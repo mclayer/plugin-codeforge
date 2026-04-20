@@ -12,7 +12,6 @@ Order Imbalance 전략 데모.
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Optional
 
 from mctrader.domain.events import MarketEvent, OrderBookDiffEvent
 from mctrader.domain.order import Fill, OrderIntent, OrderSide, OrderType
@@ -41,7 +40,7 @@ class OrderImbalanceSignalGenerator(SignalGenerator):
     def on_event(
         self,
         event: MarketEvent,
-        snapshot: Optional[OrderBookSnapshot],
+        snapshot: OrderBookSnapshot | None,
     ) -> list[Signal]:
         # OrderBookDiffEvent 이후 snapshot이 있을 때만 계산
         if not isinstance(event, OrderBookDiffEvent) or snapshot is None:
@@ -72,8 +71,8 @@ class OrderImbalanceSignalGenerator(SignalGenerator):
 class OrderImbalanceStrategy(TradingStrategy):
     def __init__(
         self,
-        signal_gen: Optional[OrderImbalanceSignalGenerator] = None,
-        order_qty: Optional[Decimal] = None,
+        signal_gen: OrderImbalanceSignalGenerator | None = None,
+        order_qty: Decimal | None = None,
     ) -> None:
         self._signal_gen = signal_gen or OrderImbalanceSignalGenerator()
         # None이면 on_event 시점에 가용현금의 10%로 결정
@@ -84,7 +83,7 @@ class OrderImbalanceStrategy(TradingStrategy):
     def on_event(
         self,
         event: MarketEvent,
-        snapshot: Optional[OrderBookSnapshot],
+        snapshot: OrderBookSnapshot | None,
         portfolio: Portfolio,
     ) -> list[OrderIntent]:
         signals = self._signal_gen.on_event(event, snapshot)

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import glob as _glob
 import os
+from collections.abc import Iterator
 from decimal import Decimal
-from typing import Iterator
 
 import duckdb
 
@@ -97,7 +97,7 @@ class DuckDBSource(MarketDataSource):
         end_ts: int,
         select_clause: str,
         order_clause: str,
-    ) -> list[tuple]:
+    ) -> list[tuple[object, ...]]:
         """Execute DuckDB query for market data with time filtering."""
         symbol_names = [s.name for s in symbols]
         placeholders = ", ".join(f"'{n}'" for n in symbol_names)
@@ -119,7 +119,7 @@ class DuckDBSource(MarketDataSource):
 
 
 def _reconstruct_orderbook_events(
-    rows: list[tuple],
+    rows: list[tuple[object, ...]],
 ) -> Iterator[OrderBookDiffEvent]:
     """
     같은 (ts, seq, symbol)의 여러 row를 하나의 OrderBookDiffEvent로 묶는다.

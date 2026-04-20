@@ -151,7 +151,7 @@ def _filter_symbols(all_symbols: list[Symbol], selector: str | list[str]) -> lis
     if selector == "all":
         return all_symbols
 
-    selected_names = selector if isinstance(selector, list) else [selector]
+    selected_names: list[str] = selector if isinstance(selector, list) else [selector]
     return [s for s in all_symbols if s.name in selected_names]
 
 

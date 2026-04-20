@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import enum
 from dataclasses import dataclass, field
-from typing import Any, Dict
 
 from mctrader.domain.symbol import Symbol
 
@@ -20,4 +19,4 @@ class Signal:
     direction: SignalDirection
     strength: float  # 0.0 ~ 1.0
     ts: int
-    metadata: Dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, object] = field(default_factory=dict)

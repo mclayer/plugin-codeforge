@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import AsyncIterator, Iterator
+from collections.abc import AsyncIterator, Iterator
 
 from mctrader.domain.events import MarketEvent, OrderBookDiffEvent, TradeEvent
 from mctrader.domain.symbol import Symbol

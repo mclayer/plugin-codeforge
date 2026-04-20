@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Dict, Optional
 
 from mctrader.domain.events import OrderBookDiffEvent
 from mctrader.domain.symbol import Symbol
@@ -26,8 +25,8 @@ class OrderBookSnapshot:
 class OrderBook:
     def __init__(self, symbol: Symbol) -> None:
         self._symbol = symbol
-        self._bids: Dict[Decimal, Decimal] = {}  # price -> qty
-        self._asks: Dict[Decimal, Decimal] = {}
+        self._bids: dict[Decimal, Decimal] = {}  # price -> qty
+        self._asks: dict[Decimal, Decimal] = {}
         self._ts: int = 0
         self._seq: int = 0
 
@@ -65,21 +64,21 @@ class OrderBook:
         )
 
     @property
-    def best_bid(self) -> Optional[Level]:
+    def best_bid(self) -> Level | None:
         if not self._bids:
             return None
         price = max(self._bids)
         return Level(price, self._bids[price])
 
     @property
-    def best_ask(self) -> Optional[Level]:
+    def best_ask(self) -> Level | None:
         if not self._asks:
             return None
         price = min(self._asks)
         return Level(price, self._asks[price])
 
     @property
-    def mid(self) -> Optional[Decimal]:
+    def mid(self) -> Decimal | None:
         bb = self.best_bid
         ba = self.best_ask
         if bb is None or ba is None:
@@ -87,7 +86,7 @@ class OrderBook:
         return (bb.price + ba.price) / Decimal(2)
 
     @property
-    def spread(self) -> Optional[Decimal]:
+    def spread(self) -> Decimal | None:
         bb = self.best_bid
         ba = self.best_ask
         if bb is None or ba is None:

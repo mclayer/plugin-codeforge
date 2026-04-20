@@ -3,7 +3,6 @@ from __future__ import annotations
 import json
 import os
 from decimal import Decimal
-from typing import Optional
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -55,12 +54,12 @@ class ResultRecorder:
         self._result_path = result_path
         self._equity_sample_interval = equity_sample_interval
 
-        self._trade_rows: list[dict] = []
-        self._equity_rows: list[dict] = []
+        self._trade_rows: list[dict[str, object]] = []
+        self._equity_rows: list[dict[str, object]] = []
 
         self._total_fills: int = 0
-        self._start_ts: Optional[int] = None
-        self._end_ts: Optional[int] = None
+        self._start_ts: int | None = None
+        self._end_ts: int | None = None
 
     # ------------------------------------------------------------------
     # Hot-path callbacks
@@ -71,7 +70,7 @@ class ResultRecorder:
         self._trade_rows.append(self._fill_to_row(fill))
 
     @staticmethod
-    def _fill_to_row(fill: Fill) -> dict:
+    def _fill_to_row(fill: Fill) -> dict[str, object]:
         """Convert Fill to Parquet row dict."""
         return {
             "ts": fill.ts,
@@ -102,7 +101,7 @@ class ResultRecorder:
         self._equity_rows.append(self._equity_to_row(ts, equity, portfolio, event_count))
 
     @staticmethod
-    def _equity_to_row(ts: int, equity: Decimal, portfolio: Portfolio, event_count: int) -> dict:
+    def _equity_to_row(ts: int, equity: Decimal, portfolio: Portfolio, event_count: int) -> dict[str, object]:
         """Convert equity snapshot to Parquet row dict."""
         return {
             "ts": ts,
@@ -142,11 +141,11 @@ class ResultRecorder:
         return self._total_fills
 
     @property
-    def start_ts(self) -> Optional[int]:
+    def start_ts(self) -> int | None:
         return self._start_ts
 
     @property
-    def end_ts(self) -> Optional[int]:
+    def end_ts(self) -> int | None:
         return self._end_ts
 
 
@@ -154,7 +153,7 @@ class ResultRecorder:
 # helpers
 
 
-def _write_parquet(path: str, schema: pa.Schema, rows: list[dict]) -> None:
+def _write_parquet(path: str, schema: pa.Schema, rows: list[dict[str, object]]) -> None:
     """Write rows to Parquet file, ensuring schema even if empty."""
     if rows:
         table = pa.Table.from_pylist(rows, schema=schema)

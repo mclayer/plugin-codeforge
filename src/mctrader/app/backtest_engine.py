@@ -5,7 +5,6 @@ import logging
 import os
 from dataclasses import dataclass
 from decimal import Decimal
-from typing import Optional
 
 from mctrader.adapters.clocks.sim_clock import SimClock
 from mctrader.adapters.execution.simulated import SimulatedExecutionVenue
@@ -38,7 +37,7 @@ class BacktestResult:
     total_fills: int
     final_equity: Decimal
     realized_pnl: Decimal
-    result_path: Optional[str]  # ResultRecorder가 저장한 경로; None이면 저장 없음
+    result_path: str | None  # ResultRecorder가 저장한 경로; None이면 저장 없음
 
 
 # Mapping from Symbol to its live OrderBook.
@@ -70,8 +69,8 @@ class BacktestEngine:
         clock: SimClock,
         portfolio: Portfolio,
         recorder: ResultRecorder,
-        coin_selector: Optional[CoinSelector] = None,
-        risk_manager: Optional[RiskManager] = None,
+        coin_selector: CoinSelector | None = None,
+        risk_manager: RiskManager | None = None,
     ) -> None:
         self._data_source = data_source
         self._venue = venue
@@ -170,7 +169,7 @@ class BacktestEngine:
         prices: dict[Symbol, Decimal],
     ) -> OrderBookSnapshot:
         """Process market event: update books and derive snapshot."""
-        snapshot: Optional[OrderBookSnapshot] = None
+        snapshot: OrderBookSnapshot | None = None
 
         if isinstance(event, OrderBookDiffEvent):
             ob = orderbooks.get(event.symbol)
@@ -202,7 +201,7 @@ class BacktestEngine:
 # module-level helpers (no external state)
 
 
-def _mid_from_snapshot(snapshot: OrderBookSnapshot) -> Optional[Decimal]:
+def _mid_from_snapshot(snapshot: OrderBookSnapshot) -> Decimal | None:
     """Calculate midprice from best bid and ask, or return None if unavailable."""
     if snapshot.bids and snapshot.asks:
         return (snapshot.bids[0].price + snapshot.asks[0].price) / Decimal(2)
@@ -214,7 +213,7 @@ def _empty_snapshot_for(
     orderbooks: OrderBookRegistry,
 ) -> OrderBookSnapshot:
     """Return a snapshot for the event's symbol when no update occurred this tick."""
-    symbol: Optional[Symbol] = getattr(event, "symbol", None)
+    symbol: Symbol | None = getattr(event, "symbol", None)
     if symbol is not None:
         ob = orderbooks.get(symbol)
         if ob is not None:

@@ -15,7 +15,7 @@ def _date_to_epoch_ms(date_str: str) -> int:
     return int(dt.timestamp() * 1000)
 
 
-def _parse_symbols(symbols_arg: str) -> list | None:
+def _parse_symbols(symbols_arg: str) -> list[str] | None:
     """
     "all" → None (엔진이 전체 처리).
     "BTC_KRW,ETH_KRW" → ["BTC_KRW", "ETH_KRW"] 문자열 리스트.

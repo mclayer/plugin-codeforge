@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from decimal import Decimal
-from typing import Optional
 
 from mctrader.domain.events import MarketEvent
 from mctrader.domain.symbol import FeeSchedule, Symbol
@@ -23,4 +22,4 @@ class ExchangeGateway(ABC):
     def fee_schedule(self, symbol: Symbol) -> FeeSchedule: ...
 
     @abstractmethod
-    def normalize_event(self, raw: dict) -> Optional[MarketEvent]: ...
+    def normalize_event(self, raw: dict) -> MarketEvent | None: ...

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from mctrader.domain.events import MarketEvent
 from mctrader.domain.order import Fill, OrderIntent
@@ -16,7 +15,7 @@ class SignalGenerator(ABC):
     def on_event(
         self,
         event: MarketEvent,
-        snapshot: Optional[OrderBookSnapshot],
+        snapshot: OrderBookSnapshot | None,
     ) -> list[Signal]: ...
 
 
@@ -25,7 +24,7 @@ class TradingStrategy(ABC):
     def on_event(
         self,
         event: MarketEvent,
-        snapshot: Optional[OrderBookSnapshot],
+        snapshot: OrderBookSnapshot | None,
         portfolio: Portfolio,
     ) -> list[OrderIntent]: ...
 

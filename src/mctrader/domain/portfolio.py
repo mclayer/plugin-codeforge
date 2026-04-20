@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Dict, Optional
 
 from mctrader.domain.order import Fill, OrderSide
 from mctrader.domain.symbol import Symbol
@@ -19,16 +18,16 @@ class Position:
 class Portfolio:
     def __init__(self, initial_cash: Decimal) -> None:
         self._cash: Decimal = initial_cash
-        self._positions: Dict[Symbol, Position] = {}
+        self._positions: dict[Symbol, Position] = {}
 
     @property
     def cash(self) -> Decimal:
         return self._cash
 
-    def position(self, symbol: Symbol) -> Optional[Position]:
+    def position(self, symbol: Symbol) -> Position | None:
         return self._positions.get(symbol)
 
-    def all_positions(self) -> Dict[Symbol, Position]:
+    def all_positions(self) -> dict[Symbol, Position]:
         return dict(self._positions)
 
     def apply_fill(self, fill: Fill) -> None:
@@ -72,7 +71,7 @@ class Portfolio:
             return Decimal(0)
         return (current_price - pos.avg_price) * pos.qty
 
-    def total_equity(self, prices: Dict[Symbol, Decimal]) -> Decimal:
+    def total_equity(self, prices: dict[Symbol, Decimal]) -> Decimal:
         equity = self._cash
         for symbol, pos in self._positions.items():
             if pos.qty > Decimal(0):
