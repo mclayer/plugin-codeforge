@@ -1,6 +1,6 @@
 ---
 name: CodeHeadAgent
-model: claude-opus-4-7
+model: claude-sonnet-4-6
 description: 구현 가능성 및 코드 품질 관점 판단
 ---
 
