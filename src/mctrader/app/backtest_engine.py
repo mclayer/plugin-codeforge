@@ -11,6 +11,7 @@ from mctrader.adapters.clocks.sim_clock import SimClock
 from mctrader.adapters.execution.simulated import SimulatedExecutionVenue
 from mctrader.app.result_recorder import ResultRecorder
 from mctrader.domain.events import MarketEvent, OrderBookDiffEvent, TradeEvent
+from mctrader.domain.order import OrderIntent
 from mctrader.domain.orderbook import OrderBook, OrderBookSnapshot
 from mctrader.domain.portfolio import Portfolio
 from mctrader.domain.symbol import Symbol
@@ -103,24 +104,7 @@ class BacktestEngine:
             self._clock.set(event.ts)
 
             # 3 & 4. update OrderBook and derive snapshot
-            snapshot: Optional[OrderBookSnapshot] = None
-            if isinstance(event, OrderBookDiffEvent):
-                ob = orderbooks.get(event.symbol)
-                if ob is not None:
-                    ob.apply_diff(event)
-                    snapshot = ob.snapshot()
-                    mid = _mid_from_snapshot(snapshot)
-                    if mid is not None:
-                        prices[event.symbol] = mid
-            elif isinstance(event, TradeEvent):
-                prices[event.symbol] = event.price
-                ob = orderbooks.get(event.symbol)
-                if ob is not None:
-                    snapshot = ob.snapshot()
-
-            # snapshot may still be None for ClockTickEvent — venue handles it
-            if snapshot is None:
-                snapshot = _empty_snapshot_for(event, orderbooks)
+            snapshot = self._process_market_event(event, orderbooks, prices)
 
             # 5. match pending orders against updated book
             self._venue.on_market_event(event, snapshot)
@@ -179,7 +163,36 @@ class BacktestEngine:
             result_path=result_path,
         )
 
-    def _submit_intent(self, intent) -> None:  # type: ignore[no-untyped-def]
+    def _process_market_event(
+        self,
+        event: MarketEvent,
+        orderbooks: OrderBookRegistry,
+        prices: dict[Symbol, Decimal],
+    ) -> OrderBookSnapshot:
+        """Process market event: update books and derive snapshot."""
+        snapshot: Optional[OrderBookSnapshot] = None
+
+        if isinstance(event, OrderBookDiffEvent):
+            ob = orderbooks.get(event.symbol)
+            if ob is not None:
+                ob.apply_diff(event)
+                snapshot = ob.snapshot()
+                mid = _mid_from_snapshot(snapshot)
+                if mid is not None:
+                    prices[event.symbol] = mid
+        elif isinstance(event, TradeEvent):
+            prices[event.symbol] = event.price
+            ob = orderbooks.get(event.symbol)
+            if ob is not None:
+                snapshot = ob.snapshot()
+
+        if snapshot is None:
+            snapshot = _empty_snapshot_for(event, orderbooks)
+
+        return snapshot
+
+    def _submit_intent(self, intent: OrderIntent) -> None:
+        """Submit order intent if risk check passes."""
         if self._risk_manager is not None and not self._risk_manager.check(intent, self._portfolio):
             return
         self._venue.submit(intent)
@@ -188,7 +201,9 @@ class BacktestEngine:
 # ------------------------------------------------------------------
 # module-level helpers (no external state)
 
+
 def _mid_from_snapshot(snapshot: OrderBookSnapshot) -> Optional[Decimal]:
+    """Calculate midprice from best bid and ask, or return None if unavailable."""
     if snapshot.bids and snapshot.asks:
         return (snapshot.bids[0].price + snapshot.asks[0].price) / Decimal(2)
     return None
@@ -209,11 +224,11 @@ def _empty_snapshot_for(
     if orderbooks:
         return next(iter(orderbooks.values())).snapshot()
 
-    # Fallback: should not happen in a well-configured run.
     raise RuntimeError("No OrderBook available to produce a snapshot")
 
 
 def _total_realized_pnl(portfolio: Portfolio) -> Decimal:
+    """Sum realized P&L across all positions."""
     return sum(
         (pos.realized_pnl for pos in portfolio.all_positions().values()),
         Decimal(0),
@@ -227,7 +242,7 @@ def _write_summary(
     final_equity: Decimal,
     realized_pnl: Decimal,
 ) -> None:
-    """Overwrite summary.json with the complete, engine-enriched data."""
+    """Write backtest summary to summary.json with engine-enriched metrics."""
     summary = {
         "total_trades": total_fills,
         "total_fills": total_fills,

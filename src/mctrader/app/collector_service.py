@@ -8,7 +8,8 @@ from typing import TYPE_CHECKING
 from mctrader.adapters.exchanges.bithumb.gateway import BithumbGateway
 from mctrader.adapters.exchanges.bithumb.ws_client import BithumbWsClient
 from mctrader.adapters.storage.parquet_sink import ParquetSink
-from mctrader.domain.events import OrderBookDiffEvent, TradeEvent
+from mctrader.domain.events import MarketEvent, OrderBookDiffEvent, TradeEvent
+from mctrader.domain.symbol import Symbol
 from mctrader.ports.market_data import MarketDataSink
 
 if TYPE_CHECKING:
@@ -48,6 +49,7 @@ class CollectorService:
         self._flush_task: asyncio.Task | None = None
 
     async def run(self) -> None:
+        """Main collection loop: connect, stream, store, and shutdown."""
         self._running = True
         await self._ws_client.connect()
         logger.info("CollectorService started")
@@ -67,13 +69,7 @@ class CollectorService:
                     continue
 
                 received += 1
-
-                if isinstance(event, OrderBookDiffEvent):
-                    self._sink.write_orderbook_diff(event)
-                    stored += 1
-                elif isinstance(event, TradeEvent):
-                    self._sink.write_trade(event)
-                    stored += 1
+                stored += await self._handle_event(event)
 
                 if received % _LOG_INTERVAL == 0:
                     logger.info(
@@ -84,20 +80,38 @@ class CollectorService:
         finally:
             await self._shutdown()
 
+    async def _handle_event(self, event: MarketEvent) -> int:
+        """Store event if applicable. Return 1 if stored, 0 otherwise."""
+        if isinstance(event, OrderBookDiffEvent):
+            self._sink.write_orderbook_diff(event)
+            return 1
+        if isinstance(event, TradeEvent):
+            self._sink.write_trade(event)
+            return 1
+        return 0
+
     async def stop(self) -> None:
+        """Signal service to stop gracefully."""
         logger.info("CollectorService stop requested")
         self._running = False
         await self._ws_client.close()
 
     async def _periodic_flush(self) -> None:
+        """Run sink flush on interval in background."""
         while self._running:
             await asyncio.sleep(self._flush_interval_sec)
             if not self._running:
                 break
-            # run flush in background so it doesn't block the message loop
             asyncio.create_task(asyncio.to_thread(self._sink.flush))
 
     async def _shutdown(self) -> None:
+        """Cancel periodic flush task and close sink."""
+        await self._cancel_flush_task()
+        await asyncio.to_thread(self._sink.close)
+        logger.info("CollectorService shutdown complete")
+
+    async def _cancel_flush_task(self) -> None:
+        """Cancel periodic flush task if present."""
         if self._flush_task is not None:
             self._flush_task.cancel()
             try:
@@ -105,22 +119,13 @@ class CollectorService:
             except asyncio.CancelledError:
                 pass
 
-        await asyncio.to_thread(self._sink.close)
-        logger.info("CollectorService shutdown complete")
-
     @classmethod
     def from_config(cls, config: CollectorConfig) -> CollectorService:
+        """Create service from configuration."""
         gateway = BithumbGateway()
-
-        if config.collector.symbols == "all":
-            symbol_objs = gateway.symbols()
-        elif isinstance(config.collector.symbols, list):
-            symbol_objs = [s for s in gateway.symbols() if s.name in config.collector.symbols]
-        else:
-            # single string that is not "all" — treat as one symbol name
-            symbol_objs = [s for s in gateway.symbols() if s.name == config.collector.symbols]
-
+        symbol_objs = _filter_symbols(gateway.symbols(), config.collector.symbols)
         ws_symbols = [s.name for s in symbol_objs]
+
         ws_client = BithumbWsClient(
             symbols=ws_symbols,
             ws_url=config.bithumb.ws_url or None,
@@ -141,11 +146,24 @@ class CollectorService:
         )
 
 
+def _filter_symbols(all_symbols: list[Symbol], selector: str | list[str]) -> list[Symbol]:
+    """Filter symbols by selector: 'all', list of names, or single name."""
+    if selector == "all":
+        return all_symbols
+
+    selected_names = selector if isinstance(selector, list) else [selector]
+    return [s for s in all_symbols if s.name in selected_names]
+
+
 async def run_collector(config: CollectorConfig) -> None:
+    """Run collector service with signal handlers for graceful shutdown."""
     service = CollectorService.from_config(config)
     loop = asyncio.get_running_loop()
 
+    def _stop_service() -> None:
+        asyncio.create_task(service.stop())
+
     for sig in (signal.SIGINT, signal.SIGTERM):
-        loop.add_signal_handler(sig, lambda: asyncio.create_task(service.stop()))
+        loop.add_signal_handler(sig, _stop_service)
 
     await service.run()
