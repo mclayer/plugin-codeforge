@@ -22,6 +22,7 @@ User
            │    ├── RefactorAgent
            │    └── ReviewAgent
            └── InfraHeadAgent   # 인프라 솔루션 검토 (Linux → Kubernetes)
+                └── DataEngineerAgent  # 데이터 파이프라인 설계 및 구현
 ```
 
 ### 합의 규칙
@@ -34,6 +35,11 @@ User
 - 기능 추가 시마다 "인프라 레벨 해결 가능 여부" 먼저 검토
 - 초기: 단일 Linux 서버 (systemd, 프로세스 관리)
 - 목표: Kubernetes 마이그레이션
+
+### DataEngineerAgent 원칙
+- WebSocket 수집, Parquet 저장, DuckDB 쿼리 등 데이터 파이프라인 전담
+- InfraHeadAgent의 인프라 결정을 데이터 계층에서 구현
+- 스키마 버전 관리 및 파티션 전략 책임
 
 ### CodeHeadAgent 원칙
 - 기능 추가마다 Refactor 패스 강제 실행

@@ -1,0 +1,25 @@
+[Unit]
+Description=mctrader market data collector
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mctrader
+Group=mctrader
+WorkingDirectory=/opt/mctrader
+ExecStart=/opt/mctrader/venv/bin/mctrader-collector
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=mctrader-collector
+
+# 환경변수
+EnvironmentFile=-/opt/mctrader/.env
+
+# 리소스 제한
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
