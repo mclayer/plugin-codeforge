@@ -18,7 +18,7 @@ User
       ├── DomainExpertAgent    # 암호화폐 트레이딩 도메인 해석 및 스펙 변환
       └── ArchitectAgent       # 설계/패턴 결정, 기술 최종 의사결정
            ├── CodeHeadAgent    # 구현 가능성 및 코드 품질 관점
-           │    ├── ImplementerAgent
+           │    ├── DeveloperAgent
            │    ├── RefactorAgent
            │    └── ReviewAgent
            └── InfraHeadAgent   # 인프라 솔루션 검토 (Linux → Kubernetes)

@@ -12,7 +12,7 @@ User
       ├── DomainExpertAgent
       └── ArchitectAgent
            ├── CodeHeadAgent
-           │    ├── ImplementerAgent
+           │    ├── DeveloperAgent
            │    ├── RefactorAgent
            │    └── ReviewAgent
            └── InfraHeadAgent
