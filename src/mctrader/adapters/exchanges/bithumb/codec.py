@@ -67,19 +67,22 @@ def _calc_side_diff(
 _diff_calc = OrderBookDiffCalculator()
 
 
+def _parse_symbol(symbol_name: str, market: Market) -> Symbol:
+    base, quote = symbol_name.split("_")
+    return Symbol(base=base, quote=quote, market=market)
+
+
 def decode(raw: dict, market: Market = Market.BITHUMB) -> MarketEvent | None:
     msg_type = raw.get("type")
     data = raw.get("data", {})
 
     if msg_type == "ORDERBOOK":
         symbol_name: str = data["s"]
-        base, quote = symbol_name.split("_")
-        symbol = Symbol(base=base, quote=quote, market=market)
+        symbol = _parse_symbol(symbol_name, market)
 
         seq = int(data["ver"])
         ts = int(time.time_ns() // 1_000_000)
 
-        # raw lists → price→qty dicts (preserving string representation for diff comparison)
         new_bids: dict[str, str] = {row[0]: row[1] for row in data["b"]}
         new_asks: dict[str, str] = {row[0]: row[1] for row in data["a"]}
 
@@ -87,13 +90,12 @@ def decode(raw: dict, market: Market = Market.BITHUMB) -> MarketEvent | None:
 
     if msg_type == "TRADE":
         symbol_name = data["s"]
-        base, quote = symbol_name.split("_")
-        symbol = Symbol(base=base, quote=quote, market=market)
+        symbol = _parse_symbol(symbol_name, market)
 
         return TradeEvent(
             symbol=symbol,
             ts=int(data["t"]),
-            seq=int(data["t"]),  # bithumb trade has no separate seq; use timestamp
+            seq=int(data["t"]),
             price=Decimal(data["p"]),
             qty=Decimal(data["v"]),
             side=data["side"],

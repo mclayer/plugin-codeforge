@@ -9,12 +9,11 @@ from mctrader.ports.queue_model import QueuePositionModel, QueueState
 
 
 class ProportionalQueueModel(QueuePositionModel):
+    """Proportional queue model. Adjusts position based on level size changes."""
+
     def __init__(self) -> None:
-        # order_id -> qty_ahead
         self._queue: dict[str, Decimal] = {}
-        # order_id -> (side_str, price)
         self._meta: dict[str, tuple[str, Decimal]] = {}
-        # (side_str, price) -> last known level qty
         self._level_qty: dict[tuple[str, Decimal], Decimal] = {}
 
     def register(self, order: Order, snapshot: OrderBookSnapshot) -> None:
@@ -27,15 +26,18 @@ class ProportionalQueueModel(QueuePositionModel):
         side_str = intent.side.value
         levels = snapshot.bids if side_str == "buy" else snapshot.asks
 
-        qty_ahead = Decimal(0)
-        for level in levels:
-            if level.price == price:
-                qty_ahead = level.qty
-                self._level_qty[(side_str, price)] = level.qty
-                break
-
+        qty_ahead = self._get_qty_at_price(levels, price)
         self._queue[order.order_id] = qty_ahead
         self._meta[order.order_id] = (side_str, price)
+        if qty_ahead > Decimal(0):
+            self._level_qty[(side_str, price)] = qty_ahead
+
+    @staticmethod
+    def _get_qty_at_price(levels: list, price: Decimal) -> Decimal:
+        for level in levels:
+            if level.price == price:
+                return level.qty
+        return Decimal(0)
 
     def on_trade(self, trade: TradeEvent) -> None:
         # trade directly clears qty_ahead by traded amount at that price

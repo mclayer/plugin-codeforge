@@ -121,24 +121,33 @@ class SimulatedExecutionVenue(ExecutionVenue):
         ts = self._clock.now()
 
         if intent.type == OrderType.MARKET:
-            if intent.side == OrderSide.BUY:
-                level = snapshot.asks[0] if snapshot.asks else None
-            else:
-                level = snapshot.bids[0] if snapshot.bids else None
+            return self._try_market_fill(order, intent, snapshot, ts)
 
-            if level is None:
-                return None
+        return self._try_limit_fill(order, intent, snapshot, ts)
 
-            fill_price = level.price
-            return self._record_fill(order, fill_price, intent.qty, ts)
+    def _try_market_fill(
+        self,
+        order: Order,
+        intent: OrderIntent,
+        snapshot: OrderBookSnapshot,
+        ts: int,
+    ) -> Fill | None:
+        level = snapshot.asks[0] if intent.side == OrderSide.BUY else snapshot.bids[0]
+        if level is None:
+            return None
+        return self._record_fill(order, level.price, intent.qty, ts)
 
-        # LIMIT order
+    def _try_limit_fill(
+        self,
+        order: Order,
+        intent: OrderIntent,
+        snapshot: OrderBookSnapshot,
+        ts: int,
+    ) -> Fill | None:
         if intent.price is None:
             return None
 
-        # check queue position
-        recent: list[TradeEvent] = []
-        state = self._queue_model.estimate(order, snapshot, recent)
+        state = self._queue_model.estimate(order, snapshot, [])
         if state.qty_ahead > Decimal(0):
             return None
 
@@ -146,7 +155,7 @@ class SimulatedExecutionVenue(ExecutionVenue):
             best_ask = snapshot.asks[0] if snapshot.asks else None
             if best_ask is None or best_ask.price > intent.price:
                 return None
-            fill_price = intent.price  # filled at limit price (passive)
+            fill_price = intent.price
         else:
             best_bid = snapshot.bids[0] if snapshot.bids else None
             if best_bid is None or best_bid.price < intent.price:

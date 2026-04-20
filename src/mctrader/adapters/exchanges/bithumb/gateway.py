@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from decimal import Decimal
-from typing import Optional
 
 from mctrader.adapters.exchanges.bithumb import codec
 from mctrader.domain.events import MarketEvent
@@ -39,5 +38,5 @@ class BithumbGateway(ExchangeGateway):
     def fee_schedule(self, symbol: Symbol) -> FeeSchedule:
         return FeeSchedule(maker=_MAKER_FEE, taker=_TAKER_FEE)
 
-    def normalize_event(self, raw: dict) -> Optional[MarketEvent]:
+    def normalize_event(self, raw: dict) -> MarketEvent | None:
         return codec.decode(raw, market=Market.BITHUMB)

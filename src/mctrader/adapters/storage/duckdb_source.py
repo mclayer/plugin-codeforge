@@ -23,8 +23,8 @@ def _parquet_glob(root: str, event_type: str) -> str:
 
 class DuckDBSource(MarketDataSource):
     """
-    Parquet 파일에서 시간순으로 MarketEvent를 방출.
-    DuckDB로 파티션 프루닝 + SQL 쿼리.
+    Stream MarketEvents from Parquet files sorted by timestamp.
+    Uses DuckDB for partition pruning and SQL queries.
     """
 
     def __init__(self, root_path: str) -> None:
@@ -50,26 +50,14 @@ class DuckDBSource(MarketDataSource):
         if not _glob.glob(pattern):
             return
 
-        symbol_names = [s.name for s in symbols]
-        placeholders = ", ".join(f"'{n}'" for n in symbol_names)
-
-        # in-memory connection — read_only=True is invalid for in-memory DBs;
-        # each call opens a fresh transient session so we never write state.
-        con = duckdb.connect()
-        try:
-            rows = con.execute(
-                f"""
-                SELECT ts, seq, symbol, market, side, price, qty
-                FROM read_parquet('{pattern}', hive_partitioning=false)
-                WHERE symbol IN ({placeholders})
-                  AND ts >= {start_ts}
-                  AND ts <= {end_ts}
-                ORDER BY ts, seq, symbol
-                """
-            ).fetchall()
-        finally:
-            con.close()
-
+        rows = self._execute_query(
+            pattern,
+            symbols,
+            start_ts,
+            end_ts,
+            "SELECT ts, seq, symbol, market, side, price, qty",
+            "ORDER BY ts, seq, symbol",
+        )
         yield from _reconstruct_orderbook_events(rows)
 
     def _query_trades(
@@ -82,23 +70,14 @@ class DuckDBSource(MarketDataSource):
         if not _glob.glob(pattern):
             return
 
-        symbol_names = [s.name for s in symbols]
-        placeholders = ", ".join(f"'{n}'" for n in symbol_names)
-
-        con = duckdb.connect()
-        try:
-            rows = con.execute(
-                f"""
-                SELECT ts, seq, symbol, market, price, qty, side
-                FROM read_parquet('{pattern}', hive_partitioning=false)
-                WHERE symbol IN ({placeholders})
-                  AND ts >= {start_ts}
-                  AND ts <= {end_ts}
-                ORDER BY ts, seq
-                """
-            ).fetchall()
-        finally:
-            con.close()
+        rows = self._execute_query(
+            pattern,
+            symbols,
+            start_ts,
+            end_ts,
+            "SELECT ts, seq, symbol, market, price, qty, side",
+            "ORDER BY ts, seq",
+        )
 
         for ts, seq, symbol_name, market_str, price, qty, side in rows:
             yield TradeEvent(
@@ -109,6 +88,34 @@ class DuckDBSource(MarketDataSource):
                 qty=Decimal(qty),
                 side=side,
             )
+
+    def _execute_query(
+        self,
+        pattern: str,
+        symbols: list[Symbol],
+        start_ts: int,
+        end_ts: int,
+        select_clause: str,
+        order_clause: str,
+    ) -> list[tuple]:
+        """Execute DuckDB query for market data with time filtering."""
+        symbol_names = [s.name for s in symbols]
+        placeholders = ", ".join(f"'{n}'" for n in symbol_names)
+
+        con = duckdb.connect()
+        try:
+            return con.execute(
+                f"""
+                {select_clause}
+                FROM read_parquet('{pattern}', hive_partitioning=false)
+                WHERE symbol IN ({placeholders})
+                  AND ts >= {start_ts}
+                  AND ts <= {end_ts}
+                {order_clause}
+                """
+            ).fetchall()
+        finally:
+            con.close()
 
 
 def _reconstruct_orderbook_events(
@@ -152,7 +159,7 @@ def _merge_sorted(
     a: Iterator[MarketEvent],
     b: Iterator[MarketEvent],
 ) -> Iterator[MarketEvent]:
-    """두 ts-정렬 이터레이터를 merge sort로 interleave."""
+    """Merge sort two timestamp-ordered iterators into single stream."""
     sentinel = object()
     a_val = next(a, sentinel)  # type: ignore[call-overload]
     b_val = next(b, sentinel)  # type: ignore[call-overload]
@@ -165,7 +172,6 @@ def _merge_sorted(
             yield b_val  # type: ignore[misc]
             b_val = next(b, sentinel)  # type: ignore[call-overload]
 
-    # drain whichever still has items
     if a_val is not sentinel:
         yield a_val  # type: ignore[misc]
         yield from a

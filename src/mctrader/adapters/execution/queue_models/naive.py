@@ -9,29 +9,23 @@ from mctrader.ports.queue_model import QueuePositionModel, QueueState
 
 
 class NaiveQueueModel(QueuePositionModel):
+    """Naive queue position model. Tracks orders in queue by qty at price level."""
+
     def __init__(self) -> None:
-        # order_id -> qty_ahead
         self._queue: dict[str, Decimal] = {}
-        # order_id -> (side, price) needed to match trade events
         self._meta: dict[str, tuple[str, Decimal]] = {}
 
     def register(self, order: Order, snapshot: OrderBookSnapshot) -> None:
         intent = order.intent
         price = intent.price
         if price is None:
-            # market orders: no queue position needed
             self._queue[order.order_id] = Decimal(0)
             return
 
-        side_str = intent.side.value  # "buy" | "sell"
+        side_str = intent.side.value
         levels = snapshot.bids if side_str == "buy" else snapshot.asks
 
-        qty_ahead = Decimal(0)
-        for level in levels:
-            if level.price == price:
-                qty_ahead = level.qty
-                break
-
+        qty_ahead = self._get_qty_at_price(levels, price)
         self._queue[order.order_id] = qty_ahead
         self._meta[order.order_id] = (side_str, price)
 
@@ -54,3 +48,10 @@ class NaiveQueueModel(QueuePositionModel):
     def remove(self, order_id: str) -> None:
         self._queue.pop(order_id, None)
         self._meta.pop(order_id, None)
+
+    @staticmethod
+    def _get_qty_at_price(levels: list, price: Decimal) -> Decimal:
+        for level in levels:
+            if level.price == price:
+                return level.qty
+        return Decimal(0)

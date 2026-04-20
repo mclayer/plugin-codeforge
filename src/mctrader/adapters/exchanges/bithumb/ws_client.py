@@ -15,8 +15,8 @@ _DEFAULT_RECONNECT_INTERVAL_SEC = 5
 
 class BithumbWsClient:
     """
-    Bithumb WebSocket 연결 및 메시지 수신.
-    재연결 자동 처리.
+    Bithumb WebSocket client with automatic reconnection.
+    Handles subscription to orderbook and trade streams.
     """
 
     WS_URL = "wss://global-api.bithumb.pro/message/realtime"
@@ -27,7 +27,6 @@ class BithumbWsClient:
         ws_url: str | None = None,
         reconnect_interval_sec: int = _DEFAULT_RECONNECT_INTERVAL_SEC,
     ) -> None:
-        # symbols: ["BTC_KRW", "ETH_KRW", ...]
         self._symbols = symbols
         self._url = ws_url or self.WS_URL
         self._reconnect_interval_sec = reconnect_interval_sec
@@ -46,7 +45,6 @@ class BithumbWsClient:
             try:
                 async for raw in self._ws:  # type: ignore[union-attr]
                     msg = json.loads(raw)
-                    # skip keepalive / ping frames that arrive as JSON
                     if msg.get("type") == "ping" or "ping" in msg:
                         continue
                     yield msg
@@ -54,14 +52,16 @@ class BithumbWsClient:
                 if self._closed:
                     return
                 logger.warning("WebSocket closed (%s), reconnecting in %ds", exc, self._reconnect_interval_sec)
-                self._ws = None
-                await asyncio.sleep(self._reconnect_interval_sec)
+                await self._handle_disconnection()
             except Exception as exc:
                 if self._closed:
                     return
                 logger.error("WebSocket error: %s, reconnecting in %ds", exc, self._reconnect_interval_sec)
-                self._ws = None
-                await asyncio.sleep(self._reconnect_interval_sec)
+                await self._handle_disconnection()
+
+    async def _handle_disconnection(self) -> None:
+        self._ws = None
+        await asyncio.sleep(self._reconnect_interval_sec)
 
     async def close(self) -> None:
         self._closed = True

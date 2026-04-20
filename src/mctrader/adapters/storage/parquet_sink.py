@@ -42,7 +42,7 @@ def _partition_key(event_type: str, symbol: str, ts_ms: int) -> str:
 
 
 def _parquet_path(root: str, key: str) -> str:
-    # key format: "{type}/{symbol}/{date}/{hour}"
+    """Build parquet file path from partition key."""
     parts = key.split("/")
     event_type, symbol, date, hour = parts
     return os.path.join(
@@ -56,8 +56,8 @@ def _parquet_path(root: str, key: str) -> str:
 
 class ParquetSink(MarketDataSink):
     """
-    이벤트를 메모리 버퍼에 누적하다가 flush 시 Parquet으로 저장.
-    파일 경로: {root}/{type}/symbol={symbol}/date={date}/hour={hour}.parquet
+    Buffer market events in memory and flush to Parquet files.
+    File path: {root}/{type}/symbol={symbol}/date={date}/hour={hour}.parquet
     """
 
     def __init__(
@@ -69,7 +69,6 @@ class ParquetSink(MarketDataSink):
         self._root = root_path
         self._flush_interval_sec = flush_interval_sec
         self._flush_max_bytes = flush_max_mb * 1024 * 1024
-        # {partition_key: list[row_dict]}
         self._buf: dict[str, list[dict]] = {}
         self._buf_row_count = 0
         self._last_flush_ts = time.monotonic()
@@ -77,27 +76,14 @@ class ParquetSink(MarketDataSink):
     def write_orderbook_diff(self, event: OrderBookDiffEvent) -> None:
         key = _partition_key("orderbook_diff", event.symbol.name, event.ts)
         rows = self._buf.setdefault(key, [])
+        base_row = self._base_row(event)
+
         for price, qty in event.bids_delta:
-            rows.append({
-                "ts": event.ts,
-                "seq": event.seq,
-                "symbol": event.symbol.name,
-                "market": event.symbol.market.value,
-                "side": "bid",
-                "price": str(price),
-                "qty": str(qty),
-            })
+            rows.append({**base_row, "side": "bid", "price": str(price), "qty": str(qty)})
             self._buf_row_count += 1
+
         for price, qty in event.asks_delta:
-            rows.append({
-                "ts": event.ts,
-                "seq": event.seq,
-                "symbol": event.symbol.name,
-                "market": event.symbol.market.value,
-                "side": "ask",
-                "price": str(price),
-                "qty": str(qty),
-            })
+            rows.append({**base_row, "side": "ask", "price": str(price), "qty": str(qty)})
             self._buf_row_count += 1
 
         if self._should_flush():
@@ -119,6 +105,15 @@ class ParquetSink(MarketDataSink):
 
         if self._should_flush():
             self.flush()
+
+    def _base_row(self, event: OrderBookDiffEvent) -> dict:
+        """Create base row dict common to all order book diff entries."""
+        return {
+            "ts": event.ts,
+            "seq": event.seq,
+            "symbol": event.symbol.name,
+            "market": event.symbol.market.value,
+        }
 
     def flush(self) -> None:
         for key, rows in self._buf.items():
