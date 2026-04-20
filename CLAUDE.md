@@ -15,26 +15,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```
 User
  └── LeaderAgent              # 요건 해석, 작업 범위 조율, 팀 합의 관리
-      ├── ArchitectAgent       # 설계/패턴 결정
-      ├── CodeSeniorAgent      # 구현 가능성 및 코드 품질 관점
-      │    ├── ImplementerAgent
-      │    ├── RefactorAgent
-      │    └── ReviewAgent
-      └── InfraAgent           # 인프라 솔루션 검토 (Linux → Kubernetes)
+      ├── DomainExpertAgent    # 암호화폐 트레이딩 도메인 해석 및 스펙 변환
+      └── ArchitectAgent       # 설계/패턴 결정, 기술 최종 의사결정
+           ├── CodeHeadAgent    # 구현 가능성 및 코드 품질 관점
+           │    ├── ImplementerAgent
+           │    ├── RefactorAgent
+           │    └── ReviewAgent
+           └── InfraHeadAgent   # 인프라 솔루션 검토 (Linux → Kubernetes)
 ```
 
 ### 합의 규칙
-- 설계 결정: Architect + CodeSenior + Infra 합의
-- 일반 구현: CodeSenior 단독 판단 후 하위 팀 위임
+- 설계 결정: ArchitectAgent 주도, CodeHead + InfraHead 검토
+- 일반 구현: CodeHeadAgent 단독 판단 후 하위 팀 위임
 - LeaderAgent가 작업 크기에 따라 합의 범위 결정
 
-### InfraAgent 원칙
+### InfraHeadAgent 원칙
 - 항상 Docker 기반으로 설계 (K8s 전환 비용 최소화)
 - 기능 추가 시마다 "인프라 레벨 해결 가능 여부" 먼저 검토
 - 초기: 단일 Linux 서버 (systemd, 프로세스 관리)
 - 목표: Kubernetes 마이그레이션
 
-### CodeSenior 원칙
+### CodeHeadAgent 원칙
 - 기능 추가마다 Refactor 패스 강제 실행
 - 패턴 일관성은 ReviewAgent가 최종 검증
 
