@@ -248,43 +248,47 @@ class TestCancel:
 class TestNaiveQueueModel:
     def test_no_fill_when_qty_ahead_positive(self) -> None:
         """
-        NaiveQueueModel registers qty_ahead from the existing level depth.
-        If qty_ahead > 0, the limit order must not be filled.
+        NaiveQueueModel.register records qty_ahead by looking at the same-side
+        depth at the order's price.  For a BUY limit at 100, it checks bids at
+        100 (other market participants already queued there).  If qty_ahead > 0,
+        the limit order must not be filled.
         """
         venue = _venue()
-        # best ask = 100 with qty=10: the order arrives and sees 10 ahead
-        snap = _snapshot(bids=[("99", "1")], asks=[("100", "10")])
-        # submit and register while snapshot is known
-        event = _diff_event(bids=[("99", "1")], asks=[("100", "10")])
+        # There are already 10 units queued in bids at price 100 ahead of us.
+        # best ask = 101 so the BUY limit at 100 is not marketable yet.
+        snap = _snapshot(bids=[("100", "10"), ("99", "1")], asks=[("101", "1")])
+        event = _diff_event(bids=[("100", "10"), ("99", "1")], asks=[("101", "1")])
+
+        # First on_market_event establishes the snapshot so submit can register.
         venue.on_market_event(event, snap)
 
         ack = venue.submit(_limit_intent(OrderSide.BUY, price="100"))
 
-        # fire another market event with same snapshot: qty_ahead still 10
+        # Second on_market_event with the same snapshot: ask is still 101 > 100,
+        # and qty_ahead = 10 > 0, so no fill should occur.
         venue.on_market_event(event, snap)
 
         fills = venue.pop_events()
-        # qty_ahead = 10 > 0, so no fill
         assert fills == []
         assert len(venue.pending_orders()) == 1
 
     def test_fill_after_queue_drains_via_trades(self) -> None:
         """
-        Sending a TradeEvent at the limit price reduces qty_ahead.
-        Once qty_ahead reaches 0 the limit order can be matched.
+        Sending a TradeEvent at the limit price with matching side reduces
+        qty_ahead.  Once qty_ahead reaches 0 and the ask crosses the limit
+        price, the order is filled.
         """
         from mctrader.domain.events import TradeEvent
 
         venue = _venue()
-        snap = _snapshot(bids=[("99", "1")], asks=[("100", "3")])
-
-        # register the order against a snapshot showing qty=3 ahead
-        setup_event = _diff_event(bids=[("99", "1")], asks=[("100", "3")])
+        # 3 units already queued in bids at 100; ask = 100 (crossable once queue clears)
+        snap = _snapshot(bids=[("100", "3"), ("99", "1")], asks=[("100", "5")])
+        setup_event = _diff_event(bids=[("100", "3"), ("99", "1")], asks=[("100", "5")])
         venue.on_market_event(setup_event, snap)
 
         ack = venue.submit(_limit_intent(OrderSide.BUY, price="100"))
 
-        # simulate trades draining all 3 units ahead of our order
+        # BUY trades at price 100 drain the 3 units ahead of our order
         trade = TradeEvent(
             symbol=SYMBOL,
             ts=1_001,
