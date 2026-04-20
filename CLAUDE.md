@@ -46,18 +46,3 @@ User
 - 실행: 완전 자율
 - 주요 데이터: 실시간 가격 데이터, 호가창
 
-### Trading Agent 구성 (구현 대상)
-```
-TradingOrchestrator
-├── DataTeam
-│   ├── PriceStreamAgent
-│   └── OrderBookAgent
-├── AnalysisTeam
-│   ├── IndicatorAgent
-│   └── SignalAgent
-├── RiskTeam
-│   └── RiskManagerAgent
-└── ExecutionTeam
-    ├── OrderAgent
-    └── PositionAgent
-```
