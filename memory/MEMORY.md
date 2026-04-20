@@ -1,0 +1,1 @@
+- [개발 에이전트 팀 구성](project_agent_team.md) — LeaderAgent + Architect/CodeSenior/Infra 합의 구조, 2026-04-20 확정
