@@ -31,7 +31,7 @@ User
 - LeaderAgent가 작업 크기에 따라 합의 범위 결정
 
 ### InfraHeadAgent 원칙
-- 항상 Docker 기반으로 설계 (K8s 전환 비용 최소화)
+- Docker 사용 안 함 — Linux 단일 서버 + systemd만 사용
 - 기능 추가 시마다 "인프라 레벨 해결 가능 여부" 먼저 검토
 - 초기: 단일 Linux 서버 (systemd, 프로세스 관리)
 - 목표: Kubernetes 마이그레이션
@@ -44,6 +44,54 @@ User
 ### CodeHeadAgent 원칙
 - 기능 추가마다 Refactor 패스 강제 실행
 - 패턴 일관성은 ReviewAgent가 최종 검증
+
+## ADR (Architecture Decision Records)
+
+### 필수 규칙
+- **설계 결정을 내릴 때마다 ADR 이슈를 생성한다** (GitLab: `mctrader1/mctrader`, project ID: `81469985`)
+- 새 세션 시작 시 기존 ADR을 먼저 확인하고, 결정된 사항을 번복하지 않는다
+- ADR에 반하는 방향으로 구현할 때는 반드시 사용자 확인 후 ADR을 업데이트한다
+
+### ADR 생성 기준
+다음 중 하나라도 해당하면 ADR 이슈 생성:
+- 라이브러리/프레임워크 선택 (왜 A를 택하고 B를 버렸는가)
+- 아키텍처 패턴 결정 (레이어 구조, 인터페이스 설계)
+- 데이터 저장/처리 방식 선택
+- 인프라/배포 방식 결정
+- 전략 도메인 핵심 개념 확정
+
+### ADR 이슈 포맷
+```
+제목: ADR-NNN: <결정 제목>
+레이블: ADR
+본문:
+## 상태
+Accepted | Deprecated | Superseded by #NNN
+
+## 컨텍스트
+왜 이 결정이 필요했는가
+
+## 결정
+무엇을 어떻게 결정했는가
+
+## 결과
+- ✅ 장점
+- ⚠️ 단점/주의사항
+- TO-DO: 후속 작업
+
+## 관련 파일
+코드 경로
+```
+
+### 기존 ADR 목록 (GitLab Issues)
+- [#1 ADR-001](https://gitlab.com/mctrader1/mctrader/-/work_items/1) — Hexagonal Architecture 채택
+- [#2 ADR-002](https://gitlab.com/mctrader1/mctrader/-/work_items/2) — OrderBook Diff-only 저장
+- [#3 ADR-003](https://gitlab.com/mctrader1/mctrader/-/work_items/3) — Parquet + DuckDB (Redis 미사용)
+- [#4 ADR-004](https://gitlab.com/mctrader1/mctrader/-/work_items/4) — 백테스트 우선 개발
+- [#5 ADR-005](https://gitlab.com/mctrader1/mctrader/-/work_items/5) — Queue Position Model
+- [#6 ADR-006](https://gitlab.com/mctrader1/mctrader/-/work_items/6) — Bithumb 우선 + 멀티 거래소 추상화
+- [#7 ADR-007](https://gitlab.com/mctrader1/mctrader/-/work_items/7) — 틱띠기 OrderBook Imbalance 전략
+- [#8 ADR-008](https://gitlab.com/mctrader1/mctrader/-/work_items/8) — Linux + systemd 인프라
 
 ## Trading Domain
 
