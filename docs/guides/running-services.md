@@ -33,6 +33,8 @@ uvicorn.run(app, host='127.0.0.1', port=8080)
 | `/run/{run_id}` | 개별 백테스트 상세 (에퀴티 커브, 체결 내역) |
 | `/compare` | 여러 백테스트 비교 |
 | `/backtest` | 백테스트 실행 페이지 |
+| `/collector` | 수집 프로세스 상태 및 심볼별 통계 ([상세](./dashboard-collector-data.md)) |
+| `/data` | Parquet 데이터 조회 ([상세](./dashboard-collector-data.md)) |
 | `/admin` | 전역 설정 관리 |
 
 ---

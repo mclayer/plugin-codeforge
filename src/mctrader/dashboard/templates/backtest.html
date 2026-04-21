@@ -71,13 +71,17 @@
 
 <script>
 // Set default datetimes: end = now (truncated to minute), start = end - 24h
+// If TZ cookie is Asia/Seoul (UTC+9), offset local time accordingly
 (function () {
   function toDatetimeLocal(d) {
     const pad = n => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
-  const end = new Date();
-  end.setSeconds(0, 0);
+  const tzCookie = (document.cookie.split(';').find(c => c.trim().startsWith('tz=')) || '').split('=')[1] || 'UTC';
+  const offsetMs = tzCookie === 'Asia/Seoul' ? 9 * 60 * 60 * 1000 : 0;
+  const nowUtc = Date.now();
+  const end = new Date(nowUtc + offsetMs);
+  end.setUTCSeconds(0, 0);
   const start = new Date(end.getTime() - 24 * 60 * 60 * 1000);
   document.getElementById('endDt').value = toDatetimeLocal(end);
   document.getElementById('startDt').value = toDatetimeLocal(start);

@@ -131,6 +131,8 @@ Accepted | Deprecated | Superseded by #NNN
 - [#7 ADR-007](https://gitlab.com/mctrader1/mctrader/-/work_items/7) — 틱띠기 OrderBook Imbalance 전략
 - [#8 ADR-008](https://gitlab.com/mctrader1/mctrader/-/work_items/8) — Linux + systemd 인프라
 - [#9 ADR-009](https://gitlab.com/mctrader1/mctrader/-/work_items/9) — QueuePositionModel lifecycle 메서드 포트 공식화
+- [#10 ADR-010](https://gitlab.com/mctrader1/mctrader/-/work_items/10) — Dashboard Web Interface (FastAPI + Jinja2 + Bootstrap 5)
+- [#11 ADR-011](https://gitlab.com/mctrader1/mctrader/-/work_items/11) — 서버사이드 타임존 변환 (zoneinfo + cookie 기반 선택)
 
 ## Trading Domain
 

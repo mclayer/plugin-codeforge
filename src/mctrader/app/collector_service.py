@@ -102,12 +102,12 @@ class CollectorService:
             await asyncio.sleep(self._flush_interval_sec)
             if not self._running:
                 break
-            asyncio.create_task(asyncio.to_thread(self._sink.flush))
+            self._sink.flush()
 
     async def _shutdown(self) -> None:
         """Cancel periodic flush task and close sink."""
         await self._cancel_flush_task()
-        await asyncio.to_thread(self._sink.close)
+        self._sink.close()
         logger.info("CollectorService shutdown complete")
 
     async def _cancel_flush_task(self) -> None:
