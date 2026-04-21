@@ -4,8 +4,10 @@ import json
 import os
 import uuid
 from dataclasses import asdict
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import yaml
 from fastapi import BackgroundTasks, FastAPI, Form, Request
@@ -13,16 +15,74 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from mctrader.dashboard.backtest_runner import BacktestRunParams, run_backtest
+from mctrader.dashboard.collector_status import build_collector_status, discover_symbols
+from mctrader.dashboard.data_query import MAX_ROWS, QueryResult, query
 from mctrader.dashboard.metrics import (
     discover_runs,
     load_equity_series,
     load_metrics,
     load_trades,
 )
-from mctrader.infra.config import _CONFIG_DIR
+from mctrader.infra.config import _CONFIG_DIR, load_collector_config
 
 _TEMPLATES_DIR = Path(__file__).parent / "templates"
 _QUEUE_MODELS = ("naive", "proportional")
+_DEFAULT_DATA_ROOT = "./data"
+_DATA_TYPES = ("orderbook_diff", "trade")
+_SUPPORTED_TZ = {"UTC", "Asia/Seoul"}
+_TZ_ABBREV = {"UTC": "UTC", "Asia/Seoul": "KST"}
+
+
+def _ts_fmt(value: Any, tz_name: str = "UTC") -> str:
+    if value is None:
+        return "—"
+    try:
+        v = float(value)
+    except (TypeError, ValueError):
+        return str(value)
+    seconds = v / 1000.0 if v > 1e12 else v
+    try:
+        if tz_name not in _SUPPORTED_TZ:
+            tz_name = "UTC"
+        tz = ZoneInfo(tz_name)
+        dt = datetime.fromtimestamp(seconds, tz=tz)
+    except (OverflowError, OSError, ValueError, ZoneInfoNotFoundError):
+        return str(value)
+    abbrev = _TZ_ABBREV.get(tz_name, tz_name)
+    return dt.strftime("%Y-%m-%d %H:%M:%S") + f" {abbrev}"
+
+
+def _resolve_data_root() -> str:
+    """수집기 설정과 동일한 data.root_path 를 사용해 일관성 유지."""
+    try:
+        cfg = load_collector_config()
+        return cfg.data.root_path
+    except Exception:
+        return _DEFAULT_DATA_ROOT
+
+
+def _parse_datetime_local(value: str, tz_name: str = "UTC") -> int | None:
+    """'YYYY-MM-DDTHH:MM[SS]' in given timezone -> epoch milliseconds."""
+    if not value:
+        return None
+    try:
+        dt = datetime.strptime(value, "%Y-%m-%dT%H:%M")
+    except ValueError:
+        try:
+            dt = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S")
+        except ValueError:
+            return None
+    tz = ZoneInfo(tz_name) if tz_name in _SUPPORTED_TZ else ZoneInfo("UTC")
+    return int(dt.replace(tzinfo=tz).timestamp() * 1000)
+
+
+def _default_range(tz_name: str = "UTC") -> tuple[str, str]:
+    """Today 00:00 ~ now (minute-truncated) in given timezone for form defaults."""
+    tz = ZoneInfo(tz_name) if tz_name in _SUPPORTED_TZ else ZoneInfo("UTC")
+    now = datetime.now(tz).replace(second=0, microsecond=0)
+    start = now.replace(hour=0, minute=0)
+    fmt = "%Y-%m-%dT%H:%M"
+    return start.strftime(fmt), now.strftime(fmt)
 
 
 # ---------------------------------------------------------------------------
@@ -60,9 +120,17 @@ def _run_job(job_id: str, params: BacktestRunParams, job_store: dict[str, Any]) 
 # App factory
 # ---------------------------------------------------------------------------
 
+def _get_tz(request: Request) -> str:
+    tz = request.cookies.get("tz", "UTC")
+    return tz if tz in _SUPPORTED_TZ else "UTC"
+
+
 def create_app(result_dir: str) -> FastAPI:
     app = FastAPI(title="mctrader Dashboard")
     templates = Jinja2Templates(directory=str(_TEMPLATES_DIR))
+
+    templates.env.filters["ts_fmt"] = _ts_fmt
+    templates.env.filters["ts_iso"] = _ts_fmt  # backward compat alias
 
     # In-memory job store; reset on process restart
     _job_store: dict[str, Any] = {}
@@ -73,6 +141,7 @@ def create_app(result_dir: str) -> FastAPI:
 
     @app.get("/", response_class=HTMLResponse)
     async def index(request: Request) -> HTMLResponse:
+        tz = _get_tz(request)
         run_ids = discover_runs(result_dir)
         runs = []
         for run_id in run_ids:
@@ -80,10 +149,11 @@ def create_app(result_dir: str) -> FastAPI:
                 runs.append(load_metrics(os.path.join(result_dir, run_id)))
             except Exception:
                 pass
-        return templates.TemplateResponse(request, "index.html", {"runs": runs})
+        return templates.TemplateResponse(request, "index.html", {"runs": runs, "tz": tz})
 
     @app.get("/run/{run_id}", response_class=HTMLResponse)
     async def run_detail(request: Request, run_id: str) -> HTMLResponse:
+        tz = _get_tz(request)
         result_path = os.path.join(result_dir, run_id)
         metrics = load_metrics(result_path)
         equity_series = load_equity_series(result_path)
@@ -97,10 +167,12 @@ def create_app(result_dir: str) -> FastAPI:
             "metrics": metrics,
             "equity_json": equity_json,
             "trades": trades[:200],
+            "tz": tz,
         })
 
     @app.get("/compare", response_class=HTMLResponse)
     async def compare(request: Request, runs: str = "") -> HTMLResponse:
+        tz = _get_tz(request)
         all_runs = discover_runs(result_dir)
         selected = [r.strip() for r in runs.split(",") if r.strip()] if runs else all_runs[:5]
 
@@ -119,6 +191,7 @@ def create_app(result_dir: str) -> FastAPI:
             "series_json": json.dumps(series),
             "all_runs": all_runs,
             "selected_runs": selected,
+            "tz": tz,
         })
 
     @app.get("/api/runs")
@@ -148,10 +221,12 @@ def create_app(result_dir: str) -> FastAPI:
 
     @app.get("/admin", response_class=HTMLResponse)
     async def admin_get(request: Request, saved: str = "") -> HTMLResponse:
+        tz = _get_tz(request)
         cfg = _load_config_file("base.yaml")
         return templates.TemplateResponse(request, "admin.html", {
             "cfg": cfg,
             "saved": saved == "1",
+            "tz": tz,
         })
 
     @app.post("/admin")
@@ -197,8 +272,10 @@ def create_app(result_dir: str) -> FastAPI:
 
     @app.get("/backtest", response_class=HTMLResponse)
     async def backtest_get(request: Request) -> HTMLResponse:
+        tz = _get_tz(request)
         return templates.TemplateResponse(request, "backtest.html", {
             "queue_models": _QUEUE_MODELS,
+            "tz": tz,
         })
 
     # -----------------------------------------------------------------------
@@ -235,5 +312,145 @@ def create_app(result_dir: str) -> FastAPI:
         if job_id not in _job_store:
             return JSONResponse({"error": "job not found"}, status_code=404)
         return JSONResponse(_job_store[job_id])
+
+    # -----------------------------------------------------------------------
+    # Collector status routes
+    # -----------------------------------------------------------------------
+
+    @app.get("/collector", response_class=HTMLResponse)
+    async def collector_page(request: Request) -> HTMLResponse:
+        tz = _get_tz(request)
+        data_root = _resolve_data_root()
+        status = build_collector_status(data_root)
+        return templates.TemplateResponse(request, "collector.html", {
+            "status": status,
+            "tz": tz,
+        })
+
+    @app.get("/api/collector/status")
+    async def api_collector_status() -> JSONResponse:
+        data_root = _resolve_data_root()
+        status = build_collector_status(data_root)
+        return JSONResponse({
+            "process": {
+                "running": status.process.running,
+                "pid": status.process.pid,
+                "cmdline": status.process.cmdline,
+                "detection": status.process.detection,
+            },
+            "data_root": status.data_root,
+            "today": status.today,
+            "symbols": [
+                {
+                    "symbol": s.symbol,
+                    "orderbook_row_count": s.orderbook_row_count,
+                    "trade_count": s.trade_count,
+                    "last_orderbook_ts": s.last_orderbook_ts,
+                    "last_trade_ts": s.last_trade_ts,
+                    "last_received_ts": s.last_received_ts,
+                }
+                for s in status.symbols
+            ],
+            "today_files": [
+                {
+                    "event_type": f.event_type,
+                    "symbol": f.symbol,
+                    "hour": f.hour,
+                    "file_name": f.file_name,
+                    "rel_path": f.rel_path,
+                    "size_bytes": f.size_bytes,
+                    "mtime_ts": f.mtime_ts,
+                }
+                for f in status.today_files
+            ],
+        })
+
+    # -----------------------------------------------------------------------
+    # Data query routes
+    # -----------------------------------------------------------------------
+
+    @app.get("/data", response_class=HTMLResponse)
+    async def data_page(
+        request: Request,
+        symbol: str = "",
+        event_type: str = "orderbook_diff",
+        start: str = "",
+        end: str = "",
+    ) -> HTMLResponse:
+        tz = _get_tz(request)
+        data_root = _resolve_data_root()
+        symbols = discover_symbols(data_root)
+
+        default_start, default_end = _default_range(tz)
+        selected = {
+            "symbol": symbol or (symbols[0] if symbols else ""),
+            "event_type": event_type if event_type in _DATA_TYPES else "orderbook_diff",
+            "start": start or default_start,
+            "end": end or default_end,
+        }
+
+        result: QueryResult | None = None
+        error: str | None = None
+
+        # 파라미터가 모두 들어왔을 때만 조회 (초기 진입 시 빈 상태)
+        if symbol and start and end and symbols:
+            start_ts = _parse_datetime_local(start, tz)
+            end_ts = _parse_datetime_local(end, tz)
+            if start_ts is None or end_ts is None:
+                error = "Invalid datetime format."
+            elif start_ts > end_ts:
+                error = "Start must be before end."
+            else:
+                try:
+                    result = query(
+                        data_root=data_root,
+                        event_type=selected["event_type"],  # type: ignore[arg-type]
+                        symbol=symbol,
+                        start_ts=start_ts,
+                        end_ts=end_ts,
+                        limit=MAX_ROWS,
+                    )
+                except Exception as exc:  # pragma: no cover - surface in UI
+                    error = f"Query failed: {exc}"
+
+        return templates.TemplateResponse(request, "data.html", {
+            "symbols": symbols,
+            "selected": selected,
+            "result": result,
+            "error": error,
+            "max_rows": MAX_ROWS,
+            "data_root": data_root,
+            "tz": tz,
+        })
+
+    @app.get("/api/data/query")
+    async def api_data_query(
+        symbol: str,
+        event_type: str = "orderbook_diff",
+        start: str = "",
+        end: str = "",
+    ) -> JSONResponse:
+        if event_type not in _DATA_TYPES:
+            return JSONResponse({"error": "invalid event_type"}, status_code=400)
+        start_ts = _parse_datetime_local(start)
+        end_ts = _parse_datetime_local(end)
+        if start_ts is None or end_ts is None:
+            return JSONResponse({"error": "invalid datetime"}, status_code=400)
+
+        data_root = _resolve_data_root()
+        result = query(
+            data_root=data_root,
+            event_type=event_type,  # type: ignore[arg-type]
+            symbol=symbol,
+            start_ts=start_ts,
+            end_ts=end_ts,
+            limit=MAX_ROWS,
+        )
+        return JSONResponse({
+            "total_count": result.total_count,
+            "returned_count": result.returned_count,
+            "truncated": result.truncated,
+            "rows": result.rows,
+        })
 
     return app

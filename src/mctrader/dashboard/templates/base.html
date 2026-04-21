@@ -18,13 +18,36 @@
 <body>
 <nav class="navbar navbar-dark px-4 py-2">
   <a class="navbar-brand fw-bold" href="/">⚡ mctrader</a>
-  <div class="d-flex gap-3">
+  <div class="d-flex gap-3 align-items-center">
     <a class="nav-link text-secondary" href="/">Runs</a>
     <a class="nav-link text-secondary" href="/compare">Compare</a>
     <a class="nav-link text-secondary" href="/backtest">Backtest</a>
+    <a class="nav-link text-secondary" href="/collector">Collector</a>
+    <a class="nav-link text-secondary" href="/data">Data</a>
     <a class="nav-link text-secondary" href="/admin">Admin</a>
+    <div class="dropdown">
+      <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+        {{ tz if tz is defined else 'UTC' }}
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end dropdown-menu-dark">
+        <li>
+          <a class="dropdown-item {% if tz is defined and tz == 'UTC' %}active{% endif %}"
+             href="#" onclick="setTz('UTC'); return false;">UTC</a>
+        </li>
+        <li>
+          <a class="dropdown-item {% if tz is defined and tz == 'Asia/Seoul' %}active{% endif %}"
+             href="#" onclick="setTz('Asia/Seoul'); return false;">KST (+09:00)</a>
+        </li>
+      </ul>
+    </div>
   </div>
 </nav>
+<script>
+function setTz(tz) {
+  document.cookie = 'tz=' + tz + '; path=/; max-age=31536000';
+  location.reload();
+}
+</script>
 <div class="container-fluid px-4 py-4">
   {% block content %}{% endblock %}
 </div>
