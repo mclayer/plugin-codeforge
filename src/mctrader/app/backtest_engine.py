@@ -15,6 +15,7 @@ from mctrader.domain.orderbook import OrderBook, OrderBookSnapshot
 from mctrader.domain.portfolio import Portfolio
 from mctrader.domain.symbol import Symbol
 from mctrader.ports.market_data import MarketDataSource
+from mctrader.ports.progress import NoopProgressReporter, ProgressEvent, ProgressReporter
 from mctrader.ports.strategy import CoinSelector, RiskManager, TradingStrategy
 
 logger = logging.getLogger(__name__)
@@ -71,6 +72,7 @@ class BacktestEngine:
         recorder: ResultRecorder,
         coin_selector: CoinSelector | None = None,
         risk_manager: RiskManager | None = None,
+        progress_reporter: ProgressReporter | None = None,
     ) -> None:
         self._data_source = data_source
         self._venue = venue
@@ -80,6 +82,7 @@ class BacktestEngine:
         self._recorder = recorder
         self._coin_selector = coin_selector
         self._risk_manager = risk_manager
+        self._reporter = progress_reporter or NoopProgressReporter()
 
     def run(self, config: BacktestConfig) -> BacktestResult:
         orderbooks: OrderBookRegistry = {s: OrderBook(s) for s in config.symbols}
@@ -89,6 +92,19 @@ class BacktestEngine:
 
         event_count = 0
         total_fills = 0
+        planned = tuple(s.name for s in config.symbols)
+
+        self._reporter.report(ProgressEvent(
+            phase="preparing",
+            progress_pct=0.0,
+            current_symbol=None,
+            planned_symbols=planned,
+            current_ts=None,
+            start_ts=config.start_ts,
+            end_ts=config.end_ts,
+            event_count=0,
+            total_fills=0,
+        ))
 
         stream = self._data_source.stream(
             symbols=config.symbols,
@@ -96,44 +112,85 @@ class BacktestEngine:
             end_ts=config.end_ts,
         )
 
-        for event in stream:
-            event_count += 1
+        try:
+            for event in stream:
+                event_count += 1
 
-            # 2. advance clock
-            self._clock.set(event.ts)
+                current_sym = getattr(event, "symbol", None)
+                self._reporter.report(ProgressEvent(
+                    phase="replaying",
+                    progress_pct=_compute_pct(event.ts, config.start_ts, config.end_ts),
+                    current_symbol=current_sym.name if current_sym is not None else None,
+                    planned_symbols=planned,
+                    current_ts=event.ts,
+                    start_ts=config.start_ts,
+                    end_ts=config.end_ts,
+                    event_count=event_count,
+                    total_fills=total_fills,
+                ))
 
-            # 3 & 4. update OrderBook and derive snapshot
-            snapshot = self._process_market_event(event, orderbooks, prices)
+                # 2. advance clock
+                self._clock.set(event.ts)
 
-            # 5. match pending orders against updated book
-            self._venue.on_market_event(event, snapshot)
+                # 3 & 4. update OrderBook and derive snapshot
+                snapshot = self._process_market_event(event, orderbooks, prices)
 
-            # 6 & 7. process fills
-            for fill in self._venue.pop_events():
-                total_fills += 1
-                self._portfolio.apply_fill(fill)
-                self._recorder.on_fill(fill, self._portfolio)
-                for intent in self._strategy.on_execution(fill, self._portfolio):
+                # 5. match pending orders against updated book
+                self._venue.on_market_event(event, snapshot)
+
+                # 6 & 7. process fills
+                for fill in self._venue.pop_events():
+                    total_fills += 1
+                    self._portfolio.apply_fill(fill)
+                    self._recorder.on_fill(fill, self._portfolio)
+                    for intent in self._strategy.on_execution(fill, self._portfolio):
+                        self._submit_intent(intent)
+
+                # 8 & 9. generate new signals → submit orders
+                for intent in self._strategy.on_event(event, snapshot, self._portfolio):
                     self._submit_intent(intent)
 
-            # 8 & 9. generate new signals → submit orders
-            for intent in self._strategy.on_event(event, snapshot, self._portfolio):
-                self._submit_intent(intent)
+                # 10. periodic recorder snapshot
+                self._recorder.on_event(event.ts, event_count, self._portfolio, prices)
 
-            # 10. periodic recorder snapshot
-            self._recorder.on_event(event.ts, event_count, self._portfolio, prices)
+                if event_count % 100_000 == 0:
+                    equity = self._portfolio.total_equity(prices)
+                    logger.info(
+                        "backtest progress: events=%d ts=%d equity=%s fills=%d",
+                        event_count,
+                        event.ts,
+                        equity,
+                        total_fills,
+                    )
 
-            if event_count % 100_000 == 0:
-                equity = self._portfolio.total_equity(prices)
-                logger.info(
-                    "backtest progress: events=%d ts=%d equity=%s fills=%d",
-                    event_count,
-                    event.ts,
-                    equity,
-                    total_fills,
-                )
+        except Exception as exc:
+            self._reporter.report(ProgressEvent(
+                phase="error",
+                progress_pct=0.0,
+                current_symbol=None,
+                planned_symbols=planned,
+                current_ts=None,
+                start_ts=config.start_ts,
+                end_ts=config.end_ts,
+                event_count=event_count,
+                total_fills=total_fills,
+                error=str(exc),
+            ))
+            raise
 
         # --- end of stream ---
+        self._reporter.report(ProgressEvent(
+            phase="finalizing",
+            progress_pct=99.0,
+            current_symbol=None,
+            planned_symbols=planned,
+            current_ts=None,
+            start_ts=config.start_ts,
+            end_ts=config.end_ts,
+            event_count=event_count,
+            total_fills=total_fills,
+        ))
+
         final_equity = self._portfolio.total_equity(prices)
         realized_pnl = _total_realized_pnl(self._portfolio)
 
@@ -145,6 +202,18 @@ class BacktestEngine:
             final_equity=final_equity,
             realized_pnl=realized_pnl,
         )
+
+        self._reporter.report(ProgressEvent(
+            phase="done",
+            progress_pct=100.0,
+            current_symbol=None,
+            planned_symbols=planned,
+            current_ts=None,
+            start_ts=config.start_ts,
+            end_ts=config.end_ts,
+            event_count=event_count,
+            total_fills=total_fills,
+        ))
 
         logger.info(
             "backtest complete: events=%d fills=%d equity=%s pnl=%s",
@@ -199,6 +268,14 @@ class BacktestEngine:
 
 # ------------------------------------------------------------------
 # module-level helpers (no external state)
+
+
+def _compute_pct(current_ts: int, start_ts: int, end_ts: int) -> float:
+    span = end_ts - start_ts
+    if span <= 0:
+        return 100.0
+    pct = (current_ts - start_ts) / span * 100.0
+    return max(0.0, min(100.0, pct))
 
 
 def _mid_from_snapshot(snapshot: OrderBookSnapshot) -> Decimal | None:

@@ -7,6 +7,11 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
+from zoneinfo import ZoneInfo
+
+from mctrader.ports.progress import ProgressReporter
+
+_SUPPORTED_TZ = {"UTC", "Asia/Seoul"}
 
 
 @dataclass
@@ -17,22 +22,26 @@ class BacktestRunParams:
     strategy: str  # "module.path:ClassName"
     queue_model: str  # "naive" | "proportional"
     initial_cash: str | None  # None이면 config 기본값 사용
+    tz: str = "UTC"  # 사용자가 선택한 타임존 (기본값 UTC, backward-compatible)
 
 
-def _datetime_to_epoch_ms(dt_str: str) -> int:
+def _datetime_to_epoch_ms(dt_str: str, tz_name: str = "UTC") -> int:
     """
     날짜/시각 문자열을 UTC epoch ms로 변환.
 
     지원 포맷:
-      YYYY-MM-DD               → 해당 날짜 UTC 자정
+      YYYY-MM-DD               → 해당 날짜 지정 타임존 자정
       YYYY-MM-DDTHH:MM         → HTML datetime-local 입력값
       YYYY-MM-DDTHH:MM:SS
       YYYY-MM-DD HH:MM:SS
     """
+    if tz_name not in _SUPPORTED_TZ:
+        tz_name = "UTC"
+    tz = ZoneInfo(tz_name)
     dt_str = dt_str.strip().replace("T", " ")
     for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
         try:
-            dt = datetime.strptime(dt_str, fmt).replace(tzinfo=timezone.utc)
+            dt = datetime.strptime(dt_str, fmt).replace(tzinfo=tz)
             return int(dt.timestamp() * 1000)
         except ValueError:
             continue
@@ -61,7 +70,10 @@ def _import_strategy_class(spec: str) -> type:
     return cls
 
 
-def run_backtest(params: BacktestRunParams) -> str:
+def run_backtest(
+    params: BacktestRunParams,
+    progress_reporter: ProgressReporter | None = None,
+) -> str:
     """백테스트를 동기 실행하고 run_id(result_path basename)를 반환."""
     from mctrader.adapters.clocks.sim_clock import SimClock
     from mctrader.adapters.exchanges.bithumb.gateway import BithumbGateway
@@ -78,8 +90,8 @@ def run_backtest(params: BacktestRunParams) -> str:
 
     config = load_backtest_config()
 
-    start_ts = _datetime_to_epoch_ms(params.start_date)
-    end_ts = _datetime_to_epoch_ms(params.end_date)
+    start_ts = _datetime_to_epoch_ms(params.start_date, params.tz)
+    end_ts = _datetime_to_epoch_ms(params.end_date, params.tz)
 
     gateway = BithumbGateway()
     all_symbols: list[Symbol] = gateway.symbols()
@@ -116,6 +128,7 @@ def run_backtest(params: BacktestRunParams) -> str:
         clock=clock,
         portfolio=portfolio,
         recorder=recorder,
+        progress_reporter=progress_reporter,
     )
     engine_config = EngineConfig(
         symbols=symbols,

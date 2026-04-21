@@ -5,6 +5,7 @@ description: 요건 해석, 작업 범위 조율, 팀 합의 관리
 permissions:
   deny:
     - Write
+    - Edit
 ---
 
 요건을 해석하고 작업 범위를 조율하며 팀 합의를 관리한다.

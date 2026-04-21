@@ -15,6 +15,7 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 from mctrader.dashboard.backtest_runner import BacktestRunParams, run_backtest
+from mctrader.dashboard.progress_reporter import JobStoreProgressReporter
 from mctrader.dashboard.collector_status import build_collector_status, discover_symbols
 from mctrader.dashboard.data_query import MAX_ROWS, QueryResult, query
 from mctrader.dashboard.metrics import (
@@ -107,8 +108,9 @@ def _save_config_file(name: str, data: dict[str, Any]) -> None:
 
 def _run_job(job_id: str, params: BacktestRunParams, job_store: dict[str, Any]) -> None:
     job_store[job_id]["status"] = "running"
+    reporter = JobStoreProgressReporter(job_store=job_store, job_id=job_id)
     try:
-        run_id = run_backtest(params)
+        run_id = run_backtest(params, progress_reporter=reporter)
         job_store[job_id]["status"] = "done"
         job_store[job_id]["result_run_id"] = run_id
     except Exception as exc:
@@ -273,9 +275,11 @@ def create_app(result_dir: str) -> FastAPI:
     @app.get("/backtest", response_class=HTMLResponse)
     async def backtest_get(request: Request) -> HTMLResponse:
         tz = _get_tz(request)
+        tz_abbrev = _TZ_ABBREV.get(tz, tz)
         return templates.TemplateResponse(request, "backtest.html", {
             "queue_models": _QUEUE_MODELS,
             "tz": tz,
+            "tz_abbrev": tz_abbrev,
         })
 
     # -----------------------------------------------------------------------
@@ -284,6 +288,7 @@ def create_app(result_dir: str) -> FastAPI:
 
     @app.post("/api/backtest/run")
     async def api_backtest_run(
+        request: Request,
         background_tasks: BackgroundTasks,
         symbols: str = Form("all"),
         start_date: str = Form(...),
@@ -294,6 +299,7 @@ def create_app(result_dir: str) -> FastAPI:
         queue_model: str = Form("naive"),
         initial_cash: str = Form(""),
     ) -> JSONResponse:
+        tz = _get_tz(request)
         job_id = uuid.uuid4().hex
         params = BacktestRunParams(
             start_date=start_date,
@@ -302,8 +308,28 @@ def create_app(result_dir: str) -> FastAPI:
             strategy=strategy,
             queue_model=queue_model,
             initial_cash=initial_cash or None,
+            tz=tz,
         )
-        _job_store[job_id] = {"status": "pending", "result_run_id": None, "error": None}
+        _planned = [] if params.symbols.strip().lower() == "all" else [
+            s.strip() for s in params.symbols.split(",") if s.strip()
+        ]
+        _job_store[job_id] = {
+            "status": "pending",
+            "result_run_id": None,
+            "error": None,
+            "progress": {
+                "phase": "queued",
+                "progress_pct": 0.0,
+                "current_symbol": None,
+                "planned_symbols": _planned,
+                "current_ts": None,
+                "start_ts": None,
+                "end_ts": None,
+                "event_count": 0,
+                "total_fills": 0,
+                "error": None,
+            },
+        }
         background_tasks.add_task(_run_job, job_id, params, _job_store)
         return JSONResponse({"job_id": job_id})
 
