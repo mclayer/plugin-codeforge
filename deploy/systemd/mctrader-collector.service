@@ -2,6 +2,8 @@
 Description=mctrader market data collector
 After=network-online.target
 Wants=network-online.target
+StartLimitBurst=5
+StartLimitIntervalSec=120
 
 [Service]
 Type=simple
@@ -14,11 +16,10 @@ RestartSec=10
 StandardOutput=journal
 StandardError=journal
 SyslogIdentifier=mctrader-collector
-
-# 환경변수
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=MCTRADER_CONFIG_DIR=/opt/mctrader/config
 EnvironmentFile=-/opt/mctrader/.env
-
-# 리소스 제한
 LimitNOFILE=65535
 
 [Install]

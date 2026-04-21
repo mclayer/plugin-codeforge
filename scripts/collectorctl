@@ -1,0 +1,170 @@
+#!/bin/bash
+set -euo pipefail
+
+OS="$(uname -s)"
+VERB="${1:-help}"
+
+LINUX_SERVICE="mctrader-collector"
+MACOS_LABEL="com.mctrader.collector"
+MACOS_PLIST_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)/deploy/launchd/${MACOS_LABEL}.plist"
+MACOS_PLIST_DST="${HOME}/Library/LaunchAgents/${MACOS_LABEL}.plist"
+MACOS_LOG_DIR="${HOME}/Library/Logs/mctrader"
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+_require_linux() {
+  if [[ "$OS" != "Linux" ]]; then
+    echo "ERROR: '$VERB' 명령은 Linux(systemd)에서만 지원됩니다." >&2
+    exit 1
+  fi
+}
+
+_require_macos() {
+  if [[ "$OS" != "Darwin" ]]; then
+    echo "ERROR: '$VERB' 명령은 macOS(launchd)에서만 지원됩니다." >&2
+    exit 1
+  fi
+}
+
+cmd_start() {
+  case "$OS" in
+    Linux)
+      sudo systemctl start "$LINUX_SERVICE"
+      echo "started: $LINUX_SERVICE"
+      ;;
+    Darwin)
+      launchctl bootstrap "gui/$(id -u)" "$MACOS_PLIST_DST"
+      echo "started: $MACOS_LABEL"
+      ;;
+    *)
+      echo "ERROR: 지원하지 않는 OS: $OS" >&2; exit 1 ;;
+  esac
+}
+
+cmd_stop() {
+  case "$OS" in
+    Linux)
+      sudo systemctl stop "$LINUX_SERVICE"
+      echo "stopped: $LINUX_SERVICE"
+      ;;
+    Darwin)
+      launchctl bootout "gui/$(id -u)" "$MACOS_PLIST_DST" 2>/dev/null || true
+      echo "stopped: $MACOS_LABEL"
+      ;;
+    *)
+      echo "ERROR: 지원하지 않는 OS: $OS" >&2; exit 1 ;;
+  esac
+}
+
+cmd_restart() {
+  cmd_stop
+  cmd_start
+}
+
+cmd_status() {
+  case "$OS" in
+    Linux)
+      sudo systemctl status "$LINUX_SERVICE" --no-pager
+      ;;
+    Darwin)
+      launchctl print "gui/$(id -u)/$MACOS_LABEL" 2>/dev/null \
+        || echo "서비스가 실행 중이 아닙니다."
+      ;;
+    *)
+      echo "ERROR: 지원하지 않는 OS: $OS" >&2; exit 1 ;;
+  esac
+}
+
+cmd_logs() {
+  local lines="${2:-100}"
+  case "$OS" in
+    Linux)
+      journalctl -u "$LINUX_SERVICE" -n "$lines" -f
+      ;;
+    Darwin)
+      mkdir -p "$MACOS_LOG_DIR"
+      tail -n "$lines" -f \
+        "${MACOS_LOG_DIR}/collector.log" \
+        "${MACOS_LOG_DIR}/collector.err.log" 2>/dev/null \
+        || echo "로그 파일이 없습니다: $MACOS_LOG_DIR"
+      ;;
+    *)
+      echo "ERROR: 지원하지 않는 OS: $OS" >&2; exit 1 ;;
+  esac
+}
+
+cmd_dev() {
+  echo "==> 개발 모드로 collector 실행 (Ctrl+C로 종료)"
+  cd "$PROJECT_ROOT"
+  PYTHONUNBUFFERED=1 \
+  MCTRADER_CONFIG_DIR="${PROJECT_ROOT}/config" \
+    "${PROJECT_ROOT}/venv/bin/mctrader-collector"
+}
+
+cmd_install() {
+  case "$OS" in
+    Linux)
+      bash "${PROJECT_ROOT}/deploy/systemd/install.sh"
+      ;;
+    Darwin)
+      bash "${PROJECT_ROOT}/deploy/launchd/install.sh"
+      ;;
+    *)
+      echo "ERROR: 지원하지 않는 OS: $OS" >&2; exit 1 ;;
+  esac
+}
+
+cmd_uninstall() {
+  case "$OS" in
+    Linux)
+      sudo systemctl stop "$LINUX_SERVICE" 2>/dev/null || true
+      sudo systemctl disable "$LINUX_SERVICE" 2>/dev/null || true
+      sudo rm -f "/etc/systemd/system/${LINUX_SERVICE}.service"
+      sudo systemctl daemon-reload
+      echo "uninstalled: $LINUX_SERVICE"
+      ;;
+    Darwin)
+      launchctl bootout "gui/$(id -u)" "$MACOS_PLIST_DST" 2>/dev/null || true
+      rm -f "$MACOS_PLIST_DST"
+      echo "uninstalled: $MACOS_LABEL"
+      ;;
+    *)
+      echo "ERROR: 지원하지 않는 OS: $OS" >&2; exit 1 ;;
+  esac
+}
+
+cmd_help() {
+  cat <<EOF
+사용법: collectorctl <verb> [options]
+
+동사:
+  start       서비스 시작
+  stop        서비스 중지
+  restart     서비스 재시작
+  status      서비스 상태 확인
+  logs [N]    로그 스트림 (기본 100줄, Linux=journal, macOS=파일)
+  dev         개발 모드 직접 실행 (포그라운드)
+  install     OS 맞는 서비스 설치 (systemd/launchd)
+  uninstall   서비스 제거
+  help        이 도움말
+
+OS 분기:
+  Linux  → systemctl + journald
+  macOS  → launchctl + ~/Library/Logs/mctrader/
+EOF
+}
+
+case "$VERB" in
+  start)     cmd_start ;;
+  stop)      cmd_stop ;;
+  restart)   cmd_restart ;;
+  status)    cmd_status ;;
+  logs)      cmd_logs "$@" ;;
+  dev)       cmd_dev ;;
+  install)   cmd_install ;;
+  uninstall) cmd_uninstall ;;
+  help|--help|-h) cmd_help ;;
+  *)
+    echo "ERROR: 알 수 없는 명령: $VERB" >&2
+    cmd_help >&2
+    exit 1 ;;
+esac

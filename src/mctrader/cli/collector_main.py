@@ -13,6 +13,7 @@ def main() -> None:
 
     usage: mctrader-collector [--config PATH]
     """
+    sys.stdout.reconfigure(line_buffering=True)
     import argparse
 
     parser = argparse.ArgumentParser(description="mctrader market data collector")

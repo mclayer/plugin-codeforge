@@ -8,7 +8,7 @@ LOG_DIR="/var/log/mctrader"
 SERVICE_USER="mctrader"
 SERVICE_GROUP="mctrader"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
 # ── root 권한 확인 ─────────────────────────────────────────────────────────────
 if [[ "${EUID:-$(id -u)}" -ne 0 ]]; then
