@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Backtest — mctrader{% endblock %}
+{% block content %}
+<h4 class="mb-4">Run Backtest</h4>
+
+<div class="row">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-body">
+        <form id="backtestForm">
+          <div class="mb-3">
+            <label class="form-label">Symbols</label>
+            <input type="text" class="form-control" name="symbols" value="all"
+                   placeholder="all  or  BTC_KRW,ETH_KRW">
+            <div class="form-text text-secondary">Use "all" or comma-separated symbol names.</div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Start Date</label>
+              <input type="date" class="form-control" name="start_date" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">End Date</label>
+              <input type="date" class="form-control" name="end_date" required>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Strategy</label>
+            <input type="text" class="form-control" name="strategy"
+                   value="mctrader.strategy.examples.order_imbalance:OrderImbalanceStrategy">
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Queue Model</label>
+              <select class="form-select" name="queue_model">
+                {% for qm in queue_models %}
+                <option value="{{ qm }}">{{ qm }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Initial Cash</label>
+              <input type="text" class="form-control" name="initial_cash" placeholder="(use config default)">
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" id="submitBtn">Run Backtest</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-6 mt-4 mt-lg-0">
+    <div id="statusArea" class="d-none">
+      <div class="card">
+        <div class="card-header">Job Status</div>
+        <div class="card-body">
+          <div id="spinnerArea" class="d-flex align-items-center gap-3 mb-3">
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+              <span class="visually-hidden">Running...</span>
+            </div>
+            <span id="statusText" class="text-secondary">pending</span>
+          </div>
+          <div id="errorArea" class="d-none">
+            <div class="alert alert-danger" id="errorMsg"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const form = document.getElementById('backtestForm');
+const statusArea = document.getElementById('statusArea');
+const spinnerArea = document.getElementById('spinnerArea');
+const statusText = document.getElementById('statusText');
+const errorArea = document.getElementById('errorArea');
+const errorMsg = document.getElementById('errorMsg');
+const submitBtn = document.getElementById('submitBtn');
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  submitBtn.disabled = true;
+  statusArea.classList.remove('d-none');
+  errorArea.classList.add('d-none');
+  spinnerArea.classList.remove('d-none');
+  statusText.textContent = 'pending';
+
+  let job_id;
+  try {
+    const resp = await fetch('/api/backtest/run', {
+      method: 'POST',
+      body: new FormData(form),
+    });
+    const data = await resp.json();
+    job_id = data.job_id;
+  } catch (err) {
+    spinnerArea.classList.add('d-none');
+    errorArea.classList.remove('d-none');
+    errorMsg.textContent = 'Failed to submit job: ' + err;
+    submitBtn.disabled = false;
+    return;
+  }
+
+  const poll = setInterval(async () => {
+    try {
+      const s = await fetch(`/api/backtest/status/${job_id}`).then(r => r.json());
+      statusText.textContent = s.status;
+
+      if (s.status === 'done') {
+        clearInterval(poll);
+        window.location = `/run/${s.result_run_id}`;
+      }
+
+      if (s.status === 'error') {
+        clearInterval(poll);
+        spinnerArea.classList.add('d-none');
+        errorArea.classList.remove('d-none');
+        errorMsg.textContent = s.error || 'Unknown error';
+        submitBtn.disabled = false;
+      }
+    } catch (err) {
+      clearInterval(poll);
+      spinnerArea.classList.add('d-none');
+      errorArea.classList.remove('d-none');
+      errorMsg.textContent = 'Polling error: ' + err;
+      submitBtn.disabled = false;
+    }
+  }, 1000);
+});
+</script>
+{% endblock %}

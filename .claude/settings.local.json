@@ -37,7 +37,18 @@
       "Bash(.venv/bin/pytest tests/unit/test_duckdb_source.py -v)",
       "Bash(.venv/bin/pytest tests/ -q)",
       "mcp__GitLab__create_issue",
-      "mcp__GitLab__create_issue_note"
+      "mcp__GitLab__create_issue_note",
+      "Bash(.venv/bin/python -m mctrader.cli.dashboard_main --result-dir ./results)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:8080/)",
+      "Bash(.venv/bin/python -c \"from mctrader.dashboard.server import create_app; print\\('import ok'\\)\")",
+      "Bash(.venv/bin/python -c ' *)",
+      "Bash(echo \"PID: $!\")",
+      "Read(//tmp/**)",
+      "Bash(jobs)",
+      "Bash(kill %2)",
+      "Bash(/Users/mccho/workspace/mctrader/.venv/bin/python -c \"from mctrader.cli.dashboard_main import main; print\\('ok'\\)\")",
+      "Bash(pkill -f \"dashboard_main\")",
+      "Bash(.venv/bin/pytest tests/unit/test_backtest_runner.py tests/unit/test_dashboard_server.py -v)"
     ]
   }
 }
