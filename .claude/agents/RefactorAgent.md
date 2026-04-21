@@ -10,4 +10,4 @@ permissions:
     - Bash(.venv/bin/python *)
 ---
 
-구현된 코드를 리팩토링한다. 기능 추가마다 CodeHeadAgent가 강제 실행하는 Refactor 패스를 담당한다.
+구현된 코드를 리팩토링한다. 기능 추가마다 CodePLAgent가 강제 실행하는 Refactor 패스를 담당한다.

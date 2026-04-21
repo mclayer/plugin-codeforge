@@ -36,9 +36,10 @@ User
 - ADR 이슈 작성 및 업데이트 담당
 - README, 설계 문서 등 작업 중 발생하는 모든 문서화 수행
 - PMAgent의 결정 사항을 문서로 기록하고 최신 상태 유지
+- PMAgent, ArchitectAgent, CodePLAgent, EngineerPLAgent, DomainPLAgent는 Write 권한이 없으므로 문서화가 필요하면 DocsAgent를 스폰해 위임한다
 
 ### EngineerPLAgent 원칙
-- Docker 사용 안 함 — Linux 단일 서버 + systemd만 사용
+- Docker 사용 안 함 — Linux 단일 서버 + systemd만 사용 (Write 권한 없음, 문서화는 DocsAgent 위임)
 - 기능 추가 시마다 "인프라 레벨 해결 가능 여부" 먼저 검토
 - 초기: 단일 Linux 서버 (systemd, 프로세스 관리)
 - 목표: Kubernetes 마이그레이션
