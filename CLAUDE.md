@@ -18,8 +18,9 @@ User
       ├── DocsAgent            # ADR, README 등 작업 전반의 문서화 담당
       ├── DomainPLAgent        # 암호화폐 트레이딩 도메인 해석 및 스펙 변환
       └── ArchitectAgent       # 설계/패턴 결정, 기술 최종 의사결정
-           ├── CodePLAgent      # 구현 가능성 및 코드 품질 관점
-           │    ├── CoderAgent
+           ├── DeveloperPLAgent  # 구현 가능성, 레이어 계약, 코드 품질 관리
+           │    ├── FrontendDeveloperAgent
+           │    ├── BackendDeveloperAgent
            │    ├── RefactorAgent
            │    └── QAAgent
            └── EngineerPLAgent     # 인프라 솔루션 검토 (Linux → Kubernetes)
@@ -37,8 +38,9 @@ User
  ├── PMAgent 스폰        → 요건 해석, 작업 분해, 스폰 계획 보고
  ├── DomainPLAgent 스폰  → 도메인 스펙 결정
  ├── ArchitectAgent 스폰 → 설계 결정
- ├── CodePLAgent 스폰    → 구현 품질 판단
- ├── CoderAgent 스폰     → 실제 구현
+ ├── DeveloperPLAgent 스폰 → 구현 품질 판단
+ ├── FrontendDeveloperAgent 스폰 → UI/템플릿 구현
+ ├── BackendDeveloperAgent 스폰  → 서버/도메인 구현
  ├── RefactorAgent 스폰  → 리팩토링
  ├── QAAgent 스폰        → 검증
  └── DocsAgent 스폰      → 문서화
@@ -48,7 +50,7 @@ PMAgent는 "스폰하는 관리자"가 아니라 **요건 해석 + 작업 분해
 
 ### PMAgent 스폰 의무 규칙 (관문 역할)
 
-**오케스트레이터는 구현 에이전트(CoderAgent, RefactorAgent 등)를 스폰하기 전에 반드시 PMAgent를 먼저 스폰해야 한다.**
+**오케스트레이터는 구현 에이전트(FrontendDeveloperAgent, BackendDeveloperAgent, RefactorAgent 등)를 스폰하기 전에 반드시 PMAgent를 먼저 스폰해야 한다.**
 
 PMAgent의 출력물은 다음을 포함한다:
 1. 태스크 유형 분류 (버그 수정 / 기능 추가 / 리팩토링 / 인프라 등)
@@ -61,13 +63,13 @@ PMAgent의 출력물은 다음을 포함한다:
 ### 합의 규칙
 - 도메인 해석: DomainPLAgent → 최상위 오케스트레이터 → ArchitectAgent에 전달
 - 설계 결정: ArchitectAgent 주도, 결과를 최상위 오케스트레이터에 보고
-- 구현 결정: 각 PL(CodePLAgent, EngineerPLAgent) 자율 판단, 상위 에스컬레이션 없음
+- 구현 결정: 각 PL(DeveloperPLAgent, EngineerPLAgent) 자율 판단, 상위 에스컬레이션 없음
 
 ### DocsAgent 원칙
 - ADR 이슈 작성 및 업데이트 담당
 - README, 설계 문서 등 작업 중 발생하는 모든 문서화 수행
 - PMAgent의 결정 사항을 문서로 기록하고 최신 상태 유지
-- PMAgent, ArchitectAgent, CodePLAgent, EngineerPLAgent, DomainPLAgent는 Write 권한이 없으므로 문서화가 필요하면 DocsAgent를 스폰해 위임한다
+- PMAgent, ArchitectAgent, DeveloperPLAgent, EngineerPLAgent, DomainPLAgent는 Write 권한이 없으므로 문서화가 필요하면 DocsAgent를 스폰해 위임한다
 
 ### EngineerPLAgent 원칙
 - Docker 사용 안 함 — Linux 단일 서버 + systemd만 사용 (Write 권한 없음, 문서화는 DocsAgent 위임)
@@ -85,18 +87,18 @@ PMAgent의 출력물은 다음을 포함한다:
 - EngineerPLAgent의 인프라 결정을 서버 레벨에서 구현
 - 서버 모니터링, 로그 관리, 성능 튜닝 담당
 
-### CodePLAgent 원칙
+### DeveloperPLAgent 원칙
 - 기능 추가마다 Refactor 패스 강제 실행
 - 패턴 일관성은 QAAgent가 최종 검증
 - **테스트 계획 적극 수행**: 구현 계획서 작성 시 신규/변경 테스트 목록을 함께 산출한다
-- **CoderAgent + QAAgent 병렬 가능성 탐색 필수**: CoderAgent가 구현을 수행하는 동안 QAAgent가 테스트를 병렬 작성할 수 있는지 검토한다. 아래 조건을 충족하면 병렬 스폰을 권장한다:
-  - 구현 인터페이스(시그니처, 포트, 스키마)가 CoderAgent 착수 전에 확정된 경우
+- **BackendDeveloperAgent + QAAgent 병렬 가능성 탐색 필수**: BackendDeveloperAgent가 구현을 수행하는 동안 QAAgent가 테스트를 병렬 작성할 수 있는지 검토한다. 아래 조건을 충족하면 병렬 스폰을 권장한다:
+  - 구현 인터페이스(시그니처, 포트, 스키마)가 BackendDeveloperAgent 착수 전에 확정된 경우
   - 테스트 대상이 신규 파일이거나, 기존 테스트와 파일 충돌이 없는 경우
-  - 병렬 수행이 불가한 경우(파일 충돌 등) 이유를 명시하고 CoderAgent 완료 후 QAAgent 스폰
+  - 병렬 수행이 불가한 경우(파일 충돌 등) 이유를 명시하고 BackendDeveloperAgent 완료 후 QAAgent 스폰
 
 ### QAAgent 원칙
-- CoderAgent 병렬 수행 시: 확정된 인터페이스·스키마 기반으로 **테스트 코드 선작성**
-- CoderAgent 순차 수행 시: 구현 결과 검증 후 **신규/변경 코드에 대한 UnitTest 작성**
+- Developer 에이전트 병렬 수행 시: 확정된 인터페이스·스키마 기반으로 **테스트 코드 선작성**
+- Developer 에이전트 순차 수행 시: 구현 결과 검증 후 **신규/변경 코드에 대한 UnitTest 작성**
 - **단발성 검증 금지**: pytest 실행으로 끝내지 않고, 커버리지 gap을 발견하면 테스트를 직접 생성·수정한다
 - **"테스트 없어서 검증 불가" 불허**: 테스트가 없으면 만들어서 검증한다
 - 신규 함수·클래스·포트는 무조건 UnitTest 작성, 변경 로직은 엣지 케이스 포함 테스트 추가
@@ -159,6 +161,12 @@ Accepted | Deprecated | Superseded by #NNN
 - [#11 ADR-011](https://gitlab.com/mctrader1/mctrader/-/work_items/11) — 서버사이드 타임존 변환 (zoneinfo + cookie 기반 선택)
 - [#12 ADR-012](https://gitlab.com/mctrader1/mctrader/-/work_items/12) — Collector 프로세스 수명주기 추상화 (collectorctl + systemd/launchd)
 - [#13 ADR-013](https://gitlab.com/mctrader1/mctrader/-/work_items/13) — 백테스트 진행률 추적 패턴 (ProgressReporter 포트 + 하이브리드 진행률)
+- [#15 ADR-014](https://gitlab.com/mctrader1/mctrader/-/work_items/15) — 에이전트 팀 구조 재편 (Developer 계열 분리)
+
+## Domain Knowledge / 도메인 지식
+
+### 시각화 스펙
+- [OrderBook/Trade 시각화 스펙](docs/guides/orderbook-trade-visualization-spec.md) — L2 호가창/체결 도메인 정의, 뷰 모델 스키마, 스캘핑 시각화 3종 스펙
 
 ## Trading Domain
 
