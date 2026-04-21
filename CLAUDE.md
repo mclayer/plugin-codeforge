@@ -27,9 +27,28 @@ User
                 └── ServerEngineerAgent  # Linux 서버 및 서버 엔지니어링 수행
 ```
 
+### 오케스트레이션 제약 (플랫폼 한계)
+
+**하위 에이전트는 Agent 툴을 사용할 수 없다** — 재귀 스폰 불가.
+따라서 실제 팀 실행 구조는 다음과 같다:
+
+```
+최상위 Claude (오케스트레이터)
+ ├── PMAgent 스폰        → 요건 해석, 작업 분해, 스폰 계획 보고
+ ├── DomainPLAgent 스폰  → 도메인 스펙 결정
+ ├── ArchitectAgent 스폰 → 설계 결정
+ ├── CodePLAgent 스폰    → 구현 품질 판단
+ ├── CoderAgent 스폰     → 실제 구현
+ ├── RefactorAgent 스폰  → 리팩토링
+ ├── QAAgent 스폰        → 검증
+ └── DocsAgent 스폰      → 문서화
+```
+
+PMAgent는 "스폰하는 관리자"가 아니라 **요건 해석 + 작업 분해 컨설턴트**다.
+
 ### 합의 규칙
-- 도메인 해석: DomainPLAgent → PMAgent 전달 → PMAgent가 ArchitectAgent에 종합 명령
-- 설계 결정: ArchitectAgent 주도, 결과만 PMAgent에 보고
+- 도메인 해석: DomainPLAgent → 최상위 오케스트레이터 → ArchitectAgent에 전달
+- 설계 결정: ArchitectAgent 주도, 결과를 최상위 오케스트레이터에 보고
 - 구현 결정: 각 PL(CodePLAgent, EngineerPLAgent) 자율 판단, 상위 에스컬레이션 없음
 
 ### DocsAgent 원칙
