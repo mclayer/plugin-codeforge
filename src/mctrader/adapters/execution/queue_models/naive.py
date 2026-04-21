@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from mctrader.domain.events import TradeEvent
-from mctrader.domain.order import Order, OrderSide
-from mctrader.domain.orderbook import OrderBookSnapshot
+from mctrader.domain.events import OrderBookDiffEvent, TradeEvent
+from mctrader.domain.order import Order
+from mctrader.domain.orderbook import Level, OrderBookSnapshot
 from mctrader.ports.queue_model import QueuePositionModel, QueueState
 
 
@@ -36,6 +36,11 @@ class NaiveQueueModel(QueuePositionModel):
                 current = self._queue[oid]
                 self._queue[oid] = max(Decimal(0), current - trade.qty)
 
+    def on_diff(self, event: OrderBookDiffEvent) -> None:
+        # Naive model ignores diff-driven depth changes; queue drains only via
+        # trades.  Implemented as no-op to satisfy the port contract.
+        pass
+
     def estimate(
         self,
         order: Order,
@@ -50,7 +55,7 @@ class NaiveQueueModel(QueuePositionModel):
         self._meta.pop(order_id, None)
 
     @staticmethod
-    def _get_qty_at_price(levels: list, price: Decimal) -> Decimal:
+    def _get_qty_at_price(levels: tuple[Level, ...], price: Decimal) -> Decimal:
         for level in levels:
             if level.price == price:
                 return level.qty

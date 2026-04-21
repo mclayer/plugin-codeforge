@@ -1,5 +1,5 @@
 ---
-name: InfraHeadAgent
+name: EngineerPLAgent
 model: claude-sonnet-4-6
 description: 인프라 솔루션 검토 (Linux → Kubernetes)
 ---

@@ -3,13 +3,11 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-import pytest
-
 from mctrader.adapters.execution.queue_models.naive import NaiveQueueModel
 from mctrader.adapters.execution.simulated import SimulatedExecutionVenue
 from mctrader.domain.events import OrderBookDiffEvent
-from mctrader.domain.order import Fill, OrderIntent, OrderSide, OrderStatus, OrderType
-from mctrader.domain.orderbook import Level, OrderBook, OrderBookSnapshot
+from mctrader.domain.order import Fill, OrderIntent, OrderSide, OrderType
+from mctrader.domain.orderbook import Level, OrderBookSnapshot
 from mctrader.domain.symbol import FeeSchedule, Market, Symbol
 from mctrader.ports.clock import Clock
 
@@ -245,6 +243,50 @@ class TestCancel:
         assert cancel_ack.success is False
 
 
+class TestMarketOrderEmptyOrderBook:
+    """MARKET 주문 시 orderbook이 비어 있으면 IndexError 없이 None을 반환해야 한다."""
+
+    def test_market_buy_empty_asks_returns_no_fill(self) -> None:
+        venue = _venue()
+        # asks가 완전히 비어 있는 스냅샷
+        snap = _snapshot(bids=[("99", "1")], asks=[])
+        intent = _market_intent(OrderSide.BUY, qty="1")
+        venue.submit(intent)
+
+        event = _diff_event(bids=[("99", "1")], asks=[])
+        venue.on_market_event(event, snap)
+
+        fills = venue.pop_events()
+        assert fills == []
+        assert len(venue.pending_orders()) == 1
+
+    def test_market_sell_empty_bids_returns_no_fill(self) -> None:
+        venue = _venue()
+        # bids가 완전히 비어 있는 스냅샷
+        snap = _snapshot(bids=[], asks=[("101", "1")])
+        intent = _market_intent(OrderSide.SELL, qty="1")
+        venue.submit(intent)
+
+        event = _diff_event(bids=[], asks=[("101", "1")])
+        venue.on_market_event(event, snap)
+
+        fills = venue.pop_events()
+        assert fills == []
+        assert len(venue.pending_orders()) == 1
+
+    def test_market_buy_empty_orderbook_does_not_raise(self) -> None:
+        venue = _venue()
+        snap = _snapshot(bids=[], asks=[])
+        intent = _market_intent(OrderSide.BUY, qty="1")
+        venue.submit(intent)
+
+        event = _diff_event(bids=[], asks=[])
+        # IndexError가 발생하지 않아야 한다
+        venue.on_market_event(event, snap)
+        fills = venue.pop_events()
+        assert fills == []
+
+
 class TestNaiveQueueModel:
     def test_no_fill_when_qty_ahead_positive(self) -> None:
         """
@@ -262,7 +304,7 @@ class TestNaiveQueueModel:
         # First on_market_event establishes the snapshot so submit can register.
         venue.on_market_event(event, snap)
 
-        ack = venue.submit(_limit_intent(OrderSide.BUY, price="100"))
+        venue.submit(_limit_intent(OrderSide.BUY, price="100"))
 
         # Second on_market_event with the same snapshot: ask is still 101 > 100,
         # and qty_ahead = 10 > 0, so no fill should occur.

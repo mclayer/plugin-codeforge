@@ -14,23 +14,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 User
- └── LeaderAgent              # 요건 해석, 작업 범위 조율, 팀 합의 관리
-      ├── DomainExpertAgent    # 암호화폐 트레이딩 도메인 해석 및 스펙 변환
+ └── PMAgent                  # 요건 해석, 작업 범위 조율, 팀 합의 관리
+      ├── DocsAgent            # ADR, README 등 작업 전반의 문서화 담당
+      ├── DomainPLAgent        # 암호화폐 트레이딩 도메인 해석 및 스펙 변환
       └── ArchitectAgent       # 설계/패턴 결정, 기술 최종 의사결정
-           ├── CodeHeadAgent    # 구현 가능성 및 코드 품질 관점
-           │    ├── DeveloperAgent
+           ├── CodePLAgent      # 구현 가능성 및 코드 품질 관점
+           │    ├── CoderAgent
            │    ├── RefactorAgent
-           │    └── ReviewAgent
-           └── InfraHeadAgent   # 인프라 솔루션 검토 (Linux → Kubernetes)
-                └── DataEngineerAgent  # 데이터 파이프라인 설계 및 구현
+           │    └── QAAgent
+           └── EngineerPLAgent     # 인프라 솔루션 검토 (Linux → Kubernetes)
+                ├── DataEngineerAgent  # 데이터 파이프라인 설계 및 구현
+                └── ServerEngineerAgent  # Linux 서버 및 서버 엔지니어링 수행
 ```
 
 ### 합의 규칙
-- 설계 결정: ArchitectAgent 주도, CodeHead + InfraHead 검토
-- 일반 구현: CodeHeadAgent 단독 판단 후 하위 팀 위임
-- LeaderAgent가 작업 크기에 따라 합의 범위 결정
+- 도메인 해석: DomainPLAgent → PMAgent 전달 → PMAgent가 ArchitectAgent에 종합 명령
+- 설계 결정: ArchitectAgent 주도, 결과만 PMAgent에 보고
+- 구현 결정: 각 PL(CodePLAgent, EngineerPLAgent) 자율 판단, 상위 에스컬레이션 없음
 
-### InfraHeadAgent 원칙
+### DocsAgent 원칙
+- ADR 이슈 작성 및 업데이트 담당
+- README, 설계 문서 등 작업 중 발생하는 모든 문서화 수행
+- PMAgent의 결정 사항을 문서로 기록하고 최신 상태 유지
+
+### EngineerPLAgent 원칙
 - Docker 사용 안 함 — Linux 단일 서버 + systemd만 사용
 - 기능 추가 시마다 "인프라 레벨 해결 가능 여부" 먼저 검토
 - 초기: 단일 Linux 서버 (systemd, 프로세스 관리)
@@ -38,12 +45,17 @@ User
 
 ### DataEngineerAgent 원칙
 - WebSocket 수집, Parquet 저장, DuckDB 쿼리 등 데이터 파이프라인 전담
-- InfraHeadAgent의 인프라 결정을 데이터 계층에서 구현
+- EngineerPLAgent의 인프라 결정을 데이터 계층에서 구현
 - 스키마 버전 관리 및 파티션 전략 책임
 
-### CodeHeadAgent 원칙
+### ServerEngineerAgent 원칙
+- Linux 서버 설정, systemd 서비스 관리, 네트워크/보안 설정 수행
+- EngineerPLAgent의 인프라 결정을 서버 레벨에서 구현
+- 서버 모니터링, 로그 관리, 성능 튜닝 담당
+
+### CodePLAgent 원칙
 - 기능 추가마다 Refactor 패스 강제 실행
-- 패턴 일관성은 ReviewAgent가 최종 검증
+- 패턴 일관성은 QAAgent가 최종 검증
 
 ## ADR (Architecture Decision Records)
 
@@ -79,6 +91,12 @@ Accepted | Deprecated | Superseded by #NNN
 - ⚠️ 단점/주의사항
 - TO-DO: 후속 작업
 
+## 다이어그램
+결정에 따라 아래 중 적합한 형식으로 Mermaid 다이어그램 첨부:
+- 아키텍처/클래스 구조 → classDiagram
+- 데이터 흐름/이벤트 순서 → sequenceDiagram
+- 인프라/배포 구성 → graph LR 또는 graph TD
+
 ## 관련 파일
 코드 경로
 ```
@@ -92,6 +110,7 @@ Accepted | Deprecated | Superseded by #NNN
 - [#6 ADR-006](https://gitlab.com/mctrader1/mctrader/-/work_items/6) — Bithumb 우선 + 멀티 거래소 추상화
 - [#7 ADR-007](https://gitlab.com/mctrader1/mctrader/-/work_items/7) — 틱띠기 OrderBook Imbalance 전략
 - [#8 ADR-008](https://gitlab.com/mctrader1/mctrader/-/work_items/8) — Linux + systemd 인프라
+- [#9 ADR-009](https://gitlab.com/mctrader1/mctrader/-/work_items/9) — QueuePositionModel lifecycle 메서드 포트 공식화
 
 ## Trading Domain
 

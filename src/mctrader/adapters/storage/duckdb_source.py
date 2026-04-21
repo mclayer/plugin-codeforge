@@ -4,6 +4,7 @@ import glob as _glob
 import os
 from collections.abc import Iterator
 from decimal import Decimal
+from typing import Any
 
 import duckdb
 
@@ -81,12 +82,12 @@ class DuckDBSource(MarketDataSource):
 
         for ts, seq, symbol_name, market_str, price, qty, side in rows:
             yield TradeEvent(
-                symbol=_symbol_obj(symbol_name, market_str),
-                ts=ts,
-                seq=seq,
-                price=Decimal(price),
-                qty=Decimal(qty),
-                side=side,
+                symbol=_symbol_obj(str(symbol_name), str(market_str)),
+                ts=int(ts),
+                seq=int(seq),
+                price=Decimal(str(price)),
+                qty=Decimal(str(qty)),
+                side=str(side),
             )
 
     def _execute_query(
@@ -97,59 +98,73 @@ class DuckDBSource(MarketDataSource):
         end_ts: int,
         select_clause: str,
         order_clause: str,
-    ) -> list[tuple[object, ...]]:
-        """Execute DuckDB query for market data with time filtering."""
+        chunk_size: int = 5000,
+    ) -> Iterator[tuple[Any, ...]]:
+        """Execute DuckDB query for market data with time filtering.
+
+        Yields rows in chunks to avoid loading full result set into memory.
+        hive_partitioning=true enables partition pruning via symbol/date/hour
+        path components; WHERE symbol IN (...) is kept for additional filtering.
+        """
         symbol_names = [s.name for s in symbols]
         placeholders = ", ".join(f"'{n}'" for n in symbol_names)
 
         con = duckdb.connect()
         try:
-            return con.execute(
+            result = con.execute(
                 f"""
                 {select_clause}
-                FROM read_parquet('{pattern}', hive_partitioning=false)
+                FROM read_parquet('{pattern}', hive_partitioning=true)
                 WHERE symbol IN ({placeholders})
                   AND ts >= {start_ts}
                   AND ts <= {end_ts}
                 {order_clause}
                 """
-            ).fetchall()
+            )
+            while True:
+                chunk = result.fetchmany(chunk_size)
+                if not chunk:
+                    break
+                yield from chunk
         finally:
             con.close()
 
 
 def _reconstruct_orderbook_events(
-    rows: list[tuple[object, ...]],
+    rows: Iterator[tuple[Any, ...]],
 ) -> Iterator[OrderBookDiffEvent]:
     """
     같은 (ts, seq, symbol)의 여러 row를 하나의 OrderBookDiffEvent로 묶는다.
     rows는 (ts, seq, symbol, market, side, price, qty) 순서로 정렬되어 있어야 함.
     """
-    i = 0
-    while i < len(rows):
-        ts, seq, symbol_name, market_str, side, price, qty = rows[i]
-        group_key = (ts, seq, symbol_name)
+    current: tuple[Any, ...] | None = next(rows, None)
+    if current is None:
+        return
+
+    while current is not None:
+        ts_v, seq_v, symbol_name, market_str, _side, _price, _qty = current
+        group_key = (ts_v, seq_v, symbol_name)
 
         bids: list[tuple[Decimal, Decimal]] = []
         asks: list[tuple[Decimal, Decimal]] = []
 
         # consume all rows sharing the same (ts, seq, symbol)
-        while i < len(rows):
-            r_ts, r_seq, r_sym, r_mkt, r_side, r_price, r_qty = rows[i]
+        while current is not None:
+            r_ts, r_seq, r_sym, r_mkt, r_side, r_price, r_qty = current
             if (r_ts, r_seq, r_sym) != group_key:
                 break
-            entry = (Decimal(r_price), Decimal(r_qty))
+            entry = (Decimal(str(r_price)), Decimal(str(r_qty)))
             if r_side == "bid":
                 bids.append(entry)
             else:
                 asks.append(entry)
             market_str = r_mkt
-            i += 1
+            current = next(rows, None)
 
         yield OrderBookDiffEvent(
-            symbol=_symbol_obj(symbol_name, market_str),
-            ts=ts,
-            seq=seq,
+            symbol=_symbol_obj(str(symbol_name), str(market_str)),
+            ts=int(ts_v),
+            seq=int(seq_v),
             bids_delta=tuple(bids),
             asks_delta=tuple(asks),
         )
@@ -160,21 +175,20 @@ def _merge_sorted(
     b: Iterator[MarketEvent],
 ) -> Iterator[MarketEvent]:
     """Merge sort two timestamp-ordered iterators into single stream."""
-    sentinel = object()
-    a_val = next(a, sentinel)  # type: ignore[call-overload]
-    b_val = next(b, sentinel)  # type: ignore[call-overload]
+    a_val: MarketEvent | None = next(a, None)
+    b_val: MarketEvent | None = next(b, None)
 
-    while a_val is not sentinel and b_val is not sentinel:
-        if a_val.ts <= b_val.ts:  # type: ignore[union-attr]
-            yield a_val  # type: ignore[misc]
-            a_val = next(a, sentinel)  # type: ignore[call-overload]
+    while a_val is not None and b_val is not None:
+        if a_val.ts <= b_val.ts:
+            yield a_val
+            a_val = next(a, None)
         else:
-            yield b_val  # type: ignore[misc]
-            b_val = next(b, sentinel)  # type: ignore[call-overload]
+            yield b_val
+            b_val = next(b, None)
 
-    if a_val is not sentinel:
-        yield a_val  # type: ignore[misc]
+    if a_val is not None:
+        yield a_val
         yield from a
-    if b_val is not sentinel:
-        yield b_val  # type: ignore[misc]
+    if b_val is not None:
+        yield b_val
         yield from b

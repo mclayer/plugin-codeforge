@@ -3,8 +3,6 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-import pytest
-
 from mctrader.domain.events import OrderBookDiffEvent
 from mctrader.domain.orderbook import Level, OrderBook
 from mctrader.domain.symbol import Market, Symbol

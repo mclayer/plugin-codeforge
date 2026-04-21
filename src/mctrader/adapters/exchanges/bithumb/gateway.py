@@ -3,6 +3,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 from mctrader.adapters.exchanges.bithumb import codec
+from mctrader.adapters.exchanges.bithumb.codec import OrderBookDiffCalculator
 from mctrader.domain.events import MarketEvent
 from mctrader.domain.symbol import FeeSchedule, Market, Symbol
 from mctrader.ports.exchange import ExchangeGateway
@@ -22,6 +23,9 @@ _TICK_SIZES: dict[str, Decimal] = {
 
 
 class BithumbGateway(ExchangeGateway):
+    def __init__(self) -> None:
+        self._diff_calc = OrderBookDiffCalculator()
+
     @property
     def name(self) -> str:
         return "bithumb"
@@ -38,5 +42,5 @@ class BithumbGateway(ExchangeGateway):
     def fee_schedule(self, symbol: Symbol) -> FeeSchedule:
         return FeeSchedule(maker=_MAKER_FEE, taker=_TAKER_FEE)
 
-    def normalize_event(self, raw: dict) -> MarketEvent | None:
-        return codec.decode(raw, market=Market.BITHUMB)
+    def normalize_event(self, raw: dict[str, object]) -> MarketEvent | None:
+        return codec.decode(raw, diff_calc=self._diff_calc, market=Market.BITHUMB)

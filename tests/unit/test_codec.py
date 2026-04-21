@@ -3,8 +3,6 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-import pytest
-
 from mctrader.adapters.exchanges.bithumb.codec import OrderBookDiffCalculator
 from mctrader.domain.events import OrderBookDiffEvent, TradeEvent
 from mctrader.domain.symbol import Market, Symbol
@@ -216,7 +214,7 @@ class TestDecodeFunction:
             qty="0.5",
             side="buy",
         )
-        event = decode(raw, market=MARKET)
+        event = decode(raw, diff_calc=_calc(), market=MARKET)
 
         assert isinstance(event, TradeEvent)
         assert event.symbol == SYMBOL
@@ -228,12 +226,12 @@ class TestDecodeFunction:
         from mctrader.adapters.exchanges.bithumb.codec import decode
 
         raw = {"type": "UNKNOWN_TYPE", "data": {}}
-        result = decode(raw, market=MARKET)
+        result = decode(raw, diff_calc=_calc(), market=MARKET)
         assert result is None
 
     def test_missing_type_returns_none(self) -> None:
         from mctrader.adapters.exchanges.bithumb.codec import decode
 
         raw = {"data": {}}
-        result = decode(raw, market=MARKET)
+        result = decode(raw, diff_calc=_calc(), market=MARKET)
         assert result is None

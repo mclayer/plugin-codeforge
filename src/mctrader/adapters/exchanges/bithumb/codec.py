@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import time
 from decimal import Decimal
+from typing import Any
 
 from mctrader.domain.events import MarketEvent, OrderBookDiffEvent, TradeEvent
 from mctrader.domain.symbol import Market, Symbol
@@ -63,18 +64,18 @@ def _calc_side_diff(
     return tuple(delta)
 
 
-# module-level calculator instance — one per process; sufficient for single-exchange use
-_diff_calc = OrderBookDiffCalculator()
-
-
 def _parse_symbol(symbol_name: str, market: Market) -> Symbol:
     base, quote = symbol_name.split("_")
     return Symbol(base=base, quote=quote, market=market)
 
 
-def decode(raw: dict, market: Market = Market.BITHUMB) -> MarketEvent | None:
+def decode(
+    raw: dict[str, object],
+    diff_calc: OrderBookDiffCalculator,
+    market: Market = Market.BITHUMB,
+) -> MarketEvent | None:
     msg_type = raw.get("type")
-    data = raw.get("data", {})
+    data: Any = raw.get("data", {})
 
     if msg_type == "ORDERBOOK":
         symbol_name: str = data["s"]
@@ -86,7 +87,7 @@ def decode(raw: dict, market: Market = Market.BITHUMB) -> MarketEvent | None:
         new_bids: dict[str, str] = {row[0]: row[1] for row in data["b"]}
         new_asks: dict[str, str] = {row[0]: row[1] for row in data["a"]}
 
-        return _diff_calc.compute_diff(symbol_name, new_bids, new_asks, ts, seq, symbol)
+        return diff_calc.compute_diff(symbol_name, new_bids, new_asks, ts, seq, symbol)
 
     if msg_type == "TRADE":
         symbol_name = data["s"]

@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from mctrader.domain.symbol import FeeSchedule, Market, Symbol
 from mctrader.domain.events import (
     ClockTickEvent,
     MarketEvent,
     OrderBookDiffEvent,
     TradeEvent,
 )
-from mctrader.domain.orderbook import Level, OrderBook, OrderBookSnapshot
 from mctrader.domain.order import (
     ExecutionEvent,
     Fill,
@@ -17,8 +15,10 @@ from mctrader.domain.order import (
     OrderStatus,
     OrderType,
 )
+from mctrader.domain.orderbook import Level, OrderBook, OrderBookSnapshot
 from mctrader.domain.portfolio import Portfolio, Position
 from mctrader.domain.signal import Signal, SignalDirection
+from mctrader.domain.symbol import FeeSchedule, Market, Symbol
 
 __all__ = [
     # symbol

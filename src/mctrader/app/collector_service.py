@@ -46,7 +46,7 @@ class CollectorService:
         self._sink = sink
         self._flush_interval_sec = flush_interval_sec
         self._running = False
-        self._flush_task: asyncio.Task | None = None
+        self._flush_task: asyncio.Task[None] | None = None
 
     async def run(self) -> None:
         """Main collection loop: connect, stream, store, and shutdown."""

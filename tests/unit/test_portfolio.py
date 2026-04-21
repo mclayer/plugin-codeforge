@@ -3,8 +3,6 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-import pytest
-
 from mctrader.domain.order import Fill, OrderSide
 from mctrader.domain.portfolio import Portfolio
 from mctrader.domain.symbol import Market, Symbol

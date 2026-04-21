@@ -101,7 +101,9 @@ class ResultRecorder:
         self._equity_rows.append(self._equity_to_row(ts, equity, portfolio, event_count))
 
     @staticmethod
-    def _equity_to_row(ts: int, equity: Decimal, portfolio: Portfolio, event_count: int) -> dict[str, object]:
+    def _equity_to_row(
+        ts: int, equity: Decimal, portfolio: Portfolio, event_count: int
+    ) -> dict[str, object]:
         """Convert equity snapshot to Parquet row dict."""
         return {
             "ts": ts,

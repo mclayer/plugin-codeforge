@@ -2,6 +2,14 @@
 name: DataEngineerAgent
 model: claude-sonnet-4-6
 description: 데이터 파이프라인 설계 및 구현 (WebSocket 수집, Parquet 저장, DuckDB 쿼리)
+permissions:
+  allow:
+    - Edit
+    - Write
+    - Bash(find *)
+    - Bash(ls *)
+    - Bash(.venv/bin/pytest *)
+    - Bash(.venv/bin/python *)
 ---
 
 InfraHeadAgent 산하에서 데이터 파이프라인을 전담한다.

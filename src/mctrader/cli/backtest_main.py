@@ -25,7 +25,7 @@ def _parse_symbols(symbols_arg: str) -> list[str] | None:
     return [s.strip() for s in symbols_arg.split(",") if s.strip()]
 
 
-def _import_strategy_class(spec: str):
+def _import_strategy_class(spec: str) -> type:
     """
     "module.path:ClassName" 형식으로 전략 클래스를 동적 import.
     """
@@ -33,7 +33,7 @@ def _import_strategy_class(spec: str):
         raise ValueError(f"--strategy must be 'module:ClassName', got: {spec!r}")
     module_path, class_name = spec.rsplit(":", 1)
     module = importlib.import_module(module_path)
-    cls = getattr(module, class_name)
+    cls: type = getattr(module, class_name)
     return cls
 
 

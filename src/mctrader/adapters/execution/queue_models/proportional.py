@@ -4,7 +4,7 @@ from decimal import Decimal
 
 from mctrader.domain.events import OrderBookDiffEvent, TradeEvent
 from mctrader.domain.order import Order
-from mctrader.domain.orderbook import OrderBookSnapshot
+from mctrader.domain.orderbook import Level, OrderBookSnapshot
 from mctrader.ports.queue_model import QueuePositionModel, QueueState
 
 
@@ -33,7 +33,7 @@ class ProportionalQueueModel(QueuePositionModel):
             self._level_qty[(side_str, price)] = qty_ahead
 
     @staticmethod
-    def _get_qty_at_price(levels: list, price: Decimal) -> Decimal:
+    def _get_qty_at_price(levels: tuple[Level, ...], price: Decimal) -> Decimal:
         for level in levels:
             if level.price == price:
                 return level.qty

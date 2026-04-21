@@ -3,7 +3,6 @@ from __future__ import annotations
 import os
 import time
 from datetime import datetime, timezone
-from decimal import Decimal
 
 import pyarrow as pa
 import pyarrow.parquet as pq
@@ -41,8 +40,12 @@ def _partition_key(event_type: str, symbol: str, ts_ms: int) -> str:
     return f"{event_type}/{symbol}/{dt.strftime('%Y-%m-%d')}/{dt.strftime('%H')}"
 
 
-def _parquet_path(root: str, key: str) -> str:
-    """Build parquet file path from partition key."""
+def _parquet_path(root: str, key: str, flush_ts_ms: int) -> str:
+    """Build parquet file path from partition key.
+
+    The flush_ts_ms suffix ensures re-flushes within the same hour partition
+    write a new file rather than overwriting the previous one.
+    """
     parts = key.split("/")
     event_type, symbol, date, hour = parts
     return os.path.join(
@@ -50,14 +53,14 @@ def _parquet_path(root: str, key: str) -> str:
         event_type,
         f"symbol={symbol}",
         f"date={date}",
-        f"hour={hour}.parquet",
+        f"hour={hour}_{flush_ts_ms}.parquet",
     )
 
 
 class ParquetSink(MarketDataSink):
     """
     Buffer market events in memory and flush to Parquet files.
-    File path: {root}/{type}/symbol={symbol}/date={date}/hour={hour}.parquet
+    File path: {root}/{type}/symbol={symbol}/date={date}/hour={hour}_{flush_ts_ms}.parquet
     """
 
     def __init__(
@@ -69,7 +72,7 @@ class ParquetSink(MarketDataSink):
         self._root = root_path
         self._flush_interval_sec = flush_interval_sec
         self._flush_max_bytes = flush_max_mb * 1024 * 1024
-        self._buf: dict[str, list[dict]] = {}
+        self._buf: dict[str, list[dict[str, object]]] = {}
         self._buf_row_count = 0
         self._last_flush_ts = time.monotonic()
 
@@ -106,7 +109,7 @@ class ParquetSink(MarketDataSink):
         if self._should_flush():
             self.flush()
 
-    def _base_row(self, event: OrderBookDiffEvent) -> dict:
+    def _base_row(self, event: OrderBookDiffEvent) -> dict[str, object]:
         """Create base row dict common to all order book diff entries."""
         return {
             "ts": event.ts,
@@ -116,10 +119,11 @@ class ParquetSink(MarketDataSink):
         }
 
     def flush(self) -> None:
+        flush_ts_ms = int(time.time() * 1000)
         for key, rows in self._buf.items():
             if not rows:
                 continue
-            path = _parquet_path(self._root, key)
+            path = _parquet_path(self._root, key, flush_ts_ms)
             os.makedirs(os.path.dirname(path), exist_ok=True)
 
             event_type = key.split("/")[0]

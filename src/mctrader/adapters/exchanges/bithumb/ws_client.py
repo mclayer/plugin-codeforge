@@ -6,6 +6,7 @@ import logging
 from collections.abc import AsyncGenerator
 
 import websockets
+from websockets.asyncio.client import ClientConnection
 from websockets.exceptions import ConnectionClosed
 
 logger = logging.getLogger(__name__)
@@ -30,14 +31,14 @@ class BithumbWsClient:
         self._symbols = symbols
         self._url = ws_url or self.WS_URL
         self._reconnect_interval_sec = reconnect_interval_sec
-        self._ws: websockets.WebSocketClientProtocol | None = None
+        self._ws: ClientConnection | None = None
         self._closed = False
 
     async def connect(self) -> None:
         self._ws = await websockets.connect(self._url)
         await self._subscribe()
 
-    async def messages(self) -> AsyncGenerator[dict, None]:
+    async def messages(self) -> AsyncGenerator[dict[str, object], None]:
         while not self._closed:
             if self._ws is None:
                 await self._reconnect()
@@ -51,12 +52,20 @@ class BithumbWsClient:
             except ConnectionClosed as exc:
                 if self._closed:
                     return
-                logger.warning("WebSocket closed (%s), reconnecting in %ds", exc, self._reconnect_interval_sec)
+                logger.warning(
+                    "WebSocket closed (%s), reconnecting in %ds",
+                    exc,
+                    self._reconnect_interval_sec,
+                )
                 await self._handle_disconnection()
             except Exception as exc:
                 if self._closed:
                     return
-                logger.error("WebSocket error: %s, reconnecting in %ds", exc, self._reconnect_interval_sec)
+                logger.error(
+                    "WebSocket error: %s, reconnecting in %ds",
+                    exc,
+                    self._reconnect_interval_sec,
+                )
                 await self._handle_disconnection()
 
     async def _handle_disconnection(self) -> None:

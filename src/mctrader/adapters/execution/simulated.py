@@ -2,10 +2,8 @@ from __future__ import annotations
 
 import uuid
 from decimal import Decimal
-from typing import Protocol, runtime_checkable
 
 from mctrader.domain.events import (
-    ClockTickEvent,
     MarketEvent,
     OrderBookDiffEvent,
     TradeEvent,
@@ -24,13 +22,6 @@ from mctrader.domain.symbol import FeeSchedule
 from mctrader.ports.clock import Clock
 from mctrader.ports.execution import CancelAck, ExecutionVenue, OrderAck
 from mctrader.ports.queue_model import QueuePositionModel
-
-
-@runtime_checkable
-class _ExtendedQueueModel(Protocol):
-    def register(self, order: Order, snapshot: OrderBookSnapshot) -> None: ...
-    def on_trade(self, trade: TradeEvent) -> None: ...
-    def remove(self, order_id: str) -> None: ...
 
 
 class SimulatedExecutionVenue(ExecutionVenue):
@@ -62,7 +53,7 @@ class SimulatedExecutionVenue(ExecutionVenue):
         )
         self._orders[order_id] = order
 
-        if self._snapshot is not None and isinstance(self._queue_model, _ExtendedQueueModel):
+        if self._snapshot is not None:
             self._queue_model.register(order, self._snapshot)
 
         return OrderAck(order_id=order_id, ts=ts)
@@ -75,8 +66,7 @@ class SimulatedExecutionVenue(ExecutionVenue):
 
         order.status = OrderStatus.CANCELLED
         order.ts_updated = ts
-        if isinstance(self._queue_model, _ExtendedQueueModel):
-            self._queue_model.remove(order_id)
+        self._queue_model.remove(order_id)
         return CancelAck(order_id=order_id, success=True, ts=ts)
 
     def pending_orders(self) -> list[Order]:
@@ -99,13 +89,9 @@ class SimulatedExecutionVenue(ExecutionVenue):
 
         # 1. update queue model
         if isinstance(event, TradeEvent):
-            if isinstance(self._queue_model, _ExtendedQueueModel):
-                self._queue_model.on_trade(event)
+            self._queue_model.on_trade(event)
         elif isinstance(event, OrderBookDiffEvent):
-            # ProportionalQueueModel exposes on_diff; call if available
-            on_diff = getattr(self._queue_model, "on_diff", None)
-            if on_diff is not None:
-                on_diff(event)
+            self._queue_model.on_diff(event)
 
         # 2. try matching pending orders
         for order in self.pending_orders():
@@ -132,9 +118,14 @@ class SimulatedExecutionVenue(ExecutionVenue):
         snapshot: OrderBookSnapshot,
         ts: int,
     ) -> Fill | None:
-        level = snapshot.asks[0] if intent.side == OrderSide.BUY else snapshot.bids[0]
-        if level is None:
-            return None
+        if intent.side == OrderSide.BUY:
+            if not snapshot.asks:
+                return None
+            level = snapshot.asks[0]
+        else:
+            if not snapshot.bids:
+                return None
+            level = snapshot.bids[0]
         return self._record_fill(order, level.price, intent.qty, ts)
 
     def _try_limit_fill(
@@ -173,8 +164,7 @@ class SimulatedExecutionVenue(ExecutionVenue):
         order.avg_price = price
         order.ts_updated = ts
 
-        if isinstance(self._queue_model, _ExtendedQueueModel):
-            self._queue_model.remove(order.order_id)
+        self._queue_model.remove(order.order_id)
 
         return Fill(
             order_id=order.order_id,
