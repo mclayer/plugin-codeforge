@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import time
 from decimal import Decimal
 from typing import Any
 
@@ -64,8 +63,9 @@ def _calc_side_diff(
     return tuple(delta)
 
 
-def _parse_symbol(symbol_name: str, market: Market) -> Symbol:
-    base, quote = symbol_name.split("_")
+def _from_exchange_code(code: str, market: Market) -> Symbol:
+    """KRW-BTC -> Symbol(base=BTC, quote=KRW)"""
+    quote, base = code.split("-")
     return Symbol(base=base, quote=quote, market=market)
 
 
@@ -75,31 +75,33 @@ def decode(
     market: Market = Market.BITHUMB,
 ) -> MarketEvent | None:
     msg_type = raw.get("type")
-    data: Any = raw.get("data", {})
 
-    if msg_type == "ORDERBOOK":
-        symbol_name: str = data["s"]
-        symbol = _parse_symbol(symbol_name, market)
+    if msg_type == "orderbook":
+        code = str(raw["code"])
+        symbol = _from_exchange_code(code, market)
+        ts = int(raw["timestamp"]) // 1000  # microseconds → milliseconds
+        seq = ts
+        units: Any = raw["orderbook_units"]
+        new_bids: dict[str, str] = {
+            str(unit["bid_price"]): str(unit["bid_size"]) for unit in units
+        }
+        new_asks: dict[str, str] = {
+            str(unit["ask_price"]): str(unit["ask_size"]) for unit in units
+        }
+        return diff_calc.compute_diff(symbol.name, new_bids, new_asks, ts, seq, symbol)
 
-        seq = int(data["ver"])
-        ts = int(time.time_ns() // 1_000_000)
-
-        new_bids: dict[str, str] = {row[0]: row[1] for row in data["b"]}
-        new_asks: dict[str, str] = {row[0]: row[1] for row in data["a"]}
-
-        return diff_calc.compute_diff(symbol_name, new_bids, new_asks, ts, seq, symbol)
-
-    if msg_type == "TRADE":
-        symbol_name = data["s"]
-        symbol = _parse_symbol(symbol_name, market)
-
+    if msg_type == "trade":
+        code = str(raw["code"])
+        symbol = _from_exchange_code(code, market)
+        ask_bid = str(raw["ask_bid"])
+        side = "buy" if ask_bid == "BID" else "sell"
         return TradeEvent(
             symbol=symbol,
-            ts=int(data["t"]),
-            seq=int(data["t"]),
-            price=Decimal(data["p"]),
-            qty=Decimal(data["v"]),
-            side=data["side"],
+            ts=int(raw["trade_timestamp"]),  # type: ignore[arg-type]
+            seq=int(raw.get("sequential_id", raw["trade_timestamp"])),  # type: ignore[arg-type]
+            price=Decimal(str(raw["trade_price"])),
+            qty=Decimal(str(raw["trade_volume"])),
+            side=side,
         )
 
     return None

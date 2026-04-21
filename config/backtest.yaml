@@ -3,5 +3,5 @@ backtest:
   start_ts: null
   end_ts: null
   symbols: all
-  result_path: /var/data/mctrader/results
+  result_path: ./results
   queue_model: naive

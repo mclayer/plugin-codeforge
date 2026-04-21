@@ -1,9 +1,23 @@
+# runtime data & results
 data/
+results/
 *.parquet
+*.log
+nohup.out
+
+# python
 __pycache__/
 *.pyc
+*.pyo
 .env
 *.egg-info/
 dist/
+build/
+
+# tools
 .mypy_cache/
 .ruff_cache/
+.pytest_cache/
+.venv/
+.coverage
+htmlcov/

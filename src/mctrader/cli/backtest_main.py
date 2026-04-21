@@ -11,7 +11,7 @@ def main() -> None:
     """
     mctrader-backtest 진입점.
 
-    usage: mctrader-backtest --start YYYY-MM-DD --end YYYY-MM-DD
+    usage: mctrader-backtest --start 'YYYY-MM-DD HH:MM:SS' --end 'YYYY-MM-DD HH:MM:SS'
                              [--symbols SYM1,SYM2] [--strategy MODULE:CLASS]
                              [--queue-model naive|proportional]
                              [--initial-cash AMOUNT]
@@ -19,8 +19,8 @@ def main() -> None:
     import argparse
 
     parser = argparse.ArgumentParser(description="mctrader backtester")
-    parser.add_argument("--start", required=True, help="start date YYYY-MM-DD")
-    parser.add_argument("--end", required=True, help="end date YYYY-MM-DD")
+    parser.add_argument("--start", required=True, help="start datetime: YYYY-MM-DD or 'YYYY-MM-DD HH:MM:SS'")
+    parser.add_argument("--end", required=True, help="end datetime: YYYY-MM-DD or 'YYYY-MM-DD HH:MM:SS'")
     parser.add_argument("--symbols", default="all")
     parser.add_argument(
         "--strategy",

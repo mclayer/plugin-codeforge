@@ -1,9 +1,9 @@
-"""Unit tests for Bithumb WebSocket codec."""
+"""Unit tests for Bithumb WebSocket codec (new API: ws-api.bithumb.com)."""
 from __future__ import annotations
 
 from decimal import Decimal
 
-from mctrader.adapters.exchanges.bithumb.codec import OrderBookDiffCalculator
+from mctrader.adapters.exchanges.bithumb.codec import OrderBookDiffCalculator, decode
 from mctrader.domain.events import OrderBookDiffEvent, TradeEvent
 from mctrader.domain.symbol import Market, Symbol
 
@@ -19,39 +19,39 @@ def _calc() -> OrderBookDiffCalculator:
 
 
 def _orderbook_raw(
-    symbol_name: str,
-    ver: str,
-    bids: list[list[str]],
-    asks: list[list[str]],
+    code: str,
+    timestamp: int,
+    orderbook_units: list[dict],
 ) -> dict:
     return {
-        "type": "ORDERBOOK",
-        "data": {
-            "s": symbol_name,
-            "ver": ver,
-            "b": bids,
-            "a": asks,
-        },
+        "type": "orderbook",
+        "code": code,
+        "timestamp": timestamp,
+        "orderbook_units": orderbook_units,
+        "stream_type": "SNAPSHOT",
     }
 
 
 def _trade_raw(
-    symbol_name: str,
-    ts: str,
-    price: str,
-    qty: str,
-    side: str,
+    code: str,
+    trade_price: int | float,
+    trade_volume: float,
+    ask_bid: str,
+    trade_timestamp: int,
+    sequential_id: int | None = None,
 ) -> dict:
-    return {
-        "type": "TRADE",
-        "data": {
-            "s": symbol_name,
-            "t": ts,
-            "p": price,
-            "v": qty,
-            "side": side,
-        },
+    raw: dict = {
+        "type": "trade",
+        "code": code,
+        "trade_price": trade_price,
+        "trade_volume": trade_volume,
+        "ask_bid": ask_bid,
+        "trade_timestamp": trade_timestamp,
+        "stream_type": "REALTIME",
     }
+    if sequential_id is not None:
+        raw["sequential_id"] = sequential_id
+    return raw
 
 
 class TestOrderBookDiffCalculator:
@@ -147,72 +147,80 @@ class TestOrderBookDiffCalculator:
 
 
 class TestDecodeFunction:
-    """Tests for the top-level decode() function using raw message dicts.
-
-    Each test creates an isolated OrderBookDiffCalculator to avoid shared
-    state from the module-level _diff_calc instance.
-    """
+    """Tests for the top-level decode() function using new API raw message dicts."""
 
     def test_orderbook_first_message_returns_diff_event(self) -> None:
         calc = _calc()
         raw = _orderbook_raw(
-            "BTC_KRW",
-            ver="1",
-            bids=[["100", "1.0"], ["99", "2.0"]],
-            asks=[["101", "0.5"]],
+            code="KRW-BTC",
+            timestamp=1_725_927_377_287,
+            orderbook_units=[
+                {"bid_price": 100, "bid_size": 1.0, "ask_price": 101, "ask_size": 0.5},
+                {"bid_price": 99, "bid_size": 2.0, "ask_price": 102, "ask_size": 0.3},
+            ],
         )
-        event = calc.compute_diff(
-            symbol_name=raw["data"]["s"],
-            new_bids={row[0]: row[1] for row in raw["data"]["b"]},
-            new_asks={row[0]: row[1] for row in raw["data"]["a"]},
-            ts=1_000,
-            seq=int(raw["data"]["ver"]),
-            symbol=SYMBOL,
-        )
+        event = decode(raw, diff_calc=calc, market=MARKET)
+
         assert isinstance(event, OrderBookDiffEvent)
+        assert event.symbol == SYMBOL
         assert len(event.bids_delta) == 2
-        assert len(event.asks_delta) == 1
+        assert len(event.asks_delta) == 2
+
+    def test_orderbook_symbol_parsed_from_code(self) -> None:
+        calc = _calc()
+        raw = _orderbook_raw(
+            code="KRW-ETH",
+            timestamp=1_725_927_377_000,
+            orderbook_units=[
+                {"bid_price": 200, "bid_size": 1.0, "ask_price": 201, "ask_size": 0.5},
+            ],
+        )
+        event = decode(raw, diff_calc=calc, market=MARKET)
+
+        assert isinstance(event, OrderBookDiffEvent)
+        assert event.symbol.base == "ETH"
+        assert event.symbol.quote == "KRW"
 
     def test_orderbook_second_message_computes_diff(self) -> None:
         calc = _calc()
         # first message establishes baseline
-        calc.compute_diff(
-            symbol_name="BTC_KRW",
-            new_bids={"100": "1.0"},
-            new_asks={"101": "0.5"},
-            ts=1_000,
-            seq=1,
-            symbol=SYMBOL,
+        decode(
+            _orderbook_raw(
+                code="KRW-BTC",
+                timestamp=1_000,
+                orderbook_units=[
+                    {"bid_price": 100, "bid_size": 1.0, "ask_price": 101, "ask_size": 0.5},
+                ],
+            ),
+            diff_calc=calc,
+            market=MARKET,
         )
         # second message with one changed ask level
-        event = calc.compute_diff(
-            symbol_name="BTC_KRW",
-            new_bids={"100": "1.0"},
-            new_asks={"101": "3.0"},
-            ts=1_001,
-            seq=2,
-            symbol=SYMBOL,
+        event = decode(
+            _orderbook_raw(
+                code="KRW-BTC",
+                timestamp=1_001,
+                orderbook_units=[
+                    {"bid_price": 100, "bid_size": 1.0, "ask_price": 101, "ask_size": 3.0},
+                ],
+            ),
+            diff_calc=calc,
+            market=MARKET,
         )
+
         assert isinstance(event, OrderBookDiffEvent)
         ask_dict = {p: q for p, q in event.asks_delta}
         assert ask_dict[Decimal("101")] == Decimal("3.0")
         # bids unchanged
         assert event.bids_delta == ()
 
-    def test_trade_raw_message_decodes_to_trade_event(self) -> None:
-        """
-        Verify that a TRADE raw message dict produces the correct TradeEvent
-        fields.  We call the codec's decode() directly for this case since
-        TradeEvent construction does not depend on stateful diff calculation.
-        """
-        from mctrader.adapters.exchanges.bithumb.codec import decode
-
+    def test_trade_bid_decodes_to_buy(self) -> None:
         raw = _trade_raw(
-            symbol_name="BTC_KRW",
-            ts="1713600000000",
-            price="50000",
-            qty="0.5",
-            side="buy",
+            code="KRW-BTC",
+            trade_price=50000,
+            trade_volume=0.5,
+            ask_bid="BID",
+            trade_timestamp=1_713_600_000_000,
         )
         event = decode(raw, diff_calc=_calc(), market=MARKET)
 
@@ -221,17 +229,54 @@ class TestDecodeFunction:
         assert event.price == Decimal("50000")
         assert event.qty == Decimal("0.5")
         assert event.side == "buy"
+        assert event.ts == 1_713_600_000_000
+
+    def test_trade_ask_decodes_to_sell(self) -> None:
+        raw = _trade_raw(
+            code="KRW-BTC",
+            trade_price=49000,
+            trade_volume=1.2,
+            ask_bid="ASK",
+            trade_timestamp=1_713_600_000_001,
+        )
+        event = decode(raw, diff_calc=_calc(), market=MARKET)
+
+        assert isinstance(event, TradeEvent)
+        assert event.side == "sell"
+
+    def test_trade_sequential_id_used_as_seq(self) -> None:
+        raw = _trade_raw(
+            code="KRW-BTC",
+            trade_price=50000,
+            trade_volume=0.1,
+            ask_bid="BID",
+            trade_timestamp=1_713_600_000_000,
+            sequential_id=999_999,
+        )
+        event = decode(raw, diff_calc=_calc(), market=MARKET)
+
+        assert isinstance(event, TradeEvent)
+        assert event.seq == 999_999
+
+    def test_trade_fallback_seq_to_trade_timestamp(self) -> None:
+        raw = _trade_raw(
+            code="KRW-BTC",
+            trade_price=50000,
+            trade_volume=0.1,
+            ask_bid="BID",
+            trade_timestamp=1_713_600_000_000,
+        )
+        event = decode(raw, diff_calc=_calc(), market=MARKET)
+
+        assert isinstance(event, TradeEvent)
+        assert event.seq == 1_713_600_000_000
 
     def test_unknown_type_returns_none(self) -> None:
-        from mctrader.adapters.exchanges.bithumb.codec import decode
-
-        raw = {"type": "UNKNOWN_TYPE", "data": {}}
+        raw: dict = {"type": "ticker", "code": "KRW-BTC"}
         result = decode(raw, diff_calc=_calc(), market=MARKET)
         assert result is None
 
     def test_missing_type_returns_none(self) -> None:
-        from mctrader.adapters.exchanges.bithumb.codec import decode
-
-        raw = {"data": {}}
+        raw: dict = {"code": "KRW-BTC"}
         result = decode(raw, diff_calc=_calc(), market=MARKET)
         assert result is None

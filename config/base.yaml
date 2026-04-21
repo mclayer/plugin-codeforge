@@ -5,7 +5,7 @@ logging:
   file_path: /var/log/mctrader/app.log
 
 data:
-  root_path: /var/data/mctrader
+  root_path: ./data
   orderbook_diff_path: orderbook_diff
   trade_path: trade
 

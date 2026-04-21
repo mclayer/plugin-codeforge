@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import importlib
+import os
+import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from decimal import Decimal
@@ -17,10 +19,24 @@ class BacktestRunParams:
     initial_cash: str | None  # None이면 config 기본값 사용
 
 
-def _date_to_epoch_ms(date_str: str) -> int:
-    """YYYY-MM-DD 문자열을 UTC 자정 epoch ms로 변환."""
-    dt = datetime.strptime(date_str, "%Y-%m-%d").replace(tzinfo=timezone.utc)
-    return int(dt.timestamp() * 1000)
+def _datetime_to_epoch_ms(dt_str: str) -> int:
+    """
+    날짜/시각 문자열을 UTC epoch ms로 변환.
+
+    지원 포맷:
+      YYYY-MM-DD               → 해당 날짜 UTC 자정
+      YYYY-MM-DDTHH:MM         → HTML datetime-local 입력값
+      YYYY-MM-DDTHH:MM:SS
+      YYYY-MM-DD HH:MM:SS
+    """
+    dt_str = dt_str.strip().replace("T", " ")
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d"):
+        try:
+            dt = datetime.strptime(dt_str, fmt).replace(tzinfo=timezone.utc)
+            return int(dt.timestamp() * 1000)
+        except ValueError:
+            continue
+    raise ValueError(f"날짜/시각 형식을 파싱할 수 없습니다: {dt_str!r}")
 
 
 def _parse_symbols(symbols_arg: str) -> list[str] | None:
@@ -62,8 +78,8 @@ def run_backtest(params: BacktestRunParams) -> str:
 
     config = load_backtest_config()
 
-    start_ts = _date_to_epoch_ms(params.start_date)
-    end_ts = _date_to_epoch_ms(params.end_date)
+    start_ts = _datetime_to_epoch_ms(params.start_date)
+    end_ts = _datetime_to_epoch_ms(params.end_date)
 
     gateway = BithumbGateway()
     all_symbols: list[Symbol] = gateway.symbols()
@@ -89,7 +105,9 @@ def run_backtest(params: BacktestRunParams) -> str:
     data_source = DuckDBSource(root_path=config.data.root_path)
     initial_cash = Decimal(params.initial_cash or config.backtest.initial_cash)
     portfolio = Portfolio(initial_cash=initial_cash)
-    recorder = ResultRecorder(result_path=config.backtest.result_path)
+    run_id = datetime.now(tz=timezone.utc).strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:6]
+    run_path = os.path.join(config.backtest.result_path, run_id)
+    recorder = ResultRecorder(result_path=run_path)
 
     engine = BacktestEngine(
         data_source=data_source,
@@ -106,5 +124,5 @@ def run_backtest(params: BacktestRunParams) -> str:
         initial_cash=initial_cash,
         queue_model_name=params.queue_model,
     )
-    result = engine.run(engine_config)
-    return Path(result.result_path).name
+    engine.run(engine_config)
+    return run_id

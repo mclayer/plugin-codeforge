@@ -4,24 +4,38 @@ import pytest
 
 from mctrader.dashboard.backtest_runner import (
     BacktestRunParams,
-    _date_to_epoch_ms,
+    _datetime_to_epoch_ms,
     _import_strategy_class,
     _parse_symbols,
 )
 
 
-class TestDateToEpochMs:
-    def test_known_date(self) -> None:
+class TestDatetimeToEpochMs:
+    def test_date_only(self) -> None:
         # 2024-01-01 UTC midnight = 1704067200000 ms
-        assert _date_to_epoch_ms("2024-01-01") == 1_704_067_200_000
+        assert _datetime_to_epoch_ms("2024-01-01") == 1_704_067_200_000
+
+    def test_date_with_time_space(self) -> None:
+        # 2024-01-01 00:01:00 UTC = midnight + 60s
+        assert _datetime_to_epoch_ms("2024-01-01 00:01:00") == 1_704_067_260_000
+
+    def test_date_with_time_t(self) -> None:
+        # HTML datetime-local: YYYY-MM-DDTHH:MM
+        assert _datetime_to_epoch_ms("2024-01-01T00:01") == 1_704_067_260_000
+
+    def test_date_with_seconds(self) -> None:
+        # 2024-01-01 00:00:30 UTC = midnight + 30s
+        assert _datetime_to_epoch_ms("2024-01-01 00:00:30") == 1_704_067_230_000
 
     def test_returns_int(self) -> None:
-        result = _date_to_epoch_ms("2023-06-15")
-        assert isinstance(result, int)
+        assert isinstance(_datetime_to_epoch_ms("2023-06-15"), int)
 
     def test_epoch_origin(self) -> None:
-        # 1970-01-01 UTC = 0 ms
-        assert _date_to_epoch_ms("1970-01-01") == 0
+        assert _datetime_to_epoch_ms("1970-01-01") == 0
+
+    def test_invalid_format_raises(self) -> None:
+        with pytest.raises(ValueError, match="파싱할 수 없습니다"):
+            _datetime_to_epoch_ms("not-a-date")
 
 
 class TestParseSymbols:

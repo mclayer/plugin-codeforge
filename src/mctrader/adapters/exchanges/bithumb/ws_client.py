@@ -3,11 +3,16 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import ssl
+import uuid
 from collections.abc import AsyncGenerator
 
+import certifi
 import websockets
 from websockets.asyncio.client import ClientConnection
 from websockets.exceptions import ConnectionClosed
+
+_SSL_CTX = ssl.create_default_context(cafile=certifi.where())
 
 logger = logging.getLogger(__name__)
 
@@ -20,7 +25,7 @@ class BithumbWsClient:
     Handles subscription to orderbook and trade streams.
     """
 
-    WS_URL = "wss://global-api.bithumb.pro/message/realtime"
+    WS_URL = "wss://ws-api.bithumb.com/websocket/v1"
 
     def __init__(
         self,
@@ -35,7 +40,7 @@ class BithumbWsClient:
         self._closed = False
 
     async def connect(self) -> None:
-        self._ws = await websockets.connect(self._url)
+        self._ws = await websockets.connect(self._url, ssl=_SSL_CTX)
         await self._subscribe()
 
     async def messages(self) -> AsyncGenerator[dict[str, object], None]:
@@ -46,8 +51,6 @@ class BithumbWsClient:
             try:
                 async for raw in self._ws:  # type: ignore[union-attr]
                     msg = json.loads(raw)
-                    if msg.get("type") == "ping" or "ping" in msg:
-                        continue
                     yield msg
             except ConnectionClosed as exc:
                 if self._closed:
@@ -79,17 +82,18 @@ class BithumbWsClient:
             self._ws = None
 
     async def _subscribe(self) -> None:
-        args: list[str] = []
-        for sym in self._symbols:
-            args.append(f"ORDERBOOK:{sym}")
-            args.append(f"TRADE:{sym}")
-        payload = json.dumps({"cmd": "subscribe", "args": args})
+        codes = [f"{s.split('_')[1]}-{s.split('_')[0]}" for s in self._symbols]
+        payload = json.dumps([
+            {"ticket": str(uuid.uuid4())},
+            {"type": "orderbook", "codes": codes},
+            {"type": "trade", "codes": codes},
+        ])
         await self._ws.send(payload)  # type: ignore[union-attr]
 
     async def _reconnect(self) -> None:
         logger.info("Reconnecting to %s", self._url)
         try:
-            self._ws = await websockets.connect(self._url)
+            self._ws = await websockets.connect(self._url, ssl=_SSL_CTX)
             await self._subscribe()
         except Exception as exc:
             logger.error("Reconnect failed: %s, retrying in %ds", exc, self._reconnect_interval_sec)

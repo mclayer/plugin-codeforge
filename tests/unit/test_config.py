@@ -92,8 +92,8 @@ class TestEnvOverrides:
         }
         with patch.dict(os.environ, env_without_overrides, clear=True):
             config = load_backtest_config()
-        # base.yaml has /var/data/mctrader as default
-        assert config.data.root_path == "/var/data/mctrader"
+        # base.yaml has ./data as default (local dev path)
+        assert config.data.root_path == "./data"
         assert config.logging.level == "INFO"
 
 

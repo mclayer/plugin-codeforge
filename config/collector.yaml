@@ -6,4 +6,4 @@ collector:
   orderbook_levels: 15
 
 bithumb:
-  ws_url: wss://global-api.bithumb.pro/message/realtime
+  ws_url: wss://ws-api.bithumb.com/websocket/v1
