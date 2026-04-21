@@ -1,0 +1,9 @@
+.tape-large { background-color: rgba(25, 135, 84, 0.15); }
+tr.text-danger.tape-large { background-color: rgba(220, 53, 69, 0.15); }
+.tape-whale { background-color: rgba(25, 135, 84, 0.3) !important; }
+tr.text-danger.tape-whale { background-color: rgba(220, 53, 69, 0.3) !important; }
+
+.bid-row:hover, .ask-row:hover { filter: brightness(1.2); }
+
+#ladder-table td { padding: 2px 6px; font-size: 0.85rem; }
+#tape-table td { padding: 2px 6px; font-size: 0.85rem; }

@@ -14,22 +14,13 @@ from __future__ import annotations
 from decimal import Decimal
 
 from mctrader.domain.events import MarketEvent, OrderBookDiffEvent
+from mctrader.domain.microstructure import imbalance as _imbalance
 from mctrader.domain.order import Fill, OrderIntent, OrderSide, OrderType
 from mctrader.domain.orderbook import OrderBookSnapshot
 from mctrader.domain.portfolio import Portfolio
 from mctrader.domain.signal import Signal, SignalDirection
 from mctrader.domain.symbol import Symbol
 from mctrader.ports.strategy import SignalGenerator, TradingStrategy
-
-
-def _calc_imbalance(snapshot: OrderBookSnapshot, levels: int) -> float:
-    """상위 levels 레벨의 bid/ask 잔량 합으로 imbalance 계산."""
-    bid_qty = sum(lvl.qty for lvl in snapshot.bids[:levels])
-    ask_qty = sum(lvl.qty for lvl in snapshot.asks[:levels])
-    total = bid_qty + ask_qty
-    if total == Decimal(0):
-        return 0.0
-    return float((bid_qty - ask_qty) / total)
 
 
 class OrderImbalanceSignalGenerator(SignalGenerator):
@@ -48,7 +39,7 @@ class OrderImbalanceSignalGenerator(SignalGenerator):
         if not snapshot.bids or not snapshot.asks:
             return []
 
-        imbalance = _calc_imbalance(snapshot, self._levels)
+        imbalance = _imbalance(snapshot, depth=self._levels)
 
         if imbalance > self._threshold:
             direction = SignalDirection.LONG

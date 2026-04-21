@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import dataclasses
 import json
 import os
+import time
 import uuid
 from dataclasses import asdict
 from datetime import datetime, timezone
@@ -10,14 +12,16 @@ from typing import Any
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 import yaml
-from fastapi import BackgroundTasks, FastAPI, Form, Request
+from fastapi import BackgroundTasks, FastAPI, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from mctrader.dashboard.backtest_runner import BacktestRunParams, run_backtest
 from mctrader.dashboard.progress_reporter import JobStoreProgressReporter
 from mctrader.dashboard.collector_status import build_collector_status, discover_symbols
 from mctrader.dashboard.data_query import MAX_ROWS, QueryResult, query
+from mctrader.dashboard.views import build_cvd, build_imbalance_series, build_snapshot_view, build_tape
 from mctrader.dashboard.metrics import (
     discover_runs,
     load_equity_series,
@@ -127,8 +131,12 @@ def _get_tz(request: Request) -> str:
     return tz if tz in _SUPPORTED_TZ else "UTC"
 
 
+_STATIC_DIR = Path(__file__).parent / "static"
+
+
 def create_app(result_dir: str) -> FastAPI:
     app = FastAPI(title="mctrader Dashboard")
+    app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
     templates = Jinja2Templates(directory=str(_TEMPLATES_DIR))
 
     templates.env.filters["ts_fmt"] = _ts_fmt
@@ -478,5 +486,71 @@ def create_app(result_dir: str) -> FastAPI:
             "truncated": result.truncated,
             "rows": result.rows,
         })
+
+    # -----------------------------------------------------------------------
+    # OrderBook / Trade microstructure API routes
+    # -----------------------------------------------------------------------
+
+    @app.get("/api/data/orderbook/snapshot")
+    async def api_orderbook_snapshot(
+        symbol: str,
+        market: str = "bithumb",
+        ts: int = 0,
+        depth: int = 20,
+        imbalance_depth: int = 5,
+    ) -> JSONResponse:
+        if not symbol:
+            raise HTTPException(400, "symbol required")
+        data_root = _resolve_data_root()
+        as_of = ts if ts > 0 else int(time.time() * 1000)
+        view = build_snapshot_view(data_root, symbol, market, as_of, depth, imbalance_depth)
+        return JSONResponse(dataclasses.asdict(view))
+
+    @app.get("/api/data/orderbook/imbalance-series")
+    async def api_imbalance_series(
+        symbol: str,
+        market: str = "bithumb",
+        start_ts: int = 0,
+        end_ts: int = 0,
+        bucket_ms: int = 250,
+        imbalance_depth: int = 5,
+    ) -> JSONResponse:
+        if not symbol:
+            raise HTTPException(400, "symbol required")
+        data_root = _resolve_data_root()
+        effective_end = end_ts if end_ts > 0 else int(time.time() * 1000)
+        points = build_imbalance_series(
+            data_root, symbol, market, start_ts, effective_end, bucket_ms, imbalance_depth
+        )
+        return JSONResponse([dataclasses.asdict(p) for p in points])
+
+    @app.get("/api/data/trades/tape")
+    async def api_trades_tape(
+        symbol: str,
+        market: str = "bithumb",
+        start_ts: int = 0,
+        end_ts: int = 0,
+        limit: int = 500,
+    ) -> JSONResponse:
+        if not symbol:
+            raise HTTPException(400, "symbol required")
+        data_root = _resolve_data_root()
+        effective_end = end_ts if end_ts > 0 else int(time.time() * 1000)
+        entries = build_tape(data_root, symbol, market, start_ts, effective_end, limit)
+        return JSONResponse([dataclasses.asdict(e) for e in entries])
+
+    @app.get("/api/data/trades/cvd")
+    async def api_trades_cvd(
+        symbol: str,
+        market: str = "bithumb",
+        start_ts: int = 0,
+        end_ts: int = 0,
+    ) -> JSONResponse:
+        if not symbol:
+            raise HTTPException(400, "symbol required")
+        data_root = _resolve_data_root()
+        effective_end = end_ts if end_ts > 0 else int(time.time() * 1000)
+        points = build_cvd(data_root, symbol, market, start_ts, effective_end)
+        return JSONResponse([dataclasses.asdict(p) for p in points])
 
     return app
