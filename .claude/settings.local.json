@@ -107,7 +107,8 @@
       "Bash(.venv/bin/python3 -m mctrader.cli.dashboard_main)",
       "Bash(echo \"EXIT:$?\")",
       "Bash(.venv/bin/mctrader-dashboard)",
-      "Bash(python3)"
+      "Bash(python3)",
+      "Bash(lsof -iTCP:8000 -sTCP:LISTEN -t)"
     ]
   }
 }
