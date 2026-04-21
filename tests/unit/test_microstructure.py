@@ -37,11 +37,11 @@ def _snap(
 class TestImbalance:
     def test_imbalance_empty_bids(self) -> None:
         snap = _snap(bids=[], asks=[("101", "1")])
-        assert imbalance(snap) == 0.0
+        assert imbalance(snap) == -1.0
 
     def test_imbalance_empty_asks(self) -> None:
         snap = _snap(bids=[("100", "1")], asks=[])
-        assert imbalance(snap) == 0.0
+        assert imbalance(snap) == 1.0
 
     def test_imbalance_both_empty(self) -> None:
         snap = _snap(bids=[], asks=[])

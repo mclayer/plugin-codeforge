@@ -31,7 +31,7 @@ def _write_trade_parquet(
     root = str(tmp_path)
     dir_path = os.path.join(root, "trade", f"symbol={symbol}", f"date={date}")
     os.makedirs(dir_path, exist_ok=True)
-    path = os.path.join(dir_path, "test.parquet")
+    path = os.path.join(dir_path, "hour=00.parquet")
     pq.write_table(pa.Table.from_pylist(rows, schema=_TRADE_SCHEMA), path)
     return root
 

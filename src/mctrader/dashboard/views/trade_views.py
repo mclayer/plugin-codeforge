@@ -44,7 +44,7 @@ def build_tape(
     )
 
     if len(notionals) < 2:
-        p75 = p95 = p99 = notionals[0] if notionals else Decimal(0)
+        p75 = p95 = p99 = Decimal("Infinity")
     else:
         p75 = _percentile(notionals, 75)
         p95 = _percentile(notionals, 95)
