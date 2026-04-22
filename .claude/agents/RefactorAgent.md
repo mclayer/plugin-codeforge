@@ -1,6 +1,6 @@
 ---
 name: RefactorAgent
-model: claude-sonnet-4-6
+model: claude-opus-4-7
 description: ArchitectAgent 직속 리팩토링 도구 — Clean Architecture 추구, God class 회피, 기존 코드 적극 검토로 최소 변경 기여
 permissions:
   allow:

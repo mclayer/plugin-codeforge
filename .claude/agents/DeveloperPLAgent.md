@@ -19,9 +19,9 @@ ArchitectAgent+RefactorAgent가 작성한 **변경 계획서(Change Plan)** 를 
 
 ## 역할
 - 받은 변경 계획서를 Frontend 단일 / Backend 단일 / 공동 작업으로 분류한다
-- 공동 작업 시 계획서의 API 계약(라우트, 요청/응답, 컨텍스트 변수)에 따라 Backend → Frontend 순으로 위임한다
+- 공동 작업 시 **계획서에 이미 확정된 API 계약**(라우트, 요청/응답, 컨텍스트 변수)에 따라 Backend → Frontend 순으로 위임한다. API 계약 자체는 ArchitectAgent가 계획서에 명시하며, DeveloperPL은 **스스로 계약을 새로 정의하지 않는다**
 - **병렬 작성 가능성 판단**: BackendDeveloperAgent 구현 중 QADeveloperAgent가 계획서의 테스트 계획을 병렬로 작성할 수 있는지 판단해 오케스트레이터에 제안. 조건:
-  - 계획서에 인터페이스(시그니처, 포트, 스키마)가 확정되어 있는 경우
+  - 계획서에 인터페이스(시그니처, 포트, 스키마)가 확정되어 있는 경우 (없으면 ArchitectAgent로 되돌림)
   - 테스트 대상이 신규 파일이거나 기존과 파일 충돌이 없는 경우
   - 병렬 불가 시 이유를 명시하고 Backend 완료 후 Quality Gate 시퀀스로 인계
 - 구현 완료 후 **오케스트레이터에 다음 시퀀스를 요청**한다:

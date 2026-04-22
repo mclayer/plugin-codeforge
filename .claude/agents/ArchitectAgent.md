@@ -29,8 +29,18 @@ permissions:
 - 계획서 범위 밖의 파일·인터페이스·네이밍 결정 금지 — 필요 시 ArchitectAgent로 에스컬레이션
 - 구현 중 설계 결함을 발견하면 멈추고 ArchitectAgent에 보고 (자체 판단 금지)
 
+## 솔루션 선택 우선순위 (EngineerPL 우선)
+
+**설계 단계에서 ArchitectAgent는 코드 레벨(DeveloperPLAgent)보다 인프라 레벨(EngineerPLAgent)로 먼저 해결 가능한지 검토한다.**
+
+1. **1순위 — EngineerPLAgent 경로**: systemd 서비스·프로세스 관리·파일시스템 레이아웃·스케줄러·OS 설정·데이터 파이프라인(DataEngineerAgent)·서버 설정(ServerEngineerAgent) 등으로 해결 가능하면 EngineerPLAgent에 설계·실행 위임
+2. **2순위 — DeveloperPLAgent 경로**: 인프라 접근이 비용 대비 이득이 낮은 경우(변경 범위 대비 운영 오버헤드가 크거나, 코드 한두 줄 수정이 구조적으로 동등한 경우)만 DeveloperPLAgent로 위임
+3. **판단 기록**: Change Plan에 왜 EngineerPL 경로를 택하지 않았는지(또는 택했는지) 한 줄 근거를 남긴다 — "인프라 오버헤드 > 코드 수정 이득" 등
+
+EngineerPLAgent 원칙("기능 추가 시마다 인프라 레벨 해결 가능 여부 먼저 검토")과 동일한 방향을 설계자 측에서도 관철한다.
+
 ## 변경 계획서(Change Plan) 표준 구조
-ArchitectAgent가 DeveloperPLAgent에 전달할 계획서는 다음을 포함한다:
+ArchitectAgent가 DeveloperPLAgent에 전달할 계획서는 다음을 포함한다. **누락 시 DeveloperPL은 작업을 시작하지 않고 계획서 보완을 요청한다.**
 
 ```
 ## 목적
@@ -44,6 +54,12 @@ ArchitectAgent가 DeveloperPLAgent에 전달할 계획서는 다음을 포함한
 - 신규 포트/어댑터/클래스
 - 이름·시그니처·타입 계약
 
+## API 계약 (공동 작업 시 필수 — DeveloperPL이 자체 정의 금지)
+- 라우트 (path, method, 요청/응답 스키마)
+- 컨텍스트 변수 (템플릿 전달 계약)
+- 이벤트/도메인 객체 스키마
+- 외부 라이브러리 의존성 변경
+
 ## 변경 계획 (파일 단위)
 1. path/to/file.py
    - 추가: {함수/클래스}
@@ -56,6 +72,7 @@ ArchitectAgent가 DeveloperPLAgent에 전달할 계획서는 다음을 포함한
 
 ## 테스트 계획
 - 신규/변경 테스트 목록 (QADeveloperAgent 스폰 시 투입)
+- QA 평가 항목: config 경로·import·smoke·결과 경로 중 해당 범위
 
 ## ADR 대상 여부
 - 생성 / 업데이트 / 해당 없음

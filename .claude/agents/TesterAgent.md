@@ -9,6 +9,9 @@ permissions:
     - Bash(ls *)
     - Bash(.venv/bin/pytest *)
     - Bash(.venv/bin/python *)
+  deny:
+    - Write
+    - Edit
 ---
 
 pytest 실행을 전담한다. 테스트 코드를 작성하지 않으며, QADeveloperAgent가 작성한 테스트를 실행하고 결과를 구조화해 **오케스트레이터에 반환**한다. 오케스트레이터가 이 보고를 QADev·Codex 보고와 함께 QualityPLAgent 입력으로 전달하면, QualityPLAgent가 교차 검증한 뒤 루프 진입 여부를 결정한다. FAIL이라도 단독으로 디버그 루프를 트리거하지 않는다.

@@ -67,28 +67,29 @@ PMAgent → DomainPLAgent → ArchitectAgent
 ```
 RefactorAgent는 ArchitectAgent 직속 공동 작업자로, **변경 계획서 작성** 단계와 **계획서 내 선행 리팩토링 실행** 단계 모두에 참여한다. DeveloperPLAgent 이하는 계획서를 받아 구현만 수행한다.
 
-### Quality Gate (4단계)
+### Quality Gate (4단계 — 3인 보고 모두 필수)
 ```
-Step 1: 3인 보고 수집 (오케스트레이터가 병렬/순차 스폰)
- ├── QADeveloperAgent      → 테스트 작성 + 커버리지 gap 보고
- ├── CodexReviewerAgent    → Codex 외부 리뷰 (--wait, same-pass 집계)
+Step 1: 3인 보고 수집 (모두 필수, SKIPPED 불허)
+ ├── QADeveloperAgent      → tests/**만 작성, src/** 읽기만 + gap 평가 보고
+ ├── CodexReviewerAgent    → Codex 외부 리뷰 (--wait) + severity 정규화된 보고
  └── TesterAgent           → pytest 실행 + PASS/FAIL 구조화 보고
 
 Step 2: 종합 판단
  └── QualityPLAgent        → 3인 보고를 프롬프트에 투입받아 PASS / FIX / ESCALATE 결정
 ```
 
-### QualityPLAgent FIX 루프 (자동)
-`FIX` 판단 시 오케스트레이터가 최대 3회 반복:
+**Codex 플러그인 필수**: 미설치 시 Quality Gate 진행 불가, 오케스트레이터가 설치 안내 후 중단 보고. QualityPL 산하(QADev/Codex/Tester)는 **src/** 쓰기 권한 없음** — 평가만 수행하고 변경은 Architect+Refactor 계획서 갱신으로만 이루어진다.
+
+### QualityPLAgent FIX 루프 (자동 — 설계 선행)
+`FIX` 판단 시 오케스트레이터가 최대 3회 반복 (매 iteration 동일 시퀀스):
 ```
-ArchitectAgent ↔ RefactorAgent (수정 계획서 갱신)
-   → DeveloperPL(계획서대로 코드 작성)
-   → [선택: QADev/Codex 재스폰]
-   → TesterAgent → QualityPLAgent(재종합)
+Step 1 (설계): ArchitectAgent ↔ RefactorAgent → 변경 계획서 갱신
+Step 2 (구현): DeveloperPL → Backend/Frontend → 계획서대로 코드 작성
+Step 3 (품질): QADev + Codex + Tester 3인 모두 재실행 → QualityPLAgent 재종합
 ```
-- **설계 금지 원칙 유지** — Dev는 새 계획서를 받아 구현만. 설계 판단은 Architect+Refactor가 루프마다 재수립
+- **설계 금지 원칙 유지** — Dev는 새 계획서를 받아 구현만. Quality 계열은 평가만. 설계 변경은 오직 Architect+Refactor의 계획서 갱신으로
+- **3인 재실행은 선택 아님** — 매 iteration 모두 돌린다 (이전과 다른 접근 + 누적 컨텍스트 전달)
 - QualityPLAgent가 **단일 판단자** — TesterAgent FAIL만으로 루프 트리거하지 않음
-- 매 iteration 이전과 다른 접근을 취함
 - 3회 초과 → ESCALATE (사용자에게 보고)
 - PASS → DocsAgent 단계로 진행
 
@@ -98,8 +99,11 @@ ArchitectAgent ↔ RefactorAgent (수정 계획서 갱신)
 - 구현 결정: 각 PL 자율
 - 품질 판단: QualityPLAgent 단독, FIX 시 ArchitectAgent 에스컬레이션
 
-### Write 권한 없는 에이전트
-PMAgent / ArchitectAgent / DeveloperPLAgent / EngineerPLAgent / QualityPLAgent / DomainPLAgent는 Write 권한이 없다. 문서화가 필요하면 **DocsAgent 스폰으로 위임**한다.
+### Write 권한 구조
+**production 코드(src/**)** 쓰기 권한이 있는 에이전트는 오직 **BackendDeveloperAgent · FrontendDeveloperAgent · RefactorAgent** 세 개뿐이다.
+
+- **PL/평가 레이어** (PMAgent / ArchitectAgent / DeveloperPLAgent / EngineerPLAgent / QualityPLAgent / DomainPLAgent): Write 권한 전면 없음. 문서화 필요 시 **DocsAgent 스폰으로 위임**
+- **Quality 계열** (QADeveloperAgent / CodexReviewerAgent / TesterAgent): src/** 수정 불가. QADev만 tests/** 쓰기 가능, Codex/Tester는 read-only. 구조적 결함 발견 시 **QualityPLAgent에 평가 내용 전달**해 Architect+Refactor 계획서 갱신으로 반영
 
 ## ADR (Architecture Decision Records)
 

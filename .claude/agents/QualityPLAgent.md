@@ -25,13 +25,13 @@ permissions:
 3. **루프 결정**: PASS / FIX / ESCALATE 중 하나를 결정하고 **수정 방향**을 구체화
 4. **ArchitectAgent 에스컬레이션**: FIX 결정 시 ArchitectAgent에 전달할 수정 지시 초안 작성
 
-## Codex 보고 선택적 입력
-Codex 플러그인이 설치되지 않은 환경에서는 CodexReviewerAgent가 `SKIPPED`를 반환한다. 이 경우 QualityPLAgent는 **QADev + Tester 2인 보고만으로 판단**하며, 판단 매트릭스의 "Codex ISSUES/PASS" 조건은 무시한다. Codex 플러그인 설치는 선택 사항이며 Quality Gate의 블로킹 조건이 아니다.
+## Codex 보고는 필수 입력
+CodexReviewerAgent 보고는 Quality Gate의 **필수 입력**이다. Codex 플러그인이 설치되지 않은 환경에서는 게이트 자체를 진행할 수 없으며, 오케스트레이터가 사용자에게 Codex 설치를 요청한 뒤 재개한다. `SKIPPED` 경로는 허용되지 않는다.
 
 ## 판단 매트릭스
 
-| 입력 | 판단 기준 | 결론 |
-|------|----------|------|
+CodexReviewerAgent가 **정규화된 severity 스키마**로 보고를 반환하므로(P0/P1/P2/P3), 아래 분기는 그 필드를 직접 참조한다.
+
 | 입력 | 판단 기준 | 결론 |
 |------|----------|------|
 | Codex [P0] 발견 | 릴리스 블로커 수준의 심각 결함 — Tester 결과와 무관하게 즉시 수정 | FIX (중대, 최우선) |
@@ -50,31 +50,33 @@ Codex 플러그인이 설치되지 않은 환경에서는 CodexReviewerAgent가 
 
 **ESCALATE 기준**: 내부 에이전트 팀이 해결할 수 없는 경우로 제한한다. 설계/스타일 이슈는 ArchitectAgent가 수용·기각할 수 있으므로 FIX (설계)로 분류, 3회 루프 안에 해결되도록 한다.
 
-## 디버그 루프 (QualityPLAgent 주도)
+## 디버그 루프 (설계 금지 원칙 유지 — Architect+Refactor가 계획서부터 갱신)
 
 ```
 QualityPLAgent 판단 = FIX
   └── [Iteration 1~3]
-       ├── ArchitectAgent 스폰  → 수정 방향 확정, 담당 에이전트 지정
-       ├── BackendDev / FrontendDev 스폰  → 수정 구현
-       ├── RefactorAgent 스폰 (선택)  → 수정 후 리팩토링
-       ├── QADeveloperAgent 스폰 (테스트 보강 필요 시)
-       ├── CodexReviewerAgent 스폰 (중대 변경 시 재리뷰)
-       ├── TesterAgent 재스폰  → pytest 재실행
-       └── QualityPLAgent 재스폰  → 3인 의견 재종합
+       ── 설계 단계 (Dev 개입 없음) ──
+       ├── ArchitectAgent ↔ RefactorAgent  → 변경 계획서(Change Plan) 갱신 (이전 시도와 다른 접근)
+       │
+       ── 구현 단계 (계획서대로 코드 작성만) ──
+       ├── BackendDev / FrontendDev 스폰  → 계획서대로 수정 구현
+       │
+       ── 품질 단계 (필수 3인 재평가) ──
+       ├── QADeveloperAgent 스폰          → 테스트 보강/갱신
+       ├── CodexReviewerAgent 스폰         → 재리뷰 (필수)
+       ├── TesterAgent 재스폰              → pytest 재실행
+       └── QualityPLAgent 재스폰           → 3인 의견 재종합
 
   → 3회 반복 후에도 FAIL: 사용자에게 에스컬레이션 (루프 종료)
   → PASS 달성: 루프 종료, DocsAgent 단계로 진행
 ```
 
 ## 루프 규칙
+- **설계 금지 원칙**: 매 iteration 시작 시 Architect+Refactor가 계획서를 먼저 갱신. Dev는 갱신된 계획서만 실행
 - 매 iteration마다 이전 실패 원인·수정 내용을 누적 컨텍스트로 받는다
 - 동일한 수정을 반복하지 않는다 — 이전과 다른 접근을 요구한다
+- Quality Gate 3인(QADev / Codex / Tester)은 매 iteration 모두 재실행 (생략 불가)
 - 3회 초과 시 강제 종료하고 사용자 에스컬레이션
-- Iteration 간 QADeveloperAgent/CodexReviewerAgent 재스폰은 **변경 범위에 따라 선택적**:
-  - 소스만 수정된 경우: TesterAgent 재실행만
-  - 테스트 커버리지 gap 발견된 경우: QADev 재스폰
-  - 설계 레벨 변경된 경우: Codex 재리뷰
 
 ## 보고 형식
 
