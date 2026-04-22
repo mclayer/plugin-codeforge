@@ -18,10 +18,10 @@ User
       ├── DocsAgent                        # ADR, README 등 작업 전반의 문서화 담당
       ├── DomainPLAgent                    # 암호화폐 트레이딩 도메인 해석 및 스펙 변환
       └── ArchitectAgent                   # 설계/패턴 결정, 기술 최종 의사결정
+           ├── RefactorAgent                 # Clean Architecture 리팩토링 (설계 개선 직속 도구)
            ├── DeveloperPLAgent             # 구현 가능성, 레이어 계약, 코드 품질 관리
            │    ├── FrontendDeveloperAgent
-           │    ├── BackendDeveloperAgent
-           │    └── RefactorAgent
+           │    └── BackendDeveloperAgent
            ├── QualityPLAgent               # 품질 PL — 3인 의견 종합 + 디버그 루프 결정
            │    ├── QADeveloperAgent         # 테스트 코드 작성 전담
            │    ├── CodexReviewerAgent       # 외부 Codex(GPT-5) 모델 리뷰
@@ -48,11 +48,14 @@ User
 
 ### 스폰 시퀀스 (표준)
 ```
-PMAgent → DomainPLAgent → ArchitectAgent → DeveloperPLAgent
-       → Frontend/BackendDeveloperAgent → RefactorAgent
+PMAgent → DomainPLAgent → ArchitectAgent
+       → [RefactorAgent]  ← ArchitectAgent가 설계 개선 필요 판단 시 선제 호출
+       → DeveloperPLAgent → Frontend/BackendDeveloperAgent
+       → [RefactorAgent]  ← 구현 후 패스 (Clean Architecture 강제)
        → [Quality Gate]
        → DocsAgent
 ```
+RefactorAgent는 ArchitectAgent 직속 도구로, 설계 개선 목적의 **선제 리팩토링**과 구현 완료 후 **후행 리팩토링** 양쪽에 호출될 수 있다.
 
 ### Quality Gate (4단계)
 ```
