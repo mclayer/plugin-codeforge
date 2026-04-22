@@ -33,6 +33,11 @@ User
 
 **에이전트별 상세 원칙·역할·보고 포맷은 각 `.claude/agents/<AgentName>.md` 파일을 참조한다.** CLAUDE.md에는 복제하지 않는다.
 
+### 설계와 구현의 분리 (SI 프로세스)
+- **설계 단계**: ArchitectAgent + RefactorAgent가 **현재 코드 분석 + 변경 계획서(Change Plan) 작성**. 파일별 수정 범위·인터페이스·시그니처·이름까지 구현 상세를 확정한다
+- **구현 단계**: DeveloperPLAgent 이하(Frontend/BackendDeveloperAgent)는 계획서 그대로 **코드 작성만** 수행. 설계 의사결정 금지, 계획서 결함 발견 시 즉시 ArchitectAgent에 에스컬레이션
+- **품질 단계**: QualityPLAgent 계열이 QA/Codex/Tester 3인 보고 종합
+
 ## 오케스트레이션 규칙
 
 ### 플랫폼 제약
@@ -48,14 +53,19 @@ User
 
 ### 스폰 시퀀스 (표준)
 ```
+─── 설계 단계 (ArchitectAgent가 결정, Dev는 개입 없음) ───
 PMAgent → DomainPLAgent → ArchitectAgent
-       → [RefactorAgent]  ← ArchitectAgent가 설계 개선 필요 판단 시 선제 호출
+       ↔ RefactorAgent (공동 작업: 기존 코드 분석, 변경 계획서 수립)
+       → RefactorAgent (선행 리팩토링 실행: 계획서의 "선행 작업" 파트)
+
+─── 구현 단계 (계획서 기반 코드 작성만) ───
        → DeveloperPLAgent → Frontend/BackendDeveloperAgent
-       → [RefactorAgent]  ← 구현 후 패스 (Clean Architecture 강제)
-       → [Quality Gate]
+
+─── 품질 단계 ───
+       → [Quality Gate: QADev + Codex + Tester → QualityPL]
        → DocsAgent
 ```
-RefactorAgent는 ArchitectAgent 직속 도구로, 설계 개선 목적의 **선제 리팩토링**과 구현 완료 후 **후행 리팩토링** 양쪽에 호출될 수 있다.
+RefactorAgent는 ArchitectAgent 직속 공동 작업자로, **변경 계획서 작성** 단계와 **계획서 내 선행 리팩토링 실행** 단계 모두에 참여한다. DeveloperPLAgent 이하는 계획서를 받아 구현만 수행한다.
 
 ### Quality Gate (4단계)
 ```
@@ -71,9 +81,12 @@ Step 2: 종합 판단
 ### QualityPLAgent FIX 루프 (자동)
 `FIX` 판단 시 오케스트레이터가 최대 3회 반복:
 ```
-ArchitectAgent(수정 방향) → Dev(구현) → [선택: Refactor/QADev/Codex 재스폰]
-                           → TesterAgent → QualityPLAgent(재종합)
+ArchitectAgent ↔ RefactorAgent (수정 계획서 갱신)
+   → DeveloperPL(계획서대로 코드 작성)
+   → [선택: QADev/Codex 재스폰]
+   → TesterAgent → QualityPLAgent(재종합)
 ```
+- **설계 금지 원칙 유지** — Dev는 새 계획서를 받아 구현만. 설계 판단은 Architect+Refactor가 루프마다 재수립
 - QualityPLAgent가 **단일 판단자** — TesterAgent FAIL만으로 루프 트리거하지 않음
 - 매 iteration 이전과 다른 접근을 취함
 - 3회 초과 → ESCALATE (사용자에게 보고)
