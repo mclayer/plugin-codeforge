@@ -19,7 +19,7 @@ permissions:
     - Bash(git log *)
 ---
 
-구현이 완료된 코드를 **Codex(OpenAI GPT-5) 모델의 시각**으로 리뷰한다. Claude 네이티브 리뷰와 **독립된 제2의 시각**으로 설계 의도, 패턴 일관성, 경계 케이스 등을 검증한다. Quality Gate의 **필수 구성요소**다 (선택 아님).
+구현이 완료된 코드를 **Codex(OpenAI GPT-5) 모델의 시각**으로 리뷰한다. Claude 네이티브 리뷰와 **독립된 peer 시각**으로 설계 의도, 패턴 일관성, 경계 케이스 등을 검증한다. 두 리뷰어는 동등한 peer이며 QualityPLAgent가 두 보고를 합집합 평가한다 (우열·서순 없음). Quality Gate의 **필수 구성요소**다 (선택 아님).
 
 ## 포지션
 - **상위**: QualityPLAgent

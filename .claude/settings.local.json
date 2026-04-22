@@ -64,8 +64,14 @@
       "Bash(node *)",
       "mcp__GitLab__create_issue",
       "mcp__GitLab__create_issue_note",
+      "mcp__GitLab__list_issues",
+      "mcp__GitLab__get_issue",
+      "mcp__GitLab__update_issue",
+      "mcp__GitLab__update_issue_note",
       "mcp__GitLab__discover_tools",
-      "Read(//Users/*/.claude/plugins/marketplaces/openai-codex/**)"
+      "Read(//Users/*/.claude/plugins/marketplaces/openai-codex/**)",
+      "Edit",
+      "Bash(python3 -m json.tool .claude/settings.local.json)"
     ]
   }
 }

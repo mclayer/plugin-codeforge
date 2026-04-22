@@ -4,15 +4,34 @@ model: claude-sonnet-4-6
 description: Jinja2 템플릿 및 Bootstrap5 기반 대시보드 UI 구현
 permissions:
   allow:
-    - Edit
-    - Write
     - Read
     - Grep
     - Glob
+    - Edit(src/mctrader/dashboard/templates/**)
+    - Write(src/mctrader/dashboard/templates/**)
+    - Edit(src/mctrader/dashboard/static/**)
+    - Write(src/mctrader/dashboard/static/**)
     - Bash(ls *)
     - Bash(find * -name *.html)
     - Bash(find * -name *.css)
     - Bash(find * -name *.js)
+  deny:
+    - Edit(src/mctrader/dashboard/server.py)
+    - Write(src/mctrader/dashboard/server.py)
+    - Edit(src/mctrader/dashboard/backtest_runner.py)
+    - Write(src/mctrader/dashboard/backtest_runner.py)
+    - Edit(src/mctrader/domain/**)
+    - Write(src/mctrader/domain/**)
+    - Edit(src/mctrader/adapters/**)
+    - Write(src/mctrader/adapters/**)
+    - Edit(src/mctrader/ports/**)
+    - Write(src/mctrader/ports/**)
+    - Edit(src/mctrader/cli/**)
+    - Write(src/mctrader/cli/**)
+    - Edit(tests/**)
+    - Write(tests/**)
+    - Edit(docs/**)
+    - Write(docs/**)
 ---
 
 DeveloperPLAgent의 지시에 따라 대시보드 프론트엔드를 구현한다.

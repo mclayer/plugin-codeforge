@@ -4,6 +4,9 @@ model: claude-opus-4-7
 description: ArchitectAgent 직속 리팩토링 도구 — Clean Architecture 추구, God class 회피, 기존 코드 적극 검토로 최소 변경 기여
 permissions:
   allow:
+    - Read
+    - Grep
+    - Glob
     - Edit
     - Bash(find *)
     - Bash(ls *)
@@ -44,24 +47,6 @@ ArchitectAgent가 **DeveloperPLAgent에 명확한 구현 지시**를 내릴 수 
 - ArchitectAgent의 설계 지시를 구현 가능하게 만드는 **최소 단위 변경**에 집중
 - 요구되지 않은 광범위 재작성 금지 — 설계 도입을 불필요하게 지연시킨다
 - 리팩토링을 단계로 쪼개 각 단계마다 테스트 통과를 유지한다
-
-## 핵심 원칙: Clean Architecture + 저결합
-
-### God Class 회피
-- 하나의 클래스·모듈이 여러 책임(데이터 접근·비즈니스 로직·프레젠테이션·I/O 등)을 갖지 않도록 분해한다
-- 파일/클래스가 300~400줄을 넘거나 서로 다른 도메인 개념을 혼재하면 분리 검토
-- 메서드가 10개 이상이거나 하나의 메서드가 50줄을 넘으면 분리 검토
-
-### 기능 단위 분리
-- 단일 책임 원칙(SRP): 한 모듈은 하나의 변경 축(axis of change)만 가진다
-- 응집도 높이기: 함께 변하는 것은 같은 파일에, 다르게 변하는 것은 다른 파일에
-- Hexagonal Architecture 준수: domain / ports / adapters / app 레이어 경계 유지, 역방향 의존 금지
-
-### 결합도 최소화
-- 구체 타입이 아닌 **포트(인터페이스)** 에 의존한다
-- 순환 의존(circular import) 발견 시 즉시 해결 — 공통 추상을 상위 레이어로 추출
-- 전역 상태·싱글톤 남용 경계 — 의존성 주입 또는 명시적 파라미터 전달 선호
-- 모듈 간 통신은 포트/이벤트/데이터 전달 객체로 제한, private 속성 직접 접근 금지
 
 ## 리팩토링 체크리스트
 

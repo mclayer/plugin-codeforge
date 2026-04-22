@@ -101,10 +101,12 @@ Step 3 (품질): QADev + Claude + Codex + Tester 4인 모두 재실행 → Quali
 - **설계 결정은 ArchitectAgent 단독** — 계획서의 파일·인터페이스·시그니처·API 계약 모두 확정. PL들은 실행 조율만 수행하며 설계 범위 확장·결함 발견 시 반드시 ArchitectAgent로 되돌린다
 - 품질 판단: QualityPLAgent 단독, FIX 시 Architect+Refactor 계획서 갱신으로 에스컬레이션
 
-### Write 권한 구조
-- **신규 파일 생성 + 편집**: `BackendDeveloperAgent` · `FrontendDeveloperAgent`만 (production 코드 src/**)
-- **기존 파일 편집만** (`Write` 없음): `RefactorAgent` — 파일 분리·신규 모듈이 필요하면 ArchitectAgent 계획서가 BackendDev/FrontendDev에 위임
-- **tests/** 쓰기**: `QADeveloperAgent`만 (src/**는 읽기만)
+### Write 권한 구조 (path-scoped 강제)
+권한은 **prose 금지**가 아닌 **frontmatter의 path scoping**으로 강제된다:
+- **`BackendDeveloperAgent`**: `Edit(src/**)` + `Write(src/**)` / deny `tests/**`, `templates/**`, `static/**`, `docs/**`
+- **`FrontendDeveloperAgent`**: `Edit|Write(src/mctrader/dashboard/templates/**)` + `Edit|Write(src/mctrader/dashboard/static/**)` / deny `server.py`, `backtest_runner.py`, `domain/**`, `adapters/**`, `ports/**`, `cli/**`, `tests/**`
+- **`QADeveloperAgent`**: `Edit|Write(tests/**)` / deny `Edit|Write(src/**)` (production 읽기만)
+- **`RefactorAgent`**: `Edit`만 (파일 생성 `Write` 없음) — 파일 분리·신규 모듈은 BackendDev/FrontendDev가 담당
 - **PL/평가 레이어** (`PMAgent` / `ArchitectAgent` / `DeveloperPLAgent` / `EngineerPLAgent` / `QualityPLAgent` / `DomainPLAgent`): Write/Edit 전면 없음. 문서화 필요 시 DocsAgent 위임
 - **읽기 전용 평가**: `ClaudeReviewerAgent` / `CodexReviewerAgent` / `TesterAgent` — 결함 발견 시 QualityPLAgent에 평가 전달, 변경은 Architect+Refactor 계획서 갱신으로만
 

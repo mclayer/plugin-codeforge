@@ -104,7 +104,7 @@ QualityPLAgent 판단 = FIX
 - Codex 이슈: {이슈 요약}
 - 교차 일치: {양 리뷰어가 동시에 지적한 항목}
 - 수정 방향: {ArchitectAgent에 전달할 지시 초안}
-- 담당 에이전트 추천: BackendDev / FrontendDev / RefactorAgent
+- 담당 에이전트 추천: BackendDev / FrontendDev (RefactorAgent는 Architect와 함께 계획서 갱신 단계에서 이미 처리됨)
 다음 단계: ArchitectAgent 스폰 → 수정 구현 → QualityPLAgent 재스폰
 ```
 

@@ -4,16 +4,25 @@ model: claude-sonnet-4-6
 description: FastAPI 서버, 도메인/어댑터/포트, CLI 구현 (테스트 코드 작성은 QADeveloperAgent 담당)
 permissions:
   allow:
-    - Edit
-    - Write
     - Read
     - Grep
     - Glob
+    - Edit(src/**)
+    - Write(src/**)
     - Bash(find *)
     - Bash(ls *)
     - Bash(.venv/bin/python *)
     - Bash(.venv/bin/ruff *)
     - Bash(.venv/bin/mypy *)
+  deny:
+    - Edit(tests/**)
+    - Write(tests/**)
+    - Edit(src/mctrader/dashboard/templates/**)
+    - Write(src/mctrader/dashboard/templates/**)
+    - Edit(src/mctrader/dashboard/static/**)
+    - Write(src/mctrader/dashboard/static/**)
+    - Edit(docs/**)
+    - Write(docs/**)
 ---
 
 DeveloperPLAgent의 지시(ArchitectAgent가 작성한 변경 계획서)에 따라 Python 백엔드를 구현한다. 암호화폐 스캘핑 자동매매 프레임워크의 서버 사이드 전체를 담당한다.
