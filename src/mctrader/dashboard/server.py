@@ -5,6 +5,7 @@ import json
 import os
 import time
 import uuid
+from contextlib import asynccontextmanager
 from dataclasses import asdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,6 +19,8 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from mctrader.dashboard.backtest_runner import BacktestRunParams, run_backtest
+from mctrader.dashboard.cache import dashboard_cache
+from mctrader.dashboard.db import close_duckdb, init_duckdb
 from mctrader.dashboard.progress_reporter import JobStoreProgressReporter
 from mctrader.dashboard.collector_status import build_collector_status, discover_symbols
 from mctrader.dashboard.data_query import MAX_ROWS, QueryResult, query
@@ -134,8 +137,161 @@ def _get_tz(request: Request) -> str:
 _STATIC_DIR = Path(__file__).parent / "static"
 
 
+# ---------------------------------------------------------------------------
+# Cache TTL constants (milliseconds)
+# ---------------------------------------------------------------------------
+
+# TTL 근거: ADR-017 Dashboard Cache Strategy + DomainExpertAgent 지정 허용치
+# 실시간 TTL은 스캘핑 의사결정 지연 허용 범위, 과거 TTL은 파티션 immutability.
+
+# 인덱스 페이지: run 목록은 신규 run 등장 주기(사람 단위 분) 고려 → 60s
+_TTL_INDEX_DATA_MS = 60_000
+
+# Collector status: 운영 모니터링, 수 초 지연 허용 → 5s
+_TTL_COLLECTOR_STATUS_MS = 5_000
+
+# Imbalance series: 임밸런스 윈도우(1~5s) 대비 허용 지연 500ms, 종료 hour는 immutable이라 5분 롱캐시
+_TTL_IMBALANCE_REALTIME_MS = 500
+_TTL_IMBALANCE_HISTORICAL_MS = 300_000
+
+# Trade tape: 체결 빈도 관찰용, 초당 수십건 수준에서 250ms 지연 허용
+_TTL_TAPE_REALTIME_MS = 250
+_TTL_TAPE_HISTORICAL_MS = 60_000
+
+# CVD (cumulative volume delta): tape과 동일 주기(체결 기반)
+_TTL_CVD_REALTIME_MS = 250
+_TTL_CVD_HISTORICAL_MS = 60_000
+
+# Orderbook snapshot: ts>0 과거 시점은 1s 캐시, ts=0(실시간)은 호출자에서 bypass
+_TTL_SNAPSHOT_REALTIME_MS = 1_000
+_TTL_SNAPSHOT_HISTORICAL_MS = 0  # Historical snapshots bypass with 0 TTL
+
+# ---------------------------------------------------------------------------
+# 캐시된 데이터 조회 헬퍼
+#
+# FastAPI 핸들러는 async def 이므로 @dashboard_cache(동기 래퍼)를 직접 붙이면
+# 코루틴 객체가 캐시되는 문제가 생긴다.
+# 해결: 데이터 조회 로직을 동기 함수로 분리 → @dashboard_cache 적용 →
+#       핸들러가 동기 함수를 호출 (FastAPI는 threadpool에서 동기 함수를 실행).
+#
+# get_bucket_hour 헬퍼: (start_ts, end_ts) 기준 UTC hour 추출.
+# end_ts가 0이면 현재 시각 기준 실시간으로 간주 → None 반환 (실시간 TTL 사용).
+# ---------------------------------------------------------------------------
+
+def _hour_from_end_ts(end_ts: int) -> int | None:
+    """end_ts(epoch ms)에서 UTC hour를 추출. 0이면 None(실시간) 반환."""
+    if end_ts <= 0:
+        return None
+    return time.gmtime(end_ts / 1000).tm_hour
+
+
+@dashboard_cache(ttl_realtime_ms=_TTL_INDEX_DATA_MS)
+def _cached_index_data(result_dir: str) -> list[Any]:
+    """인덱스 페이지용 run 목록."""
+    run_ids = discover_runs(result_dir)
+    runs = []
+    for run_id in run_ids:
+        try:
+            runs.append(load_metrics(os.path.join(result_dir, run_id)))
+        except Exception:
+            pass
+    return runs
+
+
+@dashboard_cache(ttl_realtime_ms=_TTL_COLLECTOR_STATUS_MS)
+def _cached_collector_status(data_root: str) -> Any:
+    """Collector 상태."""
+    return build_collector_status(data_root)
+
+
+@dashboard_cache(
+    ttl_realtime_ms=_TTL_IMBALANCE_REALTIME_MS,
+    ttl_historical_ms=_TTL_IMBALANCE_HISTORICAL_MS,
+    get_bucket_hour=lambda data_root, symbol, market, start_ts, end_ts, bucket_ms, imbalance_depth: (
+        _hour_from_end_ts(end_ts)
+    ),
+)
+def _cached_imbalance_series(
+    data_root: str,
+    symbol: str,
+    market: str,
+    start_ts: int,
+    end_ts: int,
+    bucket_ms: int,
+    imbalance_depth: int,
+) -> Any:
+    """임밸런스 시리즈."""
+    return build_imbalance_series(data_root, symbol, market, start_ts, end_ts, bucket_ms, imbalance_depth)
+
+
+@dashboard_cache(
+    ttl_realtime_ms=_TTL_TAPE_REALTIME_MS,
+    ttl_historical_ms=_TTL_TAPE_HISTORICAL_MS,
+    get_bucket_hour=lambda data_root, symbol, market, start_ts, end_ts, limit: (
+        _hour_from_end_ts(end_ts)
+    ),
+)
+def _cached_tape(
+    data_root: str,
+    symbol: str,
+    market: str,
+    start_ts: int,
+    end_ts: int,
+    limit: int,
+) -> Any:
+    """Trade tape."""
+    return build_tape(data_root, symbol, market, start_ts, end_ts, limit)
+
+
+@dashboard_cache(
+    ttl_realtime_ms=_TTL_CVD_REALTIME_MS,
+    ttl_historical_ms=_TTL_CVD_HISTORICAL_MS,
+    get_bucket_hour=lambda data_root, symbol, market, start_ts, end_ts: (
+        _hour_from_end_ts(end_ts)
+    ),
+)
+def _cached_cvd(
+    data_root: str,
+    symbol: str,
+    market: str,
+    start_ts: int,
+    end_ts: int,
+) -> Any:
+    """CVD."""
+    return build_cvd(data_root, symbol, market, start_ts, end_ts)
+
+
+@dashboard_cache(
+    ttl_realtime_ms=_TTL_SNAPSHOT_REALTIME_MS,
+    ttl_historical_ms=_TTL_SNAPSHOT_HISTORICAL_MS,
+    get_bucket_hour=lambda data_root, symbol, market, as_of_ts, depth, imbalance_depth: (
+        None if as_of_ts <= 0 else _hour_from_end_ts(as_of_ts)
+    ),
+)
+def _cached_snapshot(
+    data_root: str,
+    symbol: str,
+    market: str,
+    as_of_ts: int,
+    depth: int,
+    imbalance_depth: int,
+) -> Any:
+    """Orderbook snapshot."""
+    return build_snapshot_view(data_root, symbol, market, as_of_ts, depth, imbalance_depth)
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):  # type: ignore[type-arg]
+    """DuckDB 연결을 프로세스 수명에 맞춰 초기화/정리."""
+    init_duckdb()
+    try:
+        yield
+    finally:
+        close_duckdb()
+
+
 def create_app(result_dir: str) -> FastAPI:
-    app = FastAPI(title="mctrader Dashboard")
+    app = FastAPI(title="mctrader Dashboard", lifespan=_lifespan)
     app.mount("/static", StaticFiles(directory=str(_STATIC_DIR)), name="static")
     templates = Jinja2Templates(directory=str(_TEMPLATES_DIR))
 
@@ -152,13 +308,7 @@ def create_app(result_dir: str) -> FastAPI:
     @app.get("/", response_class=HTMLResponse)
     async def index(request: Request) -> HTMLResponse:
         tz = _get_tz(request)
-        run_ids = discover_runs(result_dir)
-        runs = []
-        for run_id in run_ids:
-            try:
-                runs.append(load_metrics(os.path.join(result_dir, run_id)))
-            except Exception:
-                pass
+        runs = _cached_index_data(result_dir)
         return templates.TemplateResponse(request, "index.html", {"runs": runs, "tz": tz})
 
     @app.get("/run/{run_id}", response_class=HTMLResponse)
@@ -355,7 +505,7 @@ def create_app(result_dir: str) -> FastAPI:
     async def collector_page(request: Request) -> HTMLResponse:
         tz = _get_tz(request)
         data_root = _resolve_data_root()
-        status = build_collector_status(data_root)
+        status = _cached_collector_status(data_root)
         return templates.TemplateResponse(request, "collector.html", {
             "status": status,
             "tz": tz,
@@ -364,7 +514,7 @@ def create_app(result_dir: str) -> FastAPI:
     @app.get("/api/collector/status")
     async def api_collector_status() -> JSONResponse:
         data_root = _resolve_data_root()
-        status = build_collector_status(data_root)
+        status = _cached_collector_status(data_root)
         return JSONResponse({
             "process": {
                 "running": status.process.running,
@@ -503,7 +653,9 @@ def create_app(result_dir: str) -> FastAPI:
             raise HTTPException(400, "symbol required")
         data_root = _resolve_data_root()
         as_of = ts if ts > 0 else int(time.time() * 1000)
-        view = build_snapshot_view(data_root, symbol, market, as_of, depth, imbalance_depth)
+        # ts=0(실시간)이면 _cached_snapshot 내 get_bucket_hour가 None을 반환해 bypass됨.
+        # ts>0(과거)이면 해당 hour가 현재와 다른 경우 1s 히스토리컬 캐시 적용.
+        view = _cached_snapshot(data_root, symbol, market, as_of, depth, imbalance_depth)
         return JSONResponse(dataclasses.asdict(view))
 
     @app.get("/api/data/orderbook/imbalance-series")
@@ -519,7 +671,7 @@ def create_app(result_dir: str) -> FastAPI:
             raise HTTPException(400, "symbol required")
         data_root = _resolve_data_root()
         effective_end = end_ts if end_ts > 0 else int(time.time() * 1000)
-        points = build_imbalance_series(
+        points = _cached_imbalance_series(
             data_root, symbol, market, start_ts, effective_end, bucket_ms, imbalance_depth
         )
         return JSONResponse([dataclasses.asdict(p) for p in points])
@@ -536,7 +688,7 @@ def create_app(result_dir: str) -> FastAPI:
             raise HTTPException(400, "symbol required")
         data_root = _resolve_data_root()
         effective_end = end_ts if end_ts > 0 else int(time.time() * 1000)
-        entries = build_tape(data_root, symbol, market, start_ts, effective_end, limit)
+        entries = _cached_tape(data_root, symbol, market, start_ts, effective_end, limit)
         return JSONResponse([dataclasses.asdict(e) for e in entries])
 
     @app.get("/api/data/trades/cvd")
@@ -550,7 +702,7 @@ def create_app(result_dir: str) -> FastAPI:
             raise HTTPException(400, "symbol required")
         data_root = _resolve_data_root()
         effective_end = end_ts if end_ts > 0 else int(time.time() * 1000)
-        points = build_cvd(data_root, symbol, market, start_ts, effective_end)
+        points = _cached_cvd(data_root, symbol, market, start_ts, effective_end)
         return JSONResponse([dataclasses.asdict(p) for p in points])
 
     return app

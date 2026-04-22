@@ -65,17 +65,28 @@ def trade_root(tmp_path):
     return root
 
 
+@pytest.fixture(autouse=True)
+def _init_duckdb():
+    """각 테스트 전에 DuckDB 싱글톤을 초기화하고 테스트 후 정리한다."""
+    from mctrader.dashboard.db import close_duckdb, init_duckdb
+    init_duckdb()
+    yield
+    close_duckdb()
+
+
 class TestQueryOrderbook:
     def test_no_files(self, tmp_path):
         result = query(str(tmp_path), "orderbook_diff", "BTC_KRW", 0, 9999)
-        assert result.total_count == 0
+        # LIMIT+1 기법: 파일 없으면 early return, total_count=None
+        assert result.total_count is None
         assert result.returned_count == 0
         assert result.rows == []
         assert result.truncated is False
 
     def test_returns_matching_rows(self, orderbook_root):
         result = query(orderbook_root, "orderbook_diff", "BTC_KRW", 1000, 1002)
-        assert result.total_count == 3
+        # total_count는 None (COUNT 쿼리 제거)
+        assert result.total_count is None
         assert result.returned_count == 3
         assert [r["ts"] for r in result.rows] == [1000, 1001, 1002]
         first = result.rows[0]
@@ -84,19 +95,21 @@ class TestQueryOrderbook:
 
     def test_respects_limit(self, orderbook_root):
         result = query(orderbook_root, "orderbook_diff", "BTC_KRW", 1000, 9999, limit=2)
-        assert result.total_count == 5
+        # 전체 5행 중 limit=2 → LIMIT+1=3행 조회 → 3행이 돌아오면 truncated=True
+        assert result.total_count is None
         assert result.returned_count == 2
         assert result.truncated is True
 
     def test_filters_by_symbol(self, orderbook_root):
         result = query(orderbook_root, "orderbook_diff", "ETH_KRW", 0, 9999)
-        assert result.total_count == 0
+        assert result.returned_count == 0
+        assert result.rows == []
 
 
 class TestQueryTrade:
     def test_returns_trade_rows(self, trade_root):
         result = query(trade_root, "trade", "ETH_KRW", 2000, 2002)
-        assert result.total_count == 3
+        assert result.total_count is None
         assert result.returned_count == 3
         first = result.rows[0]
         assert "price" in first

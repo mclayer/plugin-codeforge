@@ -193,6 +193,9 @@ Accepted | Deprecated | Superseded by #NNN
 - [#15 ADR-014](https://gitlab.com/mctrader1/mctrader/-/work_items/15) — 에이전트 팀 구조 재편 (Developer 계열 분리)
 - [#16 ADR-015](https://gitlab.com/mctrader1/mctrader/-/work_items/16) — 시각화 뷰 레이어 도입 (Ladder/Tape/Imbalance 아키텍처)
 - [#17 ADR-016](https://gitlab.com/mctrader1/mctrader/-/work_items/17) — TesterAgent 신설 및 자동 디버그 루프 도입
+- [#18 ADR-017](https://gitlab.com/mctrader1/mctrader/-/work_items/18) — Dashboard DuckDB Connection & Query Layer (싱글톤 + LIMIT+1)
+- [#19 ADR-018](https://gitlab.com/mctrader1/mctrader/-/work_items/19) — Dashboard Cache Strategy (TTL + 파티션 경계 무효화)
+- [#20 ADR-019](https://gitlab.com/mctrader1/mctrader/-/work_items/20) — Orderbook Snapshot Lookback Semantics (30분 윈도우)
 
 ## Domain Knowledge / 도메인 지식
 

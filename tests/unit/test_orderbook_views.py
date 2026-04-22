@@ -8,10 +8,19 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
+from mctrader.dashboard.db import close_duckdb, init_duckdb
 from mctrader.dashboard.views.orderbook_views import (
     build_imbalance_series,
     build_snapshot_view,
 )
+
+
+@pytest.fixture(autouse=True)
+def _duckdb_lifecycle():
+    """build_imbalance_series가 get_duckdb()를 직접 사용하므로 각 테스트마다 초기화/정리."""
+    init_duckdb()
+    yield
+    close_duckdb()
 
 _OB_SCHEMA = pa.schema([
     pa.field("ts", pa.int64()),
