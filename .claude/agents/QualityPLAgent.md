@@ -44,7 +44,7 @@ ClaudeReviewerAgent·CodexReviewerAgent 모두 **정규화된 severity 스키마
 | Tester PASS + 리뷰어 SUGGESTIONS (non-blocking, P3 이하) | 경미한 개선 제안, 기능·품질 영향 없음 | PASS (제안만 기록) |
 | Tester FAIL + 양 리뷰어 PASS | 테스트 실패만 존재 → 전통적 디버그 루프 | FIX (기능) |
 | Tester PASS + 양 리뷰어 PASS + QA gap 없음 | 전 영역 통과 | PASS |
-| QA gap 존재 (테스트 누락) | 커버리지 부족 — QADev 재스폰 요청 | FIX (테스트 보강) |
+| QA gap 존재 (테스트 누락) | 계획서의 테스트 계획 보강 필요 — **Architect+Refactor 계획서 갱신 후** QADev 재스폰 (QADev는 계획서 범위 밖 테스트 작성 불가) | FIX (테스트 보강) |
 | 3회 FIX 루프 후에도 해결 실패 | 자동 루프 한계 | ESCALATE (사용자 판단) |
 
 **Blocking vs Non-blocking 구분 기준** (Claude/Codex 공통 severity 태그 기반):
@@ -68,7 +68,7 @@ QualityPLAgent 판단 = FIX
        ── 품질 단계 (필수 4인 재평가) ──
        ├── QADeveloperAgent 스폰          → 테스트 보강/갱신
        ├── ClaudeReviewerAgent 스폰        → 재리뷰 (필수)
-       ├── CodexReviewerAgent 스폰         → 재리뷰 (필수, Codex 설치 시)
+       ├── CodexReviewerAgent 스폰         → 재리뷰 (필수 — 미설치 시 루프 중단·사용자 에스컬레이션, 예외 없음)
        ├── TesterAgent 재스폰              → pytest 재실행
        └── QualityPLAgent 재스폰           → 4인 의견 재종합
 
