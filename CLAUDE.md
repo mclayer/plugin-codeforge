@@ -48,25 +48,64 @@ User
 오케스트레이터는 구현 에이전트(FrontendDeveloperAgent/BackendDeveloperAgent/RefactorAgent 등)를 스폰하기 전에 **반드시 PMAgent를 먼저 스폰**한다. PMAgent 출력:
 1. 태스크 유형 분류
 2. 필요 에이전트 목록 및 스폰 순서
-3. 생략 가능 에이전트와 그 이유
+3. 생략 가능 에이전트와 그 이유 (**Quality Gate 5인은 생략 불가 — 아래 참조**)
 
 "작은 수정이라 생략" 판단은 오케스트레이터 권한 밖이다.
 
-### 스폰 시퀀스 (표준)
+#### 절대 생략 불가 에이전트 (Never-skippable)
+PMAgent의 "생략 가능" 판단은 **아래 에이전트에 절대 적용할 수 없다**:
+- **`QADeveloperAgent`** — 모든 변경에 테스트 계획 실행 필수
+- **`ClaudeReviewerAgent`** — Claude 네이티브 리뷰 필수
+- **`CodexReviewerAgent`** — Codex 외부 리뷰 필수
+- **`TesterAgent`** — pytest 실행 필수
+- **`QualityPLAgent`** — 4인 보고 종합 판단 필수
+
+PMAgent는 DomainPL·DocsAgent 등 외곽 에이전트의 조건부 생략만 제안할 수 있다.
+
+### 스폰 시퀀스 (표준 — 2개 분기)
+
+ArchitectAgent가 "EngineerPL 우선" 원칙에 따라 **인프라 경로 vs 코드 경로**를 판단 후 계획서에 명시한다.
+
+**분기 A: 인프라/운영 경로 (EngineerPL-first)** — systemd·파일시스템·프로세스·수집 파이프라인 등으로 해결 가능한 경우
 ```
-─── 설계 단계 (ArchitectAgent가 결정, Dev는 개입 없음) ───
+─── 설계 단계 ───
 PMAgent → DomainPLAgent → ArchitectAgent
-       ↔ RefactorAgent (공동 작업: 기존 코드 분석, 변경 계획서 수립)
-       → RefactorAgent (선행 리팩토링 실행: 계획서의 "선행 작업" 파트)
+       ↔ RefactorAgent (공동: 기존 코드·인프라 분석, 변경 계획서 수립)
+       → RefactorAgent (선행 리팩토링, 필요 시)
 
-─── 구현 단계 (계획서 기반 코드 작성만) ───
-       → DeveloperPLAgent → Frontend/BackendDeveloperAgent
+─── 구현 단계 (계획서대로) ───
+       → EngineerPLAgent
+       → DataEngineerAgent / ServerEngineerAgent
 
-─── 품질 단계 ───
+─── 품질 단계 (5인 게이트, Never-skippable) ───
        → [Quality Gate: QADev + Claude + Codex + Tester → QualityPL]
        → DocsAgent
 ```
-RefactorAgent는 ArchitectAgent 직속 공동 작업자로, **변경 계획서 작성** 단계와 **계획서 내 선행 리팩토링 실행** 단계 모두에 참여한다. DeveloperPLAgent 이하는 계획서를 받아 구현만 수행한다.
+
+**분기 B: 애플리케이션 경로 (Developer)** — 코드 레벨 수정이 본질인 경우
+```
+─── 설계 단계 ───
+PMAgent → DomainPLAgent → ArchitectAgent
+       ↔ RefactorAgent (공동: 기존 코드 분석, 변경 계획서 수립)
+       → RefactorAgent (선행 리팩토링, 필요 시)
+
+─── 구현 단계 (계획서대로) ───
+       → DeveloperPLAgent → Frontend/BackendDeveloperAgent
+
+─── 품질 단계 (5인 게이트, Never-skippable) ───
+       → [Quality Gate: QADev + Claude + Codex + Tester → QualityPL]
+       → DocsAgent
+```
+
+**분기 선택 규칙** (ArchitectAgent.md 참조):
+- 1순위 EngineerPL 경로 — 인프라 레벨 해결이 동등 이상 이득이면 분기 A
+- 2순위 Developer 경로 — 코드 수정이 더 단순하거나 인프라 오버헤드가 큰 경우 분기 B
+- **Change Plan에 분기 선택 근거를 한 줄 기록** 필수
+
+**공통 원칙**:
+- RefactorAgent는 ArchitectAgent 직속 공동 작업자. **변경 계획서 작성** + **선행 리팩토링 실행** 단계 참여
+- 두 분기 모두 Quality Gate 5인은 생략 불가 (never-skippable)
+- 두 분기 모두 설계는 ArchitectAgent 단독, 구현 단계는 계획서 준수
 
 ### Quality Gate (2단계 — 4인 보고 모두 필수)
 ```
@@ -106,7 +145,7 @@ Step 3 (품질): QADev + Claude + Codex + Tester 4인 모두 재실행 → Quali
 - **`BackendDeveloperAgent`**: `Edit(src/**)` + `Write(src/**)` / deny `tests/**`, `templates/**`, `static/**`, `docs/**`
 - **`FrontendDeveloperAgent`**: `Edit|Write(src/mctrader/dashboard/templates/**)` + `Edit|Write(src/mctrader/dashboard/static/**)` / deny `server.py`, `backtest_runner.py`, `domain/**`, `adapters/**`, `ports/**`, `cli/**`, `tests/**`
 - **`QADeveloperAgent`**: `Edit|Write(tests/**)` / deny `Edit|Write(src/**)` (production 읽기만)
-- **`RefactorAgent`**: `Edit`만 (파일 생성 `Write` 없음) — 파일 분리·신규 모듈은 BackendDev/FrontendDev가 담당
+- **`RefactorAgent`**: `Edit(src/**)`만 (파일 생성 `Write` 없음) / deny `tests/**`, `docs/**`, `.claude/**`, `config/**`, `deploy/**`, `scripts/**` — 파일 분리·신규 모듈은 BackendDev/FrontendDev 담당
 - **PL/평가 레이어** (`PMAgent` / `ArchitectAgent` / `DeveloperPLAgent` / `EngineerPLAgent` / `QualityPLAgent` / `DomainPLAgent`): Write/Edit 전면 없음. 문서화 필요 시 DocsAgent 위임
 - **읽기 전용 평가**: `ClaudeReviewerAgent` / `CodexReviewerAgent` / `TesterAgent` — 결함 발견 시 QualityPLAgent에 평가 전달, 변경은 Architect+Refactor 계획서 갱신으로만
 

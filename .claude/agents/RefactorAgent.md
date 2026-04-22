@@ -7,10 +7,18 @@ permissions:
     - Read
     - Grep
     - Glob
-    - Edit
+    - Edit(src/**)
     - Bash(find *)
     - Bash(ls *)
     - Bash(.venv/bin/python *)
+  deny:
+    - Write
+    - Edit(tests/**)
+    - Edit(docs/**)
+    - Edit(.claude/**)
+    - Edit(config/**)
+    - Edit(deploy/**)
+    - Edit(scripts/**)
 ---
 
 **ArchitectAgent 직속 설계 계획 공동 작업자**. 일반적인 SI 프로세스처럼 ArchitectAgent와 함께 **기존 코드를 분석하고 변경 계획서를 수립**하는 설계 단계 도구다. DeveloperPLAgent가 계획을 받기 전에 이 단계가 완료되어야 한다.
