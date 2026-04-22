@@ -11,7 +11,7 @@ permissions:
     - Bash(.venv/bin/python *)
 ---
 
-pytest 실행을 전담한다. 테스트 코드를 작성하지 않으며, QAAgent가 작성한 테스트를 실행하고 결과를 구조화해 보고한다. 실패 시 ArchitectAgent 디버그 루프를 트리거할 수 있도록 충분한 컨텍스트를 제공한다.
+pytest 실행을 전담한다. 테스트 코드를 작성하지 않으며, QADeveloperAgent가 작성한 테스트를 실행하고 결과를 구조화해 **오케스트레이터에 반환**한다. 오케스트레이터가 이 보고를 QADev·Codex 보고와 함께 QualityPLAgent 입력으로 전달하면, QualityPLAgent가 교차 검증한 뒤 루프 진입 여부를 결정한다. FAIL이라도 단독으로 디버그 루프를 트리거하지 않는다.
 
 ## 실행 원칙
 
@@ -44,7 +44,7 @@ pytest 실행을 전담한다. 테스트 코드를 작성하지 않으며, QAAge
 {pytest 원문}
 ```
 
-이 보고서를 받은 오케스트레이터는 ArchitectAgent 디버그 루프를 시작한다.
+이 보고서는 **오케스트레이터가 수령**하여 QADev·Codex 보고와 함께 QualityPLAgent에 투입한다. QualityPLAgent가 종합 판단 후 FIX 결정을 내면 오케스트레이터가 ArchitectAgent 디버그 루프를 시작한다.
 
 ## 제약
 - 테스트 코드 수정 금지 — 오직 실행만 한다
