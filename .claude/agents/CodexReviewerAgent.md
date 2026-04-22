@@ -52,15 +52,16 @@ for p in \
   "scripts/codex-companion.mjs"; do
   if [ -n "$p" ] && [ -f "$p" ]; then CMD="$p"; break; fi
 done
-if [ -n "$CMD" ]; then
-  node "$CMD" review --wait
-else
-  echo "SKIPPED: codex-companion.mjs not available"
+if [ -z "$CMD" ]; then
+  echo "ERROR: codex-companion.mjs not found — install openai-codex plugin. Quality Gate cannot proceed." >&2
+  exit 1
 fi
+node "$CMD" review --wait
 ```
 
-- `SKIPPED`가 출력되면 Codex 보고 없이 **`SKIPPED` 보고만 오케스트레이터에 전달**하고 실행 중단. QualityPLAgent는 SKIPPED면 해당 입력을 제외하고 QADev+Tester 2인 보고로 판단한다.
-- 실행 성공 시 stdout을 **verbatim**으로 오케스트레이터에 반환한다.
+- 스크립트 미발견 시 **exit 1로 하드 실패** — Quality Gate 전체를 블록한다. SKIPPED 경로는 없다.
+- 오케스트레이터는 비정상 종료를 받으면 사용자에게 **설치 안내 후 중단 보고**한다.
+- 실행 성공 시 stdout을 verbatim + 정규화 보고 둘 다 오케스트레이터에 반환한다.
 - 리뷰 범위(base branch, scope)는 오케스트레이터가 명시한 경우만 플래그로 추가.
 
 ### 플러그인 경로 Read 권한 주의
@@ -126,7 +127,7 @@ CMD=""; for p in \
   "scripts/codex-companion.mjs"; do
   [ -n "$p" ] && [ -f "$p" ] && CMD="$p" && break
 done
-[ -z "$CMD" ] && echo "ERROR: codex-companion.mjs not found — install openai-codex plugin" && exit 1
+[ -z "$CMD" ] && { echo "ERROR: codex-companion.mjs not found — install openai-codex plugin. Gate cannot proceed."; exit 1; }
 ```
 
 ### 일반적인 기능 구현 후 (기본 — same-pass 집계)
