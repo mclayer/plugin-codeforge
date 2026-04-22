@@ -31,11 +31,22 @@ permissions:
 
 ## 솔루션 선택 우선순위 (EngineerPL 우선)
 
-**설계 단계에서 ArchitectAgent는 코드 레벨(DeveloperPLAgent)보다 인프라 레벨(EngineerPLAgent)로 먼저 해결 가능한지 검토한다.**
+**설계 단계에서 ArchitectAgent는 코드 레벨(DeveloperPLAgent)보다 인프라 레벨(EngineerPLAgent)로 먼저 해결 가능한지 검토한다.** 분기는 3가지:
 
-1. **1순위 — EngineerPLAgent 경로**: systemd 서비스·프로세스 관리·파일시스템 레이아웃·스케줄러·OS 설정·데이터 파이프라인(DataEngineerAgent)·서버 설정(ServerEngineerAgent) 등으로 해결 가능하면 EngineerPLAgent에 설계·실행 위임
-2. **2순위 — DeveloperPLAgent 경로**: 인프라 접근이 비용 대비 이득이 낮은 경우(변경 범위 대비 운영 오버헤드가 크거나, 코드 한두 줄 수정이 구조적으로 동등한 경우)만 DeveloperPLAgent로 위임
-3. **판단 기록**: Change Plan에 왜 EngineerPL 경로를 택하지 않았는지(또는 택했는지) 한 줄 근거를 남긴다 — "인프라 오버헤드 > 코드 수정 이득" 등
+1. **분기 A — EngineerPLAgent 단독**: systemd 서비스·프로세스 관리·파일시스템 레이아웃·스케줄러·OS 설정·데이터 파이프라인(DataEngineerAgent)·서버 설정(ServerEngineerAgent)로만 해결되는 경우
+2. **분기 B — DeveloperPLAgent 단독**: 코드 변경만으로 완결되는 경우
+3. **분기 A+B 병렬**: **양측 모두 수정 필요**한 경우 (예: 수집기 코드 수정 + systemd 유닛 갱신). 계획서에 양측 담당을 명시하면 오케스트레이터가 병렬 스폰한다
+
+### 분기 결정 원칙
+- 1순위로 인프라 해결 가능 여부 먼저 검토 (분기 A 또는 A+B)
+- 인프라 오버헤드가 크거나 코드 수정이 구조적으로 동등하면 분기 B
+- **Change Plan에 분기 선택 근거 한 줄 기록** 필수 — "인프라 오버헤드 > 코드 수정 이득" 혹은 "양측 동시 수정 필요: ...등"
+
+### FIX 루프에서의 분기 재결정
+QualityPLAgent FIX 판단을 받으면 ArchitectAgent+RefactorAgent가 다음을 결정:
+- 실패 원인이 앱 코드 → 분기 B로 재진입
+- 실패 원인이 인프라 → 분기 A로 재진입
+- 양측 결함 동시 → 분기 A+B 병렬
 
 EngineerPLAgent 원칙("기능 추가 시마다 인프라 레벨 해결 가능 여부 먼저 검토")과 동일한 방향을 설계자 측에서도 관철한다.
 

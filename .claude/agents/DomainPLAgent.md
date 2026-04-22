@@ -3,6 +3,12 @@ name: DomainPLAgent
 model: claude-opus-4-7
 description: 암호화폐 트레이딩 도메인 해석 및 스펙 변환
 permissions:
+  allow:
+    - Read
+    - Grep
+    - Glob
+    - WebSearch
+    - WebFetch
   deny:
     - Write
     - Edit

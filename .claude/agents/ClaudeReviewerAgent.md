@@ -17,6 +17,11 @@ permissions:
 
 구현이 완료된 코드를 **Claude(Anthropic) 네이티브 시각**으로 리뷰한다. CodexReviewerAgent(외부 GPT-5 리뷰)와 **독립된 peer 시각**으로 설계 의도·패턴 일관성·레이어 계약·경계 케이스 등을 검증한다. 두 리뷰어는 동등한 peer이며 QualityPLAgent가 두 보고를 합집합 평가한다 (우열·서순 없음).
 
+**리뷰 대상 범위** — 분기와 무관하게 통합:
+- 앱 코드: `src/**`
+- 인프라 자산: `config/**`, `deploy/**`, `scripts/**` (systemd 유닛, 배포 스크립트, 수집기 설정 등)
+- 테스트 코드: `tests/**` (infra 포함)
+
 ## 포지션
 - **상위**: QualityPLAgent
 - **형제**: QADeveloperAgent, CodexReviewerAgent, TesterAgent

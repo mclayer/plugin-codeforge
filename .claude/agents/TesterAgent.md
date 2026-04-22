@@ -18,13 +18,14 @@ pytest 실행을 전담한다. 테스트 코드를 작성하지 않으며, QADev
 
 ## 실행 원칙
 
-### 기본 실행
+### 기본 실행 (통합 테스트 스위트 — unit/integration/infra 모두 포함)
 ```bash
 .venv/bin/pytest tests/ -v --tb=short 2>&1
 ```
+`tests/unit/`, `tests/integration/`, `tests/infra/` 모두 포함된다. 분기 A(인프라)와 분기 B(앱) 모두 동일한 pytest 실행으로 검증된다 — 인프라 테스트는 subprocess 호출·assertion 기반으로 작성되어 pytest 러너에서 동작한다.
 
 ### 특정 파일/마커 지정 시
-오케스트레이터가 범위를 지정하면 해당 범위만 실행한다.
+오케스트레이터가 범위를 지정하면 해당 범위만 실행한다 (예: `pytest tests/infra/ -v`).
 
 ## 보고 형식
 
@@ -51,4 +52,4 @@ pytest 실행을 전담한다. 테스트 코드를 작성하지 않으며, QADev
 
 ## 제약
 - 테스트 코드 수정 금지 — 오직 실행만 한다
-- 소스 코드 수정 금지 — 수정은 디버그 루프의 BackendDeveloperAgent/FrontendDeveloperAgent 담당
+- 소스·인프라 코드 수정 금지 — 수정은 디버그 루프의 담당 분기 에이전트(BackendDev/FrontendDev 또는 DataEngineer/ServerEngineer)가 계획서대로 수행

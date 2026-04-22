@@ -71,7 +71,10 @@
       "mcp__GitLab__discover_tools",
       "Read(//Users/*/.claude/plugins/marketplaces/openai-codex/**)",
       "Edit",
-      "Bash(python3 -m json.tool .claude/settings.local.json)"
+      "Bash(python3 -m json.tool .claude/settings.local.json)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:developers.binance.com)"
     ]
   }
 }

@@ -54,22 +54,26 @@ ClaudeReviewerAgent·CodexReviewerAgent 모두 **정규화된 severity 스키마
 
 **ESCALATE 기준**: 내부 에이전트 팀이 해결할 수 없는 경우로 제한한다. 설계/스타일 이슈는 ArchitectAgent가 수용·기각할 수 있으므로 FIX (설계)로 분류, 3회 루프 안에 해결되도록 한다.
 
-## 디버그 루프 (설계 금지 원칙 유지 — Architect+Refactor가 계획서부터 갱신)
+## 디버그 루프 (설계 금지 원칙 + 분기 인식)
+
+계획서의 담당 분기(A/B/A+B)는 반드시 ArchitectAgent가 결정한다. QualityPL은 원 분기를 계획서에서 읽어 ArchitectAgent에 전달한다.
 
 ```
 QualityPLAgent 판단 = FIX
   └── [Iteration 1~3]
-       ── 설계 단계 (Dev 개입 없음) ──
-       ├── ArchitectAgent ↔ RefactorAgent  → 변경 계획서(Change Plan) 갱신 (이전 시도와 다른 접근)
+       ── 설계 단계 (Dev·Engineer 개입 없음) ──
+       ├── ArchitectAgent ↔ RefactorAgent  → 변경 계획서 갱신 (이전 시도와 다른 접근 + 수정 담당 분기 재결정)
        │
-       ── 구현 단계 (계획서대로 코드 작성만) ──
-       ├── BackendDev / FrontendDev 스폰  → 계획서대로 수정 구현
+       ── 구현 단계 (계획서의 담당 분기에 따라 dispatch) ──
+       ├── 분기 A (인프라 결함): EngineerPLAgent → DataEngineer/ServerEngineer
+       ├── 분기 B (앱 코드 결함): BackendDev / FrontendDev
+       └── 분기 A+B (양측 필요): 위 둘을 병렬 스폰
        │
        ── 품질 단계 (필수 4인 재평가) ──
-       ├── QADeveloperAgent 스폰          → 테스트 보강/갱신
-       ├── ClaudeReviewerAgent 스폰        → 재리뷰 (필수)
+       ├── QADeveloperAgent 스폰          → 테스트 보강/갱신 (tests/unit·integration·infra 모두)
+       ├── ClaudeReviewerAgent 스폰        → 재리뷰 (필수, 코드+인프라 파일 모두 대상)
        ├── CodexReviewerAgent 스폰         → 재리뷰 (필수 — 미설치 시 루프 중단·사용자 에스컬레이션, 예외 없음)
-       ├── TesterAgent 재스폰              → pytest 재실행
+       ├── TesterAgent 재스폰              → pytest tests/** 전체 재실행
        └── QualityPLAgent 재스폰           → 4인 의견 재종합
 
   → 3회 반복 후에도 FAIL: 사용자에게 에스컬레이션 (루프 종료)
@@ -104,7 +108,8 @@ QualityPLAgent 판단 = FIX
 - Codex 이슈: {이슈 요약}
 - 교차 일치: {양 리뷰어가 동시에 지적한 항목}
 - 수정 방향: {ArchitectAgent에 전달할 지시 초안}
-- 담당 에이전트 추천: BackendDev / FrontendDev (RefactorAgent는 Architect와 함께 계획서 갱신 단계에서 이미 처리됨)
+- 담당 분기 추천: 분기 A (EngineerPL: DataEngineer/ServerEngineer) / 분기 B (Dev: Backend/Frontend) / 분기 A+B 병렬 — ArchitectAgent가 계획서 갱신 시 최종 결정
+- (RefactorAgent는 Architect와 함께 계획서 갱신 단계에서 이미 처리됨)
 다음 단계: ArchitectAgent 스폰 → 수정 구현 → QualityPLAgent 재스폰
 ```
 
