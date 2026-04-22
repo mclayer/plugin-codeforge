@@ -52,22 +52,7 @@ ClaudeReviewerAgent·CodexReviewerAgent 모두 **정규화된 severity 스키마
 **ESCALATE 기준**: Step 1 FIX 루프 3회 초과 시에만 ESCALATE. 설계/스타일 이슈는 Architect가 수용·기각 판단하며 루프 내 해결.
 
 ## Step 1 FIX 루프 (ArchitectAgent로 회귀)
-
-Step 1 FIX 판정 시 오케스트레이터가 다음을 수행:
-```
-QualityPLAgent Step 1 FIX 판정
-  └── ArchitectAgent ↔ RefactorAgent → 변경 계획서 갱신
-  └── 구현 단계 재실행 (계획서 분기 dispatch, QADev 재작성은 Architect/QADev 자체 판단)
-  └── 구현 단계 종료 + QADev 매핑표 감사 통과
-  └── Step 1 재실행 (Claude + Codex 재리뷰 병렬)
-     → 다시 P0/P1 발견 시 Step 1 카운터 증가 (최대 3회)
-     → PASS 시 Step 2 (TesterAgent) 진입
-```
-
-**카운터 규칙**:
-- **Step 1 FIX 최대 3회**, 초과 시 ESCALATE
-- **Step 2 FAIL 후 재진입한 Step 1에서 P0/P1 발견 시 카운터 리셋** — 재구현 결과는 새 리뷰 대상
-- 매 iteration마다 이전과 다른 접근 요구
+FIX 루프 카운터·처리 시퀀스는 **CLAUDE.md "FIX 루프" 섹션** 을 단일 근거로 삼는다. QualityPLAgent의 고유 역할: Step 1 severity 종합 → FIX 판정 시 ArchitectAgent에 전달할 수정 방향 초안 작성.
 
 ## 보고 형식
 

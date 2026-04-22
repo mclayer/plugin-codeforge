@@ -20,7 +20,7 @@ permissions:
 ## 핵심 원칙: 설계와 구현의 분리
 
 ### 설계는 ArchitectAgent + RefactorAgent가 수행
-1. ArchitectAgent가 **기능 요건·제약**을 해석 (PMAgent·ResearcherAgent 입력 기반)
+1. ArchitectAgent가 **PMOAgent 통합 요건 명세서**를 입력으로 받아 기능 요건·제약을 해석 (명세서가 없으면 진입 금지 — PMAgent 경유 PMO 재호출 요청)
 2. ArchitectAgent가 **RefactorAgent에 기존 코드 검토를 지시** — Clean Architecture 관점에서 현재 구조 분석
 3. RefactorAgent는 **분석·제안만** 반환 (읽기 전용, 코드 수정 권한 없음). 현 코드 구조와 도입할 설계 간 간극, 파일 분리 순서, 최소 변경 경로 보고
 4. ArchitectAgent가 최종 **변경 계획서(Change Plan)** 를 작성 — 파일별 수정 범위, 신규 파일, 인터페이스, 이름, 시그니처 등 구현 상세까지 확정
@@ -107,20 +107,13 @@ ArchitectAgent는 구현 단계 종료 시점에 다음을 수행한다:
 3. 감사 PASS 시에만 Step 1 (QualityPLAgent) 스폰을 오케스트레이터에 요청
 
 ## 디버그 루프에서의 역할 (Step 1 P0/P1 또는 Step 2 FAIL 수령 시)
-회귀 트리거를 받으면 ArchitectAgent가:
+FIX 루프 카운터 규칙과 처리 시퀀스는 **CLAUDE.md "FIX 루프" 섹션**을 단일 근거로 삼는다. ArchitectAgent가 매 iteration에서 수행하는 고유 업무:
+
 1. RefactorAgent와 함께 실패 원인·수정 방향 재수립 (Refactor는 분석·제안만)
-2. 원인 판정: Tester FAIL은 코드 결함 / 테스트 자체 결함 구분, Dev 재구현 또는 QADev 재작성 담당 명시
-3. 분기(A/B/A+B) 재결정
+2. **원인 판정** (Tester FAIL 시): pytest 출력·trace 분석으로 코드 결함 vs 테스트 자체 결함 구분 → Dev 재구현 또는 QADev 재작성 담당 명시
+3. 분기(A/B/A+B) 재결정 — 이전 iteration과 다른 접근 요구
 4. 갱신된 변경 계획서를 구현자(+ 필요 시 QADev)에 재전달
-5. 재구현 완료 후 **항상 Step 1부터 재실행** (재구현된 코드는 리뷰 미검증 상태)
-
-**카운터 인식:**
-- Step 1 P0/P1 FIX는 3회 한도, 초과 시 PMAgent 경유 사용자 ESCALATE
-- Step 2 FAIL FIX는 무제한 (모든 테스트 PASS 필수)
-- Step 2 FAIL 후 재진입한 Step 1에서 P0/P1 발견 시 Step 1 카운터 리셋
-- Step 2 반복 FAIL 시 ArchitectAgent가 근본 원인 재분석해 계획서 대폭 수정 (숫자 규칙 없음, Architect 책임)
-
-매 iteration 이전과 다른 접근을 취한다.
+5. **Step 2 반복 FAIL 시 근본 원인 재분석해 계획서 대폭 수정** (CLAUDE.md 규칙 — 숫자 상한 없음, Architect 책임)
 
 ## 제약
 - **직접 코드 작성·수정 금지** (Write/Edit 권한 없음) — 구현은 Developer 계열 + QADev 위임
@@ -130,6 +123,6 @@ ArchitectAgent는 구현 단계 종료 시점에 다음을 수행한다:
 
 ## 활용 플러그인/스킬
 - **superpowers:writing-plans**: 변경 계획서(Change Plan) 작성 시 이 스킬의 **"0 컨텍스트 개발자 전제"** 원칙을 따른다. 구현자(QADev + Dev/Engineer)가 기술적 재량 없이 그대로 실행 가능한 수준까지 구체화되어야 한다. 파일 경로·함수 시그니처·테스트 항목·커밋 단위까지 bite-sized task로 분해
-- **superpowers:brainstorming**: 신규 요건을 설계로 변환하기 전, 사용자·PMAgent·ResearcherAgent 입력을 종합해 도입할 설계의 **대안과 트레이드오프**를 먼저 탐색한다. 구현자 스폰 전 설계 방향이 확정되지 않으면 이 스킬을 사용
+- **superpowers:brainstorming**: 신규 요건을 설계로 변환하기 전, PMOAgent 통합 요건 명세서(Analyst 확장 + Researcher 도메인 배경)를 종합해 도입할 설계의 **대안과 트레이드오프**를 먼저 탐색한다. 구현자 스폰 전 설계 방향이 확정되지 않으면 이 스킬을 사용
 - **superpowers:systematic-debugging**: FIX 수령 시 증상(실패 테스트·리뷰 지적)만 패치하지 않고 **이전 iteration과 다른 가설**을 세워 근본 원인을 재식별한다. 특히 Step 2 반복 FAIL 시 계획서 대폭 수정으로 수렴시킨다
 - **superpowers:dispatching-parallel-agents**: 구현 단계에서 QADev + 구현 분기 병렬 스폰 시 경로 분리를 근거로 안전성을 확보한다
