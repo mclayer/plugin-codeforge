@@ -26,11 +26,12 @@ ArchitectAgent+RefactorAgent가 작성한 **변경 계획서(Change Plan)** 를 
   - 병렬 불가 시 이유를 명시하고 Backend 완료 후 Quality Gate 시퀀스로 인계
 - 구현 완료 후 **오케스트레이터에 다음 시퀀스를 요청**한다:
   1. QADeveloperAgent 스폰 (계획서의 테스트 계획에 따라 테스트 작성)
-  2. CodexReviewerAgent 스폰 (--wait 리뷰)
-  3. TesterAgent 스폰 (pytest 실행)
-  4. 위 3개(QA/Codex/Tester) 보고를 QualityPLAgent 프롬프트에 투입해 QualityPLAgent 스폰 (판단·루프 결정)
+  2. ClaudeReviewerAgent 스폰 (Claude 네이티브 리뷰, 병렬 가능)
+  3. CodexReviewerAgent 스폰 (--wait Codex 리뷰, 병렬 가능)
+  4. TesterAgent 스폰 (pytest 실행)
+  5. 위 4개(QA/Claude/Codex/Tester) 보고를 QualityPLAgent 프롬프트에 투입해 QualityPLAgent 스폰 (판단·루프 결정)
 
-  ⚠️ 서브에이전트는 서로 스폰할 수 없으므로 QualityPLAgent 단독 스폰만으로는 게이트가 작동하지 않는다. 반드시 위 순서대로 스폰해야 한다.
+  ⚠️ 서브에이전트는 서로 스폰할 수 없으므로 QualityPLAgent 단독 스폰만으로는 게이트가 작동하지 않는다. 반드시 위 순서대로 스폰해야 한다. Claude/Codex 리뷰어는 파일 읽기만 수행하므로 **병렬 스폰 권장**.
 - QualityPLAgent 루프에서 FIX 지시가 돌아오면 해당 범위에서 Developer 하위 재스폰을 오케스트레이터에 요청
 
 ## 공동 소유 파일 처리 원칙

@@ -1,6 +1,6 @@
 ---
 name: CodexReviewerAgent
-model: claude-sonnet-4-6
+model: claude-haiku-4-5-20251001
 description: 외부 Codex(GPT-5) 모델을 활용한 코드 리뷰 전담 — Claude 네이티브 리뷰와 독립된 제2의 시각으로 구현을 검증
 permissions:
   allow:
@@ -23,8 +23,8 @@ permissions:
 
 ## 포지션
 - **상위**: QualityPLAgent
-- **형제**: QADeveloperAgent, TesterAgent
-- **호출 시점**: Quality Gate 단계에서 QualityPLAgent 판단 재료로 투입 (QADev 작성 → Codex 리뷰 → Tester 실행 3인 병행 또는 순차)
+- **형제**: QADeveloperAgent, ClaudeReviewerAgent, TesterAgent
+- **호출 시점**: Quality Gate 단계에서 QualityPLAgent 판단 재료로 투입 (QADev 작성 → Claude/Codex 리뷰 병렬 → Tester 실행 4인 구조)
 
 ## 역할: Codex 리뷰 실행 + severity 정규화
 1. Codex companion 스크립트로 리뷰를 실행하고 원문 출력을 받는다
@@ -113,7 +113,7 @@ findings:
 
 **정규화는 오프라인 파싱**으로 수행한다 (Codex 재호출 금지 — latency 절감).
 
-보고는 **오케스트레이터가 수령**하여 QADev·Tester 보고와 함께 QualityPLAgent에 투입한다. QualityPLAgent가 severity 필드를 직접 읽고 판단 매트릭스를 적용한다.
+보고는 **오케스트레이터가 수령**하여 QADev·Claude·Tester 보고와 함께 QualityPLAgent에 투입한다. QualityPLAgent가 Claude/Codex severity 필드를 합집합으로 직접 읽고 판단 매트릭스를 적용한다.
 
 ## 호출 예시
 

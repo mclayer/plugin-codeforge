@@ -1,6 +1,6 @@
 ---
 name: QualityPLAgent
-model: claude-sonnet-4-6
+model: claude-opus-4-7
 description: Quality 계열 PL — QADeveloperAgent/ClaudeReviewerAgent/CodexReviewerAgent/TesterAgent 4인 의견을 종합해 디버그 루프 트리거 여부 결정
 permissions:
   allow:

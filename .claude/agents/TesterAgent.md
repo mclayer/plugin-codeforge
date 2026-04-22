@@ -1,6 +1,6 @@
 ---
 name: TesterAgent
-model: claude-sonnet-4-6
+model: claude-haiku-4-5-20251001
 description: pytest 실행 전담 및 실패 시 디버그 루프 보고
 permissions:
   allow:
