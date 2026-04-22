@@ -1,6 +1,6 @@
 # OrderBook / Trade 시각화 도메인 스펙
 
-작성 주체: DomainPLAgent (기록: DocsAgent)
+작성 주체: ResearcherAgent (기록: DocsAgent)
 대상 독자: ArchitectAgent, CodePLAgent, DataEngineerAgent, 프론트엔드 구현자
 관련 ADR: ADR-002 (OrderBook Diff-only 저장), ADR-006 (Bithumb 우선), ADR-007 (OrderBook Imbalance 전략), ADR-010 (Dashboard Web Interface)
 
@@ -426,4 +426,4 @@ ArchitectAgent가 로드맵을 짤 때 참고할 우선순위. MVP부터 점진 
 4. **Tape 보관 정책**: 최근 N건만 메모리 유지 vs 전량 Parquet 재쿼리 — 대시보드 새로고침 UX 영향.
 5. **시각화 전송 방식**: HTTP 폴링 유지 vs WebSocket 도입 — ADR-010 연장선에서 결정.
 
-이 문서는 DomainPL 해석 산출물이며, 위 열린 질문은 ArchitectAgent가 후속 ADR로 확정한다.
+이 문서는 Researcher 해석 산출물이며, 위 열린 질문은 ArchitectAgent가 후속 ADR로 확정한다.

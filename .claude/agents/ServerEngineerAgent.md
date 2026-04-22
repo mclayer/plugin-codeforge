@@ -30,5 +30,5 @@ Linux 서버 설정, systemd 서비스 관리, 네트워크/보안 설정을 수
 ArchitectAgent 계획서가 분기 A 또는 A+B로 지시한 인프라 변경을 수행한다. **설계 금지 원칙 적용**:
 - 계획서 명시된 파일·설정만 수정 (systemd unit, 배포 스크립트, 환경 설정 등)
 - 계획서 범위 밖 결정 금지 — 필요 시 ArchitectAgent 에스컬레이션
-- QADeveloperAgent가 `tests/infra/**`에 검증 테스트를 작성하므로, 계획서에 해당 테스트 목록이 있는지 확인하고 없으면 ArchitectAgent에 보고
+- QADeveloperAgent가 본 구현과 **병렬**로 `tests/infra/**`에 검증 테스트를 TDD 방식으로 작성하므로, 계획서에 해당 테스트 목록이 있는지 확인하고 없으면 ArchitectAgent에 보고
 - TesterAgent가 pytest로 통합 실행하므로, 인프라 테스트도 subprocess/assertion 기반 pytest 형식을 전제로 설계된다

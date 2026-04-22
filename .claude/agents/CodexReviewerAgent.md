@@ -27,9 +27,9 @@ permissions:
 - 테스트 코드: `tests/**` (infra 포함)
 
 ## 포지션
-- **상위**: QualityPLAgent
-- **형제**: QADeveloperAgent, ClaudeReviewerAgent, TesterAgent
-- **호출 시점**: Quality Gate 단계에서 QualityPLAgent 판단 재료로 투입 (QADev 작성 → Claude/Codex 리뷰 병렬 → Tester 실행 4인 구조)
+- **상위**: QualityPLAgent (Step 1 리뷰 게이트)
+- **형제**: ClaudeReviewerAgent (QADev·Tester는 Step 1 구성원 아님)
+- **호출 시점**: Step 1 리뷰 게이트 — QADev 매핑표 감사 통과 후 QualityPL 하위로 Claude/Codex 병렬 스폰. Tester(Step 2)는 Step 1 PASS 이후 별도 게이트로 ArchitectAgent가 직접 스폰
 
 ## 역할: Codex 리뷰 실행 + severity 정규화
 1. Codex companion 스크립트로 리뷰를 실행하고 원문 출력을 받는다
@@ -39,7 +39,7 @@ permissions:
 **자체 판단으로 코드를 수정·패치하지 않는다.** 읽기·분석·보고만 수행한다.
 
 ## 필수 설치
-Codex 플러그인이 없으면 **게이트 진행 불가**. 오케스트레이터가 설치 안내 후 사용자에게 중단 보고. `SKIPPED` 경로는 허용되지 않는다.
+Codex 플러그인이 없으면 **Step 1 진행 불가**. 오케스트레이터가 설치 안내 후 사용자에게 중단 보고. `SKIPPED` 경로는 허용되지 않는다.
 
 ## 실행 원칙
 
@@ -118,7 +118,7 @@ findings:
 
 **정규화는 오프라인 파싱**으로 수행한다 (Codex 재호출 금지 — latency 절감).
 
-보고는 **오케스트레이터가 수령**하여 QADev·Claude·Tester 보고와 함께 QualityPLAgent에 투입한다. QualityPLAgent가 Claude/Codex severity 필드를 합집합으로 직접 읽고 판단 매트릭스를 적용한다.
+보고는 **오케스트레이터가 수령**하여 Claude 보고와 함께 QualityPLAgent에 투입한다. QualityPLAgent가 Claude/Codex severity 필드를 합집합으로 직접 읽고 판단 매트릭스를 적용한다. Tester(Step 2) 결과는 별도 게이트로 QualityPL이 관여하지 않는다.
 
 ## 호출 예시
 

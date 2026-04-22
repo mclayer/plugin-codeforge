@@ -40,5 +40,9 @@ ArchitectAgent 계획서가 분기 A 또는 A+B로 지시한 데이터 파이프
 - 계획서 명시된 파일만 수정 (설계 금지)
 - 스키마 변경은 하위호환 유지 — 변경이 필요하면 ArchitectAgent 계획서에 migration 단계 명시 필수
 - ORDERBOOK은 full depth 금지, diff만 저장 (ADR-002)
-- QADeveloperAgent가 `tests/infra/**`에 데이터 파이프라인 검증 테스트를 작성한다 — 계획서의 테스트 계획 확인 필수
+- QADeveloperAgent가 본 구현과 **병렬**로 `tests/infra/**`에 데이터 파이프라인 검증 테스트를 TDD 방식으로 작성한다 — 계획서의 테스트 계획 확인 필수
 - 계획서 범위 밖 결정 금지 — 필요 시 ArchitectAgent 에스컬레이션
+
+## 활용 플러그인/스킬
+- **pyright-lsp**: WebSocket payload → Parquet 스키마 → DuckDB 쿼리로 이어지는 타입 변환 경로에서 LSP 진단을 적극 활용해 실시간 구조 오류 감지
+- **superpowers:systematic-debugging**: 수집 파이프라인 장애(예: ORDERBOOK diff 적용 실패, Parquet write I/O 에러) 대응 시 증상만 패치하지 않고 근본 원인(버퍼링 전략·flush 타이밍 등)을 추적한다

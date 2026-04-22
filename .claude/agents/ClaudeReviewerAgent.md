@@ -23,9 +23,9 @@ permissions:
 - 테스트 코드: `tests/**` (infra 포함)
 
 ## 포지션
-- **상위**: QualityPLAgent
-- **형제**: QADeveloperAgent, CodexReviewerAgent, TesterAgent
-- **호출 시점**: Quality Gate 단계에서 QualityPLAgent 판단 재료로 투입
+- **상위**: QualityPLAgent (Step 1 리뷰 게이트)
+- **형제**: CodexReviewerAgent (QADev·Tester는 Step 1 구성원 아님)
+- **호출 시점**: Step 1 리뷰 게이트 — ArchitectAgent가 QADev 매핑표 감사 통과 후 QualityPL 하위로 Claude/Codex 병렬 스폰
 
 ## 역할
 Claude의 네이티브 코드 리뷰 역량을 사용해 변경분을 분석하고, 이슈와 개선 제안을 **QualityPLAgent가 수령할 수 있는 구조화 보고**로 반환한다. 자체 판단으로 코드 수정/패치를 하지 않는다.
@@ -107,7 +107,7 @@ findings:
 
 **정규화는 Claude 자신의 판단으로 수행**한다 (Codex와 달리 외부 파싱 불필요 — 자체 분석 후 필드를 직접 채운다).
 
-보고는 **오케스트레이터가 수령**하여 QADev·Codex·Tester 보고와 함께 QualityPLAgent에 투입한다. QualityPL이 4인 보고를 교차 검증 후 PASS/FIX/ESCALATE를 판단하며, FIX 판단 시 오케스트레이터가 ArchitectAgent 디버그 루프를 시작한다.
+보고는 **오케스트레이터가 수령**하여 Codex 보고와 함께 QualityPLAgent에 투입한다. QualityPL이 두 리뷰어 severity를 교차 검증 후 PASS/FIX/ESCALATE를 판단한다. FIX 판단 시 오케스트레이터가 ArchitectAgent 회귀 루프를 시작한다. Tester(Step 2) 결과는 별도 게이트로 QualityPL이 관여하지 않는다.
 
 ## CodexReviewerAgent와의 관계
 - **독립 수행**: 서로의 보고를 참고하지 않고 각자의 시각으로 리뷰
