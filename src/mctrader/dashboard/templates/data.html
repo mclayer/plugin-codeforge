@@ -181,7 +181,7 @@
           <span class="badge bg-secondary ms-1">{{ selected.symbol }}</span>
         </span>
         <span class="text-secondary small">
-          showing {{ result.returned_count }} of {{ "{:,}".format(result.total_count) }} rows
+          showing {{ result.returned_count }}{% if result.total_count is not none %} of {{ "{:,}".format(result.total_count) }}{% endif %} rows
           {% if result.truncated %}<span class="text-warning ms-2">(truncated)</span>{% endif %}
         </span>
       </div>

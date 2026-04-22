@@ -12,7 +12,7 @@ import subprocess
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
-import duckdb  # type: ignore[import-untyped]
+from mctrader.dashboard.db import cursor as _cursor
 
 # ---------------------------------------------------------------------------
 # Dataclasses
@@ -128,9 +128,55 @@ def discover_symbols(data_root: str) -> list[str]:
 # ---------------------------------------------------------------------------
 
 def aggregate_symbol_stats(data_root: str) -> list[SymbolStats]:
-    """DuckDB 로 심볼별 row count + 최신 ts 를 한 쿼리로 집계."""
-    ob_stats = _aggregate_one(data_root, "orderbook_diff")
-    trade_stats = _aggregate_one(data_root, "trade")
+    """DuckDB UNION ALL 단일 쿼리로 심볼별 row count + 최신 ts 를 집계.
+
+    orderbook_diff와 trade를 별도 쿼리로 나눠 실행하던 기존 방식 대신
+    UNION ALL 서브쿼리 한 번으로 DuckDB 스캔 횟수를 절반으로 줄인다.
+    glob 미존재 시 해당 event_type 결과를 빈 값으로 처리한다.
+    """
+    pattern_ob = os.path.join(data_root, "orderbook_diff", "symbol=*", "date=*", "hour=*.parquet")
+    pattern_tr = os.path.join(data_root, "trade", "symbol=*", "date=*", "hour=*.parquet")
+
+    has_ob = bool(_glob.glob(pattern_ob))
+    has_tr = bool(_glob.glob(pattern_tr))
+
+    if not has_ob and not has_tr:
+        return []
+
+    # UNION ALL 서브쿼리: 존재하는 event_type만 포함.
+    # glob이 없는 쪽을 포함하면 DuckDB가 파일 없음 오류를 던지므로 분기한다.
+    parts: list[str] = []
+    if has_ob:
+        parts.append(
+            f"SELECT 'orderbook_diff' AS event_type, symbol, ts"
+            f" FROM read_parquet('{pattern_ob}', hive_partitioning=true)"
+        )
+    if has_tr:
+        parts.append(
+            f"SELECT 'trade' AS event_type, symbol, ts"
+            f" FROM read_parquet('{pattern_tr}', hive_partitioning=true)"
+        )
+
+    union_sql = " UNION ALL ".join(parts)
+    sql = f"""
+        SELECT event_type, symbol, COUNT(*) AS cnt, MAX(ts) AS max_ts
+        FROM ({union_sql})
+        GROUP BY event_type, symbol
+    """
+
+    with _cursor() as cur:
+        rows = cur.execute(sql).fetchall()
+
+    # event_type별 중간 집계: {symbol: (cnt, max_ts)}
+    ob_stats: dict[str, tuple[int, int | None]] = {}
+    trade_stats: dict[str, tuple[int, int | None]] = {}
+    for event_type, sym, cnt, max_ts in rows:
+        parsed_max_ts = int(max_ts) if max_ts is not None else None
+        entry: tuple[int, int | None] = (int(cnt), parsed_max_ts)
+        if str(event_type) == "orderbook_diff":
+            ob_stats[str(sym)] = entry
+        else:
+            trade_stats[str(sym)] = entry
 
     symbols = sorted(set(ob_stats.keys()) | set(trade_stats.keys()))
     result: list[SymbolStats] = []
@@ -147,32 +193,6 @@ def aggregate_symbol_stats(data_root: str) -> list[SymbolStats]:
             )
         )
     return result
-
-
-def _aggregate_one(data_root: str, event_type: str) -> dict[str, tuple[int, int | None]]:
-    """Return {symbol: (count, max_ts)} for a single event type."""
-    pattern = os.path.join(
-        data_root, event_type, "symbol=*", "date=*", "hour=*.parquet"
-    )
-    if not _glob.glob(pattern):
-        return {}
-
-    con = duckdb.connect()
-    try:
-        rows = con.execute(
-            f"""
-            SELECT symbol, COUNT(*) AS cnt, MAX(ts) AS max_ts
-            FROM read_parquet('{pattern}', hive_partitioning=true)
-            GROUP BY symbol
-            """
-        ).fetchall()
-    finally:
-        con.close()
-
-    return {
-        str(sym): (int(cnt), int(max_ts) if max_ts is not None else None)
-        for sym, cnt, max_ts in rows
-    }
 
 
 # ---------------------------------------------------------------------------
