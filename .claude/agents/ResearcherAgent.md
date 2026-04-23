@@ -36,10 +36,13 @@ permissions:
 ## 입력 (PMOAgent 경유 오케스트레이터가 전달)
 ```
 [Researcher 입력]
-- Analyst 지정 키워드 목록
-- 사용자 원문 + PMAgent 해석 요약 (컨텍스트)
-- 관련 ADR 제목/번호 (이미 결정된 도메인 제약 참조용)
+- Confluence Story 페이지 URL + pageId (MCTRADER-N)
+  · 섹션 1 (사용자 원문) + 섹션 2 (PMAgent 해석) → getConfluencePage로 fetch
+  · 섹션 3 (관련 ADR) → 도메인 제약 참조용
+- Analyst가 지정한 리서치 키워드 목록 (Story 페이지 섹션 5에 포함되어 있거나 PMO가 별도 전달)
 ```
+
+Researcher는 Story 페이지 섹션 6(도메인 배경지식)에 직접 쓰지 않고, 오케스트레이터에 결과를 반환 → DocsAgent 경유로 섹션 6 갱신.
 
 ## 출력 형식 (오케스트레이터 수령 → PMOAgent 입력)
 ```

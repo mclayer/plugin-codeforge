@@ -21,12 +21,14 @@ permissions:
 ## 설계와 구현의 분리
 
 **설계** = ArchitectAgent + RefactorAgent
-1. PMOAgent 통합 명세서 수령 (없으면 진입 금지 — PMAgent 경유 PMO 재호출)
-2. RefactorAgent에 기존 코드 분석 지시 (읽기 전용)
+1. **Confluence Story 페이지 섹션 1-6 수령** (PMAgent가 페이지 URL 프롬프트로 전달 → `mcp__atlassian__getConfluencePage`로 fetch). 섹션 1-6이 불완전하면 진입 금지 — PMAgent 경유 PMO 재호출
+2. RefactorAgent에 기존 코드 분석 지시 (읽기 전용, Story 페이지 URL 전달)
 3. RefactorAgent가 현 구조·간극·최소 변경 경로 보고
 4. ArchitectAgent가 Change Plan 확정 (파일·인터페이스·시그니처·이름)
 5. 선행 리팩토링은 계획서에 **Dev 담당 명시** (Refactor는 edit 권한 없음)
-6. DocsAgent 경유로 `docs/change-plans/<slug>.md` 저장 (Dev 스폰 전 필수)
+6. **DocsAgent 경유 이중 저장** (Dev 스폰 전 필수):
+   - `docs/change-plans/<slug>.md` 저장 (git-versioned)
+   - Story 페이지 섹션 7 갱신 — Change Plan GitHub 링크 + "목적 / 도입할 설계 / API 계약 / 분기 선택" 섹션 요약 미러링 + § 7.2 RefactorAgent 현재 구조 분석 요약
 
 **구현** = Developer 계열 + QADev (계획서 그대로 실행, 설계 금지)
 
@@ -66,12 +68,14 @@ permissions:
 
 ## 컨텍스트 수집 (설계 단계)
 
-계획 수립 시 참조 대상 — 관련성에 따라 선택:
-- **관련 ADR**: 직접 제약이면 verbatim, 배경이면 ID+요약
-- 관련 코드 경로 + 책임 요약
-- 관련 문서 발췌
+**주 입력은 Confluence Story 페이지** (pageId는 PMAgent가 프롬프트로 전달). `mcp__atlassian__getConfluencePage`로 fetch 후 섹션 1-6을 계획 수립 근거로 활용.
 
-불필요한 ADR verbatim 포함은 프롬프트 비대화를 유발.
+추가 fetch 필요 시:
+- 섹션 3에 링크된 ADR 중 **직접 제약**(설계 강제)이면 `getConfluencePage(pageId=ADR-N)`로 verbatim fetch
+- 섹션 4 코드 경로는 `Read` 도구로 현 구현 확인
+- 배경 참조 수준 ADR은 Story 페이지의 요약만으로 충분 — 재fetch 지양
+
+Story 페이지 섹션 1-6 외의 컨텍스트를 프롬프트에 추가로 주입받은 경우, 그 범위가 Story 페이지와 불일치하면 **즉시 PMAgent에 보고** 후 Story 페이지 갱신 요청 (컨텍스트 drift 방지).
 
 ## QADev 매핑표 감사 (구현 단계 종료)
 

@@ -34,14 +34,15 @@ permissions:
 
 ## 입력 컨텍스트 구성 (PMOAgent가 준비해 전달)
 
-프롬프트 포함 필수:
-1. 사용자 원문 (verbatim)
-2. PMAgent 해석 컨텍스트 (상세히)
-3. **관련 ADR** — 관련성 판단으로 선택:
-   - 결정이 본 작업의 직접 제약이면 verbatim, 배경 참조면 ID+1줄 요약
-4. 관련 코드 경로 + 책임 요약
-5. 관련 문서 발췌 (섹션 단위 verbatim)
-6. 이전 스레드 합의사항
+**주 입력**: Confluence Story 페이지 URL (PMAgent가 요건 접수 시 DocsAgent 경유로 생성한 `MCTRADER-N` 페이지). 섹션 1(사용자 원문)·2(PMAgent 해석)는 이미 채워진 상태.
+
+프롬프트 포함:
+1. **Story 페이지 URL + pageId** — `mcp__atlassian__getConfluencePage`로 fetch해 섹션 1-2 verbatim 확보
+2. **관련 ADR** — Story 페이지 섹션 3의 링크 목록. 직접 제약인 ADR만 `getConfluencePage(pageId=ADR-N)`로 verbatim fetch, 배경 참조는 ID+요약으로 충분
+3. 관련 코드 경로 (Story 페이지 섹션 4 참조)
+4. 이전 스레드 합의사항 (Story 페이지 섹션 10 FIX 서사 또는 이전 Story 페이지 링크)
+
+Claude 래퍼가 위 정보를 Story 페이지에서 추출해 codex exec heredoc에 주입한다. 사용자 원문·PMAgent 해석은 **Story 페이지 섹션 1-2에서 verbatim 복사** (재작성·요약 금지 — 변조 방지).
 
 ## 필수 환경
 `codex` CLI (`/opt/homebrew/bin/codex` 또는 `$PATH` 내) 필요. 미설치 시 요건 단계 진행 불가.

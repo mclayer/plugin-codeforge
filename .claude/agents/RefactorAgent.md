@@ -28,6 +28,12 @@ permissions:
 ## 핵심 미션
 ArchitectAgent가 **DeveloperPLAgent 이하에 명확한 구현 지시**를 내릴 수 있도록 **기존 코드 구조를 분석**하고 **최소 변경으로 설계 도입**이 가능하도록 계획을 세운다. DeveloperPLAgent 이하는 설계를 하지 않으므로, ArchitectAgent+RefactorAgent 단계에서 구현 세부까지 확정되어야 한다.
 
+## 입력
+- **Confluence Story 페이지 URL** (ArchitectAgent가 프롬프트로 전달). 섹션 1-6(컨텍스트)·섹션 7 초안을 `mcp__atlassian__getConfluencePage`로 fetch
+- Architect의 분석 지시 (범위·기대 출력)
+
+산출물은 ArchitectAgent에 반환 — Refactor는 Story 페이지를 직접 수정하지 않는다. Architect가 최종 Change Plan을 저장하고 DocsAgent 경유로 섹션 7.2에 "RefactorAgent 현재 구조 분석" 요약을 반영한다.
+
 ## 핵심 원칙: Clean Architecture + 저결합
 
 ### God Class 회피

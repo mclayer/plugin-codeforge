@@ -30,26 +30,27 @@ permissions:
    · 키워드 비어있음 → 생략
    · 키워드 존재 → ResearcherAgent 스폰
 
-3. 통합 명세서 작성
+3. 통합 명세서 작성 (**Confluence Story 페이지 섹션 5-6으로 직접 반영**)
    · Analyst 섹션 + Researcher 섹션 + 상충/정합 분석
    · "사용자 확인 필요" 항목은 blocking wait — PMAgent 경유 사용자 답변 수령 전까지 Architect 진입 금지
 
-4. DocsAgent 스폰 (복잡 요건 시만)
-   · docs/requirements/<slug>.md 저장
+4. DocsAgent 스폰 (Story 페이지 섹션 5-6 + 상충/정합 갱신)
+   · `docs/requirements/` 규약은 **폐기** — 통합 명세서는 Story 페이지에만 저장
 ```
 
-## 통합 명세서 표준 구조
+## 통합 명세서 (Confluence Story 페이지 섹션 매핑)
 
-```
-## 1. 사용자 원문 (verbatim)
-## 2. PMAgent 해석 요약
-## 3. 요건 확장 해석 (Analyst)
-   ### 3.1 유스케이스 / 3.2 암묵 가정 / 3.3 엣지 / 3.4 제외 범위
-   ### 3.5 사용자 확인 필요 (체크박스 목록 + 답변 상태)
-## 4. 도메인 배경지식 (Researcher, 조건부)
-## 5. 상충·정합 분석 (PMOAgent 작성)
-## 6. ArchitectAgent 전달 사항 (설계 범위·ADR 후보·선제 고려)
-```
+`docs/requirements/<slug>.md` 파일은 **더 이상 생성하지 않는다**. 아래 섹션들을 DocsAgent에 전달해 Story 페이지(MCTRADER-N, Confluence)에 갱신시킨다.
+
+| 통합 명세서 항목 | Story 페이지 섹션 |
+|------------------|-------------------|
+| 사용자 원문 (verbatim) | § 1 |
+| PMAgent 해석 요약 | § 2 |
+| 요건 확장 해석 (Analyst — 유스케이스/가정/엣지/제외) | § 5 |
+| 사용자 확인 필요 (체크박스) | § 5.5 |
+| 도메인 배경지식 (Researcher, 조건부) | § 6 |
+| 상충·정합 분석 (PMOAgent 작성) | § 5 또는 § 6 말미 |
+| ArchitectAgent 전달 사항 (설계 범위·ADR 후보·선제 고려) | § 7 "설계 서사" 초안 — Architect가 Change Plan 확정 후 상세 갱신 |
 
 ## 컨텍스트 수집 책임 (Analyst/Researcher 스폰 전)
 

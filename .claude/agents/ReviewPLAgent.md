@@ -23,6 +23,9 @@ permissions:
 ## 에스컬레이션 경로
 FIX 판정 시 **PMAgent 경유**로 ArchitectAgent 회귀 요청. ReviewPL은 ArchitectAgent를 직접 스폰하지 않는다(3-PL 평행 구조 — 수평 PL 간 호출은 PMAgent 경유). FIX 카운터(Step 1 최대 3회)는 PMAgent가 소유한다.
 
+## 이력 영속화 (Confluence Story 페이지 § 9)
+리뷰 레인 iteration 종료 시 결과 요약을 오케스트레이터 경유로 DocsAgent에 의뢰 — Story 페이지(MCTRADER-N) § 9 "리뷰 레인 Iteration N" 블록에 누적. 형식: Claude/Codex severity counts + 주요 findings 3-5건 + ReviewPL 판정(PASS/FIX/ESCALATE).
+
 ## 핵심 역할 (리뷰 레인 게이트)
 1. **리뷰 보고 수집**: 오케스트레이터가 병렬 스폰한 Claude/Codex 보고를 취합
 2. **severity 종합**: 두 보고의 severity(P0/P1/P2/P3)를 합집합으로 평가

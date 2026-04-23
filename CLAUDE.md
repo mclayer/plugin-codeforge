@@ -28,27 +28,37 @@ User
 **용어**: "**리뷰 레인(Step 1)**" = ReviewPLAgent + Claude/Codex 병렬 리뷰. "**테스트 레인(Step 2)**" = TestAgent pytest 최종 실행 (기능 모드 + 성능 모드 순차). 리뷰 레인 수렴 후 테스트 레인 진입.
 
 ## 단계 용어
-- **요건**: PMAgent 접수 → PMOAgent 통합 명세서 확정
-- **설계**: Architect Change Plan 확정 + DocsAgent가 `docs/change-plans/<slug>.md` 저장
-- **구현**: QADev + Dev/Engineer 병렬 → Architect의 QADev 매핑표 감사
-- **품질**: 리뷰 레인(ReviewPL이 Claude/Codex 종합, Step 1) → 테스트 레인(TestAgent pytest, Step 2). 수렴 후 순차 — 최종 원인 판정·계획서 갱신은 Architect가 PMAgent 경유로 수령
+- **요건**: PMAgent 접수 → Jira Story 생성 → DocsAgent가 Confluence Story 페이지 생성(섹션 1-2) → PMOAgent 통합 명세서 확정 (섹션 5-6 갱신)
+- **설계**: Architect Change Plan 확정 + DocsAgent가 `docs/change-plans/<slug>.md` 저장 + Story 페이지 섹션 7(요약 미러링) 갱신
+- **구현**: QADev + Dev/Engineer 병렬 → Architect의 QADev 매핑표 감사 → Story 페이지 섹션 8 갱신
+- **품질**: 리뷰 레인(ReviewPL이 Claude/Codex 종합, Step 1) → 테스트 레인(TestAgent pytest, Step 2). 수렴 후 순차. 각 iteration 결과는 Story 페이지 섹션 9·10에 누적. 최종 원인 판정·계획서 갱신은 Architect가 PMAgent 경유로 수령
 
-**Change Plan**: Dev 스폰 전 `docs/change-plans/<slug>.md` 저장 필수 (생략 불허)
-**통합 요건 명세서**: 복잡 요건만 `docs/requirements/<slug>.md` 저장 (PMO 판단)
+**Change Plan**: Dev 스폰 전 `docs/change-plans/<slug>.md` 저장 필수 (생략 불허). 저장 후 DocsAgent가 Story 페이지 섹션 7에 요약 미러링.
+**Confluence Story 페이지**: 요건 접수 시 DocsAgent가 신규 생성 필수. 모든 에이전트 단계의 컨텍스트·서사가 이 페이지로 누적된다. `docs/requirements/` 규약은 **폐기** — 통합 요건 명세서는 Story 페이지 섹션 5-6으로 흡수.
 
 ## 오케스트레이션 규칙
 
 ### 플랫폼 제약
 하위 에이전트는 Agent 툴 사용 불가 — 재귀 스폰 금지. 모든 스폰은 최상위 Claude가 직접. 서브에이전트 간 직접 통신 불가 (오케스트레이터 경유).
 
-### 컨텍스트 전달
-프롬프트에 관련 컨텍스트를 명시적으로 포함한다 (사용자 원문·PM 해석·관련 코드 경로·관련 문서 경로).
+### 컨텍스트 전달 (Confluence Story 페이지 SSOT)
 
-**ADR 참조는 선택적**:
-- **verbatim 포함**: ADR 결정이 본 작업의 핵심 근거일 때 (설계 제약 직접 적용)
-- **ID + 1줄 요약**: ADR이 배경 참조 수준일 때. 필요 시 sub-agent가 Confluence `mcp__atlassian__getConfluencePage`로 fetch
+각 Jira Story마다 **Confluence Story 페이지**가 컨텍스트 단일 출처(SSOT). 에이전트 프롬프트에는 **Story 페이지 URL만 주입**하고, 필요한 내용은 에이전트가 직접 `mcp__atlassian__getConfluencePage(pageId=N)`로 fetch한다.
 
-불필요한 verbatim 포함은 프롬프트 비대화·토큰 증가를 유발하므로 관련성 기준으로 판단한다.
+**Story 페이지 위치**:
+- Parent: `https://mctrader.atlassian.net/wiki/spaces/MCTRADER/pages/589846/Stories` (pageId=589846)
+- 각 Story: parent 하위 `MCTRADER-N: <제목>` 페이지 1개
+- 생성·갱신 전담: **DocsAgent** (섹션 1-11 규격 준수)
+
+**프롬프트 축약 원칙**:
+- 사용자 원문·PM 해석·관련 ADR verbatim을 프롬프트에 직접 넣지 않는다 — Story 페이지에 이미 있음
+- 프롬프트에는 `Story 페이지: https://.../pages/<id>/... — 섹션 1, 3, 7을 참조해 {작업}을 수행` 형태로 참조 섹션 번호 명시
+- ADR 직접 제약(설계 강제)인 경우에만 프롬프트에 verbatim 포함 허용 — 배경 참조는 Story 페이지 섹션 3 링크로 충분
+
+**섹션 갱신 의뢰 경로**:
+각 단계에서 에이전트는 오케스트레이터 경유로 DocsAgent에 "Story 페이지 MCTRADER-N 섹션 {X}에 다음 내용 추가" 를 의뢰한다. 직접 `updateConfluencePage`를 호출하는 에이전트는 DocsAgent 단독.
+
+Story 페이지 규격·섹션 책임은 Confluence `Stories` parent 페이지(pageId=589846)에 상세 정의.
 
 ### PMAgent 선행 의무
 오케스트레이터는 PMOAgent/ArchitectAgent/구현 에이전트 스폰 전 **반드시 PMAgent 먼저 스폰**. 출력: 태스크 분류 + 필요 에이전트 목록 + 스폰 순서 + 조건부 생략 제안.
@@ -200,10 +210,18 @@ status=완료, 마지막 label 유지(감사용)
 - Story 전체: `project = MCTRADER AND issuetype = 작업 AND statusCategory != Done`
 
 ### 원문 위치
-Jira는 **워크플로우 로그**만. 원문은 각 도구 유지:
-- 설계: `docs/change-plans/<slug>.md` (Git-versioned)
-- 결정: Confluence ADR 페이지
-- 코드 리뷰: GitHub PR 설명·코멘트
+Jira는 **워크플로우 상태·이벤트 로그**만. 구조화된 원문은 각 도구 유지:
+- **요건·컨텍스트·서사**: Confluence Story 페이지 (`MCTRADER` space → `Stories` parent, pageId=589846). 섹션 1-11 규격
+- **설계 실행 명세**: `docs/change-plans/<slug>.md` (Git-versioned, PR과 히스토리 동조). Story 페이지 섹션 7에 요약 미러링
+- **설계 결정(ADR)**: Confluence `ADR` 트리. Story 페이지 섹션 3에서 인용
+- **코드 리뷰 원문**: GitHub PR 설명·코멘트. Story 페이지 섹션 9에 요약 집계
+
+## Confluence Story 페이지 규약 요약
+
+- Space `MCTRADER` / parent `Stories` (pageId=589846) / 각 Story `MCTRADER-N: <제목>` 페이지 1개
+- 템플릿 `_Template: Story Page` (pageId=753705) 복제해 신규 생성
+- DocsAgent가 생성·섹션 갱신 전담, 다른 에이전트는 섹션 N에 {내용} 추가 의뢰
+- 세부 규약·섹션 책임: Stories parent 페이지 본문 참조
 
 ## Domain Knowledge
 - [OrderBook/Trade 시각화 스펙 (Confluence)](https://mctrader.atlassian.net/wiki/spaces/MCTRADER/pages/589826)
