@@ -38,7 +38,7 @@ Space: MCTRADER
  └── ADR (루트 페이지, 인덱스 + Page Properties Report 매크로)
       ├── Team & Process
       │    ├── ADR-014b: 에이전트 팀 구조 재편 — Developer 계열 분리
-      │    ├── ADR-016: TesterAgent 신설 및 자동 디버그 루프
+      │    ├── ADR-016: TestAgent 신설 및 자동 디버그 루프
       │    ├── ADR-020: TDD 병렬 구현 + 순차 품질 게이트
       │    └── ADR-021: 요건 단계 도입 — PMOAgent + RequirementsAnalyst
       ├── Architecture

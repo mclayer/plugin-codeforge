@@ -99,8 +99,8 @@ Jira 기본 3-state(`해야 할 일`/`진행 중`/`완료`)를 유지하고 **ph
 
 ### 3.5 FIX 루프 표현
 
-- **Step1 P0/P1 발견**: label 되돌림 `phase:리뷰-step1 → phase:구현`, `fix:step1-retry` label 추가, 코멘트 `[FIX #N] <Reviewer>: <원인 요약>`
-- **Step2 FAIL**: label 되돌림 `phase:테스트-step2 → phase:구현`, `fix:step2-retry` label 추가, 코멘트 `[FIX #N] Tester: <실패 테스트 요약>`
+- **Step1 P0/P1 발견**: label 되돌림 `phase:리뷰-step1 → phase:구현`, `fix:step1-retry` label 추가, 코멘트 `[FIX #N] <Review>: <원인 요약>`
+- **Step2 FAIL**: label 되돌림 `phase:테스트-step2 → phase:구현`, `fix:step2-retry` label 추가, 코멘트 `[FIX #N] TestAgent: <실패 테스트 요약>`
 - **카운터**: 오케스트레이터 세션 메모리 (Step1 최대 3회, Step2 무제한). Jira에는 코멘트 prefix `[FIX #N]`와 `fix:*` label로 시각화
 - **Step2 FAIL 후 재진입 Step1에서 P0/P1 발견 시**: 세션 카운터 리셋, 새 리뷰로 취급
 
@@ -125,8 +125,8 @@ Jira 기본 3-state(`해야 할 일`/`진행 중`/`완료`)를 유지하고 **ph
 | `[요건]` | PMAgent / PMOAgent / RequirementsAnalyst / Researcher 보고 |
 | `[설계]` | Architect / Refactor 결정·제안 |
 | `[구현]` | QADev / Frontend·Backend Dev / DataEng·ServerEng 진행 |
-| `[리뷰-Step1]` | ClaudeReviewer / CodexReviewer severity |
-| `[테스트-Step2]` | TesterAgent PASS/FAIL |
+| `[리뷰-Step1]` | ClaudeReview / CodexReview severity |
+| `[테스트-Step2]` | TestAgent PASS/FAIL |
 | `[FIX #N]` | FIX 루프 원인·계획 갱신 (N은 세션 내 증분) |
 | `[사용자]` | 사용자 에스컬레이션·확인 기록 |
 | `[완료]` | DocsAgent 후속 작업 / Story 클로징 |
@@ -164,10 +164,10 @@ Jira 기본 3-state(`해야 할 일`/`진행 중`/`완료`)를 유지하고 **ph
 3. ArchitectAgent
 4. DeveloperPLAgent
 5. EngineerPLAgent
-6. QualityPLAgent
+6. ReviewPLAgent
 7. RefactorAgent
-8. ClaudeReviewerAgent
-9. CodexReviewerAgent
+8. ClaudeReviewAgent
+9. CodexReviewAgent
 
 각 에이전트는 오케스트레이터로부터 Story 키(`MCTRADER-N`)를 프롬프트로 전달받고, 결정·협업 메시지를 직접 코멘트로 기록한다.
 
@@ -179,7 +179,7 @@ Jira 권한 없음, 오케스트레이터가 TL;DR 복사:
 - QADeveloperAgent
 - FrontendDeveloperAgent, BackendDeveloperAgent
 - DataEngineerAgent, ServerEngineerAgent
-- TesterAgent
+- TestAgent
 - DocsAgent
 
 이들의 출력은 TL;DR 1-3줄을 맨 앞에 강제 포함해야 한다(에이전트 정의에 명시).
@@ -253,8 +253,8 @@ Jira 권한 없음, 오케스트레이터가 TL;DR 복사:
 - 상태: 요건 → 설계 → 구현 → 리뷰-Step1 → 테스트-Step2 → 완료
 - FIX 루프: 상태 되돌림 + `[FIX #N]` prefix 코멘트
 - 커밋·PR: `[MCTRADER-N]` prefix 필수
-- 직접 코멘트 권한: PM/PMO/Architect/DevPL/EngPL/QualityPL/Refactor/Claude·CodexReviewer (9)
-- 오케스트레이터 경유: Analyst/Researcher/QADev/Dev/Engineer/Tester/Docs (TL;DR 요구)
+- 직접 코멘트 권한: PM/PMO/Architect/DevPL/EngPL/ReviewPL/Refactor/Claude·CodexReview (9)
+- 오케스트레이터 경유: Analyst/Researcher/QADev/Dev/Engineer/TestAgent/Docs (TL;DR 요구)
 - 원문 위치: 설계=docs/change-plans/, 결정=Confluence ADR, 코드 리뷰=PR (Jira는 요약/링크만)
 ```
 

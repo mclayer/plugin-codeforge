@@ -160,7 +160,7 @@ Expected: 7개 결과 (루트 1 + 카테고리 6).
 | 13 | ADR-013 | 백테스트 진행률 추적 | `CATEGORY_ID_TRADING_STRATEGY` |
 | 15 | ADR-014a | 시각화 뷰 레이어 | `CATEGORY_ID_DASHBOARD_UX` |
 | 16 | ADR-014b | 에이전트 팀 구조 재편 | `CATEGORY_ID_TEAM_PROCESS` |
-| 17 | ADR-016 | TesterAgent 신설 | `CATEGORY_ID_TEAM_PROCESS` |
+| 17 | ADR-016 | TestAgent 신설 | `CATEGORY_ID_TEAM_PROCESS` |
 | 18 | ADR-017 | Dashboard DuckDB Connection | `CATEGORY_ID_DASHBOARD_UX` |
 | 19 | ADR-018 | Dashboard Cache Strategy | `CATEGORY_ID_DASHBOARD_UX` |
 | 20 | ADR-019 | Orderbook Snapshot Lookback | `CATEGORY_ID_DASHBOARD_UX` |
