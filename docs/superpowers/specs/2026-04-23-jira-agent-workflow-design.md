@@ -22,7 +22,7 @@ Jira MCTRADER 프로젝트를 **워크플로우 로그** 역할로 도입해 영
 | D2 | Epic 범위 | 사용자 요건 1건 (복수 Story 포함 가능) | 큰 기능이 여러 PR로 분해되는 케이스 수용 |
 | D3 | Story 단위 | 독립 PR/머지 단위 (1 Story = 1 PR) | 코드 리뷰 단위와 정합 |
 | D4 | Story 사이클 | 각 Story가 자체 full cycle(요건→설계→구현→품질) | PM scope 분해 이후 작업별 요건 세부화 필요 |
-| D5 | 상태 전이 | 단계별 Custom Status 6종 | Kanban 보드 컬럼으로 단계 즉시 파악 |
+| D5 | 상태 전이 | 기본 3-state 유지 + **phase label로 단계 표현** (Jira free tier 제약 — custom status 추가 불가) | JQL `labels = "phase:*"`로 단계별 필터, 보드 컬럼 대신 필터 UI 사용 |
 | D6 | 코멘트 권한 | 오케스트레이터 + 9개 결정/PL 에이전트 직접 기록 | 결정자 1차 출처 보존, 구현자는 오케스트레이터 경유 |
 | D7 | GitHub 연계 | 커밋·PR `[MCTRADER-N]` prefix + GitHub for Jira 앱 | 양방향 추적 + PR merge 자동 전이 |
 | D8 | 원문 위치 | Change Plan md(Git) / ADR(Confluence) / PR(GitHub) 원문 유지 | 각 도구의 강점 활용, Jira는 요약/링크만 |
@@ -72,35 +72,36 @@ Jira MCTRADER 프로젝트를 **워크플로우 로그** 역할로 도입해 영
 
 ### 3.3 Epic 생명주기
 
-| 시점 | 동작 | 상태 |
-|---|---|---|
-| 사용자 요건 접수 | 오케스트레이터가 Epic 생성 (제목=사용자 원문 요약) | `해야 할 일` (Jira 기본) |
-| PMAgent scope 분해 직후 | Epic 본문 업데이트 + 상태 전이 | → `요건` |
-| 첫 Story 생성 시점 | Epic 전이 | → `진행 중` (Jira 기본) |
-| Story 진행 중 | Epic 상태는 `진행 중` 유지 (Story 상태와 독립) | `진행 중` |
-| 모든 Story `완료` + 사용자 "요건 끝" | 오케스트레이터가 Epic `완료` 전이 | `완료` |
-
-Epic 상태는 세부 단계를 반영하지 않는다(Story 단위 작업이므로). Epic은 scope 인지·종결 용도로만.
+| 시점 | 동작 | 상태 | 주요 label |
+|---|---|---|---|
+| 사용자 요건 접수 | 오케스트레이터가 Epic 생성 (제목=사용자 원문 요약) | `해야 할 일` | — |
+| PMAgent scope 분해 직후 | Epic 본문 업데이트 + 상태 전이 | → `진행 중` | — |
+| Story 진행 중 | Epic 상태·label 유지 (Story 단위 추적이므로 Epic은 scope 인지만) | `진행 중` | — |
+| 모든 Story `완료` + 사용자 "요건 끝" | 오케스트레이터가 Epic `완료` 전이 | `완료` | — |
 
 ### 3.4 Story 생명주기
 
-| 시점 | 동작 | 상태 |
-|---|---|---|
-| PMAgent scope 확정 순간 | Story 생성 + Epic link (생성 시 `transition` 필드로 `요건`으로 즉시 전이) | `요건` |
-| PMO 통합 명세서 확정 | 코멘트 기록 | `요건` 유지 |
-| Architect Change Plan 확정 | docs/change-plans/<slug>.md 저장, 코멘트 기록 | → `설계` |
-| 구현 병렬 스폰 (QADev + Dev/Engineer) | 코멘트 기록 | → `구현` |
-| Architect QADev 매핑표 감사 통과 | 코멘트 기록 | `구현` 유지 |
-| Step1 시작 (Claude+Codex 리뷰) | 코멘트 기록 | → `리뷰-Step1` |
-| Step1 PASS | 코멘트 기록 | → `테스트-Step2` |
-| Step2 PASS + PR 오픈 | PR 제목·본문에 [MCTRADER-N] 주입 | `테스트-Step2` 유지 |
-| PR merged | GitHub for Jira가 자동 감지해 전이 | → `완료` |
+Jira 기본 3-state(`해야 할 일`/`진행 중`/`완료`)를 유지하고 **phase label**로 단계 표현. 한 Story는 현재 단계 label 1개만 보유(교체 방식).
+
+| 시점 | 동작 | 상태 | phase label |
+|---|---|---|---|
+| PMAgent scope 확정 순간 | Story 생성 + Epic link + `phase:요건` label | `해야 할 일` → `진행 중` | `phase:요건` |
+| PMO 통합 명세서 확정 | 코멘트 기록 | `진행 중` | `phase:요건` 유지 |
+| Architect Change Plan 확정 | docs/change-plans/<slug>.md 저장, label 교체, 코멘트 기록 | `진행 중` | → `phase:설계` |
+| 구현 병렬 스폰 (QADev + Dev/Engineer) | label 교체, 코멘트 기록 | `진행 중` | → `phase:구현` |
+| Architect QADev 매핑표 감사 통과 | 코멘트 기록 | `진행 중` | `phase:구현` 유지 |
+| Step1 시작 (Claude+Codex 리뷰) | label 교체, 코멘트 기록 | `진행 중` | → `phase:리뷰-step1` |
+| Step1 PASS | label 교체, 코멘트 기록 | `진행 중` | → `phase:테스트-step2` |
+| Step2 PASS + PR 오픈 | PR 제목·본문에 [MCTRADER-N] 주입 | `진행 중` | `phase:테스트-step2` 유지 |
+| PR merged | GitHub for Jira가 감지해 전이 | → `완료` | 마지막 label 유지(감사용) |
+
+보드 대신 **JQL 필터**로 단계별 모니터링: `project = MCTRADER AND labels = "phase:리뷰-step1"` 등.
 
 ### 3.5 FIX 루프 표현
 
-- **Step1 P0/P1 발견**: 상태 되돌림 `리뷰-Step1 → 구현`, phase label 교체, 코멘트 `[FIX #N] <Reviewer>: <원인 요약>`
-- **Step2 FAIL**: 상태 되돌림 `테스트-Step2 → 구현`, 코멘트 `[FIX #N] Tester: <실패 테스트 요약>`
-- **카운터**: 오케스트레이터 세션 메모리 (Step1 최대 3회, Step2 무제한). Jira에는 코멘트 prefix `[FIX #N]`로 시각화만 남김
+- **Step1 P0/P1 발견**: label 되돌림 `phase:리뷰-step1 → phase:구현`, `fix:step1-retry` label 추가, 코멘트 `[FIX #N] <Reviewer>: <원인 요약>`
+- **Step2 FAIL**: label 되돌림 `phase:테스트-step2 → phase:구현`, `fix:step2-retry` label 추가, 코멘트 `[FIX #N] Tester: <실패 테스트 요약>`
+- **카운터**: 오케스트레이터 세션 메모리 (Step1 최대 3회, Step2 무제한). Jira에는 코멘트 prefix `[FIX #N]`와 `fix:*` label로 시각화
 - **Step2 FAIL 후 재진입 Step1에서 P0/P1 발견 시**: 세션 카운터 리셋, 새 리뷰로 취급
 
 ## 4. 코멘트 표준
@@ -210,25 +211,20 @@ Jira 권한 없음, 오케스트레이터가 TL;DR 복사:
 
 ## 8. Admin 사전 설정 (1회성)
 
-### 8.1 Jira Custom Status 추가
+### 8.1 Jira 워크플로우
 
-현재 워크플로우: `해야 할 일 → 진행 중 → 완료` (3 states).
+현재 기본 3-state 그대로 유지: `해야 할 일 → 진행 중 → 완료`.
 
-추가할 Status 5개 (status category = `indeterminate` — 진행 중 계열):
-- `요건`
-- `설계`
-- `구현`
-- `리뷰-Step1`
-- `테스트-Step2`
+**Custom Status 추가는 철회**. 2026-04-23 확인 결과, 현재 Jira 구독/프로젝트 템플릿에서 In Progress 카테고리에 복수 status 추가가 불가. Phase 추적은 **labels로 대체**:
+- `phase:요건`, `phase:설계`, `phase:구현`, `phase:리뷰-step1`, `phase:테스트-step2`
+- 한 Story는 현재 단계 label 1개만 보유(교체 방식)
+- FIX 루프: `fix:step1-retry`, `fix:step2-retry` label 누적
 
-절차(웹 UI):
-1. https://mctrader.atlassian.net/jira/software/projects/MCTRADER/settings/access
-2. `Project settings` → `Workflow` → 현재 워크플로우 편집
-3. Status 5개 생성 (각 category = Indeterminate)
-4. 전이 규칙:
-   - `해야 할 일` → 모든 진행 status 허용 (요건 진입)
-   - 모든 진행 status 간 양방향 전이 허용 (FIX 루프 되돌림)
-   - 모든 진행 status → `완료` 허용 (어느 단계에서든 클로징 가능)
+대시보드는 JQL 필터로 대체:
+- "현재 리뷰 중": `project = MCTRADER AND labels = "phase:리뷰-step1"`
+- "FIX 대상": `project = MCTRADER AND labels in ("fix:step1-retry", "fix:step2-retry")`
+
+별도 관리자 설정 불필요.
 
 ### 8.2 GitHub for Jira 앱 설치
 
