@@ -74,7 +74,13 @@
       "Bash(python3 -m json.tool .claude/settings.local.json)",
       "WebSearch",
       "WebFetch(domain:github.com)",
-      "WebFetch(domain:developers.binance.com)"
+      "WebFetch(domain:developers.binance.com)",
+      "mcp__GitLab__list_labels",
+      "Read(//Users/1111971/.claude/plugins/cache/claude-plugins-official/frontend-design/unknown/skills/frontend-design/**)",
+      "Read(//Users/1111971/.claude/plugins/cache/claude-plugins-official/frontend-design/unknown/.claude-plugin/**)",
+      "Skill(codex:setup)",
+      "Skill(codex:setup:*)",
+      "Bash(glab issue *)"
     ]
   }
 }
