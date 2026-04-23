@@ -35,7 +35,7 @@ permissions:
 
 ## 입력 컨텍스트 구성 (PMOAgent가 준비해 전달)
 
-**주 입력**: Confluence Story 페이지 URL (PMAgent가 요건 접수 시 DocsAgent 경유로 생성한 `MCTRADER-N` 페이지). 섹션 1(사용자 원문)·2(PMAgent 해석)는 이미 채워진 상태.
+**주 입력**: Confluence Story 페이지 URL (Orchestrator가 요건 접수 시 DocsAgent 경유로 생성한 `MCTRADER-N` 페이지). 섹션 1(사용자 원문)·2(PMAgent 해석)는 이미 채워진 상태.
 
 프롬프트 포함:
 1. **Story 페이지 URL + pageId** — `mcp__atlassian__getConfluencePage`로 fetch해 섹션 1-2 verbatim 확보

@@ -29,7 +29,7 @@ permissions:
 ## 포지션
 - **상위**: ReviewPLAgent (리뷰 레인 PL)
 - **형제**: ClaudeReviewAgent
-- **호출 시점**: 리뷰 레인(Step 1) — QADev 매핑표 감사 통과 후 PMAgent가 ReviewPL 스폰 → ReviewPL 하위로 Claude/Codex 병렬 스폰
+- **호출 시점**: 리뷰 레인(Step 1) — QADev 매핑표 감사 통과 후 Orchestrator가 ReviewPL 스폰 → ReviewPL 하위로 Claude/Codex 병렬 스폰
 
 ## 역할
 1. Codex companion 스크립트로 리뷰 실행

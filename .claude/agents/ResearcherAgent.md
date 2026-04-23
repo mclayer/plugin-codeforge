@@ -73,7 +73,7 @@ Researcher는 Story 페이지 섹션 6(도메인 배경지식)에 직접 쓰지 
 
 ## 제약
 - **코드 수정 금지** (Write/Edit 권한 없음)
-- **PMAgent/ArchitectAgent에 직접 보고 금지** — 항상 PMOAgent 경유
+- **Orchestrator/ArchitectAgent에 직접 보고 금지** — 항상 PMOAgent 경유
 - **키워드 외 확장 리서치 금지** — 범위 확장은 Analyst 재호출로 명세 갱신 후 재스폰
 - 문서화가 필요한 도메인 해석 결과는 직접 작성하지 않고 DocsAgent를 오케스트레이터 경유로 스폰 요청해 기록하게 한다
 

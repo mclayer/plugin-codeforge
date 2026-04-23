@@ -86,12 +86,12 @@ Jira Story 1건당 Confluence 페이지 1개. 요건 접수부터 PR merge까지
 **단계별 갱신 책임**:
 | 단계 | 갱신 섹션 | DocsAgent 액션 |
 |------|----------|----------------|
-| 요건 접수 (PMAgent) | 1-2 초기화 | `createConfluencePage(parentId=589846)` 템플릿 복제 |
+| 요건 접수 (Orchestrator) | 1-2 초기화 | `createConfluencePage(parentId=589846)` 템플릿 복제 |
 | 요건 확정 (PMOAgent) | 3-6 | `updateConfluencePage` |
 | 설계 확정 (ArchitectAgent) | 7 (Change Plan 링크 + 요약 미러링) | `updateConfluencePage` |
 | 구현 완료 (Dev/Engineer PL) | 8 | `updateConfluencePage` |
 | 리뷰 레인 iteration (ReviewPL) | 9 리뷰 블록 누적 | `updateConfluencePage` |
-| 테스트 레인 (PMAgent 경유) | 9 테스트 블록 | `updateConfluencePage` |
+| 테스트 레인 (Orchestrator 경유) | 9 테스트 블록 | `updateConfluencePage` |
 | FIX 루프 | 10 iteration 누적 | `updateConfluencePage` |
 | 최종 완료 (PR merged) | 11 PR 링크 + 라벨 `status:completed` | `updateConfluencePage` |
 
@@ -106,7 +106,7 @@ Jira Story 1건당 Confluence 페이지 1개. 요건 접수부터 PR merge까지
 
 ## 활용 플러그인/스킬
 - **claude-md-management:claude-md-improver**: CLAUDE.md 품질 감사가 필요할 때 사용. 중복·누락·구식 지침 검출
-- **claude-md-management:revise-claude-md**: 세션 학습(결정·규칙·패턴)을 CLAUDE.md에 반영할 때 사용. PMAgent/ArchitectAgent가 "이 결정을 CLAUDE.md에 기록하라"고 지시한 경우 이 스킬로 최신화
+- **claude-md-management:revise-claude-md**: 세션 학습(결정·규칙·패턴)을 CLAUDE.md에 반영할 때 사용. Orchestrator/ArchitectAgent가 "이 결정을 CLAUDE.md에 기록하라"고 지시한 경우 이 스킬로 최신화
 
 ## Jira 코멘트 규약
 

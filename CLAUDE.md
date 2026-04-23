@@ -8,30 +8,38 @@ Claude Code용 오케스트레이션 규칙. 에이전트 상세는 각 `.claude
 ## Development Agent Team
 
 ```
-User
- └── PMAgent                         # 요건 접수 + 3-PL 평행 조정 + 테스트 레인 최종 게이트 + FIX 카운터 소유
-      ├── PMOAgent                     # 요건 PL
-      │    ├── DocsAgent               # 문서화 (조직상 PMO, 기능상 전단계 스폰)
-      │    ├── RequirementsAnalystAgent  # GPT-5.4 래퍼 (codex exec)
-      │    └── ResearcherAgent         # 도메인 웹 리서치 (조건부)
-      ├── ArchitectAgent              # 설계 + 구현 PL (QADev 감사 + FIX 원인 판정)
-      │    ├── RefactorAgent            # 설계 공동작업자 (분석·제안, 읽기 전용)
-      │    ├── QADeveloperAgent         # TDD tests/** (구현 단계)
-      │    ├── DeveloperPLAgent → Frontend/Backend
-      │    └── EngineerPLAgent → DataEng/ServerEng
-      ├── ReviewPLAgent               # 리뷰 레인 PL (Step 1)
-      │    ├── ClaudeReviewAgent
-      │    └── CodexReviewAgent
-      └── TestAgent                   # 테스트 레인 최종 게이트 (Step 2, PMAgent 직속 단독)
+(Human) 사용자                       # 외부 행위자 — 요건 제공·blocking 질문 응답·ESCALATE 수신
+   ↓ 요건 전달
+Orchestrator                        # 최상위 Claude 세션 — 모든 스폰·FIX 카운터·토큰 예산 소유
+ ├── PMOAgent                         # 요건 PL
+ │    ├── PMAgent                       # 도메인 요건 해석 컨설턴트 (스캘핑·실시간·리스크 관점)
+ │    ├── DocsAgent                     # 문서화 (Story 페이지·ADR·Change Plan)
+ │    ├── RequirementsAnalystAgent      # GPT-5.4 래퍼 (codex exec)
+ │    └── ResearcherAgent               # 도메인 웹 리서치 (조건부)
+ ├── ArchitectAgent                   # 설계 + 구현 PL (QADev 감사 + FIX 원인 판정)
+ │    ├── RefactorAgent                 # 설계 공동작업자 (분석·제안, 읽기 전용)
+ │    ├── QADeveloperAgent              # TDD tests/** (구현 단계)
+ │    ├── DeveloperPLAgent → Frontend/Backend
+ │    └── EngineerPLAgent → DataEng/ServerEng
+ ├── ReviewPLAgent                    # 리뷰 레인 PL (Step 1)
+ │    ├── ClaudeReviewAgent
+ │    └── CodexReviewAgent
+ └── TestAgent                        # 테스트 레인 최종 게이트 (Step 2, Orchestrator 직속)
 ```
+
+**주체 명칭**:
+- **Orchestrator** = 최상위 Claude 세션 (기술적 주체 — 모든 Agent 툴 스폰, FIX 카운터·토큰 예산 소유)
+- **(Human) 사용자** = 인간 행위자 (요건 제공, blocking 질문 응답, ESCALATE 수신)
+
+이 둘은 다른 주체이다. 이하 본문의 "Orchestrator"는 전자, "사용자"는 후자를 뜻한다.
 
 **용어**: "**리뷰 레인(Step 1)**" = ReviewPLAgent + Claude/Codex 병렬 리뷰. "**테스트 레인(Step 2)**" = TestAgent pytest 최종 실행 (기능 모드 + 성능 모드 순차). 리뷰 레인 수렴 후 테스트 레인 진입.
 
 ## 단계 용어
-- **요건**: PMAgent 접수 → Jira Story 생성 → DocsAgent가 Confluence Story 페이지 생성(섹션 1-2) → PMOAgent 통합 명세서 확정 (섹션 5-6 갱신)
+- **요건**: Orchestrator가 사용자 요건 접수 → Jira Story 생성 → DocsAgent가 Confluence Story 페이지 생성(섹션 1-2) → PMOAgent(PMAgent 도메인 해석 + Analyst + Researcher 조건부) 통합 명세서 확정 → Story 페이지 섹션 3-6 갱신
 - **설계**: Architect Change Plan 확정 + DocsAgent가 `docs/change-plans/<slug>.md` 저장 + Story 페이지 섹션 7(요약 미러링) 갱신
 - **구현**: QADev + Dev/Engineer 병렬 → Architect의 QADev 매핑표 감사 → Story 페이지 섹션 8 갱신
-- **품질**: 리뷰 레인(ReviewPL이 Claude/Codex 종합, Step 1) → 테스트 레인(TestAgent pytest, Step 2). 수렴 후 순차. 각 iteration 결과는 Story 페이지 섹션 9·10에 누적. 최종 원인 판정·계획서 갱신은 Architect가 PMAgent 경유로 수령
+- **품질**: 리뷰 레인(ReviewPL이 Claude/Codex 종합, Step 1) → 테스트 레인(TestAgent pytest, Step 2). 수렴 후 순차. 각 iteration 결과는 Story 페이지 섹션 9·10에 누적. 최종 원인 판정·계획서 갱신은 Architect가 Orchestrator 경유로 수령
 
 **Change Plan**: Dev 스폰 전 `docs/change-plans/<slug>.md` 저장 필수 (생략 불허). 저장 후 DocsAgent가 Story 페이지 섹션 7에 요약 미러링.
 **Confluence Story 페이지**: 요건 접수 시 DocsAgent가 신규 생성 필수. 모든 에이전트 단계의 컨텍스트·서사가 이 페이지로 누적된다. `docs/requirements/` 규약은 **폐기** — 통합 요건 명세서는 Story 페이지 섹션 5-6으로 흡수.
@@ -60,40 +68,40 @@ User
 
 Story 페이지 규격·섹션 책임은 Confluence `Stories` parent 페이지(pageId=589846)에 상세 정의.
 
-### PMAgent 선행 의무
-오케스트레이터는 PMOAgent/ArchitectAgent/구현 에이전트 스폰 전 **반드시 PMAgent 먼저 스폰**. 출력: 태스크 분류 + 필요 에이전트 목록 + 스폰 순서 + 조건부 생략 제안.
+### Orchestrator 선행 의무
+Orchestrator(최상위 Claude 세션)는 사용자 요건 접수 직후 **PMOAgent 스폰 전 태스크 분류**를 수행한다. 출력: 태스크 분류 + 필요 에이전트 목록 + 스폰 순서 + 조건부 생략 제안. 요건 도메인 해석이 필요하면 PMOAgent 산하 PMAgent를 활용(PMOAgent가 스폰).
 
 #### Never-skippable (단계별)
-- 요건: **PMOAgent** (하위 중 하나라도 호출 시 필수), **RequirementsAnalystAgent** (PMAgent가 "요건 이미 명확" 명시 시만 생략)
+- 요건: **PMOAgent** (하위 중 하나라도 호출 시 필수), **RequirementsAnalystAgent** (Orchestrator가 "요건 이미 명확" 명시 시만 생략)
 - 구현: **QADeveloperAgent** (TDD)
 - 품질: **ReviewPLAgent**, **ClaudeReviewAgent**, **CodexReviewAgent**, **TestAgent**
 
-조건부 생략: ResearcherAgent(PMOAgent 판정 — Analyst 키워드 비어있을 때), EngineerPLAgent(인프라 변경 없음), DocsAgent(문서화 대상 없음, Change Plan·ADR 저장은 여전히 필수)
+조건부 생략: ResearcherAgent(PMOAgent 판정 — Analyst 키워드 비어있을 때), EngineerPLAgent(인프라 변경 없음), DocsAgent(문서화 대상 없음, Change Plan·ADR·Story 페이지 갱신은 여전히 필수). PMAgent는 PMOAgent 요청 시 스폰되는 도메인 컨설턴트 — PMOAgent 판정.
 
 ### 스폰 시퀀스
 
 ```
-[요건] PMAgent → PMOAgent → Analyst → Researcher(조건부) → PMOAgent 통합
-       · 상충 시 PMAgent 경유 사용자 에스컬레이션
+[요건] Orchestrator → PMOAgent → (PMAgent 도메인 해석 + Analyst + Researcher 조건부) → PMOAgent 통합
+       · 상충 시 Orchestrator 경유 사용자 에스컬레이션
        · "사용자 확인 필요" 항목은 blocking wait (사용자 답변 전 설계 진입 금지)
-       · 복잡 요건 시 DocsAgent가 docs/requirements/<slug>.md 저장
+       · 통합 명세서는 Confluence Story 페이지 §3-6에 직접 반영 (DocsAgent 경유)
 
-[설계] PMOAgent 통합 → Architect ↔ Refactor → Change Plan 확정 → DocsAgent 저장
+[설계] Story 페이지 §1-6 → Architect ↔ Refactor → Change Plan 확정 → DocsAgent 저장 + Story 페이지 §7 미러링
 
 [구현] Architect가 병렬 스폰
        ├── QADev (tests/** 작성 — 분기 독립 1회)
        └── 분기 A(Engineer) / B(Dev) / A+B
-       → Architect가 QADev 매핑표 감사 → 통과 시 품질 단계
+       → Architect가 QADev 매핑표 감사 → 통과 시 Orchestrator에 품질 단계 진입 요청
 
-[품질] PMAgent가 Architect 감사 PASS 수령 → ReviewPLAgent 스폰
+[품질] Orchestrator가 Architect 감사 PASS 수령 → ReviewPLAgent 스폰
        [리뷰 레인 Step 1] ReviewPL → Claude + Codex 병렬 리뷰 → severity 종합
-             ├── P0/P1 → PMAgent 경유 Architect 회귀 (FIX 루프, 최대 3회)
-             └── PASS → PMAgent가 테스트 레인 진입 지시
+             ├── P0/P1 → Orchestrator 경유 Architect 회귀 (FIX 루프, 최대 3회)
+             └── PASS → Orchestrator가 테스트 레인 진입 지시
 
-       [테스트 레인 Step 2] PMAgent → TestAgent
+       [테스트 레인 Step 2] Orchestrator → TestAgent
              · 모드 1 (기능): tests/unit tests/integration tests/infra
              · 모드 2 (성능): tests/perf -- baseline 대비 mean 10% 이상 악화 시 FAIL
-             ├── 기능 FAIL 또는 성능 회귀 → PMAgent 경유 Architect 회귀 (원인 판정 + 계획서 갱신, 재구현 후 리뷰 레인부터 재실행)
+             ├── 기능 FAIL 또는 성능 회귀 → Orchestrator 경유 Architect 회귀 (원인 판정 + 계획서 갱신, 재구현 후 리뷰 레인부터 재실행)
              └── ALL PASS → DocsAgent (최종 완료)
 ```
 
@@ -101,13 +109,13 @@ Story 페이지 규격·섹션 책임은 Confluence `Stories` parent 페이지(p
 
 ### FIX 루프
 **트리거**: 리뷰 레인(Step 1) P0/P1 또는 테스트 레인(Step 2) FAIL.
-**시퀀스**: ReviewPL 또는 TestAgent → PMAgent 수령 → Architect ↔ Refactor 계획서 갱신 → 구현 재실행 → 리뷰 레인부터 품질 재실행.
-**카운터 (PMAgent 세션 메모리 소유)**:
-- 리뷰 레인(Step 1) FIX 최대 3회 → 초과 시 PMAgent 경유 사용자 ESCALATE
+**시퀀스**: ReviewPL 또는 TestAgent → Orchestrator 수령 → Architect ↔ Refactor 계획서 갱신 → 구현 재실행 → 리뷰 레인부터 품질 재실행.
+**카운터 (Orchestrator 세션 메모리 소유 — 세션 재개 시 Jira `fix:step1-retry`/`fix:step2-retry` 라벨 카운트로 복원)**:
+- 리뷰 레인(Step 1) FIX 최대 3회 → 초과 시 Orchestrator 경유 사용자 ESCALATE
 - 테스트 레인(Step 2) FIX 무제한 (모든 테스트 PASS 필수)
 - 테스트 레인 FAIL 후 재진입한 리뷰 레인에서 P0/P1 발견 시 리뷰 레인 카운터 리셋 (재구현 결과는 새 리뷰 대상)
 - 테스트 레인 반복 FAIL 시 Architect가 근본 원인 재분석해 계획서 대폭 수정 (숫자 규칙 없음)
-- **ReviewPL/TestAgent/Architect 간 수평 호출 금지** — 모든 게이트 재실행과 회귀 요청은 PMAgent 경유
+- **ReviewPL/TestAgent/Architect 간 수평 호출 금지** — 모든 게이트 재실행과 회귀 요청은 Orchestrator 경유
 
 설계 금지 원칙 유지 — Dev·Engineer·QADev는 계획서 준수, 설계·분기 결정은 Architect+Refactor 계획서 갱신만.
 
@@ -152,8 +160,8 @@ Story 페이지 규격·섹션 책임은 Confluence `Stories` parent 페이지(p
 사용자 요건 접수부터 PR merge까지의 모든 의사결정·협업을 Jira에 영속 기록한다.
 
 ### 계층
-- **Epic** = 사용자 요건 1건. 오케스트레이터가 PMAgent 스폰 직전 생성
-- **Story** = PR 1건 (= Change Plan 1건). PMAgent scope 분해 시 확정된 독립 작업 단위만 생성
+- **Epic** = 사용자 요건 1건. Orchestrator가 PMOAgent 스폰 직전 생성
+- **Story** = PR 1건 (= Change Plan 1건). Orchestrator(필요 시 PMOAgent 조언) scope 분해 시 확정된 독립 작업 단위만 생성
 
 ### 상태 + Phase Label 방식
 
@@ -178,7 +186,7 @@ status=완료, 마지막 label 유지(감사용)
 
 ### FIX 루프
 - **리뷰 레인(Step1) P0/P1** 또는 **테스트 레인(Step2) FAIL** 시: phase label 되돌림 `phase:리뷰-step1|phase:테스트-step2 → phase:구현` + `fix:step1-retry`/`fix:step2-retry` label 추가 + 코멘트 `[FIX #N] <Agent>: <원인>`
-- 카운터는 **PMAgent 세션 메모리** (리뷰 레인 최대 3회, 테스트 레인 무제한)
+- 카운터는 **Orchestrator 세션 메모리** (리뷰 레인 최대 3회, 테스트 레인 무제한) — 세션 재개 시 Jira 라벨 카운트로 복원
 - 테스트 레인 FAIL 후 재진입한 리뷰 레인에서 P0/P1 발견 시 리뷰 레인 카운터 리셋
 
 ### 코멘트 규칙
