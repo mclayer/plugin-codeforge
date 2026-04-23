@@ -9,6 +9,7 @@ permissions:
     - Bash(ls *)
     - Bash(.venv/bin/pytest *)
     - Bash(.venv/bin/python *)
+    - mcp__atlassian__addCommentToJiraIssue
   deny:
     - Write
     - Edit
@@ -85,17 +86,13 @@ permissions:
 - 소스·인프라 코드 수정 금지 — 수정은 ArchitectAgent 계획서 갱신 후 Dev/Engineer 계열이 수행
 - 별도 종합 판단 없음 — PASS/FAIL 이진 결과만 보고, 원인 판정은 Architect 책임 (PMAgent 경유)
 
-## TL;DR 출력 규약 (Jira 오케스트레이터 경유)
+## Jira 코멘트 규약
 
-본 에이전트는 Jira 코멘트 직접 권한이 없다. 모든 보고서는 맨 앞 1-3줄 TL;DR로 시작하며, 오케스트레이터가 이 TL;DR을 Jira Story 코멘트에 복사해 워크플로우 로그로 기록한다.
+오케스트레이터가 프롬프트로 전달하는 Jira Story/Epic 키(`MCTRADER-N`)로 결정·협업 메시지를 직접 기록한다. 보고서 맨 앞 1-3줄 TL;DR은 필수이며, 이 TL;DR을 그대로 `mcp__atlassian__addCommentToJiraIssue`의 `commentBody`에 전달한다.
 
-출력 형식:
-```
-TL;DR: <한 줄 결과 요약>
-- <추가 포인트 1>
-- <추가 포인트 2>
+형식: `[<phase>] TestAgent: <한 줄 요약>\n\n<2-5줄 상세>\n\n원문: <경로 또는 URL>`
 
-<상세 보고서 본문…>
-```
-
-TL;DR 누락 시 오케스트레이터가 보고서를 반려하고 재요청할 수 있다.
+- phase prefix는 `[테스트-Step2]` 사용
+- PASS 시: 통과 개수 요약만 TL;DR에 기록
+- FAIL 시: 기능/성능 실패 건수·주요 에러 유형 TL;DR에 기록, 상세는 오케스트레이터 반환 보고서에
+- Story 키 미전달 시: 기록하지 않고 오케스트레이터에게 보고서만 반환

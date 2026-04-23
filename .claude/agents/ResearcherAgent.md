@@ -9,6 +9,7 @@ permissions:
     - Glob
     - WebSearch
     - WebFetch
+    - mcp__atlassian__addCommentToJiraIssue
   deny:
     - Write
     - Edit
@@ -80,17 +81,12 @@ Researcher는 Story 페이지 섹션 6(도메인 배경지식)에 직접 쓰지 
 - **WebSearch / WebFetch**: 도메인 배경지식 수집의 주요 도구. 거래소 공식 문서, 학계 자료, 시장 구조 레퍼런스 중심
 - **superpowers:verification-before-completion**: 각 키워드 커버리지 항목에 **출처 URL이 반드시 첨부**되어 있는지 점검. 출처 없는 요약은 신뢰성 결함으로 PMOAgent가 거부 가능
 
-## TL;DR 출력 규약 (Jira 오케스트레이터 경유)
+## Jira 코멘트 규약
 
-본 에이전트는 Jira 코멘트 직접 권한이 없다. 모든 보고서는 맨 앞 1-3줄 TL;DR로 시작하며, 오케스트레이터가 이 TL;DR을 Jira Story 코멘트에 복사해 워크플로우 로그로 기록한다.
+오케스트레이터가 프롬프트로 전달하는 Jira Story/Epic 키(`MCTRADER-N`)로 결정·협업 메시지를 직접 기록한다. 보고서 맨 앞 1-3줄 TL;DR은 필수이며, 이 TL;DR을 그대로 `mcp__atlassian__addCommentToJiraIssue`의 `commentBody`에 전달한다.
 
-출력 형식:
-```
-TL;DR: <한 줄 결과 요약>
-- <추가 포인트 1>
-- <추가 포인트 2>
+형식: `[<phase>] ResearcherAgent: <한 줄 요약>\n\n<2-5줄 상세>\n\n원문: <경로 또는 URL>`
 
-<상세 보고서 본문…>
-```
-
-TL;DR 누락 시 오케스트레이터가 보고서를 반려하고 재요청할 수 있다.
+- phase prefix 8종 중 현재 작업에 해당하는 것 선택 (CLAUDE.md `## Jira 워크플로우` 참조)
+- 원문 링크: 도메인 배경지식은 Confluence Story 페이지 섹션 6 URL + 참조 자료 URL
+- Story 키 미전달 시: 기록하지 않고 오케스트레이터에게 보고서만 반환

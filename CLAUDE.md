@@ -187,8 +187,14 @@ status=완료, 마지막 label 유지(감사용)
 **Phase prefix 8종**: `[요건]`, `[설계]`, `[구현]`, `[리뷰-Step1]`, `[테스트-Step2]`, `[FIX #N]`, `[사용자]`, `[완료]`
 
 ### 코멘트 권한
-- **직접 기록(9)**: PMAgent, PMOAgent, ArchitectAgent, DeveloperPLAgent, EngineerPLAgent, ReviewPLAgent, RefactorAgent, ClaudeReviewAgent, CodexReviewAgent (md frontmatter에 `mcp__atlassian__addCommentToJiraIssue` 권한)
-- **오케스트레이터 경유(9)**: RequirementsAnalyst, Researcher, QADev, Frontend/Backend/DataEng/ServerEng Dev, TestAgent, DocsAgent — 보고서 맨 앞 TL;DR 1-3줄을 오케스트레이터가 그대로 복사
+
+**전원 직접 기록 (18 에이전트)**: 모든 에이전트 md frontmatter에 `mcp__atlassian__addCommentToJiraIssue` 권한이 부여되어 있다. 오케스트레이터 경유 복사 규약은 폐기되었으며, 각 에이전트가 `[<phase>] <AgentName>: <한 줄 요약>` 형식으로 Jira Story에 직접 기록한다.
+
+원칙:
+- 보고서 맨 앞 1-3줄 TL;DR을 `commentBody`에 그대로 전달
+- phase prefix 8종에서 현재 작업 단계 선택
+- Story 키 미전달 시: 기록 생략, 오케스트레이터에게 보고서만 반환
+- Confluence Story 페이지 섹션 갱신은 여전히 **DocsAgent 단독** (구조화 영속 vs Jira 이벤트 로그 분리)
 
 ### GitHub 연계
 - 모든 구현 커밋: `[MCTRADER-N] <type>: <summary>` prefix

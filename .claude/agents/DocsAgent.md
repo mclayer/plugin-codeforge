@@ -20,6 +20,7 @@ permissions:
     - mcp__atlassian__searchJiraIssuesUsingJql
     - mcp__atlassian__transitionJiraIssue
     - mcp__atlassian__getTransitionsForJiraIssue
+    - mcp__atlassian__addCommentToJiraIssue
 ---
 
 **프로젝트 전체의 문서화 전담**. 세 영역을 소유한다:
@@ -107,17 +108,12 @@ Jira Story 1건당 Confluence 페이지 1개. 요건 접수부터 PR merge까지
 - **claude-md-management:claude-md-improver**: CLAUDE.md 품질 감사가 필요할 때 사용. 중복·누락·구식 지침 검출
 - **claude-md-management:revise-claude-md**: 세션 학습(결정·규칙·패턴)을 CLAUDE.md에 반영할 때 사용. PMAgent/ArchitectAgent가 "이 결정을 CLAUDE.md에 기록하라"고 지시한 경우 이 스킬로 최신화
 
-## TL;DR 출력 규약 (Jira 오케스트레이터 경유)
+## Jira 코멘트 규약
 
-본 에이전트는 Jira 코멘트 직접 권한이 없다. 모든 보고서는 맨 앞 1-3줄 TL;DR로 시작하며, 오케스트레이터가 이 TL;DR을 Jira Story 코멘트에 복사해 워크플로우 로그로 기록한다.
+오케스트레이터가 프롬프트로 전달하는 Jira Story/Epic 키(`MCTRADER-N`)로 문서화 작업 보고를 직접 기록한다. 보고서 맨 앞 1-3줄 TL;DR은 필수이며, 이 TL;DR을 그대로 `mcp__atlassian__addCommentToJiraIssue`의 `commentBody`에 전달한다.
 
-출력 형식:
-```
-TL;DR: <한 줄 결과 요약>
-- <추가 포인트 1>
-- <추가 포인트 2>
+형식: `[<phase>] DocsAgent: <한 줄 요약>\n\n<2-5줄 상세>\n\n원문: <경로 또는 URL>`
 
-<상세 보고서 본문…>
-```
-
-TL;DR 누락 시 오케스트레이터가 보고서를 반려하고 재요청할 수 있다.
+- phase prefix 8종 중 현재 작업에 해당하는 것 선택 (요건·설계·구현·리뷰·테스트·FIX·사용자·완료)
+- 원문 링크: Confluence Story 페이지·ADR URL 또는 `docs/change-plans/<slug>.md` 경로
+- Story 키 미전달 시: 기록하지 않고 오케스트레이터에게 보고서만 반환
