@@ -9,7 +9,10 @@
       "Bash(codex exec *)",
       "Bash(node /Users/1111971/.claude/plugins/marketplaces/openai-codex/plugins/codex/scripts/codex-companion.mjs *)",
       "Bash(node /Users/1111971/.claude/plugins/cache/openai-codex/codex/1.0.4/scripts/codex-companion.mjs *)",
-      "mcp__GitLab__list_issues",
+      "mcp__atlassian__searchConfluenceUsingCql",
+      "mcp__atlassian__getConfluencePage",
+      "mcp__atlassian__searchJiraIssuesUsingJql",
+      "mcp__atlassian__getJiraIssue",
       "WebSearch",
       "WebFetch"
     ]

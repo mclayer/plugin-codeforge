@@ -44,7 +44,7 @@ User
 
 **ADR 참조는 선택적**:
 - **verbatim 포함**: ADR 결정이 본 작업의 핵심 근거일 때 (설계 제약 직접 적용)
-- **ID + 1줄 요약**: ADR이 배경 참조 수준일 때. 필요 시 sub-agent가 `mcp__GitLab__get_issue`로 fetch
+- **ID + 1줄 요약**: ADR이 배경 참조 수준일 때. 필요 시 sub-agent가 Confluence `mcp__atlassian__getConfluencePage`로 fetch
 
 불필요한 verbatim 포함은 프롬프트 비대화·토큰 증가를 유발하므로 관련성 기준으로 판단한다.
 
@@ -98,7 +98,7 @@ User
 - Dev 쓰기: BackendDev(src/**), FrontendDev(templates·static), QADev(tests/**), DataEng·ServerEng(분기 A)
 - 읽기 전용: Refactor, Claude/CodexReviewer, Tester, Researcher, 모든 PL
 - 외부 도구 wrapper: RequirementsAnalyst(Bash(codex exec *))
-- 문서 쓰기: DocsAgent(.md + GitLab MCP)
+- 문서 쓰기: DocsAgent(.md + Atlassian MCP — Confluence 페이지, Jira 이슈)
 
 ### Codex CLI / 플러그인 필수
 - CodexReviewer(Step 1): Codex 플러그인
@@ -110,20 +110,28 @@ User
 - 품질 Step 1: Claude + Codex 리뷰
 - 경로 분리된 쓰기 작업만 병렬 허용
 
-## ADR (GitLab Issues SSOT)
-- 프로젝트 `mctrader1/mctrader` (ID 81469985)
-- 목록: `mcp__GitLab__list_issues(labels=["ADR"])` / 상세: `mcp__GitLab__get_issue(issue_iid=N)`
+## ADR (Confluence Pages SSOT)
+- Space: `MCTRADER` / 루트 페이지 `ADR` / 6개 카테고리 parent 하위
+- 카테고리: Team & Process / Architecture / Data & Storage / Infrastructure / Dashboard & UX / Trading Strategy
+- 목록: `mcp__atlassian__searchConfluenceUsingCql(cql="label='adr' AND space='MCTRADER'")` / 상세: `mcp__atlassian__getConfluencePage(pageId=N)`
 - 세션 시작 시 ADR 목록 조회, 결정 사항 번복 금지
 - 설계 결정마다 신규 ADR 생성 (번호 = 기존 최대 + 1)
+- 신규 ADR은 결정 성격에 맞는 카테고리 페이지의 child로 생성
 
 ### 생성 기준
 라이브러리·프레임워크 선택 / 아키텍처 패턴 / 데이터 저장·처리 / 인프라·배포 / 전략 도메인 핵심 개념
 
-### 이슈 포맷
-제목 `ADR-NNN: <결정>` + label `ADR`. 본문: `## 상태 / ## 컨텍스트 / ## 결정 / ## 결과 / ## 다이어그램 / ## 관련 파일`
+### 페이지 템플릿
+제목 `ADR-NNN: <결정>` + label `adr` + 상단 메타데이터 테이블(번호/상태/카테고리/결정일/관련파일).
+본문 섹션: `## 상태 / ## 컨텍스트 / ## 결정 / ## 결과 / ## 다이어그램(Mermaid) / ## 관련 파일`
+
+## 버그 기록 (Jira)
+- 프로젝트: `MCTRADER` (키 = 카테고리 구분 없음, label로 분류)
+- 신규 버그: `mcp__atlassian__createJiraIssue(projectKey="MCTRADER", issueTypeName="작업", labels=["bug", <component>])`
+- 해결 시: `mcp__atlassian__transitionJiraIssue`로 "완료" 전이
 
 ## Domain Knowledge
-- [OrderBook/Trade 시각화 스펙](docs/guides/orderbook-trade-visualization-spec.md)
+- [OrderBook/Trade 시각화 스펙 (Confluence)](https://mctrader.atlassian.net/wiki/spaces/MCTRADER/pages/589826)
 
 ## Trading Domain
 암호화폐 · 스캘핑(단기·고빈도) · 완전 자율 실행 · 실시간 가격·호가창

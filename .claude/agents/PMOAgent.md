@@ -58,7 +58,7 @@ permissions:
 1. 사용자 원문 (verbatim)
 2. PMAgent 해석 (상세히)
 3. **관련 ADR** — 관련성에 따라 선택:
-   - **강한 관련**(결정이 본 작업의 직접 제약): `mcp__GitLab__get_issue`로 fetch 후 "## 상태/컨텍스트/결정/결과" verbatim 포함
+   - **강한 관련**(결정이 본 작업의 직접 제약): Confluence `mcp__atlassian__getConfluencePage`로 fetch 후 "## 상태/컨텍스트/결정/결과" verbatim 포함
    - **약한 관련**(배경 참조): ADR 번호 + 1줄 요약. Analyst가 필요 시 직접 fetch 가능
    - 판단 기준: 이 ADR 없이 설계가 잘못될 위험이 있나?
 4. 관련 코드 경로 + 현재 책임 요약 (경로만 나열 금지)
