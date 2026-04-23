@@ -19,6 +19,7 @@ permissions:
     - Bash(git log *)
     - WebSearch
     - WebFetch
+    - mcp__atlassian__addCommentToJiraIssue
 ---
 
 구현 코드를 **Codex(OpenAI GPT-5)** 시각으로 리뷰한다. Claude 리뷰와 **독립 peer**로 설계 의도·패턴·경계 케이스 검증. QualityPLAgent가 두 보고를 합집합 평가. Step 1 **필수 구성요소**.
@@ -93,3 +94,13 @@ findings:
 - Grep/Glob은 리뷰 범위 사전 확인 용도만
 
 보고는 오케스트레이터가 수령, Claude 보고와 함께 QualityPLAgent에 투입. QualityPL이 severity 합집합 판단.
+
+## Jira 코멘트 규약
+
+오케스트레이터가 프롬프트로 전달하는 Jira Story/Epic 키(`MCTRADER-N`)로 결정·협업 메시지를 직접 기록한다. 보고서 맨 앞 1-3줄 TL;DR은 필수이며, 이 TL;DR을 그대로 `mcp__atlassian__addCommentToJiraIssue`의 `commentBody`에 전달한다.
+
+형식: `[<phase>] CodexReviewerAgent: <한 줄 요약>\n\n<2-5줄 상세>\n\n원문: <경로 또는 URL>`
+
+- phase prefix 8종 중 현재 작업에 해당하는 것 선택 (CLAUDE.md `## Jira 워크플로우` 참조)
+- 원문 링크: 설계 변경은 `docs/change-plans/<slug>.md:L<line>`, 결정은 Confluence ADR URL, 코드 리뷰는 PR URL
+- Story 키 미전달 시: 기록하지 않고 오케스트레이터에게 보고서만 반환

@@ -3,6 +3,8 @@ name: ArchitectAgent
 model: claude-opus-4-7
 description: 설계/패턴 결정 — RefactorAgent와 변경 계획 수립, QADev 매핑표 감사, FIX 원인 판정
 permissions:
+  allow:
+    - mcp__atlassian__addCommentToJiraIssue
   deny:
     - Write
     - Edit
@@ -86,3 +88,13 @@ permissions:
 - `superpowers:brainstorming`: 요건→설계 변환 전 대안 탐색
 - `superpowers:systematic-debugging`: FIX 수령 시 symptom 아닌 root cause 공략, 매 iteration 다른 가설
 - `superpowers:dispatching-parallel-agents`: 구현 단계 QADev + 분기 병렬 스폰 근거
+
+## Jira 코멘트 규약
+
+오케스트레이터가 프롬프트로 전달하는 Jira Story/Epic 키(`MCTRADER-N`)로 결정·협업 메시지를 직접 기록한다. 보고서 맨 앞 1-3줄 TL;DR은 필수이며, 이 TL;DR을 그대로 `mcp__atlassian__addCommentToJiraIssue`의 `commentBody`에 전달한다.
+
+형식: `[<phase>] ArchitectAgent: <한 줄 요약>\n\n<2-5줄 상세>\n\n원문: <경로 또는 URL>`
+
+- phase prefix 8종 중 현재 작업에 해당하는 것 선택 (CLAUDE.md `## Jira 워크플로우` 참조)
+- 원문 링크: 설계 변경은 `docs/change-plans/<slug>.md:L<line>`, 결정은 Confluence ADR URL, 코드 리뷰는 PR URL
+- Story 키 미전달 시: 기록하지 않고 오케스트레이터에게 보고서만 반환

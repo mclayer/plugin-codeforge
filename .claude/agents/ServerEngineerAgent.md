@@ -32,3 +32,18 @@ ArchitectAgent 계획서가 분기 A 또는 A+B로 지시한 인프라 변경을
 - 계획서 범위 밖 결정 금지 — 필요 시 ArchitectAgent 에스컬레이션
 - QADeveloperAgent가 본 구현과 **병렬**로 `tests/infra/**`에 검증 테스트를 TDD 방식으로 작성하므로, 계획서에 해당 테스트 목록이 있는지 확인하고 없으면 ArchitectAgent에 보고
 - TesterAgent가 pytest로 통합 실행하므로, 인프라 테스트도 subprocess/assertion 기반 pytest 형식을 전제로 설계된다
+
+## TL;DR 출력 규약 (Jira 오케스트레이터 경유)
+
+본 에이전트는 Jira 코멘트 직접 권한이 없다. 모든 보고서는 맨 앞 1-3줄 TL;DR로 시작하며, 오케스트레이터가 이 TL;DR을 Jira Story 코멘트에 복사해 워크플로우 로그로 기록한다.
+
+출력 형식:
+```
+TL;DR: <한 줄 결과 요약>
+- <추가 포인트 1>
+- <추가 포인트 2>
+
+<상세 보고서 본문…>
+```
+
+TL;DR 누락 시 오케스트레이터가 보고서를 반려하고 재요청할 수 있다.

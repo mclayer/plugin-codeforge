@@ -12,6 +12,7 @@ permissions:
     - Bash(git log *)
     - WebSearch
     - WebFetch
+    - mcp__atlassian__addCommentToJiraIssue
   deny:
     - Write
     - Edit
@@ -115,3 +116,13 @@ findings:
 - **독립 수행**: 서로의 보고를 참고하지 않고 각자의 시각으로 리뷰
 - **병렬 스폰 권장**: QualityPLAgent 판단 재료 수집 시 Claude/Codex 리뷰어를 병렬 스폰 가능 (파일 읽기만 수행하므로 충돌 없음)
 - **교차 검증은 QualityPLAgent의 역할**: 두 리뷰어가 동일 이슈를 지적하면 신뢰도 상향, 한쪽만 지적하면 ArchitectAgent 판단에 맡김
+
+## Jira 코멘트 규약
+
+오케스트레이터가 프롬프트로 전달하는 Jira Story/Epic 키(`MCTRADER-N`)로 결정·협업 메시지를 직접 기록한다. 보고서 맨 앞 1-3줄 TL;DR은 필수이며, 이 TL;DR을 그대로 `mcp__atlassian__addCommentToJiraIssue`의 `commentBody`에 전달한다.
+
+형식: `[<phase>] ClaudeReviewerAgent: <한 줄 요약>\n\n<2-5줄 상세>\n\n원문: <경로 또는 URL>`
+
+- phase prefix 8종 중 현재 작업에 해당하는 것 선택 (CLAUDE.md `## Jira 워크플로우` 참조)
+- 원문 링크: 설계 변경은 `docs/change-plans/<slug>.md:L<line>`, 결정은 Confluence ADR URL, 코드 리뷰는 PR URL
+- Story 키 미전달 시: 기록하지 않고 오케스트레이터에게 보고서만 반환

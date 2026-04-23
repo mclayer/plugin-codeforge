@@ -7,6 +7,7 @@ permissions:
     - Read
     - Grep
     - Glob
+    - mcp__atlassian__addCommentToJiraIssue
   deny:
     - Write
     - Edit
@@ -80,3 +81,13 @@ Analyst 해석이 기존 ADR·도메인 제약(Researcher 발견)과 충돌 시:
 ## 스킬
 - `superpowers:brainstorming`: 요건이 복수 해석 가능할 때 대안 탐색
 - `superpowers:verification-before-completion`: 통합 명세서 확정 전 "사용자 확인 필요" 해소 점검
+
+## Jira 코멘트 규약
+
+오케스트레이터가 프롬프트로 전달하는 Jira Story/Epic 키(`MCTRADER-N`)로 결정·협업 메시지를 직접 기록한다. 보고서 맨 앞 1-3줄 TL;DR은 필수이며, 이 TL;DR을 그대로 `mcp__atlassian__addCommentToJiraIssue`의 `commentBody`에 전달한다.
+
+형식: `[<phase>] PMOAgent: <한 줄 요약>\n\n<2-5줄 상세>\n\n원문: <경로 또는 URL>`
+
+- phase prefix 8종 중 현재 작업에 해당하는 것 선택 (CLAUDE.md `## Jira 워크플로우` 참조)
+- 원문 링크: 설계 변경은 `docs/change-plans/<slug>.md:L<line>`, 결정은 Confluence ADR URL, 코드 리뷰는 PR URL
+- Story 키 미전달 시: 기록하지 않고 오케스트레이터에게 보고서만 반환

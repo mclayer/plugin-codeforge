@@ -7,6 +7,7 @@ permissions:
     - Read
     - Grep
     - Glob
+    - mcp__atlassian__addCommentToJiraIssue
   deny:
     - Write
     - Edit
@@ -93,3 +94,13 @@ FIX 루프 카운터·처리 시퀀스는 **CLAUDE.md "FIX 루프" 섹션** 을 
 ## 활용 플러그인/스킬
 - **superpowers:systematic-debugging**: Step 1 FIX 판정 후 ArchitectAgent에 전달할 **수정 방향 초안** 작성 시 이 스킬을 근거로 한다. "symptom 패치 금지, root cause 도달" 원칙을 지시에 명시해 매 iteration 접근법이 다르게 설계되도록 유도
 - **superpowers:verification-before-completion**: PASS 판정 전 "양 리뷰어 P1 이상 없음" 조건이 **실제 증거 기반**인지 점검. 보고 문구로만 PASS 선언하는 것을 방지 — 각 리뷰어 보고의 structured evidence(finding 개수·severity)를 인용해야 PASS 유효
+
+## Jira 코멘트 규약
+
+오케스트레이터가 프롬프트로 전달하는 Jira Story/Epic 키(`MCTRADER-N`)로 결정·협업 메시지를 직접 기록한다. 보고서 맨 앞 1-3줄 TL;DR은 필수이며, 이 TL;DR을 그대로 `mcp__atlassian__addCommentToJiraIssue`의 `commentBody`에 전달한다.
+
+형식: `[<phase>] QualityPLAgent: <한 줄 요약>\n\n<2-5줄 상세>\n\n원문: <경로 또는 URL>`
+
+- phase prefix 8종 중 현재 작업에 해당하는 것 선택 (CLAUDE.md `## Jira 워크플로우` 참조)
+- 원문 링크: 설계 변경은 `docs/change-plans/<slug>.md:L<line>`, 결정은 Confluence ADR URL, 코드 리뷰는 PR URL
+- Story 키 미전달 시: 기록하지 않고 오케스트레이터에게 보고서만 반환

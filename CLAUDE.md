@@ -130,6 +130,74 @@ User
 - 신규 버그: `mcp__atlassian__createJiraIssue(projectKey="MCTRADER", issueTypeName="작업", labels=["bug", <component>])`
 - 해결 시: `mcp__atlassian__transitionJiraIssue`로 "완료" 전이
 
+## Jira 워크플로우 (MCTRADER 프로젝트)
+
+사용자 요건 접수부터 PR merge까지의 모든 의사결정·협업을 Jira에 영속 기록한다.
+
+### 계층
+- **Epic** = 사용자 요건 1건. 오케스트레이터가 PMAgent 스폰 직전 생성
+- **Story** = PR 1건 (= Change Plan 1건). PMAgent scope 분해 시 확정된 독립 작업 단위만 생성
+
+### 상태 + Phase Label 방식
+
+Jira 기본 3-state 유지(`해야 할 일`/`진행 중`/`완료`). 단계는 **phase label**로 표현(Jira free tier custom status 제약).
+
+```
+[생성] status=해야 할 일 → phase:요건 label 부여 + 진행 중 전이
+  ↓ Architect Change Plan 확정
+[phase:요건 → phase:설계] (label 교체)
+  ↓ 구현 병렬 스폰
+[phase:설계 → phase:구현]
+  ↓ Step1 진입
+[phase:구현 → phase:리뷰-step1]
+  ↓ Step1 PASS
+[phase:리뷰-step1 → phase:테스트-step2]
+  ↓ PR merged (GitHub for Jira 자동 전이)
+status=완료, 마지막 label 유지(감사용)
+```
+
+### Transition ID
+- `해야 할 일` → 11 / `진행 중` → 21 / `완료` → 31
+
+### FIX 루프
+- **Step1 P0/P1** 또는 **Step2 FAIL** 시: phase label 되돌림 `phase:리뷰-step1|phase:테스트-step2 → phase:구현` + `fix:step1-retry`/`fix:step2-retry` label 추가 + 코멘트 `[FIX #N] <Agent>: <원인>`
+- 카운터는 오케스트레이터 세션 메모리 (Step1 최대 3회, Step2 무제한)
+- Step2 FAIL 후 재진입한 Step1에서 P0/P1 발견 시 Step1 카운터 리셋
+
+### 코멘트 규칙
+형식: `[<phase>] <AgentName>: <한 줄 요약>\n\n<2-5줄 상세>\n\n원문: <경로 또는 URL>`
+
+**Phase prefix 8종**: `[요건]`, `[설계]`, `[구현]`, `[리뷰-Step1]`, `[테스트-Step2]`, `[FIX #N]`, `[사용자]`, `[완료]`
+
+### 코멘트 권한
+- **직접 기록(9)**: PMAgent, PMOAgent, ArchitectAgent, DeveloperPLAgent, EngineerPLAgent, QualityPLAgent, RefactorAgent, ClaudeReviewerAgent, CodexReviewerAgent (md frontmatter에 `mcp__atlassian__addCommentToJiraIssue` 권한)
+- **오케스트레이터 경유(9)**: RequirementsAnalyst, Researcher, QADev, Frontend/Backend/DataEng/ServerEng Dev, Tester, DocsAgent — 보고서 맨 앞 TL;DR 1-3줄을 오케스트레이터가 그대로 복사
+
+### GitHub 연계
+- 모든 구현 커밋: `[MCTRADER-N] <type>: <summary>` prefix
+- PR 제목: `[MCTRADER-N] <Story 요약>`
+- PR 본문: `Jira: https://mctrader.atlassian.net/browse/MCTRADER-N` 상단 포함
+- GitHub for Jira 앱이 PR merge 시 Story 자동 `완료` 전이 (설치 시)
+
+### Labels 체계
+- `phase:*` (현재 단계 1개): `phase:요건`, `phase:설계`, `phase:구현`, `phase:리뷰-step1`, `phase:테스트-step2`
+- `component:*` (Story 단위): `component:collector`, `component:dashboard`, `component:strategy`, `component:backtest`
+- `adr:NNN` (관련 ADR 참조, 복수)
+- `branch:A` / `branch:B` / `branch:A+B` (구현 분기 결정)
+- `fix:step1-retry` / `fix:step2-retry` (FIX 발생 시 누적)
+- `bug` (버그 이슈), `migrated-from-repo` (2026-04-23 이관분)
+
+### 대시보드 JQL 예시
+- 현재 리뷰 중: `project = MCTRADER AND labels = "phase:리뷰-step1"`
+- FIX 대상: `project = MCTRADER AND labels in ("fix:step1-retry", "fix:step2-retry")`
+- Story 전체: `project = MCTRADER AND issuetype = 작업 AND statusCategory != Done`
+
+### 원문 위치
+Jira는 **워크플로우 로그**만. 원문은 각 도구 유지:
+- 설계: `docs/change-plans/<slug>.md` (Git-versioned)
+- 결정: Confluence ADR 페이지
+- 코드 리뷰: GitHub PR 설명·코멘트
+
 ## Domain Knowledge
 - [OrderBook/Trade 시각화 스펙 (Confluence)](https://mctrader.atlassian.net/wiki/spaces/MCTRADER/pages/589826)
 

@@ -79,6 +79,7 @@
       "mcp__atlassian__searchJiraIssuesUsingJql",
       "mcp__atlassian__transitionJiraIssue",
       "mcp__atlassian__getTransitionsForJiraIssue",
+      "mcp__atlassian__addCommentToJiraIssue",
       "Bash(gh auth *)",
       "Bash(gh repo *)",
       "Bash(gh api *)",

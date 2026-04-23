@@ -46,3 +46,18 @@ ArchitectAgent 계획서가 분기 A 또는 A+B로 지시한 데이터 파이프
 ## 활용 플러그인/스킬
 - **pyright-lsp**: WebSocket payload → Parquet 스키마 → DuckDB 쿼리로 이어지는 타입 변환 경로에서 LSP 진단을 적극 활용해 실시간 구조 오류 감지
 - **superpowers:systematic-debugging**: 수집 파이프라인 장애(예: ORDERBOOK diff 적용 실패, Parquet write I/O 에러) 대응 시 증상만 패치하지 않고 근본 원인(버퍼링 전략·flush 타이밍 등)을 추적한다
+
+## TL;DR 출력 규약 (Jira 오케스트레이터 경유)
+
+본 에이전트는 Jira 코멘트 직접 권한이 없다. 모든 보고서는 맨 앞 1-3줄 TL;DR로 시작하며, 오케스트레이터가 이 TL;DR을 Jira Story 코멘트에 복사해 워크플로우 로그로 기록한다.
+
+출력 형식:
+```
+TL;DR: <한 줄 결과 요약>
+- <추가 포인트 1>
+- <추가 포인트 2>
+
+<상세 보고서 본문…>
+```
+
+TL;DR 누락 시 오케스트레이터가 보고서를 반려하고 재요청할 수 있다.
