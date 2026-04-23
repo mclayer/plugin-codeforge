@@ -2,7 +2,6 @@
 name: ResearcherAgent
 model: claude-opus-4-7
 description: 도메인 웹 리서치 — RequirementsAnalyst가 지정한 키워드 기반 타겟 조사, 연구원 수준 배경지식 축적
-tools: Read, Grep, Glob, WebSearch, WebFetch
 permissions:
   allow:
     - Read

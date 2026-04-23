@@ -10,6 +10,8 @@ permissions:
     - Bash(git status *)
     - Bash(git diff *)
     - Bash(git log *)
+    - WebSearch
+    - WebFetch
   deny:
     - Write
     - Edit

@@ -6,6 +6,8 @@ permissions:
   allow:
     - Write
     - Edit
+    - WebSearch
+    - WebFetch
     - mcp__GitLab__create_issue
     - mcp__GitLab__update_issue
     - mcp__GitLab__create_issue_note
