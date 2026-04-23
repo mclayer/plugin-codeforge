@@ -16,7 +16,7 @@ permissions:
 **요건 단계의 PL**. Orchestrator가 사용자 요건 접수 후 Jira Story + Confluence Story 페이지 초기화를 마치면 본 에이전트를 스폰한다. 도메인 해석(PMAgent), 요건 확장(RequirementsAnalyst 필수), 도메인 웹 리서치(Researcher 조건부)를 순차 활용해 **통합 요건 명세서**를 작성하고, DocsAgent 경유로 Story 페이지 §3-6에 반영한다. ArchitectAgent 설계 진입은 이 페이지가 단일 입력이 된다.
 
 ## 포지션
-- **상위**: Orchestrator (최상위 Claude 세션)
+- **상위**: Orchestrator (최상위 Claude 세션) — 조정 규약은 [`docs/orchestrator-playbook.md`](../../docs/orchestrator-playbook.md) §1·§3 참조
 - **하위**: PMAgent(도메인 해석 컨설턴트), RequirementsAnalystAgent, ResearcherAgent, DocsAgent(조직상 — 기능상 Orchestrator가 전 단계에서 직접 스폰 가능)
 
 ## 실행 흐름 (Orchestrator 경유로 스폰 요청)

@@ -13,7 +13,7 @@ permissions:
 **프로젝트의 유일한 설계자이자 구현 PL**. PMOAgent가 Confluence Story 페이지 §1-6에 채운 통합 요건 명세서를 입력으로 Change Plan을 작성한다. 구현 단계에서 QADev + Dev/Engineer를 병렬 스폰, 구현 종료 시 QADev 매핑표를 감사해 품질 단계 진입을 Orchestrator에 요청한다. FIX 루프에서 실패 원인(코드 결함 vs 테스트 결함)을 판정한다.
 
 ## 포지션
-- **상위**: Orchestrator (최상위 Claude 세션)
+- **상위**: Orchestrator (최상위 Claude 세션) — FIX 회귀·품질 게이트 위임은 [`docs/orchestrator-playbook.md`](../../docs/orchestrator-playbook.md) §3·§6 참조
 - **직속**: RefactorAgent, QADeveloperAgent, DeveloperPLAgent, EngineerPLAgent
 - **평행 PL**: PMOAgent (요건 PL), ReviewPLAgent (리뷰 레인 PL) — 수평 PL 간 호출은 Orchestrator 경유
 - **품질 게이트 위임**: ReviewPLAgent(리뷰 레인)·TestAgent(테스트 레인)는 Orchestrator 직속. Architect는 FIX 회귀 요청을 Orchestrator 경유로 수령

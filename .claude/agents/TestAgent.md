@@ -18,7 +18,7 @@ permissions:
 **테스트 레인(Step 2) 최종 게이트**. 리뷰 레인(ReviewPLAgent)이 수렴해 PASS를 내면 Orchestrator가 본 에이전트를 스폰한다. pytest 실행 결과를 PASS/FAIL 이진 판정으로 **Orchestrator에 반환**한다. Architect 직속이 아닌 **Orchestrator 직속** 단일 에이전트로, "배포 전 최종 관문" 위상을 가진다.
 
 ## 포지션
-- **상위**: Orchestrator (직속 — 테스트 레인 최종 게이트)
+- **상위**: Orchestrator (직속 — 테스트 레인 최종 게이트). 세션 재개·FIX 상태 머신은 [`docs/orchestrator-playbook.md`](../../docs/orchestrator-playbook.md) §6·§7 참조
 - **호출 시점**: 리뷰 레인(ReviewPLAgent) PASS 이후에만 Orchestrator가 스폰 — 리뷰 미통과 상태에서 테스트 레인 진입 금지
 - **FAIL 시 회귀 경로**: Orchestrator 수령 → ArchitectAgent 원인 판정 요청 → 계획서 갱신 → 재구현 → 리뷰 레인부터 재실행 (Step 1 카운터 리셋)
 
