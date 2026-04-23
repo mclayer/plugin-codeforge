@@ -15,6 +15,15 @@ from mctrader.dashboard.collector_status import (
     discover_symbols,
     list_today_files,
 )
+from mctrader.dashboard.db import close_duckdb, init_duckdb
+
+
+@pytest.fixture(autouse=True)
+def _duckdb_lifecycle():
+    """aggregate_symbol_stats가 get_duckdb()를 사용하므로 각 테스트 전후 초기화/정리."""
+    init_duckdb()
+    yield
+    close_duckdb()
 
 # ---------------------------------------------------------------------------
 # Parquet fixture helpers

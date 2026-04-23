@@ -12,9 +12,11 @@ from mctrader.dashboard.server import _ts_fmt, create_app
 
 
 @pytest.fixture()
-def client(tmp_path: pytest.TempPathFactory) -> TestClient:
+def client(tmp_path: pytest.TempPathFactory):
     app = create_app(result_dir=str(tmp_path))
-    return TestClient(app)
+    # lifespan(init_duckdb/close_duckdb)을 실행하려면 컨텍스트 매니저 형태로 사용해야 한다.
+    with TestClient(app) as c:
+        yield c
 
 
 def _write_sample_orderbook(data_root: str) -> None:
@@ -177,7 +179,8 @@ class TestDataPage:
             )
         assert r.status_code == 200
         body = r.json()
-        assert body["total_count"] >= 1
+        # total_count는 LIMIT+1 기법 도입으로 None 반환
+        assert body["total_count"] is None
         assert body["returned_count"] >= 1
 
     def test_api_data_query_rejects_invalid_type(self, client: TestClient) -> None:

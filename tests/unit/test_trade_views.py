@@ -8,7 +8,16 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
+from mctrader.dashboard.db import close_duckdb, init_duckdb
 from mctrader.dashboard.views.trade_views import build_cvd, build_tape
+
+
+@pytest.fixture(autouse=True)
+def _duckdb_lifecycle():
+    """build_tape / build_cvd가 get_duckdb() 경로를 타므로 각 테스트마다 초기화/정리."""
+    init_duckdb()
+    yield
+    close_duckdb()
 
 _TRADE_SCHEMA = pa.schema([
     pa.field("ts", pa.int64()),

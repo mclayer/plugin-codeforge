@@ -21,3 +21,7 @@ build/
 .venv/
 .coverage
 htmlcov/
+
+# Claude Code — local agent worktrees (embedded repos 포함)
+.claude/worktrees/
+.claude/worktrees/*

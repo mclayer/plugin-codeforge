@@ -1,13 +1,17 @@
 # mctrader 문서
 
-작업 중 습득한 외부 API 스펙, 설계 결정, 운영 가이드를 관리한다.
+작업 산출물(요건 명세서, 변경 계획서) 및 설계 문서(superpowers specs/plans)를 관리한다.
 
-> 추후 GitLab Wiki로 이전 예정.
+도메인 문서(ADR, 운영 가이드, 외부 API 스펙, 버그 이력)는 외부 시스템으로 이관되어 있다:
+- **ADR**: [Confluence space `MCTRADER`](https://mctrader.atlassian.net/wiki/spaces/MCTRADER) / 페이지 트리 `ADR/<카테고리>/ADR-NNN: ...`
+- **운영 가이드 · API 스펙**: Confluence `MCTRADER` / `Guides`, `API Reference` 트리
+- **버그 기록**: [Jira project `MCTRADER`](https://mctrader.atlassian.net/jira/software/projects/MCTRADER) / `bug` label Task
 
 ## 구조
 
 | 디렉토리 | 내용 |
 |----------|------|
-| `api/` | 외부 API 연동 문서 (거래소 WebSocket 등) |
-| `adr/` | ADR 보완 문서 |
-| `guides/` | 운영/개발 가이드 |
+| `requirements/` | PMOAgent가 작성한 통합 요건 명세서 |
+| `change-plans/` | ArchitectAgent가 작성한 변경 계획서 (PR과 1:1 매핑) |
+| `superpowers/specs/` | 설계 문서 (brainstorming 산출물) |
+| `superpowers/plans/` | 구현 계획서 (writing-plans 산출물) |

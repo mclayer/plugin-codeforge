@@ -4,6 +4,7 @@ import asyncio
 import json
 import logging
 import ssl
+import time
 import uuid
 from collections.abc import AsyncGenerator
 
@@ -89,6 +90,21 @@ class BithumbWsClient:
             {"type": "trade", "codes": codes},
         ])
         await self._ws.send(payload)  # type: ignore[union-attr]
+
+    async def probe_handshake(self, timeout_sec: float = 5.0) -> float:
+        """Perform TLS handshake only — no subscription, immediate close.
+
+        Returns elapsed time in milliseconds.
+        Raises asyncio.TimeoutError, OSError, ssl.SSLError on failure.
+        """
+        start = time.monotonic()
+        ws = await asyncio.wait_for(
+            websockets.connect(self._url, ssl=_SSL_CTX),
+            timeout=timeout_sec,
+        )
+        elapsed = (time.monotonic() - start) * 1000.0
+        await ws.close()
+        return elapsed
 
     async def _reconnect(self) -> None:
         logger.info("Reconnecting to %s", self._url)

@@ -123,7 +123,7 @@ class CollectorService:
     def from_config(cls, config: CollectorConfig) -> CollectorService:
         """Create service from configuration."""
         gateway = BithumbGateway()
-        symbol_objs = _filter_symbols(gateway.symbols(), config.collector.symbols)
+        symbol_objs = filter_symbols(gateway.symbols(), config.collector.symbols)
         ws_symbols = [s.name for s in symbol_objs]
 
         ws_client = BithumbWsClient(
@@ -146,7 +146,7 @@ class CollectorService:
         )
 
 
-def _filter_symbols(all_symbols: list[Symbol], selector: str | list[str]) -> list[Symbol]:
+def filter_symbols(all_symbols: list[Symbol], selector: str | list[str]) -> list[Symbol]:
     """Filter symbols by selector: 'all', list of names, or single name."""
     if selector == "all":
         return all_symbols
