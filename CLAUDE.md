@@ -25,7 +25,7 @@ User
       └── TestAgent                   # 테스트 레인 최종 게이트 (Step 2, PMAgent 직속 단독)
 ```
 
-**용어**: "**리뷰 레인(Step 1)**" = ReviewPLAgent + Claude/Codex 병렬 리뷰. "**테스트 레인(Step 2)**" = TestAgent pytest 최종 실행. 리뷰 레인 수렴 후 테스트 레인 진입.
+**용어**: "**리뷰 레인(Step 1)**" = ReviewPLAgent + Claude/Codex 병렬 리뷰. "**테스트 레인(Step 2)**" = TestAgent pytest 최종 실행 (기능 모드 + 성능 모드 순차). 리뷰 레인 수렴 후 테스트 레인 진입.
 
 ## 단계 용어
 - **요건**: PMAgent 접수 → PMOAgent 통합 명세서 확정
@@ -80,8 +80,10 @@ User
              ├── P0/P1 → PMAgent 경유 Architect 회귀 (FIX 루프, 최대 3회)
              └── PASS → PMAgent가 테스트 레인 진입 지시
 
-       [테스트 레인 Step 2] PMAgent → TestAgent pytest
-             ├── FAIL → PMAgent 경유 Architect 회귀 (원인 판정 + 계획서 갱신, 재구현 후 리뷰 레인부터 재실행)
+       [테스트 레인 Step 2] PMAgent → TestAgent
+             · 모드 1 (기능): tests/unit tests/integration tests/infra
+             · 모드 2 (성능): tests/perf -- baseline 대비 mean 10% 이상 악화 시 FAIL
+             ├── 기능 FAIL 또는 성능 회귀 → PMAgent 경유 Architect 회귀 (원인 판정 + 계획서 갱신, 재구현 후 리뷰 레인부터 재실행)
              └── ALL PASS → DocsAgent (최종 완료)
 ```
 
