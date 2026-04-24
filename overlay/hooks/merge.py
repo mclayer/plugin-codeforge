@@ -3,20 +3,25 @@
 merge.py — agent md core + overlay merger
 
 Usage:
-    python3 merge.py <core.md> <overlay.md>
+    python3 merge.py <core.md> [<overlay.md>]
+    python3 merge.py --overlay-only <overlay.md>
 
 Produces merged agent md to stdout. Consumer SessionStart hook invokes this
 per agent and redirects stdout to `.claude/agents/<Name>.md`.
 
-Merge semantics (see docs/plugin-design.md):
-- Body: core body + "\\n\\n---\\n\\n## Project Overlay — <project>\\n\\n" + overlay body
+Modes:
+- core only:  `merge.py <core.md>` — emits core with auto-header
+- core+overlay: `merge.py <core.md> <overlay.md>` — frontmatter deep merge, body append
+- overlay only: `merge.py --overlay-only <overlay.md>` — for consumer-defined
+    agents that have no core counterpart (preset imports, custom agents)
+
+Merge semantics (see docs/plugin-design.md §4):
+- Body: core body + "\\n\\n---\\n\\n## Project Overlay\\n\\n" + overlay body
 - Frontmatter scalars (name, description, model, color): core-wins. overlay
   differing value → abort.
 - Frontmatter arrays (tools, permissions.allow, permissions.deny): concat +
   dedup (core first, overlay tail).
 - Frontmatter maps: recursive (nested arrays concat+dedup).
-
-If overlay file is missing, emits core-only with auto-generated header.
 """
 from __future__ import annotations
 
@@ -122,28 +127,54 @@ def render_frontmatter(fm: dict[str, Any]) -> str:
     )
 
 
-def auto_header(core_path: Path, overlay_path: Path | None) -> str:
+def auto_header(core_path: Path | None, overlay_path: Path | None) -> str:
     ts = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    core_src = str(core_path) if core_path else "(overlay-only)"
     overlay_src = str(overlay_path) if overlay_path else "(none)"
     return (
         f"<!--\n"
-        f"  GENERATED FROM {core_path} + {overlay_src}\n"
+        f"  GENERATED FROM {core_src} + {overlay_src}\n"
         f"  DO NOT EDIT DIRECTLY. Edit source files and let SessionStart hook regenerate.\n"
         f"  Last regenerated: {ts}\n"
         f"-->\n\n"
     )
 
 
+USAGE = (
+    "Usage:\n"
+    "  merge.py <core.md> [<overlay.md>]\n"
+    "  merge.py --overlay-only <overlay.md>\n"
+    "Emits merged agent md to stdout.\n"
+)
+
+
+def _render_overlay_only(overlay_path: Path) -> int:
+    if not overlay_path.exists():
+        sys.stderr.write(f"ERROR: overlay file not found: {overlay_path}\n")
+        return 5
+    overlay_raw = overlay_path.read_text(encoding="utf-8")
+    overlay_fm, overlay_body = split_frontmatter(overlay_raw)
+    sys.stdout.write(render_frontmatter(overlay_fm))
+    sys.stdout.write(auto_header(None, overlay_path))
+    sys.stdout.write(overlay_body)
+    return 0
+
+
 def main() -> int:
-    if len(sys.argv) < 2 or len(sys.argv) > 3:
-        sys.stderr.write(
-            "Usage: merge.py <core.md> [<overlay.md>]\n"
-            "Emits merged agent md to stdout.\n"
-        )
+    argv = sys.argv[1:]
+
+    if argv and argv[0] == "--overlay-only":
+        if len(argv) != 2:
+            sys.stderr.write(USAGE)
+            return 1
+        return _render_overlay_only(Path(argv[1]))
+
+    if len(argv) < 1 or len(argv) > 2:
+        sys.stderr.write(USAGE)
         return 1
 
-    core_path = Path(sys.argv[1])
-    overlay_path = Path(sys.argv[2]) if len(sys.argv) == 3 else None
+    core_path = Path(argv[0])
+    overlay_path = Path(argv[1]) if len(argv) == 2 else None
 
     if not core_path.exists():
         sys.stderr.write(f"ERROR: core file not found: {core_path}\n")

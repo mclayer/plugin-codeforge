@@ -1,7 +1,8 @@
 ---
 name: BackendDeveloperAgent
 model: claude-sonnet-4-6
-description: 백엔드 애플리케이션 코드 구현 — 도메인·어댑터·포트·CLI·서버 라우트 (테스트 코드 작성은 QADeveloperAgent 담당)
+role: dev
+description: 웹 백엔드 애플리케이션 코드 구현 — 도메인·어댑터·포트·CLI·서버 라우트 (테스트 코드 작성은 QADeveloperAgent 담당)
 permissions:
   allow:
     - Read
@@ -32,7 +33,7 @@ Consumer overlay가 언어·프레임워크·경로 관습 구체화. 본 에이
 
 ## 포지션
 - **상위**: DeveloperPLAgent (구현 레인 PL)
-- **형제**: FrontendDeveloperAgent, DataEngineerAgent, ServerEngineerAgent, QADeveloperAgent (구현 레인에서 병렬)
+- **형제**: FrontendDeveloperAgent (preset), DataEngineerAgent, InfraEngineerAgent, 기타 `role: dev` + QADeveloperAgent (구현 레인에서 병렬)
 
 ## 주 소유 범위 (production 코드만)
 - 서버 라우트·의존성 주입

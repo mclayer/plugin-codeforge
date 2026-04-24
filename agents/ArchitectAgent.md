@@ -119,7 +119,7 @@ FIX 루프 트리거 시 DeveloperPLAgent가 1차 원인 진단을 올리면 Arc
 - `superpowers:writing-plans`: "0 컨텍스트 개발자 전제" — 계획서를 재량 없이 실행 가능한 수준까지 구체화
 - `superpowers:brainstorming`: 요건→설계 변환 전 대안 탐색
 - `superpowers:systematic-debugging`: FIX 수령 시 root cause 공략, 매 iteration 다른 가설
-- `superpowers:dispatching-parallel-agents`: 구현 레인 4 Dev 병렬 스폰 근거
+- `superpowers:dispatching-parallel-agents`: 구현 레인 `role: dev` roster 병렬 스폰 근거
 
 ## 문서화 표준
 Jira/Confluence/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

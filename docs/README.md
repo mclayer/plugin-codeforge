@@ -18,4 +18,5 @@ Claude Code 범용 SW 개발 에이전트 플러그인 문서 집합.
 | [`../CLAUDE.md`](../CLAUDE.md) | 플러그인 오케스트레이션 규칙 SSOT — 에이전트 목록·레인·권한·Jira/ADR 규약 ("무엇") |
 | [`../README.md`](../README.md) | 플러그인 소개 · 설치법 · overlay 적용법 |
 | [`../templates/`](../templates/) | 공통 문서 양식 SSOT — Change Plan · ADR · Story Page · Impl Manifest |
-| `../agents/*.md` | 25 에이전트 SSOT (core — consumer overlay가 확장) |
+| `../agents/*.md` | 24 core 에이전트 SSOT (consumer overlay/preset이 확장) |
+| `../presets/` | 프로젝트 shape별 Dev 번들 (webapp 등) |
