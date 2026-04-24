@@ -5,6 +5,31 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.7.1] — 2026-04-24
+
+### Fixed (v0.7.0 병렬 모델 정합성 결함 보정)
+
+- **§2 Story 페이지 섹션 타이밍 drift**: v0.7.0에서 Analyst·Researcher가 §2(DomainAgent 해석)를 입력 참조한다는 서술이 남아있었음. 병렬 모델에서 §2는 Domain 자신의 output destination이며 페이지 생성 시엔 placeholder → Analyst·Researcher 프롬프트에서 §2 참조 제거, templates/story-page-structure.md에 타이밍 주석 추가
+- **섹션별 atomic 갱신 규정 누락**: Domain/Analyst/Researcher 결과를 배치로 기록하면 resume 시 부분 완료 감지 불가. DocsAgent가 §2·§5·§6 각각 **atomic 갱신** 의무 명시 (배치 금지)
+- **Clarification 재스폰 로그 위치 불명**: §10 FIX Ledger와 구분이 모호 → **§9.0 "Clarification 재스폰 이력"** 섹션 신설, Jira `fix:*` 라벨 미추가 (게이트 실패 아님)
+- **DesignReview 감사 항목 표류**: 병렬 모델에서 Mapper·Refactor 상호 대응이 없는데 "Mapper 변호 근거 일축 여부"를 두 에이전트 산출물에 묻는 서술이 남아있었음 → "**Architect 통합 판정**이 Mapper 변호를 근거 있게 일축·수용했는가"로 리프레이밍 (CLAUDE.md, ArchitectAgent, CodebaseMapper, Refactor 4곳)
+
+### Added
+
+- **§8.2 토큰 예산 peak/total 구분** (playbook): 병렬화로 peak concurrent context 증가 반영. 요구사항 peak 3× (~60k), 설계 peak 2× (~50k+Architect). "Peak 접근 시 순차 fallback 검토" 지침
+- **§3B.3 Preflight 공통 입력 준비 체크**: 요구사항·설계 레인 진입 전 Orchestrator가 ADR 목록·코드 경로·Project Config Packet·Change Plan 초안 등 공통 입력 패키지 완비 확인 의무
+- **§7.3 Resume 부분 완료 매핑**: §2·§5·§6 중 일부만 채워진 상태에서 중단됐을 때 비어있는 섹션의 에이전트만 선택 재스폰 (이미 채워진 섹션 재활용). 설계 레인도 동일 규칙
+- **DocsAgent §2·§5·§6 null 결과 템플릿**: "공백 없음"·"추가 해석 불필요"·"외부 지식 보강 불필요" 판정 시 섹션 생략 금지 — 독립 관점 결과 보존을 위해 사유 기록 템플릿 명시
+
+### Affected
+- `CLAUDE.md`, `docs/orchestrator-playbook.md`, `templates/story-page-structure.md`
+- `agents/DocsAgent.md`, `agents/DomainAgent.md`, `agents/RequirementsAnalystAgent.md`, `agents/ResearcherAgent.md`
+- `agents/ArchitectAgent.md`, `agents/CodebaseMapperAgent.md`, `agents/RefactorAgent.md`
+
+### Migration
+- Non-breaking (v0.7.0 semantic 유지, 정합성만 보정)
+- Consumer overlay override가 §2를 입력으로 참조하던 경우 제거 필요
+
 ## [0.7.0] — 2026-04-24
 
 ### Changed

@@ -62,7 +62,7 @@ permissions:
 ```
 1. 사용자 요구사항에서 도메인 키워드 자체 도출
    · overlay가 프로젝트별 용어 사전 제공 — 도메인 특화 단어 자동 인식
-   · 타 에이전트(Analyst·Researcher) 산출물 미수신 — 공통 입력(사용자 원문 + Story §1-2 + ADR 목록)만 사용
+   · 타 에이전트(Analyst·Researcher) 산출물 미수신 — 공통 입력(사용자 원문 §1 + ADR 목록 §3 + 도메인 코드 경로 §4)만 사용. §2는 본 에이전트 출력 destination이므로 input 아님
 
 2. Confluence Domain Knowledge CQL 검색 + 관련 페이지 fetch
    · searchConfluenceUsingCql(cql="space='<SPACE>' AND ancestor=<domain-kb-root> AND text ~ '<키워드>'")

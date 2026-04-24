@@ -116,9 +116,11 @@ Jira Story 1건당 Confluence 페이지 1개. 요구사항 접수부터 PR merge
 **단계별 갱신 책임**:
 | 단계 | 갱신 섹션 | DocsAgent 액션 |
 |------|----------|----------------|
-| 요구사항 접수 (Orchestrator) | §1-2 초기화 | `createConfluencePage(parentId=<STORIES_PARENT_ID>)` 템플릿 복제 |
-| 요구사항 확정 (RequirementsPLAgent) | §3-6 | `updateConfluencePage` |
+| 요구사항 접수 (Orchestrator) | §1 verbatim, §2·§5·§6 placeholder | `createConfluencePage(parentId=<STORIES_PARENT_ID>)` 템플릿 복제 |
+| 요구사항 병렬 에이전트 개별 완료 | Domain→§2 / Analyst→§5 / Researcher→§6 (각자 **섹션별 atomic 갱신**, 배치 금지) | 에이전트별 write queue drain 시 해당 섹션만 `updateConfluencePage` (resume 부분 완료 감지 보장) |
+| 요구사항 확정 (RequirementsPLAgent) | §3-4 + 상충/정합 블록 | `updateConfluencePage` |
 | 설계 확정 (ArchitectAgent) | §7 (Change Plan 링크 + 요약 + Mapper·Refactor 대립 결론) | `updateConfluencePage` |
+| Clarification 재스폰 (RequirementsPL · Architect) | §9.0 append | `updateConfluencePage` (FIX 라벨 미추가 — 게이트 실패 아님) |
 | 설계 리뷰 iteration (DesignReviewPL) | §9.1 | `updateConfluencePage` |
 | 구현 완료 (DeveloperPL) | §8 (§8.1-8.4 + §8.5 Impl Manifest) | `updateConfluencePage` + `createJiraIssue` (sub-task 일괄) |
 | 구현 리뷰 iteration (CodeReviewPL) | §9.2 | `updateConfluencePage` |
@@ -127,6 +129,13 @@ Jira Story 1건당 Confluence 페이지 1개. 요구사항 접수부터 PR merge
 | FIX 루프 | §10 FIX Ledger append | `updateConfluencePage` + Jira 라벨 추가 |
 | Story 완료 회고 (PMOAgent) | §11 회고 블록 | `updateConfluencePage` |
 | 최종 완료 (PR merged) | §11 PR 링크 + 라벨 `status:completed` | `updateConfluencePage` |
+
+**§2/§5/§6 null 결과 템플릿** (에이전트가 "불필요" 판정 반환 시에도 섹션은 생성 — 독립 관점 결과 보존):
+- §2 Domain "공백 없음": `## 도메인 해석\n기존 Domain Knowledge + ADR로 충분, 추가 해석 불필요.\n사유: {구체 사유}\n참조: [Domain Knowledge 페이지 pageId / ADR-NNN]`
+- §5 Analyst "추가 해석 불필요" (사실상 발생 드묾 — 요구사항이 완전 명확할 때): `## 요구사항 확장 해석\n사용자 원문이 AC·엣지 포함 완전 명시, 추가 해석 없음.\n사유: {구체 사유}`
+- §6 Researcher "외부 지식 보강 불필요": `## 외부 지식 배경\n조사 불필요 — 사유: {내부 버그 수정 · 기존 ADR 이미 충분 · trivial scope 등}`
+
+섹션 자체를 생략하지 말 것 — resume 감지·감사 trail·세 관점 명시적 결과 보존을 위해 "null 결과 섹션"도 기록 의무.
 
 **Orchestrator 경유 원칙**: 다른 에이전트는 DocsAgent를 직접 호출할 수 없다. Orchestrator에게 "<PROJECT_KEY>-N Story 페이지 섹션 {X}에 다음 내용 추가"를 요청하면 Orchestrator가 DocsAgent를 스폰.
 
