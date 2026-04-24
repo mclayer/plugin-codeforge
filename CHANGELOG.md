@@ -9,7 +9,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ### Changed
 - **BREAKING**: Plugin name rename `dev-orchestrator` → `codeforge`. `${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/*` 경로 references 전부 `${CLAUDE_PLUGIN_ROOT}/codeforge/*` 로 교체
-- Repo 예정 rename: `mctrader/mctrader` → `mctrader/plugin-codeforge` (PLG-19, admin UI)
+- Repo 예정 rename: `mctrader/plugin-codeforge` → `mctrader/plugin-codeforge` (PLG-19, admin UI)
 - Atlassian workspace 이관: 플러그인 dev를 `mctrader.atlassian.net` PLG space + PLG project (component=codeforge)로 운영
 
 ### Added
