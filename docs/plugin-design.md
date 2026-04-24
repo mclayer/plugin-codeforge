@@ -32,7 +32,7 @@ updated: 2026-04-24
 - 프로젝트 고유명사 (프로젝트명·도메인 용어·SSOT 상수)
 - SSOT 상수 (Confluence pageId, Jira project key, Atlassian host URL, transition ID)
 - 기술 스택 선택 (언어·프레임워크·라이브러리)
-- 도메인 경로 (`src/<project>/**`, `storage/**`, `adapters/exchanges/**` 등 프로젝트 구조)
+- 도메인 경로 (`src/<project>/**`, `storage/**`, `adapters/<domain-sources>/**` 등 프로젝트 구조)
 - 도메인 용어 사전
 - 프로젝트별 labels (`component:*` 구체값 등)
 

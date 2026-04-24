@@ -18,8 +18,8 @@ cp -r ${PLUGIN_ROOT}/overlay/_overlay/* .claude/_overlay/
     ├── _overlay/
     │   ├── CLAUDE.md                   # 프로젝트 특화 규칙·상수 (선택)
     │   └── agents/                     # 필요한 에이전트만 overlay (sparse)
-    │       ├── DomainAgent.md          # 예: crypto 프로젝트의 도메인 전문가
-    │       ├── DataEngineerAgent.md    # 예: WebSocket+Parquet 특화
+    │       ├── DomainAgent.md          # 프로젝트 도메인 전문가 (도메인 용어·제약·소스)
+    │       ├── DataEngineerAgent.md    # 프로젝트 데이터 파이프라인 (경로·기술 스택)
     │       └── ...
     ├── settings.json                   # SessionStart hook 등록
     └── agents/                         # GENERATED (hook 산출물, gitignore 권장)
@@ -44,24 +44,24 @@ cp -r ${PLUGIN_ROOT}/overlay/_overlay/* .claude/_overlay/
 ---
 permissions:
   allow:
-    - Edit(src/mctrader/adapters/exchanges/**)
-    - Write(src/mctrader/adapters/exchanges/**)
+    - Edit(src/<your-project>/adapters/sources/**)
+    - Write(src/<your-project>/adapters/sources/**)
 ---
 
-이 프로젝트(mctrader)는 암호화폐 거래소 WebSocket 수집 + Parquet/DuckDB 스토리지가 주요 데이터 계층.
+이 프로젝트의 데이터 계층 설명 — 수집 방식 · 저장 포맷 · 조회 도구.
 
 기술 스택:
-- 수집: websockets + asyncio
-- 저장: pyarrow Parquet (symbol/date/hour 파티션, Zstd 압축)
-- 조회: DuckDB over Parquet
+- 수집: <HTTP/Kafka/WebSocket/파일 등>
+- 저장: <DB/파일 포맷/워크로드 스토리지>
+- 조회: <SQL/OLAP/프로젝트 특화 쿼리 레이어>
 
 주요 경로:
-- `src/mctrader/adapters/exchanges/**` — 거래소별 어댑터 (Bithumb, Upbit 등)
-- `src/mctrader/adapters/storage/**` — Parquet writer·DuckDB source
-- `schemas/**` — orderbook_diff_v1.json, trade_v1.json
+- `src/<your-project>/adapters/sources/**` — 외부 데이터 소스 어댑터
+- `src/<your-project>/adapters/storage/**` — 저장 계층
+- `schemas/**` — 데이터 스키마 정의
 
 기존 ADR:
-- ADR-002 (ORDERBOOK diff만 저장, full depth 금지)
+- ADR-<NNN>: <프로젝트 고유 데이터 결정>
 ```
 
 ## regenerate
