@@ -822,8 +822,9 @@ PMOAgent가 **하지 않는** 것:
 - `CLAUDE.md` — 에이전트 목록·레인·권한·Jira/ADR 규약 ("무엇")
 - 각 `.claude/agents/<Name>.md` — 에이전트별 역할·포지션·제약 (SSOT)
 - `.claude/agents/DocsAgent.md` — 문서화 표준 SSOT (Jira 코멘트 포맷, Story 페이지 섹션, Change Plan 템플릿, ADR 템플릿)
-- Confluence `Stories` parent (pageId=589846) — Story 페이지 규격
-- Confluence `ADR` 트리 — 설계 결정 아카이브
+- `.claude/_overlay/project.yaml` — 프로젝트 SSOT 상수 (Atlassian·GitHub·labels). Schema: `docs/project-config-schema.md`
+- Confluence `Stories` parent (pageId = `project.yaml` `atlassian.confluence.stories_parent_page_id`) — Story 페이지 규격
+- Confluence `ADR` 트리 — 설계 결정 아카이브 (pageId = `project.yaml` `atlassian.confluence.adr_root_page_id`)
 - `docs/change-plans/<slug>.md` — Change Plan 실행 명세 (git)
 
 ## 부록 B. 개정 이력
@@ -833,5 +834,6 @@ PMOAgent가 **하지 않는** 것:
 - 2026-04-24: v3 플러그인 pivot (범용 SW 개발 플러그인 `dev-orchestrator`로 재편, 22 에이전트 · 6 레인) — crypto 정체성 제거, overlay 메커니즘 β 도입
 - 2026-04-24: v4 보안 테스트 레인 추가 (25 에이전트 · 7 레인) — SecurityTestPLAgent + ClaudeSecurityTestAgent + CodexSecurityTestAgent 신설, "테스트" 레인을 "구현 테스트"로 개편 후 "보안 테스트" 레인 추가, templates/ 디렉토리 도입 (change-plan·adr·story-page-structure·impl-manifest SSOT)
 - 2026-04-24: v5 generic Dev roster + preset 시스템 (24 core 에이전트 + `role: dev` 동적 roster · 7 레인) — BackendDev·FrontendDev를 `presets/webapp/`으로 이동, core에 generic `DeveloperAgent` 신설, ServerEng를 `InfraEngineerAgent`로 리네임(범위 확장), DevPL이 `role: dev` frontmatter 태그로 런타임 roster discovery, `merge.py`에 `--overlay-only` 모드 추가
+- 2026-04-24: v6 Stage 2 `project.yaml` 구조화 SSOT 상수 도입 — `.claude/_overlay/project.yaml`에 Atlassian·GitHub·labels structured 상수 분리, CLAUDE.md overlay는 narrative 컨텍스트 전담. Schema SSOT `docs/project-config-schema.md` 신설, 예시 2종 overlay 재구성
 
 본 playbook은 에이전트 구조·규약 변경 시 PR과 함께 갱신. git log로 변경 추적.

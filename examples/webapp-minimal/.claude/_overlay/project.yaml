@@ -1,0 +1,24 @@
+project:
+  name: "<REPLACE — e.g. task-manager>"
+  repo: "<REPLACE — e.g. github.com/acme/task-manager>"
+
+atlassian:
+  site: "<REPLACE — e.g. acme.atlassian.net>"
+  confluence:
+    space_key: "<REPLACE — e.g. TM>"
+    stories_parent_page_id: "<REPLACE — Story 페이지들의 parent pageId>"
+    domain_knowledge_parent_page_id: "<REPLACE — Domain Knowledge 루트 pageId>"
+    adr_root_page_id: "<REPLACE — ADR 루트 pageId>"
+  jira:
+    project_key: "<REPLACE — e.g. TM>"
+    # transitions 섹션은 선택 — 생략 시 DocsAgent가 동적 획득
+
+github:
+  pr_title_prefix_template: "[{project_key}-{story_number}] {title}"
+
+labels:
+  components:
+    - api      # 백엔드 라우트·비즈니스 로직
+    - ui       # 템플릿·정적 자산
+    - data     # DB·마이그레이션·스키마
+    - infra    # 배포·설정·CI

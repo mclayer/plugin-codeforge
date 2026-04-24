@@ -4,18 +4,9 @@
 
 > 위 core CLAUDE.md §(org chart)에서 "구현 레인의 `role: dev` roster"는 이 프로젝트에서 core의 `DeveloperAgent` + `InfraEngineerAgent`만으로 구성한다. `DataEngineerAgent`·webapp preset은 **미사용**. Frontend 계층 없음.
 
-## 프로젝트 상수 (SSOT)
+## SSOT 상수
 
-### Atlassian
-- Confluence space: `<REPLACE: SPACE_KEY>` (예: `LP`)
-- Stories parent pageId: `<REPLACE: Stories 루트 pageId>`
-- Domain Knowledge parent pageId: `<REPLACE: DK 루트 pageId>`
-- ADR 루트 pageId: `<REPLACE: ADR 루트 pageId>`
-- Jira project key: `<REPLACE: PROJECT_KEY>` (예: `LP`)
-
-### GitHub
-- Repo: `<REPLACE: github.com/owner/repo>`
-- PR 제목 prefix: `[LP-N] ...`
+**Atlassian·GitHub·labels 등 objective 상수는 [`project.yaml`](project.yaml)에 있음**. 에이전트는 그 파일을 `Read`로 직접 참조. 아래는 narrative 컨텍스트만.
 
 ## 기술 스택
 
@@ -49,10 +40,3 @@
 - 기능: `<REPLACE: pytest -q tests/unit tests/integration>`
 - 성능: `<REPLACE: pytest-benchmark tests/perf>` (대용량 로그 파싱 처리율 측정)
 - baseline: `<REPLACE: tests/perf/baselines/>`
-
-## Labels 추가 (component:*)
-
-- `component:cli` — 명령·인자 처리
-- `component:parser` — 로그 파싱 엔진
-- `component:filter` — Event 필터링
-- `component:infra` — 패키징·릴리스

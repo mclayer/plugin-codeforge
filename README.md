@@ -81,6 +81,7 @@ mkdir -p .claude/_overlay/agents
 | [`docs/orchestrator-playbook.md`](docs/orchestrator-playbook.md) | Orchestrator 행동 SSOT — 생명주기·스폰·상태 머신·토큰 예산·트러블슈팅 |
 | [`docs/consumer-guide.md`](docs/consumer-guide.md) | Consumer 프로젝트 설치·overlay 작성 가이드 |
 | [`docs/plugin-design.md`](docs/plugin-design.md) | 플러그인 설계 spec — core/overlay 분리 원칙·merge 계약·β 메커니즘 |
+| [`docs/project-config-schema.md`](docs/project-config-schema.md) | `project.yaml` Schema SSOT — Atlassian·GitHub·labels 구조화 상수 |
 | [`templates/`](templates/) | 공통 문서 양식 SSOT — Change Plan · ADR · Story Page · Impl Manifest |
 | [`presets/`](presets/) | 프로젝트 shape별 Dev 에이전트 번들 — webapp 등 |
 | `agents/*.md` | 24 core 에이전트 SSOT |
@@ -121,7 +122,7 @@ dev-orchestrator/
 
 ## 버전
 
-`0.3.0` — generic Dev roster + preset 시스템 도입. Backend/FrontendDev 를 preset/webapp으로 이동, core에 generic `DeveloperAgent` 신설, DevPL이 `role: dev` 태그로 동적 roster discovery. Stage 2 (structured config + playbook overlay) 예정.
+`0.4.0` — Stage 2 `project.yaml` 구조화 SSOT 상수 도입. Consumer의 Atlassian·GitHub·labels 상수를 `.claude/_overlay/project.yaml`로 structured 분리 (CLAUDE.md overlay는 narrative 전담). Schema SSOT는 `docs/project-config-schema.md`. 예시 2종 overlay 재구성, DocsAgent·DomainAgent 등 주 소비자 업데이트.
 
 ## 라이선스
 
@@ -132,3 +133,4 @@ TBD.
 - **2026-04-24 (v0.1.0)**: 플러그인 pivot — 기존 crypto FW repo(`mctrader`)에서 범용 SW 개발 플러그인으로 재편. Archive tag `archive/pre-plugin-pivot-20260424`에 pivot 직전 상태 보존.
 - **2026-04-24 (v0.2.0)**: 보안 테스트 레인 추가 — `SecurityTestPLAgent` + `ClaudeSecurityTestAgent` + `CodexSecurityTestAgent` 신설. 기존 "테스트" 레인 → "구현 테스트" + "보안 테스트" 2단계. `templates/` 디렉토리 SSOT 도입 (Change Plan · ADR · Story Page · Impl Manifest 양식 독립 파일화).
 - **2026-04-24 (v0.3.0)**: Generic Dev roster + preset 시스템 — 웹 편향 제거. `BackendDeveloperAgent` · `FrontendDeveloperAgent`를 `presets/webapp/`으로 이동, core에 generic `DeveloperAgent` 신설, `ServerEngineerAgent` → `InfraEngineerAgent` 리네임(범위 확장). `DeveloperPLAgent`가 `role: dev` frontmatter 태그로 동적 roster discovery. `merge.py`에 `--overlay-only` 모드 추가 (core 없는 consumer-defined agent 지원). Core 24 에이전트 + `role: dev` 동적 roster.
+- **2026-04-24 (v0.4.0)**: Stage 2 `project.yaml` 구조화 SSOT 상수 도입. Atlassian·GitHub·labels를 `.claude/_overlay/project.yaml`에 structured 분리, CLAUDE.md overlay는 narrative 컨텍스트(도메인·기술 스택 근거)만 담당. Schema SSOT 신설 (`docs/project-config-schema.md`). DocsAgent·DomainAgent 등이 Atlassian 호출 전 project.yaml을 직접 read. 예시 2종 overlay 재구성.

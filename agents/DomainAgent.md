@@ -50,9 +50,9 @@ permissions:
 
 | # | 소스 | 역할 | 접근 수단 |
 |---|------|------|-----------|
-| 1 | **Confluence `Domain Knowledge` 트리** (consumer overlay가 경로·ancestor pageId 지정) | 도메인 사실 SSOT | `searchConfluenceUsingCql`, `getConfluencePage` |
-| 2 | **ADR 도메인 카테고리** (consumer overlay가 카테고리 label·트리 지정) | 설계 결정의 도메인 근거 | `searchConfluenceUsingCql(label='adr')` |
-| 3 | **도메인 코드 경로** (consumer overlay가 `src/<domain-paths>/**` 지정) | 현재 구현된 도메인 모델 (Entity/VO/Invariant) | `Read`, `Grep` |
+| 1 | **Confluence `Domain Knowledge` 트리** (ancestor pageId = `.claude/_overlay/project.yaml` `atlassian.confluence.domain_knowledge_parent_page_id`) | 도메인 사실 SSOT | `searchConfluenceUsingCql`, `getConfluencePage` |
+| 2 | **ADR 도메인 카테고리** (space = `project.yaml` `atlassian.confluence.space_key`, 카테고리 label은 consumer overlay 지정) | 설계 결정의 도메인 근거 | `searchConfluenceUsingCql(label='adr')` |
+| 3 | **도메인 코드 경로** (consumer overlay가 `src/<domain-paths>/**` 지정 — DomainAgent.md overlay 본문) | 현재 구현된 도메인 모델 (Entity/VO/Invariant) | `Read`, `Grep` |
 | 4 | **사용자 요구사항 verbatim** | 해석 대상 | Story 페이지 §1 |
 
 ## 실행 시퀀스 (요구사항 레인 내)
