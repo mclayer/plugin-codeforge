@@ -126,16 +126,33 @@ labels:
 
 신규 consumer는 `overlay/_overlay/project.yaml.example`을 복사해 시작.
 
-## 6. 장래 확장 (미구현)
+## 6. Hook 통합 Schema 검증 (v0.5.0+)
 
-- **JSON Schema 검증**: SessionStart hook이 project.yaml 포맷 검증
+SessionStart hook (`regen-agents.sh`)이 `overlay/hooks/validate_config.py`를 자동 실행:
+
+- **missing file** → WARN (exit 0) · 계속 진행. 초기 설정 중인 consumer용
+- **malformed YAML** → ERROR (exit 3) · hook abort
+- **required field 누락 / 타입 위반** → ERROR (exit 4) · hook abort
+
+수동 실행:
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/overlay/hooks/validate_config.py \
+    .claude/_overlay/project.yaml
+```
+
+구현은 hand-rolled 타입 체크 (`jsonschema` 의존성 회피 — PyYAML만 필요). 규칙은 `validate_config.py` `SCHEMA_RULES` 리스트.
+
+## 7. 장래 확장 (미구현)
+
 - **환경 변수 참조**: `${ENV_VAR}` placeholder 지원 (secrets 분리)
 - **Context Packet 자동 주입**: Orchestrator가 project.yaml 요약을 sub-agent 프롬프트에 자동 삽입
 - **기술 스택 일부 구조화**: test runner·perf baseline 경로 등 objective 성격 항목 이전
+- **placeholder 탐지**: `<REPLACE ...>` 값이 남아있으면 warn (unconfigured consumer 감지)
 
-## 7. 관련 문서
+## 8. 관련 문서
 
 - [`consumer-guide.md`](consumer-guide.md) §3 — 실제 설정·복사 절차
 - [`plugin-design.md`](plugin-design.md) §5 — Stage 1/2 범위
 - [`../overlay/_overlay/project.yaml.example`](../overlay/_overlay/project.yaml.example) — 스켈레톤
+- [`../overlay/hooks/validate_config.py`](../overlay/hooks/validate_config.py) — Schema 검증 구현
 - [`../agents/DocsAgent.md`](../agents/DocsAgent.md) — 주 소비자

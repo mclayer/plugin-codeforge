@@ -5,6 +5,19 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.5.0] — 2026-04-24
+
+### Added
+- `overlay/hooks/validate_config.py` — `project.yaml` schema 검증기 (hand-rolled, PyYAML만 의존). Missing file=WARN, malformed YAML=exit 3, schema 위반=exit 4
+- `regen-agents.sh`에 validator 통합 — SessionStart 시 자동 검증, 위반 시 abort
+- `overlay/hooks/tests/test_validate_config.py` — 22 테스트 (unit + E2E + bundled examples 검증)
+- `.github/workflows/test.yml` — GitHub Actions CI (PR/push to main): pytest + yaml 파싱 + example 스모크 + frontmatter 유효성
+- `CHANGELOG.md` — SemVer 형식 릴리스 이력
+
+### Changed
+- `docs/project-config-schema.md` §6 신설 (Hook 통합 Schema 검증), §7 장래 확장 축소
+- README.md "연혁" → CHANGELOG 링크로 축약
+
 ## [0.4.0] — 2026-04-24
 
 ### Added

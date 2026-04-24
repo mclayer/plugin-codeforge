@@ -43,6 +43,7 @@ if [ -z "$PLUGIN_ROOT" ]; then
 fi
 
 MERGE_SCRIPT="$PLUGIN_ROOT/overlay/hooks/merge.py"
+VALIDATE_SCRIPT="$PLUGIN_ROOT/overlay/hooks/validate_config.py"
 PLUGIN_AGENTS_DIR="$PLUGIN_ROOT/agents"
 PLUGIN_CLAUDE_MD="$PLUGIN_ROOT/CLAUDE.md"
 
@@ -51,6 +52,7 @@ PROJECT_ROOT="${PROJECT_ROOT:-$PWD}"
 OVERLAY_DIR="$PROJECT_ROOT/.claude/_overlay"
 OVERLAY_AGENTS_DIR="$OVERLAY_DIR/agents"
 OVERLAY_CLAUDE_MD="$OVERLAY_DIR/CLAUDE.md"
+OVERLAY_PROJECT_YAML="$OVERLAY_DIR/project.yaml"
 OUT_AGENTS_DIR="$PROJECT_ROOT/.claude/agents"
 OUT_CLAUDE_MD="$PROJECT_ROOT/CLAUDE.md"
 
@@ -61,6 +63,15 @@ fi
 if [ ! -d "$PLUGIN_AGENTS_DIR" ]; then
     echo "[regen-agents] ERROR: plugin agents/ not found at $PLUGIN_AGENTS_DIR" >&2
     exit 1
+fi
+
+# Validate project.yaml schema (fail-fast if malformed or missing required fields).
+# Missing file is a warning, not an error (consumer may be in initial setup).
+if [ -f "$VALIDATE_SCRIPT" ]; then
+    if ! python3 "$VALIDATE_SCRIPT" "$OVERLAY_PROJECT_YAML"; then
+        echo "[regen-agents] ABORT: project.yaml schema violation — fix before session starts" >&2
+        exit 1
+    fi
 fi
 
 mkdir -p "$OUT_AGENTS_DIR"
