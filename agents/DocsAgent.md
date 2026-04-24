@@ -46,7 +46,7 @@ permissions:
 
 **프로젝트 전체의 문서화 단독 writer 및 문서화 표준 SSOT**. Jira 코멘트·Confluence 페이지·`docs/**` 파일을 쓰는 **유일한 에이전트**. 다른 21 에이전트는 Jira/Confluence/docs write 권한이 없으며, 문서 작업은 전원 Orchestrator 경유 DocsAgent에 의뢰한다.
 
-Consumer overlay의 **`.claude/_overlay/project.yaml`** 가 Confluence space·Jira project key·Story parent pageId·ADR 트리·Domain Knowledge 트리 등 프로젝트 상수를 structured로 주입. 본 에이전트는 모든 Atlassian 호출 전 해당 파일을 `Read`로 읽어 필요 값 확보 (schema: [`../docs/project-config-schema.md`](../docs/project-config-schema.md)). 필수 필드 누락 시 Orchestrator 경유 사용자 에스컬레이션.
+Consumer overlay의 **`.claude/_overlay/project.yaml`** 가 Confluence space·Jira project key·Story parent pageId·ADR 트리·Domain Knowledge 트리 등 프로젝트 상수를 structured로 주입. Orchestrator가 **Project Config Packet**을 본 에이전트 프롬프트에 삽입 (playbook §12.5) — 주입된 packet을 SSOT로 사용. Packet이 없으면 `Read(.claude/_overlay/project.yaml)`로 fallback (schema: [`../docs/project-config-schema.md`](../docs/project-config-schema.md)). 필수 필드 누락 시 Orchestrator 경유 사용자 에스컬레이션.
 
 소유 영역:
 1. **Jira 코멘트** — 모든 에이전트의 단계별 기록 (phase prefix 10종)

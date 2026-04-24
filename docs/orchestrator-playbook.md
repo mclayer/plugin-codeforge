@@ -754,6 +754,68 @@ story_cache[<story-key>] = {
 - **Packet 주입**: 설계/구현/리뷰 레인처럼 여러 섹션 깊이 참조 필요할 때 (§1-8 범위)
 - **URL만 전달**: 단발성 조회 (DocsAgent 의뢰 포맷 등), 섹션 캐시 미정의 부분
 
+### 12.5 Project Config Packet (project.yaml 슬라이스)
+
+Story 페이지 Context Packet과 병행해 **`.claude/_overlay/project.yaml`의 objective SSOT 상수**도 sub-agent 프롬프트에 주입. Atlassian/GitHub 호출하는 에이전트가 매번 `Read` 호출 없이 곧바로 활용.
+
+#### 캐시 구조
+
+```
+project_config_cache = {
+  "loaded_at": <ISO 8601>,                   # 세션 시작 시 1회 로드
+  "raw": {
+    "project": {name, repo},
+    "atlassian": {site, confluence, jira},
+    "github": {pr_title_prefix_template},
+    "labels": {components},
+  },
+}
+```
+
+#### 로드·무효화
+
+- **로드**: 세션 개시 시 1회 `Read(.claude/_overlay/project.yaml)` + yaml.safe_load
+- **검증**: validate_config.py 통과 (SessionStart hook에서 이미 검증됨 — Orchestrator는 신뢰하고 read만)
+- **무효화**: consumer가 세션 중 project.yaml 편집하면 next agent spawn 직전 재로드 (파일 mtime 비교)
+- **Missing file 처리**: validator가 WARN만 했으므로 Orchestrator는 packet 주입 생략 + 에이전트에 "project.yaml 없음 — Atlassian 호출 전 사용자 확인" 지시
+
+#### Packet 주입 형식
+
+Atlassian/GitHub 상수가 필요한 에이전트 프롬프트에 삽입:
+
+```
+[Project Config Packet — loaded at {ISO}]
+project.name: <name>
+project.repo: <repo>
+atlassian.site: <site>
+atlassian.confluence.space_key: <key>
+atlassian.confluence.stories_parent_page_id: <id>
+atlassian.confluence.domain_knowledge_parent_page_id: <id>
+atlassian.confluence.adr_root_page_id: <id>
+atlassian.jira.project_key: <key>
+atlassian.jira.transitions: {...}          # 있으면 포함, 없으면 "dynamic"
+github.pr_title_prefix_template: <template>
+labels.components: [...]
+[End Project Config Packet]
+```
+
+에이전트는 위 값을 그대로 Atlassian/GitHub 호출 인자에 사용. project.yaml `Read` 생략 가능 (packet SSOT).
+
+#### Packet 주입 대상 에이전트
+
+| 에이전트 | 사용하는 slice |
+|----------|----------------|
+| **DocsAgent** | 전체 (Jira create/transition/comment + Confluence page create/update + PR 제목) |
+| **RequirementsPLAgent** | `atlassian.confluence.stories_parent_page_id` (Story 생성 시 parent) |
+| **DomainAgent** | `atlassian.confluence.domain_knowledge_parent_page_id` + `space_key` |
+| **PMOAgent** | `atlassian.confluence` 전체 (회고·패턴 페이지 생성) |
+
+기타 에이전트 (설계·구현·리뷰·테스트 레인 대부분)는 Atlassian 호출 없음 → packet 주입 불필요.
+
+#### Fallback: Read로 직접 접근
+
+Packet 주입은 Orchestrator의 토큰 최적화 수단이지 필수 규약 아님. Packet 누락 또는 일부 필드만 필요할 때 에이전트는 여전히 `Read(.claude/_overlay/project.yaml)`로 직접 접근 가능 (agent md `Read` 권한 보장).
+
 ---
 
 ## 13. PMOAgent 프로젝트 관리 (Cross-cutting)

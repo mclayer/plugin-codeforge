@@ -5,6 +5,15 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.5.1] — 2026-04-24
+
+### Added
+- **Project Config Packet** (playbook §12.5): Orchestrator가 `.claude/_overlay/project.yaml`을 세션 개시 시 1회 로드하고 Atlassian/GitHub 호출이 필요한 에이전트 (DocsAgent·RequirementsPL·DomainAgent·PMO) 프롬프트에 slice를 자동 주입 → 반복 `Read` 회피
+- CLAUDE.md에 Project Config Packet 간단 언급 추가
+
+### Changed
+- `agents/DocsAgent.md` — Packet SSOT 우선, fallback으로 `Read` 명시
+
 ## [0.5.0] — 2026-04-24
 
 ### Added
