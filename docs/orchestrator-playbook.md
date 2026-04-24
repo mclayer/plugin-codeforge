@@ -366,7 +366,7 @@ for lane in ["설계-리뷰", "구현-리뷰", "테스트"]:
     current_cycle_count = sum(1 for r in rows[last_reset_idx+1:] if r.lane == lane)
 ```
 
-§10 스키마·DocsAgent 갱신 절차는 [DocsAgent.md](../.claude/agents/DocsAgent.md) §8 참조.
+§10 스키마·DocsAgent 갱신 절차는 [DocsAgent.md](../agents/DocsAgent.md) §8 참조.
 
 ### 6.2 트리거 → 상태 전이
 
