@@ -5,17 +5,42 @@ Claude Code용 오케스트레이션 규칙. 에이전트 상세는 각 `.claude
 ## Project
 `mctrader` — 암호화폐 스캘핑 자동매매 프레임워크. Python, 완전 자율 실행. `settings.json`에 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`.
 
-## 세션 개시 의무 (Atlassian MCP 인증 확인)
+## 세션 개시 의무 (필수 의존성 자동 확인 + 복구 or 요구)
 
-**세션 시작 직후, 모든 작업보다 먼저** Atlassian MCP 인증 상태를 확인한다. Atlassian(Jira + Confluence)은 본 프로젝트의 **핵심 의존성** — Story 페이지·ADR·FIX Ledger·Jira workflow 전부가 여기 기반이므로 미인증 상태에서는 22개 에이전트 대부분이 기능 불능.
+**세션 시작 직후, 모든 작업보다 먼저** 아래 의존성의 노출·설치·인증 상태를 확인한다. 자동 복구 가능한 것은 즉시 복구, 불가능한 것은 사용자에게 설치·재인증을 요구한다. 복구 완료 전까지 **모든 작업 중단** (요구사항 해석·에이전트 스폰·파일 수정·커밋 전부 금지).
 
-**절차**:
-1. Orchestrator가 `mcp__atlassian__*` 툴 노출 여부 확인 (deferred tool 리스트 스캔 또는 `ToolSearch select:mcp__atlassian__getJiraIssue`)
-2. 미노출 시 `~/.claude/mcp-needs-auth-cache.json`에 `plugin:atlassian:atlassian` 엔트리 존재 여부 확인
-3. **미인증 판정 시 사용자에게 `/mcp` 재인증 요청** → 응답 전까지 **모든 작업 중단**
-4. 인증 확인 후에만 요구사항 접수·에이전트 스폰 진행
+### 필수 의존성 SSOT
 
-상세는 [`docs/orchestrator-playbook.md`](docs/orchestrator-playbook.md) §1.1 체크리스트 0번 참조.
+**MCP 서버 (1종)**:
+- `atlassian` (HTTP, `https://mcp.atlassian.com/v1/mcp`) — Jira + Confluence. Story 페이지·ADR·FIX Ledger·Jira workflow 전부
+
+**필수 플러그인 (3종)**:
+- `codex@openai-codex` — CodexDesignReview/CodexCodeReview/RequirementsAnalyst 의존
+- `superpowers@claude-plugins-official` — agent md 다수 스킬 의존 (brainstorming, writing-plans, systematic-debugging, test-driven-development, verification-before-completion, dispatching-parallel-agents)
+- `claude-md-management@claude-plugins-official` — DocsAgent의 claude-md-improver / revise-claude-md 스킬 의존
+
+**필수 CLI (1종)**:
+- `codex` — RequirementsAnalyst가 `codex exec -m gpt-5.4` 호출
+
+**권장 플러그인 (6종, 미설치 시 권유만, 중단 없음)**:
+- `pyright-lsp`, `context7`, `commit-commands`, `github`, `pr-review-toolkit`, `atlassian@claude-plugins-official`
+
+### 확인·복구 절차
+
+1. **노출 확인**:
+   - MCP: `ToolSearch select:mcp__atlassian__getJiraIssue` 결과 확인
+   - 플러그인: `~/.claude/settings.json` `enabledPlugins[<id>] == true` + `~/.claude/plugins/cache/<marketplace>/<plugin>/` 디렉토리 존재
+   - CLI: `which codex` 가용
+
+2. **자동 복구 시도** (사용자 개입 없이 가능한 경우):
+   - 플러그인 cache 있으나 `enabledPlugins == false` → `~/.claude/settings.json` 직접 편집해 `true` 토글 후 세션 재시작 안내
+
+3. **사용자 요구** (자동 불가 · blocking wait):
+   - MCP 미인증 → `/mcp` 재인증 요청
+   - 플러그인 cache 부재 → `/plugins install <name>@<marketplace>` 실행 요청
+   - `codex` CLI 부재 → 설치 가이드 제시 후 응답 대기
+
+상세 절차는 [`docs/orchestrator-playbook.md`](docs/orchestrator-playbook.md) §1.1 체크리스트 0번 참조.
 
 ## Development Agent Team (22 에이전트 · 6 레인 + 2 Cross-cutting)
 

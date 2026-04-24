@@ -31,11 +31,42 @@ related:
 
 사용자 요구사항 접수 직후 아래를 순서대로 수행한다. 하나라도 생략하면 이후 단계에서 컨텍스트 drift·중복 작업 발생.
 
-**0. Atlassian MCP 인증 확인 (모든 작업 선행 · 의무)**
+**0. 필수 의존성 확인 (모든 작업 선행 · 의무)**
+
+   세션이 다른 장비 또는 다른 환경에서 시작될 가능성을 전제로 아래 5종을 모두 검증한다. 누락 시 자동 복구 가능한 것은 즉시 복구, 불가능한 것은 사용자에게 요구. 복구 완료 전까지 **모든 작업 중단**.
+
+   **0a. Atlassian MCP (필수 · 1종)**
    - deferred tool 리스트에 `mcp__atlassian__*` 노출 여부 확인 (최소 `getJiraIssue`)
    - 미노출 시 `~/.claude/mcp-needs-auth-cache.json` Read → `plugin:atlassian:atlassian` 키 존재 시 "needs auth" 확정
-   - **미인증 판정 시 즉시 사용자에게 `/mcp` 재인증 요청**, 응답 전까지 **모든 작업 중단** (요구사항 해석·에이전트 스폰·파일 수정·커밋 전부 금지)
+   - → 사용자에게 `/mcp` 재인증 요청
    - Atlassian은 mctrader 아키텍처 핵심 의존성 (Story 페이지·ADR·FIX Ledger·Jira workflow 전부)이므로 우회·스킵 불가
+
+   **0b. 필수 플러그인 3종**
+   - 대상: `codex@openai-codex`, `superpowers@claude-plugins-official`, `claude-md-management@claude-plugins-official`
+   - 확인: `~/.claude/settings.json`의 `enabledPlugins[<id>] == true` + `~/.claude/plugins/cache/<marketplace>/<plugin>/` 디렉토리 존재
+   - **자동 복구**: cache 있으나 `enabledPlugins == false`인 경우 → `~/.claude/settings.json` 직접 Edit해 `true` 토글 + 세션 재시작 안내 (새 세션에서 반영)
+   - **사용자 요구**: cache 부재 시 → `/plugins install <id>` 실행 요청 + 응답 대기
+
+   **0c. 필수 CLI (codex)**
+   - `which codex` 실행
+   - 미설치 시 설치 가이드 제시 (예: `brew install openai/codex/codex` 또는 공식 install 문서) + 사용자 응답 대기
+
+   **0d. 권장 플러그인 6종 (blocking 아님)**
+   - 대상: `pyright-lsp`, `context7`, `commit-commands`, `github`, `pr-review-toolkit`, `atlassian@claude-plugins-official`
+   - 노출·활성 여부 1회 확인, 미설치·비활성 시 권유 메시지만 제시하고 진행 허용
+
+   **0e. 확인 결과 사용자 통보 형식**
+   ```
+   🔍 세션 개시 의존성 점검
+   - Atlassian MCP: ✅ 노출 / ❌ 미인증 → /mcp 재인증 필요
+   - codex 플러그인: ✅ / ❌ cache 부재 → /plugins install codex@openai-codex
+   - superpowers 플러그인: ✅
+   - claude-md-management 플러그인: ✅
+   - codex CLI: ✅ /opt/homebrew/bin/codex / ❌ 미설치 → brew install 권장
+   - (권장 플러그인: 6/6 활성 / 일부 비활성 — 진행에 영향 없음)
+
+   [블로커 X건 — 복구 완료 전 대기]
+   ```
 
 1. **메모리 로드**: `~/.claude/projects/-Users-1111971-workspace-mctrader/memory/MEMORY.md` — 이전 세션 feedback·project·reference 기록 확인
 2. **Jira 활성 Story 조회**: `searchJiraIssuesUsingJql("project = MCTRADER AND statusCategory != Done")`
