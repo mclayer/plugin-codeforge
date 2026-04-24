@@ -1,0 +1,210 @@
+---
+title: Plugin Design — core/overlay 분리 원칙 및 merge 계약
+status: active
+created: 2026-04-24
+updated: 2026-04-24
+---
+
+# Plugin Design Spec
+
+이 문서는 `dev-orchestrator` 플러그인의 구조·경계·overlay 메커니즘 설계 SSOT.
+
+## 1. 목표
+
+- **Generic SW 개발 오케스트레이션 플러그인** — 22 에이전트 · 6 레인 · FIX 루프 구조를 consumer 프로젝트 전반에 재사용
+- **Core/Overlay 경계 유지** — 프로젝트 고유 내용(도메인·SSOT 상수·기술 스택)은 consumer overlay에 격리, plugin core는 pristine
+- **깔끔한 추출** — 신규 consumer 프로젝트 가동 시 plugin을 설치하고 `.claude/_overlay/`만 작성하면 즉시 사용 가능
+- **overlay 일급 시민** — overlay는 죽은 스테이징이 아닌, consumer 프로젝트가 적극적으로 편집·사용하는 활성 계층
+
+## 2. 분리 경계 (Option B 완화)
+
+설계 결정: [Option B](#옵션-탐색-이력) — **agent의 역할·권한·오케스트레이션은 core, 프로젝트별 바뀌는 지침 섹션은 overlay**.
+
+### 2a. Core로 가는 것
+
+- 어떤 프로젝트든 성립하는 SW 프로세스 규칙 (Orchestrator 생명주기, FIX 루프, Review severity 종합)
+- 추상 구조·관계 (22 에이전트 org chart, 6 레인, PL/sub 계층)
+- 권한·책임 분리의 원칙 (path scope, single writer, Architect stateless 재스폰 등)
+- 에이전트별 기본 행동 방식 (DomainAgent의 4-source fetch 프로세스, DesignReviewPL의 dedup 규칙)
+
+### 2b. Overlay로 가는 것
+
+- 프로젝트 고유명사 (프로젝트명·도메인 용어·SSOT 상수)
+- SSOT 상수 (Confluence pageId, Jira project key, Atlassian host URL, transition ID)
+- 기술 스택 선택 (언어·프레임워크·라이브러리)
+- 도메인 경로 (`src/<project>/**`, `storage/**`, `adapters/<domain-sources>/**` 등 프로젝트 구조)
+- 도메인 용어 사전
+- 프로젝트별 labels (`component:*` 구체값 등)
+
+### 2c. 분류 원칙 (판단이 애매할 때)
+
+**이 지침을 플러그인 repo에 남기면 다른 프로젝트에서도 말이 되는가?**
+
+- YES → core
+- NO → overlay
+
+## 3. 메커니즘 (Option β — 파일 분리 + hook concat)
+
+### 3a. 파일 구조
+
+```
+plugin repo:                          consumer project:
+  agents/                               .claude/_overlay/
+    ArchitectAgent.md  (core)             agents/
+    ...                                     DataEngineerAgent.md  (overlay)
+                                            ...
+  hooks/  (consumer-side tooling)         CLAUDE.md  (overlay, 선택)
+    regen-agents.sh
+    merge.py                            .claude/agents/  (GENERATED)
+  CLAUDE.md  (core)                       ArchitectAgent.md  (= core + overlay)
+                                          DataEngineerAgent.md  (= core + overlay)
+  .claude-plugin/plugin.json              ...
+
+                                        CLAUDE.md  (GENERATED = core + overlay)
+```
+
+### 3b. SessionStart hook flow
+
+```
+Claude Code session start
+  → .claude/settings.json의 SessionStart hook 실행
+    → ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/overlay/hooks/regen-agents.sh
+      → for each agent in plugin's agents/:
+          python3 merge.py <core> <overlay?> > .claude/agents/<Name>.md
+      → if consumer has .claude/_overlay/CLAUDE.md:
+          python3 merge.py <plugin CLAUDE.md> <overlay> > CLAUDE.md
+  → Claude Code가 .claude/agents/ 및 CLAUDE.md를 로드 (이미 최신 상태)
+```
+
+## 4. Merge 계약
+
+### 4a. Body append
+
+```
+<core body>
+
+---
+
+## Project Overlay
+
+<overlay body>
+```
+
+- overlay가 없거나 body가 비어있으면 구분선·헤더·overlay 블록 **전부 생략**
+- 구분선과 헤더는 hook이 자동 주입 (overlay 파일에는 본문만 쓰면 됨)
+- overlay가 core의 특정 섹션을 "덮어쓰려면" 명시적으로 "위 core §X는 이 프로젝트에서 Y로 대체"라고 서술 (파서는 단순 append)
+
+### 4b. Frontmatter deep merge
+
+| 필드 유형 | 예시 | 병합 규칙 |
+|-----------|------|-----------|
+| 스칼라 식별·정체성 | `name`, `description`, `model`, `color` | **core-wins**. overlay가 다른 값 → **abort** (agent identity drift 방지) |
+| 배열 (권한·툴) | `tools: [Read, "Write(src/**)", Bash]` | **concat + dedup** (core 먼저, overlay 뒤, 문자열 매칭 dedup) |
+| 맵 (permissions 등) | `permissions: {allow: [...], deny: [...]}` | 재귀 적용 (맵 내부 배열은 concat+dedup) |
+| 기타 스칼라 | (사용 예 없음) | core-wins silently |
+
+#### 스칼라 core-wins abort 정책
+
+overlay가 `name: BackendDeveloperAgent`처럼 core와 동일 값을 명시하는 건 OK. 하지만 `name: MyBackendDev`처럼 다른 값 주면 **hook abort**.
+
+이유: agent identity의 유일성 보장. overlay가 agent 정체성을 바꾸려 하면 그건 "신규 에이전트 추가"로 설계되어야지 overlay가 아님.
+
+### 4c. Auto-injected header
+
+모든 generated md 최상단 (frontmatter 다음):
+
+```markdown
+<!--
+  GENERATED FROM <core path> + <overlay path or "(none)">
+  DO NOT EDIT DIRECTLY. Edit source files and let SessionStart hook regenerate.
+  Last regenerated: <ISO 8601 UTC>
+-->
+```
+
+Claude Code agent 파서는 frontmatter 기준으로 인식 — 본문 상단 HTML 주석은 무시.
+
+### 4d. 파일 없음 케이스
+
+| core | overlay | 동작 |
+|------|---------|------|
+| 있음 | 없음 | core만 복사 + 헤더 주입 (overlay 블록 없음) |
+| 있음 | 있음 | deep merge + append |
+| 없음 | 있음 | **에러 abort** (overlay만 있는 agent는 허용 안 함) |
+| 없음 | 없음 | skip |
+
+### 4e. Idempotency
+
+hook은 idempotent. 같은 입력 → 같은 출력. 매 세션 시작 시 전부 regen (staleness 차단).
+`Last regenerated` 타임스탬프 때문에 git diff는 매번 생기므로 **generated files는 gitignore 권장** (consumer 측 `.gitignore`에 `.claude/agents/`, `CLAUDE.md` 추가).
+
+## 5. 범위 (Stage 1 / Stage 2)
+
+### Stage 1 — 현재 범위
+
+- `agents/*.md` — 22 core agent md
+- `CLAUDE.md` — core 오케스트레이션 규칙
+- `docs/orchestrator-playbook.md` — Orchestrator 행동 SSOT (현재는 core 단일본, overlay 대상 아님)
+- `overlay/hooks/merge.py` + `regen-agents.sh` — consumer tooling
+- `overlay/_overlay/README.md` — consumer 복사용 skeleton
+- `.claude-plugin/plugin.json` — plugin manifest
+- `docs/consumer-guide.md` + `docs/plugin-design.md`
+
+### Stage 2 — 후속
+
+- `config/project.yaml` (또는 유사) — SSOT 상수를 구조화 주입 (consumer CLAUDE.md overlay에 하드코딩하는 대신 구조화)
+- Playbook 일부 섹션의 overlay 지원 (예: 토큰 예산 프로젝트별 조정)
+- 추가 에이전트 (SecurityReview·Observability 등 논의됨 — 미확정)
+
+## 6. 분류 가이드 (22 에이전트)
+
+현재 버전에서 각 에이전트의 core 비중 · overlay 예상 내용:
+
+### Group A (Overlay 거의 없음 · core 100%)
+
+ArchitectAgent · CodebaseMapperAgent · RefactorAgent · DesignReviewPLAgent · ClaudeDesignReviewAgent · CodexDesignReviewAgent · CodeReviewPLAgent · ClaudeCodeReviewAgent · CodexCodeReviewAgent · DeveloperPLAgent · RequirementsPLAgent · RequirementsAnalystAgent · ResearcherAgent
+
+### Group B (Overlay 가벼움 · 경로·상수·용어)
+
+BackendDeveloperAgent · FrontendDeveloperAgent · QADeveloperAgent · ServerEngineerAgent · TestAgent (러너 커맨드)
+
+### Group C (Overlay 무거움 · 도메인 지식·워크플로우 특화)
+
+DomainAgent · DataEngineerAgent · PMOAgent · DocsAgent (SSOT 상수 다수)
+
+## 7. 옵션 탐색 이력
+
+### 분리 경계
+
+| 옵션 | 내용 | 판정 |
+|------|------|------|
+| A 엄격 | agent는 전부 core, 상수만 overlay | ❌ 부족 — agent 본문의 "Jinja2+Bootstrap5 사용" 같은 지침도 overlay 대상 |
+| **B 완화** | **agent 역할·권한 core, 프로젝트별 지침 섹션 overlay** | ✅ 채택 |
+| C 과감 | B + 일부 agent 통째 overlay (DomainAgent 등) | ❌ 분리선 과다, pilot 부담 |
+
+### 표현 메커니즘
+
+| 옵션 | 내용 | 판정 |
+|------|------|------|
+| α In-file 섹션 | agent md 안에 `## Core` / `## Project Overlay` 마커 | ❌ 텍스트 마커 drift 위험 |
+| **β 파일 분리 + hook concat** | `_core/` + `_overlay/` + SessionStart hook 병합 | ✅ 채택 (파일시스템 수준 경계) |
+| γ CLAUDE.md + 환경 주입 | agent md는 flat core, overlay는 별도 경로 주입 | ❌ Option B "지침 섹션 overlay" 만족 못함 |
+
+### 결합 방식
+
+- **Body**: 단순 append (overlay tail). 매직 없음
+- **Frontmatter**: deep merge (배열 concat+dedup, 스칼라 core-wins with abort on mismatch)
+
+## 8. 향후 작업
+
+- Stage 2 범위 (structured config, playbook overlay)
+- Plugin 배포 — marketplace 등록
+- overlay 검증 도구 (overlay가 core를 override하려 할 때 경고 CLI)
+- Multi-language TestAgent 어댑터 (pytest·vitest·go test 등 runner 자동 감지)
+
+## 9. 참조
+
+- [`../CLAUDE.md`](../CLAUDE.md) — 플러그인 오케스트레이션 규칙 SSOT
+- [`orchestrator-playbook.md`](orchestrator-playbook.md) — Orchestrator 행동 SSOT
+- [`consumer-guide.md`](consumer-guide.md) — consumer 프로젝트 사용 가이드
+- [`../overlay/hooks/merge.py`](../overlay/hooks/merge.py) — merge 계약 구현
+- [`../overlay/_overlay/README.md`](../overlay/_overlay/README.md) — consumer overlay 스켈레톤 가이드

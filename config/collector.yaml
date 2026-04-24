@@ -1,9 +1,0 @@
-collector:
-  reconnect_interval_sec: 5
-  flush_interval_sec: 60
-  flush_max_mb: 50
-  symbols: all
-  orderbook_levels: 15
-
-bithumb:
-  ws_url: wss://ws-api.bithumb.com/websocket/v1

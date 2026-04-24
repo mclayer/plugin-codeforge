@@ -1,17 +1,20 @@
-# mctrader 문서
+# Plugin 문서
 
-작업 산출물(요건 명세서, 변경 계획서) 및 설계 문서(superpowers specs/plans)를 관리한다.
-
-도메인 문서(ADR, 운영 가이드, 외부 API 스펙, 버그 이력)는 외부 시스템으로 이관되어 있다:
-- **ADR**: [Confluence space `MCTRADER`](https://mctrader.atlassian.net/wiki/spaces/MCTRADER) / 페이지 트리 `ADR/<카테고리>/ADR-NNN: ...`
-- **운영 가이드 · API 스펙**: Confluence `MCTRADER` / `Guides`, `API Reference` 트리
-- **버그 기록**: [Jira project `MCTRADER`](https://mctrader.atlassian.net/jira/software/projects/MCTRADER) / `bug` label Task
+Claude Code 범용 SW 개발 에이전트 플러그인 문서 집합.
 
 ## 구조
 
-| 디렉토리 | 내용 |
-|----------|------|
-| `requirements/` | PMOAgent가 작성한 통합 요건 명세서 |
-| `change-plans/` | ArchitectAgent가 작성한 변경 계획서 (PR과 1:1 매핑) |
-| `superpowers/specs/` | 설계 문서 (brainstorming 산출물) |
-| `superpowers/plans/` | 구현 계획서 (writing-plans 산출물) |
+| 파일 | 내용 |
+|------|------|
+| [`orchestrator-playbook.md`](orchestrator-playbook.md) | Orchestrator 행동 SSOT — 세션 생명주기·스폰·FIX 상태 머신·토큰 예산 |
+| [`consumer-guide.md`](consumer-guide.md) | Consumer 프로젝트가 플러그인 설치·overlay 구성하는 방법 |
+| [`plugin-design.md`](plugin-design.md) | 플러그인 설계 spec — core/overlay 경계 원칙, merge 계약, β 메커니즘 |
+| `change-plans/` | ArchitectAgent가 작성하는 Change Plan 저장 위치 (PR과 1:1 매핑, consumer 프로젝트에서 사용) |
+
+## 상위 레벨 문서
+
+| 파일 | 내용 |
+|------|------|
+| [`../CLAUDE.md`](../CLAUDE.md) | 플러그인 오케스트레이션 규칙 SSOT — 에이전트 목록·레인·권한·Jira/ADR 규약 ("무엇") |
+| [`../README.md`](../README.md) | 플러그인 소개 · 설치법 · overlay 적용법 |
+| `../agents/*.md` | 22 에이전트 SSOT (core — consumer overlay가 확장) |

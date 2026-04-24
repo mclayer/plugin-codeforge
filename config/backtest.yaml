@@ -1,7 +1,0 @@
-backtest:
-  initial_cash: "10000000"
-  start_ts: null
-  end_ts: null
-  symbols: all
-  result_path: ./results
-  queue_model: naive

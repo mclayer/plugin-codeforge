@@ -1,27 +1,28 @@
-# runtime data & results
-data/
-results/
-*.parquet
-*.log
-nohup.out
+# dev-orchestrator plugin — generated files (if this repo is also used as a consumer test workspace)
+.claude/agents/
+.claude-work/
 
-# python
+# macOS
+.DS_Store
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# Python (for merge.py / test scripts)
 __pycache__/
 *.pyc
 *.pyo
-.env
-*.egg-info/
-dist/
-build/
-
-# tools
 .mypy_cache/
 .ruff_cache/
 .pytest_cache/
 .venv/
-.coverage
-htmlcov/
+venv/
 
-# Claude Code — local agent worktrees (embedded repos 포함)
+# Node (if future hooks use node)
+node_modules/
+
+# Claude Code — local agent worktrees
 .claude/worktrees/
-.claude/worktrees/*
