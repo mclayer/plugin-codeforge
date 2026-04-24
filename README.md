@@ -21,8 +21,8 @@
    ↓
 Orchestrator (최상위 Claude 세션)
  ├── [Cross-cutting] PMOAgent, DocsAgent
- ├── [요구사항] RequirementsPL (DomainAgent → Analyst → Researcher)
- ├── [설계] Architect (CodebaseMapper vs Refactor)
+ ├── [요구사항] RequirementsPL (DomainAgent ‖ Analyst ‖ Researcher 병렬)
+ ├── [설계] Architect (CodebaseMapper ‖ Refactor 병렬)
  ├── [설계 리뷰] DesignReviewPL (Claude ‖ Codex)
  ├── [구현] DeveloperPL (role:dev roster 병렬) + QADev
  ├── [구현 리뷰] CodeReviewPL (Claude ‖ Codex)
@@ -124,7 +124,7 @@ codeforge/
 
 ## 버전
 
-`0.4.0` — Stage 2 `project.yaml` 구조화 SSOT 상수 도입. Consumer의 Atlassian·GitHub·labels 상수를 `.claude/_overlay/project.yaml`로 structured 분리 (CLAUDE.md overlay는 narrative 전담). Schema SSOT는 `docs/project-config-schema.md`. 예시 2종 overlay 재구성, DocsAgent·DomainAgent 등 주 소비자 업데이트.
+`0.7.0` — 요구사항·설계 레인 **병렬화**. Domain/Analyst/Researcher 셋 모두 non-skippable로 승격 + 병렬 스폰 (각자 공통 입력에서 관점 자체 도출), CodebaseMapper·Refactor 병렬 스폰 (둘 다 원 소스 직접 독해). PL/Architect가 진정한 synthesizer 역할. Clarification 재스폰 프로토콜 신설.
 
 ## 라이선스
 

@@ -13,10 +13,76 @@ updated: 2026-04-24
 
 ## 목차
 
+- [v0.6 → v0.7](#v06--v07-요구사항설계-레인-병렬화) — 요구사항·설계 레인 병렬 모델
 - [v0.5 → v0.6](#v05--v06-plugin-name-rename-dev-orchestrator--codeforge) — Plugin name rename + Atlassian 이관
 - [v0.3 → v0.4](#v03--v04-stage-2-projectyaml-구조화) — `project.yaml` 도입
 - [v0.2 → v0.3](#v02--v03-generic-dev-roster--preset) — Generic Dev roster + preset
 - [v0.1 → v0.2](#v01--v02-보안-테스트-레인--templates) — 보안 테스트 레인 + templates (non-breaking)
+
+---
+
+## v0.6 → v0.7 (요구사항·설계 레인 병렬화)
+
+### Breaking changes (오케스트레이션 semantics)
+
+- **요구사항 레인**: `DomainAgent → Analyst → Researcher` 순차 (조건부 생략 포함) → **`DomainAgent ∥ Analyst ∥ Researcher` 병렬** (셋 다 non-skippable)
+- **설계 레인**: `CodebaseMapper → Refactor` 순차 (Refactor가 Mapper 요약 입력 수신) → **`CodebaseMapper ∥ Refactor` 병렬** (둘 다 원 소스 직접 독해, 산출물 교차 참조 없음)
+- **Clarification 재스폰 프로토콜**: PL↔서브 continuous dialog가 불가하므로, PL이 통합 중 추가 질의가 필요하면 Orchestrator 경유 재스폰 요청 (이전 출력 pointer + clarification context + 범위 제한). 동일 에이전트 2회 재스폰 이후 미해소면 사용자 ESCALATE
+- **Researcher·DomainAgent non-skippable 승격**: 이전엔 조건부 생략 가능이었으나, 이제 "조사 불필요" 판정도 명시 반환 필수 (null skip 금지)
+
+### 영향 범위
+
+- **Consumer overlay가 RequirementsPLAgent 또는 ArchitectAgent 행동을 override하지 않는다면 영향 없음** — core agent 이름·경로·Story 페이지 섹션 규격 모두 동일
+- Override 중인 consumer만 아래 절차 필요
+
+### 마이그레이션 절차 (override 중인 consumer만)
+
+#### 1. RequirementsPLAgent override 수정
+
+overlay에 "DomainAgent → Analyst → Researcher 순서로 스폰" 류 지시가 있으면:
+
+**Before**:
+```markdown
+1. DomainAgent 스폰 → 지식 공백 수령
+2. Analyst 스폰 (DomainAgent 지식 공백 payload 포함)
+3. Analyst 산출물의 Researcher 키워드 존재 시 Researcher 스폰
+```
+
+**After**:
+```markdown
+1. 공통 입력 패키지 준비 (사용자 원문 + Story §1-2 + 관련 ADR + Project Config Packet)
+2. DomainAgent · Analyst · Researcher **병렬 스폰** (공통 입력만 전달, 타 에이전트 산출물 미포함)
+3. 세 결과 병렬 수령 → dedup · 상충 조정
+4. Clarification 필요 시 Orchestrator 경유 재스폰
+```
+
+#### 2. ArchitectAgent override 수정
+
+"Mapper → Refactor 순 스폰" 류 지시가 있으면:
+
+**Before**:
+```markdown
+1. CodebaseMapper 스폰 → as-is 산출물 수령
+2. Refactor 스폰 (Mapper 산출물 입력)
+```
+
+**After**:
+```markdown
+1. 공통 입력 패키지 준비 (변경 대상 코드 경로 + 관련 ADR + Change Plan 초안 + Story §1-7)
+2. CodebaseMapper · Refactor **병렬 스폰** (둘 다 원 소스 직접 독해, 상호 산출물 미전달)
+3. 두 결과 병렬 수령 → 교차 검토 → Change Plan §2·§3에 각각 반영
+4. Clarification 필요 시 Orchestrator 경유 재스폰
+```
+
+#### 3. Story 페이지 §6 null 결과 규정 확인
+
+Consumer overlay가 `templates/story-page-structure.md` §6을 override하면 "Researcher 키워드 비어있으면 섹션 생략" 서술이 있는지 점검, "외부 지식 보강 불필요 사유 명시" 로 변경.
+
+### 검증 체크리스트
+
+- [ ] overlay의 RequirementsPLAgent/ArchitectAgent에서 "순차"·"→" 표기 제거
+- [ ] Researcher·DomainAgent를 "조건부 생략 가능"으로 표기한 overlay 있으면 제거
+- [ ] 세션 1회 수행 후 Story 페이지 §10 FIX Ledger에 clarification 재스폰 이력이 적절히 기록되는지 확인
 
 ---
 

@@ -21,31 +21,32 @@ permissions:
 
 사용자 요구사항을 **GPT-5.4로 면밀·확장 해석**해 본질적 이해를 돕는다. Claude 래퍼(haiku)가 `codex exec -m gpt-5.4`를 비대화형 실행해 분석을 위임받고 결과를 정규화한다.
 
-DomainAgent가 선행 실행되어 "지식 공백"과 도메인 제약을 전달하면, 본 에이전트는 이를 Researcher 키워드 생성의 보조 입력으로 활용한다.
+요구사항 레인은 병렬 모델 — 본 에이전트는 DomainAgent·ResearcherAgent와 **동시 스폰**되어 공통 입력만 사용해 **요구사항 ambiguity 관점** 분석을 수행한다. 타 에이전트 산출물은 수신하지 않으며, 독립 관점을 유지한다.
 
 ## 포지션
 - **상위**: RequirementsPLAgent
-- **호출 시점**: 요구사항 레인 — **DomainAgent(있으면) 완료 후 → 본 에이전트 → Researcher(조건부) 순차 실행**. 본 에이전트가 생성하는 "Researcher 리서치 키워드" 필드가 Researcher 스폰 판정의 유일한 입력이므로 **항상 Researcher 선행**
+- **호출 시점**: 요구사항 레인 — **DomainAgent · Researcher와 병렬 스폰**. Never-skippable (관점 독립성 보장)
 
 ## 핵심 원칙
 - 사용자 원문이 간결하더라도 암묵 가정·숨은 전제를 추정해 명시화
 - 유스케이스·AC·엣지·제외 범위 도출
 - 불명확 항목은 **"사용자 확인 필요"** 로 분리 — 자의적 단정 금지
-- 도메인 배경 필요 시 **Researcher 리서치 키워드** 섹션에 열거
+- **Ambiguity 키워드 섹션** 작성 — 요구사항 해석 관점에서 명확화 필요한 영역 (도메인·기술 키워드 아님, **모호성 영역**)
 - Claude 네이티브 추론 최소화 — 분석 본체는 GPT-5.4에 위임
+- 타 에이전트(Domain·Researcher) 산출물 의존 금지 — 공통 입력만 사용
 
-## 입력 컨텍스트 구성 (RequirementsPLAgent가 준비해 전달)
+## 입력 컨텍스트 구성 (RequirementsPLAgent가 준비해 전달 — 공통 입력 패키지)
 
-**주 입력**: Confluence Story 페이지 URL (Orchestrator가 요구사항 접수 시 DocsAgent 경유 생성한 `<PROJECT_KEY>-N` 페이지). §1(사용자 원문)·§2(DomainAgent 해석) 이미 채워진 상태.
+**주 입력**: Confluence Story 페이지 URL (Orchestrator가 요구사항 접수 시 DocsAgent 경유 생성한 `<PROJECT_KEY>-N` 페이지). §1(사용자 원문)·§2(Orchestrator 초기 메모) 이미 채워진 상태.
 
-프롬프트 포함:
-1. **Story 페이지 URL + pageId** — `mcp__atlassian__getConfluencePage`로 fetch
-2. **DomainAgent 해석 + 지식 공백** (§2 + verbatim payload)
-3. **관련 ADR** — §3 링크 목록. 직접 제약만 verbatim fetch
-4. 관련 코드 경로 (§4)
-5. 이전 스레드 합의사항 (§10 FIX Ledger)
+프롬프트 포함 (DomainAgent·Researcher와 공통 — 타 에이전트 산출물 제외):
+1. **Story 페이지 URL + pageId** — `mcp__atlassian__getConfluencePage`로 §1-2 fetch
+2. **관련 ADR** — §3 링크 목록. 직접 제약만 verbatim fetch (다른 에이전트의 ADR 해석은 포함하지 않음)
+3. 관련 코드 경로 (§4, 지도 수준 — 심층 분석은 Mapper 영역)
+4. 이전 스레드 합의사항 (§10 FIX Ledger)
+5. Clarification 재스폰 context (재스폰 시에만, 이전 본인 출력 + PL의 재질의)
 
-사용자 원문·DomainAgent 해석은 **§1-2에서 verbatim 복사** (재작성·요약 금지 — 변조 방지).
+사용자 원문은 **§1에서 verbatim 복사** (재작성·요약 금지 — 변조 방지). DomainAgent·Researcher 해석은 **입력으로 전달되지 않는다** (독립 관점 보장).
 
 ## 필수 환경
 `codex` CLI 필요. 미설치 시 요구사항 레인 진행 불가.
@@ -59,9 +60,11 @@ mkdir -p /tmp
 codex exec -m gpt-5.4 --ephemeral -o "$OUT" - <<'PROMPT'
 당신은 요구사항 분석 전문가다. 아래 사용자 요구사항을 면밀·확장 해석해 암묵 가정·유스케이스·AC·엣지·제외 범위를 도출하라.
 
+본 에이전트는 DomainAgent·Researcher와 병렬 실행되는 요구사항 레인의 **ambiguity 관점 담당**. 도메인 사실·외부 기술 조사는 다른 에이전트가 병렬 수행하므로 본 분석은 요구사항 텍스트의 모호성·내부 일관성·AC 도출에 집중한다.
+
 출력 형식 (Markdown):
 ## 사용자 원문 (verbatim)
-## 도메인 컨텍스트 추정
+## 도메인 컨텍스트 추정 (요구사항 텍스트 내에서만 — 외부 도메인 조사는 생략)
 ## 유스케이스
   - UC-1: Actor / Precondition / Flow / AC
 ## 암묵 가정
@@ -69,13 +72,10 @@ codex exec -m gpt-5.4 --ephemeral -o "$OUT" - <<'PROMPT'
 ## 제외 범위
 ## 사용자 확인 필요
   - [ ] 질문 1
-## Researcher 리서치 키워드 (비어있을 수 있음)
+## Ambiguity 키워드 (요구사항 해석상 명확화가 필요한 모호 영역 — PL 통합 시 참조용)
 
 [사용자 요구사항]
 {사용자 원문 verbatim}
-
-[DomainAgent 해석 컨텍스트]
-{DomainAgent 제약·전제·범위·지식 공백}
 
 [관련 ADR]
 {verbatim 또는 ID+요약}
@@ -83,8 +83,8 @@ codex exec -m gpt-5.4 --ephemeral -o "$OUT" - <<'PROMPT'
 [관련 코드/문서]
 {경로 + 책임 요약 + 섹션 발췌}
 
-[이전 합의]
-{해당 시}
+[이전 합의 / Clarification 재스폰 context]
+{해당 시 — 이전 본인 출력 + PL 재질의}
 PROMPT
 STATUS=$?
 [ "$STATUS" -eq 0 ] || { echo "ERROR: codex exec failed ($STATUS)"; exit $STATUS; }
@@ -94,7 +94,7 @@ rm -f "$OUT"
 
 - exit 1 하드 실패 → 게이트 블록
 - 실행 성공 시 `$OUT` 파일 내용 + 메타데이터 반환
-- 사용자 원문·PMAgent 컨텍스트·ADR heredoc verbatim (변조 금지)
+- 사용자 원문·ADR heredoc verbatim (변조 금지)
 
 ## 보고 형식
 

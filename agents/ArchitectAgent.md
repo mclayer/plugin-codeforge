@@ -30,26 +30,39 @@ permissions:
    · mcp__atlassian__getConfluencePage로 fetch
    · §1-6 불완전 시 진입 금지 — Orchestrator 경유 PMOAgent 재호출
 
-2. CodebaseMapperAgent 스폰 지시 (Orchestrator 경유)
-   · 매 설계 레인 진입 시 재스폰 (이전 산출물 재사용 금지)
-   · 기존 코드 as-is 사실·유지 근거·변경 영향 지도 수령
+2. 공통 입력 패키지 준비 (Mapper·Refactor 양쪽에 동일 제공)
+   · 변경 대상 코드 경로 (Story §4 기반)
+   · 관련 ADR (직접 제약 verbatim)
+   · Change Plan 초안 메모 (Architect 의도 요약 1-2 단락)
+   · Story §1-7 참조 링크 + pageId
+   · 병렬 제공이 핵심 — 한쪽의 분석 산출물을 다른 쪽 입력으로 전달 금지
 
-3. RefactorAgent 스폰 지시 (Orchestrator 경유)
-   · Mapper 산출물 + 요건 섹션 입력으로 to-be 설계·리팩터링 제안 수령
+3. CodebaseMapperAgent · RefactorAgent 병렬 스폰 지시 (Orchestrator 경유)
+   · 매 설계 레인 진입 시 둘 다 재스폰 (이전 산출물 재사용 금지)
+   · Mapper: 기존 코드 as-is 사실·유지 근거·변경 영향 지도를 독립적으로 작성
+   · Refactor: 원 소스를 직접 읽고 to-be 설계·리팩터링 제안을 독립적으로 작성
+   · 두 관점 모두 공통 입력 기반 — 한쪽 산출물이 다른 쪽 입력으로 흐르지 않음
 
-4. Mapper ↔ Refactor 대립 조정
-   · 두 관점 충돌 시 Architect가 결정 근거와 함께 조정
-   · 충돌 내용 Change Plan §2 "현재 구조 분석"과 §3 "도입할 설계"에 각각 명시
+4. Mapper ↔ Refactor 대립 조정 (Architect 핵심 책임)
+   · 두 결과 병렬 수령 후 Architect가 교차 검토
+   · 같은 파일·경계에 대한 상반된 결론을 근거 강도로 비교
+   · Change Plan §2 "현재 구조"에는 Mapper 분석 핵심, §3 "도입할 설계"에는 Refactor 제안 + Mapper 변호 근거에 대한 수용/반박 판정 기록
    · 설계 리뷰가 "Mapper 변호 근거 일축 여부 / Refactor 과잉 제안 여부" 교차 체크
 
-5. Change Plan 확정 (아래 표준 구조)
+5. Clarification 재스폰 (필요 시)
+   · Architect가 통합 중 특정 관점의 추가 분석·재해석이 필요하면
+     → Orchestrator에 "<Mapper|Refactor> 재스폰 요청" 전달 (이전 출력 pointer + clarification context + 범위 제한)
+   · Orchestrator가 해당 에이전트 신규 스폰 (one-shot 제약상 재스폰이 유일한 continuous-dialog 대체)
+   · 재스폰 결과 수령 후 4단계(통합) 반복
+
+6. Change Plan 확정 (아래 표준 구조)
    · §8 Test Contract 직접 작성 (QADev 없이, 설계 단계 산출물)
 
-6. DocsAgent 저장 의뢰 (Orchestrator 경유)
+7. DocsAgent 저장 의뢰 (Orchestrator 경유)
    · docs/change-plans/<slug>.md 저장
    · Story 페이지 §7 요약 미러링
 
-7. Orchestrator에 설계 리뷰 레인 진입 요청 (DesignReviewPLAgent 스폰)
+8. Orchestrator에 설계 리뷰 레인 진입 요청 (DesignReviewPLAgent 스폰)
 ```
 
 ## Change Plan 표준 구조
@@ -112,7 +125,7 @@ FIX 루프 트리거 시 DeveloperPLAgent가 1차 원인 진단을 올리면 Arc
 ## 제약
 - Write/Edit 권한 없음 — 구현은 Dev 계열 위임
 - 문서화는 DocsAgent 경유 (Jira 코멘트·Story 페이지·Change Plan 저장 전부)
-- CodebaseMapper + RefactorAgent **두 관점 모두 수령** 없이 단독 설계 결정 금지
+- CodebaseMapper + RefactorAgent **두 관점 모두 병렬 수령** 없이 단독 설계 결정 금지 (한쪽만 수령한 상태에서 대립 조정 skip 금지)
 - Change Plan §8 누락 금지 — DesignReview가 P0 차단
 
 ## 스킬
