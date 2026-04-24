@@ -65,7 +65,7 @@ fi
 
 mkdir -p "$OUT_AGENTS_DIR"
 
-# Regenerate each agent
+# Regenerate each core agent (with optional overlay on top)
 count=0
 for core in "$PLUGIN_AGENTS_DIR"/*.md; do
     [ -f "$core" ] || continue
@@ -81,10 +81,28 @@ for core in "$PLUGIN_AGENTS_DIR"/*.md; do
     count=$((count + 1))
 done
 
+# Pick up overlay-only agents (consumer-defined, no core counterpart —
+# e.g., preset imports or project-custom agents)
+overlay_only_count=0
+if [ -d "$OVERLAY_AGENTS_DIR" ]; then
+    for overlay in "$OVERLAY_AGENTS_DIR"/*.md; do
+        [ -f "$overlay" ] || continue
+        name="$(basename "$overlay")"
+        core="$PLUGIN_AGENTS_DIR/$name"
+        out="$OUT_AGENTS_DIR/$name"
+
+        # Skip if already merged by core pass
+        [ -f "$core" ] && continue
+
+        python3 "$MERGE_SCRIPT" --overlay-only "$overlay" > "$out"
+        overlay_only_count=$((overlay_only_count + 1))
+    done
+fi
+
 # Regenerate CLAUDE.md (only if consumer has overlay CLAUDE.md)
 if [ -f "$PLUGIN_CLAUDE_MD" ] && [ -f "$OVERLAY_CLAUDE_MD" ]; then
     python3 "$MERGE_SCRIPT" "$PLUGIN_CLAUDE_MD" "$OVERLAY_CLAUDE_MD" > "$OUT_CLAUDE_MD"
-    echo "[regen-agents] regenerated $count agents + CLAUDE.md" >&2
+    echo "[regen-agents] regenerated $count core + $overlay_only_count overlay-only agents + CLAUDE.md" >&2
 else
-    echo "[regen-agents] regenerated $count agents (no CLAUDE.md overlay)" >&2
+    echo "[regen-agents] regenerated $count core + $overlay_only_count overlay-only agents (no CLAUDE.md overlay)" >&2
 fi

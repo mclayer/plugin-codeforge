@@ -1,6 +1,7 @@
 ---
 name: DataEngineerAgent
 model: claude-sonnet-4-6
+role: dev
 description: 데이터 파이프라인 구현 담당 — 수집·저장·조회 레이어 (어댑터/포트/스키마)
 permissions:
   allow:
@@ -28,7 +29,7 @@ Consumer overlay가 담당 경로·기술 스택·데이터 포맷을 구체화.
 
 ## 포지션
 - **상위**: DeveloperPLAgent (구현 레인 PL)
-- **형제**: BackendDeveloperAgent, FrontendDeveloperAgent, ServerEngineerAgent, QADeveloperAgent (구현 레인 병렬)
+- **형제**: 기타 `role: dev` 에이전트 (DeveloperAgent, InfraEngineerAgent, preset import 등)
 
 담당 영역 (consumer overlay가 경로·기술 구체화):
 - 외부 데이터 소스 어댑터 (WebSocket / REST / Kafka / DB 등)

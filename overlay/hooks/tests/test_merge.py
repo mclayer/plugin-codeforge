@@ -196,6 +196,11 @@ class TestRenderers:
         header = merge.auto_header(Path("agents/X.md"), None)
         assert "+ (none)" in header
 
+    def test_auto_header_no_core_shows_overlay_only(self):
+        header = merge.auto_header(None, Path(".claude/_overlay/agents/X.md"))
+        assert "(overlay-only)" in header
+        assert ".claude/_overlay/agents/X.md" in header
+
 
 # -----------------------------------------------------------------------------
 # End-to-end (subprocess)
@@ -393,7 +398,81 @@ class TestEndToEnd:
         res = _run_merge(str(core_file))
         assert res.returncode == 0
         out = res.stdout
-        fm_end = out.index("---", out.index("---") + 3)  # second ---
+        fm_end = out.index("---", out.index("---") + 3)
         header_start = out.index("<!--")
         body_start = out.index("# Agent X")
         assert fm_end < header_start < body_start
+
+
+# -----------------------------------------------------------------------------
+# Overlay-only mode (preset / consumer-defined agents)
+# -----------------------------------------------------------------------------
+
+
+class TestOverlayOnly:
+    def test_overlay_only_renders_with_header(self, tmp_path: Path):
+        overlay = tmp_path / "CustomAgent.md"
+        overlay.write_text(
+            dedent(
+                """\
+                ---
+                name: CustomAgent
+                model: claude-sonnet-4-6
+                description: consumer-defined agent
+                tools:
+                  - Read
+                ---
+
+                # CustomAgent
+
+                Body content.
+                """
+            ),
+            encoding="utf-8",
+        )
+        res = _run_merge("--overlay-only", str(overlay))
+        assert res.returncode == 0, res.stderr
+        assert "name: CustomAgent" in res.stdout
+        assert "(overlay-only)" in res.stdout
+        assert "Body content." in res.stdout
+        # no "## Project Overlay" separator because there's no core to append to
+        assert "## Project Overlay" not in res.stdout
+
+    def test_overlay_only_missing_file_exits_5(self, tmp_path: Path):
+        missing = tmp_path / "nope.md"
+        res = _run_merge("--overlay-only", str(missing))
+        assert res.returncode == 5
+        assert "overlay file not found" in res.stderr.lower()
+
+    def test_overlay_only_requires_exactly_one_path(self, tmp_path: Path):
+        overlay = tmp_path / "X.md"
+        overlay.write_text("---\nname: X\n---\nbody\n", encoding="utf-8")
+        # No path after flag
+        res_missing = _run_merge("--overlay-only")
+        assert res_missing.returncode == 1
+        # Two paths after flag
+        res_extra = _run_merge("--overlay-only", str(overlay), str(overlay))
+        assert res_extra.returncode == 1
+
+    def test_overlay_only_preserves_frontmatter_deny_block(self, tmp_path: Path):
+        overlay = tmp_path / "X.md"
+        overlay.write_text(
+            dedent(
+                """\
+                ---
+                name: X
+                permissions:
+                  allow:
+                    - Read
+                  deny:
+                    - "Write(src/**)"
+                ---
+
+                body
+                """
+            ),
+            encoding="utf-8",
+        )
+        res = _run_merge("--overlay-only", str(overlay))
+        assert res.returncode == 0, res.stderr
+        assert "Write(src/**)" in res.stdout
