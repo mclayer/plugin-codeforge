@@ -30,7 +30,7 @@ permissions:
 1. **리뷰 보고 수집**: Orchestrator가 병렬 스폰한 Claude/Codex 보고 취합
 2. **severity 종합**: 공통 규칙으로 병합
 3. **구현 리뷰 판정**: PASS / FIX / ESCALATE
-4. **Orchestrator 에스컬레이션**: FIX 시 Orchestrator 경유 회귀. PASS 시 Orchestrator가 테스트 레인 진입
+4. **Orchestrator 에스컬레이션**: FIX 시 Orchestrator 경유 회귀. PASS 시 Orchestrator가 **구현 테스트 레인**(TestAgent) 진입
 
 ## Severity 종합 규칙 (DesignReviewPLAgent와 공유)
 
@@ -85,12 +85,12 @@ ClaudeCodeReview · CodexCodeReview 모두 **정규화된 severity 스키마**(P
 
 ## 보고 형식
 
-### PASS (테스트 레인 진입 승인)
+### PASS (구현 테스트 레인 진입 승인)
 ```
-✅ 구현 리뷰 PASS — TestAgent(테스트 레인) 진입 승인
+✅ 구현 리뷰 PASS — TestAgent(구현 테스트 레인) 진입 승인
 - Claude: 이슈 없음 (또는 P2 N건 / P3 N건, 비차단)
 - Codex: 이슈 없음 (또는 P2 N건 / P3 N건, 비차단)
-다음 단계: Orchestrator가 TestAgent 스폰
+다음 단계: Orchestrator가 TestAgent 스폰 (구현 테스트) → 이후 SecurityTestPL 스폰 (보안 테스트)
 ```
 
 ### FIX
