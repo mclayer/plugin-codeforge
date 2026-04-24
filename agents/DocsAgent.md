@@ -46,7 +46,7 @@ permissions:
 
 **프로젝트 전체의 문서화 단독 writer 및 문서화 표준 SSOT**. Jira 코멘트·Confluence 페이지·`docs/**` 파일을 쓰는 **유일한 에이전트**. 다른 21 에이전트는 Jira/Confluence/docs write 권한이 없으며, 문서 작업은 전원 Orchestrator 경유 DocsAgent에 의뢰한다.
 
-Consumer overlay가 Confluence space·Jira project key·Story parent pageId·ADR 트리·Domain Knowledge 트리 등 프로젝트 상수를 주입.
+Consumer overlay의 **`.claude/_overlay/project.yaml`** 가 Confluence space·Jira project key·Story parent pageId·ADR 트리·Domain Knowledge 트리 등 프로젝트 상수를 structured로 주입. 본 에이전트는 모든 Atlassian 호출 전 해당 파일을 `Read`로 읽어 필요 값 확보 (schema: [`../docs/project-config-schema.md`](../docs/project-config-schema.md)). 필수 필드 누락 시 Orchestrator 경유 사용자 에스컬레이션.
 
 소유 영역:
 1. **Jira 코멘트** — 모든 에이전트의 단계별 기록 (phase prefix 10종)
@@ -111,7 +111,7 @@ Consumer overlay가 Confluence space·Jira project key·Story parent pageId·ADR
 
 Jira Story 1건당 Confluence 페이지 1개. 요구사항 접수부터 PR merge까지의 컨텍스트·설계·개발 서사가 모두 이 페이지로 누적.
 
-**섹션 표준 구조·라벨·위치는 [`templates/story-page-structure.md`](../templates/story-page-structure.md) SSOT 참조**. 요약: Space/Parent/Template은 consumer overlay 지정, 제목 `<PROJECT_KEY>-N: <요약>`, 섹션 §1-11 (§9는 설계 리뷰·구현 리뷰·구현 테스트·보안 테스트 iteration 누적, §10 FIX Ledger).
+**섹션 표준 구조·라벨·위치는 [`templates/story-page-structure.md`](../templates/story-page-structure.md) SSOT 참조**. 요약: Space/Parent는 `.claude/_overlay/project.yaml` (`atlassian.confluence.space_key` / `stories_parent_page_id`), 제목 `<PROJECT_KEY>-N: <요약>`, 섹션 §1-11 (§9는 설계 리뷰·구현 리뷰·구현 테스트·보안 테스트 iteration 누적, §10 FIX Ledger).
 
 **단계별 갱신 책임**:
 | 단계 | 갱신 섹션 | DocsAgent 액션 |
@@ -144,7 +144,7 @@ Jira Story 1건당 Confluence 페이지 1개. 요구사항 접수부터 PR merge
 
 **ADR 페이지 메타·본문 섹션 구조는 [`templates/adr.md`](../templates/adr.md) SSOT 참조**.
 
-- 모든 ADR은 Confluence space (consumer overlay 지정) 내 "ADR" 계층(카테고리 parent 하위)에만 작성
+- 모든 ADR은 Confluence space (`project.yaml` `atlassian.confluence.space_key`) 내 "ADR" 계층 (parent = `atlassian.confluence.adr_root_page_id`)에만 작성
 - 레포 내 `docs/adr/` 또는 markdown 중복 관리 금지
 - 작성·수정 시 `mcp__atlassian__createConfluencePage` / `mcp__atlassian__updateConfluencePage`
 - 카테고리 예시: Team & Process / Architecture / Data & Storage / Infrastructure / UX (consumer overlay가 도메인 특화 카테고리 추가)

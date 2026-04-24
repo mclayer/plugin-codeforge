@@ -1,7 +1,7 @@
 {
   "name": "dev-orchestrator",
-  "version": "0.3.0",
-  "description": "Claude Code 범용 SW 개발 오케스트레이션 플러그인 — 24 core 에이전트 + role:dev 동적 roster · 7 레인 구조로 요구사항부터 보안 테스트까지 자율 실행. Overlay + preset 메커니즘으로 프로젝트 shape·도메인·기술 스택 확장 지원.",
+  "version": "0.4.0",
+  "description": "Claude Code 범용 SW 개발 오케스트레이션 플러그인 — 24 core 에이전트 + role:dev 동적 roster · 7 레인 구조로 요구사항부터 보안 테스트까지 자율 실행. Overlay + preset 메커니즘 · project.yaml structured 상수 SSOT로 프로젝트 shape·도메인·기술 스택 확장 지원.",
   "author": {
     "name": "Josh"
   },
@@ -13,6 +13,7 @@
     "code-review",
     "security-testing",
     "overlay",
-    "preset"
+    "preset",
+    "structured-config"
   ]
 }

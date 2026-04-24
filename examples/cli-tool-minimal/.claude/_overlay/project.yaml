@@ -1,0 +1,23 @@
+project:
+  name: "<REPLACE — e.g. logparser>"
+  repo: "<REPLACE — e.g. github.com/acme/logparser>"
+
+atlassian:
+  site: "<REPLACE — e.g. acme.atlassian.net>"
+  confluence:
+    space_key: "<REPLACE — e.g. LP>"
+    stories_parent_page_id: "<REPLACE — Story 페이지들의 parent pageId>"
+    domain_knowledge_parent_page_id: "<REPLACE — Domain Knowledge 루트 pageId>"
+    adr_root_page_id: "<REPLACE — ADR 루트 pageId>"
+  jira:
+    project_key: "<REPLACE — e.g. LP>"
+
+github:
+  pr_title_prefix_template: "[{project_key}-{story_number}] {title}"
+
+labels:
+  components:
+    - cli       # 명령·인자 처리
+    - parser    # 로그 파싱 엔진
+    - filter    # Event 필터링
+    - infra     # 패키징·릴리스
