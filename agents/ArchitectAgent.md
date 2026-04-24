@@ -54,32 +54,13 @@ permissions:
 
 ## Change Plan 표준 구조
 
-```
-## 목적 (요건·수용 기준)
-## 현재 구조 분석 (CodebaseMapper 입력 — as-is 사실 + 유지 근거)
-## 도입할 설계 (RefactorAgent 입력 기반 — 신규 포트/어댑터/클래스, 이름·시그니처·타입)
-## API 계약 (라우트·요청/응답·컨텍스트·이벤트 스키마·의존성)
-## 변경 계획 (파일 단위 — 추가·수정·제거)
-## 리팩토링 선행 작업 (Dev 경유, 담당 Agent 명시 — Backend/Frontend/DataEng/ServerEng)
-## Test Contract (§8 — QADev TDD 입력)
-  ### §8.1 커버리지 계획 (unit/integration/infra 범위)
-  ### §8.2 경계 조건·엣지·invariant
-    - 경계 조건 목록
-    - invariant 목록 (반드시 유지되어야 할 속성)
-    - 테스트 계획 ↔ 계획서 항목 매핑 요건
-  ### §8.3 Perf Baseline Protocol (성능 영향 있을 때 필수)
-    - 대상 시나리오: {핫패스 함수 / 엔드포인트 / 파이프라인 스테이지}
-    - 측정 지표: {mean latency (µs) / p95 / throughput 등, 1개 이상 명시}
-    - baseline 파일: `tests/perf/baselines/<scenario>.json`
-    - 기준치: `--benchmark-compare-fail=mean:10%` (전역 기본, 완화/강화 필요 시 명시)
-    - 환경 고정: {CPU governor / Python 버전 / BTC 가격 등 variance 변수 처리}
-    - baseline 갱신 트리거: 설계 의도로 성능 스펙이 변경된 경우에만 Architect 승인 후 갱신 (자의적 갱신 금지)
-    - 성능 영향 없으면 "N/A (성능 영향 없음)" 1줄로 대체 가능
-## 분기 선택 (필요 Dev 조합 — 의존성 없는 한 4 Dev 병렬 가능)
-## ADR 대상 여부 + 기존 ADR 정합성 점검
-```
+**[`templates/change-plan.md`](../templates/change-plan.md)** 를 SSOT로 따른다. 모든 섹션 규격·frontmatter·§8 Test Contract 세부(§8.1/§8.2/§8.3)는 템플릿 문서 참조. 신규 ADR 필요 시 **[`templates/adr.md`](../templates/adr.md)** 를 DocsAgent에 전달.
 
-누락 시 구현자는 착수 금지, 계획서 보완 요청. **§8 누락은 DesignReviewPL이 P0로 차단**. §8.3은 성능 영향 없을 경우 `N/A` 허용 but 명시 필수.
+핵심 요약:
+- §1 목적 · §2 현재 구조 · §3 도입할 설계 · §4 API 계약 · §5 변경 계획(파일 단위) · §6 리팩토링 선행 · §8 Test Contract · §9 분기 선택 · §10 ADR 여부·정합성
+- 누락 시 구현자는 착수 금지, 계획서 보완 요청. **§8 누락은 DesignReviewPL이 P0로 차단**
+- §8.3은 성능 영향 없을 경우 `N/A` 허용이지만 명시 필수
+- Story 페이지 구조는 **[`templates/story-page-structure.md`](../templates/story-page-structure.md)** 참조 (§7에 Change Plan 요약 미러링)
 
 ## 컨텍스트 수집 (설계 단계)
 
@@ -105,6 +86,10 @@ FIX 루프 트리거 시 DeveloperPLAgent가 1차 원인 진단을 올리면 Arc
 | Code review P0 아키텍처 | **설계** | 레이어·의존성 방향 위반 |
 | **Code review P1 품질 (local)** | 구현 | 단일 파일·함수 범위 naming·가독성·작은 중복 |
 | **Code review P1 품질 (boundary)** | **설계** | 여러 파일·계층 공통 설계 지침·패턴 부재 |
+| **보안 테스트 P0 injection·credential hardcode** | 구현 | 코드 단위 결함 |
+| **보안 테스트 P0 trust boundary / auth 모델 오설계** | **설계** | 경계·권한 모델 설계 오류 |
+| **보안 테스트 P1 암호학 오용·CVE** | 구현 | 코드 수정·버전 업그레이드로 해결 |
+| **보안 테스트 P1 boundary 권한 일관성** | **설계** | 여러 파일·레이어 공통 지침 부재 |
 
 - **설계 원인 판정 시**: Change Plan 갱신 → 설계 리뷰 레인부터 재실행
 - **구현 원인 판정 시**: Change Plan 유지, 구현만 재실행
