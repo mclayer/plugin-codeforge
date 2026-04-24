@@ -853,7 +853,7 @@ PMOAgent는 단일 Story 레인 게이트 밖에서 cross-cutting 감사·회고
 
 | 트리거 | 시점 | 입력 | 산출물 |
 |--------|------|------|--------|
-| **Epic 창설** | Orchestrator가 Epic 생성 직후, Story 분해 직전 | 사용자 원문·관련 ADR·기존 Epic 이력 | Story 분해 자문 (의존성·우선순위·병렬 기회) |
+| **Epic 창설** | Orchestrator가 Epic 생성 직후, Story 분해 직전 | 사용자 원문·관련 ADR·기존 Epic 이력·코드 구조 | Story 분해 자문 (의존성·우선순위·**병렬/순차 판정**) — 상세 규칙 [PMOAgent.md §1](../agents/PMOAgent.md) |
 | **Story 완료** | TestAgent PASS → PR merge 직후 | 해당 Story 페이지 §1-11 + FIX Ledger + Jira 코멘트 이력 + 토큰 사용량 | 회고 감사 보고 (Preflight 누락·§8/§8.5 매핑·FIX evidence 완성도·예산) |
 | **사용자 요청** | `/pmo-audit` 혹은 명시 요청 | 최근 N Story (기본 5) 페이지·Ledger·ADR 변경 이력 | Cross-Story 패턴 보고 + ADR 후보 발의 |
 
