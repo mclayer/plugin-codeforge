@@ -1,0 +1,116 @@
+name: lint
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  shellcheck:
+    name: shellcheck (regen-agents.sh)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run shellcheck
+        run: shellcheck overlay/hooks/regen-agents.sh
+
+  markdown-links:
+    name: markdown internal links
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check internal links in markdown
+        run: |
+          python3 <<'EOF'
+          import re, sys
+          from pathlib import Path
+
+          LINK_RE = re.compile(r'\[[^\]]*\]\(([^)]+)\)')
+          ROOT = Path(".")
+          md_files = list(ROOT.rglob("*.md"))
+          md_files = [p for p in md_files if ".claude/agents" not in str(p)]
+
+          errors: list[str] = []
+          for md in md_files:
+              raw = md.read_text(encoding="utf-8")
+              for match in LINK_RE.finditer(raw):
+                  target = match.group(1).strip()
+                  # Skip external URLs, anchors, mailto, generic placeholders
+                  if target.startswith(("http://", "https://", "#", "mailto:")):
+                      continue
+                  if target.startswith("<") or target.startswith("{"):
+                      continue  # placeholder like <REPLACE: ...>
+                  # Strip anchor fragment
+                  file_part = target.split("#", 1)[0]
+                  if not file_part:
+                      continue
+                  resolved = (md.parent / file_part).resolve()
+                  if not resolved.exists():
+                      errors.append(f"{md}: broken link -> {target}")
+
+          if errors:
+              print("\n".join(errors))
+              sys.exit(1)
+          print(f"all internal links OK across {len(md_files)} markdown files")
+          EOF
+
+  agent-frontmatter:
+    name: agent frontmatter contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Validate role:dev tag on dev agents + presence of required fields
+        run: |
+          python3 <<'EOF'
+          import sys, yaml
+          from pathlib import Path
+
+          REQUIRED = {"name", "description"}
+          DEV_EXPECTED_IN_CORE = {"DeveloperAgent", "DataEngineerAgent", "InfraEngineerAgent"}
+          DEV_EXPECTED_IN_PRESETS = {
+              "presets/webapp/agents/BackendDeveloperAgent.md",
+              "presets/webapp/agents/FrontendDeveloperAgent.md",
+          }
+
+          failed: list[str] = []
+
+          # Core agents
+          for md in Path("agents").glob("*.md"):
+              raw = md.read_text(encoding="utf-8")
+              if not raw.startswith("---\n"):
+                  failed.append(f"{md}: no frontmatter")
+                  continue
+              fm_text = raw.split("\n---\n", 1)[0][4:]
+              fm = yaml.safe_load(fm_text)
+              if not isinstance(fm, dict):
+                  failed.append(f"{md}: frontmatter not a mapping")
+                  continue
+              missing = REQUIRED - fm.keys()
+              if missing:
+                  failed.append(f"{md}: missing required fields: {missing}")
+              if fm.get("name") in DEV_EXPECTED_IN_CORE and fm.get("role") != "dev":
+                  failed.append(f"{md}: expected role:dev, got {fm.get('role')}")
+
+          # Preset agents
+          for path_str in DEV_EXPECTED_IN_PRESETS:
+              md = Path(path_str)
+              if not md.exists():
+                  failed.append(f"{md}: missing preset agent file")
+                  continue
+              raw = md.read_text(encoding="utf-8")
+              fm_text = raw.split("\n---\n", 1)[0][4:]
+              fm = yaml.safe_load(fm_text)
+              if fm.get("role") != "dev":
+                  failed.append(f"{md}: preset agent must have role:dev, got {fm.get('role')}")
+
+          if failed:
+              print("\n".join(failed))
+              sys.exit(1)
+          print("all agent frontmatter checks passed")
+          EOF
