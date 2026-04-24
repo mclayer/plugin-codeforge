@@ -1,2 +1,0 @@
-- [개발 에이전트 팀 구성](project_agent_team.md) — LeaderAgent + Architect/CodeSenior/Infra 합의 구조, 2026-04-20 확정
-- [Git push 자동 수행](feedback_git_push.md) — push 요청 시 확인 없이 바로 수행

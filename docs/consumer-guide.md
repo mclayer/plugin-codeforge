@@ -1,0 +1,225 @@
+# Consumer Guide — 플러그인 적용 가이드
+
+이 플러그인(`dev-orchestrator`)을 consumer 프로젝트에서 사용하는 방법.
+
+## 1. 설치
+
+### 1a. 플러그인 설치 (marketplace 경유)
+
+```bash
+/plugins install dev-orchestrator@<marketplace>
+```
+
+또는 로컬 경로 설치(개발 중인 플러그인 테스트 시):
+
+```bash
+/plugins install /path/to/dev-orchestrator-repo
+```
+
+설치 확인:
+
+```bash
+ls ~/.claude/plugins/cache/<marketplace>/dev-orchestrator/<version>/agents/
+# ArchitectAgent.md  BackendDeveloperAgent.md  ...
+```
+
+### 1b. 필수 의존성 3종
+
+`CLAUDE.md` §"세션 개시 의무"에 명시된 3종 미설치 시 플러그인 동작 불가:
+
+- MCP: `atlassian` 인증 완료
+- 플러그인: `codex@openai-codex`, `superpowers@claude-plugins-official`, `claude-md-management@claude-plugins-official`
+- CLI: `codex`
+
+## 2. Consumer 프로젝트 구조 초기화
+
+```
+<consumer-project>/
+├── .claude/
+│   ├── _overlay/                       # 프로젝트 특화 overlay (편집 대상)
+│   │   ├── CLAUDE.md                   # 프로젝트 식별·SSOT 상수
+│   │   └── agents/
+│   │       ├── DomainAgent.md          # 도메인 전문가 특화
+│   │       ├── DataEngineerAgent.md    # 데이터 계층 특화
+│   │       └── ...                     # 필요한 에이전트만
+│   ├── agents/                         # GENERATED (hook 산출물, gitignore)
+│   ├── settings.json                   # SessionStart hook 등록
+│   └── settings.local.json             # (선택) 로컬 오버라이드
+├── CLAUDE.md                           # GENERATED (hook 산출물, gitignore 또는 commit)
+├── .claude-work/                       # DocsAgent write queue (gitignore)
+└── ...
+```
+
+### 2a. 초기 복사
+
+```bash
+# consumer project root에서
+mkdir -p .claude/_overlay/agents
+cp ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/overlay/_overlay/README.md .claude/_overlay/
+```
+
+### 2b. `.claude/settings.json` 설정 (SessionStart hook 등록)
+
+```json
+{
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  },
+  "hooks": {
+    "SessionStart": [
+      { "command": "bash ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/overlay/hooks/regen-agents.sh" }
+    ]
+  },
+  "permissions": {
+    "defaultMode": "bypassPermissions"
+  }
+}
+```
+
+### 2c. `.gitignore`에 추가
+
+```gitignore
+# dev-orchestrator plugin — generated files
+.claude/agents/
+.claude-work/
+CLAUDE.md    # core+overlay merge 결과면 gitignore. 수동 커밋 원하면 제외.
+```
+
+## 3. Overlay 작성
+
+### 3a. `.claude/_overlay/CLAUDE.md` 예시 (crypto 프로젝트)
+
+```markdown
+## Project
+
+`mctrader` — 암호화폐 스캘핑 자동매매 프레임워크. Python, 완전 자율 실행.
+
+## SSOT 상수
+
+- Confluence space: `MCTRADER` (spaceId=491529)
+- Story parent pageId: 589846
+- Story template pageId: 753705
+- Jira project key: `MCTRADER`
+- Atlassian host: `https://mctrader.atlassian.net`
+
+## Domain Knowledge
+
+- [OrderBook/Trade 시각화 스펙 (Confluence)](https://mctrader.atlassian.net/wiki/spaces/MCTRADER/pages/589826)
+
+## Trading Domain
+
+암호화폐 · 스캘핑(단기·고빈도) · 완전 자율 실행 · 실시간 가격·호가창
+
+## 추가 labels
+
+- `component:collector`, `component:dashboard`, `component:strategy`, `component:backtest`
+```
+
+### 3b. `.claude/_overlay/agents/<Name>.md` 예시
+
+프로젝트 특화 정보가 필요한 에이전트만 overlay 작성. 대부분 에이전트는 core만으로 충분. 예시:
+
+#### `.claude/_overlay/agents/DataEngineerAgent.md`
+
+```markdown
+---
+permissions:
+  allow:
+    - Edit(src/mctrader/adapters/exchanges/**)
+    - Write(src/mctrader/adapters/exchanges/**)
+    - Edit(src/mctrader/app/collector_service.py)
+    - Write(src/mctrader/app/collector_service.py)
+---
+
+### 프로젝트 데이터 파이프라인 (mctrader)
+
+기술 스택:
+- 수집: `websockets` (asyncio) — Bithumb WebSocket
+- 저장: `pyarrow` Parquet (symbol/date/hour 파티션, Zstd 압축)
+- 조회: `duckdb` over Parquet
+
+주요 경로:
+- `src/mctrader/adapters/exchanges/**` — 거래소별 어댑터
+- `src/mctrader/adapters/storage/**` — Parquet writer · DuckDB source
+- `schemas/orderbook_diff_v1.json` / `schemas/trade_v1.json`
+
+ADR 제약:
+- ADR-002: ORDERBOOK은 diff만 저장, full depth 금지
+- ADR-005: Parquet 파티션 = symbol/date/hour 고정
+```
+
+#### `.claude/_overlay/agents/DomainAgent.md`
+
+```markdown
+### 도메인 소스 (mctrader)
+
+- Confluence Domain Knowledge 트리: pageId=<domain-kb-root>
+- ADR 카테고리 label: `trading-strategy`
+- 도메인 코드 경로: `src/mctrader/domain/**`
+- 도메인 용어: 스캘핑, 호가창, 체결율, 슬리피지, 리스크 한도, 지연 예산
+
+### 우선순위 원칙
+- 지연 민감 경로 (WebSocket 수신 → 체결 판정): 최우선
+- 안전 제약 (주문 검증, 리스크 한도): 사용자 명시 해제 전까지 유지
+```
+
+## 4. 첫 실행 검증
+
+### 4a. Claude Code 세션 시작
+
+프로젝트 디렉토리에서 `claude` 실행. SessionStart hook이 자동으로 `.claude/agents/*.md`와 `CLAUDE.md` 생성.
+
+### 4b. 생성 결과 확인
+
+```bash
+ls -la .claude/agents/
+# 22개 파일 (core + overlay 병합 결과)
+
+head -20 .claude/agents/DataEngineerAgent.md
+# frontmatter (merged) + "GENERATED FROM ..." 헤더 + core body + "## Project Overlay" + overlay body
+```
+
+### 4c. 권한 재확인
+
+에이전트가 overlay에서 추가한 경로(예: `Edit(src/mctrader/adapters/exchanges/**)`)로 실제 편집 가능한지 세션 내에서 확인.
+
+## 5. Workflow
+
+Consumer 프로젝트에서 요구사항을 입력하면 플러그인이 22 에이전트 · 6 레인 구조로 자율 실행:
+
+```
+요구사항 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → 테스트
+```
+
+상세 오케스트레이션 규칙은 [`orchestrator-playbook.md`](orchestrator-playbook.md).
+
+## 6. FAQ
+
+### Q1. Overlay에 스칼라 필드(name, description, model)가 들어가면?
+
+**merge.py가 abort**한다. 스칼라는 core-only. 예외적으로 허용은 향후 탐색 예정.
+
+### Q2. `.claude/agents/*.md`를 직접 편집하면?
+
+SessionStart hook이 다음 실행 시 덮어쓴다. 편집하려면 `.claude/_overlay/agents/` 또는 플러그인 core agents/를 수정.
+
+### Q3. Core 에이전트 자체를 바꾸고 싶다 (버그 수정·새 규칙 추가)
+
+**플러그인 repo에 PR**. Core는 모든 consumer의 SSOT. overlay는 프로젝트 고유 내용만 담는 곳.
+
+### Q4. 플러그인 업그레이드 시 overlay 호환성
+
+core의 에이전트 섹션 구조·frontmatter 키가 바뀌면 overlay가 깨질 수 있다. 플러그인 버전 변경 시 `plugin.json`의 `version` 필드와 [`plugin-design.md`](plugin-design.md)의 compat note 확인.
+
+### Q5. `codex` 플러그인 / CLI 미설치 상태에서 시작하면?
+
+세션 시작 시 의존성 체크가 blocking wait 상태로 전환되며 설치 요청. 설치 전까지 어떤 작업도 진행 안 함.
+
+## 7. 트러블슈팅
+
+| 증상 | 원인 | 대응 |
+|------|------|------|
+| `regen-agents.sh: merge.py not found` | PLUGIN_ROOT 해석 실패 | `CLAUDE_PLUGIN_ROOT` 환경변수 확인, 또는 `PLUGIN_ROOT=...` 명시 |
+| `ERROR: overlay scalar mismatch at '.name'` | overlay frontmatter에 core와 다른 name 지정 | overlay의 name 필드 제거 (name은 core-only) |
+| `ERROR: PyYAML required` | python3 환경에 PyYAML 없음 | `pip install pyyaml` 또는 venv 설정 |
+| Agent가 overlay 내용을 따르지 않음 | 생성된 `.claude/agents/<Name>.md` 확인 | `cat .claude/agents/<Name>.md` → overlay body 실제 존재하는지 점검 |

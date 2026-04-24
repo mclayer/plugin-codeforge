@@ -1,0 +1,16 @@
+{
+  "name": "dev-orchestrator",
+  "version": "0.1.0",
+  "description": "Claude Code 범용 SW 개발 오케스트레이션 플러그인 — 22 에이전트 · 6 레인 구조로 요구사항부터 테스트까지 자율 실행. Overlay 메커니즘으로 프로젝트별 도메인·기술 스택 확장 지원.",
+  "author": {
+    "name": "Josh"
+  },
+  "keywords": [
+    "orchestration",
+    "agents",
+    "software-development",
+    "tdd",
+    "code-review",
+    "overlay"
+  ]
+}
