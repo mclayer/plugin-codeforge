@@ -47,7 +47,7 @@ permissions:
    · 두 결과 병렬 수령 후 Architect가 교차 검토
    · 같은 파일·경계에 대한 상반된 결론을 근거 강도로 비교
    · Change Plan §2 "현재 구조"에는 Mapper 분석 핵심, §3 "도입할 설계"에는 Refactor 제안 + Mapper 변호 근거에 대한 수용/반박 판정 기록
-   · 설계 리뷰가 "Mapper 변호 근거 일축 여부 / Refactor 과잉 제안 여부" 교차 체크
+   · 설계 리뷰가 "**Architect 통합 판정**이 Mapper 변호 근거를 근거 있게 일축·수용했는가 / Refactor 제안이 요건 범위를 넘지 않았는가" 교차 체크 (대립 해소 품질은 Architect 판정 결과 대상)
 
 5. Clarification 재스폰 (필요 시)
    · Architect가 통합 중 특정 관점의 추가 분석·재해석이 필요하면

@@ -28,7 +28,7 @@ permissions:
 ## 핵심 원칙: 자체 키워드 도출 + 타겟 리서치
 
 ### 키워드 자체 도출
-- 공통 입력(사용자 원문 + Story §1-2 + 관련 ADR 목록 + overlay 상위 출처 힌트)에서 **외부 기술·선행사례 관점** 키워드를 본 에이전트가 도출
+- 공통 입력(사용자 원문 Story §1 + 관련 ADR 목록 §3 + overlay 상위 출처 힌트)에서 **외부 기술·선행사례 관점** 키워드를 본 에이전트가 도출. §2(Domain)·§5(Analyst)는 병렬 실행 중이라 fetch 불가, 입력 미포함
 - 도출 기준: 사용자 요구가 전제하는 기술·라이브러리·표준·유사 제품·경쟁 구현 (예: "decimal 정밀 계산" → "IEEE 754 vs arbitrary precision", "mid-price matching" → "limit order book algorithms")
 - Analyst의 ambiguity 키워드나 Domain의 지식 공백 후보는 **입력으로 받지 않음** — 독립 관점 유지
 - "조사 불필요 (내부 버그 수정 등 trivial 범위)" 판단 시 명시적 null 결과 반환
@@ -46,7 +46,7 @@ permissions:
 ```
 [Researcher 입력]
 - Confluence Story 페이지 URL + pageId (<PROJECT_KEY>-N)
-  · §1 (사용자 원문) → getConfluencePage (verbatim)
+  · §1 (사용자 원문) → getConfluencePage (verbatim) — §2·§5는 아직 placeholder, fetch 불필요
   · §3 (관련 ADR) → 도메인 제약 참조용 (직접 제약만 verbatim)
 - Project Config Packet slice (atlassian.confluence 좌표)
 - Consumer overlay의 상위 출처 힌트 (있을 시 — 예: "crypto exchange 분야는 Binance/OKX docs 우선")

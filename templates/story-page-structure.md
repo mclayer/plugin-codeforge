@@ -30,6 +30,8 @@ Jira Story 1건당 Confluence 페이지 1개. 요구사항 접수부터 PR merge
 - 지식 공백 섹션
 - 기존 Domain Knowledge 페이지 참조 목록
 
+**타이밍**: 페이지 생성 시점엔 placeholder (요구사항 레인 진입 전 비어있음). DomainAgent가 Analyst·Researcher와 **병렬 실행** 후 결과 반환하면 RequirementsPL이 DocsAgent 경유로 §2 채움 — 따라서 **Analyst·Researcher는 §2를 입력으로 참조하지 않음** (독립 관점 보장). §5·§6과 같은 사이클에 동시 기록.
+
 ### §3. 관련 ADR
 - 직접 제약 ADR (verbatim 또는 full 요약)
 - 배경 참조 ADR (번호 + 1줄 요약)
@@ -64,6 +66,18 @@ Jira Story 1건당 Confluence 페이지 1개. 요구사항 접수부터 PR merge
 [`impl-manifest.md`](impl-manifest.md) 스키마 따름. DocsAgent가 Story 페이지 §8.5에 테이블 기록 + 동시에 Jira sub-task 일괄 생성.
 
 ### §9. 품질 게이트 이력
+
+#### §9.0 Clarification 재스폰 이력 (FIX 아님)
+
+PL(RequirementsPL / Architect)이 병렬 서브 에이전트 결과 통합 중 추가 질의를 위해 Orchestrator 경유 재스폰 요청한 이력. FIX 루프(§10)와 구분 — 재스폰은 아직 게이트 실패가 아님.
+
+| # | 시각 | 레인 | 재스폰 대상 | Clarification 사유 | 이전 출력 ref | 결과 |
+|---|------|------|-------------|-------------------|---------------|------|
+| 1 | ISO8601 | 요구사항 | ResearcherAgent | {PL이 추가 조사 요청한 주제} | §6 initial | §6 보강 |
+| 2 | ISO8601 | 설계 | RefactorAgent | {Architect가 특정 제안 재해석 요청} | §7 Change Plan draft v1 | §7 갱신 |
+
+- 같은 에이전트 **2회 한도** — 3회째 필요성 발생 시 사용자 ESCALATE로 전환
+- DocsAgent append-only 관리 (행 삭제·수정 금지)
 
 #### §9.1 설계 리뷰 Iteration N
 - Claude · Codex severity counts + 주요 findings + DesignReviewPL 판정
@@ -100,14 +114,16 @@ DocsAgent가 append-only 관리 (행 삭제·수정 금지). "현재 사이클" 
 
 | 단계 | 갱신 섹션 | DocsAgent 액션 |
 |------|----------|----------------|
-| 요구사항 접수 (Orchestrator) | §1-2 초기화 | `createConfluencePage(parentId=<STORIES_PARENT_ID>)` 템플릿 복제 |
-| 요구사항 확정 (RequirementsPLAgent) | §3-6 | `updateConfluencePage` |
+| 요구사항 접수 (Orchestrator) | §1 verbatim 삽입, §2·§5·§6 placeholder | `createConfluencePage(parentId=<STORIES_PARENT_ID>)` 템플릿 복제 |
+| 요구사항 병렬 에이전트 개별 완료 (각 에이전트) | 본인 담당 섹션만 독립 기록 — Domain→§2 / Analyst→§5 / Researcher→§6 | 에이전트별 write queue 제출 → DocsAgent drain 시 **섹션별 atomic 갱신** (배치 금지, resume 시 부분 완료 감지를 위해) |
+| 요구사항 확정 (RequirementsPLAgent) | §3-4 (공통 입력 미리 fetch된 ADR/코드 경로 반영) + 통합/상충 분석 블록 | `updateConfluencePage` |
 | 설계 확정 (ArchitectAgent) | §7 | `updateConfluencePage` |
 | 설계 리뷰 iteration (DesignReviewPL) | §9.1 | `updateConfluencePage` |
 | 구현 완료 (DeveloperPL) | §8.1-8.4 + §8.5 | `updateConfluencePage` + `createJiraIssue` (sub-task 일괄) |
 | 구현 리뷰 iteration (CodeReviewPL) | §9.2 | `updateConfluencePage` |
 | 구현 테스트 (Orchestrator) | §9.3 | `updateConfluencePage` |
 | 보안 테스트 iteration (SecurityTestPL) | §9.4 | `updateConfluencePage` |
+| Clarification 재스폰 (RequirementsPL · Architect) | §9.0 append | `updateConfluencePage` (FIX 라벨 미추가) |
 | FIX 루프 | §10 append | `updateConfluencePage` + Jira 라벨 추가 |
 | Story 완료 회고 (PMOAgent) | §11 회고 블록 | `updateConfluencePage` |
 | 최종 완료 (PR merged) | §11 PR 링크 + 라벨 `status:completed` | `updateConfluencePage` |

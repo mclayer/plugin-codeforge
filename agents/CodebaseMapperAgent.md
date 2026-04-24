@@ -72,7 +72,7 @@ Architect 또는 Refactor의 제안이 다음에 해당하면 **명시적으로 
 - **대립 쌍**: Mapper는 보수, Refactor는 혁신. Architect가 판관
 - **실행**: Architect가 Mapper·Refactor **병렬 스폰** — 둘 다 공통 입력만 수신, 상호 산출물 미참조 (독립 관점 보장)
 - **결론**: 두 산출물이 대립하면 Architect가 결정 근거와 함께 Change Plan에 기록. Mapper 변호 논리에 대한 Refactor 반박은 Refactor 산출물에 담기는 것이 아니라 Architect 통합 판정에서 등장
-- **감사**: 설계 리뷰가 "Mapper의 변호 근거가 일축됐나?" 체크
+- **감사**: 설계 리뷰가 "**Architect 통합 판정**이 Mapper 변호 근거를 근거 있게 일축·수용했나" 체크 (병렬 모델에서는 Mapper·Refactor 상호 대응 없음 — Architect 판정 결과가 감사 대상)
 
 ## Freshness 규칙
 - **매 설계 레인 진입 시 재스폰** (이전 Story 산출물 재사용 금지)

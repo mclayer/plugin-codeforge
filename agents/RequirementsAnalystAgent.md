@@ -37,16 +37,16 @@ permissions:
 
 ## 입력 컨텍스트 구성 (RequirementsPLAgent가 준비해 전달 — 공통 입력 패키지)
 
-**주 입력**: Confluence Story 페이지 URL (Orchestrator가 요구사항 접수 시 DocsAgent 경유 생성한 `<PROJECT_KEY>-N` 페이지). §1(사용자 원문)·§2(Orchestrator 초기 메모) 이미 채워진 상태.
+**주 입력**: Confluence Story 페이지 URL (Orchestrator가 요구사항 접수 시 DocsAgent 경유 생성한 `<PROJECT_KEY>-N` 페이지). 페이지 생성 시점에 §1(사용자 원문)만 verbatim 채워진 상태 — §2(Domain)·§5(Analyst 본인)·§6(Researcher)는 모두 placeholder (세 에이전트 병렬 실행 결과로 동시 기록될 예정).
 
 프롬프트 포함 (DomainAgent·Researcher와 공통 — 타 에이전트 산출물 제외):
-1. **Story 페이지 URL + pageId** — `mcp__atlassian__getConfluencePage`로 §1-2 fetch
-2. **관련 ADR** — §3 링크 목록. 직접 제약만 verbatim fetch (다른 에이전트의 ADR 해석은 포함하지 않음)
+1. **Story 페이지 URL + pageId** — `mcp__atlassian__getConfluencePage`로 §1 fetch
+2. **관련 ADR** — §3 링크 목록 (Orchestrator가 공통 입력 패키지로 선제 fetch). 직접 제약만 verbatim (다른 에이전트의 ADR 해석은 포함하지 않음)
 3. 관련 코드 경로 (§4, 지도 수준 — 심층 분석은 Mapper 영역)
 4. 이전 스레드 합의사항 (§10 FIX Ledger)
 5. Clarification 재스폰 context (재스폰 시에만, 이전 본인 출력 + PL의 재질의)
 
-사용자 원문은 **§1에서 verbatim 복사** (재작성·요약 금지 — 변조 방지). DomainAgent·Researcher 해석은 **입력으로 전달되지 않는다** (독립 관점 보장).
+사용자 원문은 **§1에서 verbatim 복사** (재작성·요약 금지 — 변조 방지). **§2(DomainAgent 해석)·§6(Researcher) 는 병렬 실행 중이라 fetch 불가이며 입력으로 전달되지 않는다** (독립 관점 보장).
 
 ## 필수 환경
 `codex` CLI 필요. 미설치 시 요구사항 레인 진행 불가.
