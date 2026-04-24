@@ -98,6 +98,13 @@ cp ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/overlay/_overlay/project.yaml.example 
 
 Schema 전체 명세: [`project-config-schema.md`](project-config-schema.md). 주 소비자는 DocsAgent·RequirementsPLAgent·DomainAgent·PMOAgent. 에이전트는 이 파일을 `Read`로 직접 참조.
 
+SessionStart hook이 자동으로 `validate_config.py`를 실행해 schema 준수를 검증. 위반 시 hook abort → 세션 개시 실패. 수동 검증:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/overlay/hooks/validate_config.py \
+    .claude/_overlay/project.yaml
+```
+
 ### 3b. `.claude/_overlay/CLAUDE.md` 예시 (narrative 컨텍스트)
 
 CLAUDE.md overlay에는 **서술 컨텍스트만** (도메인 소개·기술 스택 선택 근거·경로 관습 설명). Objective 상수는 project.yaml에 있음.
