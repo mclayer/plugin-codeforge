@@ -82,6 +82,7 @@ mkdir -p .claude/_overlay/agents
 | [`docs/consumer-guide.md`](docs/consumer-guide.md) | Consumer 프로젝트 설치·overlay 작성 가이드 |
 | [`docs/plugin-design.md`](docs/plugin-design.md) | 플러그인 설계 spec — core/overlay 분리 원칙·merge 계약·β 메커니즘 |
 | [`docs/project-config-schema.md`](docs/project-config-schema.md) | `project.yaml` Schema SSOT — Atlassian·GitHub·labels 구조화 상수 |
+| [`docs/migration-guide.md`](docs/migration-guide.md) | 플러그인 버전업 시 consumer overlay 마이그레이션 절차 |
 | [`templates/`](templates/) | 공통 문서 양식 SSOT — Change Plan · ADR · Story Page · Impl Manifest |
 | [`presets/`](presets/) | 프로젝트 shape별 Dev 에이전트 번들 — webapp 등 |
 | `agents/*.md` | 24 core 에이전트 SSOT |
