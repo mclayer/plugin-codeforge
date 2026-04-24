@@ -24,6 +24,7 @@ permissions:
 - 앱 코드: `src/**`
 - 인프라 자산: `config/**`, `deploy/**`, `scripts/**`
 - 테스트 코드: `tests/**` (infra 포함)
+- **Story 페이지 §8.5 Impl Manifest** (파일 단위 매핑 검증 입력 — 누락된 파일 있으면 P0)
 
 ## 핵심 역할 (구현 리뷰 레인 게이트)
 1. **리뷰 보고 수집**: Orchestrator가 병렬 스폰한 Claude/Codex 보고 취합
@@ -60,8 +61,11 @@ permissions:
 |---|---|---|
 | P0 보안 | 구현 | trust boundary 설계 오류 시 설계로 전환 |
 | P0 아키텍처 | **설계** | 레이어·의존성 방향 위반 |
-| P1 품질 | **설계** | 설계 지침·패턴 부재에서 기인 |
+| P1 품질 (local) | 구현 | 단일 파일·함수 범위 품질 (naming·가독성·작은 중복) |
+| P1 품질 (boundary) | **설계** | 여러 파일·계층에 걸친 설계 지침·패턴 부재 이슈 |
 | 기타 P1 | 구현 | — |
+
+**P1 품질 local vs boundary 판정**: finding 범위가 1개 파일 내 한정이면 local, 여러 파일·계층에 반복되거나 Change Plan 지침 부재가 원인으로 지목되면 boundary.
 
 ## Codex/Claude 리뷰 모두 필수 입력
 - **CodexCodeReviewAgent**: Codex 플러그인 필수. 미설치 시 게이트 진행 불가.

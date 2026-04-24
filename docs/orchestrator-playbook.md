@@ -196,6 +196,44 @@ Story별 반복:
 
 ---
 
+## 3B. Preflight 체크 (lane 진입 직전)
+
+Orchestrator가 **각 레인 진입 직전에 의무 수행**. 3개 체크 중 하나라도 FAIL이면 **block + report**: 에이전트 스폰 없이 사용자에게 실패 사유 반환.
+
+### 3B.1 3개 체크 항목
+
+| # | 체크 | PASS 조건 |
+|---|------|-----------|
+| 1 | **phase 라벨 정합성** | Jira Story `phase:*` 라벨이 진입할 레인과 일치 (예: 설계 레인 진입 시 `phase:설계`) |
+| 2 | **Story 페이지 선행 섹션 채움** | 진입할 레인이 요구하는 이전 섹션이 존재 (예: 설계 진입 시 §1-6, 설계 리뷰 진입 시 §7, 구현 진입 시 §7 + §8 Test Contract) |
+| 3 | **외부 의존성 가용** | Codex 리뷰/Analyst 레인 진입 시 `codex --version` 성공 확인. MCP Atlassian 연결 ping 성공 |
+
+### 3B.2 FAIL 시 동작
+
+- **스폰 중단**
+- 아래 형식으로 사용자 ESCALATE (§2.3 ESCALATE 프롬프트와 유사):
+
+```
+⛔ Preflight FAIL — {레인} 진입 차단
+- Story: MCTRADER-N
+- 실패 체크: {항목 번호 + 사유}
+- 현재 상태 스냅샷: {phase 라벨 / §진입 선행 섹션 상태 / 의존성 ping 결과}
+- 권장 복구: {DocsAgent로 §X 보강 / Jira 라벨 수정 / Codex 재설치 안내}
+```
+
+사용자 응답 수령 전까지 레인 진입 금지.
+
+### 3B.3 적용 레인별 세부
+
+- **요구사항**: (1) `phase:요구사항` / (2) §1 사용자 원문 존재 / (3) `codex` CLI 가용
+- **설계**: (1) `phase:설계` / (2) §1-6 모두 채움 + "사용자 확인 필요" 해소 / (3) MCP Atlassian 가용
+- **설계 리뷰**: (1) `phase:설계-리뷰` / (2) §7 채움 + `docs/change-plans/<slug>.md` 존재 / (3) Codex 플러그인 가용
+- **구현**: (1) `phase:구현` / (2) §7 완료 + Change Plan §8 Test Contract 존재 (§8.3 `N/A` 허용) / (3) 필요 Dev 전원 스폰 가능
+- **구현 리뷰**: (1) `phase:구현-리뷰` / (2) §8 Impl Manifest 기록 + Architect 매핑표 감사 PASS / (3) Codex 플러그인 가용
+- **테스트**: (1) `phase:테스트` / (2) §9 구현 리뷰 PASS 기록 / (3) pytest 환경 가용
+
+---
+
 ## 4. 병렬 스폰 판단
 
 ### 4.1 병렬 가능 조건 (AND)
@@ -256,41 +294,48 @@ Jira는 이벤트·상태, Confluence는 구조화 영속 — 역할 분리.
 
 ## 6. FIX 루프 상태 머신
 
-### 6.1 카운터 상태 (Jira 라벨 count 단일)
+### 6.1 카운터 SSOT = Confluence Story 페이지 §10 "FIX Ledger"
 
-**Orchestrator 세션 메모리 저장 없음**. 매 FIX 판정 시 Jira 라벨 count로 fresh 조회.
+**Jira 라벨은 대시보드용 보조 지표**. 카운터 판정·리셋 해석은 반드시 §10 기반.
 
 ```python
 # 의사 코드
-design_review_fix_count = count_labels(story_key, "fix:설계-리뷰-retry")  # max 3
-code_review_fix_count = count_labels(story_key, "fix:구현-리뷰-retry")    # max 3
-test_fix_count = count_labels(story_key, "fix:테스트-retry")              # 무제한
+ledger = getConfluencePage(story_page_id).section("§10 FIX Ledger")
+rows = parse_ledger_rows(ledger)
+
+# "현재 사이클" = 가장 최근 RESET 마커 이후 행들
+for lane in ["설계-리뷰", "구현-리뷰", "테스트"]:
+    last_reset_idx = max(i for i, r in enumerate(rows) if r.reset == lane)
+    current_cycle_count = sum(1 for r in rows[last_reset_idx+1:] if r.lane == lane)
 ```
+
+§10 스키마·DocsAgent 갱신 절차는 [DocsAgent.md](../.claude/agents/DocsAgent.md) §8 참조.
 
 ### 6.2 트리거 → 상태 전이
 
-| 현재 phase | 트리거 | 전이 후 phase | 라벨 동작 |
-|-----------|--------|---------------|-----------|
-| 설계-리뷰 | DesignReviewPL FIX | 설계 | `fix:설계-리뷰-retry` 추가 (누적 3 초과 시 ESCALATE) |
-| 설계-리뷰 | DesignReviewPL PASS | 구현 | (라벨 전이) |
-| 구현-리뷰 | CodeReviewPL FIX (원인=구현) | 구현 | `fix:구현-리뷰-retry` 추가 (3 초과 시 ESCALATE) |
-| 구현-리뷰 | CodeReviewPL FIX (원인=설계) | 설계 | `fix:구현-리뷰-retry` + `fix:설계-리뷰-retry` 추가, Change Plan 갱신 |
-| 구현-리뷰 | CodeReviewPL PASS | 테스트 | (라벨 전이) |
-| 테스트 | TestAgent FAIL (원인=구현) | 구현 | `fix:테스트-retry` 추가, 구현 리뷰 카운터 초기화 의미 (다음 리뷰는 fresh) |
-| 테스트 | TestAgent FAIL (원인=설계) | 설계 | `fix:테스트-retry` 추가 + Change Plan 갱신, 구현 리뷰 카운터 fresh |
-| 테스트 | TestAgent ALL PASS | 완료 | status=완료 |
+| 현재 phase | 트리거 | 전이 후 phase | §10 행 추가 | 라벨 동작 |
+|-----------|--------|---------------|-------------|-----------|
+| 설계-리뷰 | DesignReviewPL FIX | 설계 | Iter N / 설계-리뷰 / 원인=설계 / 재실행 범위 | `fix:설계-리뷰-retry` |
+| 설계-리뷰 | DesignReviewPL PASS | 구현 | — | (phase 전이만) |
+| 구현-리뷰 | CodeReviewPL FIX (원인=구현) | 구현 | Iter N / 구현-리뷰 / 원인=구현 / 재구현 | `fix:구현-리뷰-retry` |
+| 구현-리뷰 | CodeReviewPL FIX (원인=설계) | 설계 | Iter N / 구현-리뷰 / 원인=설계 / Change Plan 갱신 | `fix:구현-리뷰-retry` + `fix:설계-리뷰-retry` |
+| 구현-리뷰 | CodeReviewPL PASS | 테스트 | — | (phase 전이만) |
+| 테스트 | TestAgent FAIL (원인=구현) | 구현 | Iter N / 테스트 / 원인=구현 / 재구현 + **RESET 구현-리뷰** | `fix:테스트-retry` |
+| 테스트 | TestAgent FAIL (원인=설계) | 설계 | Iter N / 테스트 / 원인=설계 / Change Plan 갱신 + **RESET 구현-리뷰** | `fix:테스트-retry` |
+| 테스트 | TestAgent ALL PASS | 완료 | — | status=완료 |
 
-### 6.3 카운터 리셋 조건
+### 6.3 RESET 마커 규칙
 
-- **테스트 FAIL → 구현 복귀 시**: 재구현 결과는 새 리뷰 대상이므로 다음 구현 리뷰는 **fresh 시작** (기존 `fix:구현-리뷰-retry` 라벨은 유지되나 "이번 cycle"에서는 fresh 카운트로 해석). Orchestrator가 판정 시 `changelog` 기반 최근 사이클만 카운트
-- 설계 리뷰·구현 리뷰 내부 FIX 루프는 리셋 없음
+- 테스트 FAIL → 구현 복귀 시 §10 마지막 행의 `RESET?` 컬럼에 `RESET 구현-리뷰` 기입
+- 이후 구현 리뷰 카운터는 RESET 행 이후 iteration만 카운트 (이전 iteration은 감사 이력으로 유지)
+- 설계 리뷰·구현 리뷰 내부 루프는 RESET 없음
 
-### 6.4 카운터 관리 세부
+### 6.4 §10 관리 세부
 
-- 라벨은 **누적만** 수행 (제거 없음) — 감사 이력 보존
-- "현재 사이클 FIX 카운트" = 최근 `phase:*-리뷰 → phase:*` 전이 이후의 `fix:*-retry` 라벨 추가 횟수
-- Jira `getJiraIssue(expand="changelog")`로 이력 조회해 재계산
-- FIX 카운터 접근이 불가하면(MCP 장애 등) 사용자에게 판단 요청 (Architect 판정 정지)
+- DocsAgent가 단독 갱신 (append-only, 행 삭제·수정 금지)
+- Orchestrator는 `getConfluencePage`로 §10 read-only 조회 후 count 산출
+- §10 조회 실패(MCP 장애) → Architect 판정 정지 → 사용자 판단 요청
+- Jira 라벨은 DocsAgent가 §10 갱신과 동시 추가 — 대시보드 JQL 필터용
 
 ### 6.5 원인 판정 decision table
 
@@ -345,11 +390,11 @@ searchJiraIssuesUsingJql("project = MCTRADER AND statusCategory != Done")
 
 세션 개시 시점 또는 컨텍스트 압축 후 재개 시 Orchestrator는 **반드시** 아래를 수행:
 
-1. 활성 Story의 `getJiraIssue(expand="changelog")` 호출
-2. `fix:*-retry` 라벨 부여 이력에서 각 카운터 복원
-3. fetch 실패 시 **사용자 ESCALATE** (카운터 불명 상태 진행 금지)
+1. 활성 Story 페이지 `getConfluencePage(pageId)` 호출
+2. §10 "FIX Ledger" 파싱 → 마지막 `RESET 구현-리뷰` 이후 행으로 각 레인 카운터 산출
+3. Confluence fetch 실패 시 **사용자 ESCALATE** (카운터 불명 상태 진행 금지)
 
-세션 메모리 저장은 없으므로 매번 fresh 조회. 이 절차 없이 Architect 판정 진행 금지.
+Jira 라벨 count는 감사 이력으로 보존되나 복원 source of truth 아님 (§10 기준). 이 절차 없이 Architect 판정 진행 금지.
 
 ### 7.5 사용자 통보
 
@@ -475,6 +520,164 @@ Story 페이지 갱신·Jira 코멘트 기록 불가 시:
 - Mapper는 **매 설계 레인 진입 시 재스폰** — 이전 Story 산출물 재사용 금지
 - 리뷰·테스트에서 설계 레인 복귀 시에도 재스폰 (구현 레인에서 코드 변경 가능성)
 - 재사용 감지 시 Architect 단독 설계 결정 금지 (§2 설계 공동작업자 부재 상태)
+
+---
+
+## 10. Hotfix 경로 (운영 장애 대응)
+
+정상 6-레인 full flow는 Story 1건당 반나절~수일 소요. 운영 장애로 즉시 대응 필요한 경우 아래 2경로 중 하나 선택. **어느 경로든 사후 감사는 동일하게 수행**.
+
+### 10.1 Minimal Path (`severity:bug` — 기본 hotfix)
+
+단일 파일·함수 범위 버그 수정, 계획·리뷰 생략.
+
+```
+Orchestrator → (사용자 승인) → BackendDev/FrontendDev/DataEng/ServerEng 단독 → 수정 + 테스트 실행
+ · Change Plan 생략 (Story description에 버그 근거 1-3줄만)
+ · 설계 리뷰 생략, 구현 리뷰 생략
+ · 테스트 게이트는 유지 (TestAgent 기능 모드만, 성능 게이트 생략)
+ · Jira 라벨: `bug` + `hotfix:minimal`
+```
+
+**적용 조건** (모두 충족):
+- 변경 라인 수 ≤ 30
+- 설계 결정 없음 (기존 인터페이스·계약 그대로)
+- 단일 파일 수정
+- 운영 장애 복구 목적 (사용자가 명시)
+
+### 10.2 Medium Path (`severity:critical` — 심각 hotfix)
+
+여러 파일 걸친 운영 장애, 설계·구현 리뷰 축약.
+
+```
+Orchestrator → (사용자 승인) → Architect 빠른 Change Plan (§1·§5·§8 축약) → DevPL 구현 → TestAgent
+ · CodebaseMapper·Refactor 생략, Architect 단독
+ · 설계 리뷰 생략
+ · 구현 리뷰는 **Claude만** 실행 (Codex 생략 — 시간 절약)
+ · 테스트 게이트는 기능 + 성능 모두 수행
+ · Jira 라벨: `bug` + `hotfix:critical`
+```
+
+**적용 조건**: 사용자가 `severity:critical` 명시 + 운영 장애 복구 목적.
+
+### 10.3 사후 감사 (X 경로 — 양 hotfix 공통 의무)
+
+Hotfix merge 완료 후 **next working session** 초두에 Orchestrator가 자동 수행:
+
+1. **감사 Story 자동 생성** (DocsAgent 경유): `[AUDIT] MCTRADER-<hotfix Story>` + label `audit:post-hotfix`
+2. **Change Plan 소급 작성**: Architect가 hotfix 변경 diff를 소급해 Change Plan 작성 (§1-9 전부, 단 실구현은 이미 존재 상태)
+3. **구현 리뷰 소급**: CodeReviewPL이 hotfix 변경사항 대상 소급 리뷰 (Claude + Codex 모두)
+4. **ADR 영향 검토**: 변경이 ADR 결정을 위반/변경하는지 Architect 검토, 필요 시 ADR 갱신
+5. 감사 Story는 PR 없이 `완료` 전이 가능 (문서·ADR 갱신만 필요)
+
+**사후 감사 생략 금지** — hotfix는 "빠르게 대응 후 반드시 감사"가 원칙.
+
+---
+
+## 11. DocsAgent File-based Write Queue
+
+DocsAgent는 단독 writer이므로 다중 에이전트 동시 write 의뢰 시 SPOF. 파일 기반 큐로 완충.
+
+### 11.1 큐 위치 및 스키마
+
+- **디렉토리**: `/tmp/mctrader-doc-queue/<story-key>/`
+- **파일명**: `<seq>-<type>.md` (예: `001-jira-comment.md`, `002-story-section.md`, `003-change-plan.md`)
+- **seq**: 3자리 0-padded 정수, 의뢰 순서. 중복 방지 위해 각 에이전트가 `ls` 후 max+1 선택
+
+### 11.2 파일 포맷 (각 에이전트가 작성)
+
+```markdown
+---
+type: jira-comment | story-section | change-plan | adr | ledger-append
+story: MCTRADER-N
+requester: <AgentName>
+issued_at: <ISO 8601>
+priority: normal | high
+---
+
+{DocsAgent.md §"작업 요청 인터페이스" 의 해당 템플릿 본문}
+```
+
+### 11.3 에이전트 측 의뢰 절차
+
+1. `mkdir -p /tmp/mctrader-doc-queue/<story>/`
+2. `ls` 후 next seq 계산
+3. 템플릿 포맷으로 `<seq>-<type>.md` 작성
+4. 반환 (DocsAgent 스폰 여부·시점 신경 쓰지 않음)
+
+### 11.4 DocsAgent 측 drain 절차
+
+Orchestrator가 DocsAgent를 스폰하면 DocsAgent는:
+
+1. `/tmp/mctrader-doc-queue/<story>/` ls → seq 순으로 모든 파일 처리
+2. 파일 frontmatter type 별로 해당 MCP 호출 (Jira/Confluence) 또는 Write(docs/**) 수행
+3. 처리 완료 파일 rm
+4. drain 완료 후 Orchestrator에 처리 요약 반환
+
+### 11.5 Orchestrator 측 스폰 트리거
+
+- 레인 경계 (레인 종료 시점)
+- FIX 판정 직후
+- 사용자 ESCALATE 직전 (상태 영속화 목적)
+- Story 완료 직전 (§11 최종 참조 기록)
+
+### 11.6 fail-safe
+
+- 큐 파일 파싱 실패 시 DocsAgent가 해당 파일만 skip + Orchestrator에 보고
+- 세션 압축·재개 후에도 큐 파일 유지 — DocsAgent가 다음 스폰 시 이어서 drain
+- 세션 종료 시점에 큐 비어있지 않으면 경고 보고
+
+---
+
+## 12. Orchestrator 컨텍스트 패킷 (Story 페이지 섹션 캐시)
+
+에이전트 스폰마다 `getConfluencePage(pageId=N)` 반복 호출은 토큰 낭비. Orchestrator가 세션 메모리에 섹션 캐시를 유지해 **context packet** 형태로 에이전트 프롬프트에 주입.
+
+### 12.1 캐시 구조 (Orchestrator 세션 메모리)
+
+```
+story_cache[<story-key>] = {
+  "page_id": <id>,
+  "version": <Confluence version number>,
+  "fetched_at": <ISO 8601>,
+  "sections": {
+    "§1": {body, updated_at},
+    "§2": {body, updated_at},
+    ...
+  }
+}
+```
+
+### 12.2 캐시 갱신 규칙
+
+- **무효화 트리거**: DocsAgent가 Story 페이지 update 완료를 보고하면 해당 섹션 캐시 invalidate
+- **fetch 규칙**: 에이전트 스폰 직전 Orchestrator가 필요 섹션이 캐시에 없거나 invalidated 상태면 fetch
+- **섹션 단위 fetch**: `getConfluencePage` 결과에서 필요 섹션만 파싱 저장 — 전체 페이지 body 메모리에 유지하지 않음
+
+### 12.3 Context Packet 주입 형식
+
+에이전트 프롬프트 `[컨텍스트]` 블록에 아래 packet 삽입:
+
+```
+[Story Context Packet — MCTRADER-N (page version v{N}, fetched {ISO})]
+## §1 사용자 원문
+{body}
+
+## §3 관련 ADR
+{body}
+
+## §7 설계 서사
+{body}
+
+[End Packet]
+```
+
+에이전트는 prompt 내 packet을 SSOT로 사용 — 추가 `getConfluencePage` 호출 생략 (packet 외 섹션 필요 시 명시 요청).
+
+### 12.4 Packet vs URL-only 선택
+
+- **Packet 주입**: 설계/구현/리뷰 레인처럼 여러 섹션 깊이 참조 필요할 때 (§1-8 범위)
+- **URL만 전달**: 단발성 조회 (DocsAgent 의뢰 포맷 등), 섹션 캐시 미정의 부분
 
 ---
 

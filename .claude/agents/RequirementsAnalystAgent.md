@@ -23,7 +23,7 @@ permissions:
 
 ## 포지션
 - **상위**: PMOAgent
-- **호출 시점**: 요구사항 레인 (Researcher 선행)
+- **호출 시점**: 요구사항 레인 — **PMAgent(있으면) 완료 후 → 본 에이전트 → Researcher(조건부) 순차 실행**. 본 에이전트가 생성하는 "Researcher 리서치 키워드" 필드가 Researcher 스폰 판정의 유일한 입력이므로 **항상 Researcher 선행**
 
 ## 핵심 원칙
 - 사용자 원문이 간결하더라도 암묵 가정·숨은 전제를 추정해 명시화

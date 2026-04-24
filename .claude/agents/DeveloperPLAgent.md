@@ -49,11 +49,23 @@ Orchestrator
 ```
 1. 4 Dev + QADev 완료 보고 수집
 2. QADev 매핑표 수령 (Change Plan §8 Test Contract 대비 작성된 tests 매핑)
-3. Orchestrator에 구현 완료 보고
-   · Architect가 stateless 재스폰되어 매핑표 감사
-   · 매핑표 공백 시 DevPL이 QADev 재스폰 (Orchestrator 경유)
-   · 매핑표 PASS 시 Orchestrator가 CodeReviewPL 스폰
+3. **Impl Manifest 초안 구성** (파일 단위 변경 사실 + Change Plan 매핑)
+4. Orchestrator에 구현 완료 보고 + Impl Manifest 전달
+   · Orchestrator가 DocsAgent 경유 Story 페이지 §8.5 기록 + Jira sub-task 일괄 생성
+   · Architect가 stateless 재스폰되어 매핑표 감사 + Impl Manifest ↔ Change Plan 정합 확인
+   · 매핑표 공백 또는 Impl Manifest 불일치 시 DevPL이 해당 Dev/QADev 재스폰 (Orchestrator 경유)
+   · 감사 PASS 시 Orchestrator가 CodeReviewPL 스폰
 ```
+
+### Impl Manifest 포맷 (DevPL이 초안, DocsAgent.md §8 스키마 참조)
+
+```
+| 파일 경로 | 변경 유형 | 담당 Agent | Change Plan 매핑 | 라인 수(±) | 비고 |
+|-----------|-----------|------------|------------------|------------|------|
+| src/... | 수정/추가/제거 | BackendDev | §N 항목 M | +X -Y | 한 줄 |
+```
+
+§8.5는 CodeReview·Architect 감사의 **입력**. 누락된 파일이 있으면 CodeReview P0 차단 대상.
 
 ## FIX 루프 1차 원인 진단 (Architect 최종 판정용)
 
@@ -79,7 +91,10 @@ Architect 판정 요청: {evidence pack 요약}
 | 성능 test FAIL | **설계** |
 | Code review P0 보안 | 구현 |
 | Code review P0 아키텍처 | **설계** |
-| **Code review P1 품질** | **설계** |
+| **Code review P1 품질 (local)** | 구현 (단일 파일·함수 범위) |
+| **Code review P1 품질 (boundary)** | **설계** (여러 파일·계층 패턴 일관성) |
+
+**P1 품질 분류 책임**: DevPL이 1차 진단 시 local / boundary 분류 **의무** 포함. Architect가 evidence(구체 파일 목록 + Change Plan 인용)로 최종 판정.
 
 Architect가 최종 판정을 내리면:
 - **구현 원인**: DevPL이 해당 Dev 재스폰 (Orchestrator 경유)

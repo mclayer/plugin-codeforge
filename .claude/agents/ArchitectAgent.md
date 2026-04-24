@@ -62,15 +62,24 @@ permissions:
 ## 변경 계획 (파일 단위 — 추가·수정·제거)
 ## 리팩토링 선행 작업 (Dev 경유, 담당 Agent 명시 — Backend/Frontend/DataEng/ServerEng)
 ## Test Contract (§8 — QADev TDD 입력)
-  - 커버리지 계획 (unit/integration/infra 범위)
-  - 경계 조건·엣지 케이스 목록
-  - invariant 목록 (반드시 유지되어야 할 속성)
-  - 테스트 계획 ↔ 계획서 항목 매핑 요건
+  ### §8.1 커버리지 계획 (unit/integration/infra 범위)
+  ### §8.2 경계 조건·엣지·invariant
+    - 경계 조건 목록
+    - invariant 목록 (반드시 유지되어야 할 속성)
+    - 테스트 계획 ↔ 계획서 항목 매핑 요건
+  ### §8.3 Perf Baseline Protocol (성능 영향 있을 때 필수)
+    - 대상 시나리오: {핫패스 함수 / 엔드포인트 / 파이프라인 스테이지}
+    - 측정 지표: {mean latency (µs) / p95 / throughput 등, 1개 이상 명시}
+    - baseline 파일: `tests/perf/baselines/<scenario>.json`
+    - 기준치: `--benchmark-compare-fail=mean:10%` (전역 기본, 완화/강화 필요 시 명시)
+    - 환경 고정: {CPU governor / Python 버전 / BTC 가격 등 variance 변수 처리}
+    - baseline 갱신 트리거: 설계 의도로 성능 스펙이 변경된 경우에만 Architect 승인 후 갱신 (자의적 갱신 금지)
+    - 성능 영향 없으면 "N/A (성능 영향 없음)" 1줄로 대체 가능
 ## 분기 선택 (필요 Dev 조합 — 의존성 없는 한 4 Dev 병렬 가능)
 ## ADR 대상 여부 + 기존 ADR 정합성 점검
 ```
 
-누락 시 구현자는 착수 금지, 계획서 보완 요청. **§8 누락은 DesignReviewPL이 P0로 차단**.
+누락 시 구현자는 착수 금지, 계획서 보완 요청. **§8 누락은 DesignReviewPL이 P0로 차단**. §8.3은 성능 영향 없을 경우 `N/A` 허용 but 명시 필수.
 
 ## 컨텍스트 수집 (설계 단계)
 
@@ -94,7 +103,8 @@ FIX 루프 트리거 시 DeveloperPLAgent가 1차 원인 진단을 올리면 Arc
 | 성능 test FAIL | **설계** | 단순 최적화로 해결되면 구현 |
 | Code review P0 보안 | 구현 | trust boundary 설계 오류 |
 | Code review P0 아키텍처 | **설계** | 레이어·의존성 방향 위반 |
-| **Code review P1 품질** | **설계** | — (품질 이슈는 설계 지침·패턴 부재에서 기인) |
+| **Code review P1 품질 (local)** | 구현 | 단일 파일·함수 범위 naming·가독성·작은 중복 |
+| **Code review P1 품질 (boundary)** | **설계** | 여러 파일·계층 공통 설계 지침·패턴 부재 |
 
 - **설계 원인 판정 시**: Change Plan 갱신 → 설계 리뷰 레인부터 재실행
 - **구현 원인 판정 시**: Change Plan 유지, 구현만 재실행
@@ -105,6 +115,7 @@ FIX 루프 트리거 시 DeveloperPLAgent가 1차 원인 진단을 올리면 Arc
 ## 설계 리뷰 레인 FIX (최대 3회)
 - DesignReviewPL이 P0/P1 발견 → Orchestrator → 본 에이전트 재스폰
 - Change Plan 갱신 → 설계 리뷰 재실행
+- **FIX 카운터 SSOT = Story 페이지 §10 "FIX Ledger"** (Jira 라벨은 보조 지표). DocsAgent가 판정 결과를 §10에 append-only 기록, Orchestrator가 §10 기반 current-cycle count 산출
 - 3회 초과 시 Orchestrator 경유 사용자 ESCALATE
 
 ## QADev 매핑표 감사 (구현 레인 완료 시점)

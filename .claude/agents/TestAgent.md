@@ -42,7 +42,8 @@ permissions:
 ```
 - `tests/perf/` 하위 모든 테스트는 `conftest.py`가 `benchmark` 마커 자동 부여
 - baseline 대비 mean 10% 이상 악화 시 pytest 비-0 exit → FAIL
-- baseline은 `tests/perf/baselines/` JSON (git-versioned). 갱신은 Change Plan 명시 시만 QADev가 수행
+- baseline은 `tests/perf/baselines/` JSON (git-versioned). 갱신은 Change Plan **§8.3 Perf Baseline Protocol** 명시 시만 QADev가 수행
+- Change Plan §8.3에 `N/A` 명시된 Story는 성능 게이트 자동 PASS (신규 baseline 생성 없음)
 - `tests/perf/` 비어있으면 자동 PASS
 
 ### 특정 범위 지정 시

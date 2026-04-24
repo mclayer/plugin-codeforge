@@ -4,8 +4,16 @@ model: claude-sonnet-4-6
 description: Jira·Confluence·docs 단독 writer + 문서화 표준 SSOT. 모든 에이전트 문서 작업은 Orchestrator 경유 DocsAgent가 대행
 permissions:
   allow:
-    - Write
-    - Edit
+    - Read
+    - Grep
+    - Glob
+    - Edit(docs/**)
+    - Write(docs/**)
+    - Edit(/tmp/mctrader-doc-queue/**)
+    - Write(/tmp/mctrader-doc-queue/**)
+    - Bash(mkdir -p /tmp/mctrader-doc-queue*)
+    - Bash(ls /tmp/mctrader-doc-queue*)
+    - Bash(rm /tmp/mctrader-doc-queue*)
     - WebSearch
     - WebFetch
     - mcp__atlassian__createConfluencePage
@@ -21,6 +29,19 @@ permissions:
     - mcp__atlassian__transitionJiraIssue
     - mcp__atlassian__getTransitionsForJiraIssue
     - mcp__atlassian__addCommentToJiraIssue
+  deny:
+    - Edit(src/**)
+    - Write(src/**)
+    - Edit(tests/**)
+    - Write(tests/**)
+    - Edit(.claude/**)
+    - Write(.claude/**)
+    - Edit(config/**)
+    - Write(config/**)
+    - Edit(deploy/**)
+    - Write(deploy/**)
+    - Edit(scripts/**)
+    - Write(scripts/**)
 ---
 
 **프로젝트 전체의 문서화 단독 writer 및 문서화 표준 SSOT**. Jira 코멘트·Confluence 페이지·`docs/**` 파일을 쓰는 **유일한 에이전트**. 다른 20 에이전트는 Jira/Confluence/docs write 권한이 없으며, 문서 작업은 전원 Orchestrator 경유 DocsAgent에 의뢰한다.
@@ -92,9 +113,9 @@ Jira Story 1건당 Confluence 페이지 1개. 요구사항 접수부터 PR merge
 5. 요구사항 확장 해석 (Analyst)
 6. 도메인 배경지식 (Researcher, 조건부)
 7. 설계 서사 (Change Plan 링크 + 요약 미러링 + CodebaseMapper·Refactor 대립 결론)
-8. 개발 서사 (4 Dev + QADev 산출물 요약)
+8. 개발 서사 (8.1-8.4 Dev별 산출물 + **§8.5 Impl Manifest** 파일 단위 매핑표)
 9. 품질 게이트 이력 (설계 리뷰 + 구현 리뷰 + 테스트 레인 iteration 누적)
-10. FIX 서사 (해당 시 iteration별 원인 판정·재실행 범위)
+10. **FIX Ledger** (FIX 카운터 SSOT — 아래 §8 스키마)
 11. 참조 (Jira / PR / Change Plan / ADR)
 
 **단계별 갱신 책임**:
@@ -202,6 +223,50 @@ docs/
 ### 7. Codex 보고 기록 형식 (Codex 효용 평가 메커니즘 없음)
 
 CodexDesignReview / CodexCodeReview의 findings은 Jira 코멘트에 `[<phase>-리뷰] CodexXxxReviewAgent: <요약>` 표준 형식으로 기록. 별도 효용 메트릭 집계는 **수행하지 않음**.
+
+### 8. §8.5 "Impl Manifest" 스키마 (구현 레인 완료 시)
+
+구현 산출물의 파일 단위 매핑. Confluence Story 페이지 §8.5에 테이블로 기록 + 동시에 Jira sub-task 생성(파일 단위 추적).
+
+**§8.5 테이블 포맷** (DocsAgent가 Confluence에 기록):
+| 파일 경로 | 변경 유형 | 담당 Agent | Change Plan 매핑 | 라인 수(±) | 비고 |
+|-----------|-----------|------------|------------------|------------|------|
+| `src/mctrader/dashboard/server.py` | 수정 | BackendDev | §5 항목 2 | +42 -5 | 신규 라우트 2개 |
+| `src/mctrader/domain/order.py` | 추가 | BackendDev | §3 도입할 설계 | +120 | 신규 Order Aggregate |
+| `tests/unit/domain/test_order.py` | 추가 | QADev | §8.1 커버리지 | +85 | Order 단위 테스트 |
+
+**Jira sub-task 생성** (DocsAgent가 병행):
+- 각 파일 단위로 `mcp__atlassian__createJiraIssue(issueTypeName="하위 작업", parentKey=<Story>, summary=<file path>, labels=["impl-manifest", "component:*"])` 호출
+- sub-task description에 Change Plan 매핑·담당 Agent·변경 유형 포함
+- PR merge 시 GitHub for Jira가 sub-task 자동 완료 전이
+
+**산출 경로**: DeveloperPL이 4 Dev 완료 보고 수집 시 Impl Manifest 초안을 구성해 Orchestrator 경유 DocsAgent에 §8.5 기록 + Jira sub-task 일괄 생성 의뢰.
+
+### 9. §10 "FIX Ledger" SSOT 스키마
+
+FIX 카운터의 SSOT는 Story 페이지 §10. Jira 라벨은 보조 지표. DocsAgent가 append-only 관리 (행 삭제·수정 금지).
+
+**테이블 컬럼**:
+| 컬럼 | 값 | 비고 |
+|------|----|----|
+| Iter | 1, 2, 3, ... | 전체 누적 번호 |
+| 시각 | ISO 8601 UTC | `2026-04-24T10:30:00Z` |
+| 레인 | 설계-리뷰 / 구현-리뷰 / 테스트 | 현재 FIX 대상 레인 |
+| 트리거 | 간단 요약 | `"DesignReviewPL P0 × 2"` 등 |
+| 원인 판정 | 설계 / 구현 | Architect 최종 판정 |
+| 재실행 범위 | 간단 요약 | `"Change Plan §3 재작성"` / `"BackendDev 재스폰"` 등 |
+| RESET? | — / `RESET 구현-리뷰` | 테스트 FAIL 후 구현 복귀 시 마커 |
+
+**갱신 절차** (DocsAgent가 수행):
+1. Orchestrator로부터 FIX 판정 결과 수령
+2. Story 페이지 §10 fetch → 다음 Iter 번호 계산
+3. 새 행 append (기존 행 불변)
+4. 테스트 FAIL → 구현 복귀 케이스면 `RESET 구현-리뷰` 마커 병기
+5. Jira 라벨(`fix:<레인>-retry`) 동시 추가 + Jira 코멘트 `[FIX #N]` 기록
+
+**"현재 사이클" 카운트 산출** (Orchestrator가 직접 파싱):
+- 설계 리뷰 / 테스트 카운터: 전체 iteration 누적
+- 구현 리뷰 카운터: 가장 최근 `RESET 구현-리뷰` 행 이후 iteration 누적 (RESET 행 없으면 처음부터)
 
 ---
 
