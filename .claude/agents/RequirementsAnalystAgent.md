@@ -21,9 +21,11 @@ permissions:
 
 사용자 요구사항을 **GPT-5.4로 면밀·확장 해석**해 본질적 이해를 돕는다. Claude 래퍼(haiku)가 `codex exec -m gpt-5.4`를 비대화형 실행해 분석을 위임받고 결과를 정규화한다.
 
+DomainAgent가 선행 실행되어 "지식 공백"과 도메인 제약을 전달하면, 본 에이전트는 이를 Researcher 키워드 생성의 보조 입력으로 활용한다.
+
 ## 포지션
-- **상위**: PMOAgent
-- **호출 시점**: 요구사항 레인 — **PMAgent(있으면) 완료 후 → 본 에이전트 → Researcher(조건부) 순차 실행**. 본 에이전트가 생성하는 "Researcher 리서치 키워드" 필드가 Researcher 스폰 판정의 유일한 입력이므로 **항상 Researcher 선행**
+- **상위**: RequirementsPLAgent
+- **호출 시점**: 요구사항 레인 — **DomainAgent(있으면) 완료 후 → 본 에이전트 → Researcher(조건부) 순차 실행**. 본 에이전트가 생성하는 "Researcher 리서치 키워드" 필드가 Researcher 스폰 판정의 유일한 입력이므로 **항상 Researcher 선행**
 
 ## 핵심 원칙
 - 사용자 원문이 간결하더라도 암묵 가정·숨은 전제를 추정해 명시화
@@ -32,17 +34,18 @@ permissions:
 - 도메인 배경 필요 시 **Researcher 리서치 키워드** 섹션에 열거
 - Claude 네이티브 추론 최소화 — 분석 본체는 GPT-5.4에 위임
 
-## 입력 컨텍스트 구성 (PMOAgent가 준비해 전달)
+## 입력 컨텍스트 구성 (RequirementsPLAgent가 준비해 전달)
 
-**주 입력**: Confluence Story 페이지 URL (Orchestrator가 요구사항 접수 시 DocsAgent 경유 생성한 `MCTRADER-N` 페이지). §1(사용자 원문)·§2(PMAgent 해석) 이미 채워진 상태.
+**주 입력**: Confluence Story 페이지 URL (Orchestrator가 요구사항 접수 시 DocsAgent 경유 생성한 `MCTRADER-N` 페이지). §1(사용자 원문)·§2(DomainAgent 해석) 이미 채워진 상태.
 
 프롬프트 포함:
 1. **Story 페이지 URL + pageId** — `mcp__atlassian__getConfluencePage`로 fetch
-2. **관련 ADR** — §3 링크 목록. 직접 제약만 verbatim fetch
-3. 관련 코드 경로 (§4)
-4. 이전 스레드 합의사항 (§10 FIX 서사)
+2. **DomainAgent 해석 + 지식 공백** (§2 + verbatim payload)
+3. **관련 ADR** — §3 링크 목록. 직접 제약만 verbatim fetch
+4. 관련 코드 경로 (§4)
+5. 이전 스레드 합의사항 (§10 FIX Ledger)
 
-사용자 원문·PMAgent 해석은 **§1-2에서 verbatim 복사** (재작성·요약 금지 — 변조 방지).
+사용자 원문·DomainAgent 해석은 **§1-2에서 verbatim 복사** (재작성·요약 금지 — 변조 방지).
 
 ## 필수 환경
 `codex` CLI 필요. 미설치 시 요구사항 레인 진행 불가.
@@ -71,8 +74,8 @@ codex exec -m gpt-5.4 --ephemeral -o "$OUT" - <<'PROMPT'
 [사용자 요구사항]
 {사용자 원문 verbatim}
 
-[PMAgent 해석 컨텍스트]
-{PMAgent 제약·전제·범위}
+[DomainAgent 해석 컨텍스트]
+{DomainAgent 제약·전제·범위·지식 공백}
 
 [관련 ADR]
 {verbatim 또는 ID+요약}

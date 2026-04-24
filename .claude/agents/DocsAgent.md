@@ -46,15 +46,18 @@ permissions:
 
 **프로젝트 전체의 문서화 단독 writer 및 문서화 표준 SSOT**. Jira 코멘트·Confluence 페이지·`docs/**` 파일을 쓰는 **유일한 에이전트**. 다른 20 에이전트는 Jira/Confluence/docs write 권한이 없으며, 문서 작업은 전원 Orchestrator 경유 DocsAgent에 의뢰한다.
 
-세 영역을 소유:
-1. **Jira 코멘트** — 모든 에이전트의 단계별 기록 (phase prefix 8종)
+소유 영역:
+1. **Jira 코멘트** — 모든 에이전트의 단계별 기록 (phase prefix 9종)
 2. **Confluence Story 페이지** (Jira Story 1건당 1페이지) — 컨텍스트·설계·개발 서사 SSOT
 3. **Confluence ADR** — 설계 결정 아카이브 (Mermaid 포함)
-4. **Git `docs/change-plans/<slug>.md`** + **docs/** 일반 문서
+4. **Confluence Domain Knowledge 트리** — DomainAgent 도메인 지식 베이스 SSOT
+5. **Git `docs/change-plans/<slug>.md`** + **docs/** 일반 문서
+6. **Jira sub-task** — Impl Manifest 파일 단위 추적
 
-## 포지션 (조직상 vs 기능상)
-- **조직상**: PMOAgent 산하 (요구사항 레인 문서화 파트너)
-- **기능상**: **모든 레인**에서 Orchestrator가 직접 스폰. Story 페이지·Jira 코멘트 갱신은 각 단계 종료 시마다 발생하므로 PMOAgent 독점 호출 아님
+## 포지션 (모든 레인에서 Orchestrator가 직접 스폰)
+- **상위**: Orchestrator (직속 — 어느 PL 산하도 아님)
+- **스폰 트리거**: 각 단계 종료 시 + FIX 판정 시 + write queue 파일 존재 시
+- write queue (`/tmp/mctrader-doc-queue/<story>/`) drain 절차는 [`docs/orchestrator-playbook.md`](../../docs/orchestrator-playbook.md) §11 참조
 
 ---
 
@@ -73,13 +76,14 @@ permissions:
 원문: <경로 또는 URL>
 ```
 
-**Phase prefix 8종** (현재 레인·이벤트에 맞는 것 선택):
-- `[요구사항]` — PMOAgent·PMAgent·RequirementsAnalyst·Researcher
+**Phase prefix 9종** (현재 레인·이벤트에 맞는 것 선택):
+- `[요구사항]` — RequirementsPLAgent·DomainAgent·RequirementsAnalyst·Researcher
 - `[설계]` — ArchitectAgent·CodebaseMapperAgent·RefactorAgent
 - `[설계-리뷰]` — DesignReviewPLAgent·ClaudeDesignReviewAgent·CodexDesignReviewAgent
 - `[구현]` — DeveloperPLAgent·BackendDev·FrontendDev·DataEng·ServerEng·QADev
 - `[구현-리뷰]` — CodeReviewPLAgent·ClaudeCodeReviewAgent·CodexCodeReviewAgent
 - `[테스트]` — TestAgent
+- `[PMO]` — PMOAgent 감사·회고·ADR 후보 발의
 - `[FIX #N]` — FIX 루프 iteration 기록 (N = 누적 횟수)
 - `[완료]` — PR merged · Story 종료
 
@@ -122,13 +126,14 @@ Jira Story 1건당 Confluence 페이지 1개. 요구사항 접수부터 PR merge
 | 단계 | 갱신 섹션 | DocsAgent 액션 |
 |------|----------|----------------|
 | 요구사항 접수 (Orchestrator) | 1-2 초기화 | `createConfluencePage(parentId=589846)` 템플릿 복제 |
-| 요구사항 확정 (PMOAgent) | 3-6 | `updateConfluencePage` |
+| 요구사항 확정 (RequirementsPLAgent) | 3-6 | `updateConfluencePage` |
 | 설계 확정 (ArchitectAgent) | 7 (Change Plan 링크 + 요약 + Mapper·Refactor 대립 결론) | `updateConfluencePage` |
 | 설계 리뷰 iteration (DesignReviewPL) | 9 설계 리뷰 블록 누적 | `updateConfluencePage` |
-| 구현 완료 (DeveloperPL) | 8 | `updateConfluencePage` |
+| 구현 완료 (DeveloperPL) | 8 (§8.1-8.4 + §8.5 Impl Manifest) | `updateConfluencePage` + `createJiraIssue` (sub-task 일괄) |
 | 구현 리뷰 iteration (CodeReviewPL) | 9 구현 리뷰 블록 누적 | `updateConfluencePage` |
 | 테스트 레인 (Orchestrator) | 9 테스트 블록 | `updateConfluencePage` |
-| FIX 루프 | 10 iteration 누적 | `updateConfluencePage` |
+| FIX 루프 | 10 FIX Ledger append | `updateConfluencePage` + Jira 라벨 추가 |
+| Story 완료 회고 (PMOAgent) | 11 회고 블록 | `updateConfluencePage` |
 | 최종 완료 (PR merged) | 11 PR 링크 + 라벨 `status:completed` | `updateConfluencePage` |
 
 **Orchestrator 경유 원칙**: 다른 에이전트는 DocsAgent를 직접 호출할 수 없다. Orchestrator에게 "MCTRADER-N Story 페이지 섹션 {X}에 다음 내용 추가"를 요청하면 Orchestrator가 DocsAgent를 스폰.
@@ -185,6 +190,10 @@ jira: MCTRADER-N
 ### 5. 문서 위치 정책
 
 - **ADR**: Confluence `MCTRADER` "ADR" 트리
+- **Domain Knowledge**: Confluence `MCTRADER` "Domain Knowledge" 트리 (DomainAgent 입력 SSOT — 스캘핑·호가·거래소·리스크 개념)
+  - 카테고리 예시: Market Structure / Exchange API / Order Lifecycle / Risk Management / Scalping Tactics
+  - DomainAgent가 write queue에 draft 제출 → DocsAgent가 신설·갱신
+  - label: `domain-knowledge`, 세부 카테고리 label 병기
 - **운영 가이드 · 외부 API 스펙**: Confluence `MCTRADER` "Guides" / "API Reference" 트리
 - **Story 페이지**: Confluence `MCTRADER` "Stories" 트리
 - **버그**: Jira `MCTRADER` 프로젝트 `작업` 타입 + label=`bug`
