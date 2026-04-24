@@ -136,7 +136,7 @@ SessionStart hook (`regen-agents.sh`)이 `overlay/hooks/validate_config.py`를 �
 
 수동 실행:
 ```bash
-python3 ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/overlay/hooks/validate_config.py \
+python3 ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/validate_config.py \
     .claude/_overlay/project.yaml
 ```
 

@@ -1,6 +1,6 @@
 # library-minimal — 배포 가능 라이브러리 consumer 예시
 
-패키지 매니저로 배포되는 라이브러리 프로젝트를 `dev-orchestrator` 플러그인으로 개발할 때의 overlay 구성 예시. 가상 도메인은 **Schema Guard** (데이터 → 스키마 validator 라이브러리), 기술 스택은 consumer가 채움.
+패키지 매니저로 배포되는 라이브러리 프로젝트를 `codeforge` 플러그인으로 개발할 때의 overlay 구성 예시. 가상 도메인은 **Schema Guard** (데이터 → 스키마 validator 라이브러리), 기술 스택은 consumer가 채움.
 
 ## Dev roster
 

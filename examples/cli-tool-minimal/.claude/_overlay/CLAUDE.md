@@ -1,6 +1,6 @@
 # <REPLACE: 프로젝트명> — Consumer Overlay
 
-이 프로젝트는 **Log Parser** CLI 툴 (로그 파일 → 구조화 이벤트 추출 → JSON/CSV 출력). `dev-orchestrator` 플러그인을 사용.
+이 프로젝트는 **Log Parser** CLI 툴 (로그 파일 → 구조화 이벤트 추출 → JSON/CSV 출력). `codeforge` 플러그인을 사용.
 
 > 위 core CLAUDE.md §(org chart)에서 "구현 레인의 `role: dev` roster"는 이 프로젝트에서 core의 `DeveloperAgent` + `InfraEngineerAgent`만으로 구성한다. `DataEngineerAgent`·webapp preset은 **미사용**. Frontend 계층 없음.
 

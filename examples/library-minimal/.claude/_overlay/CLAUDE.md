@@ -1,6 +1,6 @@
 # <REPLACE: 프로젝트명> — Consumer Overlay
 
-이 프로젝트는 **Schema Guard** 라이브러리 — 데이터(dict/struct/JSON)를 스키마에 대해 검증하고 구조화된 에러를 반환. `dev-orchestrator` 플러그인 사용.
+이 프로젝트는 **Schema Guard** 라이브러리 — 데이터(dict/struct/JSON)를 스키마에 대해 검증하고 구조화된 에러를 반환. `codeforge` 플러그인 사용.
 
 > 위 core CLAUDE.md §(org chart)에서 "구현 레인의 `role: dev` roster"는 이 프로젝트에서 core의 `DeveloperAgent` + `InfraEngineerAgent`만으로 구성. `DataEngineerAgent`·preset은 미사용. Frontend 없음.
 

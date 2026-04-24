@@ -1,9 +1,24 @@
 # Changelog
 
-`dev-orchestrator` 플러그인 릴리스 이력. 각 엔트리는 버전 bump 단위.
+`codeforge` 플러그인 릴리스 이력. 각 엔트리는 버전 bump 단위.
 Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guide.md) 해당 섹션 참조.
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
+
+## [0.6.0] — 2026-04-24
+
+### Changed
+- **BREAKING**: Plugin name rename `dev-orchestrator` → `codeforge`. `${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/*` 경로 references 전부 `${CLAUDE_PLUGIN_ROOT}/codeforge/*` 로 교체
+- Repo 예정 rename: `mctrader/mctrader` → `mctrader/plugin-codeforge` (PLG-19, admin UI)
+- Atlassian workspace 이관: 플러그인 dev를 `mctrader.atlassian.net` PLG space + PLG project (component=codeforge)로 운영
+
+### Added
+- `.claude/_overlay/project.yaml` — 플러그인 자체의 dog-food config (PLG 좌표)
+- Confluence PLG tree: CodeForge top + Stories/Domain Knowledge/ADR/Retrospective/Architecture Overview + 6 retroactive ADRs + 5 per-version retrospectives
+- Jira retroactive: 6 Epics (v0.1~v0.5.x) + 11 Stories (PR 1:1)
+
+### Migration
+- v0.5.x 사용자: `docs/migration-guide.md` §v0.5→v0.6 섹션 참조 — consumer `.claude/settings.json` hook 커맨드 `${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/overlay/hooks/regen-agents.sh` → `${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/regen-agents.sh` 교체 필수
 
 ## [0.5.1] — 2026-04-24
 
@@ -83,7 +98,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 ## [0.1.0] — 2026-04-24
 
 ### Added
-- 플러그인 pivot — 기존 crypto FW repo(`mctrader`)에서 범용 SW 개발 플러그인 `dev-orchestrator`로 재편
+- 플러그인 pivot — 기존 crypto FW repo(`mctrader`)에서 범용 SW 개발 플러그인 `dev-orchestrator`로 재편 (v0.6.0에서 `codeforge`로 최종 rename)
 - 22 에이전트 · 6 레인 오케스트레이션 구조
 - Overlay 메커니즘 (β) — consumer 측 `.claude/_overlay/` + SessionStart merge hook
 - `overlay/hooks/merge.py` + `regen-agents.sh` — core+overlay 병합 tooling

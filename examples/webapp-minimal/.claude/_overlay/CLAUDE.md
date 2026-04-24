@@ -1,6 +1,6 @@
 # <REPLACE: 프로젝트명> — Consumer Overlay
 
-이 프로젝트는 **Task Manager** 도메인 웹 애플리케이션 (할 일·담당자·팀 관리). `dev-orchestrator` 플러그인을 사용해 요구사항부터 보안 테스트까지 자율 실행.
+이 프로젝트는 **Task Manager** 도메인 웹 애플리케이션 (할 일·담당자·팀 관리). `codeforge` 플러그인을 사용해 요구사항부터 보안 테스트까지 자율 실행.
 
 > 위 core CLAUDE.md §(org chart)에서 "구현 레인의 `role: dev` roster"는 이 프로젝트에서 webapp preset (BackendDev + FrontendDev) + core DataEng + InfraEng으로 구성한다. Core의 generic `DeveloperAgent`는 비활성화 (Backend/Frontend로 충분).
 

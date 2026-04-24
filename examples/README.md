@@ -1,6 +1,6 @@
 # Example Consumer Projects
 
-`dev-orchestrator` 플러그인을 consumer 프로젝트로 사용하는 최소 예시들. 각 예시는 **overlay shape만 포함** (실제 src/ 코드는 없음) — consumer가 본인 stack을 채워 넣는 전제.
+`codeforge` 플러그인을 consumer 프로젝트로 사용하는 최소 예시들. 각 예시는 **overlay shape만 포함** (실제 src/ 코드는 없음) — consumer가 본인 stack을 채워 넣는 전제.
 
 ## 목록
 

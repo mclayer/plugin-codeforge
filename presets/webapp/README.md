@@ -14,7 +14,7 @@
 ## 사용법
 
 ```bash
-cp -r ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/presets/webapp/agents/*.md \
+cp -r ${CLAUDE_PLUGIN_ROOT}/codeforge/presets/webapp/agents/*.md \
       .claude/_overlay/agents/
 ```
 
