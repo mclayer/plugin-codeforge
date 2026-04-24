@@ -1,0 +1,23 @@
+project:
+  name: "<REPLACE — e.g. schema-guard>"
+  repo: "<REPLACE — e.g. github.com/acme/schema-guard>"
+
+atlassian:
+  site: "<REPLACE — e.g. acme.atlassian.net>"
+  confluence:
+    space_key: "<REPLACE — e.g. SG>"
+    stories_parent_page_id: "<REPLACE — Story 페이지들의 parent pageId>"
+    domain_knowledge_parent_page_id: "<REPLACE — Domain Knowledge 루트 pageId>"
+    adr_root_page_id: "<REPLACE — ADR 루트 pageId>"
+  jira:
+    project_key: "<REPLACE — e.g. SG>"
+
+github:
+  pr_title_prefix_template: "[{project_key}-{story_number}] {title}"
+
+labels:
+  components:
+    - api       # 공개 API surface
+    - core      # 내부 검증 엔진
+    - infra     # 패키징·릴리스 자동화
+    - docs      # docstring·API reference·예시

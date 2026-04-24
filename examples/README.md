@@ -8,8 +8,9 @@
 |------|----------------|------------------|
 | [`webapp-minimal/`](webapp-minimal/) | 웹 애플리케이션 | webapp preset (Backend·Frontend) + DataEng + InfraEng + QADev |
 | [`cli-tool-minimal/`](cli-tool-minimal/) | CLI 툴 | Generic DeveloperAgent + InfraEng + QADev (preset 미사용) |
+| [`library-minimal/`](library-minimal/) | 배포 라이브러리 | Generic DeveloperAgent + InfraEng + QADev (preset 미사용, 공개 API 경로 scoping 강조) |
 
-두 예시는 플러그인이 **웹앱·비웹앱 shape 양쪽에서 동일한 오케스트레이션으로 동작**함을 실증한다. Core `agents/`는 프로젝트 shape 중립, Dev roster는 `role: dev` frontmatter 태그로 런타임 discovery.
+세 예시는 플러그인이 **웹앱·CLI·라이브러리 shape에서 동일한 오케스트레이션으로 동작**함을 실증한다. Core `agents/`는 프로젝트 shape 중립, Dev roster는 `role: dev` frontmatter 태그로 런타임 discovery.
 
 ## 사용법 (공통)
 
