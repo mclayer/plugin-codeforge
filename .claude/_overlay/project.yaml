@@ -4,7 +4,7 @@
 
 project:
   name: codeforge
-  repo: github.com/mctrader/mctrader  # rename 예정 → plugin-codeforge (Story PLG-N2)
+  repo: github.com/mctrader/plugin-codeforge
 
 atlassian:
   site: mctrader.atlassian.net

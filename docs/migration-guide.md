@@ -27,7 +27,7 @@ updated: 2026-04-24
 - **Plugin name 변경**: `dev-orchestrator` → `codeforge`
 - **Marketplace install URL 변경** (해당 시): `/plugins install dev-orchestrator@<marketplace>` → `/plugins install codeforge@<marketplace>`
 - **`CLAUDE_PLUGIN_ROOT` 하위 경로 변경**: `${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/` → `${CLAUDE_PLUGIN_ROOT}/codeforge/`
-- **GitHub repo 이동**: `mctrader/mctrader` → `mctrader/plugin-codeforge` (GitHub 자동 URL redirect 30일 유지)
+- **GitHub repo 이동**: `mctrader/plugin-codeforge` → `mctrader/plugin-codeforge` (GitHub 자동 URL redirect 30일 유지)
 
 ### 영향받는 consumer 파일
 
@@ -114,7 +114,7 @@ ls .claude/agents/ | wc -l
 ### 참고
 
 - `CHANGELOG.md` v0.6.0 엔트리
-- Repo 새 주소: https://github.com/mctrader/plugin-codeforge (30일간 `mctrader/mctrader` 자동 redirect)
+- Repo 새 주소: https://github.com/mctrader/plugin-codeforge (30일간 `mctrader/plugin-codeforge` 자동 redirect)
 
 ---
 
