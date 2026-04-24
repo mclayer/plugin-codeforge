@@ -43,10 +43,10 @@ Jira Story 1건당 Confluence 페이지 1개. 요구사항 접수부터 PR merge
 - 유스케이스 / AC / 엣지 케이스 / 제외 범위 / 암묵 가정
 - §5.5 "사용자 확인 필요" (blocking wait 항목)
 
-### §6. 도메인 배경지식 (Researcher, 조건부)
-- 웹 리서치 키워드 커버리지 + 출처 URL
+### §6. 외부 지식 배경 (Researcher)
+- Researcher 자체 도출 키워드 커버리지 + 출처 URL
 - ADR 정합성 점검 결과
-- Analyst 키워드가 비어있으면 섹션 자체 생략 가능
+- "외부 지식 보강 불필요" 판정 시에도 사유를 명시 (섹션 생략 금지 — 독립 관점 결과 보존)
 
 ### §7. 설계 서사 (Architect)
 - Change Plan 링크 (`docs/change-plans/<slug>.md`)

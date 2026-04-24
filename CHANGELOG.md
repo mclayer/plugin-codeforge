@@ -5,6 +5,28 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.7.0] — 2026-04-24
+
+### Changed
+- **BREAKING (오케스트레이션 semantics)**: 요구사항·설계 레인 서브 에이전트 **sequential → parallel** 전환
+  - 요구사항 레인: `DomainAgent → Analyst → Researcher` 순차 (조건부 생략 포함) → `DomainAgent ∥ Analyst ∥ Researcher 병렬` (셋 다 non-skippable)
+  - 설계 레인: `CodebaseMapper → Refactor` 순차 (Refactor가 Mapper 요약 입력 수신) → `CodebaseMapper ∥ Refactor 병렬` (둘 다 원 소스 직접 독해, 산출물 교차 참조 없음)
+  - 이유: 순차 모델에서 후속 에이전트가 선행 결과에 오염되어 **독립 관점** 소실. 병렬 모델에서 PL/Architect가 진정한 synthesizer 역할
+- **Clarification 재스폰 프로토콜 신설**: 서브 에이전트는 one-shot 실행이므로 PL↔서브 continuous dialog 불가. PL이 통합 중 추가 질의 필요 시 Orchestrator 경유 재스폰 요청 (이전 출력 pointer + clarification context + 범위 제한). 동일 에이전트 2회 재스폰 이후 미해소면 사용자 ESCALATE
+
+### Affected
+- `CLAUDE.md` — 스폰 시퀀스·Never-skippable·병렬 스폰 권장·CodebaseMapper↔Refactor 대립 섹션 전면 개편
+- `agents/RequirementsPLAgent.md` — 병렬 스폰 원칙·dedup·상충 조정 프로토콜·clarification 재스폰 절차 신설
+- `agents/DomainAgent.md`, `agents/RequirementsAnalystAgent.md`, `agents/ResearcherAgent.md` — 타 에이전트 산출물 수신 제거, 각자 공통 입력에서 관점 자체 도출. Researcher·DomainAgent는 **non-skippable**로 승격 (null 결과도 명시 반환)
+- `agents/ArchitectAgent.md` — 설계 레인 실행 흐름 8단계 재구성 (공통 입력 패키지 → 병렬 스폰 → 대립 조정 → clarification 재스폰)
+- `agents/CodebaseMapperAgent.md`, `agents/RefactorAgent.md` — 상호 산출물 미참조, 원 소스 직접 독해 의무. RefactorAgent에 "잠재 변호 논리 예상" 섹션 신설 (self-identify)
+- `docs/orchestrator-playbook.md` — §3.2 스폰 템플릿 특이 블록, §4.2 표준 병렬 패턴 표에 요구사항·설계 레인 추가, §4.4 Clarification 재스폰 절차 신설, §7.3 resume 매핑 수정
+- `templates/story-page-structure.md` — §6 "(Researcher, 조건부)" → "(Researcher)" + null 결과 보존 규정
+
+### Migration
+- Consumer overlay가 RequirementsPLAgent/ArchitectAgent 행동을 override하지 않는다면 영향 없음
+- Override 중이면 `docs/migration-guide.md` §v0.6→v0.7 섹션 참조 — 병렬 스폰 지시 블록 추가 필요
+
 ## [0.6.0] — 2026-04-24
 
 ### Changed
