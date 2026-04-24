@@ -1,6 +1,6 @@
 # cli-tool-minimal — CLI 툴 consumer 예시
 
-단일 바이너리 CLI 툴 프로젝트를 `dev-orchestrator` 플러그인으로 개발할 때의 overlay 구성 예시. 가상 도메인은 **Log Parser** (로그 파일 → 구조화 이벤트 추출), 기술 스택은 consumer가 채움.
+단일 바이너리 CLI 툴 프로젝트를 `codeforge` 플러그인으로 개발할 때의 overlay 구성 예시. 가상 도메인은 **Log Parser** (로그 파일 → 구조화 이벤트 추출), 기술 스택은 consumer가 채움.
 
 ## Dev roster
 

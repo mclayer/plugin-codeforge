@@ -4,7 +4,7 @@
 # Regenerates .claude/agents/*.md by merging plugin core + project overlay.
 #
 # Prerequisites:
-#   - Plugin installed at ${CLAUDE_PLUGIN_ROOT:-...}/dev-orchestrator
+#   - Plugin installed at ${CLAUDE_PLUGIN_ROOT:-...}/codeforge
 #     (or checked out locally and pointed to via PLUGIN_ROOT env var)
 #   - Consumer project has .claude/_overlay/agents/<Name>.md (optional per agent)
 #     and optional .claude/_overlay/CLAUDE.md
@@ -14,7 +14,7 @@
 #   {
 #     "hooks": {
 #       "SessionStart": [
-#         { "command": "bash ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/overlay/hooks/regen-agents.sh" }
+#         { "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/regen-agents.sh" }
 #       ]
 #     }
 #   }
@@ -30,11 +30,11 @@
 set -euo pipefail
 
 # Resolve plugin root.
-#   Priority: explicit $PLUGIN_ROOT > $CLAUDE_PLUGIN_ROOT/dev-orchestrator > script's parent .. ..
+#   Priority: explicit $PLUGIN_ROOT > $CLAUDE_PLUGIN_ROOT/codeforge > script's parent .. ..
 PLUGIN_ROOT="${PLUGIN_ROOT:-}"
 if [ -z "$PLUGIN_ROOT" ]; then
-    if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -d "$CLAUDE_PLUGIN_ROOT/dev-orchestrator" ]; then
-        PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT/dev-orchestrator"
+    if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -d "$CLAUDE_PLUGIN_ROOT/codeforge" ]; then
+        PLUGIN_ROOT="$CLAUDE_PLUGIN_ROOT/codeforge"
     else
         # Fallback: script lives at <PLUGIN_ROOT>/overlay/hooks/regen-agents.sh
         SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

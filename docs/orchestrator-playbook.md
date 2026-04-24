@@ -893,7 +893,7 @@ PMOAgent가 **하지 않는** 것:
 
 - 2026-04-23: 초기 작성 (18 에이전트 · 4 레인)
 - 2026-04-24: v2 개편 (21 에이전트 · 6 레인) — EngineerPL 제거, CodebaseMapper·DesignReviewPL·ClaudeDesignReview·CodexDesignReview 신설, Review/Test 리네임, DocsAgent 단독 writer 원칙, FIX 카운터 Jira 라벨 단일, Fast-path/Codex 효용 평가 미도입
-- 2026-04-24: v3 플러그인 pivot (범용 SW 개발 플러그인 `dev-orchestrator`로 재편, 22 에이전트 · 6 레인) — crypto 정체성 제거, overlay 메커니즘 β 도입
+- 2026-04-24: v3 플러그인 pivot (범용 SW 개발 플러그인 `codeforge`로 재편, 22 에이전트 · 6 레인) — crypto 정체성 제거, overlay 메커니즘 β 도입
 - 2026-04-24: v4 보안 테스트 레인 추가 (25 에이전트 · 7 레인) — SecurityTestPLAgent + ClaudeSecurityTestAgent + CodexSecurityTestAgent 신설, "테스트" 레인을 "구현 테스트"로 개편 후 "보안 테스트" 레인 추가, templates/ 디렉토리 도입 (change-plan·adr·story-page-structure·impl-manifest SSOT)
 - 2026-04-24: v5 generic Dev roster + preset 시스템 (24 core 에이전트 + `role: dev` 동적 roster · 7 레인) — BackendDev·FrontendDev를 `presets/webapp/`으로 이동, core에 generic `DeveloperAgent` 신설, ServerEng를 `InfraEngineerAgent`로 리네임(범위 확장), DevPL이 `role: dev` frontmatter 태그로 런타임 roster discovery, `merge.py`에 `--overlay-only` 모드 추가
 - 2026-04-24: v6 Stage 2 `project.yaml` 구조화 SSOT 상수 도입 — `.claude/_overlay/project.yaml`에 Atlassian·GitHub·labels structured 상수 분리, CLAUDE.md overlay는 narrative 컨텍스트 전담. Schema SSOT `docs/project-config-schema.md` 신설, 예시 2종 overlay 재구성

@@ -1,4 +1,4 @@
-# dev-orchestrator
+# codeforge
 
 **Claude Code 범용 SW 개발 오케스트레이션 플러그인**. 사용자 요구사항 한 건을 받아 **24 core 에이전트 + `role: dev` 동적 roster · 7 레인** 구조로 요구사항 해석 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → 구현 테스트 → 보안 테스트 게이트까지 자율 실행한다.
 
@@ -37,7 +37,7 @@ Orchestrator (최상위 Claude 세션)
 ### 1. 플러그인 설치
 
 ```bash
-/plugins install dev-orchestrator@<marketplace>
+/plugins install codeforge@<marketplace>
 ```
 
 ### 2. 필수 의존성
@@ -65,7 +65,7 @@ mkdir -p .claude/_overlay/agents
 {
   "hooks": {
     "SessionStart": [
-      { "command": "bash ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/overlay/hooks/regen-agents.sh" }
+      { "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/regen-agents.sh" }
     ]
   }
 }
@@ -91,7 +91,7 @@ mkdir -p .claude/_overlay/agents
 ## 구조
 
 ```
-dev-orchestrator/
+codeforge/
 ├── .claude-plugin/
 │   └── plugin.json
 ├── agents/                       # 24 core agent md (process + generic Dev)

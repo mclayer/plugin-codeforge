@@ -1,6 +1,6 @@
 # webapp-minimal — 웹 애플리케이션 consumer 예시
 
-풀스택 웹 애플리케이션 프로젝트를 `dev-orchestrator` 플러그인으로 개발할 때의 overlay 구성 예시. 가상 도메인은 **Task Manager** (할 일·담당자·팀 관리), 기술 스택은 consumer가 채움.
+풀스택 웹 애플리케이션 프로젝트를 `codeforge` 플러그인으로 개발할 때의 overlay 구성 예시. 가상 도메인은 **Task Manager** (할 일·담당자·팀 관리), 기술 스택은 consumer가 채움.
 
 ## Dev roster
 

@@ -24,11 +24,11 @@ Consumer 프로젝트에서:
 
 ```bash
 # 예: webapp preset 전체 복사
-cp -r ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/presets/webapp/agents/*.md \
+cp -r ${CLAUDE_PLUGIN_ROOT}/codeforge/presets/webapp/agents/*.md \
       .claude/_overlay/agents/
 
 # 또는 일부만 골라 복사 (frontend만)
-cp ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/presets/webapp/agents/FrontendDeveloperAgent.md \
+cp ${CLAUDE_PLUGIN_ROOT}/codeforge/presets/webapp/agents/FrontendDeveloperAgent.md \
    .claude/_overlay/agents/
 ```
 
@@ -44,7 +44,7 @@ SessionStart hook(regen-agents.sh)이 이후 세션에서 overlay-only agent로 
 Plugin 업데이트로 preset 원본이 바뀌었을 때는 consumer가 직접 diff 반영:
 
 ```bash
-diff ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/presets/webapp/agents/BackendDeveloperAgent.md \
+diff ${CLAUDE_PLUGIN_ROOT}/codeforge/presets/webapp/agents/BackendDeveloperAgent.md \
      .claude/_overlay/agents/BackendDeveloperAgent.md
 ```
 

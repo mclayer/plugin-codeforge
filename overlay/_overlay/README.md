@@ -80,7 +80,7 @@ Consumer `.claude/settings.json`에 SessionStart hook 등록:
 {
   "hooks": {
     "SessionStart": [
-      { "command": "bash ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/overlay/hooks/regen-agents.sh" }
+      { "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/regen-agents.sh" }
     ]
   }
 }

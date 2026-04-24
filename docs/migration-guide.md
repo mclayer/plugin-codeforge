@@ -7,15 +7,114 @@ updated: 2026-04-24
 
 # Migration Guide
 
-`dev-orchestrator` 플러그인 버전업 시 consumer 프로젝트의 overlay를 마이그레이션하는 절차.
+`codeforge` 플러그인 버전업 시 consumer 프로젝트의 overlay를 마이그레이션하는 절차.
 
 각 섹션은 **한 major/minor 버전 bump 당 1건**. breaking change가 있는 버전만 다룬다. Core는 플러그인 업데이트 시 자동 반영되지만, `.claude/_overlay/` 내용은 consumer가 직접 업데이트.
 
 ## 목차
 
+- [v0.5 → v0.6](#v05--v06-plugin-name-rename-dev-orchestrator--codeforge) — Plugin name rename + Atlassian 이관
 - [v0.3 → v0.4](#v03--v04-stage-2-projectyaml-구조화) — `project.yaml` 도입
 - [v0.2 → v0.3](#v02--v03-generic-dev-roster--preset) — Generic Dev roster + preset
 - [v0.1 → v0.2](#v01--v02-보안-테스트-레인--templates) — 보안 테스트 레인 + templates (non-breaking)
+
+---
+
+## v0.5 → v0.6 (Plugin name rename `dev-orchestrator` → `codeforge`)
+
+### Breaking changes
+
+- **Plugin name 변경**: `dev-orchestrator` → `codeforge`
+- **Marketplace install URL 변경** (해당 시): `/plugins install dev-orchestrator@<marketplace>` → `/plugins install codeforge@<marketplace>`
+- **`CLAUDE_PLUGIN_ROOT` 하위 경로 변경**: `${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/` → `${CLAUDE_PLUGIN_ROOT}/codeforge/`
+- **GitHub repo 이동**: `mctrader/mctrader` → `mctrader/plugin-codeforge` (GitHub 자동 URL redirect 30일 유지)
+
+### 영향받는 consumer 파일
+
+- `.claude/settings.json` — SessionStart hook 커맨드의 경로
+
+### 마이그레이션 절차
+
+#### 1. Plugin 재설치 (marketplace 사용 시)
+
+```bash
+/plugins uninstall dev-orchestrator
+/plugins install codeforge@<marketplace>
+```
+
+로컬 개발용 plugin (directory-based install) 은 재설치 불필요 — 플러그인 디렉토리가 `codeforge`로 바뀌었는지만 확인.
+
+#### 2. `.claude/settings.json` hook 경로 수정
+
+**Before**:
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      { "command": "bash ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/overlay/hooks/regen-agents.sh" }
+    ]
+  }
+}
+```
+
+**After**:
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      { "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/regen-agents.sh" }
+    ]
+  }
+}
+```
+
+#### 3. Preset 임포트 경로 (사용 중이면)
+
+**Before**:
+```bash
+cp -r ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/presets/webapp/agents/*.md \
+      .claude/_overlay/agents/
+```
+
+**After**:
+```bash
+cp -r ${CLAUDE_PLUGIN_ROOT}/codeforge/presets/webapp/agents/*.md \
+      .claude/_overlay/agents/
+```
+
+#### 4. project.yaml skeleton 복사 경로 (신규 설치 시)
+
+**Before**:
+```bash
+cp ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/overlay/_overlay/project.yaml.example \
+   .claude/_overlay/project.yaml
+```
+
+**After**:
+```bash
+cp ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/_overlay/project.yaml.example \
+   .claude/_overlay/project.yaml
+```
+
+#### 5. 검증
+
+```bash
+claude
+# SessionStart hook이 새 경로로 정상 작동, .claude/agents/*.md 생성 확인
+ls .claude/agents/ | wc -l
+```
+
+### 체크리스트
+
+- [ ] `.claude/settings.json` hook 커맨드에 `dev-orchestrator` 잔존 없음 (grep 확인)
+- [ ] Plugin 재설치 완료 (해당 시)
+- [ ] 세션 개시 후 `.claude/agents/` 정상 생성
+- [ ] consumer repo README·doc에 plugin 이름 참조 있다면 일괄 교체
+
+### 참고
+
+- `CHANGELOG.md` v0.6.0 엔트리
+- Repo 새 주소: https://github.com/mctrader/plugin-codeforge (30일간 `mctrader/mctrader` 자동 redirect)
 
 ---
 
@@ -36,7 +135,7 @@ updated: 2026-04-24
 #### 1. `project.yaml` 신설
 
 ```bash
-cp ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/overlay/_overlay/project.yaml.example \
+cp ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/_overlay/project.yaml.example \
    .claude/_overlay/project.yaml
 ```
 
@@ -160,7 +259,7 @@ cat .claude/agents/DocsAgent.md | grep -A1 "project.yaml"
 
 1. **preset 복사**
    ```bash
-   cp -r ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/presets/webapp/agents/*.md \
+   cp -r ${CLAUDE_PLUGIN_ROOT}/codeforge/presets/webapp/agents/*.md \
          .claude/_overlay/agents/
    ```
    (기존 overlay 본문이 있으면 수동 병합)

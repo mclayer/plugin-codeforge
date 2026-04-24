@@ -7,7 +7,7 @@ updated: 2026-04-24
 
 # Plugin Design Spec
 
-이 문서는 `dev-orchestrator` 플러그인의 구조·경계·overlay 메커니즘 설계 SSOT.
+이 문서는 `codeforge` 플러그인의 구조·경계·overlay 메커니즘 설계 SSOT.
 
 ## 1. 목표
 
@@ -69,7 +69,7 @@ plugin repo:                          consumer project:
 ```
 Claude Code session start
   → .claude/settings.json의 SessionStart hook 실행
-    → ${CLAUDE_PLUGIN_ROOT}/dev-orchestrator/overlay/hooks/regen-agents.sh
+    → ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/regen-agents.sh
       → for each agent in plugin's agents/:
           python3 merge.py <core> <overlay?> > .claude/agents/<Name>.md
       → if consumer has .claude/_overlay/CLAUDE.md:
