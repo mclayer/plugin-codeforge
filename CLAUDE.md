@@ -5,6 +5,18 @@ Claude Code용 오케스트레이션 규칙. 에이전트 상세는 각 `.claude
 ## Project
 `mctrader` — 암호화폐 스캘핑 자동매매 프레임워크. Python, 완전 자율 실행. `settings.json`에 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`.
 
+## 세션 개시 의무 (Atlassian MCP 인증 확인)
+
+**세션 시작 직후, 모든 작업보다 먼저** Atlassian MCP 인증 상태를 확인한다. Atlassian(Jira + Confluence)은 본 프로젝트의 **핵심 의존성** — Story 페이지·ADR·FIX Ledger·Jira workflow 전부가 여기 기반이므로 미인증 상태에서는 22개 에이전트 대부분이 기능 불능.
+
+**절차**:
+1. Orchestrator가 `mcp__atlassian__*` 툴 노출 여부 확인 (deferred tool 리스트 스캔 또는 `ToolSearch select:mcp__atlassian__getJiraIssue`)
+2. 미노출 시 `~/.claude/mcp-needs-auth-cache.json`에 `plugin:atlassian:atlassian` 엔트리 존재 여부 확인
+3. **미인증 판정 시 사용자에게 `/mcp` 재인증 요청** → 응답 전까지 **모든 작업 중단**
+4. 인증 확인 후에만 요구사항 접수·에이전트 스폰 진행
+
+상세는 [`docs/orchestrator-playbook.md`](docs/orchestrator-playbook.md) §1.1 체크리스트 0번 참조.
+
 ## Development Agent Team (22 에이전트 · 6 레인 + 2 Cross-cutting)
 
 ```

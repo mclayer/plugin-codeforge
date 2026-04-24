@@ -31,7 +31,13 @@ related:
 
 사용자 요구사항 접수 직후 아래를 순서대로 수행한다. 하나라도 생략하면 이후 단계에서 컨텍스트 drift·중복 작업 발생.
 
-1. **메모리 로드**: `~/.claude/projects/-Users-mccho-workspace-mctrader/memory/MEMORY.md` — 이전 세션 feedback·project·reference 기록 확인
+**0. Atlassian MCP 인증 확인 (모든 작업 선행 · 의무)**
+   - deferred tool 리스트에 `mcp__atlassian__*` 노출 여부 확인 (최소 `getJiraIssue`)
+   - 미노출 시 `~/.claude/mcp-needs-auth-cache.json` Read → `plugin:atlassian:atlassian` 키 존재 시 "needs auth" 확정
+   - **미인증 판정 시 즉시 사용자에게 `/mcp` 재인증 요청**, 응답 전까지 **모든 작업 중단** (요구사항 해석·에이전트 스폰·파일 수정·커밋 전부 금지)
+   - Atlassian은 mctrader 아키텍처 핵심 의존성 (Story 페이지·ADR·FIX Ledger·Jira workflow 전부)이므로 우회·스킵 불가
+
+1. **메모리 로드**: `~/.claude/projects/-Users-1111971-workspace-mctrader/memory/MEMORY.md` — 이전 세션 feedback·project·reference 기록 확인
 2. **Jira 활성 Story 조회**: `searchJiraIssuesUsingJql("project = MCTRADER AND statusCategory != Done")`
 3. **ADR 목록 확인**: 세션 내 첫 설계 결정 직전에만 `searchConfluenceUsingCql("label='adr' AND space='MCTRADER'")`
 4. **태스크 분류**:
