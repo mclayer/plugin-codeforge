@@ -1,63 +1,70 @@
 # ADR (Architecture Decision Record) 템플릿
 
-설계 결정마다 Confluence `<SPACE_KEY>` 공간의 "ADR" 트리 아래 카테고리 parent 페이지에 신규 ADR 페이지를 생성. **레포 내 ADR markdown 중복 관리 금지** — Confluence가 유일한 원본.
+설계 결정마다 `docs/adr/ADR-NNN-<slug>.md` 파일을 신규 생성. flat 디렉토리 + frontmatter `category:` 필드로 분류. CODEOWNERS가 `docs/adr/**` → architect team 자동 review 강제 → ADR 변경은 Phase 1 PR로 architect 결재 필수.
 
 **사용 대상**: ArchitectAgent (DocsAgent 경유 의뢰), PMOAgent (ADR 후보 발의 — `status=Proposed` draft), DocsAgent (생성·갱신 단독 실행)
 
 ---
 
-## 페이지 메타
+## 파일 메타
 
-- **제목**: `ADR-NNN: <결정>` (번호 = 기존 최대 + 1)
-- **label**: `adr` 필수. 카테고리별 보조 label(예: `adr-architecture`, `adr-data-storage`) 병기 가능
-- **Parent page**: 카테고리 parent (Team & Process / Architecture / Data & Storage / Infrastructure / UX / `<domain-category>`)
+- **위치**: `docs/adr/ADR-NNN-<slug>.md` (flat). NNN = 기존 최대 + 1, slug = kebab-case 결정 요약
+- **frontmatter**: `category:` 필수 (Architecture / Data & Storage / Infrastructure / Team & Process / UX / `<domain-category>`). status·date·related_files도 frontmatter
 - **신규 ADR 없이 기존 ADR 결정 변경 금지** — 변경하려면 새 ADR에서 이전 ADR을 supersede
 
 ---
 
-## 페이지 상단 메타데이터 테이블 (필수)
+## 파일 frontmatter (필수)
 
-| 항목 | 값 |
-|------|----|
-| ADR 번호 | NNN |
-| 상태 | Proposed / Accepted / Deprecated / Superseded-by-ADR-MMM |
-| 카테고리 | Architecture / Data & Storage / Infrastructure / Team & Process / UX / `<domain-category>` |
-| 결정일 | YYYY-MM-DD |
-| 관련 파일 | `path/to/file.ext`, `path/to/other.ext` |
-| Related Stories | `<PROJECT_KEY>-N`, `<PROJECT_KEY>-M` |
+```yaml
+---
+adr_number: NNN
+title: <결정>
+status: Proposed | Accepted | Deprecated | Superseded-by-ADR-MMM
+category: Architecture | Data & Storage | Infrastructure | Team & Process | UX | <domain-category>
+date: YYYY-MM-DD
+related_files:
+  - path/to/file.ext
+  - path/to/other.ext
+related_stories:
+  - <STORY_KEY_PREFIX>-N
+  - <STORY_KEY_PREFIX>-M
+---
+```
 
 ---
 
 ## 본문 섹션 (고정 순서)
 
-### ## 상태
-`Proposed` / `Accepted` / `Deprecated` / `Superseded by ADR-MMM`
-(하단 "Superseded by ..." 명시 시 새 ADR 링크 추가)
+```markdown
+# ADR-NNN: <결정>
 
-### ## 컨텍스트
+## 상태
+`Proposed` / `Accepted` / `Deprecated` / `Superseded by ADR-MMM`
+(하단 "Superseded by ..." 명시 시 새 ADR 파일 링크 추가)
+
+## 컨텍스트
 결정의 배경 · 문제 정의 · 제약 조건. Why this decision is needed now.
 
-### ## 결정
+## 결정
 구체 결정안. **동사·능동태**로 서술 ("X를 도입한다" / "Y를 금지한다"). 모호한 표현(고려·지향) 금지.
 
-### ## 결과
+## 결과
 결정의 긍정·부정·trade-off. 영향 받는 코드·레이어·운영 경계.
 
-### ## 다이어그램 (선택)
-Confluence code block `language=mermaid`:
+## 다이어그램 (선택)
 
-````markdown
-```mermaid
+\`\`\`mermaid
 graph LR
     Client --> API
     API --> Service
     Service --> Port
     Port --> Adapter
-```
-````
+\`\`\`
 
-### ## 관련 파일
+## 관련 파일
 변경 또는 참조되는 파일 경로. Consumer project 기준 relative path.
+```
 
 ---
 
@@ -65,11 +72,11 @@ graph LR
 
 ```
 1. 카테고리 판정 — 결정 성격에 따라 Architecture / Data & Storage / Infrastructure / Team & Process / UX / <domain> 중 선택
-2. 카테고리 parent pageId 조회 (searchConfluenceUsingCql)
-3. 기존 최대 ADR 번호 + 1 (searchConfluenceUsingCql "label='adr'" ORDER BY ID DESC)
-4. createConfluencePage(parentId=<category-parent>, title="ADR-NNN: <결정>", labels=["adr", "<category-label>"])
-5. 본문: 위 메타 테이블 + 상태/컨텍스트/결정/결과/다이어그램/관련 파일 섹션
-6. 관련 Story 페이지 §3 "관련 ADR" 항목에 링크 추가 (updateConfluencePage)
+2. 기존 최대 ADR 번호 조회: `Glob(docs/adr/ADR-*.md)` 후 max + 1
+3. slug 결정 (kebab-case, 결정 요약 짧게)
+4. `Write(docs/adr/ADR-NNN-<slug>.md)` 호출, frontmatter + 본문 작성
+5. Phase 1 PR에 commit (architect team CODEOWNERS auto-review)
+6. 관련 Story file §3 "관련 ADR" 항목에 링크 추가 — `Edit(docs/stories/<KEY>.md)`
 ```
 
 ## PMOAgent ADR 후보 발의
@@ -97,4 +104,4 @@ trigger: "최근 N Story에서 반복 발견된 {패턴}"
 ...
 ```
 
-DocsAgent가 write queue 파일을 drain → `status=Proposed`로 ADR 페이지 생성. 다음 Story 설계 진입 시 Architect가 검토해 `status=Accepted` 전이 또는 기각.
+DocsAgent가 write queue 파일을 drain → `Write(docs/adr/ADR-NNN-<slug>.md)` 호출, frontmatter `status: Proposed`로 commit. 다음 Story 설계 진입 시 Architect가 검토해 `status: Accepted` 전이 또는 기각.
