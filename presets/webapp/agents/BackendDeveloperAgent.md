@@ -60,4 +60,4 @@ Consumer overlay가 언어·프레임워크·경로 관습 구체화. 본 에이
 - **superpowers:test-driven-development**: QADev 산출물과 파일 분리(tests/** vs src/**) — 경합 없이 병렬
 
 ## 문서화 표준
-Jira/Confluence/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](../../../agents/DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](../../../agents/DocsAgent.md) 참조.
