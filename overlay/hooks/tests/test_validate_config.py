@@ -24,18 +24,20 @@ SCRIPT = HOOKS_DIR / "validate_config.py"
 
 def _minimal_valid_data() -> dict:
     return {
-        "project": {"name": "x", "repo": "github.com/a/b"},
-        "atlassian": {
-            "site": "acme.atlassian.net",
-            "confluence": {
-                "space_key": "AA",
-                "stories_parent_page_id": 123,
-                "domain_knowledge_parent_page_id": 124,
-                "adr_root_page_id": 125,
+        "project": {"name": "x"},
+        "github": {
+            "org": "acme",
+            "repo": "task-manager",
+            "default_branch": "main",
+            "pr_title_prefix_template": "[{key}] {title}",
+            "story_key_prefix": "TM",
+            "codeowners": {
+                "architect_team": "@acme/architects",
+                "domain_expert_team": "@acme/domain-experts",
             },
-            "jira": {"project_key": "AA"},
+            "discussions": {"domain_kb_category": "Domain Q&A"},
+            "milestone": {"epic_naming_pattern": "Epic-{key}-{slug}"},
         },
-        "github": {"pr_title_prefix_template": "[{project_key}-{story_number}] {title}"},
     }
 
 
@@ -43,9 +45,8 @@ class TestValidateMinimal:
     def test_minimal_required_fields_valid(self):
         assert vc.validate(_minimal_valid_data()) == []
 
-    def test_with_optional_fields_valid(self):
+    def test_with_optional_labels_valid(self):
         data = _minimal_valid_data()
-        data["atlassian"]["jira"]["transitions"] = {"to_in_progress": 21, "to_done": 31}
         data["labels"] = {"components": ["api", "ui"]}
         assert vc.validate(data) == []
 
@@ -67,35 +68,65 @@ class TestMissingRequiredFields:
         errs = vc.validate(data)
         assert any("project.name" in e for e in errs)
 
-    def test_missing_atlassian_site(self):
+    def test_missing_github_section(self):
         data = _minimal_valid_data()
-        del data["atlassian"]["site"]
+        del data["github"]
         errs = vc.validate(data)
-        assert any("atlassian.site" in e for e in errs)
+        assert any("github" in e for e in errs)
 
-    def test_missing_space_key(self):
+    def test_missing_github_org(self):
         data = _minimal_valid_data()
-        del data["atlassian"]["confluence"]["space_key"]
+        del data["github"]["org"]
         errs = vc.validate(data)
-        assert any("space_key" in e for e in errs)
+        assert any("github.org" in e for e in errs)
 
-    def test_missing_stories_parent_page_id(self):
+    def test_missing_github_repo(self):
         data = _minimal_valid_data()
-        del data["atlassian"]["confluence"]["stories_parent_page_id"]
+        del data["github"]["repo"]
         errs = vc.validate(data)
-        assert any("stories_parent_page_id" in e for e in errs)
+        assert any("github.repo" in e for e in errs)
 
-    def test_missing_jira_project_key(self):
+    def test_missing_default_branch(self):
         data = _minimal_valid_data()
-        del data["atlassian"]["jira"]["project_key"]
+        del data["github"]["default_branch"]
         errs = vc.validate(data)
-        assert any("jira.project_key" in e for e in errs)
+        assert any("github.default_branch" in e for e in errs)
 
-    def test_missing_github_template(self):
+    def test_missing_story_key_prefix(self):
+        data = _minimal_valid_data()
+        del data["github"]["story_key_prefix"]
+        errs = vc.validate(data)
+        assert any("story_key_prefix" in e for e in errs)
+
+    def test_missing_codeowners_architect_team(self):
+        data = _minimal_valid_data()
+        del data["github"]["codeowners"]["architect_team"]
+        errs = vc.validate(data)
+        assert any("architect_team" in e for e in errs)
+
+    def test_missing_codeowners_domain_expert_team(self):
+        data = _minimal_valid_data()
+        del data["github"]["codeowners"]["domain_expert_team"]
+        errs = vc.validate(data)
+        assert any("domain_expert_team" in e for e in errs)
+
+    def test_missing_pr_title_template(self):
         data = _minimal_valid_data()
         del data["github"]["pr_title_prefix_template"]
         errs = vc.validate(data)
         assert any("pr_title_prefix_template" in e for e in errs)
+
+    def test_missing_discussions_category(self):
+        data = _minimal_valid_data()
+        del data["github"]["discussions"]["domain_kb_category"]
+        errs = vc.validate(data)
+        assert any("domain_kb_category" in e for e in errs)
+
+    def test_missing_milestone_pattern(self):
+        data = _minimal_valid_data()
+        del data["github"]["milestone"]["epic_naming_pattern"]
+        errs = vc.validate(data)
+        assert any("epic_naming_pattern" in e for e in errs)
 
 
 class TestTypeChecks:
@@ -111,32 +142,17 @@ class TestTypeChecks:
         errs = vc.validate(data)
         assert any("project.name" in e for e in errs)
 
-    def test_pageid_accepts_both_int_and_str(self):
-        d1 = _minimal_valid_data()
-        d1["atlassian"]["confluence"]["adr_root_page_id"] = 12345
-        assert vc.validate(d1) == []
-
-        d2 = _minimal_valid_data()
-        d2["atlassian"]["confluence"]["adr_root_page_id"] = "12345"
-        assert vc.validate(d2) == []
-
-    def test_pageid_boolean_rejected(self):
+    def test_org_empty_invalid(self):
         data = _minimal_valid_data()
-        data["atlassian"]["confluence"]["adr_root_page_id"] = True
+        data["github"]["org"] = ""
         errs = vc.validate(data)
-        assert any("adr_root_page_id" in e for e in errs)
+        assert any("github.org" in e for e in errs)
 
     def test_components_must_be_list_of_strings(self):
         data = _minimal_valid_data()
         data["labels"] = {"components": [1, 2, 3]}
         errs = vc.validate(data)
         assert any("components" in e for e in errs)
-
-    def test_transitions_value_must_be_int(self):
-        data = _minimal_valid_data()
-        data["atlassian"]["jira"]["transitions"] = {"to_done": "31"}  # string not int
-        errs = vc.validate(data)
-        assert any("transitions" in e for e in errs)
 
 
 # -----------------------------------------------------------------------------
@@ -167,18 +183,19 @@ class TestE2E:
                 """\
                 project:
                   name: sample
-                  repo: github.com/a/b
-                atlassian:
-                  site: acme.atlassian.net
-                  confluence:
-                    space_key: SA
-                    stories_parent_page_id: 1
-                    domain_knowledge_parent_page_id: 2
-                    adr_root_page_id: 3
-                  jira:
-                    project_key: SA
                 github:
-                  pr_title_prefix_template: "[{project_key}-{story_number}] {title}"
+                  org: acme
+                  repo: sample
+                  default_branch: main
+                  pr_title_prefix_template: "[{key}] {title}"
+                  story_key_prefix: SA
+                  codeowners:
+                    architect_team: "@acme/architects"
+                    domain_expert_team: "@acme/domain-experts"
+                  discussions:
+                    domain_kb_category: "Domain Q&A"
+                  milestone:
+                    epic_naming_pattern: "Epic-{key}-{slug}"
                 """
             ),
             encoding="utf-8",
@@ -217,4 +234,7 @@ class TestE2E:
         ]:
             assert yaml_path.exists(), f"fixture missing: {yaml_path}"
             res = _run(str(yaml_path))
+            # Examples have <REPLACE — ...> placeholders, which are non-empty strings,
+            # so validation passes (placeholders treated as valid filler, not enforced
+            # value validation).
             assert res.returncode == 0, f"validator failed on {yaml_path}: {res.stderr}"
