@@ -51,4 +51,4 @@ Consumer overlay가 담당 경로·기술 스택·데이터 포맷을 구체화.
 - **superpowers:systematic-debugging**: 파이프라인 장애 근본 원인 추적
 
 ## 문서화 표준
-Jira/Confluence/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

@@ -52,4 +52,4 @@ DeveloperPLAgent 산하 기본 구현 담당자. 프로젝트 shape에 관계없
 - 언어별 LSP (pyright-lsp, typescript-lsp 등): 편집 루프 타입 진단 — consumer overlay가 지정
 
 ## 문서화 표준
-Jira/Confluence/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

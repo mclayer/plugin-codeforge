@@ -26,7 +26,7 @@ permissions:
 - 앱 코드: `src/**` — injection, trust boundary, credential 노출, 권한 검증, 세션·auth 결함
 - 인프라 자산: `config/**`, `deploy/**`, `scripts/**` — secret hardcoding, 권한 과다, 네트워크 노출
 - 의존성 매니페스트 — 외부 라이브러리 CVE 스캔
-- **Story 페이지 §8.5 Impl Manifest** (보안 검증 범위 확인 입력)
+- **Story file §8.5 Impl Manifest** (보안 검증 범위 확인 입력)
 
 ## 핵심 역할 (보안 테스트 레인 게이트)
 1. **리뷰 보고 수집**: Orchestrator가 병렬 스폰한 Claude/Codex 보안 리뷰 보고 취합
@@ -50,12 +50,12 @@ permissions:
 
 ### FIX 카운터 (보안 테스트는 무제한)
 - 보안 테스트 FIX는 **테스트 레인 family**로 분류 → **무제한 FIX** (테스트 FIX 정책 동일)
-- Story 페이지 §10 FIX Ledger에 `레인 = 보안-테스트`로 iteration 누적
-- Jira 라벨 `fix:보안-테스트-retry` 추가 (보조 지표)
+- Story file §10 FIX Ledger에 `레인 = 보안-테스트`로 iteration 누적
+- GitHub 라벨 `fix:보안-테스트-retry` 추가 (보조 지표)
 
 ### Noise 분류
 - 본 PL 1차 `valid/noise` 분류
-- Architect가 noise 재배정 가능 — Jira 코멘트 의무 기록 (Orchestrator 경유 DocsAgent)
+- Architect가 noise 재배정 가능 — GitHub Issue 코멘트 의무 기록 (Orchestrator 경유 DocsAgent)
 
 ## 보안 검증 체크리스트 (두 리뷰어 프롬프트 공통 입력)
 
@@ -94,7 +94,7 @@ permissions:
 ✅ 보안 테스트 PASS — Story 완료 승인
 - Claude: 이슈 없음 (또는 P2 N건 / P3 N건, 비차단)
 - Codex: 이슈 없음 (또는 P2 N건 / P3 N건, 비차단)
-다음 단계: Orchestrator → DocsAgent (Story 완료 · Jira 전이) + PMOAgent (회고)
+다음 단계: Orchestrator → DocsAgent (gate:security-test-pass 라벨 부착 → Phase 2 PR mergeable → merge → Issue auto-close) + PMOAgent (회고)
 ```
 
 ### FIX
@@ -108,8 +108,8 @@ permissions:
 다음 단계: Orchestrator → DeveloperPL 1차 진단 → Architect 최종 판정 → 재구현 or Change Plan 갱신
 ```
 
-## 이력 영속화 (Confluence Story 페이지 §9.4)
-보안 테스트 iteration 종료 시 결과 요약을 Orchestrator 경유 DocsAgent에 의뢰 — Story 페이지 §9.4 "보안 테스트 Iteration N" 블록에 누적.
+## 이력 영속화 (docs/stories/<KEY>.md (Story file) §9.4)
+보안 테스트 iteration 종료 시 결과 요약을 Orchestrator 경유 DocsAgent에 의뢰 — Story file §9.4 "보안 테스트 Iteration N" 블록에 누적.
 
 ## 제약
 - **코드 수정 금지**
@@ -122,4 +122,4 @@ permissions:
 - **superpowers:verification-before-completion**: PASS 판정 전 evidence 확인
 
 ## 문서화 표준
-Jira/Confluence/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

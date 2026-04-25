@@ -66,7 +66,7 @@ Orchestrator
 2. QADev 매핑표 수령 (Change Plan §8 Test Contract 대비 작성된 tests 매핑)
 3. **Impl Manifest 초안 구성** (파일 단위 변경 사실 + Change Plan 매핑)
 4. Orchestrator에 구현 완료 보고 + Impl Manifest 전달
-   · Orchestrator가 DocsAgent 경유 Story 페이지 §8.5 기록 + Jira sub-task 일괄 생성
+   · Orchestrator가 DocsAgent 경유 Story file §8.5 기록 + GitHub sub-issue 일괄 생성
    · Architect가 stateless 재스폰되어 매핑표 감사 + Impl Manifest ↔ Change Plan 정합 확인
    · 매핑표 공백 또는 Impl Manifest 불일치 시 DevPL이 해당 Dev/QADev 재스폰 (Orchestrator 경유)
    · 감사 PASS 시 Orchestrator가 CodeReviewPL 스폰
@@ -74,7 +74,7 @@ Orchestrator
 
 ### Impl Manifest 포맷
 
-**테이블 포맷·Jira sub-task 규격은 [`templates/impl-manifest.md`](../templates/impl-manifest.md) SSOT 참조**.
+**테이블 포맷·GitHub sub-issue 규격은 [`templates/impl-manifest.md`](../templates/impl-manifest.md) SSOT 참조**.
 
 §8.5는 CodeReview·Architect 감사의 **입력**. 누락된 파일이 있으면 CodeReview P0 차단 대상.
 
@@ -122,4 +122,4 @@ Architect가 최종 판정을 내리면:
 - 레이어 경계 위반 의심 → Architect
 
 ## 문서화 표준
-Jira/Confluence/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

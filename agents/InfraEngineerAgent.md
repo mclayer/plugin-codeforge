@@ -46,4 +46,4 @@ Consumer overlay가 실제 배포 방식·설정 포맷·타겟 플랫폼을 구
 - TestAgent가 프로젝트 러너로 인프라 테스트 실행 — 인프라 테스트도 프로젝트 러너 호환 형식 전제
 
 ## 문서화 표준
-Jira/Confluence/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

@@ -24,7 +24,7 @@ permissions:
 - 앱 코드: `src/**`
 - 인프라 자산: `config/**`, `deploy/**`, `scripts/**`
 - 테스트 코드: `tests/**` (infra 포함)
-- **Story 페이지 §8.5 Impl Manifest** (파일 단위 매핑 검증 입력 — 누락된 파일 있으면 P0)
+- **Story file §8.5 Impl Manifest** (파일 단위 매핑 검증 입력 — 누락된 파일 있으면 P0)
 
 ## 핵심 역할 (구현 리뷰 레인 게이트)
 1. **리뷰 보고 수집**: Orchestrator가 병렬 스폰한 Claude/Codex 보고 취합
@@ -49,7 +49,7 @@ permissions:
 
 ### Noise 분류
 - 본 PL 1차 `valid/noise` 분류
-- Architect가 noise 재배정 가능 — Jira 코멘트 의무 기록 (오케스트레이터 경유 DocsAgent)
+- Architect가 noise 재배정 가능 — GitHub Issue 코멘트 의무 기록 (오케스트레이터 경유 DocsAgent)
 - 재배정 기록: `[리뷰 종합] CodeReviewPL → Architect reclassify: <이유>`
 
 ## FIX 루프 에스컬레이션 경로 (원인 판정 규칙과 일관)
@@ -113,8 +113,8 @@ ClaudeCodeReview · CodexCodeReview 모두 **정규화된 severity 스키마**(P
 - 권장: 사용자 지시 대기
 ```
 
-## 이력 영속화 (Confluence Story 페이지 §9)
-구현 리뷰 iteration 종료 시 결과 요약을 Orchestrator 경유 DocsAgent에 의뢰 — Story 페이지 §9 "구현 리뷰 Iteration N" 블록에 누적.
+## 이력 영속화 (docs/stories/<KEY>.md (Story file) §9)
+구현 리뷰 iteration 종료 시 결과 요약을 Orchestrator 경유 DocsAgent에 의뢰 — Story file §9 "구현 리뷰 Iteration N" 블록에 누적.
 
 ## 제약
 - **테스트 레인 판정 관여 금지** — TestAgent PASS/FAIL은 Orchestrator가 직접 수령
@@ -128,4 +128,4 @@ ClaudeCodeReview · CodexCodeReview 모두 **정규화된 severity 스키마**(P
 - **superpowers:verification-before-completion**: PASS 판정 전 evidence 확인
 
 ## 문서화 표준
-Jira/Confluence/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

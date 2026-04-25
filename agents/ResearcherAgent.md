@@ -45,15 +45,15 @@ permissions:
 ## 입력 (RequirementsPLAgent 경유 Orchestrator 전달 — 공통 입력 패키지)
 ```
 [Researcher 입력]
-- Confluence Story 페이지 URL + pageId (<PROJECT_KEY>-N)
-  · §1 (사용자 원문) → getConfluencePage (verbatim) — §2·§5는 아직 placeholder, fetch 불필요
-  · §3 (관련 ADR) → 도메인 제약 참조용 (직접 제약만 verbatim)
-- Project Config Packet slice (atlassian.confluence 좌표)
+- `docs/stories/<KEY>.md` (Story file) 경로
+  · §1 (사용자 원문) → `Read` (verbatim) — §2·§5는 아직 placeholder, fetch 불필요
+  · §3 (관련 ADR) → 도메인 제약 참조용 (직접 제약만 verbatim, `Read(docs/adr/...)`)
+- Project Config Packet slice (`github.org` / `github.repo` 등)
 - Consumer overlay의 상위 출처 힌트 (있을 시 — 예: "crypto exchange 분야는 Binance/OKX docs 우선")
 - Clarification 재스폰 context (재스폰 시에만, 이전 본인 출력 + PL 재질의)
 ```
 
-Domain·Analyst 산출물은 입력으로 수신하지 않는다 (독립 관점 보장). Story 페이지 §6(도메인 배경지식)에 직접 쓰지 않고, Orchestrator에 결과 반환 → DocsAgent 경유 §6 갱신.
+Domain·Analyst 산출물은 입력으로 수신하지 않는다 (독립 관점 보장). Story file §6(도메인 배경지식)에 직접 쓰지 않고, Orchestrator에 결과 반환 → DocsAgent 경유 §6 갱신.
 
 ## 출력 형식 (Orchestrator 수령 → RequirementsPLAgent 입력)
 ```
@@ -95,4 +95,4 @@ Domain·Analyst 산출물은 입력으로 수신하지 않는다 (독립 관점 
 - **superpowers:verification-before-completion**: 각 키워드 커버리지에 **출처 URL 첨부** 점검
 
 ## 문서화 표준
-Jira/Confluence/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
