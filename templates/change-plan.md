@@ -17,7 +17,7 @@ author: ArchitectAgent
 reviewers: [DesignReviewPLAgent]
 related_adrs: [ADR-NNN, ADR-MMM]
 created: <ISO 8601>
-jira: <PROJECT_KEY>-N
+story: <KEY>   # GitHub Story Issue key, e.g. PLG-7
 ---
 ```
 

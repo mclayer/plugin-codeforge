@@ -37,10 +37,10 @@ permissions:
 
 ## 입력 컨텍스트 구성 (RequirementsPLAgent가 준비해 전달 — 공통 입력 패키지)
 
-**주 입력**: Confluence Story 페이지 URL (Orchestrator가 요구사항 접수 시 DocsAgent 경유 생성한 `<PROJECT_KEY>-N` 페이지). 페이지 생성 시점에 §1(사용자 원문)만 verbatim 채워진 상태 — §2(Domain)·§5(Analyst 본인)·§6(Researcher)는 모두 placeholder (세 에이전트 병렬 실행 결과로 동시 기록될 예정).
+**주 입력**: `docs/stories/<KEY>.md` (Story file, Orchestrator가 요구사항 접수 시 story-init.yml Action 또는 DocsAgent 경유 생성). 파일 생성 시점에 §1(사용자 원문)만 verbatim 채워진 상태 — §2(Domain)·§5(Analyst 본인)·§6(Researcher)는 모두 placeholder (세 에이전트 병렬 실행 결과로 동시 기록될 예정).
 
 프롬프트 포함 (DomainAgent·Researcher와 공통 — 타 에이전트 산출물 제외):
-1. **Story 페이지 URL + pageId** — `mcp__atlassian__getConfluencePage`로 §1 fetch
+1. **Story file 경로** — `Read(docs/stories/<KEY>.md)`로 §1 fetch
 2. **관련 ADR** — §3 링크 목록 (Orchestrator가 공통 입력 패키지로 선제 fetch). 직접 제약만 verbatim (다른 에이전트의 ADR 해석은 포함하지 않음)
 3. 관련 코드 경로 (§4, 지도 수준 — 심층 분석은 Mapper 영역)
 4. 이전 스레드 합의사항 (§10 FIX Ledger)
@@ -117,4 +117,4 @@ rm -f "$OUT"
 - `superpowers:verification-before-completion`: "사용자 확인 필요" 해소 점검
 
 ## 문서화 표준
-Jira/Confluence/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

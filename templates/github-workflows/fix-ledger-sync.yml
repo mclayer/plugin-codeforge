@@ -1,0 +1,94 @@
+name: Fix Ledger Sync
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/stories/**'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - name: Detect new §10 rows
+        id: detect
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const path = require('path');
+            const { execSync } = require('child_process');
+
+            const changed = execSync(`git diff --name-only HEAD^ HEAD -- 'docs/stories/*.md'`)
+                            .toString().trim().split('\n').filter(Boolean);
+
+            const events = [];
+            for (const f of changed) {
+              const diff = execSync(`git diff HEAD^ HEAD -- ${f}`).toString();
+              const lines = diff.split('\n');
+              let inS10 = false;
+              for (const line of lines) {
+                if (line.match(/^\+##\s*10\./)) inS10 = true;
+                else if (line.match(/^\+##\s*11\./)) inS10 = false;
+                else if (inS10 && line.startsWith('+|') && !line.match(/^\+\|\s*Iter/) && !line.match(/^\+\|-{3,}/)) {
+                  const cells = line.substring(1).split('|').map(c => c.trim()).filter(Boolean);
+                  if (cells.length >= 6) {
+                    events.push({
+                      file: f,
+                      key: path.basename(f, '.md'),
+                      iter: cells[0],
+                      lane: cells[2],
+                      cause: cells[4],
+                      reset: cells[6] || ''
+                    });
+                  }
+                }
+              }
+            }
+            core.setOutput('events', JSON.stringify(events));
+
+      - name: Mirror to Issue + attach fix label
+        if: steps.detect.outputs.events != '[]' && steps.detect.outputs.events != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const events = JSON.parse('${{ steps.detect.outputs.events }}');
+            for (const e of events) {
+              const { data: issues } = await github.rest.search.issuesAndPullRequests({
+                q: `repo:${context.repo.owner}/${context.repo.repo} is:issue label:type:story in:title "${e.key}"`
+              });
+              if (issues.total_count === 0) continue;
+              const issueNumber = issues.items[0].number;
+
+              const resetNote = e.reset ? `\n**RESET marker**: ${e.reset}` : '';
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issueNumber,
+                body: `[FIX #${e.iter}] **${e.lane}** — 원인: ${e.cause}${resetNote}\n\nSource: \`${e.file}\` §10`
+              });
+
+              const laneToLabel = {
+                '설계-리뷰': 'fix:설계-리뷰-retry',
+                '구현-리뷰': 'fix:구현-리뷰-retry',
+                '구현-테스트': 'fix:구현-테스트-retry',
+                '보안-테스트': 'fix:보안-테스트-retry'
+              };
+              const label = laneToLabel[e.lane];
+              if (label) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issueNumber,
+                  labels: [label]
+                });
+              }
+            }

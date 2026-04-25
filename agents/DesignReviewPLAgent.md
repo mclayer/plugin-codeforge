@@ -22,8 +22,8 @@ permissions:
 
 ## 리뷰 대상
 - `docs/change-plans/<slug>.md` (Change Plan 본문)
-- Confluence Story 페이지 §7 (Change Plan 요약 미러링 + RefactorAgent 현재 구조 분석)
-- Confluence Story 페이지 §3 관련 ADR (정합성 체크 입력)
+- docs/stories/<KEY>.md (Story file) §7 (Change Plan 요약 미러링 + RefactorAgent 현재 구조 분석)
+- docs/stories/<KEY>.md (Story file) §3 관련 ADR (정합성 체크 입력)
 - Change Plan §8 Test Contract (QADev가 이행할 계약)
 
 ## 핵심 역할 (설계 리뷰 레인 게이트)
@@ -49,7 +49,7 @@ permissions:
 
 ### Noise 분류
 - 본 PL이 1차 `valid/noise` 분류
-- Architect가 noise 재배정 가능 — 과정을 Jira 코멘트 의무 기록 (오케스트레이터 경유 DocsAgent)
+- Architect가 noise 재배정 가능 — 과정을 GitHub Issue 코멘트 의무 기록 (오케스트레이터 경유 DocsAgent)
 - 재배정 기록 형식: `[리뷰 종합] DesignReviewPL → Architect reclassify: <이유>`
 
 ## 설계 리뷰 체크리스트 (두 리뷰어 프롬프트 공통 입력)
@@ -107,7 +107,7 @@ ClaudeDesignReviewAgent 보고는 외부 의존성 없으므로 **항상 필수*
 ```
 
 ## 이력 영속화
-설계 리뷰 iteration 종료 시 결과 요약을 Orchestrator 경유로 DocsAgent에 의뢰 — Story 페이지 §9 "설계 리뷰 Iteration N" 블록에 누적.
+설계 리뷰 iteration 종료 시 결과 요약을 Orchestrator 경유로 DocsAgent에 의뢰 — Story file §9 "설계 리뷰 Iteration N" 블록에 누적.
 
 ## 제약
 - **Architect 직접 호출 금지** — FIX 회귀는 Orchestrator 경유
@@ -116,4 +116,4 @@ ClaudeDesignReviewAgent 보고는 외부 의존성 없으므로 **항상 필수*
 - **구현 리뷰 레인 관여 금지** — 대상이 코드인 경우 CodeReviewPLAgent 담당
 
 ## 문서화 표준
-Jira/Confluence/docs write 권한 없음. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

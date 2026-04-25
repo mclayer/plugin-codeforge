@@ -1,24 +1,28 @@
-# CodeForge 플러그인 자체의 dev를 위한 Atlassian/GitHub 좌표.
+# CodeForge 플러그인 자체의 dev를 위한 GitHub 좌표.
 # Dog-food: 플러그인이 스스로를 consumer로 쓰는 상황.
 # Schema: docs/project-config-schema.md
 
 project:
   name: codeforge
-  repo: github.com/mctrader/plugin-codeforge
-
-atlassian:
-  site: mctrader.atlassian.net
-  confluence:
-    space_key: PLG
-    stories_parent_page_id: 1409247          # https://mctrader.atlassian.net/wiki/spaces/PLG/pages/1409247
-    domain_knowledge_parent_page_id: 1441815 # https://mctrader.atlassian.net/wiki/spaces/PLG/pages/1441815
-    adr_root_page_id: 1409266                # https://mctrader.atlassian.net/wiki/spaces/PLG/pages/1409266
-  jira:
-    project_key: PLG
 
 github:
-  pr_title_prefix_template: "[{project_key}-{story_number}] {title}"
+  org: mctrader
+  repo: plugin-codeforge
+  default_branch: main
+
+  pr_title_prefix_template: "[{key}] {title}"
+  story_key_prefix: PLG
+
+  codeowners:
+    architect_team: "@mctrader/architects"
+    domain_expert_team: "@mctrader/domain-experts"
+
+  discussions:
+    domain_kb_category: "Domain Q&A"
+
+  milestone:
+    epic_naming_pattern: "Epic-{key}-{slug}"
 
 labels:
   components:
-    - codeforge  # 현 플러그인. 향후 다른 플러그인도 component 라벨로 같은 PLG project 공유
+    - codeforge  # 현 플러그인. 향후 다른 plugin도 component 라벨로 같은 repo 공유

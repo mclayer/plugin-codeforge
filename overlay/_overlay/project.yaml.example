@@ -5,29 +5,27 @@
 
 project:
   name: "<REPLACE — e.g. task-manager>"
-  repo: "<REPLACE — e.g. github.com/acme/task-manager>"
-
-atlassian:
-  site: "<REPLACE — e.g. acme.atlassian.net>"
-
-  confluence:
-    space_key: "<REPLACE — e.g. TM>"
-    stories_parent_page_id: "<REPLACE — Story 페이지들의 parent pageId (int 또는 string)>"
-    domain_knowledge_parent_page_id: "<REPLACE — Domain Knowledge 루트 pageId>"
-    adr_root_page_id: "<REPLACE — ADR 루트 pageId>"
-
-  jira:
-    project_key: "<REPLACE — e.g. TM>"
-    # transitions 섹션은 선택. 없으면 DocsAgent가 런타임에
-    # getTransitionsForJiraIssue로 동적 획득. 고정 매핑이
-    # 필요하거나 transition 이름이 비표준이면 아래 주석 해제.
-    #
-    # transitions:
-    #   to_in_progress: 21
-    #   to_done: 31
 
 github:
-  pr_title_prefix_template: "[{project_key}-{story_number}] {title}"
+  org: "<REPLACE — GitHub org 또는 user, e.g. acme>"
+  repo: "<REPLACE — repo 이름, e.g. task-manager>"
+  default_branch: main
+
+  # PR 제목 prefix 템플릿. {key}·{title} placeholder 지원.
+  pr_title_prefix_template: "[{key}] {title}"
+
+  # Issue 번호 prefix. e.g. "TM" → "TM-7"
+  story_key_prefix: "<REPLACE — e.g. TM>"
+
+  codeowners:
+    architect_team: "<REPLACE — e.g. @acme/architects>"
+    domain_expert_team: "<REPLACE — e.g. @acme/domain-experts>"
+
+  discussions:
+    domain_kb_category: "Domain Q&A"
+
+  milestone:
+    epic_naming_pattern: "Epic-{key}-{slug}"
 
 labels:
   components:

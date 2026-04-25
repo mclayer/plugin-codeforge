@@ -5,6 +5,60 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.8.0] — 2026-04-26 (BREAKING — Atlassian 제거 + GitHub 전환)
+
+### Breaking
+- **Atlassian backend 완전 제거** (Confluence/Jira). consumer는 GitHub-only로만 사용 가능
+- `atlassian.*` project.yaml 스키마 → `github.*`로 교체 (org / repo / default_branch / pr_title_prefix_template / story_key_prefix / codeowners / discussions / milestone)
+- 24 agents의 atlassian MCP 권한 제거. DocsAgent는 `mcp__github__*` write + gh CLI Bash fallback
+- 필수 의존성: MCP `github` (`atlassian` 대체), 플러그인 4종 (`github@claude-plugins-official` 격상), CLI 2종 (`gh` 추가)
+- 권장 플러그인 5종 → 4종 (`atlassian@claude-plugins-official` 제거, `github@claude-plugins-official`은 격상)
+
+### Architecture
+- **Story 페이지 → `docs/stories/<KEY>.md`** (single-file SSOT, §1-11)
+- **ADR → `docs/adr/ADR-NNN-<slug>.md`** (flat, frontmatter `category:`)
+- **Domain KB → `docs/domain-knowledge/<area>/<topic>.md`** (계층)
+- **Story 1건 = PR 2건** (Phase 1 docs / Phase 2 code+docs append)
+- **GitHub Workflow 자동화 6종**: story-init / phase-label-invariant / story-section-1-immutable / subissue-from-impl-manifest / phase-gate-mergeable / fix-ledger-sync
+- **보안 테스트 1차 layer**: Dependabot + CodeQL + Secret Scanning + Push Protection (GitHub native)
+- **Phase 라벨 single-active invariant**: phase-label-invariant.yml Action이 강제
+- **§1 변조 금지 invariant**: story-section-1-immutable.yml Action이 강제
+- **CODEOWNERS**: `docs/adr/**`·`docs/change-plans/**`·`docs/stories/**` → architect team / `docs/domain-knowledge/**` → domain expert team
+- **Branch protection**: phase-gate-mergeable required status check + CODEOWNERS review
+
+### Added
+- `templates/github-workflows/*.yml` 6개 (Action SSOT)
+- `templates/github-issue-forms/*.yml` 3개 (story / bug / audit)
+- `templates/github-pr-template.md` (Phase 1 / Phase 2 양식 분리)
+- `templates/CODEOWNERS.template`
+- `scripts/check-no-atlassian.sh`, `scripts/check-agent-frontmatter.sh`, `scripts/check-doc-links.sh`
+
+### Changed
+- `CLAUDE.md` major rewrite (atlassian 제거 + GitHub-native 워크플로우 + 세션 개시 의무 갱신)
+- `docs/orchestrator-playbook.md` major rewrite (§1.1 / §3B / §11 / §12 / §12.5 갱신)
+- `docs/project-config-schema.md` (atlassian.* 제거, github.* 신설)
+- `docs/consumer-guide.md` (GitHub-native 셋업 절차)
+- `agents/DocsAgent.md` major rewrite (권한 + GitHub primitive 매핑)
+- 23 agents (frontmatter MCP + 본문 prose 일괄 변환)
+- `templates/story-page-structure.md`, `adr.md`, `impl-manifest.md`, `change-plan.md`
+- `presets/webapp/agents/*` (Jira/Confluence → GitHub Issue/PR)
+- `.claude/settings.json`, `.claude/settings.local.json` (atlassian MCP 제거, github MCP + gh CLI 추가)
+- `overlay/_overlay/project.yaml.example`, `overlay/_overlay/README.md`, `overlay/hooks/validate_config.py`, `overlay/hooks/tests/test_validate_config.py`
+- `examples/*/.claude/_overlay/project.yaml` (3개 fixture)
+
+### Migration
+v0.7.x 이하에서 v0.8로 in-place 업그레이드 불가. 기존 consumer는 fresh GitHub-based setup 필요. [migration-guide.md](docs/migration-guide.md#v07--v08-atlassian-제거--github-전환) 참조.
+
+### Affected — 32+ files
+- Core: `CLAUDE.md`, `docs/orchestrator-playbook.md`, `docs/project-config-schema.md`, `docs/consumer-guide.md`, `docs/migration-guide.md`, `docs/plugin-design.md`, `docs/README.md`, `README.md`
+- Agents: 24 agent .md 전부
+- Templates: 4 templates 전부 + 신규 11개 (workflows · forms · CODEOWNERS · PR template)
+- Settings: `.claude/settings.json`, `.claude/settings.local.json`, `.claude/_overlay/project.yaml`
+- Overlay/Hook: `overlay/_overlay/*`, `overlay/hooks/validate_config.py`
+- Scripts: 신규 3개 검증 스크립트
+- Examples: 3개 project.yaml fixture
+- Presets: webapp agents 2개
+
 ## [0.7.1] — 2026-04-24
 
 ### Fixed (v0.7.0 병렬 모델 정합성 결함 보정)

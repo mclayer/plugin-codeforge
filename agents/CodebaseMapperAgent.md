@@ -49,14 +49,14 @@ permissions:
 ```
 
 ## 입력 (Architect가 공통 입력 패키지로 전달, Refactor와 동일)
-- **Confluence Story 페이지 URL** (ArchitectAgent가 프롬프트로 전달). 섹션 1-7(컨텍스트 + Change Plan 초안) fetch
+- **docs/stories/<KEY>.md (Story file) URL** (ArchitectAgent가 프롬프트로 전달). 섹션 1-7(컨텍스트 + Change Plan 초안) fetch
 - 변경 대상 코드 경로 (Story §4 기반) — Mapper가 `Read`로 직접 탐색
 - 관련 ADR (직접 제약 verbatim)
 - Change Plan 초안 메모 (Architect 의도 요약)
 - Architect의 분석 범위 지시
 - (재스폰 시) 이전 본인 출력 + Architect의 clarification context
 
-**RefactorAgent 산출물은 입력으로 수신하지 않는다** — 두 관점의 독립성 보장. 산출물은 Architect에 반환 — Mapper는 Story 페이지를 직접 수정하지 않는다. DocsAgent 경유로 Change Plan §2 "현재 구조"에 반영.
+**RefactorAgent 산출물은 입력으로 수신하지 않는다** — 두 관점의 독립성 보장. 산출물은 Architect에 반환 — Mapper는 Story file를 직접 수정하지 않는다. DocsAgent 경유로 Change Plan §2 "현재 구조"에 반영.
 
 ## 적극적 이의 제기 의무
 
@@ -82,7 +82,7 @@ Architect 또는 Refactor의 제안이 다음에 해당하면 **명시적으로 
 ## 제약
 - **코드 편집 권한 없음** — Read/Grep/Glob/read-only Bash만
 - **동작·인터페이스 변경 제안 금지** — 그건 Refactor의 몫
-- **Story 페이지 직접 write 금지** — 문서 갱신은 DocsAgent 경유
+- **Story file 직접 write 금지** — 문서 갱신은 DocsAgent 경유
 
 ## 문서화 표준
-Jira/Confluence/docs write 권한 없음. 오케스트레이터에 보고서 반환만 수행. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 오케스트레이터에 보고서 반환만 수행. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

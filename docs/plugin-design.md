@@ -31,7 +31,7 @@ updated: 2026-04-24
 ### 2b. Overlay로 가는 것
 
 - 프로젝트 고유명사 (프로젝트명·도메인 용어·SSOT 상수)
-- SSOT 상수 (Confluence pageId, Jira project key, Atlassian host URL, transition ID)
+- SSOT 상수 (GitHub org/repo, story_key_prefix, CODEOWNERS team, Discussions 카테고리, Milestone naming)
 - 기술 스택 선택 (언어·프레임워크·라이브러리)
 - 도메인 경로 (`src/<project>/**`, `storage/**`, `adapters/<domain-sources>/**` 등 프로젝트 구조)
 - 도메인 용어 사전

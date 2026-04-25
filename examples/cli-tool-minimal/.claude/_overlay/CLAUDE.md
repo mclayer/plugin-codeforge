@@ -6,7 +6,7 @@
 
 ## SSOT 상수
 
-**Atlassian·GitHub·labels 등 objective 상수는 [`project.yaml`](project.yaml)에 있음**. 에이전트는 그 파일을 `Read`로 직접 참조. 아래는 narrative 컨텍스트만.
+**GitHub·labels 등 objective 상수는 [`project.yaml`](project.yaml)에 있음**. 에이전트는 그 파일을 `Read`로 직접 참조. 아래는 narrative 컨텍스트만.
 
 ## 기술 스택
 

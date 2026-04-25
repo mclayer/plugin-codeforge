@@ -25,7 +25,7 @@ permissions:
 - 앱 코드: `src/**`
 - 인프라 자산: `config/**`, `deploy/**`, `scripts/**`
 - 의존성 매니페스트 (`requirements.txt` / `package.json` / `go.mod` / `Cargo.toml` / etc)
-- Story 페이지 §8.5 Impl Manifest (검증 범위 확인)
+- Story file §8.5 Impl Manifest (검증 범위 확인)
 
 ## 포지션
 - **상위**: SecurityTestPLAgent (보안 테스트 레인 PL)
@@ -135,4 +135,4 @@ findings: []
 - **교차 검증은 SecurityTestPL의 역할**: 동일 이슈 동시 지적 시 신뢰도 상향
 
 ## 문서화 표준
-Jira/Confluence/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

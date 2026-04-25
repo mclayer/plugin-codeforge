@@ -21,8 +21,8 @@ permissions:
 
 **리뷰 대상**:
 - `docs/change-plans/<slug>.md`
-- Confluence Story 페이지 §1-7 (컨텍스트·Change Plan 요약·RefactorAgent 분석)
-- Confluence Story 페이지 §3 관련 ADR (정합성 교차)
+- docs/stories/<KEY>.md (Story file) §1-7 (컨텍스트·Change Plan 요약·RefactorAgent 분석)
+- docs/stories/<KEY>.md (Story file) §3 관련 ADR (정합성 교차)
 - Change Plan §8 Test Contract
 
 ## 포지션
@@ -38,7 +38,7 @@ permissions:
 - "0 컨텍스트 개발자 전제" 구체성 — 파일·인터페이스·시그니처·이름 확정 여부
 
 ### ADR 정합성 (P0 고정 항목)
-- Story 페이지 §3에 나열된 관련 ADR을 **명시적으로 fetch**하여 Change Plan 결정과 대조
+- Story file §3에 나열된 관련 ADR을 **명시적으로 fetch**하여 Change Plan 결정과 대조
 - ADR 결정 위반 발견 시 **P0 severity 강제**
 - 설계 의도가 ADR 변경이라면 "신규 ADR 필요" P0 지적 (신규 ADR 없이 기존 ADR 변경 금지)
 
@@ -57,7 +57,7 @@ permissions:
 - Change Plan 범위 대비 커버리지 공백 식별
 
 ## 진단 도구
-- `Read` — Change Plan, Story 페이지, ADR 읽기
+- `Read` — Change Plan, Story file, ADR 읽기
 - `Grep` / `Glob` — 관련 코드 경로 탐색 (as-is 대조용)
 - `Bash(git log *)` — Change Plan 이전 버전 추적 (FIX 루프에서)
 
@@ -91,4 +91,4 @@ findings:
 - `verdict`: findings 없음·P3 이하만 → `PASS` / P1·P2 있으나 P0 없음 → `ISSUES` / P0 ≥ 1 → `NO_SHIP`
 
 ## 문서화 표준
-Jira/Confluence/docs write 권한 없음. 보고는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 보고는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

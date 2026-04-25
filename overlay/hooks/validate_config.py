@@ -31,56 +31,44 @@ except ImportError:
 # Schema definition (in code — intentionally no external JSON Schema dep)
 # -----------------------------------------------------------------------------
 
-# Each rule: (path, required, type_check, extra_check)
-#   path: dotted path e.g. "atlassian.confluence.space_key"
+# Each rule: (path, required, type_check, description)
+#   path: dotted path e.g. "github.codeowners.architect_team"
 #   required: bool
 #   type_check: callable(value) -> bool  (True if type OK)
-#   extra_check: optional callable(value) -> str|None  (None if OK, else error msg)
+#   description: human-readable description
 
 
 def _is_str(v: Any) -> bool:
     return isinstance(v, str) and len(v) > 0
 
 
-def _is_int_or_str(v: Any) -> bool:
-    return (isinstance(v, int) and not isinstance(v, bool)) or (
-        isinstance(v, str) and len(v) > 0
-    )
-
-
 def _is_list_of_str(v: Any) -> bool:
     return isinstance(v, list) and all(isinstance(x, str) and len(x) > 0 for x in v)
-
-
-def _is_map_str_to_int(v: Any) -> bool:
-    return isinstance(v, dict) and all(
-        isinstance(k, str) and isinstance(val, int) and not isinstance(val, bool)
-        for k, val in v.items()
-    )
 
 
 SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     # (path, required, type_check, description)
     ("project", True, dict, "project section (mapping)"),
     ("project.name", True, _is_str, "project.name (non-empty string)"),
-    ("project.repo", True, _is_str, "project.repo (non-empty string)"),
-    ("atlassian", True, dict, "atlassian section (mapping)"),
-    ("atlassian.site", True, _is_str, "atlassian.site (non-empty string)"),
-    ("atlassian.confluence", True, dict, "atlassian.confluence section (mapping)"),
-    ("atlassian.confluence.space_key", True, _is_str, "atlassian.confluence.space_key (non-empty string)"),
-    ("atlassian.confluence.stories_parent_page_id", True, _is_int_or_str,
-     "atlassian.confluence.stories_parent_page_id (int or non-empty string)"),
-    ("atlassian.confluence.domain_knowledge_parent_page_id", True, _is_int_or_str,
-     "atlassian.confluence.domain_knowledge_parent_page_id (int or non-empty string)"),
-    ("atlassian.confluence.adr_root_page_id", True, _is_int_or_str,
-     "atlassian.confluence.adr_root_page_id (int or non-empty string)"),
-    ("atlassian.jira", True, dict, "atlassian.jira section (mapping)"),
-    ("atlassian.jira.project_key", True, _is_str, "atlassian.jira.project_key (non-empty string)"),
-    ("atlassian.jira.transitions", False, _is_map_str_to_int,
-     "atlassian.jira.transitions (map of string → int), optional"),
     ("github", True, dict, "github section (mapping)"),
+    ("github.org", True, _is_str, "github.org (non-empty string)"),
+    ("github.repo", True, _is_str, "github.repo (non-empty string)"),
+    ("github.default_branch", True, _is_str, "github.default_branch (non-empty string)"),
     ("github.pr_title_prefix_template", True, _is_str,
      "github.pr_title_prefix_template (non-empty string)"),
+    ("github.story_key_prefix", True, _is_str,
+     "github.story_key_prefix (non-empty string, e.g. 'TM')"),
+    ("github.codeowners", True, dict, "github.codeowners section (mapping)"),
+    ("github.codeowners.architect_team", True, _is_str,
+     "github.codeowners.architect_team (non-empty string, e.g. '@acme/architects')"),
+    ("github.codeowners.domain_expert_team", True, _is_str,
+     "github.codeowners.domain_expert_team (non-empty string)"),
+    ("github.discussions", True, dict, "github.discussions section (mapping)"),
+    ("github.discussions.domain_kb_category", True, _is_str,
+     "github.discussions.domain_kb_category (non-empty string)"),
+    ("github.milestone", True, dict, "github.milestone section (mapping)"),
+    ("github.milestone.epic_naming_pattern", True, _is_str,
+     "github.milestone.epic_naming_pattern (non-empty string)"),
     ("labels", False, dict, "labels section (mapping), optional"),
     ("labels.components", False, _is_list_of_str,
      "labels.components (list of non-empty strings), optional"),
@@ -134,7 +122,7 @@ def main() -> int:
         # Missing file is a warning, not an error — consumer may be in initial setup
         sys.stderr.write(
             f"[validate-config] WARN: {path} not found. "
-            f"Atlassian/Jira 기능이 제한됩니다. "
+            f"GitHub 워크플로우 기능이 제한됩니다. "
             f"overlay/_overlay/project.yaml.example을 복사해 시작하세요.\n"
         )
         return 0

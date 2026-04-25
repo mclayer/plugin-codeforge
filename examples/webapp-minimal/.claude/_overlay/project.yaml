@@ -1,20 +1,23 @@
 project:
   name: "<REPLACE — e.g. task-manager>"
-  repo: "<REPLACE — e.g. github.com/acme/task-manager>"
-
-atlassian:
-  site: "<REPLACE — e.g. acme.atlassian.net>"
-  confluence:
-    space_key: "<REPLACE — e.g. TM>"
-    stories_parent_page_id: "<REPLACE — Story 페이지들의 parent pageId>"
-    domain_knowledge_parent_page_id: "<REPLACE — Domain Knowledge 루트 pageId>"
-    adr_root_page_id: "<REPLACE — ADR 루트 pageId>"
-  jira:
-    project_key: "<REPLACE — e.g. TM>"
-    # transitions 섹션은 선택 — 생략 시 DocsAgent가 동적 획득
 
 github:
-  pr_title_prefix_template: "[{project_key}-{story_number}] {title}"
+  org: "<REPLACE — e.g. acme>"
+  repo: "<REPLACE — e.g. task-manager>"
+  default_branch: main
+
+  pr_title_prefix_template: "[{key}] {title}"
+  story_key_prefix: "<REPLACE — e.g. TM>"
+
+  codeowners:
+    architect_team: "<REPLACE — e.g. @acme/architects>"
+    domain_expert_team: "<REPLACE — e.g. @acme/domain-experts>"
+
+  discussions:
+    domain_kb_category: "Domain Q&A"
+
+  milestone:
+    epic_naming_pattern: "Epic-{key}-{slug}"
 
 labels:
   components:

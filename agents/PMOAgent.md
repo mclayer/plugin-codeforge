@@ -7,11 +7,6 @@ permissions:
     - Read
     - Grep
     - Glob
-    - mcp__atlassian__getConfluencePage
-    - mcp__atlassian__searchConfluenceUsingCql
-    - mcp__atlassian__getPagesInConfluenceSpace
-    - mcp__atlassian__getJiraIssue
-    - mcp__atlassian__searchJiraIssuesUsingJql
     - Edit(.claude-work/doc-queue/**)
     - Write(.claude-work/doc-queue/**)
     - Bash(mkdir -p .claude-work/doc-queue*)
@@ -102,20 +97,20 @@ Story 분해안:
 - 인터페이스 설계 자체는 **ArchitectAgent 영역** — PMO는 "인터페이스/구체 분리 가능해 보인다"까지만
 - 병렬 판정 근거를 분해 제안서에 **명시** (이후 충돌 발생 시 재검토 근거)
 
-산출물: 위 형식 보고서를 write queue에 제출 → DocsAgent가 Confluence Epic 페이지에 기록. Orchestrator는 이를 참조해 Story 생성 실행.
+산출물: 위 형식 보고서를 write queue에 제출 → DocsAgent가 GitHub Epic Issue body 또는 Milestone description에 기록. Orchestrator는 이를 참조해 Story 생성 실행.
 
 ### 2. Story 완료 회고 감사 (Story 단위)
 
-Story 완료 직후 Orchestrator가 스폰. 입력: 해당 Story 페이지 §1-11 + FIX Ledger + Jira 코멘트 이력.
+Story 완료 직후 Orchestrator가 스폰. 입력: 해당 Story file §1-11 + FIX Ledger + GitHub Issue 코멘트 이력.
 
 감사 항목:
-- **Preflight 누락 여부** — 각 레인 진입 시 Preflight 3체크 실행 근거가 Jira 코멘트에 있는가
+- **Preflight 누락 여부** — 각 레인 진입 시 Preflight 3체크 실행 근거가 GitHub Issue 코멘트에 있는가
 - **§8 Test Contract ↔ 실제 테스트 매핑 누락** — QADev 매핑표 대비 실제 tests/ 파일 커버리지
 - **§8.5 Impl Manifest ↔ 실제 파일** — 기록된 파일 목록이 git diff와 일치하는가
 - **FIX 원인 판정의 evidence pack 완성도** — Architect 판정 시 Change Plan 인용·테스트 로그가 코멘트에 포함됐는가
 - **토큰 예산 초과 이력** — 레인별 사전 예산 대비 실제, 중단 임계 접근 여부
 
-산출물: `[PMOAgent 회고] <PROJECT_KEY>-N` 형식 보고서를 write queue에 제출 → DocsAgent가 Story 페이지 §11 또는 별도 회고 섹션에 기록.
+산출물: `[PMOAgent 회고] <PROJECT_KEY>-N` 형식 보고서를 write queue에 제출 → DocsAgent가 Story file §11 또는 별도 회고 섹션에 기록.
 
 ### 3. Cross-Story 패턴 분석 (다중 Story)
 
@@ -154,7 +149,7 @@ trigger: "최근 N Story에서 반복 발견된 {패턴}"
 ...
 ```
 
-DocsAgent가 drain 시 Confluence ADR 트리에 **status=Proposed** 상태로 신규 페이지 생성. 실제 채택은 Architect가 Change Plan 진입 시 검토.
+DocsAgent가 drain 시 docs/adr 트리에 **status=Proposed** 상태로 신규 페이지 생성. 실제 채택은 Architect가 Change Plan 진입 시 검토.
 
 ### 5. 세션 회고 synthesize
 
@@ -173,4 +168,4 @@ Orchestrator가 세션 종료 직전 본 에이전트를 스폰해 playbook §8.
 - `superpowers:verification-before-completion`: Story 완료 감사 시 체크리스트 빠짐 방지
 
 ## 문서화 표준
-Jira/Confluence/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록 (write queue 경유). 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록 (write queue 경유). 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

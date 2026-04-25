@@ -23,7 +23,7 @@ permissions:
 
 **Change Plan(설계 문서)을 Codex(OpenAI GPT-5) 시각으로 리뷰**한다. ClaudeDesignReview와 **독립 peer**로 Change Plan 완결성·ADR 정합성·구현 가능성 검증. DesignReviewPLAgent가 두 보고를 공통 severity 규칙으로 종합.
 
-**리뷰 대상**: `docs/change-plans/<slug>.md` + Confluence Story 페이지 §1-7 + §3 관련 ADR + §8 Test Contract
+**리뷰 대상**: `docs/change-plans/<slug>.md` + docs/stories/<KEY>.md (Story file) §1-7 + §3 관련 ADR + §8 Test Contract
 
 ## 포지션
 - **상위**: DesignReviewPLAgent
@@ -58,7 +58,7 @@ node "$CMD" review --wait --focus "design document review: docs/change-plans/<sl
 설계 리뷰 focus prompt 핵심:
 - Change Plan 완결성 (목적·현재 구조·도입할 설계·API 계약·변경 계획·테스트 계획·분기·ADR 여부)
 - §8 Test Contract 존재 및 타당성
-- 관련 ADR(Confluence `<SPACE_KEY>` ADR 트리)과의 정합성
+- 관련 ADR(`docs/adr/ADR-*.md`)과의 정합성
 - CodebaseMapper(변호) ↔ RefactorAgent(혁신) 관점 균형
 - "0 컨텍스트 개발자 전제" 구체성 — 파일·시그니처·타입 확정
 
@@ -94,4 +94,4 @@ findings:
 보고는 Orchestrator가 수령 후 ClaudeDesignReview 보고와 함께 DesignReviewPLAgent에 투입. DesignReviewPL이 severity 공통 규칙으로 판단.
 
 ## 문서화 표준
-Jira/Confluence/docs write 권한 없음. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

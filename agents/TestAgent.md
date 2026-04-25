@@ -100,4 +100,4 @@ Orchestrator가 범위 지정하면 해당 범위만 실행.
 - 테스트 러너 커맨드는 consumer overlay가 주입 — hardcoded 커맨드 금지
 
 ## 문서화 표준
-Jira/Confluence/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

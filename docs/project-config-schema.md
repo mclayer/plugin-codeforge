@@ -2,22 +2,22 @@
 title: project.yaml schema — consumer SSOT 상수 구조화
 status: active
 created: 2026-04-24
-updated: 2026-04-24
+updated: 2026-04-26
 ---
 
 # `project.yaml` Schema
 
 Consumer 프로젝트의 **objective SSOT 상수**를 구조화 주입하는 파일. 위치: `.claude/_overlay/project.yaml`.
 
-에이전트(특히 DocsAgent·RequirementsPLAgent·DomainAgent)는 이 파일을 `Read` 툴로 직접 읽어 Atlassian/GitHub 상수를 확보한다. CLAUDE.md overlay는 **narrative 컨텍스트**(도메인 해설·기술 스택 근거)에 집중.
+에이전트(특히 DocsAgent·RequirementsPLAgent·DomainAgent·PMOAgent)는 이 파일을 `Read` 툴로 직접 읽어 GitHub 상수를 확보한다. CLAUDE.md overlay는 **narrative 컨텍스트**(도메인 해설·기술 스택 근거)에 집중.
 
 ## 1. 경계
 
 ### project.yaml에 들어가는 것 (structured)
-- Atlassian 좌표 (Confluence space·pageIds, Jira project key·transition IDs)
-- GitHub 좌표 (repo URL, PR 제목 포맷)
+- GitHub 좌표 (org·repo·default branch·story key prefix·CODEOWNERS team·Discussions 카테고리·Milestone naming)
+- PR 제목 포맷
 - Label taxonomy 프로젝트별 확장 (`component:*` 구체값)
-- 프로젝트 식별자 (name, repo)
+- 프로젝트 식별자 (name)
 
 ### CLAUDE.md overlay에 들어가는 것 (narrative)
 - 도메인 소개·용어 사전
@@ -37,35 +37,32 @@ Consumer 프로젝트의 **objective SSOT 상수**를 구조화 주입하는 파
 # [필수] 프로젝트 식별
 project:
   name: <string>                    # e.g. "task-manager"
-  repo: <string>                    # e.g. "github.com/acme/task-manager"
-
-# [필수] Atlassian 좌표
-atlassian:
-  site: <string>                    # e.g. "acme.atlassian.net"
-
-  confluence:
-    space_key: <string>             # e.g. "TM"
-    stories_parent_page_id: <integer|string>   # Story 페이지 parent
-    domain_knowledge_parent_page_id: <integer|string>  # Domain Knowledge 루트
-    adr_root_page_id: <integer|string>         # ADR 루트
-    # Optional: 추가 parent 지정 (회고·패턴 등)
-    # retrospective_parent_page_id: <integer|string>
-
-  jira:
-    project_key: <string>           # e.g. "TM"
-    # Optional: transition ID 정적 매핑. 없으면 DocsAgent가
-    # getTransitionsForJiraIssue로 동적 획득.
-    transitions:
-      to_in_progress: <integer>
-      to_done: <integer>
 
 # [필수] GitHub 좌표
 github:
-  # PR 제목 템플릿. {project_key}·{story_number}·{title} placeholder 지원
-  pr_title_prefix_template: <string>   # e.g. "[{project_key}-{story_number}] {title}"
+  org: <string>                     # GitHub org 또는 user, e.g. "acme"
+  repo: <string>                    # repo 이름, e.g. "task-manager"
+  default_branch: <string>          # merge target, 보통 "main"
+
+  # PR 제목 prefix 템플릿. {key}·{title} placeholder 지원.
+  # e.g. "[{key}] {title}" → "[TM-7] Add idempotency key"
+  pr_title_prefix_template: <string>
+
+  # Issue 번호 prefix. e.g. "TM" → "TM-7"
+  story_key_prefix: <string>
+
+  codeowners:
+    architect_team: <string>        # e.g. "@acme/architects" — docs/adr·docs/change-plans·.github/workflows·docs/stories review 강제
+    domain_expert_team: <string>    # e.g. "@acme/domain-experts" — docs/domain-knowledge review 강제
+
+  discussions:
+    domain_kb_category: <string>    # e.g. "Domain Q&A" — DomainAgent Q&A 카테고리
+
+  milestone:
+    epic_naming_pattern: <string>   # e.g. "Epic-{key}-{slug}" — Epic Milestone 명명
 
 # [선택] 프로젝트별 label 확장
-# phase:*·fix:*·adr:*·impl-manifest·hotfix:*·audit:* 는 core에서 정의 (overlay 대상 아님).
+# phase:*·fix:*·gate:*·type:*·adr:*·impl-manifest·hotfix:*·audit:* 는 core에서 정의 (overlay 대상 아님).
 # consumer는 component:* 만 정의.
 labels:
   components:                       # 각 항목이 "component:<name>" 라벨로 생성
@@ -77,21 +74,20 @@ labels:
 ```yaml
 project:
   name: task-manager
-  repo: github.com/acme/task-manager
-
-atlassian:
-  site: acme.atlassian.net
-  confluence:
-    space_key: TM
-    stories_parent_page_id: 12345
-    domain_knowledge_parent_page_id: 12346
-    adr_root_page_id: 12347
-  jira:
-    project_key: TM
-    # transitions 생략 → DocsAgent가 동적 조회
 
 github:
-  pr_title_prefix_template: "[{project_key}-{story_number}] {title}"
+  org: acme
+  repo: task-manager
+  default_branch: main
+  pr_title_prefix_template: "[{key}] {title}"
+  story_key_prefix: TM
+  codeowners:
+    architect_team: "@acme/architects"
+    domain_expert_team: "@acme/domain-experts"
+  discussions:
+    domain_kb_category: "Domain Q&A"
+  milestone:
+    epic_naming_pattern: "Epic-{key}-{slug}"
 
 labels:
   components:
@@ -104,25 +100,25 @@ labels:
 ## 4. 에이전트 접근 규칙
 
 ### 4a. Read 전담
-- **DocsAgent**: Jira/Confluence 호출 시 `project_key` / `space_key` / `stories_parent_page_id` 활용
-- **RequirementsPLAgent**: Story 페이지 생성·갱신 시 parent pageId 결정
-- **DomainAgent**: Domain Knowledge 트리 fetch 시 root pageId 사용
-- **PMOAgent**: 회고·패턴 페이지 생성 시 parent 결정
-- **Orchestrator**: 세션 개시 시 1회 read → 필요 값 Context Packet으로 하위 에이전트에 전달 가능 (반복 fetch 회피)
+- **DocsAgent**: GitHub Issue/PR/comment·repo file write 시 `org`·`repo`·`story_key_prefix`·`codeowners`·`milestone.epic_naming_pattern` 활용
+- **RequirementsPLAgent**: Story SSOT 파일(`docs/stories/<KEY>.md`) 위치 결정 시 `story_key_prefix` 사용
+- **DomainAgent**: Domain Knowledge 트리(`docs/domain-knowledge/`) read + Discussions 질의 시 `discussions.domain_kb_category` 사용
+- **PMOAgent**: 회고·Cross-Story 패턴 분석 시 GitHub Issue search query에 `org`·`repo` 활용
+- **Orchestrator**: 세션 개시 시 1회 read → 필요 값 Context Packet으로 하위 에이전트에 전달 (반복 fetch 회피)
 
 ### 4b. Write 금지
 모든 에이전트는 `.claude/_overlay/project.yaml` **write 금지**. 이 파일은 consumer가 직접 관리. DocsAgent도 쓰지 않음.
 
 ### 4c. 값 부재 시 동작
 - **필수 필드 missing** → 에이전트는 블록 후 Orchestrator에 "project.yaml에 `<field>` 누락" 보고. Orchestrator가 사용자에게 질의.
-- **선택 필드 missing** → 기본 동작 (예: transitions 없으면 동적 조회)
+- **선택 필드 missing** → 기본 동작
 
 ## 5. 파일 부재 케이스
 
 `.claude/_overlay/project.yaml`이 아예 없으면:
-- 세션 개시 시 Orchestrator가 경고 출력: "project.yaml 없음 — Atlassian/Jira 기능 제한됨"
-- DocsAgent·RequirementsPLAgent 등이 Atlassian MCP 호출 시 ERROR (필수 상수 unknown)
-- 작업 지속은 가능하나 문서 동기화·Story 관리 기능 대부분 차단됨
+- 세션 개시 시 Orchestrator가 경고 출력: "project.yaml 없음 — GitHub 워크플로우 기능 제한됨"
+- DocsAgent·RequirementsPLAgent 등이 GitHub MCP 호출 시 ERROR (필수 상수 unknown)
+- 작업 지속은 가능하나 Story·PR 자동화 기능 대부분 차단됨
 
 신규 consumer는 `overlay/_overlay/project.yaml.example`을 복사해 시작.
 
@@ -148,6 +144,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/validate_config.py \
 - **Context Packet 자동 주입**: Orchestrator가 project.yaml 요약을 sub-agent 프롬프트에 자동 삽입
 - **기술 스택 일부 구조화**: test runner·perf baseline 경로 등 objective 성격 항목 이전
 - **placeholder 탐지**: `<REPLACE ...>` 값이 남아있으면 warn (unconfigured consumer 감지)
+- **GitHub Projects v2 연동**: Project number·view ID 구조화
 
 ## 8. 관련 문서
 

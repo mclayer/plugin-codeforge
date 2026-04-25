@@ -21,7 +21,7 @@
    git init
    ```
 
-2. `.claude/_overlay/CLAUDE.md`의 `<REPLACE: ...>` 플레이스홀더를 본인 프로젝트 값으로 치환 (프로젝트명·Jira·Confluence 상수 등).
+2. `.claude/_overlay/project.yaml`과 `CLAUDE.md`의 `<REPLACE: ...>` 플레이스홀더를 본인 프로젝트 값으로 치환 (프로젝트명·GitHub org/repo·story_key_prefix·CODEOWNERS team 등).
 
 3. 필요 시 `.claude/_overlay/agents/*.md`의 경로 관습·도메인 용어·기술 스택을 본인 stack에 맞게 수정.
 

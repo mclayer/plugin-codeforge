@@ -13,11 +13,96 @@ updated: 2026-04-24
 
 ## 목차
 
+- [v0.7 → v0.8](#v07--v08-atlassian-제거--github-전환) — **Atlassian 제거 + GitHub 전환 (BREAKING)**
 - [v0.6 → v0.7](#v06--v07-요구사항설계-레인-병렬화) — 요구사항·설계 레인 병렬 모델
 - [v0.5 → v0.6](#v05--v06-plugin-name-rename-dev-orchestrator--codeforge) — Plugin name rename + Atlassian 이관
 - [v0.3 → v0.4](#v03--v04-stage-2-projectyaml-구조화) — `project.yaml` 도입
 - [v0.2 → v0.3](#v02--v03-generic-dev-roster--preset) — Generic Dev roster + preset
 - [v0.1 → v0.2](#v01--v02-보안-테스트-레인--templates) — 보안 테스트 레인 + templates (non-breaking)
+
+---
+
+## v0.7 → v0.8 (Atlassian 제거 + GitHub 전환)
+
+### Breaking changes
+
+이 release는 Atlassian backend (Confluence/Jira)를 완전 제거한다. v0.7 이하 consumer는 in-place 업그레이드 불가 — fresh GitHub-based setup 필요.
+
+- **MCP 의존**: `atlassian` (HTTP) → **`github`**
+- **필수 플러그인**: `github@claude-plugins-official` 권장에서 격상, `atlassian@claude-plugins-official` 제거
+- **필수 CLI**: `gh` 추가 (Milestone·Discussions·기타 GraphQL fallback)
+- **워크플로우 모델**:
+  - Story 페이지 (Confluence) → `docs/stories/<KEY>.md` (single-file SSOT, §1-11)
+  - ADR (Confluence pages) → `docs/adr/ADR-NNN-<slug>.md` (flat, frontmatter `category:`)
+  - Domain Knowledge (Confluence tree) → `docs/domain-knowledge/<area>/<topic>.md` (계층)
+  - Jira workflow → GitHub Issue + `phase:*` labels + GitHub Actions
+  - Jira sub-task → GitHub Sub-issue (subissue-from-impl-manifest.yml Action 자동 생성)
+  - Jira Epic → GitHub Milestone + Epic Issue
+- **PR 모델**: 1 Story = **2 PRs** (Phase 1 docs / Phase 2 code+docs append)
+- **§1 변조 금지 invariant**: `story-section-1-immutable.yml` Action이 강제
+- **Phase 라벨 single-active**: `phase-label-invariant.yml` Action이 강제
+- **보안 테스트 1차 layer**: GitHub native (Dependabot / CodeQL / Secret Scanning / Push Protection)
+
+### project.yaml 스키마
+
+`atlassian.*` 키 모두 삭제 → `github.*` 키 신설.
+
+```yaml
+# OLD (v0.7)
+atlassian:
+  site: ...
+  confluence:
+    space_key: ...
+    stories_parent_page_id: ...
+    domain_knowledge_parent_page_id: ...
+    adr_root_page_id: ...
+  jira:
+    project_key: ...
+
+github:
+  pr_title_prefix_template: "[{project_key}-{story_number}] {title}"
+
+# NEW (v0.8)
+github:
+  org: ...
+  repo: ...
+  default_branch: main
+  pr_title_prefix_template: "[{key}] {title}"
+  story_key_prefix: ...                   # e.g. "TM"
+  codeowners:
+    architect_team: "@org/architects"
+    domain_expert_team: "@org/domain-experts"
+  discussions:
+    domain_kb_category: "Domain Q&A"
+  milestone:
+    epic_naming_pattern: "Epic-{key}-{slug}"
+```
+
+자세한 형식은 [project-config-schema.md](project-config-schema.md) 참조.
+
+### Consumer 절차 (fresh setup)
+
+기존 v0.7 consumer가 0건이므로 자동 마이그레이션 도구·자동 변환은 제공하지 않는다. 신규 또는 v0.7에서 v0.8로 이전하는 consumer는 [consumer-guide.md](consumer-guide.md) 셋업 절차를 따른다:
+
+1. `.github/workflows/` 6개 plugin 워크플로우 복사
+2. `.github/ISSUE_TEMPLATE/` 3 Forms + `config.yml` (blank issue 비활성화) 복사
+3. `.github/PULL_REQUEST_TEMPLATE.md` 복사
+4. `.github/CODEOWNERS` 복사 + team placeholder 치환
+5. `.claude/_overlay/project.yaml` 새 schema로 재작성
+6. GitHub Labels 일괄 생성 (gh label create ...)
+7. Branch protection 설정 (main 브랜치, required status check `phase-gate-mergeable`)
+8. Dependabot / CodeQL / Secret Scanning / Push Protection 활성화
+
+### 영향 범위
+
+- consumer 리포의 `.github/`·`.claude/_overlay/project.yaml`·`docs/` 디렉토리 모두 영향
+- 기존 Confluence 페이지·Jira issue는 별도 export 후 `docs/` 마크다운으로 수동 이전 권장 (자동 도구 미제공)
+- 기존 활성 Story (Atlassian상)가 있다면 v0.8에서 새 Story로 다시 시작하는 게 가장 단순
+
+### 참고
+
+- 설계 spec: `docs/superpowers/specs/2026-04-25-atlassian-to-github-migration-design.md`
+- 구현 plan: `docs/superpowers/plans/2026-04-25-atlassian-to-github-migration.md`
 
 ---
 

@@ -16,7 +16,7 @@ cp -r ${PLUGIN_ROOT}/overlay/_overlay/* .claude/_overlay/
 <consumer-project>/
 └── .claude/
     ├── _overlay/
-    │   ├── project.yaml                # 프로젝트 SSOT 상수 (Atlassian·GitHub·labels)
+    │   ├── project.yaml                # 프로젝트 SSOT 상수 (GitHub·labels)
     │   ├── CLAUDE.md                   # 프로젝트 narrative 컨텍스트 (도메인·stack 근거)
     │   └── agents/                     # 필요한 에이전트만 overlay (sparse)
     │       ├── DomainAgent.md          # 프로젝트 도메인 전문가 (도메인 용어·제약·소스)
@@ -37,11 +37,11 @@ cp -r ${PLUGIN_ROOT}/overlay/_overlay/* .claude/_overlay/
 ### CLAUDE.md
 
 - 플러그인의 CLAUDE.md core는 오케스트레이션 규칙·에이전트 구조. overlay에는 **프로젝트 narrative 컨텍스트** (도메인 소개·기술 스택 선택 근거·경로 관습 설명) 작성.
-- **Objective SSOT 상수 (Atlassian pageId·Jira key·GitHub repo 등)는 CLAUDE.md가 아닌 `project.yaml`에 작성** — 에이전트가 구조화된 형태로 fetch.
+- **Objective SSOT 상수 (GitHub org/repo·story_key_prefix·CODEOWNERS team 등)는 CLAUDE.md가 아닌 `project.yaml`에 작성** — 에이전트가 구조화된 형태로 fetch.
 
 ### project.yaml
 
-- `.claude/_overlay/project.yaml` — Atlassian·GitHub·labels 등 structured 상수 SSOT.
+- `.claude/_overlay/project.yaml` — GitHub·labels 등 structured 상수 SSOT.
 - Schema: [`../../docs/project-config-schema.md`](../../docs/project-config-schema.md)
 - 스켈레톤: [`project.yaml.example`](project.yaml.example) — 복사 후 치환.
 - 주 소비자: DocsAgent, RequirementsPLAgent, DomainAgent, PMOAgent, Orchestrator.

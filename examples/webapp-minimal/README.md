@@ -38,10 +38,11 @@ cp -r examples/webapp-minimal/ ~/my-webapp/
 cd ~/my-webapp
 ```
 
-`.claude/_overlay/CLAUDE.md`의 `<REPLACE: ...>` 전부 치환:
-- 프로젝트명·repo URL
-- Confluence space key·Stories parent pageId·ADR 트리 pageId
-- Jira project key·transition ID
+`.claude/_overlay/project.yaml`과 `CLAUDE.md`의 `<REPLACE: ...>` 전부 치환:
+- 프로젝트명
+- GitHub org/repo
+- story_key_prefix (예: TM)
+- CODEOWNERS team (architect/domain-expert)
 - 컴포넌트 라벨 (component:*)
 
 ### 2. Preset agent 커스터마이즈
