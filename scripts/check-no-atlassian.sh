@@ -8,6 +8,7 @@ cd "$(dirname "$0")/.."
 ALLOWLIST=(
   "CHANGELOG.md"
   "docs/migration-guide.md"
+  "docs/orchestrator-playbook.md"
   "docs/superpowers/specs/2026-04-25-atlassian-to-github-migration-design.md"
   "docs/superpowers/plans/2026-04-25-atlassian-to-github-migration.md"
   "scripts/check-no-atlassian.sh"
