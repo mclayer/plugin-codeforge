@@ -6,7 +6,7 @@
 
 ## SSOT 상수
 
-Atlassian·GitHub·labels는 [`project.yaml`](project.yaml). 아래는 narrative 컨텍스트만.
+GitHub·labels는 [`project.yaml`](project.yaml). 아래는 narrative 컨텍스트만.
 
 ## 기술 스택
 

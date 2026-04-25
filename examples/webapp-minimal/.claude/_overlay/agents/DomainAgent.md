@@ -1,7 +1,7 @@
 ### 도메인 소스 (Task Manager)
 
-- Confluence Domain Knowledge: pageId=`<REPLACE: DK 루트 pageId>`
-- ADR 카테고리 label: `domain-task`
+- Domain Knowledge: `docs/domain-knowledge/task/**`
+- ADR 카테고리 (frontmatter `category:`): `domain-task`
 - 도메인 코드: `src/domain/**`
 - 도메인 용어: Task, Assignee, Team, Status, Priority, DueDate
 

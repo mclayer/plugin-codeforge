@@ -1,7 +1,7 @@
 ### 도메인 소스 (Log Parser)
 
-- Confluence Domain Knowledge: pageId=`<REPLACE: DK 루트 pageId>`
-- ADR 카테고리 label: `domain-logparser`
+- Domain Knowledge: `docs/domain-knowledge/logparser/**`
+- ADR 카테고리 (frontmatter `category:`): `domain-logparser`
 - 도메인 코드: `src/parsers/**`, `src/events/**`, `src/filters/**`
 - 도메인 용어: Log Line, Event, Parser Profile, Filter
 

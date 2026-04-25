@@ -1,7 +1,7 @@
 ### 도메인 소스 (Schema Guard)
 
-- Confluence Domain Knowledge: pageId=`<REPLACE: DK 루트 pageId>`
-- ADR 카테고리 label: `domain-schema-validation`
+- Domain Knowledge: `docs/domain-knowledge/schema-validation/**`
+- ADR 카테고리 (frontmatter `category:`): `domain-schema-validation`
 - 도메인 코드: `src/<lib>/public/**`, `src/<lib>/internal/**`, `src/<lib>/types/**`
 - 도메인 용어: Schema, Validator, Result, Error Path, Custom Rule
 
