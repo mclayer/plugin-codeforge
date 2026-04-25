@@ -1,0 +1,57 @@
+name: Story Section 1 Immutable
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'docs/stories/**'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  check-section1:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect §1 modifications
+        id: detect
+        run: |
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          HEAD_SHA="${{ github.event.pull_request.head.sha }}"
+          VIOLATIONS=""
+          for f in $(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- 'docs/stories/*.md'); do
+            if ! git show "$BASE_SHA:$f" 2>/dev/null | grep -q '^## 1\. 사용자 요구사항'; then
+              continue
+            fi
+            BASE_S1=$(git show "$BASE_SHA:$f" | awk '/^## 1\./,/^## 2\./')
+            HEAD_S1=$(git show "$HEAD_SHA:$f" | awk '/^## 1\./,/^## 2\./')
+            if [[ "$BASE_S1" != "$HEAD_S1" ]]; then
+              VIOLATIONS="${VIOLATIONS}${f}: §1 변경 감지"$'\n'
+            fi
+          done
+          {
+            echo "violations<<VIO_EOF"
+            printf '%s' "$VIOLATIONS"
+            echo "VIO_EOF"
+          } >> "$GITHUB_OUTPUT"
+          if [[ -n "$VIOLATIONS" ]]; then
+            exit 1
+          fi
+
+      - name: Comment on PR (failure)
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: `❌ **Story §1 Immutable Violation**\n\nThe following files have §1 (사용자 요구사항 verbatim) modifications, which is not allowed:\n\n\`\`\`\n${{ steps.detect.outputs.violations }}\n\`\`\`\n\nIf §1 needs legitimate correction (typo etc.), open a separate PR with explicit bypass approval from architect team.`
+            });

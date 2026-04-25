@@ -1,0 +1,155 @@
+name: Story Init
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  story-init:
+    if: contains(github.event.issue.labels.*.name, 'type:story') && contains(github.event.issue.labels.*.name, 'phase:요구사항')
+    runs-on: ubuntu-latest
+    env:
+      ISSUE_TITLE: ${{ github.event.issue.title }}
+      ISSUE_BODY: ${{ github.event.issue.body }}
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install yq
+        uses: mikefarah/yq@v4
+
+      - name: Compute next story key
+        id: key
+        run: |
+          PREFIX=$(yq '.github.story_key_prefix' .claude/_overlay/project.yaml)
+          LAST=$(find docs/stories -maxdepth 1 -name "${PREFIX}-*.md" 2>/dev/null \
+                 | sed -E "s|.*/${PREFIX}-([0-9]+)\.md|\1|" \
+                 | sort -n | tail -1)
+          NEXT=$(( ${LAST:-0} + 1 ))
+          echo "key=${PREFIX}-${NEXT}" >> "$GITHUB_OUTPUT"
+          SLUG=$(printf '%s' "$ISSUE_TITLE" | sed -E 's/^\[STORY\] //; s/[^A-Za-z0-9가-힣]+/-/g; s/^-+|-+$//g; s/(.{40}).*/\1/')
+          echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
+
+      - name: Parse user requirement from Issue body
+        id: parse
+        run: |
+          REQ=$(printf '%s' "$ISSUE_BODY" | awk '/### 사용자 요구사항/,/### Epic Milestone/' | sed '1d;$d' | sed '/^$/d')
+          {
+            echo "requirement<<REQ_EOF"
+            printf '%s\n' "$REQ"
+            echo "REQ_EOF"
+          } >> "$GITHUB_OUTPUT"
+          MILESTONE=$(printf '%s' "$ISSUE_BODY" | awk '/### Epic Milestone/,/### Component/' | sed '1d;$d' | sed '/^$/d' | head -1)
+          echo "milestone=$MILESTONE" >> "$GITHUB_OUTPUT"
+
+      - name: Create branch + docs/stories/<KEY>.md
+        env:
+          KEY: ${{ steps.key.outputs.key }}
+          SLUG: ${{ steps.key.outputs.slug }}
+          REQUIREMENT: ${{ steps.parse.outputs.requirement }}
+        run: |
+          BRANCH="feat/${KEY}-${SLUG}"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+
+          mkdir -p docs/stories
+          # heredoc — 변수만 안전 보간 (env로 전달된 값)
+          {
+            printf '# %s: %s\n\n' "$KEY" "$ISSUE_TITLE"
+            printf -- '- **Issue**: #%s\n' "$ISSUE_NUMBER"
+            printf -- '- **Status**: phase:요구사항\n\n'
+            printf '## 1. 사용자 요구사항 (verbatim — story-section-1-immutable.yml로 변경 차단)\n\n'
+            printf '%s\n\n' "$REQUIREMENT"
+            cat <<'TPL_EOF'
+          ## 2. 도메인 해석
+
+          *(DomainAgent 작성 예정 — placeholder)*
+
+          ## 3. 관련 ADR
+
+          *(RequirementsPL 작성 예정 — placeholder)*
+
+          ## 4. 관련 코드 경로
+
+          *(RequirementsPL 작성 예정 — placeholder)*
+
+          ## 5. 요구사항 확장 해석
+
+          *(RequirementsAnalyst 작성 예정 — placeholder)*
+
+          ## 6. 외부 지식 배경
+
+          *(Researcher 작성 예정 — placeholder)*
+
+          ## 7. 설계 서사
+
+          *(Architect 작성 예정 — placeholder)*
+
+          ## 8. 개발 서사
+
+          *(DeveloperPL 작성 예정 — Phase 2 PR에서)*
+
+          ## 9. 품질 게이트 이력
+
+          *(Review/Test PL 작성 예정 — Phase 2 PR에서)*
+
+          ## 10. FIX Ledger
+
+          | Iter | 시각 | 레인 | 트리거 | 원인 판정 | 재실행 범위 | RESET? |
+          |------|------|------|--------|-----------|-------------|--------|
+
+          *(FIX 발생 시 append)*
+
+          ## 11. 회고
+
+          *(PMOAgent 작성 예정 — Story 완료 시)*
+          TPL_EOF
+          } > "docs/stories/${KEY}.md"
+
+          git add "docs/stories/${KEY}.md"
+          git commit -m "[${KEY}] feat: Story init — §1 verbatim, §2-11 placeholder"
+          git push origin "$BRANCH"
+
+      - name: Create Phase 1 PR
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          KEY: ${{ steps.key.outputs.key }}
+          SLUG: ${{ steps.key.outputs.slug }}
+        run: |
+          BRANCH="feat/${KEY}-${SLUG}"
+          BASE=$(yq '.github.default_branch' .claude/_overlay/project.yaml)
+
+          BODY=$(printf 'Story SSOT: `docs/stories/%s.md`\n\nThis is the Phase 1 PR (요구사항+설계+설계리뷰 lane). architect team CODEOWNERS auto-review attached.\n\nRelated: #%s\n' "$KEY" "$ISSUE_NUMBER")
+
+          gh pr create \
+            --base "$BASE" \
+            --head "$BRANCH" \
+            --title "[${KEY}] ${ISSUE_TITLE}" \
+            --body "$BODY" \
+            --label "type:story,phase:요구사항"
+
+      - name: Update Issue body to docs link
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          KEY: ${{ steps.key.outputs.key }}
+        run: |
+          gh issue edit "$ISSUE_NUMBER" \
+            --body "Story SSOT: [\`docs/stories/${KEY}.md\`](../blob/main/docs/stories/${KEY}.md)"
+
+      - name: Assign Milestone (if specified)
+        if: steps.parse.outputs.milestone != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          MILESTONE: ${{ steps.parse.outputs.milestone }}
+        run: |
+          gh issue edit "$ISSUE_NUMBER" --milestone "$MILESTONE"

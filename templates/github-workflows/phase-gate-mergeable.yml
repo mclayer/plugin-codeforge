@@ -1,0 +1,52 @@
+name: Phase Gate Mergeable
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled, unlabeled]
+
+permissions:
+  pull-requests: write
+  checks: write
+
+jobs:
+  check-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine PR phase + gate
+        id: gate
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            const phaseLabel = labels.find(l => l.startsWith('phase:'));
+            const gateLabel = labels.find(l => l.startsWith('gate:'));
+
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number
+            });
+            const hasCode = files.some(f => f.filename.startsWith('src/') || f.filename.startsWith('tests/'));
+
+            let required;
+            if (hasCode) {
+              required = { phase: 'phase:보안-테스트', gate: 'gate:security-test-pass' };
+            } else {
+              required = { phase: 'phase:설계-리뷰', gate: 'gate:design-review-pass' };
+            }
+
+            const phaseOk = phaseLabel === required.phase;
+            const gateOk = gateLabel === required.gate;
+            const summary = (phaseOk && gateOk)
+              ? `✓ phase + gate satisfied: ${required.phase} + ${required.gate}`
+              : `⏳ Awaiting: phase=${required.phase} (current=${phaseLabel || 'none'}), gate=${required.gate} (current=${gateLabel || 'none'})`;
+
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'phase-gate-mergeable',
+              head_sha: context.payload.pull_request.head.sha,
+              status: 'completed',
+              conclusion: (phaseOk && gateOk) ? 'success' : 'action_required',
+              output: { title: 'Phase Gate', summary: summary }
+            });
