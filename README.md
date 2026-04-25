@@ -12,7 +12,7 @@
 - **FIX 루프 상태 머신** — 설계 리뷰·구현 리뷰 최대 3회, 구현 테스트·보안 테스트 FIX 무제한
 - **Overlay 메커니즘 (β)** — consumer 프로젝트가 도메인·SSOT 상수·기술 스택을 파일 분리 방식으로 확장
 - **Templates SSOT** (`templates/`) — Change Plan · ADR · Story Page · Impl Manifest 양식 일원화
-- **단독 문서 writer (DocsAgent)** 를 통한 Jira·Confluence·docs 일관성 보장
+- **단독 문서 writer (DocsAgent)** 를 통한 GitHub Issue/PR·docs 일관성 보장
 
 ## 에이전트 구조
 
@@ -42,9 +42,9 @@ Orchestrator (최상위 Claude 세션)
 
 ### 2. 필수 의존성
 
-- MCP: `atlassian` (Jira + Confluence)
-- 플러그인: `codex@openai-codex`, `superpowers@claude-plugins-official`, `claude-md-management@claude-plugins-official`
-- CLI: `codex`
+- MCP: `github` (Issue/PR/sub-issue/comment write)
+- 플러그인: `codex@openai-codex`, `superpowers@claude-plugins-official`, `claude-md-management@claude-plugins-official`, `github@claude-plugins-official`
+- CLI: `codex`, `gh`
 
 세션 개시 시 자동 점검 · 미설치 시 blocking wait.
 
@@ -77,11 +77,11 @@ mkdir -p .claude/_overlay/agents
 
 | 파일 | 내용 |
 |------|------|
-| [`CLAUDE.md`](CLAUDE.md) | 오케스트레이션 규칙 SSOT — 에이전트·레인·권한·FIX 루프·Jira/ADR 규약 |
+| [`CLAUDE.md`](CLAUDE.md) | 오케스트레이션 규칙 SSOT — 에이전트·레인·권한·FIX 루프·GitHub Workflow·ADR 규약 |
 | [`docs/orchestrator-playbook.md`](docs/orchestrator-playbook.md) | Orchestrator 행동 SSOT — 생명주기·스폰·상태 머신·토큰 예산·트러블슈팅 |
 | [`docs/consumer-guide.md`](docs/consumer-guide.md) | Consumer 프로젝트 설치·overlay 작성 가이드 |
 | [`docs/plugin-design.md`](docs/plugin-design.md) | 플러그인 설계 spec — core/overlay 분리 원칙·merge 계약·β 메커니즘 |
-| [`docs/project-config-schema.md`](docs/project-config-schema.md) | `project.yaml` Schema SSOT — Atlassian·GitHub·labels 구조화 상수 |
+| [`docs/project-config-schema.md`](docs/project-config-schema.md) | `project.yaml` Schema SSOT — GitHub·labels 구조화 상수 |
 | [`docs/migration-guide.md`](docs/migration-guide.md) | 플러그인 버전업 시 consumer overlay 마이그레이션 절차 |
 | [`CHANGELOG.md`](CHANGELOG.md) | 릴리스 이력 (SemVer) |
 | [`templates/`](templates/) | 공통 문서 양식 SSOT — Change Plan · ADR · Story Page · Impl Manifest |
