@@ -40,17 +40,30 @@ jobs:
 
       - name: Parse user requirement from Issue body
         id: parse
+        # NOTE: section headers below MUST match `label:` prefixes in
+        # .github/ISSUE_TEMPLATE/story.yml. GitHub renders form labels as `### <label>`.
+        # 변경 시 양쪽 동시 갱신 필수 (양식 label 첫 단어 변경 = 본 워크플로우 regex 변경).
+        # Optional 필드(Epic Milestone / Component)가 비어 있으면 awk 범위가 EOF까지 흘러
+        # 지나가지 않도록 sentinel `### ` 기반 다음 헤더로 종료한다.
         run: |
-          REQ=$(printf '%s' "$ISSUE_BODY" | awk '/### 사용자 요구사항/,/### Epic Milestone/' | sed '1d;$d' | sed '/^$/d')
+          # 사용자 요구사항: '### 사용자 요구사항' 부터 다음 '### ' 헤더 직전까지
+          REQ=$(printf '%s' "$ISSUE_BODY" \
+                 | awk '/^### 사용자 요구사항/{flag=1; next} /^### /{flag=0} flag' \
+                 | sed '/^$/d')
           {
             echo "requirement<<REQ_EOF"
             printf '%s\n' "$REQ"
             echo "REQ_EOF"
           } >> "$GITHUB_OUTPUT"
-          MILESTONE=$(printf '%s' "$ISSUE_BODY" | awk '/### Epic Milestone/,/### Component/' | sed '1d;$d' | sed '/^$/d' | head -1)
+
+          MILESTONE=$(printf '%s' "$ISSUE_BODY" \
+                       | awk '/^### Epic Milestone/{flag=1; next} /^### /{flag=0} flag' \
+                       | sed '/^$/d' | head -1)
           echo "milestone=$MILESTONE" >> "$GITHUB_OUTPUT"
 
-          COMPONENT=$(printf '%s' "$ISSUE_BODY" | awk '/### Component/,0' | sed '1d' | sed '/^$/d' | head -1)
+          COMPONENT=$(printf '%s' "$ISSUE_BODY" \
+                        | awk '/^### Component/{flag=1; next} /^### /{flag=0} flag' \
+                        | sed '/^$/d' | head -1)
           # project.yaml labels.components 와 일치 검증
           VALID_COMPONENT=""
           if [[ -n "$COMPONENT" ]]; then
@@ -156,8 +169,9 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           KEY: ${{ steps.key.outputs.key }}
         run: |
+          BASE=$(yq '.github.default_branch' .claude/_overlay/project.yaml)
           gh issue edit "$ISSUE_NUMBER" \
-            --body "Story SSOT: [\`docs/stories/${KEY}.md\`](../blob/main/docs/stories/${KEY}.md)"
+            --body "Story SSOT: [\`docs/stories/${KEY}.md\`](../blob/${BASE}/docs/stories/${KEY}.md)"
 
       - name: Assign Milestone (if specified)
         if: steps.parse.outputs.milestone != ''
