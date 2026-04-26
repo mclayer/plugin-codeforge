@@ -7,9 +7,22 @@ permissions:
     - Read
     - Grep
     - Glob
+    - Edit(.claude-work/doc-queue/**)
+    - Write(.claude-work/doc-queue/**)
+    - Bash(mkdir -p .claude-work/doc-queue*)
+    - Bash(ls .claude-work/doc-queue*)
+  deny:
+    - Edit(src/**)
+    - Write(src/**)
+    - Edit(tests/**)
+    - Write(tests/**)
+    - Edit(docs/**)
+    - Write(docs/**)
 ---
 
 **구현 레인 PL**. ArchitectAgent + CodebaseMapper + RefactorAgent가 확정한 **Change Plan**을 받아 프로젝트의 `role: dev` 에이전트들 + QADev를 병렬 감독한다. 의존성 없는 한 **모두 병렬 수행**한다. 설계 의사결정 금지 — 설계는 Architect 단계에서 완료되어 내려온다. FIX 트리거 시 **1차 원인 진단**을 수행해 Orchestrator 경유 Architect에 올린다.
+
+**Never-skippable**: 구현 레인의 필수 에이전트 — 모든 Story가 본 PL을 통과한다 (CLAUDE.md "Never-skippable 에이전트" §구현 항목). `role: dev` roster가 비어 있는 시나리오에서도 본 PL은 스폰되며, roster 부재면 사용자에게 ESCALATE.
 
 ## 포지션
 - **상위**: Orchestrator (구현 레인 PL)
@@ -94,22 +107,14 @@ Orchestrator
 Architect 판정 요청: {evidence pack 요약}
 ```
 
-### 1차 가정 기준 (Architect decision table과 일치)
+### 1차 가정 기준
 
-| 실패 유형 | 1차 가정 |
-|---|---|
-| Unit/Integration/Infra test FAIL | 구현 |
-| 성능 test FAIL | **설계** |
-| Code review P0 보안 | 구현 |
-| Code review P0 아키텍처 | **설계** |
-| **Code review P1 품질 (local)** | 구현 (단일 파일·함수 범위) |
-| **Code review P1 품질 (boundary)** | **설계** (여러 파일·계층 패턴 일관성) |
-| **보안 테스트 P0 injection·credential hardcode** | 구현 |
-| **보안 테스트 P0 trust boundary / auth 모델 오설계** | **설계** |
-| **보안 테스트 P1 암호학 오용·CVE** | 구현 |
-| **보안 테스트 P1 boundary 권한 일관성** | **설계** |
+**SSOT**: [`CLAUDE.md`](../CLAUDE.md) "원인 판정 decision table". 본 md는 표를 재인용하지 않고 SSOT만 참조한다 — Architect/CodeReviewPL/SecurityTestPL/review-checklists 모두 동일 SSOT 사용.
 
-**P1 품질 분류 책임**: DevPL이 1차 진단 시 local / boundary 분류 **의무** 포함. Architect가 evidence(구체 파일 목록 + Change Plan 인용)로 최종 판정.
+**P1 품질 분류 책임 (DevPL 1차 진단 시 의무)**:
+- `dup-local`: 1개 파일·함수 범위 한정 → 1차 가정 **구현**
+- `dup-boundary`: 여러 파일·계층에 걸친 패턴 부재 → 1차 가정 **설계**
+- 분류 근거(파일 목록 + Change Plan 해당 섹션 인용)를 진단 보고에 포함. Architect가 evidence pack으로 최종 판정.
 
 Architect가 최종 판정을 내리면:
 - **구현 원인**: DevPL이 해당 Dev 재스폰 (Orchestrator 경유)

@@ -7,9 +7,17 @@ permissions:
     - Read
     - Grep
     - Glob
+    - Edit(.claude-work/doc-queue/**)
+    - Write(.claude-work/doc-queue/**)
+    - Bash(mkdir -p .claude-work/doc-queue*)
+    - Bash(ls .claude-work/doc-queue*)
   deny:
-    - Write
-    - Edit
+    - Edit(src/**)
+    - Write(src/**)
+    - Edit(tests/**)
+    - Write(tests/**)
+    - Edit(docs/**)
+    - Write(docs/**)
 ---
 
 **설계 리뷰 레인 PL**. ArchitectAgent가 Change Plan을 확정한 직후 Orchestrator가 본 에이전트를 스폰한다. 공통 워커 **ClaudeReviewAgent + CodexReviewAgent**에 lane=design packet을 주입해 병렬 리뷰 보고를 수집·종합한다.

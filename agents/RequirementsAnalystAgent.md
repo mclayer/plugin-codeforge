@@ -118,11 +118,17 @@ rm -f "$OUT"
 
 ## Story file §5 갱신 의뢰 (atomic per-agent, 의무)
 
-codex 결과 수령 후 **§5 단일 섹션 draft를 write queue에 직접 제출** — PL이 묶어 다시 제출하지 않음 (atomic 갱신으로 부분 resume 보장).
+codex 결과 수령 후 **§5 단일 섹션 draft를 write queue에 직접 제출** — PL이 묶어 다시 제출하지 않음 (atomic 갱신으로 부분 resume 보장). 큐 파일 스키마는 [docs/orchestrator-playbook.md](../docs/orchestrator-playbook.md) §11.2 SSOT.
 
 ```
 .claude-work/doc-queue/<story>/<seq>-story-section-5.md
-frontmatter type: story-section, section: "5"
+frontmatter:
+  type: story-section
+  story: <STORY_KEY>
+  requester: RequirementsAnalystAgent
+  issued_at: <ISO 8601>
+  priority: normal
+  section: "5"
 body: codex 출력의 "## 사용자 원문 / ## 유스케이스 / ## 암묵 가정 / ## 엣지 / ## 제외 / ## 사용자 확인 필요 / ## Ambiguity 키워드" 섹션
 ```
 

@@ -17,23 +17,52 @@ ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md).
 
 ## 2. 워커 packet 구성 (PL → Orchestrator → Worker)
 
-PL은 lane 진입 시 다음 4 필드를 채운 packet을 워커에 주입한다. 누락 시 워커가 ESCALATE 신호 반환 — generic fallback 금지.
+PL은 lane 진입 시 다음 필드를 채운 packet을 워커에 주입한다. **필수 필드 누락 시 워커가 ESCALATE 신호(`ESCALATE_PACKET_INCOMPLETE`) 반환 — generic fallback 금지**.
+
+### 공통 필드 (모든 lane)
 
 ```yaml
 review_packet:
-  lane: design | code | security
-  checklist_path: templates/review-checklists/{design,code,security}.md
-  scope_globs:
+  lane: design | code | security                               # 필수
+  checklist_path: templates/review-checklists/{design,code,security}.md  # 필수
+  scope_globs:                                                  # 필수
     - <file glob list>     # 예: ["docs/change-plans/**", "docs/stories/<KEY>.md"]
-  category_enum:
+  category_enum:                                                # 필수
     - <category list>      # 예: ["adr-mismatch", "design-quality", ...]
-  severity_overrides:        # lane-specific 자동 P0 룰 (선택)
+  severity_overrides:        # 선택 — lane-specific 자동 P0 룰
     - rule: "ADR violation" → P0
     - rule: "credential hardcode" → P0
-  story_key: <STORY_KEY>     # Story file 참조용
-  related_adrs:              # 정합성 교차 입력 (선택)
+  story_key: <STORY_KEY>     # 필수 — Story file 참조용
+  related_adrs:              # 선택 — 정합성 교차 입력
     - docs/adr/ADR-NNN-<slug>.md
 ```
+
+### lane-specific 확장 필드
+
+**`lane=security` 추가 필수 필드** — SecurityTestPL이 1차 layer fetch 결과를 packet에 inline 첨부:
+
+```yaml
+  first_layer_findings:                                          # security lane 필수
+    dependabot:    [<Dependabot alerts list (gh api repos/*/dependabot/alerts)>]
+    codeql:        [<CodeQL findings (gh api repos/*/code-scanning/alerts)>]
+    secret_scan:   [<Secret Scanning alerts>]
+    push_protection: [<Push Protection bypassed events, optional>]
+```
+
+워커는 1차 layer가 이미 보고한 finding은 skip하고 **high-level 분석(trust boundary·auth model)에 집중**. `lane=design` / `lane=code` 는 이 필드 없음.
+
+**lane별 packet 필수 필드 매트릭스**:
+
+| 필드 | design | code | security |
+|------|:------:|:----:|:--------:|
+| lane | ✅ | ✅ | ✅ |
+| checklist_path | ✅ | ✅ | ✅ |
+| scope_globs | ✅ | ✅ | ✅ |
+| category_enum | ✅ | ✅ | ✅ |
+| story_key | ✅ | ✅ | ✅ |
+| severity_overrides | ◯ | ◯ | ◯ |
+| related_adrs | ◯ | ◯ | ◯ |
+| **first_layer_findings** | — | — | ✅ |
 
 ---
 

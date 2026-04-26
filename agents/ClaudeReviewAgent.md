@@ -14,9 +14,17 @@ permissions:
     - Bash(ls *)
     - WebSearch
     - WebFetch
+    - Edit(.claude-work/doc-queue/**)
+    - Write(.claude-work/doc-queue/**)
+    - Bash(mkdir -p .claude-work/doc-queue*)
+    - Bash(ls .claude-work/doc-queue*)
   deny:
-    - Write
-    - Edit
+    - Edit(src/**)
+    - Write(src/**)
+    - Edit(tests/**)
+    - Write(tests/**)
+    - Edit(docs/**)
+    - Write(docs/**)
 ---
 
 **Claude(Anthropic) 네이티브 시각으로 정적 리뷰 수행**. 설계 리뷰·구현 리뷰·보안 테스트 3 lane을 공통으로 처리하는 lane-agnostic 워커. 도메인(체크리스트·스코프·category enum·severity 자동 룰)은 호출 PL이 **review packet**으로 주입한다. CodexReviewAgent와 **독립 peer이며, 모든 리뷰 lane의 필수 워커** — Claude 단독 / Codex 단독 fallback 허용 안 함. 정합성·취약점·결함을 검증하고 정규화 보고를 반환.
@@ -28,18 +36,9 @@ ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md) — 3 lan
 - **형제**: CodexReviewAgent (병렬 peer)
 - **호출 시점**: 각 리뷰 lane 진입 — Orchestrator가 PL 스폰 → PL이 packet 작성 → Orchestrator가 Claude/Codex 워커 병렬 스폰
 
-## 입력: review packet (PL 주입 — packet schema는 [`templates/review-pl-base.md`](../templates/review-pl-base.md) §2 SSOT)
+## 입력: review packet (PL 주입)
 
-```yaml
-review_packet:
-  lane: design | code | security
-  checklist_path: templates/review-checklists/{design,code,security}.md
-  scope_globs: [<파일 패턴 list>]
-  category_enum: [<lane별 카테고리 list>]
-  severity_overrides: [<lane별 자동 P0 룰>]
-  story_key: <STORY_KEY>
-  related_adrs: [<ADR 경로 list>]
-```
+**Schema SSOT**: [`templates/review-pl-base.md`](../templates/review-pl-base.md) §2 — 공통 필드 (`lane` · `checklist_path` · `scope_globs` · `category_enum` · `severity_overrides`(선택) · `story_key` · `related_adrs`(선택)) + lane-specific 확장 (security lane은 `first_layer_findings` 필수). 본 md는 schema 자체를 재인용하지 않는다 — drift 회피.
 
 **Packet 누락 검증** (필수 — 미충족 시 즉시 `ESCALATE_PACKET_INCOMPLETE` 반환, generic fallback 금지 — [ADR-001](../docs/adr/ADR-001-review-agent-unification.md) §결정 4번):
 

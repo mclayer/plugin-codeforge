@@ -28,7 +28,6 @@ permissions:
     - mcp__github__list_pull_requests
     - mcp__github__create_pull_request
     - mcp__github__update_pull_request
-    - mcp__github__merge_pull_request
     - mcp__github__create_branch
     - mcp__github__get_label
     - Bash(gh api repos/*/milestones*)
@@ -55,7 +54,7 @@ permissions:
 Consumer overlay의 **`.claude/_overlay/project.yaml`** 가 GitHub org/repo·story_key_prefix·CODEOWNERS team·Discussions 카테고리·Milestone naming·label taxonomy 등 프로젝트 상수를 structured로 주입. Orchestrator가 **Project Config Packet**을 본 에이전트 프롬프트에 삽입 (playbook §12.5) — 주입된 packet을 SSOT로 사용. Packet이 없으면 `Read(.claude/_overlay/project.yaml)`로 fallback (schema: [`../docs/project-config-schema.md`](../docs/project-config-schema.md)). 필수 필드 누락 시 Orchestrator 경유 사용자 에스컬레이션.
 
 소유 영역:
-1. **GitHub Issue 코멘트** — 모든 에이전트의 단계별 기록 (phase prefix 10종)
+1. **GitHub Issue 코멘트** — 모든 에이전트의 단계별 기록 (phase prefix 10종 + Orchestrator Preflight 1종 = 총 11종)
 2. **`docs/stories/<KEY>.md`** (GitHub Issue 1건당 1파일) — 컨텍스트·설계·개발 서사 SSOT (single-file)
 3. **`docs/adr/ADR-NNN-<slug>.md`** — 설계 결정 아카이브 (flat, frontmatter `category:`)
 4. **`docs/domain-knowledge/<area>/<topic>.md`** 트리 — DomainAgent 도메인 지식 베이스 SSOT (계층) + GitHub Discussions Q&A
@@ -92,7 +91,7 @@ Consumer overlay의 **`.claude/_overlay/project.yaml`** 가 GitHub org/repo·sto
 원문: <경로 또는 URL>
 ```
 
-**Phase prefix 10종** (현재 레인·이벤트에 맞는 것 선택):
+**Phase prefix 10종 + Orchestrator Preflight 1종 = 총 11종** (현재 레인·이벤트에 맞는 것 선택):
 - `[요구사항]` — RequirementsPLAgent·DomainAgent·RequirementsAnalyst·Researcher
 - `[설계]` — ArchitectAgent·CodebaseMapperAgent·RefactorAgent
 - `[설계-리뷰]` — DesignReviewPLAgent·ClaudeReviewAgent·CodexReviewAgent (워커는 lane=design packet 수령)
@@ -122,7 +121,7 @@ Consumer overlay의 **`.claude/_overlay/project.yaml`** 가 GitHub org/repo·sto
 
 GitHub Story Issue 1건당 `docs/stories/<KEY>.md` 파일 1개. 요구사항 접수부터 PR merge까지의 컨텍스트·설계·개발 서사가 모두 이 파일로 누적.
 
-**섹션 표준 구조·라벨·위치는 [`templates/story-page-structure.md`](../templates/story-page-structure.md) SSOT 참조**. 요약: 위치 `docs/stories/<KEY>.md` (KEY = `<github.story_key_prefix>-N`), 제목 H1 `<KEY>: <요약>`, 섹션 §1-11 (§9는 설계 리뷰·구현 리뷰·구현 테스트·보안 테스트 iteration 누적, §10 FIX Ledger). §1 변조 금지 invariant는 `story-section-1-immutable.yml` Action이 강제.
+**섹션 표준 구조·라벨·위치·단계별 갱신 책임 표는 [`templates/story-page-structure.md`](../templates/story-page-structure.md) SSOT 참조** — 본 md는 ownership 표를 재인용하지 않는다 (drift 회피). 요약: 위치 `docs/stories/<KEY>.md` (KEY = `<github.story_key_prefix>-N`), 제목 H1 `<KEY>: <요약>`, 섹션 §1-11 (§9는 설계 리뷰·구현 리뷰·구현 테스트·보안 테스트 iteration 누적, §10 FIX Ledger). §1 변조 금지 invariant는 `story-section-1-immutable.yml` Action이 강제.
 
 **story-init.yml Action 자동 생성**: 사용자가 GitHub Issue Form (story.yml) 제출 시 Action이 자동:
 - 다음 KEY 번호 계산
@@ -131,26 +130,7 @@ GitHub Story Issue 1건당 `docs/stories/<KEY>.md` 파일 1개. 요구사항 접
 - Issue body link 변환
 - `phase:요구사항` 라벨 부착
 
-DocsAgent는 Action이 처리하지 않은 모든 후속 갱신을 담당.
-
-**단계별 갱신 책임**:
-| 단계 | 갱신 섹션 | DocsAgent 액션 |
-|------|----------|----------------|
-| 요구사항 접수 (story-init.yml Action 자동 또는 DocsAgent 수동) | §1 verbatim, §2·§5·§6 placeholder | `Write(docs/stories/<KEY>.md)` (수동 fallback 시) |
-| 요구사항 병렬 에이전트 개별 완료 | Domain→§2 / Analyst→§5 / Researcher→§6 (각자 **섹션별 atomic 갱신**, 배치 금지) | 에이전트별 write queue drain 시 해당 섹션만 `Edit(docs/stories/<KEY>.md)` (resume 부분 완료 감지 보장) |
-| 요구사항 확정 (RequirementsPLAgent) | §3-4 + 상충/정합 블록 | `Edit(docs/stories/<KEY>.md)` |
-| 설계 확정 (ArchitectAgent) | §7 (Change Plan 링크 + 요약 + Mapper·Refactor 대립 결론) | `Edit(docs/stories/<KEY>.md)` |
-| Clarification 재스폰 (RequirementsPL · Architect) | §9.0 append | `Edit(docs/stories/<KEY>.md)` (FIX 라벨 미추가 — 게이트 실패 아님) |
-| 설계 리뷰 iteration (DesignReviewPL) | §9.1 | `Edit(docs/stories/<KEY>.md)` |
-| 설계 리뷰 PASS | label `gate:design-review-pass` 부착 | `mcp__github__issue_write` (label add) |
-| 구현 완료 (DeveloperPL) | §8 (§8.1-8.4 + §8.5 Impl Manifest) | `Edit(docs/stories/<KEY>.md)` — §8.5 commit 시 subissue Action 자동 sub-issue 생성 |
-| 구현 리뷰 iteration (CodeReviewPL) | §9.2 | `Edit(docs/stories/<KEY>.md)` |
-| 구현 테스트 레인 (Orchestrator) | §9.3 | `Edit(docs/stories/<KEY>.md)` |
-| 보안 테스트 iteration (SecurityTestPL) | §9.4 | `Edit(docs/stories/<KEY>.md)` |
-| 보안 테스트 PASS | label `gate:security-test-pass` 부착 | `mcp__github__issue_write` (label add) |
-| FIX 루프 | §10 FIX Ledger append | `Edit(docs/stories/<KEY>.md)` (fix-ledger-sync.yml Action이 자동 mirror+label) |
-| Story 완료 회고 (PMOAgent) | §11 회고 블록 | `Edit(docs/stories/<KEY>.md)` |
-| 최종 완료 (Phase 2 PR merged) | Issue auto-close (PR body의 `Closes #N`) | (자동) |
+DocsAgent는 Action이 처리하지 않은 모든 후속 갱신을 담당. 갱신 의무·섹션 매핑은 [`templates/story-page-structure.md`](../templates/story-page-structure.md) "단계별 갱신 책임" 표 SSOT 참조.
 
 **§2/§5/§6 null 결과 템플릿** (에이전트가 "불필요" 판정 반환 시에도 섹션은 생성 — 독립 관점 결과 보존):
 - §2 Domain "공백 없음": `## 2. 도메인 해석\n기존 Domain Knowledge + ADR로 충분, 추가 해석 불필요.\n사유: {구체 사유}\n참조: [docs/domain-knowledge/<area>/<topic>.md / ADR-NNN]`

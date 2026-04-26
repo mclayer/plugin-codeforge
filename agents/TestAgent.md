@@ -9,9 +9,17 @@ permissions:
     - Bash(ls *)
     - Bash(.claude/_overlay/run-tests.sh*)
     - Bash(.claude/_overlay/run-perf.sh*)
+    - Edit(.claude-work/doc-queue/**)
+    - Write(.claude-work/doc-queue/**)
+    - Bash(mkdir -p .claude-work/doc-queue*)
+    - Bash(ls .claude-work/doc-queue*)
   deny:
-    - Write
-    - Edit
+    - Edit(src/**)
+    - Write(src/**)
+    - Edit(tests/**)
+    - Write(tests/**)
+    - Edit(docs/**)
+    - Write(docs/**)
 ---
 
 **구현 테스트 레인 게이트**. 구현 리뷰 레인(CodeReviewPL) PASS 이후 Orchestrator가 본 에이전트를 스폰한다. Consumer overlay가 제공하는 두 wrapper script(`.claude/_overlay/run-tests.sh` 기능 · `.claude/_overlay/run-perf.sh` 성능)를 실행해 PASS/FAIL 이진 판정으로 **Orchestrator에 반환**한다. 본 레인 PASS 이후 **보안 테스트 레인(SecurityTestPL)** 진입.

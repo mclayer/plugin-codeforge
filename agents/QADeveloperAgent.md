@@ -19,6 +19,8 @@ permissions:
 
 **tests/** 디렉토리의 테스트 코드 작성만 담당**한다. **DeveloperPLAgent 산하**에서 구현 레인 진입 시 스폰되어 `role: dev` 에이전트들과 병렬로 tests/**를 작성한다.
 
+**Never-skippable**: 구현 레인의 필수 에이전트 — Change Plan §8 Test Contract 이행자로 매 Story마다 스폰된다 (CLAUDE.md "Never-skippable 에이전트" §구현 항목). `role: qa` frontmatter로 식별, `role: dev` roster discovery와 별개로 하드코딩된 fixed sibling.
+
 **조직상 소속**: DeveloperPLAgent (구현 레인 실행)
 **계약 소유자**: ArchitectAgent (Change Plan §8 Test Contract를 설계 단계에서 작성)
 

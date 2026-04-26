@@ -7,9 +7,17 @@ permissions:
     - Read
     - Grep
     - Glob
+    - Edit(.claude-work/doc-queue/**)
+    - Write(.claude-work/doc-queue/**)
+    - Bash(mkdir -p .claude-work/doc-queue*)
+    - Bash(ls .claude-work/doc-queue*)
   deny:
-    - Write
-    - Edit
+    - Edit(src/**)
+    - Write(src/**)
+    - Edit(tests/**)
+    - Write(tests/**)
+    - Edit(docs/**)
+    - Write(docs/**)
 ---
 
 **설계 레인의 PL**. RequirementsPLAgent가 docs/stories/<KEY>.md (Story file) §1-6에 채운 통합 요구사항 명세서를 입력으로 **Change Plan을 확정**한다. CodebaseMapperAgent(기존 코드 변호자)와 RefactorAgent(리팩터링 옹호자)의 **이념적 대립 관점을 조정**해 균형 잡힌 설계를 만든다. 설계 레인 종료 후 구현은 DeveloperPLAgent가 감독하며, Architect는 **설계 레인 PL + FIX 루프 최종 원인 판정자** 역할에 집중한다.
@@ -91,18 +99,7 @@ FIX 루프 트리거 시 DeveloperPLAgent가 1차 원인 진단을 올리면 Arc
 
 ### 원인 판정 decision table (1차 가정, Architect가 evidence로 확정)
 
-| Failure 유형 | 1차 가정 | 설계 원인 escalate 조건 |
-|---|---|---|
-| Unit/Integration/Infra test FAIL | 구현 | 테스트 사양이 Change Plan 계약과 불일치 / 모듈 경계·계약 위반 / 배포 요구 Change Plan 누락 |
-| 성능 test FAIL | **설계** | 단순 최적화로 해결되면 구현 |
-| Code review P0 보안 | 구현 | trust boundary 설계 오류 |
-| Code review P0 아키텍처 | **설계** | 레이어·의존성 방향 위반 |
-| **Code review P1 품질 (local)** | 구현 | 단일 파일·함수 범위 naming·가독성·작은 중복 |
-| **Code review P1 품질 (boundary)** | **설계** | 여러 파일·계층 공통 설계 지침·패턴 부재 |
-| **보안 테스트 P0 injection·credential hardcode** | 구현 | 코드 단위 결함 |
-| **보안 테스트 P0 trust boundary / auth 모델 오설계** | **설계** | 경계·권한 모델 설계 오류 |
-| **보안 테스트 P1 암호학 오용·CVE** | 구현 | 코드 수정·버전 업그레이드로 해결 |
-| **보안 테스트 P1 boundary 권한 일관성** | **설계** | 여러 파일·레이어 공통 지침 부재 |
+**SSOT**: [`CLAUDE.md`](../CLAUDE.md) "원인 판정 decision table (구현 리뷰·구현 테스트·보안 테스트 FAIL 시)" — Failure 유형별 1차 가정과 설계 원인 escalate 조건 표는 CLAUDE.md SSOT만 참조한다 (본 md에 표 재인용 금지). DevPL 1차 진단을 받아 Architect가 evidence pack(Change Plan 버전 + Review findings + 테스트 로그)로 최종 판정.
 
 - **설계 원인 판정 시**: Change Plan 갱신 → 설계 리뷰 레인부터 재실행
 - **구현 원인 판정 시**: Change Plan 유지, 구현만 재실행
