@@ -65,16 +65,7 @@ CodeReviewPLAgent가 ClaudeReviewAgent / CodexReviewAgent에 packet으로 주입
 
 ## 1차 원인 가정 (FIX 시)
 
-| Finding severity | 1차 가정 | 근거 |
-|---|---|---|
-| P0 보안 | 구현 | trust boundary 설계 오류 시 설계로 전환 (보안 lane이 깊게 검증) |
-| P0 아키텍처 (`layer-violation`) | **설계** | 레이어·의존성 방향 위반 |
-| P0 매핑 누락 (`impl-manifest-mismatch`) | 구현 | Dev가 §8.5 누락 |
-| P1 `dup-local` | 구현 | 단일 파일·함수 내 품질 |
-| P1 `dup-boundary` | **설계** | 여러 파일·계층 공통 지침 부재 |
-| 기타 P1 | 구현 | — |
-
-PL이 1차 진단 → DeveloperPL이 재진단 → Architect 최종 판정 (CLAUDE.md 원인 판정 decision table SSOT).
+원인 판정 표는 [CLAUDE.md](../../CLAUDE.md) "원인 판정 decision table" SSOT. 본 체크리스트는 코드 lane 카테고리 enum과 severity override만 담당하며, 원인 분기 표는 inline 복제하지 않는다 (drift 방지). PL이 1차 진단 → DeveloperPL이 재진단 → Architect 최종 판정.
 
 ## Consumer overlay 확장
 

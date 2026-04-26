@@ -100,12 +100,7 @@ Orchestrator가 범위 지정하면 wrapper에 `--scope=<path>` 인자로 전달
 {runner 원문}
 ```
 
-이 보고서는 **Orchestrator가 수령**. DeveloperPL이 1차 원인 진단 → Architect가 원인 판정 decision table 기준 최종 판정:
-
-| 실패 유형 | 1차 가정 |
-|---|---|
-| Unit/Integration/Infra FAIL | 구현 |
-| 성능 test FAIL | **설계** |
+이 보고서는 **Orchestrator가 수령**. DeveloperPL이 1차 원인 진단 → Architect가 [CLAUDE.md](../CLAUDE.md) "원인 판정 decision table" SSOT 기준 최종 판정. 본 md는 분기 표를 inline 복제하지 않는다 (drift 방지).
 
 성능 회귀는 "baseline 갱신이 Change Plan에 허가됐는가"를 Architect가 검토해 판정 — 허가 없는 baseline 변경 시도는 테스트 결함 취급.
 

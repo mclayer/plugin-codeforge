@@ -76,7 +76,8 @@ review_packet:
   first_layer_findings:
     dependabot: <fetched alerts>
     codeql: <fetched findings>
-    secret_scanning: <fetched alerts>
+    secret_scan: <fetched alerts>
+    push_protection: <fetched bypass events>      # optional
   story_key: <STORY_KEY>
   related_adrs: <Story §3에서 추출>
 ```
@@ -88,16 +89,13 @@ review_packet:
 
 ## 1차 원인 가정 (FIX 시 — DeveloperPL/Architect 전달 초안)
 
-| Finding category | 1차 가정 | 근거 |
-|---|---|---|
-| P0 `injection` · `credential` hardcode | 구현 | 코드 단위 결함 |
-| P0 `trust-boundary` 누락 | **설계** | 경계·권한 모델 설계 오류 |
-| P0 `auth` 모델 오설계 | **설계** | 권한 체계 설계 오류 |
-| P1 `crypto` | 구현 | 코드 수정으로 해결 |
-| P1 `dependency-cve` | 구현 | 버전 업그레이드 |
-| P1 boundary 권한 일관성 | **설계** | 여러 파일·레이어 공통 지침 부재 |
+원인 판정 표는 [CLAUDE.md](../CLAUDE.md) "원인 판정 decision table" SSOT — security lane 행만 발췌해 inline 유지하지 않는다 (drift 방지). PL은 SSOT 표를 직접 인용해 1차 진단 초안 작성.
 
-PL 1차 진단 → DeveloperPL 재진단 → Architect 최종 판정. 원인 판정 SSOT는 [CLAUDE.md](../CLAUDE.md) "원인 판정 decision table".
+**Security lane에서 자주 보는 분기** (참고 — 정확한 판정은 SSOT 사용):
+- 코드 단위 결함(injection / credential hardcode / CVE 업그레이드)은 구현 원인
+- Trust boundary / auth 모델 / boundary 권한 일관성 부재는 설계 원인 → Change Plan 갱신 + 설계 리뷰 회귀
+
+PL 1차 진단 → DeveloperPL 재진단 → Architect 최종 판정.
 
 ## 다음 게이트 (PASS 시)
 

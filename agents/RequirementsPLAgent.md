@@ -27,7 +27,7 @@ permissions:
 ## 병렬 스폰 원칙 (sequential → parallel 전환 이유)
 
 이전 순차 모델(Domain → Analyst → Researcher)은 후속 에이전트가 선행 결과에 오염되어 **독립 관점**이 소실되는 문제가 있었다. 병렬 모델에서는:
-- 셋 모두 **공통 입력**(사용자 원문 + Story §1-2 + Project Config Packet + 관련 ADR 링크)에서 각자 키워드·관점을 자체 도출
+- 셋 모두 **공통 입력**(사용자 원문 Story §1 + 관련 ADR 목록(§3 선제 fetch) + 코드 경로 지도(§4) + Project Config Packet)에서 각자 키워드·관점을 자체 도출 — §2(Domain) / §5(Analyst) / §6(Researcher)는 각 에이전트의 **출력 destination**이므로 input에 포함하지 않는다 (오염 차단)
 - 한쪽이 다른 쪽의 요약·키워드에 의존하지 않음 (오염 차단)
 - PL이 진정한 **synthesizer** 역할 — 세 독립 관점의 교집합·상충·공백을 본인 판단으로 정리
 - "조사할 것 없음" (null 결과)도 유효한 관점 — 에이전트 skip 금지, 명시적으로 반환받아 판단 근거로 활용

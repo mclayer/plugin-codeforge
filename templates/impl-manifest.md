@@ -10,10 +10,10 @@
 
 | 파일 경로 | 변경 유형 | 담당 Agent | Change Plan 매핑 | 라인 수(±) | 비고 |
 |-----------|-----------|------------|------------------|------------|------|
-| `src/<path>/server.py` | 수정 | BackendDev | §5 항목 2 | +42 -5 | 신규 라우트 2개 |
-| `src/<path>/domain/entity.py` | 추가 | BackendDev | §3 도입할 설계 | +120 | 신규 Aggregate |
-| `tests/unit/domain/test_entity.py` | 추가 | QADev | §8.1 커버리지 | +85 | Entity 단위 테스트 |
-| `deploy/systemd/<service>.service` | 수정 | InfraEng | §5 항목 7 | +3 -1 | 의존성 체인 추가 |
+| `src/<path>/server.py` | 수정 | BackendDeveloperAgent | §5 항목 2 | +42 -5 | 신규 라우트 2개 |
+| `src/<path>/domain/entity.py` | 추가 | BackendDeveloperAgent | §3 도입할 설계 | +120 | 신규 Aggregate |
+| `tests/unit/domain/test_entity.py` | 추가 | QADeveloperAgent | §8.1 커버리지 | +85 | Entity 단위 테스트 |
+| `deploy/systemd/<service>.service` | 수정 | InfraEngineerAgent | §5 항목 7 | +3 -1 | 의존성 체인 추가 |
 
 ### 컬럼 규격
 
@@ -21,7 +21,7 @@
 |------|----|----|
 | 파일 경로 | repo root 기준 relative path | backtick 감싸기 |
 | 변경 유형 | `추가` / `수정` / `제거` | 단일 값 |
-| 담당 Agent | `BackendDev` / `FrontendDev` / `DataEng` / `InfraEng` / `QADev` (consumer roster에 따라 추가/생략) | 1개 |
+| 담당 Agent | `BackendDeveloperAgent` / `FrontendDeveloperAgent` / `DataEngineerAgent` / `InfraEngineerAgent` / `QADeveloperAgent` 등 — agent md 파일명과 일치 (consumer roster에 따라 추가/생략) | 1개 |
 | Change Plan 매핑 | `§N 항목 M` 또는 `§N` (섹션 전체) | Change Plan 섹션 번호 |
 | 라인 수(±) | `+X` / `-Y` / `+X -Y` | git diff numstat 기준 |
 | 비고 | 한 줄 설명 | 선택 |
@@ -84,7 +84,7 @@ Impl Manifest는 CodeReview·Architect 감사의 **입력**:
 |-----------|------|
 | **§8.5 ↔ git diff 일치** | 기록된 파일 = PR 변경 파일 목록 |
 | **§8.5 ↔ Change Plan 매핑 타당성** | 각 파일의 "Change Plan 매핑" 컬럼이 §1-10 범위 내 |
-| **role:dev 담당 경로 준수** | Backend가 template/static 수정 없음, Frontend가 server.py 수정 없음 등 (consumer roster 정의에 따름) |
+| **role:dev 담당 경로 준수** | BackendDeveloperAgent가 template/static 수정 없음, FrontendDeveloperAgent가 server.py 수정 없음 등 (consumer roster 정의에 따름) |
 | **라인 수 합리성** | 계획 대비 과다 (+ 500줄 이상인데 "리팩토링 선행" 매핑 등) 경고 |
 | **Sub-issue 자동 생성 결과** | Action 로그 + 실제 생성된 sub-issue 수가 매핑표 행 수와 일치 |
 
