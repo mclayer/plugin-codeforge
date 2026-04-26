@@ -1,0 +1,29 @@
+# CodeForge plugin self-application CODEOWNERS
+# CFP-1 Plugin Self-Application 정책 + CFP-2 인프라 2단계.
+# 1인 maintainer 환경 — mctrader org에 team 부재로 직접 username 매핑.
+# Branch protection의 "Require review from Code Owners"는 1인 환경에서 self-merge 차단 위험으로 OFF 권장.
+# CODEOWNERS는 audit/문서화 (어느 영역이 critical인지 표시) 용도.
+
+# 설계 결정 (ADR) — architect 의무 review
+docs/adr/**                                   @mccho8865
+
+# 변경 계획 (Change Plan) — architect 의무 review
+docs/change-plans/**                          @mccho8865
+
+# Story 페이지 — architect review (Phase 1 PR 자동 결재)
+docs/stories/**                               @mccho8865
+
+# Domain Knowledge — domain expert review
+docs/domain-knowledge/**                      @mccho8865
+
+# GitHub Workflow 변경 — architect review (security-sensitive)
+.github/workflows/**                          @mccho8865
+
+# Plugin overlay 설정 — architect review
+.claude/_overlay/**                           @mccho8865
+
+# Plugin 핵심 정책 — architect review
+CLAUDE.md                                     @mccho8865
+
+# Templates SSOT — architect review (consumer 영향 큼)
+templates/**                                  @mccho8865
