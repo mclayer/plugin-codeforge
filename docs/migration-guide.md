@@ -2,7 +2,7 @@
 title: Migration Guide — 플러그인 버전업 시 consumer overlay 변경 절차
 status: active
 created: 2026-04-24
-updated: 2026-04-24
+updated: 2026-04-27
 ---
 
 # Migration Guide
@@ -13,12 +13,92 @@ updated: 2026-04-24
 
 ## 목차
 
+- [v0.8 → v0.9](#v08--v09-reviewtest-워커-통합--breaking) — **Review/Test 워커 lane-agnostic 통합 (BREAKING)**
 - [v0.7 → v0.8](#v07--v08-atlassian-제거--github-전환) — **Atlassian 제거 + GitHub 전환 (BREAKING)**
 - [v0.6 → v0.7](#v06--v07-요구사항설계-레인-병렬화) — 요구사항·설계 레인 병렬 모델
 - [v0.5 → v0.6](#v05--v06-plugin-name-rename-dev-orchestrator--codeforge) — Plugin name rename + Atlassian 이관
 - [v0.3 → v0.4](#v03--v04-stage-2-projectyaml-구조화) — `project.yaml` 도입
 - [v0.2 → v0.3](#v02--v03-generic-dev-roster--preset) — Generic Dev roster + preset
 - [v0.1 → v0.2](#v01--v02-보안-테스트-레인--templates) — 보안 테스트 레인 + templates (non-breaking)
+
+---
+
+## v0.8 → v0.9 (Review/Test 워커 통합 — BREAKING)
+
+### Breaking changes
+
+이 release는 3 lane × 2 vendor = 6 리뷰/테스트 워커(Claude/Codex × Design/Code/Security)를 **lane-agnostic 2 워커**(`ClaudeReviewAgent` · `CodexReviewAgent`)로 통합한다. 도메인(체크리스트·스코프·category enum·severity 자동 룰)은 호출 PL이 **review packet**으로 주입. 결정 근거는 [ADR-001](adr/ADR-001-review-agent-unification.md).
+
+- **삭제된 core agent 6종**:
+  - `ClaudeDesignReviewAgent`, `ClaudeCodeReviewAgent`, `ClaudeSecurityTestAgent`
+  - `CodexDesignReviewAgent`, `CodexCodeReviewAgent`, `CodexSecurityTestAgent`
+- **신설 core agent 2종**:
+  - `ClaudeReviewAgent` (lane-agnostic Claude 워커)
+  - `CodexReviewAgent` (lane-agnostic Codex 워커)
+- **호출 패턴 변경**: `Orchestrator → DesignReviewPL/CodeReviewPL/SecurityTestPL → (Claude/Codex 워커 6 종 중 2개 병렬)` → `Orchestrator → PL → review packet 작성 → (ClaudeReviewAgent ∥ CodexReviewAgent 병렬, lane=design|code|security packet 수령)`
+- **신규 SSOT 2종**:
+  - `templates/review-pl-base.md` — PL 공통 base (severity 종합·dedup·noise 분류·escalation·보고 형식)
+  - `templates/review-checklists/{design,code,security}.md` — lane별 체크리스트 SSOT
+- **워커 packet 누락 처리**: 필수 필드(`lane`·`checklist_path`·`scope_globs`·`category_enum`) 누락 시 워커가 즉시 `ESCALATE_PACKET_INCOMPLETE` 반환 — generic fallback 금지
+- **SecurityTestPL 권한 확장**: `Bash(gh api repos/*)` 추가 (1차 layer alerts fetch — Dependabot/CodeQL/Secret Scanning/Push Protection 결과 fetch)
+- **Core agent 수**: 25 → **20**
+
+### Consumer 절차
+
+#### 1. Stale overlay 삭제 (있는 경우)
+
+`.claude/_overlay/agents/` 또는 `.claude/agents/` 아래에 다음 6 파일이 있다면 **삭제**:
+
+```bash
+rm -f .claude/_overlay/agents/{ClaudeDesignReview,ClaudeCodeReview,ClaudeSecurityTest,CodexDesignReview,CodexCodeReview,CodexSecurityTest}Agent.md
+```
+
+이들은 v0.9에서 더 이상 core에 존재하지 않으므로 overlay도 의미 없음. 남겨두면 혼란 + Orchestrator 스폰 시 unknown agent 오류 가능.
+
+#### 2. PL md overlay 점검 (있는 경우)
+
+`.claude/_overlay/agents/{DesignReviewPL,CodeReviewPL,SecurityTestPL}Agent.md`에서 v0.8 시점 6 워커 호출 패턴이 명시되어 있으면 **lane=N packet 작성 + 통합 워커 호출**로 전환:
+
+- OLD: `Orchestrator에 ClaudeDesignReviewAgent와 CodexDesignReviewAgent를 병렬 스폰 의뢰`
+- NEW: `Orchestrator에 lane=design review packet 전달 + ClaudeReviewAgent와 CodexReviewAgent를 병렬 스폰 의뢰`
+
+대부분의 consumer는 PL md overlay를 두지 않을 것이므로 이 단계 skip 가능.
+
+#### 3. Consumer 도메인 특화 보안 체크포인트 이전 (해당 시)
+
+기존 `ClaudeSecurityTestAgent.md` overlay에 "PCI DSS 범위 체크 추가" 같은 도메인 특화 체크포인트가 있었다면:
+
+- (a) `templates/review-checklists/security.md`를 consumer overlay 형태로 확장 (`.claude/_overlay/templates/review-checklists/security.md`에 도메인 보강 항목 추가)
+- (b) 또는 SecurityTestPL이 packet 작성 시 `category_enum`/`severity_overrides`에 도메인 특화 룰 추가
+
+(a)가 더 자연스럽다 — 체크리스트는 SSOT 위치에서 확장.
+
+#### 4. PL md SecurityTest 권한 추가 (해당 시)
+
+SecurityTestPL overlay가 있다면 `permissions.allow`에 `Bash(gh api repos/*)` 추가 (1차 layer fetch). Core SecurityTestPL은 이미 권한 보유.
+
+#### 5. 워크플로우·project.yaml 영향
+
+**없음**. v0.9 BREAKING은 agent 정의·packet 메커니즘에 한정. `.github/workflows/` · `.claude/_overlay/project.yaml` 변경 불필요.
+
+### 체크리스트
+
+- [ ] `.claude/_overlay/agents/`에 6 stale 워커 md 부재 (`ls`로 확인)
+- [ ] PL md overlay (있는 경우) 6 워커 참조 부재
+- [ ] 도메인 특화 보안 체크포인트 (있던 경우) `templates/review-checklists/security.md` overlay 또는 packet 자동 룰로 이전
+- [ ] SecurityTestPL overlay (있는 경우) `Bash(gh api repos/*)` 권한 보유
+
+### 영향 범위
+
+- **core 변경 (자동 반영, consumer 작업 불요)**: 6 워커 md 삭제, 2 워커 신설, PL md 본문 갱신, `templates/review-pl-base.md` + `templates/review-checklists/` 신설
+- **consumer 작업 필요**: stale overlay 삭제 (1단계). 도메인 특화 보강이 있던 경우 3단계
+- **무관**: project.yaml schema, workflow yaml, ISSUE_TEMPLATE, CODEOWNERS, branch protection
+
+### 참고
+
+- 결정 근거 ADR: [ADR-001 review-agent-unification](adr/ADR-001-review-agent-unification.md)
+- 관련 commit: `3d2bfb2 feat(v0.9): Review/Test 워커 통합 — Claude/Codex 2종으로 단일화 (BREAKING)`
+- 관련 SSOT: `templates/review-pl-base.md` (공통 base), `templates/review-checklists/` (체크리스트), `agents/ClaudeReviewAgent.md` / `agents/CodexReviewAgent.md` (워커 정의)
 
 ---
 
@@ -503,6 +583,8 @@ v0.2는 consumer overlay에 영향 없음. Core만 확장:
 보안 테스트 레인이 consumer 프로젝트 특화 기준을 요구하면:
 - `.claude/_overlay/agents/ClaudeSecurityTestAgent.md`, `CodexSecurityTestAgent.md` 신설 — 프로젝트 특화 보안 체크포인트 추가
 - 예: "이 프로젝트는 결제 PG 연동 있음 → PCI DSS 범위 체크 추가"
+
+> ⚠️ **v0.9 이후 무효** — 위 안내는 v0.2 ~ v0.8 시점의 절차다. v0.9에서 review/test 워커가 lane-agnostic 통합되어 `Claude*SecurityTestAgent`·`Codex*SecurityTestAgent` 자체가 삭제됐다. v0.9 이후 consumer는 도메인 특화 보안 체크포인트를 [v0.8 → v0.9 §3 절차](#v08--v09-reviewtest-워커-통합--breaking)에 따라 `templates/review-checklists/security.md` overlay 또는 SecurityTestPL packet 자동 룰로 이전해야 한다.
 
 ### 체크리스트
 
