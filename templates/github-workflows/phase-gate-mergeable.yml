@@ -48,9 +48,13 @@ jobs:
       - name: Evaluate gate for each target PR
         if: steps.targets.outputs.targets != '[]' && steps.targets.outputs.targets != ''
         uses: actions/github-script@v7
+        env:
+          # Pass via env to avoid JS template literal injection — PR body가 backtick / ${} / \
+          # 등을 포함하면 직접 interpolation은 SyntaxError 유발.
+          TARGETS_JSON: ${{ steps.targets.outputs.targets }}
         with:
           script: |
-            const targets = JSON.parse(`${{ steps.targets.outputs.targets }}`);
+            const targets = JSON.parse(process.env.TARGETS_JSON);
 
             for (const pr of targets) {
               // 1. PR body에서 linked Story Issue 번호 추출 (Related/Closes/Fixes/Resolves)
