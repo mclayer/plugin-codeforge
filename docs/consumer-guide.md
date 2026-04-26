@@ -81,6 +81,12 @@ ls ~/.claude/plugins/cache/<marketplace>/codeforge/<version>/agents/
 mkdir -p .claude/_overlay/agents
 cp ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/_overlay/README.md .claude/_overlay/
 cp ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/_overlay/project.yaml.example .claude/_overlay/project.yaml
+
+# TestAgent가 호출할 wrapper 2종 (consumer가 러너 명령 결정)
+cp ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/_overlay/run-tests.sh.example .claude/_overlay/run-tests.sh
+cp ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/_overlay/run-perf.sh.example .claude/_overlay/run-perf.sh
+chmod +x .claude/_overlay/run-tests.sh .claude/_overlay/run-perf.sh
+# editor에서 pytest 부분을 프로젝트 러너로 교체 (vitest / go test / cargo test / jest / k6 등)
 ```
 
 ### 2b. `.claude/settings.json` 설정 (SessionStart hook 등록)
@@ -349,12 +355,18 @@ cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/<file>.yml .github
 
 ### Q7. §1 변조 금지 invariant를 정당하게 위반해야 할 때 (예: 오타 수정)
 
-`story-section-1-immutable.yml` Action이 자동 reject한다. 우회 방법:
-1. 별도 PR을 docs only로 open
-2. PR title에 `[bypass-section-1]` 명시
-3. architect team CODEOWNERS의 명시적 approval로 merge
+`story-section-1-immutable.yml` Action이 자동 reject한다. 정당한 정정을 위한 bypass:
 
-운영 빈도 0에 가까워야 함.
+1. 별도 PR을 docs only로 open
+2. **PR 제목**에 `[bypass-section-1]` 추가 (대소문자 무관, 정규식 매칭)
+3. **architect team CODEOWNERS** 멤버 1명 이상 GitHub PR APPROVED review
+4. Action이 두 조건 충족 시 자동 PASS, 부족 시 명확한 사유 코멘트 + status fail로 안내
+
+요건:
+- `.github/CODEOWNERS`에 `docs/stories/** @<org>/<architect-team>` 매핑 존재 (없으면 bypass 작동 불가)
+- architect team에 GitHub repo `read` 이상 권한
+
+운영 빈도 0에 가까워야 함 (주로 사용자 원문 명백한 오타 정정).
 
 ## 7. 트러블슈팅
 

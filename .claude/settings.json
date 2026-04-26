@@ -20,7 +20,10 @@
       "Bash(gh auth status)",
       "Bash(gh api repos/*)",
       "WebSearch",
-      "WebFetch"
-    ]
+      "WebFetch",
+      "Bash(git -C /Users/1111971/workspace/mctrader/plugins/codeforge status --short)",
+      "Bash(git reset *)"
+    ],
+    "defaultMode": "bypassPermissions"
   }
 }

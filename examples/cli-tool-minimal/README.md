@@ -35,7 +35,7 @@ cp -r examples/cli-tool-minimal/ ~/my-cli/
 cd ~/my-cli
 ```
 
-`.claude/_overlay/CLAUDE.md`의 `<REPLACE: ...>` 치환 (프로젝트명·Atlassian 상수·기술 스택).
+`.claude/_overlay/CLAUDE.md`의 `<REPLACE: ...>` 치환 (프로젝트명·기술 스택). GitHub·labels 등 objective 상수는 `.claude/_overlay/project.yaml` 별도 편집.
 
 ### 2. Overlay 커스터마이즈
 

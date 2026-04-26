@@ -2,51 +2,121 @@ name: Phase Gate Mergeable
 
 on:
   pull_request:
-    types: [opened, synchronize, labeled, unlabeled]
+    types: [opened, synchronize, labeled, unlabeled, edited]
+  issues:
+    types: [labeled, unlabeled]
 
 permissions:
   pull-requests: write
+  issues: read
   checks: write
 
 jobs:
   check-gate:
     runs-on: ubuntu-latest
     steps:
-      - name: Determine PR phase + gate
-        id: gate
+      - name: Determine PR(s) to evaluate
+        id: targets
         uses: actions/github-script@v7
         with:
           script: |
-            const labels = context.payload.pull_request.labels.map(l => l.name);
-            const phaseLabel = labels.find(l => l.startsWith('phase:'));
-            const gateLabel = labels.find(l => l.startsWith('gate:'));
-
-            const { data: files } = await github.rest.pulls.listFiles({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.payload.pull_request.number
-            });
-            const hasCode = files.some(f => f.filename.startsWith('src/') || f.filename.startsWith('tests/'));
-
-            let required;
-            if (hasCode) {
-              required = { phase: 'phase:보안-테스트', gate: 'gate:security-test-pass' };
-            } else {
-              required = { phase: 'phase:설계-리뷰', gate: 'gate:design-review-pass' };
+            // PR event: 단일 PR 평가. Issue event: linked PR(들) 모두 평가.
+            const targets = [];
+            if (context.eventName === 'pull_request') {
+              targets.push(context.payload.pull_request);
+            } else if (context.eventName === 'issues') {
+              const issueNumber = context.payload.issue.number;
+              const { data: prs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                per_page: 100
+              });
+              for (const pr of prs) {
+                const body = pr.body || '';
+                const refs = [...body.matchAll(/(?:Related|Closes|Fixes|Resolves):?\s+#(\d+)/gi)]
+                  .map(m => parseInt(m[1], 10));
+                if (refs.includes(issueNumber)) targets.push(pr);
+              }
             }
+            core.setOutput('targets', JSON.stringify(targets.map(p => ({
+              number: p.number,
+              head_sha: p.head.sha,
+              body: p.body || ''
+            }))));
 
-            const phaseOk = phaseLabel === required.phase;
-            const gateOk = gateLabel === required.gate;
-            const summary = (phaseOk && gateOk)
-              ? `✓ phase + gate satisfied: ${required.phase} + ${required.gate}`
-              : `⏳ Awaiting: phase=${required.phase} (current=${phaseLabel || 'none'}), gate=${required.gate} (current=${gateLabel || 'none'})`;
+      - name: Evaluate gate for each target PR
+        if: steps.targets.outputs.targets != '[]' && steps.targets.outputs.targets != ''
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const targets = JSON.parse(`${{ steps.targets.outputs.targets }}`);
 
-            await github.rest.checks.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              name: 'phase-gate-mergeable',
-              head_sha: context.payload.pull_request.head.sha,
-              status: 'completed',
-              conclusion: (phaseOk && gateOk) ? 'success' : 'action_required',
-              output: { title: 'Phase Gate', summary: summary }
-            });
+            for (const pr of targets) {
+              // 1. PR body에서 linked Story Issue 번호 추출 (Related/Closes/Fixes/Resolves)
+              const refs = [...pr.body.matchAll(/(?:Related|Closes|Fixes|Resolves):?\s+#(\d+)/gi)]
+                .map(m => parseInt(m[1], 10));
+
+              let issueLabels = [];
+              let issueNumber = null;
+              for (const n of refs) {
+                try {
+                  const { data: issue } = await github.rest.issues.get({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: n
+                  });
+                  if (issue.labels.some(l => (l.name || l) === 'type:story')) {
+                    issueLabels = issue.labels.map(l => l.name || l);
+                    issueNumber = n;
+                    break;
+                  }
+                } catch (e) { /* skip non-existent */ }
+              }
+
+              // 2. Story Issue 못 찾으면 fallback: PR 라벨 사용 (PR 단독 운영 케이스)
+              let phaseLabel, gateLabel, sourceNote;
+              if (issueNumber) {
+                phaseLabel = issueLabels.find(l => l.startsWith('phase:'));
+                gateLabel = issueLabels.find(l => l.startsWith('gate:'));
+                sourceNote = `Issue #${issueNumber}`;
+              } else {
+                const { data: prFull } = await github.rest.pulls.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number
+                });
+                const prLabels = prFull.labels.map(l => l.name);
+                phaseLabel = prLabels.find(l => l.startsWith('phase:'));
+                gateLabel = prLabels.find(l => l.startsWith('gate:'));
+                sourceNote = 'PR labels (no linked Story Issue found)';
+              }
+
+              // 3. PR이 code 변경 포함 여부로 required gate 결정
+              const { data: files } = await github.rest.pulls.listFiles({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: pr.number
+              });
+              const hasCode = files.some(f => f.filename.startsWith('src/') || f.filename.startsWith('tests/'));
+
+              const required = hasCode
+                ? { phase: 'phase:보안-테스트', gate: 'gate:security-test-pass' }
+                : { phase: 'phase:설계-리뷰', gate: 'gate:design-review-pass' };
+
+              const phaseOk = phaseLabel === required.phase;
+              const gateOk = gateLabel === required.gate;
+              const summary = (phaseOk && gateOk)
+                ? `✓ phase + gate satisfied: ${required.phase} + ${required.gate} (source: ${sourceNote})`
+                : `⏳ Awaiting: phase=${required.phase} (current=${phaseLabel || 'none'}), gate=${required.gate} (current=${gateLabel || 'none'}) (source: ${sourceNote})`;
+
+              await github.rest.checks.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'phase-gate-mergeable',
+                head_sha: pr.head_sha,
+                status: 'completed',
+                conclusion: (phaseOk && gateOk) ? 'success' : 'action_required',
+                output: { title: 'Phase Gate', summary: summary }
+              });
+            }

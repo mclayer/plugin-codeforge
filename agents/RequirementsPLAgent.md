@@ -42,9 +42,9 @@ permissions:
 ```
 1. 공통 입력 패키지 준비
    · 사용자 원문 verbatim (Story §1)
-   · Story file 경로 + pageId
-   · Project Config Packet slice (github.org / github.repo / ADR 루트 등)
-   · 관련 ADR 목록 (pageId + 1줄 요약)
+   · Story file 경로 (`docs/stories/<KEY>.md`)
+   · Project Config Packet slice (github.org / github.repo / story_key_prefix 등)
+   · 관련 ADR 목록 (`docs/adr/ADR-NNN-<slug>.md` 경로 + 1줄 요약)
    · 이전 스레드 합의 (있을 경우)
 
 2. 세 에이전트 병렬 스폰 의뢰 (Orchestrator에 "동시 스폰" 요청)
@@ -65,14 +65,17 @@ permissions:
    · Orchestrator가 해당 에이전트 신규 스폰 (one-shot 제약상 재스폰이 유일한 continuous-dialog 대체)
    · 재스폰 결과 수령 후 3단계(통합) 반복
 
-5. 통합 명세서 작성 (docs/stories/<KEY>.md (Story file) §3-6으로 반영 의뢰)
-   · Domain 해석 + Analyst 섹션 + Researcher 섹션 + 상충/정합 분석
+5. PL 통합 산출물 결정 (PL이 직접 write 하는 것은 §3-4 + 상충/정합 분석만)
+   · §2 (Domain 해석) — DomainAgent가 자체 queue 제출 (atomic per-agent, resume 부분 완료 감지 보장)
+   · §5 (Analyst 확장) — RequirementsAnalyst가 자체 queue 제출
+   · §6 (Researcher 외부 지식) — Researcher가 자체 queue 제출
+   · §3 관련 ADR / §4 관련 코드 경로 / 상충 정합 분석 → PL이 queue 제출
    · "사용자 확인 필요" 항목은 blocking wait — Orchestrator 경유 사용자 답변 전 Architect 진입 금지
 
-6. DocsAgent 경유 write queue에 갱신 의뢰
-   · .claude-work/doc-queue/<story>/<seq>-story-section.md 로 §2-6 병합 draft 제출
-   · DomainAgent가 Domain Knowledge 페이지 draft를 함께 제출했으면 seq 병기
-   · Orchestrator가 DocsAgent 스폰 시 drain
+6. DocsAgent 경유 write queue에 PL 산출물 의뢰
+   · .claude-work/doc-queue/<story>/<seq>-story-section-3-4.md (§3-4 + 통합 분석)
+   · 세 sub-agent의 queue 파일은 각자 독립 제출 — PL은 sub-agent 산출물을 다시 묶어 제출하지 않음
+   · Orchestrator가 DocsAgent 스폰 시 일괄 drain (atomic 섹션별 Edit)
 ```
 
 ## 통합 명세서 (docs/stories/<KEY>.md (Story file) 섹션 매핑)

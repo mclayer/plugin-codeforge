@@ -5,6 +5,49 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.9.0] — 2026-04-26 (BREAKING — Review/Test 워커 통합)
+
+### Breaking
+- **3 lane × 2 vendor = 6 워커 → 2 워커로 통합** ([ADR-001](docs/adr/ADR-001-review-agent-unification.md)). consumer overlay에 `agents/Claude{Design,Code,SecurityTest}ReviewAgent.md` 또는 `Codex...` 파일이 있다면 마이그레이션 필요
+- 24 core agents → **20 core agents** (워커 6 삭제, 워커 2 신규)
+- Codex 플러그인 단일 의존성: 미설치 시 3 리뷰 lane 모두 진입 불가 (이전: 각 lane별 개별 차단)
+
+### Architecture
+- **워커 통합**: `ClaudeReviewAgent` + `CodexReviewAgent` 2종이 lane=design/code/security 3 lane 공통 처리. 도메인은 호출 PL이 review packet으로 주입 (체크리스트·스코프·category enum·severity 자동 룰)
+- **공통 base SSOT**: `templates/review-pl-base.md` — severity 종합·dedup·noise 분류·보고 형식·escalation 절차. 3 PL이 9번 복제하던 표가 1군데로
+- **체크리스트 SSOT**: `templates/review-checklists/{design,code,security}.md` — consumer overlay가 도메인 특화 체크 추가 가능
+- **Packet 누락 invariant**: 워커는 packet 필수 필드 누락 시 즉시 `ESCALATE_PACKET_INCOMPLETE` 반환 — generic fallback 금지
+- 3 PL md 슬림화 (~120줄 → ~60줄): base 템플릿 참조 + lane-specific 4가지(체크리스트 packet·FIX 카운터 정책·검증 스코프·다음 게이트 라벨)만 본문에 명시
+- SecurityTestPL에 `Bash(gh api repos/*)` 권한 부여 — 1차 layer (Dependabot/CodeQL/Secret Scanning) 결과 fetch 후 packet inline 첨부
+- 레인 명칭·라벨·워크플로우 invariant 그대로 유지 (`phase:보안-테스트`·`gate:security-test-pass`·`fix:보안-테스트-retry`)
+
+### Added
+- `docs/adr/ADR-001-review-agent-unification.md` (첫 ADR)
+- `templates/review-pl-base.md` (3 PL 공통 base SSOT)
+- `templates/review-checklists/design.md` · `code.md` · `security.md`
+- `agents/ClaudeReviewAgent.md` · `agents/CodexReviewAgent.md` (lane-agnostic 워커)
+
+### Changed
+- `agents/DesignReviewPLAgent.md` · `agents/CodeReviewPLAgent.md` · `agents/SecurityTestPLAgent.md` 슬림화 (base + lane-specific만)
+- `CLAUDE.md` (agent tree·never-skippable·write 권한 표·외부 도구 wrapper·Codex 의존성)
+- `docs/orchestrator-playbook.md` (스폰 시퀀스 다이어그램·핵심 의무 표·외부 의존성 표·세션 회고 테이블)
+- `docs/plugin-design.md` (agent enumeration)
+- `agents/DocsAgent.md` (phase prefix 매핑·Codex 보고 기록 형식)
+
+### Removed
+- `agents/ClaudeDesignReviewAgent.md`
+- `agents/CodexDesignReviewAgent.md`
+- `agents/ClaudeCodeReviewAgent.md`
+- `agents/CodexCodeReviewAgent.md`
+- `agents/ClaudeSecurityTestAgent.md`
+- `agents/CodexSecurityTestAgent.md`
+
+### Migration
+v0.8 → v0.9 마이그레이션:
+1. consumer overlay에 6 워커 오버라이드가 있다면 → `ClaudeReviewAgent.md` / `CodexReviewAgent.md` 1쌍으로 통합 + lane-specific 부분은 `templates/review-checklists/<lane>.md`로 이동
+2. SecurityTestPL이 `gh api repos/*` 호출하므로 GitHub 인증 (Dependabot/CodeQL/Secret Scanning alerts read 권한) 확인
+3. CHANGELOG 기록·코멘트의 `Codex<Domain>ReviewAgent` 인용은 historical로 유지
+
 ## [0.8.0] — 2026-04-26 (BREAKING — Atlassian 제거 + GitHub 전환)
 
 ### Breaking

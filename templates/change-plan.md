@@ -51,11 +51,11 @@ story: <KEY>   # GitHub Story Issue key, e.g. PLG-7
 
 | 파일 경로 | 변경 유형 | 담당 Agent | 설명 |
 |-----------|-----------|------------|------|
-| `src/...` | 추가·수정·제거 | BackendDev/Frontend/DataEng/ServerEng | 한 줄 |
+| `src/...` | 추가·수정·제거 | BackendDev/FrontendDev/DataEng/InfraEng | 한 줄 |
 
 ### §6. 리팩토링 선행 작업 (Dev 실행 의뢰 명시)
 - 요건 범위 내 리팩토링만 (전역 리팩터링 금지)
-- 각 항목 담당 Dev 명시 (Backend/Frontend/DataEng/ServerEng)
+- 각 항목 담당 Dev 명시 (BackendDev/FrontendDev/DataEng/InfraEng — consumer roster에 따라 추가/생략)
 - 단계별 테스트 통과 유지 방안
 
 ### §7 Impl Manifest 초안은 여기 비움 (구현 완료 후 DocsAgent가 Story 페이지 §8.5에 기록 — [`impl-manifest.md`](impl-manifest.md) 스키마 참조)
