@@ -72,9 +72,12 @@ permissions:
    · §3 관련 ADR / §4 관련 코드 경로 / 상충 정합 분석 → PL이 queue 제출
    · "사용자 확인 필요" 항목은 blocking wait — Orchestrator 경유 사용자 답변 전 Architect 진입 금지
 
-6. DocsAgent 경유 write queue에 PL 산출물 의뢰
-   · .claude-work/doc-queue/<story>/<seq>-story-section-3-4.md (§3-4 + 통합 분석)
+6. DocsAgent 경유 write queue에 PL 산출물 의뢰 — 큐 파일 스키마는 [docs/orchestrator-playbook.md](../docs/orchestrator-playbook.md) §11.2 SSOT
+   · `.claude-work/doc-queue/<story>/<seq>-story-section-3.md` (§3 관련 ADR; frontmatter `section: "3"`)
+   · `.claude-work/doc-queue/<story>/<seq>-story-section-4.md` (§4 관련 코드 경로; frontmatter `section: "4"`)
+   · 양쪽 모두 frontmatter: `type: story-section / story: <KEY> / requester: RequirementsPLAgent / issued_at: <ISO 8601> / priority: normal`
    · 세 sub-agent의 queue 파일은 각자 독립 제출 — PL은 sub-agent 산출물을 다시 묶어 제출하지 않음
+   · 통합 분석(상충 조정) 결과는 Orchestrator에 inline 반환 (Story file 누적 대상이 아니면 queue 의뢰 없음)
    · Orchestrator가 DocsAgent 스폰 시 일괄 drain (atomic 섹션별 Edit)
 ```
 

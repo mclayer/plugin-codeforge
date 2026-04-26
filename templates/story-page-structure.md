@@ -135,7 +135,7 @@ DocsAgent가 append-only 관리 (행 삭제·수정 금지). "현재 사이클" 
 |------|----------|----------------|
 | 요구사항 접수 (story-init.yml Action 자동) | §1 verbatim 삽입, §2-11 placeholder | (Action이 자동 처리. DocsAgent fallback: `Write(docs/stories/<KEY>.md)`) |
 | 요구사항 병렬 에이전트 개별 완료 (각 에이전트) | 본인 담당 섹션만 독립 기록 — Domain→§2 / Analyst→§5 / Researcher→§6 | 에이전트별 write queue 제출 → DocsAgent drain 시 **섹션별 atomic 갱신** (배치 금지, resume 시 부분 완료 감지를 위해) — `Edit(docs/stories/<KEY>.md)` |
-| 요구사항 확정 (RequirementsPLAgent) | §3-4 (공통 입력 미리 fetch된 ADR/코드 경로 반영) + 통합/상충 분석 블록 | `Edit(docs/stories/<KEY>.md)` |
+| 요구사항 확정 (RequirementsPLAgent) | §3-4 (Orchestrator Preflight가 미리 fetch한 ADR 목록·코드 경로를 PL이 통합 명세서에 반영) + 통합/상충 분석 블록 | `Edit(docs/stories/<KEY>.md)` |
 | 설계 확정 (ArchitectAgent) | §7 + `docs/change-plans/<slug>.md` 신규 commit | `Edit(docs/stories/<KEY>.md)` + `Write(docs/change-plans/<slug>.md)` |
 | 설계 리뷰 iteration (DesignReviewPL) | §9.1 | `Edit(docs/stories/<KEY>.md)` |
 | 설계 리뷰 PASS | gate:design-review-pass 라벨 부착 → Phase 1 PR mergeable | `mcp__github__issue_write` (label add) |

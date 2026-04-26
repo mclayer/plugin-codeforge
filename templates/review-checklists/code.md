@@ -37,8 +37,8 @@ CodeReviewPLAgent가 ClaudeReviewAgent / CodexReviewAgent에 packet으로 주입
 
 - 네이밍·시그니처·에러 전파 일관성
 - **P1 품질 local vs boundary 분류** (CLAUDE.md 원인 판정 decision table 기반):
-  - `dup-local`: 1개 파일 또는 1개 함수 범위에 한정 (P2 권장)
-  - `dup-boundary`: 여러 파일·계층에 걸친 패턴 부재 이슈 (P1, 설계 원인 escalation 후보)
+  - `dup-local`: 1개 파일 또는 1개 함수 범위에 한정 (**P1**, 구현 원인 — 동일 파일 내 품질 결함)
+  - `dup-boundary`: 여러 파일·계층에 걸친 패턴 부재 이슈 (**P1**, 설계 원인 escalation 후보)
 
 ### 4. 런타임 오류·동시성 (`runtime-bug`, `concurrency`, `error-handling`)
 

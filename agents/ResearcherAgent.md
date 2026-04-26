@@ -65,11 +65,17 @@ Domain·Analyst 산출물은 입력으로 수신하지 않는다 (독립 관점 
 
 ## Story file §6 갱신 의뢰 (atomic per-agent, 의무)
 
-조사 완료 후 **§6 단일 섹션 draft를 write queue에 직접 제출** — PL이 묶어 다시 제출하지 않음 (atomic 갱신으로 부분 resume 보장).
+조사 완료 후 **§6 단일 섹션 draft를 write queue에 직접 제출** — PL이 묶어 다시 제출하지 않음 (atomic 갱신으로 부분 resume 보장). 큐 파일 스키마는 [docs/orchestrator-playbook.md](../docs/orchestrator-playbook.md) §11.2 SSOT.
 
 ```
 .claude-work/doc-queue/<story>/<seq>-story-section-6.md
-frontmatter type: story-section, section: "6"
+frontmatter:
+  type: story-section
+  story: <STORY_KEY>
+  requester: ResearcherAgent
+  issued_at: <ISO 8601>
+  priority: normal
+  section: "6"
 body: 아래 출력 형식의 "## 자체 도출 키워드 / ## 키워드 커버리지 / ## 핵심 개념 해설 / ## 참조 자료 / ## ADR 정합성 점검" 섹션
 ```
 

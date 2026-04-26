@@ -77,15 +77,17 @@ permissions:
    · "조사 결과 기존 지식으로 충분, 공백 없음"도 유효 결과 — null 반환 대신 명시적으로 "공백 없음" 섹션 기록
 
 6. **Story file §2 갱신 의뢰 (atomic per-agent, 의무)**
-   · write queue에 §2 단일 섹션 draft 제출
-     .claude-work/doc-queue/<story>/<seq>-story-section-2.md
-     (frontmatter `type: story-section`, body는 위 Output 형식 그대로)
+   · write queue에 §2 단일 섹션 draft 제출 — 큐 파일 스키마는 [docs/orchestrator-playbook.md](../docs/orchestrator-playbook.md) §11.2 SSOT
+     `.claude-work/doc-queue/<story>/<seq>-story-section-2.md`
+     frontmatter: `type: story-section / story: <KEY> / requester: DomainAgent / issued_at: <ISO 8601> / priority: normal / section: "2"`
+     body는 위 Output 형식 그대로
    · "공백 없음" null 결과도 §2 섹션 작성 의무 — 섹션 자체 생략 금지 (resume 부분 완료 감지·세 관점 명시 결과 보존)
    · PL이 §2를 묶어 다시 제출하지 않음 — atomic 갱신으로 부분 resume 가능
 
 7. "지식 공백"에 해당하는 새 Domain Knowledge 페이지가 필요하면
    · 별도 write queue 파일 제출
-     .claude-work/doc-queue/<story>/<seq>-domain-knowledge.md
+     `.claude-work/doc-queue/<story>/<seq>-domain-knowledge.md`
+     frontmatter: `type: domain-knowledge / story: <KEY> / requester: DomainAgent / issued_at: <ISO 8601> / priority: normal / area / topic`
    · DocsAgent가 drain 시 docs/domain-knowledge/<area>/<topic>.md 신규/갱신
 
 8. Clarification 재스폰 수신 시 (PL이 추가 질의 필요 판단)
