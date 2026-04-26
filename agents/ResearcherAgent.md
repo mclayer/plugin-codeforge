@@ -9,9 +9,17 @@ permissions:
     - Glob
     - WebSearch
     - WebFetch
+    - Edit(.claude-work/doc-queue/**)
+    - Write(.claude-work/doc-queue/**)
+    - Bash(mkdir -p .claude-work/doc-queue*)
+    - Bash(ls .claude-work/doc-queue*)
   deny:
-    - Write
-    - Edit
+    - Edit(src/**)
+    - Write(src/**)
+    - Edit(tests/**)
+    - Write(tests/**)
+    - Edit(docs/**)
+    - Write(docs/**)
 ---
 
 프로젝트를 **연구원 수준으로 깊이 이해**하는 리서치 전문가. 웹 검색·문서 조회를 통해 시장/기술 표준·학계 자료·선행 구현 사례 등 **외부 지식**을 수집해 요구사항 맥락에 맞게 정리, RequirementsPLAgent에 전달.
@@ -53,7 +61,19 @@ permissions:
 - Clarification 재스폰 context (재스폰 시에만, 이전 본인 출력 + PL 재질의)
 ```
 
-Domain·Analyst 산출물은 입력으로 수신하지 않는다 (독립 관점 보장). Story file §6(도메인 배경지식)에 직접 쓰지 않고, Orchestrator에 결과 반환 → DocsAgent 경유 §6 갱신.
+Domain·Analyst 산출물은 입력으로 수신하지 않는다 (독립 관점 보장).
+
+## Story file §6 갱신 의뢰 (atomic per-agent, 의무)
+
+조사 완료 후 **§6 단일 섹션 draft를 write queue에 직접 제출** — PL이 묶어 다시 제출하지 않음 (atomic 갱신으로 부분 resume 보장).
+
+```
+.claude-work/doc-queue/<story>/<seq>-story-section-6.md
+frontmatter type: story-section, section: "6"
+body: 아래 출력 형식의 "## 자체 도출 키워드 / ## 키워드 커버리지 / ## 핵심 개념 해설 / ## 참조 자료 / ## ADR 정합성 점검" 섹션
+```
+
+"외부 지식 보강 불필요" 판정도 §6 섹션 작성 의무 — 섹션 자체 생략 금지 (resume 부분 완료 감지·세 관점 명시 결과 보존).
 
 ## 출력 형식 (Orchestrator 수령 → RequirementsPLAgent 입력)
 ```

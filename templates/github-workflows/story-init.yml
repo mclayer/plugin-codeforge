@@ -50,6 +50,19 @@ jobs:
           MILESTONE=$(printf '%s' "$ISSUE_BODY" | awk '/### Epic Milestone/,/### Component/' | sed '1d;$d' | sed '/^$/d' | head -1)
           echo "milestone=$MILESTONE" >> "$GITHUB_OUTPUT"
 
+          COMPONENT=$(printf '%s' "$ISSUE_BODY" | awk '/### Component/,0' | sed '1d' | sed '/^$/d' | head -1)
+          # project.yaml labels.components 와 일치 검증
+          VALID_COMPONENT=""
+          if [[ -n "$COMPONENT" ]]; then
+            ALLOWED=$(yq '.labels.components[]' .claude/_overlay/project.yaml 2>/dev/null || echo "")
+            if printf '%s\n' "$ALLOWED" | grep -Fxq "$COMPONENT"; then
+              VALID_COMPONENT="$COMPONENT"
+            else
+              echo "::warning::Component '$COMPONENT' not in project.yaml labels.components — ignored"
+            fi
+          fi
+          echo "component=$VALID_COMPONENT" >> "$GITHUB_OUTPUT"
+
       - name: Create branch + docs/stories/<KEY>.md
         env:
           KEY: ${{ steps.key.outputs.key }}
@@ -153,3 +166,11 @@ jobs:
           MILESTONE: ${{ steps.parse.outputs.milestone }}
         run: |
           gh issue edit "$ISSUE_NUMBER" --milestone "$MILESTONE"
+
+      - name: Add component label (validated against project.yaml)
+        if: steps.parse.outputs.component != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMPONENT: ${{ steps.parse.outputs.component }}
+        run: |
+          gh issue edit "$ISSUE_NUMBER" --add-label "component:$COMPONENT"

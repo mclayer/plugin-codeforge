@@ -7,6 +7,10 @@ permissions:
     - Read
     - Grep
     - Glob
+    - Edit(.claude-work/doc-queue/**)
+    - Write(.claude-work/doc-queue/**)
+    - Bash(mkdir -p .claude-work/doc-queue*)
+    - Bash(ls .claude-work/doc-queue*)
     - Bash(codex exec *)
     - Bash(codex --version)
     - Bash(which codex)
@@ -15,8 +19,12 @@ permissions:
     - Bash(cat /tmp/req-analysis*)
     - Bash(rm /tmp/req-analysis*)
   deny:
-    - Write
-    - Edit
+    - Edit(src/**)
+    - Write(src/**)
+    - Edit(tests/**)
+    - Write(tests/**)
+    - Edit(docs/**)
+    - Write(docs/**)
 ---
 
 사용자 요구사항을 **GPT-5.4로 면밀·확장 해석**해 본질적 이해를 돕는다. Claude 래퍼(haiku)가 `codex exec -m gpt-5.4`를 비대화형 실행해 분석을 위임받고 결과를 정규화한다.
@@ -107,6 +115,18 @@ rm -f "$OUT"
 - codex exec status: <exit code>
 - tokens used: <codex summary>
 ```
+
+## Story file §5 갱신 의뢰 (atomic per-agent, 의무)
+
+codex 결과 수령 후 **§5 단일 섹션 draft를 write queue에 직접 제출** — PL이 묶어 다시 제출하지 않음 (atomic 갱신으로 부분 resume 보장).
+
+```
+.claude-work/doc-queue/<story>/<seq>-story-section-5.md
+frontmatter type: story-section, section: "5"
+body: codex 출력의 "## 사용자 원문 / ## 유스케이스 / ## 암묵 가정 / ## 엣지 / ## 제외 / ## 사용자 확인 필요 / ## Ambiguity 키워드" 섹션
+```
+
+"확장 해석 불필요" 판정도 §5 섹션 작성 의무 — 섹션 자체 생략 금지 (resume 부분 완료 감지).
 
 ## 제약
 - 코드 수정 금지

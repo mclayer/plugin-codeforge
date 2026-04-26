@@ -141,10 +141,11 @@ python3 ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/validate_config.py \
 ## 7. 장래 확장 (미구현)
 
 - **환경 변수 참조**: `${ENV_VAR}` placeholder 지원 (secrets 분리)
-- **Context Packet 자동 주입**: Orchestrator가 project.yaml 요약을 sub-agent 프롬프트에 자동 삽입
-- **기술 스택 일부 구조화**: test runner·perf baseline 경로 등 objective 성격 항목 이전
+- **기술 스택 일부 구조화**: test runner·perf baseline 경로 등 objective 성격 항목 이전 (현재는 `.claude/_overlay/run-tests.sh`·`run-perf.sh` wrapper로 캡슐화)
 - **placeholder 탐지**: `<REPLACE ...>` 값이 남아있으면 warn (unconfigured consumer 감지)
 - **GitHub Projects v2 연동**: Project number·view ID 구조화
+
+> Project Config Packet 자동 주입은 **이미 구현됨** — Orchestrator가 세션 개시 시 project.yaml을 1회 로드해 sub-agent 프롬프트에 packet으로 삽입한다. 캐시·무효화·Fallback 의미는 [`orchestrator-playbook.md`](orchestrator-playbook.md) §12.5 단일 SSOT 참조.
 
 ## 8. 관련 문서
 

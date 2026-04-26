@@ -30,17 +30,13 @@ body:
       label: Epic Milestone (선택)
       description: 이 Story가 속한 Epic Milestone 번호. 없으면 비워두세요.
       placeholder: 예) 3
-  - type: dropdown
+  - type: input
     id: component
     attributes:
       label: Component (선택)
-      description: 주 영향 component. consumer overlay project.yaml `labels.components`에 정의된 값.
-      options:
-        - (선택 안 함)
-        - backend
-        - frontend
-        - infra
-        - data
-        - other
+      description: |
+        주 영향 component 1개. consumer overlay `.claude/_overlay/project.yaml`의 `labels.components` 에 정의된 값과 정확히 일치해야 함 (story-init.yml Action이 검증·`component:<value>` 라벨로 부착).
+        목록에 없는 값은 무시되며, 비워두면 component 라벨 미부착.
+      placeholder: 예) backend (project.yaml labels.components 항목 중 하나)
     validations:
       required: false
