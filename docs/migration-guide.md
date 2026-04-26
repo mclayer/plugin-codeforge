@@ -13,12 +13,49 @@ updated: 2026-04-24
 
 ## 목차
 
+- [v0.8 → v0.9](#v08--v09-reviewtest-워커-통합) — **3 lane × 2 vendor = 6 워커 → 2 워커 (BREAKING)**
 - [v0.7 → v0.8](#v07--v08-atlassian-제거--github-전환) — **Atlassian 제거 + GitHub 전환 (BREAKING)**
 - [v0.6 → v0.7](#v06--v07-요구사항설계-레인-병렬화) — 요구사항·설계 레인 병렬 모델
 - [v0.5 → v0.6](#v05--v06-plugin-name-rename-dev-orchestrator--codeforge) — Plugin name rename + Atlassian 이관
 - [v0.3 → v0.4](#v03--v04-stage-2-projectyaml-구조화) — `project.yaml` 도입
 - [v0.2 → v0.3](#v02--v03-generic-dev-roster--preset) — Generic Dev roster + preset
 - [v0.1 → v0.2](#v01--v02-보안-테스트-레인--templates) — 보안 테스트 레인 + templates (non-breaking)
+
+---
+
+## v0.8 → v0.9 (Review/Test 워커 통합)
+
+### Breaking changes
+
+[ADR-001](adr/ADR-001-review-agent-unification.md) 결정에 따라 **3 lane × 2 vendor = 6 워커**(Claude{Design,Code,SecurityTest}ReviewAgent + Codex 동등 6종)를 **2 lane-agnostic 워커**(`ClaudeReviewAgent`, `CodexReviewAgent`)로 통합. lane-specific 도메인(체크리스트·스코프·category enum·severity 자동 룰)은 호출 PL이 `review_packet`으로 주입.
+
+- 24 core agents → **20 core agents** (워커 6 삭제 + 워커 2 신규)
+- Codex 플러그인이 단일 의존성으로 격상 — 미설치 시 3 리뷰 lane 전부 진입 불가
+- SecurityTestPL이 `Bash(gh api repos/*)` 권한 사용 — 1차 layer (Dependabot/CodeQL/Secret Scanning/Push Protection) 결과를 packet에 inline 첨부
+
+### Affected files (consumer overlay 측)
+
+| 파일 | 액션 |
+|------|------|
+| `.claude/_overlay/agents/ClaudeDesignReviewAgent.md` (있다면) | **제거** — `agents/ClaudeReviewAgent.md` (core)로 통합 |
+| `.claude/_overlay/agents/Codex{Design,Code,SecurityTest}ReviewAgent.md` (있다면) | **제거** — `agents/CodexReviewAgent.md` (core)로 통합 |
+| `.claude/_overlay/templates/review-checklists/<lane>.md` (선택) | **신규 가능** — 언어·프레임워크 특화 체크 항목 추가 (Python·Go·React 등) |
+| `.claude/_overlay/CLAUDE.md` 내 워커 인용 | "Claude/Codex<Domain>ReviewAgent" 패턴이 있다면 "ClaudeReviewAgent / CodexReviewAgent" lane-agnostic 참조로 갱신 |
+
+### Migration 절차 (consumer)
+
+1. **Codex 플러그인 인증 확인**: 3 리뷰 lane 전부 진입 불가가 되므로 `codex@openai-codex` 플러그인 미설치 시 즉시 설치
+2. **6 워커 오버라이드 제거**: `.claude/_overlay/agents/`에 `Claude{Design,Code,SecurityTest}ReviewAgent.md` 또는 Codex 동등 파일이 있다면 제거. 도메인 특화 체크는 lane checklist (`templates/review-checklists/<lane>.md`)로 이동
+3. **GitHub 토큰 권한 확인**: SecurityTestPL이 `gh api repos/*/dependabot/alerts` 등을 호출하므로 Dependabot/CodeQL/Secret Scanning alerts read 권한 필요
+4. **첫 리뷰 lane 실행 시 검증**: PL이 `review_packet` 필수 필드(lane / checklist_path / scope_globs / category_enum / story_key, security 추가 시 first_layer_findings) 누락 시 워커가 `ESCALATE_PACKET_INCOMPLETE` 반환 — generic fallback 없음
+5. **CHANGELOG·코멘트의 historical 인용 유지**: 과거 `Codex<Domain>ReviewAgent` 명칭은 historical로 보존 (변경 금지)
+
+### Backward compatibility
+
+- 라벨·워크플로우·phase 전이 invariant **무변경**: `phase:설계-리뷰` / `phase:구현-리뷰` / `phase:보안-테스트` / `gate:design-review-pass` / `gate:security-test-pass` / `fix:<레인>-retry` 라벨, `phase-gate-mergeable.yml`·`fix-ledger-sync.yml` Action 동작 유지
+- `docs/stories/<KEY>.md` 섹션 구조(§1-11) **무변경**
+
+기존 v0.8 활성 Story가 있다면, 다음 리뷰 iteration부터 자연스럽게 새 워커가 packet 수령. Phase 2 PR 진행 중 Story는 즉시 영향 없음.
 
 ---
 

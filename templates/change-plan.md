@@ -2,7 +2,7 @@
 
 ArchitectAgent가 설계 레인에서 작성하는 변경 계획서 표준 구조. DocsAgent가 `docs/change-plans/<slug>.md`에 저장.
 
-**사용 대상**: ArchitectAgent (작성), DocsAgent (저장·Story 페이지 §7 미러링), DesignReviewPL (리뷰 대상), QADeveloperAgent (§8 Test Contract 입력), DeveloperPL·4 Dev (구현 입력)
+**사용 대상**: ArchitectAgent (작성), DocsAgent (저장·Story 페이지 §7 미러링), DesignReviewPL (리뷰 대상), QADeveloperAgent (§8 Test Contract 입력), DeveloperPL · `role: dev` roster (구현 입력)
 
 ---
 
@@ -82,8 +82,8 @@ story: <KEY>   # GitHub Story Issue key, e.g. PLG-7
 - 성능 영향 없으면 "N/A (성능 영향 없음)" 1줄로 대체 가능
 
 ### §9. 분기 선택 (필요 Dev 조합)
-- 의존성 없는 한 **4 Dev 병렬 가능**
-- 의존성 있으면 순서 명시 (예: DataEng 스키마 → Backend 어댑터)
+- 의존성 없는 한 **`role: dev` roster 병렬 가능** (consumer roster에 따라 N개)
+- 의존성 있으면 순서 명시 (예: DataEngineerAgent 스키마 → BackendDeveloperAgent 어댑터)
 
 ### §10. ADR 대상 여부 + 기존 ADR 정합성 점검
 - Change Plan 결정이 기존 ADR과 일치 / 주의 / 위반 (위반 시 신규 ADR 필요)

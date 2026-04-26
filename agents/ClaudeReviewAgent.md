@@ -68,7 +68,7 @@ ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md) — 3 lan
 
 ### lane=design
 
-진단 순서: ① Change Plan §1-9 완결성 → ② Story §3 관련 ADR 정합성 → ③ CodebaseMapper(변호자) ↔ RefactorAgent(혁신자) 균형 → ④ "0-context developer premise" 구체성(파일·시그니처·타입 확정 여부) → ⑤ §8 Test Contract 타당성 → ⑥ §8.3 성능 baseline 프로토콜.
+진단 순서: ① Change Plan §1-10 완결성 → ② Story §3 관련 ADR 정합성 → ③ CodebaseMapper(변호자) ↔ RefactorAgent(혁신자) 균형 → ④ "0-context developer premise" 구체성(파일·시그니처·타입 확정 여부) → ⑤ §8 Test Contract 타당성 → ⑥ §8.3 성능 baseline 프로토콜.
 
 자동 P0 룰: ADR 위반 / §8 누락 / §3-6 핵심 섹션 누락.
 

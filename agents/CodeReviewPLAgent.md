@@ -68,20 +68,13 @@ review_packet:
 
 ## 1차 원인 가정 (FIX 시 — DeveloperPL/Architect 전달 초안)
 
-| Finding severity / category | 1차 가정 | 근거 |
-|---|---|---|
-| P0 보안 | 구현 | trust boundary 설계 오류 시 보안 lane이 깊게 검증 |
-| P0 `layer-violation` | **설계** | 레이어·의존성 방향 위반 |
-| P0 `impl-manifest-mismatch` | 구현 | Dev §8.5 작성 누락 |
-| P1 `dup-local` | 구현 | 단일 파일·함수 범위 |
-| P1 `dup-boundary` | **설계** | 여러 파일·계층 공통 지침 부재 |
-| 기타 P1 | 구현 | — |
+원인 판정 표는 [CLAUDE.md](../CLAUDE.md) "원인 판정 decision table" SSOT — code lane 행만 발췌해 inline 유지하지 않는다 (drift 방지). PL은 SSOT 표를 직접 인용해 1차 진단 초안 작성.
 
-**P1 품질 local vs boundary 분류**:
-- `dup-local`: 1개 파일 또는 1개 함수 범위 한정
-- `dup-boundary`: 여러 파일·계층에 반복되거나 Change Plan 지침 부재가 원인
+**Code lane에서 자주 보는 분기** (참고 — 정확한 판정은 SSOT 사용):
+- 보안·레이어 위반·매핑 누락·런타임 결함이 P0의 주요 카테고리
+- P1 품질의 **local vs boundary** 분류가 결정의 핵심 (`dup-local` 단일 파일·함수 vs `dup-boundary` 여러 파일·계층 또는 Change Plan 지침 부재)
 
-PL 1차 진단 → Orchestrator 경유 DeveloperPL 재진단 → Architect 최종 판정. 원인 판정 SSOT는 [CLAUDE.md](../CLAUDE.md) "원인 판정 decision table".
+PL 1차 진단 → Orchestrator 경유 DeveloperPL 재진단 → Architect 최종 판정.
 
 ## 다음 게이트 (PASS 시)
 

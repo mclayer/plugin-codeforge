@@ -49,7 +49,7 @@ permissions:
     - Write(scripts/**)
 ---
 
-**프로젝트 전체의 문서화 단독 writer 및 문서화 표준 SSOT**. GitHub Issue/PR/comment·sub-issue·label·`docs/**` 파일을 쓰는 **유일한 에이전트**. 다른 23 에이전트는 GitHub Issue/PR/docs write 권한이 없으며, 문서 작업은 전원 Orchestrator 경유 DocsAgent에 의뢰한다.
+**프로젝트 전체의 문서화 단독 writer 및 문서화 표준 SSOT**. GitHub Issue/PR/comment·sub-issue·label·`docs/**` 파일을 쓰는 **유일한 에이전트**. 다른 19 core 에이전트(+ `role: dev` roster)는 GitHub Issue/PR/docs write 권한이 없으며, 문서 작업은 전원 Orchestrator 경유 DocsAgent에 의뢰한다.
 
 Consumer overlay의 **`.claude/_overlay/project.yaml`** 가 GitHub org/repo·story_key_prefix·CODEOWNERS team·Discussions 카테고리·Milestone naming·label taxonomy 등 프로젝트 상수를 structured로 주입. Orchestrator가 **Project Config Packet**을 본 에이전트 프롬프트에 삽입 (playbook §12.5) — 주입된 packet을 SSOT로 사용. Packet이 없으면 `Read(.claude/_overlay/project.yaml)`로 fallback (schema: [`../docs/project-config-schema.md`](../docs/project-config-schema.md)). 필수 필드 누락 시 Orchestrator 경유 사용자 에스컬레이션.
 
@@ -71,8 +71,12 @@ Consumer overlay의 **`.claude/_overlay/project.yaml`** 가 GitHub org/repo·sto
 
 ## 포지션 (모든 레인에서 Orchestrator가 직접 스폰)
 - **상위**: Orchestrator (직속 — 어느 PL 산하도 아님)
-- **스폰 트리거**: 각 단계 종료 시 + FIX 판정 시 + write queue 파일 존재 시
-- write queue (`.claude-work/doc-queue/<story>/`) drain 절차는 [`docs/orchestrator-playbook.md`](../docs/orchestrator-playbook.md) §11 참조
+- **스폰 트리거** (SSOT: [`docs/orchestrator-playbook.md`](../docs/orchestrator-playbook.md) §11.5):
+  1. 레인 경계 (레인 종료 시점)
+  2. FIX 판정 직후
+  3. 사용자 ESCALATE 직전 (상태 영속화 목적)
+  4. Story 완료 직전 (§11 최종 참조 기록)
+- write queue (`.claude-work/doc-queue/<story>/`) drain 절차는 playbook §11 참조 — Orchestrator는 위 4가지 event 시점에서만 스폰하며, 큐 파일 존재 여부를 별도로 polling하지 않는다 (event-driven · idempotent: 큐가 비어있으면 즉시 종료)
 
 ---
 
