@@ -529,6 +529,41 @@ GitHub Issue/PR은 **워크플로우 상태·이벤트 로그**만. 구조화된
 - **설계 결정(ADR)**: `docs/adr/ADR-NNN-<slug>.md` (Git-versioned). Story file §3에서 인용
 - **코드 리뷰 원문**: GitHub PR 설명·코멘트·review. Story file §9에 요약 집계
 
+## Story 작성 의무 (모든 변경 적용)
+
+매 변경 시작 시 Orchestrator가 cutoff 분류 → 강제/면제 결정. **모호 시 강제 측 분류** (false positive < false negative). 이 정책은 plugin 자체와 consumer 프로젝트 모두에 적용.
+
+### 강제 대상 (Story file 작성 의무)
+
+- 신규 ADR 결정 / 기존 ADR 변경
+- 아키텍처·도메인 모델 추가·삭제·재정의
+- 에이전트 추가·삭제·역할 재정의
+- Workflow 정의(`templates/github-workflows/**`) 변경
+- SSOT 문서(`templates/`·`presets/`·`CLAUDE.md`·`docs/orchestrator-playbook.md`) 의미 변경
+- Breaking change · consumer migration 영향
+
+### 면제 대상 (chore commit OK)
+
+- Typo · 문법 · 줄바꿈 · 마크다운 형식 정리
+- 링크 깨짐 수정 / 죽은 링크 제거
+- Lint 자동 fix · dependency lock · version bump (security 영향 없는 경우)
+- README 단순 문구 수정
+
+면제 시 commit body에 `Story 면제 사유: <이유>` 1줄 명시 의무. 사유 없는 면제 commit은 PR review에서 reject 대상.
+
+### Consumer overlay 확장
+
+Consumer는 `.claude/_overlay/project.yaml`의 `story_cutoff.additional_exempt_categories[]`로 도메인 특화 면제 항목을 추가할 수 있다 (예: "auto-generated migration files", "vendored library updates"). **강제 항목 축소는 불허** — 안전 방향(면제 추가) 확장만 허용. Schema는 [`docs/project-config-schema.md`](docs/project-config-schema.md) §2 참조.
+
+### Plugin 자체 적용 (dogfooding)
+
+이 plugin repo도 동일 정책 적용. KEY prefix는 `CFP` (CodeForge Plugin). Plugin meta 변경은 §8 Test Contract / §9 리뷰·테스트 결과 등 무의미한 lane을 `N/A — <사유>`로 명시 (lane 게이트 면제 audit trail). 인프라 자동화는 단계적 도입:
+
+- **1단계** (현재): 정책 + `docs/stories/` 디렉토리 + 수동 Story 작성
+- **2단계** (향후): `.github/ISSUE_TEMPLATE/story.yml` + `.github/workflows/`에 6종 워크플로우 (story-init.yml 등) 추가 + branch protection. 별도 작업 단위로 분리
+
+판단 시점: Orchestrator가 변경 시작 시 cutoff 분류 선언, commit 직전 재확인.
+
 ## docs/stories markdown 규약 요약
 
 - 위치: `docs/stories/<KEY>.md` (single-file SSOT, KEY = `<github.story_key_prefix>-N`)

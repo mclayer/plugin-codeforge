@@ -67,6 +67,13 @@ github:
 labels:
   components:                       # 각 항목이 "component:<name>" 라벨로 생성
     - <string>                      # e.g. "api", "ui", "data"
+
+# [선택] Story 작성 의무 cutoff 확장 (CLAUDE.md "Story 작성 의무" 섹션 참조)
+# Plugin core가 정의한 강제 항목 6종은 축소 불허. Consumer는 도메인 특화 면제 항목만 추가 가능.
+story_cutoff:
+  additional_exempt_categories:     # 각 항목 1줄 자유 텍스트 면제 사유 카테고리
+    - <string>                      # e.g. "auto-generated migration files"
+    - <string>                      # e.g. "vendored library updates (security 영향 없음)"
 ```
 
 ## 3. 예시 (webapp)
@@ -104,7 +111,7 @@ labels:
 - **RequirementsPLAgent**: Story SSOT 파일(`docs/stories/<KEY>.md`) 위치 결정 시 `story_key_prefix` 사용
 - **DomainAgent**: Domain Knowledge 트리(`docs/domain-knowledge/`) read + Discussions 질의 시 `discussions.domain_kb_category` 사용
 - **PMOAgent**: 회고·Cross-Story 패턴 분석 시 GitHub Issue search query에 `org`·`repo` 활용
-- **Orchestrator**: 세션 개시 시 1회 read → 필요 값 Context Packet으로 하위 에이전트에 전달 (반복 fetch 회피)
+- **Orchestrator**: 세션 개시 시 1회 read → 필요 값 Context Packet으로 하위 에이전트에 전달 (반복 fetch 회피). 매 변경 시작 시 `story_cutoff.additional_exempt_categories`(있으면)를 cutoff 분류 입력으로 사용
 
 ### 4b. Write 금지
 모든 에이전트는 `.claude/_overlay/project.yaml` **write 금지**. 이 파일은 consumer가 직접 관리. DocsAgent도 쓰지 않음.

@@ -24,7 +24,7 @@ permissions:
     - Edit
 ---
 
-**Codex(OpenAI GPT-5) 시각으로 정적 리뷰 수행**. 설계 리뷰·구현 리뷰·보안 테스트 3 lane을 공통으로 처리하는 lane-agnostic 워커. 도메인(체크리스트·스코프·category enum·severity 자동 룰)은 호출 PL이 **review packet**으로 주입한다. ClaudeReviewAgent와 **독립 peer**. 모든 리뷰 lane의 **필수 구성요소**.
+**Codex(OpenAI GPT-5) 시각으로 정적 리뷰 수행**. 설계 리뷰·구현 리뷰·보안 테스트 3 lane을 공통으로 처리하는 lane-agnostic 워커. 도메인(체크리스트·스코프·category enum·severity 자동 룰)은 호출 PL이 **review packet**으로 주입한다. ClaudeReviewAgent와 **독립 peer이며, 모든 리뷰 lane의 필수 워커** — Claude 단독 / Codex 단독 fallback 허용 안 함.
 
 ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md) — 3 lane × 2 vendor = 6 워커 → 2 워커로 통합.
 
@@ -50,7 +50,14 @@ review_packet:
   related_adrs: [<ADR 경로 list>]
 ```
 
-**Packet 누락 검증**: 필수 필드 누락 시 즉시 `ESCALATE_PACKET_INCOMPLETE` verdict 반환 — generic fallback 금지 ([ADR-001](../docs/adr/ADR-001-review-agent-unification.md) §결정 4번).
+**Packet 누락 검증** (필수 — 미충족 시 즉시 `ESCALATE_PACKET_INCOMPLETE` verdict 반환, Codex 호출 자체 skip, generic fallback 금지 — [ADR-001](../docs/adr/ADR-001-review-agent-unification.md) §결정 4번):
+
+1. **공통 필수 필드**: `lane` · `checklist_path` · `scope_globs` · `category_enum` 존재
+2. **lane↔checklist 일치**: `checklist_path`와 `category_enum`이 packet의 `lane` 값과 동일 lane의 SSOT를 가리켜야 함 (예: `lane=design`인데 `templates/review-checklists/code.md`가 오면 ESCALATE)
+3. **lane-conditional 추가 검증**:
+   - `lane=design`: `related_adrs` 또는 Story §3에서 추적 가능한 ADR 입력 ≥ 1. 둘 다 비어 있으면 ESCALATE
+   - `lane=code`: `story_key` 필수. Story file §8.5 Impl Manifest를 `Read`로 열 수 없거나 매핑 표가 비어 있으면 ESCALATE
+   - `lane=security`: packet은 1차 layer 결과(Dependabot · CodeQL · Secret Scanning · Push Protection)를 inline 포함, `scope_globs`에 의존성 매니페스트 ≥ 1 포함. 둘 중 하나라도 없으면 findings 본문 첫 줄에 `first-layer-input-missing` 명시(완전 차단은 아니지만 보고에서 결손 표기)
 
 ## 역할
 
@@ -154,8 +161,14 @@ findings:
   - severity: P0 | P1 | P2 | P3 | unclassified
     category: <packet의 category_enum 중 하나>
     location: <path:line | path:§section | docs/adr/ADR-NNN.md>
-    title: {요약}
-    body: {원문 + CWE/CVE/ADR 번호 (해당 시)}
+    title: "[<category>] <원인 한 줄 요약>"   # 형식 고정 — PL dedup 키 (location + category + title prefix)
+    body: |
+      <location · trigger · impact를 1문장으로 요약>           # 첫 줄 고정
+      <Codex 원문 + CWE/CVE/ADR 번호 (해당 시)>
+      # lane=code · lane=security의 P0·P1 finding은 마지막 줄에 회귀 힌트 의무 포함:
+      # 1차 원인 가정: 설계 | 구현
+      # 권장 회귀: design-review-rerun | same-lane-rerun
+      # (PL/Architect 최종 판정 보조용 힌트 — 강제 아님)
 
 [Codex Review 원문]
 <원문 verbatim>
@@ -170,6 +183,8 @@ findings:
 - P0 ≥ 1 → `NO_SHIP`, 그 외 findings 있으면 `ISSUES`, 없으면 `PASS`
 - packet 누락 시 → `ESCALATE_PACKET_INCOMPLETE` (Codex 호출 자체 skip)
 - **오프라인 파싱** (Codex 재호출 금지)
+- **title/body 형식 강제 변환**: Codex 원문이 자유 형식이어도 정규화 시 `title`은 `[<category>] <원인 요약>` 형식으로 재작성, `body` 첫 줄은 `location · trigger · impact` 1문장 요약. lane=code·security의 P0·P1 finding은 `body` 마지막 줄에 회귀 힌트(`1차 원인 가정` + `권장 회귀`)를 추가 — 원문에 명시 없으면 워커가 lane별 진단 가이드(체크리스트 §1차 원인 가정)에 따라 추론
+- 회귀 힌트 추론 기준: lane=code의 dup-boundary / layer 위반 / API 계약 위반 → 설계 / dup-local / 단순 런타임 결함 → 구현. lane=security의 trust-boundary / auth model 결함 → 설계 / injection / credential / CVE → 구현
 
 ## 제약
 
