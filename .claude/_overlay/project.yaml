@@ -1,5 +1,5 @@
 # CodeForge 플러그인 자체의 dev를 위한 GitHub 좌표.
-# Dog-food: 플러그인이 스스로를 consumer로 쓰는 상황.
+# Dog-food: 플러그인이 스스로를 consumer로 쓰는 상황 (CFP-1 self-application 정책 적용).
 # Schema: docs/project-config-schema.md
 
 project:
@@ -11,11 +11,14 @@ github:
   default_branch: main
 
   pr_title_prefix_template: "[{key}] {title}"
-  story_key_prefix: PLG
+  # CFP = CodeForge Plugin. CFP-1 (CLAUDE.md "Plugin 자체 적용" 섹션) 결정.
+  story_key_prefix: CFP
 
   codeowners:
-    architect_team: "@mctrader/architects"
-    domain_expert_team: "@mctrader/domain-experts"
+    # 1인 maintainer 환경 — mctrader org에 team 부재. 직접 username 매핑.
+    # 향후 collaborator 추가 시 team으로 격상 가능.
+    architect_team: "@mccho8865"
+    domain_expert_team: "@mccho8865"
 
   discussions:
     domain_kb_category: "Domain Q&A"
@@ -24,5 +27,12 @@ github:
     epic_naming_pattern: "Epic-{key}-{slug}"
 
 labels:
+  # Plugin 자체 components — Story Issue Form에서 선택지로 노출.
   components:
-    - codeforge  # 현 플러그인. 향후 다른 plugin도 component 라벨로 같은 repo 공유
+    - agents       # agents/**.md
+    - docs         # docs/** (ADR, change-plans, stories, domain-knowledge, guides)
+    - templates    # templates/** (SSOT 템플릿)
+    - workflows    # .github/workflows/**, templates/github-workflows/**
+    - presets      # presets/** (consumer 시작점)
+    - core         # CLAUDE.md, .claude/_overlay 등 plugin 핵심 정책
+    - infra        # .github/ISSUE_TEMPLATE, CODEOWNERS, PR template
