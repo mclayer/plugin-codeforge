@@ -549,8 +549,12 @@ Consumer는 `.claude/_overlay/project.yaml`의 `story_cutoff.additional_exempt_c
 
 이 plugin repo도 동일 정책 적용. KEY prefix는 `CFP` (CodeForge Plugin). Plugin meta 변경은 §8 Test Contract / §9 리뷰·테스트 결과 등 무의미한 lane을 `N/A — <사유>`로 명시 (lane 게이트 면제 audit trail). 인프라 자동화는 단계적 도입:
 
-- **1단계** (현재): 정책 + `docs/stories/` 디렉토리 + 수동 Story 작성
-- **2단계** (향후): `.github/ISSUE_TEMPLATE/story.yml` + `.github/workflows/`에 6종 워크플로우 (story-init.yml 등) 추가 + branch protection. 별도 작업 단위로 분리
+- **1단계 완료** (CFP-1): Story 작성 의무 정책 + `docs/stories/` 디렉토리 + 수동 Story 작성
+- **2단계 완료** (CFP-2): `.github/ISSUE_TEMPLATE/{story,bug,audit}.yml` + `.github/workflows/`에 6종 워크플로우(story-init / phase-label-invariant / story-section-1-immutable / subissue-from-impl-manifest / phase-gate-mergeable / fix-ledger-sync) + `.github/PULL_REQUEST_TEMPLATE.md` + `.github/CODEOWNERS` 도입
+- **3단계 향후** (CFP-5 잠정): `templates/**` ↔ `.github/**` parity + frontmatter ↔ CLAUDE.md 표 ↔ `.claude-plugin/plugin.json` 정합 자동 점검 CI. SSOT drift 자동 차단
+- **End-to-end 실증 향후** (CFP-7 잠정): 임의 plugin meta 변경을 GitHub Issue Form으로 시작 → workflow 자동 동작 첫 검증
+
+**Branch protection** (수동 적용, GitHub Settings > Branches): main 브랜치에 `phase-gate-mergeable` required status check 권장. 1인 maintainer 환경에서는 `Require review from Code Owners`는 OFF 권장 (PR self-merge 차단 방지).
 
 판단 시점: Orchestrator가 변경 시작 시 cutoff 분류 선언, commit 직전 재확인.
 
