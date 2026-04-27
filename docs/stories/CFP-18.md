@@ -405,6 +405,55 @@ Phase 1 PR (현재 — 요구사항 + 설계 + 설계리뷰) → 머지 → Phas
 
 **다음 lane**: 보안 테스트 (SecurityTestPL)
 
+### §9.4 보안 테스트
+
+**보안 테스트 — PASS (2026-04-27)**
+
+**1차 layer (GitHub native)**:
+- Dependabot alerts: **disabled** (HTTP 403 — repository setting). CFP-18 의존성 추가 0건이므로 lane 통과에는 영향 없음. 별도 enablement 권고 (follow-up CFP 후보).
+- CodeQL findings: **disabled** (HTTP 403 — Code Security 미활성). 실행 코드 0줄이므로 finding 가능성 자체 없음. enablement 권고.
+- Secret Scanning: **disabled** (HTTP 404). Phase 2 diff grep secret/token/password/api_key 패턴 **0건** 확인. enablement 권고.
+- Push Protection: 별개 alert 없음.
+
+**2차 layer (Claude + Codex 병렬)**:
+
+9 보안 category 검증 결과 (CFP-18 plugin meta change scope):
+
+| # | Category | Result | 근거 |
+|---|----------|--------|------|
+| 1 | Injection | N/A | 실행 코드 0줄, markdown/json/yaml만 |
+| 2 | Trust boundary | N/A | 외부 입력 처리 경로 변경 0건 (§7.1) |
+| 3 | Credential / secret | N/A | grep 결과 0건 |
+| 4 | Auth / 세션 | N/A | 인증·세션 로직 변경 0건 |
+| 5 | Crypto | N/A | 암호 함수 변경 0건 |
+| 6 | 민감 데이터 (PII) | N/A | 데이터 처리·로그 변경 0건 |
+| 7 | Dependency CVE | N/A | dep lock 변경 0건 (plugin.json metadata만) |
+| 8 | Static analysis | N/A | 실행 코드 0줄 |
+| 9 | 설정·배포 보안 | N/A | deploy/config 변경 0건 |
+
+**T1 위협 (Story §7.7 P1) verify — TestContractArchitectAgent permission model**:
+- ✅ allow: Read / Grep / Glob / read-only Bash (find, ls, git log, git blame) + write queue only
+- ✅ deny: src/** + tests/** + docs/** 모두 명시 deny
+- ✅ WebSearch / WebFetch **부재** (line 151 명시 "외부 lookup 불필요, min-privilege")
+- ✅ MCP write 도구 부재 — DocsAgent 단독 writer 원칙 준수
+- ✅ SecurityArchitectAgent.md 대비 동일 min-privilege 패턴 + WebSearch/WebFetch 추가 제거 (강화)
+
+**ADR-006 보안 의의 검토**: ArchitectPL stateless 재스폰 + path-scoped permission 패턴을 또 하나의 deputy로 확장. 새로운 attack surface 추가 **0건**. min-privilege 패턴 강화.
+
+**§7 ↔ §8 cross-reference 규칙 검증**: TestContractArch는 §7.5 위협-완화 매핑을 "→ §7.5 T-N 참조"로만 cross-ref (lines 99-106). §7 내용 중복 작성 금지 → SecurityArch SSOT 보존, boundary 충돌 0건.
+
+**Severity 분포** (Claude + Codex worker dedup):
+- P0: 0건
+- P1: 0건
+- P2: 0건
+
+**종합 판정**: PASS — Phase 2 PR mergeable 가능, Story 완료.
+
+**Concerns (informational, severity 없음)**:
+- GitHub native security scanning 3종 disabled (Dependabot/CodeQL/Secret Scanning) — repository setting. 향후 CFP에서 enablement 권고 (현 CFP-18 scope 외 environmental gap).
+
+**다음 단계**: Orchestrator → DocsAgent (gate:security-test-pass 라벨 → Phase 2 PR mergeable → merge → Issue auto-close) + PMOAgent (회고).
+
 ## §10 FIX Ledger
 
 | Iter | 시각 | 레인 | 트리거 | 원인 판정 | 재실행 범위 | RESET? |
