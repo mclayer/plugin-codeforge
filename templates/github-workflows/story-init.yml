@@ -35,19 +35,28 @@ jobs:
                  | sort -n | tail -1)
           NEXT=$(( ${LAST:-0} + 1 ))
           echo "key=${PREFIX}-${NEXT}" >> "$GITHUB_OUTPUT"
-          # Python으로 슬러그 생성 — sed의 Korean 범위 `가-힣`이 C 로케일에서
-          # "Invalid collation character"로 실패하던 버그 (CFP-11 end-to-end 발견).
-          # 다국어 안전 + multi-byte truncation 안전.
-          SLUG=$(python3 - <<'PYEOF'
+          # Python으로 슬러그 + 정제 title 생성. sed의 Korean 범위가 C 로케일에서
+          # "Invalid collation character"로 실패하던 버그 fix (CFP-11). title도 동일 Python에서
+          # `[STORY]` prefix strip해 docs h1·PR title의 cosmetic 중복 회피 (CFP-15).
+          PYOUT=$(python3 - <<'PYEOF'
           import os, re
           title = os.environ.get("ISSUE_TITLE", "")
-          title = re.sub(r"^\[STORY\]\s*", "", title)
-          slug = re.sub(r"[^A-Za-z0-9가-힣]+", "-", title, flags=re.UNICODE)
+          title_clean = re.sub(r"^\[STORY\]\s*", "", title).strip()
+          slug = re.sub(r"[^A-Za-z0-9가-힣]+", "-", title_clean, flags=re.UNICODE)
           slug = slug.strip("-")[:40].rstrip("-")
+          # 두 줄 출력: slug, title_clean (\n separator)
           print(slug)
+          print(title_clean)
           PYEOF
           )
+          SLUG=$(printf '%s' "$PYOUT" | sed -n '1p')
+          TITLE_CLEAN=$(printf '%s' "$PYOUT" | sed -n '2p')
           echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
+          {
+            echo "title_clean<<TITLE_EOF"
+            printf '%s\n' "$TITLE_CLEAN"
+            echo "TITLE_EOF"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Parse user requirement from Issue body
         id: parse
@@ -91,6 +100,7 @@ jobs:
         env:
           KEY: ${{ steps.key.outputs.key }}
           SLUG: ${{ steps.key.outputs.slug }}
+          TITLE_CLEAN: ${{ steps.key.outputs.title_clean }}
           REQUIREMENT: ${{ steps.parse.outputs.requirement }}
         run: |
           BRANCH="feat/${KEY}-${SLUG}"
@@ -102,7 +112,7 @@ jobs:
           mkdir -p docs/stories
           # heredoc — 변수만 안전 보간 (env로 전달된 값)
           {
-            printf '# %s: %s\n\n' "$KEY" "$ISSUE_TITLE"
+            printf '# %s: %s\n\n' "$KEY" "$TITLE_CLEAN"
             printf -- '- **Issue**: #%s\n' "$ISSUE_NUMBER"
             printf -- '- **Status**: phase:요구사항\n\n'
             printf '## 1. 사용자 요구사항 (verbatim — story-section-1-immutable.yml로 변경 차단)\n\n'
@@ -162,6 +172,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           KEY: ${{ steps.key.outputs.key }}
           SLUG: ${{ steps.key.outputs.slug }}
+          TITLE_CLEAN: ${{ steps.key.outputs.title_clean }}
         run: |
           BRANCH="feat/${KEY}-${SLUG}"
           BASE=$(yq '.github.default_branch' .claude/_overlay/project.yaml)
@@ -171,7 +182,7 @@ jobs:
           gh pr create \
             --base "$BASE" \
             --head "$BRANCH" \
-            --title "[${KEY}] ${ISSUE_TITLE}" \
+            --title "[${KEY}] ${TITLE_CLEAN}" \
             --body "$BODY" \
             --label "type:story,phase:요구사항"
 
