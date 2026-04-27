@@ -179,6 +179,30 @@ GitHub repo settings 또는 gh api로:
 
 이는 SecurityTestPL의 1차 layer로 활용된다.
 
+### 2f. Workflow permissions (org-level) — **반드시 설정**
+
+**story-init.yml workflow가 Phase 1 PR을 자동 open하므로 GitHub Actions에 PR 생성 권한이 필요**. CFP-11 end-to-end 실증에서 발견된 bootstrap drift — org admin 권한 필요 (1회 설정).
+
+**Web UI**:
+1. https://github.com/organizations/`<your-org>`/settings/actions
+2. **Workflow permissions** → "Read and write permissions" 선택
+3. **"Allow GitHub Actions to create and approve pull requests"** 체크
+4. Save
+
+**CLI** (admin:org scope 필요, `gh auth refresh -h github.com -s admin:org` 후):
+
+```bash
+gh api -X PUT orgs/<your-org>/actions/permissions/workflow \
+  -f default_workflow_permissions=write \
+  -F can_approve_pull_request_reviews=true
+```
+
+미설정 시: story-init.yml의 `Create Phase 1 PR` step이 다음 에러로 fail:
+```
+GitHub Actions is not permitted to create or approve pull requests (createPullRequest)
+```
+(branch + docs file은 commit·push되지만 PR auto-open 실패. 수동 `gh pr create`로 복구 가능하나 자동화 가치 손실)
+
 ### 2g. `.gitignore`에 추가
 
 ```gitignore
