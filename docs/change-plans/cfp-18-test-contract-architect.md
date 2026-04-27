@@ -73,7 +73,9 @@ CodebaseMapperAgent.md / RefactorAgent.md / SecurityArchitectAgent.md "Mapper/Re
 
 ### §3.6 ADR-005 status 전이
 
-CFP-17 §7 N/A + CFP-18 §7 부분 N/A 두 번 dogfooding 검증 완료 → ADR-005 status `Proposed` → `Accepted` 전이 (chief author + 사용자 승인). 본 Change Plan 채택 시 ADR-005 frontmatter 갱신 동시 commit.
+CFP-17 §7 N/A + CFP-18 §7 부분 N/A 두 번 dogfooding 검증으로 **결정 1·2·3 (N/A 표기 형식·면제 분류·N/A inheritance 차단)** 안정화 검증 완료 → ADR-005 status `Proposed` → `Accepted` 전이 (chief author + 사용자 승인). 본 Change Plan 채택 시 ADR-005 frontmatter 갱신 동시 commit.
+
+**결정 4 분리**: ADR-005 결정 4 (invariant-check Step 신설)는 **본 Story 범위 외**. CFP-17/18 dogfooding은 결정 1·2·3에 한정 검증, 결정 4 invariant-check workflow Step 추가 implementation은 별도 Story (CFP-19+) 발의 의무. 본 status 전이가 결정 4 self-condition 충족을 함의하지 않음.
 
 ## §4 API 계약
 
@@ -98,7 +100,7 @@ chief author가 deputy output을 §8.1-§8.3 본문에 반영. 채택/반박 근
 
 | 파일 | 유형 | 담당 | 설명 |
 |------|------|------|------|
-| `agents/TestContractArchitectAgent.md` | 신규 | DocsAgent | SecurityArchitectAgent.md verbatim copy + 도메인 substitution (§7→§8, "공격자/위협"→"QA perspective contributor", "trust boundary/auth/data"→"test contract author input"). WebSearch/WebFetch 제거 (min-privilege, SecurityArch §7.7). "QADev 인터페이스" 섹션 + "§7-§8 cross-reference 규칙" 섹션 추가 |
+| `agents/TestContractArchitectAgent.md` | 신규 | DocsAgent | SecurityArchitectAgent.md verbatim copy + 도메인 substitution (§7→§8, "공격자/위협"→"QA perspective contributor", **"trust boundary/auth/data"→"§8 author input (QA perspective contributor)"**). WebSearch/WebFetch 제거 (min-privilege, SecurityArch §7.7). "QADev 인터페이스" 섹션 + "§7-§8 cross-reference 규칙" 섹션 추가. **본문 구조 매핑** (SecurityArch §7.x → TestContractArch §8.x): §7.1 Trust boundary → §8.0 책임 범위(§8.1·§8.2·§8.3 author input scope) / §7.2 STRIDE-LITE → §8.1 단위·통합·인프라 covered cases / §7.3 Auth/Authz → §8.2 경계·invariant / §7.4 민감 데이터 → §8.3 Perf Baseline 타당성 / §7.5 위협-완화 매핑 → §8.4 N/A 권한(동형) / §7.6 N/A → §8.4 N/A 권한 |
 | `agents/ArchitectAgent.md` | 수정 | DocsAgent | 7개소: description / :23, 27, 39, 48 "3 deputy" → "4 deputy", :56 §8 author 라인 "TestContractArch input 통합 후 확정" 보강 |
 | `agents/ArchitectPLAgent.md` | 수정 | DocsAgent | 11개소: description / :23, 27 deputy 4 → 5 / :38-43 spawn diagram +TestContractArch / :45, 51 input 4 → 5 / :58-66 검수 4 항목 → 메타-규칙 2 항목 (§3.2 위 본문) / :70 clarification list / :103 4 deputy → 5 |
 | `agents/QADeveloperAgent.md` | 수정 | DocsAgent | :25 1줄 보강 (§3.4 위 verbatim). :33, 53-56, 71 invariant 보존 |
@@ -107,16 +109,18 @@ chief author가 deputy output을 §8.1-§8.3 본문에 반영. 채택/반박 근
 | `agents/SecurityArchitectAgent.md` | 수정 | DocsAgent | 동상 1줄 cross-ref + "§7 ↔ §8 cross-reference 규칙" 섹션 신설 |
 | `templates/change-plan.md` | 수정 | DocsAgent | frontmatter inputs +1 (TestContractArchitectAgent). §8 header에 "author input: TestContractArch (deputy) → chief author 통합" 1줄. §8.4 신설 (§8.6 N/A 권한 — `plugin-meta-na`/`runtime-inert` ADR-005 정합) |
 | `templates/review-checklists/design.md` | 변경 0 | — | 기존 `test-contract` enum + 5축 충분 (Mapper M9). invariant Test 6 3-location parity 부담 회피 |
-| `CLAUDE.md` | 수정 | DocsAgent | 다이어그램 (5 deputy) / 23 core → **24 core** / Never-skippable list / spawn list / 4 감사 → 메타 2 항목 / write queue list. "3-way 이념 대립" 본문 변경 금지, 절 끝 1줄 cross-ref |
-| `docs/orchestrator-playbook.md` | 수정 | DocsAgent | deputy 수 일괄 (4→5) + 토큰 예산 표 + 작업 요약 표 + bonus drift 정정: line 22, 561, 589, 1004 "20 core" / "23 core" → 정확값 (CFP-17 drift) |
-| `docs/plugin-design.md` | 수정 | DocsAgent | 5개소 23→24 core + 라인업 prose +1 element |
-| `.claude-plugin/plugin.json` | 수정 | DocsAgent | version 0.11.0 → 0.12.0 + "22 core" → "24 core" |
-| `CHANGELOG.md` | 수정 | DocsAgent | v0.12.0 entry (BREAKING — invariant Test 7 의무) |
-| `README.md` | 수정 | DocsAgent | 4개소 23→24 core |
+| `CLAUDE.md` | 수정 | DocsAgent | 다이어그램 (5 deputy) / **22 core → 23 core (v0.12.0)** / Never-skippable list / spawn list / 4 감사 → 메타 2 항목 / write queue list. "3-way 이념 대립" 본문 변경 금지, 절 끝 1줄 cross-ref |
+| `docs/orchestrator-playbook.md` | 수정 | DocsAgent | deputy 수 일괄 (4→5) + 토큰 예산 표 + 작업 요약 표 + bonus drift 정정: **line 22 / 561 / 589 "20 core" → "23 core"** (CFP-17 drift 정정 + CFP-18 적용). **line 1001 v5 changelog "24 core" → "23 core"** (CFP-17 drift, §5 누락분 보강 — chief author 판정: changelog 항목이 "그 시점 정확값" 기록이라면 v5 시점 baseline 22 core ⊕ CFP-18 +1 = 23 core가 history fact, "24 core"는 drift로 분류). **line 1004 v9 changelog "25 → 20 core agents"는 정정 대상 아님** — ADR-001 직후 baseline 20 core 정확 history fact. "23 core" 표기는 playbook에 부재 (현 baseline 22 core가 doc에 22로 표기). |
+| `docs/plugin-design.md` | 수정 | DocsAgent | 5개소 **22 → 23 core** + 라인업 prose +1 element |
+| `.claude-plugin/plugin.json` | 수정 | DocsAgent | version 0.11.0 → 0.12.0 + **"22 core" → "23 core"** |
+| `CHANGELOG.md` | 수정 | DocsAgent | v0.12.0 entry (BREAKING — invariant Test 7 의무, **22 → 23 core**) |
+| `README.md` | 수정 | DocsAgent | 4개소 **22 → 23 core** |
 | `docs/migration-guide.md` | 수정 | DocsAgent | "v0.11 → v0.12" 절 신설 (invariant Test 7 통과) |
 | `docs/adr/ADR-006-testcontract-architect.md` | 신규 | DocsAgent | ADR-004 verbatim copy + substitution + 사용자 5 결정 verbatim 인용 |
 | `docs/adr/ADR-005-plugin-self-application-na-standardization.md` | 수정 | DocsAgent | frontmatter status `Proposed` → `Accepted` (§3.6) |
 | `docs/adr/ADR-004-architectpl-securityarch-restructure.md` | 수정 | DocsAgent | 라인 70-72 후속 #1 closure 라인: "#1 = CFP-18 + ADR-006으로 해소" cross-ref |
+
+> **변경 통계**: 신규 2 + 수정 16 + 변경 0 1 = 총 19 파일. (기존 "수정 17" 표기는 review-checklists/design.md "변경 0" 행 합산 오류 — off-by-one 정정.)
 
 > **Impl Manifest**: Phase 2 PR §8.5 매핑표 commit 후 자동 sub-issue 생성 (subissue-from-impl-manifest.yml)
 
@@ -128,6 +132,10 @@ chief author가 deputy output을 §8.1-§8.3 본문에 반영. 채택/반박 근
 
 ## §7 보안 설계 (SecurityArchitectAgent 입력)
 
+### §7.5 위협 ↔ 완화 매핑
+
+본 Story의 위협-완화 매핑은 §7.7 본문이 substitute 한다 — T1 (신규 agent permission model) ↔ min-privilege spec (WebSearch/WebFetch 제거, deny list). §7.7 yaml block이 mapping table의 implementation 형식. SecurityArch 통상 §7.5 STRIDE-LITE 표 형식 대신, plugin-meta Story 특성(§7.6 부분 N/A) 상 단일 위협 T1만 존재해 §7.7 1행 매핑으로 substitute 정합.
+
 ### §7.6 부분 N/A — `plugin-meta-na` (ADR-005 분류)
 
 본 Story는 trust boundary 변경 없음 — STRIDE 분석 부분 N/A. 근거: agent md / template / docs / yaml 변경만, 외부 입력·인증·민감데이터 흐름 변경 0건.
@@ -135,7 +143,7 @@ chief author가 deputy output을 §8.1-§8.3 본문에 반영. 채택/반박 근
 - 검증 채널: ArchitectPL 메타-규칙 §3.2-1번 항목 (§7 SecurityArch input 통합 정합성)
 - 면제 분류: `plugin-meta-na` (ADR-005 결정 2 verbatim)
 
-### §7.7 부분 영향 — T1 신규 agent permission model
+### §7.7 T1 위협 + min-privilege 완화책 (§7.5 substitute implementation)
 
 **T1 (P1)**: TestContractArchitectAgent frontmatter `permissions:` over-privileged allow list 부여 시 deputy 권한 model 위반 위험.
 

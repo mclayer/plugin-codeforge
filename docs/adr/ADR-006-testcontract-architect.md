@@ -73,7 +73,7 @@ Codex audit #1 closure 정의를 2단계로 분리:
 1. **ArchitectPL 검수 4 항목 → 메타-규칙 2 항목 압축** (Refactor STRONG ROI #1) — deputy N+1 추가 시 enumerate 폭증 회피
 2. **TestContractArch ↔ QADev mutual reference** (Refactor STRONG ROI #3) — 시점/산출물 분리 invariant 명문 cross-ref
 3. **min-privilege permissions** (SecurityArch §7.7) — WebSearch/WebFetch 제거 (TestContractArch 외부 lookup 불필요)
-4. **ADR-005 status 전이** — `Proposed` → `Accepted` (CFP-17/18 두 번 dogfooding 검증 완료)
+4. **ADR-005 status 전이** — `Proposed` → `Accepted` (CFP-17/18 두 번 dogfooding 검증 완료, **결정 1·2·3에 한정**: N/A 표기 형식 / 면제 분류 / N/A inheritance 차단). **결정 4 (invariant-check workflow Step 신설)는 본 Story 범위 외 — 별도 follow-up Story (CFP-19+) 발의 의무**. 본 status 전이가 결정 4 self-condition 충족을 함의하지 않으며, 결정 4 implementation은 별도 lane으로 추적.
 5. **`templates/change-plan.md` §8.4 N/A 권한 신설** — `plugin-meta-na` / `runtime-inert` 분류 (ADR-005 정합)
 
 ## 결과

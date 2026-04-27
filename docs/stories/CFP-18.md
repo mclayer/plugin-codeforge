@@ -91,6 +91,7 @@ CFP-18은 **새 deputy(또는 sub-author) 역할을 도입하는 설계 결정**
 
 - ADR-006 채택 후 ADR-004 본문에 "후속 #1 = CFP-18 + ADR-006" 보충 라인 추가 검토 (DocsAgent 단순 cross-reference 갱신, lane 게이트 외).
 - v0.11.0 release notes의 deputy 수(현 4) → 5로 갱신 (Option A 채택 시).
+- **ArchitectPL 검수 모델**: 설계 lane(Change Plan §3.2)이 Refactor STRONG ROI #1 채택으로 **4 항목 → 메타-규칙 2 항목 압축** 결정 — 본 §3.3 + §4.2 + §5.1 AC-INV-4 표기는 요구사항 lane 시점 가설(4→5 enumerate 추가). 설계 lane 결정은 §7 Change Plan 요약이 SSOT.
 
 ## §4 변경 영향 코드 경로
 
@@ -106,7 +107,7 @@ CFP-18은 **새 deputy(또는 sub-author) 역할을 도입하는 설계 결정**
 | 경로 | 현재 책임 요약 | 갱신 방향 |
 |------|----------------|-----------|
 | `agents/ArchitectAgent.md`:56,76,80 | §8 Test Contract chief author 단독 | "§8 본문은 chief author 권한, 단 TestContractArch input을 통합한 뒤 확정"으로 author 모델 보강 |
-| `agents/ArchitectPLAgent.md`:58-66 | 4 검수 항목 (§1-§9 누락 / §3 ADR / §6 리팩터링 / §10 evidence) | 5번째 항목 추가: "§8 author input 통합 정합성 + chief author 채택/반박 정합성" |
+| `agents/ArchitectPLAgent.md`:58-66 | 4 검수 항목 (§1-§9 누락 / §3 ADR / §6 리팩터링 / §10 evidence) | 설계 lane(Change Plan §3.2) 결정으로 **메타-규칙 2 항목 압축** (Refactor STRONG ROI #1) — deputy N+1 추가 시 enumerate 폭증 회피. 메타-규칙 1: §섹션별 deputy author input 통합 정합성(§2 Mapper / §3·§6 Refactor / §7 SecurityArch / §8 TestContractArch). 메타-규칙 2: §섹션 누락 차단(§7/§8/§10). 설계 lane SSOT는 Change Plan §3.2. |
 | `agents/QADeveloperAgent.md`:25,33,53-56,71 | 계약 소유자 = ArchitectAgent / 감사 = ArchitectPL / §8 = 스펙 / 자체 추가 금지 | "계약 소유자 = ArchitectAgent (TestContractArch input 통합 후)"로 라인 보강. QADev 시점/금지 라인은 그대로 유지 (§2.3 invariant) |
 | `agents/SecurityArchitectAgent.md` | §7 Security author input deputy SSOT | TestContractArch md 작성 시 doctrinal 참조 ("동일 도형") |
 | `templates/change-plan.md`:99-118 | §8 Test Contract 본문 (§8.1-§8.3) | 본문 구조는 유지, header에 "author input: TestContractArch (deputy) → chief author 통합"을 1줄 명시 검토 (template 의미 변경이므로 Story 작성 의무 강제 대상) |
@@ -158,7 +159,7 @@ CFP-18은 **새 deputy(또는 sub-author) 역할을 도입하는 설계 결정**
 | AC-INV-1 | TestContractArch 시점 = 설계 lane만, QADev 시점 = 구현 lane만 — 시점 분리 invariant | DomainAgent §2.3 |
 | AC-INV-2 | TestContractArch 산출물 = 명세 텍스트(assertion 코드 안 씀), QADev 산출물 = 테스트 함수 코드(§8 본문 안 씀) — 산출물 분리 invariant | DomainAgent §2.3 |
 | AC-INV-3 | TestContractArch clarification 경로 = ArchitectPL 재스폰 (SecurityArch 패턴 동형) | DomainAgent §2.3 |
-| AC-INV-4 | ArchitectPL 검수 항목이 4 → 5로 확장 (§8 author input 통합 정합성 추가) | DomainAgent §2.3 + Analyst AC-2/AC-7 |
+| AC-INV-4 | ArchitectPL 검수 항목 모델이 §8 author input 통합 정합성을 포괄한다 (요구사항 lane 가설: 4→5 enumerate 확장. **설계 lane 채택 모델: 4→2 메타-규칙 압축 — Change Plan §3.2 정합 SSOT, Refactor STRONG ROI #1**) | DomainAgent §2.3 + Analyst AC-2/AC-7 + Change Plan §3.2 |
 
 ### §5.2 명문화 의무 (암묵 가정 8건)
 
@@ -263,8 +264,12 @@ ADR-004 후속 — Codex audit #1 (Top-1, High) 해소. §8 Test Contract author
 ### §3 도입할 설계 (핵심 결정 4건)
 1. TestContractArchitectAgent 신설 — ArchitectPL 직속 5번째 deputy (사용자 BLOCKING-1: Option A)
 2. §8 author = ArchitectAgent (chief author) 유지, TestContractArch는 author input contributor (BLOCKING-2)
-3. ArchitectPL 검수 4 항목 → 메타-규칙 2 항목 압축 (Refactor STRONG ROI #1 채택)
+3. ArchitectPL 검수 4 항목 → 메타-규칙 2 항목 압축 (Refactor STRONG ROI #1 채택). **요구사항 lane §3.3·§4.2·§5.1 AC-INV-4의 "4→5 enumerate 확장" 가설은 설계 lane에서 압축 채택으로 supersede.**
 4. §7 ↔ §8 cross-reference 규칙 명문화 (BLOCKING-4: §7 단독 + §8 cross-ref만)
+
+**변경 통계** (Change Plan §5 정합): 신규 2 + 수정 16 + 변경 0 1 = 총 19 파일. (요구사항 lane "수정 17" 표기는 review-checklists/design.md "변경 0" 행 합산 오류 — off-by-one 정정.)
+
+**baseline 정정**: agent count 22 core (현 main `agents/*.md`) + CFP-18 신규 +1 = **v0.12.0 23 core** (P0-1 대응).
 
 ### §4 API 계약
 TestContractArch ↔ ArchitectPL/Architect/QADev/SecurityArch 4 인터페이스 명시 — 시점·산출물 type·cross-ref 의무.
