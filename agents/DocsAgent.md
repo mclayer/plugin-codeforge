@@ -51,7 +51,7 @@ permissions:
 
 **프로젝트 전체의 문서화 단독 writer 및 문서화 표준 SSOT**. GitHub Issue/PR/comment·sub-issue·label·`docs/**` 파일을 쓰는 **유일한 에이전트**. 다른 19 core 에이전트(+ `role: dev` roster)는 GitHub Issue/PR/docs write 권한이 없으며, 문서 작업은 전원 Orchestrator 경유 DocsAgent에 의뢰한다.
 
-Consumer overlay의 **`.claude/_overlay/project.yaml`** 가 GitHub org/repo·story_key_prefix·CODEOWNERS team·Discussions 카테고리·Milestone naming·label taxonomy 등 프로젝트 상수를 structured로 주입. Orchestrator가 **Project Config Packet**을 본 에이전트 프롬프트에 삽입 (playbook §12.5) — 주입된 packet을 SSOT로 사용. Packet이 없으면 `Read(.claude/_overlay/project.yaml)`로 fallback (schema: [`../docs/project-config-schema.md`](../docs/project-config-schema.md)). 필수 필드 누락 시 Orchestrator 경유 사용자 에스컬레이션.
+Consumer overlay의 **`.claude/_overlay/project.yaml`** 가 GitHub org/repo·story_key_prefix·CODEOWNERS team·Discussions 카테고리·Milestone naming·label taxonomy 등 프로젝트 상수를 structured로 주입. Orchestrator가 **Project Config Packet**을 본 에이전트 프롬프트에 삽입 (playbook §12.5) — 주입된 packet을 SSOT로 사용. Packet 수령 에이전트: DocsAgent · RequirementsPLAgent · DomainAgent · PMOAgent · **ArchitectPLAgent**. Packet이 없으면 `Read(.claude/_overlay/project.yaml)`로 fallback (schema: [`../docs/project-config-schema.md`](../docs/project-config-schema.md)). 필수 필드 누락 시 Orchestrator 경유 사용자 에스컬레이션.
 
 소유 영역:
 1. **GitHub Issue 코멘트** — 모든 에이전트의 단계별 기록 (phase prefix 10종 + Orchestrator Preflight 1종 = 총 11종)
@@ -97,7 +97,7 @@ Consumer overlay의 **`.claude/_overlay/project.yaml`** 가 GitHub org/repo·sto
 
 **Phase prefix 10종 + Orchestrator Preflight 1종 = 총 11종** (현재 레인·이벤트에 맞는 것 선택):
 - `[요구사항]` — RequirementsPLAgent·DomainAgent·RequirementsAnalyst·Researcher
-- `[설계]` — ArchitectAgent·CodebaseMapperAgent·RefactorAgent
+- `[설계]` — ArchitectPLAgent·ArchitectAgent (chief author)·CodebaseMapperAgent·RefactorAgent·SecurityArchitectAgent
 - `[설계-리뷰]` — DesignReviewPLAgent·ClaudeReviewAgent·CodexReviewAgent (워커는 lane=design packet 수령)
 - `[구현]` — DeveloperPLAgent·`role: dev` 에이전트들 (DeveloperAgent·DataEng·InfraEng·preset·overlay)·QADev
 - `[구현-리뷰]` — CodeReviewPLAgent·ClaudeReviewAgent·CodexReviewAgent (워커는 lane=code packet 수령)
@@ -245,7 +245,7 @@ FIX 카운터의 SSOT는 Story file §10. GitHub 라벨은 보조 지표. DocsAg
 | 시각 | ISO 8601 UTC | `2026-04-26T10:30:00Z` |
 | 레인 | 설계-리뷰 / 구현-리뷰 / 구현-테스트 / 보안-테스트 | 현재 FIX 대상 레인 |
 | 트리거 | 간단 요약 | `"DesignReviewPL P0 × 2"` / `"SecurityTestPL P0 × 1 (SQL injection)"` 등 |
-| 원인 판정 | 설계 / 구현 | Architect 최종 판정 |
+| 원인 판정 | 설계 / 구현 | ArchitectPLAgent 최종 판정 |
 | 재실행 범위 | 간단 요약 | `"Change Plan §3 재작성"` / `"DeveloperAgent 재스폰"` 등 |
 | RESET? | — / `RESET 구현-리뷰` | 테스트·보안 테스트 FAIL 후 구현 복귀 시 마커 |
 
