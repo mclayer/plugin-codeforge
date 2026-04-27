@@ -72,7 +72,29 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     ("labels", False, dict, "labels section (mapping), optional"),
     ("labels.components", False, _is_list_of_str,
      "labels.components (list of non-empty strings), optional"),
+    # CFP-1 Story 작성 의무 정책의 consumer overlay 확장 — 안전 방향(면제 추가)만 허용,
+    # 강제 항목 축소(예: 가상의 'required_categories' 키)는 schema에 정의 안 해 unknown key reject로 자동 차단.
+    ("story_cutoff", False, dict, "story_cutoff section (mapping), optional"),
+    ("story_cutoff.additional_exempt_categories", False, _is_list_of_str,
+     "story_cutoff.additional_exempt_categories (list of non-empty strings), optional"),
 ]
+
+
+# Unknown key reject — schema 정의 외 키는 거부
+# 강제 항목 축소·우회 시도(예: story_cutoff.required_categories) 자동 차단
+def _build_allowed_keys_by_parent() -> dict[str, set[str]]:
+    """SCHEMA_RULES에서 parent dotted-path → set of allowed child keys 매핑 생성."""
+    table: dict[str, set[str]] = {}
+    for path, *_ in SCHEMA_RULES:
+        parts = path.split(".")
+        for i in range(len(parts)):
+            parent = ".".join(parts[:i])  # "" for root
+            child = parts[i]
+            table.setdefault(parent, set()).add(child)
+    return table
+
+
+ALLOWED_KEYS_BY_PARENT: dict[str, set[str]] = _build_allowed_keys_by_parent()
 
 
 def _get_path(data: Any, dotted: str) -> tuple[bool, Any]:
@@ -83,6 +105,26 @@ def _get_path(data: Any, dotted: str) -> tuple[bool, Any]:
             return False, None
         cur = cur[key]
     return True, cur
+
+
+def _check_unknown_keys(data: Any, parent_path: str = "") -> list[str]:
+    """SCHEMA_RULES에 정의되지 않은 unknown key 탐색 (recursive)."""
+    if not isinstance(data, dict):
+        return []
+    errors: list[str] = []
+    allowed = ALLOWED_KEYS_BY_PARENT.get(parent_path, set())
+    for key, value in data.items():
+        full_path = f"{parent_path}.{key}" if parent_path else key
+        if key not in allowed:
+            errors.append(
+                f"unknown key: {full_path} — schema에 정의되지 않음 "
+                f"(allowed at '{parent_path or '<root>'}': {sorted(allowed) or '<none>'})"
+            )
+            continue
+        # recurse into known nested dicts only
+        if isinstance(value, dict):
+            errors.extend(_check_unknown_keys(value, full_path))
+    return errors
 
 
 def validate(data: Any) -> list[str]:
@@ -107,6 +149,9 @@ def validate(data: Any) -> list[str]:
         elif callable(type_check):
             if not type_check(value):
                 errors.append(f"{path}: type mismatch — expected {description}, got {value!r}")
+
+    # Unknown key reject — schema 정의 외 키는 거부 (강제 항목 축소·우회 시도 차단)
+    errors.extend(_check_unknown_keys(data))
 
     return errors
 
