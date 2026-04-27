@@ -253,11 +253,27 @@ CFP-18은 **새 deputy(또는 sub-author) 역할을 도입하는 설계 결정**
 
 본 lane 결정은 HIGH 신뢰도 출처에 한해 직접 인용, MEDIUM 이하는 보조 근거로만 사용.
 
-## §7 Change Plan 요약 (설계 lane — 작성 대기)
+## §7 Change Plan 요약 (설계 lane — 작성 완료)
 
-→ docs/change-plans/cfp-18-test-contract-architect.md (설계 lane Phase 1 PR에서 작성)
+→ docs/change-plans/cfp-18-test-contract-architect.md
 
-**§7 보안 설계**: 분석 대기 — SecurityArchitect deputy가 평가. Test Contract author 분리가 trust boundary·credential 흐름에 영향 없을 가능성 높음 (§7.6 N/A 가능성 높음).
+### §1 목적
+ADR-004 후속 — Codex audit #1 (Top-1, High) 해소. §8 Test Contract author input을 chief author 단독에서 deputy(TestContractArchitectAgent)로 분리. SecurityArch:§7 isomorphic 패턴.
+
+### §3 도입할 설계 (핵심 결정 4건)
+1. TestContractArchitectAgent 신설 — ArchitectPL 직속 5번째 deputy (사용자 BLOCKING-1: Option A)
+2. §8 author = ArchitectAgent (chief author) 유지, TestContractArch는 author input contributor (BLOCKING-2)
+3. ArchitectPL 검수 4 항목 → 메타-규칙 2 항목 압축 (Refactor STRONG ROI #1 채택)
+4. §7 ↔ §8 cross-reference 규칙 명문화 (BLOCKING-4: §7 단독 + §8 cross-ref만)
+
+### §4 API 계약
+TestContractArch ↔ ArchitectPL/Architect/QADev/SecurityArch 4 인터페이스 명시 — 시점·산출물 type·cross-ref 의무.
+
+### §7 보안 설계 (부분 N/A)
+§7.6 부분 N/A — `plugin-meta-na` (ADR-005). T1 위협 (신규 agent permission model) → §7.7 min-privilege spec으로 완화 (WebSearch/WebFetch 제거, SecurityArch 대비 강화). §7.8 ADR-004 패턴 안정성 OK.
+
+### §9 분기
+Phase 1 PR (현재 — 요구사항 + 설계 + 설계리뷰) → 머지 → Phase 2 PR (구현 = 19 SSOT 갱신 + TestContractArch.md 신규 + ADR-005/004 cross-ref).
 
 ## §8 구현 결과 (Phase 2)
 
