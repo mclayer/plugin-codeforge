@@ -5,6 +5,37 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.13.0] - 2026-04-28
+
+### CFP-19 — 오케스트레이션 병렬화 (R1-R11 Tier 1+2)
+
+**Non-BREAKING**. 사용자 critical feedback ("전체적으로 너무 느리다") 대응. Codex(GPT-5) + general-purpose 두 독립 감사 합의 11개 직렬 병목 제거. 본 plugin은 자기 적용 안 함 (paradox 처리, ADR-005 plugin-meta-na).
+
+**Tier 1 (R1-R8)**:
+- R1: DocsAgent dual-mode (blocking/background) write queue drain — `mode` 필드 필수, blocking 7종 / background 4종 분류
+- R2: ReviewPL verdict-return-first protocol — DocsAgent save 대기 안 함, 다음 lane spawn 트리거 후 background drain
+- R3: Orchestrator-direct dual review worker spawn — PL이 packet return → Orchestrator 한 메시지에 (Claude ∥ Codex) dispatch
+- R4: FIX speculative pipelining — DeveloperPL 1차 진단 ∥ ArchitectPL 최종 판정 병렬, 불일치 시 ArchitectPL 우선
+- R5: §8.5 Impl Manifest 자동 생성 — DocsAgent kind=impl-manifest helper, DeveloperPL은 review-edit only
+- R6: Lane Context Packet warm cache — `.claude-work/cache/<KEY>-sections.json` git commit hash invalidation
+- R7: Phase 1 merge ↔ Phase 2 prep parallel — 설계 리뷰 PASS 즉시 Track A(merge) ∥ Track B(prep) 병렬
+- R8: ArchitectPL fail-fast pre-synthesis — Phase 1.5 sanity check, 결격 deputy clarification 재spawn
+
+**Tier 2 (R9-R11)**:
+- R9: TestAgent subset 병렬 — `subset: functional` ∥ `subset: performance`
+- R10: SecurityTestPL 1차 layer pre-fetch — `.claude-work/cache/<KEY>-sec1.json` background prefetch
+- R11: FIX mechanical fast-path — typo/broken-link/minor-naming/comment-only 자격 시 ArchitectPL 판정 skip + §10 row 안 매김
+
+**예상 효과**: Story 1건당 평균 20-32분 단축 (60-90분 → 40-60분 예상, 30-40% reduction).
+
+**변경 파일**: `templates/review-pl-base.md`, `agents/{DocsAgent,ArchitectPLAgent,DeveloperPLAgent,DesignReviewPLAgent,CodeReviewPLAgent,SecurityTestPLAgent,TestAgent}.md`, `docs/orchestrator-playbook.md`, `CLAUDE.md`. ADR 변경 0건.
+
+**Spec/Plan**: [docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md](docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md), [docs/superpowers/plans/2026-04-27-cfp-19-orchestration-parallelization.md](docs/superpowers/plans/2026-04-27-cfp-19-orchestration-parallelization.md).
+
+### Migration
+- Non-BREAKING — 모든 변경은 SSOT 문서·agent md·playbook 추가 절. consumer 액션 없음.
+- 본 plugin은 자기 적용 안 함 (paradox 처리). 다음 Story부터 발효.
+
 ## [0.12.0] - 2026-04-27
 
 ### Added
