@@ -292,6 +292,40 @@ DomainAgent가 도메인 질문 답변을 Q&A 카테고리에 게시할 때:
 
 다른 에이전트가 Orchestrator 경유로 DocsAgent에 요청할 때 사용하는 요청 템플릿:
 
+### Drain 모드 (R1, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
+
+모든 요청 frontmatter에 `mode` 필드 필수 (write queue 파일 frontmatter SSOT는 [`docs/orchestrator-playbook.md`](../docs/orchestrator-playbook.md) §11.2):
+
+| mode | 의미 | drain 시점 |
+|------|------|----------|
+| **`blocking`** | 다음 lane이 의존하는 산출물 | 현재 lane 종료 직전 (다음 lane spawn 전 반드시 drain 완료) |
+| **`background`** | 누적 보고·코멘트·monitoring | 다음 lane spawn 후 별도 DocsAgent run으로 drain |
+
+**blocking 분류 의무 항목**:
+- §1-7 (Phase 1 PR open 직전)
+- Change Plan `docs/change-plans/<slug>.md` 신규/갱신
+- ADR draft `docs/adr/ADR-NNN-<slug>.md` 신규
+- §8.5 Impl Manifest commit (sub-issue Action 트리거)
+- gate label 부착 (`gate:design-review-pass` / `gate:security-test-pass`)
+- §10 FIX Ledger Iter row append (다음 FIX 회귀 이전)
+- Phase 1·2 PR create
+
+**background 분류 허용 항목**:
+- 에이전트 산출물 요약 Issue 코멘트 (`[<phase>] <Agent>: <요약>`)
+- §9.x 리뷰·테스트 결과 누적 append
+- §11 회고 append
+- ledger-append 후속 mirror (단 §10 본문 append 자체는 blocking)
+
+**의뢰자 측 책임**: write queue 파일 작성 시 frontmatter `mode: blocking | background` 명시 의무. 누락 시 DocsAgent가 `mode: blocking` fallback (안전 측). 라벨 잘못이면 후속 lane 진입 지연 발생 → 점진 교정.
+
+**DocsAgent 측 drain 우선순위**:
+1. `priority: high` AND `mode: blocking`
+2. `priority: normal` AND `mode: blocking`
+3. `priority: high` AND `mode: background`
+4. `priority: normal` AND `mode: background`
+
+같은 클래스 내 seq 순.
+
 ### Issue 코멘트 요청
 ```
 [DocsAgent 요청: Issue 코멘트]
