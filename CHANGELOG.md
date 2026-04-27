@@ -5,6 +5,27 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.12.0] - 2026-04-27
+
+### Added
+- **TestContractArchitectAgent** 신설 — 설계 lane 5번째 deputy (§8 Test Contract author input contributor, QA perspective)
+- **ADR-006** — TestContractArch 도입 결정 기록 (status=Accepted)
+- **ArchitectPL 검수 메타-규칙 압축** — 4 항목 enumerate -> 2 항목 메타-규칙 (§섹션별 deputy author input 통합 + §섹션 누락 차단)
+
+### Changed
+- **ArchitectAgent**: deputy 3인 -> 4인 (TestContractArch 추가) + §8 Test Contract author 라인 §7 동형 보강
+- **ArchitectPLAgent**: deputy 4인 -> 5인 + 검수 4 항목 -> 메타-규칙 2 항목 압축
+- **CodebaseMapper / RefactorAgent / SecurityArchitectAgent**: "Mapper/Refactor와의 관계" 절 끝에 "TestContractArch는 §3·§7 도형 대립 비참여" 1줄 cross-reference 추가
+- **QADeveloperAgent**: 계약 소유자 라인 보강 ("TestContractArch input 통합 후 §8 확정")
+- **CLAUDE.md / orchestrator-playbook.md / plugin-design.md**: 22 core -> 23 core, deputy 4 -> 5 일괄, 검수 메타-규칙 압축 반영
+- **ADR-005**: status Proposed -> **Accepted (결정 1·2·3 한정)** — N/A 표기 형식·면제 분류·N/A inheritance 차단. 결정 4 (invariant-check Step 신설)는 follow-up CFP
+
+### Migration
+- BREAKING: agent count 22 -> 23 (TestContractArchitectAgent 추가)
+- BREAKING: 책임 매트릭스에 TestContractArch perspective 추가 (§8 author input contributor)
+- Consumer 액션: 없음 (Orchestrator 경유 호출). SessionStart hook 재실행 권장
+- 자세한 사항: [docs/migration-guide.md](docs/migration-guide.md) v0.11.0 -> v0.12.0 절
+
 ## [0.11.0] - 2026-04-27
 
 ### Added

@@ -13,6 +13,7 @@ updated: 2026-04-24
 
 ## 목차
 
+- [v0.11.0 → v0.12.0](#v0110--v0120) — 설계 lane 5-deputy: TestContractArchitectAgent 신설 (BREAKING)
 - [v0.10.0 → v0.11.0](#v0100--v0110) — 설계 lane 재구조화: ArchitectPLAgent + SecurityArchitectAgent 신설
 - [v0.8 → v0.9](#v08--v09-reviewtest-워커-통합) — **3 lane × 2 vendor = 6 워커 → 2 워커 (BREAKING)**
 - [v0.7 → v0.8](#v07--v08-atlassian-제거--github-전환) — **Atlassian 제거 + GitHub 전환 (BREAKING)**
@@ -21,6 +22,24 @@ updated: 2026-04-24
 - [v0.3 → v0.4](#v03--v04-stage-2-projectyaml-구조화) — `project.yaml` 도입
 - [v0.2 → v0.3](#v02--v03-generic-dev-roster--preset) — Generic Dev roster + preset
 - [v0.1 → v0.2](#v01--v02-보안-테스트-레인--templates) — 보안 테스트 레인 + templates (non-breaking)
+
+---
+
+## v0.11.0 → v0.12.0
+
+### 변경 사항
+- **신규 에이전트 1종**: `TestContractArchitectAgent` (설계 lane 5번째 deputy, QA perspective contributor for §8 Test Contract)
+- **ArchitectPL 검수 메타-규칙 압축**: 4 항목 enumerate -> 2 항목 메타-규칙 (Refactor STRONG ROI 채택)
+- **ADR-005 status 전이**: Proposed -> Accepted (결정 1·2·3 한정 — N/A 표기 형식·면제 분류·N/A inheritance 차단)
+- **ADR-006 신규 발행**: TestContractArch 도입 근거 + 사용자 5 BLOCKING 결정 verbatim 인용
+
+### Consumer 액션 필요
+- **없음** (Orchestrator 경유 호출이라 직접 영향 없음)
+- 권장: SessionStart hook 재실행해 새 agent md 인식
+
+### 기존 docs/change-plans/* 회귀 갱신 불필요
+- 과거 Change Plan은 historical record 보존
+- 새 §8 author input 규칙은 v0.12.0 이후 신규 Story부터 적용
 
 ---
 
