@@ -13,6 +13,7 @@ updated: 2026-04-24
 
 ## 목차
 
+- [v0.10.0 → v0.11.0](#v0100--v0110) — 설계 lane 재구조화: ArchitectPLAgent + SecurityArchitectAgent 신설
 - [v0.8 → v0.9](#v08--v09-reviewtest-워커-통합) — **3 lane × 2 vendor = 6 워커 → 2 워커 (BREAKING)**
 - [v0.7 → v0.8](#v07--v08-atlassian-제거--github-전환) — **Atlassian 제거 + GitHub 전환 (BREAKING)**
 - [v0.6 → v0.7](#v06--v07-요구사항설계-레인-병렬화) — 요구사항·설계 레인 병렬 모델
@@ -20,6 +21,29 @@ updated: 2026-04-24
 - [v0.3 → v0.4](#v03--v04-stage-2-projectyaml-구조화) — `project.yaml` 도입
 - [v0.2 → v0.3](#v02--v03-generic-dev-roster--preset) — Generic Dev roster + preset
 - [v0.1 → v0.2](#v01--v02-보안-테스트-레인--templates) — 보안 테스트 레인 + templates (non-breaking)
+
+---
+
+## v0.10.0 → v0.11.0
+
+### 변경 사항
+- **신규 에이전트 2종**: `ArchitectPLAgent` (설계 lane PL), `SecurityArchitectAgent` (설계 lane deputy)
+- **ArchitectAgent 역할 변경**: 단독 PL → ArchitectPL 직속 chief author (Change Plan §1-§10 + ADR draft + §8 Test Contract author)
+- **Change Plan template 신규 §7 보안 설계 섹션** — 신규 Story부터 적용 (외부 입력·인증·민감데이터 무관 시 §7.6 N/A 권한)
+- **ADR-004** 발행: 설계 lane 재구조화 결정 기록
+- **책임 매트릭스 변경**: trust boundary·auth·민감데이터 등 설계 결정은 Design lane (SecurityArch), 코드 준수 검증은 Security Test (시점 분리)
+
+### Consumer 액션 필요
+- **없음** (Orchestrator 경유 호출이라 직접 영향 없음)
+- **권장**: SessionStart hook 재실행해 새 agent md 인식 (`~/.claude/plugins/cache/...` refresh)
+
+### 기존 docs/change-plans/* 회귀 갱신 불필요
+- 과거 Change Plan은 historical record로 보존
+- 새 §7 섹션은 v0.11.0 이후 신규 Story부터 적용
+
+### Rollback
+- v0.11.0 이슈 발견 시 v0.11.1 hotfix 우선
+- Last resort: `/plugins install codeforge@0.10.0`로 다운그레이드 (data migration 0건이라 안전)
 
 ---
 
