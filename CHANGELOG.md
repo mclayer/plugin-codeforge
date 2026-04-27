@@ -5,6 +5,45 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.10.0] — 2026-04-27 (Self-application 6 layer 완성 — CFP-1~16)
+
+### Architecture
+- **Plugin self-application 정합화 sprint** — 16 CFP Story로 6 layer 완성:
+  1. **정책** (CFP-1): `story_cutoff` policy + dogfooding rule (CLAUDE.md "Story 작성 의무" 섹션)
+  2. **인프라** (CFP-2): GitHub Issue Forms 3종 + 6 workflows + CODEOWNERS + PR template
+  3. **메타 정합** (CFP-4): story-init.yml drift sync + CLAUDE.md self-application stage 정정 + plugin.json 메타
+  4. **CI invariant** (CFP-5/6/7/8/9/10/13/16): `invariant-check.yml` 8 step (workflow parity / version match / agent count / write queue 권한 / ADR-002 footer / 3-lane category enum / migration-guide BREAKING / severity overrides count+breakdown)
+  5. **SessionStart 부트스트랩** (CFP-12): `overlay/hooks/check-bootstrap.sh` (org permission + 18 label 자동 검출, non-blocking) + `scripts/bootstrap-labels.sh` (idempotent 부트스트랩)
+  6. **end-to-end 실측** (CFP-11): Issue Form → workflow chain 첫 실증 + 3 drift 발견·정합 회복
+- **ADR-003 도입**: SSOT drift 검출·회복 책임을 3 layer로 분리 (CI invariant / SessionStart 부트스트랩 / 사용자 가이드) — 향후 새 drift 검출 추가 시 layer 결정 기준 (Q1-Q3 tree)
+- **CFP-15 폴리시**: story-init workflow의 docs h1·PR title에서 `[STORY]` prefix strip (cosmetic 정합)
+
+### Added
+- `.github/workflows/invariant-check.yml` (CI level layer)
+- `overlay/hooks/check-bootstrap.sh` (SessionStart non-blocking 진단)
+- `scripts/bootstrap-labels.sh` (consumer 1회 부트스트랩)
+- `docs/adr/ADR-003-three-layer-drift-responsibility.md`
+- `docs/stories/CFP-1.md` ~ `CFP-16.md` (15 Story files; CFP-3 deferred)
+- `docs/change-plans/cfp-*.md` (대응 Change Plan 14건)
+
+### Changed
+- `overlay/hooks/regen-agents.sh` — SessionStart에 `check-bootstrap.sh` 호출 wiring (`|| true` 비차단)
+- `overlay/hooks/validate_config.py` — `story_cutoff.additional_exempt_categories` schema + unknown key reject (CFP-1 invariant 영구 보존, CFP-6)
+- `.github/workflows/story-init.yml` — sed Korean range bug fix (Python re.UNICODE 교체) + `[STORY]` prefix strip
+- `docs/adr/ADR-002-docsagent-inherit-footer-pattern.md` — §3.2 path example 오타 정정
+- `docs/consumer-guide.md` — §2d label bootstrap script 자동화 참조 + §2g org permission 부트스트랩 단계 신설
+- `CLAUDE.md` — "Story 작성 의무 (모든 변경 적용)" 섹션 추가 (cutoff 정책 + dogfood 단계)
+- `docs/project-config-schema.md` — `story_cutoff.additional_exempt_categories` schema 추가
+
+### Migration
+
+v0.9 → v0.10은 **non-BREAKING** (모든 추가는 opt-in 또는 자동 적용). consumer 마이그레이션 절차 없음.
+
+다만 **권장**:
+- 신규 invariant-check.yml은 plugin maintainer 전용 — consumer는 복사 불필요
+- consumer는 `bash scripts/bootstrap-labels.sh` 1회 실행으로 18 plugin label 일괄 부트스트랩
+- consumer-guide §2g 따라 org-level "Workflow permissions" 활성화 (story-init.yml의 PR auto-create 정상 동작 조건)
+
 ## [0.9.0] — 2026-04-26 (BREAKING — Review/Test 워커 통합)
 
 ### Breaking
