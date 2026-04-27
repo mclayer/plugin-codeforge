@@ -18,6 +18,7 @@ inputs:
   - CodebaseMapperAgent
   - RefactorAgent
   - SecurityArchitectAgent
+  - TestContractArchitectAgent
 reviewers: [DesignReviewPLAgent]
 related_adrs: [ADR-NNN, ADR-MMM]
 created: <ISO 8601>
@@ -96,7 +97,7 @@ story: <KEY>   # GitHub Story Issue key, e.g. PLG-7
 - 근거 1줄 (예: "내부 docs/templates 수정만, 외부 입력 0개")
 - ※ N/A 근거 누락 시 DesignReview P0 차단
 
-### §8. Test Contract (QADev TDD 입력 — 누락 시 DesignReview P0 차단)
+### §8. Test Contract (TestContractArchitectAgent 입력 통합 + chief author author — QADev TDD 입력 — 누락 시 DesignReview P0 차단)
 
 #### §8.1 커버리지 계획
 - 단위 테스트 범위 (신규·변경된 함수·클래스)
@@ -116,6 +117,13 @@ story: <KEY>   # GitHub Story Issue key, e.g. PLG-7
 - 환경 고정: {CPU · runtime 버전 · 외부 의존성 variance 변수 처리}
 - baseline 갱신 트리거: 설계 의도로 성능 스펙이 변경된 경우에만 Architect 승인 후 갱신
 - 성능 영향 없으면 "N/A (성능 영향 없음)" 1줄로 대체 가능
+
+#### §8.4 N/A 권한 (Story 전체 §8 N/A 시 — ADR-005 정합)
+- Story가 실행 가능 코드 0줄인 경우 §8 전체 N/A 허용
+- 표기: "N/A — <사유 한 줄>. 검증 채널: <대체 검증>. 면제 분류: plugin-meta-na | runtime-inert"
+- `plugin-meta-na`: agent md / template / docs / yaml만 수정, 실행 가능 코드 0줄
+- `runtime-inert`: 코드는 있으나 테스트 대상 runtime behavior 변경 없음
+- N/A 근거 누락 시 DesignReview P0 차단 (SecurityArch §7.6 N/A 패턴 동형)
 
 ### §9. 분기 선택 (필요 Dev 조합)
 - 의존성 없는 한 **`role: dev` roster 병렬 가능** (consumer roster에 따라 N개)

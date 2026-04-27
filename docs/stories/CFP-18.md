@@ -267,7 +267,7 @@ ADR-004 후속 — Codex audit #1 (Top-1, High) 해소. §8 Test Contract author
 3. ArchitectPL 검수 4 항목 → 메타-규칙 2 항목 압축 (Refactor STRONG ROI #1 채택). **요구사항 lane §3.3·§4.2·§5.1 AC-INV-4의 "4→5 enumerate 확장" 가설은 설계 lane에서 압축 채택으로 supersede.**
 4. §7 ↔ §8 cross-reference 규칙 명문화 (BLOCKING-4: §7 단독 + §8 cross-ref만)
 
-**변경 통계** (Change Plan §5 정합): 신규 2 + 수정 16 + 변경 0 1 = 총 19 파일. (요구사항 lane "수정 17" 표기는 review-checklists/design.md "변경 0" 행 합산 오류 — off-by-one 정정.)
+**변경 통계** (Change Plan §5 정합): 신규 2 + 수정 18 = 총 20 파일. (요구사항 lane "수정 17" 표기는 review-checklists/design.md "변경 0" 행 합산 오류 — off-by-one 정정. CodeReview Iter 1 FIX: ADR-006 신규 + ADR-005/ADR-004 수정 3행 추가.)
 
 **baseline 정정**: agent count 22 core (현 main `agents/*.md`) + CFP-18 신규 +1 = **v0.12.0 23 core** (P0-1 대응).
 
@@ -286,7 +286,28 @@ Phase 1 PR (현재 — 요구사항 + 설계 + 설계리뷰) → 머지 → Phas
 
 ### §8.5 Impl Manifest
 
-→ Phase 2 PR §8.5 매핑표 commit 후 자동 sub-issue 생성
+| 파일 경로 | 변경 유형 | 책임 요약 |
+|-----------|-----------|-----------|
+| `agents/TestContractArchitectAgent.md` | 신규 | SecurityArchitectAgent.md 도형 기반 — §8 Test Contract author input 제공 deputy (커버리지 후보·경계 조건·Perf Baseline·QADev 인터페이스·§7↔§8 cross-ref 규칙) |
+| `agents/ArchitectAgent.md` | 수정 | §8 chief author 모델 → TestContractArch input 통합 후 확정 반영; deputy 3→4인 갱신 |
+| `agents/ArchitectPLAgent.md` | 수정 | deputy 4→5인 갱신; ArchitectPL 검수 4 항목 → 메타-규칙 2 항목 압축; TestContractArch 스폰 추가 |
+| `agents/CodebaseMapperAgent.md` | 수정 | TestContractArch cross-ref 1줄 추가 (도형 대립 비참여 명시) |
+| `agents/RefactorAgent.md` | 수정 | TestContractArch cross-ref 1줄 추가 (도형 대립 비참여 명시) |
+| `agents/SecurityArchitectAgent.md` | 수정 | TestContractArch cross-ref 1줄 추가 (도형 대립 비참여 명시) |
+| `agents/QADeveloperAgent.md` | 수정 | 계약 소유자 라인 — "ArchitectAgent (chief author, TestContractArch deputy input 통합 후 §8 확정)"으로 갱신 |
+| `agents/DocsAgent.md` | 수정 | [설계] phase prefix에 TestContractArchitectAgent 추가 |
+| `agents/DeveloperPLAgent.md` | 수정 | 도입부 "4인" → "5인(+ TestContractArchitectAgent)" |
+| `templates/change-plan.md` | 수정 | §8 header QA perspective contributor 입력 반영 + §8.4 N/A 권한 블록 신규 추가 |
+| `CLAUDE.md` | 수정 | 에이전트 다이어그램 +TestContractArch; 22→23 core; 설계 lane never-skippable + 스폰 시퀀스 + 병렬 스폰 전면 갱신 |
+| `docs/orchestrator-playbook.md` | 수정 | line 22/561/589 "20 core"→"23 core"; v5 changelog "24 core"→"23 core"; 스폰 시퀀스 + 토큰 예산 + 작업 요약 표 + Hotfix Medium Path + §12.4 packet "4→5 deputy" 갱신 |
+| `docs/plugin-design.md` | 수정 | "22 core"→"23 core" 전체 치환; Stage 1 / Group A 설명 갱신 |
+| `.claude-plugin/plugin.json` | 수정 | version 0.11.0→0.12.0; description "22 core"→"23 core" |
+| `CHANGELOG.md` | 수정 | v0.12.0 항목 신규 추가 |
+| `README.md` | 수정 | "22 core"→"23 core" 전체 치환; 에이전트 다이어그램 TestContractArch 추가 |
+| `docs/migration-guide.md` | 수정 | v0.11.0→v0.12.0 마이그레이션 섹션 신규 추가 |
+| `docs/adr/ADR-006-testcontract-architect.md` | 신규 | ADR-004 후속, 사용자 5 BLOCKING 결정 반영 — TestContractArch 도입 결정 기록 (status=Accepted) |
+| `docs/adr/ADR-005-plugin-self-application-na-standardization.md` | 수정 | status Proposed → Accepted (결정 1·2·3 한정); 결정 4 invariant-check Step 신설은 follow-up CFP 명시 |
+| `docs/adr/ADR-004-architectpl-securityarch-restructure.md` | 수정 | 후속 #1 cross-ref 추가 (CFP-18 + ADR-006으로 해소) |
 
 ## §9 리뷰·테스트 결과 (Phase 2)
 
@@ -331,11 +352,114 @@ Phase 1 PR (현재 — 요구사항 + 설계 + 설계리뷰) → 머지 → Phas
 
 **다음 단계**: gate:design-review-pass 라벨 부착 → Phase 1 PR mergeable → 구현 lane 진입.
 
+### §9.2 구현 리뷰
+
+**Iteration 1/3 — FIX (2026-04-27)**
+
+**종합 판정**: FIX (구현 원인 4건 / 설계 boundary 1건).
+
+**Severity 분포**:
+- P0: 1건 (C-1: §8.5 Impl Manifest ADR-006/ADR-005/ADR-004 3건 누락 — subissue-from-impl-manifest Action 자동 생성 실패 위험)
+- P1: 4건 (C-2 boundary: deputy 명명 규칙 — perspective 차이로 처리 / C-3: playbook deputy 4 누락 4개소 / C-4: README "22 core" off-by-one / X-2: CHANGELOG baseline 모호)
+- P2: 3건 (C-5 ADR-005 line 76 stale / X-4 consumer-guide scope 외 / X-5 정보용)
+
+**원인 판정**: 4 구현 / 1 설계 boundary. C-2 boundary는 "perspective 차이 명시"로 해소 (chief author 본인 제외 vs 포함 — 의도된 view 차이).
+
+**Fix 적용**:
+- C-1 (P0): §8.5 ADR-006 신규 + ADR-005 수정 + ADR-004 수정 3행 추가. 변경 통계 정정 (신규 2 + 수정 18 = 20건).
+- C-3 (P1): playbook line 260·261·262·394·509·510 deputy 4→5 누락 6개소 정정.
+- C-4 (P1): README line 97 "22 core agent md" → "23 core agent md".
+- X-2 (P1): CHANGELOG v0.12.0 Changed 항목에 perspective 차이 note 1줄 추가.
+- C-2 (P1 boundary): ArchitectAgent.md line 48 "3 deputy 산출물 통합" → "4 deputy 산출물 통합" (peer view stale, CFP-17 정정 누락).
+- C-5 (P2): ADR-005 line 76 self-contradiction 해소 — "본 ADR은 결정 1·2·3 Accepted 상태로 정책 명문화" 명시.
+
+**다음 단계**: 구현 리뷰 재실행 (Iter 2/3).
+
+**Iteration 2/3 — PASS (2026-04-27)**
+
+**종합 판정**: PASS — 구현 테스트 lane 진입 가능.
+
+**Severity 분포**:
+- P0: 0건 (Iter 1 P0×1 해소)
+- P1: 0건 (Iter 1 P1×4 해소 + regression 0)
+- P2: 0건
+
+**Iter 1 6 finding verify 결과**: 모두 PASS (C-1 §8.5 ADR 3행 / C-2 line 48 / C-3 playbook 6개소 / C-4 README line 97 / X-2 CHANGELOG perspective / C-5 ADR-005 line 76). Deeper-issue probe (메타-규칙 압축 / TestContractArch permissions / §7-§8 cross-ref / TestContractArch↔QADev 상호참조 / §1 verbatim) 모두 정합.
+
+**다음 단계**: Orchestrator → TestAgent (구현 테스트 lane) 진입.
+
+### §9.3 구현 테스트
+
+**구현 테스트 — PASS (2026-04-27)**
+
+**모드 1 (기능)**: invariant-check workflow ALL PASS
+- agent count 22→23 parity ✅
+- frontmatter contract ✅
+- ADR-002 footer 패턴 ✅
+- write queue parity (19 에이전트) ✅
+- category enum 3-location parity ✅
+- severity_overrides count (6 P0 rule) ✅
+- BREAKING migration-guide presence ✅
+
+**모드 2 (성능)**: N/A — Story §8.6 `plugin-meta-na` 면제 (실행 가능 코드 0줄, baseline 변경 없음)
+
+**다음 lane**: 보안 테스트 (SecurityTestPL)
+
+### §9.4 보안 테스트
+
+**보안 테스트 — PASS (2026-04-27)**
+
+**1차 layer (GitHub native)**:
+- Dependabot alerts: **disabled** (HTTP 403 — repository setting). CFP-18 의존성 추가 0건이므로 lane 통과에는 영향 없음. 별도 enablement 권고 (follow-up CFP 후보).
+- CodeQL findings: **disabled** (HTTP 403 — Code Security 미활성). 실행 코드 0줄이므로 finding 가능성 자체 없음. enablement 권고.
+- Secret Scanning: **disabled** (HTTP 404). Phase 2 diff grep secret/token/password/api_key 패턴 **0건** 확인. enablement 권고.
+- Push Protection: 별개 alert 없음.
+
+**2차 layer (Claude + Codex 병렬)**:
+
+9 보안 category 검증 결과 (CFP-18 plugin meta change scope):
+
+| # | Category | Result | 근거 |
+|---|----------|--------|------|
+| 1 | Injection | N/A | 실행 코드 0줄, markdown/json/yaml만 |
+| 2 | Trust boundary | N/A | 외부 입력 처리 경로 변경 0건 (§7.1) |
+| 3 | Credential / secret | N/A | grep 결과 0건 |
+| 4 | Auth / 세션 | N/A | 인증·세션 로직 변경 0건 |
+| 5 | Crypto | N/A | 암호 함수 변경 0건 |
+| 6 | 민감 데이터 (PII) | N/A | 데이터 처리·로그 변경 0건 |
+| 7 | Dependency CVE | N/A | dep lock 변경 0건 (plugin.json metadata만) |
+| 8 | Static analysis | N/A | 실행 코드 0줄 |
+| 9 | 설정·배포 보안 | N/A | deploy/config 변경 0건 |
+
+**T1 위협 (Story §7.7 P1) verify — TestContractArchitectAgent permission model**:
+- ✅ allow: Read / Grep / Glob / read-only Bash (find, ls, git log, git blame) + write queue only
+- ✅ deny: src/** + tests/** + docs/** 모두 명시 deny
+- ✅ WebSearch / WebFetch **부재** (line 151 명시 "외부 lookup 불필요, min-privilege")
+- ✅ MCP write 도구 부재 — DocsAgent 단독 writer 원칙 준수
+- ✅ SecurityArchitectAgent.md 대비 동일 min-privilege 패턴 + WebSearch/WebFetch 추가 제거 (강화)
+
+**ADR-006 보안 의의 검토**: ArchitectPL stateless 재스폰 + path-scoped permission 패턴을 또 하나의 deputy로 확장. 새로운 attack surface 추가 **0건**. min-privilege 패턴 강화.
+
+**§7 ↔ §8 cross-reference 규칙 검증**: TestContractArch는 §7.5 위협-완화 매핑을 "→ §7.5 T-N 참조"로만 cross-ref (lines 99-106). §7 내용 중복 작성 금지 → SecurityArch SSOT 보존, boundary 충돌 0건.
+
+**Severity 분포** (Claude + Codex worker dedup):
+- P0: 0건
+- P1: 0건
+- P2: 0건
+
+**종합 판정**: PASS — Phase 2 PR mergeable 가능, Story 완료.
+
+**Concerns (informational, severity 없음)**:
+- GitHub native security scanning 3종 disabled (Dependabot/CodeQL/Secret Scanning) — repository setting. 향후 CFP에서 enablement 권고 (현 CFP-18 scope 외 environmental gap).
+
+**다음 단계**: Orchestrator → DocsAgent (gate:security-test-pass 라벨 → Phase 2 PR mergeable → merge → Issue auto-close) + PMOAgent (회고).
+
 ## §10 FIX Ledger
 
 | Iter | 시각 | 레인 | 트리거 | 원인 판정 | 재실행 범위 | RESET? |
 |------|------|------|--------|-----------|-------------|--------|
 | 1 | 2026-04-27T16:30:00Z | 설계-리뷰 | DesignReviewPL P0 × 2 + P1 × 6 | 설계 | Change Plan §3·§5·§7 + Story §3·§4·§5 + ADR-006 부수결정 4 | — |
+| 2 | 2026-04-27T18:00:00Z | 구현-리뷰 | CodeReviewPL P0 × 1 + P1 × 4 | 구현 (4건) / 설계 boundary (1건 — deputy 명명 규칙 SSOT) | §8.5 ADR 3행 추가 + playbook drift 4개소 + README off-by-one + CHANGELOG baseline note + ADR-005 line 76 + ArchitectAgent.md line 48 | — |
 
 ## §11 회고 (PMOAgent)
 
