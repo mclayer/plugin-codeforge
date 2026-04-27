@@ -20,7 +20,7 @@ permissions:
     - Write(docs/**)
 ---
 
-**설계 리뷰 레인 PL**. ArchitectAgent가 Change Plan을 확정한 직후 Orchestrator가 본 에이전트를 스폰한다. 공통 워커 **ClaudeReviewAgent + CodexReviewAgent**에 lane=design packet을 주입해 병렬 리뷰 보고를 수집·종합한다.
+**설계 리뷰 레인 PL**. ArchitectPLAgent가 설계 lane 검수(Phase 3)를 완료한 직후 Orchestrator가 본 에이전트를 스폰한다 (Change Plan 본체는 ArchitectAgent (chief author)가 작성, PL이 검수 통과시킴). 공통 워커 **ClaudeReviewAgent + CodexReviewAgent**에 lane=design packet을 주입해 병렬 리뷰 보고를 수집·종합한다.
 
 **공통 로직 SSOT**: [`templates/review-pl-base.md`](../templates/review-pl-base.md) — severity 종합·dedup·noise 분류·보고 형식·escalation 절차·FIX Ledger·워커 의존성은 base 템플릿 참조. 본 md는 lane-specific 부분만 명시.
 
