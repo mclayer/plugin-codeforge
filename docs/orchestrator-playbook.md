@@ -257,9 +257,9 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
 | **DomainAgent** | 사용자 원문 verbatim (Story file §1 복사) + 4소스 fetch 경로 (`docs/domain-knowledge/**` Glob+Read, `docs/adr/**` 도메인 카테고리, <domain-paths>/**, §1 원문). 타 에이전트 산출물 미수신 — 독립 키워드 자체 도출 |
 | **RequirementsAnalystAgent** | 공통 입력(Story §1 + ADR)만 수신, 타 에이전트 해석 미포함. Ambiguity 키워드 섹션 생성 의무. codex CLI 필수 |
 | **ResearcherAgent** | 사용자 원문에서 외부 기술·선행사례 관점 키워드 자체 도출, 타 에이전트 산출물 미수신. "조사 불필요" 판정도 명시 반환 (null skip 금지) |
-| **ArchitectPLAgent** | 설계 lane PL. 3 deputy(CodebaseMapper ∥ Refactor ∥ SecurityArchitect) 병렬 스폰 후 ArchitectAgent (chief author) 통합 의뢰 → draft 검수. FIX 최종 판정자 (구현 리뷰·구현 테스트·보안 테스트 FAIL 시). Stateless 재스폰. write queue 의뢰 권한 |
-| **ArchitectAgent** | Change Plan §1-§10 chief author + ADR draft author + §8 Test Contract author. ArchitectPLAgent 산하 deputy. 입력 = 3 deputy 산출물(Mapper / Refactor / SecurityArchitect) + Story §1-7. DocsAgent 이중 저장 (`docs/change-plans/<slug>.md` + Story file §7 미러링) 의뢰. Clarification 재스폰 의뢰 권한 |
-| **CodebaseMapperAgent** | as-is 변호 역할. 매 설계 레인 진입 시 Refactor·SecurityArchitect와 병렬 재스폰, base_sha/scope_paths frontmatter. 타 deputy 산출물 미수신 — 원 소스 직접 독해 |
+| **ArchitectPLAgent** | 설계 lane PL. 4 deputy(CodebaseMapper ∥ Refactor ∥ SecurityArchitect ∥ TestContractArchitect) 병렬 스폰 후 ArchitectAgent (chief author) 통합 의뢰 → draft 검수. FIX 최종 판정자 (구현 리뷰·구현 테스트·보안 테스트 FAIL 시). Stateless 재스폰. write queue 의뢰 권한 |
+| **ArchitectAgent** | Change Plan §1-§10 chief author + ADR draft author + §8 Test Contract author. ArchitectPLAgent 산하 deputy. 입력 = 4 deputy 산출물(Mapper / Refactor / SecurityArchitect / TestContractArchitect) + Story §1-7. DocsAgent 이중 저장 (`docs/change-plans/<slug>.md` + Story file §7 미러링) 의뢰. Clarification 재스폰 의뢰 권한 |
+| **CodebaseMapperAgent** | as-is 변호 역할. 매 설계 레인 진입 시 Refactor·SecurityArchitect·TestContractArchitect와 병렬 재스폰, base_sha/scope_paths frontmatter. 타 deputy 산출물 미수신 — 원 소스 직접 독해 |
 | **RefactorAgent** | to-be 혁신 역할. 타 deputy 산출물 미수신, 원 소스 직접 독해. "잠재 변호 논리 예상" 섹션으로 self-identify한 충돌 지점 제출 (chief author가 Mapper 실제 변호와 대조) |
 | **SecurityArchitectAgent** | 설계 lane 보안 deputy. 타 deputy 산출물 미수신, 원 소스 직접 독해. trust boundary·auth 모델·credential 흐름·암호학 결정에 대한 보안 설계 권고 산출 → chief author가 Change Plan §7 (보안 설계 섹션, §7.1-§7.5; 외부 입력 무관 시 §7.6 N/A) 에 통합 |
 | **QADeveloperAgent** | Change Plan §8 Test Contract 입력. 매핑표 반환 의무 |
@@ -391,7 +391,7 @@ DocsAgent는 `mcp__github__add_issue_comment` 1회 호출. 코멘트 prefix는 `
 |--------|----------|---------------------------------------|
 | 신규 Story Issue 생성 직후 | docs/stories/<KEY>.md 신규 생성 + §1-2 (또는 story-init.yml Action이 자동) | 사용자 원문 verbatim + DomainAgent 도메인 해석 |
 | RequirementsPLAgent 통합 명세서 확정 | §3-6 | 관련 ADR / 코드 경로 / Analyst / Researcher / 상충 분석 |
-| ArchitectAgent (chief author) Change Plan 확정 + ArchitectPLAgent 검수 | §7 + `docs/change-plans/<slug>.md` 신규 commit | Change Plan 요약 + Mapper/Refactor/SecurityArchitect 통합 결론 |
+| ArchitectAgent (chief author) Change Plan 확정 + ArchitectPLAgent 검수 | §7 + `docs/change-plans/<slug>.md` 신규 commit | Change Plan 요약 + Mapper/Refactor/SecurityArchitect/TestContractArchitect 통합 결론 |
 | 설계 리뷰 iteration 종료 | §9.1 "설계 리뷰 Iteration N" | Claude/Codex severity counts + 주요 findings 3-5건 + DesignReviewPL 판정 |
 | 설계 리뷰 PASS | label `gate:design-review-pass` 부착 + Phase 1 PR mergeable | (라벨만, 본문 변경 없음) |
 | Dev/Engineer 구현 완료 | §8 + §8.5 Impl Manifest commit (subissue Action 트리거) | QADev 매핑표 요약 + 담당 에이전트 + 변경 파일 경로 |
@@ -506,8 +506,8 @@ mcp__github__list_issues(state='open', labels=['type:story'])
 | phase:요구사항 | §1만 채움 | RequirementsPLAgent 재스폰 → Domain·Analyst·Researcher **병렬 재스폰** (Never-skippable 3종 전원) |
 | phase:요구사항 | §2·§5·§6 **일부만** 채움 (부분 완료 resume) | 비어있는 섹션의 에이전트만 **선택 재스폰** + 이미 채워진 섹션은 PL 통합 단계에서 재활용. §9.0에 "Resume 부분 재스폰" 행 append |
 | phase:요구사항 | §2·§5·§6 모두 채움 | RequirementsPLAgent 통합 명세서 재확정 단계 재진입 ("사용자 확인 필요" 해소 여부 체크). 일부 관점 재보강 필요 시 clarification 재스폰 |
-| phase:설계 | §7 초안만 | ArchitectPLAgent — Mapper·Refactor·SecurityArchitect **병렬 재스폰** + ArchitectAgent (chief author) 통합 의뢰 (이전 산출물 세션 외 유지 불가, §7 Change Plan 초안만 복원됨) |
-| phase:설계 | §7에 Mapper/Refactor/SecurityArchitect 일부만 반영 (부분 완료 resume) | 미반영 쪽 deputy만 **선택 재스폰** + 반영된 쪽은 재활용. §9.0에 "Resume 부분 재스폰" 행 append |
+| phase:설계 | §7 초안만 | ArchitectPLAgent — Mapper·Refactor·SecurityArchitect·TestContractArchitect **병렬 재스폰** + ArchitectAgent (chief author) 통합 의뢰 (이전 산출물 세션 외 유지 불가, §7 Change Plan 초안만 복원됨) |
+| phase:설계 | §7에 Mapper/Refactor/SecurityArchitect/TestContractArchitect 일부만 반영 (부분 완료 resume) | 미반영 쪽 deputy만 **선택 재스폰** + 반영된 쪽은 재활용. §9.0에 "Resume 부분 재스폰" 행 append |
 | phase:설계 | §7 완료 | DocsAgent가 Change Plan 저장 완료 확인 → 설계 리뷰 진입 |
 | phase:설계-리뷰 | §9.1 블록 없음 | DesignReviewPLAgent 재스폰 (Claude/Codex 병렬) |
 | phase:설계-리뷰 | §9.1 블록 FIX | ArchitectPLAgent → ArchitectAgent (chief author) 재스폰, Change Plan 갱신 |

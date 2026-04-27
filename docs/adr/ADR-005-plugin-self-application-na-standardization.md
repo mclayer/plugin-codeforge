@@ -73,7 +73,7 @@ Story가 lane을 N/A 처리한 경우 §11 회고에 "이번 Story는 lane {X·Y
 
 `invariant-check.yml` 신규 Step 추가: Story file의 §X (X ∈ {7,8,9}) 본문이 빈 placeholder인지 vs `N/A — <사유>` 형식인지 검사. 빈 placeholder 또는 사유 없는 N/A는 reject.
 
-(이 결정 4는 후속 Story로 분리 — 본 ADR은 `Proposed` 상태로 정책만 명문화, Step 신설은 follow-up Story)
+(이 결정 4는 후속 Story로 분리 — 본 ADR은 결정 1·2·3 `Accepted` 상태로 정책 명문화, Step 신설은 follow-up Story. 결정 4 invariant-check Step 신설은 후속 CFP에서 `Accepted`로 전환)
 
 ## 결과
 

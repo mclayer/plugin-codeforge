@@ -14,6 +14,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ### Changed
 - **ArchitectAgent**: deputy 3인 -> 4인 (TestContractArch 추가) + §8 Test Contract author 라인 §7 동형 보강
+  > Note: "deputy" 카운트는 perspective 차이 — ArchitectAgent peer view = 4 (Mapper/Refactor/SecurityArch/TestContractArch), ArchitectPL chief-inclusive view = 5 (+chief author).
 - **ArchitectPLAgent**: deputy 4인 -> 5인 + 검수 4 항목 -> 메타-규칙 2 항목 압축
 - **CodebaseMapper / RefactorAgent / SecurityArchitectAgent**: "Mapper/Refactor와의 관계" 절 끝에 "TestContractArch는 §3·§7 도형 대립 비참여" 1줄 cross-reference 추가
 - **QADeveloperAgent**: 계약 소유자 라인 보강 ("TestContractArch input 통합 후 §8 확정")

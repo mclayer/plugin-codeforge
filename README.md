@@ -94,7 +94,7 @@ mkdir -p .claude/_overlay/agents
 codeforge/
 ├── .claude-plugin/
 │   └── plugin.json
-├── agents/                       # 22 core agent md (process + generic Dev)
+├── agents/                       # 23 core agent md (process + generic Dev)
 ├── presets/                      # 프로젝트 shape별 Dev 번들
 │   ├── README.md
 │   └── webapp/

@@ -45,7 +45,7 @@ permissions:
    · §3 관련 ADR `Read(docs/adr/ADR-NNN-<slug>.md)`
    · §4 코드 경로 `Read`로 현 구현 확인
 
-3. Change Plan author (3 deputy 산출물 통합)
+3. Change Plan author (4 deputy 산출물 통합)
    · §1 목적 (Story §1-2 기반)
    · §2 현재 구조 (Mapper 산출물 통합 + 본 에이전트 검증)
    · §3 도입할 설계 (Refactor 산출물 통합 + 본 에이전트 결정 + Mapper 변호 근거 채택/반박 명시)

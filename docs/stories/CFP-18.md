@@ -267,7 +267,7 @@ ADR-004 후속 — Codex audit #1 (Top-1, High) 해소. §8 Test Contract author
 3. ArchitectPL 검수 4 항목 → 메타-규칙 2 항목 압축 (Refactor STRONG ROI #1 채택). **요구사항 lane §3.3·§4.2·§5.1 AC-INV-4의 "4→5 enumerate 확장" 가설은 설계 lane에서 압축 채택으로 supersede.**
 4. §7 ↔ §8 cross-reference 규칙 명문화 (BLOCKING-4: §7 단독 + §8 cross-ref만)
 
-**변경 통계** (Change Plan §5 정합): 신규 2 + 수정 16 + 변경 0 1 = 총 19 파일. (요구사항 lane "수정 17" 표기는 review-checklists/design.md "변경 0" 행 합산 오류 — off-by-one 정정.)
+**변경 통계** (Change Plan §5 정합): 신규 2 + 수정 18 = 총 20 파일. (요구사항 lane "수정 17" 표기는 review-checklists/design.md "변경 0" 행 합산 오류 — off-by-one 정정. CodeReview Iter 1 FIX: ADR-006 신규 + ADR-005/ADR-004 수정 3행 추가.)
 
 **baseline 정정**: agent count 22 core (현 main `agents/*.md`) + CFP-18 신규 +1 = **v0.12.0 23 core** (P0-1 대응).
 
@@ -305,6 +305,9 @@ Phase 1 PR (현재 — 요구사항 + 설계 + 설계리뷰) → 머지 → Phas
 | `CHANGELOG.md` | 수정 | v0.12.0 항목 신규 추가 |
 | `README.md` | 수정 | "22 core"→"23 core" 전체 치환; 에이전트 다이어그램 TestContractArch 추가 |
 | `docs/migration-guide.md` | 수정 | v0.11.0→v0.12.0 마이그레이션 섹션 신규 추가 |
+| `docs/adr/ADR-006-testcontract-architect.md` | 신규 | ADR-004 후속, 사용자 5 BLOCKING 결정 반영 — TestContractArch 도입 결정 기록 (status=Accepted) |
+| `docs/adr/ADR-005-plugin-self-application-na-standardization.md` | 수정 | status Proposed → Accepted (결정 1·2·3 한정); 결정 4 invariant-check Step 신설은 follow-up CFP 명시 |
+| `docs/adr/ADR-004-architectpl-securityarch-restructure.md` | 수정 | 후속 #1 cross-ref 추가 (CFP-18 + ADR-006으로 해소) |
 
 ## §9 리뷰·테스트 결과 (Phase 2)
 
@@ -349,11 +352,35 @@ Phase 1 PR (현재 — 요구사항 + 설계 + 설계리뷰) → 머지 → Phas
 
 **다음 단계**: gate:design-review-pass 라벨 부착 → Phase 1 PR mergeable → 구현 lane 진입.
 
+### §9.2 구현 리뷰
+
+**Iteration 1/3 — FIX (2026-04-27)**
+
+**종합 판정**: FIX (구현 원인 4건 / 설계 boundary 1건).
+
+**Severity 분포**:
+- P0: 1건 (C-1: §8.5 Impl Manifest ADR-006/ADR-005/ADR-004 3건 누락 — subissue-from-impl-manifest Action 자동 생성 실패 위험)
+- P1: 4건 (C-2 boundary: deputy 명명 규칙 — perspective 차이로 처리 / C-3: playbook deputy 4 누락 4개소 / C-4: README "22 core" off-by-one / X-2: CHANGELOG baseline 모호)
+- P2: 3건 (C-5 ADR-005 line 76 stale / X-4 consumer-guide scope 외 / X-5 정보용)
+
+**원인 판정**: 4 구현 / 1 설계 boundary. C-2 boundary는 "perspective 차이 명시"로 해소 (chief author 본인 제외 vs 포함 — 의도된 view 차이).
+
+**Fix 적용**:
+- C-1 (P0): §8.5 ADR-006 신규 + ADR-005 수정 + ADR-004 수정 3행 추가. 변경 통계 정정 (신규 2 + 수정 18 = 20건).
+- C-3 (P1): playbook line 260·261·262·394·509·510 deputy 4→5 누락 6개소 정정.
+- C-4 (P1): README line 97 "22 core agent md" → "23 core agent md".
+- X-2 (P1): CHANGELOG v0.12.0 Changed 항목에 perspective 차이 note 1줄 추가.
+- C-2 (P1 boundary): ArchitectAgent.md line 48 "3 deputy 산출물 통합" → "4 deputy 산출물 통합" (peer view stale, CFP-17 정정 누락).
+- C-5 (P2): ADR-005 line 76 self-contradiction 해소 — "본 ADR은 결정 1·2·3 Accepted 상태로 정책 명문화" 명시.
+
+**다음 단계**: 구현 리뷰 재실행 (Iter 2/3).
+
 ## §10 FIX Ledger
 
 | Iter | 시각 | 레인 | 트리거 | 원인 판정 | 재실행 범위 | RESET? |
 |------|------|------|--------|-----------|-------------|--------|
 | 1 | 2026-04-27T16:30:00Z | 설계-리뷰 | DesignReviewPL P0 × 2 + P1 × 6 | 설계 | Change Plan §3·§5·§7 + Story §3·§4·§5 + ADR-006 부수결정 4 | — |
+| 2 | 2026-04-27T18:00:00Z | 구현-리뷰 | CodeReviewPL P0 × 1 + P1 × 4 | 구현 (4건) / 설계 boundary (1건 — deputy 명명 규칙 SSOT) | §8.5 ADR 3행 추가 + playbook drift 4개소 + README off-by-one + CHANGELOG baseline note + ADR-005 line 76 + ArchitectAgent.md line 48 | — |
 
 ## §11 회고 (PMOAgent)
 
