@@ -37,11 +37,14 @@ ADR-002는 다음을 enforce하기로 결정:
 
 ### 2.2 21 agent md footer 현 상태
 
-3 form 패턴 식별:
-- **Form A (minimal)**: ``[`agents/DocsAgent.md`](DocsAgent.md) 참조.`` (3 PL agents — DesignReviewPL/CodeReviewPL/SecurityTestPL)
-- **Form B (extended)**: `GitHub Issue/PR/docs write 권한 없음. ... 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.`
-- **Form B' (queue-enabled)**: Form B + "(write queue 경유)" 절
-- **Form C (presets)**: Form B with `[DocsAgent.md](../../../agents/DocsAgent.md)` 상대 경로
+3 form 패턴 식별 (실제 link target은 fenced block 참조 — 본 문서 위치에서는 점검 대상 외):
+
+```text
+Form A (minimal, 3 PL agents): [`agents/DocsAgent.md`](DocsAgent.md) 참조.
+Form B (extended): GitHub Issue/PR/docs write 권한 없음. ... 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+Form B' (queue-enabled): Form B + "(write queue 경유)" 절 추가
+Form C (presets): Form B with link target [../../../agents/DocsAgent.md] (3 levels up)
+```
 
 ### 2.3 현재 자동 검증 부재
 
