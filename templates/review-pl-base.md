@@ -144,7 +144,7 @@ review_packet:
 ### 설계 lane (DesignReviewPL)
 
 ```
-FIX → Orchestrator → ArchitectAgent 회귀 → Change Plan 갱신 → 설계 리뷰 재실행
+FIX → Orchestrator → ArchitectPLAgent 회귀 → ArchitectAgent 재스폰 의뢰 → Change Plan 갱신 → 설계 리뷰 재실행
 ```
 
 ### 코드/보안 lane (CodeReviewPL · SecurityTestPL)

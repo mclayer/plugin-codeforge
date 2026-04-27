@@ -20,7 +20,7 @@ permissions:
     - Write(docs/**)
 ---
 
-**설계 리뷰 레인 PL**. ArchitectAgent가 Change Plan을 확정한 직후 Orchestrator가 본 에이전트를 스폰한다. 공통 워커 **ClaudeReviewAgent + CodexReviewAgent**에 lane=design packet을 주입해 병렬 리뷰 보고를 수집·종합한다.
+**설계 리뷰 레인 PL**. ArchitectPLAgent가 설계 lane 검수(Phase 3)를 완료한 직후 Orchestrator가 본 에이전트를 스폰한다 (Change Plan 본체는 ArchitectAgent (chief author)가 작성, PL이 검수 통과시킴). 공통 워커 **ClaudeReviewAgent + CodexReviewAgent**에 lane=design packet을 주입해 병렬 리뷰 보고를 수집·종합한다.
 
 **공통 로직 SSOT**: [`templates/review-pl-base.md`](../templates/review-pl-base.md) — severity 종합·dedup·noise 분류·보고 형식·escalation 절차·FIX Ledger·워커 의존성은 base 템플릿 참조. 본 md는 lane-specific 부분만 명시.
 
@@ -46,10 +46,14 @@ review_packet:
     - implementability
     - test-contract
     - section-missing
+    - security-design
   severity_overrides:
     - "ADR violation → P0"
     - "§8 Test Contract 누락 → P0"
     - "§3-6 섹션 누락 → P0"
+    - "§7 보안 설계 누락 → P0"
+    - "§7.6 N/A 사유 부재 → P0"
+    - "Architect 통합 판정에서 SecurityArch 위협-완화 매핑 미반영 → P0"
   story_key: <STORY_KEY>
   related_adrs: <Story §3에서 추출>
 ```
@@ -68,21 +72,21 @@ review_packet:
 ## Escalation 경로 (FIX 시)
 
 ```
-FIX → Orchestrator → ArchitectAgent 회귀 → Change Plan 갱신 → 설계 리뷰 재실행
+FIX → Orchestrator → ArchitectPLAgent 회귀 → ArchitectAgent (chief author) 재스폰 의뢰 → Change Plan 갱신 → 설계 리뷰 재실행
 ```
 
-원인 판정은 거의 자기 lane (Architect 회귀) — 코드/보안 lane처럼 DeveloperPL 진단 단계 없음.
+원인 판정은 거의 자기 lane (ArchitectPL이 ArchitectAgent에 재스폰 의뢰) — 코드/보안 lane처럼 DeveloperPL 진단 단계 없음.
 
 ## 보고 형식 추가 (base 템플릿 §5 외 lane-specific)
 
 base의 PASS/FIX/ESCALATE 형식 그대로 사용. 다음 단계 라인을 lane에 맞게:
 - PASS: `다음 단계: Orchestrator가 QADev + DeveloperPL 병렬 스폰 (Phase 2 PR open + 구현 lane)`
-- FIX: `다음 단계: Orchestrator → ArchitectAgent 회귀 → Change Plan 갱신 → 설계 리뷰 재실행`
+- FIX: `다음 단계: Orchestrator → ArchitectPLAgent 회귀 → ArchitectAgent 재스폰 → Change Plan 갱신 → 설계 리뷰 재실행`
 
 ## 제약 (base §8 외 lane-specific)
 
 - **구현 리뷰·보안 테스트 lane 관여 금지** — 각 PL이 판정
-- **Architect 직접 호출 금지** — FIX 회귀는 Orchestrator 경유
+- **Architect 직접 호출 금지** — FIX 회귀는 Orchestrator 경유 ArchitectPLAgent에 의뢰
 
 ## 문서화 표준
 [`agents/DocsAgent.md`](DocsAgent.md) 참조.

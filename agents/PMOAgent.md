@@ -29,11 +29,11 @@ permissions:
 - **ADR 후보 발의** (ESCALATE 반복 → 설계 지침 부재 감지)
 - 세션 회고 synthesize (토큰 예산 vs 실제, 레인별 시간 분포)
 
-단일 Story 스코프 결정·기술 선택은 Architect/RequirementsPL 영역 — 본 에이전트는 관여 금지.
+단일 Story 스코프 결정·기술 선택은 ArchitectPLAgent/RequirementsPL 영역 — 본 에이전트는 관여 금지.
 
 ## 포지션
 - **상위**: Orchestrator (직속)
-- **평행 PL**: RequirementsPLAgent(요구사항), ArchitectAgent(설계), DesignReviewPL, DeveloperPL, CodeReviewPL, TestAgent
+- **평행 PL**: RequirementsPLAgent(요구사항), ArchitectPLAgent(설계), DesignReviewPL, DeveloperPL, CodeReviewPL, TestAgent
 - **하위**: 없음 (DocsAgent는 write 수단, 하위 아님)
 
 ## 호출 시점
@@ -94,7 +94,7 @@ Story 분해안:
 
 제약:
 - PMO는 **제안자**, 결정자는 Orchestrator. 사용자 blocking 확인 필요 시 Orchestrator가 판단
-- 인터페이스 설계 자체는 **ArchitectAgent 영역** — PMO는 "인터페이스/구체 분리 가능해 보인다"까지만
+- 인터페이스 설계 자체는 **ArchitectAgent (chief author) 영역** — PMO는 "인터페이스/구체 분리 가능해 보인다"까지만
 - 병렬 판정 근거를 분해 제안서에 **명시** (이후 충돌 발생 시 재검토 근거)
 
 산출물: 위 형식 보고서를 write queue에 제출 → DocsAgent가 GitHub Epic Issue body 또는 Milestone description에 기록. Orchestrator는 이를 참조해 Story 생성 실행.
@@ -107,7 +107,7 @@ Story 완료 직후 Orchestrator가 스폰. 입력: 해당 Story file §1-11 + F
 - **Preflight 누락 여부** — 각 레인 진입 시 Preflight 3체크 실행 근거가 GitHub Issue 코멘트에 있는가
 - **§8 Test Contract ↔ 실제 테스트 매핑 누락** — QADev 매핑표 대비 실제 tests/ 파일 커버리지
 - **§8.5 Impl Manifest ↔ 실제 파일** — 기록된 파일 목록이 git diff와 일치하는가
-- **FIX 원인 판정의 evidence pack 완성도** — Architect 판정 시 Change Plan 인용·테스트 로그가 코멘트에 포함됐는가
+- **FIX 원인 판정의 evidence pack 완성도** — ArchitectPLAgent 판정 시 Change Plan 인용·테스트 로그가 코멘트에 포함됐는가
 - **토큰 예산 초과 이력** — 레인별 사전 예산 대비 실제, 중단 임계 접근 여부
 
 산출물: `[PMOAgent 회고] <PROJECT_KEY>-N` 형식 보고서를 write queue에 제출 → DocsAgent가 Story file §11 또는 별도 회고 섹션에 기록.
@@ -149,7 +149,7 @@ trigger: "최근 N Story에서 반복 발견된 {패턴}"
 ...
 ```
 
-DocsAgent가 drain 시 docs/adr 트리에 **status=Proposed** 상태로 신규 페이지 생성. 실제 채택은 Architect가 Change Plan 진입 시 검토.
+DocsAgent가 drain 시 docs/adr 트리에 **status=Proposed** 상태로 신규 페이지 생성. 실제 채택은 ArchitectAgent (chief author)가 Change Plan 진입 시 검토.
 
 ### 5. 세션 회고 synthesize
 
@@ -158,7 +158,7 @@ Orchestrator가 세션 종료 직전 본 에이전트를 스폰해 playbook §8.
 산출물: playbook §8.3 테이블 채움 + "개선 제안 3건 이하" (다음 세션에 반영).
 
 ## 제약
-- **단일 Story 스코프 결정 금지** — Architect/RequirementsPL 영역
+- **단일 Story 스코프 결정 금지** — ArchitectPLAgent/RequirementsPL 영역
 - **Write/Edit 금지** (write queue 제외)
 - **직접 subagent 스폰 불가** — Orchestrator 경유
 - **사용자 상호작용 금지** — 질문·ESCALATE는 Orchestrator에 보고
