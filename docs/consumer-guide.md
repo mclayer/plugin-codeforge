@@ -130,6 +130,10 @@ cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/CODEOWNERS.template .github/CODEOWN
 
 ### 2d. GitHub Labels 생성 (gh CLI 일괄)
 
+> **CFP-12 자동화** (권장): `bash scripts/bootstrap-labels.sh [<org>/<repo>]` — 아래 18 label을 idempotent로 일괄 생성. SessionStart hook의 `check-bootstrap.sh`가 부재 시 자동 안내.
+
+수동 명령으로 진행하려면:
+
 ```bash
 ORG_REPO="<your-org>/<your-repo>"
 
@@ -182,6 +186,8 @@ GitHub repo settings 또는 gh api로:
 ### 2f. Workflow permissions (org-level) — **반드시 설정**
 
 **story-init.yml workflow가 Phase 1 PR을 자동 open하므로 GitHub Actions에 PR 생성 권한이 필요**. CFP-11 end-to-end 실증에서 발견된 bootstrap drift — org admin 권한 필요 (1회 설정).
+
+> **CFP-12 자동 검출**: SessionStart hook의 `check-bootstrap.sh`가 본 설정 미적용 시 자동 WARN 출력 (non-blocking). 수동 enable이 필요하나 잊은 경우 매 세션 시작에 안내.
 
 **Web UI**:
 1. https://github.com/organizations/`<your-org>`/settings/actions
