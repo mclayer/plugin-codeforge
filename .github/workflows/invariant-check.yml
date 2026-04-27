@@ -1,0 +1,89 @@
+name: Invariant Check
+
+# CFP-5 Phase A — SSOT drift 자동 차단 (Codex+Claude 종합 리뷰 합의: "다음 단계 우선순위는 새 기능 추가가 아니라 SSOT를 SSOT답게 유지하는 자동 invariant").
+#
+# 검증 3종:
+#   1. Workflow parity — templates/github-workflows/*.yml ↔ .github/workflows/<basename>.yml byte-identical
+#   2. Version match — .claude-plugin/plugin.json `version` ↔ CHANGELOG.md 최상단 [version] header
+#   3. Agent count — agents/*.md 실제 개수 ↔ CLAUDE.md "N core 에이전트" 첫 매칭
+#
+# Phase B/C/D는 별도 Story로 후속 (validate_config.py story_cutoff / frontmatter↔CLAUDE.md 표 / migration-guide v0.X→v0.Y).
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  invariant-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Workflow parity (templates ↔ .github)
+        run: |
+          set -u
+          EXIT=0
+          for f in templates/github-workflows/*.yml; do
+            base=$(basename "$f")
+            target=".github/workflows/${base}"
+            if [ ! -f "$target" ]; then
+              echo "::error file=${target}::Missing — templates/github-workflows/${base}는 self-app copy 필요"
+              EXIT=1
+              continue
+            fi
+            if ! diff -q "$f" "$target" > /dev/null 2>&1; then
+              echo "::error file=${target}::Drift from templates/github-workflows/${base}"
+              echo "--- diff (template → self-app) ---"
+              diff "$f" "$target" || true
+              EXIT=1
+            fi
+          done
+          if [ $EXIT -eq 0 ]; then
+            echo "✓ All $(ls templates/github-workflows/*.yml | wc -l | tr -d ' ') template workflows match self-app copies"
+          fi
+          exit $EXIT
+
+      - name: Version match (plugin.json ↔ CHANGELOG.md latest)
+        run: |
+          set -u
+          PJ_VER=$(jq -r '.version' .claude-plugin/plugin.json)
+          CL_VER=$(grep -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | head -1 | sed -E 's/^## \[(.*)\]$/\1/')
+          if [ -z "$PJ_VER" ] || [ "$PJ_VER" = "null" ]; then
+            echo "::error file=.claude-plugin/plugin.json::version 필드 부재 또는 null"
+            exit 1
+          fi
+          if [ -z "$CL_VER" ]; then
+            echo "::error file=CHANGELOG.md::최상단 ## [N.N.N] header 부재"
+            exit 1
+          fi
+          if [ "$PJ_VER" != "$CL_VER" ]; then
+            echo "::error::plugin.json version ($PJ_VER) ≠ CHANGELOG.md latest ($CL_VER)"
+            echo "  plugin.json: $PJ_VER"
+            echo "  CHANGELOG.md: $CL_VER"
+            exit 1
+          fi
+          echo "✓ Version match: $PJ_VER"
+
+      - name: Agent count (agents/*.md ↔ CLAUDE.md \"N core 에이전트\")
+        run: |
+          set -u
+          AGENT_COUNT=$(ls agents/*.md 2>/dev/null | wc -l | tr -d ' ')
+          DOC_COUNT=$(grep -oE '[0-9]+ core 에이전트' CLAUDE.md | head -1 | grep -oE '[0-9]+')
+          if [ -z "$DOC_COUNT" ]; then
+            echo "::error file=CLAUDE.md::\"N core 에이전트\" 패턴 부재"
+            exit 1
+          fi
+          if [ "$AGENT_COUNT" != "$DOC_COUNT" ]; then
+            echo "::error::agents/*.md count ($AGENT_COUNT) ≠ CLAUDE.md 'N core 에이전트' ($DOC_COUNT)"
+            echo "  Actual files in agents/: $AGENT_COUNT"
+            echo "  CLAUDE.md narrative: $DOC_COUNT"
+            echo "  새 agent 추가/삭제 시 CLAUDE.md 첫 N도 동기 갱신 필요"
+            exit 1
+          fi
+          echo "✓ Agent count match: $AGENT_COUNT"
