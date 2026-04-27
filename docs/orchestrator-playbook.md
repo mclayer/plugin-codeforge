@@ -851,7 +851,7 @@ story_cache[<story-key>] = {
 
 - **Packet 주입**: 설계/구현/리뷰 레인처럼 여러 섹션 깊이 참조 필요할 때 (§1-8 범위)
 - **Path만 전달**: 단발성 조회 (DocsAgent 의뢰 포맷 등), 섹션 캐시 미정의 부분
-- **설계 lane packet recipient**: ArchitectPLAgent (그 후 ArchitectAgent (chief author) + 3 deputy(Mapper/Refactor/SecurityArchitect)에 forward — PL이 packet 분배 책임)
+- **설계 lane packet recipient**: ArchitectPLAgent (Phase 2에서 ArchitectAgent (chief author) + 3 deputy(Mapper/Refactor/SecurityArchitect)에 forward — PL이 packet 분배 책임)
 
 ### 12.5 Project Config Packet (project.yaml 슬라이스)
 
