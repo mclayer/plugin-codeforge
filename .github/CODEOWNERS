@@ -1,6 +1,6 @@
 # CodeForge plugin self-application CODEOWNERS
 # CFP-1 Plugin Self-Application 정책 + CFP-2 인프라 2단계.
-# 1인 maintainer 환경 — mctrader org에 team 부재로 직접 username 매핑.
+# 1인 maintainer 환경 — mclayer org에 team 부재로 직접 username 매핑.
 # Branch protection의 "Require review from Code Owners"는 1인 환경에서 self-merge 차단 위험으로 OFF 권장.
 # CODEOWNERS는 audit/문서화 (어느 영역이 critical인지 표시) 용도.
 

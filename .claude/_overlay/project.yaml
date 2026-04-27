@@ -6,7 +6,7 @@ project:
   name: codeforge
 
 github:
-  org: mctrader
+  org: mclayer
   repo: plugin-codeforge
   default_branch: main
 
@@ -15,7 +15,7 @@ github:
   story_key_prefix: CFP
 
   codeowners:
-    # 1인 maintainer 환경 — mctrader org에 team 부재. 직접 username 매핑.
+    # 1인 maintainer 환경 — mclayer org에 team 부재. 직접 username 매핑.
     # 향후 collaborator 추가 시 team으로 격상 가능.
     architect_team: "@mccho8865"
     domain_expert_team: "@mccho8865"

@@ -65,4 +65,4 @@ Closes #<Story Issue 번호>
 
 ---
 
-🤖 Generated with [CodeForge plugin](https://github.com/mctrader/plugin-codeforge)
+🤖 Generated with [CodeForge plugin](https://github.com/mclayer/plugin-codeforge)
