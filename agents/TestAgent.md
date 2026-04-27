@@ -30,7 +30,7 @@ permissions:
 - **상위**: Orchestrator (직속 — 구현 테스트 레인 게이트)
 - **호출 시점**: CodeReviewPL PASS 이후에만 스폰 — 리뷰 미통과 상태 진입 금지
 - **PASS 후 다음 레인**: 보안 테스트 레인(SecurityTestPL) 진입
-- **FAIL 시 회귀 경로**: Orchestrator 수령 → DeveloperPL 1차 원인 진단 → Architect 최종 판정 → (설계 원인) Change Plan 갱신 + 설계 리뷰부터 재시작 / (구현 원인) 구현만 재실행 → 구현 리뷰부터 재실행
+- **FAIL 시 회귀 경로**: Orchestrator 수령 → DeveloperPL 1차 원인 진단 → ArchitectPLAgent 최종 판정 → (설계 원인) Change Plan 갱신 + 설계 리뷰부터 재시작 / (구현 원인) 구현만 재실행 → 구현 리뷰부터 재실행
 
 ## 실행 원칙
 
@@ -79,7 +79,7 @@ Orchestrator가 범위 지정하면 wrapper에 `--scope=<path>` 인자로 전달
 - 성능: {m}개 통과 (baseline 대비 최대 악화 mean:{x}%, 임계 10% 이하)
 ```
 
-### FAIL 구조화 보고 (Orchestrator 수령 → DeveloperPL 1차 진단 → Architect 최종 판정용)
+### FAIL 구조화 보고 (Orchestrator 수령 → DeveloperPL 1차 진단 → ArchitectPLAgent 최종 판정용)
 ```
 ❌ 테스트 레인 FAIL
 
@@ -100,14 +100,14 @@ Orchestrator가 범위 지정하면 wrapper에 `--scope=<path>` 인자로 전달
 {runner 원문}
 ```
 
-이 보고서는 **Orchestrator가 수령**. DeveloperPL이 1차 원인 진단 → Architect가 [CLAUDE.md](../CLAUDE.md) "원인 판정 decision table" SSOT 기준 최종 판정. 본 md는 분기 표를 inline 복제하지 않는다 (drift 방지).
+이 보고서는 **Orchestrator가 수령**. DeveloperPL이 1차 원인 진단 → ArchitectPLAgent가 [CLAUDE.md](../CLAUDE.md) "원인 판정 decision table" SSOT 기준 최종 판정. 본 md는 분기 표를 inline 복제하지 않는다 (drift 방지).
 
-성능 회귀는 "baseline 갱신이 Change Plan에 허가됐는가"를 Architect가 검토해 판정 — 허가 없는 baseline 변경 시도는 테스트 결함 취급.
+성능 회귀는 "baseline 갱신이 Change Plan에 허가됐는가"를 ArchitectPLAgent가 검토해 판정 — 허가 없는 baseline 변경 시도는 테스트 결함 취급.
 
 ## 제약
 - 테스트 코드 수정 금지 — 실행만
 - 소스·인프라 코드 수정 금지
-- 별도 종합 판단 없음 — PASS/FAIL 이진, 원인 판정은 Architect (Orchestrator 경유)
+- 별도 종합 판단 없음 — PASS/FAIL 이진, 원인 판정은 ArchitectPLAgent (Orchestrator 경유)
 - 직접 러너 호출 금지 — 반드시 `.claude/_overlay/run-tests.sh` / `.claude/_overlay/run-perf.sh` wrapper 경유 (consumer가 러너 명령·환경·baseline 결정 캡슐화)
 
 ## 문서화 표준

@@ -22,7 +22,7 @@
 Orchestrator (최상위 Claude 세션)
  ├── [Cross-cutting] PMOAgent, DocsAgent
  ├── [요구사항] RequirementsPL (DomainAgent ‖ Analyst ‖ Researcher 병렬)
- ├── [설계] Architect (CodebaseMapper ‖ Refactor 병렬)
+ ├── [설계] ArchitectPLAgent (CodebaseMapper ‖ Refactor ‖ SecurityArchitect 병렬, ArchitectAgent chief author)
  ├── [설계 리뷰] DesignReviewPL (Claude ‖ Codex)
  ├── [구현] DeveloperPL (role:dev roster 병렬) + QADev
  ├── [구현 리뷰] CodeReviewPL (Claude ‖ Codex)

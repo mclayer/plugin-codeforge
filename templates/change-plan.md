@@ -39,10 +39,10 @@ story: <KEY>   # GitHub Story Issue key, e.g. PLG-7
 - 기존 패턴·컨벤션 (ADR 추적 가능 시 인용)
 - 유지 근거 논증 (Mapper 변호 내용)
 
-### §3. 도입할 설계 (RefactorAgent 입력 기반)
+### §3. 도입할 설계 (Mapper / Refactor / SecurityArch 3-way 입력 기반)
 - 신규 포트/어댑터/클래스 — **이름·시그니처·타입 확정**
 - 레이어 경계·의존성 방향
-- Mapper vs Refactor 대립 결론 (어느 쪽 채택했고 왜)
+- Mapper / Refactor / SecurityArch 3-way 대립 결론 (어느 쪽 채택했고 왜)
 - 관련 ADR 정합성 (신규 ADR 필요 여부)
 
 ### §4. API 계약

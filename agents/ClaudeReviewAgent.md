@@ -135,7 +135,7 @@ findings:
       # lane=code · lane=security의 P0·P1 finding은 마지막 줄에 회귀 힌트 의무 포함:
       # 1차 원인 가정: 설계 | 구현
       # 권장 회귀: design-review-rerun | same-lane-rerun
-      # (PL/Architect 최종 판정 보조용 힌트 — 강제 아님)
+      # (PL/ArchitectPLAgent 최종 판정 보조용 힌트 — 강제 아님)
 
 [Claude Review 원문]
 <분석 내용 verbatim>
