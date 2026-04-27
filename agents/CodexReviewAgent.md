@@ -99,7 +99,7 @@ design document review for docs/change-plans/<slug>.md (story: <STORY_KEY>):
 5. §8 Test Contract validity (coverage, boundaries, performance baseline §8.3)
 Report each finding with severity [P0]/[P1]/[P2]/[P3], category from {adr-mismatch,
 design-completeness, mapper-refactor-balance, implementability, test-contract,
-section-missing}, location as path:section, ADR reference where applicable.
+section-missing, security-design}, location as path:section, ADR reference where applicable.
 Auto-P0: ADR violation, §8 missing, §3-6 sections missing.
 ```
 
