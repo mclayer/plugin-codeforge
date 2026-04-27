@@ -204,17 +204,27 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
 요구사항:    Orchestrator → RequirementsPLAgent(DomainAgent ∥ Analyst ∥ Researcher 병렬, 셋 다 non-skippable) → PL dedup·상충 조정 → Story file §3-6 갱신
 설계:        Orchestrator → ArchitectPLAgent → (CodebaseMapper ∥ Refactor ∥ SecurityArchitect ∥ TestContractArch 병렬) → ArchitectAgent (chief author) 통합 → ArchitectPLAgent 검수 → Change Plan 확정
                          → DocsAgent (docs/change-plans/<slug>.md commit + Story file §7 미러링)
-설계 리뷰:   Orchestrator → DesignReviewPLAgent (lane=design packet) → (ClaudeReviewAgent ∥ CodexReviewAgent) → PASS/FIX
-                         → PASS 시 DocsAgent가 gate:design-review-pass 라벨 부착 → Phase 1 PR mergeable
-구현:        Phase 1 PR merge 후 Phase 2 PR open (DeveloperPL → DocsAgent → mcp__github__create_pull_request)
-             Orchestrator → (DeveloperPLAgent(role:dev roster 병렬) ∥ QADev) → 완료 보고
+설계 리뷰:   Orchestrator → DesignReviewPLAgent (lane=design packet 작성) → packet return
+             → Orchestrator가 한 메시지에 (ClaudeReviewAgent ∥ CodexReviewAgent) dispatch → PL이 결과 종합 → PASS/FIX (R3, R2 verdict-first)
+                         → PASS 시 **2 트랙 병렬** (R7):
+                            · Track A: DocsAgent가 gate:design-review-pass 라벨 부착 + Phase 1 PR mergeable·merge
+                            · Track B: DeveloperPL spawn → Change Plan §5·§8 fetch + 첫 commit draft 준비 (PR open 보류)
+                         → Track A merge 완료 시 Track B가 즉시 mcp__github__create_pull_request 호출
+                         → 동시에 Orchestrator가 background DocsAgent 의뢰 (type=security-prefetch, R10) → .claude-work/cache/<KEY>-sec1.json 생성
+구현:        Orchestrator → (DeveloperPLAgent(role:dev roster 병렬) ∥ QADev) → 완료 보고
+                         → §8.5 Impl Manifest 자동 생성 (DocsAgent kind=impl-manifest helper, R5) → DeveloperPL review-edit
                          → Orchestrator가 ArchitectPLAgent stateless 재스폰 → 매핑표 감사 (chief author 보조)
-                         → §8.5 Impl Manifest commit 시 subissue-from-impl-manifest.yml 자동 sub-issue 생성
-구현 리뷰:   Orchestrator → CodeReviewPLAgent (lane=code packet) → (ClaudeReviewAgent ∥ CodexReviewAgent) → PASS/FIX
-구현 테스트: Orchestrator → TestAgent (기능 → 성능 순차) → ALL PASS/FAIL
-보안 테스트: Orchestrator → SecurityTestPLAgent (lane=security packet + 1차 layer fetch 의무)
-             1차 layer (자동): Dependabot + CodeQL + Secret Scanning + Push Protection 결과 fetch (`gh api repos/*`)
-             2차 layer (병렬): ClaudeReviewAgent ∥ CodexReviewAgent → PASS/FIX
+                         → §8.5 commit 시 subissue-from-impl-manifest.yml 자동 sub-issue 생성
+구현 리뷰:   Orchestrator → CodeReviewPLAgent (lane=code packet 작성) → packet return
+             → Orchestrator가 한 메시지에 (ClaudeReviewAgent ∥ CodexReviewAgent) dispatch → PL 종합 → PASS/FIX (R3, R2)
+                         FIX 시 mechanical_category 자격 확인 → fast-path 또는 정상 cycle (R11)
+구현 테스트: Orchestrator → TestAgent **subset 병렬** (R9):
+                         · TestAgent(subset: functional) ∥ TestAgent(subset: performance)
+                         → 두 subset 모두 PASS 시 보안 lane 진입
+                         (consumer overlay에서 performance가 functional 부산물 의존 시 sequential fallback)
+보안 테스트: Orchestrator → SecurityTestPLAgent (lane=security packet 작성, 1차 layer cache hit/miss 확인)
+             1차 layer: .claude-work/cache/<KEY>-sec1.json hit 시 inline 첨부 (R10) / miss 시 PL이 직접 fetch
+             2차 layer: PL이 packet return → Orchestrator가 한 메시지에 (ClaudeReviewAgent ∥ CodexReviewAgent) dispatch → PL 종합 → PASS/FIX (R3, R2)
                          → PASS 시 DocsAgent가 gate:security-test-pass 라벨 부착 → Phase 2 PR mergeable
 완료:        Phase 2 PR merge (`Closes #<Story Issue>`) → Issue 자동 close → DocsAgent (Story file §11 + status:completed)
              → PMOAgent (회고)
