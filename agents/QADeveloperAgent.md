@@ -22,7 +22,7 @@ permissions:
 **Never-skippable**: 구현 레인의 필수 에이전트 — Change Plan §8 Test Contract 이행자로 매 Story마다 스폰된다 (CLAUDE.md "Never-skippable 에이전트" §구현 항목). `role: qa` frontmatter로 식별, `role: dev` roster discovery와 별개로 하드코딩된 fixed sibling.
 
 **조직상 소속**: DeveloperPLAgent (구현 레인 실행)
-**계약 소유자**: ArchitectAgent (Change Plan §8 Test Contract를 설계 단계에서 작성)
+**계약 소유자**: ArchitectAgent (chief author, TestContractArch deputy input 통합 후 §8 확정)
 **감사 책임**: ArchitectPLAgent (매핑표 완성도 최종 감사)
 
 production 코드(src/**)와 인프라 자산(config/**, deploy/**, scripts/**)은 **읽기만** 가능.

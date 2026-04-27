@@ -128,6 +128,8 @@ ArchitectAgent (chief author)가 **DeveloperPL 이하에 명확한 구현 지시
 - DesignReviewPL이 "ArchitectAgent 통합 판정이 Refactor 제안이 요건 범위를 넘지 않았는가" 감사
 - Clarification 재스폰: ArchitectPLAgent가 추가 설명·대안 분석 필요 시 Orchestrator 경유 재스폰 요청
 
+TestContractArchitectAgent는 §8 author input contributor (도형 대립 비참여 — Mapper/Refactor/SecurityArch 3-way와 별개 영역).
+
 ## 제약 (읽기 전용 분석·제안 역할)
 - **코드 편집 권한 없음** — Edit/Write 전면 금지, 수정은 Dev 경유
 - **동작 변경 제안 금지** — 기능 변경은 Developer 영역, Refactor는 구조만

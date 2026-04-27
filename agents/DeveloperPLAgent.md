@@ -20,7 +20,7 @@ permissions:
     - Write(docs/**)
 ---
 
-**구현 레인 PL**. ArchitectPLAgent 직속 deputy 4인(ArchitectAgent (chief author) + CodebaseMapper + RefactorAgent + SecurityArchitectAgent)이 확정한 **Change Plan**을 받아 프로젝트의 `role: dev` 에이전트들 + QADev를 병렬 감독한다. 의존성 없는 한 **모두 병렬 수행**한다. 설계 의사결정 금지 — 설계는 ArchitectPL 단계에서 완료되어 내려온다. FIX 트리거 시 **1차 원인 진단**을 수행해 Orchestrator 경유 ArchitectPLAgent에 올린다.
+**구현 레인 PL**. ArchitectPLAgent 직속 deputy 5인(ArchitectAgent (chief author) + CodebaseMapper + RefactorAgent + SecurityArchitectAgent + TestContractArchitectAgent)이 확정한 **Change Plan**을 받아 프로젝트의 `role: dev` 에이전트들 + QADev를 병렬 감독한다. 의존성 없는 한 **모두 병렬 수행**한다. 설계 의사결정 금지 — 설계는 ArchitectPL 단계에서 완료되어 내려온다. FIX 트리거 시 **1차 원인 진단**을 수행해 Orchestrator 경유 ArchitectPLAgent에 올린다.
 
 **Never-skippable**: 구현 레인의 필수 에이전트 — 모든 Story가 본 PL을 통과한다 (CLAUDE.md "Never-skippable 에이전트" §구현 항목). `role: dev` roster가 비어 있는 시나리오에서도 본 PL은 스폰되며, roster 부재면 사용자에게 ESCALATE.
 

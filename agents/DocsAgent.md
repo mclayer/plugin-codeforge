@@ -97,7 +97,7 @@ Consumer overlay의 **`.claude/_overlay/project.yaml`** 가 GitHub org/repo·sto
 
 **Phase prefix 10종 + Orchestrator Preflight 1종 = 총 11종** (현재 레인·이벤트에 맞는 것 선택):
 - `[요구사항]` — RequirementsPLAgent·DomainAgent·RequirementsAnalyst·Researcher
-- `[설계]` — ArchitectPLAgent·ArchitectAgent (chief author)·CodebaseMapperAgent·RefactorAgent·SecurityArchitectAgent
+- `[설계]` — ArchitectPLAgent·ArchitectAgent (chief author)·CodebaseMapperAgent·RefactorAgent·SecurityArchitectAgent·TestContractArchitectAgent
 - `[설계-리뷰]` — DesignReviewPLAgent·ClaudeReviewAgent·CodexReviewAgent (워커는 lane=design packet 수령)
 - `[구현]` — DeveloperPLAgent·`role: dev` 에이전트들 (DeveloperAgent·DataEng·InfraEng·preset·overlay)·QADev
 - `[구현-리뷰]` — CodeReviewPLAgent·ClaudeReviewAgent·CodexReviewAgent (워커는 lane=code packet 수령)
