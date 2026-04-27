@@ -168,9 +168,9 @@ sed -n '1,80p' /Users/1111971/workspace/mctrader/plugins/codeforge/agents/Design
 - [ ] **Step 3: 본 단계는 DesignReviewPLAgent · CodeReviewPLAgent · SecurityTestPLAgent 3개 파일을 동일 패턴으로 처리**
 
 각 파일에서 다음 패턴 변경:
-1. spawn 관련 자체 detail이 있다면 → "공통 절차는 [`templates/review-pl-base.md`](../templates/review-pl-base.md) §1 SSOT 참조" 1줄로 압축
+1. spawn 관련 자체 detail이 있다면 → 공통 절차는 `templates/review-pl-base.md` §1 SSOT 참조 1줄로 압축
 2. mechanical_category 분류 책임 1줄 추가:
-   - DesignReview: "FIX verdict 시 `mechanical_category` 분류 의무 (typo / broken-link / minor-naming / comment-only / none) — SSOT [`templates/review-pl-base.md`](../templates/review-pl-base.md) §3"
+   - DesignReview: FIX verdict 시 `mechanical_category` 분류 의무 (typo / broken-link / minor-naming / comment-only / none) — SSOT `templates/review-pl-base.md` §3
    - CodeReview: 동일
    - SecurityTest: 동일 + "단 보안 카테고리(injection/credential)는 항상 `none`으로 분류"
 
