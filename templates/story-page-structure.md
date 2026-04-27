@@ -64,11 +64,11 @@ GitHub Issue (Story 1건)에 부착되는 라벨:
 - ADR 정합성 점검 결과
 - "외부 지식 보강 불필요" 판정 시에도 사유를 명시 (섹션 생략 금지 — 독립 관점 결과 보존)
 
-### §7. 설계 서사 (Architect)
+### §7. 설계 서사 (ArchitectAgent (chief author) → ArchitectPLAgent 검수)
 - Change Plan 링크 (`docs/change-plans/<slug>.md`)
 - §1 목적 / §3 도입할 설계 / §4 API 계약 / §7 보안 설계 요약 / §9 분기 선택 요약 미러링 (5-10줄)
   - §7 보안 설계 요약: Change Plan §7의 보안 설계 요약 (1-3줄) 또는 `N/A — <사유>` 그대로 미러링
-- CodebaseMapper ↔ RefactorAgent 대립 결론
+- CodebaseMapper ↔ RefactorAgent ↔ SecurityArchitectAgent 3-way 대립 결론
 
 ### §8. 개발 서사 (DeveloperPL + role:dev roster)
 
@@ -84,12 +84,12 @@ GitHub Issue (Story 1건)에 부착되는 라벨:
 
 #### §9.0 Clarification 재스폰 이력 (FIX 아님)
 
-PL(RequirementsPL / Architect)이 병렬 서브 에이전트 결과 통합 중 추가 질의를 위해 Orchestrator 경유 재스폰 요청한 이력. FIX 루프(§10)와 구분 — 재스폰은 아직 게이트 실패가 아님.
+PL(RequirementsPL / ArchitectPLAgent)이 병렬 서브 에이전트 결과 통합 중 추가 질의를 위해 Orchestrator 경유 재스폰 요청한 이력. FIX 루프(§10)와 구분 — 재스폰은 아직 게이트 실패가 아님.
 
 | # | 시각 | 레인 | 재스폰 대상 | Clarification 사유 | 이전 출력 ref | 결과 |
 |---|------|------|-------------|-------------------|---------------|------|
 | 1 | ISO8601 | 요구사항 | ResearcherAgent | {PL이 추가 조사 요청한 주제} | §6 initial | §6 보강 |
-| 2 | ISO8601 | 설계 | RefactorAgent | {Architect가 특정 제안 재해석 요청} | §7 Change Plan draft v1 | §7 갱신 |
+| 2 | ISO8601 | 설계 | RefactorAgent | {ArchitectPLAgent가 특정 제안 재해석 요청} | §7 Change Plan draft v1 | §7 갱신 |
 
 - 같은 에이전트 **2회 한도** — 3회째 필요성 발생 시 사용자 ESCALATE로 전환
 - DocsAgent append-only 관리 (행 삭제·수정 금지)
@@ -137,7 +137,7 @@ DocsAgent가 append-only 관리 (행 삭제·수정 금지). "현재 사이클" 
 | 요구사항 접수 (story-init.yml Action 자동) | §1 verbatim 삽입, §2-11 placeholder | (Action이 자동 처리. DocsAgent fallback: `Write(docs/stories/<KEY>.md)`) |
 | 요구사항 병렬 에이전트 개별 완료 (각 에이전트) | 본인 담당 섹션만 독립 기록 — Domain→§2 / Analyst→§5 / Researcher→§6 | 에이전트별 write queue 제출 → DocsAgent drain 시 **섹션별 atomic 갱신** (배치 금지, resume 시 부분 완료 감지를 위해) — `Edit(docs/stories/<KEY>.md)` |
 | 요구사항 확정 (RequirementsPLAgent) | §3-4 (Orchestrator Preflight가 미리 fetch한 ADR 목록·코드 경로를 PL이 통합 명세서에 반영) + 통합/상충 분석 블록 | `Edit(docs/stories/<KEY>.md)` |
-| 설계 확정 (ArchitectAgent) | §7 + `docs/change-plans/<slug>.md` 신규 commit | `Edit(docs/stories/<KEY>.md)` + `Write(docs/change-plans/<slug>.md)` |
+| 설계 확정 (ArchitectAgent (chief author) → ArchitectPLAgent 검수) | §7 + `docs/change-plans/<slug>.md` 신규 commit | `Edit(docs/stories/<KEY>.md)` + `Write(docs/change-plans/<slug>.md)` |
 | 설계 리뷰 iteration (DesignReviewPL) | §9.1 | `Edit(docs/stories/<KEY>.md)` |
 | 설계 리뷰 PASS | gate:design-review-pass 라벨 부착 → Phase 1 PR mergeable | `mcp__github__issue_write` (label add) |
 | 구현 완료 (DeveloperPL) | §8.1-8.4 + §8.5 매핑표 commit | `Edit(docs/stories/<KEY>.md)` — §8.5 commit 시 subissue Action 자동 sub-issue 생성 |
@@ -145,7 +145,7 @@ DocsAgent가 append-only 관리 (행 삭제·수정 금지). "현재 사이클" 
 | 구현 테스트 (Orchestrator) | §9.3 | `Edit(docs/stories/<KEY>.md)` |
 | 보안 테스트 iteration (SecurityTestPL) | §9.4 (1차 + 2차 layer 모두) | `Edit(docs/stories/<KEY>.md)` |
 | 보안 테스트 PASS | gate:security-test-pass 라벨 부착 → Phase 2 PR mergeable | `mcp__github__issue_write` (label add) |
-| Clarification 재스폰 (RequirementsPL · Architect) | §9.0 append | `Edit(docs/stories/<KEY>.md)` (FIX 라벨 미추가 — fix-ledger-sync.yml은 §10만 trigger) |
+| Clarification 재스폰 (RequirementsPL · ArchitectPLAgent) | §9.0 append | `Edit(docs/stories/<KEY>.md)` (FIX 라벨 미추가 — fix-ledger-sync.yml은 §10만 trigger) |
 | FIX 루프 | §10 append | `Edit(docs/stories/<KEY>.md)` (fix-ledger-sync.yml Action이 자동 mirror+label) |
 | Story 완료 회고 (PMOAgent) | §11 회고 블록 | `Edit(docs/stories/<KEY>.md)` |
 | Phase 2 PR merged (최종) | Issue auto-close (PR body의 `Closes #N`) | (자동) |
@@ -155,5 +155,5 @@ DocsAgent가 append-only 관리 (행 삭제·수정 금지). "현재 사이클" 
 ## 섹션 읽기 규약
 
 - **필요한 섹션만 읽기**: 프롬프트에 `§X, §Y 참조` 명시 → 에이전트가 `Read(docs/stories/<KEY>.md)` 후 해당 섹션만 참조
-- 전체 file 읽기는 Architect 설계 진입 1회만 허용 (§1-6 전체 필요)
+- 전체 file 읽기는 ArchitectAgent (chief author) 설계 진입 1회만 허용 (§1-6 전체 필요)
 - 파일 변경은 **DocsAgent 독점** (Edit/Write 권한)

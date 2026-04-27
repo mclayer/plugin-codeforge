@@ -100,7 +100,7 @@ design document review for docs/change-plans/<slug>.md (story: <STORY_KEY>):
 Report each finding with severity [P0]/[P1]/[P2]/[P3], category from {adr-mismatch,
 design-completeness, mapper-refactor-balance, implementability, test-contract,
 section-missing, security-design}, location as path:section, ADR reference where applicable.
-Auto-P0: ADR violation, §8 missing, §3-6 sections missing.
+Auto-P0: ADR violation, §8 missing, §3-6 sections missing, §7 보안 설계 누락 또는 §7.6 N/A 사유 부재.
 ```
 
 #### lane=code
@@ -167,7 +167,7 @@ findings:
       # lane=code · lane=security의 P0·P1 finding은 마지막 줄에 회귀 힌트 의무 포함:
       # 1차 원인 가정: 설계 | 구현
       # 권장 회귀: design-review-rerun | same-lane-rerun
-      # (PL/Architect 최종 판정 보조용 힌트 — 강제 아님)
+      # (PL/ArchitectPLAgent 최종 판정 보조용 힌트 — 강제 아님)
 
 [Codex Review 원문]
 <원문 verbatim>
@@ -187,7 +187,7 @@ findings:
 
 ## 제약
 
-- 코드·문서 수정 금지 — 패치는 Architect/Refactor 계획서 갱신 후 Dev 재스폰
+- 코드·문서 수정 금지 — 패치는 ArchitectPLAgent → ArchitectAgent (chief author) / Refactor 계획서 갱신 후 Dev 재스폰
 - Grep/Glob은 리뷰 범위 사전 확인 용도만
 - 다른 워커(Claude)와 중복 판단 금지 — 독립 수행
 - Packet 누락 시 침묵 fallback 금지 — ESCALATE 반환

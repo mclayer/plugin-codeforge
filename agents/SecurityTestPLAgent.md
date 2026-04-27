@@ -95,7 +95,7 @@ review_packet:
 - 코드 단위 결함(injection / credential hardcode / CVE 업그레이드)은 구현 원인
 - Trust boundary / auth 모델 / boundary 권한 일관성 부재는 설계 원인 → Change Plan 갱신 + 설계 리뷰 회귀
 
-PL 1차 진단 → DeveloperPL 재진단 → Architect 최종 판정.
+PL 1차 진단 → DeveloperPL 재진단 → ArchitectPLAgent 최종 판정.
 
 ## 다음 게이트 (PASS 시)
 
@@ -107,7 +107,7 @@ PL 1차 진단 → DeveloperPL 재진단 → Architect 최종 판정.
 ## Escalation 경로 (FIX 시)
 
 ```
-FIX → Orchestrator → DeveloperPL 1차 원인 진단 → Architect 최종 판정
+FIX → Orchestrator → DeveloperPL 1차 원인 진단 → ArchitectPLAgent 최종 판정
   ├── 설계 원인 (trust boundary / auth 오설계): Change Plan 갱신 → 설계 리뷰부터 재실행
   └── 구현 원인 (injection / credential hardcode / CVE 업그레이드): 구현만 재실행 → 구현 리뷰·구현 테스트 재실행
 ```
@@ -115,7 +115,7 @@ FIX → Orchestrator → DeveloperPL 1차 원인 진단 → Architect 최종 판
 ## 보고 형식 추가 (base §5 외 lane-specific)
 
 - PASS: `다음 단계: Orchestrator → DocsAgent (gate:security-test-pass 라벨 → Phase 2 PR mergeable → merge → Issue auto-close) + PMOAgent (회고)`
-- FIX: `다음 단계: Orchestrator → DeveloperPL 1차 진단 → Architect 최종 판정 → 재구현 or Change Plan 갱신`
+- FIX: `다음 단계: Orchestrator → DeveloperPL 1차 진단 → ArchitectPLAgent 최종 판정 → 재구현 or Change Plan 갱신`
 
 ## 제약 (base §8 외 lane-specific)
 

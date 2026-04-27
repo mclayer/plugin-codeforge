@@ -1050,7 +1050,7 @@ Expected: §7 placeholder ("§7 Impl Manifest 초안은 여기 비움") 검출, 
 - ※ N/A 근거 누락 시 DesignReview P0 차단
 ```
 
-§5 footer에 "Impl Manifest는 구현 완료 후 Story §8.5에 기록 — [`impl-manifest.md`](../../../templates/impl-manifest.md) 스키마 참조" 1줄 인라인 추가 (placeholder가 §7에서 제거됐으므로 정보 보존).
+§5 footer에 "Impl Manifest는 구현 완료 후 Story §8.5에 기록 — `impl-manifest.md` (templates/) 스키마 참조" 1줄 인라인 추가 (placeholder가 §7에서 제거됐으므로 정보 보존).
 
 - [ ] **Step 3: Frontmatter inputs 명시 추가**
 
