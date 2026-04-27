@@ -285,14 +285,39 @@ Phase 1 PR (현재 — 요구사항 + 설계 + 설계리뷰) → 머지 → Phas
 
 ## §9 리뷰·테스트 결과 (Phase 2)
 
-(설계 리뷰 / 구현 리뷰 / 구현 테스트 / 보안 테스트 결과)
+### §9.1 설계 리뷰
+
+**Iteration 1/3 — FIX (2026-04-27)**
+
+**종합 판정**: FIX (설계 원인). Architect 회귀 의무, 구현 lane 진입 차단.
+
+**Severity 분포** (Claude + Codex worker dedup):
+- P0: 2건 (implementability + adr-mismatch)
+- P1: 6건 (design-completeness · adr-mismatch · implementability · security-design · mapper-refactor-balance)
+- P2: 1건 (정보용)
+
+**핵심 P0 finding**:
+
+1. **24 core over-count** — chief author 메모 "23 core (v0.11.0) → 24 core (v0.12.0)"는 **+1 over-count**. baseline 검증: 현 main `agents/*.md` count = 22, plugin.json/CLAUDE.md/README.md/plugin-design.md 모두 일관 "22 core". CFP-18 신규 +1 → **23 core (v0.12.0)** 정확. Change Plan §5 매핑표·plugin.json·CLAUDE.md·README.md·plugin-design.md 모든 행 일관 정정 필요.
+
+2. **playbook drift 카운트 부정확** — Change Plan §5 매핑표 "playbook line 22, 561, 589, 1004 '20 core' / '23 core'" 표기 부정확. 실제: line 22 / 561 / 589 = "20 core" (CFP-17 drift, 정정 대상). line 1004 = v9 changelog "25 → 20 core agents" (ADR-001 결과 정확 history fact, 정정 대상 아님). line 1001 = v5 changelog "24 core" (CFP-17 drift이나 §5에서 누락). "23 core" 표기는 playbook에 없음.
+
+**핵심 P1 finding**:
+
+1. ADR-005 status 전이 self-condition 결정 4 (invariant-check Step 신설) 미충족 — ADR-006 부수 결정 4 + Change Plan §3.6에 분리 명시 필요.
+2. Story §3.3·§4.2·AC-INV-4 ("4→5 항목 enumerate") vs Change Plan §3.2 ("4→2 메타-규칙 압축") 자체 모순 — Story file 갱신 필요 (§1 verbatim 보존).
+3. §5 매핑표 "수정 17" → 실제 16 off-by-one.
+4. §7.5 sub-section 헤더 부재 — T1 mitigation이 §7.7에 합쳐짐. §7.5 신설 또는 cross-ref 명시.
+5. §5 매핑표 substitution string "test contract author input" → "QA perspective contributor input" 정정 (Researcher Insight 3 + ADR-006 결정 2 일관).
+6. §5 매핑표 `agents/TestContractArchitectAgent.md` 행에 SecurityArch §7.1-§7.5 → TestContractArch §8.1-§8.3 section-level 매핑 부재.
+
+**다음 단계**: Orchestrator → ArchitectAgent (chief author) 회귀 → Change Plan §3·§5·§7 + Story §3·§4·§5 + ADR-006 부수결정 4 갱신 → 설계 리뷰 재실행.
 
 ## §10 FIX Ledger
 
 | Iter | 시각 | 레인 | 트리거 | 원인 판정 | 재실행 범위 | RESET? |
 |------|------|------|--------|-----------|-------------|--------|
-
-**비어있음**.
+| 1 | 2026-04-27T16:30:00Z | 설계-리뷰 | DesignReviewPL P0 × 2 + P1 × 6 | 설계 | Change Plan §3·§5·§7 + Story §3·§4·§5 + ADR-006 부수결정 4 | — |
 
 ## §11 회고 (PMOAgent)
 
