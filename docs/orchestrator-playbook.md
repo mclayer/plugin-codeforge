@@ -257,11 +257,11 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
 | **DomainAgent** | 사용자 원문 verbatim (Story file §1 복사) + 4소스 fetch 경로 (`docs/domain-knowledge/**` Glob+Read, `docs/adr/**` 도메인 카테고리, <domain-paths>/**, §1 원문). 타 에이전트 산출물 미수신 — 독립 키워드 자체 도출 |
 | **RequirementsAnalystAgent** | 공통 입력(Story §1 + ADR)만 수신, 타 에이전트 해석 미포함. Ambiguity 키워드 섹션 생성 의무. codex CLI 필수 |
 | **ResearcherAgent** | 사용자 원문에서 외부 기술·선행사례 관점 키워드 자체 도출, 타 에이전트 산출물 미수신. "조사 불필요" 판정도 명시 반환 (null skip 금지) |
-| **ArchitectPLAgent** | 설계 lane PL. 4 deputy(3 deputy + chief author) 스폰 지시 — CodebaseMapper ∥ Refactor ∥ SecurityArchitect 병렬 스폰 후 ArchitectAgent (chief author) 통합 의뢰 → draft 검수. FIX 최종 판정자 (구현 리뷰·구현 테스트·보안 테스트 FAIL 시). Stateless 재스폰. write queue 의뢰 권한 |
+| **ArchitectPLAgent** | 설계 lane PL. 3 deputy(CodebaseMapper ∥ Refactor ∥ SecurityArchitect) 병렬 스폰 후 ArchitectAgent (chief author) 통합 의뢰 → draft 검수. FIX 최종 판정자 (구현 리뷰·구현 테스트·보안 테스트 FAIL 시). Stateless 재스폰. write queue 의뢰 권한 |
 | **ArchitectAgent** | Change Plan §1-§10 chief author + ADR draft author + §8 Test Contract author. ArchitectPLAgent 산하 deputy. 입력 = 3 deputy 산출물(Mapper / Refactor / SecurityArchitect) + Story §1-7. DocsAgent 이중 저장 (`docs/change-plans/<slug>.md` + Story file §7 미러링) 의뢰. Clarification 재스폰 의뢰 권한 |
 | **CodebaseMapperAgent** | as-is 변호 역할. 매 설계 레인 진입 시 Refactor·SecurityArchitect와 병렬 재스폰, base_sha/scope_paths frontmatter. 타 deputy 산출물 미수신 — 원 소스 직접 독해 |
 | **RefactorAgent** | to-be 혁신 역할. 타 deputy 산출물 미수신, 원 소스 직접 독해. "잠재 변호 논리 예상" 섹션으로 self-identify한 충돌 지점 제출 (chief author가 Mapper 실제 변호와 대조) |
-| **SecurityArchitectAgent** | 설계 lane 보안 deputy. 타 deputy 산출물 미수신, 원 소스 직접 독해. trust boundary·auth 모델·credential 흐름·암호학 결정에 대한 보안 설계 권고 산출 → chief author가 Change Plan §7.6 (보안 설계 섹션)에 통합 |
+| **SecurityArchitectAgent** | 설계 lane 보안 deputy. 타 deputy 산출물 미수신, 원 소스 직접 독해. trust boundary·auth 모델·credential 흐름·암호학 결정에 대한 보안 설계 권고 산출 → chief author가 Change Plan §7 (보안 설계 섹션, §7.1-§7.5; 외부 입력 무관 시 §7.6 N/A) 에 통합 |
 | **QADeveloperAgent** | Change Plan §8 Test Contract 입력. 매핑표 반환 의무 |
 | **`role: dev` 에이전트** (DeveloperAgent·DataEng·InfraEng·preset·overlay) | 계획서 변경 금지 — 결함 발견 시 즉시 DevPL→ArchitectPLAgent 에스컬레이션 |
 | **DesignReviewPLAgent** | lane=design packet 작성 (`templates/review-checklists/design.md` 인용 + scope_globs + category_enum + severity_overrides). Claude/Codex 통합 워커 병렬 스폰 후 종합. ADR 정합성 체크 P0 고정 |
