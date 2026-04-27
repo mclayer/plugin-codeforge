@@ -44,6 +44,7 @@ fi
 
 MERGE_SCRIPT="$PLUGIN_ROOT/overlay/hooks/merge.py"
 VALIDATE_SCRIPT="$PLUGIN_ROOT/overlay/hooks/validate_config.py"
+BOOTSTRAP_CHECK_SCRIPT="$PLUGIN_ROOT/overlay/hooks/check-bootstrap.sh"
 PLUGIN_AGENTS_DIR="$PLUGIN_ROOT/agents"
 PLUGIN_CLAUDE_MD="$PLUGIN_ROOT/CLAUDE.md"
 
@@ -72,6 +73,12 @@ if [ -f "$VALIDATE_SCRIPT" ]; then
         echo "[regen-agents] ABORT: project.yaml schema violation — fix before session starts" >&2
         exit 1
     fi
+fi
+
+# Bootstrap drift check (CFP-12) — non-blocking. WARN만 출력, hook 진행은 계속.
+# CFP-11 발견 drift: org workflow permissions / 18 plugin label 부재 자동 검출.
+if [ -x "$BOOTSTRAP_CHECK_SCRIPT" ]; then
+    OVERLAY_PROJECT_YAML="$OVERLAY_PROJECT_YAML" bash "$BOOTSTRAP_CHECK_SCRIPT" || true
 fi
 
 mkdir -p "$OUT_AGENTS_DIR"
