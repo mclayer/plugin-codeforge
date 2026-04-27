@@ -286,7 +286,25 @@ Phase 1 PR (현재 — 요구사항 + 설계 + 설계리뷰) → 머지 → Phas
 
 ### §8.5 Impl Manifest
 
-→ Phase 2 PR §8.5 매핑표 commit 후 자동 sub-issue 생성
+| 파일 경로 | 변경 유형 | 책임 요약 |
+|-----------|-----------|-----------|
+| `agents/TestContractArchitectAgent.md` | 신규 | SecurityArchitectAgent.md 도형 기반 — §8 Test Contract author input 제공 deputy (커버리지 후보·경계 조건·Perf Baseline·QADev 인터페이스·§7↔§8 cross-ref 규칙) |
+| `agents/ArchitectAgent.md` | 수정 | §8 chief author 모델 → TestContractArch input 통합 후 확정 반영; deputy 3→4인 갱신 |
+| `agents/ArchitectPLAgent.md` | 수정 | deputy 4→5인 갱신; ArchitectPL 검수 4 항목 → 메타-규칙 2 항목 압축; TestContractArch 스폰 추가 |
+| `agents/CodebaseMapperAgent.md` | 수정 | TestContractArch cross-ref 1줄 추가 (도형 대립 비참여 명시) |
+| `agents/RefactorAgent.md` | 수정 | TestContractArch cross-ref 1줄 추가 (도형 대립 비참여 명시) |
+| `agents/SecurityArchitectAgent.md` | 수정 | TestContractArch cross-ref 1줄 추가 (도형 대립 비참여 명시) |
+| `agents/QADeveloperAgent.md` | 수정 | 계약 소유자 라인 — "ArchitectAgent (chief author, TestContractArch deputy input 통합 후 §8 확정)"으로 갱신 |
+| `agents/DocsAgent.md` | 수정 | [설계] phase prefix에 TestContractArchitectAgent 추가 |
+| `agents/DeveloperPLAgent.md` | 수정 | 도입부 "4인" → "5인(+ TestContractArchitectAgent)" |
+| `templates/change-plan.md` | 수정 | §8 header QA perspective contributor 입력 반영 + §8.4 N/A 권한 블록 신규 추가 |
+| `CLAUDE.md` | 수정 | 에이전트 다이어그램 +TestContractArch; 22→23 core; 설계 lane never-skippable + 스폰 시퀀스 + 병렬 스폰 전면 갱신 |
+| `docs/orchestrator-playbook.md` | 수정 | line 22/561/589 "20 core"→"23 core"; v5 changelog "24 core"→"23 core"; 스폰 시퀀스 + 토큰 예산 + 작업 요약 표 + Hotfix Medium Path + §12.4 packet "4→5 deputy" 갱신 |
+| `docs/plugin-design.md` | 수정 | "22 core"→"23 core" 전체 치환; Stage 1 / Group A 설명 갱신 |
+| `.claude-plugin/plugin.json` | 수정 | version 0.11.0→0.12.0; description "22 core"→"23 core" |
+| `CHANGELOG.md` | 수정 | v0.12.0 항목 신규 추가 |
+| `README.md` | 수정 | "22 core"→"23 core" 전체 치환; 에이전트 다이어그램 TestContractArch 추가 |
+| `docs/migration-guide.md` | 수정 | v0.11.0→v0.12.0 마이그레이션 섹션 신규 추가 |
 
 ## §9 리뷰·테스트 결과 (Phase 2)
 
