@@ -1,14 +1,15 @@
 name: Invariant Check
 
-# CFP-5 Phase A + CFP-7 Phase C-1 — SSOT drift 자동 차단.
+# CFP-5 Phase A + CFP-7 Phase C-1 + CFP-8 Phase C-2 — SSOT drift 자동 차단.
 #
-# 검증 4종:
+# 검증 5종:
 #   1. Workflow parity — templates/github-workflows/*.yml ↔ .github/workflows/<basename>.yml byte-identical
 #   2. Version match — .claude-plugin/plugin.json `version` ↔ CHANGELOG.md 최상단 [version] header
 #   3. Agent count — agents/*.md 실제 개수 ↔ CLAUDE.md "N core 에이전트" 첫 매칭
 #   4. Write queue permission parity (CFP-7) — CLAUDE.md "Write queue 의뢰 권한" 표 ↔ agents/*.md frontmatter permissions.allow
+#   5. ADR-002 footer pattern (CFP-8) — 모든 agents/*.md (DocsAgent 제외) + presets/*/agents/*.md 의 "## 문서화 표준" 섹션이 1줄 + DocsAgent.md 참조 link + SSOT 본문 inline 복제 금지
 #
-# Phase C-2/C-3/D는 별도 Story (ADR-002 footer / dup-local enum / migration-guide v0.X→v0.Y).
+# Phase C-3/D는 별도 Story (dup-local enum / migration-guide v0.X→v0.Y).
 
 on:
   push:
@@ -183,4 +184,110 @@ jobs:
               sys.exit(1)
 
           print(f"✓ Write queue permission parity: {len(listed_full)} listed agents + DocsAgent (single writer)")
+          EOF
+
+      - name: ADR-002 footer pattern (CFP-8 — agents/*.md + presets/*/agents/*.md)
+        run: |
+          python3 <<'EOF'
+          """
+          ADR-002 §3 — 모든 에이전트 md(DocsAgent 제외) "## 문서화 표준" 섹션이
+          1줄 body + DocsAgent.md 참조 link + SSOT 본문 inline 복제 금지를 만족하는지 검증.
+
+          Invariant:
+            - DocsAgent.md를 제외한 모든 agents/*.md + presets/*/agents/*.md
+            - "## 문서화 표준" 섹션 마지막 위치에 존재
+            - body는 1줄
+            - body에 DocsAgent.md 참조 link 포함 (위치별 상대 경로 검증):
+                · agents/<X>.md → "DocsAgent.md"
+                · presets/<flavor>/agents/<X>.md → "../../../agents/DocsAgent.md"
+            - body에 SSOT 본문 inline 복제 금지 키워드 부재 (anti-drift):
+                "phase prefix", "Story file 섹션", "FIX Ledger 스키마", "Impl Manifest 스키마"
+          """
+          import re
+          import sys
+          from pathlib import Path
+
+          # SSOT 본문 inline 복제 차단 keyword (drift 위험)
+          FORBIDDEN_KEYWORDS = [
+              "phase prefix",
+              "Story file 섹션",
+              "FIX Ledger 스키마",
+              "Impl Manifest 스키마",
+          ]
+
+          # 위치별 expected DocsAgent.md 상대 link target
+          def expected_link_target(path: Path) -> str:
+              parts = path.parts
+              if parts[0] == "agents":
+                  return "DocsAgent.md"
+              if parts[0] == "presets" and "agents" in parts:
+                  # presets/<flavor>/agents/<X>.md → 3 levels up to root, then agents/
+                  return "../../../agents/DocsAgent.md"
+              return ""  # 본 invariant scope 외
+
+          targets = []
+          for p in sorted(Path("agents").glob("*.md")):
+              if p.stem == "DocsAgent":
+                  continue
+              targets.append(p)
+          for p in sorted(Path("presets").glob("*/agents/*.md")):
+              targets.append(p)
+
+          errors = []
+
+          for path in targets:
+              text = path.read_text(encoding="utf-8")
+              # "## 문서화 표준" 섹션 + 다음 "## " heading 사이 body 추출
+              m = re.search(
+                  r"^## 문서화 표준\s*\n(.+?)(?=\n## |\Z)",
+                  text,
+                  re.MULTILINE | re.DOTALL,
+              )
+              if not m:
+                  errors.append(f"{path}: '## 문서화 표준' 섹션 부재 (ADR-002 §3 위반)")
+                  continue
+
+              body_raw = m.group(1).strip()
+              body_lines = [ln for ln in body_raw.split("\n") if ln.strip()]
+
+              # 1줄 검사
+              if len(body_lines) != 1:
+                  errors.append(
+                      f"{path}: footer body 1줄이 아님 ({len(body_lines)} 줄, ADR-002 §3 'footer 본문 확장 금지' 위반)"
+                  )
+                  continue
+
+              body = body_lines[0]
+
+              # link target 검증
+              expected = expected_link_target(path)
+              if expected:
+                  link_pattern = re.compile(r"\[(?:[^\]]+)\]\(([^)]+)\)")
+                  links = link_pattern.findall(body)
+                  if not any(href.endswith("DocsAgent.md") for href in links):
+                      errors.append(f"{path}: footer body에 DocsAgent.md 참조 link 부재")
+                      continue
+                  # 정확한 expected target 1개 이상 존재하는지
+                  if expected not in links:
+                      errors.append(
+                          f"{path}: footer link target 불일치 — expected '{expected}', got {links}"
+                      )
+                      continue
+
+              # SSOT 본문 inline 복제 금지 keyword 검사
+              for kw in FORBIDDEN_KEYWORDS:
+                  if kw in body:
+                      errors.append(
+                          f"{path}: footer body에 SSOT 본문 키워드 '{kw}' 포함 — "
+                          f"ADR-002 §3 'footer 본문 확장 금지' 위반 (drift 위험)"
+                      )
+                      break
+
+          if errors:
+              print(f"::error::ADR-002 footer pattern 정합 실패 ({len(errors)} drift)")
+              for e in errors:
+                  print(f"  - {e}")
+              sys.exit(1)
+
+          print(f"✓ ADR-002 footer pattern: {len(targets)} agent md (DocsAgent 제외)")
           EOF
