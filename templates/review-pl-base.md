@@ -10,7 +10,7 @@ ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md).
 
 - **상위**: Orchestrator
 - **하위**: ClaudeReviewAgent, CodexReviewAgent (워커 2종 통합 — [ADR-001](../docs/adr/ADR-001-review-agent-unification.md))
-- **호출 시점**: 각 레인 진입 직후 Orchestrator 스폰. PL이 워커 packet 작성 후 Orchestrator에 "Claude/Codex 워커 병렬 스폰" 의뢰
+- **호출 시점**: 각 레인 진입 직후 Orchestrator 스폰. PL은 워커 packet만 작성·검증해 Orchestrator에 return — **워커 spawn은 Orchestrator가 한 메시지에 두 워커(Claude ∥ Codex)를 dispatch** (서브에이전트 재귀 spawn 금지 platform 제약 정합, [CFP-19 R3](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
 - **평행 PL**: 다른 2개 리뷰 PL — 동일 종합 로직 공유, lane-specific 4가지만 다름
 
 ---
@@ -83,6 +83,24 @@ review_packet:
 | P2만 | **PASS** |
 | FIX 카운터 한도 초과 | **ESCALATE** (한도는 lane-specific) |
 
+### Mechanical fast-path 분류 (R11)
+
+PL이 verdict packet에 **`mechanical_category`** 필드를 추가해 다음 자격을 1차 분류한다. Orchestrator가 fast-path 적용 여부 최종 판정.
+
+| `mechanical_category` 후보 | 자격 조건 |
+|---------|----------|
+| `typo` | 단일 파일 typo·문법 수정 |
+| `broken-link` | markdown link 1건 깨짐 (path/anchor) |
+| `minor-naming` | 단일 함수/변수 rename, 의미 보존 |
+| `comment-only` | 코멘트·docstring 수정만 |
+| `none` | 위 4종 미해당 (정상 cycle) |
+
+**Fast-path 자격 = `mechanical_category != none` AND (severity = P2 OR (severity = P1 AND 파일 수 = 1))**.
+
+자격 충족 시 Orchestrator는 DeveloperPL 1차 진단 → ArchitectPL 판정 cycle을 skip하고 직접 fix commit + same-iteration internal verify (다음 Iter 행 안 매김). 분류 잘못이면 다음 review iteration이 P0/P1 발견 → 정상 cycle 회복 (Iter 행 append).
+
+분류 책임자: 각 ReviewPL이 verdict 산출 시 1차 분류. SSOT는 본 절. 각 lane checklist md (`templates/review-checklists/{design,code,security}.md`)는 본 절 참조만 (재정의 금지).
+
 ### Noise 분류
 
 - 본 PL 1차 `valid/noise` 분류
@@ -103,6 +121,15 @@ review_packet:
 ---
 
 ## 5. 보고 형식
+
+### Verdict-return 우선 원칙 (R2)
+
+PL은 severity 종합 후 **즉시 Orchestrator에 verdict return** (PASS / FIX / ESCALATE 결정). DocsAgent를 통한 영속 기록(GitHub Issue 코멘트·Story file §9)은 **Orchestrator가 다음 lane spawn을 트리거한 직후 background drain**으로 처리.
+
+- ✅ 허용: PL → Orchestrator (verdict) → Orchestrator → 다음 lane spawn ∥ DocsAgent (background, mode: background)
+- ❌ 금지: PL이 DocsAgent save 완료 대기 후 verdict return — save가 다음 lane 게이트가 되면 안 됨
+
+이 분기는 평균 1-2분 단축 ([CFP-19 R2](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md)).
 
 ### PASS
 

@@ -62,6 +62,7 @@ review_packet:
 
 - **최대 3회** — 초과 시 ESCALATE (사용자 지시 대기)
 - §10 FIX Ledger `레인 = 설계-리뷰`로 누적
+- **FIX verdict 시 `mechanical_category` 1차 분류 의무** (typo / broken-link / minor-naming / comment-only / none) — fast-path 자격 분류 SSOT [`templates/review-pl-base.md`](../templates/review-pl-base.md) §3 (R11, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
 
 ## 다음 게이트 (PASS 시)
 

@@ -91,6 +91,12 @@ Orchestrator
 
 §8.5는 CodeReview·ArchitectPLAgent 감사의 **입력**. 누락된 파일이 있으면 CodeReview P0 차단 대상.
 
+**작성 절차 변경 (R5, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))**:
+- 본 에이전트는 Impl Manifest 표를 **수동 타이핑하지 않음**
+- 대신 Orchestrator 경유 DocsAgent에 `kind: impl-manifest` 의뢰 (mode: blocking, args: commit_range + change_plan_path) — SSOT [`agents/DocsAgent.md`](DocsAgent.md) §8.1
+- DocsAgent가 git diff에서 자동 생성한 표를 **review-edit**: description 컬럼만 line-edit (path/agent_role/related_change_plan_section은 helper가 결정)
+- helper 실패 시 (git diff 파싱 오류 등) 수동 작성으로 fallback (기존 절차)
+
 ## FIX 루프 1차 원인 진단 (ArchitectPL 회부용)
 
 **구현 리뷰 FAIL · 구현 테스트 FAIL · 보안 테스트 FAIL** 시 본 에이전트가 1차 원인 진단을 수행한다. Orchestrator 경유 ArchitectPLAgent가 최종 판정.
@@ -112,6 +118,15 @@ Orchestrator
 ArchitectPLAgent 판정 요청: {evidence pack 요약}
 ```
 
+### Parallel diagnosis 출력 (R4, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
+
+review·테스트 FIX 시 Orchestrator가 본 에이전트와 ArchitectPL을 **병렬 spawn**. 본 에이전트는 ArchitectPL 결과를 수신하지 않음 — 코드 변경 영향 + Change Plan §5 변경 계획 정합성으로 독립 진단.
+
+- 입력: review verdict packet + Story file §8.5 Impl Manifest + Change Plan §5·§8 + 최근 commit diff
+- 산출: 원인 분류(`구현` / `설계`) + 1줄 근거 + suggested fix 초안 → Story file §10 row append (mode: blocking)
+- 본 진단은 ArchitectPL 최종 판정과 불일치할 수 있음 — 불일치 시 ArchitectPL 우선 (`§10` row 비고에 본 진단 archive)
+- 참조 절차: [`docs/orchestrator-playbook.md`](../docs/orchestrator-playbook.md) §6.6 SSOT
+
 ### 1차 가정 기준
 
 **SSOT**: [`CLAUDE.md`](../CLAUDE.md) "원인 판정 decision table". 본 md는 표를 재인용하지 않고 SSOT만 참조한다 — Architect/CodeReviewPL/SecurityTestPL/review-checklists 모두 동일 SSOT 사용.
@@ -130,6 +145,19 @@ ArchitectPLAgent가 최종 판정을 내리면:
 - 계획서 범위 밖 변경 필요 → ArchitectPLAgent 경유 ArchitectAgent 계획서 갱신 요청
 - 기술 스택 교체 → ArchitectPLAgent + ADR
 - 레이어 경계 위반 의심 → ArchitectPLAgent
+
+## Mechanical fast-path (R11, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
+
+ReviewPL verdict packet의 `mechanical_category` 자격 충족 시 (`mechanical_category != none` AND severity = P2 OR (P1 AND 파일 1)) — Orchestrator가 본 에이전트를 fix-only 모드로 직접 spawn. 절차:
+
+1. 입력: review verdict packet (`mechanical_category` + 영향 파일 + finding location)
+2. 직접 fix commit (Phase 2 PR commit append)
+3. ArchitectPL 판정 skip — 다음 review iteration이 internal verify
+4. §10 ledger 신규 row 안 매김
+
+자격 분류 SSOT는 [`templates/review-pl-base.md`](../templates/review-pl-base.md) §3 R11 절. 보안 lane의 injection / credential / CVE / trust-boundary 카테고리는 항상 `none`이라 본 fast-path 미적용.
+
+분류 잘못이면 다음 iteration이 P0/P1 검출 → 정상 §6.6 cycle 회복.
 
 ## 문서화 표준
 GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

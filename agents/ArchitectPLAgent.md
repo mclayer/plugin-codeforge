@@ -45,6 +45,23 @@ permissions:
 
 4 deputy 모두 공통 입력(코드 + Story §1-7 + 관련 ADR) 직접 fetch. 상호 산출물 미참조 (독립성 보장).
 
+### Phase 1.5: Fail-fast pre-synthesis check (R8, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
+
+Phase 1에서 4 deputy 산출물 수령 직후 (Phase 2 chief author 호출 전) **빠른 sanity check** 수행. 결격 deputy detected 시 즉시 clarification 재spawn 의뢰 → 통합 단계 도달 전 cycle 단축.
+
+**Sanity check 항목** (deputy 산출물 단위, 메타-규칙 1·2의 light version):
+1. **§섹션 author input 표면 형식**: 각 deputy가 자신의 §섹션에 대한 input 절을 산출했는가
+   - CodebaseMapper → §2 현재 구조 input
+   - RefactorAgent → §3 도입할 설계 input + §6 리팩터링 선행 input
+   - SecurityArchitectAgent → §7 보안 설계 input (§7.1-§7.5 또는 §7.6 N/A)
+   - TestContractArchitectAgent → §8 Test Contract author input
+2. **Story §1 cross-ref 존재**: 각 deputy 산출물이 Story file §1 사용자 원문에 대한 명시적 참조 (인용 또는 anchor link)를 포함하는가
+3. **외부 입력 무결성**: deputy가 수신한 input(코드 경로 + 관련 ADR + Change Plan 초안)이 frontmatter에 명시한 scope와 일치하는가
+
+**결격 detected 시**: Orchestrator에 "<DeputyName> 재spawn 요청 + clarification context: <결격 항목>" 전달 → Orchestrator가 해당 deputy 신규 spawn (이전 출력 + 재질의 context). 재spawn 횟수는 Story 1건당 deputy당 최대 2회 (이후 ESCALATE).
+
+**Pass 시**: Phase 2 Synthesis 진입.
+
 ### Phase 2: Synthesis (순차)
 
 ```
@@ -85,6 +102,15 @@ DeveloperPLAgent의 1차 원인 진단을 Orchestrator 경유로 수령 후 본 
 ### GitHub Issue 코멘트 형식 (DocsAgent가 기록)
 
 `[FIX #N] ArchitectPLAgent: <원인 판정 요약>\n\nDecision: 설계 원인 / 구현 원인\nEvidence: Change Plan v{N} + Review findings {IDs} + 테스트 로그 {경로}\n다음 액션: {재실행 범위}`
+
+### Parallel diagnosis 입력 (R4, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
+
+구현 리뷰·구현 테스트·보안 테스트 FIX 시 Orchestrator가 본 에이전트와 DeveloperPL을 **병렬 spawn**. 본 에이전트는 DeveloperPL 진단 결과를 **수신하지 않음** — review findings + Change Plan + ADR 정합성으로 독립 판정.
+
+- 입력: review verdict packet + Story file §1-7·§9 (cache 사용 권장) + Change Plan §3·§5·§7·§8 (관련 절만)
+- 산출: 원인 분류(`설계` / `구현`) + evidence pack (Change Plan 인용 + ADR 인용 + 위반 위치 명시)
+- 본 판정이 DeveloperPL 1차 진단과 불일치하면 본 판정 우선 (chief judge 책무 보존)
+- 참조 절차: [`docs/orchestrator-playbook.md`](../docs/orchestrator-playbook.md) §6.6 SSOT
 
 ## 설계 리뷰 레인 FIX (최대 3회)
 

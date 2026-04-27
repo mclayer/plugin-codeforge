@@ -34,6 +34,30 @@ permissions:
 
 ## 실행 원칙
 
+### 호출 시 subset arg (R9, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
+
+본 에이전트는 `subset` 프롬프트 arg로 단일 모드 실행 가능 — Orchestrator가 두 subset을 병렬 spawn할 수 있도록 한다.
+
+| `subset` 값 | 실행 모드 |
+|------------|---------|
+| `functional` | 모드 1만 실행 (unit/integration/infra) |
+| `performance` | 모드 2만 실행 (성능 baseline 비교) |
+| `all` (default) | 모드 1 → 모드 2 순차 실행 (기존 동작, 단일 spawn 시) |
+
+**병렬 spawn 절차** (Orchestrator 측, [`docs/orchestrator-playbook.md`](../docs/orchestrator-playbook.md) §3.1):
+1. 한 메시지에 두 spawn dispatch:
+   - `Agent({subagent_type: 'TestAgent', prompt: '...subset: functional...'})`
+   - `Agent({subagent_type: 'TestAgent', prompt: '...subset: performance...'})`
+2. 두 결과 수령 후 종합:
+   - 둘 다 PASS → 보안 lane 진입
+   - 한쪽 FAIL → §6 FIX 루프 (다른 한쪽 결과는 fail-safe 보존, retry 시 재실행 안 함)
+
+**제약**:
+- consumer overlay에서 performance 모드가 functional 부산물(예: fixture·dataset)에 의존 시 sequential fallback (overlay에 명시: `tests.performance.depends_on_functional: true`)
+- baseline 측정 환경(개별 worktree)이 functional 테스트 동시 실행에 영향받지 않는지 consumer 책임
+
+### 기존 동작
+
 테스트 레인은 두 모드를 **순차 실행**. 기능 ALL PASS → 성능 → 둘 다 PASS여야 테스트 레인 PASS.
 
 ### 모드 1: 기능 게이트 (unit/integration/infra)

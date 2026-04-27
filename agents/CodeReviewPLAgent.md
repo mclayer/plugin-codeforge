@@ -65,6 +65,7 @@ review_packet:
 - **최대 3회** — 초과 시 ESCALATE
 - 구현 테스트/보안 테스트 FAIL → 구현 재실행 → 구현 리뷰 재진입 시 §10에 `RESET 구현-리뷰` 마커 추가, RESET 이후 iteration만 합산
 - §10 FIX Ledger `레인 = 구현-리뷰`로 누적
+- **FIX verdict 시 `mechanical_category` 1차 분류 의무** (typo / broken-link / minor-naming / comment-only / none) — fast-path 자격 분류 SSOT [`templates/review-pl-base.md`](../templates/review-pl-base.md) §3 (R11, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
 
 ## 1차 원인 가정 (FIX 시 — DeveloperPL/Architect 전달 초안)
 

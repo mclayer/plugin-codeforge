@@ -234,6 +234,83 @@ CodexReviewAgent의 findings은 GitHub Issue 코멘트에 `[<phase>-리뷰] Code
 
 DocsAgent는 sub-issue write 권한을 fallback (`mcp__github__sub_issue_write`)으로만 사용. Action 실패 시 수동 처리.
 
+### 8.1 Impl Manifest 자동 생성 helper (R5, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
+
+DeveloperPL이 수동 타이핑하던 §8.5 매핑표를 DocsAgent가 git diff에서 자동 생성. DeveloperPL은 review·승인만.
+
+**의뢰 형식 (write queue type=story-section)**:
+
+```yaml
+---
+type: story-section
+story: <KEY>
+section: "8.5"
+mode: blocking
+kind: impl-manifest          # 신규 — kind hint
+requester: DeveloperPLAgent
+issued_at: <ISO 8601>
+priority: normal
+---
+[Args]
+commit_range: <base_sha>..<head_sha>          # 필수 — Phase 2 첫 commit ~ 현재 HEAD
+change_plan_path: docs/change-plans/<slug>.md  # 필수 — §5 변경 계획 cross-ref용
+```
+
+**DocsAgent 측 처리**:
+1. `Bash(git diff --name-status <base_sha>..<head_sha>)` — A/M/D 레이블 + 파일 목록
+2. `Read(change_plan_path)` §5 변경 계획 fetch
+3. 각 파일별 `agent_role` 추론 규칙:
+   - `tests/**` → `QADeveloperAgent` (`role: qa`)
+   - `src/**` → `DeveloperAgent` (`role: dev`) — overlay roster에 다른 dev 있으면 path glob 매칭
+   - `docs/**` → `DocsAgent`
+   - `deploy/**` · `.github/workflows/**` → `InfraEngineerAgent` (`role: dev:infra`)
+   - `data/**` · `migrations/**` → `DataEngineerAgent` (`role: dev:data`)
+4. §5 변경 계획에서 해당 파일 언급 절을 `related_change_plan_section`으로 매핑
+5. §8.5 표 생성 후 Story file edit
+6. DeveloperPL에 review 요청 코멘트 (background mode)
+
+**§8.5 표 컬럼** (테이블 schema는 [`templates/impl-manifest.md`](../templates/impl-manifest.md) SSOT):
+| change | path | agent_role | related_change_plan_section | description |
+
+`change` 컬럼 = `A` (added) / `M` (modified) / `D` (deleted). DeveloperPL이 description 컬럼을 review-edit.
+
+**Fallback**: helper 실패 시 (git diff 파싱 오류 등) DeveloperPL이 수동 작성 (기존 절차).
+
+### 8.2 Security 1차 layer pre-fetch helper (R10, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
+
+SecurityTestPL spawn 시 1차 layer (Dependabot/CodeQL/Secret Scanning/Push Protection)을 매번 fetch하는 직렬 비용을 제거. 구현 lane Phase 2 PR open 직후 background로 prefetch → cache.
+
+**의뢰 형식 (write queue type=security-prefetch)**:
+
+```yaml
+---
+type: security-prefetch       # 신규 type
+story: <KEY>
+mode: background
+requester: Orchestrator        # 보통 구현 lane 진입 직후 Orchestrator가 직접 의뢰
+issued_at: <ISO 8601>
+priority: normal
+---
+[Args]
+ref: <branch or PR ref>         # 필수 — 예: pull/<N>/head
+output_cache: .claude-work/cache/<KEY>-sec1.json
+```
+
+**DocsAgent 측 처리**:
+1. 4 항목 fetch (`gh api repos/<owner>/<repo>/...`):
+   - `dependabot/alerts?state=open` — 의존성 CVE
+   - `code-scanning/alerts?state=open` — CodeQL findings
+   - `secret-scanning/alerts?state=open` — Secret Scanning
+   - 가능 시 push-protection events
+2. 결과 JSON merge → `output_cache` 경로 write (`Write(.claude-work/cache/<KEY>-sec1.json)`)
+3. 캐시 만료: `cached_at` 필드 + 24h TTL — SecurityTestPL이 만료 감지 시 재fetch 의뢰
+
+**SecurityTestPL 측 사용**: lane 진입 시 cache 존재 + TTL 유효 확인 → packet `first_layer_findings` 필드에 cache JSON inline. 부재·만료 시 본인이 직접 fetch (기존 절차 fallback).
+
+**보안**: cache 파일에 CVE 정보 포함 가능 → `.gitignore`에 `.claude-work/cache/` 추가 의무 (Group F에서 처리).
+
+**Bash 권한**: DocsAgent frontmatter `tools` 에 `Bash(gh api repos/*)` 명시 — 이미 §11/§12 milestone·discussions에서 허용된 패턴 재사용.
+
 ### 9. §10 "FIX Ledger" SSOT 스키마
 
 FIX 카운터의 SSOT는 Story file §10. GitHub 라벨은 보조 지표. DocsAgent가 append-only 관리 (행 삭제·수정 금지).
@@ -291,6 +368,40 @@ DomainAgent가 도메인 질문 답변을 Q&A 카테고리에 게시할 때:
 ## DocsAgent 작업 요청 인터페이스
 
 다른 에이전트가 Orchestrator 경유로 DocsAgent에 요청할 때 사용하는 요청 템플릿:
+
+### Drain 모드 (R1, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
+
+모든 요청 frontmatter에 `mode` 필드 필수 (write queue 파일 frontmatter SSOT는 [`docs/orchestrator-playbook.md`](../docs/orchestrator-playbook.md) §11.2):
+
+| mode | 의미 | drain 시점 |
+|------|------|----------|
+| **`blocking`** | 다음 lane이 의존하는 산출물 | 현재 lane 종료 직전 (다음 lane spawn 전 반드시 drain 완료) |
+| **`background`** | 누적 보고·코멘트·monitoring | 다음 lane spawn 후 별도 DocsAgent run으로 drain |
+
+**blocking 분류 의무 항목**:
+- §1-7 (Phase 1 PR open 직전)
+- Change Plan `docs/change-plans/<slug>.md` 신규/갱신
+- ADR draft `docs/adr/ADR-NNN-<slug>.md` 신규
+- §8.5 Impl Manifest commit (sub-issue Action 트리거)
+- gate label 부착 (`gate:design-review-pass` / `gate:security-test-pass`)
+- §10 FIX Ledger Iter row append (다음 FIX 회귀 이전)
+- Phase 1·2 PR create
+
+**background 분류 허용 항목**:
+- 에이전트 산출물 요약 Issue 코멘트 (`[<phase>] <Agent>: <요약>`)
+- §9.x 리뷰·테스트 결과 누적 append
+- §11 회고 append
+- ledger-append 후속 mirror (단 §10 본문 append 자체는 blocking)
+
+**의뢰자 측 책임**: write queue 파일 작성 시 frontmatter `mode: blocking | background` 명시 의무. 누락 시 DocsAgent가 `mode: blocking` fallback (안전 측). 라벨 잘못이면 후속 lane 진입 지연 발생 → 점진 교정.
+
+**DocsAgent 측 drain 우선순위**:
+1. `priority: high` AND `mode: blocking`
+2. `priority: normal` AND `mode: blocking`
+3. `priority: high` AND `mode: background`
+4. `priority: normal` AND `mode: background`
+
+같은 클래스 내 seq 순.
 
 ### Issue 코멘트 요청
 ```
