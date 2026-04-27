@@ -60,7 +60,7 @@ permissions:
 1. **Mapper 변호 근거 채택/반박 정합성** — Architect가 근거 있게 일축·수용했는가
 2. **Refactor 제안 범위 준수** — 요구 범위 밖 리팩토링 포함 여부
 3. **SecurityArch 위협-완화 매핑 §7 반영 완결성** — 식별된 위협이 §7.5 매핑에 빠짐없이 반영
-4. **§섹션 누락 차단** — §7 / §8 Test Contract / §10 ADR 판단 누락 시 차단
+4. **§섹션 누락 차단** — Change Plan §7 보안 설계 / §8 Test Contract / §10 ADR 판단 누락 시 차단 (Story file §10 FIX Ledger와 namespace 구분)
 
 PASS → Orchestrator에 DesignReview lane 진입 요청.
 RETURN → ArchitectAgent 재스폰 의뢰 (clarification context + 누락 항목).
