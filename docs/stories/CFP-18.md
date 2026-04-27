@@ -388,6 +388,23 @@ Phase 1 PR (현재 — 요구사항 + 설계 + 설계리뷰) → 머지 → Phas
 
 **다음 단계**: Orchestrator → TestAgent (구현 테스트 lane) 진입.
 
+### §9.3 구현 테스트
+
+**구현 테스트 — PASS (2026-04-27)**
+
+**모드 1 (기능)**: invariant-check workflow ALL PASS
+- agent count 22→23 parity ✅
+- frontmatter contract ✅
+- ADR-002 footer 패턴 ✅
+- write queue parity (19 에이전트) ✅
+- category enum 3-location parity ✅
+- severity_overrides count (6 P0 rule) ✅
+- BREAKING migration-guide presence ✅
+
+**모드 2 (성능)**: N/A — Story §8.6 `plugin-meta-na` 면제 (실행 가능 코드 0줄, baseline 변경 없음)
+
+**다음 lane**: 보안 테스트 (SecurityTestPL)
+
 ## §10 FIX Ledger
 
 | Iter | 시각 | 레인 | 트리거 | 원인 판정 | 재실행 범위 | RESET? |
