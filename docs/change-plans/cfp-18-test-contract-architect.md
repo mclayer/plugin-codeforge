@@ -184,7 +184,7 @@ stateless 재스폰 + path-scoped permissions invariant 유지. T1 완화책 외
 
 본 Story는 실행 가능 코드 0줄 — agent md / template / docs / yaml 변경만. 단위/통합/인프라/Perf 테스트 inert.
 
-- 검증 채널: invariant-check workflow 자동 검증 — agent count 23→**24** parity / frontmatter contract / ADR-002 footer / write queue parity / category enum 3-location parity / severity_overrides count / BREAKING migration-guide presence (Test 7)
+- 검증 채널: invariant-check workflow 자동 검증 — agent count 22→**23** parity / frontmatter contract / ADR-002 footer / write queue parity / category enum 3-location parity / severity_overrides count / BREAKING migration-guide presence (Test 7)
 - 면제 분류: `plugin-meta-na`
 - self-paradox 인지: TestContractArch가 신설 대상 자체이므로 본 Change Plan §8은 chief author 단독 author (TestContractArch input 0건) — Story §1 verbatim 인지된 paradox
 
