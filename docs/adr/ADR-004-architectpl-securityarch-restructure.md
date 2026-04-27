@@ -71,6 +71,8 @@ ArchitectPLAgent (신설)                                  # PL: supervisor + ju
 
 Codex 감사 #1·#2·#4-#6 (TestContractArch / DataMigrationArch / 관측성·API호환·SLO checklist)는 본 ADR 범위 외 — 후속 CFP-18+ 분리.
 
+- **#1 = CFP-18 + ADR-006으로 해소**: TestContractArchitectAgent (5번째 deputy, §8 Test Contract author input) 신설. 상세는 [ADR-006](ADR-006-test-contract-architect-deputy.md) 및 [CFP-18](../stories/CFP-18.md) 참조.
+
 ## 다이어그램
 
 설계 lane 재편 (CLAUDE.md 다이어그램 SSOT 참조):

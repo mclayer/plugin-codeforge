@@ -1,7 +1,7 @@
 ---
 adr_number: "005"
 title: "ADR-005: Plugin Self-Application N/A 표준화"
-status: Proposed
+status: Accepted
 category: Team & Process
 date: "2026-04-27"
 related_files:
@@ -20,7 +20,8 @@ related_files:
 
 ## 상태
 
-Proposed — Architect 검토 + 사용자 승인 후 Accepted 전환
+Accepted (2026-04-27) — 결정 1·2·3 CFP-18 Phase 2 완료 시 확정.
+결정 4 (invariant-check workflow N/A prefix detect step)는 후속 CFP 분리.
 
 ## 컨텍스트
 
@@ -107,4 +108,4 @@ Story가 lane을 N/A 처리한 경우 §11 회고에 "이번 Story는 lane {X·Y
 ---
 
 **발의자**: PMOAgent (Cross-cutting), v0.11.0 sprint close retro 직후 (2026-04-27)
-**Status**: Proposed — Architect 검토 + 사용자 승인 후 Accepted 전환
+**Status**: Accepted (2026-04-27) — 결정 1·2·3 확정. 결정 4 후속 CFP 분리.
