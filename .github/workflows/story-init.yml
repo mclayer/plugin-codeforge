@@ -35,7 +35,18 @@ jobs:
                  | sort -n | tail -1)
           NEXT=$(( ${LAST:-0} + 1 ))
           echo "key=${PREFIX}-${NEXT}" >> "$GITHUB_OUTPUT"
-          SLUG=$(printf '%s' "$ISSUE_TITLE" | sed -E 's/^\[STORY\] //; s/[^A-Za-z0-9가-힣]+/-/g; s/^-+|-+$//g; s/(.{40}).*/\1/')
+          # Python으로 슬러그 생성 — sed의 Korean 범위 `가-힣`이 C 로케일에서
+          # "Invalid collation character"로 실패하던 버그 (CFP-11 end-to-end 발견).
+          # 다국어 안전 + multi-byte truncation 안전.
+          SLUG=$(python3 - <<'PYEOF'
+          import os, re
+          title = os.environ.get("ISSUE_TITLE", "")
+          title = re.sub(r"^\[STORY\]\s*", "", title)
+          slug = re.sub(r"[^A-Za-z0-9가-힣]+", "-", title, flags=re.UNICODE)
+          slug = slug.strip("-")[:40].rstrip("-")
+          print(slug)
+          PYEOF
+          )
           echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
 
       - name: Parse user requirement from Issue body
