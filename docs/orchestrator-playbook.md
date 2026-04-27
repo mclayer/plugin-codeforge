@@ -974,6 +974,46 @@ labels.components: [...]
 
 Packet 주입은 Orchestrator의 토큰 최적화 수단이지 필수 규약 아님. Packet 누락 또는 일부 필드만 필요할 때 에이전트는 여전히 `Read(.claude/_overlay/project.yaml)`로 직접 접근 가능 (agent md `Read` 권한 보장).
 
+### 12.6 Warm cache (R6, [CFP-19 spec](superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
+
+매 spawn마다 `Read(docs/stories/<KEY>.md)` → 섹션 추출 → packet 재구성 비용을 cache로 amortize.
+
+**Cache 위치**: `.claude-work/cache/<KEY>-sections.json` (Story 1건당 1 파일)
+
+**Cache 스키마**:
+
+```json
+{
+  "story_key": "<KEY>",
+  "story_file_commit": "<git rev-parse HEAD on docs/stories/<KEY>.md>",
+  "cached_at": "<ISO 8601>",
+  "sections": {
+    "1": "<§1 본문 hash>",
+    "3": "<§3 본문 hash>",
+    "7": "<§7 본문 hash>",
+    "...": "..."
+  },
+  "section_bodies": {
+    "1": "<§1 verbatim>",
+    "3": "<§3 verbatim>",
+    "...": "..."
+  }
+}
+```
+
+**Cache 사용 절차**:
+1. Orchestrator가 spawn 직전 packet 조립
+2. cache 파일 존재 + `story_file_commit` 일치 확인:
+   - **hit**: `section_bodies`에서 필요 섹션 reuse → 재 Read 없음
+   - **miss (commit drift)**: `Read(docs/stories/<KEY>.md)` → 새 cache write
+3. 1 Story 평균 6 lane × 4 spawn = 24회 spawn 중 **14-18회 cache hit 기대** (lane 경계마다 1회만 commit drift)
+
+**Invalidation**:
+- DocsAgent가 Story file edit 후 `git rev-parse HEAD:docs/stories/<KEY>.md` 변경 → 자동 cache miss
+- Story 완료 시 cache 파일 cleanup (선택)
+
+**보안**: cache 파일에 §1 사용자 원문 포함 → `.gitignore`에 `.claude-work/cache/` 추가 의무 (Group F).
+
 ---
 
 ## 13. PMOAgent 프로젝트 관리 (Cross-cutting)
