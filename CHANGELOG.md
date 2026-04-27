@@ -5,6 +5,26 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.11.0] - 2026-04-27
+
+### Added
+- **ArchitectPLAgent** 신설 — 설계 레인 PL (supervisor + FIX 루프 최종 판정자)
+- **SecurityArchitectAgent** 신설 — 설계 레인 deputy (trust boundary / threat model / auth / data)
+- **Change Plan §7 보안 설계** 섹션 신설 (templates/change-plan.md)
+- **ADR-004** — 설계 lane 재구조화 결정 기록
+
+### Changed
+- **ArchitectAgent** 책임 분리: PL → chief author. FIX 최종 판정·deputy 스폰·Impl Manifest 감사 책임을 ArchitectPLAgent로 이관. 신규 ADR draft 작성 책임 명문화 (Codex #7)
+- **CodebaseMapperAgent / RefactorAgent**: 상위 ArchitectAgent → ArchitectPLAgent. 2-way → 3-way 대립 (+ SecurityArch)
+- **CLAUDE.md**: 다이어그램·Never-skippable·스폰 시퀀스·책임 매트릭스·FIX decision table·병렬 스폰·Write 권한 모두 갱신
+- **DesignReviewPL**: review packet에 §7 보안 설계 차단 룰 추가
+- **DeveloperPL**: FIX 1차 진단 → ArchitectPLAgent 최종 판정 (3 lane 갱신)
+
+### Migration
+- Consumer 액션 필요 없음 (Orchestrator 경유 호출이라 직접 영향 없음)
+- 기존 docs/change-plans/* 회귀 갱신 불필요 (신규 Story부터 §7 적용)
+- 자세한 사항: [docs/migration-guide.md](docs/migration-guide.md) v0.10.0 → v0.11.0 절
+
 ## [0.10.0] — 2026-04-27 (Self-application 6 layer 완성 — CFP-1~16)
 
 ### Architecture
