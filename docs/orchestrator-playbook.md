@@ -752,12 +752,14 @@ DocsAgent는 단독 writer이므로 다중 에이전트 동시 write 의뢰 시 
 
 ```markdown
 ---
-type: issue-comment | story-section | change-plan | adr | adr-draft | domain-knowledge | ledger-append | label-update | pr-create
+type: issue-comment | story-section | change-plan | adr | adr-draft | domain-knowledge | ledger-append | label-update | pr-create | security-prefetch
 story: <KEY>                # 필수 — 디렉토리 이름과 일치
 requester: <AgentName>      # 필수 — 의뢰 에이전트 식별
 issued_at: <ISO 8601>       # 필수 — 큐 진입 시각
 priority: normal | high     # 필수 — drain 우선순위
+mode: blocking | background # 필수 (R1, CFP-19) — drain timing 결정. blocking 분류 의무 7종 / background 분류 허용 4종은 agents/DocsAgent.md §"Drain 모드" SSOT
 section: "<N>"              # type=story-section 인 경우 필수 (§N), 기타 type 생략
+kind: impl-manifest         # type=story-section 이고 §8.5 자동 생성 의뢰 시 (R5, CFP-19)
 ---
 
 {DocsAgent.md §"작업 요청 인터페이스" 의 해당 템플릿 본문}
@@ -774,7 +776,12 @@ section: "<N>"              # type=story-section 인 경우 필수 (§N), 기타
 
 Orchestrator가 DocsAgent를 스폰하면 DocsAgent는:
 
-1. `.claude-work/doc-queue/<story>/` ls → seq 순으로 모든 파일 처리
+1. `.claude-work/doc-queue/<story>/` ls → **drain 우선순위 4단계** (R1, CFP-19) 순으로 정렬:
+   1. `priority: high` AND `mode: blocking`
+   2. `priority: normal` AND `mode: blocking`
+   3. `priority: high` AND `mode: background`
+   4. `priority: normal` AND `mode: background`
+   같은 클래스 내 seq 순.
 2. 파일 frontmatter type 별로 해당 처리:
    - `issue-comment` → `mcp__github__add_issue_comment`
    - `story-section` → `Edit(docs/stories/<KEY>.md)`
@@ -790,10 +797,18 @@ Orchestrator가 DocsAgent를 스폰하면 DocsAgent는:
 
 ### 11.5 Orchestrator 측 스폰 트리거
 
-- 레인 경계 (레인 종료 시점)
-- FIX 판정 직후
+**blocking drain 트리거** (다음 lane 진입 직전 반드시):
+- 레인 경계 — 다음 lane spawn **이전** blocking 의뢰 모두 drain 완료 확인
+- FIX 판정 직후 — §10 ledger-append blocking
 - 사용자 ESCALATE 직전 (상태 영속화 목적)
 - Story 완료 직전 (§11 최종 참조 기록)
+- Phase 1 PR open / Phase 2 PR open 직전
+
+**background drain 트리거** (lane 진행과 병렬 OK):
+- 다음 lane spawn 직후 별도 DocsAgent run (mode: background 의뢰만 처리)
+- 한 Story 내 누적 background queue가 5건 초과 시 보조 spawn
+
+R1 ([CFP-19 spec](superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md)) 정책으로 blocking이 다음 lane 게이트 역할 보존, background는 lane 진행과 병렬 처리.
 
 ### 11.6 fail-safe
 
