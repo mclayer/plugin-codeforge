@@ -145,7 +145,7 @@ Change Plan: [`docs/change-plans/cfp-4-self-app-meta-sync.md`](../change-plans/c
 - **Change Plan**: [`docs/change-plans/cfp-4-self-app-meta-sync.md`](../change-plans/cfp-4-self-app-meta-sync.md)
 - **CFP-1 Story**: [`docs/stories/CFP-1.md`](CFP-1.md) — Self-application 정책
 - **CFP-2 Story**: [`docs/stories/CFP-2.md`](CFP-2.md) — 인프라 2단계
-- **CFP-3 Story**: [`docs/stories/CFP-3.md`](CFP-3.md) — v0.9 migration guide (PR #27 OPEN)
+- **CFP-3**: deferred (audit Round 2 흡수, PR #27 close — story file 영속화 면제)
 - **관련 ADR**: [`docs/adr/ADR-001-review-agent-unification.md`](../adr/ADR-001-review-agent-unification.md)
 
 ### 회고
