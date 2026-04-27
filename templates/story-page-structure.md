@@ -66,7 +66,8 @@ GitHub Issue (Story 1건)에 부착되는 라벨:
 
 ### §7. 설계 서사 (Architect)
 - Change Plan 링크 (`docs/change-plans/<slug>.md`)
-- §1 목적 / §3 도입할 설계 / §4 API 계약 / §9 분기 선택 요약 미러링 (5-10줄)
+- §1 목적 / §3 도입할 설계 / §4 API 계약 / §7 보안 설계 요약 / §9 분기 선택 요약 미러링 (5-10줄)
+  - §7 보안 설계 요약: Change Plan §7의 보안 설계 요약 (1-3줄) 또는 `N/A — <사유>` 그대로 미러링
 - CodebaseMapper ↔ RefactorAgent 대립 결론
 
 ### §8. 개발 서사 (DeveloperPL + role:dev roster)
