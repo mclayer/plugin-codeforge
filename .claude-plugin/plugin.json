@@ -1,0 +1,14 @@
+{
+  "name": "codeforge-test",
+  "version": "0.1.0",
+  "description": "codeforge ζ arc Test lane plugin (CFP-38) — TestAgent (functional + performance subset 병렬). 결과를 test_verdict v1 contract 로 Orchestrator 에 보고. Story §10 FIX Ledger append 는 Orchestrator 단독 (CFP-32 monopoly). codeforge core 의존.",
+  "author": {
+    "name": "Josh"
+  },
+  "keywords": [
+    "test",
+    "performance-baseline",
+    "codeforge-extension",
+    "lane-plugin"
+  ]
+}
