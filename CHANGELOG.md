@@ -5,6 +5,39 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.22.0] - 2026-04-29
+
+### CFP-35 (ζ arc) — review_verdict v2 retrofit (Non-BREAKING for wrapper · BREAKING for codeforge-review)
+
+ζ arc 첫 lane plugin self-write 검증 단계 (parent spec §5.5). codeforge-review v1.0.0 BREAKING + codeforge wrapper sibling sync.
+
+설계 SSOT: [`docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md`](docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md) §5.5. Codex round 2 sequencing 권고 (review v2 retrofit이 코드 이동 0의 첫 self-write 검증으로 적합).
+
+### Added
+- `docs/inter-plugin-contracts/review-verdict-v2.md` — sibling reference (canonical은 mclayer/plugin-codeforge-review repo)
+
+### Changed
+- `docs/inter-plugin-contracts/review-verdict-v1.md` status: Active → Deprecated. 본문 상단 deprecation 안내 추가 (6 CFP 무사고 후 archive 예정)
+- `.claude-plugin/plugin.json` version 0.21.0 → 0.22.0
+
+### Why
+codeforge-review v1.0.0 BREAKING (Self-write 도입) 시 wire compatibility 위해 wrapper 도 동시 bump. wrapper 자체 코드 변경 없음 (Orchestrator는 verdict status·findings만 소비, write 책임은 codeforge-review로 이전).
+
+거부된 대안: v1 + v2 동시 지원 (write 책임 분기 → DocsAgent 절반만 해체 = ζ arc 모호. v1 deprecate가 명료), wrapper BREAKING bump (실제 wrapper API/runtime 변화 없음 — minor 가 정확).
+
+### Migration
+**Non-BREAKING for wrapper consumer** — wrapper 자체 동작 변화 없음. 단 codeforge-review v1.0.0 동시 install 의무 (CFP-29 BREAKING 정책 동일).
+
+- consumer: `gh plugins update codeforge-review` 후 `gh plugins update codeforge` (또는 동시 install)
+- v1 contract reference (codeforge core CLAUDE.md "Inter-plugin Contract" 섹션) — Deprecated 표기 후 본문 변경 없음 (audit 보존)
+
+### Validation
+- All 10 lint scripts PASS (review-verdict-v2.md 신설로 inter-plugin-contracts 2 contract 검증)
+- 1-2 dogfood Story (다음 real Story)에서 codeforge-review v1.0.0 self-write 정상 동작 확인 — 본 PR scope 외
+
+### Followups (CFP-36+)
+- CFP-36: codeforge-pmo 신설 (PMOAgent 이전 + retro template + pmo writer + pmo-output-v1 contract). v2 self-write 패턴 두 번째 검증
+
 ## [0.21.0] - 2026-04-29
 
 ### CFP-34 (ζ arc F3) — Workflow yaml syntax tests + marketplace sync drift detection (Non-BREAKING)
