@@ -45,9 +45,11 @@ assert_allow agents/ArchitectAgent.md "Write(docs/change-plans/**)"
 assert_allow agents/ArchitectAgent.md "Edit(docs/adr/**)"
 assert_allow agents/ArchitectAgent.md "Write(docs/adr/**)"
 
-# DomainAgent
-assert_allow agents/DomainAgent.md "Edit(docs/domain-knowledge/**)"
-assert_allow agents/DomainAgent.md "Write(docs/domain-knowledge/**)"
+# DomainAgent — CFP-37 ζ arc 후 codeforge-requirements plugin 으로 이관 → wrapper 부재 시 skip
+if [[ -f agents/DomainAgent.md ]]; then
+  assert_allow agents/DomainAgent.md "Edit(docs/domain-knowledge/**)"
+  assert_allow agents/DomainAgent.md "Write(docs/domain-knowledge/**)"
+fi
 
 # PMOAgent — CFP-36 ζ arc 후 codeforge-pmo plugin으로 이관 → wrapper에 부재 시 skip
 if [[ -f agents/PMOAgent.md ]]; then
