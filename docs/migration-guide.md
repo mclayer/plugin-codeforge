@@ -13,7 +13,7 @@ updated: 2026-04-24
 
 ## 목차
 
-- [v0.13.0 → v0.14.0](#v0130--v0140) — 설계 lane 6-deputy: DataMigrationArchitectAgent 신설 (BREAKING)
+- [v0.13 → v0.14](#v013--v014) — 설계 lane 6-deputy: DataMigrationArchitectAgent 신설 (BREAKING)
 - [v0.11.0 → v0.12.0](#v0110--v0120) — 설계 lane 5-deputy: TestContractArchitectAgent 신설 (BREAKING)
 - [v0.10.0 → v0.11.0](#v0100--v0110) — 설계 lane 재구조화: ArchitectPLAgent + SecurityArchitectAgent 신설
 - [v0.8 → v0.9](#v08--v09-reviewtest-워커-통합) — **3 lane × 2 vendor = 6 워커 → 2 워커 (BREAKING)**
@@ -26,7 +26,7 @@ updated: 2026-04-24
 
 ---
 
-## v0.13.0 → v0.14.0
+## v0.13 → v0.14
 
 ### 변경 사항
 - **신규 에이전트 1종**: `DataMigrationArchitectAgent` (설계 lane 6번째 deputy, 데이터 무결성 advocate for §11 데이터 마이그레이션)
