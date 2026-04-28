@@ -1,16 +1,19 @@
 #!/usr/bin/env bash
 # CFP-27 Phase 0b — 도입 (warning 모드)
 # CFP-28 Phase 0c — strict 전환 (exit=1 on warnings)
-# 검사: 4 owner doc path 의 본문 필수 섹션 헤딩
+# CFP-32 (ζ arc F1) — docs/inter-plugin-contracts/ 신규 path 추가
+# 검사: 5 owner doc path 의 본문 필수 섹션 헤딩
 #
 # Section schema source:
-#   - docs/change-plans/**     templates/change-plan.md  §1-§11 (주요 8개)
-#                              ※ CFP-1 ~ CFP-18 (CFP-3·CFP-17 제외) 은 schema 도입 이전 legacy
-#                                allowlist로 면제. CFP-19+ 부터 docs/superpowers/{specs,plans}/*
-#                                패턴이라 docs/change-plans/ 추가 작성 자체가 드물어짐.
-#   - docs/adr/**              templates/adr.md          ## 상태 / ## 컨텍스트 / ## 결정 / ## 결과 / ## 관련 파일
-#   - docs/domain-knowledge/** templates/domain-knowledge.md ## 정의 / ## 컨텍스트 / ## 핵심 규칙 / ## 경계 / ## 관련 ADR / ## 변경 이력
-#   - docs/retros/**           templates/retro.md         ## §1 / ## §2 / ## §3 / ## §4 (제목 자유, §N prefix만 강제)
+#   - docs/change-plans/**            templates/change-plan.md  §1-§11 (주요 8개)
+#                                     ※ CFP-1 ~ CFP-18 (CFP-3·CFP-17 제외) 은 schema 도입 이전 legacy
+#                                       allowlist로 면제. CFP-19+ 부터 docs/superpowers/{specs,plans}/*
+#                                       패턴이라 docs/change-plans/ 추가 작성 자체가 드물어짐.
+#   - docs/adr/**                     templates/adr.md          ## 상태 / ## 컨텍스트 / ## 결정 / ## 결과 / ## 관련 파일
+#   - docs/domain-knowledge/**        templates/domain-knowledge.md ## 정의 / ## 컨텍스트 / ## 핵심 규칙 / ## 경계 / ## 관련 ADR / ## 변경 이력
+#   - docs/retros/**                  templates/retro.md         ## §1 / ## §2 / ## §3 / ## §4 (제목 자유, §N prefix만 강제)
+#   - docs/inter-plugin-contracts/**  registry kind: ## 1. 목적 / ## 2. Schema / ## 3. 항목 / ## 4. 변경 규칙
+#                                     ※ review-verdict-v1.md는 CFP-29 legacy — allowlist 면제
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -53,12 +56,24 @@ REQUIRED_SECTIONS = {
         r"^## §3\s+\S",
         r"^## §4\s+\S",
     ],
+    "docs/inter-plugin-contracts": [
+        r"^## 1\. 목적",
+        r"^## 2\. Schema",
+        r"^## 3\. 항목",
+        r"^## 4\. 변경 규칙",
+    ],
 }
 
 # Legacy change-plan allowlist — pre-CFP-27 schema 이전 산출물.
 # CFP-19+ 부터 docs/superpowers/{specs,plans}/* 패턴 적용으로 docs/change-plans/ 디렉토리는
 # 사실상 freeze. Backfill 비용 회피하고 신규 작성에 대해서만 strict 적용.
 LEGACY_CHANGE_PLAN_CFPS = {1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18}
+
+# Legacy inter-plugin-contracts allowlist — CFP-29 산출물.
+# CFP-33 contract harness에서 backfill 후 allowlist 제거.
+LEGACY_INTER_PLUGIN_CONTRACTS = {
+    "review-verdict-v1.md",
+}
 
 warns = []
 for prefix, patterns in REQUIRED_SECTIONS.items():
@@ -72,6 +87,10 @@ for prefix, patterns in REQUIRED_SECTIONS.items():
         if prefix == "docs/change-plans":
             m = re.match(r"^cfp-(\d+)-", md.name)
             if m and int(m.group(1)) in LEGACY_CHANGE_PLAN_CFPS:
+                continue
+        # Legacy inter-plugin-contracts allowlist (path-scoped)
+        if prefix == "docs/inter-plugin-contracts":
+            if md.name in LEGACY_INTER_PLUGIN_CONTRACTS:
                 continue
         text = md.read_text(encoding="utf-8")
         # frontmatter 영역 제거
@@ -93,7 +112,7 @@ if warns:
     print("strict 모드 — schema 위반 시 PR 차단. 신규 작성은 templates/<doc-type>.md schema 준수 필수.")
     sys.exit(1)
 
-print("✓ CFP-28 doc-section-schema: 4 owner path 전부 schema 충족")
+print("✓ CFP-32 doc-section-schema: 5 owner path 전부 schema 충족")
 PY
 
 echo ""
