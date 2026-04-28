@@ -443,17 +443,29 @@ TestContractArchitectAgent는 §8 author input contributor (도형 대립 비참
 - **Write 권한 있음**:
   - `role: dev` 에이전트별 개별 scoping (core: DeveloperAgent `src/**` 기본 + `tests/**`·`docs/**` deny, DataEng 프로젝트별 데이터 계층 경로, InfraEngineer `deploy/**`·`config/**`·`scripts/**`; preset·overlay가 경로 재정의 — preset 예: `presets/webapp/agents/{Backend,Frontend}DeveloperAgent`)
   - QADev `role: qa` (`tests/**` allow + `src/**` deny — production 코드 직접 수정 금지)
-  - **DocsAgent(`docs/**` + `.claude-work/doc-queue/**` + GitHub MCP write 도구 전용, `src`·`tests`·`.claude`·`config`·`deploy`·`scripts` 명시 deny)**
-- **Write queue 의뢰 권한** (`.claude-work/doc-queue/**`만): RequirementsPLAgent, DomainAgent, PMOAgent, ArchitectPLAgent, ArchitectAgent, SecurityArchitectAgent, TestContractArchitectAgent, DataMigrationArchitectAgent, CodebaseMapper, Refactor, DesignReviewPL, CodeReviewPL, SecurityTestPL, ClaudeReviewAgent, CodexReviewAgent, DeveloperPLAgent, RequirementsAnalyst, Researcher, TestAgent — 기타 Edit/Write 없음
+  - **DocsAgent**: `docs/**` (단, `docs/{change-plans,adr,domain-knowledge,retros}/**` 4종은 deny — CFP-26 Phase 0a부터 owner agent로 이관) + `.claude-work/doc-queue/**` + GitHub MCP write 도구 전용 + `src`·`tests`·`.claude`·`config`·`deploy`·`scripts` 명시 deny
+  - **ArchitectAgent**: `docs/change-plans/**` + `docs/adr/**` (CFP-26 Phase 0a — chief author direct write)
+  - **DomainAgent**: `docs/domain-knowledge/**` (CFP-26 Phase 0a — 도메인 KB direct write)
+  - **PMOAgent**: `docs/retros/**` (CFP-26 Phase 0a — retro direct write)
+- **Write queue 의뢰 권한만** (`.claude-work/doc-queue/**`): RequirementsPLAgent, ArchitectPLAgent, SecurityArchitectAgent, TestContractArchitectAgent, DataMigrationArchitectAgent, CodebaseMapper, Refactor, DesignReviewPL, CodeReviewPL, SecurityTestPL, ClaudeReviewAgent, CodexReviewAgent, DeveloperPLAgent, RequirementsAnalyst, Researcher, TestAgent — Story file·GitHub comment 등 multi-writer / lifecycle 책임은 여전히 DocsAgent 경유
 - **외부 도구 wrapper**: RequirementsAnalyst(`Bash(codex exec *)`), CodexReviewAgent(`Bash(node *)` codex-companion 실행 + `WebSearch`·`WebFetch` CVE/OWASP 조회), ClaudeReviewAgent(`WebSearch`·`WebFetch` 보안 lane CVE 조회), SecurityTestPL(`Bash(gh api repos/*)` 1차 layer alerts fetch), DocsAgent(`Bash(gh api repos/*/milestones*)`, `Bash(gh api repos/*/discussions*)`, `Bash(gh api graphql*)`, `Bash(mkdir/ls/rm .claude-work/doc-queue*)`)
 
-### 문서 write 단독 writer 원칙
+### 문서 write 책임 분담 (CFP-26 Phase 0a 후)
 
-**DocsAgent만이 GitHub Issue/PR/comment·repo file `docs/**` write 가능**. 나머지 에이전트는 모두 문서 write 권한 없음. 문서 작업은 전원 **file-based write queue**(`.claude-work/doc-queue/<story>/`)에 의뢰 파일을 append → Orchestrator가 DocsAgent 스폰 시 drain. 상세는 playbook §11.
+**DocsAgent + 3 owner agent 분담 모델**. `docs/**` 영역은 둘로 나뉜다:
 
-- DocsAgent 권한은 path-scoped: `Edit(docs/**)`, `Write(docs/**)`, `Edit(.claude-work/doc-queue/**)`, `Write(.claude-work/doc-queue/**)` + GitHub MCP write 도구 + gh CLI Bash fallback
-- 문서화 표준(GitHub Issue 코멘트 phase prefix, Story file 섹션 규격, Change Plan 템플릿, ADR 템플릿, FIX Ledger 스키마, Impl Manifest 스키마)은 [`agents/DocsAgent.md`](agents/DocsAgent.md) SSOT
-- 다른 에이전트 md에는 "문서화 표준은 DocsAgent.md 참조" 1줄만
+1. **Single-owner 직접 write** (CFP-26 Phase 0a부터):
+   - **ArchitectAgent**: `docs/change-plans/**` + `docs/adr/**` (chief author 산출물)
+   - **DomainAgent**: `docs/domain-knowledge/**` (도메인 KB)
+   - **PMOAgent**: `docs/retros/**` (회고)
+   - 이 4 path는 DocsAgent deny — owner agent가 직접 write
+2. **DocsAgent 단독 owner** (multi-writer 직렬화 + GitHub lifecycle):
+   - `docs/stories/<KEY>.md` (multi-writer 직렬화 — RequirementsPL §2-6, ArchitectAgent §7 미러링, DeveloperPL §8/§8.5, ReviewPLs §9, TestAgent §10 결과, FIX Ledger §10 schema, PMO §11 회고 pointer)
+   - `docs/**` 그 외 일반 문서 (orchestrator-playbook, plugin-design, migration-guide, consumer-guide 등)
+   - GitHub Issue/PR/comment (phase prefix 11종) · PR/Issue body create/update (`Closes #N` keyword) · label 부착(gate/phase/fix) · sub-issue 수동 fallback · milestone · gh api fallback
+3. **나머지 에이전트** (Write queue 의뢰만): Story file 섹션 갱신·GitHub comment 게시 등 multi-writer/lifecycle 영역은 `.claude-work/doc-queue/<story>/`에 의뢰 → Orchestrator가 DocsAgent 스폰 시 drain. 상세는 playbook §11
+
+문서화 표준(GitHub Issue 코멘트 phase prefix, Story file 섹션 규격, Change Plan 템플릿, ADR 템플릿, FIX Ledger 스키마, Impl Manifest 스키마)은 [`agents/DocsAgent.md`](agents/DocsAgent.md) SSOT. 4 single-owner doc 템플릿은 [`templates/`](templates/) (change-plan / adr / domain-knowledge schema / retro schema). owner agent는 본인 owner path write 시 해당 템플릿 schema 준수 필수 — `scripts/check-write-permission-redistribution.sh` (CFP-26) + 향후 frontmatter/section schema lint (CFP-27)에서 강제.
 
 ### Codex CLI / 플러그인 필수
 - CodexReviewAgent: Codex 플러그인 (3 리뷰 lane 공통 — 미설치 시 설계 리뷰·구현 리뷰·보안 테스트 모두 진행 불가)
