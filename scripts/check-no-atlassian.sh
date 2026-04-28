@@ -16,6 +16,7 @@ ALLOWLIST=(
   "docs/superpowers/plans/2026-04-28-cfp-27-phase-0b-lint-strengthening-and-ci-integration.md"
   "docs/superpowers/specs/2026-04-28-cfp-29-codeforge-review-extraction-design.md"
   "docs/superpowers/plans/2026-04-28-cfp-29-phase-1-codeforge-review-extract.md"
+  "docs/superpowers/plans/2026-04-29-cfp-32-foundation-invariant-ssot.md"
   "scripts/check-no-atlassian.sh"
 )
 
