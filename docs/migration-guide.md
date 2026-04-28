@@ -13,6 +13,7 @@ updated: 2026-04-24
 
 ## 목차
 
+- [v0.14 → v0.15](#v014--v015-cfp-26-phase-0a--single-owner-write-권한-재분배) — Single-owner write 권한 재분배 (BREAKING)
 - [v0.13 → v0.14](#v013--v014) — 설계 lane 6-deputy: DataMigrationArchitectAgent 신설 (BREAKING)
 - [v0.11.0 → v0.12.0](#v0110--v0120) — 설계 lane 5-deputy: TestContractArchitectAgent 신설 (BREAKING)
 - [v0.10.0 → v0.11.0](#v0100--v0110) — 설계 lane 재구조화: ArchitectPLAgent + SecurityArchitectAgent 신설
@@ -23,6 +24,46 @@ updated: 2026-04-24
 - [v0.3 → v0.4](#v03--v04-stage-2-projectyaml-구조화) — `project.yaml` 도입
 - [v0.2 → v0.3](#v02--v03-generic-dev-roster--preset) — Generic Dev roster + preset
 - [v0.1 → v0.2](#v01--v02-보안-테스트-레인--templates) — 보안 테스트 레인 + templates (non-breaking)
+
+---
+
+## v0.14 → v0.15 (CFP-26 Phase 0a) — Single-owner write 권한 재분배 (BREAKING)
+
+**범위**: agent permission frontmatter 4건 갱신 + DocsAgent scope 축소 + SSOT 문서 일관성 갱신.
+
+**필요 조치**:
+
+### Consumer overlay에서 agent 권한 확장하던 경우
+
+overlay의 frontmatter `permissions.allow` 항목은 core와 **concat+dedup** 처리되므로 자동 흡수 — 별도 조치 불필요.
+
+### Consumer overlay에서 DocsAgent 권한 명시 override 하던 경우 (드뭄)
+
+core가 `docs/{change-plans,adr,domain-knowledge,retros}/**` 4 path에 대해 deny를 추가했음.
+- overlay에서 다시 allow를 명시하면 path-scoped allow가 우선
+- 단 의도가 4 path에 대한 owner agent 분담 모델이 아니라면 core 모델에 맞추는 것을 권장
+
+### Consumer 자동화 (CI / pre-commit)에서 invariant 강제
+
+core가 신설한 `scripts/check-write-permission-redistribution.sh` 호출 권장:
+
+```bash
+./scripts/check-write-permission-redistribution.sh
+```
+
+exit=0 이어야 통과. 16 assertion check.
+
+### 향후 단계 안내
+
+- CFP-27 (Phase 0b): frontmatter / 섹션 schema lint 강화
+- CFP-28 (Phase 0c): real Story 실행 검증
+- CFP-29 (Phase 1): codeforge-review plugin 추출 — 별도 plugin marketplace 등록 + dependency 추가 필요
+
+### 설계 SSOT
+
+- [`docs/superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md`](superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md) (CFP-25 design spec)
+
+자세한 사항: 본 spec §1·§5 참조.
 
 ---
 
