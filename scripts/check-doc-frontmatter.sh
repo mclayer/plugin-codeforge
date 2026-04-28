@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# CFP-27 Phase 0b
-# 검사: 4 owner doc path 의 frontmatter 필수 필드 (warning 모드 — exit=0 with warnings)
+# CFP-27 Phase 0b — 도입 (warning 모드)
+# CFP-28 Phase 0c — strict 전환 (exit=1 on warnings)
+# 검사: 4 owner doc path 의 frontmatter 필수 필드
 #
 # Path / 필수 frontmatter 필드 source:
 #   - docs/change-plans/**     templates/change-plan.md frontmatter (title, slug, status, author, created, story)
@@ -8,11 +9,11 @@
 #   - docs/domain-knowledge/** templates/domain-knowledge.md (title, area, topic_slug, status, updated)
 #   - docs/retros/**           templates/retro.md         (title, date, sprint_period, cfp_keys, authors)
 #
-# CFP-28 dogfooding에서 strict 모드로 전환 (exit=1).
+# Strict 모드: warning 발견 시 exit 1 → CI에서 PR 차단. 신규 작성은 templates/<doc-type>.md schema 준수 필수.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-python3 <<'PY' || true
+python3 <<'PY'
 import sys, re
 from pathlib import Path
 
@@ -56,15 +57,14 @@ for prefix, fields in REQUIRED.items():
             warns.append(f"{md}: 필수 필드 누락 — {sorted(missing)}")
 
 if warns:
-    print(f"⚠ CFP-27 doc-frontmatter (WARN): {len(warns)} 건")
+    print(f"::error::CFP-28 doc-frontmatter (STRICT): {len(warns)} 건")
     for w in warns:
         print(f"  - {w}")
-    print("⚠ warning 모드 — CFP-28 strict 전환 시점에 모두 fix 또는 allowlist 필요")
-else:
-    print("✓ CFP-27 doc-frontmatter: 4 owner path 전부 schema 충족")
+    print("strict 모드 — schema 위반 시 PR 차단. 신규 작성은 templates/<doc-type>.md frontmatter schema 준수 필수.")
+    sys.exit(1)
+
+print("✓ CFP-28 doc-frontmatter: 4 owner path 전부 schema 충족")
 PY
 
-# 항상 exit 0 (warning 모드)
 echo ""
-echo "(check-doc-frontmatter: warning 모드 — exit 0 강제. CFP-28에서 strict 전환)"
-exit 0
+echo "(check-doc-frontmatter: strict 모드 (CFP-28부터). warning 발견 시 exit 1)"

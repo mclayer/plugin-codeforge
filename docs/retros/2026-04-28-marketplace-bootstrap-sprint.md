@@ -1,3 +1,14 @@
+---
+title: 2026-04-28 Marketplace Bootstrap Sprint 회고
+date: 2026-04-28
+sprint_period: "2026-04-28 ~ 2026-04-28"
+cfp_keys: [CFP-23, CFP-24]
+authors: [PMOAgent]
+related_stories: [CFP-23, CFP-24]
+sentinel_refs:
+  - docs/retros/2026-04-28-codex-audit-closure-sprint.md
+---
+
 # 2026-04-28 Marketplace Bootstrap Sprint 회고
 
 기간: 2026-04-28 (단일 세션, codex audit closure sprint 직후 연속)

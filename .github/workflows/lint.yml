@@ -133,7 +133,7 @@ jobs:
         run: bash scripts/check-write-permission-redistribution.sh
 
   doc-frontmatter:
-    name: doc frontmatter schema (CFP-27 — warning)
+    name: doc frontmatter schema (CFP-28 — strict)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -146,7 +146,7 @@ jobs:
         run: bash scripts/check-doc-frontmatter.sh
 
   doc-section-schema:
-    name: doc section schema (CFP-27 — warning)
+    name: doc section schema (CFP-28 — strict)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

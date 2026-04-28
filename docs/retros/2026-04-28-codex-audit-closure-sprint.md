@@ -1,3 +1,14 @@
+---
+title: Codex Audit Closure Sprint 회고 (CFP-19~CFP-22, v0.13.0~v0.14.1)
+date: 2026-04-28
+sprint_period: "2026-04-27 ~ 2026-04-28"
+cfp_keys: [CFP-19, CFP-20, CFP-21, CFP-22]
+authors: [PMOAgent]
+related_stories: [CFP-19, CFP-20, CFP-21, CFP-22]
+sentinel_refs:
+  - docs/retros/2026-04-27-v0.11.0-sprint-close.md
+---
+
 # Codex Audit Closure Sprint 회고 (CFP-19~CFP-22, v0.13.0~v0.14.1)
 
 > **작성**: PMOAgent (Cross-cutting), 2026-04-28

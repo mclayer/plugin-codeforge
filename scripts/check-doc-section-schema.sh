@@ -1,18 +1,20 @@
 #!/usr/bin/env bash
-# CFP-27 Phase 0b
-# 검사: 4 owner doc path 의 본문 필수 섹션 헤딩 (warning 모드 — exit=0 with warnings)
+# CFP-27 Phase 0b — 도입 (warning 모드)
+# CFP-28 Phase 0c — strict 전환 (exit=1 on warnings)
+# 검사: 4 owner doc path 의 본문 필수 섹션 헤딩
 #
 # Section schema source:
 #   - docs/change-plans/**     templates/change-plan.md  §1-§11 (주요 8개)
+#                              ※ CFP-1 ~ CFP-18 (CFP-3·CFP-17 제외) 은 schema 도입 이전 legacy
+#                                allowlist로 면제. CFP-19+ 부터 docs/superpowers/{specs,plans}/*
+#                                패턴이라 docs/change-plans/ 추가 작성 자체가 드물어짐.
 #   - docs/adr/**              templates/adr.md          ## 상태 / ## 컨텍스트 / ## 결정 / ## 결과 / ## 관련 파일
 #   - docs/domain-knowledge/** templates/domain-knowledge.md ## 정의 / ## 컨텍스트 / ## 핵심 규칙 / ## 경계 / ## 관련 ADR / ## 변경 이력
-#   - docs/retros/**           templates/retro.md         ## §1 결과 / ## §2 / ## §3 / ## §4 (§5-§8 선택)
-#
-# CFP-28에서 strict 모드 (exit=1) 전환.
+#   - docs/retros/**           templates/retro.md         ## §1 / ## §2 / ## §3 / ## §4 (제목 자유, §N prefix만 강제)
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-python3 <<'PY' || true
+python3 <<'PY'
 import sys, re
 from pathlib import Path
 
@@ -44,12 +46,19 @@ REQUIRED_SECTIONS = {
         r"^## 변경 이력",
     ],
     "docs/retros": [
-        r"^## §1 결과",
-        r"^## §2 ",   # 무엇이 잘 갔나
-        r"^## §3 ",   # 무엇이 막혔나
-        r"^## §4 ",   # 다음에 할 일
+        # 회고 종류 (closure / cross-Story / sprint / session)별 §1 명칭이 자연스럽게 다름.
+        # schema intent는 "첫 메이저 섹션이 §1로 시작" — prefix만 강제, 제목 자유.
+        r"^## §1\s+\S",
+        r"^## §2\s+\S",
+        r"^## §3\s+\S",
+        r"^## §4\s+\S",
     ],
 }
+
+# Legacy change-plan allowlist — pre-CFP-27 schema 이전 산출물.
+# CFP-19+ 부터 docs/superpowers/{specs,plans}/* 패턴 적용으로 docs/change-plans/ 디렉토리는
+# 사실상 freeze. Backfill 비용 회피하고 신규 작성에 대해서만 strict 적용.
+LEGACY_CHANGE_PLAN_CFPS = {1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18}
 
 warns = []
 for prefix, patterns in REQUIRED_SECTIONS.items():
@@ -59,6 +68,11 @@ for prefix, patterns in REQUIRED_SECTIONS.items():
     for md in sorted(path.rglob("*.md")):
         if md.name.lower() in {"readme.md", "index.md"}:
             continue
+        # Legacy change-plan allowlist (path-scoped)
+        if prefix == "docs/change-plans":
+            m = re.match(r"^cfp-(\d+)-", md.name)
+            if m and int(m.group(1)) in LEGACY_CHANGE_PLAN_CFPS:
+                continue
         text = md.read_text(encoding="utf-8")
         # frontmatter 영역 제거
         if text.startswith("---\n"):
@@ -73,14 +87,14 @@ for prefix, patterns in REQUIRED_SECTIONS.items():
             warns.append(f"{md}: 필수 섹션 누락 — {missing}")
 
 if warns:
-    print(f"⚠ CFP-27 doc-section-schema (WARN): {len(warns)} 건")
+    print(f"::error::CFP-28 doc-section-schema (STRICT): {len(warns)} 건")
     for w in warns:
         print(f"  - {w}")
-    print("⚠ warning 모드 — CFP-28 strict 전환 시점에 모두 fix 또는 allowlist 필요")
-else:
-    print("✓ CFP-27 doc-section-schema: 4 owner path 전부 schema 충족")
+    print("strict 모드 — schema 위반 시 PR 차단. 신규 작성은 templates/<doc-type>.md schema 준수 필수.")
+    sys.exit(1)
+
+print("✓ CFP-28 doc-section-schema: 4 owner path 전부 schema 충족")
 PY
 
 echo ""
-echo "(check-doc-section-schema: warning 모드 — exit 0 강제. CFP-28에서 strict 전환)"
-exit 0
+echo "(check-doc-section-schema: strict 모드 (CFP-28부터). warning 발견 시 exit 1)"
