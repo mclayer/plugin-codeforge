@@ -5,6 +5,40 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.15.0] - 2026-04-28
+
+### CFP-26 — Phase 0a · Single-owner write 권한 재분배 (BREAKING — DocsAgent scope 축소)
+
+**BREAKING (v1.0 이전 minor 표기)**. DocsAgent 단독 writer 모델을 "DocsAgent + 3 owner agent 분담"으로 변경.
+4 single-owner 문서 경로(`docs/{change-plans,adr,domain-knowledge,retros}/**`)가 owner agent direct write로 이관.
+DocsAgent는 Story file (multi-writer 직렬화) + GitHub Issue/PR/comment·label·body·milestone 책임 유지.
+
+설계 SSOT: [`docs/superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md`](docs/superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md) (CFP-25).
+
+### Changed
+- `agents/ArchitectAgent.md` frontmatter — `docs/change-plans/**` + `docs/adr/**` Edit/Write 추가, `docs/**` 블랭킷 deny 제거
+- `agents/DomainAgent.md` frontmatter — `docs/domain-knowledge/**` Edit/Write 추가, `docs/**` 블랭킷 deny 제거
+- `agents/PMOAgent.md` frontmatter — `docs/retros/**` Edit/Write 추가, `docs/**` 블랭킷 deny 제거
+- `agents/DocsAgent.md` frontmatter — 4 owner-path deny 추가, "소유 영역" 표 갱신 (취소선으로 이관 audit trail 보존)
+- `CLAUDE.md` "Write 권한 (path-scoped)" + "문서 write 책임 분담" 섹션 (이전 "단독 writer 원칙") 갱신
+- `docs/orchestrator-playbook.md` §5.1 + §5.2 + §11.2/§11.4 + §13.4 — 단계 종료 시 DocsAgent 스폰 체크리스트의 4 single-owner trigger를 owner direct로 변경, write queue type enum에서 4 deprecated type 제거
+
+### Added
+- `scripts/check-write-permission-redistribution.sh` — Phase 0a invariant lint (4 owner-path direct write + DocsAgent deny 16 assertion)
+
+### Why
+CFP-21 (DataMigrationArchitectAgent — 6th deputy) 추가가 9+ 파일 동시 갱신 + BREAKING bump을 일으킨 사례에서, codeforge 본체 revision 비용이 monolithic single-writer 모델 때문에 과도하게 상승함이 명확. DocsAgent의 funnel 가치(multi-writer 직렬화·GitHub lifecycle 일관성·comment phase prefix)는 보존하되, single-author 산출물은 owner agent direct write로 이관해 funnel 부담을 줄이고, 향후 plugin 추출(CFP-29 codeforge-review)의 cross-plugin 결합점을 narrow하게 한다.
+
+설계 협업: Claude Opus 4.7 + Codex GPT-5.4 (4 라운드, 라운드 4에서 Path A 합의). 거부된 대안: Path B (DocsAgent 완전 제거 — multi-writer 직렬화 깨짐), Path C (skill 다운그레이드 — knowledge 보존하지만 enforcement 잃음).
+
+### Migration
+**BREAKING — consumer 영향**:
+- consumer overlay에서 ArchitectAgent · DomainAgent · PMOAgent 권한을 추가로 확장하던 경우, frontmatter `permissions.allow` 항목이 **core와 concat+dedup** 되므로 변경 없음 (overlay 메커니즘이 새 항목 자동 흡수)
+- consumer overlay가 DocsAgent 권한을 명시 override 하던 경우(드뭄), `docs/{change-plans,adr,domain-knowledge,retros}/**` 4 path deny가 추가됨에 유의 — overlay에서 다시 allow를 명시하면 path-scoped allow가 우선
+- 자동화: `scripts/check-write-permission-redistribution.sh`가 invariant 강제. CI에서 호출 권장
+
+자세한 사항: 본 spec (CFP-25) §1·§5 참조.
+
 ## [0.14.3] - 2026-04-28
 
 ### CFP-24 — Marketplace cross-repo 동기화 의무 정식 잠금
