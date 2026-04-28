@@ -101,7 +101,7 @@ Story 분해안:
 
 ### 2. Story 완료 회고 감사 (Story 단위)
 
-Story 완료 직후 Orchestrator가 스폰. 입력: 해당 Story file §1-11 + FIX Ledger + GitHub Issue 코멘트 이력.
+Story 완료 직후 Orchestrator가 스폰. 입력: 해당 Story file §1-11 + FIX Ledger + GitHub Issue 코멘트 이력 + `.claude-work/progress/<KEY>.md` (Orchestrator-owned live progress trace, playbook §14).
 
 감사 항목:
 - **Preflight 누락 여부** — 각 레인 진입 시 Preflight 3체크 실행 근거가 GitHub Issue 코멘트에 있는가
@@ -114,7 +114,7 @@ Story 완료 직후 Orchestrator가 스폰. 입력: 해당 Story file §1-11 + F
 
 ### 3. Cross-Story 패턴 분석 (다중 Story)
 
-사용자 요청 시 또는 Epic 완료 시.
+사용자 요청 시 또는 Epic 완료 시. 입력: 다수 Story file §1-11 + 다수 FIX Ledger + `.claude-work/progress/_archive/**` (완료 Story 누적 progress trace, playbook §14.10).
 
 패턴 검출 대상:
 - 반복되는 FIX 원인 유형 (예: "최근 5 Story 중 3건이 같은 Adapter 레이어 경계에서 P1 boundary 발생")
