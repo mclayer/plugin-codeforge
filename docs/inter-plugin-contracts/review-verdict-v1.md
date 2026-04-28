@@ -1,3 +1,18 @@
+---
+kind: contract
+contract_version: "1.0"
+status: Active
+related_plugins:
+  - codeforge (wrapper, consumer)
+  - codeforge-review (lane plugin, producer)
+related_adrs:
+  - ADR-001 (review-agent-unification — lane-agnostic worker)
+  - ADR-008 (Inter-plugin Contract Versioning)
+authors:
+  - CFP-29 동결 (2026-04-28)
+  - CFP-33 frontmatter backfill (2026-04-29)
+---
+
 # review_verdict v1 — Inter-plugin Contract
 
 `codeforge` core ↔ `codeforge-review` plugin 사이의 양방향 schema. CFP-29 Phase 1에서 동결.
