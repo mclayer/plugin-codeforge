@@ -10,34 +10,22 @@ cd "$(dirname "$0")/.."
 
 FAIL=0
 
-# helper: extract permissions allow block from agent md
-allow_block() {
-  local f="$1"
-  awk '
+# helper: extract permissions sub-block (allow|deny) from agent md frontmatter
+extract_block() {
+  local f="$1" key="$2"
+  awk -v key="$key" '
     /^---$/{c++; next}
     c==1 && /^permissions:/{in_perm=1; next}
-    c==1 && in_perm && /^  allow:/{in_allow=1; next}
-    c==1 && in_perm && /^  [a-z]+:/{in_allow=0}
-    c==1 && in_allow{print}
-    c>=2{exit}
-  ' "$f"
-}
-
-deny_block() {
-  local f="$1"
-  awk '
-    /^---$/{c++; next}
-    c==1 && /^permissions:/{in_perm=1; next}
-    c==1 && in_perm && /^  deny:/{in_deny=1; next}
-    c==1 && in_perm && /^  [a-z]+:/{in_deny=0}
-    c==1 && in_deny{print}
+    c==1 && in_perm && $0 ~ "^  " key ":"{in_block=1; next}
+    c==1 && in_perm && /^  [a-z]+:/{in_block=0}
+    c==1 && in_block{print}
     c>=2{exit}
   ' "$f"
 }
 
 assert_allow() {
   local f="$1" pat="$2"
-  if ! allow_block "$f" | grep -qF -- "$pat"; then
+  if ! extract_block "$f" allow | grep -qF -- "$pat"; then
     echo "✗ $f frontmatter permissions.allow에 '$pat' 없음"
     FAIL=1
   fi
@@ -45,7 +33,7 @@ assert_allow() {
 
 assert_deny() {
   local f="$1" pat="$2"
-  if ! deny_block "$f" | grep -qF -- "$pat"; then
+  if ! extract_block "$f" deny | grep -qF -- "$pat"; then
     echo "✗ $f frontmatter permissions.deny에 '$pat' 없음"
     FAIL=1
   fi
