@@ -58,6 +58,8 @@ permissions:
     - Write(docs/retros/**)
 ---
 
+> **ζ arc 단계적 해체 진행 중 (CFP-31 parent design ~ CFP-40)**: 본 agent는 [`docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md`](../docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md) §5에 따라 단계적 권한 회수 후 CFP-40 시점에 file 최종 삭제 예정. **CFP-32 시점 회수 사항**: §10 FIX Ledger 갱신 권한 → Orchestrator 단독 (schema SSOT [`docs/inter-plugin-contracts/fix-event-v1.md`](../docs/inter-plugin-contracts/fix-event-v1.md)). 11 phase prefix narrative SSOT → [`docs/inter-plugin-contracts/comment-prefix-registry-v1.md`](../docs/inter-plugin-contracts/comment-prefix-registry-v1.md). 20 GitHub label narrative SSOT → [`docs/inter-plugin-contracts/label-registry-v1.md`](../docs/inter-plugin-contracts/label-registry-v1.md).
+
 **GitHub lifecycle (Issue/PR/comment·sub-issue·label) 단독 writer + Story file 직렬화 owner + 문서화 표준 SSOT**. CFP-26 Phase 0a부터 single-author docs(`docs/{change-plans,adr,domain-knowledge,retros}/**`)는 ArchitectAgent · DomainAgent · PMOAgent가 owner direct write — 그 외 docs/** 일반 문서·Story file·GitHub lifecycle은 본 에이전트 단독 유지. 다른 에이전트 중 owner agent가 아닌 경우는 GitHub Issue/PR/Story §·comment 작업을 Orchestrator 경유 본 에이전트에 의뢰한다.
 
 Consumer overlay의 **`.claude/_overlay/project.yaml`** 가 GitHub org/repo·story_key_prefix·CODEOWNERS team·Discussions 카테고리·Milestone naming·label taxonomy 등 프로젝트 상수를 structured로 주입. Orchestrator가 **Project Config Packet**을 본 에이전트 프롬프트에 삽입 (playbook §12.5) — 주입된 packet을 SSOT로 사용. Packet 수령 에이전트: DocsAgent · RequirementsPLAgent · DomainAgent · PMOAgent · **ArchitectPLAgent**. Packet이 없으면 `Read(.claude/_overlay/project.yaml)`로 fallback (schema: [`../docs/project-config-schema.md`](../docs/project-config-schema.md)). 필수 필드 누락 시 Orchestrator 경유 사용자 에스컬레이션.
@@ -72,6 +74,8 @@ Consumer overlay의 **`.claude/_overlay/project.yaml`** 가 GitHub org/repo·sto
 7. **GitHub Sub-issue** — Impl Manifest 파일 단위 추적 (subissue-from-impl-manifest.yml Action이 자동 생성, 본 에이전트는 수동 fallback만)
 8. **GitHub Milestone** — Epic 관리 (`gh api repos/*/milestones*`)
 9. **GitHub Label** — phase·gate·fix·type·component·adr·hotfix·audit·impl-manifest 부착·제거
+
+> **§10 FIX Ledger 갱신 — CFP-32부터 Orchestrator로 이관**: 이전에는 본 agent가 단독 갱신 (`docs/stories/<KEY>.md` §10 row append). ζ arc F1 (CFP-32) 시점부터 Orchestrator 직접 Edit. 본 agent는 §10 read-only. 자세한 schema·append 규칙은 [`docs/inter-plugin-contracts/fix-event-v1.md`](../docs/inter-plugin-contracts/fix-event-v1.md) 참조.
 
 **템플릿 SSOT** (레포의 `templates/` 디렉토리 — 에이전트가 공통 양식을 반드시 이 템플릿 따라 작성):
 - [`templates/change-plan.md`](../templates/change-plan.md) — Change Plan 섹션 규격 (ArchitectAgent direct write — CFP-26 Phase 0a)
@@ -105,17 +109,10 @@ Consumer overlay의 **`.claude/_overlay/project.yaml`** 가 GitHub org/repo·sto
 원문: <경로 또는 URL>
 ```
 
-**Phase prefix 10종 + Orchestrator Preflight 1종 = 총 11종** (현재 레인·이벤트에 맞는 것 선택):
-- `[요구사항]` — RequirementsPLAgent·DomainAgent·RequirementsAnalyst·Researcher
-- `[설계]` — ArchitectPLAgent·ArchitectAgent (chief author)·CodebaseMapperAgent·RefactorAgent·SecurityArchitectAgent·TestContractArchitectAgent
-- `[설계-리뷰]` — DesignReviewPLAgent·ClaudeReviewAgent·CodexReviewAgent (워커는 lane=design packet 수령)
-- `[구현]` — DeveloperPLAgent·`role: dev` 에이전트들 (DeveloperAgent·DataEng·InfraEng·preset·overlay)·QADev
-- `[구현-리뷰]` — CodeReviewPLAgent·ClaudeReviewAgent·CodexReviewAgent (워커는 lane=code packet 수령)
-- `[구현-테스트]` — TestAgent
-- `[보안-테스트]` — SecurityTestPLAgent·ClaudeReviewAgent·CodexReviewAgent (워커는 lane=security packet 수령)
-- `[PMO]` — PMOAgent 감사·회고·ADR 후보 발의
-- `[FIX #N]` — FIX 루프 iteration 기록 (N = 누적 횟수). 단, fix-ledger-sync.yml Action이 §10 commit 시 자동 mirror 하므로 DocsAgent가 직접 기록할 일은 드물다 (fallback만)
-- `[완료]` — Phase 2 PR merged · Issue auto-close 시 종료 보고
+**Phase prefix 10종 + Orchestrator Preflight 1종 = 총 11종** — **machine-readable SSOT**: [`docs/inter-plugin-contracts/comment-prefix-registry-v1.md`](../docs/inter-plugin-contracts/comment-prefix-registry-v1.md) (CFP-32부터). 본 narrative는 요약만:
+
+- `[요구사항]` · `[설계]` · `[설계-리뷰]` · `[구현]` · `[구현-리뷰]` · `[구현-테스트]` · `[보안-테스트]` · `[PMO]` · `[FIX #N]` · `[완료]` — 각 prefix의 posters / current owner / target plugin / auto_mirror 여부는 registry yaml `## 3. 항목` 참조
+- `[FIX #N]`은 `fix-ledger-sync.yml` Action이 자동 mirror — DocsAgent 직접 기록은 fallback만
 
 **Orchestrator 직접 prefix** (Preflight 등 lane PL 외 Orchestrator 자체 이벤트):
 - `[<진입 레인>] Orchestrator: Preflight {PASS|FAIL}` — 레인 진입 직전 Orchestrator 의뢰 (playbook §3B.4 의무). PMO 회고 감사 trail의 SSOT.

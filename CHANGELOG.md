@@ -5,6 +5,51 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.19.0] - 2026-04-29
+
+### CFP-32 (ζ arc F1) — Foundation: Invariant SSOT 3종 + §10 Orchestrator 단독 owner (Non-BREAKING)
+
+ζ arc 첫 foundation step. 3 invariant SSOT(`comment-prefix-registry-v1` · `label-registry-v1` · `fix-event-v1`)을 `docs/inter-plugin-contracts/`에 신설하고 lint로 강제. §10 FIX Ledger 갱신 권한을 DocsAgent → Orchestrator 단독으로 이관. 후속 CFP-35~40 lane plugin 추출의 contract surface 준비 완료.
+
+설계 SSOT: [`docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md`](docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md) §5.2. Codex round 2 조건 #2(machine-readable shared contract 사전 구축) 직접 대응.
+
+### Added
+- `docs/inter-plugin-contracts/comment-prefix-registry-v1.md` — 11종 phase prefix machine-readable SSOT (kind: registry)
+- `docs/inter-plugin-contracts/label-registry-v1.md` — 20종 GitHub label machine-readable SSOT
+- `docs/inter-plugin-contracts/fix-event-v1.md` — §10 FIX Ledger row schema + append 규칙 + RESET 시맨틱스
+- `docs/superpowers/plans/2026-04-29-cfp-32-foundation-invariant-ssot.md` — 본 implementation plan
+
+### Changed
+- `scripts/check-doc-frontmatter.sh` — `docs/inter-plugin-contracts/**` path 규칙 추가 (필수: kind/registry/version/status/authors). `review-verdict-v1.md` legacy allowlist
+- `scripts/check-doc-section-schema.sh` — `docs/inter-plugin-contracts/**` 본문 섹션 규칙 추가 (## 1-4. 목적/Schema/항목/변경 규칙). 같은 legacy allowlist
+- `docs/orchestrator-playbook.md` §6.4 — DocsAgent → Orchestrator §10 단독 갱신자 이관 명시 + 3 SSOT cross-ref. §6.6 parallel diagnosis narrative 정정 (DeveloperPL typed return)
+- `agents/DocsAgent.md` — ζ arc 단계적 해체 진행 표시 + §10 권한 회수 + 11 phase prefix narrative → registry SSOT cross-ref
+- `.claude-plugin/plugin.json` version 0.18.0 → 0.19.0
+
+### Why
+ζ arc parent spec(CFP-31)이 정의한 9 CFP 로드맵의 첫 단계. Codex round 2 명시: lane plugin 추출 시작 전 phase prefix · label · FIX event 필드 contract를 machine-readable로 fix해야 split-brain 위험 회피. 본 CFP는 "추출"이 아닌 "추출 전 invariant 동결" — 추출 자체는 CFP-35부터.
+
+거부된 대안: F1+F2+F3 압축 1 CFP (Codex 명시 거부 — 검증 신호 분리 불가), F1을 review-verdict-v1.md 백필 포함 확장 (scope creep — CFP-33 contract harness 영역).
+
+### Migration
+**Non-BREAKING** — 본 CFP는 schema 도입 + 권한 narrative 갱신만. 기존 Story file·GitHub Issue·CI Action 동작 변화 없음.
+
+- consumer overlay 영향 없음
+- agent permission frontmatter 변화 없음 (DocsAgent narrative만 갱신)
+- §10 갱신 주체가 Orchestrator로 명시되었으나 실제 mechanics는 동일 (Orchestrator → DocsAgent 의뢰 → §10 Edit이 → Orchestrator 직접 Edit으로 변경 — Orchestrator는 top-level 세션이라 path-scoped 권한 무관)
+
+### Validation
+- `scripts/check-doc-frontmatter.sh` (strict) — 5 owner path 통과
+- `scripts/check-doc-section-schema.sh` (strict) — 5 owner path 통과
+- `scripts/check-doc-links.sh` — 신규 cross-ref 무결
+- `scripts/check-agent-frontmatter.sh` — DocsAgent 변경분 통과
+- 1-2 dogfood Story (CFP-33 또는 다음 real Story)에서 Orchestrator §10 직접 Edit 동작 확인 (본 CFP scope 외 — 다음 PR 검증)
+
+### Followups (CFP-33+)
+- CFP-33: contract lint harness 신설 — `docs/inter-plugin-contracts/**` 의 cross-contract 의존성 + example 유효성 검증. `review-verdict-v1.md` frontmatter 백필 (allowlist 제거)
+- CFP-34: workflow yaml syntax test + marketplace sync auto + `story-section-write-guard.yml`
+- CFP-35: codeforge-review v2 retrofit (verdict 반환 → self-write)
+
 ## [0.18.0] - 2026-04-28
 
 ### CFP-28 — Phase 0c · Lint strict 전환 + retro frontmatter backfill (Non-BREAKING)
