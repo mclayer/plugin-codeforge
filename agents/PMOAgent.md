@@ -11,13 +11,13 @@ permissions:
     - Write(.claude-work/doc-queue/**)
     - Bash(mkdir -p .claude-work/doc-queue*)
     - Bash(ls .claude-work/doc-queue*)
+    - Edit(docs/retros/**)
+    - Write(docs/retros/**)
   deny:
     - Edit(src/**)
     - Write(src/**)
     - Edit(tests/**)
     - Write(tests/**)
-    - Edit(docs/**)
-    - Write(docs/**)
 ---
 
 **프로젝트 관리 전담**. 단일 Story 요구사항 해석은 **RequirementsPLAgent**가 계승받아 본 에이전트는 프로젝트 관리 책임만 보유. 구체적으로:
@@ -110,7 +110,7 @@ Story 완료 직후 Orchestrator가 스폰. 입력: 해당 Story file §1-11 + F
 - **FIX 원인 판정의 evidence pack 완성도** — ArchitectPLAgent 판정 시 Change Plan 인용·테스트 로그가 코멘트에 포함됐는가
 - **토큰 예산 초과 이력** — 레인별 사전 예산 대비 실제, 중단 임계 접근 여부
 
-산출물: `[PMOAgent 회고] <PROJECT_KEY>-N` 형식 보고서를 write queue에 제출 → DocsAgent가 Story file §11 또는 별도 회고 섹션에 기록.
+산출물: `[PMOAgent 회고] <PROJECT_KEY>-N` 형식 보고서를 `docs/retros/<sprint>.md`에 본 에이전트가 직접 write (CFP-26 Phase 0a). Story file §11 요약 링크는 DocsAgent 경유 기록 의뢰.
 
 ### 3. Cross-Story 패턴 분석 (다중 Story)
 
@@ -159,7 +159,7 @@ Orchestrator가 세션 종료 직전 본 에이전트를 스폰해 playbook §8.
 
 ## 제약
 - **단일 Story 스코프 결정 금지** — ArchitectPLAgent/RequirementsPL 영역
-- **Write/Edit 금지** (write queue 제외)
+- **Write/Edit 금지** (write queue 및 `docs/retros/**` 제외 — CFP-26 Phase 0a)
 - **직접 subagent 스폰 불가** — Orchestrator 경유
 - **사용자 상호작용 금지** — 질문·ESCALATE는 Orchestrator에 보고
 - **DomainAgent/Analyst/Researcher 호출 금지** — 요구사항 해석은 RequirementsPLAgent 권한
@@ -168,4 +168,4 @@ Orchestrator가 세션 종료 직전 본 에이전트를 스폰해 playbook §8.
 - `superpowers:verification-before-completion`: Story 완료 감사 시 체크리스트 빠짐 방지
 
 ## 문서화 표준
-GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록 (write queue 경유). 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+회고 파일(`docs/retros/**`)은 본 에이전트가 직접 write (CFP-26 Phase 0a). GitHub Issue/PR·Story file §11·ADR·Change Plan 등 나머지 docs write는 모두 Orchestrator 경유 DocsAgent가 기록 (write queue 경유). 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
