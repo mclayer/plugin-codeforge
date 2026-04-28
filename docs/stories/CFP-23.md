@@ -138,7 +138,7 @@ N/A — attack surface 추가 없음.
 - 선행 작업: `mclayer/marketplace` bootstrap commit `a7a708c` (https://github.com/mclayer/marketplace)
 - spec: [`docs/superpowers/specs/2026-04-28-cfp-23-marketplace-exposure-notice-design.md`](../superpowers/specs/2026-04-28-cfp-23-marketplace-exposure-notice-design.md)
 - plan: [`docs/superpowers/plans/2026-04-28-cfp-23-marketplace-exposure-notice.md`](../superpowers/plans/2026-04-28-cfp-23-marketplace-exposure-notice.md)
-- 관련 ADR: [`docs/adr/ADR-005-plugin-meta-na.md`](../adr/ADR-005-plugin-meta-na.md)
+- 관련 ADR: [`docs/adr/ADR-005-plugin-self-application-na-standardization.md`](../adr/ADR-005-plugin-self-application-na-standardization.md)
 - GitHub Issue URL: (PR 머지 후 추가)
 - PR URL: (open 후 추가)
 - 후속 CFP 후보:
