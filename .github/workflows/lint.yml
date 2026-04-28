@@ -81,11 +81,10 @@ jobs:
           from pathlib import Path
 
           REQUIRED = {"name", "description"}
-          DEV_EXPECTED_IN_CORE = {"DeveloperAgent", "DataEngineerAgent", "InfraEngineerAgent"}
-          DEV_EXPECTED_IN_PRESETS = {
-              "presets/webapp/agents/BackendDeveloperAgent.md",
-              "presets/webapp/agents/FrontendDeveloperAgent.md",
-          }
+          # CFP-39 ζ arc 후 dev agents + presets 가 codeforge-develop plugin 으로 이전.
+          # 본 lint 는 wrapper 에 남은 agents 만 검증.
+          DEV_EXPECTED_IN_CORE = set()  # CFP-39: 이전 {Developer/DataEngineer/InfraEngineer} 제거
+          DEV_EXPECTED_IN_PRESETS = set()  # CFP-39: presets 도 plugin 으로 이전
 
           failed: list[str] = []
 
@@ -106,7 +105,7 @@ jobs:
               if fm.get("name") in DEV_EXPECTED_IN_CORE and fm.get("role") != "dev":
                   failed.append(f"{md}: expected role:dev, got {fm.get('role')}")
 
-          # Preset agents
+          # Preset agents (skip — CFP-39 후 presets 가 codeforge-develop plugin 으로 이전)
           for path_str in DEV_EXPECTED_IN_PRESETS:
               md = Path(path_str)
               if not md.exists():
