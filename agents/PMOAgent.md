@@ -149,7 +149,7 @@ trigger: "최근 N Story에서 반복 발견된 {패턴}"
 ...
 ```
 
-DocsAgent가 drain 시 docs/adr 트리에 **status=Proposed** 상태로 신규 페이지 생성. 실제 채택은 ArchitectAgent (chief author)가 Change Plan 진입 시 검토.
+ArchitectAgent가 drain 시 `docs/adr/` 트리에 **status=Proposed** 상태로 신규 페이지 직접 write (CFP-26 Phase 0a 후 owner direct write). 실제 채택은 ArchitectAgent가 Change Plan 진입 시 검토 후 status=Accepted 전환.
 
 ### 5. 세션 회고 synthesize
 

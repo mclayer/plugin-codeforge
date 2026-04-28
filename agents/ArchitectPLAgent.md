@@ -70,7 +70,7 @@ Phase 1에서 5 deputy 산출물 수령 직후 (Phase 2 chief author 호출 전)
 [본 PL → ArchitectAgent (chief author)]
   with input: 5 deputy outputs + Story §1-7 + 관련 ADR
   → output: Change Plan §1-§11 draft + 신규 ADR draft + §8 Test Contract + §11 데이터 마이그레이션
-  → DocsAgent 경유 docs/change-plans/<slug>.md 저장 의뢰
+  → ArchitectAgent direct write — `docs/change-plans/<slug>.md` + `docs/adr/ADR-NNN-<slug>.md` (CFP-26 Phase 0a 후 owner direct write). Story §7 미러링만 DocsAgent 경유 의뢰
 ```
 
 ### Phase 3: PL 검수 + 판정
