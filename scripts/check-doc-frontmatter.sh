@@ -10,8 +10,8 @@
 #   - docs/domain-knowledge/**        templates/domain-knowledge.md (title, area, topic_slug, status, updated)
 #   - docs/retros/**                  templates/retro.md         (title, date, sprint_period, cfp_keys, authors)
 #   - docs/inter-plugin-contracts/**  registry kind: {kind, registry, version, status, authors}
-#                                     ※ review-verdict-v1.md는 CFP-29 legacy — allowlist 면제
-#                                       (CFP-33 contract harness에서 backfill)
+#                                     ※ kind: contract 파일은 본 lint 적용 안 함 — CFP-33
+#                                       check-inter-plugin-contracts.sh 가 별도 검증
 #
 # Strict 모드: warning 발견 시 exit 1 → CI에서 PR 차단. 신규 작성은 templates/<doc-type>.md schema 준수 필수.
 set -euo pipefail
@@ -35,12 +35,9 @@ REQUIRED = {
     "docs/inter-plugin-contracts": {"kind", "registry", "version", "status", "authors"},
 }
 
-# Legacy allowlist — CFP-29 review-verdict-v1.md는 본 schema 도입 이전 산출물.
-# CFP-33 contract harness에서 backfill 후 allowlist 제거.
-LEGACY_INTER_PLUGIN_CONTRACTS = {
-    "review-verdict-v1.md",
-}
-
+# CFP-33 — kind-based dispatch: docs/inter-plugin-contracts/는 두 종류 파일 보유:
+#   - kind: registry → 본 lint가 검증 (REQUIRED 표 적용)
+#   - kind: contract → check-inter-plugin-contracts.sh 가 별도 검증 — 본 lint는 skip
 warns = []
 for prefix, fields in REQUIRED.items():
     path = Path(prefix)
@@ -50,14 +47,19 @@ for prefix, fields in REQUIRED.items():
         # README 또는 index 파일은 schema 대상 아님
         if md.name.lower() in {"readme.md", "index.md"}:
             continue
-        # Legacy inter-plugin-contracts allowlist (path-scoped)
-        if prefix == "docs/inter-plugin-contracts":
-            if md.name in LEGACY_INTER_PLUGIN_CONTRACTS:
-                continue
         text = md.read_text(encoding="utf-8")
         if not text.startswith("---\n"):
             warns.append(f"{md}: frontmatter 부재")
             continue
+        # CFP-33 kind:contract dispatch — 본 lint 적용 안 함 (별도 lint)
+        if prefix == "docs/inter-plugin-contracts":
+            try:
+                fm_peek_text = text.split("\n---\n", 1)[0][4:]
+                fm_peek = yaml.safe_load(fm_peek_text)
+                if isinstance(fm_peek, dict) and fm_peek.get("kind") == "contract":
+                    continue
+            except Exception:
+                pass  # parse 실패 시 아래에서 다시 잡힘
         try:
             fm_text = text.split("\n---\n", 1)[0][4:]
             fm = yaml.safe_load(fm_text)

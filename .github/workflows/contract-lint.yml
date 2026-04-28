@@ -1,0 +1,47 @@
+name: contract-lint
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  inter-plugin-contracts:
+    name: inter-plugin-contracts (CFP-33)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Run check-inter-plugin-contracts.sh
+        run: bash scripts/check-inter-plugin-contracts.sh
+
+  comment-prefix-registry:
+    name: comment-prefix-registry self-validation (CFP-33)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Run check-comment-prefix.sh
+        run: bash scripts/check-comment-prefix.sh
+
+  label-registry-sync:
+    name: label-registry ↔ bootstrap-labels.sh sync (CFP-33)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Run check-label-registry.sh
+        run: bash scripts/check-label-registry.sh

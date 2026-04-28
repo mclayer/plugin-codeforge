@@ -5,6 +5,48 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.20.0] - 2026-04-29
+
+### CFP-33 (ζ arc F2) — Contract Lint Harness (Non-BREAKING)
+
+ζ arc 두번째 foundation step. Inter-plugin contract + cross-system registry 검증을 자동화하는 lint harness 3종 신설. CFP-32에서 도입한 invariant SSOT 3종을 CI에서 일관 강제 + 기존 review-verdict-v1.md frontmatter 백필로 legacy allowlist 제거.
+
+설계 SSOT: [`docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md`](docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md) §5.3. Codex round 2 조건 #2 후속(machine-readable shared contract) + 조건 #3(workflow regex 사전 lint).
+
+### Added
+- `scripts/check-inter-plugin-contracts.sh` — `kind: contract` 파일 frontmatter (kind, contract_version, status, related_plugins, related_adrs, authors) + 본문 sanity (≥3 ## 섹션) 검증
+- `scripts/check-comment-prefix.sh` — `comment-prefix-registry-v1.md` ## 3. 항목 yaml self-validation (11 prefix · 필수 field · auto_mirror bool · 중복 검출)
+- `scripts/check-label-registry.sh` — `label-registry-v1.md` ↔ `bootstrap-labels.sh --dry-run` 양방향 sync (name set + color drift + single_active invariant)
+- `.github/workflows/contract-lint.yml` — 위 3 lint job CI 통합
+
+### Changed
+- `docs/inter-plugin-contracts/review-verdict-v1.md` — frontmatter 백필 (kind: contract, contract_version: 1.0, status: Active, related_plugins, related_adrs, authors)
+- `scripts/bootstrap-labels.sh` — `--dry-run` 플래그 추가 (gh 미호출, name|color|desc tab-separated stdout 출력 → check-label-registry.sh 가 parse)
+- `scripts/check-doc-frontmatter.sh` — kind:contract dispatch (kind:registry 만 본 lint 적용, kind:contract 는 check-inter-plugin-contracts.sh 가 별도)
+- `scripts/check-doc-section-schema.sh` — 동일 dispatch
+- `.claude-plugin/plugin.json` version 0.19.0 → 0.20.0
+
+### Why
+CFP-32 가 SSOT를 도입했지만 CI 강제는 일부만 (frontmatter + section 만). CFP-33 은 내용물(`## 3. 항목`) 자체 + script ↔ registry sync 까지 자동 검증. CFP-35 review v2 retrofit 진입 전 contract 변경 안전성 보장.
+
+거부된 대안: 모든 lint 를 `check-doc-frontmatter.sh` 안에 inline (단일 스크립트가 너무 많은 역할), `bootstrap-labels.sh` 자체를 registry 에서 자동 생성 (CFP-33 scope 초과 — 이전은 후속 CFP).
+
+### Migration
+**Non-BREAKING** — 본 CFP는 추가 lint 만. consumer 영향 없음. 기존 동작 변화 없음.
+
+- review-verdict-v1.md 의 frontmatter 백필은 narrative 영향 없음 (본문 그대로)
+- bootstrap-labels.sh 정상 호출 시 동작 동일 (--dry-run 추가만)
+- consumer overlay 영향 없음
+
+### Validation
+- 3 신규 lint 모두 정상 상태 PASS (review-verdict-v1.md 1건 contract 검증, registry 11+20 entry sync)
+- 의도적 break (frontmatter 누락 / yaml schema mismatch / bootstrap-labels.sh 라벨 추가 누락) 시 CI fail 검증
+- 기존 5 lint (frontmatter / section-schema / write-permission / no-atlassian / doc-links) 회기 없음
+
+### Followups (CFP-34+)
+- CFP-34: workflow yaml syntax test + marketplace sync auto + story-section-write-guard.yml
+- CFP-35: codeforge-review v2 retrofit (review-verdict-v2 신설 + v1 deprecate)
+
 ## [0.19.0] - 2026-04-29
 
 ### CFP-32 (ζ arc F1) — Foundation: Invariant SSOT 3종 + §10 Orchestrator 단독 owner (Non-BREAKING)

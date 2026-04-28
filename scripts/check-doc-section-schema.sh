@@ -13,7 +13,8 @@
 #   - docs/domain-knowledge/**        templates/domain-knowledge.md ## 정의 / ## 컨텍스트 / ## 핵심 규칙 / ## 경계 / ## 관련 ADR / ## 변경 이력
 #   - docs/retros/**                  templates/retro.md         ## §1 / ## §2 / ## §3 / ## §4 (제목 자유, §N prefix만 강제)
 #   - docs/inter-plugin-contracts/**  registry kind: ## 1. 목적 / ## 2. Schema / ## 3. 항목 / ## 4. 변경 규칙
-#                                     ※ review-verdict-v1.md는 CFP-29 legacy — allowlist 면제
+#                                     ※ kind: contract 파일은 본 lint 적용 안 함 (CFP-33부터)
+#                                       check-inter-plugin-contracts.sh 가 별도 검증
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -69,11 +70,8 @@ REQUIRED_SECTIONS = {
 # 사실상 freeze. Backfill 비용 회피하고 신규 작성에 대해서만 strict 적용.
 LEGACY_CHANGE_PLAN_CFPS = {1, 2, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 18}
 
-# Legacy inter-plugin-contracts allowlist — CFP-29 산출물.
-# CFP-33 contract harness에서 backfill 후 allowlist 제거.
-LEGACY_INTER_PLUGIN_CONTRACTS = {
-    "review-verdict-v1.md",
-}
+# CFP-33 — kind:contract 파일은 본 lint 적용 안 함 (별도 lint 운영, 섹션 schema 자유)
+KIND_CONTRACT_RE = re.compile(r"^kind:\s*contract\s*$", re.MULTILINE)
 
 warns = []
 for prefix, patterns in REQUIRED_SECTIONS.items():
@@ -88,10 +86,13 @@ for prefix, patterns in REQUIRED_SECTIONS.items():
             m = re.match(r"^cfp-(\d+)-", md.name)
             if m and int(m.group(1)) in LEGACY_CHANGE_PLAN_CFPS:
                 continue
-        # Legacy inter-plugin-contracts allowlist (path-scoped)
+        # CFP-33 kind:contract dispatch — 본 lint 적용 안 함 (regex로 frontmatter peek)
         if prefix == "docs/inter-plugin-contracts":
-            if md.name in LEGACY_INTER_PLUGIN_CONTRACTS:
-                continue
+            raw_peek = md.read_text(encoding="utf-8")
+            if raw_peek.startswith("---\n"):
+                fm_peek_block = raw_peek.split("\n---\n", 1)[0][4:]
+                if KIND_CONTRACT_RE.search(fm_peek_block):
+                    continue
         text = md.read_text(encoding="utf-8")
         # frontmatter 영역 제거
         if text.startswith("---\n"):
