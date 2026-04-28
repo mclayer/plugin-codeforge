@@ -5,6 +5,44 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [1.0.0] - 2026-04-29
+
+### CFP-36 (ζ arc) — codeforge-pmo plugin extraction (BREAKING)
+
+ζ arc 두 번째 lane plugin 추출 (parent §5.6). PMOAgent + retro template + retros owner write 를 별도 plugin `codeforge-pmo` 으로 이전. wrapper agent 수 감소 (writer-distributed 모델 본격 진행).
+
+설계 SSOT: [`docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md`](docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md) §5.6.
+
+### Removed (BREAKING for consumer)
+- `agents/PMOAgent.md` — codeforge-pmo plugin 으로 이전
+- `templates/retro.md` — codeforge-pmo plugin 으로 이전
+
+### Changed
+- `CLAUDE.md` 필수 플러그인 5종 → 6종 (`codeforge-pmo@mclayer` 추가). codeforge-review 항목 v1.0.0 retrofit 사실 반영
+- `scripts/check-write-permission-redistribution.sh` — PMOAgent.md 부재 시 skip (extraction 후 wrapper 영역 외 invariant)
+- `.claude-plugin/plugin.json` v0.22.0 → v1.0.0 BREAKING (consumer 신규 plugin install 의무)
+
+### Why
+ζ arc 로드맵 §5.6: PMOAgent 가 가장 작은 lane (1 agent) + 가장 약한 결합 (Cross-cutting, lane gate 무관) → writer-distributed 패턴의 두 번째 검증 단계로 적합. CFP-35 review v2 retrofit (코드 이동 0) 검증 후 코드 이전 첫 사례.
+
+거부된 대안: PMOAgent를 wrapper 잔류 (overlay 충분 — Codex round 2 표면적 권고이지만 wrapper-only end-state 와 충돌), retro template 도 wrapper 잔류 (cross-plugin schema 인지 lane-owned 인지 모호 — codeforge-pmo 단일 owner 가 명료).
+
+### Migration (BREAKING)
+- consumer 측 install 추가 필수: `/plugins install codeforge-pmo@mclayer`
+- 기존 docs/retros/* 그대로 유지 (codeforge-pmo의 PMOAgent 가 동일 path 직접 write — schema 변화 없음)
+- CFP-26 Phase 0a single-owner write 모델 유지 (단 owner 가 wrapper 의 PMOAgent → codeforge-pmo 의 PMOAgent 로 이동)
+
+### Validation
+- 5 신규 lint 모두 PASS (PMOAgent.md 삭제 후에도 invariant 통과 — CFP-26 invariant 가 부재 시 skip 처리)
+- codeforge-pmo plugin v0.1.0 정상 install 가능 (자체 SessionStart hook + regen-agents.sh)
+- marketplace sync 동시 진행 (codeforge v1.0.0 + codeforge-pmo v0.1.0 신규 등록)
+
+### Followups (CFP-37+)
+- CFP-37: codeforge-requirements (RequirementsPL + Domain + Analyst + Researcher 추출)
+- CFP-38: codeforge-test (TestAgent 추출)
+- CFP-39: codeforge-develop (DeveloperPL + role:dev 추출)
+- CFP-40: codeforge-design (가장 마지막 — 가장 큰 표면)
+
 ## [0.22.0] - 2026-04-29
 
 ### CFP-35 (ζ arc) — review_verdict v2 retrofit (Non-BREAKING for wrapper · BREAKING for codeforge-review)

@@ -502,7 +502,7 @@ Codex 라운드 2 진단: review plugin은 Story §9·§10·gate label·phase �
 - [`docs/orchestrator-playbook.md`](../../orchestrator-playbook.md) — write 흐름 §11 갱신 필요
 - [`docs/plugin-design.md`](../../plugin-design.md) — plugin 분리 정책 갱신 필요
 - [`agents/DocsAgent.md`](../../../agents/DocsAgent.md) — scope 축소 대상
-- [`agents/ArchitectAgent.md`](../../../agents/ArchitectAgent.md) · [`agents/DomainAgent.md`](../../../agents/DomainAgent.md) · [`agents/PMOAgent.md`](../../../agents/PMOAgent.md) — 권한 추가 대상
+- [`agents/ArchitectAgent.md`](../../../agents/ArchitectAgent.md) · [`agents/DomainAgent.md`](../../../agents/DomainAgent.md) · [`agents/PMOAgent.md`](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/agents/PMOAgent.md) — 권한 추가 대상
 - `templates/review-pl-base.md` · `templates/review-checklists/` — Phase 1 추출 대상 (CFP-29에서 mclayer/plugin-codeforge-review로 이동 완료, 본 codeforge core repo 에서는 더 이상 존재 안 함)
 
 ### 관련 ADR

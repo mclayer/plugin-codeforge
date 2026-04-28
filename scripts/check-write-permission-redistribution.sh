@@ -49,9 +49,11 @@ assert_allow agents/ArchitectAgent.md "Write(docs/adr/**)"
 assert_allow agents/DomainAgent.md "Edit(docs/domain-knowledge/**)"
 assert_allow agents/DomainAgent.md "Write(docs/domain-knowledge/**)"
 
-# PMOAgent
-assert_allow agents/PMOAgent.md "Edit(docs/retros/**)"
-assert_allow agents/PMOAgent.md "Write(docs/retros/**)"
+# PMOAgent — CFP-36 ζ arc 후 codeforge-pmo plugin으로 이관 → wrapper에 부재 시 skip
+if [[ -f agents/PMOAgent.md ]]; then
+  assert_allow agents/PMOAgent.md "Edit(docs/retros/**)"
+  assert_allow agents/PMOAgent.md "Write(docs/retros/**)"
+fi
 
 # DocsAgent — 4 path deny
 assert_deny agents/DocsAgent.md "Edit(docs/change-plans/**)"
