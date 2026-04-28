@@ -5,6 +5,42 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.18.0] - 2026-04-28
+
+### CFP-28 — Phase 0c · Lint strict 전환 + retro frontmatter backfill (Non-BREAKING)
+
+CFP-27 Phase 0b에서 도입된 4 owner doc path schema lint(`scripts/check-doc-frontmatter.sh` + `scripts/check-doc-section-schema.sh`) 을 warning 모드 → strict 모드 전환. retro 3 file frontmatter backfill + 회고 §1 regex 완화 + legacy change-plan allowlist 도입.
+
+설계 SSOT: [`docs/stories/CFP-28.md`](docs/stories/CFP-28.md) (plugin-meta-na 1-PR 패턴, ADR-005). Phase 0a (CFP-26) → Phase 0b (CFP-27) → 본 Phase 0c (CFP-28) 의 staged ε path 마지막 단계.
+
+### Changed
+- `scripts/check-doc-frontmatter.sh` — strict 전환 (`exit 0` → `sys.exit(1)` on warns), 헤더 주석 갱신
+- `scripts/check-doc-section-schema.sh` — strict 전환 + 회고 §1 regex 완화 (`^## §1 결과` → `^## §1\s+\S` — 회고 종류별 §1 명칭 자유) + legacy change-plan allowlist (CFP-1 ~ CFP-18 중 docs/change-plans/ 존재분 16건 면제)
+- `.github/workflows/lint.yml` — `doc-frontmatter` / `doc-section-schema` job name `(CFP-27 — warning)` → `(CFP-28 — strict)`
+- `.claude-plugin/plugin.json` version 0.17.0 → 0.18.0
+
+### Added
+- `docs/retros/2026-04-27-v0.11.0-sprint-close.md` frontmatter (title/date/sprint_period/cfp_keys/authors/related_stories/sentinel_refs)
+- `docs/retros/2026-04-28-codex-audit-closure-sprint.md` frontmatter
+- `docs/retros/2026-04-28-marketplace-bootstrap-sprint.md` frontmatter
+- `docs/stories/CFP-28.md` — Story file
+- `docs/migration-guide.md` `## v0.17 → v0.18` 섹션 (Non-BREAKING 안내)
+
+### Why
+CFP-27 도입 시점에 명시적으로 "CFP-28 strict 전환" 약속. drift 위험을 silent에서 PR 차단으로 격상. legacy 16 change-plan은 backfill 비용 회피하고 신규 작성에 대해서만 strict 적용 (CFP-19+ 부터 docs/superpowers/{specs,plans}/* 패턴 전환으로 docs/change-plans/ 디렉토리는 사실상 freeze — 미래 backfill 부담 없음).
+
+거부된 대안: legacy 16 change-plan 전부 backfill (busywork, 결정은 commit 이력 + ADR에 이미 보존), 별도 디렉토리 이동 (URL/링크 영향, 보존 가치 낮음), schema 자체 폐기 (consumer 프로젝트 규약은 유지 필요).
+
+### Migration
+**Non-BREAKING for plugin runtime — schema 위반 시 lint.yml CI에서 PR 차단**:
+
+- 신규 `docs/{change-plans,adr,domain-knowledge,retros}/**` 작성 시 [`templates/<doc-type>.md`](templates/) frontmatter + 본문 섹션 schema 준수 필수
+- 회고 §1 명칭 자유 — 첫 메이저 섹션이 `## §1 ...`로 시작하면 통과
+- pre-CFP-27 legacy change-plan(`cfp-1` ~ `cfp-18`)은 자동 면제 — 추가 작업 불필요
+- consumer overlay (`.claude/_overlay/**`) 영향 없음
+
+상세는 [`docs/migration-guide.md`](docs/migration-guide.md) `## v0.17 → v0.18` 섹션 참조.
+
 ## [0.17.0] - 2026-04-28
 
 ### CFP-29 — Phase 1 · codeforge-review plugin 추출 (BREAKING — staged ε strategic payoff)

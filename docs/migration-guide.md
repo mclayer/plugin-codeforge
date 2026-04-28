@@ -13,6 +13,7 @@ updated: 2026-04-24
 
 ## 목차
 
+- [v0.17 → v0.18](#v017--v018-cfp-28-phase-0c--lint-strict-전환--retro-frontmatter-backfill-non-breaking) — Lint strict 전환 + retro frontmatter backfill (Non-BREAKING)
 - [v0.16 → v0.17](#v016--v017-cfp-29-phase-1--codeforge-review-plugin-추출-breaking) — codeforge-review plugin 추출 (BREAKING)
 - [v0.15 → v0.16](#v015--v016-cfp-27-phase-0b--lint-강화--ci-integration-non-breaking) — Lint 강화 + CI Integration (Non-BREAKING)
 - [v0.14 → v0.15](#v014--v015-cfp-26-phase-0a--single-owner-write-권한-재분배) — Single-owner write 권한 재분배 (BREAKING)
@@ -26,6 +27,41 @@ updated: 2026-04-24
 - [v0.3 → v0.4](#v03--v04-stage-2-projectyaml-구조화) — `project.yaml` 도입
 - [v0.2 → v0.3](#v02--v03-generic-dev-roster--preset) — Generic Dev roster + preset
 - [v0.1 → v0.2](#v01--v02-보안-테스트-레인--templates) — 보안 테스트 레인 + templates (non-breaking)
+
+---
+
+## v0.17 → v0.18 (CFP-28 Phase 0c) — Lint strict 전환 + retro frontmatter backfill (Non-BREAKING)
+
+**범위**: CFP-27 Phase 0b 도입된 4 owner doc path schema lint(`scripts/check-doc-frontmatter.sh` + `scripts/check-doc-section-schema.sh`) 을 warning 모드 → strict 모드 전환. 이미 존재하는 retro 3 file frontmatter backfill + 회고 §1 regex 완화 + legacy change-plan allowlist.
+
+**Plugin runtime 영향**: 없음 (Non-BREAKING). 에이전트 동작·overlay 메커니즘·workflow 자동화 모두 무변경.
+
+**CI 영향 (consumer 영향 가능)**:
+
+### 1. 신규 doc 작성 시 schema 강제
+
+이제 다음 path 신규/갱신 시 `lint.yml` CI에서 PR 차단:
+
+| Path | Schema source | 필수 frontmatter | 필수 본문 섹션 |
+|---|---|---|---|
+| `docs/change-plans/**` | `templates/change-plan.md` | title, slug, status, author, created, story | §1 목적 / §2 현재 구조 / §3 도입할 설계 / §4 API 계약 / §7 보안 / §8 Test Contract / §10 ADR 정합성 / §11 데이터 마이그레이션 |
+| `docs/adr/**` | `templates/adr.md` | adr_number, title, status, category, date | ## 상태 / ## 컨텍스트 / ## 결정 / ## 결과 / ## 관련 파일 |
+| `docs/domain-knowledge/**` | `templates/domain-knowledge.md` | title, area, topic_slug, status, updated | ## 정의 / ## 컨텍스트 / ## 핵심 규칙 / ## 경계 / ## 관련 ADR / ## 변경 이력 |
+| `docs/retros/**` | `templates/retro.md` | title, date, sprint_period, cfp_keys, authors | ## §1 ... / ## §2 ... / ## §3 ... / ## §4 ... (제목 자유) |
+
+### 2. Legacy change-plan 자동 면제
+
+- `docs/change-plans/cfp-1` ~ `docs/change-plans/cfp-18`(현재 디렉토리에 존재하는 16건, CFP-3·CFP-17 제외)은 schema 도입 이전 산출물로 자동 면제 (allowlist hardcode)
+- 추가 작업 불필요 — backfill 의무 없음
+
+### 3. 회고 §1 regex 완화
+
+- 기존: `^## §1 결과` strict 매칭 (제목 텍스트 강제)
+- 신규: `^## §1\s+\S` (§1 prefix만 강제, 제목 자유 — closure / cross-Story / sprint / session 회고별 자연스러운 명칭 사용)
+
+### 4. consumer overlay 영향
+
+없음. `.claude/_overlay/**` 변경 의무 없음. 본 lint은 plugin repo 자체 dogfooding 영역.
 
 ---
 
