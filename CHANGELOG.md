@@ -5,6 +5,45 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.21.0] - 2026-04-29
+
+### CFP-34 (ζ arc F3) — Workflow yaml syntax tests + marketplace sync drift detection (Non-BREAKING)
+
+ζ arc 세번째 foundation step. 3 핵심 workflow yaml 의 regex 패턴 fixture 검증 + mclayer/marketplace mirrored 필드 drift CI 자동 감지. CFP-35+ lane plugin 추출 진입 전 Codex round 2 5조건 충족 마무리 단계.
+
+설계 SSOT: [`docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md`](docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md) §5.4. Codex round 2 조건 #3(workflow regex CI 사전 lint) + 조건 #4(marketplace 4-plugin 임계점 전 sync 자동화) 직접 대응.
+
+### Added
+- `scripts/check-workflow-yaml.sh` — 3 workflow (fix-ledger-sync · subissue-from-impl-manifest · phase-gate-mergeable) yaml syntax + 핵심 regex 패턴 존재 + Python re-impl fixture 검증
+- `scripts/check-marketplace-sync.sh` — `.claude-plugin/plugin.json` mirrored 필드 (name/version/description/author) ↔ mclayer/marketplace marketplace.json plugins[name=local] entry 양방향 비교. drift 시 CI fail + sync 안내
+- `.github/workflows/contract-lint.yml` — `workflow-yaml` + `marketplace-sync` job 2종 추가
+
+### Changed
+- `.claude-plugin/plugin.json` version 0.20.0 → 0.21.0
+
+### Why
+CFP-32 (SSOT 도입) + CFP-33 (lint harness)에 이은 ζ arc foundation 마무리. 본 CFP 후 Codex round 2 5조건 모두 충족 → CFP-35 review v2 retrofit 부터 lane plugin 추출 본격 진입 가능.
+
+거부된 대안: marketplace 자동 PR 생성까지 단일 CFP 포함 (cross-repo PAT 설정 + secret 관리 추가 → 본 CFP scope 초과. drift 감지만 우선 도입, 자동 sync PR open 은 token 인프라 후속 CFP), workflow yaml regex 추출 + 직접 실행 (Node.js 설치 + js engine 통합 → 복잡도 대비 가치 낮음).
+
+### Migration
+**Non-BREAKING** — 본 CFP는 lint 추가 + version bump 만. consumer 영향 없음.
+
+- 기존 9 lint job 그대로 + 신규 2 lint job (`workflow-yaml`, `marketplace-sync`)
+- workflow yaml 변경 시 fixture와 drift 시 lint catch — yaml 의 핵심 regex 보호
+- marketplace 동기 의무 자동 enforcement (CFP-24 정책 manual → automated)
+
+### Validation
+- 5 신규 lint 모두 정상 상태 PASS (workflow-yaml 3 fixture, marketplace-sync 양방향 비교)
+- 기존 8 lint 회기 없음
+- 의도적 yaml regex break 도입 → fixture fail 검증
+- 의도적 plugin.json mirrored 필드 변경 (sync 누락) → CI fail 검증
+
+### Followups (CFP-35+)
+- CFP-35: codeforge-review v2 retrofit (review-verdict-v2 신설, 첫 lane self-write 검증)
+- 향후 (별도): marketplace sync 자동 PR 생성 (cross-repo PAT secret 인프라 + auto-PR workflow)
+- 본 CFP 머지 직후: mclayer/marketplace 에 codeforge entry sync (v0.18.0 stale → v0.21.0)
+
 ## [0.20.0] - 2026-04-29
 
 ### CFP-33 (ζ arc F2) — Contract Lint Harness (Non-BREAKING)

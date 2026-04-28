@@ -45,3 +45,26 @@ jobs:
       - run: pip install pyyaml
       - name: Run check-label-registry.sh
         run: bash scripts/check-label-registry.sh
+
+  workflow-yaml:
+    name: workflow yaml regex fixture tests (CFP-34)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Run check-workflow-yaml.sh
+        run: bash scripts/check-workflow-yaml.sh
+
+  marketplace-sync:
+    name: marketplace mirrored fields drift (CFP-34)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run check-marketplace-sync.sh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/check-marketplace-sync.sh
