@@ -6,7 +6,7 @@ current_lane: 설계
 fix_cycle: 0
 
 ✅ 요구사항 — 통합 명세 §3-6 + 도메인 공백 0건
-🔄 설계 — 진행 중 (3/4 deputies)
+🔄 설계 — 진행 중 (4/4 deputies, chief author 통합 중)
    ├─ ✅ CodebaseMapperAgent
    ├─ ✅ RefactorAgent
    ├─ ✅ SecurityArchitectAgent
@@ -18,4 +18,4 @@ fix_cycle: 0
 ⏸ 구현 테스트
 ⏸ 보안 테스트
 
-# Note: 4 deputy 모두 PASS, ArchitectAgent (chief author) 통합 author 진행 중. qualifier "(3/4 deputies)" 는 sub-tree 내 done deputy 수 / 전체 deputy 수.
+# Note: 4 deputy 모두 PASS (4/4), ArchitectAgent (chief author) 통합 author 진행 중. qualifier 는 [done deputy / total deputy] + chief author 별도 표기 패턴.
