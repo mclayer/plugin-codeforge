@@ -5,6 +5,29 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [4.0.0] - 2026-04-29
+
+### CFP-39 (ζ arc) — codeforge-develop plugin extraction (BREAKING)
+
+ζ arc 다섯 번째 lane plugin (parent §5.9). 5 agent + presets/webapp 이전.
+
+### Removed (BREAKING)
+- `agents/{Developer,DataEngineer,InfraEngineer,DeveloperPL,QADeveloper}Agent.md` → mclayer/plugin-codeforge-develop
+- `presets/` 전체 → mclayer/plugin-codeforge-develop
+
+### Changed
+- `CLAUDE.md` 8 → 9 plugin, agent count 13 → 8
+- `CLAUDE.md` write-queue 표 + 외부 plugin listing 갱신
+- 7 broken link → external URL (DeveloperPLAgent, presets/)
+- `.claude-plugin/plugin.json` v3.0.0 → v4.0.0 BREAKING
+
+### Why
+ζ arc §5.9: DeveloperPL의 role:dev roster 동적 discovery + 5 agent + presets 가 응집된 단위. CFP-31 §3.5 거부 (Codex round 2 권고 "overlay 충분")는 wrapper-only end-state 와 충돌이라 폐기 — 본 CFP에서 명시적 이전.
+
+### Followups
+- CFP-40: codeforge-design (last — 가장 큰 표면 7 agent + change-plan/adr templates)
+- CFP-41: ζ arc retro
+
 ## [3.0.0] - 2026-04-29
 
 ### CFP-38 (ζ arc) — codeforge-test plugin extraction (BREAKING)
