@@ -5,6 +5,33 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.14.2] - 2026-04-28
+
+### CFP-23 — `mclayer` marketplace 노출
+
+**Non-BREAKING**. 본 플러그인이 [`mclayer/marketplace`](https://github.com/mclayer/marketplace) 단일 진입점으로 노출됨. 사용자는 `/plugins install codeforge@mclayer`로 설치 가능. 기존 GitHub 좌표 직접 등록 사용자에 영향 없음.
+
+### Added
+- README.md `설치 · 사용` 섹션: `mclayer` marketplace 등록 명령 + `~/.claude/settings.json` 영구 등록 예시
+
+### Why
+v0.14.1까지 marketplace 노출 부재 — 사용자가 GitHub 원본 좌표를 직접 등록해야 했음. `mclayer/marketplace` 별도 wrapper 리포 신설(2026-04-28)로 단일 진입점 확보. 향후 `mclayer/plugin-<X>` 시리즈 추가 시에도 동일 marketplace에서 일괄 설치 가능.
+
+### Migration
+Non-BREAKING — 기존 사용자(직접 GitHub 좌표 등록)는 그대로 유지 가능. 신규/이주 권장 경로:
+
+```jsonc
+// ~/.claude/settings.json
+{
+  "extraKnownMarketplaces": {
+    "mclayer": { "source": { "source": "github", "repo": "mclayer/marketplace" } }
+  },
+  "enabledPlugins": { "codeforge@mclayer": true }
+}
+```
+
+자세한 사항: `mclayer/marketplace` README 참조.
+
 ## [0.14.1] - 2026-04-28
 
 ### CFP-22 — DesignReview checklist 확장 (Codex audit #4·#5·#6)

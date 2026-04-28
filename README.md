@@ -37,7 +37,19 @@ Orchestrator (최상위 Claude 세션)
 ### 1. 플러그인 설치
 
 ```bash
-/plugins install codeforge@<marketplace>
+/plugins marketplace add mclayer/marketplace
+/plugins install codeforge@mclayer
+```
+
+또는 `~/.claude/settings.json`에 영구 등록:
+
+```jsonc
+{
+  "extraKnownMarketplaces": {
+    "mclayer": { "source": { "source": "github", "repo": "mclayer/marketplace" } }
+  },
+  "enabledPlugins": { "codeforge@mclayer": true }
+}
 ```
 
 ### 2. 필수 의존성
