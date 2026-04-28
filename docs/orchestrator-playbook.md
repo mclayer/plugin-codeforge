@@ -10,16 +10,20 @@ related:
   - agents/DomainAgent.md
   - agents/PMOAgent.md
   - agents/ArchitectAgent.md
-  - agents/DesignReviewPLAgent.md
-  - agents/CodeReviewPLAgent.md
   - agents/DeveloperPLAgent.md
   - agents/TestAgent.md
   - agents/DocsAgent.md
+  # Review subsystem (codeforge-review plugin, CFP-29 Phase 1 추출):
+  - codeforge-review:agents/DesignReviewPLAgent.md
+  - codeforge-review:agents/CodeReviewPLAgent.md
+  - codeforge-review:agents/SecurityTestPLAgent.md
 ---
 
 # Orchestrator Playbook
 
-최상위 Claude 세션(이하 **Orchestrator**)의 행동 SSOT. 사용자(Human)가 제공한 요구사항을 받아 24 core 에이전트 + role:dev roster를 조정하는 모든 규약을 담는다.
+최상위 Claude 세션(이하 **Orchestrator**)의 행동 SSOT. 사용자(Human)가 제공한 요구사항을 받아 19 core 에이전트 + codeforge-review plugin 5 review agent + role:dev roster를 조정하는 모든 규약을 담는다.
+
+**CFP-29 Phase 1 (BREAKING v0.17.0) 이후**: 5 review agent (Design/Code/SecurityTest PL + Claude/Codex worker)는 별도 plugin [codeforge-review](https://github.com/mclayer/plugin-codeforge-review)로 추출됨. Orchestrator는 본 playbook의 관점에서 이들을 **외부 plugin agent**로 spawn하며, 결과는 `review_verdict v1` typed contract ([`docs/inter-plugin-contracts/review-verdict-v1.md`](inter-plugin-contracts/review-verdict-v1.md))로 수령한다.
 
 `CLAUDE.md`는 "무엇이 있는가(에이전트 목록·레인·권한 경계)"를 정의하고, 본 playbook은 "어떻게 움직이는가(생명주기·스폰·복원·에스컬레이션)"를 정의한다.
 
@@ -275,7 +279,7 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
 | **SecurityArchitectAgent** | 설계 lane 보안 deputy. 타 deputy 산출물 미수신, 원 소스 직접 독해. trust boundary·auth 모델·credential 흐름·암호학 결정에 대한 보안 설계 권고 산출 → chief author가 Change Plan §7 (보안 설계 섹션, §7.1-§7.5; 외부 입력 무관 시 §7.6 N/A) 에 통합 |
 | **QADeveloperAgent** | Change Plan §8 Test Contract 입력. 매핑표 반환 의무 |
 | **`role: dev` 에이전트** (DeveloperAgent·DataEng·InfraEng·preset·overlay) | 계획서 변경 금지 — 결함 발견 시 즉시 DevPL→ArchitectPLAgent 에스컬레이션 |
-| **DesignReviewPLAgent** | lane=design packet 작성 (`templates/review-checklists/design.md` 인용 + scope_globs + category_enum + severity_overrides). Claude/Codex 통합 워커 병렬 스폰 후 종합. ADR 정합성 체크 P0 고정 |
+| **DesignReviewPLAgent** (codeforge-review plugin) | lane=design packet 작성 (codeforge-review repo의 `templates/review-checklists/design.md` 인용 + scope_globs + category_enum + severity_overrides). Claude/Codex 통합 워커 병렬 스폰 후 종합. ADR 정합성 체크 P0 고정 |
 | **CodeReviewPLAgent** | lane=code packet 작성. Claude/Codex 통합 워커 병렬 스폰 후 종합. DesignReviewPL과 공통 severity 규칙 (base 템플릿 SSOT) |
 | **TestAgent** | 구현 테스트 레인 — 기능 → 성능 순차, baseline 비교 임계 mean:10% |
 | **SecurityTestPLAgent** | 1차 layer = Dependabot/CodeQL/Secret Scanning 결과 `gh api repos/*` 로 fetch → packet에 inline 첨부. 2차 layer = lane=security packet으로 Claude/Codex 통합 워커 병렬 스폰 후 종합. 구현 테스트 PASS 이후 진입 |
@@ -357,7 +361,7 @@ ADR-005 plugin-meta-na 패턴(§8/§9 lane 게이트 면제)으로 진행되는 
 **의무 절차** (push 직전):
 1. 변경 대상 SSOT 식별 (CLAUDE.md / `agents/**` / `templates/**` / `.claude-plugin/plugin.json` / `CHANGELOG.md` / `docs/migration-guide.md` 등)
 2. 영향 받는 invariant-check Step (3 agent count / 6 category enum / 7 migration-guide BREAKING parity / 8 severity_overrides count)을 [`.github/workflows/invariant-check.yml`](../.github/workflows/invariant-check.yml)에서 직접 grep으로 확인
-3. 로컬 dry-run: 해당 step의 핵심 grep·python 로직 1-2줄을 직접 실행해 본 PR 변경 후 PASS 여부 확인 (예: `grep -c "data-migration" templates/review-checklists/design.md agents/DesignReviewPLAgent.md agents/CodexReviewAgent.md`)
+3. 로컬 dry-run: 해당 step의 핵심 grep·python 로직 1-2줄을 직접 실행해 본 PR 변경 후 PASS 여부 확인 (예: `grep -c "data-migration" templates/change-plan.md docs/inter-plugin-contracts/review-verdict-v1.md` — review subsystem 자체 검증은 codeforge-review repo에서)
 4. drift 발견 시 push 전 fix commit 추가, drift 부재 시 push 진행
 
 **근거**: [`docs/retros/2026-04-28-codex-audit-closure-sprint.md`](../docs/retros/2026-04-28-codex-audit-closure-sprint.md) §5. CFP-21 (migration-guide BREAKING regex 미일치) / CFP-22 (DesignReviewPL severity_overrides P1 3건 누락) 모두 push 후 CI fail로 발견 — plan 작성 단계에서 잡혔어야.
@@ -530,7 +534,7 @@ review·테스트 FIX (구현 리뷰·구현 테스트·보안 테스트) 시 De
 
 ### 6.7 Mechanical fast-path (R11, [CFP-19 spec](superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
 
-ReviewPL verdict packet의 `mechanical_category` 필드 (typo / broken-link / minor-naming / comment-only / none — SSOT [`templates/review-pl-base.md`](../templates/review-pl-base.md) §3 R11 절) + severity 조합으로 fast-path 자격 판정:
+ReviewPL verdict packet의 `mechanical_category` 필드 (typo / broken-link / minor-naming / comment-only / none — SSOT codeforge-review repo의 `templates/review-pl-base.md` §3 R11 절) + severity 조합으로 fast-path 자격 판정:
 
 **자격 조건**: `mechanical_category != none` AND (severity = P2 OR (severity = P1 AND 영향 파일 수 = 1))
 
@@ -542,7 +546,7 @@ ReviewPL verdict packet의 `mechanical_category` 필드 (typo / broken-link / mi
 
 **자격 미충족 또는 분류 잘못**: 다음 review iteration이 P0/P1 검출 → 정상 §6.6 cycle.
 
-**제약**: 보안 lane의 injection / credential / CVE / trust-boundary 카테고리는 항상 `mechanical_category = none`이라 fast-path 자격 없음 ([`templates/review-pl-base.md`](../templates/review-pl-base.md) §3 R11 SSOT).
+**제약**: 보안 lane의 injection / credential / CVE / trust-boundary 카테고리는 항상 `mechanical_category = none`이라 fast-path 자격 없음 (codeforge-review repo의 `templates/review-pl-base.md` §3 R11 SSOT).
 
 ---
 

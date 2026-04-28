@@ -155,7 +155,7 @@ ReviewPL verdict packet의 `mechanical_category` 자격 충족 시 (`mechanical_
 3. ArchitectPL 판정 skip — 다음 review iteration이 internal verify
 4. §10 ledger 신규 row 안 매김
 
-자격 분류 SSOT는 [`templates/review-pl-base.md`](../templates/review-pl-base.md) §3 R11 절. 보안 lane의 injection / credential / CVE / trust-boundary 카테고리는 항상 `none`이라 본 fast-path 미적용.
+자격 분류 SSOT는 codeforge-review repo의 `templates/review-pl-base.md` §3 R11 절 (CFP-29 추출). 보안 lane의 injection / credential / CVE / trust-boundary 카테고리는 항상 `none`이라 본 fast-path 미적용.
 
 분류 잘못이면 다음 iteration이 P0/P1 검출 → 정상 §6.6 cycle 회복.
 
