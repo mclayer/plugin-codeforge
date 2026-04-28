@@ -11,6 +11,8 @@ ALLOWLIST=(
   "docs/orchestrator-playbook.md"
   "docs/superpowers/specs/2026-04-25-atlassian-to-github-migration-design.md"
   "docs/superpowers/plans/2026-04-25-atlassian-to-github-migration.md"
+  "docs/superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md"
+  "docs/superpowers/plans/2026-04-28-cfp-26-phase-0a-write-permission-redistribution.md"
   "scripts/check-no-atlassian.sh"
 )
 

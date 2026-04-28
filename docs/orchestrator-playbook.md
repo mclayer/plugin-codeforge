@@ -145,7 +145,7 @@ Story 완료 직후:
 | 응답 종류 | 재스폰 대상 | 전달할 컨텍스트 |
 |-----------|------------|----------------|
 | "사용자 확인 필요" 답변 | RequirementsPLAgent | 답변 내용 + 기존 Story file 경로 |
-| ADR 갱신 승인 | DocsAgent → RequirementsPLAgent | DocsAgent가 ADR 업데이트 후 RequirementsPLAgent 재호출 |
+| ADR 갱신 승인 | ArchitectAgent (ADR direct write) → RequirementsPLAgent | ArchitectAgent가 ADR 업데이트 후 RequirementsPLAgent 재호출 (CFP-26 Phase 0a) |
 | breaking change 승인 | ArchitectPLAgent (chief author 재스폰 의뢰) | ADR 후보 추가 지시 + Change Plan 재수립 |
 | 설계 리뷰 ESCALATE 후 judgment | ArchitectPLAgent (재진입) | 사용자 지시를 Change Plan 갱신 입력으로 전달 → chief author 재스폰. 설계 리뷰 카운터 **리셋** |
 | 구현 리뷰 ESCALATE 후 judgment | ArchitectPLAgent | 동일 — 구현 리뷰 카운터 리셋 |
@@ -203,7 +203,7 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
 [Story 내부 7 레인]
 요구사항:    Orchestrator → RequirementsPLAgent(DomainAgent ∥ Analyst ∥ Researcher 병렬, 셋 다 non-skippable) → PL dedup·상충 조정 → Story file §3-6 갱신
 설계:        Orchestrator → ArchitectPLAgent → (CodebaseMapper ∥ Refactor ∥ SecurityArchitect ∥ TestContractArch ∥ DataMigrationArchitect 병렬) → ArchitectAgent (chief author) 통합 → ArchitectPLAgent 검수 → Change Plan 확정
-                         → DocsAgent (docs/change-plans/<slug>.md commit + Story file §7 미러링)
+                         → ArchitectAgent direct write (docs/change-plans/<slug>.md + docs/adr/ADR-NNN-<slug>.md) + DocsAgent (Story file §7·§11 미러링)
 설계 리뷰:   Orchestrator → DesignReviewPLAgent (lane=design packet 작성) → packet return
              → Orchestrator가 한 메시지에 (ClaudeReviewAgent ∥ CodexReviewAgent) dispatch → PL이 결과 종합 → PASS/FIX (R3, R2 verdict-first)
                          → PASS 시 **2 트랙 병렬** (R7):
@@ -268,7 +268,7 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
 | **RequirementsAnalystAgent** | 공통 입력(Story §1 + ADR)만 수신, 타 에이전트 해석 미포함. Ambiguity 키워드 섹션 생성 의무. codex CLI 필수 |
 | **ResearcherAgent** | 사용자 원문에서 외부 기술·선행사례 관점 키워드 자체 도출, 타 에이전트 산출물 미수신. "조사 불필요" 판정도 명시 반환 (null skip 금지) |
 | **ArchitectPLAgent** | 설계 lane PL. 5 deputy(CodebaseMapper ∥ Refactor ∥ SecurityArchitect ∥ TestContractArchitect ∥ DataMigrationArchitect) 병렬 스폰 후 ArchitectAgent (chief author) 통합 의뢰 → draft 검수. FIX 최종 판정자 (구현 리뷰·구현 테스트·보안 테스트 FAIL 시). Stateless 재스폰. write queue 의뢰 권한 |
-| **ArchitectAgent** | Change Plan §1-§11 chief author + ADR draft author + §8 Test Contract author + §11 데이터 마이그레이션 author. ArchitectPLAgent 산하 deputy. 입력 = 5 deputy 산출물(Mapper / Refactor / SecurityArchitect / TestContractArchitect / DataMigrationArchitect) + Story §1-7. DocsAgent 이중 저장 (`docs/change-plans/<slug>.md` + Story file §7 미러링) 의뢰. Clarification 재스폰 의뢰 권한 |
+| **ArchitectAgent** | Change Plan §1-§11 chief author + ADR draft author + §8 Test Contract author + §11 데이터 마이그레이션 author. ArchitectPLAgent 산하 deputy. 입력 = 5 deputy 산출물(Mapper / Refactor / SecurityArchitect / TestContractArchitect / DataMigrationArchitect) + Story §1-7. `docs/change-plans/<slug>.md` + `docs/adr/ADR-NNN-<slug>.md` **직접 write** (CFP-26 Phase 0a) — Story file §7·§11 미러링은 DocsAgent 의뢰. Clarification 재스폰 의뢰 권한 |
 | **CodebaseMapperAgent** | as-is 변호 역할. 매 설계 레인 진입 시 Refactor·SecurityArchitect·TestContractArchitect·DataMigrationArchitect와 병렬 재스폰, base_sha/scope_paths frontmatter. 타 deputy 산출물 미수신 — 원 소스 직접 독해 |
 | **DataMigrationArchitectAgent** | 데이터 무결성 advocate. 매 설계 레인 진입 시 Mapper·Refactor·SecurityArchitect·TestContractArchitect와 병렬 재스폰. trust boundary와 별개 영역 — schema 진화·rollback·integrity invariant·backfill 결정 산출 → chief author가 Change Plan §11 (§11.1-§11.5; DB 무관 시 §11.6 N/A) 에 통합 |
 | **RefactorAgent** | to-be 혁신 역할. 타 deputy 산출물 미수신, 원 소스 직접 독해. "잠재 변호 논리 예상" 섹션으로 self-identify한 충돌 지점 제출 (chief author가 Mapper 실제 변호와 대조) |
@@ -280,7 +280,7 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
 | **TestAgent** | 구현 테스트 레인 — 기능 → 성능 순차, baseline 비교 임계 mean:10% |
 | **SecurityTestPLAgent** | 1차 layer = Dependabot/CodeQL/Secret Scanning 결과 `gh api repos/*` 로 fetch → packet에 inline 첨부. 2차 layer = lane=security packet으로 Claude/Codex 통합 워커 병렬 스폰 후 종합. 구현 테스트 PASS 이후 진입 |
 | **ClaudeReviewAgent / CodexReviewAgent** | lane-agnostic 워커 ([ADR-001](../docs/adr/ADR-001-review-agent-unification.md)). 호출 PL이 review packet으로 도메인(체크리스트·스코프·category enum·severity 자동 룰) 주입. packet 누락 시 ESCALATE 반환 — generic fallback 금지. 정규화 스키마 P0/P1/P2/P3 + lane 필드 반환. CodexReviewAgent는 codex-companion.mjs 실행 |
-| **DocsAgent** | 단독 writer — GitHub Issue/PR/comment + docs/** 모든 write 요청 수령. 작업 유형·섹션 번호 명시 |
+| **DocsAgent** | GitHub Issue/PR/comment + docs/** write 요청 수령 (단 single-owner 4종은 owner agent direct write — CFP-26 Phase 0a: `docs/change-plans/**`·`docs/adr/**`·`docs/domain-knowledge/**`·`docs/retros/**`). 작업 유형·섹션 번호 명시 |
 
 ### 3.3 컨텍스트 주입 정책
 
@@ -415,8 +415,9 @@ ADR-005 plugin-meta-na 패턴(§8/§9 lane 게이트 면제)으로 진행되는 
 | 트리거 | 갱신 섹션 | Orchestrator가 DocsAgent에 전달할 내용 |
 |--------|----------|---------------------------------------|
 | 신규 Story Issue 생성 직후 | docs/stories/<KEY>.md 신규 생성 + §1-2 (또는 story-init.yml Action이 자동) | 사용자 원문 verbatim + DomainAgent 도메인 해석 |
+| **DomainAgent 지식 공백 발견 시** | `docs/domain-knowledge/<area>/<topic>.md` — **DomainAgent 직접 write** (owner, CFP-26 Phase 0a). DocsAgent 의뢰 불필요 | N/A — owner agent direct write (CFP-26 Phase 0a). DocsAgent 스폰 없음. |
 | RequirementsPLAgent 통합 명세서 확정 | §3-6 | 관련 ADR / 코드 경로 / Analyst / Researcher / 상충 분석 |
-| ArchitectAgent (chief author) Change Plan 확정 + ArchitectPLAgent 검수 | §7 + §11 + `docs/change-plans/<slug>.md` 신규 commit | Change Plan 요약 + Mapper/Refactor/SecurityArchitect/TestContractArchitect/DataMigrationArchitect 통합 결론 |
+| ArchitectAgent (chief author) Change Plan 확정 + ArchitectPLAgent 검수 | §7 + §11 미러링만 DocsAgent 의뢰 — `docs/change-plans/<slug>.md` + `docs/adr/ADR-NNN-<slug>.md` 신규 commit은 **ArchitectAgent direct write** (CFP-26 Phase 0a) | Change Plan §7·§11 Story 미러 요약 + Mapper/Refactor/SecurityArchitect/TestContractArchitect/DataMigrationArchitect 통합 결론 |
 | 설계 리뷰 iteration 종료 | §9.1 "설계 리뷰 Iteration N" | Claude/Codex severity counts + 주요 findings 3-5건 + DesignReviewPL 판정 |
 | 설계 리뷰 PASS | label `gate:design-review-pass` 부착 + Phase 1 PR mergeable | (라벨만, 본문 변경 없음) |
 | Dev/Engineer 구현 완료 | §8 + §8.5 Impl Manifest commit (subissue Action 트리거) | QADev 매핑표 요약 + 담당 에이전트 + 변경 파일 경로 |
@@ -426,12 +427,18 @@ ADR-005 plugin-meta-na 패턴(§8/§9 lane 게이트 면제)으로 진행되는 
 | 보안 테스트 PASS | label `gate:security-test-pass` 부착 + Phase 2 PR mergeable | (라벨만) |
 | FIX 발생 (iteration 단위) | §10 "Iteration N" commit (fix-ledger-sync.yml Action이 자동 mirror+label) | 트리거 · 원인 판정(구현 vs 설계) · 수정 방향 · 결과 |
 | Phase 2 PR merged (최종) | §11 + Issue auto-close | PR 링크 + `status:completed` |
+| **PMOAgent 회고 시** | `docs/retros/<sprint>.md` — **PMOAgent 직접 write** (owner, CFP-26 Phase 0a). Story file §11 요약 링크만 DocsAgent 의뢰 | N/A — owner agent direct write (CFP-26 Phase 0a). DocsAgent 스폰 없음. |
 
 ### 5.2 Story file 읽기 규약
 
 - **필요한 섹션만 읽기**: 프롬프트에 `§X, §Y 참조` 명시 → 에이전트가 `Read(docs/stories/<KEY>.md)` 후 해당 섹션만 참조
 - 전체 file 읽기는 ArchitectAgent (chief author) 설계 진입 1회만 허용 (§1-6 전체 필요)
-- file 변경은 **DocsAgent 독점**
+- file 변경 권한 분담 (CFP-26 Phase 0a 이후):
+  - `docs/change-plans/**` + `docs/adr/**` → **ArchitectAgent direct**
+  - `docs/domain-knowledge/**` → **DomainAgent direct**
+  - `docs/retros/**` → **PMOAgent direct**
+  - `docs/stories/**` (multi-writer) + `docs/**` 그 외 + GitHub Issue/PR/comment + label → **DocsAgent 단독**
+  - 그 외 모든 에이전트는 write queue 의뢰만 — 4 single-owner type(`change-plan`/`adr`/`adr-draft`/`domain-knowledge`)은 deprecated, queue 제출 시 §11.4 deny 규칙 적용
 
 ### 5.3 GitHub Issue body vs Story file
 
@@ -566,7 +573,7 @@ mcp__github__list_issues(state='open', labels=['type:story'])
 | phase:요구사항 | §2·§5·§6 모두 채움 | RequirementsPLAgent 통합 명세서 재확정 단계 재진입 ("사용자 확인 필요" 해소 여부 체크). 일부 관점 재보강 필요 시 clarification 재스폰 |
 | phase:설계 | §7 + §11 초안만 | ArchitectPLAgent — Mapper·Refactor·SecurityArchitect·TestContractArchitect·DataMigrationArchitect **병렬 재스폰** + ArchitectAgent (chief author) 통합 의뢰 (이전 산출물 세션 외 유지 불가, §7/§11 Change Plan 초안만 복원됨) |
 | phase:설계 | §7/§11에 5 deputy 일부만 반영 (부분 완료 resume) | 미반영 쪽 deputy만 **선택 재스폰** + 반영된 쪽은 재활용. §9.0에 "Resume 부분 재스폰" 행 append |
-| phase:설계 | §7 완료 | DocsAgent가 Change Plan 저장 완료 확인 → 설계 리뷰 진입 |
+| phase:설계 | §7 완료 | ArchitectAgent가 Change Plan 저장 완료 보고 + DocsAgent가 Story §7 미러링 완료 확인 → 설계 리뷰 진입 |
 | phase:설계-리뷰 | §9.1 블록 없음 | DesignReviewPLAgent 재스폰 (Claude/Codex 병렬) |
 | phase:설계-리뷰 | §9.1 블록 FIX | ArchitectPLAgent → ArchitectAgent (chief author) 재스폰, Change Plan 갱신 |
 | phase:구현 | §7 완료, §8 비어있음 | Phase 2 PR open 여부 확인. 없으면 DocsAgent 경유 PR open. 있으면 DevPL + QADev 병렬 스폰 |
@@ -811,7 +818,8 @@ DocsAgent는 단독 writer이므로 다중 에이전트 동시 write 의뢰 시 
 
 ```markdown
 ---
-type: issue-comment | story-section | change-plan | adr | adr-draft | domain-knowledge | ledger-append | label-update | pr-create | security-prefetch
+type: issue-comment | story-section | ledger-append | label-update | pr-create | security-prefetch
+# ※ change-plan | adr | adr-draft | domain-knowledge 는 CFP-26 Phase 0a 이후 owner agent direct write — write queue 경유 금지
 story: <KEY>                # 필수 — 디렉토리 이름과 일치
 requester: <AgentName>      # 필수 — 의뢰 에이전트 식별
 issued_at: <ISO 8601>       # 필수 — 큐 진입 시각
@@ -844,10 +852,13 @@ Orchestrator가 DocsAgent를 스폰하면 DocsAgent는:
 2. 파일 frontmatter type 별로 해당 처리:
    - `issue-comment` → `mcp__github__add_issue_comment`
    - `story-section` → `Edit(docs/stories/<KEY>.md)`
-   - `change-plan` → `Write(docs/change-plans/<slug>.md)` 또는 `Edit`
-   - `adr` → `Write(docs/adr/ADR-NNN-<slug>.md)`
-   - `adr-draft` → `Write(docs/adr/ADR-NNN-<slug>.md)` with `status: Proposed` (PMOAgent 발의)
-   - `domain-knowledge` → `Write` 또는 `Edit(docs/domain-knowledge/<area>/<topic>.md)` (frontmatter `area`·`topic` 필드 사용)
+   - `change-plan` → **DocsAgent 처리 불가 (deny)** — ArchitectAgent direct write 전환 (CFP-26 Phase 0a). 큐에 도달하면 skip + Orchestrator 경고
+   - `adr` → **DocsAgent 처리 불가 (deny)** — ArchitectAgent direct write 전환 (CFP-26 Phase 0a). 큐에 도달하면 skip + Orchestrator 경고
+   - `adr-draft` → **DocsAgent 처리 불가 (deny)** — Orchestrator가 ArchitectAgent를 스폰해 `docs/adr/ADR-NNN-<slug>.md` 직접 write (status=Proposed ADR 신설, CFP-26 Phase 0a). 큐에 도달하면 skip + Orchestrator 경고
+   - `domain-knowledge` → **DocsAgent 처리 불가 (deny)** — DomainAgent direct write 전환 (CFP-26 Phase 0a). 큐에 도달하면 skip + Orchestrator 경고
+
+   > **Note**: DocsAgent는 deprecated type 파일 skip 시 drain 완료 요약 return에 `[WARN] deprecated queue type <type> detected at <file> — owner agent direct write 전환 필요 (CFP-26 Phase 0a)` 항목을 포함한다. Orchestrator는 이 warning을 수령 시 해당 source agent에 알림 + 다음 사이클부터 direct write로 전환되었는지 확인.
+
    - `ledger-append` → `Edit(docs/stories/<KEY>.md)` §10 append (fix-ledger-sync.yml가 자동 mirror+label)
    - `label-update` → `mcp__github__issue_write` (label 추가/제거; phase-label-invariant.yml가 single-active 강제)
    - `pr-create` → `mcp__github__create_pull_request`
@@ -1071,13 +1082,15 @@ outputs:
 
 ### 13.4 ADR 후보 발의 절차
 
-PMOAgent가 반복 패턴을 식별해 ADR draft를 write queue에 제출하면, DocsAgent가 `status=Proposed` ADR 파일(`docs/adr/ADR-NNN-<slug>.md`)을 신설. 다음 Story 설계 진입 시 ArchitectAgent (chief author)가 검토해 `status=Accepted` 전이 또는 기각.
+PMOAgent가 반복 패턴을 식별해 ADR draft 제안을 Orchestrator에 전달하면, Orchestrator가 ArchitectAgent를 스폰해 `status=Proposed` ADR 파일(`docs/adr/ADR-NNN-<slug>.md`)을 직접 write (CFP-26 Phase 0a — DocsAgent는 `docs/adr/**` write deny). 다음 Story 설계 진입 시 ArchitectAgent (chief author)가 검토해 `status=Accepted` 전이 또는 기각.
 
 ```
-write queue 파일: .claude-work/doc-queue/<epic>/<seq>-adr-draft.md
-frontmatter type: adr-draft
-body: PMOAgent.md의 "ADR 후보 발의" 템플릿 따름
+# CFP-26 Phase 0a 이후 경로:
+# PMOAgent → (Orchestrator 경유) → ArchitectAgent → docs/adr/ADR-NNN-<slug>.md 직접 write
+# ※ write queue adr-draft type은 DocsAgent deny로 처리 불가 — Orchestrator가 ArchitectAgent 스폰
 ```
+
+ArchitectAgent가 write하는 ADR 파일 본문 구조는 PMOAgent.md의 "ADR 후보 발의" 템플릿을 따른다 (status=Proposed로 신설).
 
 ### 13.5 PMOAgent 보고 기록
 
