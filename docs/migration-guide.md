@@ -13,6 +13,7 @@ updated: 2026-04-24
 
 ## 목차
 
+- [v0.13 → v0.14](#v013--v014) — 설계 lane 6-deputy: DataMigrationArchitectAgent 신설 (BREAKING)
 - [v0.11.0 → v0.12.0](#v0110--v0120) — 설계 lane 5-deputy: TestContractArchitectAgent 신설 (BREAKING)
 - [v0.10.0 → v0.11.0](#v0100--v0110) — 설계 lane 재구조화: ArchitectPLAgent + SecurityArchitectAgent 신설
 - [v0.8 → v0.9](#v08--v09-reviewtest-워커-통합) — **3 lane × 2 vendor = 6 워커 → 2 워커 (BREAKING)**
@@ -22,6 +23,53 @@ updated: 2026-04-24
 - [v0.3 → v0.4](#v03--v04-stage-2-projectyaml-구조화) — `project.yaml` 도입
 - [v0.2 → v0.3](#v02--v03-generic-dev-roster--preset) — Generic Dev roster + preset
 - [v0.1 → v0.2](#v01--v02-보안-테스트-레인--templates) — 보안 테스트 레인 + templates (non-breaking)
+
+---
+
+## v0.13 → v0.14
+
+### 변경 사항
+- **신규 에이전트 1종**: `DataMigrationArchitectAgent` (설계 lane 6번째 deputy, 데이터 무결성 advocate for §11 데이터 마이그레이션)
+- **agent count**: 23 → 24
+- **ArchitectPLAgent**: deputy 4 → 5 (Phase 1 spawn diagram + Phase 1.5 sanity check 1 항목 + 메타-규칙 1번 §11 매핑 1행 추가)
+- **ArchitectAgent (chief author)**: §11 author input 통합 절차 추가 — Change Plan §1-§10 → §1-§11
+- **`templates/change-plan.md`**: §10 다음 §11 데이터 마이그레이션 신설 (§11.1 Schema 영향 / §11.2 Migration 전략 / §11.3 Rollback 경로 / §11.4 Data integrity invariant / §11.5 Backfill / §11.6 N/A)
+- **DesignReview checklist**: §11 audit 절 신설 + 3 P0 차단 룰 (§11 누락 / §11.6 N/A 사유 부재 / DataMigrationArch 매핑 미반영)
+- **lane=design category enum**: `data-migration` 추가 (7 → 8 카테고리)
+- **3-way → 4-way 대립 재명명**: Mapper(보수) / Refactor(혁신) / SecurityArch(공격자) / DataMigrationArch(데이터 무결성)
+- **ADR-007** (Accepted) — DataMigrationArchitectAgent 도입 결정 (ADR-006 패턴 mirror)
+- **CFP-21**: Codex audit #2 (High severity) 직접 closure
+
+### 변경 의도
+- shift-left 데이터 무결성: schema 진화·rollback·integrity invariant·backfill 결정이 설계 단계에서 별도 author input으로 가시화 → 구현 테스트 / 보안 테스트 lane FIX 회귀 비용 감소
+- ADR-004 / ADR-006 패턴 세 번째 적용 — 구조적 정합성 검증 (dogfooding success metric)
+
+### Consumer 액션
+
+#### 진행 중 Story (phase: 설계 / 설계 리뷰)
+1. Change Plan에 §11 데이터 마이그레이션 추가 (DataMigrationArchitectAgent 산출물 통합)
+   - DB·schema·migration이 무관한 Story (예: pure UI / docs-only / plugin meta) → §11.6 N/A + 사유 1줄
+   - DB·schema·migration이 관련된 Story → §11.1-§11.5 작성
+2. ArchitectPLAgent Phase 3 검수 재실행 (메타-규칙 1번에 §11 매핑 추가됨)
+3. DesignReview 재실행 (§11 누락 또는 N/A 사유 부재 시 P0 차단)
+
+#### 신규 Story
+- 자동 적용 — story-init.yml Action이 신규 template 사용
+- consumer overlay에 `has_data_layer: false` 설정 시 DataMigrationArchitectAgent가 항상 §11.6 N/A 결과 반환 (단 사유 1줄 의무)
+
+### 위험·완화
+
+- **위험**: 진행 중 Story가 §11 누락 상태로 설계 리뷰 진입 시 P0 차단
+- **완화**: 본 가이드의 "진행 중 Story" 절차 따라 §11 추가 후 재진입
+
+### 토큰 비용
+
+- 설계 lane peak: 175k → 200k (+25k DataMigrationArch deputy)
+- 1 Story당 5-10k 토큰 추가 추정 (실제 §11 작성 시점에만 소요, §11.6 N/A 케이스는 minimal)
+
+### 자기 적용 paradox
+
+본 CFP-21 자체는 plugin meta paradox로 자기 적용 안 함 (CFP-17/CFP-18/CFP-19/CFP-20 동일 패턴, ADR-005 정합). 본 §11 신설은 **다음 Story부터 발효**.
 
 ---
 

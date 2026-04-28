@@ -40,14 +40,15 @@ permissions:
   ├─ spawn → CodebaseMapperAgent           → as-is 사실 + 유지 근거 + 변경 영향 지도
   ├─ spawn → RefactorAgent                 → to-be 구조 + 결합도 분석 + 최소 변경 경로
   ├─ spawn → SecurityArchitectAgent        → trust boundary + threat model + auth/data 설계
-  └─ spawn → TestContractArchitectAgent    → §8 커버리지 후보 + 경계 조건 + invariant + Perf Baseline 타당성
+  ├─ spawn → TestContractArchitectAgent    → §8 커버리지 후보 + 경계 조건 + invariant + Perf Baseline 타당성
+  └─ spawn → DataMigrationArchitectAgent   → §11 schema 영향 + migration 전략 + rollback + integrity invariant
 ```
 
-4 deputy 모두 공통 입력(코드 + Story §1-7 + 관련 ADR) 직접 fetch. 상호 산출물 미참조 (독립성 보장).
+5 deputy 모두 공통 입력(코드 + Story §1-7 + 관련 ADR) 직접 fetch. 상호 산출물 미참조 (독립성 보장).
 
 ### Phase 1.5: Fail-fast pre-synthesis check (R8, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
 
-Phase 1에서 4 deputy 산출물 수령 직후 (Phase 2 chief author 호출 전) **빠른 sanity check** 수행. 결격 deputy detected 시 즉시 clarification 재spawn 의뢰 → 통합 단계 도달 전 cycle 단축.
+Phase 1에서 5 deputy 산출물 수령 직후 (Phase 2 chief author 호출 전) **빠른 sanity check** 수행. 결격 deputy detected 시 즉시 clarification 재spawn 의뢰 → 통합 단계 도달 전 cycle 단축.
 
 **Sanity check 항목** (deputy 산출물 단위, 메타-규칙 1·2의 light version):
 1. **§섹션 author input 표면 형식**: 각 deputy가 자신의 §섹션에 대한 input 절을 산출했는가
@@ -55,6 +56,7 @@ Phase 1에서 4 deputy 산출물 수령 직후 (Phase 2 chief author 호출 전)
    - RefactorAgent → §3 도입할 설계 input + §6 리팩터링 선행 input
    - SecurityArchitectAgent → §7 보안 설계 input (§7.1-§7.5 또는 §7.6 N/A)
    - TestContractArchitectAgent → §8 Test Contract author input
+   - DataMigrationArchitectAgent → §11 데이터 마이그레이션 input (§11.1-§11.5 또는 §11.6 N/A)
 2. **Story §1 cross-ref 존재**: 각 deputy 산출물이 Story file §1 사용자 원문에 대한 명시적 참조 (인용 또는 anchor link)를 포함하는가
 3. **외부 입력 무결성**: deputy가 수신한 input(코드 경로 + 관련 ADR + Change Plan 초안)이 frontmatter에 명시한 scope와 일치하는가
 
@@ -66,8 +68,8 @@ Phase 1에서 4 deputy 산출물 수령 직후 (Phase 2 chief author 호출 전)
 
 ```
 [본 PL → ArchitectAgent (chief author)]
-  with input: 4 deputy outputs + Story §1-7 + 관련 ADR
-  → output: Change Plan §1-§10 draft + 신규 ADR draft + §8 Test Contract
+  with input: 5 deputy outputs + Story §1-7 + 관련 ADR
+  → output: Change Plan §1-§11 draft + 신규 ADR draft + §8 Test Contract + §11 데이터 마이그레이션
   → DocsAgent 경유 docs/change-plans/<slug>.md 저장 의뢰
 ```
 
@@ -80,15 +82,16 @@ Phase 1에서 4 deputy 산출물 수령 직후 (Phase 2 chief author 호출 전)
    - §3·§6 → RefactorAgent 제안 범위 준수
    - §7 → SecurityArchitectAgent 위협-완화 매핑 반영 완결성
    - §8 → TestContractArchitectAgent 커버리지 후보 통합 + chief author 채택/반박 정합성
+   - §11 → DataMigrationArchitectAgent 마이그레이션 안전성 매핑 (§11.1-§11.5 schema 영향 + 전략 + rollback + invariant + backfill 또는 §11.6 N/A) 반영 완결성
    각 deputy 산출물의 chief author 채택/반박 근거를 Change Plan에서 확인
-2. **§섹션 누락 차단** — Change Plan §7 보안 설계 / §8 Test Contract / §10 ADR 판단 누락 시 차단 (Story file §10 FIX Ledger와 namespace 구분)
+2. **§섹션 누락 차단** — Change Plan §7 보안 설계 / §8 Test Contract / §10 ADR 판단 / §11 데이터 마이그레이션 누락 시 차단 (Story file §10 FIX Ledger와 namespace 구분)
 
 PASS → Orchestrator에 DesignReview lane 진입 요청.
 RETURN → ArchitectAgent 재스폰 의뢰 (clarification context + 누락 항목).
 
 ## Clarification 재스폰 trigger
 
-본 PL 또는 deputy 산출물 검수 중 추가 분석이 필요하면 Orchestrator에 "<Mapper|Refactor|SecurityArch|TestContractArch|Architect> 재스폰 요청 + clarification context + 이전 출력 pointer" 전달. Orchestrator가 해당 에이전트를 신규 스폰 (one-shot 제약상 재스폰이 유일한 continuous-dialog 대체).
+본 PL 또는 deputy 산출물 검수 중 추가 분석이 필요하면 Orchestrator에 "<Mapper|Refactor|SecurityArch|TestContractArch|DataMigrationArch|Architect> 재스폰 요청 + clarification context + 이전 출력 pointer" 전달. Orchestrator가 해당 에이전트를 신규 스폰 (one-shot 제약상 재스폰이 유일한 continuous-dialog 대체).
 
 ## FIX 루프 최종 원인 판정자
 
@@ -130,7 +133,7 @@ DeveloperPLAgent의 1차 원인 진단을 Orchestrator 경유로 수령 후 본 
 
 - Write/Edit 권한 없음 — 구현은 Dev 계열 위임, 문서화는 DocsAgent 위임
 - 문서화는 DocsAgent 경유 (GitHub Issue 코멘트·Story file·Change Plan 저장 전부)
-- ArchitectAgent + Mapper + Refactor + SecurityArch + TestContractArch **5 deputy 모두 병렬 수령** 없이 단독 설계 결정 금지 (한 deputy만 수령한 상태에서 Architect 통합 author 진입 금지)
+- ArchitectAgent + Mapper + Refactor + SecurityArch + TestContractArch + DataMigrationArch **6 deputy (chief 포함) 모두 병렬 수령** 없이 단독 설계 결정 금지 (한 deputy만 수령한 상태에서 Architect 통합 author 진입 금지)
 - Change Plan §7 / §8 누락 금지 — DesignReview가 P0 차단
 
 ## 스킬

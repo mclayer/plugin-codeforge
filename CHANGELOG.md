@@ -5,6 +5,34 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.14.0] - 2026-04-28 (BREAKING)
+
+### CFP-21 — DataMigrationArchitectAgent (Codex audit #2)
+
+**BREAKING**. ADR-004 §"후속 조치" #2 직접 적용. ADR-006 (TestContractArch precedent) 패턴 그대로 차용 — shift-left 데이터 무결성 advocate. 본 plugin은 자기 적용 안 함 (paradox 처리, ADR-005 plugin-meta-na).
+
+### Added
+- `agents/DataMigrationArchitectAgent.md` (신설, 6번째 deputy)
+- ADR-007 (Accepted) — DataMigrationArchitectAgent 도입 결정
+- `templates/change-plan.md` §11 데이터 마이그레이션 (§11.1 Schema 영향 / §11.2 Migration 전략 / §11.3 Rollback 경로 / §11.4 Data integrity invariant / §11.5 Backfill / §11.6 N/A)
+- `templates/review-checklists/design.md` §11 audit 절 + 3 P0 차단 룰 (누락 / N/A 사유 부재 / DataMigrationArch 매핑 미반영)
+- lane=design category enum: `data-migration` (7 → 8 카테고리)
+
+### Changed
+- agent count: 23 → 24
+- ArchitectPLAgent: deputy 4 → 5 (Phase 1.5 sanity check 1 항목 + 메타-규칙 1번 §11 매핑 1행 추가)
+- ArchitectAgent: deputy 5인 산출물 통합 + Change Plan §1-§10 → §1-§11 + §11 author input 절차
+- 4 deputy md (Mapper / Refactor / SecurityArch / TestContractArch): cross-ref 1줄 (DataMigrationArch §11 author input + 4-way 대립 참여)
+- CLAUDE.md: 24 core, 다이어그램, Never-skippable, 책임 매트릭스 6행 (§11 5 항목 + 누락/N/A 1행), FIX decision table 1행 추가, 3-way → 4-way 대립 재명명, ArchitectAgent 재스폰 §1-§11
+- orchestrator-playbook.md: 24 core, deputy 5인 일괄, 토큰 budget 175k → 200k peak, §3.1 스폰 시퀀스, §3.2 PL 표 DataMigrationArch 행, §14 progress dashboard 5/5 deputies
+
+### Migration
+- BREAKING: agent count 23 → 24 (DataMigrationArchitectAgent 추가)
+- BREAKING: Change Plan template §1-§10 → §1-§11 (신규 §11 데이터 마이그레이션)
+- BREAKING: DesignReview checklist §11 누락 차단 룰 추가
+- Consumer 액션: 진행 중 Story (phase: 설계 / 설계 리뷰)는 §11 추가 후 ArchitectPLAgent 검수 재실행. Plugin meta / docs-only / pure UI Story는 §11.6 N/A 사유 1줄 명시
+- 자세한 사항: [docs/migration-guide.md](docs/migration-guide.md) v0.13.0 → v0.14.0 절
+
 ## [0.13.0] - 2026-04-28
 
 ### CFP-19 — 오케스트레이션 병렬화 (R1-R11 Tier 1+2)

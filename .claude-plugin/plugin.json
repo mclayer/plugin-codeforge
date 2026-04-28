@@ -1,7 +1,7 @@
 {
   "name": "codeforge",
-  "version": "0.13.0",
-  "description": "Claude Code 범용 SW 개발 오케스트레이션 플러그인 — 23 core 에이전트 + role:dev 동적 roster · 7 레인 구조로 요구사항부터 보안 테스트까지 자율 실행. Lane-agnostic review 워커 통합 (ADR-001) · Plugin self-application dogfooding · Overlay + preset · project.yaml structured 상수 (SessionStart hook schema 검증 + Project Config Packet 자동 주입) · GitHub Actions CI.",
+  "version": "0.14.0",
+  "description": "Claude Code 범용 SW 개발 오케스트레이션 플러그인 — 24 core 에이전트 + role:dev 동적 roster · 7 레인 구조로 요구사항부터 보안 테스트까지 자율 실행. Lane-agnostic review 워커 통합 (ADR-001) · Plugin self-application dogfooding · Overlay + preset · project.yaml structured 상수 (SessionStart hook schema 검증 + Project Config Packet 자동 주입) · GitHub Actions CI.",
   "author": {
     "name": "Josh"
   },

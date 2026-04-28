@@ -133,6 +133,42 @@ story: <KEY>   # GitHub Story Issue key, e.g. PLG-7
 - Change Plan 결정이 기존 ADR과 일치 / 주의 / 위반 (위반 시 신규 ADR 필요)
 - 신규 ADR 필요 여부 (새 ADR은 [`adr.md`](adr.md) 템플릿 따름)
 
+### §11. 데이터 마이그레이션 (DataMigrationArchitectAgent 입력 — 누락 시 DesignReview P0 차단)
+
+DataMigrationArchitectAgent의 산출물을 ArchitectAgent (chief author)가 통합. SecurityArchitect §7 동형 패턴 — 외부 입력·schema·migration 무관 시 §11.6 N/A 명시 + 사유 1줄. 누락 시 DesignReview P0 차단 ([CFP-21 spec](../docs/superpowers/specs/2026-04-28-cfp-21-datamigration-architect-design.md)).
+
+#### §11.1 Schema 변경 영향
+- 변경 대상 테이블/컬렉션/인덱스/뷰 + 변경 유형 (ADD / MODIFY / DROP)
+- 기존 데이터 행/문서 수 추정 + impact 분석 (테이블 크기 / 트래픽 / 의존 service)
+- FK / unique / check constraint 영향
+
+#### §11.2 Migration 전략
+- 마이그레이션 방식 (online schema migration / offline / blue-green / dual-write / expand-contract / shadow table)
+- Lock 시간 추정 + downtime 허용 여부
+- Backward / forward compatibility (구버전 코드↔새 schema 양방향)
+- 도구 (consumer 환경 — 예: pt-online-schema-change / gh-ost / Liquibase / Flyway / Prisma migrate / Alembic)
+
+#### §11.3 Rollback 경로
+- 실패 시 rollback 스크립트/절차
+- Rollback이 데이터 손실 동반하는 지점 명시
+- Point of no return 지점 (예: DROP COLUMN 후 데이터 복구 불가)
+- Rollback 검증 절차 (production 적용 전 staging 시뮬레이션)
+
+#### §11.4 Data integrity invariant
+- Migration 전후 불변식 (row count 보존 / FK 정합성 / NULL 비율 / unique 위반 없음)
+- 검증 쿼리·체크포인트 (pre-check / post-check)
+- 불일치 감지 시 alert / halt 정책
+
+#### §11.5 Backfill / 기존 데이터 처리
+- Default value 정책 (nullable vs NOT NULL with default)
+- Backfill 배치 전략 (chunk size / throttle / lock 회피 / replication lag)
+- 진행률 모니터링 + resume 가능성
+
+#### §11.6 N/A 명시 (DB·migration 무관 시)
+- "본 Story는 데이터 layer 변경 없음 — migration 분석 N/A"
+- 근거 1줄 (예: "내부 docs/templates 수정만, schema 변경 0개")
+- 사유 누락 시 DesignReview P0 차단
+
 ---
 
 ## DocsAgent 저장·미러링 의무
@@ -143,5 +179,5 @@ story: <KEY>   # GitHub Story Issue key, e.g. PLG-7
 
 ## 구현 진입 조건
 
-- Change Plan 모든 섹션(§1-10) 존재 + DesignReview PASS
+- Change Plan 모든 섹션(§1-§11) 존재 + DesignReview PASS
 - Dev 스폰 전 Change Plan 저장 완료 필수
