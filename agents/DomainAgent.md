@@ -139,7 +139,7 @@ permissions:
 
 RequirementsPLAgent는 이 출력을 Analyst·Researcher 산출물과 **병렬 수령** 후 dedup·상충 조정 단계에서 통합. 본 산출물이 Analyst·Researcher 프롬프트로 전달되지 않는다 (독립 관점 유지).
 
-## Domain Knowledge 페이지 생성·갱신 의뢰 템플릿 (write queue 제출)
+## Domain Knowledge 페이지 직접 write + write queue drain 추적 템플릿
 
 ```markdown
 ---
