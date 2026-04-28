@@ -350,6 +350,20 @@ Source: <자동 — Orchestrator §3B Preflight>
 
 DocsAgent는 `mcp__github__add_issue_comment` 1회 호출. 코멘트 prefix는 `[<phase>] Orchestrator: Preflight {PASS|FAIL}`. 기록 누락 시 PMO 완료 회고에서 P1 결함으로 감사 보고됨.
 
+### 3B.5 plugin-meta-na PR pre-push 자가 검증 (Codex audit closure sprint 회고 §5 운영 개선 #1)
+
+ADR-005 plugin-meta-na 패턴(§8/§9 lane 게이트 면제)으로 진행되는 plugin 자기 적용 PR은 일반 lane 리뷰를 우회하므로 **author가 push 직전 로컬 invariant-check 자가 검증 의무**.
+
+**의무 절차** (push 직전):
+1. 변경 대상 SSOT 식별 (CLAUDE.md / `agents/**` / `templates/**` / `.claude-plugin/plugin.json` / `CHANGELOG.md` / `docs/migration-guide.md` 등)
+2. 영향 받는 invariant-check Step (3 agent count / 6 category enum / 7 migration-guide BREAKING parity / 8 severity_overrides count)을 [`.github/workflows/invariant-check.yml`](../.github/workflows/invariant-check.yml)에서 직접 grep으로 확인
+3. 로컬 dry-run: 해당 step의 핵심 grep·python 로직 1-2줄을 직접 실행해 본 PR 변경 후 PASS 여부 확인 (예: `grep -c "data-migration" templates/review-checklists/design.md agents/DesignReviewPLAgent.md agents/CodexReviewAgent.md`)
+4. drift 발견 시 push 전 fix commit 추가, drift 부재 시 push 진행
+
+**근거**: [`docs/retros/2026-04-28-codex-audit-closure-sprint.md`](../docs/retros/2026-04-28-codex-audit-closure-sprint.md) §5. CFP-21 (migration-guide BREAKING regex 미일치) / CFP-22 (DesignReviewPL severity_overrides P1 3건 누락) 모두 push 후 CI fail로 발견 — plan 작성 단계에서 잡혔어야.
+
+**적용 범위**: plugin-meta-na PR만 (production code Story는 일반 lane Preflight + DesignReview/CodeReview/SecurityTest가 자동 검증). consumer overlay 적용 PR은 본 절차 비대상.
+
 ---
 
 ## 4. 병렬 스폰 판단
