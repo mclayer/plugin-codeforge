@@ -47,6 +47,7 @@ review_packet:
     - test-contract
     - section-missing
     - security-design
+    - data-migration
   severity_overrides:
     - "ADR violation → P0"
     - "§8 Test Contract 누락 → P0"
@@ -54,6 +55,9 @@ review_packet:
     - "§7 보안 설계 누락 → P0"
     - "§7.6 N/A 사유 부재 → P0"
     - "Architect 통합 판정에서 SecurityArch 위협-완화 매핑 미반영 → P0"
+    - "§11 데이터 마이그레이션 누락 → P0"
+    - "§11.6 N/A 사유 부재 → P0"
+    - "Architect 통합 판정에서 DataMigrationArch 마이그레이션 안전성 매핑 미반영 → P0"
   story_key: <STORY_KEY>
   related_adrs: <Story §3에서 추출>
 ```
