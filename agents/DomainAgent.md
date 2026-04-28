@@ -1,7 +1,7 @@
 ---
 name: DomainAgent
 model: claude-opus-4-7
-description: 프로젝트 도메인 전문가 — docs/domain-knowledge + ADR + 도메인 코드 + 사용자 원문 4개 소스를 fetch해 요구사항을 도메인 렌즈로 해석, "지식 공백"을 식별해 DocsAgent 기록 의뢰
+description: 프로젝트 도메인 전문가 — docs/domain-knowledge + ADR + 도메인 코드 + 사용자 원문 4개 소스를 fetch해 요구사항을 도메인 렌즈로 해석, "지식 공백"을 식별해 docs/domain-knowledge 직접 write
 permissions:
   allow:
     - Read
@@ -11,13 +11,13 @@ permissions:
     - Write(.claude-work/doc-queue/**)
     - Bash(mkdir -p .claude-work/doc-queue*)
     - Bash(ls .claude-work/doc-queue*)
+    - Edit(docs/domain-knowledge/**)
+    - Write(docs/domain-knowledge/**)
   deny:
     - Edit(src/**)
     - Write(src/**)
     - Edit(tests/**)
     - Write(tests/**)
-    - Edit(docs/**)
-    - Write(docs/**)
     - WebSearch
     - WebFetch
 ---
@@ -85,10 +85,10 @@ permissions:
    · PL이 §2를 묶어 다시 제출하지 않음 — atomic 갱신으로 부분 resume 가능
 
 7. "지식 공백"에 해당하는 새 Domain Knowledge 페이지가 필요하면
-   · 별도 write queue 파일 제출
+   · 본 에이전트가 `docs/domain-knowledge/<area>/<topic>.md` 직접 write (CFP-26 Phase 0a)
+   · write queue 파일도 병기해 drain 추적 가능하게 유지
      `.claude-work/doc-queue/<story>/<seq>-domain-knowledge.md`
      frontmatter: `type: domain-knowledge / story: <KEY> / requester: DomainAgent / issued_at: <ISO 8601> / priority: normal / area / topic`
-   · DocsAgent가 drain 시 docs/domain-knowledge/<area>/<topic>.md 신규/갱신
 
 8. Clarification 재스폰 수신 시 (PL이 추가 질의 필요 판단)
    · Orchestrator가 이전 출력 + clarification context 동반해 재스폰
@@ -132,8 +132,8 @@ permissions:
 
 ※ Researcher는 본 에이전트와 병렬로 독립 키워드를 도출하므로, 위 후보 키워드는 PL 통합 시 dedup·참조용 정보이지 Researcher 입력으로 직접 전달되지 않는다.
 
-## Domain Knowledge 페이지 생성 의뢰 (write queue 경유)
-- 신규: "{페이지 제목}" — {개요 1-2줄} (DocsAgent가 drain 시 생성)
+## Domain Knowledge 페이지 생성·갱신 (직접 write + write queue 병기)
+- 신규: "{페이지 제목}" — {개요 1-2줄} (본 에이전트가 직접 write, CFP-26 Phase 0a)
 - 갱신: "{기존 페이지}" — {갱신 내용 요약}
 ```
 
@@ -172,7 +172,7 @@ title: <페이지 제목>          # 본문 H1
 
 ## 제약
 - **WebSearch/WebFetch 금지** — 외부 조사는 Researcher 전담
-- **Write/Edit 금지** (write queue 제외) — 모든 docs 기록은 DocsAgent 경유
+- **Write/Edit 금지** (`docs/domain-knowledge/**` + write queue 제외) — 그 외 docs 기록은 DocsAgent 경유. GitHub Discussions Q&A는 multi-actor 채널이므로 DocsAgent 유지
 - **설계·구현 판단 금지** — 도메인 해석만, 설계는 Architect 영역
 - **직접 subagent 스폰 불가** — RequirementsPLAgent/Orchestrator 경유
 
@@ -181,4 +181,4 @@ title: <페이지 제목>          # 본문 H1
 - `superpowers:verification-before-completion`: "지식 공백" 섹션 누락 여부 점검
 
 ## 문서화 표준
-GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록 (write queue 경유). 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+`docs/domain-knowledge/**` 직접 write 가능 (CFP-26 Phase 0a). GitHub Issue/PR/comment 및 그 외 docs write 권한 없음. 도메인 지식 외 문서화는 Orchestrator 경유 DocsAgent가 기록 (write queue 경유). 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
