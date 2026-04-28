@@ -5,6 +5,28 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.14.1] - 2026-04-28
+
+### CFP-22 — DesignReview checklist 확장 (Codex audit #4·#5·#6)
+
+**Non-BREAKING**. ADR-004 §"후속 조치" #4·#5·#6 직접 적용. 새 deputy 없음, 새 §섹션 없음 — 기존 design.md에 3 audit 섹션만 추가.
+
+### Added
+- design.md: §4 API 호환 감사 (Codex #5)
+- design.md: §3·§4 관측성 감사 (Codex #4)
+- design.md: §3 SLO 감사 (Codex #6)
+- lane=design category enum: api-compatibility / observability / slo-missing (3개 추가, 8 → 11)
+- DesignReviewPL severity_overrides: P0 3건 추가 (조건부 — 공개 API·SLA·boundary만)
+- CodexReviewAgent lane=design prompt: auto-P0 3건 추가
+
+### Why
+Codex audit #4 (관측성) / #5 (API 호환) / #6 (SLO) 모두 설계 시점 누락 위험 — 운영 단계에서 발견 시 비싼 회귀. shift-left 정합성 (ADR-004 / ADR-006 / ADR-007 동일 trade-off, 단 새 deputy 불필요).
+
+### Migration
+Non-BREAKING — 기존 Story 진행 중인 경우 새 audit 룰은 다음 DesignReview 진입 시 자동 적용. P0 룰은 조건부 (공개 API·SLA·boundary 컴포넌트만) — 내부 도구·docs-only는 P1 또는 N/A 사유 1줄로 처리.
+
+자세한 사항: [docs/superpowers/specs/2026-04-28-cfp-22-design-checklist-expansion.md](docs/superpowers/specs/2026-04-28-cfp-22-design-checklist-expansion.md)
+
 ## [0.14.0] - 2026-04-28 (BREAKING)
 
 ### CFP-21 — DataMigrationArchitectAgent (Codex audit #2)
