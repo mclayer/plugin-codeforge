@@ -5,6 +5,29 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [3.0.0] - 2026-04-29
+
+### CFP-38 (ζ arc) — codeforge-test plugin extraction (BREAKING)
+
+ζ arc 네 번째 lane plugin 추출 (parent §5.8). TestAgent 단독 + owner doc 부재 — 가장 단순한 lane.
+
+### Removed (BREAKING)
+- `agents/TestAgent.md` → mclayer/plugin-codeforge-test
+
+### Changed
+- `CLAUDE.md` 필수 플러그인 7 → 8종 (codeforge-test 추가). agent count 14 → 13
+- `CLAUDE.md` write-queue 표 — TestAgent 제거
+- `docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md` 2건 broken link → external URL
+- `.claude-plugin/plugin.json` v2.0.0 → v3.0.0 BREAKING
+
+### Why
+ζ arc §5.8: 가장 단순한 lane (1 agent + owner doc 부재) — Codex sequencing 권고대로 review/pmo/requirements 검증 후 진입.
+
+### Followups
+- CFP-39: codeforge-develop (5 agent + presets, role:dev 동적 roster)
+- CFP-40: codeforge-design (7 agent + change-plan/adr templates — 가장 큰 표면, last)
+- CFP-41: ζ arc retro
+
 ## [2.0.0] - 2026-04-29
 
 ### CFP-37 (ζ arc) — codeforge-requirements plugin extraction (BREAKING)

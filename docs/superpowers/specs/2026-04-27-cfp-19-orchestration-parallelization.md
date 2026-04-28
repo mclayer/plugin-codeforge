@@ -139,7 +139,7 @@ Track B는 Track A 완료 시점에 PR open 준비 완료 → 즉시 `mcp__githu
 
 **제약**: 성능 baseline 측정이 기능 테스트 부산물 사용 시 의존성 확인 필요 (consumer overlay에서 정의). 의존 시 sequential fallback.
 
-**파일**: [agents/TestAgent.md](../../../agents/TestAgent.md) (subset arg), [docs/orchestrator-playbook.md](../../orchestrator-playbook.md) §스폰 시퀀스 §[구현 테스트].
+**파일**: [agents/TestAgent.md](https://github.com/mclayer/plugin-codeforge-test/blob/main/agents/TestAgent.md) (subset arg), [docs/orchestrator-playbook.md](../../orchestrator-playbook.md) §스폰 시퀀스 §[구현 테스트].
 
 ### 2.10 R10 — SecurityTestPL 1차 layer pre-fetch (B10 해소, Tier 2)
 
@@ -182,7 +182,7 @@ Track B는 Track A 완료 시점에 PR open 준비 완료 → 즉시 `mcp__githu
 - `codeforge-review:agents/SecurityTestPLAgent.md` — same + R10 cache 첨부
 - [agents/ArchitectPLAgent.md](../../../agents/ArchitectPLAgent.md) — fail-fast pre-synthesis (R8) + parallel diagnosis (R4)
 - [agents/DeveloperPLAgent.md](../../../agents/DeveloperPLAgent.md) — parallel diagnosis (R4) + manifest review (R5) + fast-path (R11)
-- [agents/TestAgent.md](../../../agents/TestAgent.md) — subset arg (R9)
+- [agents/TestAgent.md](https://github.com/mclayer/plugin-codeforge-test/blob/main/agents/TestAgent.md) — subset arg (R9)
 
 총 11개 파일. ADR 변경 0건 (Non-BREAKING).
 
