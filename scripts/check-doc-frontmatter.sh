@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
 # CFP-27 Phase 0b — 도입 (warning 모드)
 # CFP-28 Phase 0c — strict 전환 (exit=1 on warnings)
-# 검사: 4 owner doc path 의 frontmatter 필수 필드
+# CFP-32 (ζ arc F1) — docs/inter-plugin-contracts/ 신규 path 추가
+# 검사: 5 owner doc path 의 frontmatter 필수 필드
 #
 # Path / 필수 frontmatter 필드 source:
-#   - docs/change-plans/**     templates/change-plan.md frontmatter (title, slug, status, author, created, story)
-#   - docs/adr/**              templates/adr.md          (adr_number, title, status, category, date)
-#   - docs/domain-knowledge/** templates/domain-knowledge.md (title, area, topic_slug, status, updated)
-#   - docs/retros/**           templates/retro.md         (title, date, sprint_period, cfp_keys, authors)
+#   - docs/change-plans/**            templates/change-plan.md frontmatter (title, slug, status, author, created, story)
+#   - docs/adr/**                     templates/adr.md          (adr_number, title, status, category, date)
+#   - docs/domain-knowledge/**        templates/domain-knowledge.md (title, area, topic_slug, status, updated)
+#   - docs/retros/**                  templates/retro.md         (title, date, sprint_period, cfp_keys, authors)
+#   - docs/inter-plugin-contracts/**  registry kind: {kind, registry, version, status, authors}
+#                                     ※ review-verdict-v1.md는 CFP-29 legacy — allowlist 면제
+#                                       (CFP-33 contract harness에서 backfill)
 #
 # Strict 모드: warning 발견 시 exit 1 → CI에서 PR 차단. 신규 작성은 templates/<doc-type>.md schema 준수 필수.
 set -euo pipefail
@@ -28,6 +32,13 @@ REQUIRED = {
     "docs/adr":          {"adr_number", "title", "status", "category", "date"},
     "docs/domain-knowledge": {"title", "area", "topic_slug", "status", "updated"},
     "docs/retros":       {"title", "date", "sprint_period", "cfp_keys", "authors"},
+    "docs/inter-plugin-contracts": {"kind", "registry", "version", "status", "authors"},
+}
+
+# Legacy allowlist — CFP-29 review-verdict-v1.md는 본 schema 도입 이전 산출물.
+# CFP-33 contract harness에서 backfill 후 allowlist 제거.
+LEGACY_INTER_PLUGIN_CONTRACTS = {
+    "review-verdict-v1.md",
 }
 
 warns = []
@@ -39,6 +50,10 @@ for prefix, fields in REQUIRED.items():
         # README 또는 index 파일은 schema 대상 아님
         if md.name.lower() in {"readme.md", "index.md"}:
             continue
+        # Legacy inter-plugin-contracts allowlist (path-scoped)
+        if prefix == "docs/inter-plugin-contracts":
+            if md.name in LEGACY_INTER_PLUGIN_CONTRACTS:
+                continue
         text = md.read_text(encoding="utf-8")
         if not text.startswith("---\n"):
             warns.append(f"{md}: frontmatter 부재")
@@ -63,7 +78,7 @@ if warns:
     print("strict 모드 — schema 위반 시 PR 차단. 신규 작성은 templates/<doc-type>.md frontmatter schema 준수 필수.")
     sys.exit(1)
 
-print("✓ CFP-28 doc-frontmatter: 4 owner path 전부 schema 충족")
+print("✓ CFP-32 doc-frontmatter: 5 owner path 전부 schema 충족")
 PY
 
 echo ""
