@@ -13,6 +13,7 @@ updated: 2026-04-24
 
 ## 목차
 
+- [v0.16 → v0.17](#v016--v017-cfp-29-phase-1--codeforge-review-plugin-추출-breaking) — codeforge-review plugin 추출 (BREAKING)
 - [v0.15 → v0.16](#v015--v016-cfp-27-phase-0b--lint-강화--ci-integration-non-breaking) — Lint 강화 + CI Integration (Non-BREAKING)
 - [v0.14 → v0.15](#v014--v015-cfp-26-phase-0a--single-owner-write-권한-재분배) — Single-owner write 권한 재분배 (BREAKING)
 - [v0.13 → v0.14](#v013--v014) — 설계 lane 6-deputy: DataMigrationArchitectAgent 신설 (BREAKING)
@@ -25,6 +26,66 @@ updated: 2026-04-24
 - [v0.3 → v0.4](#v03--v04-stage-2-projectyaml-구조화) — `project.yaml` 도입
 - [v0.2 → v0.3](#v02--v03-generic-dev-roster--preset) — Generic Dev roster + preset
 - [v0.1 → v0.2](#v01--v02-보안-테스트-레인--templates) — 보안 테스트 레인 + templates (non-breaking)
+
+---
+
+## v0.16 → v0.17 (CFP-29 Phase 1) — codeforge-review plugin 추출 (BREAKING)
+
+**범위**: 5 review agent + base + 3 checklist을 별도 plugin으로 분리. consumer는 두 plugin 모두 등록 의무.
+
+**필요 조치**:
+
+### 1. codeforge-review plugin 설치
+
+```jsonc
+// ~/.claude/settings.json
+{
+  "extraKnownMarketplaces": {
+    "mclayer": { "source": { "source": "github", "repo": "mclayer/marketplace" } }
+  },
+  "enabledPlugins": {
+    "codeforge@mclayer": true,
+    "codeforge-review@mclayer": true   // 추가
+  }
+}
+```
+
+또는 CLI:
+
+```
+/plugins install codeforge-review@mclayer
+```
+
+### 2. consumer overlay 영향
+
+- consumer overlay에 5 review agent 중 어느 것이라도 override 하던 경우 (드뭄): overlay 파일을 codeforge-review repo의 동일 path 구조로 이동
+- review packet/verdict schema는 v1 contract — overlay 호환성 영향 없음
+
+### 3. 자동 감지
+
+- codeforge-review의 SessionStart hook이 codeforge core 설치 여부 verify. 미설치 시 fail-fast + install 안내 메시지
+- codeforge core의 SessionStart hook도 codeforge-review 설치 여부 감지 (필수 플러그인 5종 list에 추가) — 미설치 시 review lane 진입 불가 안내
+
+### 4. Inter-plugin Contract 인지
+
+본 추출의 핵심 메커니즘:
+- codeforge core (Orchestrator) → codeforge-review: `review_packet` 주입
+- codeforge-review (PL) → codeforge core: `review_verdict v1` 반환 (typed)
+- codeforge core (DocsAgent): verdict 받아 Story §9 / PR comment / gate label 처리
+
+상세 schema: codeforge core repo의 [`docs/inter-plugin-contracts/review-verdict-v1.md`](inter-plugin-contracts/review-verdict-v1.md). Versioning 룰: [ADR-008](adr/ADR-008-inter-plugin-contract-versioning.md).
+
+### 5. 설계 SSOT
+
+- [`docs/superpowers/specs/2026-04-28-cfp-29-codeforge-review-extraction-design.md`](superpowers/specs/2026-04-28-cfp-29-codeforge-review-extraction-design.md) (CFP-29 design spec)
+- parent: [CFP-25](superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md) staged ε strategy
+
+### 6. 향후 단계 안내
+
+- CFP-29.5 (조건부): codeforge-review 자체 lint workflow 추가
+- CFP-30+ (조건부): contract validation lint (v1 schema 위반 자동 detect)
+
+자세한 사항: 본 spec (CFP-29) §6 + CHANGELOG [0.17.0] 참조.
 
 ---
 

@@ -5,6 +5,65 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.17.0] - 2026-04-28
+
+### CFP-29 — Phase 1 · codeforge-review plugin 추출 (BREAKING — staged ε strategic payoff)
+
+**BREAKING (v1.0 이전 minor 표기)**. 5 review agent (Design/Code/SecurityTest PL + Claude/Codex worker) + `templates/review-pl-base.md` + 3 lane checklist을 별도 plugin [`codeforge-review`](https://github.com/mclayer/plugin-codeforge-review) v0.1.0 으로 추출. Inter-plugin Contract `review_verdict v1` 동결.
+
+설계 SSOT: [`docs/superpowers/specs/2026-04-28-cfp-29-codeforge-review-extraction-design.md`](docs/superpowers/specs/2026-04-28-cfp-29-codeforge-review-extraction-design.md) (CFP-29 — 본 구현 Story, parent CFP-25 staged ε design).
+
+### Removed
+- `agents/DesignReviewPLAgent.md` (codeforge-review로 이동)
+- `agents/CodeReviewPLAgent.md` (이동)
+- `agents/SecurityTestPLAgent.md` (이동)
+- `agents/ClaudeReviewAgent.md` (이동)
+- `agents/CodexReviewAgent.md` (이동)
+- `templates/review-pl-base.md` (이동)
+- `templates/review-checklists/{design,code,security}.md` (이동)
+- `templates/review-checklists/` 디렉토리 (자동 정리)
+
+### Added
+- `docs/inter-plugin-contracts/review-verdict-v1.md` — review_packet (core → review) + review_verdict (review → core) v1 contract 상세 schema
+- `docs/adr/ADR-008-inter-plugin-contract-versioning.md` — SemVer-style versioning 룰 (v1.x compat / v2.0 BREAKING)
+- `CLAUDE.md` "## Inter-plugin Contract" 신규 섹션 — review_verdict v1 요약 + 향후 plugin 추출 시 동일 패턴 안내
+- 필수 플러그인 목록에 `codeforge-review@mclayer` (4종 → 5종)
+
+### Changed
+- `.claude-plugin/plugin.json` version 0.16.0 → 0.17.0 + description 갱신 (24 → 19 + codeforge-review 추출 명시)
+- `CLAUDE.md` 9 곳: agent count 24 → 19, ASCII 다이어그램의 review 5 agent에 `[codeforge-review]` marker, 리뷰 워커 통합 paragraph + Never-skippable + 판정 SSOT 등 cross-ref 갱신
+- `docs/orchestrator-playbook.md` 5 곳: frontmatter related_files / 첫 paragraph / review-pl-base path 참조 / 에이전트 표 / dry-run 예시
+- `docs/plugin-design.md` 5 곳: §1 §2a §5 §6 헤딩 + Group A 분류 (codeforge core vs codeforge-review plugin 분리)
+
+### Why
+CFP-25 ([staged ε design — Claude Opus 4.7 + Codex GPT-5.4 4 라운드 협업](docs/superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md))의 strategic payoff. CFP-21 (DataMigrationArchitectAgent 6th deputy 추가)이 9+ file 동시 갱신 + BREAKING bump을 일으킨 사례에서 monolithic plugin의 revision 비용 高를 진단. Phase 0a (CFP-26 DocsAgent scope 축소) + Phase 0b (CFP-27 lint 강화) 가 inter-plugin extraction의 prerequisite 정착 — Phase 1이 이 구조 위에서 review subsystem 분리 실현. ADR-001 lane-agnostic worker 통합 결정을 plugin 경계로 보존.
+
+거부된 대안: soft transition (deprecation 기간 — drift 위험), subdirectory plugin (단일 repo 2 plugin — marketplace 단위와 mismatch), dual install (두 곳에 같은 agent — overlay merge 우선순위 모호), manifest dependency field (Claude Code schema 부재).
+
+### Migration
+**BREAKING — consumer 영향**:
+
+기존 codeforge consumer는 다음과 같이 두 plugin 모두 등록 의무:
+
+```jsonc
+// ~/.claude/settings.json
+{
+  "extraKnownMarketplaces": {
+    "mclayer": { "source": { "source": "github", "repo": "mclayer/marketplace" } }
+  },
+  "enabledPlugins": {
+    "codeforge@mclayer": true,
+    "codeforge-review@mclayer": true   // 추가
+  }
+}
+```
+
+또는 CLI: `/plugins install codeforge-review@mclayer`.
+
+codeforge-review의 SessionStart hook이 codeforge core 설치 여부 verify — codeforge만 설치하고 review 미설치 시 review lane 진입 시 fail-fast + install 안내. codeforge core의 SessionStart hook도 codeforge-review 설치 여부 감지해 안내.
+
+자세한 사항: `docs/migration-guide.md` v0.16 → v0.17 섹션 참조.
+
 ## [0.16.0] - 2026-04-28
 
 ### CFP-27 — Phase 0b · Lint 강화 + CI Integration
