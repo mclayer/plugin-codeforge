@@ -1078,6 +1078,169 @@ PMOAgent가 **하지 않는** 것:
 
 ---
 
+## 14. §0 Live Progress (CFP-20)
+
+`.claude-work/progress/<KEY>.md` 파일에 Orchestrator가 7-lane × phase 진행 상황을 M3 hierarchical + S3 completion snippet 형식으로 기록한다. PR diff에 노출 X (gitignored), GitHub Issue body 미러링 X (DocsAgent 영역 침범 회피). 사용자 원문 "todolist 처럼 매 진행 때마다 수시로 보여" 의도 충족.
+
+### 14.1 권한·소유
+
+| 컴포넌트 | Writer | Reader |
+|---|---|---|
+| `.claude-work/progress/<KEY>.md` | **Orchestrator 단독** | Orchestrator (resume), PMOAgent (회고), 사용자 (수동) |
+| `.claude-work/progress/index.md` | Orchestrator 단독 | Orchestrator (multi-Story 분기) |
+| `.claude-work/progress/_archive/<KEY>.md` | Orchestrator (Story 완료 시 mv) | PMOAgent (Cross-Story 패턴) |
+
+DocsAgent / doc-queue / docs/stories/<KEY>.md / GitHub Issue body: **무관여**.
+
+### 14.2 State source vs Derivative cache (핵심 invariant)
+
+```
+State source (committed, durable):
+  - docs/stories/<KEY>.md §10 FIX Ledger    → FIX 카운터 + RESET 마커
+  - docs/stories/<KEY>.md §-fill state      → 완료 lane 추론
+  - GitHub Issue phase label                → 현재 lane
+
+Derivative cache (ephemeral, gitignored):
+  - .claude-work/progress/<KEY>.md          → rendered §0
+```
+
+- 정상 흐름: 매 이벤트마다 cache 직접 patch (read-patch-write, 저비용)
+- 세션 재개 / 손상 / 모순 감지 시: state source에서 재 derive 후 cache 재기록
+- cache는 항상 source로부터 재구성 가능 → 손실/손상이 데이터 손실이 아님
+
+### 14.3 §0 file 포맷
+
+```markdown
+# Live Progress — <KEY>
+
+last_updated: <ISO8601>
+last_processed_seq: <N>
+current_lane: <한국어 lane 이름>
+fix_cycle: <N>
+
+✅ 요구사항 — <S3 snippet>
+🔄 설계 — 진행 중 (4/4 deputies, chief author 통합 중)
+   ├─ ✅ CodebaseMapperAgent
+   ├─ ✅ RefactorAgent
+   ├─ ✅ SecurityArchitectAgent
+   ├─ ✅ TestContractArchitectAgent
+   └─ 🔄 ArchitectAgent (chief author) — Change Plan §3 author 중
+⏸ 설계 리뷰
+⏸ 구현
+⏸ 구현 리뷰
+⏸ 구현 테스트
+⏸ 보안 테스트
+```
+
+- frontmatter 없이 plain markdown + yaml-style 메타 4줄
+- Story 시작 시 모든 lane `⏸` init
+- Story 완료 시 `_archive/<KEY>.md` 로 mv (PMO Cross-Story 분석 input 보존)
+
+### 14.4 Status enum
+
+| 마커 | 의미 | 사용 위치 |
+|---|---|---|
+| `⏸` | pending | Lane top, deputy slot |
+| `🔄` | in-progress | Lane top, deputy slot |
+| `✅` | PASS / done | Lane top (S3 snippet 동반), deputy slot |
+| `❌ FIX-N` | FIX 진행 중 | Lane top (evidence 1줄 동반) |
+| `❌ FIX-N (fast-path)` | R11 mechanical | Lane top (typo·broken-link·minor-naming·comment-only) |
+| `⏳` | blocked | Lane top (사용자/외부 의존성 대기) |
+| `⊘ N/A` | skip | Lane top (사유 동반, 주로 plugin meta) |
+| `🔁 RESET-N` | 구현 리뷰 RESET | 구현 테스트·보안 테스트 → 구현 회귀 시 |
+
+활성 lane top 라인에 inline qualifier (예: `🔄 설계 — 진행 중 (4/4 deputies, chief author 통합 중)` / `🔄 구현 테스트 — 진행 중 (functional ✅ / performance 🔄)`).
+
+### 14.5 트리거 SSOT
+
+| 이벤트 | 영향 라인 | 갱신 동작 | terminal narration |
+|---|---|---|---|
+| Story 개시 | 전체 | file create, 7 lane `⏸` | ✅ |
+| Lane 진입 | top | `⏸` → `🔄 진행 중`, current_lane 갱신 | ✅ |
+| Deputy spawn | active sub-tree | `🔄 <Deputy>` 추가, qualifier 갱신 | ❌ (file only) |
+| Deputy return | active sub-tree | `🔄` → `✅`, qualifier 갱신 | ❌ (file only) |
+| 병렬 dispatch (R3·R4·R7·R9) | active sub-tree | 두 deputy 동시 `🔄` 라인 추가 | ❌ (file only) |
+| R9 subset 시작 | 구현 테스트 | inline qualifier `(functional 🔄 / performance ⏸)` | ✅ |
+| R9 subset 완료 | 구현 테스트 | qualifier 갱신 | ❌ (lane PASS/FIX 시 별도) |
+| R11 fast-path | 해당 lane | `❌ FIX-N (fast-path)` 마커 | ✅ |
+| Lane PASS | top | `🔄` → `✅ — <S3 snippet>`, sub-tree 접음 | ✅ |
+| Lane FIX | top | `🔄` → `❌ FIX-N — <evidence 1줄>`, fix_cycle 갱신 | ✅ |
+| Lane 재진입 (FIX 후) | top | `❌ FIX-N` → `🔄 진행 중 (FIX-N)` | ✅ |
+| RESET 마커 | 구현 리뷰 | `✅` → `🔁 RESET-N` | ✅ |
+| Lane N/A (plugin meta) | top | `⏸` → `⊘ N/A — <사유>` | ✅ |
+| 사용자 "진행상황 보여줘" | — | file 변경 없이 현재 §0 전체 emit | ✅ (deputy 포함 full) |
+| Story 완료 | 전체 | 모두 `✅`, archive mv, index 갱신 | ✅ |
+
+R10 prefetch (security 1차 layer cache) 같은 사용자 무관 메타 이벤트는 **의도적 skip**.
+
+### 14.6 S3 snippet 7-lane 표 (Lane PASS 시 1줄)
+
+| Lane | snippet 템플릿 | source |
+|---|---|---|
+| 요구사항 | `통합 명세 §3-6 + 도메인 공백 <N>건` | RequirementsPL 통합 + DomainAgent |
+| 설계 | `Change Plan v<N> + ADR-<NNN> <신규\|변경> (deputy <M>인)` | ArchitectPL + ADR file mtime |
+| 설계 리뷰 | `PASS — Claude/Codex 종합, 코멘트 #<id>` | DesignReviewPL packet |
+| 구현 | `Phase 2 PR #<num> · <commit>건 · §8.5 manifest <file>건` | DeveloperPL + git log |
+| 구현 리뷰 | `PASS — Claude/Codex 종합, 코멘트 #<id>` | CodeReviewPL packet |
+| 구현 테스트 | `functional <PASS\|FAIL>, performance Δ <±N%>` | TestAgent subset |
+| 보안 테스트 | `1차 alerts <N> / 2차 P0:<N> P1:<N>` | SecurityTestPL packet |
+
+미정 데이터는 `?` placeholder (예: `Change Plan v? + ADR-? 신규 (deputy 4인)`).
+
+### 14.7 Render flow
+
+```
+[Lane/Deputy event 발생]
+  └→ Orchestrator 1차 수신
+       ├→ 1) Read(.claude-work/progress/<KEY>.md)  (cache)
+       ├→ 2) parse → 해당 lane sub-tree patch
+       ├→ 3) Write(.claude-work/progress/<KEY>.md) — full rewrite, last_processed_seq 증가
+       ├→ 4) lane boundary 이벤트일 때만 → terminal narration emit
+       └→ 5) Story 완료 시 _archive/<KEY>.md 로 mv + index.md 갱신
+```
+
+### 14.8 Resume / corruption 처리
+
+세션 재개 / 압축 재개 시:
+
+1. `.claude-work/progress/<KEY>.md` 존재 여부 확인
+2. **존재해도 신뢰하지 않음** — state source(Story §10 + GitHub Issue phase label + Story §-fill state)에서 재 derive
+3. 재 derive 결과를 cache 재기록, last_processed_seq 갱신
+4. deputy sub-tree는 비워둠 (활성 deputy 정보 손실 허용 — 다음 deputy 이벤트에서 자동 충족)
+
+손상 시: parse 실패 → backup(`<KEY>.md.bak`) → state source에서 재 derive.
+
+### 14.9 Multi-Story index
+
+`.claude-work/progress/index.md`:
+
+```markdown
+# Active Stories Index
+
+last_updated: <ISO8601>
+
+- CFP-20 (phase: 설계, fix_cycle: 0)
+- CFP-21 (phase: 구현 리뷰, fix_cycle: 1)
+```
+
+- Orchestrator가 모든 active Story KEY + 현재 phase만 기록
+- "always latest" pointer로 사용 (다음 작업 분기 시 어느 Story가 활성인지 파악)
+- SSOT 아님 — 진실은 각 `<KEY>.md` 와 state source
+
+### 14.10 Story 완료 archive
+
+Story Phase 2 PR merge 후:
+
+```bash
+mv .claude-work/progress/<KEY>.md .claude-work/progress/_archive/<KEY>.md
+```
+
+Orchestrator는 `_archive/` 디렉토리 부재 시 `mkdir -p` 후 mv. PMOAgent Cross-Story 분석은 `_archive/**` glob 으로 누적 progress 참조.
+
+Story 중도 폐기 시: `_archive/<KEY>-aborted.md` 로 mv, 사용자 narration "Story 폐기".
+
+---
+
 ## 부록 A. 관련 문서
 
 - `CLAUDE.md` — 에이전트 목록·레인·권한·GitHub Workflow·ADR 규약 ("무엇")
