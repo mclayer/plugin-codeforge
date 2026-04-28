@@ -5,6 +5,41 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [2.0.0] - 2026-04-29
+
+### CFP-37 (ζ arc) — codeforge-requirements plugin extraction (BREAKING)
+
+ζ arc 세 번째 lane plugin 추출 (parent §5.7). 4 sub-agent (RequirementsPL + Domain + Analyst + Researcher) + 도메인 KB owner write + Story §2/§5/§6 self-write 를 별도 plugin `codeforge-requirements` 으로 이전.
+
+설계 SSOT: [`docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md`](docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md) §5.7.
+
+### Removed (BREAKING for consumer)
+- `agents/RequirementsPLAgent.md` → mclayer/plugin-codeforge-requirements
+- `agents/DomainAgent.md` → mclayer/plugin-codeforge-requirements
+- `agents/RequirementsAnalystAgent.md` → mclayer/plugin-codeforge-requirements
+- `agents/ResearcherAgent.md` → mclayer/plugin-codeforge-requirements
+- `templates/domain-knowledge.md` → mclayer/plugin-codeforge-requirements
+
+### Changed
+- `CLAUDE.md` 필수 플러그인 6종 → 7종 (`codeforge-requirements@mclayer` 추가). agent count 18 → 14
+- `CLAUDE.md` Write queue 의뢰 권한 표 — 4 agent 제거 + 외부 plugin listing 갱신
+- `CLAUDE.md` 외부 도구 wrapper 표 — RequirementsAnalyst codex CLI 의존성 codeforge-requirements 로 이전 표시
+- 3 file 의 DomainAgent / domain-knowledge 링크 → mclayer/plugin-codeforge-requirements external URL
+- `.claude-plugin/plugin.json` v1.0.0 → v2.0.0 BREAKING
+
+### Why
+ζ arc §5.7: 4 sub-agent 병렬 패턴이 본 plugin 의 응집성 핵심. 도메인 KB owner write 이전이 "writer-distributed + path-scoped permission travels with agent" 모델 검증 두 번째 사례 (CFP-36 PMOAgent retro 이전 다음).
+
+### Migration (BREAKING)
+- consumer install: `/plugins install codeforge-requirements@mclayer`
+- 기존 docs/domain-knowledge/* 그대로 유지 (codeforge-requirements 의 DomainAgent 가 동일 path 직접 write)
+- codex CLI 의존성: codeforge-requirements 측 SessionStart hook 이 검증 (codeforge wrapper 측 부담 해소)
+
+### Followups (CFP-38+)
+- CFP-38: codeforge-test (TestAgent 단독 — 가장 단순)
+- CFP-39: codeforge-develop (5 agent + presets)
+- CFP-40: codeforge-design (7 agent + change-plan/adr templates — 가장 큰 표면, last per Codex)
+
 ## [1.0.0] - 2026-04-29
 
 ### CFP-36 (ζ arc) — codeforge-pmo plugin extraction (BREAKING)
