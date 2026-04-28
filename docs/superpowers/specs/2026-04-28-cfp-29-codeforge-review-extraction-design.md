@@ -425,8 +425,8 @@ codeforge core의 lint workflow (6 jobs)가 codeforge-review 파일은 점검 �
 - [CFP-25 brainstorm 4 라운드 (Codex)](2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md#11-references) — staged ε strategy 합의
 
 ### 관련 SSOT
-- [ADR-001](../adr/ADR-001-review-agent-unification.md) — review worker 통합 결정. 본 추출이 plugin 경계로 보존
-- [ADR-008](../adr/ADR-008-inter-plugin-contract-versioning.md) — NEW, 본 CFP에서 신설
+- [ADR-001](../../adr/ADR-001-review-agent-unification.md) — review worker 통합 결정. 본 추출이 plugin 경계로 보존
+- [ADR-008](../../adr/ADR-008-inter-plugin-contract-versioning.md) — NEW, 본 CFP에서 신설
 - [CLAUDE.md](../../../CLAUDE.md) "## Inter-plugin Contract" — review_verdict v1 schema + versioning 룰 SSOT
 - [docs/inter-plugin-contracts/review-verdict-v1.md](../../inter-plugin-contracts/review-verdict-v1.md) — 상세 schema
 - [docs/migration-guide.md](../../migration-guide.md) v0.16 → v0.17 섹션 — consumer 조치
