@@ -13,6 +13,7 @@ ALLOWLIST=(
   "docs/superpowers/plans/2026-04-25-atlassian-to-github-migration.md"
   "docs/superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md"
   "docs/superpowers/plans/2026-04-28-cfp-26-phase-0a-write-permission-redistribution.md"
+  "docs/superpowers/plans/2026-04-28-cfp-27-phase-0b-lint-strengthening-and-ci-integration.md"
   "scripts/check-no-atlassian.sh"
 )
 
