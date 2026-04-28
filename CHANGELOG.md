@@ -5,6 +5,23 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.14.3] - 2026-04-28
+
+### CFP-24 — Marketplace cross-repo 동기화 의무 정식 잠금
+
+**Non-BREAKING**. 사용자 명시 규칙을 CLAUDE.md에 SSOT로 명문화. plugin.json의 mirrored 필드(`name` · `version` · `description` · `author`) 변경 시 `mclayer/marketplace`의 marketplace.json `plugins[name=codeforge]` 동일 필드도 같은 Story 범위 내 sync PR 의무.
+
+### Added
+- CLAUDE.md `## Plugin` 섹션 하위 `### Marketplace cross-repo 동기화 의무` 신규 — mirrored 필드 정의 + 의무 절차 + 면제 조건 + 향후 자동화 후보
+
+### Why
+CFP-23(2026-04-28)에서 `mclayer/marketplace` 단일 진입점 노출 시작. 두 리포가 plugin.json·marketplace.json 양쪽에 같은 필드를 가져 drift surface 신규 발생. 사용자 입장에서 단일 좌표(`codeforge@mclayer`)로 보이는데 실제는 두 리포 분리 → drift 시 stale version 또는 어긋난 description 노출. 본 규칙으로 author·Orchestrator 의무화. 자동화는 cross-repo parity CI 후속 CFP에서 처리.
+
+### Migration
+Non-BREAKING — 기존 사용자 영향 없음. 향후 codeforge plugin.json 변경 PR 작성 시 mirrored 필드 점검 + marketplace sync PR 후속 의무가 author/Orchestrator 절차에 추가됨.
+
+자세한 사항: CLAUDE.md `Marketplace cross-repo 동기화 의무` 섹션 참조.
+
 ## [0.14.2] - 2026-04-28
 
 ### CFP-23 — `mclayer` marketplace 노출
