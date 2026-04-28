@@ -294,7 +294,7 @@ cp -r ${CLAUDE_PLUGIN_ROOT}/codeforge/presets/webapp/agents/*.md \
       .claude/_overlay/agents/
 ```
 
-상세는 [`../presets/README.md`](../presets/README.md) 참조.
+상세는 [`../presets/README.md`](https://github.com/mclayer/plugin-codeforge-develop/blob/main/presets/README.md) 참조.
 
 ### 3d. `.claude/_overlay/agents/<Name>.md` 예시
 
