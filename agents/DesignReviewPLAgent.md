@@ -64,6 +64,9 @@ review_packet:
     - "API breaking change에 versioning 전략 부재 → P0 (공개 API·SLA 대상만)"
     - "외부 입력 컴포넌트에 관측성 결정 부재 → P0 (boundary 컴포넌트만)"
     - "공개 API · SLA 대상 서비스에 SLO 부재 → P0"
+    - "API 변경 시 deprecation timeline 미정의 → P1"
+    - "신규 컴포넌트 metric 종류 미명시 → P1"
+    - "SLO 목표 측정 방법 부재 → P1"
   story_key: <STORY_KEY>
   related_adrs: <Story §3에서 추출>
 ```
