@@ -1,7 +1,7 @@
 ---
 kind: contract
 contract_version: "1.0"
-status: Active
+status: Deprecated
 related_plugins:
   - codeforge (wrapper, consumer)
   - codeforge-review (lane plugin, producer)
@@ -11,9 +11,12 @@ related_adrs:
 authors:
   - CFP-29 동결 (2026-04-28)
   - CFP-33 frontmatter backfill (2026-04-29)
+  - CFP-35 status Active → Deprecated (v2 신설, 2026-04-29)
 ---
 
-# review_verdict v1 — Inter-plugin Contract
+# review_verdict v1 — Inter-plugin Contract (DEPRECATED)
+
+> **CFP-35 (2026-04-29) 이후 Deprecated**: codeforge-review plugin v1.0.0+ 부터 [`review-verdict-v2.md`](review-verdict-v2.md) self-write contract 사용. v1 contract surface (DocsAgent 경유 write 위임)는 codeforge v0.22.0 + codeforge-review v1.0.0 짝 부터 더 이상 호환 처리 안 함. 본 file은 audit·archive 목적으로 유지 (6 CFP 무사고 후 별도 cleanup CFP에서 file 삭제 예정).
 
 `codeforge` core ↔ `codeforge-review` plugin 사이의 양방향 schema. CFP-29 Phase 1에서 동결.
 
