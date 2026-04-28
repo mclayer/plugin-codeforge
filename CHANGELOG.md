@@ -5,6 +5,38 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.16.0] - 2026-04-28
+
+### CFP-27 — Phase 0b · Lint 강화 + CI Integration
+
+**Non-BREAKING** — 신규 lint 2종 (doc-frontmatter / doc-section-schema)은 **warning 모드** 시작. 기존 docs 파일 fail 없음. CFP-28 dogfood 검증 통과 후 strict 전환 예정.
+
+설계 SSOT: [`docs/superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md`](docs/superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md) (CFP-25 — 설계 spec, CFP-27 — 본 구현 Story).
+
+### Added
+- `templates/domain-knowledge.md` — DomainAgent owner doc schema SSOT (CFP-26 Phase 0a부터 owner direct write이나 schema 부재였음)
+- `templates/retro.md` — PMOAgent owner doc schema SSOT (동일)
+- `scripts/check-doc-frontmatter.sh` — 4 owner doc path frontmatter 필수 필드 검증 (warning 모드)
+- `scripts/check-doc-section-schema.sh` — 4 owner doc path 본문 필수 섹션 헤딩 검증 (warning 모드)
+- `.github/workflows/lint.yml` 3 신규 job: `write-permission-redistribution` (strict, CFP-26 invariant CI 통합) + `doc-frontmatter` + `doc-section-schema` (warning 모드)
+
+### Changed
+- `scripts/check-write-permission-redistribution.sh` — `allow_block` / `deny_block` 두 함수를 단일 `extract_block(file, key)` 파라미터화 (CFP-26 code review minor follow-up)
+- `CLAUDE.md` "## ADR" + "## Domain Knowledge" + "## docs/stories markdown 규약" 섹션 — CFP-27 lint enforcement 안내 추가
+
+### Why
+CFP-26 Phase 0a가 4 owner agent direct write를 도입했으나 **schema enforcement는 manual convention**에 그침. CFP-27이 schema를 lint로 자동 강제 시작 (warning 모드 → CFP-28 dogfood → CFP-28+ strict). 또한 부재했던 owner doc 템플릿 2건(domain-knowledge / retro) 신설로 SSOT 완결성 회복.
+
+추가로 CFP-26에서 식별된 follow-up 2건 처리: redistribution lint CI integration (이전 manual call only) + awk 코드 정리.
+
+### Migration
+**Non-BREAKING — consumer 영향 미미**:
+- 신규 lint 2종은 warning 모드라 기존 consumer docs 파일 호환
+- consumer가 `templates/domain-knowledge.md` / `templates/retro.md` 를 schema source로 사용 가능 — 강제 아님 (CFP-28에서 strict 전환 시 backfill 필요)
+- CI workflow 6 jobs 운영 — consumer가 `.github/workflows/lint.yml` 복사한 경우 새 job 3개 동기화 권장
+
+자세한 사항: `docs/migration-guide.md` v0.15 → v0.16 섹션 참조.
+
 ## [0.15.0] - 2026-04-28
 
 ### CFP-26 — Phase 0a · Single-owner write 권한 재분배 (BREAKING — DocsAgent scope 축소)

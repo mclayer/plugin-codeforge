@@ -13,6 +13,7 @@ updated: 2026-04-24
 
 ## 목차
 
+- [v0.15 → v0.16](#v015--v016-cfp-27-phase-0b--lint-강화--ci-integration-non-breaking) — Lint 강화 + CI Integration (Non-BREAKING)
 - [v0.14 → v0.15](#v014--v015-cfp-26-phase-0a--single-owner-write-권한-재분배) — Single-owner write 권한 재분배 (BREAKING)
 - [v0.13 → v0.14](#v013--v014) — 설계 lane 6-deputy: DataMigrationArchitectAgent 신설 (BREAKING)
 - [v0.11.0 → v0.12.0](#v0110--v0120) — 설계 lane 5-deputy: TestContractArchitectAgent 신설 (BREAKING)
@@ -24,6 +25,34 @@ updated: 2026-04-24
 - [v0.3 → v0.4](#v03--v04-stage-2-projectyaml-구조화) — `project.yaml` 도입
 - [v0.2 → v0.3](#v02--v03-generic-dev-roster--preset) — Generic Dev roster + preset
 - [v0.1 → v0.2](#v01--v02-보안-테스트-레인--templates) — 보안 테스트 레인 + templates (non-breaking)
+
+---
+
+## v0.15 → v0.16 (CFP-27 Phase 0b) — Lint 강화 + CI Integration (Non-BREAKING)
+
+**범위**: 신규 owner doc 템플릿 2건 + 신규 lint 2건 (warning 모드) + redistribution lint CI integration.
+
+**필요 조치**:
+
+### Consumer overlay에서 owner doc schema 따르려면 (선택)
+- `templates/domain-knowledge.md` / `templates/retro.md` 를 frontmatter + 섹션 schema source로 활용 가능
+- consumer overlay에 `_overlay/templates/<doc-type>.md` 작성하면 owner agent가 그 schema도 따름 (overlay-aware)
+
+### Consumer CI workflow 동기화 (권장)
+- `.github/workflows/lint.yml` 에 다음 3 job 추가 동기화:
+  - `write-permission-redistribution` (strict)
+  - `doc-frontmatter` (warning)
+  - `doc-section-schema` (warning)
+- 생략해도 codeforge plugin 동작에는 영향 없음. 다만 본 plugin이 consumer 워크플로우의 invariant를 보지 않게 됨.
+
+### 향후 단계 안내
+- CFP-28 (Phase 0c): 2 lint를 strict 모드로 전환 + 1-2 real Story 실행 검증. 이 시점에 backfill 필요한 모든 docs 파일 schema 갱신 의무.
+- CFP-29 (Phase 1): codeforge-review plugin 추출.
+
+### 설계 SSOT
+- [`docs/superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md`](superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md) (CFP-25 design spec)
+
+자세한 사항: 본 plan (CFP-27) 참조.
 
 ---
 

@@ -123,3 +123,36 @@ jobs:
               sys.exit(1)
           print("all agent frontmatter checks passed")
           EOF
+
+  write-permission-redistribution:
+    name: write permission redistribution invariant (CFP-26)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run check-write-permission-redistribution.sh
+        run: bash scripts/check-write-permission-redistribution.sh
+
+  doc-frontmatter:
+    name: doc frontmatter schema (CFP-27 — warning)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Run check-doc-frontmatter.sh
+        run: bash scripts/check-doc-frontmatter.sh
+
+  doc-section-schema:
+    name: doc section schema (CFP-27 — warning)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run check-doc-section-schema.sh
+        run: bash scripts/check-doc-section-schema.sh

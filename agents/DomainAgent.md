@@ -181,4 +181,4 @@ title: <페이지 제목>          # 본문 H1
 - `superpowers:verification-before-completion`: "지식 공백" 섹션 누락 여부 점검
 
 ## 문서화 표준
-`docs/domain-knowledge/**` 직접 write 가능 (CFP-26 Phase 0a). GitHub Issue/PR/comment 및 그 외 docs write 권한 없음. 도메인 지식 외 문서화는 Orchestrator 경유 DocsAgent가 기록 (write queue 경유). 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+`docs/domain-knowledge/**` 직접 write 가능 (CFP-26 Phase 0a, schema [`templates/domain-knowledge.md`](../templates/domain-knowledge.md) CFP-27). GitHub Issue/PR/comment 및 그 외 docs write 권한 없음. 도메인 지식 외 문서화는 Orchestrator 경유 DocsAgent가 기록 (write queue 경유). 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

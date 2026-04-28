@@ -504,6 +504,8 @@ DesignReviewPL 프롬프트에 명시:
 ### 페이지 템플릿
 [`templates/adr.md`](templates/adr.md) 참조. frontmatter (adr_number / title / status / category / date / related_files) + 본문 섹션 (`## 상태 / ## 컨텍스트 / ## 결정 / ## 결과 / ## 다이어그램 / ## 관련 파일`).
 
+**CFP-27부터** `scripts/check-doc-frontmatter.sh` + `scripts/check-doc-section-schema.sh` 가 본 schema를 검증 (warning 모드 — CFP-28 strict 전환).
+
 ## 버그 기록 (GitHub Issues)
 - Issue Forms: `.github/ISSUE_TEMPLATE/bug.yml`. Severity dropdown (P0/P1/P2)
 - 신규 버그: DocsAgent가 `mcp__github__issue_write(action='create', title=..., body=..., labels=['type:bug', 'component:<name>'])`
@@ -645,6 +647,7 @@ Consumer는 `.claude/_overlay/project.yaml`의 `story_cutoff.additional_exempt_c
 - DocsAgent가 생성·섹션 갱신 전담
 - 세부 규약·섹션 책임: [`agents/DocsAgent.md`](agents/DocsAgent.md) SSOT
 - §1 변조 금지 invariant: `story-section-1-immutable.yml` Action이 강제
+- **Retro page schema** (참고): `docs/retros/<sprint>.md` 페이지는 PMOAgent 직접 write — 형식은 [`templates/retro.md`](templates/retro.md) (CFP-27 신설) 따름. `check-doc-frontmatter.sh` + `check-doc-section-schema.sh` 검증 (warning 모드)
 
 ## Domain Knowledge
 
@@ -652,3 +655,4 @@ Consumer는 `.claude/_overlay/project.yaml`의 `story_cutoff.additional_exempt_c
 - CODEOWNERS가 `docs/domain-knowledge/**` → `@org/domain-experts` 자동 review
 - DomainAgent 입력 4소스: `docs/domain-knowledge/**` + `docs/adr/**` + 도메인 코드 + 사용자 원문 §1
 - Q&A는 GitHub Discussions의 "Domain Q&A" 카테고리 (consumer overlay `github.discussions.domain_kb_category` 지정)
+- **페이지 schema**: [`templates/domain-knowledge.md`](templates/domain-knowledge.md) (CFP-27 신설). frontmatter (title / area / topic_slug / status / sources / related_adrs / related_stories / updated) + 본문 섹션 (`## 정의 / ## 컨텍스트 / ## 핵심 규칙 / ## 경계 / ## 관련 ADR / ## 변경 이력`). `scripts/check-doc-frontmatter.sh` + `scripts/check-doc-section-schema.sh` 검증 (warning 모드)
