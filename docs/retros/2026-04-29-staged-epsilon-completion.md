@@ -51,7 +51,7 @@ sentinel_refs:
 - 새 plugin: [`mclayer/plugin-codeforge-review`](https://github.com/mclayer/plugin-codeforge-review) v0.1.0 (5 review agent + base + 3 checklist)
 - 새 인터페이스: `review_verdict v1` Inter-plugin Contract ([`docs/inter-plugin-contracts/review-verdict-v1.md`](../inter-plugin-contracts/review-verdict-v1.md))
 - 새 ADR: [ADR-008 — Inter-plugin Contract Versioning](../adr/ADR-008-inter-plugin-contract-versioning.md)
-- 새 templates: [`templates/retro.md`](../../templates/retro.md), [`templates/domain-knowledge.md`](../../templates/domain-knowledge.md)
+- 새 templates: [`templates/retro.md`](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/templates/retro.md), [`templates/domain-knowledge.md`](../../templates/domain-knowledge.md)
 - 새 owner direct-write paths: ArchitectAgent → `docs/{change-plans,adr}/**`, DomainAgent → `docs/domain-knowledge/**`, PMOAgent → `docs/retros/**`
 - 새 lint enforce mode: strict (warning 발견 시 PR 차단)
 
