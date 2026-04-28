@@ -182,3 +182,4 @@ title: <페이지 제목>          # 본문 H1
 
 ## 문서화 표준
 `docs/domain-knowledge/**` 직접 write 가능 (CFP-26 Phase 0a). GitHub Issue/PR/comment 및 그 외 docs write 권한 없음. 도메인 지식 외 문서화는 Orchestrator 경유 DocsAgent가 기록 (write queue 경유). 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+- 본 에이전트가 작성하는 `docs/domain-knowledge/<area>/<topic>.md` 페이지의 frontmatter + 섹션 schema는 [`templates/domain-knowledge.md`](../templates/domain-knowledge.md) (CFP-27 신설) SSOT. `scripts/check-doc-frontmatter.sh` + `scripts/check-doc-section-schema.sh` 가 검증 (warning 모드)

@@ -169,3 +169,4 @@ Orchestrator가 세션 종료 직전 본 에이전트를 스폰해 playbook §8.
 
 ## 문서화 표준
 회고 파일(`docs/retros/**`)은 본 에이전트가 직접 write (CFP-26 Phase 0a). GitHub Issue/PR·Story file §11·ADR·Change Plan 등 나머지 docs write는 모두 Orchestrator 경유 DocsAgent가 기록 (write queue 경유). 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+- 본 에이전트가 작성하는 `docs/retros/<sprint>.md` 페이지의 frontmatter + 섹션 schema는 [`templates/retro.md`](../templates/retro.md) (CFP-27 신설) SSOT. `scripts/check-doc-frontmatter.sh` + `scripts/check-doc-section-schema.sh` 가 검증 (warning 모드)

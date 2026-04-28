@@ -25,7 +25,7 @@ REQUIRED_SECTIONS = {
         r"^### §4\. API 계약",
         r"^### §7\. 보안",   # 보안 설계 (CFP-17 이후 항상 필요, 무관 시 N/A 명시)
         r"^### §8\. Test Contract",
-        r"^### §10\.",      # FIX Ledger 위치 — 정확 명칭은 schema 변동, 헤딩 prefix만
+        r"^### §10\.",      # ADR 정합성 + 신규 ADR 필요 여부 판정 — 헤딩 prefix만 (template §10)
         r"^### §11\.",      # 데이터 마이그레이션 (CFP-21 이후)
     ],
     "docs/adr": [
