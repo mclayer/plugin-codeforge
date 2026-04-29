@@ -8,7 +8,7 @@
 
 **Tech Stack:** Markdown + YAML manifest + Bash/Python lint script (`pyyaml`) + GitHub MCP (`mcp__github__get_file_contents`) for canonical fetch.
 
-**Note (workflow ↔ artifacts):** CFP-42 의 [docs/stories/CFP-42.md](../../stories/CFP-42.md) Story file 은 `story-init.yml` GitHub Action 이 Issue Form (story.yml) 제출 시점에 자동 생성합니다. 본 plan 은 **기술 산출물** (ADR + Change Plan + MANIFEST + 5 sibling + review-verdict frontmatter update + lint + test harness + CLAUDE.md) 에 집중합니다. Story file 의 §1 verbatim · §2-7 (Phase 1) · §8-11 (Phase 2) 채움은 codeforge 7-lane 워크플로우의 lane plugin 들이 self-write 합니다.
+**Note (workflow ↔ artifacts):** CFP-42 의 `docs/stories/CFP-42.md` Story file (생성 예정) 은 `story-init.yml` GitHub Action 이 Issue Form (story.yml) 제출 시점에 자동 생성합니다. 본 plan 은 **기술 산출물** (ADR + Change Plan + MANIFEST + 5 sibling + review-verdict frontmatter update + lint + test harness + CLAUDE.md) 에 집중합니다. Story file 의 §1 verbatim · §2-7 (Phase 1) · §8-11 (Phase 2) 채움은 codeforge 7-lane 워크플로우의 lane plugin 들이 self-write 합니다.
 
 **Spec reference:** [docs/superpowers/specs/2026-04-29-cfp-42-inter-plugin-contract-sibling-backfill-design.md](../specs/2026-04-29-cfp-42-inter-plugin-contract-sibling-backfill-design.md)
 

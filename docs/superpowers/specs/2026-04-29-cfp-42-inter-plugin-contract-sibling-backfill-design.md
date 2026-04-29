@@ -156,7 +156,7 @@ CFP-24 marketplace cross-repo sync 정책과 동질:
 |---|---|---|
 | [scripts/check-inter-plugin-contracts.sh](../../../scripts/check-inter-plugin-contracts.sh) | Phase 2 | manifest completeness + orphan + frontmatter schema + sibling marker 검증 추가 |
 | [CLAUDE.md](../../../CLAUDE.md) | Phase 2 | "Inter-plugin Contract" 섹션 — kind:contract 6 / kind:registry 3 분리 listing + ADR-010 참조 |
-| [docs/stories/CFP-42.md](../../stories/CFP-42.md) | Phase 1 + Phase 2 | Issue Form → story-init.yml 자동 §1 + 수동 §2-11 |
+| `docs/stories/CFP-42.md` (생성 예정 — story-init.yml Action) | Phase 1 + Phase 2 | Issue Form → story-init.yml 자동 §1 + 수동 §2-11 |
 | [docs/change-plans/cfp-42-inter-plugin-contract-sibling-backfill.md](../../change-plans/cfp-42-inter-plugin-contract-sibling-backfill.md) | Phase 1 | Phase 1 PR ArchitectAgent 산출물 |
 | [docs/inter-plugin-contracts/review-verdict-v1.md](../../inter-plugin-contracts/review-verdict-v1.md) | Phase 2 | frontmatter `related_adrs` 에 ADR-010 추가 (sibling marker 강제 통과) |
 | [docs/inter-plugin-contracts/review-verdict-v2.md](../../inter-plugin-contracts/review-verdict-v2.md) | Phase 2 | frontmatter `related_adrs` 에 ADR-010 추가 (sibling marker 강제 통과) |
