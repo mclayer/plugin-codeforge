@@ -95,7 +95,7 @@ updated: 2026-04-24
 ### 2. consumer overlay 영향
 
 - consumer overlay에 5 review agent 중 어느 것이라도 override 하던 경우 (드뭄): overlay 파일을 codeforge-review repo의 동일 path 구조로 이동
-- review packet/verdict schema는 v1 contract — overlay 호환성 영향 없음
+- review packet/verdict schema는 v2 contract (v1 은 CFP-D 시점 Archived) — overlay 호환성 영향 없음
 
 ### 3. 자동 감지
 
@@ -106,10 +106,10 @@ updated: 2026-04-24
 
 본 추출의 핵심 메커니즘:
 - codeforge core (Orchestrator) → codeforge-review: `review_packet` 주입
-- codeforge-review (PL) → codeforge core: `review_verdict v1` 반환 (typed)
+- codeforge-review (PL) → codeforge core: `review_verdict v2` 반환 (typed, v1 은 CFP-D 시점 Archived)
 - codeforge core (Orchestrator → lane plugin): verdict 받아 Story §9 / PR comment / gate label 처리 *(v0.x에서는 DocsAgent가 담당했으나 CFP-40 final delete 후 각 lane plugin self-write로 전환)*
 
-상세 schema: codeforge core repo의 [`docs/inter-plugin-contracts/review-verdict-v1.md`](inter-plugin-contracts/review-verdict-v1.md). Versioning 룰: [ADR-008](adr/ADR-008-inter-plugin-contract-versioning.md).
+상세 schema: codeforge core repo의 [`docs/inter-plugin-contracts/review-verdict-v2.md`](inter-plugin-contracts/review-verdict-v2.md) (Active). v1 (Archived, historical record): [`docs/inter-plugin-contracts/review-verdict-v1.md`](inter-plugin-contracts/review-verdict-v1.md). Versioning + archive 룰: [ADR-008](adr/ADR-008-inter-plugin-contract-versioning.md) §5/§5.1.
 
 ### 5. 설계 SSOT
 
