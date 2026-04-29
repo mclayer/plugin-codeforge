@@ -107,7 +107,7 @@ updated: 2026-04-24
 본 추출의 핵심 메커니즘:
 - codeforge core (Orchestrator) → codeforge-review: `review_packet` 주입
 - codeforge-review (PL) → codeforge core: `review_verdict v1` 반환 (typed)
-- codeforge core (DocsAgent): verdict 받아 Story §9 / PR comment / gate label 처리
+- codeforge core (Orchestrator → lane plugin): verdict 받아 Story §9 / PR comment / gate label 처리 *(v0.x에서는 DocsAgent가 담당했으나 CFP-40 final delete 후 각 lane plugin self-write로 전환)*
 
 상세 schema: codeforge core repo의 [`docs/inter-plugin-contracts/review-verdict-v1.md`](inter-plugin-contracts/review-verdict-v1.md). Versioning 룰: [ADR-008](adr/ADR-008-inter-plugin-contract-versioning.md).
 
@@ -155,7 +155,7 @@ updated: 2026-04-24
 
 ## v0.14 → v0.15 (CFP-26 Phase 0a) — Single-owner write 권한 재분배 (BREAKING)
 
-**범위**: agent permission frontmatter 4건 갱신 + DocsAgent scope 축소 + SSOT 문서 일관성 갱신.
+**범위**: agent permission frontmatter 4건 갱신 + DocsAgent scope 축소 (당시 v0.15 context — DocsAgent 는 CFP-40에서 최종 삭제됨) + SSOT 문서 일관성 갱신.
 
 **필요 조치**:
 
@@ -163,7 +163,7 @@ updated: 2026-04-24
 
 overlay의 frontmatter `permissions.allow` 항목은 core와 **concat+dedup** 처리되므로 자동 흡수 — 별도 조치 불필요.
 
-### Consumer overlay에서 DocsAgent 권한 명시 override 하던 경우 (드뭄)
+### Consumer overlay에서 DocsAgent 권한 명시 override 하던 경우 (v0.15 당시 — 현재 DocsAgent 부재 · CFP-40)
 
 core가 `docs/{change-plans,adr,domain-knowledge,retros}/**` 4 path에 대해 deny를 추가했음.
 - overlay에서 다시 allow를 명시하면 path-scoped allow가 우선
@@ -569,7 +569,7 @@ ls .claude/agents/ | wc -l
 ### Breaking changes
 
 - **Atlassian·GitHub·labels 상수 위치 변경**: `.claude/_overlay/CLAUDE.md` 에 free text로 작성하던 SSOT 상수가 `.claude/_overlay/project.yaml`로 이동.
-- **에이전트 동작 변경**: DocsAgent·DomainAgent·RequirementsPLAgent·PMOAgent가 Atlassian 호출 전 `project.yaml`을 `Read`하는 것이 의무. 파일이 없거나 필수 필드 누락 시 Orchestrator 경유 사용자 에스컬레이션.
+- **에이전트 동작 변경**: DomainAgent·RequirementsPLAgent·PMOAgent 및 각 lane plugin agent가 `project.yaml`을 `Read`하는 것이 의무. 파일이 없거나 필수 필드 누락 시 Orchestrator 경유 사용자 에스컬레이션.
 
 ### 영향받는 consumer 파일
 
@@ -664,8 +664,8 @@ python3 -c "import yaml; yaml.safe_load(open('.claude/_overlay/project.yaml'))"
 # 세션 개시 → SessionStart hook이 .claude/agents/ 재생성
 claude
 
-# DocsAgent overlay 본문 확인 — project.yaml 참조 문구 포함
-cat .claude/agents/DocsAgent.md | grep -A1 "project.yaml"
+# lane plugin overlay 본문 확인 — project.yaml 참조 문구 포함 (DocsAgent 부재 — CFP-40)
+# cat .claude/agents/<LanePluginAgent>.md | grep -A1 "project.yaml"
 ```
 
 #### 4. 체크리스트
