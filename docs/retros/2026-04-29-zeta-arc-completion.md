@@ -72,7 +72,7 @@ CFP-31 §1 동기 인용:
 
 ### 4.2 미해결 / deferred
 
-- **review-verdict-v1.md archive** (codeforge-review): 6 CFP 무사고 후 file 삭제 예정. 현재 Deprecated status 표기만
+- **review-verdict-v1.md archive** (codeforge-review): ~~6 CFP 무사고 후 file 삭제 예정~~ → CFP-D 시점 (2026-04-30) Archived status 전환. file 자체는 ADR-008 §5 historical record 보존 룰로 유지 (삭제 X)
 - **Marketplace 자동 PR 생성**: CFP-34 는 drift 감지 + 수동 sync. 본격 cross-repo PAT secret 인프라는 별도 CFP (deferred — 1인 maintainer 환경에서 manual sync 가 sustainable)
 - **Migration-guide BREAKING parity**: 5 wrapper BREAKING (v0.22 → v5) 모두 invariant-check 의 regex 조건 (`^## [X.Y.Z] ... (BREAKING ...)`) 회피해 lint 미감지. CFP-41 retro 에선 backfill 안 함 — 향후 cleanup CFP 또는 invariant-check regex 강화
 
