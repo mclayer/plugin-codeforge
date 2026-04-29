@@ -82,6 +82,10 @@ for md in sorted(contracts_dir.rglob("*.md")):
         # contract 가 아니면 skip (registry 등)
         continue
 
+    # CFP-42: orphan check — kind:contract must be registered in MANIFEST
+    if md.name not in manifest_files:
+        errors.append(f"{md}: orphan kind:contract file (not registered in MANIFEST.yaml)")
+
     contracts_seen += 1
 
     # 1. 필수 frontmatter 필드
