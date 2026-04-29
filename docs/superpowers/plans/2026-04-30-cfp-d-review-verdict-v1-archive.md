@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** review_verdict v1 contract status를 `Deprecated` → `Archived` 로 전환하고 canonical (codeforge-review) + wrapper sibling 양쪽 동기화 + 21 wrapper files 의 v1 references 갱신 + ADR-008 §5.1 보강.
+**Goal:** review_verdict v1 contract status를 `Deprecated` → `Archived` 로 전환 + 21 wrapper files 의 v1 references 갱신 + ADR-008 §5.1 보강.
 
-**Architecture:** 2 PR 시퀀스 (canonical 먼저 → wrapper 나중). canonical 1 file 변경, wrapper 21 files 변경. status enum "Archived" 는 lint 이 이미 인정 (CFP-42, line 103) — schema 변경 없음. file 자체 보존 (ADR-008 §5 historical record 룰).
+**Architecture (revision 2026-04-30 — option α):** 1 PR (wrapper 단독). canonical (codeforge-review) repo 에 v1 file 부재 확인 — wrapper 가 v1 단독 SSOT. status enum "Archived" 는 lint 이 이미 인정 (CFP-42, line 103) — schema 변경 없음. file 자체 보존 (ADR-008 §5 historical record 룰).
 
-**Tech Stack:** mcp__github MCP tools (canonical PR), git/Edit (wrapper PR), bash scripts/check-inter-plugin-contracts.sh + scripts/test-check-inter-plugin-contracts.sh (lint 검증).
+**Tech Stack:** git/Edit (wrapper PR), bash scripts/check-inter-plugin-contracts.sh + scripts/test-check-inter-plugin-contracts.sh (lint 검증).
 
 ---
 
@@ -14,13 +14,22 @@
 
 본 plan은 spec [`docs/superpowers/specs/2026-04-30-cfp-d-review-verdict-v1-archive-design.md`](../specs/2026-04-30-cfp-d-review-verdict-v1-archive-design.md) 의 §4-§5 를 task 화. 모든 wrapper 변경은 branch `cfp-d-v1-archive` (이미 spec commit 9fa7256 존재).
 
-**전체 작업 범위 (22 files)**:
-- canonical (codeforge-review repo): 1 file (Task 1)
-- wrapper (본 repo): 21 files (Task 2-7)
+**전체 작업 범위 (21 files, wrapper 단독 — revision 2026-04-30 option α)**:
+- wrapper (본 repo): 21 files (Task 1-7)
+- canonical (codeforge-review repo): **N/A — v1 file 부재 확인** (원안 Task 1 폐기)
 
 ---
 
-### Task 1: canonical PR (codeforge-review repo)
+### ~~Task 1 (원안): canonical PR (codeforge-review repo)~~ — **폐기 (2026-04-30 revision option α)**
+
+**폐기 사유**: 실행 시점 (2026-04-30) `mcp__github__get_file_contents(owner=mclayer, repo=plugin-codeforge-review, path=docs/inter-plugin-contracts/)` 결과 v1 file 부재. v2 만 존재. v1 은 wrapper repo 단독 SSOT (CFP-29 시점 wrapper 신설 후 canonical 으로 이동된 적 없음). canonical 작업 N/A.
+
+**아래 원안 Task 1 step 들은 실행 안 함**. Task 2-8 → Task 1-7 로 renumber.
+
+<details>
+<summary>원안 Task 1 (참조용 보존)</summary>
+
+### Task 1 (원안): canonical PR (codeforge-review repo)
 
 **Files:**
 - Modify (canonical, via mcp__github): `mclayer/plugin-codeforge-review` `docs/inter-plugin-contracts/review-verdict-v1.md`
@@ -149,16 +158,18 @@ mcp__github__merge_pull_request(
 
 Expected: PR merged, branch `cfp-d-v1-archive` 삭제됨.
 
+</details>
+
 ---
 
-### Task 2: wrapper sibling status transition (file 1)
+### Task 1: wrapper v1 status transition (file 1)
 
 **Files:**
-- Modify: `docs/inter-plugin-contracts/review-verdict-v1.md` (wrapper sibling — canonical verbatim mirror + "**상위 SSOT 위치**:" section)
+- Modify: `docs/inter-plugin-contracts/review-verdict-v1.md` (wrapper 단독 SSOT — canonical 부재 확인 후)
 
 **Branch:** `cfp-d-v1-archive` (현재 작업 중)
 
-- [ ] **Step 1: wrapper sibling frontmatter status 전환**
+- [ ] **Step 1: wrapper frontmatter status 전환**
 
 [`docs/inter-plugin-contracts/review-verdict-v1.md`](../../inter-plugin-contracts/review-verdict-v1.md) line 4:
 
@@ -216,7 +227,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-### Task 3: SSOT registry update (MANIFEST.yaml + CLAUDE.md table)
+### Task 2: SSOT registry update (MANIFEST.yaml + CLAUDE.md table)
 
 **Files:**
 - Modify: `docs/inter-plugin-contracts/MANIFEST.yaml`
@@ -267,7 +278,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-### Task 4: ADR-008 §5.1 보강
+### Task 3: ADR-008 §5.1 보강
 
 **Files:**
 - Modify: `docs/adr/ADR-008-inter-plugin-contract-versioning.md`
@@ -324,7 +335,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-### Task 5: Active narrative 갱신 (orchestrator-playbook + migration-guide)
+### Task 4: Active narrative 갱신 (orchestrator-playbook + migration-guide)
 
 **Files:**
 - Modify: `docs/orchestrator-playbook.md`
@@ -396,7 +407,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-### Task 6: History 14 files 일괄 치환
+### Task 5: History 14 files 일괄 치환
 
 **Files (14):**
 1. `docs/superpowers/specs/2026-04-28-cfp-29-codeforge-review-extraction-design.md`
@@ -491,7 +502,7 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-### Task 7: CHANGELOG entry append + final lint
+### Task 6: CHANGELOG entry append + final lint
 
 **Files:**
 - Modify: `CHANGELOG.md`
@@ -567,11 +578,11 @@ Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>"
 
 ---
 
-### Task 8: wrapper PR open + admin merge
+### Task 7: wrapper PR open + admin merge
 
-**Branch:** `cfp-d-v1-archive` (5 commits 누적: spec + Task 2-7)
+**Branch:** `cfp-d-v1-archive` (commits 누적: spec + plan + Task 1-6)
 
-**Pre-condition:** Task 1 (canonical PR) 머지 완료 — wrapper sibling content 가 canonical 과 일관 상태.
+**Pre-condition:** Task 1-6 모두 commit 완료 (canonical PR 사전조건 폐기 — option α).
 
 - [ ] **Step 1: branch push**
 
@@ -672,15 +683,15 @@ Expected: frontmatter `status: Archived` (canonical PR 머지된 상태).
 
 ## 검증 종합
 
-본 plan 실행 후 spec §8 Test Contract T-1 ~ T-6 모두 PASS:
+본 plan 실행 후 spec §8 Test Contract:
 - T-1: `bash scripts/check-inter-plugin-contracts.sh` exit 0 ✓
 - T-2: `bash scripts/test-check-inter-plugin-contracts.sh` T1-T6 모두 PASS ✓
 - T-3: MANIFEST entry `Archived` 1 hit ✓
-- T-4: canonical frontmatter `status: Archived` ✓
+- T-4: **N/A — canonical 부재 확인 (option α)**
 - T-5: active SSOT "Deprecated" 잔재 0 ✓
 - T-6: history 14 files 치환 0 hit (Deprecated literal) ✓
 
-총 변경:
-- canonical PR: 1 file
-- wrapper PR: 21 files (Task 2: 1 + Task 3: 2 + Task 4: 1 + Task 5: 2 + Task 6: 14 + Task 7: 1)
-- 총 22 files ✓ (spec §4 일치)
+총 변경 (revision 2026-04-30 option α):
+- wrapper PR: 21 files (Task 1: 1 + Task 2: 2 + Task 3: 1 + Task 4: 2 + Task 5: 14 + Task 6: 1)
+- canonical PR: N/A
+- 총 21 files ✓ (spec §4 revised 일치)

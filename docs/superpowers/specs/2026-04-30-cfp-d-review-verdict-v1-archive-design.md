@@ -12,12 +12,14 @@ related_adrs:
 
 ### §1. 목적
 
-review_verdict v1 contract 의 status 를 `Deprecated` → `Archived` 로 전환. consumer 부재 확신 (사용자 명시 2026-04-30) 으로 grace period 불필요. canonical (codeforge-review) + wrapper sibling 양쪽 동기화. history attribution 보존 (ADR-008 §5 "이전 file 은 historical record 로 유지" 룰 준수).
+review_verdict v1 contract 의 status 를 `Deprecated` → `Archived` 로 전환. consumer 부재 확신 (사용자 명시 2026-04-30) 으로 grace period 불필요. history attribution 보존 (ADR-008 §5 "이전 file 은 historical record 로 유지" 룰 준수).
+
+**실행 시점 발견 (2026-04-30 revision)**: v1 file 은 wrapper repo 단독 SSOT. canonical (codeforge-review) repo 의 `docs/inter-plugin-contracts/` 에 v1 부재 (CFP-29 시점 wrapper 신설 후 canonical 으로 이동된 적 없음 — wrapper sibling 본문 line 24 "**상위 SSOT 위치**: 본 file" 명시). 따라서 canonical PR 작업 N/A, wrapper PR 단독 진행 (option α 채택).
 
 ### §2. 범위
 
-**In scope**:
-- canonical + wrapper sibling 양쪽 v1 file 의 frontmatter `status` + body header 전환
+**In scope** (2026-04-30 revision: option α — canonical 부재 확인 후 wrapper-only):
+- wrapper repo v1 file 의 frontmatter `status` + body header 전환 (단독 SSOT)
 - MANIFEST.yaml entry status 갱신
 - CLAUDE.md Inter-plugin Contract 표 status 컬럼 갱신
 - ADR-008 §5 한 단락 보강 (Deprecated → Archived 전환 트리거 정의)
@@ -30,6 +32,8 @@ review_verdict v1 contract 의 status 를 `Deprecated` → `Archived` 로 전환
 - 신규 v3 contract 발의
 - 일반 history pruning (CFP-E 후속 분리)
 - 신규 ADR-011 발의 (ADR-008 §5 보강으로 대체)
+- canonical (codeforge-review) repo 에 v1 file 신설 (option β 기각 — archive 의도와 audit trail 어색)
+- MANIFEST.yaml `canonical_repo` 의 v1 부정확성 수정 (option γ 기각 — schema 확장 scope 초과, 후속 CFP-E 또는 후속 cleanup CFP 처리)
 
 ### §3. 결정 근거
 
@@ -40,14 +44,14 @@ review_verdict v1 contract 의 status 를 `Deprecated` → `Archived` 로 전환
 | Q3 ADR 처리 | A: ADR-008 §5 보강 | B (신규 ADR-011) — 1 건 단발 결정에 ADR 비용 과함, YAGNI 위배 |
 | Q4 references 갱신 | Y: 21 files 모두 (active + history) | X (active 만) — 사용자가 history file 도 일관성 유지 선호 |
 | Q5 history pruning | β: 별도 CFP-E 로 분리 | α (CFP-D 합류) — pruning 기준 별도 brainstorm 필요 |
-| Q6 PR 시퀀스 | 1: canonical 먼저 → wrapper 나중 | 2 (병렬 — incoherent 짧은 구간) / 3 (wrapper 먼저 — sibling 이 canonical 앞서면 mirror 의미 위배) |
+| Q6 PR 시퀀스 (원안) | 1: canonical 먼저 → wrapper 나중 | 2 (병렬) / 3 (wrapper 먼저) |
+| Q6 실행 revision (2026-04-30) | α: wrapper PR 단독 — canonical 부재 확인 후 | β (canonical 신설 + 동시 archive) / γ (MANIFEST schema 확장) |
 
 ### §4. 변경 대상 file 분류
 
-#### §4.1 status 전환 (frontmatter + body header) — 2 files
+#### §4.1 status 전환 (frontmatter + body header) — 1 file (revision 2026-04-30)
 
-- canonical: `mclayer/plugin-codeforge-review` `docs/inter-plugin-contracts/review-verdict-v1.md`
-- wrapper sibling: 본 repo `docs/inter-plugin-contracts/review-verdict-v1.md`
+- wrapper (단독 SSOT — canonical 부재 확인): 본 repo `docs/inter-plugin-contracts/review-verdict-v1.md`
 
 변경 내용:
 - frontmatter `status: Deprecated` → `Archived`
@@ -110,28 +114,21 @@ review_verdict v1 contract 의 status 를 `Deprecated` → `Archived` 로 전환
 ### Changed
 - review_verdict v1 contract status `Deprecated` → `Archived` (consumer 부재 확신, 2026-04-30)
 - ADR-008 §5 보강 — `Deprecated → Archived` 전환 트리거 정의 (§5.1 추가)
-- canonical (codeforge-review) + wrapper sibling 양쪽 동기화 (ADR-010 sync 의무)
+- wrapper repo 단독 SSOT (canonical 부재 — option α)
 ```
 
-**총: 22 files** (canonical 1 + wrapper 21).
+**총: 21 files** (wrapper 단독 — 2026-04-30 revision: canonical 부재 확인 후 option α).
 
-### §5. 작업 시퀀스
+### §5. 작업 시퀀스 (revision 2026-04-30: option α — wrapper 단독)
 
-#### §5.1 PR 1: canonical (codeforge-review repo)
-
-- branch: `cfp-d-v1-archive`
-- file 1개 변경: `docs/inter-plugin-contracts/review-verdict-v1.md`
-- author note frontmatter 추가
-- 직접 PR via `mcp__github` MCP tools (CFP-43 패턴)
-- merge 대기 (sub-issue 생성 안 함 — single-file change)
-
-#### §5.2 PR 2: wrapper (codeforge repo)
+#### §5.1 PR (wrapper, 단독)
 
 - branch: `cfp-d-v1-archive`
 - 21 files 변경 (§4.1-§4.6)
 - spec/plan 파일 사전 commit 후 본 PR 에 포함
-- subagent-driven-development 로 실행
-- canonical PR (PR 1) merge 후 진행 — wrapper sibling 본문이 canonical 의 verbatim mirror 일관성 유지
+- inline-execution 으로 실행 (사용자 선택, executing-plans skill)
+
+**원안 §5.1 (canonical PR) 폐기 사유**: 실행 시점 (2026-04-30) canonical (codeforge-review) repo `docs/inter-plugin-contracts/` 디렉토리에 v1 file 부재 확인. v1 의 `**상위 SSOT 위치**: 본 file` 명시는 wrapper 자체가 SSOT 임을 의미 — canonical 작업 N/A.
 
 #### §5.3 Lint 검증
 
@@ -157,7 +154,7 @@ N/A — schema 변경 없음. status enum "Archived" 는 lint 이 이미 인정 
 | T-1 | positive | check-inter-plugin-contracts.sh 실행 (수정 후) | exit 0 |
 | T-2 | positive | test-check-inter-plugin-contracts.sh T1-T6 | 모두 PASS |
 | T-3 | manual | MANIFEST entry status 확인 | `grep -E "review-verdict-v1.*Archived" docs/inter-plugin-contracts/MANIFEST.yaml` 1 hit |
-| T-4 | manual | canonical (codeforge-review) v1 file status 확인 | `mcp__github__get_file_contents` 결과 frontmatter `status: Archived` |
+| T-4 | manual | canonical (codeforge-review) v1 file status 확인 | **N/A — canonical 부재 확인 (2026-04-30 revision option α)** |
 | T-5 | manual | active SSOT 잔재 없음 | `grep -rn "v1.*Deprecated" CLAUDE.md MANIFEST.yaml ADR-008-*.md migration-guide.md orchestrator-playbook.md` 0 hits |
 | T-6 | manual | history file 14개 치환 확인 | 각 file 에 `"v1 (Archived)"` 또는 `"v1.*Archived"` 매치, `"v1 (Deprecated)"` 매치 0 |
 
@@ -167,26 +164,25 @@ N/A — schema 변경 없음. status enum "Archived" 는 lint 이 이미 인정 
 |---|---|---|
 | ADR-008 | §5 보강 (§5.1 추가) | 본 CFP 가 author. 위반 0 |
 | ADR-009 | 무영향 | wrapper-only 모델 변경 없음 |
-| ADR-010 | sync 의무 준수 | PR 1 → PR 2 시퀀스로 enforce |
+| ADR-010 | sync 의무 N/A | v1 은 wrapper 단독 SSOT (canonical 부재) — sibling 모델 밖이라 sync 의무 부적용 |
 | ADR-001 | v1 attribution 보존 | file 자체 유지로 satisfied |
 
 ### §10. Risk + 완화
 
 | Risk | 완화 |
 |---|---|
-| canonical merge 후 wrapper sibling 누락 (sync 깜빡) | PR 2 의 wrapper sibling status 변경이 같은 PR scope 안에 포함 |
+| canonical 부재로 ADR-010 sibling sync 모델과 어긋남 | 후속 CFP-E (또는 별도 cleanup CFP) 에서 MANIFEST `canonical_repo` schema 정합성 처리. 본 CFP 는 status 전환만 |
 | history file 14개 일괄 치환 시 sed 오버킬 | 정확한 pattern: `"v1 (Deprecated)"` per-file Edit (sed -i 금지) |
 | 추후 v2 도 Archived 전환 시점 룰 부재 | ADR-008 §5.1 보강에 트리거 정의 (consumer 부재 + 6 CFP grace) |
 | meta-CFP 머지 시 phase-gate-mergeable 차단 | admin merge (`gh pr merge --admin`) 사전 인지 (CFP-42, CFP-43 패턴) |
-| CFP-D Story file 부재로 §10 FIX Ledger 위치 불명 | Phase 1 시작 시점 docs/stories/CFP-D.md 수동 생성 (story-init Action 미동작 가능성 대비) |
+| CFP-D Story file 부재로 §10 FIX Ledger 위치 불명 | meta-CFP 패턴 (CFP-42, CFP-43 도 Story file 없음) — ledger 부재 허용 |
 
-### §11. 작업 추정
+### §11. 작업 추정 (revision 2026-04-30)
 
-- canonical PR: 1 file × 5 lines (~매우 작음)
 - wrapper PR: 21 files (대부분 1-2 lines 치환), ADR-008 §5.1 단락 1 추가
-- 총 token: 5-10k (subagent task 5-7개)
-- 총 PR: 2 (canonical + wrapper)
-- 총 PR-commit: 5-7 (subagent-driven 단위 commit)
+- 총 token: 3-7k
+- 총 PR: 1 (wrapper 단독 — option α)
+- 총 commit: 5-7 (inline-execution Task 단위 commit)
 
 ### §12. 리뷰 결과
 
@@ -195,3 +191,4 @@ N/A — schema 변경 없음. status enum "Archived" 는 lint 이 이미 인정 
 ### §13. 변경 이력
 
 - 2026-04-30: CFP-D Phase 1 author Claude (Opus 4.7) — 본 spec 작성
+- 2026-04-30 (실행 시점 revision): canonical (codeforge-review) repo `docs/inter-plugin-contracts/` 디렉토리에 v1 file 부재 확인 — wrapper repo 가 v1 단독 SSOT (CFP-29 신설 후 canonical 으로 이동된 적 없음). spec 의 "canonical + wrapper sibling 양쪽 동기화" 가정 거짓. option α (wrapper 단독 PR) 채택. spec §1, §2, §3, §4.1, §5, §8 T-4, §9, §10, §11 수정.
