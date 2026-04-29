@@ -5,6 +5,28 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [Unreleased] - CFP-D (2026-04-30)
+
+### CFP-D — review_verdict v1 Deprecated → Archived
+
+consumer 부재 확신 (사용자 명시 2026-04-30) 으로 v1 grace period 불필요. 실행 시점 canonical (codeforge-review) repo 의 `docs/inter-plugin-contracts/` 에 v1 file 부재 확인 — wrapper 가 v1 단독 SSOT (option α 채택, canonical PR drop).
+
+### Changed
+
+- `docs/inter-plugin-contracts/review-verdict-v1.md` frontmatter `status: Deprecated → Archived`. body header `(DEPRECATED) → (ARCHIVED)`. warning paragraph 갱신 (CFP-D 전환 시점 + ADR-008 §5 historical record 보존 명시)
+- `docs/inter-plugin-contracts/MANIFEST.yaml` v1 entry status `Deprecated → Archived`
+- `CLAUDE.md` "Inter-plugin Contract" 표 review_verdict v1 컬럼: `(Deprecated) → (Archived)`
+- `docs/adr/ADR-008-inter-plugin-contract-versioning.md` §5.1 신규 단락 — Deprecated → Archived 전환 트리거 3 조건 정의 (consumer 부재 + 후속 MAJOR 1+ release + canonical/sibling sync 또는 wrapper 단독)
+- `docs/orchestrator-playbook.md` line 26 narrative: `review_verdict v1 → v2` (v1 Archived 명시)
+- `docs/migration-guide.md` line 98/109/112 narrative: 현재 active schema v2 + v1 Archived 명시
+- 5 history file (`cfp-31` spec, `cfp-42` spec+plan, `zeta-arc` retro, `ADR-009`) v1 status reference 갱신
+
+### Migration
+
+- consumer 부재 — 액션 불필요
+- v1 file 자체는 historical record 로 영구 보존 (ADR-008 §5 룰 — 삭제 금지)
+- 향후 v1 schema 참조하던 코드 (없음 — v2 active 부터 v1 사용 0) 는 v2 로 migrate 필요
+
 ## [5.0.1] - 2026-04-29
 
 ### CFP-41 (ζ arc retro) — 종합 회고 + ADR-009 Adopted (Patch)
