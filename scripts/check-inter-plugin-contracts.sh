@@ -124,6 +124,10 @@ for md in sorted(contracts_dir.rglob("*.md")):
     if section_count < 3:
         errors.append(f"{md}: 본문 ## 섹션 부족 ({section_count} < 3) — 구조화 강제")
 
+    # CFP-42: sibling marker section — every kind:contract in MANIFEST is sibling for now
+    if not re.search(r"\*\*상위 SSOT 위치\*\*:", body):
+        errors.append(f"{md}: sibling marker section missing (need '**상위 SSOT 위치**:' in body)")
+
 if errors:
     print(f"::error::CFP-33 inter-plugin-contracts (STRICT): {len(errors)} 건")
     for e in errors:
