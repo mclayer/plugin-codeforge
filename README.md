@@ -1,10 +1,10 @@
 # codeforge
 
-**Claude Code 범용 SW 개발 오케스트레이션 플러그인**. 사용자 요구사항 한 건을 받아 **23 core 에이전트 + `role: dev` 동적 roster · 7 레인** 구조로 요구사항 해석 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → 구현 테스트 → 보안 테스트 게이트까지 자율 실행한다.
+**Claude Code 범용 SW 개발 오케스트레이션 플러그인**. 사용자 요구사항 한 건을 받아 **0 core 에이전트 (wrapper-only) + 6 lane plugin (codeforge-{review,pmo,requirements,test,develop,design}) + `role: dev` 동적 roster · 7 레인** 구조로 요구사항 해석 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → 구현 테스트 → 보안 테스트 게이트까지 자율 실행한다.
 
 ## 주요 특징
 
-- **23 core 에이전트 + `role: dev` 동적 roster · 7 레인 · 2 Cross-cutting** 구조로 SW 개발 프로세스 전반 커버
+- **0 core (wrapper-only) + 6 lane plugin + `role: dev` 동적 roster · 7 레인 · 1 Cross-cutting (PMOAgent)** 구조로 SW 개발 프로세스 전반 커버
 - **프로젝트 shape별 preset** (`presets/webapp` 등) — 웹앱·CLI·라이브러리·임베디드 등 Dev 구성 번들을 골라 overlay에 임포트
 - **CodebaseMapper ↔ Refactor 이념 대립** 으로 설계 균형 확보
 - **Claude + Codex(GPT-5) peer 리뷰** 로 설계 리뷰·코드 리뷰·보안 테스트 3중 peer 이중화
@@ -12,7 +12,7 @@
 - **FIX 루프 상태 머신** — 설계 리뷰·구현 리뷰 최대 3회, 구현 테스트·보안 테스트 FIX 무제한
 - **Overlay 메커니즘 (β)** — consumer 프로젝트가 도메인·SSOT 상수·기술 스택을 파일 분리 방식으로 확장
 - **Templates SSOT** (`templates/`) — Change Plan · ADR · Story Page · Impl Manifest 양식 일원화
-- **단독 문서 writer (DocsAgent)** 를 통한 GitHub Issue/PR·docs 일관성 보장
+- **Lane plugin self-write boundary** — 각 lane plugin 이 자기 owner section/comment/label 을 직접 write 해 자율적 일관성 유지 (codeforge-* CLAUDE.md self-write 표 SSOT)
 
 ## 에이전트 구조
 
@@ -20,7 +20,7 @@
 (Human) 사용자
    ↓
 Orchestrator (최상위 Claude 세션)
- ├── [Cross-cutting] PMOAgent, DocsAgent
+ ├── [Cross-cutting] PMOAgent
  ├── [요구사항] RequirementsPL (DomainAgent ‖ Analyst ‖ Researcher 병렬)
  ├── [설계] ArchitectPLAgent (CodebaseMapper ‖ Refactor ‖ SecurityArchitect ‖ TestContractArch 병렬, ArchitectAgent chief author)
  ├── [설계 리뷰] DesignReviewPL (Claude ‖ Codex)
@@ -98,7 +98,7 @@ mkdir -p .claude/_overlay/agents
 | [`CHANGELOG.md`](CHANGELOG.md) | 릴리스 이력 (SemVer) |
 | [`templates/`](templates/) | 공통 문서 양식 SSOT — Change Plan · ADR · Story Page · Impl Manifest |
 | [`presets/`](https://github.com/mclayer/plugin-codeforge-develop/tree/main/presets) | 프로젝트 shape별 Dev 에이전트 번들 — webapp 등 |
-| `agents/*.md` | 23 core 에이전트 SSOT |
+| `agents/*.md` | 없음 (wrapper-only — agent md 는 6 lane plugin 에 분산) |
 
 ## 구조
 
@@ -106,7 +106,7 @@ mkdir -p .claude/_overlay/agents
 codeforge/
 ├── .claude-plugin/
 │   └── plugin.json
-├── agents/                       # 23 core agent md (process + generic Dev)
+├── agents/                       # (없음 — wrapper-only, ζ arc 완료 후 0개)
 ├── presets/                      # 프로젝트 shape별 Dev 번들
 │   ├── README.md
 │   └── webapp/
