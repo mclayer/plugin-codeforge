@@ -114,7 +114,7 @@ Story 분해안:
 - 인터페이스 설계 자체는 **ArchitectAgent (chief author) 영역** — PMO는 "인터페이스/구체 분리 가능해 보인다"까지만
 - 병렬 판정 근거를 분해 제안서에 **명시** (이후 충돌 발생 시 재검토 근거)
 
-산출물: 위 형식 보고서를 write queue에 제출 → DocsAgent가 GitHub Epic Issue body 또는 Milestone description에 기록. Orchestrator는 이를 참조해 Story 생성 실행.
+산출물: 위 형식 보고서를 PMOAgent가 직접 write — `mcp__github__add_issue_comment` (Epic Issue body) + `Bash(gh api repos/*/milestones*)` (Milestone description). CFP-36 Phase 0a 후 owner agent direct write — DocsAgent 의뢰 path 폐기. Orchestrator는 이를 참조해 Story 생성 실행.
 
 ### 2. Story 완료 회고 감사 (Story 단위)
 
@@ -127,7 +127,7 @@ Story 완료 직후 Orchestrator가 스폰. 입력: 해당 Story file §1-11 + F
 - **FIX 원인 판정의 evidence pack 완성도** — ArchitectPLAgent 판정 시 Change Plan 인용·테스트 로그가 코멘트에 포함됐는가
 - **토큰 예산 초과 이력** — 레인별 사전 예산 대비 실제, 중단 임계 접근 여부
 
-산출물: `[PMOAgent 회고] <PROJECT_KEY>-N` 형식 보고서를 `docs/retros/<sprint>.md`에 본 에이전트가 직접 write (CFP-26 Phase 0a). Story file §11 요약 링크는 DocsAgent 경유 기록 의뢰.
+산출물: `[PMOAgent 회고] <PROJECT_KEY>-N` 형식 보고서를 `docs/retros/<sprint>.md`에 본 에이전트가 직접 write (CFP-26 Phase 0a). Story §11 은 PMOAgent 직접 `Edit(docs/stories/<KEY>.md)` (codeforge-pmo CLAUDE.md `Self-write 책임` 표 — owner agent direct write, CFP-36).
 
 ### 3. Cross-Story 패턴 분석 (다중 Story)
 
@@ -143,11 +143,12 @@ Story 완료 직후 Orchestrator가 스폰. 입력: 해당 Story file §1-11 + F
 
 ### 4. ADR 후보 발의
 
-패턴 분석 결과 반복되는 이슈가 있으면 ADR 초안을 write queue에 제출:
+패턴 분석 결과 반복되는 이슈가 있으면 PMOAgent 가 Orchestrator 에 inline ADR draft 를 반환한다 (`pmo_output v1.adr_proposal` 필드 — pmo-output-v1 contract). Orchestrator 가 codeforge-design plugin 의 ArchitectAgent 를 spawn 하며 inline ADR draft content 를 입력으로 전달. ArchitectAgent 가 신규 ADR file `docs/adr/ADR-NNN-<slug>.md` 를 직접 author 한다. `adr-draft` write queue type 은 폐기 (CFP-26 Phase 0a deny rule).
+
+ADR draft 내용 예시 (Orchestrator 반환 payload `adr_proposal` 필드):
 
 ```markdown
 ---
-type: adr-draft
 category: Architecture | Data & Storage | Infrastructure | ...
 title: "ADR-NNN: <제안 결정>"
 trigger: "최근 N Story에서 반복 발견된 {패턴}"
@@ -166,7 +167,7 @@ trigger: "최근 N Story에서 반복 발견된 {패턴}"
 ...
 ```
 
-ArchitectAgent가 drain 시 `docs/adr/` 트리에 **status=Proposed** 상태로 신규 페이지 직접 write (CFP-26 Phase 0a 후 owner direct write). 실제 채택은 ArchitectAgent가 Change Plan 진입 시 검토 후 status=Accepted 전환.
+Orchestrator 가 ArchitectAgent spawn 시 위 draft content 를 입력으로 전달하면 ArchitectAgent 가 `docs/adr/` 트리에 **status=Proposed** 상태로 신규 페이지 직접 write (CFP-26 Phase 0a 후 owner direct write). 실제 채택은 ArchitectAgent 가 Change Plan 진입 시 검토 후 status=Accepted 전환.
 
 ### 5. 세션 회고 synthesize
 
@@ -185,4 +186,4 @@ Orchestrator가 세션 종료 직전 본 에이전트를 스폰해 playbook §8.
 - `superpowers:verification-before-completion`: Story 완료 감사 시 체크리스트 빠짐 방지
 
 ## 문서화 표준
-회고 파일(`docs/retros/**`)은 본 에이전트가 직접 write (CFP-26 Phase 0a, schema [`templates/retro.md`](../templates/retro.md) CFP-27). GitHub Issue/PR·Story file §11·ADR·Change Plan 등 나머지 docs write는 모두 Orchestrator 경유 DocsAgent가 기록 (write queue 경유). 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+회고 파일(`docs/retros/**`) 및 Story §11 retro pointer 는 본 에이전트가 직접 write (CFP-36 + CFP-26 Phase 0a, schema [`templates/retro.md`](../templates/retro.md) CFP-27). Epic Issue 코멘트·Milestone description 도 본 에이전트가 직접 write (`mcp__github__add_issue_comment` + `Bash(gh api repos/*/milestones*)`, CFP-36). ADR 후보 발의는 `pmo_output v1.adr_proposal` 필드 로 Orchestrator 에 inline 반환 — DocsAgent 경유 write queue path 는 폐기. GitHub PR·Story file 일반 섹션·Change Plan 등 나머지 docs write 는 Orchestrator 경유 DocsAgent 가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
