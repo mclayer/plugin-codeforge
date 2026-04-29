@@ -111,6 +111,13 @@ for md in sorted(contracts_dir.rglob("*.md")):
         elif isinstance(val, list) and len(val) == 0:
             errors.append(f"{md}: {list_field} 빈 list 금지")
 
+    # CFP-42: sibling must reference ADR-008 + ADR-010
+    related_adrs_str = " ".join(str(x) for x in (fm.get("related_adrs") or []))
+    if "ADR-008" not in related_adrs_str:
+        errors.append(f"{md}: related_adrs must reference ADR-008 (versioning rule)")
+    if "ADR-010" not in related_adrs_str:
+        errors.append(f"{md}: related_adrs must reference ADR-010 (sibling sync policy)")
+
     # 5. 본문 구조화 sanity — 최소 3개 ## 섹션
     body = text.split("\n---\n", 1)[1] if "\n---\n" in text else text
     section_count = len(re.findall(r"^## ", body, re.MULTILINE))
