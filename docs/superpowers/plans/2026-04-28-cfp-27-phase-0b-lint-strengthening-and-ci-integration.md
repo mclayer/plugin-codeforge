@@ -743,13 +743,13 @@ Note line numbers.
 Find the line:
 ```markdown
 ### 페이지 템플릿
-[`templates/adr.md`](templates/adr.md) 참조. frontmatter (adr_number / title / status / category / date / related_files) + 본문 섹션 (`## 상태 / ## 컨텍스트 / ## 결정 / ## 결과 / ## 다이어그램 / ## 관련 파일`).
+[`templates/adr.md`](https://github.com/mclayer/plugin-codeforge-design/blob/main/templates/adr.md) 참조. frontmatter (adr_number / title / status / category / date / related_files) + 본문 섹션 (`## 상태 / ## 컨텍스트 / ## 결정 / ## 결과 / ## 다이어그램 / ## 관련 파일`).
 ```
 
 Append:
 ```markdown
 ### 페이지 템플릿
-[`templates/adr.md`](templates/adr.md) 참조. frontmatter (adr_number / title / status / category / date / related_files) + 본문 섹션 (`## 상태 / ## 컨텍스트 / ## 결정 / ## 결과 / ## 다이어그램 / ## 관련 파일`).
+[`templates/adr.md`](https://github.com/mclayer/plugin-codeforge-design/blob/main/templates/adr.md) 참조. frontmatter (adr_number / title / status / category / date / related_files) + 본문 섹션 (`## 상태 / ## 컨텍스트 / ## 결정 / ## 결과 / ## 다이어그램 / ## 관련 파일`).
 
 **CFP-27부터** `scripts/check-doc-frontmatter.sh` + `scripts/check-doc-section-schema.sh` 가 본 schema를 검증 (warning 모드 — CFP-28 strict 전환).
 ```

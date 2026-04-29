@@ -160,4 +160,4 @@ python3 ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/validate_config.py \
 - [`plugin-design.md`](plugin-design.md) §5 — Stage 1/2 범위
 - [`../overlay/_overlay/project.yaml.example`](../overlay/_overlay/project.yaml.example) — 스켈레톤
 - [`../overlay/hooks/validate_config.py`](../overlay/hooks/validate_config.py) — Schema 검증 구현
-- [`../agents/DocsAgent.md`](../agents/DocsAgent.md) — 주 소비자
+- [`../agents/DocsAgent.md`](https://github.com/mclayer/plugin-codeforge/blob/v3.0.0/agents/DocsAgent.md) — 주 소비자

@@ -122,6 +122,11 @@ jobs:
           # DocsAgent는 single writer로 doc-queue도 가지나 표에는 없음 (의뢰자가 아닌 drain 주체)
           EXEMPT_FROM_TABLE = {"DocsAgent"}
 
+          # CFP-40 ζ arc 후 wrapper agent 0개 — agents/ 비어있으면 본 invariant 적용 대상 없음
+          if not list(Path("agents").glob("*.md")):
+              print("✓ Write queue permission parity: wrapper agent 0개 (ζ arc wrapper-only) — skip")
+              sys.exit(0)
+
           claude_md = Path("CLAUDE.md").read_text(encoding="utf-8")
           # 표 라인 패턴: "**Write queue 의뢰 권한** (`.claude-work/doc-queue/**`만): A, B, C ... — 기타 ..."
           m = re.search(

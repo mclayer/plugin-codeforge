@@ -87,7 +87,7 @@ GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경�
 [DocsAgent.md](DocsAgent.md)
 
 # presets/<flavor>/agents/<X>.md 위치
-[../../../agents/DocsAgent.md](../../../agents/DocsAgent.md)
+[../../../agents/DocsAgent.md](https://github.com/mclayer/plugin-codeforge/blob/v3.0.0/agents/DocsAgent.md)
 ```
 
 ### 4. CodeReview 강제 항목

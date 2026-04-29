@@ -39,11 +39,13 @@ assert_deny() {
   fi
 }
 
-# ArchitectAgent
-assert_allow agents/ArchitectAgent.md "Edit(docs/change-plans/**)"
-assert_allow agents/ArchitectAgent.md "Write(docs/change-plans/**)"
-assert_allow agents/ArchitectAgent.md "Edit(docs/adr/**)"
-assert_allow agents/ArchitectAgent.md "Write(docs/adr/**)"
+# ArchitectAgent — CFP-40 ζ arc 후 codeforge-design plugin 으로 이관 → wrapper 부재 시 skip
+if [[ -f agents/ArchitectAgent.md ]]; then
+  assert_allow agents/ArchitectAgent.md "Edit(docs/change-plans/**)"
+  assert_allow agents/ArchitectAgent.md "Write(docs/change-plans/**)"
+  assert_allow agents/ArchitectAgent.md "Edit(docs/adr/**)"
+  assert_allow agents/ArchitectAgent.md "Write(docs/adr/**)"
+fi
 
 # DomainAgent — CFP-37 ζ arc 후 codeforge-requirements plugin 으로 이관 → wrapper 부재 시 skip
 if [[ -f agents/DomainAgent.md ]]; then
@@ -57,15 +59,17 @@ if [[ -f agents/PMOAgent.md ]]; then
   assert_allow agents/PMOAgent.md "Write(docs/retros/**)"
 fi
 
-# DocsAgent — 4 path deny
-assert_deny agents/DocsAgent.md "Edit(docs/change-plans/**)"
-assert_deny agents/DocsAgent.md "Write(docs/change-plans/**)"
-assert_deny agents/DocsAgent.md "Edit(docs/adr/**)"
-assert_deny agents/DocsAgent.md "Write(docs/adr/**)"
-assert_deny agents/DocsAgent.md "Edit(docs/domain-knowledge/**)"
-assert_deny agents/DocsAgent.md "Write(docs/domain-knowledge/**)"
-assert_deny agents/DocsAgent.md "Edit(docs/retros/**)"
-assert_deny agents/DocsAgent.md "Write(docs/retros/**)"
+# DocsAgent — CFP-40 ζ arc 후 file 최종 삭제 (wrapper-only end-state) → 부재 시 skip
+if [[ -f agents/DocsAgent.md ]]; then
+  assert_deny agents/DocsAgent.md "Edit(docs/change-plans/**)"
+  assert_deny agents/DocsAgent.md "Write(docs/change-plans/**)"
+  assert_deny agents/DocsAgent.md "Edit(docs/adr/**)"
+  assert_deny agents/DocsAgent.md "Write(docs/adr/**)"
+  assert_deny agents/DocsAgent.md "Edit(docs/domain-knowledge/**)"
+  assert_deny agents/DocsAgent.md "Write(docs/domain-knowledge/**)"
+  assert_deny agents/DocsAgent.md "Edit(docs/retros/**)"
+  assert_deny agents/DocsAgent.md "Write(docs/retros/**)"
+fi
 
 if [[ $FAIL -eq 0 ]]; then
   echo "✓ CFP-26 Phase 0a — single-owner 4종 권한 재분배 invariant OK"

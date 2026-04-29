@@ -5,6 +5,47 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [5.0.0] - 2026-04-29
+
+### CFP-40 (ζ arc LAST) — codeforge-design plugin extraction + DocsAgent final delete (BREAKING)
+
+ζ arc 마지막 lane plugin 추출 (parent §5.10). 7 design agents + 2 templates 이전. **DocsAgent agent file 최종 삭제** — wrapper-only end-state 도달.
+
+설계 SSOT: [`docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md`](docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md) §5.10. Codex round 2 sequencing 권고: design 가장 마지막 (가장 큰 표면 — split-brain 위험 회피).
+
+### Removed (BREAKING)
+- `agents/{ArchitectPL,Architect,CodebaseMapper,Refactor,SecurityArchitect,TestContractArchitect,DataMigrationArchitect}Agent.md` → mclayer/plugin-codeforge-design (7 agent)
+- `agents/DocsAgent.md` — **최종 삭제** (CFP-32부터 단계적 권한 회수 끝)
+- `templates/change-plan.md` → mclayer/plugin-codeforge-design
+- `templates/adr.md` → mclayer/plugin-codeforge-design
+
+### Changed
+- `CLAUDE.md` 9 → 10 plugin (codeforge-design 추가). agent count 8 → 0 (wrapper-only)
+- `CLAUDE.md` description: "19 core 에이전트" 패턴 → "0 core 에이전트 (wrapper-only)"
+- `.claude-plugin/plugin.json` description: 완전 재작성 — wrapper-only end-state 반영
+- 다수 file 의 broken link → external URL (ArchitectAgent, ArchitectPLAgent, deputies, change-plan/adr templates, DocsAgent)
+- `scripts/check-write-permission-redistribution.sh` — ArchitectAgent / DocsAgent 부재 시 skip
+- `.claude-plugin/plugin.json` v4.0.0 → v5.0.0 BREAKING
+
+### Why
+ζ arc parent spec §2.1 end-state 도달: codeforge wrapper agent 0개. Orchestrator (top-level Claude 세션) + playbook + CI workflows + cross-plugin schema templates + inter-plugin contracts SSOT location 만 wrapper에 잔류.
+
+DocsAgent 최종 삭제 정당화:
+- §10 owner = Orchestrator (CFP-32)
+- §9 owner = codeforge-review (CFP-35)
+- §11 owner = codeforge-pmo (CFP-36)
+- §2/§5/§6 owner = codeforge-requirements (CFP-37)
+- §10 trigger reporter = codeforge-test (CFP-38)
+- §8/§8.5 owner = codeforge-develop (CFP-39)
+- §3/§7/§11 mirror owner = codeforge-design (본 CFP)
+- §1 owner = story-init.yml CI Action (plugin 무관)
+- 일반 docs/** writes (orchestrator-playbook, consumer-guide 등) = Orchestrator 직접 (top-level 세션 path-scoped 권한 무관)
+
+### Followups (CFP-41 retro)
+- ζ arc 종합 검증 + ADR-009 status Accepted → Adopted
+- 가상 시나리오 검증 (새 deputy 추가 시 wrapper 무손상)
+- core agent 수 19 → 0 도달 audit
+
 ## [4.0.0] - 2026-04-29
 
 ### CFP-39 (ζ arc) — codeforge-develop plugin extraction (BREAKING)

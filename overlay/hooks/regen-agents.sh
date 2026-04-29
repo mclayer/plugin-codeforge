@@ -62,8 +62,10 @@ if [ ! -f "$MERGE_SCRIPT" ]; then
     exit 1
 fi
 if [ ! -d "$PLUGIN_AGENTS_DIR" ]; then
-    echo "[regen-agents] ERROR: plugin agents/ not found at $PLUGIN_AGENTS_DIR" >&2
-    exit 1
+    # CFP-40 ζ arc 후 wrapper agent 0개 — agents/ 디렉토리 부재 시 graceful skip
+    # (lane plugin 들의 자체 regen-agents.sh 가 실제 agent merge 처리)
+    echo "[regen-agents] codeforge wrapper agent 0개 (ζ arc wrapper-only) — lane plugin 으로 위임" >&2
+    exit 0
 fi
 
 # Validate project.yaml schema (fail-fast if malformed or missing required fields).

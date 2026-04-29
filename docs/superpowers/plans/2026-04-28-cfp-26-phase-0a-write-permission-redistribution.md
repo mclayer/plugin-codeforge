@@ -567,7 +567,7 @@ grep -n "### Write 권한\|### 문서 write 단독 writer" CLAUDE.md
 **DocsAgent만이 GitHub Issue/PR/comment·repo file `docs/**` write 가능**. 나머지 에이전트는 모두 문서 write 권한 없음. 문서 작업은 전원 **file-based write queue**(`.claude-work/doc-queue/<story>/`)에 의뢰 파일을 append → Orchestrator가 DocsAgent 스폰 시 drain. 상세는 playbook §11.
 
 - DocsAgent 권한은 path-scoped: `Edit(docs/**)`, `Write(docs/**)`, `Edit(.claude-work/doc-queue/**)`, `Write(.claude-work/doc-queue/**)` + GitHub MCP write 도구 + gh CLI Bash fallback
-- 문서화 표준(GitHub Issue 코멘트 phase prefix, Story file 섹션 규격, Change Plan 템플릿, ADR 템플릿, FIX Ledger 스키마, Impl Manifest 스키마)은 [`agents/DocsAgent.md`](agents/DocsAgent.md) SSOT
+- 문서화 표준(GitHub Issue 코멘트 phase prefix, Story file 섹션 규격, Change Plan 템플릿, ADR 템플릿, FIX Ledger 스키마, Impl Manifest 스키마)은 [`agents/DocsAgent.md`](https://github.com/mclayer/plugin-codeforge/blob/v3.0.0/agents/DocsAgent.md) SSOT
 - 다른 에이전트 md에는 "문서화 표준은 DocsAgent.md 참조" 1줄만
 ```
 
@@ -589,7 +589,7 @@ grep -n "### Write 권한\|### 문서 write 단독 writer" CLAUDE.md
    - GitHub Issue/PR/comment (phase prefix 11종) · PR/Issue body create/update (`Closes #N` keyword) · label 부착(gate/phase/fix) · sub-issue 수동 fallback · milestone · gh api fallback
 3. **나머지 에이전트** (Write queue 의뢰만): Story file 섹션 갱신·GitHub comment 게시 등 multi-writer/lifecycle 영역은 `.claude-work/doc-queue/<story>/`에 의뢰 → Orchestrator가 DocsAgent 스폰 시 drain. 상세는 playbook §11
 
-문서화 표준(GitHub Issue 코멘트 phase prefix, Story file 섹션 규격, Change Plan 템플릿, ADR 템플릿, FIX Ledger 스키마, Impl Manifest 스키마)은 [`agents/DocsAgent.md`](agents/DocsAgent.md) SSOT. 4 single-owner doc 템플릿은 [`templates/`](templates/) (change-plan / adr / domain-knowledge schema / retro schema). owner agent는 본인 owner path write 시 해당 템플릿 schema 준수 필수 — `scripts/check-write-permission-redistribution.sh` (CFP-26) + 향후 frontmatter/section schema lint (CFP-27)에서 강제.
+문서화 표준(GitHub Issue 코멘트 phase prefix, Story file 섹션 규격, Change Plan 템플릿, ADR 템플릿, FIX Ledger 스키마, Impl Manifest 스키마)은 [`agents/DocsAgent.md`](https://github.com/mclayer/plugin-codeforge/blob/v3.0.0/agents/DocsAgent.md) SSOT. 4 single-owner doc 템플릿은 [`templates/`](templates/) (change-plan / adr / domain-knowledge schema / retro schema). owner agent는 본인 owner path write 시 해당 템플릿 schema 준수 필수 — `scripts/check-write-permission-redistribution.sh` (CFP-26) + 향후 frontmatter/section schema lint (CFP-27)에서 강제.
 ```
 
 - [ ] **Step 4: Commit**
@@ -740,7 +740,7 @@ grep -n "DocsAgent\|단독 writer\|write queue\|docs/\*\*" docs/plugin-design.md
 발견 hit가 "DocsAgent 단독 writer" 또는 "docs/** 단독 write" 표현이면 다음으로 갱신:
 
 ```markdown
-- **문서 write 책임 분담** (CFP-26 Phase 0a 이후): DocsAgent + 3 owner agent (ArchitectAgent / DomainAgent / PMOAgent). 상세는 [CLAUDE.md](../CLAUDE.md) "문서 write 책임 분담" 섹션 + [agents/DocsAgent.md](../agents/DocsAgent.md) "소유 영역" 표 SSOT
+- **문서 write 책임 분담** (CFP-26 Phase 0a 이후): DocsAgent + 3 owner agent (ArchitectAgent / DomainAgent / PMOAgent). 상세는 [CLAUDE.md](../CLAUDE.md) "문서 write 책임 분담" 섹션 + [agents/DocsAgent.md](https://github.com/mclayer/plugin-codeforge/blob/v3.0.0/agents/DocsAgent.md) "소유 영역" 표 SSOT
 ```
 
 - [ ] **Step 4: Commit**
