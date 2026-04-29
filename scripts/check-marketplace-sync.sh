@@ -28,7 +28,8 @@ if ! gh auth status >/dev/null 2>&1; then
     exit 0
 fi
 
-python3 <<'PY'
+PY_EXIT=0
+python3 <<'PY' || PY_EXIT=$?
 import sys, json, base64, subprocess
 from pathlib import Path
 
@@ -102,3 +103,4 @@ PY
 
 echo ""
 echo "(check-marketplace-sync: strict 모드 — CFP-24 정책 자동 enforcement)"
+exit $PY_EXIT

@@ -1,6 +1,6 @@
 {
   "name": "codeforge",
-  "version": "5.0.0",
+  "version": "5.0.1",
   "description": "Claude Code SW 개발 오케스트레이션 wrapper-only plugin. ζ arc 완료 (CFP-40, 2026-04-29). Agent 0개 — protocol/CI/schemas/bootstrap/Orchestrator instructions 만 보유. 6 lane plugin 의존: codeforge-{requirements,design,develop,test,review,pmo}. Inter-plugin contract 6종 + invariant SSOT 3종 (ADR-008/009).",
   "author": {
     "name": "Josh"
