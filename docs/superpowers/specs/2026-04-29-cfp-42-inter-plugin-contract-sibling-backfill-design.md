@@ -12,12 +12,14 @@ related_adrs:
   - ADR-009 (Wrapper-only Decomposition — ζ arc 결과. 본 CFP 가 추격하는 미해결 P0 gap 의 출처)
   - ADR-010-NEW (Inter-plugin Contract Sibling Sync — 본 spec 의 결정 ADR 후보)
 related_files:
-  - docs/inter-plugin-contracts/requirements-output-v1.md (NEW — sibling, canonical: codeforge-requirements)
-  - docs/inter-plugin-contracts/design-output-v1.md (NEW — sibling, canonical: codeforge-design)
-  - docs/inter-plugin-contracts/develop-output-v1.md (NEW — sibling, canonical: codeforge-develop)
-  - docs/inter-plugin-contracts/test-verdict-v1.md (NEW — sibling, canonical: codeforge-test)
-  - docs/inter-plugin-contracts/pmo-output-v1.md (NEW — sibling, canonical: codeforge-pmo)
-  - docs/inter-plugin-contracts/MANIFEST.yaml (NEW — contract registry SSOT, 9 entry / 10 file)
+  - docs/inter-plugin-contracts/requirements-output-v1.md (NEW — kind:contract sibling, canonical: codeforge-requirements)
+  - docs/inter-plugin-contracts/design-output-v1.md (NEW — kind:contract sibling, canonical: codeforge-design)
+  - docs/inter-plugin-contracts/develop-output-v1.md (NEW — kind:contract sibling, canonical: codeforge-develop)
+  - docs/inter-plugin-contracts/test-verdict-v1.md (NEW — kind:contract sibling, canonical: codeforge-test)
+  - docs/inter-plugin-contracts/pmo-output-v1.md (NEW — kind:contract sibling, canonical: codeforge-pmo)
+  - docs/inter-plugin-contracts/review-verdict-v1.md (UPDATE — frontmatter related_adrs 에 ADR-010 추가)
+  - docs/inter-plugin-contracts/review-verdict-v2.md (UPDATE — frontmatter related_adrs 에 ADR-010 추가)
+  - docs/inter-plugin-contracts/MANIFEST.yaml (NEW — kind:contract registry SSOT, 6 entry / 7 file)
   - docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md (NEW — sync 정책 + drift 처리 결정)
   - scripts/check-inter-plugin-contracts.sh (UPDATE — manifest completeness + frontmatter schema 검증)
   - CLAUDE.md (UPDATE — "Inter-plugin Contract" 섹션 9 contract listing + ADR-010 참조)
@@ -54,7 +56,7 @@ related_canonicals:
 
 CFP-31 (2026-04-29 ζ arc parent design) 이 5 신규 contract 도입을 계획 — `requirements-output-v1`, `design-output-v1`, `develop-output-v1`, `test-verdict-v1`, `pmo-output-v1`. ζ arc 추출 PR 시리즈 (CFP-29 / CFP-36 / CFP-37 / CFP-38 / CFP-39 / CFP-40) 에서 각 lane plugin 의 canonical contract 파일은 작성·머지 완료. 그러나 **wrapper 측 sibling reference 5종 backfill 은 누락** 상태로 ζ arc 가 종료됨 (CFP-41 retrospective).
 
-CFP-41 retro ([docs/retros/2026-04-29-zeta-arc-completion.md](../../retros/2026-04-29-zeta-arc-completion.md)) 가 "Migration-guide BREAKING parity" 는 follow-up cleanup 으로 명시했으나 **sibling backfill 자체는 lessons-learned 에 누락**. ADR-009 본문 §51 에 "Inter-plugin contract 6종 보유" 라고 단언되었지만, 로컬 [docs/inter-plugin-contracts/](../../inter-plugin-contracts/) 실제 파일은 5개 (`comment-prefix-v1`, `fix-event-v1`, `label-registry-v1`, `review-verdict-v1`, `review-verdict-v2`) — 6종 주장과 5 lane output sibling 부재가 동시에 존재하는 split-brain 상태.
+CFP-41 retro ([docs/retros/2026-04-29-zeta-arc-completion.md](../../retros/2026-04-29-zeta-arc-completion.md)) 가 "Migration-guide BREAKING parity" 는 follow-up cleanup 으로 명시했으나 **sibling backfill 자체는 lessons-learned 에 누락**. ADR-009 본문 §51 에 "Inter-plugin contract 6종 보유" 라고 단언되었지만, 로컬 [docs/inter-plugin-contracts/](../../inter-plugin-contracts/) 실제 파일은 5개 — 그중 3개 (`comment-prefix-registry-v1`, `fix-event-v1`, `label-registry-v1`) 는 **`kind: registry`** (cross-cutting protocol — 별도 schema·별도 lint chain) 이고, 2개 (`review-verdict-v1`, `review-verdict-v2`) 만 **`kind: contract`** (typed inter-plugin schema, [scripts/check-inter-plugin-contracts.sh](../../../scripts/check-inter-plugin-contracts.sh) lint 대상). "6종 contract 보유" 는 사실상 2 contract + 3 registry 의 합산. 본 CFP 의 sibling backfill 범위는 **`kind: contract` 표면만** — 5 lane plugin canonical 을 wrapper sibling 으로 backfill 하면 contract 표면이 2 → 7 로 확장되고 registry 표면은 3 으로 불변.
 
 본 CFP 는 이 누락을 backfill 하면서, 동일 누락이 향후 7번째·8번째 contract 추가 시 재발하지 않도록 ADR-010 정책 + lint 확장으로 차단한다.
 
@@ -104,12 +106,18 @@ contract 완결성 검증을 위해 별도 manifest file 도입. 이유:
 
 대안 (D2-Alt): ADR-010 frontmatter 에 manifest 박기 → **반려**. ADR 의 결정 vs 상태 데이터 분리 원칙 위배.
 
-### 2.3 D3. Role 구분 = sibling vs canonical
+### 2.3 D3. MANIFEST 범위 = `kind: contract` 표면만
 
-wrapper 자체가 producer 인 cross-cutting protocol 3종 (`comment_prefix`, `fix_event`, `label_registry`) 은 `role: canonical`. 6 lane output contract 는 `role: sibling`. 이유:
-- lint 가 frontmatter `related_adrs ∋ "ADR-010"` 검사를 sibling 에만 강제 가능
-- "상위 SSOT 위치" 섹션 검사도 sibling 에만 적용
-- 향후 wrapper-canonical → lane plugin 이전 (예: fix_event 이 별도 plugin 으로 추출) 시 role 만 변경
+wrapper repo 의 [docs/inter-plugin-contracts/](../../inter-plugin-contracts/) 디렉터리는 두 종류 파일을 보유:
+- **`kind: contract`** — typed inter-plugin schema (lane plugin → core 단방향 verdict/output). [scripts/check-inter-plugin-contracts.sh](../../../scripts/check-inter-plugin-contracts.sh) 가 frontmatter+본문 sanity 검증
+- **`kind: registry`** — wrapper-owned cross-cutting protocol (comment prefix · fix-event · label registry). `check-doc-frontmatter.sh` + `check-doc-section-schema.sh` 가 검증
+
+본 CFP 의 MANIFEST.yaml 은 **`kind: contract` 파일만 등록**. 이유:
+- 두 kind 는 frontmatter schema 가 다름 (`contract_version` vs `version`, `related_plugins` 필수 vs 부재). 하나의 MANIFEST 에 섞으면 검증 분기 복잡
+- 기존 lint chain 분리 모델 유지 (separation of concerns)
+- 향후 wrapper-canonical `kind: contract` (예: cross-cutting typed schema 신설) 가 등장하면 그때 role 필드 도입
+
+현재 MANIFEST 등록 6 entries 모두 sibling (lane plugin canonical 의 mirror). `role` 필드는 MANIFEST schema 에서 생략 — 나중 필요 시 ADR 갱신과 함께 추가.
 
 ### 2.4 D4. Drift 검출 정책 = 본 CFP 는 manifest completeness 까지
 
@@ -147,9 +155,12 @@ CFP-24 marketplace cross-repo sync 정책과 동질:
 | 파일 | Phase | 변경 |
 |---|---|---|
 | [scripts/check-inter-plugin-contracts.sh](../../../scripts/check-inter-plugin-contracts.sh) | Phase 2 | manifest completeness + orphan + frontmatter schema + sibling marker 검증 추가 |
-| [CLAUDE.md](../../../CLAUDE.md) | Phase 2 | "Inter-plugin Contract" 섹션 — 9 contract listing 갱신 + ADR-010 참조 |
+| [CLAUDE.md](../../../CLAUDE.md) | Phase 2 | "Inter-plugin Contract" 섹션 — kind:contract 6 / kind:registry 3 분리 listing + ADR-010 참조 |
 | [docs/stories/CFP-42.md](../../stories/CFP-42.md) | Phase 1 + Phase 2 | Issue Form → story-init.yml 자동 §1 + 수동 §2-11 |
 | [docs/change-plans/cfp-42-inter-plugin-contract-sibling-backfill.md](../../change-plans/cfp-42-inter-plugin-contract-sibling-backfill.md) | Phase 1 | Phase 1 PR ArchitectAgent 산출물 |
+| [docs/inter-plugin-contracts/review-verdict-v1.md](../../inter-plugin-contracts/review-verdict-v1.md) | Phase 2 | frontmatter `related_adrs` 에 ADR-010 추가 (sibling marker 강제 통과) |
+| [docs/inter-plugin-contracts/review-verdict-v2.md](../../inter-plugin-contracts/review-verdict-v2.md) | Phase 2 | frontmatter `related_adrs` 에 ADR-010 추가 (sibling marker 강제 통과) |
+| [scripts/test-check-inter-plugin-contracts.sh](../../../scripts/test-check-inter-plugin-contracts.sh) | Phase 2 | NEW — lint 회귀 테스트 harness (T1-T6 시나리오) |
 
 ## 4. ADR-010 핵심 내용 (Phase 1 ArchitectAgent draft 입력)
 
@@ -176,12 +187,12 @@ CFP-24 marketplace cross-repo sync 정책과 동질:
 
 ```yaml
 # docs/inter-plugin-contracts/MANIFEST.yaml
-# SSOT for inter-plugin contract completeness — referenced by ADR-010
-# Owner: codeforge wrapper repo. Updated when adding/removing contract.
+# SSOT for kind:contract files completeness — referenced by ADR-010
+# Owner: codeforge wrapper repo. Updated when adding/removing kind:contract.
+# Scope: kind:contract files only. kind:registry files (comment-prefix-registry,
+# fix-event, label-registry) are managed by check-doc-frontmatter.sh chain.
 contracts:
-  # ── Sibling (lane plugin canonical) ─────────────────────────────────
   - name: review_verdict
-    role: sibling
     canonical_repo: mclayer/plugin-codeforge-review
     canonical_path: docs/inter-plugin-contracts/
     files:
@@ -189,70 +200,45 @@ contracts:
       - { file: review-verdict-v2.md, contract_version: "2.0", status: Active }
 
   - name: requirements_output
-    role: sibling
     canonical_repo: mclayer/plugin-codeforge-requirements
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: requirements-output-v1.md, contract_version: "1.0", status: Active }
 
   - name: design_output
-    role: sibling
     canonical_repo: mclayer/plugin-codeforge-design
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: design-output-v1.md, contract_version: "1.0", status: Active }
 
   - name: develop_output
-    role: sibling
     canonical_repo: mclayer/plugin-codeforge-develop
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: develop-output-v1.md, contract_version: "1.0", status: Active }
 
   - name: test_verdict
-    role: sibling
     canonical_repo: mclayer/plugin-codeforge-test
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: test-verdict-v1.md, contract_version: "1.0", status: Active }
 
   - name: pmo_output
-    role: sibling
     canonical_repo: mclayer/plugin-codeforge-pmo
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: pmo-output-v1.md, contract_version: "1.0", status: Active }
-
-  # ── Canonical (wrapper-owned cross-cutting protocol) ────────────────
-  - name: comment_prefix
-    role: canonical
-    canonical_repo: mclayer/plugin-codeforge
-    canonical_path: docs/inter-plugin-contracts/
-    files:
-      - { file: comment-prefix-v1.md, contract_version: "1.0", status: Active }
-
-  - name: fix_event
-    role: canonical
-    canonical_repo: mclayer/plugin-codeforge
-    canonical_path: docs/inter-plugin-contracts/
-    files:
-      - { file: fix-event-v1.md, contract_version: "1.0", status: Active }
-
-  - name: label_registry
-    role: canonical
-    canonical_repo: mclayer/plugin-codeforge
-    canonical_path: docs/inter-plugin-contracts/
-    files:
-      - { file: label-registry-v1.md, contract_version: "1.0", status: Active }
 ```
 
 **검증 의미**:
 - `contracts[].name`: snake_case identifier
-- `contracts[].role ∈ {sibling, canonical}`
 - `contracts[].canonical_repo`: GitHub `<org>/<repo>` 형식
+- `contracts[].canonical_path`: canonical file 의 destination repo 내 디렉터리 (slash 종결)
 - `contracts[].files[].file`: `docs/inter-plugin-contracts/` 내 파일명 (basename)
 - `contracts[].files[].contract_version`: ADR-008 SemVer (major.minor)
 - `contracts[].files[].status ∈ {Active, Deprecated}`
+
+**Total**: 6 entry / 7 file (review_verdict 가 v1+v2 두 파일 보유, 나머지 5 entry 는 각 1 file).
 
 ## 6. Sibling file 형식
 
@@ -299,35 +285,33 @@ authors:
 ```
 For each entry in MANIFEST.yaml.contracts[].files[]:
   IF NOT EXISTS docs/inter-plugin-contracts/<entry.file>:
-    FAIL "manifest entry <name> v<version> missing sibling/canonical file <file>"
+    FAIL "manifest entry <name> v<version> missing sibling file <file>"
 ```
 
 ### 7.2 Orphan 차단 (negative)
 
 ```
-For each *.md in docs/inter-plugin-contracts/ (excluding MANIFEST.yaml + index.md if exists):
-  IF NOT registered in any MANIFEST.yaml.contracts[].files[]:
-    FAIL "orphan contract file <file> not registered in MANIFEST.yaml"
+For each *.md in docs/inter-plugin-contracts/ (excluding MANIFEST.yaml + readme/index):
+  Read frontmatter
+  IF kind == "contract":
+    IF NOT registered in any MANIFEST.yaml.contracts[].files[]:
+      FAIL "orphan kind:contract file <file> not registered in MANIFEST.yaml"
+  # kind:registry files: skip (managed by other lint chain)
 ```
 
-### 7.3 Frontmatter schema
+### 7.3 Frontmatter schema (sibling — ADR-010 reference)
 
 ```
-For each contract file:
-  Required: kind == "contract"
-  Required: contract_version (SemVer string)
-  Required: status ∈ {Active, Deprecated}
-  Required: related_plugins (non-empty array)
-  Required: related_adrs ∋ "ADR-008"
-  IF role == sibling (per MANIFEST):
-    Required: related_adrs ∋ "ADR-010"
-  Required: authors (non-empty array)
+For each kind:contract file (existing check-inter-plugin-contracts 가 kind/version/status/related_plugins/related_adrs/authors 검증중):
+  ADD: Required: related_adrs (string-cast 후) ∋ "ADR-008"
+  ADD: Required: related_adrs (string-cast 후) ∋ "ADR-010"
+       (현재 MANIFEST 등록 6 entry 모두 sibling. 향후 wrapper-canonical kind:contract 추가 시 분기 도입)
 ```
 
 ### 7.4 Sibling marker
 
 ```
-For each contract file with role == sibling:
+For each kind:contract file (현재 MANIFEST 의 모든 entry — 모두 sibling):
   Required: 본문에 "상위 SSOT 위치" 헤딩 또는 동등 마커 (regex: /\*\*상위 SSOT 위치\*\*:/) 존재
 ```
 
@@ -345,8 +329,8 @@ For each contract file with role == sibling:
 | T2 | functional negative | MANIFEST 미등록 신규 .md 추가 | lint exit 1 + "orphan contract file ... not registered" |
 | T3 | functional negative | 기존 sibling 의 frontmatter 에서 `related_adrs` 제거 | lint exit 1 + "missing required frontmatter field" |
 | T4 | functional negative | sibling file 의 "상위 SSOT 위치" 섹션 제거 | lint exit 1 + "sibling marker section missing" |
-| T5 | functional positive | 정합 상태 (모든 9 contract entry × 본문 정상) | lint exit 0 |
-| T6 | functional positive (regression) | 기존 fix-event/comment-prefix/label-registry/review-verdict v1+v2 | lint exit 0 (이전 동작 유지) |
+| T5 | functional positive | 정합 상태 (모든 7 sibling file + 6 MANIFEST entry × 본문 정상) | lint exit 0 |
+| T6 | functional positive (regression) | 기존 review-verdict v1+v2 (frontmatter 에 ADR-010 추가 후) + 3 kind:registry 파일은 본 lint 무시 | lint exit 0 |
 | Performance | N/A | 순수 shell lint, baseline 무관 | — |
 
 ## 9. Phase 1 / Phase 2 PR split
@@ -381,7 +365,7 @@ For each contract file with role == sibling:
 - 5 sibling file (각 destination canonical 의 verbatim mirror + frontmatter + 상위 SSOT 위치 섹션)
 - `docs/inter-plugin-contracts/MANIFEST.yaml`
 - `scripts/check-inter-plugin-contracts.sh` (확장)
-- `CLAUDE.md` "Inter-plugin Contract" 섹션 (9 contract listing + ADR-010 인용)
+- `CLAUDE.md` "Inter-plugin Contract" 섹션 (6 kind:contract listing + 3 kind:registry 분리 명시 + ADR-010 인용)
 - `docs/stories/CFP-42.md` §8-11 append (Test Contract + Impl Manifest + 리뷰 결과 + FIX Ledger)
 
 **Lane 흐름**:
