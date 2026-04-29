@@ -24,10 +24,6 @@ authors:
 
 `codeforge-pmo` plugin → `codeforge` core (Orchestrator) 단방향 schema. PMOAgent 가 self-write 후 typed output 으로 결과 audit 보고.
 
-**상위 SSOT 위치**:
-- `mclayer/plugin-codeforge-pmo/docs/inter-plugin-contracts/pmo-output-v1.md`: **canonical** (codeforge-pmo repo)
-- `mclayer/plugin-codeforge/docs/inter-plugin-contracts/pmo-output-v1.md`: sibling reference (sync 의무)
-
 ## 1. 흐름 개요
 
 ```

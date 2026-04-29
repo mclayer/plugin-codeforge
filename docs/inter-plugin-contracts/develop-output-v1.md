@@ -24,8 +24,6 @@ authors:
 
 `codeforge-develop` plugin → `codeforge` core (Orchestrator) 단방향 schema. DeveloperPLAgent 가 role:dev roster 동적 discover + 병렬 spawn 후 Story §8 / §8.5 self-write + Phase 2 PR open + verdict 반환.
 
-**상위 SSOT**: `mclayer/plugin-codeforge-develop/docs/inter-plugin-contracts/develop-output-v1.md`
-
 ## 1. 흐름 개요
 
 ```

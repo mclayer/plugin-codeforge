@@ -24,8 +24,6 @@ authors:
 
 `codeforge-design` plugin → `codeforge` core (Orchestrator) 단방향 schema. ArchitectPLAgent 가 5 deputies 병렬 spawn 후 ArchitectAgent (chief author) 가 Change Plan + ADR + Story §3/§7/§11 mirror self-write.
 
-**상위 SSOT**: `mclayer/plugin-codeforge-design/docs/inter-plugin-contracts/design-output-v1.md`
-
 ## 1. 흐름 개요
 
 ```

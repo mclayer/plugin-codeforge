@@ -24,10 +24,6 @@ authors:
 
 `codeforge-test` plugin → `codeforge` core (Orchestrator) 단방향 schema. TestAgent 가 functional + performance subset 병렬 실행 후 self-write (phase comment + label transition) + Orchestrator 가 §10 FIX Ledger append 결정 (FAIL 시).
 
-**상위 SSOT 위치**:
-- `mclayer/plugin-codeforge-test/docs/inter-plugin-contracts/test-verdict-v1.md`: **canonical**
-- `mclayer/plugin-codeforge/docs/inter-plugin-contracts/test-verdict-v1.md`: sibling reference
-
 ## 1. 흐름 개요
 
 ```
