@@ -66,11 +66,11 @@ ls ~/.claude/plugins/cache/<marketplace>/codeforge/<version>/agents/
 │   └── CODEOWNERS                      # architect/domain-expert team 매핑
 ├── docs/
 │   ├── stories/                        # GENERATED (story-init.yml Action 산출)
-│   ├── adr/                            # ADR markdown (DocsAgent commit)
-│   ├── change-plans/                   # Architect Change Plan (DocsAgent commit)
-│   └── domain-knowledge/               # Domain KB (계층, DocsAgent commit)
+│   ├── adr/                            # ADR markdown (ArchitectAgent direct write)
+│   ├── change-plans/                   # Architect Change Plan (ArchitectAgent direct write)
+│   └── domain-knowledge/               # Domain KB (계층, DomainAgent direct write)
 ├── CLAUDE.md                           # GENERATED (hook 산출물, gitignore 또는 commit)
-├── .claude-work/                       # DocsAgent write queue (gitignore)
+├── .claude-work/                       # consumer overlay scratch (gitignore)
 └── ...
 ```
 
@@ -248,7 +248,7 @@ labels:
     - <component-2>   # e.g. ui
 ```
 
-주 소비자: DocsAgent · RequirementsPLAgent · DomainAgent · PMOAgent. 에이전트는 이 파일을 `Read`로 직접 참조.
+주 소비자: RequirementsPLAgent · DomainAgent · PMOAgent · ArchitectPLAgent 및 각 lane plugin. 에이전트는 이 파일을 `Read`로 직접 참조.
 
 SessionStart hook이 자동으로 `validate_config.py`를 실행해 schema 준수를 검증. 위반 시 hook abort. 수동 검증:
 
@@ -409,6 +409,6 @@ cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/<file>.yml .github
 | `gh: command not found` | gh CLI 미설치 | https://cli.github.com/ 참고해 설치 |
 | GitHub MCP 미인증 | OAuth 만료 | `/mcp` 재인증 |
 | story-init.yml Action 실패 | yq 미설치 또는 project.yaml 누락 | Action 로그 확인. yq는 `mikefarah/yq@v4` Action으로 자동 설치되어야 함 |
-| Phase-gate-mergeable check 통과 안 됨 | phase + gate 라벨 미부착 | DocsAgent가 라벨 부착했는지 확인. phase-label-invariant.yml가 자동 single-active 강제하므로 새 phase 라벨만 추가하면 됨 |
+| Phase-gate-mergeable check 통과 안 됨 | phase + gate 라벨 미부착 | lane plugin (DesignReviewPL·SecurityTestPL)이 라벨 부착했는지 확인. phase-label-invariant.yml가 자동 single-active 강제하므로 새 phase 라벨만 추가하면 됨 |
 | §1 변경 PR이 reject됨 | story-section-1-immutable.yml | Q7 참조 |
-| sub-issue 자동 생성 안 됨 | §8.5 매핑표 형식 오류 또는 `addSubIssue` GraphQL beta 변경 | Action 로그 확인. fallback으로 DocsAgent가 `mcp__github__sub_issue_write` 수동 호출 |
+| sub-issue 자동 생성 안 됨 | §8.5 매핑표 형식 오류 또는 `addSubIssue` GraphQL beta 변경 | Action 로그 확인. fallback으로 DeveloperPL이 `mcp__github__sub_issue_write` 수동 호출 |
