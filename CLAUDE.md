@@ -485,23 +485,41 @@ TestContractArchitectAgent는 §8 author input contributor (도형 대립 비참
 
 **Clarification 재스폰 공통 절차** (요구사항·설계 레인): 서브에이전트는 one-shot이라 PL↔서브 continuous dialog 불가. PL이 통합 중 추가 질의가 필요하면 → Orchestrator에 "<에이전트> 재스폰 요청 + clarification context + 이전 출력 pointer" 전달 → Orchestrator가 해당 에이전트를 신규 스폰. 이것이 "각 책임 종료 전까지 보조" 메커니즘의 실제 구현.
 
-## Inter-plugin Contract (CFP-29 Phase 1 후)
+## Inter-plugin Contract (CFP-29 Phase 1 후 + CFP-42 sibling backfill)
 
-codeforge core 가 외부 plugin과 통신할 때의 typed schema. **review subsystem 이 codeforge-review plugin 으로 추출** 된 결과 신설 — 향후 plugin 추출 (CFP-25 Phase 2 deferred 결정 후) 시점에 더 추가 가능.
+codeforge core 가 외부 plugin과 통신할 때의 typed schema. wrapper repo 의 [docs/inter-plugin-contracts/](docs/inter-plugin-contracts/) 디렉터리는 두 종류 보유:
 
-### review_verdict v1 (codeforge-review ↔ codeforge core)
+### kind:contract (typed inter-plugin schema, 6 entry / 7 file)
 
-- **상세 schema**: [`docs/inter-plugin-contracts/review-verdict-v1.md`](docs/inter-plugin-contracts/review-verdict-v1.md)
-- **Versioning 룰**: [ADR-008](docs/adr/ADR-008-inter-plugin-contract-versioning.md) — v1.x backward-compat (선택 필드 추가만) / v2.0 BREAKING (양쪽 plugin 동시 bump + 새 ADR)
-- **흐름**:
-  - `review_packet` (codeforge core → codeforge-review): lane / checklist_path / scope_globs / category_enum / severity_overrides / story_key / first_layer_findings (security only)
-  - `review_verdict` (codeforge-review → codeforge core): contract_version / lane / story_key / iteration / status (PASS/FIX/FIX_DISCRETIONARY) / findings[] / summary_for_story_section_9 / summary_for_pr_comment / next_gate_label
-- **Write boundary**: codeforge-review 는 typed verdict 반환만, write 안 함. codeforge core 의 DocsAgent 가 verdict 받아 Story §9 + PR comment + gate label 처리
-- **Version mismatch 처리**: codeforge core 가 unknown contract_version verdict 받으면 ESCALATE (compat 매트릭스 부재 fallback 금지)
+[docs/inter-plugin-contracts/MANIFEST.yaml](docs/inter-plugin-contracts/MANIFEST.yaml) 가 SSOT. lint 는 [scripts/check-inter-plugin-contracts.sh](scripts/check-inter-plugin-contracts.sh).
 
-### 향후 plugin 추출 시 동일 패턴
+| Contract | Producer plugin | Files (wrapper sibling) |
+|---|---|---|
+| `review_verdict` | codeforge-review | review-verdict-v1.md (Deprecated) · review-verdict-v2.md (Active) |
+| `requirements_output` | codeforge-requirements | requirements-output-v1.md (Active) |
+| `design_output` | codeforge-design | design-output-v1.md (Active) |
+| `develop_output` | codeforge-develop | develop-output-v1.md (Active) |
+| `test_verdict` | codeforge-test | test-verdict-v1.md (Active) |
+| `pmo_output` | codeforge-pmo | pmo-output-v1.md (Active) |
 
-CFP-25 §10.2 staged ε Phase 2 (조건부 — arch-deputies / req-deputies)가 실현되면 각 plugin 도 own contract + own ADR 신설 의무. ADR-008 versioning 룰이 모든 inter-plugin contract 에 일률 적용.
+각 wrapper sibling 은 lane plugin canonical 의 verbatim mirror + "**상위 SSOT 위치**" 섹션. canonical 변경 시 wrapper sibling sync PR 후속 의무 ([ADR-010](docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md)).
+
+### kind:registry (cross-cutting protocol, 3 file)
+
+wrapper-owned. 본 lint scope 밖 — `check-doc-frontmatter.sh` + `check-doc-section-schema.sh` 가 검증.
+
+- [comment-prefix-registry-v1.md](docs/inter-plugin-contracts/comment-prefix-registry-v1.md) — 11 phase prefix taxonomy
+- [fix-event-v1.md](docs/inter-plugin-contracts/fix-event-v1.md) — Story §10 FIX Ledger writer monopoly
+- [label-registry-v1.md](docs/inter-plugin-contracts/label-registry-v1.md) — phase/gate/fix label taxonomy
+
+### Versioning + sync 정책
+
+- [ADR-008 Inter-plugin Contract Versioning](docs/adr/ADR-008-inter-plugin-contract-versioning.md): SemVer 룰 (v1.x backward-compat, v2.0 BREAKING + 양쪽 plugin 동시 bump + 새 ADR)
+- [ADR-010 Inter-plugin Contract Sibling Sync](docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md): canonical/sibling 책임 + sync 트리거 + 신규 contract 추가 4단계 절차
+
+### Write boundary
+
+각 lane plugin 이 자기 contract 의 producer + self-writer. wrapper Orchestrator 는 contract verdict 에 응답해 다음 lane 라우팅·Story §10 FIX Ledger 만 처리. 상세 흐름은 [docs/orchestrator-playbook.md](docs/orchestrator-playbook.md) 참조.
 
 ---
 
