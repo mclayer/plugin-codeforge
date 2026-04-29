@@ -1,0 +1,42 @@
+# docs/inter-plugin-contracts/MANIFEST.yaml
+# SSOT for kind:contract files completeness — referenced by ADR-010
+# Owner: codeforge wrapper repo. Updated when adding/removing kind:contract.
+# Scope: kind:contract files only. kind:registry files (comment-prefix-registry,
+# fix-event, label-registry) are managed by check-doc-frontmatter.sh chain.
+contracts:
+  - name: review_verdict
+    canonical_repo: mclayer/plugin-codeforge-review
+    canonical_path: docs/inter-plugin-contracts/
+    files:
+      - { file: review-verdict-v1.md, contract_version: "1.0", status: Deprecated }
+      - { file: review-verdict-v2.md, contract_version: "2.0", status: Active }
+
+  - name: requirements_output
+    canonical_repo: mclayer/plugin-codeforge-requirements
+    canonical_path: docs/inter-plugin-contracts/
+    files:
+      - { file: requirements-output-v1.md, contract_version: "1.0", status: Active }
+
+  - name: design_output
+    canonical_repo: mclayer/plugin-codeforge-design
+    canonical_path: docs/inter-plugin-contracts/
+    files:
+      - { file: design-output-v1.md, contract_version: "1.0", status: Active }
+
+  - name: develop_output
+    canonical_repo: mclayer/plugin-codeforge-develop
+    canonical_path: docs/inter-plugin-contracts/
+    files:
+      - { file: develop-output-v1.md, contract_version: "1.0", status: Active }
+
+  - name: test_verdict
+    canonical_repo: mclayer/plugin-codeforge-test
+    canonical_path: docs/inter-plugin-contracts/
+    files:
+      - { file: test-verdict-v1.md, contract_version: "1.0", status: Active }
+
+  - name: pmo_output
+    canonical_repo: mclayer/plugin-codeforge-pmo
+    canonical_path: docs/inter-plugin-contracts/
+    files:
+      - { file: pmo-output-v1.md, contract_version: "1.0", status: Active }

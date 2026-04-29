@@ -41,6 +41,24 @@ if not contracts_dir.exists():
     print("✓ CFP-33 inter-plugin-contracts: 디렉토리 부재 — skip")
     sys.exit(0)
 
+# CFP-42: Manifest completeness — every MANIFEST.yaml entry must exist as a file
+manifest_path = contracts_dir / "MANIFEST.yaml"
+manifest_files = set()  # set of basenames declared in MANIFEST
+if manifest_path.exists():
+    try:
+        manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"::error::CFP-42 MANIFEST.yaml parse 실패: {e}")
+        sys.exit(1)
+    for entry in (manifest or {}).get("contracts", []):
+        for fent in entry.get("files", []):
+            fname = fent.get("file")
+            if fname:
+                manifest_files.add(fname)
+                if not (contracts_dir / fname).exists():
+                    print(f"::error::CFP-42 manifest entry {entry.get('name')} v{fent.get('contract_version')} missing sibling file {fname}")
+                    sys.exit(1)
+
 errors = []
 contracts_seen = 0
 
@@ -63,6 +81,10 @@ for md in sorted(contracts_dir.rglob("*.md")):
     if not isinstance(fm, dict) or fm.get("kind") != "contract":
         # contract 가 아니면 skip (registry 등)
         continue
+
+    # CFP-42: orphan check — kind:contract must be registered in MANIFEST
+    if md.name not in manifest_files:
+        errors.append(f"{md}: orphan kind:contract file (not registered in MANIFEST.yaml)")
 
     contracts_seen += 1
 
@@ -89,11 +111,22 @@ for md in sorted(contracts_dir.rglob("*.md")):
         elif isinstance(val, list) and len(val) == 0:
             errors.append(f"{md}: {list_field} 빈 list 금지")
 
+    # CFP-42: sibling must reference ADR-008 + ADR-010
+    related_adrs_str = " ".join(str(x) for x in (fm.get("related_adrs") or []))
+    if "ADR-008" not in related_adrs_str:
+        errors.append(f"{md}: related_adrs must reference ADR-008 (versioning rule)")
+    if "ADR-010" not in related_adrs_str:
+        errors.append(f"{md}: related_adrs must reference ADR-010 (sibling sync policy)")
+
     # 5. 본문 구조화 sanity — 최소 3개 ## 섹션
     body = text.split("\n---\n", 1)[1] if "\n---\n" in text else text
     section_count = len(re.findall(r"^## ", body, re.MULTILINE))
     if section_count < 3:
         errors.append(f"{md}: 본문 ## 섹션 부족 ({section_count} < 3) — 구조화 강제")
+
+    # CFP-42: sibling marker section — every kind:contract in MANIFEST is sibling for now
+    if not re.search(r"\*\*상위 SSOT 위치\*\*:", body):
+        errors.append(f"{md}: sibling marker section missing (need '**상위 SSOT 위치**:' in body)")
 
 if errors:
     print(f"::error::CFP-33 inter-plugin-contracts (STRICT): {len(errors)} 건")
