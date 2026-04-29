@@ -8,6 +8,7 @@ related_plugins:
 related_adrs:
   - ADR-001 (review-agent-unification — lane-agnostic worker)
   - ADR-008 (Inter-plugin Contract Versioning)
+  - ADR-010 (Inter-plugin Contract Sibling Sync — sync 정책)
 authors:
   - CFP-35 ζ arc retrofit (2026-04-29) — first lane self-write 검증
 ---
