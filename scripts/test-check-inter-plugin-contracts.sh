@@ -38,9 +38,9 @@ run_test() {
   # Apply mutation in tmp
   ( cd "$tmp" && eval "$mutation_fn" )
 
-  # Run lint with cwd at tmp
+  # Run lint with cwd at tmp (PYTHONIOENCODING=utf-8 required on Windows/cp949 locales)
   local actual_exit=0
-  ( cd "$tmp" && bash scripts/check-inter-plugin-contracts.sh ) >/dev/null 2>&1 || actual_exit=$?
+  ( cd "$tmp" && PYTHONIOENCODING=utf-8 bash scripts/check-inter-plugin-contracts.sh ) >/dev/null 2>&1 || actual_exit=$?
 
   if [ "$actual_exit" = "$expected_exit" ]; then
     echo "✓ $name (exit $actual_exit)"
