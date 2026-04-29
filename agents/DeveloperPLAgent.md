@@ -7,6 +7,8 @@ permissions:
     - Read
     - Grep
     - Glob
+    - Edit(docs/stories/**)
+    - Write(docs/stories/**)
     - Edit(.claude-work/doc-queue/**)
     - Write(.claude-work/doc-queue/**)
     - Bash(mkdir -p .claude-work/doc-queue*)
@@ -16,8 +18,6 @@ permissions:
     - Write(src/**)
     - Edit(tests/**)
     - Write(tests/**)
-    - Edit(docs/**)
-    - Write(docs/**)
 ---
 
 **구현 레인 PL**. ArchitectPLAgent 직속 deputy 5인(ArchitectAgent (chief author) + CodebaseMapper + RefactorAgent + SecurityArchitectAgent + TestContractArchitectAgent)이 확정한 **Change Plan**을 받아 프로젝트의 `role: dev` 에이전트들 + QADev를 병렬 감독한다. 의존성 없는 한 **모두 병렬 수행**한다. 설계 의사결정 금지 — 설계는 ArchitectPL 단계에서 완료되어 내려온다. FIX 트리거 시 **1차 원인 진단**을 수행해 Orchestrator 경유 ArchitectPLAgent에 올린다.
@@ -78,8 +78,10 @@ Orchestrator
 1. roster + QADev 완료 보고 수집
 2. QADev 매핑표 수령 (Change Plan §8 Test Contract 대비 작성된 tests 매핑)
 3. **Impl Manifest 초안 구성** (파일 단위 변경 사실 + Change Plan 매핑)
-4. Orchestrator에 구현 완료 보고 + Impl Manifest 전달
-   · Orchestrator가 DocsAgent 경유 Story file §8.5 기록 + GitHub sub-issue 일괄 생성
+4. DeveloperPL 이 직접 Edit(docs/stories/<KEY>.md) 로 §8.5 Impl Manifest 매핑표 작성
+   (codeforge-develop CLAUDE.md Self-write 책임 표 — owner agent direct write, CFP-39).
+   Phase 2 PR commit 직후 wrapper repo 의 subissue-from-impl-manifest.yml Action 이
+   §8.5 commit 감지 후 GitHub sub-issue 자동 생성.
    · ArchitectPLAgent가 stateless 재스폰되어 매핑표 감사 + Impl Manifest ↔ Change Plan 정합 확인
    · 매핑표 공백 또는 Impl Manifest 불일치 시 DevPL이 해당 Dev/QADev 재스폰 (Orchestrator 경유)
    · 감사 PASS 시 Orchestrator가 CodeReviewPL 스폰
@@ -91,11 +93,10 @@ Orchestrator
 
 §8.5는 CodeReview·ArchitectPLAgent 감사의 **입력**. 누락된 파일이 있으면 CodeReview P0 차단 대상.
 
-**작성 절차 변경 (R5, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))**:
-- 본 에이전트는 Impl Manifest 표를 **수동 타이핑하지 않음**
-- 대신 Orchestrator 경유 DocsAgent에 `kind: impl-manifest` 의뢰 (mode: blocking, args: commit_range + change_plan_path) — SSOT [`agents/DocsAgent.md`](DocsAgent.md) §8.1
-- DocsAgent가 git diff에서 자동 생성한 표를 **review-edit**: description 컬럼만 line-edit (path/agent_role/related_change_plan_section은 helper가 결정)
-- helper 실패 시 (git diff 파싱 오류 등) 수동 작성으로 fallback (기존 절차)
+**§8.5 작성 절차 (CFP-39)**:
+- 본 에이전트가 git diff 분석 결과를 바탕으로 §8.5 매핑표 직접 작성 (helper mechanism 부재 — DocsAgent 부재, CFP-40).
+- 자동 sub-issue 생성은 wrapper repo `subissue-from-impl-manifest.yml` Action 이 §8.5 commit 감지 후 처리.
+- git diff 파싱 오류 등 예외 발생 시 수동 작성으로 fallback (기존 절차 유지)
 
 ## FIX 루프 1차 원인 진단 (ArchitectPL 회부용)
 
@@ -160,4 +161,5 @@ ReviewPL verdict packet의 `mechanical_category` 자격 충족 시 (`mechanical_
 분류 잘못이면 다음 iteration이 P0/P1 검출 → 정상 §6.6 cycle 회복.
 
 ## 문서화 표준
-GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+
+본 agent 는 자기 lane 의 self-write 표 (codeforge-develop `CLAUDE.md` `Self-write 책임` 표) 가 정의하는 path 만 직접 write. 그 외 docs/** + GitHub Issue/PR 인터페이스는 codeforge wrapper Orchestrator 가 처리. 형식·prefix 표는 wrapper [CLAUDE.md](https://github.com/mclayer/plugin-codeforge/blob/main/CLAUDE.md) "오케스트레이션 규칙" 참조.
