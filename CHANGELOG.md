@@ -5,6 +5,31 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [5.0.1] - 2026-04-29
+
+### CFP-41 (ζ arc retro) — 종합 회고 + ADR-009 Adopted (Patch)
+
+ζ arc parent spec (CFP-31) §5.10 마지막 deliverable. lane plugin 6개 추출 + DocsAgent 해체 완료 후 종합 검증.
+
+### Added
+
+- `docs/adr/ADR-009-wrapper-only-decomposition.md` — 신규 ADR (status: Adopted). ζ arc 결정 영속 기록
+- `docs/retros/2026-04-29-zeta-arc-completion.md` — ζ arc 종합 회고 (Codex round 2 5 조건 검증 + 사용자 진단 통증 해소 검증)
+
+### Changed
+
+- `.claude-plugin/plugin.json` v5.0.0 → v5.0.1 (patch — retro/ADR doc only)
+
+### Why
+
+ζ arc 6 lane plugin 추출 (CFP-32 ~ CFP-40) 완료 후 결정 영속 + 사용자 진단 통증 해소 검증 필요. ADR-009 가 wrapper-only 결정의 SSOT.
+
+### Validation 검증 시나리오 (retro 본문)
+
+- "새 architect deputy 추가" 시 wrapper 무손상 ✓
+- "새 role:dev (예: ML Engineer)" 시 wrapper 무관 ✓
+- ζ arc 진행 중 6+ silent drift 자동 catch (lint harness 가치 입증) ✓
+
 ## [5.0.0] - 2026-04-29
 
 ### CFP-40 (ζ arc LAST) — codeforge-design plugin extraction + DocsAgent final delete (BREAKING)
