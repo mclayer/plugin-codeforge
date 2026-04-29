@@ -41,6 +41,24 @@ if not contracts_dir.exists():
     print("✓ CFP-33 inter-plugin-contracts: 디렉토리 부재 — skip")
     sys.exit(0)
 
+# CFP-42: Manifest completeness — every MANIFEST.yaml entry must exist as a file
+manifest_path = contracts_dir / "MANIFEST.yaml"
+manifest_files = set()  # set of basenames declared in MANIFEST
+if manifest_path.exists():
+    try:
+        manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"::error::CFP-42 MANIFEST.yaml parse 실패: {e}")
+        sys.exit(1)
+    for entry in (manifest or {}).get("contracts", []):
+        for fent in entry.get("files", []):
+            fname = fent.get("file")
+            if fname:
+                manifest_files.add(fname)
+                if not (contracts_dir / fname).exists():
+                    print(f"::error::CFP-42 manifest entry {entry.get('name')} v{fent.get('contract_version')} missing sibling file {fname}")
+                    sys.exit(1)
+
 errors = []
 contracts_seen = 0
 
