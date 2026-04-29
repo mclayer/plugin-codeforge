@@ -1,9 +1,10 @@
 ---
-change_plan: cfp-42
 title: Inter-plugin contract sibling backfill (5 lane output + MANIFEST + lint 확장)
-story_key: CFP-42
+slug: cfp-42-inter-plugin-contract-sibling-backfill
 status: Phase-1-Design
-date: 2026-04-29
+author: Claude (Opus 4.7) — CFP-42 Phase 1 author
+created: 2026-04-29
+story: CFP-42
 related_adrs:
   - ADR-008 (Inter-plugin Contract Versioning)
   - ADR-009 (Wrapper-only Decomposition)
