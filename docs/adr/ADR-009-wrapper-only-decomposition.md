@@ -9,7 +9,7 @@ related_files:
   - docs/inter-plugin-contracts/comment-prefix-registry-v1.md
   - docs/inter-plugin-contracts/label-registry-v1.md
   - docs/inter-plugin-contracts/fix-event-v1.md
-  - docs/inter-plugin-contracts/review-verdict-v1.md (Deprecated)
+  - docs/inter-plugin-contracts/review-verdict-v1.md (Archived)
   - docs/inter-plugin-contracts/review-verdict-v2.md
 ---
 
@@ -92,7 +92,7 @@ codeforge core (wrapper-only, agent 0개)
 │   ├── comment-prefix-registry-v1.md
 │   ├── label-registry-v1.md
 │   ├── fix-event-v1.md
-│   ├── review-verdict-v1.md (Deprecated)
+│   ├── review-verdict-v1.md (Archived)
 │   ├── review-verdict-v2.md (sibling)
 │   ├── requirements-output-v1.md (sibling)
 │   ├── design-output-v1.md (sibling)

@@ -1,7 +1,7 @@
 ---
 kind: contract
 contract_version: "1.0"
-status: Deprecated
+status: Archived
 related_plugins:
   - codeforge (wrapper, consumer)
   - codeforge-review (lane plugin, producer)
@@ -13,11 +13,12 @@ authors:
   - CFP-29 동결 (2026-04-28)
   - CFP-33 frontmatter backfill (2026-04-29)
   - CFP-35 status Active → Deprecated (v2 신설, 2026-04-29)
+  - CFP-D status Deprecated → Archived (consumer 부재 확신, 2026-04-30)
 ---
 
-# review_verdict v1 — Inter-plugin Contract (DEPRECATED)
+# review_verdict v1 — Inter-plugin Contract (ARCHIVED)
 
-> **CFP-35 (2026-04-29) 이후 Deprecated**: codeforge-review plugin v1.0.0+ 부터 [`review-verdict-v2.md`](review-verdict-v2.md) self-write contract 사용. v1 contract surface (DocsAgent 경유 write 위임)는 codeforge v0.22.0 + codeforge-review v1.0.0 짝 부터 더 이상 호환 처리 안 함. 본 file은 audit·archive 목적으로 유지 (6 CFP 무사고 후 별도 cleanup CFP에서 file 삭제 예정).
+> **CFP-D (2026-04-30) 이후 Archived**: consumer 부재 확신 시점 (사용자 명시) Deprecated → Archived 전환. codeforge-review plugin v1.0.0+ 부터 [`review-verdict-v2.md`](review-verdict-v2.md) self-write contract 사용. v1 contract surface (DocsAgent 경유 write 위임)는 codeforge v0.22.0 + codeforge-review v1.0.0 짝 부터 호환 처리 안 함. 본 file 은 historical record 로 영구 보존 (ADR-008 §5 룰 — 삭제 금지). lint scope 에 동일 schema 검증 적용 (status enum 만 다름).
 
 `codeforge` core ↔ `codeforge-review` plugin 사이의 양방향 schema. CFP-29 Phase 1에서 동결.
 

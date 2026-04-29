@@ -305,7 +305,7 @@ contracts:
     canonical_repo: mclayer/plugin-codeforge-review
     canonical_path: docs/inter-plugin-contracts/
     files:
-      - { file: review-verdict-v1.md, contract_version: "1.0", status: Deprecated }
+      - { file: review-verdict-v1.md, contract_version: "1.0", status: Archived }
       - { file: review-verdict-v2.md, contract_version: "2.0", status: Active }
 
   - name: requirements_output
@@ -1014,7 +1014,7 @@ codeforge core 가 외부 plugin과 통신할 때의 typed schema. wrapper repo 
 
 | Contract | Producer plugin | Files (wrapper sibling) |
 |---|---|---|
-| `review_verdict` | codeforge-review | review-verdict-v1.md (Deprecated) · review-verdict-v2.md (Active) |
+| `review_verdict` | codeforge-review | review-verdict-v1.md (Archived) · review-verdict-v2.md (Active) |
 | `requirements_output` | codeforge-requirements | requirements-output-v1.md (Active) |
 | `design_output` | codeforge-design | design-output-v1.md (Active) |
 | `develop_output` | codeforge-develop | develop-output-v1.md (Active) |

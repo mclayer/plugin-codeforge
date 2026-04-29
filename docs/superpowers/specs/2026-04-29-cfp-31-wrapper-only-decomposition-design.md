@@ -373,7 +373,7 @@ codeforge SessionStart hook:
 
 **deliverable** (codeforge wrapper 측):
 - `CLAUDE.md` 갱신 — review v2 self-write 명시
-- `docs/inter-plugin-contracts/review-verdict-v1.md` archived (deprecated 표시)
+- `docs/inter-plugin-contracts/review-verdict-v1.md` archived (Archived status — CFP-D 시점 전환)
 - `docs/inter-plugin-contracts/review-verdict-v2.md` 사본 (SSOT는 codeforge-review)
 - v0.22.0 → v0.23.0 (지금 시점엔 BREAKING bump 안 함 — codeforge wrapper는 review를 spawn할 뿐 직접 의존 코드 없음)
 - mclayer/marketplace sync PR (auto from F3)

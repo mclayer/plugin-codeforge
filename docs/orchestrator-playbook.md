@@ -23,7 +23,7 @@ related:
 
 최상위 Claude 세션(이하 **Orchestrator**)의 행동 SSOT. 사용자(Human)가 제공한 요구사항을 받아 **0 core 에이전트 (wrapper-only)** + 6 lane plugin (codeforge-{review,pmo,requirements,test,develop,design}) + role:dev roster를 조정하는 모든 규약을 담는다.
 
-**CFP-29 Phase 1 (BREAKING v0.17.0) 이후**: 5 review agent (Design/Code/SecurityTest PL + Claude/Codex worker)는 별도 plugin [codeforge-review](https://github.com/mclayer/plugin-codeforge-review)로 추출됨. Orchestrator는 본 playbook의 관점에서 이들을 **외부 plugin agent**로 spawn하며, 결과는 `review_verdict v1` typed contract ([`docs/inter-plugin-contracts/review-verdict-v1.md`](inter-plugin-contracts/review-verdict-v1.md))로 수령한다.
+**CFP-29 Phase 1 (BREAKING v0.17.0) 이후**: 5 review agent (Design/Code/SecurityTest PL + Claude/Codex worker)는 별도 plugin [codeforge-review](https://github.com/mclayer/plugin-codeforge-review)로 추출됨. Orchestrator는 본 playbook의 관점에서 이들을 **외부 plugin agent**로 spawn하며, 결과는 `review_verdict v2` typed contract ([`docs/inter-plugin-contracts/review-verdict-v2.md`](inter-plugin-contracts/review-verdict-v2.md))로 수령한다 (v1 은 CFP-D 시점 Archived — historical record).
 
 `CLAUDE.md`는 "무엇이 있는가(에이전트 목록·레인·권한 경계)"를 정의하고, 본 playbook은 "어떻게 움직이는가(생명주기·스폰·복원·에스컬레이션)"를 정의한다.
 

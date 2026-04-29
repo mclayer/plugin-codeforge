@@ -196,7 +196,7 @@ contracts:
     canonical_repo: mclayer/plugin-codeforge-review
     canonical_path: docs/inter-plugin-contracts/
     files:
-      - { file: review-verdict-v1.md, contract_version: "1.0", status: Deprecated }
+      - { file: review-verdict-v1.md, contract_version: "1.0", status: Archived }
       - { file: review-verdict-v2.md, contract_version: "2.0", status: Active }
 
   - name: requirements_output
@@ -236,7 +236,7 @@ contracts:
 - `contracts[].canonical_path`: canonical file 의 destination repo 내 디렉터리 (slash 종결)
 - `contracts[].files[].file`: `docs/inter-plugin-contracts/` 내 파일명 (basename)
 - `contracts[].files[].contract_version`: ADR-008 SemVer (major.minor)
-- `contracts[].files[].status ∈ {Active, Deprecated}`
+- `contracts[].files[].status ∈ {Active, Deprecated, Archived}` (Archived 는 CFP-D 시점 추가)
 
 **Total**: 6 entry / 7 file (review_verdict 가 v1+v2 두 파일 보유, 나머지 5 entry 는 각 1 file).
 

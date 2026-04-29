@@ -8,7 +8,7 @@ contracts:
     canonical_repo: mclayer/plugin-codeforge-review
     canonical_path: docs/inter-plugin-contracts/
     files:
-      - { file: review-verdict-v1.md, contract_version: "1.0", status: Deprecated }
+      - { file: review-verdict-v1.md, contract_version: "1.0", status: Archived }
       - { file: review-verdict-v2.md, contract_version: "2.0", status: Active }
 
   - name: requirements_output
