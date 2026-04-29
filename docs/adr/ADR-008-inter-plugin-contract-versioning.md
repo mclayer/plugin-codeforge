@@ -69,6 +69,18 @@ codeforge core 가 verdict.contract_version 을 모르는 값으로 받으면:
 - `CLAUDE.md` "## Inter-plugin Contract" 섹션 — 요약 + cross-ref
 - 새 MAJOR 시점에 `review-verdict-v<NEW>.md` 신설, 이전 file은 historical record로 유지 (삭제 금지)
 
+### 5.1 Deprecated → Archived 전환 트리거 (CFP-D 보강, 2026-04-30)
+
+`Deprecated` 상태의 contract file 은 다음 조건 모두 충족 시 `Archived` 로 전환:
+
+1. consumer 부재 확신 (author 가 release / install metric 또는 사용자 confirm 으로 검증)
+2. 후속 MAJOR 가 1개 이상 release 후 일정 grace period 경과 (case-by-case, default 6 CFP)
+3. canonical 이 존재하면 canonical + sibling 양쪽 frontmatter `status` 동시 갱신 (ADR-010 sync 의무). canonical 부재 (wrapper 단독 SSOT) 인 contract 는 wrapper 측 status 만 전환
+
+`Archived` 상태도 file 자체는 유지 — historical record 보존 의무는 §5 본문 룰 그대로. lint (kind:contract) 은 status 값과 무관하게 동일 schema 강제 (`scripts/check-inter-plugin-contracts.sh` 의 status enum `{Draft, Active, Deprecated, Archived}` 모두 통과). consumer 가 재출현하면 author 가 즉시 Active 또는 새 MAJOR 발의 결정 (Archived → Active 직접 전환 금지 — historical record 일관성 위배).
+
+**최초 적용**: review_verdict v1 (CFP-D, 2026-04-30) — wrapper 단독 SSOT (canonical codeforge-review repo 부재 확인 후 option α 채택).
+
 ### 6. enforcement (현재 상태 + 향후)
 
 - **CFP-29 시점 (현재)**: enforcement는 manual convention. ADR-008이 룰 동결, 실제 위반 catch는 dogfood + code review
