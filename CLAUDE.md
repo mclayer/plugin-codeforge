@@ -62,7 +62,7 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 | Lane | Plugin | Agent count | SSOT |
 |---|---|---|---|
 | 요구사항 | codeforge-requirements | 4 (PL + DomainAgent + RequirementsAnalyst + Researcher) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-requirements/blob/main/CLAUDE.md) |
-| 설계 | codeforge-design | 7 (PL + ArchitectAgent chief + 5 deputy) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-design/blob/main/CLAUDE.md) |
+| 설계 | codeforge-design | 8 (PL + ArchitectAgent chief + 6 deputy) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-design/blob/main/CLAUDE.md) |
 | 설계리뷰 / 구현리뷰 / 보안테스트 | codeforge-review | 5 (3 PL + 2 worker) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-review/blob/main/CLAUDE.md) |
 | 구현 | codeforge-develop | 5 (PL + QADev + 3 role:dev core) + preset/overlay 동적 | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-develop/blob/main/CLAUDE.md) |
 | 구현테스트 | codeforge-test | 1 (TestAgent) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-test/blob/main/CLAUDE.md) |
@@ -89,7 +89,7 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 **레인 진입 전 Preflight 체크 의무** — 각 레인 진입 직전 Orchestrator가 3개 체크 수행 (phase 라벨 정합 / docs file 선행 섹션 / 외부 의존성 가용). FAIL 시 block+report. 상세는 playbook §3B.
 
 - **요구사항**: 사용자가 GitHub Issue Forms (story.yml) 제출 → `story-init.yml` Action이 자동 `<KEY>` 번호 계산 + `docs/stories/<KEY>.md` 생성 (§1 verbatim, §2-11 placeholder) + Phase 1 PR 자동 open + Issue body link 변환 → RequirementsPLAgent 아래 **병렬** (DomainAgent · Analyst · Researcher 동시 스폰, 각자 독립 관점) → RequirementsPL이 세 결과 dedup·상충 조정 → §2/§5/§6 직접 self-write + §3-4 갱신 (codeforge-requirements self-write 표)
-- **설계**: ArchitectPLAgent가 CodebaseMapper(변호자) · Refactor(혁신자) · SecurityArchitectAgent(위협 변호자) · TestContractArchitectAgent(QA perspective contributor) · DataMigrationArchitectAgent(데이터 무결성 변호자) **5 deputy 병렬 스폰** → ArchitectAgent(chief author)가 통합 → Change Plan 확정 (§7 보안 설계 + §8 Test Contract + §11 데이터 마이그레이션 포함) → ArchitectAgent가 `docs/change-plans/<slug>.md` + 신규 `docs/adr/ADR-NNN-<slug>.md` direct write (CFP-26 Phase 0a 후) + ArchitectAgent 가 Story file §7/§3/§11 직접 self-write (CFP-40 codeforge-design 추출 후 — codeforge-design self-write 표)
+- **설계**: ArchitectPLAgent가 CodebaseMapper(변호자) · Refactor(혁신자) · SecurityArchitectAgent(위협 변호자) · TestContractArchitectAgent(QA perspective contributor) · DataMigrationArchitectAgent(데이터 무결성 변호자) · **OperationalRiskArchitectAgent**(운영 리스크 변호자) **6 deputy 병렬 스폰** → ArchitectAgent(chief author)가 통합 → Change Plan 확정 (§7 보안 설계 + §8 Test Contract + §11 데이터 마이그레이션 포함) → ArchitectAgent가 `docs/change-plans/<slug>.md` + 신규 `docs/adr/ADR-NNN-<slug>.md` direct write (CFP-26 Phase 0a 후) + ArchitectAgent 가 Story file §7/§3/§11 직접 self-write (CFP-40 codeforge-design 추출 후 — codeforge-design self-write 표)
 - **설계 리뷰**: DesignReviewPL이 Claude/Codex 설계 리뷰 종합 → PASS 시 `gate:design-review-pass` 라벨 부착 → Phase 1 PR mergeable → merge → 구현 진입 / FIX 시 ArchitectPLAgent 회귀 → ArchitectAgent (chief author) 재스폰 (최대 3회)
 - **구현**: Phase 2 PR open (DeveloperPL 이 첫 commit 준비 후 직접 `mcp__github__create_pull_request` — codeforge-develop self-write 표). Orchestrator가 QADev + DeveloperPL 병렬 스폰. DevPL이 프로젝트 `role: dev` roster를 동적 discover해 의존성 없는 한 **모두 병렬** 스폰. ArchitectPLAgent가 stateless 재스폰되어 매핑표 감사
 - **구현 리뷰**: CodeReviewPL이 Claude/Codex 코드 리뷰 종합 → PASS 시 구현 테스트 진입 / FIX 시 DeveloperPL 1차 진단 → ArchitectPLAgent 최종 판정 (최대 3회)
@@ -115,7 +115,7 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 ### 스폰 시퀀스
 
-각 lane 별 상세 스폰 흐름·branch logic 은 [playbook §3 스폰 시퀀스](docs/orchestrator-playbook.md) SSOT. 각 lane 진입 시 Orchestrator 가 해당 lane plugin 의 PL agent 를 spawn → PL 이 sub-agent 병렬 spawn (요구사항 3개 / 설계 5 deputy / 리뷰 2 worker / 구현 N role:dev). PL 산출물 종합 후 Orchestrator 에 verdict return → 다음 lane 라우팅.
+각 lane 별 상세 스폰 흐름·branch logic 은 [playbook §3 스폰 시퀀스](docs/orchestrator-playbook.md) SSOT. 각 lane 진입 시 Orchestrator 가 해당 lane plugin 의 PL agent 를 spawn → PL 이 sub-agent 병렬 spawn (요구사항 3개 / 설계 6 deputy / 리뷰 2 worker / 구현 N role:dev). PL 산출물 종합 후 Orchestrator 에 verdict return → 다음 lane 라우팅.
 
 **Clarification 재스폰**: 서브에이전트 one-shot 이라 PL ↔ 서브 continuous dialog 불가 → PL 이 Orchestrator 에 재 spawn 의뢰 (각 lane plugin CLAUDE.md SSOT).
 
@@ -247,7 +247,7 @@ ADR-014 + ADR-012 §3 4번째 SSOT 예외. design lane 의 6 deputy (CFP-46 Oper
 | §7.2 Threat model | — | — | ✅ | — | — | — |
 | §7.3 Auth/authz | — | — | ✅ | — | — | — |
 | **§7.4 DR / disconnect / rate limit / env isolation** | — | — | (consult) | **✅** | — | — |
-| **§7.4 Clock sync (CONDITIONAL)** | — | — | (consult) | **✅** | (test 연동) | — |
+| **§7.4 Clock sync (CONDITIONAL)** | — | — | (consult) | **✅** | — | — |
 | §7.5 민감 데이터 분류 | — | — | ✅ | — | — | — |
 | §7.6 위협↔완화 매핑 | — | — | ✅ | (DR↔failover consult) | — | — |
 | **§11 Idempotency (CONDITIONAL)** | — | — | — | (consult) | — | **✅** |
@@ -291,7 +291,7 @@ ADR-014 + ADR-012 §3 4번째 SSOT 예외. design lane 의 6 deputy (CFP-46 Oper
 
 codeforge core 가 외부 plugin과 통신할 때의 typed schema. wrapper repo 의 [docs/inter-plugin-contracts/](docs/inter-plugin-contracts/) 디렉터리는 두 종류 보유:
 
-### kind:contract (typed inter-plugin schema, 6 entry / 7 file)
+### kind:contract (typed inter-plugin schema, 6 entry / 8 file)
 
 [docs/inter-plugin-contracts/MANIFEST.yaml](docs/inter-plugin-contracts/MANIFEST.yaml) 가 SSOT. lint 는 [scripts/check-inter-plugin-contracts.sh](scripts/check-inter-plugin-contracts.sh).
 
