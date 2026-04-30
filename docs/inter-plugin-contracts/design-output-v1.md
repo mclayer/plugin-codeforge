@@ -1,15 +1,19 @@
 ---
 kind: contract
 contract_version: "1.0"
-status: Active
+status: Archived
+archived_at: 2026-04-30
+superseded_by: design-output-v2.md
 related_plugins:
   - codeforge (wrapper, consumer)
   - codeforge-design (lane plugin, producer + self-writer)
 related_adrs:
   - ADR-008
   - ADR-009
+  - ADR-014
 authors:
   - CFP-40 ζ arc — Design lane extraction (LAST, 2026-04-29)
+  - CFP-46 — Archived in favor of design-output-v2.md (2026-04-30)
 ---
 
 # design_output v1 — Inter-plugin Contract
