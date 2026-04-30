@@ -174,39 +174,23 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 ### FIX 루프
 
-**판정 SSOT**: codeforge-review plugin의 `templates/review-pl-base.md` §3 — severity 종합·dedup·종합 판정(P0/P1=2 → FIX, P1=1 → FIX 재량, P2만 → PASS). codeforge core 입장에서는 [`docs/inter-plugin-contracts/review-verdict-v1.md`](docs/inter-plugin-contracts/review-verdict-v1.md) §3.2 review_verdict.status 필드 (PASS / FIX / FIX_DISCRETIONARY)가 contract surface. 본 섹션은 **트리거·카운터·원인 판정**만 본문에 명시.
+**판정 SSOT**: codeforge-review 의 [`templates/review-pl-base.md`](https://github.com/mclayer/plugin-codeforge-review/blob/main/templates/review-pl-base.md) §3 — severity 종합·dedup·종합 판정. codeforge core 입장에서는 [`docs/inter-plugin-contracts/review-verdict-v2.md`](docs/inter-plugin-contracts/review-verdict-v2.md) §3.2 review_verdict.status 필드 (PASS / FIX / FIX_DISCRETIONARY) 가 contract surface.
 
 **트리거** (review-pl-base.md §3 결과 FIX 또는 FIX 재량):
-- 설계 리뷰 → ArchitectPLAgent 회귀 → ArchitectAgent 재스폰
-- 구현 리뷰 → DeveloperPL 1차 진단 → ArchitectPLAgent 최종 판정
-- 구현 테스트 FAIL → DeveloperPL 1차 진단 → ArchitectPLAgent 최종 판정
-- 보안 테스트 → DeveloperPL 1차 진단 → ArchitectPLAgent 최종 판정
+- 설계 리뷰 → ArchitectPLAgent 회귀
+- 구현 리뷰 / 구현 테스트 / 보안 테스트 FAIL → DeveloperPL 1차 진단 + ArchitectPLAgent 최종 판정 (parallel diagnosis, R4)
 
-**카운터 SSOT = `docs/stories/<KEY>.md` §10 "FIX Ledger"** (GitHub Issue 라벨은 대시보드용 보조 지표):
-- §10은 테이블 형식으로 모든 FIX iteration 누적 (레인별 컬럼 + RESET 마커 지원)
-- Orchestrator가 FIX 판정 시마다 `Read(docs/stories/<KEY>.md)` → §10 파싱 → "현재 사이클" count 산출
-- §10에 새 행이 commit되면 `fix-ledger-sync.yml` Action이 자동:
-  1. Issue comment에 `[FIX #N]` mirror
-  2. `fix:<레인>-retry` 라벨 자동 부착
+**카운터 SSOT** = `docs/stories/<KEY>.md` §10 "FIX Ledger" — Orchestrator 단독 관리 (CFP-32 monopoly · `fix-event-v1` contract). GitHub Issue 라벨은 보조 지표 (fix-ledger-sync.yml Action 자동 mirror).
 
-**§10 FIX Ledger 스키마** (Orchestrator 단독 관리 — CFP-32 monopoly · fix-event-v1 contract):
+**§10 FIX Ledger 스키마**:
 ```
 | Iter | 시각 | 레인 | 트리거 | 원인 판정 | 재실행 범위 | RESET? |
 |------|------|------|--------|-----------|-------------|--------|
 | 1    | ISO8601 | 설계-리뷰   | DesignReviewPL P0 × 2 | 설계 | Change Plan §3 재작성 | — |
 | 2    | ISO8601 | 구현-테스트 | 성능 mean +15% | 설계 | Change Plan §3 재작성 | **RESET 구현-리뷰** |
-| 3    | ISO8601 | 보안-테스트 | SecurityTestPL P0 × 1 (SQL injection) | 구현 | DeveloperAgent 재스폰 | — |
 ```
 
-**최대 FIX 횟수** (§10 current-cycle count 기준):
-- **설계 리뷰 FIX 최대 3회** → 초과 시 Orchestrator 경유 사용자 ESCALATE
-- **구현 리뷰 FIX 최대 3회**
-- **구현 테스트 FIX 무제한**
-- **보안 테스트 FIX 무제한**
-
-**카운터 리셋**: 구현 테스트 또는 보안 테스트 FAIL → 구현 재실행 → 구현 리뷰 재진입 시 §10에 `RESET 구현-리뷰` 마커 행 추가. 이후 구현 리뷰 카운터는 RESET 이후 iteration만 합산.
-
-**수평 호출 금지** — ReviewPL/TestAgent/ArchitectPLAgent/DeveloperPL 간 직접 호출 금지, 모든 게이트 재실행·회귀 요청은 Orchestrator 경유.
+상세 룰 (max FIX 횟수 / RESET marker / parallel diagnosis / mechanical fast-path) 은 [playbook §6](docs/orchestrator-playbook.md) SSOT.
 
 ### 원인 판정 decision table (설계 리뷰·구현 리뷰·구현 테스트·보안 테스트 FAIL 시)
 
