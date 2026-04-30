@@ -79,57 +79,24 @@ Lane internal · per-lane spawn detail · severity rule detail · GitHub workflo
 
 상세 절차는 [`docs/orchestrator-playbook.md`](docs/orchestrator-playbook.md) §1.1 체크리스트 0번 참조.
 
-## Development Agent Team (0 core 에이전트 — wrapper-only + codeforge-review plugin 5 agent + `role: dev` 동적 roster · 7 레인 + 2 Cross-cutting)
+## Development Agent Team
 
-※ 본 구조는 v0.12.0(CFP-18 머지) 직후부터 발효. 머지 시점 이전에 진행 중이던 Story는 [`docs/superpowers/specs/2026-04-27-cfp-17-architectpl-securityarch-design.md`](docs/superpowers/specs/2026-04-27-cfp-17-architectpl-securityarch-design.md) §8.1 paradox 처리에 따라 옛 구조로 완료.
+Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-decomposition.md)). Orchestrator (top-level Claude 세션) 가 6 lane plugin 의 agent 를 spawn.
 
-```
-(Human) 사용자                       # 외부 행위자 — 요구사항 제공·blocking 질문 응답·ESCALATE 수신
-   ↓ 요구사항 전달
-Orchestrator                        # 최상위 Claude 세션 — 모든 스폰·토큰 예산 소유
- │
- ├── [Cross-cutting] PMOAgent        # 프로젝트 관리 — Epic 분해 자문·Story 회고·Cross-Story 패턴·ADR 후보 발의
- │
- ├── [요구사항] RequirementsPLAgent
- │    ├── DomainAgent                  # 프로젝트 도메인 전문가 (docs/domain-knowledge + ADR + 도메인 코드 + 사용자 원문 4소스)
- │    ├── RequirementsAnalystAgent     # GPT-5.4 래퍼 (codex exec)
- │    └── ResearcherAgent              # 외부 지식 리서치 (웹·논문·공급사 문서)   ※ 셋 모두 병렬 스폰, 독립 관점 유지
- │
- ├── [설계] ArchitectPLAgent
- │    ├── ArchitectAgent (chief author)         # Change Plan §1-§11 + ADR draft + §8 Test Contract + §11 데이터 마이그레이션 author
- │    ├── CodebaseMapperAgent                   # 보수 — as-is 변호자
- │    ├── RefactorAgent                         # 혁신 — 결합도/구조 옹호자
- │    ├── SecurityArchitectAgent                # 위협 — trust boundary/auth/data 변호자
- │    ├── TestContractArchitectAgent            # QA perspective contributor — §8 Test Contract author input
- │    └── DataMigrationArchitectAgent           # 데이터 무결성 — schema 진화·rollback·integrity invariant 변호자 (§11 author input)
- │    ※ QADev는 조직상 여기 계약(§8 소유자) but 실행은 구현 레인에서 DevPL 산하
- │
- ├── [설계 리뷰] DesignReviewPLAgent              # ↓ codeforge-review plugin (별도) — lane=design packet 주입
- │    ├── ClaudeReviewAgent            # 공통 워커 (lane-agnostic, Claude 네이티브) [codeforge-review]
- │    └── CodexReviewAgent             # 공통 워커 (lane-agnostic, Codex GPT-5 wrapper) [codeforge-review]
- │
- ├── [구현] DeveloperPLAgent
- │    ├── <role: dev 에이전트 N개>     # 프로젝트 roster — core 3종(DeveloperAgent·DataEngineerAgent·InfraEngineerAgent) + overlay/preset 추가분
- │    └── QADeveloperAgent            # 테스트 코드 (Change Plan §8 Test Contract 이행)
- │
- ├── [구현 리뷰] CodeReviewPLAgent                # ↓ codeforge-review plugin (별도) — lane=code packet 주입
- │    ├── ClaudeReviewAgent            # ↑ 공통 워커 재사용 [codeforge-review]
- │    └── CodexReviewAgent             # ↑ 공통 워커 재사용 [codeforge-review]
- │
- ├── [구현 테스트] TestAgent          # Orchestrator 직속 구현 테스트 게이트 (기능 + 성능, 언어·프레임워크 중립)
- │
- └── [보안 테스트] SecurityTestPLAgent             # ↓ codeforge-review plugin (별도) — lane=security packet 주입 + 1차 layer fetch 의무
-      ├── ClaudeReviewAgent            # ↑ 공통 워커 재사용 (high-level: trust boundary·auth model) [codeforge-review]
-      └── CodexReviewAgent             # ↑ 공통 워커 재사용 [codeforge-review]
-      ※ 1차 layer는 GitHub native — Dependabot/CodeQL/Secret Scanning/Push Protection
-```
+| Lane | Plugin | Agent count | SSOT |
+|---|---|---|---|
+| 요구사항 | codeforge-requirements | 4 (PL + DomainAgent + RequirementsAnalyst + Researcher) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-requirements/blob/main/CLAUDE.md) |
+| 설계 | codeforge-design | 7 (PL + ArchitectAgent chief + 5 deputy) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-design/blob/main/CLAUDE.md) |
+| 설계리뷰 / 구현리뷰 / 보안테스트 | codeforge-review | 5 (3 PL + 2 worker) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-review/blob/main/CLAUDE.md) |
+| 구현 | codeforge-develop | 5 (PL + QADev + 3 role:dev core) + preset/overlay 동적 | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-develop/blob/main/CLAUDE.md) |
+| 구현테스트 | codeforge-test | 1 (TestAgent) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-test/blob/main/CLAUDE.md) |
+| Cross-cutting | codeforge-pmo | 1 (PMOAgent) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/CLAUDE.md) |
 
-리뷰 워커 통합 ([ADR-001](docs/adr/ADR-001-review-agent-unification.md)): 3 lane × 2 vendor = 6 워커였던 구조를 **2 워커(ClaudeReviewAgent · CodexReviewAgent)** 로 통합. CFP-29 Phase 1 (BREAKING v0.17.0)에서 별도 plugin [`codeforge-review`](https://github.com/mclayer/codeforge-review)로 추출. 도메인(체크리스트·스코프·category enum·severity 자동 룰)은 codeforge core(Orchestrator)가 `review_packet` 으로 주입, codeforge-review의 PL이 `review_verdict v1` 으로 반환 — **Inter-plugin Contract**: [`docs/inter-plugin-contracts/review-verdict-v1.md`](docs/inter-plugin-contracts/review-verdict-v1.md) (versioning 룰: [ADR-008](docs/adr/ADR-008-inter-plugin-contract-versioning.md)). 공통 로직(severity 종합·dedup·보고 형식)은 codeforge-review repo의 `templates/review-pl-base.md` SSOT.
+각 lane plugin 의 agent 역할·동작은 해당 plugin CLAUDE.md SSOT. 본 표는 composition map 만.
 
-**주체 명칭**:
-- **Orchestrator** = 최상위 Claude 세션 (모든 Agent 툴 스폰, 토큰 예산 소유)
-- **(Human) 사용자** = 인간 행위자
-- **Cross-cutting** = 특정 레인에 속하지 않고 모든 레인에 걸쳐 작동하는 에이전트 (PMOAgent — 프로젝트 관리·회고·ADR 발의)
+**주체 명칭**: **Orchestrator** = 최상위 Claude 세션 (모든 Agent 툴 스폰, 토큰 예산 소유) · **(Human) 사용자** = 인간 행위자 · **Cross-cutting** = 모든 레인에 걸쳐 작동하는 에이전트 (PMOAgent).
+
+리뷰 워커 통합 근거: [ADR-001](docs/adr/ADR-001-review-agent-unification.md) (3 lane × 2 vendor → 2 lane-agnostic worker). [Inter-plugin Contract `review_verdict`](docs/inter-plugin-contracts/review-verdict-v2.md) versioning: [ADR-008](docs/adr/ADR-008-inter-plugin-contract-versioning.md).
 
 ## 레인 7개 · 단계 정의
 
