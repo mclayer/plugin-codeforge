@@ -336,93 +336,21 @@ DesignReviewPL 프롬프트에 명시:
 
 ## GitHub Workflow
 
-사용자 요구사항 접수부터 PR merge까지의 모든 의사결정·협업을 GitHub에 영속 기록. GitHub Issue/PR/comment·label·milestone 쓰기는 각 lane plugin self-write (§ "Lane plugin self-write boundary" 표 참조).
+사용자 요구사항 접수부터 PR merge 까지의 워크플로우 자동화. wrapper 가 templates/github-workflows/ 6종 fixture 제공:
 
-### 계층
-- **Epic** = 사용자 요구사항 1건. **Milestone (due date·% 진행률 자동) + Issue (`type:epic` 라벨, body=narrative)**. Orchestrator가 PMOAgent 스폰 → PMOAgent 가 Milestone + Epic Issue 직접 생성 (codeforge-pmo self-write)
-- **Story** = PR 1쌍 (Phase 1 + Phase 2 = Change Plan 1건). **Issue (`type:story` 라벨)**. Milestone에 속함. Orchestrator(필요 시 PMO 조언) scope 분해 시 확정된 독립 작업 단위만 생성
-- **하위 작업(sub-issue)** = Impl Manifest 파일 단위. **Sub-issue (`impl-manifest` 라벨)**. Phase 2 PR이 §8.5 매핑표 commit 시 `subissue-from-impl-manifest.yml` Action이 자동 생성. PR merge 시 parent close에 따라 자동 close
-- **Audit Story** = hotfix 사후 감사 1건. `audit:post-hotfix` 라벨. hotfix merge 다음 세션 개시 시 Orchestrator가 Issue Forms (audit.yml)로 자동 생성
+- `story-init.yml` — Issue Forms (story.yml) 제출 → docs file 생성 + Phase 1 PR 자동 open
+- `phase-label-invariant.yml` — `phase:*` single-active 강제
+- `story-section-1-immutable.yml` — §1 line range 변경 PR 자동 reject
+- `subissue-from-impl-manifest.yml` — §8.5 매핑표 → file 단위 sub-issue 자동 생성
+- `phase-gate-mergeable.yml` — required status check (linked Story Issue 의 phase + gate 라벨 검사)
+- `fix-ledger-sync.yml` — §10 FIX Ledger commit 감지 → Issue `[FIX #N]` mirror + `fix:<레인>-retry` 라벨 자동
 
-### 상태 + Phase Label 방식
-
-GitHub Issue 기본 2-state (`open`/`closed`). 단계는 **phase label**로 표현. PR merge 시 GitHub native `Closes #N` keyword가 Issue 자동 close.
-
-```
-[Issue Form 제출] story-init.yml Action 자동 실행
-   ↓ docs file 생성 + Phase 1 PR 자동 open + 라벨 phase:요구사항 부착
-[phase:요구사항 → phase:설계]   (RequirementsPL 이 phase 라벨 부착 — codeforge-requirements self-write, phase-label-invariant.yml 가 기존 detach)
-   ↓ ArchitectAgent (chief author) Change Plan 확정
-[phase:설계 → phase:설계-리뷰]
-   ↓ 설계 리뷰 PASS → DesignReviewPL 이 gate:design-review-pass 라벨 부착 (review-verdict-v2 self-write)
-[Phase 1 PR mergeable → merge → Issue label phase:구현]
-   ↓ Phase 2 PR open
-[phase:구현 → phase:구현-리뷰]
-   ↓ 구현 리뷰 PASS
-[phase:구현-리뷰 → phase:구현-테스트]
-   ↓ 구현 테스트 PASS
-[phase:구현-테스트 → phase:보안-테스트]
-   ↓ 보안 테스트 PASS → SecurityTestPL 이 gate:security-test-pass 라벨 부착 (review-verdict-v2 self-write)
-[Phase 2 PR mergeable → merge → "Closes #<Story Issue>" → Issue 자동 close]
-status=closed
-```
-
-### FIX 루프 라벨 규칙
-
-(`fix-ledger-sync.yml` Action이 §10 commit 감지 시 자동 부착)
-
-- **설계 리뷰 P0/P1**: `phase:설계-리뷰 → phase:설계` + `fix:설계-리뷰-retry` 라벨 추가 + `[FIX #N]` 코멘트 (Action이 자동 mirror)
-- **구현 리뷰 P0/P1**: `phase:구현-리뷰 → phase:구현` + `fix:구현-리뷰-retry` 라벨 추가 + `[FIX #N]` 코멘트
-- **구현 테스트 FAIL**: `phase:구현-테스트 → phase:구현` + `fix:구현-테스트-retry` 라벨 추가 + `[FIX #N]` 코멘트
-- **보안 테스트 P0/P1**: `phase:보안-테스트 → phase:구현` (구현 원인) 또는 `phase:보안-테스트 → phase:설계` (설계 원인) + `fix:보안-테스트-retry` 라벨 추가 + `[FIX #N]` 코멘트
-
-카운터는 Story file §10 FIX Ledger SSOT, GitHub 라벨은 보조 지표.
-
-### 코멘트 규칙 (lane plugin self-write)
-
-형식·phase prefix(10 lane prefix + Orchestrator Preflight 1 = 총 11종). 각 lane plugin 이 자기 phase prefix 로 `mcp__github__add_issue_comment` 직접 호출 — 각 lane plugin 의 `CLAUDE.md` `Self-write 책임` 표 (codeforge-{review,pmo,requirements,test,develop,design}) 참조.
-
-### GitHub 워크플로우 자동화
-
-`templates/github-workflows/` SSOT, consumer가 `.github/workflows/`로 복사. SessionStart hook이 부재·drift 검사. 6종:
-
-- `story-init.yml`: Issue Forms (story.yml) 제출 → docs file 생성 + Phase 1 PR + Issue body 변환
-- `phase-label-invariant.yml`: `phase:*` single-active 강제
-- `story-section-1-immutable.yml`: §1 line range 변경 PR 자동 reject
-- `subissue-from-impl-manifest.yml`: §8.5 매핑표 → file 단위 sub-issue 자동 생성
-- `phase-gate-mergeable.yml`: PR body의 `Related|Closes|Fixes|Resolves: #N` 패턴으로 linked Story Issue 추출 → 해당 **Issue의 phase + gate 라벨** 검사 (Issue가 SSOT, PR 라벨 sync 불필요). Issue 라벨 변경 시 linked PR 재평가 (issues `labeled/unlabeled` 트리거). required status check
-- `fix-ledger-sync.yml`: PR 또는 main push 시 docs §10 전체 파싱 → 새 Iter 행마다 Issue `[FIX #N]` 코멘트 + `fix:<레인>-retry` 라벨 자동 (idempotent — 이미 mirror된 Iter는 skip)
-
-상세는 [docs/consumer-guide.md](docs/consumer-guide.md) §1.3 참조.
+상세 hierarchy (Epic / Story / sub-issue / Audit) · phase / gate / fix label 분류 · 코멘트 규칙 · 대시보드 search syntax 는 [docs/consumer-guide.md](docs/consumer-guide.md) §1.3 + [docs/inter-plugin-contracts/label-registry-v1.md](docs/inter-plugin-contracts/label-registry-v1.md) + [docs/inter-plugin-contracts/comment-prefix-registry-v1.md](docs/inter-plugin-contracts/comment-prefix-registry-v1.md) SSOT.
 
 ### Branch protection + Required status checks
+
 - Main 브랜치: `phase-gate-mergeable` required status check + CODEOWNERS review 필수
-- CODEOWNERS: `docs/adr/**`·`docs/change-plans/**`·`docs/stories/**`·`.github/workflows/**` → `@org/architects` / `docs/domain-knowledge/**` → `@org/domain-experts`. 템플릿: [`templates/CODEOWNERS.template`](templates/CODEOWNERS.template)
-
-### Labels 체계
-
-- `type:*`: `type:epic`, `type:story`, `type:bug`, `impl-manifest` (sub-issue)
-- `phase:*` (single-active 1개): `phase:요구사항`, `phase:설계`, `phase:설계-리뷰`, `phase:구현`, `phase:구현-리뷰`, `phase:구현-테스트`, `phase:보안-테스트`
-- `gate:*` (review 통과 표시): `gate:design-review-pass`, `gate:security-test-pass`
-- `fix:*` (누적): `fix:설계-리뷰-retry`, `fix:구현-리뷰-retry`, `fix:구현-테스트-retry`, `fix:보안-테스트-retry`
-- `component:*` (`project.yaml` `labels.components`에 정의)
-- `adr:NNN`
-- `hotfix:minimal`, `hotfix:critical`, `audit:post-hotfix`
-
-### 대시보드 (GitHub Issues search syntax)
-- 현재 구현 리뷰 중: `repo:<org>/<repo> is:issue is:open label:"phase:구현-리뷰"`
-- 현재 설계 리뷰 중: `repo:<org>/<repo> is:issue is:open label:"phase:설계-리뷰"`
-- 현재 보안 테스트 중: `repo:<org>/<repo> is:issue is:open label:"phase:보안-테스트"`
-- FIX 대상: `repo:<org>/<repo> is:issue is:open label:"fix:설계-리뷰-retry","fix:구현-리뷰-retry","fix:구현-테스트-retry","fix:보안-테스트-retry"`
-- Story 전체: `repo:<org>/<repo> is:issue is:open label:type:story`
-- Projects v2 board view에서도 phase·milestone·custom field별 가시성 제공
-
-### 원문 위치
-GitHub Issue/PR은 **워크플로우 상태·이벤트 로그**만. 구조화된 원문은 각 도구 유지:
-- **요구사항·컨텍스트·서사**: `docs/stories/<KEY>.md` (Git-versioned). 섹션 1-11
-- **설계 실행 명세**: `docs/change-plans/<slug>.md` (Git-versioned). Story file §7 요약 미러링
-- **설계 결정(ADR)**: `docs/adr/ADR-NNN-<slug>.md` (Git-versioned). Story file §3에서 인용
-- **코드 리뷰 원문**: GitHub PR 설명·코멘트·review. Story file §9에 요약 집계
+- CODEOWNERS template: [`templates/CODEOWNERS.template`](templates/CODEOWNERS.template)
 
 ## Story 작성 의무 (모든 변경 적용)
 
