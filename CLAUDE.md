@@ -160,95 +160,17 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 ### 스폰 시퀀스
 
+각 lane 별 상세 스폰 흐름·branch logic 은 [playbook §3 스폰 시퀀스](docs/orchestrator-playbook.md) SSOT. 요약:
+
 ```
-[요구사항] Orchestrator → RequirementsPLAgent → **병렬** (DomainAgent · RequirementsAnalyst · Researcher 동시 스폰) → RequirementsPLAgent 통합
-        · 셋 모두 공통 입력(사용자 원문 Story §1 + ADR 목록 §3 선제 fetch + 코드 경로 §4 + Project Config Packet)에서 각자 키워드·관점 자체 도출 (§2·§5·§6은 각자의 출력 destination이므로 input 아님)
-          - DomainAgent: 도메인 지식 공백 (용어·개념·비즈니스 규칙·ADR)
-          - Analyst: 요구사항 ambiguity (암묵 가정·누락·충돌·AC)
-          - Researcher: 외부 기술·선행사례 (라이브러리·표준·유사 구현)
-        · 세 결과 독립적으로 반환 → RequirementsPL이 dedup·상충 조정해 통합 명세서 확정
-        · "null 결과" (조사 불필요 판단)도 유효한 관점 — 에이전트 skip 금지
-        · DomainAgent 지식 공백 해소 시 본 에이전트가 docs/domain-knowledge/<area>/<topic>.md 직접 write (CFP-26 Phase 0a)
-        · 상충 시 Orchestrator 경유 사용자 에스컬레이션
-        · "사용자 확인 필요" 항목은 blocking wait
-        · RequirementsPL이 세 결과 dedup·상충 조정 → §2/§5/§6 직접 self-write + §3-4 갱신 (codeforge-requirements self-write 표)
-        · **Clarification 재스폰**: PL이 세 결과 통합 중 특정 관점의 추가 조사·재해석이 필요하면 Orchestrator에 "<에이전트> 재스폰 요청 + clarification context" 전달 → Orchestrator가 해당 에이전트 신규 스폰 (이전 출력 + 재질의 context 포함). 서브에이전트는 one-shot이므로 재스폰이 유일한 "clarification" 메커니즘
-
-[설계] Orchestrator → ArchitectPLAgent → **병렬 스폰** (deputy 5인)
-        ├── CodebaseMapperAgent (as-is 변호자 — 원 소스 직접 읽기)
-        ├── RefactorAgent (to-be 혁신자 — 원 소스 직접 읽기)
-        ├── SecurityArchitectAgent (위협/공격자 — 원 소스 직접 읽기, OWASP·CWE 참조)
-        ├── TestContractArchitectAgent (QA perspective contributor — §8 커버리지 후보·경계·invariant)
-        └── DataMigrationArchitectAgent (데이터 무결성 advocate — §11 schema 영향·migration 전략·rollback·integrity invariant)
-        · 다섯 다 PL이 공통 입력(코드 경로 + 관련 ADR + Change Plan 초안 + Story §1-7) 직접 제공
-        · 다섯 결과 PL에 독립적으로 반환 → PL이 forward
-        ↓
-        Orchestrator → ArchitectAgent (chief author) 스폰
-        with input: 5 deputy 산출물 + Story §1-7 + 관련 ADR
-        → Change Plan §1-§11 author + 신규 ADR draft + §8 Test Contract + §11 데이터 마이그레이션
-        → ArchitectAgent 가 docs/change-plans/<slug>.md + docs/adr/ADR-NNN-<slug>.md + Story §3/§7/§11 직접 self-write (codeforge-design self-write 표)
-        ↓
-        ArchitectPLAgent draft 검수 (메타-규칙 2 항목: §섹션별 deputy author input 통합 정합성 + §섹션 누락 차단)
-        · PASS → Orchestrator에 DesignReview lane 진입 요청
-        · RETURN → ArchitectAgent 재스폰 의뢰 (clarification context)
-        · **Clarification 재스폰**: PL이 deputy 산출물 검수 중 추가 분석 필요 시 Orchestrator에 "<Mapper|Refactor|SecurityArch|TestContractArch|DataMigrationArch> 재스폰 요청 + clarification context" 전달
-
-[설계 리뷰] Orchestrator → DesignReviewPLAgent (lane=design packet 작성) → packet return
-        Orchestrator가 한 메시지에 dispatch:
-        ├── ClaudeReviewAgent (lane=design packet 수령)
-        └── CodexReviewAgent  (lane=design packet 수령, 병렬)
-        → DesignReviewPL 결과 종합 → PASS or FIX (최대 3회) (R3·R2)
-        · PASS (R7 2 트랙 병렬):
-          - Track A: DesignReviewPL 이 review-verdict-v2 self-write 로 직접 mcp__github__issue_write 호출 (gate:design-review-pass label + phase transition) → Phase 1 PR mergeable → merge
-          - Track B: DeveloperPL spawn → Change Plan §5·§8 fetch + 첫 commit draft 준비 (PR open 보류)
-          - Track A merge 완료 시 Track B가 즉시 `mcp__github__create_pull_request` 호출
-          - 동시에 Orchestrator가 background SecurityTestPL prefetch 의뢰 → `.claude-work/cache/<KEY>-sec1.json` 생성
-        · FIX: Orchestrator 경유 ArchitectPLAgent 회귀 → ArchitectAgent 재스폰 → Change Plan 갱신 → 설계 리뷰 재실행
-
-[구현] Phase 2 PR open (DeveloperPL → 직접 mcp__github__create_pull_request — codeforge-develop self-write 표)
-        Orchestrator가 병렬 스폰
-        ├── DeveloperPLAgent
-        │    └── <role: dev 에이전트 N개>   # 프로젝트 roster — Change Plan 경로 교집합 있는 것만 실제 스폰
-        └── QADeveloperAgent (조직상 ArchitectPLAgent 산하 §8 Test Contract 이행자, 실행상 구현 레인 병렬)
-        → roster 전체는 의존성 없는 한 병렬
-        → DeveloperPL 완료 보고 → §8.5 Impl Manifest 매핑표 commit → subissue-from-impl-manifest.yml Action이 자동 sub-issue 생성
-        → Orchestrator가 ArchitectPLAgent를 stateless 재스폰해 매핑표 감사
-        → 감사 PASS 시 Orchestrator가 구현 리뷰 레인 진입
-
-[구현 리뷰] Orchestrator → CodeReviewPLAgent (lane=code packet 작성) → packet return
-        Orchestrator가 한 메시지에 dispatch:
-        ├── ClaudeReviewAgent (lane=code packet 수령)
-        └── CodexReviewAgent  (lane=code packet 수령, 병렬)
-        → CodeReviewPL 결과 종합 → PASS or FIX (최대 3회) (R3·R2)
-        · FIX 시 mechanical_category 자격 확인 → fast-path 또는 정상 cycle (R11)
-        · 정상 cycle FIX: Orchestrator 경유 DeveloperPL ∥ ArchitectPLAgent 병렬 진단/판정 (R4)
-          · 설계 원인 판정 시: Change Plan 갱신 → Phase 1 follow-up PR로 회귀 → 설계 리뷰부터 재실행
-          · 구현 원인 판정 시: Phase 2 PR commit append → 구현 리뷰 재실행
-
-[구현 테스트] Orchestrator → TestAgent **subset 병렬** (R9):
-        · TestAgent(subset: functional) ∥ TestAgent(subset: performance) — 한 메시지에 dispatch
-        · 모드 1 (기능): 단위/통합/인프라 테스트 (consumer overlay가 러너·경로 지정)
-        · 모드 2 (성능): baseline 대비 mean 10% 이상 악화 시 FAIL (consumer overlay가 baseline 위치 지정)
-        · 둘 다 PASS → 보안 테스트 레인 진입
-        · consumer overlay `tests.performance.depends_on_functional: true` 시 sequential fallback
-        · FAIL → Orchestrator 경유 DeveloperPL 1차 진단 → ArchitectPLAgent 최종 판정 (구현 원인 / 설계 원인)
-          · 설계 원인: Change Plan 갱신 → 설계 리뷰부터 재실행
-          · 구현 원인: 구현만 재실행 → 구현 리뷰 재실행
-          · 재진입한 구현 리뷰에서 P0/P1 발견 시 구현 리뷰 카운터 리셋 (구현 테스트 FIX는 무제한)
-
-[보안 테스트] Orchestrator → SecurityTestPLAgent (lane=security packet 작성, 1차 layer cache hit/miss 확인)
-        1차 layer: `.claude-work/cache/<KEY>-sec1.json` hit 시 inline 첨부 (R10) / miss 시 PL이 `gh api repos/*` 직접 fetch
-        cache는 Phase 2 PR open 직후 Orchestrator가 background SecurityTestPL prefetch 의뢰로 사전 생성
-        2차 layer (Orchestrator가 한 메시지에 dispatch, R3):
-        ├── ClaudeReviewAgent (lane=security packet 수령, high-level: trust boundary, auth model)
-        └── CodexReviewAgent  (lane=security packet 수령, 병렬)
-        → SecurityTestPL severity 종합 (OWASP·CWE·CVE·trust boundary·credential 범위)
-        · PASS → SecurityTestPL 이 review-verdict-v2 self-write 로 직접 mcp__github__issue_write 호출 (gate:security-test-pass label) → Phase 2 PR mergeable → merge (PR body의 `Closes #N`이 Issue 자동 close) → PMOAgent 가 §11 직접 self-write + 회고 (codeforge-pmo)
-        · FAIL → Orchestrator 경유 DeveloperPL 1차 진단 → ArchitectPLAgent 최종 판정
-          · 설계 원인 (trust boundary / auth 모델 오설계): Change Plan 갱신 → 설계 리뷰부터 재실행
-          · 구현 원인 (injection / credential hardcode / CVE 업그레이드): 구현만 재실행 → 구현 리뷰·구현 테스트 재실행
-          · 보안 테스트 FIX 카운터 무제한 (테스트 레인 family 정책)
+요구사항 → 설계 → 설계리뷰 → 구현 → 구현리뷰 → 구현테스트 → 보안테스트
 ```
+
+각 lane 진입 시 Orchestrator 가 해당 lane plugin 의 PL agent 를 spawn → PL 이 sub-agent 병렬 spawn (요구사항 3개 / 설계 5 deputy / 리뷰 2 worker / 구현 N role:dev). PL 산출물 종합 후 Orchestrator 에 verdict return → 다음 lane 라우팅.
+
+**Clarification 재스폰**: 서브에이전트 one-shot 이라 PL ↔ 서브 continuous dialog 불가 → PL 이 Orchestrator 에 재 spawn 의뢰 (각 lane plugin CLAUDE.md SSOT).
+
+**Track 병렬** (R7 — 설계리뷰 PASS 시): Track A (DesignReviewPL self-write merge gate) ∥ Track B (DeveloperPL Phase 2 PR 준비). 상세 [playbook §3.1](docs/orchestrator-playbook.md).
 
 ### FIX 루프
 
