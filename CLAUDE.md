@@ -20,6 +20,15 @@ Claude Code 범용 SW 개발 오케스트레이션 플러그인. **0 core 에이
 
 **근거**: 사용자 명시 (CFP-24, 2026-04-28). drift 시 사용자가 stale version·어긋난 description을 install하게 되어 marketplace의 단일 진입점 의미가 무너진다.
 
+## SSOT Boundary (ADR-012)
+
+본 wrapper CLAUDE.md content scope 는 [ADR-012](docs/adr/ADR-012-wrapper-claudemd-ssot-boundary.md) 에 따라 strictly limited:
+1. **Plugin identity** (composition · marketplace sync · dependency check)
+2. **Cross-cutting policy** (dogfood Story 작성 의무 · write boundary table · inter-plugin contract index · ADR list)
+3. **3 SSOT 예외** (cross-lane scope, no single-plugin home): 책임 매트릭스 · 원인 판정 decision table · FIX Ledger §10 schema
+
+Lane internal · per-lane spawn detail · severity rule detail · GitHub workflow subsection 상세는 각 lane plugin CLAUDE.md SSOT 또는 [playbook](docs/orchestrator-playbook.md) 위임.
+
 ## 세션 개시 의무 (필수 의존성 자동 확인 + 복구 or 요구)
 
 **세션 시작 직후, 모든 작업보다 먼저** 아래 의존성의 노출·설치·인증 상태를 확인한다. 자동 복구 가능한 것은 즉시 복구, 불가능한 것은 사용자에게 설치·재인증을 요구한다. 복구 완료 전까지 **모든 작업 중단** (요구사항 해석·에이전트 스폰·파일 수정·커밋 전부 금지).
