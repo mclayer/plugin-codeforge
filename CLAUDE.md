@@ -30,12 +30,14 @@ codeforge core (>= 5.0.0) 의존.
 
 ## 4-way 이념 대립 — 6 deputy 의 독립 관점
 
+**deputy 수 = 6, 이념 대립 축 = 4-way (Mapper ↔ Refactor ↔ SecurityArch ↔ DataMigrationArch). TestContractArch / OpRiskArch 는 contributor / production-readiness 단일 축 — 대립 비참여.**
+
 ArchitectPLAgent 가 6 deputy 를 **병렬 spawn** — 넷은 4-way 이념 대립 (Mapper ↔ Refactor ↔ SecurityArch ↔ DataMigrationArch), TestContractArch 는 §8 author input contributor (대립 비참여), OperationalRiskArch 는 production-readiness 단일 축 contributor (대립 비참여 — ADR-014).
 
 | Deputy | 입장 | 핵심 질문 |
 |---|---|---|
 | **CodebaseMapperAgent** | 보수 — as-is 변호자 | "기존 패턴 유지, 변경 영향 최소화" |
-| **RefactorAgent** | 혁신 — to-be 옥호자 | "결합도 감소, 인터페이스 분리, 패턴화" |
+| **RefactorAgent** | 혁신 — to-be 옹호자 | "결합도 감소, 인터페이스 분리, 패턴화" |
 | **SecurityArchitectAgent** | 위협 — 공격자 관점 | "어디서 외부 입력이 들어오는가, 누가 무엇을 신뢰하는가" |
 | **DataMigrationArchitectAgent** | 데이터 무결성 — 변호자 | "schema 가 어떻게 변하는가, 기존 데이터는 어떻게 처리되는가, 실패 시 어떻게 복구하는가" |
 | TestContractArchitectAgent | QA perspective contributor | §8 커버리지 후보·경계·invariant — 대립 비참여 |
