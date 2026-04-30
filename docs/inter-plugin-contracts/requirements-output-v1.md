@@ -14,8 +14,6 @@ authors:
 
 # requirements_output v1 — Inter-plugin Contract
 
-`codeforge-requirements` plugin → `codeforge` core (Orchestrator) 단방향 schema.
-
 **상위 SSOT 위치**:
 - `mclayer/plugin-codeforge-requirements/docs/inter-plugin-contracts/requirements-output-v1.md`: **canonical** (codeforge-requirements repo)
 - 본 file (codeforge wrapper repo): sibling reference (canonical 변경 시 sync 의무 — ADR-010 + CFP-24 marketplace sync 정책 동질)

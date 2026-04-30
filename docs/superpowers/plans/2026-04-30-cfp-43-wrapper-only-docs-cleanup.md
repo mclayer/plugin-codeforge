@@ -508,7 +508,7 @@ git commit -m "fix(cfp-43): remove DocsAgent references + restructure 'Lane plug
 ```
 - **lines 444 (Story Issue comments listing)**: `[<phase>] <AgentName>: <한 줄>` 형식 — 표현 자체는 보존하되 "DocsAgent 가 기록" 부분을 "각 lane plugin self-write" 로 갱신
 - **line 453 ("Story Issue comments" 행)**: 동일하게 갱신
-- **line 477**: `[DocsAgent.md](...)` reference → 각 lane plugin CLAUDE.md reference
+- **line 477**: `[DocsAgent.md]` (placeholder link 제거) reference → 각 lane plugin CLAUDE.md reference
 - **§11 file-based write queue 전체 (lines 809-866)**: 본 절은 DocsAgent fixture 시대의 mechanism — wrapper-only 모델에서는 사용 안 함. 다음으로 단순화:
 ```markdown
 ## §11. Cross-agent write coordination

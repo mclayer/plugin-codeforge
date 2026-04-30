@@ -5,6 +5,28 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [Unreleased] - CFP-E (2026-04-30)
+
+### CFP-E — Inter-plugin Contract Drift Detection (ADR-011 신설)
+
+ADR-010 §5 후속 ADR 직접 충족. wrapper PR/push 시 canonical (lane plugin repo) ↔ wrapper sibling 본문 verbatim drift 자동 검증.
+
+### Added
+
+- `docs/adr/ADR-011-inter-plugin-contract-drift-detection.md` — drift detection 정책 동결 (live fetch + 정규화 5단계 + Archived skip + PR/push trigger only)
+- `scripts/check-inter-plugin-drift.sh` — canonical live fetch (GitHub REST API) + 정규화 + byte-verbatim 비교 lint
+- `scripts/test-check-inter-plugin-drift.sh` — 회귀 테스트 harness (T-1 ~ T-8: 정합 / sibling drift / canonical drift / meta heading 변형 / line ending / Archived skip / Active 404 / trailing whitespace)
+- `.github/workflows/contract-lint.yml` 신규 job `inter-plugin-drift (CFP-E)` + `workflow_dispatch:` trigger
+
+### Fixed
+
+- 5 lane output sibling (requirements/design/develop/test/pmo output v1) 의 inherited drift 제거 — CFP-42 sibling backfill 시 author 가 의도치 않게 prepend 한 short intro 1 줄 제거. drift detection lint dogfood 결과로 발견한 사후 fix.
+
+### Migration
+
+- consumer 무영향 — 신규 lint 추가만
+- 첫 PR/push merge 후 1일 dogfood 후 main branch protection 의 required-status-check 에 `inter-plugin-drift (CFP-E)` 수동 등록 권장
+
 ## [Unreleased] - CFP-D (2026-04-30)
 
 ### CFP-D — review_verdict v1 Deprecated → Archived
