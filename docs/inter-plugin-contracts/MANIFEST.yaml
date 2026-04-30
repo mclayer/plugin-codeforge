@@ -34,7 +34,7 @@ contracts:
     canonical_repo: mclayer/plugin-codeforge-test
     canonical_path: docs/inter-plugin-contracts/
     files:
-      - { file: test-verdict-v1.md, contract_version: "1.0", status: Active }
+      - { file: test-verdict-v1.md, contract_version: "1.1", status: Active }
 
   - name: pmo_output
     canonical_repo: mclayer/plugin-codeforge-pmo
