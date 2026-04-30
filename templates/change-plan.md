@@ -19,6 +19,8 @@ inputs:
   - RefactorAgent
   - SecurityArchitectAgent
   - TestContractArchitectAgent
+  - DataMigrationArchitectAgent
+  - OperationalRiskArchitectAgent  # CFP-46 PR-D
 reviewers: [DesignReviewPLAgent]
 related_adrs: [ADR-NNN, ADR-MMM]
 created: <ISO 8601>
@@ -83,16 +85,54 @@ story: <KEY>   # GitHub Story Issue key, e.g. PLG-7
 - 권한 모델 (RBAC·ABAC·기능 단위) + 결정 근거
 - 세션 lifecycle (생성·만료·갱신·폐기)
 
-#### §7.4 민감 데이터 분류 + 흐름
+### §7.4 운영 리스크 (OperationalRiskArchitectAgent 산출 — CFP-46 / ADR-014)
+
+production-readiness 단일 책임 축. 5 항목 모두 명시 또는 `N/A — <사유 1줄>` (CONDITIONAL 항목 한정). 누락·사유 부재 시 DesignReview P0 차단.
+
+#### §7.4.1 DR (Disaster Recovery)
+<항목 본문 또는 N/A — <사유>>
+- 외부 API · 거래소 · 서비스 장애 모드 enumeration
+- 재시작 후 상태 복원 (in-flight order / open positions / unconfirmed transactions)
+- failover 경로 (primary → secondary endpoint, region 이중화)
+- runbook reference (운영팀 대응 sequence)
+
+#### §7.4.2 Cancel-on-disconnect
+<항목 본문 또는 N/A — <사유>>
+- 외부 stream (WebSocket / SSE) 끊김 감지 mechanism
+- 자동 작업 취소 정책 (in-flight orders / pending submissions)
+- 재진입 정책 (idempotent re-submit, gap detection)
+
+#### §7.4.3 Clock sync (CONDITIONAL)
+<항목 본문 또는 N/A — <사유 1줄, 외부 time-window 프로토콜 의존 여부>>
+- **적용 조건**: 외부 time-window 프로토콜 의존 (recvWindow / signed timestamp / OAuth token expiry / TOTP)
+- NTP 의존성 / drift tolerance budget
+- timestamp skew 처리 (재시도 vs reject)
+
+#### §7.4.4 Rate limit / quota
+<항목 본문 또는 N/A — <사유>>
+- 외부 API weight / IP ban 모델
+- throttling 정책 (token bucket / sliding window)
+- quota 초과 시 backoff / circuit breaker
+- 거래소별 weight 표 (consumer overlay 가 도메인 특화 weight 정의)
+
+#### §7.4.5 Env isolation
+<항목 본문 또는 N/A — <사유>>
+- staging / prod (or paper / live) 시크릿 분리 (vault / env var namespacing)
+- 런타임 분리 (process / container / cluster)
+- 승인 게이트 (live 배포 시 별도 approval flow)
+- 누설 차단 (live key 가 staging 노출 검증)
+
+#### §7.5 민감 데이터 분류 + 흐름
 - 데이터 분류표 (Public / Internal / PII / Secret)
 - 데이터 흐름 (발생 → 흐름 → 저장 → 마스킹·암호화 지점)
 - log/error 노출 금지 항목 명시
 
-#### §7.5 위협 ↔ 완화 매핑
+#### §7.6 위협 ↔ 완화 매핑
 - 식별 위협 ID별 설계 단계 완화책 (구현 단계는 SecurityTest lane)
 - 미완화 위협은 명시 + 수용 사유
+- DR↔failover / disconnect↔cancel 매핑 (OperationalRiskArch consult)
 
-#### §7.6 N/A 명시 (외부 입력·인증·민감데이터 무관 시)
+#### §7.7 N/A 명시 (외부 입력·인증·민감데이터 무관 시)
 - "본 Story는 trust boundary 변경 없음 — STRIDE 분석 N/A"
 - 근거 1줄 (예: "내부 docs/templates 수정만, 외부 입력 0개")
 - ※ N/A 근거 누락 시 DesignReview P0 차단
@@ -123,7 +163,7 @@ story: <KEY>   # GitHub Story Issue key, e.g. PLG-7
 - 표기: "N/A — <사유 한 줄>. 검증 채널: <대체 검증>. 면제 분류: plugin-meta-na | runtime-inert"
 - `plugin-meta-na`: agent md / template / docs / yaml만 수정, 실행 가능 코드 0줄
 - `runtime-inert`: 코드는 있으나 테스트 대상 runtime behavior 변경 없음
-- N/A 근거 누락 시 DesignReview P0 차단 (SecurityArch §7.6 N/A 패턴 동형)
+- N/A 근거 누락 시 DesignReview P0 차단 (SecurityArch §7.7 N/A 패턴 동형)
 
 ### §9. 분기 선택 (필요 Dev 조합)
 - 의존성 없는 한 **`role: dev` roster 병렬 가능** (consumer roster에 따라 N개)
@@ -135,7 +175,7 @@ story: <KEY>   # GitHub Story Issue key, e.g. PLG-7
 
 ### §11. 데이터 마이그레이션 (DataMigrationArchitectAgent 입력 — 누락 시 DesignReview P0 차단)
 
-DataMigrationArchitectAgent의 산출물을 ArchitectAgent (chief author)가 통합. SecurityArchitect §7 동형 패턴 — 외부 입력·schema·migration 무관 시 §11.6 N/A 명시 + 사유 1줄. 누락 시 DesignReview P0 차단 ([CFP-21 spec](../docs/superpowers/specs/2026-04-28-cfp-21-datamigration-architect-design.md)).
+DataMigrationArchitectAgent의 산출물을 ArchitectAgent (chief author)가 통합. SecurityArchitect §7 동형 패턴 — 외부 입력·schema·migration 무관 시 §11.7 N/A 명시 + 사유 1줄. 누락 시 DesignReview P0 차단 ([CFP-21 spec](../docs/superpowers/specs/2026-04-28-cfp-21-datamigration-architect-design.md)).
 
 #### §11.1 Schema 변경 영향
 - 변경 대상 테이블/컬렉션/인덱스/뷰 + 변경 유형 (ADD / MODIFY / DROP)
@@ -164,7 +204,21 @@ DataMigrationArchitectAgent의 산출물을 ArchitectAgent (chief author)가 통
 - Backfill 배치 전략 (chunk size / throttle / lock 회피 / replication lag)
 - 진행률 모니터링 + resume 가능성
 
-#### §11.6 N/A 명시 (DB·migration 무관 시)
+#### §11.6 Idempotency invariant (CONDITIONAL — CFP-46 / ADR-014)
+
+DataMigrationArch primary, OperationalRiskArchitectAgent consult (§7.4.2 disconnect 후 재진입 짝). CONDITIONAL — 적용 조건 충족 시 본문, 미충족 시 `N/A — <사유 1줄>` 명시.
+
+<적용 시 항목 본문: client order ID / exactly-once intent / 재시도 시 동작 / N/A — <사유 1줄>>
+
+- **적용 조건**: 재시도 가능 외부 호출 / side effect 있는 외부 호출 (HTTP POST / queue publish / payment / 주문 submit) / 장기 워크플로우 / migration script
+- **N/A 패턴**: batch-only / read-only / sync-only RPC
+- 적용 시 본문 항목:
+  - Idempotency key 정의 (client order ID / request ID / dedup token)
+  - exactly-once intent 구현 방식 (DB unique constraint / dedup table / idempotency-key middleware)
+  - 재시도 시 동작 (return cached response / no-op / merge)
+  - TTL · cleanup 정책
+
+#### §11.7 N/A 명시 (DB·migration 무관 시)
 - "본 Story는 데이터 layer 변경 없음 — migration 분석 N/A"
 - 근거 1줄 (예: "내부 docs/templates 수정만, schema 변경 0개")
 - 사유 누락 시 DesignReview P0 차단
