@@ -14,8 +14,6 @@ authors:
 
 # design_output v1 — Inter-plugin Contract
 
-`codeforge-design` plugin → `codeforge` core (Orchestrator) 단방향 schema.
-
 **상위 SSOT 위치**:
 - `mclayer/plugin-codeforge-design/docs/inter-plugin-contracts/design-output-v1.md`: **canonical** (codeforge-design repo)
 - 본 file (codeforge wrapper repo): sibling reference (canonical 변경 시 sync 의무 — ADR-010 + CFP-24 marketplace sync 정책 동질)
