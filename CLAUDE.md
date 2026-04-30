@@ -279,21 +279,9 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 - **SecurityTest**: 대상은 코드 + 인프라 + 의존성. 보안 카테고리 전담. 1차 layer는 GitHub native 도구(Dependabot/CodeQL/Secret Scanning), 2차 layer는 Claude/Codex 통합 워커(lane=security packet)
 - 중복 지적 발생 시 해당 레인의 ReviewPL이 dedup → severity 높은 쪽 채택
 
-### PMOAgent 프로젝트 관리 (Cross-cutting)
+### PMOAgent (Cross-cutting)
 
-단일 Story 레인 게이트 밖 **Cross-cutting 감사·회고·패턴 분석 전담**. 요구사항 해석은 RequirementsPLAgent 영역.
-
-**스폰 시점**:
-- **Epic 창설 시** (1회): Scope 분해 자문 — Story 분해·의존성 식별·**병렬/순차 판정** (파일 경로 disjoint / 인터페이스↔구체 분리 / 공유 자원 충돌 기준, 상세 [PMOAgent.md §1](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/agents/PMOAgent.md))
-- **Story 완료 시**: 회고 감사 (Preflight/Gate 준수·§8/§8.5 매핑·FIX evidence pack 완성도·토큰 예산)
-- **사용자 요청 시** (주기적): Cross-Story 패턴 보고서 (FIX 반복 유형·ESCALATE 트렌드·성능 회귀·코드 핫스팟)
-
-**산출물**:
-- `[PMOAgent 회고]` / `[PMOAgent Cross-Story 감사]` 보고서 (PMOAgent 직접 Story §11 self-write + docs/retros/<sprint>.md owner direct write — codeforge-pmo)
-- **ADR 후보 발의** (반복 패턴이 "설계 지침 부재"로 해석 시 `status=Proposed` ADR draft를 write queue에 제출)
-- 세션 회고 synthesize (playbook §8.3 테이블 채움)
-
-상세는 [`agents/PMOAgent.md`](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/agents/PMOAgent.md).
+스폰 트리거: Epic 창설 / Story 완료 회고 / 사용자 요청. 단일 Story lane 게이트에 개입 없음. 상세 동작·산출물 schema 는 [codeforge-pmo CLAUDE.md](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/CLAUDE.md) SSOT.
 
 ### Lane plugin self-write boundary
 
