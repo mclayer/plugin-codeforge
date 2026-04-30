@@ -295,31 +295,6 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 상세는 [`agents/PMOAgent.md`](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/agents/PMOAgent.md).
 
-### CodebaseMapper ↔ Refactor ↔ SecurityArchitect ↔ DataMigrationArchitect 4-way 이념 대립
-
-- **CodebaseMapperAgent** = **기존 코드 변호자** (보수). "기존 패턴 유지, 변경 영향 최소화"가 기본 입장
-- **RefactorAgent** = **리팩터링 옹호자** (혁신). "결합도 감소, 인터페이스 분리, 패턴화"가 기본 입장
-- **SecurityArchitectAgent** = **위협 변호자** (공격자 관점). "어디서 외부 입력이 들어오는가, 누가 무엇을 신뢰하는가"가 기본 입장
-- **DataMigrationArchitectAgent** = **데이터 무결성 변호자** (CFP-21). "schema가 어떻게 변하는가, 기존 데이터는 어떻게 처리되는가, 실패 시 어떻게 복구하는가"가 기본 입장
-- ArchitectPLAgent가 Mapper·Refactor·SecurityArch·DataMigrationArch **병렬 스폰** — 넷 다 원 소스(코드 + ADR + Change Plan 초안 + Story §1-7)를 직접 읽고 각자 관점에서 분석 (서로 산출물에 오염되지 않도록 독립 유지)
-- 네 관점 충돌 시 ArchitectAgent (chief author)가 결정 근거와 함께 Change Plan §2(현재 구조)·§3(도입할 설계)·§7(보안 설계)·§11(데이터 마이그레이션)에 명시. 수용·반박은 chief author가 조정 후 기록 (deputy 간 상호 대응 방식 아님). ArchitectPLAgent는 통합 결과를 검수
-- DesignReviewPL이 "**ArchitectAgent (chief author) 통합 판정 + ArchitectPLAgent 검수**가 Mapper 변호 근거를 근거 있게 일축·수용했는가 / Refactor 제안이 요건 범위를 넘지 않았는가 / SecurityArch 위협·완화 매핑이 §7에 충실히 반영되었는가 / DataMigrationArch 마이그레이션 안전성 매핑이 §11에 충실히 반영되었는가" 교차 체크 (병렬 모델에서는 deputy 간 상호 대응하지 않으므로, 대립 해소 품질 평가는 chief author + PL 통합 결과 대상)
-
-TestContractArchitectAgent는 §8 author input contributor (도형 대립 비참여 — Mapper/Refactor/SecurityArch/DataMigrationArch 4-way와 별개 영역). ArchitectPLAgent 메타-규칙 1번이 §8 TestContractArch input + §11 DataMigrationArch input 통합 정합성을 감사.
-
-### 설계 lane deputy Freshness
-
-모든 deputy (CodebaseMapperAgent · RefactorAgent · SecurityArchitectAgent · TestContractArchitectAgent · DataMigrationArchitectAgent) 공통:
-- **매 설계 레인 진입 시 재스폰** (이전 Story 산출물 재사용 금지)
-- 리뷰·테스트에서 설계 레인 복귀 시에도 재스폰 (구현 레인에서 코드 변경 전제)
-
-### ArchitectPLAgent 라이프사이클 (stateless 재스폰)
-
-- 매 트리거마다 Orchestrator가 신규 스폰 — 세션 유지 없음
-- Story file §1-8 재로딩으로 컨텍스트 복원
-- 토큰 비용: 재스폰 당 ~5-10k tokens. FIX 3회 가정 시 15-30k overhead (playbook §8 참조)
-- **ArchitectAgent (chief author)** 도 각 설계 레인 진입마다 stateless 재스폰 — 5 deputy 산출물을 입력으로 수령 후 Change Plan §1-§11 author 수행. ArchitectPLAgent RETURN 시에도 재스폰
-
 ### Write 권한 (path-scoped — 각 agent md frontmatter가 SSOT)
 
 **Core 기본 경로** (consumer overlay가 확장):
