@@ -321,19 +321,6 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 자세한 owner path / mechanism / trigger 는 각 lane plugin 의 `CLAUDE.md` `Self-write 책임` 표 (codeforge-{review,pmo,requirements,test,develop,design}) 참조.
 
-### Codex CLI / 플러그인 필수
-- CodexReviewAgent (codeforge-review plugin 소속): Codex 플러그인 (3 리뷰 lane 공통 — 미설치 시 설계 리뷰·구현 리뷰·보안 테스트 모두 진행 불가). codeforge-review plugin 자체도 설치 의무 (CFP-29 BREAKING)
-- RequirementsAnalyst: `codex` CLI
-- 미설치 시 해당 레인 진행 불가, Orchestrator가 설치 안내 후 중단
-
-### 병렬 스폰 권장
-- **요구사항**: **DomainAgent · RequirementsAnalyst · Researcher 병렬** — 셋 모두 공통 입력에서 각자 키워드·관점 자체 도출. PL이 synthesizer
-- **설계**: **5 deputy 병렬** (CodebaseMapper · Refactor · SecurityArchitectAgent · TestContractArchitectAgent · DataMigrationArchitectAgent) — 5 deputy 모두 원 소스 직접 읽기, 한쪽이 다른 쪽의 요약에 의존하지 않음. ArchitectAgent (chief author)가 통합, ArchitectPLAgent가 검수
-- **구현**: QADev + DevPL의 `role: dev` roster (의존성 없는 한 모두 병렬)
-- **리뷰·보안**: Claude + Codex 병렬 (Design Review / Code Review / Security Test 각 레인)
-
-**Clarification 재스폰 공통 절차** (요구사항·설계 레인): 서브에이전트는 one-shot이라 PL↔서브 continuous dialog 불가. PL이 통합 중 추가 질의가 필요하면 → Orchestrator에 "<에이전트> 재스폰 요청 + clarification context + 이전 출력 pointer" 전달 → Orchestrator가 해당 에이전트를 신규 스폰. 이것이 "각 책임 종료 전까지 보조" 메커니즘의 실제 구현.
-
 ## Inter-plugin Contract (CFP-29 Phase 1 후 + CFP-42 sibling backfill)
 
 codeforge core 가 외부 plugin과 통신할 때의 typed schema. wrapper repo 의 [docs/inter-plugin-contracts/](docs/inter-plugin-contracts/) 디렉터리는 두 종류 보유:
