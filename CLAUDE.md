@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Claude Code 범용 SW 개발 오케스트레이션 플러그인. **0 core 에이전트 (wrapper-only)** · 7 레인 구조 + `role: dev` 동적 roster로 요구사항 접수부터 보안 테스트 통과까지 자율 실행. 에이전트 상세는 각 lane plugin 의 `agents/<Name>.md` (codeforge-{review,pmo,requirements,test,develop,design} 각 repo SSOT — 본 wrapper repo 에는 agent file 없음). 공통 문서 양식은 [`templates/`](templates/) SSOT 참조. **Review subsystem (3 PL + 2 worker + base + 3 checklist)은 별도 plugin [`codeforge-review`](https://github.com/mclayer/plugin-codeforge-review)** 로 추출 (CFP-29 Phase 1). Inter-plugin contract `review_verdict v1` 은 [`docs/inter-plugin-contracts/review-verdict-v1.md`](docs/inter-plugin-contracts/review-verdict-v1.md) SSOT ([ADR-001](docs/adr/ADR-001-review-agent-unification.md) lane-agnostic 통합 + [ADR-008](docs/adr/ADR-008-inter-plugin-contract-versioning.md) versioning). 프로젝트 shape별 Dev 구성 preset은 [`presets/`](https://github.com/mclayer/plugin-codeforge-develop/tree/main/presets) 참조.
+Claude Code 범용 SW 개발 오케스트레이션 플러그인. **0 core 에이전트 (wrapper-only)** · 7 레인 + `role: dev` 동적 roster 로 요구사항 접수부터 보안 테스트 통과까지 자율 실행. 에이전트 상세는 각 lane plugin (codeforge-{review,pmo,requirements,test,develop,design}) SSOT — 본 wrapper repo 에는 agent file 없음. Dev preset 은 [codeforge-develop presets/](https://github.com/mclayer/plugin-codeforge-develop/tree/main/presets) 참조.
 
 ## Plugin
 
@@ -10,15 +10,7 @@ Claude Code 범용 SW 개발 오케스트레이션 플러그인. **0 core 에이
 
 ### Marketplace cross-repo 동기화 의무
 
-본 플러그인은 [`mclayer/marketplace`](https://github.com/mclayer/marketplace)를 통해 사용자에게 노출된다 (`/plugins install codeforge@mclayer`). codeforge `.claude-plugin/plugin.json`의 **mirrored 필드 — `name` · `version` · `description` · `author`** — 변경 시 `mclayer/marketplace`의 [`/.claude-plugin/marketplace.json`](https://github.com/mclayer/marketplace/blob/main/.claude-plugin/marketplace.json) `plugins[name=codeforge]`의 동일 필드를 같은 Story 범위 내에서 **반드시 동기화 PR로 반영**한다 (codeforge PR 머지 직후 즉시 marketplace sync PR open·merge).
-
-**규칙**:
-- mirrored 필드 변경이 포함된 codeforge PR은 본문 / Story file §11에 "marketplace sync PR 후속 의무" 명시
-- codeforge PR merge → 즉시 marketplace 측 동기화 PR open (gh API로 cross-check 후 merge)
-- 비-mirrored 필드(`keywords` 등 marketplace.json schema 비대상)만 변경 시 sync 면제 (예외 사유는 Story §4·§7에 명시)
-- 정식 인프라화는 cross-repo parity CI 후속 CFP에서 처리 — 자동 차단 도입 전까지 author·Orchestrator 의무
-
-**근거**: 사용자 명시 (CFP-24, 2026-04-28). drift 시 사용자가 stale version·어긋난 description을 install하게 되어 marketplace의 단일 진입점 의미가 무너진다.
+본 플러그인은 [`mclayer/marketplace`](https://github.com/mclayer/marketplace) 를 통해 노출 (`/plugins install codeforge@mclayer`). codeforge `.claude-plugin/plugin.json` 의 **mirrored 필드** (`name` · `version` · `description` · `author`) 변경 시 `mclayer/marketplace` 의 [`marketplace.json`](https://github.com/mclayer/marketplace/blob/main/.claude-plugin/marketplace.json) `plugins[name=codeforge]` 동일 필드를 **같은 Story 내 동기화 PR 로 반영** (codeforge PR merge 직후 즉시 sync PR open·merge). 비-mirrored 필드(`keywords` 등) 만 변경 시 면제 (Story §4·§7 예외 사유 명시). codeforge PR 본문/Story §11 에 "marketplace sync PR 후속 의무" 표기. 정식 cross-repo parity CI 는 후속 CFP — 도입 전까지 author·Orchestrator 의무 (CFP-24, 2026-04-28). drift 시 사용자가 stale version 을 install 하게 되어 marketplace 단일 진입점 의미가 무너진다.
 
 ## SSOT Boundary (ADR-012)
 
@@ -371,16 +363,9 @@ Consumer는 `.claude/_overlay/project.yaml`의 `story_cutoff.additional_exempt_c
 
 ### Plugin 자체 적용 (dogfooding)
 
-이 plugin repo도 동일 정책 적용. KEY prefix는 `CFP` (CodeForge Plugin). Plugin meta 변경은 §8 Test Contract / §9 리뷰·테스트 결과 등 무의미한 lane을 `N/A — <사유>`로 명시 (lane 게이트 면제 audit trail). 인프라 자동화는 단계적 도입:
+이 plugin repo 도 동일 정책 적용 (KEY prefix `CFP`). Plugin meta 변경 시 무의미한 lane (§8 Test Contract / §9 리뷰·테스트 등) 은 `N/A — <사유>` 명시 (lane 게이트 면제 audit trail). 인프라 자동화 단계 — CFP-1 (Story 정책 + `docs/stories/`), CFP-2 (Issue/PR template + 6 workflow + CODEOWNERS) 완료. 후속 CFP-5 (templates/** ↔ .github/** parity CI) · CFP-7 (E2E workflow 실증) 잠정.
 
-- **1단계 완료** (CFP-1): Story 작성 의무 정책 + `docs/stories/` 디렉토리 + 수동 Story 작성
-- **2단계 완료** (CFP-2): `.github/ISSUE_TEMPLATE/{story,bug,audit}.yml` + `.github/workflows/`에 6종 워크플로우(story-init / phase-label-invariant / story-section-1-immutable / subissue-from-impl-manifest / phase-gate-mergeable / fix-ledger-sync) + `.github/PULL_REQUEST_TEMPLATE.md` + `.github/CODEOWNERS` 도입
-- **3단계 향후** (CFP-5 잠정): `templates/**` ↔ `.github/**` parity + frontmatter ↔ CLAUDE.md 표 ↔ `.claude-plugin/plugin.json` 정합 자동 점검 CI. SSOT drift 자동 차단
-- **End-to-end 실증 향후** (CFP-7 잠정): 임의 plugin meta 변경을 GitHub Issue Form으로 시작 → workflow 자동 동작 첫 검증
-
-**Branch protection** (수동 적용, GitHub Settings > Branches): main 브랜치에 `phase-gate-mergeable` required status check 권장. 1인 maintainer 환경에서는 `Require review from Code Owners`는 OFF 권장 (PR self-merge 차단 방지).
-
-판단 시점: Orchestrator가 변경 시작 시 cutoff 분류 선언, commit 직전 재확인.
+판단 시점: Orchestrator 가 변경 시작 시 cutoff 분류 선언, commit 직전 재확인.
 
 ## docs/stories markdown 규약 요약
 
