@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # CFP-46 PR-G — Test harness for check-doc-section-schema.sh
 #
-# 3 fixture cases:
-#   passing.md         — §7.4 5 항목 + CONDITIONAL N/A 사유 (10자+) 충족 → exit 0
-#   failing-no-na.md   — Clock sync CONDITIONAL 본문/N/A 모두 부재 → exit 1
-#   failing-empty-na.md — Clock sync CONDITIONAL 다음 'N/A' 만 (사유 부재, 10자 minimum 미충족) → exit 1
+# 4 fixture cases (passing + 3 failure tiers):
+#   passing.md           — §7.4 5 항목 + CONDITIONAL N/A 사유 (10자+) 충족 → exit 0
+#   failing-no-na.md     — Tier 1: CONDITIONAL 본문/N/A 모두 부재 → exit 1
+#   failing-empty-na.md  — Tier 2: CONDITIONAL 다음 'N/A' 만 (사유 부재) → exit 1
+#   failing-short-na.md  — Tier 3: 'N/A — TBD' (사유 10자 minimum 미충족) → exit 1
 #
 # 각 case 마다:
 #   1. tmp dir 생성 + scripts/ + docs/change-plans/<fixture>.md mirror
@@ -58,11 +59,14 @@ run_fixture_test() {
 # T1: passing fixture — §7.4 5 항목 + CONDITIONAL N/A 사유 (10자+) 모두 충족
 run_fixture_test "T1 passing.md (§7.4 + CONDITIONAL N/A 충족)" "passing.md" 0
 
-# T2: failing — Clock sync CONDITIONAL 본문/N/A 모두 부재
-run_fixture_test "T2 failing-no-na.md (CONDITIONAL 본문/N/A 부재)" "failing-no-na.md" 1
+# T2: Tier 1 — Clock sync CONDITIONAL 본문/N/A 모두 부재
+run_fixture_test "T2 failing-no-na.md (Tier 1: CONDITIONAL 본문/N/A 부재)" "failing-no-na.md" 1
 
-# T3: failing — N/A 만 (사유 부재, 10자 minimum 미충족)
-run_fixture_test "T3 failing-empty-na.md (N/A 사유 부재, 10자 minimum 미충족)" "failing-empty-na.md" 1
+# T3: Tier 2 — N/A 만 (사유 부재)
+run_fixture_test "T3 failing-empty-na.md (Tier 2: N/A 사유 부재)" "failing-empty-na.md" 1
+
+# T4: Tier 3 — 'N/A — TBD' (사유 10자 minimum 미충족, NA_JUSTIFY_RE 검증)
+run_fixture_test "T4 failing-short-na.md (Tier 3: N/A 사유 10자 minimum 미충족)" "failing-short-na.md" 1
 
 echo ""
 echo "Results: $PASS passed, $FAIL failed"
