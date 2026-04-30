@@ -8,8 +8,8 @@ codeforge core (>= 5.0.0) 의존.
 
 ## Inter-plugin contracts
 
-- `design_output v1` — [`docs/inter-plugin-contracts/design-output-v1.md`](docs/inter-plugin-contracts/design-output-v1.md)
-  - **CFP-46 PR-E 머지 후 v2 로 BREAKING bump 예정** (§7.4 운영 리스크 5 sub-item + §11 idempotency CONDITIONAL + 6 deputy 산출물 통합 표 추가). 현 placeholder 유지.
+- `design_output v2` — [`docs/inter-plugin-contracts/design-output-v2.md`](docs/inter-plugin-contracts/design-output-v2.md) (Active, BREAKING from v1, CFP-46 / ADR-014)
+- `design_output v1` — [`docs/inter-plugin-contracts/design-output-v1.md`](docs/inter-plugin-contracts/design-output-v1.md) (Archived 2026-04-30)
 
 ## Owner doc paths
 
