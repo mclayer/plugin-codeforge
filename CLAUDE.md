@@ -8,7 +8,7 @@ codeforge core (>= 5.0.0) 의존.
 
 ## Inter-plugin contracts
 
-- `design_output v2` — [`docs/inter-plugin-contracts/design-output-v2.md`](docs/inter-plugin-contracts/design-output-v2.md) (Active, BREAKING from v1, CFP-46 / ADR-014)
+- `design_output v2` — [`docs/inter-plugin-contracts/design-output-v2.md`](docs/inter-plugin-contracts/design-output-v2.md) (Active. v2.0 BREAKING from v1 — CFP-46 / ADR-014. v2.1 additive minor — CFP-47 §8.5 / ADR-015 [후속 PR-D])
 - `design_output v1` — [`docs/inter-plugin-contracts/design-output-v1.md`](docs/inter-plugin-contracts/design-output-v1.md) (Archived 2026-04-30)
 
 ## Owner doc paths
