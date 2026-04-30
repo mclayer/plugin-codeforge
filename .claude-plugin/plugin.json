@@ -1,7 +1,7 @@
 {
   "name": "codeforge",
-  "version": "5.0.1",
-  "description": "Claude Code SW 개발 오케스트레이션 wrapper-only plugin. ζ arc 완료 (CFP-40, 2026-04-29). Agent 0개 — protocol/CI/schemas/bootstrap/Orchestrator instructions 만 보유. 6 lane plugin 의존: codeforge-{requirements,design,develop,test,review,pmo}. Inter-plugin contract 6종 + invariant SSOT 3종 (ADR-008/009).",
+  "version": "5.1.0",
+  "description": "Claude Code SW 개발 오케스트레이션 wrapper-only plugin. ζ arc 완료 (CFP-40, 2026-04-29) + CFP-46 OperationalRiskArchitect 6th deputy + §7.4 운영리스크 / §11.6 idempotency CONDITIONAL (2026-04-30). Agent 0개 — protocol/CI/schemas/bootstrap/Orchestrator instructions 만 보유. 6 lane plugin 의존: codeforge-{requirements,design,develop,test,review,pmo}. Inter-plugin contract 6 entry / 8 file + invariant SSOT 3종 (ADR-008/009/010/012/013/014).",
   "author": {
     "name": "Josh"
   },
