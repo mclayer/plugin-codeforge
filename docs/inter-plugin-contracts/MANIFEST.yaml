@@ -22,7 +22,7 @@ contracts:
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: design-output-v1.md, contract_version: "1.0", status: Archived }
-      - { file: design-output-v2.md, contract_version: "2.0", status: Active }
+      - { file: design-output-v2.md, contract_version: "2.1", status: Active }
 
   - name: develop_output
     canonical_repo: mclayer/plugin-codeforge-develop
