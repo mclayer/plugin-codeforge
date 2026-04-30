@@ -5,6 +5,40 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [5.2.0] - 2026-04-30
+
+### CFP-47 — Stateful / restart invariant test category (ADR-015)
+
+CFP-46 (Operational Risk Architect 6th deputy) 의 검증-side 짝. §8 Test Contract 에 §8.5 CONDITIONAL sub-section 신설 + codeforge-test lane 1→2 agent split + 양 contract additive minor in-place bump.
+
+### Added
+
+- `docs/adr/ADR-015-stateful-test-category.md` — carrier ADR (5 결정 + 거부된 대안)
+- 책임 매트릭스 §8.5 row (TestContractArch primary + DesignReview 감사 P0 차단 + StatefulTestAgent 검증)
+- 원인 판정 decision table 4 row (cache drift / queue accumulation / restart loss / replay failure)
+- 6 deputy mandate matrix §8.5 row (TestContractArch primary)
+- `scripts/check-doc-section-schema.sh` §8.5 applicability 표 강제 (4 Y/N + substantive reason 30자 minimum, vague 차단) [후속 PR-G]
+- 4 lint fixture (passing-y-applies / passing-n-substantive / failing-y-no-section / failing-n-vague) [후속 PR-G]
+- `agents/StatefulTestAgent.md` (codeforge-test) — long-running + restart invariant 전담 [후속 PR-F]
+
+### Changed
+
+- `.claude-plugin/plugin.json`: 5.1.0 → 5.2.0 + description CFP-47 / ADR-015 + `stateful-testing` keyword
+- `templates/change-plan.md` (codeforge-design): §8.4 직후 §8.5 신설 (체크표 + §8.5.1-§8.5.4) [후속 PR-C]
+- `agents/TestContractArchitectAgent.md` (codeforge-design): mandate.primary 에 §8.5 추가 [후속 PR-B]
+- `docs/inter-plugin-contracts/design-output-v2.md`: contract_version 2.0 → 2.1 (additive minor — sections_authored 에 §8.5 추가) [후속 PR-D]
+- `docs/inter-plugin-contracts/test-verdict-v1.md`: contract_version 1.0 → 1.1 (additive minor — stateful_invariant_results optional 필드) [후속 PR-E]
+- `docs/inter-plugin-contracts/MANIFEST.yaml`: design_output / test_verdict version 갱신 [후속 PR-D / PR-E]
+- `agents/TestAgent.md` (codeforge-test): functional/integration/infra/perf 영역 명시 (StatefulTestAgent 와 boundary clarity) [후속 PR-F]
+- `CLAUDE.md` (codeforge-test): self-write 책임 표 갱신 + failure ownership 매트릭스 추가 [후속 PR-F]
+
+### Migration
+
+- consumer 무영향 — 모든 bump minor (additive)
+- 기존 §8 N/A Story 에 §8.5 자동 N/A (포함 관계)
+- in-flight Story 는 transition period (1 sprint) 동안 §8.5.0 체크표 추가 작성 의무
+- marketplace sync 는 CFP-49 sweep 에 포함 (별도 진행)
+
 ## [5.1.0] - 2026-04-30
 
 ### CFP-46 — Operational Risk Architect 6th deputy + §7.4 운영리스크 + §11.6 idempotency CONDITIONAL (ADR-014 신설)

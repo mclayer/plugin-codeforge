@@ -167,6 +167,10 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 | **§7.4 Env isolation 위반 (live ↔ staging 누설)** | 구현 | §7.4 isolation 모델 부재 → 설계 |
 | **§7.4 Clock skew FAIL (CONDITIONAL active)** | 구현 | §7.4 skew tolerance 부재·N/A 모순 → 설계 |
 | **§11 Idempotency 위반 (CONDITIONAL active)** | 구현 | §11 invariant 부재·N/A 모순 → 설계 |
+| **§8.5 Cache / state drift (long-running)** | 구현 | §8.5.1 long-running invariant 정의 부재 또는 §7.4.1 DR boundary 부재 → 설계 |
+| **§8.5 Unbounded background accumulation** | 구현 | §7.4.4 rate limit / quota 정책 부재 또는 §8.5.1 worker queue bound 정의 부재 → 설계 |
+| **§8.5 Restart recovery loss** | 구현 | §7.4.5 env isolation 모델 부재 또는 §11.6 idempotency CONDITIONAL active 인데 spec 부재 → 설계 |
+| **§8.5 Idempotency replay failure (§11.6 active 시)** | 구현 | §11.6 idempotency invariant 정의 부재 (§11.6 active 인데 §8.5.3 cross-ref 깨짐) → 설계 |
 
 **P1 품질 local vs boundary 판정 기준**:
 - **local**: finding이 1개 파일 또는 1개 함수 범위에 한정, 설계 결정과 무관한 개별 구현 결함
@@ -187,6 +191,8 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 | CodebaseMapper ↔ Refactor 균형 | — | ✅ | — | — |
 | API 계약 일관성 (라우트·스키마·타입) | — | ✅ | — | — |
 | §8 Test Contract 타당성 | — | ✅ | — | — |
+| **§8.5 Stateful / restart invariant 정의** | ✅ TestContractArch | ✅ DesignReview (감사 — applicability 표 valid) | — | StatefulTestAgent (검증) |
+| **§8.5 누락 / vague N/A 사유** | — | ✅ **P0 차단** | — | — |
 | 성능 baseline §8.3 프로토콜 타당성 | — | ✅ | — | — |
 | **§7 Trust boundary 정의** | ✅ | (감사) | — | (검증) |
 | **§7 Threat model (STRIDE-LITE)** | ✅ | (감사) | — | — |
@@ -252,6 +258,7 @@ ADR-014 + ADR-012 §3 4번째 SSOT 예외. design lane 의 6 deputy (CFP-46 Oper
 | §7.6 위협↔완화 매핑 | — | — | ✅ | (DR↔failover consult) | — | — |
 | **§11 Idempotency (CONDITIONAL)** | — | — | — | (consult) | — | **✅** |
 | §11 Schema/Migration/Rollback | — | — | — | — | — | ✅ |
+| **§8.5 Stateful / restart invariant** | — | — | — | (consult §7.4 짝) | **✅** | (consult §11.6 짝) |
 
 ✅ = primary owner / (consult) = secondary input.
 
