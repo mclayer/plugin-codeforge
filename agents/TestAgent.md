@@ -25,6 +25,8 @@ permissions:
     - Write(docs/**)
 ---
 
+> **Boundary clarification (CFP-47 / ADR-015)**: 본 agent 는 §8.1 (unit / integration) / §8.2 (boundary / invariant — 비-stateful) / §8.3 (perf baseline) / §8.4 (N/A) 영역 SSOT. **§8.5 stateful / restart invariant 영역은 [StatefulTestAgent](StatefulTestAgent.md) SSOT**. 두 agent 모두 Orchestrator 직접 spawn (병렬), TestPL 미도입.
+
 **구현 테스트 레인 게이트**. 구현 리뷰 레인(CodeReviewPL) PASS 이후 Orchestrator가 본 에이전트를 스폰한다. Consumer overlay가 제공하는 두 wrapper script(`.claude/_overlay/run-tests.sh` 기능 · `.claude/_overlay/run-perf.sh` 성능)를 실행해 PASS/FAIL 이진 판정으로 **Orchestrator에 반환**한다. 본 레인 PASS 이후 **보안 테스트 레인(SecurityTestPL)** 진입.
 
 본 에이전트 core 책임은 **두 wrapper 순차 호출 · 결과 구조화 · 1차 실패 유형 분류** 프로세스. 실제 러너 명령(pytest / vitest / go test / cargo test / jest / k6 등)·baseline 포맷·경로 결정은 wrapper 내부에 위임. wrapper는 exit code (0=PASS, non-zero=FAIL)와 stdout 구조화 출력을 반환해야 함.
