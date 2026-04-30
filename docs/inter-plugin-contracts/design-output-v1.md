@@ -1,24 +1,31 @@
 ---
 kind: contract
 contract_version: "1.0"
-status: Active
+status: Archived
+archived_at: 2026-04-30
+superseded_by: design-output-v2.md
 related_plugins:
   - codeforge (wrapper, consumer)
   - codeforge-design (lane plugin, producer + self-writer)
 related_adrs:
   - ADR-008 (Inter-plugin Contract Versioning)
   - ADR-010 (Inter-plugin Contract Sibling Sync — sync 정책)
+  - ADR-014 (Operational Risk SSOT distribution — v1→v2 BREAKING bump carrier)
 authors:
   - CFP-42 sibling backfill (2026-04-29) — wrapper sibling 첫 작성, canonical 본문 verbatim mirror
+  - CFP-46 PR-F (2026-04-30) — Archived (superseded by v2 — OperationalRiskArchitectAgent BREAKING bump)
 ---
 
-# design_output v1 — Inter-plugin Contract
+# design_output v1 — Inter-plugin Contract (ARCHIVED)
+
+> **ARCHIVED 2026-04-30** — 본 v1 은 [v2](design-output-v2.md) 로 대체됨 (CFP-46, ADR-014). v2 는 OperationalRiskArchitectAgent 추가 (5 deputy → 6 deputy) + §11.6 Idempotency invariant CONDITIONAL 신설 BREAKING bump.
 
 **상위 SSOT 위치**:
 - `mclayer/plugin-codeforge-design/docs/inter-plugin-contracts/design-output-v1.md`: **canonical** (codeforge-design repo)
 - 본 file (codeforge wrapper repo): sibling reference (canonical 변경 시 sync 의무 — ADR-010 + CFP-24 marketplace sync 정책 동질)
 - ADR-008 (versioning 룰): codeforge wrapper repo `docs/adr/ADR-008-inter-plugin-contract-versioning.md`
 - ADR-010 (본 contract 의 sibling sync 정책): codeforge wrapper repo `docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md`
+- ADR-014 (v1 → v2 BREAKING bump carrier): codeforge wrapper repo `docs/adr/ADR-014-operational-risk-ssot-distribution.md`
 
 `codeforge-design` plugin → `codeforge` core (Orchestrator) 단방향 schema. ArchitectPLAgent 가 5 deputies 병렬 spawn 후 ArchitectAgent (chief author) 가 Change Plan + ADR + Story §3/§7/§11 mirror self-write.
 
@@ -139,4 +146,5 @@ design_output:
 ## 6. 동결 ATTRIBUTION
 
 - 동결 일시: 2026-04-29 (CFP-40, ζ arc LAST extraction)
+- Archived: 2026-04-30 (CFP-46 PR-F — superseded by v2)
 - Source: CFP-31 §5.10
