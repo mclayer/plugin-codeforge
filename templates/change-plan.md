@@ -165,6 +165,64 @@ production-readiness 단일 책임 축. 5 항목 모두 명시 또는 `N/A — <
 - `runtime-inert`: 코드는 있으나 테스트 대상 runtime behavior 변경 없음
 - N/A 근거 누락 시 DesignReview P0 차단 (SecurityArch §7.7 N/A 패턴 동형)
 
+#### §8.5 Stateful / restart invariant tests (CONDITIONAL — CFP-47 / ADR-015)
+
+TestContractArch primary, OperationalRiskArchitectAgent + DataMigrationArchitectAgent consult (§7.4 disconnect/clock/rate/env 짝, §11.6 idempotency 짝). CONDITIONAL — 적용 조건 충족 시 본문, 미충족 시 §8.5.0 표 4개 Y/N 모두 N + substantive reason 기재 후 §8.5 N/A 명시.
+
+##### §8.5.0 Applicability decision (필수)
+
+| 적용 조건 | Y/N | 근거 1줄 (substantive — 단순 부정 X, 30자 이상) |
+|---|:-:|---|
+| Long-running connection (WebSocket / SSE / long-poll / persistent TCP / gRPC stream) | □ | <근거> |
+| Stateful in-memory cache (>1 update/sec sustained, >5 min retention 또는 derived state) | □ | <근거> |
+| Background worker / queue consumer (async job runner / scheduler / data stream consumer) | □ | <근거> |
+| Process restart-aware system (in-flight 작업 보유 / persistent state / graceful shutdown 요구) | □ | <근거> |
+
+→ 1개라도 Y: §8.5.1+ 본문 필수
+→ 4개 모두 N + 각 substantive reason: §8.5 전체 N/A 허용 + §8.5.4 본문에 "N/A — <reason>" 명시
+→ 단순 "not applicable" / "해당 없음" / 길이 <30자 reason 차단 (`scripts/check-doc-section-schema.sh` 강제)
+
+##### §8.5.1 Long-running invariant tests (적용 시)
+
+(체크표 1번 또는 2번 또는 3번 Y 일 때 본문 필수)
+
+- **테스트 대상 invariant** (sustained load 동안 유지되어야 할 속성):
+  - cache eviction rate / depth bound / sequence consistency / worker queue bound / time-window correctness 등
+- **부하 시나리오 + 지속 시간** (예: 6시간 sustained / N/sec / Y업데이트 누적)
+- **invariant assertion 주기** (예: 매 N분 / 매 M update / 매 K 이벤트)
+- **expected baseline + tolerance** (drift 허용 범위)
+- **테스트 fixture / framework** (consumer 환경 — pytest-anyio / asyncio long-running fixture / load generator 등)
+
+##### §8.5.2 Process restart recovery tests (적용 시)
+
+(체크표 4번 Y 일 때 본문 필수)
+
+- **restart 시나리오** (SIGTERM / SIGKILL / deploy rolling update / OOM)
+- **in-flight state**: 어떤 작업이 in-flight 인 시점에 kill (예: 주문 submit 중 / DB transaction 중 / queue publish 중)
+- **검증 invariant**:
+  - idempotency key persistence (재시도 시 중복 차단)
+  - state reconciliation (재시작 후 외부 truth 와 일치)
+  - graceful shutdown 완료 (in-flight 완료 vs cancel 정책 실제 동작)
+  - WebSocket re-attach + sequence-gap detection (재시작 후 stream 재요청)
+- **테스트 helper** (consumer 환경 — fork-and-kill helper / supervisor / state harness)
+
+##### §8.5.3 Idempotency replay tests (CONDITIONAL — §11.6 active 시)
+
+(§11.6 idempotency CONDITIONAL active + 체크표 4번 Y 인 교집합)
+
+- **replay 시나리오** (같은 idempotency key 재호출 — 직후 / restart 후 / N분 후 / TTL 직전)
+- **expected behavior** (cached response return / no-op / merge / conflict 처리)
+- **§11.6 idempotency invariant 와 cross-ref** (Change Plan §11.6 의 key 정의 / TTL / cleanup 정책 직접 인용)
+
+##### §8.5.4 N/A 명시 (4 적용 조건 모두 No 시)
+
+- 표기: "N/A — <substantive reason 1줄>. 검증 채널: <대체 검증 — 예: §8.1-§8.2 만으로 충분>"
+- substantive reason 예시:
+  - "본 Story 는 sync HTTP request/response 만 수정 — long-running connection / cache / worker / restart-aware state 0개"
+  - "본 Story 는 read-only API endpoint 추가 — 외부 호출 idempotency / state mutation 없음"
+- 단순 "not applicable" / "해당 없음" / 길이 <30자 차단
+- check-doc-section-schema.sh 강제 (Codex 개선 #1)
+
 ### §9. 분기 선택 (필요 Dev 조합)
 - 의존성 없는 한 **`role: dev` roster 병렬 가능** (consumer roster에 따라 N개)
 - 의존성 있으면 순서 명시 (예: DataEngineerAgent 스키마 → BackendDeveloperAgent 어댑터)
