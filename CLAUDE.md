@@ -17,7 +17,7 @@ Claude Code 범용 SW 개발 오케스트레이션 플러그인. **0 core 에이
 본 wrapper CLAUDE.md content scope 는 [ADR-012](docs/adr/ADR-012-wrapper-claudemd-ssot-boundary.md) 에 따라 strictly limited:
 1. **Plugin identity** (composition · marketplace sync · dependency check)
 2. **Cross-cutting policy** (dogfood Story 작성 의무 · write boundary table · inter-plugin contract index · ADR list)
-3. **3 SSOT 예외** (cross-lane scope, no single-plugin home): 책임 매트릭스 · 원인 판정 decision table · FIX Ledger §10 schema
+3. **4 SSOT 예외** (cross-lane scope, no single-plugin home): 책임 매트릭스 · 원인 판정 decision table · FIX Ledger §10 schema · **6 deputy mandate 매트릭스 + §7.4 / §11 idempotency 행 (ADR-014 carrier, CFP-46)**
 
 추가 — [ADR-013](docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md) (CFP-45):
 - 7 plugin repo 의 dogfood artifacts (specs/plans/retros/stories/change-plans) 는 [`mclayer/codeforge-internal-docs`](https://github.com/mclayer/codeforge-internal-docs) 단일 monorepo SSOT
@@ -162,6 +162,11 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 | **보안 테스트 P0 trust boundary 위반** | 구현 | §7.1에 boundary 부재·모순 또는 §7.1과 코드 boundary 불일치 → 설계 |
 | **보안 테스트 P0 auth/authz 결함** | 구현 | §7.3 인증·권한 모델 자체 결함 → 설계. 모델은 맞으나 구현 결함 → 구현 유지 |
 | **구현 테스트 Migration FAIL · data integrity 위반 · rollback 실패** | 구현 | §11.1-§11.5 부재·모순 (schema 영향 누락 / Migration 전략 부재 / Rollback 경로 부재 / invariant 정의 부재) → 설계. 모델은 맞으나 script 결함 → 구현 유지 |
+| **§7.4 DR/disconnect cascade FAIL** | 구현 | §7.4 boundary 부재·모순 → 설계 |
+| **§7.4 Rate limit / IP ban** | 구현 | §7.4 quota·throttling 정책 부재 → 설계 |
+| **§7.4 Env isolation 위반 (live ↔ staging 누설)** | 구현 | §7.4 isolation 모델 부재 → 설계 |
+| **§7.4 Clock skew FAIL (CONDITIONAL active)** | 구현 | §7.4 skew tolerance 부재·N/A 모순 → 설계 |
+| **§11 Idempotency 위반 (CONDITIONAL active)** | 구현 | §11 invariant 부재·N/A 모순 → 설계 |
 
 **P1 품질 local vs boundary 판정 기준**:
 - **local**: finding이 1개 파일 또는 1개 함수 범위에 한정, 설계 결정과 무관한 개별 구현 결함
@@ -195,6 +200,14 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 | **§11 Data integrity invariant** | ✅ | (감사) | — | (검증) |
 | **§11 Backfill / 기존 데이터 처리** | ✅ | (감사) | — | (검증) |
 | **§11 누락 / N/A 사유 부재** | — | ✅ **P0 차단** | — | — |
+| **§7.4 DR / failover 경로** | ✅ OpRiskArch | (감사) | — | (검증) |
+| **§7.4 Cancel-on-disconnect** | ✅ OpRiskArch | (감사) | — | (검증) |
+| **§7.4 Clock sync (CONDITIONAL)** | ✅ OpRiskArch | (감사·N/A 사유) | — | (검증) |
+| **§7.4 Rate limit / quota** | ✅ OpRiskArch | (감사) | — | (검증) |
+| **§7.4 Env isolation** | ✅ OpRiskArch | (감사) | — | (검증) |
+| **§7.4 누락 / N/A 사유 부재** | — | ✅ **P0 차단** | — | — |
+| **§11 Idempotency (CONDITIONAL)** | ✅ DataMigrationArch | (감사·N/A 사유) | — | — |
+| **§11 Idempotency 누락 / N/A 사유 부재** | — | ✅ **P0 차단** | — | — |
 | 코드 ↔ Change Plan 변경 계획 준수 | — | — | ✅ | — |
 | 코드 스타일·네이밍·가독성 | — | — | ✅ | — |
 | 테스트 코드 품질 (커버리지·경계·mock 경계) | — | — | ✅ | — |
@@ -223,6 +236,26 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 - **CodeReview**: 대상은 코드(src·config·deploy·tests). 일반 품질·런타임 결함·테스트 품질 중심. 보안은 SecurityTest가 깊게 검증
 - **SecurityTest**: 대상은 코드 + 인프라 + 의존성. 보안 카테고리 전담. 1차 layer는 GitHub native 도구(Dependabot/CodeQL/Secret Scanning), 2차 layer는 Claude/Codex 통합 워커(lane=security packet)
 - 중복 지적 발생 시 해당 레인의 ReviewPL이 dedup → severity 높은 쪽 채택
+
+### 6 deputy mandate 매트릭스 (codeforge-design lane)
+
+ADR-014 + ADR-012 §3 4번째 SSOT 예외. design lane 의 6 deputy (CFP-46 OperationalRiskArchitect 신설 후) 가 §7 / §11 sub 별로 owning 하는 범위를 명시 — H17 책임 분쟁 차단.
+
+| §7 / §11 sub | CodebaseMapper | Refactor | SecurityArch | **OpRiskArch** | TestContractArch | DataMigrationArch |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|
+| §7.1 Trust boundary | — | — | ✅ | (consult) | — | — |
+| §7.2 Threat model | — | — | ✅ | — | — | — |
+| §7.3 Auth/authz | — | — | ✅ | — | — | — |
+| **§7.4 DR / disconnect / rate limit / env isolation** | — | — | (consult) | **✅** | — | — |
+| **§7.4 Clock sync (CONDITIONAL)** | — | — | (consult) | **✅** | (test 연동) | — |
+| §7.5 민감 데이터 분류 | — | — | ✅ | — | — | — |
+| §7.6 위협↔완화 매핑 | — | — | ✅ | (DR↔failover consult) | — | — |
+| **§11 Idempotency (CONDITIONAL)** | — | — | — | (consult) | — | **✅** |
+| §11 Schema/Migration/Rollback | — | — | — | — | — | ✅ |
+
+✅ = primary owner / (consult) = secondary input.
+
+§7.4 schema 자체는 codeforge-design plugin SSOT (OperationalRiskArchitectAgent agent file). wrapper 는 본 매트릭스만 SSOT 보유 ([ADR-014](docs/adr/ADR-014-operational-risk-ssot-distribution.md)).
 
 ### PMOAgent (Cross-cutting)
 
@@ -266,7 +299,7 @@ codeforge core 가 외부 plugin과 통신할 때의 typed schema. wrapper repo 
 |---|---|---|
 | `review_verdict` | codeforge-review | review-verdict-v1.md (Archived) · review-verdict-v2.md (Active) |
 | `requirements_output` | codeforge-requirements | requirements-output-v1.md (Active) |
-| `design_output` | codeforge-design | design-output-v1.md (Active) |
+| `design_output` | codeforge-design | design-output-v1.md (Archived) · design-output-v2.md (Active — §7.4 + §11 idempotency, CFP-46) |
 | `develop_output` | codeforge-develop | develop-output-v1.md (Active) |
 | `test_verdict` | codeforge-test | test-verdict-v1.md (Active) |
 | `pmo_output` | codeforge-pmo | pmo-output-v1.md (Active) |
