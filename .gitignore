@@ -26,3 +26,9 @@ node_modules/
 
 # Claude Code — local agent worktrees
 .claude/worktrees/
+
+# CFP-45: dogfood artifacts moved to mclayer/codeforge-internal-docs
+docs/superpowers/
+docs/stories/
+docs/retros/
+docs/change-plans/
