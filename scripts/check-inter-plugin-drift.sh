@@ -92,25 +92,33 @@ def fetch_canonical(repo, path):
     raise RuntimeError(f"canonical fetch 실패 ({repo}/{path}): {last_err}")
 
 def normalize(text):
-    """정규화 5 단계 (canonical + sibling 양쪽 동일 적용)."""
+    """정규화 5 단계 (canonical + sibling 양쪽 동일 적용).
+
+    순서: line ending → trailing whitespace → frontmatter → meta section → trailing newline
+    (whitespace 가 frontmatter delimiter `---` 에도 영향 주지 않도록 먼저 trim)
+    """
+    # 1. Line ending 정규화
     text = text.replace("\r\n", "\n").replace("\r", "\n")
 
+    # 2. Trailing whitespace per line (frontmatter delimiter `---` 도 깨끗하게)
+    text = "\n".join(line.rstrip() for line in text.split("\n"))
+
+    # 3. Frontmatter 분리
     if text.startswith("---\n"):
         end = text.find("\n---\n", 4)
         if end != -1:
             text = text[end + 5:]
 
-    # **상위 SSOT 위치** section: canonical + sibling 양쪽에 존재 (CFP-42 패턴)
-    # 두 파일 모두에서 해당 단락 제거 → 본문 contract 비교만
+    # 4. **상위 SSOT** section 제거 (canonical + sibling 양쪽 동일 strip)
+    # heading 변형 허용 (예: "**상위 SSOT 위치 (변경됨)**:") — 본 section 자체를 메타로 간주
     pattern = re.compile(
-        r"^\*\*상위 SSOT(?: 위치)?\*\*:.*?(?=\n\n|\n##\s|\Z)",
+        r"^\*\*상위 SSOT[^\n]*?\*\*:.*?(?=\n\n|\n##\s|\Z)",
         re.DOTALL | re.MULTILINE,
     )
     text = pattern.sub("", text)
     text = re.sub(r"\n{3,}", "\n\n", text)
 
-    text = "\n".join(line.rstrip() for line in text.split("\n"))
-
+    # 5. Trailing newline 통일 (file 끝 \n 1개)
     text = text.rstrip("\n") + "\n"
 
     return text
