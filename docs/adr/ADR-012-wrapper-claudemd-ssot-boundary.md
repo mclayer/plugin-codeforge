@@ -57,7 +57,7 @@ CLAUDE.md 본문 top (intro 직후) 에 본 ADR 의 5-line summary + ADR link in
 ## 결과
 
 **달성**:
-- CLAUDE.md 705 → ~330줄 (53% 절감, 매 세션 ~9k tokens 절약)
+- CLAUDE.md 705 → 377줄 (47% 절감, 매 세션 ~7k tokens 절약). 첫 추정 330줄은 cross-cutting policy 잔류량 underestimate — bottom-up 재계산 후 ≤380 cap 내 377줄로 수렴
 - "wrapper-only" 정체성 명확화 — composition + cross-cutting policy only
 - 3 SSOT 예외 명시로 cross-lane 콘텐츠의 단일 출처 보장
 - 미래 wrapper drift 의 anchor — boundary 위반 PR 의 review 시 ADR-012 reference
@@ -68,7 +68,7 @@ CLAUDE.md 본문 top (intro 직후) 에 본 ADR 의 5-line summary + ADR link in
 - documentation-quality asymmetry — lane plugin 별 self-contained 깊이 차이 (review/pmo/develop 는 agent md 영역 의존)
 
 **검증**:
-- 압축 후 CLAUDE.md line count ≤ 380 (target 330)
+- 압축 후 CLAUDE.md line count = 377 (target 330 미달, ≤ 380 cap 충족)
 - §5.2 grep test (CFP-44 spec): 압축 대상 헤더 잔존 0
 - ADR-012 frontmatter + section schema PASS
 
@@ -102,7 +102,7 @@ codeforge wrapper CLAUDE.md (705 lines)
 └── Domain Knowledge (lane internal)
 
 After (CFP-44 머지 후):
-codeforge wrapper CLAUDE.md (~330 lines)
+codeforge wrapper CLAUDE.md (377 lines)
 ├── Plugin identity (KEEP)
 ├── ## SSOT Boundary (NEW — ADR-012 5-line + link)
 ├── 세션 개시 의무 (compressed — checklist 만)
