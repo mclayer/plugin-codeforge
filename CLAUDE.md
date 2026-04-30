@@ -31,53 +31,30 @@ Lane internal · per-lane spawn detail · severity rule detail · GitHub workflo
 
 ## 세션 개시 의무 (필수 의존성 자동 확인 + 복구 or 요구)
 
-**세션 시작 직후, 모든 작업보다 먼저** 아래 의존성의 노출·설치·인증 상태를 확인한다. 자동 복구 가능한 것은 즉시 복구, 불가능한 것은 사용자에게 설치·재인증을 요구한다. 복구 완료 전까지 **모든 작업 중단** (요구사항 해석·에이전트 스폰·파일 수정·커밋 전부 금지).
+세션 시작 직후, 모든 작업보다 먼저 의존성의 노출·설치·인증 상태 확인. 자동 복구 가능한 것은 즉시 복구, 불가능한 것은 사용자에게 설치·재인증 요구. 복구 완료 전까지 모든 작업 중단.
 
 ### 필수 의존성 SSOT
 
 **MCP 서버 (1종)**:
-- `github` — Issue/PR/sub-issue/comment·label·milestone는 각 lane plugin self-write (codeforge-{review,pmo,requirements,test,develop,design} 별 self-write 표 참조); `docs/{change-plans,adr,domain-knowledge,retros}/**` 직접 write는 owner agent (CFP-26 Phase 0a)
+- `github` — Issue/PR/sub-issue/comment·label·milestone 는 각 lane plugin self-write; `docs/{change-plans,adr,domain-knowledge,retros}/**` 직접 write 는 owner agent (CFP-26 Phase 0a)
 
 **필수 플러그인 (9종)**:
-- `codeforge-review@mclayer` (>= 1.0.0) — review subsystem (3 PL + 2 worker). CFP-35 v2 self-write
-- `codeforge-pmo@mclayer` (>= 0.1.0) — PMO lane (PMOAgent). CFP-36
-- `codeforge-requirements@mclayer` (>= 0.1.0) — Requirements lane (4 agent + 도메인 KB owner). CFP-37
-- `codeforge-test@mclayer` (>= 0.1.0) — Test lane (TestAgent). CFP-38
-- `codeforge-develop@mclayer` (>= 0.1.0) — Develop lane (DeveloperPL + QADev + 3 role:dev + presets). CFP-39 ζ arc 추출. 미설치 시 구현 lane 진행 불가
-- `codex@openai-codex` — **codeforge-review의 CodexReviewAgent** (3 리뷰 lane 공통) 전용. RequirementsAnalyst는 별도 `codex` CLI만 의존하며 본 플러그인이 없어도 CLI만 설치돼 있으면 동작 (아래 필수 CLI 항목 참조)
-- `superpowers@claude-plugins-official` — agent md 다수 스킬 의존 (brainstorming, writing-plans, systematic-debugging, test-driven-development, verification-before-completion, dispatching-parallel-agents)
-- `github@claude-plugins-official` — GitHub MCP 도구 (issue_write, sub_issue_write, create_or_update_file, create_pull_request 등) 노출
+- `codeforge-{review,pmo,requirements,test,develop,design}@mclayer` — 6 lane plugin
+- `codex@openai-codex` — codeforge-review 의 CodexReviewAgent + codex CLI dependency
+- `superpowers@claude-plugins-official` — agent md skill 의존
+- `github@claude-plugins-official` — GitHub MCP 도구 노출
 
-**필수 CLI (2종)**:
-- `codex` — RequirementsAnalyst가 `codex exec -m gpt-5.4` 호출
-- `gh` — PMOAgent (Milestone), DomainAgent (Discussions Q&A), 각 lane plugin (필요 시 graphql fallback) self-call
+**필수 CLI (2종)**: `codex`, `gh`
 
-**권장 플러그인 (4종, 미설치 시 권유만, 중단 없음)**:
-- `pyright-lsp`, `context7`, `commit-commands`, `pr-review-toolkit`
+**권장 플러그인 (4종, 미설치 시 권유만)**: `pyright-lsp`, `context7`, `commit-commands`, `pr-review-toolkit`
 
 ### 확인·복구 절차
 
-1. **노출 확인**:
-   - MCP: `ToolSearch select:mcp__github__issue_write` 결과 확인
-   - 플러그인: `~/.claude/settings.json` `enabledPlugins[<id>] == true` + `~/.claude/plugins/cache/<marketplace>/<plugin>/` 디렉토리 존재
-   - CLI: `which codex`, `which gh`, `gh auth status` 가용
-
-2. **추가 검증** (consumer 리포 기준):
-   - `.github/workflows/`에 plugin 권장 6개 워크플로우 부재·SHA drift 검사 (story-init / phase-label-invariant / story-section-1-immutable / subissue-from-impl-manifest / phase-gate-mergeable / fix-ledger-sync). 부재·drift 시 **알림만** (자동 복사·자동 commit 안 함)
-   - `.github/ISSUE_TEMPLATE/{story,bug,audit}.yml` 부재 알림
-   - `.github/PULL_REQUEST_TEMPLATE.md` 부재 알림
-   - `CODEOWNERS` 파일 architect/domain-expert team 매핑 부재 알림
-
-3. **자동 복구 시도** (사용자 개입 없이 가능한 경우):
-   - 플러그인 cache 있으나 `enabledPlugins == false` → `~/.claude/settings.json` 직접 편집해 `true` 토글 후 세션 재시작 안내
-
-4. **사용자 요구** (자동 불가 · blocking wait):
-   - GitHub MCP 미인증 → `/mcp` 재인증 요청
-   - 플러그인 cache 부재 → `/plugins install <name>@<marketplace>` 실행 요청
-   - `codex` / `gh` CLI 부재 → 설치 가이드 제시 후 응답 대기
-   - `gh auth status` 실패 → `gh auth login` 요청
-
-상세 절차는 [`docs/orchestrator-playbook.md`](docs/orchestrator-playbook.md) §1.1 체크리스트 0번 참조.
+상세 절차는 [playbook §1.1](docs/orchestrator-playbook.md) checklist 0번 SSOT. 요약:
+1. **노출 확인** — MCP `ToolSearch` / 플러그인 `~/.claude/settings.json` enabledPlugins / CLI `which` + `gh auth status`
+2. **자동 복구 시도** — 플러그인 cache 있으나 disabled → settings.json 직접 토글
+3. **사용자 요구** (자동 불가 · blocking wait) — `/mcp` 재인증 / `/plugins install <name>@<marketplace>` / CLI 설치 / `gh auth login`
+4. **추가 검증** (consumer repo) — `.github/workflows/` 권장 6개 + ISSUE_TEMPLATE + PULL_REQUEST_TEMPLATE + CODEOWNERS 부재 시 알림 (자동 복사 안 함)
 
 ## Development Agent Team
 
