@@ -95,7 +95,8 @@ CONDITIONAL_HEADER_RE = re.compile(
 )
 
 # CFP-46 — N/A 사유 (10자 minimum, em dash 또는 hyphen 허용)
-NA_JUSTIFY_RE = re.compile(r"^N/A\s+[—\-]\s+\S.{9,}", re.MULTILINE)
+# NA_JUSTIFY_RE: applied to single-line first_nontrivial only — MULTILINE flag unnecessary
+NA_JUSTIFY_RE = re.compile(r"^N/A\s+[—\-]\s+\S.{9,}")
 
 
 def check_section_7_4(md_path: Path, body: str) -> list:
