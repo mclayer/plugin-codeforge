@@ -7,6 +7,7 @@ date: 2026-04-30
 related_files:
   - CLAUDE.md (본 ADR 의 enforcement 대상 + 5-line summary inline)
   - docs/superpowers/specs/2026-04-30-cfp-44-wrapper-claudemd-ssot-compression-design.md (parent CFP)
+  - docs/adr/ADR-014-operational-risk-ssot-distribution.md (CFP-46 4번째 SSOT 예외 짝꿍)
 related_stories:
   - CFP-44 (본 ADR 신설 시점 — wrapper CLAUDE.md 705→~330줄 압축)
   - CFP-43 (parent — X2 cleanup, 잔존 부속 사항 진단의 직전 상태)
@@ -40,10 +41,11 @@ Wrapper plugin (codeforge) CLAUDE.md content scope 는 다음으로 strictly lim
 
 1. **Plugin identity** — 인트로, marketplace cross-repo sync 의무, 세션 개시 dependency check
 2. **Cross-cutting policy** — dogfood Story 작성 의무, write boundary table (Lane plugin self-write boundary), inter-plugin contract index, ADR list
-3. **3 named SSOT exceptions** (cross-lane scope, no single-plugin home):
+3. **4 named SSOT exceptions** (cross-lane scope, no single-plugin home):
    - Design / Code / Security 책임 매트릭스
    - 원인 판정 decision table
    - FIX Ledger §10 schema + Orchestrator monopoly + RESET 룰
+   - **Cross-lane §7 운영 리스크 책임 매트릭스 행 + 원인 판정 §7.4 / §11 idempotency 행 + 6 deputy mandate 매트릭스** ([ADR-014](ADR-014-operational-risk-ssot-distribution.md) carrier — codeforge-design plugin SSOT 인 §7.4 schema 자체 와 분리되는 cross-lane disambiguation 영역)
 
 **Excluded** (lane plugin SSOT 또는 playbook 으로 위임):
 - per-lane spawn detail · agent role description
@@ -71,6 +73,8 @@ CLAUDE.md 본문 top (intro 직후) 에 본 ADR 의 5-line summary + ADR link in
 - 압축 후 CLAUDE.md line count = 377 (target 330 미달, ≤ 380 cap 충족)
 - §5.2 grep test (CFP-44 spec): 압축 대상 헤더 잔존 0
 - ADR-012 frontmatter + section schema PASS
+
+**2026-04-30 amendment (CFP-46)** — 4번째 SSOT 예외 추가. operational risk schema (§7.4) 가 codeforge-design plugin SSOT 라 wrapper 의 cross-lane 책임 매트릭스·decision table·deputy mandate matrix 만 wrapper 보유. 향후 §7.X / §11.X 추가 시 동일 패턴 (좁은 명명 + 짝꿍 ADR 개정) 의무 — H16 exception creep 차단.
 
 ## 거부된 대안
 
@@ -128,3 +132,4 @@ codeforge wrapper CLAUDE.md (377 lines)
 - CLAUDE.md (본 ADR 의 enforcement 대상)
 - [ADR-009 Wrapper-only Decomposition](ADR-009-wrapper-only-decomposition.md) — parent ζ arc 결정
 - [ADR-010 Inter-plugin Contract Sibling Sync](ADR-010-inter-plugin-contract-sibling-sync.md) — sibling cleanup arc
+- [ADR-014 Operational Risk SSOT Distribution](ADR-014-operational-risk-ssot-distribution.md) — CFP-46 4번째 SSOT 예외 짝꿍
