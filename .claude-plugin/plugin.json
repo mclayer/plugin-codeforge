@@ -1,16 +1,15 @@
 {
   "name": "codeforge-design",
-  "version": "0.2.0",
-  "description": "codeforge ζ arc Design lane plugin (CFP-40, LAST + CFP-46 OperationalRiskArchitect 6th deputy) — ArchitectPLAgent + ArchitectAgent (chief author) + 6 deputies (CodebaseMapper · Refactor · SecurityArch · OperationalRiskArch · TestContractArch · DataMigrationArch). Change Plan + ADR templates owned. Story §3/§7 (incl. §7.4 운영리스크) + §11 데이터 마이그레이션 (incl. §11.6 idempotency CONDITIONAL) mirror self-write. codeforge core 의존.",
-  "author": {
-    "name": "Josh"
-  },
+  "version": "0.3.0",
+  "description": "codeforge ζ arc Design lane plugin (CFP-40, LAST + CFP-46 OperationalRiskArchitect 6th deputy + CFP-47 TestContractArch §8.5 mandate 확장) — ArchitectPLAgent + ArchitectAgent (chief author) + 6 deputies (CodebaseMapper · Refactor · SecurityArch · OperationalRiskArch · TestContractArch · DataMigrationArch). Change Plan + ADR templates owned. Story §3/§7 (incl. §7.4 운영리스크) + §8 (incl. §8.5 stateful) + §11 데이터 마이그레이션 (incl. §11.6 idempotency CONDITIONAL) mirror self-write. codeforge core 의존.",
+  "author": { "name": "Josh" },
   "keywords": [
     "design",
     "architecture",
     "change-plan",
     "adr",
     "deputies",
+    "stateful-test",
     "codeforge-extension",
     "lane-plugin"
   ]
