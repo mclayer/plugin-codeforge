@@ -3,6 +3,7 @@
 # CFP-28 Phase 0c — strict 전환 (exit=1 on warnings)
 # CFP-32 (ζ arc F1) — docs/inter-plugin-contracts/ 신규 path 추가
 # CFP-46 PR-G — §7.4 운영 리스크 schema (5 항목) + CONDITIONAL N/A 사유 (10자 minimum) 강제
+# CFP-47 PR-G — §8.5 Stateful / restart invariant tests applicability lint (30자 minimum)
 # 검사: 5 owner doc path 의 본문 필수 섹션 헤딩
 #
 # Section schema source:
@@ -98,6 +99,21 @@ CONDITIONAL_HEADER_RE = re.compile(
 # NA_JUSTIFY_RE: applied to single-line first_nontrivial only — MULTILINE flag unnecessary
 NA_JUSTIFY_RE = re.compile(r"^N/A\s+[—\-]\s+\S.{9,}")
 
+# CFP-47 — §8.5 Stateful / restart invariant tests applicability
+# §8.5.0 Applicability decision 표 (4 적용 조건 row) + Y/N 기반 §8.5.1 또는 §8.5.4 강제
+SECTION_8_5_HEADER_RE = re.compile(r"^####? §8\.5\b", re.MULTILINE)
+SECTION_8_5_0_HEADER_RE = re.compile(r"^#####? §8\.5\.0\b", re.MULTILINE)
+SECTION_8_5_1_HEADER_RE = re.compile(r"^#####? §8\.5\.1\b", re.MULTILINE)
+SECTION_8_5_4_HEADER_RE = re.compile(r"^#####? §8\.5\.4\b", re.MULTILINE)
+# §8.5.0 표 의 4 row 의 Y/N — 표 line 안의 | Y | 또는 | N | 토큰
+APPLICABILITY_ROW_RE = re.compile(
+    r"\|\s*(Long-running connection|Stateful in-memory cache|Background worker|Process restart-aware system)[^\|]*\|\s*([YN])\s*\|",
+    re.MULTILINE,
+)
+# CFP-47 vague N/A reason 차단 — substantive 30자 minimum (CFP-46의 10자 minimum 보다 강화)
+# applicability decision 은 더 신중한 결정 요구 (Codex 개선 #1)
+NA_85_SUBSTANTIVE_RE = re.compile(r"^N/A\s+[—\-]\s+\S.{29,}", re.MULTILINE)
+
 
 def check_section_7_4(md_path: Path, body: str) -> list:
     """§7.4 운영 리스크 5 항목 존재 여부. 헤딩이 없으면 skip (개별 file 의무 아님 — 본문 작성된 경우만)."""
@@ -157,9 +173,73 @@ def check_conditional_na(md_path: Path, body: str) -> list:
     return fails
 
 
+def check_section_8_5(md_path: Path, body: str) -> list:
+    """§8.5 applicability + body presence 검증 (CFP-47 / ADR-015 결정 5).
+
+    Rules:
+    - §8.5 헤딩 부재 → 본 lint 비대상 (template §8.5 누락은 §8 N/A 처리로 위임)
+    - §8.5.0 헤딩 부재 → FAIL
+    - §8.5.0 표 4 row 부재 (4 적용 조건 모두 매칭 부재) → FAIL
+    - 1+ row Y AND §8.5.1 헤딩 부재 → FAIL
+    - 4 row N AND §8.5.4 헤딩 부재 → FAIL
+    - 4 row N AND §8.5.4 본문 N/A reason vague (substantive 30자 minimum 미충족) → FAIL
+    """
+    fails = []
+    if not SECTION_8_5_HEADER_RE.search(body):
+        return []  # §8.5 자체 부재 → §8 N/A 영역, 본 lint 비대상
+
+    if not SECTION_8_5_0_HEADER_RE.search(body):
+        fails.append(f"{md_path}: §8.5 본문 존재하나 §8.5.0 Applicability decision 헤딩 부재")
+        return fails
+
+    # §8.5.0 표 의 4 row 추출
+    rows = APPLICABILITY_ROW_RE.findall(body)
+    found_rows = {row[0]: row[1] for row in rows}
+    expected = {
+        "Long-running connection",
+        "Stateful in-memory cache",
+        "Background worker",
+        "Process restart-aware system",
+    }
+    missing = expected - set(found_rows.keys())
+    if missing:
+        fails.append(f"{md_path}: §8.5.0 표 의 4 적용 조건 행 누락 — {sorted(missing)}")
+        return fails
+
+    yes_count = sum(1 for v in found_rows.values() if v == "Y")
+    no_count = sum(1 for v in found_rows.values() if v == "N")
+
+    if yes_count >= 1:
+        # §8.5.1 헤딩 강제
+        if not SECTION_8_5_1_HEADER_RE.search(body):
+            fails.append(
+                f"{md_path}: §8.5.0 에 1+ Y ({yes_count}개) 인데 §8.5.1 Long-running invariant tests 본문 부재"
+            )
+
+    if no_count == 4:
+        # §8.5.4 헤딩 + N/A 본문 substantive 강제
+        if not SECTION_8_5_4_HEADER_RE.search(body):
+            fails.append(f"{md_path}: §8.5.0 4 N 인데 §8.5.4 N/A 명시 헤딩 부재")
+        else:
+            # §8.5.4 본문 추출 후 substantive check
+            m_84 = SECTION_8_5_4_HEADER_RE.search(body)
+            start = m_84.end()
+            # 다음 헤딩 까지
+            next_header = re.search(r"^#{1,6}\s+\S", body[start:], re.MULTILINE)
+            end = start + (next_header.start() if next_header else len(body) - start)
+            section_body = body[start:end].strip()
+            if not NA_85_SUBSTANTIVE_RE.search(section_body):
+                fails.append(
+                    f"{md_path}: §8.5.4 N/A reason 가 substantive 30자 minimum 미충족 — vague reason 차단 (CFP-47 / ADR-015 결정 5)"
+                )
+
+    return fails
+
+
 warns = []
 section_7_4_warns = []
 conditional_warns = []
+section_8_5_warns = []
 for prefix, patterns in REQUIRED_SECTIONS.items():
     path = Path(prefix)
     if not path.exists():
@@ -200,6 +280,9 @@ for prefix, patterns in REQUIRED_SECTIONS.items():
                 )
             cond_fails = check_conditional_na(md, text)
             conditional_warns.extend(cond_fails)
+            # CFP-47 — §8.5 applicability lint (change-plan 만)
+            s85_fails = check_section_8_5(md, text)
+            section_8_5_warns.extend(s85_fails)
 
 # CFP-46 — change-plan 외 path (예: stories) 도 CONDITIONAL N/A 사유 강제
 # (e.g. story §11 Idempotency CONDITIONAL — 향후 story schema 적용 시 활용)
@@ -218,9 +301,9 @@ for extra_prefix in ["docs/stories"]:
         cond_fails = check_conditional_na(md, text)
         conditional_warns.extend(cond_fails)
 
-total_fails = len(warns) + len(section_7_4_warns) + len(conditional_warns)
+total_fails = len(warns) + len(section_7_4_warns) + len(conditional_warns) + len(section_8_5_warns)
 if total_fails:
-    print(f"::error::CFP-46 doc-section-schema (STRICT): {total_fails} 건")
+    print(f"::error::CFP-46/CFP-47 doc-section-schema (STRICT): {total_fails} 건")
     if warns:
         print(f"  [필수 섹션 누락] {len(warns)} 건")
         for w in warns:
@@ -233,11 +316,15 @@ if total_fails:
         print(f"  [CONDITIONAL N/A 사유 부재] {len(conditional_warns)} 건")
         for w in conditional_warns:
             print(f"  - {w}")
-    print("strict 모드 — schema 위반 시 PR 차단. 신규 작성은 templates/<doc-type>.md schema + ADR-014 §7.4 5 항목 + CONDITIONAL N/A 사유 (10자 minimum) 준수 필수.")
+    if section_8_5_warns:
+        print(f"  [CFP-47 §8.5 applicability] {len(section_8_5_warns)} 건")
+        for w in section_8_5_warns:
+            print(f"  - {w}")
+    print("strict 모드 — schema 위반 시 PR 차단. 신규 작성은 templates/<doc-type>.md schema + ADR-014 §7.4 5 항목 + CONDITIONAL N/A 사유 (10자 minimum) + CFP-47 §8.5 applicability (30자 minimum) 준수 필수.")
     sys.exit(1)
 
-print("✓ CFP-46 doc-section-schema: 5 owner path schema + §7.4 5 항목 + CONDITIONAL N/A 사유 모두 충족")
+print("✓ CFP-46/CFP-47 doc-section-schema: 5 owner path schema + §7.4 5 항목 + CONDITIONAL N/A 사유 + §8.5 applicability 모두 충족")
 PY
 
 echo ""
-echo "(check-doc-section-schema: strict 모드 (CFP-28부터). CFP-46 — §7.4 schema + CONDITIONAL N/A regex 추가. warning 발견 시 exit 1)"
+echo "(check-doc-section-schema: strict 모드 (CFP-28부터). CFP-46 — §7.4 schema + CONDITIONAL N/A regex 추가. CFP-47 — §8.5 applicability lint 추가 (30자 minimum). warning 발견 시 exit 1)"
