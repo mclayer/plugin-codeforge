@@ -5,6 +5,7 @@ on:
     branches: [main]
   push:
     branches: [main]
+  workflow_dispatch: {}
 
 jobs:
   inter-plugin-contracts:
@@ -19,6 +20,21 @@ jobs:
       - run: pip install pyyaml
       - name: Run check-inter-plugin-contracts.sh
         run: bash scripts/check-inter-plugin-contracts.sh
+
+  inter-plugin-drift:
+    name: inter-plugin-drift (CFP-E)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pyyaml
+      - name: Run check-inter-plugin-drift.sh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bash scripts/check-inter-plugin-drift.sh
 
   comment-prefix-registry:
     name: comment-prefix-registry self-validation (CFP-33)
