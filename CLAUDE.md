@@ -104,36 +104,15 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 ### 플랫폼 제약
 하위 에이전트는 Agent 툴 사용 불가 — 재귀 스폰 금지. 모든 스폰은 최상위 Claude가 직접. 서브에이전트 간 직접 통신 불가 (Orchestrator 경유).
 
-### 컨텍스트 전달 (docs file SSOT + Context Packet)
+### 컨텍스트 전달
 
-각 Story마다 **`docs/stories/<KEY>.md`** 파일이 컨텍스트 단일 출처(SSOT). 에이전트 프롬프트에는 기본적으로 **docs file 경로만 주입**하고, 필요한 내용은 에이전트가 직접 `Read(docs/stories/<KEY>.md)`로 fetch.
+각 Story 마다 `docs/stories/<KEY>.md` 가 SSOT. 에이전트 프롬프트는 docs file 경로 주입, 본문은 에이전트 자체 fetch. Context Packet · §0 Live Progress · Project Config Packet 상세는 [playbook §12 + §14](docs/orchestrator-playbook.md) SSOT.
 
-**Context Packet 주입** (설계·구현·리뷰 레인): Orchestrator가 섹션 캐시를 유지해 에이전트 프롬프트에 packet 형태로 필요 섹션을 직접 삽입 → 반복 fetch 회피. 상세는 playbook §12.
-
-**§0 Live Progress** (ephemeral derivative cache): `.claude-work/progress/<KEY>.md` (Orchestrator owner, gitignored). M3 hierarchical + S3 completion snippet 형식. 정상 흐름은 Orchestrator가 cache patch, 재개·손상 시 state source(Story §10 + phase label + §-fill)에서 재 derive. 상세는 playbook §14.
-
-**Project Config Packet** (RequirementsPL·DomainAgent·PMO·ArchitectPLAgent — 각 lane plugin): `.claude/_overlay/project.yaml` slice도 packet으로 주입 → GitHub 호출 에이전트의 반복 `Read` 회피. 상세는 playbook §12.5.
-
-**Story file 위치**: `docs/stories/<KEY>.md` (KEY = `<github.story_key_prefix>-N`, 예: `PLG-7`). story-init.yml Action이 자동 생성 (요구사항 lane 진입 시).
-
-**생성·갱신 책임**: 각 lane plugin self-write — owner section 별로 분산. 자세한 분담은 § "Lane plugin self-write boundary" 절 참조.
-
-**섹션 갱신 path**: 각 lane plugin 이 자기 owned section 을 직접 `Edit(docs/stories/**)`. multi-writer 영역 (§9 review verdict — Phase 별 다른 Review PL self-write) 은 lane 별 phase 진행 순서에 따라 자연 직렬화.
-
-섹션 규격·단계별 책임 상세는 각 lane plugin 의 self-write 표 SSOT (codeforge-{review,pmo,requirements,test,develop,design} CLAUDE.md) 참조.
+각 lane plugin 이 자기 owned section 직접 self-write — § Lane plugin self-write boundary 표 SSOT.
 
 ### Never-skippable 에이전트
 
-- **요구사항**: **RequirementsPLAgent**, **DomainAgent**, **RequirementsAnalystAgent**, **ResearcherAgent** (세 서브 에이전트는 PL 산하 병렬 관점 제공자로 전원 필수)
-- **설계**: **ArchitectPLAgent**, **ArchitectAgent**, **CodebaseMapperAgent**, **RefactorAgent**, **SecurityArchitectAgent**, **TestContractArchitectAgent**, **DataMigrationArchitectAgent**
-- **설계 리뷰** (codeforge-review plugin): **DesignReviewPLAgent**, **ClaudeReviewAgent**, **CodexReviewAgent** (워커는 lane=design packet 수령)
-- **구현**: **DeveloperPLAgent**, **QADeveloperAgent**
-- **구현 리뷰** (codeforge-review plugin): **CodeReviewPLAgent**, **ClaudeReviewAgent**, **CodexReviewAgent** (워커는 lane=code packet 수령)
-- **구현 테스트**: **TestAgent**
-- **보안 테스트** (codeforge-review plugin): **SecurityTestPLAgent**, **ClaudeReviewAgent**, **CodexReviewAgent** (워커는 lane=security packet 수령)
-조건부 생략: `role: dev` 에이전트만 해당 (Change Plan이 해당 에이전트 소유 경로 미변경 시). 요구사항·설계 레인의 서브 에이전트는 전원 non-skippable — "조사할 것 없음" 판단도 독립 관점의 하나이므로 각자 스폰되어 명시적으로 결과를 반환해야 한다 ("null 결과"도 유효한 관점).
-
-**PMOAgent**는 Never-skippable이 아니며 Cross-cutting 트리거 기반 스폰: Epic 창설 1회 / Story 완료 회고 1회 / 사용자 요청 시. 단일 Story 레인 게이트에 개입 없음.
+각 lane plugin 의 PL agent + non-skippable sub-agent 는 해당 plugin CLAUDE.md SSOT. wrapper Orchestrator 는 lane 진입 시 PL agent 1개만 spawn — PL 이 sub-agent fan-out 책임. `role: dev` 만 조건부 생략 (Change Plan 경로 매핑 따라).
 
 ### 스폰 시퀀스
 
