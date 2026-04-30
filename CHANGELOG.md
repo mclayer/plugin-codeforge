@@ -5,6 +5,39 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [5.1.0] - 2026-04-30
+
+### CFP-46 — Operational Risk Architect 6th deputy + §7.4 운영리스크 + §11.6 idempotency CONDITIONAL (ADR-014 신설)
+
+ζ arc (CFP-31~40) 후 첫 minor bump. 암호화폐 트레이딩 시스템 대비 production-readiness invariant 통합 — 외부 의존 disconnect / clock drift / rate limit / env isolation / DR / idempotency.
+
+### Added
+
+- `docs/adr/ADR-014-operational-risk-ssot-distribution.md` — carrier ADR (OperationalRiskArchitectAgent SSOT 분배 + §7.4 5 sub-item + §11.6 CONDITIONAL + design-output v1→v2 BREAKING 결정 5종)
+- `docs/inter-plugin-contracts/design-output-v2.md` — sibling. 6 deputy schema (op_risk_arch + idempotency_applicable) + sections_authored §7.4/§7.5/§7.6/§7.7 + §11.6/§11.7 mirror
+- 6 deputy mandate 매트릭스 — wrapper CLAUDE.md 4번째 SSOT 예외 (ADR-012 §3 amendment)
+- 책임 매트릭스 §7.4 운영리스크 8 행 + §11 Idempotency CONDITIONAL 행 추가
+- 원인 판정 decision table §7.4 5 행 + §11 Idempotency 1 행 추가
+- `scripts/check-doc-section-schema.sh` — §7.4 schema (5 sub-item) + CONDITIONAL N/A justification 10-char minimum 검증
+- `scripts/test-check-doc-section-schema.sh` + 4 fixture (passing / failing-no-na / failing-empty-na / failing-short-na)
+
+### Changed
+
+- `.claude-plugin/plugin.json`: 5.0.1 → 5.1.0 + description (CFP-46 / ADR-014 / 6 deputy / §7.4 / §11.6 반영)
+- `docs/adr/ADR-012-wrapper-claudemd-ssot-boundary.md` §3: "3 named SSOT exceptions" → "4 named SSOT exceptions" (carrier ADR pattern)
+- `docs/orchestrator-playbook.md`: 13 location 5 deputy → 6 deputy + token budget 200k→225k / 320k→345k 재조정 (CFP-21 precedent)
+- `docs/inter-plugin-contracts/design-output-v2.md` §4 6 deputy 통합 표 DataMigrationArchitectAgent consult 행 §11.6 OpRiskArch consult 추가 (CFP-46 cleanup C4)
+
+### BREAKING (lane plugin internal — wrapper consumer 영향 없음)
+
+- `design_output` contract v1 → v2 BREAKING (ADR-008 룰): deputies_results.op_risk_arch 신규 + sections_authored §7 sub-numbering shift (§7.4 운영리스크 신규, 기존 §7.4 민감→§7.5 / §7.5 위협매핑→§7.6 / §7.6 N/A→§7.7)
+
+### Migration
+
+- consumer 무영향 — wrapper plugin level 은 minor bump
+- lane plugin (codeforge-design) 측 0.1.0 → 0.2.0 BREAKING (consumer 영향 없음 — overlay 기반 사용자에게는 transparent)
+- marketplace.json sync (ζ arc + CFP-46 누적 drift) 는 별도 CFP-49 sweep 예정
+
 ## [Unreleased] - CFP-E (2026-04-30)
 
 ### CFP-E — Inter-plugin Contract Drift Detection (ADR-011 신설)
