@@ -305,29 +305,20 @@ wrapper-owned. 본 lint scope 밖 — `check-doc-frontmatter.sh` + `check-doc-se
 
 ## ADR (`docs/adr/` SSOT)
 
-- 위치: `docs/adr/ADR-NNN-<slug>.md` (flat). frontmatter `category:` 필드로 분류 (Team & Process / Architecture / Data & Storage / Infrastructure / UX 등 — consumer overlay가 도메인별 추가 카테고리 정의)
-- 목록: `Glob(docs/adr/ADR-*.md)` + `Grep`으로 frontmatter category·status 필터
-- 상세: `Read(docs/adr/ADR-NNN-<slug>.md)`
-- 세션 시작 시 ADR 목록 조회, 결정 사항 번복 금지
-- 설계 결정마다 신규 ADR 생성 (번호 = 기존 최대 + 1)
-- CODEOWNERS가 `docs/adr/**`을 architect team에 자동 review 강제 → ADR 변경은 Phase 1 PR로 architect 결재 필수
+- **위치**: `docs/adr/ADR-NNN-<slug>.md` (flat). frontmatter `category:` 필드로 분류
+- **목록**: `Glob(docs/adr/ADR-*.md)` + `Grep` frontmatter category·status 필터
+- **상세**: `Read(docs/adr/ADR-NNN-<slug>.md)`
+- **CODEOWNERS** 가 `docs/adr/**` 을 architect team review 강제 → ADR 변경은 Phase 1 PR 로 architect 결재 필수
 
 ### 생성 기준
-라이브러리·프레임워크 선택 / 아키텍처 패턴 / 데이터 저장·처리 / 인프라·배포 / 도메인 핵심 개념 (consumer overlay가 도메인 특화 기준 추가)
 
-### DesignReview ADR 정합성 체크 (필수)
+라이브러리·프레임워크 선택 / 아키텍처 패턴 / 데이터 저장·처리 / 인프라·배포 / 도메인 핵심 개념 (consumer overlay 가 도메인 특화 기준 추가)
 
-DesignReviewPL 프롬프트에 명시:
-- Story file §3에서 관련 ADR 목록 fetch (`Glob` + `Read`)
-- Change Plan 결정이 ADR 결정을 **위반**하는가 explicit 검토
-- Change Plan §7 보안 설계 결정이 ADR 결정을 **위반**하는가 explicit 검토
-- 위반 발견 시 **P0 severity 고정**
-- 설계 의도가 ADR 변경이면 "신규 ADR 필요" 발견사항으로 기록 (신규 ADR 없이 ADR 변경 금지)
+DesignReview 의 ADR 정합성 체크 (Change Plan §3·§7 ↔ ADR 위반 검출) 는 [codeforge-review CLAUDE.md](https://github.com/mclayer/plugin-codeforge-review/blob/main/CLAUDE.md) SSOT.
 
 ### 페이지 템플릿
-[`templates/adr.md`](https://github.com/mclayer/plugin-codeforge-design/blob/main/templates/adr.md) 참조. frontmatter (adr_number / title / status / category / date / related_files) + 본문 섹션 (`## 상태 / ## 컨텍스트 / ## 결정 / ## 결과 / ## 다이어그램 / ## 관련 파일`).
 
-**CFP-27부터** `scripts/check-doc-frontmatter.sh` + `scripts/check-doc-section-schema.sh` 가 본 schema를 검증 (warning 모드 — CFP-28 strict 전환).
+[`templates/adr.md`](https://github.com/mclayer/plugin-codeforge-design/blob/main/templates/adr.md) 참조 (CFP-40 으로 codeforge-design 추출 후 SSOT 위치).
 
 ## 버그 기록 (GitHub Issues)
 - Issue Forms: `.github/ISSUE_TEMPLATE/bug.yml`. Severity dropdown (P0/P1/P2)
