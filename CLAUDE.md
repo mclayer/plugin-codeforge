@@ -295,18 +295,6 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 상세는 [`agents/PMOAgent.md`](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/agents/PMOAgent.md).
 
-### Write 권한 (path-scoped — 각 agent md frontmatter가 SSOT)
-
-**Core 기본 경로** (consumer overlay가 확장):
-- **Write 권한 있음**:
-  - `role: dev` 에이전트별 개별 scoping (core: DeveloperAgent `src/**` 기본 + `tests/**`·`docs/**` deny, DataEng 프로젝트별 데이터 계층 경로, InfraEngineer `deploy/**`·`config/**`·`scripts/**`; preset·overlay가 경로 재정의 — preset 예: `presets/webapp/agents/{Backend,Frontend}DeveloperAgent`)
-  - QADev `role: qa` (`tests/**` allow + `src/**` deny — production 코드 직접 수정 금지)
-  - **ArchitectAgent**: `docs/change-plans/**` + `docs/adr/**` (CFP-26 Phase 0a — chief author direct write)
-  - ~~DomainAgent~~ → codeforge-requirements plugin 으로 이전 (CFP-37). Domain KB owner write 는 그쪽 plugin 의 DomainAgent
-  - ~~PMOAgent~~ → codeforge-pmo plugin 으로 이전 (CFP-36). retro owner write 는 그쪽 plugin 의 PMOAgent
-- **Write queue 의뢰 권한** (`.claude-work/doc-queue/**`): **wrapper agent 0개 (ζ arc 완료) — 본 listing 비어있음**. 모든 agent 가 별도 plugin 으로 추출됨: codeforge-review (5 agent), codeforge-pmo (PMOAgent), codeforge-requirements (4 agent), codeforge-test (TestAgent), codeforge-develop (5 agent + presets), codeforge-design (7 agent + 2 templates). 각 plugin 의 frontmatter 가 SSOT
-- **외부 도구 wrapper**: SecurityTestPL(`Bash(gh api repos/*)` 1차 layer alerts fetch — codeforge-review plugin). **Review 5 agent + PMOAgent + 4 requirements agent**의 외부 도구 wrapper 는 각 plugin 으로 이전 — 본 listing 에서 제외. gh api 호출은 PMOAgent (Milestone), DomainAgent (Discussions), 각 lane plugin (GraphQL fallback) 이 직접 보유
-
 ### Lane plugin self-write boundary
 
 `docs/**` + GitHub Issue/PR/comment + label 영역의 write 책임은 lane plugin 별로 분산. wrapper repo 자체에는 agent 0개 — Orchestrator 가 lane plugin 을 spawn 하면 lane plugin 이 자기 owner section 을 직접 write.
