@@ -30,7 +30,7 @@ Lane internal · per-lane spawn detail · severity rule · GitHub workflow subse
 - `superpowers@claude-plugins-official` — agent md skill 의존
 - `github@claude-plugins-official` — GitHub MCP 도구 노출
 
-**필수 CLI (3종)**: `codex`, `gh`, `gemini` (CFP-57 / ADR-018 — `GEMINI_API_KEY` 환경변수 paid Pro tier 필수)
+**필수 CLI (3종)**: `codex`, `gh`, `gemini` (CFP-57 / ADR-018 + Amendment 1 CFP-58 — Gemini Plus subscription OAuth, `gemini auth status` Plus 확인. `GEMINI_API_KEY` 환경변수 prerequisite 아님)
 
 **권장 플러그인 (4종, 미설치 시 권유만)**: `pyright-lsp`, `context7`, `commit-commands`, `pr-review-toolkit`
 
@@ -105,6 +105,8 @@ Substantive choice trigger 발화 시 Gemini = 최종 결정자. Claude+Codex = 
 **Logging**: Story §10 FIX Ledger (trigger b 시 `decider: gemini` 컬럼) + Story §12 Gemini Decision Log (per-Story append-only) + `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` (full v1 schema).
 
 **Phase 1 = doc-only** (CFP-57). agent / skill / 코드 추가 없음. Phase 2 subagent ROI 평가 = 후속 CFP. 정책 SSOT: [ADR-018](docs/adr/ADR-018-gemini-decider-auto-proceed.md). Schema SSOT: [decision-packet-v1](docs/inter-plugin-contracts/decision-packet-v1.md).
+
+**Amendment 1 (CFP-58 — 2026-05-02)**: Auth = Gemini Plus subscription OAuth (`GEMINI_API_KEY` 제거). Quota exhausted fallback = Claude Sonnet (`claude-sonnet-4-6`) decider + 즉시 사용자 알림 + auto-proceed (no-stop). decision-packet v1.0 → v1.1 minor bump (`attempts[].outcome += quota_sonnet_fallback`, `authority_transfer.final_decider += claude_sonnet`, Story §12 `audit_result += sonnet-fallback`). 상세 = ADR-018 결정 5 (갱신) + 결정 9 (신설).
 
 ### FIX 루프
 
