@@ -10,11 +10,14 @@ related_files:
   - mclayer/codeforge-internal-docs (NEW external repo — dogfood artifact monorepo)
 related_stories:
   - CFP-45
+  - CFP-56
 ---
 
 ## 상태
 
 Adopted (2026-04-30) — CFP-45 PR-I 머지 시점.
+
+**Amendment 1 (2026-05-01) — CFP-56**: Brainstorming/writing-plans skill override path enforcement 정책을 ADR-017로 추가. `docs/superpowers/specs/**`와 `docs/superpowers/plans/**`가 plugin repo PR에 나타나면 CI가 fail-closed 하며, internal-docs 경로가 authoritative artifact lane이다. 검사 로직은 `scripts/check-dogfood-artifact-paths.sh`, CI는 `.github/workflows/dogfood-artifact-paths.yml` (template: `templates/github-workflows/dogfood-artifact-paths.yml`).
 
 ## 컨텍스트
 
@@ -109,3 +112,7 @@ mclayer/plugin-codeforge (wrapper, post-CFP-45)
 - [ADR-009 Wrapper-only Decomposition](ADR-009-wrapper-only-decomposition.md) — ζ arc parent
 - [ADR-012 Wrapper CLAUDE.md SSOT Boundary](ADR-012-wrapper-claudemd-ssot-boundary.md) — direct predecessor
 - [mclayer/codeforge-internal-docs](https://github.com/mclayer/codeforge-internal-docs) — NEW dogfood monorepo
+- [ADR-017 Skill override path enforcement](ADR-017-skill-override-path-enforcement.md) — Amendment 1 carrier
+- `scripts/check-dogfood-artifact-paths.sh` — path scan lint script
+- `templates/github-workflows/dogfood-artifact-paths.yml` — CI workflow template
+- `.github/workflows/dogfood-artifact-paths.yml` — active workflow (wrapper repo)
