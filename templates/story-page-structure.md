@@ -139,7 +139,7 @@ Story 내 모든 substantive decision 의 Gemini final pick 기록. per-Story ap
 
 - `packet_id`: `<KEY>-<3-digit seq>` (decision-packet-v1).
 - `trigger` enum: option-formulation / fix-root-cause / codex-ambiguity / brainstorming-constraint.
-- `audit_result`: direct (override 없음) / sanity-PASS / sanity-FAIL / authority-transfer / gemini-suspended / user-escalation.
+- `audit_result`: direct (override 없음) / sanity-PASS / sanity-FAIL / authority-transfer / gemini-suspended / user-escalation / sonnet-fallback (CFP-58 / ADR-018 Amendment 1 — Gemini quota exhausted, Sonnet decider).
 - Detailed packet artifact = `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` (full v1 schema).
 - 첫 5 packet scheduled self-audit, 그 후 failure-driven only.
 

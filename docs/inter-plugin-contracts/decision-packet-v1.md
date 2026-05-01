@@ -1,14 +1,15 @@
 ---
 kind: registry
 registry: decision-packet
-version: "1.0"
+version: "1.1"
 status: Active
 authors:
   - Claude (CFP-57 author — spec § 2.6 codification)
   - Codex (gpt-5.5 high) — Round 1+2 brainstorming + spec audit Round 1+2
+# v1.1 (CFP-58 ADR-018 Amendment 1) — quota_sonnet_fallback + claude_sonnet enum extensions
 related_adrs:
-  - ADR-018 (carrier)
-  - ADR-008 (parent — versioning rule)
+  - ADR-018 (carrier — CFP-57 + Amendment 1 CFP-58)
+  - ADR-008 (parent — versioning rule, v1.1 minor bump)
   - ADR-001 (sibling — review verdict 는 본 registry 적용 대상 아님)
 related_files:
   - CLAUDE.md (오케스트레이션 규칙 — Gemini Decider subsection)
@@ -58,10 +59,10 @@ attempts:                         # retry / resume 시 append
     outcome: success | parse_failure | timeout | quota_exhausted | malformed
               | invalid_packet | unauthorized | repeated_identical | dual_failure
               | schema_terminal_failure | parse_terminal_failure | user_override
-              | gemini_suspended
+              | gemini_suspended | quota_sonnet_fallback
 authority_transfer:               # quota/auth 실패 시
   occurred: bool
-  final_decider: gemini | codex_legacy | user
+  final_decider: gemini | codex_legacy | claude_sonnet | user
 fallback_unavailable: bool        # Gemini + Codex 동시 차단 시
 ```
 
@@ -95,20 +96,22 @@ fallback_unavailable: bool        # Gemini + Codex 동시 차단 시
 ### 3.5 attempts
 
 - 매 retry / resume / fallback 시 append.
-- `outcome` enum 13 값:
+- `outcome` enum 14 값:
   - `success` — Gemini 정상 응답 + schema 정합
   - `parse_failure` — 응답 parse 실패 (1 회 retry 대상)
   - `timeout` / `quota_exhausted` / `unauthorized` / `malformed` / `invalid_packet` — fallback matrix row 트리거
   - `repeated_identical` — ≥2 회 동일 pick 반복 실패
-  - `dual_failure` — Gemini + Codex 동시 차단
+  - `dual_failure` — Gemini + Codex 동시 차단 (또는 Gemini + Sonnet 동시 차단, Amendment 1)
   - `schema_terminal_failure` / `parse_terminal_failure` — retry 후에도 실패 → user escalation
   - `user_override` — 사용자 mid-flow 직접 결정
   - `gemini_suspended` — suspend 중 발생, Claude·Codex 합의 임시 proceed
+  - `quota_sonnet_fallback` (v1.1 — CFP-58 Amendment 1) — Gemini quota exhausted 후 Claude Sonnet (`claude-sonnet-4-6`) fallback decider 호출 성공
 
 ### 3.6 authority_transfer
 
 - Gemini quota/auth 실패 시 `occurred: true` + `final_decider` 변경.
-- `codex_legacy` = quota exhausted 시 Codex audit gate 임시 권한.
+- `codex_legacy` = (deprecated, v1.0 backward-compatibility 보존 — Amendment 1 이후 실제 invocation 없음).
+- `claude_sonnet` (v1.1 — CFP-58 Amendment 1) = quota exhausted 시 Claude Sonnet (`claude-sonnet-4-6`) 가 임시 final decider.
 - `user` = unauthorized / repeated / dual_failure 시 사용자 escalation.
 
 ### 3.7 fallback_unavailable
@@ -134,3 +137,17 @@ fallback_unavailable: bool        # Gemini + Codex 동시 차단 시
 ### 4.3 검증
 
 본 registry 는 lint scope 밖 (kind:registry). 운영 검증 = CFP-57 Phase 1 acceptance target (N≥30, zero whitelist-out, 100% schema 준수).
+
+## 6. Versioning history
+
+### v1.0 (2026-05-01 — CFP-57 ADR-018 carrier)
+
+초기 schema. attempts.outcome 13 enum + authority_transfer.final_decider 3 enum (gemini / codex_legacy / user).
+
+### v1.1 (2026-05-02 — CFP-58 ADR-018 Amendment 1)
+
+backward-compatible enum 확장 (ADR-008 SemVer minor bump):
+- `attempts[].outcome` + `quota_sonnet_fallback`
+- `authority_transfer.final_decider` + `claude_sonnet`
+
+v1.0 packets 그대로 valid (enum 확장 = forward-compatible). v1.0 archive 안 함, v1.1 active.
