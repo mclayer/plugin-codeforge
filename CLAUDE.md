@@ -30,7 +30,7 @@ Lane internal · per-lane spawn detail · severity rule · GitHub workflow subse
 - `superpowers@claude-plugins-official` — agent md skill 의존
 - `github@claude-plugins-official` — GitHub MCP 도구 노출
 
-**필수 CLI (2종)**: `codex`, `gh`
+**필수 CLI (3종)**: `codex`, `gh`, `gemini` (CFP-57 / ADR-018 — `GEMINI_API_KEY` 환경변수 paid Pro tier 필수)
 
 **권장 플러그인 (4종, 미설치 시 권유만)**: `pyright-lsp`, `context7`, `commit-commands`, `pr-review-toolkit`
 
@@ -92,11 +92,27 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 - Never-skippable: 각 lane 진입 시 Orchestrator 가 해당 lane plugin PL agent 1개만 spawn — sub-agent fan-out (수·역할·non-skippable 매트릭스) 상세는 각 lane plugin CLAUDE.md SSOT
 - Track 병렬 (R7 설계리뷰 PASS 시): Track A (DesignReviewPL merge gate) ∥ Track B (DeveloperPL Phase 2 PR 준비) — 상세 [playbook §3.1]
 
+### Gemini Decider (CFP-57 / ADR-018)
+
+Substantive choice trigger 발화 시 Gemini = 최종 결정자. Claude+Codex = 동급 대안 생성자 + 교차 reviewer.
+
+**자동 trigger** (4 종): (a) substantive 다중 선택지 / (b) FIX root-cause 불일치 / (c) Codex ambiguity / (d-constraint) 제약 surfacing Q.
+
+**User escalation whitelist** (5 종): (d-intent) 사용자 의도 추정 / (e) lane FIX max 3 / 운영 prerequisite 실패 / destructive action / denylist (보안 sensitive). 정의 SSOT = ADR-018 §결정 2.
+
+**Decision flow**: Claude options → Codex options (codex-rescue, memory trigger 1 Round 1) → cross-review → `decision-packet-v1` 작성 → `gemini -p -m gemini-2.5-pro-001` call → pick handling (direct vs Codex sanity audit override) → log.
+
+**Logging**: Story §10 FIX Ledger (trigger b 시 `decider: gemini` 컬럼) + Story §12 Gemini Decision Log (per-Story append-only) + `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` (full v1 schema).
+
+**Phase 1 = doc-only** (CFP-57). agent / skill / 코드 추가 없음. Phase 2 subagent ROI 평가 = 후속 CFP. 정책 SSOT: [ADR-018](docs/adr/ADR-018-gemini-decider-auto-proceed.md). Schema SSOT: [decision-packet-v1](docs/inter-plugin-contracts/decision-packet-v1.md).
+
 ### FIX 루프
 
 **판정 SSOT** = codeforge-review [`templates/review-pl-base.md`](https://github.com/mclayer/plugin-codeforge-review/blob/main/templates/review-pl-base.md) §3 (severity 종합·dedup·판정). Contract surface = [`review-verdict-v2`](docs/inter-plugin-contracts/review-verdict-v2.md) §3.2 `status` (PASS / FIX / FIX_DISCRETIONARY).
 
 **트리거**: 설계 리뷰 FIX → ArchitectPLAgent 회귀. 구현 리뷰·구현 테스트·보안 테스트 FAIL → DeveloperPL 1차 진단 + ArchitectPLAgent 최종 판정 (parallel diagnosis).
+
+**원인 판정 최종 결정자** (CFP-57 / ADR-018): Claude vs Codex 1차 판정 불일치 시 — Gemini (`gemini-2.5-pro-001`) 가 decision-packet-v1 받아 final pick. Story §10 row 의 `원인 판정` 컬럼 = Gemini 결정 반영. Gemini quota / auth 실패 시 fallback (Codex audit gate / user). 상세 = ADR-018.
 
 **카운터 SSOT** = `docs/stories/<KEY>.md` §10 "FIX Ledger" — Orchestrator 단독 관리 ([fix-event-v1](docs/inter-plugin-contracts/fix-event-v1.md) contract, CFP-32 monopoly). GitHub Issue 라벨은 보조 (fix-ledger-sync.yml Action mirror).
 
