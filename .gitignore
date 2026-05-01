@@ -27,6 +27,9 @@ node_modules/
 # Claude Code — local agent worktrees
 .claude/worktrees/
 
+# Claude Code — local project MCP config (per-developer, may contain token env refs)
+.mcp.json
+
 # CFP-45: dogfood artifacts moved to mclayer/codeforge-internal-docs
 docs/superpowers/
 docs/stories/
