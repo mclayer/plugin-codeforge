@@ -115,17 +115,22 @@ fallback_unavailable: bool        # Gemini + Codex 동시 차단 시
 
 - Gemini + Codex 동시 차단 시 true. 사용자 escalation + packet draft 첨부.
 
-## 4. 영향 / 라이프사이클
+## 4. 변경 규칙
+
+### 4.1 라이프사이클
 
 - 생성: Claude 본세션이 trigger 발화 시 schema 따라 수동 작성 (Phase 1 doc-only).
 - 저장: `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` (full schema), Story §12 (요약 1 row).
 - Retention: Story closure 까지. closure 후 archive 정책 후속 (CFP-57 §4.1 Open Item).
 - Audit: 첫 5 packet scheduled self-audit, 그 후 failure-driven.
 
-## 5. 검증
+### 4.2 Versioning (ADR-008 정합)
+
+- Breaking change 시 v2 발급 + 본 v1 status=Archived.
+- Phase 1 운영 후 schema deviation 다수 발견 시 v2 검토 (CFP-57 §4.1 Open Item).
+- Schema 추가 (필드 신설) = minor (v1 → v1.1, MANIFEST.yaml 변경 없음, kind:registry 라 lint scope 밖).
+- 필드 삭제 / enum 축소 / 의미 재정의 = major (v2 신규 file).
+
+### 4.3 검증
 
 본 registry 는 lint scope 밖 (kind:registry). 운영 검증 = CFP-57 Phase 1 acceptance target (N≥30, zero whitelist-out, 100% schema 준수).
-
-## 6. Versioning
-
-ADR-008 정합. Breaking change 시 v2 발급 + 본 v1 status=Archived. Phase 1 운영 후 schema deviation 다수 발견 시 v2 검토 (CFP-57 §4.1 Open Item).

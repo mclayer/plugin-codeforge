@@ -7,6 +7,7 @@ date: 2026-05-01
 related_files:
   - CLAUDE.md
   - docs/inter-plugin-contracts/decision-packet-v1.md
+  - docs/inter-plugin-contracts/MANIFEST.yaml
   - templates/story-page-structure.md
   - docs/adr/ADR-001-review-agent-unification.md
   - docs/adr/ADR-008-inter-plugin-contract-versioning.md
@@ -124,9 +125,21 @@ User (escalation whitelist): (d-intent) intent-clarifying / (e) lane FIX max 3 /
 후속:
 - 30+ decision 후 §4.1 Open Items 결정 (cost cap / Phase 2 ROI / escalation whitelist 정량 / packet schema v2 필요성).
 
-## ADR 영향
+## ADR 정합성
 
 - ADR-001 file content 완전 무수정. scope clarification 본 ADR-018 §검토 의 대안 만 거주.
 - ADR-008 — `decision-packet-v1` 신규 registry kind. MANIFEST.yaml 의 contracts list 변경 없음 (registry 는 lint scope 밖).
 - ADR-009 — Phase 1 영향 없음 (agent count = 0 유지). Phase 2 시 별도 ADR (ADR-019+).
 - ADR-013 + ADR-017 — 본 CFP-57 spec/plan 위치 = `<internal-docs>/wrapper/{specs,plans}/` 정합.
+
+## 관련 파일
+
+- `CLAUDE.md`
+- `docs/inter-plugin-contracts/decision-packet-v1.md`
+- `docs/inter-plugin-contracts/MANIFEST.yaml`
+- `templates/story-page-structure.md`
+- `docs/adr/ADR-001-review-agent-unification.md`
+- `docs/adr/ADR-008-inter-plugin-contract-versioning.md`
+- `docs/adr/ADR-009-wrapper-only-decomposition.md`
+- `docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md`
+- `docs/adr/ADR-017-skill-override-path-enforcement.md`
