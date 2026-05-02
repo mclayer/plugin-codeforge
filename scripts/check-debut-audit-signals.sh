@@ -34,11 +34,12 @@ r1_check() {
   fi
   # Story §10 FIX Ledger 의 트리거 컬럼 (5번째 |) 추출 + 빈도
   local count
-  count=$(grep -E '^\| [0-9]+\s+\|' "$STORY_FILE" 2>/dev/null \
+  count=$( { grep -E '^\| [0-9]+\s+\|' "$STORY_FILE" 2>/dev/null \
     | awk -F'|' '{print $5}' \
     | sed 's/^ *//; s/ *$//' \
-    | sort | uniq -c | sort -rn | head -1 | awk '{print $1}')
+    | sort | uniq -c | sort -rn | head -1 | awk '{print $1}'; } || true)
   count="${count:-0}"
+  [[ -z "$count" ]] && count=0
   if [[ "$count" -ge 5 ]]; then
     echo "R1: FAIL ($count 회 반복 — same trigger ≥5)"
     FAIL_COUNT=$((FAIL_COUNT + 1))
@@ -57,8 +58,8 @@ r2_check() {
   fi
   # author HTML comment 추출 — unique authors count
   local authors_count
-  authors_count=$(grep -oE '<!-- author: [^ ]+ -->' "$CHANGE_PLAN_FILE" 2>/dev/null \
-    | sort -u | wc -l | tr -d ' ')
+  authors_count=$( { grep -oE '<!-- author: [^ ]+ -->' "$CHANGE_PLAN_FILE" 2>/dev/null \
+    | sort -u | wc -l | tr -d ' '; } || echo 0)
   authors_count="${authors_count:-0}"
   if [[ "$authors_count" -eq 0 ]]; then
     echo "R2: SKIP (no author meta found)"
@@ -71,7 +72,7 @@ r2_check() {
 
   # Same author across multiple sub-sections → "1 agent multi-section count"
   local sub_count
-  sub_count=$(grep -oE '<!-- author: [^ ]+ -->' "$CHANGE_PLAN_FILE" 2>/dev/null | wc -l | tr -d ' ')
+  sub_count=$( { grep -oE '<!-- author: [^ ]+ -->' "$CHANGE_PLAN_FILE" 2>/dev/null | wc -l | tr -d ' '; } || echo 0)
   sub_count="${sub_count:-0}"
   # If 1 author repeats across sub-sections — sub_count > authors_count
   local max_sub_per_author=$((sub_count / authors_count))
@@ -95,6 +96,9 @@ r3_check() {
   local propagate
   propagate=$(grep -cE '^- \[propagate-from-review\]' "$STORY_FILE" 2>/dev/null || echo 0)
   propagate="${propagate:-0}"
+  # Strip any whitespace/newlines (grep -c can include trailing newline on some platforms)
+  propagate=$(echo "$propagate" | tr -d '[:space:]')
+  [[ -z "$propagate" ]] && propagate=0
   if [[ "$propagate" -ge 2 ]]; then
     echo "R3: FAIL ($propagate 회 propagate)"
     FAIL_COUNT=$((FAIL_COUNT + 1))
@@ -112,26 +116,30 @@ r4_check() {
     echo "R4: SKIP (CLAUDE.md not found)"
     return 0
   fi
-  # 책임 매트릭스 표 추출 — "| 체크 항목" 시작 ~ 다음 non-table line
+  # disable set -e inside awk pipe loop (grep no-match exits 1)
+  set +e
   local leak_count=0
+  local matrix_rows
+  matrix_rows=$(awk '/^\| 체크 항목/,/^[^|]/' "$claude_md")
   while IFS= read -r line; do
-    # 표 row 검증: pipe ≥4 (header + 4 lane columns)
+    [[ -z "$line" ]] && continue
+    # header / separator 제외
+    case "$line" in
+      "| 체크 항목"*|"|---"*) continue ;;
+    esac
+    # pipe ≥4 검증
     local pipe_count
-    pipe_count=$(echo "$line" | grep -oE '\|' | wc -l | tr -d ' ')
-    if [[ "$pipe_count" -lt 4 ]]; then
-      continue
-    fi
+    pipe_count=$(echo "$line" | tr -cd '|' | wc -c | tr -d ' ')
+    [[ "$pipe_count" -lt 4 ]] && continue
     # ✅ count
     local check_count
-    check_count=$(echo "$line" | grep -oE '✅' | wc -l | tr -d ' ')
-    # row 가 header / separator 아닌지 (체크 항목 / --- 제외)
-    if echo "$line" | grep -qE '^\| 체크 항목|^\|---'; then
-      continue
-    fi
+    check_count=$(echo "$line" | grep -o '✅' | wc -l | tr -d ' ')
+    check_count="${check_count:-0}"
     if [[ "$check_count" -eq 0 || "$check_count" -ge 2 ]]; then
       leak_count=$((leak_count + 1))
     fi
-  done < <(awk '/^\| 체크 항목/,/^[^|]/' "$claude_md")
+  done <<< "$matrix_rows"
+  set -e
 
   if [[ "$leak_count" -ge 2 ]]; then
     echo "R4: FAIL ($leak_count leak rows)"
