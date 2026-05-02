@@ -222,7 +222,7 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
                     └── Story §9 / §10 append 차단. §12 row append (decider_pick=<none>, audit_result=user-escalation, attempts[].outcome=timeout|malformed)
              4. Orchestrator self-write (decision_state=decided 일 때만):
                 ├── Story §9 append (lane iteration result) — append-only, never rolled back
-                ├── GitHub Issue/PR comment ([<lane>-리뷰] / [보안-테스트] prefix) via mcp__github__add_issue_comment
+                ├── GitHub Issue/PR comment (lane-specific prefix per comment-prefix-registry-v1) via mcp__github__add_issue_comment
                 ├── PASS 시: gate:*-pass label + phase:* 다음 단계 전환 via mcp__github__issue_write
                 └── Story §12 Sonnet Decision Log row append
                 
@@ -258,6 +258,16 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
 완료:        Phase 2 PR merge (`Closes #<Story Issue>`) → Issue 자동 close → PMOAgent 가 Story §11 직접 self-write (codeforge-pmo)
              → PMOAgent (회고)
 ```
+
+**Lane-specific write targets (Step 4 GitHub comment / label / phase 매핑)**:
+
+| Lane | Comment prefix | Gate label (PASS) | Phase 다음 단계 |
+|---|---|---|---|
+| 설계-리뷰 | `[설계-리뷰]` | `gate:design-review-pass` | `phase:구현` |
+| 구현-리뷰 | `[구현-리뷰]` | (none — flow continues) | `phase:구현-테스트` |
+| 보안-테스트 | `[보안-테스트]` | `gate:security-test-pass` | (PR mergeable) |
+
+상세 SSOT: comment-prefix-registry-v1 (CFP-61 갱신 — review verdict 작성자 = Orchestrator post-Sonnet) + label-registry-v1.
 
 상세 분기 규칙은 CLAUDE.md "스폰 시퀀스" 섹션과 각 에이전트 md 참조.
 
