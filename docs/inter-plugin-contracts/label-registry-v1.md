@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: label
-version: "1.0"
+version: "1.1"
 status: Active
 authors:
   - Claude (CFP-32 codification — bootstrap-labels.sh 추출 + ζ arc owner 매핑)
@@ -184,6 +184,71 @@ labels:
     description: "Post-hotfix audit Story"
     single_active: false
     attach_owner_plugin: "Orchestrator (hotfix merge 다음 세션 자동 부착)"
+
+  # audit:debut-* (2종) — CFP-60 / ADR-021 introduced (v1.1 minor bump)
+  - name: audit:debut-eval
+    category: audit
+    color: "fbca04"
+    description: "데뷔 평가 (consumer 첫 사용 사례) 발견 사항"
+    single_active: false
+    attach_owner_plugin: "wrapper Orchestrator (CFP-60 ADR-021 detection)"
+
+  - name: audit:from-mctrader-debut
+    category: audit
+    color: "fef2c0"
+    description: "mctrader 데뷔 평가에서 발견된 codeforge gap (첫 사례)"
+    single_active: false
+    attach_owner_plugin: "wrapper Orchestrator (CFP-60 mctrader 데뷔 평가)"
+
+  # category:* (7종) — CFP-60 / debut-audit-triage-v1 introduced (v1.1 minor bump)
+  - name: category:lane-progression
+    category: audit
+    color: "0e8a16"
+    description: "#1 — 7 lane 통과 / 막힘 (owner: PMOAgent)"
+    single_active: false
+    attach_owner_plugin: "wrapper Orchestrator (debut-audit-triage)"
+
+  - name: category:agent-gap
+    category: audit
+    color: "d93f0b"
+    description: "#2 — phase 별 gap + 과부하 (owner: ArchitectPL, ADR-021 R1-R4)"
+    single_active: false
+    attach_owner_plugin: "wrapper Orchestrator (scripts/check-debut-audit-signals.sh detection)"
+
+  - name: category:decision-table
+    category: audit
+    color: "1d76db"
+    description: "#3 — 원인 판정 row 모호 / 신규 (owner: wrapper Orchestrator)"
+    single_active: false
+    attach_owner_plugin: "wrapper Orchestrator"
+
+  - name: category:deputy-mandate
+    category: audit
+    color: "5319e7"
+    description: "#4 — 6 deputy mandate 부족 (owner: ArchitectPL)"
+    single_active: false
+    attach_owner_plugin: "wrapper Orchestrator"
+
+  - name: category:workflow-invariant
+    category: audit
+    color: "bfd4f2"
+    description: "#5 — GitHub Actions 강제 누락 (owner: wrapper Orchestrator)"
+    single_active: false
+    attach_owner_plugin: "wrapper Orchestrator"
+
+  - name: category:template
+    category: audit
+    color: "c5def5"
+    description: "#6 — Story / Change Plan / ADR 필드 부족 (owner: per-template)"
+    single_active: false
+    attach_owner_plugin: "wrapper Orchestrator"
+
+  - name: category:contract-schema
+    category: audit
+    color: "bfdadc"
+    description: "#7 — inter-plugin contract schema 부족 (owner: producer lane plugin)"
+    single_active: false
+    attach_owner_plugin: "wrapper Orchestrator"
 ```
 
 ## 4. 변경 규칙
