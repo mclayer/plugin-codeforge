@@ -128,22 +128,25 @@ Orchestrator 가 append-only 관리 (CFP-32 monopoly, 행 삭제·수정 금지)
 - 관련 ADR 링크 (`docs/adr/ADR-NNN-<slug>.md`)
 - 회고 (PMOAgent 작성)
 
-### §12. Gemini Decision Log (CFP-57 / ADR-018)
+### §12. Sonnet Decision Log (CFP-59 / ADR-019)
 
-Story 내 모든 substantive decision 의 Gemini final pick 기록. per-Story append-only.
+Story 내 모든 substantive decision 의 Sonnet final pick 기록. per-Story append-only.
 
-| packet_id | trigger | options_count | gemini_pick | override? | audit_result | timestamp |
-|-----------|---------|---------------|-------------|-----------|--------------|-----------|
+| packet_id | trigger | options_count | decider_pick | override? | audit_result | timestamp |
+|-----------|---------|---------------|--------------|-----------|--------------|-----------|
 | CFP-NN-001 | brainstorming-constraint | 4 | A | no  | direct       | ISO8601 |
 | CFP-NN-002 | option-formulation       | 5 | C | yes | sanity-PASS  | ISO8601 |
 
-- `packet_id`: `<KEY>-<3-digit seq>` (decision-packet-v1).
+- `packet_id`: `<KEY>-<3-digit seq>` (decision-packet-v2).
 - `trigger` enum: option-formulation / fix-root-cause / codex-ambiguity / brainstorming-constraint.
-- `audit_result`: direct (override 없음) / sanity-PASS / sanity-FAIL / authority-transfer / gemini-suspended / user-escalation / sonnet-fallback (CFP-58 / ADR-018 Amendment 1 — Gemini quota exhausted, Sonnet decider).
-- Detailed packet artifact = `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` (full v1 schema).
+- `decider_pick`: options[].id picked by Sonnet (`claude-sonnet-4-6`).
+- `audit_result` enum: direct (override 없음) / sanity-PASS / sanity-FAIL / decider-suspended / user-escalation. (CFP-57 의 sonnet-fallback / authority-transfer / gemini-suspended 모두 제거 — v2 단순화.)
+- Detailed packet artifact = `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` (full v2 schema, includes `decider_decision.model` field).
 - 첫 5 packet scheduled self-audit, 그 후 failure-driven only.
 
-Schema SSOT: [decision-packet-v1](../docs/inter-plugin-contracts/decision-packet-v1.md).
+Schema SSOT: [decision-packet-v2](../docs/inter-plugin-contracts/decision-packet-v2.md).
+
+ADR-018 의 §12 "Gemini Decision Log" superseded by 본 §12 (CFP-59 / ADR-019).
 
 ---
 
@@ -165,7 +168,7 @@ Schema SSOT: [decision-packet-v1](../docs/inter-plugin-contracts/decision-packet
 | Clarification 재스폰 (RequirementsPL · ArchitectPLAgent) | §9.0 append | RequirementsPL / ArchitectPL (FIX 라벨 미추가 — fix-ledger-sync.yml은 §10만 trigger) |
 | FIX 루프 | §10 append | **Orchestrator 단독** (CFP-32 fix-event-v1 monopoly, fix-ledger-sync.yml Action이 자동 mirror+label) |
 | Story 완료 회고 (PMOAgent) | §11 회고 블록 | PMOAgent (codeforge-pmo direct Edit) |
-| Gemini decision 발생 시 (substantive trigger) | §12 append + `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` 생성 | Orchestrator (CFP-57 / ADR-018, decision-packet-v1) |
+| Sonnet decision 발생 시 (substantive trigger) | §12 append + `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` 생성 | Orchestrator (CFP-59 / ADR-019, decision-packet-v2) |
 | Phase 2 PR merged (최종) | Issue auto-close (PR body의 `Closes #N`) | (자동) |
 
 ---
