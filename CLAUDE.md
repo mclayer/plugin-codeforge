@@ -67,6 +67,8 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 - **Phase 1 PR** (요구사항 + 설계 + 설계리뷰 lane): `docs/stories/<KEY>.md` §1-7 + `docs/change-plans/<slug>.md` + `docs/adr/ADR-NNN-<slug>.md`
 - **Phase 2 PR** (구현 + 구현리뷰 + 구현테스트 + 보안테스트 lane): `src/**` + `tests/**` + `docs/stories/<KEY>.md` §8-11 append
 
+**Cross-repo Epic** (mctrader 등 multi-repo consumer): parent Epic Issue + child Story per repo + `epic_dependencies` graph + Change Plan §3 contract pin. 상세 [ADR-020](docs/adr/ADR-020-cross-repo-epic-pattern.md), playbook §3.
+
 **레인 진입 전 Preflight 체크 의무** — 각 레인 진입 직전 Orchestrator가 3개 체크 수행 (phase 라벨 정합 / docs file 선행 섹션 / 외부 의존성 가용). FAIL 시 block+report. 상세는 playbook §3B.
 
 | 레인 | 진입 트리거 | 1차 self-write target | FIX max |
@@ -231,6 +233,8 @@ ADR-018 (CFP-57 carrier — Gemini decider) + ADR-018 Amendment 1 (CFP-58 — So
 - **CodeReview**: 대상은 코드(src·config·deploy·tests). 일반 품질·런타임 결함·테스트 품질 중심. 보안은 SecurityTest가 깊게 검증
 - **SecurityTest**: 대상은 코드 + 인프라 + 의존성. 보안 카테고리 전담. 1차 layer는 GitHub native 도구(Dependabot/CodeQL/Secret Scanning), 2차 layer는 Claude/Codex 통합 워커(lane=security packet)
 - 중복 지적 발생 시 해당 레인의 ReviewPL이 dedup → severity 높은 쪽 채택
+
+> **Debut-audit measurable signal**: 본 매트릭스의 ✅ 0 개 또는 ≥2 개 row 가 [ADR-021](docs/adr/ADR-021-phase-gap-measurable-signal.md) R4 (Responsibility leak) detection source.
 
 ### 6 deputy mandate 매트릭스 (codeforge-design lane)
 
