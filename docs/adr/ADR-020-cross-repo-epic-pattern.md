@@ -19,16 +19,20 @@ Codex audit (2026-05-02, gpt-5.5 high) #6 FAIL: "retrospective 발견은 계약 
 
 ## 결정
 
-### 결정 1: Epic owner repo 자유 결정
+### 결정 1: Epic owner repo 자유 결정 + 도메인 ADR collocate
 
 cross-repo Epic 의 parent Issue 위치 = consumer 가 명시. wrapper 강제 X.
 
 - doc-only hub repo 권장 (예: mctrader-hub)
 - consumer 가 `epic_owner_repo` field 로 명시 의무
+- **Epic owner repo = consumer 의 doc-only hub 일 경우, 도메인 ADR 도 같은 repo 에 collocate** (single source of truth — cross-repo 도메인 결정의 분산 방지)
 
-### 결정 2: Child Story 위치 = 작업 repo 자체
+### 결정 2: Child Story 위치 = 작업 repo 자체 + Epic Issue body link 수집
 
 각 작업 repo 의 `docs/stories/<KEY>.md` 자체 보유 (consumer default). dogfood-out 정책 (ADR-013) 은 codeforge family 만 적용 — consumer 자유.
+
+- **Parent Epic Issue body** = child Story Issue 들의 `<owner>/<repo>#<issue>` link 모음 보유 (Epic 진행 추적의 single entry point)
+- 예: `mclayer/mctrader-hub#11` (Epic) body 에 `mclayer/mctrader-market#1`, `mclayer/mctrader-market-bithumb#1`, ... link 5 개
 
 ### 결정 3: Story §1 메타 에 `epic_dependencies` field 추가 (optional)
 
