@@ -9,7 +9,8 @@ contracts:
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: review-verdict-v1.md, contract_version: "1.0", status: Archived }
-      - { file: review-verdict-v2.md, contract_version: "2.0", status: Active }
+      - { file: review-verdict-v2.md, contract_version: "2.0", status: Archived, superseded_by: review-verdict-v3 }  # CFP-61
+      - { file: review-verdict-v3.md, contract_version: "3.0", status: Active }  # CFP-61: NEW
 
   - name: requirements_output
     canonical_repo: mclayer/plugin-codeforge-requirements
