@@ -1,0 +1,7 @@
+{
+  "name": "unregistered-plugin",
+  "version": "1.0.0",
+  "description": "Plugin not in marketplace",
+  "author": { "name": "TestAuthor" },
+  "keywords": ["test"]
+}
