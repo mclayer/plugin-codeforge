@@ -1,7 +1,8 @@
 ---
 adr_number: 18
 title: Gemini Decider Auto-Proceed System (Phase 1 doc-only policy)
-status: Accepted
+status: Superseded
+superseded_by: ADR-019
 category: Team & Process
 date: 2026-05-01
 related_files:
@@ -26,6 +27,8 @@ related_stories:
 Accepted (2026-05-01) — CFP-57 carrier, Phase 1 doc-only.
 
 **Amendment 1 (2026-05-02) — CFP-58**: Auth = OAuth via Gemini Plus (API key 제거), Fallback row "Quota exhausted" = Claude Sonnet (`claude-sonnet-4-6`) decider + 사용자 알림 + auto-proceed. decision-packet-v1 v1.1 minor bump (enum 확장 backward-compatible). Codex audit gate (legacy) fallback deprecated (실제 invocation 사라짐).
+
+**Superseded (2026-05-02) by ADR-019** — CFP-59. ADR-018 + Amendment 1 (CFP-58) 모두 historical record 로 보존. ADR-018 본문 무수정 (cross-link 도 추가 안 함). 신규 packet / 결정 시 ADR-019 SSOT 사용.
 
 ## 컨텍스트
 

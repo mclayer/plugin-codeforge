@@ -2,13 +2,16 @@
 kind: registry
 registry: decision-packet
 version: "1.1"
-status: Active
+status: Archived
+superseded_by: docs/inter-plugin-contracts/decision-packet-v2.md
 authors:
   - Claude (CFP-57 author — spec § 2.6 codification)
   - Codex (gpt-5.5 high) — Round 1+2 brainstorming + spec audit Round 1+2
 # v1.1 (CFP-58 ADR-018 Amendment 1) — quota_sonnet_fallback + claude_sonnet enum extensions
+# Body frozen 2026-05-02 (CFP-59 ADR-019). Schema preserved as historical reference.
 related_adrs:
-  - ADR-018 (carrier — CFP-57 + Amendment 1 CFP-58)
+  - ADR-018 (carrier — CFP-57 + Amendment 1 CFP-58, superseded by ADR-019)
+  - ADR-019 (supersedes ADR-018 — decision-packet v2 active)
   - ADR-008 (parent — versioning rule, v1.1 minor bump)
   - ADR-001 (sibling — review verdict 는 본 registry 적용 대상 아님)
 related_files:
