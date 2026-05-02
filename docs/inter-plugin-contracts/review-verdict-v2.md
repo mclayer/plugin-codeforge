@@ -1,7 +1,8 @@
 ---
 kind: contract
 contract_version: "2.0"
-status: Active
+status: Archived
+superseded_by: review-verdict-v3
 related_plugins:
   - codeforge (wrapper, consumer of FIX routing data)
   - codeforge-review (lane plugin, producer + self-writer)
@@ -12,6 +13,8 @@ related_adrs:
 authors:
   - CFP-35 ζ arc retrofit (2026-04-29) — first lane self-write 검증
 ---
+
+> **SUPERSEDED**: 본 sibling = canonical 의 archive 동기화. canonical (codeforge-review repo) 와 동일 frozen state. 모든 신규 review verdict = v3 schema 강제 (ADR-022 / CFP-61).
 
 # review_verdict v2 — Inter-plugin Contract (CFP-35 ζ arc retrofit)
 
