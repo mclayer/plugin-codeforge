@@ -63,12 +63,11 @@ prefixes:
 
   - prefix: "[설계-리뷰]"
     phase: design-review
-    current_owner: DocsAgent
-    target_owner_plugin: codeforge-review (CFP-35 v2 retrofit 후)
+    current_owner: "(CFP-35) DesignReviewPLAgent → (CFP-61) Orchestrator post-Sonnet"
+    target_owner_plugin: "core wrapper (Orchestrator 직접 게시 — review-verdict final write, CFP-61 / ADR-022)"
     posters:
-      - DesignReviewPLAgent
-      - ClaudeReviewAgent
-      - CodexReviewAgent
+      - Orchestrator  # review verdict final write (CFP-61 / ADR-022 §결정 3 step 4)
+      # DesignReviewPLAgent, ClaudeReviewAgent, CodexReviewAgent — packet return only (no comment post, CFP-61)
     auto_mirror: false
 
   - prefix: "[구현]"
@@ -86,12 +85,11 @@ prefixes:
 
   - prefix: "[구현-리뷰]"
     phase: code-review
-    current_owner: DocsAgent
-    target_owner_plugin: codeforge-review (CFP-35 v2 retrofit 후)
+    current_owner: "(CFP-35) CodeReviewPLAgent → (CFP-61) Orchestrator post-Sonnet"
+    target_owner_plugin: "core wrapper (Orchestrator 직접 게시 — review-verdict final write, CFP-61 / ADR-022)"
     posters:
-      - CodeReviewPLAgent
-      - ClaudeReviewAgent
-      - CodexReviewAgent
+      - Orchestrator  # review verdict final write (CFP-61 / ADR-022 §결정 3 step 4)
+      # CodeReviewPLAgent, ClaudeReviewAgent, CodexReviewAgent — packet return only (no comment post, CFP-61)
     auto_mirror: false
 
   - prefix: "[구현-테스트]"
@@ -104,12 +102,11 @@ prefixes:
 
   - prefix: "[보안-테스트]"
     phase: security-test
-    current_owner: DocsAgent
-    target_owner_plugin: codeforge-review (CFP-35 v2 retrofit 후)
+    current_owner: "(CFP-35) SecurityTestPLAgent → (CFP-61) Orchestrator post-Sonnet"
+    target_owner_plugin: "core wrapper (Orchestrator 직접 게시 — review-verdict final write, CFP-61 / ADR-022)"
     posters:
-      - SecurityTestPLAgent
-      - ClaudeReviewAgent
-      - CodexReviewAgent
+      - Orchestrator  # review verdict final write (CFP-61 / ADR-022 §결정 3 step 4)
+      # SecurityTestPLAgent, ClaudeReviewAgent, CodexReviewAgent — packet return only (no comment post, CFP-61)
     auto_mirror: false
 
   - prefix: "[PMO]"
@@ -153,3 +150,11 @@ prefixes:
 - **Posters 갱신**: 기존 prefix에 새 agent 추가는 minor (v1.1). agent 이름 변경(예: rename)도 minor — alias 매핑으로 호환성 유지
 - **`[FIX #N]` 자동 mirror**: `fix-ledger-sync.yml` CI Action이 §10 commit 감지 시 자동. agent는 직접 게시 금지 (fallback 시 DocsAgent 사용)
 - **Format 위반 enforcement**: lane plugin이 본 registry 외 prefix 또는 형식으로 게시 시 향후 CFP-33 contract harness가 lint catch
+
+## 5. 변경 이력
+
+| CFP | 변경 내용 |
+|---|---|
+| CFP-32 | 초기 codification — 11 prefix taxonomy (ζ arc 진행 CFP-31~CFP-40 기반) |
+| CFP-35 | review verdict 3 prefix (`[설계-리뷰]` / `[구현-리뷰]` / `[보안-테스트]`) current_owner → DesignReviewPL / CodeReviewPL / SecurityTestPL (review-verdict-v2 self-write) |
+| CFP-61 | review verdict 3 prefix current_owner 재정의: DesignReviewPLAgent / CodeReviewPLAgent / SecurityTestPLAgent → **Orchestrator post-Sonnet** (ADR-022 review-verdict 5-step step 4). PL 은 packet return only — comment post 권한 제거. target_owner_plugin = core wrapper 잔류 |

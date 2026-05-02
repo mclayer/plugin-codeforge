@@ -398,7 +398,40 @@ cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/<file>.yml .github
 
 운영 빈도 0에 가까워야 함 (주로 사용자 원문 명백한 오타 정정).
 
-## 7. 트러블슈팅
+## 7. Sonnet Decider 정책 (CFP-61 / ADR-022)
+
+본 plugin install 한 consumer 프로젝트의 Orchestrator 도 Sonnet decider 적용 대상. 단 Phase 1 = trust model — plugin CLAUDE.md doc 만 정책 source, 강제 instrumentation 없음.
+
+### Phase 1 활성 절차
+
+consumer 측 사용자 가 다음 directive 발화 시 활성:
+
+> "이 프로젝트에서도 codeforge plugin Sonnet decider 정책 (CFP-61 / ADR-022) 적용해서 정지 없이 진행해라."
+
+또는 동등 wording. directive 없으면 default = user-approval gates 운영.
+
+### 적용 trigger 5 종 (ADR-022 §결정 2)
+
+- (a) substantive 다중 선택지
+- (b) FIX root-cause 불일치
+- (c) Codex ambiguity (option-formulation 한정)
+- (d-constraint) 제약 surfacing Q
+- (e) review-verdict — 매 review iteration 종료 후 Sonnet final pick (PASS|FIX)
+
+### 운영 의존성
+
+- `Agent` tool with `model: sonnet` (Anthropic billing 내, 외부 auth 무관)
+- 외부 API key / Plus subscription / Vertex AI / GCA — 의무 prerequisite 아님 (CFP-58 axis 모두 제거)
+
+### Phase 2 enforcement (후속)
+
+30+ packet 운영 후 ROI 평가 + instrumentation hook / refusal logic / runtime validation 도입 여부 결정 — 별도 CFP.
+
+### 사용자 explicit suspension
+
+"잠깐 끄자" / "Sonnet decider 정지" → session/Story 단위 일시 중단 — review-verdict trigger 발화 시 PL 1차 판단 (pl_recommendation) 으로 임시 proceed (ADR-022 §결정 9).
+
+## 8. 트러블슈팅
 
 | 증상 | 원인 | 대응 |
 |------|------|------|

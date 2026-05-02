@@ -128,7 +128,7 @@ Orchestrator 가 append-only 관리 (CFP-32 monopoly, 행 삭제·수정 금지)
 - 관련 ADR 링크 (`docs/adr/ADR-NNN-<slug>.md`)
 - 회고 (PMOAgent 작성)
 
-### §12. Sonnet Decision Log (CFP-59 / ADR-019)
+### §12. Sonnet Decision Log (CFP-59 / CFP-61 / ADR-022)
 
 Story 내 모든 substantive decision 의 Sonnet final pick 기록. per-Story append-only.
 
@@ -136,17 +136,38 @@ Story 내 모든 substantive decision 의 Sonnet final pick 기록. per-Story ap
 |-----------|---------|---------------|--------------|-----------|--------------|-----------|
 | CFP-NN-001 | brainstorming-constraint | 4 | A | no  | direct       | ISO8601 |
 | CFP-NN-002 | option-formulation       | 5 | C | yes | sanity-PASS  | ISO8601 |
+| CFP-NN-003 | review-verdict           | 2 | FIX | yes (pl: PASS) | direct | ISO8601 |
 
-- `packet_id`: `<KEY>-<3-digit seq>` (decision-packet-v2).
-- `trigger` enum: option-formulation / fix-root-cause / codex-ambiguity / brainstorming-constraint.
-- `decider_pick`: options[].id picked by Sonnet (`claude-sonnet-4-6`).
-- `audit_result` enum: direct (override 없음) / sanity-PASS / sanity-FAIL / decider-suspended / user-escalation. (CFP-57 의 sonnet-fallback / authority-transfer / gemini-suspended 모두 제거 — v2 단순화.)
-- Detailed packet artifact = `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` (full v2 schema, includes `decider_decision.model` field).
-- 첫 5 packet scheduled self-audit, 그 후 failure-driven only.
+- `packet_id`: `<KEY>-<3-digit seq>` (decision-packet-v2.1).
+- `trigger` enum 5: option-formulation / fix-root-cause / codex-ambiguity / brainstorming-constraint / **review-verdict** (CFP-61 NEW).
+- `decider_pick`: options[].id picked by Sonnet (`claude-sonnet-4-6`). review-verdict trigger 시 = `sonnet_final_status` (PASS|FIX 이진, contract-fixed per ADR-022 §결정 4). blocked / timeout / suspended / reopen 케이스 = `<none>` 또는 `<blocked>` (아래 failure-state 표 참조).
+- `options_count`: review-verdict 시 = 2 (PASS|FIX 이진 선택지). Trigger 5 의 option set = contract-fixed — Sonnet 가 추가 / 삭제 / rename / synthesize 금지 (ADR-022 §결정 4 invariant).
+- `override?`: PL pl_recommendation reduce binary != sonnet_final_status 시 yes. FIX_DISCRETIONARY → FIX 로 reduce 시 override 아님 (PL 도 issue 인지). PASS → FIX 또는 FIX → PASS 시 override.
+- `audit_result` enum 6: direct (override 없음) / sanity-PASS / sanity-FAIL / decider-suspended / user-escalation / **review-reopen** (CFP-61 NEW — packet_requires_review_reopen 발화 시).
+- Detailed packet artifact = `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` (full v2.1 schema, includes `decider_decision.model` field + `review_lane_context` when trigger=review-verdict).
+- 첫 5 packet scheduled self-audit (review-verdict trigger 포함 합산), 그 후 failure-driven only.
 
-Schema SSOT: [decision-packet-v2](../docs/inter-plugin-contracts/decision-packet-v2.md).
+Schema SSOT: [decision-packet-v2.1](../docs/inter-plugin-contracts/decision-packet-v2.md).
 
-ADR-018 의 §12 "Gemini Decision Log" superseded by 본 §12 (CFP-59 / ADR-019).
+ADR-018 의 §12 "Gemini Decision Log" superseded by 본 §12 (CFP-59 / ADR-019). ADR-019 §12 → ADR-022 §12 (CFP-61 trigger enum 5 + failure-state rows).
+
+**Failure-state §12 row format (decision_state ≠ decided 인 케이스, ADR-022 §결정 7 mirror)**:
+
+| decision_state | options_count | decider_pick | override? | audit_result | reason 컬럼 |
+|---|---|---|---|---|---|
+| `blocked_packet_incomplete` | 0 | `<blocked>` | n/a | user-escalation | `pl_recommendation:ESCALATE_PACKET_INCOMPLETE` |
+| `decider_timeout` | 2 | `<none>` | n/a | user-escalation | `attempts[].outcome:timeout` (또는 malformed) |
+| `decider_suspended` | 2 | `<none>` | n/a | decider-suspended | `attempts[].outcome:decider_suspended` (Sonnet quota / auth) |
+| `review_reopen_requested` | 2 | `<none>` | n/a | review-reopen | `attempts[].outcome:packet_requires_review_reopen` |
+| `write_partial` (decided 후 write 일부 실패) | 2 | `<sonnet_final_status>` | (정상) | user-escalation | `write_errors[].step:<failed step>` |
+
+`<blocked>` / `<none>` 은 literal placeholder string 으로 §12 row 에 기재 (machine-readable enum value).
+
+**§10 FIX Ledger 원인 판정 컬럼 evidence (CFP-61 부터)**:
+- 정상 (PL≡Sonnet): `<원인>` (decider:claude_sonnet)
+- Override (PL≠Sonnet): `<원인>` (decider:claude_sonnet, override: pl_recommendation=<X> sonnet_final=<Y>)
+
+**§10 append-only resolution rule**: §10 row 는 append-only (CFP-32 monopoly). Iteration N FIX → iteration N+1 PASS 시점에 row N 이 mutate 되지 않음 (CFP-32 monopoly + CFP-61 §4.7.1 명시). 같은 cycle 내 PASS 회복은 §9 의 다음 iteration PASS row + phase/gate label transition 으로 외부 visible. RESET 마커는 별도 lane 의 cascading retry 때만 사용.
 
 ---
 
@@ -158,17 +179,18 @@ ADR-018 의 §12 "Gemini Decision Log" superseded by 본 §12 (CFP-59 / ADR-019)
 | 요구사항 병렬 에이전트 완료 | Domain→§2 / Analyst→§5 / Researcher→§6 (각 에이전트 직접 Edit) | RequirementsPLAgent / DomainAgent (codeforge-requirements) |
 | 요구사항 확정 (RequirementsPLAgent) | §3-4 | RequirementsPLAgent (codeforge-requirements) |
 | 설계 확정 (ArchitectAgent → ArchitectPLAgent 검수) | §3/§7/§11 + `docs/change-plans/<slug>.md` + `docs/adr/ADR-NNN-<slug>.md` | ArchitectAgent (codeforge-design direct Edit) |
-| 설계 리뷰 iteration (DesignReviewPL) | §9.1 | DesignReviewPL (codeforge-review review-verdict-v2) |
-| 설계 리뷰 PASS | gate:design-review-pass 라벨 부착 → Phase 1 PR mergeable | DesignReviewPL (codeforge-review review-verdict-v2) |
+| 설계 리뷰 iteration (DesignReviewPL packet return) | (no write — pl_recommendation 반환만) | DesignReviewPL (codeforge-review review-verdict-v3) |
+| 설계 리뷰 PASS/FIX verdict final write | §9.1 append + GitHub comment [설계-리뷰] + gate:design-review-pass 라벨 + phase transition + §12 row | **Orchestrator 단독** (CFP-61 / ADR-022 review-verdict 5-step step 4) |
 | 구현 완료 (DeveloperPL) | §8.1-8.4 + §8.5 매핑표 commit + Phase 2 PR creation | DeveloperPL (codeforge-develop direct Edit) |
-| 구현 리뷰 iteration (CodeReviewPL) | §9.2 | CodeReviewPL (codeforge-review review-verdict-v2) |
+| 구현 리뷰 iteration (CodeReviewPL packet return) | (no write — pl_recommendation 반환만) | CodeReviewPL (codeforge-review review-verdict-v3) |
+| 구현 리뷰 PASS/FIX verdict final write | §9.2 append + GitHub comment [구현-리뷰] + phase transition + §12 row | **Orchestrator 단독** (CFP-61 / ADR-022 review-verdict 5-step step 4) |
 | 구현 테스트 (Orchestrator verdict receipt) | §9.3 | TestAgent verdict + Orchestrator |
-| 보안 테스트 iteration (SecurityTestPL) | §9.4 (1차 + 2차 layer 모두) | SecurityTestPL (codeforge-review review-verdict-v2) |
-| 보안 테스트 PASS | gate:security-test-pass 라벨 부착 → Phase 2 PR mergeable | SecurityTestPL (codeforge-review review-verdict-v2) |
+| 보안 테스트 iteration (SecurityTestPL packet return) | (no write — pl_recommendation 반환만) | SecurityTestPL (codeforge-review review-verdict-v3) |
+| 보안 테스트 PASS/FIX verdict final write | §9.4 append + GitHub comment [보안-테스트] + gate:security-test-pass 라벨 + phase transition + §12 row | **Orchestrator 단독** (CFP-61 / ADR-022 review-verdict 5-step step 4) |
 | Clarification 재스폰 (RequirementsPL · ArchitectPLAgent) | §9.0 append | RequirementsPL / ArchitectPL (FIX 라벨 미추가 — fix-ledger-sync.yml은 §10만 trigger) |
 | FIX 루프 | §10 append | **Orchestrator 단독** (CFP-32 fix-event-v1 monopoly, fix-ledger-sync.yml Action이 자동 mirror+label) |
 | Story 완료 회고 (PMOAgent) | §11 회고 블록 | PMOAgent (codeforge-pmo direct Edit) |
-| Sonnet decision 발생 시 (substantive trigger) | §12 append + `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` 생성 | Orchestrator (CFP-59 / ADR-019, decision-packet-v2) |
+| Sonnet decision 발생 시 (substantive trigger 4 + review-verdict trigger 5) | §12 append + `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` 생성 | Orchestrator (CFP-59 / CFP-61 / ADR-022, decision-packet-v2.1) |
 | Phase 2 PR merged (최종) | Issue auto-close (PR body의 `Closes #N`) | (자동) |
 
 ---

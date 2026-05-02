@@ -208,10 +208,31 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
 요구사항:    Orchestrator → RequirementsPLAgent(DomainAgent ∥ Analyst ∥ Researcher 병렬, 셋 다 non-skippable) → PL dedup·상충 조정 → Story file §3-6 갱신
 설계:        Orchestrator → ArchitectPLAgent → (CodebaseMapper ∥ Refactor ∥ SecurityArchitect ∥ TestContractArch ∥ DataMigrationArchitect 병렬) → ArchitectAgent (chief author) 통합 → ArchitectPLAgent 검수 → Change Plan 확정
                          → ArchitectAgent direct write (docs/change-plans/<slug>.md + docs/adr/ADR-NNN-<slug>.md) + ArchitectAgent 가 Story file §3/§7/§11 직접 self-write (codeforge-design self-write 표)
-설계 리뷰:   Orchestrator → DesignReviewPLAgent (lane=design packet 작성) → packet return
-             → Orchestrator가 한 메시지에 (ClaudeReviewAgent ∥ CodexReviewAgent) dispatch → PL이 결과 종합 → PASS/FIX (R3, R2 verdict-first)
+설계 리뷰:   Orchestrator → DesignReviewPLAgent (lane=design packet 작성) → packet return (no writes — CFP-61 / ADR-022)
+             **review-verdict 5-step algorithm (CFP-61 / ADR-022 §결정 3)**:
+             1. ReviewPL spawn → workers (ClaudeReviewAgent ∥ CodexReviewAgent 병렬) → dedup → review-verdict-v3 packet 작성 (no writes)
+                ├── findings + pl_recommendation 작성
+                ├── decision_state = pending_sonnet (or blocked_packet_incomplete if pl_recommendation=ESCALATE_PACKET_INCOMPLETE)
+                └── return to Orchestrator
+             2. Orchestrator: decision-packet-v2.1 작성 (trigger: review-verdict, review_lane_context populated, findings_hash verified)
+             3. Orchestrator: Agent tool with model:sonnet 호출 → 응답 parse
+                ├── decision=PASS|FIX → sonnet_final_status 채움, decision_state=decided, step 4 로 진행
+                ├── decision=PACKET_REQUIRES_REVIEW_REOPEN → decision_state=review_reopen_requested, ReviewPL 재 spawn (1 회 한도 per (story_key,lane,iteration))
+                └── timeout/malformed → decision_state=decider_timeout
+                    └── Story §9 / §10 append 차단. §12 row append (decider_pick=<none>, audit_result=user-escalation, attempts[].outcome=timeout|malformed)
+             4. Orchestrator self-write (decision_state=decided 일 때만):
+                ├── Story §9 append (lane iteration result) — append-only, never rolled back
+                ├── GitHub Issue/PR comment ([설계-리뷰] prefix) via mcp__github__add_issue_comment
+                ├── PASS 시: gate:design-review-pass label + phase:* 다음 단계 전환 via mcp__github__issue_write
+                └── Story §12 Sonnet Decision Log row append
+                **Partial-write policy**: 각 sub-step 별 idempotent retry (initial + 2 retry = 3 회 한도). 실패 시 writes_completed.<field>=false + write_errors[] populate, decision_state=write_partial. any required write 가 retry 한도 후에도 false 잔존 시 user escalation. Story §9 + §12 는 append-only — 이미 append 된 내용 rollback 안 함.
+             5. FIX 시 (sonnet_final_status=FIX):
+                ├── Story §10 FIX Ledger append (decider: claude_sonnet, override marker if pl_recommendation != sonnet_final_status)
+                ├── fix-ledger-sync.yml Action mirror (auto)
+                └── DeveloperPL + ArchitectPL parallel diagnosis spawn (CFP-19 R4)
+                **Spawn-failure policy**: §10 append 성공 + diagnosis spawn 실패 시 — §10 row 유지 (append-only), §12 append (audit_result=user-escalation, spawn_status=failed), 1 회 retry → second failure = user escalation.
                          → PASS 시 **2 트랙 병렬** (R7):
-                            · Track A: DesignReviewPL 이 review-verdict-v2 self-write 로 gate:design-review-pass 라벨 부착 + Phase 1 PR mergeable → merge
+                            · Track A: Orchestrator post-Sonnet self-write (gate:design-review-pass 라벨 부착 + Phase 1 PR mergeable) → merge
                             · Track B: DeveloperPL spawn → Change Plan §5·§8 fetch + 첫 commit draft 준비 (PR open 보류)
                          → Track A merge 완료 시 Track B가 즉시 mcp__github__create_pull_request 호출
                          → 동시에 Orchestrator가 background SecurityTestPL prefetch 의뢰 → .claude-work/cache/<KEY>-sec1.json 생성
@@ -219,8 +240,9 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
                          → §8.5 Impl Manifest DeveloperPL 이 직접 self-write (codeforge-develop self-write 표, R5)
                          → Orchestrator가 ArchitectPLAgent stateless 재스폰 → 매핑표 감사 (chief author 보조)
                          → §8.5 commit 시 subissue-from-impl-manifest.yml 자동 sub-issue 생성
-구현 리뷰:   Orchestrator → CodeReviewPLAgent (lane=code packet 작성) → packet return
+구현 리뷰:   Orchestrator → CodeReviewPLAgent (lane=code packet 작성) → packet return (no writes — CFP-61 / ADR-022)
              → Orchestrator가 한 메시지에 (ClaudeReviewAgent ∥ CodexReviewAgent) dispatch → PL 종합 → PASS/FIX (R3, R2)
+             → PASS/FIX 결정: review-verdict 5-step algorithm 적용 (위 설계-리뷰 동일 흐름, lane=code, [구현-리뷰] prefix)
                          FIX 시 mechanical_category 자격 확인 → fast-path 또는 정상 cycle (R11)
 구현 테스트: Orchestrator → TestAgent **subset 병렬** (R9):
                          · TestAgent(subset: functional) ∥ TestAgent(subset: performance)
@@ -229,7 +251,8 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
 보안 테스트: Orchestrator → SecurityTestPLAgent (lane=security packet 작성, 1차 layer cache hit/miss 확인)
              1차 layer: .claude-work/cache/<KEY>-sec1.json hit 시 inline 첨부 (R10) / miss 시 PL이 직접 fetch
              2차 layer: PL이 packet return → Orchestrator가 한 메시지에 (ClaudeReviewAgent ∥ CodexReviewAgent) dispatch → PL 종합 → PASS/FIX (R3, R2)
-                         → PASS 시 SecurityTestPL 이 review-verdict-v2 self-write 로 gate:security-test-pass 라벨 부착 → Phase 2 PR mergeable
+                         → PASS/FIX 결정: review-verdict 5-step algorithm 적용 (위 설계-리뷰 동일 흐름, lane=security)
+                         → PASS 시 Orchestrator post-Sonnet self-write (gate:security-test-pass 라벨 부착) → Phase 2 PR mergeable
 완료:        Phase 2 PR merge (`Closes #<Story Issue>`) → Issue 자동 close → PMOAgent 가 Story §11 직접 self-write (codeforge-pmo)
              → PMOAgent (회고)
 ```
@@ -457,16 +480,17 @@ ADR-005 plugin-meta-na 패턴(§8/§9 lane 게이트 면제)으로 진행되는 
 | DomainAgent 지식 공백 발견 시 | `docs/domain-knowledge/<area>/<topic>.md` | DomainAgent (codeforge-requirements) |
 | RequirementsPL 통합 후 ADR / 코드 경로 갱신 | Story §3/§4 | RequirementsPLAgent (codeforge-requirements) |
 | ArchitectAgent Change Plan + ADR 확정 | `docs/change-plans/<slug>.md` + `docs/adr/ADR-NNN-<slug>.md` + Story §3/§7/§11 | ArchitectAgent (codeforge-design) |
-| 설계 리뷰 iteration 종료 | Story §9.1 | DesignReviewPLAgent (codeforge-review) |
-| 설계 리뷰 PASS | gate:design-review-pass label + phase:설계-리뷰→phase:구현 | DesignReviewPL (codeforge-review review-verdict-v2) |
+| 설계 리뷰 iteration 종료 (ReviewPL packet return) | (no direct write — packet only) | DesignReviewPLAgent (codeforge-review, review-verdict-v3 pl_recommendation) |
+| 설계 리뷰 PASS/FIX verdict final write | Story §9.1 + GitHub comment [설계-리뷰] + gate:design-review-pass label + phase transition + Story §12 row | **Orchestrator 단독** (CFP-61 / ADR-022 review-verdict 5-step step 4) |
 | 구현 완료 | Story §8 + §8.5 Impl Manifest + Phase 2 PR creation | DeveloperPLAgent (codeforge-develop) |
-| 구현 리뷰 iteration 종료 | Story §9.2 | CodeReviewPLAgent (codeforge-review) |
+| 구현 리뷰 iteration 종료 (ReviewPL packet return) | (no direct write — packet only) | CodeReviewPLAgent (codeforge-review, review-verdict-v3 pl_recommendation) |
+| 구현 리뷰 PASS/FIX verdict final write | Story §9.2 + GitHub comment [구현-리뷰] + phase transition + Story §12 row | **Orchestrator 단독** (CFP-61 / ADR-022 review-verdict 5-step step 4) |
 | 구현 테스트 종료 | Story §9.3 (Orchestrator가 verdict receipt 후 처리) | TestAgent verdict + Orchestrator |
-| 보안 테스트 iteration 종료 | Story §9.4 | SecurityTestPLAgent (codeforge-review) |
-| 보안 테스트 PASS | gate:security-test-pass label + Phase 2 PR mergeable | SecurityTestPL (codeforge-review review-verdict-v2) |
+| 보안 테스트 iteration 종료 (ReviewPL packet return) | (no direct write — packet only) | SecurityTestPLAgent (codeforge-review, review-verdict-v3 pl_recommendation) |
+| 보안 테스트 PASS/FIX verdict final write | Story §9.4 + GitHub comment [보안-테스트] + gate:security-test-pass label + phase transition + Story §12 row | **Orchestrator 단독** (CFP-61 / ADR-022 review-verdict 5-step step 4) |
 | FIX 발생 | Story §10 FIX Ledger append | **Orchestrator 단독** (CFP-32 fix-event-v1 monopoly) |
 | PMOAgent 회고 | `docs/retros/<sprint>.md` + Story §11 + Epic Milestone close | PMOAgent (codeforge-pmo) |
-| 단계별 상태 변화 | GitHub Issue comment `[<phase>] <Agent>: <한 줄>` | 각 lane plugin (각 phase prefix 책임자)
+| 단계별 상태 변화 | GitHub Issue comment `[<phase>] <Agent>: <한 줄>` | review-verdict 영역 → Orchestrator (CFP-61); 기타 → 각 lane plugin
 
 ### 5.2 Story file 읽기 규약
 
@@ -476,9 +500,9 @@ ADR-005 plugin-meta-na 패턴(§8/§9 lane 게이트 면제)으로 진행되는 
   - `docs/change-plans/**` + `docs/adr/**` → **ArchitectAgent direct**
   - `docs/domain-knowledge/**` → **DomainAgent direct**
   - `docs/retros/**` → **PMOAgent direct**
-  - `docs/stories/**` 각 섹션 → 해당 lane plugin self-write (§5.1 표 참조). §10 FIX Ledger → **Orchestrator 단독** (CFP-32 fix-event-v1)
+  - `docs/stories/**` 각 섹션 → 해당 lane plugin self-write (§5.1 표 참조). §10 FIX Ledger → **Orchestrator 단독** (CFP-32 fix-event-v1). §9 (review-verdict) + §12 (Sonnet Decision Log) → **Orchestrator 단독** (CFP-61 / ADR-022 review-verdict final write)
   - `docs/**` general (orchestrator-playbook, plugin-design, consumer-guide 등) → Orchestrator 또는 수동
-  - GitHub Issue/PR/comment + label → 각 lane plugin self-write (codeforge-{review,pmo,requirements,test,develop,design} CLAUDE.md self-write 표)
+  - GitHub Issue/PR/comment + label → review-verdict 영역 ([설계-리뷰] / [구현-리뷰] / [보안-테스트] comment + gate/phase label) → **Orchestrator 단독** (CFP-61 / ADR-022). 기타 → 각 lane plugin self-write (codeforge-{review,pmo,requirements,test,develop,design} CLAUDE.md self-write 표)
   - 그 외 모든 에이전트는 자기 owner section 에만 직접 write — 4 single-owner type(`change-plan`/`adr`/`domain-knowledge`/`retro`)은 owner agent direct write (CFP-26 Phase 0a)
 
 ### 5.3 GitHub Issue body vs Story file
