@@ -50,32 +50,53 @@ r1_check() {
   fi
 }
 
-# R2 — Overload: Change Plan §3+§7+§11 author 동시 + Story §10 FIX iteration
+# R2 — Overload: Change Plan §3 / §7 / §11 의 본문 시작 author HTML comment + Story §10 FIX iteration
+# ADR-021 결정 6: "§3 / §7 / §11 의 본문 시작 부분에 <!-- author: <agent-name> --> HTML comment"
 r2_check() {
   if [[ -z "$CHANGE_PLAN_FILE" || ! -f "$CHANGE_PLAN_FILE" ]]; then
     echo "R2: SKIP (Change Plan not provided)"
     return 0
   fi
-  # author HTML comment 추출 — unique authors count
-  local authors_count
-  authors_count=$( { grep -oE '<!-- author: [^ ]+ -->' "$CHANGE_PLAN_FILE" 2>/dev/null \
-    | sort -u | wc -l | tr -d ' '; } || echo 0)
-  authors_count="${authors_count:-0}"
-  if [[ "$authors_count" -eq 0 ]]; then
-    echo "R2: SKIP (no author meta found)"
+
+  # Extract first author HTML comment within each of §3 / §7 / §11 sections only
+  set +e
+  section_first_author() {
+    local sec_num="$1"
+    awk -v sec="^## §${sec_num}( |\$)" '
+      $0 ~ sec {found=1; next}
+      found && /^## §/ {exit}
+      found
+    ' "$CHANGE_PLAN_FILE" 2>/dev/null | grep -oE '<!-- author: [^ ]+ -->' | head -1
+  }
+  local s3_author s7_author s11_author
+  s3_author=$(section_first_author 3)
+  s7_author=$(section_first_author 7)
+  s11_author=$(section_first_author 11)
+  set -e
+
+  # Build author occurrence map across §3 / §7 / §11 only
+  local -A author_counts=()
+  for a in "$s3_author" "$s7_author" "$s11_author"; do
+    [[ -n "$a" ]] && author_counts["$a"]=$((${author_counts["$a"]:-0} + 1))
+  done
+
+  if [[ "${#author_counts[@]}" -eq 0 ]]; then
+    echo "R2: SKIP (no author meta in §3/§7/§11)"
     return 0
   fi
+
+  # Max occurrence count = "1 agent multi-section count"
+  local max_sub_per_author=0
+  for v in "${author_counts[@]}"; do
+    [[ "$v" -gt "$max_sub_per_author" ]] && max_sub_per_author="$v"
+  done
+
   # Story §10 FIX iteration count
   local fix_count
   fix_count=$(grep -cE '^\| [1-9][0-9]*\s+\|' "$STORY_FILE" 2>/dev/null || echo 0)
-  fix_count="${fix_count:-0}"
+  fix_count=$(echo "$fix_count" | tr -d '[:space:]')
+  [[ -z "$fix_count" ]] && fix_count=0
 
-  # Same author across multiple sub-sections → "1 agent multi-section count"
-  local sub_count
-  sub_count=$( { grep -oE '<!-- author: [^ ]+ -->' "$CHANGE_PLAN_FILE" 2>/dev/null | wc -l | tr -d ' '; } || echo 0)
-  sub_count="${sub_count:-0}"
-  # If 1 author repeats across sub-sections — sub_count > authors_count
-  local max_sub_per_author=$((sub_count / authors_count))
   if [[ "$max_sub_per_author" -ge 3 && "$fix_count" -ge 3 ]]; then
     echo "R2: FAIL ($max_sub_per_author sub + FIX $fix_count)"
     FAIL_COUNT=$((FAIL_COUNT + 1))
