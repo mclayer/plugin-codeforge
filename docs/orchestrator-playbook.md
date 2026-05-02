@@ -294,6 +294,38 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
 - 배경 참조 ADR은 Story file §3 링크로 충분
 - 코드 경로는 Story file §4에 요약, 구체 내용은 `Read`/`Glob`/`Grep` 도구로 직접 접근
 
+### 3.4 Cross-repo Epic 패턴 ([ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md))
+
+mctrader 등 multi-repo consumer 의 cross-repo Epic 진행 시.
+
+#### Epic 시작
+1. consumer 가 Epic owner repo 결정 (doc-only hub repo 권장 — 예: mctrader-hub)
+2. parent Epic Issue 생성 (owner repo)
+3. child Story 생성 — 각 작업 repo `docs/stories/<KEY>.md`. Story §1 메타에 `epic_dependencies` graph 명시:
+   ```yaml
+   epic_dependencies:
+     - type: hard_block | design_parallel | impl_parallel
+       target: <KEY>
+       repo: <owner/repo>
+   ```
+4. Change Plan §3 에 `consumes: { <producer>: <SemVer> }` pin 의무
+
+#### Epic 진행
+- **Topological merge order**: dependency graph 따라 producer 먼저 → consumer 나중
+- `hard_block` 위반 detected 시 Epic 차단 (PMOAgent enforce)
+- `design_parallel` / `impl_parallel` = 동시 진행 허용
+
+#### Epic Rollback
+producer merge 후 consumer break 시:
+1. Producer revert PR open
+2. 모든 affected consumer 의 contract pin downgrade PR
+3. Producer fix → 새 minor SemVer release
+4. Consumer pin upgrade
+
+#### Cross-references
+- [ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md) (cross-repo Epic 패턴 SSOT)
+- [requirements-output-v1.1](../docs/inter-plugin-contracts/requirements-output-v1.md) (Story §1 epic_dependencies field schema)
+
 ---
 
 ## 3B. Preflight 체크 (lane 진입 직전)
