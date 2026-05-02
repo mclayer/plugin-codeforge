@@ -60,12 +60,12 @@ ls ~/.claude/plugins/cache/<marketplace>/codeforge/<version>/agents/
 │   ├── settings.json                   # SessionStart hook 등록
 │   └── settings.local.json             # (선택) 로컬 오버라이드
 ├── .github/
-│   ├── workflows/                      # Plugin 워크플로우 6종 (수동 cp)
-│   ├── ISSUE_TEMPLATE/                 # Plugin Issue Forms 3종 + config.yml
+│   ├── workflows/                      # Plugin 워크플로우 2종 consumer-distributable (수동 cp)
+│   ├── ISSUE_TEMPLATE/                 # Plugin Issue Forms 2종 (audit + bug) + config.yml
 │   ├── PULL_REQUEST_TEMPLATE.md        # Plugin PR template
 │   └── CODEOWNERS                      # architect/domain-expert team 매핑
 ├── docs/
-│   ├── stories/                        # GENERATED (story-init.yml Action 산출)
+│   ├── stories/                        # MANUAL (story-init.yml = codeforge-internal-docs 전용 — F2 #116 후속 fix 시 복구)
 │   ├── adr/                            # ADR markdown (ArchitectAgent direct write)
 │   ├── change-plans/                   # Architect Change Plan (ArchitectAgent direct write)
 │   └── domain-knowledge/               # Domain KB (계층, DomainAgent direct write)
@@ -107,11 +107,11 @@ chmod +x .claude/_overlay/run-tests.sh .claude/_overlay/run-perf.sh
 ### 2c. GitHub repo 셋업 (Plugin 권장 워크플로우 + Forms + CODEOWNERS)
 
 ```bash
-# Workflow 6개 복사
+# Workflow 2개 복사 (consumer-distributable: phase-gate-mergeable + phase-label-invariant)
 mkdir -p .github/workflows
 cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/*.yml .github/workflows/
 
-# Issue Forms 3개 복사
+# Issue Forms 2개 복사 (audit + bug)
 mkdir -p .github/ISSUE_TEMPLATE
 cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-issue-forms/*.yml .github/ISSUE_TEMPLATE/
 
@@ -166,6 +166,8 @@ gh label create "audit:post-hotfix" --color "FBCA04" --repo "$ORG_REPO"
 
 ### 2e. Branch protection (main)
 
+#### 다인 contributor 팀 (default — review gate 강제)
+
 ```bash
 gh api -X PUT repos/$ORG_REPO/branches/main/protection \
   -F required_status_checks='{"strict":true,"contexts":["phase-gate-mergeable"]}' \
@@ -173,6 +175,30 @@ gh api -X PUT repos/$ORG_REPO/branches/main/protection \
   -F enforce_admins=false \
   -F restrictions=null
 ```
+
+#### 단일 author / 1-2인 팀 (solo-dev 권장)
+
+단일 author 가 sole CODEOWNER 이면 GitHub 정책 (`Cannot approve your own pull request`) 으로 self-approve 불가능 → 모든 PR 영구 deadlock. 다음 완화 분기 권장:
+
+```bash
+gh api -X PUT repos/$ORG_REPO/branches/main/protection \
+  -F required_status_checks='{"strict":true,"contexts":["phase-gate-mergeable"]}' \
+  -F required_pull_request_reviews='{"required_approving_review_count":0,"require_code_owner_reviews":false}' \
+  -F enforce_admins=false \
+  -F restrictions=null
+```
+
+`phase-gate-mergeable` status check 는 그대로 강제 — review-gate 만 완화. 팀 합류 시 위 다인 모드로 전환.
+
+#### 이미 deadlock 상태인 경우 (workaround — standard flow 아님)
+
+`enforce_admins=false` + repo admin 권한 보유자가 admin override:
+
+```bash
+gh pr merge --admin --squash <PR-number>
+```
+
+본 명령은 **escape-hatch** 이며 정상 flow 가 아님. solo-dev 모드 시 위 권장 분기 적용 후 일반 `gh pr merge --squash` 사용.
 
 ### 2f. 보안 보강 활성화 (consumer settings)
 
@@ -183,31 +209,11 @@ GitHub repo settings 또는 gh api로:
 
 이는 SecurityTestPL의 1차 layer로 활용된다.
 
-### 2g. Workflow permissions (org-level) — **반드시 설정**
+### 2g. Workflow permissions (org-level) — **현재 N/A (consumer)**
 
-**story-init.yml workflow가 Phase 1 PR을 자동 open하므로 GitHub Actions에 PR 생성 권한이 필요**. CFP-11 end-to-end 실증에서 발견된 bootstrap drift — org admin 권한 필요 (1회 설정).
+> **CFP-45 + F2 (#116) drift**: 본 §2g 는 본래 `story-init.yml` 의 PR 자동 open 권한 요구사항이었음. CFP-45 가 `story-init.yml` 을 `mclayer/codeforge-internal-docs` 로 이동했고, monorepo 가정 hardcode 가 남아 있어 fresh consumer 미배포. 본 §2g 의 workflow permissions 는 **현재 plugin templates 의 2 workflow (phase-gate-mergeable + phase-label-invariant) 모두 PR 생성 안 함** 이므로 consumer 측 설정 불필요.
 
-> **CFP-12 자동 검출**: SessionStart hook의 `check-bootstrap.sh`가 본 설정 미적용 시 자동 WARN 출력 (non-blocking). 수동 enable이 필요하나 잊은 경우 매 세션 시작에 안내.
-
-**Web UI**:
-1. https://github.com/organizations/`<your-org>`/settings/actions
-2. **Workflow permissions** → "Read and write permissions" 선택
-3. **"Allow GitHub Actions to create and approve pull requests"** 체크
-4. Save
-
-**CLI** (admin:org scope 필요, `gh auth refresh -h github.com -s admin:org` 후):
-
-```bash
-gh api -X PUT orgs/<your-org>/actions/permissions/workflow \
-  -f default_workflow_permissions=write \
-  -F can_approve_pull_request_reviews=true
-```
-
-미설정 시: story-init.yml의 `Create Phase 1 PR` step이 다음 에러로 fail:
-```
-GitHub Actions is not permitted to create or approve pull requests (createPullRequest)
-```
-(branch + docs file은 commit·push되지만 PR auto-open 실패. 수동 `gh pr create`로 복구 가능하나 자동화 가치 손실)
+F2 (#116) 후속 fix 로 single-repo flavor `story-init.yml` 가 plugin templates 에 복귀하면 본 §2g 의 workflow permissions 가 다시 필요. 현재는 manual Story 작성 (§4c 참조).
 
 ### 2h. `.gitignore`에 추가
 
@@ -322,19 +328,23 @@ cp -r ${CLAUDE_PLUGIN_ROOT}/codeforge/presets/webapp/agents/*.md \
 
 ### 4b. 의존성 점검
 
-세션 개시 즉시 Orchestrator가 의존성 체크 결과 출력. 6개 워크플로우·3개 Forms·CODEOWNERS 부재 시 알림.
+세션 개시 즉시 Orchestrator가 의존성 체크 결과 출력. 2개 워크플로우·2개 Forms·CODEOWNERS 부재 시 알림.
 
-### 4c. 첫 Story 생성
+### 4c. 첫 Story 생성 (현재 manual flow)
 
-GitHub UI에서 Issue 생성 → "Story" 템플릿 선택 → 사용자 요구사항 입력 → 제출.
+> **F2 (#116) drift**: `story-init.yml` Action 이 codeforge-internal-docs 로 이동, monorepo hardcode 로 fresh consumer 미배포. F2 후속 fix 까지 manual flow.
 
-`story-init.yml` Action이 자동:
-1. 다음 KEY 번호 계산
-2. `docs/stories/<KEY>.md` 생성 + Phase 1 PR open
-3. Issue body를 docs link로 변환
-4. 라벨 부착
+**Manual flow**:
 
-이후 Claude Code 세션을 재시작하거나 prompt에 "Story <KEY> 진행"이라고 입력하면 Orchestrator가 활성 Story를 감지해 RequirementsPLAgent 스폰.
+1. GitHub UI 또는 CLI 로 Issue 생성 — `audit.yml` / `bug.yml` form 활용. Story scoping 은 자유 형식 (Issue body 에 §1-§5 inline 작성).
+2. Story KEY 직접 결정 (e.g. `<PREFIX>-1`, `<PREFIX>-2`)
+3. `docs/stories/<KEY>.md` 수동 생성 — `templates/story-page-structure.md` 참조
+4. `phase:요구사항` label 부착
+5. Phase 1 PR 수동 open (story_uri PR-body marker 포함)
+
+이후 Claude Code 세션 재시작 또는 prompt 에 "Story `<KEY>` 진행" 입력 시 Orchestrator 가 Story file 감지하여 RequirementsPLAgent 스폰.
+
+F2 fix 후에는 `story.yml` Issue Form 제출 만으로 자동 진행 복구 예정.
 
 ## 5. Workflow
 
@@ -441,7 +451,7 @@ consumer 측 사용자 가 다음 directive 발화 시 활성:
 | Agent가 overlay 내용을 따르지 않음 | 생성된 `.claude/agents/<Name>.md` 확인 | `cat .claude/agents/<Name>.md` → overlay body 실제 존재하는지 점검 |
 | `gh: command not found` | gh CLI 미설치 | https://cli.github.com/ 참고해 설치 |
 | GitHub MCP 미인증 | OAuth 만료 | `/mcp` 재인증 |
-| story-init.yml Action 실패 | yq 미설치 또는 project.yaml 누락 | Action 로그 확인. yq는 `mikefarah/yq@v4` Action으로 자동 설치되어야 함 |
+| story-init.yml Action 실패 | (현재 N/A — consumer 미배포, F2 #116) | F2 fix 후 복구. 현재 Story 작성 = §4c manual flow |
 | Phase-gate-mergeable check 통과 안 됨 | phase + gate 라벨 미부착 | lane plugin (DesignReviewPL·SecurityTestPL)이 라벨 부착했는지 확인. phase-label-invariant.yml가 자동 single-active 강제하므로 새 phase 라벨만 추가하면 됨 |
 | §1 변경 PR이 reject됨 | story-section-1-immutable.yml | Q7 참조 |
 | sub-issue 자동 생성 안 됨 | §8.5 매핑표 형식 오류 또는 `addSubIssue` GraphQL beta 변경 | Action 로그 확인. fallback으로 DeveloperPL이 `mcp__github__sub_issue_write` 수동 호출 |

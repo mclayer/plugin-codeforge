@@ -16,10 +16,10 @@ jobs:
       - name: Evaluate phase gate (cross-repo Story fetch)
         uses: actions/github-script@v7
         env:
-          # Cross-repo PAT for fetching Story file from codeforge-internal-docs.
+          # Cross-repo PAT for fetching Story file from any external repo via story_uri PR-body marker.
           # Falls back to GITHUB_TOKEN if PAT not configured (degraded: PR-label-only mode).
+          # Story repo coordinate is parsed from story_uri URL itself (no hardcode — F3 fix CFP-63).
           CROSS_REPO_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
-          STORY_REPO: mclayer/codeforge-internal-docs
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
