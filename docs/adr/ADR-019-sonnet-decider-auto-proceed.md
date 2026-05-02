@@ -1,7 +1,8 @@
 ---
 adr_number: 19
 title: Sonnet Decider Auto-Proceed Policy
-status: Accepted
+status: Superseded
+superseded_by: ADR-022
 category: Team & Process
 date: 2026-05-02
 related_files:
@@ -19,6 +20,8 @@ related_stories:
 # ADR-019: Sonnet Decider Auto-Proceed Policy
 
 ## 상태
+
+> **SUPERSEDED by ADR-022** (2026-05-02, 1-day succession). 본 ADR-019 = historical record. CFP-58 → CFP-59 → CFP-61 iterative refinement 결과 ADR-022 = active SSOT. 본문 결정 1-10 + Amendment 1 본문 무수정 (history record).
 
 Accepted (2026-05-02) — CFP-59 carrier. Supersedes ADR-018 + Amendment 1 (CFP-58).
 

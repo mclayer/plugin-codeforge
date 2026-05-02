@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: decision-packet
-version: "2.0"
+version: "2.1"
 status: Active
 supersedes: docs/inter-plugin-contracts/decision-packet-v1.md
 authors:
@@ -9,7 +9,8 @@ authors:
   - Codex (gpt-5.5 high) — Round 1 spec audit
   - User (mccho) — directive 2026-05-02 (Gemini 제거, Sonnet decider)
 related_adrs:
-  - ADR-019 (carrier — Sonnet decider auto-proceed)
+  - ADR-022 (carrier — CFP-61 Sonnet decider comprehensive policy)
+  - ADR-019 (superseded by ADR-022 — CFP-59 Sonnet decider auto-proceed)
   - ADR-018 (superseded — CFP-57 + Amendment 1 CFP-58)
   - ADR-008 (parent — versioning rule, v1 → v2 MAJOR bump per breaking change SemVer 룰)
 related_files:
@@ -17,11 +18,11 @@ related_files:
   - templates/story-page-structure.md
 ---
 
-# decision-packet v2
+# decision-packet v2.1
 
 ## 1. 목적
 
-CFP-59 (ADR-019) Sonnet decider auto-proceed system 의 decision packet schema. Claude+Codex 가 생성한 옵션 set + cross-review + 사용자 context 를 Claude Sonnet (`claude-sonnet-4-6`) decider 에 전달할 때의 정형 format. Decider 응답·sanity audit·retry/fallback 결과 까지 누적 기록.
+CFP-59 (ADR-019) → CFP-61 (ADR-022) Sonnet decider auto-proceed system 의 decision packet schema. Claude+Codex 가 생성한 옵션 set + cross-review + 사용자 context 를 Claude Sonnet (`claude-sonnet-4-6`) decider 에 전달할 때의 정형 format. Decider 응답·sanity audit·retry/fallback 결과 까지 누적 기록.
 
 본 registry 는 wrapper-owned (registry kind, lint scope 밖). MANIFEST.yaml 의 contracts list 에 등록하지 않음.
 
@@ -78,12 +79,13 @@ fallback_unavailable: bool                # decider 사용 불가 + Codex sanity
 - `packet_id`: Story KEY + 3-digit zero-padded seq (예: `CFP-59-001`). globally unique across all Story sessions. concurrent Story session 운영 시 별도 packet artifact / Story §12 log / `content_hash` field 유지 의무 — packet_id collision 발생 시 packet 재생성 + suffix `-<timestamp>` 추가.
 - `content_hash`: options + context 정규화 후 SHA-256 (decider_decision 제외). "같은 packet" 정의 = packet_id + content_hash 동시 일치. content 변경 시 새 packet 발급. packet artifact 무결성 검증 용.
 
-### 3.2 trigger enum (CFP-57 그대로)
+### 3.2 trigger enum (CFP-57 + CFP-61)
 
 - `option-formulation`: substantive 다중 선택지 (stop point a)
 - `fix-root-cause`: FIX Ledger 원인 판정 Claude vs Codex 불일치 (stop point b)
-- `codex-ambiguity`: Codex 가 결론 회피 (stop point c)
+- `codex-ambiguity`: Codex 가 결론 회피 — **option-formulation 단계 한정 (CFP-61 scope narrowing)**, review-verdict 흐름의 worker ambiguity 는 별도 trigger (`packet_requires_review_reopen` outcome routing)
 - `brainstorming-constraint`: brainstorming clarifying Q 의 d-constraint sub-class (stop point d-constraint)
+- `review-verdict`: **NEW (CFP-61)** — 매 review iteration 종료 후 Sonnet final pick (PASS|FIX). review_lane_context block required.
 
 ### 3.3 options
 
@@ -109,7 +111,8 @@ fallback_unavailable: bool                # decider 사용 불가 + Codex sanity
   - `notification_or_log_written_at` — user notification 또는 §12/packet log append (whichever first) ISO8601 timestamp.
   - PASS 조건: response latency (`decider_response_received_at` - `agent_call_started_at`) ≤ 30s + notification latency (`notification_or_log_written_at` - `decider_response_received_at`) ≤ 10s.
   - 위반 시 packet artifact 에 `latency_violation: true` + 위반 axis 추가 record (informational, 운영 진행 차단 안 함).
-- `outcome` enum 7 values (Gemini-specific 값 모두 제거):
+- `outcome` enum 8 values (CFP-61 v2.1 추가):
+  - 7 values from v2 그대로
   - `success` — Sonnet 정상 응답 + schema 정합
   - `parse_failure` — non-YAML / schema-invalid 응답 (1 회 retry 대상, retry with explicit YAML correction prompt)
   - `timeout` — Sonnet API timeout / transient (1 회 retry 후 user)
@@ -117,6 +120,7 @@ fallback_unavailable: bool                # decider 사용 불가 + Codex sanity
   - `repeated_identical` — ≥2 회 동일 packet 동일 pick 반복 실패
   - `user_override` — 사용자 mid-flow 직접 결정
   - `decider_suspended` — 사용자 explicit suspension / Agent tool quota / billing / auth/runtime denial / repeated infrastructure failure
+  - `packet_requires_review_reopen` — **NEW (CFP-61)**: Sonnet 응답 = PACKET_REQUIRES_REVIEW_REOPEN. ReviewPL 재 spawn (per `(story_key, lane, iteration)` 1 회 한도). 두 번째 신호 시 user escalation.
 
 ### 3.6 authority_transfer
 
@@ -128,6 +132,30 @@ fallback_unavailable: bool                # decider 사용 불가 + Codex sanity
 ### 3.7 fallback_unavailable
 
 - Decider 사용 불가 (Sonnet quota / auth) + Codex sanity audit 도 차단 시 true. 사용자 escalation + packet draft 첨부.
+
+### 3.8 review_lane_context (NEW v2.1, trigger=review-verdict 시 required)
+
+```yaml
+review_lane_context:
+  review_verdict_contract_version: "3.0"
+  lane: design | code | security
+  story_key: <STORY_KEY>
+  iteration: <int>
+  pl_recommendation: PASS | FIX | FIX_DISCRETIONARY | ESCALATE_PACKET_INCOMPLETE
+  findings_hash: <sha256>
+  source_packet_ref:
+    artifact_path: <internal-docs path or wrapper sibling path>
+    content_sha256: <sha256 of review-verdict-v3 yaml>
+    github_issue_or_pr_ref: <optional, populated when binding GitHub Issue/PR — format owner/repo#number>
+```
+
+**Validation rules**:
+- trigger=review-verdict 시 review_lane_context 모든 required field populated
+- findings_hash = canonicalized review-verdict-v3 findings[] SHA-256 (deterministic JSON serialization, sort keys, no whitespace)
+- Orchestrator MUST verify findings_hash before invoking Sonnet
+- mismatch 시 packet malformed → user escalation
+- source_packet_ref.content_sha256 = review-verdict-v3 yaml 의 SHA-256
+- github_issue_or_pr_ref populated 시점 = Phase 1 PR / Phase 2 PR open 후 review iteration 진행 중. PR open 전 (요구사항 / 설계 lane) absent.
 
 ## 4. 영향 / 라이프사이클
 
@@ -145,6 +173,24 @@ fallback_unavailable: bool                # decider 사용 불가 + Codex sanity
 - v1 in-flight packet 가 v2 acceptance 시점 에 미완료 인 경우 — 해당 packet 내 outcome 그대로 v1.1 enum 으로 close, 다음 packet 부터 v2 적용.
 - 기존 v1 artifact = Archived historical record (rewrite 안 함, explicit migration request 시 외 — 향후 v1 → v2 retroactive migration 필요 시 별도 CFP).
 - Inventory at ADR-019 acceptance: CFP-57-001 (CFP-57 brainstorming archive) = historical only, no active in-flight.
+
+### 4.3 First-5 review-verdict packet self-audit checklist (CFP-61 추가)
+
+각 packet 별 다음 11 checklist 통과 의무:
+
+- [ ] decider_decision.model = claude-sonnet-4-6 (model-ID exact match)
+- [ ] Sonnet 응답이 §4.5.3 schema 준수 (decision / reasoning_summary / confidence + PACKET_REQUIRES_REVIEW_REOPEN 시 packet_gap_summary)
+- [ ] review-verdict-v3 findings / pl_recommendation / decision_state populated
+- [ ] decision-packet-v2.1 review_lane_context 모든 required field populated
+- [ ] findings_hash verification 성공 (canonicalized findings[] hash 일치)
+- [ ] source_packet_ref.content_sha256 = review-verdict-v3 yaml SHA256 일치
+- [ ] Sonnet response = packet_requires_review_reopen 으로 routing 시 (Sonnet-authored finding 0 건)
+- [ ] Story §9 (PASS/FIX) / §10 (FIX) / §12 (모든 trigger) write 완결
+- [ ] override marker format 준수
+- [ ] reopen budget enforcement (per (story_key, lane, iteration) ≤ 1)
+- [ ] decision-packet artifact yaml = decision-packet v2.1 schema 정확 준수
+
+11 checklist 1 건이라도 fail = user escalation. 5 packet 모두 통과 후 = failure-driven only.
 
 ## 5. 검증 (Acceptance Criteria — ADR-019 §5.5 SSOT mirror)
 
@@ -213,6 +259,16 @@ Sonnet invocation 시작 후:
 본 metrics = Phase 2 subagent ROI 평가 input. 30 packet 미만 시 metrics partial record OK, 평가 보류.
 
 ## 6. Versioning
+
+### v2.1 (2026-05-02 — CFP-61 ADR-022)
+
+backward-compatible MINOR bump (ADR-008 SemVer additive):
+- `trigger` enum + `review-verdict`
+- `attempts[].outcome` + `packet_requires_review_reopen`
+- `review_lane_context` 신규 optional block (trigger=review-verdict 시 required)
+- First-5 review-verdict packet self-audit checklist (§4.3)
+
+v2.0 reader backward-compat 유지 (모르는 enum value + optional block 무시).
 
 ### v1.0 (2026-05-01 — CFP-57 ADR-018 carrier)
 

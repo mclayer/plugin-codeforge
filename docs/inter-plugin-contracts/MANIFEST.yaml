@@ -2,7 +2,7 @@
 # SSOT for kind:contract files completeness — referenced by ADR-010
 # Owner: codeforge wrapper repo. Updated when adding/removing kind:contract.
 # Scope: kind:contract files only. kind:registry files (comment-prefix-registry,
-# fix-event, label-registry, decision-packet [versions: v1 archived, v2 active]) are managed by check-doc-frontmatter.sh chain.
+# fix-event, label-registry, decision-packet [versions: v1 archived, v2.1 active]) are managed by check-doc-frontmatter.sh chain.
 contracts:
   - name: review_verdict
     canonical_repo: mclayer/plugin-codeforge-review
