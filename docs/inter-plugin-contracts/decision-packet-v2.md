@@ -33,7 +33,7 @@ CFP-59 (ADR-019) → CFP-61 (ADR-022) Sonnet decider auto-proceed system 의 dec
 ```yaml
 packet_id: <story_key>-<3-digit seq>     # globally unique, format CFP-NN-NNN
 content_hash: <sha256>                    # normalized options + context hash (decider_decision 제외)
-trigger: option-formulation | fix-root-cause | codex-ambiguity | brainstorming-constraint
+trigger: option-formulation | fix-root-cause | codex-ambiguity | brainstorming-constraint | review-verdict
 story_key: CFP-NN
 seq: 1                                    # Story 내 순번
 context:
@@ -65,7 +65,7 @@ attempts:                                 # retry / resume 시 append
     decider_response_received_at: <ISO8601>  # NEW v2 field — parseable response 회수 timestamp (AC-2 latency)
     notification_or_log_written_at: <ISO8601>  # NEW v2 field — user notification 또는 §12/packet log append (whichever first) timestamp (AC-2 latency)
     outcome: success | parse_failure | timeout | malformed
-              | repeated_identical | user_override | decider_suspended
+              | repeated_identical | user_override | decider_suspended | packet_requires_review_reopen
 authority_transfer:                       # quota/auth 실패 시
   occurred: bool
   final_decider: claude_sonnet | user     # v2 enum simplified (gemini / codex_legacy 제거)

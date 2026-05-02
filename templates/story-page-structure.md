@@ -145,7 +145,8 @@ Story 내 모든 substantive decision 의 Sonnet final pick 기록. per-Story ap
 - `override?`: PL pl_recommendation reduce binary != sonnet_final_status 시 yes. FIX_DISCRETIONARY → FIX 로 reduce 시 override 아님 (PL 도 issue 인지). PASS → FIX 또는 FIX → PASS 시 override.
 - `audit_result` enum 6: direct (override 없음) / sanity-PASS / sanity-FAIL / decider-suspended / user-escalation / **review-reopen** (CFP-61 NEW — packet_requires_review_reopen 발화 시).
 - Detailed packet artifact = `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` (full v2.1 schema, includes `decider_decision.model` field + `review_lane_context` when trigger=review-verdict).
-- 첫 5 packet scheduled self-audit (review-verdict trigger 포함 합산), 그 후 failure-driven only.
+- 첫 5 review-verdict trigger packet scheduled self-audit (schema 검증 + invariant 충족 + override rate baseline).
+  review-verdict trigger 한정 (option-formulation / fix-root-cause / codex-ambiguity / brainstorming-constraint trigger 별도 audit policy 적용 — ADR-019 §결정 7 그대로).
 
 Schema SSOT: [decision-packet-v2.1](../docs/inter-plugin-contracts/decision-packet-v2.md).
 

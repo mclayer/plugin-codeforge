@@ -115,24 +115,24 @@ Substantive choice trigger 발화 시 **Claude Sonnet (`claude-sonnet-4-6`)** = 
    ├── decision_state = pending_sonnet (or blocked_packet_incomplete if pl_recommendation=ESCALATE_PACKET_INCOMPLETE)
    └── return to Orchestrator
 2. Orchestrator: decision-packet-v2.1 작성 (trigger: review-verdict, review_lane_context populated, findings_hash verified)
-3. Orchestrator: Agent tool with model:sonnet 호출 → 응답 parse (Sonnet 응답 schema)
+3. Orchestrator: Agent tool with model:sonnet 호출 → 응답 parse (§4.5.3 Sonnet 응답 schema)
    ├── decision=PASS|FIX → sonnet_final_status 채움, decision_state=decided, step 4 로 진행
    ├── decision=PACKET_REQUIRES_REVIEW_REOPEN → decision_state=review_reopen_requested, ReviewPL 재 spawn (1 회 한도 per (story_key,lane,iteration))
-   └── timeout/malformed → decision_state=decider_timeout
+   └── timeout/malformed (Codex P1 #4) → decision_state=decider_timeout
        └── Story §9 / §10 append 차단. §12 row append (decider_pick=<none>, audit_result=user-escalation, attempts[].outcome=timeout|malformed)
 4. Orchestrator self-write (decision_state=decided 일 때만):
    ├── Story §9 append (lane iteration result) — append-only, never rolled back
    ├── GitHub Issue/PR comment ([<lane>-리뷰] / [보안-테스트] prefix) via mcp__github__add_issue_comment
    ├── PASS 시: gate:*-pass label + phase:* 다음 단계 전환 via mcp__github__issue_write
    └── Story §12 Sonnet Decision Log row append
-
-   **Partial-write policy**: 각 sub-step 별 idempotent retry (initial + 2 retry = 3 회 한도). 실패 시 `writes_completed.<field>=false` + `write_errors[]` populate, decision_state=write_partial. **any required write 가 retry 한도 후에도 false 잔존 시 user escalation**. Story §9 + §12 는 append-only — 이미 append 된 내용 rollback 안 함. 외부 복구 후 다음 spawn 사이클에 missing write 재시도 가능 (write_partial → write_complete 전환).
+   
+   **Partial-write policy (Codex P1 #5)**: 각 sub-step 별 idempotent retry (initial + 2 retry = 3 회 한도, Codex Round 2 gap fix). 실패 시 `writes_completed.<field>=false` + `write_errors[]` populate, decision_state=write_partial. **any required write 가 retry 한도 후에도 false 잔존 시 user escalation** (모든 required 가 아닌 1 건이라도 잔존 시 — Codex Round 2 gap fix wording 명확화). Story §9 + §12 는 append-only — 이미 append 된 내용 rollback 안 함. 외부 복구 후 다음 spawn 사이클에 missing write 재시도 가능 (write_partial → write_complete 전환).
 5. FIX 시 (sonnet_final_status=FIX):
    ├── Story §10 FIX Ledger append (decider: claude_sonnet, override marker if pl_recommendation != sonnet_final_status)
    ├── fix-ledger-sync.yml Action mirror (auto)
    ├── DeveloperPL + ArchitectPL parallel diagnosis spawn (CFP-19 R4)
-
-   **Spawn-failure policy**: §10 append 성공 + diagnosis spawn 실패 시 — §10 row 유지 (append-only), §12 append (audit_result=user-escalation, spawn_status=failed), 1 회 retry → second failure = user escalation. spawn 성공할 때까지 §10 row 는 "open FIX with no diagnosis" 상태로 visible.
+   
+   **Spawn-failure policy (Codex P1 #6)**: §10 append 성공 + diagnosis spawn 실패 시 — §10 row 유지 (append-only), §12 append (audit_result=user-escalation, spawn_status=failed), 1 회 retry → second failure = user escalation. spawn 성공할 때까지 §10 row 는 "open FIX with no diagnosis" 상태로 visible.
 ```
 
 **User escalation whitelist** (5 종): (d-intent) 사용자 의도 추정 / (e2) lane FIX max 3 / 운영 prerequisite 실패 / destructive action / denylist (보안 sensitive). 정의 SSOT = ADR-022 §결정 2.
@@ -338,7 +338,7 @@ codeforge core 가 외부 plugin과 통신할 때의 typed schema. wrapper repo 
 
 | Contract | Producer plugin | Files (wrapper sibling) |
 |---|---|---|
-| `review_verdict` | codeforge-review | review-verdict-v1.md (Archived) · review-verdict-v2.md (Active) |
+| `review_verdict` | codeforge-review | review-verdict-v1.md (Archived) · review-verdict-v2.md (Archived) · [review-verdict-v3.md](docs/inter-plugin-contracts/review-verdict-v3.md) (Active) |
 | `requirements_output` | codeforge-requirements | requirements-output-v1.md (Active) |
 | `design_output` | codeforge-design | design-output-v1.md (Archived) · design-output-v2.md (Active — §7.4 + §11 idempotency, CFP-46) |
 | `develop_output` | codeforge-develop | develop-output-v1.md (Active) |

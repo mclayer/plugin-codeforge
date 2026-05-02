@@ -23,7 +23,7 @@ related:
 
 최상위 Claude 세션(이하 **Orchestrator**)의 행동 SSOT. 사용자(Human)가 제공한 요구사항을 받아 **0 core 에이전트 (wrapper-only)** + 6 lane plugin (codeforge-{review,pmo,requirements,test,develop,design}) + role:dev roster를 조정하는 모든 규약을 담는다.
 
-**CFP-29 Phase 1 (BREAKING v0.17.0) 이후**: 5 review agent (Design/Code/SecurityTest PL + Claude/Codex worker)는 별도 plugin [codeforge-review](https://github.com/mclayer/plugin-codeforge-review)로 추출됨. Orchestrator는 본 playbook의 관점에서 이들을 **외부 plugin agent**로 spawn하며, 결과는 `review_verdict v2` typed contract ([`docs/inter-plugin-contracts/review-verdict-v2.md`](inter-plugin-contracts/review-verdict-v2.md))로 수령한다 (v1 은 CFP-D 시점 Archived — historical record).
+**CFP-29 Phase 1 (BREAKING v0.17.0) 이후**: 5 review agent (Design/Code/SecurityTest PL + Claude/Codex worker)는 별도 plugin [codeforge-review](https://github.com/mclayer/plugin-codeforge-review)로 추출됨. Orchestrator는 본 playbook의 관점에서 이들을 **외부 plugin agent**로 spawn하며, 결과는 `review_verdict v3` typed contract ([`docs/inter-plugin-contracts/review-verdict-v3.md`](inter-plugin-contracts/review-verdict-v3.md))로 수령한다 (v2 는 CFP-61 / ADR-022 시점 Archived, v1 은 CFP-D 시점 Archived — historical records).
 
 `CLAUDE.md`는 "무엇이 있는가(에이전트 목록·레인·권한 경계)"를 정의하고, 본 playbook은 "어떻게 움직이는가(생명주기·스폰·복원·에스컬레이션)"를 정의한다.
 
@@ -215,22 +215,24 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
                 ├── decision_state = pending_sonnet (or blocked_packet_incomplete if pl_recommendation=ESCALATE_PACKET_INCOMPLETE)
                 └── return to Orchestrator
              2. Orchestrator: decision-packet-v2.1 작성 (trigger: review-verdict, review_lane_context populated, findings_hash verified)
-             3. Orchestrator: Agent tool with model:sonnet 호출 → 응답 parse
+             3. Orchestrator: Agent tool with model:sonnet 호출 → 응답 parse (§4.5.3 Sonnet 응답 schema)
                 ├── decision=PASS|FIX → sonnet_final_status 채움, decision_state=decided, step 4 로 진행
                 ├── decision=PACKET_REQUIRES_REVIEW_REOPEN → decision_state=review_reopen_requested, ReviewPL 재 spawn (1 회 한도 per (story_key,lane,iteration))
-                └── timeout/malformed → decision_state=decider_timeout
+                └── timeout/malformed (Codex P1 #4) → decision_state=decider_timeout
                     └── Story §9 / §10 append 차단. §12 row append (decider_pick=<none>, audit_result=user-escalation, attempts[].outcome=timeout|malformed)
              4. Orchestrator self-write (decision_state=decided 일 때만):
                 ├── Story §9 append (lane iteration result) — append-only, never rolled back
-                ├── GitHub Issue/PR comment ([설계-리뷰] prefix) via mcp__github__add_issue_comment
-                ├── PASS 시: gate:design-review-pass label + phase:* 다음 단계 전환 via mcp__github__issue_write
+                ├── GitHub Issue/PR comment ([<lane>-리뷰] / [보안-테스트] prefix) via mcp__github__add_issue_comment
+                ├── PASS 시: gate:*-pass label + phase:* 다음 단계 전환 via mcp__github__issue_write
                 └── Story §12 Sonnet Decision Log row append
-                **Partial-write policy**: 각 sub-step 별 idempotent retry (initial + 2 retry = 3 회 한도). 실패 시 writes_completed.<field>=false + write_errors[] populate, decision_state=write_partial. any required write 가 retry 한도 후에도 false 잔존 시 user escalation. Story §9 + §12 는 append-only — 이미 append 된 내용 rollback 안 함.
+                
+                **Partial-write policy (Codex P1 #5)**: 각 sub-step 별 idempotent retry (initial + 2 retry = 3 회 한도, Codex Round 2 gap fix). 실패 시 `writes_completed.<field>=false` + `write_errors[]` populate, decision_state=write_partial. **any required write 가 retry 한도 후에도 false 잔존 시 user escalation** (모든 required 가 아닌 1 건이라도 잔존 시 — Codex Round 2 gap fix wording 명확화). Story §9 + §12 는 append-only — 이미 append 된 내용 rollback 안 함. 외부 복구 후 다음 spawn 사이클에 missing write 재시도 가능 (write_partial → write_complete 전환).
              5. FIX 시 (sonnet_final_status=FIX):
                 ├── Story §10 FIX Ledger append (decider: claude_sonnet, override marker if pl_recommendation != sonnet_final_status)
                 ├── fix-ledger-sync.yml Action mirror (auto)
                 └── DeveloperPL + ArchitectPL parallel diagnosis spawn (CFP-19 R4)
-                **Spawn-failure policy**: §10 append 성공 + diagnosis spawn 실패 시 — §10 row 유지 (append-only), §12 append (audit_result=user-escalation, spawn_status=failed), 1 회 retry → second failure = user escalation.
+                
+                **Spawn-failure policy (Codex P1 #6)**: §10 append 성공 + diagnosis spawn 실패 시 — §10 row 유지 (append-only), §12 append (audit_result=user-escalation, spawn_status=failed), 1 회 retry → second failure = user escalation. spawn 성공할 때까지 §10 row 는 "open FIX with no diagnosis" 상태로 visible.
                          → PASS 시 **2 트랙 병렬** (R7):
                             · Track A: Orchestrator post-Sonnet self-write (gate:design-review-pass 라벨 부착 + Phase 1 PR mergeable) → merge
                             · Track B: DeveloperPL spawn → Change Plan §5·§8 fetch + 첫 commit draft 준비 (PR open 보류)
