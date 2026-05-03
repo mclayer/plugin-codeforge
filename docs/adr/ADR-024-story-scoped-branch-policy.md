@@ -110,3 +110,21 @@ gh api -X PUT repos/mclayer/plugin-codeforge/branches/main/protection \
 ```
 
 bypass 가능 admin = mccho8865 (mclayer org owner).
+
+## solo-dev governance gap 영구 해결 (CFP-72 — 2026-05-04)
+
+CFP-71 (PR #149) merge 시 발견 — solo-dev 환경 + `enforce_admins:true` + `require_code_owner_reviews:true` + `required_approving_review_count:1` = **본인 PR 본인 approve 불가** (GitHub policy: `Can not approve your own pull request`). CFP-66/70 검토 시 누락된 edge case. 매 PR 마다 `enforce_admins:false` + review requirement off 임시 bypass + 즉시 복원 = 1-2분 governance gap 누적.
+
+CFP-72 (CFP-72-001 옵션 A 사용자 결단) 가 영구 해결:
+
+- ✅ `required_approving_review_count: 0` — review 강제 해제
+- ✅ `require_code_owner_reviews: false` — CODEOWNERS 강제 해제
+- ✅ `enforce_admins: true` — 유지 (admin 도 4 required check 통과 의무)
+- ✅ `restrictions: {users:[], teams:[], apps:[]}` — 유지 (direct push 차단)
+- ✅ 4 required status check — 유지 (phase-gate-mergeable / doc frontmatter / doc section / invariant-check)
+
+CODEOWNERS file 자체는 **유지** — auto review request 발생 = 도덕적 governance (PR open 시 architects team 자동 통보, merge 강제 요건 없음).
+
+**가정 변경 시 재검토 의무**: contributor 추가 (외부 PR 가능성 발생) 시점에 `require_code_owner_reviews:true` + `required_approving_review_count:1` 복원 의무. 본 § = 재검토 trigger.
+
+CFP-72 본 PR 자체가 governance gap **마지막** 임시 bypass 사용 사례 — merge 후 영구 해결 적용 → 재발 0.
