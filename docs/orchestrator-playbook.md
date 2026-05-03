@@ -1275,6 +1275,54 @@ Story 중도 폐기 시: `_archive/<KEY>-aborted.md` 로 mv, 사용자 narration
 
 ---
 
+## 15. Stop event ledger 의무 (ADR-025 + stop-event-v1)
+
+ADR-025 §결정 2 의무 — Orchestrator 는 모든 stop 발화 시점에 `stop-event-v1` schema (`docs/inter-plugin-contracts/stop-event-v1.md`) 따라 ledger append.
+
+### 15.1 발화 시점 (4 카테고리)
+
+1. 사용자 직접 응답 대기 (clarifying question / confirm prompt)
+2. Sonnet decider 호출 직전 / 직후 의사결정 보고
+3. Lane transition 또는 PR merge 직전 confirm 요청
+4. User Override 발생 (Sonnet pick 후 사용자 다른 결정)
+
+### 15.2 Reason class 분류 의무
+
+매 stop 발화 시 다음 7 종 중 1 종 분류:
+
+| reason_class | 발화 정당화 | ADR-025 status |
+|---|---|---|
+| `intent_ambiguity` | 사용자 의도 추정 (d-intent whitelist) | ✅ 정당 |
+| `lane_fix_max` | lane FIX max 3 도달 (e2 whitelist) | ✅ 정당 |
+| `prereq_failure` | 운영 prerequisite 실패 (whitelist) | ✅ 정당 |
+| `destructive_action` | git force / DB drop / file delete (whitelist) | ✅ 정당 |
+| `denylist_security` | 보안 sensitive (whitelist) | ✅ 정당 |
+| `user_override` | Sonnet pick 후 사용자 다른 결정 (ADR-022 §결정 1 hierarchy) | ✅ 정당 (User authority) |
+| `policy_violation` | 위 6 종 미해당 stop | ❌ defect (PMOAgent retro 분석 대상) |
+
+### 15.3 Append target
+
+- 본 plugin (codeforge family) = `<internal-docs>/<plugin-folder>/stop-events.jsonl`
+- consumer (overlay) = `<consumer-repo>/.codeforge/stop-events.jsonl`
+
+### 15.4 Write 의무
+
+- passive write only (새로운 user prompt 추가 금지 — Codex Cat 6 finding 3 paradox 차단)
+- summary sanitize (PII / credential / token / 절대경로 제거)
+- append-only JSONL (rollback 안 함)
+
+### 15.5 Read 시점
+
+PMOAgent 가 sprint retro 또는 30+ event 누적 시 `retros/<sprint>.md` "Stop event analysis" section 작성 의무. ADR-022 Phase 2 transition gate input.
+
+### 15.6 Boundary
+
+- ✅ wrapper Orchestrator passive write
+- ❌ enforcement hook / refusal logic (Phase 2 ROI 평가 후, 별도 CFP)
+- ❌ lane plugin self-emit (S3, 후속 CFP)
+
+---
+
 ## 부록 A. 관련 문서
 
 - `CLAUDE.md` — 에이전트 목록·레인·권한·GitHub Workflow·ADR 규약 ("무엇")

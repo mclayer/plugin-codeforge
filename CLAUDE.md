@@ -347,13 +347,14 @@ codeforge core 가 외부 plugin과 통신할 때의 typed schema. wrapper repo 
 
 각 wrapper sibling 은 lane plugin canonical 의 verbatim mirror + "**상위 SSOT 위치**" 섹션. canonical 변경 시 wrapper sibling sync PR 후속 의무 ([ADR-010](docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md)).
 
-### kind:registry (cross-cutting protocol, 3 file)
+### kind:registry (cross-cutting protocol, 4 file)
 
 wrapper-owned. 본 lint scope 밖 — `check-doc-frontmatter.sh` + `check-doc-section-schema.sh` 가 검증.
 
 - [comment-prefix-registry-v1.md](docs/inter-plugin-contracts/comment-prefix-registry-v1.md) — 11 phase prefix taxonomy
 - [fix-event-v1.md](docs/inter-plugin-contracts/fix-event-v1.md) — Story §10 FIX Ledger writer monopoly
 - [label-registry-v1.md](docs/inter-plugin-contracts/label-registry-v1.md) — phase/gate/fix label taxonomy
+- [stop-event-v1.md](docs/inter-plugin-contracts/stop-event-v1.md) — wrapper-owned passive stop ledger (ADR-025, CFP-73)
 
 ### Versioning + Write boundary
 
