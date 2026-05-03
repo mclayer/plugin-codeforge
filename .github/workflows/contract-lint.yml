@@ -33,7 +33,9 @@ jobs:
       - run: pip install pyyaml
       - name: Run check-inter-plugin-drift.sh
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # CFP-71 / ADR-011 amendment: lane plugin private repo cross-repo read 전용 PAT.
+          # secrets.GITHUB_TOKEN 은 wrapper repo scope 만 — 6 lane plugin contents fetch 불가.
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
         run: bash scripts/check-inter-plugin-drift.sh
 
   comment-prefix-registry:
