@@ -132,7 +132,7 @@ Change Plan §8:
 ## 관련 파일
 
 - 본 ADR
-- [CFP-47 spec](../superpowers/specs/2026-04-30-cfp-47-stateful-test-category-design.md) (internal-docs)
+- [CFP-47 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-30-cfp-47-stateful-test-category-design.md) (internal-docs)
 - [ADR-014](ADR-014-operational-risk-ssot-distribution.md) — CFP-46 design-side 짝
 - [ADR-008](ADR-008-inter-plugin-contract-versioning.md) — additive minor 룰
 - [ADR-010](ADR-010-inter-plugin-contract-sibling-sync.md) — in-place sibling sync

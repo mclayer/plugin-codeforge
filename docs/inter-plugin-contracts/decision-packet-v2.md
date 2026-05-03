@@ -157,7 +157,7 @@ review_lane_context:
 - source_packet_ref.content_sha256 = review-verdict-v3 yaml 의 SHA-256
 - github_issue_or_pr_ref populated 시점 = Phase 1 PR / Phase 2 PR open 후 review iteration 진행 중. PR open 전 (요구사항 / 설계 lane) absent.
 
-## 4. 영향 / 라이프사이클
+## 4. 변경 규칙 (영향 / 라이프사이클)
 
 ### 4.1 라이프사이클
 

@@ -113,7 +113,7 @@ codeforge core (wrapper-only, agent 0개)
 ## 관련 파일
 
 - 본 ADR
-- [CFP-31 parent design](../superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md)
+- [CFP-31 parent design](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md)
 - [CFP-32 ~ CFP-40 CHANGELOG entries](../../CHANGELOG.md)
-- [docs/retros/2026-04-29-zeta-arc-completion.md](../retros/2026-04-29-zeta-arc-completion.md) — ζ arc 종합 회고
+- [docs/retros/2026-04-29-zeta-arc-completion.md](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/retros/2026-04-29-zeta-arc-completion.md) — ζ arc 종합 회고
 - [ADR-008](ADR-008-inter-plugin-contract-versioning.md) — Inter-plugin Contract Versioning (ζ arc 의존성)

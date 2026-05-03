@@ -1,5 +1,5 @@
 ---
-adr: ADR-021
+adr_number: 21
 title: Phase-gap measurable signal — debut-audit 카테고리 #2 backing
 date: 2026-05-02
 status: Accepted
@@ -10,6 +10,10 @@ superseded_by: null
 ---
 
 # ADR-021: Phase-gap measurable signal — debut-audit 카테고리 #2 backing
+
+## 상태
+
+Accepted (2026-05-02)
 
 ## 컨텍스트
 

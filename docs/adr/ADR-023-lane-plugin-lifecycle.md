@@ -1,5 +1,5 @@
 ---
-adr: ADR-023
+adr_number: 23
 title: Lane plugin lifecycle — add / deprecate / rename governance
 date: 2026-05-02
 status: Accepted
@@ -10,6 +10,10 @@ superseded_by: null
 ---
 
 # ADR-023: Lane plugin lifecycle — add / deprecate / rename governance
+
+## 상태
+
+Accepted (2026-05-02)
 
 ## 컨텍스트
 

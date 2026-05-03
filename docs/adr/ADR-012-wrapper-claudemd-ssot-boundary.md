@@ -128,7 +128,7 @@ codeforge wrapper CLAUDE.md (377 lines)
 ## 관련 파일
 
 - 본 ADR
-- [CFP-44 spec](../superpowers/specs/2026-04-30-cfp-44-wrapper-claudemd-ssot-compression-design.md)
+- [CFP-44 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-30-cfp-44-wrapper-claudemd-ssot-compression-design.md)
 - CLAUDE.md (본 ADR 의 enforcement 대상)
 - [ADR-009 Wrapper-only Decomposition](ADR-009-wrapper-only-decomposition.md) — parent ζ arc 결정
 - [ADR-010 Inter-plugin Contract Sibling Sync](ADR-010-inter-plugin-contract-sibling-sync.md) — sibling cleanup arc
