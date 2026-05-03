@@ -84,7 +84,29 @@ CLAUDE.md 에 본 ADR-024 cross-ref 1줄 + consumer-guide.md §2e cross-ref. 두
 
 - `CLAUDE.md` — Story 작성 의무 섹션에 ADR-024 cross-ref 추가
 - `docs/consumer-guide.md` — §2e 와 cross-ref 분리 명시
-- GitHub branch protection (api operation, file 외부) — `restrictions:{users:[],teams:[],apps:[]}` 적용
-- 후속 Phase 2 CFP (TBD) — enforce_admins:true / Rulesets / naming / source-branch enforcement
+- GitHub branch protection (api operation, file 외부) — `restrictions:{users:[],teams:[],apps:[]}` (Phase 1) + **`enforce_admins: true` (Phase 2 / CFP-70)** 적용
 - ADR-013 (dogfood-out policy) — Story 작성 의무 root principle
 - ADR-022 (Sonnet Decider) — 본 ADR 의 결정 protocol
+
+## Phase 2 partial impl (CFP-70 — 2026-05-03)
+
+CFP-70 (Sonnet decider CFP-70-001 pick=A + CFP-70-002 sub-pick=B minimal) 가 Phase 2 의 부분 적용:
+
+- ✅ **`enforce_admins: true`** — 적용. admin (mccho8865) 도 4 required check (phase-gate-mergeable / doc frontmatter / doc section / invariant-check) 모두 통과 의무.
+- ⏸️ **GitHub Rulesets** — solo-dev 가정 하 ROI 낮음. defer.
+- ⏸️ **Branch naming auto enforcement** — 정책 도덕적 의무 (본 ADR §결정 1) 충분. defer.
+- ⏸️ **PR source-branch non-main enforcement** — `restrictions:{users:[],teams:[],apps:[]}` 가 이미 covered. 추가 enforcement 불필요.
+
+Phase 2 sequence 해석 ("Rulesets 검증 → naming → enforcement 자동화 → enforce_admins:true"): 결정 4 의 "검증" = "evaluate + skip-if-not-needed". Solo-dev evaluation 결과 = skip — sequence 위반 아님.
+
+**가정 변경 시 재검토 의무**: contributor 추가 (외부 PR 가능성 발생) 시점에 Rulesets shadow + branch naming auto enforcement 별도 CFP 추진 의무. 본 ADR Phase 2 partial 명시 = 재검토 trigger.
+
+Rollback runbook (emergency only):
+
+```bash
+# enforce_admins:false 재전환 (admin bypass 복원)
+gh api -X PUT repos/mclayer/plugin-codeforge/branches/main/protection \
+  --input <(현재 protection JSON 단 enforce_admins:false)
+```
+
+bypass 가능 admin = mccho8865 (mclayer org owner).

@@ -369,7 +369,7 @@ Versioning + sibling sync SSOT: [ADR-008](docs/adr/ADR-008-inter-plugin-contract
 
 `templates/github-workflows/` 6종 fixture: `story-init.yml` · `phase-label-invariant.yml` · `story-section-1-immutable.yml` · `subissue-from-impl-manifest.yml` · `phase-gate-mergeable.yml` · `fix-ledger-sync.yml`. Issue Forms / branch protection / 버그 기록 등 상세 hierarchy + label 분류 + 코멘트 규칙 SSOT: [`docs/consumer-guide.md`](docs/consumer-guide.md) §1.3 + [`label-registry-v1`](docs/inter-plugin-contracts/label-registry-v1.md) + [`comment-prefix-registry-v1`](docs/inter-plugin-contracts/comment-prefix-registry-v1.md).
 
-**Branch protection**: main 브랜치 = `phase-gate-mergeable` required status check + CODEOWNERS review 필수 + `restrictions:{users:[],teams:[],apps:[]}` (direct push 차단, PR 경유만). CODEOWNERS template: [`templates/CODEOWNERS.template`](templates/CODEOWNERS.template). 정책 SSOT: [ADR-024](docs/adr/ADR-024-story-scoped-branch-policy.md). Phase 2 (`enforce_admins:true` / Rulesets / naming enforcement) 는 별도 후속 CFP — CI green 100% 달성 후.
+**Branch protection**: main 브랜치 = 4 required status check (phase-gate-mergeable + doc frontmatter + doc section + invariant-check) + CODEOWNERS review 필수 + `restrictions:{users:[],teams:[],apps:[]}` (direct push 차단) + **`enforce_admins: true` (admin 도 required check 통과 의무, CFP-70)**. CODEOWNERS template: [`templates/CODEOWNERS.template`](templates/CODEOWNERS.template). 정책 SSOT: [ADR-024](docs/adr/ADR-024-story-scoped-branch-policy.md). Rulesets / branch naming auto enforcement 는 solo-dev 가정 하 defer — contributor 추가 시 별도 CFP.
 
 ## Story 작성 의무 (CFP-45)
 
