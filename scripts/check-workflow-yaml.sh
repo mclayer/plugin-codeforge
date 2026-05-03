@@ -3,9 +3,9 @@
 #
 # 검사: 3 핵심 workflow의 yaml syntax + 핵심 regex 패턴 존재 + Python re-impl fixture 검증
 #
-# - .github/workflows/fix-ledger-sync.yml — §10 row parsing
-# - .github/workflows/subissue-from-impl-manifest.yml — §8.5 row parsing
-# - .github/workflows/phase-gate-mergeable.yml — Closes/Fixes/Resolves ref extraction
+# - templates/github-workflows/fix-ledger-sync.yml — §10 row parsing (consumer-only, CFP-67/68)
+# - templates/github-workflows/subissue-from-impl-manifest.yml — §8.5 row parsing (consumer-only, CFP-68)
+# - .github/workflows/phase-gate-mergeable.yml — Closes/Fixes/Resolves ref extraction (plugin-self)
 #
 # Codex round 2 조건 #3 직접 대응: encoding-sensitive regex CI 사전 lint.
 # Python re-impl 이 yaml 안 JS 와 drift 시 fixture가 catch (yaml 변경 후 Python 미동기 = fail).
@@ -20,15 +20,18 @@ errors = []
 
 # === 1. yaml 파싱 + 패턴 존재 검증 ===
 EXPECTED_PATTERNS = {
-    ".github/workflows/fix-ledger-sync.yml": [
+    # CFP-68 — consumer-only workflow 의 yaml content 검증 source 를 templates/ 로 align.
+    # plugin-codeforge 는 internal-docs Story binding 사용으로 .github/workflows/ self-app 부재 (CONSUMER_ONLY_WORKFLOWS exclusion).
+    "templates/github-workflows/fix-ledger-sync.yml": [
         r"##\\s\*10\\\.",
         r"\[FIX #",
         r"fix:.*-retry",
     ],
-    ".github/workflows/subissue-from-impl-manifest.yml": [
+    "templates/github-workflows/subissue-from-impl-manifest.yml": [
         r"##\\s\*8\\\.5",
         r"impl-manifest",
     ],
+    # plugin-self workflow — .github/workflows/ 에서 직접 검증.
     ".github/workflows/phase-gate-mergeable.yml": [
         r"Related\|Closes\|Fixes\|Resolves",
         r"phase:",
