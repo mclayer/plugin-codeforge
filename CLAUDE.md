@@ -369,11 +369,13 @@ Versioning + sibling sync SSOT: [ADR-008](docs/adr/ADR-008-inter-plugin-contract
 
 `templates/github-workflows/` 6종 fixture: `story-init.yml` · `phase-label-invariant.yml` · `story-section-1-immutable.yml` · `subissue-from-impl-manifest.yml` · `phase-gate-mergeable.yml` · `fix-ledger-sync.yml`. Issue Forms / branch protection / 버그 기록 등 상세 hierarchy + label 분류 + 코멘트 규칙 SSOT: [`docs/consumer-guide.md`](docs/consumer-guide.md) §1.3 + [`label-registry-v1`](docs/inter-plugin-contracts/label-registry-v1.md) + [`comment-prefix-registry-v1`](docs/inter-plugin-contracts/comment-prefix-registry-v1.md).
 
-**Branch protection**: main 브랜치 = `phase-gate-mergeable` required status check + CODEOWNERS review 필수. CODEOWNERS template: [`templates/CODEOWNERS.template`](templates/CODEOWNERS.template).
+**Branch protection**: main 브랜치 = `phase-gate-mergeable` required status check + CODEOWNERS review 필수 + `restrictions:{users:[],teams:[],apps:[]}` (direct push 차단, PR 경유만). CODEOWNERS template: [`templates/CODEOWNERS.template`](templates/CODEOWNERS.template). 정책 SSOT: [ADR-024](docs/adr/ADR-024-story-scoped-branch-policy.md). Phase 2 (`enforce_admins:true` / Rulesets / naming enforcement) 는 별도 후속 CFP — CI green 100% 달성 후.
 
 ## Story 작성 의무 (CFP-45)
 
 매 변경 시작 시 Orchestrator 가 cutoff 분류 → 강제/면제 결정. **모호 시 강제 측 분류**. Plugin 자체 + consumer 프로젝트 모두 적용. 정책 SSOT: [ADR-013](docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md). Story file 위치 = `mclayer/codeforge-internal-docs/<plugin-folder>/stories/<KEY>.md` (Plugin repo Issue body 와 bidirectional `story_uri`/`story_issues` binding). 새 Story = internal-docs `story.yml` Issue Form → `story-init.yml` Action 자동 생성 + Phase 1 PR open.
+
+**Branch governance** (CFP-66 / ADR-024): 모든 wrapper 변경 = Story-scoped feature branch (`cfp-NNN[-<slug>]`) + PR 경유 의무. main 직접 push 금지 — branch protection `restrictions:{users:[],teams:[],apps:[]}` 물리 차단. emergency hotfix 도 PR 경유 (no exception). 병렬 modification 지원 = Story 단위 독립 branch + 독립 PR. 정책 SSOT: [ADR-024](docs/adr/ADR-024-story-scoped-branch-policy.md). Consumer-side branch protection 권장은 별도 ([consumer-guide.md §2e](docs/consumer-guide.md)).
 
 ### 강제 대상 (Story file 작성 의무)
 - 신규 ADR 결정 / 기존 ADR 변경
