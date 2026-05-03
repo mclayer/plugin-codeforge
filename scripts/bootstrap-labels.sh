@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bootstrap-labels.sh — Plugin이 사용하는 GitHub label 20종 일괄 생성 (1회).
+# bootstrap-labels.sh — Plugin이 사용하는 GitHub label 29종 일괄 생성 (1회).
 #
 # CFP-11 end-to-end 실증에서 발견된 bootstrap drift — 신규 repo에 plugin 적용 시
 # type:* / phase:* / gate:* / fix:* / hotfix:* / audit:* 라벨 부재로 Issue Form
@@ -48,7 +48,7 @@ create_label() {
         || echo "  ! $name: create/edit 실패 (권한 문제 가능)"
 }
 
-[ $DRY_RUN -eq 0 ] && echo "Plugin label 20종 부트스트랩..."
+[ $DRY_RUN -eq 0 ] && echo "Plugin label 29종 부트스트랩..."
 
 # type:* (4종)
 create_label "type:epic"        "5319e7" "Epic (사용자 요구사항 1건 = Milestone + Issue)"
@@ -75,7 +75,19 @@ create_label "hotfix:minimal"     "ff9999" "Hotfix minimal"
 create_label "hotfix:critical"    "ff0000" "Hotfix critical"
 create_label "audit:post-hotfix"  "fef2c0" "Post-hotfix audit Story"
 
+# debut audit (2종, source) + category (7종, mutually exclusive) — CFP-60 / debut-audit-triage-v1
+# 색상 = label-registry-v1.md SSOT
+create_label "audit:debut-eval"            "fbca04" "데뷔 평가 (consumer 첫 사용 사례) 발견 사항"
+create_label "audit:from-mctrader-debut"   "fef2c0" "mctrader 데뷔 평가에서 발견된 codeforge gap (첫 사례)"
+create_label "category:lane-progression"   "0e8a16" "#1 — 7 lane 통과 / 막힘 (owner: PMOAgent)"
+create_label "category:agent-gap"          "d93f0b" "#2 — phase 별 gap + 과부하 (owner: ArchitectPL, ADR-021 R1-R4)"
+create_label "category:decision-table"     "1d76db" "#3 — 원인 판정 row 모호 / 신규 (owner: wrapper Orchestrator)"
+create_label "category:deputy-mandate"     "5319e7" "#4 — 6 deputy mandate 부족 (owner: ArchitectPL)"
+create_label "category:workflow-invariant" "bfd4f2" "#5 — GitHub Actions 강제 누락 (owner: wrapper Orchestrator)"
+create_label "category:template"           "c5def5" "#6 — Story / Change Plan / ADR 필드 부족 (owner: per-template)"
+create_label "category:contract-schema"    "bfdadc" "#7 — inter-plugin contract schema 부족 (owner: producer lane plugin)"
+
 if [ $DRY_RUN -eq 0 ]; then
     echo ""
-    echo "✓ 20 label 처리 완료. 'gh label list' 로 확인."
+    echo "✓ 29 label 처리 완료. 'gh label list' 로 확인."
 fi

@@ -108,7 +108,7 @@ mclayer/plugin-codeforge (wrapper, post-CFP-45)
 
 ## 관련 파일
 
-- [CFP-45 spec](../superpowers/specs/2026-04-30-cfp-45-dogfood-out-restructure-design.md) — parent
+- [CFP-45 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-30-cfp-45-dogfood-out-restructure-design.md) — parent
 - [ADR-009 Wrapper-only Decomposition](ADR-009-wrapper-only-decomposition.md) — ζ arc parent
 - [ADR-012 Wrapper CLAUDE.md SSOT Boundary](ADR-012-wrapper-claudemd-ssot-boundary.md) — direct predecessor
 - [mclayer/codeforge-internal-docs](https://github.com/mclayer/codeforge-internal-docs) — NEW dogfood monorepo

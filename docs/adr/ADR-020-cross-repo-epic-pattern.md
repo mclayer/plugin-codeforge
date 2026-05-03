@@ -1,5 +1,5 @@
 ---
-adr: ADR-020
+adr_number: 20
 title: Cross-repo Epic 패턴
 date: 2026-05-02
 status: Accepted
@@ -10,6 +10,10 @@ superseded_by: null
 ---
 
 # ADR-020: Cross-repo Epic 패턴
+
+## 상태
+
+Accepted (2026-05-02)
 
 ## 컨텍스트
 

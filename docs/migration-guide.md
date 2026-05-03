@@ -113,8 +113,8 @@ updated: 2026-04-24
 
 ### 5. 설계 SSOT
 
-- [`docs/superpowers/specs/2026-04-28-cfp-29-codeforge-review-extraction-design.md`](superpowers/specs/2026-04-28-cfp-29-codeforge-review-extraction-design.md) (CFP-29 design spec)
-- parent: [CFP-25](superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md) staged ε strategy
+- [`docs/superpowers/specs/2026-04-28-cfp-29-codeforge-review-extraction-design.md`](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-28-cfp-29-codeforge-review-extraction-design.md) (CFP-29 design spec)
+- parent: [CFP-25](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md) staged ε strategy
 
 ### 6. 향후 단계 안내
 
@@ -147,7 +147,7 @@ updated: 2026-04-24
 - CFP-29 (Phase 1): codeforge-review plugin 추출.
 
 ### 설계 SSOT
-- [`docs/superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md`](superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md) (CFP-25 design spec)
+- [`docs/superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md`](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md) (CFP-25 design spec)
 
 자세한 사항: 본 plan (CFP-27) 참조.
 
@@ -187,7 +187,7 @@ exit=0 이어야 통과. 16 assertion check.
 
 ### 설계 SSOT
 
-- [`docs/superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md`](superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md) (CFP-25 design spec)
+- [`docs/superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md`](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md) (CFP-25 design spec)
 
 자세한 사항: 본 spec §1·§5 참조.
 
