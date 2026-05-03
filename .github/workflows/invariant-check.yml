@@ -32,8 +32,22 @@ jobs:
         run: |
           set -u
           EXIT=0
+          # CFP-65 Phase 1 — consumer-only workflow 는 self-app parity 검증 제외.
+          # plugin-codeforge 는 internal-docs Story binding 사용으로 story-init.yml self-app 불필요.
+          CONSUMER_ONLY_WORKFLOWS=("story-init.yml")
           for f in templates/github-workflows/*.yml; do
             base=$(basename "$f")
+            skip_file=0
+            for skip in "${CONSUMER_ONLY_WORKFLOWS[@]}"; do
+              if [ "$base" = "$skip" ]; then
+                skip_file=1
+                break
+              fi
+            done
+            if [ $skip_file -eq 1 ]; then
+              echo "↷ Skip $base (consumer-only — CFP-65 exclusion)"
+              continue
+            fi
             target=".github/workflows/${base}"
             if [ ! -f "$target" ]; then
               echo "::error file=${target}::Missing — templates/github-workflows/${base}는 self-app copy 필요"
@@ -48,7 +62,7 @@ jobs:
             fi
           done
           if [ $EXIT -eq 0 ]; then
-            echo "✓ All $(ls templates/github-workflows/*.yml | wc -l | tr -d ' ') template workflows match self-app copies"
+            echo "✓ Workflow parity: templates/github-workflows/*.yml ↔ .github/workflows/ (consumer-only exclusion: ${CONSUMER_ONLY_WORKFLOWS[*]})"
           fi
           exit $EXIT
 
