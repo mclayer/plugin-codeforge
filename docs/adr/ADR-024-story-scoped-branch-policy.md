@@ -1,0 +1,90 @@
+---
+adr_number: 24
+title: Story-scoped branch policy — main 직접 수정 금지 + Phase 2 enforcement deferred
+status: Accepted
+category: governance
+date: 2026-05-03
+related_files:
+  - CLAUDE.md
+  - docs/consumer-guide.md
+  - docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md
+  - docs/adr/ADR-022-sonnet-review-verdict-decider.md
+---
+
+# ADR-024: Story-scoped branch policy — main 직접 수정 금지 + Phase 2 enforcement deferred
+
+## 상태
+
+Accepted (2026-05-03 — CFP-66 carrier)
+
+## 컨텍스트
+
+User directive 2026-05-03 (CFP-65 작업 중간):
+
+> "codeforge로 작업하는 모든 변경사항은 story 단위 이하에서 브랜치를 분리하여 작업 수행해 main 브랜치에 머지할 수 있도록 한다 main브랜치에 직접 수정하는 것을 금지한다. 이유는 스토리 단위 별로 병렬 수정이 가능하도록 하기 위함이다."
+
+현재 practice (2026-05-02 ~ 03 dogfood 운영):
+- CFP-63 / CFP-64 / CFP-65 모두 feature branch + PR 경유 — 행동상 직접 push 사례 없음
+- main branch protection 설정: `enforce_admins: false`, `restrictions: null` — admin (mccho8865) 가 main 직접 push 가능, 단 운영 중 직접 push 미사용
+
+Gap: 행동상 충족 / policy enforcement 미완. solo-dev 가 우연히 main commit 하거나 emergency hotfix 명목으로 직접 push 시 governance 부재.
+
+추가 제약 (Sonnet decider CFP-66-001 검토):
+- 6+ pre-existing CI fail 존재 (inter-plugin-drift / workflow yaml regex 등) — `enforce_admins:true` 즉시 적용 시 ANY PR merge 차단 (deadlock).
+- consumer 측 branch policy 권장 (consumer-guide.md §2e) 와 wrapper repo 자체 policy 분리 필요 — 두 scope 가 혼재 시 governance 모호.
+
+## 결정
+
+### 결정 1: Story-scoped feature branch + PR 경유 의무
+
+모든 wrapper 변경 (codeforge family 자체 dogfood 작업 포함) = Story-scoped feature branch + PR 경유. main 직접 push 금지 — 정책 + 물리 강제.
+
+권장 branch naming (강제는 Phase 2):
+- `cfp-NNN[-<slug>]` (가장 일반적)
+- `cfp-NNN-<phase>` (multi-phase Story 의 Phase 분리 시 — 예: `cfp-65-story-flow-phase1`)
+- 동등 naming 도 허용 — Phase 2 에서 enforcement (Option G) 결정.
+
+### 결정 2: main branch protection `restrictions:{users:[],teams:[],apps:[]}` 강제 (Phase 1)
+
+`gh api -X PUT repos/mclayer/plugin-codeforge/branches/main/protection` 의 `restrictions` field 를 `null` → `{users:[],teams:[],apps:[]}` 로 변경. 결과: main 에 직접 push 권한이 누구에게도 없음 — PR 경유 merge 만 허용.
+
+### 결정 3: `enforce_admins: false` Phase 1 유지 (deadlock 회피)
+
+`enforce_admins: true` 적용 시 admin 도 required status check fail bypass 불가. 현재 6+ pre-existing CI fail 환경에서 ANY PR merge 차단 = 즉시 deadlock. Phase 2 (CI green 100% 달성 후 별도 CFP) 까지 `enforce_admins: false` 유지 — admin (mccho8865) 가 PR-based admin merge 로 deferred CI fail bypass 가능.
+
+### 결정 4: Phase 2 enforcement 후속 CFP — CI green 전제
+
+Phase 2 transition 조건 = 6+ pre-existing CI fail 전부 해소. 별도 CFP 로 다음 항목 평가:
+- `enforce_admins: true` 전환
+- GitHub Rulesets (legacy branch protection 대체)
+- Story branch naming enforcement (e.g. `^cfp-\d+(-.*)?$` regex)
+- PR source-branch non-main enforcement (자동화 추가)
+
+Phase 2 도입 순서: Rulesets 검증 → naming rule 정착 → enforcement 자동화 → enforce_admins:true 최종 전환.
+
+### 결정 5: Consumer policy 분리 + cross-reference
+
+Wrapper repo (mclayer/plugin-codeforge) governance vs consumer-guide.md §2e (다운스트림 consumer 권장 settings) 분리. consumer 는 자기 repo 의 branch protection 을 자기 환경 (solo-dev / 1-2인 팀 / 다인 contributor) 에 맞게 설정 — wrapper governance 와 별도.
+
+CLAUDE.md 에 본 ADR-024 cross-ref 1줄 + consumer-guide.md §2e cross-ref. 두 SSOT 의 분리 명시.
+
+### 결정 6: Emergency hotfix 도 PR 경유 의무 (no exception)
+
+운영 장애 hotfix 도 본 정책 예외 없음. hotfix branch (e.g. `hotfix-<id>`) + PR 경유 — admin merge via PR API 로 신속 merge 가능. 직접 push 우회 금지.
+
+## 결과
+
+- 직접 push 물리 차단 → governance 강화, solo-dev 우연 commit 차단
+- PR-based admin merge 패턴 무영향 (`enforce_admins:false` 유지로 deferred CI fail bypass 가능)
+- 병렬 modification 지원: 여러 Story-scoped branch 동시 작업 + 독립 PR 가능 (개별 PR 의 CI 검증 / merge 순서 자유)
+- ADR governance trail — Phase 2 transition 의 명확한 trigger / 조건 추적 가능
+- consumer 측은 자기 환경에 맞는 별도 protection — wrapper 정책 강요 X
+
+## 관련 파일
+
+- `CLAUDE.md` — Story 작성 의무 섹션에 ADR-024 cross-ref 추가
+- `docs/consumer-guide.md` — §2e 와 cross-ref 분리 명시
+- GitHub branch protection (api operation, file 외부) — `restrictions:{users:[],teams:[],apps:[]}` 적용
+- 후속 Phase 2 CFP (TBD) — enforce_admins:true / Rulesets / naming / source-branch enforcement
+- ADR-013 (dogfood-out policy) — Story 작성 의무 root principle
+- ADR-022 (Sonnet Decider) — 본 ADR 의 결정 protocol
