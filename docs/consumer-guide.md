@@ -60,7 +60,7 @@ ls ~/.claude/plugins/cache/<marketplace>/codeforge/<version>/agents/
 │   ├── settings.json                   # SessionStart hook 등록
 │   └── settings.local.json             # (선택) 로컬 오버라이드
 ├── .github/
-│   ├── workflows/                      # Plugin 워크플로우 6종 consumer-distributable (수동 cp)
+│   ├── workflows/                      # Plugin 워크플로우 7종 consumer-distributable (수동 cp, CFP-94)
 │   ├── ISSUE_TEMPLATE/                 # Plugin Issue Forms 3종 (audit + bug + story) + config.yml
 │   ├── PULL_REQUEST_TEMPLATE.md        # Plugin PR template
 │   └── CODEOWNERS                      # architect/domain-expert team 매핑
@@ -107,9 +107,16 @@ chmod +x .claude/_overlay/run-tests.sh .claude/_overlay/run-perf.sh
 ### 2c. GitHub repo 셋업 (Plugin 권장 워크플로우 + Forms + CODEOWNERS)
 
 ```bash
-# Workflow 6개 복사 (consumer-distributable: phase-gate-mergeable + phase-label-invariant + story-init + story-section-1-immutable + fix-ledger-sync + subissue-from-impl-manifest)
+# Workflow 7개 복사 (consumer-distributable):
+#   phase-gate-mergeable + phase-label-invariant + story-init + story-section-1-immutable
+#   + fix-ledger-sync + subissue-from-impl-manifest + story-section-schema (CFP-94)
 mkdir -p .github/workflows
 cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/*.yml .github/workflows/
+
+# CFP-94: story-section-schema.yml 가 scripts/check-story-section-schema.sh 의존 — script 도 copy
+mkdir -p scripts
+cp ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-story-section-schema.sh scripts/
+chmod +x scripts/check-story-section-schema.sh
 
 # Issue Forms 3개 복사 (audit + bug + story)
 mkdir -p .github/ISSUE_TEMPLATE
@@ -130,9 +137,9 @@ cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/CODEOWNERS.template .github/CODEOWN
 
 #### Path A (default — full distribution) vs Path B (degraded distribution) (CFP-86)
 
-mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/issues/181) P1-6 finding: 위 6 workflow 모두 복사가 default 이나 (Path A), 실제 mctrader-hub 는 **2 workflow 만 보유 (Path B)**. SSOT 미문서화 → invariant 보장 기대치 mismatch.
+mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/issues/181) P1-6 finding: 위 7 workflow (CFP-94 후 — 6 → 7) 모두 복사가 default 이나 (Path A), 실제 mctrader-hub 는 **2 workflow 만 보유 (Path B)**. SSOT 미문서화 → invariant 보장 기대치 mismatch.
 
-**Path A (full)**: 6 workflow 모두 보유 — 모든 invariant 자동 enforce.
+**Path A (full)**: 7 workflow 모두 보유 — 모든 invariant 자동 enforce.
 **Path B (degraded)**: 일부 workflow 부재 — manual compensating check 의무.
 
 ##### Workflow 별 invariant 영향
@@ -145,6 +152,7 @@ mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/is
 | `story-section-1-immutable.yml` | §1 변조 금지 | PR diff 의 `## §1` line range manual review |
 | `fix-ledger-sync.yml` | §10 row append → Issue label mirror + comment | §10 row 추가 commit 시 수동 `[FIX #N]` Issue comment + `fix:<lane>-retry` label 부착 |
 | `subissue-from-impl-manifest.yml` | §8.5 Impl Manifest → file-level sub-issue 자동 생성 | §8.5 commit 후 수동 `gh sub-issue create` per file |
+| `story-section-schema.yml` (CFP-94) | Story file §1-§13 schema lint (Implementation strict + Epic condensed) | PR review 시 수동 section schema 검증 또는 `bash scripts/check-story-section-schema.sh` 로컬 실행 |
 
 **mctrader-hub 현재 상태 (2026-05-04 audit)**:
 - ✅ `phase-gate-mergeable.yml`
