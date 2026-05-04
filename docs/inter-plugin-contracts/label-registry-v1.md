@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: label
-version: "1.1"
+version: "1.2"
 status: Active
 authors:
   - Claude (CFP-32 codification — bootstrap-labels.sh 추출 + ζ arc owner 매핑)
@@ -199,6 +199,14 @@ labels:
     description: "mctrader 데뷔 평가에서 발견된 codeforge gap (첫 사례)"
     single_active: false
     attach_owner_plugin: "wrapper Orchestrator (CFP-60 mctrader 데뷔 평가)"
+
+  # audit:spec-amendment (1종) — CFP-87 / playbook §6.8 introduced (v1.2 minor bump, CFP-88)
+  - name: audit:spec-amendment
+    category: audit
+    color: "fbca04"
+    description: "Mid-implementation spec doc 수정 PR (Codex push-back / 사용자 mid-impl clarification / spec drift 발견 시)"
+    single_active: false
+    attach_owner_plugin: "wrapper Orchestrator (playbook §6.8 spec amendment loop)"
 
   # category:* (7종) — CFP-60 / debut-audit-triage-v1 introduced (v1.1 minor bump)
   - name: category:lane-progression
