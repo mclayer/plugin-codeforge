@@ -65,11 +65,20 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 모든 Story는 **full 7 레인** 통과. Fast-path 없음 (단 **Hotfix 경로** 2종은 예외 — 운영 장애 대응, 사후 감사 의무. 상세는 [`docs/orchestrator-playbook.md`](docs/orchestrator-playbook.md) §10 참조).
 
-**1 Story = 2 PRs**:
+**Story flow (default — single-repo Story 또는 Epic 외 1 child Story)**: **1 Story = 2 PRs**
 - **Phase 1 PR** (요구사항 + 설계 + 설계리뷰 lane): `docs/stories/<KEY>.md` §1-7 + `docs/change-plans/<slug>.md` + `docs/adr/ADR-NNN-<slug>.md`
 - **Phase 2 PR** (구현 + 구현리뷰 + 구현테스트 + 보안테스트 lane): `src/**` + `tests/**` + `docs/stories/<KEY>.md` §8-11 append
 
-**Cross-repo Epic** (mctrader 등 multi-repo consumer): parent Epic Issue + child Story per repo + `epic_dependencies` graph + Change Plan §3 contract pin. 상세 [ADR-020](docs/adr/ADR-020-cross-repo-epic-pattern.md), playbook §3.
+**Epic flow (cross-repo 또는 multi-Story Epic)** — **1 Epic = Phase 1 doc PR + N implementation PRs + Phase N+1 close PR** (N=3~5 일반적, mctrader 데뷔 audit Issue #181 P1-3, CFP-82):
+- **Phase 1 PR** (hub / owner repo): Epic doc + N child Story stub + Codex 7-area review aggregate
+- **Phase 2 ~ Phase N PR**: 각 child Story 의 implementation. **Joint-phase narrow form 허용** (단일 child Story 가 1 phase 안에서 multi-repo joint PR 보유 가능, ADR-020 Amendment 1 §결정 9 — 예: MCT-26 = data#1 + engine#1)
+- **Phase N+1 close PR** (hub / owner repo): `EPIC-RESULTS-<KEY>.md` artifact + Epic Issue close
+- Mid-Phase **spec amendment PR** 가능 (Codex push-back 발견 시 — 예: mctrader-hub PR #72)
+
+**Cross-repo Epic** (mctrader 등 multi-repo consumer) — **Centralization mode 의무 결정** (ADR-020 Amendment 1 / CFP-81):
+- **Mode A (repo-local, ADR-020 v1 default)**: 각 작업 repo 가 자체 Story
+- **Mode B (hub-centralized)**: 1 hub repo 가 모든 child Story (mctrader 패턴)
+- parent Epic Issue + child Story (per mode) + `epic_dependencies` graph + Change Plan §3 contract pin + Mixed-mode 금지. 상세 [ADR-020](docs/adr/ADR-020-cross-repo-epic-pattern.md), playbook §3.4.
 
 **레인 진입 전 Preflight 체크 의무** — 각 레인 진입 직전 Orchestrator가 3개 체크 수행 (phase 라벨 정합 / docs file 선행 섹션 / 외부 의존성 가용). FAIL 시 block+report. 상세는 playbook §3B.
 
