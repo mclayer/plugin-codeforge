@@ -365,7 +365,7 @@ producer merge 후 consumer break 시:
 #### Cross-references
 - [ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md) + Amendment 1 (cross-repo Epic 패턴 SSOT — Mode A/B + Joint-phase narrow form)
 - [requirements-output-v1.1](../docs/inter-plugin-contracts/requirements-output-v1.md) (Story §1 epic_dependencies field schema)
-- [`consumer-guide.md`](consumer-guide.md) §3.4 (consumer 측 mode 선택 안내)
+- [`consumer-guide.md`](consumer-guide.md) §5.1 (consumer 측 mode 선택 안내 — Mode A/B 비교표)
 
 ---
 

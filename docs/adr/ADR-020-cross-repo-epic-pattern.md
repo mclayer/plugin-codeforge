@@ -150,9 +150,27 @@ cross-repo Epic 진행 시 child Story file 위치 = 두 모드 중 consumer 가
 | Implementation repo 가 ≤ 2개이며 자체 doc 책임 보유 | Mode A |
 | Plugin family 자체 dogfood (CFP-* Story) — internal-docs SSOT | (별도 ADR-013 dogfood-out 우선, 본 결정 미적용) |
 
+**조건 충돌 시 우선순위** (예: doc-only hub 존재 + impl repo ≤ 2개):
+1. **Mode B 우선** — Doc-only hub 존재 자체가 governance ownership 명시. Impl repo 수와 무관하게 hub 가 single truth 역할 수행.
+2. Mode B 채택해도 impl repo 가 자체 doc 책임 추가 보유 시 ADR-013 dogfood-out 정책 별도 검토 (codeforge family 만 적용).
+
 #### Mixed-mode 금지
 
 단일 Epic 내 mode 혼합 (일부 child Story = Mode A + 일부 = Mode B) **불허**. Epic owner repo 결정 시 함께 mode 결정 + 모든 child 일관 적용. 다른 Epic 은 다른 mode 가능.
+
+#### Mid-Epic 신규 repo 추가 시 처리 (Codex P1 #2 응답)
+
+Epic 진행 중 (Phase 1 PR merged 후) 신규 repo 가 child Story scope 에 추가될 경우:
+
+- **기존 mode 유지 의무** (default): Epic 가 Mode B 면 신규 repo 도 hub 에 Story file 작성 (자체 `docs/stories/` 신설 X). Epic 가 Mode A 면 신규 repo 자체 `docs/stories/` 신설.
+- **Mode 전환 절차**: 기존 mode 와 양립 불가능한 경우 (예: 신규 repo 가 자체 governance 책임 보유 의무) — 다음 중 택 1, **consumer 명시 ESCALATE 의무**:
+  1. **Epic 분할** (권장): 기존 mode child Story 까지 close + 신규 repo 포함 신규 Epic open (다른 mode)
+  2. **Epic 재시작**: Epic Issue close + 신규 mode 로 새 Epic — 기존 진행 분 archive
+- Default = mode 유지. ESCALATE = consumer 가 mid-Epic restructure 명시 결정.
+
+#### §결정 8 ↔ §결정 7 backward compat 검증 (Codex P2 응답)
+
+§결정 7 ("단일 repo Story 적용 룰" — `epic_dependencies: []` + `epic_owner_repo: null`) 은 **Mode A의 single-Story sub-case** 에 해당. §결정 8 도입으로 변경 없음 — 단일 repo Story 는 amendment 1 영향 0 (Mode 결정 trivial = `null`).
 
 ### 결정 9: §거부된 대안 A — Joint-phase narrow form 허용
 
@@ -166,9 +184,24 @@ cross-repo Epic 진행 시 child Story file 위치 = 두 모드 중 consumer 가
   - PR merge 순서는 dependency graph topological order
 - mctrader MCT-26 (data#1 + engine#1 joint Phase 2) = 본 narrow form 사용 사례
 
+#### Narrow form vs Full form — §대안 A 거부 사유 ("PR scope 분리 어려움") 의 재해석 (Codex P1 #3 응답)
+
+§대안 A v1 거부 사유 "PR scope 분리 어려움" 은 **monolithic Story** 가정 하 정확:
+- 1 Story 가 **wide scope** (예: 5 repo 의 모든 변경 1 Story 에 cluster) → reviewer 가 어떤 PR 를 어떤 lane 으로 review 할지 모호 → lane progression 추적 불가
+- PR scope = "이 PR 가 어떤 Story 의 어떤 phase 를 진행하나" — 모호하면 lane gate 적용 못함
+
+**Narrow form 은 본 거부 사유 해소**:
+- 1 Story = 단일 logical scope (foundation / kill-switch / dashboard 등 single concern)
+- Joint Phase N PR 들 = **모두 동일 Story key + 동일 phase 라벨** — lane gate 동일 적용
+- topological merge order = dependency graph 명시 → reviewer 가 merge 순서 deterministic
+- PR scope 모호성 = 0 (각 PR 가 독립 review 가능, joint = 단일 Story 의 multi-repo joint 임을 명시)
+
+따라서 narrow form (single-scope Story 의 multi-repo PR) 은 §대안 A 거부 사유와 양립.
+
 §거부된 대안 A **full form** ("Story 가 모든 repo 의 PR 1개씩 가지는 monolith Story") = 여전히 거부:
 - Wide-scope Story 는 child Story 분할 권장 (예: MCT-25 → MCT-26~30 5 child 분할)
 - 1 Story 안의 PR 이 5+ repo = lane progression 추적 불가
+- 본 거부 = full form / wide-scope 만 적용. narrow form / single-scope 은 결정 9 로 허용.
 
 ### 결정 10: 영향 받는 doc 갱신
 
