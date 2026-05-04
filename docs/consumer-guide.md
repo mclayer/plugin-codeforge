@@ -128,6 +128,45 @@ cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/CODEOWNERS.template .github/CODEOWN
 # editor에서 @ORG/ARCHITECT_TEAM, @ORG/DOMAIN_EXPERT_TEAM을 자기 organization team으로 치환
 ```
 
+#### Path A (default — full distribution) vs Path B (degraded distribution) (CFP-86)
+
+mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/issues/181) P1-6 finding: 위 6 workflow 모두 복사가 default 이나 (Path A), 실제 mctrader-hub 는 **2 workflow 만 보유 (Path B)**. SSOT 미문서화 → invariant 보장 기대치 mismatch.
+
+**Path A (full)**: 6 workflow 모두 보유 — 모든 invariant 자동 enforce.
+**Path B (degraded)**: 일부 workflow 부재 — manual compensating check 의무.
+
+##### Workflow 별 invariant 영향
+
+| Workflow | 부재 시 lost invariant | Manual compensating check (Path B) |
+|---|---|---|
+| `story-init.yml` | Issue Form → Story file + Phase 1 PR 자동 생성 | `gh issue create` 수동 + `docs/stories/<KEY>.md` 수동 작성 + Phase 1 PR 수동 open |
+| `phase-label-invariant.yml` | single-active phase label enforce | PR review 시 phase label 1개만 boolean check (script 또는 manual) |
+| `phase-gate-mergeable.yml` | phase gate ↔ PR mergeable status | PR merge 직전 phase 라벨 + gate 라벨 manual verify |
+| `story-section-1-immutable.yml` | §1 변조 금지 | PR diff 의 `## §1` line range manual review |
+| `fix-ledger-sync.yml` | §10 row append → Issue label mirror + comment | §10 row 추가 commit 시 수동 `[FIX #N]` Issue comment + `fix:<lane>-retry` label 부착 |
+| `subissue-from-impl-manifest.yml` | §8.5 Impl Manifest → file-level sub-issue 자동 생성 | §8.5 commit 후 수동 `gh sub-issue create` per file |
+
+**mctrader-hub 현재 상태 (2026-05-04 audit)**:
+- ✅ `phase-gate-mergeable.yml`
+- ✅ `phase-label-invariant.yml`
+- ❌ 4 workflow 부재 (Path B 운영 중) — 수동 compensating check 가 자율적
+
+##### Path A ↔ Path B cutover 절차
+
+**Path A → Path B (degrade)**:
+1. 부재할 workflow yml 명시 (PR description 에 reason)
+2. 본 §2c 표 의 manual compensating check 활성화
+3. consumer overlay `.claude/_overlay/project.yaml` 의 `workflow_distribution: full | degraded` field 갱신 (CFP-86 Phase 2 — 별도 follow-up CFP)
+
+**Path B → Path A (upgrade)**:
+1. `cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/<missing>.yml .github/workflows/`
+2. CI 가 신규 invariant 발견 시 backlog Story 로 변환 (예: 누락된 §10 row → Story 작성)
+3. `workflow_distribution` field = `full`
+
+##### git history audit signal
+
+mctrader-hub git log 에 `chore: codeforge consumer setup (Path B — degraded distribution)` commit 존재 (2026-04-25 시점). 본 CFP-86 = ex post SSOT 화 — 이미 emerge 한 패턴 명시.
+
 ### 2d. GitHub Labels 생성 (gh CLI 일괄)
 
 > **CFP-12 자동화** (권장): `bash scripts/bootstrap-labels.sh [<org>/<repo>]` — 아래 18 label을 idempotent로 일괄 생성. SessionStart hook의 `check-bootstrap.sh`가 부재 시 자동 안내.
