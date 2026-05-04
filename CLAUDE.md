@@ -201,6 +201,11 @@ ADR-018 (CFP-57 carrier — Gemini decider) + ADR-018 Amendment 1 (CFP-58 — So
 | **§8.5 Unbounded background accumulation** | 구현 | §7.4.4 rate limit / quota 정책 부재 또는 §8.5.1 worker queue bound 정의 부재 → 설계 |
 | **§8.5 Restart recovery loss** | 구현 | §7.4.5 env isolation 모델 부재 또는 §11.6 idempotency CONDITIONAL active 인데 spec 부재 → 설계 |
 | **§8.5 Idempotency replay failure (§11.6 active 시)** | 구현 | §11.6 idempotency invariant 정의 부재 (§11.6 active 인데 §8.5.3 cross-ref 깨짐) → 설계 |
+| **Real-funds 손실 (Live trade) — CONDITIONAL Live touching Story** | 구현 | §7.4 live exposure limit / §11 ledger invariant / first-trade cap 부재 시 → 설계 |
+| **Kill switch 자동 발동 실패 (CONDITIONAL Live touching Story)** | 구현 | §7.4 trigger condition (drawdown / max_exposure / rate_limit / KRW_drift) 부재 시 → 설계 |
+| **Kill switch manual override 실패 (CONDITIONAL Live touching Story)** | 구현 | operator-action-v1 schema / protocol 부재 시 → 설계 |
+| **Partial fill reconciliation 실패 (CONDITIONAL Live touching Story)** | 구현 | §11 partial fill invariant (8-state lifecycle drift / fee 정합 / cancel race) 부재 시 → 설계 |
+| **Fee handling drift (CONDITIONAL Live touching Story)** | 구현 | §11 fee accounting invariant (fee_actual ≠ fee_expected drift threshold) 부재 시 → 설계 |
 
 **P1 품질 local vs boundary 판정 기준**:
 - **local**: finding이 1개 파일 또는 1개 함수 범위에 한정, 설계 결정과 무관한 개별 구현 결함
