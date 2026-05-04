@@ -170,6 +170,30 @@ ADR-018 의 §12 "Gemini Decision Log" superseded by 본 §12 (CFP-59 / ADR-019)
 
 **§10 append-only resolution rule**: §10 row 는 append-only (CFP-32 monopoly). Iteration N FIX → iteration N+1 PASS 시점에 row N 이 mutate 되지 않음 (CFP-32 monopoly + CFP-61 §4.7.1 명시). 같은 cycle 내 PASS 회복은 §9 의 다음 iteration PASS row + phase/gate label transition 으로 외부 visible. RESET 마커는 별도 lane 의 cascading retry 때만 사용.
 
+### §13. Live Operational Discipline (CONDITIONAL — Live touching Story 만 의무)
+
+CONDITIONAL trigger: Story 가 **real funds / live exchange API / production credential / live order placement** 중 하나 이상 touching 시 본 §13 의무. Backtest/Paper-only Story = 미작성 (또는 `N/A — backtest/paper only` 명시).
+
+**필수 필드 11종**:
+
+| # | 필드 | 설명 | 예시 |
+|---|------|------|------|
+| 1 | Vault path | Secret 저장 위치 (per-exchange / per-account isolation) | `mctrader/live/bithumb/spot/main/{connect_key, secret_key}` |
+| 2 | Runtime injection | Secret 주입 방식 (영구 저장 금지) | `1Password CLI subprocess → process-local env (lifetime: process only)` |
+| 3 | Key permission | API key 권한 scope | `order:create + order:cancel + read; withdrawal:DISABLED` |
+| 4 | IP allowlist | 거래소 측 IP 제한 | `Bithumb: <발급 시점 IP>; CI/CD: 미허용` |
+| 5 | Withdrawal off proof | 출금 비활성 verify (screenshot / API response) | `Bithumb account settings — withdrawal disabled (2026-MM-DD)` |
+| 6 | First-trade cap | 실거래 첫 한도 (engine call site enforce) | `KRW 10,000 (~7-8 USD), 단일 round trip` |
+| 7 | Kill switch trigger | 자동 발동 조건 + manual override 절차 | `auto: drawdown / max_exposure / rate_limit / KRW_drift`<br>`manual: operator-action-v1 (UI/CLI)` |
+| 8 | Operator approval | 실거래 진입 승인 절차 | `--confirm-live + ADR-008 D4 3-condition AND` |
+| 9 | Reconciliation invariant | engine ↔ 거래소 ledger 정합 검증 | `KRW position drift < 1 KRW; partial fill 8-state lifecycle preserve; fee_actual ≠ fee_expected drift threshold` |
+| 10 | Runbook | 운영 절차 (first-trade / kill-switch / incident) link | `docs/runbooks/live-first-trade.md`, `kill-switch-trigger.md`, `incident-response-7step.md` |
+| 11 | Rollback | 비상 회복 경로 (real money 비가역 case 포함) | `kill switch trigger + open order cancel + key revoke + reconciliation`; 실 자금 손실 case = forward-only (rollback 불가) |
+
+**미작성 시 (Live touching 인데도)**: SecurityTest lane P0 차단 (review verdict FIX, 본 §13 누락 = 보안 설계 결함). DesignReview lane 도 §7 / §11 / §8.5 cross-ref 부재 시 P0 차단.
+
+**ADR cross-ref**: 본 §13 = ADR (consumer-side Live policy ADR — 예: mctrader ADR-012 Live Rollout Policy) 의 contract enforcement. Story-level §13 작성 시 해당 ADR cross-ref 의무.
+
 ---
 
 ## 단계별 갱신 책임
@@ -192,6 +216,7 @@ ADR-018 의 §12 "Gemini Decision Log" superseded by 본 §12 (CFP-59 / ADR-019)
 | FIX 루프 | §10 append | **Orchestrator 단독** (CFP-32 fix-event-v1 monopoly, fix-ledger-sync.yml Action이 자동 mirror+label) |
 | Story 완료 회고 (PMOAgent) | §11 회고 블록 | PMOAgent (codeforge-pmo direct Edit) |
 | Sonnet decision 발생 시 (substantive trigger 4 + review-verdict trigger 5) | §12 append + `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` 생성 | Orchestrator (CFP-59 / CFP-61 / ADR-022, decision-packet-v2.1) |
+| Live touching Story 의 §13 (CONDITIONAL) | §13 11 필드 (vault / injection / permission / allowlist / withdrawal-off / first-trade cap / kill switch / operator approval / reconciliation / runbook / rollback) | ArchitectAgent (chief author, §7 / §11 / §8.5 와 동시 작성) |
 | Phase 2 PR merged (최종) | Issue auto-close (PR body의 `Closes #N`) | (자동) |
 
 ---
