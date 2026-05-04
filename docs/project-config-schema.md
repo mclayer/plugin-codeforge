@@ -74,6 +74,16 @@ story_cutoff:
   additional_exempt_categories:     # 각 항목 1줄 자유 텍스트 면제 사유 카테고리
     - <string>                      # e.g. "auto-generated migration files"
     - <string>                      # e.g. "vendored library updates (security 영향 없음)"
+
+# [선택] Workflow distribution mode (CFP-86 / consumer-guide §2c, CFP-89)
+# default = "full" (Path A — 6 workflow 모두 보유)
+# "degraded" (Path B) = 일부 workflow 부재, manual compensating check 의무
+# 부재한 workflow 명시 의무 (degraded 시).
+workflow_distribution:
+  mode: full | degraded             # 기본값: full
+  missing_workflows:                # mode=degraded 시 의무, mode=full 시 비어있음
+    - <string>                      # e.g. "story-init.yml"
+    - <string>                      # e.g. "fix-ledger-sync.yml"
 ```
 
 ## 3. 예시 (webapp)
@@ -102,6 +112,22 @@ labels:
     - ui
     - data
     - infra
+
+workflow_distribution:
+  mode: full
+  missing_workflows: []
+```
+
+**Path B (degraded) 예시 — mctrader-hub 시점**:
+
+```yaml
+workflow_distribution:
+  mode: degraded
+  missing_workflows:
+    - story-init.yml
+    - story-section-1-immutable.yml
+    - fix-ledger-sync.yml
+    - subissue-from-impl-manifest.yml
 ```
 
 ## 4. 에이전트 접근 규칙
