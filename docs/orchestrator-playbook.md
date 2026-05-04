@@ -668,6 +668,52 @@ ReviewPL verdict packet의 `mechanical_category` 필드 (typo / broken-link / mi
 
 **제약**: 보안 lane의 injection / credential / CVE / trust-boundary 카테고리는 항상 `mechanical_category = none`이라 fast-path 자격 없음 (codeforge-review repo의 `templates/review-pl-base.md` §3 R11 SSOT).
 
+### 6.8 Spec amendment loop (CFP-87)
+
+mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/issues/181) P1-7 finding (Opus 자체 발견): mctrader-hub PR [#72](https://github.com/mclayer/mctrader-hub/pull/72) (`[MCT-50/51] Spec amendments — Codex push-back 6건`) — Phase 3 implementation 진행 중 Codex review 가 발견한 push-back 6건 → spec doc 수정 PR (Story file `MCT-50.md` + `MCT-51.md` amendment) 으로 캡처 후 implementation 재개. 매우 가치 있는 패턴이나 codeforge SSOT 미정의 — 본 §6.8 codify.
+
+#### 6.8.1 Trigger
+
+다음 중 하나 발생 시 Spec amendment loop 진입 (FIX 루프 §6.1-§6.7 와 별도):
+
+- **Codex push-back during implementation**: Phase N implementation (Phase 2~N PR 작업) 중 Codex review 또는 자율 검토 시 spec gap 발견 (Story file §1-§7 unspecified / inconsistent)
+- **사용자 mid-implementation requirement clarification**: 구현 중 사용자가 새 AC 제시 또는 기존 §1 의미 재해석
+- **Spec drift 발견**: implementation 진행 중 §7 설계 결정과 코드 사이 drift 발견 (코드 측 fix 만으로 해결 안 되는 경우)
+
+§6.1-§6.7 FIX 루프 와 구분:
+- FIX 루프 = review verdict FAIL → 코드 / 설계 변경
+- Spec amendment = review verdict 무관 → spec doc (Story file / Change Plan / ADR) 변경
+
+#### 6.8.2 Output
+
+`[<KEY>] Spec amendment — <reason>` PR (1+ Story file edit, doc-only):
+
+- Story file §1-§7 / §11 / §13 amendment 시 PR title prefix `[<KEY>] Spec amendment`
+- amendment 동반 의무:
+  - Story file frontmatter `status:` field 유지 (현재 phase 변경 없음 — amendment 는 phase progression 아님)
+  - Story file §10 FIX Ledger row 추가 = N/A (FIX 가 아니므로)
+  - Story file §12 Sonnet Decision Log row 추가 (substantive choice 발생 시)
+  - PR labels = `audit:spec-amendment` + `phase:<현재 phase>` (CFP-86 label registry 확장 candidate)
+
+#### 6.8.3 Limit
+
+per Story max **2 spec amendment PR**. 3+ amendment 발생 시 = 설계 결함 신호 → 설계 lane 재실행 trigger (§6.5 decision table 의 "설계 원인 판정" 적용).
+
+#### 6.8.4 Audit trail
+
+- Story file §11 = amendment PR list (link + reason summary)
+- EPIC-RESULTS-<EPIC_KEY>.md §6 Codex review aggregate = amendment 발생 row 명시 (PR # + reason)
+
+#### 6.8.5 mctrader 사례 (CFP-87 source)
+
+| Story | Amendment PR | Reason | Trigger |
+|---|---|---|---|
+| MCT-50 / MCT-51 | mctrader-hub#72 | Codex push-back 6건 (Signal handler ownership / RunStatus minimal v1 / HTTP edge case / "11 tables" 재정의 / MarketDataFreshnessEvent deferred / ClosedBarEvent.source_hash) | Phase 3 implementation 중 Codex review |
+
+#### 6.8.6 §6.8 ↔ §6.5 (원인 판정 decision table) cross-ref
+
+§6.8 spec amendment 가 결과적으로 spec drift 가 코드 / 설계 사이 발생 시 → §6.5 decision table 의 "설계 원인 판정" 적용 → 설계 lane 재실행. 즉 spec amendment → FIX 루프 conversion path 존재.
+
 ---
 
 ## 7. 세션 재개(resume) 복원 절차
