@@ -196,6 +196,82 @@ CONDITIONAL trigger: Story 가 **real funds / live exchange API / production cre
 
 ---
 
+## Epic Story Condensed Mode (CFP-84)
+
+mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/issues/181) P1-4 finding: Epic-level Story (frontmatter `type: epic`) 가 일반적으로 §§ 일부 collapsed/축약 형태로 작성됨 (예: MCT-25, MCT-50 의 §5-6 결합 / §8 부재). Implementation child Story 가 details 를 carry 하므로 Epic 자체의 §8 dev narrative / §10 FIX Ledger 등 일부 섹션 = 의미 X.
+
+본 condensed mode = Epic Story (frontmatter `type: epic`) 만 적용. Implementation Story (`type: story`) 는 § 1-§13 strict mode 유지.
+
+### Epic Story 섹션 의무 매트릭스
+
+| § | 섹션 | Implementation Story (`type: story`) | Epic Story (`type: epic`) |
+|---|---|:-:|:-:|
+| §1 | 사용자 요구사항 (verbatim) | 의무 | **의무** (story-section-1-immutable.yml 동일 적용) |
+| §2 | 도메인 해석 (DomainAgent) | 의무 | 권장 (Epic-level brief OK) |
+| §3 | 관련 ADR | 의무 | **의무** (Epic = ADR-driven 결정 source) |
+| §4 | 관련 코드 경로 + 책임 | 의무 | 선택 (Epic-level scope 만 명시 OK) |
+| §5 | 요구사항 확장 해석 | 의무 | 선택 (`§5-6 결합` 허용) |
+| §6 | 외부 지식 배경 | 의무 | 선택 (`§5-6 결합` 또는 `N/A — Epic-level` 허용) |
+| §7 | 설계 서사 (ArchitectAgent) | 의무 | **의무** (Epic-level design choice = ADR-driven) |
+| §8 | 개발 서사 (DeveloperPL) | 의무 | **N/A 명시 의무** ("N/A — child Story 가 carry" 명시) |
+| §9 | 품질 게이트 이력 | 의무 | Epic 닫는 시점 child verdict aggregate (선택) |
+| §10 | FIX Ledger | 의무 | **N/A 명시 의무** (Epic 자체 FIX 없음 — child Story 가 별도 §10) |
+| §11 | 참조 (회고 + child Story link) | 의무 | **의무** — child Story Issue link 모음 + EPIC-RESULTS reference |
+| §12 | Sonnet Decision Log | 발생 시 | **의무** (Epic-level substantive 결정 누적) |
+| §13 | Live Operational Discipline | CONDITIONAL | CONDITIONAL (child 영향 시) |
+
+### "결합" 허용 패턴
+
+다음 형식 만 허용:
+- `## §5-6. 요구사항 확장 + 외부 지식 (combined for Epic)` — sub-content 안에 §5 항목 + §6 항목 가시 분리
+- `## §X-Y. <combined title>` — heading 에 결합 명시 + 내용 안 sub-항목 분리
+
+거부 (lint enforce — CFP-84 Phase 2 follow-up):
+- 단순 `## 5-6` (heading 에 § 누락 시) → reject
+- 결합 표현 없이 한 섹션이 두 § 내용 mix → reject
+- §1, §3, §7 같은 mandatory 섹션 결합 → reject
+
+### N/A 명시 형식
+
+Implementation 무관한 §8 / §10 등 = **명시적 "N/A — <사유>" 작성 의무** (단순 섹션 omit = lint reject):
+
+```markdown
+## §8. 개발 서사
+
+N/A — Epic Story (type=epic). 5 child Story (MCT-13 ~ MCT-17) 가 §8 dev narrative carry. EPIC-RESULTS-MCT-12.md §2 Phase decomposition 참조.
+
+## §10. FIX Ledger
+
+N/A — Epic 자체 FIX 없음. Child Story 별 §10 (별도 file) + EPIC-RESULTS §9 CI iteration 통계 참조.
+```
+
+### Epic close 시 §11 의무 (Story §11 ↔ EPIC-RESULTS link)
+
+Epic Story 의 §11 회고 블록 = Epic close PR (Phase N+1) 동반 작성. EPIC-RESULTS-<EPIC_KEY>.md 가 별도 artifact 으로 작성됨 ([CFP-83 epic-results template](epic-results.md)) — Story §11 = link + 1-paragraph summary 만 보유.
+
+```markdown
+## §11. 참조
+
+### Child Story
+- mclayer/<repo>#<issue>: <CHILD-1> — <one-line summary>
+- ...
+
+### Epic close artifact
+- [EPIC-RESULTS-<EPIC_KEY>.md](../../EPIC-RESULTS-<EPIC_KEY>.md) — 14 섹션 close summary
+
+### 회고 (Epic close 후 PMOAgent fill)
+<one paragraph>
+```
+
+### Implementation enforcement (CFP-84 Phase 2 follow-up)
+
+본 CFP-84 Phase 1 = doc only. Phase 2 (별도 follow-up CFP) lint script `scripts/check-story-section-schema.sh` 강화:
+- `type: epic` frontmatter detect → condensed mode allowed
+- `type: story` strict mode (§1-§13 모두 의무, N/A 도 명시)
+- 결합 허용 / N/A 형식 검증
+
+---
+
 ## 단계별 갱신 책임
 
 | 단계 | 갱신 섹션 | Owner agent |
