@@ -282,26 +282,33 @@ ADR-018 (CFP-57 carrier — Gemini decider) + ADR-018 Amendment 1 (CFP-58 — So
 
 > **Debut-audit measurable signal**: 본 매트릭스의 ✅ 0 개 또는 ≥2 개 row 가 [ADR-021](docs/adr/ADR-021-phase-gap-measurable-signal.md) R4 (Responsibility leak) detection source.
 
-### 6 deputy mandate 매트릭스 (codeforge-design lane)
+### Deputy mandate 매트릭스 (codeforge-design lane) — 6 permanent + 2 CONDITIONAL
 
-ADR-014 + ADR-012 §3 4번째 SSOT 예외. design lane 의 6 deputy (CFP-46 OperationalRiskArchitect 신설 후) 가 §7 / §11 sub 별로 owning 하는 범위를 명시 — H17 책임 분쟁 차단.
+ADR-014 + ADR-012 §3 4번째 SSOT 예외. design lane 의 deputy (CFP-46 OperationalRiskArchitect 신설 + CFP-77 LiveOps + LiveOrdering CONDITIONAL 추가) 가 §7 / §11 / §13 sub 별로 owning 하는 범위 명시 — H17 책임 분쟁 차단.
 
-| §7 / §11 sub | CodebaseMapper | Refactor | SecurityArch | **OpRiskArch** | TestContractArch | DataMigrationArch |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|
-| §7.1 Trust boundary | — | — | ✅ | (consult) | — | — |
-| §7.2 Threat model | — | — | ✅ | — | — | — |
-| §7.3 Auth/authz | — | — | ✅ | — | — | — |
-| **§7.4 DR / disconnect / rate limit / env isolation** | — | — | (consult) | **✅** | — | — |
-| **§7.4 Clock sync (CONDITIONAL)** | — | — | (consult) | **✅** | — | — |
-| §7.5 민감 데이터 분류 | — | — | ✅ | — | — | — |
-| §7.6 위협↔완화 매핑 | — | — | ✅ | (DR↔failover consult) | — | — |
-| **§11 Idempotency (CONDITIONAL)** | — | — | — | (consult) | — | **✅** |
-| §11 Schema/Migration/Rollback | — | — | — | — | — | ✅ |
-| **§8.5 Stateful / restart invariant** | — | — | — | (consult §7.4 짝) | **✅** | (consult §11.6 짝) |
+| §7 / §11 / §13 sub | CodebaseMapper | Refactor | SecurityArch | **OpRiskArch** | TestContractArch | DataMigrationArch | **LiveOps** (CONDITIONAL) | **LiveOrdering** (CONDITIONAL) |
+|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+| §7.1 Trust boundary | — | — | ✅ | (consult) | — | — | (consult Live API) | — |
+| §7.2 Threat model | — | — | ✅ | — | — | — | — | — |
+| §7.3 Auth/authz | — | — | ✅ | — | — | — | (consult operator approval) | — |
+| **§7.4 DR / disconnect / rate limit / env isolation** | — | — | (consult) | **✅** | — | — | (consult Live failure) | (consult exchange rate-limit) |
+| **§7.4 Clock sync (CONDITIONAL)** | — | — | (consult) | **✅** | — | — | — | — |
+| §7.5 민감 데이터 분류 | — | — | ✅ | — | — | — | (consult API key) | — |
+| §7.6 위협↔완화 매핑 | — | — | ✅ | (DR↔failover consult) | — | — | (consult kill switch) | — |
+| **§11 Idempotency (CONDITIONAL)** | — | — | — | (consult) | — | **✅** | — | (consult order idempotency) |
+| §11 Schema/Migration/Rollback | — | — | — | — | — | ✅ | — | — |
+| **§11 Ledger reconcile / partial fill / fee invariant (CONDITIONAL Live)** | — | — | — | (consult) | — | (consult §11) | — | **✅** |
+| **§8.5 Stateful / restart invariant** | — | — | — | (consult §7.4 짝) | **✅** | (consult §11.6 짝) | — | (consult order replay) |
+| **§13 Live Operational Discipline (CONDITIONAL Live touching)** | — | — | (consult §7.5) | (consult kill switch) | — | (consult §11) | **✅** | (consult §11 ledger) |
 
 ✅ = primary owner / (consult) = secondary input.
 
-§7.4 schema 자체는 codeforge-design plugin SSOT (OperationalRiskArchitectAgent agent file). wrapper 는 본 매트릭스만 SSOT 보유 ([ADR-014](docs/adr/ADR-014-operational-risk-ssot-distribution.md)).
+**CONDITIONAL deputy 활성 정책 (CFP-77)**:
+- **LiveOpsDeputy + LiveOrderingDeputy** = Live touching Story 만 active (real funds / live exchange API / production credential / live order placement 중 하나 이상 touching). Backtest/Paper-only Story = 미spawn (token / token cost 절약).
+- ArchitectPLAgent 가 Story 의 §13 CONDITIONAL trigger 검토 후 6 → 8 deputy parallel spawn 결정.
+- 활성 시: ArchitectAgent chief 가 8 deputy 산출물 통합 (4-way 이념 대립 + production-readiness 단일 축 + Live operational 단일 축 + Live ordering 단일 축).
+
+§7.4 schema 자체는 codeforge-design plugin SSOT (OperationalRiskArchitectAgent agent file). §13 / Live ordering schema 는 codeforge-design plugin agent file (LiveOpsDeputy / LiveOrderingDeputy — CFP-77 follow-up agent file CFP). wrapper 는 본 매트릭스만 SSOT 보유 ([ADR-014](docs/adr/ADR-014-operational-risk-ssot-distribution.md), CFP-77 amendment).
 
 **PMOAgent (Cross-cutting)** — Epic 창설 / Story 완료 회고 / 사용자 요청 시 spawn. 단일 Story lane 게이트 비개입. 상세: [codeforge-pmo CLAUDE.md](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/CLAUDE.md).
 
