@@ -383,6 +383,21 @@ Consumer 프로젝트에서 요구사항을 GitHub Issue Form으로 입력하면
 
 상세 오케스트레이션 규칙은 [`orchestrator-playbook.md`](orchestrator-playbook.md).
 
+### 5.1 Cross-repo Epic — Centralization mode 선택 (multi-repo consumer)
+
+multi-repo consumer (예: mctrader 의 6 repo) 의 cross-repo Epic 진행 시 [ADR-020 Amendment 1](adr/ADR-020-cross-repo-epic-pattern.md) (CFP-81) 의 mode 결정 의무:
+
+| Mode | child Story 위치 | 채택 조건 |
+|---|---|---|
+| **A: Repo-local** (ADR-020 v1 default) | 각 작업 repo 의 `docs/stories/<KEY>.md` | Implementation repo 가 자체 storyboard 운영 / repo 별 자율 lifecycle |
+| **B: Hub-centralized** | 1 hub repo 가 모든 child Story 보유, implementation repo 는 code PR 만 | Doc-only hub repo 존재 + 도메인 ADR collocate (mctrader 패턴) |
+
+**Mixed-mode 금지** — 단일 Epic 내 mode 일관 유지. 다른 Epic 은 다른 mode 가능.
+
+**Joint-phase narrow form 허용** (ADR-020 Amendment 1 §결정 9): 단일 child Story 가 1 phase 안에서 multi-repo joint PR 보유 가능 (예: foundation Story 의 data + engine 동시 변경). 모든 PR 가 동일 Story key + 동일 phase label + topological merge order. mctrader MCT-26 = 사용 사례.
+
+**Mid-Epic 신규 repo 추가**: 기존 mode 유지 default. Mode 전환 필요 시 Epic 분할 또는 재시작 (consumer 명시 ESCALATE). 상세 = playbook §3.4 + ADR-020 Amendment 1 §결정 8.
+
 ## 6. FAQ
 
 ### Q1. Overlay에 스칼라 필드(name, description, model)가 들어가면?

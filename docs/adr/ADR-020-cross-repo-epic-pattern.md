@@ -104,9 +104,121 @@ Producer repo merge 후 consumer 가 break 시:
 - 단일 repo Story 영향 없음 (backward compatible)
 - 향후 plugin family 외 consumer 도 cross-repo Epic 진행 가능
 
+## Amendment 1: Centralization mode 명시 (CFP-81, 2026-05-04)
+
+### 컨텍스트
+
+mctrader debut audit (Issue [#181](https://github.com/mclayer/plugin-codeforge/issues/181) P1-2) 발견:
+
+- ADR-020 v1 §결정 2 default = "각 작업 repo 의 `docs/stories/<KEY>.md` 자체 보유"
+- mctrader 실제 = `mctrader-hub` 가 모든 Story file 보유 (MCT-1 ~ MCT-54). implementation repo (`mctrader-engine` / `mctrader-web` / `mctrader-market-bithumb`) 의 `docs/stories/` 디렉터리 부재
+- 즉 mctrader 는 **hub-centralized Story 모드** 채택 — ADR-020 v1 default 와 정반대 패턴 운영 중
+
+ADR-020 v1 §결정 2 가 single mode 만 가정 → 다음 cross-repo consumer 가 잘못된 default 채택 risk.
+
+또한 §거부된 대안 A "1 Story = N PR across N repos" narrow form (MCT-26 의 data#1 + engine#1 joint Phase 2) 가 실제 현장 사용 — 거부 사유 부분 reconsider 필요.
+
+### 결정 8: Centralization mode 명시 (Mode A vs Mode B)
+
+cross-repo Epic 진행 시 child Story file 위치 = 두 모드 중 consumer 가 명시:
+
+#### Mode A: Repo-local (per-repo Story) — ADR-020 v1 default
+
+- 각 작업 repo 의 `docs/stories/<KEY>.md` 자체 보유
+- 채택 조건:
+  - Implementation repo 가 자체 storyboard / governance lifecycle 운영
+  - Repo 별 자율 release cycle 유지 의도
+  - Hub repo 가 별도 존재하지 않거나 doc 책임 미가짐
+- backward compat 유지 — CFP-1 ~ CFP-59 + 단일 repo Story 모두 본 모드
+
+#### Mode B: Hub-centralized (governance hub Story)
+
+- 1 governance hub repo 가 모든 child Story file 보유
+- Implementation repo 는 code PR 만 보유 — `docs/stories/` 디렉터리 부재
+- 채택 조건:
+  - Hub 가 doc-only governance repo (예: `mctrader-hub`)
+  - Cross-repo 도메인 ADR collocate (§결정 1 hub-centralize 권장과 자연스러운 pair)
+  - Story 단위가 multi-repo 영향을 frequent — 단일 location 추적 가치 큼
+- mctrader 실제 채택 패턴 (MCT-1 ~ MCT-54)
+
+#### Mode 선택 기준
+
+| 상황 | 권장 모드 |
+|---|---|
+| Doc-only hub repo 존재 + 도메인 ADR collocate | **Mode B** |
+| Implementation repo 가 N (3+) 개이며 모두 활성 | **Mode B** (단일 truth) |
+| Implementation repo 가 ≤ 2개이며 자체 doc 책임 보유 | Mode A |
+| Plugin family 자체 dogfood (CFP-* Story) — internal-docs SSOT | (별도 ADR-013 dogfood-out 우선, 본 결정 미적용) |
+
+**조건 충돌 시 우선순위** (예: doc-only hub 존재 + impl repo ≤ 2개):
+1. **Mode B 우선** — Doc-only hub 존재 자체가 governance ownership 명시. Impl repo 수와 무관하게 hub 가 single truth 역할 수행.
+2. Mode B 채택해도 impl repo 가 자체 doc 책임 추가 보유 시 ADR-013 dogfood-out 정책 별도 검토 (codeforge family 만 적용).
+
+#### Mixed-mode 금지
+
+단일 Epic 내 mode 혼합 (일부 child Story = Mode A + 일부 = Mode B) **불허**. Epic owner repo 결정 시 함께 mode 결정 + 모든 child 일관 적용. 다른 Epic 은 다른 mode 가능.
+
+#### Mid-Epic 신규 repo 추가 시 처리 (Codex P1 #2 응답)
+
+Epic 진행 중 (Phase 1 PR merged 후) 신규 repo 가 child Story scope 에 추가될 경우:
+
+- **기존 mode 유지 의무** (default): Epic 가 Mode B 면 신규 repo 도 hub 에 Story file 작성 (자체 `docs/stories/` 신설 X). Epic 가 Mode A 면 신규 repo 자체 `docs/stories/` 신설.
+- **Mode 전환 절차**: 기존 mode 와 양립 불가능한 경우 (예: 신규 repo 가 자체 governance 책임 보유 의무) — 다음 중 택 1, **consumer 명시 ESCALATE 의무**:
+  1. **Epic 분할** (권장): 기존 mode child Story 까지 close + 신규 repo 포함 신규 Epic open (다른 mode)
+  2. **Epic 재시작**: Epic Issue close + 신규 mode 로 새 Epic — 기존 진행 분 archive
+- Default = mode 유지. ESCALATE = consumer 가 mid-Epic restructure 명시 결정.
+
+#### §결정 8 ↔ §결정 7 backward compat 검증 (Codex P2 응답)
+
+§결정 7 ("단일 repo Story 적용 룰" — `epic_dependencies: []` + `epic_owner_repo: null`) 은 **Mode A의 single-Story sub-case** 에 해당. §결정 8 도입으로 변경 없음 — 단일 repo Story 는 amendment 1 영향 0 (Mode 결정 trivial = `null`).
+
+### 결정 9: §거부된 대안 A — Joint-phase narrow form 허용
+
+§거부된 대안 A "1 Story = N PR across N repos" 의 narrow form 재허용:
+
+- **Joint-phase 패턴**: 단일 Story 가 1 phase 안에서 multiple repo 의 joint PR 보유 가능
+- 조건:
+  - 모든 PR 가 동일 Story key reference (PR title / commit footer)
+  - Phase 1 PR 1개 (doc, hub 또는 owner repo) 단일 — 변경 없음
+  - Phase N implementation PR 가 multi-repo 가능 (foundation Story 의 data + engine 동시 변경 등)
+  - PR merge 순서는 dependency graph topological order
+- mctrader MCT-26 (data#1 + engine#1 joint Phase 2) = 본 narrow form 사용 사례
+
+#### Narrow form vs Full form — §대안 A 거부 사유 ("PR scope 분리 어려움") 의 재해석 (Codex P1 #3 응답)
+
+§대안 A v1 거부 사유 "PR scope 분리 어려움" 은 **monolithic Story** 가정 하 정확:
+- 1 Story 가 **wide scope** (예: 5 repo 의 모든 변경 1 Story 에 cluster) → reviewer 가 어떤 PR 를 어떤 lane 으로 review 할지 모호 → lane progression 추적 불가
+- PR scope = "이 PR 가 어떤 Story 의 어떤 phase 를 진행하나" — 모호하면 lane gate 적용 못함
+
+**Narrow form 은 본 거부 사유 해소**:
+- 1 Story = 단일 logical scope (foundation / kill-switch / dashboard 등 single concern)
+- Joint Phase N PR 들 = **모두 동일 Story key + 동일 phase 라벨** — lane gate 동일 적용
+- topological merge order = dependency graph 명시 → reviewer 가 merge 순서 deterministic
+- PR scope 모호성 = 0 (각 PR 가 독립 review 가능, joint = 단일 Story 의 multi-repo joint 임을 명시)
+
+따라서 narrow form (single-scope Story 의 multi-repo PR) 은 §대안 A 거부 사유와 양립.
+
+§거부된 대안 A **full form** ("Story 가 모든 repo 의 PR 1개씩 가지는 monolith Story") = 여전히 거부:
+- Wide-scope Story 는 child Story 분할 권장 (예: MCT-25 → MCT-26~30 5 child 분할)
+- 1 Story 안의 PR 이 5+ repo = lane progression 추적 불가
+- 본 거부 = full form / wide-scope 만 적용. narrow form / single-scope 은 결정 9 로 허용.
+
+### 결정 10: 영향 받는 doc 갱신
+
+- `docs/consumer-guide.md` §3.4 = mode 선택 안내 추가 (본 amendment 동반 PR)
+- 본 ADR §관련 파일 = consumer-guide §3.4 mode 안내 명시
+- `requirements-output-v1` schema = **변경 없음** (mode 는 Epic Issue body / Story file 위치 자체로 observable, frontmatter 새 필드 불필요)
+
+### Backward compatibility
+
+- ADR-020 v1 default = Mode A — 기존 Story (CFP-1 ~ CFP-59 + 단일 repo) 영향 없음
+- mctrader 는 사후 Mode B 명시 (본 amendment merge 후 hub README / governance doc update)
+- 기존 §대안 A 거부 사유 narrow form 만 reconsider — full form 거부 유지
+
 ## 관련 파일
 
 - [`CLAUDE.md`](../../CLAUDE.md) (cross-references update)
+- [`docs/consumer-guide.md`](../consumer-guide.md) §3.4 (mode 선택 안내 — Amendment 1)
 - [`docs/orchestrator-playbook.md`](../orchestrator-playbook.md) §3 (cross-repo Epic 섹션 신설)
 - [`docs/inter-plugin-contracts/requirements-output-v1.md`](../inter-plugin-contracts/requirements-output-v1.md) (epic_dependencies field 추가)
 - [`docs/inter-plugin-contracts/label-registry-v1.md`](../inter-plugin-contracts/label-registry-v1.md) (audit:* + category:* label 추가)
