@@ -208,6 +208,29 @@ labels:
     single_active: false
     attach_owner_plugin: "wrapper Orchestrator (playbook §6.8 spec amendment loop)"
 
+  # early-close:* (3종 권장 + freeform) — CFP-90 / phase-label-invariant Issue close validation (v1.2 minor bump, CFP-90)
+  # phase progression 미완 채로 close 정당화 시 의무 — phase-label-invariant.yml workflow 가 PASS 조건 검증
+  - name: early-close:duplicate
+    category: audit
+    color: "d4c5f9"
+    description: "다른 Story 와 중복 — early-close 정당화"
+    single_active: false
+    attach_owner_plugin: "wrapper Orchestrator (CFP-90 phase invariant)"
+
+  - name: early-close:reclassified
+    category: audit
+    color: "d4c5f9"
+    description: "Out-of-scope 재분류 — 다른 Epic / 별도 Story 로 이전"
+    single_active: false
+    attach_owner_plugin: "wrapper Orchestrator (CFP-90 phase invariant)"
+
+  - name: early-close:epic-rolled-up
+    category: audit
+    color: "d4c5f9"
+    description: "Epic 종료 시 child Story 일괄 close — Epic close PR 가 absorbing"
+    single_active: false
+    attach_owner_plugin: "wrapper Orchestrator (CFP-90 phase invariant)"
+
   # category:* (7종) — CFP-60 / debut-audit-triage-v1 introduced (v1.1 minor bump)
   - name: category:lane-progression
     category: audit
