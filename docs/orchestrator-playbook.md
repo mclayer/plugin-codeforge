@@ -128,6 +128,34 @@ Story 완료 직후:
 - **blocking wait**: PMOAgent "사용자 확인 필요" 체크박스 미해소 → 사용자 질문 제시 후 세션 대기 (§2)
 - **ESCALATE**: 설계 리뷰·구현 리뷰 FIX 3회 초과 또는 ArchitectPLAgent 판단 근본 한계 → 구조화된 에스컬레이션 보고 후 판단 대기
 
+### 1.4 Phase label progression invariant (CFP-85)
+
+mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/issues/181) P1-5 finding: closed Story Issues 가 종종 `phase:요구사항` 등 초기 phase 에 정체 — phase progression 미수행. **본 invariant 가 lane plugin self-write 의무 명시화**:
+
+각 lane PASS verdict 시 phase 라벨 transition **반드시 수행**:
+
+| 현재 phase | PASS 시 transition | enforcer |
+|---|---|---|
+| `phase:요구사항` | → `phase:설계` | RequirementsPLAgent (codeforge-requirements) |
+| `phase:설계` | → `phase:설계-리뷰` | ArchitectAgent (codeforge-design) |
+| `phase:설계-리뷰` | → `phase:구현` | **Orchestrator** (CFP-61 / ADR-022 5-step step 4 — review-verdict trigger e final write) |
+| `phase:구현` | → `phase:구현-리뷰` | DeveloperPL (codeforge-develop) |
+| `phase:구현-리뷰` | → `phase:구현-테스트` | **Orchestrator** (CFP-61 / ADR-022 5-step) |
+| `phase:구현-테스트` | → `phase:보안-테스트` | Orchestrator (verdict receipt 후) |
+| `phase:보안-테스트` | terminal (Issue close 시점) | **Orchestrator** + `gate:security-test-pass` 부착 |
+
+**Issue close 의무**:
+- Issue close 시 phase label = `phase:보안-테스트` (terminal) 가 default
+- early-close (Epic 종료 / 중복 / Out-of-scope reclassify 등) 시 phase 라벨 `early-close:<reason>` 명시 의무
+- phase progression 미완 채로 close = `policy_violation` defect 추적 (ADR-025 stop discipline metric 과 동일 source)
+
+**Audit trail (CFP-85 신규)**:
+- Story file §9.x = Gate evidence row 의무 (story-page-structure.md §9 enrichment)
+- EPIC-RESULTS-<EPIC_KEY>.md §10 = PR gate evidence 표 (CFP-83 신규)
+- 두 source 합쳐 audit reproducibility 보장 — GitHub API 라벨 verify 가 향후 막혀도 file evidence 로 phase progression audit 가능
+
+**Phase 2 follow-up (별도 CFP)**: `phase-label-invariant.yml` Action 강화 — Issue close 시 phase 라벨 = terminal state (`phase:보안-테스트`) 또는 `early-close:<reason>` 부재 시 reject. lint-level enforcement.
+
 ---
 
 ## 2. 사용자(Human) 상호작용 규약
