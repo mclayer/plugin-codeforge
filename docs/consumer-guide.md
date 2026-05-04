@@ -377,9 +377,23 @@ Consumer 프로젝트에서 요구사항을 GitHub Issue Form으로 입력하면
 요구사항 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → 구현 테스트 → 보안 테스트
 ```
 
-**1 Story = 2 PRs**:
+**Story flow (default — single-repo Story 또는 Epic 외 1 child Story)** — **1 Story = 2 PRs**:
 - **Phase 1 PR** (요구사항+설계+설계리뷰): docs only
 - **Phase 2 PR** (구현+구현리뷰+구현테스트+보안테스트): code + docs append
+
+**Epic flow (cross-repo 또는 multi-Story Epic, CFP-82)** — **1 Epic = Phase 1 doc PR + N implementation PRs + close PR**:
+- **Phase 1 PR** (hub / owner repo): Epic doc + child Story stubs + Codex 7-area review aggregate
+- **Phase 2 ~ Phase N PR**: 각 child Story implementation. Joint-phase narrow form 허용 (1 Story 가 1 phase 안 multi-repo joint PR 보유 가능, ADR-020 Amendment 1)
+- **Phase N+1 close PR** (hub / owner repo): `EPIC-RESULTS-<KEY>.md` Epic close artifact
+- Mid-Phase **spec amendment PR** 가능 (Codex push-back 발견 시)
+
+mctrader 진행 중 Epic 예시:
+
+| Epic | Phase 1 (hub) | Phase 2~N (impl) | close PR | total PR |
+|---|---|---|---|---|
+| MCT-25 RiskGate full | hub#41 | data#1 + engine#1/#2/#3 | hub#42 | 6 |
+| MCT-32 Order rate limit | hub#48 | engine#4/#5/#6 + market-bithumb#1 | hub#49 | 6 |
+| MCT-48 Paper Runtime | hub#64 | engine#10/#11/#12 + web#1/#2 + spec amend hub#72 | (in flight) | 7+ |
 
 상세 오케스트레이션 규칙은 [`orchestrator-playbook.md`](orchestrator-playbook.md).
 
