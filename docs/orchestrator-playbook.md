@@ -329,26 +329,31 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
 - 배경 참조 ADR은 Story file §3 링크로 충분
 - 코드 경로는 Story file §4에 요약, 구체 내용은 `Read`/`Glob`/`Grep` 도구로 직접 접근
 
-### 3.4 Cross-repo Epic 패턴 ([ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md))
+### 3.4 Cross-repo Epic 패턴 ([ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md) + Amendment 1)
 
 mctrader 등 multi-repo consumer 의 cross-repo Epic 진행 시.
 
 #### Epic 시작
 1. consumer 가 Epic owner repo 결정 (doc-only hub repo 권장 — 예: mctrader-hub)
-2. parent Epic Issue 생성 (owner repo)
-3. child Story 생성 — 각 작업 repo `docs/stories/<KEY>.md`. Story §1 메타에 `epic_dependencies` graph 명시:
+2. **Centralization mode 결정** ([ADR-020 Amendment 1](../docs/adr/ADR-020-cross-repo-epic-pattern.md), CFP-81):
+   - **Mode A (repo-local)**: 각 작업 repo 가 자체 `docs/stories/<KEY>.md`. Implementation repo 가 자율 storyboard 운영 시.
+   - **Mode B (hub-centralized)**: 1 hub repo 가 모든 child Story 보유, implementation repo 는 code PR 만. Doc-only hub + 도메인 ADR collocate 시 (mctrader 패턴).
+   - Mixed-mode 금지 — 단일 Epic 내 모드 일관 유지 (다른 Epic 은 다른 mode 가능).
+3. parent Epic Issue 생성 (owner repo)
+4. child Story 생성 — 선택된 mode 에 따라 hub 또는 각 작업 repo. Story §1 메타에 `epic_dependencies` graph 명시:
    ```yaml
    epic_dependencies:
      - type: hard_block | design_parallel | impl_parallel
        target: <KEY>
        repo: <owner/repo>
    ```
-4. Change Plan §3 에 `consumes: { <producer>: <SemVer> }` pin 의무
+5. Change Plan §3 에 `consumes: { <producer>: <SemVer> }` pin 의무
 
 #### Epic 진행
 - **Topological merge order**: dependency graph 따라 producer 먼저 → consumer 나중
 - `hard_block` 위반 detected 시 Epic 차단 (PMOAgent enforce)
 - `design_parallel` / `impl_parallel` = 동시 진행 허용
+- **Joint-phase PR 허용** (ADR-020 Amendment 1 §결정 9): 단일 Story 가 1 phase 안에서 multi-repo joint PR 보유 가능 (예: foundation Story 의 data + engine 동시 변경). 모든 PR 가 동일 Story key reference + dependency graph topological merge.
 
 #### Epic Rollback
 producer merge 후 consumer break 시:
@@ -358,8 +363,9 @@ producer merge 후 consumer break 시:
 4. Consumer pin upgrade
 
 #### Cross-references
-- [ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md) (cross-repo Epic 패턴 SSOT)
+- [ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md) + Amendment 1 (cross-repo Epic 패턴 SSOT — Mode A/B + Joint-phase narrow form)
 - [requirements-output-v1.1](../docs/inter-plugin-contracts/requirements-output-v1.md) (Story §1 epic_dependencies field schema)
+- [`consumer-guide.md`](consumer-guide.md) §3.4 (consumer 측 mode 선택 안내)
 
 ---
 
