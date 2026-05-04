@@ -464,6 +464,63 @@ consumer 측 사용자 가 다음 directive 발화 시 활성:
 
 "잠깐 끄자" / "Sonnet decider 정지" → session/Story 단위 일시 중단 — review-verdict trigger 발화 시 PL 1차 판단 (pl_recommendation) 으로 임시 proceed (ADR-022 §결정 9).
 
+## 7.1 Stop discipline + Epic-level continuity (ADR-025 + Amendment 1)
+
+Sonnet decider 정책 (§7) 의 **trust model invariant** 와 **Epic-level continuity** 직접 적용:
+
+### "Sonnet decides ⇒ Orchestrator proceeds without user confirmation" (ADR-025 §결정 1)
+
+Sonnet decider 가 PASS / FIX / pick 응답 후 Orchestrator 가 사용자에게 "진행할까요?" / "이대로 가도 됩니까?" 묻는 것은 **whitelist 외 stop = `policy_violation` (defect)** 분류.
+
+### Epic-level continuity (CFP-80 / ADR-025 Amendment 1, 2026-05-04)
+
+**사용자 메시지 받은 시점 = 작업 단위 식별**:
+
+| 사용자 메시지 패턴 | 작업 단위 | Continuity 의무 |
+|---|---|---|
+| "다음 작업 있나" + 1+ 후보 존재 | 모든 후보 / backlog 처리 단위 | backlog 모든 issue / Story 자동 통과 + 1번 final report |
+| "X 진행" (X = Epic 명시) | Epic 의 7 phase + 모든 child Story | child Story 모두 Phase 1 + Phase 2 PR cycle 자동 통과 + 1번 final report |
+| "X 진행" (X = Story 명시) | Story 의 Phase 1 + Phase 2 PR cycle | 양 PR cycle 자동 통과 + 1번 final report |
+| 명시 선택 ("a" / "C" / "ok" / "진행하자") | 직전 메시지의 후보 또는 진행 path | path 끝까지 자동 진행 |
+| 정보 요청 ("X 보여달라") | 정보 답변 단위 | 답변 + stop 없음 |
+
+### 합법 stop whitelist (5종 strict — 본 외 모든 stop = defect)
+
+1. **User environment 변경 의무** (PAT 발급 / API key / 외부 서비스 가입 / 자금 입금 / 1Password setup 등)
+2. **Destructive action 직전** (force push / DB drop / 설정 영구 변경 / production first 동작)
+3. **진정 unprecedented / unscoped 영역** (새 organizational decision)
+4. **Codex+Sonnet decider 의 escalation 결정** (`decider_decision.escalation_required=true`)
+5. **작업 단위 완료 후 final report** (1번)
+
+### 불법 stop 패턴 (반드시 회피)
+
+| Pattern | Defect 사유 |
+|---|---|
+| "후보 A/B/C/D 중 어떤거?" | Codex+Sonnet 자동 처리 의무 (sub-decision) |
+| "큰 작업이라 확인 받겠습니다" | token cost 추정 = 사용자 의도 아님 |
+| "Phase 1 완료, Phase 2 시작할까요?" | 1 Story / Epic 안의 sub-step (decision unit 분리 violation) |
+| "5 sub-CFP 중 첫 번째 완료, 다음 진행할까요?" | backlog 단위면 5 모두 처리 |
+| "final report 후 다음 작업 후보 결정 받음" | backlog 안 끝났으면 자동 발굴 + 진행 |
+
+### Result 보고 형식 (1번)
+
+작업 단위 전체 완료 후 1번 final report — sub-step 별 완료 시각 / 소요 시간 / Sonnet pick / override marker 포함. 사용자 redirect 가능성 명시 (단 본인이 stop 안 함).
+
+### Consumer 측 활성 directive
+
+consumer 측 사용자 발화 의무 (Phase 1 trust model — enforcement hook 없음):
+
+> "이 프로젝트에서도 codeforge plugin Stop discipline + Epic-level continuity (ADR-025 / CFP-80) 적용해서 작업 단위 끝까지 자동 진행 + 1번 final report 해라."
+
+또는 동등 wording. directive 없으면 default = user-approval gates 운영 + 매 phase stop.
+
+### Phase 2 instrumentation (후속)
+
+30+ stop event 누적 후 stop-event-v1 ledger ROI 평가 + 도입 시:
+- `reason_class` enum: `policy_violation` / `policy_violation_subdecision` / `policy_violation_phase_split` 분류
+- consumer + wrapper 양쪽 행동 데이터 누적
+- hook / refusal logic / runtime validation 도입 여부 결정 — 별도 CFP
+
 ## 8. 트러블슈팅
 
 | 증상 | 원인 | 대응 |
