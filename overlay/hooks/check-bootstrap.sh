@@ -98,6 +98,34 @@ if [ ${#MISSING_LABELS[@]} -gt 0 ]; then
     WARN_MESSAGES+=("           → 미해결 시 Issue Form 제출 시 'label not found' 에러")
 fi
 
+# Check 3: workflow_distribution.mode=degraded 시 missing_workflows 안내 (CFP-95 / CFP-89 활성화)
+WORKFLOW_DIST=$(python3 - "$OVERLAY_PROJECT_YAML" <<'PYEOF' 2>/dev/null
+import sys, yaml
+try:
+    with open(sys.argv[1]) as f:
+        data = yaml.safe_load(f) or {}
+    wd = data.get("workflow_distribution", {})
+    mode = wd.get("mode", "full")
+    missing = wd.get("missing_workflows", []) or []
+    print(f"{mode}|{','.join(missing)}")
+except Exception:
+    pass
+PYEOF
+)
+WD_MODE="${WORKFLOW_DIST%%|*}"
+WD_MISSING="${WORKFLOW_DIST##*|}"
+
+if [ "$WD_MODE" = "degraded" ]; then
+    WARN_COUNT=$((WARN_COUNT + 1))
+    WARN_MESSAGES+=("[bootstrap] WARN: workflow_distribution.mode=degraded (CFP-86 Path B)")
+    if [ -n "$WD_MISSING" ]; then
+        WARN_MESSAGES+=("           Missing workflows: $WD_MISSING")
+    fi
+    WARN_MESSAGES+=("           → consumer-guide §2c 'Path A vs Path B' 표 manual compensating check 의무")
+    WARN_MESSAGES+=("           → Path B 사용 사례: mctrader-hub (story-init / fix-ledger-sync / subissue-from-impl-manifest / story-section-1-immutable 부재)")
+    WARN_MESSAGES+=("           → Path A upgrade: 'cp \${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/<missing>.yml .github/workflows/'")
+fi
+
 # 결과 출력
 if [ $WARN_COUNT -gt 0 ]; then
     {
