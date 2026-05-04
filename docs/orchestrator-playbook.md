@@ -362,6 +362,17 @@ producer merge 후 consumer break 시:
 3. Producer fix → 새 minor SemVer release
 4. Consumer pin upgrade
 
+#### Epic close — `EPIC-RESULTS-<EPIC_KEY>.md` artifact 의무 (CFP-83)
+
+Epic close PR (Phase N+1) 동반 작성:
+
+- **위치**: Epic owner repo root — `EPIC-RESULTS-<EPIC_KEY>.md`
+- **Template**: [`templates/epic-results.md`](../templates/epic-results.md) — 14 섹션 의무 (§1 child Story summary / §2 Phase decomposition / §3 Blocking AC / §4 Calibration AC / §5 Demonstration AC / §6 Codex review aggregate / §7 자율 결정 요약 (Sonnet decider) / §8 Out-of-scope / §9 CI iteration 통계 + 사용자 stop trigger 횟수 / §10 PR gate evidence / §11 후속 candidate 우선순위 / §12 debut-audit metric / §13 통계 / §14 결론)
+- **작성자**: PMOAgent self-write (codeforge-pmo lane plugin owner)
+- **mctrader 사례**: `mctrader-hub/EPIC-RESULTS-MCT-{12,18,25,32,37}.md` 5건 (template emergent source)
+- **§9 stop trigger 횟수** = ADR-025 + Amendment 1 (CFP-73 / CFP-80) stop discipline metric. 합법 stop whitelist 5종 외 stop = `policy_violation` defect 추적.
+- **§10 PR gate evidence** = 향후 audit 시 GitHub API 라벨 verify fall-back evidence (Issue #181 P1-5 partial 해소)
+
 #### Cross-references
 - [ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md) + Amendment 1 (cross-repo Epic 패턴 SSOT — Mode A/B + Joint-phase narrow form)
 - [requirements-output-v1.1](../docs/inter-plugin-contracts/requirements-output-v1.md) (Story §1 epic_dependencies field schema)
