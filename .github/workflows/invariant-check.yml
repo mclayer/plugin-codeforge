@@ -35,7 +35,8 @@ jobs:
           # CFP-65 / CFP-67 / CFP-68 — consumer-only workflow 는 self-app parity 검증 제외.
           # plugin-codeforge 는 internal-docs Story binding 사용으로 docs/stories/*.md path
           # 의존하는 workflow self-app 불필요.
-          CONSUMER_ONLY_WORKFLOWS=("story-init.yml" "story-section-1-immutable.yml" "fix-ledger-sync.yml" "subissue-from-impl-manifest.yml")
+          # CFP-79 — 4 Live touching reusable workflow (workflow_call) 도 consumer 전용. wrapper 자체 .github/workflows/ copy 불필요.
+          CONSUMER_ONLY_WORKFLOWS=("story-init.yml" "story-section-1-immutable.yml" "fix-ledger-sync.yml" "subissue-from-impl-manifest.yml" "live-test-guard.yml" "live-deploy-approval.yml" "live-secret-policy.yml" "kill-switch-integration-test.yml")
           for f in templates/github-workflows/*.yml; do
             base=$(basename "$f")
             skip_file=0
