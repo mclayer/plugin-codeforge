@@ -79,6 +79,8 @@ create_label "audit:post-hotfix"  "fef2c0" "Post-hotfix audit Story"
 # 색상 = label-registry-v1.md SSOT
 create_label "audit:debut-eval"            "fbca04" "데뷔 평가 (consumer 첫 사용 사례) 발견 사항"
 create_label "audit:from-mctrader-debut"   "fef2c0" "mctrader 데뷔 평가에서 발견된 codeforge gap (첫 사례)"
+# CFP-88: audit:spec-amendment (CFP-87 / playbook §6.8 follow-up, label-registry v1.2)
+create_label "audit:spec-amendment"        "fbca04" "Mid-implementation spec doc 수정 PR (Codex push-back / 사용자 mid-impl clarification / spec drift 발견 시)"
 create_label "category:lane-progression"   "0e8a16" "#1 — 7 lane 통과 / 막힘 (owner: PMOAgent)"
 create_label "category:agent-gap"          "d93f0b" "#2 — phase 별 gap + 과부하 (owner: ArchitectPL, ADR-021 R1-R4)"
 create_label "category:decision-table"     "1d76db" "#3 — 원인 판정 row 모호 / 신규 (owner: wrapper Orchestrator)"
