@@ -206,30 +206,61 @@ def check_workflow_distribution(yaml_path: Path) -> list[str]:
 # ---------------------------------------------------------------------- check 4
 
 
-def check_consumer_scripts_manifest(plugin_root: Path) -> list[str]:
-    """기존 check 4 — consumer-scripts manifest drift (CFP-97)."""
+def check_consumer_scripts_manifest(plugin_root: Path, overlay_yaml: Path | None = None) -> list[str]:
+    """기존 check 4 — consumer-scripts manifest drift (CFP-97 / CFP-109 / CFP-110).
+
+    CFP-109: schema 확장 `<script-path>[:<dependent-workflow-path>]` parse +
+             degraded suppression (workflow basename ∈ workflow_distribution.missing_workflows).
+    CFP-110: SessionStart auto-copy (regen-agents.sh) 가 정상 작동 시 자동 install →
+             본 WARN 발화 = hook 미실행 / 실패 / 의도적 부재. Manual copy = fallback.
+    """
     manifest_path = plugin_root / "templates" / "consumer-scripts.manifest"
     if not manifest_path.is_file():
         return []
+
+    # CFP-109: workflow_distribution.missing_workflows for degraded suppression
+    wd_missing: set[str] = set()
+    if overlay_yaml is not None and overlay_yaml.is_file():
+        try:
+            import yaml
+            data = yaml.safe_load(overlay_yaml.read_text(encoding="utf-8")) or {}
+            wd = data.get("workflow_distribution", {})
+            wd_missing = {x for x in (wd.get("missing_workflows") or []) if isinstance(x, str)}
+        except Exception:
+            pass
+
     missing = []
     try:
         for line in manifest_path.read_text(encoding="utf-8").splitlines():
             line = line.strip()
             if not line or line.startswith("#"):
                 continue
-            # Path traversal guard (CFP-97 P1 fix)
-            if line.startswith("/") or ".." in line:
+            # CFP-109: parse script-path[:dep-workflow]
+            if ":" in line:
+                script_path, _, dep_workflow = line.partition(":")
+            else:
+                script_path, dep_workflow = line, ""
+            # Path traversal guard (CFP-97 P1 fix) on script_path
+            if script_path.startswith("/") or ".." in script_path or not script_path:
                 continue
-            if not Path(line).is_file():
-                missing.append(line)
+            if Path(script_path).is_file():
+                continue
+            # CFP-109 degraded suppression — basename ∈ missing_workflows
+            if dep_workflow and wd_missing:
+                dep_basename = Path(dep_workflow).name
+                if dep_basename in wd_missing:
+                    continue
+            missing.append(script_path)
     except Exception:
         return []
+
     if missing:
         return [
-            f"[bootstrap] WARN: {len(missing)} consumer-distributable script(s) 부재 (CFP-97)",
+            f"[bootstrap] WARN: {len(missing)} consumer-distributable script(s) 부재 (CFP-97 / CFP-109 / CFP-110)",
             f"           누락: {' '.join(missing)}",
-            "           → consumer-guide §2c manifest-driven copy 실행",
-            "           → 미해결 시 해당 script 의존 workflow 가 lint skip + warning",
+            "           → CFP-110 SessionStart auto-copy (regen-agents.sh) 가 정상 작동 시 자동 install",
+            "           → 본 WARN 발화 = hook 미실행 / regen-agents.sh 실패 / 의도적 부재. fallback = consumer-guide §2c manifest-driven copy 실행",
+            "           → 미해결 시 해당 script 의존 workflow (예: story-section-schema.yml) 가 lint skip + warning",
         ]
     return []
 
@@ -418,7 +449,7 @@ def main() -> int:
         check_workflow_permissions(org, repo) if gh_ready else [],
         check_plugin_labels(org, repo) if gh_ready else [],
         check_workflow_distribution(overlay_yaml),
-        check_consumer_scripts_manifest(plugin_root) if plugin_root is not None else [],
+        check_consumer_scripts_manifest(plugin_root, overlay_yaml) if plugin_root is not None else [],
         check_plugins_installed(plugins_json),
         check_consumer_workflows(Path(".github/workflows"), expected_workflows),
         check_consumer_issue_forms(Path(".github/ISSUE_TEMPLATE")),

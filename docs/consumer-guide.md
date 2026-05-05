@@ -113,10 +113,13 @@ chmod +x .claude/_overlay/run-tests.sh .claude/_overlay/run-perf.sh
 mkdir -p .github/workflows
 cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/*.yml .github/workflows/
 
-# CFP-97 + CFP-109: consumer-distributable scripts manifest-driven copy.
+# CFP-97 + CFP-109 + CFP-110: consumer-distributable scripts manifest-driven copy.
 # Manifest format: <script-path>[:<dependent-workflow-path>]
 # (CFP-109 — workflow path optional, used by SessionStart Check 4 for degraded suppression).
-# 위 workflow cp 와 본 loop 는 함께 실행 의무 — 한쪽만 실행 시 의존 workflow CI 가 lint skip + warning.
+#
+# CFP-110: SessionStart hook (regen-agents.sh) 가 매 세션 시 자동 install (cp -n no-clobber)
+# — 본 manual loop 는 fallback (hook 미작동 / 첫 install 전 / opt-out 시).
+# Plugin update 시 신규 manifest entry 는 자동 propagate.
 while IFS= read -r line; do
     # trim leading/trailing whitespace
     line="${line#"${line%%[![:space:]]*}"}"
