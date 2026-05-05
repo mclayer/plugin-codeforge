@@ -14,6 +14,13 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 - Spec/plan/change-plan/decisions: codeforge-internal-docs/wrapper/ (ADR-013 dogfood-out).
 - Phase 2 (CFP-103+CFP-104) version bump: 5.2.0 → 5.3.0 (예상).
 
+### CFP-106 — Phase 4: #143 + #144 + #169 close
+
+- `templates/github-workflows/phase-gate-mergeable.yml` (Modify) — doc-only / `type:epic` fast-pass step 추가 (#143 fix). PR labels 에 `type:epic` 있거나 모든 변경 file 이 `docs/`/`wrapper/`/`.github/`/`*.md`/`CHANGELOG.md`/`README.md` 인 경우 자동 `success` conclude — phase + gate 라벨 검증 우회.
+- `docs/consumer-guide.md` §7.5 (NEW) — CI Terminal State Classification (#144 fix): 8-state 표 (SUCCESS / FAILURE / ACTION_REQUIRED known/unknown / NEUTRAL / SKIPPED / BLOCKED MERGEABLE / UNKNOWN) + watch 명령 패턴 + enforce_admins toggle 기법.
+- `overlay/hooks/regen-agents.sh` (Modify) — docstring 예시 schema-correct fix (#169). Flat `{"command": "..."}` → nested 3-level `{"hooks": [{"type": "command", "command": "..."}]}`. `${CLAUDE_PLUGIN_ROOT}` 치환 한계 안내 추가.
+- ADR-027 §결정-2 Tertiary trigger (SessionStart 강화) + §결정-5 (consumer-guide SSOT) implementation.
+
 ### CFP-104 — Phase 2b: UserPromptSubmit hook (변경 착수 reminder inject)
 
 - `overlay/hooks/userprompt_reminder.py` (NEW) — Python core (regex change-intent + branch parse + bypass env).
