@@ -121,9 +121,12 @@ PMOAgent 가 cross-Story 패턴 분석에서 ADR 후보를 발의하면 (`pmo_ou
 - Change Plan §7 / §7.4 / §8 / §11 누락 금지 — DesignReview가 P0 차단
 
 ## 스킬
-- `superpowers:writing-plans`: "0 컨텍스트 개발자 전제" — 계획서를 재량 없이 실행 가능한 수준까지 구체화
-- `superpowers:brainstorming`: 요건→설계 변환 전 대안 탐색
-- `superpowers:systematic-debugging`: FIX 수령 시 root cause 공략, 매 iteration 다른 가설
+
+호출 skill SSOT = wrapper [`docs/superpowers-integration.md §2`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers-integration.md) row `design/ArchitectAgent` 참조 (정책 재정의 X, link only per [ADR-028](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-028-superpowers-integration-policy.md) §결정 1):
+
+- `superpowers:writing-plans` — 계획서 0-context 구체화
+- `superpowers:brainstorming` — 요건→설계 대안 탐색
+- `superpowers:systematic-debugging` — FIX root cause
 
 ## 문서화 표준
 

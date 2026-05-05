@@ -153,7 +153,9 @@ Consumer overlay에 `has_data_layer: false` (pure plugin meta / docs-only repo) 
 
 ## 활용 스킬
 
-- **superpowers:writing-plans**: "0 컨텍스트 개발자 전제" — migration 절차가 ArchitectAgent에게 명확히 전달되도록 구체성 유지
+호출 skill SSOT = wrapper [`docs/superpowers-integration.md §2`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers-integration.md) row `design/DataMigrationArchitectAgent` 참조 (정책 재정의 X, link only per [ADR-028](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-028-superpowers-integration-policy.md) §결정 1):
+
+- **superpowers:writing-plans** — migration 절차 0-context 구체화
 
 ## 문서화 표준
 

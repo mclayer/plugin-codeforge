@@ -177,7 +177,9 @@ Story가 실행 가능 코드 0줄 (예: docs-only Story, agent md 변경, templ
 
 ## 활용 스킬
 
-- **superpowers:writing-plans**: "0 컨텍스트 개발자 전제" — 커버리지 후보 표가 ArchitectAgent에게 명확히 전달되도록 구체성 유지
+호출 skill SSOT = wrapper [`docs/superpowers-integration.md §2`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers-integration.md) row `design/TestContractArchitectAgent` 참조 (정책 재정의 X, link only per [ADR-028](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-028-superpowers-integration-policy.md) §결정 1):
+
+- **superpowers:writing-plans** — 커버리지 후보 표 0-context 구체화
 
 ## 문서화 표준
 
