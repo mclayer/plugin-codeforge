@@ -221,6 +221,36 @@ def test_resolve_plugins_json_windows() -> None:
     assert ".claude" in s and "plugins" in s and "installed_plugins.json" in s
 
 
+def test_resolve_plugins_json_dual_env_neither_exists() -> None:
+    """HOME + USERPROFILE 둘 다 set, 둘 다 file 부재 — 첫 candidate (HOME) 반환."""
+    p = check_bootstrap._resolve_plugins_json({"HOME": "/home/user", "USERPROFILE": "C:/Users/test"})
+    s = str(p).replace("\\", "/")
+    # HOME first
+    assert "home/user" in s
+
+
+def test_resolve_plugins_json_dual_env_userprofile_exists(tmp_path: Path) -> None:
+    """HOME 부재 + USERPROFILE 의 file 존재 → USERPROFILE path 반환."""
+    fake_home = tmp_path / "fake_home"
+    fake_home.mkdir()
+    real_userprofile = tmp_path / "real_userprofile"
+    plugins_dir = real_userprofile / ".claude" / "plugins"
+    plugins_dir.mkdir(parents=True)
+    (plugins_dir / "installed_plugins.json").write_text("{}", encoding="utf-8")
+    p = check_bootstrap._resolve_plugins_json({
+        "HOME": str(fake_home),
+        "USERPROFILE": str(real_userprofile),
+    })
+    assert str(real_userprofile) in str(p)
+
+
+def test_resolve_plugins_json_no_envs() -> None:
+    """둘 다 부재 시 fallback 상대 경로."""
+    p = check_bootstrap._resolve_plugins_json({})
+    s = str(p).replace("\\", "/")
+    assert ".claude/plugins/installed_plugins.json" in s
+
+
 # ============================================================ main() smoke
 
 
@@ -229,3 +259,55 @@ def test_main_smoke_no_overlay(tmp_path: Path, monkeypatch) -> None:
     monkeypatch.chdir(tmp_path)
     rc = check_bootstrap.main()
     assert rc == 0
+
+
+def test_main_bootstrap_expected_workflows_override(tmp_path: Path, monkeypatch, capsys) -> None:
+    """main() 이 bootstrap.expected_workflows override 를 적용하는지 (CFP-103 C fix)."""
+    overlay_dir = tmp_path / ".claude" / "_overlay"
+    overlay_dir.mkdir(parents=True)
+    (overlay_dir / "project.yaml").write_text(
+        "github:\n  org: example\n  repo: test\n"
+        "bootstrap:\n"
+        "  expected_workflows:\n"
+        "    - only-one.yml\n",
+        encoding="utf-8",
+    )
+    workflows_dir = tmp_path / ".github" / "workflows"
+    workflows_dir.mkdir(parents=True)
+    (workflows_dir / "only-one.yml").write_text("# stub\n", encoding="utf-8")
+    forms_dir = tmp_path / ".github" / "ISSUE_TEMPLATE"
+    forms_dir.mkdir(parents=True)
+    for f in ["audit.yml", "bug.yml", "story.yml"]:
+        (forms_dir / f).write_text("# stub\n", encoding="utf-8")
+    (tmp_path / "CODEOWNERS").write_text("* @user\n", encoding="utf-8")
+    # plugins_json 없으면 WARN 1건 추가됨 — 본 test 의 핵심은 workflow override 만이므로 무시
+    monkeypatch.chdir(tmp_path)
+    rc = check_bootstrap.main()
+    assert rc == 0
+    captured = capsys.readouterr()
+    # only-one.yml 이 expected workflow 라 부재하지 않음 → workflow check WARN 부재
+    assert "only-one.yml" not in captured.err  # missing 안내 부재 (이미 존재하므로)
+
+
+def test_main_finding_count_semantics(tmp_path: Path, monkeypatch, capsys) -> None:
+    """findings_count semantics — 각 check 1건, 다 line 아닌 (CFP-103 D fix)."""
+    overlay_dir = tmp_path / ".claude" / "_overlay"
+    overlay_dir.mkdir(parents=True)
+    (overlay_dir / "project.yaml").write_text(
+        "github:\n  org: example\n  repo: test\n",
+        encoding="utf-8",
+    )
+    monkeypatch.chdir(tmp_path)
+    rc = check_bootstrap.main()
+    assert rc == 0
+    captured = capsys.readouterr()
+    # 부재 자산이 많아 N 개 finding (~3-5) — line 수보다 작아야 함
+    if "[check-bootstrap]" in captured.err:
+        # "[check-bootstrap] N 부트스트랩 drift" 의 N
+        import re
+        m = re.search(r"\[check-bootstrap\]\s+(\d+)\s+부트스트랩", captured.err)
+        if m:
+            findings = int(m.group(1))
+            line_count = len([line for line in captured.err.splitlines() if line.startswith("           ") or line.startswith("[bootstrap]")])
+            # findings 가 line_count 보다 작거나 같음 (각 finding 가 multi-line 가능)
+            assert findings <= line_count

@@ -85,9 +85,17 @@ def _resolve_plugins_json(env: dict[str, str]) -> Path:
 
     Linux/macOS: ~/.claude/plugins/installed_plugins.json
     Windows: $env:USERPROFILE/.claude/plugins/installed_plugins.json
+    WSL/dual-env: HOME + USERPROFILE 둘 다 set — 둘 다 try, 첫 file 존재 path 반환.
     """
-    home = env.get("HOME") or env.get("USERPROFILE") or ""
-    return Path(home) / ".claude" / "plugins" / "installed_plugins.json"
+    candidates: list[str] = [v for v in (env.get("HOME"), env.get("USERPROFILE")) if v]
+    for c in candidates:
+        p = Path(c) / ".claude" / "plugins" / "installed_plugins.json"
+        if p.is_file():
+            return p
+    # Fallback: 둘 다 file 미존재. 첫 candidate 반환 (main 측에서 WARN 처리).
+    if candidates:
+        return Path(candidates[0]) / ".claude" / "plugins" / "installed_plugins.json"
+    return Path(".claude") / "plugins" / "installed_plugins.json"
 
 
 def _resolve_plugin_root(env: dict[str, str], script_path: Path) -> Path | None:
@@ -390,24 +398,11 @@ def main() -> int:
     plugins_json = _resolve_plugins_json(env)
     org, repo = _extract_org_repo(overlay_yaml)
 
-    warnings: list[str] = []
+    # Each check returns list[str] — empty = no finding, non-empty = 1 finding (multi-line).
+    # findings_count = check 별 1건씩 (기존 sh WARN_COUNT semantic 보존, CFP-103 D fix).
+    gh_ready = _gh_available() and bool(org) and bool(repo)
 
-    # Check 1+2 — gh 의존 (silent skip if gh not available)
-    if _gh_available() and org and repo:
-        warnings.extend(check_workflow_permissions(org, repo))
-        warnings.extend(check_plugin_labels(org, repo))
-
-    # Check 3 — workflow_distribution
-    warnings.extend(check_workflow_distribution(overlay_yaml))
-
-    # Check 4 — consumer-scripts manifest (plugin root 필요)
-    if plugin_root is not None:
-        warnings.extend(check_consumer_scripts_manifest(plugin_root))
-
-    # Check 5 — 11 plugin install
-    warnings.extend(check_plugins_installed(plugins_json))
-
-    # Check 6 — consumer workflows (project.yaml override)
+    # project.yaml override for expected workflows
     expected_workflows = EXPECTED_WORKFLOWS_FULL
     try:
         import yaml
@@ -418,22 +413,28 @@ def main() -> int:
             expected_workflows = set(override)
     except Exception:
         pass
-    warnings.extend(check_consumer_workflows(Path(".github/workflows"), expected_workflows))
 
-    # Check 7 — Issue Forms
-    warnings.extend(check_consumer_issue_forms(Path(".github/ISSUE_TEMPLATE")))
-
-    # Check 8 — CODEOWNERS (3 candidate path)
-    warnings.extend(check_codeowners(
-        Path("CODEOWNERS"),
-        Path(".github/CODEOWNERS"),
-        Path("docs/CODEOWNERS"),
-    ))
+    all_results: list[list[str]] = [
+        check_workflow_permissions(org, repo) if gh_ready else [],
+        check_plugin_labels(org, repo) if gh_ready else [],
+        check_workflow_distribution(overlay_yaml),
+        check_consumer_scripts_manifest(plugin_root) if plugin_root is not None else [],
+        check_plugins_installed(plugins_json),
+        check_consumer_workflows(Path(".github/workflows"), expected_workflows),
+        check_consumer_issue_forms(Path(".github/ISSUE_TEMPLATE")),
+        check_codeowners(
+            Path("CODEOWNERS"),
+            Path(".github/CODEOWNERS"),
+            Path("docs/CODEOWNERS"),
+        ),
+    ]
+    findings_count = sum(1 for r in all_results if r)
+    warnings = [line for r in all_results for line in r]
 
     if warnings:
         print(file=sys.stderr)
         print(
-            f"[check-bootstrap] {len(warnings)} 부트스트랩 drift 발견 (non-blocking):",
+            f"[check-bootstrap] {findings_count} 부트스트랩 drift 발견 (non-blocking):",
             file=sys.stderr,
         )
         for w in warnings:
