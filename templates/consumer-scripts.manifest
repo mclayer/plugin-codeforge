@@ -1,0 +1,10 @@
+# consumer-scripts.manifest — paths relative to plugin root.
+# CFP-97 — these scripts must be copied to consumer projects alongside
+# templates/github-workflows/ files, since consumer-distributable workflows
+# may invoke them at CI runtime.
+#
+# Format: one path per line; lines starting with '#' or empty are skipped.
+# When adding a new consumer-distributable workflow that invokes a script,
+# also append the script's plugin-root-relative path here.
+
+scripts/check-story-section-schema.sh

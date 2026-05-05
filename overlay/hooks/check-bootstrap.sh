@@ -126,6 +126,46 @@ if [ "$WD_MODE" = "degraded" ]; then
     WARN_MESSAGES+=("           → Path A upgrade: 'cp \${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/<missing>.yml .github/workflows/'")
 fi
 
+# Check 4: consumer-scripts manifest drift (CFP-97)
+# Plugin manifest 의 각 entry 가 consumer project 에 실재하는지 확인. 부재 시 WARN.
+# Plugin root resolution: regen-agents.sh 동일 방식.
+PLUGIN_ROOT_RESOLVED=""
+if [ -n "${CLAUDE_PLUGIN_ROOT:-}" ] && [ -d "$CLAUDE_PLUGIN_ROOT/codeforge" ]; then
+    PLUGIN_ROOT_RESOLVED="$CLAUDE_PLUGIN_ROOT/codeforge"
+else
+    SCRIPT_DIR_BS="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd 2>/dev/null)" || SCRIPT_DIR_BS=""
+    if [ -n "$SCRIPT_DIR_BS" ] && [ -d "$SCRIPT_DIR_BS/../.." ]; then
+        PLUGIN_ROOT_RESOLVED="$(cd "$SCRIPT_DIR_BS/../.." && pwd)"
+    fi
+fi
+
+CONSUMER_SCRIPTS_MANIFEST="$PLUGIN_ROOT_RESOLVED/templates/consumer-scripts.manifest"
+if [ -n "$PLUGIN_ROOT_RESOLVED" ] && [ -f "$CONSUMER_SCRIPTS_MANIFEST" ]; then
+    MISSING_SCRIPTS=()
+    while IFS= read -r line; do
+        # trim leading/trailing whitespace
+        line="${line#"${line%%[![:space:]]*}"}"
+        line="${line%"${line##*[![:space:]]}"}"
+        case "$line" in '#'*|'') continue ;; esac
+        # path traversal guard (CFP-97 P1 fix) — silent skip; manifest is plugin-trusted
+        case "$line" in
+            /*|*..*) continue ;;
+        esac
+        if [ ! -f "$line" ]; then
+            MISSING_SCRIPTS+=("$line")
+        fi
+    done < "$CONSUMER_SCRIPTS_MANIFEST"
+
+    if [ ${#MISSING_SCRIPTS[@]} -gt 0 ]; then
+        WARN_COUNT=$((WARN_COUNT + 1))
+        WARN_MESSAGES+=("[bootstrap] WARN: ${#MISSING_SCRIPTS[@]} consumer-distributable script(s) 부재 (CFP-97)")
+        WARN_MESSAGES+=("           누락: ${MISSING_SCRIPTS[*]}")
+        WARN_MESSAGES+=("           → consumer-guide §2c manifest-driven copy 실행 또는:")
+        WARN_MESSAGES+=("              while IFS= read -r l; do case \"\$l\" in '#'*|'') continue;; esac; mkdir -p \"\$(dirname \"\$l\")\"; cp \"\${CLAUDE_PLUGIN_ROOT}/codeforge/\${l}\" \"\$l\"; chmod +x \"\$l\"; done < \"\${CLAUDE_PLUGIN_ROOT}/codeforge/templates/consumer-scripts.manifest\"")
+        WARN_MESSAGES+=("           → 미해결 시 해당 script 의존 workflow (예: story-section-schema.yml) 가 lint skip + warning")
+    fi
+fi
+
 # 결과 출력
 if [ $WARN_COUNT -gt 0 ]; then
     {
