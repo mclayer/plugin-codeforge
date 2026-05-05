@@ -113,23 +113,25 @@ chmod +x .claude/_overlay/run-tests.sh .claude/_overlay/run-perf.sh
 mkdir -p .github/workflows
 cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/*.yml .github/workflows/
 
-# CFP-97: consumer-distributable scripts manifest-driven copy
-# (currently 1 entry: scripts/check-story-section-schema.sh — CFP-94 의존).
+# CFP-97 + CFP-109: consumer-distributable scripts manifest-driven copy.
+# Manifest format: <script-path>[:<dependent-workflow-path>]
+# (CFP-109 — workflow path optional, used by SessionStart Check 4 for degraded suppression).
 # 위 workflow cp 와 본 loop 는 함께 실행 의무 — 한쪽만 실행 시 의존 workflow CI 가 lint skip + warning.
 while IFS= read -r line; do
     # trim leading/trailing whitespace
     line="${line#"${line%%[![:space:]]*}"}"
     line="${line%"${line##*[![:space:]]}"}"
     case "$line" in '#'*|'') continue ;; esac
-    # path traversal guard (CFP-97 P1 fix)
-    case "$line" in
+    # CFP-109: parse script-path before optional `:<workflow>` suffix
+    script_path="${line%%:*}"
+    # path traversal guard (CFP-97 P1 fix) — applied to script_path only
+    case "$script_path" in
         /*) echo "manifest absolute-path entry rejected: $line" >&2; continue ;;
         *..*) echo "manifest traversal entry rejected: $line" >&2; continue ;;
     esac
-    target_path="$line"
-    mkdir -p "$(dirname "$target_path")"
-    cp "${CLAUDE_PLUGIN_ROOT}/codeforge/${line}" "${target_path}"
-    chmod +x "${target_path}"
+    mkdir -p "$(dirname "$script_path")"
+    cp "${CLAUDE_PLUGIN_ROOT}/codeforge/${script_path}" "${script_path}"
+    chmod +x "${script_path}"
 done < "${CLAUDE_PLUGIN_ROOT}/codeforge/templates/consumer-scripts.manifest"
 
 # Issue Forms 3개 복사 (audit + bug + story)

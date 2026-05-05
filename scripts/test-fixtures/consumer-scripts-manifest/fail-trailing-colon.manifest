@@ -1,0 +1,2 @@
+# CFP-109 fixture: trailing colon (empty workflow side)
+scripts/check-story-section-schema.sh:

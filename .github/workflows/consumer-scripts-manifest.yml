@@ -1,0 +1,33 @@
+name: consumer-scripts-manifest lint (CFP-109)
+
+# Validates templates/consumer-scripts.manifest entries:
+# - Format: <script-path>[:<dependent-workflow-path>]
+# - Path traversal reject (no '/' prefix, no '..' segment)
+# - Script existence + executable bit
+# - Dep workflow existence + templates/github-workflows/*.yml constraint
+#
+# Plugin-internal lint (NOT consumer-distributable — manifest authored by plugin only).
+
+on:
+  pull_request:
+    paths:
+      - 'templates/consumer-scripts.manifest'
+      - 'scripts/check-consumer-scripts-manifest.sh'
+      - 'scripts/test-check-consumer-scripts-manifest.sh'
+      - 'templates/github-workflows/*.yml'
+      - '.github/workflows/consumer-scripts-manifest.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  consumer-scripts-manifest:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run manifest lint (production manifest)
+        run: bash scripts/check-consumer-scripts-manifest.sh
+
+      - name: Run lint self-test (fixtures)
+        run: bash scripts/test-check-consumer-scripts-manifest.sh

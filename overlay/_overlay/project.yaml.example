@@ -34,7 +34,7 @@ labels:
     - "<REPLACE — 프로젝트 component 3 (e.g. data)>"
 
 # Workflow distribution mode (CFP-86 / consumer-guide §2c, CFP-89)
-# - "full" (Path A, default) = 6 workflow 모두 보유
+# - "full" (Path A, default) = 7 workflow 모두 보유 (CFP-94 후 — story-section-schema.yml 추가)
 # - "degraded" (Path B) = 일부 workflow 부재, manual compensating check 의무
 workflow_distribution:
   mode: full
