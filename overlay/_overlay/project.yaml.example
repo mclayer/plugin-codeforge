@@ -47,14 +47,14 @@ workflow_distribution:
   #   - fix-ledger-sync.yml
   #   - subissue-from-impl-manifest.yml
 
-# Bootstrap protocol settings (CFP-103, ADR-027)
-bootstrap:
-  # Override expected workflow set. Default = check_bootstrap.EXPECTED_WORKFLOWS_FULL.
-  # Path B (degraded) consumer 가 모든 workflow 가질 필요 없을 때 명시.
-  # expected_workflows:
-  #   - phase-gate-mergeable.yml
-  #   - phase-label-invariant.yml
-
-  # bypass env vars (ADR-027 결정 3, CFP-104 후행)
-  # 본 section 은 informational only — 실제 bypass 는 hook 안에서 env 검사
-  # HOTFIX_BYPASS_CODEFORGE=1 + HOTFIX_BYPASS_REASON="<text>" 동시 설정 의무
+# Bootstrap protocol settings (CFP-103, ADR-027) — optional section, all commented
+# bootstrap:
+#   # Override expected workflow set. Default = check_bootstrap.EXPECTED_WORKFLOWS_FULL.
+#   # Path B (degraded) consumer 가 모든 workflow 가질 필요 없을 때 명시.
+#   expected_workflows:
+#     - phase-gate-mergeable.yml
+#     - phase-label-invariant.yml
+#
+# bypass env vars (ADR-027 결정 3, CFP-104 후행) — informational only
+# 실제 bypass 는 hook 안에서 env 검사:
+# HOTFIX_BYPASS_CODEFORGE=1 + HOTFIX_BYPASS_REASON="<text>" 동시 설정 의무
