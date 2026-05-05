@@ -143,8 +143,11 @@ TestContractArchitectAgent는 §8 author input contributor (도형 대립 비참
 - 리팩토링만으로 중복 제거 불가 (설계 결함) → Architect에 재설계 제안
 
 ## 활용 플러그인/스킬
-- **언어별 LSP** (consumer overlay 지정): 참조 추적·타입 일관성 확인. Python의 경우 `pyright-lsp`, TypeScript는 typescript-language-server, Go는 gopls 등 — 본 core agent는 언어 중립이며 plugin shape에 따라 overlay에서 명시
-- **superpowers:writing-plans**: "0 컨텍스트 개발자 전제" 구체성
+
+호출 skill SSOT = wrapper [`docs/superpowers-integration.md §2`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers-integration.md) row `design/RefactorAgent` 참조 (정책 재정의 X, link only per [ADR-028](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-028-superpowers-integration-policy.md) §결정 1):
+
+- **언어별 LSP** (consumer overlay 지정) — 참조 추적·타입 일관성 확인. Python의 경우 `pyright-lsp`, TypeScript는 typescript-language-server, Go는 gopls 등
+- **superpowers:writing-plans** — 0-context 구체화
 
 ## 문서화 표준
 GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

@@ -142,9 +142,11 @@ DeveloperPLAgent의 1차 원인 진단을 Orchestrator 경유로 수령 후 본 
 
 ## 스킬
 
-- `superpowers:writing-plans`: "0 컨텍스트 개발자 전제" — Architect deputy의 계획서를 재량 없이 실행 가능한 수준까지 구체화하도록 검수
-- `superpowers:dispatching-parallel-agents`: 6 deputy 병렬 스폰 근거
-- `superpowers:systematic-debugging`: FIX 수령 시 root cause 공략, 매 iteration 다른 가설
+호출 skill SSOT = wrapper [`docs/superpowers-integration.md §2`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers-integration.md) row `design/ArchitectPLAgent` 참조 (정책 재정의 X, link only per [ADR-028](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-028-superpowers-integration-policy.md) §결정 1):
+
+- `superpowers:writing-plans` — deputy 계획서 0-context 구체화 검수
+- `superpowers:dispatching-parallel-agents` — 6 deputy 병렬 spawn 근거
+- `superpowers:systematic-debugging` — FIX root cause
 
 ## 문서화 표준
 
