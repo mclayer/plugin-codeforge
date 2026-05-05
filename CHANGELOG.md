@@ -1,9 +1,18 @@
 # Changelog
 
 `codeforge` 플러그인 릴리스 이력. 각 엔트리는 버전 bump 단위.
-Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guide.md) 해당 섹션 참조.
+Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guide.md) 해당 섹션 변경.
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
+
+## Unreleased
+
+### CFP-96 — First-Consumer Adoption Bootstrap Phase 1 (doc-only)
+
+- `docs/adr/ADR-027-consumer-adoption-protocol.md` (NEW) — 5 결정 freeze: bootstrap 검증 책임 = wrapper overlay/hooks/, 3-trigger enforcement (Story phase / UserPromptSubmit / SessionStart), bypass = HOTFIX_BYPASS_CODEFORGE env, cross-platform (POSIX + Windows), consumer-guide.md = 절차 SSOT.
+- 6 child Story registered (CFP-103~108, #199~#204) for Phase 2~6 implementation. Phase 7 = Epic close.
+- Spec/plan/change-plan/decisions: codeforge-internal-docs/wrapper/ (ADR-013 dogfood-out).
+- Phase 2 (CFP-103+CFP-104) version bump: 5.2.0 → 5.3.0 (예상).
 
 ## [5.2.0] - 2026-04-30
 
