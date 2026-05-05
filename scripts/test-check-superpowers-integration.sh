@@ -9,13 +9,16 @@ LINT_SCRIPT="$SCRIPT_DIR/check-superpowers-integration.sh"
 FAILED=0
 
 # Test 1: good fixtures pass
-if "$LINT_SCRIPT" \
+if OUTPUT=$("$LINT_SCRIPT" \
     --ssot "$FIXTURES/good_ssot.md" \
     --agent-glob "$FIXTURES/good_agent.md" \
-    --helpers-dir "$FIXTURES/helpers_empty" 2>/dev/null; then
+    --helpers-dir "$FIXTURES/helpers_empty" 2>&1); then
   echo "PASS test 1 — good fixtures accepted"
 else
   echo "FAIL test 1 — good fixtures rejected (expected pass)"
+  echo "  --- lint output ---"
+  echo "$OUTPUT" | sed 's/^/  /'
+  echo "  --- end lint output ---"
   FAILED=$((FAILED+1))
 fi
 
