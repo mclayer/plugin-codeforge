@@ -7,6 +7,21 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## Unreleased
 
+### CFP-113 — Superpowers integration wrapping (Phase 1 wrapper SSOT)
+
+- `docs/superpowers-integration.md` (NEW) — codeforge ↔ superpowers 통합 SSOT (6 sub-section, 23 호출 지점 / 7 skill / 15 agent file enumerate).
+- `docs/adr/ADR-028-superpowers-integration-policy.md` (NEW) — 6 결정 (SSOT 위치 / contract / path override / 변환 표 / helpers 소유권 / Phase 2-7 batch open). Sonnet decider Option B + Codex 3 mod + Sonnet 2 mitigation 통합.
+- `docs/adr/ADR-017-skill-override-path-enforcement.md` (Modify) — Amendment 1: agent md `Edit/Write(docs/superpowers/**)` 권한 표기 lint 추가. effective date = Phase 1 PR merge 직후.
+- `templates/skill-prompt-helpers/{brainstorming-path-override,writing-plans-path-override,tdd-discipline,verification-before-completion}.md` (NEW, 4 fragment) — wrapper-owned, lane import-only.
+- `scripts/check-superpowers-integration.sh` + `scripts/test-check-superpowers-integration.sh` + `scripts/fixtures/superpowers-integration/` (NEW) — 3 check lint (SSOT row drift / stale path / inline copy) + 4 fixture test runner.
+- `templates/github-workflows/superpowers-integration.yml` (NEW) — PR check (fail-closed self-test + real wrapper state lint).
+- `CLAUDE.md` (Modify) — "필수 플러그인 9종" 의 superpowers 표기 명확화 + integration SSOT link.
+- `overlay/hooks/check_bootstrap.py` (Modify) — REQUIRED_PLUGINS comment + WARN 메시지 보강 (non-blocking 유지).
+- `docs/orchestrator-playbook.md` (Modify) — §1.1 checklist 0번 superpowers ✅ line 에 integration SSOT link.
+- `docs/consumer-guide.md` (Modify) — §1b 플러그인 4종 의 superpowers 표기 link.
+- Story / spec / plan / change-plan / decision archive — internal-docs `wrapper/{stories,specs,plans,change-plans,decisions}/` (ADR-013 dogfood-out).
+- Phase 2-7 lane plugin batch open at Phase 1 merge — agent prose 정합 + 4 stale path 정리 (3 ReviewPL + PMOAgent) acceptance criteria.
+
 ### CFP-96 — Phase 7: Epic close
 
 - `wrapper/retros/EPIC-RESULTS-CFP-96.md` (NEW, codeforge-internal-docs) — Epic close artifact.
