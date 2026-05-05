@@ -1,0 +1,9 @@
+{
+  "version": 2,
+  "plugins": {
+    "github@claude-plugins-official": [{"scope": "user"}],
+    "superpowers@claude-plugins-official": [{"scope": "user"}],
+    "claude-md-management@claude-plugins-official": [{"scope": "user"}],
+    "codex@openai-codex": [{"scope": "user"}]
+  }
+}

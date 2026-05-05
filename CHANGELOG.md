@@ -14,6 +14,20 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 - Spec/plan/change-plan/decisions: codeforge-internal-docs/wrapper/ (ADR-013 dogfood-out).
 - Phase 2 (CFP-103+CFP-104) version bump: 5.2.0 → 5.3.0 (예상).
 
+### CFP-103 — Phase 2a: bootstrap protocol Python core + cross-platform wrapper
+
+- `overlay/hooks/check_bootstrap.py` (NEW) — Python core for cross-platform check (validate_config.py 패턴).
+- `overlay/hooks/check-bootstrap.sh` (Modify) — thin POSIX wrapper, calls check_bootstrap.py.
+- `overlay/hooks/check-bootstrap.ps1` (NEW) — Windows PowerShell wrapper.
+- `overlay/hooks/tests/test_check_bootstrap.py` (NEW) — 22 pytest 단위 테스트 (cross-platform CI matrix 권장).
+- `overlay/hooks/tests/fixtures/installed_plugins_{full,partial,empty}.json` (NEW) — fixture (mctrader-hub 검증 데이터 포함).
+- 4 NEW check (CFP-103): 11 plugin install (`installed_plugins.json`) + consumer `.github/workflows/` file 존재 + `.github/ISSUE_TEMPLATE/` 3종 sync + `CODEOWNERS` 정합.
+- 4 보존 (CFP-11/86/89/97): workflow permissions / 18 plugin labels / workflow_distribution.mode / consumer-scripts manifest drift.
+- Non-blocking exit 0 invariant 보존.
+- `overlay/_overlay/project.yaml.example` — `bootstrap.expected_workflows` override field 추가.
+- ADR-027 결정 1 (bootstrap 검증 책임 = wrapper overlay/hooks/) + 4 (cross-platform) implementation.
+- Codex Phase 2 entry review (agent a394d669843f0a58b) Sonnet decider pick=split (CFP-103 선행, CFP-104 후행) HIGH confidence.
+
 ## [5.2.0] - 2026-04-30
 
 ### CFP-47 — Stateful / restart invariant test category (ADR-015)
