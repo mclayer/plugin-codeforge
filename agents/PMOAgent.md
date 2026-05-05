@@ -29,12 +29,10 @@ permissions:
     - Edit(docs/adr/**)
     - Edit(docs/domain-knowledge/**)
     - Edit(docs/inter-plugin-contracts/**)
-    - Edit(docs/superpowers/**)
     - Write(docs/change-plans/**)
     - Write(docs/adr/**)
     - Write(docs/domain-knowledge/**)
     - Write(docs/inter-plugin-contracts/**)
-    - Write(docs/superpowers/**)
 ---
 
 **프로젝트 관리 전담**. 단일 Story 요구사항 해석은 **RequirementsPLAgent**가 계승받아 본 에이전트는 프로젝트 관리 책임만 보유. 구체적으로:
@@ -183,7 +181,10 @@ Orchestrator가 세션 종료 직전 본 에이전트를 스폰해 playbook §8.
 - **DomainAgent/Analyst/Researcher 호출 금지** — 요구사항 해석은 RequirementsPLAgent 권한
 
 ## 스킬
-- `superpowers:verification-before-completion`: Story 완료 감사 시 체크리스트 빠짐 방지
+
+호출 skill SSOT = wrapper [`docs/superpowers-integration.md §2`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers-integration.md) row `pmo/PMOAgent` 참조 (정책 재정의 X, link only per [ADR-028](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-028-superpowers-integration-policy.md) §결정 1):
+
+- `superpowers:verification-before-completion` — Story 완료 감사 체크리스트 빠짐 방지
 
 ## 문서화 표준
 회고 파일(`docs/retros/**`) 및 Story §11 retro pointer 는 본 에이전트가 직접 write (CFP-36 + CFP-26 Phase 0a, schema [`templates/retro.md`](../templates/retro.md) CFP-27). Epic Issue 코멘트·Milestone description 도 본 에이전트가 직접 write (`mcp__github__add_issue_comment` + `Bash(gh api repos/*/milestones*)`, CFP-36). ADR 후보 발의는 `pmo_output v1.adr_proposal` 필드 로 Orchestrator 에 inline 반환 — DocsAgent 경유 write queue path 는 폐기. GitHub PR·Story file 일반 섹션·Change Plan 등 나머지 docs write 는 Orchestrator 경유 DocsAgent 가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
