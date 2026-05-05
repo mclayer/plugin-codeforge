@@ -147,21 +147,36 @@ if [ -n "$PLUGIN_ROOT_RESOLVED" ] && [ -f "$CONSUMER_SCRIPTS_MANIFEST" ]; then
         line="${line#"${line%%[![:space:]]*}"}"
         line="${line%"${line##*[![:space:]]}"}"
         case "$line" in '#'*|'') continue ;; esac
+        # CFP-109: parse script-path[:dep-workflow]
+        script_path="${line%%:*}"
+        if [ "$script_path" = "$line" ]; then
+            dep_workflow=""
+        else
+            dep_workflow="${line#*:}"
+        fi
         # path traversal guard (CFP-97 P1 fix) — silent skip; manifest is plugin-trusted
-        case "$line" in
+        case "$script_path" in
             /*|*..*) continue ;;
         esac
-        if [ ! -f "$line" ]; then
-            MISSING_SCRIPTS+=("$line")
+        if [ ! -f "$script_path" ]; then
+            # CFP-109 degraded suppression: if dep workflow basename ∈ WD_MISSING, skip WARN
+            # grep -Fq for literal match (avoid '.' wildcard false-positive — Codex AREA 2 P1)
+            if [ -n "$dep_workflow" ] && [ -n "$WD_MISSING" ]; then
+                dep_basename="$(basename "$dep_workflow")"
+                if echo ",$WD_MISSING," | grep -Fq ",$dep_basename,"; then
+                    continue
+                fi
+            fi
+            MISSING_SCRIPTS+=("$script_path")
         fi
     done < "$CONSUMER_SCRIPTS_MANIFEST"
 
     if [ ${#MISSING_SCRIPTS[@]} -gt 0 ]; then
         WARN_COUNT=$((WARN_COUNT + 1))
-        WARN_MESSAGES+=("[bootstrap] WARN: ${#MISSING_SCRIPTS[@]} consumer-distributable script(s) 부재 (CFP-97)")
+        WARN_MESSAGES+=("[bootstrap] WARN: ${#MISSING_SCRIPTS[@]} consumer-distributable script(s) 부재 (CFP-97 / CFP-109)")
         WARN_MESSAGES+=("           누락: ${MISSING_SCRIPTS[*]}")
         WARN_MESSAGES+=("           → consumer-guide §2c manifest-driven copy 실행 또는:")
-        WARN_MESSAGES+=("              while IFS= read -r l; do case \"\$l\" in '#'*|'') continue;; esac; mkdir -p \"\$(dirname \"\$l\")\"; cp \"\${CLAUDE_PLUGIN_ROOT}/codeforge/\${l}\" \"\$l\"; chmod +x \"\$l\"; done < \"\${CLAUDE_PLUGIN_ROOT}/codeforge/templates/consumer-scripts.manifest\"")
+        WARN_MESSAGES+=("              while IFS= read -r l; do case \"\$l\" in '#'*|'') continue;; esac; sp=\"\${l%%:*}\"; mkdir -p \"\$(dirname \"\$sp\")\"; cp \"\${CLAUDE_PLUGIN_ROOT}/codeforge/\${sp}\" \"\$sp\"; chmod +x \"\$sp\"; done < \"\${CLAUDE_PLUGIN_ROOT}/codeforge/templates/consumer-scripts.manifest\"")
         WARN_MESSAGES+=("           → 미해결 시 해당 script 의존 workflow (예: story-section-schema.yml) 가 lint skip + warning")
     fi
 fi

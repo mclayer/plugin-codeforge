@@ -1,0 +1,2 @@
+# CFP-109 fixture: leading colon (empty script_path)
+:templates/github-workflows/story-section-schema.yml

@@ -1,0 +1,2 @@
+# CFP-109 fixture: valid legacy single-column entry
+scripts/check-story-section-schema.sh

@@ -1,0 +1,2 @@
+# CFP-109 fixture: too many colons
+scripts/check-story-section-schema.sh:templates/github-workflows/story-section-schema.yml:extra

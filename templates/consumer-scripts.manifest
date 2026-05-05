@@ -3,8 +3,21 @@
 # templates/github-workflows/ files, since consumer-distributable workflows
 # may invoke them at CI runtime.
 #
-# Format: one path per line; lines starting with '#' or empty are skipped.
+# Format (CFP-109 schema extension): one entry per line.
+#   <script-path>[:<dependent-workflow-path>]
+#     <script-path>: plugin-root-relative path to script (REQUIRED).
+#     <dependent-workflow-path>: optional. plugin-root-relative path to the
+#         workflow yml that invokes this script. Used by SessionStart hook
+#         Check 4 to suppress the missing-script WARN when the workflow itself
+#         is in workflow_distribution.missing_workflows (degraded consumers).
+#
+# Lines starting with '#' or empty are skipped.
+# Lint: scripts/check-consumer-scripts-manifest.sh validates each entry
+# (path traversal reject + file existence + executable bit + workflow constraint).
+#
 # When adding a new consumer-distributable workflow that invokes a script,
-# also append the script's plugin-root-relative path here.
+# also append the script's plugin-root-relative path here. If the workflow is
+# in templates/github-workflows/, append `:templates/github-workflows/<name>.yml`
+# to enable degraded-mode suppression.
 
-scripts/check-story-section-schema.sh
+scripts/check-story-section-schema.sh:templates/github-workflows/story-section-schema.yml

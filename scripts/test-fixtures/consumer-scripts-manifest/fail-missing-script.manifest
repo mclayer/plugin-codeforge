@@ -1,0 +1,2 @@
+# CFP-109 fixture: script does not exist in plugin repo
+scripts/this-does-not-exist.sh

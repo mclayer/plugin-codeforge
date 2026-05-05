@@ -1,0 +1,2 @@
+# CFP-109 fixture: workflow not under templates/github-workflows/
+scripts/check-story-section-schema.sh:.github/workflows/story-section-schema.yml

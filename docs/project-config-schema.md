@@ -76,7 +76,7 @@ story_cutoff:
     - <string>                      # e.g. "vendored library updates (security 영향 없음)"
 
 # [선택] Workflow distribution mode (CFP-86 / consumer-guide §2c, CFP-89)
-# default = "full" (Path A — 6 workflow 모두 보유)
+# default = "full" (Path A — 7 workflow 모두 보유 — CFP-94 후 story-section-schema.yml 추가)
 # "degraded" (Path B) = 일부 workflow 부재, manual compensating check 의무
 # 부재한 workflow 명시 의무 (degraded 시).
 workflow_distribution:

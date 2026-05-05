@@ -1,0 +1,2 @@
+# CFP-109 fixture: workflow file does not exist
+scripts/check-story-section-schema.sh:templates/github-workflows/this-does-not-exist.yml
