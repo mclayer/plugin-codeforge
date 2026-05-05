@@ -1,0 +1,16 @@
+{
+  "version": 2,
+  "plugins": {
+    "codeforge@mclayer": [{"scope": "user"}],
+    "codeforge-requirements@mclayer": [{"scope": "user"}],
+    "codeforge-design@mclayer": [{"scope": "user"}],
+    "codeforge-develop@mclayer": [{"scope": "user"}],
+    "codeforge-test@mclayer": [{"scope": "user"}],
+    "codeforge-review@mclayer": [{"scope": "user"}],
+    "codeforge-pmo@mclayer": [{"scope": "user"}],
+    "github@claude-plugins-official": [{"scope": "user"}],
+    "codex@openai-codex": [{"scope": "user"}],
+    "superpowers@claude-plugins-official": [{"scope": "user"}],
+    "claude-md-management@claude-plugins-official": [{"scope": "user"}]
+  }
+}

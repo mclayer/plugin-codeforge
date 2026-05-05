@@ -84,6 +84,10 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
      "workflow_distribution.mode (string: 'full' | 'degraded'), optional"),
     ("workflow_distribution.missing_workflows", False, _is_list_of_str,
      "workflow_distribution.missing_workflows (list of non-empty strings), optional"),
+    # CFP-103 bootstrap section (ADR-027) — bootstrap protocol settings
+    ("bootstrap", False, dict, "bootstrap section (mapping), optional"),
+    ("bootstrap.expected_workflows", False, _is_list_of_str,
+     "bootstrap.expected_workflows (list of non-empty strings, override EXPECTED_WORKFLOWS_FULL), optional"),
 ]
 
 
