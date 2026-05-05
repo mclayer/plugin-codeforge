@@ -72,7 +72,7 @@ related:
    🔍 세션 개시 의존성 점검
    - GitHub MCP: ✅ 노출 / ❌ 미인증 → /mcp 재인증 필요
    - codex 플러그인: ✅ / ❌ cache 부재 → /plugins install codex@openai-codex
-   - superpowers 플러그인: ✅
+   - superpowers 플러그인: ✅ (integration SSOT: [`docs/superpowers-integration.md`](superpowers-integration.md))
    - claude-md-management 플러그인: ✅
    - github 플러그인: ✅
    - codex CLI: ✅ /opt/homebrew/bin/codex / ❌ 미설치 → brew install 권장

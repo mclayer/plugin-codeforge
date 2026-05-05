@@ -53,7 +53,11 @@ REQUIRED_PLUGINS = {
     "codeforge-test@mclayer",
     "codeforge-review@mclayer",
     "codeforge-pmo@mclayer",
-    # 4 dependencies
+    # 4 dependencies (integration SSOT: docs/superpowers-integration.md):
+    #   github             — GitHub MCP tool exposure
+    #   codex              — CodexReviewAgent (review lane) + Sonnet decider 5-step
+    #   superpowers        — 17 lane agent x 7 skill (writing-plans / brainstorming / TDD / ...)
+    #   claude-md-management — CLAUDE.md maintenance skill
     "github@claude-plugins-official",
     "codex@openai-codex",
     "superpowers@claude-plugins-official",
@@ -306,6 +310,7 @@ def check_plugins_installed(plugins_json: Path) -> list[str]:
             warns.append(f"              /plugins install {p}")
         warns.extend([
             "           → consumer-guide §1a 'codeforge family 11 plugin install' 참조",
+            "           → superpowers 의존 SSOT: docs/superpowers-integration.md",
             "           → 미해결 시 6 lane orchestration 작동 불가, manual workaround 회귀",
         ])
         return warns

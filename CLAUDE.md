@@ -27,7 +27,7 @@ Lane internal · per-lane spawn detail · severity rule · GitHub workflow subse
 **필수 플러그인 (9종)**:
 - `codeforge-{review,pmo,requirements,test,develop,design}@mclayer` — 6 lane plugin
 - `codex@openai-codex` — CodexReviewAgent + codex CLI dependency
-- `superpowers@claude-plugins-official` — agent md skill 의존
+- `superpowers@claude-plugins-official` — 17 lane agent × 7 skill 호출 (SSOT: [`docs/superpowers-integration.md`](docs/superpowers-integration.md))
 - `github@claude-plugins-official` — GitHub MCP 도구 노출
 
 **필수 CLI (2종)**: `codex`, `gh`. (CFP-59 / ADR-019 → ADR-022 — Gemini CLI 의존 제거. Sonnet decider = Claude Code Agent tool runtime, 외부 auth 무관. `gemini` CLI 가 다른 용도로 설치되어 있으면 unset / removable optional.)
