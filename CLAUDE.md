@@ -36,7 +36,7 @@ Story §10 FIX Ledger append 는 **Orchestrator 단독** (codeforge core CFP-32 
 
 ## 구현 테스트 lane 동작
 
-Orchestrator 가 TestAgent 를 **subset 병렬** 로 spawn (R9 — [CFP-19 spec](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md)):
+Orchestrator 가 TestAgent 를 **subset 병렬** 로 spawn (R9 — [CFP-19 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-27-cfp-19-orchestration-parallelization.md)):
 
 - `TestAgent(subset: functional)` ∥ `TestAgent(subset: performance)` — 한 메시지에 dispatch
 - 두 subset 모두 PASS → 보안 lane 진입
