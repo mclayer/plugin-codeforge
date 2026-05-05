@@ -7,6 +7,14 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## Unreleased
 
+### CFP-122 — ADR-020 Amendment 2 — Mechanical Epic mode
+
+- `docs/adr/ADR-020-cross-repo-epic-pattern.md` (Modify) — Amendment 2 신설:
+  - **Mode C: Mechanical Epic** — Mode B special case. wrapper-driven Epic 의 Phase 2-N 가 동일 mechanical apply 시 child Story Issue / per-lane spec/plan 생략 허용.
+  - 4 조건 AND (file content 동일 / acceptance criteria 동일 / Sonnet trigger 무발화 / parent Epic §5 표 enumerate).
+  - PR body / Story frontmatter `mode: mechanical` marker 의무.
+  - CFP-120 + CFP-121 Phase 2 post-hoc ratification.
+
 ### CFP-121 — Superpowers schema drift quarterly review (wrapper Phase 1)
 
 - `templates/superpowers-skill-snapshot.txt` (NEW) — pinned snapshot of 14 superpowers v5.1.0 skills.
