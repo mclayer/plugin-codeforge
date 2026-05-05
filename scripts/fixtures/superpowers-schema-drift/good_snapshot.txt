@@ -1,0 +1,6 @@
+SUPERPOWERS_VERSION: 5.1.0
+
+brainstorming
+writing-plans
+test-driven-development
+verification-before-completion

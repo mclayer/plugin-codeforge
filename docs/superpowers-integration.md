@@ -57,7 +57,7 @@ CI 안전망: [ADR-017](adr/ADR-017-skill-override-path-enforcement.md) + Amendm
 | requirements | RequirementsPLAgent | 요구사항 대안 탐색 | superpowers:brainstorming | YES | §3 row 2 | plugin-codeforge-requirements Phase 2 |
 | requirements | RequirementsPLAgent | 통합 명세 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-requirements Phase 2 |
 | requirements | ResearcherAgent | 출처 URL 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-requirements Phase 2 |
-| review | ClaudeReviewAgent | 표준 체크리스트 | superpowers:code-reviewer | NO | §3 row 7 | plugin-codeforge-review Phase 2 |
+| review | ClaudeReviewAgent | 표준 체크리스트 | superpowers:requesting-code-review | NO | §3 row 7 | plugin-codeforge-review Phase 2 |
 | review | ClaudeReviewAgent | PASS evidence 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-review Phase 2 |
 | pmo | PMOAgent | Story 완료 감사 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-pmo Phase 2 |
 
@@ -71,7 +71,7 @@ CI 안전망: [ADR-017](adr/ADR-017-skill-override-path-enforcement.md) + Amendm
 | 4. systematic-debugging | `docs/stories/<KEY>.md §10 FIX Ledger` (column 원인 판정 / 재실행 범위) | 매 iteration 다른 가설 → §10 row append; root cause → 설계 vs 구현 dichotomy |
 | 5. verification-before-completion | gate label (gate:design-review-pass / gate:security-test-pass) + Story §9 evidence | 체크리스트 빠짐 방지 → review-verdict-v3 packet evidence column |
 | 6. dispatching-parallel-agents | playbook §3 parallel spawn 판단 (track A ∥ track B) | 병렬 fan-out 근거 → spawn 시점 + sub-agent 수 + non-skippable 매트릭스 |
-| 7. code-reviewer | review-verdict-v3 finding format + lane-specific 체크리스트 | 표준 체크리스트 + lane 책임 매트릭스 dedup |
+| 7. requesting-code-review | review-verdict-v3 finding format + lane-specific 체크리스트 | 표준 체크리스트 + lane 책임 매트릭스 dedup. `requesting-code-review` skill 가 codeforge-review 의 ClaudeReview/CodexReview worker 와 같은 dispatch pattern (subagent code-reviewer) — wrapper Orchestrator 가 직접 호출보다 lane plugin spawn 패턴 사용 권장 |
 
 ## §4 Path override 강제 메커니즘
 

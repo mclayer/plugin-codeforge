@@ -1,0 +1,39 @@
+# superpowers@claude-plugins-official skill snapshot (CFP-121)
+#
+# Pinned snapshot of known superpowers skills. Used by
+# scripts/check-superpowers-schema-drift.sh to detect drift between
+# wrapper SSOT (docs/superpowers-integration.md §2 enumerated invocations)
+# and the actual superpowers plugin schema.
+#
+# Update protocol:
+#   - When superpowers releases a new version with skill add/remove/rename:
+#     1. Update SUPERPOWERS_VERSION line below to new version
+#     2. Add/remove/rename skill names below
+#     3. Update wrapper SSOT (docs/superpowers-integration.md §2) if codeforge agents
+#        need to use new skills, or if removed skills affected agents
+#   - Maintenance frequency: quarterly check (templates/github-workflows/superpowers-schema-drift.yml schedule)
+#
+# Format:
+#   - Lines starting with '#' = comments
+#   - Single header `SUPERPOWERS_VERSION: <semver>`
+#   - Empty lines OK
+#   - Each skill = single line, no prefix (just bare name like `brainstorming`)
+#
+# Source: ~/.claude/plugins/cache/claude-plugins-official/superpowers/<version>/skills/
+
+SUPERPOWERS_VERSION: 5.1.0
+
+brainstorming
+dispatching-parallel-agents
+executing-plans
+finishing-a-development-branch
+receiving-code-review
+requesting-code-review
+subagent-driven-development
+systematic-debugging
+test-driven-development
+using-git-worktrees
+using-superpowers
+verification-before-completion
+writing-plans
+writing-skills
