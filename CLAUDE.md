@@ -90,7 +90,7 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 | 구현 | 설계 리뷰 PASS | §8·§8.5 + Phase 2 PR 첫 commit (DeveloperPL + QADev + N role:dev) | — |
 | 구현 리뷰 | DeveloperPL ready | §9 (CodeReviewPL Claude+Codex 종합) | 3 |
 | 구현 테스트 | 구현 리뷰 PASS | (TestAgent 기능→성능 순차) | ∞ |
-| 보안 테스트 | 구현 테스트 PASS | §9 (SecurityTestPL 2-layer: GitHub native + Claude+Codex) + `gate:security-test-pass` | ∞ |
+| 보안 테스트 | 구현 테스트 PASS | §9 (SecurityTestPL 2-layer: GitHub native + Claude+Codex) + `gate:security-test-pass` (+ `gate:live-entry-pass` if Live touching, ADR-030) | ∞ |
 
 세부 spawn sequence · branch logic · FIX 진단 흐름 SSOT: [playbook §3](docs/orchestrator-playbook.md) + 각 lane plugin CLAUDE.md.
 

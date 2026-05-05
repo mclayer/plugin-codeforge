@@ -61,9 +61,10 @@ for p in 요구사항 설계 설계-리뷰 구현 구현-리뷰 구현-테스트
     create_label "phase:$p" "1d76db" "Phase: $p"
 done
 
-# gate:* (2종)
+# gate:* (3종) — gate:live-entry-pass added v1.3 (CFP-123 / ADR-030)
 create_label "gate:design-review-pass"   "0e8a16" "Design review PASS"
 create_label "gate:security-test-pass"   "0e8a16" "Security test PASS"
+create_label "gate:live-entry-pass"      "0e8a16" "Live Epic lane-entry pass (3-condition AND: mode==live + --confirm-live + isolated runtime)"
 
 # fix:* (4종)
 for r in 설계-리뷰 구현-리뷰 구현-테스트 보안-테스트; do

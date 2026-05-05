@@ -1,13 +1,14 @@
 ---
 kind: registry
 registry: label
-version: "1.2"
+version: "1.3"
 status: Active
 authors:
   - Claude (CFP-32 codification — bootstrap-labels.sh 추출 + ζ arc owner 매핑)
 related_adrs:
   - ADR-008
   - ADR-009 (CFP-31)
+  - ADR-030 (CFP-123 — gate:live-entry-pass v1.3 minor bump)
 related_files:
   - scripts/bootstrap-labels.sh (현재 hardcoded source — CFP-33 contract harness에서 SSOT 역전 후 본 registry → script 자동 생성)
   - .github/workflows/phase-label-invariant.yml
@@ -119,7 +120,7 @@ labels:
     single_active: true
     attach_owner_plugin: "codeforge-review (CFP-35 v2 후) / DocsAgent (CFP-32 시점)"
 
-  # gate:* (2종)
+  # gate:* (3종) — gate:live-entry-pass added v1.3 (CFP-123 / ADR-030)
   - name: gate:design-review-pass
     category: gate
     color: "0e8a16"
@@ -133,6 +134,13 @@ labels:
     description: "Security test PASS"
     single_active: false
     attach_owner_plugin: "codeforge-review (CFP-35 v2 후) / DocsAgent (CFP-32 시점)"
+
+  - name: gate:live-entry-pass
+    category: gate
+    color: "0e8a16"
+    description: "Live Epic lane-entry pass — 3-condition AND (mode==live + --confirm-live + isolated runtime) 충족"
+    single_active: false
+    attach_owner_plugin: "wrapper Orchestrator (post-Sonnet review-verdict step 4) / consumer CI 부착 (3-condition 검증 통과 시)"
 
   # fix:* (4종, 누적 가능)
   - name: fix:설계-리뷰-retry
