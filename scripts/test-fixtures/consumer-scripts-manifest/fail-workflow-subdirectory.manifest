@@ -1,0 +1,2 @@
+# CFP-112 fixture: workflow path with sub-directory rejected (AREA 3)
+scripts/check-story-section-schema.sh:templates/github-workflows/sub/foo.yml

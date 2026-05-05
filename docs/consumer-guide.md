@@ -127,10 +127,11 @@ while IFS= read -r line; do
     case "$line" in '#'*|'') continue ;; esac
     # CFP-109: parse script-path before optional `:<workflow>` suffix
     script_path="${line%%:*}"
-    # path traversal guard (CFP-97 P1 fix) — applied to script_path only
+    # path traversal guard (CFP-97 P1 + CFP-112 leading-dash) — applied to script_path only
     case "$script_path" in
         /*) echo "manifest absolute-path entry rejected: $line" >&2; continue ;;
         *..*) echo "manifest traversal entry rejected: $line" >&2; continue ;;
+        -*) echo "manifest leading-dash entry rejected: $line" >&2; continue ;;
     esac
     mkdir -p "$(dirname "$script_path")"
     cp "${CLAUDE_PLUGIN_ROOT}/codeforge/${script_path}" "${script_path}"

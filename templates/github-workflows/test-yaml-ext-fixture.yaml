@@ -1,0 +1,13 @@
+name: test-yaml-ext fixture (CFP-112)
+
+# Placeholder workflow for CFP-112 lint test fixture (valid-yaml-extension.manifest).
+# Demonstrates that .yaml extension is valid (vs .yml). Not invoked in CI.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  noop:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "fixture only"

@@ -14,7 +14,10 @@ on:
       - 'templates/consumer-scripts.manifest'
       - 'scripts/check-consumer-scripts-manifest.sh'
       - 'scripts/test-check-consumer-scripts-manifest.sh'
+      - 'scripts/test-regen-agents-autocopy.sh'
+      - 'overlay/hooks/regen-agents.sh'
       - 'templates/github-workflows/*.yml'
+      - 'templates/github-workflows/*.yaml'
       - '.github/workflows/consumer-scripts-manifest.yml'
 
 permissions:
@@ -31,3 +34,6 @@ jobs:
 
       - name: Run lint self-test (fixtures)
         run: bash scripts/test-check-consumer-scripts-manifest.sh
+
+      - name: Run regen-agents auto-copy self-test (CFP-112)
+        run: bash scripts/test-regen-agents-autocopy.sh
