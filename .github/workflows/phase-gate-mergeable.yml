@@ -34,7 +34,14 @@ jobs:
 
             let phaseLabel = null;
             let gateLabel = null;
+            let liveTouching = false;  // CFP-123 / ADR-030 — Live Epic lane-entry policy
             let sourceNote = '';
+
+            // CFP-123: Detect live_touching marker from PR body (Phase 1 explicit declare)
+            //   Story frontmatter `live_touching: true` will be parsed below from cross-repo Story fetch.
+            //   PR body marker form: `live_touching: true` (case-insensitive)
+            const prBodyLiveMatch = body.match(/live_touching:\s*true/i);
+            if (prBodyLiveMatch) liveTouching = true;
 
             // 2. Cross-repo Story fetch path (preferred — CFP-45 binding)
             if (storyUriMatch) {
@@ -69,8 +76,10 @@ jobs:
                       const fm = fmMatch[1];
                       const phaseM = fm.match(/^phase:\s*(\S+)/m);
                       const gateM = fm.match(/^gate:\s*(\S+)/m);
+                      const liveM = fm.match(/^live_touching:\s*(true|false)/im);
                       if (phaseM) phaseLabel = phaseM[1].replace(/["']/g, '');
                       if (gateM) gateLabel = gateM[1].replace(/["']/g, '');
+                      if (liveM && liveM[1].toLowerCase() === 'true') liveTouching = true;
                       sourceNote = `Story ${sOwner}/${sRepo}#${sPath} frontmatter`;
                     } else {
                       sourceNote = `Story file fetched but no frontmatter found`;
@@ -106,6 +115,9 @@ jobs:
             // CFP-113 fix: also supplement missing gate from PR labels even if Story
             // provided phase. Story frontmatter typically has `phase:` but not `gate:`
             // (gate is iteration-driven, not Story-fixed).
+            // CFP-123 fix: collect ALL gate:* labels (membership-style), not first-only —
+            //   Live touching Story can carry multiple gates (e.g. gate:security-test-pass + gate:live-entry-pass).
+            let prGateLabels = [];
             if (!phaseLabel || !gateLabel) {
               const { data: prFull } = await github.rest.pulls.get({
                 owner: context.repo.owner,
@@ -114,7 +126,8 @@ jobs:
               });
               const prLabels = prFull.labels.map(l => l.name);
               if (!phaseLabel) phaseLabel = prLabels.find(l => l.startsWith('phase:'));
-              if (!gateLabel) gateLabel = prLabels.find(l => l.startsWith('gate:'));
+              prGateLabels = prLabels.filter(l => l.startsWith('gate:'));
+              if (!gateLabel) gateLabel = prGateLabels[0];  // legacy single-gate display
               const supplementNote = sourceNote ? `${sourceNote}; PR labels supplement` : 'PR labels (no Story binding)';
               sourceNote = supplementNote;
             }
@@ -184,10 +197,42 @@ jobs:
             }
 
             const phaseOk = phaseLabel === required.phase;
-            const gateOk = gateLabel === required.gate;
-            const summary = (phaseOk && gateOk)
-              ? `phase + gate satisfied: ${required.phase} + ${required.gate} (source: ${sourceNote})`
-              : `Awaiting: phase=${required.phase} (current=${phaseLabel || 'none'}), gate=${required.gate} (current=${gateLabel || 'none'}) (source: ${sourceNote})`;
+            // CFP-123 fix: gate membership check (PR may carry multiple gates simultaneously)
+            //   Required gate must be PRESENT among PR gate labels — first-label strict equality
+            //   would false-fail when PR carries both gate:security-test-pass + gate:live-entry-pass.
+            const gateOk = prGateLabels.includes(required.gate)
+              || gateLabel === required.gate;  // fallback when prGateLabels not populated (cross-repo Story binding path)
+
+            // CFP-123 / ADR-030: Live Epic lane-entry gate
+            //   When Story / PR is Live touching AND we're at security-test phase (Phase 2 PR merge gate),
+            //   require gate:live-entry-pass label IN ADDITION to gate:security-test-pass.
+            //   Detection: gate:live-entry-pass attached to PR (consumer CI 또는 Orchestrator 부착).
+            const isLivePhase = required.phase === 'phase:보안-테스트' || required.phase === '보안-테스트';
+            const requireLiveEntry = liveTouching && isLivePhase;
+            let liveEntryOk = true;
+            if (requireLiveEntry) {
+              if (prGateLabels.length === 0) {
+                // prGateLabels not populated when Story binding satisfied phase + gate fully —
+                // re-fetch PR labels to verify Live entry gate presence.
+                const { data: prFullForLive } = await github.rest.pulls.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number
+                });
+                prGateLabels = prFullForLive.labels.map(l => l.name).filter(l => l.startsWith('gate:'));
+              }
+              liveEntryOk = prGateLabels.includes('gate:live-entry-pass');
+            }
+
+            const allOk = phaseOk && gateOk && liveEntryOk;
+            const liveNote = requireLiveEntry
+              ? (liveEntryOk
+                  ? `, gate:live-entry-pass ✓ (Live touching)`
+                  : `, gate:live-entry-pass MISSING (Live touching Story — ADR-030)`)
+              : '';
+            const summary = allOk
+              ? `phase + gate satisfied: ${required.phase} + ${required.gate}${liveNote} (source: ${sourceNote})`
+              : `Awaiting: phase=${required.phase} (current=${phaseLabel || 'none'}), gate=${required.gate} (current=${gateLabel || 'none'})${liveNote} (source: ${sourceNote})`;
 
             await github.rest.checks.create({
               owner: context.repo.owner,
@@ -195,6 +240,6 @@ jobs:
               name: 'phase-gate-mergeable',
               head_sha: pr.head.sha,
               status: 'completed',
-              conclusion: (phaseOk && gateOk) ? 'success' : 'action_required',
+              conclusion: allOk ? 'success' : 'action_required',
               output: { title: 'Phase Gate', summary: summary }
             });
