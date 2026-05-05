@@ -10,14 +10,26 @@
 #     and optional .claude/_overlay/CLAUDE.md
 #   - python3 available with PyYAML installed (`pip install pyyaml`)
 #
-# Usage (consumer .claude/settings.json):
+# Usage (consumer .claude/settings.json) — schema-correct (CFP-106 fix #169):
 #   {
 #     "hooks": {
 #       "SessionStart": [
-#         { "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/regen-agents.sh" }
+#         {
+#           "hooks": [
+#             {
+#               "type": "command",
+#               "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/regen-agents.sh"
+#             }
+#           ]
+#         }
 #       ]
 #     }
 #   }
+#
+# Note: Claude Code hook schema = EventName -> [{ matcher?, hooks: [{type, command}] }].
+#       Flat `{"command": "..."}` form 은 silently dropped — 반드시 nested 3-level 사용.
+#       `${CLAUDE_PLUGIN_ROOT}` 는 plugin manifest 측 hook 에서만 자동 치환됨.
+#       Consumer 가 직접 settings.json 에 작성 시 절대경로 또는 별도 env 사용 권장.
 #
 # Behavior:
 #   - For each agent in plugin's agents/, emits .claude/agents/<Name>.md as
