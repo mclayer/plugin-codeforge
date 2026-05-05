@@ -57,10 +57,13 @@ Phase 1 = frontmatter / PR body marker explicit declare 의무. Phase 2 = §13 s
 
 `templates/github-workflows/phase-gate-mergeable.yml` 의 `// 5. Determine required gate by file change scope` 블록 확장:
 
-- Story / PR 가 `live_touching: true` 일 때 + phase 가 `phase:보안-테스트` 또는 `phase:구현-리뷰` (post-design-review Phase 2 PR) 일 때
+- Story / PR 가 `live_touching: true` 일 때 + phase 가 `phase:보안-테스트` (Phase 2 PR merge gate) 일 때
   - 기존 `gate:security-test-pass` 외에 `gate:live-entry-pass` 추가 의무
   - 두 gate 모두 부재 = `action_required` (PR merge block)
 - Live touching = false (default) Story = 기존 gate 만 검증 (변경 없음)
+- PR 가 동시에 여러 `gate:*` label 을 carry 하므로 membership check (label list 안에 required gate 가 있는가) 적용 — strict-equality 단일 gate label 비교 시 false-fail.
+
+**Phase 2 PR 의 phase 라벨 = `phase:보안-테스트`** (보안 테스트 lane PASS 직후 부착, Phase 2 PR merge gate). `phase:구현-리뷰` 적용 안 함 — 구현 리뷰 PASS 시점은 보안 테스트 진입 전.
 
 ### 결정 4 — 3-condition AND 정의 SSOT 분리
 

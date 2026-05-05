@@ -22,7 +22,7 @@ related_files:
 
 ## 1. 목적
 
-`bootstrap-labels.sh`가 생성하는 GitHub label 20종 machine-readable SSOT. ζ arc 진행 후 각 lane plugin이 자기 phase·gate·fix label을 attach·detach 시 통일된 이름·색상·의미 보장. CI Actions(`phase-label-invariant.yml` 등)도 본 registry를 참조해 invariant enforce.
+`bootstrap-labels.sh`가 생성하는 GitHub label (v1.3 시점 30+종, 누적 — type 4 / phase 7 / gate 3 / fix 4 / hotfix 2 / audit 12+ / category 7) machine-readable SSOT. ζ arc 진행 후 각 lane plugin이 자기 phase·gate·fix label을 attach·detach 시 통일된 이름·색상·의미 보장. CI Actions(`phase-label-invariant.yml` 등)도 본 registry를 참조해 invariant enforce.
 
 ## 2. Schema
 
