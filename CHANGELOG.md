@@ -7,6 +7,13 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## Unreleased
 
+### CFP-120 — Lane plugin parity gap fix-back (Phase 1 wrapper)
+
+- `.gitattributes` (NEW, all 7 codeforge family repos via Phase 2-7 batch) — `*.sh text eol=lf executable` + line ending normalization. Windows clones default `core.autocrlf` 가 LF→CRLF + exec bit 손실 → CI permission denied 사고 영구 fix (CFP-113 Phase 1 발견).
+- `scripts/bootstrap-codeforge-family.sh` (NEW) — 7 codeforge family repo (wrapper + 6 lane) label set 일괄 부트스트랩. CFP-113 Phase 2-7 시 manual `gh label create` workaround 영구 fix.
+- `docs/consumer-guide.md` §2d (Modify) — codeforge family setup 시 `bootstrap-codeforge-family.sh` 사용법 추가.
+- Phase 2-7 lane plugin (6 repos) — `.gitattributes` 동일 standard 적용.
+
 ### CFP-113 — Superpowers integration wrapping (Phase 1 wrapper SSOT)
 
 - `docs/superpowers-integration.md` (NEW) — codeforge ↔ superpowers 통합 SSOT (6 sub-section, 23 호출 지점 / 7 skill / 15 agent file enumerate).

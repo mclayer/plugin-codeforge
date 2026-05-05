@@ -198,7 +198,9 @@ mctrader-hub git log 에 `chore: codeforge consumer setup (Path B — degraded d
 
 ### 2d. GitHub Labels 생성 (gh CLI 일괄)
 
-> **CFP-12 자동화** (권장): `bash scripts/bootstrap-labels.sh [<org>/<repo>]` — 아래 18 label을 idempotent로 일괄 생성. SessionStart hook의 `check-bootstrap.sh`가 부재 시 자동 안내.
+> **CFP-12 자동화** (권장 — consumer 1 repo): `bash scripts/bootstrap-labels.sh [<org>/<repo>]` — 아래 18 label을 idempotent로 일괄 생성. SessionStart hook의 `check-bootstrap.sh`가 부재 시 자동 안내.
+
+> **CFP-120 (codeforge family setup)**: codeforge family 7 repo (wrapper + 6 lane) 모두 label 부트스트랩 = `bash scripts/bootstrap-codeforge-family.sh [--org <org>]` (default org: `mclayer`). lane plugin contributor 가 처음 setup 할 때 의무. label 부재 시 cross-repo Story binding PR 의 phase + gate label apply 가 `'phase:설계-리뷰' not found` 로 실패.
 
 수동 명령으로 진행하려면:
 
