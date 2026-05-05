@@ -26,7 +26,7 @@ Accepted (2026-05-05) — CFP-113 carrier.
 
 `superpowers@claude-plugins-official` 은 codeforge family 의 필수 의존이지만, 통합 표면이 4 위치에 산재 (CLAUDE.md / check_bootstrap.py / playbook §1.1 / consumer-guide §0b) + 17 lane agent file 의 prose reference + 4 agent (3 ReviewPL + PMOAgent) 의 stale `docs/superpowers/**` 권한. trust-based 산재 상태로 4 결함 (Skill→codeforge contract 부재 / prose 일관성 결여 / stale legacy path / trust-based override) 노출.
 
-본 ADR 은 [CFP-113 spec](../../../codeforge-internal-docs/wrapper/specs/2026-05-05-cfp-113-superpowers-integration-wrapping-design.md) (Sonnet decider Option B 채택, Codex 3 mod + Sonnet 2 mitigation 통합) 의 정책 결정을 SSOT 로 기록.
+본 ADR 은 [CFP-113 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-05-05-cfp-113-superpowers-integration-wrapping-design.md) (Sonnet decider Option B 채택, Codex 3 mod + Sonnet 2 mitigation 통합) 의 정책 결정을 SSOT 로 기록.
 
 ## 결정
 
