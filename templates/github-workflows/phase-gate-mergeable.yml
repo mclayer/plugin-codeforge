@@ -50,11 +50,18 @@ jobs:
                   sourceNote = `story_uri found but CODEFORGE_CROSS_REPO_PAT secret missing (degraded)`;
                 } else {
                   try {
-                    const { Octokit } = require('@octokit/rest');
-                    const crossOcto = new Octokit({ auth: token });
-                    const { data: file } = await crossOcto.repos.getContent({
-                      owner: sOwner, repo: sRepo, path: sPath, ref: sRef
+                    // CFP-113 fix: @octokit/rest not bundled in github-script v7.
+                    // Use fetch directly with Authorization header.
+                    const url = `https://api.github.com/repos/${sOwner}/${sRepo}/contents/${sPath}?ref=${sRef}`;
+                    const resp = await fetch(url, {
+                      headers: {
+                        'Authorization': `token ${token}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'User-Agent': 'phase-gate-mergeable-action'
+                      }
                     });
+                    if (!resp.ok) throw new Error(`HTTP ${resp.status} ${resp.statusText}`);
+                    const file = await resp.json();
                     const content = Buffer.from(file.content, 'base64').toString('utf-8');
                     // Parse YAML frontmatter (simple regex — phase + gate fields)
                     const fmMatch = content.match(/^---\n([\s\S]*?)\n---/);
