@@ -47,9 +47,12 @@ DeveloperPLAgent 산하 기본 구현 담당자. 프로젝트 shape에 관계없
 - 문서화 write 금지 — DocsAgent 전담
 
 ## 활용 플러그인/스킬
-- **superpowers:test-driven-development**: QADev 산출물과 파일 분리 (tests/** vs src/**) — 경합 없이 병렬
-- **superpowers:systematic-debugging**: 구현 장애 근본 원인 추적
-- 언어별 LSP (pyright-lsp, typescript-lsp 등): 편집 루프 타입 진단 — consumer overlay가 지정
+
+호출 skill SSOT = wrapper [`docs/superpowers-integration.md §2`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers-integration.md) row `develop/DeveloperAgent` 참조 (정책 재정의 X, link only per [ADR-028](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-028-superpowers-integration-policy.md) §결정 1):
+
+- **superpowers:test-driven-development** — QADev 산출물과 파일 분리 (tests/** vs src/**)
+- **superpowers:systematic-debugging** — 구현 장애 root cause
+- 언어별 LSP (pyright-lsp / typescript-lsp 등) — 편집 루프 타입 진단, consumer overlay 지정
 
 ## 문서화 표준
 GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.

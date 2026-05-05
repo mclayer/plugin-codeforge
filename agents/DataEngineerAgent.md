@@ -47,8 +47,11 @@ Consumer overlay가 담당 경로·기술 스택·데이터 포맷을 구체화.
 - 계획서 범위 밖 결정 금지 — 필요 시 DeveloperPL 경유 Architect 에스컬레이션
 
 ## 활용 플러그인/스킬
-- **pyright-lsp** (Python 프로젝트의 경우): 소스 → 저장 → 쿼리 경로 타입 일관성 진단
-- **superpowers:systematic-debugging**: 파이프라인 장애 근본 원인 추적
+
+호출 skill SSOT = wrapper [`docs/superpowers-integration.md §2`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers-integration.md) row `develop/DataEngineerAgent` 참조 (정책 재정의 X, link only per [ADR-028](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-028-superpowers-integration-policy.md) §결정 1):
+
+- **pyright-lsp** (Python 프로젝트의 경우) — 타입 일관성 진단
+- **superpowers:systematic-debugging** — 파이프라인 장애 root cause
 
 ## 문서화 표준
 GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
