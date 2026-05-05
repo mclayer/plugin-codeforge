@@ -1,0 +1,16 @@
+{
+  "_comment": "codeforge consumer 측 .claude/settings.json 등록 템플릿 (CFP-104).",
+  "_doc": "consumer-guide §1c 참조. POSIX 예시 — Windows 는 'pwsh -File ...ps1' 으로 변경.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/check-bootstrap.sh"
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/userprompt-reminder.sh"
+      }
+    ]
+  }
+}

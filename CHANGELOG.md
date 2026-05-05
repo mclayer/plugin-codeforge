@@ -14,6 +14,17 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 - Spec/plan/change-plan/decisions: codeforge-internal-docs/wrapper/ (ADR-013 dogfood-out).
 - Phase 2 (CFP-103+CFP-104) version bump: 5.2.0 → 5.3.0 (예상).
 
+### CFP-104 — Phase 2b: UserPromptSubmit hook (변경 착수 reminder inject)
+
+- `overlay/hooks/userprompt_reminder.py` (NEW) — Python core (regex change-intent + branch parse + bypass env).
+- `overlay/hooks/userprompt-reminder.sh` (NEW) — POSIX thin wrapper (CFP-103 패턴 reuse).
+- `overlay/hooks/userprompt-reminder.ps1` (NEW) — Windows PowerShell thin wrapper.
+- `overlay/hooks/tests/test_userprompt_reminder.py` (NEW) — 54 pytest 단위 테스트 (cross-platform CI matrix).
+- `templates/settings.json.example` (NEW) — consumer 측 hook 등록 템플릿 (SessionStart + UserPromptSubmit).
+- ADR-027 §결정-2 Secondary trigger (UserPromptSubmit) implementation.
+- bypass: `HOTFIX_BYPASS_CODEFORGE=1` + `HOTFIX_BYPASS_REASON='<사유>'` 양 env 의무 (사유 추적). flag 만 set 시 bypass NOT honored + reminder 에 WARN 포함.
+- 활성 Story 검출: git branch 명 `cfp-N/...` / `mct-N/...` parse → reminder 에 Story key + phase 노출.
+
 ### CFP-103 — Phase 2a: bootstrap protocol Python core + cross-platform wrapper
 
 - `overlay/hooks/check_bootstrap.py` (NEW) — Python core for cross-platform check (validate_config.py 패턴).
