@@ -9,7 +9,7 @@ LINT_SCRIPT="$SCRIPT_DIR/check-superpowers-integration.sh"
 FAILED=0
 
 # Test 1: good fixtures pass
-if OUTPUT=$("$LINT_SCRIPT" \
+if OUTPUT=$(bash "$LINT_SCRIPT" \
     --ssot "$FIXTURES/good_ssot.md" \
     --agent-glob "$FIXTURES/good_agent.md" \
     --helpers-dir "$FIXTURES/helpers_empty" 2>&1); then
@@ -23,7 +23,7 @@ else
 fi
 
 # Test 2: bad_stale_path detected
-if ! "$LINT_SCRIPT" \
+if ! bash "$LINT_SCRIPT" \
     --ssot "$FIXTURES/good_ssot.md" \
     --agent-glob "$FIXTURES/bad_stale_path.md" \
     --helpers-dir "$FIXTURES/helpers_empty" 2>/dev/null; then
@@ -34,7 +34,7 @@ else
 fi
 
 # Test 3: bad_ssot_drift detected
-if ! "$LINT_SCRIPT" \
+if ! bash "$LINT_SCRIPT" \
     --ssot "$FIXTURES/bad_ssot_drift.md" \
     --agent-glob "$FIXTURES/good_agent.md" \
     --helpers-dir "$FIXTURES/helpers_empty" 2>/dev/null; then
@@ -45,7 +45,7 @@ else
 fi
 
 # Test 4: bad_inline_copy detected
-if ! "$LINT_SCRIPT" \
+if ! bash "$LINT_SCRIPT" \
     --ssot "$FIXTURES/good_ssot.md" \
     --agent-glob "$FIXTURES/bad_inline_copy.md" \
     --helpers-dir "$FIXTURES/fixtures_helpers" 2>/dev/null; then
