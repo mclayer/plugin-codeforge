@@ -10,6 +10,10 @@ supersedes: null
 
 # ADR-029: Phase execution visibility expansion — sub-step terminal narration
 
+## 상태
+
+Accepted (2026-05-05). carrier_story = CFP-114.
+
 ## 컨텍스트
 
 CFP-20 (`docs/orchestrator-playbook.md` §14) 가 §0 Live Progress mechanism 도입 — Orchestrator 가 `.claude-work/progress/<KEY>.md` file 에 7-lane × phase 진행을 hierarchical 형식으로 기록. Trigger SSOT 표 (§14.5) 에서 **lane-level event 만 `terminal narration ✅`** (사용자 가시), sub-step event (deputy spawn / return / 병렬 dispatch / R9 subset) 는 `❌ (file only)`.
@@ -131,6 +135,22 @@ CFP-104 의 UserPromptSubmit hook 이 매 prompt submit 시 §0 progress 일부 
 
 - Yes — `progress_narration_verbosity: lane_only` 설정으로 CFP-20 기존 동작 복원
 - ADR revert 시 sub-step narration 제거 → file-only 동작 복원
+
+## Out-of-scope
+
+- Stop discipline 정책 변경 (ADR-022 + ADR-025 + Amendment 1 SSOT 그대로 — §결정 3 cross-reference 만)
+- 6 lane plugin (codeforge-{requirements,design,develop,test,review,pmo}) CLAUDE.md 변경 (§결정 5 — Writer 단독 invariant)
+- §0 Live Progress file 동작 (CFP-20 무변화 — terminal output 만 확장)
+- Per-deputy narration content 표준 (deputy 별 작성자 책임 — 본 ADR §결정 2 sanitize policy 만 강제)
+
+## 관련 파일
+
+- `docs/orchestrator-playbook.md` §14.5 — Trigger SSOT 표 갱신
+- `docs/project-config-schema.md` §2 — `progress_narration_verbosity` field 명세
+- `overlay/_overlay/project.yaml.example` — 신규 field 예시
+- `overlay/hooks/validate_config.py` SCHEMA_RULES — `_is_progress_narration_verbosity` enum validator
+- `docs/consumer-guide.md` — verbosity 사용법
+- `CLAUDE.md` — 본 ADR reference
 
 ## 관련 ADR
 
