@@ -1,0 +1,27 @@
+{
+  "_comment": "codeforge consumer 측 .claude/settings.json 등록 템플릿 (CFP-104).",
+  "_doc": "consumer-guide §1c 참조. 공식 Claude Code hook schema (EventName -> [{matcher?, hooks: [{type, command}]}]).",
+  "_windows_note": "Windows 사용 시 'bash ...' 대신 'pwsh -File ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/check-bootstrap.ps1' 형식 권장.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/check-bootstrap.sh"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/userprompt-reminder.sh"
+          }
+        ]
+      }
+    ]
+  }
+}
