@@ -357,15 +357,16 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
 - 배경 참조 ADR은 Story file §3 링크로 충분
 - 코드 경로는 Story file §4에 요약, 구체 내용은 `Read`/`Glob`/`Grep` 도구로 직접 접근
 
-### 3.4 Cross-repo Epic 패턴 ([ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md) + Amendment 1)
+### 3.4 Cross-repo Epic 패턴 ([ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md) + Amendment 1 + 2)
 
 mctrader 등 multi-repo consumer 의 cross-repo Epic 진행 시.
 
 #### Epic 시작
 1. consumer 가 Epic owner repo 결정 (doc-only hub repo 권장 — 예: mctrader-hub)
-2. **Centralization mode 결정** ([ADR-020 Amendment 1](../docs/adr/ADR-020-cross-repo-epic-pattern.md), CFP-81):
+2. **Centralization mode 결정** ([ADR-020 Amendment 1](../docs/adr/ADR-020-cross-repo-epic-pattern.md) + Amendment 2 CFP-122):
    - **Mode A (repo-local)**: 각 작업 repo 가 자체 `docs/stories/<KEY>.md`. Implementation repo 가 자율 storyboard 운영 시.
    - **Mode B (hub-centralized)**: 1 hub repo 가 모든 child Story 보유, implementation repo 는 code PR 만. Doc-only hub + 도메인 ADR collocate 시 (mctrader 패턴).
+   - **Mode C (mechanical Epic, NEW Amendment 2)**: Mode B special case. Phase 2-N 모든 PR 가 동일 mechanical content (file copy 동일 + acceptance 동일 + Sonnet 무발화 + parent Epic §5 표 enumerate). child Story Issue / per-lane spec 생략 허용. CFP-120 / CFP-121 Phase 2 사용 사례. PR body marker `mode: mechanical` 의무.
    - Mixed-mode 금지 — 단일 Epic 내 모드 일관 유지 (다른 Epic 은 다른 mode 가능).
 3. parent Epic Issue 생성 (owner repo)
 4. child Story 생성 — 선택된 mode 에 따라 hub 또는 각 작업 repo. Story §1 메타에 `epic_dependencies` graph 명시:
@@ -402,7 +403,7 @@ Epic close PR (Phase N+1) 동반 작성:
 - **§10 PR gate evidence** = 향후 audit 시 GitHub API 라벨 verify fall-back evidence (Issue #181 P1-5 partial 해소)
 
 #### Cross-references
-- [ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md) + Amendment 1 (cross-repo Epic 패턴 SSOT — Mode A/B + Joint-phase narrow form)
+- [ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md) + Amendment 1 + 2 (cross-repo Epic 패턴 SSOT — Mode A / B / C + Joint-phase narrow form)
 - [requirements-output-v1.1](../docs/inter-plugin-contracts/requirements-output-v1.md) (Story §1 epic_dependencies field schema)
 - [`consumer-guide.md`](consumer-guide.md) §5.1 (consumer 측 mode 선택 안내 — Mode A/B 비교표)
 
