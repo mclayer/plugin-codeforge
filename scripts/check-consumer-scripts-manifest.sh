@@ -37,7 +37,7 @@ if [ ! -f "$MANIFEST_FULL" ]; then
     exit 2
 fi
 
-cd "$PLUGIN_ROOT"
+cd -- "$PLUGIN_ROOT" || { echo "[manifest-lint] ERROR: cd failed: $PLUGIN_ROOT" >&2; exit 2; }
 
 PASS_COUNT=0
 FAIL_COUNT=0
@@ -82,7 +82,7 @@ while IFS= read -r line; do
 
     entry_fail=0
 
-    # Check 2a: path traversal on script_path
+    # Check 2a: path traversal + leading-dash on script_path (CFP-112 AREA 4b)
     case "$script_path" in
         /*)
             echo "[manifest-lint] FAIL line $LINE_NUM: script absolute path: $script_path" >&2
@@ -92,9 +92,13 @@ while IFS= read -r line; do
             echo "[manifest-lint] FAIL line $LINE_NUM: script path traversal ('..'): $script_path" >&2
             entry_fail=1
             ;;
+        -*)
+            echo "[manifest-lint] FAIL line $LINE_NUM: script leading-dash (option-injection risk): $script_path" >&2
+            entry_fail=1
+            ;;
     esac
 
-    # Check 2b: path traversal on dep_workflow (if present)
+    # Check 2b: path traversal + leading-dash on dep_workflow (if present, CFP-112 AREA 4b)
     if [ -n "$dep_workflow" ]; then
         case "$dep_workflow" in
             /*)
@@ -103,6 +107,10 @@ while IFS= read -r line; do
                 ;;
             *..*)
                 echo "[manifest-lint] FAIL line $LINE_NUM: workflow path traversal ('..'): $dep_workflow" >&2
+                entry_fail=1
+                ;;
+            -*)
+                echo "[manifest-lint] FAIL line $LINE_NUM: workflow leading-dash (option-injection risk): $dep_workflow" >&2
                 entry_fail=1
                 ;;
         esac
@@ -128,11 +136,16 @@ while IFS= read -r line; do
 
     # Check 5+6: dep workflow validation
     if [ -n "$dep_workflow" ]; then
-        # Check 6: must be templates/github-workflows/*.yml
+        # Check 6: must be templates/github-workflows/*.{yml,yaml} — direct child only (CFP-112 AREA 3)
+        # GitHub Actions accepts both .yml and .yaml; sub-directories are not workflow paths.
         case "$dep_workflow" in
-            templates/github-workflows/*.yml) ;;
+            templates/github-workflows/*/*)
+                echo "[manifest-lint] FAIL line $LINE_NUM: workflow sub-directory not allowed: $dep_workflow" >&2
+                entry_fail=1
+                ;;
+            templates/github-workflows/*.yml|templates/github-workflows/*.yaml) ;;
             *)
-                echo "[manifest-lint] FAIL line $LINE_NUM: workflow must match 'templates/github-workflows/*.yml': $dep_workflow" >&2
+                echo "[manifest-lint] FAIL line $LINE_NUM: workflow must match 'templates/github-workflows/*.{yml,yaml}': $dep_workflow" >&2
                 entry_fail=1
                 ;;
         esac

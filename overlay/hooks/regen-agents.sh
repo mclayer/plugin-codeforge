@@ -159,9 +159,10 @@ PYEOF
         else
             dep_workflow="${line#*:}"
         fi
-        # Path traversal guard (silent skip; manifest is plugin-trusted)
+        # Path traversal + leading-dash guard (silent skip; manifest is plugin-trusted)
+        # CFP-112 AREA 4b: leading `-` rejected to prevent option injection in cp/mkdir/chmod
         case "$script_path" in
-            /*|*..*) continue ;;
+            /*|*..*|-*) continue ;;
         esac
         # Degraded suppression — skip if dep workflow basename ∈ missing_workflows
         if [ -n "$dep_workflow" ] && [ -n "$WD_MISSING_AUTO" ]; then

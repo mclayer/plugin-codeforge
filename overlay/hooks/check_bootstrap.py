@@ -240,8 +240,13 @@ def check_consumer_scripts_manifest(plugin_root: Path, overlay_yaml: Path | None
                 script_path, _, dep_workflow = line.partition(":")
             else:
                 script_path, dep_workflow = line, ""
-            # Path traversal guard (CFP-97 P1 fix) on script_path
-            if script_path.startswith("/") or ".." in script_path or not script_path:
+            # Path traversal + leading-dash guard (CFP-97 P1 + CFP-112 AREA 4b)
+            if (
+                script_path.startswith("/")
+                or ".." in script_path
+                or not script_path
+                or script_path.startswith("-")
+            ):
                 continue
             if Path(script_path).is_file():
                 continue

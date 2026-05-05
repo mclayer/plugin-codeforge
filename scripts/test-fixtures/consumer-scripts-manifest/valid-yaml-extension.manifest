@@ -1,0 +1,2 @@
+# CFP-112 fixture: valid .yaml extension dep workflow (AREA 3 backward-compat)
+scripts/check-story-section-schema.sh:templates/github-workflows/test-yaml-ext-fixture.yaml

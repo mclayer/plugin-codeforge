@@ -1,0 +1,2 @@
+# CFP-112 fixture: leading-dash workflow path rejected (AREA 4b)
+scripts/check-story-section-schema.sh:-foo/bar.yml
