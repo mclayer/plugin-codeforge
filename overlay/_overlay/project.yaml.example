@@ -47,6 +47,11 @@ workflow_distribution:
   #   - fix-ledger-sync.yml
   #   - subissue-from-impl-manifest.yml
 
+# Progress narration verbosity (CFP-114 / ADR-029)
+# - "full" (default) = 모든 sub-step event narrate (Deputy spawn/return / 병렬 dispatch / R9 subset 등)
+# - "lane_only" = lane-level event 만 narrate (CFP-20 기존 동작)
+progress_narration_verbosity: full
+
 # Bootstrap protocol settings (CFP-103, ADR-027) — optional section, all commented
 # bootstrap:
 #   # Override expected workflow set. Default = check_bootstrap.EXPECTED_WORKFLOWS_FULL.

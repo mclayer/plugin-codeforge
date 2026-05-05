@@ -84,6 +84,12 @@ workflow_distribution:
   missing_workflows:                # mode=degraded 시 의무, mode=full 시 비어있음
     - <string>                      # e.g. "story-init.yml"
     - <string>                      # e.g. "fix-ledger-sync.yml"
+
+# [선택] Progress narration verbosity (CFP-114 / ADR-029)
+# default = "full" (모든 sub-step event 가 stderr 로 narrate — Deputy spawn/return / 병렬 dispatch / R9 subset 등)
+# "lane_only" = lane-level event 만 narrate (CFP-20 기존 동작, sub-step 은 file-only)
+# 다른 값 = validate_config.py FAIL.
+progress_narration_verbosity: full | lane_only  # 기본값: full
 ```
 
 ## 3. 예시 (webapp)
