@@ -38,7 +38,7 @@ ls ~/.claude/plugins/cache/<marketplace>/codeforge/<version>/agents/
 `CLAUDE.md` §"세션 개시 의무"에 명시. 미설치 시 플러그인 동작 불가:
 
 - **MCP**: `github` 인증 완료 (`/mcp` 인증)
-- **플러그인 4종**: `codex@openai-codex`, `superpowers@claude-plugins-official`, `claude-md-management@claude-plugins-official`, `github@claude-plugins-official`
+- **플러그인 4종**: `codex@openai-codex`, `superpowers@claude-plugins-official` ([integration SSOT](superpowers-integration.md)), `claude-md-management@claude-plugins-official`, `github@claude-plugins-official`
 - **CLI 2종**: `codex`, `gh` (`gh auth login` 인증)
 
 ### 1c. 권장 플러그인 (선택)
