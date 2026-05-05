@@ -77,12 +77,6 @@ if [ -f "$VALIDATE_SCRIPT" ]; then
     fi
 fi
 
-# Bootstrap drift check (CFP-12) — non-blocking. WARN만 출력, hook 진행은 계속.
-# CFP-11 발견 drift: org workflow permissions / 18 plugin label 부재 자동 검출.
-if [ -x "$BOOTSTRAP_CHECK_SCRIPT" ]; then
-    OVERLAY_PROJECT_YAML="$OVERLAY_PROJECT_YAML" bash "$BOOTSTRAP_CHECK_SCRIPT" || true
-fi
-
 mkdir -p "$OUT_AGENTS_DIR"
 
 # Regenerate each core agent (with optional overlay on top)
@@ -125,4 +119,82 @@ if [ -f "$PLUGIN_CLAUDE_MD" ] && [ -f "$OVERLAY_CLAUDE_MD" ]; then
     echo "[regen-agents] regenerated $count core + $overlay_only_count overlay-only agents + CLAUDE.md" >&2
 else
     echo "[regen-agents] regenerated $count core + $overlay_only_count overlay-only agents (no CLAUDE.md overlay)" >&2
+fi
+
+# CFP-110: Auto-copy consumer-distributable scripts (manifest-driven).
+# Runs AFTER agent regen + IMMEDIATELY BEFORE check-bootstrap.sh so Check 4 (CFP-97) sees
+# scripts as present (no false WARN). Semantics: cp -n (atomic no-clobber, Codex AREA 2 P1
+# fix) — only copies if consumer file absent. Respects CFP-109 manifest schema
+# (`<script>[:<workflow>]`) + degraded mode suppression via missing_workflows.
+CONSUMER_SCRIPTS_MANIFEST="$PLUGIN_ROOT/templates/consumer-scripts.manifest"
+if [ -f "$CONSUMER_SCRIPTS_MANIFEST" ]; then
+    # Read workflow_distribution.missing_workflows (CFP-89) for degraded suppression
+    WD_MISSING_AUTO=""
+    if [ -f "$OVERLAY_PROJECT_YAML" ]; then
+        WD_MISSING_AUTO=$(python3 - "$OVERLAY_PROJECT_YAML" <<'PYEOF' 2>/dev/null
+import sys
+try:
+    import yaml
+    with open(sys.argv[1]) as f:
+        data = yaml.safe_load(f) or {}
+    wd = data.get("workflow_distribution", {})
+    missing = wd.get("missing_workflows", []) or []
+    print(",".join(missing))
+except Exception:
+    pass
+PYEOF
+)
+    fi
+
+    COPIED_SCRIPTS=()
+    while IFS= read -r line; do
+        # trim leading/trailing whitespace
+        line="${line#"${line%%[![:space:]]*}"}"
+        line="${line%"${line##*[![:space:]]}"}"
+        case "$line" in '#'*|'') continue ;; esac
+        # CFP-109: parse script-path[:dep-workflow]
+        script_path="${line%%:*}"
+        if [ "$script_path" = "$line" ]; then
+            dep_workflow=""
+        else
+            dep_workflow="${line#*:}"
+        fi
+        # Path traversal guard (silent skip; manifest is plugin-trusted)
+        case "$script_path" in
+            /*|*..*) continue ;;
+        esac
+        # Degraded suppression — skip if dep workflow basename ∈ missing_workflows
+        if [ -n "$dep_workflow" ] && [ -n "$WD_MISSING_AUTO" ]; then
+            dep_basename_auto="$(basename "$dep_workflow")"
+            if echo ",$WD_MISSING_AUTO," | grep -Fq ",$dep_basename_auto,"; then
+                continue
+            fi
+        fi
+        # cp -n atomic no-clobber. Track creation via existence delta.
+        target="$PROJECT_ROOT/$script_path"
+        source_path="$PLUGIN_ROOT/$script_path"
+        if [ ! -f "$source_path" ]; then
+            continue
+        fi
+        target_existed_before=0
+        [ -f "$target" ] && target_existed_before=1
+        mkdir -p "$(dirname "$target")"
+        if cp -n "$source_path" "$target" 2>/dev/null; then
+            if [ "$target_existed_before" -eq 0 ] && [ -f "$target" ]; then
+                chmod +x "$target" 2>/dev/null || true
+                COPIED_SCRIPTS+=("$script_path")
+            fi
+        fi
+    done < "$CONSUMER_SCRIPTS_MANIFEST"
+
+    if [ ${#COPIED_SCRIPTS[@]} -gt 0 ]; then
+        echo "[regen-agents] auto-copied ${#COPIED_SCRIPTS[@]} consumer script(s) (CFP-110): ${COPIED_SCRIPTS[*]}" >&2
+    fi
+fi
+
+# Bootstrap drift check (CFP-12) — non-blocking. WARN만 출력, hook 진행은 계속.
+# CFP-11 발견 drift: org workflow permissions / 18 plugin label 부재 자동 검출.
+# CFP-110 ordering: auto-copy 직후 실행 — Check 4 (CFP-97) 가 auto-copy 후 상태 검증.
+if [ -x "$BOOTSTRAP_CHECK_SCRIPT" ]; then
+    OVERLAY_PROJECT_YAML="$OVERLAY_PROJECT_YAML" bash "$BOOTSTRAP_CHECK_SCRIPT" || true
 fi
