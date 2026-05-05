@@ -7,6 +7,17 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## Unreleased
 
+### CFP-121 — Superpowers schema drift quarterly review (wrapper Phase 1)
+
+- `templates/superpowers-skill-snapshot.txt` (NEW) — pinned snapshot of 14 superpowers v5.1.0 skills.
+- `scripts/check-superpowers-schema-drift.sh` (NEW) — 2-check lint: SSOT-referenced skills ⊆ snapshot (broken reference detection) + (optional) snapshot vs local install diff (advisory).
+- `scripts/test-check-superpowers-schema-drift.sh` + `scripts/fixtures/superpowers-schema-drift/` (NEW, 3 fixture TDD).
+- `templates/github-workflows/superpowers-schema-drift.yml` (NEW) — quarterly cron + manual dispatch + PR trigger. Auto-creates Issue if scheduled drift detected.
+- `docs/superpowers-integration.md` §2 + §3 fix (DOGFOOD test caught existing CFP-113 bug):
+  - SSOT row 22 `review/ClaudeReviewAgent`: `superpowers:code-reviewer` → `superpowers:requesting-code-review` (실제 superpowers v5.1.0 에 `code-reviewer` 는 standalone skill 아님, `requesting-code-review` skill 의 dispatch subagent).
+  - §3 row 7 변환 표 동일 수정.
+- Phase 2 follow-up: codeforge-review ClaudeReviewAgent.md 의 동일 typo 수정 (별도 lane PR).
+
 ### CFP-120 — Lane plugin parity gap fix-back (Phase 1 wrapper)
 
 - `.gitattributes` (NEW, all 7 codeforge family repos via Phase 2-7 batch) — `*.sh text eol=lf executable` + line ending normalization. Windows clones default `core.autocrlf` 가 LF→CRLF + exec bit 손실 → CI permission denied 사고 영구 fix (CFP-113 Phase 1 발견).
