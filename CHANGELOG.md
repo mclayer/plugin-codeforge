@@ -7,6 +7,16 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## Unreleased
 
+### CFP-96 — Phase 7: Epic close
+
+- `wrapper/retros/EPIC-RESULTS-CFP-96.md` (NEW, codeforge-internal-docs) — Epic close artifact.
+- Spec verbiage fix-back — `consumer-shared 11종 + Story-flow 4종 = 14종` → 실제 EXPECTED_WORKFLOWS_FULL 7종 (Phase 6/6b finding).
+- 9 Decision YAML 일관성 검증 (CFP-96-001 + CFP-96-002 + CFP-103~108 + CFP-111).
+- 7 child Story (CFP-103~108 + CFP-111) 모두 close.
+- 3 finding (#143 / #144 / #169) + CFP-45 4건 모두 close.
+- mctrader 6-repo (1 hub + 5 sister) full codeforge adoption — 매 변경 시 codeforge protocol 의무 자동 enforcement.
+- 76 pytest (Phase 2a 22 + Phase 2b 54) Windows native pass.
+
 ### CFP-96 — First-Consumer Adoption Bootstrap Phase 1 (doc-only)
 
 - `docs/adr/ADR-027-consumer-adoption-protocol.md` (NEW) — 5 결정 freeze: bootstrap 검증 책임 = wrapper overlay/hooks/, 3-trigger enforcement (Story phase / UserPromptSubmit / SessionStart), bypass = HOTFIX_BYPASS_CODEFORGE env, cross-platform (POSIX + Windows), consumer-guide.md = 절차 SSOT.
