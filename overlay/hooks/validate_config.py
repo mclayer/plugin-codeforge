@@ -46,6 +46,10 @@ def _is_list_of_str(v: Any) -> bool:
     return isinstance(v, list) and all(isinstance(x, str) and len(x) > 0 for x in v)
 
 
+def _is_progress_narration_verbosity(v: Any) -> bool:
+    return isinstance(v, str) and v in ("full", "lane_only")
+
+
 SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     # (path, required, type_check, description)
     ("project", True, dict, "project section (mapping)"),
@@ -88,6 +92,9 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     ("bootstrap", False, dict, "bootstrap section (mapping), optional"),
     ("bootstrap.expected_workflows", False, _is_list_of_str,
      "bootstrap.expected_workflows (list of non-empty strings, override EXPECTED_WORKFLOWS_FULL), optional"),
+    # CFP-114 / ADR-029 — progress narration verbosity
+    ("progress_narration_verbosity", False, _is_progress_narration_verbosity,
+     "progress_narration_verbosity ('full' | 'lane_only'), optional, default 'full'"),
 ]
 
 

@@ -1256,25 +1256,40 @@ fix_cycle: <N>
 
 ### 14.5 트리거 SSOT
 
-| 이벤트 | 영향 라인 | 갱신 동작 | terminal narration |
-|---|---|---|---|
-| Story 개시 | 전체 | file create, 7 lane `⏸` | ✅ |
-| Lane 진입 | top | `⏸` → `🔄 진행 중`, current_lane 갱신 | ✅ |
-| Deputy spawn | active sub-tree | `🔄 <Deputy>` 추가, qualifier 갱신 | ❌ (file only) |
-| Deputy return | active sub-tree | `🔄` → `✅`, qualifier 갱신 | ❌ (file only) |
-| 병렬 dispatch (R3·R4·R7·R9) | active sub-tree | 두 deputy 동시 `🔄` 라인 추가 | ❌ (file only) |
-| R9 subset 시작 | 구현 테스트 | inline qualifier `(functional 🔄 / performance ⏸)` | ✅ |
-| R9 subset 완료 | 구현 테스트 | qualifier 갱신 | ❌ (lane PASS/FIX 시 별도) |
-| R11 fast-path | 해당 lane | `❌ FIX-N (fast-path)` 마커 | ✅ |
-| Lane PASS | top | `🔄` → `✅ — <S3 snippet>`, sub-tree 접음 | ✅ |
-| Lane FIX | top | `🔄` → `❌ FIX-N — <evidence 1줄>`, fix_cycle 갱신 | ✅ |
-| Lane 재진입 (FIX 후) | top | `❌ FIX-N` → `🔄 진행 중 (FIX-N)` | ✅ |
-| RESET 마커 | 구현 리뷰 | `✅` → `🔁 RESET-N` | ✅ |
-| Lane N/A (plugin meta) | top | `⏸` → `⊘ N/A — <사유>` | ✅ |
-| 사용자 "진행상황 보여줘" | — | file 변경 없이 현재 §0 전체 emit | ✅ (deputy 포함 full) |
-| Story 완료 | 전체 | 모두 `✅`, archive mv, index 갱신 | ✅ |
+**Verbosity policy (CFP-114 / ADR-029)** — `terminal narration` 컬럼은 `progress_narration_verbosity` 값 기반 적용:
+- `full` (default, ADR-029 §결정 1+4) — 모든 ✅ 표기 항목 narrate (sub-step 포함)
+- `lane_only` — lane-level event 만 narrate (CFP-20 기존 동작, sub-step 표기는 file-only 로 fallback)
 
-R10 prefetch (security 1차 layer cache) 같은 사용자 무관 메타 이벤트는 **의도적 skip**.
+| 이벤트 | 영향 라인 | 갱신 동작 | terminal narration | full/lane_only |
+|---|---|---|---|---|
+| Story 개시 | 전체 | file create, 7 lane `⏸` | ✅ | both |
+| Lane 진입 | top | `⏸` → `🔄 진행 중`, current_lane 갱신 | ✅ | both |
+| Deputy spawn | active sub-tree | `🔄 <Deputy>` 추가, qualifier 갱신 | ✅ | full only |
+| Deputy return | active sub-tree | `🔄` → `✅`, qualifier 갱신 | ✅ | full only |
+| 병렬 dispatch (R3·R4·R7·R9) | active sub-tree | 두 deputy 동시 `🔄` 라인 추가 | ✅ | full only |
+| R9 subset 시작 | 구현 테스트 | inline qualifier `(functional 🔄 / performance ⏸)` | ✅ | both |
+| R9 subset 완료 | 구현 테스트 | qualifier 갱신 | ✅ (functional/performance 분리) | full only |
+| R11 fast-path | 해당 lane | `❌ FIX-N (fast-path)` 마커 | ✅ | both |
+| Lane PASS | top | `🔄` → `✅ — <S3 snippet>`, sub-tree 접음 | ✅ | both |
+| Lane FIX | top | `🔄` → `❌ FIX-N — <evidence 1줄>`, fix_cycle 갱신 | ✅ | both |
+| Lane 재진입 (FIX 후) | top | `❌ FIX-N` → `🔄 진행 중 (FIX-N)` | ✅ | both |
+| RESET 마커 | 구현 리뷰 | `✅` → `🔁 RESET-N` | ✅ | both |
+| Lane N/A (plugin meta) | top | `⏸` → `⊘ N/A — <사유>` | ✅ | both |
+| 사용자 "진행상황 보여줘" | — | file 변경 없이 현재 §0 전체 emit | ✅ (deputy 포함 full) | both |
+| Story 완료 | 전체 | 모두 `✅`, archive mv, index 갱신 | ✅ | both |
+
+R10 prefetch (security 1차 layer cache) 같은 사용자 무관 메타 이벤트는 **의도적 skip** (verbosity 무관).
+
+**Narration format (ADR-029 §결정 2)** — `[<lane-한국어>] <event>: <detail>` 1 sentence stderr line. 예시:
+
+```
+[설계] Deputy spawn 6/6 병렬 (CodebaseMapper / Refactor / SecurityArch / OpRiskArch / TestContractArch / DataMigrationArch)
+[설계] DataMigrationArchitectAgent return — §11 Migration 전략 + Rollback 경로 author 완료
+[설계 리뷰] R7 병렬 dispatch — DesignReviewPL ∥ DeveloperPL Phase 2 PR 준비
+[구현 테스트] R9 functional subset 완료 — 18 test pass, 다음 performance subset 진입
+```
+
+세부 rule: 한국어 lane 이름, 멀티라인 금지, stderr only (file-write 와 격리). Stop discipline 정책은 ADR-022 §결정 2 + ADR-025 SSOT (본 §14.5 는 visibility 만 다룸).
 
 ### 14.6 S3 snippet 7-lane 표 (Lane PASS 시 1줄)
 

@@ -344,7 +344,11 @@ labels:
   components:
     - <component-1>   # e.g. api
     - <component-2>   # e.g. ui
+
+progress_narration_verbosity: full  # full | lane_only
 ```
+
+`progress_narration_verbosity` 는 phase 진행 narration 출력량을 조절한다. 기본값 `full` 은 ADR-029 기준 sub-step narration 까지 출력하는 opt-in 기본 동작이고, consumer 가 더 조용한 CFP-20 기존 동작을 원하면 `lane_only` 로 opt-out 하여 lane boundary event 만 출력한다.
 
 주 소비자: RequirementsPLAgent · DomainAgent · PMOAgent · ArchitectPLAgent 및 각 lane plugin. 에이전트는 이 파일을 `Read`로 직접 참조.
 
