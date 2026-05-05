@@ -113,10 +113,24 @@ chmod +x .claude/_overlay/run-tests.sh .claude/_overlay/run-perf.sh
 mkdir -p .github/workflows
 cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/*.yml .github/workflows/
 
-# CFP-94: story-section-schema.yml 가 scripts/check-story-section-schema.sh 의존 — script 도 copy
-mkdir -p scripts
-cp ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-story-section-schema.sh scripts/
-chmod +x scripts/check-story-section-schema.sh
+# CFP-97: consumer-distributable scripts manifest-driven copy
+# (currently 1 entry: scripts/check-story-section-schema.sh — CFP-94 의존).
+# 위 workflow cp 와 본 loop 는 함께 실행 의무 — 한쪽만 실행 시 의존 workflow CI 가 lint skip + warning.
+while IFS= read -r line; do
+    # trim leading/trailing whitespace
+    line="${line#"${line%%[![:space:]]*}"}"
+    line="${line%"${line##*[![:space:]]}"}"
+    case "$line" in '#'*|'') continue ;; esac
+    # path traversal guard (CFP-97 P1 fix)
+    case "$line" in
+        /*) echo "manifest absolute-path entry rejected: $line" >&2; continue ;;
+        *..*) echo "manifest traversal entry rejected: $line" >&2; continue ;;
+    esac
+    target_path="$line"
+    mkdir -p "$(dirname "$target_path")"
+    cp "${CLAUDE_PLUGIN_ROOT}/codeforge/${line}" "${target_path}"
+    chmod +x "${target_path}"
+done < "${CLAUDE_PLUGIN_ROOT}/codeforge/templates/consumer-scripts.manifest"
 
 # Issue Forms 3개 복사 (audit + bug + story)
 mkdir -p .github/ISSUE_TEMPLATE
@@ -152,7 +166,7 @@ mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/is
 | `story-section-1-immutable.yml` | §1 변조 금지 | PR diff 의 `## §1` line range manual review |
 | `fix-ledger-sync.yml` | §10 row append → Issue label mirror + comment | §10 row 추가 commit 시 수동 `[FIX #N]` Issue comment + `fix:<lane>-retry` label 부착 |
 | `subissue-from-impl-manifest.yml` | §8.5 Impl Manifest → file-level sub-issue 자동 생성 | §8.5 commit 후 수동 `gh sub-issue create` per file |
-| `story-section-schema.yml` (CFP-94) | Story file §1-§13 schema lint (Implementation strict + Epic condensed) | PR review 시 수동 section schema 검증 또는 `bash scripts/check-story-section-schema.sh` 로컬 실행 |
+| `story-section-schema.yml` (CFP-94) | Story file §1-§13 schema lint (Implementation strict + Epic condensed) | PR review 시 수동 section schema 검증 또는 `bash scripts/check-story-section-schema.sh` 로컬 실행 (CFP-97 manifest 경유 copy) |
 
 **mctrader-hub 현재 상태 (2026-05-04 audit)**:
 - ✅ `phase-gate-mergeable.yml`
@@ -168,8 +182,9 @@ mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/is
 
 **Path B → Path A (upgrade)**:
 1. `cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/<missing>.yml .github/workflows/`
-2. CI 가 신규 invariant 발견 시 backlog Story 로 변환 (예: 누락된 §10 row → Story 작성)
-3. `workflow_distribution` field = `full`
+2. (CFP-97) `<missing>.yml` 가 의존 script 보유 시 (예: `story-section-schema.yml` ↔ `scripts/check-story-section-schema.sh`) §2c manifest-driven loop 동시 실행
+3. CI 가 신규 invariant 발견 시 backlog Story 로 변환 (예: 누락된 §10 row → Story 작성)
+4. `workflow_distribution` field = `full`
 
 ##### git history audit signal
 

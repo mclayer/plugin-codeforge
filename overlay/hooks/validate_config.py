@@ -77,6 +77,13 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     ("story_cutoff", False, dict, "story_cutoff section (mapping), optional"),
     ("story_cutoff.additional_exempt_categories", False, _is_list_of_str,
      "story_cutoff.additional_exempt_categories (list of non-empty strings), optional"),
+    # CFP-89 workflow_distribution overlay (CFP-97 schema fix — main blocker)
+    # Path A (full) vs Path B (degraded) tracking. Schema SSOT: docs/project-config-schema.md §2.
+    ("workflow_distribution", False, dict, "workflow_distribution section (mapping), optional"),
+    ("workflow_distribution.mode", False, _is_str,
+     "workflow_distribution.mode (string: 'full' | 'degraded'), optional"),
+    ("workflow_distribution.missing_workflows", False, _is_list_of_str,
+     "workflow_distribution.missing_workflows (list of non-empty strings), optional"),
 ]
 
 
