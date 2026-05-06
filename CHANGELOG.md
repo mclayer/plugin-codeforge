@@ -7,6 +7,12 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## Unreleased
 
+### CFP-126 — ADR-031 amend (Proposed → Accepted, §결정 1 (a) §14 freeze)
+
+- `docs/adr/ADR-031-lane-spawn-evidence-trail.md` (Modify) — frontmatter `status: Proposed → Accepted`, `related_files` 갱신 (`phase-gate-mergeable.yml` → `lane-evidence-check.yml`). §상태 갱신 (CFP-126 Phase 1 PR #59 + Phase 2 PR #232 merged). §결정 1 storage location 4 candidate → (a) §14 freeze (12 field YAML schema explicit). 다른 3 candidate 명시적 superseded.
+- Sonnet decider CFP-126-001 pick (high confidence) freeze. 본 amend = no-impl (도큐먼트 status 전환 + canonical schema reference).
+- Parent Epic: CFP-124 (#230 + #57). carrier_story = CFP-126 (#59 + #232).
+
 ### CFP-127 — ADR-032 amend (Proposed → Accepted) + ADR-027 Amendment 1 in-doc
 
 - `docs/adr/ADR-032-adr-027-amendment-1-hard-enforcement.md` (Modify) — frontmatter `status: Proposed → Accepted`. §상태 갱신 (CFP-127 Phase 1 PR #60 + Phase 2 PR #233 merged 명시).
