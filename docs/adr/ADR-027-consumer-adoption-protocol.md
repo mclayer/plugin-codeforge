@@ -20,6 +20,9 @@ related_stories:
   - CFP-106
   - CFP-107
   - CFP-108
+  - CFP-127
+amendments:
+  - ADR-032
 supersedes: null
 superseded_by: null
 ---
@@ -124,3 +127,26 @@ Consumer 절차 SSOT = `docs/consumer-guide.md`. 본 ADR 은 결정만 freeze, �
 - `docs/consumer-guide.md` (Phase 4 §X 추가)
 - spec: `codeforge-internal-docs/wrapper/specs/2026-05-05-cfp-96-first-consumer-adoption-bootstrap-design.md`
 - plan: `codeforge-internal-docs/wrapper/plans/2026-05-05-cfp-96-first-consumer-adoption-bootstrap-plan.md`
+
+## Amendment 1 — Strict mode opt-in (ADR-032, CFP-127)
+
+**Effective**: 2026-05-06 (CFP-127 Phase 1 PR #60 + Phase 2 PR #233 merged).
+
+본 ADR §결정 2 (3-trigger enforcement model) Tertiary trigger (`check-bootstrap` SessionStart hook) 의 `LLM-trust default` 는 유지 (warning-only, exit 0). [ADR-032](ADR-032-adr-027-amendment-1-hard-enforcement.md) 가 **additive opt-in strict mode** 추가 — supersede 아님.
+
+**Strict mode 활성 조건** (CLI > env > yaml priority):
+1. `--strict` flag (`bash overlay/hooks/check-bootstrap.sh --strict`)
+2. `CODEFORGE_STRICT_BOOTSTRAP=1` env
+3. `bootstrap.strict_mode: true` in `.claude/_overlay/project.yaml`
+
+**Strict 활성 + 4종 strict-eligible drift 발견 → exit 1** (Sonnet decider CFP-127-001 pick alpha):
+- (a) `project.yaml` 부재
+- (b) plugin 8 critical (wrapper + 6 lane + superpowers) 미설치
+- (c) `settings.json` 3 hook (SessionStart × 2 + UserPromptSubmit × 1) 미등록
+- (d) 18 label 중 phase:* (7) + gate:* (3) = 10 critical 부재
+
+**Bypass priority HIGHEST**: §결정 3 `HOTFIX_BYPASS_CODEFORGE=1 + REASON` 양 env set → strict 무관 hook self skip. Bypass mechanism (§결정 3) 와 Strict mode (Amendment 1) 동시 작동, 별도 mechanism.
+
+**Default 미변경** = warning-only. mctrader 6-repo 점진 도입 가능. 본 amendment = additive 만 (default behavior 변경 없음).
+
+상세: [ADR-032](ADR-032-adr-027-amendment-1-hard-enforcement.md) §결정 1-5.

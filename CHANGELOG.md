@@ -7,6 +7,13 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## Unreleased
 
+### CFP-127 — ADR-032 amend (Proposed → Accepted) + ADR-027 Amendment 1 in-doc
+
+- `docs/adr/ADR-032-adr-027-amendment-1-hard-enforcement.md` (Modify) — frontmatter `status: Proposed → Accepted`. §상태 갱신 (CFP-127 Phase 1 PR #60 + Phase 2 PR #233 merged 명시).
+- `docs/adr/ADR-027-consumer-adoption-protocol.md` (Modify) — frontmatter `amendments: [ADR-032]` field 추가, `related_stories[]` 에 CFP-127 추가. 본문 끝에 "Amendment 1 — Strict mode opt-in (ADR-032, CFP-127)" section 신설 (effective date / 활성 조건 3 mechanism / 4종 strict-eligible drift / Bypass priority HIGHEST / default 미변경 명시 + ADR-032 cross-ref).
+- Sonnet decider CFP-127-001 (strict-eligible 4-type pick alpha high confidence) freeze. 본 amend = no-impl (도큐먼트 status 전환 + cross-reference).
+- Parent Epic: CFP-124 (#230 + #57). carrier_story = CFP-127 (#60 + #233).
+
 ### CFP-124 — Consumer adoption hardening Phase 1 (Epic doc-only)
 
 - `docs/adr/ADR-031-lane-spawn-evidence-trail.md` (NEW, status: Proposed) — CFP-126 carrier. 5 결정: Wrapper Orchestrator self-write committed lane evidence (storage location 4 candidate 중 CFP-126 Phase 1 Sonnet decider pick — Story 새 §section / §8.5 sub-block / frontmatter / PR description-only. 명시적 제외: `.claude-work/progress/` CFP-20 NG6 cache invariant) / Phase 2 PR description `## Lane evidence` 의무 블록 (regex 검증) / `phase-gate-mergeable.yml` evidence 부재 시 action_required block / `BYPASS_LANE_EVIDENCE` env (REASON 의무 동반) / effective date = ADR-031 Accepted PR merge 직후 Phase 2 PR (retroactive 안 함). 6 lane plugin 영향 매트릭스: 모두 변경 없음 (wrapper Orchestrator self-write 영역 한정).
