@@ -7,6 +7,12 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## Unreleased
 
+### CFP-126 — ADR-031 amend (Proposed → Accepted, §결정 1 (a) §14 freeze)
+
+- `docs/adr/ADR-031-lane-spawn-evidence-trail.md` (Modify) — frontmatter `status: Proposed → Accepted`, `related_files` 갱신 (`phase-gate-mergeable.yml` → `lane-evidence-check.yml`). §상태 갱신 (CFP-126 Phase 1 PR #59 + Phase 2 PR #232 merged). §결정 1 storage location 4 candidate → (a) §14 freeze (12 field YAML schema explicit). 다른 3 candidate 명시적 superseded.
+- Sonnet decider CFP-126-001 pick (high confidence) freeze. 본 amend = no-impl (도큐먼트 status 전환 + canonical schema reference).
+- Parent Epic: CFP-124 (#230 + #57). carrier_story = CFP-126 (#59 + #232).
+
 ### CFP-124 — Consumer adoption hardening Phase 1 (Epic doc-only)
 
 - `docs/adr/ADR-031-lane-spawn-evidence-trail.md` (NEW, status: Proposed) — CFP-126 carrier. 5 결정: Wrapper Orchestrator self-write committed lane evidence (storage location 4 candidate 중 CFP-126 Phase 1 Sonnet decider pick — Story 새 §section / §8.5 sub-block / frontmatter / PR description-only. 명시적 제외: `.claude-work/progress/` CFP-20 NG6 cache invariant) / Phase 2 PR description `## Lane evidence` 의무 블록 (regex 검증) / `phase-gate-mergeable.yml` evidence 부재 시 action_required block / `BYPASS_LANE_EVIDENCE` env (REASON 의무 동반) / effective date = ADR-031 Accepted PR merge 직후 Phase 2 PR (retroactive 안 함). 6 lane plugin 영향 매트릭스: 모두 변경 없음 (wrapper Orchestrator self-write 영역 한정).
