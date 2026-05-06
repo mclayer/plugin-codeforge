@@ -222,6 +222,68 @@ CONDITIONAL trigger: Story 가 **real funds / live exchange API / production cre
 
 **ADR cross-ref**: 본 §13 = ADR (consumer-side Live policy ADR — 예: mctrader ADR-012 Live Rollout Policy) 의 contract enforcement. Story-level §13 작성 시 해당 ADR cross-ref 의무.
 
+### §14. Lane Evidence (CFP-126 / ADR-031 — committed lane-spawn evidence trail)
+
+**Effective date**: ADR-031 Accepted 후 신규 Phase 2 PR 부터 (retroactive 미처리 — ADR-031 §결정 5).
+
+**의무 trigger**: 매 lane (요구사항/설계/설계-리뷰/구현/구현-리뷰/구현-테스트/보안-테스트) spawn 시 wrapper Orchestrator 가 row append (start) + return 직후 row update (end).
+
+**Schema** (12 field YAML block, CFP-126-002 Codex review 정합):
+
+```yaml
+lane_evidence:
+  - lane: 요구사항                    # 한국어 7종 중 하나
+    iteration: 1                     # 1+, lane local row index (FIX 시 multiple row)
+    agent: RequirementsPLAgent (codeforge-requirements@mclayer)
+    spawned_at: 2026-MM-DD T HH:MM Z # ISO8601 UTC, spawn 직전
+    returned_at: 2026-MM-DD T HH:MM Z # ISO8601 UTC, return 직후. output_status=spawned 시 empty
+    output_status: completed         # spawned | completed | failed | escalated | bypass
+    outcome: PASS                    # PASS | FIX | SKIPPED — output_status=completed 시만 채움
+    pr_ref: <org>/<repo>#NNN         # Phase 2 PR ref
+    decision_packet_ref: null        # optional — Sonnet decision archive yaml id (예: CFP-NN-001)
+    transcript: <inline 50자 OR internal-docs decision archive link>
+    spawn_id: null                   # optional UUID (retry idempotency, Phase 2 implementation 결정)
+    fix_iteration: null              # optional — §10 FIX Ledger row index cross-ref (FIX retry row 시)
+  - lane: 설계
+    ...
+```
+
+**Field semantics**:
+
+| # | Field | Required | 의미 |
+|---|---|---|---|
+| 1 | lane | yes | 요구사항/설계/설계-리뷰/구현/구현-리뷰/구현-테스트/보안-테스트 |
+| 2 | iteration | yes | Lane local 1+ (FIX 시 multiple row) |
+| 3 | agent | yes | PLAgent name + plugin |
+| 4 | spawned_at | yes | ISO8601 UTC |
+| 5 | returned_at | conditional | output_status=completed 시 의무 |
+| 6 | output_status | yes | partial-row write semantic — `spawned` (in-flight) / `completed` / `failed` / `escalated` / `bypass` |
+| 7 | outcome | conditional | output_status=completed 시 의무. PASS/FIX/SKIPPED |
+| 8 | pr_ref | yes | Phase 2 PR ref |
+| 9 | decision_packet_ref | optional | Sonnet archive yaml id |
+| 10 | transcript | yes | 50자 inline OR link |
+| 11 | spawn_id | optional | UUID retry idempotency |
+| 12 | fix_iteration | optional | §10 FIX Ledger row index — FIX retry row 한정 |
+
+**Iteration vs fix_iteration cross-validation** (Codex P1 #3):
+- `iteration` = lane local spawn 순번
+- `fix_iteration` = §10 FIX Ledger row index (FIX retry 일 때)
+- lint `scripts/check-lane-evidence.sh` 가 §14 의 fix_iteration ↔ §10 row 정합 검증
+
+**Bypass mechanism** (ADR-031 §결정 4):
+- `BYPASS_LANE_EVIDENCE=1` + `BYPASS_LANE_EVIDENCE_REASON="<reason>"` 양 env 의무
+- 사용 시 row append (output_status=bypass) + Phase 2 PR description `BYPASS:` 명시 + audit Issue 자동 생성 (ADR-026 패턴)
+
+**Phase-gate-mergeable enforcement** (ADR-031 §결정 3):
+- Phase 2 PR (label `phase:보안-테스트`) → PR description regex `^## Lane evidence$` + 7-row valid 검증
+- 부재/invalid → `action_required` block
+- `type:epic` / doc-only fast-pass (CFP-106) 변경 없음
+
+**`.claude-work/progress/<KEY>.md` 와 분리** (CFP-20 NG6):
+- §14 = committed authoritative SSOT
+- `.claude-work/progress/` = gitignored ephemeral cache (non-authoritative)
+- 두 file 충돌 시 §14 priority
+
 ---
 
 ## Epic Story Condensed Mode (CFP-84)

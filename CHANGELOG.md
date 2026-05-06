@@ -7,6 +7,22 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## Unreleased
 
+### CFP-126 — Phase 2: Story §14 Lane Evidence schema + workflow + lint
+
+- `templates/story-page-structure.md` (Modify) — §14 Lane Evidence section 신설 (additive, 기존 §1-§13 무영향). 12 field YAML schema (lane / iteration / agent / spawned_at / returned_at / output_status / outcome / pr_ref / decision_packet_ref / transcript / spawn_id / fix_iteration). Effective date = ADR-031 Accepted 후 신규 Phase 2 PR (retroactive 미처리). `.claude-work/progress/<KEY>.md` (CFP-20 NG6 cache) 와 분리 명시 — §14 SSOT priority.
+- `templates/github-workflows/lane-evidence-check.yml` (NEW) + `.github/workflows/` self-apply — Phase 2 PR description `## Lane evidence` 블록 + 7-row valid format 검증. Fast-pass (type:epic / doc-only PR / non-Phase-2 PR), bypass (PR description `BYPASS: <reason>`), 부재/invalid → action_required.
+- `scripts/check-lane-evidence.sh` + `.ps1` (NEW) — Story §14 ↔ PR description cross-validate (lane name set 일치 + bypass reason 명시). Auto-detect Story path from branch + PR number from gh CLI. Default exit 0 advisory (ADR-027 §결정 2 정합), `--strict` flag → exit 1.
+- `scripts/test-check-lane-evidence.sh` (NEW) — 5 smoke test (single-pass fixture / missing story default / missing story strict / --help / unknown arg). 5/5 PASS local.
+- `scripts/fixtures/check-lane-evidence/single-pass-story.md` (NEW) — fixture story 7-lane PASS 모두 §14 row carry. 향후 follow-up 에서 multi-iteration FIX / bypass fixture 확장.
+- `templates/github-pr-template.md` (Modify) — Phase 2 PR template 에 `## Lane evidence` placeholder 7-row 추가 + `bash scripts/check-lane-evidence.sh` 검증 task 추가.
+- `templates/consumer-scripts.manifest` (Modify) — `scripts/check-lane-evidence.sh:templates/github-workflows/lane-evidence-check.yml` entry 추가 (CFP-109 schema 정합).
+- `CLAUDE.md` (Modify) — §"오케스트레이션 규칙" 의 "Wrapper 위임 패턴" 에 lane evidence invariant 1 line 추가 (ADR-031 cross-ref + bypass + effective date + .claude-work 분리).
+- Sonnet decider CFP-126-001 storage location pick (a) §14 (high confidence) — Phase 1 PR #59 archived. Codex 7-area review CFP-126-002 = HOLD → CONDITIONAL_PASS, P1=7 모두 pre-merge fixed (file missing 해소 + spawn_id + fix_iteration cross-ref + output_status partial-row + §13 vs §14 verification + ADR-031 transition + .claude-work non-authoritative).
+- Story SSOT: codeforge-internal-docs PR #59 (Phase 1).
+- Parent Epic: CFP-124 (#230 + #57).
+- Resolves CFP-124 Gap #1 (Lane plugin 실제 spawn 흔적 invariant 부재) + root cause A1.
+- ADR-031 status (Proposed → Accepted) + §결정 1 (a) §14 pick freeze = 별도 small wrapper amend PR (CFP-124 #230 merge 후 즉시).
+
 ### CFP-74 — Post-merge follow-up automation (ADR-026)
 
 - `docs/adr/ADR-026-post-merge-automation.md` (NEW) — 4 결정 (Wrapper Orchestrator post-merge automation 의무 / Cross-repo PAT / Telemetry only / Disable-by-flag + main 직접 push 금지). Sonnet decider (CFP-74-001) pick=alpha, Codex round 2 audit (gpt-5.5 high, ADR conflict 0/7).
