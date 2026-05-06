@@ -34,7 +34,7 @@ ADR-027 §컨텍스트:35 검증 quote:
 
 ### CFP-20 NG6 명시 — `§0` 위치는 cache-only
 
-[CFP-20 spec](../../../codeforge-internal-docs/wrapper/specs/2026-04-28-cfp-20-live-progress-design.md) NG6 명시:
+[CFP-20 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-28-cfp-20-live-progress-design.md) NG6 명시:
 
 > §0 file 이 commit 되거나 deliverable 이 되는 모델 (cache 로 유지)
 
