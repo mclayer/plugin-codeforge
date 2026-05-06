@@ -30,13 +30,37 @@ jobs:
         if: steps.enabled.outputs.disabled != 'true'
         id: meta
         run: |
-          STORY_KEY=$(echo "${{ github.event.pull_request.title }}" | grep -oE 'CFP-[0-9]+' | head -1 || echo "")
+          PR_TITLE='${{ github.event.pull_request.title }}'
+
+          # CFP-74 followup: chore PR detection + multi-CFP aggregating PR detection.
+          # 1) chore(*) prefix → skip Story-tied actions (chore PR not tied to single Story)
+          # 2) multiple CFP-NN refs in title → likely aggregating PR (CHANGELOG sync etc.)
+          CFP_COUNT=$(echo "$PR_TITLE" | grep -oE 'CFP-[0-9]+' | sort -u | wc -l)
+          if [[ "$PR_TITLE" =~ ^chore[:\(] ]]; then
+            echo "::notice::Chore PR detected — skip Story-tied actions: $PR_TITLE"
+            echo "story_key=" >> $GITHUB_OUTPUT
+            echo "lane=" >> $GITHUB_OUTPUT
+            echo "phase=" >> $GITHUB_OUTPUT
+            echo "skip_reason=chore_prefix" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          if [ "$CFP_COUNT" -gt 1 ]; then
+            echo "::notice::Multiple CFP refs (${CFP_COUNT}) in title — aggregating PR, skip Story actions: $PR_TITLE"
+            echo "story_key=" >> $GITHUB_OUTPUT
+            echo "lane=" >> $GITHUB_OUTPUT
+            echo "phase=" >> $GITHUB_OUTPUT
+            echo "skip_reason=multi_cfp" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          STORY_KEY=$(echo "$PR_TITLE" | grep -oE 'CFP-[0-9]+' | head -1 || echo "")
           LANE=$(echo '${{ toJson(github.event.pull_request.labels) }}' | jq -r '.[] | select(.name | startswith("phase:")) | .name' | head -1 || echo "")
-          PHASE=$(echo "${{ github.event.pull_request.title }}" | grep -oE 'Phase [12]' | head -1 | tr -d ' ' || echo "")
+          PHASE=$(echo "$PR_TITLE" | grep -oE 'Phase [12]' | head -1 | tr -d ' ' || echo "")
 
           echo "story_key=$STORY_KEY" >> $GITHUB_OUTPUT
           echo "lane=$LANE" >> $GITHUB_OUTPUT
           echo "phase=$PHASE" >> $GITHUB_OUTPUT
+          echo "skip_reason=" >> $GITHUB_OUTPUT
           echo "::notice::Extracted: story=$STORY_KEY, lane=$LANE, phase=$PHASE"
 
       - name: Action 1 — Phase label transition
