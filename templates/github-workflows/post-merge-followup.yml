@@ -1,0 +1,107 @@
+name: Post-merge follow-up automation
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  followup:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Disable check
+        id: enabled
+        run: |
+          if [ -f .codeforge/post-merge-automation.disabled ]; then
+            echo "disabled=true" >> $GITHUB_OUTPUT
+            echo "::warning::Post-merge automation disabled by .codeforge/post-merge-automation.disabled"
+          else
+            echo "disabled=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Extract PR metadata
+        if: steps.enabled.outputs.disabled != 'true'
+        id: meta
+        run: |
+          STORY_KEY=$(echo "${{ github.event.pull_request.title }}" | grep -oE 'CFP-[0-9]+' | head -1 || echo "")
+          LANE=$(echo '${{ toJson(github.event.pull_request.labels) }}' | jq -r '.[] | select(.name | startswith("phase:")) | .name' | head -1 || echo "")
+          PHASE=$(echo "${{ github.event.pull_request.title }}" | grep -oE 'Phase [12]' | head -1 | tr -d ' ' || echo "")
+
+          echo "story_key=$STORY_KEY" >> $GITHUB_OUTPUT
+          echo "lane=$LANE" >> $GITHUB_OUTPUT
+          echo "phase=$PHASE" >> $GITHUB_OUTPUT
+          echo "::notice::Extracted: story=$STORY_KEY, lane=$LANE, phase=$PHASE"
+
+      - name: Action 1 — Phase label transition
+        if: steps.enabled.outputs.disabled != 'true' && steps.meta.outputs.story_key != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+        run: |
+          NEXT_PHASE=$(./scripts/next-phase.sh "${{ steps.meta.outputs.lane }}" "${{ steps.meta.outputs.phase }}")
+          ISSUE_NUM=$(gh issue list --label "type:story" --search "${{ steps.meta.outputs.story_key }}" --json number -q '.[0].number')
+
+          if [ -n "$ISSUE_NUM" ] && [ -n "$NEXT_PHASE" ] && [ "${{ steps.meta.outputs.lane }}" != "$NEXT_PHASE" ]; then
+            gh issue edit "$ISSUE_NUM" --remove-label "${{ steps.meta.outputs.lane }}" --add-label "$NEXT_PHASE"
+            echo "::notice::Issue #$ISSUE_NUM phase transition: ${{ steps.meta.outputs.lane }} → $NEXT_PHASE"
+          fi
+
+      - name: Action 2 — Story §9 writer (cross-repo via PAT)
+        if: steps.enabled.outputs.disabled != 'true' && steps.meta.outputs.story_key != ''
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+        continue-on-error: true
+        run: |
+          ./scripts/post-merge-story-writer.sh \
+            --story-key "${{ steps.meta.outputs.story_key }}" \
+            --lane "${{ steps.meta.outputs.lane }}" \
+            --pr-number "${{ github.event.pull_request.number }}" \
+            --pr-repo "${{ github.repository }}" \
+            --decider "user_admin"
+
+      - name: Action 3 — Carrier Issue close (Phase 2 final merge only)
+        if: steps.enabled.outputs.disabled != 'true' && steps.meta.outputs.phase == 'Phase2' && steps.meta.outputs.story_key != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+        run: |
+          ISSUE_NUM=$(gh issue list --label "type:story" --search "${{ steps.meta.outputs.story_key }}" --json number -q '.[0].number')
+          if [ -n "$ISSUE_NUM" ]; then
+            gh issue close "$ISSUE_NUM" --comment "Phase 2 PR #${{ github.event.pull_request.number }} merged. Auto-closed by post-merge-followup workflow."
+            echo "::notice::Issue #$ISSUE_NUM auto-closed"
+          fi
+
+      - name: Action 4 — Sibling PR auto-close
+        if: steps.enabled.outputs.disabled != 'true' && steps.meta.outputs.story_key != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+        run: |
+          ./scripts/post-merge-sibling-close.sh "${{ steps.meta.outputs.story_key }}"
+
+      - name: Telemetry counter
+        if: always() && steps.enabled.outputs.disabled != 'true' && steps.meta.outputs.story_key != ''
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+        run: |
+          OUTCOME="auto_completed"
+          if [ "${{ job.status }}" != "success" ]; then OUTCOME="partial"; fi
+
+          ACTIONS_DONE="phase_label_transition,story_section_9,sibling_pr_close"
+          if [ "${{ steps.meta.outputs.phase }}" == "Phase2" ]; then
+            ACTIONS_DONE="${ACTIONS_DONE},issue_close"
+          fi
+
+          ./scripts/post-merge-telemetry.sh \
+            --story-key "${{ steps.meta.outputs.story_key }}" \
+            --pr "${{ github.repository }}#${{ github.event.pull_request.number }}" \
+            --outcome "$OUTCOME" \
+            --actions-completed "$ACTIONS_DONE" \
+            --decider "user_admin"
