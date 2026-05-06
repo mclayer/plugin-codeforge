@@ -60,11 +60,65 @@ if echo "$CURRENT_CONTENT" | grep -q "${PR_REPO}#${PR_NUM} merged"; then
     exit 0
 fi
 
-# Append §9 row
+# CFP-74 followup #3: Append §9 row with table-header auto-insert.
+# Story files may or may not pre-include §9 table header. Two paths:
+#   (a) Existing `| Iter |` table header found → print header + separator + new row.
+#   (b) Reached `## §10` without finding table → insert table header + separator + row before §10.
+# This ensures row always lands inside a valid markdown table for readability.
 NEW_CONTENT=$(echo "$CURRENT_CONTENT" | awk -v new_row="$NEW_ROW" '
+    BEGIN {
+        in_section = 0      # inside §9 block
+        existing_table = 0  # found `| Iter |` header
+        in_table = 0        # currently iterating table rows
+        row_inserted = 0
+        trailing_blank = 0
+    }
     /^## §9 / { in_section = 1; print; next }
-    in_section && /^\| Iter \|/ { print; getline; print; print new_row; in_section = 0; next }
-    /^## §10/ && in_section { print new_row; in_section = 0 }
+
+    # Enter existing table (header line)
+    in_section && /^\| Iter \|/ {
+        existing_table = 1
+        in_table = 1
+        if (trailing_blank) { print ""; trailing_blank = 0 }
+        print
+        next
+    }
+
+    # Continuation of table (separator or row): keep printing
+    in_section && in_table && /^\|/ { print; next }
+
+    # First non-| line after table: insert new row here, exit table mode
+    in_section && in_table {
+        print new_row
+        row_inserted = 1
+        in_table = 0
+        if (/^$/) { trailing_blank = 1; next }
+        print
+        next
+    }
+
+    # §10 boundary without prior table → insert table header + row
+    /^## §10/ && in_section && !row_inserted {
+        if (!existing_table) {
+            print ""
+            print "| Iter | 레인 | Claude verdict | Codex verdict | Decider | 결과 | 시각 |"
+            print "|------|------|----------------|---------------|---------|------|------|"
+        }
+        print new_row
+        print ""
+        print
+        in_section = 0
+        row_inserted = 1
+        trailing_blank = 0
+        next
+    }
+
+    in_section && /^$/ { trailing_blank = 1; next }
+    in_section {
+        if (trailing_blank) { print ""; trailing_blank = 0 }
+        print
+        next
+    }
     { print }
 ')
 
