@@ -35,7 +35,10 @@ jobs:
           # CFP-74 followup: chore PR detection + multi-CFP aggregating PR detection.
           # 1) chore(*) prefix → skip Story-tied actions (chore PR not tied to single Story)
           # 2) multiple CFP-NN refs in title → likely aggregating PR (CHANGELOG sync etc.)
-          CFP_COUNT=$(echo "$PR_TITLE" | grep -oE 'CFP-[0-9]+' | sort -u | wc -l)
+          # CFP-74 followup #2: case-insensitive CFP extraction (PR conventions use lowercase
+          #   `feat(cfp-N):`). Normalize to UPPERCASE for downstream Story file path / GitHub
+          #   Issue search (which expects CFP-N uppercase Story file naming).
+          CFP_COUNT=$(echo "$PR_TITLE" | grep -oiE 'CFP-[0-9]+' | tr '[:lower:]' '[:upper:]' | sort -u | wc -l)
           if [[ "$PR_TITLE" =~ ^chore[:\(] ]]; then
             echo "::notice::Chore PR detected — skip Story-tied actions: $PR_TITLE"
             echo "story_key=" >> $GITHUB_OUTPUT
@@ -53,7 +56,7 @@ jobs:
             exit 0
           fi
 
-          STORY_KEY=$(echo "$PR_TITLE" | grep -oE 'CFP-[0-9]+' | head -1 || echo "")
+          STORY_KEY=$(echo "$PR_TITLE" | grep -oiE 'CFP-[0-9]+' | head -1 | tr '[:lower:]' '[:upper:]' || echo "")
           LANE=$(echo '${{ toJson(github.event.pull_request.labels) }}' | jq -r '.[] | select(.name | startswith("phase:")) | .name' | head -1 || echo "")
           PHASE=$(echo "$PR_TITLE" | grep -oE 'Phase [12]' | head -1 | tr -d ' ' || echo "")
 
