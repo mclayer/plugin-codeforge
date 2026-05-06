@@ -7,6 +7,39 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## Unreleased
 
+### CFP-74 — Post-merge follow-up automation (ADR-026)
+
+- `docs/adr/ADR-026-post-merge-automation.md` (NEW) — 4 결정 (Wrapper Orchestrator post-merge automation 의무 / Cross-repo PAT / Telemetry only / Disable-by-flag + main 직접 push 금지). Sonnet decider (CFP-74-001) pick=alpha, Codex round 2 audit (gpt-5.5 high, ADR conflict 0/7).
+- `templates/github-workflows/post-merge-followup.yml` (NEW) + `.github/workflows/` self-apply — 4 sequential actions (phase label transition / cross-repo Story §9 writer / carrier Issue close / sibling PR auto-close) + telemetry counter + disable-by-flag + per-action outcome tracking.
+- `scripts/{next-phase,post-merge-story-writer,post-merge-sibling-close,post-merge-telemetry}.sh` (NEW, 4 scripts) — workflow action implementations. Cross-repo write via CODEFORGE_CROSS_REPO_PAT (CFP-71 precedent), main 직접 push 금지 (branch + PR pattern).
+- `<internal-docs>/wrapper/post-merge-counters.jsonl` (NEW telemetry, on first run) — JSONL append-only, contract_version 1.0. Long-lived `telemetry-counters` rolling branch (auto-PR), accumulates outcome events across runs. PMOAgent retro 30+ run 후 ROI 평가.
+- `docs/orchestrator-playbook.md` (Modify) — §15 reserved (CFP-73 Phase 2 stop-event-v1 deferred placeholder) + §16 신설 (post-merge automation flow narrative SSOT).
+- `CLAUDE.md` (Modify) — workflow list 10 → 11 fixture (`post-merge-followup.yml` 추가).
+- Codex audit P0 (telemetry main push violation) + 4 P1 (phase transition source / outcome aggregation / JSONL newline / rerun idempotency) + P2 (story_uri marker) — pre-merge 모두 fixed.
+- Story SSOT: internal-docs `wrapper/stories/CFP-74.md` (PR #31 merged 2ce571b).
+
+### CFP-123 — Live Epic lane-entry policy (ADR-030)
+
+- `docs/adr/ADR-030-live-entry-gate-policy.md` (NEW) — 5 결정 (gate:live-entry-pass label 정의 / Live touching Story 식별 mechanism / phase-gate-mergeable.yml validation / 3-condition AND consumer-side SSOT / fast-pass 영향 차단). mctrader debut audit P0 (Codex gpt-5.5 high 2026-05-04) 해소.
+- `docs/inter-plugin-contracts/label-registry-v1.md` (Modify, v1.2 → v1.3 minor bump) — gate:* 카테고리 2종 → 3종 (`gate:live-entry-pass` 추가). Color 0e8a16, single_active false.
+- `scripts/bootstrap-labels.sh` (Modify) — `gate:live-entry-pass` 1 line idempotent create.
+- `templates/github-workflows/phase-gate-mergeable.yml` (Modify) + `.github/workflows/` self-apply — Live touching Story (Story frontmatter `live_touching:true` OR PR body marker) + phase:보안-테스트 시 본 gate 추가 검증. Membership-style gate check (PR carries multiple gate:* labels simultaneously).
+- `CLAUDE.md` (Modify) — 보안 테스트 row gate list 갱신 (조건부 gate:live-entry-pass 추가, ADR-030).
+- Codex audit P1 (gate label first-only bug) + 2 P2 (ADR phase reference / registry purpose text) — pre-merge fixed.
+- Story SSOT: internal-docs `wrapper/stories/CFP-123.md` (PR #52 merged e1296ff).
+- Resolves issue #156.
+
+### CFP-114 — Phase execution visibility expansion (ADR-029)
+
+- `docs/adr/ADR-029-phase-execution-visibility-expansion.md` (NEW) — 5 결정 (sub-step event narration 의무 / format 표준 + sanitize policy / stop discipline cross-reference / verbosity opt-out / Lane plugin 변경 불요). 사용자 directive (2026-05-05) "phase 와 내부 진행단계를 완료 시마다 출력해주어야 한다" 해소.
+- `docs/orchestrator-playbook.md` (Modify, §14.5 갱신) — Trigger SSOT 표 4 sub-step event (Deputy spawn / Deputy return / 병렬 dispatch R3·R4·R7·R9 / R9 subset 완료) terminal narration ❌ → ✅ 전환. R10 prefetch skip 유지.
+- `docs/project-config-schema.md` (Modify) — `progress_narration_verbosity: full | lane_only` field 명세 (default `full`).
+- `overlay/_overlay/project.yaml.example` (Modify) — 신규 field 예시 (commented).
+- `overlay/hooks/validate_config.py` (Modify) — `_is_progress_narration_verbosity` enum validator + SCHEMA_RULES 추가.
+- `docs/consumer-guide.md` (Modify) — verbosity 사용법 subsection.
+- `CLAUDE.md` (Modify) — ADR-029 reference (Orchestration 규칙 §).
+- Stop discipline 정책 변경 없음 — ADR-022 + ADR-025 + Amendment 1 SSOT 그대로 cross-reference.
+
 ### CFP-122 — ADR-020 Amendment 2 — Mechanical Epic mode
 
 - `docs/adr/ADR-020-cross-repo-epic-pattern.md` (Modify) — Amendment 2 신설:
