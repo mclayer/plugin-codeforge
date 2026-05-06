@@ -2,7 +2,7 @@
 adr_number: 32
 title: ADR-027 Amendment 1 — bootstrap strict mode opt-in (hard enforcement layer)
 date: 2026-05-06
-status: Proposed
+status: Accepted
 category: Plugin Distribution & Consumer Onboarding
 carrier_story: CFP-127
 parent_epic: CFP-124
@@ -24,7 +24,7 @@ related_files:
 
 ## 상태
 
-Proposed (2026-05-06). carrier_story = CFP-127 (CFP-124 Epic 의 Phase 4 child). CFP-127 Phase 1 PR merge 시 Accepted 전환. ADR-027 §결정 2 (3-trigger enforcement model) amendment 1 (additive, supersede 아님). ADR-027 §결정 3 (Bypass) 와는 별도 mechanism — strict mode 활성 시에도 §결정 3 bypass env (`HOTFIX_BYPASS_CODEFORGE`) 는 그대로 작동.
+**Accepted (2026-05-06)** — CFP-127 Phase 1 PR #60 (Sonnet decider CFP-127-001 strict-eligible 4-type pick alpha high confidence) + Phase 2 PR #233 merged. 본 amend = ADR-027 §결정 2 (3-trigger enforcement model) Tertiary trigger amendment 1 (additive, supersede 아님). ADR-027 §결정 3 (Bypass) 와는 별도 mechanism — strict mode 활성 시에도 §결정 3 bypass env (`HOTFIX_BYPASS_CODEFORGE`) 는 그대로 작동. carrier_story = CFP-127 (CFP-124 Epic 의 Phase 4 child).
 
 ## 컨텍스트
 
