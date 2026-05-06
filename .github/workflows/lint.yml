@@ -15,6 +15,14 @@ jobs:
       - name: Run shellcheck
         run: shellcheck overlay/hooks/regen-agents.sh
 
+  script-exec-bit:
+    name: script exec bit (CFP-74 invariant)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify directly-invoked scripts have 100755 mode
+        run: bash scripts/check-script-exec-bit.sh
+
   markdown-links:
     name: markdown internal links
     runs-on: ubuntu-latest
