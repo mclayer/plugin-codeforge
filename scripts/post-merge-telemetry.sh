@@ -58,19 +58,39 @@ INTERNAL_DOCS_REPO="mclayer/codeforge-internal-docs"
 PLUGIN_FOLDER="${PLUGIN_FOLDER:-wrapper}"
 COUNTER_PATH="${PLUGIN_FOLDER}/post-merge-counters.jsonl"
 
-# Fetch existing counter (or empty if not exists)
-EXISTING=$(gh api "repos/${INTERNAL_DOCS_REPO}/contents/${COUNTER_PATH}" --jq '.content' 2>/dev/null | base64 -d 2>/dev/null || echo "")
-NEW_CONTENT="${EXISTING}${ENTRY}"$'\n'
-NEW_CONTENT_B64=$(printf "%s" "$NEW_CONTENT" | base64 -w0)
+# CFP-74 Codex P0 fix: ADR-026 §결정 4 — main 직접 push 금지 invariant.
+# Telemetry 도 cross-repo write 이므로 branch + PR 패턴 적용.
+# Long-lived branch `telemetry-counters` 에 누적 commit, 단일 PR 가 update.
+TELEMETRY_BRANCH="telemetry-counters"
 
-# Get SHA (or empty for new file)
-SHA=$(gh api "repos/${INTERNAL_DOCS_REPO}/contents/${COUNTER_PATH}" --jq '.sha' 2>/dev/null || echo "")
+# Ensure long-lived telemetry branch exists (idempotent — create if missing)
+MAIN_SHA=$(gh api "repos/${INTERNAL_DOCS_REPO}/git/refs/heads/main" --jq '.object.sha')
+gh api -X POST "repos/${INTERNAL_DOCS_REPO}/git/refs" \
+    -f ref="refs/heads/${TELEMETRY_BRANCH}" -f sha="$MAIN_SHA" 2>/dev/null || true
 
-# PUT (create or update)
+# Fetch existing counter from telemetry branch (preferred — accumulates across runs).
+# Fallback to main if branch is fresh.
+EXISTING=$(gh api "repos/${INTERNAL_DOCS_REPO}/contents/${COUNTER_PATH}?ref=${TELEMETRY_BRANCH}" --jq '.content' 2>/dev/null | base64 -d 2>/dev/null || \
+           gh api "repos/${INTERNAL_DOCS_REPO}/contents/${COUNTER_PATH}" --jq '.content' 2>/dev/null | base64 -d 2>/dev/null || \
+           echo "")
+
+# CFP-74 Codex P1 #3 fix: trailing-newline preservation.
+# Command substitution strips trailing newlines. Use printf with explicit \n separator.
+if [[ -n "$EXISTING" ]]; then
+    NEW_CONTENT=$(printf '%s\n%s\n' "$EXISTING" "$ENTRY")
+else
+    NEW_CONTENT=$(printf '%s\n' "$ENTRY")
+fi
+NEW_CONTENT_B64=$(printf '%s' "$NEW_CONTENT" | base64 -w0)
+
+# Get SHA on telemetry branch (or empty for new file)
+SHA=$(gh api "repos/${INTERNAL_DOCS_REPO}/contents/${COUNTER_PATH}?ref=${TELEMETRY_BRANCH}" --jq '.sha' 2>/dev/null || echo "")
+
+# PUT (create or update) on telemetry branch — NOT main
 ARGS=(-X PUT "repos/${INTERNAL_DOCS_REPO}/contents/${COUNTER_PATH}"
     -f message="telemetry(${STORY_KEY,,}): post-merge counter entry (PR ${PR}, outcome: ${OUTCOME})"
     -f content="$NEW_CONTENT_B64"
-    -f branch="main")
+    -f branch="${TELEMETRY_BRANCH}")
 
 if [[ -n "$SHA" ]]; then
     ARGS+=(-f sha="$SHA")
@@ -78,4 +98,13 @@ fi
 
 gh api "${ARGS[@]}"
 
-echo "::notice::Telemetry entry appended (story=$STORY_KEY, pr=$PR, outcome=$OUTCOME)"
+# Open or update single rolling PR for telemetry-counters branch (idempotent)
+EXISTING_PR=$(gh pr list -R "$INTERNAL_DOCS_REPO" --state open --head "$TELEMETRY_BRANCH" --json number --jq '.[0].number' 2>/dev/null || echo "")
+if [[ -z "$EXISTING_PR" ]]; then
+    gh pr create -R "$INTERNAL_DOCS_REPO" \
+        --base main --head "$TELEMETRY_BRANCH" \
+        --title "telemetry: post-merge counters (rolling PR — ADR-026)" \
+        --body "Auto-rolling telemetry counter PR (ADR-026 / CFP-74). Accumulates post-merge automation outcome events. Merge periodically (PMOAgent retro 30+ run 후)."
+fi
+
+echo "::notice::Telemetry entry appended to ${TELEMETRY_BRANCH} branch (story=$STORY_KEY, pr=$PR, outcome=$OUTCOME)"
