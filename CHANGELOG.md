@@ -7,6 +7,18 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## Unreleased
 
+### CFP-124 — Consumer adoption hardening Phase 1 (Epic doc-only)
+
+- `docs/adr/ADR-031-lane-spawn-evidence-trail.md` (NEW, status: Proposed) — CFP-126 carrier. 5 결정: Wrapper Orchestrator self-write committed lane evidence (storage location 4 candidate 중 CFP-126 Phase 1 Sonnet decider pick — Story 새 §section / §8.5 sub-block / frontmatter / PR description-only. 명시적 제외: `.claude-work/progress/` CFP-20 NG6 cache invariant) / Phase 2 PR description `## Lane evidence` 의무 블록 (regex 검증) / `phase-gate-mergeable.yml` evidence 부재 시 action_required block / `BYPASS_LANE_EVIDENCE` env (REASON 의무 동반) / effective date = ADR-031 Accepted PR merge 직후 Phase 2 PR (retroactive 안 함). 6 lane plugin 영향 매트릭스: 모두 변경 없음 (wrapper Orchestrator self-write 영역 한정).
+- `docs/adr/ADR-032-adr-027-amendment-1-hard-enforcement.md` (NEW, status: Proposed) — CFP-127 carrier. ADR-027 **§결정 2 (3-trigger enforcement model) Tertiary trigger** amendment 1 (additive opt-in, supersede 아님). §결정 3 (Bypass) 와 별도 mechanism — 동시 작동. 5 결정: LLM-trust default 유지 / strict-eligible drift 4종 (project.yaml 부재 / plugin 미설치 / hook 미등록 / phase·gate label 부재) / opt-in 3 mechanism (`--strict` flag > env > yaml `bootstrap.strict_mode`) / strict exit 1 → Claude Code session 차단 안 함 (stderr + Orchestrator escalation) / 점진 도입 (mctrader 6-repo first opt-in) + revert procedure (CLI 미사용 / env unset / yaml false). Risk 5종 (false-positive / telemetry volume / schema drift / cold-start / in-flight 작업 차단) + mitigation 명시.
+- Epic decomposition: 3 child Story (CFP-125 consumer-guide §2b sync + single-entry script / CFP-126 lane-spawn evidence trail / CFP-127 ADR-027 §결정 2 amendment 1).
+- Phase 1 = doc-only Epic carrier PR. 각 child Story 가 독자 Phase 1+2 dogfood iteration.
+- Spec / plan / Epic Story / 3 child Story stub: codeforge-internal-docs `wrapper/{specs,plans,stories}/CFP-124*` (ADR-013 dogfood-out).
+- 사용자 directive (2026-05-06): "codeforge가 consumer에서 제대로 쓰이고 있지 않다 — 적극적으로 사용할 수 있도록 개정해야 한다" + Codex deep diagnosis 결과 + Claude verification + 사용자 explicit pick = option α.
+- 진단 데이터 (verified): 28 `audit:from-mctrader-debut` 모두 closed / ADR-027 §결정 2 Tertiary trigger LLM-trust 의도된 design / `consumer-guide.md §2b` FLAT schema drift / `check_bootstrap.py:17` warning-only / mctrader 7 Epic 모두 main merge but 6 lane plugin 0개 spawn (manual workaround 회귀).
+- Codex 7-area review (gpt-5.5 high, 본 Phase 1 spec/plan): P0=0 / P1=4 (lane evidence storage 충돌 → 4 candidate Sonnet pick / 6 lane plugin 영향 매트릭스 / ADR-027 §결정 ref 정정 / risk + revert procedure) / P2=2 (measurable acceptance / cross-plugin 제외 근거) — pre-merge 모두 fixed.
+- Sonnet decider 본 옵션-formulation 미발화 (사용자 explicit pick). 각 child Story sub-decision 발화 가능 — 특히 CFP-126 Phase 1 PR 의 lane evidence storage 4 candidate (trigger a) 가 명시 의무.
+
 ### CFP-125 — Phase 2: consumer-guide §2 invert + bootstrap-consumer + check-debut-readiness
 
 - `docs/consumer-guide.md` (Modify):
