@@ -21,4 +21,6 @@
 # to enable degraded-mode suppression.
 
 scripts/check-story-section-schema.sh:templates/github-workflows/story-section-schema.yml
+scripts/bootstrap-consumer.sh
+scripts/check-debut-readiness.sh
 scripts/check-lane-evidence.sh:templates/github-workflows/lane-evidence-check.yml

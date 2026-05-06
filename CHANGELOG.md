@@ -19,6 +19,22 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 - Codex 7-area review (gpt-5.5 high, 본 Phase 1 spec/plan): P0=0 / P1=4 (lane evidence storage 충돌 → 4 candidate Sonnet pick / 6 lane plugin 영향 매트릭스 / ADR-027 §결정 ref 정정 / risk + revert procedure) / P2=2 (measurable acceptance / cross-plugin 제외 근거) — pre-merge 모두 fixed.
 - Sonnet decider 본 옵션-formulation 미발화 (사용자 explicit pick). 각 child Story sub-decision 발화 가능 — 특히 CFP-126 Phase 1 PR 의 lane evidence storage 4 candidate (trigger a) 가 명시 의무.
 
+### CFP-125 — Phase 2: consumer-guide §2 invert + bootstrap-consumer + check-debut-readiness
+
+- `docs/consumer-guide.md` (Modify):
+  - §2.0 신설 "5분 quickstart (RECOMMENDED — single-command setup)" — `bash scripts/bootstrap-consumer.sh` + `bash scripts/check-debut-readiness.sh` first-class. Windows variant 명시. Recovery (--resume default / --force / --reset) + plugin install reminder (platform-level).
+  - §2a → §2.1 rename + framing "manual / advanced fallback (script 미작동 시)" + anchor 보존
+  - §2b → §2.2 — FLAT schema → NESTED schema (`templates/settings.json.example` 정합) + 3 hook 등록 의무 (SessionStart × 2: regen-agents + check-bootstrap / UserPromptSubmit × 1: userprompt-reminder). Windows variant inline + hook 역할 enumerate.
+- `scripts/bootstrap-consumer.sh` + `.ps1` (NEW) — 8 단계 idempotent setup (pre-check / plugin install reminder / overlay scaffold / settings.json bootstrap / GitHub workflows+forms+CODEOWNERS / labels delegate / consumer-scripts.manifest / summary). State marker `.claude/_overlay/.bootstrap-state.json` + `--dry-run` / `--force` / `--reset` / `--family-skip` / `--org` / `--repo` flag. Default `--resume` semantic. settings.json 자동 backup `.bak.<ts>` 보호.
+- `scripts/check-debut-readiness.sh` + `.ps1` (NEW) — 4 verification (check_bootstrap.py 8 sub-check / plugin 11종 presence / project.yaml schema / settings.json 3 hook 정합). Default exit 0 advisory (ADR-027 §결정 2 LLM-trust 정합). `--strict` flag 인식 + 현 release 무 동작 (CFP-127 ADR-032 후 활성).
+- `scripts/test-bootstrap-consumer.sh` (NEW) — 6 smoke test (--dry-run / --help / unknown arg / check-debut default / check-debut --strict pre-CFP-127 / PowerShell syntax). 향후 follow-up CFP 에서 3 fixture end-to-end TDD 확장.
+- `templates/consumer-scripts.manifest` (Modify) — 2 신규 entry (`bootstrap-consumer.sh` + `check-debut-readiness.sh`, workflow dependency 없음).
+- 3 substantive sub-decision Codex CONFIRM (CFP-125-001): bootstrap-consumer α (별도 신규 + reuse) / check-debut-readiness α (thin orchestrator) / consumer-guide §2b fix γ (invert priority).
+- Codex 7-area review Phase 1 pre-merge: CONDITIONAL_PASS / P0=0 / P1=4 모두 fixed (plan/Change Plan/Story §3 작성 / exit code semantics 명확 표 / 6 lane plugin no-impact + mctrader 6-repo migration path 매트릭스 / partial-bootstrap failure recovery contract).
+- Sonnet decider 발화 없음 (Phase 1 = 사용자 picked option / sub-decision Codex CONFIRM).
+- Story SSOT: codeforge-internal-docs `wrapper/stories/CFP-125.md` (Phase 1 PR #58, Phase 2 sibling PR).
+- Resolves CFP-124 Gap #2 (consumer-guide §2b FLAT schema drift) + Gap #3 (단일 진입점 부재).
+
 ### CFP-126 — Phase 2: Story §14 Lane Evidence schema + workflow + lint
 
 - `templates/story-page-structure.md` (Modify) — §14 Lane Evidence section 신설 (additive, 기존 §1-§13 무영향). 12 field YAML schema (lane / iteration / agent / spawned_at / returned_at / output_status / outcome / pr_ref / decision_packet_ref / transcript / spawn_id / fix_iteration). Effective date = ADR-031 Accepted 후 신규 Phase 2 PR (retroactive 미처리). `.claude-work/progress/<KEY>.md` (CFP-20 NG6 cache) 와 분리 명시 — §14 SSOT priority.
