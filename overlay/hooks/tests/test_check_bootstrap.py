@@ -257,7 +257,7 @@ def test_resolve_plugins_json_no_envs() -> None:
 def test_main_smoke_no_overlay(tmp_path: Path, monkeypatch) -> None:
     """project.yaml 부재 시 silent exit 0 (cwd 변경)."""
     monkeypatch.chdir(tmp_path)
-    rc = check_bootstrap.main()
+    rc = check_bootstrap.main([])
     assert rc == 0
 
 
@@ -282,7 +282,7 @@ def test_main_bootstrap_expected_workflows_override(tmp_path: Path, monkeypatch,
     (tmp_path / "CODEOWNERS").write_text("* @user\n", encoding="utf-8")
     # plugins_json 없으면 WARN 1건 추가됨 — 본 test 의 핵심은 workflow override 만이므로 무시
     monkeypatch.chdir(tmp_path)
-    rc = check_bootstrap.main()
+    rc = check_bootstrap.main([])
     assert rc == 0
     captured = capsys.readouterr()
     # only-one.yml 이 expected workflow 라 부재하지 않음 → workflow check WARN 부재
@@ -298,7 +298,7 @@ def test_main_finding_count_semantics(tmp_path: Path, monkeypatch, capsys) -> No
         encoding="utf-8",
     )
     monkeypatch.chdir(tmp_path)
-    rc = check_bootstrap.main()
+    rc = check_bootstrap.main([])
     assert rc == 0
     captured = capsys.readouterr()
     # 부재 자산이 많아 N 개 finding (~3-5) — line 수보다 작아야 함
