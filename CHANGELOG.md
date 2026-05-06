@@ -19,6 +19,38 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 - Codex 7-area review (gpt-5.5 high, 본 Phase 1 spec/plan): P0=0 / P1=4 (lane evidence storage 충돌 → 4 candidate Sonnet pick / 6 lane plugin 영향 매트릭스 / ADR-027 §결정 ref 정정 / risk + revert procedure) / P2=2 (measurable acceptance / cross-plugin 제외 근거) — pre-merge 모두 fixed.
 - Sonnet decider 본 옵션-formulation 미발화 (사용자 explicit pick). 각 child Story sub-decision 발화 가능 — 특히 CFP-126 Phase 1 PR 의 lane evidence storage 4 candidate (trigger a) 가 명시 의무.
 
+### CFP-125 — Phase 2: consumer-guide §2 invert + bootstrap-consumer + check-debut-readiness
+
+- `docs/consumer-guide.md` (Modify):
+  - §2.0 신설 "5분 quickstart (RECOMMENDED — single-command setup)" — `bash scripts/bootstrap-consumer.sh` + `bash scripts/check-debut-readiness.sh` first-class. Windows variant 명시. Recovery (--resume default / --force / --reset) + plugin install reminder (platform-level).
+  - §2a → §2.1 rename + framing "manual / advanced fallback (script 미작동 시)" + anchor 보존
+  - §2b → §2.2 — FLAT schema → NESTED schema (`templates/settings.json.example` 정합) + 3 hook 등록 의무 (SessionStart × 2: regen-agents + check-bootstrap / UserPromptSubmit × 1: userprompt-reminder). Windows variant inline + hook 역할 enumerate.
+- `scripts/bootstrap-consumer.sh` + `.ps1` (NEW) — 8 단계 idempotent setup (pre-check / plugin install reminder / overlay scaffold / settings.json bootstrap / GitHub workflows+forms+CODEOWNERS / labels delegate / consumer-scripts.manifest / summary). State marker `.claude/_overlay/.bootstrap-state.json` + `--dry-run` / `--force` / `--reset` / `--family-skip` / `--org` / `--repo` flag. Default `--resume` semantic. settings.json 자동 backup `.bak.<ts>` 보호.
+- `scripts/check-debut-readiness.sh` + `.ps1` (NEW) — 4 verification (check_bootstrap.py 8 sub-check / plugin 11종 presence / project.yaml schema / settings.json 3 hook 정합). Default exit 0 advisory (ADR-027 §결정 2 LLM-trust 정합). `--strict` flag 인식 + 현 release 무 동작 (CFP-127 ADR-032 후 활성).
+- `scripts/test-bootstrap-consumer.sh` (NEW) — 6 smoke test (--dry-run / --help / unknown arg / check-debut default / check-debut --strict pre-CFP-127 / PowerShell syntax). 향후 follow-up CFP 에서 3 fixture end-to-end TDD 확장.
+- `templates/consumer-scripts.manifest` (Modify) — 2 신규 entry (`bootstrap-consumer.sh` + `check-debut-readiness.sh`, workflow dependency 없음).
+- 3 substantive sub-decision Codex CONFIRM (CFP-125-001): bootstrap-consumer α (별도 신규 + reuse) / check-debut-readiness α (thin orchestrator) / consumer-guide §2b fix γ (invert priority).
+- Codex 7-area review Phase 1 pre-merge: CONDITIONAL_PASS / P0=0 / P1=4 모두 fixed (plan/Change Plan/Story §3 작성 / exit code semantics 명확 표 / 6 lane plugin no-impact + mctrader 6-repo migration path 매트릭스 / partial-bootstrap failure recovery contract).
+- Sonnet decider 발화 없음 (Phase 1 = 사용자 picked option / sub-decision Codex CONFIRM).
+- Story SSOT: codeforge-internal-docs `wrapper/stories/CFP-125.md` (Phase 1 PR #58, Phase 2 sibling PR).
+- Resolves CFP-124 Gap #2 (consumer-guide §2b FLAT schema drift) + Gap #3 (단일 진입점 부재).
+
+### CFP-126 — Phase 2: Story §14 Lane Evidence schema + workflow + lint
+
+- `templates/story-page-structure.md` (Modify) — §14 Lane Evidence section 신설 (additive, 기존 §1-§13 무영향). 12 field YAML schema (lane / iteration / agent / spawned_at / returned_at / output_status / outcome / pr_ref / decision_packet_ref / transcript / spawn_id / fix_iteration). Effective date = ADR-031 Accepted 후 신규 Phase 2 PR (retroactive 미처리). `.claude-work/progress/<KEY>.md` (CFP-20 NG6 cache) 와 분리 명시 — §14 SSOT priority.
+- `templates/github-workflows/lane-evidence-check.yml` (NEW) + `.github/workflows/` self-apply — Phase 2 PR description `## Lane evidence` 블록 + 7-row valid format 검증. Fast-pass (type:epic / doc-only PR / non-Phase-2 PR), bypass (PR description `BYPASS: <reason>`), 부재/invalid → action_required.
+- `scripts/check-lane-evidence.sh` + `.ps1` (NEW) — Story §14 ↔ PR description cross-validate (lane name set 일치 + bypass reason 명시). Auto-detect Story path from branch + PR number from gh CLI. Default exit 0 advisory (ADR-027 §결정 2 정합), `--strict` flag → exit 1.
+- `scripts/test-check-lane-evidence.sh` (NEW) — 5 smoke test (single-pass fixture / missing story default / missing story strict / --help / unknown arg). 5/5 PASS local.
+- `scripts/fixtures/check-lane-evidence/single-pass-story.md` (NEW) — fixture story 7-lane PASS 모두 §14 row carry. 향후 follow-up 에서 multi-iteration FIX / bypass fixture 확장.
+- `templates/github-pr-template.md` (Modify) — Phase 2 PR template 에 `## Lane evidence` placeholder 7-row 추가 + `bash scripts/check-lane-evidence.sh` 검증 task 추가.
+- `templates/consumer-scripts.manifest` (Modify) — `scripts/check-lane-evidence.sh:templates/github-workflows/lane-evidence-check.yml` entry 추가 (CFP-109 schema 정합).
+- `CLAUDE.md` (Modify) — §"오케스트레이션 규칙" 의 "Wrapper 위임 패턴" 에 lane evidence invariant 1 line 추가 (ADR-031 cross-ref + bypass + effective date + .claude-work 분리).
+- Sonnet decider CFP-126-001 storage location pick (a) §14 (high confidence) — Phase 1 PR #59 archived. Codex 7-area review CFP-126-002 = HOLD → CONDITIONAL_PASS, P1=7 모두 pre-merge fixed (file missing 해소 + spawn_id + fix_iteration cross-ref + output_status partial-row + §13 vs §14 verification + ADR-031 transition + .claude-work non-authoritative).
+- Story SSOT: codeforge-internal-docs PR #59 (Phase 1).
+- Parent Epic: CFP-124 (#230 + #57).
+- Resolves CFP-124 Gap #1 (Lane plugin 실제 spawn 흔적 invariant 부재) + root cause A1.
+- ADR-031 status (Proposed → Accepted) + §결정 1 (a) §14 pick freeze = 별도 small wrapper amend PR (CFP-124 #230 merge 후 즉시).
+
 ### CFP-127 — Phase 2: bootstrap strict mode opt-in (ADR-032 amendment 1)
 
 - `overlay/hooks/check_bootstrap.py` (Modify) — `argparse` 추가 (`--strict` / `--quiet` flag), `_check_bypass_active()` + `_check_strict_mode_active()` + `_classify_strict_eligible()` helper 신설. NEW check 9 (`check_settings_hooks` — SessionStart × 2 + UserPromptSubmit × 1 hook 등록 검증). Strict mode 활성 조건 (CLI > env > yaml): `--strict` flag / `CODEFORGE_STRICT_BOOTSTRAP=1` / `bootstrap.strict_mode: true` (project.yaml). Strict-eligible drift 4종 (Sonnet pick alpha CFP-127-001): (a) project.yaml 부재 (b) plugin 8 critical (wrapper + 6 lane + superpowers) 미설치 (c) settings.json 3 hook 미등록 (d) 10 critical label (phase:* 7 + gate:* 3) 부재. Strict 활성 + drift 발견 → exit 1. Bypass priority HIGHEST: `HOTFIX_BYPASS_CODEFORGE=1 + REASON` 양 env set → strict 무관 hook self skip (ADR-027 §결정 3 정합).

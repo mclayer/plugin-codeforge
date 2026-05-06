@@ -50,12 +50,31 @@ Closes #<Story Issue 번호>
 ### Impl Manifest §8.5
 <!-- subissue-from-impl-manifest.yml이 자동 생성하는 sub-issue 목록 (자동 채움) -->
 
+## Lane evidence
+
+<!--
+  CFP-126 / ADR-031 — Phase 2 PR 의무 블록.
+  ADR-031 effective date 이후 의무. phase-gate-mergeable.yml 가 본 블록 부재 시 action_required.
+  Story §14 Lane Evidence 와 cross-validate (lane name set + outcome 일치).
+  Bypass: BYPASS_LANE_EVIDENCE=1 + BYPASS_LANE_EVIDENCE_REASON="<reason>" 양 env 의무 + 본 블록에 `BYPASS: <reason>` 명시.
+  effective date 이전 PR = 본 블록 생략 가능.
+-->
+
+- 요구사항: <PASS|SKIPPED|FIX|ESCALATED|BYPASS> (story=<KEY>, iteration=N, agent=RequirementsPLAgent)
+- 설계: <PASS|SKIPPED|FIX|ESCALATED|BYPASS> (...)
+- 설계-리뷰: <PASS|SKIPPED|FIX|ESCALATED|BYPASS> (gate:design-review-pass)
+- 구현: <PASS|SKIPPED|FIX|ESCALATED|BYPASS> (...)
+- 구현-리뷰: <PASS|SKIPPED|FIX|ESCALATED|BYPASS> (FIX iteration: N — Story §10 row M)
+- 구현-테스트: <PASS|SKIPPED|FIX|ESCALATED|BYPASS> (...)
+- 보안-테스트: <PASS|SKIPPED|FIX|ESCALATED|BYPASS> (gate:security-test-pass)
+
 ### Test plan (Phase 2)
 - [ ] 단위 테스트 PASS
 - [ ] 통합 테스트 PASS
 - [ ] 인프라 테스트 PASS (해당 시)
 - [ ] 성능 테스트: baseline 대비 mean ≤ +10%
 - [ ] 보안 테스트 PASS (Dependabot/CodeQL/Secret Scanning + Claude/Codex Security)
+- [ ] Lane evidence 블록 ↔ Story §14 cross-validate (`bash scripts/check-lane-evidence.sh`)
 
 ### FIX 이력
 <!-- docs/stories/<KEY>.md §10 FIX Ledger 참조 -->
