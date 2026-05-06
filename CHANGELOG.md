@@ -18,6 +18,14 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 - Codex audit P0 (telemetry main push violation) + 4 P1 (phase transition source / outcome aggregation / JSONL newline / rerun idempotency) + P2 (story_uri marker) — pre-merge 모두 fixed.
 - Story SSOT: internal-docs `wrapper/stories/CFP-74.md` (PR #31 merged 2ce571b).
 
+CFP-74 Phase 1 dogfood 4 followup PR (5 iteration 통과 후 production-ready):
+- **Followup #1** (PR #225): exec bit (100644 → 100755) 누락 fix + chore PR detection (`^chore[:(]`+ multi-CFP regex `grep -oiE | sort -u | wc -l > 1`).
+- **Followup #2** (PR #226): case-insensitive CFP regex (`grep -oE` → `grep -oiE` + `tr '[:lower:]' '[:upper:]'` normalize) — lowercase PR convention `feat(cfp-N):` extraction silent no-op fix.
+- **Followup #3** (PR #227): §9 row insertion logic — awk state machine `in_table` mode 추가, table header 자동 삽입, append-only chronological ordering. Codex P1 (existing_table flag-only) FIXED.
+- **Followup #4** (PR #228): CI invariant `script-exec-bit (CFP-74 invariant)` (`scripts/check-script-exec-bit.sh` + `.github/workflows/lint.yml`) — 미래 `Permission denied` drift 사전 차단. Codex P2 #2 (bash prefix false positive) FIXED.
+
+Lesson: 신규 cross-repo workflow 배포 = 3-5 dogfood iteration 일반적 패턴 입증.
+
 ### CFP-123 — Live Epic lane-entry policy (ADR-030)
 
 - `docs/adr/ADR-030-live-entry-gate-policy.md` (NEW) — 5 결정 (gate:live-entry-pass label 정의 / Live touching Story 식별 mechanism / phase-gate-mergeable.yml validation / 3-condition AND consumer-side SSOT / fast-pass 영향 차단). mctrader debut audit P0 (Codex gpt-5.5 high 2026-05-04) 해소.
