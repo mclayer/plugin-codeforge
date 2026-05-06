@@ -1,31 +1,45 @@
 #!/usr/bin/env python3
-"""check_bootstrap.py — Consumer 환경 부트스트랩 정합 진단 (non-blocking).
+"""check_bootstrap.py — Consumer 환경 부트스트랩 정합 진단 (default non-blocking, strict mode opt-in).
 
 Cross-platform Python core. POSIX bash (`check-bootstrap.sh`) + Windows
 PowerShell (`check-bootstrap.ps1`) wrapper 둘 다 본 모듈을 호출.
 
-CFP-103 (Phase 2a of CFP-96 Epic). 8 check:
+CFP-103 (Phase 2a of CFP-96 Epic). 9 check (CFP-127 NEW check 9):
   1. Workflow permissions (org-level) — 기존 (CFP-11)
   2. 18 plugin label 존재 — 기존 (CFP-11)
   3. workflow_distribution.mode=degraded missing_workflows 안내 — 기존 (CFP-86/89/95)
   4. consumer-scripts manifest drift — 기존 (CFP-97)
-  5. 11 plugin install (~/.claude/plugins/installed_plugins.json) — NEW (CFP-103)
-  6. consumer .github/workflows/ file 존재 — NEW (CFP-103)
-  7. consumer .github/ISSUE_TEMPLATE/ 3종 sync — NEW (CFP-103)
-  8. consumer CODEOWNERS 정합 — NEW (CFP-103)
+  5. 11 plugin install (~/.claude/plugins/installed_plugins.json) — 기존 (CFP-103)
+  6. consumer .github/workflows/ file 존재 — 기존 (CFP-103)
+  7. consumer .github/ISSUE_TEMPLATE/ 3종 sync — 기존 (CFP-103)
+  8. consumer CODEOWNERS 정합 — 기존 (CFP-103)
+  9. .claude/settings.json 의 SessionStart × 2 + UserPromptSubmit × 1 hook 등록 — NEW (CFP-127)
 
-Non-blocking: 발견된 drift 는 WARN 으로만 출력 (stderr). exit 0.
+Default non-blocking: 발견된 drift 는 WARN 으로만 출력 (stderr). exit 0. ADR-027 §결정 2 정합.
+
+Strict mode opt-in (CFP-127 / ADR-032 amendment 1):
+  Priority CLI > env > yaml:
+    1. CLI flag: `--strict`
+    2. Env: `CODEFORGE_STRICT_BOOTSTRAP=1`
+    3. YAML: `bootstrap.strict_mode: true` (.claude/_overlay/project.yaml)
+  Strict-eligible drift (4종 — Sonnet pick alpha CFP-127-001):
+    (a) project.yaml 부재 → exit 1
+    (b) plugin 11종 중 wrapper(1) + 6 lane(6) + superpowers(1) = 8 critical 미설치 → exit 1
+    (c) settings.json 의 3 hook 미등록 → exit 1
+    (d) 18 label 중 phase:* (7) + gate:* (3) = 10 critical 부재 → exit 1
+  Bypass precedence: HOTFIX_BYPASS_CODEFORGE=1 + REASON 양 env set → strict 무관 hook self skip.
 
 Skip 조건 (기존):
   - gh CLI 미설치 (check 1+2 skip)
   - gh auth status 실패 (check 1+2 skip)
-  - .claude/_overlay/project.yaml 부재 (전체 skip)
+  - .claude/_overlay/project.yaml 부재 (default mode = silent skip / strict mode = exit 1)
 
 Required 의존: PyYAML (project.yaml parse, validate_config.py 와 동일).
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import re
@@ -77,6 +91,25 @@ EXPECTED_WORKFLOWS_FULL = {
 EXPECTED_FORMS = {"audit.yml", "bug.yml", "story.yml"}
 
 CODEOWNERS_LINE_PATTERN = re.compile(r"^[^\s#]+\s+@[\w\-/]+(?:\s+@[\w\-/]+)*\s*$")
+
+# CFP-127 / ADR-032 — Strict-eligible plugin subset (8 critical = wrapper + 6 lane + superpowers)
+STRICT_ELIGIBLE_PLUGINS = {
+    "codeforge@mclayer",
+    "codeforge-requirements@mclayer",
+    "codeforge-design@mclayer",
+    "codeforge-develop@mclayer",
+    "codeforge-test@mclayer",
+    "codeforge-review@mclayer",
+    "codeforge-pmo@mclayer",
+    "superpowers@claude-plugins-official",
+}
+
+# CFP-127 / ADR-032 — Strict-eligible label subset (10 critical = phase:* 7 + gate:* 3)
+STRICT_ELIGIBLE_LABELS = {
+    "phase:요구사항", "phase:설계", "phase:설계-리뷰", "phase:구현",
+    "phase:구현-리뷰", "phase:구현-테스트", "phase:보안-테스트",
+    "gate:design-review-pass", "gate:security-test-pass", "gate:live-entry-pass",
+}
 
 
 def _resolve_overlay_yaml(env: dict[str, str]) -> Path:
@@ -399,6 +432,96 @@ def check_codeowners(*paths: Path) -> list[str]:
     return []
 
 
+# ---------------------------------------------------------------------- check 9
+
+
+def check_settings_hooks(settings_path: Path) -> tuple[list[str], bool]:
+    """CFP-127 NEW check 9 — `.claude/settings.json` 의 3 hook 등록 검증.
+
+    Strict-eligible (c): SessionStart × 2 (regen-agents + check-bootstrap) +
+                         UserPromptSubmit × 1 (userprompt-reminder).
+
+    Returns:
+      (warnings_list, is_strict_eligible_drift)
+      - warnings_list: empty if PASS, non-empty if drift
+      - is_strict_eligible_drift: True if any of 3 hook 미등록 (strict mode → exit 1)
+    """
+    if not settings_path.is_file():
+        return (
+            [
+                f"[bootstrap] WARN: {settings_path} 부재 (strict-eligible)",
+                "           → CFP-125 quickstart: 'bash scripts/bootstrap-consumer.sh'",
+                "           → 또는 manual: cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/settings.json.example .claude/settings.json",
+                "           → 미해결 시 CFP-103/CFP-104 enforcement layer 자동 누락",
+            ],
+            True,
+        )
+    try:
+        data = json.loads(settings_path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, Exception):
+        return (
+            [
+                f"[bootstrap] WARN: {settings_path} parse 실패 (malformed JSON, strict-eligible)",
+                "           → templates/settings.json.example 정합 갱신",
+            ],
+            True,
+        )
+    hooks = data.get("hooks", {}) if isinstance(data, dict) else {}
+    session_starts = hooks.get("SessionStart", []) if isinstance(hooks, dict) else []
+    user_prompts = hooks.get("UserPromptSubmit", []) if isinstance(hooks, dict) else []
+
+    found_regen = found_check = found_userprompt = False
+
+    def _scan_entries(entries: list, found_keys: list[str]) -> list[str]:
+        """Return found patterns from hook entries. Supports nested NESTED schema."""
+        found = []
+        if not isinstance(entries, list):
+            return found
+        for entry in entries:
+            if not isinstance(entry, dict):
+                continue
+            inner = entry.get("hooks", [])
+            if isinstance(inner, list):
+                for h in inner:
+                    if isinstance(h, dict):
+                        cmd = h.get("command", "")
+                        if isinstance(cmd, str):
+                            for k in found_keys:
+                                if k in cmd:
+                                    found.append(k)
+        return found
+
+    ss_found = _scan_entries(session_starts, ["regen-agents", "check-bootstrap"])
+    up_found = _scan_entries(user_prompts, ["userprompt-reminder"])
+    if "regen-agents" in ss_found:
+        found_regen = True
+    if "check-bootstrap" in ss_found:
+        found_check = True
+    if "userprompt-reminder" in up_found:
+        found_userprompt = True
+
+    missing = []
+    if not found_regen:
+        missing.append("SessionStart:regen-agents")
+    if not found_check:
+        missing.append("SessionStart:check-bootstrap")
+    if not found_userprompt:
+        missing.append("UserPromptSubmit:userprompt-reminder")
+
+    if missing:
+        return (
+            [
+                f"[bootstrap] WARN: settings.json 의 3 hook 중 {len(missing)} 개 미등록 (strict-eligible)",
+                f"           누락: {' '.join(missing)}",
+                "           → templates/settings.json.example 정합 갱신 (CFP-125 §2.2)",
+                "           → 또는 'bash scripts/bootstrap-consumer.sh' 1회 실행",
+                "           → 미해결 시 CFP-103/CFP-104 enforcement layer 자동 누락",
+            ],
+            True,
+        )
+    return ([], False)
+
+
 # --------------------------------------------------------------------- helpers
 
 
@@ -423,24 +546,177 @@ def _extract_org_repo(yaml_path: Path) -> tuple[str, str]:
         return "", ""
 
 
+def _check_bypass_active(env: dict[str, str]) -> tuple[bool, str | None]:
+    """ADR-027 §결정 3 — Bypass detection. Strict mode 보다 priority HIGHEST.
+
+    Returns:
+      (True, reason) — 양 env set, hook self skip honored
+      (False, None) — 둘 다 unset (또는 reason empty)
+    """
+    flag = env.get("HOTFIX_BYPASS_CODEFORGE", "").strip()
+    reason = env.get("HOTFIX_BYPASS_REASON", "").strip()
+    if flag == "1" and reason:
+        return True, reason
+    return False, None
+
+
+def _check_strict_mode_active(
+    env: dict[str, str], cli_strict: bool, overlay_yaml: Path
+) -> tuple[bool, str]:
+    """CFP-127 / ADR-032 — Strict mode opt-in detection.
+
+    Priority CLI > env > yaml.
+
+    Returns:
+      (True, source) — strict mode 활성, source ∈ {"cli", "env", "yaml"}
+      (False, "") — strict mode 미활성
+    """
+    if cli_strict:
+        return True, "cli"
+    if env.get("CODEFORGE_STRICT_BOOTSTRAP", "").strip() == "1":
+        return True, "env"
+    if overlay_yaml.is_file():
+        try:
+            import yaml
+            data = yaml.safe_load(overlay_yaml.read_text(encoding="utf-8")) or {}
+            bs = data.get("bootstrap", {})
+            if isinstance(bs, dict) and bs.get("strict_mode") is True:
+                return True, "yaml"
+        except Exception:
+            pass
+    return False, ""
+
+
+def _classify_strict_eligible(
+    plugins_json: Path,
+    settings_path: Path,
+    org: str,
+    repo: str,
+    gh_ready: bool,
+) -> list[str]:
+    """CFP-127 / ADR-032 — Strict-eligible drift 4종 detection (Sonnet pick alpha).
+
+    4 type (Story §3.1):
+      (a) project.yaml 부재 — 별도 main() 검사
+      (b) plugin 11종 중 wrapper(1) + 6 lane(6) + superpowers(1) = 8 critical 미설치
+      (c) settings.json 의 3 hook 미등록 (check 9)
+      (d) 18 label 중 phase:* (7) + gate:* (3) = 10 critical 부재 (gh_ready 시만)
+
+    Returns:
+      list of strict-eligible drift findings (multi-line, ready to print).
+      empty list = no strict-eligible drift.
+    """
+    findings: list[str] = []
+
+    # (b) plugin subset
+    if plugins_json.is_file():
+        try:
+            data = json.loads(plugins_json.read_text(encoding="utf-8"))
+            installed = set(data.get("plugins", {}).keys())
+            missing_critical = STRICT_ELIGIBLE_PLUGINS - installed
+            if missing_critical:
+                findings.append(
+                    f"[bootstrap] STRICT (b): {len(missing_critical)}/{len(STRICT_ELIGIBLE_PLUGINS)} critical plugin 미설치"
+                )
+                findings.append(f"           누락: {' '.join(sorted(missing_critical))}")
+                findings.append("           → /plugins install 명령 직접 실행 (Claude Code platform-level)")
+        except Exception:
+            findings.append(f"[bootstrap] STRICT (b): {plugins_json} parse 실패 — plugin 설치 검증 불가")
+    else:
+        findings.append(f"[bootstrap] STRICT (b): {plugins_json} 부재 — Claude Code 미설치 또는 plugin 0개")
+
+    # (c) settings.json 3 hook
+    _, hook_strict = check_settings_hooks(settings_path)
+    if hook_strict:
+        # Detail 은 main() 에서 별도 출력
+        findings.append("[bootstrap] STRICT (c): settings.json hook 미등록 — check 9 detail 참조")
+
+    # (d) labels (gh_ready 시만)
+    if gh_ready:
+        try:
+            result = subprocess.run(
+                [
+                    "gh", "label", "list", "--limit", "100", "--repo", f"{org}/{repo}",
+                    "--json", "name", "-q", "[.[].name]",
+                ],
+                capture_output=True, text=True, timeout=10,
+            )
+            if result.returncode == 0:
+                existing = set(json.loads(result.stdout))
+                missing_critical = STRICT_ELIGIBLE_LABELS - existing
+                if missing_critical:
+                    findings.append(
+                        f"[bootstrap] STRICT (d): {len(missing_critical)}/{len(STRICT_ELIGIBLE_LABELS)} critical label 부재"
+                    )
+                    findings.append(f"           누락: {' '.join(sorted(missing_critical))}")
+                    findings.append("           → 'bash scripts/bootstrap-labels.sh <org>/<repo>' 1회 실행")
+        except Exception:
+            pass
+
+    return findings
+
+
 # ----------------------------------------------------------------------- main
 
 
-def main() -> int:
-    """Entry point. Print WARN 모음 to stderr. Exit 0 (non-blocking)."""
+def main(argv: list[str] | None = None) -> int:
+    """Entry point. Default non-blocking exit 0. Strict mode opt-in (CFP-127 / ADR-032) → exit 1 가능.
+
+    CLI:
+      check_bootstrap.py [--strict] [--quiet]
+
+    Exit code:
+      Default mode: 0 (advisory only, ADR-027 §결정 2 정합)
+      Strict mode + strict-eligible drift 부재: 0
+      Strict mode + 1+ strict-eligible drift: 1
+
+    Bypass precedence: HOTFIX_BYPASS_CODEFORGE=1 + HOTFIX_BYPASS_REASON 양 env set →
+      strict mode 활성 무관 hook self skip (exit 0).
+    """
+    parser = argparse.ArgumentParser(
+        description="Consumer 환경 부트스트랩 정합 진단 (CFP-103 + CFP-127)"
+    )
+    parser.add_argument("--strict", action="store_true",
+                        help="CFP-127 / ADR-032 strict mode opt-in (priority 1, CLI > env > yaml)")
+    parser.add_argument("--quiet", action="store_true",
+                        help="Suppress non-strict warning output")
+    args = parser.parse_args(argv)
+
     env = dict(os.environ)
+
+    # Bypass check (ADR-027 §결정 3) — priority HIGHEST, strict mode 무관
+    bypass_active, bypass_reason = _check_bypass_active(env)
+    if bypass_active:
+        print(f"[check-bootstrap] BYPASS honored — HOTFIX_BYPASS_CODEFORGE=1 reason={bypass_reason!r}",
+              file=sys.stderr)
+        return 0
+
     overlay_yaml = _resolve_overlay_yaml(env)
 
-    # Skip 조건: project.yaml 부재 → consumer 초기 설정 단계, silent skip.
+    # Strict mode detection (CLI > env > yaml)
+    strict_active, strict_source = _check_strict_mode_active(env, args.strict, overlay_yaml)
+
+    # Strict-eligible (a): project.yaml 부재
     if not overlay_yaml.is_file():
+        if strict_active:
+            print("", file=sys.stderr)
+            print(f"[check-bootstrap] STRICT mode active (source={strict_source}) — strict-eligible (a) drift:",
+                  file=sys.stderr)
+            print(f"           {overlay_yaml} 부재 — Orchestrator config 미인식, lane spawn 정합 불가",
+                  file=sys.stderr)
+            print("           → 'bash scripts/bootstrap-consumer.sh' 1회 실행 (CFP-125 quickstart)",
+                  file=sys.stderr)
+            print("           → revert: --strict flag 미사용 / unset CODEFORGE_STRICT_BOOTSTRAP / yaml strict_mode false",
+                  file=sys.stderr)
+            print("", file=sys.stderr)
+            return 1
+        # Default mode: silent skip (consumer 초기 설정 단계)
         return 0
 
     plugin_root = _resolve_plugin_root(env, Path(__file__).resolve())
     plugins_json = _resolve_plugins_json(env)
     org, repo = _extract_org_repo(overlay_yaml)
 
-    # Each check returns list[str] — empty = no finding, non-empty = 1 finding (multi-line).
-    # findings_count = check 별 1건씩 (기존 sh WARN_COUNT semantic 보존, CFP-103 D fix).
     gh_ready = _gh_available() and bool(org) and bool(repo)
 
     # project.yaml override for expected workflows
@@ -455,6 +731,9 @@ def main() -> int:
     except Exception:
         pass
 
+    settings_path = Path(".claude/settings.json")
+    hook_warnings, _ = check_settings_hooks(settings_path)
+
     all_results: list[list[str]] = [
         check_workflow_permissions(org, repo) if gh_ready else [],
         check_plugin_labels(org, repo) if gh_ready else [],
@@ -468,19 +747,35 @@ def main() -> int:
             Path(".github/CODEOWNERS"),
             Path("docs/CODEOWNERS"),
         ),
+        hook_warnings,  # CFP-127 NEW check 9
     ]
     findings_count = sum(1 for r in all_results if r)
     warnings = [line for r in all_results for line in r]
 
-    if warnings:
+    if warnings and not args.quiet:
         print(file=sys.stderr)
         print(
-            f"[check-bootstrap] {findings_count} 부트스트랩 drift 발견 (non-blocking):",
+            f"[check-bootstrap] {findings_count} 부트스트랩 drift 발견 ({'strict mode' if strict_active else 'non-blocking'}):",
             file=sys.stderr,
         )
         for w in warnings:
             print(w, file=sys.stderr)
         print(file=sys.stderr)
+
+    # CFP-127 / ADR-032 — Strict mode → strict-eligible drift 4종 검사
+    if strict_active:
+        strict_findings = _classify_strict_eligible(plugins_json, settings_path, org, repo, gh_ready)
+        if strict_findings:
+            print(f"[check-bootstrap] STRICT mode active (source={strict_source}) — strict-eligible drift detected:",
+                  file=sys.stderr)
+            for f in strict_findings:
+                print(f, file=sys.stderr)
+            print("", file=sys.stderr)
+            print("           → revert: --strict flag 미사용 / unset CODEFORGE_STRICT_BOOTSTRAP / yaml strict_mode false",
+                  file=sys.stderr)
+            print("           → bypass: HOTFIX_BYPASS_CODEFORGE=1 + HOTFIX_BYPASS_REASON='<reason>' (ADR-027 §결정 3)",
+                  file=sys.stderr)
+            return 1
 
     return 0
 

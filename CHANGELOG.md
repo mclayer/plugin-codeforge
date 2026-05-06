@@ -7,6 +7,23 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## Unreleased
 
+### CFP-127 — Phase 2: bootstrap strict mode opt-in (ADR-032 amendment 1)
+
+- `overlay/hooks/check_bootstrap.py` (Modify) — `argparse` 추가 (`--strict` / `--quiet` flag), `_check_bypass_active()` + `_check_strict_mode_active()` + `_classify_strict_eligible()` helper 신설. NEW check 9 (`check_settings_hooks` — SessionStart × 2 + UserPromptSubmit × 1 hook 등록 검증). Strict mode 활성 조건 (CLI > env > yaml): `--strict` flag / `CODEFORGE_STRICT_BOOTSTRAP=1` / `bootstrap.strict_mode: true` (project.yaml). Strict-eligible drift 4종 (Sonnet pick alpha CFP-127-001): (a) project.yaml 부재 (b) plugin 8 critical (wrapper + 6 lane + superpowers) 미설치 (c) settings.json 3 hook 미등록 (d) 10 critical label (phase:* 7 + gate:* 3) 부재. Strict 활성 + drift 발견 → exit 1. Bypass priority HIGHEST: `HOTFIX_BYPASS_CODEFORGE=1 + REASON` 양 env set → strict 무관 hook self skip (ADR-027 §결정 3 정합).
+- `overlay/hooks/check-bootstrap.sh` + `.ps1` (Modify) — `--strict` / `--quiet` flag passthrough (`-Strict` / `-Quiet` for PowerShell). Exit code passthrough from Python core (default 0, strict + drift 1).
+- `docs/project-config-schema.md` (Modify) — `bootstrap.strict_mode` field 명세 (boolean, default false). Priority + Bypass precedence + Revert procedure 명시.
+- `overlay/hooks/validate_config.py` (Modify) — SCHEMA_RULES 에 `bootstrap.strict_mode` boolean validator 추가.
+- `overlay/_overlay/project.yaml.example` (Modify) — `bootstrap.strict_mode` commented field 예시 + 점진 도입 + revert + Bypass 정합 안내.
+- `docs/consumer-guide.md` (Modify) — §2i 신설 "Strict mode opt-in" — 점진 도입 4 단계 절차 + 3 mechanism 우선순위 표 + strict-eligible 4종 detection + revert procedure + ADR-027 §결정 3 Bypass 동시 작동.
+- `scripts/test-check-bootstrap-strict.sh` (NEW) — 6 smoke test (--help / default silent skip / --strict no yaml / bypass priority HIGHEST / env-priority / yaml fixture). 6/6 PASS local.
+- `scripts/fixtures/check-bootstrap-strict/clean/.claude/_overlay/project.yaml` (NEW) — fixture with `bootstrap.strict_mode: true`.
+- Sonnet decider CFP-127-001 (Phase 1 PR #60) strict-eligible 4-type pick alpha (high confidence) — 본 Phase 2 = implement.
+- Codex 7-area review CFP-127-002 (Phase 1) — CONDITIONAL_PASS, 6 P1 fixed.
+- ADR-032 status (Proposed → Accepted) finalize = 별도 small wrapper amend PR (CFP-124 #230 merge 후).
+- Story SSOT: codeforge-internal-docs PR #60 (Phase 1).
+- Parent Epic: CFP-124 (#230 + #57).
+- Resolves CFP-124 Gap #4 (`check_bootstrap` warning-only) + root cause A0 (LLM-trust enforcement architectural 한계).
+
 ### CFP-74 — Post-merge follow-up automation (ADR-026)
 
 - `docs/adr/ADR-026-post-merge-automation.md` (NEW) — 4 결정 (Wrapper Orchestrator post-merge automation 의무 / Cross-repo PAT / Telemetry only / Disable-by-flag + main 직접 push 금지). Sonnet decider (CFP-74-001) pick=alpha, Codex round 2 audit (gpt-5.5 high, ADR conflict 0/7).

@@ -60,6 +60,14 @@ progress_narration_verbosity: full
 #     - phase-gate-mergeable.yml
 #     - phase-label-invariant.yml
 #
+#   # CFP-127 / ADR-032 amendment 1 — strict mode opt-in (priority 3, CLI > env > yaml).
+#   # true 시: strict-eligible drift 4종 (project.yaml 부재 / plugin 8 critical 미설치 /
+#   # settings.json 3 hook 미등록 / phase:* + gate:* 10 critical label 부재) 발견 → exit 1.
+#   # 점진 도입 권장 — mctrader 6-repo first opt-in target.
+#   # Revert: false 또는 field 삭제 + commit.
+#   # ADR-027 §결정 3 Bypass (HOTFIX_BYPASS_CODEFORGE=1 + REASON) 와 별도 mechanism (Bypass priority HIGHEST).
+#   strict_mode: false
+#
 # bypass env vars (ADR-027 결정 3, CFP-104 후행) — informational only
 # 실제 bypass 는 hook 안에서 env 검사:
 # HOTFIX_BYPASS_CODEFORGE=1 + HOTFIX_BYPASS_REASON="<text>" 동시 설정 의무

@@ -1,0 +1,20 @@
+project:
+  name: cb-strict-fixture-clean
+
+github:
+  org: test-org
+  repo: cb-strict-fixture-clean
+  default_branch: main
+  pr_title_prefix_template: "[{key}] {title}"
+  story_key_prefix: "FIX"
+  codeowners:
+    architect_team: "@test-org/architects"
+    domain_expert_team: "@test-org/domain-experts"
+  discussions:
+    domain_kb_category: "Domain Q&A"
+  milestone:
+    epic_naming_pattern: "Epic-{key}-{slug}"
+
+# Strict mode opt-in via yaml — priority 3 (CLI > env > yaml)
+bootstrap:
+  strict_mode: true

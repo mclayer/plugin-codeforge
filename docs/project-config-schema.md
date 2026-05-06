@@ -90,6 +90,27 @@ workflow_distribution:
 # "lane_only" = lane-level event 만 narrate (CFP-20 기존 동작, sub-step 은 file-only)
 # 다른 값 = validate_config.py FAIL.
 progress_narration_verbosity: full | lane_only  # 기본값: full
+
+# [선택] Bootstrap protocol settings (CFP-103 / ADR-027 / CFP-127 / ADR-032)
+bootstrap:
+  # CFP-103 — workflow distribution override (existing).
+  expected_workflows:                   # 부재 시 check_bootstrap.EXPECTED_WORKFLOWS_FULL 사용
+    - <string>                          # e.g. "phase-gate-mergeable.yml"
+
+  # CFP-127 / ADR-032 amendment 1 — strict mode opt-in.
+  # default = false (warning-only, ADR-027 §결정 2 Tertiary trigger LLM-trust 정합).
+  # true 시 strict-eligible drift 4종 발견 → exit 1 (CFP-127 / ADR-032 §결정 2):
+  #   (a) project.yaml 부재
+  #   (b) plugin 11종 중 wrapper(1) + 6 lane(6) + superpowers(1) = 8 critical 미설치
+  #   (c) settings.json 의 SessionStart × 2 + UserPromptSubmit × 1 hook 미등록
+  #   (d) 18 label 중 phase:* (7) + gate:* (3) = 10 critical 부재
+  # Priority (CLI > env > yaml — most explicit wins):
+  #   1. CLI flag: --strict
+  #   2. Env: CODEFORGE_STRICT_BOOTSTRAP=1
+  #   3. YAML (lowest): bootstrap.strict_mode: true (본 field)
+  # Bypass precedence: HOTFIX_BYPASS_CODEFORGE=1 + REASON 양 env set → strict 무관 hook self skip (ADR-027 §결정 3).
+  # Revert: false 또는 field 삭제 + commit.
+  strict_mode: true | false             # 기본값: false (opt-in)
 ```
 
 ## 3. 예시 (webapp)

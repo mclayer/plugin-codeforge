@@ -92,6 +92,9 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     ("bootstrap", False, dict, "bootstrap section (mapping), optional"),
     ("bootstrap.expected_workflows", False, _is_list_of_str,
      "bootstrap.expected_workflows (list of non-empty strings, override EXPECTED_WORKFLOWS_FULL), optional"),
+    # CFP-127 / ADR-032 amendment 1 — strict mode opt-in
+    ("bootstrap.strict_mode", False, lambda v: isinstance(v, bool),
+     "bootstrap.strict_mode (boolean, default false — CFP-127 / ADR-032 strict mode opt-in priority 3 (yaml < env < CLI)), optional"),
     # CFP-114 / ADR-029 — progress narration verbosity
     ("progress_narration_verbosity", False, _is_progress_narration_verbosity,
      "progress_narration_verbosity ('full' | 'lane_only'), optional, default 'full'"),

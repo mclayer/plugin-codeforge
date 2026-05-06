@@ -316,6 +316,93 @@ GitHub Actions is not permitted to create or approve pull requests (createPullRe
 CLAUDE.md    # core+overlay merge 결과면 gitignore. 수동 커밋 원하면 제외.
 ```
 
+### 2i. Strict mode opt-in (CFP-127 / ADR-032 amendment 1) — RECOMMENDED for mctrader 6-repo
+
+기본 동작 (default): `check_bootstrap.py` 가 drift 발견 시 stderr 경고만 출력, exit 0 (ADR-027 §결정 2 Tertiary trigger LLM-trust 정합). 신규 consumer 가 lane orchestration 진입 가능하지만 enforcement layer 가 silent 로 누락될 위험.
+
+**Strict mode opt-in**: `bootstrap.strict_mode: true` (project.yaml) 활성 시 adoption-critical drift 4종 발견 → exit 1 + Orchestrator 사용자 escalation. mctrader 6-repo first opt-in target 권장.
+
+#### 2i-1. 점진 도입 4 단계 (Cold-start 회피)
+
+신규 strict opt-in 시 4종 drift 동시 발견 시 escalation flood 회피하기 위한 **점진 단계** (각 단계별 PASS 확인 후 다음 진행):
+
+```bash
+# 단계 1: Plugin install (8 critical = wrapper + 6 lane + superpowers)
+/plugins install codeforge@<marketplace>
+/plugins install codeforge-requirements@<marketplace>
+# ... 6 lane plugin 모두
+/plugins install superpowers@claude-plugins-official
+
+# 단계 1 verify:
+bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-debut-readiness.sh
+# Check 2 PASS 확인
+
+# 단계 2: settings.json hook 등록 (3 hook = SessionStart × 2 + UserPromptSubmit × 1)
+# §2.2 (또는 §2b legacy) 의 NESTED schema 정합 cp:
+cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/settings.json.example .claude/settings.json
+# 단계 2 verify:
+bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-debut-readiness.sh
+# Check 4 PASS 확인
+
+# 단계 3: project.yaml 작성 + validation
+cp ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/_overlay/project.yaml.example .claude/_overlay/project.yaml
+# editor 에서 <REPLACE> 값 치환
+python3 ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/validate_config.py .claude/_overlay/project.yaml
+# 단계 3 verify:
+bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-debut-readiness.sh
+# Check 1 + 3 PASS 확인
+
+# 단계 4: labels bootstrap (10 critical = phase:* 7 + gate:* 3)
+bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/bootstrap-labels.sh <org>/<repo>
+# 단계 4 verify:
+bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-debut-readiness.sh
+# 모든 4 check PASS 확인
+
+# 단계 5: strict_mode opt-in 활성
+# .claude/_overlay/project.yaml 에 추가:
+#   bootstrap:
+#     strict_mode: true
+git add .claude/_overlay/project.yaml
+git commit -m "chore: opt-in bootstrap.strict_mode (CFP-127 / ADR-032)"
+```
+
+#### 2i-2. 3 mechanism + 우선순위 (CLI > env > yaml)
+
+| Priority | Mechanism | 명령 | 적용 범위 |
+|---|---|---|---|
+| 1 (highest) | CLI flag | `bash check-bootstrap.sh --strict` / `python check_bootstrap.py --strict` | per-invocation |
+| 2 | Env | `CODEFORGE_STRICT_BOOTSTRAP=1` | shell session |
+| 3 (lowest) | YAML | `bootstrap.strict_mode: true` (project.yaml) | persistent project-level |
+
+"Most explicit wins" — CLI flag set 시 env / yaml 무시.
+
+#### 2i-3. Strict-eligible drift 4종
+
+| # | Drift | Detection |
+|---|---|---|
+| (a) | `.claude/_overlay/project.yaml` 부재 | file presence |
+| (b) | plugin 8 critical (wrapper + 6 lane + superpowers) 미설치 | `~/.claude/plugins/installed_plugins.json` parse |
+| (c) | `.claude/settings.json` 의 SessionStart × 2 + UserPromptSubmit × 1 hook 미등록 | json hooks parse + command grep |
+| (d) | phase:* (7) + gate:* (3) = 10 critical label 부재 | `gh label list` |
+
+Non-eligible (warning-only 유지): workflow permissions / consumer-scripts manifest drift / consumer .github/workflows/ file (Path B degraded 정합) / Issue forms / CODEOWNERS / 기타 advisory.
+
+#### 2i-4. Revert procedure
+
+False-positive 발생 또는 strict mode 비활성 필요 시:
+
+| Mechanism | Disable 명령 |
+|---|---|
+| CLI flag | flag 미사용 (next invocation) |
+| Env | `unset CODEFORGE_STRICT_BOOTSTRAP` |
+| YAML | `bootstrap.strict_mode: false` 또는 field 삭제 + commit |
+
+#### 2i-5. ADR-027 §결정 3 Bypass 와 동시 작동
+
+`HOTFIX_BYPASS_CODEFORGE=1 + HOTFIX_BYPASS_REASON="<reason>"` 양 env set → strict mode 활성 무관 hook self skip. Bypass priority HIGHEST.
+
+emergency hotfix / lane invariant override 시 사용. `docs/hotfix-playbook.md` 사유 등재 의무 + post-bypass audit Issue 자동 생성.
+
 ## 3. Overlay 작성
 
 ### 3a. `.claude/_overlay/project.yaml` — objective SSOT 상수
