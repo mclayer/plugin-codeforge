@@ -74,7 +74,45 @@ ls ~/.claude/plugins/cache/<marketplace>/codeforge/<version>/agents/
 └── ...
 ```
 
-### 2a. 초기 복사
+### 2.0. 5분 quickstart (RECOMMENDED — single-command setup, CFP-125)
+
+새 consumer project 에서 처음 codeforge 적용 시 단일 명령 setup + 검증:
+
+```bash
+# Setup (idempotent, --dry-run 으로 사전 검증 가능)
+bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/bootstrap-consumer.sh
+  # 8 단계: pre-check / plugin install reminder / overlay scaffold / settings.json /
+  #         workflows+forms+CODEOWNERS / labels / consumer-scripts.manifest / summary
+
+# Verify
+bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-debut-readiness.sh
+  # 4 verification: check_bootstrap.py (8 sub-check) / plugin 11종 / project.yaml schema / settings.json 3 hook
+```
+
+Windows:
+
+```powershell
+pwsh -File ${env:CLAUDE_PLUGIN_ROOT}/codeforge/scripts/bootstrap-consumer.ps1
+pwsh -File ${env:CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-debut-readiness.ps1
+```
+
+**PASS 시**: 첫 Story Issue Form 제출 가능. `gh issue create --template story.yml` (또는 GitHub UI 의 New Issue → Story).
+
+**FAIL 시**: stderr 의 안내 따라 manual fix 또는 §2a-§2h manual fallback 절차 활용. `--dry-run` 으로 변경 미적용 사전 진단, `--reset` 으로 state marker 삭제 + clean 재시도.
+
+**Recovery**:
+- Default semantic = `--resume` (`.claude/_overlay/.bootstrap-state.json` marker 인식 + 재개점부터)
+- `--force` — marker 무시 모든 단계 재시도 (cp -n 안전망 보존)
+- `--reset` — marker 삭제 + clean state from scratch (사용자 확인 prompt 의무)
+- 기존 `.claude/settings.json` 는 자동 backup `.claude/settings.json.bak.<ts>` (단계 4 시)
+
+**Plugin install 안내**: `bootstrap-consumer.sh` 가 누락 plugin 11종 listing stdout 출력 — 실 install 은 platform-level (Claude Code `/plugins install` 명령 사용자 직접 실행 의무).
+
+§2.1 ~ §2.7 = manual / advanced fallback (script 미작동 시 / 부분 customize 필요 시).
+
+---
+
+### 2.1 (manual fallback) 초기 복사
 
 ```bash
 # consumer project root에서
@@ -89,7 +127,11 @@ chmod +x .claude/_overlay/run-tests.sh .claude/_overlay/run-perf.sh
 # editor에서 pytest 부분을 프로젝트 러너로 교체 (vitest / go test / cargo test / jest / k6 등)
 ```
 
-### 2b. `.claude/settings.json` 설정 (SessionStart hook 등록)
+(§2a anchor 보존 — 외부 link 호환)
+
+### 2.2 (manual fallback) `.claude/settings.json` 설정 — 3 hook 등록 (CFP-103 + CFP-104 + CFP-106 정합)
+
+`templates/settings.json.example` 정합 NESTED schema. 3 hook 등록 의무 — SessionStart × 2 (regen-agents + check-bootstrap) + UserPromptSubmit × 1 (userprompt-reminder). FLAT schema (기존 §2b 잔존, CFP-125 fix 전) 는 invalid — Claude Code parser silent skip 가능성.
 
 ```json
 {
@@ -98,11 +140,50 @@ chmod +x .claude/_overlay/run-tests.sh .claude/_overlay/run-perf.sh
   },
   "hooks": {
     "SessionStart": [
-      { "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/regen-agents.sh" }
+      {
+        "hooks": [
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/regen-agents.sh" }
+        ]
+      },
+      {
+        "hooks": [
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/check-bootstrap.sh" }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/userprompt-reminder.sh" }
+        ]
+      }
     ]
   }
 }
 ```
+
+**Windows variant** (PowerShell wrapper, `templates/settings.json.example` `_windows_note` 정합):
+
+```json
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [{ "type": "command", "command": "pwsh -File ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/regen-agents.ps1" }] },
+      { "hooks": [{ "type": "command", "command": "pwsh -File ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/check-bootstrap.ps1" }] }
+    ],
+    "UserPromptSubmit": [
+      { "hooks": [{ "type": "command", "command": "pwsh -File ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/userprompt-reminder.ps1" }] }
+    ]
+  }
+}
+```
+
+**Hook 역할**:
+- SessionStart `regen-agents.sh` (CFP-65) — overlay agents 자동 merge
+- SessionStart `check-bootstrap.sh` (CFP-103) — 8 sub-check (workflow 권한 / label / plugin / consumer workflows / forms / CODEOWNERS)
+- UserPromptSubmit `userprompt-reminder.sh` (CFP-104) — 변경 착수 prompt 검출 시 reminder inject
+
+(§2b anchor 보존 — 외부 link 호환. CFP-125 Phase 2 PR 가 §2b FLAT → NESTED schema fix.)
 
 ### 2c. GitHub repo 셋업 (Plugin 권장 워크플로우 + Forms + CODEOWNERS)
 
