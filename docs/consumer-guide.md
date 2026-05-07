@@ -112,6 +112,18 @@ pwsh -File ${env:CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-debut-readiness.ps1
 
 ---
 
+### 2.0a Optional Stage 0 — pre-Issue brainstorming (recommended for non-trivial Story)
+
+복잡한 요구사항 (cross-cutting / 새 도메인 / 모호한 scope) 인 경우, Issue Form 제출 전 `superpowers:brainstorming` skill 로 scope 를 먼저 정리할 수 있습니다 ([ADR-034](adr/ADR-034-pre-issue-brainstorming-stage.md), [orchestrator-playbook §1.2.0](orchestrator-playbook.md)). 산출 spec 의 결론 요약을 Issue Form `user-original` 필드에, spec path 를 `spec_link` 필드에 입력하면 codeforge requirements lane 이 그 텍스트를 입력으로 받아 분석을 시작합니다. 작은 chore / 명료한 요구사항이면 생략 가능 — Stage 0 는 옵션입니다 (CI 강제 없음).
+
+Spec 저장 위치:
+- **Consumer project**: `docs/superpowers/specs/YYYY-MM-DD-<slug>-design.md` (skill default)
+- **Plugin repo dogfood (codeforge family)**: `<internal-docs>/<plugin-folder>/specs/YYYY-MM-DD-cfp-NNN-<slug>-design.md` ([ADR-013](adr/ADR-013-codeforge-family-dogfood-out-policy.md) / [ADR-017](adr/ADR-017-skill-override-path-enforcement.md) enforced)
+
+In-lane brainstorming (DomainAgent / RequirementsPL 가 lane 내부에서 호출) 과는 다른 단계 — [superpowers-integration.md §2](superpowers-integration.md) 참조.
+
+---
+
 ### 2.1 (manual fallback) 초기 복사
 
 ```bash

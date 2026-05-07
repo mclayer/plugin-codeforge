@@ -87,8 +87,28 @@ related:
 2. **활성 Story 조회**: `mcp__github__list_issues(state='open', labels=['type:story'])`
 3. **ADR 목록 확인**: 세션 내 첫 설계 결정 직전에만 `Glob(docs/adr/ADR-*.md)` + `Grep` (frontmatter category·status 필터)
 4. **태스크 분류**:
-   - 신규 요구사항 → §1.2 신규 세션 플로우
+   - 신규 요구사항 → §1.2 신규 세션 플로우 (또는 §1.2.0 Stage 0 옵션)
    - resume (활성 Story 존재) → §7 세션 재개 복원 절차
+
+### 1.2.0 Stage 0 (선택, recommended for non-trivial Story) — pre-Issue brainstorming
+
+복잡한 요구사항 (cross-cutting / 새 도메인 / 모호한 scope) 인 경우 Issue Form 제출 전 `superpowers:brainstorming` skill 로 사전 scoping 가능. **옵션 — CI 강제 없음** ([ADR-034](adr/ADR-034-pre-issue-brainstorming-stage.md)).
+
+```
+사용자 또는 Orchestrator 가 superpowers:brainstorming skill 호출
+  ├─ Skill 가 spec 산출:
+  │    consumer:    docs/superpowers/specs/<YYYY-MM-DD>-<slug>-design.md
+  │    plugin repo: <internal-docs>/<plugin-folder>/specs/<YYYY-MM-DD>-cfp-NNN-<slug>-design.md
+  │      (ADR-013 / ADR-017 enforced — default path 금지)
+  ├─ 사용자가 spec 결론 요약을 story.yml Issue Form 에 입력:
+  │    user-original 필드 = 요약 본문 (§1 verbatim source)
+  │    spec_link 필드 (NEW per ADR-034 / Phase 2) = spec file path 또는 URL
+  └─ Issue Form 제출 → 기존 §1.2 신규 세션 플로우 진입 (Stage 1: 요구사항 lane)
+```
+
+Stage 0 미사용 시 (작은 chore / 사용자 의도 명료) — §1.2 직접 진입 (변동 없음).
+
+`superpowers:brainstorming` 의 in-lane 호출 (DomainAgent / RequirementsPL) 은 본 Stage 0 와 별개 단계 — [`docs/superpowers-integration.md`](superpowers-integration.md) §2 SSOT 참조. Pre-Issue 시나리오의 호출점은 §2 표 의 `wrapper / Orchestrator (or human) / pre-Issue scoping (Stage 0)` row.
 
 ### 1.2 신규 세션 플로우
 
