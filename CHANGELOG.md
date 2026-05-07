@@ -5,7 +5,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
-## Unreleased
+## [5.3.0] - 2026-05-07
 
 ### CFP-128 — Docker-first Infra Engineering (Phase 1 + Phase 2)
 
