@@ -98,6 +98,12 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     # CFP-114 / ADR-029 — progress narration verbosity
     ("progress_narration_verbosity", False, _is_progress_narration_verbosity,
      "progress_narration_verbosity ('full' | 'lane_only'), optional, default 'full'"),
+    # CFP-128 / ADR-033 — Docker-first Infra Engineering (infra_strategy enum)
+    ("infra_strategy", False, lambda v: isinstance(v, str) and v in ("docker_first", "legacy_systemd", "none"),
+     "infra_strategy ('docker_first' | 'legacy_systemd' | 'none'), optional, default 'docker_first'"),
+    ("infra_strategy_extras", False, dict, "infra_strategy_extras section (mapping), optional"),
+    ("infra_strategy_extras.k8s_preset_enabled", False, lambda v: isinstance(v, bool),
+     "infra_strategy_extras.k8s_preset_enabled (boolean, default false), optional"),
 ]
 
 

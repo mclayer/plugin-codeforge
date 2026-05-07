@@ -1,0 +1,16 @@
+project:
+  name: fixture-legacy-systemd
+github:
+  org: example
+  repo: fixture-legacy-systemd
+  default_branch: main
+  pr_title_prefix_template: "[{key}] {title}"
+  story_key_prefix: FX
+  codeowners:
+    architect_team: "@example/architects"
+    domain_expert_team: "@example/domain"
+  discussions:
+    domain_kb_category: "Domain Q&A"
+  milestone:
+    epic_naming_pattern: "Epic-{key}-{slug}"
+infra_strategy: legacy_systemd

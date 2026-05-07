@@ -25,3 +25,8 @@ labels:
     - ui       # 템플릿·정적 자산
     - data     # DB·마이그레이션·스키마
     - infra    # 배포·설정·CI
+
+# CFP-128 / ADR-033 — webapp 은 Docker-first (Dockerfile + compose 시범 동봉)
+infra_strategy: docker_first
+infra_strategy_extras:
+  k8s_preset_enabled: false  # single-host docker compose 충분 (default)

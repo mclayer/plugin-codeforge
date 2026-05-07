@@ -1,0 +1,44 @@
+# CFP-128 / ADR-033 — webapp-minimal example .dockerignore
+# build context 축소 + secret leak 방지
+
+# Node
+node_modules
+npm-debug.log
+.npm
+
+# Build artifacts
+dist
+build
+coverage
+.next
+
+# Git / VCS
+.git
+.gitignore
+
+# CI / GitHub
+.github
+
+# Codeforge
+.claude
+.claude-work
+
+# Docs / markdown
+*.md
+docs
+
+# Env / secrets (CRITICAL — image layer 누설 방지)
+.env
+.env.*
+*.pem
+*.key
+*.crt
+secrets/
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db

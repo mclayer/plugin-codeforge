@@ -25,3 +25,7 @@ labels:
     - core      # 내부 검증 엔진
     - infra     # 패키징·릴리스 자동화
     - docs      # docstring·API reference·예시
+
+# CFP-128 / ADR-033 — library 는 Docker artifact 미적용 (deployable runtime 부재)
+# `none` enum value = library / config-only repo 의 default
+infra_strategy: none

@@ -36,7 +36,8 @@ jobs:
           # plugin-codeforge 는 internal-docs Story binding 사용으로 docs/stories/*.md path
           # 의존하는 workflow self-app 불필요.
           # CFP-79 — 4 Live touching reusable workflow (workflow_call) 도 consumer 전용. wrapper 자체 .github/workflows/ copy 불필요.
-          CONSUMER_ONLY_WORKFLOWS=("story-init.yml" "story-section-1-immutable.yml" "fix-ledger-sync.yml" "subissue-from-impl-manifest.yml" "live-test-guard.yml" "live-deploy-approval.yml" "live-secret-policy.yml" "kill-switch-integration-test.yml")
+          # CFP-128 / ADR-033 — container-image-scan.yml (workflow_call reusable, consumer build pipeline 호출용) 도 consumer 전용. wrapper 자체엔 컨테이너 이미지 빌드 부재.
+          CONSUMER_ONLY_WORKFLOWS=("story-init.yml" "story-section-1-immutable.yml" "fix-ledger-sync.yml" "subissue-from-impl-manifest.yml" "live-test-guard.yml" "live-deploy-approval.yml" "live-secret-policy.yml" "kill-switch-integration-test.yml" "container-image-scan.yml")
           for f in templates/github-workflows/*.yml; do
             base=$(basename "$f")
             skip_file=0

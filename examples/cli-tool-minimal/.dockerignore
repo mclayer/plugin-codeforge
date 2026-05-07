@@ -1,0 +1,39 @@
+# CFP-128 / ADR-033 — cli-tool-minimal example .dockerignore
+# build context 축소 + secret leak 방지
+
+# Build artifacts
+dist
+bin
+out
+target
+vendor
+
+# Git / VCS
+.git
+.gitignore
+
+# CI / GitHub
+.github
+
+# Codeforge
+.claude
+.claude-work
+
+# Docs / markdown
+*.md
+docs
+
+# Env / secrets
+.env
+.env.*
+*.pem
+*.key
+*.crt
+
+# IDE
+.vscode
+.idea
+
+# OS
+.DS_Store
+Thumbs.db

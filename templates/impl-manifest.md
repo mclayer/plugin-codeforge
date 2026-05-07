@@ -13,7 +13,9 @@
 | `src/<path>/server.py` | 수정 | BackendDeveloperAgent | §5 항목 2 | +42 -5 | 신규 라우트 2개 |
 | `src/<path>/domain/entity.py` | 추가 | BackendDeveloperAgent | §3 도입할 설계 | +120 | 신규 Aggregate |
 | `tests/unit/domain/test_entity.py` | 추가 | QADeveloperAgent | §8.1 커버리지 | +85 | Entity 단위 테스트 |
-| `deploy/systemd/<service>.service` | 수정 | InfraEngineerAgent | §5 항목 7 | +3 -1 | 의존성 체인 추가 |
+| `Dockerfile`                       | 수정 | InfraEngineerAgent | §5 항목 7 | +18    | multi-stage build, base 갱신 |
+| `compose.yml`                      | 추가 | InfraEngineerAgent | §5 항목 7 | +24    | service + healthcheck + volume |
+| `.dockerignore`                    | 추가 | InfraEngineerAgent | §5 항목 7 | +8     | build context 축소 |
 
 ### 컬럼 규격
 
