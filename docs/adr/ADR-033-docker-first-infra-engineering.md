@@ -243,7 +243,7 @@ archive: `mclayer/codeforge-internal-docs/wrapper/decisions/CFP-128-001-codex-sp
 - [ADR-010 Inter-plugin Contract Sibling Sync](ADR-010-inter-plugin-contract-sibling-sync.md) — sibling sync 패턴
 - [ADR-016 Marketplace Registration Policy](ADR-016-marketplace-registration-policy.md) — marketplace mirror
 - [ADR-031 Lane spawn evidence trail](ADR-031-lane-spawn-evidence-trail.md) — effective date freeze pattern
-- [ADR-005 N/A Standardization](ADR-005-na-standardization.md) — N/A 명시 패턴
+- [ADR-005 Plugin Self-application N/A Standardization](ADR-005-plugin-self-application-na-standardization.md) — N/A 명시 패턴
 - [ADR-012 Wrapper CLAUDE.md SSOT Boundary](ADR-012-wrapper-claudemd-ssot-boundary.md) — 4 SSOT 매트릭스 정의
 - [ADR-013 codeforge family dogfood-out policy](ADR-013-codeforge-family-dogfood-out-policy.md) — Spec/Plan/Change-Plan/Story internal-docs override
 - [ADR-022 Sonnet review-verdict decider](ADR-022-sonnet-review-verdict-decider.md) — 매 review iteration Sonnet decider
