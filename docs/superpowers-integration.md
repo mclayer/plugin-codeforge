@@ -33,7 +33,7 @@ CI 안전망: [ADR-017](adr/ADR-017-skill-override-path-enforcement.md) + Amendm
 
 본 표가 17 agent × 7 skill 호출 매핑 SSOT. 변경 시 본 표 + lane plugin agent md 동시 갱신 (CI lint 가 drift 자동 detect).
 
-총 23 호출 지점 / 7 skill / 15 agent file (3 ReviewPL agent 는 skill 호출 없음 — stale path 정리 대상만, §5 참조).
+총 24 호출 지점 / 7 skill / 15 agent file + 1 wrapper Orchestrator (3 ReviewPL agent 는 skill 호출 없음 — stale path 정리 대상만, §5 참조). 24 = 23 in-lane + 1 wrapper Stage 0 ([ADR-034](adr/ADR-034-pre-issue-brainstorming-stage.md), CFP-129).
 
 | Lane | Agent | codeforge Phase trigger | Skill | Path override | I/O 계약 | Phase target |
 |---|---|---|---|:-:|---|---|
@@ -60,6 +60,9 @@ CI 안전망: [ADR-017](adr/ADR-017-skill-override-path-enforcement.md) + Amendm
 | review | ClaudeReviewAgent | 표준 체크리스트 | superpowers:requesting-code-review | NO | §3 row 7 | plugin-codeforge-review Phase 2 |
 | review | ClaudeReviewAgent | PASS evidence 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-review Phase 2 |
 | pmo | PMOAgent | Story 완료 감사 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-pmo Phase 2 |
+| **wrapper** | **Orchestrator (or human)** | **pre-Issue scoping (Stage 0, [ADR-034](adr/ADR-034-pre-issue-brainstorming-stage.md))** | superpowers:brainstorming | YES | §3 row 2 | wrapper Phase 1 (post-merge: Issue Form 제출) |
+
+> **Stage 0 footnote (CFP-129 / ADR-034)**: 위 row 의 I/O = §3 row 2 의 in-lane 시나리오와 다름. Pre-Issue 시나리오의 I/O = spec → Issue Form `user-original` 필드 (§1 verbatim source) + `spec_link` 필드 (path/URL traceability, Phase 2 fixture). [orchestrator-playbook §1.2.0](orchestrator-playbook.md) SSOT. 총 호출 지점 = 23 → 24, in-lane brainstorming 2 행 (DomainAgent / RequirementsPL) 과 별개 단계.
 
 ## §3 I/O 변환 표 (skill → codeforge artifact)
 
