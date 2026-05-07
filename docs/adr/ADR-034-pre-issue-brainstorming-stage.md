@@ -15,6 +15,7 @@ related_adrs:
   - ADR-017
   - ADR-027
   - ADR-028
+  - ADR-031
   - ADR-032
 related_files:
   - docs/orchestrator-playbook.md
