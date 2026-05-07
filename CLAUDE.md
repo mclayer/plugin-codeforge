@@ -57,6 +57,8 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 리뷰 워커 통합 근거: [ADR-001](docs/adr/ADR-001-review-agent-unification.md) (3 lane × 2 vendor → 2 lane-agnostic worker). [Inter-plugin Contract `review_verdict`](docs/inter-plugin-contracts/review-verdict-v2.md) versioning: [ADR-008](docs/adr/ADR-008-inter-plugin-contract-versioning.md).
 
+> **(선택) Stage 0 — pre-Issue brainstorming**: 비-trivial Story 는 `superpowers:brainstorming` 으로 사전 scope 정리 후 Issue Form 제출 권장 ([ADR-034](docs/adr/ADR-034-pre-issue-brainstorming-stage.md) · [playbook §1.2.0](docs/orchestrator-playbook.md)). CI 강제 없음 — `spec_link` Issue Form 필드는 옵션.
+
 ## 레인 7개 · 단계 정의
 
 ```

@@ -2,7 +2,7 @@
 adr_number: 34
 title: Pre-Issue Brainstorming as Optional Stage 0 — orchestrator-playbook §1.2.0 + story.yml spec_link
 date: 2026-05-07
-status: Proposed
+status: Accepted
 category: workflow-policy
 carrier_story: CFP-129
 parent_epic: null
@@ -30,11 +30,11 @@ related_files:
 
 ## 상태
 
-**Proposed (2026-05-07)** — CFP-129 Phase 1 wrapper PR (본 PR). carrier_story = CFP-129 (single Story, single-repo, not part of Epic). Phase 2 wrapper PR merge 시점 → **Accepted** (ADR-027 Amendment 1 / CFP-127 정합 — Proposed → Accepted 2-stage 패턴).
+**Accepted (2026-05-07)** — CFP-129 Phase 1 wrapper PR mclayer/plugin-codeforge#245 (merged 2026-05-07T14:41:16Z) + Phase 2 wrapper PR (본 PR, merge 시점에 effective). carrier_story = CFP-129 (single Story, single-repo, not part of Epic). Effective date = Phase 2 wrapper PR merge timestamp (ADR-031 §14 freeze pattern 재사용 — 본 effective date 이전 Phase 1 PR open 된 모든 Story = grandfather, retroactive 강제 없음).
 
-Effective date = Phase 2 wrapper PR merge timestamp. ADR-031 §14 freeze 패턴 재사용 — 본 effective date 이전 Phase 1 PR open 된 모든 Story = grandfather (retroactive 강제 없음).
+Phase 1 internal-docs PR (mclayer/codeforge-internal-docs#70, merged 2026-05-07T14:42:32Z) — spec / plan / Change Plan / Story §1-§7 / Codex 7-area review CONDITIONAL_PASS archive.
 
-Phase 1 internal-docs PR (mclayer/codeforge-internal-docs `cfp-129-pre-issue-brainstorming` branch) — spec / plan / Change Plan / Story §1-§7 / Codex 7-area review archive.
+ADR-027 Amendment 1 / CFP-127 정합 — Proposed → Accepted 2-stage 패턴.
 
 ## 컨텍스트
 

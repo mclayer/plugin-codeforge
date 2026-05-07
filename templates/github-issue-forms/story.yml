@@ -46,3 +46,16 @@ body:
       placeholder: 예) backend
     validations:
       required: false
+
+  - type: textarea
+    id: spec_link
+    attributes:
+      label: Brainstorming spec link (선택)
+      description: |
+        Stage 0 pre-Issue brainstorming spec 의 path 또는 URL (ADR-034 / CFP-129).
+        - Consumer: `docs/superpowers/specs/...`
+        - Plugin dogfood (codeforge family): `<internal-docs>/<plugin-folder>/specs/...` (ADR-013 / ADR-017 enforced)
+        미사용 시 비워두세요 — Stage 0 는 옵션입니다 (CI 강제 없음).
+      placeholder: 예) docs/superpowers/specs/2026-05-07-my-feature-design.md
+    validations:
+      required: false
