@@ -220,6 +220,13 @@ ADR-018 (CFP-57 carrier — Gemini decider) + ADR-018 Amendment 1 (CFP-58 — So
 | **Kill switch manual override 실패 (CONDITIONAL Live touching Story)** | 구현 | operator-action-v1 schema / protocol 부재 시 → 설계 |
 | **Partial fill reconciliation 실패 (CONDITIONAL Live touching Story)** | 구현 | §11 partial fill invariant (8-state lifecycle drift / fee 정합 / cancel race) 부재 시 → 설계 |
 | **Fee handling drift (CONDITIONAL Live touching Story)** | 구현 | §11 fee accounting invariant (fee_actual ≠ fee_expected drift threshold) 부재 시 → 설계 |
+| **Dockerfile build FAIL (CI) (CFP-128 / ADR-033)** | 구현 | Change Plan §3 image strategy / multi-stage 부재 → 설계 |
+| **Container image CVE P0 (trivy) (CFP-128 / ADR-033)** | 구현 | base image 자체 stale (4y old, EOL) → 설계 (image base 결정 재검토) |
+| **hadolint P1 violation (CFP-128 / ADR-033)** | 구현 | (단일 파일) — 항상 구현 |
+| **Compose service health check FAIL (CFP-128 / ADR-033)** | 구현 | §7.4 health check policy 부재 → 설계 |
+| **Container secret 누설 (env / log / image layer) (CFP-128 / ADR-033)** | 구현 | §7.5 secret mount 전략 부재 → 설계 |
+| **Network mode 위반 (internal service host network 노출) (CFP-128 / ADR-033)** | 구현 | §7.1 network boundary 부재·모순 → 설계 |
+| **§7.4 Container restart loop / volume mount race (CFP-128 / ADR-033)** | 구현 | §7.4 restart policy / volume invariant 부재 → 설계 |
 
 **P1 품질 local vs boundary 판정 기준**:
 - **local**: finding이 1개 파일 또는 1개 함수 범위에 한정, 설계 결정과 무관한 개별 구현 결함
@@ -281,6 +288,13 @@ ADR-018 (CFP-57 carrier — Gemini decider) + ADR-018 Amendment 1 (CFP-58 — So
 | 정적 분석 결함 | — | — | — | ✅ (1차: CodeQL) |
 | 설정·배포 보안 (default credential·open port·TLS) | — | — | — | ✅ |
 | Race / TOCTOU 보안 취약 | — | — | — | ✅ |
+| **Container image base / multi-stage build 전략 (CFP-128 / ADR-033)** | ✅ (Refactor + OpRiskArch) | ✅ (감사) | (구현 준수) | — |
+| **Dockerfile syntax + best practice (CFP-128 / ADR-033)** | — | — | — | ✅ (1차: hadolint) |
+| **Container image CVE / misconfig (CFP-128 / ADR-033)** | — | — | — | ✅ (1차: trivy) |
+| **Compose service definition / health check / dep order (CFP-128 / ADR-033)** | — | (감사) | ✅ | — |
+| **Container network mode / port exposure (CFP-128 / ADR-033)** | ✅ SecurityArch | (감사) | — | ✅ (코드 준수 검증) |
+| **Container secret / env mount 전략 (CFP-128 / ADR-033)** | ✅ SecurityArch | (감사) | — | ✅ (런타임 노출 검증) |
+| **§7.4 Container restart policy / volume DR / health check tuning (CFP-128 / ADR-033)** | ✅ OpRiskArch | (감사) | — | (검증) |
 
 > **DesignLane vs SecurityTest**:
 > - DesignLane(SecurityArch) = "**어디에 boundary가 있어야 하는가**" — 설계 결정 (예방)
@@ -302,20 +316,22 @@ ADR-014 + ADR-012 §3 4번째 SSOT 예외. design lane 의 deputy (CFP-46 Operat
 
 | §7 / §11 / §13 sub | CodebaseMapper | Refactor | SecurityArch | **OpRiskArch** | TestContractArch | DataMigrationArch | **LiveOps** (CONDITIONAL) | **LiveOrdering** (CONDITIONAL) |
 |---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| §7.1 Trust boundary | — | — | ✅ | (consult) | — | — | (consult Live API) | — |
+| §7.1 Trust boundary | — | — | ✅ **(+container network mode / secret mount — CFP-128)** | (consult) | — | — | (consult Live API) | — |
 | §7.2 Threat model | — | — | ✅ | — | — | — | — | — |
 | §7.3 Auth/authz | — | — | ✅ | — | — | — | (consult operator approval) | — |
-| **§7.4 DR / disconnect / rate limit / env isolation** | — | — | (consult) | **✅** | — | — | (consult Live failure) | (consult exchange rate-limit) |
+| **§7.4 DR / disconnect / rate limit / env isolation** | — | — | (consult) | **✅ (+container restart policy / volume DR / health check / network mode — CFP-128)** | — | — | (consult Live failure) | (consult exchange rate-limit) |
 | **§7.4 Clock sync (CONDITIONAL)** | — | — | (consult) | **✅** | — | — | — | — |
-| §7.5 민감 데이터 분류 | — | — | ✅ | — | — | — | (consult API key) | — |
+| §7.5 민감 데이터 분류 | — | — | ✅ **(+container secret mount / image layer 누설 — CFP-128)** | — | — | — | (consult API key) | — |
 | §7.6 위협↔완화 매핑 | — | — | ✅ | (DR↔failover consult) | — | — | (consult kill switch) | — |
 | **§11 Idempotency (CONDITIONAL)** | — | — | — | (consult) | — | **✅** | — | (consult order idempotency) |
-| §11 Schema/Migration/Rollback | — | — | — | — | — | ✅ | — | — |
+| §11 Schema/Migration/Rollback | — | — | — | — | — | ✅ **(+DB container volume / data persistence — CFP-128)** | — | — |
 | **§11 Ledger reconcile / partial fill / fee invariant (CONDITIONAL Live)** | — | — | — | (consult) | — | (consult §11) | — | **✅** |
 | **§8.5 Stateful / restart invariant** | — | — | — | (consult §7.4 짝) | **✅** | (consult §11.6 짝) | — | (consult order replay) |
 | **§13 Live Operational Discipline (CONDITIONAL Live touching)** | — | — | (consult §7.5) | (consult kill switch) | — | (consult §11) | **✅** | (consult §11 ledger) |
 
 ✅ = primary owner / (consult) = secondary input.
+
+**§3 chief author 수준 cell annotation (CFP-128 / ADR-033)**: 본 매트릭스 row 외에, ArchitectAgent (chief author) 의 §3 도입할 설계 책임에 **image base / multi-stage 전략** 결정 추가 (Refactor consult). 새 row 추가 안 함 — chief author 의 cross-cutting 책임 cell annotation 만.
 
 **CONDITIONAL deputy 활성 정책 (CFP-77)**:
 - **LiveOpsDeputy + LiveOrderingDeputy** = Live touching Story 만 active (real funds / live exchange API / production credential / live order placement 중 하나 이상 touching). Backtest/Paper-only Story = 미spawn (token / token cost 절약).

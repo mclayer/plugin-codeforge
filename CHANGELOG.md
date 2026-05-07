@@ -7,16 +7,44 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## Unreleased
 
-### CFP-128 — Docker-first Infra Engineering (Phase 1: ADR-033 Proposed)
+### CFP-128 — Docker-first Infra Engineering (Phase 1 + Phase 2)
 
-- `docs/adr/ADR-033-docker-first-infra-engineering.md` (NEW, status: Proposed) — CFP-128 carrier. 7 결정: (1) InfraEngineerAgent default 출력 = Dockerfile + compose.yml + .dockerignore (1st-class). (2) K8s manifests = `presets/k8s/` (codeforge-develop) opt-in. (3) systemd / launchd / PaaS = legacy (consumer overlay opt-in only). (4) SecurityTest 1st-layer = trivy + hadolint 추가. (5) CONDITIONAL deputy 매트릭스 — Docker 관련 cell annotation update (5 cell — §7.1 / §7.4 / §7.5 / §11 / §3 chief author). (6) Migration = ADR Accepted 후 신규 Story 만 의무, 기존 in-flight grandfathered (ADR-031 §14 freeze pattern). (7) Consumer 측 follow-on Epic = mctrader 등 컨테이너화 코드 작업 별도 Epic 의무 (consumer 워크스페이스 수행).
-- `docs/adr/ADR-014-operational-risk-ssot-distribution.md` (Modify) — frontmatter `amendments: [ADR-033]` 추가 + `related_stories` 에 CFP-128 + `related_files` 에 ADR-033 추가. 본문 끝에 "Amended by — CFP-128 / ADR-033 — Docker-first Infra Engineering (2026-05-07)" section 신설 (§7.4 OpRiskArch mandate 4 항목 확장 — container restart policy / volume DR / health check tuning / network mode boundary).
-- 5 substantive decision (D1-D6, brainstorming 5 turn): D1 wrapper framework 전체 / D2 InfraEngineer mandate 재작성 / D3 agent 수 불변 / D4 Dockerfile+compose 1st-class + K8s preset opt-in / D5 effective date + grandfather + consumer follow-on Epic / D6 trivy + hadolint.
-- Codex 7-area review CFP-128-001 (gpt-5.5 high) verdict CONDITIONAL_PASS (P0:0, P1:3, all resolved).
-- Spec / plan / Change Plan / Story §1-§7 / Codex review archive: codeforge-internal-docs `wrapper/{specs,plans,change-plans,stories,decisions}/CFP-128*` (ADR-013 dogfood-out, PR #67 merged 2026-05-07T04:46:52Z).
-- Sibling sync follow-on (Phase 2 wrapper PR merge 후): codeforge-develop (InfraEngineerAgent + presets/k8s/ + develop-output-v1) / codeforge-design (OpRiskArch §7.4 + design-output-v2) / codeforge-review (SecurityTestPL trivy + review-pl-base). 3 PR ★ Agent tool parallel dispatch (사용자 directive 2026-05-07).
-- Marketplace sync = 4 plugin (codeforge + 3 lane) version bump mirror (ADR-016).
-- Phase 2 wrapper PR (별도): ADR-033 Status `Accepted` + 4 SSOT 매트릭스 cell update (책임 매트릭스 + 7 row · decision table + 7 row · 6 deputy mandate 5 cell annotation) + impl-manifest 예시 row Docker 교체 + project-config-schema.md `infra_strategy` field + consumer-guide.md § Docker-first 채택 신설 + scripts/check-container-strategy.sh + templates/github-workflows/container-image-scan.yml + examples/{webapp,cli-tool,library}-minimal/.
+#### Phase 1 (PR #240, merged 2026-05-07T04:56:20Z)
+
+- `docs/adr/ADR-033-docker-first-infra-engineering.md` (NEW) — CFP-128 carrier. 7 결정: (1) InfraEngineerAgent default 출력 = Dockerfile + compose.yml + .dockerignore (1st-class). (2) K8s manifests = `presets/k8s/` (codeforge-develop) opt-in. (3) systemd / launchd / PaaS = legacy (consumer overlay opt-in only). (4) SecurityTest 1st-layer = trivy + hadolint 추가. (5) CONDITIONAL deputy 매트릭스 — Docker 관련 cell annotation update. (6) Migration = ADR Accepted 후 신규 Story 만 의무, 기존 in-flight grandfathered (ADR-031 §14 freeze pattern). (7) Consumer 측 follow-on Epic = mctrader 등 컨테이너화 코드 작업 별도 Epic 의무 (consumer 워크스페이스 수행).
+- `docs/adr/ADR-014-operational-risk-ssot-distribution.md` (Modify) — frontmatter `amendments: [ADR-033]` + 본문 "Amended by" section (§7.4 OpRiskArch mandate 4 항목 확장 — container restart policy / volume DR / health check tuning / network mode boundary).
+- 5 substantive decision (D1-D6, brainstorming 5 turn).
+- Codex 7-area review CFP-128-001 verdict CONDITIONAL_PASS (P0:0, P1:3, all resolved).
+- Spec / plan / Change Plan / Story §1-§7 / Codex review archive: codeforge-internal-docs `wrapper/{specs,plans,change-plans,stories,decisions}/CFP-128*` (PR #67 merged 2026-05-07T04:46:52Z).
+
+#### Phase 2 (this PR)
+
+- `docs/adr/ADR-033` (Modify) — Status `Proposed` → `Accepted`. effective date = Phase 2 PR merge timestamp.
+- `CLAUDE.md` (Modify) — 4 SSOT 매트릭스 cell update:
+  - 책임 매트릭스 +7 row (image base / Dockerfile lint / image CVE / compose definition / network mode / secret mount / restart policy)
+  - 원인 판정 decision table +7 row (Dockerfile build FAIL / image CVE P0 / hadolint P1 / health check FAIL / secret 누설 / network 위반 / restart loop)
+  - 6 deputy mandate 매트릭스 5 cell parenthetical annotation (§7.1 / §7.4 / §7.5 / §11 + §3 chief author footer note)
+  - FIX Ledger §10 schema 무변화
+- `templates/impl-manifest.md` (Modify) — 예시 row 교체 (`deploy/systemd/<service>.service` → `Dockerfile` + `compose.yml` + `.dockerignore`)
+- `docs/project-config-schema.md` (Modify) — `infra_strategy` enum field (docker_first | legacy_systemd | none) + `infra_strategy_extras.k8s_preset_enabled` 추가
+- `docs/consumer-guide.md` (Modify) — §3z "Docker-first 채택" subsection 신설 (4 sub: default contract / project.yaml override / K8s preset opt-in / container-image-scan workflow 호출 / 기존 consumer follow-on Epic 패턴). §4-§8 numbering 보존.
+- `scripts/check-container-strategy.sh` (NEW) — `infra_strategy: docker_first` consumer 의 Dockerfile + compose.yml 존재 검증 lint.
+- `scripts/test-check-container-strategy.sh` (NEW) — TDD wrapper 5 시나리오 PASS (docker_first / docker_first_old_compose_name (duality) / legacy_systemd / none / 2 negative — Codex P1-3 fix).
+- `scripts/fixtures/check-container-strategy/{docker_first,docker_first_old_compose_name,legacy_systemd,none}/` (NEW) — TDD fixtures.
+- `templates/github-workflows/container-image-scan.yml` (NEW) — reusable workflow (hadolint + trivy + SARIF upload, severity threshold CRITICAL,HIGH default + ignore-unfixed mitigation).
+- `examples/webapp-minimal/Dockerfile` + `compose.yml` + `.dockerignore` (NEW) — multi-stage Node webapp + db + redis + healthcheck + restart policy 시범. project.yaml `infra_strategy: docker_first`.
+- `examples/cli-tool-minimal/Dockerfile` + `.dockerignore` (NEW) — distroless single-stage Go binary 시범. project.yaml `infra_strategy: docker_first`.
+- `examples/library-minimal/.claude/_overlay/project.yaml` (Modify) — `infra_strategy: none` 명시 (library Docker artifact 미적용).
+
+#### Sibling sync (Phase 2 merge 후 — D step ★ Agent tool 3 parallel dispatch)
+
+- mclayer/plugin-codeforge-develop: InfraEngineer mandate + presets/k8s/ + develop-output-v1
+- mclayer/plugin-codeforge-design: OpRiskArch §7.4 Container considerations + design-output-v2
+- mclayer/plugin-codeforge-review: SecurityTestPL trivy + hadolint 1st-layer + review-pl-base
+
+#### Marketplace mirror (F step)
+
+- mclayer/marketplace marketplace.json 4 plugin version bump (codeforge + 3 lane).
 
 ### CFP-126 — ADR-031 amend (Proposed → Accepted, §결정 1 (a) §14 freeze)
 

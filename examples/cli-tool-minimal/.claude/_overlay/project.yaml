@@ -25,3 +25,9 @@ labels:
     - parser    # 로그 파싱 엔진
     - filter    # Event 필터링
     - infra     # 패키징·릴리스
+
+# CFP-128 / ADR-033 — cli-tool 은 Docker-first (distroless binary 시범 동봉)
+# CLI binary 도 컨테이너로 배포 가능 (`docker run org/cli:tag --options`)
+infra_strategy: docker_first
+infra_strategy_extras:
+  k8s_preset_enabled: false  # CLI binary 는 K8s preset 무관 (default false)

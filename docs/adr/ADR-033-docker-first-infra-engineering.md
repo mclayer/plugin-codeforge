@@ -2,7 +2,7 @@
 adr_number: 33
 title: Docker-first Infra Engineering — InfraEngineerAgent mandate 재정의 + 4 SSOT 매트릭스 cell update
 date: 2026-05-07
-status: Proposed
+status: Accepted
 category: Architecture
 carrier_story: CFP-128
 parent_epic: null
@@ -29,7 +29,9 @@ related_files:
 
 ## 상태
 
-**Proposed (2026-05-07)** — CFP-128 Phase 1 wrapper PR 에서 도입. Phase 2 wrapper PR 에서 `Accepted` 로 status 변경 + effective date populate (ADR-031 §14 freeze pattern 재사용). Phase 1 internal-docs PR (mclayer/codeforge-internal-docs#67) merged at 2026-05-07T04:46:52Z.
+**Accepted (2026-05-07)** — CFP-128 Phase 1 wrapper PR #240 (`d8155a5`, merged 2026-05-07T04:56:20Z) + Phase 2 wrapper PR (본 PR, merge 시점에 effective). carrier_story = CFP-128 (single Story, not part of Epic). Effective date = Phase 2 wrapper PR merge timestamp (ADR-031 §14 freeze pattern 재사용 — 본 effective date 이전 Phase 1 PR open 된 모든 Story = grandfather, retroactive 강제 없음).
+
+Phase 1 internal-docs PR (mclayer/codeforge-internal-docs#67) merged at 2026-05-07T04:46:52Z (`235c8c4`) — spec / plan / Change Plan / Story §1-§7 / Codex 7-area review CONDITIONAL_PASS archive.
 
 본 ADR = ADR-014 (Operational Risk SSOT Distribution) **amend** — §7.4 OpRiskArch mandate 4 항목 추가 (container restart policy / volume DR / health check tuning / network mode). supersede 아님 (ADR-014 의 SSOT 분배 결정 자체는 그대로 유효).
 

@@ -111,6 +111,16 @@ bootstrap:
   # Bypass precedence: HOTFIX_BYPASS_CODEFORGE=1 + REASON 양 env set → strict 무관 hook self skip (ADR-027 §결정 3).
   # Revert: false 또는 field 삭제 + commit.
   strict_mode: true | false             # 기본값: false (opt-in)
+
+# [선택] Infra 산출물 전략 (CFP-128 / ADR-033)
+# default = "docker_first" — InfraEngineerAgent 가 Dockerfile + compose.yml + .dockerignore 1st-class 산출
+# "legacy_systemd" — systemd unit / launchd plist (deprecated, opt-in only — ADR-033 §결정 3)
+# "none" — library / config-only repo (Docker artifact 미적용, examples/library-minimal 시범)
+infra_strategy: docker_first | legacy_systemd | none  # 기본값: docker_first
+
+# [선택] Infra 산출물 보조 옵션 (CFP-128 / ADR-033)
+infra_strategy_extras:
+  k8s_preset_enabled: true | false  # presets/k8s/ (codeforge-develop) 활성 여부, 기본값: false
 ```
 
 ## 3. 예시 (webapp)

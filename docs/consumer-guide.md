@@ -584,6 +584,76 @@ cp -r ${CLAUDE_PLUGIN_ROOT}/codeforge/presets/webapp/agents/*.md \
 - <예: 지연 민감 / 데이터 일관성 / 보안 / 장애 복구 등>
 ```
 
+### 3z. Docker-first Infra 채택 (CFP-128 / ADR-033)
+
+framework default = Docker-first ([ADR-033](adr/ADR-033-docker-first-infra-engineering.md)). InfraEngineerAgent 가 Story 의 §5 변경 계획 에 따라 다음 산출물 생성:
+
+- `Dockerfile` (multi-stage build — deps / builder / runner 분리)
+- `compose.yml` (service definition + healthcheck + volume + network)
+- `.dockerignore` (build context 축소)
+
+#### 3z.1 `infra_strategy` override (project.yaml)
+
+3 enum value 중 1개 선택 (default = `docker_first`):
+
+```yaml
+# .claude/_overlay/project.yaml
+infra_strategy: docker_first  # default — Dockerfile + compose + .dockerignore
+# infra_strategy: legacy_systemd  # legacy systemd unit / launchd plist (deprecated, opt-in only)
+# infra_strategy: none            # library / config-only repo (Docker artifact 미적용)
+
+infra_strategy_extras:
+  k8s_preset_enabled: false     # presets/k8s/ activate 여부 (codeforge-develop)
+```
+
+scripts/check-container-strategy.sh 가 lint:
+- `docker_first` 채택 + Dockerfile / compose.yml 부재 → exit 1
+- `legacy_systemd` / `none` → skip
+
+#### 3z.2 K8s preset opt-in
+
+production K8s 환경 사용 시 `k8s_preset_enabled: true` + 다음 절차:
+
+```bash
+# K8s manifest skeleton 적용 (codeforge-develop presets/k8s/ 에서 templates 참조)
+cp ${CLAUDE_PLUGIN_ROOT}/codeforge-develop/presets/k8s/*.yaml.template k8s/
+# 각 template 의 placeholder ({app_name} / {namespace} / {image_ref}) 치환
+```
+
+Single-host docker compose 환경 = K8s preset 비활성 (`false`, default). 90% consumer 에 적합.
+
+#### 3z.3 container-image-scan workflow 호출
+
+본 plugin 의 `templates/github-workflows/container-image-scan.yml` reusable workflow 를 consumer build pipeline 에서 호출:
+
+```yaml
+# .github/workflows/build.yml (consumer 측)
+jobs:
+  build-image:
+    # ... build + push to registry ...
+    outputs:
+      image-ref: ${{ steps.push.outputs.image-ref }}
+  scan:
+    needs: build-image
+    uses: ./.github/workflows/container-image-scan.yml
+    with:
+      image-ref: ${{ needs.build-image.outputs.image-ref }}
+      severity: "CRITICAL,HIGH"
+      ignore-unfixed: true
+```
+
+trivy + hadolint 자동 실행. SecurityTestPL 1st-layer 의 일부 (CFP-128 / ADR-033 §결정 4).
+
+#### 3z.4 기존 consumer follow-on Epic 패턴
+
+ADR-033 effective date (Phase 2 wrapper PR merge) 이전 Phase 1 PR open 된 Story = grandfather (legacy 산출물 유지). retroactive 강제 없음. 컨테이너화 코드 작업 = **별도 Epic** (consumer 워크스페이스에서 수행, ADR-020 Mode B hub-centralized 권장 — mctrader 패턴):
+
+1. Epic Issue (consumer hub repo) — 컨테이너화 scope + child Story decomposition (per repo)
+2. 각 child Story 가 자체 Phase 1 + Phase 2 PR 시퀀스
+3. Epic close PR (`EPIC-RESULTS-<KEY>.md` artifact)
+
+mctrader 5 repo (Tier B-extended) = 첫 follow-on Epic 후보 (CFP-128 spec §3.4.1 / Story §11 회고 pointer).
+
 ## 4. 첫 실행 검증
 
 ### 4a. Claude Code 세션 시작
