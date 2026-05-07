@@ -161,6 +161,7 @@ jobs:
               f.filename.startsWith('docs/') ||
               f.filename.startsWith('wrapper/') ||
               f.filename.startsWith('.github/') ||
+              f.filename.startsWith('templates/') ||
               f.filename === 'CHANGELOG.md' ||
               f.filename === 'README.md'
             );
