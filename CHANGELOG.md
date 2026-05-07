@@ -2,6 +2,27 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.4.0] - 2026-05-07
+
+### CFP-128 / ADR-033 — Docker-first infra mandate sync (MINOR)
+
+Wrapper canonical ADR-033 (amends ADR-014) 의 sibling sync. OpRiskArch agent + design-output-v2 contract 갱신.
+
+### Added
+
+- `agents/OperationalRiskArchitectAgent.md` §7.4.6 Container considerations (Docker-first infra orientation; deputy mandate 추가)
+- `docs/inter-plugin-contracts/design-output-v2.md` `contract_version: 2.1 → 2.2` (additive minor — Container considerations field)
+
+### Why
+
+ADR-033 (CFP-128 carrier, wrapper canonical) — Docker-first infra orientation 을 OpRiskArch deputy mandate 에 명시 + design-output-v2 contract 에 surface. ADR-014 (OpRisk SSOT distribution) 의 amendment.
+
+### Compatibility
+
+- **Wire**: codeforge >= 5.0.0 (no break)
+- **Contract version**: design-output-v2 2.1 → 2.2 (additive minor — backward compatible)
+- **Sibling sync**: D2 PR #21 (commit fcf1666) merged
+
 ## [0.1.0] - 2026-04-29
 
 ### CFP-40 (codeforge ζ arc LAST) — Initial extraction (NEW)
