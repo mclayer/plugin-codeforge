@@ -7,6 +7,17 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## Unreleased
 
+### CFP-128 — Docker-first Infra Engineering (Phase 1: ADR-033 Proposed)
+
+- `docs/adr/ADR-033-docker-first-infra-engineering.md` (NEW, status: Proposed) — CFP-128 carrier. 7 결정: (1) InfraEngineerAgent default 출력 = Dockerfile + compose.yml + .dockerignore (1st-class). (2) K8s manifests = `presets/k8s/` (codeforge-develop) opt-in. (3) systemd / launchd / PaaS = legacy (consumer overlay opt-in only). (4) SecurityTest 1st-layer = trivy + hadolint 추가. (5) CONDITIONAL deputy 매트릭스 — Docker 관련 cell annotation update (5 cell — §7.1 / §7.4 / §7.5 / §11 / §3 chief author). (6) Migration = ADR Accepted 후 신규 Story 만 의무, 기존 in-flight grandfathered (ADR-031 §14 freeze pattern). (7) Consumer 측 follow-on Epic = mctrader 등 컨테이너화 코드 작업 별도 Epic 의무 (consumer 워크스페이스 수행).
+- `docs/adr/ADR-014-operational-risk-ssot-distribution.md` (Modify) — frontmatter `amendments: [ADR-033]` 추가 + `related_stories` 에 CFP-128 + `related_files` 에 ADR-033 추가. 본문 끝에 "Amended by — CFP-128 / ADR-033 — Docker-first Infra Engineering (2026-05-07)" section 신설 (§7.4 OpRiskArch mandate 4 항목 확장 — container restart policy / volume DR / health check tuning / network mode boundary).
+- 5 substantive decision (D1-D6, brainstorming 5 turn): D1 wrapper framework 전체 / D2 InfraEngineer mandate 재작성 / D3 agent 수 불변 / D4 Dockerfile+compose 1st-class + K8s preset opt-in / D5 effective date + grandfather + consumer follow-on Epic / D6 trivy + hadolint.
+- Codex 7-area review CFP-128-001 (gpt-5.5 high) verdict CONDITIONAL_PASS (P0:0, P1:3, all resolved).
+- Spec / plan / Change Plan / Story §1-§7 / Codex review archive: codeforge-internal-docs `wrapper/{specs,plans,change-plans,stories,decisions}/CFP-128*` (ADR-013 dogfood-out, PR #67 merged 2026-05-07T04:46:52Z).
+- Sibling sync follow-on (Phase 2 wrapper PR merge 후): codeforge-develop (InfraEngineerAgent + presets/k8s/ + develop-output-v1) / codeforge-design (OpRiskArch §7.4 + design-output-v2) / codeforge-review (SecurityTestPL trivy + review-pl-base). 3 PR ★ Agent tool parallel dispatch (사용자 directive 2026-05-07).
+- Marketplace sync = 4 plugin (codeforge + 3 lane) version bump mirror (ADR-016).
+- Phase 2 wrapper PR (별도): ADR-033 Status `Accepted` + 4 SSOT 매트릭스 cell update (책임 매트릭스 + 7 row · decision table + 7 row · 6 deputy mandate 5 cell annotation) + impl-manifest 예시 row Docker 교체 + project-config-schema.md `infra_strategy` field + consumer-guide.md § Docker-first 채택 신설 + scripts/check-container-strategy.sh + templates/github-workflows/container-image-scan.yml + examples/{webapp,cli-tool,library}-minimal/.
+
 ### CFP-126 — ADR-031 amend (Proposed → Accepted, §결정 1 (a) §14 freeze)
 
 - `docs/adr/ADR-031-lane-spawn-evidence-trail.md` (Modify) — frontmatter `status: Proposed → Accepted`, `related_files` 갱신 (`phase-gate-mergeable.yml` → `lane-evidence-check.yml`). §상태 갱신 (CFP-126 Phase 1 PR #59 + Phase 2 PR #232 merged). §결정 1 storage location 4 candidate → (a) §14 freeze (12 field YAML schema explicit). 다른 3 candidate 명시적 superseded.

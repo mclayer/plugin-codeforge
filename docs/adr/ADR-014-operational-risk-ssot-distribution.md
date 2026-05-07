@@ -6,12 +6,16 @@ category: Architecture
 date: 2026-04-30
 related_stories:
   - CFP-46 (parent — Operational Risk Architect 신설 + §7.4 SSOT 분산)
+  - CFP-128 (amends — Docker-first §7.4 mandate 4 항목 확장)
 related_files:
   - docs/adr/ADR-008-inter-plugin-contract-versioning.md
   - docs/adr/ADR-009-wrapper-only-decomposition.md
   - docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md
   - docs/adr/ADR-012-wrapper-claudemd-ssot-boundary.md
+  - docs/adr/ADR-033-docker-first-infra-engineering.md
   - docs/inter-plugin-contracts/design-output-v2.md (created in PR-E canonical / PR-F sibling)
+amendments:
+  - ADR-033
 ---
 
 ## 상태
@@ -131,3 +135,20 @@ design-output-v2 contract 가 §13 추가 시 schema bump 필요 — design-outp
 - mclayer/plugin-codeforge#157 (LiveOpsDeputy candidate) + #158 (LiveOrderingDeputy candidate) — CFP-77 처리
 - ADR-022 §결정 11 (consumer-side Sonnet decider Phase 1 trust model)
 - CFP-76 (Story §13 Live Operational Discipline schema)
+
+## Amended by
+
+### CFP-128 / ADR-033 — Docker-first Infra Engineering (2026-05-07)
+
+[ADR-033](ADR-033-docker-first-infra-engineering.md) §결정 5 가 본 ADR-014 의 §7.4 OpRiskArch mandate 를 확장. 4 새 항목 추가:
+
+1. **Container restart policy** — `always` / `on-failure` / `unless-stopped` / `no` 결정 + 근거. compose service 별 명시.
+2. **Volume DR** — anonymous vs named volume vs bind mount 의 data persistence 전략. backup strategy. host path leak 방지.
+3. **Health check tuning** — `interval` / `timeout` / `retries` / `start_period`. service dependency 의 `condition: service_healthy` 사용.
+4. **Network mode boundary** — bridge (default) / host / overlay / macvlan 결정. internal service 의 host 노출 금지.
+
+amendment 형태: ADR-014 의 SSOT distribution 결정 자체 (codeforge-design plugin canonical / wrapper matrix sibling) 는 그대로 유효. §7.4 schema 의 5 sub (DR / Cancel-on-disconnect / Clock sync CONDITIONAL / Rate limit / Env isolation) 외에 Container 관련 4 항목 cell annotation 으로 추가. supersede 아님.
+
+OpRiskArch 의 cell annotation update SSOT = wrapper CLAUDE.md § "Deputy mandate 매트릭스" §7.4 row (CFP-128 spec §3.2.3). codeforge-design canonical 변경 = OperationalRiskArchitectAgent.md (sibling sync PR per ADR-010, CFP-128 scope 내).
+
+cross-ref: CFP-128 spec §3.4 / Change Plan §3.5 / Story §3.1.
