@@ -2,6 +2,23 @@
 
 `codeforge-develop` plugin 릴리스 이력.
 
+## [0.2.0] - 2026-05-07
+
+### CFP-128 / ADR-033 — InfraEngineer Docker-first mandate + presets/k8s/ (MINOR)
+
+#### Added
+
+- InfraEngineer mandate Docker-first 재작성 (D1 sibling sync PR #8, commit b6bda7c)
+- `presets/k8s/` NEW directory (Kubernetes preset)
+
+#### Why
+
+ADR-033 (wrapper canonical) — InfraEngineer 의 backing mandate 를 Docker-first 로 확정 + Kubernetes preset 도입. CFP-128 marketplace mirror prep 의 일환으로 minor bump.
+
+#### Compatibility
+
+- **Wire**: codeforge >= 4.0.0
+
 ## [0.1.0] - 2026-04-29
 
 ### CFP-39 (codeforge ζ arc) — Initial extraction (NEW)
