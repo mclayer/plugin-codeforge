@@ -1,0 +1,21 @@
+{
+  "_comment": "codeforge worktree stale GC — SessionStart hook sample (CFP-136 / ADR-040).",
+  "_doc": "Append this hook definition to consumer's `.claude/settings.json` under `hooks.SessionStart[]` array. Or merge via overlay/hooks/merge.py.",
+  "_purpose": "Stale worktree (>=7 days + origin branch absent) auto-prune. Idempotent — no stale = no-op exit 0.",
+  "_severity": "Stale prune = info logging only (no session block). Script always exits 0.",
+  "_bypass": "BYPASS_WORKTREE_GC=1 env (rare — debugging only)",
+  "_prerequisite": "git >= 2.5 (worktree subcommand) + bash >= 4 + find + awk",
+  "_cross_platform": "Windows = Git Bash / WSL. macOS / Linux = native bash. Path resolution via templates/scripts/worktree-path-util.sh.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-worktree-stale.sh || true"
+          }
+        ]
+      }
+    ]
+  }
+}

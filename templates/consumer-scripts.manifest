@@ -26,3 +26,12 @@ scripts/check-debut-readiness.sh
 scripts/check-lane-evidence.sh:templates/github-workflows/lane-evidence-check.yml
 scripts/check-lint.sh
 overlay/hooks/pre-push.sh.example
+
+# CFP-136 / ADR-040 — worktree convention scripts (SessionStart hook + manual invocation).
+# Source: templates/scripts/worktree-*.sh (plugin-relative).
+# Consumer install path: .claude/scripts/worktree-*.sh.
+templates/scripts/worktree-create.sh
+templates/scripts/worktree-merge.sh
+templates/scripts/worktree-prune.sh
+templates/scripts/check-worktree-stale.sh
+templates/scripts/worktree-path-util.sh
