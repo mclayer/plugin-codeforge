@@ -170,7 +170,7 @@ expected = max(commit_signal, diff_signal, coupling_signal)
 ## 관련 파일
 
 - [`.claude-plugin/plugin.json`](../../.claude-plugin/plugin.json) — wrapper plugin (현재 5.3.0)
-- [`templates/github-workflows/check-plugin-version-bump.yml`](../../templates/github-workflows/check-plugin-version-bump.yml) — Phase 2 spillover
+- `templates/github-workflows/check-plugin-version-bump.yml` — Phase 2 spillover (본 PR 에는 부재)
 - [`docs/orchestrator-playbook.md`](../orchestrator-playbook.md) — Conventional Commits 안내 섹션 추가
 - [`docs/consumer-guide.md`](../consumer-guide.md) — consumer 자체 plugin 작성 가이드
 - [`docs/adr/ADR-008-inter-plugin-contract-versioning.md`](ADR-008-inter-plugin-contract-versioning.md) — 결정 1 (e)/(f) propagation
