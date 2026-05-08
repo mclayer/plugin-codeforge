@@ -46,6 +46,9 @@ setup_repo() {
   local tmp
   tmp="$(mktemp -d)"
   git init -q "$tmp"
+  # Set committer identity to avoid CI failure when global git config is absent
+  git -C "$tmp" config user.email "test@cfp-136.local"
+  git -C "$tmp" config user.name "CFP-136 Test"
   git -C "$tmp" commit --allow-empty -q -m "init"
   echo "$tmp"
 }
@@ -186,24 +189,17 @@ test_5_main_worktree_skipped() {
 
 # Test 6 — Fail-safe: git failure inside subshell does not crash outer session (|| true)
 test_6_failsafe_git_error_no_crash() {
-  log "Test 6: §8.5.2 fail-safe — invalid git repo → graceful exit (non-blocking)"
+  log "Test 6: §8.5.2 fail-safe — invalid git repo → graceful exit rc=0 (non-blocking)"
   local rc=0
-  # Run stale check in a non-git directory; set -euo means git errors would crash without || true
+  # Run stale check in a non-git directory; production trap guarantees exit 0
   local tmp_nonrepo
   tmp_nonrepo="$(mktemp -d)"
-  # Wrap in || true to simulate SessionStart hook behaviour
   (
     cd "$tmp_nonrepo"
     bash "$STALE_SCRIPT" 2>/dev/null
   ) || rc=$?
-  # Exit code doesn't matter — what matters is no unhandled crash (rc < 128)
-  if [[ "$rc" -lt 128 ]]; then
-    PASS=$((PASS + 1))
-    log "  PASS: stale-check in non-git dir exited gracefully (rc=$rc)"
-  else
-    FAIL=$((FAIL + 1))
-    log "  FAIL: stale-check crashed with signal (rc=$rc)"
-  fi
+  # Production fix (§3.5 graceful trap) guarantees exit 0 on non-git dir
+  assert_exit "invalid-git-dir exit 0" 0 "$rc"
   rm -rf "$tmp_nonrepo"
 }
 

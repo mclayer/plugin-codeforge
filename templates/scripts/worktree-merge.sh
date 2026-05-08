@@ -28,10 +28,16 @@ PARENT_PATH="$HOME/.claude/worktrees/$REPO_NAME/$PARENT_FLAT"
 if [[ ! -d "$PARENT_PATH" ]]; then
   echo "[worktree-merge] CREATE parent worktree: $PARENT" >&2
   mkdir -p "$HOME/.claude/worktrees/$REPO_NAME"
-  # Check out existing local branch (no -b); branch must already exist on local or origin.
+  # 3-way fallback: local branch → remote-tracking branch → origin/main
   if git show-ref --verify --quiet "refs/heads/$PARENT"; then
+    # Local branch exists — check out directly
     git worktree add "$PARENT_PATH" "$PARENT"
+  elif git show-ref --verify --quiet "refs/remotes/origin/$PARENT"; then
+    # Remote-only PARENT (fresh clone) — fetch and create local tracking branch
+    git fetch origin "$PARENT"
+    git worktree add -b "$PARENT" "$PARENT_PATH" "origin/$PARENT"
   else
+    # PARENT not found anywhere — fall back to origin/main
     git worktree add -b "$PARENT" "$PARENT_PATH" "origin/main"
   fi
 fi

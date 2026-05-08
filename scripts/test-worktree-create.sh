@@ -44,6 +44,9 @@ setup_repo() {
   local tmp
   tmp="$(mktemp -d)"
   git init -q "$tmp"
+  # Set committer identity to avoid CI failure when global git config is absent
+  git -C "$tmp" config user.email "test@cfp-136.local"
+  git -C "$tmp" config user.name "CFP-136 Test"
   git -C "$tmp" commit --allow-empty -q -m "init"
   echo "$tmp"
 }
