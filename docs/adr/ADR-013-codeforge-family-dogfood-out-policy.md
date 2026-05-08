@@ -106,6 +106,24 @@ mclayer/plugin-codeforge (wrapper, post-CFP-45)
 └── .github/workflows/phase-gate-mergeable.yml (cross-repo via App)
 ```
 
+## Amendment 2 (2026-05-08) — CFP-276 — EPIC-RESULTS classification + Doc Location Registry 정합
+
+### 컨텍스트
+
+[Issue #276](https://github.com/mclayer/plugin-codeforge/issues/276) 검토 중 발견:
+- EPIC-RESULTS-`<KEY>`.md 가 codeforge dogfood 시 `<internal-docs>/<plugin-folder>/retros/` 사용 (실제 4 file 존재). 본 ADR §결정 의 dogfood subdir 5종 (`specs/plans/retros/stories/change-plans`) 중 `retros/` 가 EPIC-RESULTS 도 포괄함이 미문서화 → 인지 drift 위험.
+- Codex round 1 (gpt-5.5 high) 검토 verdict: EPIC-RESULTS = retro-like artifact (Epic close evidence aggregate — outcome / gate / CI / follow-up 집계, 기능적으로 retro).
+
+### 결정
+
+EPIC-RESULTS-`<EPIC_KEY>`.md 는 codeforge family dogfood 시 `<internal-docs>/<plugin-folder>/retros/EPIC-RESULTS-<EPIC_KEY>.md` 에 위치한다 — 새 subdir 카테고리 추가 없이 기존 `retros/` 재사용. 본 결정의 machine-readable SSOT = [`docs/doc-locations.yaml`](../doc-locations.yaml) `epic_results` row의 `dogfood` variant ([ADR-038](ADR-038-doc-location-registry.md)).
+
+### 결과
+
+- Issue #276 의 "모순 2 (codeforge 자체 dogfood drift)" = drift 가 아닌 ADR-013 logical 결과로 명문화
+- 향후 audit 시 인지 drift 차단
+- File 이동 없음 (현재 4 file 이미 정합)
+
 ## 관련 파일
 
 - [CFP-45 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-30-cfp-45-dogfood-out-restructure-design.md) — parent

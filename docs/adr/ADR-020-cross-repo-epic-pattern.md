@@ -30,6 +30,7 @@ cross-repo Epic 의 parent Issue 위치 = consumer 가 명시. wrapper 강제 X.
 - doc-only hub repo 권장 (예: mctrader-hub)
 - consumer 가 `epic_owner_repo` field 로 명시 의무
 - **Epic owner repo = consumer 의 doc-only hub 일 경우, 도메인 ADR 도 같은 repo 에 collocate** (single source of truth — cross-repo 도메인 결정의 분산 방지)
+- **EPIC-RESULTS 파일 canonical location** = [ADR-038](ADR-038-doc-location-registry.md) / [`docs/doc-locations.yaml`](../doc-locations.yaml) `epic_results` row 참조 (Mode A → owner / Mode B/C → hub / dogfood → internal-docs `<plugin-folder>/retros/`).
 
 ### 결정 2: Child Story 위치 = 작업 repo 자체 + Epic Issue body link 수집
 
