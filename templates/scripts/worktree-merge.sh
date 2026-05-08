@@ -20,6 +20,18 @@ fi
 PARENT="$1"; shift
 SUBS=("$@")
 
+# Defense-in-depth: validate branch names (SEC-iter1-P2-2)
+if ! git check-ref-format --branch "$PARENT" >/dev/null 2>&1; then
+  echo "[worktree-merge] INVALID_BRANCH: '$PARENT' is not a valid git branch name" >&2
+  exit 1
+fi
+for _sub in "${SUBS[@]}"; do
+  if ! git check-ref-format --branch "$_sub" >/dev/null 2>&1; then
+    echo "[worktree-merge] INVALID_BRANCH: '$_sub' is not a valid git branch name" >&2
+    exit 1
+  fi
+done
+
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 REPO_NAME="$(basename "$REPO_ROOT")"
 PARENT_FLAT="${PARENT//\//-}"

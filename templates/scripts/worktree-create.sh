@@ -24,6 +24,12 @@ fi
 BRANCH="$1"
 BASE="${2:-origin/main}"
 
+# Defense-in-depth: validate branch name (SEC-iter1-P2-2)
+if ! git check-ref-format --branch "$BRANCH" >/dev/null 2>&1; then
+  echo "[worktree-create] INVALID_BRANCH: '$BRANCH' is not a valid git branch name" >&2
+  exit 1
+fi
+
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 REPO_NAME="$(basename "$REPO_ROOT")"
 BRANCH_FLAT="${BRANCH//\//-}"

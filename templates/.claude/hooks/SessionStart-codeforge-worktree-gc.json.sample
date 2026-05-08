@@ -13,7 +13,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PROJECT_DIR}/templates/scripts/check-worktree-stale.sh || true"
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/templates/scripts/check-worktree-stale.sh\" || true"
           }
         ]
       }

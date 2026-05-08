@@ -203,6 +203,39 @@ test_6_failsafe_git_error_no_crash() {
   rm -rf "$tmp_nonrepo"
 }
 
+# Test 7 — SEC-iter1-P2-1: BYPASS_WORKTREE_GC=1 → exit 0 + skip message (no origin contact)
+test_7_bypass_worktree_gc() {
+  log "Test 7: SEC-iter1-P2-1 — BYPASS_WORKTREE_GC=1 → exit 0 + skip log, no origin contact"
+  local repo rc=0 err_out
+  repo="$(setup_repo)"
+
+  err_out="$(
+    cd "$repo"
+    BYPASS_WORKTREE_GC=1 bash "$STALE_SCRIPT" 2>&1 1>/dev/null
+  )" || rc=$?
+
+  assert_exit "BYPASS_WORKTREE_GC exit 0" 0 "$rc"
+  assert_contains "skip message in stderr" "BYPASS_WORKTREE_GC=1" "$err_out"
+  assert_contains "skipping keyword" "skipping" "$err_out"
+
+  # Verify no 'ls-remote' or 'git fetch' invocation by checking the script did not
+  # reach the origin-contact section (DONE line must be absent from stdout)
+  local stdout_out
+  stdout_out="$(
+    cd "$repo"
+    BYPASS_WORKTREE_GC=1 bash "$STALE_SCRIPT" 2>/dev/null
+  )"
+  if printf '%s' "$stdout_out" | grep -q "DONE"; then
+    FAIL=$((FAIL + 1))
+    log "  FAIL: BYPASS mode should not reach DONE line (origin contact section)"
+  else
+    PASS=$((PASS + 1))
+    log "  PASS: BYPASS mode exited before DONE (origin contact skipped)"
+  fi
+
+  teardown_repo "$repo"
+}
+
 # ── Run ───────────────────────────────────────────────────────────────────────
 log "=== test-check-worktree-stale 시작 ==="
 test_1_syntax_check
@@ -211,6 +244,7 @@ test_3_empty_worktree_base_exits_0
 test_4_fresh_worktree_not_pruned
 test_5_main_worktree_skipped
 test_6_failsafe_git_error_no_crash
+test_7_bypass_worktree_gc
 
 log ""
 log "=== Summary: $PASS PASS, $FAIL FAIL ==="

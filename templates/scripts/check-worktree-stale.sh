@@ -5,6 +5,12 @@
 
 set -euo pipefail
 
+# BYPASS: BYPASS_WORKTREE_GC=1 skips all origin contact + prune (debugging only)
+if [[ "${BYPASS_WORKTREE_GC:-}" == "1" ]]; then
+  echo "[stale-check] BYPASS_WORKTREE_GC=1, skipping" >&2
+  exit 0
+fi
+
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
   echo "[stale-check] NOT_A_GIT_REPO — skipping (non-blocking)" >&2
   exit 0
