@@ -189,8 +189,8 @@ spec / Phase 1 PR / Phase 2 PR 모두 KEY 인용 (race-free)
 ## 관련 파일
 
 - [`templates/github-workflows/story-init.yml`](../../templates/github-workflows/story-init.yml) — 갱신 대상
-- [`templates/github-issue-forms/cfp-reserve.yml`](../../templates/github-issue-forms/cfp-reserve.yml) — 신설 (Phase 2 spillover)
-- [`templates/github-workflows/reservation-cleanup.yml`](../../templates/github-workflows/reservation-cleanup.yml) — 신설 (Phase 2 spillover)
+- `templates/github-issue-forms/cfp-reserve.yml` — 신설 (Phase 2 spillover, 본 PR 에는 부재)
+- `templates/github-workflows/reservation-cleanup.yml` — 신설 (Phase 2 spillover, 본 PR 에는 부재)
 - [`docs/inter-plugin-contracts/label-registry-v1.md`](../inter-plugin-contracts/label-registry-v1.md) — MINOR bump
 - [`scripts/bootstrap-labels.sh`](../../scripts/bootstrap-labels.sh) — `phase:reservation` entry
 - [`docs/adr/ADR-024-story-scoped-branch-policy.md`](ADR-024-story-scoped-branch-policy.md) — branch governance cross-ref
