@@ -879,46 +879,36 @@ cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/<file>.yml .github
 
 운영 빈도 0에 가까워야 함 (주로 사용자 원문 명백한 오타 정정).
 
-## 7. Sonnet Decider 정책 (CFP-61 / ADR-022)
+## 7. Sonnet Decider 정책 — DEPRECATED (CFP-134 / ADR-035, 2026-05-08)
 
-본 plugin install 한 consumer 프로젝트의 Orchestrator 도 Sonnet decider 적용 대상. 단 Phase 1 = trust model — plugin CLAUDE.md doc 만 정책 source, 강제 instrumentation 없음.
+**DEPRECATED 2026-05-08 (CFP-134 Epic / ADR-035, CFP-135 carrier)**: Codex review / Sonnet decider 는 codeforge 1st-class component 가 아니라 **사용자 ad-hoc 도구** 로 정정. codeforge 자동 invoke 없음. consumer Orchestrator 도 동일 — Sonnet decider 자동 발동 무효. 사용자 explicit request (e.g., "이 결정은 Codex+Opus 양쪽 옵션 받고 Sonnet 으로 정리해줘") 시에만 ad-hoc invoke 가능. 이전 본 §의 5 trigger 자동 발동 + Phase 1 trust model directive + Phase 2 instrumentation 계획 모두 무효.
 
-### Phase 1 활성 절차
+Architecture decision SSOT = [`docs/adr/ADR-035-codeforge-agent-teams-epic-architecture.md`](adr/ADR-035-codeforge-agent-teams-epic-architecture.md) (Epic CFP-134). ADR-022 status = Deprecated. 본 § 의 2026-05-08 이전 내용은 `docs/adr/ADR-022-sonnet-review-verdict-decider.md` body history record 로 보존.
 
-consumer 측 사용자 가 다음 directive 발화 시 활성:
+### review-verdict 흐름 (post-deprecate)
 
-> "이 프로젝트에서도 codeforge plugin Sonnet decider 정책 (CFP-61 / ADR-022) 적용해서 정지 없이 진행해라."
+각 review iteration (DesignReview / CodeReview / SecurityTest) 의 final gate = **PL pl_recommendation** (PASS / FIX / FIX_DISCRETIONARY) 직접 적용. PL 이 자기 lane synthesis 후 Story §9 / GitHub comment / gate label / phase transition 모두 직접 write. Sonnet final pick 자동 발화 없음.
 
-또는 동등 wording. directive 없으면 default = user-approval gates 운영.
+### 사용자 ad-hoc Sonnet 호출
 
-### 적용 trigger 5 종 (ADR-022 §결정 2)
+특정 substantive 결정에서 사용자가 명시 요청 시 한정:
 
-- (a) substantive 다중 선택지
-- (b) FIX root-cause 불일치
-- (c) Codex ambiguity (option-formulation 한정)
-- (d-constraint) 제약 surfacing Q
-- (e) review-verdict — 매 review iteration 종료 후 Sonnet final pick (PASS|FIX)
+> "이 결정은 Codex 와 Opus 로 옵션 받고 Sonnet 으로 정리해줘"
 
-### 운영 의존성
+또는 동등 wording. 이 경우 Orchestrator 가 ad-hoc Sonnet invoke (Agent tool with model:sonnet). decision-packet schema 의무 아님 — 사용자 prompt 자유 형식. Story §12 Sonnet Decision Log row append (사용자 요청 evidence 명시).
 
-- `Agent` tool with `model: sonnet` (Anthropic billing 내, 외부 auth 무관)
-- 외부 API key / Plus subscription / Vertex AI / GCA — 의무 prerequisite 아님 (CFP-58 axis 모두 제거)
+## 7.1 Stop discipline + Epic-level continuity (ADR-025 + Amendment 1 + Amendment 2)
 
-### Phase 2 enforcement (후속)
+Stop discipline 정책 (ADR-025) 의 **trust model invariant** 와 **Epic-level continuity** 직접 적용. Amendment 2 (2026-05-08, CFP-135) 정정 후 — actor 표기 remap (Sonnet → PL pl_recommendation / 직전 사용자 directive). 정책 자체 (whitelist 외 stop = defect) 무손상.
 
-30+ packet 운영 후 ROI 평가 + instrumentation hook / refusal logic / runtime validation 도입 여부 결정 — 별도 CFP.
+### "Decider decides ⇒ Orchestrator proceeds without user confirmation" (ADR-025 §결정 1, Amendment 2 정정 후)
 
-### 사용자 explicit suspension
+Decider 의 actor 분류:
+- **review-verdict 단**: PL `pl_recommendation` (PASS / FIX / FIX_DISCRETIONARY) = decider
+- **작업 단위 단 (Epic / Story / backlog)**: 사용자 직전 directive = decider
+- **사용자 explicit ad-hoc Sonnet request**: 사용자 directive ⇒ Sonnet 임시 invoke (codeforge 자동 발동 무효)
 
-"잠깐 끄자" / "Sonnet decider 정지" → session/Story 단위 일시 중단 — review-verdict trigger 발화 시 PL 1차 판단 (pl_recommendation) 으로 임시 proceed (ADR-022 §결정 9).
-
-## 7.1 Stop discipline + Epic-level continuity (ADR-025 + Amendment 1)
-
-Sonnet decider 정책 (§7) 의 **trust model invariant** 와 **Epic-level continuity** 직접 적용:
-
-### "Sonnet decides ⇒ Orchestrator proceeds without user confirmation" (ADR-025 §결정 1)
-
-Sonnet decider 가 PASS / FIX / pick 응답 후 Orchestrator 가 사용자에게 "진행할까요?" / "이대로 가도 됩니까?" 묻는 것은 **whitelist 외 stop = `policy_violation` (defect)** 분류.
+Decider PASS / FIX / pick 결정 후 Orchestrator 가 사용자에게 "진행할까요?" / "이대로 가도 됩니까?" 묻는 것은 **whitelist 외 stop = `policy_violation` (defect)** 분류. 이전 ~~"Sonnet decides ⇒ ..."~~ 표기는 ADR-022 Deprecated 후 actor remap.
 
 ### Epic-level continuity (CFP-80 / ADR-025 Amendment 1, 2026-05-04)
 
@@ -937,14 +927,14 @@ Sonnet decider 가 PASS / FIX / pick 응답 후 Orchestrator 가 사용자에게
 1. **User environment 변경 의무** (PAT 발급 / API key / 외부 서비스 가입 / 자금 입금 / 1Password setup 등)
 2. **Destructive action 직전** (force push / DB drop / 설정 영구 변경 / production first 동작)
 3. **진정 unprecedented / unscoped 영역** (새 organizational decision)
-4. **Codex+Sonnet decider 의 escalation 결정** (`decider_decision.escalation_required=true`)
+4. **Decider escalation 결정** — PL pl_recommendation = `ESCALATE_PACKET_INCOMPLETE` 또는 사용자 ad-hoc Sonnet 호출 시 escalation_required=true (Amendment 2 정정 후, 이전 ~~"Codex+Sonnet decider 의 escalation 결정 (`decider_decision.escalation_required=true`)"~~)
 5. **작업 단위 완료 후 final report** (1번)
 
 ### 불법 stop 패턴 (반드시 회피)
 
 | Pattern | Defect 사유 |
 |---|---|
-| "후보 A/B/C/D 중 어떤거?" | Codex+Sonnet 자동 처리 의무 (sub-decision) |
+| "후보 A/B/C/D 중 어떤거?" | sub-decision 자동 처리 의무 — PL pl_recommendation / 직전 사용자 directive 자동 진행 (Amendment 2 정정 후, 이전 ~~"Codex+Sonnet 자동 처리 의무"~~) |
 | "큰 작업이라 확인 받겠습니다" | token cost 추정 = 사용자 의도 아님 |
 | "Phase 1 완료, Phase 2 시작할까요?" | 1 Story / Epic 안의 sub-step (decision unit 분리 violation) |
 | "5 sub-CFP 중 첫 번째 완료, 다음 진행할까요?" | backlog 단위면 5 모두 처리 |
@@ -952,7 +942,7 @@ Sonnet decider 가 PASS / FIX / pick 응답 후 Orchestrator 가 사용자에게
 
 ### Result 보고 형식 (1번)
 
-작업 단위 전체 완료 후 1번 final report — sub-step 별 완료 시각 / 소요 시간 / Sonnet pick / override marker 포함. 사용자 redirect 가능성 명시 (단 본인이 stop 안 함).
+작업 단위 전체 완료 후 1번 final report — sub-step 별 완료 시각 / 소요 시간 / decider pick (PL pl_recommendation 또는 사용자 ad-hoc Sonnet pick) / override marker 포함 (Amendment 2 정정 후, 이전 ~~"Sonnet pick"~~). 사용자 redirect 가능성 명시 (단 본인이 stop 안 함).
 
 ### Consumer 측 활성 directive
 

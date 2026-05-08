@@ -182,6 +182,12 @@ GHEC governance 4 영역 (rulesets-as-code / required workflows enterprise sync 
 - ADR-025 (Stop discipline) — D1 deprecate 와 정합 (ADR-022 reference 만 정리, ADR-025 정책 자체는 carrier 로 유지)
 - ADR-029 (Phase execution visibility) — D1 deprecate 와 정합 (Sonnet decider auto-proceed 정책 무효 → visibility 정책 자체는 무영향)
 
+## CFP-135 Foundation Story — change-plan + 6 deputy 면제 근거
+
+본 ADR-035 가 CFP-134 Epic 의 **architecture decision SSOT** 역할 — D1 (ADR-022 deprecate) / D2 (Agent teams 적극 도입) / D3 (GitOpsAgent 신설) / D4 (Hierarchical branch convention) / D5 (Story 완료 회고 의무화) 의 Foundation 결정 5종 모두 본 ADR 본문 명시. 따라서 **CFP-135 Foundation Story 는 별도 change-plan 작성 면제** (ADR-013 dogfood-out policy 정합 — internal-docs SSOT 의 architecture decision 이 본 ADR 이므로 §3 도입할 설계 SSOT 역할 충족).
+
+또한 CFP-135 = **doc-only Story** (Phase 2 implementation 부재, ADR-027 Amendment 1 정합) — §7 (보안 설계) / §11 (데이터 마이그레이션) / §13 (Live Operational Discipline) 모두 N/A. 따라서 **6 deputy gathering skip 정합** (deputy mandate 매트릭스 의 active row 0). CodebaseMapper / Refactor / SecurityArch / OpRiskArch / TestContractArch / DataMigrationArch 6 deputy 모두 mandate 영역 (코드 경로 매핑 / refactor 영역 / trust boundary / DR / Test Contract / migration) 본 Story 에서 비활성. ArchitectAgent (chief author) 가 직접 본 ADR 작성 + Stage 0 spec verbatim 보존 invariant 우선 — Wave 2 (CFP-137 worktree 인프라) / Wave 3 (CFP-139 GitOpsAgent) 진입 시 deputy gathering 재개 trigger (§7 / §11 / §13 sub 활성).
+
 ## 관련 파일
 
 - `CLAUDE.md` — 4 영역 SSOT 정정 (CFP-135 carrier)

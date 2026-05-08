@@ -2,14 +2,19 @@
 kind: registry
 registry: decision-packet
 version: "2.1"
-status: Active
+status: Deprecated
+deprecated_by: CFP-134
+deprecated_date: 2026-05-08
+deprecated_reason: "ADR-022 deprecate 의무 동반 — Sonnet decider 5-step packet schema 무효 (codeforge 자동 invoke 안 함). 사용자 ad-hoc Sonnet 호출 시 본 schema 비-의무 (사용자 prompt 자유 형식)."
 supersedes: docs/inter-plugin-contracts/decision-packet-v1.md
 authors:
   - Claude (CFP-59 author — spec § 2.6 codification)
   - Codex (gpt-5.5 high) — Round 1 spec audit
   - User (mccho) — directive 2026-05-02 (Gemini 제거, Sonnet decider)
+  - CFP-135 (2026-05-08) — Deprecated annotation
 related_adrs:
-  - ADR-022 (carrier — CFP-61 Sonnet decider comprehensive policy)
+  - ADR-022 (carrier — CFP-61 Sonnet decider comprehensive policy) [Deprecated 2026-05-08, CFP-134]
+  - ADR-035 (codeforge agent teams Epic — D1 ADR-022 deprecate)
   - ADR-019 (superseded by ADR-022 — CFP-59 Sonnet decider auto-proceed)
   - ADR-018 (superseded — CFP-57 + Amendment 1 CFP-58)
   - ADR-008 (parent — versioning rule, v1 → v2 MAJOR bump per breaking change SemVer 룰)
@@ -18,11 +23,17 @@ related_files:
   - templates/story-page-structure.md
 ---
 
+> **DEPRECATED (2026-05-08, CFP-134 / ADR-035)**: ADR-022 가 Deprecated 처리되어 본 decision-packet v2.1 schema 의 5-step Sonnet decider invocation 영역 (trigger enum / `review_lane_context` block / `decider_decision` / `attempts[]` / `audit_result` 등) 자동 발동 무효. codeforge 가 자동 invoke 안 함. 사용자 ad-hoc Sonnet 호출 시 본 schema 의무 아님 — 사용자 prompt 자유 형식 가능. v3 MAJOR bump 후속 deferred (CFP-137 또는 별도 CFP carrier — 정식 schema 제거 / 신규 ad-hoc-only schema 도입). 본문 history record 보존.
+>
+> Architecture decision SSOT = [ADR-035](../adr/ADR-035-codeforge-agent-teams-epic-architecture.md) (Epic CFP-134).
+
 # decision-packet v2.1
 
 ## 1. 목적
 
 CFP-59 (ADR-019) → CFP-61 (ADR-022) Sonnet decider auto-proceed system 의 decision packet schema. Claude+Codex 가 생성한 옵션 set + cross-review + 사용자 context 를 Claude Sonnet (`claude-sonnet-4-6`) decider 에 전달할 때의 정형 format. Decider 응답·sanity audit·retry/fallback 결과 까지 누적 기록.
+
+**(CFP-135 Deprecated 후)**: 본 schema 자동 발동 무효 — frontmatter 위 deprecation note 참조.
 
 본 registry 는 wrapper-owned (registry kind, lint scope 밖). MANIFEST.yaml 의 contracts list 에 등록하지 않음.
 

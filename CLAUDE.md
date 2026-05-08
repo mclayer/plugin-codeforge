@@ -68,7 +68,7 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 모든 Story는 **full 7 레인** 통과. Fast-path 없음 (단 **Hotfix 경로** 2종은 예외 — 운영 장애 대응, 사후 감사 의무. 상세는 [`docs/hotfix-playbook.md`](docs/hotfix-playbook.md) — CFP-93 분리, mctrader debut audit 까지 사용 사례 0).
 
 **Story flow (default — single-repo Story 또는 Epic 외 1 child Story)**: **1 Story = 2 PRs**
-- **Phase 1 PR** (요구사항 + 설계 + 설계리뷰 lane): `docs/stories/<KEY>.md` §1-7 + `docs/change-plans/<slug>.md` + `docs/adr/ADR-NNN-<slug>.md`
+- **Phase 1 PR** (요구사항 + 설계 + 설계리뷰 lane): `docs/stories/<KEY>.md` §1-7 + `docs/change-plans/<slug>.md` + `docs/adr/ADR-NNN-<slug>.md`. **(internal-docs SSOT 적용 시, ADR-013 dogfood-out + amendment)**: change-plan 위치는 `<internal-docs-clone>/<plugin-folder>/change-plans/<slug>.md`. Codeforge family / dogfood Story 의 경우 본 path override. 또한 doc-only Story (예: ADR carrier 가 architecture decision SSOT 인 경우) 는 **별도 change-plan 면제** — ADR 가 §3 도입할 설계 SSOT 역할 충족 (ADR-013 정합).
 - **Phase 2 PR** (구현 + 구현리뷰 + 구현테스트 + 보안테스트 lane): `src/**` + `tests/**` + `docs/stories/<KEY>.md` §8-11 append
 
 **Epic flow (cross-repo 또는 multi-Story Epic)** — **1 Epic = Phase 1 doc PR + N implementation PRs + Phase N+1 close PR** (N=3~5 일반적, mctrader 데뷔 audit Issue #181 P1-3, CFP-82):
@@ -113,6 +113,12 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 ### Sonnet Decider (Deprecated — CFP-134 / ADR-035, 2026-05-08)
 
 **DEPRECATED**: Codex review / Sonnet decider 는 codeforge 1st-class component 가 아니라 **사용자 ad-hoc 도구**. codeforge 가 자동 invoke 하지 않음. 사용자 explicit request (e.g., "codex 와 opus 로 심층 리뷰 후 sonnet 으로 정리") 시에만 ad-hoc spawn. 이전 ADR-022 의 5 trigger 자동 발동 + 5-step protocol + decision-packet-v2.1 schema 무효. Architecture decision SSOT = [ADR-035](docs/adr/ADR-035-codeforge-agent-teams-epic-architecture.md) (Epic CFP-134). 상세 deprecation context = [CFP-134 Epic spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-05-08-cfp-134-codeforge-agent-teams-epic-design.md).
+
+#### review-verdict v3 → v4 transitional 처리 (CFP-137 deferred)
+
+ADR-022 deprecate 후 `review-verdict-v3` contract (canonical: codeforge-review plugin / sibling: 본 wrapper repo) 의 Sonnet decider 영역 — `decision_state` enum 의 7 state (`pending_sonnet` 외), `sonnet_final_status`, `decider_decision_ref`, `write_errors` step enum 등 — 전부 **DEPRECATED PASSTHROUGH (NO-OP)** 처리. PL 이 자기 lane synthesis 후 `pl_recommendation` (PASS / FIX / FIX_DISCRETIONARY) 만 직접 적용 — Sonnet final pick 자동 발화 없음.
+
+review-verdict v4 MAJOR bump 가 본 PASSTHROUGH 영역 정식 제거 — **CFP-137 carrier (Wave 2, deferred)**. Wave 2 진입 전까지 v3 schema body verbatim 보존, transitional 기간 동안 Orchestrator + PL 양쪽 NO-OP 영역 미작성 (default / absent). canonical (codeforge-review plugin) 의 review-verdict-v3.md 동기 annotation 의무 — sibling sync follow-up PR 별도 (ADR-010 §단계 절차).
 
 ### FIX 루프
 
@@ -301,15 +307,15 @@ ADR-014 + ADR-012 §3 4번째 SSOT 예외. design lane 의 deputy (CFP-46 Operat
 |---|---|---|
 | codeforge-requirements | `docs/stories/<KEY>.md §2·§5·§6`, `docs/domain-knowledge/<area>/<topic>.md` | `[요구사항]` prefix comment, phase:요구사항→phase:설계 transition, Discussions Q&A routing |
 | codeforge-design | `docs/stories/<KEY>.md §3·§7·§11`, `docs/change-plans/<slug>.md`, `docs/adr/ADR-NNN-<slug>.md` | `[설계]` prefix comment, phase:설계→phase:설계-리뷰 transition |
-| codeforge-review (CFP-35 v2) | `docs/stories/<KEY>.md §9` (각 Review PL) | `[설계-리뷰]` / `[구현-리뷰]` / `[보안-테스트]` prefix comment, gate:design-review-pass / gate:security-test-pass label, phase transition (review-verdict-v2) |
-| **codeforge-review (CFP-61 v3)** | review-verdict-v3 packet 작성 (findings + pl_recommendation), Orchestrator 에 return | (없음 — review-verdict 영역 GitHub write 가 Orchestrator 로 transfer) |
+| codeforge-review (CFP-35 v2 — pre-CFP-61 history) | `docs/stories/<KEY>.md §9` (각 Review PL) | `[설계-리뷰]` / `[구현-리뷰]` / `[보안-테스트]` prefix comment, gate:design-review-pass / gate:security-test-pass label, phase transition (review-verdict-v2). **(History only — CFP-61 부터 final §9 verdict + GitHub gate write 책임 Orchestrator 로 transfer)** |
+| **codeforge-review (CFP-61 v3 — current SSOT, CFP-134 / ADR-035 정정 후)** | review-verdict-v3 packet 작성 (findings + `pl_recommendation`) — synthesis 만, Orchestrator 에 return. **final §9 verdict append + GitHub comment + gate label + phase transition 은 Orchestrator self-write** (Stage 0 spec §3.5 verbatim, ADR-022 Deprecated 후 Sonnet decider 자동 발동 무효) | (review-verdict 영역 GitHub write 는 Orchestrator) |
 | codeforge-develop | `docs/stories/<KEY>.md §8·§8.5`, Phase 2 PR creation | `[구현]` prefix comment, phase:구현→phase:구현-리뷰 transition |
 | codeforge-test | (§9.3 은 Orchestrator 가 verdict receipt 후 처리 — lane plugin 직접 write 안 함) | `[구현-테스트]` prefix comment |
 | codeforge-pmo | `docs/retros/<sprint>.md`, `docs/stories/<KEY>.md §11`, Epic Issue body, Milestone description | `[PMO]` prefix comment, Epic Milestone via gh api |
 
 **Wrapper Orchestrator 단독 영역**:
 - `docs/stories/<KEY>.md §10` FIX Ledger append (CFP-32 monopoly · `fix-event-v1` contract)
-- review-verdict v3 final write: Story §9 append / GitHub comment / gate label / phase transition (CFP-134 / ADR-035 정정 후 PL 직접 write — ADR-022 Deprecated)
+- **review-verdict 최종 write** (Story §9 append / GitHub comment / gate label / phase transition) — **CFP-134 / ADR-035 정정 후 (Stage 0 spec §3.5 verbatim)**: PL synthesis (findings + `pl_recommendation`) 만 lane plugin self-write 영역, **final §9 verdict append + GitHub comment + gate label + phase transition 은 Orchestrator self-write** (ADR-022 Deprecated 후 Sonnet decider 자동 발동 무효 — review-verdict v3 의 Sonnet 5-step 영역 NO-OP, v4 MAJOR bump 가 정식 제거 — CFP-137 deferred).
 - general `docs/**` write (lane plugin owner 외)
 - branch protection · CI workflow · cross-plugin schema templates
 
