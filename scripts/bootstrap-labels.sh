@@ -94,7 +94,41 @@ create_label "category:workflow-invariant" "bfd4f2" "#5 — GitHub Actions 강�
 create_label "category:template"           "c5def5" "#6 — Story / Change Plan / ADR 필드 부족 (owner: per-template)"
 create_label "category:contract-schema"    "bfdadc" "#7 — inter-plugin contract schema 부족 (owner: producer lane plugin)"
 
+# component:* (CFP-131 / Issue #237) — project.yaml `labels.components[]` 에서 동적 read.
+# placeholder ("<REPLACE...") 항목 skip. Python + PyYAML 의존 (codeforge family 표준).
+# --dry-run 모드 에서는 skip — component:* 는 consumer overlay 동적 (CFP-33 check-label-registry
+# strict sync 와 충돌 회피). 실제 gh 호출 시에만 component:* 생성.
+PROJECT_YAML="${PROJECT_YAML:-.claude/_overlay/project.yaml}"
+if [ $DRY_RUN -eq 0 ] && [ -f "$PROJECT_YAML" ]; then
+    # PyYAML preflight — 부재 시 명시적 warning (silent skip 금지, Codex P1 권고)
+    if ! python -c "import yaml" 2>/dev/null; then
+        echo "  ! component:* labels SKIPPED — Python PyYAML 미설치 ('pip install pyyaml' 후 재실행 권장). 29 base label 만 처리됨." >&2
+    else
+        # path 를 argv 로 안전 전달 (shell quoting 회피, Codex P1 권고)
+        components=$(python -c "
+import sys, yaml
+try:
+    with open(sys.argv[1], 'r', encoding='utf-8') as f:
+        d = yaml.safe_load(f) or {}
+    for c in (d.get('labels', {}) or {}).get('components', []) or []:
+        if isinstance(c, str) and not c.startswith('<REPLACE'):
+            print(c)
+except Exception as e:
+    print(f'PARSE_ERROR: {e}', file=sys.stderr)
+    sys.exit(1)
+" "$PROJECT_YAML" 2>/dev/null) || components=""
+
+        if [ -n "$components" ]; then
+            # printf 로 안전 iterate (echo $var 회피, Codex P1 권고)
+            printf '%s\n' "$components" | while IFS= read -r c; do
+                [ -z "$c" ] && continue
+                create_label "component:$c" "ededed" "Component: $c"
+            done
+        fi
+    fi
+fi
+
 if [ $DRY_RUN -eq 0 ]; then
     echo ""
-    echo "✓ 29 label 처리 완료. 'gh label list' 로 확인."
+    echo "✓ 29 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."
 fi
