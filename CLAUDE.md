@@ -30,7 +30,7 @@ Lane internal · per-lane spawn detail · severity rule · GitHub workflow subse
 - `superpowers@claude-plugins-official` — 17 lane agent × 7 skill 호출 (SSOT: [`docs/superpowers-integration.md`](docs/superpowers-integration.md))
 - `github@claude-plugins-official` — GitHub MCP 도구 노출
 
-**필수 CLI (2종)**: `codex`, `gh`. (CFP-59 / ADR-019 → ADR-022 — Gemini CLI 의존 제거. Sonnet decider = Claude Code Agent tool runtime, 외부 auth 무관. `gemini` CLI 가 다른 용도로 설치되어 있으면 unset / removable optional.)
+**필수 CLI (2종)**: `codex`, `gh`. (CFP-59 / ADR-019 → ADR-022 (Superseded by CFP-134) — Gemini CLI 의존 제거. ad-hoc Sonnet / Codex 호출 = Claude Code Agent tool runtime / codex CLI, 외부 auth 무관. `gemini` CLI 가 다른 용도로 설치되어 있으면 unset / removable optional.)
 
 **권장 플러그인 (4종, 미설치 시 권유만)**: `pyright-lsp`, `context7`, `commit-commands`, `pr-review-toolkit`
 
@@ -100,7 +100,9 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 > **Orchestrator 행동 SSOT**: [`docs/orchestrator-playbook.md`](docs/orchestrator-playbook.md) — 세션 생명주기, 스폰 프롬프트 템플릿, 병렬 스폰 판단, FIX 상태 머신, 세션 재개 복원, 토큰 예산.
 
-**플랫폼 제약** — 하위 에이전트는 Agent 툴 사용 불가 (재귀 스폰 금지), 서브에이전트 간 직접 통신 불가, **서브에이전트 one-shot** (PL ↔ 서브 continuous dialog 불가 → PL 이 Orchestrator 에 재 spawn 의뢰). 모든 스폰은 최상위 Claude.
+**Default subagent context 의 codeforge 정책 결정** (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0` 또는 미설정 시) — 하위 에이전트는 Agent 툴 사용 불가 (재귀 스폰 금지 — platform inherent), 서브에이전트 간 직접 통신 불가 (codeforge 정책 — agent teams enabled context 별도), 서브에이전트 one-shot (codeforge 정책). 모든 스폰은 최상위 Claude.
+
+**Agent teams enabled context 별도** (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`, CFP-137 적용 후) — sibling teammate 간 SendMessage 사용 가능 + long-running + continuous dialog 가능. 단 (a) 재귀 스폰 금지 (platform inherent — Lead 와 teammate 모두), (b) nested team 금지 (no team-of-teams), (c) one-team-per-lead 강제. 상세는 CFP-137 진행 후 codeforge agent teams policy ADR 참조.
 
 **Wrapper 위임 패턴**:
 - 컨텍스트 전달: `docs/stories/<KEY>.md` SSOT, agent 프롬프트는 path 주입, 본문은 agent self-fetch — Context Packet / §0 Live Progress / Project Config Packet 상세는 [playbook §12·§14](docs/orchestrator-playbook.md)
@@ -108,72 +110,17 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 - **Lane-spawn evidence (ADR-031, CFP-126)**: 매 lane spawn 시 Story §14 Lane Evidence row append (start: spawn 직전, end: return 직후 outcome 채움) + Phase 2 PR description `## Lane evidence` 블록 의무. `lane-evidence-check.yml` workflow + `scripts/check-lane-evidence.sh` lint 가 cross-validate. Bypass = `BYPASS_LANE_EVIDENCE=1` + `BYPASS_LANE_EVIDENCE_REASON` env. Effective date = ADR-031 Accepted 후 신규 Phase 2 PR 부터 (retroactive 미처리). `.claude-work/progress/<KEY>.md` (CFP-20 NG6 cache) 와 분리 — §14 가 SSOT.
 - Track 병렬 (R7 설계리뷰 PASS 시): Track A (DesignReviewPL merge gate) ∥ Track B (DeveloperPL Phase 2 PR 준비) — 상세 [playbook §3.1]
 
-### Sonnet Decider (CFP-61 / ADR-022)
+### Sonnet Decider (Superseded — CFP-134, 2026-05-08)
 
-Substantive choice trigger 발화 시 **Claude Sonnet (`claude-sonnet-4-6`)** = 최종 결정자. Claude Opus + Codex = 동급 대안 생성자 + 교차 reviewer. **Decider 모델 invariant** (CFP-61 / ADR-022 §결정 4): decider ≠ option-generator (Claude Opus 4.7) AND ≠ cross-reviewer (Claude + Codex) AND ≠ sanity-auditor (Codex). enforcement = exact model-ID + role level (vendor / family level 아님). Sonnet (`claude-sonnet-4-6`) 채택 정합 — 모든 다른 model-ID 와 distinct.
-
-**자동 trigger 5 종**:
-- (a) substantive 다중 선택지
-- (b) FIX root-cause 불일치
-- (c) Codex ambiguity — **scope narrowing (CFP-61)**: option-formulation 단계 한정 (substantive choice 의 options proposal 시 Codex 가 옵션 결정 못하는 ambiguity). review-verdict 흐름의 worker (CodexReviewAgent) finding severity ambiguity 는 본 trigger 미발화 — `packet_requires_review_reopen` 으로 routing 처리 (5-step step 3). ADR-019 §결정 2 의 "Codex ambiguity" 광의 정의 → ADR-022 narrowing.
-- (d-constraint) 제약 surfacing Q
-- **(e) review-verdict — NEW (CFP-61)**: 매 review iteration (DesignReview / CodeReview / SecurityTest) 종료 후 Sonnet final pick (PASS/FIX). worker ambiguity 는 본 trigger 의 packet 흐름 내에서 reopen mechanism 으로 처리 (별도 trigger c packet 미발화).
-
-**5-step Orchestrator algorithm (trigger e, ADR-022 §결정 3)**:
-
-```
-1. ReviewPL spawn → workers (Claude+Codex parallel) → dedup → review-verdict-v3 packet (no writes)
-   ├── findings + pl_recommendation 작성
-   ├── decision_state = pending_sonnet (or blocked_packet_incomplete if pl_recommendation=ESCALATE_PACKET_INCOMPLETE)
-   └── return to Orchestrator
-2. Orchestrator: decision-packet-v2.1 작성 (trigger: review-verdict, review_lane_context populated, findings_hash verified)
-3. Orchestrator: Agent tool with model:sonnet 호출 → 응답 parse (§4.5.3 Sonnet 응답 schema)
-   ├── decision=PASS|FIX → sonnet_final_status 채움, decision_state=decided, step 4 로 진행
-   ├── decision=PACKET_REQUIRES_REVIEW_REOPEN → decision_state=review_reopen_requested, ReviewPL 재 spawn (1 회 한도 per (story_key,lane,iteration))
-   └── timeout/malformed (Codex P1 #4) → decision_state=decider_timeout
-       └── Story §9 / §10 append 차단. §12 row append (decider_pick=<none>, audit_result=user-escalation, attempts[].outcome=timeout|malformed)
-4. Orchestrator self-write (decision_state=decided 일 때만):
-   ├── Story §9 append (lane iteration result) — append-only, never rolled back
-   ├── GitHub Issue/PR comment ([<lane>-리뷰] / [보안-테스트] prefix) via mcp__github__add_issue_comment
-   ├── PASS 시: gate:*-pass label + phase:* 다음 단계 전환 via mcp__github__issue_write
-   └── Story §12 Sonnet Decision Log row append
-   
-   **Partial-write policy (Codex P1 #5)**: 각 sub-step 별 idempotent retry (initial + 2 retry = 3 회 한도, Codex Round 2 gap fix). 실패 시 `writes_completed.<field>=false` + `write_errors[]` populate, decision_state=write_partial. **any required write 가 retry 한도 후에도 false 잔존 시 user escalation** (모든 required 가 아닌 1 건이라도 잔존 시 — Codex Round 2 gap fix wording 명확화). Story §9 + §12 는 append-only — 이미 append 된 내용 rollback 안 함. 외부 복구 후 다음 spawn 사이클에 missing write 재시도 가능 (write_partial → write_complete 전환).
-5. FIX 시 (sonnet_final_status=FIX):
-   ├── Story §10 FIX Ledger append (decider: claude_sonnet, override marker if pl_recommendation != sonnet_final_status)
-   ├── fix-ledger-sync.yml Action mirror (auto)
-   ├── DeveloperPL + ArchitectPL parallel diagnosis spawn (CFP-19 R4)
-   
-   **Spawn-failure policy (Codex P1 #6)**: §10 append 성공 + diagnosis spawn 실패 시 — §10 row 유지 (append-only), §12 append (audit_result=user-escalation, spawn_status=failed), 1 회 retry → second failure = user escalation. spawn 성공할 때까지 §10 row 는 "open FIX with no diagnosis" 상태로 visible.
-```
-
-**User escalation whitelist** (5 종): (d-intent) 사용자 의도 추정 / (e2) lane FIX max 3 / 운영 prerequisite 실패 / destructive action / denylist (보안 sensitive). 정의 SSOT = ADR-022 §결정 2.
-
-**Decision flow**: Claude options → Codex options (codex-rescue, memory trigger 1 Round 1) → cross-review → `decision-packet-v2.1` 작성 → **`Agent` tool with `model: sonnet`** call → pick handling (direct vs Codex sanity audit override) → log.
-
-**Operational policy**: Sonnet = Agent tool runtime (Anthropic billing 내, 외부 auth 무관). 외부 `GEMINI_API_KEY` / Plus subscription / Vertex AI / GCA 모두 제거됨.
-
-**Consumer scope (CFP-61 / ADR-022 §결정 11)**: ADR-022 적용 범위 = **codeforge-family + consumer**. Phase 1 trust model — consumer Orchestrator 가 사용자 명시 directive 발화 의무 (enforcement hook 없음). Phase 2 ROI-driven instrumentation 은 30+ packet 후 별도 CFP. 상세: [consumer-guide.md](docs/consumer-guide.md) §"Sonnet Decider 정책".
-
-**Stop discipline + Epic-level continuity (ADR-025 + Amendment 1, CFP-73 / CFP-80)**: "Sonnet decides ⇒ Orchestrator proceeds without user confirmation". Whitelist 외 stop = `policy_violation` (defect). **Epic-level continuity** (CFP-80 / ADR-025 Amendment 1, 2026-05-04): 사용자 메시지 받은 시점 = 작업 단위 식별 (Epic / backlog / Story / 명시 선택 / 정보 요청). 작업 단위 안의 모든 sub-decision / sub-CFP 자동 통과 + **1번 final report**. Phase boundary / sub-step 사이 stop = defect. 합법 stop whitelist 5종 strict (user environment 변경 의무 / destructive action 직전 / 진정 unprecedented / decider escalation_required=true / 작업 단위 완료 후 final report). consumer 측도 동일 적용 — [consumer-guide.md](docs/consumer-guide.md) § "Stop discipline + Epic-level continuity".
-
-**Phase execution visibility (ADR-029, CFP-114)**: 모든 phase + sub-step (deputy spawn / return / 병렬 dispatch / R9 subset) 완료 시 stderr 1-line narrate. Format `[<lane-한국어>] <event>: <detail>`. Verbosity 조절 = consumer overlay `progress_narration_verbosity: full | lane_only` (default `full`). Trigger SSOT [playbook §14.5](docs/orchestrator-playbook.md). Stop discipline 정책 무변화 — 본 ADR 는 visibility expansion 만.
-
-**Logging**: Story §10 FIX Ledger (trigger b / trigger e FIX 시 `decider: claude_sonnet` 컬럼 + override marker) + Story §12 "Sonnet Decision Log" (per-Story append-only) + `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` (full v2.1 schema, includes `decider_decision.model` field + `review_lane_context` block when trigger=review-verdict).
-
-**Phase 1 = doc-only** (CFP-61). agent / skill / 코드 추가 없음. Phase 2 subagent ROI 평가 = 후속 CFP (30+ packet 운영 후). 정책 SSOT: [ADR-022](docs/adr/ADR-022-sonnet-review-verdict-decider.md). Schema SSOT: [decision-packet-v2](docs/inter-plugin-contracts/decision-packet-v2.md) (v2.1 minor bump).
-
-ADR-018 (CFP-57 carrier — Gemini decider) + ADR-018 Amendment 1 (CFP-58 — Sonnet quota fallback) **superseded** by ADR-019 (2026-05-02). ADR-019 (CFP-59 — Sonnet decider auto-proceed) **superseded** by 본 ADR-022 (2026-05-02).
+**SUPERSEDED**: Codex review / Sonnet decider 는 codeforge 1st-class component 가 아니라 **사용자 ad-hoc 도구**. codeforge 가 자동 invoke 하지 않음. 사용자 explicit request (e.g., "codex 와 opus 로 심층 리뷰 후 sonnet 으로 정리") 시에만 ad-hoc spawn. 이전 ADR-022 의 5 trigger 자동 발동 + 5-step protocol + decision-packet-v2.1 schema 무효. 상세 supersession context = [CFP-134 Epic spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-05-08-cfp-134-codeforge-agent-teams-epic-design.md).
 
 ### FIX 루프
 
-**판정 SSOT** = codeforge-review [`templates/review-pl-base.md`](https://github.com/mclayer/plugin-codeforge-review/blob/main/templates/review-pl-base.md) §3 (severity 종합·dedup·판정). Contract surface = [`review-verdict-v3`](docs/inter-plugin-contracts/review-verdict-v3.md) `pl_recommendation` (PASS / FIX / FIX_DISCRETIONARY) → Sonnet `sonnet_final_status` (PASS / FIX).
+**판정 SSOT** = codeforge-review [`templates/review-pl-base.md`](https://github.com/mclayer/plugin-codeforge-review/blob/main/templates/review-pl-base.md) §3 (severity 종합·dedup·판정). Contract surface = [`review-verdict-v3`](docs/inter-plugin-contracts/review-verdict-v3.md) `pl_recommendation` (PASS / FIX / FIX_DISCRETIONARY).
 
 **트리거**: 설계 리뷰 FIX → ArchitectPLAgent 회귀. 구현 리뷰·구현 테스트·보안 테스트 FAIL → DeveloperPL 1차 진단 + ArchitectPLAgent 최종 판정 (parallel diagnosis).
 
-**review-verdict trigger e (CFP-61)**: review iteration 의 PL pl_recommendation → Orchestrator decision-packet v2.1 (trigger: review-verdict) → Sonnet final pick (PASS/FIX) → FIX 시 §10 FIX Ledger append (decider:claude_sonnet, override marker if pl_recommendation != sonnet_final_status) + DeveloperPL+ArchitectPL parallel diagnosis spawn (CFP-19 R4).
-
-**원인 판정 최종 결정자** (CFP-61 / ADR-022): Claude vs Codex 1차 판정 불일치 시 — **Claude Sonnet (`claude-sonnet-4-6`)** 가 decision-packet-v2.1 받아 final pick. Story §10 row 의 `원인 판정` 컬럼 = Sonnet 결정 반영, `decider:claude_sonnet`. Sonnet 실패 시 user escalation (recursive chain 없음). 상세 = ADR-022. (ADR-018 + Amendment 1 superseded by ADR-019 (Superseded by ADR-022).)
+**원인 판정 최종 결정자** (CFP-134 정정 후): PL 이 자기 lane review-verdict 의 final pl_recommendation 작성. Sonnet decider 자동 발동 무효 (ADR-022 Superseded — CFP-134). FIX root cause 원인 판정 (설계 vs 구현) 은 ArchitectPLAgent 가 DeveloperPL 1차 진단 받은 후 최종 결정. 사용자 explicit request 시에만 ad-hoc Sonnet 호출 가능.
 
 **카운터 SSOT** = `docs/stories/<KEY>.md` §10 "FIX Ledger" — Orchestrator 단독 관리 ([fix-event-v1](docs/inter-plugin-contracts/fix-event-v1.md) contract, CFP-32 monopoly). GitHub Issue 라벨은 보조 (fix-ledger-sync.yml Action mirror).
 
@@ -242,7 +189,7 @@ ADR-018 (CFP-57 carrier — Gemini decider) + ADR-018 Amendment 1 (CFP-58 — So
 
 네 레인의 체크 항목이 겹치지 않도록 분담. 한쪽에서 커버된 항목은 다른 쪽에서 재검토하지 않음.
 
-**review verdict write 책임 (CFP-61 부터)**: review-verdict v3 schema 의 final gate write (Story §9 / GitHub comment / gate label / phase transition) = **Orchestrator**. PL = synthesis (findings + pl_recommendation) only. SSOT: ADR-022 §결정 4 (review synthesis ownership ≠ final gate write authority).
+**review verdict write 책임 (CFP-134 정정 후)**: review-verdict v3 schema 의 final gate write (Story §9 / GitHub comment / gate label / phase transition) = **PL** (자기 lane synthesis 후 직접 write). Sonnet decider 자동 발동 무효 (ADR-022 Superseded — CFP-134). 사용자 explicit request 시에만 ad-hoc Sonnet 호출 가능.
 
 | 체크 항목 | DesignLane | DesignReview | CodeReview | SecurityTest |
 |-----------|:----------:|:------------:|:----------:|:------------:|
@@ -362,7 +309,7 @@ ADR-014 + ADR-012 §3 4번째 SSOT 예외. design lane 의 deputy (CFP-46 Operat
 
 **Wrapper Orchestrator 단독 영역**:
 - `docs/stories/<KEY>.md §10` FIX Ledger append (CFP-32 monopoly · `fix-event-v1` contract)
-- review-verdict v3 final write: Story §9 append / GitHub comment / gate label / phase transition post-Sonnet (CFP-61 신규 영역 — ADR-022 §결정 4)
+- review-verdict v3 final write: Story §9 append / GitHub comment / gate label / phase transition (CFP-134 정정 후 PL 직접 write — ADR-022 Superseded)
 - general `docs/**` write (lane plugin owner 외)
 - branch protection · CI workflow · cross-plugin schema templates
 

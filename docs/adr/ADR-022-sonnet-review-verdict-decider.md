@@ -1,7 +1,10 @@
 ---
 adr_number: 22
 title: Sonnet Decider — Comprehensive Policy (Triggers + Consumer Scope + Review-Verdict)
-status: Accepted
+status: Superseded
+superseded_by: CFP-134
+superseded_date: 2026-05-08
+superseded_reason: "Codex review / Sonnet decider 가 codeforge 1st-class component 가 아닌 사용자 ad-hoc 도구로 framing 정정 (CFP-134 Epic). 본 정책 (5 trigger 자동 발동) 무효."
 category: Team & Process
 date: 2026-05-02
 related_files:
@@ -23,6 +26,8 @@ related_stories:
 # ADR-022: Sonnet Decider — Comprehensive Policy
 
 ## 상태
+
+**SUPERSEDED 2026-05-08 (CFP-134 Epic)**: Codex review / Sonnet decider 가 codeforge 1st-class component 가 아니라 사용자 ad-hoc 도구로 정정. 본 ADR 의 5 trigger 자동 발동 + 5-step Orchestrator algorithm 무효. 사용자 explicit request 시에만 ad-hoc invoke.
 
 Accepted (2026-05-02) — CFP-61 carrier. **Supersedes ADR-019** (1-day succession).
 

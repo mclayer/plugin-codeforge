@@ -4,6 +4,12 @@ title: Story-scoped branch policy — main 직접 수정 금지 + Phase 2 enforc
 status: Accepted
 category: governance
 date: 2026-05-03
+amended_by: CFP-134
+amended_date: 2026-05-08
+amendments:
+  - by: "CFP-134"
+    date: "2026-05-08"
+    scope: "hierarchical branch convention 추가 — flat cfp-NNN 에서 cfp-NNN[/<lane>[/<sub>]] 계층까지 분기 가능"
 related_files:
   - CLAUDE.md
   - docs/consumer-guide.md
@@ -128,3 +134,48 @@ CODEOWNERS file 자체는 **유지** — auto review request 발생 = 도덕적 
 **가정 변경 시 재검토 의무**: contributor 추가 (외부 PR 가능성 발생) 시점에 `require_code_owner_reviews:true` + `required_approving_review_count:1` 복원 의무. 본 § = 재검토 trigger.
 
 CFP-72 본 PR 자체가 governance gap **마지막** 임시 bypass 사용 사례 — merge 후 영구 해결 적용 → 재발 0.
+
+## Amendment 1 — Hierarchical branch convention (CFP-134, 2026-05-08)
+
+### 컨텍스트
+
+Agent teams 적극 도입 (CFP-137) + worktree infrastructure (CFP-136) 도입 시 1 Story = N teammate 가 자기 sub-branch 위에서 병렬 작업. flat naming (`cfp-NNN[-slug]`) 으로는 lane / sub-task 분기 표현 불가. 사용자 directive (CFP-134 Epic, 2026-05-08): "Epic > Story > sub... 이렇게 있는 경우 branch 를 하위 생성하여 agent 내에서 적극적으로 병렬 작업".
+
+### Amendment
+
+기존 §결정 1 의 branch naming 확장:
+
+```yaml
+naming_convention:
+  story_root: cfp-NNN[-slug]              # 기존 — 변경 없음
+  lane: cfp-NNN/<lane-name>               # 신규 — lane 단위 sub-branch
+  sub_task: cfp-NNN/<lane-name>/<sub-name>  # 신규 — deputy / role:dev 등 sub-task
+  fix_iter: cfp-NNN/fix-iter-<N>          # 신규 — FIX iteration 임시 branch
+  retro: cfp-NNN/retro                    # 신규 — retro 작업 임시 branch
+
+example_paths:
+  - cfp-135                               # Story root
+  - cfp-135-foundation                    # Story root with slug
+  - cfp-NNN/design                        # design lane sub-branch
+  - cfp-NNN/design/chief                  # design lane chief author sub-branch
+  - cfp-NNN/design/mapper                 # design lane CodebaseMapper deputy sub-branch
+  - cfp-NNN/code-review/codex-worker      # code review lane Codex worker sub-branch
+```
+
+### 적용 규칙
+
+- 모든 sub-branch 는 자기 worktree (CFP-136 infrastructure) 에서 작업 — file 충돌 0
+- Lane 완료 시 sub-branch → lane branch sequential merge → Story root branch merge → main PR
+- GitOpsAgent (CFP-139) 가 worktree lifecycle + sequential merge 담당
+- Phase 2 enforcement (branch naming auto enforcement) 는 별도 CFP — solo-dev 환경 deferred (현재 ADR-024 결정 4)
+
+### Compatibility
+
+기존 flat naming `cfp-NNN[-slug]` 그대로 유효 — story root branch 로 사용. 신규 hierarchical 은 sub-branch 영역 추가만.
+
+### Related
+
+- CFP-134 Epic spec: `<internal-docs>/wrapper/specs/2026-05-08-cfp-134-codeforge-agent-teams-epic-design.md` §3.4
+- CFP-136 (worktree infrastructure) — 본 amendment 의 prerequisite
+- CFP-137 (agent teams 적극 도입) — 본 amendment 의 use case
+- CFP-139 (GitOpsAgent) — 본 amendment 의 enforcement
