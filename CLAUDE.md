@@ -30,7 +30,7 @@ Lane internal · per-lane spawn detail · severity rule · GitHub workflow subse
 - `superpowers@claude-plugins-official` — 17 lane agent × 7 skill 호출 (SSOT: [`docs/superpowers-integration.md`](docs/superpowers-integration.md))
 - `github@claude-plugins-official` — GitHub MCP 도구 노출
 
-**필수 CLI (2종)**: `codex`, `gh`. (CFP-59 / ADR-019 → ADR-022 (Superseded by CFP-134) — Gemini CLI 의존 제거. ad-hoc Sonnet / Codex 호출 = Claude Code Agent tool runtime / codex CLI, 외부 auth 무관. `gemini` CLI 가 다른 용도로 설치되어 있으면 unset / removable optional.)
+**필수 CLI (2종)**: `codex`, `gh`. (CFP-59 / ADR-019 → ADR-022 (Deprecated by CFP-134 / ADR-035) — Gemini CLI 의존 제거. ad-hoc Sonnet / Codex 호출 = Claude Code Agent tool runtime / codex CLI, 외부 auth 무관. `gemini` CLI 가 다른 용도로 설치되어 있으면 unset / removable optional.)
 
 **권장 플러그인 (4종, 미설치 시 권유만)**: `pyright-lsp`, `context7`, `commit-commands`, `pr-review-toolkit`
 
@@ -110,9 +110,9 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 - **Lane-spawn evidence (ADR-031, CFP-126)**: 매 lane spawn 시 Story §14 Lane Evidence row append (start: spawn 직전, end: return 직후 outcome 채움) + Phase 2 PR description `## Lane evidence` 블록 의무. `lane-evidence-check.yml` workflow + `scripts/check-lane-evidence.sh` lint 가 cross-validate. Bypass = `BYPASS_LANE_EVIDENCE=1` + `BYPASS_LANE_EVIDENCE_REASON` env. Effective date = ADR-031 Accepted 후 신규 Phase 2 PR 부터 (retroactive 미처리). `.claude-work/progress/<KEY>.md` (CFP-20 NG6 cache) 와 분리 — §14 가 SSOT.
 - Track 병렬 (R7 설계리뷰 PASS 시): Track A (DesignReviewPL merge gate) ∥ Track B (DeveloperPL Phase 2 PR 준비) — 상세 [playbook §3.1]
 
-### Sonnet Decider (Superseded — CFP-134, 2026-05-08)
+### Sonnet Decider (Deprecated — CFP-134 / ADR-035, 2026-05-08)
 
-**SUPERSEDED**: Codex review / Sonnet decider 는 codeforge 1st-class component 가 아니라 **사용자 ad-hoc 도구**. codeforge 가 자동 invoke 하지 않음. 사용자 explicit request (e.g., "codex 와 opus 로 심층 리뷰 후 sonnet 으로 정리") 시에만 ad-hoc spawn. 이전 ADR-022 의 5 trigger 자동 발동 + 5-step protocol + decision-packet-v2.1 schema 무효. 상세 supersession context = [CFP-134 Epic spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-05-08-cfp-134-codeforge-agent-teams-epic-design.md).
+**DEPRECATED**: Codex review / Sonnet decider 는 codeforge 1st-class component 가 아니라 **사용자 ad-hoc 도구**. codeforge 가 자동 invoke 하지 않음. 사용자 explicit request (e.g., "codex 와 opus 로 심층 리뷰 후 sonnet 으로 정리") 시에만 ad-hoc spawn. 이전 ADR-022 의 5 trigger 자동 발동 + 5-step protocol + decision-packet-v2.1 schema 무효. Architecture decision SSOT = [ADR-035](docs/adr/ADR-035-codeforge-agent-teams-epic-architecture.md) (Epic CFP-134). 상세 deprecation context = [CFP-134 Epic spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-05-08-cfp-134-codeforge-agent-teams-epic-design.md).
 
 ### FIX 루프
 
@@ -120,7 +120,7 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 **트리거**: 설계 리뷰 FIX → ArchitectPLAgent 회귀. 구현 리뷰·구현 테스트·보안 테스트 FAIL → DeveloperPL 1차 진단 + ArchitectPLAgent 최종 판정 (parallel diagnosis).
 
-**원인 판정 최종 결정자** (CFP-134 정정 후): PL 이 자기 lane review-verdict 의 final pl_recommendation 작성. Sonnet decider 자동 발동 무효 (ADR-022 Superseded — CFP-134). FIX root cause 원인 판정 (설계 vs 구현) 은 ArchitectPLAgent 가 DeveloperPL 1차 진단 받은 후 최종 결정. 사용자 explicit request 시에만 ad-hoc Sonnet 호출 가능.
+**원인 판정 최종 결정자** (CFP-134 / ADR-035 정정 후): PL 이 자기 lane review-verdict 의 final pl_recommendation 작성. Sonnet decider 자동 발동 무효 (ADR-022 Deprecated — CFP-134). FIX root cause 원인 판정 (설계 vs 구현) 은 ArchitectPLAgent 가 DeveloperPL 1차 진단 받은 후 최종 결정. 사용자 explicit request 시에만 ad-hoc Sonnet 호출 가능.
 
 **카운터 SSOT** = `docs/stories/<KEY>.md` §10 "FIX Ledger" — Orchestrator 단독 관리 ([fix-event-v1](docs/inter-plugin-contracts/fix-event-v1.md) contract, CFP-32 monopoly). GitHub Issue 라벨은 보조 (fix-ledger-sync.yml Action mirror).
 
@@ -189,7 +189,7 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 네 레인의 체크 항목이 겹치지 않도록 분담. 한쪽에서 커버된 항목은 다른 쪽에서 재검토하지 않음.
 
-**review verdict write 책임 (CFP-134 정정 후)**: review-verdict v3 schema 의 final gate write (Story §9 / GitHub comment / gate label / phase transition) = **PL** (자기 lane synthesis 후 직접 write). Sonnet decider 자동 발동 무효 (ADR-022 Superseded — CFP-134). 사용자 explicit request 시에만 ad-hoc Sonnet 호출 가능.
+**review verdict write 책임 (CFP-134 / ADR-035 정정 후)**: review-verdict v3 schema 의 final gate write (Story §9 / GitHub comment / gate label / phase transition) = **PL** (자기 lane synthesis 후 직접 write). Sonnet decider 자동 발동 무효 (ADR-022 Deprecated — CFP-134). 사용자 explicit request 시에만 ad-hoc Sonnet 호출 가능.
 
 | 체크 항목 | DesignLane | DesignReview | CodeReview | SecurityTest |
 |-----------|:----------:|:------------:|:----------:|:------------:|
@@ -309,7 +309,7 @@ ADR-014 + ADR-012 §3 4번째 SSOT 예외. design lane 의 deputy (CFP-46 Operat
 
 **Wrapper Orchestrator 단독 영역**:
 - `docs/stories/<KEY>.md §10` FIX Ledger append (CFP-32 monopoly · `fix-event-v1` contract)
-- review-verdict v3 final write: Story §9 append / GitHub comment / gate label / phase transition (CFP-134 정정 후 PL 직접 write — ADR-022 Superseded)
+- review-verdict v3 final write: Story §9 append / GitHub comment / gate label / phase transition (CFP-134 / ADR-035 정정 후 PL 직접 write — ADR-022 Deprecated)
 - general `docs/**` write (lane plugin owner 외)
 - branch protection · CI workflow · cross-plugin schema templates
 
