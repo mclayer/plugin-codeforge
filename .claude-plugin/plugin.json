@@ -1,7 +1,7 @@
 {
   "name": "codeforge",
-  "version": "5.4.0",
-  "description": "Claude Code SW 개발 오케스트레이션 wrapper-only plugin. ζ arc 완료 (CFP-40, 2026-04-29) + CFP-46 OperationalRiskArchitect 6th deputy + §7.4 / §11.6 idempotency CONDITIONAL (2026-04-30) + CFP-47 §8.5 Stateful / restart invariant test category + StatefulTestAgent split (2026-04-30) + CFP-259 Epic plugin version governance + project key atomic reservation (ADR-036/037, 2026-05-08). Agent 0개 — protocol/CI/schemas/bootstrap/Orchestrator instructions 만 보유. 6 lane plugin 의존: codeforge-{requirements,design,develop,test,review,pmo}. Inter-plugin contract 6 entry / 8 file + invariant SSOT 3종 (ADR-008/009/010/012/013/014/015/036/037).",
+  "version": "5.5.0",
+  "description": "Claude Code SW 개발 오케스트레이션 wrapper-only plugin. ζ arc 완료 (CFP-40, 2026-04-29) + CFP-46 OperationalRiskArchitect 6th deputy + §7.4 / §11.6 idempotency CONDITIONAL (2026-04-30) + CFP-47 §8.5 Stateful / restart invariant test category + StatefulTestAgent split (2026-04-30) + CFP-259 Epic plugin version governance + project key atomic reservation (ADR-036/037, 2026-05-08) + CFP-273 SessionStart drift check hook sample (2026-05-08). Agent 0개 — protocol/CI/schemas/bootstrap/Orchestrator instructions 만 보유. 6 lane plugin 의존: codeforge-{requirements,design,develop,test,review,pmo}. Inter-plugin contract 6 entry / 8 file + invariant SSOT 3종 (ADR-008/009/010/012/013/014/015/036/037).",
   "author": { "name": "Josh" },
   "keywords": [
     "orchestration",

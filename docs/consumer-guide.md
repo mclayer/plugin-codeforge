@@ -166,19 +166,32 @@ pwsh -File ${env:CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-debut-readiness.ps1
 
 **KEY 사전 확보 (선택, ADR-036 / CFP-260 — Option B)**: brainstorming 시점에 KEY 미리 확보가 필요하면 `gh issue create --template cfp-reserve.yml` (또는 GitHub UI New Issue → "CFP key reservation"). 받은 Issue # 가 KEY 가 됨 (`<PREFIX>-<#>`, 예: TM-247). spec 작성 후 label `phase:reservation` → `phase:요구사항` + `type:story` 로 promote 시 story-init.yml 자동 트리거. 30 일 미진행 시 `reservation-cleanup.yml` 가 자동 close.
 
-**Version drift 검사 (선택, ADR-037 / CFP-262 — 권장)**: consumer 가 stale codeforge plugin 으로 작업 진입 시 silent corruption 위험. SessionStart hook 으로 자동 검사 권장:
+**Version drift 검사 (선택, ADR-037 / CFP-262 / CFP-273 — 권장)**: consumer 가 stale codeforge plugin 으로 작업 진입 시 silent corruption 위험. SessionStart hook 으로 자동 검사 권장.
 
-```jsonc
-// .claude/_overlay/.claude/hooks/SessionStart-codeforge-drift.json
-{
-  "command": "${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-version-drift.sh",
-  "type": "block-on-error",
-  "matcher": "*",
-  "description": "codeforge plugin family version drift check (CFP-262)"
-}
+**Activate (cp 방식, CFP-273)**:
+
+```bash
+# Sample hook config 복사 (overlay/hooks/merge.py 가 settings.json 에 자동 merge)
+mkdir -p .claude/_overlay/.claude/hooks/
+cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/.claude/hooks/SessionStart-codeforge-drift.json.sample \
+   .claude/_overlay/.claude/hooks/SessionStart-codeforge-drift.json
 ```
 
-또는 manual: `bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-version-drift.sh`. MAJOR drift → exit 1 (hard-stop), MINOR/PATCH → exit 0 (warning/info). Bypass: `BYPASS_VERSION_DRIFT=1 BYPASS_VERSION_DRIFT_REASON='<text>'`.
+**Manual 실행 (hook 미사용 시)**:
+
+```bash
+bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-version-drift.sh
+# Exit 0 = no drift / MINOR / PATCH (작업 진행)
+# Exit 1 = MAJOR drift (hard-stop, /plugins update <name> 의무)
+# Exit 2 = prerequisite missing (gh CLI / jq / awk / gh auth status)
+```
+
+**Severity → action (ADR-037 cross-ref)**:
+- **MAJOR** = hard-stop blocking → `/plugins update <name>` 의무 + Orchestrator 재 spawn
+- **MINOR** = warning + auto-proceed → 작업 진행, 사용자에게 update 권유
+- **PATCH** = info only → 작업 진행, log 만
+
+**Bypass (긴급 / network 부재 시)**: `BYPASS_VERSION_DRIFT=1 BYPASS_VERSION_DRIFT_REASON='<text>'`. reason field non-empty 의무 (audit trail).
 
 **FAIL 시**: stderr 의 안내 따라 manual fix 또는 §2a-§2h manual fallback 절차 활용. `--dry-run` 으로 변경 미적용 사전 진단, `--reset` 으로 state marker 삭제 + clean 재시도.
 

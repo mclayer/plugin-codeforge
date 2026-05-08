@@ -1,0 +1,19 @@
+{
+  "_comment": "codeforge plugin family version drift check — SessionStart hook sample (CFP-262 / ADR-037 / CFP-273).",
+  "_doc": "Append this hook definition to consumer's `.claude/settings.json` under `hooks.SessionStart[]` array. Or merge via overlay/hooks/merge.py.",
+  "_severity": "MAJOR drift = exit 1 (hard-stop, blocks session) / MINOR = warning + auto-proceed / PATCH = info only",
+  "_bypass": "BYPASS_VERSION_DRIFT=1 + BYPASS_VERSION_DRIFT_REASON=<text> env (audit trail 의무)",
+  "_prerequisite": "gh CLI authenticated (gh auth status PASS) + jq + awk",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-version-drift.sh"
+          }
+        ]
+      }
+    ]
+  }
+}

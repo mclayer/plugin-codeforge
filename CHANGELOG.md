@@ -5,6 +5,17 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.5.0] - 2026-05-08
+
+### CFP-273 — SessionStart-codeforge-drift.json.sample consumer overlay (CFP-262 spillover)
+
+- `templates/.claude/hooks/SessionStart-codeforge-drift.json.sample` (NEW) — drift check hook 의 ready-to-cp sample. consumer 가 `.claude/_overlay/.claude/hooks/SessionStart-codeforge-drift.json` 으로 복사하면 overlay/hooks/merge.py 가 `.claude/settings.json.hooks.SessionStart[]` 에 자동 merge.
+- `docs/consumer-guide.md` (Modify) — Version drift 검사 섹션 갱신: "Activate (cp 방식)" 단계 추가, severity → action mapping 명시, manual 실행 + bypass env 안내.
+
+ADR-037 §3.1 (c) 선택 hook 추가 + (d) 선택 template 추가 → MINOR. 5.4.0 → 5.5.0.
+
+Marketplace mirror sync: mclayer/marketplace#21 (선행 merge for drift CI pass).
+
 ## [5.4.0] - 2026-05-08
 
 ### CFP-259 Epic — Plugin version governance + project key atomic reservation (3 child Stories)
