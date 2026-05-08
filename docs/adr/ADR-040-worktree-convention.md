@@ -131,6 +131,8 @@ on_story_close       → GitOpsAgent prunes all sub-worktrees (Story root 제외
 
 **근거**: 7 days = ADR-031 lane evidence freeze 와 동일 grace period. orphan worktree 누적 방지 + 활성 작업 보호. Origin branch 부재 = remote lifecycle 종료 신호 (PR merge 후 origin 에서 branch 제거되는 일반 패턴).
 
+**보안 면제 cross-ref** (CFP-136 보안 lane iter 1 SEC-iter1-P1-1 정정): `git ls-remote --exit-code --heads origin "$BRANCH"` = anonymous git protocol read-only ref query. 외부 API · 인증 시스템 · 자격증명 비접촉 — Story §7 SSOT (filesystem-only + origin git ref query 1회 narrowing) 정합. trust boundary 영향 없음.
+
 ### 결정 6 — Scripts location + consumer distribution
 
 **Wrapper repo**:
