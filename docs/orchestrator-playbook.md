@@ -1388,7 +1388,12 @@ incremental patch 금지 — collision 의심 시 항상 full rewrite.
 1. `.claude-work/progress/<KEY>.md` 존재 여부 확인
 2. **존재해도 신뢰하지 않음** — state source(Story §10 + GitHub Issue phase label + Story §-fill state)에서 재 derive
 3. 재 derive 결과를 cache 재기록, last_processed_seq 갱신
-4. deputy sub-tree는 비워둠 (활성 deputy 정보 손실 허용 — 다음 deputy 이벤트에서 자동 충족)
+4. **★ TodoWrite re-build (ADR-038 NEW)**: §0 file 의 lane 별 status 로 TodoWrite full rewrite
+   - active lane 의 agent sub-row 는 빈 상태 (deputy 활성 정보 손실 허용 — 다음 deputy 이벤트에서 자동 충족)
+   - 4 marker (⏳ 🔄 ✅ ❌) 어휘로 변환
+   - Single-Story 모드 — `[KEY]` prefix drop
+   - best-effort — TodoWrite re-build 실패 시 warning, file-only 상태로 lane work 진행 (§14.5 best-effort 원칙)
+5. deputy sub-tree 는 비워둠 (file + TodoWrite 동일 — 다음 deputy 이벤트에서 자동 충족)
 
 손상 시: parse 실패 → backup(`<KEY>.md.bak`) → state source에서 재 derive.
 
