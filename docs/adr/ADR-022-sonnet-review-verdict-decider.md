@@ -1,7 +1,10 @@
 ---
 adr_number: 22
 title: Sonnet Decider — Comprehensive Policy (Triggers + Consumer Scope + Review-Verdict)
-status: Accepted
+status: Deprecated
+deprecated_by: CFP-134
+deprecated_date: 2026-05-08
+deprecated_reason: "Codex review / Sonnet decider 가 codeforge 1st-class component 가 아닌 사용자 ad-hoc 도구로 framing 정정 (CFP-134 Epic). 본 정책 (5 trigger 자동 발동) 무효 — 후속 ADR 가 명시적 'Supersedes' 안 함, 'codeforge family 결정 deprecate' 가 정확."
 category: Team & Process
 date: 2026-05-02
 related_files:
@@ -24,7 +27,11 @@ related_stories:
 
 ## 상태
 
-Accepted (2026-05-02) — CFP-61 carrier. **Supersedes ADR-019** (1-day succession).
+**DEPRECATED 2026-05-08 (CFP-134 Epic, ADR-035)**: Codex review / Sonnet decider 가 codeforge 1st-class component 가 아니라 사용자 ad-hoc 도구로 정정. 본 ADR 의 5 trigger 자동 발동 + 5-step Orchestrator algorithm 무효. 사용자 explicit request 시에만 ad-hoc invoke. 본 ADR body history record 보존 (Supersession 미사용 — 후속 ADR 가 명시적 'Supersedes' 안 함, 'codeforge family 결정 deprecate' 가 정확). Architecture decision SSOT 는 ADR-035 (Epic CFP-134).
+
+**Framing 정합 (Issue #252 §1 verbatim "영구 삭제" ↔ ADR template enum)**: Issue #252 §1 사용자 원문 "영구 삭제" 의도는 codeforge 1st-class component 로서의 자동 발동 정책 영구 삭제. ADR template enum (`Proposed | Accepted | Deprecated | Superseded-by-ADR-MMM`) 정합 채택 = `Deprecated` (frontmatter `status: Deprecated` + 본문 history record 보존). 사용자 ad-hoc 도구로서의 invoke 가능성 만 잔존 — codeforge 자동 invoke 영구 차단. Supersession chain 미사용 사유 = 후속 ADR-035 가 본 ADR 의 결정안 대체 X (deprecate 만 — codeforge family decision 자체를 폐기, supersede 가 아닌 deprecate 가 정확한 framing). Frontmatter ad-hoc 필드 (`deprecated_by` / `deprecated_date` / `deprecated_reason`) 는 lint REQUIRED set 외 — 추가 metadata 로 schema 통과 (inclusion check 정합).
+
+~~Accepted (2026-05-02) — CFP-61 carrier. **Supersedes ADR-019** (1-day succession).~~ **(Strikethrough: 2026-05-08 Deprecated 후 무효 — history record 만)**
 
 **Supersession map**: ADR-018 → ADR-019 → ADR-022 (CFP-58 / CFP-59 / CFP-61 iterative refinement under explicit user directive). 본 ADR-022 = active SSOT — ADR-018 + ADR-019 = historical record.
 
