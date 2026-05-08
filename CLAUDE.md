@@ -195,7 +195,7 @@ review-verdict v4 MAJOR bump 가 본 PASSTHROUGH 영역 정식 제거 — **CFP-
 
 네 레인의 체크 항목이 겹치지 않도록 분담. 한쪽에서 커버된 항목은 다른 쪽에서 재검토하지 않음.
 
-**review verdict write 책임 (CFP-134 / ADR-035 정정 후)**: review-verdict v3 schema 의 final gate write (Story §9 / GitHub comment / gate label / phase transition) = **PL** (자기 lane synthesis 후 직접 write). Sonnet decider 자동 발동 무효 (ADR-022 Deprecated — CFP-134). 사용자 explicit request 시에만 ad-hoc Sonnet 호출 가능.
+**review verdict write 책임 (CFP-134 / ADR-035 정정 후, Stage 0 spec §3.5 verbatim)**: review-verdict v3 schema 의 final gate write (Story §9 / GitHub comment / gate label / phase transition) = **Orchestrator self-write** (PL 은 lane synthesis 후 `pl_recommendation` 만 작성, Orchestrator 가 받아 final write 수행). Sonnet decider 자동 발동 무효 (ADR-022 Deprecated — CFP-134). 사용자 explicit request 시에만 ad-hoc Sonnet 호출 가능.
 
 | 체크 항목 | DesignLane | DesignReview | CodeReview | SecurityTest |
 |-----------|:----------:|:------------:|:----------:|:------------:|
