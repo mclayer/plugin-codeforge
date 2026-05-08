@@ -1367,9 +1367,19 @@ incremental patch 금지 — collision 의심 시 항상 full rewrite.
        ├→ 1) Read(.claude-work/progress/<KEY>.md)  (cache)
        ├→ 2) parse → 해당 lane sub-tree patch
        ├→ 3) Write(.claude-work/progress/<KEY>.md) — full rewrite, last_processed_seq 증가
-       ├→ 4) lane boundary 이벤트일 때만 → terminal narration emit
-       └→ 5) Story 완료 시 _archive/<KEY>.md 로 mv + index.md 갱신
+       ├→ 4) terminal narration emit (ADR-029)
+       ├→ 5) ★ TodoWrite update (ADR-038 NEW) — best-effort, hierarchical render rule
+       └→ 6) Story 완료 시 _archive/<KEY>.md 로 mv + index.md 갱신
 ```
+
+**TodoWrite update (step 5) detail (ADR-038)**:
+- Lane 진입: lane row → 🔄 + agent sub-row 펼침 (PL → workers/deputies → chief 순)
+- Agent return: 해당 agent sub-row 의 status=completed + content 갱신 (1-line 활동 결과)
+- Lane PASS: agent sub-row 제거, lane row content = `PASS · <S3 snippet>`
+- Lane FIX (검출 후): 검출 lane → ✅ + content `FIX-N detected (cause: <원인 lane>)`, 원인 lane → ❌ + content `FIX-N 원인 · <원인 판정 1줄>`, 재진입 lane row append (⏳ 시작)
+- Multi-row in_progress 의도적 허용 (TodoWrite "ONE in_progress" 가이드 deviation, codeforge 병렬 agent 모델)
+- Single-Story 모드 — `[KEY]` prefix drop (모든 row 에서)
+- best-effort: TodoWrite update 실패 시 warning, lane primary work 미차단 (§14.5 best-effort 원칙)
 
 ### 14.8 Resume / corruption 처리
 
