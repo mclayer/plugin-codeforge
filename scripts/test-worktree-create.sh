@@ -95,12 +95,11 @@ test_4_happy_path_new_branch() {
   local base
   base="$(git -C "$repo" symbolic-ref --short HEAD 2>/dev/null || echo "main")"
 
-  out="$(HOME="$(mktemp -d)" bash "$CREATE_SCRIPT" "cfp-136-test-branch" "$base" 2>/dev/null)" \
-    || rc=$?
+  local fake_home
+  fake_home="$(mktemp -d)"
 
-  # Cleanup the created worktree path (different HOME was used above)
-  local wt_home
-  wt_home="$(echo "$out" | sed 's|/\.claude/.*||')"
+  out="$(cd "$repo" && HOME="$fake_home" bash "$CREATE_SCRIPT" "cfp-136-test-branch" "$base" 2>/dev/null)" \
+    || rc=$?
 
   assert_exit "happy path exit 0" 0 "$rc"
   assert_contains "stdout contains path" "cfp-136-test-branch" "$out"
@@ -108,7 +107,7 @@ test_4_happy_path_new_branch() {
   # Cleanup
   git -C "$repo" worktree remove --force "$out" 2>/dev/null || true
   git -C "$repo" branch -D "cfp-136-test-branch" 2>/dev/null || true
-  rm -rf "$wt_home/.claude" 2>/dev/null || true
+  rm -rf "$fake_home"
   teardown_repo "$repo"
 }
 
@@ -122,10 +121,10 @@ test_5_already_exists_idempotent() {
   local fake_home
   fake_home="$(mktemp -d)"
 
-  # First create
-  out1="$(HOME="$fake_home" bash "$CREATE_SCRIPT" "cfp-136-idem-branch" "$base" 2>/dev/null)" || rc1=$?
-  # Second create (same branch/path)
-  out2="$(HOME="$fake_home" bash "$CREATE_SCRIPT" "cfp-136-idem-branch" "$base" 2>/dev/null)" || rc2=$?
+  # First create (CWD = repo so git rev-parse resolves correctly)
+  out1="$(cd "$repo" && HOME="$fake_home" bash "$CREATE_SCRIPT" "cfp-136-idem-branch" "$base" 2>/dev/null)" || rc1=$?
+  # Second create (same branch/path — idempotent)
+  out2="$(cd "$repo" && HOME="$fake_home" bash "$CREATE_SCRIPT" "cfp-136-idem-branch" "$base" 2>/dev/null)" || rc2=$?
 
   assert_exit "first create exit 0" 0 "$rc1"
   assert_exit "second create (idempotent) exit 0" 0 "$rc2"
@@ -147,7 +146,7 @@ test_6_branch_name_slash_flattened_in_path() {
   local fake_home
   fake_home="$(mktemp -d)"
 
-  out="$(HOME="$fake_home" bash "$CREATE_SCRIPT" "cfp-136/design" "$base" 2>/dev/null)" || rc=$?
+  out="$(cd "$repo" && HOME="$fake_home" bash "$CREATE_SCRIPT" "cfp-136/design" "$base" 2>/dev/null)" || rc=$?
 
   assert_exit "slash-flatten exit 0" 0 "$rc"
   assert_contains "path uses dash not slash" "cfp-136-design" "$out"

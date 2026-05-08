@@ -30,6 +30,9 @@ setup_repo_with_commit() {
   local tmp
   tmp="$(mktemp -d)"
   git init -q "$tmp"
+  # Ensure committer identity is set for merge commits in isolated tmp repo
+  git -C "$tmp" config user.email "test@cfp-136.local"
+  git -C "$tmp" config user.name "CFP-136 Test"
   git -C "$tmp" commit --allow-empty -q -m "init"
   echo "$tmp"
 }
@@ -80,17 +83,20 @@ test_4_happy_path_merge() {
   local fake_home
   fake_home="$(mktemp -d)"
 
+  # parent is a new branch (worktree-create.sh uses -b; must not pre-exist)
+  local parent="cfp-136-merge-parent"
+  git -C "$repo" branch -q "$parent" "$base"
+
   # Create sub branch with a unique commit
   git -C "$repo" checkout -q -b cfp-136-merge-sub
   git -C "$repo" commit --allow-empty -q -m "sub: work done"
   git -C "$repo" checkout -q "$base"
 
-  # Run merge: parent=$base sub=cfp-136-merge-sub
-  # worktree-merge.sh will create parent worktree via worktree-create.sh
-  # We run inside the repo CWD so git rev-parse works
+  # Run merge: parent=$parent sub=cfp-136-merge-sub
+  # CWD = $repo so git rev-parse resolves correctly; worktree-create.sh will create $parent worktree
   (
     cd "$repo"
-    HOME="$fake_home" bash "$MERGE_SCRIPT" "$base" "cfp-136-merge-sub" 2>/dev/null
+    HOME="$fake_home" bash "$MERGE_SCRIPT" "$parent" "cfp-136-merge-sub" 2>/dev/null
   ) || rc=$?
 
   assert_exit "merge exit 0" 0 "$rc"
@@ -110,10 +116,13 @@ test_5_conflict_exit_code_2() {
   local fake_home
   fake_home="$(mktemp -d)"
 
-  # Conflict setup: parent has file-A content, sub has diverging file-A
+  # parent is a new branch so worktree-create.sh can create it with -b
+  local parent="cfp-136-conflict-parent"
+
+  # Conflict setup: make diverging changes on parent branch vs sub branch
   echo "parent" > "$repo/conflict.txt"
   git -C "$repo" add conflict.txt
-  git -C "$repo" commit -q -m "parent adds conflict.txt"
+  git -C "$repo" commit -q -m "base: adds conflict.txt"
 
   git -C "$repo" checkout -q -b cfp-136-conflict-sub
   echo "sub" > "$repo/conflict.txt"
@@ -121,20 +130,25 @@ test_5_conflict_exit_code_2() {
   git -C "$repo" commit -q -m "sub: diverges conflict.txt"
   git -C "$repo" checkout -q "$base"
 
-  # Make parent diverge after branching point
+  # parent branch diverges from base after sub branching point
+  git -C "$repo" branch -q "$parent" "$base"
+  git -C "$repo" checkout -q "$parent"
   echo "parent-diverge" > "$repo/conflict.txt"
   git -C "$repo" add conflict.txt
   git -C "$repo" commit -q -m "parent: diverges conflict.txt"
+  git -C "$repo" checkout -q "$base"
 
   (
     cd "$repo"
-    HOME="$fake_home" bash "$MERGE_SCRIPT" "$base" "cfp-136-conflict-sub" 2>/dev/null
+    HOME="$fake_home" bash "$MERGE_SCRIPT" "$parent" "cfp-136-conflict-sub" 2>/dev/null
   ) || rc=$?
 
   assert_exit "conflict exit 2" 2 "$rc"
 
-  # Cleanup (conflict leaves index dirty — abort first)
-  git -C "$repo" merge --abort 2>/dev/null || true
+  # Cleanup — conflict leaves worktree dirty; find and abort
+  local parent_flat="${parent//\//-}"
+  local parent_wt="$fake_home/.claude/worktrees/$(basename "$repo")/$parent_flat"
+  git -C "$parent_wt" merge --abort 2>/dev/null || true
   rm -rf "$fake_home"
   teardown_repo "$repo"
 }
@@ -149,6 +163,10 @@ test_6_multi_sub_sequential_merge() {
   local fake_home
   fake_home="$(mktemp -d)"
 
+  # parent is a new branch so worktree-create.sh can create it with -b
+  local parent="cfp-136-multi-parent"
+  git -C "$repo" branch -q "$parent" "$base"
+
   git -C "$repo" checkout -q -b cfp-136-multi-sub-a
   git -C "$repo" commit --allow-empty -q -m "sub-a work"
   git -C "$repo" checkout -q "$base"
@@ -158,7 +176,7 @@ test_6_multi_sub_sequential_merge() {
 
   (
     cd "$repo"
-    HOME="$fake_home" bash "$MERGE_SCRIPT" "$base" "cfp-136-multi-sub-a" "cfp-136-multi-sub-b" 2>/dev/null
+    HOME="$fake_home" bash "$MERGE_SCRIPT" "$parent" "cfp-136-multi-sub-a" "cfp-136-multi-sub-b" 2>/dev/null
   ) || rc=$?
 
   assert_exit "multi-sub merge exit 0" 0 "$rc"

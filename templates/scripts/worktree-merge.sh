@@ -27,7 +27,13 @@ PARENT_PATH="$HOME/.claude/worktrees/$REPO_NAME/$PARENT_FLAT"
 
 if [[ ! -d "$PARENT_PATH" ]]; then
   echo "[worktree-merge] CREATE parent worktree: $PARENT" >&2
-  bash "$(dirname "$0")/worktree-create.sh" "$PARENT" "origin/main" >/dev/null
+  mkdir -p "$HOME/.claude/worktrees/$REPO_NAME"
+  # Check out existing local branch (no -b); branch must already exist on local or origin.
+  if git show-ref --verify --quiet "refs/heads/$PARENT"; then
+    git worktree add "$PARENT_PATH" "$PARENT"
+  else
+    git worktree add -b "$PARENT" "$PARENT_PATH" "origin/main"
+  fi
 fi
 
 cd "$PARENT_PATH"

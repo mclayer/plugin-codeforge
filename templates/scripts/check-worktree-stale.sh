@@ -5,7 +5,10 @@
 
 set -euo pipefail
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || {
+  echo "[stale-check] NOT_A_GIT_REPO — skipping (non-blocking)" >&2
+  exit 0
+}
 REPO_NAME="$(basename "$REPO_ROOT")"
 WORKTREE_BASE="$HOME/.claude/worktrees/$REPO_NAME"
 
@@ -17,8 +20,8 @@ fi
 STALE_DAYS=7
 PRUNED=0
 
-# Iterate git worktree list
-git worktree list --porcelain | awk '/^worktree / {print $2}' | while read -r wt_path; do
+# Iterate git worktree list (process substitution keeps while in main shell — counter scope preserved)
+while read -r wt_path; do
   # Skip main worktree
   if [[ "$wt_path" == "$REPO_ROOT" ]]; then
     continue
@@ -51,6 +54,6 @@ git worktree list --porcelain | awk '/^worktree / {print $2}' | while read -r wt
   git worktree remove --force "$wt_path"
   git branch -D "$BRANCH" 2>/dev/null || true
   PRUNED=$((PRUNED + 1))
-done
+done < <(git worktree list --porcelain | awk '/^worktree / {print $2}')
 
 echo "[stale-check] DONE: pruned=$PRUNED"
