@@ -13,6 +13,12 @@ permissions:
   issues: write
   pull-requests: write
 
+# CFP-260 / ADR-036 Option B safety net — per-Issue concurrency group.
+# 같은 Issue 의 reopen / re-trigger race 만 직렬화. 병렬 Issue (다른 #) 는 영향 없음.
+concurrency:
+  group: story-init-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
 jobs:
   story-init:
     if: contains(github.event.issue.labels.*.name, 'type:story') && contains(github.event.issue.labels.*.name, 'phase:요구사항')
@@ -67,18 +73,16 @@ jobs:
 
           echo "story_key_prefix=$story_key_prefix" >> "$GITHUB_OUTPUT"
 
-      - name: Compute next story key
+      - name: Compute story key (CFP-260 / ADR-036 Option B — KEY = PREFIX-Issue#)
         id: key
         env:
           PREFIX: ${{ steps.project_config.outputs.story_key_prefix }}
         run: |
-          # docs/stories/<PREFIX>-N.md 파일 스캔 → max(N) + 1
+          # CFP-260 / ADR-036 결정 1: GitHub atomic Issue numbering 위임.
+          # 기존 file-system scan + max+1 방식 (race-prone) 제거.
+          # 결과: race window 0, brainstorming 시점 KEY 사전 확보 (cfp-reserve.yml) 와 정합.
           mkdir -p docs/stories
-          LAST=$(find docs/stories -maxdepth 1 -name "${PREFIX}-*.md" 2>/dev/null \
-                 | sed -E "s|.*/${PREFIX}-([0-9]+)\.md|\1|" \
-                 | sort -n | tail -1)
-          NEXT=$(( ${LAST:-0} + 1 ))
-          echo "key=${PREFIX}-${NEXT}" >> "$GITHUB_OUTPUT"
+          echo "key=${PREFIX}-${ISSUE_NUMBER}" >> "$GITHUB_OUTPUT"
 
           PYOUT=$(python3 - <<'PYEOF'
           import os, re
