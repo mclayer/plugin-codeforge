@@ -1303,25 +1303,36 @@ fix_cycle: <N>
 - `full` (default, ADR-029 §결정 1+4) — 모든 ✅ 표기 항목 narrate (sub-step 포함)
 - `lane_only` — lane-level event 만 narrate (CFP-20 기존 동작, sub-step 표기는 file-only 로 fallback)
 
-| 이벤트 | 영향 라인 | 갱신 동작 | terminal narration | full/lane_only |
-|---|---|---|---|---|
-| Story 개시 | 전체 | file create, 7 lane `⏸` | ✅ | both |
-| Lane 진입 | top | `⏸` → `🔄 진행 중`, current_lane 갱신 | ✅ | both |
-| Deputy spawn | active sub-tree | `🔄 <Deputy>` 추가, qualifier 갱신 | ✅ | full only |
-| Deputy return | active sub-tree | `🔄` → `✅`, qualifier 갱신 | ✅ | full only |
-| 병렬 dispatch (R3·R4·R7·R9) | active sub-tree | 두 deputy 동시 `🔄` 라인 추가 | ✅ | full only |
-| R9 subset 시작 | 구현 테스트 | inline qualifier `(functional 🔄 / performance ⏸)` | ✅ | both |
-| R9 subset 완료 | 구현 테스트 | qualifier 갱신 | ✅ (functional/performance 분리) | full only |
-| R11 fast-path | 해당 lane | `❌ FIX-N (fast-path)` 마커 | ✅ | both |
-| Lane PASS | top | `🔄` → `✅ — <S3 snippet>`, sub-tree 접음 | ✅ | both |
-| Lane FIX | top | `🔄` → `❌ FIX-N — <evidence 1줄>`, fix_cycle 갱신 | ✅ | both |
-| Lane 재진입 (FIX 후) | top | `❌ FIX-N` → `🔄 진행 중 (FIX-N)` | ✅ | both |
-| RESET 마커 | 구현 리뷰 | `✅` → `🔁 RESET-N` | ✅ | both |
-| Lane N/A (plugin meta) | top | `⏸` → `⊘ N/A — <사유>` | ✅ | both |
-| 사용자 "진행상황 보여줘" | — | file 변경 없이 현재 §0 전체 emit | ✅ (deputy 포함 full) | both |
-| Story 완료 | 전체 | 모두 `✅`, archive mv, index 갱신 | ✅ | both |
+| 이벤트 | 영향 라인 | 갱신 동작 | terminal narration | TodoWrite 갱신 (ADR-038) | full/lane_only |
+|---|---|---|---|---|---|
+| Story 개시 | 전체 | file create, 7 lane `⏸` | ✅ | 7 lane row ⏳ seed | both |
+| Lane 진입 | top | `⏸` → `🔄 진행 중`, current_lane 갱신 | ✅ | lane row ⏳ → 🔄 + agent sub-row 펼침 | both |
+| Deputy spawn | active sub-tree | `🔄 <Deputy>` 추가, qualifier 갱신 | ✅ | agent sub-row 추가 (status=in_progress) | full only |
+| Deputy return | active sub-tree | `🔄` → `✅`, qualifier 갱신 | ✅ | agent sub-row status=completed | full only |
+| 병렬 dispatch (R3·R4·R7·R9) | active sub-tree | 두 deputy 동시 `🔄` 라인 추가 | ✅ | agent sub-row 다수 동시 in_progress (multi-row deviation) | full only |
+| R9 subset 시작 | 구현 테스트 | inline qualifier `(functional 🔄 / performance ⏸)` | ✅ | TestAgent sub-row inline qualifier | both |
+| R9 subset 완료 | 구현 테스트 | qualifier 갱신 | ✅ (functional/performance 분리) | TestAgent sub-row 갱신 | full only |
+| R11 fast-path | 해당 lane | `❌ FIX-N (fast-path)` 마커 | ✅ | lane row → ✅ collapsed, content "PASS · R11 mechanical fast-path" | both |
+| Lane PASS | top | `🔄` → `✅ — <S3 snippet>`, sub-tree 접음 | ✅ | lane row → ✅ + S3 snippet, agent sub-row 제거 | both |
+| Lane FIX | top | `🔄` → `❌ FIX-N — <evidence 1줄>`, fix_cycle 갱신 | ✅ | 검출 lane → ✅ + content "FIX-N detected (cause: X)" + 원인 lane → ❌ flip + 재진입 lane row append | both |
+| Lane 재진입 (FIX 후) | top | `❌ FIX-N` → `🔄 진행 중 (FIX-N)` | ✅ | 재진입 lane row → 🔄 + agent sub-row 펼침 | both |
+| RESET 마커 | 구현 리뷰 | `✅` → `🔁 RESET-N` | ✅ | 재진입 lane row append (suffix "(재진입 RESET-N)") | both |
+| Lane N/A (plugin meta) | top | `⏸` → `⊘ N/A — <사유>` | ✅ | lane row → ✅ + content "N/A · <사유>" | both |
+| 사용자 "진행상황 보여줘" | — | file 변경 없이 현재 §0 전체 emit | ✅ (deputy 포함 full) | TodoWrite 도 emit (file + TodoWrite 동시) | both |
+| Story 완료 | 전체 | 모두 `✅`, archive mv, index 갱신 | ✅ | 7 lane row 모두 ✅, 최종 state | both |
 
 R10 prefetch (security 1차 layer cache) 같은 사용자 무관 메타 이벤트는 **의도적 skip** (verbosity 무관).
+
+**TodoWrite best-effort 원칙 (ADR-038)**: lane event 로 trigger 되는 TodoWrite 갱신은 best-effort / non-blocking 이다. TodoWrite update 가 실패하거나 skipped 되어도 lane 의 primary work 를 block 하지 않는다. lane 은 계속 진행하고, TodoWrite discrepancy 는 error 가 아니라 warning 으로 surface 한다. 사용자 confirmation / polling / acknowledgment wait 도입 없음 (ADR-029 stop discipline 정책 무영향).
+
+**Single-Story collision rule (ADR-038)**: single-Story 모드에서도 두 concurrent lane spawn 이 같은 Story 의 TodoWrite 를 동시에 write 할 수 있다. collision 발생 시:
+1. canonical §14 Lane Evidence table state 에서 todo list 전체를 재구성
+2. TodoWrite hard-reset 수행: 기존 todo list 를 부분 수정하지 않고 full rewrite
+3. rewrite 후 active lane / agent sub-row 는 canonical state 에 남아 있는 evidence 만 반영
+4. hard-reset 결과와 collision warning 을 terminal narration / wrapper warning 으로 surface
+5. lane primary work 는 중단하지 않고 계속 진행
+
+incremental patch 금지 — collision 의심 시 항상 full rewrite.
 
 **Narration format (ADR-029 §결정 2)** — `[<lane-한국어>] <event>: <detail>` 1 sentence stderr line. 예시:
 
