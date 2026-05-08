@@ -133,6 +133,8 @@ on_story_close       → GitOpsAgent prunes all sub-worktrees (Story root 제외
 
 **보안 면제 cross-ref** (CFP-136 보안 lane iter 1 SEC-iter1-P1-1 정정): `git ls-remote --exit-code --heads origin "$BRANCH"` = anonymous git protocol read-only ref query. 외부 API · 인증 시스템 · 자격증명 비접촉 — Story §7 SSOT (filesystem-only + origin git ref query 1회 narrowing) 정합. trust boundary 영향 없음.
 
+**Bypass mechanism** (CFP-136 보안 lane iter 1 SEC-iter1-P1-1 SSOT 보강): `BYPASS_WORKTREE_GC=1` env var 가 단일 session 의 stale check 전체를 skip — origin git ref query 미발생 + prune 미수행 + non-blocking `exit 0`. Script entry-point 첫 단계 short-circuit. 사용 케이스: (1) origin 접촉 차단 환경 (offline / restricted network), (2) debugging (false-positive stale 의심), (3) opt-out (consumer 측 정책 거부). **Env var 이름은 reserved contract** — 본 ADR SSOT 외 변경 금지 (consumer hook / wrapper Orchestrator 가 동일 이름 의존).
+
 ### 결정 6 — Scripts location + consumer distribution
 
 **Wrapper repo**:
