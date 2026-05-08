@@ -24,3 +24,5 @@ scripts/check-story-section-schema.sh:templates/github-workflows/story-section-s
 scripts/bootstrap-consumer.sh
 scripts/check-debut-readiness.sh
 scripts/check-lane-evidence.sh:templates/github-workflows/lane-evidence-check.yml
+scripts/check-lint.sh
+overlay/hooks/pre-push.sh.example

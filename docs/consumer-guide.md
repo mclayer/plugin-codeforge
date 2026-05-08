@@ -44,6 +44,72 @@ ls ~/.claude/plugins/cache/<marketplace>/codeforge/<version>/agents/
 ### 1c. 권장 플러그인 (선택)
 - `pyright-lsp`, `context7`, `commit-commands`, `pr-review-toolkit`
 
+### 1d. Plugin install 의무 — `enabledPlugins` ↔ `installed_plugins.json` (CFP-132 / Issue #238)
+
+**중요**: `~/.claude/settings.json` 의 `enabledPlugins[<id>] = true` 만으로는 agent / skill 노출 불충분합니다. Claude Code 는 세션 시작 시 `~/.claude/plugins/installed_plugins.json` 을 읽어 plugin 을 discovery — `installed_plugins.json` 에 entry 가 없으면 `enabledPlugins=true` 라도 agent 미노출.
+
+**증상**: 설치 후 `subagent_type` 리스트에 `codeforge-design:*` / `codeforge-review:*` 등 미노출 → "왜 ArchitectPL agent 가 없지?".
+
+**올바른 절차**:
+
+```bash
+# enabledPlugins=true 만 토글 — 부족
+# (settings.json 수동 편집 OR /config 토글)
+
+# /plugin install 명시 실행 — installed_plugins.json entry 추가
+/plugin install codeforge@<marketplace>
+/plugin install codeforge-requirements@<marketplace>
+/plugin install codeforge-design@<marketplace>
+/plugin install codeforge-review@<marketplace>
+/plugin install codeforge-develop@<marketplace>
+/plugin install codeforge-test@<marketplace>
+/plugin install codeforge-pmo@<marketplace>
+/plugin install codex@openai-codex
+/plugin install superpowers@claude-plugins-official
+/plugin install claude-md-management@claude-plugins-official
+/plugin install github@claude-plugins-official
+```
+
+새 세션 시작 시 11 plugin agent 모두 노출 확인 — 미노출 시 `~/.claude/plugins/installed_plugins.json` entry 부재 점검.
+
+**자동 검증**: SessionStart hook (`overlay/hooks/check_bootstrap.py`) 가 `REQUIRED_PLUGINS` 11종 verify, 누락 시 stderr WARN 출력 (CFP-103). 본 WARN 메시지를 보면 `/plugin install` 누락이 원인 — 위 명령 실행으로 해결.
+
+### 1e. Pre-push lint hook (선택, 권장 — CFP-132 / Issue #236)
+
+**문제**: 매 phase production push 후 CI 의 ruff/pyright fail → fix → push 사이클 반복 (4-round 평균) → GitHub Actions 비용 폭증.
+
+**해결**: pre-push hook 으로 push 전 lint 자동 실행 — fail 시 push 차단 + 로컬 fix 유도.
+
+**Install (수동)**:
+
+```bash
+# Option A: .git/hooks/pre-push 직접 cp
+cp ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/pre-push.sh.example .git/hooks/pre-push
+chmod +x .git/hooks/pre-push
+
+# Option B: core.hooksPath 사용 (.githooks/ 디렉터리 commit 가능)
+mkdir -p .githooks
+cp ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/pre-push.sh.example .githooks/pre-push
+chmod +x .githooks/pre-push
+git config core.hooksPath .githooks
+```
+
+**Manual 실행 (hook 미사용 시)**:
+
+```bash
+# PR open 전 의무
+bash scripts/check-lint.sh           # 검사
+bash scripts/check-lint.sh --fix     # ruff auto-fix 적용
+```
+
+`scripts/check-lint.sh` 는 pyproject.toml (ruff + pyright) / package.json (eslint + tsc) 자동 detect, 없으면 silent skip.
+
+**Bypass (긴급 push)**: `git push --no-verify`
+
+**Rollback**: `rm .git/hooks/pre-push` 또는 `git config --unset core.hooksPath`
+
+**Windows 환경 caveat**: `.venv/Scripts/Activate.ps1` 경로 권한 / WSL bash 호출 issue 시 manual 실행 fallback. 자세한 워크어라운드는 별도 follow-up CFP.
+
 ## 2. Consumer 프로젝트 구조 초기화
 
 ```
