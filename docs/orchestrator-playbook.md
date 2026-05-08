@@ -335,6 +335,8 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
 
 상세 SSOT: comment-prefix-registry-v1 (CFP-61 갱신 — review verdict 작성자 = Orchestrator post-Sonnet) + label-registry-v1.
 
+**Worktree dispatch**: 매 lane spawn 시 worktree 자동 생성 — 상세는 §3.5
+
 상세 분기 규칙은 CLAUDE.md "스폰 시퀀스" 섹션과 각 에이전트 md 참조.
 
 ### 3.2 에이전트 프롬프트 표준 템플릿
@@ -444,6 +446,61 @@ Epic close PR (Phase N+1) 동반 작성:
 - [ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md) + Amendment 1 + 2 (cross-repo Epic 패턴 SSOT — Mode A / B / C + Joint-phase narrow form)
 - [requirements-output-v1.1](../docs/inter-plugin-contracts/requirements-output-v1.md) (Story §1 epic_dependencies field schema)
 - [`consumer-guide.md`](consumer-guide.md) §5.1 (consumer 측 mode 선택 안내 — Mode A/B 비교표)
+
+### §3.5 Worktree dispatch (CFP-136 / ADR-035)
+
+매 lane spawn 시 Orchestrator 가 worktree 생성 후 sub-agent 에 cwd 주입. file 충돌 0 보장.
+
+**Lifecycle**:
+
+1. **lane spawn 직전**:
+   ```bash
+   bash templates/scripts/worktree-create.sh cfp-NNN/<lane> origin/main
+   # → returns worktree path: $HOME/.claude/worktrees/<repo>/cfp-NNN-<lane>
+   ```
+   하위 sub-task (deputy / role:dev) 가 있으면 sub-worktree 추가:
+   ```bash
+   bash templates/scripts/worktree-create.sh cfp-NNN/<lane>/<sub> cfp-NNN/<lane>
+   ```
+
+2. **sub-agent spawn 시**: prompt 에 `Working dir: <worktree-path>` 명시. sub-agent 가 cd 해서 작업.
+
+3. **sub-agent return 후**: Orchestrator 또는 sub-agent 가 자기 sub-branch 에 commit. Sequential merge:
+   ```bash
+   bash templates/scripts/worktree-merge.sh cfp-NNN/<lane> cfp-NNN/<lane>/<sub1> cfp-NNN/<lane>/<sub2>
+   ```
+
+4. **lane 완료 후**: parent (story root) branch 으로 merge:
+   ```bash
+   bash templates/scripts/worktree-merge.sh cfp-NNN cfp-NNN/<lane>
+   ```
+
+5. **Story 완료 후**: 모든 sub-worktree prune:
+   ```bash
+   bash templates/scripts/worktree-prune.sh cfp-NNN/<lane>/<sub>
+   bash templates/scripts/worktree-prune.sh cfp-NNN/<lane>
+   ```
+   Story root worktree 도 prune (PR merge 후).
+
+**Conflict 처리**:
+- worktree-merge.sh 가 conflict detect 시 exit code 2
+- Orchestrator 가 conflict 받으면 chief author / 충돌 deputy sub-agent 재 spawn (cwd = parent worktree)
+- 또는 PMOAgent escalation (CFP-139 GitOpsAgent 도입 후)
+
+**SessionStart hook**:
+- `bash templates/scripts/check-worktree-stale.sh` 자동 호출
+- 7일 이상 + origin 부재 worktree 자동 prune
+
+**Cross-platform**:
+- Windows: `${HOME}\.claude\worktrees\<repo>\<branch-flat>` (PowerShell or Bash via Git for Windows)
+- macOS / Linux: `~/.claude/worktrees/<repo>/<branch-flat>`
+- Path 변환은 `worktree-path-util.sh` 함수 (`is_windows`, `to_posix_path`).
+
+**의존성**:
+- ADR-024 amendment 1 (hierarchical branch convention)
+- ADR-035 (worktree convention SSOT)
+- CFP-137 (agent teams 적극 도입) — 본 §3.5 의 use case full
+- CFP-139 (GitOpsAgent) — Orchestrator 의 worktree management 책임을 GitOpsAgent 로 이관 (Wave 3)
 
 ---
 
