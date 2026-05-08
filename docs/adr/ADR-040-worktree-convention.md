@@ -99,7 +99,7 @@ on_team_create_pre   → GitOpsAgent (CFP-139) creates worktrees per teammate
 on_team_create_post  → each teammate spawned with cwd = worktree_path
 on_team_delete_pre   → GitOpsAgent merges worktrees → lane branch (sequential merge, conflict 시 user escalate)
 on_team_delete_post  → GitOpsAgent prunes worktrees (git worktree remove)
-on_session_start     → GitOpsAgent (또는 scripts/check-worktree-stale.sh) GC stale worktrees
+on_session_start     → GitOpsAgent (또는 templates/scripts/check-worktree-stale.sh, hook 호출) GC stale worktrees
 on_story_close       → GitOpsAgent prunes all sub-worktrees (Story root 제외 — Phase 2 PR merge 까지 보존)
 ```
 
@@ -111,7 +111,7 @@ on_story_close       → GitOpsAgent prunes all sub-worktrees (Story root 제외
 ### 결정 4 — Cross-platform path handling
 
 - **Bash POSIX path** = primary (Linux / macOS / Windows Git Bash).
-- **Windows native path** = utility 변환 (`templates/scripts/path-utils.sh` 의 `to_windows_path()` / `to_posix_path()` 헬퍼).
+- **Windows native path** = utility 변환 (`templates/scripts/worktree-path-util.sh` 의 `to_posix_path()` 헬퍼 + `is_windows()` detection).
 - worktree 생성 / 제거 / merge 스크립트는 모두 POSIX path 입력 → 내부에서 OS 감지 후 변환.
 - Claude Code Agent tool `cwd` 파라미터 = OS-native path 형태로 전달 (Windows = backslash, *nix = forward slash).
 
@@ -121,15 +121,15 @@ on_story_close       → GitOpsAgent prunes all sub-worktrees (Story root 제외
 
 **Stale 조건** (AND):
 1. Worktree last access (mtime of `.git/worktrees/<name>/HEAD`) ≥ **7 days** 전.
-2. Story branch closed — PR merged OR Issue closed (gh API 확인).
+2. Local branch 가 origin 에 부재 (`git ls-remote --exit-code --heads origin "$BRANCH"` non-zero).
 
 **GC trigger**:
-- `on_session_start` hook (Claude Code SessionStart hook → `scripts/check-worktree-stale.sh` 실행).
-- ad-hoc 사용자 호출 (`bash templates/scripts/check-worktree-stale.sh --prune`).
+- `on_session_start` hook — Claude Code SessionStart hook 이 `bash ${CLAUDE_PROJECT_DIR}/templates/scripts/check-worktree-stale.sh` 호출. hook sample = `templates/.claude/hooks/SessionStart-codeforge-worktree-gc.json.sample` (consumer 측 `.claude/settings.json` `hooks.SessionStart[]` merge). Install path 는 `bash scripts/bootstrap-consumer.sh` Stage 7 (CFP-97 / ADR-031) 가 `templates/consumer-scripts.manifest` 의 plugin-root-relative entry 를 consumer 작업 디렉터리에 동일 layout 으로 mirror — 따라서 consumer 의 `${CLAUDE_PROJECT_DIR}/templates/scripts/check-worktree-stale.sh` 가 정상 호출 경로.
+- ad-hoc 사용자 호출 (`bash templates/scripts/check-worktree-stale.sh`).
 
-**예외**: `cfp-NNN` Story root branch 가 open 상태 (Phase 2 PR 미merge) 면 sub-worktree 도 보존 — 사용자가 재작업 가능.
+**Note**: 본 base SSOT 는 단순 origin check 만 정의. gh API (PR merged / Issue closed) check + `cfp-NNN` Story root branch open 시 sub-worktree 보존 예외 로직 = **CFP-139 GitOpsAgent 진입 시 ADR amendment** 로 추가. 본 CFP-136 = infrastructure base (script 실제 동작 align), 강화 logic 은 GitOpsAgent 에 위임.
 
-**근거**: 7 days = ADR-031 lane evidence freeze 와 동일 grace period. orphan worktree 누적 방지 + 활성 작업 보호.
+**근거**: 7 days = ADR-031 lane evidence freeze 와 동일 grace period. orphan worktree 누적 방지 + 활성 작업 보호. Origin branch 부재 = remote lifecycle 종료 신호 (PR merge 후 origin 에서 branch 제거되는 일반 패턴).
 
 ### 결정 6 — Scripts location + consumer distribution
 
@@ -138,7 +138,7 @@ on_story_close       → GitOpsAgent prunes all sub-worktrees (Story root 제외
 - `templates/scripts/worktree-merge.sh`
 - `templates/scripts/worktree-prune.sh`
 - `templates/scripts/check-worktree-stale.sh`
-- `templates/scripts/path-utils.sh` (helper, 결정 4)
+- `templates/scripts/worktree-path-util.sh` (helper, 결정 4)
 
 **Consumer distribution**: `templates/consumer-scripts.manifest` (ADR-031 / CFP-97) 에 본 5 script 추가 → consumer install 시 `.claude/scripts/` 로 복사. consumer 측 Orchestrator + GitOpsAgent (CFP-139) 가 동일 SSOT 사용.
 

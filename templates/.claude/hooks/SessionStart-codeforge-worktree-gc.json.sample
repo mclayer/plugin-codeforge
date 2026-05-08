@@ -6,13 +6,14 @@
   "_bypass": "BYPASS_WORKTREE_GC=1 env (rare — debugging only)",
   "_prerequisite": "git >= 2.5 (worktree subcommand) + bash >= 4 + find + awk",
   "_cross_platform": "Windows = Git Bash / WSL. macOS / Linux = native bash. Path resolution via templates/scripts/worktree-path-util.sh.",
+  "_install_path": "Script is consumer-installed by `bash scripts/bootstrap-consumer.sh` Stage 7 (CFP-97 / ADR-031), which mirrors the plugin-root-relative path from `templates/consumer-scripts.manifest` into the consumer working tree. Entry `templates/scripts/check-worktree-stale.sh` therefore lands at `${CLAUDE_PROJECT_DIR}/templates/scripts/check-worktree-stale.sh` in the consumer repo. Do NOT use `${CLAUDE_PLUGIN_ROOT}/codeforge/...` here — that path resolves inside the plugin install (read-only) and the script depends on `git rev-parse --show-toplevel` against the consumer worktree.",
   "hooks": {
     "SessionStart": [
       {
         "hooks": [
           {
             "type": "command",
-            "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-worktree-stale.sh || true"
+            "command": "bash ${CLAUDE_PROJECT_DIR}/templates/scripts/check-worktree-stale.sh || true"
           }
         ]
       }
