@@ -29,7 +29,9 @@ overlay/hooks/pre-push.sh.example
 
 # CFP-136 / ADR-040 — worktree convention scripts (SessionStart hook + manual invocation).
 # Source: templates/scripts/worktree-*.sh (plugin-relative).
-# Consumer install path: .claude/scripts/worktree-*.sh.
+# Consumer install path: ${CLAUDE_PROJECT_DIR}/templates/scripts/worktree-*.sh
+#   (plugin-root-relative verbatim mirror per scripts/bootstrap-consumer.sh:335
+#    `local target="$script_path"` — Stage 7 mirrors manifest entry 1:1, no `.claude/scripts/` rewrite).
 templates/scripts/worktree-create.sh
 templates/scripts/worktree-merge.sh
 templates/scripts/worktree-prune.sh

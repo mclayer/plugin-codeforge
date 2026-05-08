@@ -140,7 +140,7 @@ on_story_close       → GitOpsAgent prunes all sub-worktrees (Story root 제외
 - `templates/scripts/check-worktree-stale.sh`
 - `templates/scripts/worktree-path-util.sh` (helper, 결정 4)
 
-**Consumer distribution**: `templates/consumer-scripts.manifest` (ADR-031 / CFP-97) 에 본 5 script 추가 → consumer install 시 `.claude/scripts/` 로 복사. consumer 측 Orchestrator + GitOpsAgent (CFP-139) 가 동일 SSOT 사용.
+**Consumer distribution**: `templates/consumer-scripts.manifest` (ADR-031 / CFP-97) 에 본 5 script 추가 → consumer install 시 `${CLAUDE_PROJECT_DIR}/templates/scripts/` 로 복사 (plugin-root-relative verbatim mirror per `scripts/bootstrap-consumer.sh:335` `local target="$script_path"` SSOT — Stage 7 가 manifest entry 를 그대로 consumer working tree 에 mirror, `.claude/scripts/` 변환 로직 없음). §결정 5 GC trigger path + hook sample command path 와 1:1 정합. consumer 측 Orchestrator + GitOpsAgent (CFP-139) 가 동일 SSOT 사용.
 
 **근거**: Plugin self-application + consumer adoption (ADR-027) 정합 — 본 plugin 작업 시 dogfood, mctrader 등 consumer 에 distributable.
 
