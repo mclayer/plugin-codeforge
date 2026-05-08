@@ -1,0 +1,70 @@
+# Team spec — FIX iteration (cross-lane, parallel diagnosis)
+# SSOT: ADR-035 (Phase-scoped agent teams + worktree)
+# Spec ref: <internal-docs>/wrapper/specs/2026-05-08-cfp-134-codeforge-agent-teams-epic-design.md §3.1, §3.5
+# Note: TEAM-FIX = Review FIX trigger 시 일시 활성. Triggering lane PL 이 dynamic teammate 로 합류.
+#       Sonnet decider deprecate 후 (CFP-135), 원인 판정 = ArchitectPL final.
+team_name: TEAM-FIX
+phase: fix:iteration
+lifecycle: phase-scoped (TeamCreate on FIX trigger, TeamDelete after diagnosis emitted)
+worktree: ${HOME}/.claude/worktrees/<repo>/cfp-NNN/fix-iter-<N>
+lead: Orchestrator
+teammates:
+  - role: develop-pl
+    plugin: codeforge-develop
+    agent_file: agents/DeveloperPLAgent.md
+    model: claude-opus-4-7
+    worktree_sub: fix-iter-<N>/develop-pl
+    sendmessage_peers:
+      - architect-pl
+      - pmo
+      - triggering-pl
+    responsibilities:
+      - 1차 원인 진단 (구현 측면)
+      - P1 품질 local vs boundary 분류
+      - Decision table row 매칭 + 증거 첨부
+  - role: architect-pl
+    plugin: codeforge-design
+    agent_file: agents/ArchitectPLAgent.md
+    model: claude-opus-4-7
+    worktree_sub: fix-iter-<N>/architect-pl
+    sendmessage_peers:
+      - develop-pl
+      - pmo
+      - triggering-pl
+    responsibilities:
+      - 최종 원인 판정 (구현 vs 설계)
+      - 설계 원인 시 Change Plan §3·§6·§7·§8 갱신 plan
+      - RESET marker 결정 (구현-리뷰 / 구현-테스트 회귀 시)
+  - role: pmo
+    plugin: codeforge-pmo
+    agent_file: agents/PMOAgent.md
+    model: claude-sonnet-4-6
+    worktree_sub: fix-iter-<N>/pmo
+    sendmessage_peers:
+      - develop-pl
+      - architect-pl
+      - triggering-pl
+    responsibilities:
+      - FIX max 3 carryover 관찰 (DesignReview / CodeReview 한도)
+      - Story §10 FIX Ledger evidence aggregation (Orchestrator self-write 보조)
+      - Semantic conflict escalation (GitOpsAgent merge 충돌 시)
+  - role: triggering-pl
+    plugin: codeforge-review | codeforge-test
+    agent_file: agents/<DesignReviewPLAgent | CodeReviewPLAgent | SecurityTestPLAgent | ../codeforge-test/agents/TestAgent>.md
+    model: claude-opus-4-7
+    worktree_sub: fix-iter-<N>/triggering-pl
+    sendmessage_peers:
+      - develop-pl
+      - architect-pl
+      - pmo
+    responsibilities:
+      - Review / test findings 재제시 (evidence pack)
+      - Diagnosis 와 findings cross-check
+      - Re-review 시 동일 worker reuse 여부 결정
+sendmessage_protocol:
+  rounds: 2-3
+  patterns:
+    - Parallelization
+    - Escalation
+    - Cross-layer
+output_contract: fix-event-v1

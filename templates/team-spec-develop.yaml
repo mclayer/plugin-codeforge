@@ -1,0 +1,84 @@
+# Team spec — Develop lane (Phase 2)
+# SSOT: ADR-035 (Phase-scoped agent teams + worktree)
+# Spec ref: <internal-docs>/wrapper/specs/2026-05-08-cfp-134-codeforge-agent-teams-epic-design.md §3.1
+# Note: 5 base + preset/overlay 동적 (role:dev × N). Preset = codeforge-develop presets/.
+team_name: TEAM-DEVELOP
+phase: phase:구현
+lifecycle: phase-scoped (TeamCreate at lane entry, TeamDelete at lane exit)
+worktree: ${HOME}/.claude/worktrees/<repo>/cfp-NNN/develop
+lead: Orchestrator
+teammates:
+  - role: develop-pl
+    plugin: codeforge-develop
+    agent_file: agents/DeveloperPLAgent.md
+    model: claude-opus-4-7
+    worktree_sub: develop/pl
+    sendmessage_peers:
+      - qa-dev
+      - data-engineer
+      - infra-engineer
+      - developer-core
+    responsibilities:
+      - Story §8·§8.5 owner write (Impl Manifest)
+      - Phase 2 PR creation + commit orchestration
+      - role:dev fan-out 결정 (preset / overlay 매칭)
+      - 1차 FIX 원인 진단 (구현 vs 설계, decision table 적용)
+  - role: qa-dev
+    plugin: codeforge-develop
+    agent_file: agents/QADeveloperAgent.md
+    model: claude-sonnet-4-6
+    worktree_sub: develop/qa
+    sendmessage_peers:
+      - develop-pl
+      - developer-core
+    responsibilities:
+      - Test code 작성 (unit / integration)
+      - §8 Test Contract 준수 검증
+      - TDD discipline (test-first when feasible)
+  - role: data-engineer
+    plugin: codeforge-develop
+    agent_file: agents/DataEngineerAgent.md
+    model: claude-sonnet-4-6
+    worktree_sub: develop/data
+    sendmessage_peers:
+      - develop-pl
+      - developer-core
+      - infra-engineer
+    responsibilities:
+      - Migration script 작성 (§11 design-output-v2 follow)
+      - Backfill / data integrity invariant 코드화
+      - Schema change 적용
+  - role: infra-engineer
+    plugin: codeforge-develop
+    agent_file: agents/InfraEngineerAgent.md
+    model: claude-sonnet-4-6
+    worktree_sub: develop/infra
+    sendmessage_peers:
+      - develop-pl
+      - data-engineer
+      - developer-core
+    responsibilities:
+      - Dockerfile / compose / health check (CFP-128)
+      - CI workflow 변경 + secret mount 전략 적용
+      - Container network / volume / restart policy
+  - role: developer-core
+    plugin: codeforge-develop
+    agent_file: agents/DeveloperAgent.md
+    model: claude-sonnet-4-6
+    worktree_sub: develop/core
+    sendmessage_peers:
+      - develop-pl
+      - qa-dev
+      - data-engineer
+      - infra-engineer
+    responsibilities:
+      - src/** 구현 (Change Plan §3 follow)
+      - 모듈 경계 + 의존성 방향 준수
+      - role:dev preset 동적 추가 가능 (preset N 명)
+sendmessage_protocol:
+  rounds: 4-7
+  patterns:
+    - Specialization
+    - Parallelization
+    - Cross-layer
+output_contract: develop-output-v1

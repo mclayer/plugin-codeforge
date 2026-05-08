@@ -1,7 +1,8 @@
 ---
 kind: contract
 contract_version: "3.0"
-status: Active
+status: Archived
+superseded_by: review-verdict-v4
 related_plugins:
   - codeforge (wrapper, consumer of FIX routing data + Orchestrator self-write post-Sonnet)
   - codeforge-review (lane plugin, producer + synthesizer; final gate write authority transferred to Orchestrator per CFP-61)
@@ -12,7 +13,10 @@ related_adrs:
   - ADR-022 (carrier — Sonnet review-verdict decider + consumer scope, in plugin-codeforge wrapper repo)
 authors:
   - CFP-61 Phase 1B-1 — review-verdict v2 → v3 BREAKING (Sonnet decider trigger 5 introduction)
+  - CFP-137 — Archived (superseded by review-verdict-v4, Sonnet decider field removal)
 ---
+
+> **Archived (CFP-137)**: superseded by [review-verdict-v4.md](review-verdict-v4.md). Sonnet decider trigger 5 제거 + PL direct final pick 회귀 + agent teams `team_context` 추가. ADR-008 SemVer major bump (v3 → v4). 본 file 은 6 CFP 무사고 후 file 삭제 예정.
 
 # review_verdict v3 — Inter-plugin Contract (CFP-61 Phase 1B-1)
 

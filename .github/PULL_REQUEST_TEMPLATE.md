@@ -65,4 +65,32 @@ Closes #<Story Issue 번호>
 
 ---
 
+## Lane evidence (CFP-137 / ADR-031 정합)
+
+본 PR 의 lane spawn evidence — Story §14 의 row 와 정합:
+
+| Lane | Team | Worktree | Teammates | SendMessage rounds | Outcome |
+|---|---|---|---|---|---|
+| <lane-name> | TEAM-<LANE> | cfp-NNN/<lane> | <count> | <rounds> | PASS/FIX/<other> |
+
+(team-spec yaml 참고 — `templates/team-spec-<lane>.yaml`)
+
+## Agent teams context (CFP-137 / ADR-036)
+
+본 PR 진행 시 agent teams 사용 여부:
+
+- [ ] CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 enabled
+- [ ] Phase-scoped sequential team (TeamCreate / Delete per lane)
+- [ ] Worktree isolation (CFP-136 / ADR-035)
+- [ ] PL ↔ Worker SendMessage continuous dialog
+- [ ] (FIX 시) Parallel diagnosis (TEAM-FIX)
+
+미사용 시 default subagent context (재귀 spawn 금지 + sibling 통신 불가 + one-shot) 으로 진행.
+
+## Lane evidence bypass
+
+- `BYPASS_LANE_EVIDENCE=1` env + `BYPASS_LANE_EVIDENCE_REASON` 사유 명시 시 lane evidence 검증 skip (ADR-031).
+
+---
+
 🤖 Generated with [CodeForge plugin](https://github.com/mctrader/plugin-codeforge)

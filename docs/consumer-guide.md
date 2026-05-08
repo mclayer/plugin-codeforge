@@ -263,6 +263,67 @@ chmod +x .claude/_overlay/run-tests.sh .claude/_overlay/run-perf.sh
 
 (§2b anchor 보존 — 외부 link 호환. CFP-125 Phase 2 PR 가 §2b FLAT → NESTED schema fix.)
 
+### 2.2a Agent teams 활성화 (CFP-137 / ADR-036)
+
+codeforge wrapper 가 Claude Code agent teams (experimental feature) 를 적극 활용 — Phase-scoped sequential team + Lane PL ↔ Worker SendMessage continuous dialog. 사용자 환경 변경 의무.
+
+**1. settings.json env 추가**
+
+`~/.claude/settings.json` (Windows: `C:\Users\<user>\.claude\settings.json`) 에 다음 추가:
+
+```jsonc
+{
+  // ... 기존 설정
+  "env": {
+    "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS": "1"
+  }
+}
+```
+
+**2. Claude Code 재시작**
+
+env 변경은 신규 세션에서만 적용. 현재 세션 종료 + 새 세션 시작.
+
+**3. 검증**
+
+새 세션에서 다음 명령으로 verify:
+
+```
+claude --version  # version 확인
+# tool 노출 검증: SendMessage / TeamCreate / TaskUpdate / TaskOutput / TaskStop tool 가 deferred tool 리스트에 노출됨
+```
+
+**4. Limitations 인지**
+
+agent teams 는 experimental:
+
+- No session resumption (`/resume` 후 in-process teammates 사라짐)
+- Task status lag 가능
+- Slow shutdown (current request 완료 대기)
+- One team per lead (동시 2 teams 불가)
+- No nested teams (teammate 가 자기 team 못 만듦)
+- Token cost ~7x baseline (1 lead + N teammates)
+
+codeforge 의 mitigation:
+
+- Phase-scoped sequential team (짧은 lifecycle — `/resume` risk 완화)
+- Worktree isolation (file 충돌 회피)
+- TeammateIdle / TaskCompleted hooks (status sync)
+
+**5. Disable (rollback)**
+
+agent teams 미사용 시 env 제거:
+
+```jsonc
+{
+  "env": {
+    // CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS removed
+  }
+}
+```
+
+codeforge 는 default subagent context (재귀 spawn 금지 + sibling 통신 불가 + one-shot) 으로 fallback. 단 일부 ROI (Lane PL ↔ Worker continuous dialog) 손실.
+
 ### 2c. GitHub repo 셋업 (Plugin 권장 워크플로우 + Forms + CODEOWNERS)
 
 ```bash

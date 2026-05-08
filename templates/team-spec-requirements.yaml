@@ -1,0 +1,65 @@
+# Team spec — Requirements lane (Phase 1)
+# SSOT: ADR-035 (Phase-scoped agent teams + worktree)
+# Spec ref: <internal-docs>/wrapper/specs/2026-05-08-cfp-134-codeforge-agent-teams-epic-design.md §3.1
+team_name: TEAM-REQUIREMENTS
+phase: phase:요구사항
+lifecycle: phase-scoped (TeamCreate at lane entry, TeamDelete at lane exit)
+worktree: ${HOME}/.claude/worktrees/<repo>/cfp-NNN/requirements
+lead: Orchestrator
+teammates:
+  - role: requirements-pl
+    plugin: codeforge-requirements
+    agent_file: agents/RequirementsPLAgent.md
+    model: claude-opus-4-7
+    worktree_sub: requirements/pl
+    sendmessage_peers:
+      - domain
+      - analyst
+      - researcher
+    responsibilities:
+      - Story §1·§2·§5·§6 synthesis (PL final author)
+      - Lane verdict (phase:요구사항 → phase:설계 transition)
+      - Sub-teammate output dedup + acceptance-criteria normalization
+  - role: domain
+    plugin: codeforge-requirements
+    agent_file: agents/DomainAgent.md
+    model: claude-sonnet-4-6
+    worktree_sub: requirements/domain
+    sendmessage_peers:
+      - requirements-pl
+      - analyst
+    responsibilities:
+      - docs/domain-knowledge/<area>/<topic>.md owner write
+      - Domain glossary + invariant 식별
+      - 기존 도메인 SSOT 와 정합 검사
+  - role: analyst
+    plugin: codeforge-requirements
+    agent_file: agents/RequirementsAnalystAgent.md
+    model: claude-sonnet-4-6
+    worktree_sub: requirements/analyst
+    sendmessage_peers:
+      - requirements-pl
+      - domain
+      - researcher
+    responsibilities:
+      - Story §2 acceptance criteria 작성
+      - Story §5 risk + edge case 식별
+      - 측정가능 기준 + falsifiable signal 정의
+  - role: researcher
+    plugin: codeforge-requirements
+    agent_file: agents/ResearcherAgent.md
+    model: claude-sonnet-4-6
+    worktree_sub: requirements/researcher
+    sendmessage_peers:
+      - requirements-pl
+      - analyst
+    responsibilities:
+      - Story §6 외부 reference + benchmark 조사
+      - 비교 가능 솔루션 / 라이브러리 비교
+      - WebFetch / WebSearch 통한 evidence 수집
+sendmessage_protocol:
+  rounds: 3-5
+  patterns:
+    - Specialization
+    - Cross-layer
+output_contract: requirements-output-v1

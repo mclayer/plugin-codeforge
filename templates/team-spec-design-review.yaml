@@ -1,0 +1,53 @@
+# Team spec — Design Review lane (Phase 1)
+# SSOT: ADR-035 (Phase-scoped agent teams + worktree)
+# Spec ref: <internal-docs>/wrapper/specs/2026-05-08-cfp-134-codeforge-agent-teams-epic-design.md §3.1, §3.5
+# Note: ADR-022 deprecate 후 (CFP-135) PL = decider 책임자. Sonnet decider 미사용.
+team_name: TEAM-DESIGN-REVIEW
+phase: phase:설계-리뷰
+lifecycle: phase-scoped (TeamCreate at lane entry, TeamDelete at lane exit)
+worktree: ${HOME}/.claude/worktrees/<repo>/cfp-NNN/design-review
+lead: Orchestrator
+teammates:
+  - role: design-review-pl
+    plugin: codeforge-review
+    agent_file: agents/DesignReviewPLAgent.md
+    model: claude-opus-4-7
+    worktree_sub: design-review/pl
+    sendmessage_peers:
+      - claude-worker
+      - codex-worker
+    responsibilities:
+      - Worker findings dedup + severity 종합
+      - PL final pl_recommendation (PASS / FIX / FIX_DISCRETIONARY)
+      - Story §9 owner write (review-verdict-v4 packet)
+      - Lane FIX max 3 enforcement
+  - role: claude-worker
+    plugin: codeforge-review
+    agent_file: agents/ClaudeReviewAgent.md
+    model: claude-sonnet-4-6
+    worktree_sub: design-review/claude
+    sendmessage_peers:
+      - design-review-pl
+      - codex-worker
+    responsibilities:
+      - Change Plan §1-10 완결성 감사
+      - ADR 정합성 + §7·§8·§8.5·§11 누락 차단 (P0)
+      - Adversarial debate 시 Codex 와 cross-check
+  - role: codex-worker
+    plugin: codeforge-review
+    agent_file: agents/CodexReviewAgent.md
+    model: codex-gpt-5-5-high
+    worktree_sub: design-review/codex
+    sendmessage_peers:
+      - design-review-pl
+      - claude-worker
+    responsibilities:
+      - 7-area review (codex external perspective)
+      - API 계약 일관성 + Test Contract 타당성
+      - Adversarial debate 시 Claude 와 disagree-and-justify
+sendmessage_protocol:
+  rounds: 2-4
+  patterns:
+    - Adversarial-Debate
+    - Cross-layer
+output_contract: review-verdict-v4

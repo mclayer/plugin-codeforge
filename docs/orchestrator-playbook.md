@@ -427,6 +427,72 @@ Epic close PR (Phase N+1) 동반 작성:
 - [requirements-output-v1.1](../docs/inter-plugin-contracts/requirements-output-v1.md) (Story §1 epic_dependencies field schema)
 - [`consumer-guide.md`](consumer-guide.md) §5.1 (consumer 측 mode 선택 안내 — Mode A/B 비교표)
 
+### §3.6 Agent teams TeamCreate / Delete (CFP-137 / ADR-036)
+
+매 lane 진입 = TeamCreate, lane 완료 = TeamDelete. one-team-per-lead 제약 회피 (sequential teams).
+
+**Prerequisite**: 사용자 settings.json `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` env enabled.
+
+**Lifecycle**:
+
+1. **lane 진입 직전** — Orchestrator:
+   - Worktree 생성 (CFP-136 §3.5 — 각 teammate 별 sub-worktree)
+   - TeamCreate (team_name, lead=Orchestrator, teammates list from `templates/team-spec-<lane>.yaml`)
+   - 각 teammate spawn (cwd = sub-worktree path 주입)
+
+2. **lane 작업 중** — SendMessage coordination:
+   - PL ↔ Worker continuous dialog (review iteration / FIX dialog)
+   - Cross-deputy SendMessage (chief author ↔ 6 deputy dedup)
+   - Worker ↔ Worker peer-to-peer (adversarial debate)
+
+3. **lane 완료 직전** — Orchestrator:
+   - 각 teammate finalize (contract output 작성 — review-verdict-v4 / requirements-output-v1 / etc.)
+   - Sub-worktree merge → lane branch (CFP-136 worktree-merge.sh)
+   - TeamDelete (in-flight 작업 완료 대기)
+
+4. **lane 완료 후** — Orchestrator:
+   - lane branch → Story root branch merge
+   - Sub-worktree prune (CFP-136 worktree-prune.sh)
+   - 다음 lane 진입 (다음 TeamCreate)
+
+**5 권장 패턴 적용**:
+
+- **Specialization**: 각 teammate 가 좁은 system prompt (lane plugin agent file SSOT)
+- **Parallelization**: TEAM-DESIGN 의 6 deputy 동시 dedup, FIX iteration parallel diagnosis
+- **Adversarial / Debate**: review lane 의 Claude vs Codex worker (review-verdict-v4 packet)
+- **Cross-layer**: TEAM-DEVELOP 의 dev ↔ QA ↔ Data ↔ Infra coordination
+- **Escalation**: lane FIX → TEAM-FIX (PMOAgent + DeveloperPL + ArchitectPL + lane PL)
+
+**Anti-pattern 회피**:
+
+- Too many teammates (3-5 권장, 단 일부 lane 8명 허용 within 25 thread limit)
+- Sequential as parallel (1 lane 의 sub-task 가 진정 병렬 인지 확인 — sequential 이면 single subagent)
+- Same file concurrent edit (worktree isolation 의무)
+- Lead doing work (Orchestrator = coordinator only, file edit 안 함 — sub-agent 에 위임)
+- No sync points (각 lane 사이 = TeamDelete + 다음 TeamCreate 명확 sync)
+
+**SendMessage protocol**:
+
+- Async fire-and-forget (request-response 미지원, 다음 idle 진입 시 자동 수신)
+- Multi-recipient = N 회 호출
+- Recipient 부재 / shutdown 상태 = error
+- Mailbox 자동 delivery (polling 불필요)
+
+**Hook 통합**:
+
+- TeammateIdle: teammate idle 진입 시 lead 통보 (auto)
+- TaskCreated: task list claim 시 trigger
+- TaskCompleted: task done 시 trigger (gate label 부착 자동화)
+
+**Limitations** (acknowledged):
+
+- No session resumption (in-process teammate 사라짐 — Phase-scoped sequential team 으로 mitigation)
+- Task status lag (Orchestrator nudge protocol)
+- Slow shutdown (TeamDelete 시 in-flight 완료 대기)
+- One team per lead (sequential team 으로 회피)
+
+**Cross-ref**: CFP-137 / ADR-036 / `templates/team-spec-*.yaml` (per-lane roster) / `review-verdict-v4` (decider field 제거)
+
 ---
 
 ## 3B. Preflight 체크 (lane 진입 직전)

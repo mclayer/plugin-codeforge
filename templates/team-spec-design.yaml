@@ -1,0 +1,123 @@
+# Team spec — Design lane (Phase 1)
+# SSOT: ADR-035 (Phase-scoped agent teams + worktree)
+# Spec ref: <internal-docs>/wrapper/specs/2026-05-08-cfp-134-codeforge-agent-teams-epic-design.md §3.1
+# Note: 6 permanent deputy + 2 CONDITIONAL (LiveOps / LiveOrdering) — 본 spec 은 6 permanent base.
+#       Live-touching Story 는 ArchitectPL 이 8 deputy fan-out (CFP-77).
+team_name: TEAM-DESIGN
+phase: phase:설계
+lifecycle: phase-scoped (TeamCreate at lane entry, TeamDelete at lane exit)
+worktree: ${HOME}/.claude/worktrees/<repo>/cfp-NNN/design
+lead: Orchestrator
+teammates:
+  - role: design-pl
+    plugin: codeforge-design
+    agent_file: agents/ArchitectPLAgent.md
+    model: claude-opus-4-7
+    worktree_sub: design/pl
+    sendmessage_peers:
+      - architect-chief
+      - codebase-mapper
+      - refactor
+      - security-arch
+      - test-contract-arch
+      - data-migration-arch
+      - op-risk-arch
+    responsibilities:
+      - Lane orchestration + deputy fan-out
+      - FIX iteration 회귀 (DesignReview FIX 시 ArchitectPL 직접 재진입)
+      - Phase transition (phase:설계 → phase:설계-리뷰)
+  - role: architect-chief
+    plugin: codeforge-design
+    agent_file: agents/ArchitectAgent.md
+    model: claude-opus-4-7
+    worktree_sub: design/chief
+    sendmessage_peers:
+      - design-pl
+      - codebase-mapper
+      - refactor
+      - security-arch
+      - test-contract-arch
+      - data-migration-arch
+      - op-risk-arch
+    responsibilities:
+      - Story §3·§7·§11 chief author (deputy 산출물 통합)
+      - docs/change-plans/<slug>.md owner write
+      - docs/adr/ADR-NNN-<slug>.md owner write
+      - 4-way 이념 대립 + production-readiness 단일 축 통합
+  - role: codebase-mapper
+    plugin: codeforge-design
+    agent_file: agents/CodebaseMapperAgent.md
+    model: claude-sonnet-4-6
+    worktree_sub: design/mapper
+    sendmessage_peers:
+      - architect-chief
+      - refactor
+    responsibilities:
+      - 기존 코드 inventory + dependency map
+      - Refactor balance 의 baseline 제공
+  - role: refactor
+    plugin: codeforge-design
+    agent_file: agents/RefactorAgent.md
+    model: claude-sonnet-4-6
+    worktree_sub: design/refactor
+    sendmessage_peers:
+      - architect-chief
+      - codebase-mapper
+      - op-risk-arch
+    responsibilities:
+      - §6 리팩터링 선행 식별
+      - 기존 코드 vs 신규 도입 balance
+  - role: security-arch
+    plugin: codeforge-design
+    agent_file: agents/SecurityArchitectAgent.md
+    model: claude-sonnet-4-6
+    worktree_sub: design/security
+    sendmessage_peers:
+      - architect-chief
+      - op-risk-arch
+    responsibilities:
+      - §7.1-§7.3·§7.5·§7.6 trust boundary + threat model + auth + 민감 데이터
+      - Container network mode / secret mount 전략 (CFP-128)
+  - role: test-contract-arch
+    plugin: codeforge-design
+    agent_file: agents/TestContractArchitectAgent.md
+    model: claude-sonnet-4-6
+    worktree_sub: design/test-contract
+    sendmessage_peers:
+      - architect-chief
+      - data-migration-arch
+      - op-risk-arch
+    responsibilities:
+      - §8 Test Contract + §8.5 Stateful / restart invariant
+      - Performance baseline §8.3 protocol
+  - role: data-migration-arch
+    plugin: codeforge-design
+    agent_file: agents/DataMigrationArchitectAgent.md
+    model: claude-sonnet-4-6
+    worktree_sub: design/data-migration
+    sendmessage_peers:
+      - architect-chief
+      - test-contract-arch
+    responsibilities:
+      - §11 Schema/Migration/Rollback/Backfill
+      - §11 Idempotency (CONDITIONAL)
+  - role: op-risk-arch
+    plugin: codeforge-design
+    agent_file: agents/OperationalRiskArchitectAgent.md
+    model: claude-sonnet-4-6
+    worktree_sub: design/op-risk
+    sendmessage_peers:
+      - architect-chief
+      - security-arch
+      - refactor
+      - test-contract-arch
+    responsibilities:
+      - §7.4 DR / disconnect / rate limit / env isolation / clock sync
+      - Container restart policy / volume DR / health check (CFP-128)
+sendmessage_protocol:
+  rounds: 5-8
+  patterns:
+    - Specialization
+    - Parallelization
+    - Cross-layer
+output_contract: design-output-v2
