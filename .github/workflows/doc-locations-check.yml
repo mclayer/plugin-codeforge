@@ -1,0 +1,28 @@
+name: doc-locations-check
+
+on:
+  pull_request:
+    paths:
+      - 'docs/doc-locations.yaml'
+      - 'docs/doc-location-registry.md'
+      - 'scripts/check-doc-locations.sh'
+      - 'scripts/test-check-doc-locations.sh'
+      - '.github/workflows/doc-locations-check.yml'
+  push:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pyyaml
+        run: pip install pyyaml
+      - name: Run lint (--full)
+        run: bash scripts/check-doc-locations.sh --full
+      - name: Run TDD harness
+        run: bash scripts/test-check-doc-locations.sh
