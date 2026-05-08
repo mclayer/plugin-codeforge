@@ -504,7 +504,7 @@ producer merge 후 consumer break 시:
 
 Epic close PR (Phase N+1) 동반 작성:
 
-- **위치**: Epic owner repo root — `EPIC-RESULTS-<EPIC_KEY>.md`
+- **위치**: [`docs/doc-locations.yaml`](doc-locations.yaml) `epic_results` row 참조 ([ADR-038](adr/ADR-038-doc-location-registry.md)) — Mode A → owner repo root / Mode B/C → hub repo root / dogfood → `<internal-docs>/<plugin-folder>/retros/`
 - **Template**: [`templates/epic-results.md`](../templates/epic-results.md) — 14 섹션 의무 (§1 child Story summary / §2 Phase decomposition / §3 Blocking AC / §4 Calibration AC / §5 Demonstration AC / §6 Codex review aggregate / §7 자율 결정 요약 (Sonnet decider) / §8 Out-of-scope / §9 CI iteration 통계 + 사용자 stop trigger 횟수 / §10 PR gate evidence / §11 후속 candidate 우선순위 / §12 debut-audit metric / §13 통계 / §14 결론)
 - **작성자**: PMOAgent self-write (codeforge-pmo lane plugin owner)
 - **mctrader 사례**: `mctrader-hub/EPIC-RESULTS-MCT-{12,18,25,32,37}.md` 5건 (template emergent source)

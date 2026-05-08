@@ -803,7 +803,7 @@ Consumer 프로젝트에서 요구사항을 GitHub Issue Form으로 입력하면
 **Epic flow (cross-repo 또는 multi-Story Epic, CFP-82)** — **1 Epic = Phase 1 doc PR + N implementation PRs + close PR**:
 - **Phase 1 PR** (hub / owner repo): Epic doc + child Story stubs + Codex 7-area review aggregate
 - **Phase 2 ~ Phase N PR**: 각 child Story implementation. Joint-phase narrow form 허용 (1 Story 가 1 phase 안 multi-repo joint PR 보유 가능, ADR-020 Amendment 1)
-- **Phase N+1 close PR** (hub / owner repo): `EPIC-RESULTS-<KEY>.md` Epic close artifact
+- **Phase N+1 close PR** (hub / owner repo): `EPIC-RESULTS-<KEY>.md` Epic close artifact (location SSOT: [`docs/doc-locations.yaml`](doc-locations.yaml) `epic_results` row, [ADR-038](adr/ADR-038-doc-location-registry.md))
 - Mid-Phase **spec amendment PR** 가능 (Codex push-back 발견 시)
 
 mctrader 진행 중 Epic 예시:
