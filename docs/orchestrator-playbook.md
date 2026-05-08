@@ -263,6 +263,75 @@ mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/is
 
 ## 3. 스폰 시퀀스 + 프롬프트 템플릿
 
+### 3.0 Orchestrator execution mode — Default subagent (수정 작업) (ADR-039)
+
+> **NORMATIVE SSOT (ADR-039 §결정 1·2 codification)**. 본 §3.0 = wrapper / consumer Orchestrator 의 매 codeforge 수정 작업 행위 직전 reading 의무 영역. 본 단락이 4 SSOT doc cross-ref tree 의 root.
+
+#### §3.0.1 결정 stmt
+
+codeforge 수정 작업 = Orchestrator default **subagent spawn**. "inline 으로 충분한가 vs subagent 가 나은가" 결정 분기 **자체 금지** — branch logic 제거 = ADR-025 §결정 7 `policy_violation_subdecision` 발화 채널 차단.
+
+#### §3.0.2 수정 작업 정의 (closed enumeration — ADR-039 §결정 1)
+
+- file edit / write (`docs/**`, `src/**`, `templates/**` 포함)
+- GitHub state change (Issue / PR / comment / label / milestone / sub-issue / branch / merge)
+- Story file write (§1-§14 어느 섹션이든)
+- FIX Ledger §10 row append (fix-event-v1 contract — Amendment: Orchestrator-owned delegate subagent 포함)
+- Lane-spawn evidence §14 row append (ADR-031 — Amendment 1: Orchestrator-owned delegate subagent 포함)
+- gate label transition (`gate:design-review-pass` 등)
+- phase label transition (`phase:요구사항` → `phase:설계` 등)
+- workflow yaml 수정·추가
+- ADR / Change Plan / domain-knowledge 페이지 write
+- **trivial Read 1건 도 spawn 의무** (사용자 verbatim 명시 — Story CFP-275 AC-3 trivial-threshold-zero)
+
+#### §3.0.3 Inline whitelist (closed 4-entry — ADR-039 §결정 2)
+
+| # | Category | 설명 | Mechanism rationale |
+|---|---|---|---|
+| 1 | 사용자 dialog | `AskUserQuestion` / 확답 step / 정보 요청 답변 (Yes/No / 옵션 선택) | Subagent one-shot 이라 continuous dialog 자체 mechanism 불가능 (ADR-009 §결정 + "플랫폼 제약") |
+| 2 | TodoWrite scratchpad | progress visualization marker write | TodoWrite = file write 아님, Orchestrator scratchpad / meta progress channel — 수정 작업 enumeration 미포함 |
+| 3 | Read-only Q&A 답변 | 사용자 정보 요청 응답 (state report / option enumeration / 도메인 설명) | 수정 작업 아님 — codeforge orchestration scope 외 |
+| 4 | Status report | Phase 완료 / Story close / final report | 수정 작업 아님 (read-only synthesis) — ADR-025 Amendment 1 §결정 11 의 "1번 final report" |
+
+4 entry **외** 의 모든 codeforge orchestration 행위 = subagent spawn 의무. **모호 시 = 수정 작업 측 분류** (안전 방향 — ADR-013 cutoff precedent 정합). 5번째 카테고리 추가 = ADR-039 amendment 의무.
+
+**Skill 호출 분류 (Change Plan §3.0.2 mirror)**: Skill 호출 (`superpowers:brainstorming` / `writing-plans` / `verification-before-completion` / `executing-plans` / `dispatching-parallel-agents` 등) = **Inline** (5번째 entry 추가 X — closed 4-entry 보존). Skill = wrapper around tool calls (file write / GitHub state mutation 자체 미발화 — meta wrapper). Skill 내부 individual tool call (Read / Edit / Write / mcp__github__\* / Agent / Bash) level 에서 spawn 분류 발동 — ADR-039 §결정 1 자연 routing.
+
+#### §3.0.4 Dialog turn separation (Story CFP-275 AC-5 / Change Plan §3.0.1 — normative)
+
+사용자 dialog (Inline whitelist entry 1) 와 dialog 직후 state change (subagent spawn 의무 영역 — file edit / GitHub state / Story write / FIX Ledger / label transition 등) 는 **별도 turn / message** 로 분리한다. 한 메시지 안에서 inline write + dialog 동시 수행 = `policy_violation`.
+
+#### §3.0.5 Ownership ≠ Mechanism 분리 (ADR-039 §결정 3 + §결정 12)
+
+본 정책은 **mechanism (어떻게 수행)** 변경. **ownership (누가 작성권)** 무변.
+
+- Orchestrator monopoly ownership (유지 — invariant 무손상):
+  - Story §10 FIX Ledger row append (CFP-32 / fix-event-v1 contract)
+  - Story §14 Lane Evidence row append (ADR-031 / CFP-126)
+  - review-verdict v3 final write (Story §9 / GitHub comment / gate label / phase transition)
+  - branch protection / CI workflow / cross-plugin schema templates
+- Mechanism (변경): 위 ownership 영역의 file write / GitHub state change 도 **subagent spawn 으로 수행**. Orchestrator 가 "§10 row append 전용 subagent" / "§14 row append 전용 subagent" / "label transition 전용 subagent" 를 spawn 해 Edit / mcp__github__\* tool 호출.
+
+**Orchestrator 정의 확장 (ADR-031 Amendment 1 + fix-event-v1 Amendment, CFP-275)**: "Orchestrator self-write" / "Writer monopoly v1: Orchestrator 단독" = top-level Claude 세션 + **Orchestrator 가 §10/§14 row append 전용으로 spawn 한 delegate subagent** 모두 포함. lane plugin agent 가 자체 임의 §10/§14 직접 append 는 여전히 금지 (lane plugin spawn ≠ Orchestrator-owned delegate spawn).
+
+#### §3.0.6 Phase 1 doc-only trust model (ADR-039 §결정 8)
+
+매 Orchestrator 행위 시 (1) ADR-039 / (2) 본 §3.0 / (3) CLAUDE.md "Default subagent context (수정 작업)" / (4) consumer-guide § "Subagent default (codeforge orchestration)" / (5) hotfix-playbook 1줄 reading 시 자체 인지. 자동 enforcement 부재. ADR-025 / ADR-029 precedent 정합 (Phase 1 doc-only trust pattern).
+
+Phase 2 enforcement (stop-event-v1 ledger / inline write detect hook / spawn cost telemetry / rate-limited error second-order risk 측정) = ADR-039 §결정 9 deferred follow-up CFP.
+
+#### §3.0.7 Cross-ref
+
+- **Policy SSOT**: [ADR-039](../docs/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) (amends ADR-009)
+- **Motivation**: [ADR-025](../docs/adr/ADR-025-stop-discipline-non-whitelist-as-defect.md) §결정 7 (`policy_violation_subdecision`)
+- **Narration interaction**: [ADR-029](../docs/adr/ADR-029-phase-execution-visibility-expansion.md) (매 spawn / return narrate 의무)
+- **§14 evidence**: [ADR-031](../docs/adr/ADR-031-lane-spawn-evidence-trail.md) Amendment 1 (Orchestrator-owned delegate inclusion)
+- **§10 FIX Ledger**: [fix-event-v1](../docs/inter-plugin-contracts/fix-event-v1.md) Amendment (Orchestrator-owned delegate inclusion)
+- **TodoWrite scratchpad**: TodoWrite tool surface 자체 standalone 정당화 (file write 아님 — meta progress channel). ADR-038 = informational reference, normative dep 아님 (PR #277 머지 order 무관).
+- **Subagent semantics 분기**: [ADR-035](../docs/adr/ADR-035-codeforge-agent-teams-epic-architecture.md) (default subagent context 의 one-shot subagent — `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0`)
+- **Consumer scope**: [consumer-guide.md § "Subagent default (codeforge orchestration)"](consumer-guide.md)
+- **Hotfix scope**: [hotfix-playbook.md](hotfix-playbook.md) (exception 없음 — 사용자 verbatim "무조건")
+
 ### 3.1 7 레인 + Cross-cutting 스폰 순서 (요약)
 
 ```
@@ -334,6 +403,8 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
 | 보안-테스트 | `[보안-테스트]` | `gate:security-test-pass` | (PR mergeable) |
 
 상세 SSOT: comment-prefix-registry-v1 (CFP-61 갱신 — review verdict 작성자 = Orchestrator post-Sonnet) + label-registry-v1.
+
+**Worktree dispatch**: 매 lane spawn 시 worktree 자동 생성 — 상세는 §3.5
 
 상세 분기 규칙은 CLAUDE.md "스폰 시퀀스" 섹션과 각 에이전트 md 참조.
 
@@ -444,6 +515,61 @@ Epic close PR (Phase N+1) 동반 작성:
 - [ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md) + Amendment 1 + 2 (cross-repo Epic 패턴 SSOT — Mode A / B / C + Joint-phase narrow form)
 - [requirements-output-v1.1](../docs/inter-plugin-contracts/requirements-output-v1.md) (Story §1 epic_dependencies field schema)
 - [`consumer-guide.md`](consumer-guide.md) §5.1 (consumer 측 mode 선택 안내 — Mode A/B 비교표)
+
+### §3.5 Worktree dispatch (CFP-136 / ADR-040)
+
+매 lane spawn 시 Orchestrator 가 worktree 생성 후 sub-agent 에 cwd 주입. file 충돌 0 보장.
+
+**Lifecycle**:
+
+1. **lane spawn 직전**:
+   ```bash
+   bash templates/scripts/worktree-create.sh cfp-NNN/<lane> origin/main
+   # → returns worktree path: $HOME/.claude/worktrees/<repo>/cfp-NNN-<lane>
+   ```
+   하위 sub-task (deputy / role:dev) 가 있으면 sub-worktree 추가:
+   ```bash
+   bash templates/scripts/worktree-create.sh cfp-NNN/<lane>/<sub> cfp-NNN/<lane>
+   ```
+
+2. **sub-agent spawn 시**: prompt 에 `Working dir: <worktree-path>` 명시. sub-agent 가 cd 해서 작업.
+
+3. **sub-agent return 후**: Orchestrator 또는 sub-agent 가 자기 sub-branch 에 commit. Sequential merge:
+   ```bash
+   bash templates/scripts/worktree-merge.sh cfp-NNN/<lane> cfp-NNN/<lane>/<sub1> cfp-NNN/<lane>/<sub2>
+   ```
+
+4. **lane 완료 후**: parent (story root) branch 으로 merge:
+   ```bash
+   bash templates/scripts/worktree-merge.sh cfp-NNN cfp-NNN/<lane>
+   ```
+
+5. **Story 완료 후**: 모든 sub-worktree prune:
+   ```bash
+   bash templates/scripts/worktree-prune.sh cfp-NNN/<lane>/<sub>
+   bash templates/scripts/worktree-prune.sh cfp-NNN/<lane>
+   ```
+   Story root worktree 도 prune (PR merge 후).
+
+**Conflict 처리**:
+- worktree-merge.sh 가 conflict detect 시 exit code 2
+- Orchestrator 가 conflict 받으면 chief author / 충돌 deputy sub-agent 재 spawn (cwd = parent worktree)
+- 또는 PMOAgent escalation (CFP-139 GitOpsAgent 도입 후)
+
+**SessionStart hook**:
+- `bash templates/scripts/check-worktree-stale.sh` 자동 호출
+- 7일 이상 + origin 부재 worktree 자동 prune
+
+**Cross-platform**:
+- Windows: `${HOME}\.claude\worktrees\<repo>\<branch-flat>` (PowerShell or Bash via Git for Windows)
+- macOS / Linux: `~/.claude/worktrees/<repo>/<branch-flat>`
+- Path 변환은 `worktree-path-util.sh` 함수 (`is_windows`, `to_posix_path`).
+
+**의존성**:
+- ADR-024 amendment 1 (hierarchical branch convention)
+- ADR-040 (worktree convention SSOT)
+- CFP-137 (agent teams 적극 도입) — 본 §3.5 의 use case full
+- CFP-139 (GitOpsAgent) — Orchestrator 의 worktree management 책임을 GitOpsAgent 로 이관 (Wave 3)
 
 ---
 
