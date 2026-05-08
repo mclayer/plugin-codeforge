@@ -1,7 +1,7 @@
 ---
 adr_number: 37
 title: Plugin version bump rule SSOT — Option β (Lenient + wrapper-coupling) + Option α (Conventional Commits)
-status: Proposed
+status: Accepted
 category: governance
 date: 2026-05-08
 related_files:
@@ -22,7 +22,7 @@ related_stories:
 
 ## 상태
 
-`Proposed` (2026-05-08, CFP-261 carrier — Phase 2 PR merge 후 `Accepted` 전환).
+`Accepted` (2026-05-08, CFP-261 carrier — Phase 1 PR #267 + Phase 2 PR #270 merged. Self-application 첫 적용 = wrapper plugin 5.3.0 → 5.4.0 MINOR bump 본 PR).
 
 ## 컨텍스트
 

@@ -1,7 +1,7 @@
 ---
 adr_number: 36
 title: Project key atomic reservation — KEY = PREFIX-Issue#
-status: Proposed
+status: Accepted
 category: process
 date: 2026-05-08
 related_files:
@@ -22,7 +22,7 @@ related_stories:
 
 ## 상태
 
-`Proposed` (2026-05-08, CFP-260 carrier — Phase 2 PR merge 후 `Accepted` 전환).
+`Accepted` (2026-05-08, CFP-260 carrier — Phase 1 PR #266 + Phase 2 PR #269 merged).
 
 ## 컨텍스트
 
