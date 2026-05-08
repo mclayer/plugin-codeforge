@@ -35,7 +35,7 @@ related_files:
 
 **Accepted (2026-05-08)** — carrier_story = CFP-275. Phase 1 trust model (doc-only / no hook enforcement / no telemetry, ADR-025 + ADR-029 precedent 정합 — Phase 1 doc-only trust pattern). Effective = 본 ADR 가 포함된 Phase 1 PR merge timestamp (retroactive 미적용 — 신규 codeforge orchestration 행위부터).
 
-본 ADR 의 implementation plan SSOT = [`docs/change-plans/cfp-275-orchestrator-subagent-default.md`](../change-plans/cfp-275-orchestrator-subagent-default.md). 본 ADR = 정책 결정 SSOT.
+본 ADR 의 implementation plan SSOT = [`wrapper/change-plans/cfp-275-orchestrator-subagent-default.md`](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/change-plans/cfp-275-orchestrator-subagent-default.md) (internal-docs SSOT, ADR-013 dogfood-out). 본 ADR = 정책 결정 SSOT.
 
 ## 컨텍스트
 
