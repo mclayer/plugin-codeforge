@@ -897,6 +897,45 @@ Architecture decision SSOT = [`docs/adr/ADR-035-codeforge-agent-teams-epic-archi
 
 또는 동등 wording. 이 경우 Orchestrator 가 ad-hoc Sonnet invoke (Agent tool with model:sonnet). decision-packet schema 의무 아님 — 사용자 prompt 자유 형식. Story §12 Sonnet Decision Log row append (사용자 요청 evidence 명시).
 
+## 7.0 Subagent default (codeforge orchestration) — ADR-039
+
+> consumer Orchestrator (예: mctrader Orchestrator / 추후 다른 consumer) 도 본 정책 inheritance — wrapper [ADR-039](adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) Phase 1 trust model + [playbook §3.0](orchestrator-playbook.md) normative SSOT 의 직접 적용. 본 subsection = consumer-side cross-ref anchor.
+
+### 7.0.1 결정 stmt (consumer 적용)
+
+consumer 가 codeforge family plugin (wrapper + 6 lane plugin) 을 사용하는 시점부터, consumer Orchestrator 의 **모든 codeforge 수정 작업** = Agent tool spawn (subagent) 으로 수행. inline 수행 = Inline whitelist 4-entry 외 영역 금지.
+
+### 7.0.2 Inline whitelist (wrapper playbook §3.0 inheritance)
+
+| # | Category | 설명 |
+|---|---|---|
+| 1 | 사용자 dialog | `AskUserQuestion` / 확답 step / 정보 요청 답변 |
+| 2 | TodoWrite scratchpad | progress visualization marker (file write 아님) |
+| 3 | Read-only Q&A 답변 | 사용자 정보 요청 응답 (state report / option enumeration / 도메인 설명) |
+| 4 | Status report | Phase 완료 / Story close / final report (작업 단위 1번) |
+
+**Skill 호출** (`superpowers:*`) = Inline (file write 아님 — meta wrapper). Skill 내부 individual tool call (Read / Edit / Write / mcp__github__\* / Agent / Bash) level 에서 spawn 분류 발동.
+
+### 7.0.3 Dialog turn separation 의무
+
+consumer Orchestrator 도 동일 — 사용자 dialog (entry 1) 와 dialog 직후 state change (file edit / GitHub state / Story write / FIX Ledger / label transition 등) 는 **별도 turn / message**. 한 메시지 안 inline write + dialog 동시 수행 = `policy_violation`.
+
+### 7.0.4 Phase 1 trust model (enforcement hook 없음)
+
+매 consumer Orchestrator 행위 시 본 §7.0 + wrapper [ADR-039](adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) + [playbook §3.0](orchestrator-playbook.md) reading 의무. 자동 enforcement 부재 — wrapper Phase 1 trust model 패턴 정합 (ADR-025 / ADR-029 / ADR-038 precedent).
+
+### 7.0.5 Consumer 측 활성 directive (Phase 1 trust model 의무)
+
+consumer 측 사용자 발화 의무 (wrapper directive 패턴 mirror):
+
+> "이 프로젝트에서도 codeforge plugin Subagent default (ADR-039) 적용해서 모든 수정 작업 = subagent spawn 으로 수행해라."
+
+또는 동등 wording. directive 없으면 default = wrapper / consumer 양쪽 inline write 가능 (Phase 2 enforcement 도입 전까지 trust model 의존).
+
+### 7.0.6 Phase 2 instrumentation (후속)
+
+stop-event-v1 ledger / inline write detect hook / spawn cost telemetry — wrapper [ADR-039 §결정 9](adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) deferred follow-up CFP. consumer-side 측정도 wrapper 와 동시 도입.
+
 ## 7.1 Stop discipline + Epic-level continuity (ADR-025 + Amendment 1 + Amendment 2)
 
 Stop discipline 정책 (ADR-025) 의 **trust model invariant** 와 **Epic-level continuity** 직접 적용. Amendment 2 (2026-05-08, CFP-135) 정정 후 — actor 표기 remap (Sonnet → PL pl_recommendation / 직전 사용자 directive). 정책 자체 (whitelist 외 stop = defect) 무손상.

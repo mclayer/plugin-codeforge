@@ -2,6 +2,8 @@
 
 > **Source**: `docs/orchestrator-playbook.md` §10 에서 분리 (CFP-93, P2-9 follow-up — cognitive overhead reduction). mctrader debut audit 시점 까지 hotfix 사용 사례 0 — full 7-lane flow 가 default. 본 playbook = 첫 hotfix 발생 시 활성화.
 
+> **ADR-039 적용 (CFP-275, 2026-05-08)**: 본 Hotfix 경로 (Minimal / Medium 양 경로) 도 Orchestrator subagent default 적용 — emergency hotfix 도 무조건 spawn, exception 없음 (사용자 verbatim "무조건"). Hotfix 의 fast-path 본질 (Phase skip / lane skip) 무변, mechanism 만 spawn 의무. 정책 SSOT [ADR-039](adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) + normative SSOT [playbook §3.0](orchestrator-playbook.md).
+
 정상 7-레인 full flow 는 Story 1건당 반나절~수일 소요. 운영 장애로 즉시 대응 필요한 경우 아래 2 경로 중 하나 선택. **어느 경로든 사후 감사는 동일하게 수행**.
 
 ## 1. Minimal Path (`severity:bug` — 기본 hotfix)

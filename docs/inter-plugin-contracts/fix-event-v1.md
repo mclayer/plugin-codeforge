@@ -8,6 +8,7 @@ authors:
 related_adrs:
   - ADR-008
   - ADR-009 (CFP-31 — §10 Orchestrator 단독 owner 결정)
+  - ADR-039 (CFP-275 Amendment — Orchestrator-owned delegate subagent inclusion)
 related_files:
   - docs/orchestrator-playbook.md (§6.4 narrative SSOT — 본 registry와 cross-ref)
   - .github/workflows/fix-ledger-sync.yml (§10 행 commit 감지 → label/comment mirror)
@@ -19,6 +20,8 @@ related_files:
 ## 1. 목적
 
 `docs/stories/<KEY>.md` §10 "FIX Ledger" 표의 row schema machine-readable SSOT. ζ arc CFP-32부터 §10 갱신 권한이 **Orchestrator 단독**으로 이관 — lane plugin은 FIX event를 보고할 뿐 §10에 직접 append 금지. 본 registry는 row 필드 + append 규칙 + RESET 시맨틱스를 명시.
+
+**Amendment (2026-05-08, CFP-275)** — "Orchestrator 단독" 의 **Orchestrator 정의 확장**: top-level Claude 세션 + **Orchestrator 가 §10 row append 전용으로 spawn 한 delegate subagent** 모두 포함. mechanism level subagent 경유여도 ownership identity = Orchestrator 유지. lane plugin agent 가 자체 임의 §10 직접 append 는 여전히 금지 (lane plugin spawn ≠ Orchestrator-owned delegate spawn). Cross-ref: ADR-039 §결정 3 + §결정 12.
 
 ## 2. Schema
 
@@ -102,6 +105,7 @@ append_rules:
   writer:
     - "Orchestrator 단독 (CFP-32 ζ arc F1부터)"
     - "DocsAgent §10 write 권한 회수 — fallback 없음"
+    - "ADR-039 Amendment (CFP-275, 2026-05-08): Orchestrator 정의 = top-level Claude 세션 + Orchestrator 가 §10 row append 전용으로 spawn 한 delegate subagent. lane plugin agent 직접 append 는 여전히 금지."
   ordering:
     - "append-only — 행 삭제·수정·재정렬 금지"
     - "stale-read 체크: Edit 직전 git pull --rebase 또는 file mtime 비교"
@@ -132,6 +136,6 @@ counter_semantics:
 
 - **Append-only for v1.x**: 새 필드 추가는 minor (v1.0 → v1.1). 기존 필드 삭제 또는 enum 값 제거는 v2.0 BREAKING (ADR-008)
 - **§10 마크다운 표 형식 변경 금지 (v1.x)**: `fix-ledger-sync.yml` Action regex가 현 표 형식에 의존 — column 순서·헤더 텍스트 변경 시 BREAKING. CFP-34에서 workflow yaml regex test 추가 후에야 변경 안전
-- **Writer monopoly v1**: Orchestrator 단독. lane plugin이 §10 직접 Edit 시 CI Action `story-section-write-guard.yml` (CFP-34 deliverable)이 catch
+- **Writer monopoly v1**: Orchestrator 단독. lane plugin이 §10 직접 Edit 시 CI Action `story-section-write-guard.yml` (CFP-34 deliverable)이 catch. **CFP-275 Amendment**: "Orchestrator 단독" = top-level Claude 세션 + Orchestrator-owned delegate subagent (§10 row append 전용 spawn) 동등 — ADR-039 §결정 12 normative 정합 anchor.
 - **RESET 시맨틱스 변경**: lane scope 또는 시점 변경은 minor (v1.1) — `current_cycle` 알고리즘 영향. ESCALATE 임계값 변경은 minor (v1.1)
 - **§10 schema 검증**: CFP-33 contract harness가 본 registry → Story file §10 매칭 lint 추가
