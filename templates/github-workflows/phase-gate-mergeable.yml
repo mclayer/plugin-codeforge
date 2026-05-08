@@ -156,14 +156,18 @@ jobs:
             });
             const allLabels = prFullForEpic.data.labels.map(l => l.name);
             const isEpicLabel = allLabels.includes('type:epic');
+            // CFP-260 / CFP-261 / CFP-262 — scripts/ + CONTRIBUTING.md 추가 (operational tooling, not src code).
+            // Bootstrap script entries / drift check script / version bump CI helper 등 wrapper 운영 도구.
             const isDocOnly = !hasCode && files.every(f =>
               f.filename.endsWith('.md') ||
               f.filename.startsWith('docs/') ||
               f.filename.startsWith('wrapper/') ||
               f.filename.startsWith('.github/') ||
               f.filename.startsWith('templates/') ||
+              f.filename.startsWith('scripts/') ||
               f.filename === 'CHANGELOG.md' ||
-              f.filename === 'README.md'
+              f.filename === 'README.md' ||
+              f.filename === 'CONTRIBUTING.md'
             );
             if (isEpicLabel || isDocOnly) {
               const reason = isEpicLabel

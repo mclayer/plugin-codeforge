@@ -164,6 +164,8 @@ pwsh -File ${env:CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-debut-readiness.ps1
 
 **PASS 시**: 첫 Story Issue Form 제출 가능. `gh issue create --template story.yml` (또는 GitHub UI 의 New Issue → Story).
 
+**KEY 사전 확보 (선택, ADR-036 / CFP-260 — Option B)**: brainstorming 시점에 KEY 미리 확보가 필요하면 `gh issue create --template cfp-reserve.yml` (또는 GitHub UI New Issue → "CFP key reservation"). 받은 Issue # 가 KEY 가 됨 (`<PREFIX>-<#>`, 예: TM-247). spec 작성 후 label `phase:reservation` → `phase:요구사항` + `type:story` 로 promote 시 story-init.yml 자동 트리거. 30 일 미진행 시 `reservation-cleanup.yml` 가 자동 close.
+
 **FAIL 시**: stderr 의 안내 따라 manual fix 또는 §2a-§2h manual fallback 절차 활용. `--dry-run` 으로 변경 미적용 사전 진단, `--reset` 으로 state marker 삭제 + clean 재시도.
 
 **Recovery**:

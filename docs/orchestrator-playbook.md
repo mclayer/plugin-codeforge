@@ -94,19 +94,26 @@ related:
 
 복잡한 요구사항 (cross-cutting / 새 도메인 / 모호한 scope) 인 경우 Issue Form 제출 전 `superpowers:brainstorming` skill 로 사전 scoping 가능. **옵션 — CI 강제 없음** ([ADR-034](adr/ADR-034-pre-issue-brainstorming-stage.md)).
 
+**KEY 사전 확보 (CFP-260 / ADR-036 — 권장)**: brainstorming 시작 직전 `cfp-reserve.yml` Issue Form 으로 1-line title 만 발의 → 받은 Issue # 가 KEY 가 됨 (`CFP-<#>`). spec / Phase 1 PR / Phase 2 PR 모두 이 KEY 인용 가능 — race-free + cross-session collision 방지. 30 일 미진행 시 `reservation-cleanup.yml` 가 자동 close.
+
 ```
+[권장] 사용자 또는 Orchestrator 가 cfp-reserve.yml Issue Form 발의
+  ├─ Issue 생성 직후 # 발급 = KEY 확정 (예: Issue #260 → CFP-260)
+  └─ KEY 를 brainstorming spec / branch 명 / commit message 에 인용 가능
+
 사용자 또는 Orchestrator 가 superpowers:brainstorming skill 호출
   ├─ Skill 가 spec 산출:
   │    consumer:    docs/superpowers/specs/<YYYY-MM-DD>-<slug>-design.md
   │    plugin repo: <internal-docs>/<plugin-folder>/specs/<YYYY-MM-DD>-cfp-NNN-<slug>-design.md
   │      (ADR-013 / ADR-017 enforced — default path 금지)
-  ├─ 사용자가 spec 결론 요약을 story.yml Issue Form 에 입력:
+  ├─ spec 작성 후 reservation Issue body 갱신 + label promote:
+  │    phase:reservation → phase:요구사항 + type:story (또는 type:epic)
   │    user-original 필드 = 요약 본문 (§1 verbatim source)
-  │    spec_link 필드 (NEW per ADR-034 / Phase 2) = spec file path 또는 URL
-  └─ Issue Form 제출 → 기존 §1.2 신규 세션 플로우 진입 (Stage 1: 요구사항 lane)
+  │    spec_link 필드 (ADR-034 / Phase 2) = spec file path 또는 URL
+  └─ promote 시 story-init.yml 트리거 → KEY = PREFIX-<Issue#> (ADR-036) → branch + Phase 1 PR 자동 생성
 ```
 
-Stage 0 미사용 시 (작은 chore / 사용자 의도 명료) — §1.2 직접 진입 (변동 없음).
+Stage 0 미사용 시 (작은 chore / 사용자 의도 명료) — §1.2 직접 진입 (KEY 는 story.yml Form 제출 시점에 자동 발급).
 
 `superpowers:brainstorming` 의 in-lane 호출 (DomainAgent / RequirementsPL) 은 본 Stage 0 와 별개 단계 — [`docs/superpowers-integration.md`](superpowers-integration.md) §2 SSOT 참조. Pre-Issue 시나리오의 호출점은 §2 표 의 `wrapper / Orchestrator (or human) / pre-Issue scoping (Stage 0)` row.
 
