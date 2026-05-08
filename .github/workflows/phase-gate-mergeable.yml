@@ -165,6 +165,7 @@ jobs:
               f.filename.startsWith('.github/') ||
               f.filename.startsWith('templates/') ||
               f.filename.startsWith('scripts/') ||
+              f.filename.startsWith('.claude-plugin/') ||
               f.filename === 'CHANGELOG.md' ||
               f.filename === 'README.md' ||
               f.filename === 'CONTRIBUTING.md'
