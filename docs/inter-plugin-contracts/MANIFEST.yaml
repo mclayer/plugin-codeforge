@@ -44,3 +44,9 @@ contracts:
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: pmo-output-v1.md, contract_version: "1.0", status: Active }
+
+  - name: git_ops_event
+    canonical_repo: mclayer/plugin-codeforge-pmo
+    canonical_path: docs/inter-plugin-contracts/
+    files:
+      - { file: git-ops-event-v1.md, contract_version: "1.0", status: Active }  # CFP-139: GitOpsAgent introduction

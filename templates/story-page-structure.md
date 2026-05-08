@@ -148,6 +148,45 @@ Orchestrator 가 append-only 관리 (CFP-32 monopoly, 행 삭제·수정 금지)
 - Story Issue에 `[FIX #N]` 코멘트 mirror
 - `fix:<레인>-retry` 라벨 부착
 
+### §10.5 Git Ops Log (CFP-139 / GitOpsAgent self-write)
+
+GitOpsAgent (codeforge-pmo plugin) 가 본 Story 진행 중 발생한 git operation event 를 typed 으로 누적. `git-ops-event-v1` contract 참고.
+
+#### Schema
+
+```yaml
+git_ops_log:
+  - event_id: <UUID>
+    event_type: WORKTREE_CREATE | WORKTREE_PRUNE | BRANCH_MERGE_OK | BRANCH_MERGE_CONFLICT | BRANCH_TREE_DECOMPOSE | STALE_GC
+    parent_branch: <branch>
+    child_branch: <branch> | null
+    worktree_path: <path> | null
+    timestamp: ISO8601 UTC
+    triggered_by: Orchestrator | <PL agent> | PMOAgent | scheduler
+    outcome: SUCCESS | CONFLICT | ERROR
+    conflict_detail: <text> | null
+    related_team_name: TEAM-<LANE> | null
+```
+
+#### 작성 규칙
+
+- GitOpsAgent self-write 영역 — 다른 agent / Orchestrator 가 변경하지 않음
+- 매 git ops event 마다 row 추가 (append-only)
+- BRANCH_MERGE_CONFLICT row 의 conflict_detail 은 의무 (file path + line range)
+- STALE_GC row 는 SessionStart hook 자동 trigger 시 생성
+
+#### Bypass
+
+`BYPASS_GIT_OPS_LOG=1` + `BYPASS_GIT_OPS_LOG_REASON` env 시 skip (chore commit 등). 단 substantive change 면 skip 금지.
+
+#### Cross-ref
+
+- CFP-139 (carrier)
+- ADR-035 (worktree convention)
+- ADR-036 (agent teams)
+- `docs/inter-plugin-contracts/git-ops-event-v1.md` (contract SSOT)
+- codeforge-pmo `agents/GitOpsAgent.md` (writer)
+
 ### §11. 참조
 - GitHub Issue URL: `https://github.com/<org>/<repo>/issues/<N>`
 - Phase 1 PR URL (merged)
@@ -392,6 +431,7 @@ Link path 작성 가이드:
 | 보안 테스트 PASS/FIX verdict final write | §9.4 append + GitHub comment [보안-테스트] + gate:security-test-pass 라벨 + phase transition + §12 row | **Orchestrator 단독** (CFP-61 / ADR-022 review-verdict 5-step step 4) |
 | Clarification 재스폰 (RequirementsPL · ArchitectPLAgent) | §9.0 append | RequirementsPL / ArchitectPL (FIX 라벨 미추가 — fix-ledger-sync.yml은 §10만 trigger) |
 | FIX 루프 | §10 append | **Orchestrator 단독** (CFP-32 fix-event-v1 monopoly, fix-ledger-sync.yml Action이 자동 mirror+label) |
+| Git ops event 발생 시 (worktree create/prune, branch merge, tree decompose, stale GC) | §10.5 append | **GitOpsAgent 단독** (CFP-139 / git-ops-event-v1 contract, codeforge-pmo plugin) |
 | Story 완료 회고 (PMOAgent) — **Phase 2 PR merge 후 5분 grace 자동 trigger (CFP-138 / ADR-045 mandate)**, 또는 Phase 1 PR merge 후 (doc-only Story, ADR-045 D-3) | §11 회고 블록 (4 field schema: retro_file / retro_summary / learnings_count / feedback_back_to_codeforge) | PMOAgent (codeforge-pmo direct Edit) — `gate:retro-complete` label add 의무 (forcing function) |
 | Sonnet decision 발생 시 (substantive trigger 4 + review-verdict trigger 5) | §12 append + `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` 생성 | Orchestrator (CFP-59 / CFP-61 / ADR-022, decision-packet-v2.1) |
 | Live touching Story 의 §13 (CONDITIONAL) | §13 11 필드 (vault / injection / permission / allowlist / withdrawal-off / first-trade cap / kill switch / operator approval / reconciliation / runbook / rollback) | ArchitectAgent (chief author, §7 / §11 / §8.5 와 동시 작성) |
