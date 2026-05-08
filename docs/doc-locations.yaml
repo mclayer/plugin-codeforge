@@ -1,0 +1,59 @@
+# docs/doc-locations.yaml
+# Doc Location Registry — codeforge plugin 의 전체 doc taxonomy 단일 SSOT
+# Source-of-truth: ADR-038
+# Lint: scripts/check-doc-locations.sh
+# Regen markdown: scripts/check-doc-locations.sh --regen
+schema_version: "1.0"
+introduced_by: CFP-276 (issue #276)
+last_updated: 2026-05-08
+
+allowed_variants:
+  - single_repo
+  - mode_a
+  - mode_b
+  - mode_c
+  - dogfood
+
+allowed_placeholders:
+  - <owner-repo>
+  - <hub-repo>
+  - <plugin-folder>
+  - <KEY>
+  - <EPIC_KEY>
+  - <slug>
+  - <area>
+  - <topic>
+  - <sprint>
+  - <packet_id>
+  - <version>
+
+dogfood_scope:
+  repo: mclayer/codeforge-internal-docs
+  plugin_folders:
+    - wrapper
+    - codeforge-review
+    - codeforge-pmo
+    - codeforge-requirements
+    - codeforge-test
+    - codeforge-develop
+    - codeforge-design
+
+doc_types:
+  - name: epic_results
+    variants:
+      mode_a: "<owner-repo>/EPIC-RESULTS-<EPIC_KEY>.md"
+      mode_b: "<hub-repo>/EPIC-RESULTS-<EPIC_KEY>.md"
+      mode_c: "<hub-repo>/EPIC-RESULTS-<EPIC_KEY>.md"
+      dogfood: "mclayer/codeforge-internal-docs/<plugin-folder>/retros/EPIC-RESULTS-<EPIC_KEY>.md"
+    owner_agent: codeforge-pmo:PMOAgent
+    introduced_by: CFP-83
+    naming_pattern: "EPIC-RESULTS-[A-Z]+-[0-9]+\\.md"
+    frontmatter_required: false
+    examples:
+      - "mctrader-hub/EPIC-RESULTS-MCT-12.md (Mode B)"
+      - "mclayer/codeforge-internal-docs/wrapper/retros/EPIC-RESULTS-CFP-96.md (dogfood)"
+    notes: |
+      Phase N+1 close PR 이 merge 되는 repo root.
+      ADR-020 Mode A → owner / Mode B/C → hub.
+      ADR-013 codeforge family override → internal-docs <plugin>/retros/.
+      EPIC-RESULTS = retro-like artifact (Epic close evidence aggregate, Codex round 1 verdict).
