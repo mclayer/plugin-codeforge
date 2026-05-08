@@ -166,6 +166,20 @@ pwsh -File ${env:CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-debut-readiness.ps1
 
 **KEY 사전 확보 (선택, ADR-036 / CFP-260 — Option B)**: brainstorming 시점에 KEY 미리 확보가 필요하면 `gh issue create --template cfp-reserve.yml` (또는 GitHub UI New Issue → "CFP key reservation"). 받은 Issue # 가 KEY 가 됨 (`<PREFIX>-<#>`, 예: TM-247). spec 작성 후 label `phase:reservation` → `phase:요구사항` + `type:story` 로 promote 시 story-init.yml 자동 트리거. 30 일 미진행 시 `reservation-cleanup.yml` 가 자동 close.
 
+**Version drift 검사 (선택, ADR-037 / CFP-262 — 권장)**: consumer 가 stale codeforge plugin 으로 작업 진입 시 silent corruption 위험. SessionStart hook 으로 자동 검사 권장:
+
+```jsonc
+// .claude/_overlay/.claude/hooks/SessionStart-codeforge-drift.json
+{
+  "command": "${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-version-drift.sh",
+  "type": "block-on-error",
+  "matcher": "*",
+  "description": "codeforge plugin family version drift check (CFP-262)"
+}
+```
+
+또는 manual: `bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-version-drift.sh`. MAJOR drift → exit 1 (hard-stop), MINOR/PATCH → exit 0 (warning/info). Bypass: `BYPASS_VERSION_DRIFT=1 BYPASS_VERSION_DRIFT_REASON='<text>'`.
+
 **FAIL 시**: stderr 의 안내 따라 manual fix 또는 §2a-§2h manual fallback 절차 활용. `--dry-run` 으로 변경 미적용 사전 진단, `--reset` 으로 state marker 삭제 + clean 재시도.
 
 **Recovery**:
