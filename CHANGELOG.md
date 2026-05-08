@@ -3,7 +3,65 @@
 `codeforge` 플러그인 릴리스 이력. 각 엔트리는 버전 bump 단위.
 Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guide.md) 해당 섹션 변경.
 
-버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
+버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
+
+## [5.4.0] - 2026-05-08
+
+### CFP-259 Epic — Plugin version governance + project key atomic reservation (3 child Stories)
+
+#### CFP-260 (PR #266 + PR #269) — Project key atomic reservation (Option B)
+
+- `docs/adr/ADR-036-project-key-atomic-reservation.md` (NEW, Accepted) — KEY = `<PREFIX>-<Issue#>` (GitHub atomic Issue numbering 위임). 6 결정: KEY 형식 / cfp-reserve.yml Form / phase:reservation label / reservation-cleanup.yml workflow / story-init.yml concurrency 안전망 / Migration (기존 KEY rename 금지).
+- `templates/github-issue-forms/cfp-reserve.yml` (NEW) — 1-line title reservation Form, brainstorming 시점 KEY 사전 확보.
+- `templates/github-workflows/story-init.yml` (Modify) — KEY 계산 line 70-81 단순화 (find/sort/max+1 4 lines 제거 → `${PREFIX}-${ISSUE_NUMBER}` 1 line) + per-Issue concurrency group.
+- `templates/github-workflows/reservation-cleanup.yml` (NEW) — daily cron, 30-day TTL stale reservation auto-close.
+- `docs/inter-plugin-contracts/label-registry-v1.md` (v1.3 → v1.4) — `phase:reservation` 신설.
+- `scripts/bootstrap-labels.sh` (28 → 29 labels).
+- `docs/orchestrator-playbook.md` §1.2.0 + `docs/consumer-guide.md` 갱신.
+
+#### CFP-261 (PR #267 + PR #270) — Plugin version bump rule SSOT (Option β + α)
+
+- `docs/adr/ADR-037-plugin-version-bump-rule.md` (NEW, Accepted) — Option β core (12 surface category) + Wrapper-coupling trigger 3종 (T1 contract MAJOR / T2 agent topology / T3 family invariant ADR supersede) + Option α (Conventional Commits CI enforcement).
+- `templates/github-workflows/check-plugin-version-bump.yml` (NEW) — Phase 2 v1: Conventional Commits + plugin.json version bump consistency 검사. β surface table + T1/T2/T3 mapping = follow-up CFP.
+- `CONTRIBUTING.md` (NEW) — 7 plugin family overview + Branch policy + Conventional Commits + bump rule β + Wrapper-coupling triggers + Marketplace mirror + CI required checks + Story discipline + Internal-docs.
+
+#### CFP-262 (PR #271) — Session-start codeforge plugin version drift check (Wave 2)
+
+- `scripts/check-codeforge-version-drift.sh` (NEW, executable) — 9 plugin (codeforge family 7 + codex + superpowers) installed vs marketplace 비교, semver compare, severity 분류 (MAJOR=hard-stop / MINOR=warn / PATCH=info), bypass env (`BYPASS_VERSION_DRIFT`).
+- `docs/orchestrator-playbook.md` §1.1 sub-step 0f 추가 (drift 검사 의무).
+- `docs/consumer-guide.md` (drift 검사 안내 + SessionStart hook JSON 예시).
+- `CLAUDE.md` "세션 개시 의무" 갱신 (link + bash 명령 inline).
+
+#### Epic close (PR #272 — 본 PR)
+
+- ADR-036 status: Proposed → Accepted
+- ADR-037 status: Proposed → Accepted (self-application 첫 사례 = wrapper plugin 5.3.0 → 5.4.0 MINOR bump)
+- `.claude-plugin/plugin.json` version + description 갱신
+- Marketplace mirror sync = mclayer/marketplace#20 (먼저 merged, drift CI pass)
+
+#### CI enhancement
+
+- `.github/workflows/invariant-check.yml` — `reservation-cleanup.yml` + `check-plugin-version-bump.yml` 을 CONSUMER_ONLY_WORKFLOWS 에 추가
+- `.github/workflows/phase-gate-mergeable.yml` + `templates/github-workflows/phase-gate-mergeable.yml` — 도c-only fast-pass 에 `scripts/` + `CONTRIBUTING.md` 추가
+
+#### Internal-docs (mclayer/codeforge-internal-docs#74 merged)
+
+- Stage 0 spec (CFP-259 Epic design)
+- 3 Change Plans (CFP-260 / CFP-261 / CFP-262)
+- 4 Story files (CFP-259 Epic + 3 children) in `wrapper/stories/`
+
+### ADR-037 self-application (CFP-259 Epic 누적 변경 → 5.4.0 MINOR)
+
+| Surface | 변경 | Bump |
+|---|---|---|
+| (h) ADR new | ADR-036 / ADR-037 신설 | MINOR |
+| (d) Template workflow 추가 | cfp-reserve.yml / reservation-cleanup.yml / check-plugin-version-bump.yml | MINOR |
+| (i) Bootstrap script | phase:reservation entry / check-codeforge-version-drift.sh | MINOR |
+| (l) Marketplace mirrored field | description 갱신 | MINOR |
+
+Wrapper-coupling trigger T1/T2/T3: 모두 미발동 (contract 변경 없음 / agent 0 invariant 유지 / ADR new 는 supersede 아님).
+
+→ aggregate MINOR signal → 5.3.0 → 5.4.0 정합 ✅
 
 ## [5.3.0] - 2026-05-07
 
