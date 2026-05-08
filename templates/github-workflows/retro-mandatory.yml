@@ -1,0 +1,262 @@
+name: Retro Mandatory (Story close gate)
+
+# CFP-138 / ADR-035 — Story 완료 회고 의무화.
+# Phase 2 PR merge 후 docs/retros/<sprint>.md 에 Story KEY reference 가 작성되어 있어야
+# Story Issue close 가능. 미작성 시 close 차단 + [PMO] prefix 코멘트 + Issue re-open.
+#
+# Two-path enforcement:
+#   1) issues:closed → type:story Issue 수동 close 시도 → retro 부재 시 차단
+#   2) pull_request:closed (merged) → Phase 2 PR merge 후 retro 부재 시 linked Issue 에
+#      "회고 미작성" 코멘트 (post-merge-followup workflow Action 3 의 자동 close 가
+#      gate:retro-complete 부재 상태로 진행되면 본 workflow 가 즉시 re-open)
+#
+# Bypass: gate:retro-complete label 부착 = retro 작성 완료 신호. PMOAgent 가 retro file
+# 작성 후 label 부착 의무 (codeforge-pmo lane plugin self-write).
+#
+# Single-repo flavor — docs/retros/*.md 경로. cross-repo Story binding (story_uri) 은
+# CFP-138 Phase 2 follow-up 으로 defer.
+
+on:
+  issues:
+    types: [closed]
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  check-retro-complete:
+    runs-on: ubuntu-latest
+    # Phase 2 PR merge 또는 type:story Issue close 만 처리.
+    if: |
+      (github.event_name == 'issues') ||
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Verify retro presence + enforce gate
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            // ----- Helpers -----
+
+            // docs/retros/*.md 안에 storyKey reference 가 존재하는지 scan.
+            //   - file content 안의 plain-text 매칭 (KEY 는 word-boundary, e.g. CFP-138 \b)
+            //   - EPIC-RESULTS-<KEY>.md 파일명 자체도 evidence 로 인정
+            function retroExistsForKey(storyKey) {
+              const retroDir = 'docs/retros';
+              if (!fs.existsSync(retroDir)) return { found: false, evidence: null };
+
+              const files = fs.readdirSync(retroDir).filter(f => f.endsWith('.md'));
+              const keyRegex = new RegExp(`\\b${storyKey.replace(/[-]/g, '\\-')}\\b`);
+
+              for (const f of files) {
+                // EPIC-RESULTS-<KEY>.md filename evidence
+                if (f === `EPIC-RESULTS-${storyKey}.md`) {
+                  return { found: true, evidence: `docs/retros/${f}` };
+                }
+                // Sprint retro content evidence
+                try {
+                  const content = fs.readFileSync(path.join(retroDir, f), 'utf8');
+                  if (keyRegex.test(content)) {
+                    return { found: true, evidence: `docs/retros/${f} (content)` };
+                  }
+                } catch (e) { /* skip unreadable */ }
+              }
+              return { found: false, evidence: null };
+            }
+
+            // PR title 또는 Issue title 에서 Story KEY 추출 (uppercase normalize)
+            function extractStoryKey(title) {
+              if (!title) return null;
+              const m = title.match(/CFP-\d+/i);
+              return m ? m[0].toUpperCase() : null;
+            }
+
+            // type:story Issue 검색 (KEY 기준)
+            async function findStoryIssue(storyKey) {
+              try {
+                const { data: issues } = await github.rest.issues.listForRepo({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: 'all',
+                  labels: 'type:story',
+                  per_page: 100
+                });
+                return issues.find(i => i.title && i.title.toUpperCase().includes(storyKey));
+              } catch (e) {
+                core.warning(`findStoryIssue failed: ${e.message}`);
+                return null;
+              }
+            }
+
+            // ----- Branch 1: issues:closed -----
+            if (context.eventName === 'issues') {
+              const issue = context.payload.issue;
+              const labels = (issue.labels || []).map(l => l.name || l);
+              const isStory = labels.includes('type:story');
+              if (!isStory) {
+                core.notice(`Issue #${issue.number} not type:story — skip`);
+                return;
+              }
+
+              const hasRetroGate = labels.includes('gate:retro-complete');
+              if (hasRetroGate) {
+                core.notice(`Issue #${issue.number} has gate:retro-complete — close approved`);
+                return;
+              }
+
+              // gate label 부재 시 retro file 자체 검사 (수동 작성 후 label 누락 케이스 보정)
+              const storyKey = extractStoryKey(issue.title);
+              if (!storyKey) {
+                core.warning(`Issue #${issue.number} title 에서 Story KEY 추출 실패 — skip`);
+                return;
+              }
+              const retro = retroExistsForKey(storyKey);
+              if (retro.found) {
+                core.notice(`Retro evidence found (${retro.evidence}) — auto-attach gate:retro-complete`);
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  labels: ['gate:retro-complete']
+                });
+                return;
+              }
+
+              // 차단: Issue 재오픈 + 코멘트
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'open'
+              });
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: [
+                  `[PMO] **Story 완료 회고 미작성** — close 차단 (CFP-138 / ADR-035).`,
+                  ``,
+                  `Story KEY: \`${storyKey}\``,
+                  `Required artifact: \`docs/retros/<sprint>.md\` (Story KEY reference) 또는 \`docs/retros/EPIC-RESULTS-${storyKey}.md\``,
+                  `Required label: \`gate:retro-complete\``,
+                  ``,
+                  `**조치 옵션**:`,
+                  `1. PMOAgent 자동 spawn — Orchestrator 가 codeforge-pmo plugin PMOAgent 을 호출하여 회고 자동 작성`,
+                  `2. 사용자 수동 작성 — \`docs/retros/<sprint>.md\` 에 Story KEY \`${storyKey}\` 항목 추가 후 \`gate:retro-complete\` label 수동 부착`,
+                  ``,
+                  `회고 작성 + label 부착 후 본 Issue close 재시도 가능.`
+                ].join('\n')
+              });
+              core.setFailed(`Story #${issue.number} (${storyKey}) close blocked — retro missing`);
+              return;
+            }
+
+            // ----- Branch 2: pull_request:closed (merged) -----
+            const pr = context.payload.pull_request;
+            const prTitle = pr.title || '';
+            const prBody = pr.body || '';
+
+            // Phase 2 PR 만 대상 (Phase 1 / chore / aggregating PR skip)
+            const phaseM = prTitle.match(/Phase\s*2/i);
+            const isPhase2 = !!phaseM;
+            const isChore = /^chore[:\(]/i.test(prTitle);
+            // multi-CFP aggregating PR (CFP-74 와 동일 휴리스틱)
+            const cfpRefs = [...new Set((prTitle.match(/CFP-\d+/gi) || []).map(s => s.toUpperCase()))];
+            const isAggregating = cfpRefs.length > 1;
+
+            if (isChore || isAggregating || !isPhase2) {
+              core.notice(`PR #${pr.number} skip (chore=${isChore}, aggregating=${isAggregating}, phase2=${isPhase2})`);
+              return;
+            }
+
+            const storyKey = cfpRefs[0] || extractStoryKey(prTitle);
+            if (!storyKey) {
+              core.warning(`PR #${pr.number} 에서 Story KEY 추출 실패 — skip`);
+              return;
+            }
+
+            const retro = retroExistsForKey(storyKey);
+            if (retro.found) {
+              core.notice(`Retro evidence found for ${storyKey} (${retro.evidence}) — gate satisfied`);
+              // linked Story Issue 에 gate:retro-complete label 부착 (없으면)
+              const storyIssue = await findStoryIssue(storyKey);
+              if (storyIssue) {
+                const issueLabels = storyIssue.labels.map(l => l.name || l);
+                if (!issueLabels.includes('gate:retro-complete')) {
+                  try {
+                    await github.rest.issues.addLabels({
+                      owner: context.repo.owner,
+                      repo: context.repo.repo,
+                      issue_number: storyIssue.number,
+                      labels: ['gate:retro-complete']
+                    });
+                    core.notice(`gate:retro-complete attached to Issue #${storyIssue.number}`);
+                  } catch (e) {
+                    core.warning(`Label attach failed: ${e.message}`);
+                  }
+                }
+              }
+              return;
+            }
+
+            // Retro 부재 — Phase 2 PR merged 됐지만 회고 미작성. 사용자/Orchestrator 알림.
+            const storyIssue = await findStoryIssue(storyKey);
+            const issueRef = storyIssue ? `#${storyIssue.number}` : `(linked Story Issue 미발견)`;
+
+            const commentBody = [
+              `[PMO] **Phase 2 PR merge 됐으나 Story 완료 회고 미작성** — Story close 차단 예정 (CFP-138 / ADR-035).`,
+              ``,
+              `Story KEY: \`${storyKey}\``,
+              `Phase 2 PR: #${pr.number} (merged)`,
+              `Linked Story Issue: ${issueRef}`,
+              `Required artifact: \`docs/retros/<sprint>.md\` (Story KEY reference) 또는 \`docs/retros/EPIC-RESULTS-${storyKey}.md\``,
+              `Required label (Story Issue): \`gate:retro-complete\``,
+              ``,
+              `**조치 옵션**:`,
+              `1. PMOAgent 자동 spawn — Orchestrator 가 codeforge-pmo plugin PMOAgent 을 호출하여 회고 자동 작성`,
+              `2. 사용자 수동 작성 — \`docs/retros/<sprint>.md\` 에 Story KEY \`${storyKey}\` 항목 추가 후 \`gate:retro-complete\` label 수동 부착`,
+              ``,
+              `회고 작성 + label 부착 전까지 본 Story Issue close 시도는 자동 re-open 됨 (issues:closed branch).`
+            ].join('\n');
+
+            // Phase 2 PR 자체에도 코멘트
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: commentBody
+            });
+
+            // linked Story Issue 에도 동일 코멘트 (Issue 가 발견된 경우)
+            if (storyIssue) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: storyIssue.number,
+                body: commentBody
+              });
+              // 이미 close 된 Issue 이면 재오픈 (post-merge-followup Action 3 가 먼저 close 했을 수 있음)
+              if (storyIssue.state === 'closed') {
+                await github.rest.issues.update({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: storyIssue.number,
+                  state: 'open'
+                });
+                core.notice(`Story Issue #${storyIssue.number} re-opened — retro missing`);
+              }
+            }
+
+            core.setFailed(`Phase 2 PR #${pr.number} merged for ${storyKey} but retro missing`);

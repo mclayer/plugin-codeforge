@@ -148,13 +148,51 @@ Orchestrator 가 append-only 관리 (CFP-32 monopoly, 행 삭제·수정 금지)
 - Story Issue에 `[FIX #N]` 코멘트 mirror
 - `fix:<레인>-retry` 라벨 부착
 
-### §11. 참조
+### §11. 참조 + 회고 (PMOAgent self-write)
+
+#### §11.1 참조 링크
 - GitHub Issue URL: `https://github.com/<org>/<repo>/issues/<N>`
 - Phase 1 PR URL (merged)
 - Phase 2 PR URL (merged)
 - Change Plan 링크 (`docs/change-plans/<slug>.md`)
 - 관련 ADR 링크 (`docs/adr/ADR-NNN-<slug>.md`)
-- 회고 (PMOAgent 작성)
+
+#### §11.2 회고 블록 (PMOAgent 가 자동 작성 — CFP-138 의무화)
+
+**Auto-trigger** (CFP-138 / `templates/github-workflows/retro-mandatory.yml`): Story 의 모든 lane PASS + Phase 2 PR merge 완료 시 Orchestrator 가 PMOAgent 를 자동 spawn → PMOAgent 가 본 §11.2 + `docs/retros/<sprint>.md` self-write. 작성 완료 시 Story Issue 에 `gate:retro-complete` 라벨 부착 → Story Issue close 가능. 미작성 시 `retro-mandatory.yml` workflow 가 Story close 를 차단 (gate:retro-complete 부재 → action_required block).
+
+**Required schema** (PMOAgent self-write):
+
+```yaml
+retro:
+  retro_completed: true              # boolean — 회고 완료 여부 (false 시 gate:retro-complete 미부착)
+  retro_link: docs/retros/<sprint>.md  # path string — 회고 file 경로 또는 "N/A — <사유>" (면제 시)
+  retro_date: 2026-MM-DD T HH:MM Z   # ISO8601 UTC — PMOAgent 회고 작성 완료 시각
+  lessons_learned: |                 # text (optional) — 1-3 줄 핵심 lessons summary (회고 file 의 1-paragraph excerpt)
+    <one paragraph summary or bullet list>
+  epic_milestone_updated: true       # boolean — Epic context 인 경우만 true 의무 (parent Epic Story 의 milestone 갱신 완료 여부). 단일 Story = false 또는 N/A
+```
+
+**Field semantics**:
+
+| # | Field | Required | 의미 |
+|---|---|---|---|
+| 1 | `retro_completed` | yes | 회고 작성 완료 여부. `true` 시 `gate:retro-complete` 부착 trigger |
+| 2 | `retro_link` | yes | `docs/retros/<sprint>.md` path 또는 면제 시 `"N/A — <사유>"` (예: `N/A — Epic Story (type=epic), child Story 가 carry`) |
+| 3 | `retro_date` | yes | ISO8601 UTC 완료 시각 |
+| 4 | `lessons_learned` | optional | 회고 file 의 핵심 요약 (1-3 줄). Story §11 = link + summary 만, full retro = `docs/retros/<sprint>.md` 에 |
+| 5 | `epic_milestone_updated` | conditional | Epic context (parent Epic Story 존재) 시 의무. PMOAgent 가 GitHub milestone API 통해 progress / close 갱신 후 true |
+
+**Cross-ref**:
+- CFP-138 (retro 의무화 carrier CFP)
+- `templates/github-workflows/retro-mandatory.yml` (gate:retro-complete enforce)
+- `gate:retro-complete` label (label-registry-v1)
+- PMOAgent self-write 책임: [codeforge-pmo CLAUDE.md](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/CLAUDE.md) Self-write 책임 표
+- 회고 schema SSOT: [codeforge-pmo `templates/retro.md`](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/templates/retro.md)
+
+**Schema 부재 시**: PR merge 후 `retro-mandatory.yml` workflow 가 §11.2 schema 부재 / `retro_completed: false` / 7일 timeout 검출 → Story Issue close 차단 (`action_required` block + `[PMO]` prefix comment 자동 mirror).
+
+**Epic Story (`type: epic`) 특수 케이스**: §11 의 child Story link 모음 + EPIC-RESULTS reference 는 Epic Story Condensed Mode 매트릭스 (본 file 하단) 참조. Epic close 시 §11.2 retro 블록 = Epic-level 회고 (PMOAgent 가 EPIC-RESULTS-<KEY>.md §X 회고 섹션 link + 1-paragraph summary).
 
 ### §12. Sonnet Decision Log (CFP-59 / CFP-61 / ADR-022)
 
@@ -380,7 +418,7 @@ Epic Story 의 §11 회고 블록 = Epic close PR (Phase N+1) 동반 작성. EPI
 | 보안 테스트 PASS/FIX verdict final write | §9.4 append + GitHub comment [보안-테스트] + gate:security-test-pass 라벨 + phase transition + §12 row | **Orchestrator 단독** (CFP-61 / ADR-022 review-verdict 5-step step 4) |
 | Clarification 재스폰 (RequirementsPL · ArchitectPLAgent) | §9.0 append | RequirementsPL / ArchitectPL (FIX 라벨 미추가 — fix-ledger-sync.yml은 §10만 trigger) |
 | FIX 루프 | §10 append | **Orchestrator 단독** (CFP-32 fix-event-v1 monopoly, fix-ledger-sync.yml Action이 자동 mirror+label) |
-| Story 완료 회고 (PMOAgent) | §11 회고 블록 | PMOAgent (codeforge-pmo direct Edit) |
+| Story 완료 회고 (PMOAgent — CFP-138 자동 trigger) | §11.2 retro 블록 (5 field schema) + `docs/retros/<sprint>.md` + `gate:retro-complete` 라벨 | PMOAgent (codeforge-pmo direct Edit · Phase 2 PR merge 후 Orchestrator 가 자동 spawn · `retro-mandatory.yml` enforce) |
 | Sonnet decision 발생 시 (substantive trigger 4 + review-verdict trigger 5) | §12 append + `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` 생성 | Orchestrator (CFP-59 / CFP-61 / ADR-022, decision-packet-v2.1) |
 | Live touching Story 의 §13 (CONDITIONAL) | §13 11 필드 (vault / injection / permission / allowlist / withdrawal-off / first-trade cap / kill switch / operator approval / reconciliation / runbook / rollback) | ArchitectAgent (chief author, §7 / §11 / §8.5 와 동시 작성) |
 | Phase 2 PR merged (최종) | Issue auto-close (PR body의 `Closes #N`) | (자동) |

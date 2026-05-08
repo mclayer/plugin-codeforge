@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# bootstrap-labels.sh — Plugin이 사용하는 GitHub label 29종 일괄 생성 (1회).
+# bootstrap-labels.sh — Plugin이 사용하는 GitHub label 30종 일괄 생성 (1회).
 #
 # CFP-11 end-to-end 실증에서 발견된 bootstrap drift — 신규 repo에 plugin 적용 시
 # type:* / phase:* / gate:* / fix:* / hotfix:* / audit:* 라벨 부재로 Issue Form
@@ -48,7 +48,7 @@ create_label() {
         || echo "  ! $name: create/edit 실패 (권한 문제 가능)"
 }
 
-[ $DRY_RUN -eq 0 ] && echo "Plugin label 29종 부트스트랩..."
+[ $DRY_RUN -eq 0 ] && echo "Plugin label 30종 부트스트랩..."
 
 # type:* (4종)
 create_label "type:epic"        "5319e7" "Epic (사용자 요구사항 1건 = Milestone + Issue)"
@@ -61,10 +61,11 @@ for p in 요구사항 설계 설계-리뷰 구현 구현-리뷰 구현-테스트
     create_label "phase:$p" "1d76db" "Phase: $p"
 done
 
-# gate:* (3종) — gate:live-entry-pass added v1.3 (CFP-123 / ADR-030)
+# gate:* (4종) — gate:live-entry-pass added v1.3 (CFP-123 / ADR-030), gate:retro-complete added v1.4 (CFP-138 / ADR-035)
 create_label "gate:design-review-pass"   "0e8a16" "Design review PASS"
 create_label "gate:security-test-pass"   "0e8a16" "Security test PASS"
 create_label "gate:live-entry-pass"      "0e8a16" "Live Epic lane-entry pass (3-condition AND: mode==live + --confirm-live + isolated runtime)"
+create_label "gate:retro-complete"       "0e8a16" "Retro 작성 완료 (Phase 2 PR merge 후 Story / Epic 단위 retro 의무 충족)"
 
 # fix:* (4종)
 for r in 설계-리뷰 구현-리뷰 구현-테스트 보안-테스트; do
@@ -130,5 +131,5 @@ fi
 
 if [ $DRY_RUN -eq 0 ]; then
     echo ""
-    echo "✓ 29 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."
+    echo "✓ 30 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."
 fi
