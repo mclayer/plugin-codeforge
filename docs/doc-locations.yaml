@@ -57,3 +57,122 @@ doc_types:
       ADR-020 Mode A → owner / Mode B/C → hub.
       ADR-013 codeforge family override → internal-docs <plugin>/retros/.
       EPIC-RESULTS = retro-like artifact (Epic close evidence aggregate, Codex round 1 verdict).
+
+  - name: story_file
+    variants:
+      single_repo: "<owner-repo>/docs/stories/<KEY>.md"
+      mode_b: "<hub-repo>/docs/stories/<KEY>.md"
+      dogfood: "mclayer/codeforge-internal-docs/<plugin-folder>/stories/<KEY>.md"
+    owner_agent: codeforge-requirements:RequirementsPLAgent
+    introduced_by: CFP-1
+    naming_pattern: "[A-Z]+-[0-9]+\\.md"
+    frontmatter_required: true
+    examples:
+      - "mctrader-hub/docs/stories/MCT-12.md (Mode B)"
+      - "mclayer/codeforge-internal-docs/wrapper/stories/CFP-273.md (dogfood)"
+    notes: |
+      §1 Issue 본문 verbatim invariant (story-section-1-immutable.yml).
+      ADR-020 Mode A: 각 작업 repo 가 자체 보유. Mode B: hub 가 모두 보유.
+      ADR-013: codeforge family = internal-docs <plugin>/stories/.
+
+  - name: adr
+    variants:
+      single_repo: "<owner-repo>/docs/adr/ADR-NNN-<slug>.md"
+    owner_agent: codeforge-design:ArchitectAgent
+    introduced_by: CFP-26
+    naming_pattern: "ADR-[0-9]{3}-[a-z0-9-]+\\.md"
+    frontmatter_required: true
+    examples:
+      - "mclayer/plugin-codeforge/docs/adr/ADR-020-cross-repo-epic-pattern.md"
+    notes: |
+      Mode-agnostic. ADR 는 항상 plugin repo / consumer repo 의 docs/adr/.
+      CODEOWNERS = architect team review 의무.
+
+  - name: change_plan
+    variants:
+      single_repo: "<owner-repo>/docs/change-plans/<slug>.md"
+      dogfood: "mclayer/codeforge-internal-docs/<plugin-folder>/change-plans/<slug>.md"
+    owner_agent: codeforge-design:ArchitectAgent
+    introduced_by: CFP-7
+    naming_pattern: "[a-z0-9-]+\\.md"
+    frontmatter_required: true
+    examples:
+      - "mctrader-hub/docs/change-plans/mct-12-historical-data-bridge.md"
+      - "mclayer/codeforge-internal-docs/wrapper/change-plans/cfp-83-epic-results.md"
+    notes: |
+      ADR-013: codeforge family = internal-docs <plugin>/change-plans/.
+
+  - name: retro
+    variants:
+      single_repo: "<owner-repo>/docs/retros/<sprint>.md"
+      dogfood: "mclayer/codeforge-internal-docs/<plugin-folder>/retros/<sprint>.md"
+    owner_agent: codeforge-pmo:PMOAgent
+    introduced_by: CFP-36
+    naming_pattern: "[a-z0-9-]+\\.md"
+    frontmatter_required: true
+    examples:
+      - "mclayer/codeforge-internal-docs/wrapper/retros/zeta-arc-2026-04-29.md"
+    notes: |
+      ADR-013: codeforge family dogfood. EPIC-RESULTS 도 본 디렉터리 사용 (Codex round 1 verdict — retro-like artifact).
+
+  - name: domain_knowledge
+    variants:
+      single_repo: "<owner-repo>/docs/domain-knowledge/<area>/<topic>.md"
+    owner_agent: codeforge-requirements:DomainAgent
+    introduced_by: CFP-37
+    naming_pattern: "[a-z0-9-]+\\.md"
+    frontmatter_required: true
+    examples:
+      - "mctrader-hub/docs/domain-knowledge/exchange/bithumb-rest-api.md"
+    notes: |
+      Mode-agnostic. DomainAgent self-write owner path (CFP-26 Phase 0a).
+
+  - name: spec
+    variants:
+      dogfood: "mclayer/codeforge-internal-docs/<plugin-folder>/specs/<slug>.md"
+    owner_agent: orchestrator
+    introduced_by: ADR-017
+    naming_pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9-]+\\.md"
+    frontmatter_required: true
+    examples:
+      - "mclayer/codeforge-internal-docs/wrapper/specs/2026-05-08-issue-276-doc-location-registry-design.md"
+    notes: |
+      ADR-017 codeforge family override. Default 'docs/superpowers/specs/' 는 plugin repo 에서 CI fail-closed.
+      Consumer 는 default 사용.
+
+  - name: plan
+    variants:
+      dogfood: "mclayer/codeforge-internal-docs/<plugin-folder>/plans/<slug>.md"
+    owner_agent: orchestrator
+    introduced_by: ADR-017
+    naming_pattern: "[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9-]+\\.md"
+    frontmatter_required: false
+    examples:
+      - "mclayer/codeforge-internal-docs/wrapper/plans/2026-05-08-issue-276-doc-location-registry.md"
+    notes: |
+      ADR-017 codeforge family override.
+
+  - name: decision_packet
+    variants:
+      dogfood: "mclayer/codeforge-internal-docs/<plugin-folder>/decisions/<packet_id>.yaml"
+    owner_agent: orchestrator
+    introduced_by: CFP-61
+    naming_pattern: "[a-z0-9-]+\\.yaml"
+    frontmatter_required: false
+    examples:
+      - "mclayer/codeforge-internal-docs/wrapper/decisions/<packet_id>.yaml"
+    notes: |
+      CFP-61 / ADR-022 Sonnet decider full v2.1 schema (decision-packet-v2.1).
+
+  - name: inter_plugin_contract
+    variants:
+      single_repo: "<owner-repo>/docs/inter-plugin-contracts/<slug>-v<version>.md"
+    owner_agent: each_lane_plugin
+    introduced_by: CFP-29
+    naming_pattern: "[a-z0-9-]+-v[0-9]+\\.md"
+    frontmatter_required: true
+    examples:
+      - "mclayer/plugin-codeforge-review/docs/inter-plugin-contracts/review-verdict-v3.md"
+    notes: |
+      Canonical 은 producer plugin repo. wrapper 는 sibling sync mirror (ADR-010).
+      MANIFEST.yaml 가 별도 SSOT — 본 entry 는 위치 룰만.

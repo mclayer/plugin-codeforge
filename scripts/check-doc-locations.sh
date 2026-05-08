@@ -170,7 +170,7 @@ def render_markdown(d):
     lines.append("")
     lines.append(f"**Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  ")
     lines.append(f"**schema_version**: {d.get('schema_version')}  ")
-    lines.append(f"**Last regen**: {datetime.datetime.utcnow().replace(microsecond=0).isoformat()}Z  ")
+    lines.append(f"**Last regen**: {datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0, tzinfo=None).isoformat()}Z  ")
     lines.append(f"**Registered doc types**: {len(d.get('doc_types', []))}")
     lines.append("")
     lines.append("## Summary table")
