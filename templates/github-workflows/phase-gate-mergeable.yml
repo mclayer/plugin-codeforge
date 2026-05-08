@@ -201,8 +201,53 @@ jobs:
             // CFP-123 fix: gate membership check (PR may carry multiple gates simultaneously)
             //   Required gate must be PRESENT among PR gate labels — first-label strict equality
             //   would false-fail when PR carries both gate:security-test-pass + gate:live-entry-pass.
-            const gateOk = prGateLabels.includes(required.gate)
+            let gateOk = prGateLabels.includes(required.gate)
               || gateLabel === required.gate;  // fallback when prGateLabels not populated (cross-repo Story binding path)
+
+            // CFP-133 fix (#239): if gate label not attached, fall back to PR comment
+            //   recognition. autonomous mode (사용자 directive Sonnet decider 제외) 에서 label
+            //   부착이 누락 — review chain PASS comment 가 PR 에 이미 박제되어 있으면 그것을
+            //   evidence 로 인정. CFP-61/ADR-022 §결정 4 invariant 보존 (PL synthesis only,
+            //   label attachment by Orchestrator) — 단순히 evidence source 확장.
+            //
+            //   Comment prefix mapping (comment-prefix-registry-v1):
+            //     [설계-리뷰] ... PASS  → gate:design-review-pass evidence
+            //     [구현-리뷰] ... PASS  → (gate 무, phase progression 만)
+            //     [구현-테스트] ... PASS|N/A → (gate 무)
+            //     [보안-테스트] ... PASS|N/A → gate:security-test-pass evidence
+            let gateCommentEvidence = null;
+            if (!gateOk) {
+              try {
+                const { data: comments } = await github.rest.issues.listComments({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  per_page: 100
+                });
+                // Lane → gate prefix mapping
+                const lanePrefixForGate = {
+                  'gate:design-review-pass': '[설계-리뷰]',
+                  'gate:security-test-pass': '[보안-테스트]'
+                };
+                const targetPrefix = lanePrefixForGate[required.gate];
+                if (targetPrefix) {
+                  const passRegex = new RegExp(
+                    `^\\s*##?\\s*\\${targetPrefix}\\s.*\\b(PASS|N/A)\\b`,
+                    'm'
+                  );
+                  for (const c of comments) {
+                    const body = c.body || '';
+                    if (passRegex.test(body)) {
+                      gateOk = true;
+                      gateCommentEvidence = `${targetPrefix} comment #${c.id}`;
+                      break;
+                    }
+                  }
+                }
+              } catch (e) {
+                // listComments 실패 = silent fallback (label-only 동작 유지)
+              }
+            }
 
             // CFP-123 / ADR-030: Live Epic lane-entry gate
             //   When Story / PR is Live touching AND we're at security-test phase (Phase 2 PR merge gate),
@@ -231,8 +276,9 @@ jobs:
                   ? `, gate:live-entry-pass ✓ (Live touching)`
                   : `, gate:live-entry-pass MISSING (Live touching Story — ADR-030)`)
               : '';
+            const evidenceNote = gateCommentEvidence ? ` (evidence: ${gateCommentEvidence})` : '';
             const summary = allOk
-              ? `phase + gate satisfied: ${required.phase} + ${required.gate}${liveNote} (source: ${sourceNote})`
+              ? `phase + gate satisfied: ${required.phase} + ${required.gate}${evidenceNote}${liveNote} (source: ${sourceNote})`
               : `Awaiting: phase=${required.phase} (current=${phaseLabel || 'none'}), gate=${required.gate} (current=${gateLabel || 'none'})${liveNote} (source: ${sourceNote})`;
 
             await github.rest.checks.create({
