@@ -1,6 +1,6 @@
 ---
-adr_number: 35
-title: Worktree convention — base directory + naming + lifecycle (CFP-134 Epic)
+adr_number: 40
+title: Worktree convention — base directory + naming + lifecycle (CFP-134 Epic Wave 1)
 date: 2026-05-08
 status: Proposed
 category: tooling-infrastructure
@@ -17,18 +17,20 @@ related_adrs:
   - ADR-009
   - ADR-024
   - ADR-031
+  - ADR-035
 related_files:
   - docs/adr/ADR-024-story-scoped-branch-policy.md
   - docs/adr/ADR-009-wrapper-only-decomposition.md
+  - docs/adr/ADR-035-codeforge-agent-teams-epic-architecture.md
   - templates/scripts/worktree-create.sh
   - templates/scripts/worktree-merge.sh
   - templates/scripts/worktree-prune.sh
   - templates/scripts/check-worktree-stale.sh
-  - templates/consumer-scripts.manifest
+  - templates/scripts/worktree-path-util.sh
   - docs/orchestrator-playbook.md
 ---
 
-# ADR-035: Worktree convention — base directory + naming + lifecycle
+# ADR-040: Worktree convention — base directory + naming + lifecycle
 
 ## 상태
 
@@ -177,6 +179,7 @@ on_story_close       → GitOpsAgent prunes all sub-worktrees (Story root 제외
 - [ADR-024 (story-scoped branch policy)](ADR-024-story-scoped-branch-policy.md) — 본 ADR 가 Amendment 1 로 hierarchical naming 추가.
 - [ADR-009 (wrapper-only decomposition)](ADR-009-wrapper-only-decomposition.md) — wrapper agent 0 개 invariant 정합 (worktree 는 인프라, agent 추가 아님).
 - [ADR-031 (lane spawn evidence)](ADR-031-lane-spawn-evidence-trail.md) — 7 days grace period 패턴 차용.
+- [ADR-035 (codeforge agent teams Epic architecture)](ADR-035-codeforge-agent-teams-epic-architecture.md) — Epic-level carrier ADR (D2 implementation level 의 worktree 상세를 본 ADR 가 별도 carrier 로 분리).
 - **CFP-134** — Epic carrier (worktree infrastructure + agent teams + GitOpsAgent).
 - **CFP-136** — 본 ADR carrier Story (worktree infra Wave 1).
 - **CFP-137** — phase-scoped agent teams (worktree convention 의존).

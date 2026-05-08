@@ -447,7 +447,7 @@ Epic close PR (Phase N+1) 동반 작성:
 - [requirements-output-v1.1](../docs/inter-plugin-contracts/requirements-output-v1.md) (Story §1 epic_dependencies field schema)
 - [`consumer-guide.md`](consumer-guide.md) §5.1 (consumer 측 mode 선택 안내 — Mode A/B 비교표)
 
-### §3.5 Worktree dispatch (CFP-136 / ADR-035)
+### §3.5 Worktree dispatch (CFP-136 / ADR-040)
 
 매 lane spawn 시 Orchestrator 가 worktree 생성 후 sub-agent 에 cwd 주입. file 충돌 0 보장.
 
@@ -498,7 +498,7 @@ Epic close PR (Phase N+1) 동반 작성:
 
 **의존성**:
 - ADR-024 amendment 1 (hierarchical branch convention)
-- ADR-035 (worktree convention SSOT)
+- ADR-040 (worktree convention SSOT)
 - CFP-137 (agent teams 적극 도입) — 본 §3.5 의 use case full
 - CFP-139 (GitOpsAgent) — Orchestrator 의 worktree management 책임을 GitOpsAgent 로 이관 (Wave 3)
 
