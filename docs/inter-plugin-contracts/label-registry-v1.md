@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: label
-version: "1.3"
+version: "1.4"
 status: Active
 authors:
   - Claude (CFP-32 codification — bootstrap-labels.sh 추출 + ζ arc owner 매핑)
@@ -119,6 +119,14 @@ labels:
     description: "Phase: 보안-테스트"
     single_active: true
     attach_owner_plugin: "codeforge-review (CFP-35 v2 후) / DocsAgent (CFP-32 시점)"
+
+  # phase:reservation added v1.4 (CFP-260 / ADR-036) — atomic key reservation Issue 의 임시 phase
+  - name: phase:reservation
+    category: phase
+    color: "ededed"
+    description: "Phase: reservation (CFP-260 / ADR-036 — brainstorming 시점 KEY 사전 확보, 30 일 미진행 시 reservation-cleanup.yml 자동 close. promote 시 phase:요구사항 + type:* 로 변경)"
+    single_active: true
+    attach_owner_plugin: "cfp-reserve.yml Issue Form (자동 첨부) / Orchestrator (수동 promote 시 detach)"
 
   # gate:* (3종) — gate:live-entry-pass added v1.3 (CFP-123 / ADR-030)
   - name: gate:design-review-pass

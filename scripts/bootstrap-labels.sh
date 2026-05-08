@@ -61,6 +61,9 @@ for p in 요구사항 설계 설계-리뷰 구현 구현-리뷰 구현-테스트
     create_label "phase:$p" "1d76db" "Phase: $p"
 done
 
+# phase:reservation (v1.4 / CFP-260 / ADR-036) — atomic key reservation Issue 의 임시 phase
+create_label "phase:reservation" "ededed" "Phase: reservation (CFP-260 / ADR-036 — brainstorming KEY 사전 확보, 30 일 미진행 시 자동 close)"
+
 # gate:* (3종) — gate:live-entry-pass added v1.3 (CFP-123 / ADR-030)
 create_label "gate:design-review-pass"   "0e8a16" "Design review PASS"
 create_label "gate:security-test-pass"   "0e8a16" "Security test PASS"
