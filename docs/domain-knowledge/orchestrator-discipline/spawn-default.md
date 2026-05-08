@@ -9,7 +9,6 @@ related_adrs:
   - ADR-029  # phase execution visibility (narration interaction)
   - ADR-031  # lane-spawn evidence (§14 row append행위)
   - ADR-035  # agent teams Epic (subagent semantics)
-  - ADR-038  # progress visualization TodoWrite (channel interaction)
 related_stories:
   - CFP-275
 created: 2026-05-08
@@ -90,9 +89,9 @@ ADR-029 §결정 5 "Writer: Orchestrator 단독" — sub-step narration 은 Orch
 
 ADR-031 §결정 1 의 §14 row append 행위는 본 정책 하에서도 **Orchestrator self-write** 로 유지. 단 §14 row append 자체가 file write 행위이므로, append 작업도 subagent spawn 으로 수행 (즉 Orchestrator 가 "§14 row append 전용 subagent" 를 spawn 해 Edit tool 호출). lane plugin 측 변경 0 건 (ADR-031 §결과 invariant 무손상).
 
-### TodoWrite (ADR-038) 와의 interaction
+### TodoWrite scratchpad 와의 interaction
 
-ADR-038 §결정 — TodoWrite 는 Orchestrator 단독 channel. 본 정책 하에서도 TodoWrite 호출 자체는 Orchestrator inline 행위 (file write 아님 — meta progress channel). TodoWrite 호출은 subagent spawn 의무 비-적용.
+TodoWrite tool surface = file write 아님 (Orchestrator turn meta channel — file system / GitHub state mutation 미발화). 본 정책 하에서도 TodoWrite 호출 자체는 Orchestrator inline 행위 (수정 작업 enumeration 미포함, ADR-039 §결정 2 Inline whitelist entry 2 standalone 정당화). TodoWrite 호출은 subagent spawn 의무 비-적용. (참고: ADR-038 = TodoWrite progress visualization 도입 informational reference, 본 분류의 normative dependency 아님.)
 
 ### 측정 가능성
 
@@ -106,5 +105,4 @@ ADR-038 §결정 — TodoWrite 는 Orchestrator 단독 channel. 본 정책 하�
 - [ADR-029](../../adr/ADR-029-phase-execution-visibility-expansion.md) — Orchestrator narration
 - [ADR-031](../../adr/ADR-031-lane-spawn-evidence-trail.md) — §14 evidence write
 - [ADR-035](../../adr/ADR-035-codeforge-agent-teams-epic-architecture.md) — agent teams Epic (subagent semantics 분기)
-- [ADR-038](../../adr/ADR-038-progress-visualization-todowrite.md) — TodoWrite channel
 - CLAUDE.md "오케스트레이션 규칙" §"Default subagent context" + "플랫폼 제약" — subagent 룰

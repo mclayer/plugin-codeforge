@@ -13,7 +13,6 @@ related_adrs:
   - ADR-029  # phase execution visibility (narration interaction)
   - ADR-031  # lane-spawn evidence trail (§14 row append)
   - ADR-035  # codeforge agent teams Epic (subagent semantics)
-  - ADR-038  # progress visualization TodoWrite (channel interaction)
 related_stories:
   - CFP-275
 related_cfps:
@@ -34,7 +33,7 @@ related_files:
 
 ## 상태
 
-**Accepted (2026-05-08)** — carrier_story = CFP-275. Phase 1 trust model (doc-only / no hook enforcement / no telemetry, ADR-025 + ADR-029 + ADR-038 precedent 정합). Effective = 본 ADR 가 포함된 Phase 1 PR merge timestamp (retroactive 미적용 — 신규 codeforge orchestration 행위부터).
+**Accepted (2026-05-08)** — carrier_story = CFP-275. Phase 1 trust model (doc-only / no hook enforcement / no telemetry, ADR-025 + ADR-029 precedent 정합 — Phase 1 doc-only trust pattern). Effective = 본 ADR 가 포함된 Phase 1 PR merge timestamp (retroactive 미적용 — 신규 codeforge orchestration 행위부터).
 
 본 ADR 의 implementation plan SSOT = [`docs/change-plans/cfp-275-orchestrator-subagent-default.md`](../change-plans/cfp-275-orchestrator-subagent-default.md). 본 ADR = 정책 결정 SSOT.
 
@@ -61,7 +60,6 @@ related_files:
 - ADR-029 (phase execution visibility, Accepted) — Orchestrator stderr 1-line narration 의무.
 - ADR-031 (lane-spawn evidence trail, Accepted) — Story §14 row append (Orchestrator self-write monopoly).
 - ADR-035 (codeforge agent teams Epic, Accepted) — D2 agent teams 활성 분기. ADR-022 deprecate.
-- ADR-038 (progress visualization TodoWrite, Accepted) — TodoWrite = Orchestrator scratchpad / meta progress channel.
 
 ### Gap
 
@@ -126,7 +124,7 @@ codeforge 를 이용한 **수정 작업** 진행 중, Orchestrator (top-level Cl
 - 6 lane plugin (codeforge-{requirements,design,review,develop,test,pmo}) agent 변경 0건.
 - design lane 6 deputy (CodebaseMapper / Refactor / SecurityArch / OpRiskArch / TestContractArch / DataMigrationArch) + 2 CONDITIONAL deputy (LiveOps / LiveOrdering) 변경 0건.
 - Inter-plugin contract 6 (requirements_output / design_output / review_verdict v3 / test_verdict / develop_output / pmo_output) 변경 0건.
-- ADR-009 §결과 invariant 무손상 (Writer 단독 invariant precedent — ADR-029 / ADR-031 / ADR-038 와 동일 패턴).
+- ADR-009 §결과 invariant 무손상 (Writer 단독 invariant precedent — ADR-029 / ADR-031 와 동일 패턴).
 
 ### 결정 6 — Hotfix path 동일 적용 (no exception)
 
@@ -142,7 +140,7 @@ ADR-025 §결정 9 (consumer scope) 와 동일 enforcement 패턴 — Phase 1 = 
 
 본 ADR 의 effective enforcement 강도 = doc-only. 매 Orchestrator 행위 시 (1) 본 ADR-039 / (2) playbook §3.0 / (3) CLAUDE.md "Default subagent context" / (4) consumer-guide § "Subagent default" / (5) hotfix-playbook 1줄 reading 시 자체 인지. 자동 enforcement 부재.
 
-ADR-025 / ADR-029 / ADR-038 precedent 정합 — Phase 2 enforcement = 별도 follow-up CFP.
+ADR-025 / ADR-029 precedent 정합 (Phase 1 doc-only trust pattern) — Phase 2 enforcement = 별도 follow-up CFP.
 
 ### 결정 9 — Phase 2 enforcement / measurement = deferred follow-up CFP
 
@@ -220,7 +218,7 @@ Anthropic 공식 (`https://www.anthropic.com/engineering/claude-code-best-practi
 PreToolUse hook 으로 Orchestrator 직접 Write / Edit / mcp__github__\* 호출 detect → 즉시 차단.
 
 **거부 이유**:
-- ADR-025 / ADR-029 / ADR-038 의 Phase 1 trust model precedent 위반 (doc-only / enforcement 후속 CFP)
+- ADR-025 / ADR-029 의 Phase 1 trust model precedent 위반 (doc-only / enforcement 후속 CFP)
 - spawn latency 정량 데이터 부재 (Researcher §6.F fact gap) → false-positive 위험 (legitimate Read 행위 차단)
 - §결정 2 Inline whitelist 4-entry 의 mechanism level boundary 가 hook code level 에서 정확 detect 불가능 (예: Read 가 Q&A 답변용인지 수정 작업의 일부인지 mechanism level 모호)
 
@@ -287,7 +285,7 @@ Phase 1 trust model 의 검증 채널 = doc lint (TestContractArchitect §8.4 �
 - Stop discipline (ADR-025) 5 종 whitelist 무변 — 본 ADR 는 stop 발생 가능성을 줄이는 mechanism 이지 whitelist 자체를 변경 X
 - ADR-031 §14 lane evidence write monopoly 무변 (ownership 무변, §결정 3 mechanism 분리)
 - Story §10 FIX Ledger Orchestrator monopoly 무변 (ownership 무변)
-- TodoWrite (ADR-038) 흐름 무변 (§결정 2 Inline whitelist entry 2)
+- TodoWrite 흐름 무변 (§결정 2 Inline whitelist entry 2 — TodoWrite tool surface 자체 standalone 정당화, ADR-038 informational reference 만, normative dep 아님)
 
 ### Reversibility
 

@@ -46,14 +46,14 @@ Orchestrator → (사용자 승인) → ArchitectAgent (chief author) 빠른 Cha
 
 ## 3. 사후 감사 (X 경로 — 양 hotfix 공통 의무)
 
-Hotfix merge 완료 후 **next working session** 초두에 Orchestrator 가 자동 수행:
+Hotfix merge 완료 후 **next working session** 초두에 Orchestrator 가 자동 수행. **모든 step 의 mechanism = subagent spawn** (ADR-039 §결정 1 / §결정 6 — Hotfix 의 fast-path 본질 무변, mechanism 만 spawn 의무):
 
-1. **Audit Issue 자동 생성**: GitHub Issue Forms (audit.yml) 자동 생성 — Orchestrator 직접 `mcp__github__issue_write` 호출. label `audit:post-hotfix` + `phase:요구사항`
-2. **Change Plan 소급 작성**: ArchitectAgent (chief author) 가 hotfix 변경 diff 를 소급해 Change Plan 작성 (§1-10 전부, 단 실구현은 이미 존재 상태). `docs/change-plans/` commit
-3. **구현 리뷰 소급**: CodeReviewPL 이 hotfix 변경사항 대상 소급 리뷰 (Claude + Codex 모두)
-4. **보안 테스트 소급** (Minimal Path 에서 Claude peer 생략한 경우에 한함): SecurityTestPL 이 hotfix 대상 보안 리뷰 전체 재수행
-5. **ADR 영향 검토**: 변경이 ADR 결정을 위반/변경하는지 ArchitectAgent (chief author) 검토, 필요 시 ADR 갱신
-6. Audit Issue 는 PR 없이 close 가능 (문서·ADR 갱신만 필요한 경우 → docs PR 1건으로 close)
+1. **Audit Issue 자동 생성**: Orchestrator 가 Audit Issue 생성 전용 delegate subagent spawn → spawn 된 delegate 가 GitHub Issue Forms (audit.yml) 기반 `mcp__github__issue_write` 호출. label `audit:post-hotfix` + `phase:요구사항` (Orchestrator-owned delegate semantics, ADR-039 §결정 3 + §결정 12 / ADR-031 Amendment 1)
+2. **Change Plan 소급 작성**: Orchestrator → ArchitectAgent (chief author) spawn → hotfix 변경 diff 를 소급해 Change Plan 작성 (§1-10 전부, 단 실구현은 이미 존재 상태). ArchitectAgent self-write `docs/change-plans/` commit (CFP-26 owner direct write)
+3. **구현 리뷰 소급**: Orchestrator → CodeReviewPL spawn → hotfix 변경사항 대상 소급 리뷰 (Claude + Codex worker subagent 병렬 spawn 모두)
+4. **보안 테스트 소급** (Minimal Path 에서 Claude peer 생략한 경우에 한함): Orchestrator → SecurityTestPL spawn → hotfix 대상 보안 리뷰 전체 재수행
+5. **ADR 영향 검토**: Orchestrator → ArchitectAgent (chief author) spawn → 변경이 ADR 결정을 위반/변경하는지 검토, 필요 시 ADR 갱신 (ArchitectAgent self-write `docs/adr/`)
+6. Audit Issue 는 PR 없이 close 가능 (문서·ADR 갱신만 필요한 경우 → docs PR 1건으로 close — close 자체도 Orchestrator-owned delegate subagent 경유)
 
 **사후 감사 생략 금지** — hotfix 는 "빠르게 대응 후 반드시 감사" 가 원칙.
 

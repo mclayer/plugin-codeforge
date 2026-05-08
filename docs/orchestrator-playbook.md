@@ -316,7 +316,7 @@ codeforge 수정 작업 = Orchestrator default **subagent spawn**. "inline 으�
 
 #### §3.0.6 Phase 1 doc-only trust model (ADR-039 §결정 8)
 
-매 Orchestrator 행위 시 (1) ADR-039 / (2) 본 §3.0 / (3) CLAUDE.md "Default subagent context (수정 작업)" / (4) consumer-guide § "Subagent default (codeforge orchestration)" / (5) hotfix-playbook 1줄 reading 시 자체 인지. 자동 enforcement 부재. ADR-025 / ADR-029 / ADR-038 precedent 정합.
+매 Orchestrator 행위 시 (1) ADR-039 / (2) 본 §3.0 / (3) CLAUDE.md "Default subagent context (수정 작업)" / (4) consumer-guide § "Subagent default (codeforge orchestration)" / (5) hotfix-playbook 1줄 reading 시 자체 인지. 자동 enforcement 부재. ADR-025 / ADR-029 precedent 정합 (Phase 1 doc-only trust pattern).
 
 Phase 2 enforcement (stop-event-v1 ledger / inline write detect hook / spawn cost telemetry / rate-limited error second-order risk 측정) = ADR-039 §결정 9 deferred follow-up CFP.
 
@@ -327,7 +327,7 @@ Phase 2 enforcement (stop-event-v1 ledger / inline write detect hook / spawn cos
 - **Narration interaction**: [ADR-029](../docs/adr/ADR-029-phase-execution-visibility-expansion.md) (매 spawn / return narrate 의무)
 - **§14 evidence**: [ADR-031](../docs/adr/ADR-031-lane-spawn-evidence-trail.md) Amendment 1 (Orchestrator-owned delegate inclusion)
 - **§10 FIX Ledger**: [fix-event-v1](../docs/inter-plugin-contracts/fix-event-v1.md) Amendment (Orchestrator-owned delegate inclusion)
-- **TodoWrite scratchpad**: [ADR-038](../docs/adr/ADR-038-progress-visualization-todowrite.md) (informational reference)
+- **TodoWrite scratchpad**: TodoWrite tool surface 자체 standalone 정당화 (file write 아님 — meta progress channel). ADR-038 = informational reference, normative dep 아님 (PR #277 머지 order 무관).
 - **Subagent semantics 분기**: [ADR-035](../docs/adr/ADR-035-codeforge-agent-teams-epic-architecture.md) (default subagent context 의 one-shot subagent — `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0`)
 - **Consumer scope**: [consumer-guide.md § "Subagent default (codeforge orchestration)"](consumer-guide.md)
 - **Hotfix scope**: [hotfix-playbook.md](hotfix-playbook.md) (exception 없음 — 사용자 verbatim "무조건")
