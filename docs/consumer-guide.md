@@ -164,6 +164,20 @@ pwsh -File ${env:CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-debut-readiness.ps1
 
 **PASS 시**: 첫 Story Issue Form 제출 가능. `gh issue create --template story.yml` (또는 GitHub UI 의 New Issue → Story).
 
+**Version drift 검사 (선택, ADR-037 / CFP-262 — 권장)**: consumer 가 stale codeforge plugin 으로 작업 진입 시 silent corruption 위험. SessionStart hook 으로 자동 검사 권장:
+
+```jsonc
+// .claude/_overlay/.claude/hooks/SessionStart-codeforge-drift.json
+{
+  "command": "${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-version-drift.sh",
+  "type": "block-on-error",
+  "matcher": "*",
+  "description": "codeforge plugin family version drift check (CFP-262)"
+}
+```
+
+또는 manual: `bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-version-drift.sh`. MAJOR drift → exit 1 (hard-stop), MINOR/PATCH → exit 0 (warning/info). Bypass: `BYPASS_VERSION_DRIFT=1 BYPASS_VERSION_DRIFT_REASON='<text>'`.
+
 **FAIL 시**: stderr 의 안내 따라 manual fix 또는 §2a-§2h manual fallback 절차 활용. `--dry-run` 으로 변경 미적용 사전 진단, `--reset` 으로 state marker 삭제 + clean 재시도.
 
 **Recovery**:

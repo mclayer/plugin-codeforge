@@ -67,7 +67,18 @@ related:
    - 대상: `pyright-lsp`, `context7`, `commit-commands`, `pr-review-toolkit`
    - 노출·활성 여부 1회 확인, 미설치·비활성 시 권유 메시지만 제시하고 진행 허용
 
-   **0f. 확인 결과 사용자 통보 형식**
+   **0f. codeforge plugin family version drift 검사 (CFP-262 / ADR-037)**
+   - 9 plugin 의 installed version vs marketplace.json latest 비교
+   - 실행: `bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-version-drift.sh`
+   - Severity → action mapping (ADR-037 surface table cross-ref):
+     - **MAJOR drift** = hard-stop blocking → 모든 codeforge 작업 중단 + `/plugins update <name>` 의무 + Orchestrator 재 spawn
+     - **MINOR drift** = warning + auto-proceed → 작업 진행, 사용자에게 update 권유
+     - **PATCH drift** = info only → 작업 진행, log 만
+   - **자동화**: consumer 측 `.claude/_overlay/.claude/hooks/` 에 SessionStart hook 등록 권장 (consumer-guide 참조)
+   - **Bypass**: `BYPASS_VERSION_DRIFT=1` + `BYPASS_VERSION_DRIFT_REASON=<text>` env 시 우회 (audit trail 의무)
+   - **MAJOR drift 의 의미**: ADR-037 정의 = breaking change (consumer migration 필요) — stale version 유지 시 silent corruption 위험. hard-stop 정당화.
+
+   **0g. 확인 결과 사용자 통보 형식**
    ```
    🔍 세션 개시 의존성 점검
    - GitHub MCP: ✅ 노출 / ❌ 미인증 → /mcp 재인증 필요
