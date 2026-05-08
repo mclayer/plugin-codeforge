@@ -1278,20 +1278,24 @@ fix_cycle: <N>
 - Story 시작 시 모든 lane `⏸` init
 - Story 완료 시 `_archive/<KEY>.md` 로 mv (PMO Cross-Story 분석 input 보존)
 
-### 14.4 Status enum
+### 14.4 Status enum (ADR-038, 4 marker)
 
-| 마커 | 의미 | 사용 위치 |
-|---|---|---|
-| `⏸` | pending | Lane top, deputy slot |
-| `🔄` | in-progress | Lane top, deputy slot |
-| `✅` | PASS / done | Lane top (S3 snippet 동반), deputy slot |
-| `❌ FIX-N` | FIX 진행 중 | Lane top (evidence 1줄 동반) |
-| `❌ FIX-N (fast-path)` | R11 mechanical | Lane top (typo·broken-link·minor-naming·comment-only) |
-| `⏳` | blocked | Lane top (사용자/외부 의존성 대기) |
-| `⊘ N/A` | skip | Lane top (사유 동반, 주로 plugin meta) |
-| `🔁 RESET-N` | 구현 리뷰 RESET | 구현 테스트·보안 테스트 → 구현 회귀 시 |
+| 마커 | 의미 | TodoWrite native state | 사용 위치 |
+|---|---|---|---|
+| `⏳` | pending — 진행 예정 (모래시계) | `pending` | Lane row, agent sub-row |
+| `🔄` | in_progress — 진행 중 | `in_progress` | Lane row, agent sub-row |
+| `✅` | completed — PASS / N/A / 검출 성공 | `completed` | Lane row, agent sub-row |
+| `❌` | 원인 작업 — 통과 못해 새 단계 추가의 cause | `in_progress` (content prefix `❌`) | Lane row only |
 
-활성 lane top 라인에 inline qualifier (예: `🔄 설계 — 진행 중 (6/6 deputies, chief author 통합 중)` / `🔄 구현 테스트 — 진행 중 (functional ✅ / performance 🔄)`).
+**검출 label 정규화**: review/test lane 의 terminal detection 이 FAIL 인 경우에도 TodoWrite content label 은 `FAIL detected` 를 쓰지 않고 `FIX-N detected` 로 정규화한다. RESET 이 필요한 경우에도 `FIX-N detected (cause: <원인 lane>, RESET-N)` 형식. `FAIL` 은 review/test 판정 흐름의 terminal outcome vocabulary 로만 남고, TodoWrite row label 은 `FIX-N detected` 가 canonical.
+
+**N/A**: ✅ marker + content prefix `N/A · <사유>`. PASS 와 시각 차별 (텍스트 차이).
+**RESET**: ✅ marker (검출 lane) + 새 lane row append (`(재진입 RESET-N)` suffix).
+**blocked / waiting**: 4-marker vocabulary 범위 밖. 대기 상태는 ⏳ pending 으로 표현, 진행 중 차단성 작업은 🔄 in_progress row 의 content 1줄 설명으로 표현.
+
+기존 8 marker (⏸ ⏳-blocked 🔄 ✅ ❌ FIX-N ❌ FIX-N(fast-path) ⊘ 🔁) 폐기. ⏳ semantic 변경 (blocked → pending). file / TodoWrite 두 channel 동일 어휘.
+
+활성 lane row 라인에 inline qualifier (예: `🔄 설계` content 미동반, sub-row 가 detail 표현. PASS 시 `✅ 설계 - PASS · Change Plan v1 + ADR-NNN`).
 
 ### 14.5 트리거 SSOT
 
