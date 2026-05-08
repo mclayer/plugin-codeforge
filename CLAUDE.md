@@ -100,11 +100,13 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 > **Orchestrator 행동 SSOT**: [`docs/orchestrator-playbook.md`](docs/orchestrator-playbook.md) — 세션 생명주기, 스폰 프롬프트 템플릿, 병렬 스폰 판단, FIX 상태 머신, 세션 재개 복원, 토큰 예산.
 
+**Default subagent context (수정 작업) — codeforge 정책 (ADR-039)**: codeforge 를 이용한 **수정 작업** 진행 중, Orchestrator 는 모든 work 을 `Agent` tool spawn (subagent) 으로 수행한다. inline 수행 (Orchestrator turn 안에서 Read / Write / Edit / Bash / Grep / Glob / mcp__github__\* 직접 호출) 은 **Inline whitelist 4-entry** (사용자 dialog / TodoWrite scratchpad / Read-only Q&A 답변 / Status report — 상세 [playbook §3.0](docs/orchestrator-playbook.md)) 외 영역에서 금지. "이건 inline 으로 충분한가 vs subagent 가 나은가" 결정 분기 자체 금지 — branch logic 제거 = ADR-025 §결정 7 `policy_violation_subdecision` 발화 채널 차단. 정책 SSOT [ADR-039](docs/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) (amends ADR-009). Skill 호출 = Inline (file write 아님, meta wrapper) — Skill 내부 individual tool call (Read/Edit/Write/mcp__github__\*/Agent/Bash) level 에서 spawn 분류 발동. Dialog turn separation 의무 (Story §2 AC-5): 사용자 dialog 와 dialog 직후 state change 는 별도 turn / message — 한 메시지 안 inline write + dialog 동시 수행 금지.
+
 **Default subagent context 의 codeforge 정책 결정** (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0` 또는 미설정 시) — 하위 에이전트는 Agent 툴 사용 불가 (재귀 스폰 금지 — platform inherent), 서브에이전트 간 직접 통신 불가 (codeforge 정책 — agent teams enabled context 별도), 서브에이전트 one-shot (codeforge 정책). 모든 스폰은 최상위 Claude.
 
 **Agent teams enabled context 별도** (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`, CFP-137 적용 후) — sibling teammate 간 SendMessage 사용 가능 + long-running + continuous dialog 가능. 단 (a) 재귀 스폰 금지 (platform inherent — Lead 와 teammate 모두), (b) nested team 금지 (no team-of-teams), (c) one-team-per-lead 강제. 상세는 CFP-137 진행 후 codeforge agent teams policy ADR 참조.
 
-**Wrapper 위임 패턴**:
+**Wrapper 위임 패턴** (모든 행위 = ADR-039 default subagent spawn — 위 "Default subagent context (수정 작업)" 단락 정합):
 - 컨텍스트 전달: `docs/stories/<KEY>.md` SSOT, agent 프롬프트는 path 주입, 본문은 agent self-fetch — Context Packet / §0 Live Progress / Project Config Packet 상세는 [playbook §12·§14](docs/orchestrator-playbook.md)
 - Never-skippable: 각 lane 진입 시 Orchestrator 가 해당 lane plugin PL agent 1개만 spawn — sub-agent fan-out (수·역할·non-skippable 매트릭스) 상세는 각 lane plugin CLAUDE.md SSOT
 - **Lane-spawn evidence (ADR-031, CFP-126)**: 매 lane spawn 시 Story §14 Lane Evidence row append (start: spawn 직전, end: return 직후 outcome 채움) + Phase 2 PR description `## Lane evidence` 블록 의무. `lane-evidence-check.yml` workflow + `scripts/check-lane-evidence.sh` lint 가 cross-validate. Bypass = `BYPASS_LANE_EVIDENCE=1` + `BYPASS_LANE_EVIDENCE_REASON` env. Effective date = ADR-031 Accepted 후 신규 Phase 2 PR 부터 (retroactive 미처리). `.claude-work/progress/<KEY>.md` (CFP-20 NG6 cache) 와 분리 — §14 가 SSOT.

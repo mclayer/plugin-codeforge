@@ -22,6 +22,8 @@ related_files:
 
 **Accepted (2026-05-06)** — CFP-126 Phase 1 PR #59 (Sonnet decider CFP-126-001 pick (a) §14 high confidence) + Phase 2 PR #232 merged. Storage location freeze: **(a) Story file 의 신규 §14 Lane Evidence section** (12 field YAML schema, additive). 다른 3 candidate (§8.5 sub-block / frontmatter / PR description-only) 는 superseded. carrier_story = CFP-126 (CFP-124 Epic 의 Phase 3 child).
 
+**Amendment 1 (2026-05-08, CFP-275)** — §결정 1 의 "Wrapper Orchestrator self-write committed lane evidence" 정의 확장: **Orchestrator-owned delegate subagent** (Orchestrator 가 §14 row append 전용으로 spawn 한 subagent) 의 §14 lane evidence write 도 본 §결정 1 의 "Orchestrator self-write" 정의에 포함됨. mechanism level subagent 경유여도 ownership identity = Orchestrator 유지. lane plugin agent 가 자체 임의 §14 직접 append 는 여전히 금지 (lane plugin spawn ≠ Orchestrator-owned delegate spawn). Cross-ref: ADR-039 §결정 3 + §결정 12.
+
 ## 컨텍스트
 
 CFP-124 진단 (2026-05-06) §1.3 architectural root cause A1:
