@@ -1,10 +1,10 @@
----
+﻿---
 adr_number: 50
-title: Parallel Epic Conflict Coordination — 복수 Orchestrator 세션 충돌 조율 정책 (CFP-XXX)
+title: Parallel Epic Conflict Coordination — 복수 Orchestrator 세션 충돌 조율 정책 (CFP-344)
 status: Accepted
 category: governance
 date: 2026-05-09
-carrier_story: CFP-XXX
+carrier_story: CFP-344
 related_adrs:
   - ADR-036
   - ADR-040
@@ -24,7 +24,7 @@ amends: null
 
 ## 상태
 
-Accepted (2026-05-09) — CFP-XXX carrier.
+Accepted (2026-05-09) — CFP-344 carrier.
 
 ## 컨텍스트
 

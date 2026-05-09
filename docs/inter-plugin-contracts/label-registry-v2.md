@@ -1,4 +1,4 @@
----
+﻿---
 kind: registry
 registry: label
 version: "2.1"
@@ -15,7 +15,7 @@ related_adrs:
   - ADR-030 (CFP-123 — gate:live-entry-pass v1.3)
   - ADR-036 (CFP-260 — phase:reservation v1.4)
   - ADR-045 (CFP-138 — gate:retro-complete v1.5)
-  - ADR-050 (CFP-XXX — conflict:* + merge-order:* labels v2.1)
+  - ADR-050 (CFP-344 — conflict:* + merge-order:* labels v2.1)
 related_files:
   - scripts/bootstrap-labels.sh (type:* 3 entry removed — CFP-140)
   - templates/issue-types.yaml (native Issue Types SSOT — CFP-140)
@@ -31,7 +31,7 @@ related_files:
 
 ## 변경 이력
 
-**v2.1 (CFP-XXX / ADR-050, 2026-05-09)**: MINOR bump.
+**v2.1 (CFP-344 / ADR-050, 2026-05-09)**: MINOR bump.
 - **추가**: `conflict:file-overlap`, `conflict:adr-number`, `conflict:section-locked` — 병렬 에픽 충돌 감지 레이블 (parallel-epic-conflict-check.yml Actions 부착)
 - **추가**: `merge-order:1`, `merge-order:2` — 충돌 시 merge 순서 프로토콜 (GitOpsAgent 부착)
 

@@ -1,4 +1,4 @@
----
+﻿---
 adr_number: 34
 title: Pre-Issue Brainstorming as Optional Stage 0 — orchestrator-playbook §1.2.0 + story.yml spec_link
 date: 2026-05-07
@@ -10,7 +10,7 @@ supersedes: null
 amends: null
 amendments:
   - id: 1
-    carrier_story: CFP-YYY
+    carrier_story: CFP-345
     date: 2026-05-09
     title: "codeforge:brainstorm 통합 — Stage 0 Requirements 에이전트 참여"
 related_stories:
@@ -140,7 +140,7 @@ internal-docs (별도 repo, mclayer/codeforge-internal-docs):
 - `wrapper/stories/CFP-129.md` — Story §1-§7 (Phase 1) + §8-§11 (Phase 2 append)
 - `wrapper/decisions/CFP-129-001-codex-spec-review.yaml` — Codex 7-area review verdict archive
 
-## Amendment 1 — codeforge:brainstorm 통합 (CFP-YYY, 2026-05-09)
+## Amendment 1 — codeforge:brainstorm 통합 (CFP-345, 2026-05-09)
 
 ### 컨텍스트
 

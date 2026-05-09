@@ -1,4 +1,4 @@
-# ADR 번호 예약 레지스트리
+﻿# ADR 번호 예약 레지스트리
 
 **Write 주체**: GitOpsAgent 전용 (sequential append).
 **충돌 해소**: 두 세션 동시 append → git merge positional conflict → GitOpsAgent가 adr_number 오름차순 re-sort.
@@ -23,7 +23,7 @@ reservations: []
 
 | adr_number | epic | status | reserved_at |
 |---|---|---|---|
-| 50 | CFP-XXX | active | 2026-05-09 |
+| 50 | CFP-344 | active | 2026-05-09 |
 
 ## 번호 해제 (archived)
 
