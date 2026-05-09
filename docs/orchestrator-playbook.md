@@ -815,6 +815,93 @@ Sample hook = `templates/agent-teams-hook-samples/TeammateIdle.json.sample` (ADR
 
 ---
 
+### §3.10 Codex Proactive Check (CFP-354 / [ADR-052](../docs/adr/ADR-052-codex-proactive-check-touchpoints.md))
+
+Orchestrator가 6개 touchpoint에서 `codex:codex-rescue` subagent를 **proactive check** 용도로 자동 dispatch. 기존 `codex:rescue`(사후 대응 — stuck 시) 채널과 분리.
+
+**Dispatch 패턴**:
+
+```text
+Agent(subagent_type="codex:codex-rescue", prompt=<ProactiveCheckPacket>)
+```
+
+**ProactiveCheckPacket 스키마**:
+
+```yaml
+touchpoint: <1|2|3|4|5|6>
+purpose: <한 줄 목적>
+context:
+  lane: <requirements|design|develop|orchestrator>
+  story_key: <CFP-NNN>
+  artifacts: <첨부 산출물>
+task: <Codex에게 요청할 구체적 작업>
+```
+
+**결과 처리**:
+
+| recommendation | findings | 처리 |
+|---|---|---|
+| PROCEED | — | 그대로 다음 단계 |
+| ADDRESS_FIRST | P0 포함 | 해당 agent findings 반영 후 재진행 (blocking) |
+| ADDRESS_FIRST | P1-only | Orchestrator 판단으로 skip 가능 → story §10 기록 |
+| 판정 불일치 (#5 전용) | — | 사용자 에스컬레이션 |
+
+#### §3.10.1 Pre-question Review
+
+| 항목 | 내용 |
+|---|---|
+| 트리거 | `AskUserQuestion` 호출 직전 (항상, 전 레인) |
+| artifacts | 질문 초안 + 옵션 목록 |
+| task | "아래 질문 초안을 검토해 더 명확한 표현과 더 풍부한 옵션을 제안하라. 편향·누락·모호성 포착" |
+| 출력 적용 | Codex 제안으로 질문/옵션 교체 후 `AskUserQuestion` 호출 |
+
+#### §3.10.2 Design Synthesis Check
+
+| 항목 | 내용 |
+|---|---|
+| 트리거 | ArchitectAgent Change Plan §3 초안 완료 → ArchitectPLAgent 전달 직전 (항상) |
+| artifacts | §3 Change Plan 초안 + 6 deputy 산출물 요약 |
+| task | "6 deputy 산출물이 §3에 균형 있게 반영됐는지 검증. 모순·누락·순환 논리 포착" |
+| 출력 적용 | ADDRESS_FIRST 시 ArchitectAgent §3 수정 후 재전달 |
+
+#### §3.10.3 Development Rescue
+
+| 항목 | 내용 |
+|---|---|
+| 트리거 | DeveloperPLAgent FIX 2+ 반복 동일 이슈 감지 시 |
+| artifacts | 구현 블로커 설명 + 관련 코드/로그 |
+| task | "구현 블로커를 독립적으로 진단하고 root cause 및 해결 경로를 제시" |
+| 출력 적용 | DeveloperPLAgent 진단 결과 적용 |
+
+#### §3.10.4 Requirements Output Review
+
+| 항목 | 내용 |
+|---|---|
+| 트리거 | RequirementsPLAgent §1-§6 통합 완료 → `phase:설계` 진입 직전 (항상) |
+| artifacts | Story §1-§6 전체 내용 |
+| task | "§1-§6 요구사항 완전성 검증. 테스트 불가능한 AC, 누락 엣지케이스, 모호한 표현, 상충 요구사항 포착" |
+| 출력 적용 | ADDRESS_FIRST 시 RequirementsPLAgent §5-§6 보완 후 재검증 |
+
+#### §3.10.5 FIX Root Cause 2nd Opinion
+
+| 항목 | 내용 |
+|---|---|
+| 트리거 | ArchitectPLAgent "설계 vs 구현" root cause 판정 완료 직후 (항상) |
+| artifacts | 판정 결과 + evidence pack (Change Plan 버전 + 리뷰 findings + 테스트 로그) |
+| task | "root cause 판정에 독립적 2nd opinion 제시. 동의/불동의 + 근거" |
+| 출력 적용 | 동의 → 기존 판정 진행 / 불동의 → **사용자 에스컬레이션** (최종 판정 사용자) |
+
+#### §3.10.6 ADR Draft Review
+
+| 항목 | 내용 |
+|---|---|
+| 트리거 | ArchitectAgent ADR 초안 완료 직후 (항상) |
+| artifacts | ADR 초안 전체 |
+| task | "ADR 결정 논거 검토. 순환 논리, 약한 근거, 대안 미검토, §결정 ↔ §컨텍스트 불일치 포착" |
+| 출력 적용 | ADDRESS_FIRST 시 ArchitectAgent ADR 수정 후 설계리뷰 진입 |
+
+---
+
 ## 3B. Preflight 체크 (lane 진입 직전)
 
 Orchestrator가 **각 레인 진입 직전에 의무 수행**. 3개 체크 중 하나라도 FAIL이면 **block + report**: 에이전트 스폰 없이 사용자에게 실패 사유 반환.
