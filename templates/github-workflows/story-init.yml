@@ -6,7 +6,7 @@ name: Story Init
 
 on:
   issues:
-    types: [opened]
+    types: [opened, labeled]   # was: [opened]  — CFP-280 race fix
 
 permissions:
   contents: write
@@ -81,7 +81,7 @@ jobs:
           # CFP-260 / ADR-036 결정 1: GitHub atomic Issue numbering 위임.
           # 기존 file-system scan + max+1 방식 (race-prone) 제거.
           # 결과: race window 0, brainstorming 시점 KEY 사전 확보 (cfp-reserve.yml) 와 정합.
-          mkdir -p docs/stories
+          # CFP-280 Iter 2 NF3 fix: `mkdir -p docs/stories` (Iter 0 file-system check 잔재) 제거 — branch creation step 이 directory 자동 생성.
           echo "key=${PREFIX}-${ISSUE_NUMBER}" >> "$GITHUB_OUTPUT"
 
           PYOUT=$(python3 - <<'PYEOF'
@@ -103,8 +103,29 @@ jobs:
             echo "TITLE_EOF"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Skip if first firing already published (CFP-280 Iter 1 FIX — branch-existence guard)
+        id: existence_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          KEY: ${{ steps.key.outputs.key }}
+          SLUG: ${{ steps.key.outputs.slug }}
+        run: |
+          # CFP-280 Iter 1 FIX (DesignReview F1):
+          # 첫 firing 의 substantive marker = remote feat branch creation (`git push origin feat/${KEY}-${SLUG}`).
+          # Story file 자체는 feat branch 위에만 존재 → base ref (main) checkout 에서 file-system check (`-f`) 는
+          # 영구적 false → dedup 미발동 → second-firing substantive work 중복 → branch push reject / PR duplicate reject.
+          # Fix: GitHub REST API 로 remote branch 존재 검사 (atomic + cross-firing visible).
+          BRANCH="feat/${KEY}-${SLUG}"
+          if gh api "repos/${GITHUB_REPOSITORY}/branches/${BRANCH}" --silent 2>/dev/null; then
+            echo "::notice::Remote branch ${BRANCH} already exists — skipping (idempotent re-entry, CFP-280 Iter 1 FIX)"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Parse user requirement from Issue body
         id: parse
+        if: steps.existence_check.outputs.skip != 'true'
         run: |
           REQ=$(printf '%s' "$ISSUE_BODY" \
                  | awk '/^### 사용자 요구사항/{flag=1; next} /^### /{flag=0} flag' \
@@ -126,6 +147,7 @@ jobs:
           echo "component=$COMPONENT" >> "$GITHUB_OUTPUT"
 
       - name: Create branch + docs/stories/<KEY>.md
+        if: steps.existence_check.outputs.skip != 'true'
         env:
           KEY: ${{ steps.key.outputs.key }}
           SLUG: ${{ steps.key.outputs.slug }}
@@ -205,6 +227,7 @@ jobs:
           git push origin "$BRANCH"
 
       - name: Create Phase 1 PR
+        if: steps.existence_check.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           KEY: ${{ steps.key.outputs.key }}
@@ -224,6 +247,7 @@ jobs:
             --label "type:story,phase:요구사항"
 
       - name: Update Issue body to docs link
+        if: steps.existence_check.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           KEY: ${{ steps.key.outputs.key }}
@@ -233,7 +257,7 @@ jobs:
             --body "Story SSOT: [\`docs/stories/${KEY}.md\`](../blob/${BASE}/docs/stories/${KEY}.md)"
 
       - name: Assign Milestone (if specified)
-        if: steps.parse.outputs.milestone != ''
+        if: steps.existence_check.outputs.skip != 'true' && steps.parse.outputs.milestone != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MILESTONE: ${{ steps.parse.outputs.milestone }}
@@ -241,7 +265,7 @@ jobs:
           gh issue edit "$ISSUE_NUMBER" --milestone "$MILESTONE"
 
       - name: Add component label
-        if: steps.parse.outputs.component != ''
+        if: steps.existence_check.outputs.skip != 'true' && steps.parse.outputs.component != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMPONENT: ${{ steps.parse.outputs.component }}
