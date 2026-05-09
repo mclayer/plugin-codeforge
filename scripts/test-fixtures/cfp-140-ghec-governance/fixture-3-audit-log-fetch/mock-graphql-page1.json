@@ -1,0 +1,34 @@
+{
+  "data": {
+    "enterprise": {
+      "auditLog": {
+        "edges": [
+          {
+            "node": {
+              "__typename": "PullRequestAuditEntry",
+              "actorLogin": "user1",
+              "actor_email": "user1@example.com",
+              "actor_ip": "1.2.3.4",
+              "createdAt": "2026-05-09T10:00:00Z",
+              "action": "pull_request.merged"
+            }
+          },
+          {
+            "node": {
+              "__typename": "IssueAuditEntry",
+              "actorLogin": "github-actions[bot]",
+              "actor_email": "bot@github.com",
+              "actor_ip": "10.0.0.1",
+              "createdAt": "2026-05-09T10:01:00Z",
+              "action": "issues.labeled"
+            }
+          }
+        ],
+        "pageInfo": {
+          "endCursor": "cursor_page1_end",
+          "hasNextPage": true
+        }
+      }
+    }
+  }
+}

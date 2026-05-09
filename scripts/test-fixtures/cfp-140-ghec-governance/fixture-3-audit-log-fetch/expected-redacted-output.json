@@ -1,0 +1,26 @@
+[
+  {
+    "__typename": "PullRequestAuditEntry",
+    "actorLogin": "user1",
+    "actor_email": "sha256:b58a3e3c1d5f",
+    "actor_ip": "sha256:50e83b3f2a1d",
+    "createdAt": "2026-05-09T10:00:00Z",
+    "action": "pull_request.merged"
+  },
+  {
+    "__typename": "IssueAuditEntry",
+    "actorLogin": "github-actions[bot]",
+    "actor_email": "sha256:8a4f2e1b9c3d",
+    "actor_ip": "sha256:3f1e4a2b8c9d",
+    "createdAt": "2026-05-09T10:01:00Z",
+    "action": "issues.labeled"
+  },
+  {
+    "__typename": "RepositoryRulesetAuditEntry",
+    "actorLogin": "admin",
+    "actor_email": "sha256:4d2f1e8b3c9a",
+    "actor_ip": "sha256:9c3e1a4b2f8d",
+    "createdAt": "2026-05-09T10:02:00Z",
+    "action": "repository_ruleset.update"
+  }
+]
