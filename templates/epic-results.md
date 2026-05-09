@@ -169,7 +169,7 @@ consumer 첫 cross-repo Epic 시 추가:
 
 ## 사용 절차
 
-1. PMOAgent 가 Epic close PR 생성 시 본 template 복사 → `EPIC-RESULTS-<EPIC_KEY>.md` (Epic owner repo root)
+1. PMOAgent 가 Epic close PR 생성 시 본 template 복사 → `docs/retros/EPIC-RESULTS-<EPIC_KEY>.md` (Amendment 1 — `<scope>/docs/retros/`, ADR-041 doc-locations.yaml 기준)
 2. 모든 §1~§14 섹션 fill-in. N/A 시 사유 명시.
 3. Epic close PR commit message 에 `Epic close: <EPIC_KEY> — <total PRs> PRs across <N> repos` 명시
 4. PR merge 후 PMOAgent retro 작성 시 본 EPIC-RESULTS evidence pack 으로 사용
