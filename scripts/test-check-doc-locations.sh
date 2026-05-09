@@ -52,7 +52,7 @@ run_test "T3 unknown placeholder" 1 \
 
 # T4: absolute path
 run_test "T4 absolute path" 1 \
-  "sed -i 's|<owner-repo>/EPIC-RESULTS|/abs/path/EPIC-RESULTS|' docs/doc-locations.yaml"
+  "sed -i 's|<owner-repo>/docs/retros/EPIC-RESULTS|/abs/path/EPIC-RESULTS|' docs/doc-locations.yaml"
 
 # T5: duplicate doc_type name
 run_test "T5 duplicate name" 1 \

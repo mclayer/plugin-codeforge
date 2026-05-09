@@ -5,6 +5,21 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.6.0] - 2026-05-09
+
+### Agent model selection policy — ADR-042 (ADR-013 dogfood-out waiver)
+
+- `docs/adr/ADR-042-agent-model-selection-policy.md` (NEW, Accepted) — codeforge agent `model:` field 의 Opus / Sonnet / Haiku tier 선정 SSOT. 4 결정: 3-tier role-pattern 매트릭스 / sibling PR scope (CodebaseMapper + Refactor → Sonnet, ResearcherAgent 재정의 deferred) / 신규 agent 도입 ADR-amendment 의무 / `model:` 필드 부재 = 명시적 Opus 결정. Core principle: "Sonnet 으로 fully cover 가능 = role 재정의 시그널".
+- `CLAUDE.md` (Modify) — Development Agent Team 섹션 직후 ADR-042 1줄 cross-ref.
+
+ADR-037 §3.1 (h) 새 ADR + (g) additive CLAUDE.md guidance → MINOR. 5.5.0 → 5.6.0.
+
+ADR-013 dogfood-out explicit waiver: full Story flow 우회 (3 사유 — KEY collision codeforge-internal-docs#99 / Action permission codeforge-internal-docs#98 / cost asymmetry).
+
+Sibling: [mclayer/plugin-codeforge-design#24](https://github.com/mclayer/plugin-codeforge-design/pull/24) (Mapper + Refactor model field edit + 0.4.0 → 0.4.1 PATCH).
+
+Marketplace mirror sync: 후속 sibling PR (codeforge 5.6.0 + codeforge-design 0.4.1).
+
 ## [5.5.0] - 2026-05-08
 
 ### CFP-273 — SessionStart-codeforge-drift.json.sample consumer overlay (CFP-262 spillover)
