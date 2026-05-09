@@ -61,25 +61,27 @@ fi
 
 # PII redaction helper
 pii_redact() {
-  # Hash email + IP fields using SHA-256 (first 12 chars)
-  python3 - <<'PY'
-import json, sys, hashlib
+  # Hash email + IP fields using HMAC-SHA256 (first 12 chars)
+  # AUDIT_PII_KEY must be set (validated at startup)
+  AUDIT_PII_KEY="${AUDIT_PII_KEY}" python3 - <<'PY'
+import json, sys, hashlib, hmac, os
 
-def hash_val(v):
+def hash_val(v, key_bytes):
     if not v:
         return v
-    return "sha256:" + hashlib.sha256(v.encode()).hexdigest()[:12]
+    return "hmac256:" + hmac.new(key_bytes, v.encode(), hashlib.sha256).hexdigest()[:12]
 
+key_bytes = os.environ['AUDIT_PII_KEY'].encode()
 data = json.load(sys.stdin)
 if isinstance(data, list):
     for entry in data:
         if isinstance(entry, dict):
             if 'actor_email' in entry:
-                entry['actor_email'] = hash_val(entry.get('actor_email', ''))
+                entry['actor_email'] = hash_val(entry.get('actor_email', ''), key_bytes)
             if 'actor_ip' in entry:
-                entry['actor_ip'] = hash_val(entry.get('actor_ip', ''))
+                entry['actor_ip'] = hash_val(entry.get('actor_ip', ''), key_bytes)
             if '@ip' in entry:
-                entry['@ip'] = hash_val(entry.get('@ip', ''))
+                entry['@ip'] = hash_val(entry.get('@ip', ''), key_bytes)
 print(json.dumps(data, indent=2))
 PY
 }
