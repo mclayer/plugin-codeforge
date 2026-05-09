@@ -68,8 +68,8 @@ create_label "phase:reservation" "ededed" "Phase: reservation (CFP-260 / ADR-036
 create_label "gate:design-review-pass"   "0e8a16" "Design review PASS"
 create_label "gate:security-test-pass"   "0e8a16" "Security test PASS"
 create_label "gate:live-entry-pass"      "0e8a16" "Live Epic lane-entry pass (3-condition AND: mode==live + --confirm-live + isolated runtime)"
-# gate:retro-complete (v1.5 / CFP-138 / ADR-043) — Story 완료 회고 작성 mandate forcing function
-create_label "gate:retro-complete"       "0e8a16" "Story 완료 회고 작성됨 (PMOAgent self-write — CFP-138 / ADR-043). 미부착 시 retro-mandatory.yml 가 close 차단."
+# gate:retro-complete (v1.5 / CFP-138 / ADR-045) — Story 완료 회고 작성 mandate forcing function
+create_label "gate:retro-complete"       "0e8a16" "Story 완료 회고 작성됨 (PMOAgent self-write — CFP-138 / ADR-045). 미부착 시 retro-mandatory.yml 가 close 차단."
 
 # fix:* (4종)
 for r in 설계-리뷰 구현-리뷰 구현-테스트 보안-테스트; do
