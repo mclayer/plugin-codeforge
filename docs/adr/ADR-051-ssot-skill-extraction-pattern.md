@@ -48,8 +48,10 @@ CLAUDE.md 내 4개 SSOT 예외 테이블 (~160줄)은 특정 lane 진입 시 또
 
 ## 결과
 
-**달성**:
-- CLAUDE.md ~453 → ~312줄 (ADR-012 ≤380줄 cap 충족, headroom +68줄)
+**ADR-012 §3 amendment**: 본 결정에 의해 ADR-012 §3 "4 SSOT 예외 항목 (책임 매트릭스 / 원인 판정 decision table / FIX Ledger §10 schema / 6 deputy mandate matrix)"은 CLAUDE.md inline 유지에서 skill 분리 방식으로 전환된다. ADR-012 cap(≤380줄) 수호 수단을 확장하는 amendment이며 ADR-012 본문에 cross-reference 추가 권장.
+
+**달성** (Phase 2 구현 완료 후 검증):
+- CLAUDE.md ~453 → ~312줄 예측 (ADR-012 ≤380줄 cap 충족, headroom +68줄)
 - 4개 skill on-demand 로딩으로 lane 진입 전 불필요 토큰 제거
 - Brainstorm skill 미동작 버그 해소
 

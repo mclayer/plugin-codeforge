@@ -21,15 +21,26 @@ CLAUDE.md 453줄. ADR-012 cap(≤380줄) 대비 +73줄 초과. 매 턴 시스템
 ## §3 도입할 설계
 
 - `skills/<slug>/SKILL.md` 형식 4개 신설 (subdirectory, not flat file)
-- Orchestrator: lane 진입 시 해당 skill 명시 호출 (trigger 테이블 CLAUDE.md 상단 명시)
+- Orchestrator: lane 진입 시 해당 skill 명시 호출 (오케스트레이션 규칙 섹션 상단 trigger 테이블 CLAUDE.md에 신설)
 - 기존 `skills/codeforge-brainstorm.md` → `skills/codeforge-brainstorm/SKILL.md` 형식 정정
+
+**Lane→Skill trigger 매핑**:
+
+| 진입 레인 | 호출 skill | 비고 |
+|---|---|---|
+| 설계 | `codeforge:deputy-mandate` | ArchitectPLAgent deputy spawn 결정 전 |
+| 설계리뷰 | `codeforge:review-responsibility` | DesignReviewPL spawn 전 |
+| 구현리뷰 | `codeforge:review-responsibility` | CodeReviewPL spawn 전 |
+| 보안테스트 | `codeforge:review-responsibility` | SecurityTestPL spawn 전 |
+| FIX 루프 | `codeforge:root-cause-decision` + `codeforge:fix-ledger-schema` | DeveloperPL 진단 전 |
 
 ## §4 변경 범위
 
-- `skills/` 4개 신설 + 1개 형식 정정
+- `skills/` 4개 신설 + 1개 형식 정정 (subdirectory 형식)
 - `CLAUDE.md` 4개 섹션 교체 + trigger 테이블 신설
 - `.claude-plugin/plugin.json` version 5.8.0 bump
 - `docs/adr/ADR-051-ssot-skill-extraction-pattern.md` 신설
+- `docs/adr/ADR-012-wrapper-claudemd-ssot-boundary.md` — CFP-343/ADR-051 cross-reference 주석 추가 (SSOT 예외 항목이 skill 분리 방식으로 전환됨 명시)
 
 ## §5 마이그레이션
 
