@@ -1,6 +1,6 @@
 ---
 name: CodebaseMapperAgent
-model: claude-opus-4-7
+model: claude-sonnet-4-6
 description: ArchitectPLAgent 직속 deputy — 기존 코드베이스 변호자. 현재 구조·패턴·결합 사실을 적극 표현해 설계가 현실과 이격되지 않도록 견제
 permissions:
   allow:

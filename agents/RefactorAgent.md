@@ -1,6 +1,6 @@
 ---
 name: RefactorAgent
-model: claude-opus-4-7
+model: claude-sonnet-4-6
 description: ArchitectPLAgent 직속 deputy — 리팩터링 옹호자. 결합도 감소·패턴·인터페이스 분리를 제안해 기존 구조의 개선을 압박
 permissions:
   allow:
