@@ -37,6 +37,11 @@ if [[ -z "${GH_TOKEN:-}" ]]; then
   exit 1
 fi
 
+if [[ -z "${AUDIT_PII_KEY:-}" ]]; then
+  echo "ERROR: AUDIT_PII_KEY not set. Required for HMAC-keyed PII redaction (§7.5)." >&2
+  exit 1
+fi
+
 # Retention warning
 if [[ -n "$SINCE" ]]; then
   SINCE_EPOCH=$(python3 -c "import datetime; print(int(datetime.datetime.fromisoformat('${SINCE}'.replace('Z','+00:00')).timestamp()))" 2>/dev/null || echo "0")
