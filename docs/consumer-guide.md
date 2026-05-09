@@ -289,11 +289,6 @@ mkdir -p .claude/_overlay/agents
 cp ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/_overlay/README.md .claude/_overlay/
 cp ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/_overlay/project.yaml.example .claude/_overlay/project.yaml
 
-# TestAgent가 호출할 wrapper 2종 (consumer가 러너 명령 결정)
-cp ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/_overlay/run-tests.sh.example .claude/_overlay/run-tests.sh
-cp ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/_overlay/run-perf.sh.example .claude/_overlay/run-perf.sh
-chmod +x .claude/_overlay/run-tests.sh .claude/_overlay/run-perf.sh
-# editor에서 pytest 부분을 프로젝트 러너로 교체 (vitest / go test / cargo test / jest / k6 등)
 ```
 
 (§2a anchor 보존 — 외부 link 호환)
@@ -886,6 +881,28 @@ multi-repo consumer (예: mctrader 의 6 repo) 의 cross-repo Epic 진행 시 [A
 |---|---|---|
 | **A: Repo-local** (ADR-020 v1 default) | 각 작업 repo 의 `docs/stories/<KEY>.md` | Implementation repo 가 자체 storyboard 운영 / repo 별 자율 lifecycle |
 | **B: Hub-centralized** | 1 hub repo 가 모든 child Story 보유, implementation repo 는 code PR 만 | Doc-only hub repo 존재 + 도메인 ADR collocate (mctrader 패턴) |
+
+---
+
+### lanes.security_ai opt-in (선택)
+
+기본값 `false` — 5-lane + CI gate 모드로 동작. SecurityTestPL (Claude+Codex AI 보안 분석) 없음.
+
+`true`로 설정하면 CI gate PASS 후 SecurityTestPL이 추가로 spawn됨:
+
+```yaml
+# .claude/_overlay/project.yaml
+lanes:
+  security_ai: true
+```
+
+**권장 상황**: 외부 노출 API / 금융 데이터 처리 / 개인정보 취급 시스템.
+**불필요 상황**: 내부 네트워크 전용 시스템 / solo-dev 프로젝트 (기본값 유지).
+
+GitHub native 보안 도구 (Dependabot / CodeQL / Secret Scanning)는 `security_ai` 설정과 무관하게 항상 동작. GitHub repo 설정에서 별도 활성화 필요:
+- Settings → Security → Enable Dependabot alerts
+- Settings → Security → Enable Code scanning (CodeQL)
+- Settings → Security → Enable Secret scanning
 
 **Mixed-mode 금지** — 단일 Epic 내 mode 일관 유지. 다른 Epic 은 다른 mode 가능.
 
