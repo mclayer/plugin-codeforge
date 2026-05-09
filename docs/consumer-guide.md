@@ -893,6 +893,68 @@ multi-repo consumer (예: mctrader 의 6 repo) 의 cross-repo Epic 진행 시 [A
 
 **Mid-Epic 신규 repo 추가**: 기존 mode 유지 default. Mode 전환 필요 시 Epic 분할 또는 재시작 (consumer 명시 ESCALATE). 상세 = playbook §3.4 + ADR-020 Amendment 1 §결정 8.
 
+### 5.2 Framework Migration Epic Pattern (CFP-316 / ADR-047)
+
+codeforge framework 자체가 진화(신규 deputy, §section 변경, ADR 변경 등)할 때 기존 진행 중인 Stories/Change Plans에 retrofit이 필요하다. 이를 위한 패턴. 정책 SSOT: [ADR-047](adr/ADR-047-framework-migration-epic-pattern.md).
+
+#### Framework Delta Event 4-Type
+
+codeforge framework 변경이 consumer에 영향을 줄 수 있는 이벤트의 공식 분류. PMOAgent가 감지 후 5분 이내에 Version Delta Review를 수행한다 ([playbook §13.1a](orchestrator-playbook.md)).
+
+| Type | 설명 | PMOAgent 반응 |
+|------|------|---------------|
+| **Type A — Version bump** | consumer 프로젝트의 codeforge version bump | patch: advisory review / minor·major: Migration Epic 후보 |
+| **Type B — ADR 변경** | Story 구조/lane 동작에 영향을 주는 신규·실질적 ADR 변경 (inter-plugin contract schema MAJOR bump, GitHub workflow fixture 변경 등) | 영향 범위 평가 후 Migration Epic 여부 결정 |
+| **Type C — Deputy 변경** | 신규 deputy 추가 또는 deputy mandate 변경 (새 필수 §section 발생) | 진행 중 Story에 새 §section 추가 Migration Story 생성 |
+| **Type D — Bootstrap 변경** | ADR-027/ADR-032 enforcement 변경 | consumer-guide 업데이트 + bootstrap 재검증 Migration Story |
+
+**Type B 범위 주의**: inter-plugin contract MINOR/PATCH bump, workflow cosmetic fix는 advisory-only (Migration Epic 후보 아님). MAJOR bump 또는 story-init.yml 등 구조 변경만 해당.
+
+#### Migration Epic Pattern
+
+Migration Epic = [ADR-020 Cross-Repo Epic Pattern](adr/ADR-020-cross-repo-epic-pattern.md)의 codeforge framework-specific 적용.
+
+**ADR-020 Mode 결정**:
+- **Mode B (hub-centralized)**: consumer가 hub repo를 운영하는 경우 (예: mctrader-hub) — 기본값
+- **Mode A (repo-local)**: single-repo consumer
+- Mixed-mode 금지 (ADR-020 §결정 Amendment 1 정합)
+
+#### Migration Epic §5 tiered template
+
+delta 크기에 따라 필수 §section이 다르다. PMOAgent가 Tier를 결정하고 사용자 확인 optional.
+
+| Delta 크기 | 필수 §section | 면제 (N/A 허용) |
+|------------|---------------|-----------------|
+| **Small** (1-2 ADR 변경, 새 deputy 없음) | §1 + §4 | §2, §3, §5 (N/A 사유 1줄) |
+| **Medium** (새 deputy mandate, 새 §section 추가) | §1 + §2 + §3 + §4 | §5 (N/A 허용) |
+| **Large** (breaking change, §structure 재편) | §1 + §2 + §3 + §4 + §5 | — |
+
+**Tier 충돌 시 우선순위**: 동일 delta에서 여러 Tier 기준이 충돌하면 — (1) 새 deputy 추가 ≻ (2) 새 §section 추가 ≻ (3) ADR 수 기준으로 상위 Tier 적용.
+
+**§section 설명**:
+- **§1 Framework Delta Summary**: codeforge 버전 범위, 변경된 ADR 목록, 신규/변경 deputy, 변경된 §section
+- **§2 Affected Artifact Inventory**: 진행 중 Stories + Change Plans + ADRs + hooks + labels 영향 목록
+- **§3 Deputy Migration Notes**: deputy별 domain-specific retrofit 가이드
+- **§4 Migration Story Backlog**: PMO-owned 순서화된 remediation Story 목록 + AC
+- **§5 Completion Gate** (3 invariant):
+  - Gate-1 Bootstrap PASS: ADR-027/032 enforcement 재검증 통과
+  - Gate-2 Affected Story §section 갱신 완료: §2 inventory 모든 Story가 새 §section schema 준수
+  - Gate-3 ADR alignment 확인: §1 변경 ADR 모두 Accepted + 영향 prior ADR cross-ref 갱신
+
+#### Deputy Migration Notes 포맷
+
+신규/변경 deputy mandate 발생 시 해당 deputy가 게시하는 retrofit 가이드 포맷:
+
+```
+## Migration Note: <deputy name> — <version-or-adr-ref>
+
+**변경 사항**: <1줄 요약>
+**기존 §X 보유 Story 적용**: <retrofit 가이드 2-5줄>
+**N/A 조건**: <해당 없는 경우>
+```
+
+**CONDITIONAL deputy 적용**: LiveOpsDeputy / LiveOrderingDeputy owned §section (§13, §11 ledger invariant) 변경 시 — Live-active consumer에만 Migration Notes 적용 의무. Live-inactive consumer는 N/A (사유 1줄).
+
 ## 6. FAQ
 
 ### Q1. Overlay에 스칼라 필드(name, description, model)가 들어가면?
