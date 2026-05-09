@@ -331,6 +331,45 @@ Phase 2 enforcement (stop-event-v1 ledger / inline write detect hook / spawn cos
 - **Consumer scope**: [consumer-guide.md § "Subagent default (codeforge orchestration)"](consumer-guide.md)
 - **Hotfix scope**: [hotfix-playbook.md](hotfix-playbook.md) (exception 없음 — 사용자 verbatim "무조건")
 
+#### §3.0.8 Pre-action fact verification (normative — wrapper + all consumers)
+
+Orchestrator 가 사용자에게 substantive path 를 제시하거나 외부 system 동작을 인용하기 전, 아래 5-item self-audit 의무:
+
+| 항목 | verify 도구 | skip 금지 조건 |
+|---|---|---|
+| 인용 file / 디렉터리 실제 존재 여부 | `Glob` / `Bash ls` | path 를 사용자에게 제시하는 모든 경우 |
+| workflow / Action trigger 조건 | `Read` | "자동으로 X 가 일어남" 주장 전 |
+| schema / config 실제 fields | `Read` | structured contract 인용 전 |
+| GitHub Issue / state | `mcp__github__issue_read` | Issue 상태 주장 전 |
+| 사용자 환경 state | `Read ~/.claude/settings.json` 또는 `Bash which` | 설치 여부·인증 상태 주장 전 |
+
+**Hedging 금지 신호 (이 단어 응답에 등장 시 verify 의무)**:
+- "should be" / "보통" / "~로 추정" / "~일 것" / 외부 system 동작 가정
+
+**Subagent 답 weak signal**: subagent 응답에 "추정" / "확인 필요" / "공식 미기재" 등장 시 main session 에서 fact 직접 검증.
+
+5초 cost verify 로 방지 가능한 사실은 추론으로 답변 금지.
+
+#### §3.0.9 Internal-docs branch safety (normative — codeforge dogfood 작업 시)
+
+`codeforge-internal-docs` working directory 는 외부 프로세스(사용자 IDE / 별도 터미널 / 별도 Claude 세션)가 언제든 branch 를 switch 할 수 있다. 매 commit 전 의무:
+
+1. **Branch verify — 단독 Bash call (chained 금지)**:
+   ```bash
+   git -C c:/workspace/mclayer/codeforge-internal-docs branch --show-current
+   ```
+   출력이 intended branch 와 일치 확인. 불일치 시 즉시 stash + checkout intended branch.
+
+2. **Push 전 dry-run — 단독 Bash call**:
+   ```bash
+   git -C c:/workspace/mclayer/codeforge-internal-docs push --dry-run origin <branch>
+   ```
+   `main -> main` 출력 시 즉시 abort + branch verify.
+
+3. **Chained `&&` 명령에서 branch verify 금지**: `git branch --show-current` 는 항상 exit 0 → verify 결과와 무관하게 다음 단계 진행. verify = 반드시 단독 call + 출력 확인 후 다음 call.
+
+4. **main / master force push 절대 금지**. 사고 발생 시: cherry-pick → correct branch → push (force push X).
+
 ### 3.1 7 레인 + Cross-cutting 스폰 순서 (요약)
 
 ```
