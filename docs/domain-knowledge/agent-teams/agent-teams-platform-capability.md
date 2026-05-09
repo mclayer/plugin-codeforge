@@ -4,6 +4,12 @@ area: agent-teams
 topic_slug: agent-teams-platform-capability
 title: Claude Code agent teams (experimental) platform capability + codeforge re-entrancy 제약
 status: Active
+tags:
+  - agent-teams
+  - platform-capability
+  - re-entrancy
+  - teamcreate
+  - sendmessage
 related_adrs:
   - ADR-009  # wrapper-only decomposition (Orchestrator 단일 lead 정합)
   - ADR-022  # Sonnet decider Deprecated (codeforge 1st-class vs ad-hoc 경계)
@@ -20,6 +26,30 @@ updated: 2026-05-09
 ---
 
 # Claude Code agent teams (experimental) — platform capability + codeforge re-entrancy 제약
+
+## Summary
+
+Claude Code experimental `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 활성 시 사용 가능한 **agent teams platform capability** 와 codeforge 가 적용하는 **re-entrancy 제약 3종** SSOT. ADR-044 Phase-scoped sequential team 패턴의 platform 근거이며, default subagent context (ADR-039) 와의 분기 조건을 명시한다.
+
+## Pattern
+
+**codeforge Phase-scoped sequential team 패턴** (ADR-044):
+- lane 진입 시 `TeamCreate(team-spec-<lane>.yaml)` → teammate fan-out
+- lane 종결 시 `TeamDelete()` → 다음 lane TeamCreate 이전 완료
+- re-entrancy 제약 3종: (1) 재귀 spawn 금지, (2) nested team 금지, (3) one-team-per-lead 강제
+
+**env=0 fallback**: ADR-039 default subagent context (one-shot Agent tool spawn). TeamCreate / SendMessage / TaskCreate 미사용. team-spec yaml 미사용.
+
+5 권장 패턴 매핑: Specialization (lane teammate system_prompt) / Parallelization (TEAM-DESIGN 6 deputy) / Adversarial (review Claude vs Codex — 사용자 explicit request 시) / Cross-layer (TEAM-DEVELOP dev ↔ QA) / Escalation (lane FIX).
+
+## Usage
+
+agent teams enabled context 활성화:
+1. `settings.json` 에 `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 설정 + 세션 재시작
+2. `templates/agent-teams-hook-samples/` 3종 hook install (`.claude/hooks/`)
+3. lane 진입 시 `templates/team-spec-<lane>.yaml` 로 `TeamCreate` 호출
+4. review lane Codex worker = `dispatch_mode: user_request_only` (default roster 제외 — 사용자 explicit request 시만 활성)
+5. `/resume` 후 in-process teammate 미복원 risk → Phase-scoped short lifecycle 팀 채택 의무
 
 ## 정의
 

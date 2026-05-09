@@ -4,6 +4,12 @@ area: jsonl-write
 topic_slug: race-condition-handling-pattern
 title: Cross-repo JSONL write race condition handling pattern — Contents API SHA-based optimistic concurrency (Pattern A 의무) vs Long-lived branch (Pattern B) vs File lock (Pattern C)
 status: Active
+tags:
+  - jsonl
+  - race-condition
+  - github-api
+  - concurrency
+  - cross-repo
 related_adrs:
   - ADR-026  # post-merge-counters.jsonl carrier (Pattern A implementation precedent — post-merge-telemetry.sh)
   - ADR-045  # retro-attempts.jsonl carrier (Phase 1 follow-up amendment_id=1 — Pattern A 의무 명시)
@@ -16,6 +22,50 @@ amended: 2026-05-09  # CFP-289: Retry Semantics section added
 ---
 
 # Cross-repo JSONL write race condition handling pattern
+
+## Summary
+
+Cross-repo JSONL 파일에 **다수 GitHub Actions workflow run** 이 concurrent push 를 시도할 때 발생하는 **lost-update / race condition** 문제를 해결하기 위한 3-종 패턴 비교 + 선택 기준 SSOT. **Pattern A (GitHub Contents API SHA-based optimistic concurrency)** 가 모든 cross-repo jsonl write 의 **default 의무 패턴**.
+
+## Pattern
+
+### Pattern A — Contents API SHA-based optimistic concurrency (default 의무)
+
+GitHub Contents API `PUT /repos/{owner}/{repo}/contents/{path}` 에 기존 file blob SHA 를 mandatory 파라미터로 전달 → server-side atomic SHA mismatch 검출 (409 Conflict) → client retry loop (max 3 + jitter). Cross-repo jsonl write 시 git clone + push 패턴을 대체하는 **lost-update-safe** 의무 패턴.
+
+**구현 참조**: `scripts/post-merge-telemetry.sh` line 60-110 (CFP-74 / ADR-026 — Codex P0 fix 시 도입).
+
+### Pattern B — Long-lived branch + sequential merge queue
+
+Per-write feature branch + sequential PR merge (queue order). concurrent write rate > ~10/min 또는 strict ordering 의무 시 고려. codeforge family 에서는 Pattern A 로 충분하여 **미사용 default**.
+
+### Pattern C — File lock + retry (local-only)
+
+`flock(2)` Unix advisory lock + retry-on-conflict. local file system jsonl 전용 — cross-repo 에 무효. codeforge family 는 모든 jsonl 이 cross-repo 이므로 **미사용 default**.
+
+## Usage
+
+**모든 cross-repo jsonl write workflow 에서 Pattern A 를 의무 적용**. git clone + git push 패턴 금지.
+
+```bash
+# Pattern A pseudocode — retry loop with SHA-based optimistic concurrency
+for retry in 1 2 3; do
+    SHA=$(gh api "repos/${REPO}/contents/${PATH}?ref=${BRANCH}" --jq '.sha' 2>/dev/null || echo "")
+    EXISTING=$(gh api "repos/${REPO}/contents/${PATH}?ref=${BRANCH}" --jq '.content' 2>/dev/null | base64 -d 2>/dev/null || echo "")
+    NEW_CONTENT_B64=$(printf '%s\n%s\n' "$EXISTING" "$NEW_ENTRY" | base64 -w0)
+    ARGS=(-X PUT "repos/${REPO}/contents/${PATH}" -f message="$MSG" -f content="$NEW_CONTENT_B64" -f branch="$BRANCH")
+    [[ -n "$SHA" ]] && ARGS+=(-f sha="$SHA")
+    if gh api "${ARGS[@]}"; then break; fi
+    sleep $((RANDOM % 5 + 1))  # jitter — concurrent client thundering herd 회피
+done
+```
+
+**적용 대상** (binding):
+- `post-merge-counters.jsonl` (ADR-026 / CFP-74) — 이미 Pattern A 적용
+- `retro-attempts.jsonl` (ADR-045 / CFP-138) — Pattern A 의무 적용 대상
+- 미래 신설 cross-repo jsonl 전부
+
+**Long-lived branch 의무**: cross-repo jsonl write 는 main 직접 push 금지 (ADR-026 §결정 4) → 전용 long-lived branch (예: `telemetry-counters`, `retro-attempts-state`) + 단일 rolling PR.
 
 ## 정의
 
