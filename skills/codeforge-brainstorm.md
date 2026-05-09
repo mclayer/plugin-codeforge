@@ -60,8 +60,12 @@ docs/domain-knowledge/ 디렉터리를 읽고 이 아이디어와 관련된
 당신은 codeforge RequirementsAnalystAgent입니다.
 사용자의 아이디어: {USER_IDEA}
 
-이 아이디어를 예비 요구사항으로 확장하세요.
+**먼저 WHY를 추출하세요.** 사용자가 이것을 요구하는 근본 동기·필요·배경을 파악합니다.
+지식 부족이나 선입견으로 인해 실제 필요와 다른 방향을 요청했을 가능성을 항상 고려하세요.
+
 출력 형식:
+- 추정 동기 (why): [이 요청의 근본 필요 1~2줄]
+- 명시된 요구 ↔ 실제 필요 일치 여부: 일치 / 불일치 가능성 있음 (사유 1줄)
 - AC 3~5개: [Given/When/Then 형식]
 - Edge Case 2개: [예외 시나리오]
 추론 과정 생략. 목록만.
@@ -90,7 +94,7 @@ docs/domain-knowledge/ 디렉터리를 읽고 이 아이디어와 관련된
 === brainstorming 컨텍스트 패킷 ===
 [DomainAgent] {도메인 사실 요약}
 [Researcher] 핵심 개념: {목록} / Unknowns: {목록}
-[Analyst] 예비 AC: {목록} / Edge Cases: {목록}
+[Analyst] 추정 동기(why): {근본 필요} / 일치 여부: {일치|불일치 가능성+사유} / 예비 AC: {목록} / Edge Cases: {목록}
 [PMO] 예상 Story: {N}개 / 의존: {에픽} / 위험: {1개}
 ================================
 ```
@@ -101,6 +105,12 @@ docs/domain-knowledge/ 디렉터리를 읽고 이 아이디어와 관련된
 
 `superpowers:brainstorming`의 checklist 1(project context explore)은 이미 수행됨 —
 Phase 0 결과로 대체. checklist 2부터 진행.
+
+**Why-first 원칙**: brainstorming의 첫 질문은 반드시 "왜"를 향한다. 사용자가 요청한 내용(what)이 아니라 그 배경·동기·실제 필요(why)를 먼저 확립한다.
+
+- RequirementsAnalystAgent가 "불일치 가능성 있음"을 보고한 경우, brainstorming 초반에 이 점을 명시적으로 탐색한다 — "요청하신 것이 X인데, 실제로 해결하고 싶은 문제는 무엇인가요?"
+- why 파악 결과 사용자의 실제 필요가 명시된 요구와 다를 경우, 더 나은 대안을 Orchestrator가 직접 제안한다 — "요청하신 X보다 Y가 실제 필요에 더 적합한 이유는 …" 형식.
+- 대안 제안 후 사용자가 원래 방향을 유지하면 그 선택을 존중하고 진행한다.
 
 ## Phase 2: 분해 및 scope_manifest 생성
 
