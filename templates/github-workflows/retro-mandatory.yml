@@ -37,25 +37,31 @@ on:
   # Issue close 시 reopen 차단 (UC-2 정합)
   issues:
     types: [closed]
-  # NOTE: workflow_run + scheduled cron retry trigger = Phase 2 implementation 영역 (ADR-045 §D-4).
-  #       Phase 1 PR scope 에서는 first attempt 5min grace 만 implement.
-  #       retry state machine (workflow_run self re-trigger 또는 cron */5 * * * * + jsonl state store)
-  #       는 Phase 2 PR scope 에서 추가.
+  # Phase 2 retry triggers (ADR-045 §D-4 Phase 2 implementation spec — CFP-138):
+  schedule:
+    # Every 5 min — check retro-attempts.jsonl for due retries.
+    # State machine: retro-retry-helper.sh reads jsonl, outputs due entries.
+    # Cumulative offset from PR merge: attempt1→2: 5min, 2→3: 10min, 3→4: 15min.
+    - cron: '*/5 * * * *'
+  workflow_run:
+    workflows: ["Retro mandatory (CFP-138 / ADR-045)"]
+    types: [completed]
 
 permissions:
   # GITHUB_TOKEN scope (built-in token):
   #   - issues: write — Issue label add / Issue auto-reopen / Issue comment
   #   - pull-requests: write — PR comment (필요 시)
   #   - contents: read — checkout repo (.codeforge/ flag 검사)
-  # NOTE: secrets.CODEFORGE_CROSS_REPO_PAT 사용 step 은 Phase 1 PR scope 에 부재 —
-  #       Phase 2 PR scope 의 telemetry channel (retro-attempts.jsonl) 추가 시 별도 step 도입.
-  #       Phase 2 PAT scope = `contents:write` only on internal-docs (ADR-026 §결정 2 정합).
+  # Phase 2 addition: contents:write added for retro-attempts.jsonl push (CODEFORGE_CROSS_REPO_PAT scope).
+  # CODEFORGE_CROSS_REPO_PAT scope = contents:write only on internal-docs (ADR-026 §결정 2 정합).
+  # Phase 1 steps still use GITHUB_TOKEN only (issues:write + pull-requests:write + contents:read).
   issues: write
   pull-requests: write
-  contents: read
+  contents: write
 
 concurrency:
-  group: retro-mandatory-${{ github.event.pull_request.number || github.event.issue.number }}
+  # Phase 2: schedule/workflow_run events use a different group key (no PR/Issue number)
+  group: retro-mandatory-${{ github.event.pull_request.number || github.event.issue.number || 'cron' }}
   cancel-in-progress: false
 
 jobs:
@@ -222,6 +228,47 @@ EOF
             echo "::notice::[PMO] retro alert already posted on Issue #$ISSUE_NUM (idempotent skip)"
           fi
 
+      - name: Write initial attempt to retro-attempts.jsonl (ADR-045 §D-4 Phase 2)
+        # Phase 2 addition: record first attempt in internal-docs retro-attempts.jsonl.
+        # Uses CODEFORGE_CROSS_REPO_PAT (contents:write on mclayer/codeforge-internal-docs).
+        # Pattern mirrors ADR-026 post-merge-counters.jsonl git clone + append + commit + push.
+        # Idempotent: check if same pr_ref + attempt_n=1 already recorded before appending.
+        if: |
+          steps.enabled.outputs.disabled != 'true' &&
+          steps.gate_check.outputs.outcome == 'missing_gate' &&
+          secrets.CODEFORGE_CROSS_REPO_PAT != ''
+        env:
+          PAT: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+          STORY_KEY: ${{ steps.meta.outputs.story_key }}
+          PR_REF: "mclayer/${{ github.repository_owner }}/${{ github.event.repository.name }}#${{ github.event.pull_request.number }}"
+        run: |
+          TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          ENTRY="{\"story_key\": \"$STORY_KEY\", \"pr_ref\": \"mclayer/plugin-codeforge#${{ github.event.pull_request.number }}\", \"attempt_n\": 1, \"last_attempted_at\": \"$TIMESTAMP\", \"status\": \"in_flight\"}"
+
+          # Clone internal-docs with PAT
+          git clone --depth 1 "https://x-access-token:${PAT}@github.com/mclayer/codeforge-internal-docs.git" /tmp/internal-docs
+          cd /tmp/internal-docs
+
+          # Idempotency: check if same story_key + attempt_n=1 already recorded
+          JSONL_PATH="wrapper/retro-attempts.jsonl"
+          if [ -f "$JSONL_PATH" ] && grep -q "\"story_key\": \"$STORY_KEY\"" "$JSONL_PATH" 2>/dev/null; then
+            EXISTING=$(grep "\"story_key\": \"$STORY_KEY\"" "$JSONL_PATH" | tail -1)
+            echo "::notice::retro-attempts.jsonl already has entry for $STORY_KEY — idempotent skip. existing: $EXISTING"
+            exit 0
+          fi
+
+          # Append new entry
+          mkdir -p wrapper
+          echo "$ENTRY" >> "$JSONL_PATH"
+
+          # Commit + push
+          git config user.name "codeforge-retro-mandatory[bot]"
+          git config user.email "codeforge-retro-mandatory[bot]@users.noreply.github.com"
+          git add "$JSONL_PATH"
+          git commit -m "retro-attempts: record first attempt for $STORY_KEY (CFP-138 / ADR-045 §D-4)"
+          git push
+          echo "::notice::retro-attempts.jsonl updated: $ENTRY"
+
   close-blocking:
     # Issue close event 처리 — gate:retro-complete 부재 시 자동 reopen (UC-2 정합)
     if: github.event_name == 'issues' && github.event.action == 'closed'
@@ -303,3 +350,185 @@ EOF
             });
 
             core.warning(`Issue #${issue.number} auto-reopened — retro mandatory missing`);
+
+  retry-state-machine:
+    # Phase 2 retry job (ADR-045 §D-4 Phase 2 implementation spec — CFP-138).
+    # Triggers on schedule (cron */5 * * * *) or workflow_run (completed).
+    # Reads retro-attempts.jsonl from internal-docs, dispatches due PMOAgent re-spawns.
+    # State machine: attempt_n 1→2: 5min wait, 2→3: 10min wait, 3→4: 15min wait.
+    # After attempt_n=4 fail: ESCALATE comment + status=escalated.
+    if: |
+      (github.event_name == 'schedule' || github.event_name == 'workflow_run') &&
+      secrets.CODEFORGE_CROSS_REPO_PAT != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Disable check (ADR-045 D-7)
+        id: enabled
+        run: |
+          if [ -f .codeforge/post-merge-automation.disabled ]; then
+            echo "disabled=true" >> $GITHUB_OUTPUT
+            echo "::warning::Retro retry state machine disabled by .codeforge/post-merge-automation.disabled"
+          else
+            echo "disabled=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Clone internal-docs + run retry helper
+        if: steps.enabled.outputs.disabled != 'true'
+        env:
+          PAT: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Clone internal-docs to read retro-attempts.jsonl
+          git clone --depth 1 "https://x-access-token:${PAT}@github.com/mclayer/codeforge-internal-docs.git" /tmp/internal-docs
+          JSONL_PATH="/tmp/internal-docs/wrapper/retro-attempts.jsonl"
+
+          if [ ! -f "$JSONL_PATH" ]; then
+            echo "::notice::retro-attempts.jsonl not found — no pending retries"
+            exit 0
+          fi
+
+          # Run retry helper to find due entries
+          CURRENT_EPOCH=$(date +%s)
+          DUE_ENTRIES=$(bash "$GITHUB_WORKSPACE/scripts/retro-retry-helper.sh" "$JSONL_PATH" "$CURRENT_EPOCH")
+
+          if [ -z "$DUE_ENTRIES" ]; then
+            echo "::notice::No due retry entries found"
+            exit 0
+          fi
+
+          echo "$DUE_ENTRIES" | while IFS= read -r entry; do
+            STORY_KEY=$(echo "$entry" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['story_key'])" 2>/dev/null || echo "")
+            ATTEMPT_N=$(echo "$entry" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['attempt_n'])" 2>/dev/null || echo "0")
+            PR_REF=$(echo "$entry" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d['pr_ref'])" 2>/dev/null || echo "")
+
+            if [ -z "$STORY_KEY" ]; then
+              echo "::warning::Skipping malformed entry: $entry"
+              continue
+            fi
+
+            NEW_ATTEMPT_N=$((ATTEMPT_N + 1))
+            TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+            # Find Story Issue
+            ISSUE_NUM=$(gh issue list \
+              --label "type:story" \
+              --search "in:title ${STORY_KEY}" \
+              --json number,title \
+              --jq "[.[] | select(.title | test(\"^${STORY_KEY}\\\\b\"))] | .[0].number" 2>/dev/null || echo "")
+
+            if [ -z "$ISSUE_NUM" ] || [ "$ISSUE_NUM" = "null" ]; then
+              echo "::warning::No Issue found for $STORY_KEY — skip retry"
+              continue
+            fi
+
+            # Check if gate:retro-complete already attached (success case)
+            ISSUE_LABELS=$(gh issue view "$ISSUE_NUM" --json labels --jq '[.labels[].name] | join(",")' 2>/dev/null || echo "")
+            if echo "$ISSUE_LABELS" | grep -q "gate:retro-complete"; then
+              echo "::notice::Issue #$ISSUE_NUM ($STORY_KEY) has gate:retro-complete — marking success"
+              # Update jsonl: status=success
+              cd /tmp/internal-docs
+              python3 -c "
+import json, sys
+updated = []
+with open('wrapper/retro-attempts.jsonl') as f:
+    for line in f:
+        line = line.strip()
+        if not line: continue
+        d = json.loads(line)
+        if d.get('story_key') == '$STORY_KEY':
+            d['status'] = 'success'
+            d['last_attempted_at'] = '$TIMESTAMP'
+        updated.append(json.dumps(d))
+with open('wrapper/retro-attempts.jsonl', 'w') as f:
+    f.write('\n'.join(updated) + '\n')
+"
+              git config user.name "codeforge-retro-mandatory[bot]"
+              git config user.email "codeforge-retro-mandatory[bot]@users.noreply.github.com"
+              git add wrapper/retro-attempts.jsonl
+              git commit -m "retro-attempts: mark $STORY_KEY success (gate:retro-complete detected)"
+              git push
+              continue
+            fi
+
+            # Determine if this is final attempt (attempt_n=4 = retry 3) → ESCALATE
+            if [ "$ATTEMPT_N" -ge 4 ]; then
+              echo "::warning::$STORY_KEY retry 3 (attempt_n=4) failed — ESCALATE"
+              gh issue comment "$ISSUE_NUM" --body "[PMO] Retro automation failed after 3 retries (CFP-138 / ADR-045)
+
+Story \`$STORY_KEY\` has been through 4 attempts (1 initial + 3 retries) without \`gate:retro-complete\` label.
+
+**ESCALATE — manual intervention required**:
+1. Orchestrator 또는 사용자 manual PMOAgent spawn
+2. retro file 작성 → \`<internal-docs>/wrapper/retros/<date>-cfp-NNN-<slug>.md\`
+3. Story §11 4-field schema 갱신
+4. \`gate:retro-complete\` label 수동 부착
+
+Story close 차단 유지 (forcing function — ADR-045 D-4)."
+
+              # Update jsonl: status=escalated
+              cd /tmp/internal-docs
+              python3 -c "
+import json
+updated = []
+with open('wrapper/retro-attempts.jsonl') as f:
+    for line in f:
+        line = line.strip()
+        if not line: continue
+        d = json.loads(line)
+        if d.get('story_key') == '$STORY_KEY':
+            d['status'] = 'escalated'
+            d['last_attempted_at'] = '$TIMESTAMP'
+        updated.append(json.dumps(d))
+with open('wrapper/retro-attempts.jsonl', 'w') as f:
+    f.write('\n'.join(updated) + '\n')
+"
+              git config user.name "codeforge-retro-mandatory[bot]"
+              git config user.email "codeforge-retro-mandatory[bot]@users.noreply.github.com"
+              git add wrapper/retro-attempts.jsonl
+              git commit -m "retro-attempts: mark $STORY_KEY escalated (4 attempts exhausted)"
+              git push
+              continue
+            fi
+
+            # Post retry comment to trigger PMOAgent
+            RETRY_NUM=$((ATTEMPT_N))
+            gh issue comment "$ISSUE_NUM" --body "[PMO] Retro mandatory retry $RETRY_NUM (CFP-138 / ADR-045)
+
+Story \`$STORY_KEY\` — retry $RETRY_NUM of 3. \`gate:retro-complete\` label still absent after attempt $ATTEMPT_N.
+
+**Action required**:
+1. PMOAgent retro write (Orchestrator 또는 사용자 요청)
+2. retro file → \`<internal-docs>/wrapper/retros/<date>-$( echo $STORY_KEY | tr '[:upper:]' '[:lower:]' )-<slug>.md\`
+3. Story §11 4-field schema update
+4. \`gate:retro-complete\` label 부착
+
+(Retry $(( ATTEMPT_N )) / 3 — remaining: $(( 4 - NEW_ATTEMPT_N )) retry(s) + ESCALATE if all fail)"
+
+            # Update jsonl: increment attempt_n + update timestamp
+            cd /tmp/internal-docs
+            python3 -c "
+import json
+updated = []
+with open('wrapper/retro-attempts.jsonl') as f:
+    for line in f:
+        line = line.strip()
+        if not line: continue
+        d = json.loads(line)
+        if d.get('story_key') == '$STORY_KEY':
+            d['attempt_n'] = $NEW_ATTEMPT_N
+            d['last_attempted_at'] = '$TIMESTAMP'
+            d['status'] = 'in_flight'
+        updated.append(json.dumps(d))
+with open('wrapper/retro-attempts.jsonl', 'w') as f:
+    f.write('\n'.join(updated) + '\n')
+"
+            git config user.name "codeforge-retro-mandatory[bot]"
+            git config user.email "codeforge-retro-mandatory[bot]@users.noreply.github.com"
+            git add wrapper/retro-attempts.jsonl
+            git commit -m "retro-attempts: advance $STORY_KEY to attempt_n=$NEW_ATTEMPT_N (retry $RETRY_NUM)"
+            git push
+
+            echo "::notice::$STORY_KEY retry $RETRY_NUM dispatched (attempt_n advanced to $NEW_ATTEMPT_N)"
+          done
