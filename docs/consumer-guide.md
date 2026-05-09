@@ -172,6 +172,8 @@ agent teams enabled context 에서도 다음 3 제약 유지 (`docs/domain-knowl
 - Worktree integration: [ADR-040](adr/ADR-040-worktree-convention.md)
 - review-verdict v4 schema: [docs/inter-plugin-contracts/review-verdict-v4.md](inter-plugin-contracts/review-verdict-v4.md)
 
+> **작업 규칙 (normative — CFP-341)**: 모든 변경 작업(lane spawn + ad-hoc)은 worktree 안에서 수행. 원본 clone directory 직접 편집 금지. `bash templates/scripts/worktree-create.sh <branch> origin/main` 으로 worktree 생성 후 작업 시작. 상세 [playbook §3.0.10](orchestrator-playbook.md).
+
 ## 2. Consumer 프로젝트 구조 초기화
 
 ```
