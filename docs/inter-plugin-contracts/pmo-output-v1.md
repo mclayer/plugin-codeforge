@@ -1,6 +1,6 @@
 ---
 kind: contract
-contract_version: "1.0"
+contract_version: "1.1"
 status: Active
 related_plugins:
   - codeforge (wrapper, consumer)
@@ -8,11 +8,13 @@ related_plugins:
 related_adrs:
   - ADR-008 (Inter-plugin Contract Versioning)
   - ADR-010 (Inter-plugin Contract Sibling Sync — sync 정책)
+  - ADR-047 (GitOpsAgent — CFP-139, v1.1 worktree_manifest field 추가 carrier)
 authors:
   - CFP-42 sibling backfill (2026-04-29) — wrapper sibling 첫 작성, canonical 본문 verbatim mirror
+  - CFP-139 (2026-05-09) — v1.0 → v1.1 MINOR bump (worktree_manifest optional field, GitOpsAgent SendMessage 결과 mirror, ADR-047)
 ---
 
-# pmo_output v1 — Inter-plugin Contract
+# pmo_output v1.1 — Inter-plugin Contract
 
 **상위 SSOT 위치**:
 - `mclayer/plugin-codeforge-pmo/docs/inter-plugin-contracts/pmo-output-v1.md`: **canonical** (codeforge-pmo repo)
@@ -95,6 +97,21 @@ pmo_output:
       summary: <markdown>
       affected_stories: [<list>]
       severity: P0 | P1 | P2
+
+  # Worktree manifest (선택, NEW in v1.1 — CFP-139 / ADR-047)
+  # GitOpsAgent (codeforge-pmo plugin sibling teammate) SendMessage 결과를 PMOAgent 가 자기 contract 에 mirror.
+  # Authoritative SSOT = `.claude-work/worktree-manifest.yaml` (GitOpsAgent self-write 영역).
+  # 본 field = read-only mirror (sibling teammate 협업 결과 통합).
+  # v1.0 producer (worktree_manifest 미포함) backward compat 유지 — required: false.
+  worktree_manifest:              # 선택 (required: false), null 허용
+    story_key: <STORY_KEY>        # 예: "CFP-139"
+    base_path: <string>           # 예: "${HOME}/.claude/worktrees/<repo>/"
+    worktrees:                    # array — Story 동안 생성된 worktree 목록
+      - branch: <string>          # 예: "cfp-139/design/architect"
+        path: <string>            # 예: "${HOME}/.claude/worktrees/plugin-codeforge/cfp-139-design-architect"
+        teammate_id: <string>     # 예: "ArchitectAgent"
+        created_at: <ISO8601>     # 예: "2026-05-09T08:30:00Z"
+        pruned_at: <ISO8601 | null>  # null = active, ISO8601 = TeamDelete 후 prune 완료
 ```
 
 ## 4. ESCALATE 처리
@@ -104,15 +121,24 @@ PMOAgent self-write 단계 실패 (예: GitHub milestone API rate limit, retro f
 - `writes_completed` 모든 필드 false
 - Orchestrator 가 사용자 ESCALATE 후 수동 복구 의뢰
 
-## 5. v1 → v2 변경 가능성
+## 5. 변경 이력 (ADR-008 SemVer)
+
+| Version | Date | CFP | 변경 내용 |
+|---------|------|-----|----------|
+| v1.0 | 2026-04-29 | CFP-36 | 초기 codification (CFP-31 ζ arc parent spec §5.6 기반) |
+| v1.1 | 2026-05-09 | CFP-139 / ADR-047 | **MINOR bump** — `worktree_manifest` optional field 추가 (GitOpsAgent SendMessage 결과 mirror, sibling teammate 협업 통합). v1.0 producer backward compat 유지 — required: false. |
+
+## 6. v1 → v2 변경 가능성
 
 다음 조건에서 v2 BREAKING 가능:
 - `adr_proposal` schema 확장 (예: 결정 우선순위 추가)
 - 새 trigger enum 추가 (backward-compat 시 minor)
 - `patterns_observed` category enum 변경 (drop 시 v2)
+- `worktree_manifest` required field 변경 (v1.1 → v2 BREAKING)
 
-## 6. 본 contract 시점 동결 ATTRIBUTION
+## 7. 본 contract 시점 동결 ATTRIBUTION
 
-- 동결 일시: 2026-04-29 (CFP-36)
-- 협업: Claude (codification) · CFP-31 parent spec §5.6
-- Source: `mclayer/plugin-codeforge-pmo/agents/PMOAgent.md` 책임 정의
+- 초기 동결 일시: 2026-04-29 (CFP-36)
+- v1.1 MINOR bump: 2026-05-09 (CFP-139 / ADR-047)
+- 협업: Claude (codification) · CFP-31 parent spec §5.6 + CFP-139 spec §4.4
+- Source: `mclayer/plugin-codeforge-pmo/agents/PMOAgent.md` 책임 정의 + `mclayer/plugin-codeforge-pmo/agents/GitOpsAgent.md` (Phase 2 PR pair scope, ADR-047)
