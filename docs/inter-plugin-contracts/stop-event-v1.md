@@ -49,16 +49,20 @@ ADR-039 effective enforcement 측정을 위한 stop event ledger schema machine-
 | `consumer_scope` | enum | `wrapper` / `consumer` (ADR-042 §결정 9 isolation marker) | non-sensitive |
 | `parent_event_id` | sha256 reference (optional) | nested spawn attribution chain (Researcher §6.3 dedup) — Phase 2 spawn-event-v1 land 시 cross-ref | hash (raw 부재) |
 
-## 3. Allow-list ONLY enforcement (ADR-043 §결정 2)
+## 3. 항목
+
+본 절은 §2 Schema 16 field 의 enforcement / enum / append rule / operational constraints 등 항목 명세 — kind:registry 표준 schema 정합 (`## 1. 목적` / `## 2. Schema` / `## 3. 항목` / `## 4. 변경 규칙`).
+
+### 3.1 Allow-list ONLY enforcement (ADR-043 §결정 2)
 
 **16 field 외 capture 금지**. 추가 field capture = BREAKING change → ADR-042 §결정 2 + ADR-043 §결정 2 amendment 의무.
 
 근거:
 - Allow-list = future expansion 시 explicit ADR review 강제 (silent expansion 차단)
 - Deny-list 단독 = unknown unknown 위험 (새 PII pattern 미식별 시 leak)
-- 2-layer defense in depth (Allow-list + Deny-list, §4)
+- 2-layer defense in depth (Allow-list + Deny-list, §3.2)
 
-## 4. Deny-list regex (capture 통과 후 2차 안전망)
+### 3.2 Deny-list regex (capture 통과 후 2차 안전망)
 
 `reason_class_subclass` (free-form string field) 등 string 필드에 capture 시점 redact regex 적용:
 
@@ -73,7 +77,7 @@ ADR-039 effective enforcement 측정을 위한 stop event ledger schema machine-
 
 **Match → redact** (`[REDACTED:<rule_name>]` placeholder), **NOT block** — capture 자체는 진행 (정합성 보장 — schema validation 통과).
 
-## 5. event_id 산출식 (idempotency invariant)
+### 3.3 event_id 산출식 (idempotency invariant)
 
 ```python
 import hashlib
@@ -91,7 +95,7 @@ def event_id(packet_id: str, actor: str, event_type: str, timestamp_iso8601: str
 
 `packet_id` = 본 stop event 가 발생한 context 의 packet ID (e.g. decision-packet-v2.1 packet_id, sub-step packet ID, FIX iteration packet ID). 부재 시 `packet_id = "no-packet"` fallback (capture 가능 — schema validation 통과).
 
-## 6. reason_class enum (4종)
+### 3.4 reason_class enum (4종)
 
 | Enum value | 의미 | 발생 contexts |
 |---|---|---|
@@ -102,7 +106,7 @@ def event_id(packet_id: str, actor: str, event_type: str, timestamp_iso8601: str
 
 5번째 enum 추가 = ADR-042 §결정 2 amendment 의무 (BREAKING change).
 
-## 7. Append rules
+### 3.5 Append rules
 
 ```yaml
 append_rules:
@@ -159,7 +163,7 @@ operational_constraints:
     cross_host_leak: "금지 (T-INFO-4 P0 위협 — GitHub CLI 비판 사례 대응). Phase 2 cross-host DAP 통합 = ADR-043 §결정 5 deferred."
 ```
 
-## 8. 변경 규칙
+## 4. 변경 규칙
 
 - **Append-only for v1.x**: 16 field 외 새 필드 추가 = ADR-042 §결정 2 + ADR-043 §결정 2 amendment 의무 (BREAKING change → v2.0). Allow-list ONLY enforcement 위반.
 - **reason_class enum 추가**: 5번째 enum 도입 시 = ADR-042 §결정 2 amendment 의무 (BREAKING).
@@ -167,7 +171,7 @@ operational_constraints:
 - **storage backend 변경 (sqlite → 다른 DB)**: ADR-042 §결정 4 amendment 의무 (BREAKING — JSONL 회피 사유 + DataMigrationArch substantive 권고 재평가).
 - **opt-in default 변경 (false → true)**: ADR-043 §결정 1 amendment 의무 (BREAKING — privacy invariant 위반).
 
-## 9. Phase 1 / Phase 2 scope
+## 5. Phase 1 / Phase 2 scope
 
 ### Phase 1 (CFP-283 본 PR)
 
@@ -188,7 +192,7 @@ operational_constraints:
 
 ROI gating prerequisite: post-merge-counters.jsonl 30+ run (ADR-026 §결정 3 패턴 / ADR-042 §결정 11).
 
-## 10. Cross-references
+## 6. Cross-references
 
 - **ADR-042** (codeforge measurement channel architecture) — 본 schema SSOT (§결정 2 16-field schema)
 - **ADR-043** (codeforge telemetry privacy policy) — Allow-list ONLY (§결정 2) + Deny-list regex (§결정 3) + opt-in default false (§결정 1)
