@@ -168,11 +168,11 @@ ADR-022 deprecate 후 `review-verdict-v3` contract (canonical: codeforge-review 
 | Code review P0 아키텍처 | **설계** | 레이어·의존성 방향 위반 |
 | **Code review P1 품질 (local)** | 구현 | 단일 파일·함수 내 품질 (naming, 작은 중복, 가독성) |
 | **Code review P1 품질 (boundary)** | **설계** | 모듈 경계·인터페이스·패턴 일관성 (여러 파일 공통 이슈, 설계 지침 부재) |
-| **보안 테스트 P0 injection·credential hardcode** | 구현 | 코드 단위 결함 |
-| **보안 테스트 P1 암호학 오용·CVE** | 구현 | 코드 수정·버전 업그레이드로 해결 |
-| **보안 테스트 P1 boundary 권한 일관성** | **설계** | 여러 파일·레이어 공통 지침 부재 |
-| **보안 테스트 P0 trust boundary 위반** | 구현 | §7.1에 boundary 부재·모순 또는 §7.1과 코드 boundary 불일치 → 설계 |
-| **보안 테스트 P0 auth/authz 결함** | 구현 | §7.3 인증·권한 모델 자체 결함 → 설계. 모델은 맞으나 구현 결함 → 구현 유지 |
+| **보안 테스트 (opt-in — security_ai:true) P0 injection·credential hardcode** | 구현 | 코드 단위 결함 |
+| **보안 테스트 (opt-in — security_ai:true) P1 암호학 오용·CVE** | 구현 | 코드 수정·버전 업그레이드로 해결 |
+| **보안 테스트 (opt-in — security_ai:true) P1 boundary 권한 일관성** | **설계** | 여러 파일·레이어 공통 지침 부재 |
+| **보안 테스트 (opt-in — security_ai:true) P0 trust boundary 위반** | 구현 | §7.1에 boundary 부재·모순 또는 §7.1과 코드 boundary 불일치 → 설계 |
+| **보안 테스트 (opt-in — security_ai:true) P0 auth/authz 결함** | 구현 | §7.3 인증·권한 모델 자체 결함 → 설계. 모델은 맞으나 구현 결함 → 구현 유지 |
 | **구현 테스트 Migration FAIL · data integrity 위반 · rollback 실패** | 구현 | §11.1-§11.5 부재·모순 (schema 영향 누락 / Migration 전략 부재 / Rollback 경로 부재 / invariant 정의 부재) → 설계. 모델은 맞으나 script 결함 → 구현 유지 |
 | **§7.4 DR/disconnect cascade FAIL** | 구현 | §7.4 boundary 부재·모순 → 설계 |
 | **§7.4 Rate limit / IP ban** | 구현 | §7.4 quota·throttling 정책 부재 → 설계 |
@@ -210,7 +210,7 @@ ADR-022 deprecate 후 `review-verdict-v3` contract (canonical: codeforge-review 
 
 **review verdict write 책임 (CFP-134 / ADR-035 정정 후, Stage 0 spec §3.5 verbatim)**: review-verdict v3 schema 의 final gate write (Story §9 / GitHub comment / gate label / phase transition) = **Orchestrator self-write** (PL 은 lane synthesis 후 `pl_recommendation` 만 작성, Orchestrator 가 받아 final write 수행). Sonnet decider 자동 발동 무효 (ADR-022 Deprecated — CFP-134). 사용자 explicit request 시에만 ad-hoc Sonnet 호출 가능.
 
-| 체크 항목 | DesignLane | DesignReview | CodeReview | SecurityTest |
+| 체크 항목 | DesignLane | DesignReview | CodeReview | SecurityTest (opt-in) |
 |-----------|:----------:|:------------:|:----------:|:------------:|
 | Change Plan 완결성(§1-10 섹션 존재) | — | ✅ | — | — |
 | ADR 정합성(§3·§7 위반 여부) | — | ✅ | — | — |
@@ -323,7 +323,6 @@ ADR-014 + ADR-012 §3 4번째 SSOT 예외. design lane 의 deputy (CFP-46 Operat
 | codeforge-review (CFP-35 v2 — pre-CFP-61 history) | `docs/stories/<KEY>.md §9` (각 Review PL) | `[설계-리뷰]` / `[구현-리뷰]` / `[보안-테스트]` prefix comment, gate:design-review-pass / gate:security-test-pass label, phase transition (review-verdict-v2). **(History only — CFP-61 부터 final §9 verdict + GitHub gate write 책임 Orchestrator 로 transfer)** |
 | **codeforge-review (CFP-137 v4 — current SSOT, CFP-134 / ADR-035 정정 후)** | review-verdict-v4 packet 작성 (findings + `pl_recommendation`) — synthesis 만, Orchestrator 에 return. **final §9 verdict append + GitHub comment + gate label + phase transition 은 Orchestrator self-write** (Stage 0 spec §3.5 verbatim, ADR-022 Deprecated 후 Sonnet decider 자동 발동 무효) | (review-verdict 영역 GitHub write 는 Orchestrator) |
 | codeforge-develop | `docs/stories/<KEY>.md §8·§8.5`, Phase 2 PR creation | `[구현]` prefix comment, phase:구현→phase:구현-리뷰 transition |
-| codeforge-test | (§9.3 은 Orchestrator 가 verdict receipt 후 처리 — lane plugin 직접 write 안 함) | `[구현-테스트]` prefix comment |
 | codeforge-pmo | `docs/retros/<sprint>.md`, `docs/stories/<KEY>.md §11`, Epic Issue body, Milestone description | `[PMO]` prefix comment, Epic Milestone via gh api |
 
 **Wrapper Orchestrator 단독 영역**:
