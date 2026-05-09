@@ -56,10 +56,23 @@ permissions:
 | 트리거 | 수행 |
 |--------|------|
 | **Epic 창설 시** (1회) | Scope 분해 자문 — Story 분해·의존성 식별·**병렬/순차 판정** (§1 상세) |
-| **Story 완료 시** | 회고 감사 + §10 FIX Ledger 리뷰 + 게이트 준수 감사 |
+| **Story 완료 시 — Phase 2 PR merge 후 5분 grace 자동 trigger (CFP-138 / [ADR-045](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-045-story-retro-mandatory-trigger.md) mandate, 사용자 요청 불필요)** | retro write + Story §11 4 field schema update + Epic milestone 갱신 + `gate:retro-complete` label add (forcing function) + cross-Story patterns analysis |
 | **사용자 요청 시** (주기적) | 다중 Story 감사 보고서 (예: 최근 5 Story의 FIX 패턴) |
 
 단일 Story 생명주기 내 lane 게이트 역할 **없음** — 본 에이전트는 Story 간 횡단 감사에 집중.
+
+**Retro 자동 trigger forcing function (CFP-138 / ADR-045 D-1, D-4)** — FIX iter 1 F-1 verbatim 6-source sync:
+
+Cumulative offset spec from PR merge timestamp:
+- **First attempt** at PR merge **+5min** (5min grace period) → PMOAgent retro write
+- **Retry 1** at PR merge **+10min** (5min wait after first attempt fail)
+- **Retry 2** at PR merge **+20min** (10min wait after retry 1 fail)
+- **Retry 3** at PR merge **+35min** (15min wait after retry 2 fail, final attempt)
+- **ESCALATE** at PR merge **+35min 후** (retry 3 fail 시 — `[PMO] Retro automation failed after 3 retries — 사용자 ESCALATE` comment + `gate:retro-complete` 미부착)
+
+**Total attempts = 4** (1 initial + 3 retries). **Total max latency = 35min** (5min grace + 5+10+15 retry waits).
+
+`gate:retro-complete` label add = forcing function 의 핵심 단계 (label 부착 시 Story close 가능). Story Issue close 차단 (auto-reopen) — retro 작성 후에만 close 가능. doc-only Story (Phase 2 부재) 는 Phase 1 PR merge fallback (ADR-045 D-3).
 
 ## 책임 상세
 
@@ -114,9 +127,15 @@ Story 분해안:
 
 산출물: 위 형식 보고서를 PMOAgent가 직접 write — `mcp__github__add_issue_comment` (Epic Issue body) + `Bash(gh api repos/*/milestones*)` (Milestone description). CFP-36 Phase 0a 후 owner agent direct write — DocsAgent 의뢰 path 폐기. Orchestrator는 이를 참조해 Story 생성 실행.
 
-### 2. Story 완료 회고 감사 (Story 단위)
+### 2. Story 완료 회고 감사 (Story 단위) — **자동 trigger 의무 (CFP-138 / ADR-045 mandate)**
 
-Story 완료 직후 Orchestrator가 스폰. 입력: 해당 Story file §1-11 + FIX Ledger + GitHub Issue 코멘트 이력 + `.claude-work/progress/<KEY>.md` (Orchestrator-owned live progress trace, playbook §14).
+**Trigger flow (CFP-138 / [ADR-045](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-045-story-retro-mandatory-trigger.md) D-1)**:
+
+1. Phase 2 PR merge (PR closed + merged=true) → wrapper repo `templates/github-workflows/retro-mandatory.yml` workflow 발화
+2. 5분 grace period 내 본 에이전트 spawn (Orchestrator 자동 — 사용자 요청 불필요, ADR-039 subagent default 정합)
+3. doc-only Story (ADR-027 Amendment 1, Phase 2 부재) 는 Phase 1 PR merge fallback (ADR-045 D-3)
+
+입력: 해당 Story file §1-11 + FIX Ledger + GitHub Issue 코멘트 이력 + `.claude-work/progress/<KEY>.md` (Orchestrator-owned live progress trace, playbook §14).
 
 감사 항목:
 - **Preflight 누락 여부** — 각 레인 진입 시 Preflight 3체크 실행 근거가 GitHub Issue 코멘트에 있는가
@@ -125,7 +144,32 @@ Story 완료 직후 Orchestrator가 스폰. 입력: 해당 Story file §1-11 + F
 - **FIX 원인 판정의 evidence pack 완성도** — ArchitectPLAgent 판정 시 Change Plan 인용·테스트 로그가 코멘트에 포함됐는가
 - **토큰 예산 초과 이력** — 레인별 사전 예산 대비 실제, 중단 임계 접근 여부
 
-산출물: `[PMOAgent 회고] <PROJECT_KEY>-N` 형식 보고서를 `docs/retros/<sprint>.md`에 본 에이전트가 직접 write (CFP-26 Phase 0a). Story §11 은 PMOAgent 직접 `Edit(docs/stories/<KEY>.md)` (codeforge-pmo CLAUDE.md `Self-write 책임` 표 — owner agent direct write, CFP-36).
+산출물 (PMOAgent self-write — `docs/retros/**` + `docs/stories/**` + `mcp__github__issue_write` 권한 보유):
+
+1. **retro file 신설**: `<internal-docs>/<plugin-folder>/retros/<sprint>-cfp-NNN-<slug>.md` (templates/retro.md schema 정합). path naming regex enforce: `^[0-9]{4}-[0-9]{2}-[0-9]{2}-cfp-[0-9]+(-[a-z0-9-]+)?\.md$` (path traversal 차단 — ADR-045 §7.4.1 Boundary C)
+2. **Story file §11 회고 블록 update** (CFP-138 / ADR-045 D-5 4 field schema):
+   ```markdown
+   - 회고 (PMOAgent 작성, CFP-138 / ADR-045 mandate):
+       retro_file: <relative-path-or-cross-repo-url>
+       retro_summary: <one-paragraph-summary, max 500자>
+       learnings_count: <integer >= 0>
+       feedback_back_to_codeforge: <Issue link list or empty []>
+   ```
+3. **Epic milestone description 갱신** (`gh api repos/{owner}/{repo}/milestones/{N}`)
+4. **`gate:retro-complete` label add** (`mcp__github__issue_write` — Story Issue) — **forcing function 의 핵심 단계** (label 부착 시 Story close 가능)
+5. **`[PMO]` prefix comment** (Story Issue body) — `[PMO] Retro complete: <retro file link> + <summary>`
+
+**Partial-write protocol (ADR-045 D-4)** — FIX iter 1 F-1 verbatim 6-source sync: 1-5 단계 중 일부 fail 시 (예: Epic milestone API fail) — **4 attempts total** (1 initial + 3 retries) cumulative offset from PR merge:
+
+- First attempt at PR merge +5min (grace) — PMOAgent first try
+- Retry 1 at PR merge +10min (5min wait)
+- Retry 2 at PR merge +20min (10min wait)
+- Retry 3 at PR merge +35min (15min wait, final)
+- 4 attempts 모두 fail 시 ESCALATE 사용자 + `gate:retro-complete` 미부착 (Story close 차단 유지)
+
+**Total max latency = 35min** from PR merge → ESCALATE. silent failure 차단 forcing function.
+
+**Idempotency invariant (ADR-045 §11.6)**: re-spawn 시 retro file 존재 검사 → 기존 file 존재 시 abort 또는 append (PMOAgent self-decide). label add idempotent (gh label add 이미 부착 시 no-op).
 
 ### 3. Cross-Story 패턴 분석 (다중 Story)
 

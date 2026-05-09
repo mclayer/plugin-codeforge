@@ -19,12 +19,36 @@ PMOAgent 가 다음을 직접 write:
 
 | Path | 트리거 | Mechanism |
 |---|---|---|
-| `docs/retros/<sprint>.md` | story_completion / cross_story_audit_request | `Edit(docs/retros/**)` |
-| `docs/stories/<KEY>.md §11` | story_completion | `Edit(docs/stories/**)` |
+| `docs/retros/<sprint>.md` | **story_completion (Phase 2 PR merge 자동, CFP-138 / [ADR-045](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-045-story-retro-mandatory-trigger.md) mandate)** / cross_story_audit_request (사용자 요청) | `Edit(docs/retros/**)` |
+| `docs/stories/<KEY>.md §11` | story_completion (4 field schema: retro_file / retro_summary / learnings_count / feedback_back_to_codeforge — CFP-138 / ADR-045 D-5) | `Edit(docs/stories/**)` |
+| `gate:retro-complete` label add | story_completion (retro write 완료 후 — CFP-138 / ADR-045 forcing function) | `mcp__github__issue_write` |
 | Epic GitHub milestone | epic_creation / story_completion | `gh api repos/*/milestones*` |
 | GitHub comment `[PMO]` prefix | 모든 trigger | `mcp__github__add_issue_comment` |
 
 DocsAgent 경유 안 함 — codeforge wrapper 측 DocsAgent 는 ζ arc 진행 중 단계적 해체. 자세한 사항은 codeforge wrapper [CFP-31 parent spec](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md) 참조.
+
+### Retro 자동 trigger flow (CFP-138 / ADR-045)
+
+Phase 2 PR merge 후 자동 trigger 의무 — 사용자 요청 불필요. FIX iter 1 F-1 verbatim 6-source sync (cumulative offset from PR merge timestamp):
+
+1. wrapper repo 의 `templates/github-workflows/retro-mandatory.yml` workflow 발화 (PR closed + merged=true)
+2. **First attempt at PR merge + 5min** (5min grace period) — PMOAgent retro write 시간 부여
+3. PMOAgent self-write (5 sub-steps):
+   - `docs/retros/<sprint>-cfp-NNN-<slug>.md` 신규 생성 (`templates/retro.md` schema 정합)
+   - Story file §11 회고 블록 4 field schema update
+   - Epic milestone description 갱신
+   - `gate:retro-complete` label add (forcing function 의 핵심 단계)
+   - `[PMO]` prefix comment
+4. First attempt 후에도 `gate:retro-complete` label 부재 시 retry policy:
+   - **Retry 1 at PR merge + 10min** (5min wait after first attempt fail)
+   - **Retry 2 at PR merge + 20min** (10min wait after retry 1 fail)
+   - **Retry 3 at PR merge + 35min** (15min wait after retry 2 fail, final attempt)
+   - **ESCALATE at PR merge + 35min 후** (4 attempts 모두 fail 시 사용자 ESCALATE)
+   - **Total attempts = 4** (1 initial + 3 retries). **Total max latency = 35min** (5min grace + 5+10+15 retry waits)
+   - Phase 2 PR scope retry state machine (jsonl-state-store + cron re-trigger) — Phase 1 PR scope = first attempt 만 implement
+5. Story Issue close 차단 (auto-reopen) — retro 작성 후에만 close 가능
+
+상세 정책 SSOT: [ADR-045](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-045-story-retro-mandatory-trigger.md) D-1 ~ D-8.
 
 ## Cross-Story patterns 입력 → ADR 발의 hand-off
 
