@@ -8,8 +8,8 @@ related_plugins:
 related_adrs:
   - ADR-008 (Inter-plugin Contract Versioning)
   - ADR-010 (Inter-plugin Contract Sibling Sync — sync 정책)
-  - ADR-035 (Worktree convention — CFP-139)
-  - ADR-036 (Phase-scoped agent teams — CFP-139)
+  - ADR-040 (Worktree convention — CFP-136)
+  - ADR-044 (Phase-scoped sequential team — CFP-137)
 related_files:
   - docs/inter-plugin-contracts/MANIFEST.yaml
   - templates/story-page-structure.md (Story §10.5 row schema)
