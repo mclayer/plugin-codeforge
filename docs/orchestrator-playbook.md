@@ -1367,13 +1367,43 @@ Packet 주입은 Orchestrator의 토큰 최적화 수단이지 필수 규약 아
 
 PMOAgent는 단일 Story 레인 게이트 밖에서 cross-cutting 감사·회고·패턴 분석을 전담. 요구사항 해석은 RequirementsPLAgent 영역으로 분리됨.
 
-### 13.1 스폰 타이밍 3종
+### 13.1 스폰 타이밍 4종 (CFP-316 / ADR-047 — Version Delta Review 추가)
 
 | 트리거 | 시점 | 입력 | 산출물 |
 |--------|------|------|--------|
 | **Epic 창설** | Orchestrator가 Epic 생성 직후, Story 분해 직전 | 사용자 원문·관련 ADR·기존 Epic 이력·코드 구조 | Story 분해 자문 (의존성·우선순위·**병렬/순차 판정**) — 상세 규칙 [PMOAgent.md §1](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/agents/PMOAgent.md) |
 | **Story 완료** | TestAgent PASS → 보안 테스트 PASS → Phase 2 PR merge 직후 | 해당 Story file §1-11 + FIX Ledger + GitHub Issue 코멘트 이력 + 토큰 사용량 | 회고 감사 보고 (Preflight 누락·§8/§8.5 매핑·FIX evidence 완성도·예산) |
 | **사용자 요청** | `/pmo-audit` 혹은 명시 요청 | 최근 N Story (기본 5) file·Ledger·ADR 변경 이력 | Cross-Story 패턴 보고 + ADR 후보 발의 |
+| **Version Delta Review** | Framework Delta Event 발생 후 5분 이내 (또는 사용자 수동 trigger `/pmo version-delta-review`) | Framework Delta Event 종류 + 진행 중 Story 목록 + 관련 ADR + consumer overlay 상태 | Migration Epic Issue (material drift 시) 또는 "no action" 보고서 → Story §11 기록 |
+
+### 13.1a Version Delta Review 프로세스 (CFP-316 / ADR-047)
+
+PMOAgent의 4번째 trigger — codeforge framework 진화(신규 deputy 추가, §section 변경, ADR 변경 등) 시 기존 진행 중 Stories/Change Plans의 구조 재편 필요 여부를 자동 평가한다.
+
+**Framework Delta Event 4-Type 정의**:
+
+| Type | 설명 | PMOAgent 반응 |
+|------|------|---------------|
+| **Type A — Version bump** | consumer 프로젝트의 codeforge version bump | patch: advisory review 보고서 / minor·major: Migration Epic 후보 평가 |
+| **Type B — ADR 변경** | Story 구조/lane 동작에 영향을 주는 신규·실질적 ADR 변경 (inter-plugin contract schema MAJOR bump, GitHub workflow fixture 변경 등) | 영향 범위 평가 후 Migration Epic 여부 결정 |
+| **Type C — Deputy 변경** | 신규 deputy 추가 또는 deputy mandate 변경 (새 필수 §section 발생) | 진행 중 Story에 새 §section 추가 Migration Story 생성 |
+| **Type D — Bootstrap 변경** | ADR-027/ADR-032 enforcement 변경 | consumer-guide 업데이트 + bootstrap 재검증 Migration Story |
+
+**Version Delta Review 프로세스 (4단계)**:
+
+1. Framework Delta Event 종류 판별 (Type A/B/C/D)
+2. 진행 중인 Stories/Change Plans의 §section 구조 점검 (영향 범위 평가)
+3. Material drift 판별:
+   - patch bump / advisory-only ADR: "no migration needed" 보고서 → Story §11 기록
+   - minor/major bump 또는 신규 deputy 또는 §section 신설: Migration Epic 후보 평가
+4. Migration Epic 생성 또는 "no action" 결정
+
+**2차 detection / fallback** (누락 방지):
+- (2차) PMOAgent Story 완료 회고 trigger 시 직전 5분 grace 내 Delta Event 미처리 자동 점검
+- (3차 fallback) 사용자 수동 trigger `/pmo version-delta-review` skill 호출
+- (장기) SessionStart hook 에 version bump 감지 추가 — 별도 CFP 후속
+
+상세 Migration Epic Pattern 및 tiered template → [consumer-guide.md §5.2](consumer-guide.md#52-framework-migration-epic-pattern-cfp-316--adr-047).
 
 ### 13.2 감사 체크리스트 (Story 완료 회고 기본 세트)
 
