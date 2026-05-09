@@ -54,25 +54,25 @@ if [[ "$ROLLBACK" == true ]]; then
   fi
   echo "ROLLBACK: batch-id=${BATCH_ID}"
 
-  # Find audit Issue for this batch
-  BATCH_ISSUES=$(gh api "/search/issues?q=org:${ORG_SLUG}+label:migration-batch-${BATCH_ID}&per_page=100" \
-    --jq '.items[].number' 2>/dev/null || true)
+  # Find audit Issues for this batch (include repository.full_name for correct API path)
+  BATCH_ITEMS=$(gh api "/search/issues?q=org:${ORG_SLUG}+label:migration-batch-${BATCH_ID}&per_page=100" \
+    --jq '.items[] | "\(.number)\t\(.repository.full_name)"' 2>/dev/null || true)
 
-  if [[ -z "$BATCH_ISSUES" ]]; then
+  if [[ -z "$BATCH_ITEMS" ]]; then
     echo "No Issues found with label migration-batch-${BATCH_ID}"
     exit 0
   fi
 
   COUNT=0
-  while IFS= read -r issue_number; do
+  while IFS=$'\t' read -r issue_number issue_repo; do
     [[ -z "$issue_number" ]] && continue
-    # Get current Issue Type
-    CURRENT_TYPE=$(gh api "/repos/${ORG_SLUG}/issues/${issue_number}" \
+    # Get current Issue Type using full owner/repo path
+    CURRENT_TYPE=$(gh api "/repos/${issue_repo}/issues/${issue_number}" \
       --jq '.type.name // ""' 2>/dev/null || true)
 
     if [[ -n "$CURRENT_TYPE" ]]; then
       # Remove Issue Type (set to null)
-      gh api "/repos/${ORG_SLUG}/issues/${issue_number}" \
+      gh api "/repos/${issue_repo}/issues/${issue_number}" \
         --method PATCH \
         --field "type_id=" > /dev/null 2>&1 || true
 
@@ -82,14 +82,14 @@ if [[ "$ROLLBACK" == true ]]; then
         [[ "${LABEL_TO_TYPE[$lbl]}" == "$CURRENT_TYPE" ]] && ORIGINAL_LABEL="$lbl" && break
       done
       if [[ -n "$ORIGINAL_LABEL" ]]; then
-        gh api "/repos/${ORG_SLUG}/issues/${issue_number}/labels" \
+        gh api "/repos/${issue_repo}/issues/${issue_number}/labels" \
           --method POST \
           --field "labels[]=${ORIGINAL_LABEL}" > /dev/null 2>&1 || true
-        echo "ROLLBACK: Issue #${issue_number} — removed type '${CURRENT_TYPE}', restored label '${ORIGINAL_LABEL}'"
+        echo "ROLLBACK: Issue #${issue_number} (${issue_repo}) — removed type '${CURRENT_TYPE}', restored label '${ORIGINAL_LABEL}'"
       fi
       ((COUNT++)) || true
     fi
-  done <<< "$BATCH_ISSUES"
+  done <<< "$BATCH_ITEMS"
 
   echo "ROLLBACK complete: $COUNT Issue(s) reverted in batch-${BATCH_ID}"
   exit 0

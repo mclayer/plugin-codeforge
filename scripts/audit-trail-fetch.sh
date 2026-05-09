@@ -131,12 +131,12 @@ edges = d.get('edges', [])
 print(json.dumps([e['node'] for e in edges if e.get('node')]))
 " 2>/dev/null || echo "[]")
 
-    ALL_EVENTS=$(python3 -c "
+    ALL_EVENTS=$(printf '%s' "$ALL_EVENTS" | python3 -c "
 import json, sys
-a = json.loads('$ALL_EVENTS')
-b = json.loads(sys.stdin.read())
+a = json.loads(sys.stdin.read())
+b = json.loads(sys.argv[1])
 print(json.dumps(a + b))
-" <<< "$EVENTS" || echo "[]")
+" "$EVENTS" || echo "[]")
 
     CURSOR="$END_CURSOR"
     [[ -n "$CURSOR_FILE" ]] && echo "$CURSOR" > "$CURSOR_FILE"
@@ -162,12 +162,12 @@ elif [[ -n "$ORG_SLUG" ]]; then
     RESPONSE=$(api_with_backoff "gh api '${URL}' --paginate" 2>/dev/null || echo "[]")
 
     EVENTS_COUNT=$(echo "$RESPONSE" | python3 -c "import json,sys; print(len(json.load(sys.stdin)))" 2>/dev/null || echo "0")
-    ALL_EVENTS=$(python3 -c "
+    ALL_EVENTS=$(printf '%s' "$RESPONSE" | python3 -c "
 import json, sys
-a = json.loads('$ALL_EVENTS')
+a = json.loads(sys.argv[1])
 b = json.load(sys.stdin)
 print(json.dumps(a + b))
-" <<< "$RESPONSE" || echo "[]")
+" "$ALL_EVENTS" || echo "[]")
 
     echo "  Page $PAGE: ${EVENTS_COUNT} events"
     # REST with --paginate handles pagination automatically

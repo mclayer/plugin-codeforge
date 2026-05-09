@@ -31,6 +31,16 @@ if [[ -z "${GH_TOKEN:-}" ]]; then
   exit 1
 fi
 
+# Strip _-prefixed meta keys (e.g. _schema_version, _description, _enterprise)
+# before sending to GitHub API. Writes cleaned JSON to a temp file; caller uses that.
+strip_meta_keys() {
+  local src="$1"
+  local tmp
+  tmp=$(mktemp /tmp/ruleset-stripped.XXXXXX.json)
+  jq 'with_entries(select(.key | startswith("_") | not))' "$src" > "$tmp"
+  echo "$tmp"
+}
+
 # --- Validation ---
 validate_specs() {
   local errors=0
@@ -100,14 +110,18 @@ if [[ -f "${SPEC_DIR}/repo-default.json" && -n "$ORG_SLUG" ]]; then
       --jq ".[] | select(.name==\"${RULESET_NAME}\") | .id" 2>/dev/null || true)
 
     if [[ -n "$EXISTING_ID" ]]; then
+      _stripped=$(strip_meta_keys "${SPEC_DIR}/repo-default.json")
       gh api "/orgs/${ORG_SLUG}/rulesets/${EXISTING_ID}" \
         --method PUT \
-        --input "${SPEC_DIR}/repo-default.json" > /dev/null
+        --input "$_stripped" > /dev/null
+      rm -f "$_stripped"
       echo "APPLY: updated repo-default ruleset (id=${EXISTING_ID}) in ${ORG_SLUG}"
     else
+      _stripped=$(strip_meta_keys "${SPEC_DIR}/repo-default.json")
       gh api "/orgs/${ORG_SLUG}/rulesets" \
         --method POST \
-        --input "${SPEC_DIR}/repo-default.json" > /dev/null
+        --input "$_stripped" > /dev/null
+      rm -f "$_stripped"
       echo "APPLY: created repo-default ruleset in ${ORG_SLUG}"
     fi
   fi
@@ -125,14 +139,18 @@ if [[ -f "${SPEC_DIR}/org-default.json" && -n "$ORG_SLUG" ]]; then
       --jq ".[] | select(.name==\"${RULESET_NAME}\") | .id" 2>/dev/null || true)
 
     if [[ -n "$EXISTING_ID" ]]; then
+      _stripped=$(strip_meta_keys "${SPEC_DIR}/org-default.json")
       gh api "/orgs/${ORG_SLUG}/rulesets/${EXISTING_ID}" \
         --method PUT \
-        --input "${SPEC_DIR}/org-default.json" > /dev/null
+        --input "$_stripped" > /dev/null
+      rm -f "$_stripped"
       echo "APPLY: updated org-default ruleset (id=${EXISTING_ID}) in ${ORG_SLUG}"
     else
+      _stripped=$(strip_meta_keys "${SPEC_DIR}/org-default.json")
       gh api "/orgs/${ORG_SLUG}/rulesets" \
         --method POST \
-        --input "${SPEC_DIR}/org-default.json" > /dev/null
+        --input "$_stripped" > /dev/null
+      rm -f "$_stripped"
       echo "APPLY: created org-default ruleset in ${ORG_SLUG}"
     fi
   fi
@@ -153,14 +171,18 @@ if [[ -f "${SPEC_DIR}/enterprise-default.json" && -n "$ENTERPRISE_SLUG" ]]; then
       --jq ".[] | select(.name==\"${RULESET_NAME}\") | .id" 2>/dev/null || true)
 
     if [[ -n "$EXISTING_ID" ]]; then
+      _stripped=$(strip_meta_keys "${SPEC_DIR}/enterprise-default.json")
       gh api "/enterprises/${ENTERPRISE_SLUG}/rulesets/${EXISTING_ID}" \
         --method PUT \
-        --input "${SPEC_DIR}/enterprise-default.json" > /dev/null
+        --input "$_stripped" > /dev/null
+      rm -f "$_stripped"
       echo "APPLY: updated enterprise-default ruleset (id=${EXISTING_ID}) in ${ENTERPRISE_SLUG}"
     else
+      _stripped=$(strip_meta_keys "${SPEC_DIR}/enterprise-default.json")
       gh api "/enterprises/${ENTERPRISE_SLUG}/rulesets" \
         --method POST \
-        --input "${SPEC_DIR}/enterprise-default.json" > /dev/null
+        --input "$_stripped" > /dev/null
+      rm -f "$_stripped"
       echo "APPLY: created enterprise-default ruleset in ${ENTERPRISE_SLUG}"
     fi
   fi
