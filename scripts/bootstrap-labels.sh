@@ -48,12 +48,12 @@ create_label() {
         || echo "  ! $name: create/edit 실패 (권한 문제 가능)"
 }
 
-[ $DRY_RUN -eq 0 ] && echo "Plugin label 30종 부트스트랩..."
+[ $DRY_RUN -eq 0 ] && echo "Plugin label 부트스트랩..."
 
-# type:* (4종)
-create_label "type:epic"        "5319e7" "Epic (사용자 요구사항 1건 = Milestone + Issue)"
-create_label "type:story"       "0e8a16" "Story (PR 1쌍 = Phase 1 + Phase 2)"
-create_label "type:bug"         "d73a4a" "Bug"
+# type:* — CFP-140 / ADR-049: label hack deprecated, replaced by native GitHub Issue Types
+# type:epic / type:story / type:bug → native Issue Types (org-level, see templates/issue-types.yaml)
+# See: label-registry-v2.md (Active) supersedes label-registry-v1.md (Archived)
+# impl-manifest = separate axis (retained — sub-issue visual marker)
 create_label "impl-manifest"    "fbca04" "Sub-issue (Impl Manifest 파일 단위)"
 
 # phase:* (7종, single-active)
