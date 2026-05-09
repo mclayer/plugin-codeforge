@@ -6,6 +6,14 @@ status: Accepted
 category: orchestration
 carrier_story: CFP-114
 supersedes: null
+amendment_log:
+  - date: 2026-05-09
+    carrier: CFP-283
+    section: "§결정 2"
+    summary: "Sanitize policy 적용 범위 확장 — narration (stderr) → narration + telemetry ledger unified SSOT (ADR-043 §결정 4 SSOT 분담 narrative + §결정 3 Deny-list regex specifics 정합)"
+related_adrs:
+  - ADR-042  # measurement channel architecture (sibling — sanitize scope expansion trigger)
+  - ADR-043  # telemetry privacy policy (unified sanitize SSOT — §결정 4 SSOT 분담 narrative + §결정 3 Deny-list regex specifics)
 ---
 
 # ADR-029: Phase execution visibility expansion — sub-step terminal narration
@@ -55,6 +63,8 @@ Stop discipline 측면 = ADR-022 + ADR-025 + Amendment 1 (CFP-73 / CFP-80) 가 �
 [설계 리뷰] R7 병렬 dispatch — DesignReviewPL ∥ DeveloperPL Phase 2 PR 준비
 [구현 테스트] R9 functional subset 완료 — 18 test pass, 다음 performance subset 진입
 ```
+
+> **Amendment 1 (2026-05-09, CFP-283 carrier)** — sanitize policy 적용 범위 확장: 본 §결정 2 sanitize policy = narration (stderr) **+ telemetry ledger (ADR-043 정합) 양쪽 적용**. ADR-043 §결정 4 (SSOT 분담 narrative) + §결정 3 (Deny-list regex specifics) 양쪽 cross-ref. CFP-283 measurement channel (stop-event-v1) 신설로 ledger sanitize 도 동일 정책 inherit — privacy = cross-cutting concern (narration + ledger 동일 정책). future ledger (spawn-event-v1 land 시) 도 동일 적용 의무. ADR-043 §결정 3 = sanitize Deny-list regex 6 pattern SSOT, ADR-043 §결정 4 = ADR-029 ↔ ADR-043 SSOT 분담 narrative (본 §결정 2 = format / 한국어 lane / stderr-only invariant SSOT, ADR-043 §결정 3 = Deny-list specifics). 양쪽 SSOT 변경 시 sync 의무.
 
 ### 결정 3 — Stop discipline cross-reference (재정립 X)
 

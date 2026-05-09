@@ -1002,6 +1002,62 @@ consumer 측 사용자 활성 directive 권장 (wrapper directive 패턴 mirror 
 
 stop-event-v1 ledger / inline write detect hook / spawn cost telemetry — wrapper [ADR-039 §결정 9](adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) deferred follow-up CFP. consumer-side 측정도 wrapper 와 동시 도입.
 
+### 7.0.7 Telemetry opt-in (CFP-283 / ADR-042 / ADR-043)
+
+**Phase 1 wrapper-only doc + schema land** — measurement channel 도입 (stop-event-v1 ledger schema 신설). 모든 telemetry channel = **opt-in default false** invariant. Phase 1 = doc-only — telemetry hook 구현 / enforcement mechanism 모두 Phase 2 follow-up CFP.
+
+#### Opt-in default false invariant
+
+consumer 측 silent telemetry = trust 위반 (GitHub CLI opt-out 비판 precedent — Researcher §6.5). consumer overlay `.claude/_overlay/project.yaml` `telemetry.enabled: false` (default). 사용자 명시 opt-in 발화 의무 — directive 부재 시 ledger write 발생 = `policy_violation` (defect, ADR-043 §결정 1).
+
+#### 활성 절차 (consumer 측)
+
+```yaml
+# .claude/_overlay/project.yaml
+telemetry:
+  enabled: true                              # global gate (opt-in 발화)
+  channels:
+    stop_event: true                         # stop-event-v1 ledger 활성
+  storage_path: ".claude-work/measurement/"  # default (override 가능)
+  retention_hot_days: 14                     # default (range: 7-30)
+```
+
+global `enabled: false` 시 모든 channel disabled (override 불가능 — global gate). per-channel granular flag (`channels.stop_event`) = 부분 활성 가능.
+
+#### Wrapper-vs-consumer ledger isolation (ADR-042 §결정 9 / ADR-043 §결정 5)
+
+ledger storage path 분리 invariant:
+
+- **Wrapper dogfood**: `mclayer/plugin-codeforge` checkout 의 `.claude-work/measurement/stop-event.sqlite`
+- **Consumer**: 각 consumer repo (mctrader 등) 의 `.claude-work/measurement/stop-event.sqlite`
+
+**cross-host raw event leak 금지** (T-INFO-4 SecurityArch P0 위협 대응). Phase 2 cross-host 통합 (Divvi Up DAP / aggregate report) = 별도 후속 CFP.
+
+#### Privacy 정책 SSOT
+
+- **Allow-list ONLY 16 field whitelist** (capture 시점 — stop-event-v1 schema 16 field 외 capture 금지)
+- **Deny-list regex 6 pattern** (capture 통과 후 2차 안전망 — defense in depth):
+  - API key / credential
+  - GitHub PAT (classic + fine-grained)
+  - 한국 주민번호
+  - email
+  - hex≥32 (hash / private key)
+- **0 API call constraint** — telemetry instrumentation = local I/O only. Anthropic API / GitHub API / external service 호출 금지 (measurement = measure 대상 amplify 금지, ADR-042 §결정 8).
+- **best-effort 50ms ceiling** — append latency p99 ≤50ms (overflow 시 graceful degradation).
+
+상세 SSOT = [ADR-043 (codeforge telemetry privacy policy)](adr/ADR-043-codeforge-telemetry-privacy-policy.md).
+
+#### Phase 2 deferred items
+
+- Telemetry hook 구현 (Python script `scripts/telemetry-append.py` / sqlite migration script) — Phase 2 follow-up CFP
+- Aggregate script (raw → §10 FIX Ledger row mirror / dashboard 형식 변환)
+- spawn-event-v1 신설 (§14 ↔ spawn-event dedup script 동반 의무)
+- Cross-host telemetry 통합 (Divvi Up DAP / aggregate report)
+- Rule-based hook (PreToolUse on Write / Edit / mcp__github__* — inline write detect)
+- **Wrapper dogfood always-on enforcement mechanism** — Phase 1 doc-only invariant 유지 (env flag / hook / runtime validation 모두 Phase 2). 적용 범위 (wrapper repo `mclayer/plugin-codeforge` checkout 만) 는 Phase 2 enforcement CFP 시 별도 정의.
+
+ROI gating prerequisite = post-merge-counters.jsonl 30+ run 누적 (ADR-026 §결정 3 패턴 / ADR-042 §결정 11).
+
 ## 7.1 Stop discipline + Epic-level continuity (ADR-025 + Amendment 1 + Amendment 2)
 
 Stop discipline 정책 (ADR-025) 의 **trust model invariant** 와 **Epic-level continuity** 직접 적용. Amendment 2 (2026-05-08, CFP-135) 정정 후 — actor 표기 remap (Sonnet → PL pl_recommendation / 직전 사용자 directive). 정책 자체 (whitelist 외 stop = defect) 무손상.
