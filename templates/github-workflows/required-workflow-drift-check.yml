@@ -43,10 +43,9 @@ jobs:
           bash scripts/sync-required-workflows.sh \
             --dry-run \
             --spec templates/required-workflows-spec.yaml
-        continue-on-error: true
 
       - name: Apply drift (workflow_dispatch with apply=true only)
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.apply == 'true' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.apply == 'true' && steps.drift_check.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

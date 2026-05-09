@@ -117,7 +117,7 @@ if [[ -n "$ENTERPRISE_SLUG" ]]; then
     CURSOR_ARG=""
     [[ -n "$CURSOR" ]] && CURSOR_ARG=", after: \"$CURSOR\""
 
-    QUERY="{enterprise(slug:\"${ENTERPRISE_SLUG}\"){auditLog(first:100${CURSOR_ARG}){edges{node{__typename ...on AuditEntry{actorLogin createdAt action}}}pageInfo{endCursor hasNextPage}}}}"
+    QUERY="{enterprise(slug:\"${ENTERPRISE_SLUG}\"){auditLog(first:100${CURSOR_ARG}){edges{node{__typename ...on AuditEntry{actorLogin createdAt action actorEmail actorIp}}}pageInfo{endCursor hasNextPage}}}}"
 
     RESPONSE=$(api_with_backoff "gh api graphql -f query='$QUERY' --jq '.data.enterprise.auditLog'" 2>/dev/null || echo "{}")
 
@@ -128,7 +128,18 @@ if [[ -n "$ENTERPRISE_SLUG" ]]; then
 import json, sys
 d = json.load(sys.stdin)
 edges = d.get('edges', [])
-print(json.dumps([e['node'] for e in edges if e.get('node')]))
+nodes = []
+for e in edges:
+    node = e.get('node')
+    if not node:
+        continue
+    # Normalize camelCase GraphQL fields to snake_case for pii_redact()
+    if 'actorEmail' in node:
+        node['actor_email'] = node.pop('actorEmail')
+    if 'actorIp' in node:
+        node['actor_ip'] = node.pop('actorIp')
+    nodes.append(node)
+print(json.dumps(nodes))
 " 2>/dev/null || echo "[]")
 
     ALL_EVENTS=$(printf '%s' "$ALL_EVENTS" | python3 -c "
