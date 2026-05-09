@@ -122,6 +122,30 @@ infra_strategy: docker_first | legacy_systemd | none  # 기본값: docker_first
 infra_strategy_extras:
   k8s_preset_enabled: true | false  # presets/k8s/ (codeforge-develop) 활성 여부, 기본값: false
 
+# [선택] Multi-repo story key system (CFP-342 / ADR-050)
+# Opt-in only — 부재 시 single-repo flat 모드 유지 (기존 동작 보존).
+# 활성화 트리거 = `codeforge.stories.repos[]` 에 1+ entry 선언.
+# Backward compat: 기존 single-repo consumer + 기존 multi-repo hub-flat 운영 (mctrader MCT-1~111) 모두 영향 0.
+codeforge:
+  stories:
+    hub:
+      key_pattern: <string>           # 예: "{prefix}-{seq:03d}" (또는 자유 format string), optional
+      story_dir: <string>             # default: "docs/stories", optional
+      template: <string>              # default: "hub-story.md", optional
+    repo_key_pattern: <string>        # 예: "{prefix}-{seq:03d}", optional
+    counters:
+      path: <string>                  # default: ".codeforge/counters.json", optional
+      lock: file                      # enum: "file" (Phase 1 = file 만 지원), optional
+    repos:
+      - name: <string>                  # required, repo 식별자 (예: "mctrader-hub")
+        role: governance | implementation  # required, enum
+        path: <string>                  # role=implementation 시 required, sibling checkout 위치
+        github: <string>                # role=implementation 시 required (예: "mclayer/mctrader-data")
+        story_dir: <string>             # default: "docs/stories", optional
+        components:                     # role=implementation 시 권장 (target repo fallback)
+          - <string>                    # 예: "data", "pipeline"
+        creates_repo_stories: <bool>    # default: true (governance role 은 false), optional
+
 # [선택] Lane 활성화 설정 (CFP-317 / ADR-048)
 # default = security_ai: false (5-lane + CI gate 모드)
 # security_ai: true 시 SecurityTestPL (Claude+Codex 2차 AI 보안 분석) spawn 활성
@@ -188,14 +212,77 @@ workflow_distribution:
     - subissue-from-impl-manifest.yml
 ```
 
+**Multi-repo 예시 — mctrader 6-repo (CFP-342 / ADR-050)**:
+
+```yaml
+project:
+  name: mctrader
+
+github:
+  org: mclayer
+  repo: mctrader-hub
+  default_branch: main
+  pr_title_prefix_template: "[{key}] {title}"
+  story_key_prefix: MCT
+  codeowners:
+    architect_team: "@mclayer/architects"
+    domain_expert_team: "@mclayer/domain-experts"
+  discussions:
+    domain_kb_category: "Domain Q&A"
+  milestone:
+    epic_naming_pattern: "Epic-{key}-{slug}"
+
+# CFP-342 / ADR-050 — Multi-repo story key system (mctrader 6-repo Mode B)
+codeforge:
+  stories:
+    hub:
+      key_pattern: "{prefix}-{seq:03d}"
+      story_dir: docs/stories
+      template: hub-story.md
+    repo_key_pattern: "{prefix}-{seq:03d}"
+    counters:
+      path: .codeforge/counters.json
+      lock: file
+    repos:
+      - name: mctrader-hub
+        role: governance
+        story_dir: docs/stories
+        creates_repo_stories: false
+      - name: mctrader-data
+        role: implementation
+        path: C:/workspace/mclayer/mctrader-data
+        github: mclayer/mctrader-data
+        story_dir: docs/stories
+        components: [data, pipeline, storage]
+      - name: mctrader-market
+        role: implementation
+        path: C:/workspace/mclayer/mctrader-market
+        github: mclayer/mctrader-market
+        story_dir: docs/stories
+        components: [market, contracts]
+      - name: mctrader-engine
+        role: implementation
+        path: C:/workspace/mclayer/mctrader-engine
+        github: mclayer/mctrader-engine
+        story_dir: docs/stories
+        components: [engine, strategy, risk]
+      - name: mctrader-web
+        role: implementation
+        path: C:/workspace/mclayer/mctrader-web
+        github: mclayer/mctrader-web
+        story_dir: docs/stories
+        components: [web, ui]
+```
+
 ## 4. 에이전트 접근 규칙
 
 ### 4a. Read 전담
 - **DocsAgent**: GitHub Issue/PR/comment·repo file write 시 `org`·`repo`·`story_key_prefix`·`codeowners`·`milestone.epic_naming_pattern` 활용
-- **RequirementsPLAgent**: Story SSOT 파일(`docs/stories/<KEY>.md`) 위치 결정 시 `story_key_prefix` 사용
+- **RequirementsPLAgent**: Story SSOT 파일(`docs/stories/<KEY>.md`) 위치 결정 시 `story_key_prefix` 사용. **Multi-repo system 활성 시** (CFP-342 / ADR-050) `codeforge.stories.repos[]` 검사 → hub vs repo story 결정 + target repo 결정 (frontmatter `story_scope` priority 1, `component` label fallback)
 - **DomainAgent**: Domain Knowledge 트리(`docs/domain-knowledge/`) read + Discussions 질의 시 `discussions.domain_kb_category` 사용
 - **PMOAgent**: 회고·Cross-Story 패턴 분석 시 GitHub Issue search query에 `org`·`repo` 활용
-- **Orchestrator**: 세션 개시 시 1회 read → 필요 값 Context Packet으로 하위 에이전트에 전달 (반복 fetch 회피). 매 변경 시작 시 `story_cutoff.additional_exempt_categories`(있으면)를 cutoff 분류 입력으로 사용
+- **All lane plugin agents**: **Multi-repo system 활성 시** (CFP-342 / ADR-050) `codeforge.stories.repos[].path` + `components` 활용해 작업 target repo 결정 (priority: frontmatter `story_scope: repo` + `repo` → `story_scope: hub` → `component` label mapping → ESCALATE)
+- **Orchestrator**: 세션 개시 시 1회 read → 필요 값 Context Packet으로 하위 에이전트에 전달 (반복 fetch 회피). 매 변경 시작 시 `story_cutoff.additional_exempt_categories`(있으면)를 cutoff 분류 입력으로 사용. **Multi-repo system 활성 시** Project Config Packet 에 `codeforge.stories.repos[]` slice 포함 의무
 
 ### 4b. Write 금지
 모든 에이전트는 `.claude/_overlay/project.yaml` **write 금지**. 이 파일은 consumer가 직접 관리. DocsAgent도 쓰지 않음.
@@ -245,3 +332,5 @@ python3 ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/validate_config.py \
 - [`../overlay/_overlay/project.yaml.example`](../overlay/_overlay/project.yaml.example) — 스켈레톤
 - [`../overlay/hooks/validate_config.py`](../overlay/hooks/validate_config.py) — Schema 검증 구현
 - [`../agents/DocsAgent.md`](https://github.com/mclayer/plugin-codeforge/blob/v3.0.0/agents/DocsAgent.md) — 주 소비자
+- [`adr/ADR-050-multi-repo-story-key-system.md`](adr/ADR-050-multi-repo-story-key-system.md) — Multi-repo story key system (`codeforge.stories.*` 블록 SSOT)
+- [`adr/ADR-020-cross-repo-epic-pattern.md`](adr/ADR-020-cross-repo-epic-pattern.md) — Mode A/B/C cross-repo Epic 패턴 (ADR-050 의 조직적 결정 root)
