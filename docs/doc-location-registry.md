@@ -5,7 +5,7 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.0  
-**Last regen**: 2026-05-09T02:49:18Z  
+**Last regen**: 2026-05-09T13:25:28Z  
 **Registered doc types**: 10
 
 ## Summary table
@@ -13,7 +13,7 @@
 | # | doc_type | variants | owner | introduced_by |
 |---|---|---|---|---|
 | 1 | `epic_results` | dogfood / mode_a / mode_b / mode_c | `codeforge-pmo:PMOAgent` | CFP-83 |
-| 2 | `story_file` | dogfood / mode_b / single_repo | `codeforge-requirements:RequirementsPLAgent` | CFP-1 |
+| 2 | `story_file` | dogfood / mode_b / multi_repo_hub / multi_repo_impl / single_repo | `codeforge-requirements:RequirementsPLAgent` | CFP-1 |
 | 3 | `adr` | single_repo | `codeforge-design:ArchitectAgent` | CFP-26 |
 | 4 | `change_plan` | dogfood / single_repo | `codeforge-design:ArchitectAgent` | CFP-7 |
 | 5 | `retro` | dogfood / single_repo | `codeforge-pmo:PMOAgent` | CFP-36 |
@@ -49,19 +49,29 @@
 
 - **single_repo**: `<owner-repo>/docs/stories/<KEY>.md`
 - **mode_b**: `<hub-repo>/docs/stories/<KEY>.md`
+- **multi_repo_hub**: `<hub-repo>/docs/stories/<KEY>.md`
+- **multi_repo_impl**: `<impl-repo>/docs/stories/<KEY>.md`
 - **dogfood**: `mclayer/codeforge-internal-docs/<plugin-folder>/stories/<KEY>.md`
 - **owner_agent**: `codeforge-requirements:RequirementsPLAgent`
 - **introduced_by**: CFP-1
 - **naming_pattern**: `[A-Z]+-[0-9]+\.md`
 - **frontmatter_required**: True
 - **examples**:
-  - mctrader-hub/docs/stories/MCT-12.md (Mode B)
+  - mctrader-hub/docs/stories/MCT-12.md (Mode B legacy hub-flat)
+  - mctrader-hub/docs/stories/MCT-112.md (multi_repo_hub — story_scope: hub, CFP-342 / ADR-050)
+  - mctrader-data/docs/stories/MCT-001.md (multi_repo_impl — story_scope: repo, CFP-342 / ADR-050)
   - mclayer/codeforge-internal-docs/wrapper/stories/CFP-273.md (dogfood)
 
   **notes**:
   > §1 Issue 본문 verbatim invariant (story-section-1-immutable.yml).
   > ADR-020 Mode A: 각 작업 repo 가 자체 보유. Mode B: hub 가 모두 보유.
   > ADR-013: codeforge family = internal-docs <plugin>/stories/.
+  > CFP-342 / ADR-050: multi_repo_hub (story_scope: hub) + multi_repo_impl (story_scope: repo)
+  > = ADR-020 Mode B 의 automation backbone. Hub repo 의 project.yaml 에 codeforge.stories.repos[]
+  > 블록 활성 시 trigger. mode_b vs multi_repo_hub 구분 = 자동화 layer 활성 여부 (mode_b = manual,
+  > multi_repo_hub = automation). 향후 Phase 2 mechanism 구현 후 mode_b → multi_repo_hub
+  > 자연스러운 evolution.
+  > <impl-repo> placeholder = project.yaml codeforge.stories.repos[].name (ADR-050 §결정 1).
 
 ### `adr`
 
