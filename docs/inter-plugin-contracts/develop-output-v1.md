@@ -142,5 +142,5 @@ develop_output:
 
 | Version | Date | CFP | 변경 내용 |
 |---|---|---|---|
-| 1.0 | 2026-04-29 | CFP-42 | 최초 작성 (wrapper sibling backfill) |
+| 1.0 | 2026-04-29 | CFP-39 | 최초 작성 (ζ arc Develop lane extraction) |
 | 1.1 | 2026-05-09 | CFP-297 | MINOR bump: `cross_layer_dialog_rounds: int >= 0` 추가 — TEAM-DEVELOP Cross-layer pattern (DeveloperAgent ↔ QADeveloperAgent) measurable verification (ADR-044 §결정 5). `develop_packet` + `develop_output` 양쪽 `contract_version` "1.1" 갱신. |
