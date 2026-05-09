@@ -24,8 +24,8 @@ Lane internal · per-lane spawn detail · severity rule · GitHub workflow subse
 
 **MCP 서버 (1종)**: `github` — Issue/PR/sub-issue/comment·label·milestone 각 lane plugin self-write; `docs/{change-plans,adr,domain-knowledge,retros}/**` 직접 write 는 owner agent (CFP-26 Phase 0a)
 
-**필수 플러그인 (9종)**:
-- `codeforge-{review,pmo,requirements,test,develop,design}@mclayer` — 6 lane plugin
+**필수 플러그인 (8종)**:
+- `codeforge-{review,pmo,requirements,develop,design}@mclayer` — 5 lane plugin (codeforge-test deprecated — CFP-317 / ADR-048)
 - `codex@openai-codex` — CodexReviewAgent + codex CLI dependency
 - `superpowers@claude-plugins-official` — 17 lane agent × 7 skill 호출 (SSOT: [`docs/superpowers-integration.md`](docs/superpowers-integration.md))
 - `github@claude-plugins-official` — GitHub MCP 도구 노출
@@ -46,7 +46,6 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 | 설계 | codeforge-design | 8 (PL + ArchitectAgent chief + 6 deputy) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-design/blob/main/CLAUDE.md) |
 | 설계리뷰 / 구현리뷰 / 보안테스트 | codeforge-review | 5 (3 PL + 2 worker) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-review/blob/main/CLAUDE.md) |
 | 구현 | codeforge-develop | 5 (PL + QADev + 3 role:dev core) + preset/overlay 동적 | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-develop/blob/main/CLAUDE.md) |
-| 구현테스트 | codeforge-test | 1 (TestAgent) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-test/blob/main/CLAUDE.md) |
 | Cross-cutting | codeforge-pmo | 2 (PMOAgent + GitOpsAgent) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/CLAUDE.md) |
 
 각 lane plugin 의 agent 역할·동작은 해당 plugin CLAUDE.md SSOT. 본 표는 composition map 만.
@@ -61,13 +60,13 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 > **(선택) Stage 0 — pre-Issue brainstorming**: 비-trivial Story 는 `superpowers:brainstorming` 으로 사전 scope 정리 후 Issue Form 제출 권장 ([ADR-034](docs/adr/ADR-034-pre-issue-brainstorming-stage.md) · [playbook §1.2.0](docs/orchestrator-playbook.md)). CI 강제 없음 — `spec_link` Issue Form 필드는 옵션.
 
-## 레인 7개 · 단계 정의
+## 레인 5개 · 단계 정의
 
 ```
-요구사항 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → 구현 테스트 → 보안 테스트
+요구사항 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → [CI gate]
 ```
 
-모든 Story는 **full 7 레인** 통과. Fast-path 없음 (단 **Hotfix 경로** 2종은 예외 — 운영 장애 대응, 사후 감사 의무. 상세는 [`docs/hotfix-playbook.md`](docs/hotfix-playbook.md) — CFP-93 분리, mctrader debut audit 까지 사용 사례 0).
+모든 Story는 **full 5 레인 + CI gate** 통과. Fast-path 없음 (단 **Hotfix 경로** 2종은 예외 — 운영 장애 대응, 사후 감사 의무. 상세는 [`docs/hotfix-playbook.md`](docs/hotfix-playbook.md) — CFP-93 분리, mctrader debut audit 까지 사용 사례 0). **CI gate** = 구현 리뷰 PASS 후 Orchestrator가 `gh pr checks <PR_NUMBER> --watch`로 GitHub CI 결과 polling (최대 30분 timeout). PASS 시 merge gate 진입 (`lanes.security_ai: true` consumer는 SecurityTestPL spawn 추가). FAIL 시 DeveloperPL 1차 진단 → ArchitectPL 최종 판정 → FIX loop (CFP-317 / ADR-048).
 
 **Story flow (default — single-repo Story 또는 Epic 외 1 child Story)**: **1 Story = 2 PRs**
 - **Phase 1 PR** (요구사항 + 설계 + 설계리뷰 lane): `docs/stories/<KEY>.md` §1-7 + `docs/change-plans/<slug>.md` + `docs/adr/ADR-NNN-<slug>.md`. **(internal-docs SSOT 적용 시, ADR-013 dogfood-out + amendment)**: change-plan 위치는 `<internal-docs-clone>/<plugin-folder>/change-plans/<slug>.md`. Codeforge family / dogfood Story 의 경우 본 path override. 또한 doc-only Story (예: ADR carrier 가 architecture decision SSOT 인 경우) 는 **별도 change-plan 면제** — ADR 가 §3 도입할 설계 SSOT 역할 충족 (ADR-013 정합).
@@ -93,8 +92,8 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 | 설계 리뷰 | ArchitectAgent verdict | §9 (DesignReviewPL Claude+Codex 종합) + `gate:design-review-pass` | 3 |
 | 구현 | 설계 리뷰 PASS | §8·§8.5 + Phase 2 PR 첫 commit (DeveloperPL + QADev + N role:dev) | — |
 | 구현 리뷰 | DeveloperPL ready | §9 (CodeReviewPL Claude+Codex 종합) | 3 |
-| 구현 테스트 | 구현 리뷰 PASS | (TestAgent 기능→성능 순차) | ∞ |
-| 보안 테스트 | 구현 테스트 PASS | §9 (SecurityTestPL 2-layer: GitHub native + Claude+Codex) + `gate:security-test-pass` (+ `gate:live-entry-pass` if Live touching, ADR-030) | ∞ |
+| CI gate | 구현 리뷰 PASS | (Orchestrator inline `gh pr checks` polling — 30분 timeout) | ∞ |
+| 보안 테스트 **(opt-in: lanes.security_ai: true)** | CI gate PASS | §9 (SecurityTestPL 2-layer: GitHub native + Claude+Codex) + `gate:security-test-pass` (+ `gate:live-entry-pass` if Live touching, ADR-030) | ∞ |
 
 세부 spawn sequence · branch logic · FIX 진단 흐름 SSOT: [playbook §3](docs/orchestrator-playbook.md) + 각 lane plugin CLAUDE.md.
 
