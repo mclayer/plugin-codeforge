@@ -1,5 +1,9 @@
 # CLAUDE.md
 
+## 언어 정책
+
+모든 응답·코드 주석·문서 작성에서 **한글 또는 영어만 사용**. 한자(일본어·중국어 포함) 사용 절대 금지.
+
 Claude Code 범용 SW 개발 오케스트레이션 플러그인. **0 core 에이전트 (wrapper-only)** · 7 레인 + `role: dev` 동적 roster 로 요구사항 접수부터 보안 테스트 통과까지 자율 실행. 에이전트 상세는 각 lane plugin (codeforge-{review,pmo,requirements,test,develop,design}) SSOT — 본 wrapper repo 에는 agent file 없음. Dev preset 은 [codeforge-develop presets/](https://github.com/mclayer/plugin-codeforge-develop/tree/main/presets) 참조.
 
 ## Plugin
@@ -23,6 +27,8 @@ Lane internal · per-lane spawn detail · severity rule · GitHub workflow subse
 세션 시작 직후, 모든 작업보다 먼저 의존성 노출·설치·인증 상태 확인. 자동 복구 가능한 것은 즉시 복구, 불가능한 것은 사용자에게 요구. 복구 완료 전까지 **모든 작업 중단**.
 
 **MCP 서버 (1종)**: `github` — Issue/PR/sub-issue/comment·label·milestone 각 lane plugin self-write; `docs/{change-plans,adr,domain-knowledge,retros}/**` 직접 write 는 owner agent (CFP-26 Phase 0a)
+
+**GitHub 도구 우선순위**: 모든 GitHub 작업(Issue·PR·comment·sub-issue·repo file write)은 `mcp__github__*` 도구 우선 사용. `gh` CLI는 MCP 미커버 영역(`milestone CRUD` / `Discussions` / `GraphQL` / `label 부트스트랩 스크립트`)에서만 fallback. MCP 미노출 시 gh 로 즉시 우회 금지 — 사용자에게 `/mcp` 재인증 요청 후 대기.
 
 **필수 플러그인 (8종)**:
 - `codeforge-{review,pmo,requirements,develop,design}@mclayer` — 5 lane plugin (codeforge-test deprecated — CFP-317 / ADR-048)
@@ -98,6 +104,10 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 세부 spawn sequence · branch logic · FIX 진단 흐름 SSOT: [playbook §3](docs/orchestrator-playbook.md) + 각 lane plugin CLAUDE.md.
 
 ## 오케스트레이션 규칙
+
+> **Orchestrator 정책 적용 범위 (normative)**: 본 CLAUDE.md 및 playbook 의 모든 Orchestrator 행동 규칙 (lane spawn 방식·stop discipline·진행 시각화·GitHub 도구 선택·통신 표준·fact verification 등) 은 **wrapper plugin 자체 작업과 모든 consumer project 에 동일 적용**. Consumer overlay (`.claude/_overlay/`) 는 정책을 축소할 수 없고 확장만 가능.
+
+> **behavioral directive → memory 금지 (normative)**: 사용자가 Orchestrator 행동 directive 를 내릴 때, 해당 규칙을 personal memory file 에 저장하는 것으로 갈음하지 않는다. 대신 **즉시 CFP 제안** 후 playbook / CLAUDE.md / consumer-guide 에 반영해야 한다. Memory = ephemeral + consumer 비전파 + single-session scope = structural enforcement 불가. 예외 없음.
 
 > **Orchestrator 행동 SSOT**: [`docs/orchestrator-playbook.md`](docs/orchestrator-playbook.md) — 세션 생명주기, 스폰 프롬프트 템플릿, 병렬 스폰 판단, FIX 상태 머신, 세션 재개 복원, 토큰 예산.
 
