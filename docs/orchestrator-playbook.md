@@ -43,6 +43,7 @@ related:
    - 미노출 시 `~/.claude/mcp-needs-auth-cache.json` Read → `plugin:github:github` 키 존재 시 "needs auth" 확정
    - → 사용자에게 `/mcp` 재인증 요청
    - GitHub은 본 플러그인 핵심 의존성 (Issue/PR·docs file·sub-issue·Milestone 전부)이므로 우회·스킵 불가
+   **GitHub 도구 우선순위 (CLAUDE.md §세션 개시 의무 mirror)**: MCP 노출 후 모든 GitHub 작업 = `mcp__github__*` 우선. `gh` CLI = MCP 미커버 영역 전용 fallback (milestone CRUD / Discussions / GraphQL / label 부트스트랩). MCP 미노출 상태에서 gh 우회 금지.
 
    **0b. 필수 플러그인 4종**
    - 대상: `codex@openai-codex`, `superpowers@claude-plugins-official`, `claude-md-management@claude-plugins-official`, `github@claude-plugins-official`
@@ -1420,6 +1421,24 @@ Packet 주입은 Orchestrator의 토큰 최적화 수단이지 필수 규약 아
 
 ---
 
+### 12.7 Orchestrator 통신 표준 (normative — wrapper + all consumers)
+
+**매 메시지 첫 줄 = 단계 메타 라벨 의무**:
+
+| 상황 | 첫 줄 형식 |
+|---|---|
+| 레인 진행 중 | `현재 단계: <레인명> — <에이전트명> <동작>` |
+| Skill 절차 진행 중 | `<Skill명> Step N/<전체> — <현재 동작>` |
+| ADR / spec / 코드 블록 제시 | `다음은 [무엇] — 사용자가 [무엇] 검토` |
+| 결정 선택지 제시 | `결정 대상: <무엇> — 아래 N개 선택지` |
+| 약어 첫 등장 | 첫 등장 시 풀어쓰기 (예: `CFP-274 (TodoWrite 진행 시각화 Story)`) |
+
+**Cold-start readability 의무**: 각 메시지가 대화 누적 컨텍스트 없이도 이해 가능해야 한다. 약어·코드 블록·ADR ref 가 맥락 설명 없이 갑자기 등장하는 것은 `communication_violation`.
+
+**적용 범위**: wrapper + 모든 consumer project Orchestrator 세션.
+
+---
+
 ## 13. PMOAgent 프로젝트 관리 (Cross-cutting)
 
 PMOAgent는 단일 Story 레인 게이트 밖에서 cross-cutting 감사·회고·패턴 분석을 전담. 요구사항 해석은 RequirementsPLAgent 영역으로 분리됨.
@@ -1721,6 +1740,29 @@ mv .claude-work/progress/<KEY>.md .claude-work/progress/_archive/<KEY>.md
 Orchestrator는 `_archive/` 디렉토리 부재 시 `mkdir -p` 후 mv. PMOAgent Cross-Story 분석은 `_archive/**` glob 으로 누적 progress 참조.
 
 Story 중도 폐기 시: `_archive/<KEY>-aborted.md` 로 mv, 사용자 narration "Story 폐기".
+
+---
+
+### 14.11 완료 시각 + 소요 시간 reporting (normative — wrapper + all consumers)
+
+Orchestrator 는 substantive milestone 마다 완료 시각 + 소요 시간을 final report 또는 단계 마무리 메시지에 명시한다.
+
+**Reporting 의무 트리거**:
+- Phase 1 PR open / merge
+- Phase 2 PR open / merge
+- Story close (Phase 2 PR merge + Issue auto-close)
+- Lane gate transition (설계 리뷰 PASS / 구현 리뷰 PASS / CI PASS)
+- 사용자 가시 milestone (ad-hoc 요청 완료 / FIX loop 완료)
+
+**형식**:
+```
+Phase 2 PR merged (14:23, 이 단계 37분 / 세션 시작부터 1h 12m)
+```
+- 시각: `HH:MM`
+- 소요 시간: incremental (해당 단계 시작부터) + cumulative (세션 시작부터) 모두 명시
+- Trivial 작업 (1 commit, 1 file edit) = skip OK. Substantive milestone = 의무.
+
+**TodoWrite 연동**: §14.7 render flow step 5 의 lane row content 에 완료 시각 suffix 포함 권장 (`✅ 구현 레인 PASS · 14:23`). TodoWrite update best-effort 정책(ADR-038 §결정 7) 유지 — TodoWrite 실패 시에도 메시지 내 시간 명시는 이 §14.11 normative 규칙으로 유지.
 
 ---
 
