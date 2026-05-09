@@ -23,11 +23,22 @@ except ImportError:
     print("⚠ check-label-registry: pyyaml 미설치 — skip", file=sys.stderr)
     sys.exit(0)
 
-REGISTRY = Path("docs/inter-plugin-contracts/label-registry-v1.md")
 BOOTSTRAP = Path("scripts/bootstrap-labels.sh")
 
+# Active registry 자동 감지: label-registry-v*.md 중 status: Active 인 최신 파일
+import glob as _glob
+_candidates = sorted(_glob.glob("docs/inter-plugin-contracts/label-registry-v*.md"))
+REGISTRY = None
+for _p in reversed(_candidates):
+    _txt = Path(_p).read_text(encoding="utf-8")
+    if re.search(r"^status:\s*Active", _txt, re.MULTILINE):
+        REGISTRY = Path(_p)
+        break
+if REGISTRY is None:
+    REGISTRY = Path("docs/inter-plugin-contracts/label-registry-v1.md")
+
 if not REGISTRY.exists():
-    print(f"::error::label-registry-v1.md 부재")
+    print(f"::error::label-registry Active 파일 부재 (checked: {_candidates})")
     sys.exit(1)
 
 if not BOOTSTRAP.exists():

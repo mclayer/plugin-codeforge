@@ -197,10 +197,10 @@ jobs:
             } else if (phaseLabel === 'phase:보안-테스트' || phaseLabel === '보안-테스트') {
               required = { phase: phaseLabel, gate: 'gate:security-test-pass' };
             } else {
-              // No Story binding or unknown phase — file-based heuristic (legacy)
-              required = hasCode
-                ? { phase: 'phase:보안-테스트', gate: 'gate:security-test-pass' }
-                : { phase: 'phase:설계-리뷰', gate: 'gate:design-review-pass' };
+              // No Story binding — file-based heuristic (legacy).
+              // CFP-317 / ADR-048: code PRs no longer require gate:security-test-pass by default.
+              // GitHub CI handles code quality gate. Design review gate applies universally.
+              required = { phase: 'phase:설계-리뷰', gate: 'gate:design-review-pass' };
             }
 
             const phaseOk = phaseLabel === required.phase;
