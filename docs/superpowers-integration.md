@@ -60,6 +60,7 @@ CI 안전망: [ADR-017](adr/ADR-017-skill-override-path-enforcement.md) + Amendm
 | review | ClaudeReviewAgent | 표준 체크리스트 | superpowers:requesting-code-review | NO | §3 row 7 | plugin-codeforge-review Phase 2 |
 | review | ClaudeReviewAgent | PASS evidence 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-review Phase 2 |
 | pmo | PMOAgent | Story 완료 감사 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-pmo Phase 2 |
+| pmo | GitOpsAgent | Worktree lifecycle + branch tree + sequential merge + conflict escalation (CFP-139) | superpowers:using-git-worktrees | NO | §3 row 6 (CFP-139) | plugin-codeforge-pmo Phase 2 (CFP-139) |
 | **wrapper** | **Orchestrator (or human)** | **pre-Issue scoping (Stage 0, [ADR-034](adr/ADR-034-pre-issue-brainstorming-stage.md))** | superpowers:brainstorming | YES | §3 row 2 | wrapper Phase 1 (post-merge: Issue Form 제출) |
 
 > **Stage 0 footnote (CFP-129 / ADR-034)**: 위 row 의 I/O = §3 row 2 의 in-lane 시나리오와 다름. Pre-Issue 시나리오의 I/O = spec → Issue Form `user-original` 필드 (§1 verbatim source) + `spec_link` 필드 (path/URL traceability, Phase 2 fixture). [orchestrator-playbook §1.2.0](orchestrator-playbook.md) SSOT. 총 호출 지점 = 23 → 24, in-lane brainstorming 2 행 (DomainAgent / RequirementsPL) 과 별개 단계.
@@ -107,6 +108,6 @@ Phase 1 wrapper PR merge 직후 6 lane CFP batch open. 각 lane CFP scope:
 | 4 | codeforge-review | 5 agent md (3 PL stale + 2 worker prose) | stale `docs/superpowers/**` 권한 제거 의무 |
 | 5 | codeforge-develop | 5 agent md | (동일) |
 | 6 | codeforge-test | 2 agent md | (동일) |
-| 7 | codeforge-pmo | 1 agent md | (동일) |
+| 7 | codeforge-pmo | 2 agent md (PMOAgent + GitOpsAgent CFP-139) | (동일) |
 
 각 lane CFP = 별도 child Story (Mode B hub-centralized — wrapper repo = Epic owner, [ADR-020](adr/ADR-020-cross-repo-epic-pattern.md)).

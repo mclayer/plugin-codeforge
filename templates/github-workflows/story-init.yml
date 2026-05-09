@@ -271,3 +271,25 @@ jobs:
           COMPONENT: ${{ steps.parse.outputs.component }}
         run: |
           gh issue edit "$ISSUE_NUMBER" --add-label "component:$COMPONENT"
+
+      - name: Attach native Issue Type (CFP-140 / ADR-049)
+        if: steps.existence_check.outputs.skip != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Attach native Issue Type "Story" to newly created Issue.
+          # Idempotent: if type already set, PATCH is a no-op.
+          # Graceful fallback: if Issue Types not configured for org, emit warning and continue.
+          REPO_OWNER="${GITHUB_REPOSITORY%%/*}"
+          # Get org Issue Types to find "Story" type ID
+          TYPE_ID=$(gh api "/orgs/${REPO_OWNER}/issue-types" \
+            --jq '.[] | select(.name == "Story") | .id' 2>/dev/null || true)
+          if [[ -z "$TYPE_ID" ]]; then
+            echo "::warning::Issue Types not configured for org ${REPO_OWNER} — label fallback active (ADR-049 §결정 3)"
+            exit 0
+          fi
+          # PATCH issue to set type (idempotent — same type_id = no-op)
+          gh api --method PATCH "/repos/${GITHUB_REPOSITORY}/issues/${ISSUE_NUMBER}" \
+            --field "type_id=${TYPE_ID}" 2>/dev/null \
+            && echo "Issue Type 'Story' attached to #${ISSUE_NUMBER}" \
+            || echo "::warning::Issue Type attachment failed (may already be set or API unsupported)"

@@ -122,6 +122,14 @@ infra_strategy: docker_first | legacy_systemd | none  # 기본값: docker_first
 infra_strategy_extras:
   k8s_preset_enabled: true | false  # presets/k8s/ (codeforge-develop) 활성 여부, 기본값: false
 
+# [선택] Lane 활성화 설정 (CFP-317 / ADR-048)
+# default = security_ai: false (5-lane + CI gate 모드)
+# security_ai: true 시 SecurityTestPL (Claude+Codex 2차 AI 보안 분석) spawn 활성
+# 내부 전용 / solo-dev 시스템은 false 권장.
+# 외부 노출 서비스 / 금융 데이터 처리 시스템은 true 권장.
+lanes:
+  security_ai: false               # 기본값: false (opt-in only)
+
 # [선택] Telemetry / measurement channel (CFP-283 / ADR-042 / ADR-043)
 # default = 모든 channel disabled (opt-in default false invariant — ADR-043 §결정 1)
 # Phase 1 = wrapper / consumer 동일 trust model — default false + 사용자 explicit opt-in 의무
