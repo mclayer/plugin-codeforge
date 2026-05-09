@@ -5,7 +5,7 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.0  
-**Last regen**: 2026-05-09T01:27:16Z  
+**Last regen**: 2026-05-09T02:49:18Z  
 **Registered doc types**: 10
 
 ## Summary table
@@ -27,22 +27,22 @@
 
 ### `epic_results`
 
-- **mode_a**: `<owner-repo>/EPIC-RESULTS-<EPIC_KEY>.md`
-- **mode_b**: `<hub-repo>/EPIC-RESULTS-<EPIC_KEY>.md`
-- **mode_c**: `<hub-repo>/EPIC-RESULTS-<EPIC_KEY>.md`
+- **mode_a**: `<owner-repo>/docs/retros/EPIC-RESULTS-<EPIC_KEY>.md`
+- **mode_b**: `<hub-repo>/docs/retros/EPIC-RESULTS-<EPIC_KEY>.md`
+- **mode_c**: `<hub-repo>/docs/retros/EPIC-RESULTS-<EPIC_KEY>.md`
 - **dogfood**: `mclayer/codeforge-internal-docs/<plugin-folder>/retros/EPIC-RESULTS-<EPIC_KEY>.md`
 - **owner_agent**: `codeforge-pmo:PMOAgent`
 - **introduced_by**: CFP-83
 - **naming_pattern**: `EPIC-RESULTS-[A-Z]+-[0-9]+\.md`
 - **frontmatter_required**: False
 - **examples**:
-  - mctrader-hub/EPIC-RESULTS-MCT-12.md (Mode B)
+  - mctrader-hub/docs/retros/EPIC-RESULTS-MCT-12.md (Mode B)
   - mclayer/codeforge-internal-docs/wrapper/retros/EPIC-RESULTS-CFP-96.md (dogfood)
 
   **notes**:
-  > Phase N+1 close PR 이 merge 되는 repo root.
-  > ADR-020 Mode A → owner / Mode B/C → hub.
-  > ADR-013 codeforge family override → internal-docs <plugin>/retros/.
+  > Phase N+1 close PR 이 merge 되는 repo 의 docs/retros/.
+  > ADR-020 Mode A → owner / Mode B/C → hub. dogfood (codeforge family) → internal-docs <plugin>/retros/.
+  > mode_a/b/c + dogfood 모두 <scope>/[docs/]retros/ 단일 패턴 (ADR-041 Amendment 1, 2026-05-09).
   > EPIC-RESULTS = retro-like artifact (Epic close evidence aggregate, Codex round 1 verdict).
 
 ### `story_file`
@@ -102,9 +102,11 @@
 - **frontmatter_required**: True
 - **examples**:
   - mclayer/codeforge-internal-docs/wrapper/retros/zeta-arc-2026-04-29.md
+  - mctrader-hub/docs/retros/EPIC-RESULTS-MCT-12.md (Mode B EPIC-RESULTS, ADR-041 Amendment 1)
 
   **notes**:
-  > ADR-013: codeforge family dogfood. EPIC-RESULTS 도 본 디렉터리 사용 (Codex round 1 verdict — retro-like artifact).
+  > ADR-013: codeforge family dogfood. EPIC-RESULTS 도 본 디렉터리 사용 (mode_a/b/c + dogfood 통일, ADR-041 Amendment 1).
+  > Sprint retro (`<sprint>.md`) 와 EPIC-RESULTS (`EPIC-RESULTS-<KEY>.md`) 는 prefix 로 명확히 구분.
 
 ### `domain_knowledge`
 
