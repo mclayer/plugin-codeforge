@@ -621,18 +621,22 @@ Epic close PR (Phase N+1) 동반 작성:
    ```
    Story root worktree 는 **PR merge 확인 후** prune:
    ```bash
-   # branch protection 감지
+   # 1) branch protection 감지
    PROTECTED=$(gh api "repos/$(gh repo view --json nameWithOwner --jq .nameWithOwner)/branches/main" --jq '.protected')
-   # merge 확인 (non-null mergedAt = merged)
+   # PROTECTED=true → merge 시도 금지, push → PR → mergedAt 확인 순서 필수
+   # PROTECTED=false → local merge 후 바로 cleanup 가능
+
+   # 2) PR merge 확인 (non-null mergedAt = merged) — PROTECTED=true 시 필수
    gh pr view <PR_NUMBER> --json mergedAt --jq .mergedAt
-   # 확인 후 cleanup
+
+   # 3) mergedAt 확인 후 cleanup
    MAIN_ROOT=$(git -C "$(git rev-parse --git-common-dir)/.." rev-parse --show-toplevel)
    cd "$MAIN_ROOT"
    git worktree remove "$HOME/.claude/worktrees/<repo>/cfp-NNN"
    git worktree prune
    git branch -d cfp-NNN
    ```
-   **branch-protected repo**: `PROTECTED=true` 시 merge 시도 금지 — push → PR 생성 → `mergedAt` 확인 → cleanup 순서 강제 (ADR-040 Amendment 2). pre-merge `git worktree remove` = policy violation.
+   **branch-protected repo** (`PROTECTED=true`): push → PR 생성 → `mergedAt` 확인 → cleanup 순서 강제 (ADR-040 Amendment 2). pre-merge `git worktree remove` = policy violation.
 
 **Conflict 처리**:
 - worktree-merge.sh 가 conflict detect 시 exit code 2
