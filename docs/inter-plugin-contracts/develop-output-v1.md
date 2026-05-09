@@ -24,8 +24,6 @@ authors:
 - ADR-008 (versioning 룰): codeforge wrapper repo `docs/adr/ADR-008-inter-plugin-contract-versioning.md`
 - ADR-010 (본 contract 의 sibling sync 정책): codeforge wrapper repo `docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md`
 
-> **Canonical sync required**: 본 wrapper sibling 의 v1.1 bump (CFP-297) 는 codeforge-develop plugin 의 canonical 파일 sync PR 이 후속 의무 (ADR-010 §단계 절차 — wrapper-first pattern). Canonical sync PR 없이 본 sibling 만 갱신된 상태는 임시 상태.
-
 ## 1. 흐름 개요
 
 ```
