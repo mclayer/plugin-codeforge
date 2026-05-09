@@ -371,6 +371,7 @@ Orchestrator 가 사용자에게 substantive path 를 제시하거나 외부 sys
 
 4. **main / master force push 절대 금지**. 사고 발생 시: cherry-pick → correct branch → push (force push X).
 
+
 #### §3.0.10 Worktree-first mandate (normative — wrapper + all consumers)
 
 모든 coding work 는 git worktree 안에서 수행. 원본 working directory(`git checkout <branch>`) 직접 편집 금지.
