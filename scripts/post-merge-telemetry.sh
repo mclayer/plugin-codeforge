@@ -96,7 +96,61 @@ if [[ -n "$SHA" ]]; then
     ARGS+=(-f sha="$SHA")
 fi
 
-gh api "${ARGS[@]}"
+# Pattern A retry loop — 4xx/5xx semantics per CFP-289 / domain-knowledge/jsonl-write/race-condition-handling-pattern.md
+# 4xx (except 409): immediate fail, no-retry.
+# 5xx / network error: exponential backoff (2s, 4s, 8s).
+# 409 (SHA conflict): re-fetch SHA + jitter sleep, then retry.
+# Exhausted: emit error to stderr, exit non-zero (never silent drop).
+BACKOFF_DELAYS=(2 4 8)
+WRITE_SUCCESS=0
+for ATTEMPT in 1 2 3 4; do
+    # Re-fetch SHA on each attempt (stale SHA from prior 409 would cause another conflict)
+    if [[ "$ATTEMPT" -gt 1 ]]; then
+        EXISTING=$(gh api "repos/${INTERNAL_DOCS_REPO}/contents/${COUNTER_PATH}?ref=${TELEMETRY_BRANCH}" --jq '.content' 2>/dev/null | base64 -d 2>/dev/null || echo "")
+        SHA=$(gh api "repos/${INTERNAL_DOCS_REPO}/contents/${COUNTER_PATH}?ref=${TELEMETRY_BRANCH}" --jq '.sha' 2>/dev/null || echo "")
+        # Rebuild content with refreshed EXISTING
+        if [[ -n "$EXISTING" ]]; then
+            NEW_CONTENT=$(printf '%s\n%s\n' "$EXISTING" "$ENTRY")
+        else
+            NEW_CONTENT=$(printf '%s\n' "$ENTRY")
+        fi
+        NEW_CONTENT_B64=$(printf '%s' "$NEW_CONTENT" | base64 -w0)
+        ARGS=(-X PUT "repos/${INTERNAL_DOCS_REPO}/contents/${COUNTER_PATH}"
+            -f message="telemetry(${STORY_KEY,,}): post-merge counter entry (PR ${PR}, outcome: ${OUTCOME})"
+            -f content="$NEW_CONTENT_B64"
+            -f branch="${TELEMETRY_BRANCH}")
+        [[ -n "$SHA" ]] && ARGS+=(-f sha="$SHA")
+    fi
+
+    mkdir -p /tmp/telemetry-state
+    gh api "${ARGS[@]}" -i > /tmp/telemetry-state/put-response.txt 2>/dev/null || true
+    HTTP_CODE=$(head -1 /tmp/telemetry-state/put-response.txt | grep -o '[0-9]\{3\}' || echo "0")
+
+    if echo "$HTTP_CODE" | grep -qE '^(200|201)$'; then
+        echo "::notice::Telemetry JSONL write success (attempt=$ATTEMPT)"
+        WRITE_SUCCESS=1
+        break
+    elif echo "$HTTP_CODE" | grep -q '^409$'; then
+        # SHA conflict — concurrent write detected; re-fetch + jitter
+        echo "::warning::SHA conflict (HTTP 409) on attempt $ATTEMPT — re-fetch SHA + jitter retry" >&2
+        sleep $(( RANDOM % 5 + 1 ))
+    elif echo "$HTTP_CODE" | grep -qE '^4[0-9]{2}$'; then
+        # 4xx client error — no retry
+        echo "::error::4xx client error (HTTP ${HTTP_CODE}) on telemetry write — no retry, aborting" >&2
+        exit 1
+    else
+        # 5xx or network error — exponential backoff
+        IDX=$(( ATTEMPT - 1 ))
+        DELAY=${BACKOFF_DELAYS[$IDX]:-8}
+        echo "::warning::5xx/network error (HTTP ${HTTP_CODE}) on attempt $ATTEMPT — backoff ${DELAY}s" >&2
+        [[ "$ATTEMPT" -lt 4 ]] && sleep "$DELAY"
+    fi
+done
+
+if [[ "$WRITE_SUCCESS" -ne 1 ]]; then
+    echo "::error::Pattern A retries exhausted after 3 attempts — telemetry entry NOT written (story=${STORY_KEY}, pr=${PR})" >&2
+    exit 1
+fi
 
 # Open or update single rolling PR for telemetry-counters branch (idempotent)
 EXISTING_PR=$(gh pr list -R "$INTERNAL_DOCS_REPO" --state open --head "$TELEMETRY_BRANCH" --json number --jq '.[0].number' 2>/dev/null || echo "")

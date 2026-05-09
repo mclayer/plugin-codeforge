@@ -11,6 +11,7 @@ related_files:
 related_stories:
   - CFP-45
   - CFP-56
+  - CFP-299
 ---
 
 ## 상태
@@ -18,6 +19,8 @@ related_stories:
 Adopted (2026-04-30) — CFP-45 PR-I 머지 시점.
 
 **Amendment 1 (2026-05-01) — CFP-56**: Brainstorming/writing-plans skill override path enforcement 정책을 ADR-017로 추가. `docs/superpowers/specs/**`와 `docs/superpowers/plans/**`가 plugin repo PR에 나타나면 CI가 fail-closed 하며, internal-docs 경로가 authoritative artifact lane이다. 검사 로직은 `scripts/check-dogfood-artifact-paths.sh`, CI는 `.github/workflows/dogfood-artifact-paths.yml` (template: `templates/github-workflows/dogfood-artifact-paths.yml`).
+
+**Amendment 3 (2026-05-09) — CFP-299**: `docs/domain-knowledge/` cross-cutting pattern doc 작성 표준 추가. 신규 pattern doc 은 implementation-ready pseudocode (`## Pseudocode` 섹션) + edge case table (`## Edge Cases`, 최소 3 entry) 필수. 소급 재작성 면제 (단 기존 파일 수정 시 의무 적용). 상세는 본 ADR 말미 Amendment 3 절.
 
 ## 컨텍스트
 
@@ -123,6 +126,87 @@ EPIC-RESULTS-`<EPIC_KEY>`.md 는 codeforge family dogfood 시 `<internal-docs>/<
 - Issue #276 의 "모순 2 (codeforge 자체 dogfood drift)" = drift 가 아닌 ADR-013 logical 결과로 명문화
 - 향후 audit 시 인지 drift 차단
 - File 이동 없음 (현재 4 file 이미 정합)
+
+## Amendment 3 (2026-05-09) — CFP-299 — domain-knowledge pattern doc authoring standard
+
+### 컨텍스트
+
+[Issue #314](https://github.com/mclayer/plugin-codeforge/issues/314) 에서 식별:
+- `docs/domain-knowledge/` 의 cross-cutting pattern doc 이 implementation-ready pseudocode 작성 의무를 갖지 않았음.
+- 초기 pattern doc (`race-condition-handling-pattern.md`) 작성 시 pseudocode 가 conceptual-level 에 머물러 implementor 가 edge case 를 직접 추론해야 했음.
+- Pattern doc 의 목적 — 재현 가능한 구현 지식 전달 — 이 개념 수준 설명만으로는 달성되지 않음.
+
+ADR-013 은 plugin repo 에 잔류하는 runtime SSOT (`docs/domain-knowledge/**` 포함) 의 위치 policy 를 다루지만, 품질 기준은 미정의였음.
+
+### 결정
+
+`docs/domain-knowledge/` 하위 cross-cutting pattern doc (새로 작성하는 파일 및 기존 파일의 실질적 수정 시) 에 다음 두 섹션을 필수로 포함한다:
+
+**1. `## Pseudocode` 섹션 — implementation-ready 수준 의무**
+
+구체적으로 요구하는 내용:
+- **변수명 구체화**: `x`, `item` 같은 generic 이름 금지 — 도메인 의미가 드러나는 명칭 사용 (예: `lock_file_path`, `sha256_digest`, `tmp_path`).
+- **에러 핸들링 명시**: 예외 종류·복구 경로·fallback 동작을 코드 흐름 안에서 표현. `try/except ExceptionType` 수준으로 구체화.
+- **루프 경계 명시**: 재시도 루프는 최대 횟수(`MAX_RETRIES`) 또는 timeout 경계 명시. 무한 루프 형태 금지.
+- **원자적 연산 주석**: OS-level atomic 보장이 필요한 지점 (`atomic rename`, `O_EXCL open`, `fcntl lock`) 은 주석으로 명시.
+- **개념 흐름만으로 불충분**: "acquire lock → write → release" 수준의 고수준 설명은 pseudocode 섹션으로 부적합. 상세는 아래 예시 참조.
+
+```python
+# GOOD — implementation-ready
+MAX_RETRIES = 5
+LOCK_TIMEOUT_SEC = 10.0
+
+def append_entry(jsonl_path: Path, entry: dict) -> None:
+    lock_path = jsonl_path.with_suffix(".lock")
+    tmp_path = jsonl_path.with_suffix(".tmp")
+    start = time.monotonic()
+    for attempt in range(MAX_RETRIES):
+        try:
+            fd = os.open(lock_path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)  # atomic O_EXCL
+        except FileExistsError:
+            if time.monotonic() - start > LOCK_TIMEOUT_SEC:
+                raise TimeoutError(f"Lock not acquired within {LOCK_TIMEOUT_SEC}s")
+            time.sleep(0.1 * (2 ** attempt))  # exponential backoff
+            continue
+        try:
+            line = json.dumps(entry, ensure_ascii=False) + "\n"
+            tmp_path.write_text(line, encoding="utf-8")
+            os.replace(tmp_path, jsonl_path)  # atomic rename — POSIX guarantee
+        finally:
+            os.close(fd)
+            lock_path.unlink(missing_ok=True)
+        return
+    raise RuntimeError(f"Failed to append after {MAX_RETRIES} attempts")
+
+# BAD — conceptual only (not acceptable in ## Pseudocode)
+# acquire lock
+# write entry
+# release lock
+```
+
+**2. `## Edge Cases` 섹션 — 최소 3 entry 테이블 의무**
+
+pattern 당 최소 3개의 edge case 를 다음 컬럼으로 기술:
+
+| Edge Case | 발생 조건 | 탐지 방법 | 처리 전략 |
+|---|---|---|---|
+| (예시) SHA 충돌 | 동시 write 시 서로 다른 content 가 동일 SHA 생성 | 파일 내용 비교 | content hash 외 타임스탬프 + PID 조합으로 uniqueness 강화 |
+| (예시) 빈 파일 초기화 race | 두 프로세스가 동시에 파일 최초 생성 시도 | O_EXCL open 결과 | 패배 프로세스는 retry — winner 가 생성한 파일에 append |
+| (예시) atomic rename 실패 | 크로스-디바이스 rename (tmp 와 target 가 다른 마운트 포인트) | OSError: Invalid cross-device link | tmp 를 target 와 동일 디렉토리에 생성 또는 shutil.move fallback |
+
+entry 수 3개는 최소값 — pattern 의 복잡도에 비례해 추가 권장.
+
+### 소급 적용 범위
+
+- **신규 pattern doc**: 본 amendment 가 merge 된 이후 새로 생성하는 `docs/domain-knowledge/**/*.md` 파일 중 pattern/guide/recipe 성격의 파일에 즉시 적용.
+- **기존 pattern doc 수정 시**: 파일을 실질적으로 수정(내용 추가·삭제·재구성)할 경우 해당 PR 에서 두 섹션 추가 의무. 단순 오탈자·링크 수정은 면제.
+- **기존 파일 소급 재작성 면제**: 수정 없이 그대로 두는 기존 파일은 소급 적용 없음 (예: `race-condition-handling-pattern.md` 현 상태 유지 허용).
+
+### 결과
+
+- 신규 pattern doc 이 implementor 가 edge case 추론 없이 직접 사용 가능한 수준의 품질 기준을 갖춤.
+- Retro 발견 사항 (Issue #314) 이 ADR 수준 의무로 상향 — 향후 design/code review 에서 pattern doc PR 심사 기준으로 활용 가능.
+- Lint 자동화는 CFP-299 scope 밖 — 향후 `check-doc-section-schema.sh` 확장 시 `## Pseudocode` + `## Edge Cases` 섹션 존재 여부 검사 추가 가능 (별도 CFP).
 
 ## 관련 파일
 

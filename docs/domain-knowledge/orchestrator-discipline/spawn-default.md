@@ -4,6 +4,12 @@ area: orchestrator-discipline
 topic_slug: spawn-default
 title: Subagent-default Orchestrator execution discipline (codeforge modification work)
 status: Active
+tags:
+  - orchestrator
+  - subagent
+  - spawn-policy
+  - inline-whitelist
+  - adr-039
 related_adrs:
   - ADR-009  # wrapper-only decomposition (Orchestrator definition)
   - ADR-025  # stop discipline (motivation)
@@ -17,6 +23,30 @@ updated: 2026-05-09
 ---
 
 # Subagent-default Orchestrator execution discipline
+
+## Summary
+
+codeforge 수정 작업 중 Orchestrator 가 모든 work 을 `Agent` tool spawn (subagent) 으로 수행하는 **subagent-default discipline** SSOT. "inline 으로 충분한가 vs subagent 가 나은가" 판단 분기 자체를 제거하여 ADR-025 §결정 7 `policy_violation_subdecision` stop 발화 채널을 차단한다.
+
+## Pattern
+
+**Inline whitelist 4-entry** (subagent spawn 면제 — Orchestrator 직접 수행 허용):
+1. 사용자 dialog (텍스트 응답)
+2. TodoWrite scratchpad (progress visualization)
+3. Read-only Q&A 답변 (Read / Grep / Glob only, no write)
+4. Status report (lane 진행 현황 텍스트)
+
+**Whitelist 외 모든 작업** = subagent spawn 의무 (Read/Write/Edit/Bash/Grep/Glob/mcp__github__\* 포함).
+
+**에러 모드**: "이건 inline 으로 충분한가 vs subagent 가 나은가" 분기 판단 시도 자체가 `policy_violation_subdecision` — 분기 없이 항상 spawn.
+
+## Usage
+
+Orchestrator 코드 실행 전 체크리스트:
+1. 현재 작업이 Inline whitelist 4-entry 중 하나인가? → Yes: inline OK. No: spawn 의무.
+2. `Agent` tool 프롬프트에 `docs/stories/<KEY>.md` path 주입 → agent self-fetch.
+3. 복수 독립 lane = 병렬 spawn (Track A ∥ Track B — playbook §3.1).
+4. agent teams enabled context (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) 시: TeamCreate 패턴으로 전환 (ADR-044). whitelist invariant 유지.
 
 ## 정의
 
