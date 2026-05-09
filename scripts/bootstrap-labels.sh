@@ -99,6 +99,13 @@ create_label "category:workflow-invariant" "bfd4f2" "#5 — GitHub Actions 강�
 create_label "category:template"           "c5def5" "#6 — Story / Change Plan / ADR 필드 부족 (owner: per-template)"
 create_label "category:contract-schema"    "bfdadc" "#7 — inter-plugin contract schema 부족 (owner: producer lane plugin)"
 
+# conflict:* + merge-order:* (5종 — 병렬 에픽 충돌 조율, ADR-050 / CFP-344)
+create_label "conflict:file-overlap"   "e4e669" "다른 open PR과 변경 파일 중복 (parallel-epic-conflict-check.yml 자동 감지)"
+create_label "conflict:adr-number"     "e4e669" "ADR-RESERVATION.md 동시 수정 감지 — ADR 번호 충돌 위험"
+create_label "conflict:section-locked" "d93f0b" "section-ownership.yaml locked 섹션 동시 수정 감지 — merge 순서 조율 필요"
+create_label "merge-order:1"           "0075ca" "병렬 에픽 충돌 시 먼저 merge해야 하는 PR (낮은 CFP 번호)"
+create_label "merge-order:2"           "e4e669" "병렬 에픽 충돌 시 merge-order:1 완료 후 git rebase main 의무"
+
 # component:* (CFP-131 / Issue #237) — project.yaml `labels.components[]` 에서 동적 read.
 # placeholder ("<REPLACE...") 항목 skip. Python + PyYAML 의존 (codeforge family 표준).
 # --dry-run 모드 에서는 skip — component:* 는 consumer overlay 동적 (CFP-33 check-label-registry

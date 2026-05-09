@@ -16,6 +16,8 @@ authors:
 
 # develop_output v1 — Inter-plugin Contract
 
+`codeforge-develop` plugin → `codeforge` core (Orchestrator) 단방향 schema. DeveloperPLAgent 가 role:dev roster 동적 discover + 병렬 spawn 후 Story §8 / §8.5 self-write + Phase 2 PR open + verdict 반환.
+
 **상위 SSOT 위치**:
 - `mclayer/plugin-codeforge-develop/docs/inter-plugin-contracts/develop-output-v1.md`: **canonical** (codeforge-develop repo)
 - 본 file (codeforge wrapper repo): sibling reference (canonical 변경 시 sync 의무 — ADR-010 + CFP-24 marketplace sync 정책 동질)
@@ -23,8 +25,6 @@ authors:
 - ADR-010 (본 contract 의 sibling sync 정책): codeforge wrapper repo `docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md`
 
 > **Canonical sync required**: 본 wrapper sibling 의 v1.1 bump (CFP-297) 는 codeforge-develop plugin 의 canonical 파일 sync PR 이 후속 의무 (ADR-010 §단계 절차 — wrapper-first pattern). Canonical sync PR 없이 본 sibling 만 갱신된 상태는 임시 상태.
-
-`codeforge-develop` plugin → `codeforge` core (Orchestrator) 단방향 schema. DeveloperPLAgent 가 role:dev roster 동적 discover + 병렬 spawn 후 Story §8 / §8.5 self-write + Phase 2 PR open + verdict 반환.
 
 ## 1. 흐름 개요
 

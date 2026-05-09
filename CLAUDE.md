@@ -33,7 +33,7 @@ Lane internal · per-lane spawn detail · severity rule · GitHub workflow subse
 **필수 플러그인 (8종)**:
 - `codeforge-{review,pmo,requirements,develop,design}@mclayer` — 5 lane plugin (codeforge-test deprecated — CFP-317 / ADR-048)
 - `codex@openai-codex` — CodexReviewAgent + codex CLI dependency
-- `superpowers@claude-plugins-official` — 17 lane agent × 7 skill 호출 (SSOT: [`docs/superpowers-integration.md`](docs/superpowers-integration.md))
+- `superpowers@claude-plugins-official` — 17 lane agent × 8 skill 호출 (SSOT: [`docs/superpowers-integration.md`](docs/superpowers-integration.md))
 - `github@claude-plugins-official` — GitHub MCP 도구 노출
 
 **필수 CLI (2종)**: `codex`, `gh`. (CFP-59 / ADR-019 → ADR-022 (Deprecated by CFP-134 / ADR-035) — Gemini CLI 의존 제거. ad-hoc Sonnet / Codex 호출 = Claude Code Agent tool runtime / codex CLI, 외부 auth 무관. `gemini` CLI 가 다른 용도로 설치되어 있으면 unset / removable optional.)
@@ -64,7 +64,7 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 리뷰 워커 통합 근거: [ADR-001](docs/adr/ADR-001-review-agent-unification.md) (3 lane × 2 vendor → 2 lane-agnostic worker). [Inter-plugin Contract `review_verdict`](docs/inter-plugin-contracts/review-verdict-v2.md) versioning: [ADR-008](docs/adr/ADR-008-inter-plugin-contract-versioning.md).
 
-> **(선택) Stage 0 — pre-Issue brainstorming**: 비-trivial Story 는 `superpowers:brainstorming` 으로 사전 scope 정리 후 Issue Form 제출 권장 ([ADR-034](docs/adr/ADR-034-pre-issue-brainstorming-stage.md) · [playbook §1.2.0](docs/orchestrator-playbook.md)). CI 강제 없음 — `spec_link` Issue Form 필드는 옵션.
+> **(선택) Stage 0 — pre-Issue brainstorming**: 비-trivial Story 는 `codeforge:brainstorm` (codeforge 프로젝트) 또는 `superpowers:brainstorming` (generic) 으로 사전 scope 정리 후 Issue Form 제출 권장 ([ADR-034 + Amendment 1](docs/adr/ADR-034-pre-issue-brainstorming-stage.md) · [playbook §1.2.0](docs/orchestrator-playbook.md)). `codeforge:brainstorm` = Requirements 에이전트 4종 병렬 컨텍스트 + scope_manifest 초안 자동 생성 (opt-in Phase 0). CI 강제 없음.
 
 ## 레인 5개 · 단계 정의
 
@@ -124,6 +124,24 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 - Track 병렬 (R7 설계리뷰 PASS 시): Track A (DesignReviewPL merge gate) ∥ Track B (DeveloperPL Phase 2 PR 준비) — 상세 [playbook §3.1]
 - **Worktree dispatch (CFP-136 / [ADR-040](docs/adr/ADR-040-worktree-convention.md))**: 매 lane spawn 시 isolated working directory 보장. base = `${HOME}/.claude/worktrees/<repo-name>/<branch-flat>`, hierarchical branch (ADR-024 Amendment 1) `cfp-NNN[/<lane>[/<sub>]]`, lifecycle (`on_team_create_pre|post` / `on_team_delete_pre|post` / `on_session_start` / `on_story_close`). 5 script (`templates/scripts/worktree-{create,merge,prune,path-util}.sh` + `check-worktree-stale.sh`) + SessionStart hook (`templates/.claude/hooks/SessionStart-codeforge-worktree-gc.json.sample`) — 7 days + origin absent stale 자동 prune. CFP-137 (agent teams) prerequisite + CFP-139 (GitOpsAgent) hook contract SSOT. Default subagent context (agent teams `=0`) 에서도 사용자 ad-hoc 호출 가능. 상세 [playbook §3.5](docs/orchestrator-playbook.md).
 - **Worktree-first (normative — wrapper + all consumers, CFP-341)**: lane spawn·ad-hoc 구분 없이 모든 coding work 는 worktree 안에서 수행. `git checkout <branch>` 로 원본 working directory 직접 편집 금지. Story 시작 시 `bash templates/scripts/worktree-create.sh` 선행 의무. 상세 [playbook §3.0.10](docs/orchestrator-playbook.md).
+
+**Parallel epic coordination (ADR-050)**: 복수 Orchestrator 세션 병렬 진행 시 충돌 조율 의무.
+
+- **Epic Scope Manifest 작성 의무**: Phase 1 시작 시 Orchestrator가 Epic Issue body에 `<!-- scope_manifest -->` 블록 작성 (예상 변경 파일·ADR·CLAUDE.md 섹션 목록). GitOpsAgent가 이 블록을 파싱해 다른 open 에픽과 교집합 검사.
+- **ADR 번호 예약**: ADR 필요 시 GitOpsAgent가 `docs/adr/ADR-RESERVATION.md` sequential append로 번호 클레임 (직접 번호 추측 금지).
+- **Section 편집 정책**: `docs/parallel-work/section-ownership.yaml` 정의 섹션은 `parallel_edit` 정책 준수 (append-only / locked). locked 섹션 동시 수정 시 `merge-order` 조율 의무.
+- **Merge 순서**: 낮은 CFP 번호 PR이 merge 우선. GitOpsAgent가 `merge-order:1/2` 레이블 자동 부여.
+
+Scope Manifest 형식:
+```yaml
+<!-- scope_manifest -->
+planned_adrs: [NNN]
+planned_files:
+  - path/to/file.md
+planned_claude_md_sections:
+  - "섹션명"
+<!-- /scope_manifest -->
+```
 
 **Progress visualization via TodoWrite (ADR-038, CFP-274)**: TodoWrite 를 CFP-20 §14.7 render flow 의 3번째 channel 로 추가. 4 marker (⏳ 🔄 ✅ ❌) hierarchical (lane row + 2-space indent agent sub-row) 렌더 표준. ❌ 는 검출 lane 이 아닌 원인 lane 에 표시 (검출 lane 은 ✅ + content `FIX-N detected`). Single-Story 모드 (multi-Story 별도 CFP). Lane plugin 변경 0건 (Writer 단독 invariant 유지). multi-row in_progress 의도적 허용 (codeforge 병렬 agent 모델 — wrapper-specific deviation). 상세: [ADR-038](docs/adr/ADR-038-progress-visualization-todowrite.md), [playbook §14](docs/orchestrator-playbook.md).
 
@@ -391,7 +409,7 @@ Versioning + sibling sync SSOT: [ADR-008](docs/adr/ADR-008-inter-plugin-contract
 
 ## GitHub Workflow
 
-`templates/github-workflows/` 12종 fixture: 8 core (`story-init.yml` · `phase-label-invariant.yml` · `story-section-1-immutable.yml` · `subissue-from-impl-manifest.yml` · `phase-gate-mergeable.yml` · `fix-ledger-sync.yml` · `post-merge-followup.yml` (ADR-026 / CFP-74) · `retro-mandatory.yml` ([ADR-045](docs/adr/ADR-045-story-retro-mandatory-trigger.md) / CFP-138 — Story 완료 회고 forcing function, `gate:retro-complete` close-blocking)) + 4 Live touching reusable workflow (`live-test-guard.yml` · `live-deploy-approval.yml` · `live-secret-policy.yml` · `kill-switch-integration-test.yml`, CFP-C). Issue Forms / branch protection / 버그 기록 등 상세 hierarchy + label 분류 + 코멘트 규칙 SSOT: [`docs/consumer-guide.md`](docs/consumer-guide.md) §1.3 + [`label-registry-v1`](docs/inter-plugin-contracts/label-registry-v1.md) + [`comment-prefix-registry-v1`](docs/inter-plugin-contracts/comment-prefix-registry-v1.md).
+`templates/github-workflows/` 13종 fixture: 9 core (`story-init.yml` · `phase-label-invariant.yml` · `story-section-1-immutable.yml` · `subissue-from-impl-manifest.yml` · `phase-gate-mergeable.yml` · `fix-ledger-sync.yml` · `post-merge-followup.yml` (ADR-026 / CFP-74) · `retro-mandatory.yml` ([ADR-045](docs/adr/ADR-045-story-retro-mandatory-trigger.md) / CFP-138 — Story 완료 회고 forcing function, `gate:retro-complete` close-blocking) · `parallel-epic-conflict-check.yml` (ADR-050 — 병렬 에픽 파일 충돌 감지, non-blocking)) + 4 Live touching reusable workflow (`live-test-guard.yml` · `live-deploy-approval.yml` · `live-secret-policy.yml` · `kill-switch-integration-test.yml`, CFP-C). Issue Forms / branch protection / 버그 기록 등 상세 hierarchy + label 분류 + 코멘트 규칙 SSOT: [`docs/consumer-guide.md`](docs/consumer-guide.md) §1.3 + [`label-registry-v1`](docs/inter-plugin-contracts/label-registry-v1.md) + [`comment-prefix-registry-v1`](docs/inter-plugin-contracts/comment-prefix-registry-v1.md).
 
 **Branch protection**: main 브랜치 = 4 required status check (phase-gate-mergeable + doc frontmatter + doc section + invariant-check) + `restrictions:{users:[],teams:[],apps:[]}` (direct push 차단) + **`enforce_admins: true` (admin 도 required check 통과 의무, CFP-70)**. CODEOWNERS 자동 review request 는 **도덕적 governance** — solo-dev 환경 강제 off (`require_code_owner_reviews:false` + `required_approving_review_count:0`, CFP-72). contributor 추가 시 `require_code_owner_reviews:true` + `count:1` 복원 의무 (별도 CFP). CODEOWNERS template: [`templates/CODEOWNERS.template`](templates/CODEOWNERS.template). 정책 SSOT: [ADR-024](docs/adr/ADR-024-story-scoped-branch-policy.md). Rulesets / branch naming auto enforcement 는 solo-dev 가정 하 defer — contributor 추가 시 별도 CFP.
 
@@ -424,6 +442,7 @@ Plugin repo (codeforge family) 작업 시:
 - `superpowers:writing-plans` skill plan 저장 위치 = `<internal-docs-clone>/<plugin-folder>/plans/` (default 아님)
 - Controller (Orchestrator) 가 path 명시 의무, Skill prompt 에 explicit override
 - Plugin repo CI (`dogfood-artifact-paths`) 가 PR 단계에서 fail-closed (ADR-017). Skill prompt 정책 인지는 1차 안전망, CI 가 authoritative
+- `codeforge:brainstorm` skill = codeforge 프로젝트 전용 강화 brainstorming (ADR-034 Amendment 1). `superpowers:brainstorming` 상위호환.
 
 Consumer overlay: `.claude/_overlay/project.yaml` `story_cutoff.additional_exempt_categories[]` 로 도메인 특화 면제 추가 가능 (**강제 항목 축소 불허** — 안전 방향만). Schema [`docs/project-config-schema.md`](docs/project-config-schema.md) §2.
 
