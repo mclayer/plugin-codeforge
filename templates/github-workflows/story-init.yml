@@ -1,4 +1,5 @@
 name: Story Init
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
 
 # Consumer-distributable single-repo flavor (CFP-65 / F2 Phase 1).
 # story_key_prefix 는 project.yaml `github.story_key_prefix` 에서 fetch (yq 우선 + Python fallback).
@@ -29,7 +30,7 @@ jobs:
       ISSUE_NUMBER: ${{ github.event.issue.number }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
           fetch-depth: 0
 

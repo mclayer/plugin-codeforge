@@ -1,4 +1,5 @@
 # Live Deploy Approval — GitHub environment protection workflow template
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
 #
 # 정책: ADR-008 D4 "3-condition AND" 의 워크플로우 레벨 enforcement.
 #       real live deploy = GitHub environment ("production-live") + manual approval gate 통과 의무.
@@ -40,7 +41,7 @@ jobs:
     environment: ${{ inputs.environment_name }}
     name: Live deploy approval (ADR-008 D4)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Verify environment protection passed
         run: |

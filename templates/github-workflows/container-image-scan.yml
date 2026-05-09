@@ -1,4 +1,5 @@
 name: Container Image Scan (CFP-128 / ADR-033)
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
 
 # Reusable workflow — consumer 가 Docker-first 채택 시 자기 build pipeline 에서 호출.
 #
@@ -51,10 +52,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Run hadolint
-        uses: hadolint/hadolint-action@v3.1.0
+        uses: hadolint/hadolint-action@54c9adbab1582c2ef04b2016b760714a4bfde3cf # v3.1.0
         with:
           dockerfile: ${{ inputs.dockerfile-path }}
           recursive: false
@@ -68,10 +69,10 @@ jobs:
     needs: hadolint
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Run trivy image scan
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # v0.24.0
         with:
           image-ref: ${{ inputs.image-ref }}
           severity: ${{ inputs.severity }}
@@ -83,7 +84,7 @@ jobs:
 
       - name: Run trivy image scan — SARIF (security-events upload)
         if: always()
-        uses: aquasecurity/trivy-action@0.24.0
+        uses: aquasecurity/trivy-action@6e7b7d1fd3e4fef0c5fa8cce1229c54b2c9bd0d8 # v0.24.0
         with:
           image-ref: ${{ inputs.image-ref }}
           severity: ${{ inputs.severity }}
@@ -96,7 +97,7 @@ jobs:
 
       - name: Upload SARIF to GitHub Security tab
         if: always()
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@7fd177fa680c9881b53cdab4d346d32574c9f7f4 # v3.35.4
         with:
           sarif_file: 'trivy-results.sarif'
           category: 'trivy-image-scan'

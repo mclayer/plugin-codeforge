@@ -43,6 +43,7 @@ related:
    - 미노출 시 `~/.claude/mcp-needs-auth-cache.json` Read → `plugin:github:github` 키 존재 시 "needs auth" 확정
    - → 사용자에게 `/mcp` 재인증 요청
    - GitHub은 본 플러그인 핵심 의존성 (Issue/PR·docs file·sub-issue·Milestone 전부)이므로 우회·스킵 불가
+   **GitHub 도구 우선순위 (CLAUDE.md §세션 개시 의무 mirror)**: MCP 노출 후 모든 GitHub 작업 = `mcp__github__*` 우선. `gh` CLI = MCP 미커버 영역 전용 fallback (milestone CRUD / Discussions / GraphQL / label 부트스트랩). MCP 미노출 상태에서 gh 우회 금지.
 
    **0b. 필수 플러그인 4종**
    - 대상: `codex@openai-codex`, `superpowers@claude-plugins-official`, `claude-md-management@claude-plugins-official`, `github@claude-plugins-official`
@@ -330,6 +331,57 @@ Phase 2 enforcement (stop-event-v1 ledger / inline write detect hook / spawn cos
 - **Subagent semantics 분기**: [ADR-035](../docs/adr/ADR-035-codeforge-agent-teams-epic-architecture.md) (default subagent context 의 one-shot subagent — `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0`)
 - **Consumer scope**: [consumer-guide.md § "Subagent default (codeforge orchestration)"](consumer-guide.md)
 - **Hotfix scope**: [hotfix-playbook.md](hotfix-playbook.md) (exception 없음 — 사용자 verbatim "무조건")
+
+#### §3.0.8 Pre-action fact verification (normative — wrapper + all consumers)
+
+Orchestrator 가 사용자에게 substantive path 를 제시하거나 외부 system 동작을 인용하기 전, 아래 5-item self-audit 의무:
+
+| 항목 | verify 도구 | skip 금지 조건 |
+|---|---|---|
+| 인용 file / 디렉터리 실제 존재 여부 | `Glob` / `Bash ls` | path 를 사용자에게 제시하는 모든 경우 |
+| workflow / Action trigger 조건 | `Read` | "자동으로 X 가 일어남" 주장 전 |
+| schema / config 실제 fields | `Read` | structured contract 인용 전 |
+| GitHub Issue / state | `mcp__github__issue_read` | Issue 상태 주장 전 |
+| 사용자 환경 state | `Read ~/.claude/settings.json` 또는 `Bash which` | 설치 여부·인증 상태 주장 전 |
+
+**Hedging 금지 신호 (이 단어 응답에 등장 시 verify 의무)**:
+- "should be" / "보통" / "~로 추정" / "~일 것" / 외부 system 동작 가정
+
+**Subagent 답 weak signal**: subagent 응답에 "추정" / "확인 필요" / "공식 미기재" 등장 시 main session 에서 fact 직접 검증.
+
+5초 cost verify 로 방지 가능한 사실은 추론으로 답변 금지.
+
+#### §3.0.9 Internal-docs branch safety (normative — codeforge dogfood 작업 시)
+
+`codeforge-internal-docs` working directory 는 외부 프로세스(사용자 IDE / 별도 터미널 / 별도 Claude 세션)가 언제든 branch 를 switch 할 수 있다. 매 commit 전 의무:
+
+1. **Branch verify — 단독 Bash call (chained 금지)**:
+   ```bash
+   git -C c:/workspace/mclayer/codeforge-internal-docs branch --show-current
+   ```
+   출력이 intended branch 와 일치 확인. 불일치 시 즉시 stash + checkout intended branch.
+
+2. **Push 전 dry-run — 단독 Bash call**:
+   ```bash
+   git -C c:/workspace/mclayer/codeforge-internal-docs push --dry-run origin <branch>
+   ```
+   `main -> main` 출력 시 즉시 abort + branch verify.
+
+3. **Chained `&&` 명령에서 branch verify 금지**: `git branch --show-current` 는 항상 exit 0 → verify 결과와 무관하게 다음 단계 진행. verify = 반드시 단독 call + 출력 확인 후 다음 call.
+
+4. **main / master force push 절대 금지**. 사고 발생 시: cherry-pick → correct branch → push (force push X).
+
+#### §3.0.10 Worktree-first mandate (normative — wrapper + all consumers)
+
+모든 coding work 는 git worktree 안에서 수행. 원본 working directory(`git checkout <branch>`) 직접 편집 금지.
+
+- **Story 시작 시**: `bash templates/scripts/worktree-create.sh cfp-NNN origin/main` 선행 → cwd = worktree path
+- **Subagent spawn 시**: prompt 에 `Working dir: <worktree-path>` 명시 — lane spawn (§3.5) 과 ad-hoc spawn 동일
+- **Ad-hoc 작업 포함**: lane spawn 외 일반 subagent spawn, 사용자 직접 작업 모두 동일 적용
+- **Consumer 동일 적용**: consumer project 에서 codeforge 사용 시 동일 rule
+- **위반 판정**: 원본 working directory 에서 file edit/write/bash 수행 = stop discipline 위반 (ADR-025 §결정 2 `policy_violation`)
+
+인프라 SSOT: ADR-040 (CFP-136). Script: `bash templates/scripts/worktree-create.sh <branch> <base-ref>`.
 
 ### 3.1 7 레인 + Cross-cutting 스폰 순서 (요약)
 
@@ -1419,6 +1471,24 @@ Packet 주입은 Orchestrator의 토큰 최적화 수단이지 필수 규약 아
 
 ---
 
+### 12.7 Orchestrator 통신 표준 (normative — wrapper + all consumers)
+
+**매 메시지 첫 줄 = 단계 메타 라벨 의무**:
+
+| 상황 | 첫 줄 형식 |
+|---|---|
+| 레인 진행 중 | `현재 단계: <레인명> — <에이전트명> <동작>` |
+| Skill 절차 진행 중 | `<Skill명> Step N/<전체> — <현재 동작>` |
+| ADR / spec / 코드 블록 제시 | `다음은 [무엇] — 사용자가 [무엇] 검토` |
+| 결정 선택지 제시 | `결정 대상: <무엇> — 아래 N개 선택지` |
+| 약어 첫 등장 | 첫 등장 시 풀어쓰기 (예: `CFP-274 (TodoWrite 진행 시각화 Story)`) |
+
+**Cold-start readability 의무**: 각 메시지가 대화 누적 컨텍스트 없이도 이해 가능해야 한다. 약어·코드 블록·ADR ref 가 맥락 설명 없이 갑자기 등장하는 것은 `communication_violation`.
+
+**적용 범위**: wrapper + 모든 consumer project Orchestrator 세션.
+
+---
+
 ## 13. PMOAgent 프로젝트 관리 (Cross-cutting)
 
 PMOAgent는 단일 Story 레인 게이트 밖에서 cross-cutting 감사·회고·패턴 분석을 전담. 요구사항 해석은 RequirementsPLAgent 영역으로 분리됨.
@@ -1775,6 +1845,29 @@ Orchestrator 는 매 spawn 결과 수령 후 **Spawn token telemetry 대장**을
 - 본 대장은 Tier 1 ephemeral 채널 (`.claude-work/progress/<KEY>.md` cache 와 동일 파일). gitignored.
 - stop-event-v1 (Tier 3) 과 이중 기록 금지 — quota 분석용 로컬 계산 전용.
 - spawn-event-v1 (§15.2 boundary note, ADR-042 §결정 3 보류) 신설 전까지 본 대장이 spawn 단위 token 추적 유일 source.
+
+---
+
+### 14.11 완료 시각 + 소요 시간 reporting (normative — wrapper + all consumers)
+
+Orchestrator 는 substantive milestone 마다 완료 시각 + 소요 시간을 final report 또는 단계 마무리 메시지에 명시한다.
+
+**Reporting 의무 트리거**:
+- Phase 1 PR open / merge
+- Phase 2 PR open / merge
+- Story close (Phase 2 PR merge + Issue auto-close)
+- Lane gate transition (설계 리뷰 PASS / 구현 리뷰 PASS / CI PASS)
+- 사용자 가시 milestone (ad-hoc 요청 완료 / FIX loop 완료)
+
+**형식**:
+```
+Phase 2 PR merged (14:23, 이 단계 37분 / 세션 시작부터 1h 12m)
+```
+- 시각: `HH:MM`
+- 소요 시간: incremental (해당 단계 시작부터) + cumulative (세션 시작부터) 모두 명시
+- Trivial 작업 (1 commit, 1 file edit) = skip OK. Substantive milestone = 의무.
+
+**TodoWrite 연동**: §14.7 render flow step 5 의 lane row content 에 완료 시각 suffix 포함 권장 (`✅ 구현 레인 PASS · 14:23`). TodoWrite update best-effort 정책(ADR-038 §결정 7) 유지 — TodoWrite 실패 시에도 메시지 내 시간 명시는 이 §14.11 normative 규칙으로 유지.
 
 ---
 
