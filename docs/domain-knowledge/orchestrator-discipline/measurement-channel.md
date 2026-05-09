@@ -1,0 +1,143 @@
+---
+type: domain-knowledge
+area: orchestrator-discipline
+topic_slug: measurement-channel
+title: Codeforge measurement channel — 4-channel observability boundary + stop-event-v1 ledger
+status: Active
+related_adrs:
+  - ADR-025  # stop discipline (§결정 10 deferred slot 채움)
+  - ADR-026  # post-merge automation (post-merge-counters.jsonl 30+ run ROI gate)
+  - ADR-029  # phase execution visibility (sanitize policy SSOT 통합)
+  - ADR-031  # lane-spawn evidence (§14 lane coarse vs spawn-event sub-step boundary)
+  - ADR-038  # progress visualization TodoWrite (boundary 차단 — 측정 대상 아님)
+  - ADR-039  # subagent default (§결정 9 deferred Phase 2 measurement)
+  - ADR-042  # measurement channel architecture
+  - ADR-043  # telemetry privacy policy
+related_stories:
+  - CFP-283
+created: 2026-05-09
+updated: 2026-05-09
+---
+
+# Codeforge measurement channel
+
+## 정의
+
+**Measurement channel** 는 codeforge orchestration 의 **Tier 3 persistent measurement** 영역 — committed · queryable · time-series ledger 가 핵심. ADR-039 effective enforcement 의 ROI 검증 + Phase 2 enforcement 의 발동 trigger 데이터 prerequisite.
+
+기존 codeforge observability stack 3-tier 중 Tier 3 가 가장 sparse — `post-merge-counters.jsonl` (ADR-026 lite scope) 만 존재했으며, stop-event-v1 ledger (ADR-025 §결정 10 deferred slot) 는 CFP-283 / ADR-042 신설로 채움. spawn-event-v1 = Phase 2 deferred (Refactor B1 보류).
+
+## 컨텍스트
+
+본 page 는 ADR-042 (codeforge measurement channel architecture) + ADR-043 (codeforge telemetry privacy policy) 의 도메인 정의 cross-cutting reference. CFP-275 ADR-039 §결정 9 deferred 의 4 items 중 measurement channel slot only 처리 (CFP-283 carrier).
+
+## 핵심 규칙
+
+### Tier 분리 (3-tier observability stack)
+
+| Tier | 의미 | 포함 channel |
+|---|---|---|
+| **Tier 1 ephemeral** | session / turn-only 휘발성 | stderr narration (ADR-029) / TodoWrite (ADR-038) / `.claude-work/progress/<KEY>.md` cache (CFP-20) |
+| **Tier 2 committed lane-coarse** | git commit 영속, lane-level granularity | Story §10 FIX Ledger (CFP-32 / fix-event-v1) / Story §14 Lane Evidence (ADR-031) |
+| **Tier 3 persistent measurement** | git commit 또는 sqlite 영속, discrete event granularity | post-merge-counters.jsonl (ADR-026) / **stop-event-v1 ledger (CFP-283)** / spawn-event-v1 (Phase 2 deferred) |
+
+### 4-channel boundary (ADR-042 §결정 1 / playbook §15 SSOT)
+
+7-channel boundary 표 완전 enumeration = wrapper [`docs/orchestrator-playbook.md`](../../orchestrator-playbook.md) §15 normative SSOT. 본 page 는 도메인 정의 cross-ref.
+
+**Boundary 차단 invariant 3**:
+
+- **TodoWrite ↔ stop-event-v1 boundary**: TodoWrite 호출은 stop-event-v1 ledger record 대상 아님 (ADR-038 standalone 정당화 — meta-cognitive scratchpad, file system / GitHub state mutation 미발화).
+- **§14 ↔ spawn-event-v1 boundary**: spawn-event-v1 신설 보류 (ADR-042 §결정 3) — race 회피. Phase 2 spawn-event land 시 dedup script 신설 의무.
+- **§10 ↔ stop-event-v1 boundary**: stop-event-v1 의 `reason_class: policy_violation` row 가 §10 FIX Ledger row append 의 proxy. dedup 책임 = aggregate script (Phase 2). cold tier 별도 file 신설 안 함.
+
+### Storage architecture (ADR-042 §결정 4 / DataMigrationArch substantive)
+
+**Hot tier default = sqlite** (JSONL 채택 안 함):
+
+- WAL mode = atomic transaction + concurrent read 안전
+- append-only invariant = sqlite trigger (`BEFORE UPDATE`/`BEFORE DELETE` → ROLLBACK)
+- idempotency = `UNIQUE INDEX (event_id)` hardware-level enforcement
+- schema migration = sqlite ALTER TABLE expand-contract 패턴
+
+Storage path: `.claude-work/measurement/stop-event.sqlite` (consumer overlay `telemetry.storage_path` 로 override).
+
+**Cold tier** = `docs/stories/<KEY>.md §10` FIX Ledger row append (`reason_class: policy_violation` row 가 cold tier proxy). 별도 cold tier file 신설 안 함 (Phase 1 scope 축소).
+
+### Idempotency invariant (DataMigrationArch §11.6)
+
+```
+event_id = sha256(packet_id || actor || event_type || timestamp_iso8601)
+```
+
+`UNIQUE INDEX (event_id)` sqlite hardware enforcement. application-level retry 안전 (network retry / hook retry / spawn retry).
+
+nested spawn double-count anti-pattern (Researcher §6.3 — claude-code#5904) 대응 = `parent_event_id` reference + chain dedup (Phase 2 aggregate script).
+
+### Privacy invariant (ADR-043 SSOT)
+
+- **opt-in default false** (모든 telemetry channel 적용 — wrapper / consumer 동일 trust model)
+- **Allow-list ONLY 16 field whitelist** (capture 시점 — stop-event-v1 schema 16 field 외 capture 금지)
+- **Deny-list regex 6 pattern** (capture 통과 후 2차 안전망 — API key / GitHub PAT / 한국 주민번호 / email / hex≥32 / GitHub fine-grained PAT)
+- **wrapper-vs-consumer ledger isolation** (T-INFO-4 P0 위협 대응)
+- **wrapper dogfood always-on enforcement** = Phase 2 follow-up CFP (env flag / hook / runtime validation 모두 본 ADR scope 외 — Phase 1 doc-only strict invariant 보존)
+
+### 운영 invariant (OperationalRiskArchitect substantive)
+
+- **0 API call constraint** (CRITICAL — measurement = measure 대상 amplify 금지)
+- **best-effort 50ms ceiling** (append latency p99 ≤50ms, overflow 시 graceful degradation)
+- **measurement-vs-fix scope boundary** (CFP-283 = measurement only, throttling / backoff / circuit breaker = 별도 후속 CFP)
+
+### ROI gating (ADR-042 §결정 11 / ADR-026 §결정 3 패턴)
+
+Phase 2 enforcement (rule-based hook / inline write detect / stop-event auto-fire / rate-limit cascade detection) 발동 prerequisite:
+
+- post-merge-counters.jsonl 30+ run 누적
+- ROI metric: (1) inline_violation_count 변화 추세 (2) `policy_violation_subdecision` stop frequency (3) token cost burn 정량 baseline
+
+ROI 충분 시 follow-up CFP 발의 (Sonnet decider Phase 2 ROI 패턴 정합 — ADR-022 §결정 11).
+
+## 경계
+
+### 비-적용 (ledger record 대상 외)
+
+- **TodoWrite scratchpad** — meta-cognitive scratchpad, file system / GitHub state mutation 미발화. boundary 차단.
+- **stderr narration** — ephemeral debug, ledger 와 별도 channel (Tier 1 vs Tier 3). narration 이 ledger 를 대체 안 함.
+- **재귀 spawn** — Orchestrator (top-level) 만 ledger write 권한 (ADR-039 §결정 3 Orchestrator-owned delegate subagent). subagent 의 자체 임의 ledger write = `policy_violation`.
+
+### 관련 용어 분류
+
+- **Hot tier**: sqlite raw event (7-30d retention, 14d default)
+- **Cold tier**: §10 FIX Ledger row proxy (persistent, append-only)
+- **Aggregate**: raw → §10 / dashboard 형식 변환 (Phase 2 script)
+- **opt-in**: consumer 측 명시 발화 의무 (default false)
+- **wrapper dogfood**: codeforge family 자체 development scope (Phase 1 = consumer 와 동일 default false trust model. always-on enforcement = Phase 2 follow-up CFP)
+
+### 다른 ADR 와의 interaction (비-충돌 영역)
+
+**TodoWrite (ADR-038) 와의 boundary** — TodoWrite tool surface 자체가 file system / GitHub state mutation 미발화. ledger record 대상 아님 (boundary 차단). ADR-042 §결정 1 invariant.
+
+**Stop discipline (ADR-025) 와의 amends 관계** — §결정 10 deferred slot (stop-event-v1) 가 ADR-042 §결정 2 로 채움. ADR-025 의 5 종 whitelist 무변 — stop-event-v1 = 측정 channel, whitelist 자체 변경 X.
+
+**Phase execution visibility (ADR-029) 와의 amends 관계** — §결정 2 sanitize policy 적용 범위 = narration (stderr) + telemetry ledger 양쪽 unified SSOT (ADR-043 §결정 3 / §결정 4 정합). CFP-283 carrier Amendment 1 (2026-05-09) land 완료. narration vs ledger 두 channel 모두 동일 sanitize 정책 inherit. ADR-029 §결정 2 = format / scope SSOT, ADR-043 §결정 3 = Deny-list regex / Allow-list 16 field SSOT.
+
+**Lane-spawn evidence (ADR-031) 와의 boundary** — §14 lane coarse vs spawn-event-v1 sub-step. spawn-event-v1 보류 (ADR-042 §결정 3) — §14 schema 무변경 invariant 보존.
+
+**Subagent default (ADR-039) 와의 inheritance** — §결정 9 4 deferred items 중 measurement channel slot only 처리 (CFP-283 carrier). 3 items (inline write detect hook / spawn cost telemetry / rate-limited cascade detection) 잔존.
+
+**Post-merge automation (ADR-026) 와의 ROI gating** — §결정 3 30+ run ROI 평가 패턴 inherit. Phase 2 enforcement 발동 prerequisite.
+
+## 관련 ADR
+
+- [ADR-042](../../adr/ADR-042-codeforge-measurement-channel-architecture.md) — measurement channel architecture (architectural decision SSOT)
+- [ADR-043](../../adr/ADR-043-codeforge-telemetry-privacy-policy.md) — telemetry privacy policy (sibling Phase 1 PR)
+- [ADR-025](../../adr/ADR-025-stop-discipline-non-whitelist-as-defect.md) — stop discipline (§결정 10 deferred slot 채움)
+- [ADR-026](../../adr/ADR-026-post-merge-automation.md) — post-merge automation (30+ run ROI gate 패턴)
+- [ADR-029](../../adr/ADR-029-phase-execution-visibility-expansion.md) — phase execution visibility (sanitize SSOT 통합 amends)
+- [ADR-031](../../adr/ADR-031-lane-spawn-evidence-trail.md) — lane-spawn evidence (§14 boundary)
+- [ADR-038](../../adr/ADR-038-progress-visualization-todowrite.md) — TodoWrite (boundary 차단)
+- [ADR-039](../../adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — subagent default (§결정 9 deferred carrier)
+
+## 변경 이력
+
+- **2026-05-09** — ArchitectAgent 신규 작성 (CFP-283 carrier Story Phase 1 PR scope, ADR-042 §결정 12 동일 PR commit batch).

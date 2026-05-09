@@ -121,6 +121,19 @@ infra_strategy: docker_first | legacy_systemd | none  # 기본값: docker_first
 # [선택] Infra 산출물 보조 옵션 (CFP-128 / ADR-033)
 infra_strategy_extras:
   k8s_preset_enabled: true | false  # presets/k8s/ (codeforge-develop) 활성 여부, 기본값: false
+
+# [선택] Telemetry / measurement channel (CFP-283 / ADR-042 / ADR-043)
+# default = 모든 channel disabled (opt-in default false invariant — ADR-043 §결정 1)
+# Phase 1 = wrapper / consumer 동일 trust model — default false + 사용자 explicit opt-in 의무
+# wrapper dogfood always-on enforcement (env flag / hook / runtime validation) = Phase 2 follow-up CFP
+# silent always-on 금지 — default false 위반 시 policy_violation
+telemetry:
+  enabled: false                              # global gate (default false)
+  channels:
+    stop_event: false                         # stop-event-v1 ledger (default false)
+    # spawn_event: false                      # spawn-event-v1 (Phase 2 deferred — ADR-042 §결정 3)
+  storage_path: ".claude-work/measurement/"   # default sqlite location (ADR-042 §결정 4)
+  retention_hot_days: 14                      # default 14d (range: 7-30, Researcher §6.6 InfluxData 중간값)
 ```
 
 ## 3. 예시 (webapp)
