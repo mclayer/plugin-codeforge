@@ -13,4 +13,4 @@ fix_cycle: 0
 🔄 구현 테스트 — 진행 중 (functional ✅ / performance 🔄)
 ⏸ 보안 테스트
 
-# Note: R9 subset 병렬 — TestAgent functional 완료 후 performance baseline 비교 진행 중. inline qualifier 가 두 subset 진행 상태 동시 표기.
+# Note: R9 subset 병렬 — 구현 테스트 CI gate 통과 후 보안 테스트(opt-in) 진행 중. inline qualifier 가 두 subset 진행 상태 동시 표기. (TestAgent는 CFP-317에서 deprecated)

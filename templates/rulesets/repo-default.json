@@ -1,0 +1,18 @@
+{
+  "_schema_version": "1.0",
+  "_description": "codeforge repo-level ruleset skeleton (CFP-140 / ADR-048). Replace placeholder values before applying.",
+  "name": "codeforge-repo-default",
+  "target": "branch",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "include": ["refs/heads/main"],
+      "exclude": []
+    }
+  },
+  "rules": [
+    { "type": "deletion" },
+    { "type": "non_fast_forward" }
+  ],
+  "bypass_actors": []
+}

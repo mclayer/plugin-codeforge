@@ -426,7 +426,7 @@ Link path 작성 가이드:
 | 구현 완료 (DeveloperPL) | §8.1-8.4 + §8.5 매핑표 commit + Phase 2 PR creation | DeveloperPL (codeforge-develop direct Edit) |
 | 구현 리뷰 iteration (CodeReviewPL packet return) | (no write — pl_recommendation 반환만) | CodeReviewPL (codeforge-review review-verdict-v3) |
 | 구현 리뷰 PASS/FIX verdict final write | §9.2 append + GitHub comment [구현-리뷰] + phase transition + §12 row | **Orchestrator 단독** (CFP-61 / ADR-022 review-verdict 5-step step 4) |
-| 구현 테스트 (Orchestrator verdict receipt) | §9.3 | TestAgent verdict + Orchestrator |
+| 구현 테스트 (CI gate — Orchestrator inline) | §9.3 | Orchestrator `gh pr checks` polling (CFP-317 / ADR-048) |
 | 보안 테스트 iteration (SecurityTestPL packet return) | (no write — pl_recommendation 반환만) | SecurityTestPL (codeforge-review review-verdict-v3) |
 | 보안 테스트 PASS/FIX verdict final write | §9.4 append + GitHub comment [보안-테스트] + gate:security-test-pass 라벨 + phase transition + §12 row | **Orchestrator 단독** (CFP-61 / ADR-022 review-verdict 5-step step 4) |
 | Clarification 재스폰 (RequirementsPL · ArchitectPLAgent) | §9.0 append | RequirementsPL / ArchitectPL (FIX 라벨 미추가 — fix-ledger-sync.yml은 §10만 trigger) |

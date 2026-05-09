@@ -1,10 +1,18 @@
-# Changelog
+﻿# Changelog
 
 `codeforge` 플러그인 릴리스 이력. 각 엔트리는 버전 bump 단위.
 Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guide.md) 해당 섹션 변경.
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.7.0] - 2026-05-09
+
+### Added
+- ADR-046: ResearcherAgent 역할 재정립 — Concept Formulation + Deep Exploration + Requirement Reshape mandate (3 mandate boundary, Light structured 6-section output schema, mode policy, Opus tier rationale)
+
+### Changed
+- ADR-042 amendment_log[1]: ResearcherAgent deferred fence resolved — §결정 2 RESOLVED annotation + §결정 1 (g) cleanup (Risk R3 mitigation, ref ADR-046)
+- CLAUDE.md: Agent model tier 정책 단락에 ADR-046 cross-ref 추가
 ## [5.6.0] - 2026-05-09
 
 ### Agent model selection policy — ADR-042 (ADR-013 dogfood-out waiver)

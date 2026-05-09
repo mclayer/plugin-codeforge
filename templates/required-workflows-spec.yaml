@@ -1,0 +1,39 @@
+# Required Workflows enterprise sync spec (CFP-140 / ADR-048 §결정 3)
+# core 6 workflows → enterprise required + per-consumer drift detect
+# Apply via: scripts/sync-required-workflows.sh --apply
+# Docs: https://docs.github.com/en/enterprise-cloud@latest/admin/policies/enforcing-policies-for-your-enterprise/enforcing-required-workflows-in-your-enterprise
+---
+schema_version: "1.0"
+enterprise_slug: "ENTERPRISE_SLUG_PLACEHOLDER"  # replace with actual enterprise slug (gh api /enterprises)
+source_repo: "mclayer/plugin-codeforge"         # repo containing the workflow files
+
+required_workflows:
+  - id: phase-gate-mergeable
+    source_workflow: ".github/workflows/phase-gate-mergeable.yml"
+    target: all
+    description: "Phase gate: mergeable check (core codeforge)"
+
+  - id: phase-label-invariant
+    source_workflow: ".github/workflows/phase-label-invariant.yml"
+    target: all
+    description: "Phase label invariant — single-active enforce (core codeforge)"
+
+  - id: story-section-1-immutable
+    source_workflow: ".github/workflows/story-section-1-immutable.yml"
+    target: all
+    description: "Story §1 immutability guard (core codeforge)"
+
+  - id: fix-ledger-sync
+    source_workflow: ".github/workflows/fix-ledger-sync.yml"
+    target: all
+    description: "FIX Ledger sync label mirror (core codeforge, fix-event-v1)"
+
+  - id: lane-evidence-check
+    source_workflow: ".github/workflows/lane-evidence-check.yml"
+    target: all
+    description: "Lane evidence trail check (ADR-031, core codeforge)"
+
+  - id: post-merge-followup
+    source_workflow: ".github/workflows/post-merge-followup.yml"
+    target: all
+    description: "Post-merge automation trigger (ADR-026, core codeforge)"
