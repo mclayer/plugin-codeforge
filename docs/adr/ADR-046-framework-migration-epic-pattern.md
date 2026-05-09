@@ -4,13 +4,13 @@ title: Framework Migration Epic Pattern — PMOAgent Version Delta Review + Depu
 date: 2026-05-09
 status: Proposed
 category: Team & Process
-carrier_story: CFP-315
+carrier_story: CFP-316
 related_files:
   - docs/orchestrator-playbook.md
   - templates/change-plan.md
   - docs/consumer-guide.md
 related_stories:
-  - CFP-315
+  - CFP-316
 amends: null
 supersedes: null
 ---
@@ -19,7 +19,7 @@ supersedes: null
 
 ## 상태
 
-Proposed (2026-05-09) — CFP-315 carrier.
+Proposed (2026-05-09) — CFP-316 carrier.
 
 ## 컨텍스트
 
@@ -155,4 +155,4 @@ Migration Epic = ADR-020 Cross-Repo Epic Pattern의 codeforge framework-specific
 - `docs/adr/ADR-007-datamigration-architect.md` (비-범위 cross-ref)
 - `docs/adr/ADR-020-cross-repo-epic-pattern.md` (Migration Epic = ADR-020 적용)
 - `docs/adr/ADR-027-consumer-adoption-protocol.md` (Delta Event Type D cross-ref)
-- carrier story: `codeforge-internal-docs/wrapper/stories/CFP-315.md`
+- carrier story: `codeforge-internal-docs/wrapper/stories/CFP-316.md`
