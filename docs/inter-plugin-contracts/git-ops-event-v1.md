@@ -1,8 +1,6 @@
 ---
-id: git-ops-event-v1
-schema_version: "1.0"
-plugin: codeforge-pmo
 kind: contract
+contract_version: "1.0"
 status: Active
 related_plugins:
   - codeforge (wrapper, consumer)

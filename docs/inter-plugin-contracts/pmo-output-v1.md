@@ -7,7 +7,8 @@ related_plugins:
   - codeforge-pmo (lane plugin, producer + self-writer)
 related_adrs:
   - ADR-008 (Inter-plugin Contract Versioning)
-  - ADR-009 (Wrapper-only core + writer-distributed lane plugins, codeforge wrapper CFP-31)
+  - ADR-010 (Inter-plugin Contract Sibling Sync — sync 정책)
+  - ADR-047 (GitOpsAgent — CFP-139, v1.1 worktree_manifest field 추가 carrier)
 authors:
   - CFP-36 ζ arc — second lane self-write pattern validation (2026-04-29)
   - CFP-139 — GitOpsAgent worktree_manifest MINOR bump (2026-05-08)
