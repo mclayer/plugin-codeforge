@@ -1,6 +1,6 @@
 ---
 kind: contract
-contract_version: "1.0"
+contract_version: "1.1"
 status: Active
 related_plugins:
   - codeforge (wrapper, consumer)
@@ -8,8 +8,10 @@ related_plugins:
 related_adrs:
   - ADR-008
   - ADR-009
+  - ADR-044
 authors:
   - CFP-39 ζ arc — Develop lane extraction (2026-04-29)
+  - CFP-297 (2026-05-09) — v1.1 MINOR bump: cross_layer_dialog_rounds field 추가 (ADR-044 §결정 5)
 ---
 
 # develop_output v1 — Inter-plugin Contract
@@ -57,7 +59,7 @@ codeforge core (Orchestrator)
 
 ```yaml
 develop_packet:
-  contract_version: "1.0"
+  contract_version: "1.1"
   story_key: <STORY_KEY>
   change_plan_paths:                # 필수 — Change Plan §3 코드 변경 경로
     - <path glob>
@@ -72,7 +74,7 @@ develop_packet:
 
 ```yaml
 develop_output:
-  contract_version: "1.0"
+  contract_version: "1.1"
   story_key: <STORY_KEY>
 
   status: PASS | PARTIAL | ESCALATE_PACKET_INCOMPLETE
@@ -88,6 +90,10 @@ develop_output:
     executed: <bool>
     test_files_created: [<path>]
 
+  # Cross-layer pattern (TEAM-DEVELOP) measurable verification — ADR-044 §결정 5
+  cross_layer_dialog_rounds: <int>  # DeveloperAgent ↔ QADeveloperAgent 간 dialog round 수 (>= 0)
+                                    # Cross-layer pattern 미사용 시 0
+
   # PL self-write 결과 audit
   writes_completed:
     story_section_8: <bool>          # 구현 요약 + 변경 파일 목록
@@ -100,6 +106,18 @@ develop_output:
     pr_number: <int>
     pr_url: <string>
 ```
+
+### 3.1 cross_layer_dialog_rounds 필드 상세
+
+| 항목 | 내용 |
+|---|---|
+| 필드명 | `cross_layer_dialog_rounds` |
+| 타입 | `int >= 0` |
+| 필수 여부 | 필수 (v1.1 이후) |
+| 기본값 | `0` |
+| 설명 | TEAM-DEVELOP Cross-layer pattern 에서 DeveloperAgent 와 QADeveloperAgent 간 실제 dialog round 수. `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 환경에서 SendMessage 를 통한 직접 대화 횟수. Cross-layer pattern 을 사용하지 않았거나 `AGENT_TEAMS=0` 환경에서는 `0` 기록. |
+| 용도 | ADR-044 §결정 5 measurable verification — dev ↔ QA 협업 depth 검증. Orchestrator 가 Story §14 Lane Evidence row 에 포함하여 audit trail 유지. |
+| 연관 ADR | ADR-044 (Phase-scoped Sequential Team + Cross-layer pattern) |
 
 ## 4. ESCALATE 처리
 
@@ -115,3 +133,10 @@ develop_output:
 
 - 동결 일시: 2026-04-29 (CFP-39)
 - Source: CFP-31 §5.9
+
+## 7. Changelog
+
+| Version | Date | CFP | 변경 내용 |
+|---|---|---|---|
+| 1.0 | 2026-04-29 | CFP-39 | 최초 작성 (ζ arc Develop lane extraction) |
+| 1.1 | 2026-05-09 | CFP-297 | MINOR bump: `cross_layer_dialog_rounds: int >= 0` 추가 — TEAM-DEVELOP Cross-layer pattern (DeveloperAgent ↔ QADeveloperAgent) measurable verification (ADR-044 §결정 5). `develop_packet` + `develop_output` 양쪽 `contract_version` "1.1" 갱신. |
