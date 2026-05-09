@@ -50,6 +50,49 @@ def _is_progress_narration_verbosity(v: Any) -> bool:
     return isinstance(v, str) and v in ("full", "lane_only")
 
 
+def _is_list_of_repo_entries(v: Any) -> bool:
+    """list of dict, each with required name + role; role-conditional fields validated.
+
+    Schema SSOT: docs/project-config-schema.md §2 + Change Plan CFP-342 §3.1.
+    - name: required non-empty string
+    - role: required enum ('governance' | 'implementation')
+    - role=implementation 시 path + github required
+    - optional: story_dir (str), components (list[str]), creates_repo_stories (bool)
+    """
+    if not isinstance(v, list):
+        return False
+    seen_names: set[str] = set()
+    for entry in v:
+        if not isinstance(entry, dict):
+            return False
+        # required: name
+        if "name" not in entry or not isinstance(entry["name"], str) or not entry["name"]:
+            return False
+        # uniqueness invariant (§8.4 경계 조건)
+        if entry["name"] in seen_names:
+            return False
+        seen_names.add(entry["name"])
+        # required: role enum
+        if "role" not in entry or entry["role"] not in ("governance", "implementation"):
+            return False
+        # role=implementation 시 required: path, github
+        if entry["role"] == "implementation":
+            if "path" not in entry or not isinstance(entry["path"], str) or not entry["path"]:
+                return False
+            if "github" not in entry or not isinstance(entry["github"], str) or not entry["github"]:
+                return False
+        # optional: story_dir (str)
+        if "story_dir" in entry and not isinstance(entry["story_dir"], str):
+            return False
+        # optional: components (list of non-empty str)
+        if "components" in entry and not _is_list_of_str(entry["components"]):
+            return False
+        # optional: creates_repo_stories (bool)
+        if "creates_repo_stories" in entry and not isinstance(entry["creates_repo_stories"], bool):
+            return False
+    return True
+
+
 SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     # (path, required, type_check, description)
     ("project", True, dict, "project section (mapping)"),
@@ -104,6 +147,31 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     ("infra_strategy_extras", False, dict, "infra_strategy_extras section (mapping), optional"),
     ("infra_strategy_extras.k8s_preset_enabled", False, lambda v: isinstance(v, bool),
      "infra_strategy_extras.k8s_preset_enabled (boolean, default false), optional"),
+    # CFP-342 / ADR-050 — Multi-repo story key system (opt-in only)
+    # codeforge.stories 블록 부재 시 single-repo flat 모드 유지 (기존 동작 보존).
+    # 활성화 = codeforge.stories.repos[] 에 1+ entry 선언 시.
+    ("codeforge", False, dict, "codeforge section (mapping), optional"),
+    ("codeforge.stories", False, dict, "codeforge.stories section (mapping), optional"),
+    ("codeforge.stories.hub", False, dict, "codeforge.stories.hub section (mapping), optional"),
+    ("codeforge.stories.hub.key_pattern", False, _is_str,
+     "codeforge.stories.hub.key_pattern (string), optional"),
+    ("codeforge.stories.hub.story_dir", False, _is_str,
+     "codeforge.stories.hub.story_dir (string), optional, default 'docs/stories'"),
+    ("codeforge.stories.hub.template", False, _is_str,
+     "codeforge.stories.hub.template (string), optional, default 'hub-story.md'"),
+    ("codeforge.stories.repo_key_pattern", False, _is_str,
+     "codeforge.stories.repo_key_pattern (string), optional"),
+    ("codeforge.stories.counters", False, dict,
+     "codeforge.stories.counters section (mapping), optional"),
+    ("codeforge.stories.counters.path", False, _is_str,
+     "codeforge.stories.counters.path (string), optional, default '.codeforge/counters.json'"),
+    ("codeforge.stories.counters.lock", False,
+     lambda v: isinstance(v, str) and v in ("file",),
+     "codeforge.stories.counters.lock ('file'), optional"),
+    ("codeforge.stories.repos", False, _is_list_of_repo_entries,
+     "codeforge.stories.repos (list of repo entry dicts), optional — "
+     "each entry requires name (str) + role ('governance'|'implementation'); "
+     "role=implementation also requires path (str) + github (str)"),
 ]
 
 
