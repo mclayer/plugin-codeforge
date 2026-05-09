@@ -1,7 +1,7 @@
 ---
 kind: contract
 contract_version: "1.1"
-status: Active
+status: Archived  # CFP-317 / ADR-048 — TestAgent deprecated, CI-native 전환
 related_plugins:
   - codeforge (wrapper, consumer)
   - codeforge-test (lane plugin, producer + self-writer)
@@ -14,6 +14,8 @@ authors:
 ---
 
 # test_verdict v1 — Inter-plugin Contract
+
+> **[ARCHIVED — CFP-317 / ADR-048]** TestAgent deprecated. CI-native 테스트 전환으로 본 contract는 더 이상 사용되지 않음. 역사적 참조용으로 보존.
 
 **상위 SSOT 위치**:
 - `mclayer/plugin-codeforge-test/docs/inter-plugin-contracts/test-verdict-v1.md`: **canonical** (codeforge-test repo)
