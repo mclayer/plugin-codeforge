@@ -26,7 +26,7 @@ related_files:
   - docs/inter-plugin-contracts/MANIFEST.yaml
   - docs/orchestrator-playbook.md  # §15 4-channel boundary table
   - docs/project-config-schema.md  # telemetry block schema
-  - docs/consumer-guide.md  # §7.0.6 telemetry_enabled flag 안내
+  - docs/consumer-guide.md  # §7.0.7 telemetry_enabled flag 안내
   - docs/domain-knowledge/orchestrator-discipline/measurement-channel.md
   - docs/change-plans/cfp-283-adr-039-measurement-channel.md  # internal-docs SSOT (ADR-013)
 ---
@@ -236,7 +236,7 @@ Phase 1 PR scope (본 Story):
 - `docs/inter-plugin-contracts/MANIFEST.yaml` comment update (kind:registry 명시 — entry 추가 안 함)
 - `docs/orchestrator-playbook.md` §15 4-channel boundary table content (Reserved 해제)
 - `docs/project-config-schema.md` telemetry block schema (§결정 7)
-- `docs/consumer-guide.md` § "Telemetry opt-in" 신규 subsection (§7.0.6 권장)
+- `docs/consumer-guide.md` § "Telemetry opt-in" 신규 subsection (§7.0.7 권장)
 - `docs/domain-knowledge/orchestrator-discipline/measurement-channel.md` 신설
 - `wrapper/change-plans/cfp-283-adr-039-measurement-channel.md` (internal-docs SSOT)
 
