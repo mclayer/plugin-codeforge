@@ -8,6 +8,11 @@ carrier_story: CFP-129
 parent_epic: null
 supersedes: null
 amends: null
+amendments:
+  - id: 1
+    carrier_story: CFP-YYY
+    date: 2026-05-09
+    title: "codeforge:brainstorm 통합 — Stage 0 Requirements 에이전트 참여"
 related_stories:
   - CFP-129
 related_adrs:
@@ -134,3 +139,33 @@ internal-docs (별도 repo, mclayer/codeforge-internal-docs):
 - `wrapper/change-plans/cfp-129-pre-issue-brainstorming.md` — Change Plan §1-§11
 - `wrapper/stories/CFP-129.md` — Story §1-§7 (Phase 1) + §8-§11 (Phase 2 append)
 - `wrapper/decisions/CFP-129-001-codex-spec-review.yaml` — Codex 7-area review verdict archive
+
+## Amendment 1 — codeforge:brainstorm 통합 (CFP-YYY, 2026-05-09)
+
+### 컨텍스트
+
+기존 Stage 0는 `superpowers:brainstorming` 단독 호출 (Orchestrator 단일 에이전트).
+Requirements 에이전트(DomainAgent, ResearcherAgent, RequirementsAnalystAgent, PMOAgent)의
+전문성이 brainstorming 단계에 투입되지 않아 scope 정의 품질이 낮고 downstream 충돌 확률이 높다.
+
+또한 brainstorming 결과가 scope_manifest(ADR-050 §결정 2)로 연결되지 않아
+병렬 에픽 충돌 조율 정보가 누락된다.
+
+### 변경
+
+| 항목 | 기존 (ADR-034 v1) | Amendment 1 이후 |
+|---|---|---|
+| Stage 0 스킬 | `superpowers:brainstorming` | codeforge 프로젝트 = `codeforge:brainstorm` (권장) |
+| 하위호환 | — | `superpowers:brainstorming` 직접 호출 허용 유지 |
+| 에이전트 참여 | Orchestrator 단독 | Phase 0: 4 에이전트 병렬 컨텍스트 제공 (opt-in) |
+| 출력 | spec 파일 | spec 파일 + scope_manifest 초안 |
+
+### 적용 조건
+
+- codeforge 프로젝트 (`.claude/_overlay/project.yaml` 존재) 또는 dogfood (`docs/adr/` 디렉터리 존재)
+- Orchestrator가 brainstorming을 시작할 때 `codeforge:brainstorm` 스킬 호출
+- Phase 0는 사용자 opt-in (ResearcherAgent Opus 비용 제어)
+
+### 만료 / supersede
+
+별도 superseding amendment 없는 한 영구.
