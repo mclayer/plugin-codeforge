@@ -1,6 +1,7 @@
 ---
 id: git-ops-event-v1
 schema_version: "1.0"
+contract_version: "1.0"
 plugin: codeforge-pmo
 kind: contract
 status: Active
