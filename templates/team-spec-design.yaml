@@ -1,5 +1,5 @@
 # Team spec — 설계 lane
-# CFP-137 / ADR-041 §결정 2 SSOT
+# CFP-137 / ADR-044 §결정 2 SSOT
 # Trigger: RequirementsPL verdict = PASS 후 Orchestrator 가 ArchitectPL spawn
 # Activation: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 (env=0 시 fallback to ADR-039 default subagent context)
 
@@ -93,7 +93,7 @@ hook_subscriptions:
   - TaskCompleted
 
 measurable_verification:
-  parallelization: "§14 Lane Evidence 의 6 deputy row spawned_at diff < 60s (ADR-041 §결정 5)"
+  parallelization: "§14 Lane Evidence 의 6 deputy row spawned_at diff < 60s (ADR-044 §결정 5)"
   specialization: "각 deputy system_prompt_path line count < ArchitectPLAgent.md line count (subjective fixture, Phase 2 spot-check)"
 
 env_divergent_fallback:

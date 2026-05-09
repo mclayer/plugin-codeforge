@@ -1,5 +1,5 @@
 # Team spec — 요구사항 lane
-# CFP-137 / ADR-041 §결정 2 SSOT
+# CFP-137 / ADR-044 §결정 2 SSOT
 # Trigger: story-init.yml Action (Issue Forms 제출) 후 Orchestrator 가 RequirementsPL spawn
 # Activation: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 (env=0 시 fallback to ADR-039 default subagent context)
 
@@ -48,7 +48,7 @@ hook_subscriptions:
   - TaskCompleted
 
 measurable_verification:
-  parallelization: "§14 Lane Evidence 의 3 sub-agent row spawned_at diff < 60s (ADR-041 §결정 5)"
+  parallelization: "§14 Lane Evidence 의 3 sub-agent row spawned_at diff < 60s (ADR-044 §결정 5)"
 
 env_divergent_fallback:
   env_0_behavior: "Orchestrator 가 PL 1개만 spawn → PL 이 1차 sub-agent (Domain) 호출 후 return, Orchestrator 재 spawn 으로 다음 sub-agent. 3-round Orchestrator round-trip 으로 fallback (continuous dialog 부재)."

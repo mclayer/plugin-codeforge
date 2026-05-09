@@ -571,7 +571,7 @@ Epic close PR (Phase N+1) 동반 작성:
 - CFP-137 (agent teams 적극 도입) — 본 §3.5 의 use case full
 - CFP-139 (GitOpsAgent) — Orchestrator 의 worktree management 책임을 GitOpsAgent 로 이관 (Wave 3)
 
-### §3.6 TeamCreate / TeamDelete protocol (CFP-137 / [ADR-041](../docs/adr/ADR-041-phase-scoped-sequential-team.md))
+### §3.6 TeamCreate / TeamDelete protocol (CFP-137 / [ADR-044](../docs/adr/ADR-044-phase-scoped-sequential-team.md))
 
 > **Activation**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` env 활성 시에만 본 §3.6 적용. env=0 또는 미설정 시 = ADR-039 default subagent context fallback (§3.0 + 기존 §3.1 one-shot Agent tool 패턴).
 
@@ -581,7 +581,7 @@ Epic close PR (Phase N+1) 동반 작성:
 1. Preflight check (§3B)
 2. (CFP-139 후) GitOpsAgent SendMessage — lane worktree 준비 (§3.5 lifecycle)
 3. TeamCreate(team_spec=templates/team-spec-<lane>.yaml, worktree=<path>)
-   - team-spec yaml 7종 SSOT (ADR-041 §결정 2)
+   - team-spec yaml 7종 SSOT (ADR-044 §결정 2)
    - Codex worker dispatch_mode=user_request_only — 사용자 explicit request 시에만 활성
 4. lane 진행:
    - Lane PL → teammate dispatch (TaskCreate)
@@ -609,7 +609,7 @@ Epic close PR (Phase N+1) 동반 작성:
 4. CodexReviewAgent → ClaudeReviewAgent (직접 SendMessage): "P1 #3 finding 의 evidence 부족 — file:line cite 추가"
 5. ClaudeReviewAgent → CodexReviewAgent: "evidence 추가, 또한 P0 #2 도 보강"
 6. PL ↔ both workers: dedup + severity 합의
-7. PL → Orchestrator: review-verdict v4 packet (worker_dialog_rounds = 5, ADR-041 §결정 5 measurable)
+7. PL → Orchestrator: review-verdict v4 packet (worker_dialog_rounds = 5, ADR-044 §결정 5 measurable)
 ```
 
 **Cross-layer 패턴** (TEAM-DEVELOP, dev ↔ QA):
@@ -620,7 +620,7 @@ Epic close PR (Phase N+1) 동반 작성:
 3. PL → role:dev (e.g., SoftwareDeveloperAgent): "feature X 구현"
 4. role:dev → QADev (직접 SendMessage): "test fixture <path> 의 boundary case 추가 권유"
 5. QADev → role:dev: "fixture 갱신 — invariant 가 valid 한지 확인 required"
-6. PL → develop-output v1.1 packet (cross_layer_dialog_rounds = 2, ADR-041 §결정 5 measurable — codeforge-develop sibling sync follow-up)
+6. PL → develop-output v1.1 packet (cross_layer_dialog_rounds = 2, ADR-044 §결정 5 measurable — codeforge-develop sibling sync follow-up)
 ```
 
 **Sequential-dialog 패턴** (Stage 0 [TEAM-DECOMPOSE], TEAM-DECOMPOSE):
@@ -641,7 +641,7 @@ idle teammate 감지 시 platform 이 본 hook trigger:
             └─ Orchestrator → TeamDelete (in-flight wait + worktree merge orchestration)
 ```
 
-Sample hook = `templates/agent-teams-hook-samples/TeammateIdle.json.sample` (ADR-041 §결정 3). Phase 2 PR scope = nudge logic + script 실제 구현.
+Sample hook = `templates/agent-teams-hook-samples/TeammateIdle.json.sample` (ADR-044 §결정 3). Phase 2 PR scope = nudge logic + script 실제 구현.
 
 ### §3.9 env-divergent context fallback (default ↔ enabled context 분기)
 

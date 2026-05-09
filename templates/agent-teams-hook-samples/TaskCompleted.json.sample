@@ -1,5 +1,5 @@
 {
-  "_comment": "codeforge agent teams TaskCompleted hook — CFP-137 / ADR-041 §결정 3.",
+  "_comment": "codeforge agent teams TaskCompleted hook — CFP-137 / ADR-044 §결정 3.",
   "_doc": "Append this hook definition to consumer's `.claude/settings.json` under `hooks.TaskCompleted[]` array.",
   "_purpose": "TaskCompleted 발화 시 Story §14 Lane Evidence row outcome 채움 (end: return 직후). CFP-139 GitOpsAgent 활성 후에는 추가로 worktree merge trigger.",
   "_severity": "§14 row update 실패 = warning logging. 본 sample 은 placeholder.",

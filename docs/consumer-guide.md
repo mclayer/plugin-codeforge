@@ -110,7 +110,7 @@ bash scripts/check-lint.sh --fix     # ruff auto-fix 적용
 
 **Windows 환경 caveat**: `.venv/Scripts/Activate.ps1` 경로 권한 / WSL bash 호출 issue 시 manual 실행 fallback. 자세한 워크어라운드는 별도 follow-up CFP.
 
-### 1f. Agent teams 적극 도입 (CFP-137 / [ADR-041](adr/ADR-041-phase-scoped-sequential-team.md))
+### 1f. Agent teams 적극 도입 (CFP-137 / [ADR-044](adr/ADR-044-phase-scoped-sequential-team.md))
 
 > **Optional**: agent teams 적극 도입 = wrapper / consumer Orchestrator 모두 적용 가능. 활성 시 Phase-scoped sequential team + SendMessage continuous dialog + Adversarial debate 패턴 사용 가능. 비활성 시 ADR-039 default subagent context (one-shot Agent tool) fallback — 본 CFP-137 도입 전 동작과 동일.
 
@@ -127,10 +127,10 @@ bash scripts/check-lint.sh --fix     # ruff auto-fix 적용
 
 설정 후 **신규 세션 재시작** 의무. env=0 또는 미설정 시 = ADR-039 default subagent context — 본 CFP-137 의 SendMessage / TeamCreate / TaskCreate / TeammateIdle 모두 미발화, hook 등록되어도 trigger 0.
 
-**Hook 3종 install** (CFP-137 / ADR-041 §결정 3):
+**Hook 3종 install** (CFP-137 / ADR-044 §결정 3):
 
 ```bash
-# Sample 3종 install (ADR-041 §결정 3 path)
+# Sample 3종 install (ADR-044 §결정 3 path)
 mkdir -p .claude/hooks
 cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/agent-teams-hook-samples/TeammateIdle.json.sample \
    .claude/hooks/TeammateIdle.json
@@ -143,11 +143,11 @@ cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/agent-teams-hook-samples/TaskComple
 # (overlay/hooks/merge.py 또는 수동 편집)
 ```
 
-**Codex worker dispatch 정책 (ADR-041 §결정 2 SSOT)**:
+**Codex worker dispatch 정책 (ADR-044 §결정 2 SSOT)**:
 
 review lane (TEAM-DESIGN-REVIEW / TEAM-CODE-REVIEW / TEAM-SECURITY-TEST) 의 Codex worker = `dispatch_mode: user_request_only`. **Default roster = `PL + Claude worker` 2 teammate**. Codex worker 는 사용자 explicit request 시에만 활성 (예: "codex 와 opus 로 심층 리뷰 후 ..." 와 같은 ad-hoc 발화). codeforge 가 자동 invoke 하지 않음 — ADR-022 Deprecated (CFP-134) 정합.
 
-**Secret hygiene 의무 (ADR-041 §결정 7)**:
+**Secret hygiene 의무 (ADR-044 §결정 7)**:
 
 agent teams enabled context 의 SendMessage 는 **sibling teammate 끼리 system prompt / tool output 공유** (Anthropic platform behavior). consumer 측 secret (API key / DB credential / service account token 등) 가 SendMessage body 또는 system prompt 안에 포함되면 sibling teammate 모두 노출. 의무:
 
@@ -165,7 +165,7 @@ agent teams enabled context 에서도 다음 3 제약 유지 (`docs/domain-knowl
 **Disable / rollback**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0` 또는 unset → ADR-039 default subagent context fallback. hook 3종 install 되어도 trigger 미발화. Phase-scoped sequential team 은 자연 무효화 — 기존 one-shot Agent tool spawn 패턴.
 
 **상세 SSOT**:
-- Policy: [ADR-041](adr/ADR-041-phase-scoped-sequential-team.md) (CFP-137 carrier)
+- Policy: [ADR-044](adr/ADR-044-phase-scoped-sequential-team.md) (CFP-137 carrier)
 - Epic context: [ADR-035](adr/ADR-035-codeforge-agent-teams-epic-architecture.md) D2
 - Domain knowledge: [docs/domain-knowledge/agent-teams/agent-teams-platform-capability.md](domain-knowledge/agent-teams/agent-teams-platform-capability.md)
 - Default fallback: [ADR-039](adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md)

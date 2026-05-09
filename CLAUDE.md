@@ -104,7 +104,7 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 **Default subagent context 의 codeforge 정책 결정** (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0` 또는 미설정 시) — 하위 에이전트는 Agent 툴 사용 불가 (재귀 스폰 금지 — platform inherent), 서브에이전트 간 직접 통신 불가 (codeforge 정책 — agent teams enabled context 별도), 서브에이전트 one-shot (codeforge 정책). 모든 스폰은 최상위 Claude.
 
-**Agent teams enabled context 별도** (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`, CFP-137 / [ADR-041](docs/adr/ADR-041-phase-scoped-sequential-team.md) 적용 후) — sibling teammate 간 SendMessage 사용 가능 + Phase-scoped sequential team + Adversarial debate (review lane) + Cross-layer (TEAM-DEVELOP) 패턴 활성. 단 (a) 재귀 spawn 금지 (platform inherent — Lead 와 teammate 모두), (b) nested team 금지 (no team-of-teams), (c) one-team-per-lead 강제 — 다음 lane TeamCreate 전 현 team `TeamDelete()` 의무. team-spec yaml 7종 (`templates/team-spec-{decompose,requirements,design,design-review,develop,code-review,security-test}.yaml`) + hook 3종 sample (`templates/agent-teams-hook-samples/{TeammateIdle,TaskCreated,TaskCompleted}.json.sample`) SSOT. review lane Codex worker `dispatch_mode: user_request_only` (사용자 ad-hoc 요청 시에만 활성, ADR-022 Deprecated 정합). env=0 fallback = ADR-039 default subagent context (one-shot Agent tool, 본 단락 무효화). 상세 SSOT [ADR-041](docs/adr/ADR-041-phase-scoped-sequential-team.md) + [domain-knowledge entry](docs/domain-knowledge/agent-teams/agent-teams-platform-capability.md) + [playbook §3.6-§3.9](docs/orchestrator-playbook.md).
+**Agent teams enabled context 별도** (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`, CFP-137 / [ADR-044](docs/adr/ADR-044-phase-scoped-sequential-team.md) 적용 후) — sibling teammate 간 SendMessage 사용 가능 + Phase-scoped sequential team + Adversarial debate (review lane) + Cross-layer (TEAM-DEVELOP) 패턴 활성. 단 (a) 재귀 spawn 금지 (platform inherent — Lead 와 teammate 모두), (b) nested team 금지 (no team-of-teams), (c) one-team-per-lead 강제 — 다음 lane TeamCreate 전 현 team `TeamDelete()` 의무. team-spec yaml 7종 (`templates/team-spec-{decompose,requirements,design,design-review,develop,code-review,security-test}.yaml`) + hook 3종 sample (`templates/agent-teams-hook-samples/{TeammateIdle,TaskCreated,TaskCompleted}.json.sample`) SSOT. review lane Codex worker `dispatch_mode: user_request_only` (사용자 ad-hoc 요청 시에만 활성, ADR-022 Deprecated 정합). env=0 fallback = ADR-039 default subagent context (one-shot Agent tool, 본 단락 무효화). 상세 SSOT [ADR-044](docs/adr/ADR-044-phase-scoped-sequential-team.md) + [domain-knowledge entry](docs/domain-knowledge/agent-teams/agent-teams-platform-capability.md) + [playbook §3.6-§3.9](docs/orchestrator-playbook.md).
 
 **Wrapper 위임 패턴** (모든 행위 = ADR-039 default subagent spawn — 위 "Default subagent context (수정 작업)" 단락 정합):
 - 컨텍스트 전달: `docs/stories/<KEY>.md` SSOT, agent 프롬프트는 path 주입, 본문은 agent self-fetch — Context Packet / §0 Live Progress / Project Config Packet 상세는 [playbook §12·§14](docs/orchestrator-playbook.md)
@@ -119,9 +119,9 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 **DEPRECATED**: Codex review / Sonnet decider 는 codeforge 1st-class component 가 아니라 **사용자 ad-hoc 도구**. codeforge 가 자동 invoke 하지 않음. 사용자 explicit request (e.g., "codex 와 opus 로 심층 리뷰 후 sonnet 으로 정리") 시에만 ad-hoc spawn. 이전 ADR-022 의 5 trigger 자동 발동 + 5-step protocol + decision-packet-v2.1 schema 무효. Architecture decision SSOT = [ADR-035](docs/adr/ADR-035-codeforge-agent-teams-epic-architecture.md) (Epic CFP-134). 상세 deprecation context = [CFP-134 Epic spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-05-08-cfp-134-codeforge-agent-teams-epic-design.md).
 
-#### review-verdict v3 → v4 cutover 완료 (CFP-137 / ADR-041)
+#### review-verdict v3 → v4 cutover 완료 (CFP-137 / ADR-044)
 
-ADR-022 deprecate 후 `review-verdict-v3` contract (canonical: codeforge-review plugin / sibling: 본 wrapper repo) 의 Sonnet decider 영역 — `decision_state` enum 의 8 state, `sonnet_final_status`, `decider_decision_ref`, `write_errors` step Sonnet semantics, 5-step Orchestrator algorithm — **review-verdict v4 (CFP-137 / ADR-041 §결정 4) 으로 정식 제거**. v4 = `pl_recommendation` 자체가 final verdict (PASS / FIX / FIX_DISCRETIONARY / ESCALATE_PACKET_INCOMPLETE), 4-step linear path. 신규 field `worker_dialog_rounds: int >= 0` 추가 (Adversarial debate measurable verification, ADR-041 §결정 5).
+ADR-022 deprecate 후 `review-verdict-v3` contract (canonical: codeforge-review plugin / sibling: 본 wrapper repo) 의 Sonnet decider 영역 — `decision_state` enum 의 8 state, `sonnet_final_status`, `decider_decision_ref`, `write_errors` step Sonnet semantics, 5-step Orchestrator algorithm — **review-verdict v4 (CFP-137 / ADR-044 §결정 4) 으로 정식 제거**. v4 = `pl_recommendation` 자체가 final verdict (PASS / FIX / FIX_DISCRETIONARY / ESCALATE_PACKET_INCOMPLETE), 4-step linear path. 신규 field `worker_dialog_rounds: int >= 0` 추가 (Adversarial debate measurable verification, ADR-044 §결정 5).
 
 **Cutover (CFP-137 wrapper Phase 1 PR merge 시점)**:
 - v3 sibling (wrapper repo) `status: Active → Archived` 동기 갱신.
@@ -134,7 +134,7 @@ ADR-022 deprecate 후 `review-verdict-v3` contract (canonical: codeforge-review 
 
 ### FIX 루프
 
-**판정 SSOT** = codeforge-review [`templates/review-pl-base.md`](https://github.com/mclayer/plugin-codeforge-review/blob/main/templates/review-pl-base.md) §3 (severity 종합·dedup·판정). Contract surface = [`review-verdict-v4`](docs/inter-plugin-contracts/review-verdict-v4.md) `pl_recommendation` (PASS / FIX / FIX_DISCRETIONARY / ESCALATE_PACKET_INCOMPLETE) — CFP-137 / ADR-041 cutover 후. v3 archived 참조: [`review-verdict-v3`](docs/inter-plugin-contracts/review-verdict-v3.md).
+**판정 SSOT** = codeforge-review [`templates/review-pl-base.md`](https://github.com/mclayer/plugin-codeforge-review/blob/main/templates/review-pl-base.md) §3 (severity 종합·dedup·판정). Contract surface = [`review-verdict-v4`](docs/inter-plugin-contracts/review-verdict-v4.md) `pl_recommendation` (PASS / FIX / FIX_DISCRETIONARY / ESCALATE_PACKET_INCOMPLETE) — CFP-137 / ADR-044 cutover 후. v3 archived 참조: [`review-verdict-v3`](docs/inter-plugin-contracts/review-verdict-v3.md).
 
 **트리거**: 설계 리뷰 FIX → ArchitectPLAgent 회귀. 구현 리뷰·구현 테스트·보안 테스트 FAIL → DeveloperPL 1차 진단 + ArchitectPLAgent 최종 판정 (parallel diagnosis).
 
@@ -327,7 +327,7 @@ ADR-014 + ADR-012 §3 4번째 SSOT 예외. design lane 의 deputy (CFP-46 Operat
 
 **Wrapper Orchestrator 단독 영역**:
 - `docs/stories/<KEY>.md §10` FIX Ledger append (CFP-32 monopoly · `fix-event-v1` contract)
-- **review-verdict 최종 write** (Story §9 append / GitHub comment / gate label / phase transition) — **CFP-134 / ADR-035 정정 후 (Stage 0 spec §3.5 verbatim)**: PL synthesis (findings + `pl_recommendation`) 만 lane plugin self-write 영역, **final §9 verdict append + GitHub comment + gate label + phase transition 은 Orchestrator self-write** (ADR-022 Deprecated 후 Sonnet decider 자동 발동 무효 — review-verdict v3 의 Sonnet 5-step 영역 NO-OP, v4 MAJOR bump 가 정식 제거 — CFP-137 / ADR-041 cutover 완료).
+- **review-verdict 최종 write** (Story §9 append / GitHub comment / gate label / phase transition) — **CFP-134 / ADR-035 정정 후 (Stage 0 spec §3.5 verbatim)**: PL synthesis (findings + `pl_recommendation`) 만 lane plugin self-write 영역, **final §9 verdict append + GitHub comment + gate label + phase transition 은 Orchestrator self-write** (ADR-022 Deprecated 후 Sonnet decider 자동 발동 무효 — review-verdict v3 의 Sonnet 5-step 영역 NO-OP, v4 MAJOR bump 가 정식 제거 — CFP-137 / ADR-044 cutover 완료).
 - general `docs/**` write (lane plugin owner 외)
 - branch protection · CI workflow · cross-plugin schema templates
 
@@ -351,7 +351,7 @@ codeforge core 가 외부 plugin과 통신할 때의 typed schema. wrapper repo 
 
 | Contract | Producer plugin | Files (wrapper sibling) |
 |---|---|---|
-| `review_verdict` | codeforge-review | review-verdict-v1.md (Archived) · review-verdict-v2.md (Archived) · [review-verdict-v3.md](docs/inter-plugin-contracts/review-verdict-v3.md) (Archived — CFP-137) · [review-verdict-v4.md](docs/inter-plugin-contracts/review-verdict-v4.md) (Active — CFP-137 / ADR-041) |
+| `review_verdict` | codeforge-review | review-verdict-v1.md (Archived) · review-verdict-v2.md (Archived) · [review-verdict-v3.md](docs/inter-plugin-contracts/review-verdict-v3.md) (Archived — CFP-137) · [review-verdict-v4.md](docs/inter-plugin-contracts/review-verdict-v4.md) (Active — CFP-137 / ADR-044) |
 | `requirements_output` | codeforge-requirements | requirements-output-v1.md (Active) |
 | `design_output` | codeforge-design | design-output-v1.md (Archived) · design-output-v2.md (Active — §7.4 + §11 idempotency, CFP-46) |
 | `develop_output` | codeforge-develop | develop-output-v1.md (Active) |

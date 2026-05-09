@@ -1,5 +1,5 @@
 # Team spec — Stage 0 (Epic 분해)
-# CFP-137 / ADR-041 §결정 2 SSOT — Phase-scoped sequential team
+# CFP-137 / ADR-044 §결정 2 SSOT — Phase-scoped sequential team
 # Trigger: Epic-level Story 발의 시 Orchestrator 가 PMOAgent 와 SendMessage round 진행
 # Activation: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 (env=0 시 fallback to ADR-039 default subagent context)
 

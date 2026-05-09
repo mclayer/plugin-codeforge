@@ -22,7 +22,7 @@ related_adrs:
   - ADR-024
   - ADR-025
   - ADR-029
-  - ADR-041  # CFP-137 carrier — D2 implementation level SSOT (amendment_log[1] applied)
+  - ADR-044  # CFP-137 carrier — D2 implementation level SSOT (amendment_log[1] applied)
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md
@@ -34,7 +34,7 @@ amendment_log:
     status: planned
   - amendment_id: 2
     date: 2026-05-09
-    scope: "CFP-137 (Wave 2) carrier — D2 (Agent teams 적극 도입) 의 implementation level 결정 본 ADR 외 별도 ADR-041 (Phase-scoped sequential team SSOT) 으로 carrier 분리. ADR-041 가 lifecycle / team-spec yaml 7종 / hook 3종 / review-verdict v3 → v4 cutover / 5 권장 패턴 measurable verification 통합. 본 ADR D2 본문 변경 0 — D2 §결정 정합 invariant 무손상 + ADR-041 carrier 명시 cross-ref 만 추가."
+    scope: "CFP-137 (Wave 2) carrier — D2 (Agent teams 적극 도입) 의 implementation level 결정 본 ADR 외 별도 ADR-044 (Phase-scoped sequential team SSOT) 으로 carrier 분리. ADR-044 가 lifecycle / team-spec yaml 7종 / hook 3종 / review-verdict v3 → v4 cutover / 5 권장 패턴 measurable verification 통합. 본 ADR D2 본문 변경 0 — D2 §결정 정합 invariant 무손상 + ADR-044 carrier 명시 cross-ref 만 추가."
     status: applied
     applied_pr: "wrapper Phase 1 PR (CFP-137)"
 ---
@@ -112,7 +112,7 @@ amendment_log:
 - 권장 3-5 명 초과 (Design 8명, Develop 5-7명) — 25 thread 한도 내 + Specialization 패턴 정합으로 허용
 - Experimental status — Hotfix path 유지 + `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` SessionStart hook 검증 의무
 
-**Implementation**: CFP-137 (Wave 2). D2 의 implementation level 결정은 본 ADR 외 별도 [ADR-041 (Phase-scoped sequential team SSOT)](ADR-041-phase-scoped-sequential-team.md) carrier — `templates/team-spec-<lane>.yaml` 7종 + hook 3종 (TeammateIdle / TaskCreated / TaskCompleted) + review-verdict v3 → v4 contract bump + 5 권장 패턴 measurable verification 통합. 본 ADR amendment_log[1] = `applied` (CFP-137 wrapper Phase 1 PR carrier). lane plugin agent prompt 갱신 = sibling sync follow-up PR (ADR-010 wrapper-first 절차).
+**Implementation**: CFP-137 (Wave 2). D2 의 implementation level 결정은 본 ADR 외 별도 [ADR-044 (Phase-scoped sequential team SSOT)](ADR-044-phase-scoped-sequential-team.md) carrier — `templates/team-spec-<lane>.yaml` 7종 + hook 3종 (TeammateIdle / TaskCreated / TaskCompleted) + review-verdict v3 → v4 contract bump + 5 권장 패턴 measurable verification 통합. 본 ADR amendment_log[1] = `applied` (CFP-137 wrapper Phase 1 PR carrier). lane plugin agent prompt 갱신 = sibling sync follow-up PR (ADR-010 wrapper-first 절차).
 
 ### D3 — GitOpsAgent 신설 + 위치 = codeforge-pmo plugin
 

@@ -88,7 +88,7 @@ env=0 fallback 동작은 모든 lane plugin agent prompt 가 명시 의무 — S
 
 ## 관련 ADR / Story / 후속 작업
 
-- **Carrier ADR**: ADR-035 (Epic 통합) + ADR-041 (CFP-137 Phase-scoped sequential team SSOT, Phase 1 PR 작성 예정).
+- **Carrier ADR**: ADR-035 (Epic 통합) + ADR-044 (CFP-137 Phase-scoped sequential team SSOT, Phase 1 PR 작성 예정).
 - **Carrier Story**: CFP-137 (본 entry 도입), CFP-134 (Epic).
 - **의존 ADR**: ADR-009 (Orchestrator 단일 lead), ADR-039 (default subagent context), ADR-040 (worktree integration), ADR-022 Deprecated (Codex / Sonnet 정체성 정정).
 - **후속**: CFP-139 (GitOpsAgent — long-running teammate 패턴 도입 시 본 entry §"`/resume` risk" 재방문), CFP-141 후보 (gh-aw 와 codeforge 관계 분석 — out-of-scope priming).
@@ -108,7 +108,7 @@ env=0 fallback 동작은 모든 lane plugin agent prompt 가 명시 의무 — S
 - team-spec yaml 7종 (`templates/team-spec-<lane>.yaml`) — teammate roster + dispatch_pattern + worktree_layout 정의
 - hook 3종 sample (`templates/agent-teams-hook-samples/{TeammateIdle,TaskCreated,TaskCompleted}.json.sample`) — consumer install reference
 - review-verdict v4 schema (`docs/inter-plugin-contracts/review-verdict-v4.md`) — `worker_dialog_rounds` field SSOT
-- ADR-041 carrier (Phase-scoped sequential team SSOT)
+- ADR-044 carrier (Phase-scoped sequential team SSOT)
 - env-divergent fallback contract (env=1 enabled context vs env=0 default subagent context)
 
 **Anthropic platform 책임 영역 (out of scope)**:

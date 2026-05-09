@@ -1,5 +1,5 @@
 # Team spec — 구현 리뷰 lane
-# CFP-137 / ADR-041 §결정 2 SSOT (dispatch_mode SSOT — design-review 와 동일 패턴)
+# CFP-137 / ADR-044 §결정 2 SSOT (dispatch_mode SSOT — design-review 와 동일 패턴)
 # Trigger: DeveloperPL ready 후 Orchestrator 가 CodeReviewPL spawn
 # Activation: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 (env=0 시 fallback to ADR-039 default subagent context)
 
@@ -44,7 +44,7 @@ hook_subscriptions:
   - TaskCompleted
 
 measurable_verification:
-  adversarial: "review-verdict v4 packet의 worker_dialog_rounds >= 2 (Codex worker 활성 시) — ADR-041 §결정 5"
+  adversarial: "review-verdict v4 packet의 worker_dialog_rounds >= 2 (Codex worker 활성 시) — ADR-044 §결정 5"
 
 env_divergent_fallback:
   env_0_behavior: "design-review 와 동일 — CodeReviewPL 1개 spawn → Claude worker 호출 → return → Orchestrator 재 spawn 으로 Codex worker (사용자 요청 시). worker_dialog_rounds = 0."

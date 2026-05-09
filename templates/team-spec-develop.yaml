@@ -1,5 +1,5 @@
 # Team spec — 구현 lane
-# CFP-137 / ADR-041 §결정 2 SSOT
+# CFP-137 / ADR-044 §결정 2 SSOT
 # Trigger: gate:design-review-pass label 부착 후 Orchestrator 가 DeveloperPL spawn
 # Activation: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 (env=0 시 fallback to ADR-039 default subagent context)
 
@@ -60,7 +60,7 @@ hook_subscriptions:
   - TaskCompleted
 
 measurable_verification:
-  cross_layer: "develop-output v1.1 packet의 cross_layer_dialog_rounds >= 1 (dev ↔ QA SendMessage round count) — ADR-041 §결정 5"
+  cross_layer: "develop-output v1.1 packet의 cross_layer_dialog_rounds >= 1 (dev ↔ QA SendMessage round count) — ADR-044 §결정 5"
 
 env_divergent_fallback:
   env_0_behavior: "DeveloperPL 1개만 spawn → PL 이 QADev 호출 (Impl Manifest 매핑표 작성) → return → Orchestrator 재 spawn 으로 role:dev N (병렬 spawn — Orchestrator 가 직접 fan-out). QA ↔ dev continuous dialog 부재 → cross_layer_dialog_rounds = 0."

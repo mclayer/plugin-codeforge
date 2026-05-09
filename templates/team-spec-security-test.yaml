@@ -1,5 +1,5 @@
 # Team spec — 보안 테스트 lane
-# CFP-137 / ADR-041 §결정 2 SSOT (dispatch_mode SSOT — review lane 패턴)
+# CFP-137 / ADR-044 §결정 2 SSOT (dispatch_mode SSOT — review lane 패턴)
 # Trigger: 구현 테스트 PASS 후 Orchestrator 가 SecurityTestPL spawn
 # Activation: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 (env=0 시 fallback to ADR-039 default subagent context)
 
@@ -49,7 +49,7 @@ native_layer_integration:
   github_secret_scanning: "1차 layer — Secret Scanning alert 가 packet 으로 import"
 
 measurable_verification:
-  adversarial: "review-verdict v4 packet의 worker_dialog_rounds >= 2 (Codex worker 활성 시) — ADR-041 §결정 5"
+  adversarial: "review-verdict v4 packet의 worker_dialog_rounds >= 2 (Codex worker 활성 시) — ADR-044 §결정 5"
   native_layer: "1차 layer alert 수 + 2차 layer finding 수 packet 보고 (PASS/FIX 판정 입력)"
 
 env_divergent_fallback:

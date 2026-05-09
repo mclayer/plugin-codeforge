@@ -1,5 +1,5 @@
 ---
-adr_number: 41
+adr_number: 44
 title: Phase-scoped sequential team SSOT (CFP-134 Epic Wave 2)
 date: 2026-05-09
 status: Proposed
@@ -41,7 +41,7 @@ related_files:
   - CLAUDE.md
 ---
 
-# ADR-041: Phase-scoped sequential team SSOT
+# ADR-044: Phase-scoped sequential team SSOT
 
 ## 상태
 

@@ -12,18 +12,18 @@ related_adrs:
   - ADR-010 (Inter-plugin Contract Sibling Sync)
   - ADR-022 (carrier — Sonnet review-verdict decider + consumer scope, in plugin-codeforge wrapper repo) [Deprecated 2026-05-08, CFP-134]
   - ADR-035 (codeforge agent teams Epic architecture — D1 ADR-022 deprecate)
-  - ADR-041 (Phase-scoped sequential team SSOT — review-verdict v4 cutover carrier, CFP-137)
+  - ADR-044 (Phase-scoped sequential team SSOT — review-verdict v4 cutover carrier, CFP-137)
 authors:
   - CFP-61 Phase 1B-1 — review-verdict v2 → v3 BREAKING (Sonnet decider trigger 5 introduction)
   - CFP-135 (2026-05-08) — DEPRECATED PASSTHROUGH annotation (ADR-022 deprecate consequence)
   - CFP-137 (2026-05-09) — Archived (review-verdict v4 cutover, Sonnet decider 영역 정식 제거)
 ---
 
-> **ARCHIVED (2026-05-09, CFP-137 / ADR-041)**: 본 contract 가 [review-verdict v4](review-verdict-v4.md) 으로 superseded 됨. v4 가 v3 의 NO-OP passthrough 영역 (Sonnet decider) 정식 제거 + 신규 `worker_dialog_rounds` field 추가. 즉시 cutover (consumer scope 0건). v4 = `pl_recommendation` 자체가 final verdict (PL = decider 책임자 복원). v3 본문은 archive reference 로 보존 — 6 CFP 무사고 후 별도 cleanup CFP 에서 file 삭제 (v2 deprecate 패턴 정합).
+> **ARCHIVED (2026-05-09, CFP-137 / ADR-044)**: 본 contract 가 [review-verdict v4](review-verdict-v4.md) 으로 superseded 됨. v4 가 v3 의 NO-OP passthrough 영역 (Sonnet decider) 정식 제거 + 신규 `worker_dialog_rounds` field 추가. 즉시 cutover (consumer scope 0건). v4 = `pl_recommendation` 자체가 final verdict (PL = decider 책임자 복원). v3 본문은 archive reference 로 보존 — 6 CFP 무사고 후 별도 cleanup CFP 에서 file 삭제 (v2 deprecate 패턴 정합).
 >
 > **(이전 annotation)** DEPRECATED PASSTHROUGH (2026-05-08, CFP-134 / ADR-035): ADR-022 가 Deprecated 처리되어 본 contract 의 Sonnet decider 5-step 영역 (`decision_state` 의 `pending_sonnet`/`decided`/`decider_timeout`/`decider_suspended`/`review_reopen_requested`/`write_partial`/`write_complete` state, `sonnet_final_status` 필드, `decider_decision_ref` 필드, `write_errors` step enum) 은 **NO-OP** 으로 사용. PL 이 자기 lane synthesis 후 `pl_recommendation` (PASS / FIX / FIX_DISCRETIONARY) 직접 적용 — Sonnet final pick 자동 발화 없음. 사용자 explicit request 시에만 ad-hoc Sonnet invoke. (본 transitional 영역 = CFP-137 wrapper Phase 1 PR merge 시 종료, v4 cutover 적용.)
 >
-> Architecture decision SSOT = [ADR-035](../adr/ADR-035-codeforge-agent-teams-epic-architecture.md) (Epic CFP-134) + [ADR-041](../adr/ADR-041-phase-scoped-sequential-team.md) (CFP-137 v4 carrier). 본 wrapper sibling annotation 외 canonical (codeforge-review plugin) 도 동일 annotation 동기 의무 — sibling sync follow-up PR 별도 (codeforge-review repo, ADR-010 §단계 절차).
+> Architecture decision SSOT = [ADR-035](../adr/ADR-035-codeforge-agent-teams-epic-architecture.md) (Epic CFP-134) + [ADR-044](../adr/ADR-044-phase-scoped-sequential-team.md) (CFP-137 v4 carrier). 본 wrapper sibling annotation 외 canonical (codeforge-review plugin) 도 동일 annotation 동기 의무 — sibling sync follow-up PR 별도 (codeforge-review repo, ADR-010 §단계 절차).
 
 # review_verdict v3 — Inter-plugin Contract (CFP-61 Phase 1B-1)
 
