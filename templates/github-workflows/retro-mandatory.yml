@@ -255,7 +255,12 @@ EOF
 
           # Pattern A: Contents API SHA-based optimistic concurrency (retry max 3, jitter sleep)
           # Mirror of post-merge-telemetry.sh (ADR-026 §결정 4 / domain-knowledge/jsonl-write/race-condition-handling-pattern.md)
+          # CFP-289: 4xx → no-retry immediate fail; 5xx → exponential backoff (2s/4s/8s);
+          #          exhausted → stderr ::error:: + exit 1 (never silent drop);
+          #          all diagnostic output → stderr (>&2).
           MAX_RETRIES=3
+          BACKOFF_DELAYS=(2 4 8)
+          WRITE_SUCCESS=0
           for ATTEMPT in $(seq 1 $((MAX_RETRIES + 1))); do
             # Fetch current file content + SHA from retro-attempts-state branch
             RESPONSE=$(gh api "repos/${INTERNAL_DOCS_REPO}/contents/${JSONL_PATH}?ref=${JSONL_BRANCH}" 2>/dev/null || echo "null")
@@ -297,18 +302,28 @@ EOF
             HTTP_CODE=$(head -1 /tmp/retro-state/put-response.txt | grep -o '[0-9]\{3\}' || echo "0")
             if echo "$HTTP_CODE" | grep -qE '^(200|201)$'; then
               echo "::notice::retro-attempts.jsonl updated (attempt $ATTEMPT): $ENTRY"
-              exit 0
+              WRITE_SUCCESS=1
+              break
             elif echo "$HTTP_CODE" | grep -q '^409$'; then
-              echo "::warning::SHA conflict on attempt $ATTEMPT — retrying with jitter"
+              # SHA conflict — re-fetch SHA on next iteration, jitter sleep
+              echo "::warning::SHA conflict (HTTP 409) on attempt $ATTEMPT — re-fetch SHA + jitter retry" >&2
               sleep $(( RANDOM % 5 + 1 ))
+            elif echo "$HTTP_CODE" | grep -qE '^4[0-9]{2}$'; then
+              # 4xx client error — no retry (CFP-289 Pattern A semantics)
+              echo "::error::4xx client error (HTTP ${HTTP_CODE}) on attempt $ATTEMPT — no retry, aborting" >&2
+              exit 1
             else
-              echo "::error::Unexpected HTTP $HTTP_CODE on attempt $ATTEMPT"
-              if [ "$ATTEMPT" -gt "$MAX_RETRIES" ]; then exit 1; fi
-              sleep $(( RANDOM % 5 + 1 ))
+              # 5xx or network error — exponential backoff (CFP-289 Pattern A semantics)
+              IDX=$(( ATTEMPT - 1 ))
+              DELAY=${BACKOFF_DELAYS[$IDX]:-8}
+              echo "::warning::5xx/network error (HTTP ${HTTP_CODE}) on attempt $ATTEMPT — backoff ${DELAY}s" >&2
+              [ "$ATTEMPT" -lt $((MAX_RETRIES + 1)) ] && sleep "$DELAY"
             fi
           done
-          echo "::error::Pattern A retries exhausted for $STORY_KEY write (attempt_n=1)"
-          exit 1
+          if [ "$WRITE_SUCCESS" -ne 1 ]; then
+            echo "::error::Pattern A retries exhausted for $STORY_KEY write (attempt_n=1) — entry NOT written" >&2
+            exit 1
+          fi
 
   close-blocking:
     # Issue close event 처리 — gate:retro-complete 부재 시 자동 reopen (UC-2 정합)
@@ -481,18 +496,23 @@ EOF
 
           # Helper: Pattern A write — update single story_key record in JSONL via Contents API
           # Args: $1=story_key $2=new_status $3=new_attempt_n $4=timestamp $5=commit_msg
+          # CFP-289: 4xx → no-retry immediate fail; 5xx → exponential backoff (2s/4s/8s);
+          #          exhausted → stderr ::error:: + return 1 (never silent drop);
+          #          all diagnostic output → stderr (>&2).
           pattern_a_write() {
             local STORY_KEY="$1"
             local NEW_STATUS="$2"
             local NEW_ATTEMPT_N="$3"
             local TIMESTAMP="$4"
             local COMMIT_MSG="$5"
+            local BACKOFF_DELAYS=(2 4 8)
+            local WRITE_SUCCESS=0
 
             for PUT_ATTEMPT in $(seq 1 $((MAX_RETRIES + 1))); do
               # Fetch latest content + SHA from retro-attempts-state branch
               RESPONSE=$(gh api "repos/${INTERNAL_DOCS_REPO}/contents/${JSONL_PATH}?ref=${JSONL_BRANCH}" 2>/dev/null || echo "null")
               if [ "$RESPONSE" = "null" ]; then
-                echo "::error::retro-attempts.jsonl vanished during update for $STORY_KEY"
+                echo "::error::retro-attempts.jsonl vanished during update for $STORY_KEY" >&2
                 return 1
               fi
               CURRENT_SHA=$(echo "$RESPONSE" | python3 -c "import json,sys; print(json.load(sys.stdin)['sha'])" 2>/dev/null || echo "")
@@ -541,18 +561,29 @@ print('\n'.join(updated) + '\n')
               HTTP_CODE=$(head -1 /tmp/retro-state/put-response.txt | grep -o '[0-9]\{3\}' || echo "0")
               if echo "$HTTP_CODE" | grep -qE '^(200|201)$'; then
                 echo "::notice::Pattern A write success (${STORY_KEY} → status=${NEW_STATUS}, attempt_n=${NEW_ATTEMPT_N}, put_attempt=${PUT_ATTEMPT})"
-                return 0
+                WRITE_SUCCESS=1
+                break
               elif echo "$HTTP_CODE" | grep -q '^409$'; then
-                echo "::warning::SHA conflict on put_attempt ${PUT_ATTEMPT} for ${STORY_KEY} — retrying with jitter"
+                # SHA conflict — re-fetch SHA on next iteration, jitter sleep
+                echo "::warning::SHA conflict (HTTP 409) on put_attempt ${PUT_ATTEMPT} for ${STORY_KEY} — re-fetch + jitter retry" >&2
                 sleep $(( RANDOM % 5 + 1 ))
+              elif echo "$HTTP_CODE" | grep -qE '^4[0-9]{2}$'; then
+                # 4xx client error — no retry (CFP-289 Pattern A semantics)
+                echo "::error::4xx client error (HTTP ${HTTP_CODE}) on put_attempt ${PUT_ATTEMPT} for ${STORY_KEY} — no retry" >&2
+                return 1
               else
-                echo "::error::Unexpected HTTP ${HTTP_CODE} on put_attempt ${PUT_ATTEMPT} for ${STORY_KEY}"
-                if [ "$PUT_ATTEMPT" -gt "$MAX_RETRIES" ]; then return 1; fi
-                sleep $(( RANDOM % 5 + 1 ))
+                # 5xx or network error — exponential backoff (CFP-289 Pattern A semantics)
+                IDX=$(( PUT_ATTEMPT - 1 ))
+                DELAY=${BACKOFF_DELAYS[$IDX]:-8}
+                echo "::warning::5xx/network error (HTTP ${HTTP_CODE}) on put_attempt ${PUT_ATTEMPT} for ${STORY_KEY} — backoff ${DELAY}s" >&2
+                [ "$PUT_ATTEMPT" -lt $((MAX_RETRIES + 1)) ] && sleep "$DELAY"
               fi
             done
-            echo "::error::Pattern A retries exhausted for ${STORY_KEY} (status=${NEW_STATUS})"
-            return 1
+            if [ "$WRITE_SUCCESS" -ne 1 ]; then
+              echo "::error::Pattern A retries exhausted for ${STORY_KEY} (status=${NEW_STATUS}) — entry NOT written" >&2
+              return 1
+            fi
+            return 0
           }
 
           while IFS= read -r entry; do
