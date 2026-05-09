@@ -347,7 +347,14 @@ Epic Story 의 §11 회고 블록 = Epic close PR (Phase N+1) 동반 작성. EPI
 - ...
 
 ### Epic close artifact
-- [EPIC-RESULTS-<EPIC_KEY>.md](../../EPIC-RESULTS-<EPIC_KEY>.md) — 14 섹션 close summary
+
+EPIC-RESULTS-`<EPIC_KEY>`.md location SSOT = [`docs/doc-locations.yaml`](../docs/doc-locations.yaml) `epic_results` row ([ADR-041](../docs/adr/ADR-041-doc-location-registry.md)).
+
+Link path 작성 가이드:
+- **동일 repo 내** (Mode B hub Story → hub root EPIC-RESULTS): `[EPIC-RESULTS-<EPIC_KEY>.md](../../EPIC-RESULTS-<EPIC_KEY>.md)` (relative)
+- **Cross-repo / dogfood** (예: codeforge family internal-docs `<plugin>/retros/`): 절대 GitHub URL `[EPIC-RESULTS-<EPIC_KEY>.md](https://github.com/mclayer/codeforge-internal-docs/blob/main/<plugin-folder>/retros/EPIC-RESULTS-<EPIC_KEY>.md)`
+
+— 14 섹션 close summary
 
 ### 회고 (Epic close 후 PMOAgent fill)
 <one paragraph>

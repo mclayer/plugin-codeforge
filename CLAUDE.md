@@ -330,6 +330,10 @@ ADR-014 + ADR-012 §3 4번째 SSOT 예외. design lane 의 deputy (CFP-46 Operat
 
 자세한 owner path / mechanism / trigger 는 각 lane plugin 의 `CLAUDE.md` `Self-write 책임` 표 (codeforge-{review,pmo,requirements,test,develop,design}) 참조.
 
+## Doc Location Registry (CFP-276 / ADR-041)
+
+codeforge plugin 의 doc taxonomy (epic_results / story_file / adr / change_plan / retro / domain_knowledge / spec / plan / decision_packet / inter_plugin_contract) 위치 SSOT = [`docs/doc-locations.yaml`](docs/doc-locations.yaml). Human-readable mirror = [`docs/doc-location-registry.md`](docs/doc-location-registry.md) (auto-generated from yaml). Lint = [`scripts/check-doc-locations.sh --full`](scripts/check-doc-locations.sh) (CI required check, branch protection 5번째). 정책 SSOT: [ADR-041](docs/adr/ADR-041-doc-location-registry.md). 새 doc type 도입 / 기존 location 변경 시 yaml row 갱신만 → codeforge upgrade 자연스러운 reflection. EPIC-RESULTS 의 issue #276 SSOT 모순 (3 문서 disagree) 해소가 본 registry 도입 동인.
+
 ## Inter-plugin Contract (CFP-29 Phase 1 후 + CFP-42 sibling backfill)
 
 codeforge core 가 외부 plugin과 통신할 때의 typed schema. wrapper repo 의 [docs/inter-plugin-contracts/](docs/inter-plugin-contracts/) 디렉터리는 두 종류 보유:
