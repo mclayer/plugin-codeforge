@@ -8,6 +8,11 @@ carrier_story: CFP-136
 parent_epic: CFP-134
 supersedes: null
 amends: null
+amendments:
+  - id: 1
+    carrier_story: CFP-139
+    date: 2026-05-09
+    title: GitOpsAgent hook 실행 주체 명시
 related_stories:
   - CFP-134
   - CFP-136
@@ -177,6 +182,56 @@ on_story_close       → GitOpsAgent prunes all sub-worktrees (Story root 제외
 | **Docker container per session** | overkill — file isolation 만 필요, full OS isolation 불필요. ADR-033 docker-first 와 무관 (개발 환경 isolation ≠ deploy artifact). |
 | **VSCode multi-root workspace** | IDE-specific, Claude Code Agent tool 무관. file isolation 미보장. |
 | **flat branch (ADR-024 v1 유지)** | CFP-137 lane parallel spawn 표현력 부족 — sub-task 별 worktree 필요. |
+
+## Amendment 1 — CFP-139 (2026-05-09)
+
+**제목**: GitOpsAgent hook 실행 주체 명시 (carrier: CFP-139, codeforge-pmo plugin)
+
+**상태**: Proposed (Phase 1 PR open) → CFP-139 Phase 2 PR merge 시점 Accepted.
+
+### 컨텍스트
+
+본 ADR §결정 3 (Lifecycle hooks) 는 6 hook (`on_team_create_pre/post`, `on_team_delete_pre/post`, `on_session_start`, `on_story_close`) 의 실행 주체로 "GitOpsAgent (CFP-139)" 를 anticipate 하지만, CFP-136 carrier 시점에는 GitOpsAgent 미존재 → Orchestrator inline fallback. CFP-139 가 codeforge-pmo plugin 에 GitOpsAgent 신설 → 본 ADR §결정 3 의 hook 실행 주체를 정식 위임 명시.
+
+또한 §결정 5 의 "**Note**: gh API check + sub-worktree 보존 예외 = CFP-139 GitOpsAgent 진입 시 ADR amendment 로 추가" 약속을 본 amendment 가 이행.
+
+### 변경
+
+**§결정 3 hook 실행 주체** (이전 = "GitOpsAgent (CFP-139)" anticipate, 이후 = 정식 위임):
+
+| Hook | 이전 (CFP-136) | CFP-139 이후 (Amendment 1) |
+|---|---|---|
+| `on_team_create_pre` | Orchestrator inline (fallback) | **GitOpsAgent** 가 `templates/scripts/worktree-create.sh <branch> <path>` × N 실행 |
+| `on_team_create_post` | Orchestrator (cwd 주입) | Orchestrator (변경 없음 — teammate spawn 시점 cwd 주입은 platform inherent) |
+| `on_team_delete_pre` | Orchestrator inline (fallback) | **GitOpsAgent** 가 `templates/scripts/worktree-merge.sh` sequential merge 수행 (lock 보유) |
+| `on_team_delete_post` | Orchestrator inline | **GitOpsAgent** 가 `templates/scripts/worktree-prune.sh` 호출 |
+| `on_session_start` | SessionStart hook (`check-worktree-stale.sh`) | **GitOpsAgent** 가 SessionStart hook 호출 보조 + 능동 GC (gh API PR merged + Story closed cross-ref) |
+| `on_story_close` | (미정의) | **GitOpsAgent** 가 sub-worktree prune (Story root 제외, Phase 2 PR merge 까지 보존) |
+
+**§결정 5 stale GC 강화** (CFP-136 의 약속 이행):
+
+CFP-136 SSOT = 단순 origin check 만 (`git ls-remote --exit-code --heads origin`). 본 amendment 가 GitOpsAgent 진입 후 강화:
+
+1. **gh API PR merged check**: `gh pr list --state merged --head <branch>` 검증 → merged 면 stale.
+2. **Story closed cross-ref**: branch name 에서 `cfp-NNN` 추출 → Story Issue state = closed 면 stale (단 Phase 2 PR 이 open 상태면 보존).
+3. **`cfp-NNN` Story root branch 보존 예외**: sub-worktree (`cfp-NNN/lane/<lane>` 등) 만 prune, Story root 는 Phase 2 PR merge 까지 보존.
+4. **`BYPASS_WORKTREE_GC=1` env**: §결정 5 SSOT 무손상 — short-circuit 동작 유지.
+
+### 이행 의무
+
+- codeforge-pmo plugin `agents/GitOpsAgent.md` 의 responsibility table 에 본 6 hook 실행 의무 명시 (CFP-139 Phase 1 AC-1).
+- CFP-139 Phase 2 e2e fixture (trace log) 에 `worktree_create / merge_attempt / worktree_delete` 3-event sequence trace 포함 (CFP-139 Phase 1 AC-10).
+
+### 정합성 검증
+
+- ADR-009 invariant 무손상: GitOpsAgent = codeforge-pmo plugin agent (lane plugin 영역). wrapper agent 0개 유지.
+- ADR-044 정합: GitOpsAgent 는 long-running teammate (Story 전 기간 active) — phase-scoped sequential team lifecycle step 2 (`worktree 준비`) 의 실행 주체.
+- ADR-024 Amendment 1 정합: hierarchical branch naming (`cfp-NNN[/<lane>[/<sub>]]`) 의 actual 생성자 = GitOpsAgent.
+
+### 만료 / supersede
+
+본 amendment 는 ADR-040 본문 §결정 3 / §결정 5 와 **함께 활성**. 별도 superseding amendment 없는 한 영구.
+
 
 ## 관련 파일
 
