@@ -137,6 +137,11 @@ done
 - CodeReviewPL = boundary issue P0 fail (Pattern A 미적용 implementation = lost-update risk)
 - 회귀 spec = 본 페이지 cross-ref 명시 + 해당 ADR amendment + DesignReview re-run
 
+## 관련 ADR
+
+- **ADR-026 / CFP-74** — post-merge-counters.jsonl carrier (Pattern A implementation precedent — post-merge-telemetry.sh)
+- **ADR-045 / CFP-138** — retro-attempts.jsonl carrier (Phase 1 follow-up amendment_id=1 — Pattern A 의무 명시)
+
 ## 변경 이력
 
 - **2026-05-09**: 신설 (CFP-138 Phase 1 follow-up — FIX iter 2 boundary resolution from CodeReviewPL Iter 1 P0 A-2 + P0 C-1). ArchitectPLAgent 최종 판정 정합 — C-1 = 설계 (boundary), Pattern A 의무 명시.
