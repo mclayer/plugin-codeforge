@@ -6,7 +6,7 @@ name: Story Init
 
 on:
   issues:
-    types: [opened]
+    types: [opened, labeled]   # was: [opened]  — CFP-280 race fix
 
 permissions:
   contents: write
@@ -103,8 +103,21 @@ jobs:
             echo "TITLE_EOF"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Skip if Story file already exists (CFP-280 idempotency guard)
+        id: existence_check
+        env:
+          KEY: ${{ steps.key.outputs.key }}
+        run: |
+          if [[ -f "docs/stories/${KEY}.md" ]]; then
+            echo "::notice::docs/stories/${KEY}.md already exists — skipping (idempotent re-entry)"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Parse user requirement from Issue body
         id: parse
+        if: steps.existence_check.outputs.skip != 'true'
         run: |
           REQ=$(printf '%s' "$ISSUE_BODY" \
                  | awk '/^### 사용자 요구사항/{flag=1; next} /^### /{flag=0} flag' \
@@ -126,6 +139,7 @@ jobs:
           echo "component=$COMPONENT" >> "$GITHUB_OUTPUT"
 
       - name: Create branch + docs/stories/<KEY>.md
+        if: steps.existence_check.outputs.skip != 'true'
         env:
           KEY: ${{ steps.key.outputs.key }}
           SLUG: ${{ steps.key.outputs.slug }}
@@ -205,6 +219,7 @@ jobs:
           git push origin "$BRANCH"
 
       - name: Create Phase 1 PR
+        if: steps.existence_check.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           KEY: ${{ steps.key.outputs.key }}
@@ -224,6 +239,7 @@ jobs:
             --label "type:story,phase:요구사항"
 
       - name: Update Issue body to docs link
+        if: steps.existence_check.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           KEY: ${{ steps.key.outputs.key }}
@@ -233,7 +249,7 @@ jobs:
             --body "Story SSOT: [\`docs/stories/${KEY}.md\`](../blob/${BASE}/docs/stories/${KEY}.md)"
 
       - name: Assign Milestone (if specified)
-        if: steps.parse.outputs.milestone != ''
+        if: steps.existence_check.outputs.skip != 'true' && steps.parse.outputs.milestone != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MILESTONE: ${{ steps.parse.outputs.milestone }}
@@ -241,7 +257,7 @@ jobs:
           gh issue edit "$ISSUE_NUMBER" --milestone "$MILESTONE"
 
       - name: Add component label
-        if: steps.parse.outputs.component != ''
+        if: steps.existence_check.outputs.skip != 'true' && steps.parse.outputs.component != ''
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           COMPONENT: ${{ steps.parse.outputs.component }}
