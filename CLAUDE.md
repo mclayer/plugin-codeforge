@@ -29,6 +29,16 @@ DeveloperPLAgent 가 다음 source 에서 frontmatter `role: dev` 매칭:
 
 매칭된 agent 들을 의존성 없는 한 모두 병렬 spawn (한 메시지). 상세는 codeforge wrapper CLAUDE.md "스폰 시퀀스" 참조.
 
+## QADeveloperAgent 추가 책임
+
+테스트 코드 작성 외에, **CI 워크플로 작성/갱신 (신규 — CFP-317 / ADR-048)**:
+- `.github/workflows/test.yml` 생성 또는 갱신 (매 Phase 2 Story)
+- consumer `project.yaml` `tests.runner` 값 기반으로 runner 명령 결정 (pytest / jest / go test / cargo test 등)
+- performance baseline 파일 생성/갱신 (`.perf-baseline.json` 등)
+- test.yml 최소 구조:
+  - `test` job: `tests.runner` 명령 실행
+  - `security` job: `actions/dependency-review-action@v4` (Dependabot)
+
 ## Dogfood policy (CFP-45)
 
 본 plugin repo 는 runtime SSOT 만 보유. dogfood artifacts (specs/plans/retros/stories/change-plans) 는 [`mclayer/codeforge-internal-docs`](https://github.com/mclayer/codeforge-internal-docs) 단일 monorepo SSOT. 본 plugin 폴더는 `codeforge-internal-docs/develop/`. 상세 정책 + Story workflow 흐름은 wrapper [CLAUDE.md](https://github.com/mclayer/plugin-codeforge/blob/main/CLAUDE.md) canonical SSOT 참조 + [ADR-013](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md) (PR-I 머지 후 Adopted).
