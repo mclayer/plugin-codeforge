@@ -71,3 +71,54 @@ progress_narration_verbosity: full
 # bypass env vars (ADR-027 결정 3, CFP-104 후행) — informational only
 # 실제 bypass 는 hook 안에서 env 검사:
 # HOTFIX_BYPASS_CODEFORGE=1 + HOTFIX_BYPASS_REASON="<text>" 동시 설정 의무
+
+# Multi-repo story key system (CFP-342 / ADR-050) — 선택, 기본 비활성
+# single-repo consumer 는 이 블록 전체를 삭제하거나 주석 유지.
+# multi-repo consumer (hub + impl repo 구조) 는 아래 주석 해제 후 각 <REPLACE> 값 입력.
+#
+# 활성화 조건: codeforge.stories.repos[] 에 1+ entry 선언 시 자동 활성.
+# 부재 시 기존 single-repo flat 모드 유지 (backward compat).
+#
+# codeforge:
+#   stories:
+#     hub:
+#       # hub repo 의 story key 발급 패턴 (예: "{prefix}-{seq:03d}")
+#       key_pattern: "<REPLACE — e.g. MCT-{seq:03d}>"
+#       # hub story 저장 디렉터리 (default: docs/stories)
+#       story_dir: "docs/stories"
+#       # hub story 생성 시 사용할 템플릿 (default: hub-story.md)
+#       template: "hub-story.md"
+#     # impl repo story key 패턴 (hub 와 동일 prefix 공유 권장)
+#     repo_key_pattern: "<REPLACE — e.g. MCT-{seq:03d}>"
+#     counters:
+#       # counter file 위치 (hub repo root, committed)
+#       path: ".codeforge/counters.json"
+#       # lock mechanism — 현재 'file' 만 지원 (POSIX fcntl / cross-platform filelock)
+#       lock: "file"
+#     repos:
+#       # governance hub repo (role: governance)
+#       - name: "<REPLACE — e.g. mctrader-hub>"
+#         role: governance
+#         github: "<REPLACE — e.g. mclayer/mctrader-hub>"
+#         story_dir: "docs/stories"
+#         creates_repo_stories: false
+#
+#       # implementation repo (role: implementation) — 필요한 만큼 반복
+#       - name: "<REPLACE — e.g. mctrader-data>"
+#         role: implementation
+#         # 로컬 sibling checkout 절대 경로 (또는 ${HOME}/... 형식)
+#         path: "<REPLACE — e.g. /Users/you/workspace/mctrader-data>"
+#         github: "<REPLACE — e.g. mclayer/mctrader-data>"
+#         story_dir: "docs/stories"
+#         components:
+#           - "<REPLACE — e.g. data>"
+#         creates_repo_stories: true
+#
+#       - name: "<REPLACE — e.g. mctrader-engine>"
+#         role: implementation
+#         path: "<REPLACE — e.g. /Users/you/workspace/mctrader-engine>"
+#         github: "<REPLACE — e.g. mclayer/mctrader-engine>"
+#         story_dir: "docs/stories"
+#         components:
+#           - "<REPLACE — e.g. engine>"
+#         creates_repo_stories: true
