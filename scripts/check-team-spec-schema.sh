@@ -80,19 +80,95 @@ check_yaml_file() {
     log ""
     log "--- $base ---"
 
-    # Read file content
     if [ ! -f "$file" ]; then
         log_err "[FAIL] $base: file 부재"
         total_fail=$((total_fail + 1))
         return
     fi
 
-    local content
-    content="$(cat "$file")"
+    # Single-pass awk: extract all needed values from the file in one subprocess call.
+    # (Issue #304 optimization: replaces ~10 separate grep/sed subshell calls per file with 1 awk pass)
+    # Output format (tab-separated, one value per line):
+    #   lane=<value>
+    #   dispatch_pattern=<value>
+    #   has_env_divergent_fallback=1|0
+    #   has_env_0_behavior=1|0
+    #   name_count=<N>
+    #   role_count=<N>
+    #   spp_count=<N>
+    #   model_count=<N>
+    #   sm_count=<N>
+    #   has_dispatch_mode_user_request_only=1|0
+    #   has_adversarial=1|0
+    #   has_parallelization=1|0
+    local parsed
+    parsed="$(awk '
+        # Track teammates block scope (between "teammates:" and next top-level key)
+        /^teammates:[[:space:]]*$/ || /^teammates:/ { in_tm=1; next }
+        in_tm && /^[a-zA-Z]/ { in_tm=0 }
+
+        # Top-level fields
+        /^lane:[[:space:]]/ {
+            v=$0; sub(/^lane:[[:space:]]*/,"",v); sub(/[[:space:]#].*/,"",v); gsub(/['"'"'"]/,"",v)
+            lane=v
+        }
+        /^dispatch_pattern:[[:space:]]/ {
+            v=$0; sub(/^dispatch_pattern:[[:space:]]*/,"",v); sub(/[[:space:]#].*/,"",v); gsub(/['"'"'"]/,"",v)
+            dp=v
+        }
+        /^env_divergent_fallback:/ { has_edf=1 }
+        /env_0_behavior:/          { has_e0b=1 }
+
+        # Teammates block: count entries and required fields
+        in_tm && /^[[:space:]]+-[[:space:]]+name:[[:space:]]/ { name_cnt++ }
+        in_tm && /^[[:space:]]+role:[[:space:]]/ { role_cnt++ }
+        in_tm && /^[[:space:]]+system_prompt_path:[[:space:]]/ { spp_cnt++ }
+        in_tm && /^[[:space:]]+model:[[:space:]]/ { model_cnt++ }
+        in_tm && /^[[:space:]]+spawn_mode:[[:space:]]/ { sm_cnt++ }
+
+        # Adversarial / parallelization markers (anywhere in file)
+        /dispatch_mode:[[:space:]]*user_request_only/ { has_uro=1 }
+        /adversarial:/                                 { has_adv=1 }
+        /parallelization:/                             { has_par=1 }
+
+        END {
+            print "lane=" lane
+            print "dispatch_pattern=" dp
+            print "has_env_divergent_fallback=" (has_edf+0)
+            print "has_env_0_behavior=" (has_e0b+0)
+            print "name_count=" (name_cnt+0)
+            print "role_count=" (role_cnt+0)
+            print "spp_count=" (spp_cnt+0)
+            print "model_count=" (model_cnt+0)
+            print "sm_count=" (sm_cnt+0)
+            print "has_dispatch_mode_uro=" (has_uro+0)
+            print "has_adversarial=" (has_adv+0)
+            print "has_parallelization=" (has_par+0)
+        }
+    ' "$file")"
+
+    # Parse awk output into local variables
+    local lane_val="" dp_val="" has_edf=0 has_e0b=0
+    local name_count=0 role_count=0 spp_count=0 model_count=0 sm_count=0
+    local has_uro=0 has_adv=0 has_par=0
+    while IFS='=' read -r key val; do
+        case "$key" in
+            lane)                       lane_val="$val" ;;
+            dispatch_pattern)           dp_val="$val" ;;
+            has_env_divergent_fallback) has_edf="$val" ;;
+            has_env_0_behavior)         has_e0b="$val" ;;
+            name_count)                 name_count="$val" ;;
+            role_count)                 role_count="$val" ;;
+            spp_count)                  spp_count="$val" ;;
+            model_count)                model_count="$val" ;;
+            sm_count)                   sm_count="$val" ;;
+            has_dispatch_mode_uro)      has_uro="$val" ;;
+            has_adversarial)            has_adv="$val" ;;
+            has_parallelization)        has_par="$val" ;;
+        esac
+    done <<< "$parsed"
 
     # Check: lane field
-    local lane_val
-    lane_val="$(printf '%s' "$content" | grep -E '^lane:' | head -1 | sed -E 's/^lane:[[:space:]]*([^[:space:]#]+).*/\1/' | tr -d "'\"")"
     if [ -z "$lane_val" ]; then
         log_err "[FAIL] $base: 'lane:' 필드 부재"
         fail=$((fail + 1))
@@ -101,60 +177,45 @@ check_yaml_file() {
     fi
 
     # Check: teammates list (at least 1 entry)
-    local teammate_count
-    teammate_count="$(printf '%s' "$content" | grep -cE '^\s*- name:' || true)"
-    if [ "$teammate_count" -lt 1 ]; then
+    if [ "$name_count" -lt 1 ]; then
         log_err "[FAIL] $base: teammates 목록 비어있음 (name: 항목 0개)"
         fail=$((fail + 1))
     else
-        log "[OK] teammates: $teammate_count 개"
+        log "[OK] teammates: $name_count 개"
     fi
 
     # Check: dispatch_pattern field
-    if ! printf '%s' "$content" | grep -qE '^dispatch_pattern:'; then
+    if [ -z "$dp_val" ]; then
         log_err "[FAIL] $base: 'dispatch_pattern:' 필드 부재"
         fail=$((fail + 1))
     else
-        local dp_val
-        dp_val="$(printf '%s' "$content" | grep -E '^dispatch_pattern:' | head -1 | sed -E 's/^dispatch_pattern:[[:space:]]*([^[:space:]#]+).*/\1/' | tr -d "'\"")"
         log "[OK] dispatch_pattern: $dp_val"
     fi
 
     # Check: env_divergent_fallback field + env_0_behavior subkey
-    if ! printf '%s' "$content" | grep -qE '^env_divergent_fallback:'; then
+    if [ "$has_edf" -eq 0 ]; then
         log_err "[FAIL] $base: 'env_divergent_fallback:' 필드 부재"
         fail=$((fail + 1))
-    elif ! printf '%s' "$content" | grep -qE 'env_0_behavior:'; then
+    elif [ "$has_e0b" -eq 0 ]; then
         log_err "[FAIL] $base: 'env_divergent_fallback.env_0_behavior' 서브키 부재"
         fail=$((fail + 1))
     else
         log "[OK] env_divergent_fallback.env_0_behavior 존재"
     fi
 
-    # Check: each teammate entry has required fields (name / role / system_prompt_path / model / spawn_mode)
-    # Strategy: extract only the teammates: list block (between 'teammates:' and next top-level key)
-    # then count '- name:' entries and check that required sibling fields appear the same number of times
-    local teammates_block
-    teammates_block="$(printf '%s' "$content" | awk '
-        /^teammates:/ { in_tm=1; next }
-        in_tm && /^[a-z]/ { in_tm=0 }
-        in_tm { print }
-    ')"
-
-    local name_count
-    name_count="$(printf '%s' "$teammates_block" | grep -cE '^\s+- name:' || true)"
-
+    # Check: each teammate entry has required fields (role / system_prompt_path / model / spawn_mode)
     if [ "$name_count" -gt 0 ]; then
-        # Note: for loop checks 4 fields (role/system_prompt_path/model/spawn_mode).
-        # 'name' is the anchor count (name_count), not included in the for loop fields.
-        for field in role system_prompt_path model spawn_mode; do
-            local field_count
-            field_count="$(printf '%s' "$teammates_block" | grep -cE "^\s+${field}:" || true)"
-            if [ "$field_count" -lt "$name_count" ]; then
-                log_err "[FAIL] $base: teammates[] 에 '${field}:' 필드 부재 항목 있음 (name=$name_count, ${field}=$field_count)"
+        local counts_arr=("$role_count" "$spp_count" "$model_count" "$sm_count")
+        local fields_arr=(role system_prompt_path model spawn_mode)
+        local i
+        for i in 0 1 2 3; do
+            local fc="${counts_arr[$i]}"
+            local fn="${fields_arr[$i]}"
+            if [ "$fc" -lt "$name_count" ]; then
+                log_err "[FAIL] $base: teammates[] 에 '${fn}:' 필드 부재 항목 있음 (name=$name_count, ${fn}=$fc)"
                 fail=$((fail + 1))
             else
-                log "[OK] teammates[] ${field}: $field_count/$name_count 항목 보유"
+                log "[OK] teammates[] ${fn}: $fc/$name_count 항목 보유"
             fi
         done
     fi
@@ -165,15 +226,13 @@ check_yaml_file() {
         [ "$lane_val" = "$al" ] && is_adversarial=1 && break
     done
     if [ $is_adversarial -eq 1 ]; then
-        # dispatch_mode: user_request_only in at least 1 teammate
-        if ! printf '%s' "$content" | grep -qE 'dispatch_mode:\s*user_request_only'; then
+        if [ "$has_uro" -eq 0 ]; then
             log_err "[FAIL] $base (adversarial lane): dispatch_mode: user_request_only 인 teammate 없음 (Codex worker 정책 — ADR-044 §결정 2)"
             fail=$((fail + 1))
         else
             log "[OK] dispatch_mode: user_request_only teammate 존재"
         fi
-        # measurable_verification.adversarial
-        if ! printf '%s' "$content" | grep -qE 'adversarial:'; then
+        if [ "$has_adv" -eq 0 ]; then
             log_err "[FAIL] $base (adversarial lane): measurable_verification.adversarial 서브키 부재 (ADR-044 §결정 5)"
             fail=$((fail + 1))
         else
@@ -183,15 +242,13 @@ check_yaml_file() {
 
     # Parallelization lane check
     if [ "$lane_val" = "$PARALLEL_LANE" ]; then
-        local dp_val2
-        dp_val2="$(printf '%s' "$content" | grep -E '^dispatch_pattern:' | head -1 | sed -E 's/^dispatch_pattern:[[:space:]]*([^[:space:]#]+).*/\1/' | tr -d "'\"")"
-        if [ "$dp_val2" != "parallel" ]; then
-            log_err "[FAIL] $base (design lane): dispatch_pattern != parallel (got: '$dp_val2')"
+        if [ "$dp_val" != "parallel" ]; then
+            log_err "[FAIL] $base (design lane): dispatch_pattern != parallel (got: '$dp_val')"
             fail=$((fail + 1))
         else
             log "[OK] dispatch_pattern: parallel (design lane 정합)"
         fi
-        if ! printf '%s' "$content" | grep -qE 'parallelization:'; then
+        if [ "$has_par" -eq 0 ]; then
             log_err "[FAIL] $base (design lane): measurable_verification.parallelization 서브키 부재 (ADR-044 §결정 5)"
             fail=$((fail + 1))
         else
@@ -222,19 +279,20 @@ if [ $found -eq 0 ]; then
 fi
 
 # Check 7종 모두 존재하는지 (lane value 기준) — --skip-completeness 시 생략
+# Optimization (Issue #304): single-pass — build seen-lanes set from all yamls once (O(N)),
+# then check each expected lane against the set (O(7)) → total O(N+7) vs old O(49).
 if [ $found -gt 0 ] && [ $SKIP_COMPLETENESS -eq 0 ]; then
     log ""
     log "--- 7종 완전성 검사 ---"
+    # Build newline-separated list of lane values found across all yaml files (1 grep per file, not per lane)
+    seen_lanes=""
+    for f in "$SPEC_DIR"/team-spec-*.yaml; do
+        [ -f "$f" ] || continue
+        lv="$(grep -E '^lane:[[:space:]]*' "$f" | head -1 | sed -E 's/^lane:[[:space:]]*([^[:space:]#]+).*/\1/' | tr -d "'\"")"
+        [ -n "$lv" ] && seen_lanes="${seen_lanes}${lv}"$'\n'
+    done
     for expected_lane in $EXPECTED_LANES; do
-        local_found=0
-        for f in "$SPEC_DIR"/team-spec-*.yaml; do
-            [ -f "$f" ] || continue
-            if grep -qE "^lane:\s*${expected_lane}(\s|$|#)" "$f"; then
-                local_found=1
-                break
-            fi
-        done
-        if [ $local_found -eq 1 ]; then
+        if printf '%s' "$seen_lanes" | grep -qxF "$expected_lane"; then
             log "[OK] lane=$expected_lane 파일 존재"
         else
             log_err "[FAIL] lane=$expected_lane 에 해당하는 team-spec yaml 파일 부재"
