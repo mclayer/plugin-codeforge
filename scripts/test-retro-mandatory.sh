@@ -408,6 +408,83 @@ test_ac11_template_mentions_gate_label() {
 }
 
 # ---------------------------------------------------------------------------
+# FIX iter 1: A-2 + C-1 structural verification
+# A-2: workflow_run trigger 제거 검증 (infinite loop prevention)
+# C-1: git clone 제거 + Pattern A (gh api PUT + SHA) 존재 검증
+# ---------------------------------------------------------------------------
+
+WORKFLOW_FILE="$SCRIPT_DIR/../templates/github-workflows/retro-mandatory.yml"
+
+test_fix_a2_no_workflow_run_trigger() {
+    log "FIX A-2 Test 1: retro-mandatory.yml must NOT contain workflow_run trigger"
+    if [ ! -f "$WORKFLOW_FILE" ]; then
+        FAIL=$((FAIL + 1))
+        log "  FAIL: workflow file not found at $WORKFLOW_FILE"
+        return
+    fi
+    # Detect any 'workflow_run:' trigger in 'on:' block
+    if grep -qE '^\s+workflow_run\s*:' "$WORKFLOW_FILE" 2>/dev/null; then
+        FAIL=$((FAIL + 1))
+        log "  FAIL: workflow_run trigger still present (infinite loop risk — ADR-045 §D-4 amendment_id=1)"
+    else
+        PASS=$((PASS + 1))
+        log "  PASS (no workflow_run trigger)"
+    fi
+}
+
+test_fix_c1_no_git_clone_in_write_steps() {
+    log "FIX C-1 Test 1: retro-mandatory.yml write steps must NOT use git clone for JSONL writes"
+    if [ ! -f "$WORKFLOW_FILE" ]; then
+        FAIL=$((FAIL + 1))
+        log "  FAIL: workflow file not found"
+        return
+    fi
+    # git clone with PAT used to be the write mechanism; Pattern A replaces it entirely
+    # Check specifically for the cross-repo clone-for-write pattern
+    if grep -qE 'git clone.*codeforge-internal-docs' "$WORKFLOW_FILE" 2>/dev/null; then
+        FAIL=$((FAIL + 1))
+        log "  FAIL: git clone for internal-docs write still present (Pattern A required — race condition C-1)"
+    else
+        PASS=$((PASS + 1))
+        log "  PASS (no git clone for JSONL write)"
+    fi
+}
+
+test_fix_c1_pattern_a_gh_api_put_present() {
+    log "FIX C-1 Test 2: retro-mandatory.yml must contain Pattern A gh api PUT calls"
+    if [ ! -f "$WORKFLOW_FILE" ]; then
+        FAIL=$((FAIL + 1))
+        log "  FAIL: workflow file not found"
+        return
+    fi
+    # Pattern A: 'gh api ... -X PUT ... contents/...' with SHA-based update
+    if grep -qE 'gh api.*PUT.*contents' "$WORKFLOW_FILE" 2>/dev/null || \
+       grep -q '\-X PUT' "$WORKFLOW_FILE" 2>/dev/null; then
+        PASS=$((PASS + 1))
+        log "  PASS (Pattern A gh api PUT present)"
+    else
+        FAIL=$((FAIL + 1))
+        log "  FAIL: Pattern A gh api PUT not found (race condition fix incomplete)"
+    fi
+}
+
+test_fix_c1_long_lived_branch_present() {
+    log "FIX C-1 Test 3: retro-mandatory.yml must reference retro-attempts-state branch"
+    if [ ! -f "$WORKFLOW_FILE" ]; then
+        FAIL=$((FAIL + 1))
+        log "  FAIL: workflow file not found"
+        return
+    fi
+    if grep -q 'retro-attempts-state' "$WORKFLOW_FILE" 2>/dev/null; then
+        PASS=$((PASS + 1))
+        log "  PASS (retro-attempts-state long-lived branch referenced)"
+    else
+        FAIL=$((FAIL + 1))
+        log "  FAIL: retro-attempts-state branch not found (ADR-026 §결정 4 — main 직접 push 금지)"
+    fi
+}
+
+# ---------------------------------------------------------------------------
 # Run all tests
 # ---------------------------------------------------------------------------
 log "=== test-retro-mandatory 시작 (CFP-138 Phase 2 / ADR-045) ==="
@@ -443,6 +520,13 @@ test_ac11_template_exists
 test_ac11_template_has_required_fields
 test_ac11_retro_path_naming_matches_ac5
 test_ac11_template_mentions_gate_label
+
+log ""
+log "--- FIX iter 1: A-2 (no workflow_run) + C-1 (Pattern A) ---"
+test_fix_a2_no_workflow_run_trigger
+test_fix_c1_no_git_clone_in_write_steps
+test_fix_c1_pattern_a_gh_api_put_present
+test_fix_c1_long_lived_branch_present
 
 log ""
 log "=== Summary: $PASS PASS, $FAIL FAIL ==="
