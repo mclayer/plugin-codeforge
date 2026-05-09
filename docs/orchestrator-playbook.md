@@ -653,7 +653,7 @@ Phase 1 (현재): 사용자가 `.codeforge/counters.json` 직접 관리. Orchest
 Phase 2 (follow-up CFP): `scripts/codeforge-story-counter.py` 자동 발급 (file lock + atomic rename + reconciliation).
 
 #### Cross-references
-- [ADR-050](../docs/adr/ADR-020-cross-repo-epic-pattern.md) §결정 4 (Agent target repo 결정 priority SSOT)
+- [ADR-050](../docs/adr/ADR-050-multi-repo-story-key-system.md) §결정 4 (Agent target repo 결정 priority SSOT)
 - [ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md) Amendment 3 (본 시스템 = Mode B automation layer)
 - [`consumer-guide.md`](consumer-guide.md) §3 (multi-repo story key 활성화 가이드)
 - [`overlay/_overlay/project.yaml.example`](../overlay/_overlay/project.yaml.example) (codeforge.stories 블록 예시)
