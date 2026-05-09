@@ -5,6 +5,15 @@
   Phase 2 PR (구현·구현리뷰·구현테스트·보안테스트 lane): src/** + tests/** + docs/stories/**/§8-11 append
 
   사용하지 않는 phase 섹션은 통째로 삭제하세요.
+
+  ⚠️  Phase 1 PR Closes/Fixes/Resolves 키워드 금지 (CFP-292 / Issue #299):
+      Phase 1 PR description 에 `Closes #NNN`, `Fixes #NNN`, `Resolves #NNN` 사용 금지.
+      GitHub 이 PR merge 시 Issue 를 자동 close 하여 Phase 2 PR merge 전 Issue 가 premature close 됨.
+      Phase 1 에서는 `Related: #NNN` 사용. `Closes #NNN` 은 Phase 2 PR 에서만 사용.
+
+  ⚠️  Cross-PR conflict resolution (CFP-292 / Issue #299):
+      같은 Story 의 복수 PR (Phase 1 + follow-up) 충돌 시 — base PR 먼저 merge 후
+      충돌 PR 을 merged base 위로 rebase (`git rebase origin/main`) 하고 conflict 해소 후 merge.
 -->
 
 ## Story
@@ -16,6 +25,9 @@
 ---
 
 ## (Phase 1 only) 요구사항·설계·설계리뷰 PR
+
+<!-- Phase 1: Closes/Fixes/Resolves 금지 — Related: #NNN 사용 (CFP-292) -->
+Related: #<Story Issue 번호>
 
 ### 변경 요약
 <!-- 무엇을 했는가, 왜 (1-3 bullet) -->
