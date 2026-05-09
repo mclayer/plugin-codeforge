@@ -1,0 +1,50 @@
+# Team spec — 설계 리뷰 lane
+# CFP-137 / ADR-044 §결정 2 SSOT (dispatch_mode SSOT)
+# Trigger: ArchitectPL verdict = PASS 후 Orchestrator 가 DesignReviewPL spawn
+# Activation: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 (env=0 시 fallback to ADR-039 default subagent context)
+
+lane: design-review
+description: |
+  설계 리뷰 lane — DesignReviewPL (lead) + 1~2 worker (Claude default + Codex on user_request).
+  Default roster = 2 teammate (PL + Claude worker). Codex worker 는 사용자 explicit request 시 추가 → 3 teammate.
+  Adversarial debate: Claude vs Codex SendMessage rounds (사용자 활성 시).
+  PL final pl_recommendation = review-verdict v4 packet (ADR-044 §결정 4 — Sonnet decider 영역 정식 제거).
+
+teammates:
+  - name: DesignReviewPLAgent
+    role: PL
+    system_prompt_path: agents/DesignReviewPLAgent.md  # codeforge-review plugin canonical
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: ClaudeReviewAgent
+    role: worker
+    system_prompt_path: agents/ClaudeReviewAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: CodexReviewAgent
+    role: worker
+    system_prompt_path: agents/CodexReviewAgent.md
+    model: gpt-5-codex  # codex@openai-codex plugin 의 codex CLI runtime
+    spawn_mode: conditional
+    activation_condition: user_explicit_request  # 사용자 ad-hoc 요청 시에만 활성 (Story §2.4)
+    dispatch_mode: user_request_only  # ADR-044 §결정 2 SSOT — memory feedback_sonnet_decider_user_only.md 정합
+
+dispatch_pattern: adversarial  # Claude vs Codex worker SendMessage rounds (Codex 활성 시)
+worktree_layout:
+  per_teammate: false  # review lane = read-only review, 단일 worktree 충분
+  base_worktree: cfp-NNN/design-review
+
+hook_subscriptions:
+  - TeammateIdle
+  - TaskCreated
+  - TaskCompleted
+
+measurable_verification:
+  adversarial: "review-verdict v4 packet의 worker_dialog_rounds >= 2 (Codex worker 활성 시) — ADR-044 §결정 5"
+
+env_divergent_fallback:
+  env_0_behavior: "DesignReviewPL 1개만 spawn → PL 이 Claude worker 1차 호출 → return → Orchestrator 재 spawn 으로 Codex worker (사용자 요청 시). 2-3 round Orchestrator round-trip fallback. SendMessage 부재 → worker_dialog_rounds = 0."
