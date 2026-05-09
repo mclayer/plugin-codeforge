@@ -1,23 +1,24 @@
 ---
 kind: registry
 registry: label
-version: "1.5"
-status: Archived
-superseded_by: label-registry-v2.md
-archived_by: CFP-140
-archived_date: 2026-05-09
-archived_reason: "ADR-049 — type:* label hack replaced by native GitHub Issue Types (type:epic/story/bug → Issue Types). label-registry-v2.md is now Active SSOT."
+version: "2.0"
+status: Active
+supersedes: label-registry-v1.md
+created_by: CFP-140
+created_date: 2026-05-09
 authors:
-  - Claude (CFP-32 codification — bootstrap-labels.sh 추출 + ζ arc owner 매핑)
+  - Claude (CFP-140 — ADR-049 type:* → native Issue Types cutover)
 related_adrs:
-  - ADR-008
-  - ADR-009 (CFP-31)
-  - ADR-030 (CFP-123 — gate:live-entry-pass v1.3 minor bump)
-  - ADR-036 (CFP-260 — phase:reservation v1.4 minor bump)
-  - ADR-045 (CFP-138 — gate:retro-complete v1.5 minor bump)
-  - ADR-049 (CFP-140 — ARCHIVED, superseded by v2)
+  - ADR-008 (contract versioning — MAJOR bump = label hack removal)
+  - ADR-049 (CFP-140 — Issue Types native migration)
+  - ADR-009 (CFP-31 — wrapper agent 0 invariant)
+  - ADR-030 (CFP-123 — gate:live-entry-pass v1.3)
+  - ADR-036 (CFP-260 — phase:reservation v1.4)
+  - ADR-045 (CFP-138 — gate:retro-complete v1.5)
 related_files:
-  - scripts/bootstrap-labels.sh (현재 hardcoded source — CFP-33 contract harness에서 SSOT 역전 후 본 registry → script 자동 생성)
+  - scripts/bootstrap-labels.sh (type:* 3 entry removed — CFP-140)
+  - templates/issue-types.yaml (native Issue Types SSOT — CFP-140)
+  - scripts/migrate-label-to-issue-type.sh (migration tool — CFP-140)
   - .github/workflows/phase-label-invariant.yml
   - .github/workflows/phase-gate-mergeable.yml
   - .github/workflows/fix-ledger-sync.yml
@@ -25,15 +26,20 @@ related_files:
   - .github/workflows/story-init.yml
 ---
 
-> **ARCHIVED (CFP-140 / ADR-049)**: This registry is superseded by `label-registry-v2.md`.
-> type:epic / type:story / type:bug entries have been deprecated in favor of native GitHub Issue Types.
-> See `templates/issue-types.yaml` and `scripts/migrate-label-to-issue-type.sh` for migration.
+# label-registry v2
 
-# label-registry v1
+## 변경 이력
+
+**v2.0 (CFP-140 / ADR-049, 2026-05-09)**: MAJOR bump.
+- **제거**: `type:epic`, `type:story`, `type:bug` — native GitHub Issue Types 로 대체
+  - See: `templates/issue-types.yaml`, `scripts/migrate-label-to-issue-type.sh`
+- **유지**: `impl-manifest` (별도 axis — sub-issue visual marker, non-breaking)
+- **유지**: phase:* / gate:* / fix:* / hotfix:* / audit:* / category:* (전부 유지)
 
 ## 1. 목적
 
-`bootstrap-labels.sh`가 생성하는 GitHub label (v1.3 시점 30+종, 누적 — type 4 / phase 7 / gate 3 / fix 4 / hotfix 2 / audit 12+ / category 7) machine-readable SSOT. ζ arc 진행 후 각 lane plugin이 자기 phase·gate·fix label을 attach·detach 시 통일된 이름·색상·의미 보장. CI Actions(`phase-label-invariant.yml` 등)도 본 registry를 참조해 invariant enforce.
+`bootstrap-labels.sh`가 생성하는 GitHub label SSOT (v2.0 시점 27+ 종 — type 1 / phase 8 / gate 4 / fix 4 / hotfix 2 / audit 12+ / category 7).
+`type:epic` / `type:story` / `type:bug` 는 native Issue Types 로 대체 (ADR-049).
 
 ## 2. Schema
 
@@ -44,35 +50,17 @@ related_files:
 | name | string | label 이름 (예: `phase:설계`) |
 | category | enum | type / phase / gate / fix / hotfix / audit |
 | color | string | 6자리 hex (gh label spec) |
-| description | string | label 설명 (gh label create --description 인자) |
+| description | string | label 설명 |
 | single_active | bool | 같은 category에서 1개만 active 가능 (phase만 true) |
-| attach_owner_plugin | string | CFP-32 시점 + ζ arc 완료 후 부착 권한 plugin / Action |
+| attach_owner_plugin | string | 부착 권한 plugin / Action |
 
 ## 3. 항목
 
 ```yaml
 labels:
-  # type:* (4종)
-  - name: type:epic
-    category: type
-    color: "5319e7"
-    description: "Epic (사용자 요구사항 1건 = Milestone + Issue)"
-    single_active: false
-    attach_owner_plugin: "codeforge-pmo (CFP-36 후) / DocsAgent (CFP-32 시점)"
-
-  - name: type:story
-    category: type
-    color: "0e8a16"
-    description: "Story (PR 1쌍 = Phase 1 + Phase 2)"
-    single_active: false
-    attach_owner_plugin: "story-init.yml CI Action (자동)"
-
-  - name: type:bug
-    category: type
-    color: "d73a4a"
-    description: "Bug"
-    single_active: false
-    attach_owner_plugin: "DocsAgent (CFP-32 시점) / 사용자 직접"
+  # type:* — v2.0 변경사항
+  # type:epic / type:story / type:bug = REMOVED (native Issue Types — ADR-049)
+  # impl-manifest = RETAINED (sub-issue axis, non-breaking)
 
   - name: impl-manifest
     category: type
@@ -81,7 +69,7 @@ labels:
     single_active: false
     attach_owner_plugin: "subissue-from-impl-manifest.yml CI Action (자동)"
 
-  # phase:* (7종, single-active enforced by phase-label-invariant.yml)
+  # phase:* (8종 — phase:reservation 포함, single-active enforced by phase-label-invariant.yml)
   - name: phase:요구사항
     category: phase
     color: "1d76db"
@@ -131,15 +119,14 @@ labels:
     single_active: true
     attach_owner_plugin: "codeforge-review (CFP-35 v2 후) / DocsAgent (CFP-32 시점)"
 
-  # phase:reservation added v1.4 (CFP-260 / ADR-036) — atomic key reservation Issue 의 임시 phase
   - name: phase:reservation
     category: phase
     color: "ededed"
-    description: "Phase: reservation (CFP-260 / ADR-036 — brainstorming 시점 KEY 사전 확보, 30 일 미진행 시 reservation-cleanup.yml 자동 close. promote 시 phase:요구사항 + type:* 로 변경)"
+    description: "Phase: reservation (CFP-260 / ADR-036 — brainstorming 시점 KEY 사전 확보, 30 일 미진행 시 reservation-cleanup.yml 자동 close. promote 시 phase:요구사항 으로 변경)"
     single_active: true
     attach_owner_plugin: "cfp-reserve.yml Issue Form (자동 첨부) / Orchestrator (수동 promote 시 detach)"
 
-  # gate:* (3종) — gate:live-entry-pass added v1.3 (CFP-123 / ADR-030)
+  # gate:* (4종) — gate:live-entry-pass added v1.3 (CFP-123 / ADR-030)
   - name: gate:design-review-pass
     category: gate
     color: "0e8a16"
@@ -159,9 +146,8 @@ labels:
     color: "0e8a16"
     description: "Live Epic lane-entry pass — 3-condition AND (mode==live + --confirm-live + isolated runtime) 충족"
     single_active: false
-    attach_owner_plugin: "wrapper Orchestrator (post-Sonnet review-verdict step 4) / consumer CI 부착 (3-condition 검증 통과 시)"
+    attach_owner_plugin: "wrapper Orchestrator (post-review-verdict step 4) / consumer CI 부착 (3-condition 검증 통과 시)"
 
-  # gate:retro-complete added v1.5 (CFP-138 / ADR-045) — Story 완료 회고 작성 mandate forcing function
   - name: gate:retro-complete
     category: gate
     color: "0e8a16"
@@ -198,7 +184,7 @@ labels:
     single_active: false
     attach_owner_plugin: "fix-ledger-sync.yml CI Action (자동)"
 
-  # hotfix:* (2종) + audit (1종)
+  # hotfix:* (2종)
   - name: hotfix:minimal
     category: hotfix
     color: "ff9999"
@@ -220,7 +206,7 @@ labels:
     single_active: false
     attach_owner_plugin: "Orchestrator (hotfix merge 다음 세션 자동 부착)"
 
-  # audit:debut-* (2종) — CFP-60 / ADR-021 introduced (v1.1 minor bump)
+  # audit:debut-* (2종)
   - name: audit:debut-eval
     category: audit
     color: "fbca04"
@@ -235,7 +221,6 @@ labels:
     single_active: false
     attach_owner_plugin: "wrapper Orchestrator (CFP-60 mctrader 데뷔 평가)"
 
-  # audit:spec-amendment (1종) — CFP-87 / playbook §6.8 introduced (v1.2 minor bump, CFP-88)
   - name: audit:spec-amendment
     category: audit
     color: "fbca04"
@@ -243,8 +228,7 @@ labels:
     single_active: false
     attach_owner_plugin: "wrapper Orchestrator (playbook §6.8 spec amendment loop)"
 
-  # early-close:* (3종 권장 + freeform) — CFP-90 / phase-label-invariant Issue close validation (v1.2 minor bump, CFP-90)
-  # phase progression 미완 채로 close 정당화 시 의무 — phase-label-invariant.yml workflow 가 PASS 조건 검증
+  # early-close:* (3종 권장)
   - name: early-close:duplicate
     category: audit
     color: "d4c5f9"
@@ -266,7 +250,7 @@ labels:
     single_active: false
     attach_owner_plugin: "wrapper Orchestrator (CFP-90 phase invariant)"
 
-  # category:* (7종) — CFP-60 / debut-audit-triage-v1 introduced (v1.1 minor bump)
+  # category:* (7종) — CFP-60 debut-audit-triage-v1
   - name: category:lane-progression
     category: audit
     color: "0e8a16"
@@ -319,8 +303,6 @@ labels:
 
 ## 4. 변경 규칙
 
-- **Append-only for v1.x**: 새 label 추가는 minor (v1.1). 기존 label 삭제 또는 이름 변경은 v2.0 BREAKING (ADR-008)
-- **`single_active: true` invariant**: phase:* 카테고리만 single-active. CI Action `phase-label-invariant.yml`이 enforce — 두 phase:* 동시 부착 PR reject
-- **Color drift 방지**: 본 registry color 값은 `bootstrap-labels.sh`가 idempotent edit (`gh label edit --color`)로 강제 동기화. consumer가 manual로 색상 변경 시 다음 bootstrap 실행에 복원
-- **Owner transition**: ζ arc 진행에 따라 `attach_owner_plugin` 좌측(현재 owner) → 우측(target plugin)으로 이전. fix:* / impl-manifest / type:story / audit:* 는 CI Action 또는 Orchestrator 유지 (lane plugin 무관)
-- **`bootstrap-labels.sh` SSOT 역전 (CFP-33 contract harness 후)**: 현재 script가 hardcoded source. CFP-33에서 본 registry → script 자동 생성으로 전환
+- **v2.x append-only**: 새 label 추가는 minor (v2.1). 기존 label 삭제 또는 이름 변경은 v3.0 BREAKING (ADR-008)
+- **`single_active: true` invariant**: phase:* 카테고리만 single-active
+- **`bootstrap-labels.sh` SSOT 역전 (CFP-33 contract harness 후)**: 현재 script 가 hardcoded source. CFP-33 에서 본 registry → script 자동 생성으로 전환

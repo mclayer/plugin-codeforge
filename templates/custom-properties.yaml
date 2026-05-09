@@ -1,0 +1,38 @@
+# Custom Properties for ABAC targeting (CFP-140 / ADR-048 §결정 2)
+# org: mclayer (replace with actual org)
+# Apply via: gh api /orgs/{org}/properties/schema --method PUT (GitHub API)
+# Docs: https://docs.github.com/en/rest/orgs/properties
+---
+schema_version: "1.0"
+org: "MCLAYER_ORG_PLACEHOLDER"
+properties:
+  - name: criticality
+    value_type: single_select
+    required: false
+    default_value: medium
+    description: "Ruleset cascade tier: high repos get stricter rules (CFP-140 / ADR-048 §결정 2)"
+    allowed_values:
+      - high
+      - medium
+      - low
+
+  - name: story_key_prefix
+    value_type: string
+    required: false
+    default_value: ""
+    description: "Story key prefix for Required Workflow targeting (e.g. CFP, MCT)"
+
+  - name: component
+    value_type: string
+    required: false
+    default_value: ""
+    description: "overlay-defined component identifier (from .claude/_overlay/project.yaml)"
+
+  - name: live_touching
+    value_type: single_select
+    required: false
+    default_value: "false"
+    description: "Does this repo touch live funds / exchange API / production credentials?"
+    allowed_values:
+      - "true"
+      - "false"
