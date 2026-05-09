@@ -33,6 +33,13 @@ supersedes: null
 superseded_by: null
 amends:
   - ADR-035 (Wave 2 amendment_id 추가 — D5 Story 완료 회고 의무화 implementation level)
+amendment_log:
+  - amendment_id: 1
+    cfp: CFP-138
+    date: 2026-05-09
+    scope: "Phase 1 follow-up (FIX iter 2 boundary resolution from CodeReviewPL Iter 1 P0 A-2 + P0 C-1) — §D-4 Phase 2 implementation spec 명확화: 'workflow_run **또는** scheduled cron' disjunction → 'scheduled cron `*/5 * * * *` 단독 사용 (workflow_run trigger 제거)'. workflow_run self re-trigger 의 GitHub Actions infinite loop risk + quota exhaustion risk 회피. boundary issue resolution = 신규 cross-cutting design pattern doc `docs/domain-knowledge/jsonl-write/race-condition-handling-pattern.md` 도입 — Pattern A (Contents API SHA-based optimistic concurrency, default), Pattern B (Long-lived branch + rolling PR, high-volume), Pattern C (File lock + retry, low-volume + simple). 모든 cross-repo jsonl write workflow = Pattern A 의무 (post-merge-telemetry.sh + retro-mandatory.yml + 미래 신설). git clone + bare push 패턴 금지 (lost-update risk)."
+    status: applied
+    ref: §D-4 + docs/domain-knowledge/jsonl-write/race-condition-handling-pattern.md
 ---
 
 # ADR-045: Story 완료 회고 의무화 — Phase 2 PR merge 후 PMOAgent 자동 trigger
@@ -142,7 +149,8 @@ amends:
 
 **Phase 2 implementation spec** (F-5 fix — DesignReview iter 1 P1, Phase 2 PR scope):
 - **State management mechanism**: `<internal-docs>/wrapper/retro-attempts.jsonl` (Phase 2 신설, ADR-026 post-merge-counters.jsonl 와 별도 channel). per-Story attempt counter 누적 — schema = `{story_key, pr_ref, attempt_n: 1|2|3|4, last_attempted_at: ISO8601, status: in_flight|success|failed|escalated}`.
-- **Re-trigger mechanism**: GitHub Actions `workflow_run` event (workflow self re-trigger) 또는 scheduled cron `*/5 * * * *` (every 5min, jsonl state 검사 후 due retry execute). Phase 1 PR scope 에서는 first attempt (5min grace) 만 implement — retry 영역 = Phase 2 PR scope.
+- **Re-trigger mechanism (Phase 1 follow-up amendment_id=1, FIX iter 2 boundary resolution)**: **scheduled cron `*/5 * * * *` 단독 사용** (workflow_run trigger 제거 — workflow_run self re-trigger 의 GitHub Actions infinite loop risk + quota exhaustion risk 회피). cron + retry-state-machine job 가 retro-attempts.jsonl state 검사 후 due retry dispatch. 거절된 alternative: "workflow_run + cron both enabled with infinite loop guard" (`if: github.event.workflow_run.name != 'self'` 등) — complexity 증가 + edge case 다수 (workflow_run.conclusion 다양 + race condition retry 발화 + GitHub Actions runtime quota burn) → cron 단독 = 단순성 + safety + 5min latency overhead 무시 가능 채택. Phase 1 PR scope 에서는 first attempt (5min grace) 만 implement — retry 영역 = Phase 2 PR scope.
+- **Concurrent jsonl write race handling** (boundary issue resolution, FIX iter 2 amendment_id=1): retro-attempts.jsonl 의 모든 cross-repo write (4 git push points = first attempt write + retry-state-machine 의 success/failed/escalated status update) = **Pattern A (Contents API SHA-based optimistic concurrency) 의무** — 신규 cross-cutting design pattern doc `docs/domain-knowledge/jsonl-write/race-condition-handling-pattern.md` SSOT. ADR-026 post-merge-counters.jsonl 도 동일 Pattern A mirror (post-merge-telemetry.sh 가 이미 implementation 정합). git clone + bare push pattern 금지 (lost-update risk — concurrent push 시 second push fail without recovery, silent telemetry loss).
 - **Max attempts state machine**: 4번째 attempt fail 시 `escalated` state 진입 + ESCALATE comment + close-blocking 유지.
 
 Phase 1 PR scope (본 ADR carrier) = first attempt 5min grace + close-blocking action 만. retry state machine = Phase 2 PR scope deferred.
