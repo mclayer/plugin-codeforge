@@ -1049,13 +1049,17 @@ Decider PASS / FIX / pick 결정 후 Orchestrator 가 사용자에게 "진행할
 
 작업 단위 전체 완료 후 1번 final report — sub-step 별 완료 시각 / 소요 시간 / decider pick (PL pl_recommendation 또는 사용자 ad-hoc Sonnet pick) / override marker 포함 (Amendment 2 정정 후, 이전 ~~"Sonnet pick"~~). 사용자 redirect 가능성 명시 (단 본인이 stop 안 함).
 
-### Consumer 측 활성 directive
+### Consumer 측 활성 directive (Phase 1 trust model — enforcement scope 만 directive 의존)
 
-consumer 측 사용자 발화 의무 (Phase 1 trust model — enforcement hook 없음):
+**정책 normative status** = consumer 가 codeforge family plugin 을 사용하는 시점부터 **항상 적용** (ADR-025 §결정 1 / Amendment 1). directive 발화 여부와 무관 — Stop discipline + Epic-level continuity 정책 자체 normative.
+
+**Enforcement scope 만 Phase 1 trust model 적용** = directive 부재 시 자동 enforcement hook 부재 (§7.0.6 / Phase 2 instrumentation 도입 전까지). 즉 정책은 발효되지만, consumer Orchestrator 자체 인지 (본 §7.1 + ADR-025 reading) 가 1차 안전망.
+
+consumer 측 사용자 활성 directive 권장 (자체 인지 강화 채널 — wrapper directive 패턴 mirror):
 
 > "이 프로젝트에서도 codeforge plugin Stop discipline + Epic-level continuity (ADR-025 / CFP-80) 적용해서 작업 단위 끝까지 자동 진행 + 1번 final report 해라."
 
-또는 동등 wording. directive 없으면 default = user-approval gates 운영 + 매 phase stop.
+또는 동등 wording. directive 발화 시 consumer Orchestrator 정책 인지 reinforced — 그러나 발화 부재 시에도 정책 normative 적용 보존 (§7.0.5 / ADR-039 §결정 7 동일 패턴).
 
 ### Phase 2 instrumentation (후속)
 
