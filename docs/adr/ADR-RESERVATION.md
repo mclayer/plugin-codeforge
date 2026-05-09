@@ -54,6 +54,7 @@ reservations: []
 | adr_number | epic | status | reserved_at |
 |---|---|---|---|
 | 50 | CFP-344 | active | 2026-05-09 |
+| 51 | CFP-343 | active | 2026-05-09 |
 
 ### 번호 해제 (archived)
 
