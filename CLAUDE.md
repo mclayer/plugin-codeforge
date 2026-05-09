@@ -27,7 +27,7 @@ Lane internal · per-lane spawn detail · severity rule · GitHub workflow subse
 **필수 플러그인 (8종)**:
 - `codeforge-{review,pmo,requirements,develop,design}@mclayer` — 5 lane plugin (codeforge-test deprecated — CFP-317 / ADR-048)
 - `codex@openai-codex` — CodexReviewAgent + codex CLI dependency
-- `superpowers@claude-plugins-official` — 17 lane agent × 7 skill 호출 (SSOT: [`docs/superpowers-integration.md`](docs/superpowers-integration.md))
+- `superpowers@claude-plugins-official` — 17 lane agent × 8 skill 호출 (SSOT: [`docs/superpowers-integration.md`](docs/superpowers-integration.md))
 - `github@claude-plugins-official` — GitHub MCP 도구 노출
 
 **필수 CLI (2종)**: `codex`, `gh`. (CFP-59 / ADR-019 → ADR-022 (Deprecated by CFP-134 / ADR-035) — Gemini CLI 의존 제거. ad-hoc Sonnet / Codex 호출 = Claude Code Agent tool runtime / codex CLI, 외부 auth 무관. `gemini` CLI 가 다른 용도로 설치되어 있으면 unset / removable optional.)
@@ -58,7 +58,7 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 리뷰 워커 통합 근거: [ADR-001](docs/adr/ADR-001-review-agent-unification.md) (3 lane × 2 vendor → 2 lane-agnostic worker). [Inter-plugin Contract `review_verdict`](docs/inter-plugin-contracts/review-verdict-v2.md) versioning: [ADR-008](docs/adr/ADR-008-inter-plugin-contract-versioning.md).
 
-> **(선택) Stage 0 — pre-Issue brainstorming**: 비-trivial Story 는 `superpowers:brainstorming` 으로 사전 scope 정리 후 Issue Form 제출 권장 ([ADR-034](docs/adr/ADR-034-pre-issue-brainstorming-stage.md) · [playbook §1.2.0](docs/orchestrator-playbook.md)). CI 강제 없음 — `spec_link` Issue Form 필드는 옵션.
+> **(선택) Stage 0 — pre-Issue brainstorming**: 비-trivial Story 는 `codeforge:brainstorm` (codeforge 프로젝트) 또는 `superpowers:brainstorming` (generic) 으로 사전 scope 정리 후 Issue Form 제출 권장 ([ADR-034 + Amendment 1](docs/adr/ADR-034-pre-issue-brainstorming-stage.md) · [playbook §1.2.0](docs/orchestrator-playbook.md)). `codeforge:brainstorm` = Requirements 에이전트 4종 병렬 컨텍스트 + scope_manifest 초안 자동 생성 (opt-in Phase 0). CI 강제 없음.
 
 ## 레인 5개 · 단계 정의
 
@@ -431,6 +431,7 @@ Plugin repo (codeforge family) 작업 시:
 - `superpowers:writing-plans` skill plan 저장 위치 = `<internal-docs-clone>/<plugin-folder>/plans/` (default 아님)
 - Controller (Orchestrator) 가 path 명시 의무, Skill prompt 에 explicit override
 - Plugin repo CI (`dogfood-artifact-paths`) 가 PR 단계에서 fail-closed (ADR-017). Skill prompt 정책 인지는 1차 안전망, CI 가 authoritative
+- `codeforge:brainstorm` skill = codeforge 프로젝트 전용 강화 brainstorming (ADR-034 Amendment 1). `superpowers:brainstorming` 상위호환.
 
 Consumer overlay: `.claude/_overlay/project.yaml` `story_cutoff.additional_exempt_categories[]` 로 도메인 특화 면제 추가 가능 (**강제 항목 축소 불허** — 안전 방향만). Schema [`docs/project-config-schema.md`](docs/project-config-schema.md) §2.
 
