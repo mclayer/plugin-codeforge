@@ -112,25 +112,40 @@ amends:
 
 **Implementation**: retro-mandatory.yml workflow 가 Phase 2 marker 부재 시 fallback = Phase 1 PR merge + Story Issue close 시점 trigger. 또는 doc-only Story = `phase:보안-테스트` 도달 시점 (Phase 1 PR merge 후 phase progression 가능). 본 ADR 결정 = doc-only Story 도 retro 의무.
 
-### D-4 — Partial-write protocol = retry 5/10/15분 + max 2 retry + ESCALATE + close-blocking 유지
+### D-4 — Partial-write protocol = 4 attempts (1 initial + 3 retries) + ESCALATE + close-blocking 유지
 
-**결정**: PMOAgent retro write 시 partial failure (예: retro file write 성공 + Story §11 update 성공 — Epic milestone API 호출 fail) 발생 시 retry policy:
+**결정**: PMOAgent retro write 시 partial failure (예: retro file write 성공 + Story §11 update 성공 — Epic milestone API 호출 fail) 발생 시 retry policy.
 
-1. **Retry 1**: 5분 후 재실행
-2. **Retry 2**: 10분 후 재실행
-3. **Retry 3 (cap)**: 15분 후 재실행
-4. **3회 후 ESCALATE**: `[PMO] Retro automation failed after 3 retry — 사용자 ESCALATE` comment + `gate:retro-complete` 미부착 (Story close 차단 유지)
+**Cumulative offset spec from PR merge timestamp** (verbatim — 6 source sync SSOT, FIX iter 1 F-1 fix):
 
-**Total max retry latency = 5+10+15 = 30분**. 30분 후 Story close 차단 유지 + 사용자 manual 복구 후 PMOAgent re-spawn → 정상 경로 복귀.
+| Attempt | Wait from previous | Cumulative offset from PR merge | Action |
+|---|---|---|---|
+| **First attempt** (initial) | — (5min grace) | **+5min** | PMOAgent retro write 시도 |
+| **Retry 1** | +5min wait | **+10min** | gate:retro-complete 부재 검출 시 PMOAgent re-spawn |
+| **Retry 2** | +10min wait | **+20min** | gate:retro-complete 부재 검출 시 PMOAgent re-spawn |
+| **Retry 3** | +15min wait | **+35min** | gate:retro-complete 부재 검출 시 PMOAgent re-spawn (final attempt) |
+| **ESCALATE** | — | **+35min** 후 | retry 3 fail 시 `[PMO] Retro automation failed after 3 retries — 사용자 ESCALATE` comment + `gate:retro-complete` 미부착 (Story close 차단 유지) |
+
+**Total attempts = 4** (1 initial + 3 retries).
+**Total max latency from PR merge to ESCALATE = 35min** (5min grace + 5+10+15 retry waits).
+
+35min 후 Story close 차단 유지 + 사용자 manual 복구 후 PMOAgent re-spawn → 정상 경로 복귀.
 
 **거절된 대안**:
 - (b) retry 1회 + ESCALATE — transient failure (network blip / GitHub API 5xx) 자동 복구 부족
 - (c) infinite retry — DoS risk (PR 다수 merge 시 worker thread 누적)
 - (d) close-blocking 해제 — silent failure 차단 무력화 (mandate forcing function 의미 상실)
 
-**근거**: 5분 grace = first attempt budget. 5+10+15 = 점진 증가 (exponential backoff lite). 30분 max latency 후 사용자 ESCALATE = silent failure 차단 정합.
+**근거**: 5min grace = first attempt budget. 5/10/15 wait = 점진 증가 (exponential backoff lite). 35min max latency 후 사용자 ESCALATE = silent failure 차단 정합.
 
-**Implementation**: retro-mandatory.yml workflow 가 retry counter 보유 (workflow re-run trigger 또는 scheduled cron + state file). PMOAgent retry 시 idempotent (기존 retro file 존재 검사 → append 또는 skip).
+**Idempotency invariant** (§11.6 cross-ref): 매 attempt 가 idempotent — retro file 존재 검사 (PMOAgent re-spawn 시 existing file 검출 + abort 또는 append) + `gh label add` no-op (이미 부착 시) + Issue close-blocking auto-reopen idempotent comment (EXISTING_ALERT check, retro-mandatory.yml workflow 안).
+
+**Phase 2 implementation spec** (F-5 fix — DesignReview iter 1 P1, Phase 2 PR scope):
+- **State management mechanism**: `<internal-docs>/wrapper/retro-attempts.jsonl` (Phase 2 신설, ADR-026 post-merge-counters.jsonl 와 별도 channel). per-Story attempt counter 누적 — schema = `{story_key, pr_ref, attempt_n: 1|2|3|4, last_attempted_at: ISO8601, status: in_flight|success|failed|escalated}`.
+- **Re-trigger mechanism**: GitHub Actions `workflow_run` event (workflow self re-trigger) 또는 scheduled cron `*/5 * * * *` (every 5min, jsonl state 검사 후 due retry execute). Phase 1 PR scope 에서는 first attempt (5min grace) 만 implement — retry 영역 = Phase 2 PR scope.
+- **Max attempts state machine**: 4번째 attempt fail 시 `escalated` state 진입 + ESCALATE comment + close-blocking 유지.
+
+Phase 1 PR scope (본 ADR carrier) = first attempt 5min grace + close-blocking action 만. retry state machine = Phase 2 PR scope deferred.
 
 ### D-5 — Story §11 schema migration = 신규 Story 부터 적용 (backward compat)
 
@@ -240,10 +255,10 @@ amends:
 - ADR-026 post-merge-followup.yml 미터치 (single-responsibility 보존)
 - bootstrap-labels.sh idempotency 보존 (기존 30+ label 무수정)
 - backward compat (기존 Story file retroactive 미처리)
-- forcing function 동작 (close-blocking + 30분 max retry + ESCALATE)
+- forcing function 동작 (close-blocking + 4 attempts (1 initial + 3 retries) + 35min max latency + ESCALATE)
 
 부정:
-- 5분 grace + retry 5/10/15분 = 30분 max latency — 정상 경로에서 retro write 즉시 시 0-5분 (acceptable)
+- 5min grace + 4 attempts (1 initial + 3 retries) cumulative = 35min max latency — 정상 경로에서 retro write 첫 attempt 성공 시 0-5min (acceptable)
 - Story close 시점 다소 지연 (5분 grace + PMOAgent spawn time)
 - Cross-repo PAT (CODEFORGE_CROSS_REPO_PAT) expiration 의존 — ADR-026 §결정 2 90d runbook 정합
 - Doc-only Story trigger window 정의 복잡 (Phase 2 marker fallback) — D-3 implementation 정밀화 의무
