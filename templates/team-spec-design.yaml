@@ -1,0 +1,100 @@
+# Team spec — 설계 lane
+# CFP-137 / ADR-041 §결정 2 SSOT
+# Trigger: RequirementsPL verdict = PASS 후 Orchestrator 가 ArchitectPL spawn
+# Activation: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 (env=0 시 fallback to ADR-039 default subagent context)
+
+lane: design
+description: |
+  설계 lane — ArchitectPL (lead) + ArchitectAgent (chief author) + 6 deputy 병렬 (CodebaseMapper / Refactor / SecurityArch / OpRiskArch / TestContractArch / DataMigrationArch).
+  Live touching Story 시 +2 CONDITIONAL deputy (LiveOps / LiveOrdering) — total 8.
+  Deputy mandate matrix SSOT = wrapper CLAUDE.md "Deputy mandate 매트릭스" (ADR-014 + ADR-012 §3 4번째 SSOT 예외).
+
+teammates:
+  - name: ArchitectPLAgent
+    role: PL
+    system_prompt_path: agents/ArchitectPLAgent.md  # codeforge-design plugin canonical
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: ArchitectAgent
+    role: chief
+    system_prompt_path: agents/ArchitectAgent.md  # chief author (6 deputy 통합)
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: CodebaseMapperAgent
+    role: deputy
+    system_prompt_path: agents/CodebaseMapperAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: RefactorAgent
+    role: deputy
+    system_prompt_path: agents/RefactorAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: SecurityArchitectAgent
+    role: deputy
+    system_prompt_path: agents/SecurityArchitectAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: OperationalRiskArchitectAgent
+    role: deputy
+    system_prompt_path: agents/OperationalRiskArchitectAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: TestContractArchitectAgent
+    role: deputy
+    system_prompt_path: agents/TestContractArchitectAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: DataMigrationArchitectAgent
+    role: deputy
+    system_prompt_path: agents/DataMigrationArchitectAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: LiveOpsDeputy
+    role: deputy
+    system_prompt_path: agents/LiveOpsDeputy.md
+    model: claude-opus-4-7
+    spawn_mode: conditional
+    activation_condition: live_touching_story  # ADR-030 § Live touching detection
+    dispatch_mode: default
+
+  - name: LiveOrderingDeputy
+    role: deputy
+    system_prompt_path: agents/LiveOrderingDeputy.md
+    model: claude-opus-4-7
+    spawn_mode: conditional
+    activation_condition: live_touching_story
+    dispatch_mode: default
+
+dispatch_pattern: parallel  # 6 deputy 동시 spawn (CONDITIONAL +2)
+worktree_layout:
+  per_teammate: true  # 각 deputy 자기 sub-worktree 보유 — file 충돌 0
+  base_worktree: cfp-NNN/design  # lane sub-branch (ADR-040 hierarchical)
+
+hook_subscriptions:
+  - TeammateIdle
+  - TaskCreated
+  - TaskCompleted
+
+measurable_verification:
+  parallelization: "§14 Lane Evidence 의 6 deputy row spawned_at diff < 60s (ADR-041 §결정 5)"
+  specialization: "각 deputy system_prompt_path line count < ArchitectPLAgent.md line count (subjective fixture, Phase 2 spot-check)"
+
+env_divergent_fallback:
+  env_0_behavior: "ArchitectPL 1개만 spawn → PL 이 6 deputy 산출물을 sequential 합성 후 chief author 통합 (현재 cfp-137-agent-teams branch 본 lane 진행 방식 — Orchestrator 가 본 PL 만 spawn, PL 이 deputy perspective 직접 합성)."

@@ -22,6 +22,7 @@ related_adrs:
   - ADR-024
   - ADR-025
   - ADR-029
+  - ADR-041  # CFP-137 carrier — D2 implementation level SSOT (amendment_log[1] applied)
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md
@@ -31,6 +32,11 @@ amendment_log:
     date: 2026-05-08
     scope: "CFP-140 추가 — GitHub Enterprise Cloud (GHEC) governance 4 영역 (rulesets-as-code / required workflows enterprise sync / audit log streaming + decision packet SIEM trail / Issue Types + sub-issues migration) 을 GitOpsAgent mandate 로 확장. 본 ADR Initial draft 는 D1-D5 (Foundation 결정) 만, CFP-137 가 phase-scoped agent teams 내용 amendment, CFP-140 가 GHEC governance 내용 amendment 추가 예정."
     status: planned
+  - amendment_id: 2
+    date: 2026-05-09
+    scope: "CFP-137 (Wave 2) carrier — D2 (Agent teams 적극 도입) 의 implementation level 결정 본 ADR 외 별도 ADR-041 (Phase-scoped sequential team SSOT) 으로 carrier 분리. ADR-041 가 lifecycle / team-spec yaml 7종 / hook 3종 / review-verdict v3 → v4 cutover / 5 권장 패턴 measurable verification 통합. 본 ADR D2 본문 변경 0 — D2 §결정 정합 invariant 무손상 + ADR-041 carrier 명시 cross-ref 만 추가."
+    status: applied
+    applied_pr: "wrapper Phase 1 PR (CFP-137)"
 ---
 
 # ADR-035: codeforge agent teams + GitOps + retro 의무화 + ADR-022 deprecate Epic architecture
@@ -106,7 +112,7 @@ amendment_log:
 - 권장 3-5 명 초과 (Design 8명, Develop 5-7명) — 25 thread 한도 내 + Specialization 패턴 정합으로 허용
 - Experimental status — Hotfix path 유지 + `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` SessionStart hook 검증 의무
 
-**Implementation**: CFP-137 (Wave 2). 본 ADR 의 phase-scoped agent teams 상세 mandate (`templates/team-spec-<lane>.yaml` 7종 + lane plugin agent prompt 갱신 + review-verdict v3 → v4 contract bump 등) 는 CFP-137 진행 시 Amendment 1 으로 본 ADR 추가.
+**Implementation**: CFP-137 (Wave 2). D2 의 implementation level 결정은 본 ADR 외 별도 [ADR-041 (Phase-scoped sequential team SSOT)](ADR-041-phase-scoped-sequential-team.md) carrier — `templates/team-spec-<lane>.yaml` 7종 + hook 3종 (TeammateIdle / TaskCreated / TaskCompleted) + review-verdict v3 → v4 contract bump + 5 권장 패턴 measurable verification 통합. 본 ADR amendment_log[1] = `applied` (CFP-137 wrapper Phase 1 PR carrier). lane plugin agent prompt 갱신 = sibling sync follow-up PR (ADR-010 wrapper-first 절차).
 
 ### D3 — GitOpsAgent 신설 + 위치 = codeforge-pmo plugin
 

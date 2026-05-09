@@ -1,0 +1,23 @@
+{
+  "_comment": "codeforge agent teams TaskCompleted hook — CFP-137 / ADR-041 §결정 3.",
+  "_doc": "Append this hook definition to consumer's `.claude/settings.json` under `hooks.TaskCompleted[]` array.",
+  "_purpose": "TaskCompleted 발화 시 Story §14 Lane Evidence row outcome 채움 (end: return 직후). CFP-139 GitOpsAgent 활성 후에는 추가로 worktree merge trigger.",
+  "_severity": "§14 row update 실패 = warning logging. 본 sample 은 placeholder.",
+  "_activation": "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 시에만 platform 이 trigger 발화. env=0 fallback (ADR-039 default subagent context) 시 hook 등록되어도 미발화 — outcome 채움 은 Orchestrator 가 직접 수행.",
+  "_bypass": "BYPASS_TASK_COMPLETED_HOOK=1 env (rare — debugging only)",
+  "_prerequisite": "settings.json env 에 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 활성. agent teams 활성 + 신규 세션 재시작.",
+  "_install_path": "Sample 만 — runtime 동작 부재. Phase 2 PR (CFP-137 Wave 2 follow-up) 가 실제 §14 row outcome update script + worktree merge trigger (CFP-139 후) 구현 의무. 본 sample = consumer 측 settings.json hook 등록 schema reference.",
+  "hooks": {
+    "TaskCompleted": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[TaskCompleted] lane=$LANE teammate=$TEAMMATE outcome=$OUTCOME — update §14 row' >&2 || true"
+          }
+        ]
+      }
+    ]
+  }
+}

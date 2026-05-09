@@ -31,6 +31,20 @@
 - ADR 정합성: 위반 0건
 - (또는) Change Plan §3 vs ADR 정합성 확인 결과
 
+### Team spec (CFP-137 / ADR-041 — agent teams enabled context 만)
+<!--
+  CFP-137 / ADR-041 §결정 2 — Phase-scoped sequential team 사용 시 본 블록 채움.
+  CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 활성 + team-spec yaml 사용 시.
+  env=0 (default subagent context, ADR-039 fallback) 시 본 블록 생략 가능.
+-->
+- 요구사항 lane team spec: `templates/team-spec-requirements.yaml` (4 teammate parallel)
+- 설계 lane team spec: `templates/team-spec-design.yaml` (8 teammate parallel + CONDITIONAL +2 Live deputy)
+- 설계 리뷰 lane team spec: `templates/team-spec-design-review.yaml` (default 2 teammate / Codex on user_request_only — 3)
+- (Phase 2 만) 구현 lane team spec: `templates/team-spec-develop.yaml` (5-7 teammate cross-layer)
+- 구현 리뷰 lane team spec: `templates/team-spec-code-review.yaml` (default 2 teammate)
+- 보안 테스트 lane team spec: `templates/team-spec-security-test.yaml` (default 2 teammate + native layer integration)
+- review-verdict v4 worker_dialog_rounds (review lane Codex 활성 시 >= 2 권장 — ADR-041 §결정 5)
+
 ### Test plan (Phase 1)
 <!-- 본 PR 머지 전에 수행할 검토 -->
 - [ ] Story §1 verbatim 그대로 (story-init.yml 결과 검증)

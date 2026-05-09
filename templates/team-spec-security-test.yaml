@@ -1,0 +1,56 @@
+# Team spec — 보안 테스트 lane
+# CFP-137 / ADR-041 §결정 2 SSOT (dispatch_mode SSOT — review lane 패턴)
+# Trigger: 구현 테스트 PASS 후 Orchestrator 가 SecurityTestPL spawn
+# Activation: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 (env=0 시 fallback to ADR-039 default subagent context)
+
+lane: security-test
+description: |
+  보안 테스트 lane — SecurityTestPL (lead) + 1~2 worker (Claude default + Codex on user_request).
+  2-layer 통합: GitHub native (Dependabot / CodeQL / Secret Scanning — 1차 layer) + Claude / Codex 통합 워커 (lane=security packet, 2차 layer).
+  Default roster = 2 teammate. Codex worker 는 사용자 explicit request 시 추가 → 3 teammate.
+  Adversarial + GitHub native 1차 layer 통합 패턴.
+
+teammates:
+  - name: SecurityTestPLAgent
+    role: PL
+    system_prompt_path: agents/SecurityTestPLAgent.md  # codeforge-review plugin canonical
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: ClaudeReviewAgent
+    role: worker
+    system_prompt_path: agents/ClaudeReviewAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: CodexReviewAgent
+    role: worker
+    system_prompt_path: agents/CodexReviewAgent.md
+    model: gpt-5-codex
+    spawn_mode: conditional
+    activation_condition: user_explicit_request
+    dispatch_mode: user_request_only
+
+dispatch_pattern: adversarial-with-native-layer-integration
+worktree_layout:
+  per_teammate: false
+  base_worktree: cfp-NNN/security-test
+
+hook_subscriptions:
+  - TeammateIdle
+  - TaskCreated
+  - TaskCompleted
+
+native_layer_integration:
+  github_dependabot: "1차 layer — Dependabot CVE alert 가 packet 으로 import"
+  github_codeql: "1차 layer — CodeQL alert 가 packet 으로 import"
+  github_secret_scanning: "1차 layer — Secret Scanning alert 가 packet 으로 import"
+
+measurable_verification:
+  adversarial: "review-verdict v4 packet의 worker_dialog_rounds >= 2 (Codex worker 활성 시) — ADR-041 §결정 5"
+  native_layer: "1차 layer alert 수 + 2차 layer finding 수 packet 보고 (PASS/FIX 판정 입력)"
+
+env_divergent_fallback:
+  env_0_behavior: "design-review / code-review 와 동일 fallback. 1차 layer (GitHub native) 는 env 무관 동작 — workflow native API."

@@ -1,0 +1,66 @@
+# Team spec — 구현 lane
+# CFP-137 / ADR-041 §결정 2 SSOT
+# Trigger: gate:design-review-pass label 부착 후 Orchestrator 가 DeveloperPL spawn
+# Activation: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 (env=0 시 fallback to ADR-039 default subagent context)
+
+lane: develop
+description: |
+  구현 lane — DeveloperPL (lead) + QADev + role:dev × N (N = preset/overlay 동적, 일반적 3-5).
+  Cross-layer pattern: dev ↔ QA continuous coordination (SendMessage rounds).
+  Total teammate count = 5-7 (PL + QADev + 3-5 role:dev).
+
+teammates:
+  - name: DeveloperPLAgent
+    role: PL
+    system_prompt_path: agents/DeveloperPLAgent.md  # codeforge-develop plugin canonical
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: QADeveloperAgent
+    role: QADev
+    system_prompt_path: agents/QADeveloperAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  # role:dev 3 core (codeforge-develop plugin) — preset / overlay 가 추가 발화
+  - name: SoftwareDeveloperAgent
+    role: role:dev
+    system_prompt_path: agents/SoftwareDeveloperAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: TestDeveloperAgent
+    role: role:dev
+    system_prompt_path: agents/TestDeveloperAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: InfraDeveloperAgent
+    role: role:dev
+    system_prompt_path: agents/InfraDeveloperAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  # role:dev preset/overlay 동적 추가 (e.g., FrontendDev / BackendDev / DBA / SecurityDev)
+  # presets/{python,typescript,go,...}.yaml 또는 consumer overlay 가 추가 teammate 목록 지정.
+
+dispatch_pattern: cross-layer  # dev ↔ QA SendMessage rounds
+worktree_layout:
+  per_teammate: true  # 각 dev role 자기 sub-worktree 보유 — file 충돌 0 (병렬 commit 안전)
+  base_worktree: cfp-NNN/develop
+
+hook_subscriptions:
+  - TeammateIdle
+  - TaskCreated
+  - TaskCompleted
+
+measurable_verification:
+  cross_layer: "develop-output v1.1 packet의 cross_layer_dialog_rounds >= 1 (dev ↔ QA SendMessage round count) — ADR-041 §결정 5"
+
+env_divergent_fallback:
+  env_0_behavior: "DeveloperPL 1개만 spawn → PL 이 QADev 호출 (Impl Manifest 매핑표 작성) → return → Orchestrator 재 spawn 으로 role:dev N (병렬 spawn — Orchestrator 가 직접 fan-out). QA ↔ dev continuous dialog 부재 → cross_layer_dialog_rounds = 0."

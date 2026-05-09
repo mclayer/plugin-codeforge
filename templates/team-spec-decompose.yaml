@@ -1,0 +1,38 @@
+# Team spec — Stage 0 (Epic 분해)
+# CFP-137 / ADR-041 §결정 2 SSOT — Phase-scoped sequential team
+# Trigger: Epic-level Story 발의 시 Orchestrator 가 PMOAgent 와 SendMessage round 진행
+# Activation: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 (env=0 시 fallback to ADR-039 default subagent context)
+
+lane: decompose
+description: |
+  Epic 분해 단계 — Orchestrator (lead) + PMOAgent (teammate). Epic→Story→sub 계층 + branch tree 결정.
+  CFP-139 GitOpsAgent 활성 후에는 GitOpsAgent 도 teammate 추가 (현재 spawn_mode=conditional, activation_condition=cfp_139_active).
+
+teammates:
+  - name: PMOAgent
+    role: PL
+    system_prompt_path: agents/PMOAgent.md  # codeforge-pmo plugin canonical (sibling sync)
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: GitOpsAgent
+    role: deputy
+    system_prompt_path: agents/GitOpsAgent.md  # codeforge-pmo plugin (CFP-139 신설 후)
+    model: claude-opus-4-7
+    spawn_mode: conditional
+    activation_condition: cfp_139_active
+    dispatch_mode: default
+
+dispatch_pattern: sequential-dialog
+worktree_layout:
+  per_teammate: false
+  base_worktree: cfp-NNN  # Story root branch (Epic 분해 시점은 Phase 1 PR 진행 전)
+
+hook_subscriptions:
+  - TaskCreated
+  - TaskCompleted
+  # TeammateIdle = 미발화 (sequential-dialog 라 idle 자연 발생 빈도 낮음)
+
+env_divergent_fallback:
+  env_0_behavior: "Orchestrator 가 PMOAgent 를 one-shot Agent tool spawn — sequential dialog 미발화. Epic 분해 결과는 single round 로 종결 (continuous dialog 부재)."

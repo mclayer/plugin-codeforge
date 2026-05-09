@@ -1,0 +1,23 @@
+{
+  "_comment": "codeforge agent teams TaskCreated hook — CFP-137 / ADR-041 §결정 3.",
+  "_doc": "Append this hook definition to consumer's `.claude/settings.json` under `hooks.TaskCreated[]` array.",
+  "_purpose": "TaskCreate 발화 시 Story §14 Lane Evidence row append (start: spawn 직전). ADR-031 Amendment 1 (Orchestrator-owned delegate inclusion) 정합 — hook 자체가 Orchestrator-owned delegate 의 subagent spawn 을 mechanism level 에서 trigger.",
+  "_severity": "§14 row append 실패 = warning logging (no session block). 본 sample 은 placeholder — Phase 2 PR (실제 row append script 구현) 가 retry policy 추가.",
+  "_activation": "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 시에만 platform 이 trigger 발화. env=0 fallback (ADR-039 default subagent context) 시 hook 등록되어도 미발화 — Story §14 row append 는 Orchestrator 가 직접 수행 (기존 ADR-031 Phase 1 invariant).",
+  "_bypass": "BYPASS_TASK_CREATED_HOOK=1 env (rare — debugging only)",
+  "_prerequisite": "settings.json env 에 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 활성. agent teams 활성 + 신규 세션 재시작.",
+  "_install_path": "Sample 만 — runtime 동작 부재. Phase 2 PR (CFP-137 Wave 2 follow-up) 가 실제 §14 row append script 구현 + ADR-031 Amendment 1 mechanism level 자동화 의무. 본 sample = consumer 측 settings.json hook 등록 schema reference.",
+  "hooks": {
+    "TaskCreated": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[TaskCreated] lane=$LANE teammate=$TEAMMATE — append §14 row' >&2 || true"
+          }
+        ]
+      }
+    ]
+  }
+}

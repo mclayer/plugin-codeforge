@@ -1,0 +1,23 @@
+{
+  "_comment": "codeforge agent teams TeammateIdle hook — CFP-137 / ADR-041 §결정 3.",
+  "_doc": "Append this hook definition to consumer's `.claude/settings.json` under `hooks.TeammateIdle[]` array. Or merge via overlay/hooks/merge.py.",
+  "_purpose": "Idle teammate detect (Anthropic platform behavior — agent teams enabled context only). PL 에 nudge SendMessage 또는 TeamDelete trigger 권유.",
+  "_severity": "Idle nudge = info logging only (no session block). Script always exits 0.",
+  "_activation": "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 시에만 platform 이 trigger 발화. env=0 fallback (ADR-039 default subagent context) 시 hook 등록되어도 미발화.",
+  "_bypass": "BYPASS_TEAMMATE_IDLE_HOOK=1 env (rare — debugging only)",
+  "_prerequisite": "settings.json env 에 CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 활성. agent teams 활성 + 신규 세션 재시작.",
+  "_install_path": "Sample 만 — runtime 동작 부재. Phase 2 PR (CFP-137 Wave 2 follow-up) 가 실제 nudge logic + script 구현 의무. 본 sample = consumer 측 settings.json hook 등록 schema reference.",
+  "hooks": {
+    "TeammateIdle": [
+      {
+        "matcher": ".*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '[TeammateIdle] $TEAMMATE_NAME idle — nudge or TeamDelete' >&2 || true"
+          }
+        ]
+      }
+    ]
+  }
+}
