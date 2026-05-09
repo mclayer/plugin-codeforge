@@ -10,7 +10,7 @@ related_adrs:
   - ADR-009 (CFP-31)
   - ADR-030 (CFP-123 — gate:live-entry-pass v1.3 minor bump)
   - ADR-036 (CFP-260 — phase:reservation v1.4 minor bump)
-  - ADR-042 (CFP-138 — gate:retro-complete v1.5 minor bump)
+  - ADR-043 (CFP-138 — gate:retro-complete v1.5 minor bump)
 related_files:
   - scripts/bootstrap-labels.sh (현재 hardcoded source — CFP-33 contract harness에서 SSOT 역전 후 본 registry → script 자동 생성)
   - .github/workflows/phase-label-invariant.yml
@@ -152,11 +152,11 @@ labels:
     single_active: false
     attach_owner_plugin: "wrapper Orchestrator (post-Sonnet review-verdict step 4) / consumer CI 부착 (3-condition 검증 통과 시)"
 
-  # gate:retro-complete added v1.5 (CFP-138 / ADR-042) — Story 완료 회고 작성 mandate forcing function
+  # gate:retro-complete added v1.5 (CFP-138 / ADR-043) — Story 완료 회고 작성 mandate forcing function
   - name: gate:retro-complete
     category: gate
     color: "0e8a16"
-    description: "Story 완료 회고 작성됨 (PMOAgent self-write — CFP-138 / ADR-042). 미부착 시 retro-mandatory.yml 가 Story Issue close 차단 (auto-reopen)."
+    description: "Story 완료 회고 작성됨 (PMOAgent self-write — CFP-138 / ADR-043). 미부착 시 retro-mandatory.yml 가 Story Issue close 차단 (auto-reopen)."
     single_active: false
     attach_owner_plugin: "codeforge-pmo (PMOAgent self-write) — Phase 2 PR merge 후 retro write 완료 시 부착"
 

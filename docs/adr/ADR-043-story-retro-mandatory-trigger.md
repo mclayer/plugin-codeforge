@@ -35,7 +35,7 @@ amends:
   - ADR-035 (Wave 2 amendment_id 추가 — D5 Story 완료 회고 의무화 implementation level)
 ---
 
-# ADR-042: Story 완료 회고 의무화 — Phase 2 PR merge 후 PMOAgent 자동 trigger
+# ADR-043: Story 완료 회고 의무화 — Phase 2 PR merge 후 PMOAgent 자동 trigger
 
 ## 상태
 
@@ -177,7 +177,7 @@ Phase 1 PR scope (본 ADR carrier) = first attempt 5min grace + close-blocking a
 - name: gate:retro-complete
   category: gate
   color: "0e8a16"
-  description: "Story 완료 회고 작성됨 (PMOAgent self-write — CFP-138 / ADR-042 mandate)"
+  description: "Story 완료 회고 작성됨 (PMOAgent self-write — CFP-138 / ADR-043 mandate)"
   single_active: false
   attach_owner_plugin: "codeforge-pmo (PMOAgent self-write)"
 ```
@@ -274,7 +274,7 @@ Yes. Rollback 경로:
    - bootstrap-labels.sh `gate:retro-complete` 1줄 revert
    - story-page-structure.md §11 schema revert (`- 회고 (PMOAgent 작성)` line 복구)
    - codeforge-pmo CLAUDE.md + agents/PMOAgent.md amendment revert
-   - ADR-042 status: Accepted → Deprecated
+   - ADR-043 status: Accepted → Deprecated
 3. **이미 운영 중인 retro file 보존** (audit trail 유지) — append-only invariant 정합
 4. **이미 부착된 `gate:retro-complete` label** = leave as-is (label 자체 GitHub 측 잔존, registry revert 후 무영향)
 
