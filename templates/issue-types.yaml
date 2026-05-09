@@ -1,0 +1,36 @@
+# Issue Types schema (CFP-140 / ADR-049 §결정 1)
+# Native GitHub Issue Types replacing type:* label hack
+# org: mclayer — org-level definition (repo-level not supported by GitHub)
+# Apply via: gh api /orgs/{org}/issue-types (requires org admin)
+# Docs: https://docs.github.com/en/issues/tracking-your-work-with-issues/configuring-issues/managing-issue-types
+---
+schema_version: "1.0"
+org: "MCLAYER_ORG_PLACEHOLDER"  # replace with actual org slug
+
+# type:* label mapping (ADR-049 §결정 3):
+#   type:epic  → Epic
+#   type:story → Story
+#   type:bug   → Bug
+#   (new)      → Audit
+#   impl-manifest = separate axis (label retained, NOT replaced)
+
+issue_types:
+  - name: Epic
+    description: "Epic: multi-Story user requirement (Milestone + multiple Stories)"
+    color: "5319e7"
+    _replaces_label: "type:epic"
+
+  - name: Story
+    description: "Story: single PR-pair unit (Phase 1 doc + Phase 2 implementation)"
+    color: "0e8a16"
+    _replaces_label: "type:story"
+
+  - name: Bug
+    description: "Bug: defect report requiring a fix Story"
+    color: "d73a4a"
+    _replaces_label: "type:bug"
+
+  - name: Audit
+    description: "Audit: governance / compliance / drift audit item"
+    color: "fbca04"
+    _replaces_label: null  # new type (no previous label equivalent)
