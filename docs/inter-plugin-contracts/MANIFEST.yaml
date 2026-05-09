@@ -11,7 +11,8 @@ contracts:
     files:
       - { file: review-verdict-v1.md, contract_version: "1.0", status: Archived }
       - { file: review-verdict-v2.md, contract_version: "2.0", status: Archived, superseded_by: review-verdict-v3 }  # CFP-61
-      - { file: review-verdict-v3.md, contract_version: "3.0", status: Active }  # CFP-61: NEW
+      - { file: review-verdict-v3.md, contract_version: "3.0", status: Archived, superseded_by: review-verdict-v4 }  # CFP-137: archive (Sonnet decider 영역 정식 제거)
+      - { file: review-verdict-v4.md, contract_version: "4.0", status: Active }  # CFP-137: NEW (Sonnet decider 영역 제거 + worker_dialog_rounds 추가)
 
   - name: requirements_output
     canonical_repo: mclayer/plugin-codeforge-requirements

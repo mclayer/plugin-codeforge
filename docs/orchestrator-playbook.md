@@ -571,6 +571,89 @@ Epic close PR (Phase N+1) 동반 작성:
 - CFP-137 (agent teams 적극 도입) — 본 §3.5 의 use case full
 - CFP-139 (GitOpsAgent) — Orchestrator 의 worktree management 책임을 GitOpsAgent 로 이관 (Wave 3)
 
+### §3.6 TeamCreate / TeamDelete protocol (CFP-137 / [ADR-044](../docs/adr/ADR-044-phase-scoped-sequential-team.md))
+
+> **Activation**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` env 활성 시에만 본 §3.6 적용. env=0 또는 미설정 시 = ADR-039 default subagent context fallback (§3.0 + 기존 §3.1 one-shot Agent tool 패턴).
+
+매 lane 진입 시 Orchestrator (영구 lead) 가 다음 sequence 수행:
+
+```
+1. Preflight check (§3B)
+2. (CFP-139 후) GitOpsAgent SendMessage — lane worktree 준비 (§3.5 lifecycle)
+3. TeamCreate(team_spec=templates/team-spec-<lane>.yaml, worktree=<path>)
+   - team-spec yaml 7종 SSOT (ADR-044 §결정 2)
+   - Codex worker dispatch_mode=user_request_only — 사용자 explicit request 시에만 활성
+4. lane 진행:
+   - Lane PL → teammate dispatch (TaskCreate)
+   - teammate ↔ teammate SendMessage (Adversarial / Cross-layer 패턴)
+   - PL 중재 + dedup → pl_recommendation
+5. TeamDelete (in-flight teammate 완료 명시 wait — TeamDelete 시점에 in-flight task 가 있으면 platform 이 자동 wait, Orchestrator 는 추가 polling 미필요)
+6. Orchestrator self-write (Story §9 + GitHub gate label + phase transition — review-verdict v4 4-step algorithm)
+7. FIX 시 → TEAM-FIX 새 team (parallel diagnosis: DeveloperPL + ArchitectPL)
+```
+
+**Lead = Orchestrator** (Story 전 기간 fixed). One-team-per-lead 강제 — 다음 lane TeamCreate 전 현 team `TeamDelete()` 의무.
+
+**team-spec yaml 7종**: `templates/team-spec-{decompose,requirements,design,design-review,develop,code-review,security-test}.yaml`. 구현 테스트 lane = 1 agent TestAgent (team 미생성, 기존 single subagent 유지).
+
+### §3.7 SendMessage 사용 패턴
+
+> **Activation**: env=1 시에만 SendMessage 발화. env=0 시 fallback = Orchestrator round-trip (PL ↔ worker continuous dialog 부재).
+
+**Adversarial debate 패턴** (TEAM-{DESIGN,CODE,SECURITY}-REVIEW, Codex worker 활성 시):
+
+```
+1. PL → ClaudeReviewAgent: "primary review pass — 모든 finding 수집"
+2. ClaudeReviewAgent → PL: findings packet (round 1)
+3. PL → CodexReviewAgent: "Claude packet 검수 + 누락 찾기"
+4. CodexReviewAgent → ClaudeReviewAgent (직접 SendMessage): "P1 #3 finding 의 evidence 부족 — file:line cite 추가"
+5. ClaudeReviewAgent → CodexReviewAgent: "evidence 추가, 또한 P0 #2 도 보강"
+6. PL ↔ both workers: dedup + severity 합의
+7. PL → Orchestrator: review-verdict v4 packet (worker_dialog_rounds = 5, ADR-044 §결정 5 measurable)
+```
+
+**Cross-layer 패턴** (TEAM-DEVELOP, dev ↔ QA):
+
+```
+1. PL → QADev: "Impl Manifest 매핑표 작성"
+2. QADev → PL: 매핑표 v1
+3. PL → role:dev (e.g., SoftwareDeveloperAgent): "feature X 구현"
+4. role:dev → QADev (직접 SendMessage): "test fixture <path> 의 boundary case 추가 권유"
+5. QADev → role:dev: "fixture 갱신 — invariant 가 valid 한지 확인 required"
+6. PL → develop-output v1.1 packet (cross_layer_dialog_rounds = 2, ADR-044 §결정 5 measurable — codeforge-develop sibling sync follow-up)
+```
+
+**Sequential-dialog 패턴** (Stage 0 [TEAM-DECOMPOSE], TEAM-DECOMPOSE):
+- PMOAgent + (CFP-139 후) GitOpsAgent 단순 sequential — Adversarial 부재.
+
+### §3.8 TeammateIdle nudge protocol
+
+> **Activation**: env=1 시에만 TeammateIdle hook 발화.
+
+idle teammate 감지 시 platform 이 본 hook trigger:
+
+```
+[Hook fires]
+  └─ PL 수신: idle teammate name + last_task_completed_at
+       ├─ option A: PL → idle teammate SendMessage (추가 task dispatch)
+       │   예: TEAM-DESIGN 의 RefactorAgent idle 시 "추가 boundary 검토"
+       └─ option B: PL → Orchestrator SendMessage: "TeamDelete 권유 — 모든 teammate finished"
+            └─ Orchestrator → TeamDelete (in-flight wait + worktree merge orchestration)
+```
+
+Sample hook = `templates/agent-teams-hook-samples/TeammateIdle.json.sample` (ADR-044 §결정 3). Phase 2 PR scope = nudge logic + script 실제 구현.
+
+### §3.9 env-divergent context fallback (default ↔ enabled context 분기)
+
+| env | 동작 |
+|---|---|
+| `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` | §3.6 + §3.7 + §3.8 활성. team-spec yaml 7종 본격 사용. SendMessage / TaskCreate / TeammateIdle hook 발화. |
+| `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0` 또는 미설정 | ADR-039 default subagent context fallback. Orchestrator 가 lane PL 1개만 spawn (one-shot Agent tool). PL 이 sub-agent 재 spawn 매 round Orchestrator 경유. SendMessage / TeamCreate / TaskCreate / TeammateIdle hook 미발화. team-spec yaml 미사용. review-verdict v4 의 worker_dialog_rounds = 0 (Adversarial 패턴 mechanism level 부재). |
+
+**Backward compat 보장**: env=0 사용자 = 본 CFP-137 도입 후에도 ADR-039 + 기존 §3.1 one-shot 패턴 그대로 동작. 본 CFP-137 의 Phase 1 PR merge 시점에 env=0 사용자 영향 0.
+
+**Hook 등록 의무 (env 무관)**: `templates/agent-teams-hook-samples/{TeammateIdle,TaskCreated,TaskCompleted}.json.sample` 3종 sample 은 consumer 측 `.claude/hooks/` 로 install 가능 — env=0 시 trigger 미발화이지만 install 자체는 무해 (Anthropic platform 이 env 기반 자동 분기). consumer-guide §"Agent teams 적극 도입 (CFP-137)" install 안내 정합.
+
 ---
 
 ## 3B. Preflight 체크 (lane 진입 직전)
