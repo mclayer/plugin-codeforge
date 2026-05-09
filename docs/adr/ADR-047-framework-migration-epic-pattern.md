@@ -111,7 +111,10 @@ Migration Epic = ADR-020 Cross-Repo Epic Pattern의 codeforge framework-specific
 - **§2 Affected Artifact Inventory**: 진행 중 Stories + Change Plans + ADRs + hooks + labels 영향 목록
 - **§3 Deputy Migration Notes**: deputy별 domain-specific retrofit 가이드 (§결정 3 포맷)
 - **§4 Migration Story Backlog**: PMO-owned 순서화된 remediation Story 목록 + AC (각 Story = 1 consumer repo 또는 1 §section 단위)
-- **§5 Completion Gate**: bootstrap PASS + 열린 Stories §sections 갱신 완료 + ADR alignment 확인
+- **§5 Completion Gate** (3 측정 가능 invariant, TestContractArch consult):
+  - **Gate-1 Bootstrap PASS**: ADR-027/032 enforcement 재검증 통과 (consumer `.claude/_overlay/` 무결성 + plugin install 상태)
+  - **Gate-2 Affected Story §section 갱신 완료**: §2 inventory에 나열된 모든 진행 중 Story가 새 §section schema 준수 (frontmatter / section schema lint PASS)
+  - **Gate-3 ADR alignment 확인**: §1에 나열된 변경 ADR이 모두 Accepted 상태 + 영향받은 prior ADR cross-ref 갱신 완료
 
 ## 결과
 
@@ -135,9 +138,10 @@ Migration Epic = ADR-020 Cross-Repo Epic Pattern의 codeforge framework-specific
 
 | Risk | Mitigation |
 |---|---|
-| PMOAgent Version Delta Review 누락 | Framework Delta Event = well-defined 4-type. SessionStart hook에 version bump 감지 추가 후보 |
+| PMOAgent Version Delta Review 누락 (OpRiskArch consult) | (1차) Framework Delta Event = well-defined 4-type. (2차 detection) PMOAgent Story 완료 회고 trigger (ADR-045) 시 직전 5분 grace 내 Delta Event 미처리 자동 점검. (3차 fallback) 사용자 수동 trigger `/pmo version-delta-review` skill 호출. (장기) SessionStart hook 에 version bump 감지 추가 별도 CFP. |
 | Deputy Migration Notes 게시 지연 | deputy mandate에 명시 (§결정 3). DesignReview P1로 감사 |
-| Migration Epic tiered 분류 오류 (small vs medium) | PMOAgent가 delta 크기 판별 → 사용자 확인 optional |
+| Migration Epic tiered 분류 오류 (small vs medium) | PMOAgent가 delta 크기 판별 → 사용자 확인 optional (Requirements CL-3 정합) |
+| Type D bootstrap 변경 감지 책임 (SecurityArch consult) | Type D 발생 시 PMOAgent 가 ADR-027/032 cross-ref 의무 검증 → consumer-guide §X migration row 추가 |
 | 전용 agent 재검토 기준 불명확 | §결정 1 재검토 3개 조건 명시 — 별도 CFP 트리거로 사용 |
 
 ## Out-of-scope
@@ -147,6 +151,8 @@ Migration Epic = ADR-020 Cross-Repo Epic Pattern의 codeforge framework-specific
 - codeforge version bump 자동 감지 CI/CD (별도 CFP — SessionStart hook 확장 후보)
 - ADR-007 DataMigrationArch scope 변경 (story-time DB migration 유지)
 - ADR-027/032 기존 bootstrap enforcement 변경 (Delta Event Type D는 감지만)
+- Deputy Migration Notes 별도 파일 시스템 분리 (Refactor deputy 의견, 본 ADR scope에서 인라인 포맷 유지 — 별도 CFP 후보 / Requirements CL-2 정합)
+- Story §11 데이터 마이그레이션 (DataMigrationArch §11.6) 와의 통합 (framework meta-migration vs data migration 분리 유지)
 
 ## 관련 파일
 
