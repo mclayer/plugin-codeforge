@@ -75,6 +75,8 @@ PMOAgent의 기존 trigger (Story 완료 회고, Epic 관리, Cross-Story 패턴
 | DataMigrationArchitectAgent | §11 데이터 마이그레이션 | §11 sub-section 추가/변경 |
 | OperationalRiskArchitectAgent | §7.4 DR/failover | §7.4 sub-section 추가/변경 |
 
+**CONDITIONAL deputy (LiveOpsDeputy / LiveOrderingDeputy)**: Live touching Story에만 active (ADR-014 §CONDITIONAL 정책). CONDITIONAL deputy owned §section (§13 Live Operational Discipline / §11 ledger invariant) 변경 시 — 해당 deputy active consumer에만 Migration Notes 적용 의무. Live-inactive consumer는 N/A (사유 1줄).
+
 **Migration Notes 포맷**:
 ```
 ## Migration Note: <deputy name> — <version-or-adr-ref>
@@ -89,13 +91,15 @@ PMOAgent의 기존 trigger (Story 완료 회고, Epic 관리, Cross-Story 패턴
 | Type | 설명 | PMOAgent 반응 |
 |---|---|---|
 | Type A — Version bump | codeforge version bump in consumer project | patch: advisory review / minor·major: Migration Epic 후보 |
-| Type B — ADR 변경 | Story 구조/lane 동작에 영향을 주는 신규·실질적 ADR 변경 | 영향 범위 평가 후 Migration Epic 여부 결정 |
+| Type B — ADR 변경 | Story 구조/lane 동작에 영향을 주는 신규·실질적 ADR 변경 (예: inter-plugin contract schema 변경 — review-verdict-v4 MAJOR bump 등, GitHub workflow fixture 변경 — story-init.yml 등) | 영향 범위 평가 후 Migration Epic 여부 결정 |
 | Type C — Deputy 변경 | 신규 deputy 추가 또는 deputy mandate 변경 (새 필수 §section 발생) | 진행 중 Story에 새 §section 추가 Migration Story 생성 |
 | Type D — Bootstrap 변경 | ADR-027/ADR-032 enforcement 변경 | consumer-guide 업데이트 + bootstrap 재검증 Migration Story |
 
 ### 결정 5 — Migration Epic Pattern + Tiered §5 Template (Option 5)
 
 Migration Epic = ADR-020 Cross-Repo Epic Pattern의 codeforge framework-specific 적용.
+
+**ADR-020 Mode**: 기본 Mode B (hub-centralized — 1 hub repo가 모든 child Migration Story 보유). consumer가 hub repo를 운영하는 경우 (예: mctrader-hub) Mode B. single-repo consumer는 Mode A. Mixed-mode 금지 (ADR-020 §결정 Amendment 1 정합).
 
 **Delta 크기에 따른 tiered template**:
 
@@ -104,6 +108,8 @@ Migration Epic = ADR-020 Cross-Repo Epic Pattern의 codeforge framework-specific
 | Small (1-2 ADR 변경, 새 deputy 없음) | §1 + §4 | §2, §3, §5 (N/A 사유 1줄) |
 | Medium (새 deputy mandate, 새 §section 추가) | §1 + §2 + §3 + §4 | §5 (N/A 허용) |
 | Large (breaking change, §structure 재편) | §1 + §2 + §3 + §4 + §5 | — |
+
+**Tier 충돌 시 우선순위**: 동일 delta에서 여러 Tier 기준이 충돌할 경우 (예: 1개 ADR 변경이 새 deputy mandate를 유발) — (1) 새 deputy 추가 ≻ (2) 새 §section 추가 ≻ (3) ADR 수 기준으로 상위 Tier 적용. PMOAgent가 결정, 사용자 확인 optional.
 
 **Migration Epic §5 필수 섹션**:
 
@@ -153,6 +159,7 @@ Migration Epic = ADR-020 Cross-Repo Epic Pattern의 codeforge framework-specific
 - ADR-027/032 기존 bootstrap enforcement 변경 (Delta Event Type D는 감지만)
 - Deputy Migration Notes 별도 파일 시스템 분리 (Refactor deputy 의견, 본 ADR scope에서 인라인 포맷 유지 — 별도 CFP 후보 / Requirements CL-2 정합)
 - Story §11 데이터 마이그레이션 (DataMigrationArch §11.6) 와의 통합 (framework meta-migration vs data migration 분리 유지)
+- Type B에서 inter-plugin contract MINOR/PATCH bump, workflow cosmetic fix는 advisory-only (Migration Epic 후보 아님 — §결정 4 Type B 명시 예시 외 변경은 PMOAgent advisory review 만 수행)
 
 ## 관련 파일
 
