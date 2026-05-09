@@ -121,13 +121,13 @@ fetch_pr_lane_evidence() {
 # Extract lane names from Story §14 yaml block
 extract_story_lanes() {
     local yaml="$1"
-    printf '%s' "$yaml" | grep -E '^\s*- lane:' | sed -E 's/.*lane:\s*([^\s#]+).*/\1/' | sort -u
+    printf '%s' "$yaml" | grep -E '^[[:space:]]*- lane:' | sed -E 's/.*lane:[[:space:]]*([^[:space:]#]+).*/\1/' | sort -u
 }
 
 # Extract lane names from PR description block
 extract_pr_lanes() {
     local block="$1"
-    printf '%s' "$block" | grep -E '^- ' | sed -E 's/^-\s*([^:]+):.*/\1/' | tr -d ' ' | sort -u
+    printf '%s' "$block" | grep -E '^- ' | sed -E 's/^-[[:space:]]*([^:]+):.*/\1/' | tr -d ' ' | sort -u
 }
 
 # CFP-137 Phase 2: Parallelization check
@@ -263,7 +263,7 @@ run_check() {
 
     # Check 5: Bypass 의무 (BYPASS_LANE_EVIDENCE row 시 reason 명시 검증)
     if [ -n "$story_yaml" ]; then
-        if printf '%s' "$story_yaml" | grep -q "output_status:\s*bypass"; then
+        if printf '%s' "$story_yaml" | grep -q "output_status:[[:space:]]*bypass"; then
             if ! printf '%s' "$pr_block" | grep -qi "BYPASS:"; then
                 log_err "[FAIL] §14 에 bypass row 존재 — PR description 에 'BYPASS: <reason>' 명시 의무"
                 fail=$((fail + 1))
