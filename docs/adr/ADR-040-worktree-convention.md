@@ -13,11 +13,16 @@ amendments:
     carrier_story: CFP-139
     date: 2026-05-09
     title: GitOpsAgent hook 실행 주체 명시
+  - id: 2
+    carrier_story: CFP-348
+    date: 2026-05-09
+    title: Branch-protection-aware worktree cleanup lifecycle
 related_stories:
   - CFP-134
   - CFP-136
   - CFP-137
   - CFP-139
+  - CFP-348
 related_adrs:
   - ADR-009
   - ADR-024
@@ -231,6 +236,58 @@ CFP-136 SSOT = 단순 origin check 만 (`git ls-remote --exit-code --heads origi
 ### 만료 / supersede
 
 본 amendment 는 ADR-040 본문 §결정 3 / §결정 5 와 **함께 활성**. 별도 superseding amendment 없는 한 영구.
+
+
+## Amendment 2 — CFP-348 (2026-05-09)
+
+**제목**: Branch-protection-aware worktree cleanup lifecycle (carrier: CFP-348)
+
+**상태**: Proposed → CFP-348 Phase 2 PR merge 시점 Accepted.
+
+### 컨텍스트
+
+ADR-040 §결정 3 `on_team_delete_pre` = "sequential merge, conflict 시 user escalate" 는 main 브랜치가 branch protection 으로 직접 push 가 차단된 경우의 동작을 미정의. 또한 §위험 "Branch protection conflict" 항에서 "sub-branch → Story root 만 merge 허용 (no main 직접 merge)" 를 언급하나 Story root → main 의 cleanup 타이밍 invariant 가 명시되지 않음.
+
+CFP-340 `finishing-a-development-branch` 실행 시 branch protection 이 있는 repo 에서 "Merge Locally" 를 제시하여 사용자 교정 발생 → 명시적 결정 필요.
+
+### 변경
+
+**§결정 3 보완 — Story root worktree cleanup invariant**:
+
+| 조건 | `on_team_delete_pre` 동작 | Cleanup trigger |
+|---|---|---|
+| main branch protection **없음** | sequential merge → main 직접 push | `on_team_delete_post` → worktree prune |
+| main branch protection **있음** | 직접 merge 금지. PR 생성 후 대기 | `gh pr view <N> --json mergedAt` non-null 확인 후 worktree prune |
+
+**cleanup 순서 invariant** (branch-protected repo):
+
+```
+push → PR 생성 → gh pr view <N> --json mergedAt 확인 (non-null) → git worktree remove
+```
+
+- pre-merge cleanup 절대 금지: PR merge 확인 전 `git worktree remove` = policy violation.
+- Story root worktree 는 `mergedAt` 확인 시점까지 보존 의무 (Amendment 1 `on_story_close` "Phase 2 PR merge 까지 보존" 의 명시적 enforcement).
+
+**Branch protection 감지 명령**:
+
+```bash
+gh api "repos/$(gh repo view --json nameWithOwner --jq .nameWithOwner)/branches/main" --jq '.protected'
+# "true" → cleanup invariant 적용, "false" → 직접 merge 가능
+```
+
+**GitOpsAgent 영향**: `on_team_delete_pre` hook 실행 시 위 감지 로직 수행 의무. branch-protected 감지 시 PR 생성 후 `mergedAt` polling 으로 merge 확인 → cleanup 트리거. 직접 merge 시도 금지.
+
+### 이행 의무
+
+- `docs/orchestrator-playbook.md` §3.5 Step 5 "Story 완료 후" 에 branch-protected lifecycle 분기 명시 (CFP-348 AC).
+- `docs/consumer-guide.md` §2e 에 branch protection ↔ worktree lifecycle 연결 명시 (CFP-348 AC).
+- GitOpsAgent (codeforge-pmo) `on_team_delete_pre` 구현 시 본 amendment §결정 3 보완 준수 의무 (CFP-139 follow-up).
+
+### 정합성 검증
+
+- Amendment 1 "Story root 제외, Phase 2 PR merge 까지 보존" 과 정합: 본 amendment 는 "Phase 2 PR merge 까지 보존" 의 enforcement 방법을 명시 (protection check + mergedAt polling).
+- ADR-024 branch governance 정합: PR-only merge = ADR-024 "main 직접 push 금지" 강제 정합.
+- ADR-009 invariant 무손상: 본 amendment 는 GitOpsAgent 행동 명세 추가이며 wrapper agent 신설 없음.
 
 
 ## 관련 파일
