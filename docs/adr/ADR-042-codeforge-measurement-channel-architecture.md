@@ -163,7 +163,7 @@ Sanitize policy = **Allow-list ONLY**. 16 field (§결정 2 enumerated) 외 capt
 
 - consumer 측 silent telemetry = trust 위반 (GitHub CLI opt-out 비판 precedent — Researcher §6.5).
 - ADR-039 Phase 1 doc-only trust model 패턴 정합 (Phase 1 trust = enforcement hook 부재).
-- Wrapper dogfood (codeforge family 자체 development) 만 always-on 허용 (별도 environment flag — `CODEFORGE_DOGFOOD_TELEMETRY=1`).
+- Wrapper dogfood (codeforge family 자체 development) always-on 적용 = **Phase 2 enforcement CFP 시 도입** (env flag / hook / runtime validation 모두 본 ADR scope 외 — Phase 1 doc-only strict invariant 보존). Phase 1 = wrapper dogfood 도 default false + 사용자 explicit opt-in 의무 (consumer 와 동일 trust model).
 
 flag 위반 시 (default false 인데 ledger write 발생) = `policy_violation` (defect). 별도 lint = TestContractArch §8.4 후보 5 (opt-in default false invariant).
 
@@ -299,7 +299,7 @@ Wrapper dogfood + consumer 모두 always-on.
 - ADR-039 Phase 1 doc-only trust model 패턴 정합 위반
 - consumer 측 silent telemetry = trust 위반 (Researcher §6.5)
 
-채택 = §결정 6 default false + wrapper dogfood explicit env flag (`CODEFORGE_DOGFOOD_TELEMETRY=1`).
+채택 = §결정 6 default false (wrapper / consumer 동일 trust model — Phase 1 doc-only strict). wrapper dogfood always-on enforcement (env flag / hook) = Phase 2 follow-up CFP.
 
 ### 대안 E — Phase 1 즉시 enforcement (rule-based hook)
 
@@ -343,7 +343,7 @@ PreToolUse hook 으로 inline write detect → 즉시 차단.
 4. **opt-in default false invariant** — project-config-schema.md `telemetry.enabled: false` default + consumer-guide § "Telemetry opt-in" cross-ref 존재 검증.
 5. **Allow-list ONLY enforcement** — stop-event-v1 schema 의 16 field 외 추가 시 lint FAIL (BREAKING change → ADR amendment 의무).
 
-**현재 Phase 1 PR scope 안 lint 도입** = 후보 1 + 후보 2 만 (가능하면). 후보 3-5 = follow-up CFP (Phase 2 enforcement 도입 시 동반).
+**현재 Phase 1 PR scope 안 lint 도입** = **0 후보 land** (doc-only invariant 보존). 5 후보 모두 = follow-up CFP (Phase 2 enforcement 도입 시 동반 land — 분리 land = partial enforcement 의미 없음, Phase 1 trust model 정합). 후속 CFP 번호 = post-merge-counters.jsonl 30+ run ROI 평가 후 발의 시 할당 (current 미배정).
 
 ## 결과
 

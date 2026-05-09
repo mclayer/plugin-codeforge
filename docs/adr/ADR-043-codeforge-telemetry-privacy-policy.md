@@ -62,7 +62,7 @@ CFP-283 ADR-039 §결정 9 deferred measurement channel slot 처리 시 Security
 - consumer overlay `.claude/_overlay/project.yaml` `telemetry.enabled: false` (default).
 - per-channel granular flag (`telemetry.channels.<channel>: false` default).
 - global `enabled: false` 시 모든 channel disabled (override 불가능 — global gate).
-- **wrapper dogfood exception**: codeforge family 자체 development 만 always-on 허용 — explicit env flag (`CODEFORGE_DOGFOOD_TELEMETRY=1`) 의무. consumer 측 silent always-on 금지.
+- **wrapper dogfood always-on enforcement**: Phase 2 enforcement CFP 시 도입 (env flag / hook / runtime validation 모두 본 ADR scope 외 — Phase 1 doc-only strict invariant 보존). Phase 1 = wrapper dogfood 도 default false + 사용자 explicit opt-in 의무 (consumer 와 동일 trust model).
 
 위반 시 (default false 인데 ledger write 발생) = `policy_violation` (defect). lint = TestContractArch §8.4 후보 5 (opt-in default false invariant — ADR-042 §검증 채널 cross-ref).
 
@@ -111,14 +111,18 @@ future ledger (spawn-event-v1 land 시) = 본 §결정 3 동일 적용 의무.
 
 ### 결정 4 — Sanitize SSOT 통합 (ADR-029 §결정 2 amends)
 
-ADR-029 §결정 2 (phase narration sanitize policy) = **본 ADR-043 §결정 3 으로 SSOT 통합**. ADR-029 frontmatter `superseded_by_partial: ADR-043` 마킹 권장 (cross-ref invariant — 양쪽 SSOT 변경 시 sync 의무).
+ADR-029 §결정 2 (phase narration sanitize policy) sanitize 적용 범위 = **narration (stderr) + telemetry ledger (본 ADR-043 §결정 3 정합) 양쪽 unified SSOT**. CFP-283 carrier 로 ADR-029 §결정 2 Amendment 1 (2026-05-09) land — ADR-029 frontmatter `amendment_log[]` entry 추가 + 본문 amendment paragraph 명시.
 
 근거:
 - privacy = cross-cutting concern (narration + ledger 동일 정책)
-- single source of truth (ADR-043) = update / audit 비용 ↓
+- single source of truth = update / audit 비용 ↓
 - ADR-029 narration scope 한정 SSOT 가 ledger 신설 시 분기 — 분기 회피
 
-ADR-029 §결정 2 본문 = 본 ADR amends 후 1줄 cross-ref 잔존 (`Sanitize policy SSOT = ADR-043 §결정 3` link).
+**SSOT 분담**:
+- ADR-029 §결정 2 (Amendment 1 후) = format / 한국어 lane / stderr-only invariant + sanitize 적용 범위 (narration + ledger 양쪽) SSOT
+- 본 ADR-043 §결정 3 = sanitize Deny-list regex 6 pattern + Allow-list ONLY 16 field SSOT
+
+양쪽 SSOT 변경 시 sync 의무 (cross-ref invariant). future ledger (spawn-event-v1 land 시) = 본 §결정 4 가 정의하는 unified scope 자동 inherit.
 
 ### 결정 5 — Wrapper-vs-consumer ledger isolation + Phase 2 cross-host DAP deferred
 
@@ -156,7 +160,7 @@ LDP (Local Differential Privacy, arxiv 2507.06350) = Phase 2 dashboard cold tier
 - GitHub CLI opt-out 비판 precedent
 - ADR-039 Phase 1 doc-only trust model 패턴 정합 위반
 
-채택 = §결정 1 default false + wrapper dogfood explicit env flag.
+채택 = §결정 1 default false (wrapper / consumer 동일 trust model — Phase 1 doc-only strict). wrapper dogfood always-on enforcement (env flag / hook / runtime validation) = Phase 2 follow-up CFP.
 
 ### 대안 D — Phase 1 즉시 cross-host DAP 통합
 
@@ -181,10 +185,10 @@ LDP (Local Differential Privacy, arxiv 2507.06350) = Phase 2 dashboard cold tier
 1. **Opt-in default false invariant lint** — `docs/project-config-schema.md` `telemetry.enabled: false` default + consumer-guide § "Telemetry opt-in" cross-ref 존재.
 2. **Allow-list ONLY enforcement lint** — stop-event-v1 schema 16 field 외 추가 시 lint FAIL (BREAKING change → ADR-042 + ADR-043 amendment 의무).
 3. **Deny-list regex coverage lint** — 6 redact pattern 정합 검증.
-4. **ADR-029 §결정 2 cross-ref invariant** — ADR-029 → ADR-043 §결정 3 cross-ref link 존재.
+4. **ADR-029 §결정 2 amendment invariant** — ADR-029 frontmatter `amendment_log[]` CFP-283 entry 존재 + ADR-029 §결정 2 본문 Amendment 1 paragraph 존재 + ADR-043 §결정 4 cross-ref link 양방향 정합 (CFP-283 carrier Amendment 1, 2026-05-09 land 완료).
 5. **wrapper-vs-consumer isolation lint** — ledger storage path 분리 (wrapper `mclayer/plugin-codeforge` vs consumer repo).
 
-후보 1 + 후보 2 = Phase 1 PR scope. 후보 3-5 = follow-up CFP.
+5 후보 모두 = follow-up CFP (Phase 2 enforcement 도입 시 동반 land — 분리 land = partial enforcement 의미 없음, Phase 1 trust model 정합 — ADR-042 §검증 채널 SSOT 정합). 후속 CFP 번호 = post-merge-counters.jsonl 30+ run ROI 평가 후 발의 시 할당 (current 미배정).
 
 ## 결과
 
@@ -195,7 +199,7 @@ LDP (Local Differential Privacy, arxiv 2507.06350) = Phase 2 dashboard cold tier
 - `docs/project-config-schema.md` (telemetry block — opt-in default false)
 - `docs/consumer-guide.md` § "Telemetry opt-in" (default false 명시)
 - `docs/domain-knowledge/orchestrator-discipline/measurement-channel.md` (privacy 정책 cross-ref)
-- `docs/adr/ADR-029-phase-execution-visibility-expansion.md` (§결정 2 sanitize policy SSOT 통합 cross-ref — Phase 2 follow-up CFP, 본 Phase 1 scope 외 — see Phase 2 follow-up)
+- `docs/adr/ADR-029-phase-execution-visibility-expansion.md` (Amendment 1 — frontmatter `amendment_log[]` + §결정 2 amendment paragraph, sanitize 적용 범위 narration → narration + ledger unified SSOT, CFP-283 carrier 2026-05-09 land 완료)
 
 ### 비-영향
 
@@ -213,14 +217,14 @@ LDP (Local Differential Privacy, arxiv 2507.06350) = Phase 2 dashboard cold tier
 
 - Phase 2 cross-host DAP 통합 — §결정 5 deferred
 - LDP cold tier sanitize — Phase 2 dashboard CFP
-- ADR-029 §결정 2 본문 SSOT 통합 commit — Phase 2 follow-up CFP (본 Phase 1 = ADR-043 신설 only, ADR-029 amend commit 은 별도 lite scope follow-up)
+- (ADR-029 §결정 2 본문 amendment commit = CFP-283 carrier 로 본 Phase 1 안에서 land 완료, Out-of-scope 제거)
 - Telemetry hook 구현 (sqlite write) — ADR-042 §결정 12 deferred
 - Token attribution model — ADR-042 §결정 3 spawn-event 보류 와 동반 deferred
 - 외부 telemetry vendor 연동 (Datadog / Honeycomb / OpenTelemetry collector) — Phase 2 dashboard CFP
 
 ## 관련 ADR
 
-- **ADR-029** (phase execution visibility) — **amends** 관계. §결정 2 sanitize policy 가 본 ADR §결정 3 으로 SSOT 통합 (Phase 2 follow-up CFP commit).
+- **ADR-029** (phase execution visibility) — **amends** 관계. §결정 2 sanitize policy 적용 범위 확장 (narration → narration + ledger unified SSOT) — CFP-283 carrier Amendment 1 (2026-05-09) land 완료. ADR-029 §결정 2 = format / scope SSOT, 본 ADR §결정 3 = Deny-list regex / Allow-list 16 field SSOT.
 - **ADR-042** (measurement channel architecture) — **sibling Phase 1 PR**. ADR-042 §결정 5-6 verbatim cross-ref. architecture vs policy 분리.
 - **ADR-039** (subagent default) — Phase 1 doc-only trust model 패턴 precedent. §결정 1 opt-in default false 정당화 근거.
 - **ADR-025** (stop discipline) — stop-event-v1 deferred slot context.

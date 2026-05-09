@@ -139,9 +139,9 @@ append_rules:
     - "Anthropic API rate-limit error (cascade detection — policy_violation_rate_limit_induced)"
 
   opt_in_default_false:
-    rule: "telemetry.enabled: false default (ADR-043 §결정 1 invariant)"
-    wrapper_dogfood_exception: "CODEFORGE_DOGFOOD_TELEMETRY=1 explicit env flag 시만 always-on"
-    consumer_silent_always_on: "금지 — consumer 측 default false 위반 시 policy_violation"
+    rule: "telemetry.enabled: false default (ADR-043 §결정 1 invariant — wrapper / consumer 동일 trust model)"
+    wrapper_dogfood_always_on_enforcement: "Phase 2 follow-up CFP (env flag / hook / runtime validation 모두 Phase 1 scope 외 — doc-only strict invariant 보존)"
+    silent_always_on: "금지 — wrapper / consumer 모두 default false 위반 시 policy_violation"
 
 operational_constraints:
   zero_api_call:

@@ -124,8 +124,9 @@ infra_strategy_extras:
 
 # [선택] Telemetry / measurement channel (CFP-283 / ADR-042 / ADR-043)
 # default = 모든 channel disabled (opt-in default false invariant — ADR-043 §결정 1)
-# wrapper dogfood = CODEFORGE_DOGFOOD_TELEMETRY=1 explicit env flag 시만 always-on
-# consumer 측 silent always-on 금지 — default false 위반 시 policy_violation
+# Phase 1 = wrapper / consumer 동일 trust model — default false + 사용자 explicit opt-in 의무
+# wrapper dogfood always-on enforcement (env flag / hook / runtime validation) = Phase 2 follow-up CFP
+# silent always-on 금지 — default false 위반 시 policy_violation
 telemetry:
   enabled: false                              # global gate (default false)
   channels:
