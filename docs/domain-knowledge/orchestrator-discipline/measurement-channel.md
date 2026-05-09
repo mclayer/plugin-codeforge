@@ -4,6 +4,12 @@ area: orchestrator-discipline
 topic_slug: measurement-channel
 title: Codeforge measurement channel — 4-channel observability boundary + stop-event-v1 ledger
 status: Active
+tags:
+  - measurement
+  - observability
+  - telemetry
+  - stop-event
+  - jsonl
 related_adrs:
   - ADR-025  # stop discipline (§결정 10 deferred slot 채움)
   - ADR-026  # post-merge automation (post-merge-counters.jsonl 30+ run ROI gate)
@@ -20,6 +26,26 @@ updated: 2026-05-09
 ---
 
 # Codeforge measurement channel
+
+## Summary
+
+codeforge orchestration 의 **4-channel observability boundary** SSOT. Tier 3 (persistent ledger) 의 stop-event-v1 + post-merge-counters.jsonl 구조와, 각 channel 의 책임 경계 (측정 대상 / 측정 제외 대상) 를 명시한다. ADR-042 measurement channel architecture + ADR-039 Phase 2 enforcement 의 데이터 prerequisite.
+
+## Pattern
+
+4-channel observability model:
+- **Tier 1 — TodoWrite progress** (ADR-038): session-local, non-persistent, rendering-only. 측정 대상 외.
+- **Tier 2 — §14 Lane Evidence** (ADR-031): Story-scoped, commit-persisted, coarse-grained (lane level). spawn-event sub-step = Phase 2 deferred.
+- **Tier 3 — JSONL ledger** (ADR-026 / ADR-042): cross-repo, append-only, time-series queryable. `post-merge-counters.jsonl` + `stop-event-v1` ledger. Pattern A (SHA-based optimistic concurrency) 의무 — [jsonl-write/race-condition-handling-pattern](../jsonl-write/race-condition-handling-pattern.md) 참조.
+- **Tier 4 — GitHub telemetry** (future): Discussions / API metrics. scope TBD.
+
+## Usage
+
+신규 persistent ledger 도입 시:
+1. Tier 3 JSONL pattern 채택 — `docs/domain-knowledge/jsonl-write/race-condition-handling-pattern.md` Pattern A 의무
+2. long-lived branch + 단일 rolling PR (ADR-026 §결정 4)
+3. ADR-042 §channel boundary 준수 — Tier 1/2 와 중복 측정 금지
+4. stop-event-v1 schema: `stop_event` field (stop type enum) + `story_key` + `ts` (ISO8601 Z suffix 필수) + `session_id`
 
 ## 정의
 
