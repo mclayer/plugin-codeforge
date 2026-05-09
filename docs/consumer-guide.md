@@ -517,6 +517,19 @@ gh pr merge --admin --squash <PR-number>
 
 본 명령은 **escape-hatch** 이며 정상 flow 가 아님. solo-dev 모드 시 위 권장 분기 적용 후 일반 `gh pr merge --squash` 사용.
 
+#### Branch protection 활성화 시 worktree lifecycle
+
+`phase-gate-mergeable` + PR required check 활성화 시 Story root worktree 정리 순서:
+
+```
+git push → PR 생성 → gh pr view <N> --json mergedAt (non-null 확인) → git worktree remove
+```
+
+- **pre-merge cleanup 금지**: Phase 2 PR merge 확인 전 `git worktree remove` 실행 = policy violation (ADR-040 Amendment 2).
+- **merge 확인 명령**: `gh pr view <PR_NUMBER> --json mergedAt --jq .mergedAt` → non-null 이면 merge 완료.
+- **protection 감지**: `gh api "repos/$(gh repo view --json nameWithOwner --jq .nameWithOwner)/branches/main" --jq '.protected'` — `true` 면 직접 merge 금지, PR-only.
+- solo-dev (`required_approving_review_count:0`) + `enforce_admins=false` 환경에서도 동일 순서 적용. `phase-gate-mergeable` check 통과 후 자동 merge 가능하나, worktree 정리는 항상 `mergedAt` 확인 후.
+
 ### 2f. 보안 보강 활성화 (consumer settings)
 
 GitHub repo settings 또는 gh api로:
