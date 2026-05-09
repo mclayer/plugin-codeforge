@@ -57,7 +57,7 @@ else
     local_content="$(cat "$CONTRACT_PATH")"
 
     # A1: frontmatter contract_version: "4.0"
-    if printf '%s' "$local_content" | grep -qE 'contract_version:\s*"4\.0"'; then
+    if printf '%s' "$local_content" | grep -qE 'contract_version:[[:space:]]*"4\.0"'; then
         log "[OK] contract_version: 4.0"
     else
         log_err "[FAIL] contract_version: \"4.0\" 부재 — v4 marker 미확인"
@@ -65,7 +65,7 @@ else
     fi
 
     # A2: frontmatter status: Active
-    if printf '%s' "$local_content" | grep -qE '^status:\s*Active'; then
+    if printf '%s' "$local_content" | grep -qE '^status:[[:space:]]*Active'; then
         log "[OK] status: Active"
     else
         log_err "[FAIL] frontmatter status: Active 부재 — v4 Active 미확인"
@@ -90,7 +90,7 @@ else
 
     v3_deprecated_fields="decision_state sonnet_final_status decider_decision_ref"
     for f in $v3_deprecated_fields; do
-        if printf '%s' "$schema_block" | grep -qE "^\s+${f}:" ; then
+        if printf '%s' "$schema_block" | grep -qE "^[[:space:]]+${f}:" ; then
             log_err "[FAIL] schema §2 에 v3 deprecated field '${f}' 잔존 — v4 정식 제거 미완료"
             fail=$((fail + 1))
         else
@@ -129,7 +129,7 @@ if [ -n "$PACKET_PATH" ]; then
         packet_content="$(cat "$PACKET_PATH")"
 
         # B1: contract_version: "4.0" present
-        if printf '%s' "$packet_content" | grep -qE 'contract_version:\s*"4\.0"'; then
+        if printf '%s' "$packet_content" | grep -qE 'contract_version:[[:space:]]*"4\.0"'; then
             log "[OK] packet contract_version: 4.0"
         else
             log_err "[FAIL] packet contract_version: \"4.0\" 부재"
@@ -137,7 +137,7 @@ if [ -n "$PACKET_PATH" ]; then
         fi
 
         # B2: worker_dialog_rounds field present and is integer
-        if printf '%s' "$packet_content" | grep -qE 'worker_dialog_rounds:\s*[0-9]+'; then
+        if printf '%s' "$packet_content" | grep -qE 'worker_dialog_rounds:[[:space:]]*[0-9]+'; then
             wdr="$(printf '%s' "$packet_content" | grep -E 'worker_dialog_rounds:' | head -1 | sed -E 's/.*worker_dialog_rounds:[[:space:]]*([0-9]+).*/\1/')"
             log "[OK] worker_dialog_rounds: $wdr (int — Adversarial measurable)"
         else
@@ -147,7 +147,7 @@ if [ -n "$PACKET_PATH" ]; then
 
         # B3: v3 deprecated fields NOT present
         for f in decision_state sonnet_final_status decider_decision_ref; do
-            if printf '%s' "$packet_content" | grep -qE "^\s+${f}:"; then
+            if printf '%s' "$packet_content" | grep -qE "^[[:space:]]+${f}:"; then
                 log_err "[FAIL] packet 에 v3 deprecated field '${f}' 잔존"
                 fail=$((fail + 1))
             else
@@ -172,7 +172,7 @@ if [ -n "$PACKET_PATH" ]; then
         esac
 
         # B5: lane field present
-        if printf '%s' "$packet_content" | grep -qE '^  lane:\s*(design|code|security)'; then
+        if printf '%s' "$packet_content" | grep -qE '^[[:space:]]+lane:[[:space:]]*(design|code|security)'; then
             log "[OK] lane field present (design/code/security)"
         else
             log_err "[FAIL] lane field 부재 또는 invalid (must be design|code|security)"

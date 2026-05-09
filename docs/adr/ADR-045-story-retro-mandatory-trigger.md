@@ -40,6 +40,18 @@ amendment_log:
     scope: "Phase 1 follow-up (FIX iter 2 boundary resolution from CodeReviewPL Iter 1 P0 A-2 + P0 C-1) — §D-4 Phase 2 implementation spec 명확화: 'workflow_run **또는** scheduled cron' disjunction → 'scheduled cron `*/5 * * * *` 단독 사용 (workflow_run trigger 제거)'. workflow_run self re-trigger 의 GitHub Actions infinite loop risk + quota exhaustion risk 회피. boundary issue resolution = 신규 cross-cutting design pattern doc `docs/domain-knowledge/jsonl-write/race-condition-handling-pattern.md` 도입 — Pattern A (Contents API SHA-based optimistic concurrency, default), Pattern B (Long-lived branch + rolling PR, high-volume), Pattern C (File lock + retry, low-volume + simple). 모든 cross-repo jsonl write workflow = Pattern A 의무 (post-merge-telemetry.sh + retro-mandatory.yml + 미래 신설). git clone + bare push 패턴 금지 (lost-update risk)."
     status: applied
     ref: §D-4 + docs/domain-knowledge/jsonl-write/race-condition-handling-pattern.md
+  - amendment_id: 2
+    cfp: CFP-290
+    date: 2026-05-09
+    scope: "retro-attempts-state branch retention policy 추가 (Issue #295) — `retro-attempts-state/<KEY>` long-lived branch 의 보존 기간을 Story close 후 90일로 정의. cleanup trigger = `gate:retro-complete` label 부착 확인 + Story Issue close 확인 + 90일 경과. cleanup command = `git push origin --delete retro-attempts-state/<KEY>`. worktree GC hook (CFP-136 / ADR-040) cross-ref 의무 — `templates/scripts/check-worktree-stale.sh` 가 stale 판정 시 함께 prune. Pattern B (Long-lived branch) 채택 Story 에 적용."
+    status: applied
+    ref: §D-4 + §Amendments-2 (branch-retention)
+  - amendment_id: 3
+    cfp: CFP-290
+    date: 2026-05-09
+    scope: "§11.6 multi-runner race scenario informational mitigation enumeration (Issue #297) — Pattern A (Contents API SHA-based optimistic concurrency) 가 multi-runner concurrent write 를 처리함을 검증·문서화. CFP-138 security test 통과 근거: (1) SHA mismatch 시 409 Conflict 반환 → caller retry, (2) SHA collision 확률 무시 가능 (Git SHA-1 2^80 preimage resistance), (3) retro-attempts.jsonl write 경합 = last-writer-wins 없음 (모든 writer 가 최신 SHA fetch 후 CAS write). 코드 변경 불필요 — Pattern A 구현이 이미 이 보장을 내포. 검증된 동작을 ADR 에 informational note 로 기록."
+    status: applied
+    ref: §D-4 + §Amendments-3 (multi-runner-mitigation) + docs/domain-knowledge/jsonl-write/race-condition-handling-pattern.md
 ---
 
 # ADR-045: Story 완료 회고 의무화 — Phase 2 PR merge 후 PMOAgent 자동 trigger
@@ -294,6 +306,51 @@ Yes. Rollback 경로:
 - Hotfix 경로 retro 의무 — `docs/hotfix-playbook.md` amendment 별도 CFP
 - TEAM-RETRO 의 agent teams 활성 (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) 의존성 — 본 ADR 는 default subagent context 에서도 동작 (Orchestrator → PMOAgent subagent spawn one-shot 패턴)
 - EC-5 사용자 manual edit policy (retro file append-only / immutable) — KB 신설 후보 (`docs/domain-knowledge/retro-flow/manual-override-policy.md`), 별도 CFP
+
+## Amendments
+
+### Amendment 2 — `retro-attempts-state` branch retention policy (CFP-290 / Issue #295)
+
+**문제**: ADR-045 D-4 §Phase 2 implementation spec 에서 Pattern B (Long-lived branch + rolling PR) 를 선택한 Story 의 경우 `retro-attempts-state/<KEY>` long-lived branch 가 생성된다. 그러나 해당 branch 의 보존 기간·삭제 트리거·삭제 명령이 어디에도 정의되지 않아 브랜치가 무기한 잔존하는 리포지터리 오염이 발생할 수 있다.
+
+**결정**: `retro-attempts-state/<KEY>` branch 보존 기간 = **Story close 후 90일**. 아래 조건 모두 충족 시 삭제 의무:
+
+1. `gate:retro-complete` label 부착 확인 (retro 정상 완료 증거)
+2. Story Issue close 확인
+3. Story close timestamp 로부터 90일 경과
+
+**Cleanup command**:
+
+```bash
+git push origin --delete retro-attempts-state/<KEY>
+```
+
+**Worktree GC hook cross-ref (ADR-040 / CFP-136)**: `templates/scripts/check-worktree-stale.sh` 가 stale worktree 판정 기준 (7 days + origin absent) 에 따라 prune 할 때, 동일 `<KEY>` 의 `retro-attempts-state/<KEY>` remote branch 도 함께 정리 대상으로 포함. 단 worktree GC = 7 day stale 기준, branch cleanup = 90 day — 두 기준은 독립 (worktree GC 가 branch cleanup 을 강제하지 않음, 편의 참고만).
+
+**Pattern A 해당 Story**: Pattern A (Contents API SHA-based optimistic concurrency) 를 사용하는 경우 `retro-attempts-state/<KEY>` long-lived branch 생성 없음 — 본 retention policy 적용 범위 외. Pattern A 기본 채택 (amendment_id=1 정합).
+
+**근거**: 90일 = ADR-026 §결정 2 CODEFORGE_CROSS_REPO_PAT 90d rotation runbook 과 alignment. story close 후 90일 = audit trail 충분 보존 + 브랜치 누적 방지 균형.
+
+---
+
+### Amendment 3 — §11.6 multi-runner race scenario informational mitigation (CFP-290 / Issue #297)
+
+**문제**: retro-attempts.jsonl 의 concurrent write 시나리오 (GitHub Actions matrix strategy 또는 병렬 workflow runner 가 동시에 jsonl append 시도) 에 대한 mitigation 이 ADR-045 내에 문서화되지 않아 "race 발생 시 어떻게 되는가" 가 불명확했다.
+
+**결정**: Pattern A (Contents API SHA-based optimistic concurrency, `docs/domain-knowledge/jsonl-write/race-condition-handling-pattern.md`) 가 multi-runner concurrent write 를 올바르게 처리함을 CFP-138 security test 를 통해 검증했다. **코드 변경 불필요** — 검증된 동작을 informational note 로 기록.
+
+**검증된 mitigation enumeration**:
+
+| 시나리오 | Pattern A 처리 방식 | 결과 |
+|---|---|---|
+| Runner A + Runner B 동시 append 시도 | A 가 먼저 write 완료 → B 의 PUT 요청 SHA mismatch → GitHub Contents API 409 Conflict 반환 | B 가 최신 SHA re-fetch 후 CAS retry → eventual consistency 보장 |
+| 3+ runner 동시 경합 | 동일 CAS 메커니즘, 순차 직렬화 | 모든 write 가 commit history 에 기록됨 |
+| SHA collision 위험 | Git SHA-1 2^80 preimage resistance (NIST SP 800-131A 기준) | collision 확률 무시 가능 (negligible) |
+| 네트워크 지연 / 부분 실패 | 409 이후 caller retry + exponential backoff (Pattern A spec 정합) | no silent data loss |
+
+**보장**: git clone + bare push pattern (lost-update risk, D-4 금지) 과 달리 Pattern A 는 last-writer-wins 없음 — 모든 concurrent writer 가 CAS 로 직렬화되어 retro-attempts.jsonl 의 data integrity invariant (D-4 Idempotency invariant) 충족.
+
+**Scope**: 본 informational note 는 Pattern A 구현 코드의 동작을 ADR 레벨에서 확인·기록한 것. Pattern A 코드 자체는 `docs/domain-knowledge/jsonl-write/race-condition-handling-pattern.md` SSOT — 본 ADR 는 cross-reference 만.
 
 ## 관련 파일
 

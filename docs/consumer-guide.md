@@ -859,6 +859,12 @@ Consumer 프로젝트에서 요구사항을 GitHub Issue Form으로 입력하면
 - **Phase 1 PR** (요구사항+설계+설계리뷰): docs only
 - **Phase 2 PR** (구현+구현리뷰+구현테스트+보안테스트): code + docs append
 
+> **PR description `Closes/Fixes/Resolves` keyword 정책 (CFP-292 / Issue #299)**:
+> - **Phase 1 PR MUST NOT** use `Closes #NNN`, `Fixes #NNN`, `Resolves #NNN` — GitHub 이 PR merge 시 해당 keyword 를 감지하여 Issue 를 자동 close 하므로, Phase 2 PR merge 전에 Story Issue 가 premature close 됨.
+> - Phase 1 PR 에서는 `Related: #NNN` 사용.
+> - **Phase 2 PR** 에서만 `Closes #NNN` 사용 (정상 auto-close 트리거).
+> - **Cross-PR conflict resolution**: 동일 Story 의 복수 PR (Phase 1 + follow-up spec amendment 등) 이 충돌할 경우, base PR 을 먼저 merge 한 후 충돌 PR 을 `git rebase origin/main` 으로 merged base 위로 rebase, conflict 해소 후 merge. `git merge` 방향 역전 금지.
+
 **Epic flow (cross-repo 또는 multi-Story Epic, CFP-82)** — **1 Epic = Phase 1 doc PR + N implementation PRs + close PR**:
 - **Phase 1 PR** (hub / owner repo): Epic doc + child Story stubs + Codex 7-area review aggregate
 - **Phase 2 ~ Phase N PR**: 각 child Story implementation. Joint-phase narrow form 허용 (1 Story 가 1 phase 안 multi-repo joint PR 보유 가능, ADR-020 Amendment 1)
@@ -874,6 +880,41 @@ mctrader 진행 중 Epic 예시:
 | MCT-48 Paper Runtime | hub#64 | engine#10/#11/#12 + web#1/#2 + spec amend hub#72 | (in flight) | 7+ |
 
 상세 오케스트레이션 규칙은 [`orchestrator-playbook.md`](orchestrator-playbook.md).
+
+#### EPIC-RESULTS 파일 위치 + migration guide (ADR-041 Amendment 1)
+
+EPIC-RESULTS-`<EPIC_KEY>`.md canonical location = [`docs/doc-locations.yaml`](doc-locations.yaml) `epic_results` row ([ADR-041](adr/ADR-041-doc-location-registry.md), Amendment 1 — CFP-288):
+
+- **Mode A (owner repo)**: `<owner-repo>/docs/retros/EPIC-RESULTS-<EPIC_KEY>.md`
+- **Mode B/C (hub repo)**: `<hub-repo>/docs/retros/EPIC-RESULTS-<EPIC_KEY>.md`
+- **dogfood (codeforge family)**: `<internal-docs>/<plugin-folder>/retros/EPIC-RESULTS-<EPIC_KEY>.md`
+
+**기존 root 위치 파일이 있는 경우 migration 패턴:**
+
+```bash
+# 1. docs/retros/ 디렉터리 생성 (없으면)
+mkdir -p docs/retros
+
+# 2. 기존 root 파일 일괄 이동
+for f in EPIC-RESULTS-*.md; do
+  git mv "$f" "docs/retros/$f"
+done
+
+# 3. inbound link 갱신 — Story file §11, design doc 등
+grep -rn "EPIC-RESULTS-" docs/ | grep -v "docs/retros/" \
+  | awk -F: '{print $1}' | sort -u
+# 위 출력 파일에서 링크를 docs/retros/EPIC-RESULTS-*.md 로 갱신
+
+# 4. 빈 디렉터리 정리 (docs/results/ 등 drift dir 존재 시)
+rmdir docs/results 2>/dev/null || true
+```
+
+**Story file §11 link path (Mode B same-repo):**
+```markdown
+[EPIC-RESULTS-<KEY>.md](../../docs/retros/EPIC-RESULTS-<KEY>.md)
+```
+
+**Cross-repo / dogfood:** 절대 GitHub URL 사용 (예: `https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/retros/EPIC-RESULTS-<KEY>.md`)
 
 ### 5.1 Cross-repo Epic — Centralization mode 선택 (multi-repo consumer)
 

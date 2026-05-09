@@ -30,7 +30,7 @@ related_files:
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | Iter | int (1-indexed) | iteration 누적 카운터. 같은 Story 안에서 단조 증가 (RESET 무관) |
-| 시각 | ISO8601 string | UTC, `2026-04-29T12:34:56Z` 형식 |
+| 시각 | ISO8601 string | UTC strict — Z suffix 필수. `2026-04-29T12:34:56Z` 형식 (CFP-295 / Issue #302 — +00:00 / bare datetime 불허) |
 | 레인 | enum | 요구사항 / 설계 / 설계-리뷰 / 구현 / 구현-리뷰 / 구현-테스트 / 보안-테스트 |
 | 트리거 | string | 실패 원문 요약 (예: "DesignReviewPL P0 × 2", "성능 mean +15%", "SecurityTestPL P0 × 1 (SQL injection)") |
 | 원인 판정 | enum | 설계 / 구현 (ArchitectPL 최종 판정. CLAUDE.md "원인 판정 decision table" SSOT) |
@@ -61,8 +61,8 @@ fix_event_schema:
   "시각":
     type: ISO8601
     constraints:
-      - "UTC (timezone Z 또는 +00:00)"
-      - "millisecond precision optional"
+      - "UTC strict — Z suffix 필수 (예: 2026-04-29T12:34:56Z). +00:00 / bare datetime 불허 (CFP-295 / Issue #302)"
+      - "millisecond precision optional (e.g. 2026-04-29T12:34:56.789Z 허용)"
 
   "레인":
     type: enum
@@ -134,6 +134,7 @@ counter_semantics:
 
 ## 4. 변경 규칙
 
+- **`시각` 필드 UTC strict (CFP-295 / Issue #302, 2026-05-09)**: `시각` 값 Z suffix 강제 (ISO8601 UTC). +00:00 표기 및 timezone 없는 bare datetime 불허. 기존 legacy entry (Z suffix 미적용) 는 표시 전용 — 신규 append 시 반드시 Z suffix. 이 정책 변경 = schema clarification (v1.0 minor commentary) — BREAKING 아님 (append-only 필드 의미 동일).
 - **Append-only for v1.x**: 새 필드 추가는 minor (v1.0 → v1.1). 기존 필드 삭제 또는 enum 값 제거는 v2.0 BREAKING (ADR-008)
 - **§10 마크다운 표 형식 변경 금지 (v1.x)**: `fix-ledger-sync.yml` Action regex가 현 표 형식에 의존 — column 순서·헤더 텍스트 변경 시 BREAKING. CFP-34에서 workflow yaml regex test 추가 후에야 변경 안전
 - **Writer monopoly v1**: Orchestrator 단독. lane plugin이 §10 직접 Edit 시 CI Action `story-section-write-guard.yml` (CFP-34 deliverable)이 catch. **CFP-275 Amendment**: "Orchestrator 단독" = top-level Claude 세션 + Orchestrator-owned delegate subagent (§10 row append 전용 spawn) 동등 — ADR-039 §결정 12 normative 정합 anchor.

@@ -89,3 +89,53 @@ wrapper repo `docs/inter-plugin-contracts/MANIFEST.yaml` 가 모든 `kind: contr
 - [scripts/check-inter-plugin-contracts.sh](../../scripts/check-inter-plugin-contracts.sh) — 본 ADR 강제 lint
 - [docs/adr/ADR-008-inter-plugin-contract-versioning.md](ADR-008-inter-plugin-contract-versioning.md)
 - [docs/adr/ADR-009-wrapper-only-decomposition.md](ADR-009-wrapper-only-decomposition.md)
+
+---
+
+## Amendment 1 — ADR number reserve protocol 강화 (CFP-291 / Issue #298, 2026-05-09)
+
+### 배경
+
+§4 Sync 트리거 절차에 "ADR 번호를 실제 할당하기 전에 현재 최댓값을 확인" 하는 명시적 단계가 없었다. 병렬 feature branch 가 동시에 동일 번호를 채택하는 race condition 이 관찰됐으며, 이를 기계적으로 차단할 프로토콜이 필요하다.
+
+### 결정
+
+새 ADR 번호를 reserve 하기 전 반드시 아래 3단계를 수행한다:
+
+1. **Verify** — `Glob(docs/adr/ADR-*.md)` 결과를 숫자 정렬하여 현재 최대 번호(max)를 확인.
+   ```bash
+   ls docs/adr/ADR-*.md | sort -t- -k2 -n | tail -3
+   ```
+2. **Reserve** — 사용할 번호를 `max + 1` 로 결정.
+3. **Re-verify immediately before commit** — 파일 이름을 실제 기록하기 직전에 동일 Glob 을 한 번 더 실행하여, 동일 번호를 사용하는 파일이 존재하지 않음을 확인. 충돌 발견 시 즉시 중단하고 번호를 재산정.
+
+이 절차는 (a) 새 ADR 파일 생성, (b) Story §3 에 ADR 번호 최초 기입, (c) DesignLane agent 가 change-plan 또는 story file 에 `ADR-NNN` 를 삽입하는 모든 시점에 적용된다.
+
+### 위배 시 처리
+
+- 중복 ADR 번호가 PR 에서 발견되면 CI `check-doc-frontmatter.sh` 가 FAIL (duplicate `adr_number` 검출).
+- 작성자는 번호를 re-number 하고 re-push 해야 한다. retroactive 수정 허용 (충돌 발생 시 번호가 작은 쪽을 선점).
+
+---
+
+## Amendment 2 — inter-plugin contract MAJOR bump canonical-first 의무 (CFP-291 / Issue #311, 2026-05-09)
+
+### 배경
+
+§4 Sync 트리거는 "canonical 변경 PR merge 직후 wrapper sibling sync PR open·merge 의무" 를 규정하지만, MAJOR version bump(예: v3 → v4) 시 어느 repo 가 먼저 merge 해야 하는지 순서를 명시하지 않았다. wrapper-first MAJOR bump 가 발생하면 canonical 이 구버전인 상태에서 sibling 이 신버전을 선언하는 일시적 drift 가 생겨 consumer 에게 잘못된 contract 가 노출된다.
+
+### 결정
+
+**MAJOR version bump 에 한해 canonical-first 순서를 의무화한다:**
+
+1. **Canonical PR 먼저** — lane plugin repo 에 MAJOR bump PR 을 open·merge 한다.
+2. **Wrapper sibling sync PR 후속** — canonical merge 완료 후에만 wrapper sibling sync PR 을 open 한다.
+3. **Wrapper-first MAJOR 금지** — wrapper sibling 에 MAJOR bump 를 먼저 commit 하는 것은 금지. 해당 PR 은 CI `inter-plugin-drift` check 가 차단한다.
+
+MINOR / PATCH bump 는 이전과 동일하게 wrapper-first 허용 (ADR-008 §결정 3 forward-compat 정책 유지).
+
+### 위배 시 처리
+
+- `scripts/check-inter-plugin-contracts.sh` 의 향후 drift check 확장에서, wrapper sibling 의 MAJOR version 이 MANIFEST.yaml 에 기록된 canonical MAJOR version 보다 높을 경우 CI FAIL.
+- 현 시점 (lint 확장 전): author 의무 + PR description 에 "canonical 먼저 merge 확인" 체크박스 추가 의무.
+- 장기: `inter-plugin-drift.yml` workflow (후속 ADR 도입 예정) 가 자동 강제.

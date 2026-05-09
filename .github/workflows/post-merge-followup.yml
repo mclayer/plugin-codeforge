@@ -1,20 +1,28 @@
 name: Post-merge follow-up automation
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
 
 on:
   pull_request:
     types: [closed]
+
+# CFP-300 least-privilege: deny all at workflow level; job overrides only what it needs.
+permissions: {}
 
 jobs:
   followup:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     permissions:
+      # issues:write — phase label transition, Issue close, Issue comment
+      # pull-requests:write — PR comment (sibling close / status updates)
+      # contents:read — checkout repo (.codeforge/ flag check)
+      # CODEFORGE_CROSS_REPO_PAT handles cross-repo writes (story writer, telemetry) independently.
       issues: write
       pull-requests: write
       contents: read
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Disable check
         id: enabled

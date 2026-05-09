@@ -4,6 +4,12 @@ area: github-actions
 topic_slug: issue-event-trigger-semantics
 title: GitHub Actions issue event trigger semantics — REST vs Web UI label timing
 status: Active
+tags:
+  - github-actions
+  - issue-events
+  - webhook
+  - label-timing
+  - n-plus-one-firing
 related_adrs:
   - ADR-036  # CFP-260 atomic Issue numbering — REST event ordering 의존
 related_stories:
@@ -14,6 +20,23 @@ updated: 2026-05-09
 ---
 
 # GitHub Actions issue event trigger semantics
+
+## Summary
+
+GitHub REST API or Web UI Issue Form submit 시 발화하는 webhook event 의 **N+1 firing law** 와 `issue.labels` field timing 차이 SSOT. codeforge `story-init.yml` 등 label-conditional workflow 설계 시 `[opened, labeled]` 조합 + step-level guard 가 의무임을 명시한다.
+
+## Problem
+
+`on.issues.types: [opened]` 단독 trigger 는 REST-filed Issue 에서 `issue.labels` 가 항상 `[]` 인 채로 발화 — label-conditional job guard 가 false → silent skip. `labeled` event 는 29s 후 별도 발화하지만 trigger 에 미포함 시 workflow 미실행. CFP-280 이 `[opened, labeled]` 합성 + step-level file-existence dedup 으로 해소.
+
+## Usage
+
+codeforge workflow 가 label-conditional trigger 를 설계할 때:
+1. `on.issues.types: [opened, labeled]` 조합 채택 (REST + Web UI 양쪽 대응)
+2. Job/step level guard: `if: contains(github.event.issue.labels.*.name, 'type:story')` 또는 file-existence marker 로 dedup
+3. `concurrency: group: story-init-${{ github.event.issue.number }}` 로 dual-firing 직렬화
+
+상세 선택 기준은 [workflow-idempotency-patterns](workflow-idempotency-patterns.md) 참조.
 
 ## 정의
 

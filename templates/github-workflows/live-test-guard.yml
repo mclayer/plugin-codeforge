@@ -1,4 +1,5 @@
 # Live Test Guard — ADR-008 D5 fail-default workflow template
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
 #
 # 정책: real live mode test = fail-default. MCTRADER_ALLOW_LIVE_TEST=1 (또는 consumer-defined env) 시만
 #       dry-run / shadow only 허용. real secret 사용은 절대 금지.
@@ -39,7 +40,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Live test fail-default (ADR-008 D5)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Detect real live test files
         id: detect
