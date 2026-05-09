@@ -1,5 +1,5 @@
 ---
-adr_number: 46
+adr_number: 47
 title: Framework Migration Epic Pattern — PMOAgent Version Delta Review + Deputy Migration Notes
 date: 2026-05-09
 status: Proposed
@@ -15,7 +15,7 @@ amends: null
 supersedes: null
 ---
 
-# ADR-046: Framework Migration Epic Pattern
+# ADR-047: Framework Migration Epic Pattern
 
 ## 상태
 
