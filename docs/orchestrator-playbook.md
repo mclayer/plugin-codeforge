@@ -371,6 +371,18 @@ Orchestrator 가 사용자에게 substantive path 를 제시하거나 외부 sys
 
 4. **main / master force push 절대 금지**. 사고 발생 시: cherry-pick → correct branch → push (force push X).
 
+#### §3.0.10 Worktree-first mandate (normative — wrapper + all consumers)
+
+모든 coding work 는 git worktree 안에서 수행. 원본 working directory(`git checkout <branch>`) 직접 편집 금지.
+
+- **Story 시작 시**: `bash templates/scripts/worktree-create.sh cfp-NNN origin/main` 선행 → cwd = worktree path
+- **Subagent spawn 시**: prompt 에 `Working dir: <worktree-path>` 명시 — lane spawn (§3.5) 과 ad-hoc spawn 동일
+- **Ad-hoc 작업 포함**: lane spawn 외 일반 subagent spawn, 사용자 직접 작업 모두 동일 적용
+- **Consumer 동일 적용**: consumer project 에서 codeforge 사용 시 동일 rule
+- **위반 판정**: 원본 working directory 에서 file edit/write/bash 수행 = stop discipline 위반 (ADR-025 §결정 2 `policy_violation`)
+
+인프라 SSOT: ADR-040 (CFP-136). Script: `bash templates/scripts/worktree-create.sh <branch> <base-ref>`.
+
 ### 3.1 7 레인 + Cross-cutting 스폰 순서 (요약)
 
 ```
