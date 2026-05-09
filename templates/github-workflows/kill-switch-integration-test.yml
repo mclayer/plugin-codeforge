@@ -1,4 +1,5 @@
 # Kill Switch Integration Test — Live touching Story 의무 워크플로우 template
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
 #
 # 정책: Sonnet decider D4=A — kill switch enforcement = engine layer (call site enforcement).
 #       Live touching Story 의 implementation PR 시 kill switch test artifact 의무.
@@ -45,7 +46,7 @@ jobs:
     runs-on: ubuntu-latest
     name: Kill switch integration test (ADR-008 D8)
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Run consumer-defined kill switch test
         run: ${{ inputs.test_command }}
@@ -84,7 +85,7 @@ jobs:
           echo "All required test categories PASS"
 
       - name: Upload test report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: kill-switch-test-report
           path: ${{ inputs.test_artifact_path }}
