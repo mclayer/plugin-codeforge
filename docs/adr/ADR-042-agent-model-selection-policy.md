@@ -7,6 +7,13 @@ category: governance
 carrier_story: null
 supersedes: []
 amends: null
+amendment_log:
+  - amendment_id: 1
+    date: 2026-05-09
+    status: applied
+    summary: "ResearcherAgent deferred fence resolved — mandate + model tier confirmed by ADR-046"
+    ref: ADR-046
+    carrier_story: "chore/researcher-role-redefinition (ADR-013 waiver)"
 related_stories: []
 related_adrs:
   - ADR-009
@@ -15,6 +22,7 @@ related_adrs:
   - ADR-035
   - ADR-037
   - ADR-039
+  - ADR-046
 related_files:
   - .claude-plugin/plugin.json
   - CLAUDE.md
@@ -71,7 +79,7 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 
 | Tier | Model | Role pattern criteria |
 |------|-------|----------------------|
-| **Opus** | claude-opus-4-7 | (a) Multi-source synthesis (3+ deputy / lane / contract input dedup + 종합 판정) — 모든 PL · ArchitectAgent chief. (b) Independent reasoning peer to external GPT-5 (ClaudeReviewAgent — Codex 와의 의도적 reasoning depth 매칭). (c) High-stakes domain interpretation (DomainAgent — Live trading / 금융 / 헬스 데이터 등 invariant 누설 위험). (d) Security / safety boundary owner (SecurityArchitectAgent · OperationalRiskArchitectAgent · DataMigrationArchitectAgent · TestContractArchitectAgent — §7 trust boundary / §7.4 DR / §11 schema rollback / §8 perf baseline). (e) Real-funds risk owner (LiveOpsDeputyAgent · LiveOrderingDeputyAgent — CFP-77 CONDITIONAL). (f) Cross-Story pattern analysis + ADR proposal (PMOAgent). (g) Deep research with reshape mandate (ResearcherAgent — but see § "결정 2 — pending follow-up"). |
+| **Opus** | claude-opus-4-7 | (a) Multi-source synthesis (3+ deputy / lane / contract input dedup + 종합 판정) — 모든 PL · ArchitectAgent chief. (b) Independent reasoning peer to external GPT-5 (ClaudeReviewAgent — Codex 와의 의도적 reasoning depth 매칭). (c) High-stakes domain interpretation (DomainAgent — Live trading / 금융 / 헬스 데이터 등 invariant 누설 위험). (d) Security / safety boundary owner (SecurityArchitectAgent · OperationalRiskArchitectAgent · DataMigrationArchitectAgent · TestContractArchitectAgent — §7 trust boundary / §7.4 DR / §11 schema rollback / §8 perf baseline). (e) Real-funds risk owner (LiveOpsDeputyAgent · LiveOrderingDeputyAgent — CFP-77 CONDITIONAL). (f) Cross-Story pattern analysis + ADR proposal (PMOAgent). (g) Deep research with reshape mandate (ResearcherAgent — per [ADR-046](ADR-046-researcher-role-redefinition.md) (2026-05-09)). |
 | **Sonnet** | claude-sonnet-4-6 | (a) Single-mandate advocacy within multi-deputy debate — read-only 조사 + 자기 mandate 측 단일 축 주장 (CodebaseMapperAgent — existing facts only, RefactorAgent — pattern advocacy only). (b) Implementation work — code write / refactor / test 구현 (DeveloperAgent · DataEngineerAgent · InfraEngineerAgent · QADeveloperAgent · DeveloperPLAgent · 2 webapp preset). |
 | **Haiku** | claude-haiku-4-5 | (a) Test runner / 결과 수집 — minimal reasoning (TestAgent). (b) External tool wrapper — 본체 reasoning 은 external (Codex GPT-5 / GPT-5.4) 가 수행, Claude 는 prompt 조립 / output relay 만 (CodexReviewAgent · RequirementsAnalystAgent). |
 
@@ -83,8 +91,7 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 
 근거: 양 agent 모두 3-way deputy debate (Mapper = existing codebase fact 보고, Refactor = decoupling/pattern advocacy, SecurityArch = threat) 안에서 **single-mandate advocacy** 패턴. read-only 조사 + 자기 축 단일 주장. multi-source synthesis 책임은 ArchitectAgent chief (Opus) 가 수행. Sonnet 4.6 의 reasoning depth 가 본 mandate 를 fully cover.
 
-**ResearcherAgent (deferred — codeforge-requirements 별도 Story)**:
-현재 frontmatter 정의 ("외부 지식 리서치 — 사용자 원문에서 자체 도출한 기술·선행사례 키워드 기반 타겟 조사, 연구원 수준 배경지식 축적") 는 keyword fetch 수준으로 underdefined. 진정한 Researcher 역할 = deep concept formulation + requirements reshape. Role 재정의 후 model 결정 — tracked: [plugin-codeforge-requirements#12](https://github.com/mclayer/plugin-codeforge-requirements/issues/12).
+**ResearcherAgent** — RESOLVED by [ADR-046](ADR-046-researcher-role-redefinition.md) (2026-05-09): Concept formulation + Deep exploration + Requirement reshape. Opus tier 유지 (mandate depth 근거). 상세: ADR-046.
 
 ### 결정 3: 신규 agent 도입 / 기존 agent model 변경 시 ADR 의무
 
@@ -180,6 +187,7 @@ DeveloperPLAgent 가 1차 FIX root cause 진단을 수행하지만, 최종 판�
 - [ADR-035](ADR-035-codeforge-agent-teams-epic-architecture.md) — Codeforge Agent Teams Epic Architecture (CFP-134, agent topology SSOT)
 - [ADR-037](ADR-037-plugin-version-bump-rule.md) — plugin version bump rule (model tier 변경 = MINOR bump trigger)
 - [ADR-039](ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — Orchestrator subagent default (model tier 변경 작업 자체도 본 정책 적용)
+- [ADR-046](ADR-046-researcher-role-redefinition.md) — ResearcherAgent role redefinition (resolves §결정 2 deferred fence, amendment_log[1])
 
 ### 외부 reference
 

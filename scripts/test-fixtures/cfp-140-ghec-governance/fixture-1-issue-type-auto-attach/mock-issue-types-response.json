@@ -1,0 +1,26 @@
+[
+  {
+    "id": "IT_epic_001",
+    "name": "Epic",
+    "description": "Epic: multi-Story user requirement",
+    "color": "5319e7"
+  },
+  {
+    "id": "IT_story_002",
+    "name": "Story",
+    "description": "Story: single PR-pair unit",
+    "color": "0e8a16"
+  },
+  {
+    "id": "IT_bug_003",
+    "name": "Bug",
+    "description": "Bug: defect report",
+    "color": "d73a4a"
+  },
+  {
+    "id": "IT_audit_004",
+    "name": "Audit",
+    "description": "Audit: governance item",
+    "color": "fbca04"
+  }
+]
