@@ -1,0 +1,49 @@
+# CLAUDE.md / playbook 병렬 에픽 섹션 편집 정책 (ADR-050)
+# parallel_edit:
+#   append-only — 테이블 row 추가만 허용, 기존 텍스트 수정 시 conflict:section-locked
+#   locked      — 동시 수정 시 merge-order 의무 + conflict:section-locked
+
+version: 1
+
+owned_sections:
+  - file: CLAUDE.md
+    section: "FIX 루프"
+    owner_adr: ADR-025
+    parallel_edit: append-only
+
+  - file: CLAUDE.md
+    section: "레인 5개 · 단계 정의"
+    owner_adr: ADR-044
+    parallel_edit: locked
+
+  - file: CLAUDE.md
+    section: "오케스트레이션 규칙"
+    owner_adr: ADR-039
+    parallel_edit: locked
+
+  - file: CLAUDE.md
+    section: "원인 판정 decision table"
+    owner_adr: ADR-025
+    parallel_edit: append-only
+
+  - file: CLAUDE.md
+    section: "Deputy mandate 매트릭스"
+    owner_adr: ADR-014
+    parallel_edit: append-only
+
+  - file: CLAUDE.md
+    section: "Design / Code / Security 리뷰 책임 매트릭스"
+    owner_adr: ADR-001
+    parallel_edit: append-only
+
+  - file: docs/orchestrator-playbook.md
+    section: "§3 Lane 실행"
+    owner_adr: ADR-039
+    parallel_edit: locked
+
+  - file: docs/orchestrator-playbook.md
+    section: "§6 FIX 루프 상태 머신"
+    owner_adr: ADR-025
+    parallel_edit: locked
+
+# 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)
