@@ -5,6 +5,16 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.8.0] - 2026-05-10
+
+### Added
+- CFP-343 / ADR-051: 4개 SSOT 예외 테이블 → plugin skill 분리 (`codeforge:review-responsibility`, `codeforge:root-cause-decision`, `codeforge:fix-ledger-schema`, `codeforge:deputy-mandate`)
+- CLAUDE.md 오케스트레이션 규칙: Lane 진입 시 skill 호출 의무 trigger 테이블 신설
+
+### Changed
+- CLAUDE.md: 454줄 → 320줄 (ADR-012 ≤380줄 cap 재충족, -29.5%)
+- `skills/codeforge-brainstorm.md` flat 파일 → `skills/codeforge-brainstorm/SKILL.md` subdirectory 형식 정정 (system-reminder 노출 버그 해소)
+
 ## [5.7.0] - 2026-05-09
 
 ### Added
