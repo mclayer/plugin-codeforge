@@ -31,6 +31,12 @@ amendment_log:
     date: 2026-05-08
     scope: "CFP-140 추가 — GitHub Enterprise Cloud (GHEC) governance 4 영역 (rulesets-as-code / required workflows enterprise sync / audit log streaming + decision packet SIEM trail / Issue Types + sub-issues migration) 을 GitOpsAgent mandate 로 확장. 본 ADR Initial draft 는 D1-D5 (Foundation 결정) 만, CFP-137 가 phase-scoped agent teams 내용 amendment, CFP-140 가 GHEC governance 내용 amendment 추가 예정."
     status: planned
+  - amendment_id: 2
+    date: 2026-05-09
+    scope: "CFP-138 (Wave 2) — D5 Story 완료 회고 의무화 implementation level. Phase 2 PR merge 후 5분 grace + retry 5/10/15분 + close-blocking forcing function. retro-mandatory.yml workflow + label-registry v1.5 (gate:retro-complete) + Story §11 schema migration + codeforge-pmo PMOAgent mandate amendment. ADR-042 = D5 Foundation 결정 implementation carrier."
+    status: applied
+    ref: ADR-042
+    cfp: CFP-138
 ---
 
 # ADR-035: codeforge agent teams + GitOps + retro 의무화 + ADR-022 deprecate Epic architecture
@@ -152,7 +158,7 @@ Worktree base = `${HOME}/.claude/worktrees/<repo-name>/` (cross-platform).
 
 **근거**: 사용자 turn 9 명시 ("story 완료 회고는 사용자 요청이 없어도 의무로 수행한다.").
 
-**Implementation**: CFP-138 (Wave 1, depends on CFP-135 ADR-022 deprecate 후 — decider 비-개입 전제 위에 retro mandate 작성).
+**Implementation**: CFP-138 (Wave 2, depends on CFP-135 ADR-022 deprecate 후 — decider 비-개입 전제 위에 retro mandate 작성). **Implementation level SSOT = [ADR-042](ADR-042-story-retro-mandatory-trigger.md)** (Wave 2 amendment_id 2 / Accepted 시 본 amendment_log[] update). Phase 2 PR merge 후 5분 grace + retry 5/10/15분 + close-blocking forcing function (gate:retro-complete) — 상세 D-1 ~ D-8.
 
 ## D6 (Amendment 1 — CFP-140 Wave 4 추가, 별도 ADR carrier)
 

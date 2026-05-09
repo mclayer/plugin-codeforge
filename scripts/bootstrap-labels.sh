@@ -48,7 +48,7 @@ create_label() {
         || echo "  ! $name: create/edit 실패 (권한 문제 가능)"
 }
 
-[ $DRY_RUN -eq 0 ] && echo "Plugin label 29종 부트스트랩..."
+[ $DRY_RUN -eq 0 ] && echo "Plugin label 30종 부트스트랩..."
 
 # type:* (4종)
 create_label "type:epic"        "5319e7" "Epic (사용자 요구사항 1건 = Milestone + Issue)"
@@ -68,6 +68,8 @@ create_label "phase:reservation" "ededed" "Phase: reservation (CFP-260 / ADR-036
 create_label "gate:design-review-pass"   "0e8a16" "Design review PASS"
 create_label "gate:security-test-pass"   "0e8a16" "Security test PASS"
 create_label "gate:live-entry-pass"      "0e8a16" "Live Epic lane-entry pass (3-condition AND: mode==live + --confirm-live + isolated runtime)"
+# gate:retro-complete (v1.5 / CFP-138 / ADR-042) — Story 완료 회고 작성 mandate forcing function
+create_label "gate:retro-complete"       "0e8a16" "Story 완료 회고 작성됨 (PMOAgent self-write — CFP-138 / ADR-042). 미부착 시 retro-mandatory.yml 가 close 차단."
 
 # fix:* (4종)
 for r in 설계-리뷰 구현-리뷰 구현-테스트 보안-테스트; do
@@ -133,5 +135,5 @@ fi
 
 if [ $DRY_RUN -eq 0 ]; then
     echo ""
-    echo "✓ 29 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."
+    echo "✓ 30 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."
 fi
