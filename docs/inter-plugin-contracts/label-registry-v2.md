@@ -1,4 +1,4 @@
-﻿---
+---
 kind: registry
 registry: label
 version: "2.1"

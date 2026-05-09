@@ -1,4 +1,4 @@
-﻿---
+---
 adr_number: 50
 title: Parallel Epic Conflict Coordination — 복수 Orchestrator 세션 충돌 조율 정책 (CFP-344)
 status: Accepted

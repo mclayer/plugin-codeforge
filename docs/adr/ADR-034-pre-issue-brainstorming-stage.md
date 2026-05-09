@@ -1,4 +1,4 @@
-﻿---
+---
 adr_number: 34
 title: Pre-Issue Brainstorming as Optional Stage 0 — orchestrator-playbook §1.2.0 + story.yml spec_link
 date: 2026-05-07
