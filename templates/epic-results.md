@@ -13,10 +13,10 @@ related_adrs:
 
 ## 사용 위치 및 시점
 
-- **위치**: [`docs/doc-locations.yaml`](../docs/doc-locations.yaml) `epic_results` row 참조 ([ADR-041](../docs/adr/ADR-041-doc-location-registry.md)) — Mode A → owner repo root / Mode B/C → hub repo root / dogfood (codeforge family) → `<internal-docs>/<plugin-folder>/retros/EPIC-RESULTS-<EPIC_KEY>.md`
+- **위치**: [`docs/doc-locations.yaml`](../docs/doc-locations.yaml) `epic_results` row 참조 ([ADR-041](../docs/adr/ADR-041-doc-location-registry.md)) — Mode A/B/C → `<scope>/docs/retros/EPIC-RESULTS-<EPIC_KEY>.md` / dogfood (codeforge family) → `<internal-docs>/<plugin-folder>/retros/EPIC-RESULTS-<EPIC_KEY>.md` (Amendment 1 — CFP-288)
 - **시점**: Epic close PR 동반 작성 (Phase N+1 close PR 의 doc artifact)
 - **작성자**: PMOAgent (Cross-cutting) self-write — codeforge-pmo lane plugin owner path
-- **mctrader 사용 사례**: `mctrader-hub/EPIC-RESULTS-MCT-{12,18,25,32,37}.md` 5건 (실제 emergent pattern, 본 template 화 source)
+- **mctrader 사용 사례**: `mctrader-hub/docs/retros/EPIC-RESULTS-MCT-*.md` (Amendment 1 — root → docs/retros/ 이동, consumer root clutter 해소)
 
 본 template = 13 섹션 구조. 모든 섹션 의무. N/A 시 "N/A — <사유>" 명시.
 
@@ -169,7 +169,7 @@ consumer 첫 cross-repo Epic 시 추가:
 
 ## 사용 절차
 
-1. PMOAgent 가 Epic close PR 생성 시 본 template 복사 → `EPIC-RESULTS-<EPIC_KEY>.md` (Epic owner repo root)
+1. PMOAgent 가 Epic close PR 생성 시 본 template 복사 → `docs/retros/EPIC-RESULTS-<EPIC_KEY>.md` (Amendment 1 — `<scope>/docs/retros/`, ADR-041 doc-locations.yaml 기준)
 2. 모든 §1~§14 섹션 fill-in. N/A 시 사유 명시.
 3. Epic close PR commit message 에 `Epic close: <EPIC_KEY> — <total PRs> PRs across <N> repos` 명시
 4. PR merge 후 PMOAgent retro 작성 시 본 EPIC-RESULTS evidence pack 으로 사용

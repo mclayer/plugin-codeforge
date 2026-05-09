@@ -4,6 +4,12 @@ area: github-actions
 topic_slug: workflow-idempotency-patterns
 title: GitHub Actions workflow idempotency patterns — file marker / concurrency / opened-only filter / PAT-loop prevention
 status: Active
+tags:
+  - github-actions
+  - idempotency
+  - concurrency
+  - dedup
+  - workflow-patterns
 related_adrs:
   - ADR-036  # CFP-260 atomic Issue numbering — concurrency group precedent
 related_stories:
@@ -15,6 +21,48 @@ updated: 2026-05-09
 ---
 
 # GitHub Actions workflow idempotency patterns
+
+## Summary
+
+N+1 firing (opened + labeled dual-event) 또는 multi-run 환경에서 workflow 의 substantive work 가 1회만 실행되도록 보장하는 **4 종 dedup mechanism** 비교 SSOT. codeforge family workflow (특히 `story-init.yml`) 설계 시 (a) file-existence marker + (b) concurrency group 조합이 default 권장 패턴임을 명시한다.
+
+## Pattern
+
+4 종 dedup mechanism:
+
+- **(a) File-existence marker**: `if: steps.check_file.outputs.exists == 'false'` — substantive work 이미 완료 여부를 산출물 파일 존재로 확인. idempotent re-run safe.
+- **(b) Concurrency group**: `concurrency: group: story-init-${{ issue.number }}` — 동일 Issue 에 대한 concurrent run 직렬화. N+1 firing 으로 발화된 동시 run 이 1개만 proceed.
+- **(c) opened-only filter**: `if: github.event.action == 'opened'` step-level guard — labeled event 에서 substantive work skip. 단독 사용 시 REST-filed Issue (opened label[] empty) 에서 skip.
+- **(d) PAT-loop prevention**: `if: github.actor != 'github-actions[bot]'` — PAT 으로 commit/push 한 경우 workflow 재발화 방지.
+
+codeforge 채택: (a) + (b) 조합 (CFP-280 `story-init.yml`). (c) 단독 = REST-filed Issue silent skip risk (issue-event-trigger-semantics.md N+1 firing law 참조).
+
+## Usage
+
+`story-init.yml` 형태의 label-conditional workflow 설계 시:
+```yaml
+on:
+  issues:
+    types: [opened, labeled]
+concurrency:
+  group: story-init-${{ github.event.issue.number }}
+  cancel-in-progress: false
+jobs:
+  scaffold:
+    if: contains(github.event.issue.labels.*.name, 'type:story')
+    steps:
+      - name: check existing file
+        id: check_file
+        run: |
+          if [ -f "docs/stories/${{ env.KEY }}.md" ]; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+      - name: scaffold
+        if: steps.check_file.outputs.exists == 'false'
+        run: # ... substantive work
+```
 
 ## 정의
 
