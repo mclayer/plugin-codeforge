@@ -18,7 +18,7 @@ Claude Code 범용 SW 개발 오케스트레이션 플러그인. **0 core 에이
 
 ## SSOT Boundary
 
-Wrapper CLAUDE.md content scope = (1) Plugin identity (2) Cross-cutting policy (3) 4 SSOT 예외 (책임 매트릭스 / 원인 판정 decision table / FIX Ledger §10 schema / 6 deputy mandate matrix) — 정확한 정의는 [ADR-012](docs/adr/ADR-012-wrapper-claudemd-ssot-boundary.md). Dogfood artifacts (specs/plans/retros/stories/change-plans) 는 [`mclayer/codeforge-internal-docs`](https://github.com/mclayer/codeforge-internal-docs) monorepo SSOT, plugin repo 작업 시 brainstorming/writing-plans skill 의 spec/plan 저장 위치도 internal-docs override — 정책 SSOT: [ADR-013](docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md) (CFP-45).
+Wrapper CLAUDE.md content scope = (1) Plugin identity (2) Cross-cutting policy (3) 4 SSOT 예외 (책임 매트릭스 / 원인 판정 decision table / FIX Ledger §10 schema / 6 deputy mandate matrix) — **CFP-343 / ADR-051 이후 skill로 분리** (`codeforge:review-responsibility` / `codeforge:root-cause-decision` / `codeforge:fix-ledger-schema` / `codeforge:deputy-mandate`). 정확한 정의는 [ADR-012](docs/adr/ADR-012-wrapper-claudemd-ssot-boundary.md). Dogfood artifacts (specs/plans/retros/stories/change-plans) 는 [`mclayer/codeforge-internal-docs`](https://github.com/mclayer/codeforge-internal-docs) monorepo SSOT, plugin repo 작업 시 brainstorming/writing-plans skill 의 spec/plan 저장 위치도 internal-docs override — 정책 SSOT: [ADR-013](docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md) (CFP-45).
 
 Lane internal · per-lane spawn detail · severity rule · GitHub workflow subsection 상세는 lane plugin CLAUDE.md 또는 [playbook](docs/orchestrator-playbook.md) 위임.
 
@@ -105,6 +105,18 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 ## 오케스트레이션 규칙
 
+### Lane 진입 시 skill 호출 의무
+
+Orchestrator는 해당 lane 진입 직전 아래 skill을 호출한다. 상세 테이블은 각 skill 참조.
+
+| 진입 레인 | 호출 skill | 비고 |
+|---|---|---|
+| 설계 | `codeforge:deputy-mandate` | ArchitectPLAgent deputy spawn 결정 전 |
+| 설계리뷰 | `codeforge:review-responsibility` | DesignReviewPL spawn 전 |
+| 구현리뷰 | `codeforge:review-responsibility` | CodeReviewPL spawn 전 |
+| 보안테스트 | `codeforge:review-responsibility` | SecurityTestPL spawn 전 |
+| FIX 루프 | `codeforge:root-cause-decision` + `codeforge:fix-ledger-schema` | DeveloperPL 진단 전 |
+
 > **Orchestrator 정책 적용 범위 (normative)**: 본 CLAUDE.md 및 playbook 의 모든 Orchestrator 행동 규칙 (lane spawn 방식·stop discipline·진행 시각화·GitHub 도구 선택·통신 표준·fact verification 등) 은 **wrapper plugin 자체 작업과 모든 consumer project 에 동일 적용**. Consumer overlay (`.claude/_overlay/`) 는 정책을 축소할 수 없고 확장만 가능.
 
 > **behavioral directive → memory 금지 (normative)**: 사용자가 Orchestrator 행동 directive 를 내릴 때, 해당 규칙을 personal memory file 에 저장하는 것으로 갈음하지 않는다. 대신 **즉시 CFP 제안** 후 playbook / CLAUDE.md / consumer-guide 에 반영해야 한다. Memory = ephemeral + consumer 비전파 + single-session scope = structural enforcement 불가. 예외 없음.
@@ -172,170 +184,25 @@ ADR-022 deprecate 후 `review-verdict-v3` contract (canonical: codeforge-review 
 
 **카운터 SSOT** = `docs/stories/<KEY>.md` §10 "FIX Ledger" — Orchestrator 단독 관리 ([fix-event-v1](docs/inter-plugin-contracts/fix-event-v1.md) contract, CFP-32 monopoly). GitHub Issue 라벨은 보조 (fix-ledger-sync.yml Action mirror).
 
-**§10 FIX Ledger 스키마**:
-```
-| Iter | 시각 | 레인 | 트리거 | 원인 판정 | 재실행 범위 | RESET? |
-|------|------|------|--------|-----------|-------------|--------|
-| 1    | ISO8601 | 설계-리뷰   | DesignReviewPL P0 × 2 | 설계 | Change Plan §3 재작성 | — |
-| 2    | ISO8601 | 구현-테스트 | 성능 mean +15% | 설계 | Change Plan §3 재작성 | **RESET 구현-리뷰** |
-```
+**§10 FIX Ledger 스키마**: `codeforge:fix-ledger-schema` 호출 (FIX 루프 진입 시). Orchestrator 단독 §10 append 독점 (fix-event-v1 contract, CFP-32). RESET 룰·max FIX 횟수 상세는 [playbook §6](docs/orchestrator-playbook.md).
 
-상세 룰 (max FIX 횟수 / RESET marker / parallel diagnosis / mechanical fast-path) 은 [playbook §6](docs/orchestrator-playbook.md) SSOT.
+### 원인 판정 decision table
 
-### 원인 판정 decision table (설계 리뷰·구현 리뷰·구현 테스트·보안 테스트 FAIL 시)
+FIX 루프 시작 시 `codeforge:root-cause-decision` 호출 (DeveloperPL 진단 전). Failure 유형별 1차 가정 (구현/설계)·escalate 조건 전체 테이블 포함.
 
-**프로세스**: 설계 리뷰 FIX는 DeveloperPL 개입 없이 ArchitectPLAgent 직접 회귀. 구현 리뷰·구현 테스트·보안 테스트 FIX는 DeveloperPL 1차 원인 진단 → Orchestrator 경유 → ArchitectPLAgent 최종 판정. 모든 경우 evidence pack(Change Plan 버전 + 리뷰 findings + 테스트 로그) 첨부 의무. Story file §10 FIX Ledger에 누적.
+요약: local P1 → 구현, boundary P1 → 설계. 설계 원인 시 Change Plan 갱신 + Phase 1 follow-up PR. 구현 원인 시 Phase 2 PR commit append.
 
-| Failure 유형 | 1차 가정 | 설계 원인 escalate 조건 |
-|---|---|---|
-| **설계 리뷰 P0 §7 누락** | **설계** | 항상 설계 (ArchitectAgent chief author 미흡) |
-| Unit test FAIL | 구현 | 테스트 사양이 Change Plan 계약과 불일치 |
-| Integration test FAIL | 구현 | 모듈 경계·계약 위반 |
-| Infra test FAIL | 구현 | 배포/환경 요구 Change Plan 누락 |
-| 성능 test FAIL | **설계** | 단순 최적화로 해결되면 구현 |
-| Code review P0 보안 | 구현 | trust boundary 설계 오류 |
-| Code review P0 아키텍처 | **설계** | 레이어·의존성 방향 위반 |
-| **Code review P1 품질 (local)** | 구현 | 단일 파일·함수 내 품질 (naming, 작은 중복, 가독성) |
-| **Code review P1 품질 (boundary)** | **설계** | 모듈 경계·인터페이스·패턴 일관성 (여러 파일 공통 이슈, 설계 지침 부재) |
-| **보안 테스트 (opt-in — security_ai:true) P0 injection·credential hardcode** | 구현 | 코드 단위 결함 |
-| **보안 테스트 (opt-in — security_ai:true) P1 암호학 오용·CVE** | 구현 | 코드 수정·버전 업그레이드로 해결 |
-| **보안 테스트 (opt-in — security_ai:true) P1 boundary 권한 일관성** | **설계** | 여러 파일·레이어 공통 지침 부재 |
-| **보안 테스트 (opt-in — security_ai:true) P0 trust boundary 위반** | 구현 | §7.1에 boundary 부재·모순 또는 §7.1과 코드 boundary 불일치 → 설계 |
-| **보안 테스트 (opt-in — security_ai:true) P0 auth/authz 결함** | 구현 | §7.3 인증·권한 모델 자체 결함 → 설계. 모델은 맞으나 구현 결함 → 구현 유지 |
-| **구현 테스트 Migration FAIL · data integrity 위반 · rollback 실패** | 구현 | §11.1-§11.5 부재·모순 (schema 영향 누락 / Migration 전략 부재 / Rollback 경로 부재 / invariant 정의 부재) → 설계. 모델은 맞으나 script 결함 → 구현 유지 |
-| **§7.4 DR/disconnect cascade FAIL** | 구현 | §7.4 boundary 부재·모순 → 설계 |
-| **§7.4 Rate limit / IP ban** | 구현 | §7.4 quota·throttling 정책 부재 → 설계 |
-| **§7.4 Env isolation 위반 (live ↔ staging 누설)** | 구현 | §7.4 isolation 모델 부재 → 설계 |
-| **§7.4 Clock skew FAIL (CONDITIONAL active)** | 구현 | §7.4 skew tolerance 부재·N/A 모순 → 설계 |
-| **§11 Idempotency 위반 (CONDITIONAL active)** | 구현 | §11 invariant 부재·N/A 모순 → 설계 |
-| **§8.5 Cache / state drift (long-running)** | 구현 | §8.5.1 long-running invariant 정의 부재 또는 §7.4.1 DR boundary 부재 → 설계 |
-| **§8.5 Unbounded background accumulation** | 구현 | §7.4.4 rate limit / quota 정책 부재 또는 §8.5.1 worker queue bound 정의 부재 → 설계 |
-| **§8.5 Restart recovery loss** | 구현 | §7.4.5 env isolation 모델 부재 또는 §11.6 idempotency CONDITIONAL active 인데 spec 부재 → 설계 |
-| **§8.5 Idempotency replay failure (§11.6 active 시)** | 구현 | §11.6 idempotency invariant 정의 부재 (§11.6 active 인데 §8.5.3 cross-ref 깨짐) → 설계 |
-| **Real-funds 손실 (Live trade) — CONDITIONAL Live touching Story** | 구현 | §7.4 live exposure limit / §11 ledger invariant / first-trade cap 부재 시 → 설계 |
-| **Kill switch 자동 발동 실패 (CONDITIONAL Live touching Story)** | 구현 | §7.4 trigger condition (drawdown / max_exposure / rate_limit / KRW_drift) 부재 시 → 설계 |
-| **Kill switch manual override 실패 (CONDITIONAL Live touching Story)** | 구현 | operator-action-v1 schema / protocol 부재 시 → 설계 |
-| **Partial fill reconciliation 실패 (CONDITIONAL Live touching Story)** | 구현 | §11 partial fill invariant (8-state lifecycle drift / fee 정합 / cancel race) 부재 시 → 설계 |
-| **Fee handling drift (CONDITIONAL Live touching Story)** | 구현 | §11 fee accounting invariant (fee_actual ≠ fee_expected drift threshold) 부재 시 → 설계 |
-| **Dockerfile build FAIL (CI) (CFP-128 / ADR-033)** | 구현 | Change Plan §3 image strategy / multi-stage 부재 → 설계 |
-| **Container image CVE P0 (trivy) (CFP-128 / ADR-033)** | 구현 | base image 자체 stale (4y old, EOL) → 설계 (image base 결정 재검토) |
-| **hadolint P1 violation (CFP-128 / ADR-033)** | 구현 | (단일 파일) — 항상 구현 |
-| **Compose service health check FAIL (CFP-128 / ADR-033)** | 구현 | §7.4 health check policy 부재 → 설계 |
-| **Container secret 누설 (env / log / image layer) (CFP-128 / ADR-033)** | 구현 | §7.5 secret mount 전략 부재 → 설계 |
-| **Network mode 위반 (internal service host network 노출) (CFP-128 / ADR-033)** | 구현 | §7.1 network boundary 부재·모순 → 설계 |
-| **§7.4 Container restart loop / volume mount race (CFP-128 / ADR-033)** | 구현 | §7.4 restart policy / volume invariant 부재 → 설계 |
+### Design / Code / Security 리뷰 책임 매트릭스
 
-**P1 품질 local vs boundary 판정 기준**:
-- **local**: finding이 1개 파일 또는 1개 함수 범위에 한정, 설계 결정과 무관한 개별 구현 결함
-- **boundary**: finding이 여러 파일·계층에 걸침, 또는 Change Plan에 "이 경계·패턴 어떻게 가야 하는지" 지침이 부족해서 발생한 이슈
-- DeveloperPL이 1차 진단 시 이 분류를 포함 → ArchitectPLAgent 최종 판정
+설계리뷰·구현리뷰·보안테스트 lane 진입 시 `codeforge:review-responsibility` 호출. 4 lane 체크 항목 분담 전체 테이블 포함.
 
-- **설계 원인 판정 시**: Change Plan 갱신 (특히 §3 도입할 설계 / §6 리팩터링 선행 / §7 보안 설계 / §8 Test Contract 중 해당 항목) → Phase 1 follow-up PR → 설계 리뷰 레인부터 재실행
-- **구현 원인 판정 시**: Change Plan 유지, Phase 2 PR commit append → 구현 리뷰 재실행
-
-### Design / Code / Security 리뷰 책임 매트릭스 (중복 방지)
-
-네 레인의 체크 항목이 겹치지 않도록 분담. 한쪽에서 커버된 항목은 다른 쪽에서 재검토하지 않음.
-
-**review verdict write 책임 (CFP-134 / ADR-035 정정 후, Stage 0 spec §3.5 verbatim)**: review-verdict v3 schema 의 final gate write (Story §9 / GitHub comment / gate label / phase transition) = **Orchestrator self-write** (PL 은 lane synthesis 후 `pl_recommendation` 만 작성, Orchestrator 가 받아 final write 수행). Sonnet decider 자동 발동 무효 (ADR-022 Deprecated — CFP-134). 사용자 explicit request 시에만 ad-hoc Sonnet 호출 가능.
-
-| 체크 항목 | DesignLane | DesignReview | CodeReview | SecurityTest (opt-in) |
-|-----------|:----------:|:------------:|:----------:|:------------:|
-| Change Plan 완결성(§1-10 섹션 존재) | — | ✅ | — | — |
-| ADR 정합성(§3·§7 위반 여부) | — | ✅ | — | — |
-| CodebaseMapper ↔ Refactor 균형 | — | ✅ | — | — |
-| API 계약 일관성 (라우트·스키마·타입) | — | ✅ | — | — |
-| §8 Test Contract 타당성 | — | ✅ | — | — |
-| **§8.5 Stateful / restart invariant 정의** | ✅ TestContractArch | ✅ DesignReview (감사 — applicability 표 valid) | — | StatefulTestAgent (검증) |
-| **§8.5 누락 / vague N/A 사유** | — | ✅ **P0 차단** | — | — |
-| 성능 baseline §8.3 프로토콜 타당성 | — | ✅ | — | — |
-| **§7 Trust boundary 정의** | ✅ | (감사) | — | (검증) |
-| **§7 Threat model (STRIDE-LITE)** | ✅ | (감사) | — | — |
-| **§7 Auth/Authz 모델 결정** | ✅ | (감사) | — | (검증) |
-| **§7 민감 데이터 분류·흐름** | ✅ | (감사) | — | (검증) |
-| **§7 위협↔완화 매핑** | ✅ | (감사) | — | (검증) |
-| **§7 누락 / N/A 사유 부재** | — | ✅ **P0 차단** | — | — |
-| **§11 Schema 변경 영향** | ✅ | (감사) | — | (검증) |
-| **§11 Migration 전략** | ✅ | (감사) | — | (검증) |
-| **§11 Rollback 경로** | ✅ | (감사) | — | (검증) |
-| **§11 Data integrity invariant** | ✅ | (감사) | — | (검증) |
-| **§11 Backfill / 기존 데이터 처리** | ✅ | (감사) | — | (검증) |
-| **§11 누락 / N/A 사유 부재** | — | ✅ **P0 차단** | — | — |
-| **§7.4 DR / failover 경로** | ✅ OpRiskArch | (감사) | — | (검증) |
-| **§7.4 Cancel-on-disconnect** | ✅ OpRiskArch | (감사) | — | (검증) |
-| **§7.4 Clock sync (CONDITIONAL)** | ✅ OpRiskArch | (감사·N/A 사유) | — | (검증) |
-| **§7.4 Rate limit / quota** | ✅ OpRiskArch | (감사) | — | (검증) |
-| **§7.4 Env isolation** | ✅ OpRiskArch | (감사) | — | (검증) |
-| **§7.4 누락 / N/A 사유 부재** | — | ✅ **P0 차단** | — | — |
-| **§11 Idempotency (CONDITIONAL)** | ✅ DataMigrationArch | (감사·N/A 사유) | — | — |
-| **§11 Idempotency 누락 / N/A 사유 부재** | — | ✅ **P0 차단** | — | — |
-| 코드 ↔ Change Plan 변경 계획 준수 | — | — | ✅ | — |
-| 코드 스타일·네이밍·가독성 | — | — | ✅ | — |
-| 테스트 코드 품질 (커버리지·경계·mock 경계) | — | — | ✅ | — |
-| 런타임 오류 가능성 (null·타입·race 일반) | — | — | ✅ | — |
-| 레이어 경계·의존성 방향 준수 | — | 부분(패턴 수준) | 주(실구현) | — |
-| Impl Manifest §8.5 ↔ 실제 파일 일치 | — | — | ✅ | — |
-| Injection 공격 표면 (SQL·Command·Template·NoSQL) | — | — | — | ✅ |
-| **Trust boundary 위반 (외부 입력 검증 누락)** | (설계) | — | — | ✅ (코드 준수 검증) |
-| Credential / secret 노출 (hardcoded·log·error) | — | — | — | ✅ (1차: Secret Scanning) |
-| **Auth / 세션 결함 (CSRF·session fixation·JWT 무결성)** | (설계) | — | — | ✅ (코드 준수 검증) |
-| 암호학 오용 (weak algo·nonce reuse·ECB·hardcoded key) | — | — | — | ✅ |
-| **민감 데이터 유출 (PII·금융·헬스 데이터 로그·응답)** | (설계 분류) | — | — | ✅ (런타임 노출 검증) |
-| 의존성 CVE 스캔 | — | — | — | ✅ (1차: Dependabot) |
-| 정적 분석 결함 | — | — | — | ✅ (1차: CodeQL) |
-| 설정·배포 보안 (default credential·open port·TLS) | — | — | — | ✅ |
-| Race / TOCTOU 보안 취약 | — | — | — | ✅ |
-| **Container image base / multi-stage build 전략 (CFP-128 / ADR-033)** | ✅ (Refactor + OpRiskArch) | ✅ (감사) | (구현 준수) | — |
-| **Dockerfile syntax + best practice (CFP-128 / ADR-033)** | — | — | — | ✅ (1차: hadolint) |
-| **Container image CVE / misconfig (CFP-128 / ADR-033)** | — | — | — | ✅ (1차: trivy) |
-| **Compose service definition / health check / dep order (CFP-128 / ADR-033)** | — | (감사) | ✅ | — |
-| **Container network mode / port exposure (CFP-128 / ADR-033)** | ✅ SecurityArch | (감사) | — | ✅ (코드 준수 검증) |
-| **Container secret / env mount 전략 (CFP-128 / ADR-033)** | ✅ SecurityArch | (감사) | — | ✅ (런타임 노출 검증) |
-| **§7.4 Container restart policy / volume DR / health check tuning (CFP-128 / ADR-033)** | ✅ OpRiskArch | (감사) | — | (검증) |
-
-> **DesignLane vs SecurityTest**:
-> - DesignLane(SecurityArch) = "**어디에 boundary가 있어야 하는가**" — 설계 결정 (예방)
-> - SecurityTest = "**코드가 그 boundary를 지키는가**" — 구현 검증 (검출)
-> - 두 lane이 같은 카테고리(예: trust boundary)를 다루지만 **시점이 다름**: 설계 결정 vs 코드 준수
-> - DesignReview는 "§7 보안 설계 자체의 완결성"을 감사 (추가 보안 검토 X — SecurityArch 산출물이 충분한가만)
-
-- **DesignLane**: 대상은 설계 단계의 보안 결정 (SecurityArchitectAgent 산출물 → ArchitectAgent §7 반영). trust boundary·threat model·auth model·민감 데이터 흐름 정의
-- **DesignReview**: 대상은 문서(Change Plan + ADR). 실구현 코드 미검토. §7 보안 설계 완결성 감사
-- **CodeReview**: 대상은 코드(src·config·deploy·tests). 일반 품질·런타임 결함·테스트 품질 중심. 보안은 SecurityTest가 깊게 검증
-- **SecurityTest**: 대상은 코드 + 인프라 + 의존성. 보안 카테고리 전담. 1차 layer는 GitHub native 도구(Dependabot/CodeQL/Secret Scanning), 2차 layer는 Claude/Codex 통합 워커(lane=security packet)
-- 중복 지적 발생 시 해당 레인의 ReviewPL이 dedup → severity 높은 쪽 채택
-
-> **Debut-audit measurable signal**: 본 매트릭스의 ✅ 0 개 또는 ≥2 개 row 가 [ADR-021](docs/adr/ADR-021-phase-gap-measurable-signal.md) R4 (Responsibility leak) detection source.
+요약: DesignLane=설계 결정, DesignReview=문서 감사, CodeReview=구현 품질, SecurityTest=보안 검증. 중복 지적 시 해당 ReviewPL dedup → severity 높은 쪽 채택.
 
 ### Deputy mandate 매트릭스 (codeforge-design lane) — 6 permanent + 2 CONDITIONAL
 
-ADR-014 + ADR-012 §3 4번째 SSOT 예외. design lane 의 deputy (CFP-46 OperationalRiskArchitect 신설 + CFP-77 LiveOps + LiveOrdering CONDITIONAL 추가) 가 §7 / §11 / §13 sub 별로 owning 하는 범위 명시 — H17 책임 분쟁 차단.
+설계 lane 진입 시 `codeforge:deputy-mandate` 호출 (ArchitectPLAgent deputy spawn 결정 전). 6+2 deputy §7/§11/§13 sub별 ownership 전체 테이블 포함.
 
-| §7 / §11 / §13 sub | CodebaseMapper | Refactor | SecurityArch | **OpRiskArch** | TestContractArch | DataMigrationArch | **LiveOps** (CONDITIONAL) | **LiveOrdering** (CONDITIONAL) |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| §7.1 Trust boundary | — | — | ✅ **(+container network mode / secret mount — CFP-128)** | (consult) | — | — | (consult Live API) | — |
-| §7.2 Threat model | — | — | ✅ | — | — | — | — | — |
-| §7.3 Auth/authz | — | — | ✅ | — | — | — | (consult operator approval) | — |
-| **§7.4 DR / disconnect / rate limit / env isolation** | — | — | (consult) | **✅ (+container restart policy / volume DR / health check / network mode — CFP-128)** | — | — | (consult Live failure) | (consult exchange rate-limit) |
-| **§7.4 Clock sync (CONDITIONAL)** | — | — | (consult) | **✅** | — | — | — | — |
-| §7.5 민감 데이터 분류 | — | — | ✅ **(+container secret mount / image layer 누설 — CFP-128)** | — | — | — | (consult API key) | — |
-| §7.6 위협↔완화 매핑 | — | — | ✅ | (DR↔failover consult) | — | — | (consult kill switch) | — |
-| **§11 Idempotency (CONDITIONAL)** | — | — | — | (consult) | — | **✅** | — | (consult order idempotency) |
-| §11 Schema/Migration/Rollback | — | — | — | — | — | ✅ **(+DB container volume / data persistence — CFP-128)** | — | — |
-| **§11 Ledger reconcile / partial fill / fee invariant (CONDITIONAL Live)** | — | — | — | (consult) | — | (consult §11) | — | **✅** |
-| **§8.5 Stateful / restart invariant** | — | — | — | (consult §7.4 짝) | **✅** | (consult §11.6 짝) | — | (consult order replay) |
-| **§13 Live Operational Discipline (CONDITIONAL Live touching)** | — | — | (consult §7.5) | (consult kill switch) | — | (consult §11) | **✅** | (consult §11 ledger) |
-
-✅ = primary owner / (consult) = secondary input.
-
-**§3 chief author 수준 cell annotation (CFP-128 / ADR-033)**: 본 매트릭스 row 외에, ArchitectAgent (chief author) 의 §3 도입할 설계 책임에 **image base / multi-stage 전략** 결정 추가 (Refactor consult). 새 row 추가 안 함 — chief author 의 cross-cutting 책임 cell annotation 만.
-
-**CONDITIONAL deputy 활성 정책 (CFP-77)**:
-- **LiveOpsDeputy + LiveOrderingDeputy** = Live touching Story 만 active (real funds / live exchange API / production credential / live order placement 중 하나 이상 touching). Backtest/Paper-only Story = 미spawn (token / token cost 절약).
-- ArchitectPLAgent 가 Story 의 §13 CONDITIONAL trigger 검토 후 6 → 8 deputy parallel spawn 결정.
-- 활성 시: ArchitectAgent chief 가 8 deputy 산출물 통합 (4-way 이념 대립 + production-readiness 단일 축 + Live operational 단일 축 + Live ordering 단일 축).
-
-§7.4 schema 자체는 codeforge-design plugin SSOT (OperationalRiskArchitectAgent agent file). §13 / Live ordering schema 는 codeforge-design plugin agent file (LiveOpsDeputy / LiveOrderingDeputy — CFP-77 follow-up agent file CFP). wrapper 는 본 매트릭스만 SSOT 보유 ([ADR-014](docs/adr/ADR-014-operational-risk-ssot-distribution.md), CFP-77 amendment).
+요약: SecurityArch=§7.1/§7.2/§7.3/§7.5/§7.6, OpRiskArch=§7.4(DR/rate/env/clock), DataMigrationArch=§11 schema/migration/idempotency, TestContractArch=§8.5. CONDITIONAL LiveOps·LiveOrdering = Live touching Story만 spawn ([ADR-014](docs/adr/ADR-014-operational-risk-ssot-distribution.md)).
 
 **PMOAgent (Cross-cutting)** — Epic 창설 / Story 완료 회고 (**자동 의무 trigger** — Phase 2 PR merge 후 5분 grace, CFP-138 / [ADR-045](docs/adr/ADR-045-story-retro-mandatory-trigger.md)) / 사용자 요청 시 spawn. 단일 Story lane 게이트 비개입. 상세: [codeforge-pmo CLAUDE.md](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/CLAUDE.md).
 
