@@ -5,7 +5,7 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.0  
-**Last regen**: 2026-05-08T15:27:15Z  
+**Last regen**: 2026-05-09T01:27:16Z  
 **Registered doc types**: 10
 
 ## Summary table

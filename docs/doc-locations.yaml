@@ -1,6 +1,6 @@
 # docs/doc-locations.yaml
 # Doc Location Registry — codeforge plugin 의 전체 doc taxonomy 단일 SSOT
-# Source-of-truth: ADR-038
+# Source-of-truth: ADR-041
 # Lint: scripts/check-doc-locations.sh
 # Regen markdown: scripts/check-doc-locations.sh --regen
 schema_version: "1.0"

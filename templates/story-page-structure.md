@@ -348,7 +348,7 @@ Epic Story 의 §11 회고 블록 = Epic close PR (Phase N+1) 동반 작성. EPI
 
 ### Epic close artifact
 
-EPIC-RESULTS-`<EPIC_KEY>`.md location SSOT = [`docs/doc-locations.yaml`](../docs/doc-locations.yaml) `epic_results` row ([ADR-038](../docs/adr/ADR-038-doc-location-registry.md)).
+EPIC-RESULTS-`<EPIC_KEY>`.md location SSOT = [`docs/doc-locations.yaml`](../docs/doc-locations.yaml) `epic_results` row ([ADR-041](../docs/adr/ADR-041-doc-location-registry.md)).
 
 Link path 작성 가이드:
 - **동일 repo 내** (Mode B hub Story → hub root EPIC-RESULTS): `[EPIC-RESULTS-<EPIC_KEY>.md](../../EPIC-RESULTS-<EPIC_KEY>.md)` (relative)

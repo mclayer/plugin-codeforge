@@ -327,7 +327,7 @@ Phase 2 enforcement (stop-event-v1 ledger / inline write detect hook / spawn cos
 - **Narration interaction**: [ADR-029](../docs/adr/ADR-029-phase-execution-visibility-expansion.md) (매 spawn / return narrate 의무)
 - **§14 evidence**: [ADR-031](../docs/adr/ADR-031-lane-spawn-evidence-trail.md) Amendment 1 (Orchestrator-owned delegate inclusion)
 - **§10 FIX Ledger**: [fix-event-v1](../docs/inter-plugin-contracts/fix-event-v1.md) Amendment (Orchestrator-owned delegate inclusion)
-- **TodoWrite scratchpad**: TodoWrite tool surface 자체 standalone 정당화 (file write 아님 — meta progress channel). ADR-038 = informational reference, normative dep 아님 (PR #277 머지 order 무관).
+- **TodoWrite scratchpad**: TodoWrite tool surface 자체 standalone 정당화 (file write 아님 — meta progress channel). ADR-041 = informational reference, normative dep 아님 (PR #277 머지 order 무관).
 - **Subagent semantics 분기**: [ADR-035](../docs/adr/ADR-035-codeforge-agent-teams-epic-architecture.md) (default subagent context 의 one-shot subagent — `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0`)
 - **Consumer scope**: [consumer-guide.md § "Subagent default (codeforge orchestration)"](consumer-guide.md)
 - **Hotfix scope**: [hotfix-playbook.md](hotfix-playbook.md) (exception 없음 — 사용자 verbatim "무조건")
@@ -504,7 +504,7 @@ producer merge 후 consumer break 시:
 
 Epic close PR (Phase N+1) 동반 작성:
 
-- **위치**: [`docs/doc-locations.yaml`](doc-locations.yaml) `epic_results` row 참조 ([ADR-038](adr/ADR-038-doc-location-registry.md)) — Mode A → owner repo root / Mode B/C → hub repo root / dogfood → `<internal-docs>/<plugin-folder>/retros/`
+- **위치**: [`docs/doc-locations.yaml`](doc-locations.yaml) `epic_results` row 참조 ([ADR-041](adr/ADR-041-doc-location-registry.md)) — Mode A → owner repo root / Mode B/C → hub repo root / dogfood → `<internal-docs>/<plugin-folder>/retros/`
 - **Template**: [`templates/epic-results.md`](../templates/epic-results.md) — 14 섹션 의무 (§1 child Story summary / §2 Phase decomposition / §3 Blocking AC / §4 Calibration AC / §5 Demonstration AC / §6 Codex review aggregate / §7 자율 결정 요약 (Sonnet decider) / §8 Out-of-scope / §9 CI iteration 통계 + 사용자 stop trigger 횟수 / §10 PR gate evidence / §11 후속 candidate 우선순위 / §12 debut-audit metric / §13 통계 / §14 결론)
 - **작성자**: PMOAgent self-write (codeforge-pmo lane plugin owner)
 - **mctrader 사례**: `mctrader-hub/EPIC-RESULTS-MCT-{12,18,25,32,37}.md` 5건 (template emergent source)
@@ -1404,7 +1404,7 @@ fix_cycle: <N>
 - Story 시작 시 모든 lane `⏸` init
 - Story 완료 시 `_archive/<KEY>.md` 로 mv (PMO Cross-Story 분석 input 보존)
 
-### 14.4 Status enum (ADR-038, 4 marker)
+### 14.4 Status enum (ADR-041, 4 marker)
 
 | 마커 | 의미 | TodoWrite native state | 사용 위치 |
 |---|---|---|---|
@@ -1429,7 +1429,7 @@ fix_cycle: <N>
 - `full` (default, ADR-029 §결정 1+4) — 모든 ✅ 표기 항목 narrate (sub-step 포함)
 - `lane_only` — lane-level event 만 narrate (CFP-20 기존 동작, sub-step 표기는 file-only 로 fallback)
 
-| 이벤트 | 영향 라인 | 갱신 동작 | terminal narration | TodoWrite 갱신 (ADR-038) | full/lane_only |
+| 이벤트 | 영향 라인 | 갱신 동작 | terminal narration | TodoWrite 갱신 (ADR-041) | full/lane_only |
 |---|---|---|---|---|---|
 | Story 개시 | 전체 | file create, 7 lane `⏸` | ✅ | 7 lane row ⏳ seed | both |
 | Lane 진입 | top | `⏸` → `🔄 진행 중`, current_lane 갱신 | ✅ | lane row ⏳ → 🔄 + agent sub-row 펼침 | both |
@@ -1449,9 +1449,9 @@ fix_cycle: <N>
 
 R10 prefetch (security 1차 layer cache) 같은 사용자 무관 메타 이벤트는 **의도적 skip** (verbosity 무관).
 
-**TodoWrite best-effort 원칙 (ADR-038)**: lane event 로 trigger 되는 TodoWrite 갱신은 best-effort / non-blocking 이다. TodoWrite update 가 실패하거나 skipped 되어도 lane 의 primary work 를 block 하지 않는다. lane 은 계속 진행하고, TodoWrite discrepancy 는 error 가 아니라 warning 으로 surface 한다. 사용자 confirmation / polling / acknowledgment wait 도입 없음 (ADR-029 stop discipline 정책 무영향).
+**TodoWrite best-effort 원칙 (ADR-041)**: lane event 로 trigger 되는 TodoWrite 갱신은 best-effort / non-blocking 이다. TodoWrite update 가 실패하거나 skipped 되어도 lane 의 primary work 를 block 하지 않는다. lane 은 계속 진행하고, TodoWrite discrepancy 는 error 가 아니라 warning 으로 surface 한다. 사용자 confirmation / polling / acknowledgment wait 도입 없음 (ADR-029 stop discipline 정책 무영향).
 
-**Single-Story collision rule (ADR-038)**: single-Story 모드에서도 두 concurrent lane spawn 이 같은 Story 의 TodoWrite 를 동시에 write 할 수 있다. collision 발생 시:
+**Single-Story collision rule (ADR-041)**: single-Story 모드에서도 두 concurrent lane spawn 이 같은 Story 의 TodoWrite 를 동시에 write 할 수 있다. collision 발생 시:
 1. canonical §14 Lane Evidence table state 에서 todo list 전체를 재구성
 2. TodoWrite hard-reset 수행: 기존 todo list 를 부분 수정하지 않고 full rewrite
 3. rewrite 후 active lane / agent sub-row 는 canonical state 에 남아 있는 evidence 만 반영
@@ -1494,11 +1494,11 @@ incremental patch 금지 — collision 의심 시 항상 full rewrite.
        ├→ 2) parse → 해당 lane sub-tree patch
        ├→ 3) Write(.claude-work/progress/<KEY>.md) — full rewrite, last_processed_seq 증가
        ├→ 4) terminal narration emit (ADR-029)
-       ├→ 5) ★ TodoWrite update (ADR-038 NEW) — best-effort, hierarchical render rule
+       ├→ 5) ★ TodoWrite update (ADR-041 NEW) — best-effort, hierarchical render rule
        └→ 6) Story 완료 시 _archive/<KEY>.md 로 mv + index.md 갱신
 ```
 
-**TodoWrite update (step 5) detail (ADR-038)**:
+**TodoWrite update (step 5) detail (ADR-041)**:
 - Lane 진입: lane row → 🔄 + agent sub-row 펼침 (PL → workers/deputies → chief 순)
 - Agent return: 해당 agent sub-row 의 status=completed + content 갱신 (1-line 활동 결과)
 - Lane PASS: agent sub-row 제거, lane row content = `PASS · <S3 snippet>`
@@ -1514,7 +1514,7 @@ incremental patch 금지 — collision 의심 시 항상 full rewrite.
 1. `.claude-work/progress/<KEY>.md` 존재 여부 확인
 2. **존재해도 신뢰하지 않음** — state source(Story §10 + GitHub Issue phase label + Story §-fill state)에서 재 derive
 3. 재 derive 결과를 cache 재기록, last_processed_seq 갱신
-4. **★ TodoWrite re-build (ADR-038 NEW)**: §0 file 의 lane 별 status 로 TodoWrite full rewrite
+4. **★ TodoWrite re-build (ADR-041 NEW)**: §0 file 의 lane 별 status 로 TodoWrite full rewrite
    - active lane 의 agent sub-row 는 빈 상태 (deputy 활성 정보 손실 허용 — 다음 deputy 이벤트에서 자동 충족)
    - 4 marker (⏳ 🔄 ✅ ❌) 어휘로 변환
    - Single-Story 모드 — `[KEY]` prefix drop

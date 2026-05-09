@@ -116,7 +116,7 @@ mclayer/plugin-codeforge (wrapper, post-CFP-45)
 
 ### 결정
 
-EPIC-RESULTS-`<EPIC_KEY>`.md 는 codeforge family dogfood 시 `<internal-docs>/<plugin-folder>/retros/EPIC-RESULTS-<EPIC_KEY>.md` 에 위치한다 — 새 subdir 카테고리 추가 없이 기존 `retros/` 재사용. 본 결정의 machine-readable SSOT = [`docs/doc-locations.yaml`](../doc-locations.yaml) `epic_results` row의 `dogfood` variant ([ADR-038](ADR-038-doc-location-registry.md)).
+EPIC-RESULTS-`<EPIC_KEY>`.md 는 codeforge family dogfood 시 `<internal-docs>/<plugin-folder>/retros/EPIC-RESULTS-<EPIC_KEY>.md` 에 위치한다 — 새 subdir 카테고리 추가 없이 기존 `retros/` 재사용. 본 결정의 machine-readable SSOT = [`docs/doc-locations.yaml`](../doc-locations.yaml) `epic_results` row의 `dogfood` variant ([ADR-041](ADR-041-doc-location-registry.md)).
 
 ### 결과
 

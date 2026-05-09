@@ -1,5 +1,5 @@
 ---
-adr_number: 38
+adr_number: 41
 title: Doc Location Registry — codeforge plugin doc taxonomy 통합 SSOT
 date: 2026-05-08
 status: Proposed
@@ -16,7 +16,7 @@ related_files:
   - .github/workflows/doc-locations-check.yml
 ---
 
-# ADR-038: Doc Location Registry — codeforge plugin doc taxonomy 통합 SSOT
+# ADR-041: Doc Location Registry — codeforge plugin doc taxonomy 통합 SSOT
 
 ## 상태
 
@@ -33,7 +33,7 @@ Proposed (2026-05-08, CFP-276 — issue #276 carrier).
 
 사용자 요구: "이 문서 규약은 codeforge 의 업그레이드로 인해 변경될 때마다 반영될 수 있도록 하자" — single yaml row 갱신만으로 doc location 정책 갱신 가능한 mechanism.
 
-ADR-002 ("DocsAgent inherit footer pattern", 2026-04-27) 는 [ADR-009](ADR-009-wrapper-only-decomposition.md) (wrapper 0-agent, 2026-04-29) 이후 referenced agent files 전부 부재 → zombie ADR. 본 결정 채택 시 ADR-002 → Superseded by ADR-038.
+ADR-002 ("DocsAgent inherit footer pattern", 2026-04-27) 는 [ADR-009](ADR-009-wrapper-only-decomposition.md) (wrapper 0-agent, 2026-04-29) 이후 referenced agent files 전부 부재 → zombie ADR. 본 결정 채택 시 ADR-002 → Superseded by ADR-041.
 
 ## 결정
 
@@ -83,9 +83,9 @@ Phase N+1 close PR repo root. ADR-020 Mode A → owner / Mode B/C → hub. ADR-0
 |---|---|---|---|
 | 1 | 새 doc type 도입 | `doc_types[]` row 추가 | ADR-NNN 가 yaml row 추가 commit 동반 |
 | 2 | 기존 doc location 변경 | row 의 variants 갱신 | ADR amendment + migration 가이드 |
-| 3 | 새 mode 추가 (ADR-020 amendment) | `allowed_variants[]` 추가 + 영향 row 갱신 | ADR-020 Amendment + ADR-038 cross-ref |
+| 3 | 새 mode 추가 (ADR-020 amendment) | `allowed_variants[]` 추가 + 영향 row 갱신 | ADR-020 Amendment + ADR-041 cross-ref |
 | 4 | doc type deprecate | row 의 `status: Deprecated` field | ADR-NNN deprecate 명시 |
-| 5 | 새 lane plugin (ADR-023) | `dogfood_scope.plugin_folders[]` 추가 | ADR-023 lifecycle 절차 + ADR-038 minor cross-ref |
+| 5 | 새 lane plugin (ADR-023) | `dogfood_scope.plugin_folders[]` 추가 | ADR-023 lifecycle 절차 + ADR-041 minor cross-ref |
 
 ## 결과
 
@@ -131,7 +131,7 @@ mctrader-hub/docs/results/EPIC-RESULTS-MCT-89.md → mctrader-hub/EPIC-RESULTS-M
 추가 작업:
 - inbound link scan (`grep -rn "docs/EPIC-RESULTS\|docs/results/EPIC-RESULTS"` mctrader-hub 전체)
 - 빈 디렉터리 정리: `mctrader-hub/docs/results/` 삭제
-- PR description 에 ADR-038 링크 + "Mode B 정합" 명시
+- PR description 에 ADR-041 링크 + "Mode B 정합" 명시
 
 ## 다이어그램
 

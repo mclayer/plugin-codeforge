@@ -113,7 +113,7 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 - Track 병렬 (R7 설계리뷰 PASS 시): Track A (DesignReviewPL merge gate) ∥ Track B (DeveloperPL Phase 2 PR 준비) — 상세 [playbook §3.1]
 - **Worktree dispatch (CFP-136 / [ADR-040](docs/adr/ADR-040-worktree-convention.md))**: 매 lane spawn 시 isolated working directory 보장. base = `${HOME}/.claude/worktrees/<repo-name>/<branch-flat>`, hierarchical branch (ADR-024 Amendment 1) `cfp-NNN[/<lane>[/<sub>]]`, lifecycle (`on_team_create_pre|post` / `on_team_delete_pre|post` / `on_session_start` / `on_story_close`). 5 script (`templates/scripts/worktree-{create,merge,prune,path-util}.sh` + `check-worktree-stale.sh`) + SessionStart hook (`templates/.claude/hooks/SessionStart-codeforge-worktree-gc.json.sample`) — 7 days + origin absent stale 자동 prune. CFP-137 (agent teams) prerequisite + CFP-139 (GitOpsAgent) hook contract SSOT. Default subagent context (agent teams `=0`) 에서도 사용자 ad-hoc 호출 가능. 상세 [playbook §3.5](docs/orchestrator-playbook.md).
 
-**Progress visualization via TodoWrite (ADR-038, CFP-274)**: TodoWrite 를 CFP-20 §14.7 render flow 의 3번째 channel 로 추가. 4 marker (⏳ 🔄 ✅ ❌) hierarchical (lane row + 2-space indent agent sub-row) 렌더 표준. ❌ 는 검출 lane 이 아닌 원인 lane 에 표시 (검출 lane 은 ✅ + content `FIX-N detected`). Single-Story 모드 (multi-Story 별도 CFP). Lane plugin 변경 0건 (Writer 단독 invariant 유지). multi-row in_progress 의도적 허용 (codeforge 병렬 agent 모델 — wrapper-specific deviation). 상세: [ADR-038](docs/adr/ADR-038-progress-visualization-todowrite.md), [playbook §14](docs/orchestrator-playbook.md).
+**Progress visualization via TodoWrite (ADR-041, CFP-274)**: TodoWrite 를 CFP-20 §14.7 render flow 의 3번째 channel 로 추가. 4 marker (⏳ 🔄 ✅ ❌) hierarchical (lane row + 2-space indent agent sub-row) 렌더 표준. ❌ 는 검출 lane 이 아닌 원인 lane 에 표시 (검출 lane 은 ✅ + content `FIX-N detected`). Single-Story 모드 (multi-Story 별도 CFP). Lane plugin 변경 0건 (Writer 단독 invariant 유지). multi-row in_progress 의도적 허용 (codeforge 병렬 agent 모델 — wrapper-specific deviation). 상세: [ADR-041](docs/adr/ADR-041-progress-visualization-todowrite.md), [playbook §14](docs/orchestrator-playbook.md).
 
 ### Sonnet Decider (Deprecated — CFP-134 / ADR-035, 2026-05-08)
 
@@ -330,9 +330,9 @@ ADR-014 + ADR-012 §3 4번째 SSOT 예외. design lane 의 deputy (CFP-46 Operat
 
 자세한 owner path / mechanism / trigger 는 각 lane plugin 의 `CLAUDE.md` `Self-write 책임` 표 (codeforge-{review,pmo,requirements,test,develop,design}) 참조.
 
-## Doc Location Registry (CFP-276 / ADR-038)
+## Doc Location Registry (CFP-276 / ADR-041)
 
-codeforge plugin 의 doc taxonomy (epic_results / story_file / adr / change_plan / retro / domain_knowledge / spec / plan / decision_packet / inter_plugin_contract) 위치 SSOT = [`docs/doc-locations.yaml`](docs/doc-locations.yaml). Human-readable mirror = [`docs/doc-location-registry.md`](docs/doc-location-registry.md) (auto-generated from yaml). Lint = [`scripts/check-doc-locations.sh --full`](scripts/check-doc-locations.sh) (CI required check, branch protection 5번째). 정책 SSOT: [ADR-038](docs/adr/ADR-038-doc-location-registry.md). 새 doc type 도입 / 기존 location 변경 시 yaml row 갱신만 → codeforge upgrade 자연스러운 reflection. EPIC-RESULTS 의 issue #276 SSOT 모순 (3 문서 disagree) 해소가 본 registry 도입 동인.
+codeforge plugin 의 doc taxonomy (epic_results / story_file / adr / change_plan / retro / domain_knowledge / spec / plan / decision_packet / inter_plugin_contract) 위치 SSOT = [`docs/doc-locations.yaml`](docs/doc-locations.yaml). Human-readable mirror = [`docs/doc-location-registry.md`](docs/doc-location-registry.md) (auto-generated from yaml). Lint = [`scripts/check-doc-locations.sh --full`](scripts/check-doc-locations.sh) (CI required check, branch protection 5번째). 정책 SSOT: [ADR-041](docs/adr/ADR-041-doc-location-registry.md). 새 doc type 도입 / 기존 location 변경 시 yaml row 갱신만 → codeforge upgrade 자연스러운 reflection. EPIC-RESULTS 의 issue #276 SSOT 모순 (3 문서 disagree) 해소가 본 registry 도입 동인.
 
 ## Inter-plugin Contract (CFP-29 Phase 1 후 + CFP-42 sibling backfill)
 
