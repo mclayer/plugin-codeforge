@@ -1216,12 +1216,31 @@ GitHub Issue/PR 갱신·코멘트 기록·sub-issue 생성 불가 시:
 
 ### 9.6 Phase 1 / Phase 2 PR 모델 트러블슈팅
 
+#### PR description `Closes/Fixes/Resolves` keyword 정책 (CFP-292 / Issue #299)
+
+- **Phase 1 PR MUST NOT** use `Closes #NNN`, `Fixes #NNN`, `Resolves #NNN` in PR description.  
+  GitHub 이 PR merge 시 이 keyword 를 자동 감지하여 Issue 를 close 하므로, Phase 2 merge 전에 Story Issue 가 premature close 됨.
+- Phase 1 PR 에서는 `Related: #NNN` 사용.
+- **Phase 2 PR** 에서만 `Closes #NNN` 사용 (정상 auto-close 트리거).
+- `story-init.yml` 이 자동 open 하는 Phase 1 PR 에는 `Related:` keyword 를 사용하도록 workflow 를 유지해야 함.
+
+#### Cross-PR conflict resolution (CFP-292 / Issue #299)
+
+동일 Story 의 복수 PR (Phase 1 + follow-up spec amendment 등) 이 merge 순서 충돌 또는 git conflict 발생 시:
+
+1. **base PR (가장 먼저 merge 할 PR) 을 먼저 merge** (Phase 1 PR → spec amendment 순서 유지).
+2. 충돌 PR 의 브랜치에서 `git rebase origin/main` 으로 merged base 위로 rebase.
+3. Conflict 해소 후 force-push → PR CI 재통과 → merge.
+4. `git merge` 방향 역전 금지 (base 브랜치에 feature 브랜치를 merge 하는 방향 유지).
+
 | 증상 | 원인 | 대응 |
 |------|------|------|
 | Phase 1 PR mergeable 아님 (label OK인데 Action fail) | `phase-gate-mergeable.yml` Action이 status check fail | Action 로그 확인. `gate:design-review-pass` 라벨 누락 검증 |
 | Phase 2 PR open 안 되는 상태 | Phase 1 PR이 main에 merge 안 됨 | Phase 1 PR review 완료 + merge 후 Phase 2 PR open |
 | §1 변경 PR이 reject됨 | `story-section-1-immutable.yml` Action이 §1 line range 변경 감지 | 정당한 정정 필요 시 architect team에 bypass approval 요청 |
 | Sub-issue가 자동 생성 안 됨 | `subissue-from-impl-manifest.yml` Action 미실행 또는 §8.5 매핑표 형식 오류 | Action 로그 + §8.5 markdown table 형식 검증 |
+| Phase 1 PR merge 후 Story Issue 가 자동 close 됨 | Phase 1 PR description 에 `Closes/Fixes/Resolves` 사용 | `Related: #NNN` 으로 수정 후 PR reopen — 본 §9.6 keyword 정책 참조 |
+| 복수 PR 간 git conflict | 동일 Story 내 Phase 1 + follow-up 병렬 open | base PR 먼저 merge → 충돌 PR rebase on main → conflict 해소 |
 
 ---
 

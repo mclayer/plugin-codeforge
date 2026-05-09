@@ -857,6 +857,12 @@ Consumer 프로젝트에서 요구사항을 GitHub Issue Form으로 입력하면
 - **Phase 1 PR** (요구사항+설계+설계리뷰): docs only
 - **Phase 2 PR** (구현+구현리뷰+구현테스트+보안테스트): code + docs append
 
+> **PR description `Closes/Fixes/Resolves` keyword 정책 (CFP-292 / Issue #299)**:
+> - **Phase 1 PR MUST NOT** use `Closes #NNN`, `Fixes #NNN`, `Resolves #NNN` — GitHub 이 PR merge 시 해당 keyword 를 감지하여 Issue 를 자동 close 하므로, Phase 2 PR merge 전에 Story Issue 가 premature close 됨.
+> - Phase 1 PR 에서는 `Related: #NNN` 사용.
+> - **Phase 2 PR** 에서만 `Closes #NNN` 사용 (정상 auto-close 트리거).
+> - **Cross-PR conflict resolution**: 동일 Story 의 복수 PR (Phase 1 + follow-up spec amendment 등) 이 충돌할 경우, base PR 을 먼저 merge 한 후 충돌 PR 을 `git rebase origin/main` 으로 merged base 위로 rebase, conflict 해소 후 merge. `git merge` 방향 역전 금지.
+
 **Epic flow (cross-repo 또는 multi-Story Epic, CFP-82)** — **1 Epic = Phase 1 doc PR + N implementation PRs + close PR**:
 - **Phase 1 PR** (hub / owner repo): Epic doc + child Story stubs + Codex 7-area review aggregate
 - **Phase 2 ~ Phase N PR**: 각 child Story implementation. Joint-phase narrow form 허용 (1 Story 가 1 phase 안 multi-repo joint PR 보유 가능, ADR-020 Amendment 1)
