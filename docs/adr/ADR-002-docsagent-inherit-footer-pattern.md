@@ -1,9 +1,11 @@
 ---
 adr_number: 002
 title: 모든 에이전트 md의 "문서화 표준" 섹션은 DocsAgent.md SSOT 참조 1줄만 유지
-status: Accepted
+status: Superseded by ADR-041
 category: Team & Process
 date: 2026-04-27
+superseded_by: ADR-041
+superseded_date: 2026-05-08
 related_files:
   - agents/DocsAgent.md
   - agents/ArchitectAgent.md
@@ -34,7 +36,9 @@ related_stories: []
 
 ## 상태
 
-`Accepted` (2026-04-27)
+`Accepted` (2026-04-27) → **Superseded by [ADR-041](ADR-041-doc-location-registry.md) (2026-05-08, CFP-276 — issue #276 carrier)**.
+
+본 ADR 가 강제하던 footer pattern 의 referenced agent files (agents/DocsAgent.md 외 21 종) 는 [ADR-009](ADR-009-wrapper-only-decomposition.md) ζ arc (CFP-40 시점, 2026-04-29) 에서 영구 삭제됨. wrapper 는 0-agent 로 수렴 — 본 ADR 는 historical record 로 보존되나 active enforcement 없음. 문서화 표준 SSOT 는 ADR-041 이 정의하는 doc location registry (`docs/doc-locations.yaml`) 가 인계.
 
 ## 컨텍스트
 
