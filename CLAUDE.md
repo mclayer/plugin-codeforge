@@ -13,7 +13,7 @@ codeforge ζ arc PMO lane plugin. PMOAgent 가 codeforge core 의 Orchestrator �
 - `pmo_output v1` — [`docs/inter-plugin-contracts/pmo-output-v1.md`](docs/inter-plugin-contracts/pmo-output-v1.md) (canonical SSOT)
 - codeforge wrapper 측 sibling reference: `mclayer/plugin-codeforge/docs/inter-plugin-contracts/pmo-output-v1.md`
 
-## Self-write 책임 (CFP-36 ζ arc 패턴)
+## Self-write 책임 (CFP-36 ζ arc 패턴 + CFP-139 GitOps)
 
 PMOAgent 가 다음을 직접 write:
 
@@ -24,6 +24,14 @@ PMOAgent 가 다음을 직접 write:
 | `gate:retro-complete` label add | story_completion (retro write 완료 후 — CFP-138 / ADR-045 forcing function) | `mcp__github__issue_write` |
 | Epic GitHub milestone | epic_creation / story_completion | `gh api repos/*/milestones*` |
 | GitHub comment `[PMO]` prefix | 모든 trigger | `mcp__github__add_issue_comment` |
+
+GitOpsAgent (CFP-139 신설 long-running teammate) 가 다음을 직접 write:
+
+| Path | 트리거 | Mechanism |
+|---|---|---|
+| `.claude-work/worktree-manifest.yaml` | TeamCreate / TeamDelete / FIX iteration / stale cleanup | `Edit/Write(.claude-work/worktree-manifest.yaml)` |
+| `docs/stories/<KEY>.md §10.5 Git Ops Log` | 매 git ops event (append-only) | `Edit(docs/stories/**)` |
+| GitHub comment `[GitOps]` prefix | conflict / escalation | `mcp__github__add_issue_comment` |
 
 DocsAgent 경유 안 함 — codeforge wrapper 측 DocsAgent 는 ζ arc 진행 중 단계적 해체. 자세한 사항은 codeforge wrapper [CFP-31 parent spec](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md) 참조.
 
@@ -49,6 +57,21 @@ Phase 2 PR merge 후 자동 trigger 의무 — 사용자 요청 불필요. FIX i
 5. Story Issue close 차단 (auto-reopen) — retro 작성 후에만 close 가능
 
 상세 정책 SSOT: [ADR-045](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-045-story-retro-mandatory-trigger.md) D-1 ~ D-8.
+
+## GitOpsAgent (CFP-139)
+
+본 plugin 은 PMOAgent (one-shot trigger-driven, Cross-cutting 회고·감사) + **GitOpsAgent (long-running teammate, Story 전 기간 active git operations orchestrator)** 2 agent 로 구성. 두 agent 는 sibling — 책임 영역 명확히 분리.
+
+| 영역 | PMOAgent | GitOpsAgent |
+|------|:--------:|:-----------:|
+| 회고 / Cross-Story 패턴 / ADR 발의 / Epic 분해 자문 | ✅ | — |
+| Hierarchical branch tree / Worktree lifecycle / Sequential merge / FIX iteration 재구성 / Stale cleanup | — | ✅ |
+
+GitOpsAgent 는 Orchestrator + 모든 lane PL agent 의 git 작업 (branch / worktree / merge / cleanup) 단일 위임 대상. PMOAgent 와 병렬로 작동 — Story 도메인 결정 영역 무관 (코드 / 회고 영역 deny).
+
+**SendMessage peer protocol**: GitOpsAgent ↔ Orchestrator (lead) / PMOAgent (sibling, hotspot 패턴 보고) / 각 lane PL agent (sibling, conflict escalation + TeamCreate/Delete request). 직접 sub-agent spawn 불가 — Orchestrator 경유 (codeforge family ADR-009 invariant).
+
+Agent 상세 SSOT: [`agents/GitOpsAgent.md`](agents/GitOpsAgent.md).
 
 ## Cross-Story patterns 입력 → ADR 발의 hand-off
 

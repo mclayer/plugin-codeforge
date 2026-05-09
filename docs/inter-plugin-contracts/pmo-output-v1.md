@@ -1,6 +1,6 @@
 ---
 kind: contract
-contract_version: "1.0"
+contract_version: "1.1"
 status: Active
 related_plugins:
   - codeforge (wrapper, consumer)
@@ -10,6 +10,7 @@ related_adrs:
   - ADR-009 (Wrapper-only core + writer-distributed lane plugins, codeforge wrapper CFP-31)
 authors:
   - CFP-36 ζ arc — second lane self-write pattern validation (2026-04-29)
+  - CFP-139 — GitOpsAgent worktree_manifest MINOR bump (2026-05-08)
 ---
 
 # pmo_output v1 — Inter-plugin Contract
@@ -66,7 +67,7 @@ pmo_packet:
 
 ```yaml
 pmo_output:
-  contract_version: "1.0"
+  contract_version: "1.1"
   trigger: <packet 동일 enum>
   story_key: <STORY_KEY>          # 필수 (해당 시) — packet과 일치
   epic_milestone: <int>           # 필수 (해당 시) — packet과 일치
@@ -93,6 +94,21 @@ pmo_output:
       summary: <markdown>
       affected_stories: [<list>]
       severity: P0 | P1 | P2
+
+  # GitOpsAgent worktree manifest reference (CFP-139, v1.1 신설 — optional)
+  # PMOAgent 가 retro 작성 시 GitOpsAgent 산출물 (.claude-work/worktree-manifest.yaml) 의
+  # worktree create / delete / merge / conflict event 를 reference. v1.0 consumer 호환 — 필드 부재 = 미사용.
+  worktree_manifest:              # 선택 — null 허용 (v1.1 NEW, additive)
+    schema: git-ops-event-v1      # 향후 inter-plugin contract 신설 예정 (CFP-139 follow-up)
+    manifest_path: <path>         # 보통 .claude-work/worktree-manifest.yaml
+    events:                       # array of git ops events
+      - event_type: <enum>        # team-create / team-delete / sequential-merge / conflict-detected / fix-iteration-rebuild / stale-cleanup
+        timestamp: ISO8601
+        lane: <string>            # 7 lane slug (requirements / design / develop / ...) 또는 cross-cutting
+        actor: GitOpsAgent
+        worktree_count: <int>     # team-create 시 N
+        outcome: success | conflict | aborted
+        detail: <markdown>        # short narrative
 ```
 
 ## 4. ESCALATE 처리
@@ -108,9 +124,15 @@ PMOAgent self-write 단계 실패 (예: GitHub milestone API rate limit, retro f
 - `adr_proposal` schema 확장 (예: 결정 우선순위 추가)
 - 새 trigger enum 추가 (backward-compat 시 minor)
 - `patterns_observed` category enum 변경 (drop 시 v2)
+- `worktree_manifest` 필드 required 화 (v1.1 = optional, BREAKING 시 v2)
 
-## 6. 본 contract 시점 동결 ATTRIBUTION
+## 6. Changelog
 
-- 동결 일시: 2026-04-29 (CFP-36)
-- 협업: Claude (codification) · CFP-31 parent spec §5.6
-- Source: `mclayer/plugin-codeforge-pmo/agents/PMOAgent.md` 책임 정의
+- **v1.1** (2026-05-08, CFP-139): `worktree_manifest` optional 필드 추가 (GitOpsAgent 산출물 reference, additive — v1.0 consumer 호환). MINOR per [ADR-008](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-008-inter-plugin-contract-versioning.md) (additive optional field).
+- **v1.0** (2026-04-29, CFP-36): 초기 동결.
+
+## 7. 본 contract 시점 동결 ATTRIBUTION
+
+- 동결 일시: 2026-04-29 (CFP-36) → v1.1 amendment 2026-05-08 (CFP-139)
+- 협업: Claude (codification) · CFP-31 parent spec §5.6 · CFP-139 GitOpsAgent agent file
+- Source: `mclayer/plugin-codeforge-pmo/agents/PMOAgent.md` + `agents/GitOpsAgent.md` 책임 정의
