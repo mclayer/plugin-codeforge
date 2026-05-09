@@ -81,7 +81,7 @@ jobs:
           # CFP-260 / ADR-036 결정 1: GitHub atomic Issue numbering 위임.
           # 기존 file-system scan + max+1 방식 (race-prone) 제거.
           # 결과: race window 0, brainstorming 시점 KEY 사전 확보 (cfp-reserve.yml) 와 정합.
-          mkdir -p docs/stories
+          # CFP-280 Iter 2 NF3 fix: `mkdir -p docs/stories` (Iter 0 file-system check 잔재) 제거 — branch creation step 이 directory 자동 생성.
           echo "key=${PREFIX}-${ISSUE_NUMBER}" >> "$GITHUB_OUTPUT"
 
           PYOUT=$(python3 - <<'PYEOF'
