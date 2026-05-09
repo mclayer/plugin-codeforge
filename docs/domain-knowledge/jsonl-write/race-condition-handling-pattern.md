@@ -12,6 +12,7 @@ related_stories:
   - CFP-138  # ADR-045 carrier — Story retro mandatory trigger (boundary issue resolution carrier)
 created: 2026-05-09
 updated: 2026-05-09
+amended: 2026-05-09  # CFP-289: Retry Semantics section added
 ---
 
 # Cross-repo JSONL write race condition handling pattern
@@ -125,6 +126,113 @@ done
 4. **Retry max = 3** (network blip 자동 복구 — Pattern A pseudocode `for retry in 1 2 3` SSOT). 3 회 fail 후 `::error::` log + workflow exit 1 (downstream alert)
 5. **409 conflict 시 jitter sleep** (`sleep $((RANDOM % 5 + 1))`) — concurrent client thundering herd 회피
 
+## Retry Semantics (Pattern A 의무 — CFP-289)
+
+Pattern A retry loop 의 HTTP status 별 동작과 exhausted 처리를 명시. 두 sink (post-merge-telemetry.sh + retro-mandatory.yml) 의 동작 기준 SSOT.
+
+### 4xx HTTP status → 즉시 실패 (no-retry)
+
+**4xx = client error** — retry 해도 결과가 바뀌지 않음. 재시도 낭비 + 잘못된 상태를 마스킹할 위험.
+
+| Code | 원인 | 동작 |
+|---|---|---|
+| 401 Unauthorized | PAT 만료 / scope 부족 | 즉시 exit 1 + stderr 에 `::error::` 출력 |
+| 403 Forbidden | repo 접근 불가 / branch protection | 즉시 exit 1 + stderr |
+| 404 Not Found | repo / branch / path 가 존재하지 않음 (branch 미생성 전 race 가능 — 아래 edge case 참조) | 즉시 exit 1 + stderr |
+| 409 Conflict (SHA mismatch) | **예외 — concurrent write** | 재시도 (아래 5xx/409 섹션 참조) |
+| 422 Unprocessable | 잘못된 payload (content 인코딩 오류 등) | 즉시 exit 1 + stderr |
+
+**구현 의무**: HTTP code 가 4xx (409 제외) 이면 retry loop 즉시 break → exit 1. `sleep` 없이 즉시 실패.
+
+```bash
+if echo "$HTTP_CODE" | grep -qE '^4[0-9]{2}$' && ! echo "$HTTP_CODE" | grep -q '^409$'; then
+  echo "::error::4xx client error (HTTP ${HTTP_CODE}) — no retry, aborting" >&2
+  exit 1
+fi
+```
+
+### 5xx / network timeout → exponential backoff retry
+
+**5xx = server error / transient** — GitHub API 일시 장애 또는 network timeout. 재시도로 자동 복구 가능.
+
+| 상태 | 동작 |
+|---|---|
+| 5xx (500, 502, 503, 504) | retry with exponential backoff |
+| Network timeout / curl error (exit ≠ 0, HTTP code 미취득) | retry with exponential backoff |
+| 409 Conflict (SHA mismatch) | re-fetch SHA + retry with jitter |
+
+**Backoff 스케줄** (retry max 3 → 총 4 attempt: 1 initial + 3 retry):
+
+| Attempt | 설명 | Sleep before next |
+|---|---|---|
+| 1 (initial) | first try | 실패 시 2s sleep |
+| 2 (retry 1) | backoff 1 | 실패 시 4s sleep |
+| 3 (retry 2) | backoff 2 | 실패 시 8s sleep |
+| 4 (retry 3) | backoff 3 (final) | 실패 시 → exhausted fallback |
+
+409 (SHA conflict) 시 jitter (`sleep $((RANDOM % 5 + 1))`) 추가 — thundering herd 회피. 5xx 는 deterministic backoff (2/4/8s) + 선택적 jitter 허용.
+
+```bash
+BACKOFF_DELAYS=(2 4 8)
+for ATTEMPT in 1 2 3 4; do
+  # ... PUT ...
+  HTTP_CODE=...
+  if echo "$HTTP_CODE" | grep -qE '^(200|201)$'; then
+    break   # success
+  elif echo "$HTTP_CODE" | grep -q '^409$'; then
+    echo "::warning::SHA conflict attempt $ATTEMPT — re-fetch + jitter retry" >&2
+    sleep $(( RANDOM % 5 + 1 ))
+  elif echo "$HTTP_CODE" | grep -qE '^4[0-9]{2}$'; then
+    echo "::error::4xx client error (HTTP ${HTTP_CODE}) — no retry" >&2
+    exit 1
+  else
+    # 5xx or network error
+    IDX=$(( ATTEMPT - 1 ))
+    DELAY=${BACKOFF_DELAYS[$IDX]:-8}
+    echo "::warning::5xx/network error (HTTP ${HTTP_CODE}) attempt $ATTEMPT — backoff ${DELAY}s" >&2
+    sleep "$DELAY"
+  fi
+done
+```
+
+### Exhausted fallback — 절대 silent drop 금지
+
+**3 retry 모두 실패 시** (attempt 4 실패 후):
+
+1. **stderr 에 `::error::` 출력** (GitHub Actions annotation 포함)
+2. **exit 1 (non-zero exit)** — upstream workflow fail + caller 에게 실패 전파
+3. **절대 silent drop 금지** — telemetry / retry-state-machine write 는 관찰가능성의 핵심. 조용히 무시하면 forcing function 이 무효화됨
+
+```bash
+echo "::error::Pattern A retries exhausted after 3 attempts (HTTP ${HTTP_CODE}) — story=${STORY_KEY}" >&2
+exit 1
+```
+
+**downstream 처리 의무**: workflow caller 가 이 exit 1 을 uncaught 로 두면 GitHub Actions job 이 failure 상태로 기록됨. 이것이 의도된 동작 — silent loss 보다 visible failure.
+
+### stderr capture 의무
+
+**Pattern A retry loop 내부의 모든 diagnostic output = stderr 전용** (`>&2`).
+
+| 출력 종류 | 채널 |
+|---|---|
+| `::notice::` (성공 알림) | stdout (GitHub Actions annotation 정상 동작) |
+| `::warning::` (retry 경고, conflict 감지) | **stderr** (`>&2`) |
+| `::error::` (4xx 즉시 실패, exhausted fallback) | **stderr** (`>&2`) |
+| 디버그 / 진단 중간 출력 | **stderr** (`>&2`) |
+
+**근거**: retry loop 의 경고/오류를 stdout 에 섞으면 JSONL content 파이프라인이 오염될 수 있음. stderr 분리 = stdout 을 순수 data channel 로 유지 (향후 retry helper script 의 pipe 안전성).
+
+### Edge cases
+
+| 상황 | 동작 |
+|---|---|
+| **SHA collision** (concurrent write — 409) | re-read file + SHA re-fetch → retry. jitter sleep. |
+| **Empty file initialization race** (branch 방금 생성, file 미존재 — 404) | branch 생성 직후 file 미존재 = 정상 (initial write). SHA 없이 PUT (create). 단, 이미 file 이 생겼다가 사라진 404 = 즉시 fail (예외 처리 구분 필요). |
+| **Atomic rename failure** (Contents API internal — 5xx) | retry with fresh SHA re-fetch. 이전 SHA 재사용 금지 (stale SHA 로 다시 PUT 하면 409 → infinite conflict 가능). |
+| **Branch 미생성 상태에서 PUT** (404) | 사전 branch 생성 step 의 idempotent check 가 선행 의무. 선행 step 없이 PUT → 즉시 4xx exit. |
+| **Base64 encode 오류** (local — python3 / base64 없음) | local execution error = retry 대상 아님. 즉시 exit 1 + stderr. |
+
 ### 면제 경계 (out-of-scope)
 
 - **Local-only jsonl** (codeforge wrapper repo 의 `.codeforge/` flag 등) = cross-repo race 무관. file system advisory lock 또는 simple write OK
@@ -144,4 +252,5 @@ done
 
 ## 변경 이력
 
+- **2026-05-09 (CFP-289)**: Retry Semantics 섹션 추가 — 4xx/5xx HTTP status 구분 / exhausted fallback behavior / stderr capture 의무 / edge case 5종. Two sink (post-merge-telemetry.sh + retro-mandatory.yml) conformance 검증 동반 (EPIC-RESULTS-CFP-134 §5 Group A candidate #1).
 - **2026-05-09**: 신설 (CFP-138 Phase 1 follow-up — FIX iter 2 boundary resolution from CodeReviewPL Iter 1 P0 A-2 + P0 C-1). ArchitectPLAgent 최종 판정 정합 — C-1 = 설계 (boundary), Pattern A 의무 명시.
