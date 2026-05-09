@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: label
-version: "2.0"
+version: "2.1"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
@@ -15,6 +15,7 @@ related_adrs:
   - ADR-030 (CFP-123 — gate:live-entry-pass v1.3)
   - ADR-036 (CFP-260 — phase:reservation v1.4)
   - ADR-045 (CFP-138 — gate:retro-complete v1.5)
+  - ADR-050 (CFP-XXX — conflict:* + merge-order:* labels v2.1)
 related_files:
   - scripts/bootstrap-labels.sh (type:* 3 entry removed — CFP-140)
   - templates/issue-types.yaml (native Issue Types SSOT — CFP-140)
@@ -30,6 +31,10 @@ related_files:
 
 ## 변경 이력
 
+**v2.1 (CFP-XXX / ADR-050, 2026-05-09)**: MINOR bump.
+- **추가**: `conflict:file-overlap`, `conflict:adr-number`, `conflict:section-locked` — 병렬 에픽 충돌 감지 레이블 (parallel-epic-conflict-check.yml Actions 부착)
+- **추가**: `merge-order:1`, `merge-order:2` — 충돌 시 merge 순서 프로토콜 (GitOpsAgent 부착)
+
 **v2.0 (CFP-140 / ADR-049, 2026-05-09)**: MAJOR bump.
 - **제거**: `type:epic`, `type:story`, `type:bug` — native GitHub Issue Types 로 대체
   - See: `templates/issue-types.yaml`, `scripts/migrate-label-to-issue-type.sh`
@@ -38,7 +43,7 @@ related_files:
 
 ## 1. 목적
 
-`bootstrap-labels.sh`가 생성하는 GitHub label SSOT (v2.0 시점 27+ 종 — type 1 / phase 8 / gate 4 / fix 4 / hotfix 2 / audit 12+ / category 7).
+`bootstrap-labels.sh`가 생성하는 GitHub label SSOT (v2.1 시점 32+ 종 — type 1 / phase 8 / gate 4 / fix 4 / hotfix 2 / audit 12+ / category 7 / conflict 5).
 `type:epic` / `type:story` / `type:bug` 는 native Issue Types 로 대체 (ADR-049).
 
 ## 2. Schema
@@ -299,6 +304,43 @@ labels:
     description: "#7 — inter-plugin contract schema 부족 (owner: producer lane plugin)"
     single_active: false
     attach_owner_plugin: "wrapper Orchestrator"
+
+  # conflict:* (3종 — 병렬 에픽 충돌 감지, ADR-050)
+  - name: conflict:file-overlap
+    category: conflict
+    color: "e4e669"
+    description: "다른 open PR과 변경 파일 중복 (parallel-epic-conflict-check.yml 자동 감지)"
+    single_active: false
+    attach_owner_plugin: "parallel-epic-conflict-check.yml CI Action (자동)"
+
+  - name: conflict:adr-number
+    category: conflict
+    color: "e4e669"
+    description: "ADR-RESERVATION.md 동시 수정 감지 — ADR 번호 충돌 위험"
+    single_active: false
+    attach_owner_plugin: "parallel-epic-conflict-check.yml CI Action (자동)"
+
+  - name: conflict:section-locked
+    category: conflict
+    color: "d93f0b"
+    description: "section-ownership.yaml locked 섹션 동시 수정 감지 — merge 순서 조율 필요"
+    single_active: false
+    attach_owner_plugin: "parallel-epic-conflict-check.yml CI Action (자동)"
+
+  # merge-order:* (2종 — 충돌 시 merge 순서 프로토콜, ADR-050)
+  - name: merge-order:1
+    category: conflict
+    color: "0075ca"
+    description: "병렬 에픽 충돌 시 먼저 merge해야 하는 PR (낮은 CFP 번호)"
+    single_active: false
+    attach_owner_plugin: "GitOpsAgent"
+
+  - name: merge-order:2
+    category: conflict
+    color: "e4e669"
+    description: "병렬 에픽 충돌 시 merge-order:1 완료 후 git rebase main 의무"
+    single_active: false
+    attach_owner_plugin: "GitOpsAgent"
 ```
 
 ## 4. 변경 규칙
