@@ -37,6 +37,13 @@ amendment_log:
     scope: "CFP-137 (Wave 2) carrier — D2 (Agent teams 적극 도입) 의 implementation level 결정 본 ADR 외 별도 ADR-044 (Phase-scoped sequential team SSOT) 으로 carrier 분리. ADR-044 가 lifecycle / team-spec yaml 7종 / hook 3종 / review-verdict v3 → v4 cutover / 5 권장 패턴 measurable verification 통합. 본 ADR D2 본문 변경 0 — D2 §결정 정합 invariant 무손상 + ADR-044 carrier 명시 cross-ref 만 추가."
     status: applied
     applied_pr: "wrapper Phase 1 PR (CFP-137)"
+  - amendment_id: 3
+    date: 2026-05-09
+    scope: "CFP-138 (Wave 2) — D5 Story 완료 회고 의무화 implementation level. Phase 2 PR merge 후 4 attempts (1 initial + 3 retries) cumulative offset (PR merge +5/+10/+20/+35min) + close-blocking forcing function (gate:retro-complete). retro-mandatory.yml workflow + label-registry v1.5 (gate:retro-complete) + Story §11 schema migration + codeforge-pmo PMOAgent mandate amendment. ADR-045 = D5 Foundation 결정 implementation carrier. amendment_id shift from 2 → 3 due to CFP-137 first-merge precedence (R3 정합)."
+    status: applied
+    ref: ADR-045
+    cfp: CFP-138
+    applied_pr: "wrapper Phase 1 PR (CFP-138)"
 ---
 
 # ADR-035: codeforge agent teams + GitOps + retro 의무화 + ADR-022 deprecate Epic architecture
@@ -158,7 +165,7 @@ Worktree base = `${HOME}/.claude/worktrees/<repo-name>/` (cross-platform).
 
 **근거**: 사용자 turn 9 명시 ("story 완료 회고는 사용자 요청이 없어도 의무로 수행한다.").
 
-**Implementation**: CFP-138 (Wave 1, depends on CFP-135 ADR-022 deprecate 후 — decider 비-개입 전제 위에 retro mandate 작성).
+**Implementation**: CFP-138 (Wave 2, depends on CFP-135 ADR-022 deprecate 후 — decider 비-개입 전제 위에 retro mandate 작성). **Implementation level SSOT = [ADR-045](ADR-045-story-retro-mandatory-trigger.md)** (Wave 2 amendment_id=3 / shift from 2→3 due to CFP-137 first-merge precedence, R3 정합). Phase 2 PR merge 후 4 attempts (1 initial + 3 retries) cumulative offset (PR merge +5/+10/+20/+35min) + close-blocking forcing function (gate:retro-complete) — 상세 D-1 ~ D-8.
 
 ## D6 (Amendment 1 — CFP-140 Wave 4 추가, 별도 ADR carrier)
 

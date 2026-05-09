@@ -154,7 +154,12 @@ Orchestrator 가 append-only 관리 (CFP-32 monopoly, 행 삭제·수정 금지)
 - Phase 2 PR URL (merged)
 - Change Plan 링크 (`docs/change-plans/<slug>.md`)
 - 관련 ADR 링크 (`docs/adr/ADR-NNN-<slug>.md`)
-- 회고 (PMOAgent 작성)
+- **회고 (PMOAgent 작성, CFP-138 / ADR-045 mandate)**:
+    - `retro_file: <relative-path-or-cross-repo-url>` — retro markdown file path (예: `<internal-docs>/wrapper/retros/2026-MM-DD-cfp-NNN-<slug>.md`)
+    - `retro_summary: <one-paragraph-summary>` — max 500자 한 단락 요약
+    - `learnings_count: <integer >= 0>` — retro 안 학습 항목 개수 (PMOAgent count)
+    - `feedback_back_to_codeforge: <Issue link list or empty []>` — codeforge improvement 발견 시 Issue 링크 (label: `codeforge-improvement` 또는 `from-mctrader-debut` 등)
+- **Migration policy** (ADR-045 D-5, backward compat): 본 schema = 신규 Story (CFP-138 merge 이후 close) 부터 strict mode. 기존 close Story file 100+ 의 §11 = vague placeholder (`- 회고 (PMOAgent 작성)`) 유지 — retroactive 미처리 ([ADR-045](../docs/adr/ADR-045-story-retro-mandatory-trigger.md) §결정 5 정합).
 
 ### §12. Sonnet Decision Log (CFP-59 / CFP-61 / ADR-022)
 
@@ -387,7 +392,7 @@ Link path 작성 가이드:
 | 보안 테스트 PASS/FIX verdict final write | §9.4 append + GitHub comment [보안-테스트] + gate:security-test-pass 라벨 + phase transition + §12 row | **Orchestrator 단독** (CFP-61 / ADR-022 review-verdict 5-step step 4) |
 | Clarification 재스폰 (RequirementsPL · ArchitectPLAgent) | §9.0 append | RequirementsPL / ArchitectPL (FIX 라벨 미추가 — fix-ledger-sync.yml은 §10만 trigger) |
 | FIX 루프 | §10 append | **Orchestrator 단독** (CFP-32 fix-event-v1 monopoly, fix-ledger-sync.yml Action이 자동 mirror+label) |
-| Story 완료 회고 (PMOAgent) | §11 회고 블록 | PMOAgent (codeforge-pmo direct Edit) |
+| Story 완료 회고 (PMOAgent) — **Phase 2 PR merge 후 5분 grace 자동 trigger (CFP-138 / ADR-045 mandate)**, 또는 Phase 1 PR merge 후 (doc-only Story, ADR-045 D-3) | §11 회고 블록 (4 field schema: retro_file / retro_summary / learnings_count / feedback_back_to_codeforge) | PMOAgent (codeforge-pmo direct Edit) — `gate:retro-complete` label add 의무 (forcing function) |
 | Sonnet decision 발생 시 (substantive trigger 4 + review-verdict trigger 5) | §12 append + `<internal-docs>/<plugin-folder>/decisions/<packet_id>.yaml` 생성 | Orchestrator (CFP-59 / CFP-61 / ADR-022, decision-packet-v2.1) |
 | Live touching Story 의 §13 (CONDITIONAL) | §13 11 필드 (vault / injection / permission / allowlist / withdrawal-off / first-trade cap / kill switch / operator approval / reconciliation / runbook / rollback) | ArchitectAgent (chief author, §7 / §11 / §8.5 와 동시 작성) |
 | Phase 2 PR merged (최종) | Issue auto-close (PR body의 `Closes #N`) | (자동) |

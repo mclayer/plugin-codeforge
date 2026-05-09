@@ -1,0 +1,305 @@
+name: Retro mandatory (CFP-138 / ADR-045)
+
+# Story 완료 회고 의무화 — Phase 2 PR merge 후 4 attempts (1 initial + 3 retries) cumulative offset.
+#
+# Trigger flow (ADR-045 D-1, D-4 — FIX iter 1 F-1 alignment):
+#   1. Phase 2 PR merge (closed + merged=true) → workflow 발화
+#   2. Story Issue 추출 (PR title CFP-NNN regex + title 정확 매칭 — F-2 hardening)
+#   3. First attempt at PR merge + 5min (grace period) — PMOAgent retro write 시도
+#   4. retry 1 at PR merge + 10min  (Phase 2 implementation — state machine 영역)
+#   5. retry 2 at PR merge + 20min  (Phase 2 implementation — state machine 영역)
+#   6. retry 3 at PR merge + 35min  (Phase 2 implementation — state machine 영역)
+#   7. retry 3 fail → ESCALATE 사용자 + gate:retro-complete 미부착 (Story close 차단 유지)
+#
+# Total attempts = 4 (1 initial + 3 retries).
+# Total max latency from PR merge to ESCALATE = 35min (5min grace + 5+10+15 retry waits).
+#
+# Phase 1 PR scope (본 workflow):
+#   - First attempt (5min grace) + close-blocking (Issue close auto-reopen) 만 implement
+#   - retry 1/2/3 state machine = Phase 2 PR scope deferred (ADR-045 §D-4 Phase 2 implementation spec)
+#
+# Disable safety (ADR-045 D-7):
+#   .codeforge/post-merge-automation.disabled flag 활성 시 no-op
+#   (post-merge-followup.yml 와 같은 flag 공유 — single disable = both off)
+#
+# Idempotency (ADR-045 §11.6):
+#   - workflow re-run = same result (label 부재 검사 + close-blocking idempotent)
+#   - PMOAgent re-spawn = retro file 존재 검사 후 skip 또는 append
+#   - gh label add = idempotent (이미 부착 시 no-op)
+#   - Issue close-blocking auto-reopen comment = idempotent (EXISTING_ALERT check)
+#
+# Concurrency (ADR-045 §7.4.4):
+#   같은 PR merge 다수 발화 시 single instance 만 active.
+
+on:
+  pull_request:
+    types: [closed]
+  # Issue close 시 reopen 차단 (UC-2 정합)
+  issues:
+    types: [closed]
+  # NOTE: workflow_run + scheduled cron retry trigger = Phase 2 implementation 영역 (ADR-045 §D-4).
+  #       Phase 1 PR scope 에서는 first attempt 5min grace 만 implement.
+  #       retry state machine (workflow_run self re-trigger 또는 cron */5 * * * * + jsonl state store)
+  #       는 Phase 2 PR scope 에서 추가.
+
+permissions:
+  # GITHUB_TOKEN scope (built-in token):
+  #   - issues: write — Issue label add / Issue auto-reopen / Issue comment
+  #   - pull-requests: write — PR comment (필요 시)
+  #   - contents: read — checkout repo (.codeforge/ flag 검사)
+  # NOTE: secrets.CODEFORGE_CROSS_REPO_PAT 사용 step 은 Phase 1 PR scope 에 부재 —
+  #       Phase 2 PR scope 의 telemetry channel (retro-attempts.jsonl) 추가 시 별도 step 도입.
+  #       Phase 2 PAT scope = `contents:write` only on internal-docs (ADR-026 §결정 2 정합).
+  issues: write
+  pull-requests: write
+  contents: read
+
+concurrency:
+  group: retro-mandatory-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: false
+
+jobs:
+  retro-check:
+    # Phase 2 PR merge event 처리 — first attempt at PR merge + 5min grace
+    if: |
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Disable check (ADR-045 D-7)
+        id: enabled
+        run: |
+          if [ -f .codeforge/post-merge-automation.disabled ]; then
+            echo "disabled=true" >> $GITHUB_OUTPUT
+            echo "::warning::Retro mandatory workflow disabled by .codeforge/post-merge-automation.disabled"
+          else
+            echo "disabled=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Extract PR metadata
+        if: steps.enabled.outputs.disabled != 'true'
+        id: meta
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_LABELS_JSON: ${{ toJson(github.event.pull_request.labels) }}
+        run: |
+          # Skip chore PRs and multi-CFP aggregating PRs (post-merge-followup.yml mirror).
+          # CFP-NNN regex (case-insensitive uppercase normalize) + multi-CFP detection.
+          CFP_COUNT=$(echo "$PR_TITLE" | grep -oiE 'CFP-[0-9]+' | tr '[:lower:]' '[:upper:]' | sort -u | wc -l)
+          if [[ "$PR_TITLE" =~ ^chore[:\(] ]]; then
+            echo "::notice::Chore PR detected — skip retro check: $PR_TITLE"
+            echo "skip_reason=chore_prefix" >> $GITHUB_OUTPUT
+            echo "story_key=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          if [ "$CFP_COUNT" -gt 1 ]; then
+            echo "::notice::Multi-CFP aggregating PR — skip retro check: $PR_TITLE"
+            echo "skip_reason=multi_cfp" >> $GITHUB_OUTPUT
+            echo "story_key=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          STORY_KEY=$(echo "$PR_TITLE" | grep -oiE 'CFP-[0-9]+' | head -1 | tr '[:lower:]' '[:upper:]' || echo "")
+          PHASE=$(echo "$PR_TITLE" | grep -oE 'Phase [12]' | head -1 | tr -d ' ' || echo "")
+
+          # Phase marker check (D-1, D-3 — F-13 doc-only Story 정의 정합):
+          #   - PR title contains "Phase 2" → trigger (Phase 2 PR merge — primary trigger window)
+          #   - PR carries phase:보안-테스트 label → trigger (Phase 2 alternate marker)
+          #   - PR title contains "Phase 1" + non-Epic + Story file 의 phase=보안-테스트 도달 시 →
+          #     doc-only Story (ADR-027 Amendment 1 — Phase 2 PR scope 부재) 의 retro window (D-3)
+          #     Phase 1 fallback. 단 type:epic PR (Epic 자체 PR) 는 child Story retro 와 분리 (Story §13 EC-3 정합)
+          #
+          # IS_EPIC_PR (FIX iter 1 F-10 + F-13 — variable rename):
+          #   = type:epic label 부착 여부 (Epic 자체 PR 식별)
+          #   PHASE=Phase1 + IS_EPIC_PR=0 fallback 은 doc-only Story 후보 trigger (정확한 doc-only 판정 =
+          #   Story file frontmatter `phase: 보안-테스트` + Phase 2 PR 부재 — 본 workflow 가
+          #   Story file fetch 안 함, Phase 1 PR + non-Epic 가 candidate marker 만).
+          IS_PHASE2_LABEL=$(echo "$PR_LABELS_JSON" | jq -r '[.[] | select(.name == "phase:보안-테스트")] | length')
+          IS_EPIC_PR=$(echo "$PR_LABELS_JSON" | jq -r '[.[] | select(.name == "type:epic")] | length')
+
+          if [ "$PHASE" = "Phase2" ] || [ "$IS_PHASE2_LABEL" -gt 0 ]; then
+            TRIGGER_REASON="Phase 2 PR merge (primary)"
+          elif [ "$PHASE" = "Phase1" ] && [ "$IS_EPIC_PR" -eq 0 ]; then
+            # Phase 1 PR + non-Epic — doc-only Story candidate (D-3 fallback)
+            # 정확 doc-only 판정은 Story file phase 검사 영역 — 본 workflow scope 외 (Phase 2 implementation
+            # 영역에서 cross-repo Story fetch 후 phase 검증 가능).
+            TRIGGER_REASON="Phase 1 PR merge (doc-only Story candidate, D-3 fallback)"
+          else
+            echo "::notice::Phase marker not Phase 2 / Phase 1 non-Epic — skip retro check: $PR_TITLE"
+            echo "skip_reason=phase_marker_absent" >> $GITHUB_OUTPUT
+            echo "story_key=" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "story_key=$STORY_KEY" >> $GITHUB_OUTPUT
+          echo "phase=$PHASE" >> $GITHUB_OUTPUT
+          echo "trigger_reason=$TRIGGER_REASON" >> $GITHUB_OUTPUT
+          echo "::notice::Extracted: story=$STORY_KEY, phase=$PHASE, trigger=$TRIGGER_REASON"
+
+      - name: Grace period wait (5min — ADR-045 D-1, first attempt at PR merge + 5min)
+        if: steps.enabled.outputs.disabled != 'true' && steps.meta.outputs.story_key != ''
+        run: |
+          echo "::notice::Waiting 5min grace period for PMOAgent retro write (first attempt at PR merge + 5min)..."
+          sleep 300
+
+      - name: Check gate:retro-complete label (FIX iter 1 F-2 — title 정확 매칭)
+        if: steps.enabled.outputs.disabled != 'true' && steps.meta.outputs.story_key != ''
+        id: gate_check
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STORY_KEY: ${{ steps.meta.outputs.story_key }}
+        run: |
+          # FIX iter 1 F-2 — Issue search hardening:
+          #   Before: gh issue list --search "CFP-138" → CFP-138 vs CFP-1380 vs CFP-1383 prefix collision
+          #   After: in:title qualifier + title regex post-filter (^STORY_KEY\b word boundary) → exact match only
+          ISSUE_NUM=$(gh issue list \
+            --label "type:story" \
+            --search "in:title ${STORY_KEY}" \
+            --json number,title \
+            --jq "[.[] | select(.title | test(\"^${STORY_KEY}\\\\b\"))] | .[0].number")
+
+          if [ -z "$ISSUE_NUM" ] || [ "$ISSUE_NUM" = "null" ]; then
+            echo "::warning::No Issue found for ${STORY_KEY} (in:title exact match)"
+            echo "outcome=skip_no_issue" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Check if gate:retro-complete label attached
+          ISSUE_LABELS=$(gh issue view "$ISSUE_NUM" --json labels --jq '[.labels[].name] | join(",")')
+          if echo "$ISSUE_LABELS" | grep -q "gate:retro-complete"; then
+            echo "::notice::Issue #$ISSUE_NUM has gate:retro-complete — retro write confirmed (first attempt success)"
+            echo "outcome=pass" >> $GITHUB_OUTPUT
+            echo "issue_num=$ISSUE_NUM" >> $GITHUB_OUTPUT
+          else
+            echo "::warning::Issue #$ISSUE_NUM missing gate:retro-complete after 5min grace (first attempt)"
+            echo "outcome=missing_gate" >> $GITHUB_OUTPUT
+            echo "issue_num=$ISSUE_NUM" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Post comment + mark for retry (ADR-045 D-4)
+        if: |
+          steps.enabled.outputs.disabled != 'true' &&
+          steps.gate_check.outputs.outcome == 'missing_gate'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          ISSUE_NUM='${{ steps.gate_check.outputs.issue_num }}'
+
+          # Idempotent comment — check if [PMO] retro alert already posted (avoid spam on retry)
+          EXISTING_ALERT=$(gh issue view "$ISSUE_NUM" --json comments --jq '[.comments[] | select(.body | startswith("[PMO] Retro mandatory check"))] | length')
+
+          if [ "$EXISTING_ALERT" -eq 0 ]; then
+            gh issue comment "$ISSUE_NUM" --body "$(cat <<EOF
+[PMO] Retro mandatory check (CFP-138 / ADR-045)
+
+Phase 2 PR #${{ github.event.pull_request.number }} merged ${{ steps.meta.outputs.trigger_reason }}.
+First attempt (PR merge + 5min grace) 후에도 \`gate:retro-complete\` label 부재 — retro 자동 작성 trigger 필요.
+
+**Action required**:
+1. PMOAgent re-spawn (Orchestrator 자동 또는 사용자 요청)
+2. retro file 작성 → \`<internal-docs>/wrapper/retros/<sprint>-cfp-NNN-<slug>.md\`
+3. Story §11 schema update (retro_file / retro_summary / learnings_count / feedback_back_to_codeforge)
+4. \`gate:retro-complete\` label add (PMOAgent self-write)
+
+**Retry policy** (ADR-045 D-4 cumulative offset from PR merge):
+- First attempt: PR merge + 5min  (grace period — 본 attempt fail)
+- Retry 1:        PR merge + 10min (5min wait)
+- Retry 2:        PR merge + 20min (10min wait)
+- Retry 3:        PR merge + 35min (15min wait, final attempt)
+- Total attempts = 4 (1 initial + 3 retries)
+- Total max latency = 35min from PR merge → ESCALATE 사용자 + Story close 차단 유지
+
+본 alert 는 retry 시 중복 게시 안 함 (idempotent).
+
+NOTE: Phase 1 PR scope 본 workflow = first attempt 만 implement. retry 1/2/3 state machine =
+Phase 2 PR scope deferred (ADR-045 §D-4 Phase 2 implementation spec).
+EOF
+)"
+            echo "::notice::[PMO] retro alert posted on Issue #$ISSUE_NUM"
+          else
+            echo "::notice::[PMO] retro alert already posted on Issue #$ISSUE_NUM (idempotent skip)"
+          fi
+
+  close-blocking:
+    # Issue close event 처리 — gate:retro-complete 부재 시 자동 reopen (UC-2 정합)
+    if: github.event_name == 'issues' && github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Disable check
+        id: enabled
+        run: |
+          if [ -f .codeforge/post-merge-automation.disabled ]; then
+            echo "disabled=true" >> $GITHUB_OUTPUT
+          else
+            echo "disabled=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Validate retro before allowing close
+        if: steps.enabled.outputs.disabled != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue;
+            const labels = issue.labels.map(l => l.name);
+
+            // Skip non-Story issues
+            const isStory = labels.includes('type:story');
+            if (!isStory) {
+              core.info(`Issue #${issue.number} is not type:story — skip retro check`);
+              return;
+            }
+
+            // Skip Issues that are not at terminal phase (early-close already handled by phase-label-invariant.yml)
+            const isTerminalPhase = labels.includes('phase:보안-테스트');
+            const isEarlyClose = labels.some(l => l.startsWith('early-close:'));
+
+            if (isEarlyClose) {
+              core.info(`Issue #${issue.number} early-close — skip retro mandate (out-of-scope)`);
+              return;
+            }
+
+            if (!isTerminalPhase) {
+              core.info(`Issue #${issue.number} not at terminal phase — phase-label-invariant.yml handles`);
+              return;
+            }
+
+            // Check gate:retro-complete
+            const hasRetroGate = labels.includes('gate:retro-complete');
+            if (hasRetroGate) {
+              core.info(`Issue #${issue.number} has gate:retro-complete — close allowed`);
+              return;
+            }
+
+            // ADR-045 D-4: close-blocking via auto-reopen (idempotent — workflow re-run시 same result)
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              state: 'open'
+            });
+
+            const body = `[PMO] Retro mandatory close-block (CFP-138 / ADR-045)\n\n` +
+              `Story Issue close attempted without \`gate:retro-complete\` label.\n\n` +
+              `**Auto-reopened** — retro 작성 후 close 가능 (forcing function, ADR-045 D-4).\n\n` +
+              `**Action required**:\n` +
+              `1. PMOAgent retro write 완료\n` +
+              `2. \`gate:retro-complete\` label 부착\n` +
+              `3. Issue close 재시도\n\n` +
+              `**Retry policy** (ADR-045 D-4 — cumulative offset):\n` +
+              `- First attempt: PR merge + 5min (grace) — fail\n` +
+              `- Retry 1: PR merge + 10min  /  Retry 2: PR merge + 20min  /  Retry 3: PR merge + 35min\n` +
+              `- Total = 4 attempts (1 initial + 3 retries) / max latency 35min from PR merge → ESCALATE\n\n` +
+              `면제 경로: \`early-close:*\` label 부착 (Epic rolled-up / duplicate / reclassified — ADR-026 / phase-label-invariant.yml 정합).`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: issue.number,
+              body: body
+            });
+
+            core.warning(`Issue #${issue.number} auto-reopened — retro mandatory missing`);
