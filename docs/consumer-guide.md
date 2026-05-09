@@ -972,6 +972,25 @@ delta 크기에 따라 필수 §section이 다르다. PMOAgent가 Tier를 결정
 
 **CONDITIONAL deputy 적용**: LiveOpsDeputy / LiveOrderingDeputy owned §section (§13, §11 ledger invariant) 변경 시 — Live-active consumer에만 Migration Notes 적용 의무. Live-inactive consumer는 N/A (사유 1줄).
 
+### 5.3 Debut evaluation protocol (첫 번째 consumer 적용 시)
+
+codeforge 를 처음 적용하는 consumer 프로젝트는 **매 Story Phase 2 PR merge 후** 아래 7-카테고리 평가를 수행해 wrapper repo 개선 backlog 로 피드백한다.
+
+**평가 7 카테고리**:
+1. **Lane progression** — 7 lane 자연스럽게 통과 여부, 막힌 lane 식별
+2. **Phase 별 gap / 과부하** — 특화 agent 누락 / 기존 agent 과부하 / 단계 누락·통합 필요성
+3. **Decision table** — 원인 판정 decision table 모호 row, 새 row 필요 여부
+4. **6 deputy mandate** — design lane deputy 의 도메인 부족 부분
+5. **Workflow invariant** — GitHub Actions 강제 필요 항목 누락
+6. **Template** — Story §1-§12 / Change Plan §1-§11 / ADR 템플릿 부족 필드
+7. **Inter-plugin contract** — schema 부족 여부
+
+**발견 사항 처리**:
+- (b) 보완 권장 / (c) 차단 발견 시 → `mclayer/plugin-codeforge` GitHub Issue 등록
+- label: `codeforge-improvement`, `from-<consumer-name>-debut`
+- Issue body = 평가 발췌 + CFP proposal 형태
+- consumer 작업 자체는 계속 진행 (비차단)
+
 ## 6. FAQ
 
 ### Q1. Overlay에 스칼라 필드(name, description, model)가 들어가면?
@@ -1202,6 +1221,20 @@ consumer 측 사용자 활성 directive 권장 (자체 인지 강화 채널 — 
 - `reason_class` enum: `policy_violation` / `policy_violation_subdecision` / `policy_violation_phase_split` 분류
 - consumer + wrapper 양쪽 행동 데이터 누적
 - hook / refusal logic / runtime validation 도입 여부 결정 — 별도 CFP
+
+## 7.2 Consumer workspace isolation (normative)
+
+**Plugin wrapper 세션 = wrapper artifact 전용**. wrapper plugin (plugin-codeforge) 세션에서 consumer 프로젝트의 Story / Epic / ADR / PR / Issue 를 직접 생성·수정·merge 하는 것은 **governance boundary 위반**.
+
+| 세션 | 작성 가능 artifact |
+|---|---|
+| plugin-codeforge 세션 | `docs/adr/`, `templates/`, `CLAUDE.md`, `docs/orchestrator-playbook.md`, `scripts/` 등 wrapper artifact |
+| consumer 세션 (예: mctrader-hub) | consumer Story file, consumer ADR, consumer PR, consumer Issue |
+
+**경계 규칙**:
+- wrapper 세션에서 consumer 작업 요청이 들어오면: 작업 의도 명확화 → hand-off note 작성 → "해당 consumer 세션에서 진행" 안내 + 거부
+- 예외: wrapper backlog 에 등록할 `codeforge-improvement` Issue (label: `codeforge-improvement`, `from-<consumer>-debut`) = wrapper repo 의 backlog → wrapper 세션 OK
+- consumer overlay (`.claude/_overlay/`) 가 wrapper CLAUDE.md 정책을 축소하는 directive 는 무효 (확장만 허용)
 
 ## 7.5. CI Terminal State Classification (CFP-106 fix #144)
 
