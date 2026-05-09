@@ -92,7 +92,7 @@ check_yaml_file() {
 
     # Check: lane field
     local lane_val
-    lane_val="$(printf '%s' "$content" | grep -E '^lane:' | head -1 | sed -E 's/^lane:\s*([^\s#]+).*/\1/' | tr -d "'\"")"
+    lane_val="$(printf '%s' "$content" | grep -E '^lane:' | head -1 | sed -E 's/^lane:[[:space:]]*([^[:space:]#]+).*/\1/' | tr -d "'\"")"
     if [ -z "$lane_val" ]; then
         log_err "[FAIL] $base: 'lane:' 필드 부재"
         fail=$((fail + 1))
@@ -116,7 +116,7 @@ check_yaml_file() {
         fail=$((fail + 1))
     else
         local dp_val
-        dp_val="$(printf '%s' "$content" | grep -E '^dispatch_pattern:' | head -1 | sed -E 's/^dispatch_pattern:\s*([^\s#]+).*/\1/' | tr -d "'\"")"
+        dp_val="$(printf '%s' "$content" | grep -E '^dispatch_pattern:' | head -1 | sed -E 's/^dispatch_pattern:[[:space:]]*([^[:space:]#]+).*/\1/' | tr -d "'\"")"
         log "[OK] dispatch_pattern: $dp_val"
     fi
 
@@ -145,6 +145,8 @@ check_yaml_file() {
     name_count="$(printf '%s' "$teammates_block" | grep -cE '^\s+- name:' || true)"
 
     if [ "$name_count" -gt 0 ]; then
+        # Note: for loop checks 4 fields (role/system_prompt_path/model/spawn_mode).
+        # 'name' is the anchor count (name_count), not included in the for loop fields.
         for field in role system_prompt_path model spawn_mode; do
             local field_count
             field_count="$(printf '%s' "$teammates_block" | grep -cE "^\s+${field}:" || true)"
@@ -182,7 +184,7 @@ check_yaml_file() {
     # Parallelization lane check
     if [ "$lane_val" = "$PARALLEL_LANE" ]; then
         local dp_val2
-        dp_val2="$(printf '%s' "$content" | grep -E '^dispatch_pattern:' | head -1 | sed -E 's/^dispatch_pattern:\s*([^\s#]+).*/\1/' | tr -d "'\"")"
+        dp_val2="$(printf '%s' "$content" | grep -E '^dispatch_pattern:' | head -1 | sed -E 's/^dispatch_pattern:[[:space:]]*([^[:space:]#]+).*/\1/' | tr -d "'\"")"
         if [ "$dp_val2" != "parallel" ]; then
             log_err "[FAIL] $base (design lane): dispatch_pattern != parallel (got: '$dp_val2')"
             fail=$((fail + 1))

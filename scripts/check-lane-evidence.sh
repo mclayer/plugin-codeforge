@@ -145,9 +145,16 @@ check_parallelization() {
     # Extract 설계 lane rows block
     # strategy: parse all rows where lane: 설계 and extract spawned_at timestamps
     local design_rows
+    # BSD-compat awk: use sub() + substr()/split() instead of 3-arg match (gawk-only)
     design_rows="$(printf '%s' "$yaml" | awk '
         /- lane: 설계$/ { inrow=1; ts="" }
-        inrow && /spawned_at:/ { match($0, /spawned_at: ([^ #]+)/, arr); ts=arr[1]; print ts }
+        inrow && /spawned_at:/ {
+            line=$0
+            sub(/.*spawned_at:[[:space:]]*/, "", line)
+            sub(/[[:space:]#].*/, "", line)
+            ts=line
+            print ts
+        }
         /- lane: / && !/- lane: 설계$/ { if (inrow) inrow=0 }
     ')"
 

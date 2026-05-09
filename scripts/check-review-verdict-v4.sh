@@ -138,8 +138,7 @@ if [ -n "$PACKET_PATH" ]; then
 
         # B2: worker_dialog_rounds field present and is integer
         if printf '%s' "$packet_content" | grep -qE 'worker_dialog_rounds:\s*[0-9]+'; then
-            local wdr
-            wdr="$(printf '%s' "$packet_content" | grep -E 'worker_dialog_rounds:' | head -1 | sed -E 's/.*worker_dialog_rounds:\s*([0-9]+).*/\1/')"
+            wdr="$(printf '%s' "$packet_content" | grep -E 'worker_dialog_rounds:' | head -1 | sed -E 's/.*worker_dialog_rounds:[[:space:]]*([0-9]+).*/\1/')"
             log "[OK] worker_dialog_rounds: $wdr (int — Adversarial measurable)"
         else
             log_err "[FAIL] packet worker_dialog_rounds field 부재 또는 비정수 — v4 Adversarial field 미기입"
@@ -157,8 +156,7 @@ if [ -n "$PACKET_PATH" ]; then
         done
 
         # B4: pl_recommendation valid value
-        local pl_rec
-        pl_rec="$(printf '%s' "$packet_content" | grep -E 'pl_recommendation:' | head -1 | sed -E 's/.*pl_recommendation:\s*([^\s#]+).*/\1/' | tr -d "'\"")"
+        pl_rec="$(printf '%s' "$packet_content" | grep -E 'pl_recommendation:' | head -1 | sed -E 's/.*pl_recommendation:[[:space:]]*([^[:space:]#]+).*/\1/' | tr -d "'\"")"
         case "$pl_rec" in
             PASS|FIX|FIX_DISCRETIONARY|ESCALATE_PACKET_INCOMPLETE)
                 log "[OK] pl_recommendation: $pl_rec (valid)"
