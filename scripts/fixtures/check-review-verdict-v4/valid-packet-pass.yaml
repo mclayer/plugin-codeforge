@@ -1,0 +1,22 @@
+# Fixture: valid review-verdict v4 packet — PASS (CFP-137 Phase 2 test fixture)
+review_verdict:
+  contract_version: "4.0"
+  lane: design
+  story_key: CFP-FIXTURE
+  iteration: 1
+
+  findings: []
+
+  pl_recommendation: PASS
+
+  worker_dialog_rounds: 0  # Claude only (Codex on user_request — not requested)
+
+  write_errors: []
+
+  writes_completed:
+    story_section_9: true
+    phase_comment: true
+    gate_label_attached: true
+    phase_label_transitioned: true
+    fix_ledger_append: false
+    diagnosis_spawn: false

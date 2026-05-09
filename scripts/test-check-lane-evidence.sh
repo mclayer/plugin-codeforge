@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# test-check-lane-evidence.sh — minimal smoke test for check-lane-evidence.sh (CFP-126 Phase 2).
+# test-check-lane-evidence.sh — smoke test for check-lane-evidence.sh (CFP-126 Phase 2 + CFP-137 Phase 2).
 #
-# 본 스모크 테스트 = 1 fixture (single-pass) 로 lint script 의 happy path 검증.
-# 향후 follow-up 에서 3 fixture 확장 (single-pass / multi-iteration FIX / bypass).
+# CFP-137 Phase 2 확장: T6 (--check-parallelization with design 6 deputy rows < 60s → PASS advisory)
+# 기존 T1-T5 = CFP-126 Phase 2 original tests.
 
 set -uo pipefail
 
@@ -94,12 +94,36 @@ test_5_unknown_arg() {
     fi
 }
 
+# Test 6 — CFP-137 Phase 2: --check-parallelization with design 6 deputy rows within 60s → PASS (advisory, exit 0)
+test_6_parallelization_design_rows() {
+    log "Test 6: --check-parallelization (design 6 deputy rows < 60s) → exit 0 advisory PASS"
+    local rc=0
+    # Note: --quiet suppresses log() (stdout OK messages). Run without --quiet to capture OK.
+    # stderr is captured for any WARN/FAIL messages.
+    combined="$(bash "$SCRIPT_DIR/check-lane-evidence.sh" \
+        --story "$FIXTURE_DIR/design-parallelization-story.md" \
+        --check-parallelization \
+        2>&1)" || rc=$?
+    # Should exit 0 (advisory mode) and NOT contain PARALLELIZATION WARN
+    para_warn="$(printf '%s' "$combined" | grep -c 'PARALLELIZATION WARN' || true)"
+    para_skip="$(printf '%s' "$combined" | grep -c 'PARALLELIZATION SKIP' || true)"
+    if [ $rc -eq 0 ] && [ "$para_warn" -eq 0 ] && [ "$para_skip" -eq 0 ]; then
+        PASS=$((PASS + 1))
+        log "  PASS (rc=$rc, no WARN, no SKIP — PARALLELIZATION OK)"
+    else
+        FAIL=$((FAIL + 1))
+        log "  FAIL (rc=$rc, warn=$para_warn, skip=$para_skip)"
+        printf '%s\n' "$combined" >&2
+    fi
+}
+
 log "=== test-check-lane-evidence 시작 ==="
 test_1_single_pass_fixture
 test_2_missing_story_advisory
 test_3_missing_story_strict
 test_4_help
 test_5_unknown_arg
+test_6_parallelization_design_rows
 
 log ""
 log "=== Summary: $PASS PASS, $FAIL FAIL ==="

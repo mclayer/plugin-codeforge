@@ -4,8 +4,14 @@
 # Story §14 Lane Evidence YAML block ↔ Phase 2 PR description `## Lane evidence` 블록
 # cross-validation. Lane name set + outcome 일치 + fix_iteration ↔ §10 FIX Ledger row index 정합.
 #
+# CFP-137 Phase 2 확장: --check-parallelization 플래그
+#   TEAM-DESIGN 6 deputy row 의 spawned_at diff < 60s 검증 (ADR-044 §결정 5 Parallelization measurable).
+#   대상 lane: 설계 (design). deputy role = CodebaseMapper / Refactor / SecurityArch / OpRiskArch /
+#              TestContractArch / DataMigrationArch (6개). spawned_at ISO8601 파싱 후 max-min < 60초 기준.
+#
 # Usage:
 #   bash scripts/check-lane-evidence.sh [--story <path>] [--pr <number>] [--strict] [--quiet]
+#                                        [--check-parallelization]
 #
 # Defaults:
 #   --story: docs/stories/<KEY>.md (auto-detect from git branch `cfp-N-...`)
@@ -23,6 +29,7 @@ QUIET=0
 STRICT=0
 STORY_PATH=""
 PR_NUMBER=""
+CHECK_PARALLELIZATION=0
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -30,6 +37,7 @@ while [ $# -gt 0 ]; do
         --strict) STRICT=1; shift ;;
         --story) STORY_PATH="$2"; shift 2 ;;
         --pr) PR_NUMBER="$2"; shift 2 ;;
+        --check-parallelization) CHECK_PARALLELIZATION=1; shift ;;
         -h|--help)
             sed -n '/^# check-lane-evidence/,/^# Effective date/p' "$0" | sed 's/^# \?//'
             exit 0
@@ -122,6 +130,80 @@ extract_pr_lanes() {
     printf '%s' "$block" | grep -E '^- ' | sed -E 's/^-\s*([^:]+):.*/\1/' | tr -d ' ' | sort -u
 }
 
+# CFP-137 Phase 2: Parallelization check
+# TEAM-DESIGN 6 deputy spawned_at diff < 60s (ADR-044 §결정 5)
+# Deputy roles (any of): CodebaseMapper / Refactor / SecurityArch / OpRiskArch / TestContractArch / DataMigrationArch
+# Strategy: 설계 lane 의 모든 row 의 spawned_at 추출 → epoch 변환 → max-min 차이 < 60s 검증
+# 조건: 6개 이상 deputy row 존재할 때만 (agent teams env=1 context 만 의미있음 — env=0 시 deputy row 부재)
+check_parallelization() {
+    local yaml="$1"
+    if [ -z "$yaml" ]; then
+        log_err "[PARALLELIZATION SKIP] §14 YAML block 없음 — skip"
+        return 0
+    fi
+
+    # Extract 설계 lane rows block
+    # strategy: parse all rows where lane: 설계 and extract spawned_at timestamps
+    local design_rows
+    # BSD-compat awk: use sub() + substr()/split() instead of 3-arg match (gawk-only)
+    design_rows="$(printf '%s' "$yaml" | awk '
+        /- lane: 설계$/ { inrow=1; ts="" }
+        inrow && /spawned_at:/ {
+            line=$0
+            sub(/.*spawned_at:[[:space:]]*/, "", line)
+            sub(/[[:space:]#].*/, "", line)
+            ts=line
+            print ts
+        }
+        /- lane: / && !/- lane: 설계$/ { if (inrow) inrow=0 }
+    ')"
+
+    local row_count
+    row_count=$(printf '%s\n' "$design_rows" | grep -c '[0-9]' || true)
+
+    if [ "$row_count" -lt 6 ]; then
+        log "[PARALLELIZATION SKIP] 설계 lane deputy rows < 6 ($row_count 개) — agent teams env=0 or deputy rows absent. skip (ADR-044 §결정 5 N/A in env=0)"
+        return 0
+    fi
+
+    # Parse ISO8601 → epoch seconds via date (GNU date or BSD date)
+    local timestamps=()
+    while IFS= read -r ts; do
+        [ -z "$ts" ] && continue
+        local epoch
+        # GNU date
+        epoch="$(date -d "$ts" +%s 2>/dev/null || date -jf '%Y-%m-%dT%H:%M:%SZ' "$ts" +%s 2>/dev/null || true)"
+        if [ -n "$epoch" ] && [[ "$epoch" =~ ^[0-9]+$ ]]; then
+            timestamps+=("$epoch")
+        fi
+    done <<< "$design_rows"
+
+    if [ "${#timestamps[@]}" -lt 6 ]; then
+        log "[PARALLELIZATION SKIP] spawned_at epoch 파싱 성공 row < 6 (${#timestamps[@]} 개, date 미지원 또는 null ts) — skip"
+        return 0
+    fi
+
+    # Find min and max
+    local min_ts max_ts
+    min_ts="${timestamps[0]}"
+    max_ts="${timestamps[0]}"
+    for ts in "${timestamps[@]}"; do
+        [ "$ts" -lt "$min_ts" ] && min_ts="$ts"
+        [ "$ts" -gt "$max_ts" ] && max_ts="$ts"
+    done
+
+    local diff=$(( max_ts - min_ts ))
+    if [ "$diff" -lt 60 ]; then
+        log "[PARALLELIZATION OK] TEAM-DESIGN deputy spawned_at diff = ${diff}s < 60s (${#timestamps[@]} rows)"
+    else
+        log_err "[PARALLELIZATION WARN] TEAM-DESIGN deputy spawned_at diff = ${diff}s >= 60s — Parallelization 기준 미달 (ADR-044 §결정 5). diff > 60s = sequential spawn 의심"
+        # NOTE: advisory only — not counted as fail (no agent teams enforcement in env=0 contexts)
+        # If strict mode is required for parallelization, use --strict with this flag
+        log_err "  (advisory: diff >= 60s 는 FAIL 아님. Strict parallelization enforcement 는 CFP-137 후속 CFP scope)"
+    fi
+    return 0
+}
+
 # Run check
 run_check() {
     auto_detect_story
@@ -189,6 +271,12 @@ run_check() {
                 log "[OK] BYPASS reason PR description 명시 확인"
             fi
         fi
+    fi
+
+    # Check 6 (optional): Parallelization — TEAM-DESIGN 6 deputy spawned_at diff < 60s
+    # CFP-137 Phase 2 / ADR-044 §결정 5 Parallelization measurable verification
+    if [ $CHECK_PARALLELIZATION -eq 1 ]; then
+        check_parallelization "$story_yaml"
     fi
 
     log ""

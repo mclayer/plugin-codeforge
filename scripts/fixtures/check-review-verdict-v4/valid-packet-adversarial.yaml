@@ -1,0 +1,28 @@
+# Fixture: valid review-verdict v4 packet — adversarial (worker_dialog_rounds >= 2, CFP-137 Phase 2 test fixture)
+review_verdict:
+  contract_version: "4.0"
+  lane: code
+  story_key: CFP-FIXTURE
+  iteration: 1
+
+  findings:
+    - severity: P2
+      category: style
+      file: src/foo.py
+      line: 42
+      evidence: "variable name `x` is too short"
+      suggestion: "rename to `context`"
+
+  pl_recommendation: FIX
+
+  worker_dialog_rounds: 3  # Claude → Codex → Claude (full adversarial cycle)
+
+  write_errors: []
+
+  writes_completed:
+    story_section_9: true
+    phase_comment: true
+    gate_label_attached: false
+    phase_label_transitioned: false
+    fix_ledger_append: true
+    diagnosis_spawn: true

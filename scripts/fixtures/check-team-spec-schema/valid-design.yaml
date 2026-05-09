@@ -1,0 +1,78 @@
+# Fixture: valid design team-spec (CFP-137 Phase 2 test fixture)
+lane: design
+description: |
+  Test fixture — valid design lane team spec.
+
+teammates:
+  - name: ArchitectPLAgent
+    role: PL
+    system_prompt_path: agents/ArchitectPLAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: ArchitectAgent
+    role: chief
+    system_prompt_path: agents/ArchitectAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: CodebaseMapperAgent
+    role: deputy
+    system_prompt_path: agents/CodebaseMapperAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: RefactorAgent
+    role: deputy
+    system_prompt_path: agents/RefactorAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: SecurityArchitectAgent
+    role: deputy
+    system_prompt_path: agents/SecurityArchitectAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: OperationalRiskArchitectAgent
+    role: deputy
+    system_prompt_path: agents/OperationalRiskArchitectAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: TestContractArchitectAgent
+    role: deputy
+    system_prompt_path: agents/TestContractArchitectAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: DataMigrationArchitectAgent
+    role: deputy
+    system_prompt_path: agents/DataMigrationArchitectAgent.md
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+dispatch_pattern: parallel
+worktree_layout:
+  per_teammate: true
+  base_worktree: cfp-NNN/design
+
+hook_subscriptions:
+  - TeammateIdle
+  - TaskCreated
+  - TaskCompleted
+
+measurable_verification:
+  parallelization: "§14 Lane Evidence 의 6 deputy row spawned_at diff < 60s (ADR-044 §결정 5)"
+  specialization: "deputy system_prompt_path line count < ArchitectPLAgent.md line count"
+
+env_divergent_fallback:
+  env_0_behavior: "ArchitectPL 1개만 spawn → PL 이 6 deputy 산출물을 sequential 합성."
