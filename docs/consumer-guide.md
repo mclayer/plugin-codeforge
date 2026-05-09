@@ -873,6 +873,41 @@ mctrader 진행 중 Epic 예시:
 
 상세 오케스트레이션 규칙은 [`orchestrator-playbook.md`](orchestrator-playbook.md).
 
+#### EPIC-RESULTS 파일 위치 + migration guide (ADR-041 Amendment 1)
+
+EPIC-RESULTS-`<EPIC_KEY>`.md canonical location = [`docs/doc-locations.yaml`](doc-locations.yaml) `epic_results` row ([ADR-041](adr/ADR-041-doc-location-registry.md), Amendment 1 — CFP-288):
+
+- **Mode A (owner repo)**: `<owner-repo>/docs/retros/EPIC-RESULTS-<EPIC_KEY>.md`
+- **Mode B/C (hub repo)**: `<hub-repo>/docs/retros/EPIC-RESULTS-<EPIC_KEY>.md`
+- **dogfood (codeforge family)**: `<internal-docs>/<plugin-folder>/retros/EPIC-RESULTS-<EPIC_KEY>.md`
+
+**기존 root 위치 파일이 있는 경우 migration 패턴:**
+
+```bash
+# 1. docs/retros/ 디렉터리 생성 (없으면)
+mkdir -p docs/retros
+
+# 2. 기존 root 파일 일괄 이동
+for f in EPIC-RESULTS-*.md; do
+  git mv "$f" "docs/retros/$f"
+done
+
+# 3. inbound link 갱신 — Story file §11, design doc 등
+grep -rn "EPIC-RESULTS-" docs/ | grep -v "docs/retros/" \
+  | awk -F: '{print $1}' | sort -u
+# 위 출력 파일에서 링크를 docs/retros/EPIC-RESULTS-*.md 로 갱신
+
+# 4. 빈 디렉터리 정리 (docs/results/ 등 drift dir 존재 시)
+rmdir docs/results 2>/dev/null || true
+```
+
+**Story file §11 link path (Mode B same-repo):**
+```markdown
+[EPIC-RESULTS-<KEY>.md](../../docs/retros/EPIC-RESULTS-<KEY>.md)
+```
+
+**Cross-repo / dogfood:** 절대 GitHub URL 사용 (예: `https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/retros/EPIC-RESULTS-<KEY>.md`)
+
 ### 5.1 Cross-repo Epic — Centralization mode 선택 (multi-repo consumer)
 
 multi-repo consumer (예: mctrader 의 6 repo) 의 cross-repo Epic 진행 시 [ADR-020 Amendment 1](adr/ADR-020-cross-repo-epic-pattern.md) (CFP-81) 의 mode 결정 의무:
