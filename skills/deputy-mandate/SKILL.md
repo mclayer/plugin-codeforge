@@ -39,4 +39,4 @@ ADR-014 + ADR-012 §3 4번째 SSOT 예외. design lane deputy가 §7/§11/§13 s
 - ArchitectPLAgent가 Story의 §13 CONDITIONAL trigger 검토 후 6 → 8 deputy parallel spawn 결정.
 - 활성 시: ArchitectAgent chief가 8 deputy 산출물 통합.
 
-§7.4 schema 자체는 codeforge-design plugin SSOT. wrapper는 본 매트릭스만 SSOT 보유 ([ADR-014](docs/adr/ADR-014-operational-risk-ssot-distribution.md)).
+§7.4 schema 자체는 codeforge-design plugin SSOT. wrapper는 본 매트릭스만 SSOT 보유 ([ADR-014](../../docs/adr/ADR-014-operational-risk-ssot-distribution.md)).

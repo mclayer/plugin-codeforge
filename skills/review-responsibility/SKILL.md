@@ -82,4 +82,4 @@ tools: Read
 - **SecurityTest**: 코드 + 인프라 + 의존성. 1차 GitHub native (Dependabot/CodeQL/Secret Scanning), 2차 Claude/Codex
 - 중복 지적 발생 시 해당 레인 ReviewPL이 dedup → severity 높은 쪽 채택
 
-> **Debut-audit measurable signal**: ✅ 0개 또는 ≥2개 row = [ADR-021](docs/adr/ADR-021-phase-gap-measurable-signal.md) R4 (Responsibility leak) detection source.
+> **Debut-audit measurable signal**: ✅ 0개 또는 ≥2개 row = [ADR-021](../../docs/adr/ADR-021-phase-gap-measurable-signal.md) R4 (Responsibility leak) detection source.
