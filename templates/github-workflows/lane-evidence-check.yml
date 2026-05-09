@@ -1,4 +1,5 @@
 name: Lane Evidence Check (CFP-126 / ADR-031)
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
 
 # Phase 2 PR description 의 `## Lane evidence` 블록 + 7-row 의무 검증.
 # Story §14 Lane Evidence 와 cross-validate (lint script 별도 — scripts/check-lane-evidence.sh).
@@ -21,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check Lane Evidence block + 7-row
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |

@@ -1,4 +1,5 @@
 name: Retro mandatory (CFP-138 / ADR-045)
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
 
 # Story 완료 회고 의무화 — Phase 2 PR merge 후 4 attempts (1 initial + 3 retries) cumulative offset.
 #
@@ -46,16 +47,16 @@ on:
     - cron: '*/5 * * * *'
 
 permissions:
-  # GITHUB_TOKEN scope (built-in token):
-  #   - issues: write — Issue label add / Issue auto-reopen / Issue comment
-  #   - pull-requests: write — PR comment (필요 시)
-  #   - contents: read — checkout repo (.codeforge/ flag 검사)
-  # Phase 2 addition: contents:write added for retro-attempts.jsonl push (CODEFORGE_CROSS_REPO_PAT scope).
-  # CODEFORGE_CROSS_REPO_PAT scope = contents:write only on internal-docs (ADR-026 §결정 2 정합).
-  # Phase 1 steps still use GITHUB_TOKEN only (issues:write + pull-requests:write + contents:read).
+  # CFP-300 least-privilege: top-level deny-all; each job overrides only what it needs.
+  # retro-check job needs: issues:write (label add / comment), pull-requests:write (PR comment),
+  #   contents:read (checkout + .codeforge/ flag check).
+  # contents:write is NOT needed at this level — retro-attempts.jsonl writes use
+  #   CODEFORGE_CROSS_REPO_PAT (scoped to mclayer/codeforge-internal-docs only, ADR-026 §결정 2).
+  # close-blocking job needs: issues:write (reopen + comment).
+  # retry-state-machine job needs: issues:write (comment), contents:read (checkout).
   issues: write
   pull-requests: write
-  contents: write
+  contents: read
 
 concurrency:
   # Phase 2: schedule/workflow_run events use a different group key (no PR/Issue number)
@@ -70,7 +71,7 @@ jobs:
       github.event.pull_request.merged == true
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Disable check (ADR-045 D-7)
         id: enabled
@@ -330,7 +331,7 @@ EOF
     if: github.event_name == 'issues' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Disable check
         id: enabled
@@ -343,7 +344,7 @@ EOF
 
       - name: Validate retro before allowing close
         if: steps.enabled.outputs.disabled != 'true'
-        uses: actions/github-script@v7
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
         with:
           script: |
             const issue = context.payload.issue;
@@ -419,7 +420,7 @@ EOF
       secrets.CODEFORGE_CROSS_REPO_PAT != ''
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
 
       - name: Disable check (ADR-045 D-7)
         id: enabled
