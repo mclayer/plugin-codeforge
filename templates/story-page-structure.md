@@ -32,6 +32,42 @@ GitHub Issue (Story 1건)에 부착되는 라벨:
 
 ---
 
+## Frontmatter (YAML metadata)
+
+Story file 시작 부 `---` ... `---` block. 표준 필드 + multi-repo system 활성 시 신규 4 필드.
+
+### 표준 필드 (모든 Story 적용)
+
+| 필드 | 타입 | required | 의미 |
+|---|---|:-:|---|
+| `key` | string | yes | Story KEY (예: `CFP-342`, `MCT-112`) |
+| `title` | string | yes | 한 줄 요약 |
+| `status` | string | yes | phase 라벨 mirror (`phase:요구사항` ~ `phase:보안-테스트`) |
+| `type` | enum | yes | `story` / `epic` |
+| `date` | YYYY-MM-DD | yes | Story 생성 일자 |
+| `github_issue` | string | yes | `<owner>/<repo>#<N>` 형식 |
+| `epic_dependencies` | list | optional | ADR-020 §결정 3 — `[{type, target, repo}]` |
+| `epic_owner_repo` | string \| null | optional | ADR-020 §결정 1 — Epic owner repo (`null` = 단일 repo) |
+
+### Multi-repo system 활성 시 신규 4 필드 (CFP-342 / ADR-050)
+
+`project.yaml` 의 `codeforge.stories.repos[]` 블록 활성 시 (ADR-050 §결정 1 opt-in trigger), 신규 작성 Story 의무 필드. 부재 시 = `legacy-hub` 묵시 처리 (ADR-050 §결정 5 backward compat).
+
+| 필드 | 타입 | required | 적용 |
+|---|---|:-:|---|
+| `story_scope` | enum | conditional | `hub` / `repo` / `legacy-hub` — multi-repo 활성 후 신규 story 의무 |
+| `repo` | string | conditional | `story_scope: repo` 시 required — impl repo 이름 (`project.yaml repos[].name` 정합) |
+| `hub_story` | string \| null | conditional | `story_scope: repo` 시 optional — parent hub story KEY (단독 repo story = `null`) |
+| `delegates` | list of dict | conditional | `story_scope: hub` 시 의무 — `[{story_key, repo, path, status}]`, status enum: `draft` / `in-progress` / `merged` / `cancelled` |
+
+**Backward compat**: 기존 Story (frontmatter 4 필드 부재) = `legacy-hub` 묵시 처리. Rename / move 절대 금지 (ADR-050 §결정 5 invariant).
+
+**Strict mode vs Simplified mode 공존**:
+- 단일 repo Story (예: CFP-342 자체) 또는 ADR-020 Mode A consumer = 본 file (`story-page-structure.md`) §1-§14 strict mode
+- Multi-repo Mode B consumer 의 hub story / repo story = simplified template (`templates/hub-story.md` / `templates/repo-story.md`) — frontmatter 4 신규 필드 + 본문 5-6 섹션
+
+---
+
 ## 섹션 구조 (번호 고정 · 누락 섹션 진입 차단)
 
 ### §1. 사용자 요구사항 (verbatim — story-section-1-immutable.yml로 변경 차단)

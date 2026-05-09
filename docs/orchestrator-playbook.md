@@ -371,6 +371,7 @@ Orchestrator 가 사용자에게 substantive path 를 제시하거나 외부 sys
 
 4. **main / master force push 절대 금지**. 사고 발생 시: cherry-pick → correct branch → push (force push X).
 
+
 #### §3.0.10 Worktree-first mandate (normative — wrapper + all consumers)
 
 모든 coding work 는 git worktree 안에서 수행. 원본 working directory(`git checkout <branch>`) 직접 편집 금지.
@@ -585,6 +586,77 @@ Epic close PR (Phase N+1) 동반 작성:
 - [ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md) + Amendment 1 + 2 (cross-repo Epic 패턴 SSOT — Mode A / B / C + Joint-phase narrow form)
 - [requirements-output-v1.1](../docs/inter-plugin-contracts/requirements-output-v1.md) (Story §1 epic_dependencies field schema)
 - [`consumer-guide.md`](consumer-guide.md) §5.1 (consumer 측 mode 선택 안내 — Mode A/B 비교표)
+
+### §3.4.1 Multi-repo Story Routing (CFP-342 / ADR-050)
+
+`project.yaml`의 `codeforge.stories.repos[]` 블록이 선언된 consumer에서 Orchestrator가 Story 작업 대상 repo를 결정하는 절차. [ADR-050](../docs/adr/ADR-050-multi-repo-story-key-system.md) §결정 4 SSOT.
+
+#### Agent target repo 결정 우선순위 (4-step)
+
+```
+1. Frontmatter primary — story_scope: repo + repo: <name>
+   → project.yaml repos[] 에서 name 매핑 → 해당 impl repo 직접 지정
+
+2. Hub fallback — story_scope: hub
+   → project.yaml 에서 role: governance repo 조회 → hub repo 작업
+
+3. Component fallback (legacy / frontmatter 부재)
+   → Issue label 'component:<name>' 검색
+   → project.yaml repos[].components 매핑 검색
+   → 단일 match → 해당 impl repo
+   → N(>=2) match → ESCALATE (ambiguous)
+
+4. ESCALATE — 1-3 모두 실패
+   → Orchestrator 경유 사용자 명시 요청 (§2.3 ESCALATE 형식)
+```
+
+**Backward compat**: Story frontmatter 에 `story_scope` 없는 기존 Story (`legacy-hub`) 는 step 3 → component fallback 진입. component 매핑 부재 시 hub repo 묵시 처리 (단일 hub repo 가정).
+
+#### Project Config Packet 확장
+
+lane spawn 시 Orchestrator 가 subagent 에 주입하는 Project Config Packet ([§12 참조](#12-project-config-packet))에 `codeforge.stories` slice 추가:
+
+```yaml
+# Project Config Packet 추가 항목 (codeforge.stories 활성 시)
+codeforge_stories_active: true
+hub_repo: <name>                      # role: governance repo name
+hub_github: <owner/repo>              # hub GitHub 좌표
+repos:                                # impl repo 목록
+  - name: <name>
+    role: implementation
+    path: <local-path>
+    github: <owner/repo>
+    story_dir: <story-dir>
+    components: [<component>, ...]
+counters_path: <path>                 # .codeforge/counters.json 위치
+```
+
+#### Story 생성 결정 로직
+
+| 작업 유형 | 결정 | Story 위치 |
+|---|---|---|
+| Cross-repo 조율 (N repo 동시 영향) | Hub story 생성 (story_scope: hub) | hub repo / docs/stories/<KEY>.md |
+| 단일 impl repo 작업 | Repo story 생성 (story_scope: repo) | <impl-repo-path>/docs/stories/<KEY>.md |
+| Cross-repo + 구현 동시 | Hub story 먼저 → 각 impl repo story (delegates[]) | hub + impl 각자 |
+| Legacy flat key (frontmatter 부재) | legacy-hub 처리 → hub repo | hub repo / docs/stories/<KEY>.md |
+
+#### Bidirectional linking 의무 (AC-8)
+
+- Hub story `delegates[]` 의 각 entry → 해당 repo story file 존재 여부 확인 (warn-only, block 아님)
+- Repo story `hub_story` + `hub_repo` → hub story file 존재 여부 확인 (warn-only)
+- Drift 발견 시: `[multi-repo-routing] WARN: delegate drift — <repo>#<KEY> 미존재` 형식으로 알림
+
+#### Counter 발급 (Phase 2 자동화 — 현재 Phase 1 = manual)
+
+Phase 1 (현재): 사용자가 `.codeforge/counters.json` 직접 관리. Orchestrator는 counter 값 읽어 KEY 결정 후 사용자에게 increment 안내.
+
+Phase 2 (follow-up CFP): `scripts/codeforge-story-counter.py` 자동 발급 (file lock + atomic rename + reconciliation).
+
+#### Cross-references
+- [ADR-050](../docs/adr/ADR-020-cross-repo-epic-pattern.md) §결정 4 (Agent target repo 결정 priority SSOT)
+- [ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md) Amendment 3 (본 시스템 = Mode B automation layer)
+- [`consumer-guide.md`](consumer-guide.md) §3 (multi-repo story key 활성화 가이드)
+- [`overlay/_overlay/project.yaml.example`](../overlay/_overlay/project.yaml.example) (codeforge.stories 블록 예시)
 
 ### §3.5 Worktree dispatch (CFP-136 / ADR-040)
 

@@ -706,6 +706,105 @@ python3 ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/validate_config.py \
     .claude/_overlay/project.yaml
 ```
 
+### 3a-multi-repo. Multi-repo story key system 활성화 (선택, CFP-342 / [ADR-050](adr/ADR-050-multi-repo-story-key-system.md))
+
+> **Opt-in only** — single-repo consumer 또는 기존 multi-repo hub-flat 운영 (예: mctrader MCT-1~111 cluster) 은 본 섹션 skip 가능. 부재 시 single-repo flat 모드 유지 (기존 동작 보존).
+
+#### 적용 시나리오
+
+Multi-repo consumer (1 governance hub repo + N implementation repo) 가 ADR-020 Mode B (hub-centralized) 패턴을 사용하면서 다음 페인 포인트 해소를 원할 때:
+
+1. **가독성 손상**: hub flat key 만으로 어느 impl repo 작업인지 식별 불가 (예: `MCT-107` 만 보면 어느 repo?)
+2. **Locality 위반**: impl repo 구현 상세가 hub 에 cluster — 작업 히스토리가 코드와 분리
+
+본 시스템 활성화 시 hub story (governance) + repo story (impl) 분리 + counter 자동 발급 + bidirectional linking.
+
+#### 활성화 절차
+
+**Step 1**: hub repo 의 `.claude/_overlay/project.yaml` 에 `codeforge.stories` 블록 추가:
+
+```yaml
+# CFP-342 / ADR-050 — Multi-repo story key system
+codeforge:
+  stories:
+    hub:
+      key_pattern: "{prefix}-{seq:03d}"
+      story_dir: docs/stories
+      template: hub-story.md
+    repo_key_pattern: "{prefix}-{seq:03d}"
+    counters:
+      path: .codeforge/counters.json
+      lock: file
+    repos:
+      - name: <hub-repo>
+        role: governance
+        story_dir: docs/stories
+        creates_repo_stories: false
+      - name: <impl-repo-1>
+        role: implementation
+        path: <local-absolute-path>
+        github: <owner>/<impl-repo-1>
+        story_dir: docs/stories
+        components: [<comp1>, <comp2>]
+      - name: <impl-repo-2>
+        role: implementation
+        path: <local-absolute-path>
+        github: <owner>/<impl-repo-2>
+        story_dir: docs/stories
+        components: [<comp3>]
+```
+
+**Step 2**: `.codeforge/counters.json` 신규 생성 (hub repo root, committed):
+
+```json
+{
+  "version": 1,
+  "prefix": "<your-prefix>",
+  "counters": {
+    "<hub-repo>":   { "next": <existing-max + 1> },
+    "<impl-repo-1>": { "next": 1 },
+    "<impl-repo-2>": { "next": 1 }
+  },
+  "reservations": {}
+}
+```
+
+**Step 3**: `validate_config.py` schema check 통과 확인:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/validate_config.py \
+    .claude/_overlay/project.yaml
+```
+
+#### Story 작성 시 영향
+
+**Hub story** (cross-repo 조율):
+- 위치: `<hub-repo>/docs/stories/<KEY>.md`
+- Frontmatter: `story_scope: hub` + `delegates: []`
+- 본문: `templates/hub-story.md` (Background / Direction / Delegation / Acceptance Gates / Links)
+
+**Repo story** (단일 impl repo 구현):
+- 위치: `<impl-repo>/docs/stories/<KEY>.md`
+- Frontmatter: `story_scope: repo` + `repo: <impl-repo>` + `hub_story: <HUB-KEY> | null` + `hub_repo: <hub-repo> | null`
+- 본문: `templates/repo-story.md` (Background / Implementation Scope / Technical Design / AC / Test Plan / Links)
+
+**Cross-repo 참조**: `{repo-name}#{KEY}` GitHub 스타일 (예: `mctrader-data#MCT-001`).
+
+#### Backward compat — 기존 legacy story
+
+기존 hub flat story (예: mctrader MCT-1 ~ MCT-111) 는 변경 0:
+- **Rename / move 절대 금지**
+- `story_scope` frontmatter 자동 추가 X — touched 시 author manual 옵트인
+- Agent 가 frontmatter 부재 detect → `legacy-hub` 묵시 처리 (= hub repo 작업)
+
+#### Mode B 자동화 정합
+
+본 시스템 = ADR-020 Amendment 1 §결정 8 Mode B (hub-centralized) 의 **automation backbone**. Mode B 를 manual 운영하던 consumer 는 본 시스템 활성화로 file 위치 결정 / counter 발급 / bidirectional linking 자동화 가능. Mode A (repo-local) consumer 도 `codeforge.stories.repos[].role: implementation` + `creates_repo_stories: true` 로 활용 가능.
+
+상세 SSOT: [ADR-050](adr/ADR-050-multi-repo-story-key-system.md), [ADR-020](adr/ADR-020-cross-repo-epic-pattern.md) Amendment 3.
+
+> **Phase 2 mechanism (별도 follow-up CFP)**: counter 자동 발급 / Story 자동 라우팅 / agent target repo 결정 자동화는 별도 CFP scope. Phase 1 (본 schema land 후) 는 manual 운영 (consumer 가 직접 counter 갱신 + file 작성).
+
 ### 3b. `.claude/_overlay/CLAUDE.md` 예시 (narrative 컨텍스트)
 
 CLAUDE.md overlay에는 **서술 컨텍스트만** (도메인 소개·기술 스택 선택 근거·경로 관습 설명). Objective 상수는 project.yaml에 있음.
