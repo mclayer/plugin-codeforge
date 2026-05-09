@@ -103,13 +103,21 @@ jobs:
             echo "TITLE_EOF"
           } >> "$GITHUB_OUTPUT"
 
-      - name: Skip if Story file already exists (CFP-280 idempotency guard)
+      - name: Skip if first firing already published (CFP-280 Iter 1 FIX — branch-existence guard)
         id: existence_check
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           KEY: ${{ steps.key.outputs.key }}
+          SLUG: ${{ steps.key.outputs.slug }}
         run: |
-          if [[ -f "docs/stories/${KEY}.md" ]]; then
-            echo "::notice::docs/stories/${KEY}.md already exists — skipping (idempotent re-entry)"
+          # CFP-280 Iter 1 FIX (DesignReview F1):
+          # 첫 firing 의 substantive marker = remote feat branch creation (`git push origin feat/${KEY}-${SLUG}`).
+          # Story file 자체는 feat branch 위에만 존재 → base ref (main) checkout 에서 file-system check (`-f`) 는
+          # 영구적 false → dedup 미발동 → second-firing substantive work 중복 → branch push reject / PR duplicate reject.
+          # Fix: GitHub REST API 로 remote branch 존재 검사 (atomic + cross-firing visible).
+          BRANCH="feat/${KEY}-${SLUG}"
+          if gh api "repos/${GITHUB_REPOSITORY}/branches/${BRANCH}" --silent 2>/dev/null; then
+            echo "::notice::Remote branch ${BRANCH} already exists — skipping (idempotent re-entry, CFP-280 Iter 1 FIX)"
             echo "skip=true" >> "$GITHUB_OUTPUT"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
