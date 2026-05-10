@@ -932,6 +932,57 @@ ADR-033 effective date (Phase 2 wrapper PR merge) 이전 Phase 1 PR open 된 Sto
 
 mctrader 5 repo (Tier B-extended) = 첫 follow-on Epic 후보 (CFP-128 spec §3.4.1 / Story §11 회고 pointer).
 
+#### 3z.5 통합테스트 환경 설정 (CFP-367 / ADR-055)
+
+IntegrationTestAgent (CI gate 이후 lane 6) 가 동적 통합테스트를 실행하려면 **`docker-compose.test.yml`** 이 레포 루트에 있어야 한다.
+
+**빠른 시작**:
+
+```bash
+cp ${CLAUDE_PLUGIN_ROOT}/codeforge-develop/presets/docker-compose.test.yml .
+```
+
+그 후 프로젝트 스택에 맞게 수정:
+- `app` service: 실제 Dockerfile로 교체
+- `test-db`: DB 엔진·포트 수정
+- `wiremock`: 외부 API 없으면 제거
+
+**CI workflow**: `templates/github-workflows/test.yml` 을 consumer `.github/workflows/test.yml` 로 복사 후 runner/path 수정. unit-tests (항상 실행) + integration-tests (docker-compose.test.yml 존재 시 실행, 없으면 warning + skip) 2 job 구성.
+
+**§8.6 Integration Test Contract**: Story 에 컴포넌트 경계가 2개 이상 있으면 `docs/stories/<KEY>.md §8.6` 이 **필수**:
+
+```yaml
+### §8.6 Integration Test Contract
+boundary_type: component_internal | multi_service | both
+coverage_targets:
+  - scenario: "경계 동작 검증"
+    given: "유효한 요청이 들어올 때"
+    when: "서비스 경계를 넘어 호출되면"
+    then: "DB 기록 + 후속 이벤트 발행"
+environment_dependencies:
+  db: "PostgreSQL test DB seed"
+  external_api: "외부 REST API WireMock stub"
+  services: ["app", "test-db", "wiremock"]
+isolation_strategy: ephemeral container
+dynamic_test_required: true
+```
+
+면제 Story: `N/A — 단일 모듈 내부 로직만 변경` 형식으로 명시.
+
+**통합테스트 누적 구조**:
+
+```
+tests/integration/
+├── conftest.py              # 공통 fixture (누적 append 허용)
+├── CFP-100/
+│   └── test_order_boundary.py
+├── CFP-101/
+│   └── test_market_feed.py
+...
+```
+
+각 Story마다 `tests/integration/<story-key>/` 디렉터리 아래 테스트 추가. IntegrationTestAgent 가 매 Story마다 전체 suite 실행 (regression 검증). 정책 SSOT: [ADR-055](adr/ADR-055-integration-test-lane-policy.md).
+
 ## 4. 첫 실행 검증
 
 ### 4a. Claude Code 세션 시작
