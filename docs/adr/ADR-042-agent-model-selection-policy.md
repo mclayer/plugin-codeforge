@@ -106,7 +106,7 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 - QADeveloperAgent: Sonnet 4.6 → **Haiku 4.5** (mechanical pattern execution — §8 Test Contract 명세 기반)
 - DataEngineerAgent: Sonnet 4.6 → **Haiku 4.5** (mechanical pattern execution — §11 DataMigration 명세 기반)
 
-근거: 3 agent 모두 입력 명세가 ArchitectAgent/deputy 산출물로 structured되어 있고 오류는 CI/통합테스트로 즉시 감지 가능. Pilot 평가 기준: 전환 후 5 Story 운영 → §10 FIX Ledger 집계 → baseline(0 FIX) 대비 30% 초과 시 해당 agent 단독 rollback.
+근거: 3 agent 모두 입력 명세가 ArchitectAgent/deputy 산출물로 structured되어 있고 오류는 CI/통합테스트로 즉시 감지 가능. Pilot 평가 기준: 결정 5 참조.
 
 ### 결정 3: 신규 agent 도입 / 기존 agent model 변경 시 ADR 의무
 
@@ -133,7 +133,7 @@ agent file frontmatter 의 `model:` field 부재 시 platform default 가 inheri
 
 다음 이벤트 발생 시 나머지 Sonnet agent (DeveloperPLAgent · DeveloperAgent · BackendDeveloperAgent · FrontendDeveloperAgent) 재평가 의무:
 1. Haiku major 버전 업 (Haiku 4.x → Haiku 5.x)
-2. 기존 Sonnet agent의 mandate가 "패턴 실행" 방향으로 재정의될 때
+2. 기존 Sonnet agent의 mandate가 "패턴 실행" 방향으로 재정의될 때 (결정 3 ADR amendment 또는 별도 ADR cross-ref 발동 시)
 
 ## 근거
 
@@ -167,16 +167,25 @@ PMOAgent 의 mandate = (a) Epic 창설 (multi-Story dependency graph) + (b) Stor
 
 핵심 원칙 발현: "Sonnet 으로 대체 가능 = role 재정의 시그널" 의 역방향 적용 — 본 2 deputy 는 처음부터 single-mandate 로 정의되었으므로 Sonnet 이 적정.
 
-### 왜 develop lane 전체 Sonnet 인가
+### 왜 DeveloperPLAgent · DeveloperAgent · webapp preset 은 Sonnet 인가
 
-DeveloperPLAgent / DeveloperAgent / QADeveloperAgent / DataEngineer / InfraEngineer / 2 webapp preset 모두 implementation work — Change Plan + Story §3·§7·§11 SSOT 로부터 코드 / 테스트 / 인프라 정의 작성. Architecture decision 은 design lane 에서 종결, develop lane 은 그 결정을 충실히 implement. Sonnet 4.6 의 코드 생성 / 테스트 작성 능력은 본 mandate 충분.
+DeveloperPLAgent / DeveloperAgent / 2 webapp preset (BackendDeveloperAgent · FrontendDeveloperAgent) 모두 implementation work — Change Plan + Story §3·§7·§11 SSOT 로부터 코드 작성. Architecture decision 은 design lane 에서 종결, develop lane 은 그 결정을 충실히 implement. Sonnet 4.6 의 코드 생성 능력은 본 mandate 충분.
 
 DeveloperPLAgent 가 1차 FIX root cause 진단을 수행하지만, 최종 판정은 ArchitectPLAgent (Opus) 가 수행 — 1차 진단은 Sonnet level 충분.
+
+> Amendment 2: QADeveloperAgent · DataEngineerAgent · InfraEngineerAgent 는 (c) Mechanical pattern execution 기준으로 Haiku 전환됨 — 결정 5 참조.
 
 ### 왜 TestAgent / CodexReviewAgent / RequirementsAnalystAgent 는 Haiku 인가
 
 - TestAgent: 테스트 실행 + 결과 수집 + 1차 분류만 — minimal reasoning. Haiku 4.5 fully cover.
 - CodexReviewAgent · RequirementsAnalystAgent: Claude 측은 codex CLI invocation wrapper. 본 reasoning 은 codex (GPT-5 / GPT-5.4) 가 수행. Claude 는 prompt 조립 + codex output relay 만 — Haiku 충분.
+
+**Amendment 2 — InfraEngineerAgent · QADeveloperAgent · DataEngineerAgent (Haiku 4.5)**:
+- InfraEngineerAgent: ADR-033 Docker-first preset 명세 기반 파일 생성 — 입력 명세(Dockerfile·compose 구조)가 구조화되어 있고 오류는 `docker build` / `compose up` CI에서 즉시 감지 가능. creative reasoning 불필요.
+- QADeveloperAgent: TestContractArch §8 Given/When/Then 명세 기반 테스트 코드 생성 — 입력 명세가 structured되어 있고 테스트 누락은 CodeReviewPL 단계에서 감지. 테스트 framework 지식만 필요, diagnostic reasoning 불필요.
+- DataEngineerAgent: DataMigrationArch §11 schema/port/adapter 명세 기반 구현 — 입력 명세가 structured되어 있고 schema 오류는 통합 테스트·CI schema 검증에서 감지.
+
+3 agent 모두 (c) Mechanical pattern execution 기준 충족: ① 입력 명세 structured ② CI/테스트 즉시 오류 감지. Pilot 평가 기준: 결정 5 참조.
 
 ## 결과 (Consequences)
 
