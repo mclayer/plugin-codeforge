@@ -127,7 +127,7 @@ PMOAgent 가 cross-Story 패턴 분석에서 ADR 후보를 발의하면 (`pmo_ou
 ## 제약
 - `src/**`, `tests/**` Write/Edit 권한 없음 — 구현은 Dev 계열 위임
 - Change Plan (`docs/change-plans/**`) + ADR (`docs/adr/**`) + Story file (`docs/stories/**` §3/§7/§11 섹션 한정) 직접 write/edit 가능 (CFP-26 Phase 0a, CFP-40)
-- GitHub Issue 코멘트·PR write 는 wrapper Orchestrator 경유 (DocsAgent 부재 — CFP-40)
+- GitHub Issue 코멘트·PR write 는 wrapper Orchestrator 경유
 - 본 에이전트는 author이며 deputy 스폰·대립 조정·FIX 판정은 모두 ArchitectPLAgent 책임. 단독 deputy 호출 금지
 - Change Plan §7 / §7.4 / §8 / §11 누락 금지 — DesignReview가 P0 차단
 

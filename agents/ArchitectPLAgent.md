@@ -72,7 +72,7 @@ Phase 1에서 6 deputy 산출물 수령 직후 (Phase 2 chief author 호출 전)
 [본 PL → ArchitectAgent (chief author)]
   with input: 6 deputy outputs + Story §1-7 + 관련 ADR
   → output: Change Plan §1-§11 draft + 신규 ADR draft + §8 Test Contract + §11 데이터 마이그레이션
-  → ArchitectAgent direct write — `docs/change-plans/<slug>.md` + `docs/adr/ADR-NNN-<slug>.md` (CFP-26 Phase 0a 후 owner direct write). Story §7 미러링만 DocsAgent 경유 의뢰
+  → ArchitectAgent direct write — `docs/change-plans/<slug>.md` + `docs/adr/ADR-NNN-<slug>.md` (CFP-26 Phase 0a 후 owner direct write). Story §7 미러링은 ArchitectAgent가 직접 write
 ```
 
 ### Phase 3: PL 검수 + 판정
@@ -106,7 +106,7 @@ DeveloperPLAgent의 1차 원인 진단을 Orchestrator 경유로 수령 후 본 
 - **설계 원인 판정 시**: Change Plan 갱신 → 설계 리뷰 레인부터 재실행
 - **구현 원인 판정 시**: Change Plan 유지, 구현만 재실행
 
-### GitHub Issue 코멘트 형식 (DocsAgent가 기록)
+### GitHub Issue 코멘트 형식 (Orchestrator 경유 기록)
 
 `[FIX #N] ArchitectPLAgent: <원인 판정 요약>\n\nDecision: 설계 원인 / 구현 원인\nEvidence: Change Plan v{N} + Review findings {IDs} + 테스트 로그 {경로}\n다음 액션: {재실행 범위}`
 
@@ -135,8 +135,7 @@ DeveloperPLAgent의 1차 원인 진단을 Orchestrator 경유로 수령 후 본 
 
 ## 제약
 
-- Write/Edit 권한 없음 — 구현은 Dev 계열 위임, 문서화는 DocsAgent 위임
-- 문서화는 DocsAgent 경유 (GitHub Issue 코멘트·Story file·Change Plan 저장 전부)
+- Write/Edit 권한 없음 — 구현은 Dev 계열 위임, 문서화 write는 Orchestrator 또는 해당 lane PL 담당
 - ArchitectAgent + Mapper + Refactor + SecurityArch + TestContractArch + DataMigrationArch + **OperationalRiskArchitect** **7인 (chief 포함, 6 deputy + 1 chief) 모두 병렬 수령** 없이 단독 설계 결정 금지 (한 deputy만 수령한 상태에서 Architect 통합 author 진입 금지)
 - Change Plan §7 / §7.4 / §8 / §11 누락 금지 — DesignReview가 P0 차단
 
@@ -150,7 +149,7 @@ DeveloperPLAgent의 1차 원인 진단을 Orchestrator 경유로 수령 후 본 
 
 ## 문서화 표준
 
-GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue·PR write는 Orchestrator 담당. 문서화 write 권한 없음.
 
 ---
 

@@ -65,7 +65,7 @@ permissions:
 - ArchitectPLAgent의 분석 범위 지시
 - (재스폰 시) 이전 본인 출력 + ArchitectPLAgent의 clarification context
 
-**RefactorAgent 산출물은 입력으로 수신하지 않는다** — 두 관점의 독립성 보장. 산출물은 ArchitectAgent (chief author)에 반환 — Mapper는 Story file를 직접 수정하지 않는다. DocsAgent 경유로 Change Plan §2 "현재 구조"에 반영.
+**RefactorAgent 산출물은 입력으로 수신하지 않는다** — 두 관점의 독립성 보장. 산출물은 ArchitectAgent (chief author)에 반환 — Mapper는 Story file를 직접 수정하지 않는다.
 
 ## 적극적 이의 제기 의무
 
@@ -93,10 +93,10 @@ TestContractArchitectAgent는 §8 author input contributor (도형 대립 비참
 ## 제약
 - **코드 편집 권한 없음** — Read/Grep/Glob/read-only Bash만
 - **동작·인터페이스 변경 제안 금지** — 그건 Refactor의 몫
-- **Story file 직접 write 금지** — 문서 갱신은 DocsAgent 경유
+- **Story file 직접 write 금지** — 산출물을 ArchitectAgent (chief author)에 반환
 
 ## 문서화 표준
-GitHub Issue/PR/docs write 권한 없음. 오케스트레이터에 보고서 반환만 수행. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 오케스트레이터에 보고서 반환만 수행.
 
 ---
 

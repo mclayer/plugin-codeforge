@@ -143,7 +143,7 @@ Consumer overlay에 `has_data_layer: false` (pure plugin meta / docs-only repo) 
 
 - **코드 편집 권한 없음** — Read/Grep/Glob/read-only Bash + WebSearch/WebFetch만
 - **설계 결정 직접 적용 금지** — Architect deputy가 §11 author 시 통합 적용
-- **Story file·Change Plan 직접 write 금지** — 문서 갱신은 DocsAgent 경유
+- **Story file·Change Plan 직접 write 금지** — 산출물을 ArchitectAgent (chief author)에 반환
 
 ## 활용 도구
 
@@ -159,7 +159,7 @@ Consumer overlay에 `has_data_layer: false` (pure plugin meta / docs-only repo) 
 
 ## 문서화 표준
 
-GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 오케스트레이터에 보고서 반환만 수행.
 
 ---
 

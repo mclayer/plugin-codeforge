@@ -47,7 +47,7 @@ ArchitectAgent (chief author)가 **DeveloperPL 이하에 명확한 구현 지시
 - ArchitectPLAgent 분석 지시
 - (재스폰 시) 이전 본인 출력 + ArchitectPLAgent의 clarification context
 
-**CodebaseMapper 산출물은 입력으로 수신하지 않는다** — 현재 구조 이해는 원 소스 직접 독해로 확보하며, Mapper 요약에 오염되지 않은 독립 관점을 유지. 산출물은 ArchitectAgent (chief author)에 반환. Refactor는 Story file를 직접 수정하지 않으며, DocsAgent 경유로 Change Plan §3 "도입할 설계"에 반영.
+**CodebaseMapper 산출물은 입력으로 수신하지 않는다** — 현재 구조 이해는 원 소스 직접 독해로 확보하며, Mapper 요약에 오염되지 않은 독립 관점을 유지. 산출물은 ArchitectAgent (chief author)에 반환. Refactor는 Story file를 직접 수정하지 않는다.
 
 ## 핵심 원칙: Clean Architecture + 저결합
 
@@ -150,7 +150,7 @@ TestContractArchitectAgent는 §8 author input contributor (도형 대립 비참
 - **superpowers:writing-plans** — 0-context 구체화
 
 ## 문서화 표준
-GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 오케스트레이터에 보고서 반환만 수행.
 
 ---
 
