@@ -78,7 +78,7 @@ related:
    - **Bypass**: `BYPASS_VERSION_DRIFT=1` + `BYPASS_VERSION_DRIFT_REASON=<text>` env 시 우회 (audit trail 의무)
    - **MAJOR drift 의 의미**: ADR-037 정의 = breaking change (consumer migration 필요) — stale version 유지 시 silent corruption 위험. hard-stop 정당화.
 
-   **0h. 구조적 변경 재구동 선행 의무 (ADR-053)**
+   **0g. 구조적 변경 재구동 선행 의무 (ADR-053)**
 
    직전 세션에서 아래 구조적 변경 중 하나라도 발생했던 경우, 세션 재구동 완료 여부를 먼저 확인한다.
 
@@ -100,7 +100,7 @@ related:
 
    위 조건 미충족 시 다음 작업 진입 금지 (`policy_violation` — ADR-053).
 
-   **0g. 확인 결과 사용자 통보 형식**
+   **0h. 확인 결과 사용자 통보 형식**
    ```
    🔍 세션 개시 의존성 점검
    - GitHub MCP: ✅ 노출 / ❌ 미인증 → /mcp 재인증 필요
