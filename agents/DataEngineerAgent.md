@@ -54,7 +54,7 @@ Consumer overlay가 담당 경로·기술 스택·데이터 포맷을 구체화.
 - **superpowers:systematic-debugging** — 파이프라인 장애 root cause
 
 ## 문서화 표준
-GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 모든 문서화 write는 DeveloperPLAgent 담당.
 
 ---
 

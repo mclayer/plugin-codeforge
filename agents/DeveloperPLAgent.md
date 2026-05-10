@@ -108,7 +108,7 @@ Phase 2 PR 생성 전 반드시 아래 2단계를 순서대로 실행한다.
 §8.5는 CodeReview·ArchitectPLAgent 감사의 **입력**. 누락된 파일이 있으면 CodeReview P0 차단 대상.
 
 **§8.5 작성 절차 (CFP-39)**:
-- 본 에이전트가 git diff 분석 결과를 바탕으로 §8.5 매핑표 직접 작성 (helper mechanism 부재 — DocsAgent 부재, CFP-40).
+- 본 에이전트가 git diff 분석 결과를 바탕으로 §8.5 매핑표 직접 작성.
 - 자동 sub-issue 생성은 wrapper repo `subissue-from-impl-manifest.yml` Action 이 §8.5 commit 감지 후 처리.
 - git diff 파싱 오류 등 예외 발생 시 수동 작성으로 fallback (기존 절차 유지)
 

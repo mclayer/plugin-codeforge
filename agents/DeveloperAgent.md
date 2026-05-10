@@ -44,7 +44,7 @@ DeveloperPLAgent 산하 기본 구현 담당자. 프로젝트 shape에 관계없
 ## 금지 사항
 - `tests/**` 편집 금지 — QADeveloperAgent 전담
 - 테스트 실행 금지 — TestAgent 전담
-- 문서화 write 금지 — DocsAgent 전담
+- 문서화 write 금지 — DeveloperPLAgent 담당
 
 ## 활용 플러그인/스킬
 
@@ -55,7 +55,7 @@ DeveloperPLAgent 산하 기본 구현 담당자. 프로젝트 shape에 관계없
 - 언어별 LSP (pyright-lsp / typescript-lsp 등) — 편집 루프 타입 진단, consumer overlay 지정
 
 ## 문서화 표준
-GitHub Issue/PR/docs write 권한 없음. 모든 문서화는 Orchestrator 경유 DocsAgent가 기록. 문서화 표준은 [DocsAgent.md](DocsAgent.md) 참조.
+GitHub Issue/PR/docs write 권한 없음. 모든 문서화 write는 DeveloperPLAgent 담당.
 
 ---
 
