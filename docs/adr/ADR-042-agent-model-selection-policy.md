@@ -235,3 +235,29 @@ DeveloperPLAgent 가 1차 FIX root cause 진단을 수행하지만, 최종 판�
 - [codeforge-internal-docs#99](https://github.com/mclayer/codeforge-internal-docs/issues/99) — KEY collision tracking
 - [plugin-codeforge-requirements#12](https://github.com/mclayer/plugin-codeforge-requirements/issues/12) — ResearcherAgent role 재정의 follow-up
 - **Sibling PR** (codeforge-design Mapper + Refactor model edit): [mclayer/plugin-codeforge-design#24](https://github.com/mclayer/plugin-codeforge-design/pull/24) — version 0.4.0 → 0.4.1 PATCH bump 동반
+
+---
+
+## Amendment 3 — IntegrationTestAgent Sonnet tier (CFP-367 / ADR-055)
+
+**날짜**: 2026-05-10
+
+### 변경 사항
+
+**IntegrationTestAgent**: Sonnet tier 결정.
+
+**Haiku 제외 근거**: 통합 테스트 작성은 컴포넌트 경계 판단·외부 의존성 설계를 포함한다. ADR-042 Haiku 기준 "mechanical pattern execution (no design decision)"에 부합하지 않음. 구체적으로:
+- 어떤 경계가 테스트 대상인지 §8.6을 해석해 결정
+- WireMock stub 계약 정의 (외부 API 스펙 이해 필요)
+- docker-compose.test.yml 환경과 테스트 코드의 정합성 판단
+
+**Sonnet 선택 근거**: 경계 판단은 필요하나 architecture-level decision은 TestContractArchitectAgent(Sonnet)가 §8.6에서 이미 결정. IntegrationTestAgent는 §8.6 계약을 "정확히 이행"하는 역할 → Opus 불필요. Sonnet으로 충분 커버.
+
+### 갱신된 tier 배정 (Amendment 3 이후 주요 항목)
+
+| Agent | Tier | 변경 이력 |
+|---|---|---|
+| IntegrationTestAgent | Sonnet | Amendment 3 신규 (CFP-367) |
+| InfraEngineerAgent | Haiku (pilot) | Amendment 2 (CFP-360) |
+| QADeveloperAgent | Haiku (pilot) | Amendment 2 (CFP-360) |
+| DataEngineerAgent | Haiku (pilot) | Amendment 2 (CFP-360) |
