@@ -192,6 +192,9 @@ TestContractArch primary, OperationalRiskArchitectAgent + DataMigrationArchitect
 - **invariant assertion 주기** (예: 매 N분 / 매 M update / 매 K 이벤트)
 - **expected baseline + tolerance** (drift 허용 범위)
 - **테스트 fixture / framework** (consumer 환경 — pytest-anyio / asyncio long-running fixture / load generator 등)
+- **WS stream push_interval 실증 체크** (CFP-319, stream 적용 시):
+  - [ ] `push_interval` empirical source confirmed
+        (wiretap 실측 또는 공식 문서 — 미확인 시 TBD 박제 + Phase 1.5 wiretap step 명시)
 
 ##### §8.5.2 Process restart recovery tests (적용 시)
 

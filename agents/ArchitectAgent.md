@@ -73,6 +73,17 @@ permissions:
    · RETURN 시 본 에이전트 재스폰되어 누락·재해석 반영
 ````
 
+### WS Stream 계열 push_interval 실증 의무 (CFP-319)
+
+`source_type: websocket` 또는 stream 계열 §D 스키마 설계 시 의무:
+
+- `push_interval` 을 실측값 없이 추정으로 lock-in 금지.
+- 미실측 시 반드시 `push_interval: TBD (wiretap required)` 로 박제.
+- Change Plan §D 해당 섹션에 Phase 1.5 wiretap step 명시 의무
+  (Phase 1 완료 후 실측 완료 전까지 Phase 2 진입 차단).
+
+위반 판단: 주석·실측 근거 없는 구체적 수치(예: `30s`, `1min`) 사용 = 추정값 lock-in.
+
 ## Change Plan 표준 구조
 
 **[`templates/change-plan.md`](../templates/change-plan.md)** 를 SSOT로 따른다. 모든 섹션 규격·frontmatter·§8 Test Contract 세부(§8.1/§8.2/§8.3)는 템플릿 문서 참조. 신규 ADR 필요 시 **[`templates/adr.md`](../templates/adr.md)** 를 참조해 본 에이전트가 직접 write.
