@@ -42,7 +42,9 @@ jobs:
           # CFP-138 / ADR-043 — retro-mandatory.yml = consumer-only (Phase 2 PR merge close-blocking forcing function).
           #   wrapper repo dogfood = PMOAgent manual spawn 의무 (templates-only flow, F-6 fix option (b) 채택).
           #   self-app workflow 도입 = 별도 follow-up CFP (consumer-side adoption, ADR-027).
-          CONSUMER_ONLY_WORKFLOWS=("story-init.yml" "story-section-1-immutable.yml" "fix-ledger-sync.yml" "subissue-from-impl-manifest.yml" "live-test-guard.yml" "live-deploy-approval.yml" "live-secret-policy.yml" "kill-switch-integration-test.yml" "container-image-scan.yml" "reservation-cleanup.yml" "check-plugin-version-bump.yml" "retro-mandatory.yml")
+          # CFP-367 / ADR-055 — test.yml = consumer 배포용 테스트 workflow 템플릿.
+          # wrapper 자체는 overlay/hooks/tests/ 기반 자체 test job 사용 — consumer template 과 다름.
+          CONSUMER_ONLY_WORKFLOWS=("story-init.yml" "story-section-1-immutable.yml" "fix-ledger-sync.yml" "subissue-from-impl-manifest.yml" "live-test-guard.yml" "live-deploy-approval.yml" "live-secret-policy.yml" "kill-switch-integration-test.yml" "container-image-scan.yml" "reservation-cleanup.yml" "check-plugin-version-bump.yml" "retro-mandatory.yml" "test.yml")
           for f in templates/github-workflows/*.yml; do
             base=$(basename "$f")
             skip_file=0
