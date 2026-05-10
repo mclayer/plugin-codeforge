@@ -17,7 +17,9 @@ carrier_story: CFP-367
 date: 2026-05-10
 ---
 
-# test-verdict-v2 (Integration Test Lane 결과 패킷)
+# test-verdict-v2 — Integration Lane 결과 패킷 (Canonical)
+
+**CANONICAL SSOT**: 본 파일이 원본. wrapper sibling: `mclayer/plugin-codeforge:docs/inter-plugin-contracts/test-verdict-v2.md`
 
 ## 상태
 
@@ -34,35 +36,39 @@ test_verdict:
   lane: "integration"          # 고정값
   executed_at: ISO8601
   runner: "IntegrationTestAgent"
-
   suite_summary:
-    total: int                 # tests/integration/ 전체 테스트 수
+    total: int                 # 전체 실행 테스트 수
     passed: int
     failed: int
-    skipped: int               # §8.6 면제 Story의 external-dependency-gate 포함
-    regression_baseline: int   # 이번 Story 이전 suite 누적 수
-    new_tests_added: int       # 이번 Story에서 추가된 테스트 수
-
-  dynamic_test_compliance: boolean  # 내부 컴포넌트 정적 mock 미사용 여부
-  docker_compose_used: boolean      # docker-compose.test.yml 실행 여부
-
-  failures:                    # failed > 0 인 경우에만 존재
-    - test_id: string
-      test_path: string        # "tests/integration/CFP-XXX/test_order_flow.py::test_bithumb_order_create"
+    regression_baseline: int   # 이번 Story 이전 존재하던 테스트 수 (회귀 검증 대상)
+    new_tests_added: int       # 이번 Story에서 추가된 신규 테스트 수
+  dynamic_test_compliance: boolean  # docker-compose.test.yml 환경 사용 여부 (PASS 조건 — true 필수)
+  docker_compose_used: boolean      # dynamic_test_compliance 전제 조건 — 컨테이너 실제 구동 여부
+  failures:
+    - test_id: string          # "{test_file}::{test_name}"
       failure_type: "regression" | "new_test" | "infra_setup"
-      error_summary: string    # 500자 이내
-
+      error_summary: string    # 한 줄 요약
   pl_recommendation: "PASS" | "FIX" | "ESCALATE_PACKET_INCOMPLETE"
-  # PASS: 전체 suite green
-  # FIX: 실패 존재 (regression 또는 new_test 실패)
-  # ESCALATE_PACKET_INCOMPLETE: docker-compose 미실행 또는 §8.6 누락
-
-  notes: string | null
 ```
 
-## FIX 루프 연동
+## pl_recommendation 결정 기준
 
-`pl_recommendation: FIX` 시:
-- `failure_type: regression` → root-cause-decision: 구현 원인 1차 가정 (기존 코드 regression)
-- `failure_type: new_test` → root-cause-decision: 구현 원인 1차 가정 (신규 시나리오 미구현)
-- `failure_type: infra_setup` → root-cause-decision: InfraEngineerAgent `docker-compose.test.yml` 수정 필요
+| 조건 | pl_recommendation |
+|---|---|
+| 모든 테스트 PASS + dynamic_test_compliance: true | PASS |
+| failures 존재 (regression / new_test) | FIX |
+| infra_setup 실패 (docker-compose.test.yml 구동 불가) | FIX |
+| §8.6 스키마 파싱 불가 / story_key 주입 누락 | ESCALATE_PACKET_INCOMPLETE |
+| §8.6 면제 Story (N/A) | PASS (suite_summary 전 필드 0, dynamic_test_compliance: false) |
+
+## FIX 루프 라우팅 (failure_type별)
+
+| failure_type | 1차 진단 | 최종 판정 |
+|---|---|---|
+| `regression` | DeveloperPL (기존 기능 파손 가능성) | ArchitectPLAgent (설계 vs 구현 분기) |
+| `new_test` | DeveloperPL (신규 구현 미완성) | ArchitectPLAgent |
+| `infra_setup` | InfraEngineerAgent (docker-compose.test.yml 수정) | DeveloperPL 확인 |
+
+## Wrapper sibling 동기화
+
+wrapper sibling(`mclayer/plugin-codeforge:docs/inter-plugin-contracts/test-verdict-v2.md`) 변경 시 본 canonical 동기화 PR 의무 (ADR-010 §4 sibling sync policy).
