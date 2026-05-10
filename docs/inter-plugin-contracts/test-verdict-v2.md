@@ -1,9 +1,17 @@
 ---
-contract: test_verdict
-version: "2.0"
+kind: contract
+contract_version: "2.0"
 status: Active
-producer: codeforge-test
-sibling_of: https://github.com/mclayer/plugin-codeforge-test/blob/main/contracts/test-verdict-v2.md
+related_plugins:
+  - codeforge (wrapper, consumer + IntegrationTestAgent spawn 주체)
+  - codeforge-test (lane plugin, producer + self-writer)
+related_adrs:
+  - ADR-008  # Inter-plugin Contract Versioning
+  - ADR-010  # Inter-plugin Contract Sibling Sync
+  - ADR-055  # Integration Test Lane Policy (본 v2 carrier)
+  - ADR-048  # Amendment 1 — codeforge-test 통합테스트 전용 부활
+authors:
+  - CFP-367 (2026-05-10) — test-verdict v1 → v2 (integration lane 전용 패킷, ADR-055)
 supersedes: test-verdict-v1.md
 carrier_story: CFP-367
 date: 2026-05-10
