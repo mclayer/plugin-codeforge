@@ -128,6 +128,9 @@ coverage_targets:
     given: "사전 조건"
     when: "동작 트리거"
     then: "기대 결과"
+    related_components:        # blame 절차 tier-1 소스. 이 시나리오가 사용하는 src 경로 목록.
+      - "src/orders/order_service.py"   # e.g.
+      - "src/exchange/bithumb_client.py"
 environment_dependencies:
   db: "test DB seed 요구사항"
   external_api: "WireMock stub 대상 서비스"
@@ -135,6 +138,11 @@ environment_dependencies:
 isolation_strategy: "ephemeral_container" | "test_db" | "service_mock"
 dynamic_test_required: true   # 내부 컴포넌트 정적 mock 금지
 ```
+
+`related_components[]` — IntegrationTestAgent blame tier-1 입력. blame 절차:
+1. 테스트 파일의 `STORY_KEY` 메타데이터로 직접 story_key 확인 (story suite의 경우)
+2. `coverage_targets[].related_components[]` 경로를 blame 대상으로 사용 (baseline 실패 시)
+3. 미제공 시 test_path import 정적 분석으로 fallback → 그래도 불가 시 ArchitectPL ESCALATE
 
 **면제 조건**: 컴포넌트 경계 0개 Story, doc-only Story.
 면제 시 `N/A — <근거 30자 이상>` 필수 (lint 강제).

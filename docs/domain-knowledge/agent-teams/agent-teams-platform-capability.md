@@ -16,13 +16,14 @@ related_adrs:
   - ADR-035  # codeforge agent teams Epic architecture (Phase-scoped sequential team SSOT carrier)
   - ADR-039  # subagent default for codeforge modification work (default subagent context 정의)
   - ADR-040  # worktree convention (agent teams + worktree integration 의존)
+  - ADR-044  # Phase-scoped sequential team SSOT — 본 entry 의 platform 근거 ADR (CFP-137 carrier)
 related_stories:
   - CFP-134  # Epic carrier
   - CFP-135  # ADR-022 deprecate foundation
   - CFP-136  # worktree infra prerequisite
   - CFP-137  # 본 entry 의 carrier
 created: 2026-05-09
-updated: 2026-05-09
+updated: 2026-05-11
 ---
 
 # Claude Code agent teams (experimental) — platform capability + codeforge re-entrancy 제약
@@ -128,7 +129,7 @@ env=0 fallback 동작은 모든 lane plugin agent prompt 가 명시 의무 — S
 1. **Phase-scoped sequential team** = lane 별 짧은 lifecycle (lane 진입 시 TeamCreate, 완료 시 TeamDelete). Story-long single team 회피 — `/resume` 후 in-process teammate 미복원 risk.
 2. **Lead = Orchestrator** (Story 전 기간 fixed) — ADR-009 wrapper-only invariant 정합. Lead 변경 금지.
 3. **One-team-per-lead 강제** — 다음 lane TeamCreate 전 현 team `TeamDelete()` 의무. nested team 금지 (no team-of-teams). 재귀 spawn 금지 (Lead 와 teammate 모두 — platform inherent + codeforge 정책).
-4. **review lane Codex worker `dispatch_mode: user_request_only`** — default roster = `PL + Claude worker` 2 teammate. Codex worker 는 사용자 explicit request 시에만 활성 → 3 teammate. memory `feedback_sonnet_decider_user_only.md` + ADR-022 Deprecated + 사용자 turn 7-8 directive 정합.
+4. **review lane Codex worker `dispatch_mode: user_request_only`** — default roster = `PL + Claude worker` 2 teammate. Codex worker 는 사용자 explicit request 시에만 활성 → 3 teammate. ADR-022 Deprecated (ADR-035 §결정 4) 정합 — codeforge 가 Codex 를 1st-class component 로 자동 invoke 하지 않는 정책.
 5. **env-divergent fallback** — `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0` (default 또는 미설정) 시 ADR-039 default subagent context (one-shot Agent tool spawn) 으로 fallback. SendMessage / TeamCreate / TaskCreate / TeammateIdle hook 모두 미발화. team-spec yaml 미사용.
 6. **SendMessage secret hygiene** — sibling teammate 끼리 system prompt / tool output 공유. consumer 측 secret (API key / DB credential 등) 가 SendMessage body 또는 system prompt 안에 포함되면 sibling teammate 모두 노출. consumer-guide §1f 명시 의무.
 
