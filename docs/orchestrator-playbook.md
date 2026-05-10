@@ -78,7 +78,29 @@ related:
    - **Bypass**: `BYPASS_VERSION_DRIFT=1` + `BYPASS_VERSION_DRIFT_REASON=<text>` env 시 우회 (audit trail 의무)
    - **MAJOR drift 의 의미**: ADR-037 정의 = breaking change (consumer migration 필요) — stale version 유지 시 silent corruption 위험. hard-stop 정당화.
 
-   **0g. 확인 결과 사용자 통보 형식**
+   **0g. 구조적 변경 재구동 선행 의무 (ADR-053)**
+
+   직전 세션에서 아래 구조적 변경 중 하나라도 발생했던 경우, 세션 재구동 완료 여부를 먼저 확인한다.
+
+   구조적 변경 대상:
+   - CLAUDE.md 의미 변경 (typo·형식 수정 제외)
+   - plugin 버전 업
+   - settings 구조 변경 (enabledPlugins·env·hooks 등)
+   - agent definition 변경 (역할·모델·spawn 조건 포함)
+   - skill 파일 의미 변경
+
+   **확인 절차**:
+   - 세션이 구조적 변경 반영 후 새로 시작된 것인지 확인. 동일 세션 내 변경 직후 연속 작업 = 재구동 미완료로 간주.
+   - 미완료 시: 사용자에게 세션 재구동(새 Claude Code 세션 시작) 요청 후 **모든 작업 중단**.
+
+   해당 변경이 **codeforge plugin 자체 변경**인 경우, 세션 재구동 확인에 더해 consumer 배포 완료 여부를 추가 확인한다:
+   - [ ] marketplace sync PR merge 완료 (ADR-016 — `mclayer/marketplace` `plugins[name=codeforge]` mirrored 필드 동기)
+   - [ ] consumer `/plugins install codeforge@mclayer` 완료
+   - [ ] `bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-version-drift.sh` PASS
+
+   위 조건 미충족 시 다음 작업 진입 금지 (`policy_violation` — ADR-053).
+
+   **0h. 확인 결과 사용자 통보 형식**
    ```
    🔍 세션 개시 의존성 점검
    - GitHub MCP: ✅ 노출 / ❌ 미인증 → /mcp 재인증 필요
@@ -90,6 +112,7 @@ related:
    - gh CLI: ✅ + 인증 OK / ❌ → gh auth login 안내
    - consumer 리포 .github/ 셋업: 6 워크플로우 / 3 forms / PR template / CODEOWNERS — N개 누락 (안내만)
    - (권장 플러그인: 4/4 활성 / 일부 비활성 — 진행에 영향 없음)
+   - 구조적 변경 재구동 (ADR-053): ✅ 해당 없음 / ⚠️ 재구동 필요 → 새 세션 시작 후 작업 재개 / ❌ codeforge 배포 미완 → marketplace sync + /plugins install 후 재개
 
    [블로커 X건 — 복구 완료 전 대기]
    ```
