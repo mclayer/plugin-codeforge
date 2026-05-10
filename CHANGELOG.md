@@ -5,6 +5,13 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.9.0] - 2026-05-10
+
+### Changed
+- ADR-042 Amendment 2: Haiku 3번째 카테고리(mechanical pattern execution) 추가
+- InfraEngineerAgent·QADeveloperAgent·DataEngineerAgent Haiku 4.5 pilot 전환 결정
+- rollback 트리거 기준 및 governance 재-audit 트리거 규정 (ADR-042 결정 5·6)
+
 ## [5.8.0] - 2026-05-10
 
 ### Added
