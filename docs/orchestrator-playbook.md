@@ -557,13 +557,19 @@ context_packet:
 
 #### §3.11.4 Baseline 자동승격 (PASS 시)
 
+**IntegrationTestAgent 자체 수행** — Orchestrator inline 금지 (git commit 권한 = agent 소유).
+
 ```bash
-# Orchestrator inline 수행 (Epic state update 허용 구간)
-# Epic에 Story가 여러 개인 경우 아래 패턴을 반복 (STORY-KEY마다):
-cp tests/integration/stories/<EPIC-KEY>/<STORY-KEY>/* tests/integration/baseline/
+# IntegrationTestAgent Mandate 7 (agent 내부 수행):
+mkdir -p tests/integration/baseline/<STORY-KEY>
+cp tests/integration/stories/<EPIC-KEY>/<STORY-KEY>/test_*.py \
+   tests/integration/baseline/<STORY-KEY>/
+# SUITE_TYPE = "story" → "baseline" 메타데이터 갱신 후:
 git add tests/integration/baseline/
 git commit -m "test(baseline): <EPIC-KEY> Story Suite 자동승격 — N개 케이스 추가"
 ```
+
+Orchestrator는 verdict `pl_recommendation: PASS` 수령 후 Epic State Ledger `integration_test.status = "pass"` 만 갱신.
 
 ---
 
