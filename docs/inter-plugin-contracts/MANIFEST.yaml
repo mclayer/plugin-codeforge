@@ -38,6 +38,7 @@ contracts:
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: test-verdict-v1.md, contract_version: "1.1", status: Archived }  # CFP-317 / ADR-048: TestAgent deprecated
+      - { file: test-verdict-v2.md, contract_version: "2.0", status: Active }   # CFP-367 / ADR-055: integration lane 전용
 
   - name: pmo_output
     canonical_repo: mclayer/plugin-codeforge-pmo
