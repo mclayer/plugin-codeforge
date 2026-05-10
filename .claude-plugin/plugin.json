@@ -1,7 +1,7 @@
 {
   "name": "codeforge-develop",
   "version": "0.4.0",
-  "description": "codeforge ζ arc Develop lane plugin (CFP-39) — DeveloperPLAgent + QADeveloperAgent + 3 role:dev core (Developer/DataEng/InfraEng) + presets/webapp (Backend/Frontend Developer). 동적 roster discovery + Story §8/§8.5 self-write + Phase 2 PR open. codeforge core 의존.",
+  "description": "codeforge ζ arc Develop lane plugin (CFP-39) — DeveloperPLAgent + QADeveloperAgent + 3 role:dev core (Developer/DataEng/InfraEng) + presets/webapp (Backend/Frontend Developer). 동적 roster discovery + Story §8/§8.5 self-write + Phase 2 PR open. codeforge core 의존. + CFP-317 DeveloperPLAgent PR pre-flight guard: main push 방지 + --base main 강제 (2026-05-10).",
   "author": {
     "name": "Josh"
   },
