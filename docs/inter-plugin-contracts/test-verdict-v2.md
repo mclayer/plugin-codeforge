@@ -85,15 +85,24 @@ test_verdict:
 
 ### Baseline 실패 시 story_key blame 절차
 
-`suite_type: "baseline"` 이고 `story_key: null` 인 경우:
+`suite_type: "baseline"` 이고 `story_key: null` 인 경우 3-tier 순서로 컴포넌트 경로 추출:
 
-1. 실패 테스트의 관련 컴포넌트 경로 추출 (test_path 기반)
-2. 이번 Epic의 각 Story PR merge commit에서 해당 컴포넌트 변경 이력 조회:
-   ```bash
-   git log --oneline --follow -- <컴포넌트 경로>
-   ```
-3. 가장 최근 변경 commit의 Story key → `story_key` 설정 → `responsible_stories` 추가
-4. blame 불가 시 (변경 이력 없음) → ArchitectPL 에스컬레이션
+**Tier 1 (§8.6 related_components)**:
+- 실패 테스트 `test_path` → 해당 scenario → `coverage_targets[].related_components[]` 조회
+- related_components 존재 시 해당 경로 목록을 blame 대상으로 사용
+
+**Tier 2 (static import 분석)**:
+- related_components 미제공 시 실패 테스트 파일의 import 구문 정적 분석
+- `from src.XXX import ...` / `import src.XXX` 패턴에서 실제 파일 경로 추출
+
+**Tier 3 (ESCALATE)**:
+- Tier 1·2 모두 실패 시 `story_key: null` 유지 + ArchitectPL 에스컬레이션 메모
+
+컴포넌트 경로 확정 후:
+```bash
+git log --oneline --follow -- <컴포넌트 경로>
+```
+가장 최근 변경 commit의 Story key → `story_key` 설정 → `responsible_stories` 추가
 
 ### ESCALATE_PACKET_INCOMPLETE 처리
 
