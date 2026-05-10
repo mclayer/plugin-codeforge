@@ -62,10 +62,10 @@ test_verdict:
       failure_type: "regression" | "new_test" | "infra_setup" | "env_missing"
       error_summary: string     # 500자 이내
 
-  responsible_stories: list     # FIX 대상 Story key 목록 (failures의 story_key 집계)
+  responsible_stories: list     # FIX 대상 Story key 목록 e.g. ["CFP-NNN-S1"] (failures story_key 집계)
 
   pl_recommendation: "PASS" | "FIX" | "ESCALATE_PACKET_INCOMPLETE"
-  # PASS: 전체 suite (baseline + story) green + deployability_verified true
+  # PASS: 전체 suite green + deployability_verified true. responsible_stories: []
   # FIX: 실패 존재 → responsible_stories 목록 Story FIX loop
   # ESCALATE_PACKET_INCOMPLETE: docker-compose 미실행 or §8.6 누락
 
@@ -99,3 +99,4 @@ test_verdict:
 
 - `docker_compose_used: false` → InfraEngineerAgent에게 `docker-compose.test.yml` 작성 의뢰 후 재실행
 - `stories_in_scope` 내 §8.6 없는 Story → TestContractArchitectAgent에게 §8.6 작성 의뢰 후 재실행
+- `deployability_verified: false` (docker-compose 실행됐으나 health check 실패) → `failure_type: infra_setup` 으로 FIX 분기 (ESCALATE 아님)
