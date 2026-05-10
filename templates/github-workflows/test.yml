@@ -28,6 +28,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run unit tests
+        # Consumer: 경로를 자신의 구조에 맞게 수정 (예: tests/unit/, test/, src/tests/)
         run: pytest tests/unit/ -v --tb=short
 
   integration-tests:
@@ -61,6 +62,7 @@ jobs:
 
       - name: Run integration tests
         if: steps.check_compose.outputs.exists == 'true'
+        # Consumer: timeout 초 단위로 환경에 맞게 조정, 경로도 자신의 구조로 수정
         run: pytest tests/integration/ --timeout=300 -v --tb=short
 
       - name: Teardown test environment
