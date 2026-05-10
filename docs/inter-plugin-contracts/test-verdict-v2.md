@@ -19,7 +19,9 @@ carrier_story: CFP-367
 date: 2026-05-10
 ---
 
-# test-verdict-v2 (Integration Test Lane 결과 패킷)
+# test-verdict-v2 — Integration Lane 결과 패킷 (Canonical)
+
+**CANONICAL SSOT**: 본 파일이 원본. wrapper sibling: `mclayer/plugin-codeforge:docs/inter-plugin-contracts/test-verdict-v2.md`
 
 **상위 SSOT 위치**: `mclayer/plugin-codeforge-test` canonical — 본 파일은 wrapper sibling.
 
@@ -29,7 +31,7 @@ Active — CFP-373 (2026-05-10)
 
 test-verdict-v1 Archived. v1 → v2 이유: codeforge-test 통합테스트 전용 부활(ADR-048 Amendment 1)로 integration lane 전용 결과 패킷 스키마 신설.
 
-v2 → v2.1 이유: CFP-371 / ADR-055 Amendment 2 — per-Story → Epic-level 실행 구조 전환.
+v2 → v2.1 이유: CFP-371 / ADR-055 Amendment 2 — per-Story → Epic-level 실행 구조 전환. epic_key, stories_in_scope, responsible_stories, deployability_verified, suite_type, env_missing 필드 추가.
 
 v2.1 → v2.2 이유: CFP-373 — `failures[].story_key: string|null` → `story_keys: list[string]` + `attribution_confidence` 추가. 단일 baseline failure가 복수 Story 변경에 기인할 수 있는 현실 반영. ADR-008 SemVer MINOR bump.
 
@@ -106,7 +108,7 @@ test_verdict:
 - `from src.XXX import ...` / `import src.XXX` 패턴에서 실제 파일 경로 추출
 
 **Tier 3 (ESCALATE)**:
-- Tier 1·2 모두 실패 시 `story_key: null` 유지 + ArchitectPL 에스컬레이션 메모
+- Tier 1·2 모두 실패 시 `story_keys: []`, `attribution_confidence: "unknown"` + ArchitectPL 에스컬레이션 메모
 
 컴포넌트 경로 확정 후:
 ```bash
@@ -119,3 +121,9 @@ git log --oneline --follow -- <컴포넌트 경로>
 - `docker_compose_used: false` → InfraEngineerAgent에게 `docker-compose.test.yml` 작성 의뢰 후 재실행
 - `stories_in_scope` 내 §8.6 없는 Story → TestContractArchitectAgent에게 §8.6 작성 의뢰 후 재실행
 - `deployability_verified: false` (docker-compose 실행됐으나 health check 실패) → `failure_type: infra_setup` 으로 FIX 분기 (ESCALATE 아님)
+
+## Wrapper sibling 동기화
+
+wrapper sibling(`mclayer/plugin-codeforge:docs/inter-plugin-contracts/test-verdict-v2.md`) 이 ADR-010 wrapper-first 패턴에 따라 먼저 갱신됨. 본 파일은 canonical sync PR (CFP-373, ADR-010 §4 sibling sync policy 이행).
+
+이전 sync: CFP-371 (v2.0 → v2.1).
