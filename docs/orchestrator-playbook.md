@@ -468,14 +468,7 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
                          → PASS + lanes.security_ai: false (default): merge gate 진입
                          → PASS + lanes.security_ai: true: SecurityTestPL spawn
                          → FAIL: `gh run view --log-failed` 수집 → FIX loop (DeveloperPL 1차 진단 → ArchitectPL 최종 판정)
-통합 테스트: **Epic 하위 전체 Story CI gate PASS 후 1회** Orchestrator → IntegrationTestAgent (lane=integration, ADR-055) — 상세는 §3.11:
-             0. §8.6 Integration Test Contract 확인 (면제 Story이면 skip — phase:통합-테스트 부착 후 merge gate 진입)
-             1. `docker-compose -f docker-compose.test.yml up -d`
-             2. `pytest tests/integration/ --timeout=600` (전체 suite 동적 실행, regression PASS 확인)
-             3. `docker-compose -f docker-compose.test.yml down`
-             → PASS: test-verdict-v2 pl_recommendation=PASS → Story §9 append → phase:통합-테스트 부착 → merge gate 진입
-             → FIX: pl_recommendation=FIX → FIX loop (max 3 — 구현 원인 1차 가정, failure_type 기반 라우팅)
-             → lanes.security_ai: true 시 PASS 후 SecurityTestPL spawn
+통합 테스트: (Epic 하위 전체 Story CI gate PASS 후 1회 실행 — **상세: §3.11**)
 보안 테스트: Orchestrator → SecurityTestPLAgent (lanes.security_ai: true 시만, lane=security packet 작성, 1차 layer cache hit/miss 확인)
              1차 layer: .claude-work/cache/<KEY>-sec1.json hit 시 inline 첨부 (R10) / miss 시 PL이 직접 fetch
              2차 layer: PL이 packet return → Orchestrator가 한 메시지에 (ClaudeReviewAgent ∥ CodexReviewAgent) dispatch → PL 종합 → PASS/FIX (R3, R2)
@@ -566,6 +559,7 @@ context_packet:
 
 ```bash
 # Orchestrator inline 수행 (Epic state update 허용 구간)
+# Epic에 Story가 여러 개인 경우 아래 패턴을 반복 (STORY-KEY마다):
 cp tests/integration/stories/<EPIC-KEY>/<STORY-KEY>/* tests/integration/baseline/
 git add tests/integration/baseline/
 git commit -m "test(baseline): <EPIC-KEY> Story Suite 자동승격 — N개 케이스 추가"
