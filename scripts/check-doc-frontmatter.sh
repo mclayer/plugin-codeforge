@@ -2,12 +2,14 @@
 # CFP-27 Phase 0b — 도입 (warning 모드)
 # CFP-28 Phase 0c — strict 전환 (exit=1 on warnings)
 # CFP-32 (ζ arc F1) — docs/inter-plugin-contracts/ 신규 path 추가
+# ADR-056 — docs/domain-knowledge/domain + concept 경로 분기, kind 필드 검증 추가 (CFP-376)
 # 검사: 5 owner doc path 의 frontmatter 필수 필드
 #
 # Path / 필수 frontmatter 필드 source:
 #   - docs/change-plans/**            templates/change-plan.md frontmatter (title, slug, status, author, created, story)
 #   - docs/adr/**                     templates/adr.md          (adr_number, title, status, category, date)
-#   - docs/domain-knowledge/**        templates/domain-knowledge.md (title, area, topic_slug, status, updated)
+#   - docs/domain-knowledge/domain/** templates/domain-knowledge.md (kind, title, area, topic_slug, status, updated)
+#   - docs/domain-knowledge/concept/**templates/concept.md (kind, title, slug, status, updated)
 #   - docs/retros/**                  templates/retro.md         (title, date, sprint_period, cfp_keys, authors)
 #   - docs/inter-plugin-contracts/**  registry kind: {kind, registry, version, status, authors}
 #                                     ※ kind: contract 파일은 본 lint 적용 안 함 — CFP-33
@@ -30,7 +32,8 @@ except ImportError:
 REQUIRED = {
     "docs/change-plans": {"title", "slug", "status", "author", "created", "story"},
     "docs/adr":          {"adr_number", "title", "status", "category", "date"},
-    "docs/domain-knowledge": {"title", "area", "topic_slug", "status", "updated"},
+    "docs/domain-knowledge/domain": {"kind", "title", "area", "topic_slug", "status", "updated"},
+    "docs/domain-knowledge/concept": {"kind", "title", "slug", "status", "updated"},
     "docs/retros":       {"title", "date", "sprint_period", "cfp_keys", "authors"},
     "docs/inter-plugin-contracts": {"kind", "registry", "version", "status", "authors"},
 }
@@ -72,6 +75,32 @@ for prefix, fields in REQUIRED.items():
         missing = fields - fm.keys()
         if missing:
             warns.append(f"{md}: 필수 필드 누락 — {sorted(missing)}")
+
+# ADR-056 — kind 유효값 검증
+KIND_VALID = {
+    "docs/domain-knowledge/domain": {"domain_fact"},
+    "docs/domain-knowledge/concept": {"concept_definition"},
+}
+for prefix, valid_kinds in KIND_VALID.items():
+    path = Path(prefix)
+    if not path.exists():
+        continue
+    for md in sorted(path.rglob("*.md")):
+        if md.name.lower() in {"readme.md", "index.md"}:
+            continue
+        text = md.read_text(encoding="utf-8")
+        if not text.startswith("---\n"):
+            continue
+        try:
+            fm_text = text.split("\n---\n", 1)[0][4:]
+            fm = yaml.safe_load(fm_text)
+            if not isinstance(fm, dict):
+                continue
+            kind_val = fm.get("kind", "")
+            if kind_val not in valid_kinds:
+                warns.append(f"{md}: kind 유효값 아님 ('{kind_val}' — 허용: {valid_kinds})")
+        except Exception:
+            pass
 
 if warns:
     print(f"::error::CFP-28 doc-frontmatter (STRICT): {len(warns)} 건")
