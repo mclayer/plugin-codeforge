@@ -933,6 +933,8 @@ task: <Codex에게 요청할 구체적 작업>
 
 ## 3B. Preflight 체크 (lane 진입 직전)
 
+**doc-only fast-path 분기 (ADR-054)**: Story 분류 판정 직후, Orchestrator가 §결정 1 분류 표 적용. `doc-only fast-path` 해당 시: 설계 lane → 경량 설계리뷰 → 단일 PR close (구현 lane spawn 금지). `full-lane` 해당 시: 기존 5-lane 전체. 모호 시 full-lane 강제. 판정 표 SSOT: [ADR-054](../docs/adr/ADR-054-doc-only-story-fast-path.md).
+
 Orchestrator가 **각 레인 진입 직전에 의무 수행**. 3개 체크 중 하나라도 FAIL이면 **block + report**: 에이전트 스폰 없이 사용자에게 실패 사유 반환.
 
 ### 3B.1 3개 체크 항목
