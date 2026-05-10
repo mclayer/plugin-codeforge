@@ -14,6 +14,12 @@ amendment_log:
     summary: "ResearcherAgent deferred fence resolved — mandate + model tier confirmed by ADR-046"
     ref: ADR-046
     carrier_story: "chore/researcher-role-redefinition (ADR-013 waiver)"
+  - amendment_id: 2
+    date: 2026-05-10
+    status: applied
+    summary: "Haiku 3번째 카테고리(mechanical pattern execution) 추가. InfraEngineerAgent·QADeveloperAgent·DataEngineerAgent Sonnet 4.6 → Haiku 4.5 pilot 전환. rollback 트리거 기준(30% FIX 증가/P0·P1 즉시) 및 governance 재-audit 트리거 규정."
+    ref: null
+    carrier_story: "cfp-360-haiku-pilot"
 related_stories: []
 related_adrs:
   - ADR-009
@@ -59,9 +65,11 @@ related_files:
 
 **Opus 4.7 (3, inherited via no `model:` field)**: OperationalRiskArchitectAgent · LiveOpsDeputyAgent · LiveOrderingDeputyAgent
 
-**Sonnet 4.6 (7)**: DeveloperPLAgent · DeveloperAgent · QADeveloperAgent · DataEngineerAgent · InfraEngineerAgent + 2 webapp preset (BackendDeveloperAgent · FrontendDeveloperAgent)
+**Haiku 4.5 (6 — Amendment 2 이후)**:
+- codex/external wrapper (3): TestAgent · CodexReviewAgent · RequirementsAnalystAgent
+- mechanical pattern execution (3, Amendment 2): InfraEngineerAgent · QADeveloperAgent · DataEngineerAgent
 
-**Haiku 4.5 (3, codex/external wrapper)**: TestAgent · CodexReviewAgent · RequirementsAnalystAgent
+**Sonnet 4.6 (4 — Amendment 2 이후)**: DeveloperPLAgent · DeveloperAgent + 2 webapp preset (BackendDeveloperAgent · FrontendDeveloperAgent)
 
 ### Story 우회 사유 (ADR-013 waiver)
 
@@ -81,7 +89,7 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 |------|-------|----------------------|
 | **Opus** | claude-opus-4-7 | (a) Multi-source synthesis (3+ deputy / lane / contract input dedup + 종합 판정) — 모든 PL · ArchitectAgent chief. (b) Independent reasoning peer to external GPT-5 (ClaudeReviewAgent — Codex 와의 의도적 reasoning depth 매칭). (c) High-stakes domain interpretation (DomainAgent — Live trading / 금융 / 헬스 데이터 등 invariant 누설 위험). (d) Security / safety boundary owner (SecurityArchitectAgent · OperationalRiskArchitectAgent · DataMigrationArchitectAgent · TestContractArchitectAgent — §7 trust boundary / §7.4 DR / §11 schema rollback / §8 perf baseline). (e) Real-funds risk owner (LiveOpsDeputyAgent · LiveOrderingDeputyAgent — CFP-77 CONDITIONAL). (f) Cross-Story pattern analysis + ADR proposal (PMOAgent). (g) Deep research with reshape mandate (ResearcherAgent — per [ADR-046](ADR-046-researcher-role-redefinition.md) (2026-05-09)). |
 | **Sonnet** | claude-sonnet-4-6 | (a) Single-mandate advocacy within multi-deputy debate — read-only 조사 + 자기 mandate 측 단일 축 주장 (CodebaseMapperAgent — existing facts only, RefactorAgent — pattern advocacy only). (b) Implementation work — code write / refactor / test 구현 (DeveloperAgent · DataEngineerAgent · InfraEngineerAgent · QADeveloperAgent · DeveloperPLAgent · 2 webapp preset). |
-| **Haiku** | claude-haiku-4-5 | (a) Test runner / 결과 수집 — minimal reasoning (TestAgent). (b) External tool wrapper — 본체 reasoning 은 external (Codex GPT-5 / GPT-5.4) 가 수행, Claude 는 prompt 조립 / output relay 만 (CodexReviewAgent · RequirementsAnalystAgent). |
+| **Haiku** | claude-haiku-4-5 | (a) Test runner / 결과 수집 — minimal reasoning (TestAgent). (b) External tool wrapper — 본체 reasoning 은 external (Codex GPT-5 / GPT-5.4) 가 수행, Claude 는 prompt 조립 / output relay 만 (CodexReviewAgent · RequirementsAnalystAgent). (c) Mechanical pattern execution — 입력 명세(Change Plan §3 + Story §8)가 충분히 structured되어 creative/diagnostic reasoning 없이 패턴 기반 생성이 가능하고, 오류 발생 시 FIX 루프가 CI/테스트로 즉시 감지 가능한 경우 (InfraEngineerAgent · QADeveloperAgent · DataEngineerAgent — Amendment 2). |
 
 ### 결정 2: 본 ADR 발효 시점 변경 사항 (2 sibling PR scope)
 
@@ -92,6 +100,13 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 근거: 양 agent 모두 3-way deputy debate (Mapper = existing codebase fact 보고, Refactor = decoupling/pattern advocacy, SecurityArch = threat) 안에서 **single-mandate advocacy** 패턴. read-only 조사 + 자기 축 단일 주장. multi-source synthesis 책임은 ArchitectAgent chief (Opus) 가 수행. Sonnet 4.6 의 reasoning depth 가 본 mandate 를 fully cover.
 
 **ResearcherAgent** — RESOLVED by [ADR-046](ADR-046-researcher-role-redefinition.md) (2026-05-09): Concept formulation + Deep exploration + Requirement reshape. Opus tier 유지 (mandate depth 근거). 상세: ADR-046.
+
+**Amendment 2 (2026-05-10) — Haiku pilot 전환 (codeforge-develop sibling PR)**:
+- InfraEngineerAgent: Sonnet 4.6 → **Haiku 4.5** (mechanical pattern execution — Docker-first ADR-033 명세 기반)
+- QADeveloperAgent: Sonnet 4.6 → **Haiku 4.5** (mechanical pattern execution — §8 Test Contract 명세 기반)
+- DataEngineerAgent: Sonnet 4.6 → **Haiku 4.5** (mechanical pattern execution — §11 DataMigration 명세 기반)
+
+근거: 3 agent 모두 입력 명세가 ArchitectAgent/deputy 산출물로 structured되어 있고 오류는 CI/통합테스트로 즉시 감지 가능. Pilot 평가 기준: 전환 후 5 Story 운영 → §10 FIX Ledger 집계 → baseline(0 FIX) 대비 30% 초과 시 해당 agent 단독 rollback.
 
 ### 결정 3: 신규 agent 도입 / 기존 agent model 변경 시 ADR 의무
 
@@ -104,6 +119,21 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 agent file frontmatter 의 `model:` field 부재 시 platform default 가 inherit 됨 (현재 Opus 4.7). 본 inheritance 는 **explicit Opus 결정과 의미 동일** 로 간주 — 즉 결정 1 의 Opus tier criteria 에 부합해야 함. 향후 platform default 변경 시 inheritance 영향 받는 agent 전수 audit 의무.
 
 현재 inheritance 활용 3 agent (OperationalRiskArchitectAgent · LiveOpsDeputyAgent · LiveOrderingDeputyAgent) 는 모두 Opus tier criteria (d) (e) 부합 → 본 ADR 이후에도 inheritance 유지.
+
+### 결정 5: Haiku pilot rollback 트리거 기준 (Amendment 2)
+
+**평가 주기**: 전환 후 5 Story 완료 시점에 Orchestrator가 §10 FIX Ledger 집계 → 사용자 보고.
+
+**rollback 트리거 (agent별 독립)**:
+1. **점진적 rollback**: 해당 agent 관련 FIX 루프 횟수가 전환 전 baseline 대비 30% 초과 시 → 해당 agent 단독 rollback (Sonnet 4.6 복원 + Amendment 2 해당 항목 revert)
+2. **즉시 rollback**: P0·P1 severity 결함이 Haiku 전환 agent에서 발원 확인 시 → 해당 agent 즉시 rollback
+3. **전체 rollback**: 3 agent 중 2개 이상 즉시 rollback 트리거 발생 시 → Amendment 2 전체 revert
+
+### 결정 6: 재-audit 트리거 규칙 (Amendment 2)
+
+다음 이벤트 발생 시 나머지 Sonnet agent (DeveloperPLAgent · DeveloperAgent · BackendDeveloperAgent · FrontendDeveloperAgent) 재평가 의무:
+1. Haiku major 버전 업 (Haiku 4.x → Haiku 5.x)
+2. 기존 Sonnet agent의 mandate가 "패턴 실행" 방향으로 재정의될 때
 
 ## 근거
 
