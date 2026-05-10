@@ -2,6 +2,13 @@
 
 `codeforge-develop` plugin 릴리스 이력.
 
+## [0.3.0] - 2026-05-10
+
+### Changed
+- InfraEngineerAgent: model claude-sonnet-4-6 → claude-haiku-4-5 (ADR-042 Amendment 2, mechanical pattern execution)
+- QADeveloperAgent: model claude-sonnet-4-6 → claude-haiku-4-5 (ADR-042 Amendment 2)
+- DataEngineerAgent: model claude-sonnet-4-6 → claude-haiku-4-5 (ADR-042 Amendment 2)
+
 ## [0.2.0] - 2026-05-07
 
 ### CFP-128 / ADR-033 — InfraEngineer Docker-first mandate + presets/k8s/ (MINOR)
