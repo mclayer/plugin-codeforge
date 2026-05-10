@@ -113,9 +113,20 @@ related:
    - consumer 리포 .github/ 셋업: 6 워크플로우 / 3 forms / PR template / CODEOWNERS — N개 누락 (안내만)
    - (권장 플러그인: 4/4 활성 / 일부 비활성 — 진행에 영향 없음)
    - 구조적 변경 재구동 (ADR-053): ✅ 해당 없음 / ⚠️ 재구동 필요 → 새 세션 시작 후 작업 재개 / ❌ codeforge 배포 미완 → marketplace sync + /plugins install 후 재개
+   - TodoWrite 스키마 (0i): ✅ 로드 완료 / ⚠️ 로드 실패 → 표시 불가 경고 후 계속
 
    [블로커 X건 — 복구 완료 전 대기]
    ```
+
+   **0i. TodoWrite 스키마 선제 로드 (ADR-038 Amendment 1 §결정 8)**
+
+   TodoWrite 는 deferred tool — `ToolSearch("select:TodoWrite")` 로 스키마를 먼저 fetch 해야 호출 가능.
+
+   실행: `ToolSearch("select:TodoWrite")`
+   - 성공: 이후 모든 lane 에서 TodoWrite non-skippable 시도 가능 상태 확보.
+   - 실패: 즉시 재시도 1회.
+   - 재시도 실패: 다음 경고 출력 후 작업 계속 진행 (lane 차단 없음 — ADR-038 §결정 7):
+     `⚠️ TodoWrite 스키마 로드 실패 — 레인 진행 표시 불가 (warning only)`
 
 1. **메모리 로드**: `~/.claude/projects/<workspace-hash>/memory/MEMORY.md` — 이전 세션 feedback·project·reference 기록 확인
 2. **활성 Story 조회**: `mcp__github__list_issues(state='open', labels=['type:story'])`
