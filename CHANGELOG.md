@@ -12,6 +12,9 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 - InfraEngineerAgent·QADeveloperAgent·DataEngineerAgent Haiku 4.5 pilot 전환 결정
 - rollback 트리거 기준 및 governance 재-audit 트리거 규정 (ADR-042 결정 5·6)
 
+### Phase 2 (plugin-codeforge-develop v0.3.0)
+- InfraEngineerAgent·QADeveloperAgent·DataEngineerAgent `model:` 필드 `claude-sonnet-4-6` → `claude-haiku-4-5` 실제 전환 완료 (`plugin-codeforge-develop` PR #14)
+
 ## [5.8.0] - 2026-05-10
 
 ### Added
