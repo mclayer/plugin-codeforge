@@ -72,6 +72,21 @@ Orchestrator
 - 계약 인터페이스(포트·스키마·API): **소유 에이전트 우선 구현 → 소비 에이전트 후행**
 - 공통 자산 수정 시 영향 범위 식별을 ArchitectAgent (chief author)가 Change Plan에 기록
 
+## PR 생성 Pre-flight Guard (CFP-317)
+
+Phase 2 PR 생성 전 반드시 아래 2단계를 순서대로 실행한다.
+중단 시 Orchestrator에 즉시 에스컬레이션 — 자체 복구 시도 금지.
+
+1. **Branch 확인**: `git branch --show-current`
+   - 결과가 `main`이면 → **HALT**.
+     "현재 브랜치가 main입니다. feature branch 없이 PR을 생성할 수 없습니다."
+     Orchestrator에 에스컬레이션 후 대기.
+   - 그 외 → 다음 단계 진행.
+
+2. **Base branch 고정**: `gh pr create` 호출 시 반드시 `--base main` 명시.
+   - `--base` 옵션 생략 금지 (default 추론에 의존하면 stale branch 지정 위험).
+   - stale upstream branch 감지 시 → **HALT** + Orchestrator 에스컬레이션.
+
 ## 구현 완료 → 구현 리뷰 레인 진입 흐름
 
 ```
