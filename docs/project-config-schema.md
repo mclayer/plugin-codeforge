@@ -166,7 +166,38 @@ telemetry:
     # spawn_event: false                      # spawn-event-v1 (Phase 2 deferred — ADR-042 §결정 3)
   storage_path: ".claude-work/measurement/"   # default sqlite location (ADR-042 §결정 4)
   retention_hot_days: 14                      # default 14d (range: 7-30, Researcher §6.6 InfluxData 중간값)
+
+# [선택] 통합테스트 Baseline Suite 정의 (ADR-055 Amendment 2)
+integration_test:
+  # Baseline Suite 경로 (default: tests/integration/baseline/)
+  baseline_suite_path: <string>         # e.g. "tests/integration/baseline"
+
+  # 서비스 기동 전 필수 .env 키 목록 (env_missing 감지용)
+  required_env_keys:
+    - <string>                          # e.g. "DATABASE_URL"
+    - <string>                          # e.g. "BITHUMB_API_KEY"
+
+  # 초기 Baseline 정의 항목 (최초 Epic 실행 전 consumer가 직접 정의 — seed 역할)
+  # 이후 Epic PASS 시 Story Suite 자동승격으로 누적 확장됨
+  initial_baseline:
+    - id: <string>                      # e.g. "deployability_check"
+      description: <string>             # e.g. "서비스 전체 스택 기동 + DB 연결 + health check"
+      test_path: <string>               # e.g. "tests/integration/baseline/test_deployability.py"
+
+  # docker-compose.test.yml 경로 (default: docker-compose.test.yml)
+  docker_compose_test_path: <string>    # e.g. "infra/docker-compose.test.yml"
 ```
+
+### `integration_test` 섹션 설명
+
+Consumer 프로젝트의 통합테스트 Baseline Suite와 실행 환경을 구성한다. 모두 선택 사항.
+
+- **`baseline_suite_path`**: Baseline Suite 테스트 디렉터리. 미정의 시 `tests/integration/baseline/` 사용.
+- **`required_env_keys`**: 서비스 기동 전 확인할 `.env` 필수 키 목록. 미정의 시 env_missing 감지 비활성.
+- **`initial_baseline`**: 프로젝트 최초 Epic 실행 전 seed 항목. 첫 Epic PASS 후 Story Suite 자동승격으로 확장됨. ADR-055 Amendment 2 §결정 3 참조.
+- **`docker_compose_test_path`**: 통합테스트용 docker-compose 파일 경로. 미정의 시 루트의 `docker-compose.test.yml` 사용.
+
+**미정의 시 동작**: `integration_test` 섹션 자체가 없으면 IntegrationTestAgent가 default 경로와 빈 env_keys 목록으로 동작한다.
 
 ## 3. 예시 (webapp)
 
