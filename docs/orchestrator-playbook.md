@@ -468,7 +468,7 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
                          → PASS + lanes.security_ai: false (default): merge gate 진입
                          → PASS + lanes.security_ai: true: SecurityTestPL spawn
                          → FAIL: `gh run view --log-failed` 수집 → FIX loop (DeveloperPL 1차 진단 → ArchitectPL 최종 판정)
-통합 테스트: CI gate PASS 후 Orchestrator → IntegrationTestAgent (lane=integration, ADR-055):
+통합 테스트: **Epic 하위 전체 Story CI gate PASS 후 1회** Orchestrator → IntegrationTestAgent (lane=integration, ADR-055) — 상세는 §3.11:
              0. §8.6 Integration Test Contract 확인 (면제 Story이면 skip — phase:통합-테스트 부착 후 merge gate 진입)
              1. `docker-compose -f docker-compose.test.yml up -d`
              2. `pytest tests/integration/ --timeout=600` (전체 suite 동적 실행, regression PASS 확인)
@@ -517,6 +517,95 @@ FIX routing: DeveloperPL 1차 진단 (`gh run view` 출력 첨부) → Architect
 **Worktree dispatch**: 매 lane spawn 시 worktree 자동 생성 — 상세는 §3.5
 
 상세 분기 규칙은 CLAUDE.md "스폰 시퀀스" 섹션과 각 에이전트 md 참조.
+
+### §3.11 Epic 통합테스트 게이트 (ADR-055 Amendment 2)
+
+**트리거 조건**: Epic 하위 `stories_in_scope` 모든 Story의 CI gate PASS 확인.
+단일 Story(non-Epic)는 해당 Story CI PASS 직후 동일 규칙 적용.
+
+#### §3.11.1 IntegrationTestAgent spawn 패킷
+
+```yaml
+agent: IntegrationTestAgent (codeforge-test plugin, Sonnet tier)
+context_packet:
+  epic_key: <EPIC-KEY>
+  stories_in_scope: [<STORY-KEY-1>, <STORY-KEY-2>, ...]
+  story_8_6_contracts:
+    - story_key: <KEY>
+      contract_path: "docs/stories/<KEY>.md#§8.6"
+  baseline_suite_path: <consumer overlay integration_test.baseline_suite_path>
+  required_env_keys: <consumer overlay integration_test.required_env_keys>
+  docker_compose_test_path: "docker-compose.test.yml"
+```
+
+#### §3.11.2 IntegrationTestAgent 실행 순서
+
+1. **Deployability 검증** (실패 시 즉시 env_missing/infra_setup FIX 분기):
+   - `.env` 필수 키 존재 확인
+   - `docker-compose -f docker-compose.test.yml up --wait`
+   - DB 연결 테스트
+   - 각 서비스 health check endpoint 200 확인
+
+2. **Story Suite 자동생성**: 각 Story §8.6 계약 읽기 → `tests/integration/stories/<EPIC-KEY>/<STORY-KEY>/test_*.py` 생성 (story_key metadata 태깅)
+
+3. **Baseline Suite 실행**: `<baseline_suite_path>/` 전체 실행
+
+4. **Story Suite 실행**: `tests/integration/stories/<EPIC-KEY>/` 전체 실행
+
+5. **test-verdict-v2.1 패킷 생성** → Orchestrator에 반환
+
+#### §3.11.3 결과 라우팅
+
+| pl_recommendation | 처리 |
+|---|---|
+| `PASS` | Baseline 자동승격 → Epic State Ledger `integration_test.status = "pass"` → 보안테스트(opt-in) or Epic 완료 |
+| `FIX` | `responsible_stories` 의 각 Story → failure_type별 FIX loop (§결정 9) → FIX 완료 후 재spawn (max 3회) |
+| `ESCALATE_PACKET_INCOMPLETE` | §8.6 누락 → TestContractArchitectAgent 의뢰, docker-compose 부재 → InfraEngineerAgent 의뢰 → 보완 후 재spawn |
+
+#### §3.11.4 Baseline 자동승격 (PASS 시)
+
+```bash
+# Orchestrator inline 수행 (Epic state update 허용 구간)
+cp tests/integration/stories/<EPIC-KEY>/<STORY-KEY>/* tests/integration/baseline/
+git add tests/integration/baseline/
+git commit -m "test(baseline): <EPIC-KEY> Story Suite 자동승격 — N개 케이스 추가"
+```
+
+---
+
+### §3.12 Epic State Ledger (ADR-055 Amendment 2 §결정 8)
+
+Orchestrator는 Epic 진행 중 `.claude-work/epic-state/<EPIC-KEY>.yaml` 에 상태를 유지한다.
+
+#### 파일 경로 규약
+
+```
+.claude-work/epic-state/
+  CFP-NNN.yaml        # Epic 1개 = 파일 1개
+```
+
+#### Orchestrator 상태 업데이트 의무
+
+| 이벤트 | 업데이트 필드 |
+|---|---|
+| Epic 생성 | 파일 초기화 (`stories` 목록 + `status: pending`) |
+| Story lane 전환 | `stories[i].status`, `stories[i].current_lane` |
+| Story PR 생성 | `stories[i].pr_number` |
+| CI gate PASS | `stories[i].status = "ci_pass"` |
+| FIX loop 진입 | `stories[i].fix_count++` |
+| 통합테스트 시작 | `integration_test.status = "running"` |
+| 통합테스트 완료 | `integration_test.status`, `verdict_ref` |
+
+#### 세션 재시작 Resume 절차
+
+세션 개시 체크리스트(§1.1) Step 0 이후:
+
+1. `.claude-work/epic-state/` 디렉터리 스캔
+2. `integration_test.status != "pass"` 또는 `stories[*].status != "ci_pass"` 인 파일 존재 시 사용자에게 진행 중인 Epic 목록 표시 → "이 Epic을 이어서 진행할까요?" 확인
+3. 승인 시: `session_resume_hint` 읽어 다음 액션 결정 → 해당 Story/lane부터 재개
+4. 거부 시: 신규 작업 대기
+
+---
 
 ### 3.2 에이전트 프롬프트 표준 템플릿
 
