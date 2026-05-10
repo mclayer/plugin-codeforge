@@ -85,7 +85,6 @@ Phase 2 PR 생성 전 반드시 아래 2단계를 순서대로 실행한다.
 
 2. **Base branch 고정**: `gh pr create` 호출 시 반드시 `--base main` 명시.
    - `--base` 옵션 생략 금지 (default 추론에 의존하면 stale branch 지정 위험).
-   - stale upstream branch 감지 시 → **HALT** + Orchestrator 에스컬레이션.
 
 ## 구현 완료 → 구현 리뷰 레인 진입 흐름
 
