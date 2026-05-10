@@ -1,4 +1,5 @@
 ---
+kind: domain_fact
 type: domain-knowledge
 area: github-actions
 topic_slug: issue-event-trigger-semantics

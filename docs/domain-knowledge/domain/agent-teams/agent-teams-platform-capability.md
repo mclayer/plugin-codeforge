@@ -1,4 +1,5 @@
 ---
+kind: domain_fact
 type: domain-knowledge
 area: agent-teams
 topic_slug: agent-teams-platform-capability

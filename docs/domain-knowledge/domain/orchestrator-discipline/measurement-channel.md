@@ -1,4 +1,5 @@
 ---
+kind: domain_fact
 type: domain-knowledge
 area: orchestrator-discipline
 topic_slug: measurement-channel
