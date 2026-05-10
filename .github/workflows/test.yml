@@ -1,11 +1,4 @@
-# test.yml — 구현 테스트 workflow 템플릿 (CFP-367 / ADR-055)
-# Consumer 사용법: .github/workflows/test.yml로 복사 후 runner/path 수정
-#
-# CI gate 통과 조건:
-#   - unit-tests PASS
-#   - integration-tests PASS (docker-compose.test.yml 없으면 warning + skip)
-
-name: Tests
+name: test
 
 on:
   pull_request:
@@ -14,7 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  unit-tests:
+  overlay-hooks:
+    name: overlay/hooks (merge.py + YAML)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,46 +19,51 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Run unit tests
-        # Consumer: 경로를 자신의 구조에 맞게 수정 (예: tests/unit/, test/, src/tests/)
-        run: pytest tests/unit/ -v --tb=short
-
-  integration-tests:
-    runs-on: ubuntu-latest
-    needs: unit-tests      # unit 통과 후 실행
-    if: always()           # unit FAIL도 integration 독립 실행 (별도 리포팅)
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
-      - name: Check docker-compose.test.yml
-        id: check_compose
         run: |
-          if [ -f "docker-compose.test.yml" ]; then
-            echo "exists=true" >> $GITHUB_OUTPUT
-          else
-            echo "exists=false" >> $GITHUB_OUTPUT
-            echo "::warning::docker-compose.test.yml not found — integration tests skipped (§8.6 exempt or InfraEngineerAgent pending)"
-          fi
+          python -m pip install --upgrade pip
+          pip install pyyaml pytest
 
-      - name: Start test environment
-        if: steps.check_compose.outputs.exists == 'true'
-        run: docker-compose -f docker-compose.test.yml up -d --wait
+      - name: Run merge.py unit + E2E tests
+        run: pytest overlay/hooks/tests/ -v
 
-      - name: Run integration tests
-        if: steps.check_compose.outputs.exists == 'true'
-        # Consumer: timeout 초 단위로 환경에 맞게 조정, 경로도 자신의 구조로 수정
-        run: pytest tests/integration/ --timeout=300 -v --tb=short
+      - name: Validate example project.yaml files parse
+        run: |
+          for yml in examples/*/.claude/_overlay/project.yaml overlay/_overlay/project.yaml.example; do
+            echo "checking $yml"
+            python3 -c "import yaml; yaml.safe_load(open('$yml'))"
+          done
 
-      - name: Teardown test environment
-        if: always() && steps.check_compose.outputs.exists == 'true'
-        run: docker-compose -f docker-compose.test.yml down
+      - name: Smoke test regen-agents.sh against examples
+        run: |
+          for ex in examples/*/; do
+            echo "=== smoke: $ex ==="
+            (cd "$ex" && PLUGIN_ROOT="$GITHUB_WORKSPACE" bash "$GITHUB_WORKSPACE/overlay/hooks/regen-agents.sh")
+            ls "$ex/.claude/agents/" | wc -l
+          done
+
+      - name: Verify all core agent md have valid frontmatter
+        run: |
+          python3 -c "
+          import sys, yaml
+          from pathlib import Path
+
+          failed = []
+          for md in Path('agents').glob('*.md'):
+              raw = md.read_text(encoding='utf-8')
+              if not raw.startswith('---\n'):
+                  failed.append(f'{md}: no frontmatter')
+                  continue
+              try:
+                  fm_text = raw.split('\n---\n', 1)[0][4:]
+                  fm = yaml.safe_load(fm_text)
+                  assert isinstance(fm, dict), 'not a mapping'
+                  assert 'name' in fm, 'missing name'
+                  assert 'description' in fm, 'missing description'
+              except Exception as e:
+                  failed.append(f'{md}: {e}')
+
+          if failed:
+              print('\n'.join(failed))
+              sys.exit(1)
+          print(f'all {len(list(Path(\"agents\").glob(\"*.md\")))} core agents valid')
+          "
