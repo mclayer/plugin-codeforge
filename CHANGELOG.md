@@ -2,6 +2,11 @@
 
 `codeforge-develop` plugin 릴리스 이력.
 
+## [0.4.0] - 2026-05-10
+
+### Added
+- presets/docker-compose.test.yml: 통합테스트 격리 환경 템플릿 신규 (CFP-367 / ADR-055) — 3-service(app/test-db/wiremock) ephemeral 구성, InfraEngineerAgent §8.6 사용
+
 ## [0.3.0] - 2026-05-10
 
 ### Changed

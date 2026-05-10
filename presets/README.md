@@ -8,8 +8,9 @@ Preset은 **참조 레시피**. Consumer가 필요 시 수동으로 `.claude/_ov
 
 ```
 presets/
-├── README.md              # 이 파일
-└── webapp/                # 웹 애플리케이션 preset
+├── README.md                    # 이 파일
+├── docker-compose.test.yml      # 통합테스트 격리 환경 템플릿 (CFP-367 / ADR-055)
+└── webapp/                      # 웹 애플리케이션 preset
     ├── README.md
     └── agents/
         ├── BackendDeveloperAgent.md    (role: dev)
@@ -47,6 +48,19 @@ Plugin 업데이트로 preset 원본이 바뀌었을 때는 consumer가 직접 d
 diff ${CLAUDE_PLUGIN_ROOT}/codeforge/presets/webapp/agents/BackendDeveloperAgent.md \
      .claude/_overlay/agents/BackendDeveloperAgent.md
 ```
+
+## docker-compose.test.yml 사용법
+
+IntegrationTestAgent가 사용하는 통합테스트 격리 환경 템플릿. InfraEngineerAgent가 §8.6 environment_dependencies를 참고해 레포 루트에 복사 후 커스터마이즈:
+
+```bash
+cp ${CLAUDE_PLUGIN_ROOT}/codeforge-develop/presets/docker-compose.test.yml .
+```
+
+3 서비스 구성:
+- `app`: 테스트 대상 실제 애플리케이션 컨테이너 (static mock 금지)
+- `test-db`: 격리 PostgreSQL (운영 DB와 완전 분리, ephemeral)
+- `wiremock`: 외부 API WireMock stub (계약 기반, 실제 API 스펙 일치 필수)
 
 ## 신규 preset 기여
 
