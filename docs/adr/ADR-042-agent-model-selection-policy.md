@@ -20,6 +20,12 @@ amendment_log:
     summary: "Haiku 3번째 카테고리(mechanical pattern execution) 추가. InfraEngineerAgent·QADeveloperAgent·DataEngineerAgent Sonnet 4.6 → Haiku 4.5 pilot 전환. rollback 트리거 기준(30% FIX 증가/P0·P1 즉시) 및 governance 재-audit 트리거 규정."
     ref: null
     carrier_story: "cfp-360-haiku-pilot"
+  - amendment_id: 3
+    date: "2026-05-10"
+    status: applied
+    summary: "IntegrationTestAgent Sonnet tier 결정 (컴포넌트 경계 판단·외부 의존성 설계 포함)"
+    ref: ADR-055
+    carrier_story: cfp-367-integration-test-lane
 related_stories: []
 related_adrs:
   - ADR-009

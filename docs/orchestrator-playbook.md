@@ -3,7 +3,7 @@ title: Orchestrator Playbook
 status: active
 owner: Orchestrator (= 최상위 Claude 세션)
 created: 2026-04-23
-updated: 2026-04-26
+updated: 2026-05-10
 related:
   - CLAUDE.md
   - agents/RequirementsPLAgent.md
@@ -1078,6 +1078,7 @@ ADR-005 plugin-meta-na 패턴(§8/§9 lane 게이트 면제)으로 진행되는 
 | 구현 리뷰 iteration 종료 (ReviewPL packet return) | (no direct write — packet only) | CodeReviewPLAgent (codeforge-review, review-verdict-v3 pl_recommendation) |
 | 구현 리뷰 PASS/FIX verdict final write | Story §9.2 + GitHub comment [구현-리뷰] + phase transition + Story §12 row | **Orchestrator 단독** (CFP-61 / ADR-022 review-verdict 5-step step 4) |
 | 구현 테스트 종료 (CI gate) | Story §9.3 (`gh pr checks` 결과 — Orchestrator 직접 기록) | **Orchestrator 단독** (ADR-048 CI gate inline) |
+| 통합 테스트 종료 (IntegrationTestAgent) | Story §9 통합 테스트 섹션 append + `phase:보안-테스트` 전환 | Orchestrator 단독 |
 | 보안 테스트 iteration 종료 (ReviewPL packet return) | (no direct write — packet only, lanes.security_ai: true 시만) | SecurityTestPLAgent (codeforge-review, review-verdict-v3 pl_recommendation) |
 | 보안 테스트 PASS/FIX verdict final write | Story §9.4 + GitHub comment [보안-테스트] + gate:security-test-pass label + phase transition + Story §12 row | **Orchestrator 단독** (CFP-61 / ADR-022 review-verdict 5-step step 4) |
 | FIX 발생 | Story §10 FIX Ledger append | **Orchestrator 단독** (CFP-32 fix-event-v1 monopoly) |
@@ -1315,6 +1316,8 @@ mcp__github__list_issues(state='open', labels=['type:story'])
 | phase:구현-리뷰 | §9.2 블록 FIX | DeveloperPL 1차 진단 → ArchitectPLAgent 최종 판정 |
 | phase:구현-테스트 | §9.3 블록 없음 | `gh pr checks <PR_NUMBER> --watch` 재실행 (CI gate 재확인) |
 | phase:구현-테스트 | §9.3 블록 FAIL | DeveloperPL 1차 진단 → ArchitectPLAgent 최종 판정 |
+| phase:통합-테스트 | §9 통합 테스트 블록 없음 | IntegrationTestAgent 재스폰 |
+| phase:통합-테스트 | §9 통합 테스트 FAIL | DeveloperPL 1차 진단 → ArchitectPLAgent 최종 판정 |
 | phase:보안-테스트 | §9.4 블록 없음 | SecurityTestPLAgent 재스폰 (Claude/Codex 병렬, lanes.security_ai: true 시만) |
 | phase:보안-테스트 | §9.4 블록 FIX | DeveloperPL 1차 진단 → ArchitectPLAgent 최종 판정 |
 

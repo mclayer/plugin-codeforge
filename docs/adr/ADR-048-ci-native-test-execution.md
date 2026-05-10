@@ -11,7 +11,9 @@ related_adrs:
   - ADR-039  # Orchestrator subagent default
 supersedes: null
 superseded_by: null
-amends: ADR-055
+amends: null
+amended_by: ADR-055
+amended_date: "2026-05-10"
 ---
 
 # ADR-048: CI-native 테스트 실행 — TestAgent 제거 + SecurityTestPL opt-in

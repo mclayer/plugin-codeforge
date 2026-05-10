@@ -54,6 +54,7 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 | 설계 | codeforge-design | 8 (PL + ArchitectAgent chief + 6 deputy) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-design/blob/main/CLAUDE.md) |
 | 설계리뷰 / 구현리뷰 / 보안테스트 | codeforge-review | 5 (3 PL + 2 worker) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-review/blob/main/CLAUDE.md) |
 | 구현 | codeforge-develop | 5 (PL + QADev + 3 role:dev core) + preset/overlay 동적 | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-develop/blob/main/CLAUDE.md) |
+| 통합테스트 | codeforge-test | 1 (IntegrationTestAgent) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-test/blob/main/CLAUDE.md) |
 | Cross-cutting | codeforge-pmo | 2 (PMOAgent + GitOpsAgent) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/CLAUDE.md) |
 
 각 lane plugin 의 agent 역할·동작은 해당 plugin CLAUDE.md SSOT. 본 표는 composition map 만.
@@ -68,7 +69,7 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 > **(선택) Stage 0 — pre-Issue brainstorming**: 비-trivial Story 는 `codeforge:brainstorm` (codeforge 프로젝트) 또는 `superpowers:brainstorming` (generic) 으로 사전 scope 정리 후 Issue Form 제출 권장 ([ADR-034 + Amendment 1](docs/adr/ADR-034-pre-issue-brainstorming-stage.md) · [playbook §1.2.0](docs/orchestrator-playbook.md)). `codeforge:brainstorm` = Requirements 에이전트 4종 병렬 컨텍스트 + scope_manifest 초안 자동 생성 (opt-in Phase 0). CI 강제 없음.
 
-## 레인 5개 · 단계 정의
+## 레인 6개 · 단계 정의
 
 ```
 요구사항 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → [CI gate] → 통합테스트
@@ -104,7 +105,7 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 | 구현 리뷰 | DeveloperPL ready | §9 (CodeReviewPL Claude+Codex 종합) | 3 |
 | CI gate | 구현 리뷰 PASS | (Orchestrator inline `gh pr checks` polling — 30분 timeout) | ∞ |
 | 통합테스트 | CI gate PASS | `tests/integration/<story-key>/` 신규 테스트 + 전체 suite 동적 실행 (IntegrationTestAgent) | 3 |
-| 보안 테스트 **(opt-in: lanes.security_ai: true)** | CI gate PASS | §9 (SecurityTestPL 2-layer: GitHub native + Claude+Codex) + `gate:security-test-pass` (+ `gate:live-entry-pass` if Live touching, ADR-030) | ∞ |
+| 보안 테스트 **(opt-in: lanes.security_ai: true)** | 통합테스트 PASS | §9 (SecurityTestPL 2-layer: GitHub native + Claude+Codex) + `gate:security-test-pass` (+ `gate:live-entry-pass` if Live touching, ADR-030) | ∞ |
 
 세부 spawn sequence · branch logic · FIX 진단 흐름 SSOT: [playbook §3](docs/orchestrator-playbook.md) + 각 lane plugin CLAUDE.md.
 
