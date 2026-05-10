@@ -20,7 +20,7 @@ CFP-20 (`docs/orchestrator-playbook.md` §14, `.claude-work/progress/<KEY>.md` d
 
 추가 사용자 directive (2026-05-08) — Sonnet decider 는 codeforge 가 자동 dispatch 하는 도구가 아닌, 사용자 임의 호출 전용 도구. ADR-022 deprecate 예정 (CFP-134 carrier). 본 ADR 는 codeforge 자동 dispatch 가정하지 않음.
 
-## 결정 요약 (7 결정)
+## 결정 요약 (8 결정 — Amendment 1: §결정 8 추가 2026-05-11)
 
 ### 결정 1 — TodoWrite 를 CFP-20 §14.7 render flow 의 3번째 channel 로 추가
 
@@ -57,6 +57,27 @@ cross-plugin generalization (lane plugins 에 동일 protocol 적용) 은 별도
 TodoWrite 갱신 실패 시 lane primary work 미차단 — warning 으로 surface. update 가 실패하거나 skipped 되어도 lane 은 계속 진행. 사용자 confirmation / polling / acknowledgment wait 도입 없음 (ADR-029 stop discipline 정책 무영향).
 
 Sonnet decider / Codex review 등 외부 도구는 codeforge 가 자동 dispatch 하지 않음 — 사용자 임의 호출 전용. 본 ADR sample / vocabulary 는 Sonnet decider 자동 dispatch 가정하지 않음. 원인 판정 / FIX synthesis 은 PL agent (DesignReviewPL / CodeReviewPL / SecurityTestPL) 의 pl_recommendation 으로 표현.
+
+### 결정 8 — TodoWrite 호출 시도 의무 (non-skippable attempt / Amendment 1)
+
+§결정 7 은 시도 후 실패를 다루며, 시도 자체의 의무를 명시하지 않았다. 이 gap 이 Amendment 1 의 동인.
+
+**시도 의무 (non-skippable)**:
+Orchestrator 는 아래 6개 이벤트 각각에서 TodoWrite 갱신을 **반드시 시도**해야 한다:
+lane 진입 / lane PASS / lane FIX 검출 / FIX 원인 판정 / lane 재진입 / Story 완료.
+"시도를 건너뛰는 것" 은 §결정 7 의 best-effort 허용 범위 밖이다.
+
+**전제 조건 — deferred tool 스키마 선제 로드 (non-skippable)**:
+TodoWrite 는 deferred tool — `ToolSearch("select:TodoWrite")` 로 스키마를 먼저 fetch 해야 호출 가능.
+Orchestrator 는 세션 시작 시 (§1.1 checklist 0i) 선제 수행. 로드 실패 시 재시도 1회.
+재시도 실패 시 §결정 7 경로(warning only) 로 폴백.
+
+**실패 처리 — §결정 7 그대로 유지 (non-blocking)**:
+시도 후 실패는 §결정 7 이 처리 — warning, lane primary work 미차단.
+"시도를 건너뛰는 것" 과 "시도했으나 실패한 것" 은 별개의 위반이다.
+
+carrier_story: CFP-375
+Amendment 날짜: 2026-05-11
 
 ## 대안 검토
 
