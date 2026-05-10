@@ -169,7 +169,7 @@ planned_claude_md_sections:
 <!-- /scope_manifest -->
 ```
 
-**Progress visualization via TodoWrite (ADR-038, CFP-274)**: TodoWrite 를 CFP-20 §14.7 render flow 의 3번째 channel 로 추가. 4 marker (⏳ 🔄 ✅ ❌) hierarchical (lane row + 2-space indent agent sub-row) 렌더 표준. ❌ 는 검출 lane 이 아닌 원인 lane 에 표시 (검출 lane 은 ✅ + content `FIX-N detected`). Single-Story 모드 (multi-Story 별도 CFP). Lane plugin 변경 0건 (Writer 단독 invariant 유지). multi-row in_progress 의도적 허용 (codeforge 병렬 agent 모델 — wrapper-specific deviation). 상세: [ADR-038](docs/adr/ADR-038-progress-visualization-todowrite.md), [playbook §14](docs/orchestrator-playbook.md).
+**Progress visualization via TodoWrite (ADR-038, CFP-274)**: TodoWrite 를 CFP-20 §14.7 render flow 의 3번째 channel 로 추가. 4 marker (⏳ 🔄 ✅ ❌) hierarchical (lane row + 2-space indent agent sub-row) 렌더 표준. ❌ 는 검출 lane 이 아닌 원인 lane 에 표시 (검출 lane 은 ✅ + content `FIX-N detected`). Single-Story 모드 (multi-Story 별도 CFP). Lane plugin 변경 0건 (Writer 단독 invariant 유지). multi-row in_progress 의도적 허용 (codeforge 병렬 agent 모델 — wrapper-specific deviation). 상세: [ADR-038](docs/adr/ADR-038-progress-visualization-todowrite.md), [playbook §14](docs/orchestrator-playbook.md). 호출 시도 non-skippable + 실패 non-blocking 분리: [ADR-038 Amendment 1 §결정 8](docs/adr/ADR-038-progress-visualization-todowrite.md).
 
 ### Sonnet Decider (Deprecated — CFP-134 / ADR-035, 2026-05-08)
 
