@@ -1,5 +1,5 @@
 ---
-key: ADR-056
+adr_number: 56
 title: 요구사항 레인 코드 컨텍스트 3 에이전트 추가
 status: Accepted
 category: agent-design
@@ -9,11 +9,9 @@ related_adrs:
   - ADR-042
   - ADR-046
   - ADR-054
-related_files:
-  - plugin-codeforge-requirements/agents/ChangeImpactAgent.md
-  - plugin-codeforge-requirements/agents/FeasibilityAgent.md
-  - plugin-codeforge-requirements/agents/ContinuityAgent.md
-  - templates/story-page-structure.md
+supersedes: null
+superseded_by: null
+amends: null
 ---
 
 # ADR-056: 요구사항 레인 코드 컨텍스트 3 에이전트 추가
@@ -81,8 +79,12 @@ RequirementsPLAgent가 6개 관점 dedup·통합 수행.
 - Consumer overlay로 ChangeImpactAgent·FeasibilityAgent의 src/** 탐색 범위 제한 가능 여부 — CFP 후속 검토
 - codeforge-requirements version 0.2.1 → 0.3.0 bump + marketplace sync (ADR-016 의무)
 
-## 관련 문서
+## 관련 파일
 
-- [CFP-374 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/requirements/specs/2026-05-11-requirements-code-context-agents-design.md)
 - [ADR-042](ADR-042-agent-model-selection-policy.md) — 모델 티어 정책
 - [ADR-046](ADR-046-researcher-role-redefinition.md) — Researcher Opus tier 근거
+- [CFP-374 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/requirements/specs/2026-05-11-requirements-code-context-agents-design.md)
+- [ChangeImpactAgent](https://github.com/mclayer/plugin-codeforge-requirements/blob/main/agents/ChangeImpactAgent.md)
+- [FeasibilityAgent](https://github.com/mclayer/plugin-codeforge-requirements/blob/main/agents/FeasibilityAgent.md)
+- [ContinuityAgent](https://github.com/mclayer/plugin-codeforge-requirements/blob/main/agents/ContinuityAgent.md)
+- [story-page-structure.md](../../templates/story-page-structure.md)
