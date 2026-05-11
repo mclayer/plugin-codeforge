@@ -5,6 +5,53 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.16.0] - 2026-05-12
+
+### Added (CFP-423 — Python script-writing convention)
+
+bash heredoc 안 Python script 작성의 escape trap 차단. CFP-418 FIX iter 1 root cause (43 file regression) carrier.
+
+- `docs/adr/ADR-061-python-script-writing-convention.md` (NEW, 260L) — 8 결정 정책 본문
+  1. 외부 `.py` 파일 의무 (`Write` tool → `python file.py`, > 5줄 또는 backslash escape 포함 시)
+  2. 짧은 `python -c` 허용 범위 (5줄 이내 + backslash 무관)
+  3. heredoc 금지 영역 (regex backref / byte escape / multiline string with backslash)
+  4. `<<'EOF'` single-quoted 한계 명시 (Windows Git Bash / MSYS2 / WSL 환경 backslash escape inconsistency)
+  5. Sanity check 3종 의무 (diff inspection / lint re-run / sample file Read)
+  6. Reusable backfill helper 권장 (장기 follow-up, `scripts/lib/`)
+  7. ADR-039 정합 — script work 도 subagent default
+  8. Self-application — `is_transitional: false` (permanent policy)
+- `CLAUDE.md` "ADR" 섹션 — ADR-061 cross-ref 1 단락 추가 (ADR-058 sunset criteria 직후, ADR-060 evidence-enforceable framework 직전)
+- `docs/adr/ADR-RESERVATION.md` — `| 61 | CFP-423 | active | 2026-05-12 |` row append
+
+### Why
+
+CFP-418 Phase 2 FIX iter 1: bash heredoc `<<'PYEOF'` (single-quoted) 가 Python `\\1\\2` 를 `\1\2` (octal escape, SOH+STX 제어문자) 로 변환하여 43 ADR file 의 `## 관련 파일` heading 손실. 동일 trap이 향후 backfill/migration script에서 재발화 위험. evidence-enforceable framework (ADR-060) 의 doc section schema lint 가 trap 감지 — CFP-389 framework 효과 confirmed.
+
+### Compatibility
+
+- `is_transitional: false` (permanent policy carrier — ADR-058 self-application 정합)
+- ADR-039 정합 — script work도 subagent default
+- ADR-054 §결정 4 (신규 ADR 도입 = full-lane) 정합
+- backward compatible — 기존 script 영향 없음 (신규 작성 가이드 only)
+
+## [5.15.0] - 2026-05-11
+
+### Added (CFP-393 — Story 1 of CFP-388 Epic, retroactive catch-up)
+
+evidence-enforceable framework 첫 non-sunset application — ADR-057 (Orchestrator Opus mandate + Sonnet→Opus fallback) Amendment 2 + fallback rate KPI dashboard registry entry.
+
+- `docs/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md` — Amendment 2: sunset criteria 본문 강화 (CFP-388 framework 첫 적용 사례)
+- `docs/evidence-checks-registry.yaml` — 두 번째 entry (fallback rate KPI, ADR-057 sunset criteria measurement)
+- marketplace.json 5.15.0 sync 완료 (이전 PR에서)
+
+### Why
+
+ADR-058 (CFP-387) sunset criteria 정책의 첫 non-sunset framework application. ADR-057 Sonnet→Opus fallback rate 의 정량 측정 infra 도입 — `[rate-limit-fallback:sonnet→opus]` 태그 grep + 월간 집계.
+
+### Compatibility
+
+본 entry 는 plugin.json 5.15.0 catch-up — 본 PR 이전에 marketplace 가 5.15.0 으로 sync 되었으나 plugin.json + CHANGELOG.md 가 미반영되었던 drift 정정.
+
 ## [5.14.0] - 2026-05-11
 
 ### Added (CFP-411 — Story 2 of Epic CFP-390)
