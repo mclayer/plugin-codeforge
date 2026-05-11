@@ -1,12 +1,18 @@
 # Team spec — 요구사항 lane
-# CFP-137 / ADR-044 §결정 2 SSOT
+# CFP-137 / ADR-044 §결정 2 SSOT (dispatch_mode SSOT)
+# CFP-411 / ADR-052 Amendment 1 — Codex worker entry 신설 + dispatch_mode [default, auto_on_divergence]
+#                                  + divergence_detection 블록 + adversarial-debate dispatch_pattern entry
 # Trigger: story-init.yml Action (Issue Forms 제출) 후 Orchestrator 가 RequirementsPL spawn
 # Activation: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 (env=0 시 fallback to ADR-039 default subagent context)
 
 lane: requirements
 description: |
-  요구사항 lane — RequirementsPL (lead) + 3 sub-agent (Domain + Analyst + Researcher) 병렬.
+  요구사항 lane — RequirementsPL (lead) + 3 sub-agent (Domain + Analyst + Researcher) 병렬
+  + Codex worker (proactive check producer, ADR-052 touchpoint #4).
   3 sub-agent 모두 non-skippable (codeforge-requirements plugin SSOT). PL 이 dedup + 상충 조정.
+  Codex worker = §1~§6 완료 직후 1회 발화 (proactive check) + RequirementsPL semantic divergence 감지 시
+  debate-protocol-v1 multi-round 자동 발동 (ADR-052 Amendment 1 — touchpoint #4 multi-round 격상).
+  PL final synthesis = Story §2/§5/§6 self-write (review-verdict packet producer 아님 — synthesis lane).
 
 teammates:
   - name: RequirementsPLAgent
@@ -37,7 +43,36 @@ teammates:
     spawn_mode: default
     dispatch_mode: default
 
-dispatch_pattern: parallel  # 3 sub-agent 동시 spawn
+  - name: CodexProactiveCheckAgent
+    role: worker
+    system_prompt_path: agents/codex-proactive-check.md  # codeforge-requirements plugin sibling sync (Phase 2 follow-up PR scope)
+    model: gpt-5-codex  # codex@openai-codex plugin 의 codex CLI runtime
+    spawn_mode: default
+    activation_condition: requirements_synthesis_complete  # §1~§6 self-write 완료 직후 발화 (ADR-052 touchpoint #4)
+    # CFP-411 / ADR-052 Amendment 1 — dispatch_mode 배열 표기 (우선순위: default > auto_on_divergence > user_request_only)
+    # default = §1~§6 완료 직후 1회 proactive check 발화 (touchpoint #4 자동 활성, opt-in 없음 — ADR-052 D2)
+    # auto_on_divergence = RequirementsPL semantic divergence 감지 시 debate-protocol-v1 multi-round 자동 발동
+    dispatch_mode: [default, auto_on_divergence]
+    divergence_detection:
+      surface: pl_semantic_judgment  # RequirementsPL LLM 의미 판정 (structured surface 없음 — synthesis lane 특성)
+      criteria: [ac_semantic_diff, edge_case_semantic_diff, why_interpretation_diff]
+      anchor_field: pl_assigned_anchor_id  # PL 이 §<section-ref> 형태로 할당 (review-verdict-v4 패턴 재사용)
+      anchor_format: "§<section-ref>"  # 예: §5-AC-3, §5.2-EC-2, §2-bound-1, §6-source-2
+
+dispatch_pattern:
+  - name: parallel
+    description: "3 sub-agent (Domain + Analyst + Researcher) 동시 spawn"
+  - name: post-synthesis-codex-check
+    description: "§1~§6 완료 직후 Codex proactive check 1회 발화 (touchpoint #4 default 동작)"
+    trigger: RequirementsPL §2/§5/§6 self-write 완료
+  - name: adversarial-debate
+    description: "Multi-round adversarial debate (debate-protocol-v1) — semantic divergence 감지 시 자동 발동"
+    trigger: RequirementsPL LLM 이 Codex proactive check 결과 vs 자기 synthesis 간 semantic divergence 판정
+    protocol: debate-protocol-v1
+    rounds: { min: 3, max: 5, soft_default: 4 }
+    termination: pl_llm_judgment OR user_arbitration
+    transcript_persistence: story_section_9
+
 worktree_layout:
   per_teammate: false  # 요구사항 lane = doc-only, 단일 worktree 충분
   base_worktree: cfp-NNN
@@ -49,6 +84,9 @@ hook_subscriptions:
 
 measurable_verification:
   parallelization: "§14 Lane Evidence 의 3 sub-agent row spawned_at diff < 60s (ADR-044 §결정 5)"
+  post_synthesis_codex_check: "§14 Lane Evidence 의 CodexProactiveCheckAgent row spawned_at > 3 sub-agent end timestamp (sequence 검증)"
+  adversarial_debate: "debate-protocol-v1 transcript Story §9 inline append + dialog_rounds_count >= 3 (min cap, ADR-059 §결정 1 정합). FIX 시 §10 FIX Ledger debate_artifact_ref 채움 (fix-event-v1 1.1 정합)"
 
 env_divergent_fallback:
-  env_0_behavior: "Orchestrator 가 PL 1개만 spawn → PL 이 1차 sub-agent (Domain) 호출 후 return, Orchestrator 재 spawn 으로 다음 sub-agent. 3-round Orchestrator round-trip 으로 fallback (continuous dialog 부재)."
+  env_0_behavior: "Orchestrator 가 PL 1개만 spawn → PL 이 1차 sub-agent (Domain) 호출 후 return, Orchestrator 재 spawn 으로 다음 sub-agent. 3-round Orchestrator round-trip 으로 fallback (continuous dialog 부재). §1~§6 완료 후 Orchestrator 가 CodexProactiveCheckAgent subagent one-shot spawn (post-synthesis check)."
+  env_0_adversarial_debate: "PL semantic divergence 판정 시 PL 이 Round dispatch 를 Orchestrator round-trip 으로 수행 (매 라운드 worker subagent one-shot spawn + transcript 누적 입력). 토큰 비용 증가 (cache 미적용 — round 간 cold start). PL 자체가 round counter 관리 + Story §14 free-form event 컬럼에 debate_round_N 기록. max 5 라운드 cap = 비용 폭증 차단 forcing function (5 × 2 worker × ~5K = ~50K token, ADR-059 §결정 1 token budget 정합)."
