@@ -26,6 +26,8 @@ Lane internal · per-lane spawn detail · severity rule · GitHub workflow subse
 
 세션 시작 직후, 모든 작업보다 먼저 의존성 노출·설치·인증 상태 확인. 자동 복구 가능한 것은 즉시 복구, 불가능한 것은 사용자에게 요구. 복구 완료 전까지 **모든 작업 중단**.
 
+**Orchestrator 모델 필수 확인**: Claude Code 세션 모델이 `claude-opus-4-7` (Opus)인지 확인. Sonnet 또는 Haiku 세션에서 codeforge 실행 시 즉시 중단 → 사용자에게 Opus 세션으로 재시작 요청. `/fast` 토글 또는 직접 Opus 모델 선택. Consumer overlay로 축소 불가 ([ADR-057](docs/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md)).
+
 **MCP 서버 (1종)**: `github` — Issue/PR/sub-issue/comment·label·milestone 각 lane plugin self-write; `docs/{change-plans,adr,domain-knowledge,retros}/**` 직접 write 는 owner agent (CFP-26 Phase 0a)
 
 **GitHub 도구 우선순위**: 모든 GitHub 작업(Issue·PR·comment·sub-issue·repo file write)은 `mcp__github__*` 도구 우선 사용. `gh` CLI는 MCP 미커버 영역(`milestone CRUD` / `Discussions` / `GraphQL` / `label 부트스트랩 스크립트`)에서만 fallback. MCP 미노출 시 gh 로 즉시 우회 금지 — 사용자에게 `/mcp` 재인증 요청 후 대기.
@@ -114,6 +116,15 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 세부 spawn sequence · branch logic · FIX 진단 흐름 SSOT: [playbook §3](docs/orchestrator-playbook.md) + 각 lane plugin CLAUDE.md.
 
 ## 오케스트레이션 규칙
+
+### Sonnet subagent rate-limit → Opus fallback (ADR-057)
+
+Orchestrator가 `model: sonnet` subagent spawn 결과로 rate-limit 에러를 수신하면:
+1. 동일 입력 패킷으로 `model: opus` 재spawn (1회 한정)
+2. 재spawn 성공 시 정상 진행 (§14 Lane Evidence에 `[rate-limit-fallback:sonnet→opus]` 태그 추가)
+3. Opus도 rate-limit 실패 시 사용자에게 상황 통지 후 대기 (자동 재시도 금지)
+
+적용 대상 Sonnet agent: DeveloperAgent · BackendDeveloperAgent · FrontendDeveloperAgent · IntegrationTestAgent · StatefulTestAgent · ChangeImpactAgent · CodebaseMapperAgent · RefactorAgent (현재 Sonnet 유지 agent 전체).
 
 ### Lane 진입 시 skill 호출 의무
 
