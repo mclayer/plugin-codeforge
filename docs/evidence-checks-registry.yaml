@@ -6,7 +6,7 @@
 # parallel-edit policy: append-only (docs/parallel-work/section-ownership.yaml)
 schema_version: "1.0"
 introduced_by: CFP-389
-last_updated: 2026-05-11
+last_updated: 2026-05-11  # CFP-393 entry append (rate-limit-fallback-rate)
 
 entries:
   - name: adr-sunset-criteria
@@ -39,4 +39,32 @@ entries:
     introduced_by: CFP-389
     owner_adr: ADR-058
     carrier_adr: ADR-060
+    status: Active
+
+  - name: rate-limit-fallback-rate
+    description: |
+      ADR-057 §결정 2 sunset gate measurement — 월간 Sonnet spawn 총 카운트 (분모) +
+      §14 Lane Evidence `transcript` 필드의 `[rate-limit-fallback:sonnet→opus]` 태그
+      발화 카운트 (분자) → 3 month rolling window fallback rate. runtime cron metric
+      pattern (vs static lint, 첫 entry `adr-sunset-criteria` 와 patterns 대비) — advisory
+      dashboard, no PR block. framework 첫 non-sunset application (CFP-388 / ADR-060
+      §결정 12 CFP-C carry). sample size sufficient sentinel (월 < 50 spawn 환경 = N/A).
+    detect_command: bash scripts/measure-rate-limit-fallback.sh
+    workflow: templates/github-workflows/rate-limit-fallback-kpi.yml
+    current_tier: warning  # advisory dashboard, no PR block — semantic = "warning mode 의 runtime metric extension"
+    # bypass_label: omit — runtime metric pattern 에서 의미 부적용
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      # 본 entry 의 promotion 의미 = lint warning→blocking promotion 아닌,
+      # sample size sufficient 도달 시 ADR-057 §결정 2 sunset gate measurement.
+      # pr_cumulative_min=0 = promotion semantic 부적용 표기.
+      pr_cumulative_min: 0
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - kpi_dashboard_3month_window_evidence  # sunset 판정 carrier PR 의 산출물 (별도 carrier)
+    # modal_anti_pattern_dictionary: omit — lint 가 모달 어휘 검사 미포함
+    introduced_by: CFP-393
+    owner_adr: ADR-057           # 정책 ADR — fallback rate sunset gate owner
+    carrier_adr: ADR-060         # framework carrier (CFP-388 / ADR-060 §결정 12 CFP-C)
     status: Active

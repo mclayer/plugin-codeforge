@@ -1,0 +1,9 @@
+{
+  "measured_at": null,
+  "window_months": 3,
+  "sonnet_spawn_total": 0,
+  "fallback_count": 0,
+  "fallback_rate_percent": null,
+  "sample_size_sufficient": false,
+  "gate_status": "pending"
+}

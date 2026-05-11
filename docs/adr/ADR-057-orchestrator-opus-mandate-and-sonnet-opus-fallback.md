@@ -13,9 +13,14 @@ amendment_log:
     date: "2026-05-11"
     scope: "is_transitional 신설 + 해소 기준 섹션 추가 (Amendment 1)"
     sunset_justification: "최초 transitional 분류 + sunset 기준 신설 — ADR-058 §결정 1·2·3·5 self-application 첫 사례 (CFP-387 정책 첫 적용). 본 Amendment 1 이전에는 sunset 기준 부재 → ratchet anti-pattern visibility 발화 채널이 처음 열림. 기존 정책 (결정 1·2·3) 변경 0건, 종료 조건만 명시."
+  - by: "CFP-393"
+    date: "2026-05-11"
+    scope: "Sunset gate 2 (결정 2 해제) measurement contract 강화 + KPI dashboard reference (Amendment 2). 분모 / 분자 / sample size sufficient sentinel / 측정 단위 / window 명시. 기존 정책 (결정 1·2·3) 본문 변경 0건."
+    sunset_justification: "Amendment 1 이 결정 2 sunset gate 를 declaration form 으로 정의 — `월 50+ Sonnet spawn 환경 3개월 연속 fallback < 1%`. 본 Amendment 2 는 해당 declaration 의 mechanical realization (KPI dashboard infrastructure carrier) 만 추가, sunset criteria 자체 변경 0건. sunset 효력 = unchanged (Amendment 1 시점과 동일 — 측정 시작 시점만 본 Amendment 2 merge 이후로 명시화). ADR-060 §결정 12 (CFP-C 잠정 = 본 Amendment 2 + KPI dashboard, framework 첫 non-sunset application) carry. ADR-058 §결정 5 (Amendment 시 sunset_justification 의무) self-application — 본 row 자체가 그 정합."
 related_stories:
   - CFP-379
   - CFP-392
+  - CFP-393
 related_adrs:
   - ADR-042
   - ADR-039
@@ -110,11 +115,13 @@ Sonnet 유지 + fallback 적용 대상: DeveloperAgent · BackendDeveloperAgent 
 
 ### Sunset gate 2 — 결정 2 (Sonnet → Opus rate-limit fallback) 해제 조건
 
+> **Amendment 2 (CFP-393, 2026-05-11)** 가 본 gate 의 measurement contract 를 mechanical 화. KPI dashboard infrastructure = `scripts/measure-rate-limit-fallback.sh` + `templates/github-workflows/rate-limit-fallback-kpi.yml` + `docs/kpi/rate-limit-fallback.json` + `docs/evidence-checks-registry.yaml` 두 번째 entry `rate-limit-fallback-rate`. 본 표의 measurement 기준은 Amendment 2 시점에 정량 정의되었다. gate 자체 (≥ 50 spawn / month / 3개월 연속 / < 1%) 변경 0건.
+
 | 항목 | 내용 |
 |---|---|
-| **metric** | 월 50회 이상 Sonnet subagent spawn 발생 환경에서 3개월 연속 rate-limit fallback 발생률 < 1%. 분자 = `[rate-limit-fallback:sonnet→opus]` 태그 발화 건수 / 분모 = 월간 Sonnet subagent spawn 총 건수. minimum sample size gate (월 < 50 spawn 환경 = 측정 데이터 부족, gate 발화 보류 — zero division 회피). |
-| **who** | GitOpsAgent (KPI dashboard aggregator — CFP-393 Story-2 구현 예정) + Orchestrator (월간 §14 Lane Evidence aggregation self-report) |
-| **how** | §14 Lane Evidence `[rate-limit-fallback:sonnet→opus]` 태그 발화 카운트 + 월간 Sonnet spawn 총량 카운트 → `scripts/measure-rate-limit-fallback.sh` (잠정, CFP-393 Story-2 carry) 가 dashboard 출력. 3개월 rolling window 누적. 미달 시 본 §결정 2 archive 의무 (별도 carrier Amendment 로 sunset_justification 명시). |
+| **metric** | 월 50회 이상 Sonnet subagent spawn 발생 환경에서 3개월 연속 rate-limit fallback 발생률 < 1%. 분자 = §14 Lane Evidence `transcript` 필드의 `[rate-limit-fallback:sonnet→opus]` 태그 발화 건수 / 분모 = 월간 Sonnet 잔류 agent 5종 (ADR-057 §결정 3 + ADR-042 Amendment 4 SSOT — DeveloperAgent · BackendDeveloperAgent · FrontendDeveloperAgent · IntegrationTestAgent · StatefulTestAgent) 의 spawn row 카운트. 측정 단위 = calendar month UTC (half-open `[month-N-start, month-N+1-start)`). minimum sample size gate (월 < 50 spawn 환경 = `sample_size_sufficient: false`, gate 발화 보류 — zero division 회피 + 거짓 PASS/FAIL 신호 차단). |
+| **who** | `templates/github-workflows/rate-limit-fallback-kpi.yml` (monthly cron, 1일 00:00 UTC — Amendment 2 신설) + Orchestrator (§14 Lane Evidence row 작성 시 `[rate-limit-fallback:sonnet→opus]` 태그 부착 의무 — CLAUDE.md "Sonnet subagent rate-limit → Opus fallback (ADR-057)" 섹션 verbatim). |
+| **how** | (1) workflow 가 `scripts/measure-rate-limit-fallback.sh` 실행 → wrapper `docs/stories/**` + internal-docs `<plugin-folder>/stories/**` 양쪽의 §14 Lane Evidence scan → 3개월 rolling window 의 분모 / 분자 집계 → `docs/kpi/rate-limit-fallback.json` 갱신 (auto-PR, ADR-024 §결정 6 정합). (2) `gate_status` enum = `pending` / `sample_insufficient` / `on_track` / `threshold_violated`. 3개월 모두 `on_track` 충족 시 ADR-057 §결정 2 sunset 가능 (별도 carrier — ADR-057 Amendment N 또는 후속 CFP). (3) `threshold_violated` 시 workflow 가 Issue auto-open (label = `codeforge-kpi-alert`). (4) registry entry `rate-limit-fallback-rate` (`current_tier: warning`) — advisory dashboard, PR block 없음. 미달 시 본 §결정 2 archive 의무 (별도 carrier Amendment 로 sunset_justification 명시). |
 
 ### Sunset 발화 시 처리 절차
 
@@ -145,11 +152,59 @@ Sonnet 유지 + fallback 적용 대상: DeveloperAgent · BackendDeveloperAgent 
 - §결정 7 (보안 ADR default permanent) → 본 Amendment 미해당 (ADR-057 = governance / Team & Process 계열)
 - §결정 8 (DesignReview lane 임시 운영 문구 — manual gate, CFP-B CI lint 까지) → 본 Amendment 의 DesignReview lane 검증 trigger
 
+## Amendment 2 (2026-05-11) — CFP-393 — KPI dashboard reference + measurement contract 강화
+
+### 변경 사항
+
+1. **KPI dashboard infrastructure 신설 (CFP-388 framework 첫 non-sunset application)**:
+   - `scripts/measure-rate-limit-fallback.sh` — §14 Lane Evidence aggregator (wrapper `docs/stories/**` + internal-docs `<plugin-folder>/stories/**` 양쪽 scan, monthly window, idempotent + offline runnable).
+   - `templates/github-workflows/rate-limit-fallback-kpi.yml` — monthly cron (`0 0 1 * *` UTC) + `workflow_dispatch:` (manual). aggregator 실행 → `docs/kpi/rate-limit-fallback.json` 갱신 (auto-PR, ADR-024 §결정 6 정합) → threshold 위반 시 Issue auto-open (label `codeforge-kpi-alert`).
+   - `docs/kpi/rate-limit-fallback.json` — 신규 seed file. JSON schema = `{ measured_at, window_months: 3, sonnet_spawn_total, fallback_count, fallback_rate_percent, sample_size_sufficient, gate_status }`.
+   - `docs/evidence-checks-registry.yaml` 두 번째 entry = `rate-limit-fallback-rate` (`current_tier: warning`, owner_adr = ADR-057, carrier_adr = ADR-060).
+
+2. **Sunset gate 2 measurement contract 강화 (위 § "Sunset gate 2" 표 갱신)**:
+   - **분모 명시**: Sonnet 잔류 agent 5종 (ADR-057 §결정 3 + ADR-042 Amendment 4 SSOT — DeveloperAgent · BackendDeveloperAgent · FrontendDeveloperAgent · IntegrationTestAgent · StatefulTestAgent) 의 §14 row spawn 카운트.
+   - **분자 명시**: §14 `transcript` 필드의 `[rate-limit-fallback:sonnet→opus]` 태그 발화 row 카운트.
+   - **측정 단위 명시**: calendar month UTC, half-open interval `[month-N-start, month-N+1-start)`.
+   - **window 명시**: 3 month rolling.
+   - **sample size sufficient sentinel**: 월간 분모 < 50 = `sample_size_sufficient: false` + `gate_status: sample_insufficient` + Issue auto-open 보류 (false alert 차단).
+
+3. **CLAUDE.md "Sonnet subagent rate-limit → Opus fallback (ADR-057)" 섹션에 KPI dashboard reference 1줄 append**: link 추가만, 기존 정책 본문 변경 0건. ADR-053 재구동 trigger (safety direction — 모호 시 강제 측 분류, CFP-389 CL-3 prior art 정합) + ADR-037 MINOR bump (templates/github-workflows/** 신규 file) → marketplace sync (ADR-016) + consumer install + drift check 자동 발화 (재구동 prerequisite 절차).
+
+### 기존 정책 변경 0건 (CFP-393 chief author 확인)
+
+본 Amendment 2 는 measurement contract path + KPI dashboard infrastructure 만 추가. **결정 1 (Orchestrator Opus 필수화) / 결정 2 (Sonnet → Opus fallback max 1회) / 결정 3 (ADR-042 Amendment 4 6 agent 상향) 본문 변경 0건**. Amendment 1 의 sunset gate declaration 을 Amendment 2 가 mechanical realization 함 — sunset criteria 자체 (≥ 50 spawn / 3개월 / < 1%) 변경 0건. 측정 시작 시점만 본 Amendment 2 merge 이후로 명시화.
+
+### ADR-058 self-application 검증 (Amendment 2)
+
+- §결정 1 (transitional 분류 frontmatter 의무) → Amendment 1 충족 유지 (`is_transitional: true`).
+- §결정 2 (`## 해소 기준` 본문 섹션 의무) → Amendment 1 충족 유지 + Amendment 2 가 sunset gate 2 표만 갱신 (위치 invariant 정합 — "결과" 직후 / "관련 파일" 직전).
+- §결정 3 (3-tuple metric/who/how 정량 명시 + 모달 어휘 금지) → Amendment 2 갱신된 sunset gate 2 표가 3-tuple 강화 (분모 / 분자 / sample sentinel / window / unit 정량 명시). 모달 어휘 1차 사전 4 표현 ("안정화되면" / "임시" / "한시적" / "until further notice") 발화 0건 — `scripts/check-adr-sunset-criteria.sh` (CFP-389 lint) 통과 의무.
+- §결정 5 (Amendment 시 sunset_justification 의무) → frontmatter amendment_log row + 본 단락 모두 충족.
+- §결정 7 (보안 ADR default permanent) → 본 Amendment 미해당 (ADR-057 = governance / Team & Process 계열).
+
+### ADR-060 §결정 12 cross-ref (framework 첫 non-sunset application)
+
+ADR-060 §결정 12 = "CFP-C 잠정 = ADR-057 amendment + KPI dashboard — 본 framework 위에서 운영, 첫 적용 사례". 본 Amendment 2 = 해당 carry 의 정식 실현:
+- evidence-checks-registry.yaml 두 번째 entry append (`rate-limit-fallback-rate`, `current_tier: warning`).
+- evidence-check-registry-v1 schema 변경 0건 (FeasibilityAgent + DataMigrationArch 검증 — schema generality 1차 검증 PASS).
+- framework 의 runtime metric pattern 1차 검증 완료 (기존 첫 entry `adr-sunset-criteria` = static lint pattern, 본 entry = runtime cron metric pattern).
+
+### Drift 발견 (별도 follow-up 의무)
+
+본 Amendment 2 작성 중 CodebaseMapper 검토에서 발견: CLAUDE.md "Sonnet subagent rate-limit → Opus fallback (ADR-057)" 섹션의 "적용 대상 Sonnet agent" 명단이 ADR-057 §결정 3 SSOT 와 불일치 — CLAUDE.md 가 ChangeImpactAgent · CodebaseMapperAgent · RefactorAgent 를 포함하나 ADR-057 §결정 3 Amendment 4 가 이 3개 agent 를 Opus 로 상향했다 (CFP-379). 본 Amendment 2 의 분모 정의는 ADR-057 §결정 3 SSOT (5종) verbatim 인용 — CLAUDE.md drift 정정은 본 Story scope 외, 별도 follow-up Issue 발의 의무 (Story §11 참조).
+
 ## 관련 파일
 
-- `CLAUDE.md` — Orchestrator 모델 필수 확인 + Sonnet→Opus fallback 정책 섹션
+- `CLAUDE.md` — Orchestrator 모델 필수 확인 + Sonnet→Opus fallback 정책 섹션 (CFP-393 Amendment 2 = KPI dashboard link 1줄 append)
 - `docs/orchestrator-playbook.md` — §3.0.12 rate-limit fallback 절차
 - `docs/adr/ADR-042-agent-model-selection-policy.md` — Amendment 4 (본 ADR로 상향된 6 agent 명시)
+- `docs/adr/ADR-058-adr-sunset-criteria-mandate.md` — Amendment 2 sunset_justification self-application source (CFP-393)
+- `docs/adr/ADR-060-evidence-enforceable-promotion-framework.md` — Amendment 2 가 §결정 12 (CFP-C carrier) carry — framework 첫 non-sunset application
+- `scripts/measure-rate-limit-fallback.sh` — Amendment 2 신설 (KPI aggregator, CFP-393)
+- `templates/github-workflows/rate-limit-fallback-kpi.yml` — Amendment 2 신설 (monthly cron + threshold alert, CFP-393)
+- `docs/kpi/rate-limit-fallback.json` — Amendment 2 신설 (KPI dashboard data SSOT, CFP-393)
+- `docs/evidence-checks-registry.yaml` — Amendment 2 가 두 번째 entry `rate-limit-fallback-rate` append (CFP-393)
 - `plugin-codeforge-requirements/agents/RequirementsPLAgent.md` — model: claude-opus-4-7
 - `plugin-codeforge-requirements/agents/DomainAgent.md` — model: claude-opus-4-7
 - `plugin-codeforge-requirements/agents/RequirementsAnalystAgent.md` — model: claude-opus-4-7

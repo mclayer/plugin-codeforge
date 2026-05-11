@@ -51,4 +51,14 @@ owned_sections:
     owner_adr: ADR-060
     parallel_edit: append-only
 
+  - file: docs/kpi/rate-limit-fallback.json
+    section: "(JSON root — single record refresh)"
+    owner_adr: ADR-057  # Amendment 2 (CFP-393) — KPI dashboard data SSOT
+    parallel_edit: append-only
+    # NOTE (CFP-393 chief CL-3 판정): semantic = workflow-only-write — single record
+    # refresh by monthly cron, not row-append. 사용자 manual edit 금지. policy `append-only`
+    # 채택은 scope creep 회피 (신규 enum `workflow-only-write` 도입 = ADR-050 amendment
+    # 필요, 본 Story scope 외). parallel-epic-conflict-check.yml 영향 0건 (append-only
+    # row 추가만).
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)

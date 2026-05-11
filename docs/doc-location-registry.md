@@ -5,8 +5,8 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.0  
-**Last regen**: 2026-05-11T13:05:38Z  
-**Registered doc types**: 11
+**Last regen**: 2026-05-11T14:05:13Z  
+**Registered doc types**: 12
 
 ## Summary table
 
@@ -23,6 +23,7 @@
 | 9 | `decision_packet` | dogfood | `orchestrator` | CFP-61 |
 | 10 | `inter_plugin_contract` | single_repo | `each_lane_plugin` | CFP-29 |
 | 11 | `evidence_check_registry` | single_repo | `orchestrator` | CFP-389 |
+| 12 | `kpi_artifact` | single_repo | `orchestrator` | CFP-393 |
 
 ## Per-doc-type details
 
@@ -202,4 +203,22 @@
   > MANIFEST.yaml `registries:` 블록 entry = `evidence_check_registry` (versioning 추적).
   > parallel-edit policy = append-only (docs/parallel-work/section-ownership.yaml).
   > Write owner = Orchestrator + carrier Story ArchitectAgent (wrapper governance).
+
+### `kpi_artifact`
+
+- **single_repo**: `<owner-repo>/docs/kpi/<slug>.json`
+- **owner_agent**: `orchestrator`
+- **introduced_by**: CFP-393
+- **naming_pattern**: `[a-z0-9-]+\.json`
+- **frontmatter_required**: False
+- **examples**:
+  - mclayer/plugin-codeforge/docs/kpi/rate-limit-fallback.json
+
+  **notes**:
+  > CFP-388 evidence-enforceable framework 의 runtime metric measurement 결과 JSON.
+  > ADR-057 Amendment 2 (CFP-393) 가 첫 사례 — rate-limit-fallback.json.
+  > Write owner = cron workflow auto-PR (사용자 manual edit 금지 — parallel-work/section-ownership.yaml
+  > append-only policy + comment workflow-only-write semantic).
+  > Lint scope = JSON valid (jq parse) + invariant (분자 ≤ 분모 등, aggregator 가 강제).
+  > 향후 history 누적 정책 별도 carrier (CFP-393 §11 follow-up #4).
 
