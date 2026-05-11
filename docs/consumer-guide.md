@@ -143,9 +143,32 @@ cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/agent-teams-hook-samples/TaskComple
 # (overlay/hooks/merge.py 또는 수동 편집)
 ```
 
-**Codex worker dispatch 정책 (ADR-044 §결정 2 SSOT)**:
+**Codex worker dispatch 정책 (ADR-044 §결정 2 SSOT + Amendment 1)**:
 
 review lane (TEAM-DESIGN-REVIEW / TEAM-CODE-REVIEW / TEAM-SECURITY-TEST) 의 Codex worker = `dispatch_mode: user_request_only`. **Default roster = `PL + Claude worker` 2 teammate**. Codex worker 는 사용자 explicit request 시에만 활성 (예: "codex 와 opus 로 심층 리뷰 후 ..." 와 같은 ad-hoc 발화). codeforge 가 자동 invoke 하지 않음 — ADR-022 Deprecated (CFP-134) 정합.
+
+**Amendment 1 (CFP-391 / [ADR-059](adr/ADR-059-debate-protocol-v1.md))** — `dispatch_mode` enum 에 `auto_on_divergence` 추가 (debate-protocol-v1 발동 mode). 우선순위 룰: `default > auto_on_divergence > user_request_only` — 두 mode 동시 적용 시 더 강한 쪽 effective.
+
+**Multi-round Adversarial Debate (debate-protocol-v1 / CFP-391)**:
+
+사용자가 explicit request 로 Codex worker 를 활성화 → review-verdict-v4 finding 합성 직전 Claude / Codex worker 가 동일 anchor 에 대해 **(a) 서로 다른 severity 또는 (b) 서로 다른 recommendation (FIX vs PASS)** 발화 시 DesignReviewPL 이 자동으로 multi-round debate 발동. consumer overlay 로 비활성화 불허 (codeforge 정책 — opt-out 은 별도 CFP carrier 도입 시 검토).
+
+**라운드 정책**: min 3 / soft default 4 / max 5 라운드. 평균 3~4 라운드 합의 도달 (사용자 실증 + 선행 연구 정합 — Du et al. 2023 / Liang et al. 2023). max 5 미합의 시 `AskUserQuestion` 으로 사용자 dialog escalation.
+
+**Anti-sycophancy 메커니즘**: `remaining_disagreements` 필드 강제 + role_lock + 반대 입장 강제 유지 prompt + `POSITION_CHANGE` 라벨 의무. 가짜 합의 차단 forcing function.
+
+**Reasoning carryover (FIX verdict 시)**: debate transcript 가 Story §9 에 inline append 되고 ArchitectAgent re-run prompt 에 verbatim 주입 — 양측 양보 / 반박 / 미해결 disagreement 가 redesign 입력으로 보존. §10 FIX Ledger row 의 `debate_artifact_ref` 필드 (fix-event-v1 1.1, optional) 가 transcript section anchor link 보유.
+
+**Token 비용 의식**:
+
+- `env=1` (agent teams 활성): round 간 cache 5 min TTL 활용 — 비용 최적
+- `env=0` (default subagent context, codeforge default): 매 라운드 Orchestrator round-trip — cold start cache miss 누적 → 비용 증가 의식 필요
+- 매 라운드 worker 출력 cap ~5K token × 2 worker × 5 round = 50K token (Opus PL 200K context 한도 내)
+- max 5 라운드 cap = 비용 폭증 차단 forcing function. 5 라운드 cap 초과 = AskUserQuestion 사용자 중재
+
+**Anchor 재발 escalation**: ArchitectAgent 수정 후 DesignReview 재진입 시 동일 anchor 가 두 번째 debate 유발 = 즉시 `AskUserQuestion` 사용자 escalation. AI 합의 불가능 시그널 — 사용자 중재 의무.
+
+**Story 2 (CFP-392) 진입 예정**: Requirements lane 확장 — RequirementsPL synthesis 와 Codex proactive check 간 semantic divergence 자동 debate. 본 Story 1 (CFP-391) merge 후 별도 plan 으로 진입. CodeReview / SecurityTest lane 적용은 deferred CFP-C scope.
 
 **Secret hygiene 의무 (ADR-044 §결정 7)**:
 

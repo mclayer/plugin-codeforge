@@ -1,0 +1,282 @@
+---
+kind: registry
+registry: debate-protocol
+version: "1.0"
+status: Active
+canonical_repo: mclayer/plugin-codeforge
+canonical_path: docs/inter-plugin-contracts/debate-protocol-v1.md
+date: 2026-05-11
+authors:
+  - ArchitectAgent (CFP-391 carrier — ADR-059 protocol SSOT)
+related_adrs:
+  - ADR-059  # carrier (5 결정 — protocol 정의 + DesignReview 자동 발동 + reasoning carryover + anchor 재발 escalation + lane-agnostic)
+  - ADR-044  # dispatch_mode enum 확장 Amendment 1 — auto_on_divergence
+  - ADR-008  # SemVer rule
+  - ADR-010  # canonical/sibling sync 책임
+related_files:
+  - docs/inter-plugin-contracts/review-verdict-v4.md
+  - docs/inter-plugin-contracts/fix-event-v1.md
+  - docs/adr/ADR-059-debate-protocol-v1.md
+  - docs/adr/ADR-044-phase-scoped-sequential-team.md
+  - templates/team-spec-design-review.yaml
+  - templates/story-page-structure.md
+producers:
+  - codeforge-review/DesignReviewPLAgent  # Story 1 scope (DesignReview)
+  - codeforge-requirements/RequirementsPLAgent  # Story 2 scope (CFP-392, deferred)
+consumers:
+  - codeforge-design/ArchitectPLAgent  # FIX 루프 re-spawn 시 transcript 입력 수신
+  - codeforge-design/ArchitectAgent  # re-run reasoning carryover 입력 수신
+  - Orchestrator  # §10 FIX Ledger writer monopoly (debate_artifact_ref 채움)
+---
+
+# debate-protocol-v1 registry
+
+## 상위 SSOT 위치
+
+본 파일이 canonical SSOT — wrapper-owned, lane-agnostic registry. 본 registry 는 sibling repo (codeforge-review / codeforge-design) 에서 verbatim mirror 없음 — wrapper canonical 1곳만 존재 (kind:registry 패턴, kind:contract 와 구분).
+
+## 1. 목적
+
+Codex ↔ Opus 두 워커가 lane 결정 지점에서 finding / judgment 불일치 (divergence) 를 산출할 때 발동하는 multi-round adversarial debate protocol 의 schema SSOT. **lane-agnostic** — 모든 lane (DesignReview / Requirements / 미래 CodeReview / SecurityTest) 에서 본 schema 재사용. lane-specific 트리거 조건은 각 lane plugin 이 별도 정의.
+
+본 protocol carrier ADR = [ADR-059](../adr/ADR-059-debate-protocol-v1.md). 5 결정: (1) protocol 정의 (2) DesignReview 자동 발동 (3) reasoning carryover (4) anchor 재발 escalation (5) lane-agnostic registry.
+
+### 1.1 주요 개념
+
+| 용어 | 정의 |
+|---|---|
+| **divergence** | 두 워커의 동일 anchor 에 대한 finding / judgment 불일치. lane-specific 정의 (DesignReview = severity OR recommendation, Requirements = semantic) |
+| **anchor** | divergence 발생 지점의 stable identifier. review-verdict-v4 finding 의 `anchor_id` field 사용 (일반적으로 `<file>:<line>` 또는 `§<section-ref>`) |
+| **topic anchor** | Round 0 시점 쟁점 statement 원문. 라운드 N 입력 **최상단** prepend 강제 (U-shaped attention bias 완화 forcing function) |
+| **role_lock** | Round 0 입장 fixed. 변경 시 명시적 `position_change: true` + 사유 명시 의무 |
+| **POSITION_CHANGE 라벨** | role_lock 깨고 입장 전환 라운드 표시. anti-sycophancy 메커니즘 — 가짜 합의로 미분류 |
+| **remaining_disagreements** | 매 라운드 출력 필수 필드. 비어있고 round < 3 = PL 이 "가짜 합의" 의심 → force_continue |
+| **anchor_recurrence_count** | 같은 `anchor_id` 가 ArchitectAgent re-run 후 DesignReview 재진입 시 두 번째 debate 유발 = `>= 2` → 즉시 사용자 escalation |
+| **reasoning carryover** | debate FIX 시 transcript 자체 (verdict 가 아닌) 를 ArchitectAgent re-run prompt 에 명시적 주입 |
+| **dispatch_mode: auto_on_divergence** | ADR-044 §결정 2 Amendment 1 — divergence 자동 감지 시 자동 활성. 우선순위 `default > auto_on_divergence > user_request_only` |
+
+## 2. Schema
+
+### 2.1 Trigger schema
+
+```yaml
+trigger:
+  lane: design-review | requirements | code-review | security-test
+  detected_by: <PLAgent name — 예: DesignReviewPLAgent>
+  divergence_type: severity | recommendation | semantic
+  anchor_id: <stable identifier — review-verdict-v4 finding.anchor_id>
+  anchor_text: <쟁점 원문 — 매 라운드 입력 최상단에 강제 포함>
+  detected_at: <ISO8601 UTC Z-suffix>
+  claude_initial_position:
+    statement: <원본 finding/judgment 추출>
+    rationale: <근거>
+    severity: P0 | P1 | P2 | null  # lane 에 따라 nullable
+    recommendation: FIX | FIX_DISCRETIONARY | PASS | null
+  codex_initial_position:
+    statement: <원본 finding/judgment 추출>
+    rationale: <근거>
+    severity: P0 | P1 | P2 | null
+    recommendation: FIX | FIX_DISCRETIONARY | PASS | null
+```
+
+**lane-specific divergence_type 정의**:
+
+- DesignReview: `severity` OR `recommendation` — review-verdict-v4 `findings[]` 동일 `anchor_id`. ADR-059 §결정 2
+- Requirements (Story 2 / CFP-392): `semantic` — RequirementsPL synthesis vs Codex proactive check 간 의미 차이
+- CodeReview / SecurityTest: deferred CFP-C
+
+### 2.2 Round schema
+
+```yaml
+round:
+  index: 0..5  # Round 0 = init, Round 1~5 = debate rounds
+  emitted_at: <ISO8601 UTC>
+  claude_position:
+    statement: <input 텍스트>
+    rationale: <근거>
+    position_change: false | true
+    position_change_reason: <texte — position_change true 시 의무>
+  codex_position:
+    statement: <input 텍스트>
+    rationale: <근거>
+    position_change: false | true
+    position_change_reason: <texte — position_change true 시 의무>
+  remaining_disagreements:
+    - <쟁점 1 — 양측 미해결 항목>
+    - <쟁점 2>
+    # 비어있고 round < 3 시 PL 이 force_continue (adversarial prompt 재주입)
+  pl_intermediate_judgment: continue | consensus_reached | force_continue
+  pl_intermediate_judgment_reason: <texte>
+```
+
+### 2.3 Termination schema
+
+```yaml
+termination:
+  method: pl_llm_judgment | user_arbitration | anchor_recurrence
+  terminated_at: <ISO8601 UTC>
+  reason: <texte>
+  final_verdict: PASS | FIX | FIX_DISCRETIONARY | ESCALATE
+  dialog_rounds_count: 3..5  # min 3 / max 5 정합
+  anchor_recurrence_count: 0..N
+  pl_synthesis: <texte — PL 의 최종 verdict 정당화>
+```
+
+### 2.4 Round 0 입력 (initialization)
+
+```yaml
+round_0_input:
+  anchor: <trigger.anchor_text — full text>
+  claude_initial_position: <trigger.claude_initial_position 그대로>
+  codex_initial_position: <trigger.codex_initial_position 그대로>
+  system_prompt_appendix: |
+    "Round 0 입장 유지 의무. 상대 주장의 근거가 결정적일 때만 입장 변경 허용 (position_change + reason 명시).
+     remaining_disagreements 미해결 쟁점 빠짐없이 나열. 비어 있으면 가짜 합의로 간주."
+  task: "Round 1 부터 반박 또는 보강 발화 시작. anchor 유지 의무. remaining_disagreements 명시 의무."
+```
+
+### 2.5 Round N 입력 (N >= 1)
+
+```yaml
+round_N_input:
+  anchor: <round_0.anchor — 매 라운드 동일 verbatim, 입력 최상단 prepend 의무>
+  transcript:
+    - round_0: <serialized full content>
+    - round_1: <serialized>
+    - ...
+    - round_{N-1}: <serialized>
+  system_prompt_appendix: |
+    "(Round 0 directive 와 동일 — verbatim 재주입)"
+  pl_adversarial_prompt: <optional — force_continue 발동 시 PL 이 주입하는 반박 prompt>
+  task: "Round N 입장 발화. anchor 이탈 금지. remaining_disagreements 갱신 의무. 상대 주장에 대한 명시적 반응 필수."
+```
+
+### 2.6 Output token budget 권고
+
+매 라운드 worker 출력 권고 cap (PL 이 enforce):
+
+- `statement`: <= 2000 token
+- `rationale`: <= 3000 token
+- 총 ~5000 token / round / worker
+
+5 라운드 × 2 worker × 5K = 50K token (PL Opus 200K context 한도 내 안전). 초과 시 PL 이 worker 에게 condensation 요청 (1회 한정) 후 invalid 처리.
+
+## 3. 항목
+
+### 3.1 Anti-sycophancy 메커니즘
+
+매 라운드 system prompt 에 강제 포함되는 directive (worker 별):
+
+> "당신의 Round 0 입장을 유지하라. 상대 주장의 근거가 결정적일 때만 입장 변경 허용. 입장 변경 시 출력에 `position_change: true` + `position_change_reason` (텍스트 사유) 명시 의무. `remaining_disagreements` 배열은 의심 가는 미해결 쟁점을 빠짐없이 나열하라. 비어 있으면 가짜 합의로 간주된다."
+
+**PL 검증 책무**:
+
+1. 매 라운드 출력에서 `remaining_disagreements` 필드 존재 검증. 누락 시 invalid 처리 + 재발화 요청 (1회 한정 — EC-3)
+2. `position_change: true` 인데 `position_change_reason` 누락 시 invalid 처리 + 재발화 요청 (1회 한정 — EC-4)
+3. `remaining_disagreements` 비어있고 `dialog_rounds_count < 3` 시 `force_continue` + adversarial prompt 재주입 (EC-2)
+4. 양측 동시 `position_change: true` 발화 시 가짜 합의 의심 — 결정적 근거 검증 후 force_continue (EC-5)
+
+### 3.2 영속화 (Story §9 inline append)
+
+- **위치**: Story §9 (Quality gate history) inline append. 독립 파일 신설 금지 — `doc-locations.yaml` 신규 doc_type 추가 불필요
+- **Section header format**: `### Debate transcript: <anchor_id>` (Story §9 하위)
+- **Section schema**: trigger / rounds / termination 3 block — 본 registry §2 (Schema) 정합
+- **lint**: `check-doc-section-schema.sh` 가 Story §9 의 `### Debate transcript: ` prefix sub-section 인식 + 내부 schema 검증 (Phase 2 PR scope)
+- **codeforge family Story (ADR-013 dogfood-out 적용)**: §9 = `<internal-docs-clone>/<plugin-folder>/stories/<KEY>.md §9`
+- **consumer Story**: §9 = `docs/stories/<KEY>.md §9` (consumer repo 직접)
+
+### 3.3 FIX 통합 (fix-event-v1 1.1 정합)
+
+debate verdict = `FIX` 또는 `FIX_DISCRETIONARY` 시 다음 흐름 강제 (ADR-059 §결정 3 SSOT):
+
+1. **transcript Story §9 append** — `### Debate transcript: <anchor_id>` sub-section (writer = DesignReviewPL via Orchestrator self-write delegate, ADR-039 Amendment 정합)
+2. **§10 FIX Ledger row append** — Orchestrator self-write (fix-event-v1 1.1 contract):
+   - `debate_artifact_ref` 필드 = `#debate-transcript-<anchor_id>` (Story §9 section anchor link)
+3. **ArchitectPLAgent re-spawn** — prompt 에 debate transcript 명시적 주입 (verbatim, 요약 금지)
+4. **ArchitectAgent re-run instruction**:
+   > "양측 입장의 reasoning trail 을 반영해 redesign 하라. transcript 의 양보 / 반박 / 미해결 disagreement 를 모두 검토 후 새 change-plan / ADR 작성."
+5. DesignReview re-entry (FIX-N+1) — Story §10 FIX Ledger 카운터 정합
+
+### 3.4 Anchor 재발 escalation (ADR-059 §결정 4 SSOT)
+
+DesignReview lane 진입 직전 PL 이 Story §9 scan 으로 anchor_id 재발 검출:
+
+- `count(Story §9 의 "### Debate transcript: <anchor_id>" sub-section)` 산출
+- `>= 2` 시 → debate Round 진입 없이 즉시 `termination.method = anchor_recurrence` + `AskUserQuestion` 발화
+- PL 이 정리한 packet:
+  - (a) topic_anchor 원문
+  - (b) 이전 debate 최종 verdict + 양측 마지막 라운드 입장
+  - (c) ArchitectAgent 가 적용한 redesign 요지
+  - (d) 재발 finding 의 새 context (의미적으로 같은 쟁점인지 PL 판단 근거)
+  - (e) 사용자 중재 옵션 제시
+
+**EC-7 (entry §5.4 정합)**: ArchitectAgent 수정 후 동일 `anchor_id` 가 발화되었으나 **명확히 다른 쟁점** 으로 PL 판단 시 `anchor_recurrence_count` 증가 안 함. 모호 시 사용자 escalation 우선 (안전 방향).
+
+### 3.5 AskUserQuestion escalation (max 5 미합의 시)
+
+`dialog_rounds_count == 5` 도달 + 미합의 시 PL 이 다음 packet 으로 `AskUserQuestion` 발화:
+
+```yaml
+escalation_packet:
+  topic_anchor: <full text>
+  claude_last_position: <Round 5 발화>
+  codex_last_position: <Round 5 발화>
+  unresolved_disagreements: [<list>]
+  trade_off_analysis: <PL 의 trade-off 정리>
+  pl_tentative_recommendation: <optional — PL 의 잠정 권고>
+  user_options:
+    - "Claude 입장 채택 (FIX 또는 PASS)"
+    - "Codex 입장 채택 (FIX 또는 PASS)"
+    - "절충안 — PL 의 잠정 권고 채택"
+    - "Story scope 재정의 — Requirements lane 회귀"
+```
+
+사용자 dialog 응답이 `termination.final_verdict` 결정.
+
+### 3.6 env=0 / env=1 동작 동등성
+
+| 항목 | env=1 (agent teams 활성) | env=0 (default subagent context) |
+|---|---|---|
+| Round dispatch | `SendMessage(to=worker, body=round_N_input)` continuous dialog | Orchestrator round-trip — 매 라운드 worker subagent one-shot spawn (transcript 누적 입력 첨부) |
+| Round counter | platform-tracked + review-verdict-v4 `worker_dialog_rounds` 정합 | PL 자체 관리 + review-verdict-v4 `worker_dialog_rounds` 정합 |
+| Topic anchor prepend | SendMessage body 안 prepend | Agent tool prompt 안 prepend |
+| Transcript carryover | SendMessage body 안 누적 | Agent tool prompt 안 누적 |
+| 토큰 cost | round 간 cache hit 가능 (5 min TTL) | 매 라운드 cold start (cache 미적용) — 비용 증가 |
+| PL 검증 책무 | PL teammate 가 매 round 출력 수신 후 검증 | PL Orchestrator round-trip 안에서 검증 |
+
+양쪽 동일 protocol schema 준수. env=0 fallback 의 토큰 비용 증가는 사용자 인식 의무 (consumer-guide §1f).
+
+### 3.7 ADR-013 dogfood-out 정책 정합
+
+codeforge family Story 의 debate transcript 위치 = `<internal-docs-clone>/<plugin-folder>/stories/<KEY>.md §9`. Consumer Story = `docs/stories/<KEY>.md §9`. 두 위치는 동일 schema 적용. `check-doc-section-schema.sh` 가 두 path 모두 lint scope 포함 (Phase 2 PR).
+
+### 3.8 Producer / Consumer 책임 명시
+
+- **Producer**:
+  - `DesignReviewPLAgent` (Story 1 scope) — DesignReview lane 진입 시 divergence detection + Round dispatch + Termination 결정. transcript Story §9 write (Orchestrator self-write delegate)
+  - `RequirementsPLAgent` (Story 2 scope, CFP-392) — Requirements lane 진입 시 동일 책무
+- **Consumer**:
+  - `ArchitectPLAgent` — FIX verdict 수신 시 ArchitectAgent re-spawn 입력 packet 안에 transcript 명시 주입
+  - `ArchitectAgent` — re-run instruction 정합 (reasoning carryover)
+  - `Orchestrator` — §10 FIX Ledger writer monopoly + `debate_artifact_ref` 필드 채움 + AskUserQuestion escalation 발화
+
+## 4. 변경 규칙
+
+### 4.1 SemVer 정책
+
+- **MAJOR**: trigger schema / round schema / termination schema 의미 변경 (예: divergence_type enum 의 기존 값 의미 변경, dialog_rounds_count cap 변경)
+- **MINOR**: optional 필드 추가 (예: `pl_intermediate_judgment` 의 새 enum value, rolling_summary 모드 도입)
+- **PATCH**: 문서 보강, comment 추가
+
+### 4.2 Sibling sync 정책
+
+본 registry 는 `kind: registry` (wrapper-owned, lane-agnostic) — `kind: contract` 와 달리 lane plugin sibling mirror 없음. wrapper canonical 1곳만 존재. 따라서 sibling sync PR (ADR-010) 의무 없음. canonical 만 갱신.
+
+### 4.3 관련
+
+- [ADR-059](../adr/ADR-059-debate-protocol-v1.md) — carrier (5 결정)
+- [ADR-044](../adr/ADR-044-phase-scoped-sequential-team.md) — dispatch_mode Amendment 1 (auto_on_divergence)
+- [review-verdict-v4](review-verdict-v4.md) — `findings[].anchor_id` divergence surface + `worker_dialog_rounds` 측정 source
+- [fix-event-v1 1.1](fix-event-v1.md) — `debate_artifact_ref` optional 필드 MINOR bump
+- [story-page-structure.md](../../templates/story-page-structure.md) — Story §9 schema
+

@@ -104,7 +104,7 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 |---|---|---|---|
 | 요구사항 | story-init.yml Action (Issue Forms 제출) | §1·§2·§5·§6 (RequirementsPL + 3 sub) | — |
 | 설계 | RequirementsPL verdict | §3·§7·§11 + change-plan + ADR-NNN (ArchitectAgent + 6 deputy) | — |
-| 설계 리뷰 | ArchitectAgent verdict | §9 (DesignReviewPL Claude+Codex 종합) + `gate:design-review-pass` | 3 |
+| 설계 리뷰 | ArchitectAgent verdict | §9 (DesignReviewPL Claude+Codex 종합) + `gate:design-review-pass` (Claude↔Codex 워커 finding 불일치 자동 감지 시 debate-protocol-v1 발동 — CFP-391 / ADR-059) | 3 |
 | 구현 | 설계 리뷰 PASS | §8·§8.5 + Phase 2 PR 첫 commit (DeveloperPL + QADev + N role:dev) | — |
 | 구현 리뷰 | DeveloperPL ready | §9 (CodeReviewPL Claude+Codex 종합) | 3 |
 | CI gate | 구현 리뷰 PASS | (Orchestrator inline `gh pr checks` polling — 30분 timeout) | ∞ |
@@ -199,6 +199,30 @@ ADR-022 deprecate 후 `review-verdict-v3` contract (canonical: codeforge-review 
 
 상세: [`docs/inter-plugin-contracts/review-verdict-v4.md`](docs/inter-plugin-contracts/review-verdict-v4.md) (wrapper sibling).
 
+### Adversarial Debate Protocol (debate-protocol-v1, CFP-391 / ADR-059)
+
+DesignReview lane 에서 Claude worker 와 Codex worker 가 review-verdict-v4 `findings[]` 의 동일 `anchor_id` 에 대해 **(a) 서로 다른 severity 또는 (b) 서로 다른 recommendation (FIX vs PASS)** 을 발화 = `divergence_detected` 시 multi-round adversarial debate 자동 발동. ADR-044 §결정 2 `dispatch_mode` enum 의 `auto_on_divergence` (Amendment 1, CFP-391) 가 활성 조건.
+
+**라운드 정책**: min 3 / soft default 4 / max 5. min 3 미달 합의 시 PL 이 adversarial prompt 재주입 후 force_continue. max 5 미합의 시 `AskUserQuestion` 사용자 escalation.
+
+**Anti-sycophancy 메커니즘**:
+- `remaining_disagreements` 필드 매 라운드 출력 의무 (비어 있고 round < 3 = 가짜 합의 의심)
+- role_lock + 반대 입장 강제 유지 prompt + `POSITION_CHANGE` 라벨 입장 변경 시 의무
+
+**Topic anchor 강제 prepend**: Round 0 쟁점 statement 원문이 라운드 N 입력 **최상단** 에 매 라운드 verbatim 포함 (U-shaped attention bias 완화 forcing function). full transcript carryover 정합.
+
+**Transcript 영속화**: Story §9 inline append (`### Debate transcript: <anchor_id>` sub-section, debate-protocol-v1 schema 준수). codeforge family Story (ADR-013 dogfood-out) = `<internal-docs-clone>/<plugin-folder>/stories/<KEY>.md §9`. Consumer Story = `docs/stories/<KEY>.md §9`.
+
+**FIX 통합 (reasoning carryover)**: debate verdict = FIX 시 (1) transcript Story §9 append → (2) §10 FIX Ledger row append + `debate_artifact_ref` 필드 채움 (Story §9 section anchor link, fix-event-v1 1.1 MINOR bump) → (3) ArchitectPLAgent re-spawn — prompt 에 transcript verbatim 주입 → (4) ArchitectAgent re-run instruction "양측 입장의 reasoning trail 을 반영해 redesign 하라".
+
+**Anchor 재발 escalation**: ArchitectAgent 수정 후 DesignReview 재진입 시 동일 `anchor_id` 가 두 번째 debate 유발 = `anchor_recurrence_count >= 2` → debate 진입 없이 즉시 `AskUserQuestion` 사용자 escalation. AI 합의 불가능 시그널 처리.
+
+**env=0 / env=1 동등성**: agent teams enabled context (env=1) 에서는 SendMessage 기반 continuous dialog. default subagent context (env=0) 에서는 Orchestrator round-trip polyfill (매 라운드 worker subagent one-shot spawn + transcript 누적 입력 첨부). 양쪽 동일 protocol schema 준수 — env=0 시 토큰 비용 증가 의식 필요.
+
+**lane-agnostic 설계**: protocol contract 는 lane 정보 인자로 받는 일반 schema. Story 2 (Requirements lane 확장 — CFP-392) 가 본 Story merge 후 contract 신설 없이 trigger 조건만 추가 정의. 미래 CFP-C (CodeReview / SecurityTest) 도 동일 패턴.
+
+정책 SSOT: [ADR-059](docs/adr/ADR-059-debate-protocol-v1.md) + [debate-protocol-v1 registry](docs/inter-plugin-contracts/debate-protocol-v1.md). Sonnet decider 자동 발동 무효 (ADR-022 Deprecated / CFP-134) 정합 — debate 발동은 PL 책무, Sonnet 책무 아님.
+
 ### FIX 루프
 
 **판정 SSOT** = codeforge-review [`templates/review-pl-base.md`](https://github.com/mclayer/plugin-codeforge-review/blob/main/templates/review-pl-base.md) §3 (severity 종합·dedup·판정). Contract surface = [`review-verdict-v4`](docs/inter-plugin-contracts/review-verdict-v4.md) `pl_recommendation` (PASS / FIX / FIX_DISCRETIONARY / ESCALATE_PACKET_INCOMPLETE) — CFP-137 / ADR-044 cutover 후. v3 archived 참조: [`review-verdict-v3`](docs/inter-plugin-contracts/review-verdict-v3.md).
@@ -208,6 +232,8 @@ ADR-022 deprecate 후 `review-verdict-v3` contract (canonical: codeforge-review 
 **원인 판정 최종 결정자** (CFP-134 / ADR-035 정정 후): PL 이 자기 lane review-verdict 의 final pl_recommendation 작성. Sonnet decider 자동 발동 무효 (ADR-022 Deprecated — CFP-134). FIX root cause 원인 판정 (설계 vs 구현) 은 ArchitectPLAgent 가 DeveloperPL 1차 진단 받은 후 최종 결정. 사용자 explicit request 시에만 ad-hoc Sonnet 호출 가능.
 
 **카운터 SSOT** = `docs/stories/<KEY>.md` §10 "FIX Ledger" — Orchestrator 단독 관리 ([fix-event-v1](docs/inter-plugin-contracts/fix-event-v1.md) contract, CFP-32 monopoly). GitHub Issue 라벨은 보조 (fix-ledger-sync.yml Action mirror).
+
+**debate-protocol-v1 발동 FIX**: §10 row 의 `debate_artifact_ref` optional 필드 (fix-event-v1 1.1, CFP-391 / ADR-059) 가 Story §9 transcript section anchor link 보유 (예: `#debate-transcript-F-001`). ArchitectPLAgent re-spawn 시 transcript 가 verbatim 입력으로 흘러들어 reasoning carryover 보장. 미debate FIX 행은 `null` 또는 column 자체 생략 (backward-compat).
 
 **§10 FIX Ledger 스키마**: `codeforge:fix-ledger-schema` 호출 (FIX 루프 진입 시). Orchestrator 단독 §10 append 독점 (fix-event-v1 contract, CFP-32). RESET 룰·max FIX 횟수 상세는 [playbook §6](docs/orchestrator-playbook.md).
 
@@ -281,13 +307,14 @@ codeforge core 가 외부 plugin과 통신할 때의 typed schema. wrapper repo 
 
 각 wrapper sibling 은 lane plugin canonical 의 verbatim mirror + "**상위 SSOT 위치**" 섹션. canonical 변경 시 wrapper sibling sync PR 후속 의무 ([ADR-010](docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md)).
 
-### kind:registry (cross-cutting protocol, 3 file)
+### kind:registry (cross-cutting protocol, 4 file)
 
 wrapper-owned. 본 lint scope 밖 — `check-doc-frontmatter.sh` + `check-doc-section-schema.sh` 가 검증.
 
 - [comment-prefix-registry-v1.md](docs/inter-plugin-contracts/comment-prefix-registry-v1.md) — 11 phase prefix taxonomy
-- [fix-event-v1.md](docs/inter-plugin-contracts/fix-event-v1.md) — Story §10 FIX Ledger writer monopoly
+- [fix-event-v1.md](docs/inter-plugin-contracts/fix-event-v1.md) — Story §10 FIX Ledger writer monopoly (v1.1 — CFP-391 `debate_artifact_ref` optional 필드)
 - [label-registry-v1.md](docs/inter-plugin-contracts/label-registry-v1.md) — phase/gate/fix label taxonomy
+- [debate-protocol-v1.md](docs/inter-plugin-contracts/debate-protocol-v1.md) — Codex↔Opus multi-round adversarial debate protocol (lane-agnostic, CFP-391 / ADR-059)
 
 ### Versioning + Write boundary
 
