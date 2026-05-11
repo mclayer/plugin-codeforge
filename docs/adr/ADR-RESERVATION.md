@@ -10,6 +10,7 @@ related_adrs:
 related_files:
   - docs/parallel-work/section-ownership.yaml
   - templates/github-workflows/parallel-epic-conflict-check.yml
+is_transitional: false
 ---
 
 # ADR 번호 예약 레지스트리
@@ -67,7 +68,11 @@ reservations: []
 
 ADR deprecated/superseded 시 해당 row `status: archived`. 번호 재사용 금지.
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - [ADR-050](ADR-050-parallel-epic-conflict-coordination.md) — 본 레지스트리 결정의 carrier ADR
 - `docs/parallel-work/section-ownership.yaml` — ADR-050 §결정 4 (locked 섹션 선언)

@@ -20,6 +20,7 @@ related_stories:
   - CFP-74
 supersedes: null
 superseded_by: null
+is_transitional: false
 ---
 
 # ADR-026: Post-merge follow-up automation
@@ -104,7 +105,11 @@ Yes. `.codeforge/post-merge-automation.disabled` flag 또는 workflow yaml 삭�
 - Consumer overlay path support (PMOAgent retro 후)
 - Lane plugin self-emit (S3, 후속 CFP)
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - `templates/github-workflows/post-merge-followup.yml` (workflow)
 - `scripts/post-merge-{story-writer,sibling-close,telemetry,next-phase}.sh` (4 scripts)

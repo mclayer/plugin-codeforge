@@ -12,6 +12,7 @@ related_stories:
   - CFP-45
   - CFP-56
   - CFP-299
+is_transitional: false
 ---
 
 ## 상태
@@ -72,7 +73,11 @@ Codex (gpt-5.4) 3 회 상담 후 (C) Aggressive scope + hybrid Action placement 
 - **History rewrite (filter-repo)** — SHA invalidation + open PR base 깨짐 + forks/cache 충격. Codex 명시 reject (별도 후속 CFP)
 - **GitHub App scope 광범** (write to all repos) — 보안 surface 확대. 최소 권한 원칙 (Issues write / PRs read / Contents read)
 
-## 다이어그램
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 ```
 Before (CFP-45 결정 전):

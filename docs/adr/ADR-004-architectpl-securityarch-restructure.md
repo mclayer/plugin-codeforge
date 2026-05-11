@@ -12,6 +12,7 @@ related_files:
   - agents/RefactorAgent.md
   - templates/change-plan.md
   - CLAUDE.md
+is_transitional: false
 ---
 
 ## 상태
@@ -73,7 +74,11 @@ Codex 감사 #1·#2·#4-#6 (TestContractArch / DataMigrationArch / 관측성·AP
 
 - **#1 = CFP-18 + ADR-006으로 해소**: TestContractArchitectAgent (5번째 deputy, §8 Test Contract author input) 신설. 상세는 [ADR-006](ADR-006-testcontract-architect.md) 및 [CFP-18](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/stories/CFP-18.md) 참조.
 
-## 다이어그램
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 설계 lane 재편 (CLAUDE.md 다이어그램 SSOT 참조):
 

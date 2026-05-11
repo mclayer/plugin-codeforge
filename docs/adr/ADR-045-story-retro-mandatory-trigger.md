@@ -52,6 +52,7 @@ amendment_log:
     scope: "§11.6 multi-runner race scenario informational mitigation enumeration (Issue #297) — Pattern A (Contents API SHA-based optimistic concurrency) 가 multi-runner concurrent write 를 처리함을 검증·문서화. CFP-138 security test 통과 근거: (1) SHA mismatch 시 409 Conflict 반환 → caller retry, (2) SHA collision 확률 무시 가능 (Git SHA-1 2^80 preimage resistance), (3) retro-attempts.jsonl write 경합 = last-writer-wins 없음 (모든 writer 가 최신 SHA fetch 후 CAS write). 코드 변경 불필요 — Pattern A 구현이 이미 이 보장을 내포. 검증된 동작을 ADR 에 informational note 로 기록."
     status: applied
     ref: §D-4 + §Amendments-3 (multi-runner-mitigation) + docs/domain-knowledge/jsonl-write/race-condition-handling-pattern.md
+is_transitional: false
 ---
 
 # ADR-045: Story 완료 회고 의무화 — Phase 2 PR merge 후 PMOAgent 자동 trigger
@@ -352,7 +353,11 @@ git push origin --delete retro-attempts-state/<KEY>
 
 **Scope**: 본 informational note 는 Pattern A 구현 코드의 동작을 ADR 레벨에서 확인·기록한 것. Pattern A 코드 자체는 `docs/domain-knowledge/jsonl-write/race-condition-handling-pattern.md` SSOT — 본 ADR 는 cross-reference 만.
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - `templates/github-workflows/retro-mandatory.yml` (신규)
 - `templates/github-workflows/post-merge-followup.yml` (미터치, ADR-026 보존)

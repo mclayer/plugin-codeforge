@@ -29,6 +29,7 @@ related_files:
   - docs/consumer-guide.md  # §7.0.7 telemetry_enabled flag 안내
   - docs/domain-knowledge/orchestrator-discipline/measurement-channel.md
   - docs/change-plans/cfp-283-adr-039-measurement-channel.md  # internal-docs SSOT (ADR-013)
+is_transitional: false
 ---
 
 # ADR-042: Codeforge measurement channel architecture
@@ -397,7 +398,11 @@ PreToolUse hook 으로 inline write detect → 즉시 차단.
 - **ADR-013** (codeforge family dogfood-out policy) — spec / plan 위치 internal-docs override. 본 ADR Story spec / plan 도 internal-docs SSOT.
 - **ADR-024** (Story-scoped branch policy) — 본 Story branch 명명 (`cfp-283-adr-039-measurement-channel`).
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - `docs/inter-plugin-contracts/stop-event-v1.md` (신설 — kind:registry, §결정 2 schema)
 - `docs/inter-plugin-contracts/MANIFEST.yaml` (comment 갱신, §결정 12)

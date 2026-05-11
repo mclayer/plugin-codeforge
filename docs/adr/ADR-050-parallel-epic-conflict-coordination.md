@@ -18,6 +18,7 @@ related_files:
   - docs/inter-plugin-contracts/label-registry-v1.md
 supersedes: null
 amends: null
+is_transitional: false
 ---
 
 # ADR-050: Parallel Epic Conflict Coordination
@@ -130,7 +131,11 @@ merge-order:1 PR: #XXX (CFP-YYY)
 | merge-first ordering 강제 (blocking) | 병렬 작업의 장점 소멸. non-blocking warning이 적절 |
 | Reservation Issue Form (cfp-reserve 패턴 확장) | ADR-RESERVATION.md sequential append가 더 가볍고 audit trail 명확 |
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - [ADR-036](ADR-036-project-key-atomic-reservation.md) — CFP 번호 예약 패턴 선례
 - [ADR-040](ADR-040-worktree-convention.md) — per-session 격리 선례

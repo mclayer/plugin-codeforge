@@ -25,6 +25,7 @@ amendment_log:
     date: 2026-05-08
     scope: "ADR-022 deprecate (CFP-134 / ADR-035) 정합 — invariant trigger 의 Sonnet 표기 제거. 'Sonnet decides ⇒ Orchestrator proceeds' → 'PL pl_recommendation 결정 (review-verdict 단) / 직전 사용자 directive (작업 단위 단) ⇒ Orchestrator proceeds without user confirmation' 으로 generalize. ADR-025 정책 자체 (whitelist 외 stop = defect) 무손상 — Sonnet 라는 specific actor reference 만 정리."
     status: applied
+is_transitional: false
 ---
 
 # ADR-025: Stop discipline — Decider-decides ≠ user-confirms
@@ -96,7 +97,11 @@ brainstorming skill 의 substantive choice 발화 시:
 - **ADR-021**: stop-event-v1 ledger 가 R1-R4 detection source 보강 (R1 Missing agent finding repeat / R3 Phase gap propagate).
 - **ADR-024**: story-scoped branch policy 정합 (1 PR 통합 옵션 거부 정합 — 본 ADR carrier Story 도 cfp-73-stop-discipline branch + Phase 1/Phase 2 PR 분리).
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - `docs/adr/ADR-022-sonnet-review-verdict-decider.md`
 - `docs/inter-plugin-contracts/stop-event-v1.md` (Phase 2 sibling)

@@ -12,6 +12,7 @@ related_adrs:
 supersedes: null
 superseded_by: null
 amends: null
+is_transitional: false
 ---
 
 # ADR-056: 요구사항 레인 코드 컨텍스트 3 에이전트 추가
@@ -79,7 +80,11 @@ RequirementsPLAgent가 6개 관점 dedup·통합 수행.
 - Consumer overlay로 ChangeImpactAgent·FeasibilityAgent의 src/** 탐색 범위 제한 가능 여부 — CFP 후속 검토
 - codeforge-requirements version 0.2.1 → 0.3.0 bump + marketplace sync (ADR-016 의무)
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - [ADR-042](ADR-042-agent-model-selection-policy.md) — 모델 티어 정책
 - [ADR-046](ADR-046-researcher-role-redefinition.md) — Researcher Opus tier 근거

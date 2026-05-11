@@ -19,6 +19,7 @@ related_files:
   - mclayer/plugin-codeforge-requirements/templates/domain-knowledge.md
   - mclayer/plugin-codeforge-requirements/templates/concept-knowledge.md
   - scripts/check-doc-frontmatter.sh
+is_transitional: false
 ---
 
 # ADR-056: Domain-Concept knowledge directory separation
@@ -114,7 +115,11 @@ ResearcherAgent는 §6 출력에 자신이 참조/생성한 concept 파일의 co
 
 ADR-046 §waiver 3 사유(KEY collision / Action permission / cost asymmetry) 동일 유효. 본 ADR scope = ADR 2건 + agent 파일 3건 + template 2건 + lint 스크립트 + 마이그레이션. ADR-046 waiver pattern inherit.
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - [ADR-046](ADR-046-researcher-role-redefinition.md) — ResearcherAgent role (본 ADR가 Amendment 1 적용)
 - `mclayer/plugin-codeforge-requirements:agents/DomainAgent.md`

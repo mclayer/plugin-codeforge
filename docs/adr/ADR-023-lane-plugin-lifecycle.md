@@ -7,6 +7,7 @@ category: governance
 carrier_story: CFP-51
 supersedes: null
 superseded_by: null
+is_transitional: false
 ---
 
 # ADR-023: Lane plugin lifecycle — add / deprecate / rename governance
@@ -98,7 +99,11 @@ doc-only Story (예: 본 CFP-51) 의 Phase 2 = **N/A** ([ADR-005](ADR-005-plugin
 - Marketplace drift 위험 감소 (ADR-016 + CFP-50 enforce)
 - mctrader 데뷔 평가 발견 ("신규 specialty agent 필요") 시 본 ADR 따라 add 진행 가능
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - [`CLAUDE.md`](../../CLAUDE.md) (Development Agent Team 섹션 — cross-reference)
 - [ADR-009](ADR-009-wrapper-only-decomposition.md) — wrapper-only decomposition (composition root)

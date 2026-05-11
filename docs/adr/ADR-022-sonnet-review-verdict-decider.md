@@ -21,6 +21,7 @@ related_files:
   - docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md
 related_stories:
   - CFP-61
+is_transitional: true
 ---
 
 # ADR-022: Sonnet Decider — Comprehensive Policy
@@ -436,7 +437,16 @@ ADR-019 §결정 9 그대로 + review-verdict trigger 포함:
 - ADR-010 — sibling sync 의무 (PR 1 canonical → PR 2 wrapper sibling).
 - ADR-013 — dogfood-out (Phase 1A internal-docs first).
 
-## 관련 파일
+## 해소 기준
+
+**전이 분류**: Sonnet Decider Comprehensive Policy (5 trigger + Consumer Scope + Review-Verdict). CFP-134 / ADR-035 에서 Deprecated — review-verdict v4 (ADR-044) cutover 완료.
+
+**해소 evidence**:
+- **metric**: Deprecated status + review-verdict v3 → v4 cutover 완료
+- **who**: ADR-044 carrier (Phase-scoped sequential team Epic Wave 2)
+- **how**: CFP-137 wrapper Phase 1 PR merge (2026-05-08) — v3 sibling status: Active → Archived + v4 sibling 신설 + canonical sync (codeforge-review plugin) 완료
+
+
 
 - `CLAUDE.md`
 - `docs/inter-plugin-contracts/review-verdict-v3.md`

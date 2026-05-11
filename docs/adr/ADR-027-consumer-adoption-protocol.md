@@ -25,6 +25,7 @@ amendments:
   - ADR-032
 supersedes: null
 superseded_by: null
+is_transitional: false
 ---
 
 # ADR-027: Consumer Adoption Protocol — bootstrap + 3-trigger enforcement
@@ -116,7 +117,11 @@ Consumer 절차 SSOT = `docs/consumer-guide.md`. 본 ADR 은 결정만 freeze, �
 - CFP-50 marketplace parity CI 자동화 — Phase 5 manual sync 후 follow-up
 - 6 lane plugin 의 internal redesign — 발견 시 별도 CFP-N
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - `overlay/hooks/check-bootstrap.sh` (Phase 2 강화)
 - `overlay/hooks/regen-agents.sh` (Phase 2 또는 4 #169 docstring fix)

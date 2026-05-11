@@ -38,6 +38,7 @@ related_files:
   - templates/scripts/check-worktree-stale.sh
   - templates/scripts/worktree-path-util.sh
   - docs/orchestrator-playbook.md
+is_transitional: false
 ---
 
 # ADR-040: Worktree convention — base directory + naming + lifecycle
@@ -290,7 +291,11 @@ gh api "repos/$(gh repo view --json nameWithOwner --jq .nameWithOwner)/branches/
 - ADR-009 invariant 무손상: 본 amendment 는 GitOpsAgent 행동 명세 추가이며 wrapper agent 신설 없음.
 
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - [ADR-024 (story-scoped branch policy)](ADR-024-story-scoped-branch-policy.md) — 본 ADR 가 Amendment 1 로 hierarchical naming 추가.
 - [ADR-009 (wrapper-only decomposition)](ADR-009-wrapper-only-decomposition.md) — wrapper agent 0 개 invariant 정합 (worktree 는 인프라, agent 추가 아님).

@@ -46,6 +46,7 @@ related_files:
   - templates/agent-teams-hook-samples/TaskCreated.json.sample
   - templates/agent-teams-hook-samples/TaskCompleted.json.sample
   - CLAUDE.md
+is_transitional: false
 ---
 
 # ADR-044: Phase-scoped sequential team SSOT
@@ -325,7 +326,11 @@ default  >  auto_on_divergence  >  user_request_only
 - Hotfix path 의 agent teams 통합 (hotfix-playbook.md amendment 별도)
 - ADR-022 본문 잔재 cleanup (CFP-137 follow-up CFP)
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - [ADR-035 (Epic architecture)](ADR-035-codeforge-agent-teams-epic-architecture.md) — D2 implementation level carrier 본 ADR. §amendment_log[0] = `planned → applied` flip 동행.
 - [ADR-039 (Orchestrator subagent default)](ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — default subagent context invariant. env-divergent fallback 정합.

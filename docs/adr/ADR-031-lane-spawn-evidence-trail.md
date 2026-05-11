@@ -14,6 +14,7 @@ related_files:
   - docs/orchestrator-playbook.md
   - scripts/check-lane-evidence.sh
   - CLAUDE.md
+is_transitional: false
 ---
 
 # ADR-031: Lane-spawn evidence trail
@@ -166,7 +167,11 @@ ADR-027 §결과:108 retroactive 미처리 invariant 정합.
 - `.claude-work/progress/<KEY>.md` 에 lane_spawns 추가 (CFP-20 NG6 cache invariant 보존)
 - 자동 lane spawn (Orchestrator spawn 책임 — 본 ADR 는 evidence 만)
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - `templates/story-page-structure.md` (Phase 2 PR — Sonnet pick 결과 schema)
 - `templates/github-workflows/phase-gate-mergeable.yml` (Phase 2 — regex 검증)

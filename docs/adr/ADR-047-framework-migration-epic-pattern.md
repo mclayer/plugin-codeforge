@@ -13,6 +13,7 @@ related_stories:
   - CFP-316
 amends: null
 supersedes: null
+is_transitional: false
 ---
 
 # ADR-047: Framework Migration Epic Pattern
@@ -161,7 +162,11 @@ Migration Epic = ADR-020 Cross-Repo Epic Pattern의 codeforge framework-specific
 - Story §11 데이터 마이그레이션 (DataMigrationArch §11.6) 와의 통합 (framework meta-migration vs data migration 분리 유지)
 - Type B에서 inter-plugin contract MINOR/PATCH bump, workflow cosmetic fix는 advisory-only (Migration Epic 후보 아님 — §결정 4 Type B 명시 예시 외 변경은 PMOAgent advisory review 만 수행)
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - `docs/orchestrator-playbook.md` (PMOAgent trigger 섹션 갱신 — Phase 2)
 - `docs/consumer-guide.md` (Migration Epic Pattern 신규 §X — Phase 2)

@@ -33,6 +33,7 @@ related_files:
   - templates/skill-prompt-helpers/brainstorming-path-override.md
   - templates/github-issue-forms/story.yml
   - CLAUDE.md
+is_transitional: false
 ---
 
 # ADR-034: Pre-Issue Brainstorming as Optional Stage 0
@@ -124,7 +125,11 @@ ADR-027 Amendment 1 / CFP-127 정합 — Proposed → Accepted 2-stage 패턴.
 - [ADR-028](ADR-028-superpowers-integration-policy.md) — superpowers integration SSOT, wrapper-owned fragment 4 개 고정.
 - [ADR-031](ADR-031-lane-spawn-evidence-trail.md) — lane spawn evidence trail + effective date freeze 패턴.
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 Phase 1 wrapper PR (이 PR):
 - [`docs/orchestrator-playbook.md`](../orchestrator-playbook.md) — §1.2.0 Stage 0 블록 INSERT

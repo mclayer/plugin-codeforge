@@ -27,6 +27,7 @@ deputy_inputs:
   TestContractArchitect: AC-1_to_AC-8_test_contract_+_invariants_I1-I5
   DataMigrationArchitect: legacy_hub_backward_compat_+_counter_init_protocol
   OperationalRiskArchitect: counter_file_lock_+_concurrent_creation_+_race_resilience
+is_transitional: false
 ---
 
 # ADR-050: Multi-Repo Hierarchical Story Key System
@@ -298,7 +299,11 @@ Schema + 문서 + counter mechanism + Story dispatcher 모두 단일 PR.
 | **§11.6 Idempotency (CONDITIONAL)** | **DataMigrationArch primary + OpRiskArch consult** | **counter increment idempotency: file lock + reservation slot + retry-safe** |
 | §8 Test Contract | TestContractArch | AC-1~AC-8 + I1-I5 |
 
-## 다이어그램
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 ```mermaid
 graph TD

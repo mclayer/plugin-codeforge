@@ -14,6 +14,7 @@ related_files:
   - scripts/check-doc-locations.sh
   - scripts/test-check-doc-locations.sh
   - .github/workflows/doc-locations-check.yml
+is_transitional: false
 ---
 
 # ADR-041: Doc Location Registry — codeforge plugin doc taxonomy 통합 SSOT
@@ -133,7 +134,11 @@ mctrader-hub/docs/results/EPIC-RESULTS-MCT-89.md → mctrader-hub/EPIC-RESULTS-M
 - 빈 디렉터리 정리: `mctrader-hub/docs/results/` 삭제
 - PR description 에 ADR-041 링크 + "Mode B 정합" 명시
 
-## 다이어그램
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 ```
 codeforge upgrade (e.g., 새 doc type 도입)

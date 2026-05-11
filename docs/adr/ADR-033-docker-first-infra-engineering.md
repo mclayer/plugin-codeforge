@@ -23,6 +23,7 @@ related_files:
   - examples/library-minimal/
   - docs/inter-plugin-contracts/develop-output-v1.md
   - docs/inter-plugin-contracts/design-output-v2.md
+is_transitional: false
 ---
 
 # ADR-033: Docker-first Infra Engineering
@@ -238,7 +239,11 @@ archive: `mclayer/codeforge-internal-docs/wrapper/decisions/CFP-128-001-codex-sp
 
 거절 합리성 = Codex 7-area review CFP-128-001 area_5_option_formulation **PASS**.
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - 본 ADR
 - [ADR-014 Operational Risk SSOT distribution](ADR-014-operational-risk-ssot-distribution.md) — 본 ADR 가 amend

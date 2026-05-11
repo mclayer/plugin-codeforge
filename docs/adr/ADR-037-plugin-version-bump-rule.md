@@ -16,6 +16,7 @@ related_stories:
   - CFP-261 (carrier)
   - CFP-259 (parent Epic)
   - CFP-262 (downstream — drift severity cross-reference)
+is_transitional: false
 ---
 
 # ADR-037: Plugin version bump rule SSOT — Option β + α
@@ -147,7 +148,11 @@ wrapper plugin (codeforge) 은 (1)-(12) 자체 surface 변경 외에 다음 3 tr
 - **consumer**: consumer-guide 에 본 ADR cross-reference 추가 + consumer 자체 plugin 작성 시 본 ADR 권장 (mandatory 아님)
 - **CFP-262 (downstream)**: drift severity 분류 (MAJOR=hard-stop / MINOR=warn / PATCH=info) 가 본 ADR 의 surface table cross-reference
 
-## 다이어그램
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 ```
 PR open

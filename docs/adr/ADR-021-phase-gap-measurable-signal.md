@@ -7,6 +7,7 @@ category: audit
 carrier_story: CFP-60
 supersedes: null
 superseded_by: null
+is_transitional: false
 ---
 
 # ADR-021: Phase-gap measurable signal — debut-audit 카테고리 #2 backing
@@ -75,7 +76,11 @@ Change Plan §3 / §7 / §11 의 본문 시작 부분에 `<!-- author: <agent-na
 - Codex audit #5 FAIL 차단
 - 향후 다른 consumer 데뷔 평가 (mctrader 외) 도 동일 4 룰 적용 가능
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - [`scripts/check-debut-audit-signals.sh`](../../scripts/check-debut-audit-signals.sh) (Phase 2 — detection script)
 - [`scripts/test-check-debut-audit-signals.sh`](../../scripts/test-check-debut-audit-signals.sh) (Phase 2 — test harness)

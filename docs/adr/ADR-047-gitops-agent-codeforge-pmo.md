@@ -33,6 +33,7 @@ superseded_by: null
 amends:
   - ADR-035 (Wave 3 amendment_log[] amendment_id=3 추가 — D-2 worktree convention + D-3 GitOpsAgent foundation 결정 implementation level)
   - ADR-040 (Amendment 1 — GitOpsAgent hook 실행 주체 명시, Phase 2 PR scope finalize)
+is_transitional: false
 ---
 
 # ADR-047: GitOpsAgent — cross-cutting git ops agent in codeforge-pmo plugin
@@ -333,7 +334,11 @@ Yes. Rollback 경로 (Change Plan §5.2 verbatim):
 - **§10.5 lint P0 승격** — 현재 `check-doc-section-schema.sh` warning level. 별도 follow-up CFP 가능
 - **새 event_type 추가** (예: `worktree_gc_bypassed`, `fix_iter_worktree_create`) — git-ops-event-v1 §변경 규칙 정합 별도 MINOR bump CFP
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - `docs/inter-plugin-contracts/git-ops-event-v1.md` (NEW — wrapper sibling, PR #265 done)
 - `docs/inter-plugin-contracts/pmo-output-v1.md` (v1.0 → v1.1 MINOR bump)

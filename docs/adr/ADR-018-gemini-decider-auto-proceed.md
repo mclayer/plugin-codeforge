@@ -18,6 +18,7 @@ related_files:
 related_stories:
   - CFP-57
   - CFP-58
+is_transitional: true
 ---
 
 # ADR-018: Gemini Decider Auto-Proceed System (Phase 1 doc-only policy)
@@ -221,7 +222,16 @@ Output (YAML):
 - ADR-009 — Phase 1 영향 없음 (agent count = 0 유지). Phase 2 시 별도 ADR (ADR-019+).
 - ADR-013 + ADR-017 — 본 CFP-57 spec/plan 위치 = `<internal-docs>/wrapper/{specs,plans}/` 정합.
 
-## 관련 파일
+## 해소 기준
+
+**전이 분류**: Gemini Decider Auto-Proceed (Phase 1 doc-only policy). CFP-134 / ADR-035 Wave 1 에서 Deprecated — Gemini CLI 의존 제거 + Sonnet/Codex 사용자 ad-hoc 도구로 격하.
+
+**해소 evidence**:
+- **metric**: Deprecated status (frontmatter `status: Deprecated`)
+- **who**: 사용자 ad-hoc Sonnet/Codex 호출만 허용 (자동 발동 무효)
+- **how**: CFP-134 Wave 1 merge (2026-05-08) — Decider 자동 발동 채널 제거 완료
+
+
 
 - `CLAUDE.md`
 - `docs/inter-plugin-contracts/decision-packet-v1.md`

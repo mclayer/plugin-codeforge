@@ -9,6 +9,7 @@ related_files:
   - docs/adr/ADR-014-operational-risk-ssot-distribution.md (CFP-46 design-side 짝)
   - docs/adr/ADR-008-inter-plugin-contract-versioning.md (additive minor 룰)
   - docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md (in-place sibling sync)
+is_transitional: false
 ---
 
 ## 상태
@@ -89,7 +90,11 @@ vague reason 차단 정규식 + 30자 minimum (CFP-46 의 10자보다 강화 —
 - **design-output v3 BREAKING bump**: 거부 — §7/§11 sub-numbering shift 없음 + deputies_results 변경 없음 + 신규 deputy 없음 = 순수 additive. v2.1 minor in-place 가 적합
 - **chaos / fault injection 통합** (option c): 거부 — chaos infra 의존 (Toxiproxy / chaos-mesh / faketime) opinionated. CFP-48 overlay `domain_critical_invariants[]` 로 분리
 
-## 다이어그램
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 ```
 Before (CFP-46 후, CFP-47 시점):

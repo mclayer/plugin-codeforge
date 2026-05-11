@@ -11,6 +11,7 @@ related_files:
   - templates/github-workflows/dogfood-artifact-paths.yml
 related_stories:
   - CFP-56
+is_transitional: false
 ---
 
 # ADR-017: Skill override path enforcement for codeforge dogfood artifacts
@@ -59,7 +60,11 @@ Trade-off: pre-commit보다 늦게 실패하지만, 설치 여부에 의존하�
 - **E-B: pre-commit hook만 사용** — 빠르지만 hook 설치 보장 부재. 다양한 Orchestrator session/agent/contributor 환경에서 reliable enforcement 불가.
 - **E-D: Repo-local lint script만 (no CI)** — 좋은 testable primitive 이지만 CI 없으면 trust-based 와 동일.
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - `CLAUDE.md`
 - `docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md`

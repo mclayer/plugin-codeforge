@@ -15,6 +15,7 @@ related_files:
   - templates/review-checklists/code.md
   - templates/review-checklists/security.md
 related_stories: []
+is_transitional: false
 ---
 
 # ADR-001: Review/Test 워커 에이전트 통합 — Claude/Codex 2종으로 단일화하고 도메인은 PL packet으로 분리
@@ -113,7 +114,11 @@ PL packet에 체크리스트·스코프·category enum 중 하나라도 누락�
 | 영향 없음 | GitHub workflows (라벨 매핑 외부 SSOT 그대로), CODEOWNERS, Story file 섹션 규약, 1차 layer 자동화(Dependabot/CodeQL/Secret Scanning/Push Protection) |
 | Consumer 영향 | overlay 측 `agents/Claude{Design,Code,SecurityTest}ReviewAgent.md` 또는 `Codex...` 오버라이드가 있다면 마이그레이션 필요. v0.9 CHANGELOG·migration-guide에 안내 |
 
-## 다이어그램
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 ```mermaid
 graph TB

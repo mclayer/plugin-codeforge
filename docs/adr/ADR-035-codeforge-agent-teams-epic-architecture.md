@@ -44,6 +44,7 @@ amendment_log:
     ref: ADR-045
     cfp: CFP-138
     applied_pr: "wrapper Phase 1 PR (CFP-138)"
+is_transitional: false
 ---
 
 # ADR-035: codeforge agent teams + GitOps + retro 의무화 + ADR-022 deprecate Epic architecture
@@ -201,7 +202,11 @@ GHEC governance 4 영역 (rulesets-as-code / required workflows enterprise sync 
 
 또한 CFP-135 = **doc-only Story** (Phase 2 implementation 부재, ADR-027 Amendment 1 정합) — §7 (보안 설계) / §11 (데이터 마이그레이션) / §13 (Live Operational Discipline) 모두 N/A. 따라서 **6 deputy gathering skip 정합** (deputy mandate 매트릭스 의 active row 0). CodebaseMapper / Refactor / SecurityArch / OpRiskArch / TestContractArch / DataMigrationArch 6 deputy 모두 mandate 영역 (코드 경로 매핑 / refactor 영역 / trust boundary / DR / Test Contract / migration) 본 Story 에서 비활성. ArchitectAgent (chief author) 가 직접 본 ADR 작성 + Stage 0 spec verbatim 보존 invariant 우선 — Wave 2 (CFP-137 worktree 인프라) / Wave 3 (CFP-139 GitOpsAgent) 진입 시 deputy gathering 재개 trigger (§7 / §11 / §13 sub 활성).
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - `CLAUDE.md` — 4 영역 SSOT 정정 (CFP-135 carrier)
 - `docs/orchestrator-playbook.md` — agent teams + worktree dispatch 절차 (CFP-137 carrier)

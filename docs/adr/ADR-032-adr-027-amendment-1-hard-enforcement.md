@@ -18,6 +18,7 @@ related_files:
   - docs/project-config-schema.md
   - docs/consumer-guide.md
   - docs/adr/ADR-027-consumer-adoption-protocol.md
+is_transitional: false
 ---
 
 # ADR-032: ADR-027 Amendment 1 — bootstrap strict mode opt-in
@@ -140,7 +141,11 @@ ADR-027 §결정 3 (Bypass `HOTFIX_BYPASS_CODEFORGE`) 와 함께 사용 시:
 - Cross-plugin lane-spawn evidence (ADR-031 별도)
 - `--no-strict` 명시적 disable flag 신설 (revert 는 CLI 미사용 / env unset / yaml false 로 충분)
 
-## 관련 파일
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 - `docs/adr/ADR-027-consumer-adoption-protocol.md` (Phase 1 PR — frontmatter `amendments: [ADR-032]` 갱신, Amendment 1 섹션 추가)
 - `overlay/hooks/check_bootstrap.py` (Phase 2 — `--strict` flag + REQUIRED_PLUGINS adoption-critical subset + check 9 NEW + exit code logic)
