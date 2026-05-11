@@ -1,6 +1,6 @@
 ---
 adr_number: null
-title: ADR 踰덊샇 ?덉빟 ?덉??ㅽ듃由?(GitOpsAgent ?꾩슜 ?댁쁺 ?덉??ㅽ듃由?
+title: ADR 번호 예약 레지스트리 (GitOpsAgent 전용 운영 레지스트리)
 status: Active
 category: governance
 date: 2026-05-09
@@ -12,42 +12,44 @@ related_files:
   - templates/github-workflows/parallel-epic-conflict-check.yml
 ---
 
-# ADR 踰덊샇 ?덉빟 ?덉??ㅽ듃由?
-## ?곹깭
+# ADR 번호 예약 레지스트리
 
-Active (2026-05-09) ??ADR-050 짠寃곗젙 1 援ы쁽. GitOpsAgent ?꾩슜 sequential append ?덉??ㅽ듃由?
+## 상태
 
-## 而⑦뀓?ㅽ듃
+Active (2026-05-09) — ADR-050 §결정 1 구현. GitOpsAgent 전용 sequential append 레지스트리.
 
-蹂듭닔 Orchestrator ?몄뀡???숈떆???쒕줈 ?ㅻⅨ ?먰뵿??吏꾪뻾???????몄뀡??媛숈? ADR 踰덊샇濡??뚯씪???앹꽦?섎뒗 異⑸룎??諛쒖깮?쒕떎 (ADR-048 以묐났 ?щ? ?ㅼ쬆). ADR-050 짠寃곗젙 1?먯꽌 ??臾몄젣瑜??닿껐?섍린 ?꾪빐 蹂??덉??ㅽ듃由щ? ?좎꽕?덈떎.
+## 컨텍스트
 
-**Write 二쇱껜**: GitOpsAgent ?꾩슜 (sequential append).
-**異⑸룎 ?댁냼**: ???몄뀡 ?숈떆 append ??git merge positional conflict ??GitOpsAgent媛 adr_number ?ㅻ쫫李⑥닚 re-sort.
+복수 Orchestrator 세션이 동시에 서로 다른 에픽을 진행할 때 두 세션이 같은 ADR 번호로 파일을 생성하는 충돌이 발생한다 (ADR-048 중복 사례 실증). ADR-050 §결정 1에서 이 문제를 해결하기 위해 본 레지스트리를 신설했다.
 
-## 寃곗젙
+**Write 주체**: GitOpsAgent 전용 (sequential append).
+**충돌 해소**: 두 세션 동시 append → git merge positional conflict → GitOpsAgent가 adr_number 오름차순 re-sort.
 
-GitOpsAgent媛 蹂??덉??ㅽ듃由щ? ?듯빐 ADR 踰덊샇瑜??먯옄?곸쑝濡??덉빟?쒕떎.
+## 결정
 
-### ?덉빟 ?덉감
+GitOpsAgent가 본 레지스트리를 통해 ADR 번호를 원자적으로 예약한다.
 
-1. ArchitectAgent媛 ADR ?꾩슂 ?좏샇 諛쒖떊
-2. GitOpsAgent媛 留덉?留?`adr_number` + 1??append ??commit
-3. ArchitectAgent媛 ?덉빟??踰덊샇濡?`ADR-NNN-*.md` ?앹꽦
-4. ADR merge ?꾨즺 ??`status: reserved ??active`濡?媛깆떊
+### 예약 절차
 
-### ?덉??ㅽ듃由?YAML ?ㅽ궎留?
+1. ArchitectAgent가 ADR 필요 신호 발신
+2. GitOpsAgent가 마지막 `adr_number` + 1을 append → commit
+3. ArchitectAgent가 예약된 번호로 `ADR-NNN-*.md` 생성
+4. ADR merge 완료 후 `status: reserved → active`로 갱신
+
+### 레지스트리 YAML 스키마
+
 ```yaml
 reservations: []
-# ?뺤떇:
+# 형식:
 # - adr_number: NNN
 #   epic: CFP-XXX
 #   status: reserved   # reserved | active | archived
 #   reserved_at: ISO8601
 ```
 
-## 寃곌낵
+## 결과
 
-### ?꾩옱 ?덉빟 紐⑸줉
+### 현재 예약 목록
 
 | adr_number | epic | status | reserved_at |
 |---|---|---|---|
@@ -57,13 +59,12 @@ reservations: []
 | 55 | CFP-367 | reserved | 2026-05-10 |
 | 56 | CFP-374 | active | 2026-05-11 |
 
-### 踰덊샇 ?댁젣 (archived)
+### 번호 해제 (archived)
 
-ADR deprecated/superseded ???대떦 row `status: archived`. 踰덊샇 ?ъ궗??湲덉?.
+ADR deprecated/superseded 시 해당 row `status: archived`. 번호 재사용 금지.
 
-## 愿???뚯씪
+## 관련 파일
 
-- [ADR-050](ADR-050-parallel-epic-conflict-coordination.md) ??蹂??덉??ㅽ듃由?寃곗젙??carrier ADR
-- `docs/parallel-work/section-ownership.yaml` ??ADR-050 짠寃곗젙 4 (locked ?뱀뀡 ?좎뼵)
-- `templates/github-workflows/parallel-epic-conflict-check.yml` ??ADR-050 짠寃곗젙 3 (?먮룞 異⑸룎 媛먯?)
-
+- [ADR-050](ADR-050-parallel-epic-conflict-coordination.md) — 본 레지스트리 결정의 carrier ADR
+- `docs/parallel-work/section-ownership.yaml` — ADR-050 §결정 4 (locked 섹션 선언)
+- `templates/github-workflows/parallel-epic-conflict-check.yml` — ADR-050 §결정 3 (자동 충돌 감지)
