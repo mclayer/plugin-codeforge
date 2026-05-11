@@ -14,6 +14,13 @@ related_stories:
   - CFP-136
   - CFP-137
   - CFP-139
+  - CFP-391  # Amendment 1 (2026-05-11) — dispatch_mode auto_on_divergence 추가
+amendment_log:
+  - date: 2026-05-11
+    cfp: CFP-391
+    summary: "§결정 2 dispatch_mode enum 에 auto_on_divergence 추가. ADR-059 carrier debate-protocol-v1 자동 발동 mode."
+    affected_sections: ["§결정 2"]
+    breaking: false
 related_adrs:
   - ADR-009  # wrapper-only decomposition (Orchestrator 단일 lead 정합)
   - ADR-022  # Deprecated by ADR-035 — review-verdict v4 cutover 동기
@@ -130,7 +137,7 @@ teammates:
     system_prompt_path: <plugin-relative agent file path>
     model: <claude-opus-4-7 | claude-sonnet-4-6 | gpt-5-codex>
     spawn_mode: default | conditional
-    dispatch_mode: default | user_request_only  # NEW (Story §2.4 정합)
+    dispatch_mode: default | user_request_only | auto_on_divergence  # NEW (Story §2.4 정합 / Amendment 1 CFP-391 — auto_on_divergence 추가)
     activation_condition: <expression — only when spawn_mode=conditional>
 dispatch_pattern: parallel | sequential | adversarial | cross-layer | sequential-dialog
 worktree_layout:
@@ -143,6 +150,28 @@ hook_subscriptions:
 ```
 
 **dispatch_mode SSOT (Story §2.4)**: review lane 의 Codex worker = `dispatch_mode: user_request_only`. default roster = `PL + Claude worker` 2 teammate, Codex 는 사용자 explicit request 시 추가 → 3 teammate. memory `feedback_sonnet_decider_user_only.md` + ADR-022 Deprecated + 사용자 turn 7-8 directive 정합.
+
+**Amendment 1 (2026-05-11, CFP-391 / ADR-059)** — `auto_on_divergence` 옵션 추가. ADR-059 에서 정의되는 `debate-protocol-v1` 발동 조건 — DesignReview lane 에서 Claude worker 와 Codex worker 가 동일 anchor 에 대해 (a) 서로 다른 severity 또는 (b) 서로 다른 recommendation 산출 시 자동 활성.
+
+**우선순위 룰** (두 mode 동시 적용 시 effective mode 결정):
+
+```
+default  >  auto_on_divergence  >  user_request_only
+```
+
+- `default` 가 가장 강함 (항상 활성)
+- `auto_on_divergence` = trigger 조건 (divergence) 만족 시 자동 활성
+- `user_request_only` = 사용자 explicit request 만 (최약)
+- 두 mode 가 동시 활성 시 더 강한 쪽이 effective. 예: `[user_request_only, auto_on_divergence]` 표기 worker 는 divergence 감지 시 자동 활성 + 사용자가 explicit request 안 한 상태에서도 발동.
+- review lane Codex worker 의 권고 표기 = `dispatch_mode: [user_request_only, auto_on_divergence]` (Story 1 scope = DesignReview, Story 2 scope = Requirements 도 동일 패턴).
+
+**`auto_on_divergence` trigger 의 lane-specific 정의**:
+
+- DesignReview: review-verdict-v4 `findings[]` 동일 `anchor_id` 에 대해 (severity 또는 recommendation 불일치) — ADR-059 §결정 2
+- Requirements (Story 2 / CFP-392 scope): RequirementsPL synthesis 와 Codex proactive check 간 semantic divergence — ADR-052 touchpoint #4 격상 Amendment 와 동행 (별도 Story)
+- CodeReview / SecurityTest: deferred CFP-C scope
+
+본 Amendment 자체는 BREAKING 아님 — `default | user_request_only` 기존 동작 보존 + enum 1 value 추가 (SemVer MINOR 정합 — ADR-008).
 
 **거절된 대안**:
 - (B) review lane default = `PL + Claude + Codex` (3 teammate) — 사용자 directive 정면 위배 (Codex review 자동 발동 = ad-hoc only).
