@@ -1,6 +1,7 @@
 ---
 name: BackendDeveloperAgent
 model: claude-sonnet-4-6
+# rate-limit 시 Orchestrator가 model:opus로 fallback spawn — ADR-057
 role: dev
 description: 웹 백엔드 애플리케이션 코드 구현 — 도메인·어댑터·포트·CLI·서버 라우트 (테스트 코드 작성은 QADeveloperAgent 담당)
 permissions:
