@@ -1,14 +1,14 @@
 ---
 kind: registry
 registry: label
-version: "2.1"
+version: "2.2"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
 created_date: 2026-05-09
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/label-registry-v2.md
-date: 2026-05-09
+date: 2026-05-11  # CFP-393 v2.2 — monitoring tier + codeforge-kpi-alert
 authors:
   - Claude (CFP-140 — ADR-049 type:* → native Issue Types cutover)
 related_adrs:
@@ -19,6 +19,8 @@ related_adrs:
   - ADR-036 (CFP-260 — phase:reservation v1.4)
   - ADR-045 (CFP-138 — gate:retro-complete v1.5)
   - ADR-050 (CFP-344 — conflict:* + merge-order:* labels v2.1)
+  - ADR-057 (CFP-393 — codeforge-kpi-alert + monitoring tier v2.2)
+  - ADR-060 (CFP-393 — framework first non-sunset application)
 related_files:
   - scripts/bootstrap-labels.sh (type:* 3 entry removed — CFP-140)
   - templates/issue-types.yaml (native Issue Types SSOT — CFP-140)
@@ -34,6 +36,11 @@ related_files:
 
 ## 변경 이력
 
+**v2.2 (CFP-393 / ADR-057 Amendment 2 / ADR-060, 2026-05-11)**: MINOR bump.
+- **추가**: `codeforge-kpi-alert` — codeforge KPI threshold violation alert (CFP-393 ADR-057 fallback rate KPI dashboard, rate-limit-fallback-kpi.yml CI Action 자동 부착)
+- **신규 tier**: `monitoring` — KPI / metric / dashboard / alert 영역. 기존 `audit` (후처리 분류) 와 분리. 향후 sub-axis (info / warn / error) 확장 자연.
+- canonical-only (kind:registry — sibling sync scope 외 per ADR-010).
+
 **v2.1 (CFP-344 / ADR-050, 2026-05-09)**: MINOR bump.
 - **추가**: `conflict:file-overlap`, `conflict:adr-number`, `conflict:section-locked` — 병렬 에픽 충돌 감지 레이블 (parallel-epic-conflict-check.yml Actions 부착)
 - **추가**: `merge-order:1`, `merge-order:2` — 충돌 시 merge 순서 프로토콜 (GitOpsAgent 부착)
@@ -46,7 +53,7 @@ related_files:
 
 ## 1. 목적
 
-`bootstrap-labels.sh`가 생성하는 GitHub label SSOT (v2.1 시점 32+ 종 — type 1 / phase 8 / gate 4 / fix 4 / hotfix 2 / audit 12+ / category 7 / conflict 5).
+`bootstrap-labels.sh`가 생성하는 GitHub label SSOT (v2.2 시점 33+ 종 — type 1 / phase 8 / gate 4 / fix 4 / hotfix 2 / audit 12+ / category 7 / conflict 5 / monitoring 1).
 `type:epic` / `type:story` / `type:bug` 는 native Issue Types 로 대체 (ADR-049).
 
 ## 2. Schema
@@ -344,6 +351,16 @@ labels:
     description: "병렬 에픽 충돌 시 merge-order:1 완료 후 git rebase main 의무"
     single_active: false
     attach_owner_plugin: "GitOpsAgent"
+
+  # monitoring:* (1종 — CFP-393 v2.2 신설 tier)
+  # KPI / metric / dashboard / alert 영역. 기존 `audit` (후처리 분류) 와 분리.
+  # 향후 sub-axis (info / warn / error) 확장 자연.
+  - name: codeforge-kpi-alert
+    category: monitoring
+    color: "f29513"
+    description: "codeforge KPI threshold violation alert (CFP-393 ADR-057 fallback rate KPI dashboard). rate-limit-fallback-kpi.yml workflow 가 sample_size_sufficient=true AND fallback_rate_percent >= 1.0% 시 Issue auto-open. ADR-060 evidence-enforceable framework 첫 non-sunset application."
+    single_active: false
+    attach_owner_plugin: "rate-limit-fallback-kpi.yml CI Action (자동)"
 ```
 
 ## 4. 변경 규칙

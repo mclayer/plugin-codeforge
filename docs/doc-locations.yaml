@@ -5,7 +5,7 @@
 # Regen markdown: scripts/check-doc-locations.sh --regen
 schema_version: "1.0"
 introduced_by: CFP-276 (issue #276)
-last_updated: 2026-05-09  # CFP-342 / ADR-050 multi_repo_hub + multi_repo_impl variants 추가
+last_updated: 2026-05-11  # CFP-393 — kpi_artifact doc type 추가 (ADR-041 정합)
 
 allowed_variants:
   - single_repo
@@ -207,3 +207,20 @@ doc_types:
       MANIFEST.yaml `registries:` 블록 entry = `evidence_check_registry` (versioning 추적).
       parallel-edit policy = append-only (docs/parallel-work/section-ownership.yaml).
       Write owner = Orchestrator + carrier Story ArchitectAgent (wrapper governance).
+
+  - name: kpi_artifact
+    variants:
+      single_repo: "<owner-repo>/docs/kpi/<slug>.json"
+    owner_agent: orchestrator
+    introduced_by: CFP-393
+    naming_pattern: "[a-z0-9-]+\\.json"
+    frontmatter_required: false
+    examples:
+      - "mclayer/plugin-codeforge/docs/kpi/rate-limit-fallback.json"
+    notes: |
+      CFP-388 evidence-enforceable framework 의 runtime metric measurement 결과 JSON.
+      ADR-057 Amendment 2 (CFP-393) 가 첫 사례 — rate-limit-fallback.json.
+      Write owner = cron workflow auto-PR (사용자 manual edit 금지 — parallel-work/section-ownership.yaml
+      append-only policy + comment workflow-only-write semantic).
+      Lint scope = JSON valid (jq parse) + invariant (분자 ≤ 분모 등, aggregator 가 강제).
+      향후 history 누적 정책 별도 carrier (CFP-393 §11 follow-up #4).
