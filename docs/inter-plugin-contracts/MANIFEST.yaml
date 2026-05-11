@@ -66,3 +66,7 @@ registries:
     files:
       - { file: debate-protocol-v1.md, version: "1.0", status: Active }  # CFP-391 / ADR-059: lane-agnostic adversarial debate protocol
     description: "Multi-round adversarial debate protocol (Codex ↔ Opus) — lane-agnostic"
+
+  - name: evidence_check_registry
+    files:
+      - { file: evidence-check-registry-v1.md, version: "1.0", status: Active }  # CFP-389 / ADR-060: evidence-enforceable promotion framework

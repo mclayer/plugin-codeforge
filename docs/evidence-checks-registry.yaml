@@ -1,0 +1,42 @@
+# docs/evidence-checks-registry.yaml
+# Evidence-enforceable governance check registry — single SSOT
+# Schema doc: docs/inter-plugin-contracts/evidence-check-registry-v1.md
+# Carrier ADR: ADR-060 (Evidence-enforceable promotion framework)
+# Lint chain: check-doc-frontmatter.sh + check-doc-section-schema.sh (kind:registry pattern)
+# parallel-edit policy: append-only (docs/parallel-work/section-ownership.yaml)
+schema_version: "1.0"
+introduced_by: CFP-389
+last_updated: 2026-05-11
+
+entries:
+  - name: adr-sunset-criteria
+    description: |
+      ADR-058 §결정 1-3 mechanical verification — is_transitional frontmatter +
+      ## 해소 기준 섹션 + 측정성 3-tuple (metric / who / how) + 모달 어휘 1차 사전 검사.
+      ADR-058 declaration 의 첫 evidence-enforceable check (CFP-B 잠정 carrier).
+    detect_command: bash scripts/check-adr-sunset-criteria.sh
+    workflow: templates/github-workflows/adr-sunset-criteria.yml
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:adr-sunset
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:            # ADR-060 §결정 6 (c)
+        - CFP-390  # 인벤토리 backfill — registry yaml row append
+        - CFP-391  # 4-tier 정식 amendment — current_tier required 전환 (schema v1.0 → v1.1)
+      evidence_artifacts:              # 승격 carrier PR 의 manual 첨부 의무 (자동화 인프라 별도 carrier)
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary:
+      version: "1.0"                   # ADR-060 §결정 9 — 4 표현 only (ADR-058 §결정 8 verbatim)
+      dictionary:
+        - "안정화되면"
+        - "임시"
+        - "한시적"
+        - "until further notice"
+    introduced_by: CFP-389
+    owner_adr: ADR-058
+    carrier_adr: ADR-060
+    status: Active

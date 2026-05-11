@@ -1,0 +1,155 @@
+---
+kind: registry
+registry: evidence-check
+version: "1.0"
+canonical_repo: mclayer/plugin-codeforge
+canonical_path: docs/inter-plugin-contracts/evidence-check-registry-v1.md
+date: 2026-05-11
+status: Active
+authors:
+  - CFP-389 (Initial — evidence-enforceable promotion framework SSOT, ADR-060 carrier)
+related_adrs:
+  - ADR-008  # Inter-plugin Contract Versioning (kind:registry SemVer 정합)
+  - ADR-010  # Inter-plugin Contract Sibling Sync (kind:registry scope 외 명시)
+  - ADR-024  # Story-scoped branch policy (Amendment 3 audit-trailed exception channel)
+  - ADR-041  # doc-locations
+  - ADR-050  # parallel epic + warning mode prior art
+  - ADR-058  # ADR sunset criteria mandate (직접 동인)
+  - ADR-060  # Evidence-enforceable promotion framework (carrier)
+related_files:
+  - docs/evidence-checks-registry.yaml
+  - docs/inter-plugin-contracts/MANIFEST.yaml
+  - docs/doc-locations.yaml
+  - scripts/check-adr-sunset-criteria.sh
+  - scripts/check-bypass-audit-comment.sh
+  - templates/github-workflows/adr-sunset-criteria.yml
+  - CLAUDE.md
+---
+
+# evidence-check-registry v1.0
+
+## 1. 목적
+
+codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-058 declaration 의 mechanical enforcement 점진 적용 framework (ADR-060) 의 schema doc + 운영 룰.
+
+각 evidence check entry 는 `docs/evidence-checks-registry.yaml` 의 row 로 정의되며, 본 schema 가 row 의 필수 / optional 필드 + 4-tier enforcement enum + promotion gate + bypass channel + audit trail 양식을 규정.
+
+## 2. Schema (kind:registry, wrapper-owned canonical)
+
+- **kind**: registry (cross-cutting protocol, NOT typed inter-plugin schema)
+- **lint chain**: `check-doc-frontmatter.sh` + `check-doc-section-schema.sh` (기존 3 kind:registry entry 와 동일).
+- **MANIFEST.yaml 등록**: `registries:` 블록 entry (label-registry / comment-prefix-registry 패턴) — `check-inter-plugin-contracts.sh` scope 외.
+- **doc-locations.yaml 등록**: 신규 doc type `evidence_check_registry` row (ADR-041 §결정 정합).
+
+## 3. 항목 (registry yaml entry row 필드 schema)
+
+각 entry 는 다음 필드 보유:
+
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `name` | string | 필수 | entry 식별자 (kebab-case). 예: `adr-sunset-criteria`. 전역 unique. |
+| `description` | string | 필수 | 본 entry 가 검증하는 정책 요약 (1-3 문장). |
+| `detect_command` | string | 필수 | violation 감지 lint 실행 명령 (절대 또는 repo-relative path). 예: `bash scripts/check-adr-sunset-criteria.sh`. |
+| `workflow` | string | 필수 | GitHub Actions workflow yaml path. 예: `templates/github-workflows/adr-sunset-criteria.yml`. |
+| `current_tier` | enum | optional (v1.0 — CFP-391 시점 required 전환 예정 = MINOR bump v1.1) | enforcement tier. enum = `warning` / `blocking-on-pr` / `blocking-on-merge` / `hotfix-bypass`. 결정 3 (ADR-060). |
+| `bypass_label` | string | optional (해당 tier 가 hotfix-bypass 활성 시) | bypass label name. namespace = `hotfix-bypass:<entry-name>` (예: `hotfix-bypass:adr-sunset`). per-entry namespace 분리 의무 (ADR-060 §결정 7). |
+| `bypass_audit_lint` | string | optional (bypass_label 정의 시 의무) | audit comment 존재 검증 lint 명령. 예: `bash scripts/check-bypass-audit-comment.sh`. ADR-060 §결정 8. |
+| `promotion_criteria` | object | 필수 (current_tier=warning 시) | warning → blocking 승격 gate 정의. 필드: |
+| `promotion_criteria.pr_cumulative_min` | int | 필수 | 본 entry merge 후 카운트 시작, throughput 독립 PR 누적 (ADR-060 §결정 10). 기본 `20`. |
+| `promotion_criteria.failure_threshold` | int | 필수 | bypass label 외 failure count 허용 임계 (0 = 무사고). 기본 `0`. |
+| `promotion_criteria.sibling_dependencies` | list[string] | optional | 본 entry 승격 전 merged 필요한 sibling Story keys. 예: `[CFP-390, CFP-391]`. |
+| `promotion_criteria.evidence_artifacts` | list[string] | 필수 | 승격 carrier PR 의 evidence 산출물 유형 (자동화 카운터 미도입 시 manual 첨부 의무). |
+| `modal_anti_pattern_dictionary` | object | optional (lint 가 모달 어휘 검사 포함 시) | 모달 어휘 anti-pattern 사전. 필드: `version` (string, e.g., `"1.0"`) + `dictionary` (list[string]). versioning 의무 (확장 어휘 도입 시 MINOR bump). |
+| `introduced_by` | string | 필수 | 본 entry 도입 carrier Story key. 예: `CFP-389`. |
+| `owner_adr` | string | 필수 | 본 entry 가 검증 대상으로 삼는 정책 ADR. 예: `ADR-058`. |
+| `carrier_adr` | string | 필수 | 본 entry 도입의 carrier ADR (framework SSOT 외). 예: `ADR-060`. |
+| `status` | enum | optional (default `Active`) | entry lifecycle. enum = `Active` / `Deprecated` / `Archived`. |
+
+## 4. 변경 규칙 (SemVer, ADR-008 정합 + 4-tier enforcement enum 정식 도입)
+
+| tier | 동작 | branch protection 영향 | 사용 시점 |
+|---|---|---|---|
+| `warning` | continue-on-error 또는 non-required check. PR comment / job summary 경고만. | `required_status_checks.contexts` 미부착 | 첫 도입 / 운영 신뢰도 검증 단계 |
+| `blocking-on-pr` | required check. PR merge 차단. | `required_status_checks.contexts` 부착 | 승격 gate 통과 후 정식 enforce |
+| `blocking-on-merge` | post-merge guard (예: phase-gate-mergeable). PR open 단계 통과, merge 시점 차단. | `required_status_checks.contexts` 부착 | 동적 검증 (PR 상태 변화 기반) |
+| `hotfix-bypass` | bypass label 적용 PR 만 skip + audit comment 의무. label 부재 시 blocking-on-pr 등가. | `required_status_checks.contexts` 부착 (+ bypass workflow) | 운영 장애 hotfix 통로 필수 시 |
+
+본 v1.0 시점 = enum 정의만 제공. registry yaml row 의 `current_tier` 필드 = optional. CFP-391 (4-tier 정식 amendment) 가 required 전환 + 기존 entry retroactive 분류 = MINOR bump v1.0 → v1.1.
+
+## 5. Bypass channel 운영 (ADR-024 Amendment 3 + ADR-060 §결정 7-8)
+
+### 5.1 권한자
+
+- repo admin only. solo-dev 환경 = 사용자 본인 (mccho8865).
+- contributor 추가 시 재논의 (별도 carrier).
+
+### 5.2 namespace 분리
+
+- per-entry namespace 의무: `hotfix-bypass:<entry-name>` (예: `hotfix-bypass:adr-sunset`).
+- 단일 global bypass label 금지 (ADR-060 §대안 E 거부 정합) — scope 통제 우선.
+
+### 5.3 Audit trail 3중 안전망
+
+1. **Audit comment**: GitHub Actions bot 가 PR comment 1개 자동 append. schema (CI-parsable, ADR-060 §결정 8):
+   ```
+   [hotfix-bypass-audit] PR=<number> label_applied_by=<user> reason=<bypass_reason_textbox> ADR_files=<comma-separated-paths> timestamp=<ISO8601>
+   ```
+   - `timestamp` = ISO8601 UTC Z suffix 의무 (fix-event-v1 schema clarification 정합).
+   - `reason` = PR description `### Bypass reason` 섹션 textbox 본문 (workflow 추출, 부재 시 PR block 의무).
+
+2. **Audit assertion lint** (`bypass_audit_lint` 필드 정의 entry): bypass label 부착 PR 의 audit comment 1개 이상 존재 검증. 부재 시 PR block (workflow level conditional).
+
+3. **Audit log 집계**: bypass label 적용 PR list quarterly merge 시 `docs/audit/hotfix-bypass-log.md` 자동 append — 별도 carrier scope (CFP-390 또는 신규 carrier). 본 registry 는 schema + bot comment 양식만.
+
+### 5.4 Re-entry 안전망
+
+bypass PR 안 변경 자체가 정책 위반 (재귀 시나리오) → audit comment 에 `[sunset-criteria-deferred]` 또는 entry-specific 태그 자동 추가 + 후속 보완 의무 자동 Issue 발의 (별도 carrier scope).
+
+## 6. 승격 gate (ADR-060 §결정 6, AND condition)
+
+warning → blocking-on-pr / blocking-on-merge 승격 = 3 condition AND:
+
+- **(a) `promotion_criteria.pr_cumulative_min`**: ADR-060 / 본 entry merge 후 첫 main PR merge 일자부터 카운트. `hotfix-bypass:*` label 적용 PR 도 throughput 카운트 (EC-C 정합).
+- **(b) `promotion_criteria.failure_threshold = 0`**: bypass label 외 failure count = 0. bypass label 적용 PR 의 lint 결과 skip (failure 미카운트).
+- **(c) `promotion_criteria.sibling_dependencies` 모두 merged**: 본 entry 가 다른 Story 의존 시 모두 main merge 완료.
+
+승격 carrier PR (별도 CFP-NNN) 의 `promotion_criteria.evidence_artifacts` 산출물 의무:
+- `github_actions_run_history_url` — workflow 실행 이력 page URL.
+- `lint_failure_count_zero_proof` — bypass label 외 failure = 0 lint 출력 (gh CLI / API 결과 첨부).
+- `pr_cumulative_count_proof` — PR 누적 ≥ threshold 카운트 (gh CLI / API 결과 첨부).
+
+본 3 산출물 부재 시 승격 carrier PR block. 자동화 카운터 인프라 미도입 시 manual 첨부 의무 — 자동화는 별도 carrier 책임.
+
+## 7. 추가 변경 규칙 (Amendment / version 추적)
+
+본 registry 는 ADR-008 §kind:registry SemVer 룰 적용:
+
+- **MAJOR (v1.x → v2.0)**: 기존 entry 필드 제거 / enum 값 제거 / schema BREAKING 변경. 모든 consumer (lint script + workflow + registry yaml) 갱신 의무.
+- **MINOR (v1.0 → v1.1)**: 신규 필드 추가 (default value 보유) / enum 값 추가 / `current_tier` required 전환 등. 기존 consumer backward compat 유지.
+- **PATCH (v1.0 → v1.0.x)**: schema 문서 clarification / 운영 룰 추가 (필드 변경 없음).
+
+### 예상 변경 (forward-looking)
+
+- **v1.1 (CFP-391 잠정)**: `current_tier` optional → required 전환 + tier enum 정식 분류 (기존 entry retroactive 분류 의무). MINOR bump.
+- **v1.x (CFP-D 잠정)**: `modal_anti_pattern_dictionary.version` 확장 어휘 도입 (예: `"1.1"` — "충분히" / "조만간" / "soon" / "TBD" 추가). MINOR bump.
+- **v2.0 (가설)**: per-entry `bypass_label` 단일 global 전환 등 BREAKING.
+
+## 8. Versioning + Write boundary
+
+- **Versioning SSOT**: ADR-008 (kind:registry SemVer 룰).
+- **Sibling sync**: kind:registry 는 wrapper-owned cross-cutting protocol — canonical/sibling 패턴 외 (ADR-010 scope: kind:contract only).
+- **Write boundary**: wrapper Orchestrator + 본 registry 의 entry 도입 carrier Story 의 author agent (ArchitectAgent). registry yaml row append = framework SSOT (본 doc) 의 직접 author. lane plugin 직접 entry 추가 금지 (wrapper governance).
+
+## 9. 관련 파일
+
+- `docs/evidence-checks-registry.yaml` — registry data SSOT (첫 entry = adr-sunset-criteria)
+- `docs/inter-plugin-contracts/MANIFEST.yaml` — `registries:` 블록 entry 추가 (versioning 추적)
+- `docs/doc-locations.yaml` — 신규 doc type `evidence_check_registry` row (ADR-041)
+- `docs/parallel-work/section-ownership.yaml` — `evidence-checks-registry.yaml` append-only entry (ADR-050)
+- `docs/adr/ADR-060-evidence-enforceable-promotion-framework.md` — framework carrier ADR
+- `docs/adr/ADR-058-adr-sunset-criteria-mandate.md` — 직접 동인 / 첫 entry 의 검증 대상 정책
+- `docs/adr/ADR-024-story-scoped-branch-policy.md` Amendment 3 — audit-trailed exception channel 정식 도입
+- `scripts/check-adr-sunset-criteria.sh` — 첫 entry lint 구체
+- `scripts/check-bypass-audit-comment.sh` — audit assertion lint
+- `templates/github-workflows/adr-sunset-criteria.yml` — warning mode workflow
+- 후속 carrier: CFP-390 (인벤토리 backfill) / CFP-391 (4-tier 정식 amendment) / CFP-C 잠정 (ADR-057 amendment + KPI dashboard) / CFP-D 잠정 (retroactive backfill)
