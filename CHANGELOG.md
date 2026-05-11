@@ -5,6 +5,30 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.13.0] - 2026-05-11
+
+### Added
+- CFP-389 — Evidence-enforceable promotion framework SSOT (ADR-060 신규)
+  - `docs/adr/ADR-060-evidence-enforceable-promotion-framework.md` — framework SSOT (12 §결정, is_transitional=false, ## 해소 기준 N/A — permanent policy)
+  - `docs/adr/ADR-024-story-scoped-branch-policy.md` — Amendment 3: `hotfix-bypass:*` label family = audit-trailed exception channel (사용자 ESCALATE Option A)
+  - `docs/inter-plugin-contracts/evidence-check-registry-v1.md` — kind:registry schema doc (4th wrapper-owned registry)
+  - `docs/inter-plugin-contracts/MANIFEST.yaml` — `registries:` entry (`evidence_check_registry`)
+  - `docs/evidence-checks-registry.yaml` — data SSOT 첫 entry (`adr-sunset-criteria`, tier=warning, bypass=hotfix-bypass:adr-sunset, pr_cumulative_min=20)
+  - `scripts/check-adr-sunset-criteria.sh` + `scripts/check-bypass-audit-comment.sh` — Python lint
+  - `templates/github-workflows/adr-sunset-criteria.yml` + `.github/workflows/` self-app copy (warning mode, `continue-on-error: true`)
+  - `docs/doc-locations.yaml` + `docs/parallel-work/section-ownership.yaml` row 추가
+  - `CLAUDE.md` 3 섹션 갱신 (ADR / GitHub Workflow 14종 / Inter-plugin Contract kind:registry 5 file)
+
+### Changed
+- `docs/adr/ADR-058-adr-sunset-criteria-mandate.md` — lint regex 정합 ("N/A — permanent policy" 문구)
+- `docs/adr/ADR-RESERVATION.md` — row 60 추가 (CFP-389)
+- `docs/doc-location-registry.md` — regen
+
+### Why
+- CFP-388 Epic의 첫 vertical slice (Phase 1+2 단일 PR — ADR-060 §결정 12 declaration + first check 일체화)
+- ADR-058 declaration only → mechanical enforcement 점진 적용 framework SSOT 도입
+- 사용자 ESCALATE Option A: `hotfix-bypass:adr-sunset` label로 ADR-024 `enforce_admins: true` 호환
+
 ## [5.12.1] - 2026-05-11
 
 ### Added
