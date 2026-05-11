@@ -4,17 +4,22 @@ title: Story-scoped branch policy — main 직접 수정 금지 + Phase 2 enforc
 status: Accepted
 category: governance
 date: 2026-05-03
-amended_by: CFP-134
-amended_date: 2026-05-08
+amended_by: CFP-280
+amended_date: 2026-05-11
 amendments:
   - by: "CFP-134"
     date: "2026-05-08"
     scope: "hierarchical branch convention 추가 — flat cfp-NNN 에서 cfp-NNN[/<lane>[/<sub>]] 계층까지 분기 가능"
+  - by: "CFP-280"
+    date: "2026-05-11"
+    scope: "required_status_checks.contexts drift invariant + branch-protection-manifest.yaml SSOT + branch-protection-drift-check.yml 자동화"
 related_files:
   - CLAUDE.md
   - docs/consumer-guide.md
   - docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md
   - docs/adr/ADR-022-sonnet-review-verdict-decider.md
+  - templates/branch-protection-manifest.yaml
+  - templates/github-workflows/branch-protection-drift-check.yml
 ---
 
 # ADR-024: Story-scoped branch policy — main 직접 수정 금지 + Phase 2 enforcement deferred
@@ -179,3 +184,83 @@ example_paths:
 - CFP-136 (worktree infrastructure) — 본 amendment 의 prerequisite
 - CFP-137 (agent teams 적극 도입) — 본 amendment 의 use case
 - CFP-139 (GitOpsAgent) — 본 amendment 의 enforcement
+
+## Amendment 2 — required_status_checks.contexts drift invariant (CFP-280, 2026-05-11)
+
+### 컨텍스트
+
+CFP-136 (worktree infrastructure) 도입 후 `gh api` 로 branch protection 을 직접 조회했을 때, `required_status_checks.contexts` 에 3개 stale context 가 잔존함을 확인:
+
+| stale context | 원인 |
+|---|---|
+| `doc frontmatter schema (CFP–28 — strict)` | 하이픈 문자 em-dash(`–`, U+2013) vs workflow job name의 hyphen(`-`, U+002D) 불일치 |
+| `doc section schema (CFP–28 — strict)` | 동일 em-dash 문자 불일치 |
+| `doc-locations-check / validate` | CFP-276 이후 해당 workflow job 삭제됨 — orphan |
+
+실제 workflow job name (2개) 은 `doc frontmatter schema (CFP-28 — strict)` / `doc section schema (CFP-28 — strict)` (ASCII hyphen) 이므로, branch protection 에 등록된 em-dash 변형은 영구 mismatch → 해당 check 가 GitHub 에서 "expected" 상태로 표시되지 않아 PR merge 가 잠재적으로 차단될 수 있음.
+
+CFP-136 align fix 시 3개 stale 제거 + 올바른 2개 추가 완료. 그러나 이 drift 재발 방지를 위한 **자동화 invariant 부재** — 본 Amendment 2 가 gap 해소.
+
+현재 확정 4 required context:
+
+```
+phase-gate-mergeable        # phase-gate-mergeable.yml checks.create (동적 생성)
+invariant-check             # invariant-check.yml job id (explicit name: 없음)
+doc frontmatter schema (CFP-28 — strict)  # check-doc-frontmatter.yml job name
+doc section schema (CFP-28 — strict)      # check-doc-section-schema.yml job name
+```
+
+### Amendment
+
+#### §결정 A: `templates/branch-protection-manifest.yaml` SSOT 신설
+
+branch protection 에 등록 필요한 `required_status_checks.contexts` 를 SSOT 파일로 관리. consumer 가 overlay 로 자기 context 추가 가능 (확장 only — 기본 4개 삭제 불허).
+
+```yaml
+# templates/branch-protection-manifest.yaml
+# consumer overlay: .claude/_overlay/branch-protection-manifest.yaml 로 확장 가능
+required_status_checks:
+  contexts:
+    - name: "phase-gate-mergeable"
+      type: dynamic          # checks.create API (phase-gate-mergeable.yml)
+      source_workflow: templates/github-workflows/phase-gate-mergeable.yml
+    - name: "invariant-check"
+      type: workflow-job-id  # job id (explicit name: 없음)
+      source_workflow: templates/github-workflows/invariant-check.yml
+    - name: "doc frontmatter schema (CFP-28 — strict)"
+      type: workflow-job-name
+      source_workflow: templates/github-workflows/check-doc-frontmatter.yml
+    - name: "doc section schema (CFP-28 — strict)"
+      type: workflow-job-name
+      source_workflow: templates/github-workflows/check-doc-section-schema.yml
+```
+
+#### §결정 B: `templates/github-workflows/branch-protection-drift-check.yml` 신설
+
+자동화 drift 감지. 트리거: `.github/workflows/**` 또는 `templates/branch-protection-manifest.yaml` 변경 push to main + 주 1회 schedule (`cron: '0 9 * * 1'`) + `workflow_dispatch`.
+
+동작:
+1. `gh api` 로 `repos/{owner}/{repo}/branches/main/protection/required_status_checks` 조회 → 실제 contexts 목록 추출 + sort
+2. manifest yaml 에서 기대 contexts 추출 + sort
+3. `comm -23` (stale: 실제에 있으나 manifest에 없는 것) + `comm -13` (missing: manifest에 있으나 실제에 없는 것) 비교
+4. stale 또는 missing 존재 시 → `exit 1` (CI fail)
+
+#### §결정 C: drift 발견 시 수정 절차 (운영 규칙)
+
+1. manifest yaml 에 기대 contexts 반영 (정책 반영)
+2. `gh api -X PUT repos/.../branches/main/protection` 로 실제 branch protection 동기
+3. drift-check workflow 재실행 PASS 확인
+4. 두 변경이 동일 PR 에 포함 의무 (SSOT 와 실제 동기 원자적 보장)
+
+### Compatibility
+
+- 기존 4 required check 변경 없음 — 단 SSOT 위치가 implicit → `templates/branch-protection-manifest.yaml` explicit 으로 전환
+- 기존 `required-workflow-drift-check.yml` (enterprise required workflow drift) · `rulesets-drift-check.yml` (GitHub Rulesets drift) 와 별도 목적 — 중복 없음
+- consumer overlay 확장 방식 → consumer 는 자기 context 추가만 가능 (core 4개 삭제 불허)
+
+### Related
+
+- CFP-280 carrier story
+- `templates/branch-protection-manifest.yaml` — §결정 A SSOT
+- `templates/github-workflows/branch-protection-drift-check.yml` — §결정 B 자동화
+- CFP-136 (worktree infrastructure) — 3 stale context 최초 발견 trigger
