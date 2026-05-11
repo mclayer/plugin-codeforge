@@ -1,4 +1,5 @@
 ---
+kind: domain_fact
 type: domain-knowledge
 area: github-actions
 topic_slug: issue-event-trigger-semantics
@@ -117,7 +118,7 @@ CFP-275 case 의 29s latency 는 lower bound 아닌 sample. server load / concur
 
 ## 관련 ADR
 
-- [ADR-036](../../adr/ADR-036-project-key-atomic-reservation.md) — CFP-260 GitHub atomic Issue numbering. `KEY = PREFIX-${{ issue.number }}` 로 file-system scan + max+1 race 제거. opened event payload 의 `issue.number` 의존 — N+1 firing law 의 `opened` event 가 atomic 한 sequence position 보장 (label race 와 별 영역).
+- [ADR-036](../../../adr/ADR-036-project-key-atomic-reservation.md) — CFP-260 GitHub atomic Issue numbering. `KEY = PREFIX-${{ issue.number }}` 로 file-system scan + max+1 race 제거. opened event payload 의 `issue.number` 의존 — N+1 firing law 의 `opened` event 가 atomic 한 sequence position 보장 (label race 와 별 영역).
 
 ## 변경 이력
 

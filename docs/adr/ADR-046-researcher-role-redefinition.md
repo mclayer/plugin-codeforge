@@ -7,6 +7,11 @@ category: agent-design
 carrier_story: null
 supersedes: []
 amends: null
+amendment_log:
+  - number: 1
+    date: 2026-05-11
+    adr: ADR-056
+    summary: "domain/ vs concept/ 물리 디렉터리 분리 + PLAgent 합성 순서 명문화 + §6 compact summary"
 related_stories: []
 related_adrs:
   - ADR-013
@@ -123,6 +128,11 @@ ADR-042 §결정 1 (g) Opus tier criteria — "Deep research with reshape mandat
 
 - partial-known overlap zone 처리에서 PL dedup overhead 가능 (DomainAgent partial coverage + Researcher knowledge gap 의 cross-ref) — 본 ADR 결정 2 의 "독립 관점 보고" 원칙 + 후속 follow-up CFP 후보 (DomainAgent schema partial_coverage flag 도입)
 - Story 우회 (ADR-013 waiver) — 정상 Story flow 미지원 (KEY collision codeforge-internal-docs#99 + Action permission codeforge-internal-docs#98 미해결) 정상화 후 retroactive Story 부여 검토 가능
+
+### Amendment 1 (ADR-056, 2026-05-11)
+
+물리 디렉터리 분리(`domain/` vs `concept/`), PLAgent 합성 순서 명문화, §6 compact summary 추가.
+상세: [ADR-056](ADR-056-domain-concept-knowledge-dir-separation.md)
 
 ## 대안 검토
 

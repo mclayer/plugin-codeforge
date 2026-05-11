@@ -1,4 +1,5 @@
 ---
+kind: domain_fact
 type: domain-knowledge
 area: jsonl-write
 topic_slug: race-condition-handling-pattern
