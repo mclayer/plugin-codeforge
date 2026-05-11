@@ -110,7 +110,7 @@ jobs:
             }
 
             // 5. Lane evidence block presence check
-            const blockMatch = body.match(/^## Lane evidence\s*$([\s\S]*?)(?=^## |\z)/m);
+            const blockMatch = body.match(/^## Lane evidence\s*$([\s\S]*?)(?=^## |$(?![\s\S]))/m);
             if (!blockMatch) {
               await github.rest.checks.create({
                 owner: context.repo.owner,
