@@ -35,36 +35,53 @@ permissions:
 
 ### Phase 1: Independent perspective gathering (병렬)
 
+#### Phase 1.0: §8.5 spawn-time trigger 결정 (CFP-378 AC-5)
+
+TestContractArchitectAgent spawn 직전 본 PL이 Story §1-7 fetch 후 §8.5 trigger 결정:
+
+1. **§8.5.0 4 조건 평가**:
+   - Long-running connection (WebSocket / SSE / long-poll / persistent TCP / gRPC stream)
+   - Stateful in-memory cache (>1 update/sec sustained, >5 min retention 또는 derived state)
+   - Background worker / queue consumer (async job runner / scheduler / data stream consumer)
+   - Process restart-aware system (in-flight 작업 보유 / persistent state / graceful shutdown 요구)
+
+2. **결정 룰**:
+   - 1+ Y → `§8.5_active=true`
+   - 4개 모두 N → `§8.5_active=false`
+   - 모호 시 → `§8.5_active=true` (default-on, false negative 차단 우선)
+
+3. **TestContractArch spawn prompt 본문에 명시**:
+   ```
+   - §8.5 active = {true|false}  # ArchitectPL 결정 (CFP-378 AC-5)
+   - §8.5 결정 근거 = {4 조건 평가 결과 인용}
+   ```
+
+TestContractArch는 §8.5.0 표 self-evaluation 대신 PL 결정 verbatim 반영. dissent 권한 보유 (적극적 이의 제기 의무 정합).
+
 ```
 [Orchestrator → 본 PL]
   ├─ spawn → CodebaseMapperAgent           → as-is 사실 + 유지 근거 + 변경 영향 지도
   ├─ spawn → RefactorAgent                 → to-be 구조 + 결합도 분석 + 최소 변경 경로
   ├─ spawn → SecurityArchitectAgent        → trust boundary + threat model + auth/data 설계 (§7.1-§7.3 / §7.5-§7.7)
-  ├─ spawn → TestContractArchitectAgent    → §8 커버리지 후보 + 경계 조건 + invariant + Perf Baseline 타당성
+  ├─ spawn → TestContractArchitectAgent    → §8 커버리지 후보 + 경계 조건 + invariant + Perf Baseline 타당성 (§8.5_active 파라미터 수신)
   ├─ spawn → DataMigrationArchitectAgent   → §11 schema 영향 + migration 전략 + rollback + integrity invariant
   └─ spawn → OperationalRiskArchitectAgent → §7.4 운영 리스크 (DR / disconnect / clock / rate-limit / env-isolation) + §11.6 idempotency consult
 ```
 
 6 deputy 모두 공통 입력(코드 + Story §1-7 + 관련 ADR) 직접 fetch. 상호 산출물 미참조 (독립성 보장).
 
-### Phase 1.5: Fail-fast pre-synthesis check (R8, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
+### Phase 1.5: Deputy 산출물 수령 + 재spawn 이력·품질 요약 보유 (CFP-378 AC-1, R8, [CFP-19 spec](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
 
-Phase 1에서 6 deputy 산출물 수령 직후 (Phase 2 chief author 호출 전) **빠른 sanity check** 수행. 결격 deputy detected 시 즉시 clarification 재spawn 의뢰 → 통합 단계 도달 전 cycle 단축.
+Phase 1에서 6 deputy 산출물 수령 직후 (Phase 2 chief author 호출 전), 본 PL이 다음 항목을 보유:
 
-**Sanity check 항목** (deputy 산출물 단위, 메타-규칙 1·2의 light version):
-1. **§섹션 author input 표면 형식**: 각 deputy가 자신의 §섹션에 대한 input 절을 산출했는가
-   - CodebaseMapper → §2 현재 구조 input
-   - RefactorAgent → §3 도입할 설계 input + §6 리팩터링 선행 input
-   - SecurityArchitectAgent → §7 보안 설계 input (§7.1-§7.3, §7.5-§7.6 또는 §7.7 N/A)
-   - TestContractArchitectAgent → §8 Test Contract author input
-   - DataMigrationArchitectAgent → §11 데이터 마이그레이션 input (§11.1-§11.5 또는 §11.7 N/A)
-   - **OperationalRiskArchitectAgent → §7.4 운영 리스크 + §11 idempotency consult** (§7.4.1-§7.4.5 또는 CONDITIONAL N/A 사유)
-2. **Story §1 cross-ref 존재**: 각 deputy 산출물이 Story file §1 사용자 원문에 대한 명시적 참조 (인용 또는 anchor link)를 포함하는가
-3. **외부 입력 무결성**: deputy가 수신한 input(코드 경로 + 관련 ADR + Change Plan 초안)이 frontmatter에 명시한 scope와 일치하는가
+**PL 보유 항목** (Phase 3 검수 컨텍스트로 활용):
+1. **Deputy 재spawn 이력** (deputy당 0~2회, Story §9.0 형식)
+2. **Deputy 산출물 품질 요약** (substantive vs vague N/A / Story §1 cross-ref 깊이 / 경계 모호 영역)
 
-**결격 detected 시**: Orchestrator에 "<DeputyName> 재spawn 요청 + clarification context: <결격 항목>" 전달 → Orchestrator가 해당 deputy 신규 spawn (이전 출력 + 재질의 context). 재spawn 횟수는 Story 1건당 deputy당 최대 2회 (이후 ESCALATE).
+**기계적 lint는 ArchitectAgent로 이관됨** (CFP-378 AC-1) — PL은 mechanical check 수행하지 않음.
+ArchitectAgent self-lint 결격 RETURN 수령 시 → 본 PL이 해당 deputy 재spawn 결정 (CL-1: PL supervisor 책임 보존, ADR-004 author≠judge 원칙 정합). **기존 deputy 재spawn authority는 PL 그대로 유지.**
 
-**Pass 시**: Phase 2 Synthesis 진입.
+**Pass 시**: Phase 2 Synthesis 진입 (ArchitectAgent spawn).
 
 ### Phase 2: Synthesis (순차)
 
@@ -79,7 +96,9 @@ Phase 1에서 6 deputy 산출물 수령 직후 (Phase 2 chief author 호출 전)
 
 본 PL이 Architect draft를 검수 — 메타-규칙 2 항목:
 
-1. **§섹션별 deputy author input 통합 정합성** (메타-규칙):
+1. **ArchitectAgent self-lint 통과 후 통합 산출물 검수**
+2. **재spawn 이력 reference**: Phase 1.5 보유 deputy 재spawn 이력에서 패턴 식별 (특정 deputy 재spawn 횟수 과다 시 mandate 모호성 시그널 → PMO retro 입력 후보)
+3. **§섹션별 deputy author input 통합 정합성** (메타-규칙):
    - §2 → CodebaseMapperAgent 변호 근거 채택/반박 정합성
    - §3·§6 → RefactorAgent 제안 범위 준수
    - §7 (§7.1-§7.3 / §7.5-§7.6) → SecurityArchitectAgent 위협-완화 매핑 반영 완결성
@@ -88,7 +107,7 @@ Phase 1에서 6 deputy 산출물 수령 직후 (Phase 2 chief author 호출 전)
    - §11 (§11.1-§11.5 / §11.7) → DataMigrationArchitectAgent 마이그레이션 안전성 매핑 반영 완결성
    - **§11.6 → DataMigrationArch primary + OperationalRiskArchitect consult 통합 (CONDITIONAL idempotency)**
    각 deputy 산출물의 chief author 채택/반박 근거를 Change Plan에서 확인
-2. **§섹션 누락 차단** — Change Plan §7 보안 설계 / §7.4 운영 리스크 / §8 Test Contract / §10 ADR 판단 / §11 데이터 마이그레이션 누락 시 차단 (Story file §10 FIX Ledger와 namespace 구분)
+4. **§섹션 누락 차단** — Change Plan §7 보안 설계 / §7.4 운영 리스크 / §8 Test Contract / §10 ADR 판단 / §11 데이터 마이그레이션 누락 시 차단 (Story file §10 FIX Ledger와 namespace 구분)
 
 PASS → Orchestrator에 DesignReview lane 진입 요청.
 RETURN → ArchitectAgent 재스폰 의뢰 (clarification context + 누락 항목).

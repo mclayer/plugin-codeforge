@@ -12,6 +12,7 @@ mandate:
     - kill switch policy (engine-enforced auto trigger + manual override)
     - incident response (ADR-008 D8 7-step + OperationEvent audit)
     - OperationEvent separation (live ledger event vs operational event)
+    - reconciliation invariant authority — external venue source-of-truth (exchange ledger truth / KRW drift threshold authority / audit trail)  # CFP-378 AC-2
   consult:
     - §7.5 민감 데이터 (live API key vault / runtime injection / IP allowlist)
     - §7.6 위협↔완화 매핑 (kill switch ↔ 위협 매핑)
@@ -124,10 +125,13 @@ API key 권한 scope.
 - single user 단계 = 동일 operator (ADR-008 D10), Phase 2+ multi-operator approval chain 검토
 
 ### §13.9 reconciliation invariant
-Engine ↔ 거래소 ledger 정합 검증 (cross-ref LiveOrdering deputy primary).
-- KRW position drift threshold (예: < 1 KRW = OK, ≥ 1 KRW = critical_stop)
-- partial fill 8-state lifecycle preserve (ADR-002 H1)
-- fee_actual ≠ fee_expected drift threshold
+Engine ↔ 거래소 ledger 정합 검증. **본 deputy = 외부 venue source-of-truth owner** (CFP-378 AC-2 / ADR-014 Amendment 2):
+- 외부 venue (exchange API ledger) 응답값이 정합 verify의 진실 기준
+- KRW position drift threshold authority (예: < 1 KRW = OK, ≥ 1 KRW = critical_stop)
+- audit trail authority (OperationEvent 기록 SSOT)
+- cross-ref LiveOrdering deputy: 내부 8-state lifecycle 수렴은 LiveOrdering 영역 (engine ledger ↔ exchange truth 매핑은 LiveOrdering이 author, drift threshold 위반 verdict는 본 deputy authority)
+
+**Reconciliation 소유 경계**: 외부 venue 진실 owner (거래소 잔고 KRW drift authority / audit trail / operator approval verdict). ※ 내부 상태머신 수렴은 LiveOrderingDeputyAgent 소유.
 
 ### §13.10 runbook
 운영 절차 link.

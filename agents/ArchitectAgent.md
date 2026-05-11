@@ -61,6 +61,15 @@ permissions:
    · §10 ADR 정합성 + 신규 ADR 필요 여부 판단
    · **§11 데이터 마이그레이션 (DataMigrationArch §11.1-§11.5 / §11.7 N/A + OperationalRiskArchitect §11.6 idempotency consult 통합)**
 
+3.5. 통합 직전 self-lint (CFP-378 AC-1)
+   · 6 deputy 산출물 수령 직후, Change Plan §1-§11 author 진입 전 mechanical check:
+     - §섹션 author input 표면 형식 (CodebaseMapper → §2, Refactor → §3+§6, SecurityArch → §7.1-§7.3/§7.5-§7.6, OpRiskArch → §7.4+§11.6 consult, TestContractArch → §8, DataMigrationArch → §11.1-§11.5/§11.6)
+     - Story §1 사용자 원문 cross-ref (각 산출물 내 명시적 인용 또는 anchor link)
+     - 외부 입력 무결성 (deputy 수신 input scope = frontmatter 명시 scope 일치)
+   · 결격 detected 시 ArchitectPLAgent에 RETURN — PL이 deputy 재spawn 결정 (ADR-004 author≠judge 원칙 보존)
+   · **본 self-lint = mechanical pre-check only. Design decision judgment 영역 아님 — 결격 시 ArchitectPLAgent에 RETURN, PL이 deputy 재spawn 결정 (ADR-004 author≠judge 원칙 보존).**
+   · PASS 시 흐름 4 진입
+
 4. 신규 ADR draft 작성 (필요 시 — Codex #7 명문화)
    · §10 판단에서 신규 ADR 필요 시 본 에이전트가 `docs/adr/ADR-NNN-<slug>.md` 직접 write (CFP-26 Phase 0a)
 

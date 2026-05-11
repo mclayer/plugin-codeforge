@@ -13,6 +13,7 @@ mandate:
     - rejection mapping (exchange error code → RejectionReason)
     - fee handling drift (fee_actual vs fee_expected)
     - reconciliation invariant (engine ledger ↔ exchange truth)
+    - reconciliation invariant authority — internal state machine convergence (engine 8-state lifecycle / partial fill state composition / cancel race composite)  # CFP-378 AC-2
   consult:
     - §11.6 Idempotency invariant (order side — DataMigrationArch primary)
     - §8.5 Stateful invariant (order replay restart — TestContractArch primary)
@@ -119,10 +120,18 @@ NEW → ACCEPTED → PARTIALLY_FILLED → FILLED
 
 ### Reconciliation invariant (engine ↔ exchange)
 
+**본 deputy = 내부 상태머신 수렴 owner** (CFP-378 AC-2 / ADR-014 Amendment 2):
+- engine 8-state lifecycle convergence가 내부 모델의 진실 기준
+- partial fill state composition (PARTIALLY_FILLED → FILLED, PARTIAL+CANCELED) authority
+- cancel race composite state mapping authority
+- cross-ref LiveOps deputy: 외부 venue source-of-truth verdict (drift threshold 위반 시 kill switch trigger)는 LiveOps 영역. 본 deputy = exchange truth 응답 → engine 8-state 매핑 author / 내부 lifecycle drift detection author.
+
 - 매 fill 후 engine ledger = exchange ledger 정합 verify
 - KRW position: engine balance ≈ exchange balance (drift < 1 KRW = OK)
 - in-flight order: engine pending = exchange open + acked (drift = 0 의무)
-- 위반 시 LiveOps deputy 의 §13.7 kill switch reconciliation drift trigger 발동
+- 위반 시 LiveOps deputy 의 §13.7 kill switch reconciliation drift trigger 발동 (verdict = LiveOps authority)
+
+**Reconciliation 소유 경계**: 내부 상태머신 수렴 owner (엔진 8-state lifecycle / partial fill composition / cancel race composite). ※ 외부 venue 진실 authority는 LiveOpsDeputyAgent 소유.
 
 ## CONDITIONAL trigger 판정 (ArchitectPL 의무)
 
