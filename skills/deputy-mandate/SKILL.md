@@ -21,11 +21,11 @@ ADR-014 + ADR-012 §3 4번째 SSOT 예외. design lane deputy가 §7/§11/§13 s
 | §7.1 Trust boundary | — | — | ✅ **(+container network mode / secret mount)** | (consult) | — | — | (consult Live API) | — |
 | §7.2 Threat model | — | — | ✅ | — | — | — | — | — |
 | §7.3 Auth/authz | — | — | ✅ | — | — | — | (consult operator approval) | — |
-| **§7.4 DR / disconnect / rate limit / env isolation** | — | — | (consult) | **✅ (+container restart policy / volume DR / health check / network mode)** | — | — | (consult Live failure) | (consult exchange rate-limit) |
+| **§7.4 DR / disconnect / rate limit / env isolation** | — | — | (consult) | **✅ (+container restart policy / volume DR / health check / network mode)(+environment containment owner: env isolation / IP allowlist / network mode boundary)** | — | — | (consult Live failure) | (consult exchange rate-limit) |
 | **§7.4 Clock sync (CONDITIONAL)** | — | — | (consult) | **✅** | — | — | — | — |
-| §7.5 민감 데이터 분류 | — | — | ✅ **(+container secret mount / image layer 누설)** | — | — | — | (consult API key) | — |
+| §7.5 민감 데이터 분류 | — | — | ✅ **(+container secret mount / image layer 누설)(+credential threat owner: vault path / runtime injection / key permission)** | — | — | — | (consult API key) | — |
 | §7.6 위협↔완화 매핑 | — | — | ✅ | (DR↔failover consult) | — | — | (consult kill switch) | — |
-| **§11 Idempotency (CONDITIONAL)** | — | — | — | (consult) | — | **✅** | — | (consult order idempotency) |
+| **§11 Idempotency (CONDITIONAL)** | — | — | — | (consult)(+N줄 memo input) | — | **✅ (+cell primary author)** | — | (consult order idempotency) |
 | §11 Schema/Migration/Rollback | — | — | — | — | — | ✅ **(+DB container volume / data persistence)** | — | — |
 | **§11 Ledger reconcile / partial fill / fee invariant (CONDITIONAL Live)** | — | — | — | (consult) | — | (consult §11) | — | **✅** |
 | **§8.5 Stateful / restart invariant** | — | — | — | (consult §7.4 짝) | **✅** | (consult §11.6 짝) | — | (consult order replay) |
