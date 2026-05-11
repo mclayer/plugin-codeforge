@@ -5,6 +5,38 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.14.0] - 2026-05-11
+
+### Added (CFP-411 — Story 2 of Epic CFP-390)
+
+Multi-round Adversarial Debate Protocol 의 Requirements lane 확장. Story 1 (CFP-391) 에서 도입한 `debate-protocol-v1` registry + ADR-059 + ADR-044 Amendment 1 `auto_on_divergence` 를 Requirements lane 에 적용. doc-only fast-path applied (ADR-054) — Phase 1+2 단일 PR.
+
+- `docs/adr/ADR-052-codex-proactive-check-touchpoints.md` — Amendment 1: touchpoint #4 (RequirementsPLAgent §1~§6 완료 직후 Codex proactive check) single-shot 검토 → multi-round adversarial debate 격상
+- `docs/inter-plugin-contracts/debate-protocol-v1.md` (Story 1 산출) — `trigger.lane: requirements` + `divergence_type: semantic` enum 재사용
+- `docs/orchestrator-playbook.md` §3.10 — touchpoint #4 divergence detection + debate dispatch 흐름 추가
+- codeforge-requirements 0.5.0 sibling sync (mclayer/plugin-codeforge-requirements#19):
+  - `agents/RequirementsPLAgent.md` — semantic divergence detection 3 criteria (AC 의미 차이 / Edge Case 누락 / Why 해석 mismatch)
+  - `agents/codex-proactive-check.md` (NEW) — Codex worker entry, `dispatch_mode: auto_on_divergence`
+
+### Why
+
+- ADR-052 touchpoint #4 의 single-shot 검토가 AC 의미 차이·Edge Case 누락·Why 해석 mismatch 같은 의미적 divergence 를 해소하지 못함 → multi-round debate 로 격상
+- ADR-059 lane-agnostic 설계 활용 → 신규 contract 신설 없이 trigger 조건만 추가
+- Requirements lane 은 review-verdict-v4 미적용 (verdict packet producer 아님) → divergence 판정자 = RequirementsPL LLM (semantic only, structured surface 없음)
+
+### Compatibility
+
+- **Wire**: codeforge-requirements >= 0.5.0 의무 — version drift check `bash scripts/check-codeforge-version-drift.sh` 가 강제
+- **Backward compat**: divergence 미검출 시 기존 ADR-052 single-shot 흐름 유지 — 새 동작은 superset
+- **Sibling**: marketplace.json `plugins[name=codeforge]` version 5.13.0 → 5.14.0 sync 의무 (ADR-016)
+
+### Related
+
+- Story: [CFP-411](https://github.com/mclayer/plugin-codeforge/issues/392) — doc-only fast-path
+- Wrapper PR: [#411](https://github.com/mclayer/plugin-codeforge/pull/411) merged 2026-05-11
+- Sibling: [codeforge-requirements#19](https://github.com/mclayer/plugin-codeforge-requirements/pull/19) merged 2026-05-11
+- Story 1: CFP-391 (Protocol + DesignReview lane) — full-lane
+
 ## [5.13.0] - 2026-05-11
 
 ### Added
