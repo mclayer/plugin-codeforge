@@ -17,12 +17,14 @@ related_adrs:
   - ADR-035  # codeforge agent teams Epic architecture (Phase-scoped sequential team SSOT carrier)
   - ADR-039  # subagent default for codeforge modification work (default subagent context 정의)
   - ADR-040  # worktree convention (agent teams + worktree integration 의존)
-  - ADR-044  # Phase-scoped sequential team SSOT — 본 entry 의 platform 근거 ADR (CFP-137 carrier)
+  - ADR-044  # Phase-scoped sequential team SSOT — 본 entry 의 platform 근거 ADR (CFP-137 carrier) + Amendment 1 (CFP-391 — dispatch_mode auto_on_divergence)
+  - ADR-059  # debate-protocol-v1 carrier (CFP-391) — Adversarial 패턴의 자동 발동 정책 SSOT
 related_stories:
   - CFP-134  # Epic carrier
   - CFP-135  # ADR-022 deprecate foundation
   - CFP-136  # worktree infra prerequisite
   - CFP-137  # 본 entry 의 carrier
+  - CFP-391  # Adversarial 패턴 자동 발동 (debate-protocol-v1) — 5 권장 패턴 매핑 확장
 created: 2026-05-09
 updated: 2026-05-11
 ---
@@ -42,7 +44,7 @@ Claude Code experimental `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 활성 시 사
 
 **env=0 fallback**: ADR-039 default subagent context (one-shot Agent tool spawn). TeamCreate / SendMessage / TaskCreate 미사용. team-spec yaml 미사용.
 
-5 권장 패턴 매핑: Specialization (lane teammate system_prompt) / Parallelization (TEAM-DESIGN 6 deputy) / Adversarial (review Claude vs Codex — 사용자 explicit request 시) / Cross-layer (TEAM-DEVELOP dev ↔ QA) / Escalation (lane FIX).
+5 권장 패턴 매핑: Specialization (lane teammate system_prompt) / Parallelization (TEAM-DESIGN 6 deputy) / Adversarial (review Claude vs Codex — 두 가지 dispatch_mode 지원: (1) `user_request_only` — 사용자 explicit request 시, (2) `auto_on_divergence` — DesignReview lane 에서 finding 불일치 자동 감지 시 multi-round debate 발동 [debate-protocol-v1, CFP-391 / ADR-059]) / Cross-layer (TEAM-DEVELOP dev ↔ QA) / Escalation (lane FIX).
 
 ## Usage
 
@@ -108,7 +110,7 @@ env=0 fallback 동작은 모든 lane plugin agent prompt 가 명시 의무 — S
 |---|---|---|
 | Specialization | 7 lane teammate 좁은 system prompt | team-spec yaml `system_prompt_path` |
 | Parallelization | TEAM-DESIGN 6 deputy / 2 review worker 동시 | §14 Lane Evidence `spawned_at` diff |
-| Adversarial / Debate | TEAM-{DESIGN,CODE,SECURITY}-REVIEW 의 Claude vs Codex worker (사용자 explicit request 시) | review-verdict v4 packet `worker_dialog_rounds` |
+| Adversarial / Debate | TEAM-{DESIGN,CODE,SECURITY}-REVIEW 의 Claude vs Codex worker — 두 가지 dispatch_mode: (1) `user_request_only` (사용자 explicit request 시 활성, ADR-022 Deprecated 정합), (2) `auto_on_divergence` (DesignReview lane 의 finding 불일치 자동 감지 시 multi-round debate 발동, debate-protocol-v1 / CFP-391 / ADR-059, ADR-044 Amendment 1) — 우선순위 `default > auto_on_divergence > user_request_only` | review-verdict v4 packet `worker_dialog_rounds` + Story §9 `### Debate transcript: <anchor_id>` section (debate-protocol-v1 schema) + §10 FIX Ledger `debate_artifact_ref` 필드 (fix-event-v1 1.1) |
 | Cross-layer | TEAM-DEVELOP 의 dev ↔ QA continuous coordination | develop-output `cross_layer_dialog_rounds` |
 | Escalation | lane FIX 시 lane team → TEAM-FIX (parallel diagnosis) | §10 FIX Ledger + §14 fix-iter row pair |
 
@@ -130,7 +132,7 @@ env=0 fallback 동작은 모든 lane plugin agent prompt 가 명시 의무 — S
 1. **Phase-scoped sequential team** = lane 별 짧은 lifecycle (lane 진입 시 TeamCreate, 완료 시 TeamDelete). Story-long single team 회피 — `/resume` 후 in-process teammate 미복원 risk.
 2. **Lead = Orchestrator** (Story 전 기간 fixed) — ADR-009 wrapper-only invariant 정합. Lead 변경 금지.
 3. **One-team-per-lead 강제** — 다음 lane TeamCreate 전 현 team `TeamDelete()` 의무. nested team 금지 (no team-of-teams). 재귀 spawn 금지 (Lead 와 teammate 모두 — platform inherent + codeforge 정책).
-4. **review lane Codex worker `dispatch_mode: user_request_only`** — default roster = `PL + Claude worker` 2 teammate. Codex worker 는 사용자 explicit request 시에만 활성 → 3 teammate. ADR-022 Deprecated (ADR-035 §결정 4) 정합 — codeforge 가 Codex 를 1st-class component 로 자동 invoke 하지 않는 정책.
+4. **review lane Codex worker `dispatch_mode`** — default roster = `PL + Claude worker` 2 teammate. Codex worker 는 (a) 사용자 explicit request 시 활성 → 3 teammate (ADR-022 Deprecated / ADR-035 §결정 4 정합 — codeforge 가 Codex 를 1st-class component 로 자동 invoke 하지 않는 정책), (b) DesignReview lane 에서 사용자 explicit Codex request 후 Claude / Codex worker 가 동일 anchor 에 finding 불일치 산출 시 **자동으로 multi-round debate 진입** (`auto_on_divergence` mode, ADR-044 Amendment 1 / CFP-391 / ADR-059). 우선순위 `default > auto_on_divergence > user_request_only`. `auto_on_divergence` 자체는 Codex worker 신규 spawn 권한 부여 안 함 — 이미 활성된 두 worker 사이의 divergence 해소 자동 발동만.
 5. **env-divergent fallback** — `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0` (default 또는 미설정) 시 ADR-039 default subagent context (one-shot Agent tool spawn) 으로 fallback. SendMessage / TeamCreate / TaskCreate / TeammateIdle hook 모두 미발화. team-spec yaml 미사용.
 6. **SendMessage secret hygiene** — sibling teammate 끼리 system prompt / tool output 공유. consumer 측 secret (API key / DB credential 등) 가 SendMessage body 또는 system prompt 안에 포함되면 sibling teammate 모두 노출. consumer-guide §1f 명시 의무.
 
@@ -163,3 +165,4 @@ env=0 fallback 동작은 모든 lane plugin agent prompt 가 명시 의무 — S
 |---|---|---|
 | 2026-05-09 | 초기 작성 (CFP-137 RequirementsPL lane) — 5 권장 패턴 매핑 + re-entrancy 제약 3종 + env-divergent fallback + `/resume` risk 명시 | CFP-137 (본 Story) |
 | 2026-05-09 | doc-section-schema strict 정합 — `## 핵심 규칙` + `## 경계` + `## 변경 이력` 필수 섹션 추가 (CFP-137 ArchitectPL lane Phase 1 PR commit batch) | CFP-137 (본 Story) |
+| 2026-05-11 | Adversarial 패턴 확장 (CFP-391 / ADR-059 / ADR-044 Amendment 1) — `dispatch_mode: auto_on_divergence` 추가, debate-protocol-v1 자동 발동 정책 명시, 5 권장 패턴 매핑 + 핵심 규칙 #4 + Adversarial row evidence (Story §9 transcript + §10 debate_artifact_ref) 업데이트. consumer-guide §1f 정합 | CFP-391 |

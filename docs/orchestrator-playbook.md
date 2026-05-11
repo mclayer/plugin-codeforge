@@ -1081,6 +1081,99 @@ task: <Codex에게 요청할 구체적 작업>
 
 ---
 
+### §3.13 Multi-round Adversarial Debate (debate-protocol-v1, CFP-391 / [ADR-059](../docs/adr/ADR-059-debate-protocol-v1.md))
+
+DesignReview lane 에서 Claude worker 와 Codex worker 가 review-verdict-v4 finding 불일치를 산출했을 때 Orchestrator (또는 DesignReviewPL via Orchestrator self-write delegate) 가 `debate-protocol-v1` 을 자동 발동한다. 본 protocol = ADR-022 deprecation (CFP-134) 이후 ad-hoc Codex review 자동 발동 무효 정책과 정합 — 자동 발동은 debate 한정 (사용자 explicit Codex request 시 활성된 워커들 사이의 divergence 해소).
+
+#### Trigger surface (divergence detection)
+
+DesignReviewPLAgent 가 review-verdict-v4 packet 합성 직전 surface 검사:
+
+```
+for anchor_id in union(claude_findings.anchor_id, codex_findings.anchor_id):
+    claude_f = claude_findings.get(anchor_id)
+    codex_f  = codex_findings.get(anchor_id)
+    if claude_f and not codex_f:
+        divergence = "recommendation"  # 한쪽 FIX, 다른쪽 silent = PASS
+    elif claude_f.severity != codex_f.severity:
+        divergence = "severity"
+    elif claude_f.recommendation != codex_f.recommendation:
+        divergence = "recommendation"
+    else:
+        divergence = None  # 합의 — debate 미발동
+    if divergence:
+        debate_triggers.append({anchor_id, anchor_text, claude_pos, codex_pos, divergence_type: divergence})
+```
+
+debate_triggers 비어있지 않으면 각 trigger 별로 debate 발동 (multi-anchor 동시 debate 가능 — anchor 별 독립 라운드 카운터).
+
+#### Round 실행 흐름 (사이클 1회)
+
+| 단계 | 책임자 | 행위 |
+|---|---|---|
+| Round 0 init | DesignReviewPL | `anchor_text` + 양측 initial position 추출. role_lock 명시. system_prompt_appendix 주입 |
+| Round 1 ~ N | Claude / Codex worker | role-lock 유지 prompt + `anchor` 입력 최상단 강제 prepend + transcript carryover. `remaining_disagreements` + `position_change` flag 출력 |
+| Round N 종료 판정 | DesignReviewPL | `remaining_disagreements` 검사 + `position_change` reason 검증 + LLM 합의 판정 |
+| min 3 미달 합의 | DesignReviewPL | `force_continue` + adversarial prompt 재주입 — 가짜 합의 검증 (EC-2) |
+| max 5 미합의 | Orchestrator | `AskUserQuestion` packet 발화 (escalation_packet schema 정합) — 사용자 dialog 응답이 최종 verdict |
+| anchor 재발 검출 | DesignReviewPL | Story §9 scan → `anchor_recurrence_count >= 2` 시 debate 진입 없이 즉시 사용자 escalation |
+
+#### Anti-sycophancy 강제 directive (매 라운드 system prompt 주입)
+
+> "당신의 Round 0 입장을 유지하라. 상대 주장의 근거가 결정적일 때만 입장 변경 허용. 입장 변경 시 출력에 `position_change: true` + `position_change_reason` 명시 의무. `remaining_disagreements` 미해결 쟁점을 빠짐없이 나열하라. 비어 있으면 가짜 합의로 간주된다."
+
+#### Transcript 영속화 (Story §9 inline append)
+
+- 위치: codeforge family Story = `<internal-docs-clone>/<plugin-folder>/stories/<KEY>.md §9`. Consumer Story = `docs/stories/<KEY>.md §9`
+- Section header format: `### Debate transcript: <anchor_id>`
+- Schema: debate-protocol-v1 registry 정의 준수 (trigger / rounds[] / termination)
+- Writer: DesignReviewPL via Orchestrator self-write delegate (ADR-039 Amendment 정합)
+
+#### FIX verdict 처리 (reasoning carryover)
+
+```
+debate_verdict == FIX
+  ↓
+transcript Story §9 append (### Debate transcript: <anchor_id>)
+  ↓
+§10 FIX Ledger row append (Orchestrator self-write)
+  ├─ debate_artifact_ref = #debate-transcript-<anchor_id>
+  └─ fix-event-v1 1.1 contract (CFP-391 MINOR bump)
+  ↓
+ArchitectPLAgent re-spawn
+  ├─ prompt 에 debate transcript verbatim 주입 (요약 금지)
+  └─ ArchitectAgent re-run instruction:
+     "양측 입장의 reasoning trail 을 반영해 redesign 하라"
+  ↓
+DesignReview re-entry (FIX-N+1, 카운터 정합)
+```
+
+#### env=0 / env=1 동작 차이
+
+| 환경 | Round dispatch | 토큰 비용 |
+|---|---|---|
+| `env=1` (agent teams 활성) | `SendMessage(to=worker, body=round_N_input)` continuous dialog | round 간 cache 가능 (5 min TTL) |
+| `env=0` (default subagent context) | Orchestrator round-trip polyfill — 매 라운드 Claude worker / Codex worker 각각 `Agent` tool one-shot spawn (transcript 누적 입력 첨부). 라운드 카운터 PL 자체 관리 | 매 라운드 cold start (cache 미적용) — 비용 증가 |
+
+양쪽 동일 protocol schema 준수. env=0 fallback 시 토큰 비용 증가는 사용자 인식 의무 (consumer-guide §1f).
+
+#### Token budget cap (operational risk 완화)
+
+매 라운드 worker 출력 권고 cap (PL 이 enforce):
+
+- `statement`: <= 2000 token
+- `rationale`: <= 3000 token
+- 총 ~5000 token / round / worker
+- 5 라운드 × 2 worker × 5K = 50K token (Opus PL 200K context 한도 내 안전)
+
+초과 시 PL 이 worker 에게 condensation 요청 (1회 한정) 후 invalid 처리. max 5 라운드 cap = 비용 폭증 차단 forcing function.
+
+#### lane-agnostic 적용
+
+본 §3.13 = DesignReview lane scope (Story 1 / CFP-391). Story 2 (Requirements lane — CFP-392) 진입 시 동일 protocol contract 재사용 + lane-specific `semantic` divergence_type 정의 (ADR-052 touchpoint #4 격상 Amendment 와 동행). CodeReview / SecurityTest lane 은 deferred CFP-C scope.
+
+---
+
 ## 3B. Preflight 체크 (lane 진입 직전)
 
 **doc-only fast-path 분기 (ADR-054)**: Story 분류 판정 직후, Orchestrator가 §결정 1 분류 표 적용. `doc-only fast-path` 해당 시: 설계 lane → 경량 설계리뷰 → 단일 PR close (구현 lane spawn 금지). `full-lane` 해당 시: 기존 5-lane 전체. 모호 시 full-lane 강제. 판정 표 SSOT: [ADR-054](../docs/adr/ADR-054-doc-only-story-fast-path.md).
