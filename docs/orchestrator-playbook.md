@@ -2279,7 +2279,7 @@ stop-event-v1 ledger 의 privacy / opt-in / sanitize 정책 = [ADR-043 (codeforg
 - [stop-event-v1](inter-plugin-contracts/stop-event-v1.md) — kind:registry 16-field schema
 - [project-config-schema.md](project-config-schema.md) — telemetry block schema (opt-in default false)
 - [consumer-guide.md](consumer-guide.md) § "Telemetry opt-in" — consumer 측 안내
-- [docs/domain-knowledge/orchestrator-discipline/measurement-channel.md](domain-knowledge/orchestrator-discipline/measurement-channel.md) — 도메인 정의 + cross-ADR boundary 설명
+- [docs/domain-knowledge/domain/orchestrator-discipline/measurement-channel.md](domain-knowledge/domain/orchestrator-discipline/measurement-channel.md) — 도메인 정의 + cross-ADR boundary 설명
 
 ---
 

@@ -182,7 +182,7 @@ CFP-280 = (a) + (b). pattern (b) 는 CFP-260 / ADR-036 Option B 잔존 — backw
 
 ## 관련 ADR
 
-- [ADR-036](../../adr/ADR-036-project-key-atomic-reservation.md) — CFP-260 atomic Issue numbering. concurrency group `story-init-${{ issue.number }}` 도입 — 본 페이지 pattern (b) 의 codeforge family precedent. CFP-280 가 pattern (a) 합성으로 (b) 단독 한계 보강.
+- [ADR-036](../../../adr/ADR-036-project-key-atomic-reservation.md) — CFP-260 atomic Issue numbering. concurrency group `story-init-${{ issue.number }}` 도입 — 본 페이지 pattern (b) 의 codeforge family precedent. CFP-280 가 pattern (a) 합성으로 (b) 단독 한계 보강.
 
 ## 변경 이력
 

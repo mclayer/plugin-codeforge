@@ -129,11 +129,11 @@ Orchestrator 코드 실행 전 체크리스트:
 
 ## 관련 ADR
 
-- [ADR-009](../../adr/ADR-009-wrapper-only-decomposition.md) — wrapper-only decomposition. Orchestrator (top-level Claude 세션) 정의 + wrapper agent 0 개 invariant. 본 정책은 ADR-009 의 자연 확장 / explicit 격상.
-- [ADR-025](../../adr/ADR-025-stop-discipline-non-whitelist-as-defect.md) — stop discipline + Epic-level continuity. §결정 7 의 `policy_violation_subdecision` sub-class "이거 inline 으로 충분한가" stop 을 mechanism level 에서 제거. 본 정책의 motivation source.
-- [ADR-029](../../adr/ADR-029-phase-execution-visibility-expansion.md) — phase execution visibility expansion. Orchestrator stderr 1-line narration 의무. 매 subagent spawn / return 가 narrate 대상.
-- [ADR-031](../../adr/ADR-031-lane-spawn-evidence-trail.md) — lane-spawn evidence trail. §14 row append ownership 무변 (Orchestrator monopoly), mechanism 만 spawn 으로 변경.
-- [ADR-035](../../adr/ADR-035-codeforge-agent-teams-epic-architecture.md) — codeforge agent teams Epic. subagent semantics 분기 — 본 정책의 "subagent" = default subagent context (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0`) 의 one-shot subagent.
+- [ADR-009](../../../adr/ADR-009-wrapper-only-decomposition.md) — wrapper-only decomposition. Orchestrator (top-level Claude 세션) 정의 + wrapper agent 0 개 invariant. 본 정책은 ADR-009 의 자연 확장 / explicit 격상.
+- [ADR-025](../../../adr/ADR-025-stop-discipline-non-whitelist-as-defect.md) — stop discipline + Epic-level continuity. §결정 7 의 `policy_violation_subdecision` sub-class "이거 inline 으로 충분한가" stop 을 mechanism level 에서 제거. 본 정책의 motivation source.
+- [ADR-029](../../../adr/ADR-029-phase-execution-visibility-expansion.md) — phase execution visibility expansion. Orchestrator stderr 1-line narration 의무. 매 subagent spawn / return 가 narrate 대상.
+- [ADR-031](../../../adr/ADR-031-lane-spawn-evidence-trail.md) — lane-spawn evidence trail. §14 row append ownership 무변 (Orchestrator monopoly), mechanism 만 spawn 으로 변경.
+- [ADR-035](../../../adr/ADR-035-codeforge-agent-teams-epic-architecture.md) — codeforge agent teams Epic. subagent semantics 분기 — 본 정책의 "subagent" = default subagent context (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=0`) 의 one-shot subagent.
 
 ## 변경 이력
 
