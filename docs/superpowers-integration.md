@@ -57,6 +57,9 @@ CI 안전망: [ADR-017](adr/ADR-017-skill-override-path-enforcement.md) + Amendm
 | requirements | RequirementsPLAgent | 요구사항 대안 탐색 | superpowers:brainstorming | YES | §3 row 2 | plugin-codeforge-requirements Phase 2 |
 | requirements | RequirementsPLAgent | 통합 명세 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-requirements Phase 2 |
 | requirements | ResearcherAgent | 출처 URL 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-requirements Phase 2 |
+| requirements | ChangeImpactAgent | 변경 델타 불확실 영역 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-requirements CFP-374 |
+| requirements | FeasibilityAgent | 구현 가능성 판단 근거 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-requirements CFP-374 |
+| requirements | ContinuityAgent | 연속성 분석 누락 항목 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-requirements CFP-374 |
 | review | ClaudeReviewAgent | 표준 체크리스트 | superpowers:requesting-code-review | NO | §3 row 7 | plugin-codeforge-review Phase 2 |
 | review | ClaudeReviewAgent | PASS evidence 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-review Phase 2 |
 | pmo | PMOAgent | Story 완료 감사 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-pmo Phase 2 |
