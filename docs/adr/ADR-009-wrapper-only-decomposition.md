@@ -11,6 +11,7 @@ related_files:
   - docs/inter-plugin-contracts/fix-event-v1.md
   - docs/inter-plugin-contracts/review-verdict-v1.md (Archived)
   - docs/inter-plugin-contracts/review-verdict-v2.md
+is_transitional: false
 ---
 
 ## 상태
@@ -70,7 +71,11 @@ CFP-25 §10.1 "DocsAgent 영구 fixture" 결정 + §3.5 "DeveloperAgents overlay
 - **Big-bang single CFP** — 6 plugin 동시 추출. 거부: 1 contract 1 CFP 데이터 (CFP-29) 무시 + ADR-008 manual versioning 한계 초과
 - **Foundation CFP 압축** (F1+F2+F3 → 1 CFP) — 거부: 검증 신호 분리 불가 (Codex round 2 명시)
 
-## 다이어그램
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 ```
 Before (ε arc 후, CFP-31 시점):

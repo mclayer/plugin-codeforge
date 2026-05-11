@@ -23,6 +23,7 @@ related_files:
   - examples/library-minimal/
   - docs/inter-plugin-contracts/develop-output-v1.md
   - docs/inter-plugin-contracts/design-output-v2.md
+is_transitional: false
 ---
 
 # ADR-033: Docker-first Infra Engineering
@@ -237,6 +238,10 @@ archive: `mclayer/codeforge-internal-docs/wrapper/decisions/CFP-128-001-codex-sp
 - **D6 거절**: sec tooling 미도입 (Docker-first inconsistency), trivy + hadolint 둘 다 동시 (false positive 관리 부담), trivy-only (Dockerfile syntax 검증 공백)
 
 거절 합리성 = Codex 7-area review CFP-128-001 area_5_option_formulation **PASS**.
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

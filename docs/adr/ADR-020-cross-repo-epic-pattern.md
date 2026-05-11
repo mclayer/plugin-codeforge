@@ -7,6 +7,7 @@ category: orchestration
 carrier_story: CFP-60
 supersedes: null
 superseded_by: null
+is_transitional: false
 ---
 
 # ADR-020: Cross-repo Epic 패턴
@@ -215,6 +216,10 @@ Epic 진행 중 (Phase 1 PR merged 후) 신규 repo 가 child Story scope 에 �
 - ADR-020 v1 default = Mode A — 기존 Story (CFP-1 ~ CFP-59 + 단일 repo) 영향 없음
 - mctrader 는 사후 Mode B 명시 (본 amendment merge 후 hub README / governance doc update)
 - 기존 §대안 A 거부 사유 narrow form 만 reconsider — full form 거부 유지
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

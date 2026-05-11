@@ -12,6 +12,7 @@ related_stories:
   - CFP-343 (본 ADR carrier)
   - ADR-012 (SSOT boundary — cap 수호 대상)
   - ADR-016 (marketplace sync 의무)
+is_transitional: false
 ---
 
 # ADR-051: SSOT Exception Skill Extraction Pattern
@@ -68,6 +69,10 @@ CLAUDE.md 내 4개 SSOT 예외 테이블 (~160줄)은 특정 lane 진입 시 또
 - **subdirectory CLAUDE.md 분할**: 작업 디렉터리에 따라 로딩 — lane 간 cross-cutting 참조에 적합하지 않음
 - **SessionStart hook 조건부 주입**: project.yaml 플래그 기반 — per-lane 조건 표현 불가
 - **ADR-012 cap만 낮추기 (linter 추가)**: 증상 억제, 근본 해결 아님
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

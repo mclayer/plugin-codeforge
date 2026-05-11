@@ -16,6 +16,7 @@ related_files:
   - "templates/change-plan.md"
   - "CLAUDE.md"
   - "agents/PMOAgent.md"
+is_transitional: false
 ---
 
 ## 상태
@@ -93,7 +94,11 @@ Story가 lane을 N/A 처리한 경우 §11 회고에 "이번 Story는 lane {X·Y
 
 본 ADR은 **Proposed** 상태로 우선 발행. 결정 4 (invariant-check Step 신설)는 1-2 Story 누적 후 패턴이 충분히 안정화되면 follow-up CFP로 정식 implement. PMOAgent.md §4 ADR 후보 발의 절차를 따름.
 
-## 다이어그램
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 (N/A — 정책 ADR이라 다이어그램 불필요)
 

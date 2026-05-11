@@ -12,6 +12,7 @@ related_stories:
   - CFP-44 (본 ADR 신설 시점 — wrapper CLAUDE.md 705→~330줄 압축)
   - CFP-43 (parent — X2 cleanup, 잔존 부속 사항 진단의 직전 상태)
   - ADR-009 (parent ζ arc decomposition — 6 lane plugin 추출)
+is_transitional: false
 ---
 
 # ADR-012: Wrapper CLAUDE.md SSOT Boundary
@@ -82,7 +83,11 @@ CLAUDE.md 본문 top (intro 직후) 에 본 ADR 의 5-line summary + ADR link in
 - **A3 wrapper-only quick-win** (1 PR, lane plugin gap deferral) — ADR 급 결정 의도 (사용자 (2') 선택) 미달성, 결과 ~500줄 (target 미달)
 - **Linter-first ratchet** (boundary 정의 없이 자동 강제만 도입) — 강제할 boundary 가 정의돼 있어야 lint rule 작성 가능. 후속 CFP 에서 도입 가능
 
-## 다이어그램
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 ```
 Before (CFP-43 후, 본 ADR 결정 전):

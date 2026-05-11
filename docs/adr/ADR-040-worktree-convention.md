@@ -38,6 +38,7 @@ related_files:
   - templates/scripts/check-worktree-stale.sh
   - templates/scripts/worktree-path-util.sh
   - docs/orchestrator-playbook.md
+is_transitional: false
 ---
 
 # ADR-040: Worktree convention — base directory + naming + lifecycle
@@ -289,6 +290,10 @@ gh api "repos/$(gh repo view --json nameWithOwner --jq .nameWithOwner)/branches/
 - ADR-024 branch governance 정합: PR-only merge = ADR-024 "main 직접 push 금지" 강제 정합.
 - ADR-009 invariant 무손상: 본 amendment 는 GitOpsAgent 행동 명세 추가이며 wrapper agent 신설 없음.
 
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

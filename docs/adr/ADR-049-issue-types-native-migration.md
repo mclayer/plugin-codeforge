@@ -21,6 +21,7 @@ related_stories:
 amends:
   - ADR-008
 supersedes: null
+is_transitional: false
 ---
 
 # ADR-049: Issue Types + Sub-issues Native Migration
@@ -139,7 +140,11 @@ codeforge 의 Issue 분류 = label hack `type:epic / type:story / type:bug` (3 e
 - **DI-3**: Custom Properties allowed_values change 시 schema breaking — migration script + warning + validation period 의무 (ADR-048 정합)
 - **DI-4**: ruleset name uniqueness (ADR-048 정합)
 
-## 다이어그램
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 ```mermaid
 graph TD

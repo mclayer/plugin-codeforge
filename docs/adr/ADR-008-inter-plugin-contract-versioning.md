@@ -11,6 +11,7 @@ related_files:
 related_stories:
   - CFP-29 (본 ADR 신설 시점)
   - CFP-25 (parent design — staged ε)
+is_transitional: false
 ---
 
 # ADR-008: Inter-plugin Contract Versioning — review_verdict v1.x compat / v2.0 BREAKING
@@ -107,7 +108,11 @@ codeforge core 가 verdict.contract_version 을 모르는 값으로 받으면:
 - codeforge-review: README + CHANGELOG에 contract version compat 명시
 - 향후 plugin 추출 (CFP-25 §10.2 Phase 2 — arch-deputies / req-deputies 등): 동일 룰 적용 (각 plugin 추출 시 own contract + ADR)
 
-## 다이어그램
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 ```
 v1.0 (CFP-29 동결)

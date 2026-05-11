@@ -15,6 +15,7 @@ related_files:
   - docs/adr/ADR-009-wrapper-only-decomposition.md
 related_stories:
   - CFP-59
+is_transitional: true
 ---
 
 # ADR-019: Sonnet Decider Auto-Proceed Policy
@@ -265,6 +266,15 @@ CFP-57 (ADR-018) 결정 8 패턴 generalized to Sonnet:
 - **ADR-001** (review-agent-unification) — 영향 없음. review verdict 는 별도 axis, decider 정책 적용 대상 아님.
 - **ADR-009** (wrapper-only-decomposition) — Phase 1 영향 없음 (agent count = 0 유지).
 - **ADR-013 / ADR-016 / ADR-017** — 영향 없음.
+
+## 해소 기준
+
+**전이 분류**: Sonnet Decider Auto-Proceed (Gemini 후계). CFP-134 / ADR-035 Wave 1 에서 Deprecated — Sonnet decider 자동 발동 무효, 사용자 ad-hoc 호출만 허용.
+
+**해소 evidence**:
+- **metric**: Deprecated status (frontmatter)
+- **who**: ADR-035 carrier
+- **how**: CFP-134 Wave 1 merge (2026-05-08) — decider 자동 발동 채널 제거 + review-verdict v4 (ADR-044) cutover 완료
 
 ## 관련 파일
 

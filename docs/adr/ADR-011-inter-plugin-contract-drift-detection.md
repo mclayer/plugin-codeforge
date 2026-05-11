@@ -15,6 +15,7 @@ related_stories:
   - CFP-E (본 ADR 신설 시점)
   - CFP-42 (parent — sibling backfill + ADR-010 도입)
   - CFP-D (parent — review_verdict v1 Archived 전환, drift skip 룰 도출)
+is_transitional: false
 ---
 
 # ADR-011: Inter-plugin Contract Drift Detection
@@ -86,6 +87,10 @@ CFP-D 결과 v1 review_verdict 는 wrapper 단독 SSOT (canonical 부재) 로 �
 
 - 7번째 contract 추가 시: lane plugin canonical + wrapper sibling + MANIFEST entry → 본 lint 가 자동 검증
 - 신규 contract major bump (v2 → v3): 양쪽 plugin 동시 release + 본 lint 가 sibling sync 강제
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

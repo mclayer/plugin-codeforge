@@ -19,6 +19,7 @@ related_files:
   - mclayer/plugin-codeforge-requirements/templates/domain-knowledge.md
   - mclayer/plugin-codeforge-requirements/templates/concept-knowledge.md
   - scripts/check-doc-frontmatter.sh
+is_transitional: false
 ---
 
 # ADR-056: Domain-Concept knowledge directory separation
@@ -113,6 +114,10 @@ ResearcherAgent는 §6 출력에 자신이 참조/생성한 concept 파일의 co
 ## ADR-013 dogfood-out waiver 사유
 
 ADR-046 §waiver 3 사유(KEY collision / Action permission / cost asymmetry) 동일 유효. 본 ADR scope = ADR 2건 + agent 파일 3건 + template 2건 + lint 스크립트 + 마이그레이션. ADR-046 waiver pattern inherit.
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

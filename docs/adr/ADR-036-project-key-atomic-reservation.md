@@ -16,6 +16,7 @@ related_files:
 related_stories:
   - CFP-260 (carrier)
   - CFP-259 (parent Epic)
+is_transitional: false
 ---
 
 # ADR-036: Project key atomic reservation — KEY = PREFIX-Issue#
@@ -162,7 +163,11 @@ per-Issue group → 같은 Issue 의 reopen / re-trigger race 만 직렬화. 병
 - **6 lane plugin**: 영향 없음 (lane plugin 은 자체 story-init.yml 미보유)
 - **consumer**: consumer-guide.md §2 갱신 — 자체 Issue Form 사용 시 본 패턴 권장 + project.yaml `story_key_prefix` 로 prefix override 가능
 
-## 다이어그램
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 ```
 brainstorming 시작

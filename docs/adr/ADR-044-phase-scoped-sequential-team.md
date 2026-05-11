@@ -46,6 +46,7 @@ related_files:
   - templates/agent-teams-hook-samples/TaskCreated.json.sample
   - templates/agent-teams-hook-samples/TaskCompleted.json.sample
   - CLAUDE.md
+is_transitional: false
 ---
 
 # ADR-044: Phase-scoped sequential team SSOT
@@ -324,6 +325,10 @@ default  >  auto_on_divergence  >  user_request_only
 - consumer 측 적용 본격 가이드 (별도 CFP — CFP-134 spec §8 out-of-scope)
 - Hotfix path 의 agent teams 통합 (hotfix-playbook.md amendment 별도)
 - ADR-022 본문 잔재 cleanup (CFP-137 follow-up CFP)
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

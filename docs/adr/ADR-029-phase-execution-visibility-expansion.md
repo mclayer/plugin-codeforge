@@ -14,6 +14,7 @@ amendment_log:
 related_adrs:
   - ADR-042  # measurement channel architecture (sibling — sanitize scope expansion trigger)
   - ADR-043  # telemetry privacy policy (unified sanitize SSOT — §결정 4 SSOT 분담 narrative + §결정 3 Deny-list regex specifics)
+is_transitional: false
 ---
 
 # ADR-029: Phase execution visibility expansion — sub-step terminal narration
@@ -154,6 +155,10 @@ CFP-104 의 UserPromptSubmit hook 이 매 prompt submit 시 §0 progress 일부 
 - 6 lane plugin (codeforge-{requirements,design,develop,test,review,pmo}) CLAUDE.md 변경 (§결정 5 — Writer 단독 invariant)
 - §0 Live Progress file 동작 (CFP-20 무변화 — terminal output 만 확장)
 - Per-deputy narration content 표준 (deputy 별 작성자 책임 — 본 ADR §결정 2 sanitize policy 만 강제)
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

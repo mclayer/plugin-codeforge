@@ -18,6 +18,7 @@ related_files:
   - docs/inter-plugin-contracts/label-registry-v1.md
 supersedes: null
 amends: null
+is_transitional: false
 ---
 
 # ADR-050: Parallel Epic Conflict Coordination
@@ -129,6 +130,10 @@ merge-order:1 PR: #XXX (CFP-YYY)
 | 전용 ParallelCoordinatorAgent 신설 | 새 에이전트 = ADR + model tier 결정 비용. GitOpsAgent 확장이 충분 |
 | merge-first ordering 강제 (blocking) | 병렬 작업의 장점 소멸. non-blocking warning이 적절 |
 | Reservation Issue Form (cfp-reserve 패턴 확장) | ADR-RESERVATION.md sequential append가 더 가볍고 audit trail 명확 |
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

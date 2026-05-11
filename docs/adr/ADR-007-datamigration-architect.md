@@ -20,6 +20,7 @@ related_files:
   - docs/orchestrator-playbook.md
 related_stories:
   - CFP-21
+is_transitional: false
 ---
 
 # ADR-007: DataMigrationArchitectAgent 신설
@@ -98,7 +99,11 @@ DataMigrationArch (Design lane) ≠ 구현 lane / 구현 테스트 lane:
 
 부정 영향(토큰 비용)은 ADR-004 / ADR-006 결정과 동일 trade-off — shift-left 데이터 무결성 가치가 비용 상회. full closure KPI(FIX 회귀 비용 감소) 1-2 Story 누적 후 PMOAgent 회고에서 측정.
 
-## 다이어그램
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 ```
 [설계 lane — After v0.14.0]

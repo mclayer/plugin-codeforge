@@ -6,6 +6,7 @@ status: Accepted
 category: governance
 carrier_story: CFP-123
 supersedes: null
+is_transitional: false
 ---
 
 # ADR-030: Live Epic lane-entry policy + real-funds gate
@@ -139,6 +140,10 @@ Live touching Story 가 phase:보안-테스트 진입 시 자동 block, 사용�
 - Story §13 schema presence 자동 detect (Phase 2, 별도 CFP)
 - `gate:live-entry-pass` 의 Phase 2 enforcement (require-only Phase 1 → enforce Phase 2 단계 분리, 별도 CFP)
 - Live touching Story 외 일반 Story 영향 (변경 없음)
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

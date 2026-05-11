@@ -21,6 +21,7 @@ related_files:
   - docs/project-config-schema.md
   - docs/consumer-guide.md
   - docs/domain-knowledge/orchestrator-discipline/measurement-channel.md
+is_transitional: false
 ---
 
 # ADR-043: Codeforge telemetry privacy policy
@@ -230,6 +231,10 @@ LDP (Local Differential Privacy, arxiv 2507.06350) = Phase 2 dashboard cold tier
 - **ADR-025** (stop discipline) — stop-event-v1 deferred slot context.
 - **ADR-013** (codeforge family dogfood-out policy) — wrapper dogfood always-on exception 정당화 (codeforge family 자체 development scope).
 - **ADR-024** (Story-scoped branch policy) — 본 Story branch 명명.
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

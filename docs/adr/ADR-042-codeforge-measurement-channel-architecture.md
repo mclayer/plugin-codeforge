@@ -29,6 +29,7 @@ related_files:
   - docs/consumer-guide.md  # §7.0.7 telemetry_enabled flag 안내
   - docs/domain-knowledge/orchestrator-discipline/measurement-channel.md
   - docs/change-plans/cfp-283-adr-039-measurement-channel.md  # internal-docs SSOT (ADR-013)
+is_transitional: false
 ---
 
 # ADR-042: Codeforge measurement channel architecture
@@ -396,6 +397,10 @@ PreToolUse hook 으로 inline write detect → 즉시 차단.
 - **ADR-043** (telemetry privacy policy) — sibling Phase 1 PR. privacy / opt-in / sanitize 정책 별도 ADR. §결정 5-6 cross-ref.
 - **ADR-013** (codeforge family dogfood-out policy) — spec / plan 위치 internal-docs override. 본 ADR Story spec / plan 도 internal-docs SSOT.
 - **ADR-024** (Story-scoped branch policy) — 본 Story branch 명명 (`cfp-283-adr-039-measurement-channel`).
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

@@ -23,6 +23,7 @@ related_files:
   - mclayer/plugin-codeforge-requirements/.claude-plugin/plugin.json
   - .claude-plugin/plugin.json
   - CLAUDE.md
+is_transitional: false
 ---
 
 # ADR-046: ResearcherAgent role redefinition — Concept formulation + Deep exploration + Requirement reshape
@@ -153,6 +154,10 @@ ADR-042 §결정 1 (g) Opus tier criteria — "Deep research with reshape mandat
 3. **Cost asymmetry** — 본 ADR scope = ADR 1건 + agent file 재작성 + spec 1건. Phase 1 lane flow 진입 시 ~30 Opus agent invocation (요구사항 4 + 설계 8 + 설계리뷰 PL + 종합) — 본 Story 의 효과 (Researcher role 명료화) 와 비교 시 lane flow 자체 비용 negative
 
 PR #287 (ADR-042) 와 동일 패턴 — ADR-013 waiver explicit invoke.
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

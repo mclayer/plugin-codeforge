@@ -15,6 +15,7 @@ related_files:
   - docs/orchestrator-playbook.md
 related_stories:
   - CFP-18
+is_transitional: false
 ---
 
 # ADR-006: TestContractArchitectAgent 신설
@@ -96,7 +97,11 @@ Codex audit #1 closure 정의를 2단계로 분리:
 
 부정 영향(토큰 비용)은 ADR-004 결정과 동일 trade-off — shift-left QA 가치가 비용 상회. full closure KPI(FIX 회귀 비용 감소) 1-2 Story 누적 후 PMOAgent 회고에서 측정.
 
-## 다이어그램
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 ```
 [설계 lane — After v0.12.0]

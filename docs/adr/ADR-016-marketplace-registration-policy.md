@@ -15,6 +15,7 @@ related_adrs:
   - ADR-008 (inter-plugin contract versioning)
   - ADR-010 (canonical / sibling sync within plugin repos)
   - ADR-013 (codeforge family dogfood-out policy)
+is_transitional: false
 ---
 
 # ADR-016: Marketplace registration policy for codeforge plugin family (narrow scope)
@@ -165,6 +166,10 @@ Registration + parity audit + unregister + lifecycle 통합 ADR.
 - **CFP-51 (잠정)**: Lane plugin lifecycle / unregister flow governance ADR
 
 본 CFP-49 머지 후 별도 issue 로 발의 (사용자 판단).
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

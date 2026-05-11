@@ -10,6 +10,7 @@ related_adrs:
 related_files:
   - docs/parallel-work/section-ownership.yaml
   - templates/github-workflows/parallel-epic-conflict-check.yml
+is_transitional: false
 ---
 
 # ADR 번호 예약 레지스트리
@@ -66,6 +67,10 @@ reservations: []
 ### 번호 해제 (archived)
 
 ADR deprecated/superseded 시 해당 row `status: archived`. 번호 재사용 금지.
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

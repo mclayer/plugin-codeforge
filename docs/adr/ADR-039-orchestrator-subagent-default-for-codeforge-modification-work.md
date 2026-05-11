@@ -27,6 +27,7 @@ related_files:
   - docs/hotfix-playbook.md
   - docs/change-plans/cfp-275-orchestrator-subagent-default.md
   - docs/domain-knowledge/orchestrator-discipline/spawn-default.md
+is_transitional: false
 ---
 
 # ADR-039: Orchestrator subagent default for codeforge modification work
@@ -313,6 +314,10 @@ Phase 1 trust model 의 검증 채널 = doc lint (TestContractArchitect §8.4 �
 - **ADR-013** (codeforge family dogfood-out policy) — spec / plan 위치 internal-docs override. 본 ADR Story spec / plan 도 internal-docs SSOT.
 - **ADR-024** (Story-scoped branch policy) — 본 Story branch 명명 (`cfp-275-orchestrator-subagent-default`).
 - **ADR-005** (plugin meta exempt) — N/A lane 사유 reference (Change Plan §7 / §11 / §8.5 N/A).
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

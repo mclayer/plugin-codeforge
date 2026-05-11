@@ -22,6 +22,7 @@ amends:
   - ADR-024
   - ADR-031
 supersedes: null
+is_transitional: false
 ---
 
 # ADR-048: GitHub Enterprise Cloud Governance-as-Code
@@ -122,7 +123,11 @@ GraphQL Audit Log API (`enterprise.auditLog`, 5000 pt/hr) + REST `/orgs/{org}/au
 - Rate limit: GraphQL 5000 pt/hr → batch + cursor pagination
 - Env isolation: mclayer org = single enterprise child org
 
-## 다이어그램
+## 해소 기준
+
+N/A — permanent policy
+
+
 
 ```mermaid
 graph TD

@@ -17,6 +17,7 @@ related_adrs:
 related_files:
   - docs/orchestrator-playbook.md
   - CLAUDE.md
+is_transitional: false
 ---
 
 # ADR-053: 구조적 변경 재구동 선행 의무 및 codeforge 변경 시 consumer 배포 포함
@@ -76,6 +77,10 @@ Orchestrator가 구조적 변경(CLAUDE.md 의미 변경, plugin 버전 업, set
 **문서 변경:**
 - `docs/orchestrator-playbook.md` §1.1 체크리스트 항목 추가 — 구조적 변경 감지 시 재구동 blocking 조건
 - `CLAUDE.md` "세션 개시 의무" 섹션 blocking 조건 추가 — codeforge 변경 후 consumer 배포 완료 확인
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

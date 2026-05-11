@@ -14,6 +14,7 @@ related_files:
   - templates/github-workflows/superpowers-integration.yml
 related_stories:
   - CFP-113
+is_transitional: false
 ---
 
 # ADR-028: Superpowers integration policy
@@ -74,6 +75,10 @@ Trade-off: Phase 1 wrapper PR 후 lane CFP 미진행 시 partial consistency. �
 - **A (Light, doc consolidation only)** — 결함 #2 (17 agent prose 일관성) 미해결, structural debt 누적
 - **C (Heavy, adapter pattern)** — superpowers third-party schema 변경 시 7 adapter 일괄 갱신 의무 = robustness 역효과 명백
 - **pre-commit hook** — overhead 대비 benefit 낮음 (ADR-017 CI 가 충분, 본 CFP scope 제외, 후속 CFP 가능)
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

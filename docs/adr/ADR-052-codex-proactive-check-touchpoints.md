@@ -25,6 +25,7 @@ related_files:
   - docs/orchestrator-playbook.md
   - docs/superpowers-integration.md
   - CLAUDE.md
+is_transitional: false
 ---
 
 # ADR-052: Codex Proactive Check — 6 Touchpoints
@@ -82,6 +83,10 @@ Codex와 ArchitectPLAgent 판정 불일치 시 자동 proceed 금지 — 사용�
 - codex:rescue(reactive) 채널 동작 변경 없음
 - CodexReviewAgent 역할 변경 없음
 - 문서 전용 변경 (코드/agent file 변경 0건)
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

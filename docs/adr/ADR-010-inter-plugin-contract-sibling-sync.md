@@ -10,6 +10,7 @@ related_files:
   - docs/adr/ADR-009-wrapper-only-decomposition.md (ζ arc 결과 — 본 ADR 의 P0 gap 출처)
   - docs/inter-plugin-contracts/MANIFEST.yaml (contract 완결성 SSOT)
   - docs/inter-plugin-contracts/review-verdict-v2.md (선례 패턴)
+is_transitional: false
 ---
 
 ## 상태
@@ -81,6 +82,10 @@ wrapper repo `docs/inter-plugin-contracts/MANIFEST.yaml` 가 모든 `kind: contr
 
 - 7번째·8번째 contract 추가 시 4단계 절차 + lint 자동 차단의 이중 안전망 작동
 - 향후 wrapper-canonical `kind: contract` (cross-cutting typed schema) 등장 시 MANIFEST schema 에 `role` 필드 도입 — 본 ADR 갱신 또는 신규 ADR
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

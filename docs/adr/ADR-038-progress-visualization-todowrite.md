@@ -6,6 +6,7 @@ status: Accepted
 category: orchestration
 carrier_story: CFP-274
 supersedes: null
+is_transitional: false
 ---
 
 # ADR-038: Progress visualization via TodoWrite (single-Story, hierarchical 4-marker)
@@ -135,6 +136,10 @@ Amendment 날짜: 2026-05-11
 - **ADR-024** (Story-scoped branch policy) — 본 Story branch 명명.
 - **ADR-031** (Lane spawn evidence trail) — Story §14 7 row populated 의무.
 - **ADR-005** (Plugin meta exempt) — N/A lane 사유 reference.
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 

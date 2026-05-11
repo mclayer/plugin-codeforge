@@ -20,6 +20,7 @@ related_adrs:
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md
+is_transitional: false
 ---
 
 # ADR-054: doc-only Story fast-path 분류 표 + fallback 규칙
@@ -83,6 +84,10 @@ ADR 자체가 설계 결정 SSOT이므로, 설계리뷰 lane 생략 시 self-rev
 - [ADR-024](ADR-024-story-scoped-branch-policy.md) — Story-scoped branch policy
 - CFP-357, CFP-358 — 비일관성 발생 케이스
 - CFP-364 — CLAUDE.md + playbook 반영 (후속)
+
+## 해소 기준
+
+N/A — permanent policy
 
 ## 관련 파일
 
