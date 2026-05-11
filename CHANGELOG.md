@@ -5,6 +5,39 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.17.0] - 2026-05-12
+
+### Added (CFP-436 — Marketplace ↔ plugin.json atomic invariant)
+
+CFP-387 / CFP-393 / CFP-423 retro 의 3-Wave marketplace drift 누적 → ADR carrier 격상 timing 도달. mirrored field bump 시 3 file atomic coordination 의무 명시화.
+
+- `docs/adr/ADR-063-marketplace-atomic-invariant.md` (NEW, 200L) — 8 결정 정책 본문
+  1. 3-file atomic invariant 명시 (plugin.json + CHANGELOG.md + marketplace.json 동시 처리)
+  2. PR ordering — marketplace sync PR 선행 merge 권장 (chicken-and-egg 회피)
+  3. 작성 단계 sanity check — pre-commit 권장
+  4. bypass channel — `hotfix-bypass:marketplace-atomic` label (ADR-024 Amendment 3 정합)
+  5. 기존 CI lint 보존 + 신규 lint follow-up (별도 CFP carrier)
+  6. ADR-016 vs ADR-063 분리 — sync 무엇 vs sync 어떻게
+  7. ADR-061 §결정 5 정합 — sanity check 3종 적용
+  8. Self-application — `is_transitional: false` (permanent)
+- `CLAUDE.md` "ADR" 섹션 — ADR-063 cross-ref 1 단락 (ADR-061 직후)
+- `docs/adr/ADR-RESERVATION.md` — `| 63 | CFP-436 | active | 2026-05-12 |` row append
+
+### Why
+
+3-Wave drift evidence (CFP-387 chicken-and-egg + CFP-393 catch-up + CFP-423 합쳐 처리) — mirrored field bump 시 atomic coordination invariant 부재. 기존 `check-marketplace-parity.sh` / `check-marketplace-sync.sh` 는 사후 감지만 가능, 작성 시점 강제 mechanism 없음.
+
+### Compatibility
+
+- `is_transitional: false` (permanent policy carrier — ADR-058 self-application 정합)
+- ADR-016 sibling sync 와 별도 정책 (amendment 아님)
+- ADR-037 version bump rule 정합
+- backward compatible — 기존 PR 영향 없음
+
+### Self-application
+
+본 PR 자체가 ADR-063 §결정 1 self-application 첫 사례 — plugin.json 5.16.0 → 5.17.0 + CHANGELOG 5.17.0 entry + marketplace.json sync PR 병행 open (선행 merge).
+
 ## [5.16.0] - 2026-05-12
 
 ### Added (CFP-423 — Python script-writing convention)

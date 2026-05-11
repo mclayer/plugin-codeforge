@@ -65,6 +65,7 @@ reservations: []
 | 60 | CFP-389 | active | 2026-05-11 |
 | 61 | CFP-423 | active | 2026-05-12 |
 | 62 | CFP-407 | active | 2026-05-12 |
+| 63 | CFP-436 | active | 2026-05-12 |
 
 ### 번호 해제 (archived)
 
