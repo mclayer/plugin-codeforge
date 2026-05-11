@@ -5,6 +5,37 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.12.0] - 2026-05-11
+
+### Added
+- CFP-391 / ADR-059: debate-protocol-v1 registry + DesignReview lane 적용 (Phase 1)
+  - `docs/inter-plugin-contracts/debate-protocol-v1.md` (NEW, `kind: registry`) — lane-agnostic adversarial debate protocol SSOT
+    - Trigger / Round / Termination 3-block schema + Round 0~N 입력 형식
+    - Anti-sycophancy 메커니즘 (role_lock / position_change / remaining_disagreements / force_continue)
+    - Anchor recurrence escalation (>= 2 시 즉시 사용자 escalation)
+    - FIX 통합 (reasoning carryover, ArchitectAgent re-run prompt 에 transcript 명시 주입)
+  - `docs/adr/ADR-059-debate-protocol-v1.md` (NEW, Accepted) — 5 결정 carrier
+  - `docs/adr/ADR-044-phase-scoped-sequential-team.md` Amendment 1 — `dispatch_mode` enum 에 `auto_on_divergence` 추가 + 우선순위 룰 (`default > auto_on_divergence > user_request_only`)
+  - `docs/inter-plugin-contracts/fix-event-v1.md` 1.0 → 1.1 MINOR bump — `debate_artifact_ref` optional 필드
+  - `docs/inter-plugin-contracts/review-verdict-v4.md` — `findings[].anchor_id` optional 필드 추가 (debate-protocol-v1 stable identifier 의존, FIX-1)
+  - `docs/inter-plugin-contracts/MANIFEST.yaml` debate_protocol entry 추가
+
+### Changed
+- `CLAUDE.md` 4 섹션 추가 — kind:registry 3→4 / Adversarial Debate sub-section / FIX 루프 debate_artifact_ref / 레인 진입 트리거 주석
+- `docs/orchestrator-playbook.md` §3.13 신설 — Multi-round Adversarial Debate dispatch 흐름
+- `docs/consumer-guide.md` §1f 확장 — auto_on_divergence + Token 비용 의식 + anchor 재발 escalation
+- `docs/domain-knowledge/domain/agent-teams/agent-teams-platform-capability.md` Adversarial 패턴 확장
+- `templates/team-spec-design-review.yaml` Codex worker `dispatch_mode: [user_request_only, auto_on_divergence]` (Phase 2 PR scope)
+
+### Why
+
+5 권장 패턴 중 Adversarial debate 영역 measurable verification 부족 — `worker_dialog_rounds >= 2` 시 review-verdict packet 의 finding evidence 에 round-by-round narrative 포함 강제 필요. PL LLM judgment 단독 (외부 algorithm 없음) + anti-sycophancy 메커니즘 (role_lock / remaining_disagreements) + anchor 재발 escalation 으로 AI 합의 불가능 신호 명시화.
+
+### Compatibility
+
+- ADR-037 §3.1 (h) 신규 ADR (ADR-059) + (g) additive CLAUDE.md guidance + (f) inter-plugin contract MINOR (fix-event-v1) + (h) Amendment (ADR-044) → MINOR. 5.11.0 → 5.12.0.
+- Story 2 (Requirements lane 확장) deferred → CFP-392 stub.
+
 ## [5.11.0] - 2026-05-11
 
 ### Added
