@@ -97,3 +97,28 @@ entries:
     owner_adr: ADR-057           # 정책 ADR — fallback rate sunset gate owner
     carrier_adr: ADR-060         # framework carrier (CFP-388 / ADR-060 §결정 12 CFP-C)
     status: Active
+
+  - name: story-section-9-typed
+    description: |
+      Story §9.x sub-section yaml block schema validation — review-verdict-v4 packet
+      inline embed 표준 패턴 검증. free-form markdown → typed yaml block 으로 정보 손실
+      최소화 + 자동 검증 가능성 확보. yaml block 부재 = OK (backward compat),
+      block 존재 시만 schema 검증. Warning tier (PR-block 없음, console warning 만).
+      CFP-391 retro follow-up 5건 중 P3 최종 (CFP-410).
+    detect_command: bash scripts/check-story-section-9-typed.sh
+    workflow: templates/github-workflows/story-section-9-typed-check.yml
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:story-section-9-typed
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies: []         # 독립 entry — registry append + carrier patterns 검증 외 의존 없음
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-410
+    owner_adr: ADR-044           # review-verdict-v4 schema source
+    carrier_adr: ADR-060         # framework carrier
+    status: Active
