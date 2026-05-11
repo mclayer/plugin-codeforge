@@ -430,6 +430,16 @@ Orchestrator 가 사용자에게 substantive path 를 제시하거나 외부 sys
 
 인프라 SSOT: ADR-040 (CFP-136). Script: `bash templates/scripts/worktree-create.sh <branch> <base-ref>`.
 
+#### §3.0.12 Rate-limit Fallback (ADR-057)
+
+Agent tool이 Sonnet subagent spawn 결과로 rate-limit 에러를 반환하면:
+
+1. 동일 입력 패킷으로 `model: opus` 재spawn (1회 한정)
+2. 재spawn 성공 시 §14 Lane Evidence row에 `[rate-limit-fallback:sonnet→opus]` 태그 추가 후 정상 진행
+3. Opus도 실패 시 사용자에게 상황 통지 → 대기 (자동 재시도 루프 금지)
+
+판별 기준: Agent tool result에 "rate limit", "quota exceeded", "429" 포함 시 rate-limit로 분류.
+
 ### 3.1 7 레인 + Cross-cutting 스폰 순서 (요약)
 
 ```

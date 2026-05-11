@@ -117,7 +117,7 @@ nested spawn double-count anti-pattern (Researcher §6.3 — claude-code#5904) �
 
 ### ROI gating (ADR-042 §결정 11 / ADR-026 §결정 3 패턴)
 
-Phase 2 enforcement (rule-based hook / inline write detect / stop-event auto-fire / rate-limit cascade detection) 발동 prerequisite:
+Phase 2 enforcement (rule-based hook / inline write detect / stop-event auto-fire / ~~rate-limit cascade detection~~ → **RESOLVED by ADR-057 (CFP-379)**: Orchestrator Opus 필수화 + Sonnet→Opus fallback 정책) 발동 prerequisite:
 
 - post-merge-counters.jsonl 30+ run 누적
 - ROI metric: (1) inline_violation_count 변화 추세 (2) `policy_violation_subdecision` stop frequency (3) token cost burn 정량 baseline
@@ -150,7 +150,7 @@ ROI 충분 시 follow-up CFP 발의 (Sonnet decider Phase 2 ROI 패턴 정합 �
 
 **Lane-spawn evidence (ADR-031) 와의 boundary** — §14 lane coarse vs spawn-event-v1 sub-step. spawn-event-v1 보류 (ADR-042 §결정 3) — §14 schema 무변경 invariant 보존.
 
-**Subagent default (ADR-039) 와의 inheritance** — §결정 9 4 deferred items 중 measurement channel slot only 처리 (CFP-283 carrier). 3 items (inline write detect hook / spawn cost telemetry / rate-limited cascade detection) 잔존.
+**Subagent default (ADR-039) 와의 inheritance** — §결정 9 4 deferred items 중 measurement channel slot only 처리 (CFP-283 carrier). 2 items 잔존 (inline write detect hook / spawn cost telemetry). ~~rate-limited cascade detection~~ → **RESOLVED by ADR-057 (CFP-379)**: Orchestrator Opus 필수화 + Sonnet→Opus fallback 정책.
 
 **Post-merge automation (ADR-026) 와의 ROI gating** — §결정 3 30+ run ROI 평가 패턴 inherit. Phase 2 enforcement 발동 prerequisite.
 
