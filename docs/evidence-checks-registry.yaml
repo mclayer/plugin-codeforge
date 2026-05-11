@@ -46,6 +46,30 @@ entries:
     carrier_adr: ADR-060
     status: Active
 
+  - name: carrier-bootstrap
+    description: |
+      ADR-062 §결정 1-2 mechanical verification — carrier Story frontmatter
+      `carrier_story` + `bootstrap_exempt_protocols` typed key list 정합 (5 standard
+      prefix: adr / contract / policy / workflow / script) + §3 본문 ADR/contract
+      참조 정합. self-application 첫 사례 = CFP-407 자체 (§결정 8).
+    detect_command: bash scripts/check-carrier-bootstrap.sh
+    workflow: templates/github-workflows/carrier-bootstrap-check.yml
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
+    # bypass_label: omit — 4 known carrier 중 0건 bypass 필요, 후속 carrier 가 도입 시 추가
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a)
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = schema 검증, modal phrase 검사 미포함
+    introduced_by: CFP-407
+    owner_adr: ADR-062
+    carrier_adr: ADR-062               # self-carrier
+    status: Active
+
   - name: rate-limit-fallback-rate
     description: |
       ADR-057 §결정 2 sunset gate measurement — 월간 Sonnet spawn 총 카운트 (분모) +
