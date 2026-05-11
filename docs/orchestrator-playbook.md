@@ -1052,14 +1052,33 @@ task: <Codex에게 요청할 구체적 작업>
 | task | "구현 블로커를 독립적으로 진단하고 root cause 및 해결 경로를 제시" |
 | 출력 적용 | DeveloperPLAgent 진단 결과 적용 |
 
-#### §3.10.4 Requirements Output Review
+#### §3.10.4 Requirements Output Review (multi-round debate 격상 — CFP-411 / ADR-052 Amendment 1)
 
 | 항목 | 내용 |
 |---|---|
 | 트리거 | RequirementsPLAgent §1-§6 통합 완료 → `phase:설계` 진입 직전 (항상) |
 | artifacts | Story §1-§6 전체 내용 |
 | task | "§1-§6 요구사항 완전성 검증. 테스트 불가능한 AC, 누락 엣지케이스, 모호한 표현, 상충 요구사항 포착" |
-| 출력 적용 | ADDRESS_FIRST 시 RequirementsPLAgent §5-§6 보완 후 재검증 |
+| 출력 적용 (default 흐름) | Codex `recommendation = PROCEED` 또는 RequirementsPL 의미 비교 결과 divergence 없음 → 그대로 `phase:설계` 진입 |
+| 출력 적용 (divergence 흐름 — Amendment 1) | RequirementsPL 이 Codex `{findings, recommendation, rationale}` vs 자기 synthesis (§2/§5/§6) 의 의미적 차이 (AC / Edge Case / why 해석) 검출 시 `debate-protocol-v1` (§3.13) 자동 발동. lane-agnostic 패턴 정합. 합의 시 §5/§6 보강 후 `phase:설계` 진입, max 5 미합의 시 사용자 escalation, FIX verdict 시 **RequirementsPL 자체 재spawn** (transcript 입력 — ArchitectAgent 미관여) |
+
+**Divergence detection (Requirements lane — semantic, structured surface 부재)**:
+
+```
+PL LLM judgment:
+  - compare(codex_findings vs §2/§5/§6 self-synthesis)
+  - criteria: ac_semantic_diff | edge_case_semantic_diff | why_interpretation_diff
+  - anchor_id assignment: §<section-ref> (review-verdict-v4 패턴 재사용)
+    예: §5-AC-3, §5.2-EC-2, §2-bound-1, §6-source-2
+  - 모호 시 가장 광범위한 anchor 채택 (debate 진입 결정 우선)
+```
+
+DesignReview lane (review-verdict-v4 `findings[]` structured 비교) 과 달리 Requirements lane 은 PL LLM 의미 판정 위임. false positive 차단 = `codeforge-requirements/agents/RequirementsPLAgent.md` sibling sync 의 prompt engineering 영역 (ADR-010 follow-up).
+
+**FIX 흐름 redo 대상 분기 (ADR-052 Amendment 1 A4)**:
+
+- DesignReview lane debate FIX → ArchitectAgent re-run (§3.13 정합, ADR-059 §결정 3)
+- Requirements lane debate FIX → **RequirementsPL 자체 redo** (§2/§5/§6 재합성). ArchitectAgent 미관여 — lane scope 분리. transcript verbatim 주입.
 
 #### §3.10.5 FIX Root Cause 2nd Opinion
 
@@ -1083,7 +1102,14 @@ task: <Codex에게 요청할 구체적 작업>
 
 ### §3.13 Multi-round Adversarial Debate (debate-protocol-v1, CFP-391 / [ADR-059](../docs/adr/ADR-059-debate-protocol-v1.md))
 
-DesignReview lane 에서 Claude worker 와 Codex worker 가 review-verdict-v4 finding 불일치를 산출했을 때 Orchestrator (또는 DesignReviewPL via Orchestrator self-write delegate) 가 `debate-protocol-v1` 을 자동 발동한다. 본 protocol = ADR-022 deprecation (CFP-134) 이후 ad-hoc Codex review 자동 발동 무효 정책과 정합 — 자동 발동은 debate 한정 (사용자 explicit Codex request 시 활성된 워커들 사이의 divergence 해소).
+debate-protocol-v1 = lane-agnostic registry (ADR-059 §결정 5). 현재 두 lane 에 적용:
+
+| Lane | Story | Divergence surface | Divergence 판정자 | FIX redo 대상 |
+|---|---|---|---|---|
+| DesignReview | CFP-391 (deployed) | review-verdict-v4 `findings[]` 동일 `anchor_id` 의 severity OR recommendation | DesignReviewPL structured 검사 | ArchitectAgent re-run (ADR-059 §결정 3) |
+| Requirements | CFP-411 (ADR-052 Amendment 1) | RequirementsPL synthesis (§2/§5/§6) vs Codex proactive check 의미 차이 | RequirementsPL LLM 의미 판정 | **RequirementsPL 자체 redo** (§2/§5/§6 재합성) |
+
+DesignReview lane 에서 Claude worker 와 Codex worker 가 review-verdict-v4 finding 불일치를 산출했을 때 Orchestrator (또는 DesignReviewPL via Orchestrator self-write delegate) 가 `debate-protocol-v1` 을 자동 발동한다. Requirements lane 에서 RequirementsPL 이 Codex proactive check 결과와 자기 synthesis 의 semantic divergence 를 검출할 때 동일 protocol 발동 (touchpoint #4, ADR-052 Amendment 1). 본 protocol = ADR-022 deprecation (CFP-134) 이후 ad-hoc Codex review 자동 발동 무효 정책과 정합 — 자동 발동은 debate 한정 (사용자 explicit Codex request 시 활성된 워커들 사이의 divergence 해소).
 
 #### Trigger surface (divergence detection)
 
@@ -1140,12 +1166,22 @@ transcript Story §9 append (### Debate transcript: <anchor_id>)
   ├─ debate_artifact_ref = #debate-transcript-<anchor_id>
   └─ fix-event-v1 1.1 contract (CFP-391 MINOR bump)
   ↓
-ArchitectPLAgent re-spawn
-  ├─ prompt 에 debate transcript verbatim 주입 (요약 금지)
-  └─ ArchitectAgent re-run instruction:
-     "양측 입장의 reasoning trail 을 반영해 redesign 하라"
-  ↓
-DesignReview re-entry (FIX-N+1, 카운터 정합)
+[lane 분기]
+  ├─ DesignReview lane → ArchitectPLAgent re-spawn
+  │   ├─ prompt 에 debate transcript verbatim 주입 (요약 금지)
+  │   └─ ArchitectAgent re-run instruction:
+  │      "양측 입장의 reasoning trail 을 반영해 redesign 하라"
+  │   ↓
+  │   DesignReview re-entry (FIX-N+1, 카운터 정합)
+  │
+  └─ Requirements lane (CFP-411 / ADR-052 Amendment 1 A4) → RequirementsPLAgent 자체 re-spawn
+      ├─ prompt 에 debate transcript verbatim 주입 (요약 금지)
+      ├─ ArchitectAgent 미관여 (lane scope 분리)
+      └─ re-run instruction:
+         "transcript 의 양측 입장을 반영해 §2/§5/§6 재합성하라.
+          AC / Edge Case / why 해석 영역의 미해결 disagreement 모두 검토."
+      ↓
+      Requirements re-synthesis → §1~§6 재완료 → touchpoint #4 재발화 (FIX-N+1)
 ```
 
 #### env=0 / env=1 동작 차이
