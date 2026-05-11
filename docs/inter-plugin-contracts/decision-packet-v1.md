@@ -4,6 +4,9 @@ registry: decision-packet
 version: "1.1"
 status: Archived
 superseded_by: docs/inter-plugin-contracts/decision-packet-v2.md
+canonical_repo: mclayer/plugin-codeforge
+canonical_path: docs/inter-plugin-contracts/decision-packet-v1.md
+date: 2026-04-10
 authors:
   - Claude (CFP-57 author — spec § 2.6 codification)
   - Codex (gpt-5.5 high) — Round 1+2 brainstorming + spec audit Round 1+2

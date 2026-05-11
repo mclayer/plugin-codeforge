@@ -3,6 +3,9 @@ kind: registry
 registry: fix-event
 version: "1.1"
 status: Active
+canonical_repo: mclayer/plugin-codeforge
+canonical_path: docs/inter-plugin-contracts/fix-event-v1.md
+date: 2026-05-11
 authors:
   - Claude (CFP-32 codification — playbook §6.4 추출 + Orchestrator monopoly enforcement)
   - ArchitectAgent (CFP-391 — v1.1 MINOR bump, debate_artifact_ref optional field)

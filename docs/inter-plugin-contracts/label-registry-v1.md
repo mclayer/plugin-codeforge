@@ -7,6 +7,9 @@ superseded_by: label-registry-v2.md
 archived_by: CFP-140
 archived_date: 2026-05-09
 archived_reason: "ADR-049 — type:* label hack replaced by native GitHub Issue Types (type:epic/story/bug → Issue Types). label-registry-v2.md is now Active SSOT."
+canonical_repo: mclayer/plugin-codeforge
+canonical_path: docs/inter-plugin-contracts/label-registry-v1.md
+date: 2026-05-09
 authors:
   - Claude (CFP-32 codification — bootstrap-labels.sh 추출 + ζ arc owner 매핑)
 related_adrs:
