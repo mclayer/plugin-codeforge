@@ -26,6 +26,12 @@ amendment_log:
     summary: "IntegrationTestAgent Sonnet tier 결정 (컴포넌트 경계 판단·외부 의존성 설계 포함)"
     ref: ADR-055
     carrier_story: cfp-367-integration-test-lane
+  - amendment_id: 4
+    date: "2026-05-11"
+    status: applied
+    summary: "Orchestrator Opus 필수화 + 6 agent Opus 상향 (FeasibilityAgent·ContinuityAgent·ChangeImpactAgent·CodebaseMapperAgent·RefactorAgent·DeveloperPLAgent Sonnet→Opus). §결정2 역전: CodebaseMapper·Refactor Opus 복원. ADR-057 carry."
+    ref: ADR-057
+    carrier_story: CFP-379
 related_stories: []
 related_adrs:
   - ADR-009
@@ -35,6 +41,7 @@ related_adrs:
   - ADR-037
   - ADR-039
   - ADR-046
+  - ADR-057
 related_files:
   - .claude-plugin/plugin.json
   - CLAUDE.md
@@ -104,6 +111,8 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 - RefactorAgent: Opus 4.7 → **Sonnet 4.6**
 
 근거: 양 agent 모두 3-way deputy debate (Mapper = existing codebase fact 보고, Refactor = decoupling/pattern advocacy, SecurityArch = threat) 안에서 **single-mandate advocacy** 패턴. read-only 조사 + 자기 축 단일 주장. multi-source synthesis 책임은 ArchitectAgent chief (Opus) 가 수행. Sonnet 4.6 의 reasoning depth 가 본 mandate 를 fully cover.
+
+> **Amendment 4 역전 (2026-05-11, ADR-057)**: Codex 독립 리뷰 결과 CodebaseMapperAgent·RefactorAgent의 Sonnet mandate에서 symbol resolution 정확도 및 advocacy 품질 부족이 확인되어 Opus로 복원. 본 §결정2의 해당 배정은 Amendment 4에 의해 무효화됨.
 
 **ResearcherAgent** — RESOLVED by [ADR-046](ADR-046-researcher-role-redefinition.md) (2026-05-09): Concept formulation + Deep exploration + Requirement reshape. Opus tier 유지 (mandate depth 근거). 상세: ADR-046.
 
