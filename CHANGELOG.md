@@ -2,6 +2,40 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.7.0] - 2026-05-11
+
+### CFP-387 / ADR-058 — ADR template sunset criteria + transitional 분류 frontmatter (MINOR)
+
+Wrapper canonical ADR-058 (안전망 ADR 영구 부채화 차단) 의 cross-plugin Phase 2. ADR template canonical SSOT 갱신 — consumer-facing 의미 변경 → MINOR bump (ADR-037 룰).
+
+### Added
+
+- `templates/adr.md` frontmatter `is_transitional: true | false` 필드 (ADR-058 §결정 1 의무화) — 미선언 default `true` (안전망 추정, safe direction, §결정 4)
+- `templates/adr.md` body `## 해소 기준` 섹션 (`## 결과` 직후 / `## 다이어그램 (선택)` 직전) — `is_transitional: true` 시 의무 / `false` 시 "N/A — permanent policy" 1줄
+- 측정성 3-tuple (metric / who / how) 정량 명시 의무 — 모달 어휘 ("충분히 안정화되면", "임시로", "한시적", "until further notice") 금지
+- frontmatter `amendments[]` schema — `sunset_justification` 필수 (ADR-058 §결정 5 ratchet 차단)
+- 보안 ADR default presumption = `is_transitional: false` (ADR-058 §결정 7)
+- 예시 3종 inline: (1) rate-limit 안전망 패턴 — ADR-057 fallback rate mirror / (2) platform SLA 발표 패턴 — 외부 신호 기반 / (3) full-rollout 완료 패턴 — 내부 milestone 기반
+
+### Why
+
+ADR-058 (wrapper canonical carrier, CFP-387) — 측정 기준 없는 영구 안전망 ADR 차단 forcing function. ADR-057 (Orchestrator Opus 필수화 + Sonnet→Opus fallback) 이 측정 기준 없는 영구 안전망으로 굳어지는 위험이 brainstorming (Opus×Codex 3라운드, 2026-05-11) 에서 식별 → 합의 원칙 5 "안전망 측정가능 종료" forcing function.
+
+본 plugin = ADR template canonical SSOT — frontmatter + body schema 갱신 carrier.
+
+### Compatibility
+
+- **Wire**: codeforge >= 5.11.0 (sibling 동기 권장 — wrapper CLAUDE.md ADR 섹션 ADR-058 cross-ref 추가)
+- **Template surface**: backward compatible — 기존 ADR 의 frontmatter 미선언 = default `true` 안전망 추정 (declaration only, mechanical enforcement 부재 = CFP-B 잠정 carrier)
+- **Sibling sync**: wrapper repo `templates/adr.md` sibling 사본 0건 → canonical-only single source (ADR-010 sync 무발화)
+- **Marketplace sync**: mirrored field 4종 (`name`/`version`/`description`/`author`) 중 `version` + `description` 변경 → marketplace sync PR 의무 (Phase 2 PR merge 직후, ADR-016)
+
+### Cross-plugin coordination
+
+- wrapper PR (Phase 2): `CLAUDE.md` ADR 섹션 + `plugin.json` 5.10.0 → 5.11.0 + `CHANGELOG.md`
+- wrapper canonical ADR: `docs/adr/ADR-058-adr-sunset-criteria-mandate.md` (Phase 1 PR #399 merged)
+- Mode B hub-centralized (ADR-020 Amendment 1) — wrapper hub, codeforge-design worker plugin
+
 ## [0.4.0] - 2026-05-07
 
 ### CFP-128 / ADR-033 — Docker-first infra mandate sync (MINOR)
