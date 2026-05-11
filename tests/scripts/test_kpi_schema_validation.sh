@@ -14,6 +14,7 @@ KPI_JSON_INITIAL="$REPO_ROOT/docs/kpi/rate-limit-fallback.json"
 # Color output
 RED='\033[0;31m'
 GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
 NC='\033[0m'
 
 TESTS_RUN=0
@@ -164,10 +165,12 @@ test_evidence_transcript_field_no_collision() {
 
   # Count existing uses of [rate-limit-fallback:...] tag (should be 0 in existing files)
   local existing_count
-  existing_count=$(grep -r "\[rate-limit-fallback:" "$repo_stories" 2>/dev/null | wc -l || echo "0")
+  existing_count=$(grep -r "\[rate-limit-fallback:" "$repo_stories" 2>/dev/null | wc -l || true)
+  existing_count=$(echo "$existing_count" | tr -d ' ')
+  existing_count="${existing_count:-0}"
 
   TESTS_RUN=$((TESTS_RUN + 1))
-  if [[ $existing_count -eq 0 ]]; then
+  if [[ "$existing_count" -eq 0 ]]; then
     echo -e "${GREEN}✓${NC} No accidental [rate-limit-fallback:...] tags in existing stories"
     TESTS_PASSED=$((TESTS_PASSED + 1))
   else
