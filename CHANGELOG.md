@@ -5,6 +5,22 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.12.1] - 2026-05-11
+
+### Added
+- CFP-391 Phase 2 — debate-protocol-v1 검증 인프라
+  - `templates/team-spec-design-review.yaml` Codex worker `dispatch_mode: [user_request_only, auto_on_divergence]` 배열 + `divergence_detection` block (surface/criteria/anchor_field) + `dispatch_pattern` `adversarial-debate` entry (rounds min 3 max 5 soft 4 + protocol debate-protocol-v1 + transcript Story §9 영속화) — ADR-044 Amendment 1 정합
+  - `scripts/check-doc-frontmatter.sh` — registry kind 필수 필드 보강 (`canonical_repo` + `canonical_path` + `date`); 기존 8 registry frontmatter backfill 동행
+  - `scripts/check-doc-section-schema.sh` — Story §9 `### Debate transcript: <anchor_id>` sub-section schema 검증 (anchor_id non-empty + `#### trigger` / `#### rounds` (최소 1 `- index: N` entry) / `#### termination` block 의무)
+  - `tests/debate-protocol/test_divergence_detection.sh` + `test_anchor_recurrence.sh` — bash + jq 시뮬레이션 (divergence union/severity/recommendation 분류 + recurrence count >= 2 escalation) + fixtures 4종
+  - `tests/fixtures/debate-protocol/{invalid,valid}-frontmatter.md` + `tests/fixtures/debate-transcript/{invalid-missing-anchor,invalid-empty-rounds,valid-minimal}.md` — schema lint negative/positive case
+
+### Changed
+- 8 registry frontmatter backfill — `canonical_repo` / `canonical_path` / `date` 필드 추가 (comment-prefix / debut-audit-triage / decision-packet v1/v2 / fix-event / label-registry v1/v2 / stop-event)
+
+### Why
+- Phase 2 PR scope — Phase 1 PR (ADR-059 + protocol 정의) merge 후 implementation: lint enforcement + team-spec yaml dispatch_mode array + simulation test
+
 ## [5.12.0] - 2026-05-11
 
 ### Added
