@@ -1,6 +1,6 @@
 ---
 name: codeforge-brainstorm
-description: codeforge 프로젝트 전용 brainstorming — Requirements 에이전트 4종 병렬 컨텍스트 수집 후 강화된 설계 대화 진행. ADR-034 Amendment 1에 의해 Stage 0 공식 스킬로 지정.
+description: codeforge 프로젝트 전용 brainstorming — Requirements 에이전트 4종 병렬 컨텍스트 수집 후 강화된 설계 대화 진행. ADR-034 Amendment 1에 의해 Stage 0 공식 스킬로 지정. Amendment 2 (CFP-386) 에 의해 Phase 0 자동 실행.
 ---
 
 # codeforge:brainstorm Skill
@@ -14,15 +14,15 @@ codeforge 프로젝트에서 `superpowers:brainstorming`을 대체하는 강화 
 
 조건 불충족 시 `superpowers:brainstorming`으로 fallback.
 
-## Phase 0 opt-in 확인
+## Phase 0 진입 정책 (ADR-034 Amendment 2 — CFP-386)
 
-스킬 실행 직후 사용자에게 확인 (별도 메시지):
+스킬 발동 시 **Phase 0 을 자동 실행** — 별도 사용자 확인 (AskUserQuestion) 없이 즉시 4 개 에이전트를 병렬 spawn.
 
-> "4개 에이전트를 병렬로 실행해 brainstorming 컨텍스트를 수집합니다.
-> ResearcherAgent(Opus tier) 포함으로 추가 비용이 발생합니다.
-> Phase 0을 실행할까요?"
+근거: 매 호출마다 동일 비용 경고 = 학습된 reflex 가 되어 productivity 만 저해. 호출 시점에 이미 비용 발생 의사 표명됨. CFP-358 / CFP-374 의 Subagent-Driven 자동 선택 패턴 정합.
 
-사용자 거부 → `superpowers:brainstorming` 스킬로 즉시 fallback.
+### 사용자 cost-out 경로 (Phase 0 skip)
+
+Phase 0 의 비용 (ResearcherAgent Opus tier 포함 4 에이전트 병렬 spawn) 을 원하지 않는 경우, `codeforge:brainstorm` 대신 `superpowers:brainstorming` 을 **직접 호출**한다. 이 경우 Phase 0 가 수행되지 않고 일반 brainstorming 만 진행 (Amendment 1 의 fallback 경로 유지).
 
 ## Phase 0: 병렬 에이전트 burst
 
