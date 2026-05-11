@@ -136,6 +136,42 @@ design-output-v2 contract 가 §13 추가 시 schema bump 필요 — design-outp
 - ADR-022 §결정 11 (consumer-side Sonnet decider Phase 1 trust model)
 - CFP-76 (Story §13 Live Operational Discipline schema)
 
+## Amendment 2 (CFP-378, 2026-05-11)
+
+### 결정 1 — LiveOps/LiveOrdering reconciliation 소유 경계 (AC-2)
+LiveOpsDeputyAgent = 외부 venue 진실 owner (거래소 잔고·audit trail·operator approval verdict).
+LiveOrderingDeputyAgent = 내부 상태머신 수렴 owner (엔진 8-state lifecycle·partial fill·cancel race).
+적용 범위: reconciliation invariant 영역만. 두 에이전트의 나머지 mandate는 Amendment 1 그대로 유지.
+
+도형:
+```
+LiveOps  → 외부 venue source-of-truth owner (drift verdict authority)
+                ↓ verdict
+[reconciliation invariant]
+                ↑ mapping
+LiveOrdering → 내부 상태머신 수렴 owner (engine 8-state)
+```
+
+drift threshold 위반 시 verdict authority = LiveOps. mapping author authority = LiveOrdering. 두 deputy 산출물 cross-ref 의무.
+
+### 결정 2 — §11.6 idempotency cell author rule (AC-3)
+DataMigrationArchitectAgent = §11.6 cell primary author (Change Plan §11.6 본문 작성).
+OperationalRiskArchitectAgent = N줄 memo input 제공자 (markdown quote `>` block, 3-5줄, §7.4.2 disconnect 짝 cross-ref 포함).
+ArchitectAgent chief author가 memo와 cell 본문 통합 시 DataMigrationArch primary 우선 (충돌 시).
+
+### 결정 3 — §7 env secret ownership 경계 (AC-4)
+SecurityArchitectAgent = credential threat owner (§7.5: vault path / runtime injection / key permission scope / secret 노출 위협).
+OperationalRiskArchitectAgent = environment containment owner (§7.4.5: env isolation / staging-prod 분리 / IP allowlist / network mode boundary).
+두 소유권이 같은 secret에 겹칠 경우: SecurityArch가 threat 측면, OpRiskArch가 containment 측면 각각 작성 후 ArchitectAgent 통합.
+
+NIST SP 800-190 (Container Security) + CIS Docker Benchmark 의 secrets management ↔ environment isolation 분리 control category 정합.
+
+### Cross-references
+- CFP-378 Story (mclayer/plugin-codeforge#378)
+- CFP-378 Change Plan §3 / §10
+- CFP-378 5 agent file 갱신 (codeforge-design plugin Phase 2 PR)
+- deputy-mandate skill cell sub-cell annotation (codeforge wrapper Phase 2 PR)
+
 ## Amended by
 
 ### CFP-128 / ADR-033 — Docker-first Infra Engineering (2026-05-07)
