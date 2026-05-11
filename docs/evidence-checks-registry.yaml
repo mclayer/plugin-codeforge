@@ -5,12 +5,14 @@
 # Lint chain: check-doc-frontmatter.sh + check-doc-section-schema.sh (kind:registry pattern)
 # parallel-edit policy: append-only (docs/parallel-work/section-ownership.yaml)
 #
-# 18 entry backfill scheduled Phase 2 (CFP-390 §결정 13 SSOT, ADR-060 Amendment 1).
-# 본 Phase 1 PR = SSOT 만 (ADR Amendment 본문 표 + sibling_dependencies field 정정).
-# Phase 2 PR scope = 본 §결정 13 표의 18 entry 실제 row append.
+# 18 entry backfill complete Phase 2 (CFP-390 §결정 13 SSOT, ADR-060 Amendment 1, 2026-05-11).
+# Phase 1 PR (#415) = SSOT 만 (ADR Amendment 본문 표 + sibling_dependencies field 정정).
+# Phase 2 PR = 본 §결정 13 표의 18 entry 실제 row append (CFP-390 그룹 A 인벤토리).
+# Total entries 가변 — 본 PR base 시점 = 2 + 18 = 20. main rebase 후 CFP-393 / CFP-410
+# 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
 schema_version: "1.0"
 introduced_by: CFP-389
-last_updated: 2026-05-11  # CFP-393 entry append (rate-limit-fallback-rate) + CFP-390 Amendment 1 (sibling_dependencies CFP-391 → CFP-412 정정)
+last_updated: 2026-05-11  # CFP-390 Phase 2 row append (18 entry, ADR-060 Amendment 1 §결정 13 SSOT)
 
 entries:
   - name: adr-sunset-criteria
@@ -121,4 +123,362 @@ entries:
     introduced_by: CFP-410
     owner_adr: ADR-044           # review-verdict-v4 schema source
     carrier_adr: ADR-060         # framework carrier
+    status: Active
+
+  # ─── CFP-390 Phase 2 backfill (18 entries, ADR-060 Amendment 1 §결정 13 SSOT, 2026-05-11) ───
+  # 그룹 A — 4-criteria PASS (detect_command + workflow + owner_adr/contract + tier signal)
+  # tier 최종 분포: blocking-on-merge 1 + blocking-on-pr 1 + warning 16 (manifest 부착 entry 만 blocking)
+
+  - name: lane-evidence-trail
+    description: |
+      ADR-031 lane-spawn evidence mandate — Story §14 Lane Evidence row 부재 검출 +
+      Phase 2 PR `## Lane evidence` 블록 cross-validate (CFP-126). bypass = env
+      BYPASS_LANE_EVIDENCE=1 + reason.
+    detect_command: bash scripts/check-lane-evidence.sh
+    workflow: .github/workflows/lane-evidence-check.yml
+    current_tier: warning            # manifest 미부착 — Phase 2 backfill 시점 정합 (§결정 13 표)
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: ADR-031 §결정 3 + fix-event-v1
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: doc-locations-registry
+    description: |
+      ADR-041 doc taxonomy 위치 SSOT 검증 — docs/doc-locations.yaml 의 정의 path
+      대비 실제 doc file 존재 + naming pattern 정합 검증 (--full mode).
+      CLAUDE.md "branch protection 5번째" narrative 와 manifest 부재 drift 존재 (별도 Issue 권고).
+    detect_command: bash scripts/check-doc-locations.sh --full
+    workflow: .github/workflows/doc-locations-check.yml
+    current_tier: warning            # manifest 미부착 (narrative drift, §결정 13 표 row 2)
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: ADR-041
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: marketplace-parity
+    description: |
+      ADR-016 marketplace registration parity — wrapper + 6 lane plugin 의 mirrored
+      field (name / version / description / author) cross-repo drift 검증.
+      ADR-023 §결정 5 lane plugin lifecycle 동반.
+    detect_command: bash scripts/check-marketplace-parity.sh
+    workflow: .github/workflows/marketplace-parity.yml
+    current_tier: warning
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: ADR-016 / ADR-023 §결정 5
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: invariant-check
+    description: |
+      5 invariant aggregated check — Story §1 immutable + ADR-002 footer pattern +
+      phase label invariant + script exec bit + workflow yaml syntax 등 multi-CFP
+      (5 / 7 / 8 / 10) 위반 검출. branch-protection-manifest row 2 부착.
+    detect_command: workflow inline — 5 invariant 직접
+    workflow: .github/workflows/invariant-check.yml
+    current_tier: blocking-on-pr     # branch-protection-manifest row 2 (§결정 13 표)
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: ADR-002 (footer pattern) + 다중 CFP (5/7/8/10)
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: phase-gate-mergeable
+    description: |
+      ADR-031 phase gate mergeable — cross-repo Story fetch + label-registry-v2 phase
+      label 정합 검증 + dynamic checks.create 발화. branch-protection-manifest row 1
+      부착 — merge 시점 차단 (blocking-on-merge).
+    detect_command: workflow inline — cross-repo Story fetch
+    workflow: .github/workflows/phase-gate-mergeable.yml
+    current_tier: blocking-on-merge  # branch-protection-manifest row 1, dynamic checks.create (§결정 13 표)
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: ADR-031 §결정 3 + label-registry-v2
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: inter-plugin-contracts
+    description: |
+      ADR-008 / ADR-010 inter-plugin contract MANIFEST.yaml 정합 검증 — 6 typed
+      contract 의 producer plugin / canonical-sibling pair / status enum + active
+      한 row 보장. wrapper sibling sync 의무 cross-validate.
+    detect_command: bash scripts/check-inter-plugin-contracts.sh
+    workflow: .github/workflows/contract-lint.yml  # job: inter-plugin-contracts
+    current_tier: warning
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: ADR-008 / ADR-010 / MANIFEST.yaml
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: inter-plugin-drift
+    description: |
+      ADR-011 inter-plugin contract drift 검증 — canonical (lane plugin) vs sibling
+      (wrapper) verbatim mirror 정합. drift 검출 시 sibling sync PR 후속 의무.
+    detect_command: bash scripts/check-inter-plugin-drift.sh
+    workflow: .github/workflows/contract-lint.yml  # job: inter-plugin-drift
+    current_tier: warning
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: ADR-011
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: comment-prefix-registry
+    description: |
+      comment-prefix-registry-v1 (kind:registry) 11 phase prefix taxonomy 검증 —
+      `[요구사항]` / `[설계]` / `[설계-리뷰]` / `[구현]` / `[구현-리뷰]` 등 lane
+      plugin self-write comment prefix 정합.
+    detect_command: bash scripts/check-comment-prefix.sh
+    workflow: .github/workflows/contract-lint.yml  # job: comment-prefix-registry
+    current_tier: warning
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: comment-prefix-registry-v1 (kind:registry)
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: label-registry-sync
+    description: |
+      label-registry-v2 (kind:registry) phase/gate/fix label taxonomy sync 검증 —
+      GitHub repo label state vs registry SSOT drift.
+    detect_command: bash scripts/check-label-registry.sh
+    workflow: .github/workflows/contract-lint.yml  # job: label-registry-sync
+    current_tier: warning
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: label-registry-v2 (kind:registry)
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: marketplace-sync
+    description: |
+      ADR-016 marketplace mirrored field sync 검증 — codeforge plugin family 7 plugin
+      의 marketplace.json mirrored field (name / version / description / author) 정합.
+    detect_command: bash scripts/check-marketplace-sync.sh
+    workflow: .github/workflows/contract-lint.yml  # job: marketplace-sync
+    current_tier: warning
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: ADR-016 (mirrored field)
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: dogfood-artifact-paths
+    description: |
+      ADR-013 / ADR-017 dogfood-out path 검증 — codeforge family plugin repo 의
+      brainstorming spec + writing-plans plan 저장 위치가 internal-docs override
+      (default `docs/superpowers/*` 아님) 정합.
+    detect_command: bash scripts/check-dogfood-artifact-paths.sh
+    workflow: .github/workflows/dogfood-artifact-paths.yml
+    current_tier: warning
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: ADR-013 / ADR-017
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: superpowers-integration
+    description: |
+      ADR-028 / CFP-113 superpowers plugin 8 skill × 17 lane agent integration
+      매트릭스 정합 검증 — skill 호출 가능 surface drift.
+    detect_command: bash scripts/check-superpowers-integration.sh
+    workflow: .github/workflows/superpowers-integration.yml
+    current_tier: warning
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: ADR-028 / CFP-113
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: superpowers-schema-drift
+    description: |
+      ADR-028 / CFP-121 superpowers skill schema drift 검증 — quarterly scheduled
+      (3 month rolling) + PR:paths trigger.
+    detect_command: bash scripts/check-superpowers-schema-drift.sh
+    workflow: .github/workflows/superpowers-schema-drift.yml
+    current_tier: warning            # scheduled quarterly + PR:paths (§결정 13 표 row 13)
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: ADR-028 / CFP-121
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: parallel-epic-conflict
+    description: |
+      ADR-050 parallel epic coordination — 복수 open Epic 의 scope_manifest 교집합
+      검출 + merge-order label 자동 부여. continue-on-error prior art (warning mode
+      reference).
+    detect_command: workflow inline — PR file 교집합
+    workflow: .github/workflows/parallel-epic-conflict-check.yml
+    current_tier: warning            # continue-on-error prior art (§결정 13 표 row 14)
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: ADR-050
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: branch-protection-drift
+    description: |
+      ADR-024 Amendment 2 branch protection drift 검출 — gh api response vs
+      templates/branch-protection-manifest.yaml diff. weekly cron (Mon 09:00 UTC) +
+      manual trigger.
+    detect_command: workflow inline — gh api + manifest diff
+    workflow: .github/workflows/branch-protection-drift-check.yml
+    current_tier: warning            # weekly Mon 09:00 UTC cron (§결정 13 표 row 15)
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: ADR-024 Amendment 2
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: required-workflow-drift
+    description: |
+      ADR-048 §결정 3 required workflow drift — enterprise admin 가용 가정 하
+      required_status_checks contexts vs manifest contexts diff. weekly cron
+      (Mon 10:00 UTC).
+    detect_command: workflow inline + check-enterprise-admin.sh
+    workflow: .github/workflows/required-workflow-drift-check.yml
+    current_tier: warning            # weekly Mon 10:00 UTC cron (§결정 13 표 row 16)
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: ADR-048 §결정 3
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: rulesets-drift
+    description: |
+      ADR-048 §결정 1 GitHub repository rulesets drift — daily cron (09:00 UTC)
+      gh api rulesets response vs templates/rulesets-manifest.yaml diff.
+    detect_command: workflow inline + check-enterprise-admin.sh
+    workflow: .github/workflows/rulesets-drift-check.yml
+    current_tier: warning            # daily 09:00 UTC cron (§결정 13 표 row 17)
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: ADR-048 §결정 1
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: write-permission-redistribution
+    description: |
+      CFP-26 / ADR-009 write 권한 invariant — lane plugin 의 self-write boundary
+      (docs/** + GitHub Issue/PR/comment) 정합. Phase 0a write 권한 재분배 후
+      regression 방지.
+    detect_command: bash scripts/check-write-permission-redistribution.sh
+    workflow: .github/workflows/lint.yml  # job: write-permission-redistribution
+    current_tier: warning
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-390
+    owner_adr: CFP-26 / ADR-009 (write 권한 invariant)
+    carrier_adr: ADR-060
     status: Active
