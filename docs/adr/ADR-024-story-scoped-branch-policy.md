@@ -20,6 +20,10 @@ amendments:
     date: "2026-05-11"
     scope: "audit-trailed exception channel = hotfix-bypass:* label family (carrier ADR-060) — §결정 6 의 evidence-enforceable mechanical check 호환"
     sunset_justification: "N/A — is_transitional: false (permanent governance policy). hotfix-bypass label family 자체는 ADR-060 framework 와 연동된 영구 channel — 개별 evidence check entry 의 enforce 승격 시점에만 활성."
+  - by: "CFP-426"
+    date: "2026-05-12"
+    scope: "§결정 6.A per-entry namespace 의 4 신규 `hotfix-bypass:worktree-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd}` label entry 추가 (ADR-040 Amendment 3 동반 / CFP-425 Epic Story 1) — `hotfix-bypass:adr-sunset` 패턴 직접 mirror, 단일 audit lint `scripts/check-bypass-audit-comment.sh` reuse."
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). 4 worktree-first label = §결정 6.A per-entry namespace 의무의 영구 확장."
 related_files:
   - CLAUDE.md
   - docs/consumer-guide.md
@@ -300,6 +304,7 @@ evidence-enforceable framework (ADR-060) 의 개별 evidence check 가 enforce m
 - **권한자**: repo admin only. solo-dev 환경 = 사용자 본인 (mccho8865). contributor 추가 시 재논의 (별도 carrier).
 - **scope 통제**: per-entry namespace 분리 (registry entry `bypass_label` 필드 per-entry). 단일 global bypass label 도입 금지 (ADR-060 §대안 E 거부 사유 정합).
 - **enforce mode 진입 전 (warning mode)**: bypass label 부착 시 lint workflow conditional skip — required check 부착 아님 (continue-on-error). 본 Amendment 의 protection 강화 효과는 enforce mode 진입 후 발현.
+- **확장 사례 (CFP-426 / Epic CFP-425)**: 4 신규 label entry 동시 도입 — `hotfix-bypass:worktree-session-start-wire` / `hotfix-bypass:worktree-pre-checkout` / `hotfix-bypass:worktree-pre-commit-main-block` / `hotfix-bypass:worktree-spawn-evidence-cwd`. 모두 §결정 6.A per-entry namespace 정합 + ADR-040 Amendment 3 §결정 7.D self-application 의 4 evidence check entry 와 1:1 mapping. audit lint = `scripts/check-bypass-audit-comment.sh` (CFP-389 prior art 단일 reuse — `BYPASS_LABEL_PREFIX=hotfix-bypass:` env scan 으로 all-family detect).
 
 #### §결정 6.B: PR 경유 의무 유지 (no push/merge path override)
 
