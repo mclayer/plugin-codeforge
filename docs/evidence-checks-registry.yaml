@@ -4,9 +4,13 @@
 # Carrier ADR: ADR-060 (Evidence-enforceable promotion framework)
 # Lint chain: check-doc-frontmatter.sh + check-doc-section-schema.sh (kind:registry pattern)
 # parallel-edit policy: append-only (docs/parallel-work/section-ownership.yaml)
+#
+# 18 entry backfill scheduled Phase 2 (CFP-390 §결정 13 SSOT, ADR-060 Amendment 1).
+# 본 Phase 1 PR = SSOT 만 (ADR Amendment 본문 표 + sibling_dependencies field 정정).
+# Phase 2 PR scope = 본 §결정 13 표의 18 entry 실제 row append.
 schema_version: "1.0"
 introduced_by: CFP-389
-last_updated: 2026-05-11  # CFP-393 entry append (rate-limit-fallback-rate)
+last_updated: 2026-05-11  # CFP-393 entry append (rate-limit-fallback-rate) + CFP-390 Amendment 1 (sibling_dependencies CFP-391 → CFP-412 정정)
 
 entries:
   - name: adr-sunset-criteria
@@ -22,9 +26,10 @@ entries:
     promotion_criteria:
       pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
       failure_threshold: 0             # ADR-060 §결정 6 (b)
-      sibling_dependencies:            # ADR-060 §결정 6 (c)
-        - CFP-390  # 인벤토리 backfill — registry yaml row append
-        - CFP-391  # 4-tier 정식 amendment — current_tier required 전환 (schema v1.0 → v1.1)
+      sibling_dependencies:            # ADR-060 §결정 6 (c) — Amendment 1 정정 (CFP-390)
+        - CFP-390  # 인벤토리 backfill — registry yaml row append (Amendment 1 carrier)
+        - CFP-412  # 4-tier amendment 재예약 carrier — current_tier required 전환 (schema v1.0 → v1.1)
+                   # CFP-391 (Issue #396) closed without delivery (2026-05-11) — Amendment 1 정정
       evidence_artifacts:              # 승격 carrier PR 의 manual 첨부 의무 (자동화 인프라 별도 carrier)
         - github_actions_run_history_url
         - lint_failure_count_zero_proof
