@@ -5,6 +5,35 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.15.0] - 2026-05-11
+
+### Added (CFP-393 — Phase 1)
+
+ADR-057 §결정 2 sunset gate ("월 50+ Sonnet spawn 환경 3개월 연속 fallback rate < 1%") 를 측정 가능한 형태로 검증하는 KPI dashboard 의 설계 산출물. CFP-388 framework (ADR-060) 의 first non-sunset application — `evidence-checks-registry-v1.yaml` 두 번째 entry.
+
+- `docs/adr/ADR-057-*.md` — Amendment 2 추가 (KPI dashboard reference + §결정 2 sunset gate measurement contract 강화)
+- `docs/evidence-checks-registry.yaml` — `rate-limit-fallback-rate` entry append (schema v1.0 변경 0건, tier=warning 시작)
+- `docs/doc-locations.yaml` — `kpi_artifact` doc type row append (ADR-041 정합)
+- `docs/parallel-work/section-ownership.yaml` — `docs/kpi/rate-limit-fallback.json` append-only entry
+- `docs/inter-plugin-contracts/label-registry-v2.md` — `codeforge-kpi-alert` entry + `monitoring` tier 신설 (v2 MINOR bump)
+- `CLAUDE.md` — "Sonnet subagent rate-limit → Opus fallback (ADR-057)" 섹션 KPI dashboard reference 1줄 append
+
+### Why
+
+- ADR-057 §결정 2 sunset gate 가 "측정 주체·방법·임계치" 미정의 → measurement contract 명시 의무
+- ADR-060 evidence-enforceable promotion framework 의 generality 1차 검증 (sunset criteria 외 runtime metric 도 동일 schema 수용)
+
+### Compatibility
+
+- **Backward compat**: evidence-checks-registry-v1 schema 변경 0건 (entry append-only)
+- **Sibling**: marketplace.json `plugins[name=codeforge]` version 5.14.0 → 5.15.0 sync 의무 (ADR-016)
+
+### Related
+
+- Story: [CFP-393](https://github.com/mclayer/plugin-codeforge/issues/398) — Phase 1+2 (Phase 2 implementation 별도 PR)
+- Wrapper Phase 1 PR: [#413](https://github.com/mclayer/plugin-codeforge/pull/413) merged 2026-05-11
+- Sibling story/plan: mclayer/codeforge-internal-docs#140
+
 ## [5.14.0] - 2026-05-11
 
 ### Added (CFP-411 — Story 2 of Epic CFP-390)
