@@ -5,6 +5,26 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.10.0] - 2026-05-11
+
+### Changed
+- CFP-378 / ADR-014 Amendment 2: `skills/deputy-mandate/SKILL.md` §7.4/§7.5/§11 소유권 annotation 갱신
+  - SecurityArch: credential threat owner (§7.5) 명시
+  - OpRiskArch: environment containment owner (§7.4.5) 명시
+  - DataMigrationArch: §11.6 idempotency cell primary author 명시
+- `docs/adr/ADR-014-operational-risk-ssot-distribution.md` Amendment 2 추가
+  - LiveOps = external venue source-of-truth owner / LiveOrdering = internal state machine convergence owner (reconciliation 영역)
+  - DataMigrationArch §11.6 primary author / OpRiskArch memo input 분리
+  - SecurityArch credential threat owner / OpRiskArch environment containment 경계 확정
+
+### Phase 2 (plugin-codeforge-design v0.6.0)
+- ArchitectAgent: Phase 3.5 self-lint 단계 추가 (mechanical pre-check, author≠judge 원칙 보존)
+- ArchitectPLAgent: Phase 1.0 §8.5 조건 평가 신설 + `§8.5_active` spawn parameter 하위 전달
+- TestContractArchitectAgent: `§8.5_active` spawn parameter 수신 + dissent format 표준화
+- LiveOpsDeputyAgent: reconciliation 소유 경계 (외부 venue 진실 owner) 명시
+- LiveOrderingDeputyAgent: reconciliation 소유 경계 (내부 상태머신 수렴 owner) 명시
+- `.github/workflows/phase-gate-mergeable.yml`: CFP-342/317/123/133 갱신 동기화
+
 ## [5.9.0] - 2026-05-10
 
 ### Changed
