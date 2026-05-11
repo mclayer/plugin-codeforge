@@ -46,4 +46,9 @@ owned_sections:
     owner_adr: ADR-025
     parallel_edit: locked
 
+  - file: docs/evidence-checks-registry.yaml
+    section: "entries"
+    owner_adr: ADR-060
+    parallel_edit: append-only
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)

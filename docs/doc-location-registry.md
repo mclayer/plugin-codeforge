@@ -5,8 +5,8 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.0  
-**Last regen**: 2026-05-09T13:25:28Z  
-**Registered doc types**: 10
+**Last regen**: 2026-05-11T13:05:38Z  
+**Registered doc types**: 11
 
 ## Summary table
 
@@ -22,6 +22,7 @@
 | 8 | `plan` | dogfood | `orchestrator` | ADR-017 |
 | 9 | `decision_packet` | dogfood | `orchestrator` | CFP-61 |
 | 10 | `inter_plugin_contract` | single_repo | `each_lane_plugin` | CFP-29 |
+| 11 | `evidence_check_registry` | single_repo | `orchestrator` | CFP-389 |
 
 ## Per-doc-type details
 
@@ -184,4 +185,21 @@
   **notes**:
   > Canonical 은 producer plugin repo. wrapper 는 sibling sync mirror (ADR-010).
   > MANIFEST.yaml 가 별도 SSOT — 본 entry 는 위치 룰만.
+
+### `evidence_check_registry`
+
+- **single_repo**: `<owner-repo>/docs/evidence-checks-registry.yaml`
+- **owner_agent**: `orchestrator`
+- **introduced_by**: CFP-389
+- **naming_pattern**: `evidence-checks-registry\.yaml`
+- **frontmatter_required**: False
+- **examples**:
+  - mclayer/plugin-codeforge/docs/evidence-checks-registry.yaml
+
+  **notes**:
+  > ADR-060 carrier — evidence-enforceable promotion framework registry data SSOT.
+  > Schema doc = docs/inter-plugin-contracts/evidence-check-registry-v1.md (kind:registry).
+  > MANIFEST.yaml `registries:` 블록 entry = `evidence_check_registry` (versioning 추적).
+  > parallel-edit policy = append-only (docs/parallel-work/section-ownership.yaml).
+  > Write owner = Orchestrator + carrier Story ArchitectAgent (wrapper governance).
 

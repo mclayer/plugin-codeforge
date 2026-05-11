@@ -166,7 +166,7 @@ graph LR
 
 ## 해소 기준
 
-N/A — 본 ADR 은 `is_transitional: false` (permanent policy carrier). §결정 6 self-defeat 회피.
+N/A — permanent policy. 본 ADR 은 `is_transitional: false` (permanent policy carrier). §결정 6 self-defeat 회피.
 
 ## 관련 파일
 

@@ -4,20 +4,29 @@ title: Story-scoped branch policy — main 직접 수정 금지 + Phase 2 enforc
 status: Accepted
 category: governance
 date: 2026-05-03
-amended_by: CFP-280
+is_transitional: false
+amended_by: CFP-389
 amended_date: 2026-05-11
 amendments:
   - by: "CFP-134"
     date: "2026-05-08"
     scope: "hierarchical branch convention 추가 — flat cfp-NNN 에서 cfp-NNN[/<lane>[/<sub>]] 계층까지 분기 가능"
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). hierarchical branch convention 은 영구 SSOT 확장."
   - by: "CFP-280"
     date: "2026-05-11"
     scope: "required_status_checks.contexts drift invariant + branch-protection-manifest.yaml SSOT + branch-protection-drift-check.yml 자동화"
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). drift invariant 는 영구 enforcement."
+  - by: "CFP-389"
+    date: "2026-05-11"
+    scope: "audit-trailed exception channel = hotfix-bypass:* label family (carrier ADR-060) — §결정 6 의 evidence-enforceable mechanical check 호환"
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). hotfix-bypass label family 자체는 ADR-060 framework 와 연동된 영구 channel — 개별 evidence check entry 의 enforce 승격 시점에만 활성."
 related_files:
   - CLAUDE.md
   - docs/consumer-guide.md
   - docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md
   - docs/adr/ADR-022-sonnet-review-verdict-decider.md
+  - docs/adr/ADR-060-evidence-enforceable-promotion-framework.md
+  - docs/inter-plugin-contracts/evidence-check-registry-v1.md
   - templates/branch-protection-manifest.yaml
   - templates/github-workflows/branch-protection-drift-check.yml
 ---
@@ -91,6 +100,10 @@ CLAUDE.md 에 본 ADR-024 cross-ref 1줄 + consumer-guide.md §2e cross-ref. 두
 - ADR governance trail — Phase 2 transition 의 명확한 trigger / 조건 추적 가능
 - consumer 측은 자기 환경에 맞는 별도 protection — wrapper 정책 강요 X
 
+## 해소 기준
+
+N/A — permanent policy. 본 ADR 은 `is_transitional: false` (permanent governance carrier — Story-scoped branch policy 자체 가 codeforge 의 영구 결제 룰). ADR-058 §결정 7 보안 ADR default presumption = `false` 정합 (security & governance carrier).
+
 ## 관련 파일
 
 - `CLAUDE.md` — Story 작성 의무 섹션에 ADR-024 cross-ref 추가
@@ -98,6 +111,8 @@ CLAUDE.md 에 본 ADR-024 cross-ref 1줄 + consumer-guide.md §2e cross-ref. 두
 - GitHub branch protection (api operation, file 외부) — `restrictions:{users:[],teams:[],apps:[]}` (Phase 1) + **`enforce_admins: true` (Phase 2 / CFP-70)** 적용
 - ADR-013 (dogfood-out policy) — Story 작성 의무 root principle
 - ADR-022 (Sonnet Decider) — 본 ADR 의 결정 protocol
+- ADR-058 (sunset criteria mandate) — `is_transitional: false` classification 적용
+- ADR-060 (evidence-enforceable framework) — Amendment 3 의 `hotfix-bypass:*` label family carrier
 
 ## Phase 2 partial impl (CFP-70 — 2026-05-03)
 
@@ -264,3 +279,66 @@ required_status_checks:
 - `templates/branch-protection-manifest.yaml` — §결정 A SSOT
 - `templates/github-workflows/branch-protection-drift-check.yml` — §결정 B 자동화
 - CFP-136 (worktree infrastructure) — 3 stale context 최초 발견 trigger
+
+## Amendment 3 — Audit-trailed exception channel via `hotfix-bypass:*` label family (CFP-389, 2026-05-11)
+
+### 컨텍스트
+
+ADR-024 §결정 6 ("emergency hotfix 도 PR 경유 의무, no exception") + `enforce_admins: true` (CFP-70, Phase 2 partial) + `restrictions: {users:[], teams:[], apps:[]}` (CFP-66) 조합 결과: enforce mode 진입한 required check 가 운영 장애 hotfix PR 을 차단 시 admin override 우회 채널 부재 → deadlock 위험.
+
+CFP-389 (ADR-060 carrier — evidence-enforceable promotion framework) 가 첫 evidence check (`scripts/check-adr-sunset-criteria.sh`) 도입 시 동일 deadlock pattern 재발 차단을 위해 audit-trailed exception channel 정식 도입 결정 (사용자 ESCALATE Option A).
+
+### Amendment
+
+본 Amendment 3 은 §결정 6 보완 — emergency hotfix PR 경유 의무 유지하면서 evidence-enforceable check 한정 audit-trailed bypass channel 도입:
+
+#### §결정 6.A: `hotfix-bypass:*` label family = audit-trailed exception channel
+
+evidence-enforceable framework (ADR-060) 의 개별 evidence check 가 enforce mode 진입한 후, 운영 장애 hotfix 가 정책 위반을 강제하는 경우 → `hotfix-bypass:<entry-name>` label 부착으로 해당 check skip + audit trail 자동 발의:
+
+- **label naming**: `hotfix-bypass:<entry-name>` family. 첫 entry = `hotfix-bypass:adr-sunset` (ADR-060 §결정 7).
+- **권한자**: repo admin only. solo-dev 환경 = 사용자 본인 (mccho8865). contributor 추가 시 재논의 (별도 carrier).
+- **scope 통제**: per-entry namespace 분리 (registry entry `bypass_label` 필드 per-entry). 단일 global bypass label 도입 금지 (ADR-060 §대안 E 거부 사유 정합).
+- **enforce mode 진입 전 (warning mode)**: bypass label 부착 시 lint workflow conditional skip — required check 부착 아님 (continue-on-error). 본 Amendment 의 protection 강화 효과는 enforce mode 진입 후 발현.
+
+#### §결정 6.B: PR 경유 의무 유지 (no push/merge path override)
+
+bypass label = lint skip only. 다음 항목 미변경 (§결정 6 + CFP-66 + CFP-70 정합):
+
+- main 직접 push 금지 (restrictions:{users:[],teams:[],apps:[]} 유지)
+- 모든 변경 = feature branch + PR 경유 의무
+- enforce_admins:true (admin 도 4 required check 통과 의무 — bypass label 외 check 들에는 영향 X)
+
+bypass label 은 evidence-enforceable check 한 가지의 skip 만 제공 — branch protection의 4 core required check (phase-gate-mergeable / doc frontmatter / doc section / invariant-check) 는 우회 불가.
+
+#### §결정 6.C: Audit trail 3중 안전망
+
+bypass label 적용 시 다음 3중 안전망 자동 활성:
+
+1. **Audit comment 자동 발의** (workflow level): GitHub Actions bot 이 PR comment 1개 append (schema: ADR-060 §결정 8).
+   ```
+   [hotfix-bypass-audit] PR=<number> label_applied_by=<user> reason=<bypass_reason_textbox> ADR_files=<paths> timestamp=<ISO8601>
+   ```
+2. **Audit assertion lint**: `scripts/check-bypass-audit-comment.sh` 가 audit comment 1개 이상 존재 검증 → 부재 시 PR block.
+3. **Audit log 집계**: bypass label 적용 PR list quarterly merge 시 `docs/audit/hotfix-bypass-log.md` 자동 append (별도 carrier scope — CFP-390 인벤토리 backfill 또는 신규 carrier).
+
+#### §결정 6.D: Re-entry 안전망 (bypass PR 자체 정책 위반)
+
+bypass label PR 안 변경 자체가 정책 위반 (예: bypass PR 의 변경 ADR 가 sunset criteria 누락) 인 재귀 시나리오 — audit comment 에 `[sunset-criteria-deferred]` 태그 자동 추가 + 후속 보완 의무 자동 Issue 발의 (CFP-390 인벤토리 backfill scope 또는 별도 carrier).
+
+본 재귀 시나리오 미해소 상태로 다음 bypass label 적용 시 escalation 경고 (별도 lint 또는 manual review — 별도 carrier).
+
+### Compatibility
+
+- ADR-024 §결정 1~6 + Phase 2 partial (CFP-70) + Amendment 1 (CFP-134) + Amendment 2 (CFP-280) 전부 유지 — 본 Amendment 3 은 §결정 6 의 호환 channel 확장만.
+- ADR-060 framework 외 영역 (4 core required check + 기존 evidence check 외 lint) 에는 영향 X.
+- contributor 추가 시 권한자 재논의 의무 (별도 carrier).
+
+### Related
+
+- ADR-060 (carrier — evidence-enforceable promotion framework SSOT) §결정 7
+- `docs/inter-plugin-contracts/evidence-check-registry-v1.md` — `bypass_label` per-entry 필드 정의
+- `docs/evidence-checks-registry.yaml` — `hotfix-bypass:adr-sunset` 첫 사용 entry
+- `scripts/check-bypass-audit-comment.sh` — audit assertion lint
+- `templates/github-workflows/adr-sunset-criteria.yml` — bypass label conditional skip workflow
+- label-registry-v2 entry 추가 의무 — `hotfix-bypass:adr-sunset` label = label-registry-v2 의 신규 `bypass` tier entry (MINOR bump v2.0 → v2.1 — 별도 follow-up PR 또는 Phase 1 PR 동반, ArchitectAgent 판단)

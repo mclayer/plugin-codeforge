@@ -191,3 +191,19 @@ doc_types:
     notes: |
       Canonical 은 producer plugin repo. wrapper 는 sibling sync mirror (ADR-010).
       MANIFEST.yaml 가 별도 SSOT — 본 entry 는 위치 룰만.
+
+  - name: evidence_check_registry
+    variants:
+      single_repo: "<owner-repo>/docs/evidence-checks-registry.yaml"
+    owner_agent: orchestrator
+    introduced_by: CFP-389
+    naming_pattern: "evidence-checks-registry\\.yaml"
+    frontmatter_required: false
+    examples:
+      - "mclayer/plugin-codeforge/docs/evidence-checks-registry.yaml"
+    notes: |
+      ADR-060 carrier — evidence-enforceable promotion framework registry data SSOT.
+      Schema doc = docs/inter-plugin-contracts/evidence-check-registry-v1.md (kind:registry).
+      MANIFEST.yaml `registries:` 블록 entry = `evidence_check_registry` (versioning 추적).
+      parallel-edit policy = append-only (docs/parallel-work/section-ownership.yaml).
+      Write owner = Orchestrator + carrier Story ArchitectAgent (wrapper governance).
