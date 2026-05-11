@@ -279,3 +279,4 @@ codeforge family Story 의 debate transcript 위치 = `<internal-docs-clone>/<pl
 - [review-verdict-v4](review-verdict-v4.md) — `findings[].anchor_id` divergence surface + `worker_dialog_rounds` 측정 source
 - [fix-event-v1 1.1](fix-event-v1.md) — `debate_artifact_ref` optional 필드 MINOR bump
 - [story-page-structure.md](../../templates/story-page-structure.md) — Story §9 schema
+
