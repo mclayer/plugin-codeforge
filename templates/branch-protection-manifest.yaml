@@ -1,0 +1,31 @@
+# branch-protection-manifest.yaml
+# ADR-024 Amendment 2 (CFP-280) SSOT
+#
+# required_status_checks.contexts 목록.
+# 실제 branch protection 설정과 반드시 일치해야 한다.
+# drift 감지: templates/github-workflows/branch-protection-drift-check.yml
+#
+# consumer overlay: .claude/_overlay/branch-protection-manifest.yaml 에서 확장 가능.
+# 기본 4개 삭제 불허 — 확장 전용.
+
+required_status_checks:
+  contexts:
+    - name: "phase-gate-mergeable"
+      type: dynamic
+      description: "checks.create API 로 동적 생성 — phase/gate 레이블 검사"
+      source_workflow: templates/github-workflows/phase-gate-mergeable.yml
+
+    - name: "invariant-check"
+      type: workflow-job-id
+      description: "explicit name: 없음 — job id 가 check 이름으로 사용됨"
+      source_workflow: templates/github-workflows/invariant-check.yml
+
+    - name: "doc frontmatter schema (CFP-28 — strict)"
+      type: workflow-job-name
+      description: "ASCII hyphen(-) 주의 — em-dash(–) 와 혼동 금지"
+      source_workflow: templates/github-workflows/check-doc-frontmatter.yml
+
+    - name: "doc section schema (CFP-28 — strict)"
+      type: workflow-job-name
+      description: "ASCII hyphen(-) 주의 — em-dash(–) 와 혼동 금지"
+      source_workflow: templates/github-workflows/check-doc-section-schema.yml
