@@ -88,3 +88,19 @@ Sonnet 유지 + fallback 적용 대상: DeveloperAgent · BackendDeveloperAgent 
 - 비용 증가: Orchestrator + 상향 6 agent Opus 전환 → 토큰 비용 증가 (품질·연속성 우선 결정)
 - Opus도 rate-limit 도달 시 동일 문제 재발 가능 (단, Sonnet과 별도 quota)
 - rate-limit 판별이 Agent tool result 에러 메시지 문자열 패턴에 의존 → Anthropic CLI 에러 포맷 변경 시 오탐/미탐 위험
+
+## 관련 파일
+
+- `CLAUDE.md` — Orchestrator 모델 필수 확인 + Sonnet→Opus fallback 정책 섹션
+- `docs/orchestrator-playbook.md` — §3.0.12 rate-limit fallback 절차
+- `docs/adr/ADR-042-agent-model-selection-policy.md` — Amendment 4 (본 ADR로 상향된 6 agent 명시)
+- `plugin-codeforge-requirements/agents/RequirementsPLAgent.md` — model: claude-opus-4-7
+- `plugin-codeforge-requirements/agents/DomainAgent.md` — model: claude-opus-4-7
+- `plugin-codeforge-requirements/agents/RequirementsAnalystAgent.md` — model: claude-opus-4-7
+- `plugin-codeforge-requirements/agents/ResearcherAgent.md` — model: claude-opus-4-7
+- `plugin-codeforge-requirements/agents/ChangeImpactAgent.md` — model: claude-opus-4-7
+- `plugin-codeforge-requirements/agents/FeasibilityAgent.md` — model: claude-opus-4-7
+- `plugin-codeforge-requirements/agents/ContinuityAgent.md` — model: claude-opus-4-7
+- `plugin-codeforge-design/agents/CodebaseMapperAgent.md` — model: claude-opus-4-7
+- `plugin-codeforge-design/agents/RefactorAgent.md` — model: claude-opus-4-7
+- `plugin-codeforge-develop/agents/DeveloperPLAgent.md` — model: claude-opus-4-7
