@@ -3,6 +3,9 @@ kind: registry
 registry: debut-audit-triage
 version: "1.0"
 status: Active
+canonical_repo: mclayer/plugin-codeforge
+canonical_path: docs/inter-plugin-contracts/debut-audit-triage-v1.md
+date: 2026-04-15
 authors:
   - CFP-60 (mctrader 데뷔작 mechanism)
 related_adrs:

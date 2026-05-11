@@ -1,0 +1,42 @@
+{
+  "claude_findings": [
+    {
+      "anchor_id": "docs/foo.md:10",
+      "severity": "P1",
+      "category": "typo",
+      "file": "docs/foo.md",
+      "evidence": "오타",
+      "suggestion": "FIX",
+      "recommendation": "FIX"
+    },
+    {
+      "anchor_id": "docs/bar.md:20",
+      "severity": "P2",
+      "category": "minor",
+      "file": "docs/bar.md",
+      "evidence": "formatting",
+      "suggestion": "FIX_DISCRETIONARY",
+      "recommendation": "FIX_DISCRETIONARY"
+    }
+  ],
+  "codex_findings": [
+    {
+      "anchor_id": "docs/foo.md:10",
+      "severity": "P1",
+      "category": "typo",
+      "file": "docs/foo.md",
+      "evidence": "오타 동일",
+      "suggestion": "FIX",
+      "recommendation": "FIX"
+    },
+    {
+      "anchor_id": "docs/bar.md:20",
+      "severity": "P2",
+      "category": "minor",
+      "file": "docs/bar.md",
+      "evidence": "formatting 동일",
+      "suggestion": "FIX_DISCRETIONARY",
+      "recommendation": "FIX_DISCRETIONARY"
+    }
+  ]
+}

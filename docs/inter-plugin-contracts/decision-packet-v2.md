@@ -7,6 +7,9 @@ deprecated_by: CFP-134
 deprecated_date: 2026-05-08
 deprecated_reason: "ADR-022 deprecate 의무 동반 — Sonnet decider 5-step packet schema 무효 (codeforge 자동 invoke 안 함). 사용자 ad-hoc Sonnet 호출 시 본 schema 비-의무 (사용자 prompt 자유 형식)."
 supersedes: docs/inter-plugin-contracts/decision-packet-v1.md
+canonical_repo: mclayer/plugin-codeforge
+canonical_path: docs/inter-plugin-contracts/decision-packet-v2.md
+date: 2026-05-08
 authors:
   - Claude (CFP-59 author — spec § 2.6 codification)
   - Codex (gpt-5.5 high) — Round 1 spec audit

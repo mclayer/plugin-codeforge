@@ -6,6 +6,9 @@ status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
 created_date: 2026-05-09
+canonical_repo: mclayer/plugin-codeforge
+canonical_path: docs/inter-plugin-contracts/label-registry-v2.md
+date: 2026-05-09
 authors:
   - Claude (CFP-140 — ADR-049 type:* → native Issue Types cutover)
 related_adrs:

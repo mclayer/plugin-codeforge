@@ -112,10 +112,13 @@ check_yaml_file() {
             v=$0; sub(/^lane:[[:space:]]*/,"",v); sub(/[[:space:]#].*/,"",v); gsub(/['"'"'"]/,"",v)
             lane=v
         }
+        # CFP-391 — dispatch_pattern 은 string (이전) 또는 list 형태 (신규 — name: <pat> sub-entry) 둘 다 인정
         /^dispatch_pattern:[[:space:]]/ {
             v=$0; sub(/^dispatch_pattern:[[:space:]]*/,"",v); sub(/[[:space:]#].*/,"",v); gsub(/['"'"'"]/,"",v)
             dp=v
         }
+        # CFP-391 — list form: "dispatch_pattern:" (값 없음) followed by "  - name: <pat>" entries
+        /^dispatch_pattern:[[:space:]]*$/ { dp_list=1 }
         /^env_divergent_fallback:/ { has_edf=1 }
         /env_0_behavior:/          { has_e0b=1 }
 
@@ -127,13 +130,16 @@ check_yaml_file() {
         in_tm && /^[[:space:]]+spawn_mode:[[:space:]]/ { sm_cnt++ }
 
         # Adversarial / parallelization markers (anywhere in file)
+        # CFP-391 — dispatch_mode 가 string 또는 array 형태 (e.g. "[user_request_only, auto_on_divergence]") 둘 다 매칭
         /dispatch_mode:[[:space:]]*user_request_only/ { has_uro=1 }
+        /dispatch_mode:.*user_request_only/ { has_uro=1 }
         /adversarial:/                                 { has_adv=1 }
         /parallelization:/                             { has_par=1 }
 
         END {
             print "lane=" lane
             print "dispatch_pattern=" dp
+            print "dp_list=" (dp_list+0)
             print "has_env_divergent_fallback=" (has_edf+0)
             print "has_env_0_behavior=" (has_e0b+0)
             print "name_count=" (name_cnt+0)
@@ -148,13 +154,14 @@ check_yaml_file() {
     ' "$file")"
 
     # Parse awk output into local variables
-    local lane_val="" dp_val="" has_edf=0 has_e0b=0
+    local lane_val="" dp_val="" dp_list=0 has_edf=0 has_e0b=0
     local name_count=0 role_count=0 spp_count=0 model_count=0 sm_count=0
     local has_uro=0 has_adv=0 has_par=0
     while IFS='=' read -r key val; do
         case "$key" in
             lane)                       lane_val="$val" ;;
             dispatch_pattern)           dp_val="$val" ;;
+            dp_list)                    dp_list="$val" ;;
             has_env_divergent_fallback) has_edf="$val" ;;
             has_env_0_behavior)         has_e0b="$val" ;;
             name_count)                 name_count="$val" ;;
@@ -184,12 +191,14 @@ check_yaml_file() {
         log "[OK] teammates: $name_count 개"
     fi
 
-    # Check: dispatch_pattern field
-    if [ -z "$dp_val" ]; then
+    # Check: dispatch_pattern field — string or list form (CFP-391)
+    if [ -z "$dp_val" ] && [ "$dp_list" -eq 0 ]; then
         log_err "[FAIL] $base: 'dispatch_pattern:' 필드 부재"
         fail=$((fail + 1))
-    else
+    elif [ -n "$dp_val" ]; then
         log "[OK] dispatch_pattern: $dp_val"
+    else
+        log "[OK] dispatch_pattern: <list form> (CFP-391 — adversarial-debate entry 등)"
     fi
 
     # Check: env_divergent_fallback field + env_0_behavior subkey
@@ -240,10 +249,10 @@ check_yaml_file() {
         fi
     fi
 
-    # Parallelization lane check
+    # Parallelization lane check (design lane = string form 만 인정 — parallel)
     if [ "$lane_val" = "$PARALLEL_LANE" ]; then
         if [ "$dp_val" != "parallel" ]; then
-            log_err "[FAIL] $base (design lane): dispatch_pattern != parallel (got: '$dp_val')"
+            log_err "[FAIL] $base (design lane): dispatch_pattern != parallel (got: '$dp_val', dp_list=$dp_list)"
             fail=$((fail + 1))
         else
             log "[OK] dispatch_pattern: parallel (design lane 정합)"

@@ -3,6 +3,9 @@ kind: registry
 registry: stop-event
 version: "1.0"
 status: Active
+canonical_repo: mclayer/plugin-codeforge
+canonical_path: docs/inter-plugin-contracts/stop-event-v1.md
+date: 2026-04-22
 authors:
   - Claude (CFP-283 carrier — ADR-042 §결정 2 schema codification)
 related_adrs:

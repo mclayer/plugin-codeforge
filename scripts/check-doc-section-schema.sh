@@ -114,6 +114,79 @@ APPLICABILITY_ROW_RE = re.compile(
 # applicability decision 은 더 신중한 결정 요구 (Codex 개선 #1)
 NA_85_SUBSTANTIVE_RE = re.compile(r"^N/A\s+[—\-]\s+\S.{29,}", re.MULTILINE)
 
+# CFP-391 — Story §9 debate transcript schema (debate-protocol-v1)
+# Section header format: "### Debate transcript: <anchor_id>"
+# 검증 항목:
+#   - anchor_id non-empty (header 의 colon 이후 텍스트 non-trivial)
+#   - section body 안 `rounds` block 에 최소 1 라운드 (index 0 또는 - index: 0) entry 존재
+#   - section body 안 `trigger` / `termination` 두 sub-block 존재
+DEBATE_TRANSCRIPT_HEADER_RE = re.compile(
+    r"^###\s+Debate transcript:\s*(?P<anchor>.*)$",
+    re.MULTILINE,
+)
+ROUND_ENTRY_RE = re.compile(r"^\s*-\s*index:\s*\d+", re.MULTILINE)
+TRIGGER_BLOCK_RE = re.compile(r"^####\s+trigger\b", re.MULTILINE)
+TERMINATION_BLOCK_RE = re.compile(r"^####\s+termination\b", re.MULTILINE)
+ROUNDS_BLOCK_RE = re.compile(r"^####\s+rounds\b", re.MULTILINE)
+
+
+def check_debate_transcript(md_path: Path, body: str) -> list:
+    """Story §9 debate transcript section schema 검증 (CFP-391 / debate-protocol-v1).
+
+    Rules:
+    - "### Debate transcript: <anchor_id>" header 가 발견되면 검증 진입
+    - anchor_id empty (colon 이후 trim 결과 empty) → FAIL
+    - 다음 같거나 얕은 깊이 header 까지 section body 추출:
+        * #### trigger block 부재 → FAIL
+        * #### rounds block 부재 OR rounds block 안 "- index: <int>" entry 0 개 → FAIL
+        * #### termination block 부재 → FAIL
+    """
+    fails = []
+    lines = body.splitlines()
+    for m in DEBATE_TRANSCRIPT_HEADER_RE.finditer(body):
+        start = m.start()
+        line_num = body[:start].count("\n")
+        anchor = m.group("anchor").strip()
+        if not anchor:
+            fails.append(
+                f"{md_path}:{line_num+1} debate transcript section — anchor_id empty (header format '### Debate transcript: <anchor_id>')"
+            )
+        # 다음 같거나 얕은 깊이 header (## 또는 ### prefix) 까지 section 본문
+        next_header_re = re.compile(r"^#{1,3}\s+\S", re.MULTILINE)
+        end_pos = len(body)
+        for nm in next_header_re.finditer(body, m.end()):
+            end_pos = nm.start()
+            break
+        section_body = body[m.end():end_pos]
+        # trigger block 검사
+        if not TRIGGER_BLOCK_RE.search(section_body):
+            fails.append(
+                f"{md_path}:{line_num+1} debate transcript '{anchor}' — '#### trigger' sub-block 부재"
+            )
+        # rounds block + entry 검사
+        if not ROUNDS_BLOCK_RE.search(section_body):
+            fails.append(
+                f"{md_path}:{line_num+1} debate transcript '{anchor}' — '#### rounds' sub-block 부재"
+            )
+        else:
+            # rounds block 안 entry 카운트
+            rounds_match = ROUNDS_BLOCK_RE.search(section_body)
+            rounds_start = rounds_match.end()
+            # 다음 #### header 까지
+            next_sub_header = re.search(r"^####\s+\S", section_body[rounds_start:], re.MULTILINE)
+            rounds_end = rounds_start + (next_sub_header.start() if next_sub_header else len(section_body) - rounds_start)
+            rounds_body = section_body[rounds_start:rounds_end]
+            if not ROUND_ENTRY_RE.search(rounds_body):
+                fails.append(
+                    f"{md_path}:{line_num+1} debate transcript '{anchor}' — rounds[] 비어있음 (최소 1 라운드 '- index: <int>' entry 의무)"
+                )
+        # termination block 검사
+        if not TERMINATION_BLOCK_RE.search(section_body):
+            fails.append(
+                f"{md_path}:{line_num+1} debate transcript '{anchor}' — '#### termination' sub-block 부재"
+            )
+    return fails
+
 
 def check_section_7_4(md_path: Path, body: str) -> list:
     """§7.4 운영 리스크 5 항목 존재 여부. 헤딩이 없으면 skip (개별 file 의무 아님 — 본문 작성된 경우만)."""
@@ -240,6 +313,7 @@ warns = []
 section_7_4_warns = []
 conditional_warns = []
 section_8_5_warns = []
+debate_transcript_warns = []  # CFP-391
 for prefix, patterns in REQUIRED_SECTIONS.items():
     path = Path(prefix)
     if not path.exists():
@@ -286,6 +360,7 @@ for prefix, patterns in REQUIRED_SECTIONS.items():
 
 # CFP-46 — change-plan 외 path (예: stories) 도 CONDITIONAL N/A 사유 강제
 # (e.g. story §11 Idempotency CONDITIONAL — 향후 story schema 적용 시 활용)
+# CFP-391 — Story §9 debate transcript schema 검증 추가
 for extra_prefix in ["docs/stories"]:
     extra_path = Path(extra_prefix)
     if not extra_path.exists():
@@ -300,8 +375,11 @@ for extra_prefix in ["docs/stories"]:
                 text = parts[1]
         cond_fails = check_conditional_na(md, text)
         conditional_warns.extend(cond_fails)
+        # CFP-391 — debate transcript section schema
+        debate_fails = check_debate_transcript(md, text)
+        debate_transcript_warns.extend(debate_fails)
 
-total_fails = len(warns) + len(section_7_4_warns) + len(conditional_warns) + len(section_8_5_warns)
+total_fails = len(warns) + len(section_7_4_warns) + len(conditional_warns) + len(section_8_5_warns) + len(debate_transcript_warns)
 if total_fails:
     print(f"::error::CFP-46/CFP-47 doc-section-schema (STRICT): {total_fails} 건")
     if warns:
@@ -320,11 +398,15 @@ if total_fails:
         print(f"  [CFP-47 §8.5 applicability] {len(section_8_5_warns)} 건")
         for w in section_8_5_warns:
             print(f"  - {w}")
-    print("strict 모드 — schema 위반 시 PR 차단. 신규 작성은 templates/<doc-type>.md schema + ADR-014 §7.4 5 항목 + CONDITIONAL N/A 사유 (10자 minimum) + CFP-47 §8.5 applicability (30자 minimum) 준수 필수.")
+    if debate_transcript_warns:
+        print(f"  [CFP-391 §9 debate transcript schema] {len(debate_transcript_warns)} 건")
+        for w in debate_transcript_warns:
+            print(f"  - {w}")
+    print("strict 모드 — schema 위반 시 PR 차단. 신규 작성은 templates/<doc-type>.md schema + ADR-014 §7.4 5 항목 + CONDITIONAL N/A 사유 (10자 minimum) + CFP-47 §8.5 applicability (30자 minimum) + CFP-391 §9 debate transcript (anchor_id + rounds[] + trigger/termination) 준수 필수.")
     sys.exit(1)
 
-print("✓ CFP-46/CFP-47 doc-section-schema: 5 owner path schema + §7.4 5 항목 + CONDITIONAL N/A 사유 + §8.5 applicability 모두 충족")
+print("✓ CFP-46/CFP-47/CFP-391 doc-section-schema: 5 owner path schema + §7.4 5 항목 + CONDITIONAL N/A 사유 + §8.5 applicability + §9 debate transcript 모두 충족")
 PY
 
 echo ""
-echo "(check-doc-section-schema: strict 모드 (CFP-28부터). CFP-46 — §7.4 schema + CONDITIONAL N/A regex 추가. CFP-47 — §8.5 applicability lint 추가 (30자 minimum). warning 발견 시 exit 1)"
+echo "(check-doc-section-schema: strict 모드 (CFP-28부터). CFP-46 — §7.4 schema + CONDITIONAL N/A regex 추가. CFP-47 — §8.5 applicability lint 추가 (30자 minimum). CFP-391 — Story §9 debate transcript schema (anchor_id + rounds[] + trigger/termination). warning 발견 시 exit 1)"

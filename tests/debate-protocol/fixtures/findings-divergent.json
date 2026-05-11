@@ -1,0 +1,42 @@
+{
+  "claude_findings": [
+    {
+      "anchor_id": "docs/inter-plugin-contracts/review-verdict-v4.md:52",
+      "severity": "P1",
+      "category": "ssot-mismatch",
+      "file": "docs/inter-plugin-contracts/review-verdict-v4.md",
+      "evidence": "anchor_id field 정의 부재",
+      "suggestion": "FIX",
+      "recommendation": "FIX"
+    },
+    {
+      "anchor_id": "templates/team-spec-design-review.yaml:33",
+      "severity": "P2",
+      "category": "minor",
+      "file": "templates/team-spec-design-review.yaml",
+      "evidence": "dispatch_mode 단일 value",
+      "suggestion": "FIX_DISCRETIONARY",
+      "recommendation": "FIX_DISCRETIONARY"
+    }
+  ],
+  "codex_findings": [
+    {
+      "anchor_id": "docs/inter-plugin-contracts/review-verdict-v4.md:52",
+      "severity": "P0",
+      "category": "ssot-mismatch",
+      "file": "docs/inter-plugin-contracts/review-verdict-v4.md",
+      "evidence": "anchor_id field 정의 부재 + downstream FIX critical",
+      "suggestion": "FIX",
+      "recommendation": "FIX"
+    },
+    {
+      "anchor_id": "templates/team-spec-design-review.yaml:33",
+      "severity": "P1",
+      "category": "dispatch-config",
+      "file": "templates/team-spec-design-review.yaml",
+      "evidence": "ADR-044 Amendment 본문 권고 미적용",
+      "suggestion": "FIX",
+      "recommendation": "FIX"
+    }
+  ]
+}

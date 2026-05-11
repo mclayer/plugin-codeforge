@@ -3,6 +3,9 @@ kind: registry
 registry: comment-prefix
 version: "1.1"
 status: Active
+canonical_repo: mclayer/plugin-codeforge
+canonical_path: docs/inter-plugin-contracts/comment-prefix-registry-v1.md
+date: 2026-05-09
 authors:
   - Claude (CFP-32 codification — CFP-31 ζ arc parent design 기반)
   - CFP-139 (2026-05-09) — v1.0 → v1.1 MINOR bump (`[GitOps]` prefix 추가, ADR-047)

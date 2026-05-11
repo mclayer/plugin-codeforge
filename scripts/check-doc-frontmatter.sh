@@ -3,6 +3,7 @@
 # CFP-28 Phase 0c — strict 전환 (exit=1 on warnings)
 # CFP-32 (ζ arc F1) — docs/inter-plugin-contracts/ 신규 path 추가
 # ADR-056 — docs/domain-knowledge/domain + concept 경로 분기, kind 필드 검증 추가 (CFP-376)
+# CFP-391 — registry kind 필수 필드에 canonical_repo / canonical_path / date 추가 (debate-protocol-v1)
 # 검사: 5 owner doc path 의 frontmatter 필수 필드
 #
 # Path / 필수 frontmatter 필드 source:
@@ -11,7 +12,8 @@
 #   - docs/domain-knowledge/domain/** templates/domain-knowledge.md (kind, title, area, topic_slug, status, updated)
 #   - docs/domain-knowledge/concept/**templates/concept.md (kind, title, slug, status, updated)
 #   - docs/retros/**                  templates/retro.md         (title, date, sprint_period, cfp_keys, authors)
-#   - docs/inter-plugin-contracts/**  registry kind: {kind, registry, version, status, authors}
+#   - docs/inter-plugin-contracts/**  registry kind: {kind, registry, version, status, authors,
+#                                                    canonical_repo, canonical_path, date}  # CFP-391 보강
 #                                     ※ kind: contract 파일은 본 lint 적용 안 함 — CFP-33
 #                                       check-inter-plugin-contracts.sh 가 별도 검증
 #
@@ -35,7 +37,11 @@ REQUIRED = {
     "docs/domain-knowledge/domain": {"kind", "title", "area", "topic_slug", "status", "updated"},
     "docs/domain-knowledge/concept": {"kind", "title", "slug", "status", "updated"},
     "docs/retros":       {"title", "date", "sprint_period", "cfp_keys", "authors"},
-    "docs/inter-plugin-contracts": {"kind", "registry", "version", "status", "authors"},
+    # CFP-391 — registry kind 에 canonical_repo + canonical_path + date 추가 (debate-protocol-v1 도입)
+    # rationale: kind:registry 는 wrapper-owned canonical (sibling mirror 없음). canonical_repo / canonical_path 가
+    # registry SSOT 위치를 자기 frontmatter 안에서 명시. date 는 amendment_log 부재 시점에서 변경 시각 추적용.
+    "docs/inter-plugin-contracts": {"kind", "registry", "version", "status", "authors",
+                                    "canonical_repo", "canonical_path", "date"},
 }
 
 # CFP-33 — kind-based dispatch: docs/inter-plugin-contracts/는 두 종류 파일 보유:
