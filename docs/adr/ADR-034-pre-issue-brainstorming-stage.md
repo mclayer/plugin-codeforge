@@ -13,6 +13,10 @@ amendments:
     carrier_story: CFP-345
     date: 2026-05-09
     title: "codeforge:brainstorm 통합 — Stage 0 Requirements 에이전트 참여"
+  - id: 2
+    carrier_story: CFP-386
+    date: 2026-05-11
+    title: "Phase 0 자동 실행 — opt-in AskUserQuestion 폐지"
 related_stories:
   - CFP-129
 related_adrs:
@@ -165,6 +169,54 @@ Requirements 에이전트(DomainAgent, ResearcherAgent, RequirementsAnalystAgent
 - codeforge 프로젝트 (`.claude/_overlay/project.yaml` 존재) 또는 dogfood (`docs/adr/` 디렉터리 존재)
 - Orchestrator가 brainstorming을 시작할 때 `codeforge:brainstorm` 스킬 호출
 - Phase 0는 사용자 opt-in (ResearcherAgent Opus 비용 제어)
+
+### 만료 / supersede
+
+Amendment 2 (CFP-386) 가 Phase 0 opt-in 결정을 자동 실행으로 변경 — Amendment 1 의 "Phase 0 는 사용자 opt-in" 항목은 Amendment 2 발효일 (2026-05-11) 이후 invalid.
+
+## Amendment 2 — Phase 0 자동 실행 (CFP-386, 2026-05-11)
+
+### 컨텍스트
+
+Amendment 1 (CFP-345) 는 ResearcherAgent Opus tier 비용 제어를 위해 Phase 0 opt-in 확인 절차를 `skills/codeforge-brainstorm/SKILL.md` 17-25 줄에 명시 — 매 brainstorm 호출 시 "Phase 0 을 실행할까요?" `AskUserQuestion` 발생.
+
+사용자 directive (2026-05-11 KST conversation, claude-opus-4-7 wrapper session):
+
+> 이러한 입력을 포함한 쓸모없는 userstopp 이 없어야 한다. 플러그인의 생산성을 극도로 저하시킨다.
+
+### 문제
+
+1. **반복 비용 경고 = 학습된 reflex**: 매 호출마다 동일 질문 반복 → 의미 있는 결정 없이 클릭만 수행. AskUserQuestion 의 신호 가치 소실.
+2. **호출 시점에 이미 비용 의사 표명됨**: brainstorming 자체가 비-trivial Story 권장 절차. `codeforge:brainstorm` skill 호출 = 비용 발생 동의 = 추가 확인 불필요.
+3. **cost-out 경로 이미 존재**: 비용 절감을 원하는 사용자는 `superpowers:brainstorming` 을 직접 호출 가능 (codeforge:brainstorm 의 fallback 경로). 자동 실행해도 사용자 제어 보존.
+4. **CFP-358 / CFP-374 패턴 정합**: Subagent-Driven 자동 선택 (구현 실행 방식 프롬프트 skip) 과 동일 원칙 — "비용 경고가 생산성을 저하시키는 경우 사용자 선택이 아닌 정책으로 처리".
+
+### 변경
+
+| 항목 | Amendment 1 (기존) | Amendment 2 이후 |
+|---|---|---|
+| Phase 0 진입 | opt-in 확인 후 진입 | 자동 진입 (별도 사용자 확인 없음) |
+| AskUserQuestion | 매 호출당 1회 | 0회 |
+| 사용자 cost-out 경로 | Phase 0 거절 → `superpowers:brainstorming` fallback | `superpowers:brainstorming` 을 직접 호출 (codeforge:brainstorm 호출 자체를 skip) |
+| 비용 통지 | 매 호출 inline 경고 | SKILL.md 본문 + ADR-042 의 model tier 정책 SSOT 참조 |
+
+### 적용 조건
+
+- `codeforge:brainstorm` skill 발동 시 즉시 Phase 0 (4 에이전트 병렬 spawn) 진행
+- Phase 0 결과를 Phase 1 (강화된 brainstorming 대화) 초기 컨텍스트로 주입
+- Phase 0 의 4 에이전트 결과 합성 후 `superpowers:brainstorming` 의 checklist 2 부터 진행 (기존 동일)
+
+### 사용자 제어 보존
+
+비용 절감을 원하는 사용자는:
+- `superpowers:brainstorming` 을 명시적으로 호출 → `codeforge:brainstorm` 의 Phase 0 skip (4 에이전트 spawn 없음)
+- 이 경로는 SKILL.md 본문에서 fallback 으로 명시 (Amendment 1 `superpowers:brainstorming` 직접 호출 허용 유지 정합)
+
+### 변경 파일
+
+- `skills/codeforge-brainstorm/SKILL.md` — "Phase 0 opt-in 확인" 섹션 (17-25 줄) 제거 + 자동 실행 명시
+- `docs/adr/ADR-034-pre-issue-brainstorming-stage.md` — 본 Amendment 2 (frontmatter `amendments[]` + 본문 추가)
+- `CLAUDE.md` — Stage 0 annotation 정합 갱신 (`(opt-in Phase 0)` → `(자동 Phase 0)`)
 
 ### 만료 / supersede
 
