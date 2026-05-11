@@ -5,6 +5,44 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.11.0] - 2026-05-11
+
+### Added
+- CFP-387 / ADR-058: ADR template 해소 기준 섹션 의무화 + `is_transitional` 분류 frontmatter
+  - `docs/adr/ADR-058-adr-sunset-criteria-mandate.md` (NEW, Accepted) — declaration only policy carrier
+    - §결정 1: frontmatter `is_transitional: true | false` 의무화 (boolean only)
+    - §결정 2: `## 해소 기준` 섹션 의무 (`is_transitional: true` 시) — `## 결과` 직후 / "다이어그램 (선택)" 직전 / false 시 "N/A — permanent policy" 1줄
+    - §결정 3: 측정성 3-tuple (metric / who / how) 정량 명시 의무 — 모달 어휘 ("충분히 안정화되면", "임시로", "한시적", "until further notice") 금지
+    - §결정 4: 미선언 default = `is_transitional: true` (안전망 추정, safe direction, CL-1 옵션 A 채택)
+    - §결정 5: Amendment 시 `sunset_justification` 의무 (ratchet 차단, CL-2 옵션 B 채택, count cap 거부)
+    - §결정 6: 본 ADR 자기 분류 = `is_transitional: false` (self-defeat 회피 — permanent policy carrier)
+    - §결정 7: 보안 ADR default classification presumption = `is_transitional: false` (Codex proactive check #1 권고 반영)
+    - §결정 8: Declaration only — CFP-B (CI lint) / CFP-C (ADR-057 amendment + KPI) / CFP-D (retroactive backfill) 별도 carrier 분리
+
+### Changed
+- `CLAUDE.md` "ADR (`docs/adr/` SSOT)" 섹션 — ADR-058 안전망 분류 + 해소 기준 의무 cross-ref 추가 (1 단락)
+  - frontmatter `is_transitional` 분류 정책 명시
+  - `## 해소 기준` 섹션 의무 + 측정성 3-tuple 정량 요구 명시
+  - 보안 ADR default presumption 명시
+  - DesignReview lane manual gate (CFP-B merge 까지 임시 운영 문구)
+
+### Phase 2 (plugin-codeforge-design v0.7.0)
+- `templates/adr.md` frontmatter `is_transitional` 필드 + `amendments[].sunset_justification` schema 추가
+- `templates/adr.md` body `## 해소 기준` 섹션 신설 + 예시 3종 inline (rate-limit / platform SLA / full-rollout)
+- 모달 어휘 금지 명시 + 보안 ADR default presumption 명시
+
+### Why
+
+ADR-057 (Orchestrator Opus 필수화 + Sonnet→Opus fallback) 가 측정 기준 없는 영구 안전망으로 굳어지는 위험이 brainstorming (Opus×Codex 3라운드, 2026-05-11) 에서 식별 → 합의 원칙 5 "안전망 측정가능 종료" forcing function. technical debt ratchet effect (Cunningham 1992 / Fowler 2003) + 입법 sunset clause 패턴 + feature flag sunset 운영 가이드 선행 연구 기반.
+
+### Compatibility
+
+- ADR-037 §3.1 (h) 신규 ADR + (g) additive CLAUDE.md guidance → MINOR. 5.10.0 → 5.11.0.
+- backward compatible — 기존 ADR 39종 frontmatter 미선언 = default `is_transitional: true` 안전망 추정 (declaration only, mechanical enforcement = CFP-B 잠정 carrier)
+- **Sibling sync**: codeforge-design 0.6.0 → 0.7.0 (`templates/adr.md` canonical SSOT 갱신) — Phase 2 PR pair 동시 merge 의무
+- **Marketplace sync**: wrapper + codeforge-design 양쪽 mirrored field 변경 (`version` + `description`) → marketplace sync PR 의무 (Phase 2 PR merge 직후, ADR-016)
+- Mode B hub-centralized (ADR-020 Amendment 1) — wrapper hub, codeforge-design worker plugin
+
 ## [5.10.0] - 2026-05-11
 
 ### Changed
