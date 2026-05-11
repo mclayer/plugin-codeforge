@@ -101,7 +101,7 @@ brainstorming skill 의 substantive choice 발화 시:
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - `docs/adr/ADR-022-sonnet-review-verdict-decider.md`
 - `docs/inter-plugin-contracts/stop-event-v1.md` (Phase 2 sibling)

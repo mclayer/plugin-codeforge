@@ -82,7 +82,7 @@ Orchestrator가 구조적 변경(CLAUDE.md 의미 변경, plugin 버전 업, set
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - [`docs/orchestrator-playbook.md`](../orchestrator-playbook.md) — §1.1 체크리스트 구조적 변경 재구동 blocking 항목 추가
 - [`CLAUDE.md`](../../CLAUDE.md) — 세션 개시 의무 섹션 blocking 조건 추가

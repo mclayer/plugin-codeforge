@@ -145,7 +145,7 @@ ADR-027 §결정 3 (Bypass `HOTFIX_BYPASS_CODEFORGE`) 와 함께 사용 시:
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - `docs/adr/ADR-027-consumer-adoption-protocol.md` (Phase 1 PR — frontmatter `amendments: [ADR-032]` 갱신, Amendment 1 섹션 추가)
 - `overlay/hooks/check_bootstrap.py` (Phase 2 — `--strict` flag + REQUIRED_PLUGINS adoption-critical subset + check 9 NEW + exit code logic)

@@ -206,7 +206,7 @@ GHEC governance 4 영역 (rulesets-as-code / required workflows enterprise sync 
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - `CLAUDE.md` — 4 영역 SSOT 정정 (CFP-135 carrier)
 - `docs/orchestrator-playbook.md` — agent teams + worktree dispatch 절차 (CFP-137 carrier)

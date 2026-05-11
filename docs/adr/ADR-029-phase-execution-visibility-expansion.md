@@ -160,7 +160,7 @@ CFP-104 의 UserPromptSubmit hook 이 매 prompt submit 시 §0 progress 일부 
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - `docs/orchestrator-playbook.md` §14.5 — Trigger SSOT 표 갱신
 - `docs/project-config-schema.md` §2 — `progress_narration_verbosity` field 명세

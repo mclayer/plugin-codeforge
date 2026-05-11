@@ -103,7 +103,7 @@ doc-only Story (예: 본 CFP-51) 의 Phase 2 = **N/A** ([ADR-005](ADR-005-plugin
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - [`CLAUDE.md`](../../CLAUDE.md) (Development Agent Team 섹션 — cross-reference)
 - [ADR-009](ADR-009-wrapper-only-decomposition.md) — wrapper-only decomposition (composition root)

@@ -135,7 +135,7 @@ merge-order:1 PR: #XXX (CFP-YYY)
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - [ADR-036](ADR-036-project-key-atomic-reservation.md) — CFP 번호 예약 패턴 선례
 - [ADR-040](ADR-040-worktree-convention.md) — per-session 격리 선례

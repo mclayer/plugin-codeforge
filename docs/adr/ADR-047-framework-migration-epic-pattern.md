@@ -166,7 +166,7 @@ Migration Epic = ADR-020 Cross-Repo Epic Pattern의 codeforge framework-specific
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - `docs/orchestrator-playbook.md` (PMOAgent trigger 섹션 갱신 — Phase 2)
 - `docs/consumer-guide.md` (Migration Epic Pattern 신규 §X — Phase 2)

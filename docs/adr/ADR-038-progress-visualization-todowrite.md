@@ -141,7 +141,7 @@ Amendment 날짜: 2026-05-11
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - `docs/orchestrator-playbook.md` §14.4 / §14.5 / §14.7 / §14.8
 - `CLAUDE.md` Orchestration 규칙 §

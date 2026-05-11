@@ -402,7 +402,7 @@ PreToolUse hook 으로 inline write detect → 즉시 차단.
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - `docs/inter-plugin-contracts/stop-event-v1.md` (신설 — kind:registry, §결정 2 schema)
 - `docs/inter-plugin-contracts/MANIFEST.yaml` (comment 갱신, §결정 12)

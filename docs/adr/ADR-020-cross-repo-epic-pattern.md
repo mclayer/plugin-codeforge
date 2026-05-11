@@ -221,7 +221,7 @@ Epic 진행 중 (Phase 1 PR merged 후) 신규 repo 가 child Story scope 에 �
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - [`CLAUDE.md`](../../CLAUDE.md) (cross-references update)
 - [`docs/consumer-guide.md`](../consumer-guide.md) §3.4 (mode 선택 안내 — Amendment 1)

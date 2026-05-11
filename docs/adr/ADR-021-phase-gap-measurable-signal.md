@@ -80,7 +80,7 @@ Change Plan §3 / §7 / §11 의 본문 시작 부분에 `<!-- author: <agent-na
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - [`scripts/check-debut-audit-signals.sh`](../../scripts/check-debut-audit-signals.sh) (Phase 2 — detection script)
 - [`scripts/test-check-debut-audit-signals.sh`](../../scripts/test-check-debut-audit-signals.sh) (Phase 2 — test harness)

@@ -89,7 +89,7 @@ ADR 자체가 설계 결정 SSOT이므로, 설계리뷰 lane 생략 시 self-rev
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - [`CLAUDE.md`](../../CLAUDE.md) — Story 작성 의무 강제/면제 분류 섹션 (CFP-364에서 doc-only fast-path 분류 추가 예정)
 - [`docs/orchestrator-playbook.md`](../orchestrator-playbook.md) — Orchestrator 3-way 분류 판정 절차 반영 (CFP-364)

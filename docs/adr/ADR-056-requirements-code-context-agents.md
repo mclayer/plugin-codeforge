@@ -84,7 +84,7 @@ RequirementsPLAgent가 6개 관점 dedup·통합 수행.
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - [ADR-042](ADR-042-agent-model-selection-policy.md) — 모델 티어 정책
 - [ADR-046](ADR-046-researcher-role-redefinition.md) — Researcher Opus tier 근거

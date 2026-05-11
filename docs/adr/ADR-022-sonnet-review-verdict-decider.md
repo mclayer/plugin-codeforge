@@ -446,7 +446,7 @@ ADR-019 §결정 9 그대로 + review-verdict trigger 포함:
 - **who**: ADR-044 carrier (Phase-scoped sequential team Epic Wave 2)
 - **how**: CFP-137 wrapper Phase 1 PR merge (2026-05-08) — v3 sibling status: Active → Archived + v4 sibling 신설 + canonical sync (codeforge-review plugin) 완료
 
-
+## 관련 파일
 
 - `CLAUDE.md`
 - `docs/inter-plugin-contracts/review-verdict-v3.md`

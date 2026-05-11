@@ -243,7 +243,7 @@ archive: `mclayer/codeforge-internal-docs/wrapper/decisions/CFP-128-001-codex-sp
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - 본 ADR
 - [ADR-014 Operational Risk SSOT distribution](ADR-014-operational-risk-ssot-distribution.md) — 본 ADR 가 amend

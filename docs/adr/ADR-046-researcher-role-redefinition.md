@@ -159,7 +159,7 @@ PR #287 (ADR-042) 와 동일 패턴 — ADR-013 waiver explicit invoke.
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - 본 ADR
 - [ADR-042](ADR-042-agent-model-selection-policy.md) — Agent model selection policy (frontmatter `amendment_log[1]` + §결정 2 annotation + §결정 1 (g) cleanup 동행)

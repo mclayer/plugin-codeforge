@@ -276,7 +276,7 @@ CFP-57 (ADR-018) 결정 8 패턴 generalized to Sonnet:
 - **who**: ADR-035 carrier
 - **how**: CFP-134 Wave 1 merge (2026-05-08) — decider 자동 발동 채널 제거 + review-verdict v4 (ADR-044) cutover 완료
 
-
+## 관련 파일
 
 - `CLAUDE.md`
 - `docs/inter-plugin-contracts/decision-packet-v2.md`

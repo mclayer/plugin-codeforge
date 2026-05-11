@@ -236,7 +236,7 @@ LDP (Local Differential Privacy, arxiv 2507.06350) = Phase 2 dashboard cold tier
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - `docs/inter-plugin-contracts/stop-event-v1.md` (Allow-list 16 field + Deny-list regex 적용)
 - `docs/project-config-schema.md` (telemetry block — opt-in default false)

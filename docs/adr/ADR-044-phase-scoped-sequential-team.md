@@ -330,7 +330,7 @@ default  >  auto_on_divergence  >  user_request_only
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - [ADR-035 (Epic architecture)](ADR-035-codeforge-agent-teams-epic-architecture.md) — D2 implementation level carrier 본 ADR. §amendment_log[0] = `planned → applied` flip 동행.
 - [ADR-039 (Orchestrator subagent default)](ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — default subagent context invariant. env-divergent fallback 정합.

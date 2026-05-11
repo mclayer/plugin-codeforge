@@ -119,7 +119,7 @@ ADR-046 §waiver 3 사유(KEY collision / Action permission / cost asymmetry) �
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - [ADR-046](ADR-046-researcher-role-redefinition.md) — ResearcherAgent role (본 ADR가 Amendment 1 적용)
 - `mclayer/plugin-codeforge-requirements:agents/DomainAgent.md`

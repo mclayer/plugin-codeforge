@@ -295,7 +295,7 @@ gh api "repos/$(gh repo view --json nameWithOwner --jq .nameWithOwner)/branches/
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - [ADR-024 (story-scoped branch policy)](ADR-024-story-scoped-branch-policy.md) — 본 ADR 가 Amendment 1 로 hierarchical naming 추가.
 - [ADR-009 (wrapper-only decomposition)](ADR-009-wrapper-only-decomposition.md) — wrapper agent 0 개 invariant 정합 (worktree 는 인프라, agent 추가 아님).

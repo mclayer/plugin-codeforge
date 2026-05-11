@@ -171,7 +171,7 @@ ADR-027 §결과:108 retroactive 미처리 invariant 정합.
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - `templates/story-page-structure.md` (Phase 2 PR — Sonnet pick 결과 schema)
 - `templates/github-workflows/phase-gate-mergeable.yml` (Phase 2 — regex 검증)

@@ -74,7 +74,7 @@ CLAUDE.md 내 4개 SSOT 예외 테이블 (~160줄)은 특정 lane 진입 시 또
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - [ADR-012](ADR-012-wrapper-claudemd-ssot-boundary.md) — cap 정책 SSOT
 - [ADR-016](ADR-016-marketplace-registration-policy.md) — marketplace sync 의무

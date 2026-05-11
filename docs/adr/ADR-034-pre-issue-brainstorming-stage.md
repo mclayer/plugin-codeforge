@@ -129,7 +129,7 @@ ADR-027 Amendment 1 / CFP-127 정합 — Proposed → Accepted 2-stage 패턴.
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 Phase 1 wrapper PR (이 PR):
 - [`docs/orchestrator-playbook.md`](../orchestrator-playbook.md) — §1.2.0 Stage 0 블록 INSERT

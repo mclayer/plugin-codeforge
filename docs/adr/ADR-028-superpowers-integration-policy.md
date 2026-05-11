@@ -80,7 +80,7 @@ Trade-off: Phase 1 wrapper PR 후 lane CFP 미진행 시 partial consistency. �
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - `CLAUDE.md`
 - `docs/superpowers-integration.md`

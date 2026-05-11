@@ -231,7 +231,7 @@ Output (YAML):
 - **who**: 사용자 ad-hoc Sonnet/Codex 호출만 허용 (자동 발동 무효)
 - **how**: CFP-134 Wave 1 merge (2026-05-08) — Decider 자동 발동 채널 제거 완료
 
-
+## 관련 파일
 
 - `CLAUDE.md`
 - `docs/inter-plugin-contracts/decision-packet-v1.md`

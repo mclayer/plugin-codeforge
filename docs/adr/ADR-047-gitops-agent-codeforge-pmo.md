@@ -338,7 +338,7 @@ Yes. Rollback 경로 (Change Plan §5.2 verbatim):
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - `docs/inter-plugin-contracts/git-ops-event-v1.md` (NEW — wrapper sibling, PR #265 done)
 - `docs/inter-plugin-contracts/pmo-output-v1.md` (v1.0 → v1.1 MINOR bump)

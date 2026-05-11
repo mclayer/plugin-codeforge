@@ -357,7 +357,7 @@ git push origin --delete retro-attempts-state/<KEY>
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - `templates/github-workflows/retro-mandatory.yml` (신규)
 - `templates/github-workflows/post-merge-followup.yml` (미터치, ADR-026 보존)

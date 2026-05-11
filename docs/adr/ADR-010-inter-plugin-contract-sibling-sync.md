@@ -87,7 +87,7 @@ wrapper repo `docs/inter-plugin-contracts/MANIFEST.yaml` 가 모든 `kind: contr
 
 N/A — permanent policy
 
-
+## 관련 파일
 
 - [docs/inter-plugin-contracts/MANIFEST.yaml](../inter-plugin-contracts/MANIFEST.yaml) — registry SSOT
 - [docs/inter-plugin-contracts/review-verdict-v2.md](../inter-plugin-contracts/review-verdict-v2.md) — 선례 패턴
