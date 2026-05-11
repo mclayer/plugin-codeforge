@@ -1,4 +1,5 @@
 ---
+kind: domain_fact
 type: domain-knowledge
 area: orchestrator-discipline
 topic_slug: measurement-channel
@@ -69,7 +70,7 @@ codeforge orchestration 의 **4-channel observability boundary** SSOT. Tier 3 (p
 
 ### 4-channel boundary (ADR-042 §결정 1 / playbook §15 SSOT)
 
-7-channel boundary 표 완전 enumeration = wrapper [`docs/orchestrator-playbook.md`](../../orchestrator-playbook.md) §15 normative SSOT. 본 page 는 도메인 정의 cross-ref.
+7-channel boundary 표 완전 enumeration = wrapper [`docs/orchestrator-playbook.md`](../../../orchestrator-playbook.md) §15 normative SSOT. 본 page 는 도메인 정의 cross-ref.
 
 **Boundary 차단 invariant 3**:
 
@@ -155,14 +156,14 @@ ROI 충분 시 follow-up CFP 발의 (Sonnet decider Phase 2 ROI 패턴 정합 �
 
 ## 관련 ADR
 
-- [ADR-042](../../adr/ADR-042-codeforge-measurement-channel-architecture.md) — measurement channel architecture (architectural decision SSOT)
-- [ADR-043](../../adr/ADR-043-codeforge-telemetry-privacy-policy.md) — telemetry privacy policy (sibling Phase 1 PR)
-- [ADR-025](../../adr/ADR-025-stop-discipline-non-whitelist-as-defect.md) — stop discipline (§결정 10 deferred slot 채움)
-- [ADR-026](../../adr/ADR-026-post-merge-automation.md) — post-merge automation (30+ run ROI gate 패턴)
-- [ADR-029](../../adr/ADR-029-phase-execution-visibility-expansion.md) — phase execution visibility (sanitize SSOT 통합 amends)
-- [ADR-031](../../adr/ADR-031-lane-spawn-evidence-trail.md) — lane-spawn evidence (§14 boundary)
-- [ADR-038](../../adr/ADR-038-progress-visualization-todowrite.md) — TodoWrite (boundary 차단)
-- [ADR-039](../../adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — subagent default (§결정 9 deferred carrier)
+- [ADR-042](../../../adr/ADR-042-codeforge-measurement-channel-architecture.md) — measurement channel architecture (architectural decision SSOT)
+- [ADR-043](../../../adr/ADR-043-codeforge-telemetry-privacy-policy.md) — telemetry privacy policy (sibling Phase 1 PR)
+- [ADR-025](../../../adr/ADR-025-stop-discipline-non-whitelist-as-defect.md) — stop discipline (§결정 10 deferred slot 채움)
+- [ADR-026](../../../adr/ADR-026-post-merge-automation.md) — post-merge automation (30+ run ROI gate 패턴)
+- [ADR-029](../../../adr/ADR-029-phase-execution-visibility-expansion.md) — phase execution visibility (sanitize SSOT 통합 amends)
+- [ADR-031](../../../adr/ADR-031-lane-spawn-evidence-trail.md) — lane-spawn evidence (§14 boundary)
+- [ADR-038](../../../adr/ADR-038-progress-visualization-todowrite.md) — TodoWrite (boundary 차단)
+- [ADR-039](../../../adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — subagent default (§결정 9 deferred carrier)
 
 ## 변경 이력
 

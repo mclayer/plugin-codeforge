@@ -157,7 +157,7 @@ agent teams enabled context 의 SendMessage 는 **sibling teammate 끼리 system
 
 **Re-entrancy 제약 3종 (codeforge 정책 SSOT)**:
 
-agent teams enabled context 에서도 다음 3 제약 유지 (`docs/domain-knowledge/agent-teams/agent-teams-platform-capability.md` SSOT):
+agent teams enabled context 에서도 다음 3 제약 유지 (`docs/domain-knowledge/domain/agent-teams/agent-teams-platform-capability.md` SSOT):
 1. 재귀 spawn 금지 (Lead 와 teammate 모두 — platform inherent)
 2. Nested team 금지 (no team-of-teams)
 3. One-team-per-lead 강제 — 다음 lane TeamCreate 전 현 team `TeamDelete()` 의무
@@ -167,7 +167,7 @@ agent teams enabled context 에서도 다음 3 제약 유지 (`docs/domain-knowl
 **상세 SSOT**:
 - Policy: [ADR-044](adr/ADR-044-phase-scoped-sequential-team.md) (CFP-137 carrier)
 - Epic context: [ADR-035](adr/ADR-035-codeforge-agent-teams-epic-architecture.md) D2
-- Domain knowledge: [docs/domain-knowledge/agent-teams/agent-teams-platform-capability.md](domain-knowledge/agent-teams/agent-teams-platform-capability.md)
+- Domain knowledge: [docs/domain-knowledge/domain/agent-teams/agent-teams-platform-capability.md](domain-knowledge/domain/agent-teams/agent-teams-platform-capability.md)
 - Default fallback: [ADR-039](adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md)
 - Worktree integration: [ADR-040](adr/ADR-040-worktree-convention.md)
 - review-verdict v4 schema: [docs/inter-plugin-contracts/review-verdict-v4.md](inter-plugin-contracts/review-verdict-v4.md)
