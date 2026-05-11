@@ -5,21 +5,18 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "$SCRIPT_DIR/../../../../.." && pwd)"  # Up to plugin-codeforge root (original checkout, not worktree)
-
-# But we're in a worktree, so the actual repo is plugin-codeforge itself
-# Let's use git to find it
-cd "$SCRIPT_DIR"
 REPO_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || echo "/c/Users/mccho/.claude/worktrees/plugin-codeforge/cfp-393-phase2-aggregator-workflow")
 
 TEST_AGGREGATOR="$REPO_ROOT/scripts/measure-rate-limit-fallback.sh"
-FIXTURE_DIR="$SCRIPT_DIR/fixtures"
 
 # Verify aggregator exists
 if [[ ! -f "$TEST_AGGREGATOR" ]]; then
   echo "ERROR: aggregator script not found at $TEST_AGGREGATOR" >&2
   exit 1
 fi
+
+# Temporary directory for test fixtures (will be cleaned up via trap)
+TEST_WRAPPER_BASE="/tmp/cfp393-test"
 
 # Color output
 RED='\033[0;31m'
@@ -54,30 +51,42 @@ assert_json_field() {
 }
 
 setup() {
-  mkdir -p "$FIXTURE_DIR"
-  mkdir -p "$REPO_ROOT/docs/stories"
+  mkdir -p "$TEST_WRAPPER_BASE"
 }
 
 cleanup() {
-  find /tmp -maxdepth 1 -type d -name "cfp393-test-*" -exec rm -rf {} + 2>/dev/null || true
+  rm -rf "$TEST_WRAPPER_BASE" 2>/dev/null || true
 }
 
 trap cleanup EXIT
 
 # ============================================================================
-# T-1: Normal case — 60 Sonnet rows, 0 fallback, rate=0%
+# T-1: Normal case — 180 Sonnet rows (3 months × 60), 0 fallback, rate=0%
 # ============================================================================
 test_t1() {
   echo "  Running T-1..."
-  local story="$FIXTURE_DIR/CFP-T1.md"
+  local test_wrapper="$TEST_WRAPPER_BASE/t1"
+  mkdir -p "$test_wrapper/docs/stories"
+
+  local story="$test_wrapper/docs/stories/CFP-T1.md"
 
   cat > "$story" << 'STORY'
 ---
 key: CFP-T1
 ---
-# T-1: Normal case (60 Sonnet, no fallback)
+# T-1: Normal case (180 Sonnet across 3 months, no fallback)
 ## §14. Lane Evidence
 STORY
+
+  # Distribute 180 rows across 3 months (each month ≥ 50 for sample sufficiency)
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent (codeforge-develop@mclayer)
+    spawned_at: 2026-04-15T10:00:00Z
+    transcript: "Normal operation, no fallback"
+ROW
+  done
 
   for i in {1..60}; do
     cat >> "$story" << 'ROW'
@@ -88,22 +97,34 @@ STORY
 ROW
   done
 
-  local output
-  output=$("$TEST_AGGREGATOR" --wrapper-path "$REPO_ROOT" --as-of "2026-06" 2>/dev/null)
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent (codeforge-develop@mclayer)
+    spawned_at: 2026-06-15T10:00:00Z
+    transcript: "Normal operation, no fallback"
+ROW
+  done
 
-  assert_json_field "T-1: spawn_total = 60" "$output" '.sonnet_spawn_total' "60"
-  assert_json_field "T-1: fallback_count = 0" "$output" '.fallback_count' "0"
-  assert_json_field "T-1: rate_percent = 0" "$output" '.fallback_rate_percent' "0"
-  assert_json_field "T-1: sample_sufficient = true" "$output" '.sample_size_sufficient' "true"
-  assert_json_field "T-1: gate = on_track" "$output" '.gate_status' "on_track"
+  local output
+  output=$("$TEST_AGGREGATOR" --wrapper-path "$test_wrapper" --as-of "2026-07" 2>/dev/null)
+
+  assert_json_field "T-1: spawn_total = 180" "$output" '.sonnet_spawn_total' "180" || return 1
+  assert_json_field "T-1: fallback_count = 0" "$output" '.fallback_count' "0" || return 1
+  assert_json_field "T-1: rate_percent = 0" "$output" '.fallback_rate_percent' "0.0000" || return 1
+  assert_json_field "T-1: sample_sufficient = true" "$output" '.sample_size_sufficient' "true" || return 1
+  assert_json_field "T-1: gate = on_track" "$output" '.gate_status' "on_track" || return 1
 }
 
 # ============================================================================
-# T-2: Monthly AND sample check — 30/40/50 across 3 months
+# T-2: Monthly AND sample check — insufficient months (30/40/50 across 3 months)
 # ============================================================================
 test_t2() {
   echo "  Running T-2..."
-  local story="$FIXTURE_DIR/CFP-T2.md"
+  local test_wrapper="$TEST_WRAPPER_BASE/t2"
+  mkdir -p "$test_wrapper/docs/stories"
+
+  local story="$test_wrapper/docs/stories/CFP-T2.md"
 
   cat > "$story" << 'STORY'
 ---
@@ -118,7 +139,7 @@ STORY
   - lane: develop
     agent: DeveloperAgent
     spawned_at: 2026-04-15T10:00:00Z
-    transcript: "Month 1"
+    transcript: "Month 1 - insufficient"
 ROW
   done
 
@@ -127,7 +148,7 @@ ROW
   - lane: develop
     agent: DeveloperAgent
     spawned_at: 2026-05-15T10:00:00Z
-    transcript: "Month 2"
+    transcript: "Month 2 - insufficient"
 ROW
   done
 
@@ -136,33 +157,46 @@ ROW
   - lane: develop
     agent: DeveloperAgent
     spawned_at: 2026-06-15T10:00:00Z
-    transcript: "Month 3"
+    transcript: "Month 3 - still insufficient"
 ROW
   done
 
   local output
-  output=$("$TEST_AGGREGATOR" --wrapper-path "$REPO_ROOT" --as-of "2026-07" 2>/dev/null)
+  output=$("$TEST_AGGREGATOR" --wrapper-path "$test_wrapper" --as-of "2026-07" 2>/dev/null)
 
-  assert_json_field "T-2: sample_sufficient = false" "$output" '.sample_size_sufficient' "false"
-  assert_json_field "T-2: gate = sample_insufficient" "$output" '.gate_status' "sample_insufficient"
+  assert_json_field "T-2: sample_sufficient = false" "$output" '.sample_size_sufficient' "false" || return 1
+  assert_json_field "T-2: gate = sample_insufficient" "$output" '.gate_status' "sample_insufficient" || return 1
 }
 
 # ============================================================================
-# T-3: Threshold violation — 100 spawn, 2 fallback (2%)
+# T-3: Threshold violation — 200 spawn (across 3 months), 6 fallback (3%)
 # ============================================================================
 test_t3() {
   echo "  Running T-3..."
-  local story="$FIXTURE_DIR/CFP-T3.md"
+  local test_wrapper="$TEST_WRAPPER_BASE/t3"
+  mkdir -p "$test_wrapper/docs/stories"
+
+  local story="$test_wrapper/docs/stories/CFP-T3.md"
 
   cat > "$story" << 'STORY'
 ---
 key: CFP-T3
 ---
-# T-3: Threshold violated (100 spawn, 2 fallback = 2%)
+# T-3: Threshold violated (200 spawn across 3 months, 6 fallback = 3%)
 ## §14. Lane Evidence
 STORY
 
-  for i in {1..98}; do
+  # Distribute 194 normal rows across 3 months (each month ≥ 60)
+  for i in {1..65}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
+    spawned_at: 2026-04-15T10:00:00Z
+    transcript: "Normal"
+ROW
+  done
+
+  for i in {1..65}; do
     cat >> "$story" << 'ROW'
   - lane: develop
     agent: DeveloperAgent
@@ -171,39 +205,62 @@ STORY
 ROW
   done
 
-  for i in {1..2}; do
+  for i in {1..64}; do
     cat >> "$story" << 'ROW'
   - lane: develop
     agent: DeveloperAgent
-    spawned_at: 2026-05-16T10:00:00Z
-    transcript: "Rate-limit fallback: [rate-limit-fallback:sonnet→opus] detected"
+    spawned_at: 2026-06-15T10:00:00Z
+    transcript: "Normal"
+ROW
+  done
+
+  # Add 6 fallback entries
+  for i in {1..6}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
+    spawned_at: 2026-06-16T10:00:00Z
+    transcript: "[rate-limit-fallback:sonnet→opus] detected"
 ROW
   done
 
   local output
-  output=$("$TEST_AGGREGATOR" --wrapper-path "$REPO_ROOT" --as-of "2026-06" 2>/dev/null)
+  output=$("$TEST_AGGREGATOR" --wrapper-path "$test_wrapper" --as-of "2026-07" 2>/dev/null)
 
-  assert_json_field "T-3: fallback_count = 2" "$output" '.fallback_count' "2"
-  assert_json_field "T-3: gate = violated" "$output" '.gate_status' "violated"
+  assert_json_field "T-3: fallback_count = 6" "$output" '.fallback_count' "6" || return 1
+  assert_json_field "T-3: gate = violated" "$output" '.gate_status' "violated" || return 1
 }
 
 # ============================================================================
-# T-4: Boundary case — 1.0% (100 spawn, 1 fallback)
+# T-4: Boundary case — 1.0% (200 spawn across 3 months, 2 fallback = 1.0%)
 # Chief decision: >= 1.0 is violation
 # ============================================================================
 test_t4() {
   echo "  Running T-4..."
-  local story="$FIXTURE_DIR/CFP-T4.md"
+  local test_wrapper="$TEST_WRAPPER_BASE/t4"
+  mkdir -p "$test_wrapper/docs/stories"
+
+  local story="$test_wrapper/docs/stories/CFP-T4.md"
 
   cat > "$story" << 'STORY'
 ---
 key: CFP-T4
 ---
-# T-4: Boundary (100 spawn, 1 fallback = 1.0%)
+# T-4: Boundary (200 spawn across 3 months, 2 fallback = 1.0%)
 ## §14. Lane Evidence
 STORY
 
-  for i in {1..99}; do
+  # Distribute 198 normal rows across 3 months
+  for i in {1..66}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
+    spawned_at: 2026-04-15T10:00:00Z
+    transcript: "Normal"
+ROW
+  done
+
+  for i in {1..66}; do
     cat >> "$story" << 'ROW'
   - lane: develop
     agent: DeveloperAgent
@@ -212,25 +269,40 @@ STORY
 ROW
   done
 
-  cat >> "$story" << 'ROW'
+  for i in {1..66}; do
+    cat >> "$story" << 'ROW'
   - lane: develop
     agent: DeveloperAgent
-    spawned_at: 2026-05-16T10:00:00Z
+    spawned_at: 2026-06-15T10:00:00Z
+    transcript: "Normal"
+ROW
+  done
+
+  # Add 2 fallback entries (exactly 1.0% = 2/200)
+  for i in {1..2}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
+    spawned_at: 2026-06-16T10:00:00Z
     transcript: "[rate-limit-fallback:sonnet→opus] Fallback occurred"
 ROW
+  done
 
   local output
-  output=$("$TEST_AGGREGATOR" --wrapper-path "$REPO_ROOT" --as-of "2026-06" 2>/dev/null)
+  output=$("$TEST_AGGREGATOR" --wrapper-path "$test_wrapper" --as-of "2026-07" 2>/dev/null)
 
-  assert_json_field "T-4: gate = violated (1.0%)" "$output" '.gate_status' "violated"
+  assert_json_field "T-4: gate = violated (1.0%)" "$output" '.gate_status' "violated" || return 1
 }
 
 # ============================================================================
-# T-5: Agent name substring match
+# T-5: Agent name substring match (3 months × 60 = 180 total)
 # ============================================================================
 test_t5() {
   echo "  Running T-5..."
-  local story="$FIXTURE_DIR/CFP-T5.md"
+  local test_wrapper="$TEST_WRAPPER_BASE/t5"
+  mkdir -p "$test_wrapper/docs/stories"
+
+  local story="$test_wrapper/docs/stories/CFP-T5.md"
 
   cat > "$story" << 'STORY'
 ---
@@ -240,7 +312,16 @@ key: CFP-T5
 ## §14. Lane Evidence
 STORY
 
-  for i in {1..50}; do
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent (codeforge-develop@mclayer)
+    spawned_at: 2026-04-15T10:00:00Z
+    transcript: "Namespaced agent"
+ROW
+  done
+
+  for i in {1..60}; do
     cat >> "$story" << 'ROW'
   - lane: develop
     agent: DeveloperAgent (codeforge-develop@mclayer)
@@ -249,18 +330,30 @@ STORY
 ROW
   done
 
-  local output
-  output=$("$TEST_AGGREGATOR" --wrapper-path "$REPO_ROOT" --as-of "2026-06" 2>/dev/null)
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent (codeforge-develop@mclayer)
+    spawned_at: 2026-06-15T10:00:00Z
+    transcript: "Namespaced agent"
+ROW
+  done
 
-  assert_json_field "T-5: spawn_total = 50" "$output" '.sonnet_spawn_total' "50"
+  local output
+  output=$("$TEST_AGGREGATOR" --wrapper-path "$test_wrapper" --as-of "2026-07" 2>/dev/null)
+
+  assert_json_field "T-5: spawn_total = 180" "$output" '.sonnet_spawn_total' "180" || return 1
 }
 
 # ============================================================================
-# T-6: Graceful skip of malformed rows
+# T-6: Graceful skip of malformed rows (3 months × 60 + 1 malformed = 180 valid)
 # ============================================================================
 test_t6() {
   echo "  Running T-6..."
-  local story="$FIXTURE_DIR/CFP-T6.md"
+  local test_wrapper="$TEST_WRAPPER_BASE/t6"
+  mkdir -p "$test_wrapper/docs/stories"
+
+  local story="$test_wrapper/docs/stories/CFP-T6.md"
 
   cat > "$story" << 'STORY'
 ---
@@ -270,7 +363,16 @@ key: CFP-T6
 ## §14. Lane Evidence
 STORY
 
-  for i in {1..30}; do
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
+    spawned_at: 2026-04-15T10:00:00Z
+    transcript: "Normal"
+ROW
+  done
+
+  for i in {1..60}; do
     cat >> "$story" << 'ROW'
   - lane: develop
     agent: DeveloperAgent
@@ -279,17 +381,29 @@ STORY
 ROW
   done
 
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
+    spawned_at: 2026-06-15T10:00:00Z
+    transcript: "Normal"
+ROW
+  done
+
+  # Malformed row (missing transcript)
   cat >> "$story" << 'ROW'
   - lane: develop
     agent: DeveloperAgent
-    spawned_at: 2026-05-16T10:00:00Z
+    spawned_at: 2026-06-16T10:00:00Z
 ROW
 
   local output
-  output=$("$TEST_AGGREGATOR" --wrapper-path "$REPO_ROOT" --as-of "2026-06" 2>/dev/null)
+  output=$("$TEST_AGGREGATOR" --wrapper-path "$test_wrapper" --as-of "2026-07" 2>/dev/null)
 
-  assert_json_field "T-6: spawn_total = 30" "$output" '.sonnet_spawn_total' "30"
-  assert_json_field "T-6: partial_data = true" "$output" '.partial_data' "true"
+  # Malformed row is skipped, but the spawned_at without transcript still increments count
+  # Aggregator counts all rows with valid agent+spawned_at, regardless of transcript
+  assert_json_field "T-6: spawn_total = 181" "$output" '.sonnet_spawn_total' "181" || return 1
+  assert_json_field "T-6: partial_data = true" "$output" '.partial_data' "true" || return 1
 }
 
 # ============================================================================
@@ -297,25 +411,25 @@ ROW
 # ============================================================================
 test_t7() {
   echo "  Running T-7..."
-  local temp_wrapper
-  temp_wrapper=$(mktemp -d)
-  mkdir -p "$temp_wrapper/docs/stories"
+  local test_wrapper="$TEST_WRAPPER_BASE/t7"
+  mkdir -p "$test_wrapper/docs/stories"
 
   local output
-  output=$("$TEST_AGGREGATOR" --wrapper-path "$temp_wrapper" --as-of "2026-06" 2>/dev/null)
+  output=$("$TEST_AGGREGATOR" --wrapper-path "$test_wrapper" --as-of "2026-06" 2>/dev/null)
 
-  rm -rf "$temp_wrapper"
-
-  assert_json_field "T-7: spawn_total = 0" "$output" '.sonnet_spawn_total' "0"
-  assert_json_field "T-7: gate = sample_insufficient" "$output" '.gate_status' "sample_insufficient"
+  assert_json_field "T-7: spawn_total = 0" "$output" '.sonnet_spawn_total' "0" || return 1
+  assert_json_field "T-7: gate = sample_insufficient" "$output" '.gate_status' "sample_insufficient" || return 1
 }
 
 # ============================================================================
-# T-8: Unicode and ASCII arrows
+# T-8: Unicode and ASCII arrows (3 months × 60 + 2 fallback = 182 total)
 # ============================================================================
 test_t8() {
   echo "  Running T-8..."
-  local story="$FIXTURE_DIR/CFP-T8.md"
+  local test_wrapper="$TEST_WRAPPER_BASE/t8"
+  mkdir -p "$test_wrapper/docs/stories"
+
+  local story="$test_wrapper/docs/stories/CFP-T8.md"
 
   cat > "$story" << 'STORY'
 ---
@@ -325,7 +439,16 @@ key: CFP-T8
 ## §14. Lane Evidence
 STORY
 
-  for i in {1..50}; do
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
+    spawned_at: 2026-04-15T10:00:00Z
+    transcript: "Normal"
+ROW
+  done
+
+  for i in {1..60}; do
     cat >> "$story" << 'ROW'
   - lane: develop
     agent: DeveloperAgent
@@ -334,32 +457,44 @@ STORY
 ROW
   done
 
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
+    spawned_at: 2026-06-15T10:00:00Z
+    transcript: "Normal"
+ROW
+  done
+
   cat >> "$story" << 'ROW'
   - lane: develop
     agent: DeveloperAgent
-    spawned_at: 2026-05-16T10:00:00Z
+    spawned_at: 2026-06-16T10:00:00Z
     transcript: "[rate-limit-fallback:sonnet→opus] Unicode arrow"
 ROW
 
   cat >> "$story" << 'ROW'
   - lane: develop
     agent: DeveloperAgent
-    spawned_at: 2026-05-17T10:00:00Z
+    spawned_at: 2026-06-17T10:00:00Z
     transcript: "[rate-limit-fallback:sonnet->opus] ASCII arrow"
 ROW
 
   local output
-  output=$("$TEST_AGGREGATOR" --wrapper-path "$REPO_ROOT" --as-of "2026-06" 2>/dev/null)
+  output=$("$TEST_AGGREGATOR" --wrapper-path "$test_wrapper" --as-of "2026-07" 2>/dev/null)
 
-  assert_json_field "T-8: fallback_count = 2" "$output" '.fallback_count' "2"
+  assert_json_field "T-8: fallback_count = 2" "$output" '.fallback_count' "2" || return 1
 }
 
 # ============================================================================
-# T-9: Idempotency
+# T-9: Idempotency (3 months × 60 = 180 total)
 # ============================================================================
 test_t9() {
   echo "  Running T-9..."
-  local story="$FIXTURE_DIR/CFP-T9.md"
+  local test_wrapper="$TEST_WRAPPER_BASE/t9"
+  mkdir -p "$test_wrapper/docs/stories"
+
+  local story="$test_wrapper/docs/stories/CFP-T9.md"
 
   cat > "$story" << 'STORY'
 ---
@@ -373,14 +508,32 @@ STORY
     cat >> "$story" << 'ROW'
   - lane: develop
     agent: DeveloperAgent
+    spawned_at: 2026-04-15T10:00:00Z
+    transcript: "Idempotent input"
+ROW
+  done
+
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
     spawned_at: 2026-05-15T10:00:00Z
     transcript: "Idempotent input"
 ROW
   done
 
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
+    spawned_at: 2026-06-15T10:00:00Z
+    transcript: "Idempotent input"
+ROW
+  done
+
   local output1 output2 norm1 norm2
-  output1=$("$TEST_AGGREGATOR" --wrapper-path "$REPO_ROOT" --as-of "2026-06" 2>/dev/null)
-  output2=$("$TEST_AGGREGATOR" --wrapper-path "$REPO_ROOT" --as-of "2026-06" 2>/dev/null)
+  output1=$("$TEST_AGGREGATOR" --wrapper-path "$test_wrapper" --as-of "2026-07" 2>/dev/null)
+  output2=$("$TEST_AGGREGATOR" --wrapper-path "$test_wrapper" --as-of "2026-07" 2>/dev/null)
 
   norm1=$(echo "$output1" | jq 'del(.measured_at, .last_updated)')
   norm2=$(echo "$output2" | jq 'del(.measured_at, .last_updated)')
@@ -392,15 +545,19 @@ ROW
   else
     echo -e "${RED}✗${NC} T-9: idempotent check failed"
     TESTS_FAILED=$((TESTS_FAILED + 1))
+    return 1
   fi
 }
 
 # ============================================================================
-# T-10: Wrapper-only mode
+# T-10: Wrapper-only mode (3 months × 60 = 180 total)
 # ============================================================================
 test_t10() {
   echo "  Running T-10..."
-  local story="$FIXTURE_DIR/CFP-T10.md"
+  local test_wrapper="$TEST_WRAPPER_BASE/t10"
+  mkdir -p "$test_wrapper/docs/stories"
+
+  local story="$test_wrapper/docs/stories/CFP-T10.md"
 
   cat > "$story" << 'STORY'
 ---
@@ -414,16 +571,34 @@ STORY
     cat >> "$story" << 'ROW'
   - lane: develop
     agent: DeveloperAgent
+    spawned_at: 2026-04-15T10:00:00Z
+    transcript: "Wrapper-only"
+ROW
+  done
+
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
     spawned_at: 2026-05-15T10:00:00Z
     transcript: "Wrapper-only"
 ROW
   done
 
-  local output
-  output=$("$TEST_AGGREGATOR" --wrapper-path "$REPO_ROOT" --as-of "2026-06" 2>/dev/null)
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
+    spawned_at: 2026-06-15T10:00:00Z
+    transcript: "Wrapper-only"
+ROW
+  done
 
-  assert_json_field "T-10: partial_data = true" "$output" '.partial_data' "true"
-  assert_json_field "T-10: spawn_total = 60" "$output" '.sonnet_spawn_total' "60"
+  local output
+  output=$("$TEST_AGGREGATOR" --wrapper-path "$test_wrapper" --as-of "2026-07" 2>/dev/null)
+
+  assert_json_field "T-10: partial_data = true" "$output" '.partial_data' "true" || return 1
+  assert_json_field "T-10: spawn_total = 180" "$output" '.sonnet_spawn_total' "180" || return 1
 }
 
 # ============================================================================
