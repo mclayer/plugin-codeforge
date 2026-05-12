@@ -381,6 +381,8 @@ Versioning + sibling sync SSOT: [ADR-008](docs/adr/ADR-008-inter-plugin-contract
 
 **Branch protection**: main 브랜치 = 4 required status check (phase-gate-mergeable + doc frontmatter + doc section + invariant-check) + `restrictions:{users:[],teams:[],apps:[]}` (direct push 차단) + **`enforce_admins: true` (admin 도 required check 통과 의무, CFP-70)**. CODEOWNERS 자동 review request 는 **도덕적 governance** — solo-dev 환경 강제 off (`require_code_owner_reviews:false` + `required_approving_review_count:0`, CFP-72). contributor 추가 시 `require_code_owner_reviews:true` + `count:1` 복원 의무 (별도 CFP). CODEOWNERS template: [`templates/CODEOWNERS.template`](templates/CODEOWNERS.template). 정책 SSOT: [ADR-024](docs/adr/ADR-024-story-scoped-branch-policy.md). Rulesets / branch naming auto enforcement 는 solo-dev 가정 하 defer — contributor 추가 시 별도 CFP.
 
+> **phase-gate-mergeable label mapping** (CFP-479): `phase:*` ↔ `gate:*` 정식 매핑 표 SSOT = [`docs/orchestrator-playbook.md` §9.7](docs/orchestrator-playbook.md#97-phase-gate-mergeable-label-mapping-cfp-479). CFP-342 anomaly = `phase:구현` / `phase:구현-리뷰` 도 **`gate:design-review-pass`** 요구 (직관적 `gate:code-review-pass` 아님 — codeforge 는 별도 code-review gate label 미도입). 라벨 변경 시 workflow yml line 195-208 + playbook §9.7 + 본 단락 + consumer-guide §2e 동시 갱신 의무.
+
 ## Story 작성 의무 (CFP-45)
 
 매 변경 시작 시 Orchestrator 가 cutoff 분류 → 강제/면제 결정. **모호 시 강제 측 분류**. Plugin 자체 + consumer 프로젝트 모두 적용. 정책 SSOT: [ADR-013](docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md). Story file 위치 = `mclayer/codeforge-internal-docs/<plugin-folder>/stories/<KEY>.md` (Plugin repo Issue body 와 bidirectional `story_uri`/`story_issues` binding). 새 Story = internal-docs `story.yml` Issue Form → `story-init.yml` Action 자동 생성 + Phase 1 PR open.

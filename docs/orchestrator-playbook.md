@@ -1873,6 +1873,34 @@ GitHub Issue/PR 갱신·코멘트 기록·sub-issue 생성 불가 시:
 | Phase 1 PR merge 후 Story Issue 가 자동 close 됨 | Phase 1 PR description 에 `Closes/Fixes/Resolves` 사용 | `Related: #NNN` 으로 수정 후 PR reopen — 본 §9.6 keyword 정책 참조 |
 | 복수 PR 간 git conflict | 동일 Story 내 Phase 1 + follow-up 병렬 open | base PR 먼저 merge → 충돌 PR rebase on main → conflict 해소 |
 
+### 9.7 phase-gate-mergeable label mapping (CFP-479)
+
+`templates/github-workflows/phase-gate-mergeable.yml` Action 이 PR mergeable status 를 판정할 때 적용하는 정식 phase × gate 매핑 표. **workflow yml line 195-208 의 inline comment 가 1차 SSOT** — 본 단락은 narrative drift 방지를 위한 doc 미러 (CFP-455 retro action_item #5 origin).
+
+| Phase label (PR 부착) | Required gate label | 근거 (CFP) | 비고 |
+|---|---|---|---|
+| `phase:설계` | `gate:design-review-pass` | CFP-113 | Phase 1 PR — design lane 진행 중 |
+| `phase:설계-리뷰` | `gate:design-review-pass` | CFP-113 | Phase 1 PR — DesignReviewPL verdict 부착 후 |
+| `phase:구현` | **`gate:design-review-pass`** | CFP-342 | Phase 2 PR — code-review-pass 아님 (intuitive naming 어긋남) |
+| `phase:구현-리뷰` | **`gate:design-review-pass`** | CFP-342 | Phase 2 PR — code-review-pass 아님 (동일) |
+| `phase:구현-테스트` | (gate 무) | CFP-317 / ADR-048 | CI gate inline polling, gate label 미부착 |
+| `phase:보안-테스트` | `gate:security-test-pass` | (consumer `lanes.security_ai: true` opt-in 시에만) | terminal gate |
+| (Story binding 부재 / 그 외) | `gate:design-review-pass` (legacy heuristic) | workflow line 207 | No Story binding fallback |
+
+**핵심 anomaly (CFP-342 fix)**:
+
+- `phase:구현` / `phase:구현-리뷰` 에서 **`gate:design-review-pass`** 요구 — 직관적으로 기대되는 `gate:code-review-pass` 아님 (CFP-342 verbatim: "Phase 2 PR 도 gate:design-review-pass 요구 — gate:code-review-pass 가 아닌").
+- 이유: codeforge 는 별도 `gate:code-review-pass` label 미도입. 구현 리뷰 PASS = phase progression only (gate label 무부착). 설계 리뷰 gate label 가 Phase 1 → Phase 2 전 구간 단일 mergeable 게이트 역할 수행.
+
+**Orchestrator 가 라벨 결정 시 참조 path**:
+
+1. Story file frontmatter `phase:` field (cross-repo binding, workflow line 75-92 fetch) — 1차 SSOT
+2. PR label `phase:*` (Story binding 부재 시 PR labels fallback, workflow line 122-134)
+3. 본 표 매핑에 따라 required gate label 결정 (workflow line 195-208)
+4. `gate:live-entry-pass` = Live touching Story 의 보안-테스트 phase 에 추가 요구 (ADR-030, workflow line 262-281)
+
+**Cross-ref 동기화 의무**: 본 표는 3 doc 동시 갱신 의무 — `docs/orchestrator-playbook.md` (정식 SSOT) · `CLAUDE.md` "Branch protection" 단락 (link only) · `docs/consumer-guide.md` §2e Branch protection (consumer mirror). 향후 phase / gate label taxonomy 변경 시 workflow yml line 195-208 + 본 표 + 3 doc 동시 갱신.
+
 ---
 
 ## 10. Hotfix 경로 (운영 장애 대응)

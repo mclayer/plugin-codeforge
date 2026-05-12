@@ -605,6 +605,28 @@ git push → PR 생성 → gh pr view <N> --json mergedAt (non-null 확인) → 
 - **protection 감지**: `gh api "repos/$(gh repo view --json nameWithOwner --jq .nameWithOwner)/branches/main" --jq '.protected'` — `true` 면 직접 merge 금지, PR-only.
 - solo-dev (`required_approving_review_count:0`) + `enforce_admins=false` 환경에서도 동일 순서 적용. `phase-gate-mergeable` check 통과 후 자동 merge 가능하나, worktree 정리는 항상 `mergedAt` 확인 후.
 
+#### phase-gate-mergeable label mapping (CFP-479)
+
+`phase-gate-mergeable.yml` Action 이 적용하는 phase × gate 매핑은 codeforge wrapper 의 정식 SSOT — consumer 도 동일 invariant 적용. 정식 표 SSOT = [`docs/orchestrator-playbook.md` §9.7](https://github.com/mclayer/plugin-codeforge/blob/main/docs/orchestrator-playbook.md) (wrapper repo). 본 단락은 consumer 운영 시 자주 마주치는 anomaly mirror.
+
+**핵심 anomaly (CFP-342 fix)**:
+
+- `phase:구현` / `phase:구현-리뷰` (Phase 2 PR) 에서 **`gate:design-review-pass`** 요구 — 직관적으로 기대되는 `gate:code-review-pass` 가 아님.
+- 이유: codeforge 는 별도 `gate:code-review-pass` label 미도입. 구현 리뷰 PASS = phase progression only (gate label 무부착). 설계 리뷰 gate label 가 Phase 1 → Phase 2 전 구간 단일 mergeable 게이트 역할 수행.
+- CFP-342 verbatim: "Phase 2 PR 도 gate:design-review-pass 요구 — gate:code-review-pass 가 아닌" (workflow yml `templates/github-workflows/phase-gate-mergeable.yml` line 199-202 inline comment).
+
+**전체 매핑 표** (workflow yml line 195-208 verbatim 기반):
+
+| Phase label (PR 부착) | Required gate label | 근거 (CFP) |
+|---|---|---|
+| `phase:설계` / `phase:설계-리뷰` | `gate:design-review-pass` | CFP-113 |
+| `phase:구현` / `phase:구현-리뷰` | **`gate:design-review-pass`** (anomaly) | CFP-342 |
+| `phase:구현-테스트` | (gate 무, CI inline polling) | CFP-317 / ADR-048 |
+| `phase:보안-테스트` | `gate:security-test-pass` | (`lanes.security_ai: true` opt-in 시에만) |
+| (Story binding 부재) | `gate:design-review-pass` (legacy heuristic) | workflow line 207 |
+
+Live touching Story 의 보안-테스트 phase 는 추가로 `gate:live-entry-pass` 요구 (ADR-030). Consumer 가 phase / gate label taxonomy 를 변경하지 않는 한 본 매핑은 그대로 적용.
+
 ### 2f. 보안 보강 활성화 (consumer settings)
 
 GitHub repo settings 또는 gh api로:
