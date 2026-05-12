@@ -9,21 +9,22 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ### Changed (CFP-448 Phase 2 — Sonnet selective rollback 구현)
 
-ADR-057 Amendment 3 + ADR-042 Amendment 5 (Phase 1 PR #488 merged) 의 Phase 2 구현. 6 agent decision matrix 정합 — N=3 Sonnet rollback (ChangeImpact / CodebaseMapper / Refactor) + 3 Opus 유지 (Feasibility / Continuity / DeveloperPL). mandate text 재정의 N'=2 (CodebaseMapper / Refactor — ChangeImpact exclusion criterion 정합). PATCH bump (CLAUDE.md mirror + script 배열 변경, 정책 본문 변경 0건).
+ADR-057 Amendment 3 + ADR-042 Amendment 5 (Phase 1 PR #488 merged) 의 Phase 2 구현. 6 agent decision matrix 정합 — N=3 Sonnet rollback (CodebaseMapper / Refactor / DeveloperPL) + 3 Opus 유지 (Feasibility / Continuity / ChangeImpact). mandate text 재정의 N'=2 (CodebaseMapper / Refactor — ChangeImpact exclusion criterion 정합). PATCH bump (CLAUDE.md mirror + script 배열 변경, 정책 본문 변경 0건).
 
 - `CLAUDE.md` (UPDATE L164 cross-ref note) — "ADR-057 §결정 3 표 = SSOT, CLAUDE.md L127 = mirror reference" 1줄 명시 (CL-6 사용자 확정 / drift forcing function).
-- `scripts/measure-rate-limit-fallback.sh` (UPDATE) — SONNET_AGENTS 배열 5종 → 8종 (3 entry append: ChangeImpactAgent / CodebaseMapperAgent / RefactorAgent). header 주석 + drift detection 코멘트 cross-ref Amendment 3 갱신.
+- `scripts/measure-rate-limit-fallback.sh` (UPDATE) — SONNET_AGENTS 배열 5종 → 8종 (3 entry append: CodebaseMapperAgent / RefactorAgent / DeveloperPLAgent). header 주석 + drift detection 코멘트 cross-ref Amendment 3 갱신.
 - `.claude-plugin/plugin.json` — version 5.22.0 → 5.22.1 PATCH (ADR-037 정합 — CLAUDE.md mirror + script 배열 변경, ADR Amendment 본문 변경 0건). description CFP-448 Phase 2 entry append.
 
 ### Sibling sync (ADR-016 + ADR-063 atomic invariant — Phase 2 PR pair)
 
-- `plugin-codeforge-requirements` 0.5.0 → 0.5.1 PATCH — ChangeImpactAgent model field Opus → Sonnet (mandate text 0건 — exclusion criterion 정합).
+- `plugin-codeforge-develop` 0.5.0 → 0.5.1 PATCH — DeveloperPLAgent model field Opus → Sonnet (사용자 framing 직접 적용 — ADR-042 §결정 1 (b) verbatim 회귀, mandate text 0건 — 이미 implementation work 정의 명확).
 - `plugin-codeforge-design` 0.6.0 → 0.7.0 MINOR — CodebaseMapperAgent / RefactorAgent model field Opus → Sonnet **+ mandate text 재정의** (description frontmatter + 본문 mandate boundary section).
+- `plugin-codeforge-requirements` 영향 0 (ChangeImpactAgent Opus 유지).
 - `marketplace.json` 3 entry sync — **본 PR scope 외**, Epic CFP-462 close 시 일괄 처리 (24h drift window 발생 → audit comment 자동 발의 인지, ADR-063 §결정 5 hotfix-bypass:marketplace-atomic 채널 외 normal merge).
 
 ### Why
 
-CFP-393 회고에서 발견된 3-way drift (CLAUDE.md L127 8종 / ADR-057 §결정 3 5종 / agent file 실측 4종) 의 reverse direction 해소. CLAUDE.md L127 8종이 정합인 상태로 회복 — 3 agent (ChangeImpact / CodebaseMapper / Refactor) Opus → Sonnet 복귀. mandate text 재정의로 ADR-042 §결정 2 invariant ("Sonnet 으로 fully cover 가능 = role 재정의 시그널") 정합 강제.
+CFP-393 회고에서 발견된 3-way drift (CLAUDE.md L127 8종 / ADR-057 §결정 3 5종 / agent file 실측 4종) 의 reverse direction 해소. CLAUDE.md L127 8종이 정합인 상태로 회복 — 3 agent (CodebaseMapper / Refactor / DeveloperPL) Opus → Sonnet 복귀. 사용자 framing 진화 — 초기 결정 (ChangeImpact + Mapper + Refactor) 에서 새 framing ("코드 작성 agent = Sonnet, 고도 추론 불필요" + "ChangeImpact 는 Opus 가 괜찮음") 적용 후 swap. ADR-042 §결정 1 (b) "Implementation work" verbatim 정합. mandate text 재정의로 ADR-042 §결정 2 invariant ("Sonnet 으로 fully cover 가능 = role 재정의 시그널") 정합 강제.
 
 ### Compatibility
 

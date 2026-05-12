@@ -23,9 +23,9 @@
 #         - FrontendDeveloperAgent   (ADR-057 §결정 3 + ADR-042 Amendment 4)
 #         - IntegrationTestAgent     (ADR-057 §결정 3 + ADR-042 Amendment 4)
 #         - StatefulTestAgent        (ADR-057 §결정 3 + ADR-042 Amendment 4)
-#         - ChangeImpactAgent        (ADR-057 §결정 3 Amendment 3 신규 — CFP-448 selective rollback)
 #         - CodebaseMapperAgent      (ADR-057 §결정 3 Amendment 3 신규 — CFP-448 selective rollback + mandate 재정의)
 #         - RefactorAgent            (ADR-057 §결정 3 Amendment 3 신규 — CFP-448 selective rollback + mandate 재정의)
+#         - DeveloperPLAgent         (ADR-057 §결정 3 Amendment 3 신규 — CFP-448 selective rollback, 사용자 framing 직접 적용)
 #       drift 발견 시 별도 CFP follow-up (Story CFP-393 §11 follow-up #1 + CFP-448 §11 follow-up).
 #
 # 분자: §14 `transcript` 필드 substring `[rate-limit-fallback:sonnet→opus]`
@@ -56,16 +56,16 @@
 set -euo pipefail
 
 # Sonnet 잔류 agent 8종 — ADR-057 §결정 3 (Amendment 3, CFP-448 selective rollback) + ADR-042 Amendment 5 SSOT verbatim.
-# CFP-448 (2026-05-12) selective rollback 3 entry append (ChangeImpact / CodebaseMapper / Refactor).
+# CFP-448 (2026-05-12) selective rollback 3 entry append (CodebaseMapper / Refactor / DeveloperPL).
 SONNET_AGENTS=(
   "DeveloperAgent"
   "BackendDeveloperAgent"
   "FrontendDeveloperAgent"
   "IntegrationTestAgent"
   "StatefulTestAgent"
-  "ChangeImpactAgent"
   "CodebaseMapperAgent"
   "RefactorAgent"
+  "DeveloperPLAgent"
 )
 
 WINDOW_MONTHS=3
@@ -138,11 +138,12 @@ if [[ -f "$ADR_057_FILE" || -f "$ADR_042_FILE" ]]; then
         if [[ "$existing" == "$name" ]]; then already=1; break; fi
       done
       [[ $already -eq 0 ]] && ADR_DETECTED_AGENTS+=("$name")
-    done < <(grep -oE "\b(DeveloperAgent|BackendDeveloperAgent|FrontendDeveloperAgent|IntegrationTestAgent|StatefulTestAgent|ChangeImpactAgent|CodebaseMapperAgent|RefactorAgent|QADeveloperAgent|InfraEngineerAgent|DataEngineerAgent)\b" "$adr_f" 2>/dev/null | sort -u)
+    done < <(grep -oE "\b(DeveloperPLAgent|DeveloperAgent|BackendDeveloperAgent|FrontendDeveloperAgent|IntegrationTestAgent|StatefulTestAgent|ChangeImpactAgent|CodebaseMapperAgent|RefactorAgent|QADeveloperAgent|InfraEngineerAgent|DataEngineerAgent)\b" "$adr_f" 2>/dev/null | sort -u)
   done
 
   # SONNET_AGENTS (8종 hardcode, CFP-448 Amendment 3 후) vs ADR detected — strict equal set 검증.
-  # SSOT 가 8종 명시: DeveloperAgent / BackendDeveloperAgent / FrontendDeveloperAgent / IntegrationTestAgent / StatefulTestAgent / ChangeImpactAgent / CodebaseMapperAgent / RefactorAgent.
+  # SSOT 가 8종 명시: DeveloperAgent / BackendDeveloperAgent / FrontendDeveloperAgent / IntegrationTestAgent / StatefulTestAgent / CodebaseMapperAgent / RefactorAgent / DeveloperPLAgent.
+  # ChangeImpactAgent 는 regex 에 유지 (drift 발견 가능성 위해 — Opus 유지이지만 ADR 본문에 등장) — 현재 Sonnet 잔류 list 외.
   # ADR 가 본문에 다른 agent 도 언급할 수 있으나, enum drift detection 의 정확한 의미 =
   # SONNET_AGENTS 8종 모두 ADR_DETECTED_AGENTS 에 포함되어야 함 (역방향은 ADR 본문 자유).
   for sa in "${SONNET_AGENTS[@]}"; do
@@ -282,7 +283,7 @@ END {
 
 # --- Aggregation ---
 # monthly_data 각 bucket 별 spawn_total + fallback_count 산출.
-# Sonnet agent 5종만 분모 — substring 매치 (plugin namespace `(codeforge-*@*)` 무시).
+# Sonnet agent 8종만 분모 — substring 매치 (plugin namespace `(codeforge-*@*)` 무시).
 declare -A SPAWN_MAP
 declare -A FB_MAP
 for b in "${WINDOW_BUCKETS[@]}"; do
@@ -299,7 +300,7 @@ while IFS=$'\t' read -r bucket agent fb_flag; do
   if [[ "$bucket" < "$WINDOW_FIRST" || "$bucket" > "$WINDOW_LAST" ]]; then
     continue
   fi
-  # agent 가 Sonnet 5종에 포함되는지 substring 매치.
+  # agent 가 Sonnet 8종에 포함되는지 substring 매치.
   matched=0
   for sa in "${SONNET_AGENTS[@]}"; do
     if [[ "$agent" == *"$sa"* ]]; then matched=1; break; fi
