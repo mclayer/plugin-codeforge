@@ -601,3 +601,33 @@ entries:
     owner_adr: ADR-040
     carrier_adr: ADR-040
     status: Active
+
+  - name: evidence-registry-schema-validation
+    description: |
+      ADR-060 Amendment 2 §결정 14 verbatim — evidence-checks-registry.yaml schema
+      mechanical verification (6 validation rule: schema_version field + entry
+      required field + current_tier enum membership + bypass_label↔bypass_audit_lint
+      pair 정합 + entry name uniqueness + owner_adr/carrier_adr ADR file cross-ref).
+      메타 lint self-application 첫 사례 — self-entry 도 다른 entry 와 동일 검증
+      (Q4 결정 verbatim — special-case 도입 X). 본 entry 와 §결정 14 의 메타 anomaly
+      lint 는 분리 (Q6 결정 verbatim — 별도 carrier).
+      Exit code 3-tier (ADR-060 Amendment 2 §결정 15): 0=PASS / 1=validation FAIL /
+      2=META-ERROR (pyyaml 미설치 / file 부재 / unexpected exception).
+    detect_command: bash scripts/check-evidence-registry.sh
+    workflow: templates/github-workflows/evidence-registry-check.yml
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
+    # bypass_label: omit — ADR-060 Amendment 2 §결정 16 정합 (warning tier 의 bypass 의미 부적용)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies: []         # 독립 entry — schema validation, 외부 의존 없음
+      evidence_artifacts:              # 승격 carrier PR 의 manual 첨부 의무
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    # modal_anti_pattern_dictionary: omit — schema validation lint, modal 어휘 검사 미포함
+    introduced_by: CFP-455
+    owner_adr: ADR-060                 # framework SSOT — schema 정합 검증의 정책 owner
+    carrier_adr: ADR-060               # Amendment 2 carrier (self-application 의 self-carrier 패턴)
+    status: Active

@@ -87,15 +87,22 @@ Amendment 날짜: 2026-05-11
 **Mechanism**: consumer `.claude/settings.json` `hooks.SessionStart[]` 에 `templates/.claude/hooks/SessionStart-codeforge-prereq-check.json.sample` 을 등록함으로써, Claude Code harness 가 세션 부팅 시점에 helper script `scripts/check-codeforge-prereq.sh` 의 stdout 을 Orchestrator 첫 turn context 에 prompt-injection 형태로 inject. helper script 본문 = 다음 instruction 의 static heredoc echo:
 
 ```
-You MUST call the following as your first tool actions in this session, before
+You MUST call the following as your first tool action in this session, before
 responding to any user message:
 
-  ToolSearch(query="select:TodoWrite", max_results=1)
+  ToolSearch(query="select:TodoWrite,EnterWorktree,ExitWorktree,SendMessage", max_results=5)
 
-This loads schemas for deferred tools required by codeforge orchestration
-(ADR-038 §결정 9). If ToolSearch fails: retry once. If retry fails: warn user,
-continue without progress visualization (ADR-038 §결정 7 fallback).
+This loads schemas for 4 deferred tools required by codeforge orchestration
+(ADR-038 §결정 9 + CFP-463 extension):
+  - TodoWrite — progress visualization
+  - EnterWorktree / ExitWorktree — worktree-first workflow (ADR-040)
+  - SendMessage — agent teammate communication (ADR-044)
+
+If ToolSearch fails: retry once. If retry fails: warn user, continue
+(ADR-038 §결정 7 fallback).
 ```
+
+> **CFP-463 extension (2026-05-12)**: 초기 preload list (TodoWrite 단독) 를 4 tool 로 확장. cost-benefit 평가 — codeforge orchestrator Story 작업 시 4 tool 모두 high-frequency 사용 → 4x token cost 가 첫 사용 latency 4회 제거 와 trade-off positive. measurable 도입 의도 evidence = 본 retro session 의 EnterWorktree/SendMessage 첫 사용 시 ToolSearch latency 4회 발생.
 
 **본 hook 의 책임 경계 (한계 명시 — Researcher 3-tier 중 (b) layer 한정)**:
 
@@ -104,7 +111,7 @@ continue without progress visualization (ADR-038 §결정 7 fallback).
 
 **Extensibility — `prereq_tools[]` + `prereq_checks[]` array schema**:
 
-본 hook sample 은 향후 추가 deferred tool (Monitor / WebFetch / 자주 쓰이는 mcp__github__\*) 또는 prereq check (ADR-053 structural-change verify / settings.json sanity) 가 필요할 경우 schema-only 갱신으로 list 확장 가능. **초기 preload list = TodoWrite 단독** (보수적 minimum, 향후 별도 CFP 가 measurable 도입 의도 후 확장).
+본 hook sample 은 향후 추가 deferred tool (Monitor / WebFetch / 자주 쓰이는 mcp__github__\*) 또는 prereq check (ADR-053 structural-change verify / settings.json sanity) 가 필요할 경우 schema-only 갱신으로 list 확장 가능. **초기 preload list = TodoWrite 단독** (보수적 minimum, 향후 별도 CFP 가 measurable 도입 의도 후 확장). **현재 list = TodoWrite + EnterWorktree + ExitWorktree + SendMessage 4종 (CFP-463 extension, 2026-05-12)**.
 
 **Layered defense (fallback retain)**:
 

@@ -35,11 +35,16 @@ fi
 cat <<'EOF'
 [codeforge prereq-check]
 
-You MUST call the following as your first tool actions in this session, before responding to any user message:
+You MUST call the following as your first tool action in this session, before responding to any user message:
 
-- `ToolSearch("select:TodoWrite")` — load TodoWrite schema for progress visualization (ADR-038 §결정 9 / CFP-500)
+- `ToolSearch("select:TodoWrite,EnterWorktree,ExitWorktree,SendMessage")` — load 4 deferred tool schemas in single call (ADR-038 §결정 9 / CFP-500 / CFP-463)
 
-Failure to load this schema will result in TodoWrite InputValidationError when ADR-038 progress visualization is attempted. This is a hard requirement for codeforge lane work.
+Tools loaded:
+- `TodoWrite` — progress visualization (CFP-385 / ADR-038 Amendment 1)
+- `EnterWorktree` / `ExitWorktree` — worktree-first workflow (ADR-040)
+- `SendMessage` — agent teammate communication (ADR-044)
+
+Failure to load these schemas will result in InputValidationError at first use (TodoWrite for progress / EnterWorktree for Story-scoped isolation / SendMessage for lane PL ↔ agent dialog). This is a hard requirement for codeforge orchestrator workflow.
 EOF
 
 exit 0
