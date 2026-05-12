@@ -1,14 +1,14 @@
 ---
 kind: registry
 registry: label
-version: "2.2"
+version: "2.3"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
 created_date: 2026-05-09
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/label-registry-v2.md
-date: 2026-05-11  # CFP-393 v2.2 — monitoring tier + codeforge-kpi-alert
+date: 2026-05-12  # CFP-451 v2.3 — monitoring tier sub-axis (alert + infra-error + update)
 authors:
   - Claude (CFP-140 — ADR-049 type:* → native Issue Types cutover)
 related_adrs:
@@ -21,6 +21,7 @@ related_adrs:
   - ADR-050 (CFP-344 — conflict:* + merge-order:* labels v2.1)
   - ADR-057 (CFP-393 — codeforge-kpi-alert + monitoring tier v2.2)
   - ADR-060 (CFP-393 — framework first non-sunset application)
+  - ADR-005 (CFP-451 — self-application byte-identical .github/workflows copy)
 related_files:
   - scripts/bootstrap-labels.sh (type:* 3 entry removed — CFP-140)
   - templates/issue-types.yaml (native Issue Types SSOT — CFP-140)
@@ -35,6 +36,15 @@ related_files:
 # label-registry v2
 
 ## 변경 이력
+
+**v2.3 (CFP-451 / ADR-057 Amendment 2 / ADR-060 / ADR-005, 2026-05-12)**: MINOR bump.
+- **추가**: `codeforge-kpi-infra-error` (color `d73a4a` red — severity / oncall) — rate-limit-fallback-kpi.yml workflow infrastructure failure (clone fail / aggregator script error / auto-PR fail). measurement alert (`codeforge-kpi-alert`) 와 분리된 channel — audience-based routing (oncall vs 정책 의사결정자).
+- **추가**: `codeforge-kpi-update` (color `0e8a16` green — info / data refresh marker) — rate-limit-fallback-kpi.yml workflow 가 monthly cron 으로 발의하는 data-only refresh PR. **pre-existing leak 정정** (Codex F-451-001 (a)) — CFP-393 workflow line 237 에서 `gh pr create --label codeforge-kpi-update` 사용 중이었으나 registry / bootstrap 부재 (sub-issue carrier 미발의 leak).
+- **monitoring tier sub-axis 다축 완결** (v2.2 의 "sub-axis 확장 자연" 선언 첫 다축 사례):
+  - `codeforge-kpi-alert` (orange `f29513`) = severity:warn — measurement threshold violation
+  - `codeforge-kpi-infra-error` (red `d73a4a`) = severity:error — infrastructure failure
+  - `codeforge-kpi-update` (green `0e8a16`) = severity:info — data-only refresh marker
+- canonical-only (kind:registry — sibling sync scope 외 per ADR-010).
 
 **v2.2 (CFP-393 / ADR-057 Amendment 2 / ADR-060, 2026-05-11)**: MINOR bump.
 - **추가**: `codeforge-kpi-alert` — codeforge KPI threshold violation alert (CFP-393 ADR-057 fallback rate KPI dashboard, rate-limit-fallback-kpi.yml CI Action 자동 부착)
@@ -53,7 +63,7 @@ related_files:
 
 ## 1. 목적
 
-`bootstrap-labels.sh`가 생성하는 GitHub label SSOT (v2.2 시점 33+ 종 — type 1 / phase 8 / gate 4 / fix 4 / hotfix 2 / audit 12+ / category 7 / conflict 5 / monitoring 1).
+`bootstrap-labels.sh`가 생성하는 GitHub label SSOT (v2.3 시점 35+ 종 — type 1 / phase 8 / gate 4 / fix 4 / hotfix 2 / audit 12+ / category 7 / conflict 5 / monitoring 3).
 `type:epic` / `type:story` / `type:bug` 는 native Issue Types 로 대체 (ADR-049).
 
 ## 2. Schema
@@ -352,13 +362,27 @@ labels:
     single_active: false
     attach_owner_plugin: "GitOpsAgent"
 
-  # monitoring:* (1종 — CFP-393 v2.2 신설 tier)
+  # monitoring:* (3종 — CFP-451 v2.3 sub-axis 다축 완결 / CFP-393 v2.2 신설 tier)
   # KPI / metric / dashboard / alert 영역. 기존 `audit` (후처리 분류) 와 분리.
-  # 향후 sub-axis (info / warn / error) 확장 자연.
+  # sub-axis: info (data refresh) / warn (measurement alert) / error (infra failure).
   - name: codeforge-kpi-alert
     category: monitoring
     color: "f29513"
     description: "codeforge KPI threshold violation alert (CFP-393 ADR-057 fallback rate KPI dashboard). rate-limit-fallback-kpi.yml workflow 가 sample_size_sufficient=true AND fallback_rate_percent >= 1.0% 시 Issue auto-open. ADR-060 evidence-enforceable framework 첫 non-sunset application."
+    single_active: false
+    attach_owner_plugin: "rate-limit-fallback-kpi.yml CI Action (자동)"
+
+  - name: codeforge-kpi-infra-error
+    category: monitoring
+    color: "d73a4a"
+    description: "KPI workflow infrastructure failure — oncall investigation required. rate-limit-fallback-kpi.yml workflow 가 clone fail / aggregator script error / auto-PR fail detect 시 Issue auto-open. measurement alert (`codeforge-kpi-alert`) 와 분리된 channel — audience routing (oncall vs 정책 의사결정자). CFP-451 v2.3 sub-axis 다축 완결."
+    single_active: false
+    attach_owner_plugin: "rate-limit-fallback-kpi.yml CI Action (자동)"
+
+  - name: codeforge-kpi-update
+    category: monitoring
+    color: "0e8a16"
+    description: "KPI workflow data refresh PR — auto-merge eligible. rate-limit-fallback-kpi.yml workflow 가 monthly cron 으로 발의하는 docs/kpi/rate-limit-fallback.json 데이터 갱신 PR marker. CFP-451 v2.3 sub-axis 다축 완결 (pre-existing CFP-393 leak 정정 — Codex F-451-001 (a))."
     single_active: false
     attach_owner_plugin: "rate-limit-fallback-kpi.yml CI Action (자동)"
 ```

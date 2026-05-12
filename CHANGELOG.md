@@ -5,6 +5,37 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.22.0] - 2026-05-12
+
+### Added (CFP-451 — codeforge-kpi-infra-error label + sub-axis 다축 완결 + KPI workflow infra error 분기)
+
+CFP-393 ADR-057 fallback rate KPI dashboard 의 후속 — workflow 가 두 가지 다른 종류의 실패 (measurement alert vs infra error) 를 단일 label channel 로 발화하던 한계 해소. monitoring tier sub-axis 다축 완결 (info / warn / error). 추가로 Codex F-451-001 (a) 사전 leak 정정: `codeforge-kpi-update` label 이 workflow line 237 에서 사용 중이었으나 label-registry-v2 + bootstrap-labels.sh 부재 — registry-execution drift 정정.
+
+- `docs/inter-plugin-contracts/label-registry-v2.md` (UPDATE) — v2.2 → v2.3 MINOR bump. **2 entry append**:
+  - `codeforge-kpi-infra-error` (color `d73a4a` red — severity / oncall) — KPI workflow infrastructure failure marker
+  - `codeforge-kpi-update` (color `0e8a16` green — info / data refresh) — pre-existing CFP-393 leak 정정
+  - monitoring tier sub-axis 다축 완결: info (update) / warn (alert) / error (infra-error). count 33+ → 35+.
+- `scripts/bootstrap-labels.sh` (UPDATE) — monitoring 영역 1 → 3 entry. count echo "31 base label" → "33 base label" (component:* 동적 별도).
+- `templates/github-workflows/rate-limit-fallback-kpi.yml` (UPDATE) — infra error 분기 추가:
+  - aggregate step `set -uo pipefail` 전환 (errexit 분리) + `exit_code=$?` capture + `GITHUB_OUTPUT` export
+  - `Create or update auto-PR` step `id: auto_pr` 부여 (detect_infra outcome 캡처 가능)
+  - 신규 step `Detect infra error` (id: detect_infra, if: always()) — clone fail / aggregate exit code 1/2/3/4/* / auto_pr failure 분기, case `*)` fallback default
+  - 신규 step `Open infra error issue` — `gh issue create --label codeforge-kpi-infra-error` 발화 (dedup: window 단위)
+  - Summary step `infra_error` + `infra_error_reasons` 출력 추가
+  - 기존 `Open KPI alert issue` step `if:` 조건 **변경 0** — dual-open semantics 보존 (Story §5.5 결정 3 verbatim)
+- `.github/workflows/rate-limit-fallback-kpi.yml` (UPDATE) — templates 와 byte-identical self-app copy (ADR-005)
+- `scripts/measure-rate-limit-fallback.sh` (UPDATE) — exit code 3 (internal-docs scan failure) + exit code 4 (SONNET_AGENTS enum drift) 추가. 0/1/2 기존 시맨틱 유지. header 주석 multi-line block.
+- `tests/workflows/test_rate-limit-fallback-kpi-yml.sh` (UPDATE) — 4 신규 test_function:
+  - `test_aggregate_exit_code_capture` (AC-12 — PL 신규, Story §5.1 row 부재 / CP §1.3 + §3.5 + §8.1 단일 source / DesignReview F-001 Option C 안전망)
+  - `test_detect_infra_step_exists` — case 분기 + `*)` fallback + exit 3/4 sub-reason
+  - `test_open_infra_issue_step_exists` — `--label codeforge-kpi-infra-error` 부착
+  - `test_alert_dual_open_with_infra_error` — alert step `if:` 조건이 detect_infra 미참조 verify
+  - main() 14 test 등록 (10 기존 + 4 신규)
+- `.claude-plugin/plugin.json` — version 5.21.0 → 5.22.0 MINOR (workflow 변경 동반 ADR-037). description CFP-451 entry append.
+- `marketplace.json` (sibling) — plugins[name=codeforge] version + description sync (ADR-063 atomic invariant — 3-file coordination 의무).
+
+---
+
 ## [5.21.0] - 2026-05-12
 
 ### Added (CFP-449 — forbid-list 어휘 mechanical lint + evidence-enforceable 2nd warning-tier entry)
