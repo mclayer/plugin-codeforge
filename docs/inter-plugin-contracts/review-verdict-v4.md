@@ -123,7 +123,7 @@ review_verdict:
 1. ReviewPL spawn → workers (Claude worker default + Codex worker on user_request) → dedup → review-verdict-v4 packet (no writes)
    ├── findings + pl_recommendation 작성
    ├── worker_dialog_rounds 채움 (Adversarial debate SendMessage round count)
-   ├── mechanical_self_check_passed 채움 (design lane only — ArchitectPLAgent 가 ArchitectAgent §5.5 self-check 결과 forward, ADR-065 / CFP-438)
+   ├── mechanical_self_check_passed 채움 (design lane only — ArchitectPLAgent 가 ArchitectAgent §5.5 Phase 1 commit-time self-check 결과 forward, ADR-065 / CFP-438)
    └── return to Orchestrator
 
 2. Orchestrator self-write (pl_recommendation = PASS | FIX | FIX_DISCRETIONARY 일 때만, ESCALATE_PACKET_INCOMPLETE 시 차단):
