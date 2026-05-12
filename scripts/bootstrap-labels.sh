@@ -85,6 +85,8 @@ create_label "audit:post-hotfix"  "fef2c0" "Post-hotfix audit Story"
 # 색상 = label-registry-v1.md SSOT
 create_label "audit:debut-eval"            "fbca04" "데뷔 평가 (consumer 첫 사용 사례) 발견 사항"
 create_label "audit:from-mctrader-debut"   "fef2c0" "mctrader 데뷔 평가에서 발견된 codeforge gap (첫 사례)"
+# CFP-429: from-cfp-425-followup (Epic CFP-425 gate FAIL 분기 후속 carrier provenance marker, label-registry-v2 v2.5)
+create_label "from-cfp-425-followup"       "fbca04" "Epic CFP-425 (worktree-first mechanical enforcement 영구화) gate FAIL 분기 후속 carrier marker"
 # CFP-88: audit:spec-amendment (CFP-87 / playbook §6.8 follow-up, label-registry v1.2)
 create_label "audit:spec-amendment"        "fbca04" "Mid-implementation spec doc 수정 PR (Codex push-back / 사용자 mid-impl clarification / spec drift 발견 시)"
 # CFP-90: early-close:* (CFP-85 / phase-invariant terminal state follow-up, label-registry v1.2)

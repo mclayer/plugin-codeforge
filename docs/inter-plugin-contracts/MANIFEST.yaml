@@ -58,7 +58,7 @@ registries:
   - name: label_registry
     files:
       - { file: label-registry-v1.md, version: "1.5", status: Archived, superseded_by: label-registry-v2.md }  # CFP-140: type:* deprecated
-      - { file: label-registry-v2.md, version: "2.0", status: Active }  # CFP-140 / ADR-049: native Issue Types
+      - { file: label-registry-v2.md, version: "2.5", status: Active }  # CFP-429 v2.5: from-cfp-425-followup provenance label append | CFP-481 v2.4: phase:* attach_owner_plugin auto-phase-label | CFP-451 v2.3: monitoring tier sub-axis | CFP-393 v2.2: codeforge-kpi-alert + monitoring tier | CFP-344 v2.1: conflict/merge-order | CFP-140 v2.0: native Issue Types
 
   - name: debate_protocol
     canonical_repo: mclayer/plugin-codeforge
