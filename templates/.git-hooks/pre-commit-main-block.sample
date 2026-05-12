@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# CFP-428 — pre-commit main-block hook (warning tier opt-in).
+# Block: main working tree 에서 src/docs commit (worktree-first 정책 정합).
+# carrier: ADR-040 Amendment 3 §결정 7.A action: worktree-first-pre-commit-main-block
+#
+# 환경 변수:
+#   BYPASS_WORKTREE_FIRST (선택, 1 = skip)
+#     ADR-040 Amendment 3 §결정 7.E — `BYPASS_WORKTREE_GC` 와 disjoint scope.
+#
+# Path matching (Plan SSOT verbatim, change-plan §3.2 결정 2):
+#   - src/** 또는 docs/** prefix match 만 차단.
+#   - tests/** / .claude/** / CLAUDE.md / README.md 등 차단 0.
+#   - CLAUDE.md "Story 작성 의무 면제 대상" 정합 (chore commit / typo fix / lint auto fix / dependency lock 등).
+#
+# Edge case (bare repo / detached worktree / submodule) — change-plan §3.2 결정 4:
+#   - bare repo = working tree 부재 → hook trigger 0 (자연 OOS)
+#   - detached worktree = git_dir != common_dir → 본 분기 자동 short-circuit
+#   - submodule = git_dir != common_dir → 본 분기 자동 short-circuit (consumer 별도 carrier)
+
+set -euo pipefail
+
+if [[ "${BYPASS_WORKTREE_FIRST:-}" == "1" ]]; then exit 0; fi
+
+# Detect if current working tree is main (vs worktree)
+git_dir="$(git rev-parse --git-dir 2>/dev/null || echo "")"
+common_dir="$(git rev-parse --git-common-dir 2>/dev/null || echo "")"
+[[ -n "$git_dir" && "$git_dir" == "$common_dir" ]] || exit 0
+
+# Staged file 추출 — empty case (merge commit / empty commit) = match 안 됨 (정상 흐름)
+staged="$(git diff --cached --name-only 2>/dev/null || echo "")"
+[[ -n "$staged" ]] || exit 0
+
+# src/** 또는 docs/** prefix match 만 차단
+if echo "$staged" | grep -qE '^(src|docs)/'; then
+  echo "[pre-commit-main-block] WARN: main working tree 에서 src/docs commit 시도. ADR-040 + playbook §3.0.11 worktree-first 정책 위반. 권장: bash templates/scripts/worktree-create.sh cfp-NNN origin/main 으로 worktree 생성 후 작업." >&2
+  # warning tier — allow (no exit 1)
+fi
+
+exit 0
