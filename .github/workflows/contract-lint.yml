@@ -77,12 +77,5 @@ jobs:
       - name: Run check-workflow-yaml.sh
         run: bash scripts/check-workflow-yaml.sh
 
-  marketplace-sync:
-    name: marketplace mirrored fields drift (CFP-34)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Run check-marketplace-sync.sh
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: bash scripts/check-marketplace-sync.sh
+  # marketplace-sync job removed (CFP-457) — redundant with marketplace-parity.yml (CFP-50 / ADR-016 / ADR-023).
+  # See CFP-441 retro Action item 1 (3 marketplace lint scripts redundancy cleanup).
