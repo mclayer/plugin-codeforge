@@ -482,3 +482,117 @@ entries:
     owner_adr: CFP-26 / ADR-009 (write 권한 invariant)
     carrier_adr: ADR-060
     status: Active
+
+  # ─── CFP-426 Phase 2 backfill (4 entries, ADR-040 Amendment 3 §결정 7.D verbatim, 2026-05-12) ───
+  # Story 1 skeleton (warning tier) — actual wire 는 후속 Story:
+  #   - CFP-427 (Story 2): worktree-first-session-start-wire + worktree-first-spawn-evidence-cwd actual wire
+  #   - CFP-428 (Story 3): worktree-first-pre-checkout + worktree-first-pre-commit-main-block actual git hook
+  #   - CFP-429 (Story 4): 4 entry warning → blocking-on-pr 승격 평가 (ADR-060 §결정 6 gate)
+  # carrier ADR-040 mechanical_enforcement_actions[] 4 entry self-application 첫 사례 (Amendment 3 §결정 7.D)
+
+  - name: worktree-first-session-start-wire
+    description: |
+      ADR-040 §결정 5 (Stale GC) + §결정 7 (Amendment 3) — wrapper repo `.claude/settings.json` 의
+      `hooks.SessionStart[]` 안에 `check-worktree-stale.sh` 호출 entry 존재 검증. SessionStart hook
+      wire 누락 시 stale worktree 자동 GC 미동작 (declaration only → mechanical enforcement 분리).
+      warning tier — continue-on-error: true. 후속 Story (CFP-427) 가 actual wire 첫 사례.
+    detect_command: bash scripts/check-worktree-first-session-start-wire.sh
+    workflow: templates/github-workflows/worktree-first-session-start-wire.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:worktree-session-start-wire
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse (BYPASS_LABEL_PREFIX=hotfix-bypass:)
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0          # ADR-060 §결정 6 (b)
+      sibling_dependencies:         # ADR-060 §결정 6 (c) — Story 4 진입 시 평가
+        - CFP-427
+        - CFP-428
+        - CFP-429
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-426
+    owner_adr: ADR-040
+    carrier_adr: ADR-040
+    status: Active
+
+  - name: worktree-first-pre-checkout
+    description: |
+      ADR-040 §결정 7 (Amendment 3) — main working tree 에서 `git checkout cfp-NNN` 등 lane branch
+      checkout 차단 (worktree-first 정책 정합). pre-checkout git hook sample 존재 검증 +
+      install 권고 출력 (warning tier — install 강제 X). 후속 Story (CFP-428) 가 actual git
+      hook 도입.
+    detect_command: bash scripts/check-worktree-first-pre-checkout.sh
+    workflow: templates/github-workflows/worktree-first-pre-checkout.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:worktree-pre-checkout
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-427
+        - CFP-428
+        - CFP-429
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-426
+    owner_adr: ADR-040
+    carrier_adr: ADR-040
+    status: Active
+
+  - name: worktree-first-pre-commit-main-block
+    description: |
+      ADR-040 §결정 7 (Amendment 3) — main working tree 에서 src/docs commit 차단 (worktree-first
+      정책 정합). pre-commit-main-block git hook sample 존재 검증 + install 권고 출력. 후속
+      Story (CFP-428) 가 actual git hook 도입.
+    detect_command: bash scripts/check-worktree-first-pre-commit-main-block.sh
+    workflow: templates/github-workflows/worktree-first-pre-commit-main-block.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:worktree-pre-commit-main-block
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-427
+        - CFP-428
+        - CFP-429
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-426
+    owner_adr: ADR-040
+    carrier_adr: ADR-040
+    status: Active
+
+  - name: worktree-first-spawn-evidence-cwd
+    description: |
+      ADR-040 §결정 5 + §결정 7 (Amendment 3) + ADR-031 §결정 4 — §14 Lane Evidence row 의
+      `Working dir:` field 가 worktree path (`${HOME}/.claude/worktrees/<repo>/<branch-flat>` 정합)
+      또는 `N/A — <30자 이상 사유>` (ADR-031 §결정 4 bypass mechanism) 인지 검증. wrapper repo
+      `docs/stories/**.md` scan. 후속 Story (CFP-427) 가 actual wire 첫 사례.
+    detect_command: bash scripts/check-worktree-first-spawn-evidence-cwd.sh
+    workflow: templates/github-workflows/worktree-first-spawn-evidence-cwd.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:worktree-spawn-evidence-cwd
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-427
+        - CFP-428
+        - CFP-429
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-426
+    owner_adr: ADR-040
+    carrier_adr: ADR-040
+    status: Active
