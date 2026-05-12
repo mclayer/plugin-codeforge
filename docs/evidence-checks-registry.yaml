@@ -519,6 +519,9 @@ entries:
       wire 누락 시 stale worktree 자동 GC 미동작 (declaration only → mechanical enforcement 분리).
       warning tier — continue-on-error: true. CFP-427 Story 2 가 actual wire 첫 사례 —
       `scripts/check-session-start-hook-presence.sh` `exec` swap wrapper 패턴 (RefactorArch 결정).
+      CFP-429 (Story 4) Amendment 4 declaration: 4/4 actual wire 완료 + ADR-060 §결정 6 promotion
+      gate (b) bypass 외 failure > 0 FAIL → current_tier: warning 유지 + actual 승격 follow-up CFP
+      carrier (from-cfp-425-followup label). Self-test integration test: tests/integration/stories/CFP-425/self-test-worktree-block.sh E4-1 (Phase 2 PR CFP-429).
     detect_command: bash scripts/check-worktree-first-session-start-wire.sh
     workflow: templates/github-workflows/worktree-first-session-start-wire.yml
     current_tier: warning
@@ -548,6 +551,9 @@ entries:
       사례 — `templates/.git-hooks/pre-checkout.sample` + `scripts/install-git-hooks.sh` opt-in
       installer. lint pattern = verification-only (sample 존재 + executable bit 검증,
       Story 2 exec swap 패턴 부적용 — canonical 이 git hook sample 자체).
+      CFP-429 (Story 4) Amendment 4 declaration: 4/4 actual wire 완료 + ADR-060 §결정 6 promotion
+      gate (b) bypass 외 failure > 0 FAIL → current_tier: warning 유지 + actual 승격 follow-up CFP
+      carrier (from-cfp-425-followup label). Self-test integration test: tests/integration/stories/CFP-425/self-test-worktree-block.sh E4-3 (Phase 2 PR CFP-429).
     detect_command: bash scripts/check-worktree-first-pre-checkout.sh
     workflow: templates/github-workflows/worktree-first-pre-checkout.yml
     current_tier: warning
@@ -577,6 +583,9 @@ entries:
       `scripts/install-git-hooks.sh` opt-in installer. path matching = `src/**` 또는 `docs/**`
       only (Plan SSOT verbatim — chore commit / typo fix 등 차단 0). lint pattern =
       verification-only.
+      CFP-429 (Story 4) Amendment 4 declaration: 4/4 actual wire 완료 + ADR-060 §결정 6 promotion
+      gate (b) bypass 외 failure > 0 FAIL → current_tier: warning 유지 + actual 승격 follow-up CFP
+      carrier (from-cfp-425-followup label). Self-test integration test: tests/integration/stories/CFP-425/self-test-worktree-block.sh E4-4 (Phase 2 PR CFP-429).
     detect_command: bash scripts/check-worktree-first-pre-commit-main-block.sh
     workflow: templates/github-workflows/worktree-first-pre-commit-main-block.yml
     current_tier: warning
@@ -606,6 +615,9 @@ entries:
       `docs/stories/**.md` scan. CFP-427 Story 2 가 actual wire 첫 사례 — enforce-from filter
       도입 (본 Story merged at 이후 신규 Story 만, false-positive 회피) + PLACEHOLDER sentinel
       safe-fallback (Phase 2 PR merge 전 enforce 전체 skip).
+      CFP-429 (Story 4) Amendment 4 declaration: 4/4 actual wire 완료 + ADR-060 §결정 6 promotion
+      gate (b) bypass 외 failure > 0 FAIL → current_tier: warning 유지 + actual 승격 follow-up CFP
+      carrier (from-cfp-425-followup label). Self-test integration test: tests/integration/stories/CFP-425/self-test-worktree-block.sh E4-2 (Phase 2 PR CFP-429).
     detect_command: bash scripts/check-worktree-first-spawn-evidence-cwd.sh
     workflow: templates/github-workflows/worktree-first-spawn-evidence-cwd.yml
     current_tier: warning
