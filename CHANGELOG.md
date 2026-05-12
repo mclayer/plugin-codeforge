@@ -5,6 +5,21 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.29.0] - 2026-05-13
+
+> Note: Rebased twice onto main HEAD due to concurrent CFP-521 merges (#523 sibling-pr lint = 5.27.0; #524 PAT rotation = 5.28.0; CFP-462-followup marketplace batch #70). CFP-491 jumps to 5.29.0 to maintain ADR-037 sequential bump invariant.
+
+### Added (CFP-491 — AC mapping cross-ref lint — F-001 Option C systematization)
+
+`scripts/check-impl-manifest-ac-mapping.sh` + `tests/scripts/test_check_impl_manifest_ac_mapping.sh` + `templates/github-workflows/ac-mapping-cross-ref-check.yml` + `.github/workflows/` self-app (ADR-005) + `docs/evidence-checks-registry.yaml` ac-mapping-cross-ref entry (ADR-060 Amendment 6 6번째 warning-tier entry). Story §8.5 Impl Manifest 의 AC id 인용 ↔ §5.1 AC 정의 cross-reference 검증 (1차 단순화 = 2-way only). 기본 mode = LLM trust (exit 0 + stderr advisory), --strict mode + workflow continue-on-error:true defense in depth.
+
+- `scripts/check-impl-manifest-ac-mapping.sh` (NEW)
+- `tests/scripts/test_check_impl_manifest_ac_mapping.sh` (NEW)
+- `templates/github-workflows/ac-mapping-cross-ref-check.yml` (NEW)
+- `.github/workflows/ac-mapping-cross-ref-check.yml` (NEW, self-app)
+- `docs/evidence-checks-registry.yaml` (UPDATE) — ac-mapping-cross-ref entry append (6번째 warning-tier entry)
+- `.claude-plugin/plugin.json` — version 5.28.0 → 5.29.0 MINOR
+
 ## [5.28.0] - 2026-05-13
 
 ### Added (CFP-521 — CODEFORGE_CROSS_REPO_PAT rotation policy + ADR-066)

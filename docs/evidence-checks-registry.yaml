@@ -797,3 +797,37 @@ entries:
     owner_adr: ADR-010 Amendment 4 §결정 5   # sibling-pr fast-pass anti-misuse 안전망 SSOT
     carrier_adr: ADR-060             # framework carrier (warning mode entry)
     status: Active
+
+  # ─── CFP-491 Phase 2 (impl manifest AC mapping cross-ref lint, 2026-05-13) ───
+  # ADR-060 Amendment 6 — 6번째 warning-tier entry (CFP-451 F-001 Option C systematization)
+  # (1st = adr-sunset-criteria / 2nd = decision-principle-vocab / 3rd = auto-phase-label /
+  # 4th = claude-md-line-cap / 5th = sibling-pr-label-author-check)
+  # 1차 단순화: §8.5 → §5.1 only (2-way). 3-way (Change Plan §1.3/§3.5/§8.1) = follow-up CFP.
+
+  - name: ac-mapping-cross-ref
+    description: |
+      ADR-060 Amendment 6 / CFP-451 F-001 Option C systematization — Story §8.5 Impl Manifest
+      의 AC id 인용 ↔ §5.1 AC 정의 영역 의 cross-reference 검증. 1차 단순화 = §8.5 → §5.1
+      only (2-way drift detection). 3-way (Change Plan §1.3/§3.5/§8.1 의 AC 정의) cross-check
+      = follow-up CFP scope. Exit code 3-tier (ADR-060 Amendment 2 §결정 15): 0 PASS / 1
+      violation (--strict mode 또는 향후 enforce) / 2 meta-error (file 부재). 기본 mode =
+      LLM trust (exit 0 + stderr advisory) — CI workflow continue-on-error:true 와 defense in depth.
+    detect_command: bash scripts/check-impl-manifest-ac-mapping.sh
+    workflow: templates/github-workflows/ac-mapping-cross-ref-check.yml
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:ac-mapping
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: []       # 독립 entry — Story §8.5 / §5.1 lint patterns 검증 외 의존 없음
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    # modal_anti_pattern_dictionary: omit — schema cross-reference lint, modal 어휘 검사 미포함
+    introduced_by: CFP-491
+    introduced_date: 2026-05-13
+    owner_adr: CFP-451 F-001 Option C   # F-001 retro follow-up systematization 동인
+    carrier_adr: ADR-060                # framework carrier (warning mode entry)
+    status: Active
