@@ -8,11 +8,40 @@ related_files:
   - CLAUDE.md (본 ADR 의 enforcement 대상 + 5-line summary inline)
   - docs/superpowers/specs/2026-04-30-cfp-44-wrapper-claudemd-ssot-compression-design.md (parent CFP)
   - docs/adr/ADR-014-operational-risk-ssot-distribution.md (CFP-46 4번째 SSOT 예외 짝꿍)
+  - docs/adr/ADR-051-ssot-skill-extraction-pattern.md (CFP-343 / CFP-506 — skill 추출 패턴, SSOT 예외 영역의 skill SSOT 인용)
+  - docs/adr/ADR-060-evidence-enforceable-promotion-framework.md (CFP-506 Amendment 1 — mechanical lint forcing function carrier)
+  - scripts/check-claude-md-line-cap.sh (CFP-506 Amendment 1 — line-count assertion)
+  - templates/github-workflows/claude-md-line-cap.yml (CFP-506 Amendment 1 — warning-tier workflow)
 related_stories:
   - CFP-44 (본 ADR 신설 시점 — wrapper CLAUDE.md 705→~330줄 압축)
   - CFP-43 (parent — X2 cleanup, 잔존 부속 사항 진단의 직전 상태)
   - ADR-009 (parent ζ arc decomposition — 6 lane plugin 추출)
+  - CFP-506 (Amendment 1 — cap ≤380 → ≤320 ratchet + §3 scope 4-층 재해석)
+related_adrs:
+  - ADR-014  # 4번째 SSOT 예외 짝꿍 (operational risk SSOT)
+  - ADR-051  # CFP-343 / CFP-506 — SSOT skill 추출 패턴
+  - ADR-058  # ratchet 약화 차단 (sunset criteria mandate)
+  - ADR-060  # CFP-506 Amendment 1 — mechanical lint framework carrier
+  - ADR-064  # decision principle mandate (anchor 분류 source)
+  - ADR-040  # Amendment 3 §결정 7.D self-application 패턴 reuse
 is_transitional: false
+amendment_log:
+  - amendment: 1
+    carrier_story: CFP-506
+    date: 2026-05-13
+    summary: |
+      cap ≤380 → ≤320 ratchet 강화 (ADR-058 §결정 5 정합, 강화 방향 — sunset_justification 면제) +
+      §3 "4 SSOT 예외" 표현 재해석 — CFP-343 (ADR-051) + 본 CFP-506 결과 모두 skill SSOT 로 분리됨에 따라 wrapper CLAUDE.md scope 4-층 (identity / cross-cutting policy / anchor / skill pointer) 본문 재정의 +
+      신설 §결정 5 (anchor 본문 inline 유지 / reference skill 추출 / "SSOT 예외" 표현 = "skill SSOT 로 인용" 재해석) +
+      신설 §결정 6 (mechanical lint forcing function = scripts/check-claude-md-line-cap.sh + claude-md-line-cap.yml warning tier, ADR-060 4번째 entry carrier_adr cross-ref) +
+      `is_transitional: false` 유지 (permanent policy, ratchet 약화 차단 정합).
+mechanical_enforcement_actions:
+  - name: claude-md-line-cap
+    binding: 결정 6
+    workflow: templates/github-workflows/claude-md-line-cap.yml
+    detect_command: bash scripts/check-claude-md-line-cap.sh
+    tier: warning
+    bypass_label: hotfix-bypass:claude-md-line-cap
 ---
 
 # ADR-012: Wrapper CLAUDE.md SSOT Boundary
@@ -76,6 +105,31 @@ CLAUDE.md 본문 top (intro 직후) 에 본 ADR 의 5-line summary + ADR link in
 - ADR-012 frontmatter + section schema PASS
 
 **2026-04-30 amendment (CFP-46)** — 4번째 SSOT 예외 추가. operational risk schema (§7.4) 가 codeforge-design plugin SSOT 라 wrapper 의 cross-lane 책임 매트릭스·decision table·deputy mandate matrix 만 wrapper 보유. 향후 §7.X / §11.X 추가 시 동일 패턴 (좁은 명명 + 짝꿍 ADR 개정) 의무 — H16 exception creep 차단.
+
+### 결정 5: wrapper CLAUDE.md scope 4-층 재해석 (CFP-506 Amendment 1)
+
+CFP-343 (ADR-051) 의 4 SSOT skill 분리 + 본 CFP-506 의 reference 4 블록 추가 skill 분리 결과, 위 "## 결정" 본문의 "4 SSOT 예외" 표현은 다음 4-층 분류로 재해석된다:
+
+1. **identity** (Plugin intro / marketplace sync 의무 / 세션 개시 dependency check) — 매 turn unconditional 적용
+2. **cross-cutting policy** (dogfood Story 작성 의무 / write boundary anchor / branch governance / inter-plugin contract anchor / ADR pointer 등) — 매 turn unconditional 적용
+3. **anchor** (§결정 원칙 ADR-064 normative SSOT — forbid-list 8 어휘 / 4 normative anchor / sequential 3 사유 / Top-down ratchet) — 매 turn unconditional 자기검열 의무, skill 추출 거부 (ADR-051 Amendment 1 §결정 4 anchor vs reference 판정자 정합)
+4. **skill pointer** (lane-conditional reference — `codeforge:review-responsibility` / `codeforge:root-cause-decision` / `codeforge:fix-ledger-schema` / `codeforge:deputy-mandate` / `codeforge:lane-self-write-boundary` / `codeforge:story-cutoff-classification` / `codeforge:inter-plugin-contract-registry` / `codeforge:story-epic-flow-preflight` — 총 8 wrapper-owned SSOT skill + `codeforge:codeforge-brainstorm` Stage 0) — lane 진입 / 이벤트 발화 시 lazy load
+
+"SSOT 예외" 라는 표현 = "wrapper 가 본문 inline 으로 보유한 cross-lane SSOT" 의미가 아니라 "wrapper CLAUDE.md 본문 inline 으로 보유하지 않고 wrapper-owned skill 로 인용" 의미로 재해석한다.
+
+### 결정 6: cap ≤320 + mechanical lint forcing function (CFP-506 Amendment 1)
+
+**cap ratchet**: `wc -l CLAUDE.md` ≤ **320** (이전 ≤ 380 으로부터 강화). ADR-058 §결정 5 정합 (강화 방향 — sunset_justification 면제). 본 amendment 이후 신규 CLAUDE.md 변경 PR 부터 발효.
+
+cap declaration 자체로는 사후 감지만 가능 — CFP-44 이후 CFP-506 시점까지 434줄로 누적 (54줄 초과 지속) 이 작성 시점 enforce 필요성 입증.
+
+**mechanical lint forcing function**:
+- `scripts/check-claude-md-line-cap.sh` — line-count assertion (exit 0 PASS / exit 1 validation FAIL / exit 2 meta-error, ADR-060 §결정 15 3-tier semantic)
+- `templates/github-workflows/claude-md-line-cap.yml` — warning-tier workflow (`continue-on-error: true`, ADR-060 §결정 5)
+- `.github/workflows/claude-md-line-cap.yml` — byte-identical self-app mirror (CFP-449 sentinel 1 / ADR-005 invariant-check.sh)
+- bypass channel = `hotfix-bypass:claude-md-line-cap` label (label-registry-v2 v2.4 8번째 hotfix-bypass family member, ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합) + `check-bypass-audit-comment.sh` reuse (audit comment 자동 발의)
+
+framework carrier = [ADR-060 Amendment 5](ADR-060-evidence-enforceable-promotion-framework.md) — 4번째 warning-tier entry. declaration-only ADR mechanical enforcement 확장 (ADR-040 Amendment 3 §결정 7.D self-application 패턴 reuse — 1st adr-sunset-criteria / 2nd decision-principle-vocab / 3rd auto-phase-label / 4th claude-md-line-cap).
 
 ## 거부된 대안
 

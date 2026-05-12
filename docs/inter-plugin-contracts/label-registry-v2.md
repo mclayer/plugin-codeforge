@@ -23,6 +23,9 @@ related_adrs:
   - ADR-060 (CFP-393 — framework first non-sunset application + CFP-481 Amendment 4 — 3rd warning-tier entry auto-phase-label carrier)
   - ADR-005 (CFP-451 — self-application byte-identical .github/workflows copy)
   - ADR-024 (CFP-481 Amendment 4 — branch → phase mapping 표 SSOT + hotfix-bypass:auto-phase-label 7번째 family member)
+  - ADR-012 (CFP-506 Amendment 1 — cap ratchet ≤320 + §3 scope 4-층 재해석)
+  - ADR-051 (CFP-506 Amendment 1 — Draft → Accepted + anchor vs reference 판정자)
+  - ADR-060 Amendment 5 (CFP-506 — 4th warning-tier entry claude-md-line-cap + hotfix-bypass:claude-md-line-cap 8번째 family member)
 related_files:
   - scripts/bootstrap-labels.sh (type:* 3 entry removed — CFP-140)
   - templates/issue-types.yaml (native Issue Types SSOT — CFP-140)
@@ -41,6 +44,12 @@ related_files:
 **v2.4 (CFP-481 / ADR-060 Amendment 4 / ADR-024 Amendment 4, 2026-05-12)**: MINOR bump.
 - **갱신**: phase:* 8 label entry 의 `attach_owner_plugin` field — `auto-phase-label.yml` Action 자동 부착 owner 추가 (PR open 시 1순위 inference fallback chain 으로 부착, ADR-024 Amendment 4 §결정 6.A.1 branch → phase mapping 표 verbatim 사용).
 - 기존 lane plugin self-write 영역 invariant 보전 — `auto-phase-label.yml` 가 `if: !contains(...labels.*.name, 'phase:')` 가드로 story-init.yml 가 만든 PR (이미 phase label 부착) skip → 책임 분리.
+- canonical-only (kind:registry — sibling sync scope 외 per ADR-010).
+
+**v2.4 추가 entry (CFP-506 / ADR-012 Amendment 1 / ADR-060 Amendment 5, 2026-05-13)**: same MINOR sub-entry append (frontmatter `version: "2.4"` 미변경, sub-row only — ADR-008 §결정 SemVer rule 안 same MINOR 안 additive sub-entry 허용).
+- **추가**: `hotfix-bypass:claude-md-line-cap` (color `fef2c0` audit) — `templates/github-workflows/claude-md-line-cap.yml` warning-tier mechanical lint conditional skip + audit comment 자동 발의 channel (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합, **8번째 hotfix-bypass:* family member** — 기존 7: adr-sunset / decision-principle-vocab / auto-phase-label / marketplace-atomic / worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd}).
+- bypass 사용 시 `check-bypass-audit-comment.sh` 가 audit comment 발의 (reuse 패턴, 1st/2nd/3rd entry 동일).
+- `scripts/bootstrap-labels.sh` sync 동반 의무 (Phase 1 PR scope, ADR-065 §결정 1 #1 self-check PASS gate).
 - canonical-only (kind:registry — sibling sync scope 외 per ADR-010).
 
 **v2.3 (CFP-451 / ADR-057 Amendment 2 / ADR-060 / ADR-005, 2026-05-12)**: MINOR bump.
