@@ -49,12 +49,25 @@ amendment_log:
       label-registry-v2 v2.3 MINOR 동반 (phase:* 8 label entry attach_owner_plugin field 갱신 — `auto-phase-label.yml` 명시) +
       ratchet 위반 0건 — enum 값 / tier 추가 / bypass channel 동작 변경 없음, framework 의 자연스러운 사용 사례 entry 추가 only (ADR-058 §결정 5 sunset_justification 의무 통과 — 강화 방향 amendment, framework SSOT permanent governance) +
       sibling_dependencies append `[CFP-390, CFP-412, CFP-455, CFP-449, CFP-481]` (Amendment 2 §결정 6 (c) chain 정합 — CFP-449 / CFP-481 모두 framework 운영 검증 entry).
+  - amendment: 5
+    carrier_story: CFP-506
+    date: 2026-05-13
+    summary: |
+      4th warning-tier entry `claude-md-line-cap` 등록 carrier amendment — CLAUDE.md 본문 줄수가 ADR-012 cap (≤320, CFP-506 Amendment 1 후) 초과 시 사후 감지 → 작성 시점 enforce 전환 (declaration-only ADR mechanical enforcement 확장 첫 ADR-012 cap 영역 application) +
+      registry yaml row append (Phase 2 PR scope) — schema 변경 0건 (Amendment 2 schema v1.1 정합, `current_tier: warning` + `bypass_label: hotfix-bypass:claude-md-line-cap` per-entry namespace 정합) +
+      label-registry-v2 v2.4 same-MINOR sub-entry append 동반 (`hotfix-bypass:claude-md-line-cap` 8번째 family member, v2.4 frontmatter `version` 미변경 — CFP-481 v2.3 → v2.4 carrier 후 본 CFP-506 = same MINOR 안 hotfix-bypass family entry append) +
+      ADR-012 Amendment 1 동반 (cap ≤380 → ≤320 ratchet + §3 scope 4-층 재해석 + §결정 5/6 신설) +
+      ADR-051 Amendment 1 동반 (status Draft → Accepted + §결정 7/8/9 신설 — anchor vs reference 판정자 / 5~9 skill pattern reuse / silent dead code 3-층 안전망) +
+      ADR-040 Amendment 3 §결정 7.D self-application 패턴 reuse (warning tier + bypass label + audit_lint 동반, 1st/2nd/3rd entry 패턴 동일) +
+      ratchet 위반 0건 — enum 값 / tier 추가 / bypass channel 동작 변경 없음, framework 의 자연스러운 사용 사례 entry 추가 only (ADR-058 §결정 5 sunset_justification 의무 통과 — 강화 방향 amendment) +
+      sibling_dependencies append `[CFP-390, CFP-412, CFP-455, CFP-449, CFP-481, CFP-506]` (Amendment 2 §결정 6 (c) chain 정합).
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
   - CFP-388  # parent Epic
   - CFP-449  # Amendment 3 carrier — 2nd warning-tier entry `decision-principle-vocab` + bypass channel 의미 sharpening
   - CFP-481  # Amendment 4 carrier — 3rd warning-tier entry `auto-phase-label` + ADR-024 Amendment 4 동반 + label-registry-v2 v2.3 MINOR 동반
+  - CFP-506  # Amendment 5 carrier — 4th warning-tier entry `claude-md-line-cap` + ADR-012 Amendment 1 + ADR-051 Amendment 1 + label-registry-v2 v2.4 same-MINOR sub-entry 동반
 related_adrs:
   - ADR-008   # versioning (kind:registry 도 minor/major SemVer 정합)
   - ADR-010   # contract sibling sync (kind:registry scope 외 명시)
