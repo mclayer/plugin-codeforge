@@ -1,14 +1,14 @@
 ---
 kind: registry
 registry: label
-version: "2.4"
+version: "2.5"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
 created_date: 2026-05-09
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/label-registry-v2.md
-date: 2026-05-13  # CFP-521 v2.4 sub-entry — hotfix-bypass:sibling-pr-author-check 9번째 family member (ADR-010 Amendment 4 §결정 5 anti-misuse 안전망) | CFP-506 v2.4 sub-entry — hotfix-bypass:claude-md-line-cap 8번째 | CFP-481 v2.4 — phase:* attach_owner_plugin field 갱신 (auto-phase-label.yml 명시)
+date: 2026-05-13  # CFP-429 v2.5 — from-cfp-425-followup provenance label append (Epic CFP-425 gate FAIL 분기 후속 carrier) | CFP-521 v2.4 sub-entry — hotfix-bypass:sibling-pr-author-check 9번째 family member (ADR-010 Amendment 4 §결정 5 anti-misuse 안전망) | CFP-506 v2.4 sub-entry — hotfix-bypass:claude-md-line-cap 8번째 | CFP-481 v2.4 — phase:* attach_owner_plugin field 갱신 (auto-phase-label.yml 명시)
 authors:
   - Claude (CFP-140 — ADR-049 type:* → native Issue Types cutover)
 related_adrs:
@@ -27,6 +27,8 @@ related_adrs:
   - ADR-051 (CFP-506 Amendment 1 — Draft → Accepted + anchor vs reference 판정자)
   - ADR-060 Amendment 5 (CFP-506 — 4th warning-tier entry claude-md-line-cap + hotfix-bypass:claude-md-line-cap 8번째 family member)
   - ADR-010 (CFP-521 Amendment 4 §결정 5 anti-misuse 안전망 — 5th warning-tier entry sibling-pr-label-author-check + hotfix-bypass:sibling-pr-author-check 9번째 family member)
+  - ADR-040 Amendment 4 (CFP-429 — worktree-first enforcement closing the loop declaration carrier, gate FAIL 분기 후속 carrier `from-cfp-425-followup` provenance label 신설)
+  - ADR-060 §결정 6 (CFP-429 — promotion gate 평가 FAIL = warning tier 유지 + actual 승격 follow-up CFP open mandate)
 related_files:
   - scripts/bootstrap-labels.sh (type:* 3 entry removed — CFP-140)
   - templates/issue-types.yaml (native Issue Types SSOT — CFP-140)
@@ -41,6 +43,12 @@ related_files:
 # label-registry v2
 
 ## 변경 이력
+
+**v2.5 (CFP-429 / ADR-040 Amendment 4 / ADR-060 §결정 6, 2026-05-13)**: MINOR bump.
+- **추가**: `from-cfp-425-followup` (color `fbca04` yellow provenance) — Epic CFP-425 (worktree-first mechanical enforcement 영구화) gate FAIL 분기 후속 carrier marker. ADR-060 §결정 6 promotion gate (b) bypass 외 failure > 0 FAIL → 4 entry `current_tier: warning` 유지 + actual `warning → blocking-on-pr` 승격 follow-up Story open carrier 표식.
+- ADR-040 Amendment 4 §결정 7.H (CFP-429 Phase 1) self-application closing the loop declaration 의 evidence row.
+- `scripts/bootstrap-labels.sh` sync 동반 의무 (Phase 2 PR scope — provenance category data row append, ADR-065 §결정 1 #1 self-check PASS gate).
+- canonical-only (kind:registry — sibling sync scope 외 per ADR-010).
 
 **v2.4 추가 entry (CFP-521 / ADR-010 Amendment 4 §결정 5 / ADR-060, 2026-05-13)**: same MINOR sub-entry append (frontmatter `version: "2.4"` 미변경, sub-row only — ADR-008 §결정 SemVer rule 안 same MINOR 안 additive sub-entry 허용).
 - **추가**: `hotfix-bypass:sibling-pr-author-check` (color `fef2c0` audit) — `templates/github-workflows/sibling-pr-label-author-check.yml` warning-tier mechanical lint conditional skip + audit comment 자동 발의 channel (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합, **9번째 hotfix-bypass:* family member** — 기존 8: adr-sunset / decision-principle-vocab / auto-phase-label / marketplace-atomic / worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd} / claude-md-line-cap).
@@ -267,6 +275,13 @@ labels:
     description: "mctrader 데뷔 평가에서 발견된 codeforge gap (첫 사례)"
     single_active: false
     attach_owner_plugin: "wrapper Orchestrator (CFP-60 mctrader 데뷔 평가)"
+
+  - name: from-cfp-425-followup
+    category: audit
+    color: "fbca04"
+    description: "Epic CFP-425 (worktree-first mechanical enforcement 영구화) gate FAIL 분기 후속 carrier marker. ADR-060 §결정 6 promotion gate (b) bypass 외 failure > 0 FAIL → 4 entry current_tier: warning 유지 + actual warning → blocking-on-pr 승격 follow-up Story open. 본 label 부착 Story = CFP-429 Amendment 4 declaration 후속 carrier 책임 (4 entry tier 승격 + 4 workflow continue-on-error: false + required_status_checks.contexts 부착 + plugin.json MINOR bump 등 evidence 6 산출물 i~vi 충족)."
+    single_active: false
+    attach_owner_plugin: "wrapper Orchestrator (CFP-429 Phase 2 PR description 안 conditional step gate FAIL 분기 자동 trigger) / GitOpsAgent (Issue create 위임)"
 
   - name: audit:spec-amendment
     category: audit
