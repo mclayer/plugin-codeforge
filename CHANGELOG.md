@@ -5,11 +5,26 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.28.0] - 2026-05-13
+
+### Added (CFP-521 — CODEFORGE_CROSS_REPO_PAT rotation policy + ADR-066)
+
+EPIC-RESULTS CFP-462 §6 carrier #3. CFP-450 (ADR-013 Amendment 4) PAT consolidation 후속 — 단일 `CODEFORGE_CROSS_REPO_PAT` (cross-repo Story binding + KPI internal-docs clone) 의 lifetime / rotation / compromise response / audit log SSOT 신설. 권장 rotation 90 days / 최대 lifetime 180 days. Scope minimum 3종 (`repo:read` + `repo:write` + `metadata:read`). 5-step rotation 절차 + 4-step compromise response 명문화. Audit log SSOT 신설 (`docs/security/pat-rotation-log.md`, 사용자 manual entry 의무). 자동 만료 reminder workflow + audit log schema lint 는 Phase 2 carrier (별도 CFP — ADR-066 `mechanical_enforcement_actions: []`). Consumer overlay `security.pat_rotation_cadence_days` 강화 방향 override 허용 (weaken 금지). `is_transitional: false` (security default presumption, ADR-058 정합).
+
+- `docs/adr/ADR-066-pat-rotation-policy.md` (NEW) — 7 결정 (cadence / scope / 절차 / compromise / audit / 자동화 carrier / consumer overlay)
+- `docs/adr/ADR-RESERVATION.md` (UPDATE) — ADR-066 row append
+- `docs/security/pat-rotation-log.md` (NEW) — Audit log SSOT (rotation history 표 + schema + compromise response cross-ref)
+- `docs/consumer-guide.md` (UPDATE) — §1g 신설 (rotation cadence / scope / 절차 / compromise / audit / consumer overlay)
+- `CLAUDE.md` (UPDATE) — GitHub Workflow 단락 blockquote cross-ref 1줄 추가 (cap ≤320 정합)
+- `.claude-plugin/plugin.json` — version 5.27.0 → 5.28.0 MINOR (sibling-pr lint 5.27.0 merge 후 rebase)
+
 ## [5.27.0] - 2026-05-13
 
 ### Added (CFP-521 — sibling-pr label anti-misuse lint, EPIC-RESULTS-CFP-462 §6 carrier #2)
 
 ADR-010 Amendment 4 §결정 5 anti-misuse 안전망 mechanical enforcement. `sibling-pr` label 부착 PR 의 paired wrapper PR link (`mclayer/plugin-codeforge#NNN` 패턴 — short form + URL form 양쪽) 검증. 부재 시 audit comment 부착 + workflow failure (warning tier, advisory only — PR merge 미차단). Guard 3종 (sibling-pr label 미부착 skip / hotfix-bypass label 부착 skip / wrapper repo self-PR skip) + audit comment dedup (`[sibling-pr-anti-misuse]` marker). ADR-060 evidence-enforceable framework **5th warning-tier entry** (1st = adr-sunset-criteria / 2nd = decision-principle-vocab / 3rd = auto-phase-label / 4th = claude-md-line-cap). `hotfix-bypass:sibling-pr-author-check` **9번째 hotfix-bypass:* family member** (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합). CFP-499 sibling-pr fast-pass mechanism 의 anti-misuse 안전망 forcing function — Orchestrator self-write 영역 (CFP-61 / ADR-035) enforce.
+
+> **CFP # 정정 (2026-05-13)**: 본 entry 의 "CFP-521" 은 sibling-pr lint Story 의 wrong-CFP anomaly (실제 Issue # = 522, 정정된 CFP # = CFP-522, Story file 은 cleanup PR #285 으로 rename 완료). 본 description 의 텍스트 reference 는 descriptive only 로 보존 — functional 영향 0건.
 
 - `templates/github-workflows/sibling-pr-label-author-check.yml` (NEW) — wrapper SSOT fixture, actions/github-script-based 2-step workflow (paired link 검증 + audit comment 부착)
 - `.github/workflows/sibling-pr-label-author-check.yml` (NEW, self-app byte-identical, ADR-005 self-application 정합)

@@ -294,6 +294,8 @@ codeforge plugin 의 doc taxonomy (epic_results / story_file / adr / change_plan
 
 > **phase-gate-mergeable label mapping** (CFP-479): `phase:*` ↔ `gate:*` 정식 매핑 표 SSOT = [`docs/orchestrator-playbook.md` §9.7](docs/orchestrator-playbook.md#97-phase-gate-mergeable-label-mapping-cfp-479). CFP-342 anomaly = `phase:구현` / `phase:구현-리뷰` 도 **`gate:design-review-pass`** 요구 (직관적 `gate:code-review-pass` 아님 — codeforge 는 별도 code-review gate label 미도입). 라벨 변경 시 workflow yml line 195-208 + playbook §9.7 + 본 단락 + consumer-guide §2e 동시 갱신 의무.
 
+> **CODEFORGE_CROSS_REPO_PAT rotation policy** (CFP-521 / [ADR-066](docs/adr/ADR-066-pat-rotation-policy.md)): `phase-gate-mergeable.yml` + `rate-limit-fallback-kpi.yml` 가 사용하는 단일 PAT (CFP-450 / ADR-013 Amendment 4 consolidation) 의 lifetime / scope / compromise response / audit log SSOT. 권장 rotation 90 days / 최대 lifetime 180 days. Audit log = [`docs/security/pat-rotation-log.md`](docs/security/pat-rotation-log.md) (사용자 manual entry). Consumer-facing 정책 mirror = [`consumer-guide.md §1g`](docs/consumer-guide.md). 자동 만료 reminder workflow = Phase 2 carrier.
+
 ## Story 작성 의무 (CFP-45)
 
 **Story 작성 의무 분류**: `codeforge:story-cutoff-classification` skill 호출 — 강제 대상 / doc-only fast-path / 면제 대상 3종 분류 기준 SSOT. 요구사항 접수 직후 Orchestrator 의무 호출.
