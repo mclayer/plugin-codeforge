@@ -5,6 +5,49 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.18.0] - 2026-05-12
+
+### Added (CFP-445 — 결정 원칙 mandate carrier)
+
+사용자 directive 4 회 누적 (2026-05-11 ~ 2026-05-12, KST) 의 normative SSOT 승격. memory ephemeral 영역의 cross-session enforcement 부재 해소.
+
+- `docs/adr/ADR-064-decision-principle-mandate.md` (NEW) — 8 결정 본문
+  1. 4 어휘 운영적 정의 (Trace 1) — best-effort / broad coverage / full-scope / active amendment
+  2. forbid-list 8 어휘 dictionary — CFP-449 mechanical lint SSOT (warning tier)
+  3. 결정 제시 5 룰 (Trace 2) — derived default / 옵션 dump 금지 / 식별자 사전 요약 / 질문 brevity / AskUserQuestion 범위
+  4. multi-task spawn parallel default + sequential 강제 3 사유 dictionary (Trace 4)
+  5. CFP scope unitary 룰
+  6. 결정 제시 시점 (proposing-time) 영역 정의
+  7. Self-application top-down ratchet
+  8. Declaration only (CFP-446 / CFP-449 mechanical enforcement 별도 carrier)
+- `CLAUDE.md` "결정 원칙" 신규 단락 ("오케스트레이션 규칙" 직전, append-only)
+- `docs/orchestrator-playbook.md` §4.1.1 신규 — parallel default + sequential 강제 3 사유 운영 + 결정 제안 시점 self-check 5 항목 checklist
+- `docs/domain-knowledge/domain/governance-principle/decision-style.md` (NEW) — 행동 패턴 + 적용 사례 SSOT (governance-principle 카테고리 신규 진입)
+- `templates/github-issue-forms/story.yml` `decision_principle_compliance` advisory 체크박스 추가 (forcing function)
+- `docs/adr/ADR-RESERVATION.md` — `| 64 | CFP-445 | active | 2026-05-12 |` row append
+
+### Why
+
+사용자 directive 4 회 누적 (2026-05-11 발화 1 회 + 2026-05-12 발화 2 회 + Codex pre-review iterative directive 1 회) 에도 normative SSOT 부재 = cross-session enforcement 결손. memory ephemeral 영역 한계가 결정 품질의 forbid-list 영역 침식 위험 + 옵션 dump UX + sequential bias 3 갈래 root cause. 본 carrier 가 그 SSOT 정립.
+
+### Compatibility
+
+- consumer overlay 영향 = 정책 축소 불허 (CLAUDE.md normative 단락 신설). `.claude/_overlay/project.yaml` extension 만 허용.
+- mechanical lint (CFP-449) = warning tier 진입 (ADR-060 §결정 5), advisory only. blocking 승격은 evidence-enforceable framework gate (PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling Story merged) 통과 후 별도 CFP carrier.
+- iterative reformulation (CFP-446) = ADR-052 Amendment 2 별도 carrier (touchpoint #1 single-shot → max 3 rounds).
+- 6 lane plugin 영향 = 0 (wrapper level normative SSOT, lane plugin self-write boundary 무변경).
+- Marketplace sibling sync 의무 = `name` / `description` mirrored field 갱신 (description 변경 — `+ CFP-445 ...` append). 본 PR merge 직후 `mclayer/marketplace` sync PR 즉시 open · merge (ADR-016 + ADR-063 atomic invariant 정합).
+
+### Related
+
+- [CFP-445](https://github.com/mclayer/plugin-codeforge/issues/445) — 본 carrier Story
+- [CFP-446](https://github.com/mclayer/plugin-codeforge/issues/446) — Codex pre-review iterative reformulation (ADR-052 Amendment 2 별도 carrier)
+- [CFP-449](https://github.com/mclayer/plugin-codeforge/issues/449) — forbid-list mechanical lint (ADR-060 warning tier 첫 entry)
+- [ADR-064](docs/adr/ADR-064-decision-principle-mandate.md) — normative 결정 SSOT
+- [ADR-058](docs/adr/ADR-058-adr-sunset-criteria-mandate.md) — sunset criteria mandate (ratchet 차단 forcing function)
+- [ADR-060](docs/adr/ADR-060-evidence-enforceable-promotion-framework.md) — evidence-enforceable framework
+- [ADR-063](docs/adr/ADR-063-marketplace-atomic-invariant.md) — 3-file atomic invariant
+
 ## [5.17.0] - 2026-05-12
 
 ### Added (CFP-436 — Marketplace ↔ plugin.json atomic invariant)

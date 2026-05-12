@@ -115,6 +115,34 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 세부 spawn sequence · branch logic · FIX 진단 흐름 SSOT: [playbook §3](docs/orchestrator-playbook.md) + 각 lane plugin CLAUDE.md.
 
+## 결정 원칙 (ADR-064 normative SSOT)
+
+codeforge 의 모든 결정 제안 시점 (proposing-time) 에 적용. 외연 영역 (`hotfix-bypass:*` operational-time, deprecation 사후 운영, source code fallback / safe-default 런타임 로직) 은 본 단락 scope 외. 정책 SSOT: [ADR-064](docs/adr/ADR-064-decision-principle-mandate.md) — 행동 패턴 + 적용 사례 SSOT = [`docs/domain-knowledge/domain/governance-principle/decision-style.md`](docs/domain-knowledge/domain/governance-principle/decision-style.md).
+
+### 결정 내용 (Trace 1)
+
+- **4 어휘 normative anchor**: best-effort (도달 가능한 최선의 안) / broad coverage (side effect / edge case / 외연 후보 포함) / full-scope (도메인 전체 즉시 적용) / active amendment (강화 방향 적극 발의)
+- **Forbid-list dictionary 8 어휘**: "임시 / 단계적 / 일단 / 우선[시간 우선순위 의미 한정] / 잠정 / 가벼운 / minimal viable / quick win" — 결정 menu 자체에서 제거 의무. mechanical lint 는 [CFP-449](https://github.com/mclayer/plugin-codeforge/issues/449) warning tier (ADR-060 §결정 5 정합) — scope = 5 영역 (`docs/adr/**` / `docs/change-plans/**` / `CLAUDE.md` / `docs/orchestrator-playbook.md` / `templates/**`). exempt channel = `hotfix-bypass:decision-principle-vocab` label.
+- **CFP scope unitary**: 한 CFP 안 "경량 → full" 단계 채택 금지. 별개 CFP 분리는 허용 (`CFP-N v0.1` + `CFP-N+1 v1.0` 가 독립 brainstorm + 독립 Story + 독립 PR).
+
+### 결정 제시 (Trace 2)
+
+Orchestrator 가 사용자에게 결정 제안 / 질문 시 5 룰 적용:
+
+1. **Derived default 우선** — 컨텍스트로 합리적 default 도출 가능 시 `AskUserQuestion` 발화 생략. derived default 직접 declare + 결과 보고 (사용자 정정 의무).
+2. **옵션 dump 금지** — 권장 1 안 + 대안 1 안 (최대 2). 3+ 후보는 brainstorm Phase 0 영역.
+3. **식별자 사전 요약** — ADR / CFP / 코드 식별자 인용 시 핵심 결정 1 문장 요약 사전 제시 후 질문 / 제안 본문 진입.
+4. **질문 brevity** — 1 문장 단위, 다중 질문 시 numbered list (최대 3 항목).
+5. **`AskUserQuestion` 범위 제한** — 가치 판단 / 미공개 컨텍스트 2 종 한정.
+
+### 적용 속도 (Trace 4)
+
+Orchestrator multi-task spawn 결정 default = **parallel** (단일 메시지 다중 Agent tool call). sequential 선택은 다음 3 사유 중 1 종 명시 의무 — **state dependency** (task N+1 이 task N 출력 의존) / **shared resource** (동일 file / label / branch lock) / **ordering invariant** (출력 순서 자체가 의미 — ADR-RESERVATION row append, FIX Ledger row append). 3 사유 모두 부재 = default parallel. [ADR-039](docs/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) §결정 7 `policy_violation_subdecision` 결정 영역 확장. Epic open→close 시간 단축 measurable signal = `EPIC-RESULTS-<KEY>.md` artifact frontmatter `opened_at` / `closed_at` delta.
+
+### Self-application top-down ratchet
+
+ADR-064 amendment 는 강화 방향만 허용 (scope 확장 / 강도 강화). 약화 방향 (`is_transitional: false → true` 다운그레이드 / forbid-list dictionary 축소 / sequential 강제 사유 확장) 은 [ADR-058](docs/adr/ADR-058-adr-sunset-criteria-mandate.md) §결정 5 sunset_justification 의무로 차단. memory `feedback_explain_before_ask` + `feedback_question_quality` + `feedback_subagent_driven_auto_select` 3 memory entry 의 normative 승격 첫 carrier.
+
 ## 오케스트레이션 규칙
 
 ### Sonnet subagent rate-limit → Opus fallback (ADR-057)
