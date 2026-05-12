@@ -676,3 +676,37 @@ entries:
     owner_adr: ADR-064               # forbid-list dictionary SSOT
     carrier_adr: ADR-060             # framework carrier (warning mode entry)
     status: Active
+
+  # ─── CFP-481 Phase 2 (PR open 시 phase label 자동 부착, 2026-05-12) ───
+  # ADR-024 Amendment 4 §결정 6.A.1 branch → phase mapping 표 SSOT 의 mechanical enforcement —
+  # 3rd warning-tier entry (1st = adr-sunset-criteria / 2nd = decision-principle-vocab).
+  # CFP-455 + CFP-449 retro 식별 sentinel 2 (재현 2회) → mechanical enforcement 도입 timing 도달.
+
+  - name: auto-phase-label
+    description: |
+      ADR-024 Amendment 4 §결정 6.A.1 branch → phase mapping 표 mechanical lint —
+      PR open 시 4-tier inference fallback chain (branch parse / Related Issue inherit /
+      terminal default / unclassified+warning) 으로 phase:* label 자동 부착.
+      story-init.yml 가 만든 PR 은 가드 skip (책임 분리). race 회피 = concurrency.group
+      `phase-label-auto-N` 직렬화 + phase-label-invariant.yml 와는 trigger event type 분리
+      (`pull_request:opened` vs `pull_request:labeled`). idempotency = PR body marker
+      `<!-- attached_by_auto: true -->` presence dedup. evidence-enforceable framework
+      3rd warning-tier entry (1st = adr-sunset-criteria / 2nd = decision-principle-vocab).
+    detect_command: github-actions-runtime  # workflow self-fire (PR open event), no static script
+    workflow: templates/github-workflows/auto-phase-label.yml
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:auto-phase-label
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: []       # 독립 entry — workflow self-app + ADR-024 Amendment 4 정합
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    # modal_anti_pattern_dictionary: omit — workflow lint, modal 어휘 검사 미포함
+    introduced_by: CFP-481
+    owner_adr: ADR-024 Amendment 4 §결정 6.A.1   # branch → phase mapping 표 SSOT
+    carrier_adr: ADR-060             # framework carrier (warning mode entry)
+    status: Active
