@@ -12,7 +12,7 @@
 # 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
 schema_version: "1.1"  # CFP-455 / ADR-060 Amendment 2 — current_tier required 전환 + retroactive 분류 검증 (MINOR bump)
 introduced_by: CFP-389
-last_updated: 2026-05-12  # CFP-449 — decision-principle-vocab entry append (2nd warning-tier entry)
+last_updated: 2026-05-13  # CFP-521 — sibling-pr-label-author-check entry append (5th warning-tier entry, EPIC-RESULTS-CFP-462 §6 carrier #2)
 
 entries:
   - name: adr-sunset-criteria
@@ -759,4 +759,41 @@ entries:
     owner_adr: ADR-012               # Amendment 1 cap ≤320 declaration SSOT
     carrier_adr: ADR-060             # framework carrier (warning mode entry, Amendment 5)
     carrier_amendment: 5
+    status: Active
+
+  # ─── CFP-521 Phase 2 (sibling-pr label anti-misuse lint, 2026-05-13) ───
+  # ADR-010 Amendment 4 §결정 5 anti-misuse 안전망 mechanical enforcement —
+  # 5th warning-tier entry (1st = adr-sunset-criteria / 2nd = decision-principle-vocab /
+  # 3rd = auto-phase-label / 4th = claude-md-line-cap).
+  # EPIC-RESULTS-CFP-462 §6 carrier #2 — sibling-pr label fast-pass mechanism (CFP-499) 후속.
+
+  - name: sibling-pr-label-author-check
+    description: |
+      ADR-010 Amendment 4 §결정 5 anti-misuse 안전망 mechanical lint — sibling-pr label
+      부착 PR 의 paired wrapper PR link 검증 (PR body grep mclayer/plugin-codeforge#NNN
+      패턴 — short form + URL form 양쪽). 부재 시 audit comment 부착 + workflow failure
+      (warning tier, advisory only — PR merge 미차단). Guard 3종: (a) sibling-pr label
+      미부착 PR skip / (b) hotfix-bypass:sibling-pr-author-check label 부착 skip /
+      (c) wrapper repo self-PR skip (self-referential 영역). audit comment dedup =
+      `[sibling-pr-anti-misuse]` marker presence. CFP-499 sibling-pr fast-pass mechanism
+      (ADR-010 Amendment 4) 의 anti-misuse 안전망 forcing function.
+      EPIC-RESULTS-CFP-462 §6 carrier #2.
+    detect_command: github-actions-runtime  # workflow self-fire (PR label event), no static script
+    workflow: templates/github-workflows/sibling-pr-label-author-check.yml
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:sibling-pr-author-check
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: []       # 독립 entry — workflow self-app + ADR-010 Amendment 4 정합
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    # modal_anti_pattern_dictionary: omit — workflow lint, modal 어휘 검사 미포함
+    introduced_by: CFP-521
+    introduced_date: 2026-05-13
+    owner_adr: ADR-010 Amendment 4 §결정 5   # sibling-pr fast-pass anti-misuse 안전망 SSOT
+    carrier_adr: ADR-060             # framework carrier (warning mode entry)
     status: Active
