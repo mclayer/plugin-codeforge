@@ -1,0 +1,19 @@
+---
+description: "CFP-412 false-positive"
+fixture_key: "cfp-412-false-positive"
+story_mapping: "UC-1 / EC-9"
+pr:
+  number: 421
+  title: "[CFP-393] Phase 2"
+  body: |
+    No close keyword
+  labels:
+    - "phase:구현-테스트"
+issue:
+  number: 412
+  closed_by_pull_requests_references: []
+consumer_config:
+  lanes:
+    security_ai: false
+expected_outcome: "skip_no_close_keyword"
+expected_audit_marker: null

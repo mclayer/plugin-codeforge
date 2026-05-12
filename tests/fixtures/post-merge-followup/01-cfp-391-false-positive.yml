@@ -1,0 +1,19 @@
+---
+description: "CFP-391 false-positive"
+fixture_key: "cfp-391-false-positive"
+story_mapping: "UC-1 / EC-9"
+pr:
+  number: 400
+  title: "[CFP-391] Phase 2"
+  body: |
+    No close keyword
+  labels:
+    - "phase:보안-테스트"
+issue:
+  number: 396
+  closed_by_pull_requests_references: []
+consumer_config:
+  lanes:
+    security_ai: true
+expected_outcome: "skip_no_close_keyword"
+expected_audit_marker: null
