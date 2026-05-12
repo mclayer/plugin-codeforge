@@ -96,6 +96,8 @@ jobs:
             args+=(--as-of "$AS_OF_INPUT")
           fi
           args+=(--out docs/kpi/rate-limit-fallback.json)
+          # CFP-453 — history.jsonl append (idempotent, last-line replace if same month)
+          args+=(--history-out docs/kpi/rate-limit-fallback-history.jsonl)
 
           # CFP-451: capture mode — aggregator exit code 별 sub-reason 분류 (detect_infra 가 GITHUB_OUTPUT.exit_code 참조).
           bash scripts/measure-rate-limit-fallback.sh "${args[@]}"
@@ -227,6 +229,8 @@ jobs:
 
           git checkout -b "$BRANCH"
           git add docs/kpi/rate-limit-fallback.json
+          # CFP-453 — history.jsonl 누적 file 도 동일 PR 에 포함 (auto-PR noise 회피).
+          git add docs/kpi/rate-limit-fallback-history.jsonl
           git commit -m "chore(kpi): rate-limit-fallback monthly refresh ($(date -u +%Y-%m))" \
                      -m "Automated by templates/github-workflows/rate-limit-fallback-kpi.yml" \
                      -m "evidence-checks-registry entry: rate-limit-fallback-rate (CFP-393 / ADR-057 Amendment 2)"

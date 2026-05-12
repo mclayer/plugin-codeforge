@@ -1,4 +1,6 @@
 {
+  "schema_version": "1.1",
+  "history_file": "docs/kpi/rate-limit-fallback-history.jsonl",
   "measured_at": null,
   "window_months": 3,
   "sonnet_spawn_total": 0,

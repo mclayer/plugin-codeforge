@@ -5,6 +5,37 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.24.0] - 2026-05-13
+
+### Changed (CFP-453 Phase 2 — KPI history.jsonl 누적 정책)
+
+CFP-393 (ADR-057 Amendment 2 / fallback rate KPI dashboard, merged #398) 의 best-effort 확장. latest snapshot only 한계 4종 (trend 분석 / sunset gate 시점 추적 / sample size 누적 / regression detection) broad coverage 해소. JSONL 1 line per monthly cron 누적 + idempotency rule (동일 month 재실행 = 마지막 줄 교체) + KPI JSON schema 1.0 → 1.1 MINOR bump. MINOR plugin version bump (ADR-037 정합 — `templates/github-workflows/**` + `scripts/` + schema 변경).
+
+- `docs/kpi/rate-limit-fallback-history.jsonl` (NEW, 0 byte git-tracked) — append-only JSONL, 1 entry per monthly cron. Schema: `{measured_at, month, sonnet_spawn_total, fallback_count, rate, gate_status, sample_size_sufficient, partial_data}`.
+- `scripts/measure-rate-limit-fallback.sh` (UPDATE) — `--history-out <jsonl-path>` option 추가. 미지정 시 backward-compat (history 무영향). 지정 시 window 마지막 month bucket 의 1 entry append. Idempotency: last entry month 가 새 entry 와 동일 = 마지막 줄 교체 (atomic via `head -n -1 + tmp + mv`). file 부재 시 graceful create (`mkdir -p` 동반).
+- `docs/kpi/rate-limit-fallback.json` (UPDATE) — `schema_version: "1.1"` + `history_file: "docs/kpi/rate-limit-fallback-history.jsonl"` 필드 추가. backward-compat (history field 도입 X 시 ignore).
+- `templates/github-workflows/rate-limit-fallback-kpi.yml` (UPDATE) — aggregate step `args+=(--history-out docs/kpi/rate-limit-fallback-history.jsonl)` 추가 + auto-PR step `git add docs/kpi/rate-limit-fallback-history.jsonl` 추가. 단일 PR 통합 (KPI JSON + history.jsonl 동일 PR, auto-PR noise 회피).
+- `.github/workflows/rate-limit-fallback-kpi.yml` (UPDATE) — byte-identical self-app copy (ADR-005 정합).
+- `docs/parallel-work/section-ownership.yaml` (UPDATE) — history.jsonl append-only row 추가. owner_adr = ADR-057. NOTE: workflow-only-write semantic (사용자 manual edit 금지, CFP-393 KPI JSON row 와 동일 NOTE 패턴).
+- `tests/scripts/measure-rate-limit-fallback/test_aggregator.sh` (UPDATE) — T-11 (idempotency, 4 assertion) / T-12 (graceful create, 3 assertion) / T-13 (multi-month accumulation, 4 assertion) 신규 + `assert_line_count` helper. 총 19 → 30 assertion (CFP-393 baseline 보존).
+- `.claude-plugin/plugin.json` — version 5.23.0 → 5.24.0 MINOR (ADR-037 정합 — `templates/github-workflows/**` + `scripts/` 변경, ADR Amendment 본문 변경 0건). description CFP-453 Phase 2 entry append.
+
+### Sibling sync (ADR-016 + ADR-063 atomic invariant)
+
+- `marketplace.json` 4 mirrored field sync — **본 PR scope 외**, Epic CFP-462 close 시 single marketplace sync PR 일괄 처리 전략. `hotfix-bypass:marketplace-atomic` label 부착 (24h drift window 발생 → audit comment 자동 발의 인지, ADR-063 §결정 5 정합).
+- 6 lane plugin sibling — 영향 0건 (contract schema 변경 0, agent file 변경 0).
+
+### Why
+
+CFP-393 (ADR-057 Amendment 2) KPI dashboard 가 latest snapshot only — trend / sunset gate 시점 / sample size 추이 / regression detection 4 한계 보유. ADR-057 §결정 2 sunset gate "3개월 연속 < 1%" 충족 시점이 historical evidence 부재. 본 Story = history.jsonl 누적으로 4 한계 동시 해소. visualization tool / retention policy / sunset gate 자동 발화 = 별도 carrier (Story §1 본문 명시 — future CFPs).
+
+### Compatibility
+
+- **Wire**: 영향 0건 — `--history-out` 미지정 시 기존 동작 보존 (backward-compat).
+- **KPI JSON schema**: 1.0 → 1.1 MINOR (`schema_version` + `history_file` 필드 추가). 기존 consumer (visualization tool 부재) 무영향. forward-compat verified.
+- **Test contract**: T-11/T-12/T-13 신규 — 기존 T-1~T-10 regression 0건.
+- **Sibling plugins**: 영향 0건 (contract schema 변경 0).
+
 ## [5.23.0] - 2026-05-12
 
 ### Changed (CFP-490 Phase 2 — lane-evidence-check duplicate heading collision auto-detection 강화)
