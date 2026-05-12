@@ -16,14 +16,17 @@
 # Idempotent invariant: 동일 input → 동일 output (T-9 fixture).
 # Atomic write: stdout = streaming JSON. --out 사용 시 tmpfile + mv.
 #
-# 분모: Sonnet 잔류 5 agent 의 §14 row spawn 카운트.
+# 분모: Sonnet 잔류 8 agent 의 §14 row spawn 카운트.
 #       SSOT (verbatim, ADR-039 default subagent context — hardcode + cross-ref):
 #         - DeveloperAgent           (ADR-057 §결정 3 + ADR-042 Amendment 4)
 #         - BackendDeveloperAgent    (ADR-057 §결정 3 + ADR-042 Amendment 4)
 #         - FrontendDeveloperAgent   (ADR-057 §결정 3 + ADR-042 Amendment 4)
 #         - IntegrationTestAgent     (ADR-057 §결정 3 + ADR-042 Amendment 4)
 #         - StatefulTestAgent        (ADR-057 §결정 3 + ADR-042 Amendment 4)
-#       drift 발견 시 별도 CFP follow-up (Story CFP-393 §11 follow-up #1).
+#         - CodebaseMapperAgent      (ADR-057 §결정 3 Amendment 3 신규 — CFP-448 selective rollback + mandate 재정의)
+#         - RefactorAgent            (ADR-057 §결정 3 Amendment 3 신규 — CFP-448 selective rollback + mandate 재정의)
+#         - DeveloperPLAgent         (ADR-057 §결정 3 Amendment 3 신규 — CFP-448 selective rollback, 사용자 framing 직접 적용)
+#       drift 발견 시 별도 CFP follow-up (Story CFP-393 §11 follow-up #1 + CFP-448 §11 follow-up).
 #
 # 분자: §14 `transcript` 필드 substring `[rate-limit-fallback:sonnet→opus]`
 #       또는 ASCII fallback `[rate-limit-fallback:sonnet->opus]` (T-8 fixture).
@@ -48,17 +51,33 @@
 #   bash scripts/measure-rate-limit-fallback.sh \
 #     [--internal-docs-path <path>] \
 #     [--out <json-path>] \
+#     [--history-out <jsonl-path>] \
 #     [--as-of YYYY-MM] \
 #     [--wrapper-path <path>]
+#
+# --history-out (CFP-453, ADR-057 Amendment 2 extension):
+#   지정 시 매 실행마다 1 entry (window 마지막 month bucket 기준) JSONL append.
+#   Schema per line:
+#     {"measured_at": "ISO8601", "month": "YYYY-MM",
+#      "sonnet_spawn_total": N, "fallback_count": N, "rate": float|null,
+#      "gate_status": "...", "sample_size_sufficient": bool, "partial_data": bool}
+#   Idempotency rule: history file 의 마지막 entry month 가 새 entry 와 동일 =
+#     마지막 줄 교체 (atomic via head -n -1 + tmp + mv). 다른 month = append.
+#     file 부재 시 graceful create (header 없는 pure JSONL).
+#   미지정 시 history 기능 무효 (기존 동작 보존, backward-compat).
 set -euo pipefail
 
-# Sonnet 잔류 agent 5종 — ADR-057 §결정 3 / ADR-042 Amendment 4 SSOT verbatim.
+# Sonnet 잔류 agent 8종 — ADR-057 §결정 3 (Amendment 3, CFP-448 selective rollback) + ADR-042 Amendment 5 SSOT verbatim.
+# CFP-448 (2026-05-12) selective rollback 3 entry append (CodebaseMapper / Refactor / DeveloperPL).
 SONNET_AGENTS=(
   "DeveloperAgent"
   "BackendDeveloperAgent"
   "FrontendDeveloperAgent"
   "IntegrationTestAgent"
   "StatefulTestAgent"
+  "CodebaseMapperAgent"
+  "RefactorAgent"
+  "DeveloperPLAgent"
 )
 
 WINDOW_MONTHS=3
@@ -69,6 +88,7 @@ THRESHOLD_PERCENT="1.0"          # Change Plan §8 T-4 (strict >= violation)
 INTERNAL_DOCS_PATH=""
 WRAPPER_PATH=""
 OUT_FILE=""
+HISTORY_OUT=""    # CFP-453 — history.jsonl append target (미지정 = backward-compat)
 AS_OF=""
 
 while [[ $# -gt 0 ]]; do
@@ -79,6 +99,8 @@ while [[ $# -gt 0 ]]; do
       WRAPPER_PATH="${2:-}"; shift 2 ;;
     --out)
       OUT_FILE="${2:-}"; shift 2 ;;
+    --history-out)
+      HISTORY_OUT="${2:-}"; shift 2 ;;
     --as-of)
       AS_OF="${2:-}"; shift 2 ;;
     -h|--help)
@@ -131,13 +153,14 @@ if [[ -f "$ADR_057_FILE" || -f "$ADR_042_FILE" ]]; then
         if [[ "$existing" == "$name" ]]; then already=1; break; fi
       done
       [[ $already -eq 0 ]] && ADR_DETECTED_AGENTS+=("$name")
-    done < <(grep -oE "\b(DeveloperAgent|BackendDeveloperAgent|FrontendDeveloperAgent|IntegrationTestAgent|StatefulTestAgent|ChangeImpactAgent|CodebaseMapperAgent|RefactorAgent|QADeveloperAgent|InfraEngineerAgent|DataEngineerAgent)\b" "$adr_f" 2>/dev/null | sort -u)
+    done < <(grep -oE "\b(DeveloperPLAgent|DeveloperAgent|BackendDeveloperAgent|FrontendDeveloperAgent|IntegrationTestAgent|StatefulTestAgent|ChangeImpactAgent|CodebaseMapperAgent|RefactorAgent|QADeveloperAgent|InfraEngineerAgent|DataEngineerAgent)\b" "$adr_f" 2>/dev/null | sort -u)
   done
 
-  # SONNET_AGENTS (5종 hardcode) vs ADR detected — strict equal set 검증.
-  # SSOT 가 5종 명시: DeveloperAgent / BackendDeveloperAgent / FrontendDeveloperAgent / IntegrationTestAgent / StatefulTestAgent.
-  # ADR 가 본문에 다른 agent 도 언급할 수 있으나 (예: ChangeImpactAgent — 현재 Sonnet 잔류 list 외), enum drift detection 의 정확한 의미 =
-  # SONNET_AGENTS 5종 모두 ADR_DETECTED_AGENTS 에 포함되어야 함 (역방향은 ADR 본문 자유 — 본 Story scope 외).
+  # SONNET_AGENTS (8종 hardcode, CFP-448 Amendment 3 후) vs ADR detected — strict equal set 검증.
+  # SSOT 가 8종 명시: DeveloperAgent / BackendDeveloperAgent / FrontendDeveloperAgent / IntegrationTestAgent / StatefulTestAgent / CodebaseMapperAgent / RefactorAgent / DeveloperPLAgent.
+  # ChangeImpactAgent 는 regex 에 유지 (drift 발견 가능성 위해 — Opus 유지이지만 ADR 본문에 등장) — 현재 Sonnet 잔류 list 외.
+  # ADR 가 본문에 다른 agent 도 언급할 수 있으나, enum drift detection 의 정확한 의미 =
+  # SONNET_AGENTS 8종 모두 ADR_DETECTED_AGENTS 에 포함되어야 함 (역방향은 ADR 본문 자유).
   for sa in "${SONNET_AGENTS[@]}"; do
     found=0
     for det in "${ADR_DETECTED_AGENTS[@]+"${ADR_DETECTED_AGENTS[@]}"}"; do
@@ -275,7 +298,7 @@ END {
 
 # --- Aggregation ---
 # monthly_data 각 bucket 별 spawn_total + fallback_count 산출.
-# Sonnet agent 5종만 분모 — substring 매치 (plugin namespace `(codeforge-*@*)` 무시).
+# Sonnet agent 8종만 분모 — substring 매치 (plugin namespace `(codeforge-*@*)` 무시).
 declare -A SPAWN_MAP
 declare -A FB_MAP
 for b in "${WINDOW_BUCKETS[@]}"; do
@@ -292,7 +315,7 @@ while IFS=$'\t' read -r bucket agent fb_flag; do
   if [[ "$bucket" < "$WINDOW_FIRST" || "$bucket" > "$WINDOW_LAST" ]]; then
     continue
   fi
-  # agent 가 Sonnet 5종에 포함되는지 substring 매치.
+  # agent 가 Sonnet 8종에 포함되는지 substring 매치.
   matched=0
   for sa in "${SONNET_AGENTS[@]}"; do
     if [[ "$agent" == *"$sa"* ]]; then matched=1; break; fi
@@ -430,6 +453,68 @@ if [[ -n "$OUT_FILE" ]]; then
   echo "[measure-rate-limit-fallback] wrote: $OUT_FILE" >&2
 else
   printf '%s\n' "$FINAL_JSON"
+fi
+
+# --- History append (CFP-453 / ADR-057 Amendment 2 extension) ---
+# --history-out 지정 시 1 entry append. 미지정 = no-op (backward-compat).
+# Entry = window 마지막 month bucket 의 1줄 JSON.
+# Idempotency: last entry month 가 새 entry 와 동일 = 마지막 줄 교체. 다른 month = append.
+if [[ -n "$HISTORY_OUT" ]]; then
+  # 마지막 month bucket = WINDOW_BUCKETS[-1] (window 끝 — rolling_summary 가 가리키는 month).
+  LAST_MONTH="${WINDOW_BUCKETS[-1]}"
+  LAST_SPAWN=${SPAWN_MAP["$LAST_MONTH"]}
+  LAST_FB=${FB_MAP["$LAST_MONTH"]}
+
+  # rate / gate_status / sample_size_sufficient — monthly_data 의 마지막 entry 값과 동일.
+  # 위 aggregation 에서 이미 monthly 별 계산 완료 — 마지막 month 의 값 재계산 (인덱스 접근 대신 동일 로직):
+  if (( LAST_SPAWN >= SAMPLE_MIN_PER_MONTH )); then
+    LAST_SUFFICIENT_BOOL="true"
+    if (( LAST_SPAWN == 0 )); then
+      LAST_RATE_JQ="null"
+      LAST_GATE="sample_insufficient"
+    else
+      LAST_RATE_VAL=$(awk -v fb="$LAST_FB" -v sp="$LAST_SPAWN" 'BEGIN{ printf "%.4f", (fb/sp)*100 }')
+      LAST_RATE_JQ="$LAST_RATE_VAL"
+      ge=$(awk -v r="$LAST_RATE_VAL" -v t="$THRESHOLD_PERCENT" 'BEGIN{ print (r+0 >= t+0) ? "1" : "0" }')
+      if [[ "$ge" == "1" ]]; then LAST_GATE="violated"; else LAST_GATE="on_track"; fi
+    fi
+  else
+    LAST_SUFFICIENT_BOOL="false"
+    LAST_RATE_JQ="null"
+    LAST_GATE="sample_insufficient"
+  fi
+
+  HISTORY_ENTRY="$(jq -c -n \
+    --arg measured_at "$NOW_ISO" \
+    --arg month "$LAST_MONTH" \
+    --argjson spawn "$LAST_SPAWN" \
+    --argjson fb "$LAST_FB" \
+    --argjson rate "$LAST_RATE_JQ" \
+    --arg gate "$LAST_GATE" \
+    --argjson sufficient "$LAST_SUFFICIENT_BOOL" \
+    --argjson partial "$([[ "$PARTIAL_DATA" == "true" ]] && echo "true" || echo "false")" \
+    '{measured_at:$measured_at, month:$month, sonnet_spawn_total:$spawn, fallback_count:$fb, rate:$rate, gate_status:$gate, sample_size_sufficient:$sufficient, partial_data:$partial}')"
+
+  # Idempotency 처리.
+  mkdir -p "$(dirname "$HISTORY_OUT")" 2>/dev/null || true
+  if [[ -f "$HISTORY_OUT" ]] && [[ -s "$HISTORY_OUT" ]]; then
+    LAST_MONTH_IN_FILE="$(tail -n 1 "$HISTORY_OUT" | jq -r '.month' 2>/dev/null || echo "")"
+    if [[ "$LAST_MONTH_IN_FILE" == "$LAST_MONTH" ]]; then
+      # 마지막 줄 교체 — atomic via head -n -1 + tmp + mv (CFP-453 §4.2).
+      TMP_HIST="$(mktemp -t cfp453-hist.XXXXXX)" || { echo "[measure-rate-limit-fallback] mktemp failed (history)" >&2; exit 2; }
+      head -n -1 "$HISTORY_OUT" > "$TMP_HIST" 2>/dev/null || true
+      printf '%s\n' "$HISTORY_ENTRY" >> "$TMP_HIST"
+      mv "$TMP_HIST" "$HISTORY_OUT" || { echo "[measure-rate-limit-fallback] history mv failed: $HISTORY_OUT" >&2; exit 2; }
+      echo "[measure-rate-limit-fallback] history idempotent replace (month=$LAST_MONTH): $HISTORY_OUT" >&2
+    else
+      printf '%s\n' "$HISTORY_ENTRY" >> "$HISTORY_OUT" || { echo "[measure-rate-limit-fallback] history append failed: $HISTORY_OUT" >&2; exit 2; }
+      echo "[measure-rate-limit-fallback] history append (month=$LAST_MONTH): $HISTORY_OUT" >&2
+    fi
+  else
+    # graceful create.
+    printf '%s\n' "$HISTORY_ENTRY" > "$HISTORY_OUT" || { echo "[measure-rate-limit-fallback] history create failed: $HISTORY_OUT" >&2; exit 2; }
+    echo "[measure-rate-limit-fallback] history create (month=$LAST_MONTH): $HISTORY_OUT" >&2
+  fi
 fi
 
 exit 0

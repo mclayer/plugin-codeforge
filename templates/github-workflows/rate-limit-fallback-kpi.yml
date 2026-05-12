@@ -45,11 +45,22 @@ jobs:
       - name: Clone codeforge-internal-docs (best-effort, graceful fallback)
         id: clone_internal
         continue-on-error: true
+        env:
+          # CFP-450 / ADR-013 Amendment 6 — internal-docs visibility=PRIVATE (audit 2026-05-12).
+          # CODEFORGE_CROSS_REPO_PAT secret 가 internal-docs read 권한 보유 (단일 PAT scope consolidation, Option B).
+          # PAT 부재 시 GITHUB_TOKEN fallback (private 시 fail → graceful partial_data=true).
+          INTERNAL_DOCS_PAT: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
         run: |
           set +e
-          # public repo 가정 — GITHUB_TOKEN default 권한.
-          # private 전환 시 secrets.CODEFORGE_INTERNAL_DOCS_READ_PAT 추가 의무 (Story §11 follow-up #2).
-          git clone --depth=1 https://github.com/mclayer/codeforge-internal-docs.git .internal-docs 2>&1 | tee /tmp/clone.log
+          if [ -n "${INTERNAL_DOCS_PAT:-}" ]; then
+            git clone --depth=1 "https://x-access-token:${INTERNAL_DOCS_PAT}@github.com/mclayer/codeforge-internal-docs.git" .internal-docs 2>&1 | tee /tmp/clone.log
+            echo "[clone_internal] PAT path 사용 (CFP-450 Option B)"
+          else
+            # Fallback path — PAT secret 미설정 (degraded mode).
+            # internal-docs 가 private 상태에서 GITHUB_TOKEN 사용 시 fail 예상 → partial_data=true.
+            git clone --depth=1 https://github.com/mclayer/codeforge-internal-docs.git .internal-docs 2>&1 | tee /tmp/clone.log
+            echo "[clone_internal] PAT 부재 — GITHUB_TOKEN fallback (private 시 fail 예상)"
+          fi
           status=$?
           if [ "$status" -eq 0 ]; then
             echo "internal_docs_ready=true" >> "$GITHUB_OUTPUT"
@@ -85,6 +96,8 @@ jobs:
             args+=(--as-of "$AS_OF_INPUT")
           fi
           args+=(--out docs/kpi/rate-limit-fallback.json)
+          # CFP-453 — history.jsonl append (idempotent, last-line replace if same month)
+          args+=(--history-out docs/kpi/rate-limit-fallback-history.jsonl)
 
           # CFP-451: capture mode — aggregator exit code 별 sub-reason 분류 (detect_infra 가 GITHUB_OUTPUT.exit_code 참조).
           bash scripts/measure-rate-limit-fallback.sh "${args[@]}"
@@ -216,6 +229,8 @@ jobs:
 
           git checkout -b "$BRANCH"
           git add docs/kpi/rate-limit-fallback.json
+          # CFP-453 — history.jsonl 누적 file 도 동일 PR 에 포함 (auto-PR noise 회피).
+          git add docs/kpi/rate-limit-fallback-history.jsonl
           git commit -m "chore(kpi): rate-limit-fallback monthly refresh ($(date -u +%Y-%m))" \
                      -m "Automated by templates/github-workflows/rate-limit-fallback-kpi.yml" \
                      -m "evidence-checks-registry entry: rate-limit-fallback-rate (CFP-393 / ADR-057 Amendment 2)"

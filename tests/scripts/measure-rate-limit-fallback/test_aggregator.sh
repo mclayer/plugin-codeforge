@@ -602,6 +602,260 @@ ROW
 }
 
 # ============================================================================
+# Helper: line count assertion (CFP-453)
+# ============================================================================
+assert_line_count() {
+  local description="$1"
+  local file="$2"
+  local expected="$3"
+
+  TESTS_RUN=$((TESTS_RUN + 1))
+  local actual
+  if [[ -f "$file" ]]; then
+    actual=$(wc -l < "$file" | tr -d ' ')
+  else
+    actual="FILE_NOT_FOUND"
+  fi
+
+  if [[ "$actual" == "$expected" ]]; then
+    echo -e "${GREEN}✓${NC} $description"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+    return 0
+  else
+    echo -e "${RED}✗${NC} $description"
+    echo "    File:     $file"
+    echo "    Expected: $expected lines"
+    echo "    Actual:   $actual"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+    return 1
+  fi
+}
+
+# ============================================================================
+# T-11: History append idempotency (CFP-453)
+#   동일 month (--as-of) 로 2회 호출 → 라인 수 = 1 유지, measured_at 만 갱신
+# ============================================================================
+test_t11() {
+  echo "  Running T-11..."
+  local test_wrapper="$TEST_WRAPPER_BASE/t11"
+  mkdir -p "$test_wrapper/docs/stories"
+
+  local story="$test_wrapper/docs/stories/CFP-T11.md"
+  local history_file="$test_wrapper/history-t11.jsonl"
+
+  cat > "$story" << 'STORY'
+---
+key: CFP-T11
+---
+# T-11: History idempotency
+## §14. Lane Evidence
+STORY
+
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
+    spawned_at: 2026-04-15T10:00:00Z
+    transcript: "Normal"
+ROW
+  done
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
+    spawned_at: 2026-05-15T10:00:00Z
+    transcript: "Normal"
+ROW
+  done
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
+    spawned_at: 2026-06-15T10:00:00Z
+    transcript: "Normal"
+ROW
+  done
+
+  # 1회 호출 — file 신규 생성, 1 entry.
+  "$TEST_AGGREGATOR" --wrapper-path "$test_wrapper" --as-of "2026-07" \
+    --history-out "$history_file" >/dev/null 2>&1
+  assert_line_count "T-11.a: 1st call line count = 1" "$history_file" "1" || return 1
+  local measured_1
+  measured_1=$(tail -n 1 "$history_file" | jq -r '.measured_at')
+
+  # 동일 --as-of 재호출 — 라인 수 동일 유지, last entry 의 measured_at 갱신.
+  sleep 1   # measured_at = current UTC → 1초 wait 로 timestamp 갱신 가시화.
+  "$TEST_AGGREGATOR" --wrapper-path "$test_wrapper" --as-of "2026-07" \
+    --history-out "$history_file" >/dev/null 2>&1
+  assert_line_count "T-11.b: 2nd call same month line count = 1 (idempotent replace)" "$history_file" "1" || return 1
+
+  local measured_2
+  measured_2=$(tail -n 1 "$history_file" | jq -r '.measured_at')
+
+  TESTS_RUN=$((TESTS_RUN + 1))
+  if [[ "$measured_1" != "$measured_2" ]]; then
+    echo -e "${GREEN}✓${NC} T-11.c: measured_at updated on idempotent replace"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+  else
+    echo -e "${RED}✗${NC} T-11.c: measured_at unchanged ($measured_1)"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+    return 1
+  fi
+
+  # month value 보존 확인.
+  local month_val
+  month_val=$(tail -n 1 "$history_file" | jq -r '.month')
+  TESTS_RUN=$((TESTS_RUN + 1))
+  if [[ "$month_val" == "2026-06" ]]; then
+    echo -e "${GREEN}✓${NC} T-11.d: month bucket = 2026-06 (window last)"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+  else
+    echo -e "${RED}✗${NC} T-11.d: month bucket mismatch (got: $month_val)"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+    return 1
+  fi
+}
+
+# ============================================================================
+# T-12: History file graceful create (CFP-453)
+#   --history-out 가 가리키는 file 부재 시 자동 생성 + 1 entry 작성
+# ============================================================================
+test_t12() {
+  echo "  Running T-12..."
+  local test_wrapper="$TEST_WRAPPER_BASE/t12"
+  mkdir -p "$test_wrapper/docs/stories"
+
+  local story="$test_wrapper/docs/stories/CFP-T12.md"
+  # Nested non-existent directory — mkdir -p 까지 verify.
+  local history_file="$test_wrapper/nested/sub/dir/history-t12.jsonl"
+
+  cat > "$story" << 'STORY'
+---
+key: CFP-T12
+---
+# T-12: Graceful create
+## §14. Lane Evidence
+STORY
+
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
+    spawned_at: 2026-04-15T10:00:00Z
+    transcript: "Normal"
+ROW
+  done
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
+    spawned_at: 2026-05-15T10:00:00Z
+    transcript: "Normal"
+ROW
+  done
+  for i in {1..60}; do
+    cat >> "$story" << 'ROW'
+  - lane: develop
+    agent: DeveloperAgent
+    spawned_at: 2026-06-15T10:00:00Z
+    transcript: "Normal"
+ROW
+  done
+
+  # File / parent dir 부재 — graceful create 의무.
+  TESTS_RUN=$((TESTS_RUN + 1))
+  if [[ ! -e "$history_file" ]]; then
+    echo -e "${GREEN}✓${NC} T-12.a: pre-condition — history file 부재"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+  else
+    echo -e "${RED}✗${NC} T-12.a: pre-condition 실패 (file 이미 존재)"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+    return 1
+  fi
+
+  "$TEST_AGGREGATOR" --wrapper-path "$test_wrapper" --as-of "2026-07" \
+    --history-out "$history_file" >/dev/null 2>&1
+
+  assert_line_count "T-12.b: history file created with 1 entry" "$history_file" "1" || return 1
+
+  # JSON 유효성 + schema 필드 검증.
+  local entry
+  entry=$(tail -n 1 "$history_file")
+  TESTS_RUN=$((TESTS_RUN + 1))
+  if echo "$entry" | jq -e '.measured_at and .month and (.sonnet_spawn_total != null) and (.fallback_count != null) and (.sample_size_sufficient != null) and (.partial_data != null) and .gate_status' >/dev/null 2>&1; then
+    echo -e "${GREEN}✓${NC} T-12.c: entry schema 모든 필드 보유 (measured_at, month, spawn, fb, suff, partial, gate)"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+  else
+    echo -e "${RED}✗${NC} T-12.c: entry schema 누락 필드 detect"
+    echo "    Entry: $entry"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+    return 1
+  fi
+}
+
+# ============================================================================
+# T-13: Multi-month accumulation (CFP-453)
+#   다른 --as-of 로 2회 호출 시 2 entry 누적 (다른 month bucket → append)
+# ============================================================================
+test_t13() {
+  echo "  Running T-13..."
+  local test_wrapper="$TEST_WRAPPER_BASE/t13"
+  mkdir -p "$test_wrapper/docs/stories"
+
+  local story="$test_wrapper/docs/stories/CFP-T13.md"
+  local history_file="$test_wrapper/history-t13.jsonl"
+
+  cat > "$story" << 'STORY'
+---
+key: CFP-T13
+---
+# T-13: Multi-month accumulation
+## §14. Lane Evidence
+STORY
+
+  # 6 months of data — 2 windows (2026-01~03 / 2026-04~06) 둘 다 sufficient.
+  for m in "2026-01" "2026-02" "2026-03" "2026-04" "2026-05" "2026-06"; do
+    for i in {1..60}; do
+      cat >> "$story" << ROW
+  - lane: develop
+    agent: DeveloperAgent
+    spawned_at: ${m}-15T10:00:00Z
+    transcript: "Normal"
+ROW
+    done
+  done
+
+  # 1st run — window ending 2026-03 (as-of 2026-04 → window = 2026-01/02/03, last = 2026-03)
+  "$TEST_AGGREGATOR" --wrapper-path "$test_wrapper" --as-of "2026-04" \
+    --history-out "$history_file" >/dev/null 2>&1
+  assert_line_count "T-13.a: 1st run (as-of 2026-04) line count = 1" "$history_file" "1" || return 1
+
+  # 2nd run — window ending 2026-06 (as-of 2026-07 → window = 2026-04/05/06, last = 2026-06)
+  "$TEST_AGGREGATOR" --wrapper-path "$test_wrapper" --as-of "2026-07" \
+    --history-out "$history_file" >/dev/null 2>&1
+  assert_line_count "T-13.b: 2nd run (as-of 2026-07, different month) line count = 2 (append)" "$history_file" "2" || return 1
+
+  # Entry month verify.
+  local m1 m2
+  m1=$(sed -n '1p' "$history_file" | jq -r '.month')
+  m2=$(sed -n '2p' "$history_file" | jq -r '.month')
+  TESTS_RUN=$((TESTS_RUN + 1))
+  if [[ "$m1" == "2026-03" ]] && [[ "$m2" == "2026-06" ]]; then
+    echo -e "${GREEN}✓${NC} T-13.c: entry months in order (2026-03, 2026-06)"
+    TESTS_PASSED=$((TESTS_PASSED + 1))
+  else
+    echo -e "${RED}✗${NC} T-13.c: entry months mismatch (got: $m1, $m2)"
+    TESTS_FAILED=$((TESTS_FAILED + 1))
+    return 1
+  fi
+
+  # 3rd run — 다시 2026-07 (same as 2nd run's month=2026-06) → idempotent replace, 라인 수 보존.
+  "$TEST_AGGREGATOR" --wrapper-path "$test_wrapper" --as-of "2026-07" \
+    --history-out "$history_file" >/dev/null 2>&1
+  assert_line_count "T-13.d: 3rd run same month (idempotent replace) line count = 2" "$history_file" "2" || return 1
+}
+
+# ============================================================================
 # MAIN
 # ============================================================================
 
@@ -609,7 +863,7 @@ main() {
   setup
 
   echo "======================================================================"
-  echo "CFP-393 TDD Test Suite — RED Phase"
+  echo "CFP-393 + CFP-453 TDD Test Suite"
   echo "Testing: measure-rate-limit-fallback.sh"
   echo "Script:  $TEST_AGGREGATOR"
   echo "Repo:    $REPO_ROOT"
@@ -626,6 +880,10 @@ main() {
   test_t8
   test_t9
   test_t10
+  # CFP-453 — history.jsonl tests
+  test_t11
+  test_t12
+  test_t13
 
   echo ""
   echo "======================================================================"
