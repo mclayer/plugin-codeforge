@@ -23,8 +23,12 @@ amendments:
     title: Normative ↔ mechanical boundary mandate (frontmatter mechanical_enforcement_actions[] 의무)
     sunset_justification: "N/A — is_transitional: false (permanent governance mandate). normative ↔ mechanical boundary 자체가 codeforge 거버넌스 영구 룰."
 mechanical_enforcement_actions:
+  # FIX iter 1 F-1 (CFP-427) 정정: status enum 정합 (warning / enforcing / deferred-followup) 환원 +
+  # progress_note optional string field 신설 (entry-level 진척 추적). schema 변경 = MINOR (backward compatible).
+  # ADR-040 §결정 7.A schema 본문 추가는 별도 Amendment 4 (Story 4 CFP-429 carrier) 책임.
   - action: worktree-first-session-start-wire
     status: warning
+    progress_note: "actual wire CFP-427 (Story 2 — scripts/check-session-start-hook-presence.sh)"
     target_section: §결정 5
   - action: worktree-first-pre-checkout
     status: warning
@@ -34,6 +38,7 @@ mechanical_enforcement_actions:
     target_section: §결정 7
   - action: worktree-first-spawn-evidence-cwd
     status: warning
+    progress_note: "actual wire CFP-427 (Story 2 — scripts/check-spawn-evidence-cwd.sh + enforce-from filter)"
     target_section: §결정 5
 related_stories:
   - CFP-134
