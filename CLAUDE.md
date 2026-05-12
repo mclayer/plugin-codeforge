@@ -115,6 +115,41 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 세부 spawn sequence · branch logic · FIX 진단 흐름 SSOT: [playbook §3](docs/orchestrator-playbook.md) + 각 lane plugin CLAUDE.md.
 
+## 결정 원칙 (ADR-064 normative SSOT)
+
+codeforge 의 모든 결정 제안 시점 (proposing-time) 에 적용. 외연 영역 (`hotfix-bypass:*` operational-time, deprecation 사후 운영, source code fallback / safe-default 런타임 로직) 은 본 단락 scope 외. 정책 SSOT: [ADR-064](docs/adr/ADR-064-decision-principle-mandate.md) — 행동 패턴 + 적용 사례 SSOT = [`docs/domain-knowledge/domain/governance-principle/decision-style.md`](docs/domain-knowledge/domain/governance-principle/decision-style.md).
+
+### 결정 내용 (Trace 1)
+
+- **4 어휘 normative anchor**: best-effort (도달 가능한 최선의 안) / broad coverage (side effect / edge case / 외연 후보 포함) / full-scope (도메인 전체 즉시 적용) / active amendment (강화 방향 적극 발의)
+- **Forbid-list dictionary 8 어휘** (mechanical lint = [CFP-449](https://github.com/mclayer/plugin-codeforge/issues/449) warning tier, ADR-060 §결정 5 정합 — scope = 5 영역: `docs/adr/**` / `docs/change-plans/**` / `CLAUDE.md` / `docs/orchestrator-playbook.md` / `templates/**`. exempt channel = `hotfix-bypass:decision-principle-vocab` label. dictionary SSOT = [ADR-064](docs/adr/ADR-064-decision-principle-mandate.md) §결정 2):
+
+```text
+임시 / 단계적 / 일단 / 우선[시간 우선순위 의미 한정] / 잠정 / 가벼운 / minimal viable / quick win
+```
+
+  결정 menu 자체에서 제거 의무.
+
+- **CFP scope unitary**: 한 CFP 안 "경량 → full" 단계 채택 금지. 별개 CFP 분리는 허용 (`CFP-N v0.1` + `CFP-N+1 v1.0` 가 독립 brainstorm + 독립 Story + 독립 PR).
+
+### 결정 제시 (Trace 2)
+
+Orchestrator 가 사용자에게 결정 제안 / 질문 시 5 룰 적용:
+
+1. **Derived default 기본값 적용** — 컨텍스트로 합리적 default 도출 가능 시 `AskUserQuestion` 발화 생략. derived default 직접 declare + 결과 보고 (사용자 정정 의무).
+2. **옵션 dump 금지** — 권장 1 안 + 대안 1 안 (최대 2). 3+ 후보는 brainstorm Phase 0 영역.
+3. **식별자 사전 요약** — ADR / CFP / 코드 식별자 인용 시 핵심 결정 1 문장 요약 사전 제시 후 질문 / 제안 본문 진입.
+4. **질문 brevity** — 1 문장 단위, 다중 질문 시 numbered list (최대 3 항목).
+5. **`AskUserQuestion` 범위 제한** — 가치 판단 / 미공개 컨텍스트 2 종 한정.
+
+### 적용 속도 (Trace 4)
+
+Orchestrator multi-task spawn 결정 default = **parallel** (단일 메시지 다중 Agent tool call). sequential 선택은 다음 3 사유 중 1 종 명시 의무 — **state dependency** (task N+1 이 task N 출력 의존) / **shared resource** (동일 file / label / branch lock) / **ordering invariant** (출력 순서 자체가 의미 — ADR-RESERVATION row append, FIX Ledger row append). 3 사유 모두 부재 = default parallel. [ADR-039](docs/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) §결정 7 `policy_violation_subdecision` 결정 영역 확장. Epic open→close 시간 단축 measurable signal = `EPIC-RESULTS-<KEY>.md` artifact frontmatter `opened_at` / `closed_at` delta (현재 `templates/epic-results.md` frontmatter 에 두 field 부재 — CFP-β 가 PMOAgent owner path 에 field 신설 의무).
+
+### Self-application top-down ratchet
+
+ADR-064 amendment 는 강화 방향만 허용 (scope 확장 / 강도 강화). 약화 방향 (`is_transitional: false → true` 다운그레이드 / forbid-list dictionary 축소 / sequential 강제 사유 확장) 은 [ADR-058](docs/adr/ADR-058-adr-sunset-criteria-mandate.md) §결정 5 sunset_justification 의무로 차단. memory `feedback_explain_before_ask` + `feedback_question_quality` + `feedback_subagent_driven_auto_select` 3 memory entry 의 normative 승격 첫 carrier.
+
 ## 오케스트레이션 규칙
 
 ### Sonnet subagent rate-limit → Opus fallback (ADR-057)
@@ -342,7 +377,7 @@ Versioning + sibling sync SSOT: [ADR-008](docs/adr/ADR-008-inter-plugin-contract
 
 ## GitHub Workflow
 
-`templates/github-workflows/` 19종 fixture: 9 core (`story-init.yml` · `phase-label-invariant.yml` · `story-section-1-immutable.yml` · `subissue-from-impl-manifest.yml` · `phase-gate-mergeable.yml` · `fix-ledger-sync.yml` · `post-merge-followup.yml` (ADR-026 / CFP-74) · `retro-mandatory.yml` ([ADR-045](docs/adr/ADR-045-story-retro-mandatory-trigger.md) / CFP-138 — Story 완료 회고 forcing function, `gate:retro-complete` close-blocking) · `parallel-epic-conflict-check.yml` (ADR-050 — 병렬 에픽 파일 충돌 감지, non-blocking)) + 1 evidence-enforceable warning (`adr-sunset-criteria.yml` — CFP-389 / ADR-060 §결정 5, ADR-058 mechanical lint, `continue-on-error: true`, `hotfix-bypass:adr-sunset` label 부착 PR conditional skip + audit comment 자동 발의) + 1 atomic invariant blocking (`version-bump-atomic-check.yml` — CFP-441 / ADR-063 §결정 5, plugin.json mirrored field 변경 시 3-file atomic (plugin.json + CHANGELOG.md + marketplace.json) verify, `hotfix-bypass:marketplace-atomic` label conditional skip + 24h sync 의무 audit comment) + 4 worktree-first warning (`worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd}.yml` — CFP-426 / ADR-040 Amendment 3 §결정 7, Story 1 skeleton — actual wire 는 CFP-427/428/429 후속, `hotfix-bypass:worktree-*` per-entry label + `check-bypass-audit-comment.sh` reuse) + 4 Live touching reusable workflow (`live-test-guard.yml` · `live-deploy-approval.yml` · `live-secret-policy.yml` · `kill-switch-integration-test.yml`, CFP-C). Issue Forms / branch protection / 버그 기록 등 상세 hierarchy + label 분류 + 코멘트 규칙 SSOT: [`docs/consumer-guide.md`](docs/consumer-guide.md) §1.3 + [`label-registry-v2`](docs/inter-plugin-contracts/label-registry-v2.md) + [`comment-prefix-registry-v1`](docs/inter-plugin-contracts/comment-prefix-registry-v1.md).
+`templates/github-workflows/` 20종 fixture: 9 core (`story-init.yml` · `phase-label-invariant.yml` · `story-section-1-immutable.yml` · `subissue-from-impl-manifest.yml` · `phase-gate-mergeable.yml` · `fix-ledger-sync.yml` · `post-merge-followup.yml` (ADR-026 / CFP-74) · `retro-mandatory.yml` ([ADR-045](docs/adr/ADR-045-story-retro-mandatory-trigger.md) / CFP-138 — Story 완료 회고 forcing function, `gate:retro-complete` close-blocking) · `parallel-epic-conflict-check.yml` (ADR-050 — 병렬 에픽 파일 충돌 감지, non-blocking)) + 2 evidence-enforceable warning (`adr-sunset-criteria.yml` — CFP-389 / ADR-060 §결정 5, ADR-058 mechanical lint, `continue-on-error: true`, `hotfix-bypass:adr-sunset` label 부착 PR conditional skip + audit comment 자동 발의; `decision-principle-vocabulary.yml` — CFP-449 / ADR-060 §결정 5, ADR-064 §결정 2 forbid-list 8 어휘 mechanical lint, `continue-on-error: true`, `hotfix-bypass:decision-principle-vocab` label conditional skip + audit comment 자동 발의) + 1 atomic invariant blocking (`version-bump-atomic-check.yml` — CFP-441 / ADR-063 §결정 5, plugin.json mirrored field 변경 시 3-file atomic (plugin.json + CHANGELOG.md + marketplace.json) verify, `hotfix-bypass:marketplace-atomic` label conditional skip + 24h sync 의무 audit comment) + 4 worktree-first warning (`worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd}.yml` — CFP-426 / ADR-040 Amendment 3 §결정 7, Story 1 skeleton — actual wire 는 CFP-427/428/429 후속, `hotfix-bypass:worktree-*` per-entry label + `check-bypass-audit-comment.sh` reuse) + 4 Live touching reusable workflow (`live-test-guard.yml` · `live-deploy-approval.yml` · `live-secret-policy.yml` · `kill-switch-integration-test.yml`, CFP-C). Issue Forms / branch protection / 버그 기록 등 상세 hierarchy + label 분류 + 코멘트 규칙 SSOT: [`docs/consumer-guide.md`](docs/consumer-guide.md) §1.3 + [`label-registry-v2`](docs/inter-plugin-contracts/label-registry-v2.md) + [`comment-prefix-registry-v1`](docs/inter-plugin-contracts/comment-prefix-registry-v1.md).
 
 **Branch protection**: main 브랜치 = 4 required status check (phase-gate-mergeable + doc frontmatter + doc section + invariant-check) + `restrictions:{users:[],teams:[],apps:[]}` (direct push 차단) + **`enforce_admins: true` (admin 도 required check 통과 의무, CFP-70)**. CODEOWNERS 자동 review request 는 **도덕적 governance** — solo-dev 환경 강제 off (`require_code_owner_reviews:false` + `required_approving_review_count:0`, CFP-72). contributor 추가 시 `require_code_owner_reviews:true` + `count:1` 복원 의무 (별도 CFP). CODEOWNERS template: [`templates/CODEOWNERS.template`](templates/CODEOWNERS.template). 정책 SSOT: [ADR-024](docs/adr/ADR-024-story-scoped-branch-policy.md). Rulesets / branch naming auto enforcement 는 solo-dev 가정 하 defer — contributor 추가 시 별도 CFP.
 

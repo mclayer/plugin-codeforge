@@ -1,0 +1,24 @@
+# Fixture 05 — Negative: bypass_label defined without bypass_audit_lint
+# Story §8.6.1 #5 — exit 1, violation (d)
+schema_version: "1.1"
+introduced_by: CFP-455-test
+last_updated: 2026-05-12
+entries:
+  - name: fixture-bypass-pair-violation
+    description: |
+      Test entry — bypass_label defined but bypass_audit_lint missing.
+    detect_command: bash scripts/test-detect.sh
+    workflow: templates/github-workflows/test-detect.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:test  # defined
+    # bypass_audit_lint: intentionally missing — pair 위반
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+    introduced_by: CFP-455-test
+    owner_adr: ADR-060
+    carrier_adr: ADR-060
+    status: Active

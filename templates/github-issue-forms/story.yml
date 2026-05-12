@@ -61,3 +61,21 @@ body:
       placeholder: 예) docs/superpowers/specs/2026-05-07-my-feature-design.md
     validations:
       required: false
+
+  - type: checkboxes
+    id: decision_principle_compliance
+    attributes:
+      label: 결정 원칙 (ADR-064) 준수 확인 (advisory)
+      description: |
+        본 Story 의 사용자 요구사항 본문이 [ADR-064](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-064-decision-principle-mandate.md) 결정 원칙을 준수하는지 self-attest.
+        advisory checkbox — submission 차단 없음. mechanical lint 는 [CFP-449](https://github.com/mclayer/plugin-codeforge/issues/449) (warning tier, ADR-060 §결정 5).
+        false positive 회피 channel = `hotfix-bypass:decision-principle-vocab` label (ADR-024 Amendment 3).
+      options:
+        - label: forbid-list 어휘 회피 확인 (`임시` / `단계적` / `일단` / `우선[시간 우선순위]` / `잠정` / `가벼운` / `minimal viable` / `quick win`)
+          required: false
+        - label: derived default 우선 적용 확인 (가치 판단 / 미공개 컨텍스트 영역만 `AskUserQuestion`)
+          required: false
+        - label: 식별자 사전 요약 첨부 확인 (ADR / CFP / 코드 식별자 인용 시 핵심 결정 1 문장 요약 사전 제시)
+          required: false
+    validations:
+      required: false

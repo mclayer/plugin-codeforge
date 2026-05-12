@@ -1035,14 +1035,55 @@ task: <Codex에게 요청할 구체적 작업>
 | ADDRESS_FIRST | P1-only | Orchestrator 판단으로 skip 가능 → story §10 기록 |
 | 판정 불일치 (#5 전용) | — | 사용자 에스컬레이션 |
 
-#### §3.10.1 Pre-question Review
+#### §3.10.1 Pre-question Review (iterative reformulation — CFP-446 / [ADR-052 Amendment 2](../docs/adr/ADR-052-codex-proactive-check-touchpoints.md))
 
 | 항목 | 내용 |
 |---|---|
-| 트리거 | `AskUserQuestion` 호출 직전 (항상, 전 레인) |
-| artifacts | 질문 초안 + 옵션 목록 |
-| task | "아래 질문 초안을 검토해 더 명확한 표현과 더 풍부한 옵션을 제안하라. 편향·누락·모호성 포착" |
-| 출력 적용 | Codex 제안으로 질문/옵션 교체 후 `AskUserQuestion` 호출 |
+| 트리거 | `AskUserQuestion` 호출 직전 (항상, 전 레인). ADR-064 §결정 3 룰 5 정합 — `AskUserQuestion` 발화 자체 결정 (가치 판단 / 미공개 컨텍스트 2 종 한정) 통과 후 진입 |
+| artifacts | 질문 초안 + 옵션 목록 (round 별 갱신) |
+| task | "아래 질문 초안을 검토해 (1) ambiguity / context-external 영역 = 표현 애매 또는 답 추론 정보 컨텍스트 부재 (2) verbosity 영역 = 핵심 결정 대비 장황. 2 기준 모두 통과 = `accept` / 1 종이라도 검출 = `reject` + reformulation 제안. reformulation 결과도 brevity 준수 의무" |
+| 출력 적용 (iterative) | Codex `accept` → 그대로 `AskUserQuestion` 발화 / Codex `reject` → reformulation 반영 후 다음 round dispatch / 최대 3 rounds / fall-through 시 round 3 reformulation 그대로 `AskUserQuestion` 발화 |
+
+**Round 흐름 (max 3 + fall-through)**:
+
+```
+Round 1: Codex dispatch (질문 초안 v1)
+  ├─ accept → AskUserQuestion(v1) [early termination]
+  └─ reject → reformulation v2
+       ↓
+Round 2: Codex dispatch (질문 초안 v2)
+  ├─ accept → AskUserQuestion(v2)
+  └─ reject → reformulation v3
+       ↓
+Round 3: Codex dispatch (질문 초안 v3)
+  ├─ accept → AskUserQuestion(v3)
+  └─ reject (fall-through) → AskUserQuestion(v3) [그대로]
+```
+
+사용자 발화 directive verbatim (CFP-446 §1 — Story file SSOT): "이 리뷰는 최대 3회 반복할 수 있고 3회를 채우면 그냥 사용자에게 질문하라" — fall-through 정책 SSOT.
+
+**Codex reject 기준 (2 종)**:
+
+| 기준 | 운영적 정의 |
+|---|---|
+| `ambiguity` / `context-external` | 질문 표현 애매 또는 답 추론 정보 컨텍스트 부재 (사용자가 답할 수 없는 질문) |
+| `verbosity` | 질문 본문이 핵심 결정 영역 대비 장황 — 사용자 발화 directive: "질문의 내용이 길수록 좋지 않은 질문" |
+
+**Brevity 행동 규범 (질문자 + 리뷰어)**:
+
+- **질문자 (Orchestrator)** — 질문 초안 작성 시 1 문장 단위 + numbered list (max 3 항목). 컨텍스트 길이 < 핵심 질문 길이 비율 유지. ADR-064 §결정 3 룰 4 정합
+- **리뷰어 (Codex)** — `verbosity` reject 시 reformulation 결과도 brevity 준수 의무. round N+1 입력이 round N 보다 길어지면 Orchestrator 가 reformulation 거부 후 round N+1 skip → fall-through 조기 진입 가능 (자기모순 차단)
+
+**debate-protocol-v1 미사용 결정 (ADR-052 Amendment 2 A5)**:
+
+본 iterative reformulation 은 `debate-protocol-v1` (§3.13) 의 multi-round adversarial debate 와 영역 분리. 본 영역은 단일 agent (Codex) self-iteration 으로 충분 — role_lock / anti-sycophancy / anchor 재발 / transcript Story §9 영속화 모두 불필요. 사용자 발화 directive ("Codex 에 리뷰 요청 … 다시 재구성하여 리뷰") 가 self-iteration 패턴 정합.
+
+| 영역 | debate-protocol-v1 (ADR-059) | §3.10.1 iterative reformulation |
+|---|---|---|
+| 참여자 | 2 agent adversarial | 1 agent (Codex) self-iteration |
+| Trigger | finding severity / recommendation divergence | Codex reject (ambiguity / verbosity) |
+| Round 영속화 | Story §9 transcript 의무 | Orchestrator turn 내 transient (영속화 불필요) |
+| FIX 흐름 | §10 ledger + reasoning carryover | N/A — verdict producer 영역 외 |
 
 #### §3.10.2 Design Synthesis Check
 
@@ -1307,6 +1348,28 @@ ADR-005 plugin-meta-na 패턴(§8/§9 lane 게이트 면제)으로 진행되는 
 1. **경로 분리**: 쓰기 대상 파일 경로가 겹치지 않음 (path-scoped 권한으로 보장)
 2. **입력 독립**: 한쪽 산출물이 다른 쪽 입력이 아님
 3. **완료 대기 가능**: 모든 병렬 에이전트 완료 후 종합 판단 가능
+
+### 4.1.1 결정 원칙 mandate — parallel default + sequential 강제 3 사유 (ADR-064)
+
+[ADR-064](../docs/adr/ADR-064-decision-principle-mandate.md) §결정 4 가 §4.1 의 normative 강화 — multi-task spawn default 는 **parallel** (단일 메시지 다중 Agent tool call). sequential 선택은 다음 3 사유 중 1 종 명시 의무. 3 사유 모두 부재 = default parallel.
+
+| Sequential 강제 사유 | 운영 사례 |
+|---|---|
+| **state dependency** | task N+1 이 task N 출력 (Story file section / ADR 번호 / 합의 결과) 입력 의존 — 예: ArchitectAgent §3 ADR 결정 → §7 설계 서사 |
+| **shared resource** | 동일 file write / 동일 GitHub label 변경 / 동일 branch commit / ADR 번호 sequential append — 예: ADR-RESERVATION row append |
+| **ordering invariant** | 출력 ordering 자체가 의미 — 예: FIX Ledger row append (시간 순), commit chain |
+
+본 룰은 ADR-039 §결정 7 `policy_violation_subdecision` 결정 영역 확장 — sequential 선택 시 spawn prompt 또는 commit message 에 사유 1 종 명시. derived default 가 부재한 영역 = AskUserQuestion 발화 의무 (ADR-064 §결정 3 룰 5 정합).
+
+#### 결정 제안 시점 self-check checklist
+
+Orchestrator 가 결정 제안 (brainstorm Phase 1 / writing-plans / Issue Form 제출 / lane spawn prompt 작성) 직전 다음 5 항목 self-check:
+
+1. **forbid-list 어휘 회피** — 결정 menu 후보 텍스트에 ADR-064 §결정 2 dictionary 8 어휘 등장 여부 확인 (dictionary 본문 / 외부 인용 영역 제외). 등장 시 대체 어휘로 reformulation.
+2. **Derived default 도출** — 컨텍스트 (사용자 명시 + memory + Story file + ADR 인용) 로 합리적 default 도출 가능 시 `AskUserQuestion` 생략, derived default 직접 declare.
+3. **식별자 사전 요약** — ADR / CFP / 코드 식별자 인용 시 핵심 결정 1 문장 요약 사전 제시.
+4. **옵션 수 제한** — 후보가 2+ 이면 권장 1 + 대안 1 (최대 2). 3+ 후보 = brainstorm Phase 0 영역으로 격상.
+5. **CFP scope unitary 확인** — 한 CFP 안 "경량 → full" 단계 분기 회피. 별개 CFP 분리 채택.
 
 ### 4.2 표준 병렬 패턴
 

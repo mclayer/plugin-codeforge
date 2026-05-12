@@ -1,0 +1,21 @@
+# Fixture 02 — Negative: schema_version field absent
+# Story §8.6.1 #2 — exit 1, violation (a)
+introduced_by: CFP-455-test
+last_updated: 2026-05-12
+entries:
+  - name: fixture-entry
+    description: |
+      Test entry — schema_version header field missing.
+    detect_command: bash scripts/test-detect.sh
+    workflow: templates/github-workflows/test-detect.yml
+    current_tier: warning
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+    introduced_by: CFP-455-test
+    owner_adr: ADR-060
+    carrier_adr: ADR-060
+    status: Active

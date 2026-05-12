@@ -1,0 +1,22 @@
+# Fixture 03 — Negative: entry missing current_tier
+# Story §8.6.1 #3 — exit 1, violation (b)
+schema_version: "1.1"
+introduced_by: CFP-455-test
+last_updated: 2026-05-12
+entries:
+  - name: test-no-tier
+    description: |
+      Test entry — current_tier field intentionally absent.
+    detect_command: bash scripts/test-detect.sh
+    workflow: templates/github-workflows/test-detect.yml
+    # current_tier: intentionally missing
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+    introduced_by: CFP-455-test
+    owner_adr: ADR-060
+    carrier_adr: ADR-060
+    status: Active
