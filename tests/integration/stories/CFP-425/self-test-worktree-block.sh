@@ -79,15 +79,18 @@ MD
 }
 
 # ── E4-3: templates/.git-hooks/pre-checkout.sample main working tree 에서 cfp-NNN checkout WARN ──
+# NOTE: git 'pre-checkout'은 공식 git hook 이름이 아니므로 git checkout 자동 트리거 불가.
+#       CFP-428 unit test TC-4 패턴과 동일하게 hook 스크립트를 직접 bash로 호출해 검증.
+#       hook 인자 규약 (Pro Git §8.3 verbatim): $1=prev_HEAD SHA, $2=next_HEAD (ref form), $3=branch_flag(1)
 e4_3() {
   local fixture_dir="$TMP/e4-3"
   mkdir -p "$fixture_dir"
   (cd "$fixture_dir" && git init -q -b main && git -c user.email=test@local -c user.name=test commit --allow-empty -q -m "initial")
-  install -m 0755 "$REPO_ROOT/templates/.git-hooks/pre-checkout.sample" "$fixture_dir/.git/hooks/pre-checkout"
+  # cfp-99999 branch 생성 (next_branch resolve 가능 상태 — hook L36 git rev-parse --abbrev-ref 정합)
   (cd "$fixture_dir" && git branch cfp-99999)
   local out
-  # main working tree 에서 cfp-99999 checkout 시뮬레이션
-  out=$(cd "$fixture_dir" && git checkout cfp-99999 2>&1) || true
+  # hook 직접 호출: $1=HEAD (prev), $2=refs/heads/cfp-99999 (next ref form), $3=1 (branch checkout)
+  out=$(cd "$fixture_dir" && bash "$REPO_ROOT/templates/.git-hooks/pre-checkout.sample" "HEAD" "refs/heads/cfp-99999" "1" 2>&1) || true
   assert_warn "E4-3 (pre-checkout main → cfp-NNN WARN)" "WARN|worktree-first" "$out"
 }
 
