@@ -2,6 +2,41 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.8.0] - 2026-05-12
+
+### CFP-448 — CodebaseMapperAgent · RefactorAgent Opus → Sonnet rollback + mandate text 재정의 (MINOR)
+
+ADR-057 Amendment 3 (wrapper plugin-codeforge PR #488 merged, 2026-05-12) selective rollback 의 sibling sync. CFP-379 (Amendment 4) 의 6 agent Opus 상향 중 본 lane plugin 의 2 agent (CodebaseMapperAgent / RefactorAgent) Sonnet 복귀 — ADR-042 §결정 2 invariant ("Sonnet 으로 fully cover 가능 = role 재정의 시그널") 정합으로 mandate text 재정의 동시 산출물 의무 (CFP-448 §5.3 EC-9 tie-break 정합).
+
+#### Changed
+
+- `agents/CodebaseMapperAgent.md`:
+  - `model:` field `claude-opus-4-7` → `claude-sonnet-4-6`
+  - `description` frontmatter: "기존 코드베이스 변호자" → "기존 코드베이스 **사실** 변호자 — file structure / API surface / 의존성 그래프 등 명시적 fact source 만 인용. 추론·해석·synthesis 금지 (chief author 영역)"
+  - 본문 신규 section "## Mandate boundary (Sonnet tier 정합 — ADR-057 Amendment 3 / ADR-042 Amendment 5)" 추가:
+    - **허용 영역**: file structure / API surface / 의존성 그래프 / git blame·log / 기존 ADR / 현재 패턴 — 모두 명시적 fact source 인용만
+    - **금지 영역**: 추론·해석·synthesis (chief author) / to-be 설계 (Refactor) / 보안 위협 (SecurityArch) / 데이터 무결성 (DataMigrationArch) / 운영 리스크 (OpRisk) / §7.4·§7.5·§11 mirror write
+    - **Structured output template 의무**: fact-only template (`fact source citation` + `유지 근거 추적` + `변경 영향 지도`) — 자유 서술 / opinion / suggestion 금지
+- `agents/RefactorAgent.md`:
+  - `model:` field `claude-opus-4-7` → `claude-sonnet-4-6`
+  - `description` frontmatter: "리팩터링 옹호자" → "리팩터링 옹호자 — **decoupling / pattern / 인터페이스 분리 3 카테고리** 안에서 advocacy. 카테고리 외 영역 (security / data integrity / op risk) 발화 금지 (해당 deputy 영역)"
+  - 본문 신규 section "## Advocacy axis boundary (Sonnet tier 정합 — ADR-057 Amendment 3 / ADR-042 Amendment 5)" 추가:
+    - **허용 advocacy 3 카테고리**: (a) Decoupling (b) Pattern (c) Interface separation — 표 형식으로 각 카테고리 핵심 1줄 + 산출물 형식 명시
+    - **금지 영역**: security / data integrity / op risk / test contract / 요건 범위 외 advocacy / 추론 기반 fact 주장
+    - **Structured output template 의무**: 3 카테고리 (a/b/c) 분류 형식 + 카테고리 외 영역 self-check 항목
+- `.claude-plugin/plugin.json` — version 0.7.0 → 0.8.0 MINOR (mandate text 재정의 = agent definition signature 변경, ADR-037 정합). description CFP-448 entry append.
+
+#### Why
+
+axis-A (operational cost) — ADR-042 §결정 2 original Sonnet 분류 정합 회복. axis-B (mandate 깊이) — single-mandate advocacy pattern (CodebaseMapper = fact citation / Refactor = 3 카테고리 advocacy). CFP-379 Codex review finding (CodebaseMapper symbol resolution 정확도 / Refactor advocacy 품질) 은 mandate text 재정의 동시 산출물로 해소 (단순 model field downgrade 금지 — CFP-448 §5.3 EC-9 tie-break). axis-C (SSOT alignment) — CLAUDE.md L127 8종 정합 회복 (CL-6 사용자 확정 Option (i)).
+
+#### Compatibility
+
+- **Wire**: codeforge wrapper >= 5.22.1 (Phase 2 PR pair atomic — wrapper 5.22.1 + requirements 0.5.1 + 본 0.8.0 + Story §8 internal-docs).
+- **Codex re-review**: **의무 (in-scope)** — Story §5.3 EC-2 정합. mandate text 재정의 후 Sonnet cover 가능성 검증 (Phase 2 PR Codex re-review = PASS, SUFFICIENT). FIX verdict 시 rollback reject + Opus 복귀 ADR carrier 발의 (현 PASS).
+- **Backward compat**: agent prompt structure 자체 변경 (mandate boundary section 신규) — 기존 deputy spawn 절차 변경 0건. 5 deputy 병렬 스폰 + ArchitectAgent (chief author) 통합 패턴 정합 (CodebaseMapper fact-only output + Refactor 3 카테고리 output 가 통합 단계 입력으로 자연 부합).
+- **ADR-053 재구동**: agent definition + mandate text 변경 = 구조적 변경. consumer 측 `/plugins install codeforge-design@mclayer` 의무.
+
 ## [0.7.0] - 2026-05-11
 
 ### CFP-387 / ADR-058 — ADR template sunset criteria + transitional 분류 frontmatter (MINOR)
