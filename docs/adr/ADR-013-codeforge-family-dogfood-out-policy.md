@@ -213,6 +213,42 @@ entry 수 3개는 최소값 — pattern 의 복잡도에 비례해 추가 권장
 - Retro 발견 사항 (Issue #314) 이 ADR 수준 의무로 상향 — 향후 design/code review 에서 pattern doc PR 심사 기준으로 활용 가능.
 - Lint 자동화는 CFP-299 scope 밖 — 향후 `check-doc-section-schema.sh` 확장 시 `## Pseudocode` + `## Edge Cases` 섹션 존재 여부 검사 추가 가능 (별도 CFP).
 
+## Amendment 4 (2026-05-12) — CFP-450 — internal-docs visibility=PRIVATE 명문화 + 단일 PAT (CODEFORGE_CROSS_REPO_PAT) 재사용 정책
+
+### 컨텍스트
+
+CFP-393 (#398, merged) §11 follow-up #2 가 식별: KPI workflow (`templates/github-workflows/rate-limit-fallback-kpi.yml`) 의 `clone_internal` step 가 `mclayer/codeforge-internal-docs` 를 default `GITHUB_TOKEN` 으로 clone — comment "public repo 가정" 명시. 본 Amendment 작성 시점 audit (2026-05-12) 에서 codeforge-internal-docs visibility = **PRIVATE** 확인 (`gh repo view mclayer/codeforge-internal-docs --json visibility`). 
+
+§결정 1 본문 "(Public)" 어휘 와 actual visibility drift — phase-gate-mergeable workflow (CFP-63 fix) 는 이미 `CODEFORGE_CROSS_REPO_PAT` secret 으로 동작 중이라 phase-gate evidence success. KPI workflow 는 default GITHUB_TOKEN 가정으로 fail risk 잔존.
+
+### 결정
+
+1. **Visibility 명문화**: codeforge-internal-docs = PRIVATE (2026-05-12 audit). 본 Amendment 가 §결정 1 의 "(Public)" 어휘 supersede — 본문 inline edit 미수행 (anti-drift, historic-preserving), 본 Amendment 가 신규 SSOT.
+2. **단일 PAT scope consolidation (Option B)**: cross-repo internal-docs read 가 필요한 모든 wrapper workflow 는 **`CODEFORGE_CROSS_REPO_PAT` 단일 secret 재사용**. 적용 영역:
+   - `phase-gate-mergeable.yml` (CFP-63 fix, 기존)
+   - `rate-limit-fallback-kpi.yml` (CFP-450 본 Amendment, 신규)
+   - 향후 internal-docs read 가 필요한 workflow 모두 동일 secret 재사용 (신규 secret 도입 금지 — rotation policy 단순화).
+3. **PAT permission scope**: `repo:read` (private internal-docs read only). 신규 PAT 도입 시 별도 ADR 발의 의무 (rotation / scope expansion / shared secret 영역 변경).
+4. **Fallback 정책 (graceful degradation)**: PAT secret 부재 시 → GITHUB_TOKEN fallback → private repo 환경에서 clone fail → `partial_data: true` sentinel (현 aggregator 동작 정합). workflow run = success (graceful), `codeforge-kpi-infra-error` label Issue 자동 발의 (CFP-451 정합).
+5. **Consumer overlay 영향**: consumer 측 codeforge plugin install 시 본 Amendment 무관 — codeforge-internal-docs 는 codeforge family dogfood 전용, consumer project 와 무관 (ADR-013 §결정 4 정합 — internal-docs 는 codeforge family only).
+
+### 위배 시 처리
+
+- PAT secret 미부착 wrapper workflow 에서 internal-docs clone fail → `partial_data: true` sentinel + `codeforge-kpi-infra-error` Issue auto-open (CFP-451 정합) → oncall 조치 (PAT 재발급 / scope 확인 / rotation).
+- 신규 wrapper workflow 가 internal-docs read 필요 시 본 Amendment 의무 — 신규 secret 도입 금지, `CODEFORGE_CROSS_REPO_PAT` 재사용. 위반 시 PR review 단계 차단 (별도 lint carrier 후행).
+
+### 결과
+
+- KPI workflow 가 internal-docs PRIVATE 상태에서 정합 동작 (PAT 사용 + fallback graceful).
+- 단일 PAT scope consolidation 으로 rotation overhead 최소화 (codeforge family ops 부담 감소).
+- visibility drift 해소 — ADR-013 §결정 1 의 "(Public)" 가정이 더 이상 신뢰 source 아님 (본 Amendment 가 supersede SSOT).
+
+### 관련 파일
+
+- [templates/github-workflows/rate-limit-fallback-kpi.yml](../../templates/github-workflows/rate-limit-fallback-kpi.yml) — KPI workflow PAT 사용 영역
+- [templates/github-workflows/phase-gate-mergeable.yml](../../templates/github-workflows/phase-gate-mergeable.yml) — phase-gate cross-repo Story fetch (선례)
+- CFP-450 Story file (`mclayer/codeforge-internal-docs/wrapper/stories/CFP-450.md`)
+
 ## 관련 파일
 
 - [CFP-45 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-30-cfp-45-dogfood-out-restructure-design.md) — parent
