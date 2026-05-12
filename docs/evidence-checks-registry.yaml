@@ -311,8 +311,10 @@ entries:
     description: |
       ADR-016 marketplace mirrored field sync 검증 — codeforge plugin family 7 plugin
       의 marketplace.json mirrored field (name / version / description / author) 정합.
-    detect_command: bash scripts/check-marketplace-sync.sh
-    workflow: .github/workflows/contract-lint.yml  # job: marketplace-sync
+      [CFP-457 retired 2026-05-12] — redundant with marketplace-parity (CFP-50 / ADR-023).
+      Single SSOT = marketplace-parity entry above.
+    detect_command: bash scripts/check-marketplace-sync.sh  # DELETED in CFP-457
+    workflow: .github/workflows/contract-lint.yml  # job: marketplace-sync (removed in CFP-457)
     current_tier: warning
     promotion_criteria:
       pr_cumulative_min: 20
@@ -324,7 +326,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-016 (mirrored field)
     carrier_adr: ADR-060
-    status: Active
+    status: Retired  # CFP-457 — replaced by marketplace-parity (CFP-50 / ADR-023)
+    retired_by: CFP-457
+    retired_date: 2026-05-12
 
   - name: dogfood-artifact-paths
     description: |
