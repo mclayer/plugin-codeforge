@@ -338,6 +338,15 @@ Amendment 4 (CFP-379, 2026-05-11) 의 6 agent Sonnet → Opus 상향 중 3종 se
 
 본 mandate text 재정의 산출물은 Phase 2 PR scope (sibling plugin) — codeforge-design plugin agent file edit (PATCH bump). codeforge-design plugin sibling PR 시 본 Amendment 5 cross-ref 의무.
 
+### Codex re-review + ChangeImpactAgent exclusion (ADR-057 Amendment 3 §변경 사항 5+6 cross-ref)
+
+본 Amendment 5 = ADR-057 Amendment 3 atomic carrier. ADR-057 §변경 사항 5+6 에서 발화된 정책의 역방향 cross-ref:
+
+- **Codex re-review 의무 (in-scope, Story §5.3 EC-2 정합)**: mandate text 재정의 대상 2 agent (CodebaseMapper / Refactor) — Phase 2 PR open 전 또는 PR 안에 Codex re-review 발화 의무 (단순 optional follow-up 아님). 재정의된 mandate 가 Sonnet 으로 cover 가능한지 검증. FIX verdict 시 rollback reject + Opus 복귀 ADR carrier 발의 의무
+- **ChangeImpactAgent exclusion criterion**: mandate text 재정의 면제 (mandate = AS-IS→DELTA structured mapping, invariant 자연 정합 — advocacy/synthesis pattern 아님) → Codex re-review 도 면제 (단 Phase 2 CodeReview lane 일반 model field 변경 검토는 적용)
+
+SSOT = ADR-057 Amendment 3 §변경 사항 5+6 본문. 본 Amendment 5 = 역방향 cross-ref reference (drift 차단).
+
 ### 6 agent decision evidence (3 axis 종합 — CFP-448 §5.0)
 
 axis-A (operational cost trade-off) × axis-B (role redefinition signal, ADR-042 §결정 2 invariant 정합) × axis-C (SSOT alignment direction, CFP-448 CL-6 사용자 확정 = Option (i) ADR-057 §결정 3 표 = SSOT) 종합:
