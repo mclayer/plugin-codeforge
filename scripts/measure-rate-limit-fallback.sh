@@ -161,12 +161,12 @@ if [[ -f "$ADR_057_FILE" || -f "$ADR_042_FILE" ]]; then
         if [[ "$existing" == "$name" ]]; then already=1; break; fi
       done
       [[ $already -eq 0 ]] && ADR_DETECTED_AGENTS+=("$name")
-    done < <(grep -oE "\b(DeveloperPLAgent|DeveloperAgent|BackendDeveloperAgent|FrontendDeveloperAgent|IntegrationTestAgent|StatefulTestAgent|ChangeImpactAgent|CodebaseMapperAgent|RefactorAgent|FeasibilityAgent|ContinuityAgent|ResearcherAgent|QADeveloperAgent|InfraEngineerAgent|DataEngineerAgent)\b" "$adr_f" 2>/dev/null | sort -u)
+    done < <(grep -oE "\b(DeveloperPLAgent|DeveloperAgent|BackendDeveloperAgent|FrontendDeveloperAgent|IntegrationTestAgent|StatefulTestAgent|ChangeImpactAgent|CodebaseMapperAgent|RefactorAgent|FeasibilityAgent|ContinuityAgent|QADeveloperAgent|InfraEngineerAgent|DataEngineerAgent)\b" "$adr_f" 2>/dev/null | sort -u)
   done
 
   # SONNET_AGENTS (11종 hardcode, CFP-264 Amendment 4 후) vs ADR detected — strict equal set 검증.
   # SSOT 가 11종 명시: DeveloperAgent / BackendDeveloperAgent / FrontendDeveloperAgent / IntegrationTestAgent / StatefulTestAgent / CodebaseMapperAgent / RefactorAgent / DeveloperPLAgent / FeasibilityAgent / ContinuityAgent / ChangeImpactAgent.
-  # ResearcherAgent 는 regex 에 유지 (drift 발견 가능성 위해 — Opus 유지이지만 ADR 본문에 등장) — 현재 Sonnet 잔류 list 외 (path B 정합).
+  # NOTE: ResearcherAgent 는 regex 에서 제거됨 (CFP-264 FIX iter 1) — path B invariant 정합 (Researcher Opus 유지, ADR-046 §결정 4·5 변경 0건). false positive 회피.
   # ADR 가 본문에 다른 agent 도 언급할 수 있으나, enum drift detection 의 정확한 의미 =
   # SONNET_AGENTS 11종 모두 ADR_DETECTED_AGENTS 에 포함되어야 함 (역방향은 ADR 본문 자유).
   for sa in "${SONNET_AGENTS[@]}"; do
