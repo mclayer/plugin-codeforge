@@ -1,0 +1,21 @@
+{
+  "_comment": "codeforge deferred tool schema prefetch advisory — SessionStart hook sample (CFP-500 / ADR-038 Amendment 2 §결정 9).",
+  "_doc": "Append this hook definition to consumer's `.claude/settings.json` under `hooks.SessionStart[]` array. drift / worktree-gc 와 동일 등록 패턴. 등록 위치 = drift / worktree-gc 뒤 (3번째, 권장).",
+  "_adr": "ADR-038 Amendment 2 §결정 9 — deferred tool 스키마 선제 로드 enforcement layer 를 (c) runtime advisory 에서 (b) SessionStart hook tier 로 격상. CFP-375 / CFP-385 runtime advisory 시도 2회 실패 history 의 3rd attempt.",
+  "_layer": "startup hook tier (Researcher 3-tier 모델 — (a) physical CI/git hook / (b) startup-time hook (본 hook) / (c) runtime text directive). hook = schema 가용성 advisory 한정, behavioral compliance 자체는 Orchestrator 책임 (§결정 9 본문 명시).",
+  "_severity": "Advisory only — exit 0 + stdout heredoc echo. session block 0건. hook 실행 실패 시 §결정 8 의 runtime ToolSearch attempt 가 fallback (§결정 7 폴백 layered defense retain).",
+  "_bypass": "BYPASS_PREREQ_CHECK=1 env (rare — debugging only). reason 필드 필수 아님 (advisory 성격).",
+  "_limits": "stdout ≤ 500자 / fixed format (variability 0, prompt cache hit rate 영향 최소화) / side-effect 0 (filesystem touch 0 / network call 0 / env interpolation 부재, AC-11 정적 검증). Anthropic prompt-injection ABI 미공개 — measurable performance 는 ADR-038 amendment_log sunset_justification 3-tuple 추적.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-prereq.sh\""
+          }
+        ]
+      }
+    ]
+  }
+}

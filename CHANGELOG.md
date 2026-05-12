@@ -5,6 +5,30 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.18.0] - 2026-05-12
+
+### Added (CFP-500 — SessionStart prereq-check hook tier 격상)
+
+ADR-038 Amendment 1 §결정 8 (CFP-375) + CFP-385 의 (c) runtime advisory tier 가 매 세션 무시 → 본 Story 가 (b) startup hook tier 로 enforcement 격상. consumer `.claude/settings.json` `hooks.SessionStart[]` 에 `SessionStart-codeforge-prereq-check.json.sample` 등록 시 harness 가 세션 부팅 시점에 Orchestrator 에게 prompt-injection 으로 `ToolSearch("select:TodoWrite")` 호출 지시.
+
+- `templates/.claude/hooks/SessionStart-codeforge-prereq-check.json.sample` (NEW) — 3번째 SessionStart hook sample (drift / worktree-gc 패턴 정합, 7 top-level field schema)
+- `scripts/check-codeforge-prereq.sh` (NEW) — bash helper, single-quoted heredoc static stdout (set -euo pipefail + filesystem touch 0 + network call 0 + AC-11 정적 검증 cover)
+- `tests/scripts/test_check_codeforge_prereq.sh` (NEW) — bash smoke test, 16 assertion (정적 10 + runtime 5 + exit code 1 bonus)
+- `docs/domain-knowledge/domain/runtime/deferred-tool-and-session-start-hook.md` (NEW, ADR-056 §결정 1 `domain/<area>/<topic>.md` 정합)
+- `docs/orchestrator-playbook.md` §1.1 0i 항목 supersede + hook tier 위임 + §결정 7·8 retain 폴백
+- `CLAUDE.md` "세션 개시 의무" 단락 supersede
+- `.claude-plugin/plugin.json` description 끝 CFP-500 entry append + version 5.17.0 → 5.18.0
+- `.claude/settings.json` wrapper dogfooding (`hooks.SessionStart[]` 에 prereq-check 추가)
+- `docs/consumer-guide.md` §2h.1 SessionStart prereq-check hook subsection 신설
+
+### Why
+
+`선언적 규칙 = 신뢰 불가` 가 CFP-375 + CFP-385 두 차례 검증됨. 본 Story = (c) → (b) tier escalation (3rd attempt). ADR-038 Amendment 2 §결정 9 신설 — `prereq_tools[]` + `prereq_checks[]` declarative array schema 로 extensibility 보존 (초기 preload = TodoWrite 단독, 보수적). ADR-058 §결정 5 정합 — amendment_log `sunset_justification` 3-tuple (metric `TodoWrite InputValidationError <5/100세션` / who PMOAgent / how manual sampling + CFP-389 / ADR-060 automation candidate).
+
+### Compatibility
+
+Non-breaking. Hook 등록은 consumer opt-in (CONDITIONAL). 기존 ADR-038 §결정 7 (실패 non-blocking) + §결정 8 (호출 시도 non-skippable) retain — layered defense.
+
 ## [5.17.0] - 2026-05-12
 
 ### Added (CFP-436 — Marketplace ↔ plugin.json atomic invariant)
