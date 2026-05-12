@@ -5,6 +5,24 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.26.0] - 2026-05-13
+
+### Added (CFP-506 — CLAUDE.md skill 추출 + cap ratchet ≤320 + mechanical lint forcing function)
+
+4 신규 skill 추출 (lane-self-write-boundary / story-cutoff-classification / inter-plugin-contract-registry / story-epic-flow-preflight) + CLAUDE.md 434줄 → 309줄 압축 (cap 320 대비 11줄 headroom) + `scripts/check-claude-md-line-cap.sh` lint script + `templates/github-workflows/claude-md-line-cap.yml` warning-tier workflow (ADR-060 Amendment 5 4번째 warning-tier entry). ADR-012 Amendment 1 cap ≤380 → ≤320 ratchet 강화. ADR-051 Amendment 1 Draft → Accepted + anchor vs reference 판정자 §결정 신설.
+
+- `skills/lane-self-write-boundary/SKILL.md` (NEW)
+- `skills/story-cutoff-classification/SKILL.md` (NEW)
+- `skills/inter-plugin-contract-registry/SKILL.md` (NEW)
+- `skills/story-epic-flow-preflight/SKILL.md` (NEW)
+- `CLAUDE.md` (UPDATE) — 434줄 → 309줄 압축
+- `scripts/check-claude-md-line-cap.sh` (NEW)
+- `templates/github-workflows/claude-md-line-cap.yml` (NEW)
+- `.github/workflows/claude-md-line-cap.yml` (NEW, self-app)
+- `docs/evidence-checks-registry.yaml` (UPDATE) — claude-md-line-cap entry append
+- `docs/orchestrator-playbook.md` (UPDATE) — §1.1 0a-prime 신설
+- `.claude-plugin/plugin.json` — version 5.25.0 → 5.26.0 MINOR
+
 ## [5.25.0] - 2026-05-13
 
 ### Changed (CFP-510 — ADR-052 Amendment 3 touchpoint #4 divergence detection 영역 확장)
