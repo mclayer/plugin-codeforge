@@ -77,9 +77,28 @@ permissions:
    · 본 에이전트가 `docs/change-plans/<slug>.md` 직접 write (CFP-26 Phase 0a)
    · Story file §7 (보안 + 운영 리스크 §7.4 요약) · §3 (도입할 설계 요약) · §11 (데이터 마이그레이션 + idempotency 포함) 미러링은 ArchitectAgent 직접 `Edit(docs/stories/<KEY>.md)` (codeforge-design CLAUDE.md `Self-write 책임` 표 — owner agent direct write, CFP-40)
 
+5.5. Phase 1 commit-time mechanical sync self-check (ADR-065 / CFP-438 — non-marketplace 영역)
+   · Phase 1 산출물 (Change Plan + ADR + Story file 섹션) commit 직전 본 에이전트가 7-item mechanical sync 검증:
+
+     1. `[ ]` `label-registry-v2.md` 변경 시 `scripts/bootstrap-labels.sh` sync 동반
+     2. `[ ]` `doc-locations.yaml` 변경 시 `bash scripts/check-doc-locations.sh --regen` 실행
+     3. `[ ]` 신규 `templates/github-workflows/*.yml` 시 `.github/workflows/` self-app copy 동반 (byte-identical)
+     4. `[ ]` CLAUDE.md / docs/** 내 link target 이 Phase 1 분배인지 확인 (Phase 2 file 참조 시 dangling)
+     5. `[ ]` `docs/inter-plugin-contracts/MANIFEST.yaml` registries 블록 갱신 필요성 확인
+     6. `[ ]` `docs/parallel-work/section-ownership.yaml` 정책 필요 시 row append
+     7. `[ ]` `docs/doc-locations.yaml` 신규 doc type row 필요성 확인
+
+   · 각 항목 = PASS / NA (해당 영역 변경 없음) / FAIL 중 하나로 분류
+   · 결과를 Change Plan `§13. Phase 1 산출물 self-check 결과` 섹션에 명시 (`templates/change-plan.md` schema 정합)
+   · ArchitectPLAgent verdict packet 의 `mechanical_self_check_passed: bool` 필드로 forward (true = 모두 PASS 또는 NA, false = 1+ FAIL — review-verdict-v4 v4.2 schema)
+   · **FAIL 발견 시**: 본 에이전트가 누락 항목 보완 후 commit (Phase 1 PR 진입 전 self-correction 우선). ArchitectPLAgent 가 packet 수령 시 false 발견하면 `pl_recommendation: FIX` + ArchitectAgent re-spawn 명령 (chief author re-author)
+   · **marketplace 영역은 별도** — ADR-063 (3-file atomic invariant) SSOT 참조, 본 self-check 영역 외 (cross-ref only)
+   · **CFP-378 §3.5 self-lint 와 분리**: §3.5 = 6 deputy 산출물 input 표면 mechanical check (Change Plan author 진입 전) / 본 §5.5 = Phase 1 산출물 commit 직전 outer mechanical sync (Change Plan / ADR / Story 섹션 commit 직전)
+
 6. ArchitectPLAgent에 draft 반환
    · PL 검수 → PASS or RETURN (clarification context)
    · RETURN 시 본 에이전트 재스폰되어 누락·재해석 반영
+   · packet `mechanical_self_check_passed` 필드 전달 (PL 가 review-verdict-v4 packet 작성 시 채움)
 ````
 
 ### WS Stream 계열 push_interval 실증 의무 (CFP-319)

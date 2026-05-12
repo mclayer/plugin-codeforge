@@ -2,6 +2,40 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.9.0] - 2026-05-13
+
+### CFP-438 — ArchitectAgent Phase 1 commit-time mechanical sync self-check + verdict packet schema (MINOR)
+
+ADR-065 (wrapper plugin-codeforge) sibling 적용. ArchitectAgent (chief author) Phase 1 산출물 commit 직전 7-item mechanical sync self-check 의무화 — CFP-393 iter 1 3건 + iter 3 1건 + CFP-411 phase-gate path 결함의 root cause (사전 정의된 checklist 부재) 해소. marketplace 영역 self-check 는 ADR-063 SSOT (cross-ref only, 중복 codification 회피).
+
+#### Added
+
+- `agents/ArchitectAgent.md` — `§5.5 Phase 1 commit-time mechanical sync self-check (ADR-065 / CFP-438 — non-marketplace 영역)` 섹션 신설:
+  - 7-item checklist (label-registry sync / doc-locations regen / workflow self-app / link target Phase 분배 / MANIFEST.yaml 갱신 / section-ownership row / doc-locations row)
+  - 각 항목 PASS / NA / FAIL 분류 + Change Plan §13 명시 의무 + verdict packet forward 의무
+  - CFP-378 §3.5 self-lint (input 표면 mechanical) 와 분리 — §5.5 = outer mechanical sync (Phase 1 산출물 commit 직전)
+- `agents/ArchitectPLAgent.md` — `Phase 3.5: verdict packet 작성` 섹션 신설:
+  - `mechanical_self_check_passed: bool` (review-verdict-v4 v4.2 schema MINOR optional field) forward 의무
+  - false 시 FIX 처리 절차 (`pl_recommendation: FIX` + findings[] mechanical 누락 항목 each row + ArchitectAgent re-spawn)
+  - 적용 lane: design lane 만 (code/security = omit 허용)
+- `templates/change-plan.md` — `§13. Phase 1 산출물 self-check 결과 (ADR-065 / CFP-438 — non-marketplace 영역)` 섹션 신설:
+  - 7-item 표 + Overall (`mechanical_self_check_passed: <true | false>`) 선언
+  - chief author 가 commit 직전 결과 명시 의무
+
+#### Changed
+
+- `.claude-plugin/plugin.json` — version 0.8.0 → 0.9.0 MINOR (agent definition + template schema 변경, ADR-037 정합). description CFP-438 entry append.
+
+#### Why
+
+매 Story 마다 사후 CI lint fail 로 잡히는 mechanical sync 결함을 chief author 의 commit 직전 forcing function 으로 차단. 사전 정의된 checklist + Change Plan §13 표 + verdict packet explicit marker = 3-layer evidence trail. 7 항목 한정 (Change Plan 본문 변경 0건 영역만) — overhead 최소화. CFP-378 §3.5 (input 표면) 와 본 §5.5 (outer mechanical sync) 의 명시적 분리로 review-pl-base.md §3 P2 noise 증가 위험 mitigation.
+
+#### Cross-ref
+
+- Wrapper SSOT: [ADR-065](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-065-architect-phase1-mechanical-self-check.md)
+- Wrapper PR (Phase 1, paired sibling): https://github.com/mclayer/plugin-codeforge/pulls
+- Canonical sibling sync: plugin-codeforge-review review-verdict-v4 v4.2 MINOR bump
+
 ## [0.8.0] - 2026-05-12
 
 ### CFP-448 — CodebaseMapperAgent · RefactorAgent Opus → Sonnet rollback + mandate text 재정의 (MINOR)

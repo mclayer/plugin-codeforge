@@ -284,6 +284,27 @@ DataMigrationArch primary, OperationalRiskArchitectAgent consult (§7.4.2 discon
 - 근거 1줄 (예: "내부 docs/templates 수정만, schema 변경 0개")
 - 사유 누락 시 DesignReview P0 차단
 
+### §13. Phase 1 산출물 self-check 결과 (ADR-065 / CFP-438 — non-marketplace 영역)
+
+ArchitectAgent chief author 가 Phase 1 산출물 (Change Plan + ADR + Story file 섹션) commit 직전 7-item mechanical sync self-check 결과 명시 의무. 본 섹션 누락 시 ArchitectPLAgent verdict packet 의 `mechanical_self_check_passed: false` 으로 처리 (review-verdict-v4 v4.2 schema).
+
+| # | 항목 | 결과 (PASS / NA / FAIL) | 근거 |
+|---|---|:-:|---|
+| 1 | `label-registry-v2.md` 변경 시 `scripts/bootstrap-labels.sh` sync 동반 | □ | <근거 또는 NA 사유> |
+| 2 | `doc-locations.yaml` 변경 시 `bash scripts/check-doc-locations.sh --regen` 실행 | □ | <근거 또는 NA 사유> |
+| 3 | 신규 `templates/github-workflows/*.yml` 시 `.github/workflows/` self-app copy 동반 (byte-identical) | □ | <근거 또는 NA 사유> |
+| 4 | CLAUDE.md / docs/** 내 link target Phase 1 분배 확인 (Phase 2 file 참조 시 dangling) | □ | <근거 또는 NA 사유> |
+| 5 | `docs/inter-plugin-contracts/MANIFEST.yaml` registries 블록 갱신 필요성 확인 | □ | <근거 또는 NA 사유> |
+| 6 | `docs/parallel-work/section-ownership.yaml` 정책 필요 시 row append | □ | <근거 또는 NA 사유> |
+| 7 | `docs/doc-locations.yaml` 신규 doc type row 필요성 확인 | □ | <근거 또는 NA 사유> |
+
+**Overall**: `mechanical_self_check_passed: <true | false>`
+
+- `true` = 모든 7 항목 PASS 또는 NA — review-verdict-v4 packet 에 forward
+- `false` = 1+ FAIL — ArchitectPLAgent 가 `pl_recommendation: FIX` + ArchitectAgent re-spawn 명령
+
+**marketplace 영역 분리**: marketplace mirrored field (`name` / `version` / `description` / `author`) atomic invariant 검증은 ADR-063 SSOT (3-file: `plugin.json` / `CHANGELOG.md` / `marketplace.json`). 본 §13 scope 외 — cross-ref only.
+
 ---
 
 ## DocsAgent 저장·미러링 의무
