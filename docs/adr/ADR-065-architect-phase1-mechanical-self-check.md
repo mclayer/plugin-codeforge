@@ -81,7 +81,7 @@ ArchitectAgent chief author 는 Phase 1 산출물 commit 직전 다음 7 항목 
 
 ### 결정 2: change-plan template "Phase 1 self-check 결과" 섹션 의무화
 
-[`templates/change-plan.md`](../../../plugin-codeforge-design/templates/change-plan.md) 에 `§13. Phase 1 산출물 self-check 결과 (ADR-065 / CFP-438)` 섹션 추가. chief author 가 7 항목 결과 (PASS / NA / FIX) 를 명시 의무.
+[codeforge-design `templates/change-plan.md`](https://github.com/mclayer/plugin-codeforge-design/blob/main/templates/change-plan.md) 에 `§13. Phase 1 산출물 self-check 결과 (ADR-065 / CFP-438)` 섹션 추가. chief author 가 7 항목 결과 (PASS / NA / FIX) 를 명시 의무.
 
 ### 결정 3: review-verdict-v4 v4.1 → v4.2 MINOR bump — `mechanical_self_check_passed: bool` 필드 추가
 
