@@ -24,15 +24,28 @@ amendments:
     date: "2026-05-12"
     scope: "§결정 6.A per-entry namespace 의 4 신규 `hotfix-bypass:worktree-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd}` label entry 추가 (ADR-040 Amendment 3 동반 / CFP-425 Epic Story 1) — `hotfix-bypass:adr-sunset` 패턴 직접 mirror, 단일 audit lint `scripts/check-bypass-audit-comment.sh` reuse."
     sunset_justification: "N/A — is_transitional: false (permanent governance policy). 4 worktree-first label = §결정 6.A per-entry namespace 의무의 영구 확장."
+  - by: "CFP-481"
+    date: "2026-05-12"
+    scope: "Amendment 4 — §결정 6.A per-entry namespace 의 7번째 신규 `hotfix-bypass:auto-phase-label` label entry 추가 (ADR-060 Amendment 4 동반 — 3rd warning-tier entry `auto-phase-label`) + §결정 6.A.1 (신설) branch → phase mapping 표 SSOT (cfp-NNN[/<lane>[/<sub>]] hierarchical → phase:* 8 label mapping verbatim, ADR-024 Amendment 1 hierarchical convention 의 직접 확장)."
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). hotfix-bypass:auto-phase-label = §결정 6.A per-entry namespace 의무의 영구 확장. branch → phase mapping 표 = ADR-024 Amendment 1 hierarchical convention 의 영구 SSOT 명세화."
 related_files:
   - CLAUDE.md
   - docs/consumer-guide.md
   - docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md
   - docs/adr/ADR-022-sonnet-review-verdict-decider.md
+  - docs/adr/ADR-040-worktree-convention.md
   - docs/adr/ADR-060-evidence-enforceable-promotion-framework.md
   - docs/inter-plugin-contracts/evidence-check-registry-v1.md
   - templates/branch-protection-manifest.yaml
   - templates/github-workflows/branch-protection-drift-check.yml
+mechanical_enforcement_actions:
+  # ADR-040 Amendment 3 §결정 7.A 의무 — 본 ADR-024 Amendment 4 (CFP-481, 2026-05-12)
+  # 가 ADR-040 Amendment 3 발효 (CFP-426 Phase 1 PR merge) 이후 작성된 normative
+  # ADR amendment 이므로 §결정 7.C retroactive 면제 외 — 본 Amendment 4 부터 mandate 적용.
+  # 기존 ADR-024 Amendment 1·2·3 = retroactive 면제 (§결정 7.C 정합).
+  - action: auto-phase-label
+    status: deferred-followup     # registry yaml row append = CFP-481 Phase 2 PR scope
+    target_section: §결정 6.A.1   # branch → phase mapping 표 SSOT (1순위 inference 로직)
 ---
 
 # ADR-024: Story-scoped branch policy — main 직접 수정 금지 + Phase 2 enforcement deferred
@@ -347,3 +360,71 @@ bypass label PR 안 변경 자체가 정책 위반 (예: bypass PR 의 변경 AD
 - `scripts/check-bypass-audit-comment.sh` — audit assertion lint
 - `templates/github-workflows/adr-sunset-criteria.yml` — bypass label conditional skip workflow
 - label-registry-v2 entry 추가 의무 — `hotfix-bypass:adr-sunset` label = label-registry-v2 의 신규 `bypass` tier entry (MINOR bump v2.0 → v2.1 — 별도 follow-up PR 또는 Phase 1 PR 동반, ArchitectAgent 판단)
+
+## Amendment 4 — `hotfix-bypass:auto-phase-label` 7번째 family member + branch → phase mapping 표 SSOT (CFP-481, 2026-05-12)
+
+### 컨텍스트
+
+CFP-455 + CFP-449 retro 식별 sentinel 2 (Codex review verdict EVIDENCE_FRAMEWORK_ENTRY P2) — PR open 후 phase label 누락이 2회 재현되어 mechanical enforcement 도입 timing 도달. CFP-481 (carrier) 가 ADR-060 Amendment 4 (3rd warning-tier entry `auto-phase-label` 등록) 동반으로 본 Amendment 4 도입.
+
+본 Amendment 4 의 두 결정:
+
+1. **`hotfix-bypass:auto-phase-label` 7번째 family member 추가** — Amendment 3 §결정 6.A per-entry namespace 정합 (CFP-389 prior art `hotfix-bypass:adr-sunset` + CFP-426 prior art 4 `hotfix-bypass:worktree-*` 직접 mirror).
+2. **branch → phase mapping 표 SSOT 신설** — ADR-024 Amendment 1 hierarchical convention (`cfp-NNN[/<lane>[/<sub>]]`) 의 phase:* label 매핑이 codeforge 안에서 SSOT 부재. CFP-481 의 `auto-phase-label.yml` workflow 가 1순위 inference 로직으로 본 mapping 직접 사용 — 본 Amendment 4 가 mapping SSOT 명세화.
+
+### Amendment
+
+#### §결정 6.A.1 (신설) — branch → phase mapping 표 SSOT
+
+ADR-024 Amendment 1 hierarchical convention `cfp-NNN[/<lane>[/<sub>]]` 의 lane 별 phase:* label 매핑:
+
+| branch pattern | phase:* label | 비고 |
+|---|---|---|
+| `cfp-NNN/requirements` | `phase:요구사항` | 요구사항 lane sub-branch (codeforge-requirements) |
+| `cfp-NNN/design` | `phase:설계` | 설계 lane sub-branch (codeforge-design) |
+| `cfp-NNN/design-review` | `phase:설계-리뷰` | 설계리뷰 lane sub-branch (codeforge-review) |
+| `cfp-NNN/develop` | `phase:구현` | 구현 lane sub-branch (codeforge-develop) |
+| `cfp-NNN/code-review` | `phase:구현-리뷰` | 구현리뷰 lane sub-branch (codeforge-review) |
+| `cfp-NNN/security-test` | `phase:보안-테스트` | 보안테스트 lane sub-branch (codeforge-review) |
+| `cfp-NNN[-<slug>]` (lane 표기 없음) | (mapping 없음 — 2순위 fallback) | story root branch — Issue Form 부착 phase:* label inheritance 또는 PR body `Related: #N` linked Issue label 복사 |
+| `cfp-NNN-docs-*` 또는 body marker `<!-- doc-only -->` | `phase:설계-리뷰` (terminal default) | doc-only fast-path Story (ADR-054 §결정 4) |
+| `cfp-NNN-close` 또는 Epic Phase N+1 close 시그널 | `phase:reservation` (terminal default) | Epic close PR (ADR-020 Amendment 1 §결정 9) |
+
+**SSOT 발효**: 본 §결정 6.A.1 = mapping 표의 wrapper-owned SSOT. CFP-481 의 `auto-phase-label.yml` workflow 가 1순위 inference 로직으로 본 표 verbatim 사용. 신규 lane / sub-branch 추가 시 본 표 row 동시 갱신 의무.
+
+**Sub-task branch (`cfp-NNN/<lane>/<sub-name>`)**: lane prefix 만 매칭 — 예: `cfp-481/design/security-arch` → `phase:설계` (lane prefix `cfp-481/design` 매칭).
+
+**Fix iter / retro branch**: `cfp-NNN/fix-iter-<N>` / `cfp-NNN/retro` → mapping 없음 (2순위 fallback 의존).
+
+**Mechanical enforcement** (ADR-040 Amendment 3 §결정 7.B Pattern I): `auto-phase-label` (status: deferred-followup — CFP-481 Phase 2 PR scope `docs/evidence-checks-registry.yaml` row append + `templates/github-workflows/auto-phase-label.yml` self-app workflow 도입) — 본 §결정 6.A.1 mapping 표를 1순위 inference 로직 SSOT 로 verbatim 사용. registry yaml entry name = `auto-phase-label`. tier 도입 시점 = warning (ADR-060 §결정 5 — 모든 신규 entry 는 warning 시작 강제). bypass label = `hotfix-bypass:auto-phase-label` (§결정 6.A 7번째 family member 정합).
+
+#### §결정 6.A (확장) — `hotfix-bypass:auto-phase-label` 7번째 family member
+
+기존 `hotfix-bypass:*` family (Amendment 3 §결정 6.A 정합):
+
+1. `hotfix-bypass:adr-sunset` (CFP-389)
+2. `hotfix-bypass:worktree-session-start-wire` (CFP-426)
+3. `hotfix-bypass:worktree-pre-checkout` (CFP-426)
+4. `hotfix-bypass:worktree-pre-commit-main-block` (CFP-426)
+5. `hotfix-bypass:worktree-spawn-evidence-cwd` (CFP-426)
+6. (decision-principle-vocab — CFP-449 Amendment 3, ADR-060 entry — bypass_label optional warning tier)
+7. **`hotfix-bypass:auto-phase-label` (CFP-481, 본 Amendment 4)** — 신규
+
+**audit lint**: `scripts/check-bypass-audit-comment.sh` reuse (CFP-389 prior art 단일 lint, `BYPASS_LABEL_PREFIX=hotfix-bypass:` env scan 으로 all-family detect — 별도 lint 신설 0건).
+
+**bypass scope**: `auto-phase-label.yml` workflow 의 phase label 부착 step skip — phase-gate-mergeable.yml / phase-label-invariant.yml / 기타 4 core required check 영향 0건 (Amendment 3 §결정 6.B 정합).
+
+### Compatibility
+
+- ADR-024 §결정 1~6 + Phase 2 partial (CFP-70) + CFP-72 + Amendment 1 (CFP-134) + Amendment 2 (CFP-280) + Amendment 3 (CFP-389) 전부 유지 — 본 Amendment 4 는 Amendment 3 §결정 6.A 의 호환 확장 (per-entry namespace 7번째 family member) + branch → phase mapping 표 SSOT 신설 only.
+- ADR-060 framework 외 영역 (4 core required check + 기존 evidence check + Amendment 1~3 entry) 에는 영향 X.
+- `auto-phase-label.yml` workflow 가 1순위 inference 로직으로 본 mapping 표 verbatim 사용 — workflow 변경 시 mapping 표와 동기 의무 (ADR-029 self-app byte-identity invariant 정합).
+
+### Related
+
+- ADR-060 Amendment 4 (carrier — 3rd warning-tier entry `auto-phase-label` 등록)
+- `docs/inter-plugin-contracts/label-registry-v2.md` v2.3 MINOR (phase:* 8 label entry attach_owner_plugin field 갱신 — `auto-phase-label.yml` 명시)
+- `templates/github-workflows/auto-phase-label.yml` (Phase 2 PR scope) — 본 mapping 표 verbatim 사용
+- `.github/workflows/auto-phase-label.yml` (Phase 2 PR scope) — self-app mirror byte-identical (ADR-029)
+- `docs/evidence-checks-registry.yaml` (Phase 2 PR scope) — `auto-phase-label` row append (warning tier, bypass_label `hotfix-bypass:auto-phase-label`)
+- `scripts/check-bypass-audit-comment.sh` (CFP-389 prior art) — audit lint reuse

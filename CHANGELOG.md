@@ -5,6 +5,64 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.22.1] - 2026-05-12
+
+### Changed (CFP-448 Phase 2 — Sonnet selective rollback 구현)
+
+ADR-057 Amendment 3 + ADR-042 Amendment 5 (Phase 1 PR #488 merged) 의 Phase 2 구현. 6 agent decision matrix 정합 — N=3 Sonnet rollback (ChangeImpact / CodebaseMapper / Refactor) + 3 Opus 유지 (Feasibility / Continuity / DeveloperPL). mandate text 재정의 N'=2 (CodebaseMapper / Refactor — ChangeImpact exclusion criterion 정합). PATCH bump (CLAUDE.md mirror + script 배열 변경, 정책 본문 변경 0건).
+
+- `CLAUDE.md` (UPDATE L164 cross-ref note) — "ADR-057 §결정 3 표 = SSOT, CLAUDE.md L127 = mirror reference" 1줄 명시 (CL-6 사용자 확정 / drift forcing function).
+- `scripts/measure-rate-limit-fallback.sh` (UPDATE) — SONNET_AGENTS 배열 5종 → 8종 (3 entry append: ChangeImpactAgent / CodebaseMapperAgent / RefactorAgent). header 주석 + drift detection 코멘트 cross-ref Amendment 3 갱신.
+- `.claude-plugin/plugin.json` — version 5.22.0 → 5.22.1 PATCH (ADR-037 정합 — CLAUDE.md mirror + script 배열 변경, ADR Amendment 본문 변경 0건). description CFP-448 Phase 2 entry append.
+
+### Sibling sync (ADR-016 + ADR-063 atomic invariant — Phase 2 PR pair)
+
+- `plugin-codeforge-requirements` 0.5.0 → 0.5.1 PATCH — ChangeImpactAgent model field Opus → Sonnet (mandate text 0건 — exclusion criterion 정합).
+- `plugin-codeforge-design` 0.6.0 → 0.7.0 MINOR — CodebaseMapperAgent / RefactorAgent model field Opus → Sonnet **+ mandate text 재정의** (description frontmatter + 본문 mandate boundary section).
+- `marketplace.json` 3 entry sync — **본 PR scope 외**, Epic CFP-462 close 시 일괄 처리 (24h drift window 발생 → audit comment 자동 발의 인지, ADR-063 §결정 5 hotfix-bypass:marketplace-atomic 채널 외 normal merge).
+
+### Why
+
+CFP-393 회고에서 발견된 3-way drift (CLAUDE.md L127 8종 / ADR-057 §결정 3 5종 / agent file 실측 4종) 의 reverse direction 해소. CLAUDE.md L127 8종이 정합인 상태로 회복 — 3 agent (ChangeImpact / CodebaseMapper / Refactor) Opus → Sonnet 복귀. mandate text 재정의로 ADR-042 §결정 2 invariant ("Sonnet 으로 fully cover 가능 = role 재정의 시그널") 정합 강제.
+
+### Compatibility
+
+- **Wire**: codeforge-{requirements,design} >= 0.5.0 (sibling sync 의무).
+- **Contract version**: 본 PR 의 contract schema 변경 0건 (review-verdict-v4 / develop-output-v1 / requirements-output-v1 / design-output-v2 / fix-event-v1 모두 unchanged).
+- **Marketplace**: 3-file atomic invariant (ADR-063) — 본 PR 은 24h drift window scope (Epic CFP-462 close 시 sync). 별도 PR 으로 marketplace.json 3 entry version sync 의무.
+- **ADR-053 재구동 의무**: agent definition 변경 = 구조적 변경. Phase 2 merge 후 consumer 측 marketplace install + plugin version drift check 의무.
+
+## [5.22.0] - 2026-05-12
+
+### Added (CFP-451 — codeforge-kpi-infra-error label + sub-axis 다축 완결 + KPI workflow infra error 분기)
+
+CFP-393 ADR-057 fallback rate KPI dashboard 의 후속 — workflow 가 두 가지 다른 종류의 실패 (measurement alert vs infra error) 를 단일 label channel 로 발화하던 한계 해소. monitoring tier sub-axis 다축 완결 (info / warn / error). 추가로 Codex F-451-001 (a) 사전 leak 정정: `codeforge-kpi-update` label 이 workflow line 237 에서 사용 중이었으나 label-registry-v2 + bootstrap-labels.sh 부재 — registry-execution drift 정정.
+
+- `docs/inter-plugin-contracts/label-registry-v2.md` (UPDATE) — v2.2 → v2.3 MINOR bump. **2 entry append**:
+  - `codeforge-kpi-infra-error` (color `d73a4a` red — severity / oncall) — KPI workflow infrastructure failure marker
+  - `codeforge-kpi-update` (color `0e8a16` green — info / data refresh) — pre-existing CFP-393 leak 정정
+  - monitoring tier sub-axis 다축 완결: info (update) / warn (alert) / error (infra-error). count 33+ → 35+.
+- `scripts/bootstrap-labels.sh` (UPDATE) — monitoring 영역 1 → 3 entry. count echo "31 base label" → "33 base label" (component:* 동적 별도).
+- `templates/github-workflows/rate-limit-fallback-kpi.yml` (UPDATE) — infra error 분기 추가:
+  - aggregate step `set -uo pipefail` 전환 (errexit 분리) + `exit_code=$?` capture + `GITHUB_OUTPUT` export
+  - `Create or update auto-PR` step `id: auto_pr` 부여 (detect_infra outcome 캡처 가능)
+  - 신규 step `Detect infra error` (id: detect_infra, if: always()) — clone fail / aggregate exit code 1/2/3/4/* / auto_pr failure 분기, case `*)` fallback default
+  - 신규 step `Open infra error issue` — `gh issue create --label codeforge-kpi-infra-error` 발화 (dedup: window 단위)
+  - Summary step `infra_error` + `infra_error_reasons` 출력 추가
+  - 기존 `Open KPI alert issue` step `if:` 조건 **변경 0** — dual-open semantics 보존 (Story §5.5 결정 3 verbatim)
+- `.github/workflows/rate-limit-fallback-kpi.yml` (UPDATE) — templates 와 byte-identical self-app copy (ADR-005)
+- `scripts/measure-rate-limit-fallback.sh` (UPDATE) — exit code 3 (internal-docs scan failure) + exit code 4 (SONNET_AGENTS enum drift) 추가. 0/1/2 기존 시맨틱 유지. header 주석 multi-line block.
+- `tests/workflows/test_rate-limit-fallback-kpi-yml.sh` (UPDATE) — 4 신규 test_function:
+  - `test_aggregate_exit_code_capture` (AC-12 — PL 신규, Story §5.1 row 부재 / CP §1.3 + §3.5 + §8.1 단일 source / DesignReview F-001 Option C 안전망)
+  - `test_detect_infra_step_exists` — case 분기 + `*)` fallback + exit 3/4 sub-reason
+  - `test_open_infra_issue_step_exists` — `--label codeforge-kpi-infra-error` 부착
+  - `test_alert_dual_open_with_infra_error` — alert step `if:` 조건이 detect_infra 미참조 verify
+  - main() 14 test 등록 (10 기존 + 4 신규)
+- `.claude-plugin/plugin.json` — version 5.21.0 → 5.22.0 MINOR (workflow 변경 동반 ADR-037). description CFP-451 entry append.
+- `marketplace.json` (sibling) — plugins[name=codeforge] version + description sync (ADR-063 atomic invariant — 3-file coordination 의무).
+
+---
+
 ## [5.21.0] - 2026-05-12
 
 ### Added (CFP-449 — forbid-list 어휘 mechanical lint + evidence-enforceable 2nd warning-tier entry)
