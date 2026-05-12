@@ -1,0 +1,18 @@
+---
+description: "Terminal phase success"
+fixture_key: "terminal-phase-success"
+story_mapping: "UC-2.5 / AC-3"
+pr:
+  number: 500
+  title: "[CFP-500] Phase 2"
+  body: "Closes #500"
+  labels:
+    - "phase:impl-test"
+issue:
+  number: 500
+  closed_by_pull_requests_references: [500]
+consumer_config:
+  lanes:
+    security_ai: false
+expected_outcome: "success"
+expected_audit_marker: "[close-success]"

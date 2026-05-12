@@ -1,0 +1,18 @@
+---
+description: "Dual-source mismatch"
+fixture_key: "dual-source-mismatch"
+story_mapping: "UC-4 / AC-4"
+pr:
+  number: 502
+  title: "[CFP-502] Phase 2"
+  body: "Closes #502"
+  labels:
+    - "phase:security-test"
+issue:
+  number: 502
+  closed_by_pull_requests_references: []
+consumer_config:
+  lanes:
+    security_ai: true
+expected_outcome: "skip_dual_source_mismatch"
+expected_audit_marker: "[dual-source-mismatch]"

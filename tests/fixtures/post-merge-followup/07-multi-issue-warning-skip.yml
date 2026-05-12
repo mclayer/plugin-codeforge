@@ -1,0 +1,20 @@
+---
+description: "Multi-issue detection"
+fixture_key: "multi-issue-warning-skip"
+story_mapping: "EC-4 / AC-5"
+pr:
+  number: 505
+  title: "[CFP-505] Phase 2"
+  body: |
+    Closes #505
+    Closes #506
+  labels:
+    - "phase:security-test"
+issue:
+  number: 505
+  closed_by_pull_requests_references: [505]
+consumer_config:
+  lanes:
+    security_ai: true
+expected_outcome: "skip_multi_issue"
+expected_audit_marker: "[multi-match-skip]"

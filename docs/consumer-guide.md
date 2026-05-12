@@ -1187,6 +1187,8 @@ multi-repo consumer (예: mctrader 의 6 repo) 의 cross-repo Epic 진행 시 [A
 
 ---
 
+> **post-merge-followup workflow (CFP-476 / ADR-026 Amendment 1)**: `templates/required-workflows-spec.yaml` 정의 `target: all` enterprise required workflow — 모든 codeforge consumer 자동 상속. terminal-phase gate (`phase:보안-테스트` if `lanes.security_ai: true`, `phase:구현-테스트` if `false`, fail-closed default `phase:보안-테스트`) 가 consumer `.codeforge/project.yaml` 또는 `.claude/_overlay/project.yaml` 의 `lanes.security_ai` field 를 read. Issue close trigger 는 dual-source AND (PR body close keyword regex ∩ Issue closedByPullRequestsReferences) — false-positive close 차단 (CFP-391/412/455 systemic issue 해소). 상세 SSOT = ADR-026 Amendment 1 §결정 5.A.
+
 ### lanes.security_ai opt-in (선택)
 
 기본값 `false` — 5-lane + CI gate 모드로 동작. SecurityTestPL (Claude+Codex AI 보안 분석) 없음.
