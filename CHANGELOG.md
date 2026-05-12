@@ -21,6 +21,21 @@ CFP-451 (#451) + CFP-490 (#490) 0-FIX chain 7-8번째 retro PMOAgent FU-4 (low s
 
 axis-A (governance — fact-check 영역 explicit normative anchor): 양 retro evidence 2회 누적으로 implicit 발화 영역 normative 승격 timing 도달. axis-B (PL synthesis quality — marker 5종 forcing function): "가설" vs "verified" 영역 구분 의무 부재 → Codex fact 발견 시 PL LLM 판정 false negative 위험 차단. axis-C (lane-agnostic protocol 확장 보존): debate-protocol-v1 dispatch 흐름 변경 없음 — divergence_type 영역만 확장 (separate carrier CFP 가 enum MINOR bump 처리).
 
+### Added (CFP-462 Epic close + CFP-438)
+
+- **CFP-438** ADR-065 — ArchitectAgent Phase 1 mechanical sync self-check 7-item checklist (non-marketplace 영역). change-plan template §13 self-check 결과 섹션. ArchitectPLAgent verdict packet `mechanical_self_check_passed: bool` schema forward.
+- **CFP-462** Epic close — 5 child Story 통합 처리 완료 (CFP-448 / 451 / 450 / 453 / 438).
+
+### Changed (CFP-462)
+
+- `docs/inter-plugin-contracts/review-verdict-v4.md` — v4.1 → v4.2 MINOR (`mechanical_self_check_passed` optional bool field 추가, ADR-008 §결정 2 정합). wrapper sibling sync.
+
+### Sibling sync (Epic CFP-462 close)
+
+- `codeforge-design` 0.7.0 → 0.9.0 — ArchitectAgent §5.5 self-check + ArchitectPLAgent verdict forward + change-plan §13.
+- `codeforge-review` 1.3.0 → 1.4.0 — review-verdict-v4 canonical v4.2 MINOR.
+- `marketplace.json` — 3 plugin atomic sync (codeforge / codeforge-design / codeforge-review).
+
 ## [5.24.0] - 2026-05-13
 
 ### Changed (CFP-453 Phase 2 — KPI history.jsonl 누적 정책)
