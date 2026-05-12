@@ -1545,6 +1545,19 @@ mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/is
 
 **ArchitectPLAgent 최종 판정 + evidence pack(Change Plan 버전 + 리뷰 findings + 테스트 로그) 첨부 의무**.
 
+#### 6.5.1 Mechanical reconciliation pattern — grep BEFORE sed (CFP-464, CFP-500 FIX-2/3 학습)
+
+ArchitectPL re-spawn FIX 처리 시 reconciliation 의무 4-step (partial reconciliation anti-pattern 차단):
+
+1. **COMPREHENSIVE grep BEFORE sed** — target keyword/pattern 양 worktree 전수 검색 (file scope full, not just self-report)
+2. **Report grep results** — 발견된 모든 occurrence enumerate 보고 후 처리 결정 (partial 적용 금지)
+3. **sed applied** — 발견된 모든 occurrence 정정 (audit trail 예외 명시)
+4. **Re-grep verify** — sed 후 잔존 0건 확인 (audit trail 제외)
+
+evidence: CFP-500 설계 lane FIX iter 2/3 partial reconciliation (self-report 영역만 정정, sweep 누락 → recurrence). Iter 4 grep sweep mandate 후 단번에 해소.
+
+본 단계는 codeforge-design plugin ArchitectPLAgent template 의 mechanical reconciliation 영역으로 본 playbook §6.5 의 augmentation. cross-plugin enforcement 자체는 별도 follow-up (codeforge-design plugin version bump 동반).
+
 ### 6.6 Parallel diagnosis (R4, [CFP-19 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
 
 review·테스트 FIX (구현 리뷰·구현 테스트·보안 테스트) 시 DeveloperPL 1차 진단과 ArchitectPL 최종 판정을 **병렬 spawn**한다 (한 메시지에 dispatch).

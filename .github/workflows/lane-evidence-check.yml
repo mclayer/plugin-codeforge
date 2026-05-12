@@ -109,6 +109,24 @@ jobs:
               return;
             }
 
+            // 5a. Duplicate block detection (CFP-465) — body 에 `## Lane evidence` heading 이 1회 초과 시 fail
+            const headingMatches = body.match(/^## Lane evidence\s*$/gm) || [];
+            if (headingMatches.length > 1) {
+              await github.rest.checks.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                name: 'lane-evidence-check',
+                head_sha: pr.head.sha,
+                status: 'completed',
+                conclusion: 'action_required',
+                output: {
+                  title: 'Lane Evidence',
+                  summary: `## Lane evidence 블록 중복 감지 — body 에 ${headingMatches.length} 회 등장 (1회만 허용). PR description manual append + auto-generated block collision 가능성 (CFP-500 FIX-5 패턴). 하나만 남기고 제거 후 push.`
+                }
+              });
+              return;
+            }
+
             // 5. Lane evidence block presence check
             const blockMatch = body.match(/^## Lane evidence\s*$([\s\S]*?)(?=^## |$(?![\s\S]))/m);
             if (!blockMatch) {
