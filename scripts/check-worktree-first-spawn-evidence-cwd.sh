@@ -1,35 +1,37 @@
 #!/usr/bin/env bash
+# CFP-427 — exec swap to canonical actual logic (Story 1 skeleton replaced)
 # CFP-426 / ADR-040 Amendment 3 §결정 7 / ADR-031 §결정 4 / ADR-060 §결정 5
-# worktree-first spawn evidence cwd check — Story 1 skeleton (warning tier)
+# worktree-first spawn evidence cwd check — Story 2 (CFP-427) actual wire wrapper.
 #
-# Story 1 scope = skeleton only. actual wire 첫 사례 = Story 2 (CFP-427).
-# 현 단계 = exit 0 + skeleton notification log only.
-#
-# 검증 대상 (Story 2 CFP-427 가 actual logic 도입 시):
-#   docs/stories/**.md 의 §14 Lane Evidence row 의 `Working dir:` field 가 다음 둘 중 하나 일치
-#     - regex `(^|/)Users/[^/]+/\.claude/worktrees/[^/]+/[^"]+` (worktree path)
-#     - `N/A — <30자 이상 사유>` (ADR-031 §결정 4 bypass mechanism)
+# canonical implementation = scripts/check-spawn-evidence-cwd.sh (CFP-427 신설).
+# 본 entry point = Story 1 (CFP-426) 의 4 entry 정합 wrapper — exec swap 으로 drift 0 보장.
 #
 # 환경 변수:
-#   BYPASS_WORKTREE_FIRST (선택, 1 = skip)
-#     ADR-040 Amendment 3 §결정 7.E — `BYPASS_WORKTREE_GC` 와 disjoint scope.
+#   BYPASS_WORKTREE_FIRST (선택, 1 = skip — canonical 안에서 처리)
+#   ENFORCE_FROM (선택, ISO8601 timestamp — canonical 안에서 처리)
 #
 # Exit code:
-#   0 — skeleton (Story 1) 또는 PASS (Story 2 CFP-427 wire 후)
-#   1 — violation 1건 이상 (warning tier 에서는 0, blocking-on-pr 전환 시 1)
+#   0 — always (warning tier)
+#   2 — recursive-call detected (FIX iter 1 F-5 guard)
 #
 # carrier: ADR-040 Amendment 3 §결정 7.A action: worktree-first-spawn-evidence-cwd
 set -euo pipefail
 
-if [ "${BYPASS_WORKTREE_FIRST:-}" = "1" ]; then
-    echo "BYPASS_WORKTREE_FIRST=1 — skip"
-    exit 0
+# Recursive-call guard (FIX iter 1 F-5): canonical 이름 invocation 검출 → exit 2
+SCRIPT_NAME=$(basename "$0")
+CANONICAL="check-spawn-evidence-cwd.sh"
+if [[ "$SCRIPT_NAME" == "$CANONICAL" ]]; then
+  echo "[wrapper] ERROR: recursive call detected — wrapper invoked as canonical name. ADR-040 Amendment 3 §결정 7.D + CFP-427 §3.4." >&2
+  exit 2
 fi
 
-echo "[worktree-first-spawn-evidence-cwd] SKELETON (Story 2 CFP-427 wires actual logic)"
-echo "  - scope: docs/stories/**.md §14 Lane Evidence row 의 Working dir field regex 검증"
-echo "  - allowed: worktree path 또는 'N/A — <30자 이상 사유>' (ADR-031 §결정 4 bypass)"
-echo "  - actual logic carrier: CFP-427 (Story 2)"
-echo "  - warning tier (continue-on-error: true) — PR merge 미차단"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CANONICAL_PATH="$SCRIPT_DIR/$CANONICAL"
 
-exit 0
+# Missing-script guard (FIX iter 1 F-5): canonical 부재 → exit 0 + WARN (warning tier 일관)
+if [[ ! -x "$CANONICAL_PATH" ]]; then
+  echo "[wrapper] WARN: canonical script not found or not executable: $CANONICAL_PATH. CFP-427 §3.4." >&2
+  exit 0
+fi
+
+exec "$CANONICAL_PATH" "$@"

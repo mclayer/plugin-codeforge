@@ -500,7 +500,8 @@ entries:
       ADR-040 §결정 5 (Stale GC) + §결정 7 (Amendment 3) — wrapper repo `.claude/settings.json` 의
       `hooks.SessionStart[]` 안에 `check-worktree-stale.sh` 호출 entry 존재 검증. SessionStart hook
       wire 누락 시 stale worktree 자동 GC 미동작 (declaration only → mechanical enforcement 분리).
-      warning tier — continue-on-error: true. 후속 Story (CFP-427) 가 actual wire 첫 사례.
+      warning tier — continue-on-error: true. CFP-427 Story 2 가 actual wire 첫 사례 —
+      `scripts/check-session-start-hook-presence.sh` `exec` swap wrapper 패턴 (RefactorArch 결정).
     detect_command: bash scripts/check-worktree-first-session-start-wire.sh
     workflow: templates/github-workflows/worktree-first-session-start-wire.yml
     current_tier: warning
@@ -580,7 +581,9 @@ entries:
       ADR-040 §결정 5 + §결정 7 (Amendment 3) + ADR-031 §결정 4 — §14 Lane Evidence row 의
       `Working dir:` field 가 worktree path (`${HOME}/.claude/worktrees/<repo>/<branch-flat>` 정합)
       또는 `N/A — <30자 이상 사유>` (ADR-031 §결정 4 bypass mechanism) 인지 검증. wrapper repo
-      `docs/stories/**.md` scan. 후속 Story (CFP-427) 가 actual wire 첫 사례.
+      `docs/stories/**.md` scan. CFP-427 Story 2 가 actual wire 첫 사례 — enforce-from filter
+      도입 (본 Story merged at 이후 신규 Story 만, false-positive 회피) + PLACEHOLDER sentinel
+      safe-fallback (Phase 2 PR merge 전 enforce 전체 skip).
     detect_command: bash scripts/check-worktree-first-spawn-evidence-cwd.sh
     workflow: templates/github-workflows/worktree-first-spawn-evidence-cwd.yml
     current_tier: warning
