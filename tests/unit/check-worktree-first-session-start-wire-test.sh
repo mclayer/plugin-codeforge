@@ -11,8 +11,10 @@ SCRIPT="scripts/check-worktree-first-session-start-wire.sh"
 FAIL=0
 
 echo "=== TC-1: BYPASS_WORKTREE_FIRST=1 short-circuit ==="
-OUT=$(BYPASS_WORKTREE_FIRST=1 bash "$SCRIPT" 2>&1)
-STATUS=$?
+# OR-short-circuit pattern (FIX iter 2, F-001 P1): set -e race 회피.
+# 직전 STATUS=0 명시 + command 실패 시 || branch 가 STATUS=$? 캡처 — set -e 가 abort 하기 전에.
+STATUS=0
+OUT=$(BYPASS_WORKTREE_FIRST=1 bash "$SCRIPT" 2>&1) || STATUS=$?
 if [ "$STATUS" -eq 0 ] && echo "$OUT" | grep -q "BYPASS_WORKTREE_FIRST=1 — skip"; then
     echo "  PASS — exit 0 + skip log"
 else
@@ -21,8 +23,8 @@ else
 fi
 
 echo "=== TC-2: normal run = skeleton mode (exit 0) ==="
-OUT=$(bash "$SCRIPT" 2>&1)
-STATUS=$?
+STATUS=0
+OUT=$(bash "$SCRIPT" 2>&1) || STATUS=$?
 if [ "$STATUS" -eq 0 ] && echo "$OUT" | grep -q "SKELETON"; then
     echo "  PASS — exit 0 + skeleton log"
 else
