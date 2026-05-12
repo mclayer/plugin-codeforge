@@ -732,3 +732,31 @@ entries:
     owner_adr: ADR-024 Amendment 4 §결정 6.A.1   # branch → phase mapping 표 SSOT
     carrier_adr: ADR-060             # framework carrier (warning mode entry)
     status: Active
+
+  - name: claude-md-line-cap
+    description: |
+      ADR-012 Amendment 1 §결정 6 mechanical lint — CLAUDE.md line count cap ≤320.
+      ADR-060 Amendment 5 (4번째 warning-tier entry): scripts/check-claude-md-line-cap.sh
+      exit 0 PASS / exit 1 cap 초과 / exit 2 meta-error (ADR-060 Amendment 2 §결정 15 3-tier).
+      ADR-058 §결정 5 ratchet 정합 — cap 강화 방향, sunset_justification 면제.
+      CFP-455 + CFP-449 retro sentinel 2 재현 2회 → mechanical enforcement 도입 timing 도달 (4th entry).
+    detect_command: bash scripts/check-claude-md-line-cap.sh
+    workflow: templates/github-workflows/claude-md-line-cap.yml
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:claude-md-line-cap
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_story_merged: required # ADR-060 §결정 6 (c)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    sibling_dependencies: []         # 독립 entry
+    introduced_by: CFP-506
+    introduced_date: 2026-05-13
+    owner_adr: ADR-012               # Amendment 1 cap ≤320 declaration SSOT
+    carrier_adr: ADR-060             # framework carrier (warning mode entry, Amendment 5)
+    carrier_amendment: 5
+    status: Active
