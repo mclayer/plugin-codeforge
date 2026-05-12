@@ -118,6 +118,10 @@ related:
    [블로커 X건 — 복구 완료 전 대기]
    ```
 
+   **0a-prime. SessionStart hook — worktree-gc (CFP-427 / ADR-040 §결정 5)**
+
+   wrapper repo `.claude/settings.json` `hooks.SessionStart[]` array 두 번째 entry = `bash "${CLAUDE_PROJECT_DIR}/templates/scripts/check-worktree-stale.sh" || true` (CFP-427 Story 2 merge 후 effective). 매 wrapper repo Claude Code session 시작 시 stale worktree (mtime ≥ 7 days + origin branch absent) 자동 prune. session 차단 0 (`|| true` postfix). bypass = `BYPASS_WORKTREE_GC=1` env (rare debugging only). 폐쇄루프 안전망 = `scripts/check-session-start-hook-presence.sh` (CFP-427 warning tier). prereq-check entry (CFP-500, 1번째 entry) 와 disjoint scope — 양쪽 entry 모두 sequential 실행.
+
    **0i. Deferred tool 스키마 선제 로드 — SessionStart hook tier (ADR-038 Amendment 2 §결정 9, CFP-500)**
 
    Enforcement layer 위임: 본 항목의 의무는 **SessionStart hook tier (b)** 로 격상되었다 (Researcher 3-tier 모델). 구체적 prefetch 실행은 consumer `.claude/settings.json` `hooks.SessionStart[]` 에 등록된 `SessionStart-codeforge-prereq-check.json.sample` 이 helper script `${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-prereq.sh` 의 stdout 을 Orchestrator 첫 turn context 에 prompt-injection 형태로 inject 함으로써 수행한다. Orchestrator 는 turn 0 에 hook stdout 의 지시에 따라 `ToolSearch("select:TodoWrite")` 호출.

@@ -544,8 +544,10 @@ entries:
     description: |
       ADR-040 §결정 7 (Amendment 3) — main working tree 에서 `git checkout cfp-NNN` 등 lane branch
       checkout 차단 (worktree-first 정책 정합). pre-checkout git hook sample 존재 검증 +
-      install 권고 출력 (warning tier — install 강제 X). 후속 Story (CFP-428) 가 actual git
-      hook 도입.
+      install 권고 출력 (warning tier — install 강제 X). CFP-428 (Story 3) 가 actual wire 첫
+      사례 — `templates/.git-hooks/pre-checkout.sample` + `scripts/install-git-hooks.sh` opt-in
+      installer. lint pattern = verification-only (sample 존재 + executable bit 검증,
+      Story 2 exec swap 패턴 부적용 — canonical 이 git hook sample 자체).
     detect_command: bash scripts/check-worktree-first-pre-checkout.sh
     workflow: templates/github-workflows/worktree-first-pre-checkout.yml
     current_tier: warning
@@ -570,8 +572,11 @@ entries:
   - name: worktree-first-pre-commit-main-block
     description: |
       ADR-040 §결정 7 (Amendment 3) — main working tree 에서 src/docs commit 차단 (worktree-first
-      정책 정합). pre-commit-main-block git hook sample 존재 검증 + install 권고 출력. 후속
-      Story (CFP-428) 가 actual git hook 도입.
+      정책 정합). pre-commit-main-block git hook sample 존재 검증 + install 권고 출력. CFP-428
+      (Story 3) 가 actual wire 첫 사례 — `templates/.git-hooks/pre-commit-main-block.sample` +
+      `scripts/install-git-hooks.sh` opt-in installer. path matching = `src/**` 또는 `docs/**`
+      only (Plan SSOT verbatim — chore commit / typo fix 등 차단 0). lint pattern =
+      verification-only.
     detect_command: bash scripts/check-worktree-first-pre-commit-main-block.sh
     workflow: templates/github-workflows/worktree-first-pre-commit-main-block.yml
     current_tier: warning
@@ -755,4 +760,32 @@ entries:
     introduced_by: CFP-481
     owner_adr: ADR-024 Amendment 4 §결정 6.A.1   # branch → phase mapping 표 SSOT
     carrier_adr: ADR-060             # framework carrier (warning mode entry)
+    status: Active
+
+  - name: claude-md-line-cap
+    description: |
+      ADR-012 Amendment 1 §결정 6 mechanical lint — CLAUDE.md line count cap ≤320.
+      ADR-060 Amendment 5 (4번째 warning-tier entry): scripts/check-claude-md-line-cap.sh
+      exit 0 PASS / exit 1 cap 초과 / exit 2 meta-error (ADR-060 Amendment 2 §결정 15 3-tier).
+      ADR-058 §결정 5 ratchet 정합 — cap 강화 방향, sunset_justification 면제.
+      CFP-455 + CFP-449 retro sentinel 2 재현 2회 → mechanical enforcement 도입 timing 도달 (4th entry).
+    detect_command: bash scripts/check-claude-md-line-cap.sh
+    workflow: templates/github-workflows/claude-md-line-cap.yml
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:claude-md-line-cap
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_story_merged: required # ADR-060 §결정 6 (c)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    sibling_dependencies: []         # 독립 entry
+    introduced_by: CFP-506
+    introduced_date: 2026-05-13
+    owner_adr: ADR-012               # Amendment 1 cap ≤320 declaration SSOT
+    carrier_adr: ADR-060             # framework carrier (warning mode entry, Amendment 5)
+    carrier_amendment: 5
     status: Active

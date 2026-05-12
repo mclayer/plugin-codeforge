@@ -72,4 +72,12 @@ owned_sections:
     # 필요, 본 Story scope 외). parallel-epic-conflict-check.yml 영향 0건 (append-only
     # row 추가만).
 
+  - file: docs/kpi/rate-limit-fallback-history.jsonl
+    section: "(JSONL — 1 line per monthly cron append)"
+    owner_adr: ADR-057  # Amendment 2 extension (CFP-453) — history.jsonl 누적 정책
+    parallel_edit: append-only
+    # NOTE (CFP-453): semantic = workflow-only-write — JSONL append (idempotent
+    # last-line replace if same month). 사용자 manual edit 금지. CFP-393 의 KPI JSON
+    # append-only row 와 동일 NOTE 패턴 (workflow-only-write 신규 enum 도입은 별도 CFP).
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)
