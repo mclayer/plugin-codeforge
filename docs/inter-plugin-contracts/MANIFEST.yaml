@@ -69,4 +69,4 @@ registries:
 
   - name: evidence_check_registry
     files:
-      - { file: evidence-check-registry-v1.md, version: "1.0", status: Active }  # CFP-389 / ADR-060: evidence-enforceable promotion framework
+      - { file: evidence-check-registry-v1.md, version: "1.1", status: Active }  # CFP-389 / ADR-060: evidence-enforceable promotion framework. CFP-455 / ADR-060 Amendment 2: v1.0 → v1.1 MINOR bump (current_tier required 전환)

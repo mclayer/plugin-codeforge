@@ -1,13 +1,14 @@
 ---
 kind: registry
 registry: evidence-check
-version: "1.0"
+version: "1.1"
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/evidence-check-registry-v1.md
-date: 2026-05-11
+date: 2026-05-12
 status: Active
 authors:
-  - CFP-389 (Initial — evidence-enforceable promotion framework SSOT, ADR-060 carrier)
+  - CFP-389 (Initial v1.0 — evidence-enforceable promotion framework SSOT, ADR-060 carrier)
+  - CFP-455 (MINOR bump v1.0 → v1.1 — current_tier required 전환 + 4-tier enum 본문 강조, ADR-060 Amendment 2 carrier)
 related_adrs:
   - ADR-008  # Inter-plugin Contract Versioning (kind:registry SemVer 정합)
   - ADR-010  # Inter-plugin Contract Sibling Sync (kind:registry scope 외 명시)
@@ -51,8 +52,8 @@ codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-0
 | `description` | string | 필수 | 본 entry 가 검증하는 정책 요약 (1-3 문장). |
 | `detect_command` | string | 필수 | violation 감지 lint 실행 명령 (절대 또는 repo-relative path). 예: `bash scripts/check-adr-sunset-criteria.sh`. |
 | `workflow` | string | 필수 | GitHub Actions workflow yaml path. 예: `templates/github-workflows/adr-sunset-criteria.yml`. |
-| `current_tier` | enum | optional (v1.0 — CFP-391 시점 required 전환 예정 = MINOR bump v1.1) | enforcement tier. enum = `warning` / `blocking-on-pr` / `blocking-on-merge` / `hotfix-bypass`. 결정 3 (ADR-060). |
-| `bypass_label` | string | optional (해당 tier 가 hotfix-bypass 활성 시) | bypass label name. namespace = `hotfix-bypass:<entry-name>` (예: `hotfix-bypass:adr-sunset`). per-entry namespace 분리 의무 (ADR-060 §결정 7). |
+| `current_tier` | enum | **필수 (v1.1, CFP-455 / ADR-060 Amendment 2 — required 전환)** | enforcement tier. enum = `warning` / `blocking-on-pr` / `blocking-on-merge` / `hotfix-bypass` (대소문자 / 공백 정확 일치). 결정 3 (ADR-060). 미보유 entry = `scripts/check-evidence-registry.sh` exit 1 (validation FAIL). |
+| `bypass_label` | string | optional — tier 별 의무 분리 (v1.1, CFP-455 / ADR-060 Amendment 2 §결정 16): `warning` = omit 권고 (non-blocking, bypass 의미 부적용) / `blocking-on-pr` / `blocking-on-merge` = optional (운영 장애 hotfix 채널 도입 가능) / `hotfix-bypass` = **required** (정의상 bypass channel SSOT) | bypass label name. namespace = `hotfix-bypass:<entry-name>` (예: `hotfix-bypass:adr-sunset`). per-entry namespace 분리 의무 (ADR-060 §결정 7). |
 | `bypass_audit_lint` | string | optional (bypass_label 정의 시 의무) | audit comment 존재 검증 lint 명령. 예: `bash scripts/check-bypass-audit-comment.sh`. ADR-060 §결정 8. |
 | `promotion_criteria` | object | 필수 (current_tier=warning 시) | warning → blocking 승격 gate 정의. 필드: |
 | `promotion_criteria.pr_cumulative_min` | int | 필수 | 본 entry merge 후 카운트 시작, throughput 독립 PR 누적 (ADR-060 §결정 10). 기본 `20`. |
@@ -67,6 +68,8 @@ codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-0
 
 ## 4. 변경 규칙 (SemVer, ADR-008 정합 + 4-tier enforcement enum 정식 도입)
 
+**4-tier enum SSOT (v1.1, CFP-455 / ADR-060 Amendment 2 — required 전환 완료)**: 모든 registry yaml entry 는 다음 4 enum 중 정확히 하나의 `current_tier` 보유 의무 (대소문자 / 공백 정확 일치). 위반 시 `scripts/check-evidence-registry.sh` exit 1 (validation FAIL) + warning mode 단계 PR comment 경고 + blocking mode 승격 시 PR block.
+
 | tier | 동작 | branch protection 영향 | 사용 시점 |
 |---|---|---|---|
 | `warning` | continue-on-error 또는 non-required check. PR comment / job summary 경고만. | `required_status_checks.contexts` 미부착 | 첫 도입 / 운영 신뢰도 검증 단계 |
@@ -74,7 +77,7 @@ codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-0
 | `blocking-on-merge` | post-merge guard (예: phase-gate-mergeable). PR open 단계 통과, merge 시점 차단. | `required_status_checks.contexts` 부착 | 동적 검증 (PR 상태 변화 기반) |
 | `hotfix-bypass` | bypass label 적용 PR 만 skip + audit comment 의무. label 부재 시 blocking-on-pr 등가. | `required_status_checks.contexts` 부착 (+ bypass workflow) | 운영 장애 hotfix 통로 필수 시 |
 
-본 v1.0 시점 = enum 정의만 제공. registry yaml row 의 `current_tier` 필드 = optional. CFP-391 (4-tier 정식 amendment) 가 required 전환 + 기존 entry retroactive 분류 = MINOR bump v1.0 → v1.1.
+**v1.0 → v1.1 MINOR bump (CFP-455, 2026-05-12)**: `current_tier` 필드 optional → **required** 전환 + 기존 22 entry retroactive 분류 검증 (모두 현행 `current_tier` 보유 verified — mechanical regression 0건). schema 정합 mechanical 강제 = `scripts/check-evidence-registry.sh` (Phase 2 PR scope) + `templates/github-workflows/evidence-registry-check.yml` (Phase 2 PR scope, warning mode 첫 도입).
 
 ## 5. Bypass channel 운영 (ADR-024 Amendment 3 + ADR-060 §결정 7-8)
 
@@ -128,9 +131,12 @@ warning → blocking-on-pr / blocking-on-merge 승격 = 3 condition AND:
 - **MINOR (v1.0 → v1.1)**: 신규 필드 추가 (default value 보유) / enum 값 추가 / `current_tier` required 전환 등. 기존 consumer backward compat 유지.
 - **PATCH (v1.0 → v1.0.x)**: schema 문서 clarification / 운영 룰 추가 (필드 변경 없음).
 
+### 완료된 변경 (historical)
+
+- **v1.1 (CFP-455, 2026-05-12 — Accepted)**: `current_tier` optional → required 전환 + tier enum 정식 분류 (기존 22 entry retroactive 분류 검증 — 모두 보유 verified, mechanical regression 0건). MINOR bump. ADR-060 Amendment 2 carrier. CFP-391 (Issue #396) / CFP-412 (Issue #412) 의 closed without delivery 후 재재예약 carrier.
+
 ### 예상 변경 (forward-looking)
 
-- **v1.1 (CFP-391 잠정)**: `current_tier` optional → required 전환 + tier enum 정식 분류 (기존 entry retroactive 분류 의무). MINOR bump.
 - **v1.x (CFP-D 잠정)**: `modal_anti_pattern_dictionary.version` 확장 어휘 도입 (예: `"1.1"` — "충분히" / "조만간" / "soon" / "TBD" 추가). MINOR bump.
 - **v2.0 (가설)**: per-entry `bypass_label` 단일 global 전환 등 BREAKING.
 
