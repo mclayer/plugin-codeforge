@@ -39,8 +39,16 @@ amendment_log:
     ref: ADR-057
     carrier_story: CFP-448
     sunset_justification: "본 ADR 은 `is_transitional: false` (permanent policy carrier, frontmatter 정합) → Amendment 5 의 sunset_justification 은 `is_transitional: true` 인 ADR-057 의 §결정 3 selective rollback Amendment 3 의 cross-ref atomic 으로서 발화. ADR-058 §결정 5 self-application 은 ADR-057 Amendment 3 에서 1차 발화 (sunset_justification 의무 충족) → 본 row 는 ADR-042 정책 변경 0건 (결정 1 tier criteria + 결정 2 invariant + 결정 3 신규 agent ADR 의무 + 결정 4 inheritance + 결정 5 Haiku rollback + 결정 6 재-audit 모두 본문 변경 0건) 으로서 amendment_log 일관성 유지 + tier 표 갱신만 carry. 본 Amendment 5 는 ADR-042 §결정 2 invariant ('Sonnet 으로 fully cover 가능 = role 재정의 시그널') 의 정합 정합 검증 — CodebaseMapper / Refactor 의 mandate text 재정의 동시 산출물 의무 발화로 invariant 충족 (original §결정 2 Sonnet 분류 정합 복귀)."
+  - amendment_id: 6
+    date: "2026-05-13"
+    status: applied
+    summary: "Selective rollback extension (path B) — Amendment 5 의 Opus 유지 3종 (FeasibilityAgent · ContinuityAgent · ChangeImpactAgent) 모두 Opus → Sonnet 복귀 (ResearcherAgent 제외, path B 정합 — Codex proactive check touchpoint #4 권장 + 사용자 CL-1 확정). ResearcherAgent Opus 유지 (ADR-046 §결정 4·5 본문 invariant 정합 — 변경 0건). 3 agent 모두 mandate text 재정의 면제 (ADR-042 §결정 1 Sonnet (a) single-mandate advocacy 정합 verbatim — DeveloperPL Amendment 5 exclusion criterion 패턴 정합). ADR-057 Amendment 4 cross-ref atomic."
+    ref: ADR-057
+    carrier_story: CFP-264
+    sunset_justification: "본 ADR 은 `is_transitional: false` (permanent policy carrier, frontmatter 정합) → Amendment 6 의 sunset_justification 의무 비해당 (ADR-058 §결정 5 self-application 은 `is_transitional: true` ADR amendment 시에만 의무). 단 cross-ref atomic 으로서 ADR-057 Amendment 4 (is_transitional: true → sunset_justification 의무 발화) 에 atomic 동반. 본 row 의 본문 = (1) ADR-042 정책 변경 0건 (결정 1 tier criteria + 결정 2 invariant + 결정 3 신규 agent ADR 의무 + 결정 4 inheritance + 결정 5 Haiku rollback + 결정 6 재-audit 모두 본문 변경 0건) 으로서 amendment_log 일관성 유지 + Amendment 6 본문 (§결정 1 Sonnet (a) 본문 확장 — 3 Requirements agent 명시) + tier 표 갱신만 carry. (2) Amendment 5 (CFP-448) 의 selective rollback 패턴 확장 — single-mandate advocacy criteria 의 적용 범위가 codeforge-design (CodebaseMapper / Refactor) + codeforge-develop (DeveloperPL) 에서 codeforge-requirements (Feasibility / Continuity / ChangeImpact) 로 확장. ADR-042 §결정 2 invariant ('Sonnet 으로 fully cover 가능 = role 재정의 시그널') 의 정합 검증 — 3 agent 모두 mandate text 재정의 면제 (이미 single-mandate advocacy 정의 명확). (3) Codex proactive check (touchpoint #4 divergence detected) 권장 직접 채택 — Researcher 제외 path B 발화로 ADR-046 §결정 4·5 본문 invariant (Researcher Opus tier rationale = 'Sonnet 대수 불가') 강한 보존. PL 권장 Option B (사용자 framing verbatim 적용 + Researcher 포함) reject — mandate 약화 회피 우선."
 related_stories:
   - CFP-448
+  - CFP-264
 related_adrs:
   - ADR-009
   - ADR-013
@@ -110,11 +118,13 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 | Tier | Model | Role pattern criteria |
 |------|-------|----------------------|
 | **Opus** | claude-opus-4-7 | (a) Multi-source synthesis (3+ deputy / lane / contract input dedup + 종합 판정) — 모든 PL · ArchitectAgent chief. (b) Independent reasoning peer to external GPT-5 (ClaudeReviewAgent — Codex 와의 의도적 reasoning depth 매칭). (c) High-stakes domain interpretation (DomainAgent — Live trading / 금융 / 헬스 데이터 등 invariant 누설 위험). (d) Security / safety boundary owner (SecurityArchitectAgent · OperationalRiskArchitectAgent · DataMigrationArchitectAgent · TestContractArchitectAgent — §7 trust boundary / §7.4 DR / §11 schema rollback / §8 perf baseline). (e) Real-funds risk owner (LiveOpsDeputyAgent · LiveOrderingDeputyAgent — CFP-77 CONDITIONAL). (f) Cross-Story pattern analysis + ADR proposal (PMOAgent). (g) Deep research with reshape mandate (ResearcherAgent — per [ADR-046](ADR-046-researcher-role-redefinition.md) (2026-05-09)). |
-| **Sonnet** | claude-sonnet-4-6 | (a) Single-mandate advocacy within multi-deputy debate — read-only 조사 + 자기 mandate 측 단일 축 주장 (CodebaseMapperAgent — existing facts only, RefactorAgent — pattern advocacy only). (b) Implementation work — code write / refactor / test 구현 (DeveloperAgent · DeveloperPLAgent · 2 webapp preset). |
+| **Sonnet** | claude-sonnet-4-6 | (a) Single-mandate advocacy within multi-deputy debate — read-only 조사 + 자기 mandate 측 단일 축 주장 (CodebaseMapperAgent — existing facts only, RefactorAgent — pattern advocacy only, **FeasibilityAgent — 구현 가능성 등급 + 경고 힌트 only, ContinuityAgent — 본 lane 단일 Story 안 충돌/중복/의존 분류 only, ChangeImpactAgent — single-Story DELTA mapping only**). (b) Implementation work — code write / refactor / test 구현 (DeveloperAgent · DeveloperPLAgent · 2 webapp preset). |
 
 > **Amendment 4 (2026-05-11)**: CodebaseMapperAgent·RefactorAgent는 Opus로 복원됨 — ADR-057 참조.
 >
 > **Amendment 5 (2026-05-12, CFP-448)**: Amendment 4 의 6 agent 상향 중 3종 (CodebaseMapperAgent · RefactorAgent · DeveloperPLAgent) Opus → Sonnet 복귀. 나머지 3종 (FeasibilityAgent · ContinuityAgent · ChangeImpactAgent) Opus 유지. ADR-057 Amendment 3 cross-ref. **CodebaseMapper / Refactor 의 mandate text 재정의 동시 산출물 의무 발화로 §결정 2 invariant 정합 — 단순 model field downgrade 금지. DeveloperPLAgent 는 사용자 framing (CFP-448) verbatim ('아키텍트가 짜준 디자인 명세에서 제한되게 움직여 고도의 추론이 필요하지 않기 때문이다') 직접 적용 + ADR-042 §결정 1 (b) "Implementation work — code write / refactor / test 구현" verbatim 정의 정합 회귀 → mandate text 재정의 면제 + Codex re-review 면제**. 자세한 결정 matrix 는 본 ADR Amendment 5 본문 + ADR-057 Amendment 3 §결정 3 표 참조.
+>
+> **Amendment 6 (2026-05-13, CFP-264, path B)**: Amendment 5 의 Opus 유지 3종 (FeasibilityAgent · ContinuityAgent · ChangeImpactAgent) 모두 Opus → Sonnet 복귀 (ResearcherAgent 제외 — path B 정합, Codex proactive check touchpoint #4 권장 + 사용자 CL-1 확정). 3 agent 모두 ADR-042 §결정 1 Sonnet (a) single-mandate advocacy criteria 본문 정합 — mandate text 변경 0건 (DeveloperPL Amendment 5 exclusion criterion 패턴 정합). ResearcherAgent Opus tier 유지 — ADR-046 §결정 4·5 본문 invariant ('Sonnet 대수 불가 — deep concept reasoning 책임') 정합 보존, ADR-046 변경 0건. ADR-057 Amendment 4 cross-ref atomic. 자세한 결정 matrix 는 본 ADR Amendment 6 본문 + ADR-057 Amendment 4 §결정 3 표 참조.
 | **Haiku** | claude-haiku-4-5 | (a) Test runner / 결과 수집 — minimal reasoning (TestAgent). (b) External tool wrapper — 본체 reasoning 은 external (Codex GPT-5 / GPT-5.4) 가 수행, Claude 는 prompt 조립 / output relay 만 (CodexReviewAgent · RequirementsAnalystAgent). (c) Mechanical pattern execution — 입력 명세(Change Plan §3 + Story §8)가 충분히 structured되어 creative/diagnostic reasoning 없이 패턴 기반 생성이 가능하고, 오류 발생 시 FIX 루프가 CI/테스트로 즉시 감지 가능한 경우 (InfraEngineerAgent · QADeveloperAgent · DataEngineerAgent — Amendment 2). |
 
 ### 결정 2: 본 ADR 발효 시점 변경 사항 (2 sibling PR scope)
@@ -377,3 +387,92 @@ axis-A (operational cost trade-off) × axis-B (role redefinition signal, ADR-042
 - codeforge-design: CodebaseMapperAgent + RefactorAgent model field + mandate text 재정의 — MINOR bump (mandate text 변경)
 - codeforge-develop: DeveloperPLAgent model field — PATCH bump (사용자 framing verbatim 직접 적용, mandate text 재정의 면제 → mandate 본문 변경 없음, model field 만 변경)
 - marketplace.json: wrapper + codeforge-design + codeforge-develop 3 entry version sync (ADR-063 atomic invariant)
+
+---
+
+## Amendment 6 — Selective rollback extension (path B) — 3 of 3 Requirements agent Opus → Sonnet (CFP-264 / ADR-057 Amendment 4 cross-ref)
+
+**날짜**: 2026-05-13
+
+### 변경 사항
+
+Amendment 5 의 Opus 유지 3종 (FeasibilityAgent · ContinuityAgent · ChangeImpactAgent) 모두 Opus → Sonnet 복귀 (ResearcherAgent 제외, **path B 정합** — Codex proactive check touchpoint #4 권장 + 사용자 CL-1 확정).
+
+| Agent | Amendment 5 (2026-05-12) | Amendment 6 (2026-05-13) | 비고 |
+|---|---|---|---|
+| FeasibilityAgent | **Opus 유지** | **Opus → Sonnet (rollback) + mandate text 변경 0건** | ADR-042 §결정 1 Sonnet (a) single-mandate advocacy 정합 — 구현 가능성 등급 + 경고 힌트, src+ADR read-only, supervisor synthesis 영역 아님. mandate 이미 명확, 재정의 불필요 (DeveloperPL Amendment 5 exclusion criterion 패턴 정합) |
+| ContinuityAgent | **Opus 유지** | **Opus → Sonnet (rollback) + mandate text 변경 0건** | ADR-042 §결정 1 Sonnet (a) single-mandate advocacy 정합 — 본 lane 단일 Story 안 충돌/중복/의존 분류 (cross-Story pattern detection 영역 = PMOAgent Opus 유지, 본 agent 영역 외). mandate 이미 명확 |
+| ChangeImpactAgent | **Opus 유지** | **Opus → Sonnet (rollback) + mandate text 변경 0건** | ADR-042 §결정 1 Sonnet (a) single-mandate advocacy 정합 — single-Story DELTA mapping (AS-IS → DELTA, src/** read-only). main branch sibling 측 이미 Sonnet (CFP-448 wave commit c4084d8), 본 Amendment 6 SSOT 측 갱신 + drift 정합 회복. mandate 이미 명확 |
+| ResearcherAgent | Opus tier (Amendment 5 변경 0건) | **Opus 유지 (path B 정합)** | ADR-046 §결정 4 verbatim ('Sonnet 대수 불가 — deep concept reasoning 책임') + §결정 5 동일 + §결과 §긍정 ('Sonnet 대수 가능성 제거') — Sonnet 다운 자체가 ADR-046 본문 핵심 정책 reject 영역. path B (Codex proactive check touchpoint #4 divergence detected) 직접 채택, ADR-046 변경 0건 |
+
+### 결정 framework (ADR-057 Amendment 4 SSOT carry)
+
+본 Amendment 6 의 결정 matrix 는 ADR-057 Amendment 4 §결정 3 표 + path B decision matrix verbatim cross-ref. carrier story CFP-264 Story §1 verbatim ("토큰이 너무 많이 쓰여서 opus를 조금 보수적으로 써야겠다" — 비용 보수적 framing) + Codex proactive check touchpoint #4 발견 (path B 권장) + 사용자 CL-1 확정 (path B) SSOT.
+
+### Path B 결정 framework (Codex proactive check touchpoint #4 발견)
+
+본 Story 의 PL 권장 = Option B (사용자 framing verbatim 직접 적용 + Researcher 포함 4 agent Sonnet 다운). Codex proactive check 가 3 finding 발화:
+
+| Finding | severity | 내용 | 처리 |
+|---|---|---|---|
+| Scope finding 1 | discretionary | `scripts/measure-rate-limit-fallback.sh` `SONNET_AGENTS` 배열 atomic 동반 갱신 의무 | 본 Story scope 산출물 8건에 포함 (path B 정합 결과 11종 entry) |
+| Scope finding 2 | severity 정정 (F-4 P2 → P1) | ADR-058 §결정 5 sunset_justification 의무 — `is_transitional: true` 인 ADR (ADR-057) 만 적용. `is_transitional: false` 인 ADR-042 / ADR-046 = 의무 비해당 | 본 Amendment 6 = ADR-042 (`is_transitional: false`) → sunset_justification 의무 비해당. amendment_log row 의 sunset_justification 필드 = cross-ref atomic 명시 (ADR-057 Amendment 4 가 의무 발화) |
+| Recommendation finding | **divergence** | ADR-046 §결정 4 verbatim ('Sonnet 대수 불가') + §결정 5 동일 + §결과 §긍정 ('Sonnet 대수 가능성 제거') — Researcher Sonnet 다운 자체가 ADR 본문 핵심 정책 reject 영역. PL Option B 도 본 invariant 와 충돌 — Researcher mandate text 약화 회피 우선 | **사용자 CL-1 = path B 확정** — Researcher 제외, 3 agent (Feasibility / Continuity / ChangeImpact) 만 Sonnet 다운. ADR-046 변경 0건 (Researcher mandate boundaries / Opus tier rationale 본문 invariant 강한 보존) |
+
+### Mandate text 재정의 면제 (3 agent 모두 — exclusion criterion 정합)
+
+본 Amendment 6 의 핵심 invariant 정합 mechanism — ADR-042 §결정 2 invariant ("Sonnet 으로 fully cover 가능 = role 재정의 시그널") 검증:
+
+1. **FeasibilityAgent** (`plugin-codeforge-requirements/agents/FeasibilityAgent.md`):
+   - 현재 description verbatim: "요구사항 레인 구현 가능성 평가 에이전트 — src/** + ADR을 읽어 현재 아키텍처에서 요구사항이 자연스럽게 구현 가능한지 판단하고 설계 레인 경고 힌트를 생성. Story §4.2 owner."
+   - **이미 single-mandate advocacy 정의 명확** — read-only (src/** + ADR) + 단일 산출 (구현 가능성 등급 + 경고 힌트) + Story §4.2 owner boundary. supervisor synthesis (PL 영역) 가 아니므로 mandate 재정의 불필요. **DeveloperPL Amendment 5 exclusion criterion 패턴 정합** — 사용자 framing verbatim + ADR-042 §결정 1 (a) single-mandate advocacy 정의 직접 정합 시 면제.
+
+2. **ContinuityAgent** (`plugin-codeforge-requirements/agents/ContinuityAgent.md`):
+   - 현재 description verbatim: "요구사항 레인 이전 작업 연속성 에이전트 — docs/stories·change-plans·ADR을 읽어 과거 Story/ADR과 충돌·중복·의존 관계를 식별하고 '이미 결정된 것' vs '재논의 필요' 를 분류. Story §4.3 owner."
+   - **이미 single-mandate advocacy 정의 명확** — 본 lane 단일 Story 안 충돌/중복/의존 분류 (cross-Story pattern detection 영역 = PMOAgent Opus 유지, 본 agent 의 mandate 영역 외) + read-only (docs/stories + change-plans + ADR) + Story §4.3 owner boundary. mandate 재정의 불필요 — exclusion criterion 정합.
+
+3. **ChangeImpactAgent** (`plugin-codeforge-requirements/agents/ChangeImpactAgent.md`):
+   - 현재 description verbatim: "요구사항 레인 코드 변경 델타 에이전트 — src/** 전체를 읽어 요구사항 구현 시 어떤 파일·컴포넌트·인터페이스가 달라지는지 AS-IS → DELTA 형태로 매핑. Story §4.1 owner."
+   - **이미 single-mandate advocacy 정의 명확** — single-Story DELTA mapping (AS-IS → DELTA) + read-only (src/**) + Story §4.1 owner boundary. mandate 재정의 불필요 — exclusion criterion 정합.
+
+본 3 agent 의 mandate text 재정의 면제 패턴 = DeveloperPL Amendment 5 exclusion criterion 의 일관된 확장 (사용자 framing verbatim + ADR-042 §결정 1 Sonnet (a)/(b) tier criteria 정의 직접 정합 시 면제).
+
+### Codex re-review 면제 (3 agent 모두)
+
+본 Amendment 6 의 path B 채택 결과 = Codex proactive check (touchpoint #4) 가 Researcher Sonnet 다운 reject + 나머지 3 agent 의 Sonnet 다운은 mandate text 보존 + ADR-042 §결정 1 Sonnet (a) 정합 → Codex re-review 의무 발화 영역 외. CFP-379 의 Codex finding 도 Researcher / mandate text 약화 영역 (대상 영역 외). DeveloperPL Amendment 5 의 Codex re-review 면제 패턴 정합.
+
+### 3 agent decision evidence (3 axis 종합 — path B)
+
+axis-A (operational cost trade-off) × axis-B (role redefinition signal, ADR-042 §결정 2 invariant 정합) × axis-C (SSOT alignment direction, CFP-264 CL-1 사용자 확정 = path B) 종합:
+
+| Agent | axis-A (cost) | axis-B (mandate signal) | axis-C (path B SSOT) | 최종 |
+|---|---|---|---|---|
+| FeasibilityAgent | Sonnet 정합 (사용자 §1 verbatim — 비용 보수적 framing) | single-mandate advocacy (구현 가능성 등급, src+ADR read-only) | path B SSOT (Sonnet rollback) | **Sonnet rollback (mandate text 변경 0건)** |
+| ContinuityAgent | Sonnet 정합 (사용자 §1 verbatim) | single-mandate advocacy (충돌/중복/의존 분류, 본 lane 단일 Story 안 cross-ref) | path B SSOT (Sonnet rollback) | **Sonnet rollback (mandate text 변경 0건)** |
+| ChangeImpactAgent | Sonnet 정합 (사용자 §1 verbatim) | single-mandate advocacy (single-Story DELTA mapping) | path B SSOT (Sonnet rollback, drift 정합 회복) | **Sonnet rollback (mandate text 변경 0건)** |
+| ResearcherAgent | Sonnet 정합 (사용자 §1 verbatim) but axis-B reject | **mandate text reject** — ADR-046 §결정 4·5 본문 invariant Sonnet 대수 불가 | path B SSOT (Opus 유지) | **Opus 유지 (ADR-046 변경 0건)** |
+
+**Path B exclusion criterion**: axis-B 1차 우선 시 Researcher 의 mandate text invariant (ADR-046 §결정 4·5) 가 강한 reject signal — 사용자 framing axis-A 가 mandate text 보존 axis-B 와 충돌. Codex proactive check touchpoint #4 의 divergence detection 으로 forcing function 발효 → 사용자 CL-1 = axis-B 우선 결정 (Researcher 제외, 3 agent 만 Sonnet rollback).
+
+### 기존 정책 변경 0건 (ADR-042 본문)
+
+본 Amendment 6 는 ADR-042 의 결정 1~6 본문 변경 0건. 변경 = (a) §결정 1 Sonnet (a) 본문 inline expansion (3 신규 single-mandate advocacy agent 명시 — Feasibility / Continuity / ChangeImpact) (b) §결정 1 표 직후 Amendment 6 발화 marker comment (c) Amendment 6 본문 section (본 단락) (d) frontmatter amendment_log row 6 신설. tier criteria + invariant + 신규 agent ADR 의무 + inheritance + Haiku rollback + 재-audit 모두 정책 변경 0건. Amendment 5 (CFP-448) 본문 변경 0건 (selective rollback 패턴 정합 확장만).
+
+### Cross-ref invariant (ADR-057 Amendment 4 + ADR-046 변경 0건)
+
+본 Amendment 6 + ADR-057 Amendment 4 은 atomic cross-ref pair (CFP-264 path B 정합 단일 carrier). drift 차단 mechanism:
+- 본 ADR §결정 1 tier criteria + Amendment 5 + Amendment 6 tier 표 = **agent tier 분류 기준 SSOT**
+- ADR-057 §결정 3 표 + Amendment 4 = **Sonnet 잔류 명단 SSOT** (CL-1 path B 정합)
+- ADR-046 = 변경 0건 (Researcher mandate boundaries / Opus tier rationale 본문 invariant 강한 보존, path B 정합 invariant)
+- 세 ADR 본문 모순 발생 시 → mandate 분리: tier criteria 는 ADR-042, 잔류 명단은 ADR-057, Researcher mandate 는 ADR-046 (CFP-448 prior art 정합 확장)
+
+### Phase 2 PR atomic scope (ADR-063 정합 — single PR doc-only fast-path)
+
+본 Amendment 6 의 PR scope = wrapper + 1 lane plugin sibling (codeforge-requirements — codeforge-design / codeforge-develop 변경 0건 negative evidence, Researcher Opus 유지) + marketplace.json single sync:
+- wrapper: 본 ADR-042 Amendment 6 + ADR-057 Amendment 4 + CLAUDE.md L127 mirror + `scripts/measure-rate-limit-fallback.sh` `SONNET_AGENTS` 배열 — MINOR bump (정책 본문 변경 0건 — Amendment carry / 표 + 명단 변경만, plugin.json description 갱신 동반)
+- codeforge-requirements: FeasibilityAgent + ContinuityAgent model field — PATCH bump (사용자 framing verbatim 직접 적용, mandate text 재정의 면제 → mandate 본문 변경 없음, model field 만 변경). ChangeImpactAgent NO-OP (CFP-448 wave 에서 이미 Sonnet)
+- codeforge-design: 변경 0건 (Amendment 5 의 CodebaseMapper / Refactor 정합 유지)
+- codeforge-develop: 변경 0건 (Amendment 5 의 DeveloperPL 정합 유지)
+- marketplace.json: wrapper + codeforge-requirements 2 entry version sync (ADR-063 atomic invariant)
+
+본 Story = doc-only fast-path (ADR-054) — src/** 변경 0건, tests/** 변경 0건. Phase 1/2 분리 없음 (단일 PR close).

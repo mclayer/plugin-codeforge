@@ -16,7 +16,7 @@
 # Idempotent invariant: 동일 input → 동일 output (T-9 fixture).
 # Atomic write: stdout = streaming JSON. --out 사용 시 tmpfile + mv.
 #
-# 분모: Sonnet 잔류 8 agent 의 §14 row spawn 카운트.
+# 분모: Sonnet 잔류 11 agent 의 §14 row spawn 카운트.
 #       SSOT (verbatim, ADR-039 default subagent context — hardcode + cross-ref):
 #         - DeveloperAgent           (ADR-057 §결정 3 + ADR-042 Amendment 4)
 #         - BackendDeveloperAgent    (ADR-057 §결정 3 + ADR-042 Amendment 4)
@@ -26,7 +26,11 @@
 #         - CodebaseMapperAgent      (ADR-057 §결정 3 Amendment 3 신규 — CFP-448 selective rollback + mandate 재정의)
 #         - RefactorAgent            (ADR-057 §결정 3 Amendment 3 신규 — CFP-448 selective rollback + mandate 재정의)
 #         - DeveloperPLAgent         (ADR-057 §결정 3 Amendment 3 신규 — CFP-448 selective rollback, 사용자 framing 직접 적용)
+#         - FeasibilityAgent         (ADR-057 §결정 3 Amendment 4 신규 — CFP-264 path B, single-mandate advocacy, mandate text 변경 0건)
+#         - ContinuityAgent          (ADR-057 §결정 3 Amendment 4 신규 — CFP-264 path B, single-mandate advocacy, mandate text 변경 0건)
+#         - ChangeImpactAgent        (ADR-057 §결정 3 Amendment 4 신규 — CFP-264 path B, single-mandate advocacy, sibling 측 CFP-448 wave 이미 Sonnet drift 정합 회복)
 #       drift 발견 시 별도 CFP follow-up (Story CFP-393 §11 follow-up #1 + CFP-448 §11 follow-up).
+#       NOTE: ResearcherAgent Opus 유지 (path B 정합 — ADR-046 §결정 4·5 본문 invariant 정합).
 #
 # 분자: §14 `transcript` 필드 substring `[rate-limit-fallback:sonnet→opus]`
 #       또는 ASCII fallback `[rate-limit-fallback:sonnet->opus]` (T-8 fixture).
@@ -67,8 +71,9 @@
 #   미지정 시 history 기능 무효 (기존 동작 보존, backward-compat).
 set -euo pipefail
 
-# Sonnet 잔류 agent 8종 — ADR-057 §결정 3 (Amendment 3, CFP-448 selective rollback) + ADR-042 Amendment 5 SSOT verbatim.
+# Sonnet 잔류 agent 11종 — ADR-057 §결정 3 (Amendment 4, CFP-264 path B selective rollback) + ADR-042 Amendment 6 SSOT verbatim.
 # CFP-448 (2026-05-12) selective rollback 3 entry append (CodebaseMapper / Refactor / DeveloperPL).
+# CFP-264 (2026-05-13) path B selective rollback 3 entry append (Feasibility / Continuity / ChangeImpact, Researcher 제외).
 SONNET_AGENTS=(
   "DeveloperAgent"
   "BackendDeveloperAgent"
@@ -78,6 +83,9 @@ SONNET_AGENTS=(
   "CodebaseMapperAgent"
   "RefactorAgent"
   "DeveloperPLAgent"
+  "FeasibilityAgent"
+  "ContinuityAgent"
+  "ChangeImpactAgent"
 )
 
 WINDOW_MONTHS=3
@@ -153,14 +161,14 @@ if [[ -f "$ADR_057_FILE" || -f "$ADR_042_FILE" ]]; then
         if [[ "$existing" == "$name" ]]; then already=1; break; fi
       done
       [[ $already -eq 0 ]] && ADR_DETECTED_AGENTS+=("$name")
-    done < <(grep -oE "\b(DeveloperPLAgent|DeveloperAgent|BackendDeveloperAgent|FrontendDeveloperAgent|IntegrationTestAgent|StatefulTestAgent|ChangeImpactAgent|CodebaseMapperAgent|RefactorAgent|QADeveloperAgent|InfraEngineerAgent|DataEngineerAgent)\b" "$adr_f" 2>/dev/null | sort -u)
+    done < <(grep -oE "\b(DeveloperPLAgent|DeveloperAgent|BackendDeveloperAgent|FrontendDeveloperAgent|IntegrationTestAgent|StatefulTestAgent|ChangeImpactAgent|CodebaseMapperAgent|RefactorAgent|FeasibilityAgent|ContinuityAgent|ResearcherAgent|QADeveloperAgent|InfraEngineerAgent|DataEngineerAgent)\b" "$adr_f" 2>/dev/null | sort -u)
   done
 
-  # SONNET_AGENTS (8종 hardcode, CFP-448 Amendment 3 후) vs ADR detected — strict equal set 검증.
-  # SSOT 가 8종 명시: DeveloperAgent / BackendDeveloperAgent / FrontendDeveloperAgent / IntegrationTestAgent / StatefulTestAgent / CodebaseMapperAgent / RefactorAgent / DeveloperPLAgent.
-  # ChangeImpactAgent 는 regex 에 유지 (drift 발견 가능성 위해 — Opus 유지이지만 ADR 본문에 등장) — 현재 Sonnet 잔류 list 외.
+  # SONNET_AGENTS (11종 hardcode, CFP-264 Amendment 4 후) vs ADR detected — strict equal set 검증.
+  # SSOT 가 11종 명시: DeveloperAgent / BackendDeveloperAgent / FrontendDeveloperAgent / IntegrationTestAgent / StatefulTestAgent / CodebaseMapperAgent / RefactorAgent / DeveloperPLAgent / FeasibilityAgent / ContinuityAgent / ChangeImpactAgent.
+  # ResearcherAgent 는 regex 에 유지 (drift 발견 가능성 위해 — Opus 유지이지만 ADR 본문에 등장) — 현재 Sonnet 잔류 list 외 (path B 정합).
   # ADR 가 본문에 다른 agent 도 언급할 수 있으나, enum drift detection 의 정확한 의미 =
-  # SONNET_AGENTS 8종 모두 ADR_DETECTED_AGENTS 에 포함되어야 함 (역방향은 ADR 본문 자유).
+  # SONNET_AGENTS 11종 모두 ADR_DETECTED_AGENTS 에 포함되어야 함 (역방향은 ADR 본문 자유).
   for sa in "${SONNET_AGENTS[@]}"; do
     found=0
     for det in "${ADR_DETECTED_AGENTS[@]+"${ADR_DETECTED_AGENTS[@]}"}"; do

@@ -5,6 +5,37 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.29.0] - 2026-05-13
+
+### Changed (CFP-264 — path B selective rollback 확장)
+
+ADR-057 Amendment 4 + ADR-042 Amendment 6 cross-ref atomic — CFP-448 axis-A (operational cost trade-off) 의 reverse direction 2차 evidence. **path B 정합** (Codex proactive check touchpoint #4 권장 + 사용자 CL-1 확정): ResearcherAgent 제외 + 3 Requirements agent (FeasibilityAgent · ContinuityAgent · ChangeImpactAgent) Opus → Sonnet 다운. ADR-046 변경 0건 (Researcher mandate boundaries / Opus tier rationale 본문 invariant 강한 보존). MINOR bump (정책 본문 변경 0건, Amendment carry / §결정 1 표 본문 expansion / §결정 3 표 갱신 / Sunset gate 2 분모 갱신, plugin.json description 갱신 동반).
+
+- `docs/adr/ADR-042-agent-model-selection-policy.md` (UPDATE) — Amendment 6 신설. frontmatter `amendment_log` row 6 append (`sunset_justification` = cross-ref atomic 명시, `is_transitional: false` 정합 — ADR-058 §결정 5 의무 비해당 but atomic 동반). §결정 1 Sonnet (a) 본문 inline expansion (3 신규 single-mandate advocacy agent 명시 — Feasibility / Continuity / ChangeImpact). §결정 1 표 직후 Amendment 6 발화 marker. Amendment 6 본문 section (변경 사항 + path B 결정 framework + mandate text 재정의 면제 + Codex re-review 면제 + 3 agent decision evidence + Phase 2 PR atomic scope).
+- `docs/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md` (UPDATE) — Amendment 4 신설. frontmatter `amendment_log` row 4 append (**`sunset_justification` 의무 — `is_transitional: true` 정합, ADR-058 §결정 5 self-application 3번째 사례**). §결정 3 표 갱신 (Sonnet 잔류 8종 → 11종, 3 신규 row append: Feasibility / Continuity / ChangeImpact + Researcher Opus 유지 row 신설 path B 정합). Sunset gate 2 분모 8종 → 11종 갱신 (sample size 자연 회복 추가 강화 — CFP-393 §11 follow-up #1 mitigation patterning 확장). Amendment 4 본문 section (변경 사항 + path B 결정 framework + Mirror 갱신 의무 + ADR-058 self-application 검증 + Cross-ref invariant ADR-042 Amendment 6 + ADR-046 변경 0건).
+- `CLAUDE.md` (UPDATE L130) — mirror 명단 8종 → 11종 (3 신규 entry append: FeasibilityAgent / ContinuityAgent / ChangeImpactAgent). SSOT 명시 본문 갱신 (CFP-264 / Amendment 4 / CL-1 path B cross-ref + Researcher Opus 유지 invariant 1줄 명시).
+- `scripts/measure-rate-limit-fallback.sh` (UPDATE) — SONNET_AGENTS 배열 8종 → 11종 (3 신규 entry append: FeasibilityAgent / ContinuityAgent / ChangeImpactAgent). header 주석 + 분모 정의 + drift detection 코멘트 cross-ref Amendment 4 갱신 + Researcher Opus 유지 NOTE 1줄 추가. drift detection regex 에서 ResearcherAgent 제거 (path B invariant 정합 — Codex touchpoint #6 FIX).
+- `.claude-plugin/plugin.json` — version 5.28.0 → 5.29.0 MINOR (main advance rebase 후 재bump, ADR Amendment 본문 변경 0건 but plugin.json description 갱신 동반, ADR-037 정합). description CFP-264 entry append.
+
+### Sibling sync (ADR-016 + ADR-063 atomic invariant — Phase 2 PR pair)
+
+- `plugin-codeforge-requirements` 0.6.0 → 0.6.1 PATCH — FeasibilityAgent + ContinuityAgent model field Opus → Sonnet (mandate text 변경 0건 — ADR-042 §결정 1 Sonnet (a) single-mandate advocacy 정합 verbatim, exclusion criterion 정합). ChangeImpactAgent NO-OP (CFP-448 wave 에서 이미 Sonnet, commit c4084d8 sibling 측 drift 정합 회복 SSOT 측 갱신만).
+- `plugin-codeforge-design` 영향 0 (Amendment 5 의 CodebaseMapper / Refactor 정합 유지).
+- `plugin-codeforge-develop` 영향 0 (Amendment 5 의 DeveloperPL 정합 유지).
+- `marketplace.json` 4 mirrored field sync 의무 (ADR-063 atomic invariant) — wrapper + codeforge-requirements 2 entry version sync. **본 PR scope 외, Orchestrator escalation 영역** (sync PR open path).
+
+### Why
+
+CFP-448 axis-A (operational cost trade-off) framing reverse direction 2차 evidence. 사용자 §1 verbatim ('토큰이 너무 많이 쓰여서 opus를 조금 보수적으로 써야겠다') 직접 적용 + ADR-042 §결정 1 Sonnet (a) single-mandate advocacy criteria 회귀. Codex proactive check (touchpoint #4 divergence detected) 권장 직접 채택 — path B (Researcher 제외 + 3 agent Sonnet 다운) 사용자 CL-1 확정. PL 권장 Option B (사용자 framing verbatim 직접 적용 + Researcher 포함) reject 사유 = ADR-046 §결정 4·5 본문 invariant ("Sonnet 대수 불가 — deep concept reasoning 책임") 강한 보존 우선 (mandate 약화 회피).
+
+### Compatibility
+
+- **Wire**: 영향 0건 — agent name / permissions / description 변경 0건, model field 만 변경. KPI dashboard schema 변경 0건 (SONNET_AGENTS 배열만 확장, schema 그대로).
+- **In-flight Story**: 본 PR merge 후 첫 spawn 부터 Sonnet 운영 — Sonnet → Opus rate-limit fallback (ADR-057 §결정 2) 자동 적용 보호.
+- **KPI dashboard**: Sunset gate 2 분모 11종 확대 → sample size 자연 회복 추가 강화 (CFP-393 §11 follow-up #1 mitigation patterning 확장). 다음 cron 시 자동 재집계.
+- **ADR-046**: 변경 0건 — Researcher Opus tier rationale invariant 정합 보존 (path B 정합 invariant).
+- **marketplace sync**: wrapper PR merge 후 별도 sync PR open path (ADR-063 atomic invariant). codeforge-requirements bump 정합 동반.
+
 ## [5.28.0] - 2026-05-13
 
 ### Added (CFP-521 — CODEFORGE_CROSS_REPO_PAT rotation policy + ADR-066)
