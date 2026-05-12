@@ -16,7 +16,7 @@ tools: Read
                                                            [Epic 통합테스트]
 ```
 
-모든 Story는 **full 6 레인 + CI gate** 통과. Fast-path 없음 (단 **Hotfix 경로** 2종은 예외 — 운영 장애 대응, 사후 감사 의무. 상세는 [`docs/hotfix-playbook.md`](docs/hotfix-playbook.md)). **CI gate** = 구현 리뷰 PASS 후 Orchestrator가 `gh pr checks <PR_NUMBER> --watch`로 GitHub CI 결과 polling (최대 30분 timeout). PASS 시 merge gate 진입 (`lanes.security_ai: true` consumer는 SecurityTestPL spawn 추가). FAIL 시 DeveloperPL 1차 진단 → ArchitectPL 최종 판정 → FIX loop (CFP-317 / ADR-048).
+모든 Story는 **full 6 레인 + CI gate** 통과. Fast-path 없음 (단 **Hotfix 경로** 2종은 예외 — 운영 장애 대응, 사후 감사 의무. 상세는 [`docs/hotfix-playbook.md`](../../docs/hotfix-playbook.md)). **CI gate** = 구현 리뷰 PASS 후 Orchestrator가 `gh pr checks <PR_NUMBER> --watch`로 GitHub CI 결과 polling (최대 30분 timeout). PASS 시 merge gate 진입 (`lanes.security_ai: true` consumer는 SecurityTestPL spawn 추가). FAIL 시 DeveloperPL 1차 진단 → ArchitectPL 최종 판정 → FIX loop (CFP-317 / ADR-048).
 
 ## Story flow (default — single-repo Story 또는 Epic 외 1 child Story)
 
@@ -38,7 +38,7 @@ tools: Read
 
 - **Mode A (repo-local, ADR-020 v1 default)**: 각 작업 repo 가 자체 Story
 - **Mode B (hub-centralized)**: 1 hub repo 가 모든 child Story (mctrader 패턴)
-- parent Epic Issue + child Story (per mode) + `epic_dependencies` graph + Change Plan §3 contract pin + Mixed-mode 금지. 상세 [ADR-020](docs/adr/ADR-020-cross-repo-epic-pattern.md), playbook §3.4.
+- parent Epic Issue + child Story (per mode) + `epic_dependencies` graph + Change Plan §3 contract pin + Mixed-mode 금지. 상세 [ADR-020](../../docs/adr/ADR-020-cross-repo-epic-pattern.md), playbook §3.4.
 
 ## 레인 진입 전 Preflight 체크 의무
 
@@ -62,6 +62,6 @@ FAIL 시 block+report. 상세는 playbook §3B.
 | 통합테스트 | **Epic 하위 전체 Story** CI gate PASS (1회) | `tests/integration/baseline/` + `tests/integration/stories/<EPIC-KEY>/` 동적 실행 | 3 |
 | 보안 테스트 **(opt-in: lanes.security_ai: true)** | 통합테스트 PASS | §9 (SecurityTestPL 2-layer) + `gate:security-test-pass` | ∞ |
 
-**통합테스트는 Epic-level 실행 (ADR-055 Amendment 2)**: Epic 하위 모든 Story CI gate PASS 후 Orchestrator가 IntegrationTestAgent 1회 spawn. Baseline Suite + Story Suite 동적 실행. FAIL 시 `responsible_stories` 집계 → 해당 Story FIX loop. 상세: [playbook §3.11–3.12](docs/orchestrator-playbook.md) + [ADR-055 Amendment 2](docs/adr/ADR-055-integration-test-lane-policy.md).
+**통합테스트는 Epic-level 실행 (ADR-055 Amendment 2)**: Epic 하위 모든 Story CI gate PASS 후 Orchestrator가 IntegrationTestAgent 1회 spawn. Baseline Suite + Story Suite 동적 실행. FAIL 시 `responsible_stories` 집계 → 해당 Story FIX loop. 상세: [playbook §3.11–3.12](../../docs/orchestrator-playbook.md) + [ADR-055 Amendment 2](../../docs/adr/ADR-055-integration-test-lane-policy.md).
 
-세부 spawn sequence · branch logic · FIX 진단 흐름 SSOT: [playbook §3](docs/orchestrator-playbook.md) + 각 lane plugin CLAUDE.md.
+세부 spawn sequence · branch logic · FIX 진단 흐름 SSOT: [playbook §3](../../docs/orchestrator-playbook.md) + 각 lane plugin CLAUDE.md.
