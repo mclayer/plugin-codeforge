@@ -5,6 +5,34 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.23.0] - 2026-05-12
+
+### Changed (CFP-490 Phase 2 — lane-evidence-check duplicate heading collision auto-detection 강화)
+
+ADR-031 §결정 3 (lint cross-validate) 의 enforcement layer logic refinement. CFP-465 (#482, cc5d7c3) 가 도입한 5a duplicate guard (line 113-128) 의 잔여 gap 4종 해소 — (a) summary 메시지 단순 count → tie-break case A/B/C 식별 + valid heading 명시 + 삭제 target 권고, (b) tie-break decision 부재 → Case A (1 valid) / Case B (0 valid) / Case C (2+ valid) 분기, (c) recurrence count documentation 부재 → registry description 본문 명시, (d) origin 식별 부재 → first-match capture boundary + DeveloperPL spawn template 가설 documentation. Option A strict 채택 (CFP-465 invariant 보존, lenient fallback 폐기 — ADR-031 §결정 2 "1회 heading 의무" 정합). `.mjs` extraction 채택 (testability rationale — bash heredoc `node -e` simulate 한계 초과, 6 test_function 29 assertion path coverage 측정). MINOR bump (workflow yml 변경 + .github script 신설).
+
+- `templates/github-workflows/lane-evidence-check.yml` (UPDATE line 112-143) — 5a guard 강화: `analyzeDuplicateHeadings()` import + tie-break case A/B/C summary + ADR-031 §결정 2 정책 인용 + DeveloperPL spawn template 가설 documentation comment.
+- `.github/workflows/lane-evidence-check.yml` (UPDATE) — ADR-005 byte-identical self-app mirror.
+- `.github/scripts/check-lane-evidence-block.mjs` (NEW, 116 line) — `analyzeDuplicateHeadings(body)` 함수 export. Case A/B/C tie-break + valid_heading_idx + invalid_idx_list 식별. `actions/github-script@v7.1.0` 안 dynamic import (ESM/CJS 호환).
+- `tests/workflows/test_lane-evidence-check-yml.sh` (NEW, 252 line, 6 test_function 29 assertion) — Case A/B/C path coverage + strict mode + fast-pass invariants + BYPASS honor + cross-cutting (byte-identical + .mjs presence + dynamic import) 검증. base64 body encoding 으로 cross-platform 안전 (Git Bash MSYS2 path translation 회피).
+- `docs/evidence-checks-registry.yaml` (UPDATE) — `lane-evidence-trail` entry description 본문에 actual recurrence (CFP-500 FIX-5 1차 + CFP-451 본 세션 2차) + logic refinement (CFP-490 Phase 2) 명시. schema 무영향 — machine-usable promotion signal 아님 (ADR-060 4-tier 무관).
+- `.claude-plugin/plugin.json` — version 5.22.1 → 5.23.0 MINOR (workflow yml + .github script 신설, ADR-037 정합).
+
+### Sibling sync (ADR-016 + ADR-063 atomic invariant)
+
+- `marketplace.json` 4 mirrored field sync 의무 — name/version/description/author. **본 PR scope 외, Orchestrator escalation 영역** (DeveloperPL 책임 외). marketplace sync PR open 후 atomic check PASS 의무.
+
+### Why
+
+CFP-500 FIX-5 (#456, merge 직전 1차 actual collision) + CFP-451 본 세션 transient (#486 step 3 2차 actual) 의 2회 actual recurrence — 단일 defense (5a heading-count guard) 가 작동하나 valid heading 식별 부재 + tie-break decision 부재 + fix-guide weak (수동 삭제 안내만, 어느 heading 인지 명시 안 함). 본 Story = 잔여 gap 해소. 신규 ADR 0건 — ADR-031 §결정 3 의 enforcement layer 내부 logic refinement.
+
+### Compatibility
+
+- **Wire**: 영향 0건 — ADR-031 effective date 보존 (retroactive 미처리, §결정 5 정합).
+- **Existing valid PR**: 영향 0건 (5 capture + 6 step 동작 변경 0, 5a 만 강화).
+- **In-flight Phase 2 PR with duplicate heading**: 본 Story merge 후 첫 push 부터 강화된 summary 발화 — fix 부담 줄어듦 (어느 heading 이 valid 인지 명시).
+- **codeforge-develop sibling**: AC-9 origin investigation 결론 — DeveloperPL agent body composition 영역의 first heading auto-inject 정정은 별도 carrier CFP (sibling lane plugin scope).
+
 ## [5.22.1] - 2026-05-12
 
 ### Changed (CFP-448 Phase 2 — Sonnet selective rollback 구현)
