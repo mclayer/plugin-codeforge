@@ -292,50 +292,24 @@ bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-version-drift.sh
 
 ---
 
-### §2h.1 SessionStart prereq-check hook (CFP-500 / ADR-038 Amendment 2 §결정 9 — 권장)
+### §2h.1 SessionStart prereq-check hook 자동 활성 (CFP-475 / ADR-038 Amendment 3 이후)
 
-Codeforge orchestration 의 critical path tool 인 **TodoWrite** 는 Claude Code harness 의 **deferred tool** — turn 0 시점에 schema 가 노출되지 않아 `ToolSearch("select:TodoWrite")` 로 lazy-fetch 해야 호출 가능. CFP-375 / CFP-385 의 runtime advisory tier (CLAUDE.md / playbook 인라인 명시) 시도가 2회 반복적으로 스킵된 history 가 있어, **CFP-500 가 enforcement layer 를 SessionStart hook tier 로 격상** ([ADR-038 Amendment 2 §결정 9](adr/ADR-038-progress-visualization-todowrite.md)).
+Codeforge orchestration 의 critical path tool 인 **TodoWrite** 는 Claude Code harness 의 **deferred tool** — turn 0 시점에 schema 가 노출되지 않아 `ToolSearch("select:TodoWrite")` 로 lazy-fetch 해야 호출 가능. CFP-475 / ADR-038 Amendment 3 이후 **plugin-root `hooks/hooks.json` 에 자동 등록** — 별도 consumer `.claude/settings.json` 등록 절차 불필요.
 
-Hook 등록 시 harness 가 세션 부팅 시점에 helper script `${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-prereq.sh` 의 stdout 을 Orchestrator 첫 turn context 에 prompt-injection 형태로 inject — Orchestrator 가 turn 0 에 hook 지시에 따라 `ToolSearch("select:TodoWrite")` 호출하여 schema 를 prefetch.
+Consumer 가 `/plugins install codeforge@mclayer` 만 수행하면 plugin-root `hooks/hooks.json` 의 `SessionStart` entry 가 자동 활성된다 (Claude Code 공식 spec — plugin install 시점에 plugin-root `hooks/hooks.json` discovery + auto-load). **별도 `.claude/settings.json` 등록 절차 불필요**.
 
-**Activate (drift / worktree-gc 동일 패턴 — cp 방식)**:
+**기존 consumer migration**: `.claude/settings.json` 안 `hooks.SessionStart[]` array 에 `check-codeforge-prereq.sh` 호출 entry 가 잔존하면 plugin-root 활성과 중복 (one-channel rule 위반) → `scripts/check-no-duplicate-session-start-hook.sh` lint 가 warning tier (exit 2) 발화. **권장 cleanup 절차**:
 
-```bash
-# Sample hook config 복사 (overlay/hooks/merge.py 가 settings.json 에 자동 merge)
-mkdir -p .claude/_overlay/.claude/hooks/
-cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/.claude/hooks/SessionStart-codeforge-prereq-check.json.sample \
-   .claude/_overlay/.claude/hooks/SessionStart-codeforge-prereq-check.json
-```
+1. `.claude/settings.json` 의 `hooks.SessionStart[]` 안 `command` 가 `check-codeforge-prereq.sh` 를 포함한 entry 1건 삭제
+2. `scripts/check-no-duplicate-session-start-hook.sh` 실행 후 exit 0 (PASS) verify
+3. Claude Code 세션 재시작 → 첫 turn `additionalContext` 안 `ToolSearch select:TodoWrite` substring 발화 확인
 
-**Manual settings.json merge (overlay 미사용 시)** — `.claude/settings.json` `hooks.SessionStart[]` 배열에 다음 entry append:
+**Bypass (advisory)**: 환경별 사유로 prereq-check 발화 제어 시 — `BYPASS_CODEFORGE_PREREQ=1` env 설정 시 hook short-circuit (stdout empty + harness injection 0 + stderr 1-line audit echo). 기존 `BYPASS_PREREQ_CHECK=1` 도 1 release 동안 호환 유지 (deprecation warning stderr 출력, 후속 CFP 제거 예정).
 
-```json
-{
-  "hooks": [
-    {
-      "type": "command",
-      "command": "bash \"${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-prereq.sh\""
-    }
-  ]
-}
-```
-
-**Severity / Bypass**:
-- **Advisory only** — exit 0 + stdout heredoc echo. session block 0건 (drift hook 의 MAJOR exit 1 과 다름).
-- **Bypass**: `BYPASS_PREREQ_CHECK=1` env (rare — debugging only, advisory 성격이므로 reason 비강제).
-
-**3종 SessionStart hook 등록 순서 (권장)**:
-
-codeforge 가 운영하는 SessionStart hook 3종은 `hooks.SessionStart[]` 배열의 등록 순서대로 sequential 실행됩니다. 권장 순서:
-
-1. **drift hook** (`SessionStart-codeforge-drift.json.sample`, ADR-037) — version drift hard-stop blocking 우선
-2. **worktree-gc hook** (`SessionStart-codeforge-worktree-gc.json.sample`, ADR-040) — stale worktree prune
-3. **prereq-check hook** (`SessionStart-codeforge-prereq-check.json.sample`, ADR-038 Amendment 2 §결정 9, **본 단락**) — 가장 가벼움 (stdout heredoc echo only)
-
-**중복 등록 회피**: 같은 hook entry 를 두 번 추가하면 sequential 두 번 실행 — idempotent 텍스트이므로 의미는 동일하나 prompt cache 위치 낭비. 등록 시 중복 entry 가 없는지 확인 권장.
+**Sample file 처리** (`templates/.claude/hooks/SessionStart-codeforge-prereq-check.json.sample`): CFP-475 부터 deprecated. 본 sample 은 1 release grace 후 별도 CFP 에서 삭제 — 그때까지 기존 등록 reference 보존용으로만 잔존.
 
 **Layered defense (fallback retain)**:
-- hook 미등록 / 실행 실패 → harness 가 stdout 부재 처리 → Orchestrator 가 runtime `ToolSearch("select:TodoWrite")` attempt 로 fallback (ADR-038 §결정 8 retain)
+- hook 미활성 / 실행 실패 → harness 가 stdout 부재 처리 → Orchestrator 가 runtime `ToolSearch("select:TodoWrite")` attempt 로 fallback (ADR-038 §결정 8 retain)
 - runtime fallback 도 실패 → 경고 출력 후 작업 계속 (lane 차단 없음, §결정 7 layered defense retain): `⚠️ TodoWrite 스키마 로드 실패 — 레인 진행 표시 불가 (warning only)`
 
 **책임 경계** — hook = schema 가용성 advisory layer 한정. mechanical function-call 강제 아님 — behavioral compliance 자체는 여전히 Orchestrator 책임 (Researcher 3-tier 중 (b) layer 한정).
