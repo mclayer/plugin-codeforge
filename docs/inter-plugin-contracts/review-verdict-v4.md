@@ -123,7 +123,7 @@ review_verdict:
 1. ReviewPL spawn → workers (Claude worker default + Codex worker on user_request) → dedup → review-verdict-v4 packet (no writes)
    ├── findings + pl_recommendation 작성
    ├── worker_dialog_rounds 채움 (Adversarial debate SendMessage round count)
-   ├── mechanical_self_check_passed 채움 (design lane only — ArchitectPLAgent 가 ArchitectAgent §3.5 self-check 결과 forward, ADR-065 / CFP-438)
+   ├── mechanical_self_check_passed 채움 (design lane only — ArchitectPLAgent 가 ArchitectAgent §5.5 self-check 결과 forward, ADR-065 / CFP-438)
    └── return to Orchestrator
 
 2. Orchestrator self-write (pl_recommendation = PASS | FIX | FIX_DISCRETIONARY 일 때만, ESCALATE_PACKET_INCOMPLETE 시 차단):
@@ -237,7 +237,7 @@ ADR-022 Deprecated 후 (CFP-134 / ADR-035) Sonnet decider 자동 발동 무효 �
 
 **Producer 책무 (ArchitectPLAgent)**:
 
-- ArchitectAgent `§3.5 self-lint` (CFP-378 AC-1) 통과 후 7 항목 결과 수령
+- ArchitectAgent `§5.5 Phase 1 commit-time self-check` (ADR-065 / CFP-438) 통과 후 7 항목 결과 수령
 - packet `mechanical_self_check_passed` 채움 (true = 모두 PASS 또는 NA, false = 1+ FAIL)
 - false 시 `pl_recommendation: FIX` + `findings[]` 에 mechanical 누락 항목 each row append (severity P1, category `mechanical_sync_required`)
 

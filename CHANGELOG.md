@@ -5,6 +5,22 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.25.0] - 2026-05-13
+
+### Changed (CFP-510 — ADR-052 Amendment 3 touchpoint #4 divergence detection 영역 확장)
+
+CFP-451 (#451) + CFP-490 (#490) 0-FIX chain 7-8번째 retro PMOAgent FU-4 (low severity) carrier. ADR-052 Amendment 1 (CFP-411) 의 touchpoint #4 divergence detection 3 semantic criteria 에 **4번째 영역 = fact-check** 추가. 사실 영역 (registry-execution drift / pre-existing leak / file path verification / cross-repo state verification) 의 implicit 발화를 explicit normative anchor 로 승격. PL self-evaluation 의무 = synthesis fact claim 영역 marker 5종 (`[verified]` / `[hypothesis]` / `[fact-check-pending]` / `[user-input]` / `[verification-out-of-scope: <사유>]`) — fact-check 영역 divergence detection false negative 차단 forcing function. debate-protocol-v1 dispatch 흐름 변경 없음 (divergence_type enum 확장은 별도 carrier CFP). MINOR bump (CLAUDE.md SSOT mirror 영향 + ADR amendment).
+
+- `docs/adr/ADR-052-codex-proactive-check-touchpoints.md` (UPDATE) — Amendment 3 본문 append (A1~A8 결정 + 거절된 대안 H~K). amendments[] frontmatter row 추가.
+- `CLAUDE.md` (UPDATE L188) — Codex Proactive Check blockquote 갱신: divergence 영역 = 3 semantic + 1 factual = 4 영역 명시 + marker 5종 의무 inline.
+- `.claude-plugin/plugin.json` — version 5.24.0 → 5.25.0 MINOR (rebased onto main HEAD post-CFP-453 merge). description CFP-510 entry append.
+- Sibling sync: `mclayer/plugin-codeforge-requirements` 0.5.1 → 0.6.0 MINOR (RequirementsPLAgent.md "Divergence detection 4 영역" + "PL self-evaluation 의무" 단락 + codex-proactive-check.md "Fact-check 영역" 단락).
+- Marketplace sync (`mclayer/marketplace` `marketplace.json` `plugins[name=codeforge]` + `plugins[name=codeforge-requirements]` mirrored field — name/version/description/author atomic, ADR-063 §결정 5).
+
+#### Why
+
+axis-A (governance — fact-check 영역 explicit normative anchor): 양 retro evidence 2회 누적으로 implicit 발화 영역 normative 승격 timing 도달. axis-B (PL synthesis quality — marker 5종 forcing function): "가설" vs "verified" 영역 구분 의무 부재 → Codex fact 발견 시 PL LLM 판정 false negative 위험 차단. axis-C (lane-agnostic protocol 확장 보존): debate-protocol-v1 dispatch 흐름 변경 없음 — divergence_type 영역만 확장 (separate carrier CFP 가 enum MINOR bump 처리).
+
 ## [5.24.0] - 2026-05-13
 
 ### Changed (CFP-453 Phase 2 — KPI history.jsonl 누적 정책)
