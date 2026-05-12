@@ -7,6 +7,46 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [5.22.0] - 2026-05-12
 
+### Added (CFP-475 — ADR-038 Amendment 3 hooks/hooks.json plugin-root SSOT + polyglot wrapper + plain stdout SSOT)
+
+CFP-500 (#417 CLOSED) Phase 2 in-vivo verify (#471) FAIL implementation bug fix. **Root cause** (G3 PoC SMOKING GUN): `.claude/settings.json` line 78-87 command 안 잉여 `codeforge/` segment. **Paradigm shift** (Researcher Round 4 evidence triple-anchor: code.claude.com/docs/en/hooks + anthropics/claude-code#14281 + obra/superpowers#648): JSON output 의무 → **plain stdout SSOT** (JSON form 은 `suppressOutput` 동반 시에만).
+
+- `docs/adr/ADR-038-progress-visualization-todowrite.md` (UPDATE — Phase 1 PR #493) — Amendment 3 §결정 10·11·12·13·14 신설:
+  - §결정 10: Hook 등록 위치 SSOT = plugin-root `hooks/hooks.json` (first-class). settings.json fallback deprecated.
+  - §결정 11: Polyglot wrapper pattern (superpowers 5.1.0 verbatim copy-adapt + MIT attribution).
+  - §결정 12: One-channel rule + plain stdout SSOT (double-injection 회귀 회피).
+  - §결정 13: `BYPASS_CODEFORGE_PREREQ` env contract + stderr 1-line audit echo + `BYPASS_PREREQ_CHECK` deprecation grace.
+  - §결정 14: frontmatter `mechanical_enforcement_actions[]` self-application (ADR-040 Amendment 3 §결정 7.D 두 번째 사례).
+- `hooks/hooks.json` (NEW) — plugin-root SSOT (superpowers 5.1.0 schema verbatim, matcher `startup|clear|compact`).
+- `hooks/run-hook.cmd` (NEW) — Windows CMD polyglot dispatcher (superpowers 5.1.0 verbatim copy-adapt + MIT attribution 5-line header).
+- `hooks/session-start` (NEW, executable) — extensionless naming, plain stdout SSOT body + 2 BYPASS env handling + stderr audit echo.
+- `scripts/check-no-duplicate-session-start-hook.sh` (NEW, executable) — 회귀 lint, exit code 3-tier (0/1/2), bash + jq fallback, `hotfix-bypass:duplicate-session-start-hook` label conditional skip.
+- `templates/github-workflows/duplicate-session-start-hook-check.yml` (NEW) — CI gate warning mode (`continue-on-error: true`), bypass label audit comment auto-post.
+- `tests/unit/test-session-start-hook.sh` (NEW) — §8.1-T2 + T6 control char grep verbatim assertion (Story §3.4.0 결정 3) + BYPASS env verify (12/12 test PASS).
+- `tests/unit/test-no-duplicate-session-start-hook.sh` (NEW) — §8.1-T3 5 fixture matrix F1-F5 + exit code 3-tier verify (5/5 fixture PASS).
+- `.claude/settings.json` (UPDATE) — prereq-check entry 제거 (line 71-80 splice, worktree-stale entry 무손상).
+- `CLAUDE.md` (UPDATE) — "세션 개시 의무 (필수 의존성 SSOT)" 0i 영역 갱신 (plugin-root SSOT, settings.json fallback deprecated).
+- `docs/consumer-guide.md` (UPDATE) — §2h.1 갱신 (plugin discovery 자동 활성, sample deprecation 안내).
+- `docs/evidence-checks-registry.yaml` (UPDATE) — `duplicate-session-start-hook-check` entry append (warning tier, schema v1.1, ADR-038 owner).
+- `templates/.claude/hooks/SessionStart-codeforge-prereq-check.json.sample` (DEPRECATION HEADER) — `_deprecated_since: 5.22.0` + `_migration` + `_scheduled_removal: 5.23.0` 3 field prepend.
+- `scripts/check-codeforge-prereq.sh` + `tests/scripts/test_check_codeforge_prereq.sh` (REMOVED) — logic inline 통합 (hooks/session-start), test 동반 폐기.
+- **plugin.json description retain** (CFP-451/448/481 entries 잔존) — ADR-063 atomic invariant 면제 (mirrored field 변경 0). version 5.22.0 (CFP-451/448/481 concurrent merge window 정합).
+- **marketplace.json sibling sync 면제** — mirrored field 변경 0 (description retain), 별도 sync PR 불요.
+
+### Why (CFP-475)
+
+CFP-500 forcing function 효과 0건 측정 — path mismatch root cause 해소 + 공식 SSOT 정합 (plugin-root `hooks/hooks.json` first-class) + consumer scope 확장 (`/plugins install` 단독 자동 활성). debate-protocol-v1 4 round (Codex divergence → Researcher Round 4 evidence preserved + paradigm shift 발견).
+
+### Compatibility (CFP-475)
+
+backward-compatible — consumer `/plugins install` 자동 활성 (G2 PoC PASS evidence), manual action 0. `BYPASS_PREREQ_CHECK` env 1 release deprecation grace (5.23.0 제거 예정).
+
+### Related Issues (CFP-475)
+
+CFP-475 (#475) / CFP-500 (#417 CLOSED, in-vivo verify #471 carrier) / Phase 1 PR mclayer/plugin-codeforge#493 + mclayer/codeforge-internal-docs#251.
+
+---
+
 ### Added (CFP-451 — codeforge-kpi-infra-error label + sub-axis 다축 완결 + KPI workflow infra error 분기)
 
 CFP-393 ADR-057 fallback rate KPI dashboard 의 후속 — workflow 가 두 가지 다른 종류의 실패 (measurement alert vs infra error) 를 단일 label channel 로 발화하던 한계 해소. monitoring tier sub-axis 다축 완결 (info / warn / error). 추가로 Codex F-451-001 (a) 사전 leak 정정: `codeforge-kpi-update` label 이 workflow line 237 에서 사용 중이었으나 label-registry-v2 + bootstrap-labels.sh 부재 — registry-execution drift 정정.
