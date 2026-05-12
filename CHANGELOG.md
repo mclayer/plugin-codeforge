@@ -5,6 +5,23 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.27.0] - 2026-05-13
+
+### Added (CFP-521 — sibling-pr label anti-misuse lint, EPIC-RESULTS-CFP-462 §6 carrier #2)
+
+ADR-010 Amendment 4 §결정 5 anti-misuse 안전망 mechanical enforcement. `sibling-pr` label 부착 PR 의 paired wrapper PR link (`mclayer/plugin-codeforge#NNN` 패턴 — short form + URL form 양쪽) 검증. 부재 시 audit comment 부착 + workflow failure (warning tier, advisory only — PR merge 미차단). Guard 3종 (sibling-pr label 미부착 skip / hotfix-bypass label 부착 skip / wrapper repo self-PR skip) + audit comment dedup (`[sibling-pr-anti-misuse]` marker). ADR-060 evidence-enforceable framework **5th warning-tier entry** (1st = adr-sunset-criteria / 2nd = decision-principle-vocab / 3rd = auto-phase-label / 4th = claude-md-line-cap). `hotfix-bypass:sibling-pr-author-check` **9번째 hotfix-bypass:* family member** (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합). CFP-499 sibling-pr fast-pass mechanism 의 anti-misuse 안전망 forcing function — Orchestrator self-write 영역 (CFP-61 / ADR-035) enforce.
+
+- `templates/github-workflows/sibling-pr-label-author-check.yml` (NEW) — wrapper SSOT fixture, actions/github-script-based 2-step workflow (paired link 검증 + audit comment 부착)
+- `.github/workflows/sibling-pr-label-author-check.yml` (NEW, self-app byte-identical, ADR-005 self-application 정합)
+- `docs/evidence-checks-registry.yaml` (UPDATE) — `sibling-pr-label-author-check` entry append (5th warning-tier, status=Active)
+- `docs/inter-plugin-contracts/label-registry-v2.md` (UPDATE) — v2.4 sub-entry append + frontmatter `related_adrs` ADR-010 추가 + `hotfix-bypass:sibling-pr-author-check` 9번째 family member 문서화
+- `CLAUDE.md` (UPDATE L291) — workflow 갯수 22 → 23 / 4 evidence-enforceable warning → 5 / 새 entry 1줄 inline 추가
+- `.claude-plugin/plugin.json` — version 5.26.0 → 5.27.0 MINOR (workflow 변경, ADR-037 plugin SemVer rule)
+
+#### Why
+
+axis-A (governance — ADR-010 Amendment 4 §결정 5 anti-misuse 후행 carrier 의무): CFP-499 (ADR-010 Amendment 4) 가 `sibling-pr` label fast-pass mechanism 도입 시 §결정 5 (anti-misuse 안전망) 가 후행 CFP carrier 의무 명문화. EPIC-RESULTS-CFP-462 §6 후행 carrier #2 로 식별. axis-B (mechanical enforcement — Orchestrator self-write 영역 정합): label 자체에 author check 없음 → human user 부착 시 phase-gate bypass 악용 가능. PR body grep `mclayer/plugin-codeforge#NNN` 패턴 검증으로 paired wrapper PR link evidence enforce. axis-C (warning tier conservatism — ADR-060 §결정 5 첫 도입 = warning): advisory only, PR merge 미차단. 승격 path = pr_cumulative_min 20 + failure_threshold 0 도달 시 별도 carrier 가 blocking-on-pr 평가.
+
 ## [5.26.0] - 2026-05-13
 
 ### Added (CFP-506 — CLAUDE.md skill 추출 + cap ratchet ≤320 + mechanical lint forcing function)
