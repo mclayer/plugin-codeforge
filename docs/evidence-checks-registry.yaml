@@ -10,9 +10,9 @@
 # Phase 2 PR = 본 §결정 13 표의 18 entry 실제 row append (CFP-390 그룹 A 인벤토리).
 # Total entries 가변 — 본 PR base 시점 = 2 + 18 = 20. main rebase 후 CFP-393 / CFP-410
 # 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
-schema_version: "1.0"
+schema_version: "1.1"  # CFP-455 / ADR-060 Amendment 2 — current_tier required 전환 + retroactive 분류 검증 (MINOR bump)
 introduced_by: CFP-389
-last_updated: 2026-05-11  # CFP-390 Phase 2 row append (18 entry, ADR-060 Amendment 1 §결정 13 SSOT)
+last_updated: 2026-05-12  # CFP-455 schema v1.0 → v1.1 + sibling_dep back-substitution (ADR-060 Amendment 2)
 
 entries:
   - name: adr-sunset-criteria
@@ -28,10 +28,11 @@ entries:
     promotion_criteria:
       pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
       failure_threshold: 0             # ADR-060 §결정 6 (b)
-      sibling_dependencies:            # ADR-060 §결정 6 (c) — Amendment 1 정정 (CFP-390)
-        - CFP-390  # 인벤토리 backfill — registry yaml row append (Amendment 1 carrier)
-        - CFP-412  # 4-tier amendment 재예약 carrier — current_tier required 전환 (schema v1.0 → v1.1)
+      sibling_dependencies:            # ADR-060 §결정 6 (c) — Amendment 2 정정 (CFP-455 append)
+        - CFP-390  # 인벤토리 backfill — registry yaml row append (Amendment 1 carrier, merged 2026-05-11)
+        - CFP-412  # 4-tier amendment 재예약 carrier — closed without delivery (Issue #412, 2026-05-11)
                    # CFP-391 (Issue #396) closed without delivery (2026-05-11) — Amendment 1 정정
+        - CFP-455  # 4-tier 정식 amendment carrier (재재예약) — current_tier required 전환 deliver (Amendment 2)
       evidence_artifacts:              # 승격 carrier PR 의 manual 첨부 의무 (자동화 인프라 별도 carrier)
         - github_actions_run_history_url
         - lint_failure_count_zero_proof

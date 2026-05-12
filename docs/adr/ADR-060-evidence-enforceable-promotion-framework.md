@@ -18,6 +18,19 @@ amendment_log:
       §결정 12 후속 carrier 목록 CFP-391 폐기 + CFP-412 재예약 정정 +
       신설 §결정 13 인벤토리 backfill SSOT — Phase 1 (SSOT only) / Phase 2 (row append) scope split + 그룹 A final 18 entry (owner_adr 정합 ADR 명확 entry 만, 8 entry 그룹 B 강등) + tier 재계산 (manifest 부착 2 entry 만 blocking, 나머지 warning) +
       신설 §결정 14 메타 anomaly lint 후속 carrier 의무 명시 (Codex P2-B 정합)
+  - amendment: 2
+    carrier_story: CFP-455
+    date: 2026-05-12
+    summary: |
+      4-tier enforcement 정식 amendment + schema MINOR bump (v1.0 → v1.1) —
+      §결정 3 `current_tier` 필드 optional → required 전환 명시 + retroactive 분류 검증 의무 표기 (22/22 entry 모두 현행 `current_tier` 보유 verified, mechanical regression 0건) +
+      §결정 6 (c) `sibling_dependencies` field back-substitution 결정 (append `[CFP-390, CFP-412, CFP-455]` — CFP-412 폐기 history 보존 + sibling 의도 보존) +
+      §결정 14 메타 anomaly lint 와 본 Story 의 메타 schema validation lint 분리 결정 (별도 entry 2종, scope 차이 — anomaly = inventory detection / schema validation = field schema 정합) +
+      신설 §결정 15 메타 lint exit-code 3-tier semantics (0=PASS / 1=validation FAIL / 2=meta-error) — Codex AREA 1 정합 +
+      신설 §결정 16 warning-tier bypass_label policy (warning = non-blocking, bypass 의미 부적용 → optional + 본 메타 lint entry 자체 omit) — Codex AREA 2 (a) 정합 +
+      신설 §결정 17 retroactive reclassification failure handling (immediate fail exit 1 + PR block) — Codex AREA 2 (b) 정합 +
+      신설 §결정 18 marketplace/sibling sync necessity 명시 (registry yaml = wrapper-owned, ADR-010 scope 외, marketplace sync 불필요) — Codex AREA 2 (c) 정합 +
+      Mermaid 다이어그램 sibling_dependencies 표기 갱신 (CFP-455 carrier 반영) — Codex AREA 4 정합
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
@@ -338,7 +351,7 @@ graph TD
     
     K[승격 gate AND] -->|PR 누적 ≥ 20| L[promote]
     K -->|failure = 0| L
-    K -->|"CFP-390 + CFP-412 merged<br/>(Amendment 1: CFP-391 폐기 → CFP-412)"| L
+    K -->|"CFP-390 + CFP-412 + CFP-455 merged<br/>(Amendment 2: CFP-412 폐기 → CFP-455 carrier)"| L
     L --> M[blocking-on-pr / blocking-on-merge]
     M --> N[required_status_checks.contexts 부착]
     N --> O[ADR-024 Amendment 2 manifest 갱신]
@@ -475,4 +488,88 @@ sibling_dependencies:            # ADR-060 §결정 6 (c) — Amendment 1 정정
 
 본 carrier 부재 시 = manual inventory sweep 정합 유지 (반복 CFP 비용). 본 Amendment 14 명시 = CFP-390 retro (§11) 의 reminder 1 항목 + 후속 발의 의무 SSOT 화.
 
+## Amendment 2 (CFP-455, 2026-05-12)
+
+본 Amendment 는 CFP-455 (4-tier enforcement 분류 정식화, Issue #455) 의 Phase 1 carrier 산출물. CFP-391 (Issue #396, closed without delivery 2026-05-11) / CFP-412 (Issue #412, post-merge-followup workflow false-positive close 2026-05-11) 의 재재예약 carrier — 4-tier amendment 정식 deliver.
+
+### Amendment 2-결정 3 (변경) — `current_tier` 필드 optional → required 전환 명시
+
+본 ADR §결정 3 의 4-tier enum 본문 "본 ADR (CFP-389) 의 첫 entry = `warning` tier. 후속 Story (CFP-391) 가 본 enum 을 정식 명시 + 기존 entry retroactive 분류. 본 ADR 시점에서는 enum 정의만 제공, registry yaml 의 `current_tier` 필드는 optional (CFP-391 시점 required 전환 = MINOR bump)." → **본 CFP-455 (4-tier 정식 amendment carrier, CFP-391 #396 / CFP-412 #412 폐기 후 재예약) 가 `current_tier` 필드 optional → required 전환을 정식 deliver**. schema doc `docs/inter-plugin-contracts/evidence-check-registry-v1.md` v1.0 → v1.1 MINOR bump 동반 + registry yaml `schema_version: "1.0"` → `"1.1"` header 갱신 동반.
+
+**retroactive 분류 검증 의무**: 본 Amendment 2 시점 = 22/22 entry 모두 현행 `current_tier` 보유 verified (CodebaseMapper deputy perspective 정밀 verify, 2026-05-12). mechanical regression 0건 — 신규 메타 lint (`scripts/check-evidence-registry.sh`, Phase 2 PR scope) 가 schema 정합 mechanical 강제.
+
+### Amendment 2-결정 6 (c) 정정 — `sibling_dependencies` field back-substitution (append)
+
+본 ADR §결정 6 (c) 의 `sibling_dependencies` 의미 = warning → enforce 승격 전 main merge 의무 sibling Story. Amendment 1 시점 = `[CFP-390, CFP-412]` (CFP-391 → CFP-412 정정). CFP-412 Issue #412 도 closed without delivery (2026-05-11T15:41:42Z, post-merge-followup workflow false-positive close — PR #421 = CFP-393 rate-limit-fallback 작업, "Closes #412" reference 없음) — 4-tier amendment 0 commits. 본 Amendment 2 의 결정:
+
+```yaml
+sibling_dependencies:            # ADR-060 §결정 6 (c) — Amendment 2 정정 (CFP-455)
+  - CFP-390  # 인벤토리 backfill — 본 Amendment 1 carrier (이미 발효)
+  - CFP-412  # 4-tier amendment 재예약 carrier (CFP-391 #396 폐기 처리) — Amendment 1 정정 / CFP-412 자체도 #412 closed without delivery
+  - CFP-455  # 4-tier 정식 amendment carrier (재재예약) — 본 Amendment 2 deliver
+```
+
+**append 결정 근거** (DataMigrationArch deputy + RequirementsPL Q2 권고 verbatim 채택):
+- CFP-412 의 폐기 history 가 registry yaml 에서 visible 보존 (replace 시 invisible 위험).
+- sibling 의도 ("4-tier amendment 가 main merge 의무") 보존 — append 로 chain 가시화.
+- 폐기 carrier 의 trail 이 framework SSOT 의 governance integrity 강화.
+
+### Amendment 2-결정 14 (정정) — 메타 anomaly lint 와 메타 schema validation lint 분리 (별도 entry 2종)
+
+Amendment 1 §결정 14 의 메타 anomaly lint (인벤토리 누락 감지) 와 본 Amendment 2 가 도입 명시하는 메타 schema validation lint (`scripts/check-evidence-registry.sh`, 본 Story Phase 2 PR scope) 는 **scope 가 다른 별도 lint 2종**:
+
+| lint | scope | trigger | tier |
+|---|---|---|---|
+| **메타 schema validation** (본 Story 도입) | registry yaml 자체 schema/일관성 검증 — 6 검증 (schema_version / entry required field / current_tier enum / bypass pair / name uniq / owner_adr+carrier_adr ADR file cross-ref) | `pull_request:paths` (registry yaml + contract md + lint script 변경 시) | `warning` (continue-on-error) |
+| **메타 anomaly detection** (§결정 14 후속 carrier, 본 Story scope 외) | registry yaml 미등록 신규 evidence-enforceable 패턴 자동 발견 (신규 `.github/workflows/*.yml` + `scripts/check-*.sh` 동반 도입 PR) | `pull_request:paths` (workflows + scripts 변경 시) | `warning` (false positive 위험) |
+
+**분리 근거** (RequirementsPL Q6 권고 verbatim 채택): 통합 시 lint script 복잡도 증가 + trigger paths 모호. 분리 시 각자 carrier 별도 (메타 schema validation = 본 Story CFP-455 / 메타 anomaly = §결정 14 후속 carrier).
+
+### Amendment 2-결정 15 (신설) — 메타 lint exit-code 3-tier semantics (Codex AREA 1 정합)
+
+`scripts/check-evidence-registry.sh` (Phase 2 PR scope) 의 exit code 의미:
+
+| exit code | 의미 | 처리 |
+|---|---|---|
+| **0** | PASS — 모든 검증 통과 | normal continuation |
+| **1** | validation FAIL — 1+ entry 가 schema 위반 (current_tier 부재 / enum 외 값 / bypass pair 위반 / name 중복 / owner_adr+carrier_adr ADR file 부재 등) | warning mode = continue-on-error (PR merge 가능) / blocking mode 승격 시 PR block |
+| **2** | meta-error — tooling 오류 (yaml 파싱 실패 / pyyaml 미설치 / registry yaml 자체 file 부재 / ADR file glob unreadable 등) | warning / blocking 무관 = 명확한 error message 출력 + workflow job step fail (lint logic 실행 불가 상황 분리 명시) |
+
+**근거**: validation FAIL 과 meta-error 의 semantic 분리 — meta-error 가 false-positive validation FAIL 로 위장되면 운영 신뢰도 추적 (ADR-060 §결정 5 EC-B 14d/5건 trigger) 가 왜곡. 3-tier semantics 도입 = false positive rate 측정의 무결성 보장.
+
+### Amendment 2-결정 16 (신설) — warning-tier bypass_label policy (Codex AREA 2 (a) 정합)
+
+본 ADR §결정 7 의 `bypass_label` 정책 명세화:
+
+- **warning tier** = continue-on-error / non-blocking. bypass_label 적용은 의미 부적용 (skip 의미 없음 — 이미 PR block X). → `bypass_label` field = **optional** (omit 권고).
+- **blocking-on-pr / blocking-on-merge / hotfix-bypass tier** = required check. bypass_label 의무 분리:
+  - `blocking-on-pr` / `blocking-on-merge` = bypass_label optional (운영 장애 hotfix 시 도입 가능, 미도입 시 emergency-channel 부재 risk 분리 평가).
+  - `hotfix-bypass` = bypass_label **required** (정의상 bypass channel SSOT).
+
+**본 Story 의 메타 lint self-application entry** (Phase 2 PR scope) = warning tier → bypass_label omit. 정합: SecurityArch deputy spoofing 차단 invariant 강화 (bypass field 의 잘못된 의미 부여 회피).
+
+### Amendment 2-결정 17 (신설) — Retroactive reclassification failure handling (Codex AREA 2 (b) 정합)
+
+본 Amendment 2 의 `current_tier` required 전환 시점 = 22/22 entry 모두 현행 `current_tier` 보유 verified (CodebaseMapper deputy 정밀 verify). 단 future drift / human error 로 enum membership 위반 발견 시 (예: 신규 entry 가 `current_tier: hard_block` 사용자 alias 주입, registry yaml 의 retroactive corruption):
+
+- **처리**: `scripts/check-evidence-registry.sh` exit 1 (validation FAIL) + PR block (blocking mode 승격 시) — **immediate fail**.
+- **근거**: required tier 도입 의의 정합 — schema 정합 mechanical 강제가 framework SSOT 의 핵심. tolerant mode (warning continuation) 도입 시 required 의 mechanical 효력 무력화.
+- **본 Story 단계 (warning mode)** = continue-on-error → PR merge 가능 but lint output 의 violation 명확 표시 + 운영 가이드 ADR-060 §결정 5 EC-B 14d/5건 trigger 적용. 실제 PR block 효과는 promotion carrier 시점 (별도 CFP-NNN, evidence 6 산출물 제출 시).
+
+### Amendment 2-결정 18 (신설) — Marketplace/sibling sync necessity 명시 (Codex AREA 2 (c) 정합)
+
+본 Amendment 2 의 schema v1.0 → v1.1 MINOR bump 시 sibling sync 의무 분석:
+
+- **registry yaml** (`docs/evidence-checks-registry.yaml`) = wrapper-owned cross-cutting protocol (kind:registry, ADR-010 scope 외 = sibling sync 불필요).
+- **schema doc** (`docs/inter-plugin-contracts/evidence-check-registry-v1.md`) = wrapper-owned canonical (ADR-010 scope 외 = sibling sync 불필요).
+- **MANIFEST.yaml** = wrapper-owned cross-cutting registry list (sibling sync 불필요).
+- **marketplace.json mirrored field sync**: schema v1.1 bump 동반 plugin.json MINOR bump (5.18.0 → 5.19.0, ADR-037 정합 — CFP-500 이 main 에서 5.18.0 차지 후 rebase 시 5.19.0 으로 re-bump) → ADR-063 §결정 1 atomic invariant (plugin.json + CHANGELOG.md + marketplace.json 동시 처리) 발효 → marketplace sync PR **의무** (별도 PR, codeforge PR merge 후 즉시 open·merge — ADR-063 §결정 2 chicken-and-egg 회피).
+
+**정리**: kind:registry schema 변경 자체는 sibling sync 불필요 (Codex AREA 2 (c) 권고 정합). 단 plugin version MINOR bump 동반 시 marketplace.json mirrored field sync 가 ADR-063 invariant 로 의무. 본 Story Phase 2 PR (또는 Phase 1 PR) 의 plugin.json MINOR bump 와 같은 PR 안 처리.
+
+### Mermaid 다이어그램 동기화 (Amendment 2 — Codex AREA 4 정합)
+
+본 ADR `## 다이어그램` Mermaid 의 `K -->|"CFP-390 + CFP-412 merged<br/>(Amendment 1: CFP-391 폐기 → CFP-412)"|` row 갱신 의무 (Amendment 2 시점 CFP-412 도 폐기 → CFP-455 carrier append):
+
+본 Amendment 2 carrier PR 안에서 `## 다이어그램` 본문의 해당 row 를 `K -->|"CFP-390 + CFP-412 + CFP-455 merged<br/>(Amendment 2: CFP-412 폐기 → CFP-455 carrier)"|` 으로 갱신 (carrier PR 본 §결정 동반 직접 edit). Mermaid stale 차단 — diagram 이 §결정 6 (c) sibling_dependencies 의 SSOT 와 verbatim 정합.
 
