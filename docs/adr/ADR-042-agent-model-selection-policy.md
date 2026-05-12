@@ -369,7 +369,7 @@ axis-A (operational cost trade-off) × axis-B (role redefinition signal, ADR-042
 
 ### Phase 2 PR atomic scope (ADR-063 정합)
 
-본 Amendment 5 의 Phase 2 PR scope = wrapper + 3 lane plugin sibling + marketplace.json single sync:
+본 Amendment 5 의 Phase 2 PR scope = wrapper + 2 lane plugin sibling (codeforge-requirements + codeforge-design — codeforge-develop 변경 0건 negative evidence, DeveloperPLAgent Opus 유지) + marketplace.json single sync:
 - wrapper: 본 ADR-042 Amendment 5 + ADR-057 Amendment 3 + CLAUDE.md L127 mirror + `scripts/measure-rate-limit-fallback.sh` `SONNET_AGENTS` 배열 — PATCH bump (정책 본문 변경 없음, 표 / 명단 변경만)
 - codeforge-requirements: ChangeImpactAgent model field — PATCH bump
 - codeforge-design: CodebaseMapperAgent + RefactorAgent model field + mandate text 재정의 — MINOR bump (mandate text 변경)
