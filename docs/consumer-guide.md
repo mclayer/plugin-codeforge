@@ -195,6 +195,54 @@ agent teams enabled context 에서도 다음 3 제약 유지 (`docs/domain-knowl
 - Worktree integration: [ADR-040](adr/ADR-040-worktree-convention.md)
 - review-verdict v4 schema: [docs/inter-plugin-contracts/review-verdict-v4.md](inter-plugin-contracts/review-verdict-v4.md)
 
+### 1g. CODEFORGE_CROSS_REPO_PAT rotation policy (CFP-521 / [ADR-066](adr/ADR-066-pat-rotation-policy.md))
+
+codeforge family 가 사용하는 `CODEFORGE_CROSS_REPO_PAT` (cross-repo Story binding + KPI internal-docs clone — CFP-450 / ADR-013 Amendment 4 consolidation) 의 lifetime / rotation / compromise response 정책. 정책 SSOT = [ADR-066](adr/ADR-066-pat-rotation-policy.md), audit log SSOT = [`docs/security/pat-rotation-log.md`](security/pat-rotation-log.md).
+
+**Rotation cadence**:
+
+- 권장 rotation = 90 days (분기별 회전)
+- 최대 lifetime = 180 days (반기 회전 강제)
+- 자동 만료 reminder workflow = Phase 2 carrier (별도 CFP, ADR-066 §결정 6)
+
+**Scope minimum** (least privilege, ADR-066 §결정 2):
+
+- `repo:read` — internal-docs read scan (KPI workflow)
+- `repo:write` — cross-repo Issue comment / sub-issue link (phase-gate-mergeable)
+- `metadata:read` — basic repo access
+
+`admin:org` / `delete_repo` / `workflow` 등 광역 scope 부여 금지.
+
+**Rotation 절차 (5-step, ADR-066 §결정 3)**:
+
+1. New PAT 발급 — GitHub Personal access tokens, 위 scope, expiration ≤ 90 days
+2. mclayer org secrets 갱신 — `Settings > Secrets > Actions > CODEFORGE_CROSS_REPO_PAT` (org level)
+3. sibling repo verification — 7 repo (codeforge-{requirements,design,develop,test,review,pmo} + marketplace + codeforge-internal-docs) org secret 가시성 확인
+4. 1-2 PR 테스트 — phase-gate-mergeable 또는 KPI workflow active PR 동작 확인
+5. 이전 PAT revoke — GitHub Personal access tokens settings + audit log row append
+
+**Compromise response (leak / suspected leak 시 4-step, ADR-066 §결정 4)**:
+
+1. **Immediate revoke** — GitHub UI > Personal access tokens > Revoke 즉시 (T+0)
+2. **Within 1h rotation** — New PAT 발급 + 위 5-step (T+1h 까지)
+3. **Audit 영향 범위 검토** — 영향 받은 workflow run / Issue comment / PR comment 검토 (`gh api` 활용)
+4. **Disclosure 판단** — private repo data leak 가능성 시 즉시 사용자 / 외부 통보 의무
+
+**Audit log**:
+
+- 위치: [`docs/security/pat-rotation-log.md`](security/pat-rotation-log.md)
+- Schema: `rotated_at (KST) | by | reason | expiration | revoked_at`
+- 사용자 manual entry 의무 (PAT 발급 절차 자체가 GitHub UI 의존, ADR-066 §결정 5)
+- Rotation 시 새 row append + 이전 row 의 `revoked_at` 갱신
+
+**Consumer overlay 영향** (ADR-066 §결정 7):
+
+본 정책은 codeforge family 의 `CODEFORGE_CROSS_REPO_PAT` 에 한정. Consumer project 가 자체 cross-repo PAT 사용 시:
+
+- `.claude/_overlay/project.yaml` `security.pat_rotation_cadence_days` 필드로 cadence override 가능 — **강화 방향만** (90 days 미만 short rotation 허용, 90 days 초과 weaken 금지)
+- Consumer 자체 PAT 의 audit log 는 consumer repo `docs/security/` (overlay 영역, codeforge 강제 안 함)
+- Compromise response 4-step 은 consumer 도 동일 절차 권장
+
 > **작업 규칙 (normative — CFP-341)**: 모든 변경 작업(lane spawn + ad-hoc)은 worktree 안에서 수행. 원본 clone directory 직접 편집 금지. `bash templates/scripts/worktree-create.sh <branch> origin/main` 으로 worktree 생성 후 작업 시작. 상세 [playbook §3.0.10](orchestrator-playbook.md).
 
 ## 2. Consumer 프로젝트 구조 초기화
