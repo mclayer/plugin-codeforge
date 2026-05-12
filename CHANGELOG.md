@@ -2,6 +2,12 @@
 
 `codeforge-develop` plugin 릴리스 이력.
 
+## 0.5.1 — 2026-05-12
+
+- [CFP-448 sibling] DeveloperPLAgent model `claude-opus-4-7` → `claude-sonnet-4-6` PATCH
+- ADR-042 Amendment 5 §결정 1 (b) + ADR-057 Amendment 3 정합
+- Sibling PRs: design#34 (merged), wrapper#502 (merged)
+
 ## [0.4.0] - 2026-05-10
 
 ### Added
