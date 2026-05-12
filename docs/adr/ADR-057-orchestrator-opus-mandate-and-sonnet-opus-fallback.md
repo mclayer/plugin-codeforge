@@ -221,7 +221,8 @@ ADR-060 §결정 12 = "CFP-C 잠정 = ADR-057 amendment + KPI dashboard — 본 
 2. **Sonnet 잔류 명단 = 8종** (5 기존 + 3 신규 rollback)
 3. **SSOT 명시**: §결정 3 표 = SSOT, `CLAUDE.md` L127 mirror reference (CL-6 사용자 확정)
 4. **Sunset gate 2 분모 5종 → 8종 갱신** (위 § "Sunset gate 2" 표 SSOT — 이미 본 Amendment 에 의해 갱신됨)
-5. **mandate text 재정의 동시 산출물 의무 발화** (CodebaseMapperAgent / RefactorAgent 2종) — Sonnet rollback 결정 시 ADR-042 §결정 2 invariant 정합. 단순 model field downgrade 금지
+5. **mandate text 재정의 동시 산출물 의무 발화** (CodebaseMapperAgent / RefactorAgent 2종) — Sonnet rollback 결정 시 ADR-042 §결정 2 invariant 정합. 단순 model field downgrade 금지. **ChangeImpactAgent exclusion criterion**: mandate 가 AS-IS→DELTA structured mapping (single-source map, self-evident 출력 형식) 으로 invariant 자연 정합 — role 재정의 의무 면제 (advocacy/synthesis pattern 아님). EC-5 universal mandate (§5.3) 와 align — exclusion 기준 = mandate 가 structured output template + read-only fact source citation 만으로 충족 시 면제
+6. **Codex re-review 의무** (Story §5.3 EC-2 in-scope 승격 정합): mandate text 재정의 대상 2 agent (CodebaseMapper / Refactor) 의 재정의 후, Phase 2 PR open 전 또는 PR 안에 Codex re-review 발화 의무 — 재정의된 mandate 가 Sonnet 으로 cover 가능한지 검증 (CFP-379 finding 재발 차단). Codex re-review 결과 FIX verdict 시 rollback reject + Opus 복귀. ChangeImpactAgent 는 mandate text 재정의 면제이므로 Codex re-review 도 면제 (단 Phase 2 CodeReview lane 일반 검토는 적용)
 
 ### 6 agent decision matrix (axis-A × axis-B × axis-C × Codex review × LangGraph precedent)
 
