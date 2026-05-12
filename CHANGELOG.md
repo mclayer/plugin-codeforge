@@ -5,7 +5,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
-## [5.18.0] - 2026-05-12
+## [5.20.0] - 2026-05-12
 
 ### Added (CFP-445 — 결정 원칙 mandate carrier)
 
@@ -47,6 +47,60 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 - [ADR-058](docs/adr/ADR-058-adr-sunset-criteria-mandate.md) — sunset criteria mandate (ratchet 차단 forcing function)
 - [ADR-060](docs/adr/ADR-060-evidence-enforceable-promotion-framework.md) — evidence-enforceable framework
 - [ADR-063](docs/adr/ADR-063-marketplace-atomic-invariant.md) — 3-file atomic invariant
+
+## [5.19.0] - 2026-05-12
+
+### Changed (CFP-455 — Evidence registry schema v1.0 → v1.1 (4-tier enforcement 정식 amendment))
+
+CFP-391 (Issue #396, closed without delivery 2026-05-11) / CFP-412 (Issue #412, post-merge-followup workflow false-positive close 2026-05-11) 의 재재예약 carrier. ADR-060 Amendment 2 deliver — 4-tier enforcement 정식 분류 정식화.
+
+- `docs/adr/ADR-060-evidence-enforceable-promotion-framework.md` — Amendment 2 append (frontmatter `amendment_log[]` row 2 + 본문 `## Amendment 2` § 신설 8 결정 — §결정 3 required 전환 / §결정 6 (c) `sibling_dependencies` append CFP-455 / §결정 14 메타 anomaly vs schema validation lint 분리 / §결정 15 exit-code 3-tier semantics / §결정 16 warning-tier bypass_label optional / §결정 17 retroactive reclassification immediate fail / §결정 18 marketplace sync 의무 명시 / Mermaid diagram 동기화)
+- `docs/evidence-checks-registry.yaml` — header `schema_version: "1.0"` → `"1.1"` + `last_updated: 2026-05-12` + `entries[name=adr-sunset-criteria].promotion_criteria.sibling_dependencies` append `CFP-455`
+- `docs/inter-plugin-contracts/evidence-check-registry-v1.md` — frontmatter `version: "1.0"` → `"1.1"` + §3 표 `current_tier` row required marker + §3 표 `bypass_label` row tier 별 의무 분리 + §4 본문 4-tier enum 강조 + §7 v1.1 row 완료된 변경 historical 분리
+- `docs/inter-plugin-contracts/MANIFEST.yaml` — `registries.evidence_check_registry.files[0].version: "1.0"` → `"1.1"`
+- `CLAUDE.md` — Inter-plugin Contract 단락 `evidence-check-registry-v1.md` v1.1 표기 + Amendment 2 narrative + ADR 단락 Amendment 2 narrative append
+
+### Why
+
+ADR-060 §결정 12 후속 carrier 의무가 2 carrier (CFP-391 / CFP-412) 모두 closed without delivery 로 2차 orphan. 4-tier enforcement 정식 분류 deliver = framework SSOT 의 mechanical enforcement 첫 단계 확정. schema v1.1 MINOR bump 가 `current_tier` 필드 mechanical 강제 (Phase 2 PR scope 의 메타 lint).
+
+### Compatibility
+
+- backward compatible — 기존 22 entry 모두 현행 `current_tier` 보유 verified (CodebaseMapper deputy 정밀 verify, 2026-05-12), mechanical regression 0건
+- schema MINOR bump = ADR-008 §kind:registry 정합 (field required 전환 = MINOR)
+- `is_transitional: false` (permanent — ADR-060 §결정 11 framework SSOT self-defeat 회피 정합)
+
+### Phase 2 (별도 PR 권고)
+
+본 5.19.0 = Phase 1 (docs/* SSOT 만) — Phase 2 PR scope = `scripts/check-evidence-registry.sh` 신설 + `templates/github-workflows/evidence-registry-check.yml` 신설 + 메타 lint self-application registry entry (`evidence-registry-schema`). Phase 2 시점 ADR-037 적용 — plugin.json 5.19.0 → 5.20.0 MINOR bump 권고 (별도 carrier 판단).
+
+### Marketplace sync (의무, ADR-063 §결정 2 — 별도 PR)
+
+본 PR merge 직후 즉시 marketplace sync PR open·merge (codeforge plugin family 의 wrapper plugin version mirrored field — `mclayer/marketplace` `marketplace.json` `plugins[name=codeforge]` version `5.18.0` → `5.19.0`).
+
+## [5.18.0] - 2026-05-12
+
+### Added (CFP-500 — SessionStart prereq-check hook tier 격상)
+
+ADR-038 Amendment 1 §결정 8 (CFP-375) + CFP-385 의 (c) runtime advisory tier 가 매 세션 무시 → 본 Story 가 (b) startup hook tier 로 enforcement 격상. consumer `.claude/settings.json` `hooks.SessionStart[]` 에 `SessionStart-codeforge-prereq-check.json.sample` 등록 시 harness 가 세션 부팅 시점에 Orchestrator 에게 prompt-injection 으로 `ToolSearch("select:TodoWrite")` 호출 지시.
+
+- `templates/.claude/hooks/SessionStart-codeforge-prereq-check.json.sample` (NEW) — 3번째 SessionStart hook sample (drift / worktree-gc 패턴 정합, 7 top-level field schema)
+- `scripts/check-codeforge-prereq.sh` (NEW) — bash helper, single-quoted heredoc static stdout (set -euo pipefail + filesystem touch 0 + network call 0 + AC-11 정적 검증 cover)
+- `tests/scripts/test_check_codeforge_prereq.sh` (NEW) — bash smoke test, 16 assertion (정적 10 + runtime 5 + exit code 1 bonus)
+- `docs/domain-knowledge/domain/runtime/deferred-tool-and-session-start-hook.md` (NEW, ADR-056 §결정 1 `domain/<area>/<topic>.md` 정합)
+- `docs/orchestrator-playbook.md` §1.1 0i 항목 supersede + hook tier 위임 + §결정 7·8 retain 폴백
+- `CLAUDE.md` "세션 개시 의무" 단락 supersede
+- `.claude-plugin/plugin.json` description 끝 CFP-500 entry append + version 5.17.0 → 5.18.0
+- `.claude/settings.json` wrapper dogfooding (`hooks.SessionStart[]` 에 prereq-check 추가)
+- `docs/consumer-guide.md` §2h.1 SessionStart prereq-check hook subsection 신설
+
+### Why
+
+`선언적 규칙 = 신뢰 불가` 가 CFP-375 + CFP-385 두 차례 검증됨. 본 Story = (c) → (b) tier escalation (3rd attempt). ADR-038 Amendment 2 §결정 9 신설 — `prereq_tools[]` + `prereq_checks[]` declarative array schema 로 extensibility 보존 (초기 preload = TodoWrite 단독, 보수적). ADR-058 §결정 5 정합 — amendment_log `sunset_justification` 3-tuple (metric `TodoWrite InputValidationError <5/100세션` / who PMOAgent / how manual sampling + CFP-389 / ADR-060 automation candidate).
+
+### Compatibility
+
+Non-breaking. Hook 등록은 consumer opt-in (CONDITIONAL). 기존 ADR-038 §결정 7 (실패 non-blocking) + §결정 8 (호출 시도 non-skippable) retain — layered defense.
 
 ## [5.17.0] - 2026-05-12
 
