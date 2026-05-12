@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+# CFP-447 — pre-push hook sample (opt-in local check)
+#
+# Installs to: .git/hooks/pre-push (per worktree, opt-in)
+#
+# 검증 2종:
+#   (1) BEHIND-rebase awareness — origin/main 진행 시 warning
+#   (2) Atomic invariant local check — plugin.json mirrored field 변경 시
+#       scripts/check-version-bump-atomic.sh 호출 (ADR-063 §결정 5 PR-time enforcement local 보완)
+#
+# 본 hook 은 advisory only — warning 후 push 진행 (non-blocking).
+# 차단이 필요한 경우 `export PRE_PUSH_BLOCKING=1` 환경 변수 설정.
+#
+# 설치 (opt-in):
+#   cp templates/.claude/hooks/pre-push.sh.sample .git/hooks/pre-push
+#   chmod +x .git/hooks/pre-push
+#
+# 비활성화: rm .git/hooks/pre-push
+#
+# Cross-ref:
+#   ADR-061 §결정 5 — sanity check 3종 (diff/lint/sample) local 자동화 확장
+#   ADR-063 §결정 5 — 작성 시점 enforce (PR-time CI 보완)
+#   CFP-441 — check-version-bump-atomic.sh
+#   CFP-447 — 본 hook sample
+
+set -uo pipefail
+
+BLOCKING="${PRE_PUSH_BLOCKING:-0}"
+HAS_WARNING=0
+
+# --- Helper: log + optionally block ---
+warn() {
+    echo "⚠ pre-push: $*" >&2
+    HAS_WARNING=1
+}
+
+# --- Step 1: BEHIND-rebase awareness ---
+
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+
+if [[ -z "$CURRENT_BRANCH" || "$CURRENT_BRANCH" == "HEAD" ]]; then
+    echo "ℹ pre-push: detached HEAD — skip" >&2
+    exit 0
+fi
+
+if [[ "$CURRENT_BRANCH" == "main" ]]; then
+    # main 직접 push 는 별도 branch protection이 처리
+    exit 0
+fi
+
+# Fetch origin/main (quiet, best-effort)
+if git ls-remote origin >/dev/null 2>&1; then
+    git fetch origin main --quiet 2>/dev/null || true
+fi
+
+# BEHIND count vs origin/main
+if git rev-parse origin/main >/dev/null 2>&1; then
+    BEHIND_COUNT=$(git rev-list --count "${CURRENT_BRANCH}..origin/main" 2>/dev/null || echo "0")
+    if [[ "$BEHIND_COUNT" -gt 0 ]]; then
+        warn "branch '$CURRENT_BRANCH' 가 origin/main 보다 $BEHIND_COUNT 커밋 BEHIND"
+        echo "    권고: git pull --rebase origin main 실행 후 push" >&2
+    fi
+fi
+
+# --- Step 2: Atomic invariant local check ---
+
+# Check if plugin.json mirrored fields changed
+PLUGIN_JSON=".claude-plugin/plugin.json"
+
+if [[ -f "$PLUGIN_JSON" ]] && git rev-parse origin/main >/dev/null 2>&1; then
+    DIFF=$(git diff origin/main -- "$PLUGIN_JSON" 2>/dev/null || true)
+
+    if [[ -n "$DIFF" ]]; then
+        MIRRORED_CHANGED=0
+        for field in name version description author; do
+            if echo "$DIFF" | grep -qE "^[-+]\s*\"${field}\":"; then
+                MIRRORED_CHANGED=1
+                break
+            fi
+        done
+
+        if [[ "$MIRRORED_CHANGED" -eq 1 ]] && [[ -x scripts/check-version-bump-atomic.sh ]]; then
+            echo "ℹ pre-push: plugin.json mirrored field 변경 감지 — atomic invariant check 실행" >&2
+            if ! bash scripts/check-version-bump-atomic.sh >&2; then
+                warn "atomic invariant violation 감지 — push 전 fix 권고"
+                echo "    참조: docs/adr/ADR-063-marketplace-atomic-invariant.md" >&2
+            fi
+        fi
+    fi
+fi
+
+# --- Final: blocking or advisory ---
+
+if [[ "$HAS_WARNING" -eq 1 ]] && [[ "$BLOCKING" == "1" ]]; then
+    echo "" >&2
+    echo "❌ pre-push: PRE_PUSH_BLOCKING=1 + warning 감지 → push 차단" >&2
+    echo "   bypass: unset PRE_PUSH_BLOCKING && git push (또는 --no-verify)" >&2
+    exit 1
+fi
+
+if [[ "$HAS_WARNING" -eq 1 ]]; then
+    echo "" >&2
+    echo "ℹ pre-push: warning 진행 — push 계속 (advisory mode)" >&2
+    echo "   blocking mode: export PRE_PUSH_BLOCKING=1" >&2
+fi
+
+exit 0
