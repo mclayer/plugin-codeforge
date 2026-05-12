@@ -5,6 +5,10 @@ on:
     paths:
       - docs/stories/**.md
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   ac-mapping-check:
     runs-on: ubuntu-latest
