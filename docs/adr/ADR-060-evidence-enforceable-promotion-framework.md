@@ -31,10 +31,19 @@ amendment_log:
       신설 §결정 17 retroactive reclassification failure handling (immediate fail exit 1 + PR block) — Codex AREA 2 (b) 정합 +
       신설 §결정 18 marketplace/sibling sync necessity 명시 (registry yaml = wrapper-owned, ADR-010 scope 외, marketplace sync 불필요) — Codex AREA 2 (c) 정합 +
       Mermaid 다이어그램 sibling_dependencies 표기 갱신 (CFP-455 carrier 반영) — Codex AREA 4 정합
+  - amendment: 3
+    carrier_story: CFP-449
+    date: 2026-05-12
+    summary: |
+      `hotfix-bypass:*` channel 의미 sharpening — §결정 7 본문에 "audit 전용 채널 — 정책 회피 등록 차단 (ADR-064 §결정 5 ratchet 정합)" 한 줄 명시 (운영 안전망 통로, 정책 회피 등록 channel 아님) +
+      ADR-064 §결정 2 forbid-list 8 어휘 mechanical lint entry (`decision-principle-vocab`) 신설 cross-ref +
+      evidence-checks-registry.yaml 2nd warning-tier entry 도입 = framework multi-entry 운영 검증 cross-validation 신호 (1st entry `adr-sunset-criteria` 와 schema 정합 검증) +
+      ratchet 위반 0건 — enum 값 / tier 추가 / bypass channel 동작 변경 없음, 의미 sharpening only (ADR-058 §결정 5 sunset_justification 의무 통과 — 강화 방향 amendment).
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
   - CFP-388  # parent Epic
+  - CFP-449  # Amendment 3 carrier — 2nd warning-tier entry `decision-principle-vocab` + bypass channel 의미 sharpening
 related_adrs:
   - ADR-008   # versioning (kind:registry 도 minor/major SemVer 정합)
   - ADR-010   # contract sibling sync (kind:registry scope 외 명시)
@@ -214,6 +223,7 @@ warning → blocking-on-pr (또는 blocking-on-merge) 승격 조건 = **3 condit
 - **label scope**: per-entry 한정. 본 entry (`adr-sunset`) bypass label 은 sunset criteria 관련 긴급 hotfix only. 다른 evidence check (CFP-390 인벤토리 추가) 는 자체 bypass label 정의 (registry entry `bypass_label` 필드 per-entry).
 - **ADR-024 Amendment 3 동반 의무**: 본 ADR-060 §결정 7 = ADR-024 Amendment 3 (`hotfix-bypass:*` label family 가 ADR-024 §결정 6 의 audit-trailed exception channel 임을 명시) 의 carrier. Phase 1 PR 동반 (scope cohesion).
 - **label-registry-v2 entry 추가**: `hotfix-bypass:adr-sunset` label = label-registry-v2 의 신규 entry. taxonomy = `bypass` tier (신규 tier 도입). label-registry MINOR bump (v2.0 → v2.1) — 별도 PR 또는 본 Phase 1 PR 동반 (ArchitectAgent 판단 — 본 Story scope 동반 권고). **본 결정은 label-registry-v2 의 `bypass` tier 신설 결정 carrier 역할 — label-registry sibling sync (ADR-010) 별도 follow-up 가능**.
+- **(Amendment 3, CFP-449)** **audit 전용 채널 — 정책 회피 등록 차단 (ADR-064 §결정 5 ratchet 정합)**: `hotfix-bypass:*` label 은 운영 장애 hotfix 의 일회성 exception 통로이며, 정책 위반을 회피하는 영구 등록 채널이 아님. label 부착 PR 마다 audit comment 자동 발의 + quarterly merge audit log 집계 의무 (§결정 8 schema 정합). 사용한 entry 가 enforce 승격 carrier (별도 CFP-NNN) 진입 시 bypass label 적용 PR 누적 회수가 evidence 산출물 (`bypass_pr_count`) 검토 영역. dictionary 회피 의도 등록 시 sunset_justification 의무 (ADR-058 §결정 5 정합) — bypass channel = 운영 안전망, 정책 회피 통로 아님.
 
 (§5.5 CL-4 RESOLVED — 사용자 Option A 채택 verbatim 반영)
 
