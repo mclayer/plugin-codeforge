@@ -6,6 +6,7 @@
 #   TC-3: settings.json 부재 (exit 0 + WARN log) — 폐쇄루프 안전망
 #   TC-4: hook 미wired (exit 0 + WARN log) — 폐쇄루프 self-detect
 #   TC-5: POSIX strict mode (shebang + set -euo pipefail) presence
+#   TC-6: git mode 100755 (executable bit, F-001 closing — CFP-427 FIX iter 1)
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -76,11 +77,22 @@ else
     FAIL=$((FAIL + 1))
 fi
 
+echo "=== TC-6: git mode 100755 (executable bit, F-001 closing) ==="
+# CFP-427 FIX iter 1 F-001: git ls-files -s 가 100755 (executable) 인지 검증
+# rationale: GitHub Actions ubuntu-latest 은 git mode 를 honor 하므로 100644 = silent skip
+ACTUAL_MODE=$(git ls-files -s "$SCRIPT" 2>/dev/null | awk '{print $1}')
+if [ "$ACTUAL_MODE" = "100755" ]; then
+    echo "  PASS — git mode = 100755"
+else
+    echo "  FAIL — git mode = $ACTUAL_MODE (expected 100755)"
+    FAIL=$((FAIL + 1))
+fi
+
 if [ "$FAIL" -gt 0 ]; then
     echo ""
     echo "FAIL count: $FAIL"
     exit 1
 fi
 echo ""
-echo "ALL PASS (5/5)"
+echo "ALL PASS (6/6)"
 exit 0

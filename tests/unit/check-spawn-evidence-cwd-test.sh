@@ -3,7 +3,7 @@
 # Tests:
 #   TC-1: BYPASS_WORKTREE_FIRST=1 env short-circuit
 #   TC-2: PLACEHOLDER sentinel safe-fallback (default ENFORCE_FROM = PLACEHOLDER → enforce skip)
-#   TC-3: ENFORCE_FROM env override + valid worktree path → PASS (no WARN)
+#   TC-3: ENFORCE_FROM override + valid worktree path → PASS (no WARN)
 #   TC-4a: 30자+ N/A bypass → PASS (no WARN)
 #   TC-4b: 30자 미만 N/A → WARN
 #   TC-4c: read-only suffix → PASS (no WARN)
@@ -11,6 +11,9 @@
 #   TC-5: enforce-from filter (pre-existing Story timestamp 이전 → skip)
 #   TC-6: docs/stories 부재 → exit 0 + skip log
 #   TC-7: POSIX strict mode (shebang + set -euo pipefail) presence
+#   TC-8: git mode 100755 (executable bit, F-001 closing — CFP-427 FIX iter 1)
+#   TC-9: Working dir field 부재 → WARN (F-003 closing — AC-3 (d))
+#   TC-10: Working dir 빈 값 → WARN (F-003 closing — AC-3 (d))
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -167,11 +170,89 @@ else
     FAIL=$((FAIL + 1))
 fi
 
+echo "=== TC-8: git mode 100755 (executable bit, F-001 closing) ==="
+# CFP-427 FIX iter 1 F-001: git ls-files -s 가 100755 (executable) 인지 검증
+ACTUAL_MODE=$(git ls-files -s "$SCRIPT" 2>/dev/null | awk '{print $1}')
+if [ "$ACTUAL_MODE" = "100755" ]; then
+    echo "  PASS — git mode = 100755"
+else
+    echo "  FAIL — git mode = $ACTUAL_MODE (expected 100755)"
+    FAIL=$((FAIL + 1))
+fi
+
+# TC-9 / TC-10: Working dir field 부재 / 빈 값 → WARN (F-003 closing — AC-3 (d))
+ORIG_DIR2="$(pwd)"
+TMPDIR3=$(mktemp -d)
+mkdir -p "$TMPDIR3/docs/stories" "$TMPDIR3/scripts"
+cp "$SCRIPT" "$TMPDIR3/scripts/"
+cd "$TMPDIR3" && git init -q 2>&1 >/dev/null
+git config user.email "test@example.com"
+git config user.name "test"
+
+# TC-9: transcript line 안 'Working dir:' substring 자체 부재 → WARN
+echo "=== TC-9: Working dir field 부재 → WARN (AC-3 (d)) ==="
+cat > "docs/stories/TEST-F.md" <<STORY_EOF
+---
+key: TEST-F
+title: test story missing working dir field
+---
+
+## §14 Lane Evidence
+
+\`\`\`yaml
+lane_evidence:
+  - lane: 요구사항
+    iteration: 1
+    transcript: "test transcript without working dir mention"
+\`\`\`
+STORY_EOF
+git add "docs/stories/TEST-F.md"
+git commit -q -m "add TEST-F"
+STATUS=0
+OUT=$(ENFORCE_FROM="2020-01-01T00:00:00+00:00" bash "$ORIG_DIR2/$SCRIPT" 2>&1) || STATUS=$?
+if [ "$STATUS" -eq 0 ] && echo "$OUT" | grep -q "WARN: TEST-F.*Working dir.*field 부재"; then
+    echo "  PASS — exit 0 + WARN for TEST-F (field 부재)"
+else
+    echo "  FAIL — exit=$STATUS output=$OUT"
+    FAIL=$((FAIL + 1))
+fi
+
+# TC-10: Working dir 빈 값 → WARN
+echo "=== TC-10: Working dir 빈 값 → WARN (AC-3 (d)) ==="
+cat > "docs/stories/TEST-G.md" <<STORY_EOF
+---
+key: TEST-G
+title: test story empty working dir
+---
+
+## §14 Lane Evidence
+
+\`\`\`yaml
+lane_evidence:
+  - lane: 요구사항
+    iteration: 1
+    transcript: "test transcript Working dir:    "
+\`\`\`
+STORY_EOF
+git add "docs/stories/TEST-G.md"
+git commit -q -m "add TEST-G"
+STATUS=0
+OUT=$(ENFORCE_FROM="2020-01-01T00:00:00+00:00" bash "$ORIG_DIR2/$SCRIPT" 2>&1) || STATUS=$?
+if [ "$STATUS" -eq 0 ] && echo "$OUT" | grep -q "WARN: TEST-G.*Working dir 빈 값"; then
+    echo "  PASS — exit 0 + WARN for TEST-G (빈 값)"
+else
+    echo "  FAIL — exit=$STATUS output=$OUT"
+    FAIL=$((FAIL + 1))
+fi
+
+cd "$ORIG_DIR2"
+rm -rf "$TMPDIR3"
+
 if [ "$FAIL" -gt 0 ]; then
     echo ""
     echo "FAIL count: $FAIL"
     exit 1
 fi
 echo ""
-echo "ALL PASS (9/9)"
+echo "ALL PASS (12/12)"
 exit 0

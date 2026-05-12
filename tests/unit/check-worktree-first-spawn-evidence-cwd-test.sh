@@ -7,6 +7,7 @@
 #   TC-4: false-positive — ENFORCE_FROM override + invalid Working dir → canonical WARN
 #   TC-8: recursive-call guard — wrapper 가 canonical 이름으로 invoke 시 exit 2 (FIX iter 1 F-5)
 #   TC-9: missing-script guard — canonical 부재 시 wrapper exit 0 + WARN (FIX iter 1 F-5)
+#   TC-10: git mode 100755 (executable bit, F-001 closing — CFP-427 FIX iter 1)
 set -euo pipefail
 cd "$(dirname "$0")/../.."
 
@@ -103,11 +104,21 @@ else
     FAIL=$((FAIL + 1))
 fi
 
+echo "=== TC-10: git mode 100755 (executable bit, F-001 closing) ==="
+# CFP-427 FIX iter 1 F-001: git ls-files -s 가 100755 (executable) 인지 검증
+ACTUAL_MODE=$(git ls-files -s "$SCRIPT" 2>/dev/null | awk '{print $1}')
+if [ "$ACTUAL_MODE" = "100755" ]; then
+    echo "  PASS — git mode = 100755"
+else
+    echo "  FAIL — git mode = $ACTUAL_MODE (expected 100755)"
+    FAIL=$((FAIL + 1))
+fi
+
 if [ "$FAIL" -gt 0 ]; then
     echo ""
     echo "FAIL count: $FAIL"
     exit 1
 fi
 echo ""
-echo "ALL PASS (6/6)"
+echo "ALL PASS (7/7)"
 exit 0

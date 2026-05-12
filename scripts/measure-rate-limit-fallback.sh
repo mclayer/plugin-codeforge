@@ -37,7 +37,12 @@
 # Window: 3 calendar month rolling, UTC, half-open `[month-N-start, month-N+1-start)`.
 #         --as-of YYYY-MM 로 "now" override (idempotency + 테스트 가능성).
 #
-# Exit codes: 0=정상, 1=입력 검증 실패 (script error), 2=write 실패 (--out 지정 시).
+# Exit codes:
+#   0 = 정상
+#   1 = 입력 검증 실패 (script error)
+#   2 = write 실패 (--out 지정 시)
+#   3 = internal-docs scan failure (CFP-451 — --internal-docs-path 지정됐으나 wrapper/stories/ 부재 또는 .md glob 0건)
+#   4 = SONNET_AGENTS enum drift (CFP-451 — ADR-057 §결정 3 / ADR-042 Amendment 4 SSOT 와 mismatch detect)
 #
 # CLI:
 #   bash scripts/measure-rate-limit-fallback.sh \
@@ -95,7 +100,54 @@ if [[ -n "$INTERNAL_DOCS_PATH" ]]; then
   # internal-docs monorepo layout: <root>/wrapper/stories/CFP-N.md
   if [[ -d "$INTERNAL_DOCS_PATH/wrapper/stories" ]]; then
     INTERNAL_DOCS_STORIES_DIR="$INTERNAL_DOCS_PATH/wrapper/stories"
+  else
+    # CFP-451 exit 3 — --internal-docs-path 가 명시됐으나 wrapper/stories/ 디렉터리 부재.
+    echo "[measure-rate-limit-fallback] ERROR: --internal-docs-path 지정됐으나 wrapper/stories/ 디렉터리 부재: $INTERNAL_DOCS_PATH/wrapper/stories" >&2
+    exit 3
   fi
+
+  # CFP-451 exit 3 — internal-docs wrapper/stories/ 에 .md glob 0건.
+  if ! find "$INTERNAL_DOCS_STORIES_DIR" -maxdepth 1 -type f -name "*.md" -print -quit 2>/dev/null | grep -q .; then
+    echo "[measure-rate-limit-fallback] ERROR: internal-docs scan failure — $INTERNAL_DOCS_STORIES_DIR 에서 .md 파일 0건 detect" >&2
+    exit 3
+  fi
+fi
+
+# CFP-451 exit 4 — SONNET_AGENTS enum drift detection.
+# ADR-057 §결정 3 / ADR-042 Amendment 4 본문에서 agent 이름 추출 후 SONNET_AGENTS array 와 set diff.
+# ADR file 미존재 시 silent skip (다른 repo 에서 실행 등 — exit 0 정상 path).
+ADR_057_FILE="$WRAPPER_PATH/docs/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md"
+ADR_042_FILE="$WRAPPER_PATH/docs/adr/ADR-042-agent-model-selection-policy.md"
+if [[ -f "$ADR_057_FILE" || -f "$ADR_042_FILE" ]]; then
+  # ADR 본문에서 "Sonnet 잔류" / "Sonnet 유지" 영역의 agent 이름 (CapitalizedAgent 패턴) 추출.
+  ADR_DETECTED_AGENTS=()
+  for adr_f in "$ADR_057_FILE" "$ADR_042_FILE"; do
+    [[ -f "$adr_f" ]] || continue
+    while IFS= read -r name; do
+      [[ -z "$name" ]] && continue
+      # dedup
+      already=0
+      for existing in "${ADR_DETECTED_AGENTS[@]+"${ADR_DETECTED_AGENTS[@]}"}"; do
+        if [[ "$existing" == "$name" ]]; then already=1; break; fi
+      done
+      [[ $already -eq 0 ]] && ADR_DETECTED_AGENTS+=("$name")
+    done < <(grep -oE "\b(DeveloperAgent|BackendDeveloperAgent|FrontendDeveloperAgent|IntegrationTestAgent|StatefulTestAgent|ChangeImpactAgent|CodebaseMapperAgent|RefactorAgent|QADeveloperAgent|InfraEngineerAgent|DataEngineerAgent)\b" "$adr_f" 2>/dev/null | sort -u)
+  done
+
+  # SONNET_AGENTS (5종 hardcode) vs ADR detected — strict equal set 검증.
+  # SSOT 가 5종 명시: DeveloperAgent / BackendDeveloperAgent / FrontendDeveloperAgent / IntegrationTestAgent / StatefulTestAgent.
+  # ADR 가 본문에 다른 agent 도 언급할 수 있으나 (예: ChangeImpactAgent — 현재 Sonnet 잔류 list 외), enum drift detection 의 정확한 의미 =
+  # SONNET_AGENTS 5종 모두 ADR_DETECTED_AGENTS 에 포함되어야 함 (역방향은 ADR 본문 자유 — 본 Story scope 외).
+  for sa in "${SONNET_AGENTS[@]}"; do
+    found=0
+    for det in "${ADR_DETECTED_AGENTS[@]+"${ADR_DETECTED_AGENTS[@]}"}"; do
+      if [[ "$det" == "$sa" ]]; then found=1; break; fi
+    done
+    if [[ $found -eq 0 ]]; then
+      echo "[measure-rate-limit-fallback] ERROR: SONNET_AGENTS enum drift — '$sa' 가 ADR-057 / ADR-042 본문에 부재. SSOT mismatch (별도 CFP follow-up 권고)." >&2
+      exit 4
+    fi
+  done
 fi
 
 # --- 시계 결정 ---
