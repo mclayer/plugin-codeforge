@@ -22,6 +22,17 @@ owned_sections:
     parallel_edit: locked
 
   - file: CLAUDE.md
+    section: "결정 원칙"
+    owner_adr: ADR-064
+    parallel_edit: append-only
+    # NOTE (CFP-445 / DR-F001): 신규 단락 — §1 (결정 내용 Trace 1) / §2 (결정 제시 Trace 2)
+    # / §3 (적용 속도 Trace 4) sub-section 미래 확장 예상. append-only 채택 — Trace 1
+    # forbid-list dictionary / Trace 2 5-rule / Trace 4 sequential 강제 사유 등 sub-rule
+    # 추가 시 row append. 본문 의미 변경 (예: derived default 룰 약화 방향) 은
+    # ADR-064 §결정 7 top-down ratchet + ADR-058 §결정 5 sunset_justification 으로
+    # 차단 (별도 enforcement 영역).
+
+  - file: CLAUDE.md
     section: "원인 판정 decision table"
     owner_adr: ADR-025
     parallel_edit: append-only

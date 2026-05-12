@@ -89,7 +89,7 @@ updated: 2026-05-12
 
 ## §2. 결정 제시 (Trace 2)
 
-### Derived default 우선 — ADR-064 §결정 3 (룰 1)
+### Derived default 기본값 적용 — ADR-064 §결정 3 (룰 1)
 
 Orchestrator 가 `AskUserQuestion` 발화 의도 시 다음 분기:
 
@@ -101,7 +101,7 @@ Orchestrator 가 `AskUserQuestion` 발화 의도 시 다음 분기:
 ```
 
 **예외 영역** (derived default 도출 회피 의무):
-- 가치 판단 (사용자 선호도 / 우선순위 / 도메인 의도)
+- 가치 판단 (사용자 선호도 / 가치 판단 기준 / 도메인 의도)
 - 미공개 컨텍스트 (Orchestrator 가 알 수 없는 사용자 측 정보 — 외부 시스템 상태 / 사용자 일정 등)
 
 ### 옵션 dump 금지 — ADR-064 §결정 3 (룰 2)
@@ -173,8 +173,8 @@ Sequential 선택 시 spawn prompt 또는 commit message 에 사유 1 종 명시
 
 Trace 4 measurable signal:
 
-- **데이터 출처**: `EPIC-RESULTS-<KEY>.md` artifact frontmatter `opened_at` / `closed_at` timestamp delta
-- **Dashboard 구축**: 본 carrier 외연 — CFP-β (잠재) 별도 follow-up
+- **데이터 출처**: `EPIC-RESULTS-<KEY>.md` artifact frontmatter `opened_at` / `closed_at` timestamp delta (현재 `templates/epic-results.md` frontmatter 에 두 field 부재 — CFP-β 가 PMOAgent owner path 에 field 신설 의무)
+- **Dashboard 구축**: 본 carrier 외연 — CFP-β (잠재) 별도 follow-up (frontmatter field 신설 + dashboard 구축 일체)
 - **Baseline / target 정의**: dashboard 구축 후 evidence-enforceable framework (ADR-060) 점진 승격 — warning → blocking-on-pr → blocking-on-merge
 
 본 KPI 는 외부 분산 시스템 영역의 throughput metric 와 정합 — Amdahl's Law speedup curve 가 이론적 anchor.
