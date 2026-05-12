@@ -102,7 +102,7 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 | 레인 | 진입 트리거 | 1차 self-write target | FIX max |
 |---|---|---|---|
-| 요구사항 | story-init.yml Action (Issue Forms 제출) | §1·§2·§5·§6 (RequirementsPL + 3 sub) | — |
+| 요구사항 | story-init.yml Action (Issue Forms 제출) — manual KEY path (Issue #99 P2 mitigation) 시 Orchestrator 가 초기 `phase:요구사항` label 부착 의무 (story-init.yml automation 우회 케이스에만 적용, lane plugin self-write 책임 retain — CFP-466 §결정 Option 4) | §1·§2·§5·§6 (RequirementsPL + 3 sub) | — |
 | 설계 | RequirementsPL verdict | §3·§7·§11 + change-plan + ADR-NNN (ArchitectAgent + 6 deputy) | — |
 | 설계 리뷰 | ArchitectAgent verdict | §9 (DesignReviewPL Claude+Codex 종합) + `gate:design-review-pass` (Claude↔Codex 워커 finding 불일치 자동 감지 시 debate-protocol-v1 발동 — CFP-391 / ADR-059) | 3 |
 | 구현 | 설계 리뷰 PASS | §8·§8.5 + Phase 2 PR 첫 commit (DeveloperPL + QADev + N role:dev) | — |
