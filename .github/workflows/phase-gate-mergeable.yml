@@ -157,6 +157,12 @@ jobs:
             });
             const allLabels = prFullForEpic.data.labels.map(l => l.name);
             const isEpicLabel = allLabels.includes('type:epic');
+            // CFP-499 / ADR-010 Amendment 4 — sibling-pr label fast-pass.
+            //   wrapper Story 가 sibling repo 에 mechanical mirror sync PR 생성 시,
+            //   sibling PR 은 자체 설계리뷰 evidence 없음 (wrapper Story 의 PASS 결과는 wrapper PR 에 박제).
+            //   Orchestrator 가 sibling-pr label 부착 시 fast-pass — sibling PR 의 design review 정합성 은
+            //   wrapper Story PR 의 design review PASS 가 보증.
+            const isSiblingPr = allLabels.includes('sibling-pr');
             // CFP-260 / CFP-261 / CFP-262 — scripts/ + CONTRIBUTING.md 추가 (operational tooling, not src code).
             // Bootstrap script entries / drift check script / version bump CI helper 등 wrapper 운영 도구.
             const isDocOnly = !hasCode && files.every(f =>
@@ -171,9 +177,11 @@ jobs:
               f.filename === 'README.md' ||
               f.filename === 'CONTRIBUTING.md'
             );
-            if (isEpicLabel || isDocOnly) {
+            if (isEpicLabel || isSiblingPr || isDocOnly) {
               const reason = isEpicLabel
                 ? `type:epic label fast-pass (CFP-106 #143 fix)`
+                : isSiblingPr
+                ? `sibling-pr label fast-pass (CFP-499 / ADR-010 Amendment 4 — wrapper Story mirror sync PR)`
                 : `doc-only PR fast-pass — files: ${files.map(f=>f.filename).slice(0,3).join(', ')}${files.length>3?'...':''} (CFP-106 #143 fix)`;
               await github.rest.checks.create({
                 owner: context.repo.owner,
