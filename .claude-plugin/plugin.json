@@ -1,7 +1,7 @@
 {
   "name": "codeforge-pmo",
-  "version": "0.1.0",
-  "description": "codeforge ζ arc PMO lane plugin (CFP-36) — Epic 분해 보조 · Story 완료 회고 감사 · Cross-Story 패턴 분석 · ADR 후보 발의 + docs/retros/ direct write + Story §11 self-write + Epic milestone 관리 · GitOpsAgent git-ops-event-v1 canonical producer (CFP-139). codeforge core 의존.",
+  "version": "0.1.1",
+  "description": "codeforge ζ arc PMO lane plugin (CFP-36) — Epic 분해 보조 · Story 완료 회고 감사 · Cross-Story 패턴 분석 · ADR 후보 발의 + docs/retros/ direct write + Story §11 self-write + Epic milestone 관리 · GitOpsAgent git-ops-event-v1 canonical producer (CFP-139). codeforge core 의존. + CFP-462-followup phase-gate-mergeable workflow sync (CFP-113/123/133/342/499 backport, 2026-05-13).",
   "author": {
     "name": "Josh"
   },
