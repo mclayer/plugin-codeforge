@@ -7,7 +7,7 @@ pr:
   title: "[CFP-510] Phase 2"
   body: "Closes mclayer/plugin-codeforge#510"
   labels:
-    - "phase:security-test"
+    - "phase:보안-테스트"
 issue:
   number: 510
   closed_by_pull_requests_references: [510]

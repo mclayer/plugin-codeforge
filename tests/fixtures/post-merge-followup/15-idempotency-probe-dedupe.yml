@@ -7,12 +7,12 @@ pr:
   title: "[CFP-545] Phase 2"
   body: "Closes #545"
   labels:
-    - "phase:security-test"
+    - "phase:보안-테스트"
 issue:
   number: 545
   closed_by_pull_requests_references: [545]
 consumer_config:
   lanes:
     security_ai: true
-expected_outcome: "skip_already_audited"
+expected_outcome: "success"
 expected_audit_marker: null

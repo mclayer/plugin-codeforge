@@ -7,7 +7,7 @@ pr:
   title: "[CFP-515] Phase 2"
   body: "Closes other-org/other-repo#999"
   labels:
-    - "phase:security-test"
+    - "phase:보안-테스트"
 issue:
   number: 515
   closed_by_pull_requests_references: [515]

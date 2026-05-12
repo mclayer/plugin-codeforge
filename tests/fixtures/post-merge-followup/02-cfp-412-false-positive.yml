@@ -8,7 +8,7 @@ pr:
   body: |
     No close keyword
   labels:
-    - "phase:impl-test"
+    - "phase:구현-테스트"
 issue:
   number: 412
   closed_by_pull_requests_references: []

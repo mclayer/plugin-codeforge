@@ -7,12 +7,12 @@ pr:
   title: "chore(deps): bump"
   body: "Closes #999"
   labels:
-    - "phase:security-test"
+    - "phase:보안-테스트"
 issue:
   number: 999
   closed_by_pull_requests_references: []
 consumer_config:
   lanes:
     security_ai: true
-expected_outcome: "skip_chore"
+expected_outcome: "skip_no_issue"
 expected_audit_marker: null

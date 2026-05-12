@@ -7,7 +7,7 @@ pr:
   title: "[CFP-455] Phase 1"
   body: "Closes #455"
   labels:
-    - "phase:design-review"
+    - "phase:설계-리뷰"
 issue:
   number: 455
   closed_by_pull_requests_references: []

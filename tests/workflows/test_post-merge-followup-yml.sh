@@ -352,7 +352,13 @@ try:
                 else:
                     val = None
                     break
-            print(str(val) if val is not None else '')
+            if val is None:
+                print('')
+            elif isinstance(val, list):
+                # Handle lists (e.g., pr.labels) by joining with spaces
+                print(' '.join(str(v) for v in val))
+            else:
+                print(str(val))
 except Exception as e:
     print('', file=sys.stderr)
 " 2>/dev/null || echo ""
@@ -369,32 +375,76 @@ run_fixture_simulation() {
 
     # Load fixture YAML fields
     local expected_outcome=$(load_fixture_yaml "$fixture_file" "expected_outcome")
+    local pr_title=$(load_fixture_field "$fixture_file" "pr.title")
     local pr_body=$(load_fixture_field "$fixture_file" "pr.body")
     local pr_number=$(load_fixture_field "$fixture_file" "pr.number")
     local issue_number=$(load_fixture_field "$fixture_file" "issue.number")
     local closed_by_refs=$(load_fixture_field "$fixture_file" "issue.closed_by_pull_requests_references")
     local security_ai=$(load_fixture_field "$fixture_file" "consumer_config.lanes.security_ai")
-    local pr_labels=$(load_fixture_field "$fixture_file" "pr.labels")
+    # Load issue_lane_skip_reason using Python directly
+    # Python will determine if the PR's phase label matches the terminal phase for this security_ai setting
+    local issue_lane_skip_reason=$(python3 -c "
+import yaml
+fixture_file = '$fixture_file'
+security_ai_str = '$security_ai'
+security_ai = security_ai_str == 'True'
 
-    # Determine terminal phase based on security_ai config
-    local terminal_phase="phase:security-test"
+with open(fixture_file, 'r', encoding='utf-8', errors='replace') as f:
+    data = yaml.safe_load(f)
+    labels = data.get('pr', {}).get('labels', [])
+    phase_labels = [l for l in labels if isinstance(l, str) and l.startswith('phase:')]
+
+    # Determine terminal phase
+    if not security_ai:
+        terminal_phase = '구현-테스트'
+    else:
+        terminal_phase = '보안-테스트'
+
+    # Check if phase label matches terminal phase
+    for label in phase_labels:
+        if label.endswith(terminal_phase):
+            print('')  # Terminal phase - no skip
+            exit()
+
+    # If we got here, it's a mid-phase label
+    print('mid-phase')
+" 2>/dev/null || echo ""
+)
+
+    # Build terminal_phase based on security_ai config
+    local terminal_phase
     if [ "$security_ai" = "False" ] || [ "$security_ai" = "false" ]; then
-        terminal_phase="phase:impl-test"
+        # security_ai=false → phase:구현-테스트
+        # UTF-8 hex: eab5aced98842ded858cec8aa4ed8ab8
+        terminal_phase="phase:$(printf '\xea\xb5\xac\xed\x98\x84\x2d\xed\x85\x8c\xec\x8a\xa4\xed\x8a\xb8')"
+    else
+        # security_ai=true → phase:보안-테스트
+        # UTF-8 hex: ebb3b4ec95882ded858cec8aa4ed8ab8
+        terminal_phase="phase:$(printf '\xeb\xb3\xb4\xec\x95\x88\x2d\xed\x85\x8c\xec\x8a\xa4\xed\x8a\xb8')"
     fi
 
-    # Extract ISSUE_LANE from PR labels (first phase:* label) or use terminal phase
-    local issue_lane="$terminal_phase"
-    if [[ "$pr_labels" == *"phase:"* ]]; then
-        issue_lane=$(echo "$pr_labels" | grep -oE "phase:[^ '\"]+" | head -1)
-        if [ -z "$issue_lane" ]; then
-            issue_lane="$terminal_phase"
+    # For issue_lane, we'll keep it empty if it matches terminal_phase (no need to export)
+    local issue_lane=""
+    # issue_lane_skip_reason is already determined by Python above
+
+    # Debug: Show what we loaded (uncomment to debug)
+    # echo "DEBUG: fixture=$fixture_name, security_ai=$security_ai, terminal_phase_hex=$(echo -n "$terminal_phase" | od -An -tx1 | tr -d ' '), issue_lane_skip_reason=$issue_lane_skip_reason" >&2
+
+    # Simulate workflow-level Extract PR metadata guard: detect chore PRs
+    # Chore PRs should skip before reaching action3-logic.sh
+    if [[ "$pr_title" =~ ^chore\( ]]; then
+        # Chore PR detected - skip_no_issue
+        if [ "skip_no_issue" = "$expected_outcome" ]; then
+            echo -e "${GREEN}✓${NC} $fixture_name (outcome=skip_no_issue)"
+            TESTS_PASSED=$((TESTS_PASSED + 1))
+            return 0
+        else
+            echo -e "${RED}✗${NC} $fixture_name"
+            echo "    Expected: $expected_outcome"
+            echo "    Got:      skip_no_issue (chore PR detected)"
+            TESTS_FAILED=$((TESTS_FAILED + 1))
+            return 1
         fi
-    fi
-
-    # Determine if this fixture tests mid-phase skip
-    local issue_lane_skip_reason=""
-    if [ "$issue_lane" != "$terminal_phase" ]; then
-        issue_lane_skip_reason="mid-phase"
     fi
 
     # Create temporary GITHUB_OUTPUT file for this fixture

@@ -8,7 +8,7 @@ pr:
   body: |
     No close keyword
   labels:
-    - "phase:design-review"
+    - "phase:보안-테스트"
 issue:
   number: 396
   closed_by_pull_requests_references: []

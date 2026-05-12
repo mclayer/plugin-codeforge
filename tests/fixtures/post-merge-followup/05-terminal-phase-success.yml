@@ -7,7 +7,7 @@ pr:
   title: "[CFP-500] Phase 2"
   body: "Closes #500"
   labels:
-    - "phase:impl-test"
+    - "phase:구현-테스트"
 issue:
   number: 500
   closed_by_pull_requests_references: [500]

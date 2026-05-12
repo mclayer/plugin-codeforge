@@ -9,12 +9,12 @@ pr:
     Closes #450
     Closes #451
   labels:
-    - "phase:security-test"
+    - "phase:보안-테스트"
 issue:
   number: 450
   closed_by_pull_requests_references: [530]
 consumer_config:
   lanes:
     security_ai: true
-expected_outcome: "skip_multi_cfp"
+expected_outcome: "skip_multi_issue"
 expected_audit_marker: null

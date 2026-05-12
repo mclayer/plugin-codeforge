@@ -49,8 +49,8 @@ expected_audit_comment_body: |
 
 ## Fixture count
 
-- Mandatory: 13 fixtures (Story §8.6 Change Plan §8)
-- Bonus (AC/UC coverage): 2 fixtures (pr-title-with-singlequote, idempotency-probe-dedupe)
+- Mandatory: 13 fixtures (Story §8.6 Change Plan §8) — numbered 01-13
+- Bonus (AC/UC coverage): 2 fixtures (pr-title-with-singlequote, idempotency-probe-dedupe) — numbered 14-15
 - **Total: 15 fixtures**
 
 ## Test harness runner
@@ -69,21 +69,21 @@ Test harness (`test_post-merge-followup-yml.sh`) 가 각 fixture yml 를 load �
 
 ```
 tests/fixtures/post-merge-followup/
-├── 001-cfp-391-false-positive.yml
-├── 002-cfp-412-false-positive.yml
-├── 003-cfp-455-phase1-skip.yml
-├── 004-cfp-455-phase2-success.yml
-├── 005-terminal-phase-success.yml
-├── 006-dual-source-mismatch.yml
-├── 007-multi-issue-warning-skip.yml
-├── 008-qualified-syntax-same-repo.yml
-├── 009-qualified-syntax-cross-repo-skip.yml
-├── 010-mid-phase-blocked.yml
-├── 011-chore-pr-skip.yml
-├── 012-multi-cfp-aggregating-skip.yml
-├── 013-source-b-lazy-sync.yml
-├── B1-pr-title-with-singlequote.yml
-├── B2-idempotency-probe-dedupe.yml
+├── 01-cfp-391-false-positive.yml
+├── 02-cfp-412-false-positive.yml
+├── 03-cfp-455-phase1-skip.yml
+├── 04-cfp-455-phase2-success.yml
+├── 05-terminal-phase-success.yml
+├── 06-dual-source-mismatch.yml
+├── 07-multi-issue-warning-skip.yml
+├── 08-qualified-syntax-same-repo.yml
+├── 09-qualified-syntax-cross-repo-skip.yml
+├── 10-mid-phase-blocked.yml
+├── 11-chore-pr-skip.yml
+├── 12-multi-cfp-aggregating-skip.yml
+├── 13-source-b-lazy-sync.yml
+├── 14-pr-title-with-singlequote.yml
+├── 15-idempotency-probe-dedupe.yml
 └── README.md (this file)
 ```
 

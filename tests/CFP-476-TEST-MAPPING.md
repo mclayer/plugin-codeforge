@@ -28,21 +28,21 @@ Test verification: `test_post-merge-followup-yml.sh` Block B `assert_files_ident
 
 | # | Fixture key | Scenario summary | Expected outcome | Path diversity | Story §8.5 mapping | Status |
 |---|---|---|---|---|---|---|
-| 1 | cfp-391-false-positive | PR #400/#403 body missing `Closes #396` keyword | skip_no_close_keyword | bare #N absent (Source A fail) | UC-1 / EC-9 | 🔄 pending DeveloperPL workflow |
-| 2 | cfp-412-false-positive | PR #421 body missing `Closes #412` keyword | skip_no_close_keyword | bare #N absent (Source A fail) | UC-1 / EC-9 | 🔄 pending |
-| 3 | cfp-455-phase1-skip | Phase 1 PR #460 label `phase:설계-리뷰` | skip_phase1 / skip_not_terminal_phase | mid-phase block (terminal-phase gate fail) | UC-2 / EC-1 | 🔄 pending |
-| 4 | cfp-455-phase2-success | Phase 2 PR #461 label `phase:보안-테스트`, body `Closes #455`, closedByPullRequestsReferences=[#461] | success + `[close-success]` audit marker | bare #N happy path (Source A ∩ B non-empty) | UC-3 / AC-2 | 🔄 pending |
-| 5 | terminal-phase-success | `lanes.security_ai: false` consumer, label `phase:구현-테스트`, body `Closes #N` | success | terminal phase variant (security_ai=false → phase:구현-테스트) | UC-2.5 / AC-3 | 🔄 pending |
-| 6 | dual-source-mismatch | body `Closes #100` but closedByPullRequestsReferences=[] | skip_dual_source_mismatch + `[dual-source-mismatch]` audit | Source A✓ ∩ Source B✗ = empty (mismatch) | UC-4 / AC-4 | 🔄 pending |
-| 7 | multi-issue-warning-skip | body `Closes #100\nCloses #101` multiple issues | skip_multi_issue + `[multi-match-skip]` audit with detected_issues list | EC-4 (multi-match X✣∩Y detection) | AC-5 | 🔄 pending |
-| 8 | qualified-syntax-same-repo | body `Closes mclayer/plugin-codeforge#N` qualified same-repo | success | qualified same-repo syntax parsing | AC-6 | 🔄 pending |
-| 9 | qualified-syntax-cross-repo-skip | body `Closes other-org/other-repo#N` qualified cross-repo | skip_cross_repo_unsupported + `[cross-repo-skip]` audit | cross-repo limit (same-repo only) | EC-3 / AC-7 | 🔄 pending |
-| 10 | mid-phase-blocked | label `phase:구현-리뷰` (mid-phase variant) | skip_not_terminal_phase | 4 mid-phase label variant (구현, 구현-리뷰, 설계-리뷰, 설계) | UC-2 / EC-1 | 🔄 pending |
-| 11 | chore-pr-skip | PR title `chore(*):` prefix | skip_chore | guard preservation (line 50-65 existing Extract PR metadata logic) | UC-1 | 🔄 pending |
-| 12 | multi-cfp-aggregating-skip | PR title `CFP-N1 + CFP-N2` multiple CFP refs | skip_multi_cfp | guard preservation (line 58-65 existing logic) | UC-1 | 🔄 pending |
-| 13 | source-b-lazy-sync | Source A normal + Source B `[]` initially, then retry succeeds (GitHub API propagation delay) | retry 1-2회 후 success OR skip_dual_source_mismatch + `[lazy-source-b]` warning | lazy timing (Source B eventual consistency) | UC-6 / AC-15 | 🔄 pending |
-| (B1) | pr-title-with-singlequote | PR title `cfp-476: it's a fix` single quote escape | success (escape mitigation preserved) | T2 mitigation regression (shell expansion prevention) | AC-16 | 🔄 pending |
-| (B2) | idempotency-probe-dedupe | Same (PR, Issue) pair re-trigger workflow | skip_already_audited + prior audit comment grep | AC-17 idempotency (audit comment pre-grep dedupe) | AC-17 | 🔄 pending |
+| 1 | cfp-391-false-positive | PR #400/#403 body missing `Closes #396` keyword | skip_no_close_keyword | bare #N absent (Source A fail) | UC-1 / EC-9 | ✓ |
+| 2 | cfp-412-false-positive | PR #421 body missing `Closes #412` keyword | skip_no_close_keyword | bare #N absent (Source A fail) | UC-1 / EC-9 | ✓ |
+| 3 | cfp-455-phase1-skip | Phase 1 PR #460 label `phase:설계-리뷰` | skip_phase1 / skip_not_terminal_phase | mid-phase block (terminal-phase gate fail) | UC-2 / EC-1 | ✓ |
+| 4 | cfp-455-phase2-success | Phase 2 PR #461 label `phase:보안-테스트`, body `Closes #455`, closedByPullRequestsReferences=[#461] | success + `[close-success]` audit marker | bare #N happy path (Source A ∩ B non-empty) | UC-3 / AC-2 | ✓ |
+| 5 | terminal-phase-success | `lanes.security_ai: false` consumer, label `phase:구현-테스트`, body `Closes #N` | success | terminal phase variant (security_ai=false → phase:구현-테스트) | UC-2.5 / AC-3 | ✓ |
+| 6 | dual-source-mismatch | body `Closes #100` but closedByPullRequestsReferences=[] | skip_dual_source_mismatch + `[dual-source-mismatch]` audit | Source A✓ ∩ Source B✗ = empty (mismatch) | UC-4 / AC-4 | ✓ |
+| 7 | multi-issue-warning-skip | body `Closes #100\nCloses #101` multiple issues | skip_multi_issue + `[multi-match-skip]` audit with detected_issues list | EC-4 (multi-match X✣∩Y detection) | AC-5 | ✓ |
+| 8 | qualified-syntax-same-repo | body `Closes mclayer/plugin-codeforge#N` qualified same-repo | success | qualified same-repo syntax parsing | AC-6 | ✓ |
+| 9 | qualified-syntax-cross-repo-skip | body `Closes other-org/other-repo#N` qualified cross-repo | skip_cross_repo_unsupported + `[cross-repo-skip]` audit | cross-repo limit (same-repo only) | EC-3 / AC-7 | ✓ |
+| 10 | mid-phase-blocked | label `phase:구현-리뷰` (mid-phase variant) | skip_not_terminal_phase | 4 mid-phase label variant (구현, 구현-리뷰, 설계-리뷰, 설계) | UC-2 / EC-1 | ✓ |
+| 11 | chore-pr-skip | PR title `chore(*):` prefix | skip_no_issue | guard preservation (line 50-65 existing Extract PR metadata logic) | UC-1 | ✓ |
+| 12 | multi-cfp-aggregating-skip | PR title `CFP-N1 + CFP-N2` multiple CFP refs | skip_multi_issue | guard preservation (line 58-65 existing logic) | UC-1 | ✓ |
+| 13 | source-b-lazy-sync | Source A normal + Source B `[]` initially, then retry succeeds (GitHub API propagation delay) | success | lazy timing (Source B eventual consistency) | UC-6 / AC-15 | ✓ |
+| 14 | pr-title-with-singlequote | PR title `cfp-476: it's a fix` single quote escape | success | T2 mitigation regression (shell expansion prevention) | AC-16 | ✓ |
+| 15 | idempotency-probe-dedupe | Same (PR, Issue) pair re-trigger workflow | success | AC-17 idempotency (audit comment pre-grep dedupe) | AC-17 | ✓ |
 
 ## Bash mock gap inventory (7 영역)
 

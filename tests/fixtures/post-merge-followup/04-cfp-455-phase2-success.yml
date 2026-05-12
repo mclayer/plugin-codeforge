@@ -7,7 +7,7 @@ pr:
   title: "[CFP-455] Phase 2"
   body: "Closes #455"
   labels:
-    - "phase:security-test"
+    - "phase:보안-테스트"
 issue:
   number: 455
   closed_by_pull_requests_references: [461]

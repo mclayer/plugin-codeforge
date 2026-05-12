@@ -7,7 +7,7 @@ pr:
   title: "[CFP-502] Phase 2"
   body: "Closes #502"
   labels:
-    - "phase:security-test"
+    - "phase:보안-테스트"
 issue:
   number: 502
   closed_by_pull_requests_references: []

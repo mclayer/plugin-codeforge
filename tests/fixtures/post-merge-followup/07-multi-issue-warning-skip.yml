@@ -9,7 +9,7 @@ pr:
     Closes #505
     Closes #506
   labels:
-    - "phase:security-test"
+    - "phase:보안-테스트"
 issue:
   number: 505
   closed_by_pull_requests_references: [505]

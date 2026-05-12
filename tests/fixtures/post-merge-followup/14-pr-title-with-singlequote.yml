@@ -7,7 +7,7 @@ pr:
   title: "cfp-476: it's a fix"
   body: "Closes #540"
   labels:
-    - "phase:security-test"
+    - "phase:보안-테스트"
 issue:
   number: 540
   closed_by_pull_requests_references: [540]

@@ -7,7 +7,7 @@ pr:
   title: "[CFP-520] Phase 2"
   body: "Closes #520"
   labels:
-    - "phase:impl-review"
+    - "phase:구현-리뷰"
 issue:
   number: 520
   closed_by_pull_requests_references: [520]
