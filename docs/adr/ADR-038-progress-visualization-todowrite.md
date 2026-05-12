@@ -7,6 +7,27 @@ category: orchestration
 carrier_story: CFP-274
 supersedes: null
 is_transitional: false
+amendments:
+  - id: 1
+    carrier_story: CFP-375
+    date: 2026-05-11
+    title: TodoWrite 호출 시도 의무 (non-skippable attempt)
+  - id: 2
+    carrier_story: CFP-500
+    date: 2026-05-12
+    title: Deferred tool 스키마 선제 로드 = SessionStart hook tier 격상
+  - id: 3
+    carrier_story: CFP-475
+    date: 2026-05-12
+    title: Hook 등록 위치 SSOT (plugin-root) + polyglot wrapper + one-channel rule + mechanical_enforcement_actions[] self-application
+    sunset_justification: "N/A — is_transitional: false (permanent governance mandate). Amendment 3 = §결정 10·11·12·13·14 신설 (implementation correction of CFP-500 path mismatch root cause + ADR-040 Amendment 3 §결정 7.D self-application 두 번째 사례). 기존 정책 폐기/축소 0건."
+mechanical_enforcement_actions:
+  # ADR-040 Amendment 3 §결정 7.D self-application 두 번째 사례 (CFP-475 carrier).
+  # CFP-426 self-application 첫 사례 (ADR-040 frontmatter 자체) 와 동등 패턴.
+  - action: duplicate-session-start-hook-check
+    status: warning
+    target_section: §결정 12 (one-channel rule + plain stdout SSOT)
+    progress_note: "actual wire CFP-475 (scripts/check-no-duplicate-session-start-hook.sh + templates/github-workflows/duplicate-session-start-hook-check.yml)"
 ---
 
 # ADR-038: Progress visualization via TodoWrite (single-Story, hierarchical 4-marker)
@@ -148,6 +169,146 @@ amendment_log:
         - **who**: PMOAgent (Story 완료 회고에서 mctrader debut audit 결과 집계).
         - **how**: CFP-500 merge 후 3개월 + mctrader debut audit 1 cycle 완료 시점에 retrospective 평가. PASS 시 §결정 9 retain. FAIL 시 (a) tier 격상 (CI / git hook physical enforcement) 검토 CFP 발의. **Automation candidate** — CFP-389 / ADR-060 evidence-enforceable framework 후속 evaluation (manual sampling → grep-based auto count) 으로 격상 가능성 별도 CFP 평가.
       Measurement mechanism 한계 — consumer telemetry 부재로 manual sampling (automation candidate 위 참조). ADR-058 §결정 3 정량 명시 + 모달 어휘 부재 정합. 측정 정확도는 retrospective evaluation 까지 미해소 (Story §6 위험 #1 acknowledged).
+  - by: "CFP-475"
+    date: "2026-05-12"
+    scope: |
+      §결정 10·11·12·13·14 신설 (5건 — implementation correction of CFP-500 path mismatch root cause).
+      §결정 9 retain unchanged (hook tier 격상 정책 자체 보존, 본 Amendment 3 는 **등록 위치** + **polyglot pattern** + **one-channel rule** + **env contract** + **self-application** 만 신설).
+      §결정 1-8 retain unchanged.
+    sunset_justification: |
+      본 amendment 는 ADR 본체 frontmatter `is_transitional: false` (permanent governance mandate) 변경 안 함 — Amendment 3 = implementation correction (path mismatch root cause 해소) + ADR-040 Amendment 3 §결정 7.D self-application 두 번째 사례. 기존 결정 폐기/축소 0건.
+
+      §결정 9 의 metric/who/how 3-tuple (TodoWrite InputValidationError 발생률 < 5건/100세션) 은 Amendment 3 에 의해 강화 — hook 발화 channel 정합성 확보 (path mismatch 해소) 가 metric 측정 정확도의 prerequisite. Amendment 3 후 3개월 retrospective 시점 (Amendment 2 sunset_justification 와 동일 cycle) 에 동시 평가:
+        - **§결정 10·12 measurable validation**: Phase 2 PR merge 후 100개 cold start sample 안 (a) hook 발화 channel 정합성 (`additionalContext` 안 `ToolSearch select:TodoWrite` substring 발화 비율 ≥ 95%) + (b) within-block / cross-block duplication 0건 검증 — `scripts/check-no-duplicate-session-start-hook.sh` warning detect 빈도 = 0.
+        - **§결정 11 polyglot pattern stability**: superpowers 5.1.0 verbatim copy-adapt — 5.1.0 GA 6개월 무사고 evidence preserve + 본 Story Phase 2 merge 후 3개월 cycle 안 polyglot wrapper regression 0건 (`tests/unit/test-session-start-hook.sh` PASS 100%).
+        - **§결정 13 BYPASS env contract**: `BYPASS_CODEFORGE_PREREQ` 사용 빈도 measurable (stderr audit echo grep — manual sampling 단계). `BYPASS_PREREQ_CHECK` deprecated grace = 1 release (별도 CFP carrier).
+        - **§결정 14 self-application**: ADR-040 Amendment 3 §결정 7.D 패턴 두 번째 사례. ADR-060 evidence-enforceable framework `duplicate-session-start-hook-check` entry warning tier — promotion criteria (PR 누적 ≥ 20 + failure 0) 충족 시 blocking-on-pr 격상 가능성 별도 CFP 평가.
+        - **Story §3.4.0 결정 1 T5 imperative directive measurable revisit** (DesignReview synth cfp-475-dr-synth-003 권고 정합): hook stdout 의 "You MUST call..." imperative wording 보존 결정 (factual reframing 미적용). prompt-injection defense surface 발화 frequency manual sampling — stderr / GitHub issue search "prompt injection defense" / Claude session warning 발화 grep. **100세션 sample 중 ≥ 5건 → factual reframing ("The codeforge orchestrator workflow requires...") 격상 별도 CFP carrier**. Amendment 2 sunset_justification cycle (3개월 + mctrader debut 1 cycle) 와 동일 동기화. fail-safe monitoring 채널 = Story §8.1-T4 indirect detect (cold start `additionalContext` 안 directive 발화 metric 동반 측정).
+
+      Measurement mechanism 한계 = §결정 9 sunset_justification verbatim (consumer telemetry 부재 → manual sampling, automation candidate). ADR-058 §결정 3 정량 명시 + 모달 어휘 부재 정합.
+
+### 결정 10 — Hook 등록 위치 SSOT 정정 (plugin-root `hooks/hooks.json` first-class, Amendment 3)
+
+§결정 9 의 Mechanism 부분은 consumer `.claude/settings.json` `hooks.SessionStart[]` 에 sample 등록을 명시했다. **이 명시가 CFP-500 in-vivo verify #471 FAIL 의 implementation bug root cause** — `${CLAUDE_PLUGIN_ROOT}` interpolation 이 plugin context 에서만 resolve 되는데, settings.json 안 `command` 가 `${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-prereq.sh` 잉여 `codeforge/` segment 를 포함 → bash 실행 실패 → stdout empty → harness capture 0 → injection 0. 본 §결정 10 가 등록 위치 SSOT 를 **plugin-root `hooks/hooks.json` first-class** 로 정정.
+
+**SSOT (plugin-root)**:
+- 위치: `<plugin-cache>/hooks/hooks.json` (plugin root, **`.claude-plugin/` 하위 금지** — Claude Code Plugins 공식 spec verbatim 정합)
+- Schema: superpowers 5.1.0 `hooks/hooks.json` verbatim copy-adapt (line 1-16 — `matcher: "startup|clear|compact"` + `type: "command"` + `command: "${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd session-start"` + `async: false`)
+- `${CLAUDE_PLUGIN_ROOT}` resolve scope = plugin context 한정 (잉여 path segment 0 보장)
+- Consumer activation = `/plugins install codeforge@mclayer` 단독으로 자동 활성 (CFP-475 §4.2 G2 PoC PASS evidence — `/plugin enable` 별도 명령 불필요)
+
+**Fallback (deprecated, 1 release grace)**:
+- `templates/.claude/hooks/SessionStart-codeforge-prereq-check.json.sample` = consumer 등록 sample. **CFP-475 부터 deprecated** (`_deprecated_since: 5.22.0` metadata 부착).
+- 1 release grace 후 별도 CFP 가 sample file 삭제 + 등록 잔존 cleanup 권고.
+
+**§결정 9 Mechanism 정정**: "consumer `.claude/settings.json` `hooks.SessionStart[]` 에 sample 등록" → "plugin-root `hooks/hooks.json` 자동 활성 (consumer 등록 절차 불필요)".
+
+carrier_story: CFP-475
+Amendment 날짜: 2026-05-12
+
+### 결정 11 — Polyglot wrapper pattern (Windows `.cmd` + Unix `.sh`, superpowers 5.1.0 verbatim copy-adapt + MIT attribution)
+
+§결정 9 의 helper script `scripts/check-codeforge-prereq.sh` = bash 단일 환경. Windows consumer (cmd.exe / PowerShell / Git Bash / WSL) 에서 hook 발화 시점에 어떤 shell 이 invoke 되는지 Claude Code 공식 spec 모호. CFP-475 §4.2 G1 PoC 가 superpowers 5.1.0 `run-hook.cmd` 의 polyglot 패턴 (3 환경 실측) 검증 — 본 §결정 11 가 패턴을 ADR-038 SSOT 로 채택.
+
+**Polyglot dispatcher (`hooks/run-hook.cmd`)**:
+- superpowers 5.1.0 `hooks/run-hook.cmd` (line 1-47) **verbatim copy-adapt** (변경 0건).
+- Polyglot mechanism: line 1 `: << 'CMDBLOCK'` = bash 의 no-op heredoc + cmd.exe 의 라벨 (parse 안 됨) → cmd.exe 는 line 2-39 batch 실행, bash 는 line 42-46 만 실행.
+- Windows bash detect 4-tier (line 21-35): `C:\Program Files\Git\bin\bash.exe` → `C:\Program Files (x86)\Git\bin\bash.exe` → `where bash` (PATH) → silent `exit /b 0` (4번째 = no bash 환경 fail-safe).
+- Unix dispatch (line 42-46): `exec bash "${SCRIPT_DIR}/${SCRIPT_NAME}" "$@"` — extensionless script 호출.
+
+**Extensionless script naming (`hooks/session-start`)**:
+- superpowers run-hook.cmd line 6-8 주석 verbatim — "Hook scripts use extensionless filenames (e.g. "session-start" not "session-start.sh") so Claude Code's Windows auto-detection — which prepends "bash" to any command containing .sh — doesn't interfere."
+- Windows harness auto-detect 우회 = race condition 회피.
+
+**MIT attribution**:
+- `hooks/run-hook.cmd` line 1-3 주석 안 SPDX-License-Identifier + 출처 (https://github.com/obra/superpowers v5.1.0) + carrier_story (CFP-475) 명시 의무.
+- superpowers 의 MIT 라이센스 = 본 ADR sample / 본 plugin Phase 2 PR 차용 안전.
+
+**Overhead (G1 PoC 실측)**:
+- Git Bash 단독 ~50ms / Win11 cmd.exe → bash dispatch ~150ms / WSL bash ~50ms / macOS bash ~50ms.
+- Hook timeout 15s 대비 **< 1%** = §결정 9 layered defense 영향 0.
+
+**Variants 미채택**:
+- 환경별 별도 hook entry (`.cmd` only / `.sh` only) 분리: 채택 X — schema 복잡도 증가 + cross-platform 일관성 약화. polyglot single file 가 우월.
+- `plugin.json.hooks` inline: 채택 X — Claude Code spec 안 inline schema 모호 + `${CLAUDE_PLUGIN_ROOT}` resolve scope 불확실. plugin-root `hooks/hooks.json` 단독 SSOT.
+
+carrier_story: CFP-475
+Amendment 날짜: 2026-05-12
+
+### 결정 12 — One-channel rule (plain stdout SSOT + JSON form 은 `suppressOutput` 동반 시에만)
+
+§결정 9 Mechanism = helper script stdout 의 prompt-injection inject. CFP-475 Researcher Round 4 re-verify 가 **paradigm shift** 발견 — Claude Code Hooks 공식 spec (https://code.claude.com/docs/en/hooks) verbatim: "Any text your hook script prints to stdout is added as context for Claude" + "Since plain stdout already reaches Claude for this event, a hook that only loads context can print to stdout directly without building JSON. Use the JSON form when you need to combine context with other fields such as `suppressOutput`." 본 §결정 12 가 plain stdout 을 SSOT 로 채택.
+
+**One-channel rule (plain stdout SSOT)**:
+- `hooks/session-start` 본문 = `cat <<'EOF' ... EOF` heredoc plain stdout echo + exit 0.
+- JSON wrap layer (`additional_context` / `hookSpecificOutput.additionalContext` / `additionalContext` 3-platform dispatch) **부재** — superpowers session-start 의 `escape_for_json` + 3-platform JSON dispatch 패턴 미차용.
+- JSON form 은 `suppressOutput` / `systemMessage` 등 다른 field 동반 필요 시에만 사용 (공식 spec verbatim 정합) — 본 Story scope = single advisory directive, JSON 비필수.
+
+**Double-injection 회귀 회피 (mechanical lint enforcement)**:
+- `.claude/settings.json` `hooks.SessionStart[]` + plugin-root `hooks/hooks.json` 양 channel 안 prereq-check entry 동시 존재 시 → `scripts/check-no-duplicate-session-start-hook.sh` warning tier (exit 2) 발화 + `templates/github-workflows/duplicate-session-start-hook-check.yml` PR-time audit comment auto-post.
+- `hotfix-bypass:duplicate-session-start-hook` label 부착 시 lint skip + audit comment 만 발화 (ADR-060 §결정 7 audit-trailed exception 패턴 정합).
+- Evidence base: anthropics/claude-code Issue #14281 (within-block / cross-block duplication) + superpowers Issue #648 (2-field JSON 출력 → dedup 부재 → 2x inject 회귀).
+
+**Within-block duplication 잔존 위험 처리**:
+- plain stdout 도 #14281 within-block 위험 잔존 가능 — §결정 12 가 mechanical lint 로 차단 (`hooks/hooks.json` schema 안 prereq-check entry 1 회만 정의 의무).
+- §8.5.6 paradigm shift verify 8-step (Story CFP-475) = substring count = 1 verify 의무 (cold start manual transcript export).
+
+carrier_story: CFP-475
+Amendment 날짜: 2026-05-12
+
+### 결정 13 — `BYPASS_CODEFORGE_PREREQ` env contract + namespace migration + audit trail 의무
+
+§결정 9 Mechanism = "If ToolSearch fails: retry once. If retry fails: warn user, continue (ADR-038 §결정 7 fallback)" — runtime fallback. 본 §결정 13 = 사용자 ad-hoc bypass channel SSOT 명시.
+
+**Env contract (`BYPASS_CODEFORGE_PREREQ=1`)**:
+- 사용자 advisory bypass — debug / 환경별 사유로 hook 발화 제어 시.
+- 설정 시 hook short-circuit (stdout empty + harness injection 0 + 세션 정상 진행).
+- **Audit trail 의무 (mandatory)**: stderr 로 1-line audit echo — `>&2 printf '[codeforge-prereq] BYPASS_CODEFORGE_PREREQ=1 — TodoWrite preload directive suppressed at %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"`. timestamp UTC ISO 8601 = single canonical reference.
+- 근거: ADR-058 §결정 5 audit trail visibility + ADR-060 §결정 7 hotfix-bypass:* audit-trailed exception 패턴 (env bypass 도 동등 audit channel 의무).
+
+**Namespace migration (`BYPASS_PREREQ_CHECK` → `BYPASS_CODEFORGE_PREREQ`)**:
+- 기존 `BYPASS_PREREQ_CHECK=1` env (CFP-500 산출물) = codeforge 식별 prefix 부재 — namespace 불명확.
+- `BYPASS_CODEFORGE_PREREQ` = codeforge prefix 명료 (다른 plugin / tool 의 BYPASS env 와 collision 회피).
+- **1 release deprecation grace**: `BYPASS_PREREQ_CHECK=1` 도 1 release 동안 호환 — stderr 로 deprecation warning + exit 0. 별도 CFP 가 후속 제거.
+
+**Bypass scope 한계**:
+- 본 env = advisory bypass only — TodoWrite preload directive 발화 제어만 영향 (다른 hook entry / workflow / lint 비영향).
+- Multi-instance race condition 영향 0 (hook stateless I2 정합).
+- ratchet anti-pattern 차단 = audit echo 가 silent bypass 방지 (ADR-058 §결정 5 정합).
+
+carrier_story: CFP-475
+Amendment 날짜: 2026-05-12
+
+### 결정 14 — `mechanical_enforcement_actions[]` self-application (ADR-040 Amendment 3 §결정 7.D 패턴 두 번째 사례)
+
+ADR-040 Amendment 3 §결정 7 (CFP-426) = 모든 normative ADR amendment 의 frontmatter `mechanical_enforcement_actions[]` 의무 신설. §결정 7.D self-application 첫 사례 = ADR-040 자체. 본 §결정 14 = ADR-038 Amendment 3 가 self-application 두 번째 사례.
+
+**Frontmatter `mechanical_enforcement_actions[]` 부착 (본 ADR file 자체)**:
+```yaml
+mechanical_enforcement_actions:
+  - action: duplicate-session-start-hook-check
+    status: warning
+    target_section: §결정 12 (one-channel rule + plain stdout SSOT)
+    progress_note: "actual wire CFP-475 (scripts/check-no-duplicate-session-start-hook.sh + templates/github-workflows/duplicate-session-start-hook-check.yml)"
+```
+
+**Entry binding**:
+- `action: duplicate-session-start-hook-check` = `docs/evidence-checks-registry.yaml` entry name verbatim.
+- `target_section: §결정 12` = 본 ADR 안 binding 지점 (one-channel rule mechanical enforcement 의 normative source).
+- `progress_note` = actual wire CFP-475 (script + workflow) — CFP-426 worktree-first 4 entry skeleton 동등 패턴.
+
+**evidence-checks-registry.yaml entry append (별도 file)**:
+- 위치: `docs/evidence-checks-registry.yaml` `entries[]` 마지막 row append (worktree-first-spawn-evidence-cwd 다음).
+- Schema v1.1 정합 (CFP-455 Amendment 2 §결정 17 retroactive reclassification immediate fail) — `current_tier: warning` (required) + `bypass_label: hotfix-bypass:duplicate-session-start-hook` + `bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh` (CFP-389 prior art reuse).
+- promotion criteria: `pr_cumulative_min: 20` + `failure_threshold: 0` + `sibling_dependencies: []` (본 entry 단독, Story 4 진입 시 평가 sibling 부재).
+- `introduced_by: CFP-475` / `owner_adr: ADR-038` / `carrier_adr: ADR-038` / `status: Active`.
+
+**Promotion 평가 (별도 CFP)**:
+- 본 entry = warning tier (Phase 2 PR scope = actual wire 첫 사례). CFP-426 worktree-first 4 entry skeleton 동등 패턴.
+- ADR-060 §결정 6 promotion gate AND condition (PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling Story merged) 충족 시 blocking-on-pr 격상 가능 — 별도 CFP 평가.
+
+carrier_story: CFP-475
+Amendment 날짜: 2026-05-12
 
 ## 대안 검토
 
