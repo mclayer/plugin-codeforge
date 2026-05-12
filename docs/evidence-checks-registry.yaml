@@ -135,6 +135,23 @@ entries:
       ADR-031 lane-spawn evidence mandate — Story §14 Lane Evidence row 부재 검출 +
       Phase 2 PR `## Lane evidence` 블록 cross-validate (CFP-126). bypass = env
       BYPASS_LANE_EVIDENCE=1 + reason.
+
+      Actual recurrence (description-only documentation signal, machine-usable
+      promotion signal 아님 — ADR-060 4-tier promotion path / failure_threshold
+      / pr_cumulative_min 와 무관):
+        - CFP-500 FIX-5 (1차): #456 merge 직전 첫 actual collision (table format +
+          7-row format 두 heading 등장 → first-match capture boundary 로 인해
+          첫 heading 만 capture, 7-row regex 0/7 match → fail)
+        - CFP-451 본 세션 transient (2차): #486 step 3 시점 동일 패턴 재현 후
+          step 4 awk-delete fix → step 5 final PASS
+
+      Logic refinement (CFP-490 Phase 2): 5a guard tie-break case A/B/C 식별 +
+      .mjs extraction (.github/scripts/check-lane-evidence-block.mjs) +
+      analyzeDuplicateHeadings() 함수로 valid heading 명시. Option A strict
+      (CFP-465 invariant 보존) — lenient fallback 채택 안 함. recurrence_count
+      framework / promotion gate input / lint warning condition 모두 무관 —
+      별도 carrier CFP 가 machine-usable recurrence metric framework 도입 시
+      ADR-060 정합 schema design 필요.
     detect_command: bash scripts/check-lane-evidence.sh
     workflow: .github/workflows/lane-evidence-check.yml
     current_tier: warning            # manifest 미부착 — Phase 2 backfill 시점 정합 (§결정 13 표)
@@ -704,4 +721,38 @@ entries:
     introduced_by: CFP-475
     owner_adr: ADR-038
     carrier_adr: ADR-038
+    status: Active
+
+  # ─── CFP-481 Phase 2 (PR open 시 phase label 자동 부착, 2026-05-12) ───
+  # ADR-024 Amendment 4 §결정 6.A.1 branch → phase mapping 표 SSOT 의 mechanical enforcement —
+  # 3rd warning-tier entry (1st = adr-sunset-criteria / 2nd = decision-principle-vocab).
+  # CFP-455 + CFP-449 retro 식별 sentinel 2 (재현 2회) → mechanical enforcement 도입 timing 도달.
+
+  - name: auto-phase-label
+    description: |
+      ADR-024 Amendment 4 §결정 6.A.1 branch → phase mapping 표 mechanical lint —
+      PR open 시 4-tier inference fallback chain (branch parse / Related Issue inherit /
+      terminal default / unclassified+warning) 으로 phase:* label 자동 부착.
+      story-init.yml 가 만든 PR 은 가드 skip (책임 분리). race 회피 = concurrency.group
+      `phase-label-auto-N` 직렬화 + phase-label-invariant.yml 와는 trigger event type 분리
+      (`pull_request:opened` vs `pull_request:labeled`). idempotency = PR body marker
+      `<!-- attached_by_auto: true -->` presence dedup. evidence-enforceable framework
+      3rd warning-tier entry (1st = adr-sunset-criteria / 2nd = decision-principle-vocab).
+    detect_command: github-actions-runtime  # workflow self-fire (PR open event), no static script
+    workflow: templates/github-workflows/auto-phase-label.yml
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:auto-phase-label
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: []       # 독립 entry — workflow self-app + ADR-024 Amendment 4 정합
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    # modal_anti_pattern_dictionary: omit — workflow lint, modal 어휘 검사 미포함
+    introduced_by: CFP-481
+    owner_adr: ADR-024 Amendment 4 §결정 6.A.1   # branch → phase mapping 표 SSOT
+    carrier_adr: ADR-060             # framework carrier (warning mode entry)
     status: Active

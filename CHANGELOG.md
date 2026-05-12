@@ -5,6 +5,62 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.23.0] - 2026-05-12
+
+### Changed (CFP-490 Phase 2 — lane-evidence-check duplicate heading collision auto-detection 강화)
+
+ADR-031 §결정 3 (lint cross-validate) 의 enforcement layer logic refinement. CFP-465 (#482, cc5d7c3) 가 도입한 5a duplicate guard (line 113-128) 의 잔여 gap 4종 해소 — (a) summary 메시지 단순 count → tie-break case A/B/C 식별 + valid heading 명시 + 삭제 target 권고, (b) tie-break decision 부재 → Case A (1 valid) / Case B (0 valid) / Case C (2+ valid) 분기, (c) recurrence count documentation 부재 → registry description 본문 명시, (d) origin 식별 부재 → first-match capture boundary + DeveloperPL spawn template 가설 documentation. Option A strict 채택 (CFP-465 invariant 보존, lenient fallback 폐기 — ADR-031 §결정 2 "1회 heading 의무" 정합). `.mjs` extraction 채택 (testability rationale — bash heredoc `node -e` simulate 한계 초과, 6 test_function 29 assertion path coverage 측정). MINOR bump (workflow yml 변경 + .github script 신설).
+
+- `templates/github-workflows/lane-evidence-check.yml` (UPDATE line 112-143) — 5a guard 강화: `analyzeDuplicateHeadings()` import + tie-break case A/B/C summary + ADR-031 §결정 2 정책 인용 + DeveloperPL spawn template 가설 documentation comment.
+- `.github/workflows/lane-evidence-check.yml` (UPDATE) — ADR-005 byte-identical self-app mirror.
+- `.github/scripts/check-lane-evidence-block.mjs` (NEW, 116 line) — `analyzeDuplicateHeadings(body)` 함수 export. Case A/B/C tie-break + valid_heading_idx + invalid_idx_list 식별. `actions/github-script@v7.1.0` 안 dynamic import (ESM/CJS 호환).
+- `tests/workflows/test_lane-evidence-check-yml.sh` (NEW, 252 line, 6 test_function 29 assertion) — Case A/B/C path coverage + strict mode + fast-pass invariants + BYPASS honor + cross-cutting (byte-identical + .mjs presence + dynamic import) 검증. base64 body encoding 으로 cross-platform 안전 (Git Bash MSYS2 path translation 회피).
+- `docs/evidence-checks-registry.yaml` (UPDATE) — `lane-evidence-trail` entry description 본문에 actual recurrence (CFP-500 FIX-5 1차 + CFP-451 본 세션 2차) + logic refinement (CFP-490 Phase 2) 명시. schema 무영향 — machine-usable promotion signal 아님 (ADR-060 4-tier 무관).
+- `.claude-plugin/plugin.json` — version 5.22.1 → 5.23.0 MINOR (workflow yml + .github script 신설, ADR-037 정합).
+
+### Sibling sync (ADR-016 + ADR-063 atomic invariant)
+
+- `marketplace.json` 4 mirrored field sync 의무 — name/version/description/author. **본 PR scope 외, Orchestrator escalation 영역** (DeveloperPL 책임 외). marketplace sync PR open 후 atomic check PASS 의무.
+
+### Why
+
+CFP-500 FIX-5 (#456, merge 직전 1차 actual collision) + CFP-451 본 세션 transient (#486 step 3 2차 actual) 의 2회 actual recurrence — 단일 defense (5a heading-count guard) 가 작동하나 valid heading 식별 부재 + tie-break decision 부재 + fix-guide weak (수동 삭제 안내만, 어느 heading 인지 명시 안 함). 본 Story = 잔여 gap 해소. 신규 ADR 0건 — ADR-031 §결정 3 의 enforcement layer 내부 logic refinement.
+
+### Compatibility
+
+- **Wire**: 영향 0건 — ADR-031 effective date 보존 (retroactive 미처리, §결정 5 정합).
+- **Existing valid PR**: 영향 0건 (5 capture + 6 step 동작 변경 0, 5a 만 강화).
+- **In-flight Phase 2 PR with duplicate heading**: 본 Story merge 후 첫 push 부터 강화된 summary 발화 — fix 부담 줄어듦 (어느 heading 이 valid 인지 명시).
+- **codeforge-develop sibling**: AC-9 origin investigation 결론 — DeveloperPL agent body composition 영역의 first heading auto-inject 정정은 별도 carrier CFP (sibling lane plugin scope).
+
+## [5.22.1] - 2026-05-12
+
+### Changed (CFP-448 Phase 2 — Sonnet selective rollback 구현)
+
+ADR-057 Amendment 3 + ADR-042 Amendment 5 (Phase 1 PR #488 merged) 의 Phase 2 구현. 6 agent decision matrix 정합 — N=3 Sonnet rollback (CodebaseMapper / Refactor / DeveloperPL) + 3 Opus 유지 (Feasibility / Continuity / ChangeImpact). mandate text 재정의 N'=2 (CodebaseMapper / Refactor — ChangeImpact exclusion criterion 정합). PATCH bump (CLAUDE.md mirror + script 배열 변경, 정책 본문 변경 0건).
+
+- `CLAUDE.md` (UPDATE L164 cross-ref note) — "ADR-057 §결정 3 표 = SSOT, CLAUDE.md L127 = mirror reference" 1줄 명시 (CL-6 사용자 확정 / drift forcing function).
+- `scripts/measure-rate-limit-fallback.sh` (UPDATE) — SONNET_AGENTS 배열 5종 → 8종 (3 entry append: CodebaseMapperAgent / RefactorAgent / DeveloperPLAgent). header 주석 + drift detection 코멘트 cross-ref Amendment 3 갱신.
+- `.claude-plugin/plugin.json` — version 5.22.0 → 5.22.1 PATCH (ADR-037 정합 — CLAUDE.md mirror + script 배열 변경, ADR Amendment 본문 변경 0건). description CFP-448 Phase 2 entry append.
+
+### Sibling sync (ADR-016 + ADR-063 atomic invariant — Phase 2 PR pair)
+
+- `plugin-codeforge-develop` 0.5.0 → 0.5.1 PATCH — DeveloperPLAgent model field Opus → Sonnet (사용자 framing 직접 적용 — ADR-042 §결정 1 (b) verbatim 회귀, mandate text 0건 — 이미 implementation work 정의 명확).
+- `plugin-codeforge-design` 0.6.0 → 0.7.0 MINOR — CodebaseMapperAgent / RefactorAgent model field Opus → Sonnet **+ mandate text 재정의** (description frontmatter + 본문 mandate boundary section).
+- `plugin-codeforge-requirements` 영향 0 (ChangeImpactAgent Opus 유지).
+- `marketplace.json` 3 entry sync — **본 PR scope 외**, Epic CFP-462 close 시 일괄 처리 (24h drift window 발생 → audit comment 자동 발의 인지, ADR-063 §결정 5 hotfix-bypass:marketplace-atomic 채널 외 normal merge).
+
+### Why
+
+CFP-393 회고에서 발견된 3-way drift (CLAUDE.md L127 8종 / ADR-057 §결정 3 5종 / agent file 실측 4종) 의 reverse direction 해소. CLAUDE.md L127 8종이 정합인 상태로 회복 — 3 agent (CodebaseMapper / Refactor / DeveloperPL) Opus → Sonnet 복귀. 사용자 framing 진화 — 초기 결정 (ChangeImpact + Mapper + Refactor) 에서 새 framing ("코드 작성 agent = Sonnet, 고도 추론 불필요" + "ChangeImpact 는 Opus 가 괜찮음") 적용 후 swap. ADR-042 §결정 1 (b) "Implementation work" verbatim 정합. mandate text 재정의로 ADR-042 §결정 2 invariant ("Sonnet 으로 fully cover 가능 = role 재정의 시그널") 정합 강제.
+
+### Compatibility
+
+- **Wire**: codeforge-{requirements,design} >= 0.5.0 (sibling sync 의무).
+- **Contract version**: 본 PR 의 contract schema 변경 0건 (review-verdict-v4 / develop-output-v1 / requirements-output-v1 / design-output-v2 / fix-event-v1 모두 unchanged).
+- **Marketplace**: 3-file atomic invariant (ADR-063) — 본 PR 은 24h drift window scope (Epic CFP-462 close 시 sync). 별도 PR 으로 marketplace.json 3 entry version sync 의무.
+- **ADR-053 재구동 의무**: agent definition 변경 = 구조적 변경. Phase 2 merge 후 consumer 측 marketplace install + plugin version drift check 의무.
+
 ## [5.22.0] - 2026-05-12
 
 ### Added (CFP-475 — ADR-038 Amendment 3 hooks/hooks.json plugin-root SSOT + polyglot wrapper + plain stdout SSOT)

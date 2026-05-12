@@ -109,9 +109,26 @@ jobs:
               return;
             }
 
-            // 5a. Duplicate block detection (CFP-465) — body 에 `## Lane evidence` heading 이 1회 초과 시 fail
-            const headingMatches = body.match(/^## Lane evidence\s*$/gm) || [];
-            if (headingMatches.length > 1) {
+            // 5a. Duplicate block detection (CFP-465 baseline + CFP-490 tie-break 강화) —
+            //     body 에 `## Lane evidence` heading 이 1회 초과 시 fail + tie-break case A/B/C 식별.
+            //
+            // Option A strict (CFP-490 §3.1 결정 1): heading 1회 초과 = 항상 action_required
+            //   (CFP-465 invariant 보존, lenient fallback 채택 안 함, ADR-031 §결정 2 정합).
+            //
+            // .mjs extraction (CFP-490 §3.1 결정 2): testability rationale — 6 test_function 18+ assertion
+            //   case A/B/C path coverage 측정. ADR-061 supporting analogy (multi-line script externalization).
+            //
+            // Root cause documentation (CFP-490 §1 step 1-5 sequence):
+            //   - first-match capture boundary (line 131): 첫 heading content 만 capture, 두 번째 heading 이 boundary
+            //   - duplicate origin (Story §7.5 결정 4): codeforge-develop DeveloperPL agent body composition
+            //     영역의 `## Lane evidence` heading 첫 inject (auto-generated) + Orchestrator manual append 누적
+            //   - actual recurrence: CFP-500 FIX-5 (1차) + CFP-451 본 세션 transient (2차)
+            // ESM dynamic import (.mjs) — actions/github-script CJS context 안에서 호환.
+            //   require() 는 CJS만 지원, dynamic import() 는 ESM/CJS 양방향 지원.
+            const mjsUrl = `file://${process.env.GITHUB_WORKSPACE}/.github/scripts/check-lane-evidence-block.mjs`;
+            const { analyzeDuplicateHeadings } = await import(mjsUrl);
+            const dupResult = analyzeDuplicateHeadings(body);
+            if (dupResult !== null) {
               await github.rest.checks.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -120,8 +137,8 @@ jobs:
                 status: 'completed',
                 conclusion: 'action_required',
                 output: {
-                  title: 'Lane Evidence',
-                  summary: `## Lane evidence 블록 중복 감지 — body 에 ${headingMatches.length} 회 등장 (1회만 허용). PR description manual append + auto-generated block collision 가능성 (CFP-500 FIX-5 패턴). 하나만 남기고 제거 후 push.`
+                  title: `Lane Evidence — duplicate heading (Case ${dupResult.case})`,
+                  summary: dupResult.summary
                 }
               });
               return;
