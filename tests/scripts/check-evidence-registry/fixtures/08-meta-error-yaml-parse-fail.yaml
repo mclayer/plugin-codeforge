@@ -1,0 +1,12 @@
+# Fixture 08 — META-ERROR: yaml parse failure (intentionally invalid yaml)
+# Story §8.6.1 #8 (b) variant — exit 2, META-ERROR
+# Note: This file contains intentionally malformed YAML to trigger parse error.
+schema_version: "1.1"
+entries:
+  - name: broken-entry
+    description: |
+      Test entry with unbalanced colon
+    detect_command: bash scripts/test.sh
+    current_tier: warning
+    [unclosed bracket: this is not valid yaml syntax
+    owner_adr: ADR-060

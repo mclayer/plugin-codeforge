@@ -1,0 +1,22 @@
+# Fixture 07 — Negative: owner_adr references non-existent ADR file
+# Story §8.6.1 #7 — exit 1, violation (f)
+schema_version: "1.1"
+introduced_by: CFP-455-test
+last_updated: 2026-05-12
+entries:
+  - name: fixture-owner-adr-missing
+    description: |
+      Test entry — owner_adr 'ADR-999' does not exist in docs/adr/.
+    detect_command: bash scripts/test-detect.sh
+    workflow: templates/github-workflows/test-detect.yml
+    current_tier: warning
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+    introduced_by: CFP-455-test
+    owner_adr: ADR-999  # nonexistent ADR file
+    carrier_adr: ADR-060
+    status: Active

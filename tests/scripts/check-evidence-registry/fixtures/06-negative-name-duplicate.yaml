@@ -1,0 +1,38 @@
+# Fixture 06 — Negative: duplicate entry name
+# Story §8.6.1 #6 — exit 1, violation (e)
+schema_version: "1.1"
+introduced_by: CFP-455-test
+last_updated: 2026-05-12
+entries:
+  - name: adr-sunset-criteria
+    description: |
+      First entry with name 'adr-sunset-criteria'.
+    detect_command: bash scripts/test-detect.sh
+    workflow: templates/github-workflows/test-detect.yml
+    current_tier: warning
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+    introduced_by: CFP-455-test
+    owner_adr: ADR-060
+    carrier_adr: ADR-060
+    status: Active
+  - name: adr-sunset-criteria  # duplicate
+    description: |
+      Duplicate entry with same name as above.
+    detect_command: bash scripts/test-detect2.sh
+    workflow: templates/github-workflows/test-detect2.yml
+    current_tier: warning
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+    introduced_by: CFP-455-test
+    owner_adr: ADR-060
+    carrier_adr: ADR-060
+    status: Active
