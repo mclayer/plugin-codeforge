@@ -52,16 +52,29 @@ e4_2() {
   local fixture_dir="$TMP/e4-2"
   local stories_dir="$fixture_dir/docs/stories"
   mkdir -p "$stories_dir"
-  # 의도적으로 Working dir: substring 누락 §14 row
+  # 의도적으로 Working dir: field 누락 — yaml block 형식 (canonical script awk pattern 정합)
   cat > "$stories_dir/CFP-TEST-FIXTURE.md" <<'MD'
 # CFP-TEST-FIXTURE
-## §14 Lane Evidence
-| timestamp | lane | agent | transcript | outcome |
-|---|---|---|---|---|
-| 2026-05-13T00:00:00Z | design | ArchitectPL | (no Working dir field) | RETURN_PASS |
+
+## §14. Lane Evidence
+
+```yaml
+lane_evidence:
+  - lane: requirements
+    iteration: 1
+    agent: RequirementsPLAgent
+    started_at: 2026-05-13T15:00:00+09:00
+    transcript: "(no Working dir field — 의도적 누락)"
+    outcome: RETURN_PASS
+```
 MD
+  # git repo 초기화 + fixture file commit → git log --diff-filter=A 정상 작동 보장
+  # ENFORCE_FROM=2026-05-12T00:00:00Z (CFP-426 merge 후 시점) 보다 현재 commit timestamp가 크므로 enforce 조건 통과
+  (cd "$fixture_dir" && git init -q -b main \
+    && git -c user.email=test@local -c user.name=test add docs/stories/CFP-TEST-FIXTURE.md \
+    && git -c user.email=test@local -c user.name=test commit -q -m "add fixture story") 2>/dev/null || true
   local out
-  out=$(STORIES_DIR="$stories_dir" bash "$REPO_ROOT/scripts/check-worktree-first-spawn-evidence-cwd.sh" 2>&1) || true
+  out=$(cd "$fixture_dir" && STORIES_DIR="$stories_dir" ENFORCE_FROM="2026-05-12T00:00:00Z" bash "$REPO_ROOT/scripts/check-spawn-evidence-cwd.sh" 2>&1) || true
   assert_warn "E4-2 (spawn-evidence cwd absence WARN)" "WARN|Working dir" "$out"
 }
 
@@ -69,7 +82,7 @@ MD
 e4_3() {
   local fixture_dir="$TMP/e4-3"
   mkdir -p "$fixture_dir"
-  (cd "$fixture_dir" && git init -q -b main && git commit --allow-empty -q -m "initial")
+  (cd "$fixture_dir" && git init -q -b main && git -c user.email=test@local -c user.name=test commit --allow-empty -q -m "initial")
   install -m 0755 "$REPO_ROOT/templates/.git-hooks/pre-checkout.sample" "$fixture_dir/.git/hooks/pre-checkout"
   (cd "$fixture_dir" && git branch cfp-99999)
   local out
@@ -82,14 +95,14 @@ e4_3() {
 e4_4() {
   local fixture_dir="$TMP/e4-4"
   mkdir -p "$fixture_dir"
-  (cd "$fixture_dir" && git init -q -b main && git commit --allow-empty -q -m "initial")
+  (cd "$fixture_dir" && git init -q -b main && git -c user.email=test@local -c user.name=test commit --allow-empty -q -m "initial")
   install -m 0755 "$REPO_ROOT/templates/.git-hooks/pre-commit-main-block.sample" "$fixture_dir/.git/hooks/pre-commit"
   mkdir -p "$fixture_dir/src" "$fixture_dir/docs"
   echo "x" > "$fixture_dir/src/test.txt"
   echo "y" > "$fixture_dir/docs/test.md"
   (cd "$fixture_dir" && git add src/test.txt docs/test.md)
   local out
-  out=$(cd "$fixture_dir" && git commit -m "test commit on main" 2>&1) || true
+  out=$(cd "$fixture_dir" && git -c user.email=test@local -c user.name=test commit -m "test commit on main" 2>&1) || true
   assert_warn "E4-4 (pre-commit main → src/docs WARN)" "WARN|worktree-first" "$out"
 }
 
@@ -102,14 +115,15 @@ e4_bypass() {
 JSON
   local out
   out=$(cd "$fixture_dir" && BYPASS_WORKTREE_FIRST=1 bash "$REPO_ROOT/scripts/check-session-start-hook-presence.sh" 2>&1) || true
-  # BYPASS_WORKTREE_FIRST=1 시 WARN 미출력 + exit 0 verify
+  # BYPASS_WORKTREE_FIRST=1 시 canonical script 출력 = "[hook-presence] BYPASS_WORKTREE_FIRST=1 — skip"
+  # else fallback 제거 → grep pattern 미매칭 시 FAIL (false-positive 검출 능력 보장)
   if echo "$out" | grep -E "BYPASS_WORKTREE_FIRST=1|skip" > /dev/null 2>&1; then
     RESULTS+=("PASS: E4-bypass (BYPASS_WORKTREE_FIRST=1 early exit)")
     PASS=$((PASS+1))
   else
-    # output 없거나 plain exit 0 도 acceptable (script 내부 silent skip 정책)
-    RESULTS+=("PASS: E4-bypass (BYPASS_WORKTREE_FIRST=1 — no WARN output, exit 0)")
-    PASS=$((PASS+1))
+    RESULTS+=("FAIL: E4-bypass — BYPASS skip pattern not detected in output")
+    RESULTS+=("    output: $out")
+    FAIL=$((FAIL+1))
   fi
 }
 
