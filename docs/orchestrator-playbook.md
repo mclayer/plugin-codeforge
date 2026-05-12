@@ -1308,6 +1308,28 @@ ADR-005 plugin-meta-na 패턴(§8/§9 lane 게이트 면제)으로 진행되는 
 2. **입력 독립**: 한쪽 산출물이 다른 쪽 입력이 아님
 3. **완료 대기 가능**: 모든 병렬 에이전트 완료 후 종합 판단 가능
 
+### 4.1.1 결정 원칙 mandate — parallel default + sequential 강제 3 사유 (ADR-064)
+
+[ADR-064](../docs/adr/ADR-064-decision-principle-mandate.md) §결정 4 가 §4.1 의 normative 강화 — multi-task spawn default 는 **parallel** (단일 메시지 다중 Agent tool call). sequential 선택은 다음 3 사유 중 1 종 명시 의무. 3 사유 모두 부재 = default parallel.
+
+| Sequential 강제 사유 | 운영 사례 |
+|---|---|
+| **state dependency** | task N+1 이 task N 출력 (Story file section / ADR 번호 / 합의 결과) 입력 의존 — 예: ArchitectAgent §3 ADR 결정 → §7 설계 서사 |
+| **shared resource** | 동일 file write / 동일 GitHub label 변경 / 동일 branch commit / ADR 번호 sequential append — 예: ADR-RESERVATION row append |
+| **ordering invariant** | 출력 ordering 자체가 의미 — 예: FIX Ledger row append (시간 순), commit chain |
+
+본 룰은 ADR-039 §결정 7 `policy_violation_subdecision` 결정 영역 확장 — sequential 선택 시 spawn prompt 또는 commit message 에 사유 1 종 명시. derived default 가 부재한 영역 = AskUserQuestion 발화 의무 (ADR-064 §결정 3 룰 5 정합).
+
+#### 결정 제안 시점 self-check checklist
+
+Orchestrator 가 결정 제안 (brainstorm Phase 1 / writing-plans / Issue Form 제출 / lane spawn prompt 작성) 직전 다음 5 항목 self-check:
+
+1. **forbid-list 어휘 회피** — 결정 menu 후보 텍스트에 ADR-064 §결정 2 dictionary 8 어휘 등장 여부 확인 (dictionary 본문 / 외부 인용 영역 제외). 등장 시 대체 어휘로 reformulation.
+2. **Derived default 도출** — 컨텍스트 (사용자 명시 + memory + Story file + ADR 인용) 로 합리적 default 도출 가능 시 `AskUserQuestion` 생략, derived default 직접 declare.
+3. **식별자 사전 요약** — ADR / CFP / 코드 식별자 인용 시 핵심 결정 1 문장 요약 사전 제시.
+4. **옵션 수 제한** — 후보가 2+ 이면 권장 1 + 대안 1 (최대 2). 3+ 후보 = brainstorm Phase 0 영역으로 격상.
+5. **CFP scope unitary 확인** — 한 CFP 안 "경량 → full" 단계 분기 회피. 별개 CFP 분리 채택.
+
 ### 4.2 표준 병렬 패턴
 
 | 패턴 | 구성 | 조건 충족 |

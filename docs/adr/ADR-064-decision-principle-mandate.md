@@ -1,0 +1,244 @@
+---
+adr_number: 64
+title: codeforge 결정 원칙 mandate — 결정 내용·결정 제시·적용 속도 normative SSOT
+status: Accepted
+category: governance
+date: 2026-05-12
+is_transitional: false
+carrier_story: CFP-445
+supersedes: []
+amends: []
+amendment_log: []
+related_stories:
+  - CFP-445
+  - CFP-446
+  - CFP-449
+related_adrs:
+  - ADR-039
+  - ADR-052
+  - ADR-053
+  - ADR-054
+  - ADR-058
+  - ADR-060
+  - ADR-063
+related_files:
+  - CLAUDE.md
+  - docs/orchestrator-playbook.md
+  - docs/domain-knowledge/domain/governance-principle/decision-style.md
+  - templates/github-issue-forms/story.yml
+---
+
+# ADR-064: codeforge 결정 원칙 mandate — 결정 내용·결정 제시·적용 속도 normative SSOT
+
+## 상태
+
+Accepted (2026-05-12). carrier_story = CFP-445.
+
+## 컨텍스트
+
+codeforge 의 결정 원칙은 다음 4 회 누적 사용자 directive (2026-05-11 ~ 2026-05-12, KST) 로 명문화 동인이 형성되었다:
+
+1. (2026-05-11) "모든 작업의 결정은 best-effort 하고 많은 케이스를 커버할 수 있도록 선택한다. 전체적인 적용과 적극적인 개정을 지향하고 임시적인 것이나 떼우기식 변경은 선택지도 내지말라."
+2. (2026-05-12) "전체적으로 이렇게 주는 내용이 사용자 친화적이지 않아서 선택을 오히려 방해한다. 이 부분도 함께 개선해야겠다."
+3. (2026-05-12) "besteffort하라고 했던 개정과 함께 가능한 subagent를 통해 빠르게 적용할 수 있도록 해라. codeforge의 epic open부터 close까지의 시간이 단축되는 것이 베스트이다."
+4. (Codex pre-review iterative reformulation directive — CFP-446 별도 carrier)
+
+본 ADR 은 directive 1·2·3 의 normative SSOT 를 정립한다. directive 4 는 [CFP-446](https://github.com/mclayer/plugin-codeforge/issues/446) 별도 carrier 분리 (ADR-052 Amendment 2 target).
+
+본 normative SSOT 가 부재하면:
+
+- 결정 제안 시점 menu 자체에 forbid 영역 옵션이 reflex 로 진입 (band-aid 채택 risk)
+- Orchestrator 의 LLM reasoning 이 sequential bias (안전 default) 를 활성화 → Epic lifecycle 지연
+- 사용자 발화 directive 가 memory ephemeral 영역에 머무름 → cross-session enforcement 부재
+
+선행 SSOT 정합:
+
+- [ADR-039](ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — Orchestrator 가 codeforge 수정 작업 시 모든 work 를 Agent tool spawn 으로 수행. 분기 logic 자체 차단. 본 ADR Trace 4 의 직접 확장 모체.
+- [ADR-058](ADR-058-adr-sunset-criteria-mandate.md) — ADR `is_transitional: true | false` frontmatter + `## 해소 기준` 섹션 의무. 본 ADR `is_transitional: false` 고정 영원 정책 — 외연 분리 anchor.
+- [ADR-060](ADR-060-evidence-enforceable-promotion-framework.md) — 4-tier (warning / blocking-on-pr / blocking-on-merge / hotfix-bypass) evidence-enforceable 점진 승격 framework. CFP-449 forbid-list mechanical lint 가 본 framework 의 신규 warning-tier entry (`decision-principle-vocab`) 로 진입 — 기존 entry `adr-sunset-criteria` 와 병렬.
+- [ADR-054](ADR-054-doc-only-story-fast-path.md) — doc-only Story fast-path 분류. 신규 ADR 도입 = full-lane 강제 — 본 carrier 가 그 패턴.
+- [ADR-052](ADR-052-codex-proactive-check-touchpoints.md) — 6 touchpoint Codex proactive check. CFP-446 sibling Story 가 Amendment 2 target (touchpoint #1 single-shot → iterative reformulation).
+
+## 결정
+
+본 ADR 은 결정 원칙의 normative declaration. mechanical enforcement 는 CFP-449 (forbid-list lint warning tier 진입) / CFP-446 (Codex pre-review iterative reformulation) 별도 carrier 분리 — evidence-enforceable 점진 적용 절차 (ADR-060) 정합.
+
+### 결정 1 — 4 어휘 운영적 정의 (Trace 1)
+
+다음 4 어휘를 결정 원칙의 normative anchor 로 채택한다.
+
+| 어휘 | 운영적 정의 |
+|---|---|
+| **best-effort** | 결정 제안 시점에 도달 가능한 최선의 안을 채택. 추후 보완 핑계로 도출된 약화 옵션 의존 금지. (Tech Debt Quadrant — Prudent Deliberate) |
+| **broad coverage** | 결정 menu 작성 시점에 side effect / edge case / 외연 영역까지 후보 포함. (AWS Well-Architected — 5 pillar review) |
+| **full-scope** | 결정의 scope 가 도메인 전체에 즉시 적용. partial / opt-in 분기 차단. |
+| **active amendment** | normative SSOT 의 강화 방향 amendment 적극 발의. 강도 약화 방향은 ADR-058 §결정 5 sunset_justification 의무로 차단 (top-down ratchet). |
+
+본 4 어휘는 결정 제안 시점 (proposing-time) 에 한정 적용. 외연 영역 (`hotfix-bypass:*` label, deprecation 사후 운영, source code fallback / safe-default 런타임 로직) 은 본 ADR scope 외.
+
+### 결정 2 — forbid-list 어휘 dictionary (Trace 1)
+
+다음 8 어휘를 결정 제안 시점 menu 에서 제거 의무 어휘로 고정한다.
+
+| Forbid-list 어휘 | 운영적 범위 |
+|---|---|
+| 임시 | "임시 결정" / "임시 패치" 등 결정 후보 영역 |
+| 단계적 | "단계적 도입" / "단계적 확장" 등 결정 후보 분기 |
+| 일단 | "일단 도입" / "일단 시도" 등 결정 후보 |
+| 우선 | 시간 우선순위 의미 한정 (예: "우선 채택 후 보완"). 일반 우선순위 (1순위 priority) 는 외연 |
+| 잠정 | "잠정 결정" / "잠정 운영" 등 |
+| 가벼운 | "가벼운 버전" / "가벼운 prototype" 등 |
+| minimal viable | "minimal viable" / "MVP-only" 등 결정 후보 |
+| quick win | "quick win" / "quick fix" 등 결정 후보 |
+
+본 dictionary 는 [CFP-449](https://github.com/mclayer/plugin-codeforge/issues/449) mechanical lint script (ADR-060 warning tier 신규 entry `decision-principle-vocab` — 기존 entry `adr-sunset-criteria` 와 병렬) 의 SSOT. lint scope 는 5 영역 한정 — `docs/adr/**` / `docs/change-plans/**` / `CLAUDE.md` / `docs/orchestrator-playbook.md` / `templates/**`. audit-trailed exempt channel = `hotfix-bypass:decision-principle-vocab` label (ADR-024 Amendment 3 정합).
+
+dictionary 확장 amendment 는 강화 방향 = 활성. dictionary 축소 amendment 는 약화 방향 = 차단 (ADR-058 §결정 5 sunset_justification 의무).
+
+dictionary 본문 자체 또는 외부 인용 (사용자 발화 verbatim 영역) 영역에서 본 어휘 등장은 외연 허용.
+
+### 결정 3 — 결정 제시 5 룰 (Trace 2)
+
+Orchestrator 가 사용자에게 결정 제안 / 질문 시 다음 5 룰을 적용한다.
+
+1. **Derived default 기본값 적용** — 컨텍스트로 합리적 default 도출 가능 시 `AskUserQuestion` 발화 생략. derived default 직접 declare + 결과 보고 (사용자가 정정 의무). 예외: 진짜 가치 판단 (사용자 선호도 / 가치 판단 기준) 또는 미공개 컨텍스트 (Orchestrator 가 알 수 없는 사용자 측 정보).
+2. **옵션 dump 금지** — 결정 후보 N 종을 reflex 로 나열 금지. 후보가 2+ 이면 권장 1 안 + 대안 1 안 (최대 2) 까지 제시. 3+ 후보는 brainstorm 영역 (별도 Phase 0).
+3. **식별자 사전 요약** — ADR / CFP / 코드 식별자 인용 시 핵심 결정 한 문장 요약을 대화 내에 사전 제시 후 질문 / 제안 본문 진입. memory `feedback_explain_before_ask` 의 normative 승격.
+4. **질문 brevity** — 질문은 1 문장 단위. 다중 질문 시 numbered list (최대 3 항목). 컨텍스트 길이 < 핵심 질문 길이 의 비율 유지.
+5. **`AskUserQuestion` 범위 제한** — 본 도구의 발화는 (a) 가치 판단 영역 (b) 미공개 컨텍스트 영역 2 종에 한정. derived default 도출 가능 영역에서 `AskUserQuestion` 발화 = 본 ADR 위반.
+
+### 결정 4 — Multi-task spawn parallel default + sequential 강제 3 사유 (Trace 4)
+
+Orchestrator 가 multi-task spawn 결정 시 default = **parallel** (단일 메시지에 다중 Agent tool call). sequential 선택은 다음 3 사유 중 1 종 명시 의무.
+
+| Sequential 강제 사유 | 운영적 정의 |
+|---|---|
+| **state dependency** | task N+1 이 task N 의 출력 (Story file section / ADR 번호 / 합의 결과) 을 입력으로 의존 |
+| **shared resource** | 동일 file write / 동일 GitHub label 변경 / 동일 branch commit 등 lock 필요 영역 |
+| **ordering invariant** | 출력 ordering 자체가 의미 있는 영역 (예: ADR 번호 sequential append, FIX Ledger row append) |
+
+3 사유 중 1 종도 부재하면 default = parallel. sequential 선택 시 spawn prompt 또는 commit message 에 사유 1 종 명시. ADR-039 §결정 7 `policy_violation_subdecision` 의 결정 영역 확장.
+
+본 룰은 외부 분산 시스템 표준 패턴 (Amdahl's Law / Critical Path Method / MapReduce shuffle dependency) 과 정합.
+
+### 결정 5 — CFP scope unitary 룰
+
+한 CFP 안에서 "경량 → full" 단계 채택 금지. 별개 CFP 분리는 허용 (예: `CFP-N v0.1` + `CFP-N+1 v1.0` 가 독립 brainstorm + 독립 Story + 독립 PR).
+
+본 룰은 결정 제안 시점 scope 폭발 방지 메커니즘 — PMOAgent vertical slice 분해 영역과 직교 (PMOAgent 는 한 CFP 안에서의 sub-task 분해, 본 룰은 CFP scope 단위 자체).
+
+### 결정 6 — 결정 제시 시점 (proposing-time) 영역 정의
+
+본 ADR 의 모든 결정은 다음 4 시점 영역에 적용한다.
+
+| 영역 | 정의 |
+|---|---|
+| **brainstorm Phase 1 결정 제안** | `superpowers:brainstorming` / `codeforge:codeforge-brainstorm` skill 내부의 결정 제안 영역 |
+| **writing-plans plan 작성** | `superpowers:writing-plans` skill 내부의 결정 영역 |
+| **Issue Form 제출 시 의사결정** | `templates/github-issue-forms/story.yml` 입력 시점 |
+| **lane 진입 직전 spawn prompt 작성** | Orchestrator 의 subagent spawn prompt 작성 영역 |
+
+외연 영역:
+
+- 운영 incident 의 5분 hotfix (operational-time, `hotfix-bypass:*` label 부착 PR)
+- ADR-058 `is_transitional: true` 안전망 ADR 분류 영역 (의도된 안전망)
+- deprecation path 사후 운영 (replacement 채택 자체는 in-scope)
+- source code 의 fallback / safe-default 런타임 로직
+
+### 결정 7 — Self-application top-down ratchet
+
+본 ADR amendment 는 다음 방향만 허용:
+
+- **scope 확장** — forbid-list dictionary 9 → 10 어휘 등
+- **강도 강화** — sequential 강제 사유 3 → 2 축소 등
+
+다음 방향 amendment 는 ADR-058 §결정 5 sunset_justification 의무로 차단:
+
+- `is_transitional: false → true` 다운그레이드
+- forbid-list dictionary 축소
+- sequential 강제 사유 확장 (parallel default 약화 방향)
+- 결정 제시 5 룰 (Trace 2) 약화
+
+본 결정은 ADR-058 amendment ratchet 차단 메커니즘의 self-application.
+
+### 결정 8 — Declaration only (기계적 강제 분리)
+
+본 ADR 은 정책 declaration only. 다음 영역은 별도 carrier 분리 — evidence-enforceable 점진 적용 절차 (ADR-060) 정합.
+
+- **CFP-449** — forbid-list mechanical lint (ADR-060 warning tier 신규 entry `decision-principle-vocab` — 기존 entry `adr-sunset-criteria` 와 병렬, 5 영역 scope 한정, `hotfix-bypass:decision-principle-vocab` label exempt channel)
+- **CFP-446** — Codex pre-review iterative reformulation (ADR-052 Amendment 2 — touchpoint #1 single-shot → max 3 rounds)
+- **CFP-α (잠재)** — 요구사항 traceability framework (본 ADR 인용 의무 1 순위 consumer)
+- **CFP-β (잠재)** — Epic open→close KPI dashboard (`templates/epic-results.md` frontmatter 에 `opened_at` / `closed_at` field 신설 의무 — 현재 미존재, PMOAgent owner path / dashboard 구축 일체 carrier)
+
+## 결과
+
+### 긍정 효과
+
+- 결정 시점 menu 자체에서 band-aid 옵션 차단 (Google SRE 사후 audit 보다 한 단계 위 forcing function)
+- Orchestrator reflex 옵션 dump UX 차단 — 사용자 발화 directive 2 (UX 개선) 의 직접 해소
+- parallel default 명문화로 sequential bias 자동 활성화 차단 — Epic open→close 시간 단축 measurable signal 확보
+- memory ephemeral 영역의 cross-session enforcement 부재 문제 해소 — 사용자 directive 4 회 누적의 normative 승격
+
+### 부정 효과 / Trade-off
+
+- forbid-list dictionary false positive risk (예: "우선" 어휘 일반 의미) — scope 5 영역 한정 + audit-trailed exempt channel 로 완화
+- derived default 룰의 LLM 한계 — 잘못된 default 도출 시 사용자 정정 의무 (재발 누적 시 CFP-γ amendment 후보)
+- amendment top-down ratchet 의 false rigidity risk — ADR-058 §결정 5 sunset_justification 의무가 visibility 제공으로 완화
+
+### 영향 영역
+
+- `CLAUDE.md` 신규 단락 "결정 원칙" 추가 (위치 = "오케스트레이션 규칙" 직전)
+- `docs/orchestrator-playbook.md` 적용 절차 checklist 추가
+- `docs/domain-knowledge/domain/governance-principle/decision-style.md` 신설 (DomainAgent direct write 권한)
+- `templates/github-issue-forms/story.yml` `decision_principle_compliance` advisory 체크박스 추가 (forcing function)
+- 6 lane plugin + consumer overlay 전체 적용 (wrapper level normative SSOT)
+
+### Marketplace / version bump 영향
+
+본 ADR 도입 = CLAUDE.md 의미 변경 → ADR-037 룰에 의한 codeforge wrapper **MINOR 버전 bump** 발화. ADR-063 3-file atomic invariant 적용 의무: `.claude-plugin/plugin.json` + `CHANGELOG.md` + `mclayer/marketplace/.claude-plugin/marketplace.json` 동시 sync. version bump 자체 + atomic invariant 절차 결정은 본 ADR §결정 4 parallel default 정합 — ordering 은 ADR-063 §결정 2 정합 (marketplace sync PR 선행 merge → plugin PR merge). plugin PR 선행 merge 는 ADR-063 §결정 2 Anti-pattern.
+
+## 해소 기준
+
+N/A — permanent policy
+
+본 ADR 은 governance carrier 영구 정책. self-defeat 회피 (recursive sunset 무한 후행 차단). 패턴 정합 사례 = ADR-042 / ADR-016 / ADR-013 / ADR-058 (governance carrier ADR 자기 분류 = `is_transitional: false`).
+
+본 ADR 의 효력 종료 조건은 본 ADR 의 supersede 또는 codeforge 의 결정 원칙 governance 자체 폐지뿐.
+
+## 다이어그램
+
+```mermaid
+graph TD
+    User["사용자 directive<br/>(4 회 누적)"]
+    Memory["memory ephemeral 영역<br/>(cross-session enforcement 부재)"]
+    ADR064["ADR-064<br/>(normative SSOT)"]
+    CLAUDE["CLAUDE.md<br/>(wrapper 진입점)"]
+    Playbook["playbook<br/>(절차 SSOT)"]
+    Domain["domain-knowledge<br/>(행동 패턴 SSOT)"]
+    Form["story.yml<br/>(Issue Form forcing function)"]
+    Lint["CFP-449 lint<br/>(mechanical enforcement)"]
+    Codex["CFP-446 Codex iterative<br/>(reformulation)"]
+
+    User --> Memory
+    Memory -."ephemeral".-> ADR064
+    ADR064 --> CLAUDE
+    ADR064 --> Playbook
+    ADR064 --> Domain
+    ADR064 --> Form
+    ADR064 -.dictionary SSOT.-> Lint
+    ADR064 -.AC reformulation target.-> Codex
+```
+
+## 관련 파일
+
+- [ADR-039](ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — subagent default (Trace 4 모체)
+- [ADR-052](ADR-052-codex-proactive-check-touchpoints.md) — Codex proactive check (CFP-446 Amendment 2 target)
+- [ADR-053](ADR-053-structural-change-restart-prerequisite.md) — 구조적 변경 재구동 (본 ADR merge 후 marketplace sync 의무)
+- [ADR-054](ADR-054-doc-only-story-fast-path.md) — doc-only Story fast-path (신규 ADR = full-lane 강제 anchor)
+- [ADR-058](ADR-058-adr-sunset-criteria-mandate.md) — sunset criteria mandate (`is_transitional` 분류 + ratchet 차단)
+- [ADR-060](ADR-060-evidence-enforceable-promotion-framework.md) — evidence-enforceable framework (CFP-449 warning tier 진입 base)
+- [ADR-063](ADR-063-marketplace-atomic-invariant.md) — 3-file atomic invariant (본 ADR version bump 적용 의무)
+- `CLAUDE.md` — wrapper 진입점 cross-link
+- `docs/orchestrator-playbook.md` — 적용 절차 checklist
+- `docs/domain-knowledge/domain/governance-principle/decision-style.md` — 행동 패턴 + 적용 사례 SSOT
+- `templates/github-issue-forms/story.yml` — Issue Form forcing function
