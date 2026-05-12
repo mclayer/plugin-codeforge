@@ -32,9 +32,11 @@ mechanical_enforcement_actions:
     target_section: §결정 5
   - action: worktree-first-pre-checkout
     status: warning
+    progress_note: "actual wire CFP-428 (Story 3 — templates/.git-hooks/pre-checkout.sample + scripts/install-git-hooks.sh). verification-only lint. R3 self-block 회피 5-layer: (1) worktree-internal work + (2) opt-in install + (3) warning tier exit 0 + (4) BYPASS_WORKTREE_FIRST=1 env + (5) --git-dir vs --git-common-dir skip in worktree."
     target_section: §결정 7
   - action: worktree-first-pre-commit-main-block
     status: warning
+    progress_note: "actual wire CFP-428 (Story 3 — templates/.git-hooks/pre-commit-main-block.sample + scripts/install-git-hooks.sh). verification-only lint, src/docs path matching only. R3 self-block 회피 5-layer: (1) worktree-internal work + (2) opt-in install + (3) warning tier exit 0 + (4) BYPASS_WORKTREE_FIRST=1 env + (5) --git-dir vs --git-common-dir skip in worktree."
     target_section: §결정 7
   - action: worktree-first-spawn-evidence-cwd
     status: warning
