@@ -116,7 +116,7 @@ Codex 가 발화한 "evidence" 가 Orchestrator direct file Read 결과와 misma
 **Story §10 FIX Ledger row 영역** (fix-event-v1 contract 정합):
 
 - 기존 fix-event-v1 schema 의 `events[]` row append — false positive 발생 시 `event_type: codex_false_positive` (schema MINOR bump 별도 carrier 영역, 본 ADR scope 외)
-- 임시 polyfill (schema MINOR bump 전): 기존 row `comment` 필드 안 `[codex-false-positive]` sub-tag + Orchestrator override rationale verbatim
+- polyfill (schema MINOR bump 전): 기존 row `comment` 필드 안 `[codex-false-positive]` sub-tag + Orchestrator override rationale verbatim
 
 **Override rationale 의무 항목** (4 종):
 
