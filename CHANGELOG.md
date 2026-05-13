@@ -7,6 +7,21 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.37.0] - 2026-05-13 — CFP-529 Wave 3 Phase 2
+
+### Added (CFP-529 Wave 3 Phase 2 — handoff wording linter, ADR-068 §결정 5 / ADR-060)
+
+Wave 3 Phase 2 mechanical impl carrier — handoff wording drift detector. ADR-068 §결정 5 `wording-ssot-grep-lint` evidence-enforceable framework warning-tier 8번째 entry mechanical impl. Phase 1 (PR #579 stack base) = declarative SSOT (severity-propagation-v1 contract + MANIFEST + registry row). 본 Phase 2 PR = mechanical script + tests + workflow + self-app + plugin.json 5.36.0 → 5.37.0 MINOR + CHANGELOG.
+
+- `scripts/check_handoff_wording.py` (NEW, ~600 LOC, ADR-061 정합 외부 `.py`) — handoff wording drift mechanical detection. Scope 5 영역 (`scripts/**` / `templates/**` / `tests/**` / `docs/**` / `CLAUDE.md`). Direction enum 3-way: forward (ADR 식별자 verbatim 매칭 → impl 부재 시 info) / backward (impl 식별자 reverse-lookup → ADR/contract 부재 시 warning, Amendment trigger SSOT) / lateral (Story §3 ↔ §7 ↔ §8.5 cross-section diff). Drift 패턴 8종 — mechanical 5 (synonym_substitution / unit_drift / modal_downgrade / boundary_inversion / scope_widening) + AI escalate stub 3 (precision_loss / conditional_erasure / actor_drift). Exempt regions 3종 (dictionary body marker / verbatim quote `>` lines / consumer overlay `.claude/_overlay/`). Exit code tri-tier (ADR-060 Amendment 2 §결정 15): 0 (PASS or warning tier with findings) / 1 (strict mode with findings) / 2 (root path absent).
+- `tests/scripts/test_check_handoff_wording.py` (NEW, ~370 LOC unittest) — 26 test cases: mechanical patterns (5) + AI escalate stubs (4) + direction enum (3) + exit code (4) + exempt regions (3) + arg parse (4) + formatters (3). Tempdir fixture isolation. All 26 PASS.
+- `templates/github-workflows/handoff-wording-check.yml` (NEW) + `.github/workflows/handoff-wording-check.yml` (NEW self-app byte-identical mirror). `continue-on-error: true` warning tier. Bypass channel `hotfix-bypass:boundary-wording` label (ADR-024 Amendment 3 정합) + audit comment 자동 발의 + bypass audit assertion.
+- `.claude-plugin/plugin.json` — version 5.36.0 → 5.37.0 MINOR + description CFP-529 Wave 3 Phase 2 entry append.
+
+### Sibling sync (separate PRs)
+
+- mclayer/marketplace: marketplace.json plugins[codeforge].version 5.36.0 → 5.37.0 mirrored (ADR-063 atomic invariant — 본 PR merge 전 선행 merge)
+
 ## [5.36.0] - 2026-05-13
 
 ### Added (CFP-530 — workflow yml permissions hardening, ADR-060 Amendment 8)
