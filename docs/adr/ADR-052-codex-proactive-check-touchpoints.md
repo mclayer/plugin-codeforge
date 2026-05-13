@@ -21,11 +21,16 @@ amendments:
     date: 2026-05-13
     carrier_story: CFP-510
     summary: "touchpoint #4 divergence detection 영역 확장 — 기존 3 semantic criteria (AC 의미 차이 / Edge Case 누락 / Why 해석 mismatch) 에 4번째 영역 = fact-check 추가. sub-criteria 4종 (registry-execution drift / pre-existing leak / file path verification / cross-repo state verification). PL self-evaluation 의무 = synthesis 작성 시 '가설' 영역 vs 'verified fact' 영역 분리 명시 + fact-check pending 시 reverse-explicit. CFP-451 / CFP-490 0-FIX chain retro 발견 evidence (PMOAgent FU-4 low). debate-protocol-v1 dispatch 흐름 변경 없음 — divergence_type 만 확장 (semantic + factual)."
+  - id: 4
+    date: 2026-05-13
+    carrier_story: CFP-532
+    summary: "touchpoint #2 (ArchitectAgent §3 완료 직후 Design Synthesis Check) optional → mandatory 전환. 6 sample success rate 100% sentinel (CFP-426 + CFP-427 + CFP-428 + CFP-429 + 2 carry-over Story) — 모든 dispatch 가 ArchitectAgent §3 산출물 결함을 review lane 진입 전 inline FIX 로 해소, review lane FIX 회피 evidence 누적. ADR-058 §결정 5 ratchet 강화 방향 + ADR-064 active amendment 정합. is_transitional=false, sunset_justification=N/A (permanent strengthening). 6 touchpoint 중 #2 단독 mandatory (#1/#3/#4/#5/#6 optional 유지). 본 Amendment scope = ADR + CLAUDE.md + playbook 갱신 (doc-only fast-path, ADR-054 §결정 1). skill orchestration code mandatory branch logic 은 별도 carrier 분리."
 related_stories:
   - CFP-354
   - CFP-411
   - CFP-446
   - CFP-510
+  - CFP-532
 related_adrs:
   - ADR-039
   - ADR-034
@@ -374,3 +379,136 @@ Amendment 1 의 3 semantic criteria 본문 (RequirementsPLAgent.md §"Codex Proa
 - (Amendment-J) Marker 어휘 변경 가능 (consumer overlay) — ADR-064 §결정 7 top-down ratchet 위배. Marker 어휘 SSOT = 본 ADR-052 Amendment 3 §A3 표 verbatim.
 - (Amendment-K) `[hypothesis]` default 대신 `[verified]` default — 안전 방향 위반 (false negative 위험 증가). default 안전 방향 = `[hypothesis]` (Codex verify 영역 진입) 유지.
 
+---
+
+## Amendment 4 (2026-05-13, CFP-532)
+
+### Context
+
+Epic CFP-425 (worktree-first mechanical enforcement 영구화) 가 4 Story 누적 (CFP-426 + CFP-427 + CFP-428 + CFP-429) + 2 carry-over Story 로 6 sample evidence 확보. 매 Story 의 설계 lane 진입 시점에 Codex Proactive Touchpoint #2 (Design Synthesis Check — ArchitectAgent §3 Change Plan 초안 완료 직후 ArchitectPLAgent 전달 직전) 가 자동 dispatch 되었고, **6/6 dispatch 가 ArchitectAgent §3 산출물 결함을 review lane 진입 전 inline FIX 로 해소**.
+
+가장 강한 sentinel = CFP-429 retro `sentinel_refs` (verbatim 인용):
+
+> "ADR-052 — Codex Proactive Check Touchpoint #2 (Design Synthesis) 4 finding 발견 + ArchitectPL FIX iter 1 inline 해소 (Touchpoint #4 PROCEED 와 분리)"
+
+EPIC-RESULTS-CFP-425 §7.2 carrier #3 verbatim (sample 6 = 100% review lane FIX 회피):
+
+> "MEDIUM-HIGH — ADR-052 Amendment N Touchpoint #2 mandatory: CFP-429 retro §6.2 / sample 6 누적 (Story 1-4 + 2 carry-over) — 모든 review lane FIX 회피. mandatory 전환 sentinel 통계 유의 충족."
+
+기존 D2 결정 ("opt-in 없음, 6 touchpoint 자동 활성") 는 dispatch 자체는 자동 발동 정합이나, **Orchestrator 가 dispatch 결과의 `recommendation = ADDRESS_FIRST` 발화 시 Orchestrator skip 가능 영역** 이 P1-only findings 에 대해 열려 있음 (playbook §3.10 결과 처리 표 row 3 = "P1-only → Orchestrator 판단으로 skip 가능 → story §10 기록"). 본 Amendment 는 **touchpoint #2 단독** 으로 이 skip 영역을 닫는다.
+
+### 결정 (Amendment 4)
+
+**A1. Touchpoint #2 optional → mandatory 전환**
+
+기존 §3.10.2 Design Synthesis Check 동작:
+
+- (기존) Orchestrator 가 ArchitectAgent §3 완료 직후 codex:codex-rescue dispatch → Codex `{findings, recommendation}` 수신 → Orchestrator 가 `recommendation` 기반 처리 결정 (PROCEED / ADDRESS_FIRST P0 blocking / ADDRESS_FIRST P1-only skip 가능)
+- (Amendment 4 후) Orchestrator 가 ArchitectAgent §3 완료 직후 codex:codex-rescue dispatch → Codex `{findings, recommendation}` 수신 → **Orchestrator 가 모든 finding (P0 + P1) 을 의무 inline FIX (skip 영역 차단)**. P2 finding 만 Orchestrator 판단으로 Story §10 deferred 기록 가능
+
+**A2. 6 sample success rate 100% sentinel (mandatory 전환 통계 근거)**
+
+| Story | Touchpoint #2 dispatch | Finding count | review lane FIX 발생 여부 | inline FIX 해소 |
+|---|---|---|---|---|
+| CFP-426 (Epic CFP-425 Story 1, skeleton 4 entry) | 활성 | 2 finding | 미발생 | DONE (ArchitectPL FIX inline) |
+| CFP-427 (Story 2, SessionStart hook 2/4 actual wire) | 활성 | 1 finding | 미발생 | DONE (ArchitectPL FIX inline) |
+| CFP-428 (Story 3, git layer 2/4 actual wire) | 활성 | 2 finding | 미발생 | DONE (ArchitectPL FIX inline) |
+| **CFP-429 (Story 4, story-init reminder + E4 self-test, Amendment 4 declaration carrier)** | **활성** | **4 finding (F-001 critical + F-002/F-003/F-004 major)** | **미발생** | **DONE (ArchitectPL FIX iter 1 inline 해소, retro sentinel_refs verbatim)** |
+| Carry-over Story #1 (CFP-429 retro `sentinel_refs` verbatim — Story key audit anchor 미명시, retro SSOT 영역) | 활성 | 1+ finding | 미발생 | DONE |
+| Carry-over Story #2 (CFP-429 retro `sentinel_refs` verbatim — Story key audit anchor 미명시, retro SSOT 영역) | 활성 | 1+ finding | 미발생 | DONE |
+
+**누적 dispatch 수 = 6** (verified-direct 4 = CFP-426/427/428/429 + sentinel-derived 2 = carry-over retro inheritance), **review lane FIX 발생 = 0**, **inline FIX 해소율 = 100%**. ADR-060 evidence-enforceable promotion framework 의 통계 기준 (sample ≥ 6 + failure 0) 에 부합 — sentinel 통계 유의 충족.
+
+본 통계 정의 (audit 가능성 분해):
+- **분모** = touchpoint #2 dispatch 가 활성된 Story 수 (6 = direct verified 4 + sentinel-derived 2)
+  - **direct verified 4** = CFP-426 (Epic CFP-425 Story 1) / CFP-427 (Story 2) / CFP-428 (Story 3) / CFP-429 (Story 4) — 4 Story 모두 Story file §9 verdict 또는 retro `sentinel_refs` 에 dispatch 활성 + inline FIX 해소 evidence 보존
+  - **sentinel-derived 2** = CFP-429 retro `sentinel_refs` verbatim 인용 "sample 6 누적 (Story 1-4 + 2 carry-over)" — carry-over 2건 식별자 = retro SSOT 자체 영역 (본 Amendment scope 외, retro 작성 시점 PMOAgent 인용 anchor). 독립 검토자 audit 시 = retro 원문 verbatim 추적 의무 + carry-over 식별자 별도 follow-up 추적 가능 (본 ADR scope 외)
+- **분자 (review-lane FIX 회피 성공)** = dispatch 결과 finding 을 inline FIX 로 해소한 Story 수 (6)
+- **window** = CFP-426 Story 1 dispatch (Epic CFP-425 시작) ~ CFP-429 retro 작성 시점 (2026-05-13 KST)
+- **재현 가능성**: direct verified 4 = Story file + retro 원문 직접 audit 가능. sentinel-derived 2 = retro `sentinel_refs` SSOT 인용 영역 — retro 자체가 PMOAgent self-write 영역 (codeforge-pmo lane scope), 본 Amendment 는 retro 인용 충실성만 보존.
+
+**A3. 6 touchpoint 중 #2 단독 mandatory 결정 근거**
+
+다른 5 touchpoint 와 #2 의 차별점 = **§3 Change Plan = 모든 후속 lane (구현 / 구현리뷰 / 보안테스트) 의 입력 baseline**. §3 결함이 review lane 진입 후 발견되면 ArchitectAgent re-run + Change Plan v+1 + 모든 후속 lane 재실행 = FIX 비용이 lane 수의 multiplicative growth. 본 Amendment 의 mandatory 전환은 이 multiplicative growth 의 single highest-ROI prevention point 를 closing.
+
+| Touchpoint | Cost 회피 magnitude | mandatory 전환 적격 |
+|---|---|---|
+| #1 Pre-question Review | 1 사용자 dialog | LOW — Amendment 2 iterative reformulation 으로 별도 강화 채널 활성 |
+| **#2 Design Synthesis Check** | **N lane re-run (multiplicative)** | **HIGH — 본 Amendment 4 mandatory 전환** |
+| #3 Development Rescue | FIX 2+ 반복 (이미 trigger 가 reactive) | LOW — trigger 자체가 already-stuck 상태, optional 유지 |
+| #4 Requirements Output Review | 1 lane (Requirements) re-run | MEDIUM — Amendment 1 multi-round debate 로 별도 강화 채널 활성 |
+| #5 FIX Root Cause 2nd Opinion | 1 판정 (사용자 escalation 가능) | LOW — D4 가 이미 사용자 escalation channel 강제 |
+| #6 ADR Draft Review | ADR re-author (single doc) | LOW — single artifact scope, blocking cost 작음 |
+
+mandatory 전환 적격성 = **#2 단독 HIGH**. 나머지 5 touchpoint 는 별도 강화 채널 활성 또는 cost magnitude 작음 → optional 유지.
+
+**A4. mandatory dispatch behavior — Orchestrator skip 영역 차단**
+
+기존 playbook §3.10 결과 처리 표 (verbatim):
+
+| recommendation | findings | 처리 |
+|---|---|---|
+| PROCEED | — | 그대로 다음 단계 |
+| ADDRESS_FIRST | P0 포함 | 해당 agent findings 반영 후 재진행 (blocking) |
+| ADDRESS_FIRST | P1-only | Orchestrator 판단으로 skip 가능 → story §10 기록 |
+| 판정 불일치 (#5 전용) | — | 사용자 에스컬레이션 |
+
+touchpoint #2 mandatory 적용 시 P1-only row 가 다음과 같이 변경:
+
+| recommendation | findings | 처리 (touchpoint #2 mandatory) | 처리 (touchpoint #1/#3/#4/#5/#6 optional 유지) |
+|---|---|---|---|
+| PROCEED | — | 그대로 다음 단계 | 그대로 다음 단계 |
+| ADDRESS_FIRST | P0 포함 | 해당 agent findings 반영 후 재진행 (blocking) | 동일 |
+| ADDRESS_FIRST | P1-only | **inline FIX 의무 (skip 차단)** | Orchestrator 판단으로 skip 가능 → story §10 기록 |
+| ADDRESS_FIRST | P2-only | Orchestrator 판단으로 Story §10 deferred 기록 가능 | 동일 |
+
+P2 영역은 mandatory 적용 외 — P2 = nice-to-have / minor improvement / cosmetic 영역, blocking cost 정당성 부재. 6 sample evidence 도 모두 P0/P1 영역 발견 (P2-only 시 review lane FIX 발생 위험 evidence 부재).
+
+**A5. ADR-058 §결정 5 ratchet 정합 (강화 방향 명시)**
+
+본 Amendment = **강화 방향** (optional → mandatory):
+- `is_transitional: false` (permanent governance, mandatory transition = permanent strengthening)
+- `sunset_justification: "N/A — mandatory transition = permanent strengthening, ADR-064 active amendment 정합"`
+- ADR-058 §결정 5 sunset_justification 의무는 약화 방향 (mandatory → optional 또는 strict → loose) 에만 발효 → 본 Amendment 는 면제
+
+**A6. ADR-064 §결정 (Trace 1) active amendment 정합**
+
+ADR-064 결정 원칙 4 어휘 anchor (best-effort / broad coverage / full-scope / active amendment) 중 **active amendment** 정합:
+- Amendment 발의 시점 = ratchet 강화 방향 적극 발의
+- 본 Amendment **normative decision text** (§Context + §A1~§A9 결정 + §결과) forbid-list 8 어휘 사용 0건. 거절된 대안 (§Amendment-L~§Amendment-P) 영역의 forbid-list dictionary 자체 인용 (Amendment-O 등) 은 dictionary reference (meta-citation) 영역 — normative scope 외, ADR-064 §결정 2 dictionary lint scope 정합 (forbid scope = 결정 채택 영역, 거절 근거 dictionary 인용 면제). consumer overlay 정책 축소 불허 invariant 정합 보존
+
+**A7. doc-only fast-path 적용 (ADR-054 §결정 1)**
+
+본 Amendment scope:
+- ADR-052 본문 + frontmatter `amendments[]` row 4 append
+- CLAUDE.md "Codex Proactive Check" blockquote 갱신 (touchpoint #2 mandatory marker 명시)
+- playbook §3.10 결과 처리 표 + §3.10.2 표 갱신
+
+src/** 변경 0건. tests/** 변경 0건. agent file 변경 0건. doc-only fast-path 거부 조건 (ADR-054 §결정 1) 모두 미해당 → 적용 가능.
+
+**A8. skill orchestration code mandatory branch logic 별도 carrier 분리**
+
+자율 prompt SSOT verbatim ("Step 5 skill orchestration code 변경은 선택 (별도 carrier 가능). 본 Story = ADR + 2 doc 갱신만") 정합. mandatory branch logic 의 skill 자체 갱신 (`codeforge:codex-proactive-check` skill 의 dispatch logic) 은 본 Story scope 외 — 별도 follow-up CFP carrier 분리. 본 Amendment effective 시점 ~ skill code 갱신 사이 = Orchestrator 가 doc SSOT 기반 mandatory 적용 의무 (도덕적 강제, mechanical enforcement 부재).
+
+**A9. D1/D2/D3/D4 결정 본문 의미 변경 없음**
+
+기존 D1 (codex:codex-rescue dispatch 채널) / D2 (6 touchpoint 자동 활성) / D3 (ProactiveCheckPacket v1) / D4 (#5 판정 불일치 = 사용자 escalation) 모두 의미 변경 없음. 본 Amendment 4 = §3.10.2 (touchpoint #2) 의 sub-behavior 강화만 — D1/D2/D3/D4 의미 invariant 보존 (Amendment 1/2/3 패턴 정합).
+
+### 결과 (Amendment 4)
+
+- Touchpoint #2 (Design Synthesis Check) optional → mandatory 전환 — Orchestrator 가 dispatch 결과 P0 + P1 finding 모두 inline FIX 의무 (skip 영역 차단)
+- playbook §3.10 결과 처리 표 + §3.10.2 단락 mandatory marker 명시
+- CLAUDE.md "Codex Proactive Check" blockquote 갱신 (1 mandatory + 5 optional 명시)
+- ADR-058 §결정 5 ratchet 정합 (강화 방향, sunset_justification N/A)
+- ADR-064 §결정 (Trace 1) active amendment 정합 (forbid-list 8 어휘 사용 0건)
+- doc-only fast-path 적용 (ADR-054 §결정 1) — src/tests/agent file 변경 0건
+- skill orchestration code mandatory branch logic = 별도 carrier 분리 (후속 CFP)
+- D1/D2/D3/D4 결정 + Amendment 1/2/3 본문 의미 변경 없음 — Amendment 4 sub-section 만 append
+
+### 거절된 대안 (Amendment 4)
+
+- (Amendment-L) **6 touchpoint 전체 동시 mandatory 전환** — 다른 5 touchpoint 는 cost magnitude 작거나 별도 강화 채널 (Amendment 1/2) 활성. 모든 touchpoint mandatory 시 dispatch 결과 P1-only finding 의 skip 차단으로 false positive blocking 비용 증가 위험. A3 비교 표 정합 — #2 단독 mandatory 채택. 다른 5 touchpoint 의 mandatory 전환은 각각 별도 evidence 누적 후 별도 Amendment carrier (CFP-TBD).
+- (Amendment-M) **mandatory 적용 영역을 P0 finding 만으로 한정** — 기존 D2/§3.10 P0 blocking 처리는 이미 mandatory 동등 (Orchestrator skip 채널 부재). 본 Amendment 는 P1-only skip 영역 차단이 핵심 — P0-only mandatory 채택 시 sentinel 의미 부재 (6 sample evidence 의 4 finding F-002/F-003/F-004 major 가 P1 등급 — P0 한정 시 evidence 적용 영역 외).
+- (Amendment-N) **mandatory 전환 + skill orchestration code 동시 갱신** — Story scope 확장 (doc-only fast-path 거부 트리거). 본 Amendment 의 evidence-only 영역 (doc + ADR) 과 mechanical code 영역 (skill) 분리 → 별도 carrier (CFP-TBD) 정당성 보존. skill code 갱신 시점 = Amendment 4 SSOT effective 후 follow-up carrier merge 시점, gap 기간 = Orchestrator 도덕적 강제 (mechanical enforcement 부재 의식 필요).
+- (Amendment-O) **grace period 도입** (Amendment 4 effective 후 N Story 동안 mandatory soft-enforce 후 hard-enforce) — ADR-064 §결정 7 top-down ratchet 정합 외 (`임시` / `단계적` 의미 forbid-list 정합 외). 즉시 mandatory 적용 — sample 6 evidence 가 이미 ratchet 강화 정당성 충족. consumer overlay 도 정책 축소 불허 (mandatory → optional 다운그레이드 차단).
+- (Amendment-P) **Touchpoint #2 mandatory 전환 + 자동 retry 채널 신설** (Codex dispatch failure / timeout 시 Orchestrator 가 자동 재시도) — codex CLI runtime 영역 (codex:codex-cli-runtime SSOT) 정합 외, retry 정책은 별도 ADR carrier 영역. 본 Amendment 4 scope = dispatch 결과 처리 mandatory 강화만.

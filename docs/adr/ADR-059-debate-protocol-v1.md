@@ -23,7 +23,21 @@ related_files:
   - docs/orchestrator-playbook.md
   - docs/consumer-guide.md
   - CLAUDE.md
-amendment_log: []
+amendment_log:
+  - id: 1
+    date: 2026-05-13
+    carrier_story: CFP-533
+    summary: "dispatch_mode enum 3-value 명시화 + mechanical_fast_path_inline 채널 신설. governance 강화 ratchet (ADR-064 active amendment 정합)."
+amendments:
+  - id: 1
+    date: 2026-05-13
+    carrier_story: CFP-533
+    section_ref: "§결정 6 — dispatch_mode enum 명시화"
+related_stories:
+  - CFP-391  # carrier (5 결정 원본)
+  - CFP-533  # Amendment 1 carrier (dispatch_mode enum 명시화)
+sunset_justification: "N/A — permanent policy + Amendment 1 enum 명시화 = governance 강화 ratchet (ADR-058 §결정 5 + ADR-064 active amendment 정합)"
+mechanical_enforcement_actions: []  # Amendment 1 scope = doc-only enum 명시화, mechanical lint 별도 carrier
 ---
 
 # ADR-059: Multi-round Adversarial Debate Protocol (debate-protocol-v1)
@@ -101,6 +115,40 @@ protocol contract 는 lane 정보를 인자로 받는 일반 schema 로 정의. 
 - Story 1 은 `design-review` + `severity|recommendation` 만 active. Story 2 가 `requirements` + `semantic` 추가. 미래 CFP 가 `code-review` / `security-test` 추가 가능.
 
 duplicate registry 도입 금지 (anti-pattern). 본 결정으로 Story 2 가 본 Story merge 후 contract 신설 없이 trigger 조건만 추가 정의 가능.
+
+### 결정 6 — dispatch_mode enum 명시화 (Amendment 1, CFP-533)
+
+debate-protocol-v1 자체의 dispatch_mode 가 §결정 2 (DesignReview 자동 발동) 와 §결정 4 (anchor 재발 escalation) 사이 inline FIX 분기 영역이 명시되지 않아 inline judgment 가 가능한 single-file 영역에서도 표준 multi-round debate (min 3 라운드 × 2 worker × ~5K token) 의 token cost 가 발생하던 영역 정리.
+
+본 Amendment 1 은 debate-protocol-v1 registry 의 `dispatch_mode` field 를 optional → required 로 전환 + 3-value enum 명시화. ADR-044 §결정 2 의 team-spec dispatch_mode (default / user_request_only / auto_on_divergence) 와 분리된 protocol-level dispatch_mode (auto_on_divergence / mechanical_fast_path_inline / user_request_only). 두 enum 은 다른 layer 영역 (ADR-044 = team roster level / ADR-059 = protocol activation level) — 동일 어휘 사용은 의미적 호환 보장 forcing function.
+
+**3-value 표**:
+
+| dispatch_mode | 진입 조건 | scope |
+|---|---|---|
+| `auto_on_divergence` | review-verdict-v4 `findings[]` 동일 `anchor_id` 에서 (a) 다른 severity 또는 (b) 다른 recommendation (FIX vs PASS) = `divergence_detected: true` | 표준 multi-round debate (min 3 / max 5 라운드). §결정 1-5 의 표준 흐름 발효 |
+| `mechanical_fast_path_inline` | `divergence_detected: true` + single-file scope + severity ≤ critical | inline FIX 분기 (debate skip, PL inline 판정). transcript Story §9 append 면제, §10 FIX Ledger row append 의무 보존 (debate_artifact_ref = null) |
+| `user_request_only` | consumer / user ad-hoc 명시 trigger | manual dispatch, 자동 발동 X. ADR-044 user_request_only Codex worker 가 활성된 상태에서도 protocol-level dispatch 는 사용자 explicit request 시에만 발동 |
+
+**우선순위 룰** (두 mode 동시 활성 시 effective mode 결정):
+
+```
+auto_on_divergence  >  mechanical_fast_path_inline  >  user_request_only
+```
+
+- `mechanical_fast_path_inline` 진입 조건 (single-file + severity ≤ critical) 충족 못하면 `auto_on_divergence` 로 fallback (표준 debate 발동)
+- `user_request_only` 단독 활성 (사용자 explicit request 안 함) 상태에서는 Codex worker 자체가 spawn 되지 않아 divergence 감지 불가 — protocol-level dispatch 미발동 (§결정 2 정합)
+
+**`mechanical_fast_path_inline` 발동 결정 로직** (DesignReviewPL):
+
+1. divergence detection 알고리즘 수행 (review-pl-base.md §3.0)
+2. divergence_detected: true 시 추가 검증:
+   - (a) single-file scope: divergence anchor 가 단일 file path 만 포함
+   - (b) severity ≤ critical: 모든 divergence anchor 의 severity ≤ P1 (P0 critical 영역은 표준 debate 의무)
+3. (a) + (b) 모두 충족 → `mechanical_fast_path_inline` 진입 → PL inline 판정 + Story §10 row append (debate_artifact_ref = null)
+4. 미충족 → `auto_on_divergence` fallback (표준 multi-round debate)
+
+본 결정의 의도 = inline judgment 가 가능한 single-file 영역에서 표준 debate token cost 회피. ADR-064 active amendment 정합 (governance 강화 ratchet, scope 확장 — 약화 방향 아님). debate-protocol-v1 registry v1.0 → v1.1 MINOR bump 동반 (additive strengthening, ADR-008 §결정 2 정합).
 
 ## 해소 기준
 
