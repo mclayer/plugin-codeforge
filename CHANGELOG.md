@@ -7,6 +7,8 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.34.0] - 2026-05-13
+
 ### Added
 - **[ESC#525 CFP-527]** Boundary completeness 4-invariant governance ADR-068 신설 (Wave 2A of Epic-FIX-ESCALATION-prevention). ADR-068 governance permanent (`is_transitional: false`) — 4 invariants (API contract semantic / cross-module propagation / guard placement intent / wording SSOT) + dual-binding (design author + code-review cross-validate) + review-verdict-v4 v4.3 MINOR bump (`boundary_completeness_self_check_passed` + `findings[].type: "boundary-completeness"`) + wording-ssot-grep-lint warning-tier evidence-enforceable (8번째 entry). #438 absorption — ADR-065 (mechanical syntactic) 와 ADR-068 (semantic) 분리 운영 (verdict packet 양 별도 boolean field).
 
