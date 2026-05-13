@@ -592,7 +592,7 @@ entries:
       carrier (from-cfp-425-followup label). Self-test integration test: tests/integration/stories/CFP-425/self-test-worktree-block.sh E4-1 (Phase 2 PR CFP-429).
     detect_command: bash scripts/check-worktree-first-session-start-wire.sh
     workflow: templates/github-workflows/worktree-first-session-start-wire.yml
-    current_tier: warning
+    current_tier: blocking-on-pr  # CFP-531 / ADR-040 Amendment 5 — warning → blocking-on-pr 승격 (2026-05-13)
     bypass_label: hotfix-bypass:worktree-session-start-wire
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse (BYPASS_LABEL_PREFIX=hotfix-bypass:)
     promotion_criteria:
@@ -627,7 +627,7 @@ entries:
       carrier (from-cfp-425-followup label). Self-test integration test: tests/integration/stories/CFP-425/self-test-worktree-block.sh E4-3 (Phase 2 PR CFP-429).
     detect_command: bash scripts/check-worktree-first-pre-checkout.sh
     workflow: templates/github-workflows/worktree-first-pre-checkout.yml
-    current_tier: warning
+    current_tier: blocking-on-pr  # CFP-531 / ADR-040 Amendment 5 — warning → blocking-on-pr 승격 (2026-05-13)
     bypass_label: hotfix-bypass:worktree-pre-checkout
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     promotion_criteria:
@@ -662,7 +662,7 @@ entries:
       carrier (from-cfp-425-followup label). Self-test integration test: tests/integration/stories/CFP-425/self-test-worktree-block.sh E4-4 (Phase 2 PR CFP-429).
     detect_command: bash scripts/check-worktree-first-pre-commit-main-block.sh
     workflow: templates/github-workflows/worktree-first-pre-commit-main-block.yml
-    current_tier: warning
+    current_tier: blocking-on-pr  # CFP-531 / ADR-040 Amendment 5 — warning → blocking-on-pr 승격 (2026-05-13)
     bypass_label: hotfix-bypass:worktree-pre-commit-main-block
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     promotion_criteria:
@@ -697,7 +697,7 @@ entries:
       carrier (from-cfp-425-followup label). Self-test integration test: tests/integration/stories/CFP-425/self-test-worktree-block.sh E4-2 (Phase 2 PR CFP-429).
     detect_command: bash scripts/check-worktree-first-spawn-evidence-cwd.sh
     workflow: templates/github-workflows/worktree-first-spawn-evidence-cwd.yml
-    current_tier: warning
+    current_tier: blocking-on-pr  # CFP-531 / ADR-040 Amendment 5 — warning → blocking-on-pr 승격 (2026-05-13)
     bypass_label: hotfix-bypass:worktree-spawn-evidence-cwd
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     promotion_criteria:
