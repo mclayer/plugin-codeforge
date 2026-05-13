@@ -1,19 +1,21 @@
 ---
 kind: registry
 registry: fix-event
-version: "1.1"
+version: "1.2"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/fix-event-v1.md
-date: 2026-05-11
+date: 2026-05-13
 authors:
   - Claude (CFP-32 codification — playbook §6.4 추출 + Orchestrator monopoly enforcement)
   - ArchitectAgent (CFP-391 — v1.1 MINOR bump, debate_artifact_ref optional field)
+  - ArchitectAgent (CFP-526 — v1.2 MINOR bump, reasoning_carryover optional field)
 related_adrs:
   - ADR-008
   - ADR-009 (CFP-31 — §10 Orchestrator 단독 owner 결정)
   - ADR-039 (CFP-275 Amendment — Orchestrator-owned delegate subagent inclusion)
   - ADR-059 (CFP-391 — debate-protocol-v1 reasoning carryover, debate_artifact_ref 필드 도입)
+  - ADR-067 (CFP-526 — fix-ledger implementability escalation, reasoning_carryover 필드 도입)
 related_files:
   - docs/orchestrator-playbook.md (§6.4 narrative SSOT — 본 registry와 cross-ref)
   - .github/workflows/fix-ledger-sync.yml (§10 행 commit 감지 → label/comment mirror)
@@ -26,6 +28,12 @@ amendment_log:
     summary: "debate_artifact_ref optional 필드 추가 — ADR-059 reasoning carryover (Story §9 debate transcript section anchor link). 8 번째 column 으로 §10 표 확장."
     breaking: false
     backward_compat: true  # 기존 7-column row valid (debate_artifact_ref 누락 = null 처리)
+  - date: 2026-05-13
+    version: "1.2"
+    cfp: CFP-526
+    summary: "reasoning_carryover optional 필드 추가 — ADR-067 §결정 5 architectural amnesia 차단 (3-part structured YAML: invariant_summary + disputed_claims + transcript_ref). 9 번째 column 으로 §10 표 확장."
+    breaking: false
+    backward_compat: true  # 기존 8-column row valid (reasoning_carryover 누락 = null 처리)
 ---
 
 # fix-event v1
@@ -50,16 +58,17 @@ amendment_log:
 | 재실행 범위 | string | required | 어떤 산출물·step부터 다시 진행하는지 (예: "Change Plan §3 재작성", "DeveloperAgent 재스폰") |
 | RESET? | string | required | "—" (RESET 없음) 또는 "RESET <레인>" (해당 lane 카운터 리셋) |
 | debate_artifact_ref | string \| null | **optional (v1.1, CFP-391)** | debate-protocol-v1 발동된 FIX event 시 Story §9 debate transcript section anchor link (예: `#debate-transcript-DR-001`). 미발동 FIX 시 `null` 또는 column 자체 생략 (backward-compat — 기존 7-column row valid) |
+| reasoning_carryover | object \| null | **optional (v1.2, CFP-526)** | ArchitectPL re-spawn 시 architectural amnesia 차단 — 직전 finding + reasoning 전달 (ADR-067 §결정 5). 3-part structured YAML: `invariant_summary` (50자 이내, immutable boundary 요약) / `disputed_claims` (100자 이내, unresolved 영역) / `transcript_ref` (Story §9 anchor link). 미사용 시 `null` 또는 column 생략 (backward-compat — 기존 8-column row valid) |
 
-§10 행 markdown 형식 예시 (v1.1 — 8 column):
+§10 행 markdown 형식 예시 (v1.2 — 9 column):
 
 ```markdown
-| Iter | 시각 | 레인 | 트리거 | 원인 판정 | 재실행 범위 | RESET? | debate_artifact_ref |
-|------|------|------|--------|-----------|-------------|--------|---------------------|
-| 1    | 2026-04-29T10:15:00Z | 설계-리뷰   | DesignReviewPL P0 × 2 | 설계 | Change Plan §3 재작성 | — | null |
-| 2    | 2026-04-29T14:22:00Z | 구현-테스트 | 성능 mean +15% | 설계 | Change Plan §3 재작성 | RESET 구현-리뷰 | null |
-| 3    | 2026-04-30T09:00:00Z | 보안-테스트 | SecurityTestPL P0 × 1 (SQL injection) | 구현 | DeveloperAgent 재스폰 | — | null |
-| 4    | 2026-05-11T11:00:00Z | 설계-리뷰   | debate-protocol-v1 FIX (anchor F-001 severity divergence) | 설계 | ArchitectAgent re-run with transcript | — | #debate-transcript-F-001 |
+| Iter | 시각 | 레인 | 트리거 | 원인 판정 | 재실행 범위 | RESET? | debate_artifact_ref | reasoning_carryover |
+|------|------|------|--------|-----------|-------------|--------|---------------------|---------------------|
+| 1    | 2026-04-29T10:15:00Z | 설계-리뷰   | DesignReviewPL P0 × 2 | 설계 | Change Plan §3 재작성 | — | null | null |
+| 2    | 2026-04-29T14:22:00Z | 구현-테스트 | 성능 mean +15% | 설계 | Change Plan §3 재작성 | RESET 구현-리뷰 | null | null |
+| 3    | 2026-04-30T09:00:00Z | 보안-테스트 | SecurityTestPL P0 × 1 (SQL injection) | 구현 | DeveloperAgent 재스폰 | — | null | null |
+| 4    | 2026-05-11T11:00:00Z | 설계-리뷰   | debate-protocol-v1 FIX (anchor F-001 severity divergence) | 설계 | ArchitectAgent re-run with transcript | — | #debate-transcript-F-001 | {invariant_summary: "API contract immutable", disputed_claims: "rate-limit scope", transcript_ref: "#debate-transcript-F-001"} |
 ```
 
 §10 행 markdown 형식 — backward-compat (v1.0 7-column 유지 가능, debate 미발동 시):
@@ -142,6 +151,32 @@ fix_event_schema:
       - docs/adr/ADR-059-debate-protocol-v1.md (§결정 3 reasoning carryover)
       - docs/inter-plugin-contracts/debate-protocol-v1.md (Termination schema + FIX 통합)
 
+  "reasoning_carryover":
+    type: object
+    optional: true            # v1.2 신규, backward-compat 보장 (CFP-526 / ADR-067)
+    introduced_in: "1.2"
+    description: §10 row 의 architectural amnesia 차단 — ArchitectPL re-spawn 시 직전 finding + reasoning 전달
+    properties:
+      invariant_summary:
+        type: string
+        max_length: 50
+        description: immutable boundary 요약 (변경 차단 영역)
+      disputed_claims:
+        type: string
+        max_length: 100
+        description: FIX iter 내 unresolved 영역 (다음 cycle input)
+      transcript_ref:
+        type: string
+        description: Story §9 anchor link (예 "#debate-transcript-F-001")
+    rule: |
+      ArchitectPL re-spawn 시 직전 §10 row 의 reasoning_carryover full-text를 입력으로 전달 의무.
+      debate_artifact_ref 와 직교 — debate 발동 여부와 무관하게 reasoning 보존 가능.
+      미사용 FIX = null 또는 column 생략 (backward-compat — 기존 8-column row valid).
+      Producer = Orchestrator (FIX Ledger writer monopoly 유지 — CFP-32).
+    cross_ref:
+      - docs/adr/ADR-067-fix-ledger-implementability-escalation.md (§결정 5 reasoning carryover)
+      - docs/orchestrator-playbook.md (§6.6 — re-spawn 시 carryover 전달 절차)
+
 append_rules:
   writer:
     - "Orchestrator 단독 (CFP-32 ζ arc F1부터)"
@@ -182,3 +217,11 @@ counter_semantics:
 - **RESET 시맨틱스 변경**: lane scope 또는 시점 변경은 minor (v1.1) — `current_cycle` 알고리즘 영향. ESCALATE 임계값 변경은 minor (v1.1)
 - **§10 schema 검증**: CFP-33 contract harness가 본 registry → Story file §10 매칭 lint 추가
 - **v1.0 → v1.1 (CFP-391 / ADR-059)**: `debate_artifact_ref` optional 필드 추가. SemVer MINOR — backward-compat 보장 (기존 7-column row valid, column 자체 생략 가능). `fix-ledger-sync.yml` regex 호환성 검증 필요 — Phase 2 PR scope (`scripts/check-doc-section-schema.sh` 보강).
+- **v1.1 → v1.2 (CFP-526 / ADR-067)**: `reasoning_carryover` optional 필드 추가 (3-part structured YAML: invariant_summary + disputed_claims + transcript_ref). SemVer MINOR — backward-compat 100% 보장 (기존 8-column row valid, column 자체 생략 = null 처리). `debate_artifact_ref` (v1.1) 와 직교하는 독립 필드. ESCALATE root cause = "design granularity inadequate" 또는 N+1 round divergence 유지 케이스에서 ArchitectPL re-spawn 시 reasoning continuity 확보.
+
+## v1.2 (2026-05-13, CFP-526)
+
+- reasoning_carryover optional field 신설 (3-part structured: invariant_summary + disputed_claims + transcript_ref)
+- ADR-067 §결정 5 binding — architectural amnesia 차단
+- debate-protocol-v1 v1.1 patterns (debate_artifact_ref) 정합
+- Backward compat: 100% (optional field, 기존 row null 또는 column 생략 모두 valid)

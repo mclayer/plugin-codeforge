@@ -1534,7 +1534,64 @@ mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/is
 - 이후 구현 리뷰 카운터는 RESET 행 이후 iteration만 카운트 (이전 iteration은 감사 이력으로 유지)
 - 설계 리뷰·구현 리뷰 내부 루프는 RESET 없음
 
-### 6.4 §10 관리 세부
+### 6.4 Max FIX counter implementability reassessment (CFP-526 / ADR-067)
+
+설계-리뷰 카운터 3/3 또는 구현-리뷰 카운터 3/3 도달 시, OR cross-lane cumulative_P0≥2 OR cumulative_P1≥5 OR reviewer_divergence_count≥2 (ADR-067 §결정 6 dual metric — MCT-150 §10 row 1-4 corroboration evidence) 시 ArchitectPL 재량 implementability reassessment 수행 의무.
+
+**3 escalation trigger (i/ii/iii) 중 1+ 충족 시 사용자 escalation 의무** (ADR-067 §결정 3):
+
+- (i) ESCALATE root cause = "design granularity inadequate"
+- (ii) cross-module invariant 위반 without convergence path
+- (iii) DeveloperPL ↔ ArchitectPL N+1 round divergence 유지
+
+**0 충족 시 RESET path 선택 가능** (사용자 escalation 생략).
+
+사용자 escalation 시 다음 Option A/B/C 표면 의무:
+
+- **Option A**: RESET — design 또는 code 카운터 재시작
+- **Option B**: 요건 자체 재정의 — Story 분할 또는 scope 축소
+- **Option C**: Wave delegation — cross-Wave dependency 처리 후 본 Story 재진입
+
+사용자 directive 2026-05-13 cross-ref: "타협이 어려웠던 부분을 기준으로 보수적으로 평가" — ArchitectPL reassessment 시 수렴 가능성 판단에 적용. SSOT: [ADR-067](../docs/adr/ADR-067-fix-ledger-implementability-escalation.md).
+
+### 6.5 Cross-lane RESET 정책 (Pause-and-resume, CFP-526 / ADR-067)
+
+각 lane별 독립 카운터 (각 max=3):
+
+- 설계-리뷰 카운터: 설계-리뷰 lane FIX iteration 전용
+- 구현-리뷰 카운터: 구현-리뷰 lane FIX iteration 전용
+- 보안-테스트 카운터: 무제한 (§6.7 fix-event-v1 schema 정합)
+
+**cross-lane FIX 발생 시 합산 금지** (decision noise 회피):
+
+- escalation lane (예: 보안-테스트) 에서 FIX 처리 시 design/code lane 카운터를 보존
+- escalation lane FIX 완료 후 보존된 design/code lane 카운터 resume (Pause-and-resume)
+- 사용자 directive Edge Case #2 처리 (Analyst): escalation 중 신규 lane (예: 보안-테스트) FIX 발생 시 design/code 카운터 보존 의무
+
+SSOT: [ADR-067 §결정 4](../docs/adr/ADR-067-fix-ledger-implementability-escalation.md).
+
+### 6.6 §10 FIX Ledger reasoning_carryover field (CFP-526 / ADR-067)
+
+fix-event-v1 v1.2 (ADR-067 §결정 5) — §10 row 9번째 optional column. ArchitectPL re-spawn 시 직전 row의 reasoning_carryover full-text를 입력으로 전달 의무 (architectural amnesia 차단).
+
+**3-part structured YAML schema**:
+
+```yaml
+reasoning_carryover:
+  invariant_summary: "<50자 이내, immutable boundary 요약 — 변경 차단 영역>"
+  disputed_claims: "<100자 이내, FIX iter 내 unresolved 영역 — 다음 cycle input>"
+  transcript_ref: "<Story §9 anchor link — 예: #debate-transcript-F-001>"
+```
+
+**ArchitectPL re-spawn 절차**:
+
+1. 직전 §10 row에서 reasoning_carryover 추출 (null 시 skip — 첫 iter 또는 미사용 iter)
+2. ArchitectPL spawn 시 reasoning_carryover full-text를 spawn 입력에 포함
+3. ArchitectPL이 reasoning_carryover 기반으로 설계 검토 (invariant_summary 영역 변경 차단 / disputed_claims 영역 집중 검토)
+
+debate-protocol-v1 v1.1 의 debate_artifact_ref pattern과 직교 — debate 발동 여부와 무관하게 독립 적용. backward-compat: 기존 row null 또는 column 생략 모두 valid. SSOT: [fix-event-v1 v1.2](../docs/inter-plugin-contracts/fix-event-v1.md) + [ADR-067](../docs/adr/ADR-067-fix-ledger-implementability-escalation.md).
+
+### 6.7 §10 관리 세부
 
 - **Orchestrator가 단독 갱신** (CFP-32 ζ arc F1부터 — fix-event-v1 monopoly). append-only, 행 삭제·수정 금지
 - Schema SSOT: [`docs/inter-plugin-contracts/fix-event-v1.md`](../docs/inter-plugin-contracts/fix-event-v1.md) — row 필드 + append 규칙 + RESET 시맨틱스
@@ -1543,13 +1600,13 @@ mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/is
 - §10 조회 실패(파일 부재 등) → ArchitectPLAgent 판정 정지 → 사용자 판단 요청
 - GitHub 라벨은 `fix-ledger-sync.yml` Action이 §10 commit 감지 시 자동 부착 — 단방향 mirror (§10 → label/comment). 대시보드 search syntax 필터용
 
-### 6.5 원인 판정 decision table
+### 6.8 원인 판정 decision table
 
 [CLAUDE.md](../CLAUDE.md) "원인 판정 decision table" 섹션이 SSOT — 본 playbook은 표를 inline 복제하지 않는다 (drift 방지). Orchestrator는 FIX 트리거 시 CLAUDE.md 표를 직접 참조해 DeveloperPL/ArchitectPLAgent 전달용 evidence pack을 구성.
 
 **ArchitectPLAgent 최종 판정 + evidence pack(Change Plan 버전 + 리뷰 findings + 테스트 로그) 첨부 의무**.
 
-#### 6.5.1 Mechanical reconciliation pattern — grep BEFORE sed (CFP-464, CFP-500 FIX-2/3 학습)
+#### 6.8.1 Mechanical reconciliation pattern — grep BEFORE sed (CFP-464, CFP-500 FIX-2/3 학습)
 
 ArchitectPL re-spawn FIX 처리 시 reconciliation 의무 4-step (partial reconciliation anti-pattern 차단):
 
@@ -1560,9 +1617,9 @@ ArchitectPL re-spawn FIX 처리 시 reconciliation 의무 4-step (partial reconc
 
 evidence: CFP-500 설계 lane FIX iter 2/3 partial reconciliation (self-report 영역만 정정, sweep 누락 → recurrence). Iter 4 grep sweep mandate 후 단번에 해소.
 
-본 단계는 codeforge-design plugin ArchitectPLAgent template 의 mechanical reconciliation 영역으로 본 playbook §6.5 의 augmentation. cross-plugin enforcement 자체는 별도 follow-up (codeforge-design plugin version bump 동반).
+본 단계는 codeforge-design plugin ArchitectPLAgent template 의 mechanical reconciliation 영역으로 본 playbook §6.8 의 augmentation. cross-plugin enforcement 자체는 별도 follow-up (codeforge-design plugin version bump 동반).
 
-### 6.6 Parallel diagnosis (R4, [CFP-19 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
+### 6.9 Parallel diagnosis (R4, [CFP-19 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
 
 review·테스트 FIX (구현 리뷰·구현 테스트·보안 테스트) 시 DeveloperPL 1차 진단과 ArchitectPL 최종 판정을 **병렬 spawn**한다 (한 메시지에 dispatch).
 
@@ -1579,7 +1636,7 @@ review·테스트 FIX (구현 리뷰·구현 테스트·보안 테스트) 시 De
 
 **제약**: 설계 리뷰 FIX는 본 절 범위 외 — DeveloperPL 미개입 (기존 절차: ArchitectPL 직접 회귀).
 
-### 6.7 Mechanical fast-path (R11, [CFP-19 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
+### 6.10 Mechanical fast-path (R11, [CFP-19 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
 
 ReviewPL verdict packet의 `mechanical_category` 필드 (typo / broken-link / minor-naming / comment-only / none — SSOT codeforge-review repo의 `templates/review-pl-base.md` §3 R11 절) + severity 조합으로 fast-path 자격 판정:
 
@@ -1595,11 +1652,11 @@ ReviewPL verdict packet의 `mechanical_category` 필드 (typo / broken-link / mi
 
 **제약**: 보안 lane의 injection / credential / CVE / trust-boundary 카테고리는 항상 `mechanical_category = none`이라 fast-path 자격 없음 (codeforge-review repo의 `templates/review-pl-base.md` §3 R11 SSOT).
 
-### 6.8 Spec amendment loop (CFP-87)
+### 6.11 Spec amendment loop (CFP-87)
 
 mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/issues/181) P1-7 finding (Opus 자체 발견): mctrader-hub PR [#72](https://github.com/mclayer/mctrader-hub/pull/72) (`[MCT-50/51] Spec amendments — Codex push-back 6건`) — Phase 3 implementation 진행 중 Codex review 가 발견한 push-back 6건 → spec doc 수정 PR (Story file `MCT-50.md` + `MCT-51.md` amendment) 으로 캡처 후 implementation 재개. 매우 가치 있는 패턴이나 codeforge SSOT 미정의 — 본 §6.8 codify.
 
-#### 6.8.1 Trigger
+#### 6.11.1 Trigger
 
 다음 중 하나 발생 시 Spec amendment loop 진입 (FIX 루프 §6.1-§6.7 와 별도):
 
@@ -1611,7 +1668,7 @@ mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/is
 - FIX 루프 = review verdict FAIL → 코드 / 설계 변경
 - Spec amendment = review verdict 무관 → spec doc (Story file / Change Plan / ADR) 변경
 
-#### 6.8.2 Output
+#### 6.11.2 Output
 
 `[<KEY>] Spec amendment — <reason>` PR (1+ Story file edit, doc-only):
 
@@ -1622,24 +1679,24 @@ mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/is
   - Story file §12 Sonnet Decision Log row 추가 (substantive choice 발생 시)
   - PR labels = `audit:spec-amendment` + `phase:<현재 phase>` (CFP-86 label registry 확장 candidate)
 
-#### 6.8.3 Limit
+#### 6.11.3 Limit
 
 per Story max **2 spec amendment PR**. 3+ amendment 발생 시 = 설계 결함 신호 → 설계 lane 재실행 trigger (§6.5 decision table 의 "설계 원인 판정" 적용).
 
-#### 6.8.4 Audit trail
+#### 6.11.4 Audit trail
 
 - Story file §11 = amendment PR list (link + reason summary)
 - EPIC-RESULTS-<EPIC_KEY>.md §6 Codex review aggregate = amendment 발생 row 명시 (PR # + reason)
 
-#### 6.8.5 mctrader 사례 (CFP-87 source)
+#### 6.11.5 mctrader 사례 (CFP-87 source)
 
 | Story | Amendment PR | Reason | Trigger |
 |---|---|---|---|
 | MCT-50 / MCT-51 | mctrader-hub#72 | Codex push-back 6건 (Signal handler ownership / RunStatus minimal v1 / HTTP edge case / "11 tables" 재정의 / MarketDataFreshnessEvent deferred / ClosedBarEvent.source_hash) | Phase 3 implementation 중 Codex review |
 
-#### 6.8.6 §6.8 ↔ §6.5 (원인 판정 decision table) cross-ref
+#### 6.11.6 §6.11 ↔ §6.8 (원인 판정 decision table) cross-ref
 
-§6.8 spec amendment 가 결과적으로 spec drift 가 코드 / 설계 사이 발생 시 → §6.5 decision table 의 "설계 원인 판정" 적용 → 설계 lane 재실행. 즉 spec amendment → FIX 루프 conversion path 존재.
+§6.11 spec amendment 가 결과적으로 spec drift 가 코드 / 설계 사이 발생 시 → §6.8 decision table 의 "설계 원인 판정" 적용 → 설계 lane 재실행. 즉 spec amendment → FIX 루프 conversion path 존재.
 
 ---
 

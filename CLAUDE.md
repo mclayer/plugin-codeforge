@@ -232,6 +232,8 @@ DesignReview lane 에서 Claude worker 와 Codex worker 가 review-verdict-v4 `f
 
 **§10 FIX Ledger 스키마**: `codeforge:fix-ledger-schema` 호출 (FIX 루프 진입 시). Orchestrator 단독 §10 append 독점 (fix-event-v1 contract, CFP-32). RESET 룰·max FIX 횟수 상세는 [playbook §6](docs/orchestrator-playbook.md).
 
+> **Max FIX 3/3 + implementability reassessment + cross-lane RESET (CFP-526 / ADR-067)**: 본 단락 SSOT = `codeforge:fix-ledger-schema` skill + playbook §6.4/§6.5/§6.6. 사용자 directive 2026-05-13 — ArchitectPL 재량 implementability 평가 + escalation trigger 3종.
+
 ### 원인 판정 decision table
 
 FIX 루프 시작 시 `codeforge:root-cause-decision` 호출 (DeveloperPL 진단 전). Failure 유형별 1차 가정 (구현/설계)·escalate 조건 전체 테이블 포함.
