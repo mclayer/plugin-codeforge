@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: label
-version: "2.5"
+version: "2.7"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
@@ -47,6 +47,14 @@ related_files:
 # label-registry v2
 
 ## 변경 이력
+
+**v2.7 (CFP-598 / ADR-024 Amendment 3/5 §결정 6.A, 2026-05-14)**: PATCH bump (schema 무변경 — §3 yaml hotfix-bypass:* 12 row first-class backfill, 기존 prose-only entry 의 yaml 정규화).
+- **추가**: `hotfix-bypass:*` 12종 §3 yaml first-class entry — adr-sunset / decision-principle-vocab / auto-phase-label / marketplace-atomic / worktree-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd} / claude-md-line-cap / sibling-pr-author-check / workflow-permissions / workflow-yaml-parse / debate-convergence-quality. pre-existing state: 12개 모두 §변경 이력 prose 에만 기록, §3 yaml row 부재 (bootstrap-labels.sh --dry-run 에서 hotfix-bypass:* 생성 불가 = pre-existing leak). backfill 로 DRY status 해소.
+- `scripts/parse-hotfix-bypass-labels.py` 신설 — label-registry-v2.md §3 yaml block 안 `category: hotfix-bypass` row 동적 parse (ADR-061 외부 .py 정합).
+- `scripts/bootstrap-labels.sh` hotfix-bypass:* dynamic read 분기 신설 (라인 125 component:* 직전 삽입).
+- `scripts/check-bootstrap-labels-count.sh` 3-way parity 확장 (기존 2-way + §3 yaml hotfix-bypass:* row count 추가).
+- canonical-only (kind:registry — sibling sync scope 외 per ADR-010).
+- ADR-008 §결정 3 SSOT: schema 무변경 yaml row backfill = PATCH bump.
 
 **v2.6 추가 entry (CFP-582 / ADR-059 Amendment 2 §결정 8 / ADR-024 Amendment 5, 2026-05-13)**: same MINOR sub-entry append (frontmatter `version: "2.5"` 미변경, sub-row only — ADR-008 §결정 SemVer rule 안 same MINOR 안 additive sub-entry 허용).
 - **추가**: `hotfix-bypass:debate-convergence-quality` (color `fef2c0` audit) — `templates/github-workflows/debate-convergence-quality.yml` warning-tier mechanical lint conditional skip + audit comment 자동 발의 channel (ADR-024 Amendment 5 §결정 6.A per-entry namespace 정합, **12번째 hotfix-bypass:* family member** — 기존 11: adr-sunset / decision-principle-vocab / auto-phase-label / marketplace-atomic / worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd} / claude-md-line-cap / sibling-pr-author-check / workflow-permissions / workflow-yaml-parse).
@@ -448,6 +456,102 @@ labels:
     description: "KPI workflow data refresh PR — auto-merge eligible. rate-limit-fallback-kpi.yml workflow 가 monthly cron 으로 발의하는 docs/kpi/rate-limit-fallback.json 데이터 갱신 PR marker. CFP-451 v2.3 sub-axis 다축 완결 (pre-existing CFP-393 leak 정정 — Codex F-451-001 (a))."
     single_active: false
     attach_owner_plugin: "rate-limit-fallback-kpi.yml CI Action (자동)"
+
+  # hotfix-bypass:* (12종 — ADR-024 Amendment 3/5 §결정 6.A per-entry namespace)
+  # CFP-598 v2.7 PATCH backfill — §변경 이력 prose-only 상태에서 §3 yaml first-class 정규화.
+  # color: fef2c0 (audit tier 동일 — bypass channel 은 audit 계열 색상 공유)
+  # single_active: false (누적 가능 — 여러 entry bypass 동시 활성)
+  # category: hotfix-bypass (별도 category enum — ADR-024 Amendment 3 §결정 6.A namespace)
+  - name: hotfix-bypass:adr-sunset
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: adr-sunset-criteria lint 조건부 skip + audit comment 자동 발의 (CFP-389 / ADR-024 Amendment 3 §결정 6.A / ADR-060 §결정 7 — templates/github-workflows/adr-sunset-criteria.yml)"
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  - name: hotfix-bypass:decision-principle-vocab
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: decision-principle-vocabulary lint 조건부 skip + audit comment 자동 발의 (CFP-449 / ADR-024 Amendment 3 §결정 6.A / ADR-060 §결정 5 — templates/github-workflows/decision-principle-vocabulary.yml)"
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  - name: hotfix-bypass:auto-phase-label
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: auto-phase-label 조건부 skip + audit comment 자동 발의 (CFP-481 / ADR-024 Amendment 4 §결정 6.A.1 / ADR-060 Amendment 4 — templates/github-workflows/auto-phase-label.yml)"
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  - name: hotfix-bypass:marketplace-atomic
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: marketplace ↔ plugin.json atomic invariant check 조건부 skip + audit comment 자동 발의 (CFP-441 / ADR-063 §결정 4 — templates/github-workflows/version-bump-atomic-check.yml)"
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  - name: hotfix-bypass:worktree-session-start-wire
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: worktree-first-session-start-wire blocking-on-pr check 조건부 skip (CFP-427 / ADR-040 Amendment 3 §결정 7.D — templates/github-workflows/worktree-first-session-start-wire.yml)"
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  - name: hotfix-bypass:worktree-pre-checkout
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: worktree-first-pre-checkout blocking-on-pr check 조건부 skip (CFP-428 / ADR-040 Amendment 3 §결정 7.D — templates/github-workflows/worktree-first-pre-checkout.yml)"
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  - name: hotfix-bypass:worktree-pre-commit-main-block
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: worktree-first-pre-commit-main-block blocking-on-pr check 조건부 skip (CFP-428 / ADR-040 Amendment 3 §결정 7.D — templates/github-workflows/worktree-first-pre-commit-main-block.yml)"
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  - name: hotfix-bypass:worktree-spawn-evidence-cwd
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: worktree-first-spawn-evidence-cwd blocking-on-pr check 조건부 skip (CFP-427 / ADR-040 Amendment 3 §결정 7.D — templates/github-workflows/worktree-first-spawn-evidence-cwd.yml)"
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  - name: hotfix-bypass:claude-md-line-cap
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: CLAUDE.md ≤320줄 cap lint 조건부 skip + audit comment 자동 발의 (CFP-506 / ADR-012 Amendment 1 / ADR-060 Amendment 5 — templates/github-workflows/claude-md-line-cap.yml)"
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  - name: hotfix-bypass:sibling-pr-author-check
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: sibling-pr-label-author-check lint 조건부 skip + audit comment 자동 발의 (CFP-521 / ADR-010 Amendment 4 §결정 5 — templates/github-workflows/sibling-pr-label-author-check.yml)"
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  - name: hotfix-bypass:workflow-permissions
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: workflow permissions block presence lint 조건부 skip + audit comment 자동 발의 (CFP-530 / ADR-060 Amendment 8 §결정 21 — templates/github-workflows/workflow-permissions-check.yml)"
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  - name: hotfix-bypass:workflow-yaml-parse
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: workflow yaml parse lint 조건부 skip + audit comment 자동 발의 (CFP-583 / ADR-060 Amendment 9 §결정 22 — templates/github-workflows/workflow-yaml-parse.yml)"
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  - name: hotfix-bypass:debate-convergence-quality
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: debate convergence_quality_invariant 3 marker lint 조건부 skip + audit comment 자동 발의 (CFP-582 / ADR-059 Amendment 2 §결정 8 / ADR-024 Amendment 5 — templates/github-workflows/debate-convergence-quality.yml)"
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
 ```
 
 ## 4. 변경 규칙
