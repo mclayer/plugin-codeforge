@@ -28,12 +28,14 @@ related_adrs:
   - ADR-065
   - ADR-067
 mechanical_enforcement_actions:
-  - name: boundary-completeness-self-check
-    binding: §결정 2
-    evidence_check: boundary-completeness-self-check (verdict field, blocking-on-pr 승격 후보)
-  - name: wording-ssot-grep-lint
-    binding: §결정 5
-    evidence_check: wording-ssot-grep-lint (warning tier, registry entry 신설)
+  - action: boundary-completeness-self-check
+    status: deferred-followup
+    progress_note: "ADR-068 신설 시점 registry entry 부재 (verdict field-only enforcement). blocking-on-pr 승격 후보 — 별도 CFP 가 evidence-checks-registry append + verdict field-time lint 신설 후 status 갱신 (deferred-followup → warning → blocking-on-pr)."
+    target_section: §결정 2
+  - action: wording-ssot-grep-lint
+    status: warning
+    progress_note: "ADR-060 framework 4번째 warning entry — schema v1.2 (CFP-509 / ADR-060 Amendment 6). hotfix-bypass:boundary-wording label. 첫 20 PR sample 측정 후 blocking-on-pr 승격 별도 CFP."
+    target_section: §결정 5
 ---
 
 # ADR-068: Boundary completeness invariants (semantic dual-binding)
@@ -132,11 +134,15 @@ ADR-068 invariant 검증 fail + ADR-067 max FIX 3/3 도달 동시 발생 시 처
 
 ADR-060 evidence-enforceable framework 의 4번째 warning-tier entry (auto-phase-label / forbid-list / adr-sunset-criteria 다음):
 
-- **Registry entry**: `wording-ssot-grep-lint` (`docs/evidence-checks-registry.yaml`)
+- **Registry entry**: `wording-ssot-grep-lint` (`docs/evidence-checks-registry.yaml`, schema v1.2)
   - `owner_adr`: ADR-068
+  - `carrier_adr`: ADR-060
   - `current_tier`: warning
+  - `status`: Active
   - `hotfix_bypass_label`: `hotfix-bypass:boundary-wording` (ADR-024 Amendment 3 per-entry namespace 정합)
   - `promotion_gate`: PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling Story merged → blocking-on-pr 승격 (별도 CFP, Wave 2A 직접 scope 외)
+  - `introduced_in`: CFP-527
+  - schema v1.2 정합 (CFP-509 / ADR-060 Amendment 6) — `recurrence` field 신설 정합
 - **Lint script**: `scripts/check-wording-ssot.sh`
   - Mechanical scope — Story §3/§7 enum-like identifier (UPPER_SNAKE_CASE 4+ char) 추출 → impl source ripgrep 매칭
   - Story file 없을 시 skip exit 0 (advisory only)
@@ -156,14 +162,20 @@ ADR-060 evidence-enforceable framework 의 4번째 warning-tier entry (auto-phas
 
 ### 결정 6 — Mechanical enforcement actions binding
 
-frontmatter `mechanical_enforcement_actions[]` 2 entry (ADR-040 Amendment 3 §결정 7.A list[object] schema 정합):
+frontmatter `mechanical_enforcement_actions[]` 2 entry — ADR-040 Amendment 3 §결정 7.A (CFP-531 FIX iter 1 정정 후 schema) list[object] verbatim 정합:
 
-| Action name | Binding §결정 | Evidence check entry |
-|---|---|---|
-| `boundary-completeness-self-check` | §결정 2 (3-tier dual-binding) | verdict field `boundary_completeness_self_check_passed: bool` (review-verdict-v4 v4.3) + DesignReview/CodeReview `findings[].type: "boundary-completeness"`. blocking-on-pr 승격 후보 (별도 CFP). |
-| `wording-ssot-grep-lint` | §결정 5 (warning-tier evidence-enforceable) | `docs/evidence-checks-registry.yaml` entry (current_tier: warning) + `scripts/check-wording-ssot.sh` + `.github/workflows/wording-ssot-check.yml` |
+| Action | Status | Target section | Evidence check / registry binding |
+|---|---|---|---|
+| `boundary-completeness-self-check` | `deferred-followup` | §결정 2 (3-tier dual-binding) | verdict field `boundary_completeness_self_check_passed: bool` (review-verdict-v4 v4.3) + DesignReview/CodeReview `findings[].type: "boundary-completeness"`. ADR-068 신설 시점 registry entry 부재 — verdict field-only enforcement. blocking-on-pr 승격 별도 CFP 가 (a) `docs/evidence-checks-registry.yaml` row append + (b) verdict field-time lint 신설 후 status 갱신 (deferred-followup → warning → blocking-on-pr). |
+| `wording-ssot-grep-lint` | `warning` | §결정 5 (warning-tier evidence-enforceable) | `docs/evidence-checks-registry.yaml` entry (schema v1.2, current_tier: warning) + `scripts/check-wording-ssot.sh` + `.github/workflows/wording-ssot-check.yml`. 첫 20 PR sample 측정 후 blocking-on-pr 승격 별도 CFP. |
 
-ADR-040 Amendment 3 §결정 7.A `mechanical_enforcement_actions[]` list[object] schema 정합 — name / binding / evidence_check 3-key verbatim.
+Schema verbatim (ADR-040 §결정 7.A CFP-531 정정 후 + CFP-427 progress_note optional 신설):
+- `action` (required) = evidence-check-registry entry name (또는 deferred-followup carrier action name)
+- `status` (required) = warning / enforcing / deferred-followup enum 중 1
+- `progress_note` (optional) = entry-level 진척 / carrier history free-form string
+- `target_section` (required) = 본 ADR 본문 §결정 N reference
+
+본 ADR-068 frontmatter `mechanical_enforcement_actions[]` 2 entry 모두 4 field 보유.
 
 ## 관련 ADR
 
@@ -172,7 +184,7 @@ ADR-040 Amendment 3 §결정 7.A `mechanical_enforcement_actions[]` list[object]
 | ADR-065 (ArchitectAgent Phase 1 mechanical sync self-check) | **분리 운영 base** — syntactic 7-item carrier. 본 ADR-068 = semantic 4-invariant. 동일 ArchitectAgent verdict packet 양 별도 boolean field. ADR-065 계속 active (sunset 불필요), #438 ADR-065 구현 일부로 포섭. |
 | ADR-067 (Fix-ledger implementability escalation, Wave 1) | **EC-2 동시 발동 순서 sibling** — invariant fail → implementability assessment → §10 row reasoning_carryover 활용 (§결정 4). |
 | ADR-058 (ADR sunset criteria mandate) | **`is_transitional: false` (governance permanent) 정합** — §결정 7 보안 ADR default presumption + governance default 동일 적용. sunset 기준 부재 + amendment 시 ratchet 강화 방향만 허용 (ADR-058 §결정 5 정합). |
-| ADR-060 (Evidence-enforceable promotion framework) | **§결정 5 wording-ssot-grep-lint warning-tier 첫 적용** — 4번째 warning entry (auto-phase-label / forbid-list / adr-sunset-criteria 다음). schema v1.1 정합 (Amendment 2 / CFP-455). 승격 gate 3 AND condition. |
+| ADR-060 (Evidence-enforceable promotion framework) | **§결정 5 wording-ssot-grep-lint warning-tier 첫 적용** — 4번째 warning entry (auto-phase-label / forbid-list / adr-sunset-criteria 다음). schema v1.2 정합 (Amendment 6 / CFP-509, recurrence field 정식 도입 — v1.1 Amendment 2 / CFP-455 의 current_tier required 확장). 승격 gate 3 AND condition. |
 | ADR-063 (Marketplace atomic invariant) | **plugin.json + CHANGELOG + marketplace.json atomic coordination** — review-verdict-v4 v4.3 MINOR bump → plugin.json 5.34.0 MINOR bump → marketplace.json sync atomic. PR ordering: marketplace 선행 merge → wrapper Phase 1 PR. |
 | ADR-064 (Decision principle mandate) | **normative anchor 정합** — 4 어휘 (best-effort / broad coverage / full-scope / active amendment) + forbid-list 8 어휘 lint. dual-binding (cross-lane enforce) = `broad coverage` / `full-scope` 직접 적용. |
 | ADR-008 (Inter-plugin contract versioning) | **review-verdict-v4 v4.2 → v4.3 MINOR bump** — `boundary_completeness_self_check_passed: bool` optional field + `findings[].type: "boundary-completeness"` literal 추가. backward-compat 의무 (기존 v4.2 packet 모두 valid). |
