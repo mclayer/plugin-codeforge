@@ -4,6 +4,21 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.1.3] - 2026-05-13
+
+### CFP-597 — GitOpsAgent §3.6 marketplace sync proactive PR dispatch (ADR-063 Amendment 1, PATCH)
+
+Orchestrator 가 Phase 2 PR open 시점에 Change Plan §13 `marketplace_sync_required: true` declare 감지 시 GitOpsAgent §3.6 spawn → marketplace cfp-NNN worktree 신설 + marketplace.json mirrored field sync + PR open.
+
+#### Added
+
+- `agents/GitOpsAgent.md` — `§3.6 Marketplace sync proactive PR dispatch (CFP-597 / ADR-063 Amendment 1)` 섹션 신설:
+  - Trigger 조건 (Orchestrator monopoly, Phase 2 PR open 시점, Change Plan §13 lookup)
+  - artifacts verbatim 첨부 의무 (ADR-070 verify-before-trust)
+  - 행위 5단계 (worktree 신설 / marketplace.json 갱신 / PR open / cross-reference / merge ordering)
+  - ADR-063 §결정 2 ordering 정합 (marketplace PR 선행 merge 의무)
+  - dispatch trigger 영역 + Cross-reference
+
 ## [0.1.2] - 2026-05-13
 
 ### CFP-534 — ADR-050 Amendment 1 GitOpsAgent intersection 로직 확장 (PATCH)

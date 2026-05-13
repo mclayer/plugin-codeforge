@@ -183,6 +183,81 @@ sh scripts/worktree-merge.sh cfp-139/design/oprisk cfp-139/design
 
 **Sentinel evidence** (CFP-534 도입 동기): 2026-05-13 KST CFP-521 v2.4 vs CFP-429 v2.5 가 `docs/inter-plugin-contracts/label-registry-v2.md` 의 frontmatter 3-location (`version` / `bumped_at` / `amendments[]` row) 동시 수정 → manual 15분 추가 + risk.
 
+### 3.6. Marketplace sync proactive PR dispatch (CFP-597 / ADR-063 Amendment 1)
+
+Orchestrator 가 Phase 2 PR open 시점에 Change Plan §13 안 `marketplace_sync_required: true` declare 감지 시 본 §3.6 spawn flow 실행.
+
+#### Trigger
+
+Orchestrator monopoly trigger — Phase 2 PR open 시점:
+1. Phase 1 PR merged
+2. Phase 2 PR carrier 준비 중
+3. Orchestrator 가 Change Plan §13 lookup:
+   - `marketplace_sync_required: true`
+   - `mirrored_fields_changed: [...]`
+   - `triggering_plugins: [...]`
+4. Orchestrator → GitOpsAgent §3.6 spawn (sibling plugin location = codeforge-pmo)
+
+#### artifacts (verbatim 첨부, ADR-070 verify-before-trust)
+
+- Change Plan §13 sub-row (`marketplace_sync_required` + `mirrored_fields_changed[]` + `triggering_plugins[]`)
+- triggering plugin name + 변경된 mirrored field enum + bump type
+
+#### 행위
+
+1. `mclayer/marketplace` repo worktree 신설 — branch `cfp-NNN`, base `main`:
+
+   ```bash
+   cd c:/workspace/mclayer/marketplace
+   bash <wrapper>/templates/scripts/worktree-create.sh cfp-NNN origin/main
+   cd ~/.claude/worktrees/marketplace/cfp-NNN
+   ```
+
+2. `.claude-plugin/marketplace.json` 안 해당 plugin entry 의 mirrored field 갱신:
+
+   ```json
+   {
+     "plugins": [
+       {
+         "name": "<plugin-name>",
+         "version": "<new-version>",
+         "description": "...",
+         "author": "..."
+       }
+     ]
+   }
+   ```
+
+   `mirrored_fields_changed[]` 기준으로 변경된 field 만 갱신 의무.
+
+3. marketplace PR open:
+
+   ```bash
+   git add .claude-plugin/marketplace.json
+   git commit -m "chore(CFP-NNN): Sibling sync — <plugin> <version> mirrored field update"
+   git push -u origin cfp-NNN
+   gh pr create --title "[CFP-NNN] Sibling sync — <plugin> <version> mirrored field update" \
+     --body "Closes related: <triggering-plugin-PRs>"
+   ```
+
+4. PR body 안 `Closes <triggering-plugin-PR>` cross-reference
+
+5. ADR-063 §결정 2 ordering 정합 — **marketplace PR 선행 merge 의무**:
+   - 권장: marketplace PR merge 선행 → plugin PR open → CI marketplace-parity PASS → plugin PR merge
+   - Anti-pattern: plugin PR merge 먼저 (chicken-and-egg, ADR-063 §결정 2 위반)
+
+#### dispatch trigger 영역
+
+- Phase 2 PR carrier (Orchestrator monopoly)
+- 본 §3.6 lane 위치 = codeforge-pmo (GitOpsAgent home, sibling plugin)
+- Phase 1 영역 = ArchitectAgent §5.7 declarative only (codeforge-design sibling)
+
+#### Cross-reference
+
+- ADR-063 §결정 9 (CFP-597 Amendment 1) — ArchitectAgent §5.7 declare trigger
+- ArchitectAgent §5.7 (codeforge-design sibling) — Phase 1 declare
+- ADR-063 §결정 2 — marketplace PR 선행 merge ordering
+
 ### 4. FIX iteration worktree 재구성
 
 §10 FIX Ledger row append (Orchestrator 가 단독 작성, CFP-32 monopoly) 시점에 GitOpsAgent 가 알림 받아:
