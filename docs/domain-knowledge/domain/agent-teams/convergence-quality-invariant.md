@@ -38,11 +38,13 @@ debate-protocol-v1 v1.2 (CFP-582 / ADR-059 Amendment 2 §결정 8) 가 도입한
 
 매 debate round 발화 (Claude worker / Codex worker / PL synthesis) 는 다음 3-tuple 모두 만족해야 한다:
 
-| Field | 의미 | Measurable signal | 적용 round 영역 |
+| Field (stable base name) | 의미 | Measurable signal | 적용 round 영역 |
 |---|---|---|---|
-| `counterargument_received_and_addressed` | 직전 라운드 반대 worker 의 핵심 반론을 인용 + 자기 입장에서 explicit 응답 | round 본문 안에 `[COUNTERARGUMENT]` marker block 1+ 개 + 직전 라운드 worker 발화 anchor reference | round 1+ (round 0 statement 는 면제) |
-| `alternative_proposed_or_rebutted` | 반대 worker 가 제시한 대안을 reject (rebut + 사유) 또는 자기 대안 발의 | round 본문 안에 `[ALTERNATIVE_PROPOSED]` marker block 1+ 개 | round 1+ |
+| `counterargument_present` | 직전 라운드 반대 worker 의 핵심 반론을 인용 + 자기 입장에서 explicit 응답 | round 본문 안에 `[COUNTERARGUMENT]` marker block 1+ 개 + 직전 라운드 worker 발화 anchor reference | round 1+ (round 0 statement 는 면제) |
+| `alternative_proposed` | 반대 worker 가 제시한 대안을 reject (rebut + 사유) 또는 자기 대안 발의 | round 본문 안에 `[ALTERNATIVE_PROPOSED]` marker block 1+ 개 (count = `alternative_proposed_count`) | round 1+ |
 | `debate_purpose_statement_present` | 본 라운드 발화 목적 (어느 쟁점에 합의 / 어디서 입장 유지 / 무엇이 미해결) 1 문장 명문화 | round 본문 안에 `[DEBATE_PURPOSE_STATEMENT]` marker block 1 개 (단일 라인) | 모든 round (round 0 statement 포함) |
+
+위 base name 은 4-SSOT (CLAUDE.md L222 / ADR-059 §결정 8 + §3.1 #6 / debate-protocol-v1 v1.2 §2.2 + §2.3 / 본 page) 공통 stable name. scope suffix 변형 — per-worker per-round: base 자체 + `_count` (count field). PL writes per-round: `_both_workers` / `_cumulative_count` / `_present_round_0_inherited`. Termination: `_all_rounds_both_workers` / `_cumulative_count` (>=1) / `_present_round_0`.
 
 3-tuple AND 검증 = 모두 true 일 때만 라운드 발화 유효. 단 1 개라도 false = `convergence_invariant_violation` flag set + PL force_continue 강제.
 
@@ -146,7 +148,7 @@ ADR-059 Amendment 2 §결정 8 carrier — CFP-582 Wave 4 의 DesignLane blanket
 
 ## 핵심 규칙
 
-1. **3-tuple AND 검증** — `counterargument_received_and_addressed` + `alternative_proposed_or_rebutted` + `debate_purpose_statement_present` 3 모두 true 일 때만 round 발화 유효. 1 false = `convergence_invariant_violation` flag set + force_continue 강제 (동일 round 재발화).
+1. **3-tuple AND 검증** — `counterargument_present` + `alternative_proposed` (count >= 1) + `debate_purpose_statement_present` 3 모두 true 일 때만 round 발화 유효. 1 false = `convergence_invariant_violation` flag set + force_continue 강제 (동일 round 재발화). PL scope variant — per-round `*_both_workers` / termination `*_all_rounds_both_workers` (registry §2.2 + §2.3 정합).
 2. **3 marker 정확한 syntax 의무** — `[COUNTERARGUMENT]` / `[ALTERNATIVE_PROPOSED]` / `[DEBATE_PURPOSE_STATEMENT]` 대소문자 정확히 일치. round 본문 안 marker block 으로 명시. PL 검증 + mechanical lint (Phase 2) 양쪽 동일 syntax 의존.
 3. **PL 검증 책무** — Orchestrator / lane PL 이 each round 발화 직후 3-tuple 추출 + `convergence_invariant_violation` flag set 책임. worker self-report 의 sycophancy 우회 차단.
 4. **force_continue 발동 시 round counter 미증가** — invariant false 시 동일 round 재발화. min 3 / max 5 round 정책 영향 없음 (재발화 = round counter 변화 없음).

@@ -46,7 +46,12 @@ related_stories:
   - CFP-533  # Amendment 1 carrier (dispatch_mode enum 명시화)
   - CFP-582  # Amendment 2 carrier (Epic-FIX-ESCALATION-prevention #525 close)
 sunset_justification: "N/A — permanent policy + Amendment 1+2 = governance 강화 ratchet 누적 (ADR-058 §결정 5 + ADR-064 active amendment 정합). Amendment 2 가 Epic-FIX-ESCALATION-prevention #525 close trigger."
-mechanical_enforcement_actions: []  # Amendment 1+2 scope = doc-only governance, mechanical lint 별도 carrier (CFP-529 Wave 3 handoff wording linter 등)
+mechanical_enforcement_actions:
+  - action_name: "debate-convergence-quality-lint"
+    owner_adr: "ADR-060 Amendment 2"
+    owner_section: "docs/evidence-checks-registry.yaml (warning tier entry, scripts/check_debate_convergence_quality.py)"
+    status: "deferred — Phase 2 carrier (별 CFP Story, mechanical script + workflow + registry row 신설 시점)"
+    decision_binding: "§결정 8 (3 marker pattern + 3-tuple AND 검증)"
 ---
 
 # ADR-059: Multi-round Adversarial Debate Protocol (debate-protocol-v1)
@@ -191,7 +196,7 @@ debate transcript 의 **3 marker pattern** 의무 — `participants[]` 가 라�
 **PL 검증 책무** (기존 §3.1 anti-sycophancy 4 메커니즘 확장):
 
 5. 매 라운드 출력에서 3 marker section header 검증. 부재 시 invalid 처리 + 재발화 요청 (1회 한정) + 두 번째 부재 시 force_continue + adversarial prompt 재주입 ("debate 의 본질은 반론·대안 — 합의 도달 자체가 목적이 아니다").
-6. `consensus_reached` verdict 발화 전 3-tuple AND 충족 검증: `counterargument_section_present == true` AND `alternative_proposed_count >= 1` AND `debate_purpose_statement_present == true`. 미충족 시 `consensus_reached` 차단 + `force_continue` 강제.
+6. `consensus_reached` verdict 발화 전 3-tuple AND 충족 검증: `counterargument_present == true` AND `alternative_proposed_count >= 1` AND `debate_purpose_statement_present == true`. 미충족 시 `consensus_reached` 차단 + `force_continue` 강제. (PL 검증 시 per-round scope = `counterargument_present_both_workers` / per-termination scope = `counterargument_present_all_rounds_both_workers` 변형 사용 — 동일 base name 의 scope suffix. registry §2.2 + §2.3 schema 정합.)
 
 **Measurable signal**: debate-protocol-v1 v1.2 schema 의 `round.convergence_quality_invariant` block (Task 3 schema 정의).
 
