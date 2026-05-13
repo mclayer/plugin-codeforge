@@ -383,23 +383,25 @@ ADR-040 자체가 본 패턴의 사례: `templates/.claude/hooks/SessionStart-co
 - frontmatter `status: Archived` / `status: Deprecated` / `supersedes` 항 있는 superseded ADR → 면제.
 - normative declaration 이 아닌 ADR (decision-only / amendment-summary / retro-record) → 면제. 판단 기준 = `category` field 가 위 5 카테고리 외 또는 본 ADR-040 같은 정책 SSOT 역할 아님.
 
-**Schema (A안 채택 — list[string] verbatim entry name)**:
+**Schema (A안 채택 — `list[object]` verbatim entry name + optional `progress_note`, CFP-531 FIX iter 1 정정)**:
 
 ```yaml
 # frontmatter (신설 / Amendment 적용 normative ADR)
 mechanical_enforcement_actions:
   - action: <evidence-check-registry entry name>   # 예: worktree-first-pre-checkout
     status: warning | enforcing | deferred-followup
+    progress_note: <optional string — entry-level 진척 추적 / carrier history>
     target_section: §결정 N                          # 본문 어느 결정과 binding 되는가
 ```
 
 **필드 의미**:
-- `action`: `docs/evidence-checks-registry.yaml` 의 `entries[].name` verbatim (kebab-case). registry 미등록 entry 직접 명시 금지 — 먼저 registry append 의무.
-- `status`: 본 ADR amendment 시점 mechanical action 의 enforcement tier 와 정합.
+- `action` (required, string): `docs/evidence-checks-registry.yaml` 의 `entries[].name` verbatim (kebab-case). registry 미등록 entry 직접 명시 금지 — 먼저 registry append 의무.
+- `status` (required, enum): 본 ADR amendment 시점 mechanical action 의 enforcement tier 와 정합.
   - `warning` = ADR-060 §결정 3 4-tier enum 의 `warning` tier (continue-on-error / non-required check). 첫 도입 default.
   - `enforcing` = `blocking-on-pr` / `blocking-on-merge` / `hotfix-bypass` tier 활성 후 (registry yaml `current_tier` 와 정합).
   - `deferred-followup` = mechanical action 도입 carrier 가 별도 follow-up CFP 일 때. action 이름 + 후속 carrier reference 의무.
-- `target_section`: 본 ADR 본문 §결정 N 중 어느 결정이 본 mechanical action 으로 enforce 되는가 명시. inline 또는 별도 sub-section `## Mechanical Enforcement` 둘 다 허용 (작성자 선택).
+- `progress_note` (optional, string, CFP-427 FIX iter 1 신설 — schema MINOR backward-compatible): entry-level 진척 / carrier history 추적용 free-form string. 부재 시 default = 빈 string. drift 감지 보조 (carrier ADR 와 registry 의 cross-link audit). CFP-531 FIX iter 1 (F-1) 에서 schema 본문 명시 추가 — 기존 4 entry 의 `progress_note` 활용 이미 정합 사례.
+- `target_section` (required, string): 본 ADR 본문 §결정 N 중 어느 결정이 본 mechanical action 으로 enforce 되는가 명시. inline 또는 별도 sub-section `## Mechanical Enforcement` 둘 다 허용 (작성자 선택).
 
 **B안 (object — `action_type`/`target`/`current_tier` 풍부 schema) 거부 사유**: registry yaml 이 이미 entry-level 메타 (lint script path / workflow path / tier) 의 SSOT. ADR frontmatter 가 동일 정보 중복 보유 시 drift 위험. 본 Story §4.2 설계 lane 경고 힌트 (4번) 정합.
 
@@ -663,7 +665,9 @@ gh run view <push-event-run-id> --json jobs
 
 **분리 결론** verbatim:
 
-> 4 workflow `on: pull_request` only 등록 + push event 시점 yaml schema validation run = jobs match 0 → **infrastructure regression 영역 (event mismatch)**. actual worktree-first violation 측정 기회 = **0회** (PR event 발화 0회 = violation 검출 기회 자체 0회 = violation 0건). EPIC-RESULTS-CFP-425 §5 (b) caveat verbatim 정합 — ADR-060 §결정 6 (b) "0 violation" 정의 정합 (sample size unrelated).
+> 4 workflow `on: pull_request` only 등록 + push event 시점 yaml schema validation run = jobs match 0 → **infrastructure regression 영역 (event mismatch)** `[hypothesis]`. actual worktree-first violation 측정 기회 = **0회** (PR event 발화 0회 = violation 검출 기회 자체 0회 = violation 0건). EPIC-RESULTS-CFP-425 §5 (b) caveat verbatim 정합 — ADR-060 §결정 6 (b) "0 violation" 정의 정합 (sample size unrelated).
+
+**`[hypothesis]` marker (CFP-531 FIX iter 1 정정)**: GitHub Actions runner 의 push event 시점 workflow yaml schema validation 동작은 공식 문서 미명시 영역 — `jobs: []` empty matrix 가 "schema validation infrastructure regression" 으로 단정 가능한지 verified fact 부재. **확정 전환 조건** (Phase 2 PR review 시점): Phase 2 PR push event 의 `gh run view <run-id> --json jobs,event,name` 출력 = `jobs: []` + `event: push` + `name: workflow-yaml-schema-check` (또는 동등 ephemeral validation step name) 정합 확인 시 `[verified]` 전환. 미정합 시 별도 carrier (CFP-Y 잠정 패턴) 발의 + 본 §7.I.2 결론 재검증 의무. Story §6.3 `[hypothesis]` marker 정합.
 
 ##### §7.I.3 — Amendment 5 결정 (actual enforce 활성 scope)
 
