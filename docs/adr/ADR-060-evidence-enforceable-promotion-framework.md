@@ -77,6 +77,20 @@ amendment_log:
       의무 통과 — 강화 방향 amendment, framework SSOT permanent governance) +
       sibling_dependencies append `[CFP-390, CFP-412, CFP-455, CFP-449, CFP-481, CFP-506, CFP-509]`
       (Amendment 2 §결정 6 (c) chain 정합).
+  - amendment: 7
+    carrier_story: CFP-508
+    date: 2026-05-13
+    summary: |
+      evidence-checks-registry 32 entry name ↔ workflow file drift sweep — multi-job workflow
+      pattern 정식 인정 (contract-lint.yml + lint.yml = 5+ entry 공유 jobs, registry entry
+      name 과 workflow basename 자연스러운 divergence 허용) + `scripts/check-evidence-registry-naming.sh`
+      신설 (workflow file 존재 검증 only, naming drift 는 allowlist hardcode warning) +
+      신설 §결정 20 (entry name convention — kebab-case + workflow file name 자유 + multi-job
+      pattern 허용 + Conservative no-rename policy + workflow file existence lint 의무) +
+      ratchet 위반 0건 — lint scope 확장 + framework 의 자연스러운 사용 사례 정식 인정 only
+      (ADR-058 §결정 5 sunset_justification 의무 통과 — 강화 방향 amendment, framework SSOT
+      permanent governance) + sibling_dependencies append `[CFP-390, CFP-412, CFP-455, CFP-449,
+      CFP-481, CFP-506, CFP-509, CFP-508]` (Amendment 2 §결정 6 (c) chain 정합).
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
@@ -85,6 +99,7 @@ related_stories:
   - CFP-481  # Amendment 4 carrier — 3rd warning-tier entry `auto-phase-label` + ADR-024 Amendment 4 동반 + label-registry-v2 v2.3 MINOR 동반
   - CFP-506  # Amendment 5 carrier — 4th warning-tier entry `claude-md-line-cap` + ADR-012 Amendment 1 + ADR-051 Amendment 1 + label-registry-v2 v2.4 same-MINOR sub-entry 동반
   - CFP-509  # Amendment 6 carrier — evidence-check-registry schema v1.1 → v1.2 MINOR bump + §결정 19 신설 (recurrence-based advisory promotion signal)
+  - CFP-508  # Amendment 7 carrier — evidence-registry-naming convention lint + §결정 20 신설 (entry name ↔ workflow file naming convention + Conservative no-rename policy + multi-job pattern 정식 인정)
 related_adrs:
   - ADR-008   # versioning (kind:registry 도 minor/major SemVer 정합)
   - ADR-010   # contract sibling sync (kind:registry scope 외 명시)
@@ -635,4 +650,43 @@ Amendment 1 §결정 14 의 메타 anomaly lint (인벤토리 누락 감지) 와
 본 ADR `## 다이어그램` Mermaid 의 `K -->|"CFP-390 + CFP-412 merged<br/>(Amendment 1: CFP-391 폐기 → CFP-412)"|` row 갱신 의무 (Amendment 2 시점 CFP-412 도 폐기 → CFP-455 carrier append):
 
 본 Amendment 2 carrier PR 안에서 `## 다이어그램` 본문의 해당 row 를 `K -->|"CFP-390 + CFP-412 + CFP-455 merged<br/>(Amendment 2: CFP-412 폐기 → CFP-455 carrier)"|` 으로 갱신 (carrier PR 본 §결정 동반 직접 edit). Mermaid stale 차단 — diagram 이 §결정 6 (c) sibling_dependencies 의 SSOT 와 verbatim 정합.
+
+## Amendment 7 (CFP-508, 2026-05-13)
+
+본 Amendment 는 CFP-508 (evidence-registry-naming convention lint, Issue #508) 의 Phase 1 carrier 산출물. CFP-490 FU-2 carrier.
+
+### §결정 20 (Amendment 7, CFP-508 — 2026-05-13)
+
+**Entry name ↔ workflow file naming convention**: evidence-checks-registry entry 의 `name` field 와 `workflow:` field 의 file basename 자연스러운 divergence 허용 — multi-job workflow pattern 인정:
+
+- **EXACT match (default)**: entry name = workflow basename (`.yml` 제외). 권장 패턴.
+- **partial match**: entry name 이 workflow basename 의 substring 또는 vice versa. 자연스러운 변형 (e.g., `carrier-bootstrap` ↔ `carrier-bootstrap-check`). 허용.
+- **multi-job pattern**: 단일 workflow file 안 여러 job 이 별개 evidence-check entry 로 등록 (e.g., `contract-lint.yml` 안 `inter-plugin-contracts` / `inter-plugin-drift` / `comment-prefix-registry` / `label-registry-sync` jobs). registry entry name = workflow job name (workflow file basename 과 무관). 허용.
+- **Conservative no-rename policy**: 기존 entry 에 대한 workflow rename 금지 — CI history + branch protection `required_status_checks.contexts` 영향 회피. 신규 entry 도입 시만 EXACT match 권장.
+
+**Lint enforcement** (`scripts/check-evidence-registry-naming.sh`):
+- workflow file 존재 검증 의무 (templates/ 기준 file path 실제 존재).
+- DRIFT (no match) entry = allowlist hardcode 의무 (별도 file rename 필요 시 후속 carrier Story).
+- `github-actions-runtime` detect_command entry 는 workflow file 존재만 검증 (job name 무관).
+- `Retired` status entry skip.
+- Exit code 3-tier (ADR-060 Amendment 2 §결정 15): 0 PASS / 1 violation (workflow file 부재 OR allowlist 밖 DRIFT) / 2 meta-error (yaml parse 실패 / python3 미설치 등).
+
+**DRIFT allowlist 10건** (CFP-508 audit 결과 — Conservative no-rename policy 첫 적용):
+
+| entry name | workflow basename | pattern |
+|---|---|---|
+| `rate-limit-fallback-rate` | `rate-limit-fallback-kpi.yml` | basename divergence (rate vs kpi) |
+| `lane-evidence-trail` | `lane-evidence-check.yml` | basename divergence (trail vs check) |
+| `doc-locations-registry` | `doc-locations-check.yml` | basename divergence (registry vs check) |
+| `inter-plugin-contracts` | `contract-lint.yml` | multi-job pattern (ADR-008/010) |
+| `inter-plugin-drift` | `contract-lint.yml` | multi-job pattern (ADR-011) |
+| `comment-prefix-registry` | `contract-lint.yml` | multi-job pattern (comment-prefix-registry-v1) |
+| `label-registry-sync` | `contract-lint.yml` | multi-job pattern (label-registry-v2) |
+| `marketplace-sync` | `contract-lint.yml` | Retired entry / multi-job pattern (CFP-457) |
+| `write-permission-redistribution` | `lint.yml` | multi-job pattern (lint.yml shared job) |
+| `evidence-registry-schema-validation` | `evidence-registry-check.yml` | basename divergence (schema-validation vs check) |
+
+**ratchet 위반 0건** — lint scope 확장 (workflow file existence lint 의무 + DRIFT allowlist hardcode 10건) + framework 의 자연스러운 사용 사례 정식 인정 only (ADR-058 §결정 5 sunset_justification 의무 통과 — 강화 방향 amendment, framework SSOT permanent governance).
+
+**sibling_dependencies append**: `[CFP-390, CFP-412, CFP-455, CFP-449, CFP-481, CFP-506, CFP-509, CFP-508]` (Amendment 2 §결정 6 (c) chain 정합).
 

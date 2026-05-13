@@ -5,6 +5,20 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.31.0] - 2026-05-13
+
+### Added (CFP-508 — evidence-registry-naming convention lint, ADR-060 Amendment 7)
+
+evidence-checks-registry 32 entry name ↔ workflow file naming convention 검증 (Conservative no-rename policy). `scripts/check-evidence-registry-naming.sh` (file existence + allowlist DRIFT advisory). multi-job workflow pattern 정식 인정 (contract-lint.yml + lint.yml). §결정 20 신설. 7번째 warning-tier evidence-enforceable entry.
+
+- `scripts/check-evidence-registry-naming.sh` (NEW)
+- `tests/scripts/test_check_evidence_registry_naming.sh` (NEW, 3 case)
+- `templates/github-workflows/evidence-registry-naming-check.yml` (NEW, warning mode)
+- `.github/workflows/evidence-registry-naming-check.yml` (NEW, self-app byte-identical)
+- `docs/evidence-checks-registry.yaml` — evidence-registry-naming entry append (7번째 warning-tier)
+- `docs/adr/ADR-060-evidence-enforceable-promotion-framework.md` — Amendment 7 + §결정 20 신설
+- `.claude-plugin/plugin.json` — version 5.30.0 → 5.31.0 MINOR
+
 ## [5.30.0] - 2026-05-13
 
 ### Changed (CFP-509 — evidence-check-registry schema v1.1 → v1.2 MINOR bump)

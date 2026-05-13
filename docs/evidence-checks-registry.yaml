@@ -941,3 +941,40 @@ entries:
       count: 0
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
+
+  # ─── CFP-508 Phase 2 (entry name ↔ workflow file naming convention lint, 2026-05-13) ───
+  # ADR-060 Amendment 7 — 7번째 warning-tier entry (CFP-490 FU-2 carrier)
+  # (1st = adr-sunset-criteria / 2nd = decision-principle-vocab / 3rd = auto-phase-label /
+  # 4th = claude-md-line-cap / 5th = sibling-pr-label-author-check / 6th = ac-mapping-cross-ref)
+  # Conservative no-rename policy: multi-job workflow pattern + naming divergence 정식 인정.
+
+  - name: evidence-registry-naming
+    description: |
+      ADR-060 Amendment 7 / §결정 20 — evidence-checks-registry entry name ↔ workflow file
+      naming convention 검증. workflow file 존재 의무 + DRIFT (no match) allowlist hardcode.
+      multi-job workflow pattern 인정 (contract-lint.yml + lint.yml = 5+ entry 공유 jobs).
+      Conservative no-rename policy — workflow rename 회피 (CI history + branch protection
+      `required_status_checks.contexts` 영향 회피). Exit code 3-tier (ADR-060 Amendment 2
+      §결정 15): 0 PASS / 1 violation (workflow file 부재 OR allowlist 밖 DRIFT) / 2
+      meta-error (yaml parse 실패).
+    detect_command: bash scripts/check-evidence-registry-naming.sh
+    workflow: templates/github-workflows/evidence-registry-naming-check.yml
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:evidence-naming
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: []       # 독립 entry — naming convention lint 검증 외 의존 없음
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-508
+    introduced_date: 2026-05-13
+    owner_adr: ADR-060               # framework SSOT — entry name convention policy owner
+    carrier_adr: ADR-060             # Amendment 7 carrier
+    recurrence:
+      count: 0
+      promotion_trigger: none        # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active
