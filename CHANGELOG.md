@@ -7,6 +7,24 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.40.0] - 2026-05-13 — CFP-507 DeveloperPLAgent Phase 2 PR body composition convention codification
+
+### Added (CFP-507 — Lane evidence heading 1회 inject convention, ADR-031 §결정 3 정합)
+
+CFP-490 (#490, merged) §7.5 origin investigation 의 carrier — `## Lane evidence` first heading auto-include 의 actual origin 정정. 가설 (wrapper PR template 부재 → DeveloperPL spawn template) 은 **verified false**, 실제 origin = codeforge-develop DeveloperPLAgent body composition convention 부재 + wrapper Orchestrator manual append 정책 부재 결합.
+
+- `docs/orchestrator-playbook.md` (UPDATE) — §3.0.13 신설 "PR description `## Lane evidence` manual append 정책 (CFP-507)". 3-step 절차 (heading 존재 check → row append only / heading 재추가 금지 → 부재 시 heading + 7-row template inject) + Story §14 Lane Evidence row append 동시 turn 처리 의무 (ADR-031 정합) + 위반 시 `lane-evidence-check.yml` 5a duplicate guard 발화 (CFP-490 §결정 1 정합). codeforge-develop sibling plugin `agents/DeveloperPLAgent.md` "Phase 2 PR body composition convention" section 와 짝 (sibling 0.5.2 → 0.6.0 MINOR bump).
+- `.claude-plugin/plugin.json` — version 5.39.0 → 5.40.0 MINOR + description CFP-507 entry append.
+
+### Doc-only fast-path (ADR-054 §결정 1) — src/tests 0건 + 신규 ADR 0건 + ADR Amendment 0건
+
+본 Story = doc-only fast-path 분류. 설계 lane 진입 후 ArchitectPLAgent chief author self-execute (6 permanent deputy + 2 CONDITIONAL deputy spawn 0 — mandate 정합 0). Self-check verdict packet: `mechanical_self_check_passed: true` (ADR-065 vacuous truth) + `boundary_completeness_self_check_passed: true` (ADR-068 wording SSOT cross-ref) + `dimensional_empirical_self_check_passed: true` (ADR-068 Amendment 1 count dim empirical-source annotated). 구현 / 구현-리뷰 / 구현-테스트 / 보안-테스트 lane SKIPPED.
+
+### Sibling sync (separate PRs)
+
+- mclayer/plugin-codeforge-develop — `agents/DeveloperPLAgent.md` "Phase 2 PR body composition convention" section 신설 + `.claude-plugin/plugin.json` 0.5.2 → 0.6.0 MINOR
+- mclayer/marketplace — `.claude-plugin/marketplace.json` `plugins[name=codeforge]` version 5.39.0 → 5.40.0 mirror + `plugins[name=codeforge-develop]` version 0.5.2 → 0.6.0 mirror (ADR-063 §결정 5 atomic invariant — concurrent merge gate)
+
 ## [5.39.0] - 2026-05-13
 
 > Note: Version 5.38.0 reserved by CFP-582 (marketplace PR #85 open). CFP-585 jumps to 5.39.0 to avoid concurrent reservation collision (ADR-037 sequential bump rule).

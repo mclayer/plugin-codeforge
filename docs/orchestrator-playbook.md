@@ -454,6 +454,37 @@ Agent tool이 Sonnet subagent spawn 결과로 rate-limit 에러를 반환하면:
 
 판별 기준: Agent tool result에 "rate limit", "quota exceeded", "429" 포함 시 rate-limit로 분류.
 
+#### §3.0.13 PR description `## Lane evidence` manual append 정책 (CFP-507)
+
+Phase 2 PR description 안 `## Lane evidence` row append 시 Orchestrator (또는 Orchestrator-owned delegate subagent — §3.0.6 정합) 가 아래 3-step 절차를 준수한다. 본 정책은 CFP-490 (#490, merged) §7.5 origin investigation 의 carrier — codeforge-develop sibling plugin DeveloperPLAgent body composition convention (`agents/DeveloperPLAgent.md` "Phase 2 PR body composition convention" section) 와 짝.
+
+**3-step 절차**:
+
+1. **기존 heading 존재 check** — `grep '^## Lane evidence' <PR description body>` 또는 GitHub MCP `mcp__github__pull_request_read` 로 PR body fetch 후 line-prefix match
+2. **존재 시 row 만 append** — 기존 `## Lane evidence` heading 다음 lane row 7개 영역 안 적절 lane row 의 status 갱신 (`<PASS|SKIPPED|FIX|ESCALATED|BYPASS>`). **heading 재추가 금지** — 두 번째 `## Lane evidence` heading 발생 시 `lane-evidence-check.yml` 5a duplicate guard 발화 (CFP-490 §결정 1 정합)
+3. **부재 시 heading + 7-row template inject** — `## Lane evidence` heading + 7-row format (wrapper `templates/github-pr-template.md` SSOT line 79 verbatim 정합):
+   ```
+   ## Lane evidence
+
+   - 요구사항: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+   - 설계: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+   - 설계-리뷰: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+   - 구현: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+   - 구현-리뷰: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+   - 구현-테스트: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+   - 보안-테스트: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+   ```
+
+**동시 동기화 의무 (ADR-031 정합)**: Story §14 Lane Evidence row append 와 PR description row append 는 **동일 turn / 단일 spawn cycle** 안에서 동시 처리. 두 영역 drift 시 §14 = SSOT (ADR-031 §결정 3 enforcement layer 우선), PR description 은 mirror.
+
+**위반 시 guard 발화**: `lane-evidence-check.yml` workflow 의 5a tie-break case A/B/C (CFP-490 §결정 1) 가 duplicate `## Lane evidence` heading 또는 7-row format 위반을 detect → PR 차단 + audit comment. Bypass channel = `hotfix-bypass:lane-evidence-check` label (ADR-024 Amendment 3 정합).
+
+**Cross-ref**:
+- codeforge-develop `agents/DeveloperPLAgent.md` "Phase 2 PR body composition convention" — agent body composition layer
+- wrapper `templates/github-pr-template.md` line 79 — heading 형식 SSOT
+- ADR-031 §결정 3 — §14 Lane Evidence enforcement layer
+- CFP-490 §결정 1 — `lane-evidence-check.yml` 5a guard tie-break
+
 ### 3.1 7 레인 + Cross-cutting 스폰 순서 (요약)
 
 ```
