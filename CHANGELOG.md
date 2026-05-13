@@ -7,6 +7,18 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.39.0] - 2026-05-13
+
+> Note: Version 5.38.0 reserved by CFP-582 (marketplace PR #85 open). CFP-585 jumps to 5.39.0 to avoid concurrent reservation collision (ADR-037 sequential bump rule).
+
+### Fixed (CFP-585 — version-bump-atomic-check workflow Bypass audit comment permission)
+
+본 세션 4 Stories (CFP-491/509/508/492) 모두 hit한 `atomic-check` workflow "Bypass audit comment" step 실패의 root cause 정정. `permissions:` block 가 `contents: read` only — `gh pr comment` 호출 시 `pull-requests: write` 누락으로 GraphQL "Resource not accessible by integration (addComment)" 실패. 정정 후 admin merge 불필요화.
+
+- `templates/github-workflows/version-bump-atomic-check.yml` (UPDATE) — `permissions:` 에 `pull-requests: write` 추가
+- `.github/workflows/version-bump-atomic-check.yml` (UPDATE, ADR-005 self-application byte-identical)
+- `.claude-plugin/plugin.json` — version 5.37.0 → 5.39.0 MINOR (5.38.0 reserved by CFP-582)
+
 ## [5.37.0] - 2026-05-13 — CFP-529 Wave 3 Phase 2
 
 ### Added (CFP-529 Wave 3 Phase 2 — handoff wording linter, ADR-068 §결정 5 / ADR-060)
