@@ -16,11 +16,12 @@ related_adrs:
   - ADR-008
   - ADR-024
   - ADR-039
-  - ADR-050
+  - ADR-050-parallel-epic-conflict-coordination   # multi-repo-story-key 가 아닌 parallel-epic-conflict-coordination 정합 (file disambiguation)
   - ADR-052
   - ADR-054
   - ADR-058
   - ADR-059
+  - ADR-063
   - ADR-064
 related_files:
   - skills/fix-ledger-schema/SKILL.md
@@ -99,7 +100,7 @@ max FIX 3/3 도달 + ArchitectPL reassessment 완료 시:
 
 implementability reassessment 진행 중 (또는 사용자 escalation 대기 중) cross-lane (보안-테스트 또는 구현-테스트) 신규 FIX 발생 시:
 
-**채택: Pause-and-resume**. 현 escalation 일시 pause + 보안 (또는 구현-테스트) FIX 우선 수행 → 해당 lane PASS 후 escalation 재개. `RESET?` column 에 `"cross-lane-pause:<lane>"` 마커 명시 (예: `"cross-lane-pause:보안-테스트"`).
+**채택: Pause-and-resume**. 현 escalation 일시 pause + 보안 (또는 구현-테스트) FIX 선행 수행 → 해당 lane PASS 후 escalation 재개. `RESET?` column 에 `"cross-lane-pause:<lane>"` 마커 명시 (예: `"cross-lane-pause:보안-테스트"`).
 
 거부 옵션 — Bundled escalation: 보안 FIX 도 escalation packet 에 통합 → 사용자 결정 시 종합 검토. 거부 사유 (CFP-526 §7 ArchitectPL 채택):
 - cross-lane reasoning bundling 시 reasoning_carryover SSOT 단일성 손상 (1 lane reasoning chain per row invariant 위반)
@@ -165,6 +166,17 @@ Producer = Orchestrator (FIX Ledger writer monopoly 유지 — CFP-32). Architec
 
 Metric A OR Metric B 1+ hit = 결정 2 의 3 trigger (i/ii/iii) 후보로 강격상. 정성 trigger evaluation + 정량 dual metric 결합 → escalation 의무.
 
+**Dual metric threshold corroboration evidence** (mctrader-hub MCT-150 §10 FIX trail, 2026-05-13):
+
+| row | lane | finding 분포 | 누적 P0 | 누적 P1 | reviewer divergence |
+|---|---|---|---|---|---|
+| row 1 | design-review FIX#1 | P0=0 / P1=3 | 0 | 3 | 0 |
+| row 2 | code-review FIX#2 | P0=2 / P1=3 (양 reviewer 동일 교차 일치) | 2 (≥2 threshold **hit**) | 6 (≥5 threshold **hit**) | 1 |
+| row 3 | code-review FIX#3 | P0=NEW-1 + P1=NEW-1 (dimensional extension) | 3 | 7 | 2 (≥2 threshold **hit**) |
+| row 4 | ESCALATE | P1=NEW-2 + P1=NEW-3 | 3 | 9 | 2 |
+
+row 2 시점 = Metric A (cumulative P0≥2 AND cumulative P1≥5) 동시 hit. row 3 시점 = Metric B (reviewer_divergence_count≥2) 추가 hit. row 4 ESCALATE Option A RESET 도달 이전 row 2-3 시점에서 dual metric 충족 — 본 ADR §결정 1 deterministic trigger 가 land 되었다면 row 4 진입 이전 ArchitectPL implementability reassessment + 사용자 escalation 발동 가능했음. 본 case study evidence 가 dual metric threshold 의 ex-post calibration 근거.
+
 거부 후보 metric:
 
 - **(b) 영향 file count**: surface area proxy 일뿐, 동일 boundary 내 mechanical mirror (예: 13 곳 wording desync) 와 cross-boundary propagation 구분 불가.
@@ -208,7 +220,7 @@ Metric A OR Metric B 1+ hit = 결정 2 의 3 trigger (i/ii/iii) 후보로 강격
 
 대안 3 — **사용자 immediate AskUserQuestion at FIX 1**:
 
-- 거부 사유: codeforge governance 정합성 침해. FIX 1-2 cycle 은 normal convergence path — ArchitectPL synthesizer 책무 우선. 결정 원칙 (ADR-064) Trace 2 Rule 5 "AskUserQuestion 범위 제한 — 가치 판단 / 미공개 컨텍스트 2 종 한정" 정합 위배.
+- 거부 사유: codeforge governance 정합성 침해. FIX 1-2 cycle 은 normal convergence path — ArchitectPL synthesizer 책무 선행. 결정 원칙 (ADR-064) Trace 2 Rule 5 "AskUserQuestion 범위 제한 — 가치 판단 / 미공개 컨텍스트 2 종 한정" 정합 위배.
 
 대안 4 — **ADR-052 Amendment 으로 흡수 (별 ADR 미신설)**:
 
