@@ -1181,3 +1181,37 @@ entries:
       promotion_trigger: advisory
       last_occurrence: null
     status: Active
+
+  - name: wording-dictionary
+    description: |-
+      CFP-610 / ADR-064 Amendment 2 — wording-dictionary lint.
+      카테고리 (a) forbid 어휘 발견 시 exit 1 warning (박제 / 못 박기 / pin / freezing).
+      카테고리 (b) 어휘 평문 정의 누락 시 exit 0 advisory (normative / sibling sync / kind:contract / ratchet / mirrored field).
+      SSOT: docs/wording-dictionary.md. 5 scope: docs/adr/** / docs/change-plans/** / CLAUDE.md / docs/orchestrator-playbook.md / templates/**
+    detect_command: bash scripts/check-wording-dictionary.sh docs/adr docs/change-plans CLAUDE.md docs/orchestrator-playbook.md templates
+    workflow: .github/workflows/wording-dictionary.yml
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:wording-dictionary
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-610
+    introduced_date: 2026-05-13
+    owner_adr: ADR-064
+    carrier_adr: ADR-064
+    sunset_gate:
+      metric: "Orchestrator user-facing 응답 안 forbid 어휘 발생률 < 1건/100 turn + 사용자 frustration 발화 0건/3 Story"
+      who: "PMOAgent (cross-Story retro 패턴 분석)"
+      how: "PMOAgent retro file §wording-discipline 표 (lint warning count + frustration timestamp delta)"
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: advisory
+      last_occurrence: null
+    status: Active

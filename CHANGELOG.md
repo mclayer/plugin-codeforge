@@ -98,6 +98,22 @@ CFP-530 retro carrier #2 — `bootstrap-labels.sh` hotfix-bypass:* family dynami
 - **Codex proactive check #2** (ADR-052 Amendment 4 / CFP-532 mandatory) — P0:0 / P1:3 inline FIX-1 (F-3 base count / F-5 exit-code semantic / F-6 §8 test intent anchor) / P2:3 skip rationale.
 - **DesignReviewPL iter 1 = PASS** (review-verdict-v4 v4.4, 3 self-check 모두 verified true).
 
+## [5.43.0] - 2026-05-13 — CFP-610 Story 2 Phase 2 (ADR-064 Amendment 2 mechanical enforcement)
+
+### Added (CFP-610 Story 2 — wording-dictionary lint)
+
+- **`scripts/check-wording-dictionary.sh`** (NEW) — ADR-064 Amendment 2 wording-dictionary lint script. 카테고리 (a) forbid 어휘 발견 시 exit 1 warning (박제 / 못 박기 / pin / freezing). 카테고리 (b) 어휘 평문 정의 누락 시 exit 0 advisory (normative / sibling sync / kind:contract / ratchet / mirrored field). SSOT: docs/wording-dictionary.md. 5 scope: docs/adr/** / docs/change-plans/** / CLAUDE.md / docs/orchestrator-playbook.md / templates/**. blockquote + fenced code block exempt. docs/wording-dictionary.md 자체 EXEMPT.
+- **`tests/scripts/test_check_wording_dictionary.bats`** (NEW) — TDD unit test (17 TC PASS: TC-1~4 + IT-1~3 + CI-1). bats framework. 카테고리 (a) forbid 4 TC + 카테고리 (b) advisory 2 TC + 정의 동반 5 TC + 일반 어휘 2 TC + blockquote/fenced exempt 2 TC + self-app baseline 1 TC.
+- **`templates/github-workflows/wording-dictionary.yml`** + **`.github/workflows/wording-dictionary.yml`** (NEW, byte-identical) — ADR-060 warning-tier workflow. continue-on-error: true. hotfix-bypass:wording-dictionary label bypass + audit comment.
+- **`docs/evidence-checks-registry.yaml`** — 39번째 entry `wording-dictionary` append. owner_adr: ADR-064, introduced_by: CFP-610, current_tier: warning.
+- **`docs/inter-plugin-contracts/label-registry-v2.md`** — v2.6 sub-entry `hotfix-bypass:wording-dictionary` (13번째 hotfix-bypass:* family member). frontmatter version `2.5` 미변경 (same-MINOR additive).
+- **`scripts/bootstrap-labels.sh`** — `hotfix-bypass:wording-dictionary` label entry append (label-registry-v2 sync).
+- **CLAUDE.md** — Evidence-enforceable 단락 5→6 warning entry / GitHub Workflow 단락 fixture 22→23종.
+
+### Sibling sync (separate PR)
+
+- mclayer/marketplace: plugins[codeforge].version 5.42.0 → 5.43.0 mirrored (ADR-063 atomic invariant)
+
 ## [5.42.0] - 2026-05-13 — CFP-582 Phase 2 (ADR-059 Amendment 2 enforcement)
 
 ### Changed (CFP-582 Phase 2 — debate convergence quality lint)

@@ -1,0 +1,42 @@
+name: wording-dictionary
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - 'CLAUDE.md'
+      - 'templates/**'
+      - '.github/workflows/wording-dictionary.yml'
+permissions:
+  contents: read
+  pull-requests: write
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # warning tier — branch protection 차단 안 함 (ADR-060 §결정 5)
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check hotfix-bypass label
+        id: bypass
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(l => l.name);
+            if (labels.includes('hotfix-bypass:wording-dictionary')) {
+              core.setOutput('skip', 'true');
+            } else {
+              core.setOutput('skip', 'false');
+            }
+      - name: Run wording-dictionary lint
+        if: steps.bypass.outputs.skip != 'true'
+        run: bash scripts/check-wording-dictionary.sh docs/adr docs/change-plans CLAUDE.md docs/orchestrator-playbook.md templates
+      - name: Audit comment on bypass
+        if: steps.bypass.outputs.skip == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body: 'audit: `hotfix-bypass:wording-dictionary` label 적용 — wording-dictionary lint 건너뜀. ADR-064 §결정 2 / Amendment 2 정합 audit 의무. PR description `### Bypass reason` 섹션 기재 필수.'
+            });
