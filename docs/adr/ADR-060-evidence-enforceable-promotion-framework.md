@@ -61,6 +61,22 @@ amendment_log:
       ADR-040 Amendment 3 §결정 7.D self-application 패턴 reuse (warning tier + bypass label + audit_lint 동반, 1st/2nd/3rd entry 패턴 동일) +
       ratchet 위반 0건 — enum 값 / tier 추가 / bypass channel 동작 변경 없음, framework 의 자연스러운 사용 사례 entry 추가 only (ADR-058 §결정 5 sunset_justification 의무 통과 — 강화 방향 amendment) +
       sibling_dependencies append `[CFP-390, CFP-412, CFP-455, CFP-449, CFP-481, CFP-506]` (Amendment 2 §결정 6 (c) chain 정합).
+  - amendment: 6
+    carrier_story: CFP-509
+    date: 2026-05-13
+    summary: |
+      evidence-check-registry schema v1.1 → v1.2 MINOR bump — `recurrence:` field 정식 도입
+      (optional object: count / last_occurrence / threshold / promotion_trigger) +
+      신설 §결정 19 — recurrence-based advisory promotion signal (recurrence.count ≥
+      recurrence.threshold 시 PR comment advisory + 별도 carrier 가 actual blocking-on-pr
+      승격 평가, CFP-490 lane-evidence-trail description-only recurrence_count 의 schema 흡수) +
+      22 entry retroactive recurrence 검증 (lane-evidence-trail count=2 — CFP-500 FIX-5 +
+      CFP-451 transient 2회 historical evidence 정합, 나머지 31 entry count=0 default) +
+      ratchet 위반 0건 — enum 값 / tier 추가 / bypass channel 동작 변경 없음, schema MINOR bump only
+      (backward-compat — recurrence 미정의 entry 모두 정상 lint pass, ADR-058 §결정 5 sunset_justification
+      의무 통과 — 강화 방향 amendment, framework SSOT permanent governance) +
+      sibling_dependencies append `[CFP-390, CFP-412, CFP-455, CFP-449, CFP-481, CFP-506, CFP-509]`
+      (Amendment 2 §결정 6 (c) chain 정합).
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
@@ -68,6 +84,7 @@ related_stories:
   - CFP-449  # Amendment 3 carrier — 2nd warning-tier entry `decision-principle-vocab` + bypass channel 의미 sharpening
   - CFP-481  # Amendment 4 carrier — 3rd warning-tier entry `auto-phase-label` + ADR-024 Amendment 4 동반 + label-registry-v2 v2.3 MINOR 동반
   - CFP-506  # Amendment 5 carrier — 4th warning-tier entry `claude-md-line-cap` + ADR-012 Amendment 1 + ADR-051 Amendment 1 + label-registry-v2 v2.4 same-MINOR sub-entry 동반
+  - CFP-509  # Amendment 6 carrier — evidence-check-registry schema v1.1 → v1.2 MINOR bump + §결정 19 신설 (recurrence-based advisory promotion signal)
 related_adrs:
   - ADR-008   # versioning (kind:registry 도 minor/major SemVer 정합)
   - ADR-010   # contract sibling sync (kind:registry scope 외 명시)
@@ -600,6 +617,18 @@ Amendment 1 §결정 14 의 메타 anomaly lint (인벤토리 누락 감지) 와
 - **marketplace.json mirrored field sync**: schema v1.1 bump 동반 plugin.json MINOR bump (5.18.0 → 5.19.0, ADR-037 정합 — CFP-500 이 main 에서 5.18.0 차지 후 rebase 시 5.19.0 으로 re-bump) → ADR-063 §결정 1 atomic invariant (plugin.json + CHANGELOG.md + marketplace.json 동시 처리) 발효 → marketplace sync PR **의무** (별도 PR, codeforge PR merge 후 즉시 open·merge — ADR-063 §결정 2 chicken-and-egg 회피).
 
 **정리**: kind:registry schema 변경 자체는 sibling sync 불필요 (Codex AREA 2 (c) 권고 정합). 단 plugin version MINOR bump 동반 시 marketplace.json mirrored field sync 가 ADR-063 invariant 로 의무. 본 Story Phase 2 PR (또는 Phase 1 PR) 의 plugin.json MINOR bump 와 같은 PR 안 처리.
+
+### §결정 19 (Amendment 6, CFP-509 — 2026-05-13)
+
+**Recurrence-based advisory promotion signal**: evidence-check-registry schema v1.2 의 `recurrence:` field 가 machine-usable recurrence metric 제공. `recurrence.count ≥ recurrence.threshold` 도달 시:
+
+- **advisory mode** (기본): `recurrence.promotion_trigger: advisory` — PR comment 만 (warning tier 유지, blocking transition 없음). `[recurrence-threshold-reached]` marker 자동 발화.
+- **auto_blocking mode**: `recurrence.promotion_trigger: auto_blocking` — 별도 carrier Story 가 actual `current_tier: warning → blocking-on-pr` 승격 평가 의무 (자동 transition 아님 — governance 보존).
+- **none mode** (default): `recurrence.count` 누적만, advisory / blocking 모두 미발화.
+
+본 §결정 = §결정 6 (warning → blocking 승격 gate) 의 supplementary signal — 기존 3 condition (pr_cumulative_min / failure_threshold / sibling_dependencies) 와 OR 관계 아님 (additional advisory). actual transition 은 여전히 별도 carrier 의무.
+
+**CFP-490 lane-evidence-trail entry description-only `recurrence_count` 의 schema 흡수**: CFP-500 FIX-5 + CFP-451 transient 2회 historical evidence (description body 영역) → `recurrence.count: 2` schema-level 정식 표기. machine-usable 전환.
 
 ### Mermaid 다이어그램 동기화 (Amendment 2 — Codex AREA 4 정합)
 

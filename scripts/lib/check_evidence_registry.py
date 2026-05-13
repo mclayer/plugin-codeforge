@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # CFP-455 / ADR-060 Amendment 2 §결정 14 — evidence-checks-registry schema lint
+# CFP-509 / ADR-060 Amendment 6 — recurrence field validation 추가 (schema v1.2).
 # CFP-455 FIX iter 1 / ADR-061 §결정 1 정합 — heredoc multi-line Python 외부 .py split.
 #
 # 검증 대상 (Story CFP-455 §8.6 / Change Plan §3 verbatim):
@@ -222,6 +223,74 @@ def main():
                 violations.append(
                     f"(f) entry '{name}' {adr_field} '{adr_key}' file not found in docs/adr/"
                 )
+
+        # (g) recurrence field validation (schema v1.2, CFP-509 / ADR-060 Amendment 6)
+        recurrence = entry.get("recurrence")
+        if recurrence is not None:
+            if not isinstance(recurrence, dict):
+                violations.append(
+                    f"(g) entry '{name}' recurrence 가 mapping 아님 (type={type(recurrence).__name__})"
+                )
+            else:
+                # count: 필수, int >= 0
+                if "count" not in recurrence:
+                    violations.append(
+                        f"(g) entry '{name}' recurrence.count 미정의 (recurrence 정의 시 필수 — schema v1.2)"
+                    )
+                else:
+                    r_count = recurrence["count"]
+                    if not isinstance(r_count, int) or isinstance(r_count, bool):
+                        violations.append(
+                            f"(g) entry '{name}' recurrence.count 가 int 아님"
+                            f" (type={type(r_count).__name__}, value={r_count!r})"
+                        )
+                    elif r_count < 0:
+                        violations.append(
+                            f"(g) entry '{name}' recurrence.count < 0 (value={r_count})"
+                        )
+
+                # last_occurrence: optional, 정의 시 ISO8601 UTC pattern (YYYY-MM-DDTHH:MM:SSZ)
+                ISO8601_UTC_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+                last_occ = recurrence.get("last_occurrence")
+                if last_occ is not None:
+                    if not isinstance(last_occ, str):
+                        violations.append(
+                            f"(g) entry '{name}' recurrence.last_occurrence 가 string 아님"
+                            f" (type={type(last_occ).__name__})"
+                        )
+                    elif not ISO8601_UTC_RE.match(last_occ):
+                        violations.append(
+                            f"(g) entry '{name}' recurrence.last_occurrence ISO8601 UTC 형식 위반"
+                            f" (expected YYYY-MM-DDTHH:MM:SSZ, got {last_occ!r})"
+                        )
+
+                # threshold: optional default 3, int >= 1
+                threshold = recurrence.get("threshold")
+                if threshold is not None:
+                    if not isinstance(threshold, int) or isinstance(threshold, bool):
+                        violations.append(
+                            f"(g) entry '{name}' recurrence.threshold 가 int 아님"
+                            f" (type={type(threshold).__name__}, value={threshold!r})"
+                        )
+                    elif threshold < 1:
+                        violations.append(
+                            f"(g) entry '{name}' recurrence.threshold < 1 (value={threshold})"
+                        )
+
+                # promotion_trigger: optional default 'none', enum none|advisory|auto_blocking
+                VALID_PROMOTION_TRIGGERS = {"none", "advisory", "auto_blocking"}
+                p_trigger = recurrence.get("promotion_trigger")
+                if p_trigger is not None:
+                    if not isinstance(p_trigger, str):
+                        violations.append(
+                            f"(g) entry '{name}' recurrence.promotion_trigger 가 string 아님"
+                            f" (type={type(p_trigger).__name__})"
+                        )
+                    elif p_trigger not in VALID_PROMOTION_TRIGGERS:
+                        violations.append(
+                            f"(g) entry '{name}' recurrence.promotion_trigger '{p_trigger}'"
+                            f" not in enum {sorted(VALID_PROMOTION_TRIGGERS)}"
+                        )
 
     # 결과 출력
     print(f"check-evidence-registry: {registry_path} — {entries_validated} entries validated")
