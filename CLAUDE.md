@@ -198,6 +198,8 @@ planned_claude_md_sections:
 
 DesignReview lane 에서 Claude worker 와 Codex worker 가 review-verdict-v4 `findings[]` 의 동일 `anchor_id` 에 대해 **(a) 서로 다른 severity 또는 (b) 서로 다른 recommendation (FIX vs PASS)** 을 발화 = `divergence_detected` 시 multi-round adversarial debate 자동 발동. ADR-044 §결정 2 `dispatch_mode` enum 의 `auto_on_divergence` (Amendment 1, CFP-391) 가 활성 조건.
 
+**dispatch_mode 3-value 표 (debate-protocol-v1 v1.1, ADR-059 Amendment 1 / CFP-533)**: `auto_on_divergence` (divergence_detected 시 표준 multi-round debate, min 3 / max 5) / `mechanical_fast_path_inline` (divergence_detected + single-file scope + severity ≤ critical 시 inline FIX, debate skip + PL inline 판정, transcript §9 면제 + §10 row 의무 보존) / `user_request_only` (consumer/user ad-hoc 명시 trigger, manual dispatch). 우선순위 `auto_on_divergence > mechanical_fast_path_inline > user_request_only`. ADR-044 team-spec layer dispatch_mode 와 분리 (별 layer 의미 호환 forcing function).
+
 **라운드 정책**: min 3 / soft default 4 / max 5. min 3 미달 합의 시 PL 이 adversarial prompt 재주입 후 force_continue. max 5 미합의 시 `AskUserQuestion` 사용자 escalation.
 
 **Anti-sycophancy 메커니즘**:
