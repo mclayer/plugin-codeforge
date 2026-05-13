@@ -851,7 +851,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/validate_config.py \
     .claude/_overlay/project.yaml
 ```
 
-### 3a-multi-repo. Multi-repo story key system 활성화 (선택, CFP-342 / [ADR-050](adr/ADR-050-multi-repo-story-key-system.md))
+### 3a-multi-repo. Multi-repo story key system 활성화 (선택, CFP-342 / [ADR-069](adr/ADR-069-multi-repo-story-key-system.md))
 
 > **Opt-in only** — single-repo consumer 또는 기존 multi-repo hub-flat 운영 (예: mctrader MCT-1~111 cluster) 은 본 섹션 skip 가능. 부재 시 single-repo flat 모드 유지 (기존 동작 보존).
 
@@ -869,7 +869,7 @@ Multi-repo consumer (1 governance hub repo + N implementation repo) 가 ADR-020 
 **Step 1**: hub repo 의 `.claude/_overlay/project.yaml` 에 `codeforge.stories` 블록 추가:
 
 ```yaml
-# CFP-342 / ADR-050 — Multi-repo story key system
+# CFP-342 / ADR-069 — Multi-repo story key system
 codeforge:
   stories:
     hub:
@@ -946,7 +946,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/validate_config.py \
 
 본 시스템 = ADR-020 Amendment 1 §결정 8 Mode B (hub-centralized) 의 **automation backbone**. Mode B 를 manual 운영하던 consumer 는 본 시스템 활성화로 file 위치 결정 / counter 발급 / bidirectional linking 자동화 가능. Mode A (repo-local) consumer 도 `codeforge.stories.repos[].role: implementation` + `creates_repo_stories: true` 로 활용 가능.
 
-상세 SSOT: [ADR-050](adr/ADR-050-multi-repo-story-key-system.md), [ADR-020](adr/ADR-020-cross-repo-epic-pattern.md) Amendment 3.
+상세 SSOT: [ADR-069](adr/ADR-069-multi-repo-story-key-system.md), [ADR-020](adr/ADR-020-cross-repo-epic-pattern.md) Amendment 3.
 
 > **Phase 2 mechanism (별도 follow-up CFP)**: counter 자동 발급 / Story 자동 라우팅 / agent target repo 결정 자동화는 별도 CFP scope. Phase 1 (본 schema land 후) 는 manual 운영 (consumer 가 직접 counter 갱신 + file 작성).
 

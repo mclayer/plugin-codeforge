@@ -780,9 +780,9 @@ Epic close PR (Phase N+1) 동반 작성:
 - [requirements-output-v1.1](../docs/inter-plugin-contracts/requirements-output-v1.md) (Story §1 epic_dependencies field schema)
 - [`consumer-guide.md`](consumer-guide.md) §5.1 (consumer 측 mode 선택 안내 — Mode A/B 비교표)
 
-### §3.4.1 Multi-repo Story Routing (CFP-342 / ADR-050)
+### §3.4.1 Multi-repo Story Routing (CFP-342 / ADR-069)
 
-`project.yaml`의 `codeforge.stories.repos[]` 블록이 선언된 consumer에서 Orchestrator가 Story 작업 대상 repo를 결정하는 절차. [ADR-050](../docs/adr/ADR-050-multi-repo-story-key-system.md) §결정 4 SSOT.
+`project.yaml`의 `codeforge.stories.repos[]` 블록이 선언된 consumer에서 Orchestrator가 Story 작업 대상 repo를 결정하는 절차. [ADR-069](../docs/adr/ADR-069-multi-repo-story-key-system.md) §결정 4 SSOT.
 
 #### Agent target repo 결정 우선순위 (4-step)
 
