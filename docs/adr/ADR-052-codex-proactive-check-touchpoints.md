@@ -317,7 +317,7 @@ CFP-451 (`#451`, merged) + CFP-490 (`#490`, merged) 양 Story 의 0-FIX chain 7-
 | 3 | Why 해석 mismatch | semantic | 사용자 §1 원문의 root why 에 대해 PL 과 Codex 가 다른 가치 우선순위 제시 (Amendment 1 SSOT 보존) |
 | **4** | **Fact-check** | **factual** | **PL synthesis 의 사실 claim (registry entry / 이전 PR leak / file path / cross-repo state) 이 Codex 가 read-only verify 한 사실과 불일치** |
 
-4번째 영역 hit 시 `divergence_type: factual` (debate-protocol-v1 registry §2.1 enum 확장 — 별도 follow-up CFP 가 schema MINOR bump). 임시 polyfill (본 Amendment 3 effective 시점 ~ enum 확장 CFP merge 전) = `divergence_type: semantic` 으로 통합 발화 + Story §9.0 entry 에 sub-tag `[factual]` 명시.
+4번째 영역 hit 시 `divergence_type: factual` (debate-protocol-v1 registry §2.1 enum 확장 — 별도 follow-up CFP 가 schema MINOR bump). polyfill (본 Amendment 3 effective 시점 ~ enum 확장 CFP merge 전) = `divergence_type: semantic` 으로 통합 발화 + Story §9.0 entry 에 sub-tag `[factual]` 명시.
 
 **A2. Fact-check sub-criteria 4종**
 
@@ -354,7 +354,7 @@ PL 이 fact claim 영역인데 도구 한계로 검증 불가능 (예: 외부 AP
 Amendment 1 의 dispatch 흐름 (min 3 / max 5 / soft default 4 / PL = synthesizer / anchor_id = `cfp-NNN-requirements-divergence-N`) 그대로 적용. divergence type 만 확장:
 
 - `divergence_type: semantic` (기존 3 criteria) — Amendment 1 SSOT 보존
-- `divergence_type: factual` (4번째 criteria) — 본 Amendment 3 신설 (임시 polyfill 시점 = `semantic` + `[factual]` sub-tag)
+- `divergence_type: factual` (4번째 criteria) — 본 Amendment 3 신설 (polyfill 시점 = `semantic` + `[factual]` sub-tag)
 
 매 라운드 carryover input 흐름 / Story §9.0 transcript append 의무 / FIX 흐름 redo 대상 (RequirementsPL 자체) 모두 변경 없음.
 
@@ -375,7 +375,7 @@ Amendment 1 의 3 semantic criteria 본문 (RequirementsPLAgent.md §"Codex Proa
 - Touchpoint #4 divergence detection 영역 = 3 semantic + 1 factual = 4 영역 (현재 implicit 영역의 explicit normative anchor 승격)
 - RequirementsPLAgent §2/§5/§6 synthesis 작성 시 fact claim 영역 marker 4종 (`[verified]` / `[hypothesis]` / `[fact-check-pending]` / `[user-input]`) + reverse-explicit `[verification-out-of-scope: <사유>]` 의무
 - codeforge-requirements `RequirementsPLAgent.md` + `codex-proactive-check.md` sibling sync (본 Story Phase 1 PR 의 sibling)
-- debate-protocol-v1 registry §2.1 enum 확장 (`divergence_type` 에 `factual` 추가) = follow-up CFP carrier (본 Story scope 외, 임시 polyfill 정책 SSOT 만 본 Amendment 보유)
+- debate-protocol-v1 registry §2.1 enum 확장 (`divergence_type` 에 `factual` 추가) = follow-up CFP carrier (본 Story scope 외, polyfill 정책 SSOT 만 본 Amendment 보유)
 - D1/D2/D3/D4 결정 본문 + Amendment 1/2 본문 의미 변경 없음 — Amendment 3 sub-section 만 append (Amendment 1/2 패턴 정합)
 
 ### 거절된 대안 (Amendment 3)
