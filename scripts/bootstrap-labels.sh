@@ -122,6 +122,34 @@ create_label "codeforge-kpi-alert"        "f29513" "codeforge KPI threshold viol
 create_label "codeforge-kpi-infra-error"  "d73a4a" "KPI workflow infrastructure failure — oncall investigation required. rate-limit-fallback-kpi.yml workflow 가 clone fail / aggregator script error / auto-PR fail detect 시 Issue auto-open. measurement alert (codeforge-kpi-alert) 와 분리된 channel — audience routing (oncall vs 정책 의사결정자). CFP-451 v2.3 sub-axis 다축 완결."
 create_label "codeforge-kpi-update"       "0e8a16" "KPI workflow data refresh PR — auto-merge eligible. rate-limit-fallback-kpi.yml workflow 가 monthly cron 으로 발의하는 docs/kpi/rate-limit-fallback.json 데이터 갱신 PR marker. CFP-451 v2.3 sub-axis 다축 완결 (pre-existing CFP-393 leak 정정 — Codex F-451-001 (a))."
 
+# hotfix-bypass:* (CFP-598) — label-registry-v2.md §3 yaml dynamic read.
+# canonical-only category (component:* 와 달리 consumer overlay 아님) — DRY_RUN + actual 양 모드 모두 처리.
+_BOOTSTRAP_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REGISTRY_MD="${REGISTRY_MD:-${_BOOTSTRAP_SCRIPT_DIR}/../docs/inter-plugin-contracts/label-registry-v2.md}"
+if [ -f "$REGISTRY_MD" ]; then
+    if ! python -c "import yaml" 2>/dev/null; then
+        echo "  ! hotfix-bypass:* labels SKIPPED — Python PyYAML 미설치 ('pip install pyyaml' 후 재실행 권장)." >&2
+    else
+        hotfix_bypass=$(python "${_BOOTSTRAP_SCRIPT_DIR}/parse-hotfix-bypass-labels.py" "$REGISTRY_MD" 2>/dev/null) || {
+            rc=$?
+            if [ $rc -eq 2 ]; then
+                echo "  ! hotfix-bypass:* SKIPPED — registry 안 0 entry (drift sentinel)." >&2
+            else
+                echo "  ! hotfix-bypass:* SKIPPED — parse failure (exit $rc)." >&2
+            fi
+            hotfix_bypass=""
+        }
+        if [ -n "$hotfix_bypass" ]; then
+            # process substitution (<(...)) — subshell 회피로 LABEL_COUNT 부모 shell 증분 보장
+            # (pipe | while read 는 subshell → LABEL_COUNT 부모 미전파 — 2-way self-check parity 파괴)
+            while IFS=$'\t' read -r name color desc; do
+                [ -z "$name" ] && continue
+                create_label "$name" "$color" "$desc"
+            done < <(printf '%s\n' "$hotfix_bypass")
+        fi
+    fi
+fi
+
 # component:* (CFP-131 / Issue #237) — project.yaml `labels.components[]` 에서 동적 read.
 # placeholder ("<REPLACE...") 항목 skip. Python + PyYAML 의존 (codeforge family 표준).
 # --dry-run 모드 에서는 skip — component:* 는 consumer overlay 동적 (CFP-33 check-label-registry
