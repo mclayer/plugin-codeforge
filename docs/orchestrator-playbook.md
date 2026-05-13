@@ -976,11 +976,29 @@ Phase 2 (follow-up CFP): `scripts/codeforge-story-counter.py` 자동 발급 (fil
 - macOS / Linux: `~/.claude/worktrees/<repo>/<branch-flat>`
 - Path 변환은 `worktree-path-util.sh` 함수 (`is_windows`, `to_posix_path`).
 
+**Marketplace sync PR proactive dispatch (CFP-597 / [ADR-063](../docs/adr/ADR-063-marketplace-atomic-invariant.md) Amendment 1)**:
+
+Orchestrator 가 Phase 2 PR open 시점에 Change Plan §13 안 `marketplace_sync_required: true` declare 감지 시 GitOpsAgent (codeforge-pmo) spawn. spawn prompt:
+
+**artifacts (verbatim 첨부, [ADR-070](../docs/adr/ADR-070-codex-verify-before-trust.md) verify-before-trust mandate)**:
+- Change Plan §13 sub-row (`marketplace_sync_required` + `mirrored_fields_changed[]` + `triggering_plugins[]`)
+- triggering plugin name + 변경된 mirrored field enum
+
+**GitOpsAgent §3.6 행위** (codeforge-pmo sibling, Phase 2 carrier):
+1. `mclayer/marketplace` repo worktree 신설 — branch `cfp-NNN`, base `main`
+2. `.claude-plugin/marketplace.json` 안 해당 plugin entry 의 mirrored field 갱신 (`mirrored_fields_changed[]` 기준)
+3. marketplace PR open — title `[CFP-NNN] Sibling sync — <plugin> <version> mirrored field update`
+4. PR body 안 `Closes <triggering-plugin-PR>` cross-reference
+5. ADR-063 §결정 2 ordering 정합 — marketplace PR 선행 merge 의무
+
+dispatch trigger: Phase 2 PR carrier (Orchestrator monopoly, ADR-039 subagent default 정합). lane 위치 = codeforge-pmo (GitOpsAgent home, sibling plugin). reactive `check-marketplace-parity.sh` channel = defense-in-depth 보존.
+
 **의존성**:
 - ADR-024 amendment 1 (hierarchical branch convention)
 - ADR-040 (worktree convention SSOT)
 - CFP-137 (agent teams 적극 도입) — 본 §3.5 의 use case full
 - CFP-139 (GitOpsAgent) — Orchestrator 의 worktree management 책임을 GitOpsAgent 로 이관 (Wave 3)
+- CFP-597 (ADR-063 Amendment 1) — marketplace sync PR proactive dispatch trigger
 
 ### §3.6 TeamCreate / TeamDelete protocol (CFP-137 / [ADR-044](../docs/adr/ADR-044-phase-scoped-sequential-team.md))
 
