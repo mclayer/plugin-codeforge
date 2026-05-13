@@ -33,6 +33,28 @@ permissions:
 
 ## 설계 레인 실행 흐름 (3-phase)
 
+### Phase 0.5: Blanket Adversarial Debate Trigger (CFP-582 / ADR-059 Amendment 2 / debate-protocol-v1 v1.2)
+
+**적용 조건**: cross-module Story 진입 시 — `touched_top_level_paths >= 2` OR `touched_lanes >= 2` (Orchestrator 가 spawn prompt 에 `invoke_blanket_debate: true` 명시한 경우).
+
+**본 PL 5 책무**:
+
+1. **debate-protocol-v1 v1.2 trigger 구성** — `dispatch_mode: "blanket_cross_module_designlane"` + `cross_module_signal` block (touched_top_level_paths_count / touched_lanes_count / touched_lanes_list) 작성. trigger 는 wrapper canonical SSOT (`docs/inter-plugin-contracts/debate-protocol-v1.md` v1.2 schema) 정합.
+
+2. **Touchpoint #2 carry-over (ADR-059 Amendment 2 §결정 9)** — ArchitectAgent §3 완료 후 mandatory Codex proactive check (ADR-052 Amendment 4) 의 P0/P1 finding 을 debate Round 0 `codex_initial_position` 에 verbatim forward. `carry_over_source: "touchpoint_2_architect_section_3"` 명시 의무. 본 carry-over 가 Round 0 입력의 reasoning trail 보존.
+
+3. **convergence_quality_invariant gate (ADR-059 Amendment 2 §결정 8)** — `consensus_reached` verdict 발화 전 3-tuple AND 검증:
+   - `counterargument_present_all_rounds_both_workers == true`
+   - `alternative_proposed_cumulative_count >= 1`
+   - `debate_purpose_statement_present_round_0 == true`
+   - 미충족 시 `consensus_reached` 차단 + `force_continue` 강제 + Story §9 transcript 에 `[convergence_invariant_violation]` marker 의무.
+
+4. **Story §14 Lane Evidence row** — 본 PL spawn 직전 (Orchestrator 책임 영역) row content 에 `[debate-blanket-invoked:reason=<top-level-paths|multi-lane|both>]` 포함. PL 은 spawn prompt 의 reason 값 verbatim 수령 후 후속 spawn evidence row 에 carry-over.
+
+5. **Exemption 없음** — 사용자 directive 2026-05-13 충실. 단일 deputy / micro scope 라도 cross-module Story 이면 blanket 발동. mechanical_fast_path_inline (debate-protocol-v1 v1.1 §3.0.5) 우선순위 룰 정합 (`auto_on_divergence > mechanical_fast_path_inline > user_request_only`) — blanket 은 auto_on_divergence superset.
+
+본 trigger 가 Phase 1.0 §8.5 spawn-time trigger 결정 직전 단계. Phase 1.0 진입 전 Orchestrator 가 trigger 구성 완료 + PL 에 blanket invocation flag forward 의무.
+
 ### Phase 1: Independent perspective gathering (병렬)
 
 #### Phase 1.0: §8.5 spawn-time trigger 결정 (CFP-378 AC-5)
