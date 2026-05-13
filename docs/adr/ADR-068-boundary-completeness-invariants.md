@@ -44,7 +44,7 @@ mechanical_enforcement_actions:
 
 `Accepted` (2026-05-13). ADR-065 (mechanical syntactic 7-item self-check) 의 semantic 상위 개념. 분리 운영 — verdict packet 양 별도 boolean field emit.
 
-## 맥락
+## 컨텍스트
 
 mctrader-hub MCT-150 Phase 2 case study (Epic CFP-525 brainstorm spec L17) — design-review PASS 후 code-review 에서 **반복 발견된 boundary completeness gap 4회** (양 reviewer independent identification). 4 gap 의 type 별 분류:
 
