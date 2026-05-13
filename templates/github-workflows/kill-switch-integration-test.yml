@@ -41,6 +41,9 @@ on:
         type: string
         default: "auto_trigger,manual_trigger,call_site_enforcement,ui_failure_resilience"
 
+permissions:
+  contents: read
+
 jobs:
   run-kill-switch-tests:
     runs-on: ubuntu-latest

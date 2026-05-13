@@ -35,6 +35,9 @@ on:
         type: string
         default: "tests/live_shadow/**"
 
+permissions:
+  contents: read
+
 jobs:
   enforce-live-test-policy:
     runs-on: ubuntu-latest

@@ -7,6 +7,22 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.36.0] - 2026-05-13
+
+### Added (CFP-530 — workflow yml permissions hardening, ADR-060 Amendment 8)
+
+Workflow yml `permissions:` block 일괄 hardening (`.github/workflows/` 6 + `templates/github-workflows/` 8 = 16 file). GitHub Actions least-privilege standard 정합 — GITHUB_TOKEN 명시적 scope 제어. 14 MISSING + 2 job-level upgrade 대상 모두 T1 base (`contents: read`), `superpowers-schema-drift.yml` pair 는 TH-7 sealed (top-level deny + schedule job override `issues: write` event-conditioned). `scripts/check-workflow-permissions-presence.sh` mechanical lint + `templates/github-workflows/workflow-permissions-check.yml` warning-tier workflow + self-app byte-identical mirror (`workflow-permissions-check.yml` `.github/workflows/` 동시 신설). evidence-check-registry-v1 row append `workflow-permissions-block-presence` (9번째 entry), label-registry-v2 v2.5 same-MINOR sub-entry append (`hotfix-bypass:workflow-permissions` 10번째 family member). ADR-024 Amendment 정합, ADR-063 atomic invariant 발효 (plugin.json 5.35.0 → 5.36.0 + CHANGELOG + marketplace.json 3-file atomic sync).
+
+- `.github/workflows/` 6 file `permissions: contents: read` top-level prepend
+- `templates/github-workflows/` 8 file `permissions: contents: read` top-level prepend + 2 pair byte-identical mirror
+- `templates/github-workflows/superpowers-schema-drift.yml` + `.github/workflows/superpowers-schema-drift.yml` job-level `issues: write` override (TH-7 sealed)
+- `scripts/check-workflow-permissions-presence.sh` (NEW) + exec bit
+- `templates/github-workflows/workflow-permissions-check.yml` (NEW) warning-tier workflow
+- `.github/workflows/workflow-permissions-check.yml` (NEW self-app mirror)
+- `docs/evidence-checks-registry.yaml` row append `workflow-permissions-block-presence` (9번째 entry, ADR-060 Amendment 8 §결정 21)
+- `docs/inter-plugin-contracts/label-registry-v2.md` v2.5 same-MINOR sub-entry append (`hotfix-bypass:workflow-permissions` 10번째 family, ADR-024 Amendment 정합)
+- `.claude-plugin/plugin.json` — version 5.35.0 → 5.36.0 + description CFP-530 row append
+
 ## [5.35.0] - 2026-05-13 — CFP-528 Wave 2B
 
 ### Added

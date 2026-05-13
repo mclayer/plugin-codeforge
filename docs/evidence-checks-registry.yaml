@@ -1016,3 +1016,29 @@ entries:
       count: 0
       promotion_trigger: none        # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
+  - name: workflow-permissions-block-presence
+    description: |
+      ADR-060 Amendment 8 §결정 21 mechanical verification —
+      .github/workflows/*.yml + templates/github-workflows/*.yml top-level
+      `permissions:` block 부재 detect. Glob scope = *.yml only.
+    detect_command: bash scripts/check-workflow-permissions-presence.sh
+    workflow: templates/github-workflows/workflow-permissions-check.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:workflow-permissions
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-530
+    introduced_date: 2026-05-13
+    owner_adr: ADR-060
+    carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none
+    status: Active
