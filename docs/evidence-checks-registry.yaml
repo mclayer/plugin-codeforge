@@ -1080,3 +1080,34 @@ entries:
       count: 0
       promotion_trigger: none
     status: Active
+
+  - name: workflow-yaml-parse
+    description: |
+      CFP-583 / ADR-060 Amendment 9 §결정 22 — workflow yml YAML parse validation gate.
+      .github/workflows/*.yml + templates/github-workflows/*.yml 전체 대상 PyYAML safe_load +
+      actionlint dual validation. BODY heredoc anti-pattern (multi-line + backtick fence +
+      variable interpolation) 재발 방지 recurrence prevention forcing function.
+      broken workflow = absent 와 동치 → framework promotion gate measurement 무효.
+    detect_command: bash scripts/check-workflow-yaml-parse.sh
+    workflow: templates/github-workflows/workflow-yaml-parse.yml
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:workflow-yaml-parse
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies: []         # 독립 entry
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-583
+    introduced_date: 2026-05-13
+    owner_adr: ADR-060
+    carrier_adr: ADR-060
+    recurrence:
+      count: 6                         # CFP-449 carrier 이후 broken 상태 6 workflow 동시 영향 (§2.1 evidence)
+      threshold: 3                     # ADR-060 §결정 6 promotion gate
+      promotion_trigger: advisory      # recurrence count ≥ threshold → advisory comment (별도 carrier 승격 평가)
+      last_occurrence: 2026-05-13      # CFP-583 fix 시점 — broken-baseline 회복 baseline 재시작
+    status: Active
