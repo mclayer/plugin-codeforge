@@ -70,3 +70,10 @@ registries:
   - name: evidence_check_registry
     files:
       - { file: evidence-check-registry-v1.md, version: "1.1", status: Active }  # CFP-389 / ADR-060: evidence-enforceable promotion framework. CFP-455 / ADR-060 Amendment 2: v1.0 → v1.1 MINOR bump (current_tier required 전환)
+
+  - name: severity_propagation
+    canonical_repo: mclayer/plugin-codeforge
+    canonical_path: docs/inter-plugin-contracts/severity-propagation-v1.md
+    files:
+      - { file: severity-propagation-v1.md, version: "1.0", status: Active }  # CFP-529 Wave 3: review-verdict-v4 findings[].severity ↔ label-registry-v2 severity:* ↔ evidence-checks-registry current_tier 3-way bidirectional binding SSOT. RC#8 carrier (ADR-068). kind:registry (sibling sync 면제, ADR-010 §결정 2).
+    description: "severity 어휘 cross-channel propagation SSOT (3-way bidirectional binding) — RC#8 carrier"
