@@ -120,6 +120,47 @@ amendment_log:
       강화 방향 amendment, framework SSOT permanent governance) +
       sibling_dependencies append `[CFP-390, CFP-412, CFP-455, CFP-449, CFP-481, CFP-506,
       CFP-509, CFP-508, CFP-530]` (Amendment 2 §결정 6 (c) chain 정합).
+  - amendment: 9
+    carrier_story: CFP-583
+    date: 2026-05-13
+    summary: |
+      7th warning-tier entry `workflow-yaml-parse` 등록 carrier amendment — 6 workflow file
+      (decision-principle-vocabulary / adr-sunset-criteria / auto-phase-label / worktree-first-pre-checkout /
+      carrier-bootstrap-check / handoff-wording-check) 가 multi-line bash `BODY="${HEADER}\n\n\`\`\`\n${VAR}..."`
+      heredoc 패턴 (block scalar 안 0-indent backtick fence + variable interpolation) 으로 인해
+      yaml ScannerError 유발 → `pull_request` listener 미등록 → workflow startup_failure +
+      jobs:[] empty + PR statusCheckRollup 0 attach (zero-coverage operation since carrier merge).
+      framework legitimacy 훼손 sentinel — Amendment 3/4/5/6/7 의 warning-tier entry 도입 시점부터
+      mechanical enforcement 가 false-PASS 운영 (작성 carrier PR merge 이후 모든 PR-time enforce 0건).
+      ADR-060 framework promotion gate (PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling Story merged)
+      의 measurement 자체가 무의미 (broken workflow = absent 와 동치, sample size = 0).
+      해소 + recurrence prevention validation gate 도입:
+        - 6 workflow yml + 6 template self-app 정정 (BODY heredoc 정상 패턴 = printf interpolation form
+          또는 ANSI-C bash `$'...'` quoting, parallel-epic-conflict-check.yml healthy reference) +
+        - `scripts/check-workflow-yaml-parse.sh` 신설 (PyYAML safe_load + actionlint dual validation,
+          ADR-061 §결정 1 Python script convention 정합 — multi-line Python > 5줄 외부 .py 의무 동인
+          + 이번 carrier 가 yaml-shell heredoc 영역 extension 확장 첫 사례) +
+        - `templates/github-workflows/workflow-yaml-parse.yml` + self-app `.github/workflows/`
+          (warning tier first, `hotfix-bypass:workflow-yaml-parse` 11th hotfix-bypass family member,
+          per-entry namespace ADR-024 Amendment 3 §결정 6.A 정합) +
+        - registry yaml row append (Phase 2 PR scope, schema v1.2 정합 — `recurrence: count=6
+          / threshold=3 / promotion_trigger=advisory` schema v1.2 Amendment 6 정합 — 6 file 동시
+          actual failure 가 threshold 초과 → advisory comment trigger) +
+      신설 §결정 23 (workflow yml BODY heredoc anti-pattern + 정상 패턴 정의):
+        - **금지**: `run: |` block scalar 안 `BODY="${VAR}\n\n\`\`\`\n${OTHER}..."` 패턴 —
+          0-indent backtick fence + 0-indent `${...}` interpolation 가 yaml scanner 의
+          block scalar 종료 모호성 유발 (PyYAML strict ScannerError / GitHub Actions Go parser
+          jobs:[] silent fail) +
+        - **권장**: `BODY=$(printf '%s\n\n\`\`\`\n%s\n\`\`\`\n\n%s' "$HEADER" "$LINT_OUT" "$FOOTER")`
+          (printf format string + variable arg = yaml scanner 영역 무관) 또는 ANSI-C bash
+          `BODY=$'${HEADER}\n\n```...'` (single-quoted dollar prefix, fence 가 ANSI escape 안
+          포함되어 yaml scanner 미접근) +
+        - **참조 healthy pattern**: parallel-epic-conflict-check.yml line 146-152 +
+      ratchet 위반 0건 — enum 값 / tier 추가 / bypass channel 동작 변경 없음, framework 의 zero-coverage
+      sentinel 회복 + recurrence prevention validation gate 도입 (ADR-058 §결정 5 sunset_justification
+      의무 통과 — 강화 방향 amendment, framework legitimacy 회복 의무) +
+      sibling_dependencies append `[CFP-390, CFP-412, CFP-455, CFP-449, CFP-481, CFP-506,
+      CFP-509, CFP-508, CFP-530, CFP-583]` (Amendment 2 §결정 6 (c) chain 정합).
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
@@ -130,6 +171,7 @@ related_stories:
   - CFP-509  # Amendment 6 carrier — evidence-check-registry schema v1.1 → v1.2 MINOR bump + §결정 19 신설 (recurrence-based advisory promotion signal)
   - CFP-508  # Amendment 7 carrier — evidence-registry-naming convention lint + §결정 20 신설 (entry name ↔ workflow file naming convention + Conservative no-rename policy + multi-job pattern 정식 인정)
   - CFP-530  # Amendment 8 carrier — N번째 warning-tier entry `workflow-permissions-block-presence` 등록 + 16 file remediation surface T1/T3 tier 매핑 + hotfix-bypass:workflow-permissions 10번째 family member + ADR-063 atomic invariant 발효
+  - CFP-583  # Amendment 9 carrier — 7th warning-tier entry `workflow-yaml-parse` 등록 + 6 workflow yml BODY heredoc anti-pattern 정정 + framework zero-coverage sentinel 회복 (ADR-064 §결정 2 forbid-list mechanical lint + ADR-058 sunset criteria mandate + ADR-040 worktree-first 4 entry + ADR-024 Amendment 4 auto-phase-label + ADR-068 wording SSOT 등 framework SSOT 운영 정당성 회복) + §결정 23 BODY heredoc 정상 패턴 SSOT
 related_adrs:
   - ADR-008   # versioning (kind:registry 도 minor/major SemVer 정합)
   - ADR-010   # contract sibling sync (kind:registry scope 외 명시)
@@ -792,4 +834,121 @@ evidence-checks-registry.yaml 에 신규 row append (Phase 2 PR scope). framewor
 **CFP-300 cross-ref** (third-party action SHA-pinning policy) — 직교 정책 결합: token scope 최소화 (본 Amendment 8) + action 신뢰성 immutable pinning (CFP-300) = supply chain security family AND 결합 완성. 두 정책 independent invariant 유지.
 
 **Mermaid 다이어그램 동기화** (Amendment 2 §결정 6 (c) chain 정합): 본 ADR `## 다이어그램` Mermaid 의 carrier chain row 갱신은 추후 다이어그램 갱신 carrier 가 통합 처리 (현재 chain length 9 — CFP-530 까지 보존 의무).
+
+### §결정 22 (Amendment 9, CFP-583 — 2026-05-13)
+
+**7th warning-tier entry 등록** — `workflow-yaml-parse`:
+
+CFP-578 retro 후속 audit 결과 6 workflow file (decision-principle-vocabulary / adr-sunset-criteria / auto-phase-label / worktree-first-pre-checkout / carrier-bootstrap-check / handoff-wording-check) 가 multi-line bash `BODY="${HEADER}\n\n` + 3-backtick fence + `${VAR}` interpolation 패턴으로 인해 yaml ScannerError 유발 → `pull_request` listener 미등록 → workflow startup_failure + jobs:[] empty + PR statusCheckRollup 0 attach. carrier merge 시점부터 zero-coverage 운영 sentinel — Amendment 3/4/5/6/7 framework SSOT 의 mechanical enforcement 가 false-PASS.
+
+PR #581 evidence chain (3 runs, cfp-578 branch, event=push, conclusion=failure, jobs:[]): adb15b4 / 6c084d8 / dbd556f — workflow `name:` field path fallback (yml top parse 실패) + `pull_request` event 0건. RequirementsPL §1 진술의 H1/H2/H3 가설 모두 reject — root cause = yaml scanner block scalar 종료 모호성 (path filter / cache / dispatch race 영역 도달 전 단계 fail).
+
+**Entry 필드 SSOT** (registry yaml row 형식, Phase 2 PR append target):
+
+```yaml
+  - name: workflow-yaml-parse
+    description: |
+      ADR-060 §결정 23 — workflow yml YAML scanner ambiguity 감지 carrier (CFP-583 sentinel).
+      Multi-line bash `BODY="${HEADER}\n\n` + 3-backtick fence + `${VAR}` interpolation 패턴이
+      PyYAML strict ScannerError + GitHub Actions Go parser jobs:[] silent fail 유발. 6 file
+      재현 evidence (decision-principle-vocabulary / adr-sunset-criteria / auto-phase-label /
+      worktree-first-pre-checkout / carrier-bootstrap-check / handoff-wording-check).
+      validation: `python -c "import yaml; yaml.safe_load(open('<file>'))"` (PyYAML safe_load)
+      + actionlint binary (Go 기반 GitHub Actions parser semantics 정합).
+    detect_command: bash scripts/check-workflow-yaml-parse.sh
+    workflow: templates/github-workflows/workflow-yaml-parse.yml
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:workflow-yaml-parse
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: []       # 독립 entry — workflow self-app + 6 file 정정 외 의존 없음
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-583
+    introduced_date: 2026-05-13
+    owner_adr: ADR-060               # framework SSOT — workflow yml parse 정합의 정책 owner
+    carrier_adr: ADR-060             # self-carrier (Amendment 9)
+    recurrence:
+      count: 6                       # 6 file 동시 actual broken (CFP-583 evidence)
+      last_occurrence: "2026-05-13T00:00:00Z"
+      threshold: 3                   # ADR-060 §결정 19 (Amendment 6) — advisory promotion signal
+      promotion_trigger: advisory    # 6 >= 3 threshold 도달 → PR advisory comment
+    status: Active
+```
+
+**Hotfix-bypass label 명명**: `hotfix-bypass:workflow-yaml-parse` — ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합, **11번째 hotfix-bypass:* family member** (기존 10: adr-sunset / decision-principle-vocab / auto-phase-label / marketplace-atomic / worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd} / claude-md-line-cap / sibling-pr-author-check / workflow-permissions). label-registry-v2 v2.6 same-MINOR sub-entry append 동반 (frontmatter `version` 미변경, sub-row only — ADR-008 §결정 SemVer rule 안 same MINOR 안 additive sub-entry 허용).
+
+**Promotion criteria** (warning → blocking-on-pr, ADR-060 §결정 6 AND condition):
+- (a) pr_cumulative_min: 20 PR 누적 (velocity-normalized — §결정 10)
+- (b) failure_threshold: 0 bypass 외 failure (본 carrier PR merge 시점 = 0 발효 시작)
+- (c) sibling_dependencies: [] (독립 entry — 6 file 정정 atomic Phase 2 PR scope 안 완결, 외부 carrier 미의존)
+
+승격 평가 책임 = 별도 carrier Story (warning → blocking-on-pr transition 자동 아님, governance 보존 — Amendment 6 §결정 19 정합).
+
+**framework legitimacy 회복**: 본 carrier 가 ADR-060 framework promotion gate (PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling Story merged) 의 measurement 정당성 회복 — 6 affected entry (decision-principle-vocab / adr-sunset-criteria / auto-phase-label / worktree-first-pre-checkout / carrier-bootstrap / handoff-wording) 가 본 PR merge 후 actual PR-time enforce 발효 시작. 회복 전 시점의 measurement (PR 누적 / failure count) 는 broken-baseline 으로 retroactive 분리 (별도 carrier scope, Story §3.4 명시).
+
+### §결정 23 (Amendment 9, CFP-583 — 2026-05-13)
+
+**workflow yml BODY heredoc anti-pattern + 정상 패턴 SSOT** (forcing function for future workflow author + DesignReview lint reference):
+
+GitHub Actions workflow yml 안 `run: |` block scalar 내부에서 multi-line bash `BODY="..."` 변수 assignment 작성 시 다음 패턴이 yaml scanner 의 block scalar 종료 모호성 유발 → ScannerError / jobs:[] silent fail.
+
+#### 금지 (anti-pattern)
+
+```yaml
+run: |
+  BODY="${HEADER}
+
+  ```                  # ← yaml scanner 가 fence-start line 으로 오해
+  ${LINT_OUT}          # ← yaml 가 새 key 시작으로 분류 시도 → ':' 부재 → ScannerError
+  ```
+  ..."
+```
+
+**금지 사유**: yaml block scalar (`|`) 안 모든 line 은 nominal "indented continuation". 그러나 0-indent backtick fence + 0-indent `${...}` 가 continuation interpretation 와 충돌 — PyYAML strict 는 `ScannerError: while scanning a simple key, could not find expected ':'`. GitHub Actions Go parser 는 lenient 하나 `jobs:` block 평가 시점에 silent fail (workflow startup_failure 패턴, jobs:[] empty + run status=failure).
+
+#### 권장 (정상 패턴 2종)
+
+**(A) printf format string + variable arg** (parallel-epic-conflict-check.yml healthy reference line 146-152):
+
+```yaml
+run: |
+  BODY=$(printf '%s\n\n```\n%s\n```\n\n%s' \
+    "$HEADER" "$LINT_OUT" "$FOOTER")
+  gh pr comment "$PR_NUMBER" --body "$BODY"
+```
+
+**정당화**: printf format string 은 single-quoted (yaml scanner 가 단일 quoted scalar 로 인식, 내부 backtick / `${...}` 가 escape 영역 외). variable arg `"$HEADER"` 는 bash interpolation 영역 (yaml 미접근).
+
+**(B) ANSI-C bash quoting `$'...'` + escape literal newline**:
+
+```yaml
+run: |
+  BODY=$'## Header\n\n```\n'"$LINT_OUT"$'\n```\n\n'"$FOOTER"
+  gh pr comment "$PR_NUMBER" --body "$BODY"
+```
+
+**정당화**: `$'...'` 는 ANSI-C quoted string (bash builtin). 내부 `\n` 가 literal newline 으로 escape. yaml scanner 영역에서는 single-quoted scalar 로 인식 — backtick fence 가 quoted scalar 안 포함되어 block scalar 종료 boundary 미접근.
+
+**(C) external script call** (ADR-061 §결정 1 영역 적용 — multi-line > 5줄 시):
+
+```yaml
+run: |
+  bash scripts/emit-comment-body.sh "$HEADER" "$LINT_OUT" "$FOOTER" > /tmp/body.md
+  gh pr comment "$PR_NUMBER" --body-file /tmp/body.md
+```
+
+**정당화**: yaml 안에 multi-line bash 자체 부재. external `.sh` 또는 `.py` script 가 모든 escape 책임 흡수. ADR-061 §결정 1 의 yaml-shell 영역 extension (Python script convention 의 self-citation).
+
+#### Lint enforcement
+
+`scripts/check-workflow-yaml-parse.sh` (Phase 2 PR scope) 가 PyYAML safe_load + actionlint dual validation 으로 mechanical enforcement. warning tier 첫 도입 — `continue-on-error: true`. 4-tier promotion path (warning → blocking-on-pr) 는 별도 carrier (ADR-060 §결정 6 AND condition + §결정 19 advisory promotion signal).
+
+#### ADR-061 cross-ref
+
+ADR-061 §결정 1 (Python script-writing convention) 는 multi-line Python > 5줄 외부 .py 의무 + bash heredoc 금지. 본 §결정 23 = 동일 root cause family 의 yaml-shell heredoc 영역 extension (multi-line quoted string 안 backtick / `$` / `\` 가 transmission boundary 마다 다른 escape semantics 적용). ADR-061 신규 Amendment 영역은 별도 carrier — 본 ADR-060 §결정 23 가 워킹플로우 yml 영역 mechanical enforcement carrier (registry entry + script + workflow self-app).
 
