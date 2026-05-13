@@ -7,6 +7,22 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.43.0] - 2026-05-14 — CFP-609 (ADR-064 Amendment 1 + parallel-dispatch-protocol-v1)
+
+### Added (CFP-609 — parallel-dispatch-protocol-v1 신설 + ADR-064 Amendment 1 mechanical enforcement Phase 1)
+
+- **`docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md`** 신설 (kind:registry, wrapper canonical, sibling sync 면제) — ADR-064 §결정 4 Trace 4 "Orchestrator multi-task spawn default = parallel" normative declaration 의 execution-time enforcement contract. 4 의무 항목 (plan DAG verbatim 박제 / PL 자율 병렬 권한 명시 / sequential mandate enum 명시 / file-level conflict resolution 패턴) + 6 sequential mandate enum (close-set) + PL 자율 병렬 결정 tree 4-분기 + env=0/1 동등성 + consumer overlay defaults.
+- **`docs/inter-plugin-contracts/MANIFEST.yaml`** `registries:` 행 `parallel-dispatch-protocol-v1` append.
+- **`docs/evidence-checks-registry.yaml`** entry `parallel-dispatch-prompt-check` append — ADR-060 evidence-enforceable framework warning tier (ADR-064 Amendment 1 §결정 4 carrier).
+- **`scripts/check-parallel-dispatch-prompt.sh`** + **`scripts/check_parallel_dispatch_prompt.py`** — Orchestrator → PL spawn prompt 내 `[Parallel Dispatch Hint]` block 유무 + sequential 의무 영역 명시 여부 검증 lint (exit-code 0/1/2 tri-tier, ADR-060 Amendment 2 §결정 15 정합).
+- **`templates/github-workflows/parallel-dispatch-prompt-check.yml`** (warning tier, `continue-on-error: true`, bypass label `hotfix-bypass:parallel-dispatch-prompt`).
+- **`templates/team-spec-requirements.yaml`** 6-way teammates 정합 (ADR-056 gap absorb — CFP-609 absorb).
+- **ADR-064 Amendment 1** frontmatter `amendment_log` + `mechanical_enforcement_actions[]` 갱신 — parallel-dispatch-prompt-check binding.
+- **`docs/orchestrator-playbook.md`** §3.0.14 신설 — Parallel Dispatch Protocol 운영 매뉴얼 (registry §4 full schema 요약 + 4 의무 항목 + 6 enum + 4-분기 cross-ref, DRY 구조).
+- **`overlay/_overlay/project.yaml.example`** consumer overlay `parallel_dispatch` defaults 섹션 추가.
+
+**trigger**: consumer mctrader MCT-159 Phase 2 55min wall-clock sequential bias 실측 (mctrader-data#49).
+
 ### Added (CFP-598 Phase 1 — Design lane, plumbing only)
 
 CFP-530 retro carrier #2 — `bootstrap-labels.sh` hotfix-bypass:* family dynamic sync + §3 yaml backfill (pre-existing leak). Phase 1 PR scope = Change Plan + Story §1-§9 only (no src/scripts/registry edit). Phase 2 PR (별 carrier) 가 6 file 변경 + marketplace 5.42.0 → 5.43.0 sibling PR.
