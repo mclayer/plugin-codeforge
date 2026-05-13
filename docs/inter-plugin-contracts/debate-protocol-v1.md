@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: debate-protocol
-version: "1.1"
+version: "1.2"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/debate-protocol-v1.md
@@ -9,12 +9,15 @@ date: 2026-05-13
 authors:
   - ArchitectAgent (CFP-391 carrier — ADR-059 protocol SSOT)
   - ArchitectAgent (CFP-533 — v1.1 MINOR bump, dispatch_mode field required 전환)
+  - ArchitectAgent (CFP-582 — v1.2 MINOR bump, blanket_cross_module_designlane dispatch enum + convergence_quality_invariant block 신설)
 version_history:
   - { version: "1.0", date: 2026-05-11, carrier: CFP-391, change: "initial — protocol schema + 라운드 정책 + termination + anti-sycophancy + reasoning carryover + lane-agnostic" }
   - { version: "1.1", date: 2026-05-13, carrier: CFP-533, change: "MINOR bump — dispatch_mode field optional → required + enum 3-value 명시화 (auto_on_divergence / mechanical_fast_path_inline / user_request_only). ADR-059 Amendment 1 동반." }
+  - { version: "1.2", date: 2026-05-13, carrier: CFP-582, change: "MINOR bump — dispatch_mode enum 4번째 value blanket_cross_module_designlane 추가 + convergence_quality_invariant block 신설 (3 marker pattern: [COUNTERARGUMENT] / [ALTERNATIVE_PROPOSED] / [DEBATE_PURPOSE_STATEMENT]) + Touchpoint #2 carry-over schema. ADR-059 Amendment 2 동반. Epic-FIX-ESCALATION-prevention #525 close trigger." }
 related_adrs:
-  - ADR-059  # carrier (5 결정 + Amendment 1 — protocol 정의 + DesignReview 자동 발동 + reasoning carryover + anchor 재발 escalation + lane-agnostic + dispatch_mode enum 명시화)
+  - ADR-059  # carrier (5 결정 + Amendment 1+2 — protocol 정의 + DesignReview 자동 발동 + reasoning carryover + anchor 재발 escalation + lane-agnostic + dispatch_mode enum 명시화 + DesignLane blanket + convergence_quality_invariant)
   - ADR-044  # team-spec dispatch_mode enum 확장 Amendment 1 — auto_on_divergence (별 layer)
+  - ADR-052  # Codex proactive check Touchpoint #2 carry-over (Amendment 2 §결정 9)
   - ADR-008  # SemVer rule
   - ADR-010  # canonical/sibling sync 책임
 related_files:
@@ -27,6 +30,7 @@ related_files:
 producers:
   - codeforge-review/DesignReviewPLAgent  # Story 1 scope (DesignReview)
   - codeforge-requirements/RequirementsPLAgent  # Story 2 scope (CFP-392, deferred)
+  - codeforge-design/ArchitectPLAgent  # CFP-582 Wave 4 — DesignLane blanket trigger producer
 consumers:
   - codeforge-design/ArchitectPLAgent  # FIX 루프 re-spawn 시 transcript 입력 수신
   - codeforge-design/ArchitectAgent  # re-run reasoning carryover 입력 수신
@@ -60,6 +64,10 @@ Codex ↔ Opus 두 워커가 lane 결정 지점에서 finding / judgment 불일�
 | **dispatch_mode (team-spec layer)** | ADR-044 §결정 2 Amendment 1 — team roster level dispatch_mode (default / user_request_only / auto_on_divergence). 우선순위 `default > auto_on_divergence > user_request_only` |
 | **dispatch_mode (protocol layer, v1.1 required field)** | ADR-059 Amendment 1 (CFP-533) — protocol activation level dispatch_mode (auto_on_divergence / mechanical_fast_path_inline / user_request_only). 우선순위 `auto_on_divergence > mechanical_fast_path_inline > user_request_only` |
 | **mechanical_fast_path_inline** | divergence_detected: true + single-file scope + severity ≤ critical 시 inline FIX 분기. debate skip, PL inline 판정, transcript Story §9 append 면제, §10 FIX Ledger row append 의무 보존 (debate_artifact_ref = null) |
+| **blanket_cross_module_designlane** | ADR-059 Amendment 2 (CFP-582) — DesignLane internal (ArchitectPL + ArchitectAgent + 6 deputy) 전면 적용. trigger = `touched_top_level_paths >= 2` OR `touched_lanes >= 2` (cross-module Story 정의). 우선순위 최상위. |
+| **convergence_quality_invariant** | 3-tuple AND 충족 검증: `counterargument_section_present` AND `alternative_proposed_count >= 1` AND `debate_purpose_statement_present`. 미충족 시 `consensus_reached` 차단 + `force_continue` 강제 |
+| **3 marker pattern** | debate transcript section header 의무 — `[COUNTERARGUMENT]` (Round 1+ 매 라운드 per worker) / `[ALTERNATIVE_PROPOSED]` (debate cumulative >= 1) / `[DEBATE_PURPOSE_STATEMENT]` (Round 0 only) |
+| **Touchpoint #2 carry-over** | ADR-052 Amendment 4 (CFP-532) Codex proactive check 의 P0/P1 finding 을 debate Round 0 `codex_initial_position` 으로 verbatim forward. 이중 spawn 회피 |
 
 ## 2. Schema
 
@@ -67,10 +75,14 @@ Codex ↔ Opus 두 워커가 lane 결정 지점에서 finding / judgment 불일�
 
 ```yaml
 trigger:
-  lane: design-review | requirements | code-review | security-test
-  detected_by: <PLAgent name — 예: DesignReviewPLAgent>
-  divergence_type: severity | recommendation | semantic
-  dispatch_mode: auto_on_divergence | mechanical_fast_path_inline | user_request_only  # REQUIRED (v1.1 — CFP-533 / ADR-059 Amendment 1)
+  lane: design-review | design-lane | requirements | code-review | security-test
+  detected_by: <PLAgent name — 예: DesignReviewPLAgent | ArchitectPLAgent>
+  divergence_type: severity | recommendation | semantic | structural  # structural = blanket trigger (CFP-582)
+  dispatch_mode: blanket_cross_module_designlane | auto_on_divergence | mechanical_fast_path_inline | user_request_only  # REQUIRED (v1.2 — CFP-582 / ADR-059 Amendment 2)
+  cross_module_signal:  # blanket_cross_module_designlane 시 required, v1.2
+    touched_top_level_paths_count: int
+    touched_lanes_count: int
+    touched_lanes_list: [string]  # 예: ["design", "develop", "review"]
   anchor_id: <stable identifier — review-verdict-v4 finding.anchor_id>
   anchor_text: <쟁점 원문 — 매 라운드 입력 최상단에 강제 포함>
   detected_at: <ISO8601 UTC Z-suffix>
@@ -84,11 +96,13 @@ trigger:
     rationale: <근거>
     severity: P0 | P1 | P2 | null
     recommendation: FIX | FIX_DISCRETIONARY | PASS | null
+    carry_over_source: <"touchpoint_2_architect_section_3" | "adhoc_spawn" | null — v1.2, blanket trigger 시 required>
 ```
 
 **lane-specific divergence_type 정의**:
 
 - DesignReview: `severity` OR `recommendation` — review-verdict-v4 `findings[]` 동일 `anchor_id`. ADR-059 §결정 2
+- DesignLane (CFP-582 blanket): `structural` — cross-module Story 의 ArchitectPLAgent / ArchitectAgent / deputy 간 결정 영역. divergence detection 없이 자동 발동 (`touched_top_level_paths >= 2` OR `touched_lanes >= 2`).
 - Requirements (Story 2 / CFP-392): `semantic` — RequirementsPL synthesis vs Codex proactive check 간 의미 차이
 - CodeReview / SecurityTest: deferred CFP-C
 
@@ -103,17 +117,30 @@ round:
     rationale: <근거>
     position_change: false | true
     position_change_reason: <texte — position_change true 시 의무>
+    convergence_quality_markers:  # v1.2 — CFP-582 (per worker, worker writes)
+      counterargument_section_present: bool  # Round 1+ 의무 (`[COUNTERARGUMENT]` section header)
+      alternative_proposed_sections_count: int (>=0)  # 본 라운드 `[ALTERNATIVE_PROPOSED]` section header 개수
+      debate_purpose_statement_present: bool  # Round 0 의무 (`[DEBATE_PURPOSE_STATEMENT]` section header)
   codex_position:
     statement: <input 텍스트>
     rationale: <근거>
     position_change: false | true
     position_change_reason: <texte — position_change true 시 의무>
+    convergence_quality_markers:  # v1.2 — CFP-582 (per worker, worker writes)
+      counterargument_section_present: bool
+      alternative_proposed_sections_count: int (>=0)
+      debate_purpose_statement_present: bool
   remaining_disagreements:
     - <쟁점 1 — 양측 미해결 항목>
     - <쟁점 2>
     # 비어있고 round < 3 시 PL 이 force_continue (adversarial prompt 재주입)
   pl_intermediate_judgment: continue | consensus_reached | force_continue
   pl_intermediate_judgment_reason: <texte>
+  convergence_quality_invariant_check:  # v1.2 — CFP-582 (per round, PL writes)
+    counterargument_present_both_workers: bool
+    alternative_proposed_cumulative_count: int (>=0)  # debate cumulative 누적
+    debate_purpose_statement_round_0_inherited: bool
+    invariant_satisfied: bool  # 3-tuple AND 결과 — consensus_reached 발화 전 PL 가 검증
 ```
 
 ### 2.3 Termination schema
@@ -127,6 +154,12 @@ termination:
   dialog_rounds_count: 3..5  # min 3 / max 5 정합
   anchor_recurrence_count: 0..N
   pl_synthesis: <texte — PL 의 최종 verdict 정당화>
+  convergence_quality_invariant_final:  # v1.2 — CFP-582 (PL writes)
+    counterargument_present_all_rounds_both_workers: bool
+    alternative_proposed_cumulative_count: int  # >=1 required for consensus_reached
+    debate_purpose_statement_round_0_present: bool
+    invariant_satisfied_at_termination: bool
+    invariant_violation_action: null | "force_continue_round_N" | "verdict_downgraded_to_force_continue"
 ```
 
 ### 2.4 Round 0 입력 (initialization)
@@ -182,6 +215,8 @@ round_N_input:
 2. `position_change: true` 인데 `position_change_reason` 누락 시 invalid 처리 + 재발화 요청 (1회 한정 — EC-4)
 3. `remaining_disagreements` 비어있고 `dialog_rounds_count < 3` 시 `force_continue` + adversarial prompt 재주입 (EC-2)
 4. 양측 동시 `position_change: true` 발화 시 가짜 합의 의심 — 결정적 근거 검증 후 force_continue (EC-5)
+5. **3 marker pattern 검증 (v1.2 — CFP-582 / ADR-059 Amendment 2)**: 매 라운드 worker 출력의 `convergence_quality_markers` 검증. `counterargument_section_present == false` (Round 1+) 또는 `debate_purpose_statement_present == false` (Round 0) 시 invalid 처리 + 재발화 요청 (1회 한정 — EC-6) + 두 번째 부재 시 `force_continue` + adversarial prompt 재주입 ("debate 의 본질은 반론·대안 — 합의 도달 자체가 목적이 아니다").
+6. **convergence_quality_invariant gate (v1.2 — CFP-582 / ADR-059 Amendment 2)**: PL 이 `consensus_reached` verdict 발화 전 3-tuple AND 충족 검증: `counterargument_present_all_rounds_both_workers == true` AND `alternative_proposed_cumulative_count >= 1` AND `debate_purpose_statement_round_0_present == true`. 미충족 시 `consensus_reached` 차단 + `force_continue` 강제 + Story §9 transcript 에 `[convergence_invariant_violation]` marker append.
 
 ### 3.2 영속화 (Story §9 inline append)
 
