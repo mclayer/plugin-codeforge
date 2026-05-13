@@ -5,8 +5,8 @@ status: Accepted
 category: governance
 date: 2026-05-03
 is_transitional: false
-amended_by: CFP-389
-amended_date: 2026-05-11
+amended_by: CFP-582
+amended_date: 2026-05-13
 amendments:
   - by: "CFP-134"
     date: "2026-05-08"
@@ -28,16 +28,23 @@ amendments:
     date: "2026-05-12"
     scope: "Amendment 4 — §결정 6.A per-entry namespace 의 7번째 신규 `hotfix-bypass:auto-phase-label` label entry 추가 (ADR-060 Amendment 4 동반 — 3rd warning-tier entry `auto-phase-label`) + §결정 6.A.1 (신설) branch → phase mapping 표 SSOT (cfp-NNN[/<lane>[/<sub>]] hierarchical → phase:* 8 label mapping verbatim, ADR-024 Amendment 1 hierarchical convention 의 직접 확장)."
     sunset_justification: "N/A — is_transitional: false (permanent governance policy). hotfix-bypass:auto-phase-label = §결정 6.A per-entry namespace 의무의 영구 확장. branch → phase mapping 표 = ADR-024 Amendment 1 hierarchical convention 의 영구 SSOT 명세화."
+  - by: "CFP-582"
+    date: "2026-05-13"
+    scope: "Amendment 5 — §결정 6.A per-entry namespace 의 12번째 신규 `hotfix-bypass:debate-convergence-quality` label entry 추가 (ADR-059 Amendment 2 §결정 8 동반 — convergence_quality_invariant 첫 debate 영역 warning-tier entry `debate-convergence-quality-marker-presence`, ADR-060 framework 정합). prior art `hotfix-bypass:adr-sunset` (CFP-389) + 4 `hotfix-bypass:worktree-*` (CFP-426) + `hotfix-bypass:auto-phase-label` (CFP-481) + `hotfix-bypass:claude-md-line-cap` (CFP-506) + `hotfix-bypass:sibling-pr-author-check` (CFP-521) + `hotfix-bypass:workflow-permissions` (CFP-530) + `hotfix-bypass:workflow-yaml-parse` (CFP-583) 직접 mirror, 단일 audit lint `scripts/check-bypass-audit-comment.sh` reuse."
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). hotfix-bypass:debate-convergence-quality = §결정 6.A per-entry namespace 의무의 영구 확장 (debate 영역 첫 family member)."
 related_files:
   - CLAUDE.md
   - docs/consumer-guide.md
   - docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md
   - docs/adr/ADR-022-sonnet-review-verdict-decider.md
   - docs/adr/ADR-040-worktree-convention.md
+  - docs/adr/ADR-059-debate-protocol-v1.md
   - docs/adr/ADR-060-evidence-enforceable-promotion-framework.md
   - docs/inter-plugin-contracts/evidence-check-registry-v1.md
+  - docs/inter-plugin-contracts/label-registry-v2.md
   - templates/branch-protection-manifest.yaml
   - templates/github-workflows/branch-protection-drift-check.yml
+  - templates/github-workflows/debate-convergence-quality.yml
 mechanical_enforcement_actions:
   # ADR-040 Amendment 3 §결정 7.A 의무 — 본 ADR-024 Amendment 4 (CFP-481, 2026-05-12)
   # 가 ADR-040 Amendment 3 발효 (CFP-426 Phase 1 PR merge) 이후 작성된 normative
@@ -427,4 +434,57 @@ ADR-024 Amendment 1 hierarchical convention `cfp-NNN[/<lane>[/<sub>]]` 의 lane 
 - `templates/github-workflows/auto-phase-label.yml` (Phase 2 PR scope) — 본 mapping 표 verbatim 사용
 - `.github/workflows/auto-phase-label.yml` (Phase 2 PR scope) — self-app mirror byte-identical (ADR-029)
 - `docs/evidence-checks-registry.yaml` (Phase 2 PR scope) — `auto-phase-label` row append (warning tier, bypass_label `hotfix-bypass:auto-phase-label`)
+- `scripts/check-bypass-audit-comment.sh` (CFP-389 prior art) — audit lint reuse
+
+## Amendment 5 — `hotfix-bypass:debate-convergence-quality` 12번째 family member (CFP-582, 2026-05-13)
+
+### 컨텍스트
+
+CFP-582 Wave 4 (ADR-059 Amendment 2 carrier — debate-protocol-v1 v1.2 convergence_quality_invariant) 가 ADR-060 framework 의 첫 debate 영역 warning-tier evidence check entry `debate-convergence-quality-marker-presence` 신설. 본 entry 는 Story §9 debate transcript 안 3 marker (`[COUNTERARGUMENT]` / `[ALTERNATIVE_PROPOSED]` / `[DEBATE_PURPOSE_STATEMENT]`) section header 존재 여부를 mechanical lint 로 검증 — `scripts/check_debate_convergence_quality.py` + `templates/github-workflows/debate-convergence-quality.yml`.
+
+ADR-060 framework 정합 의무: 모든 warning-tier evidence check entry 는 ADR-024 Amendment 3 §결정 6.A per-entry namespace `hotfix-bypass:*` family member 와 1:1 mapping 의무 (audit-trailed exception channel SSOT). 12번째 family member 등록이 본 Amendment 5 의 의무.
+
+### Amendment
+
+#### §결정 6.A (확장) — `hotfix-bypass:debate-convergence-quality` 12번째 family member
+
+기존 `hotfix-bypass:*` family (Amendment 3 §결정 6.A 정합 + Amendment 4 확장 정합):
+
+1. `hotfix-bypass:adr-sunset` (CFP-389)
+2. `hotfix-bypass:worktree-session-start-wire` (CFP-426)
+3. `hotfix-bypass:worktree-pre-checkout` (CFP-426)
+4. `hotfix-bypass:worktree-pre-commit-main-block` (CFP-426)
+5. `hotfix-bypass:worktree-spawn-evidence-cwd` (CFP-426)
+6. `hotfix-bypass:decision-principle-vocab` (CFP-449 — ADR-060 entry, bypass_label optional warning tier)
+7. `hotfix-bypass:auto-phase-label` (CFP-481, Amendment 4)
+8. `hotfix-bypass:marketplace-atomic` (ADR-063 carrier)
+9. `hotfix-bypass:claude-md-line-cap` (CFP-506)
+10. `hotfix-bypass:sibling-pr-author-check` (CFP-521)
+11. `hotfix-bypass:workflow-permissions` (CFP-530)
+12. `hotfix-bypass:workflow-yaml-parse` (CFP-583)
+13. **`hotfix-bypass:debate-convergence-quality` (CFP-582, 본 Amendment 5)** — 신규
+
+(family member 카운트 = 12 — 위 prior list 의 entry 중 ADR-060 entry 와 wrapper-internal entry 혼합 sequence. 본 Amendment 5 시점 family 총원 = 12 active entry. label-registry-v2 v2.6 sub-entry append 동반.)
+
+**audit lint**: `scripts/check-bypass-audit-comment.sh` reuse (CFP-389 prior art 단일 lint, `BYPASS_LABEL_PREFIX=hotfix-bypass:` env scan 으로 all-family detect — 별도 lint 신설 0건).
+
+**bypass scope**: `debate-convergence-quality.yml` workflow 의 3 marker presence lint step skip — phase-gate-mergeable.yml / phase-label-invariant.yml / 기타 4 core required check 영향 0건 (Amendment 3 §결정 6.B 정합).
+
+**debate 영역 첫 family member**: 기존 11 family member 는 모두 syntactic / structural mechanical lint 대응. 본 Amendment 5 의 12번째 family member 는 debate transcript 의 convergence_quality_invariant (semantic anti-sycophancy 검증) 영역 첫 진입 — debate-protocol-v1 v1.2 schema 와 inter-plugin-contracts 의 cross-validation channel 활성.
+
+### Compatibility
+
+- ADR-024 §결정 1~6 + Phase 2 partial (CFP-70) + CFP-72 + Amendment 1 (CFP-134) + Amendment 2 (CFP-280) + Amendment 3 (CFP-389) + Amendment 4 (CFP-481) 전부 유지 — 본 Amendment 5 는 Amendment 3 §결정 6.A 의 호환 확장 (per-entry namespace 12번째 family member) only.
+- ADR-060 framework 외 영역 (4 core required check + 기존 evidence check + Amendment 1~4 entry) 에는 영향 X.
+- ADR-059 Amendment 2 §결정 8 convergence_quality_invariant carrier 동반 — debate-protocol-v1 v1.2 schema 의 `convergence_quality_invariant` block 과 cross-validate 의무.
+
+### Related
+
+- ADR-059 Amendment 2 (carrier — convergence_quality_invariant 3 marker mechanical enforcement + first debate-domain warning-tier entry)
+- ADR-060 (framework — 7th warning-tier entry `debate-convergence-quality-marker-presence` 등록)
+- `docs/inter-plugin-contracts/label-registry-v2.md` v2.6 sub-entry (CFP-582 — 12번째 hotfix-bypass:* family member entry)
+- `docs/inter-plugin-contracts/debate-protocol-v1.md` v1.2 (convergence_quality_invariant schema block)
+- `docs/evidence-checks-registry.yaml` (CFP-582 Phase 2 — `debate-convergence-quality-marker-presence` row append, warning tier, bypass_label `hotfix-bypass:debate-convergence-quality`)
+- `templates/github-workflows/debate-convergence-quality.yml` — 3 marker mechanical lint workflow
+- `scripts/check_debate_convergence_quality.py` — 3 marker regex lint (CFP-582 Phase 2 산출물)
 - `scripts/check-bypass-audit-comment.sh` (CFP-389 prior art) — audit lint reuse

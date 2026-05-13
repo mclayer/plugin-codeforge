@@ -8,7 +8,7 @@ created_by: CFP-140
 created_date: 2026-05-09
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/label-registry-v2.md
-date: 2026-05-13  # CFP-583 v2.6 sub-entry — hotfix-bypass:workflow-yaml-parse 11번째 family member (ADR-060 Amendment 9 §결정 22 evidence-enforceable warning-tier entry carrier — 6 broken workflow yaml ScannerError sentinel 회복) | CFP-530 v2.5 sub-entry — hotfix-bypass:workflow-permissions 10번째 family member (ADR-060 Amendment 8 §결정 21 evidence-enforceable warning-tier entry carrier) | CFP-429 v2.5 — from-cfp-425-followup provenance label append (Epic CFP-425 gate FAIL 분기 후속 carrier) | CFP-521 v2.4 sub-entry — hotfix-bypass:sibling-pr-author-check 9번째 family member (ADR-010 Amendment 4 §결정 5 anti-misuse 안전망) | CFP-506 v2.4 sub-entry — hotfix-bypass:claude-md-line-cap 8번째 | CFP-481 v2.4 — phase:* attach_owner_plugin field 갱신 (auto-phase-label.yml 명시)
+date: 2026-05-13  # CFP-582 v2.6 sub-entry — hotfix-bypass:debate-convergence-quality 12번째 family member (ADR-059 Amendment 2 §결정 8 + ADR-024 Amendment 5 carrier — convergence_quality_invariant 3 marker mechanical enforcement 첫 debate 영역 warning-tier entry) | CFP-583 v2.6 sub-entry — hotfix-bypass:workflow-yaml-parse 11번째 family member (ADR-060 Amendment 9 §결정 22 evidence-enforceable warning-tier entry carrier — 6 broken workflow yaml ScannerError sentinel 회복) | CFP-530 v2.5 sub-entry — hotfix-bypass:workflow-permissions 10번째 family member (ADR-060 Amendment 8 §결정 21 evidence-enforceable warning-tier entry carrier) | CFP-429 v2.5 — from-cfp-425-followup provenance label append (Epic CFP-425 gate FAIL 분기 후속 carrier) | CFP-521 v2.4 sub-entry — hotfix-bypass:sibling-pr-author-check 9번째 family member (ADR-010 Amendment 4 §결정 5 anti-misuse 안전망) | CFP-506 v2.4 sub-entry — hotfix-bypass:claude-md-line-cap 8번째 | CFP-481 v2.4 — phase:* attach_owner_plugin field 갱신 (auto-phase-label.yml 명시)
 authors:
   - Claude (CFP-140 — ADR-049 type:* → native Issue Types cutover)
 related_adrs:
@@ -31,6 +31,8 @@ related_adrs:
   - ADR-060 §결정 6 (CFP-429 — promotion gate 평가 FAIL = warning tier 유지 + actual 승격 follow-up CFP open mandate)
   - ADR-060 Amendment 8 (CFP-530 — N번째 warning-tier entry workflow-permissions-block-presence + hotfix-bypass:workflow-permissions 10번째 family member)
   - ADR-060 Amendment 9 (CFP-583 — 7th warning-tier entry workflow-yaml-parse + hotfix-bypass:workflow-yaml-parse 11번째 family member + 6 workflow yml BODY heredoc anti-pattern 정정 + framework zero-coverage sentinel 회복)
+  - ADR-059 Amendment 2 (CFP-582 — convergence_quality_invariant 3 marker mechanical enforcement + debate-convergence-quality-marker-presence warning-tier entry + hotfix-bypass:debate-convergence-quality 12번째 family member)
+  - ADR-024 Amendment 5 (CFP-582 — §결정 6.A per-entry namespace 의 12번째 family member hotfix-bypass:debate-convergence-quality 추가)
 related_files:
   - scripts/bootstrap-labels.sh (type:* 3 entry removed — CFP-140)
   - templates/issue-types.yaml (native Issue Types SSOT — CFP-140)
@@ -45,6 +47,13 @@ related_files:
 # label-registry v2
 
 ## 변경 이력
+
+**v2.6 추가 entry (CFP-582 / ADR-059 Amendment 2 §결정 8 / ADR-024 Amendment 5, 2026-05-13)**: same MINOR sub-entry append (frontmatter `version: "2.5"` 미변경, sub-row only — ADR-008 §결정 SemVer rule 안 same MINOR 안 additive sub-entry 허용).
+- **추가**: `hotfix-bypass:debate-convergence-quality` (color `fef2c0` audit) — `templates/github-workflows/debate-convergence-quality.yml` warning-tier mechanical lint conditional skip + audit comment 자동 발의 channel (ADR-024 Amendment 5 §결정 6.A per-entry namespace 정합, **12번째 hotfix-bypass:* family member** — 기존 11: adr-sunset / decision-principle-vocab / auto-phase-label / marketplace-atomic / worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd} / claude-md-line-cap / sibling-pr-author-check / workflow-permissions / workflow-yaml-parse).
+- bypass 사용 시 `check-bypass-audit-comment.sh` 가 audit comment 발의 (reuse 패턴, 1st-11th entry 동일).
+- ADR-059 Amendment 2 §결정 8 convergence_quality_invariant carrier 동반 — Story §9 debate transcript 내 3 marker (`[COUNTERARGUMENT]` / `[ALTERNATIVE_PROPOSED]` / `[DEBATE_PURPOSE_STATEMENT]`) section header 존재 여부 mechanical lint (debate-protocol-v1 v1.2 convergence_quality_invariant block 과 cross-validate, ADR-060 framework 첫 debate 영역 warning-tier entry).
+- `scripts/bootstrap-labels.sh` sync 동반 의무 (Phase 2 PR scope — bootstrap labels 데이터 row append, ADR-065 §결정 1 #1 self-check PASS gate).
+- canonical-only (kind:registry — sibling sync scope 외 per ADR-010).
 
 **v2.6 추가 entry (CFP-583 / ADR-060 Amendment 9 §결정 22, 2026-05-13)**: same MINOR sub-entry append (frontmatter `version: "2.5"` 미변경, sub-row only — ADR-008 §결정 SemVer rule 안 same MINOR 안 additive sub-entry 허용. v2.5 → v2.6 marker 는 본 sub-entry append carrier 의 chronological provenance, frontmatter version bump 아님).
 - **추가**: `hotfix-bypass:workflow-yaml-parse` (color `fef2c0` audit) — `templates/github-workflows/workflow-yaml-parse.yml` warning-tier mechanical lint conditional skip + audit comment 자동 발의 channel (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합, **11번째 hotfix-bypass:* family member** — 기존 10: adr-sunset / decision-principle-vocab / auto-phase-label / marketplace-atomic / worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd} / claude-md-line-cap / sibling-pr-author-check / workflow-permissions).
