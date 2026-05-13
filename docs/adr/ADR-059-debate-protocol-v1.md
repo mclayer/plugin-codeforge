@@ -28,16 +28,30 @@ amendment_log:
     date: 2026-05-13
     carrier_story: CFP-533
     summary: "dispatch_mode enum 3-value 명시화 + mechanical_fast_path_inline 채널 신설. governance 강화 ratchet (ADR-064 active amendment 정합)."
+  - id: 2
+    date: 2026-05-13
+    carrier_story: CFP-582
+    summary: "DesignLane blanket trigger 신설 (모든 cross-module Story 자동 발동) + convergence_quality_invariant 신설 (3 marker pattern: [COUNTERARGUMENT] / [ALTERNATIVE_PROPOSED] / [DEBATE_PURPOSE_STATEMENT]) + Touchpoint #2 carry-over 의무. Epic-FIX-ESCALATION-prevention #525 close trigger."
 amendments:
   - id: 1
     date: 2026-05-13
     carrier_story: CFP-533
     section_ref: "§결정 6 — dispatch_mode enum 명시화"
+  - id: 2
+    date: 2026-05-13
+    carrier_story: CFP-582
+    section_ref: "§결정 7~10 — DesignLane blanket + convergence_quality_invariant + Touchpoint #2 carry-over"
 related_stories:
   - CFP-391  # carrier (5 결정 원본)
   - CFP-533  # Amendment 1 carrier (dispatch_mode enum 명시화)
-sunset_justification: "N/A — permanent policy + Amendment 1 enum 명시화 = governance 강화 ratchet (ADR-058 §결정 5 + ADR-064 active amendment 정합)"
-mechanical_enforcement_actions: []  # Amendment 1 scope = doc-only enum 명시화, mechanical lint 별도 carrier
+  - CFP-582  # Amendment 2 carrier (Epic-FIX-ESCALATION-prevention #525 close)
+sunset_justification: "N/A — permanent policy + Amendment 1+2 = governance 강화 ratchet 누적 (ADR-058 §결정 5 + ADR-064 active amendment 정합). Amendment 2 가 Epic-FIX-ESCALATION-prevention #525 close trigger."
+mechanical_enforcement_actions:
+  - action_name: "debate-convergence-quality-lint"
+    owner_adr: "ADR-060 Amendment 2"
+    owner_section: "docs/evidence-checks-registry.yaml (warning tier entry, scripts/check_debate_convergence_quality.py)"
+    status: "deferred — Phase 2 carrier (별 CFP Story, mechanical script + workflow + registry row 신설 시점)"
+    decision_binding: "§결정 8 (3 marker pattern + 3-tuple AND 검증)"
 ---
 
 # ADR-059: Multi-round Adversarial Debate Protocol (debate-protocol-v1)
@@ -149,6 +163,66 @@ auto_on_divergence  >  mechanical_fast_path_inline  >  user_request_only
 4. 미충족 → `auto_on_divergence` fallback (표준 multi-round debate)
 
 본 결정의 의도 = inline judgment 가 가능한 single-file 영역에서 표준 debate token cost 회피. ADR-064 active amendment 정합 (governance 강화 ratchet, scope 확장 — 약화 방향 아님). debate-protocol-v1 registry v1.0 → v1.1 MINOR bump 동반 (additive strengthening, ADR-008 §결정 2 정합).
+
+### 결정 7 — DesignLane blanket trigger (Amendment 2, CFP-582)
+
+DesignReview lane 의 `auto_on_divergence` (Amendment 1, CFP-391) 외에 **DesignLane internal (ArchitectPL + ArchitectAgent + 6 deputy)** 으로 debate-protocol-v1 적용 영역 확장. trigger condition = **모든 cross-module Story 자동 발동** (signal-driven `divergence_detected` 와 분리된 structural-driven trigger).
+
+**cross-module Story 정의 (mechanical heuristic)**:
+- `touched_top_level_paths >= 2` (file-path 기반) OR
+- `touched_lanes >= 2` (의미 기반, lane evidence §14 row 기반)
+
+OR-merge 로 false negative 차단. 단일 lane 또는 단일 top-level path Story = blanket 미발동 (기존 `auto_on_divergence` 만 적용).
+
+**dispatch_mode 신규 enum value**: `blanket_cross_module_designlane` — debate-protocol-v1 v1.2 MINOR bump 으로 추가. 우선순위:
+`blanket_cross_module_designlane > auto_on_divergence > mechanical_fast_path_inline > user_request_only`
+
+ArchitectPLAgent spawn 시 Orchestrator 가 cross-module 판정 후 prompt 에 `invoke_blanket_debate: true` 명시 + Story §14 Lane Evidence `[debate-blanket-invoked:<reason>]` row append 의무.
+
+**참여자 (participants[])**: ArchitectPLAgent (PL) + ArchitectAgent (chief author) + 활성 deputy 들 (mandate matrix 기반) + Codex worker (proactive check touchpoint #2 carry-over — §결정 9). binary fanout round-robin (Codex × deputy pair) 으로 schema breaking 회피.
+
+**Exemption**: 없음. 사용자 directive 2026-05-13 "모든 cross-module Story" 충실. 후속 Amendment 시 escape hatch 도입 검토 (ADR-058 §결정 5 governance 강화 ratchet 정합 — 약화 방향 차단).
+
+### 결정 8 — convergence_quality_invariant 신설 (Amendment 2, CFP-582)
+
+debate transcript 의 **3 marker pattern** 의무 — `participants[]` 가 라운드 N 출력 시 section header 강제 포함:
+
+| Marker | Round 영역 | Required | 의미 |
+|---|---|---|---|
+| `[COUNTERARGUMENT]` | Round 1+ 매 라운드 per worker | yes | 상대 입장에 대한 명시적 반응 = 반론 수용 |
+| `[ALTERNATIVE_PROPOSED]` | debate cumulative ≥ 1 | yes | 대안 발의 — 합의 도달이 아닌 새 해법 제시 |
+| `[DEBATE_PURPOSE_STATEMENT]` | Round 0 only | yes | 토론 목적 명문화 — Round 0 첫 발화 의무 |
+
+**PL 검증 책무** (기존 §3.1 anti-sycophancy 4 메커니즘 확장):
+
+5. 매 라운드 출력에서 3 marker section header 검증. 부재 시 invalid 처리 + 재발화 요청 (1회 한정) + 두 번째 부재 시 force_continue + adversarial prompt 재주입 ("debate 의 본질은 반론·대안 — 합의 도달 자체가 목적이 아니다").
+6. `consensus_reached` verdict 발화 전 3-tuple AND 충족 검증: `counterargument_present == true` AND `alternative_proposed_count >= 1` AND `debate_purpose_statement_present == true`. 미충족 시 `consensus_reached` 차단 + `force_continue` 강제. (PL 검증 시 per-round scope = `counterargument_present_both_workers` / per-termination scope = `counterargument_present_all_rounds_both_workers` 변형 사용 — 동일 base name 의 scope suffix. registry §2.2 + §2.3 schema 정합.)
+
+**Measurable signal**: debate-protocol-v1 v1.2 schema 의 `round.convergence_quality_invariant` block (Task 3 schema 정의).
+
+**Story §9 transcript marker**: 위 검증 violation 시 transcript 에 `[convergence_invariant_violation]` marker 영속 기록 — 후속 ratchet (강화 방향 Amendment) 의 evidence 소스.
+
+**Domain knowledge SSOT**: `docs/domain-knowledge/domain/agent-teams/convergence-quality-invariant.md` (Wave 4 Task 7 신규 page).
+
+### 결정 9 — Touchpoint #2 (ADR-052 Amendment 4) carry-over 의무 (Amendment 2, CFP-582)
+
+ArchitectAgent §3 mandatory Codex proactive check (ADR-052 Amendment 4 / CFP-532) 결과 P0/P1 finding 발견 시, DesignLane blanket debate Round 0 input 구성 시 Codex finding 을 `codex_initial_position` 에 verbatim forward 의무. 이중 spawn 회피 + reasoning carryover 정신 정합.
+
+**Forward mapping**:
+- Codex finding `statement` → `codex_initial_position.statement`
+- Codex finding `rationale` → `codex_initial_position.rationale`
+- Codex finding `severity` → `codex_initial_position.severity`
+- Codex finding `recommendation` (`FIX` / `FIX_DISCRETIONARY`) → `codex_initial_position.recommendation`
+
+**P2 finding 영역**: Story §10 deferred 기록만 (debate Round 0 forward 미적용). P0 + P1 만 carry-over.
+
+**Touchpoint #2 미발동 케이스** (예: ArchitectAgent §3 작성 전 blanket trigger 발동): Codex worker 를 debate Round 0 시점에 ad-hoc spawn (codex:codex-rescue subagent) — 이중 spawn 회피 목적은 carry-over 우선이나 Touchpoint #2 자체가 없는 경우 fallback.
+
+### 결정 10 — lane-agnostic registry 정합 (Amendment 2, CFP-582)
+
+debate-protocol-v1 v1.2 schema 갱신은 lane-agnostic 정신 유지 (CFP-391 §결정 5 정합) — convergence_quality_invariant block + dispatch_mode 4번째 enum value (`blanket_cross_module_designlane`) 는 DesignLane blanket 외 미래 lane (CodeReview / SecurityTest 의 blanket 적용) 에도 재사용 가능한 일반 schema. lane-specific trigger 조건 (cross-module 판정 등) 만 lane plugin 측에 분리.
+
+CodeReview / SecurityTest blanket invocation 도입 시 신규 ADR (Amendment X) — 본 §결정 10 의 schema reuse 의무로 별 v-bump 면제 (additive lane enum 추가는 MINOR, schema 구조 변경 시에만 추가 MINOR — ADR-008 §결정 2 정합).
 
 ## 해소 기준
 

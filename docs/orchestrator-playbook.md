@@ -1343,6 +1343,21 @@ transcript Story §9 append (### Debate transcript: <anchor_id>)
 
 초과 시 PL 이 worker 에게 condensation 요청 (1회 한정) 후 invalid 처리. max 5 라운드 cap = 비용 폭증 차단 forcing function.
 
+#### Wave 4 — DesignLane blanket trigger (CFP-582 / [ADR-059 Amendment 2](../docs/adr/ADR-059-debate-protocol-v1.md))
+
+cross-module Story 의 ArchitectAgent 산출물 (Change Plan §3 / ADR / Story §3/§7/§11) 에 대한 blanket Codex worker 검증 — divergence 발생 시 다시 multi-round debate 흐름 진입. dispatch_mode `blanket_cross_module_designlane` 자동 활성 조건 + 6 step 진입 절차:
+
+1. **touched_top_level_paths 산정**: Story §1 spec_links + Change Plan §2 영향 영역 union 의 top-level path (예: `src/foo/` / `docs/` / `templates/`). 중복 dedup 후 distinct count.
+2. **touched_lanes 산정**: 같은 union 에서 codeforge lane plugin folder mapping (codeforge-{requirements,design,develop,review,pmo,test}) 의 distinct lane count.
+3. **판정**: `touched_top_level_paths >= 2` OR `touched_lanes >= 2` 시 dispatch_mode = `blanket_cross_module_designlane` 활성 (단일 module Story 는 활성 안 함, 기존 `auto_on_divergence` 분기 유지).
+4. **spawn prompt 갱신**: ArchitectPLAgent 가 Codex worker spawn 시 prompt `artifacts` 필드에 Change Plan §3 + 신규 ADR draft + Story §3/§7/§11 mirroring content verbatim 첨부 (ADR-070 verify-before-trust 정합).
+5. **§14 row append**: Lane Evidence 에 spawn 직전 row 추가 (`dispatch_mode=blanket_cross_module_designlane`, `touched_top_level_paths=N`, `touched_lanes=M`). end column = Codex return 시 outcome (`agreement_reached` / `divergence_detected` / `escalated`).
+6. **verdict 처리**: agreement 시 정상 PASS (FIX 없음). divergence detected 시 다시 §3.13 multi-round debate 진입 (`auto_on_divergence` flow + `convergence_quality_invariant` 3 marker 의무). PL verdict 작성 시 `prior_codex_findings[]` (Touchpoint #2 carry-over, §결정 9) 가 transcript Round 0 input 으로 verbatim 첨부.
+
+**non-blanket 케이스**: `touched_top_level_paths < 2` AND `touched_lanes < 2` (single-module Story) — Wave 4 trigger 미활성, 기존 `auto_on_divergence` (Codex single-shot vs Claude finding 비교) flow 유지. dispatch_mode 4-value enum precedence `auto_on_divergence > blanket_cross_module_designlane > mechanical_fast_path_inline > user_request_only` 정합.
+
+**EC-1 (Codex 미가용 fallback)**: codex CLI 미설치 / authentication fail / network unavailable 시 ArchitectPLAgent 가 blanket trigger skip + Story §10 row append (`reason: "codex unavailable - blanket trigger skipped"`). 사용자 통지 후 정상 PASS 진행 — DesignReviewPL lane (CFP-391 기존 flow) 가 후속 검증 channel.
+
 #### lane-agnostic 적용
 
 본 §3.13 = DesignReview lane scope (Story 1 / CFP-391). Story 2 (Requirements lane — CFP-392) 진입 시 동일 protocol contract 재사용 + lane-specific `semantic` divergence_type 정의 (ADR-052 touchpoint #4 격상 Amendment 와 동행). CodeReview / SecurityTest lane 은 deferred CFP-C scope.
