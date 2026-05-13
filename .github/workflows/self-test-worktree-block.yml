@@ -1,0 +1,27 @@
+name: E4 self-test (worktree-first mechanical enforcement actual 발동 검증)
+# CFP-429 — integration test: 4 mechanical enforcement entry 실제 발동 시뮬레이션
+# carrier: ADR-040 Amendment 4 (CFP-429) + ADR-055 Amendment 2 (integration test scope)
+# R4 self-block 회피 5-layer = self-test-worktree-block.sh 주석 참조.
+
+on:
+  pull_request:
+    paths:
+      - 'tests/integration/stories/CFP-425/**'
+      - 'templates/.git-hooks/**'
+      - 'scripts/check-session-start-hook-presence.sh'
+      - 'scripts/check-worktree-first-spawn-evidence-cwd.sh'
+      - 'scripts/check-worktree-first-pre-checkout.sh'
+      - 'scripts/check-worktree-first-pre-commit-main-block.sh'
+      - 'scripts/install-git-hooks.sh'
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - name: Run E4 self-test
+        run: bash tests/integration/stories/CFP-425/self-test-worktree-block.sh

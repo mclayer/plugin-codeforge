@@ -1,0 +1,157 @@
+---
+adr_number: 66
+title: CODEFORGE_CROSS_REPO_PAT rotation policy (lifetime / scope / compromise response / audit)
+status: Accepted
+category: security
+date: 2026-05-13
+is_transitional: false
+related_files:
+  - docs/consumer-guide.md
+  - docs/security/pat-rotation-log.md
+  - CLAUDE.md
+  - templates/github-workflows/phase-gate-mergeable.yml
+  - templates/github-workflows/rate-limit-fallback-kpi.yml
+related_stories:
+  - CFP-450
+  - CFP-521
+related_adrs:
+  - ADR-013
+  - ADR-016
+  - ADR-024
+  - ADR-037
+  - ADR-058
+  - ADR-063
+  - ADR-064
+mechanical_enforcement_actions: []
+---
+
+# ADR-066: CODEFORGE_CROSS_REPO_PAT rotation policy
+
+## 상태
+
+`Accepted` (2026-05-13). CFP-450 (ADR-013 Amendment 4) PAT consolidation 의 lifetime / rotation / compromise response 후속 정책. EPIC-RESULTS CFP-462 §6 carrier #3.
+
+## 컨텍스트
+
+CFP-450 (ADR-013 Amendment 4) 가 `CODEFORGE_CROSS_REPO_PAT` 단일 PAT consolidation 도입. 이 PAT 는 다음 wrapper workflow 에서 사용:
+
+- `phase-gate-mergeable.yml` (cross-repo Story binding sync — internal-docs Story ↔ plugin repo Issue bidirectional link 검증)
+- `rate-limit-fallback-kpi.yml` (internal-docs clone, ADR-013 Amendment 4 §결정 — 단일 PAT 재사용 정책)
+
+CFP-450 이 도입한 consolidation 자체는 secret governance 의 첫 단계 (Option B). 그러나 다음 3 영역 미정의:
+
+1. **Rotation policy 부재** — PAT lifetime / rotation schedule / 자동 만료 reminder 미정의 → PAT 가 무기한 사용될 위험
+2. **Audit trail 부재** — rotation 시점 / 만료 일자 추적 어려움 → compromise 분석 시 영향 범위 산정 불가
+3. **Compromise response 부재** — leak / suspected leak 시 immediate rotation 절차 명문화 안됨 → 사고 시 ad-hoc 대응
+
+본 ADR 이 3 영역 SSOT.
+
+## 결정
+
+### 결정 1 — Rotation cadence (lifetime)
+
+- **권장 rotation cadence**: 90 days (분기별 회전)
+- **최대 lifetime**: 180 days (반기 회전 강제 — 본 lifetime 초과 PAT 는 의무 rotation)
+- **자동 만료 reminder**: GitHub Actions cron 으로 만료 30 days 전 warning Issue 자동 발의 (Phase 2 carrier — 별도 CFP, 본 ADR `mechanical_enforcement_actions: []` 정합)
+
+90 days 는 GitHub 권장 best practice + codeforge family 의 cross-repo 활성 활동 기간 (CFP cycle 평균 1-2 weeks × 8-10 Story = 분기 1회 회전이 정상 사용 cycle 과 align).
+
+### 결정 2 — Scope minimum (least privilege)
+
+PAT 발급 시 다음 3 scope 만 부여:
+
+- `repo:read` — internal-docs read scan (KPI workflow `rate-limit-fallback-kpi.yml`)
+- `repo:write` — cross-repo Issue comment / sub-issue link (`phase-gate-mergeable.yml`)
+- `metadata:read` — basic repo access
+
+`admin:org` / `delete_repo` / `workflow` / `gist` / 기타 광역 scope 부여 금지. 향후 신규 workflow 가 추가 scope 필요 시 별도 ADR 보완 의무.
+
+### 결정 3 — Rotation 절차 (5-step)
+
+1. **New PAT 발급** — GitHub Personal access tokens (classic 또는 fine-grained), 위 §결정 2 scope, expiration ≤ 90 days
+2. **mclayer org secrets 갱신** — `Settings > Secrets > Actions > CODEFORGE_CROSS_REPO_PAT` (org level)
+3. **sibling repo verification** — 7 repo 의 org secret 가시성 확인 (`codeforge-{requirements,design,develop,test,review,pmo}` + `marketplace` + `codeforge-internal-docs`). org level secret 이므로 개별 repo 갱신 불필요 (org → repo 자동 inherit).
+4. **1-2 PR 테스트** — `phase-gate-mergeable.yml` 또는 KPI workflow 가 active 한 1 PR 에서 동작 확인 (workflow run success).
+5. **이전 PAT revoke** — GitHub Personal access tokens settings 에서 이전 PAT 즉시 revoke. 동시에 §결정 5 audit log row append.
+
+### 결정 4 — Compromise response (leak / suspected leak 시 4-step)
+
+PAT leak / suspected leak (e.g., 실수 commit / log 노출 / org member 이탈) 감지 시:
+
+1. **Immediate revoke** — GitHub UI > Personal access tokens > Revoke 즉시 실행 (시간 = T+0).
+2. **Within 1h rotation** — New PAT 발급 + §결정 3 절차 5-step 실행 (T+1h 까지 완료).
+3. **Audit 영향 범위 검토** — 영향 받은 workflow run / Issue comment / PR comment / sub-issue link 검토 (`gh api` 활용). 의심 활동 1차 식별.
+4. **Disclosure 판단** — 영향 범위에 따라 사용자 / 외부 통보 (private repo data leak 가능성 시 즉시 disclosure 의무).
+
+### 결정 5 — Audit log SSOT
+
+- **Audit log 위치**: `docs/security/pat-rotation-log.md` (본 PR 신설).
+- **Schema**: rotation history 표 — `rotated_at (KST) | by | reason | expiration | revoked_at`.
+- **Write 책임**: 사용자 manual entry 의무 — PAT 발급 절차 자체가 GitHub UI 의존 (자동화 불가).
+- **Rotation 시점**: 위 §결정 3 step 5 직후 새 row append + 이전 row 의 `revoked_at` 갱신 의무.
+- **첫 row**: CFP-450 initial issuance 시점 (2026-05-12, expiration TBD 사용자 확인 의무).
+
+### 결정 6 — 자동화 carrier (Phase 2 후속)
+
+본 ADR 은 **정책 SSOT 만**. Mechanical enforcement (자동 만료 reminder workflow + audit log lint) 는 Phase 2 carrier (별도 CFP):
+
+- **자동 만료 reminder workflow**: GitHub Actions cron (weekly) 가 `docs/security/pat-rotation-log.md` 최신 row 의 `expiration` 필드 parse → 30 days 이내 warning Issue 자동 발의. Phase 2 carrier 도입 시 본 ADR `mechanical_enforcement_actions[]` row append (ADR-040 Amendment 3 §결정 7 정합).
+- **Audit log schema lint**: `scripts/check-pat-rotation-log.sh` (Phase 2) — row format / KST timezone / 정렬 순서 검증.
+
+본 ADR `mechanical_enforcement_actions: []` (Phase 2 carrier 도입 전까지 빈 array). evidence-enforceable framework (ADR-060) warning tier 첫 entry 는 Phase 2 PR 에서 추가.
+
+### 결정 7 — Consumer overlay 영향
+
+본 ADR 정책은 codeforge family 의 `CODEFORGE_CROSS_REPO_PAT` 에 한정 (wrapper + 6 lane plugin + marketplace + internal-docs). Consumer project 가 자체 cross-repo PAT 사용 시:
+
+- Consumer overlay (`.claude/_overlay/project.yaml`) `security.pat_rotation_cadence_days` 필드로 cadence override 가능 (강화 방향만 — 90 days 미만 short rotation 허용, 90 days 초과 weaken 금지).
+- Consumer 자체 PAT 의 audit log 는 consumer repo `docs/security/` (overlay 영역, codeforge 가 강제 안 함).
+- 본 ADR §결정 4 compromise response 4-step 은 normative — consumer 도 동일 절차 권장 (consumer-guide cross-ref).
+
+## 대안
+
+- **무한 lifetime PAT** (현재 상태) — rotation 부재. compromise 영향 범위 산정 불가. 기각 (CFP-450 consolidation 의 본래 목적과 충돌).
+- **30 days short rotation** — GitHub best practice 더 보수적. 기각 (codeforge family 활성 활동 cycle 분기 1회 align 우선 — sustainability vs security tradeoff, 90 days 가 derived default).
+- **Per-workflow PAT** (consolidation 무효화) — CFP-450 (ADR-013 Amendment 4) 와 정면 충돌. 기각.
+- **Automated rotation via GitHub API** — GitHub fine-grained PAT 가 API rotation 미지원 (2026-05 시점). 기각 (Phase 2 carrier 도 manual + reminder hybrid).
+
+## 결과
+
+### 도입 효과
+
+- `CODEFORGE_CROSS_REPO_PAT` lifetime 명시 (90 days 권장 / 180 days 최대) → compromise 영향 범위 bounded.
+- Audit log SSOT (`docs/security/pat-rotation-log.md`) 신설 → rotation 시점 추적 가능.
+- Compromise response 4-step 명문화 → 사고 시 ad-hoc 대응 → 정형 절차.
+- Consumer overlay 강화 방향 허용 (cadence override) → security 강화 channel.
+
+### 영향 범위
+
+- wrapper repo (본 ADR carrier).
+- 6 lane plugin + marketplace + internal-docs (PAT 사용 영역 — workflow 변경 0건, 정책 SSOT 만).
+- Consumer project (consumer-guide cross-ref + overlay schema 확장 channel).
+
+### 후속 carrier
+
+- **Phase 2 CFP-TBD**: 자동 만료 reminder workflow + audit log lint script + evidence-checks-registry warning tier entry.
+- **Consumer overlay schema 갱신**: `docs/project-config-schema.md` `security.pat_rotation_cadence_days` field 추가 (별도 CFP).
+
+## 해소 기준
+
+N/A — `is_transitional: false` (permanent policy, ADR-058 보안 default presumption 정합).
+
+본 정책은 codeforge family 가 `CODEFORGE_CROSS_REPO_PAT` 를 사용하는 한 영구 유지. 단 다음 2 사유 발생 시 amendment 의무:
+
+- GitHub PAT 모델 자체 변경 (e.g., fine-grained PAT 의 API rotation 지원 도입 시) → §결정 6 자동화 carrier 절차 갱신.
+- PAT consolidation 정책 변경 (CFP-450 / ADR-013 Amendment 4 revoke) → 본 ADR scope 축소 / archive.
+
+## 관련 파일
+
+- [`docs/consumer-guide.md`](../consumer-guide.md) §1.f — Consumer-facing 정책 mirror
+- [`docs/security/pat-rotation-log.md`](../security/pat-rotation-log.md) — Audit log SSOT
+- [`CLAUDE.md`](../../CLAUDE.md) — wrapper Orchestrator 인지용 cross-ref
+- [`templates/github-workflows/phase-gate-mergeable.yml`](../../templates/github-workflows/phase-gate-mergeable.yml) — PAT 사용 workflow 1
+- [`templates/github-workflows/rate-limit-fallback-kpi.yml`](../../templates/github-workflows/rate-limit-fallback-kpi.yml) — PAT 사용 workflow 2
+- [`ADR-013 Amendment 4`](ADR-013-codeforge-family-dogfood-out-policy.md) — PAT consolidation carrier (CFP-450)
+- [`ADR-058`](ADR-058-adr-sunset-criteria-mandate.md) — security default `is_transitional: false`
+- [`ADR-063`](ADR-063-marketplace-atomic-invariant.md) — `hotfix-bypass:marketplace-atomic` (본 PR 적용)
+- [`ADR-064`](ADR-064-decision-principle-mandate.md) — derived default 적용 근거

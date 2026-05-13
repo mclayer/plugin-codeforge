@@ -195,6 +195,54 @@ agent teams enabled context 에서도 다음 3 제약 유지 (`docs/domain-knowl
 - Worktree integration: [ADR-040](adr/ADR-040-worktree-convention.md)
 - review-verdict v4 schema: [docs/inter-plugin-contracts/review-verdict-v4.md](inter-plugin-contracts/review-verdict-v4.md)
 
+### 1g. CODEFORGE_CROSS_REPO_PAT rotation policy (CFP-521 / [ADR-066](adr/ADR-066-pat-rotation-policy.md))
+
+codeforge family 가 사용하는 `CODEFORGE_CROSS_REPO_PAT` (cross-repo Story binding + KPI internal-docs clone — CFP-450 / ADR-013 Amendment 4 consolidation) 의 lifetime / rotation / compromise response 정책. 정책 SSOT = [ADR-066](adr/ADR-066-pat-rotation-policy.md), audit log SSOT = [`docs/security/pat-rotation-log.md`](security/pat-rotation-log.md).
+
+**Rotation cadence**:
+
+- 권장 rotation = 90 days (분기별 회전)
+- 최대 lifetime = 180 days (반기 회전 강제)
+- 자동 만료 reminder workflow = Phase 2 carrier (별도 CFP, ADR-066 §결정 6)
+
+**Scope minimum** (least privilege, ADR-066 §결정 2):
+
+- `repo:read` — internal-docs read scan (KPI workflow)
+- `repo:write` — cross-repo Issue comment / sub-issue link (phase-gate-mergeable)
+- `metadata:read` — basic repo access
+
+`admin:org` / `delete_repo` / `workflow` 등 광역 scope 부여 금지.
+
+**Rotation 절차 (5-step, ADR-066 §결정 3)**:
+
+1. New PAT 발급 — GitHub Personal access tokens, 위 scope, expiration ≤ 90 days
+2. mclayer org secrets 갱신 — `Settings > Secrets > Actions > CODEFORGE_CROSS_REPO_PAT` (org level)
+3. sibling repo verification — 7 repo (codeforge-{requirements,design,develop,test,review,pmo} + marketplace + codeforge-internal-docs) org secret 가시성 확인
+4. 1-2 PR 테스트 — phase-gate-mergeable 또는 KPI workflow active PR 동작 확인
+5. 이전 PAT revoke — GitHub Personal access tokens settings + audit log row append
+
+**Compromise response (leak / suspected leak 시 4-step, ADR-066 §결정 4)**:
+
+1. **Immediate revoke** — GitHub UI > Personal access tokens > Revoke 즉시 (T+0)
+2. **Within 1h rotation** — New PAT 발급 + 위 5-step (T+1h 까지)
+3. **Audit 영향 범위 검토** — 영향 받은 workflow run / Issue comment / PR comment 검토 (`gh api` 활용)
+4. **Disclosure 판단** — private repo data leak 가능성 시 즉시 사용자 / 외부 통보 의무
+
+**Audit log**:
+
+- 위치: [`docs/security/pat-rotation-log.md`](security/pat-rotation-log.md)
+- Schema: `rotated_at (KST) | by | reason | expiration | revoked_at`
+- 사용자 manual entry 의무 (PAT 발급 절차 자체가 GitHub UI 의존, ADR-066 §결정 5)
+- Rotation 시 새 row append + 이전 row 의 `revoked_at` 갱신
+
+**Consumer overlay 영향** (ADR-066 §결정 7):
+
+본 정책은 codeforge family 의 `CODEFORGE_CROSS_REPO_PAT` 에 한정. Consumer project 가 자체 cross-repo PAT 사용 시:
+
+- `.claude/_overlay/project.yaml` `security.pat_rotation_cadence_days` 필드로 cadence override 가능 — **강화 방향만** (90 days 미만 short rotation 허용, 90 days 초과 weaken 금지)
+- Consumer 자체 PAT 의 audit log 는 consumer repo `docs/security/` (overlay 영역, codeforge 강제 안 함)
+- Compromise response 4-step 은 consumer 도 동일 절차 권장
+
 > **작업 규칙 (normative — CFP-341)**: 모든 변경 작업(lane spawn + ad-hoc)은 worktree 안에서 수행. 원본 clone directory 직접 편집 금지. `bash templates/scripts/worktree-create.sh <branch> origin/main` 으로 worktree 생성 후 작업 시작. 상세 [playbook §3.0.10](orchestrator-playbook.md).
 
 ## 2. Consumer 프로젝트 구조 초기화
@@ -777,7 +825,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/validate_config.py \
     .claude/_overlay/project.yaml
 ```
 
-### 3a-multi-repo. Multi-repo story key system 활성화 (선택, CFP-342 / [ADR-050](adr/ADR-050-multi-repo-story-key-system.md))
+### 3a-multi-repo. Multi-repo story key system 활성화 (선택, CFP-342 / [ADR-069](adr/ADR-069-multi-repo-story-key-system.md))
 
 > **Opt-in only** — single-repo consumer 또는 기존 multi-repo hub-flat 운영 (예: mctrader MCT-1~111 cluster) 은 본 섹션 skip 가능. 부재 시 single-repo flat 모드 유지 (기존 동작 보존).
 
@@ -795,7 +843,7 @@ Multi-repo consumer (1 governance hub repo + N implementation repo) 가 ADR-020 
 **Step 1**: hub repo 의 `.claude/_overlay/project.yaml` 에 `codeforge.stories` 블록 추가:
 
 ```yaml
-# CFP-342 / ADR-050 — Multi-repo story key system
+# CFP-342 / ADR-069 — Multi-repo story key system
 codeforge:
   stories:
     hub:
@@ -872,7 +920,7 @@ python3 ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/validate_config.py \
 
 본 시스템 = ADR-020 Amendment 1 §결정 8 Mode B (hub-centralized) 의 **automation backbone**. Mode B 를 manual 운영하던 consumer 는 본 시스템 활성화로 file 위치 결정 / counter 발급 / bidirectional linking 자동화 가능. Mode A (repo-local) consumer 도 `codeforge.stories.repos[].role: implementation` + `creates_repo_stories: true` 로 활용 가능.
 
-상세 SSOT: [ADR-050](adr/ADR-050-multi-repo-story-key-system.md), [ADR-020](adr/ADR-020-cross-repo-epic-pattern.md) Amendment 3.
+상세 SSOT: [ADR-069](adr/ADR-069-multi-repo-story-key-system.md), [ADR-020](adr/ADR-020-cross-repo-epic-pattern.md) Amendment 3.
 
 > **Phase 2 mechanism (별도 follow-up CFP)**: counter 자동 발급 / Story 자동 라우팅 / agent target repo 결정 자동화는 별도 CFP scope. Phase 1 (본 schema land 후) 는 manual 운영 (consumer 가 직접 counter 갱신 + file 작성).
 
@@ -1160,6 +1208,8 @@ multi-repo consumer (예: mctrader 의 6 repo) 의 cross-repo Epic 진행 시 [A
 | **B: Hub-centralized** | 1 hub repo 가 모든 child Story 보유, implementation repo 는 code PR 만 | Doc-only hub repo 존재 + 도메인 ADR collocate (mctrader 패턴) |
 
 ---
+
+> **post-merge-followup workflow (CFP-476 / ADR-026 Amendment 1)**: `templates/required-workflows-spec.yaml` 정의 `target: all` enterprise required workflow — 모든 codeforge consumer 자동 상속. terminal-phase gate (`phase:보안-테스트` if `lanes.security_ai: true`, `phase:구현-테스트` if `false`, fail-closed default `phase:보안-테스트`) 가 consumer `.codeforge/project.yaml` 또는 `.claude/_overlay/project.yaml` 의 `lanes.security_ai` field 를 read. Issue close trigger 는 dual-source AND (PR body close keyword regex ∩ Issue closedByPullRequestsReferences) — false-positive close 차단 (CFP-391/412/455 systemic issue 해소). 상세 SSOT = ADR-026 Amendment 1 §결정 5.A.
 
 ### lanes.security_ai opt-in (선택)
 

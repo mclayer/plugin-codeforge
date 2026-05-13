@@ -27,6 +27,10 @@ if [ $# -ge 1 ]; then
     fi
 fi
 
+# CFP-492 2-way self-check: create_label 호출 횟수 카운터.
+# DRY_RUN 모드 시 stderr 로 "create_label invocations: N" 출력 → check-bootstrap-labels-count.sh 가 cross-verify.
+LABEL_COUNT=0
+
 if [ $DRY_RUN -eq 0 ] && ! command -v gh >/dev/null 2>&1; then
     echo "ERROR: gh CLI 미설치. https://cli.github.com 에서 설치 후 'gh auth login' 실행." >&2
     exit 1
@@ -34,10 +38,12 @@ fi
 
 # Idempotent label create — 이미 존재하면 0 반환 (silent).
 # --dry-run 모드: gh 미호출, "name|color|desc" tab-separated 출력 → CFP-33 check-label-registry.sh 가 parse.
+# CFP-492: LABEL_COUNT 증가 (DRY_RUN/non-DRY_RUN 모두) — 2-way self-check 용.
 create_label() {
     local name="$1"
     local color="$2"
     local desc="$3"
+    LABEL_COUNT=$((LABEL_COUNT + 1))
     if [ $DRY_RUN -eq 1 ]; then
         printf '%s\t%s\t%s\n' "$name" "$color" "$desc"
         return 0
@@ -85,6 +91,8 @@ create_label "audit:post-hotfix"  "fef2c0" "Post-hotfix audit Story"
 # 색상 = label-registry-v1.md SSOT
 create_label "audit:debut-eval"            "fbca04" "데뷔 평가 (consumer 첫 사용 사례) 발견 사항"
 create_label "audit:from-mctrader-debut"   "fef2c0" "mctrader 데뷔 평가에서 발견된 codeforge gap (첫 사례)"
+# CFP-429: from-cfp-425-followup (Epic CFP-425 gate FAIL 분기 후속 carrier provenance marker, label-registry-v2 v2.5)
+create_label "from-cfp-425-followup"       "fbca04" "Epic CFP-425 (worktree-first mechanical enforcement 영구화) gate FAIL 분기 후속 carrier marker"
 # CFP-88: audit:spec-amendment (CFP-87 / playbook §6.8 follow-up, label-registry v1.2)
 create_label "audit:spec-amendment"        "fbca04" "Mid-implementation spec doc 수정 PR (Codex push-back / 사용자 mid-impl clarification / spec drift 발견 시)"
 # CFP-90: early-close:* (CFP-85 / phase-invariant terminal state follow-up, label-registry v1.2)
@@ -151,4 +159,12 @@ fi
 if [ $DRY_RUN -eq 0 ]; then
     echo ""
     echo "✓ 33 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."
+fi
+
+# CFP-492 2-way self-check (DRY_RUN 모드에서만):
+# dry-run stdout 의 line count 는 caller 가 wc -l 로 확인 가능.
+# 본 script 는 stderr 로 LABEL_COUNT 출력 → check-bootstrap-labels-count.sh 가 cross-verify.
+# 잠재적 drift: 신규 label 추가 시 create_label invocation 추가했으나 dry-run 출력 line count 와 mismatch 발생 가능.
+if [ $DRY_RUN -eq 1 ]; then
+    echo "[bootstrap-labels self-check] create_label invocations: $LABEL_COUNT" >&2
 fi

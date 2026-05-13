@@ -8,10 +8,17 @@ on:
 # CFP-300 least-privilege: deny all at workflow level; job overrides only what it needs.
 permissions: {}
 
+# CFP-476 / ADR-026 Amendment 1 §결정 5.D — PR number 기반 concurrent run serialization.
+# cancel-in-progress: false = 진행 중 run 보존 (cancel 시 partial Issue close state 위험 차단).
+concurrency:
+  group: post-merge-followup-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
 jobs:
   followup:
     if: github.event.pull_request.merged == true
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       # issues:write — phase label transition, Issue close, Issue comment
       # pull-requests:write — PR comment (sibling close / status updates)
@@ -37,8 +44,11 @@ jobs:
       - name: Extract PR metadata
         if: steps.enabled.outputs.disabled != 'true'
         id: meta
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
         run: |
-          PR_TITLE='${{ github.event.pull_request.title }}'
+          # CFP-476 / ADR-026 Amendment 1 §결정 5.D — T2 PR_TITLE shell expansion mitigation.
+          # PR_TITLE injected via env: block (env indirection), never inline ${{ ... }}.
 
           # CFP-74 followup: chore PR detection + multi-CFP aggregating PR detection.
           # 1) chore(*) prefix → skip Story-tied actions (chore PR not tied to single Story)
@@ -126,23 +136,208 @@ jobs:
             echo "outcome=fail" >> $GITHUB_OUTPUT
           fi
 
-      - name: Action 3 — Carrier Issue close (Phase 2 final merge only)
-        if: steps.enabled.outputs.disabled != 'true' && steps.meta.outputs.phase == 'Phase2' && steps.meta.outputs.story_key != ''
+      - name: Action 3 — Carrier Issue close (terminal-phase + dual-source AND)
+        if: steps.enabled.outputs.disabled != 'true' && steps.meta.outputs.story_key != ''
         id: action3
+        timeout-minutes: 2
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUM: ${{ github.event.pull_request.number }}
+          THIS_REPO: ${{ github.repository }}
         continue-on-error: true
         run: |
-          ISSUE_NUM=$(gh issue list --label "type:story" --search "${{ steps.meta.outputs.story_key }}" --json number -q '.[0].number')
-          if [ -n "$ISSUE_NUM" ]; then
-            if gh issue close "$ISSUE_NUM" --comment "Phase 2 PR #${{ github.event.pull_request.number }} merged. Auto-closed by post-merge-followup workflow."; then
-              echo "::notice::Issue #$ISSUE_NUM auto-closed"
-              echo "outcome=success" >> $GITHUB_OUTPUT
+          # CFP-476 / ADR-026 Amendment 1 §결정 5.A-5.D
+          # dual-source AND semantic + terminal-phase gate + multi-match audit + cross-repo skip
+          # Security: PR_BODY injected via env: block (T1 mitigation). Never inline ${{ ... }}.
+          set -euo pipefail
+
+          STORY_KEY="${{ steps.meta.outputs.story_key }}"
+
+          # ── Step 1: Issue resolution ──────────────────────────────────────────────
+          ISSUE_NUM=$(gh issue list --label "type:story" --search "$STORY_KEY in:title" --json number -q '.[0].number' || echo "")
+          if [ -z "$ISSUE_NUM" ]; then
+            echo "::notice::No Issue found for $STORY_KEY — skip"
+            echo "outcome=skip_no_issue" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # ── Step 2: Consumer config read — lanes.security_ai (fail-closed default) ─
+          # Mirror pattern: story-init.yml line 37-68 (yq → python3 fallback).
+          # Inv-2: fail-closed default = phase:보안-테스트 (option B — stricter, close trigger 차단).
+          TERMINAL_PHASE="phase:보안-테스트"
+          _read_security_ai() {
+            local cfg="$1"
+            if command -v yq >/dev/null 2>&1; then
+              yq -r '.lanes.security_ai // "false"' "$cfg" 2>/dev/null || echo "false"
             else
-              echo "outcome=fail" >> $GITHUB_OUTPUT
+              python3 - "$cfg" <<'PY'
+          import re, sys
+          path = sys.argv[1]
+          in_lanes = False
+          for raw in open(path, encoding="utf-8"):
+              line = raw.rstrip("\n")
+              if re.match(r"^[A-Za-z_][\w-]*:\s*$", line):
+                  in_lanes = line.split(":", 1)[0] == "lanes"
+                  continue
+              if in_lanes:
+                  m = re.match(r"^\s{2}security_ai:\s*(.*?)\s*$", line)
+                  if m:
+                      val = m.group(1).strip().strip('"').strip("'").lower()
+                      print("true" if val == "true" else "false")
+                      sys.exit(0)
+          print("false")
+          PY
             fi
+          }
+          SECURITY_AI="false"
+          if [ -f ".codeforge/project.yaml" ]; then
+            SECURITY_AI=$(_read_security_ai ".codeforge/project.yaml")
+          elif [ -f ".claude/_overlay/project.yaml" ]; then
+            SECURITY_AI=$(_read_security_ai ".claude/_overlay/project.yaml")
+          fi
+          if [ "$SECURITY_AI" = "true" ]; then
+            TERMINAL_PHASE="phase:보안-테스트"
           else
-            echo "outcome=skip_no_issue" >> $GITHUB_OUTPUT
+            TERMINAL_PHASE="phase:구현-테스트"
+          fi
+
+          # ── Step 3: Issue label re-fetch (PR label 신뢰 X — R-5 phase label race) ──
+          ISSUE_LANE=$(gh issue view "$ISSUE_NUM" --json labels --jq '.labels[] | select(.name | startswith("phase:")) | .name' | head -1 || echo "")
+          if [ -z "$ISSUE_LANE" ]; then
+            echo "::warning::Issue #$ISSUE_NUM has no phase:* label — [stale-phase-label] audit + skip"
+            gh issue comment "$ISSUE_NUM" --body "[stale-phase-label] pr=$THIS_REPO#$PR_NUM issue=#$ISSUE_NUM action=skip_no_phase — phase label absent at close-trigger evaluation" || true
+            echo "outcome=skip_no_phase" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if [ "$ISSUE_LANE" != "$TERMINAL_PHASE" ]; then
+            echo "::notice::Issue #$ISSUE_NUM phase=$ISSUE_LANE != terminal=$TERMINAL_PHASE — mid-phase block (AC-3/AC-4)"
+            echo "outcome=skip_phase1" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # ── Step 4: Idempotency probe (AC-17 / EC-8) ─────────────────────────────
+          EXISTING_AUDIT=$(gh issue view "$ISSUE_NUM" --json comments \
+            --jq '.comments[].body' \
+            | grep -E '\[(close-success|multi-match-skip|cross-repo-skip|dual-source-mismatch)\] .*pr='"$THIS_REPO#$PR_NUM"'( |$)' \
+            | head -1 || echo "")
+          if [ -n "$EXISTING_AUDIT" ]; then
+            echo "::notice::Idempotency probe hit — already audited for pr=$THIS_REPO#$PR_NUM, skip"
+            echo "outcome=skip_already_audited" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # ── Step 5: Source A regex extraction (POSIX ERE — ADR-026 §결정 5.A SSOT) ─
+          # printf '%s' = raw byte output (F-P1-05 shell deeper mitigation).
+          # Regex: GitHub native 9 variant close keyword + bare/qualified #N reference.
+          MATCHES=$(printf '%s' "$PR_BODY" \
+            | grep -oiE '(close[sd]?|fix(es|ed)?|resolve[sd]?)[[:space:]]*:?[[:space:]]*(([[:alnum:]_-]+/[[:alnum:]_.-]+)?#[0-9]+)' \
+            || echo "")
+          if [ -z "$MATCHES" ]; then
+            echo "::notice::No close keyword in PR body — skip"
+            echo "outcome=skip_no_close_keyword" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Post-process: extract issue numbers + classify same-repo vs cross-repo.
+          SET_X=""
+          CROSS_REPO_HIT_SET=""
+          while IFS= read -r match_line; do
+            [ -z "$match_line" ] && continue
+            # Extract trailing #N (bare or qualified owner/repo#N)
+            REF=$(echo "$match_line" | grep -oE '([[:alnum:]_-]+/[[:alnum:]_.-]+)?#[0-9]+$' | head -1 || echo "")
+            [ -z "$REF" ] && continue
+            if echo "$REF" | grep -qE '^[[:alnum:]_-]+/[[:alnum:]_.-]+#[0-9]+$'; then
+              # qualified owner/repo#N
+              REF_REPO=$(echo "$REF" | sed 's/#[0-9]*$//')
+              REF_NUM=$(echo "$REF" | grep -oE '[0-9]+$')
+              if [ "$REF_REPO" = "$THIS_REPO" ]; then
+                # same-repo qualified → treat as bare
+                SET_X=$(printf '%s\n%s' "$SET_X" "$REF_NUM" | sed '/^$/d')
+              else
+                CROSS_REPO_HIT_SET=$(printf '%s\n%s' "$CROSS_REPO_HIT_SET" "$REF" | sed '/^$/d')
+              fi
+            else
+              # bare #N
+              REF_NUM=$(echo "$REF" | grep -oE '[0-9]+$')
+              SET_X=$(printf '%s\n%s' "$SET_X" "$REF_NUM" | sed '/^$/d')
+            fi
+          done <<EOF
+          $MATCHES
+          EOF
+          SET_X=$(echo "$SET_X" | sort -u | sed '/^$/d')
+
+          # ── Step 6: Cross-repo qualified detect (§5.C) ───────────────────────────
+          if [ -n "$CROSS_REPO_HIT_SET" ]; then
+            CROSS_REF=$(echo "$CROSS_REPO_HIT_SET" | head -1)
+            echo "::warning::Cross-repo reference detected — skip (unsupported scope)"
+            gh issue comment "$ISSUE_NUM" --body "[cross-repo-skip] reference=$CROSS_REF pr=$THIS_REPO#$PR_NUM action=skip_cross_repo_unsupported follow_up_carrier=CFP-TBD" || true
+            echo "outcome=skip_cross_repo_unsupported" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          if [ -z "$SET_X" ]; then
+            echo "::notice::No same-repo issue references extracted — skip"
+            echo "outcome=skip_no_match" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # ── Step 7: Multi-match audit (§5.C — set X size > 1) ───────────────────
+          MATCH_COUNT=$(echo "$SET_X" | wc -l | tr -d ' ')
+          if [ "$MATCH_COUNT" -gt 1 ]; then
+            DETECTED_LIST=$(echo "$SET_X" | awk '{printf "#%s, ", $1}' | sed 's/, $//')
+            # Source B per-issue lookup to determine manual_follow_up
+            MANUAL_FOLLOW_UP="false"
+            while IFS= read -r n; do
+              [ -z "$n" ] && continue
+              SOURCE_B_N=""
+              for attempt in 1 2 3; do
+                SOURCE_B_N=$(gh issue view "$n" --json closedByPullRequestsReferences \
+                  --jq '.closedByPullRequestsReferences[].number' 2>/dev/null || echo "")
+                [ -n "$SOURCE_B_N" ] && break
+                [ "$attempt" -lt 3 ] && sleep $((2 ** attempt))
+              done
+              if [ -z "$SOURCE_B_N" ]; then
+                MANUAL_FOLLOW_UP="true"
+              fi
+            done <<EOF
+          $SET_X
+          EOF
+            CARRIER_NUM="$ISSUE_NUM"
+            echo "::warning::multi-issue close detected — workflow skipping carrier-only close; GitHub native handles all matched issues"
+            gh issue comment "$ISSUE_NUM" \
+              --body "[multi-match-skip] detected_issues=[$DETECTED_LIST] pr=$THIS_REPO#$PR_NUM carrier=#$CARRIER_NUM action=workflow_skip_native_close_delegated manual_follow_up=$MANUAL_FOLLOW_UP" || true
+            echo "outcome=skip_multi_issue" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # ── Step 8: Single-issue dual-source AND (§5.A) ──────────────────────────
+          TARGET_N=$(echo "$SET_X" | head -1)
+          SOURCE_B=""
+          for attempt in 1 2 3; do
+            SOURCE_B=$(gh issue view "$TARGET_N" --json closedByPullRequestsReferences \
+              --jq '.closedByPullRequestsReferences[].number' 2>/dev/null || echo "")
+            # Source B lazy update (F-P1-06): retry if empty (eventual consistency lag)
+            [ -n "$SOURCE_B" ] && break
+            [ "$attempt" -lt 3 ] && sleep $((2 ** attempt))
+          done
+
+          SOURCE_B_LIST=$(echo "$SOURCE_B" | tr '\n' ',' | sed 's/,$//')
+          if ! echo "$SOURCE_B" | grep -qxF "$PR_NUM"; then
+            echo "::warning::dual-source mismatch — source_a=[#$TARGET_N] source_b=[$SOURCE_B_LIST] — skip"
+            gh issue comment "$ISSUE_NUM" \
+              --body "[dual-source-mismatch] pr=$THIS_REPO#$PR_NUM issue=#$TARGET_N source_a=[#$TARGET_N] source_b=[$SOURCE_B_LIST] action=skip" || true
+            echo "outcome=skip_dual_source_mismatch" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # ── Step 9: Close + close-success audit ──────────────────────────────────
+          if gh issue close "$TARGET_N" \
+            --comment "[close-success] pr=$THIS_REPO#$PR_NUM issue=#$TARGET_N action=close — Phase 2 PR #$PR_NUM merged. Auto-closed by post-merge-followup workflow."; then
+            echo "::notice::Issue #$TARGET_N auto-closed (dual-source AND verified)"
+            echo "outcome=success" >> "$GITHUB_OUTPUT"
+          else
+            echo "outcome=fail" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Action 4 — Sibling PR auto-close

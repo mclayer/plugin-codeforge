@@ -7,6 +7,9 @@ on:
     branches: [main]
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+
 jobs:
   inter-plugin-contracts:
     name: inter-plugin-contracts (CFP-33)

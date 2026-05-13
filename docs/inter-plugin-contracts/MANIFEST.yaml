@@ -12,7 +12,7 @@ contracts:
       - { file: review-verdict-v1.md, contract_version: "1.0", status: Archived }
       - { file: review-verdict-v2.md, contract_version: "2.0", status: Archived, superseded_by: review-verdict-v3 }  # CFP-61
       - { file: review-verdict-v3.md, contract_version: "3.0", status: Archived, superseded_by: review-verdict-v4 }  # CFP-137: archive (Sonnet decider 영역 정식 제거)
-      - { file: review-verdict-v4.md, contract_version: "4.1", status: Active }  # CFP-137: NEW (Sonnet decider 영역 제거 + worker_dialog_rounds 추가). CFP-391: v4.0 → v4.1 MINOR bump (findings[].anchor_id optional field, debate-protocol-v1 stable identifier SSOT).
+      - { file: review-verdict-v4.md, contract_version: "4.4", status: Active }  # CFP-137: NEW (Sonnet decider 영역 제거 + worker_dialog_rounds 추가). CFP-391: v4.0 → v4.1 MINOR bump (findings[].anchor_id optional field, debate-protocol-v1 stable identifier SSOT). CFP-438: v4.1 → v4.2 MINOR bump (mechanical_self_check_passed optional bool, ADR-065). CFP-527: v4.2 → v4.3 MINOR bump (boundary_completeness_self_check_passed optional bool + findings[].type "boundary-completeness" literal, ADR-068). CFP-528: v4.3 → v4.4 MINOR bump (dimensional_empirical_self_check_passed optional bool + findings[].type "dimensional-empirical-gap" literal, ADR-068 Amendment 1).
 
   - name: requirements_output
     canonical_repo: mclayer/plugin-codeforge-requirements
@@ -58,15 +58,22 @@ registries:
   - name: label_registry
     files:
       - { file: label-registry-v1.md, version: "1.5", status: Archived, superseded_by: label-registry-v2.md }  # CFP-140: type:* deprecated
-      - { file: label-registry-v2.md, version: "2.0", status: Active }  # CFP-140 / ADR-049: native Issue Types
+      - { file: label-registry-v2.md, version: "2.5", status: Active }  # CFP-429 v2.5: from-cfp-425-followup provenance label append | CFP-481 v2.4: phase:* attach_owner_plugin auto-phase-label | CFP-451 v2.3: monitoring tier sub-axis | CFP-393 v2.2: codeforge-kpi-alert + monitoring tier | CFP-344 v2.1: conflict/merge-order | CFP-140 v2.0: native Issue Types
 
   - name: debate_protocol
     canonical_repo: mclayer/plugin-codeforge
     canonical_path: docs/inter-plugin-contracts/debate-protocol-v1.md
     files:
-      - { file: debate-protocol-v1.md, version: "1.0", status: Active }  # CFP-391 / ADR-059: lane-agnostic adversarial debate protocol
+      - { file: debate-protocol-v1.md, version: "1.1", status: Active }  # CFP-391 v1.0: lane-agnostic adversarial debate protocol. CFP-533 v1.1: MINOR bump (dispatch_mode field optional → required + enum 3-value 명시화 — auto_on_divergence / mechanical_fast_path_inline / user_request_only)
     description: "Multi-round adversarial debate protocol (Codex ↔ Opus) — lane-agnostic"
 
   - name: evidence_check_registry
     files:
       - { file: evidence-check-registry-v1.md, version: "1.1", status: Active }  # CFP-389 / ADR-060: evidence-enforceable promotion framework. CFP-455 / ADR-060 Amendment 2: v1.0 → v1.1 MINOR bump (current_tier required 전환)
+
+  - name: severity_propagation
+    canonical_repo: mclayer/plugin-codeforge
+    canonical_path: docs/inter-plugin-contracts/severity-propagation-v1.md
+    files:
+      - { file: severity-propagation-v1.md, version: "1.0", status: Active }  # CFP-529 Wave 3: review-verdict-v4 findings[].severity ↔ label-registry-v2 severity:* ↔ evidence-checks-registry current_tier 3-way bidirectional binding SSOT. RC#8 carrier (ADR-068). kind:registry (sibling sync 면제, ADR-010 §결정 2).
+    description: "severity 어휘 cross-channel propagation SSOT (3-way bidirectional binding) — RC#8 carrier"

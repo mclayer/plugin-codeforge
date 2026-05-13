@@ -1,0 +1,18 @@
+---
+description: "Qualified same-repo"
+fixture_key: "qualified-syntax-same-repo"
+story_mapping: "AC-6"
+pr:
+  number: 510
+  title: "[CFP-510] Phase 2"
+  body: "Closes mclayer/plugin-codeforge#510"
+  labels:
+    - "phase:보안-테스트"
+issue:
+  number: 510
+  closed_by_pull_requests_references: [510]
+consumer_config:
+  lanes:
+    security_ai: true
+expected_outcome: "success"
+expected_audit_marker: "[close-success]"

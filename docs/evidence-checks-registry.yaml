@@ -10,9 +10,9 @@
 # Phase 2 PR = 본 §결정 13 표의 18 entry 실제 row append (CFP-390 그룹 A 인벤토리).
 # Total entries 가변 — 본 PR base 시점 = 2 + 18 = 20. main rebase 후 CFP-393 / CFP-410
 # 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
-schema_version: "1.1"  # CFP-455 / ADR-060 Amendment 2 — current_tier required 전환 + retroactive 분류 검증 (MINOR bump)
+schema_version: "1.2"  # CFP-509 / ADR-060 Amendment 6 — recurrence field 정식 도입 (MINOR bump v1.1 → v1.2)
 introduced_by: CFP-389
-last_updated: 2026-05-12  # CFP-449 — decision-principle-vocab entry append (2nd warning-tier entry)
+last_updated: 2026-05-13  # CFP-521 — sibling-pr-label-author-check entry append (5th warning-tier entry, EPIC-RESULTS-CFP-462 §6 carrier #2)
 
 entries:
   - name: adr-sunset-criteria
@@ -47,6 +47,9 @@ entries:
     introduced_by: CFP-389
     owner_adr: ADR-058
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: carrier-bootstrap
@@ -71,6 +74,9 @@ entries:
     introduced_by: CFP-407
     owner_adr: ADR-062
     carrier_adr: ADR-062               # self-carrier
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: rate-limit-fallback-rate
@@ -99,6 +105,9 @@ entries:
     introduced_by: CFP-393
     owner_adr: ADR-057           # 정책 ADR — fallback rate sunset gate owner
     carrier_adr: ADR-060         # framework carrier (CFP-388 / ADR-060 §결정 12 CFP-C)
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: story-section-9-typed
@@ -124,6 +133,9 @@ entries:
     introduced_by: CFP-410
     owner_adr: ADR-044           # review-verdict-v4 schema source
     carrier_adr: ADR-060         # framework carrier
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   # ─── CFP-390 Phase 2 backfill (18 entries, ADR-060 Amendment 1 §결정 13 SSOT, 2026-05-11) ───
@@ -149,9 +161,9 @@ entries:
       .mjs extraction (.github/scripts/check-lane-evidence-block.mjs) +
       analyzeDuplicateHeadings() 함수로 valid heading 명시. Option A strict
       (CFP-465 invariant 보존) — lenient fallback 채택 안 함. recurrence_count
-      framework / promotion gate input / lint warning condition 모두 무관 —
-      별도 carrier CFP 가 machine-usable recurrence metric framework 도입 시
-      ADR-060 정합 schema design 필요.
+      framework / promotion gate input / lint warning condition 모두 무관 (description-only narrative).
+      CFP-509 schema v1.2 (ADR-060 Amendment 6) 에 `recurrence:` field 정식 도입 — 본 entry 는
+      schema-level count: 2 보유 (CFP-500 FIX-5 + CFP-451 transient 2회 historical evidence).
     detect_command: bash scripts/check-lane-evidence.sh
     workflow: .github/workflows/lane-evidence-check.yml
     current_tier: warning            # manifest 미부착 — Phase 2 backfill 시점 정합 (§결정 13 표)
@@ -165,6 +177,11 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-031 §결정 3 + fix-event-v1
     carrier_adr: ADR-060
+    recurrence:
+      count: 2
+      last_occurrence: "2026-05-12T00:00:00Z"    # CFP-451 본 세션 transient 2차 발생 (대략 timestamp)
+      threshold: 3
+      promotion_trigger: advisory              # threshold 도달 시 PR comment advisory
     status: Active
 
   - name: doc-locations-registry
@@ -185,6 +202,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-041
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: marketplace-parity
@@ -205,6 +225,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-016 / ADR-023 §결정 5
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: invariant-check
@@ -225,6 +248,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-002 (footer pattern) + 다중 CFP (5/7/8/10)
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: phase-gate-mergeable
@@ -245,6 +271,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-031 §결정 3 + label-registry-v2
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: inter-plugin-contracts
@@ -265,6 +294,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-008 / ADR-010 / MANIFEST.yaml
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: inter-plugin-drift
@@ -284,6 +316,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-011
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: comment-prefix-registry
@@ -304,6 +339,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: comment-prefix-registry-v1 (kind:registry)
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: label-registry-sync
@@ -323,6 +361,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: label-registry-v2 (kind:registry)
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: marketplace-sync
@@ -344,6 +385,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-016 (mirrored field)
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Retired  # CFP-457 — replaced by marketplace-parity (CFP-50 / ADR-023)
     retired_by: CFP-457
     retired_date: 2026-05-12
@@ -366,6 +410,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-013 / ADR-017
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: superpowers-integration
@@ -385,6 +432,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-028 / CFP-113
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: superpowers-schema-drift
@@ -404,6 +454,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-028 / CFP-121
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: parallel-epic-conflict
@@ -424,6 +477,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-050
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: branch-protection-drift
@@ -444,6 +500,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-024 Amendment 2
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: required-workflow-drift
@@ -464,6 +523,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-048 §결정 3
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: rulesets-drift
@@ -483,6 +545,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-048 §결정 1
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: write-permission-redistribution
@@ -503,6 +568,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: CFP-26 / ADR-009 (write 권한 invariant)
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   # ─── CFP-426 Phase 2 backfill (4 entries, ADR-040 Amendment 3 §결정 7.D verbatim, 2026-05-12) ───
@@ -519,9 +587,12 @@ entries:
       wire 누락 시 stale worktree 자동 GC 미동작 (declaration only → mechanical enforcement 분리).
       warning tier — continue-on-error: true. CFP-427 Story 2 가 actual wire 첫 사례 —
       `scripts/check-session-start-hook-presence.sh` `exec` swap wrapper 패턴 (RefactorArch 결정).
+      CFP-429 (Story 4) Amendment 4 declaration: 4/4 actual wire 완료 + ADR-060 §결정 6 promotion
+      gate (b) bypass 외 failure > 0 FAIL → current_tier: warning 유지 + actual 승격 follow-up CFP
+      carrier (from-cfp-425-followup label). Self-test integration test: tests/integration/stories/CFP-425/self-test-worktree-block.sh E4-1 (Phase 2 PR CFP-429).
     detect_command: bash scripts/check-worktree-first-session-start-wire.sh
     workflow: templates/github-workflows/worktree-first-session-start-wire.yml
-    current_tier: warning
+    current_tier: blocking-on-pr  # CFP-531 / ADR-040 Amendment 5 — warning → blocking-on-pr 승격 (2026-05-13)
     bypass_label: hotfix-bypass:worktree-session-start-wire
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse (BYPASS_LABEL_PREFIX=hotfix-bypass:)
     promotion_criteria:
@@ -538,6 +609,9 @@ entries:
     introduced_by: CFP-426
     owner_adr: ADR-040
     carrier_adr: ADR-040
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: worktree-first-pre-checkout
@@ -548,9 +622,12 @@ entries:
       사례 — `templates/.git-hooks/pre-checkout.sample` + `scripts/install-git-hooks.sh` opt-in
       installer. lint pattern = verification-only (sample 존재 + executable bit 검증,
       Story 2 exec swap 패턴 부적용 — canonical 이 git hook sample 자체).
+      CFP-429 (Story 4) Amendment 4 declaration: 4/4 actual wire 완료 + ADR-060 §결정 6 promotion
+      gate (b) bypass 외 failure > 0 FAIL → current_tier: warning 유지 + actual 승격 follow-up CFP
+      carrier (from-cfp-425-followup label). Self-test integration test: tests/integration/stories/CFP-425/self-test-worktree-block.sh E4-3 (Phase 2 PR CFP-429).
     detect_command: bash scripts/check-worktree-first-pre-checkout.sh
     workflow: templates/github-workflows/worktree-first-pre-checkout.yml
-    current_tier: warning
+    current_tier: blocking-on-pr  # CFP-531 / ADR-040 Amendment 5 — warning → blocking-on-pr 승격 (2026-05-13)
     bypass_label: hotfix-bypass:worktree-pre-checkout
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     promotion_criteria:
@@ -567,6 +644,9 @@ entries:
     introduced_by: CFP-426
     owner_adr: ADR-040
     carrier_adr: ADR-040
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: worktree-first-pre-commit-main-block
@@ -577,9 +657,12 @@ entries:
       `scripts/install-git-hooks.sh` opt-in installer. path matching = `src/**` 또는 `docs/**`
       only (Plan SSOT verbatim — chore commit / typo fix 등 차단 0). lint pattern =
       verification-only.
+      CFP-429 (Story 4) Amendment 4 declaration: 4/4 actual wire 완료 + ADR-060 §결정 6 promotion
+      gate (b) bypass 외 failure > 0 FAIL → current_tier: warning 유지 + actual 승격 follow-up CFP
+      carrier (from-cfp-425-followup label). Self-test integration test: tests/integration/stories/CFP-425/self-test-worktree-block.sh E4-4 (Phase 2 PR CFP-429).
     detect_command: bash scripts/check-worktree-first-pre-commit-main-block.sh
     workflow: templates/github-workflows/worktree-first-pre-commit-main-block.yml
-    current_tier: warning
+    current_tier: blocking-on-pr  # CFP-531 / ADR-040 Amendment 5 — warning → blocking-on-pr 승격 (2026-05-13)
     bypass_label: hotfix-bypass:worktree-pre-commit-main-block
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     promotion_criteria:
@@ -596,6 +679,9 @@ entries:
     introduced_by: CFP-426
     owner_adr: ADR-040
     carrier_adr: ADR-040
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: worktree-first-spawn-evidence-cwd
@@ -606,9 +692,12 @@ entries:
       `docs/stories/**.md` scan. CFP-427 Story 2 가 actual wire 첫 사례 — enforce-from filter
       도입 (본 Story merged at 이후 신규 Story 만, false-positive 회피) + PLACEHOLDER sentinel
       safe-fallback (Phase 2 PR merge 전 enforce 전체 skip).
+      CFP-429 (Story 4) Amendment 4 declaration: 4/4 actual wire 완료 + ADR-060 §결정 6 promotion
+      gate (b) bypass 외 failure > 0 FAIL → current_tier: warning 유지 + actual 승격 follow-up CFP
+      carrier (from-cfp-425-followup label). Self-test integration test: tests/integration/stories/CFP-425/self-test-worktree-block.sh E4-2 (Phase 2 PR CFP-429).
     detect_command: bash scripts/check-worktree-first-spawn-evidence-cwd.sh
     workflow: templates/github-workflows/worktree-first-spawn-evidence-cwd.yml
-    current_tier: warning
+    current_tier: blocking-on-pr  # CFP-531 / ADR-040 Amendment 5 — warning → blocking-on-pr 승격 (2026-05-13)
     bypass_label: hotfix-bypass:worktree-spawn-evidence-cwd
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     promotion_criteria:
@@ -625,6 +714,9 @@ entries:
     introduced_by: CFP-426
     owner_adr: ADR-040
     carrier_adr: ADR-040
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: evidence-registry-schema-validation
@@ -655,6 +747,9 @@ entries:
     introduced_by: CFP-455
     owner_adr: ADR-060                 # framework SSOT — schema 정합 검증의 정책 owner
     carrier_adr: ADR-060               # Amendment 2 carrier (self-application 의 self-carrier 패턴)
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   # ─── CFP-449 Phase 2 (decision principle forbid-list vocabulary lint, 2026-05-12) ───
@@ -697,6 +792,9 @@ entries:
     introduced_by: CFP-449
     owner_adr: ADR-064               # forbid-list dictionary SSOT
     carrier_adr: ADR-060             # framework carrier (warning mode entry)
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   # ─── CFP-475 Phase 2 (duplicate-session-start-hook-check, 2026-05-12) ───
@@ -760,6 +858,9 @@ entries:
     introduced_by: CFP-481
     owner_adr: ADR-024 Amendment 4 §결정 6.A.1   # branch → phase mapping 표 SSOT
     carrier_adr: ADR-060             # framework carrier (warning mode entry)
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: claude-md-line-cap
@@ -788,4 +889,194 @@ entries:
     owner_adr: ADR-012               # Amendment 1 cap ≤320 declaration SSOT
     carrier_adr: ADR-060             # framework carrier (warning mode entry, Amendment 5)
     carrier_amendment: 5
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active
+
+  # ─── CFP-521 Phase 2 (sibling-pr label anti-misuse lint, 2026-05-13) ───
+  # ADR-010 Amendment 4 §결정 5 anti-misuse 안전망 mechanical enforcement —
+  # 5th warning-tier entry (1st = adr-sunset-criteria / 2nd = decision-principle-vocab /
+  # 3rd = auto-phase-label / 4th = claude-md-line-cap).
+  # EPIC-RESULTS-CFP-462 §6 carrier #2 — sibling-pr label fast-pass mechanism (CFP-499) 후속.
+
+  - name: sibling-pr-label-author-check
+    description: |
+      ADR-010 Amendment 4 §결정 5 anti-misuse 안전망 mechanical lint — sibling-pr label
+      부착 PR 의 paired wrapper PR link 검증 (PR body grep mclayer/plugin-codeforge#NNN
+      패턴 — short form + URL form 양쪽). 부재 시 audit comment 부착 + workflow failure
+      (warning tier, advisory only — PR merge 미차단). Guard 3종: (a) sibling-pr label
+      미부착 PR skip / (b) hotfix-bypass:sibling-pr-author-check label 부착 skip /
+      (c) wrapper repo self-PR skip (self-referential 영역). audit comment dedup =
+      `[sibling-pr-anti-misuse]` marker presence. CFP-499 sibling-pr fast-pass mechanism
+      (ADR-010 Amendment 4) 의 anti-misuse 안전망 forcing function.
+      EPIC-RESULTS-CFP-462 §6 carrier #2.
+    detect_command: github-actions-runtime  # workflow self-fire (PR label event), no static script
+    workflow: templates/github-workflows/sibling-pr-label-author-check.yml
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:sibling-pr-author-check
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: []       # 독립 entry — workflow self-app + ADR-010 Amendment 4 정합
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    # modal_anti_pattern_dictionary: omit — workflow lint, modal 어휘 검사 미포함
+    introduced_by: CFP-521
+    introduced_date: 2026-05-13
+    owner_adr: ADR-010 Amendment 4 §결정 5   # sibling-pr fast-pass anti-misuse 안전망 SSOT
+    carrier_adr: ADR-060             # framework carrier (warning mode entry)
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active
+
+  # ─── CFP-491 Phase 2 (impl manifest AC mapping cross-ref lint, 2026-05-13) ───
+  # ADR-060 Amendment 6 — 6번째 warning-tier entry (CFP-451 F-001 Option C systematization)
+  # (1st = adr-sunset-criteria / 2nd = decision-principle-vocab / 3rd = auto-phase-label /
+  # 4th = claude-md-line-cap / 5th = sibling-pr-label-author-check)
+  # 1차 단순화: §8.5 → §5.1 only (2-way). 3-way (Change Plan §1.3/§3.5/§8.1) = follow-up CFP.
+
+  - name: ac-mapping-cross-ref
+    description: |
+      ADR-060 Amendment 6 / CFP-451 F-001 Option C systematization — Story §8.5 Impl Manifest
+      의 AC id 인용 ↔ §5.1 AC 정의 영역 의 cross-reference 검증. 1차 단순화 = §8.5 → §5.1
+      only (2-way drift detection). 3-way (Change Plan §1.3/§3.5/§8.1 의 AC 정의) cross-check
+      = follow-up CFP scope. Exit code 3-tier (ADR-060 Amendment 2 §결정 15): 0 PASS / 1
+      violation (--strict mode 또는 향후 enforce) / 2 meta-error (file 부재). 기본 mode =
+      LLM trust (exit 0 + stderr advisory) — CI workflow continue-on-error:true 와 defense in depth.
+    detect_command: bash scripts/check-impl-manifest-ac-mapping.sh
+    workflow: templates/github-workflows/ac-mapping-cross-ref-check.yml
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:ac-mapping
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: []       # 독립 entry — Story §8.5 / §5.1 lint patterns 검증 외 의존 없음
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    # modal_anti_pattern_dictionary: omit — schema cross-reference lint, modal 어휘 검사 미포함
+    introduced_by: CFP-491
+    introduced_date: 2026-05-13
+    owner_adr: CFP-451 F-001 Option C   # F-001 retro follow-up systematization 동인
+    carrier_adr: ADR-060                # framework carrier (warning mode entry)
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active
+
+  # ─── CFP-527 Wave 2A (boundary completeness wording SSOT lint, 2026-05-13) ───
+  # ADR-068 §결정 5 wording SSOT mechanical enforcement — 8번째 warning-tier entry
+  # (1st = adr-sunset-criteria / 2nd = decision-principle-vocab / 3rd = auto-phase-label /
+  # 4th = claude-md-line-cap / 5th = sibling-pr-label-author-check / 6th = ac-mapping-cross-ref /
+  # 7th = evidence-registry-naming)
+  # wording-ssot-grep-lint: Story §3/§7 enum identifier → impl source ripgrep 매칭 (warning advisory).
+
+  - name: wording-ssot-grep-lint
+    description: |
+      ADR-068 §결정 5 wording SSOT mechanical lint — Story §3/§7 의 enum-like identifier
+      (UPPER_SNAKE_CASE 4+ chars) 추출 후 impl source (src/ scripts/) ripgrep 매칭.
+      불일치 시 warning 출력 (advisory only — PR merge 미차단). Story file 미제공 시
+      skip exit 0. Warning tier (continue-on-error: true workflow 정합).
+      Hotfix bypass: hotfix-bypass:boundary-wording (ADR-024 Amendment 3 per-entry namespace).
+      4 invariants (I-1 API contract semantic / I-2 cross-module propagation /
+      I-3 guard placement intent / I-4 wording SSOT) 중 I-4 wording SSOT 의 mechanical enforcement.
+      CFP-529 Wave 3 Phase 2 = handoff wording linter expansion (scripts/check_handoff_wording.py +
+      3-direction enum forward/backward/lateral + 5 mechanical pre-screen patterns + 3 AI escalate
+      stub patterns). 본 entry 의 mechanical scope = ADR-068 wording SSOT 단방향 (§3 → src/scripts);
+      CFP-529 Phase 2 가 bidirectional + cross-section coverage 확장 (severity-propagation-v1 SSOT).
+    detect_command: bash scripts/check-wording-ssot.sh
+    workflow: templates/github-workflows/wording-ssot-check.yml
+    enforcement_script_phase_2: scripts/check_handoff_wording.py            # CFP-529 Phase 2 carrier (handoff wording linter, bidirectional + 3-direction enum)
+    enforcement_workflow_phase_2: templates/github-workflows/handoff-wording-check.yml  # CFP-529 Phase 2 carrier
+    carrier_story_phase_2: CFP-529   # mechanical impl carrier (severity-propagation-v1 SSOT + handoff wording linter)
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:boundary-wording
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: [CFP-529]  # CFP-529 Phase 2 handoff wording linter (bidirectional + 3-direction enum) 가 mechanical coverage 확장
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-527
+    introduced_date: 2026-05-13
+    owner_adr: ADR-068               # boundary completeness invariants SSOT — wording SSOT §결정 5
+    carrier_adr: ADR-060             # framework carrier (warning mode entry)
+    related_contracts:               # CFP-529 — severity-propagation-v1 (RC#8 bidirectional binding SSOT)
+      - severity-propagation-v1
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active
+
+  # ─── CFP-508 Phase 2 (entry name ↔ workflow file naming convention lint, 2026-05-13) ───
+  # ADR-060 Amendment 7 — 7번째 warning-tier entry (CFP-490 FU-2 carrier)
+  # (1st = adr-sunset-criteria / 2nd = decision-principle-vocab / 3rd = auto-phase-label /
+  # 4th = claude-md-line-cap / 5th = sibling-pr-label-author-check / 6th = ac-mapping-cross-ref)
+  # Conservative no-rename policy: multi-job workflow pattern + naming divergence 정식 인정.
+
+  - name: evidence-registry-naming
+    description: |
+      ADR-060 Amendment 7 / §결정 20 — evidence-checks-registry entry name ↔ workflow file
+      naming convention 검증. workflow file 존재 의무 + DRIFT (no match) allowlist hardcode.
+      multi-job workflow pattern 인정 (contract-lint.yml + lint.yml = 5+ entry 공유 jobs).
+      Conservative no-rename policy — workflow rename 회피 (CI history + branch protection
+      `required_status_checks.contexts` 영향 회피). Exit code 3-tier (ADR-060 Amendment 2
+      §결정 15): 0 PASS / 1 violation (workflow file 부재 OR allowlist 밖 DRIFT) / 2
+      meta-error (yaml parse 실패).
+    detect_command: bash scripts/check-evidence-registry-naming.sh
+    workflow: templates/github-workflows/evidence-registry-naming-check.yml
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:evidence-naming
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: []       # 독립 entry — naming convention lint 검증 외 의존 없음
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-508
+    introduced_date: 2026-05-13
+    owner_adr: ADR-060               # framework SSOT — entry name convention policy owner
+    carrier_adr: ADR-060             # Amendment 7 carrier
+    recurrence:
+      count: 0
+      promotion_trigger: none        # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active
+  - name: workflow-permissions-block-presence
+    description: |
+      ADR-060 Amendment 8 §결정 21 mechanical verification —
+      .github/workflows/*.yml + templates/github-workflows/*.yml top-level
+      `permissions:` block 부재 detect. Glob scope = *.yml only.
+    detect_command: bash scripts/check-workflow-permissions-presence.sh
+    workflow: templates/github-workflows/workflow-permissions-check.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:workflow-permissions
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-530
+    introduced_date: 2026-05-13
+    owner_adr: ADR-060
+    carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none
     status: Active

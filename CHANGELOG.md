@@ -5,6 +5,154 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [Unreleased]
+
+## [5.37.0] - 2026-05-13 — CFP-529 Wave 3 Phase 2
+
+### Added (CFP-529 Wave 3 Phase 2 — handoff wording linter, ADR-068 §결정 5 / ADR-060)
+
+Wave 3 Phase 2 mechanical impl carrier — handoff wording drift detector. ADR-068 §결정 5 `wording-ssot-grep-lint` evidence-enforceable framework warning-tier 8번째 entry mechanical impl. Phase 1 (PR #579 stack base) = declarative SSOT (severity-propagation-v1 contract + MANIFEST + registry row). 본 Phase 2 PR = mechanical script + tests + workflow + self-app + plugin.json 5.36.0 → 5.37.0 MINOR + CHANGELOG.
+
+- `scripts/check_handoff_wording.py` (NEW, ~600 LOC, ADR-061 정합 외부 `.py`) — handoff wording drift mechanical detection. Scope 5 영역 (`scripts/**` / `templates/**` / `tests/**` / `docs/**` / `CLAUDE.md`). Direction enum 3-way: forward (ADR 식별자 verbatim 매칭 → impl 부재 시 info) / backward (impl 식별자 reverse-lookup → ADR/contract 부재 시 warning, Amendment trigger SSOT) / lateral (Story §3 ↔ §7 ↔ §8.5 cross-section diff). Drift 패턴 8종 — mechanical 5 (synonym_substitution / unit_drift / modal_downgrade / boundary_inversion / scope_widening) + AI escalate stub 3 (precision_loss / conditional_erasure / actor_drift). Exempt regions 3종 (dictionary body marker / verbatim quote `>` lines / consumer overlay `.claude/_overlay/`). Exit code tri-tier (ADR-060 Amendment 2 §결정 15): 0 (PASS or warning tier with findings) / 1 (strict mode with findings) / 2 (root path absent).
+- `tests/scripts/test_check_handoff_wording.py` (NEW, ~370 LOC unittest) — 26 test cases: mechanical patterns (5) + AI escalate stubs (4) + direction enum (3) + exit code (4) + exempt regions (3) + arg parse (4) + formatters (3). Tempdir fixture isolation. All 26 PASS.
+- `templates/github-workflows/handoff-wording-check.yml` (NEW) + `.github/workflows/handoff-wording-check.yml` (NEW self-app byte-identical mirror). `continue-on-error: true` warning tier. Bypass channel `hotfix-bypass:boundary-wording` label (ADR-024 Amendment 3 정합) + audit comment 자동 발의 + bypass audit assertion.
+- `.claude-plugin/plugin.json` — version 5.36.0 → 5.37.0 MINOR + description CFP-529 Wave 3 Phase 2 entry append.
+
+### Sibling sync (separate PRs)
+
+- mclayer/marketplace: marketplace.json plugins[codeforge].version 5.36.0 → 5.37.0 mirrored (ADR-063 atomic invariant — 본 PR merge 전 선행 merge)
+
+## [5.36.0] - 2026-05-13
+
+### Added (CFP-530 — workflow yml permissions hardening, ADR-060 Amendment 8)
+
+Workflow yml `permissions:` block 일괄 hardening (`.github/workflows/` 6 + `templates/github-workflows/` 8 = 16 file). GitHub Actions least-privilege standard 정합 — GITHUB_TOKEN 명시적 scope 제어. 14 MISSING + 2 job-level upgrade 대상 모두 T1 base (`contents: read`), `superpowers-schema-drift.yml` pair 는 TH-7 sealed (top-level deny + schedule job override `issues: write` event-conditioned). `scripts/check-workflow-permissions-presence.sh` mechanical lint + `templates/github-workflows/workflow-permissions-check.yml` warning-tier workflow + self-app byte-identical mirror (`workflow-permissions-check.yml` `.github/workflows/` 동시 신설). evidence-check-registry-v1 row append `workflow-permissions-block-presence` (9번째 entry), label-registry-v2 v2.5 same-MINOR sub-entry append (`hotfix-bypass:workflow-permissions` 10번째 family member). ADR-024 Amendment 정합, ADR-063 atomic invariant 발효 (plugin.json 5.35.0 → 5.36.0 + CHANGELOG + marketplace.json 3-file atomic sync).
+
+- `.github/workflows/` 6 file `permissions: contents: read` top-level prepend
+- `templates/github-workflows/` 8 file `permissions: contents: read` top-level prepend + 2 pair byte-identical mirror
+- `templates/github-workflows/superpowers-schema-drift.yml` + `.github/workflows/superpowers-schema-drift.yml` job-level `issues: write` override (TH-7 sealed)
+- `scripts/check-workflow-permissions-presence.sh` (NEW) + exec bit
+- `templates/github-workflows/workflow-permissions-check.yml` (NEW) warning-tier workflow
+- `.github/workflows/workflow-permissions-check.yml` (NEW self-app mirror)
+- `docs/evidence-checks-registry.yaml` row append `workflow-permissions-block-presence` (9번째 entry, ADR-060 Amendment 8 §결정 21)
+- `docs/inter-plugin-contracts/label-registry-v2.md` v2.5 same-MINOR sub-entry append (`hotfix-bypass:workflow-permissions` 10번째 family, ADR-024 Amendment 정합)
+- `.claude-plugin/plugin.json` — version 5.35.0 → 5.36.0 + description CFP-530 row append
+
+## [5.35.0] - 2026-05-13 — CFP-528 Wave 2B
+
+### Added
+
+- **ADR-068 Amendment 1** — I-5 dimensional empirical grounding invariant 신설 (4 → 5 invariants, ratchet 강화). 10 dimension enum (latency/scale/cardinality/throughput/cost/accuracy/lifecycle/volume/rate/count) 의 quantitative parameter 마다 `[empirical-source: <ref>]` 또는 `[empirical-source: TBD]` annotation 의무. empirical-absent default lock-in 차단 (#319 RETRO-MCT-104 carrier).
+- **review-verdict-v4 v4.3 → v4.4 MINOR bump** — `dimensional_empirical_self_check_passed: bool` optional field + `findings[].type: "dimensional-empirical-gap"` literal. ArchitectAgent verdict packet 셋 별도 boolean field (mechanical + boundary_completeness + dimensional_empirical) 동시 PASS 의무.
+- **mechanical_enforcement_actions[] 3번째 entry** — `dimensional-empirical-grounding` (status: deferred-followup, target_section: §결정 1).
+
+### Closed
+
+- **#319 (RETRO-MCT-104)** — keep-linked + close as absorbed. distinct failure-class but systemic super-class (empirical-grounded design discipline). ADR-052 Amendment 3 (touchpoint #4 fact-check) cover specific case + CFP-528 dimensional sensitivity discipline 일반화.
+
+### Sibling sync (separate PRs)
+
+- mclayer/marketplace: marketplace.json plugins[codeforge].version 5.34.0 → 5.35.0 mirrored (ADR-063 atomic invariant)
+- mclayer/plugin-codeforge-design: ArchitectAgent.md / ArchitectPLAgent.md I-5 self-check step (parallel sibling PR)
+- mclayer/plugin-codeforge-review: review-pl-base.md §3 I-5 mechanical detection rule + review-verdict-v4 canonical v4.4 (parallel sibling PR)
+- mclayer/codeforge-internal-docs: wrapper/stories/CFP-528.md 신설
+
+## [5.34.0] - 2026-05-13
+
+### Added
+- **[ESC#525 CFP-527]** Boundary completeness 4-invariant governance ADR-068 신설 (Wave 2A of Epic-FIX-ESCALATION-prevention). ADR-068 governance permanent (`is_transitional: false`) — 4 invariants (API contract semantic / cross-module propagation / guard placement intent / wording SSOT) + dual-binding (design author + code-review cross-validate) + review-verdict-v4 v4.3 MINOR bump (`boundary_completeness_self_check_passed` + `findings[].type: "boundary-completeness"`) + wording-ssot-grep-lint warning-tier evidence-enforceable (8번째 entry). #438 absorption — ADR-065 (mechanical syntactic) 와 ADR-068 (semantic) 분리 운영 (verdict packet 양 별도 boolean field).
+
+## [5.33.0] - 2026-05-13
+
+### Changed
+- **[ESC#525 CFP-526]** fix-ledger RESET 정책 + implementability reassessment + reasoning carryover (Wave 1 of Epic-FIX-ESCALATION-prevention). ADR-067 신설 (fix-ledger implementability escalation, governance category) + fix-event-v1 v1.1 → v1.2 MINOR bump (reasoning_carryover optional field, 3-part structured YAML) + skill `codeforge:fix-ledger-schema` 4 bullet 본문 확장 + orchestrator-playbook §6.4/§6.5/§6.6 신설 + CLAUDE.md FIX 루프 cross-ref. 사용자 directive 2026-05-13 carrier — FIX 3회 초과 시 ArchitectPL 재량 implementability 평가 + 사용자 escalation 의무 trigger 3종 (ESCALATE root cause / cross-module invariant / N+1 round divergence). Case study source = mctrader-hub MCT-150 §10 4 FIX cycle.
+
+## [5.32.0] - 2026-05-13
+
+### Added (CFP-492 — lint hardening: bootstrap-labels self-check + measure exit 4 context-aware)
+
+CFP-451 P2 advisory 2건 통합 (PMOAgent 발의 #5). bootstrap-labels.sh 에 `LABEL_COUNT` counter + DRY_RUN 모드 stderr report 추가, `scripts/check-bootstrap-labels-count.sh` 신설하여 dry-run output line count ↔ counter 2-way verify (drift detection 자동화). measure-rate-limit-fallback.sh exit 4 SONNET_AGENTS enum drift 검출을 ADR 본문 `## 결정` / `### 결정 N:` block scope 안으로 한정 (awk state machine — false-positive 회피, deprecated section / 거절 대안 영역 무시).
+
+- `scripts/bootstrap-labels.sh` (UPDATE) — LABEL_COUNT counter + DRY_RUN stderr report
+- `scripts/check-bootstrap-labels-count.sh` (NEW) — 2-way verify lint
+- `scripts/measure-rate-limit-fallback.sh` (UPDATE) — exit 4 section-aware awk parsing
+- `tests/scripts/test_bootstrap_labels_count.sh` (NEW, 3 case)
+- `tests/scripts/test_measure_rate_limit_fallback_section_aware.sh` (NEW, 2 case)
+- `.claude-plugin/plugin.json` — 5.31.0 → 5.32.0 MINOR
+
+## [5.31.0] - 2026-05-13
+
+### Added (CFP-508 — evidence-registry-naming convention lint, ADR-060 Amendment 7)
+
+evidence-checks-registry 32 entry name ↔ workflow file naming convention 검증 (Conservative no-rename policy). `scripts/check-evidence-registry-naming.sh` (file existence + allowlist DRIFT advisory). multi-job workflow pattern 정식 인정 (contract-lint.yml + lint.yml). §결정 20 신설. 7번째 warning-tier evidence-enforceable entry.
+
+- `scripts/check-evidence-registry-naming.sh` (NEW)
+- `tests/scripts/test_check_evidence_registry_naming.sh` (NEW, 3 case)
+- `templates/github-workflows/evidence-registry-naming-check.yml` (NEW, warning mode)
+- `.github/workflows/evidence-registry-naming-check.yml` (NEW, self-app byte-identical)
+- `docs/evidence-checks-registry.yaml` — evidence-registry-naming entry append (7번째 warning-tier)
+- `docs/adr/ADR-060-evidence-enforceable-promotion-framework.md` — Amendment 7 + §결정 20 신설
+- `.claude-plugin/plugin.json` — version 5.30.0 → 5.31.0 MINOR
+
+## [5.30.0] - 2026-05-13
+
+### Changed (CFP-509 — evidence-check-registry schema v1.1 → v1.2 MINOR bump)
+
+ADR-060 Amendment 6 carrier — `recurrence:` field 정식 도입 (optional object: count / last_occurrence / threshold / promotion_trigger) + §결정 19 신설 (recurrence-based advisory promotion signal) + 32 entry retroactive migration (lane-evidence-trail count=2 historical evidence 흡수, 31 entry count=0 default). schema validation lint 확장. backward-compat 100% (recurrence 미정의 entry 모두 정상 PASS).
+
+- `docs/inter-plugin-contracts/evidence-check-registry-v1.md` (UPDATE) — schema v1.1 → v1.2 MINOR (recurrence field schema + v1.2 historical row)
+- `docs/adr/ADR-060-evidence-enforceable-promotion-framework.md` (UPDATE) — Amendment 6 + §결정 19 신설
+- `docs/evidence-checks-registry.yaml` (UPDATE) — 32 entry recurrence field migration
+- `scripts/check-evidence-registry.sh` (UPDATE) — recurrence field validation
+- `.claude-plugin/plugin.json` — version 5.29.0 → 5.30.0 MINOR
+
+## [5.29.0] - 2026-05-13
+
+> Note: Rebased twice onto main HEAD due to concurrent CFP-521 merges (#523 sibling-pr lint = 5.27.0; #524 PAT rotation = 5.28.0; CFP-462-followup marketplace batch #70). CFP-491 jumps to 5.29.0 to maintain ADR-037 sequential bump invariant.
+
+### Added (CFP-491 — AC mapping cross-ref lint — F-001 Option C systematization)
+
+`scripts/check-impl-manifest-ac-mapping.sh` + `tests/scripts/test_check_impl_manifest_ac_mapping.sh` + `templates/github-workflows/ac-mapping-cross-ref-check.yml` + `.github/workflows/` self-app (ADR-005) + `docs/evidence-checks-registry.yaml` ac-mapping-cross-ref entry (ADR-060 Amendment 6 6번째 warning-tier entry). Story §8.5 Impl Manifest 의 AC id 인용 ↔ §5.1 AC 정의 cross-reference 검증 (1차 단순화 = 2-way only). 기본 mode = LLM trust (exit 0 + stderr advisory), --strict mode + workflow continue-on-error:true defense in depth.
+
+- `scripts/check-impl-manifest-ac-mapping.sh` (NEW)
+- `tests/scripts/test_check_impl_manifest_ac_mapping.sh` (NEW)
+- `templates/github-workflows/ac-mapping-cross-ref-check.yml` (NEW)
+- `.github/workflows/ac-mapping-cross-ref-check.yml` (NEW, self-app)
+- `docs/evidence-checks-registry.yaml` (UPDATE) — ac-mapping-cross-ref entry append (6번째 warning-tier entry)
+- `.claude-plugin/plugin.json` — version 5.28.0 → 5.29.0 MINOR
+
+## [5.28.0] - 2026-05-13
+
+### Added (CFP-521 — CODEFORGE_CROSS_REPO_PAT rotation policy + ADR-066)
+
+EPIC-RESULTS CFP-462 §6 carrier #3. CFP-450 (ADR-013 Amendment 4) PAT consolidation 후속 — 단일 `CODEFORGE_CROSS_REPO_PAT` (cross-repo Story binding + KPI internal-docs clone) 의 lifetime / rotation / compromise response / audit log SSOT 신설. 권장 rotation 90 days / 최대 lifetime 180 days. Scope minimum 3종 (`repo:read` + `repo:write` + `metadata:read`). 5-step rotation 절차 + 4-step compromise response 명문화. Audit log SSOT 신설 (`docs/security/pat-rotation-log.md`, 사용자 manual entry 의무). 자동 만료 reminder workflow + audit log schema lint 는 Phase 2 carrier (별도 CFP — ADR-066 `mechanical_enforcement_actions: []`). Consumer overlay `security.pat_rotation_cadence_days` 강화 방향 override 허용 (weaken 금지). `is_transitional: false` (security default presumption, ADR-058 정합).
+
+- `docs/adr/ADR-066-pat-rotation-policy.md` (NEW) — 7 결정 (cadence / scope / 절차 / compromise / audit / 자동화 carrier / consumer overlay)
+- `docs/adr/ADR-RESERVATION.md` (UPDATE) — ADR-066 row append
+- `docs/security/pat-rotation-log.md` (NEW) — Audit log SSOT (rotation history 표 + schema + compromise response cross-ref)
+- `docs/consumer-guide.md` (UPDATE) — §1g 신설 (rotation cadence / scope / 절차 / compromise / audit / consumer overlay)
+- `CLAUDE.md` (UPDATE) — GitHub Workflow 단락 blockquote cross-ref 1줄 추가 (cap ≤320 정합)
+- `.claude-plugin/plugin.json` — version 5.27.0 → 5.28.0 MINOR (sibling-pr lint 5.27.0 merge 후 rebase)
+
+## [5.27.0] - 2026-05-13
+
+### Added (CFP-521 — sibling-pr label anti-misuse lint, EPIC-RESULTS-CFP-462 §6 carrier #2)
+
+ADR-010 Amendment 4 §결정 5 anti-misuse 안전망 mechanical enforcement. `sibling-pr` label 부착 PR 의 paired wrapper PR link (`mclayer/plugin-codeforge#NNN` 패턴 — short form + URL form 양쪽) 검증. 부재 시 audit comment 부착 + workflow failure (warning tier, advisory only — PR merge 미차단). Guard 3종 (sibling-pr label 미부착 skip / hotfix-bypass label 부착 skip / wrapper repo self-PR skip) + audit comment dedup (`[sibling-pr-anti-misuse]` marker). ADR-060 evidence-enforceable framework **5th warning-tier entry** (1st = adr-sunset-criteria / 2nd = decision-principle-vocab / 3rd = auto-phase-label / 4th = claude-md-line-cap). `hotfix-bypass:sibling-pr-author-check` **9번째 hotfix-bypass:* family member** (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합). CFP-499 sibling-pr fast-pass mechanism 의 anti-misuse 안전망 forcing function — Orchestrator self-write 영역 (CFP-61 / ADR-035) enforce.
+
+> **CFP # 정정 (2026-05-13)**: 본 entry 의 "CFP-521" 은 sibling-pr lint Story 의 wrong-CFP anomaly (실제 Issue # = 522, 정정된 CFP # = CFP-522, Story file 은 cleanup PR #285 으로 rename 완료). 본 description 의 텍스트 reference 는 descriptive only 로 보존 — functional 영향 0건.
+
+- `templates/github-workflows/sibling-pr-label-author-check.yml` (NEW) — wrapper SSOT fixture, actions/github-script-based 2-step workflow (paired link 검증 + audit comment 부착)
+- `.github/workflows/sibling-pr-label-author-check.yml` (NEW, self-app byte-identical, ADR-005 self-application 정합)
+- `docs/evidence-checks-registry.yaml` (UPDATE) — `sibling-pr-label-author-check` entry append (5th warning-tier, status=Active)
+- `docs/inter-plugin-contracts/label-registry-v2.md` (UPDATE) — v2.4 sub-entry append + frontmatter `related_adrs` ADR-010 추가 + `hotfix-bypass:sibling-pr-author-check` 9번째 family member 문서화
+- `CLAUDE.md` (UPDATE L291) — workflow 갯수 22 → 23 / 4 evidence-enforceable warning → 5 / 새 entry 1줄 inline 추가
+- `.claude-plugin/plugin.json` — version 5.26.0 → 5.27.0 MINOR (workflow 변경, ADR-037 plugin SemVer rule)
+
+#### Why
+
+axis-A (governance — ADR-010 Amendment 4 §결정 5 anti-misuse 후행 carrier 의무): CFP-499 (ADR-010 Amendment 4) 가 `sibling-pr` label fast-pass mechanism 도입 시 §결정 5 (anti-misuse 안전망) 가 후행 CFP carrier 의무 명문화. EPIC-RESULTS-CFP-462 §6 후행 carrier #2 로 식별. axis-B (mechanical enforcement — Orchestrator self-write 영역 정합): label 자체에 author check 없음 → human user 부착 시 phase-gate bypass 악용 가능. PR body grep `mclayer/plugin-codeforge#NNN` 패턴 검증으로 paired wrapper PR link evidence enforce. axis-C (warning tier conservatism — ADR-060 §결정 5 첫 도입 = warning): advisory only, PR merge 미차단. 승격 path = pr_cumulative_min 20 + failure_threshold 0 도달 시 별도 carrier 가 blocking-on-pr 평가.
+
 ## [5.26.0] - 2026-05-13
 
 ### Added (CFP-506 — CLAUDE.md skill 추출 + cap ratchet ≤320 + mechanical lint forcing function)

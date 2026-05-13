@@ -1,9 +1,13 @@
 ---
-adr_number: 50
+adr_number: 69
 title: Multi-Repo Hierarchical Story Key System
 status: Accepted
 category: orchestration
 date: 2026-05-09
+renumbered_from: 50
+renumbered_at: 2026-05-13
+renumber_carrier: CFP-570
+renumber_reason: "ADR-050 namespace collision — ADR-RESERVATION.md row 50 owns CFP-344 (parallel-epic-conflict-coordination, 공식 reservation). CFP-342 (multi-repo-story-key-system) 는 ADR-RESERVATION 도입 전 pre-registry intruder 였음. retroactive 정리."
 carrier_story: CFP-342
 supersedes: null
 superseded_by: null
@@ -30,7 +34,7 @@ deputy_inputs:
 is_transitional: false
 ---
 
-# ADR-050: Multi-Repo Hierarchical Story Key System
+# ADR-069: Multi-Repo Hierarchical Story Key System
 
 ## 상태
 
@@ -174,7 +178,7 @@ ADR-020 Amendment 1 §결정 8 Mode B (hub-centralized) 가 본 시스템의 **d
 
 **§결정 9 (Joint-phase narrow form) 정합**: 1 Story 가 multi-repo 의 joint Phase N PR 보유 가능. 본 시스템에서 = hub story `delegates[]` 다중 entry → 각 impl repo story 가 동일 Story 의 일부 phase 진행. PR title / commit footer 가 동일 Story key reference (예: `mctrader-data#MCT-001` + `mctrader-engine#MCT-002` 가 hub `mctrader-hub#MCT-112` 의 joint Phase 2).
 
-**ADR-020 Amendment 3 cross-ref**: 본 ADR-050 가 ADR-020 Mode B 의 implementation backbone 임을 ADR-020 Amendment 3 (별도 단순 cross-ref) 가 명시.
+**ADR-020 Amendment 3 cross-ref**: 본 ADR-069 가 ADR-020 Mode B 의 implementation backbone 임을 ADR-020 Amendment 3 (별도 단순 cross-ref) 가 명시.
 
 ## 거부된 대안
 
