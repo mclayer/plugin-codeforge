@@ -5,6 +5,11 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.33.0] - 2026-05-13
+
+### Changed
+- **[ESC#525 CFP-526]** fix-ledger RESET 정책 + implementability reassessment + reasoning carryover (Wave 1 of Epic-FIX-ESCALATION-prevention). ADR-067 신설 (fix-ledger implementability escalation, governance category) + fix-event-v1 v1.1 → v1.2 MINOR bump (reasoning_carryover optional field, 3-part structured YAML) + skill `codeforge:fix-ledger-schema` 4 bullet 본문 확장 + orchestrator-playbook §6.4/§6.5/§6.6 신설 + CLAUDE.md FIX 루프 cross-ref. 사용자 directive 2026-05-13 carrier — FIX 3회 초과 시 ArchitectPL 재량 implementability 평가 + 사용자 escalation 의무 trigger 3종 (ESCALATE root cause / cross-module invariant / N+1 round divergence). Case study source = mctrader-hub MCT-150 §10 4 FIX cycle.
+
 ## [5.32.0] - 2026-05-13
 
 ### Added (CFP-492 — lint hardening: bootstrap-labels self-check + measure exit 4 context-aware)
