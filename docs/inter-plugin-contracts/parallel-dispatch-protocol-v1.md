@@ -55,13 +55,15 @@ consumers:
 
 선례 정합 = debate-protocol-v1 / severity-propagation-v1 / evidence-check-registry-v1 / label-registry-v2 / comment-prefix-registry-v1 / fix-event-v1.
 
-## §1. 목적
+## 1. 목적
 
 codeforge 내 모든 lane PL agent 가 plan task 를 dispatch 할 때 **의존성 그래프(DAG) 기반 병렬 dispatch default** 를 구조적으로 강제하는 행동 registry. ADR-064 §결정 4 (Trace 4) "Orchestrator multi-task spawn default = parallel" normative declaration 의 execution-time enforcement carrier.
 
 근본 동기: mctrader (codeforge consumer 데뷔작) MCT-159 Phase 2 55min wall-clock 실측 — 의존성 부재 Task 8~14 sequential 진행으로 ~40-45% wall-clock 손실 추정 (잠재 30min 감축 가능). 6 영역 root cause 중 F2 (Orchestrator dispatch prompt sequential lock) / F3 (DeveloperPLAgent default sequential bias) / F6 (consumer overlay default sequential bias) = 본 registry scope. F1 / F4 / F5 (외부 superpowers skill 영역) = 본 registry scope 외.
 
-## §2. Plan Task DAG 3 Field (의무 박제)
+## 2. Schema
+
+### Plan Task DAG 3 Field (의무 박제)
 
 codeforge 가 plan 작성 시 각 task block 에 아래 3 field (+ 선택 1 field) 를 반드시 박제한다. field 부재 = parallel default 추정 → spawn prompt 시 audit 위반.
 
@@ -75,7 +77,9 @@ codeforge 가 plan 작성 시 각 task block 에 아래 3 field (+ 선택 1 fiel
 - 순차 의무 사유: "<6 enum 중 1>" # sequential_mandate_reason — 선택 (sequential 선택 시 의무)
 ```
 
-## §3. 6 순차 의무 영역 Enum (close-set)
+## 3. 항목
+
+### 6 순차 의무 영역 Enum (close-set)
 
 ADR-064 §결정 4 의 3 사유 (state dependency / shared resource / ordering invariant) 의 codeforge 도메인 instantiation. sequential 선택 시 아래 6 enum 중 1 종 명시 의무.
 
@@ -90,7 +94,9 @@ ADR-064 §결정 4 의 3 사유 (state dependency / shared resource / ordering i
 
 **Close-set assumption**: 6 enum 외 sequential 선택 = ADR-064 §결정 4 위반. ADR-039 §결정 7 `policy_violation_subdecision` 발화 채널. enum 확장 (예: label-registry MINOR bump 의 shared resource 분류 후보) 은 별 CFP carrier 신설 + ADR-064 Amendment N 의무.
 
-## §4. Orchestrator → PL Dispatch Prompt 4 의무 항목
+## 4. 변경 규칙
+
+### Orchestrator → PL Dispatch Prompt 4 의무 항목
 
 lane PL agent spawn 시 Orchestrator 가 prompt 에 반드시 포함해야 하는 4 항목.
 

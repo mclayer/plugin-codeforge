@@ -172,6 +172,23 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
      "codeforge.stories.repos (list of repo entry dicts), optional — "
      "each entry requires name (str) + role ('governance'|'implementation'); "
      "role=implementation also requires path (str) + github (str)"),
+    # CFP-609 / ADR-064 Amendment 1 — Parallel Dispatch Protocol consumer overlay
+    # SSOT: docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md (kind:registry)
+    # ADR-064 §결정 7 ratchet — 약화 방향 차단 (강화 방향만 허용).
+    ("parallel_dispatch", False, dict, "parallel_dispatch section (mapping), optional"),
+    ("parallel_dispatch.pl_autonomous_parallel_authority", False,
+     lambda v: isinstance(v, str) and v in ("required", "optional", "disabled"),
+     "parallel_dispatch.pl_autonomous_parallel_authority "
+     "('required' | 'optional' | 'disabled'), optional, default 'required'"),
+    ("parallel_dispatch.plan_dag_hint_required", False,
+     lambda v: isinstance(v, bool),
+     "parallel_dispatch.plan_dag_hint_required (boolean), optional, default true"),
+    ("parallel_dispatch.dispatch_prompt_validation", False,
+     lambda v: isinstance(v, str) and v in ("warn", "block"),
+     "parallel_dispatch.dispatch_prompt_validation ('warn' | 'block'), optional, default 'warn'"),
+    ("parallel_dispatch.wall_clock_measurement", False,
+     lambda v: isinstance(v, bool),
+     "parallel_dispatch.wall_clock_measurement (boolean), optional, default true"),
 ]
 
 
