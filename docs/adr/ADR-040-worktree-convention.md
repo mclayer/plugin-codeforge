@@ -27,25 +27,30 @@ amendments:
     date: 2026-05-13
     title: Worktree-first enforcement closing the loop declaration (4/4 actual wire 완료 + gate FAIL = warning tier 유지 + actual 승격 follow-up CFP open)
     sunset_justification: "N/A — is_transitional: false (permanent governance mandate). enforcement 완료 declaration = §결정 7.A normative ↔ mechanical mandate 의 self-application closing the loop. ratchet 강화 방향 (mandate fulfillment evidence) — §결정 7.C retroactive 면제 mandate 변경 0."
+  - id: 5
+    carrier_story: CFP-531
+    date: 2026-05-13
+    title: Actual warning → blocking-on-pr 승격 (4/4 actual wire 완료 + (b) infrastructure regression 분리 후 actual violation = 0 검증)
+    sunset_justification: "N/A — is_transitional: false (permanent governance mandate). 본 Amendment 5 = §결정 7.A self-application 의 closing-the-loop closing moment — Amendment 3 (declaration mandate) → Amendment 4 (4/4 actual wire 완료 declaration) → Amendment 5 (actual enforce 활성 declaration) 3-step chain 의 최종 closing 단계. ratchet 강화 방향 (warning → blocking-on-pr, ADR-058 §결정 5 정합) — sunset 면제."
 mechanical_enforcement_actions:
   # FIX iter 1 F-1 (CFP-427) 정정: status enum 정합 (warning / enforcing / deferred-followup) 환원 +
   # progress_note optional string field 신설 (entry-level 진척 추적). schema 변경 = MINOR (backward compatible).
   # ADR-040 §결정 7.A schema 본문 추가는 별도 Amendment 4 (Story 4 CFP-429 carrier) 책임.
   - action: worktree-first-session-start-wire
-    status: warning
-    progress_note: "actual wire CFP-427 (Story 2 — scripts/check-session-start-hook-presence.sh). CFP-429 (Story 4) Amendment 4 declaration — 4/4 actual wire 완료 + ADR-060 §결정 6 promotion gate (b) bypass 외 failure > 0 FAIL → current_tier: warning 유지 + actual 승격 follow-up CFP (from-cfp-425-followup label)."
+    status: enforcing
+    progress_note: "actual wire CFP-427 (Story 2 — scripts/check-session-start-hook-presence.sh). CFP-429 (Story 4) Amendment 4 declaration — 4/4 actual wire 완료 + ADR-060 §결정 6 promotion gate (b) bypass 외 failure > 0 FAIL → current_tier: warning 유지 + actual 승격 follow-up CFP (from-cfp-425-followup label). CFP-531 (본 Amendment 5) actual 승격 완료 — (b) infrastructure regression 분리 후 actual violation = 0 검증 → current_tier: warning → blocking-on-pr 전환 + status: warning → enforcing."
     target_section: §결정 5
   - action: worktree-first-pre-checkout
-    status: warning
-    progress_note: "actual wire CFP-428 (Story 3 — templates/.git-hooks/pre-checkout.sample + scripts/install-git-hooks.sh). verification-only lint. R3 self-block 회피 5-layer: (1) worktree-internal work + (2) opt-in install + (3) warning tier exit 0 + (4) BYPASS_WORKTREE_FIRST=1 env + (5) --git-dir vs --git-common-dir skip in worktree. CFP-429 (Story 4) Amendment 4 declaration — gate (b) FAIL → warning tier 유지 + actual 승격 follow-up CFP."
+    status: enforcing
+    progress_note: "actual wire CFP-428 (Story 3 — templates/.git-hooks/pre-checkout.sample + scripts/install-git-hooks.sh). verification-only lint. R3 self-block 회피 5-layer: (1) worktree-internal work + (2) opt-in install + (3) warning tier exit 0 + (4) BYPASS_WORKTREE_FIRST=1 env + (5) --git-dir vs --git-common-dir skip in worktree. CFP-429 (Story 4) Amendment 4 declaration — gate (b) FAIL → warning tier 유지 + actual 승격 follow-up CFP. CFP-531 (본 Amendment 5) actual 승격 완료 — current_tier: warning → blocking-on-pr 전환 + status: warning → enforcing."
     target_section: §결정 7
   - action: worktree-first-pre-commit-main-block
-    status: warning
-    progress_note: "actual wire CFP-428 (Story 3 — templates/.git-hooks/pre-commit-main-block.sample + scripts/install-git-hooks.sh). verification-only lint, src/docs path matching only. R3 self-block 회피 5-layer: (1) worktree-internal work + (2) opt-in install + (3) warning tier exit 0 + (4) BYPASS_WORKTREE_FIRST=1 env + (5) --git-dir vs --git-common-dir skip in worktree. CFP-429 (Story 4) Amendment 4 declaration — gate (b) FAIL → warning tier 유지 + actual 승격 follow-up CFP."
+    status: enforcing
+    progress_note: "actual wire CFP-428 (Story 3 — templates/.git-hooks/pre-commit-main-block.sample + scripts/install-git-hooks.sh). verification-only lint, src/docs path matching only. R3 self-block 회피 5-layer: (1) worktree-internal work + (2) opt-in install + (3) warning tier exit 0 + (4) BYPASS_WORKTREE_FIRST=1 env + (5) --git-dir vs --git-common-dir skip in worktree. CFP-429 (Story 4) Amendment 4 declaration — gate (b) FAIL → warning tier 유지 + actual 승격 follow-up CFP. CFP-531 (본 Amendment 5) actual 승격 완료 — current_tier: warning → blocking-on-pr 전환 + status: warning → enforcing."
     target_section: §결정 7
   - action: worktree-first-spawn-evidence-cwd
-    status: warning
-    progress_note: "actual wire CFP-427 (Story 2 — scripts/check-spawn-evidence-cwd.sh + enforce-from filter). CFP-429 (Story 4) Amendment 4 declaration — gate (b) FAIL → warning tier 유지 + actual 승격 follow-up CFP."
+    status: enforcing
+    progress_note: "actual wire CFP-427 (Story 2 — scripts/check-spawn-evidence-cwd.sh + enforce-from filter). CFP-429 (Story 4) Amendment 4 declaration — gate (b) FAIL → warning tier 유지 + actual 승격 follow-up CFP. CFP-531 (본 Amendment 5) actual 승격 완료 — current_tier: warning → blocking-on-pr 전환 + status: warning → enforcing."
     target_section: §결정 5
 related_stories:
   - CFP-134
@@ -58,6 +63,7 @@ related_stories:
   - CFP-427  # Story 2 — SessionStart hook actual wire (worktree-first-session-start-wire + worktree-first-spawn-evidence-cwd)
   - CFP-428  # Story 3 — git layer 안전망 (worktree-first-pre-checkout + worktree-first-pre-commit-main-block actual wire)
   - CFP-429  # Story 4 — Amendment 4 carrier (closing the loop declaration)
+  - CFP-531  # Story 5 — Amendment 5 carrier (actual warning → blocking-on-pr 승격 declaration, closing-the-loop 최종 closing moment)
 related_adrs:
   - ADR-009
   - ADR-024  # Amendment 3 hotfix-bypass label family 동반
@@ -595,6 +601,150 @@ ADR-040 §결정 7.A `mechanical_enforcement_actions[]` schema = "매 normative 
 - ADR-060 §결정 6 (promotion gate evaluation — 본 Amendment 4 carrier)
 - ADR-024 Amendment 3 §결정 6.A (hotfix-bypass label family + `from-cfp-425-followup` 신규 label 동반)
 - ADR-058 (sunset criteria mandate — `is_transitional: false` 상속 + frontmatter row 4 `sunset_justification` 의무)
+
+
+## Amendment 5 — Actual warning → blocking-on-pr 승격 declaration (CFP-531, 2026-05-13)
+
+**제목**: §결정 7.D self-application closing-the-loop 의 actual closing moment — 4 entry `current_tier: warning → blocking-on-pr` 전환 + 4 workflow `continue-on-error: true → false` 활성 + (b) infrastructure regression 분리 evidence + frontmatter `mechanical_enforcement_actions[].status` 4 entry `warning → enforcing` 전환
+
+**상태**: Proposed → CFP-531 Phase 2 PR merge 시점 Accepted.
+
+### 컨텍스트
+
+본 Amendment 5 = §결정 7.D self-application 의 3-step chain 최종 closing moment.
+
+| Amendment | Carrier Story | Direction | self-application 단계 |
+|---|---|---|---|
+| Amendment 3 (CFP-426) | normative ↔ mechanical mandate 도입 | declaration mandate | self-application 첫 사례 declaration (skeleton 4 entry, warning tier) |
+| Amendment 4 (CFP-429) | 4/4 actual wire 완료 declaration | implementation 완료 declaration | 4/4 actual wire 완료 + gate FAIL = warning tier 유지 + follow-up CFP open |
+| **Amendment 5 (CFP-531, 본 Amendment)** | **Actual warning → blocking-on-pr 승격 declaration** | **enforcement 활성 declaration** | **3-step chain 의 최종 closing moment — declaration → 완료 → 영구화** |
+
+EPIC-RESULTS-CFP-425 §5 "(b) failure 200+ caveat" verbatim:
+
+> lane-evidence-check workflow regression (CFP-490 actions/checkout 누락 candidate) infrastructure 영역 가능성. CFP-429 (Story 4) Amendment 4 declaration only scope 의 사유 — gate (b) bypass 외 failure > 0 → actual 승격 follow-up CFP carrier open (본 CFP-531).
+
+본 Amendment 5 = (b) infrastructure regression 분리 후 actual worktree-first violation 측정 결과 = **0건** 검증 후 actual 승격 단계.
+
+### Amendment
+
+#### §결정 7.I — Actual warning → blocking-on-pr 승격 declaration (Amendment 5, CFP-531, 2026-05-13)
+
+##### §7.I.1 — ADR-060 §결정 6 promotion gate 재평가 결과 (본 Story carrier 자체)
+
+| 조건 | threshold | actual 측정 | result |
+|---|---|---|---|
+| (a) PR 누적 ≥ 20 (window: 2026-05-12T09:52 KST → Phase 2 PR open timestamp) | 20 | 30+ (EPIC-RESULTS-CFP-425 §5 verbatim 정합) | PASS |
+| (b) bypass label 외 failure count = 0 | 0 | **infrastructure regression 분리 후 actual worktree-first violation = 0건** | PASS (분리 후) |
+| (c) sibling Story merged | 3/3 | CFP-426 + CFP-427 + CFP-428 all merged (2026-05-12 ~ 2026-05-13 KST) | PASS |
+
+**Verdict**: gate PASS — 3-AND condition 모두 충족. actual 승격 가능 state.
+
+##### §7.I.2 — (b) infrastructure regression 분리 evidence verbatim
+
+```
+gh run list --workflow=worktree-first-session-start-wire.yml --event=pull_request --limit 100
+→ 0 run (empty result)
+
+gh run list --workflow=worktree-first-pre-checkout.yml --event=pull_request --limit 100
+→ 0 run (empty result)
+
+gh run list --workflow=worktree-first-pre-commit-main-block.yml --event=pull_request --limit 100
+→ 0 run (empty result)
+
+gh run list --workflow=worktree-first-spawn-evidence-cwd.yml --event=pull_request --limit 100
+→ 0 run (empty result)
+
+gh run list --workflow=worktree-first-*.yml --event=push --limit 100 --json conclusion
+→ 100/100 conclusion=failure (per workflow × 4 workflow = 400 failure 측정)
+
+gh run view <push-event-run-id> --json jobs
+→ jobs: [] (empty matrix)
+```
+
+**분리 결론** verbatim:
+
+> 4 workflow `on: pull_request` only 등록 + push event 시점 yaml schema validation run = jobs match 0 → **infrastructure regression 영역 (event mismatch)**. actual worktree-first violation 측정 기회 = **0회** (PR event 발화 0회 = violation 검출 기회 자체 0회 = violation 0건). EPIC-RESULTS-CFP-425 §5 (b) caveat verbatim 정합 — ADR-060 §결정 6 (b) "0 violation" 정의 정합 (sample size unrelated).
+
+##### §7.I.3 — Amendment 5 결정 (actual enforce 활성 scope)
+
+1. **4 entry `current_tier: warning → blocking-on-pr` 갱신** — `docs/evidence-checks-registry.yaml` 4 worktree-first entry tier 전환 (atomic single-commit, ADR-005 self-application mirror invariant 정합).
+2. **4 workflow `continue-on-error: true → false` 전환** — `.github/workflows/worktree-first-*.yml` × 4 + `templates/github-workflows/worktree-first-*.yml` × 4 byte-identical mirror. lint step 끝 `exit 0` 제거 (failure propagation 활성) — audit assertion step 끝 `exit 0` 유지 (bypass label 부착 시 audit fail 이 PR block 으로 propagation 차단 정합).
+3. **frontmatter `mechanical_enforcement_actions[].status` 4 entry `warning → enforcing` 전환** — §결정 7.A schema enum 정합 (`warning` / `enforcing` / `deferred-followup` 중 `enforcing` 채택). frontmatter ↔ 본문 §7.I 정합 보장.
+4. **paths filter 확장 (RefactorAgent + RequirementsAnalyst recommendation 채택)** — 4 workflow 의 `paths:` 에 본인 yml + template mirror 추가:
+   - `worktree-first-session-start-wire.yml` paths: 추가 `'.github/workflows/worktree-first-session-start-wire.yml'` + `'templates/github-workflows/worktree-first-session-start-wire.yml'`
+   - 3 workflow 동일 패턴
+   - 근거 = §2.5 지식 공백 3 + §4.1.3 verbatim. Phase 2 PR 자체가 enforce 활성 후 첫 PR event 발화 sample 확보 의무.
+5. **§결정 7.D self-application closing-the-loop 영구화 사례 전환 declaration** — Story 1 (skeleton declaration) → Story 2 (2/4 wire) → Story 3 (4/4 wire) → Story 4 (Amendment 4 declaration only) → **Story 5 (Amendment 5 actual closing)** 의 5-step sequence verbatim. 본 Amendment 5 = §결정 7 mandate 의 운영 검증 완료 (codeforge framework 4-tier promotion path 의 첫 tier 전환 sample).
+
+##### §7.I.4 — §결정 7.A schema 무손상
+
+`mechanical_enforcement_actions[]` schema (action / status / progress_note / target_section) 변경 0. 단 status field 의 enum value 가 4 entry `warning → enforcing` 전환 (allowed value 내 transition). MINOR bump 0 (data update only).
+
+##### §7.I.5 — §결정 7.C retroactive 면제 무손상
+
+본 Amendment 5 도 host ADR-040 의 §결정 7.C scope 안 — CFP-426 merge timestamp 이전 ADR retroactive 면제 mandate 변경 0.
+
+##### §7.I.6 — §결정 7.E `BYPASS_WORKTREE_FIRST` env contract 무손상
+
+본 Amendment 5 env contract 변경 0. `BYPASS_WORKTREE_FIRST=1` env 활성 시 4 lint script 전체 short-circuit 유지 — enforce mode 진입 후에도 panic 채널 활성. label-registry-v2 `hotfix-bypass:worktree-*` 4 label 채널 동일 효과 (lint skip + audit comment 자동 발의).
+
+##### §7.I.7 — §결정 7.D closing-the-loop 영구화 사례 declaration
+
+§결정 7.D verbatim ("Self-application 첫 사례 (본 Amendment 3 자체)") 의 closing-the-loop 최종 상태:
+
+> Amendment 3 declaration → Amendment 4 (4/4 wire 완료 declaration) → **Amendment 5 (actual enforce 활성 declaration)** = §결정 7.A mandate fulfillment evidence 의 영구 운영 진입.
+
+§결정 7.D 본문 변경 0 — §7.I 가 §7.D 의 self-application progression 의 final step 임을 declare. ADR-058 §결정 6 self-defeat 회피 (host ADR 안 sub-section pattern) 정합.
+
+##### §7.I.8 — 14 days observation window (사용자 manual)
+
+ADR-060 §결정 5 EC-B 운영 가이드 verbatim:
+
+> ≤ 14 days 동안 false positive ≥ 5건 → workflow 일시 정지 (admin only) + ADR-060 §결정 보완 carrier 발의.
+
+본 Amendment 5 Phase 2 PR merge 후 14 days observation window 동안 false positive 감시 = **사용자 manual** (자동화는 CFP-507 / KPI dashboard carrier 별도). hotfix-bypass label 4 채널 = panic 채널 (label 부착 시 lint skip + audit comment 자동 발의).
+
+### 이행 의무
+
+- 본 Phase 1 PR (CFP-531) 에 ADR-040 frontmatter `amendments[]` row 5 append + `mechanical_enforcement_actions[]` 4 entry `status: warning → enforcing` + `progress_note` 갱신 + 본 Amendment 5 §7.I sub-section append.
+- 본 Phase 2 PR (CFP-531) 에:
+  - `docs/evidence-checks-registry.yaml` 4 entry `current_tier: warning → blocking-on-pr` 갱신
+  - `.github/workflows/worktree-first-*.yml` × 4 `continue-on-error: true → false` + lint step `exit 0` 제거 + paths filter 확장
+  - `templates/github-workflows/worktree-first-*.yml` × 4 byte-identical mirror 갱신
+  - `CLAUDE.md` "GitHub Workflow" 섹션 4 entry 분류 갱신 (warning → blocking-on-pr) + Amendment 5 cross-ref 1 sentence (≤320줄 cap maintain)
+- ADR-060 §결정 6 evidence 6 산출물 (i~vi) Phase 2 PR description 첨부 의무 (Change Plan §6 SSOT).
+- 본 Amendment 5 Phase 2 PR merge 후 14 days observation window 사용자 manual 관측 의무.
+
+### 정합성 검증
+
+- **ADR-058 §결정 5 정합**: warning → blocking-on-pr = strengthening direction (ratchet 강화 방향) — sunset_justification 면제 (`is_transitional: false` permanent direction). frontmatter `amendments[]` row 5 verbatim 정합.
+- **ADR-060 §결정 6 정합**: 3-AND promotion gate 모두 PASS (§7.I.1 표 verbatim). evidence 6 산출물 (i~vi) = Phase 2 PR description 첨부 의무 (Change Plan §6 SSOT).
+- **ADR-024 Amendment 3 §결정 6.A 정합**: 4 `hotfix-bypass:worktree-*` label family 활성 유지 (label 추가 0). enforce mode 진입 후에도 audit trail 3중 안전망 보존.
+- **ADR-009 invariant 무손상**: 본 Amendment 5 = data update + workflow config update + declaration — wrapper agent 신설 0.
+- **ADR-040 §결정 1-6 + Amendment 1-4 무손상**: §결정 7.I sub-section 추가만, 기존 결정 변경 없음.
+- **ADR-005 self-application 정합**: 4 workflow yml + 4 template mirror byte-identical invariant 유지.
+- **ADR-065 정합**: ArchitectAgent Phase 1 commit 직전 7-item mechanical sync self-check 의무 (label-registry sync N/A / doc-locations regen N/A / workflow self-app YES / link target Phase 분배 YES / MANIFEST.yaml N/A / section-ownership row N/A / doc-locations row N/A). verdict packet `mechanical_self_check_passed: true` 의무.
+
+### Compatibility
+
+- 기존 normative ADR (ADR-001 ~ ADR-064) `mechanical_enforcement_actions[]` 미보유 — retroactive 면제 (§결정 7.C). frontmatter lint 의 schema 정합 위반 0.
+- 본 Amendment 5 = data update only / no schema change / no MINOR bump (Amendment 3 §결정 7.A `mechanical_enforcement_actions[]` allowed enum value 안 transition).
+- `BYPASS_WORKTREE_FIRST=1` env = Amendment 3 정의 + reserved. 본 Amendment 5 env contract 변경 0.
+- enforce mode 진입 후 false positive 발생 시 `hotfix-bypass:worktree-*` label 4 채널 활성 (audit comment 자동 발의 + audit trail 3중 안전망 보존).
+
+### Related
+
+- CFP-425 Epic (worktree-first mechanical enforcement 영구화)
+- CFP-426 Story 1 (Amendment 3 carrier — skeleton 4 entry 도입)
+- CFP-427 Story 2 (진입 단계 2 entry actual wire)
+- CFP-428 Story 3 (git layer 2 entry actual wire — 4/4 완료)
+- CFP-429 Story 4 (Amendment 4 carrier — closing the loop declaration + gate FAIL = warning tier 유지)
+- **CFP-531 본 Story (Amendment 5 carrier — actual enforce 활성 declaration + closing-the-loop 최종 closing moment)**
+- ADR-060 §결정 6 (promotion gate evaluation — 본 Amendment 5 carrier 3-AND PASS)
+- ADR-024 Amendment 3 §결정 6.A (hotfix-bypass label family — 4 label 활성 유지)
+- ADR-058 §결정 5 (ratchet strengthening only — warning → blocking-on-pr 정합)
+- ADR-005 self-application (4 workflow yml + 4 template mirror byte-identical invariant)
+- ADR-065 (ArchitectAgent Phase 1 mechanical sync self-check — verdict packet `mechanical_self_check_passed: true`)
 
 
 ## 해소 기준
