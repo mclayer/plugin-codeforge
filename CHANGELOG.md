@@ -5,6 +5,19 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.32.0] - 2026-05-13
+
+### Added (CFP-492 — lint hardening: bootstrap-labels self-check + measure exit 4 context-aware)
+
+CFP-451 P2 advisory 2건 통합 (PMOAgent 발의 #5). bootstrap-labels.sh 에 `LABEL_COUNT` counter + DRY_RUN 모드 stderr report 추가, `scripts/check-bootstrap-labels-count.sh` 신설하여 dry-run output line count ↔ counter 2-way verify (drift detection 자동화). measure-rate-limit-fallback.sh exit 4 SONNET_AGENTS enum drift 검출을 ADR 본문 `## 결정` / `### 결정 N:` block scope 안으로 한정 (awk state machine — false-positive 회피, deprecated section / 거절 대안 영역 무시).
+
+- `scripts/bootstrap-labels.sh` (UPDATE) — LABEL_COUNT counter + DRY_RUN stderr report
+- `scripts/check-bootstrap-labels-count.sh` (NEW) — 2-way verify lint
+- `scripts/measure-rate-limit-fallback.sh` (UPDATE) — exit 4 section-aware awk parsing
+- `tests/scripts/test_bootstrap_labels_count.sh` (NEW, 3 case)
+- `tests/scripts/test_measure_rate_limit_fallback_section_aware.sh` (NEW, 2 case)
+- `.claude-plugin/plugin.json` — 5.31.0 → 5.32.0 MINOR
+
 ## [5.31.0] - 2026-05-13
 
 ### Added (CFP-508 — evidence-registry-naming convention lint, ADR-060 Amendment 7)
