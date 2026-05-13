@@ -150,10 +150,59 @@ permissions:
    · **ADR-065 mechanical 7-item (§5.5) 과 분리**: §5.5 = syntactic structural 정합 (label-registry / doc-locations / workflow self-app 등), 본 §5.6 = semantic 의미 완결성 (API docstring / propagation / guard / wording). 양 필드 모두 true 일 때만 Phase 1 commit 진행.
    · **marketplace 영역 외**: ADR-063 SSOT (cross-ref only)
 
+5.7. Marketplace sync proactive self-check trigger (ADR-063 Amendment 1 / CFP-597)
+
+본 ArchitectAgent (chief author) 는 Phase 1 산출물 commit 직전 plugin.json mirrored field diff 감지 의무 (ADR-063 Amendment 1 §결정 9 정합).
+
+#### 9.1 mirrored field diff 감지
+
+`git diff <plugin>/.claude-plugin/plugin.json` — 4 field 중 변경된 것 enum:
+- `name` 변경 감지
+- `version` 변경 감지 (MAJOR/MINOR/PATCH 모두)
+- `description` 변경 감지
+- `author` 변경 감지
+
+4 field 모두 git diff 비교 의무 (`git diff plugin.json | jq '.name,.version,.description,.author'` 또는 동등).
+
+#### 9.2 Change Plan §13 declarative sub-row 작성
+
+변경 감지 시 Change Plan §13 안 다음 sub-row 작성 의무:
+
+```yaml
+marketplace_sync_required: true
+mirrored_fields_changed: [<enum from 9.1>]  # 예: [version]
+triggering_plugins:
+  - <plugin name>: <bump type — MAJOR/MINOR/PATCH>
+```
+
+#### 9.3 verdict packet field 설정
+
+review-verdict-v4 v4.5 신규 optional field `marketplace_sync_declared: bool` true 설정 (ArchitectPLAgent verdict packet).
+
+#### 9.4 변경 미감지 시 명시적 declare (silent skip 금지)
+
+mirrored field 변경 0건 = Change Plan §13 안 `marketplace_sync_required: false` 명시. silent skip 금지 (AC-2 정합).
+
+#### 실행 책임 분리 (codeforge architecture)
+
+- **본 ArchitectAgent** = 9.1 + 9.2 + 9.3 + 9.4 (declarative only)
+- **Orchestrator** = Change Plan §13 declare 감지 → GitOpsAgent §3.6 spawn (Phase 2 PR open 시점)
+- **GitOpsAgent §3.6** (codeforge-pmo sibling) = marketplace cfp-NNN worktree 신설 + marketplace.json mirrored field sync + PR open
+
+#### ADR-065 boundary 보존
+
+본 §5.7 = ADR-063 SSOT 내부 trigger. ADR-065 §결정 1 7-item 영역 (non-marketplace mechanical sync) 그대로 유지. ADR-063 ↔ ADR-065 boundary cross-ref only — 중복 codification 회피.
+
+#### Cross-reference
+
+- ADR-063 §결정 9 (CFP-597 Amendment 1) SSOT
+- ADR-065 §결정 5 cross-ref 1줄 추가 (boundary 보존)
+- review-verdict-v4 v4.5 schema MINOR bump
+
 6. ArchitectPLAgent에 draft 반환
    · PL 검수 → PASS or RETURN (clarification context)
    · RETURN 시 본 에이전트 재스폰되어 누락·재해석 반영
-   · packet `mechanical_self_check_passed` (§5.5 결과) + `boundary_completeness_self_check_passed` (§5.6 결과) + `dimensional_empirical_self_check_passed` (§5.6.1 결과) 3 필드 전달 (PL 가 review-verdict-v4 v4.4 packet 작성 시 채움)
+   · packet `mechanical_self_check_passed` (§5.5 결과) + `boundary_completeness_self_check_passed` (§5.6 결과) + `dimensional_empirical_self_check_passed` (§5.6.1 결과) + `marketplace_sync_declared` (§5.7 결과) 4 필드 전달 (PL 가 review-verdict-v4 v4.5 packet 작성 시 채움)
 ````
 
 ### WS Stream 계열 push_interval 실증 의무 (CFP-319)

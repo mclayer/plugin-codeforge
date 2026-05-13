@@ -6,25 +6,25 @@
 
 ### CFP-582 — ADR-059 Amendment 2 / debate-protocol-v1 v1.2 sibling sync — Blanket Adversarial Debate Trigger (MINOR)
 
-Wrapper Phase 1 PR (mclayer/plugin-codeforge CFP-582 — Wave 4 ADR-059 Amendment 2) 의 canonical sibling sync (ADR-010 §4 wrapper-first allowed pattern). DesignLane cross-module Story 진입 시 adversarial debate 자동 발동 — 사용자 directive 2026-05-13 ("반론 수용 + 대안 발의 + 토론 목적 = 최적 구조") 충실.
+Wrapper Phase 1 PR (mclayer/plugin-codeforge CFP-582 — Wave 4 ADR-059 Amendment 2) 의 canonical sibling sync. DesignLane cross-module Story 진입 시 adversarial debate 자동 발동.
 
-#### Changed
+### CFP-597 — ArchitectAgent §5.7 marketplace sync proactive self-check trigger (ADR-063 Amendment 1)
 
-- `agents/ArchitectPLAgent.md` — `Phase 0.5: Blanket Adversarial Debate Trigger (CFP-582 / ADR-059 Amendment 2 / debate-protocol-v1 v1.2)` 섹션 신설 (Phase 1 직전 단계):
-  - 적용 조건: `touched_top_level_paths >= 2` OR `touched_lanes >= 2` (Orchestrator spawn prompt `invoke_blanket_debate: true` flag)
-  - 5 책무 — debate-protocol-v1 v1.2 trigger 구성 + Touchpoint #2 carry-over + convergence_quality_invariant 3-tuple gate + Story §14 Lane Evidence row carry-over + Exemption 없음
-  - `consensus_reached` 발화 전 3-tuple AND 검증 (counterargument 양 worker 매 라운드 + alternative cumulative >= 1 + Round 0 debate_purpose_statement) — 미충족 시 force_continue 강제 + `[convergence_invariant_violation]` marker
+ArchitectAgent Phase 1 산출물 commit 직전 plugin.json mirrored field diff 감지 + Change Plan §13 declarative declare 의무화. review-verdict-v4 v4.5 `marketplace_sync_declared` optional bool field 정합.
+
+#### Changed (CFP-582)
+
+- `agents/ArchitectPLAgent.md` — `Phase 0.5: Blanket Adversarial Debate Trigger` 섹션 신설
+
+#### Added (CFP-597)
+
+- `agents/ArchitectAgent.md` — `§5.7 Marketplace sync proactive self-check trigger (ADR-063 Amendment 1 / CFP-597)` 섹션 신설
+- `templates/change-plan.md` — §13.N Marketplace sync self-check sub-row schema 추가
 
 #### Compatibility
 
-- **Wire**: agent prompt block 신설만. 기존 동작은 cross-module 미해당 Story (single-module) 에서는 변경 없음 — non-disruptive additive.
-- **debate-protocol-v1 v1.2** canonical SSOT = wrapper repo (`docs/inter-plugin-contracts/debate-protocol-v1.md`). 본 plugin 은 trigger 구성 책무 author 만.
-- **marketplace sync**: 본 MINOR bump 의 marketplace.json mirror 동반 (ADR-063 atomic invariant).
-
-#### Refs
-
-- mclayer/plugin-codeforge — CFP-582 wrapper Phase 1 PR (TBD — Task 12 cross-ref backfill)
-- mclayer/plugin-codeforge-review — review-pl-base.md cross-ref sibling PR (TBD)
+- **Wire**: agent prompt block 신설. 기존 동작 single-module Story 불변.
+- **marketplace sync**: mclayer/marketplace#91 (merged 선행 — ADR-063 §결정 2 ordering).
 
 ## [0.10.0] - 2026-05-13
 

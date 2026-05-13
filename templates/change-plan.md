@@ -305,6 +305,17 @@ ArchitectAgent chief author 가 Phase 1 산출물 (Change Plan + ADR + Story fil
 
 **marketplace 영역 분리**: marketplace mirrored field (`name` / `version` / `description` / `author`) atomic invariant 검증은 ADR-063 SSOT (3-file: `plugin.json` / `CHANGELOG.md` / `marketplace.json`). 본 §13 scope 외 — cross-ref only.
 
+### §13.N Marketplace sync self-check (ADR-063 Amendment 1 / CFP-597)
+
+```yaml
+marketplace_sync_required: <bool>  # true = mirrored field 변경 감지, false = NA
+mirrored_fields_changed: [<name|version|description|author>]  # 변경된 field enum
+triggering_plugins:  # marketplace_sync_required=true 시
+  - <plugin name>: <MAJOR|MINOR|PATCH>
+```
+
+silent skip 금지 — `marketplace_sync_required: false` 명시 의무 (AC-2 정합).
+
 ---
 
 ## DocsAgent 저장·미러링 의무
