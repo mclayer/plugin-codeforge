@@ -1,0 +1,68 @@
+---
+schema_version: "1.0"
+introduced_by: CFP-610
+last_updated: 2026-05-13
+title: "codeforge wording dictionary — 어휘 사전 (forbid + 평문 정의 의무)"
+---
+
+# codeforge wording dictionary
+
+codeforge 의 표현 규율 (ADR-064 §결정 2 + §결정 9) 의 어휘 SSOT.
+
+## 개요
+
+사용자 (한국어 native, solo dev) 가 codeforge family jargon 노출 영역에서 frustration 을 표현한 directive (Issue #610, 2026-05-13) 를 계기로 신설. 2 카테고리:
+
+- **(a) 사용 금지 어휘 (forbid)**: 사용 시 lint warning. ADR-064 §결정 2 와 verbatim sync 의무.
+- **(b) 사용 허용 + 평문 정의 동반 의무**: codeforge 식별자 어휘. 사용 가능하되 inline 평문 정의 동반 필수.
+
+## 카테고리 (a) — 사용 금지 어휘 (forbid)
+
+**SSOT 방향**: 본 표 = SSOT. ADR-064 §결정 2 forbid-list 표 (Amendment 2 부분) + lint script (`scripts/check-wording-dictionary.sh`) FORBID_DICTIONARY array 가 mirror. 변경 시 lockstep 갱신 의무.
+
+**lint 적용 영역 (5 scope)**: `docs/adr/**` / `docs/change-plans/**` / `CLAUDE.md` / `docs/orchestrator-playbook.md` / `templates/**` — ADR-064 §결정 2 verbatim.
+
+**예외 채널**: `hotfix-bypass:wording-dictionary` label (ADR-024 Amendment 3 per-entry namespace 정합) + PR description `### Bypass reason` 본문 의무.
+
+| 어휘 | 평문 정의 (사용자에게 보이는 의미) | 권장 대체 | 도입 CFP |
+|---|---|---|---|
+| 박제 | codeforge family 자체 신조어. 의미: "결정을 못 박듯 명문화 / 확정 / 기재" 다층 의미. 사용자 발화 verbatim (Issue #610): "아니 니가 쓰는 표현이다. 나는 그 표현이 뭔지 모르겠다고". | "명시" / "확정" / "기재" — 맥락에 맞게 선택 | CFP-610 |
+| 못 박기 | 결정 noise — 미합의 상태에 사용 시 가짜 합의 인상. 한국어 형태 변화 처리 의무 (못박기 / 못박는 / 못 박았다 등) | "확정" / "결정 종결" | CFP-610 |
+| pin | 영어 jargon — 한국어 native 사용자 의미 불투명. 일반 영어 어휘 false-positive risk ("pin to top" 등) 있으므로 lint 는 word-boundary regex + 5 scope 한정 + blockquote exempt 로 완화. | "고정" / "확정" | CFP-610 |
+| freezing | 영어 jargon — 한국어 native 사용자 의미 불투명. 외부 인용 (blockquote `>` prefix) 영역 exempt. | "동결" / "변경 차단" | CFP-610 |
+
+> **시점 1 entry cap = 4 어휘** (Amendment 2 시점, 2026-05-13). 추가 entry 도입 = 별 CFP 의무 (ADR-064 §결정 5 CFP scope unitary 정합 — scope creep 차단).
+
+## 카테고리 (b) — 사용 허용 + 평문 정의 동반 의무
+
+codeforge 식별자 어휘. **사용 금지 아님** — 단 등장 시 inline 평문 정의를 동반해야 한다.
+
+예시 형식: `normative ("강제 규칙")` / `sibling sync ("관련 다른 plugin 동시 갱신")`
+
+정의 누락 시: lint advisory warning (exit 0 + console warn — baseline 폭증 risk 완화, 카테고리 (a) 와 별 동작).
+
+| 어휘 | 평문 정의 | 도입 CFP / ADR |
+|---|---|---|
+| normative | "강제 규칙" — 모든 codeforge 작업이 따라야 하는 규범 | ADR-064 (CFP-610 dictionary 등록) |
+| sibling sync | "관련 다른 plugin 동시 갱신 의무" — codeforge family 7 plugin 간 mirror 정합 | ADR-010 (CFP-610 dictionary 등록) |
+| kind:contract | "다른 plugin 과의 데이터 교환 표준 (sibling sync 의무)" — `kind:registry` 와 구분 | ADR-008 (CFP-610 dictionary 등록) |
+| ratchet | "강화 방향만 허용 + 약화 차단" — ADR amendment top-down rule. forbid-list 축소 / sequential 강제 사유 확장 등 약화 방향 = sunset_justification 의무 | ADR-058 §결정 5 + ADR-064 §결정 7 (CFP-610 dictionary 등록) |
+| mirrored field | "여러 file 에 동시 존재 + 변경 시 lockstep sync 의무 field" — marketplace ↔ plugin.json `name`/`version`/`description`/`author` 가 대표 예 | ADR-063 (CFP-610 dictionary 등록) |
+
+> **5개 cap** (Amendment 2 시점, 2026-05-13). 추가 entry 도입 = 별 CFP 의무 (scope creep 차단). 카테고리 (b) lint = advisory-only — baseline 폭증 risk 완화 (spec §4.2.1 FeasibilityAgent 영역).
+
+## 사용 규칙
+
+- **카테고리 (a) 어휘**: 사용 시 lint warning (`scripts/check-wording-dictionary.sh`). PR 머지 차단 안 함 (warning tier, ADR-060 §결정 5). 정당 사용 = `hotfix-bypass:wording-dictionary` label + PR description `### Bypass reason` 의무.
+- **카테고리 (b) 어휘**: 사용 가능. 단 inline 평문 정의 동반 필수. 정의 누락 시 advisory warning (exit 0).
+- **lint 적용 영역**: 5 scope — `docs/adr/**` / `docs/change-plans/**` / `CLAUDE.md` / `docs/orchestrator-playbook.md` / `templates/**`.
+- **behavioral directive 영역** (Orchestrator user-facing dialog text turn): mechanical enforce 미시도. retro audit signal 만 (PMOAgent retro file §wording-discipline 표).
+- **외연 허용**: 본 dictionary 본문 자체 / 사용자 발화 verbatim 인용 영역에서 금지 어휘 등장은 허용 (EXEMPT_PATHS 처리).
+
+## 신규 entry 추가 절차
+
+1. **별 CFP brainstorm 의무** — scope creep 차단 (ADR-064 §결정 5 CFP scope unitary 정합)
+2. **ADR-064 Amendment N 작성** — 본 dictionary entry 추가 + `amendment_log` row append
+3. **lint workflow 정합 확인** — 기존 doc 안 신규 어휘 발생 시 grep sweep PR 동반 의무 (CFP-610 Story 3 패턴 차용)
+4. **carrier-bootstrap-check.yml 정합 verify** — 5 표준 prefix (adr/contract/policy/workflow/script)
+5. **카테고리 (a) 추가 시**: ADR-064 §결정 2 forbid-list 표 + lint script FORBID_DICTIONARY array lockstep 갱신 의무
