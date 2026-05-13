@@ -7,6 +7,28 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.41.0] - 2026-05-13 — CFP-582 Wave 4 (ADR-059 Amendment 2)
+
+### Added (CFP-582 Wave 4 — DesignLane blanket adversarial debate + convergence_quality_invariant, ADR-059 Amendment 2)
+
+Wave 4 of Epic-FIX-ESCALATION-prevention (#525) — ADR-059 Amendment 2 carrier. 사용자 directive "반론 수용 + 대안 발의 + 토론 목적 = 최적 구조" 의 mechanical enforceable invariant 명문화. doc-only fast-path (ADR-054) — src/tests 무변경.
+
+- `docs/adr/ADR-059-debate-protocol-v1.md` — Amendment 2 append (§결정 7: DesignLane blanket trigger + cross-module Story 정의 heuristic inline / §결정 8: convergence_quality_invariant 3 marker pattern / §결정 9: Touchpoint #2 carry-over 의무 / §결정 10: lane-agnostic registry 정합).
+- `docs/inter-plugin-contracts/debate-protocol-v1.md` — v1.1 → v1.2 MINOR bump. `blanket_cross_module_designlane` dispatch_mode 4번째 enum value + `convergence_quality_invariant` block schema (counterargument_present / alternative_proposed_count / debate_purpose_statement_present) + Touchpoint #2 carry-over field + version_history row.
+- `docs/inter-plugin-contracts/MANIFEST.yaml` — debate-protocol-v1 version row 1.1 → 1.2 갱신.
+- `CLAUDE.md` — Adversarial Debate Protocol 단락 갱신 (blanket dispatch 4번째 enum value + 3 marker pattern + convergence_quality_invariant 3-tuple AND + Touchpoint #2 carry-over 절차).
+- `docs/orchestrator-playbook.md` — DesignLane blanket trigger 진입 절차 (§3 blanket invocation flow + convergence_quality_invariant gate + Touchpoint #2 forward).
+- `docs/domain-knowledge/domain/agent-teams/convergence-quality-invariant.md` (NEW) — 3-tuple 정의 + measurable signal + ADR-059 Amendment 2 carrier link.
+- `docs/domain-knowledge/domain/agent-teams/agent-teams-platform-capability.md` — 변경 이력 row append (blanket dispatch_mode + convergence_quality_invariant 추가).
+- `.claude-plugin/plugin.json` — version 5.40.0 → 5.41.0 MINOR + description CFP-582 Wave 4 entry append.
+
+### Sibling sync (separate PRs)
+
+- mclayer/marketplace#85: plugins[codeforge].version 5.40.0 → 5.41.0 mirrored (ADR-063 atomic invariant)
+- mclayer/plugin-codeforge-design#40: ArchitectPLAgent Phase 0.5 Blanket Adversarial Debate Trigger (cross-module Story 자동 발동 + Touchpoint #2 carry-over + convergence_quality_invariant gate)
+- mclayer/plugin-codeforge-review#32: review-pl-base §11.5 debate-protocol-v1 v1.2 cross-ref + 3 marker pattern verification 책무
+- mclayer/marketplace#87: codeforge-design 0.11.0 + codeforge-review 1.6.0 sibling sync mirror
+
 ## [5.40.0] - 2026-05-13 — CFP-507 DeveloperPLAgent Phase 2 PR body composition convention codification
 
 ### Added (CFP-507 — Lane evidence heading 1회 inject convention, ADR-031 §결정 3 정합)
