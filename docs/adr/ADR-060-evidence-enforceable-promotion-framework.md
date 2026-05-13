@@ -91,6 +91,35 @@ amendment_log:
       (ADR-058 §결정 5 sunset_justification 의무 통과 — 강화 방향 amendment, framework SSOT
       permanent governance) + sibling_dependencies append `[CFP-390, CFP-412, CFP-455, CFP-449,
       CFP-481, CFP-506, CFP-509, CFP-508]` (Amendment 2 §결정 6 (c) chain 정합).
+  - amendment: 8
+    carrier_story: CFP-530
+    date: 2026-05-13
+    summary: |
+      N번째 warning-tier entry `workflow-permissions-block-presence` 등록 carrier amendment —
+      workflow yml top-level `permissions:` block 부재 mechanical lint (warning tier first,
+      hotfix-bypass:workflow-permissions per-entry namespace) carrier 직접 이행. CFP-506
+      Phase 2 PR #519 CodeQL 권고 (claude-md-line-cap.yml:34 workflow permissions hardening
+      unresolved review thread) + CFP-506 §11.1 entry 5 carrier 의무 + CFP-520 retro carrier
+      reference 종합 해소 — wrapper repo 79 file (.github 38 + templates 41) audit 후 16 file
+      remediation surface (14 MISSING + 2 JOB-LEVEL upgrade) top-level `permissions:` block
+      일괄 prepend (T1 base = `contents: read` / T3 conditional override = schedule job 만
+      `issues: write`, TH-7 sealed verdict 정합 — SecurityArch finalize) +
+      registry yaml row append (Phase 2 PR scope) — schema 변경 0건 (Amendment 2 schema v1.1
+      정합, `current_tier: warning` + `bypass_label: hotfix-bypass:workflow-permissions`
+      per-entry namespace) +
+      label-registry-v2 v2.5 same-MINOR sub-entry append 동반
+      (`hotfix-bypass:workflow-permissions` 10번째 family member, v2.5 frontmatter `version`
+      미변경 — CFP-429 v2.4 → v2.5 carrier 후 본 CFP-530 = same MINOR 안 hotfix-bypass family
+      entry append, ADR-008 §결정 SemVer rule 안 same MINOR sub-entry 허용 정합) +
+      ADR-063 atomic invariant 발효 (plugin.json MINOR bump 5.34.0 → 5.35.0 + CHANGELOG +
+      marketplace.json sync) — Phase 2 PR scope, 3-file atomic coordination 의무 +
+      CFP-300 (third-party action SHA-pinning) 직교 정책 결합 — supply chain security family
+      AND 결합 (token scope 최소화 + action 신뢰성 immutable pinning) 완성 +
+      ratchet 위반 0건 — enum 값 / tier 추가 / bypass channel 동작 변경 없음, framework 의
+      자연스러운 사용 사례 entry 추가 only (ADR-058 §결정 5 sunset_justification 의무 통과 —
+      강화 방향 amendment, framework SSOT permanent governance) +
+      sibling_dependencies append `[CFP-390, CFP-412, CFP-455, CFP-449, CFP-481, CFP-506,
+      CFP-509, CFP-508, CFP-530]` (Amendment 2 §결정 6 (c) chain 정합).
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
@@ -100,6 +129,7 @@ related_stories:
   - CFP-506  # Amendment 5 carrier — 4th warning-tier entry `claude-md-line-cap` + ADR-012 Amendment 1 + ADR-051 Amendment 1 + label-registry-v2 v2.4 same-MINOR sub-entry 동반
   - CFP-509  # Amendment 6 carrier — evidence-check-registry schema v1.1 → v1.2 MINOR bump + §결정 19 신설 (recurrence-based advisory promotion signal)
   - CFP-508  # Amendment 7 carrier — evidence-registry-naming convention lint + §결정 20 신설 (entry name ↔ workflow file naming convention + Conservative no-rename policy + multi-job pattern 정식 인정)
+  - CFP-530  # Amendment 8 carrier — N번째 warning-tier entry `workflow-permissions-block-presence` 등록 + 16 file remediation surface T1/T3 tier 매핑 + hotfix-bypass:workflow-permissions 10번째 family member + ADR-063 atomic invariant 발효
 related_adrs:
   - ADR-008   # versioning (kind:registry 도 minor/major SemVer 정합)
   - ADR-010   # contract sibling sync (kind:registry scope 외 명시)
@@ -689,4 +719,77 @@ Amendment 1 §결정 14 의 메타 anomaly lint (인벤토리 누락 감지) 와
 **ratchet 위반 0건** — lint scope 확장 (workflow file existence lint 의무 + DRIFT allowlist hardcode 10건) + framework 의 자연스러운 사용 사례 정식 인정 only (ADR-058 §결정 5 sunset_justification 의무 통과 — 강화 방향 amendment, framework SSOT permanent governance).
 
 **sibling_dependencies append**: `[CFP-390, CFP-412, CFP-455, CFP-449, CFP-481, CFP-506, CFP-509, CFP-508]` (Amendment 2 §결정 6 (c) chain 정합).
+
+## Amendment 8 (CFP-530, 2026-05-13)
+
+본 Amendment 는 CFP-530 (Workflow yml `permissions:` block 일괄 hardening, Issue #530) 의 Phase 1 carrier 산출물. CFP-506 §11.1 entry 5 (workflow yml permissions block 일괄 hardening follow-up CFP) + CFP-520 retro carrier reference 종합 해소.
+
+### §결정 21 (Amendment 8, CFP-530 — 2026-05-13)
+
+**N번째 warning-tier entry 등록** — `workflow-permissions-block-presence`:
+
+evidence-checks-registry.yaml 에 신규 row append (Phase 2 PR scope). framework 의 자연스러운 사용 사례 entry 추가 — schema 변경 0건 (Amendment 2 schema v1.1 정합 유지).
+
+**Entry 필드 SSOT** (registry yaml row 형식):
+
+```yaml
+  - name: workflow-permissions-block-presence
+    description: |
+      Workflow yml top-level `permissions:` block 부재 mechanical lint.
+      GitHub Actions least-privilege standard 정합 (Secure use reference) —
+      `permissions:` 부재 시 GITHUB_TOKEN 의 모든 scope 자동 grant (over-privileged) →
+      top-level block 명시 후 per-job override (granular least privilege) 패턴 강제.
+      CFP-506 PR #519 CodeQL `actions/missing-workflow-permissions` query 권고 해소 carrier.
+      Glob scope: `.github/workflows/*.yml` + `templates/github-workflows/*.yml`
+      (`*.yaml` 확장자 제외 — fixture file 면제).
+    detect_command: bash scripts/check-workflow-permissions-presence.sh
+    workflow: templates/github-workflows/workflow-permissions-check.yml
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode (continue-on-error: true)
+    bypass_label: hotfix-bypass:workflow-permissions
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a)
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies: []         # 신규 entry — sibling 없음 (CFP-530 carrier self)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = schema 검증, modal phrase 검사 미포함
+    introduced_by: CFP-530
+    owner_adr: ADR-060                  # framework SSOT 직접 carrier
+    carrier_adr: ADR-060                # self-carrier (Amendment 8)
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active
+```
+
+**Tier 매핑 SSOT — 16 file remediation surface** (Phase 2 PR scope, SecurityArch finalize T0-T7 framework 정합):
+
+| File 그룹 | 개수 | 적용 tier | scope |
+|---|---|---|---|
+| 14 MISSING (read-only lint) | 14 | **T1 base** | `permissions: contents: read` |
+| 2 JOB-LEVEL upgrade (`wording-ssot-check.yml` x2) | 2 | **T1 base** | `permissions: contents: read` (job-level → top-level move) |
+| 2 `superpowers-schema-drift.yml` (.github + templates) | (이미 14 MISSING 안 포함) | **T1 top-level + T3 schedule job override** | top-level `contents: read` + schedule job `issues: write` (TH-7 sealed verdict 정합 — EC-4 job-level escalation 채택) |
+| 1 pair `test.yml` (.github vs templates) | 2 file (의도적 divergence) | **T1 base** each | 양쪽 독립 hardening, mirror invariant 비대상 (Story §2.4) |
+
+**TH-7 sealed verdict** (SecurityArch finalize): scheduled conditional issue create job 만 `issues: write` 권한 escalate — top-level `issues: write` 가 PR 경로까지 권한 확대 = least privilege 위반 회피 (Story §5.3 EC-4 정합).
+
+**Hotfix-bypass label 명명**: `hotfix-bypass:workflow-permissions` — ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합, **10번째 hotfix-bypass:* family member** (기존 9: adr-sunset / decision-principle-vocab / auto-phase-label / marketplace-atomic / worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd} / claude-md-line-cap / sibling-pr-author-check). label-registry-v2 v2.5 same-MINOR sub-entry append 동반 (frontmatter `version` 미변경, sub-row only — ADR-008 §결정 SemVer rule 안 same MINOR 안 additive sub-entry 허용).
+
+**Promotion criteria** (warning → blocking-on-pr, ADR-060 §결정 6 AND condition):
+- (a) pr_cumulative_min: 20 PR 누적 (velocity-normalized — §결정 10)
+- (b) failure_threshold: 0 bypass 외 failure
+- (c) sibling_dependencies: [] (신규 entry — sibling 없음, 본 carrier self-application)
+
+승격 평가 책임 = 별도 carrier Story (warning → blocking-on-pr transition 자동 아님, governance 보존 — Amendment 6 §결정 19 정합).
+
+**ratchet 위반 0건** — enum 값 / tier 추가 / bypass channel 동작 변경 없음, framework 의 자연스러운 사용 사례 entry 추가 only (ADR-058 §결정 5 sunset_justification 의무 통과 — 강화 방향 amendment, framework SSOT permanent governance).
+
+**sibling_dependencies append**: `[CFP-390, CFP-412, CFP-455, CFP-449, CFP-481, CFP-506, CFP-509, CFP-508, CFP-530]` (Amendment 2 §결정 6 (c) chain 정합).
+
+**CFP-300 cross-ref** (third-party action SHA-pinning policy) — 직교 정책 결합: token scope 최소화 (본 Amendment 8) + action 신뢰성 immutable pinning (CFP-300) = supply chain security family AND 결합 완성. 두 정책 independent invariant 유지.
+
+**Mermaid 다이어그램 동기화** (Amendment 2 §결정 6 (c) chain 정합): 본 ADR `## 다이어그램` Mermaid 의 carrier chain row 갱신은 추후 다이어그램 갱신 carrier 가 통합 처리 (현재 chain length 9 — CFP-530 까지 보존 의무).
 
