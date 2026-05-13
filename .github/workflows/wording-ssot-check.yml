@@ -12,6 +12,8 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     continue-on-error: true  # warning-tier — ADR-060 evidence-enforceable advisory
     steps:
       - uses: actions/checkout@v4
