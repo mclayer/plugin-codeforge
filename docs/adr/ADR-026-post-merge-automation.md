@@ -242,7 +242,7 @@ concurrency:
 
 ### 컨텍스트
 
-CFP-541 Epic A (1주 SLA emergency hotfix) 안 child Story 2종 (CFP-545 Action 1 strict + CFP-546 concurrency namespace) 의 ADR scope 가 동일 `ADR-026-post-merge-automation.md` 의 별개 sub-decision 영역으로 분리됨. Codex 종합 리뷰 (2026-05-13, [codex-review-2026-05-13.md](../change-plans/codex-review-2026-05-13.md)) 권고 정합 — CFP-546 standalone PR 가치 평가 결과 ADR namespace 1-line workflow 변경 + framing errata 영역만 보유하므로 별도 Story / PR 분리 불요, CFP-545 의 unified Amendment 2 안에 §결정 5.F 로 통합. CFP-546 Issue 자체는 sibling sweep (CFP-569) 와 grouped open 상태 유지 (audit-trail 보존).
+CFP-541 Epic A (1주 SLA emergency hotfix) 안 child Story 2종 (CFP-545 Action 1 strict + CFP-546 concurrency namespace) 의 ADR scope 가 동일 `ADR-026-post-merge-automation.md` 의 별개 sub-decision 영역으로 분리됨. Codex 종합 리뷰 (2026-05-13) 권고 정합 — CFP-546 standalone PR 가치 평가 결과 ADR namespace 1-line workflow 변경 + framing errata 영역만 보유하므로 별도 Story / PR 분리 불요, CFP-545 의 unified Amendment 2 안에 §결정 5.F 로 통합. CFP-546 Issue 자체는 sibling sweep (CFP-569) 와 grouped open 상태 유지 (audit-trail 보존).
 
 본 Amendment 2 = 2 sub-decision unified:
 - **§결정 5.E** (CFP-545 origin) — Action 1 (Phase label transition) Issue resolution 영역의 strict regex matching 의무
