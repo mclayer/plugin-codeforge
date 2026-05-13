@@ -8,6 +8,9 @@ on:
       - templates/github-workflows/claude-md-line-cap.yml
       - .github/workflows/claude-md-line-cap.yml
 
+permissions:
+  contents: read
+
 jobs:
   line-cap:
     runs-on: ubuntu-latest

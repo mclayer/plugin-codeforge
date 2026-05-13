@@ -35,6 +35,9 @@ on:
         required: true
         type: string
 
+permissions:
+  contents: read
+
 jobs:
   request-approval:
     runs-on: ubuntu-latest
