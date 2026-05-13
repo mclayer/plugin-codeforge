@@ -12,7 +12,7 @@ contracts:
       - { file: review-verdict-v1.md, contract_version: "1.0", status: Archived }
       - { file: review-verdict-v2.md, contract_version: "2.0", status: Archived, superseded_by: review-verdict-v3 }  # CFP-61
       - { file: review-verdict-v3.md, contract_version: "3.0", status: Archived, superseded_by: review-verdict-v4 }  # CFP-137: archive (Sonnet decider 영역 정식 제거)
-      - { file: review-verdict-v4.md, contract_version: "4.3", status: Active }  # CFP-137: NEW (Sonnet decider 영역 제거 + worker_dialog_rounds 추가). CFP-391: v4.0 → v4.1 MINOR bump (findings[].anchor_id optional field, debate-protocol-v1 stable identifier SSOT). CFP-438: v4.1 → v4.2 MINOR bump (mechanical_self_check_passed optional bool, ADR-065). CFP-527: v4.2 → v4.3 MINOR bump (boundary_completeness_self_check_passed optional bool + findings[].type "boundary-completeness" literal, ADR-068).
+      - { file: review-verdict-v4.md, contract_version: "4.4", status: Active }  # CFP-137: NEW (Sonnet decider 영역 제거 + worker_dialog_rounds 추가). CFP-391: v4.0 → v4.1 MINOR bump (findings[].anchor_id optional field, debate-protocol-v1 stable identifier SSOT). CFP-438: v4.1 → v4.2 MINOR bump (mechanical_self_check_passed optional bool, ADR-065). CFP-527: v4.2 → v4.3 MINOR bump (boundary_completeness_self_check_passed optional bool + findings[].type "boundary-completeness" literal, ADR-068). CFP-528: v4.3 → v4.4 MINOR bump (dimensional_empirical_self_check_passed optional bool + findings[].type "dimensional-empirical-gap" literal, ADR-068 Amendment 1).
 
   - name: requirements_output
     canonical_repo: mclayer/plugin-codeforge-requirements
