@@ -305,19 +305,19 @@ PR title 에 `(Phase X of <CFP-NNN> Epic)` 명시 (Mode B 와 동일 형식).
 
 ### 컨텍스트
 
-[ADR-050](ADR-050-multi-repo-story-key-system.md) (Multi-Repo Hierarchical Story Key System) 가 본 ADR Mode B (hub-centralized) 의 **implementation backbone** 역할 도입. ADR-020 Amendment 1 §결정 8 Mode B 가 manual 운영하던 Story file 위치 결정 / counter 발급 / hub-impl bidirectional linking 을 codeforge plugin 의 `project.yaml` 단일 블록 declare 로 자동화.
+[ADR-069](ADR-069-multi-repo-story-key-system.md) (Multi-Repo Hierarchical Story Key System) 가 본 ADR Mode B (hub-centralized) 의 **implementation backbone** 역할 도입. ADR-020 Amendment 1 §결정 8 Mode B 가 manual 운영하던 Story file 위치 결정 / counter 발급 / hub-impl bidirectional linking 을 codeforge plugin 의 `project.yaml` 단일 블록 declare 로 자동화.
 
 ### Cross-reference
 
-- **Mode B 활성화 = `project.yaml` 의 `codeforge.stories.repos[]` 블록 선언** (ADR-050 §결정 1)
-- **`delegates[]` frontmatter = Mode B 의 hub story → impl repo story 위임 링크** (ADR-050 §결정 2)
-- **Counter 메커니즘 = Mode B 의 자동 번호 발급 layer** (`.codeforge/counters.json`, ADR-050 §결정 3)
-- **§결정 9 Joint-phase narrow form** = ADR-050 hub story `delegates[]` 다중 entry 로 자연스럽게 표현 (예: `mctrader-data#MCT-001` + `mctrader-engine#MCT-002` 가 hub `mctrader-hub#MCT-112` 의 joint Phase 2)
+- **Mode B 활성화 = `project.yaml` 의 `codeforge.stories.repos[]` 블록 선언** (ADR-069 §결정 1)
+- **`delegates[]` frontmatter = Mode B 의 hub story → impl repo story 위임 링크** (ADR-069 §결정 2)
+- **Counter 메커니즘 = Mode B 의 자동 번호 발급 layer** (`.codeforge/counters.json`, ADR-069 §결정 3)
+- **§결정 9 Joint-phase narrow form** = ADR-069 hub story `delegates[]` 다중 entry 로 자연스럽게 표현 (예: `mctrader-data#MCT-001` + `mctrader-engine#MCT-002` 가 hub `mctrader-hub#MCT-112` 의 joint Phase 2)
 
 ### 영향
 
 - 본 ADR-020 §결정 1-11 본문 변경 **0** (단순 cross-ref 단락)
-- Mode A (repo-local) default 유지 — ADR-050 opt-in 으로 single-repo consumer / 기존 CFP-1~CFP-59 영향 0
-- Mode C (mechanical Epic) 와 직교 — ADR-050 hub story 는 substantive carrier, Mode C 는 child Story Issue 미발행 mechanical batch
-- 상세: [ADR-050](ADR-050-multi-repo-story-key-system.md)
+- Mode A (repo-local) default 유지 — ADR-069 opt-in 으로 single-repo consumer / 기존 CFP-1~CFP-59 영향 0
+- Mode C (mechanical Epic) 와 직교 — ADR-069 hub story 는 substantive carrier, Mode C 는 child Story Issue 미발행 mechanical batch
+- 상세: [ADR-069](ADR-069-multi-repo-story-key-system.md)
 

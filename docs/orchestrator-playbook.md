@@ -780,9 +780,9 @@ Epic close PR (Phase N+1) 동반 작성:
 - [requirements-output-v1.1](../docs/inter-plugin-contracts/requirements-output-v1.md) (Story §1 epic_dependencies field schema)
 - [`consumer-guide.md`](consumer-guide.md) §5.1 (consumer 측 mode 선택 안내 — Mode A/B 비교표)
 
-### §3.4.1 Multi-repo Story Routing (CFP-342 / ADR-050)
+### §3.4.1 Multi-repo Story Routing (CFP-342 / ADR-069)
 
-`project.yaml`의 `codeforge.stories.repos[]` 블록이 선언된 consumer에서 Orchestrator가 Story 작업 대상 repo를 결정하는 절차. [ADR-050](../docs/adr/ADR-050-multi-repo-story-key-system.md) §결정 4 SSOT.
+`project.yaml`의 `codeforge.stories.repos[]` 블록이 선언된 consumer에서 Orchestrator가 Story 작업 대상 repo를 결정하는 절차. [ADR-069](../docs/adr/ADR-069-multi-repo-story-key-system.md) §결정 4 SSOT.
 
 #### Agent target repo 결정 우선순위 (4-step)
 
@@ -850,6 +850,34 @@ Phase 2 (follow-up CFP): `scripts/codeforge-story-counter.py` 자동 발급 (fil
 - [ADR-020](../docs/adr/ADR-020-cross-repo-epic-pattern.md) Amendment 3 (본 시스템 = Mode B automation layer)
 - [`consumer-guide.md`](consumer-guide.md) §3 (multi-repo story key 활성화 가이드)
 - [`overlay/_overlay/project.yaml.example`](../overlay/_overlay/project.yaml.example) (codeforge.stories 블록 예시)
+
+### §3.4.2 Parallel epic coordination (ADR-050 + Amendment 1 CFP-534)
+
+복수 Orchestrator 세션 (두 개 이상 Claude Code 창) 이 서로 다른 Epic 을 병렬 진행할 때 충돌 조율 의무 SSOT.
+
+**Epic Scope Manifest 작성 의무**: Phase 1 시작 시 Orchestrator 가 Epic Issue body 에 `<!-- scope_manifest -->` 블록 작성. GitOpsAgent 가 다른 open 에픽과 교집합 검사.
+
+**필드 의미** (Amendment 1, CFP-534 — 3 신규 field 추가):
+
+| Field | 의미 | 충돌 라벨 |
+|---|---|---|
+| `planned_adrs[]` | 예약 ADR 번호 (ADR-RESERVATION.md sequential append) | `conflict:adr-number` |
+| `planned_files[]` | 예상 변경 파일 경로 | `conflict:file-overlap` |
+| `planned_claude_md_sections[]` | CLAUDE.md / playbook 섹션 (section-ownership.yaml lookup) | `conflict:section-locked` |
+| `planned_inter_plugin_contracts[]` (신규) | inter-plugin-contracts file 경로 (`MANIFEST.yaml` 포함) | `conflict:contract-overlap` |
+| `planned_label_registry_bumps[]` (신규) | label-registry-v2.md version bump 의도 (`kind: MAJOR\|MINOR\|PATCH` + `scope`) | `conflict:registry-bump-overlap` |
+| `cross_section_conflict_detection` (신규, default false) | cross-section 검사 활성 flag — true 시 frontmatter 3-location 의미 충돌 사전 경고 | (activation flag — 라벨 부여 0건) |
+
+**GitOpsAgent intersection 검사 동작** (Amendment 1):
+
+1. `parallel-epic-conflict-check.yml` workflow 가 변경 파일 lookup → `conflict:*` 라벨 자동 부여.
+2. GitOpsAgent 가 양쪽 PR 에 `[GitOps]` prefix WARN comment 자동 발의 — 충돌 영역 / 상대 PR / merge-order / 권장 조치 명시.
+3. lower CFP 번호 PR = `merge-order:1` 부여, 후순위 PR = `merge-order:2` + rebase 지시.
+4. 미해결 시 PMOAgent sibling SendMessage → cross-Story hotspot 패턴 감지 → ADR 후보 발의 가능.
+
+**Sentinel evidence (CFP-534)**: 2026-05-13 KST CFP-521 v2.4 vs CFP-429 v2.5 가 `docs/inter-plugin-contracts/label-registry-v2.md` frontmatter 3-location (`version` / `bumped_at` / `amendments[]` row) 동시 수정 → manual 15분 추가 + risk. Amendment 1 = 해당 사고 재발 방지 carrier.
+
+**Cross-references**: [ADR-050](../docs/adr/ADR-050-parallel-epic-conflict-coordination.md) Amendment 1 / `templates/github-workflows/parallel-epic-conflict-check.yml` / sibling `mclayer/plugin-codeforge-pmo` `agents/GitOpsAgent.md` §3.5 / `docs/parallel-work/section-ownership.yaml`.
 
 ### §3.5 Worktree dispatch (CFP-136 / ADR-040)
 
@@ -2678,7 +2706,7 @@ Phase 2 follow-up CFP 에서 canonical clone + commit + PR 자동화 확장 검�
 
 **canonical → wrapper sibling → marketplace.** MAJOR bump 시 canonical-first 의무 (ADR-010 Amendment 2). script 가 MANIFEST Active file 명에서 vN 추출 → 자동 감지 → PR body footer 자동 삽입.
 
-병렬 epic 환경에서는 `merge-order:1/2` label (ADR-050) 동시 사용.
+병렬 epic 환경에서는 `merge-order:1/2` label (ADR-050) 동시 사용. cross-section conflict (inter-plugin-contracts / label-registry / MANIFEST.yaml 동시 수정) 시 `conflict:{contract-overlap,registry-bump-overlap}` 라벨 (ADR-050 Amendment 1, CFP-534) 자동 부착 — lower CFP 선행 merge.
 
 ### 17.4 Test harness
 

@@ -80,4 +80,25 @@ owned_sections:
     # last-line replace if same month). 사용자 manual edit 금지. CFP-393 의 KPI JSON
     # append-only row 와 동일 NOTE 패턴 (workflow-only-write 신규 enum 도입은 별도 CFP).
 
+  # ADR-050 Amendment 1 (CFP-534) — inter-plugin-contracts 영역 cross-section conflict detection
+  - file: docs/inter-plugin-contracts/label-registry-v2.md
+    section: "frontmatter (version / bumped_at / amendments[])"
+    owner_adr: ADR-050  # Amendment 1 (CFP-534) — cross-section conflict detection
+    parallel_edit: append-only
+    arbitrator: GitOpsAgent
+    # NOTE (CFP-534): 2026-05-13 KST CFP-521 v2.4 vs CFP-429 v2.5 frontmatter 3-location
+    # 동시 수정 (manual 15min 추가) sentinel. GitOpsAgent intersection 검사 강화 대상.
+
+  - file: docs/inter-plugin-contracts/MANIFEST.yaml
+    section: "contracts[] + registries[]"
+    owner_adr: ADR-050  # Amendment 1 (CFP-534)
+    parallel_edit: append-only
+    arbitrator: GitOpsAgent
+
+  - file: docs/inter-plugin-contracts/fix-event-v1.md
+    section: "schema (frontmatter version + body)"
+    owner_adr: ADR-050  # Amendment 1 (CFP-534)
+    parallel_edit: append-only
+    arbitrator: GitOpsAgent
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)

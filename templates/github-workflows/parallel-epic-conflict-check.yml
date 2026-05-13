@@ -82,6 +82,23 @@ jobs:
             | cut -d: -f1 | sort -u | tr '\n' ',' | sed 's/,$//')
           echo "prs=$CONFLICT_PRS" >> $GITHUB_OUTPUT
 
+          # ADR-050 Amendment 1 (CFP-534) — cross-section conflict detection
+          # inter-plugin-contracts / MANIFEST 영역 동시 수정 검출
+          CONTRACT_HIT=false
+          REGISTRY_HIT=false
+          while IFS= read -r path; do
+            case "$path" in
+              docs/inter-plugin-contracts/*.md|docs/inter-plugin-contracts/MANIFEST.yaml)
+                CONTRACT_HIT=true
+                ;;
+            esac
+            if [ "$path" = "docs/inter-plugin-contracts/label-registry-v2.md" ]; then
+              REGISTRY_HIT=true
+            fi
+          done < /tmp/overlap.txt
+          echo "contract=$CONTRACT_HIT" >> $GITHUB_OUTPUT
+          echo "registry=$REGISTRY_HIT" >> $GITHUB_OUTPUT
+
       - name: Apply labels
         if: steps.check.outputs.overlap == 'true'
         env:
@@ -93,6 +110,11 @@ jobs:
             && gh pr edit "$PR" --add-label "conflict:adr-number" || true
           [ "${{ steps.check.outputs.section }}" = "true" ] \
             && gh pr edit "$PR" --add-label "conflict:section-locked" || true
+          # ADR-050 Amendment 1 (CFP-534) — cross-section conflict labels
+          [ "${{ steps.check.outputs.contract }}" = "true" ] \
+            && gh pr edit "$PR" --add-label "conflict:contract-overlap" || true
+          [ "${{ steps.check.outputs.registry }}" = "true" ] \
+            && gh pr edit "$PR" --add-label "conflict:registry-bump-overlap" || true
 
       - name: Post comment
         if: steps.check.outputs.overlap == 'true'
@@ -111,12 +133,21 @@ jobs:
           [ "${{ steps.check.outputs.section }}" = "true" ] && \
             SEC_MSG=$'\n🔒 **locked 섹션 충돌**: merge 순서를 조율하세요 (`conflict:section-locked`).'
 
+          # ADR-050 Amendment 1 (CFP-534) — cross-section conflict messages
+          CONTRACT_MSG=""
+          [ "${{ steps.check.outputs.contract }}" = "true" ] && \
+            CONTRACT_MSG=$'\n📜 **inter-plugin-contracts 충돌**: contract file 또는 MANIFEST.yaml 동시 수정 (`conflict:contract-overlap`). GitOpsAgent merge-order 자동 부여 — lower CFP 번호 PR 선행 merge 의무.'
+
+          REGISTRY_MSG=""
+          [ "${{ steps.check.outputs.registry }}" = "true" ] && \
+            REGISTRY_MSG=$'\n🏷️ **label-registry-v2.md frontmatter 충돌**: 3-location (`version` / `bumped_at` / `amendments[]` row) 동시 수정 가능 (`conflict:registry-bump-overlap`). semantic versioning 우선순위 결정 필요 — GitOpsAgent escalate.'
+
           CONFLICT_PRS_FMT="#$(echo "$CONFLICT_PRS" | tr ',' ', #')"
-          BODY="$(printf '%s\n\n%s %s\n\n%s\n%s\n%s%s\n\n%s\n\n%s' \
+          BODY="$(printf '%s\n\n%s %s\n\n%s\n%s\n%s%s%s%s\n\n%s\n\n%s' \
             "## ⚠️ 병렬 에픽 파일 충돌 감지" \
             "**충돌 PR**:" "$CONFLICT_PRS_FMT" \
             "**중복 변경 파일**:" "$OVERLAP_LIST" \
-            "$ADR_MSG" "$SEC_MSG" \
+            "$ADR_MSG" "$SEC_MSG" "$CONTRACT_MSG" "$REGISTRY_MSG" \
             "**권장 조치**: 낮은 CFP 번호 PR을 먼저 merge한 후 이 PR에서 \`git rebase main\`을 수행하세요." \
             "> ⓘ 이 경고는 **non-blocking**입니다. merge는 가능하지만 충돌 해소 책임은 작업자에게 있습니다.")"
           gh pr comment "$PR" --body "$BODY"
