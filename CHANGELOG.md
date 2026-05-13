@@ -7,6 +7,19 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.42.0] - 2026-05-13 — CFP-582 Phase 2 (ADR-059 Amendment 2 enforcement)
+
+### Changed (CFP-582 Phase 2 — debate convergence quality lint)
+
+- **CFP-582 Phase 2 / ADR-059 Amendment 2 §결정 8 enforcement**: `scripts/check_debate_convergence_quality.py` 신설 (3 marker regex pattern lint — `[COUNTERARGUMENT]` / `[ALTERNATIVE_PROPOSED]` / `[DEBATE_PURPOSE_STATEMENT]`). Story §9 debate transcript section 탐지 후 marker presence 검증. exit-code 0/1/2 tri-tier (ADR-060 Amendment 2 §결정 15 정합).
+- **`templates/github-workflows/debate-convergence-quality.yml`** + **`.github/workflows/debate-convergence-quality.yml`** (byte-identical self-app) — warning tier workflow (continue-on-error: true). Story 파일 변경 PR 시 trigger.
+- **`docs/evidence-checks-registry.yaml`** entry `debate-convergence-quality-marker-presence` append — ADR-060 evidence-enforceable framework warning tier 첫 debate 영역 entry. owner_adr: ADR-059, carrier_adr: ADR-059.
+- **ADR-061 Python script-writing convention 정합** — heredoc 금지 + Write tool 외부 .py 파일 작성.
+
+### Sibling sync (separate PR)
+
+- mclayer/marketplace: plugins[codeforge].version 5.41.0 → 5.42.0 mirrored (ADR-063 atomic invariant)
+
 ## [5.41.0] - 2026-05-13 — CFP-582 Wave 4 (ADR-059 Amendment 2)
 
 ### Added (CFP-582 Wave 4 — DesignLane blanket adversarial debate + convergence_quality_invariant, ADR-059 Amendment 2)
