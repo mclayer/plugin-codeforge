@@ -4,6 +4,26 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.1.2] - 2026-05-13
+
+### CFP-534 — ADR-050 Amendment 1 GitOpsAgent intersection 로직 확장 (PATCH)
+
+EPIC-RESULTS CFP-425 §7.5 follow-up carrier #5. ADR-050 Amendment 1 (wrapper) sibling sync — GitOpsAgent agent file 책임 §3.5 신설 (Epic Scope Manifest intersection 검사 — cross-section conflict detection).
+
+#### Changed
+
+- `agents/GitOpsAgent.md` — §3.5 "Epic Scope Manifest intersection 검사" 신설. 3 신규 scope manifest field (`planned_inter_plugin_contracts[]` / `planned_label_registry_bumps[]` / `cross_section_conflict_detection`) 활용 로직 + intersection 발견 시 WARN comment 자동 발의 + merge-order 자동 부여 (lower CFP 우선).
+
+#### Why
+
+2026-05-13 KST CFP-521 v2.4 vs CFP-429 v2.5 가 `docs/inter-plugin-contracts/label-registry-v2.md` frontmatter 3-location 동시 수정 (manual 15분 추가 + risk) sentinel evidence. 단순 file overlap 검출로는 frontmatter 의미 충돌 식별 불가 → cross-section detection layer 신설.
+
+#### Cross-references
+
+- ADR-050 Amendment 1 (wrapper) — `docs/adr/ADR-050-parallel-epic-conflict-coordination.md`
+- Epic CFP-425 §7.5 follow-up
+- Story file (internal-docs): `wrapper/stories/CFP-534.md`
+
 ## [0.1.1] - 2026-05-13
 
 ### CFP-462-followup — phase-gate-mergeable workflow sync (PATCH)

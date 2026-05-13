@@ -153,6 +153,36 @@ sh scripts/worktree-merge.sh cfp-139/design/oprisk cfp-139/design
 # push 는 worktree-merge.sh 내부에서 수행 (직접 git push 호출 금지)
 ```
 
+### 3.5. Epic Scope Manifest intersection 검사 (ADR-050 Amendment 1, CFP-534)
+
+복수 Orchestrator 세션 병렬 진행 시 Epic Issue body `<!-- scope_manifest -->` 블록 (ADR-050 §결정 2) 의 cross-Epic intersection 검사 의무. 본 에이전트가 GitHub Actions (`parallel-epic-conflict-check.yml`) 결과를 받아 의미 수준 충돌 판정 + escalation.
+
+**확장된 검사 영역 (Amendment 1, CFP-534)** — 기존 결정 3 단순 file overlap 외 추가:
+
+| 검사 영역 | scope manifest field | 충돌 라벨 | 동작 |
+|---|---|---|---|
+| inter-plugin-contracts file overlap | `planned_inter_plugin_contracts[]` | `conflict:contract-overlap` | GitOpsAgent 가 두 PR 에 라벨 부여 + merge-order 자동 결정 (lower CFP) |
+| label-registry version bump 동시 발의 | `planned_label_registry_bumps[]` | `conflict:registry-bump-overlap` | frontmatter 3-location (`version` / `bumped_at` / `amendments[]` row) 충돌 사전 경고 comment + version 우선순위 결정 escalate |
+| MANIFEST.yaml entry append 충돌 | `planned_inter_plugin_contracts[]` 안 `MANIFEST.yaml` 포함 시 | `conflict:contract-overlap` | append 순서 결정 + lower CFP 선행 merge |
+
+**의무 동작 (intersection 발견 시)**:
+
+1. `parallel-epic-conflict-check.yml` workflow 가 `conflict:*` 라벨 자동 부여 (workflow 책임).
+2. GitOpsAgent 가 두 PR 에 WARN comment 자동 발의 (`[GitOps]` prefix):
+   ```
+   [GitOps] Cross-section conflict detected (ADR-050 Amendment 1)
+   - 충돌 영역: <label-registry-v2.md / MANIFEST.yaml / 기타 contract>
+   - 상대 PR: #YYY (CFP-ZZZ)
+   - merge-order: 1 (lower CFP 우선)
+   - 권장 조치: merge-order:1 PR merge 후 본 PR rebase + frontmatter 재정합
+   ```
+3. merge-order 자동 부여 (lower CFP 번호 우선 — 결정 5 정합).
+4. 사람이 미해결 시 PMOAgent (sibling SendMessage) 로 escalate — cross-Story hotspot 패턴 감지 후 ADR 후보 발의 가능.
+
+**Activation 조건**: scope manifest 의 `cross_section_conflict_detection: true` flag 선언 PR 만 cross-section 검사 활성. 미선언 PR 은 단순 file overlap (결정 3) 만. **default = false** (backward-compat) — Amendment 1 이전 PR 영향 0건.
+
+**Sentinel evidence** (CFP-534 도입 동기): 2026-05-13 KST CFP-521 v2.4 vs CFP-429 v2.5 가 `docs/inter-plugin-contracts/label-registry-v2.md` 의 frontmatter 3-location (`version` / `bumped_at` / `amendments[]` row) 동시 수정 → manual 15분 추가 + risk.
+
 ### 4. FIX iteration worktree 재구성
 
 §10 FIX Ledger row append (Orchestrator 가 단독 작성, CFP-32 monopoly) 시점에 GitOpsAgent 가 알림 받아:
