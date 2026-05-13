@@ -196,32 +196,27 @@ jobs:
           EXISTING_ALERT=$(gh issue view "$ISSUE_NUM" --json comments --jq '[.comments[] | select(.body | startswith("[PMO] Retro mandatory check"))] | length')
 
           if [ "$EXISTING_ALERT" -eq 0 ]; then
-            gh issue comment "$ISSUE_NUM" --body "$(cat <<EOF
-[PMO] Retro mandatory check (CFP-138 / ADR-045)
-
-Phase 2 PR #${{ github.event.pull_request.number }} merged ${{ steps.meta.outputs.trigger_reason }}.
-First attempt (PR merge + 5min grace) 후에도 \`gate:retro-complete\` label 부재 — retro 자동 작성 trigger 필요.
-
-**Action required**:
-1. PMOAgent re-spawn (Orchestrator 자동 또는 사용자 요청)
-2. retro file 작성 → \`<internal-docs>/wrapper/retros/<sprint>-cfp-NNN-<slug>.md\`
-3. Story §11 schema update (retro_file / retro_summary / learnings_count / feedback_back_to_codeforge)
-4. \`gate:retro-complete\` label add (PMOAgent self-write)
-
-**Retry policy** (ADR-045 D-4 cumulative offset from PR merge):
-- First attempt: PR merge + 5min  (grace period — 본 attempt fail)
-- Retry 1:        PR merge + 10min (5min wait)
-- Retry 2:        PR merge + 20min (10min wait)
-- Retry 3:        PR merge + 35min (15min wait, final attempt)
-- Total attempts = 4 (1 initial + 3 retries)
-- Total max latency = 35min from PR merge → ESCALATE 사용자 + Story close 차단 유지
-
-본 alert 는 retry 시 중복 게시 안 함 (idempotent).
-
-NOTE: Phase 1 PR scope 본 workflow = first attempt 만 implement. retry 1/2/3 state machine =
-Phase 2 PR scope deferred (ADR-045 §D-4 Phase 2 implementation spec).
-EOF
-)"
+            PR_NUM="${{ github.event.pull_request.number }}"
+            TRIGGER_REASON="${{ steps.meta.outputs.trigger_reason }}"
+            COMMENT_BODY=$(printf '%s\n\n%s\n%s\n\n%s\n%s\n%s\n%s\n%s\n\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n\n%s\n\n%s' \
+              "[PMO] Retro mandatory check (CFP-138 / ADR-045)" \
+              "Phase 2 PR #${PR_NUM} merged ${TRIGGER_REASON}." \
+              "First attempt (PR merge + 5min grace) 후에도 gate:retro-complete label 부재 — retro 자동 작성 trigger 필요." \
+              "**Action required**:" \
+              "1. PMOAgent re-spawn (Orchestrator 자동 또는 사용자 요청)" \
+              "2. retro file 작성 → <internal-docs>/wrapper/retros/<sprint>-cfp-NNN-<slug>.md" \
+              "3. Story §11 schema update (retro_file / retro_summary / learnings_count / feedback_back_to_codeforge)" \
+              "4. gate:retro-complete label add (PMOAgent self-write)" \
+              "**Retry policy** (ADR-045 D-4 cumulative offset from PR merge):" \
+              "- First attempt: PR merge + 5min  (grace period — 본 attempt fail)" \
+              "- Retry 1:        PR merge + 10min (5min wait)" \
+              "- Retry 2:        PR merge + 20min (10min wait)" \
+              "- Retry 3:        PR merge + 35min (15min wait, final attempt)" \
+              "- Total attempts = 4 (1 initial + 3 retries)" \
+              "- Total max latency = 35min from PR merge → ESCALATE 사용자 + Story close 차단 유지" \
+              "본 alert 는 retry 시 중복 게시 안 함 (idempotent)." \
+              "NOTE: Phase 1 PR scope 본 workflow = first attempt 만 implement. retry 1/2/3 state machine = Phase 2 PR scope deferred (ADR-045 §D-4 Phase 2 implementation spec).")
+            gh issue comment "$ISSUE_NUM" --body "$COMMENT_BODY"
             echo "::notice::[PMO] retro alert posted on Issue #$ISSUE_NUM"
           else
             echo "::notice::[PMO] retro alert already posted on Issue #$ISSUE_NUM (idempotent skip)"
@@ -521,31 +516,9 @@ EOF
               echo "$RESPONSE" | python3 -c "import json,sys,base64; d=json.load(sys.stdin); open('/tmp/retro-state/current.jsonl','w').write(base64.b64decode(d['content']).decode())" 2>/dev/null || true
 
               # Update target story_key record via env vars + file I/O (safe from quoting)
+              # ADR-061 §결정 1 — multi-line Python 외부 스크립트 위임
               export _SK="$STORY_KEY" _NS="$NEW_STATUS" _TS="$TIMESTAMP" _NA="$NEW_ATTEMPT_N"
-              NEW_CONTENT=$(python3 -c "
-import json, os
-sk = os.environ['_SK']
-ns = os.environ['_NS']
-ts = os.environ['_TS']
-na = int(os.environ['_NA'])
-updated = []
-try:
-    with open('/tmp/retro-state/current.jsonl') as f:
-        for line in f:
-            line = line.strip()
-            if not line:
-                continue
-            d = json.loads(line)
-            if d.get('story_key') == sk:
-                d['status'] = ns
-                d['last_attempted_at'] = ts
-                if na > 0:
-                    d['attempt_n'] = na
-            updated.append(json.dumps(d))
-except FileNotFoundError:
-    pass
-print('\n'.join(updated) + '\n')
-")
+              NEW_CONTENT=$(python3 "$GITHUB_WORKSPACE/scripts/retro-attempts-update.py")
               NEW_CONTENT_B64=$(printf '%s' "$NEW_CONTENT" | base64 -w0)
 
               # PUT with current SHA (409 = concurrent write → retry with jitter)
@@ -626,17 +599,16 @@ print('\n'.join(updated) + '\n')
             # Determine if this is final attempt (attempt_n=4 = retry 3) → ESCALATE
             if [ "$ATTEMPT_N" -ge 4 ]; then
               echo "::warning::$STORY_KEY retry 3 (attempt_n=4) failed — ESCALATE"
-              gh issue comment "$ISSUE_NUM" --body "[PMO] Retro automation failed after 3 retries (CFP-138 / ADR-045)
-
-Story \`$STORY_KEY\` has been through 4 attempts (1 initial + 3 retries) without \`gate:retro-complete\` label.
-
-**ESCALATE — manual intervention required**:
-1. Orchestrator 또는 사용자 manual PMOAgent spawn
-2. retro file 작성 → \`<internal-docs>/wrapper/retros/<date>-cfp-NNN-<slug>.md\`
-3. Story §11 4-field schema 갱신
-4. \`gate:retro-complete\` label 수동 부착
-
-Story close 차단 유지 (forcing function — ADR-045 D-4)."
+              ESCALATE_BODY=$(printf '%s\n\n%s\n\n%s\n%s\n%s\n%s\n%s\n\n%s' \
+                "[PMO] Retro automation failed after 3 retries (CFP-138 / ADR-045)" \
+                "Story ${STORY_KEY} has been through 4 attempts (1 initial + 3 retries) without gate:retro-complete label." \
+                "**ESCALATE — manual intervention required**:" \
+                "1. Orchestrator 또는 사용자 manual PMOAgent spawn" \
+                "2. retro file 작성 → <internal-docs>/wrapper/retros/<date>-cfp-NNN-<slug>.md" \
+                "3. Story §11 4-field schema 갱신" \
+                "4. gate:retro-complete label 수동 부착" \
+                "Story close 차단 유지 (forcing function — ADR-045 D-4).")
+              gh issue comment "$ISSUE_NUM" --body "$ESCALATE_BODY"
 
               # Pattern A write: status=escalated
               pattern_a_write "$STORY_KEY" "escalated" "0" "$TIMESTAMP" \
@@ -646,17 +618,17 @@ Story close 차단 유지 (forcing function — ADR-045 D-4)."
 
             # Post retry comment to trigger PMOAgent
             RETRY_NUM=$((ATTEMPT_N))
-            gh issue comment "$ISSUE_NUM" --body "[PMO] Retro mandatory retry $RETRY_NUM (CFP-138 / ADR-045)
-
-Story \`$STORY_KEY\` — retry $RETRY_NUM of 3. \`gate:retro-complete\` label still absent after attempt $ATTEMPT_N.
-
-**Action required**:
-1. PMOAgent retro write (Orchestrator 또는 사용자 요청)
-2. retro file → \`<internal-docs>/wrapper/retros/<date>-$( echo $STORY_KEY | tr '[:upper:]' '[:lower:]' )-<slug>.md\`
-3. Story §11 4-field schema update
-4. \`gate:retro-complete\` label 부착
-
-(Retry $(( ATTEMPT_N )) / 3 — remaining: $(( 4 - NEW_ATTEMPT_N )) retry(s) + ESCALATE if all fail)"
+            STORY_KEY_LOWER=$(echo "$STORY_KEY" | tr '[:upper:]' '[:lower:]')
+            REMAINING=$(( 4 - NEW_ATTEMPT_N ))
+            RETRY_BODY=$(printf '%s\n\n%s\n\n%s\n%s\n%s\n%s\n\n%s' \
+              "[PMO] Retro mandatory retry ${RETRY_NUM} (CFP-138 / ADR-045)" \
+              "Story ${STORY_KEY} — retry ${RETRY_NUM} of 3. gate:retro-complete label still absent after attempt ${ATTEMPT_N}." \
+              "**Action required**:" \
+              "1. PMOAgent retro write (Orchestrator 또는 사용자 요청)" \
+              "2. retro file → <internal-docs>/wrapper/retros/<date>-${STORY_KEY_LOWER}-<slug>.md" \
+              "3. Story §11 4-field schema update / 4. gate:retro-complete label 부착" \
+              "(Retry ${RETRY_NUM} / 3 — remaining: ${REMAINING} retry(s) + ESCALATE if all fail)")
+            gh issue comment "$ISSUE_NUM" --body "$RETRY_BODY"
 
             # Pattern A write: advance attempt_n + status=in_flight
             pattern_a_write "$STORY_KEY" "in_flight" "$NEW_ATTEMPT_N" "$TIMESTAMP" \

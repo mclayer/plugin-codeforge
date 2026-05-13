@@ -47,19 +47,15 @@ jobs:
 
           for n in $STALE; do
             echo "::notice::closing reservation #$n (>30 days)"
-            gh issue comment "$n" --repo "$REPO" --body "$(cat <<'COMMENT'
-## [reservation-cleanup] Auto-close (30-day TTL expired)
-
-본 reservation Issue 는 30 일 동안 promotion 없이 유지되어 자동 close 됩니다 (ADR-036 / CFP-260 Option B).
-
-재 활성화 필요 시:
-1. 본 Issue 재 open
-2. body 갱신 + label `phase:reservation` 유지 또는 `phase:요구사항` + `type:story` 로 promote
-3. 새 30-day TTL 시작 (재 open 시점 기준)
-
-원본 KEY (`CFP-<#>`) 는 GitHub Issue # 보존 정책에 따라 영구 보존 — 다른 Story 가 재사용 불가.
-COMMENT
-)"
+            COMMENT_BODY=$(printf '%s\n\n%s\n\n%s\n%s\n%s\n%s\n\n%s' \
+              "## [reservation-cleanup] Auto-close (30-day TTL expired)" \
+              "본 reservation Issue 는 30 일 동안 promotion 없이 유지되어 자동 close 됩니다 (ADR-036 / CFP-260 Option B)." \
+              "재 활성화 필요 시:" \
+              "1. 본 Issue 재 open" \
+              "2. body 갱신 + label phase:reservation 유지 또는 phase:요구사항 + type:story 로 promote" \
+              "3. 새 30-day TTL 시작 (재 open 시점 기준)" \
+              "원본 KEY (CFP-<#>) 는 GitHub Issue # 보존 정책에 따라 영구 보존 — 다른 Story 가 재사용 불가.")
+            gh issue comment "$n" --repo "$REPO" --body "$COMMENT_BODY"
             gh issue close "$n" --repo "$REPO" --reason "not_planned"
           done
 

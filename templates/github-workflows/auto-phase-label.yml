@@ -261,9 +261,9 @@ jobs:
 
           AUDIT="[hotfix-bypass-audit] PR=${PR_NUMBER} label_applied_by=${LABEL_USER} reason=${REASON} scope_files=auto-phase-label-skip timestamp=${TS}"
 
-          BODY="${AUDIT}
-
-> i ADR-024 Amendment 3 §결정 6.C — audit trail 3중 안전망 1차 (audit comment 자동 발의). assertion lint = \`scripts/check-bypass-audit-comment.sh\`. quarterly merge 시 \`docs/audit/hotfix-bypass-log.md\` append (별도 carrier scope)."
+          BODY=$(printf '%s\n\n%s' \
+            "$AUDIT" \
+            "> i ADR-024 Amendment 3 §결정 6.C — audit trail 3중 안전망 1차 (audit comment 자동 발의). assertion lint = \`scripts/check-bypass-audit-comment.sh\`. quarterly merge 시 \`docs/audit/hotfix-bypass-log.md\` append (별도 carrier scope).")
           gh pr comment "$PR_NUMBER" --body "$BODY"
 
       - name: Audit assertion (bypass label 부착 시)
