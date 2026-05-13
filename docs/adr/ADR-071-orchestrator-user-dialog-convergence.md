@@ -125,10 +125,12 @@ frame mode + §결정 2 세부 룰을 보조하는 4 검증 layer. CFP-612 §1 v
 
 | Layer | 동작 | 발화 위치 |
 |---|---|---|
-| **Layer 1 — 가시적 preamble** | 메시지 맨 위 "지금 답해주실 것" 1 문장 가시 | 매 user-facing turn 의 메시지 맨 윗줄. trivial turn (§결정 4 E12) 면제. **mechanical lint 별 follow-up CFP** — 본 Wave 5 scope 외 |
-| **Layer 2 — 자기 declare** | turn 끝 "주의한 가설" 1 줄 declare (보조 신호) | 매 user-facing turn 의 메시지 맨 아랫줄. trivial turn 면제 |
-| **Layer 3 — keyword "추상" 즉시 halt** | 사용자 메시지 본문 안 "추상" 한글 token 등장 시 즉시 halt + 재작성 의무 | 사용자 발화 token detection 시점. Hanja form ("抽象") 면제 (CLAUDE.md §1 한자 금지 정책 정합). stem match (예: "추상적" / "추상화") = 적용. playbook §3.14 본문이 stem vs exact match 결정 영역 |
-| **Layer 4 — 누적 detection** | N=1 즉시 halt (같은 양상 다음 turn 재발 시) + M=5 max threshold 사용자 escalation (`AskUserQuestion` 발화) + 누적 file 영속 | `docs/orchestrator-communication-incidents.md` (cross-Story append-only). §결정 6 참조 |
+| **Layer 1 — 가시적 preamble** | 메시지 맨 위 "지금 답해주실 것" 1 문장 가시 | 매 user-facing turn 의 메시지 맨 윗줄. trivial turn (E12) 면제 + turn-shape edge 분기 (E9 streaming / E10 tool-call-only / E11 AskUserQuestion popup) 적용. 분기 derived default = playbook §3.14 본문 "Turn-shape derived defaults" 표 결정 영역. **mechanical lint 별 follow-up CFP** — 본 Wave 5 scope 외 |
+| **Layer 2 — 자기 declare** | turn 끝 "주의한 가설" 1 줄 declare (보조 신호) | 매 user-facing turn 의 메시지 맨 아랫줄. trivial turn (E12) + E10 tool-call-only + E11 popup turn 면제. E9 streaming = final flush 시 적용. derived default = playbook §3.14 |
+| **Layer 3 — keyword "추상" 즉시 halt** | 사용자 메시지 본문 안 "추상" 한글 token 등장 시 즉시 halt + 재작성 의무 | 사용자 발화 token detection 시점. Hanja form ("抽象") 면제 (CLAUDE.md §1 한자 금지 정책 정합). stem match (예: "추상적" / "추상화") = 적용. **모든 turn-shape edge (E9-E12) 에서 active** — popup option_text 안 "추상" 등장 가능. playbook §3.14 본문이 stem vs exact match 결정 영역 |
+| **Layer 4 — 누적 detection** | N=1 즉시 halt (같은 양상 다음 turn 재발 시) + M=5 max threshold 사용자 escalation (`AskUserQuestion` 발화) + 누적 file 영속 | `docs/orchestrator-communication-incidents.md` (cross-Story append-only). **모든 turn-shape edge (E9-E12) 에서 active** — 단 E10 tool-call-only turn 자체는 incident 분류 외 (no user-facing prose = pattern detection 영역 외). §결정 6 참조 |
+
+**Turn-shape edge derived default (E9 / E10 / E11) cross-ref**: 본 ADR §결정 10 (scope out) 정합 — 4 layer × 4 turn-shape edge 의 정량 default matrix 는 **playbook §3.14 "Turn-shape derived defaults" 표 결정 영역**. 본 ADR §결정 3 안 mapping 만 명시 (cross-ref boundary 보존). E10 tool-call-only 정량 정의 (prose 0 줄 + cosmetic 1-줄 미만) + E11 popup turn Layer 2 면제 사유 (popup 본문 자체 declare semantic 충당) 도 playbook 결정 영역. RequirementsPL §5.3 E9-E12 의 `[fact-check-pending]` marker 가 본 FIX-1 으로 모두 resolved.
 
 ### §결정 4 — Sub-mechanism 2 종 (수렴 보장)
 

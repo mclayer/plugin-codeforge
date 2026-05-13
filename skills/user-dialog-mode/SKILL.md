@@ -66,6 +66,17 @@ tools: Read
 
 **Hanja form ("抽象") 면제** (CLAUDE.md 한자 금지 정책 정합). **영문 alias ("abstract") = trigger 아님** (한글 token 만 anchor).
 
+### Turn-shape edge 분기 (E9 / E10 / E11 / E12, playbook §3.14 "Turn-shape derived defaults" SSOT)
+
+| Edge | Layer 1 (preamble) | Layer 2 (declare) | Layer 3 / Layer 4 |
+|---|---|---|---|
+| **E9 streaming token** | final flush 시 적용 | final flush 시 적용 | active |
+| **E10 tool-call-only** (prose 0 줄 + cosmetic 1-줄 미만) | 면제 | 면제 | Layer 3 active / Layer 4 incident 분류 외 |
+| **E11 AskUserQuestion popup** | "AskUserQuestion 으로 답해주실 것:" 1 문장 | 면제 (popup 본문이 declare 충당) | active |
+| **E12 trivial answer** (응답 ≤ 1 줄 + 의문 부재 + 결정 부재 AND) | 면제 | 면제 | active |
+
+상세 derived default = [playbook §3.14](../../docs/orchestrator-playbook.md) "Turn-shape derived defaults" 표 SSOT.
+
 ## Sub-mechanism 2 종 (ADR-071 §결정 4)
 
 ### Sub-mechanism 1 — "이전과 다르게 한 점" 1 줄 의무
