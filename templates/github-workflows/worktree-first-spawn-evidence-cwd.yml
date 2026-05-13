@@ -58,7 +58,8 @@ jobs:
           exit $status  # blocking-on-pr mode — lint fail 시 step fail propagation (CFP-531)
 
       - name: Post lint result comment (sticky)
-        if: steps.bypass.outputs.bypass == 'false'
+        # CFP-531 FIX iter 2 (CodeReview F-1): if always() ensure audit trail comment runs even on lint failure
+        if: always() && steps.bypass.outputs.bypass == 'false'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
