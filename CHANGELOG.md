@@ -7,6 +7,15 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+### Added (CFP-598 Phase 1 — Design lane, plumbing only)
+
+CFP-530 retro carrier #2 — `bootstrap-labels.sh` hotfix-bypass:* family dynamic sync + §3 yaml backfill (pre-existing leak). Phase 1 PR scope = Change Plan + Story §1-§9 only (no src/scripts/registry edit). Phase 2 PR (별 carrier) 가 6 file 변경 + marketplace 5.42.0 → 5.43.0 sibling PR.
+
+- `wrapper/change-plans/2026-05-13-cfp-598-bootstrap-labels-hotfix-bypass-sync.md` (internal-docs) — Change Plan §1-§14 author by ArchitectAgent chief (5 deputy synthesis: CodebaseMapper + DataMigrationArch + SecurityArch + TestContractArch + Refactor). ADR audit: 신규 0건, 기존 9 ADR 정합 (ADR-024 A3 §6.A + A4 §6.A.1 / ADR-063 §2 / ADR-061 §1·§3 / ADR-064 §1 / ADR-065 §1 #1 / ADR-008 §3 / ADR-037 / ADR-010 §2 / ADR-013).
+- `wrapper/stories/CFP-598.md` §1-§9 (internal-docs) — RequirementsPL §1-§6 + ArchitectPL §3·§7·§11 + Orchestrator §9.1 DesignReview PASS + §9.2 Codex proactive check #2 FIX-1 record.
+- **Codex proactive check #2** (ADR-052 Amendment 4 / CFP-532 mandatory) — P0:0 / P1:3 inline FIX-1 (F-3 base count / F-5 exit-code semantic / F-6 §8 test intent anchor) / P2:3 skip rationale.
+- **DesignReviewPL iter 1 = PASS** (review-verdict-v4 v4.4, 3 self-check 모두 verified true).
+
 ## [5.42.0] - 2026-05-13 — CFP-582 Phase 2 (ADR-059 Amendment 2 enforcement)
 
 ### Changed (CFP-582 Phase 2 — debate convergence quality lint)
