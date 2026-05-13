@@ -83,8 +83,8 @@ jobs:
         run: |
           set -euo pipefail
           LINT_OUT="$(cat /tmp/lint.out 2>/dev/null || echo '(lint output 부재)')"
-          # Truncate output to first 80 lines for comment brevity
-          LINT_TRUNCATED="$(echo "$LINT_OUT" | head -n 80)"
+          # Truncate output to first 80 lines for comment brevity (|| true: SIGPIPE 방어)
+          LINT_TRUNCATED="$(echo "$LINT_OUT" | head -n 80 || true)"
           if [ "${LINT_STATUS:-1}" = "0" ]; then
             HEADER="## OK handoff-wording-check — PASS (warning mode)"
             FOOTER="finding 0건. ADR-068 §결정 5 wording-ssot-grep-lint 정합."
