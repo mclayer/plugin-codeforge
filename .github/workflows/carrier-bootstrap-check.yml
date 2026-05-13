@@ -75,13 +75,7 @@ jobs:
             HEADER="## ⚠ Carrier bootstrap lint — violation 감지 (warning mode)"
             FOOTER=$'**warning mode (CFP-407 / ADR-062 / ADR-060 §결정 5)**: lint fail 이 PR merge 를 차단하지 않습니다. 의도된 결과인지 확인 + 다음 commit 으로 해소.\n\ncarrier Story 작성 시 `carrier_story: <KEY>` + `bootstrap_exempt_protocols: ["<type>:<identifier>"]` typed key list 의무. 5 standard type prefix: adr / contract / policy / workflow / script.'
           fi
-          BODY="${HEADER}
-
-\`\`\`
-${LINT_OUT}
-\`\`\`
-
-${FOOTER}
-
-> ⓘ 본 workflow = **warning mode** (continue-on-error). PR merge 미차단. 승격 gate (ADR-060 §결정 6) 통과 후 blocking 전환."
+          BODY=$(printf '%s\n\n```\n%s\n```\n\n%s\n\n%s' \
+            "$HEADER" "$LINT_OUT" "$FOOTER" \
+            "> ⓘ 본 workflow = **warning mode** (continue-on-error). PR merge 미차단. 승격 gate (ADR-060 §결정 6) 통과 후 blocking 전환.")
           gh pr comment "$PR_NUMBER" --body "$BODY"
