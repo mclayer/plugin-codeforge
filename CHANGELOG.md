@@ -7,6 +7,25 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.35.0] - 2026-05-13 — CFP-528 Wave 2B
+
+### Added
+
+- **ADR-068 Amendment 1** — I-5 dimensional empirical grounding invariant 신설 (4 → 5 invariants, ratchet 강화). 10 dimension enum (latency/scale/cardinality/throughput/cost/accuracy/lifecycle/volume/rate/count) 의 quantitative parameter 마다 `[empirical-source: <ref>]` 또는 `[empirical-source: TBD]` annotation 의무. empirical-absent default lock-in 차단 (#319 RETRO-MCT-104 carrier).
+- **review-verdict-v4 v4.3 → v4.4 MINOR bump** — `dimensional_empirical_self_check_passed: bool` optional field + `findings[].type: "dimensional-empirical-gap"` literal. ArchitectAgent verdict packet 셋 별도 boolean field (mechanical + boundary_completeness + dimensional_empirical) 동시 PASS 의무.
+- **mechanical_enforcement_actions[] 3번째 entry** — `dimensional-empirical-grounding` (status: deferred-followup, target_section: §결정 1).
+
+### Closed
+
+- **#319 (RETRO-MCT-104)** — keep-linked + close as absorbed. distinct failure-class but systemic super-class (empirical-grounded design discipline). ADR-052 Amendment 3 (touchpoint #4 fact-check) cover specific case + CFP-528 dimensional sensitivity discipline 일반화.
+
+### Sibling sync (separate PRs)
+
+- mclayer/marketplace: marketplace.json plugins[codeforge].version 5.34.0 → 5.35.0 mirrored (ADR-063 atomic invariant)
+- mclayer/plugin-codeforge-design: ArchitectAgent.md / ArchitectPLAgent.md I-5 self-check step (parallel sibling PR)
+- mclayer/plugin-codeforge-review: review-pl-base.md §3 I-5 mechanical detection rule + review-verdict-v4 canonical v4.4 (parallel sibling PR)
+- mclayer/codeforge-internal-docs: wrapper/stories/CFP-528.md 신설
+
 ## [5.34.0] - 2026-05-13
 
 ### Added
