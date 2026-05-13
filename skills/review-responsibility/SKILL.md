@@ -56,6 +56,7 @@ tools: Read
 | 런타임 오류 가능성 (null·타입·race 일반) | — | — | ✅ | — |
 | 레이어 경계·의존성 방향 준수 | — | 부분(패턴 수준) | 주(실구현) | — |
 | Impl Manifest §8.5 ↔ 실제 파일 일치 | — | — | ✅ | — |
+| **4 invariants cross-validate (ADR-068 §결정 2 dual-binding)**: I-1 API contract semantic completeness / I-2 cross-module propagation completeness / I-3 unconditional vs conditional guard placement intent / I-4 wording SSOT | ✅ (I-1~I-4 설계 author emit) | ✅ (I-1~I-4 문서 감사) | ✅ (I-1~I-4 구현 cross-validate) | — |
 | Injection 공격 표면 (SQL·Command·Template·NoSQL) | — | — | — | ✅ |
 | **Trust boundary 위반 (외부 입력 검증 누락)** | (설계) | — | — | ✅ (코드 준수 검증) |
 | Credential / secret 노출 (hardcoded·log·error) | — | — | — | ✅ (1차: Secret Scanning) |

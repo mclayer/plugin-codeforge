@@ -74,6 +74,7 @@ DRIFT_ALLOWLIST = {
     ("marketplace-sync",               "contract-lint.yml"):                 "Retired entry — multi-job pattern (CFP-457 cleanup)",
     ("write-permission-redistribution","lint.yml"):                          "multi-job workflow pattern — lint.yml shared job",
     ("evidence-registry-schema-validation", "evidence-registry-check.yml"): "ADR-060 Amendment 2 — schema validation lint basename divergence",
+    ("wording-ssot-grep-lint",             "wording-ssot-check.yml"):       "ADR-068 §결정 5 wording SSOT lint — basename divergence (grep-lint vs check)",
 }
 
 REGISTRY_PATH = Path("docs/evidence-checks-registry.yaml")

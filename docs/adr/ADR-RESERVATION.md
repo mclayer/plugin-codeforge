@@ -70,6 +70,7 @@ reservations: []
 | 65 | CFP-438 | active | 2026-05-13 |
 | 66 | CFP-521 | active | 2026-05-13 |
 | 67 | CFP-526 | active | 2026-05-13 |
+| 68 | CFP-527 | active | 2026-05-13 |
 
 ### 번호 해제 (archived)
 

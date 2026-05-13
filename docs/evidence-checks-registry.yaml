@@ -942,6 +942,44 @@ entries:
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
+  # ─── CFP-527 Wave 2A (boundary completeness wording SSOT lint, 2026-05-13) ───
+  # ADR-068 §결정 5 wording SSOT mechanical enforcement — 8번째 warning-tier entry
+  # (1st = adr-sunset-criteria / 2nd = decision-principle-vocab / 3rd = auto-phase-label /
+  # 4th = claude-md-line-cap / 5th = sibling-pr-label-author-check / 6th = ac-mapping-cross-ref /
+  # 7th = evidence-registry-naming)
+  # wording-ssot-grep-lint: Story §3/§7 enum identifier → impl source ripgrep 매칭 (warning advisory).
+
+  - name: wording-ssot-grep-lint
+    description: |
+      ADR-068 §결정 5 wording SSOT mechanical lint — Story §3/§7 의 enum-like identifier
+      (UPPER_SNAKE_CASE 4+ chars) 추출 후 impl source (src/ scripts/) ripgrep 매칭.
+      불일치 시 warning 출력 (advisory only — PR merge 미차단). Story file 미제공 시
+      skip exit 0. Warning tier (continue-on-error: true workflow 정합).
+      Hotfix bypass: hotfix-bypass:boundary-wording (ADR-024 Amendment 3 per-entry namespace).
+      4 invariants (I-1 API contract semantic / I-2 cross-module propagation /
+      I-3 guard placement intent / I-4 wording SSOT) 중 I-4 wording SSOT 의 mechanical enforcement.
+    detect_command: bash scripts/check-wording-ssot.sh
+    workflow: templates/github-workflows/wording-ssot-check.yml
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:boundary-wording
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: []       # 독립 entry — ADR-068 wording SSOT lint 외 의존 없음
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-527
+    introduced_date: 2026-05-13
+    owner_adr: ADR-068               # boundary completeness invariants SSOT — wording SSOT §결정 5
+    carrier_adr: ADR-060             # framework carrier (warning mode entry)
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active
+
   # ─── CFP-508 Phase 2 (entry name ↔ workflow file naming convention lint, 2026-05-13) ───
   # ADR-060 Amendment 7 — 7번째 warning-tier entry (CFP-490 FU-2 carrier)
   # (1st = adr-sunset-criteria / 2nd = decision-principle-vocab / 3rd = auto-phase-label /
