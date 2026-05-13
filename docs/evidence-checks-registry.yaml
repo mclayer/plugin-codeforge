@@ -10,7 +10,7 @@
 # Phase 2 PR = 본 §결정 13 표의 18 entry 실제 row append (CFP-390 그룹 A 인벤토리).
 # Total entries 가변 — 본 PR base 시점 = 2 + 18 = 20. main rebase 후 CFP-393 / CFP-410
 # 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
-schema_version: "1.1"  # CFP-455 / ADR-060 Amendment 2 — current_tier required 전환 + retroactive 분류 검증 (MINOR bump)
+schema_version: "1.2"  # CFP-509 / ADR-060 Amendment 6 — recurrence field 정식 도입 (MINOR bump v1.1 → v1.2)
 introduced_by: CFP-389
 last_updated: 2026-05-13  # CFP-521 — sibling-pr-label-author-check entry append (5th warning-tier entry, EPIC-RESULTS-CFP-462 §6 carrier #2)
 
@@ -47,6 +47,9 @@ entries:
     introduced_by: CFP-389
     owner_adr: ADR-058
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: carrier-bootstrap
@@ -71,6 +74,9 @@ entries:
     introduced_by: CFP-407
     owner_adr: ADR-062
     carrier_adr: ADR-062               # self-carrier
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: rate-limit-fallback-rate
@@ -99,6 +105,9 @@ entries:
     introduced_by: CFP-393
     owner_adr: ADR-057           # 정책 ADR — fallback rate sunset gate owner
     carrier_adr: ADR-060         # framework carrier (CFP-388 / ADR-060 §결정 12 CFP-C)
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: story-section-9-typed
@@ -124,6 +133,9 @@ entries:
     introduced_by: CFP-410
     owner_adr: ADR-044           # review-verdict-v4 schema source
     carrier_adr: ADR-060         # framework carrier
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   # ─── CFP-390 Phase 2 backfill (18 entries, ADR-060 Amendment 1 §결정 13 SSOT, 2026-05-11) ───
@@ -149,9 +161,9 @@ entries:
       .mjs extraction (.github/scripts/check-lane-evidence-block.mjs) +
       analyzeDuplicateHeadings() 함수로 valid heading 명시. Option A strict
       (CFP-465 invariant 보존) — lenient fallback 채택 안 함. recurrence_count
-      framework / promotion gate input / lint warning condition 모두 무관 —
-      별도 carrier CFP 가 machine-usable recurrence metric framework 도입 시
-      ADR-060 정합 schema design 필요.
+      framework / promotion gate input / lint warning condition 모두 무관 (description-only narrative).
+      CFP-509 schema v1.2 (ADR-060 Amendment 6) 에 `recurrence:` field 정식 도입 — 본 entry 는
+      schema-level count: 2 보유 (CFP-500 FIX-5 + CFP-451 transient 2회 historical evidence).
     detect_command: bash scripts/check-lane-evidence.sh
     workflow: .github/workflows/lane-evidence-check.yml
     current_tier: warning            # manifest 미부착 — Phase 2 backfill 시점 정합 (§결정 13 표)
@@ -165,6 +177,11 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-031 §결정 3 + fix-event-v1
     carrier_adr: ADR-060
+    recurrence:
+      count: 2
+      last_occurrence: "2026-05-12T00:00:00Z"    # CFP-451 본 세션 transient 2차 발생 (대략 timestamp)
+      threshold: 3
+      promotion_trigger: advisory              # threshold 도달 시 PR comment advisory
     status: Active
 
   - name: doc-locations-registry
@@ -185,6 +202,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-041
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: marketplace-parity
@@ -205,6 +225,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-016 / ADR-023 §결정 5
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: invariant-check
@@ -225,6 +248,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-002 (footer pattern) + 다중 CFP (5/7/8/10)
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: phase-gate-mergeable
@@ -245,6 +271,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-031 §결정 3 + label-registry-v2
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: inter-plugin-contracts
@@ -265,6 +294,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-008 / ADR-010 / MANIFEST.yaml
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: inter-plugin-drift
@@ -284,6 +316,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-011
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: comment-prefix-registry
@@ -304,6 +339,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: comment-prefix-registry-v1 (kind:registry)
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: label-registry-sync
@@ -323,6 +361,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: label-registry-v2 (kind:registry)
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: marketplace-sync
@@ -344,6 +385,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-016 (mirrored field)
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Retired  # CFP-457 — replaced by marketplace-parity (CFP-50 / ADR-023)
     retired_by: CFP-457
     retired_date: 2026-05-12
@@ -366,6 +410,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-013 / ADR-017
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: superpowers-integration
@@ -385,6 +432,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-028 / CFP-113
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: superpowers-schema-drift
@@ -404,6 +454,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-028 / CFP-121
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: parallel-epic-conflict
@@ -424,6 +477,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-050
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: branch-protection-drift
@@ -444,6 +500,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-024 Amendment 2
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: required-workflow-drift
@@ -464,6 +523,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-048 §결정 3
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: rulesets-drift
@@ -483,6 +545,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: ADR-048 §결정 1
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: write-permission-redistribution
@@ -503,6 +568,9 @@ entries:
     introduced_by: CFP-390
     owner_adr: CFP-26 / ADR-009 (write 권한 invariant)
     carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   # ─── CFP-426 Phase 2 backfill (4 entries, ADR-040 Amendment 3 §결정 7.D verbatim, 2026-05-12) ───
@@ -541,6 +609,9 @@ entries:
     introduced_by: CFP-426
     owner_adr: ADR-040
     carrier_adr: ADR-040
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: worktree-first-pre-checkout
@@ -573,6 +644,9 @@ entries:
     introduced_by: CFP-426
     owner_adr: ADR-040
     carrier_adr: ADR-040
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: worktree-first-pre-commit-main-block
@@ -605,6 +679,9 @@ entries:
     introduced_by: CFP-426
     owner_adr: ADR-040
     carrier_adr: ADR-040
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: worktree-first-spawn-evidence-cwd
@@ -637,6 +714,9 @@ entries:
     introduced_by: CFP-426
     owner_adr: ADR-040
     carrier_adr: ADR-040
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: evidence-registry-schema-validation
@@ -667,6 +747,9 @@ entries:
     introduced_by: CFP-455
     owner_adr: ADR-060                 # framework SSOT — schema 정합 검증의 정책 owner
     carrier_adr: ADR-060               # Amendment 2 carrier (self-application 의 self-carrier 패턴)
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   # ─── CFP-449 Phase 2 (decision principle forbid-list vocabulary lint, 2026-05-12) ───
@@ -709,6 +792,9 @@ entries:
     introduced_by: CFP-449
     owner_adr: ADR-064               # forbid-list dictionary SSOT
     carrier_adr: ADR-060             # framework carrier (warning mode entry)
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   # ─── CFP-481 Phase 2 (PR open 시 phase label 자동 부착, 2026-05-12) ───
@@ -743,6 +829,9 @@ entries:
     introduced_by: CFP-481
     owner_adr: ADR-024 Amendment 4 §결정 6.A.1   # branch → phase mapping 표 SSOT
     carrier_adr: ADR-060             # framework carrier (warning mode entry)
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   - name: claude-md-line-cap
@@ -771,6 +860,9 @@ entries:
     owner_adr: ADR-012               # Amendment 1 cap ≤320 declaration SSOT
     carrier_adr: ADR-060             # framework carrier (warning mode entry, Amendment 5)
     carrier_amendment: 5
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   # ─── CFP-521 Phase 2 (sibling-pr label anti-misuse lint, 2026-05-13) ───
@@ -808,6 +900,9 @@ entries:
     introduced_date: 2026-05-13
     owner_adr: ADR-010 Amendment 4 §결정 5   # sibling-pr fast-pass anti-misuse 안전망 SSOT
     carrier_adr: ADR-060             # framework carrier (warning mode entry)
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
   # ─── CFP-491 Phase 2 (impl manifest AC mapping cross-ref lint, 2026-05-13) ───
@@ -842,4 +937,7 @@ entries:
     introduced_date: 2026-05-13
     owner_adr: CFP-451 F-001 Option C   # F-001 retro follow-up systematization 동인
     carrier_adr: ADR-060                # framework carrier (warning mode entry)
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active

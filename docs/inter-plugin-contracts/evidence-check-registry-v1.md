@@ -1,14 +1,15 @@
 ---
 kind: registry
 registry: evidence-check
-version: "1.1"
+version: "1.2"
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/evidence-check-registry-v1.md
-date: 2026-05-12
+date: 2026-05-13
 status: Active
 authors:
   - CFP-389 (Initial v1.0 — evidence-enforceable promotion framework SSOT, ADR-060 carrier)
   - CFP-455 (MINOR bump v1.0 → v1.1 — current_tier required 전환 + 4-tier enum 본문 강조, ADR-060 Amendment 2 carrier)
+  - CFP-509 (MINOR bump v1.1 → v1.2 — recurrence field 정식 도입 + ADR-060 promotion gate auto-firing, ADR-060 Amendment 6 carrier)
 related_adrs:
   - ADR-008  # Inter-plugin Contract Versioning (kind:registry SemVer 정합)
   - ADR-010  # Inter-plugin Contract Sibling Sync (kind:registry scope 외 명시)
@@ -65,6 +66,11 @@ codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-0
 | `owner_adr` | string | 필수 | 본 entry 가 검증 대상으로 삼는 정책 ADR. 예: `ADR-058`. |
 | `carrier_adr` | string | 필수 | 본 entry 도입의 carrier ADR (framework SSOT 외). 예: `ADR-060`. |
 | `status` | enum | optional (default `Active`) | entry lifecycle. enum = `Active` / `Deprecated` / `Archived`. |
+| `recurrence` | object | optional (v1.2, CFP-509 / ADR-060 Amendment 6 — recurrence-driven promotion 정식 도입) | recurrence tracking. 필드: |
+| `recurrence.count` | int | 필수 (recurrence 정의 시) | 본 entry 도입 후 누적 위반 발생 횟수 (machine-usable). 기본 `0`. |
+| `recurrence.last_occurrence` | ISO8601 UTC | optional | 마지막 위반 timestamp (ISO8601 UTC Z suffix). count = 0 시 omit 가능. |
+| `recurrence.threshold` | int | optional (default `3`) | promotion gate auto-firing threshold. recurrence.count ≥ threshold 시 warning → blocking-on-pr 승격 자동 발화 신호 (별도 carrier 가 actual blocking 부여). |
+| `recurrence.promotion_trigger` | enum | optional (default `none`) | recurrence-based promotion 행동 enum. enum = `none` / `advisory` (PR comment 만) / `auto_blocking` (별도 carrier 강제). 기본 `none`. |
 
 ## 4. 변경 규칙 (SemVer, ADR-008 정합 + 4-tier enforcement enum 정식 도입)
 
@@ -78,6 +84,8 @@ codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-0
 | `hotfix-bypass` | bypass label 적용 PR 만 skip + audit comment 의무. label 부재 시 blocking-on-pr 등가. | `required_status_checks.contexts` 부착 (+ bypass workflow) | 운영 장애 hotfix 통로 필수 시 |
 
 **v1.0 → v1.1 MINOR bump (CFP-455, 2026-05-12)**: `current_tier` 필드 optional → **required** 전환 + 기존 22 entry retroactive 분류 검증 (모두 현행 `current_tier` 보유 verified — mechanical regression 0건). schema 정합 mechanical 강제 = `scripts/check-evidence-registry.sh` (Phase 2 PR scope) + `templates/github-workflows/evidence-registry-check.yml` (Phase 2 PR scope, warning mode 첫 도입).
+
+**v1.1 → v1.2 MINOR bump (CFP-509, 2026-05-13)**: `recurrence:` field 정식 도입 (optional object — count / last_occurrence / threshold / promotion_trigger). machine-usable recurrence metric framework 제공 — CFP-490 description-only `recurrence_count` (lane-evidence-trail entry) 의 schema 흡수 + ADR-060 §결정 새 추가 (recurrence.count ≥ recurrence.threshold 시 promotion gate auto-firing advisory). 22 entry retroactive 분류 검증 (기존 entry 는 recurrence 미정의 = backward-compat default).
 
 ## 5. Bypass channel 운영 (ADR-024 Amendment 3 + ADR-060 §결정 7-8)
 
@@ -134,6 +142,7 @@ warning → blocking-on-pr / blocking-on-merge 승격 = 3 condition AND:
 ### 완료된 변경 (historical)
 
 - **v1.1 (CFP-455, 2026-05-12 — Accepted)**: `current_tier` optional → required 전환 + tier enum 정식 분류 (기존 22 entry retroactive 분류 검증 — 모두 보유 verified, mechanical regression 0건). MINOR bump. ADR-060 Amendment 2 carrier. CFP-391 (Issue #396) / CFP-412 (Issue #412) 의 closed without delivery 후 재재예약 carrier.
+- **v1.2 (CFP-509, 2026-05-13 — Accepted)**: `recurrence:` field 정식 도입 (optional object). MINOR bump (신규 optional field). ADR-060 Amendment 6 carrier. CFP-490 description-only `recurrence_count` (lane-evidence-trail entry, CFP-500 FIX-5 + CFP-451 transient 2회) 의 schema 흡수.
 
 ### 예상 변경 (forward-looking)
 

@@ -5,6 +5,18 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
+## [5.30.0] - 2026-05-13
+
+### Changed (CFP-509 — evidence-check-registry schema v1.1 → v1.2 MINOR bump)
+
+ADR-060 Amendment 6 carrier — `recurrence:` field 정식 도입 (optional object: count / last_occurrence / threshold / promotion_trigger) + §결정 19 신설 (recurrence-based advisory promotion signal) + 32 entry retroactive migration (lane-evidence-trail count=2 historical evidence 흡수, 31 entry count=0 default). schema validation lint 확장. backward-compat 100% (recurrence 미정의 entry 모두 정상 PASS).
+
+- `docs/inter-plugin-contracts/evidence-check-registry-v1.md` (UPDATE) — schema v1.1 → v1.2 MINOR (recurrence field schema + v1.2 historical row)
+- `docs/adr/ADR-060-evidence-enforceable-promotion-framework.md` (UPDATE) — Amendment 6 + §결정 19 신설
+- `docs/evidence-checks-registry.yaml` (UPDATE) — 32 entry recurrence field migration
+- `scripts/check-evidence-registry.sh` (UPDATE) — recurrence field validation
+- `.claude-plugin/plugin.json` — version 5.29.0 → 5.30.0 MINOR
+
 ## [5.29.0] - 2026-05-13
 
 > Note: Rebased twice onto main HEAD due to concurrent CFP-521 merges (#523 sibling-pr lint = 5.27.0; #524 PAT rotation = 5.28.0; CFP-462-followup marketplace batch #70). CFP-491 jumps to 5.29.0 to maintain ADR-037 sequential bump invariant.
