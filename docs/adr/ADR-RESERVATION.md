@@ -72,6 +72,7 @@ reservations: []
 | 67 | CFP-526 | active | 2026-05-13 |
 | 68 | CFP-527 | active | 2026-05-13 |
 | 69 | CFP-342 | active | 2026-05-13 (retroactive — CFP-570 renumber from collided ADR-050; ADR file = `ADR-069-multi-repo-story-key-system.md`) |
+| 70 | CFP-578 | active | 2026-05-13 (ArchitectAgent inline append per CFP-578 chief author scope — GitOpsAgent self-write 영역 inline carrier 정합. ADR file = `ADR-070-codex-verify-before-trust.md`) |
 
 ### 번호 해제 (archived)
 

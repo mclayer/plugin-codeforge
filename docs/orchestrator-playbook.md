@@ -1054,11 +1054,33 @@ purpose: <한 줄 목적>
 context:
   lane: <requirements|design|develop|orchestrator>
   story_key: <CFP-NNN>
-  artifacts: <첨부 산출물>
+  artifacts: <첨부 산출물 — verbatim content 의무, CFP-578 / ADR-070 §결정 D2 + ADR-052 Amendment 5>
 task: <Codex에게 요청할 구체적 작업>
 ```
 
-**결과 처리** (touchpoint #2 **mandatory** 분기 — CFP-532 / [ADR-052 Amendment 4](../docs/adr/ADR-052-codex-proactive-check-touchpoints.md), 나머지 5 touchpoint **optional** 유지):
+**`artifacts` 필드 verbatim 첨부 의무** (CFP-578 / [ADR-070](../docs/adr/ADR-070-codex-verify-before-trust.md) §결정 D2 + [ADR-052 Amendment 5](../docs/adr/ADR-052-codex-proactive-check-touchpoints.md)):
+
+Codex worker spawn prompt 안 file path reference 만 사용 금지. 모든 file content 가 verify task scope 인 경우 prompt payload 안 verbatim 첨부 필수 — Codex sandbox file system access 실패 (CFP-506 / CFP-520 / CFP-530 3 회 reproduce sentinel) systemic 원인 차단.
+
+| verbatim 첨부 대상 | 영역 |
+|---|---|
+| 사용자 §1 원문 | story-section-1-immutable.yml SSOT, 변조 금지 invariant 정합 |
+| Story §2-§6 / §7 PL synthesis 본문 | sandbox 영역 외 (internal-docs path) |
+| 관련 ADR / Change Plan 본문 | sandbox 영역 외 가능성 (cross-repo / cross-plugin path) |
+| cross-repo state | sibling plugin file / marketplace.json / contract MANIFEST 등 |
+
+**partial 첨부 허용 (cap 초과 시)**: file content cap 초과 시 (token 비용 risk) → verify 대상 영역만 verbatim 첨부 + 나머지 file path reference 표시 + `[partial: lines NN-NN]` marker 의무.
+
+**verify-before-trust 결과 처리 단계** (CFP-578 / [ADR-070](../docs/adr/ADR-070-codex-verify-before-trust.md) §결정 D1 / D3):
+
+Codex worker 결과 수신 후 Orchestrator 는 finding evidence 의 ground truth 를 own working directory 안 Read / Glob / Grep 으로 verify 의무:
+
+1. Codex finding evidence (인용 본문 / file path / line number / commit SHA / contract version 등) 추출
+2. Orchestrator direct file Read / Glob / Grep 으로 evidence 영역 ground truth 확정
+3. **mismatch 검출 시 verdict reject** + Story §10 FIX Ledger row append (false positive count tally, fix-event-v1 contract `[codex-false-positive]` sub-tag — schema MINOR bump 별도 carrier) + Orchestrator override rationale 명시 (4 종 verbatim: Codex evidence + Orchestrator Read 결과 + mismatch 영역 + reject 후속 동작)
+4. **match 검출 시 finding accept** → recommendation / severity 기반 후속 동작 (PROCEED / ADDRESS_FIRST) 진입
+
+**결과 처리** (touchpoint #2 **mandatory** 분기 — CFP-532 / [ADR-052 Amendment 4](../docs/adr/ADR-052-codex-proactive-check-touchpoints.md), 나머지 5 touchpoint **optional** 유지, verify-before-trust 단계 통과 후):
 
 | recommendation | findings | 처리 (touchpoint #2 **mandatory**) | 처리 (touchpoint #1/#3/#4/#5/#6 optional) |
 |---|---|---|---|
@@ -1067,6 +1089,7 @@ task: <Codex에게 요청할 구체적 작업>
 | ADDRESS_FIRST | P1-only | **inline FIX 의무 (skip 차단)** | Orchestrator 판단으로 skip 가능 → story §10 기록 |
 | ADDRESS_FIRST | P2-only | Orchestrator 판단으로 Story §10 deferred 기록 가능 | 동일 |
 | 판정 불일치 (#5 전용) | — | N/A (#5 = optional) | 사용자 에스컬레이션 |
+| verify mismatch 검출 (모든 touchpoint) | — | finding reject + Story §10 false positive count tally + override rationale (ADR-070 §결정 D3) | 동일 |
 
 #### §3.10.1 Pre-question Review (iterative reformulation — CFP-446 / [ADR-052 Amendment 2](../docs/adr/ADR-052-codex-proactive-check-touchpoints.md))
 
