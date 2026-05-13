@@ -797,6 +797,35 @@ entries:
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
+  # ─── CFP-475 Phase 2 (duplicate-session-start-hook-check, 2026-05-12) ───
+  # ADR-038 Amendment 3 §결정 12 one-channel rule mechanical lint
+  # plugin-root hooks/hooks.json SSOT 이전 후 settings.json 중복 등록 detect
+
+  - name: duplicate-session-start-hook-check
+    description: |
+      ADR-038 Amendment 3 §결정 12 (one-channel rule) — `.claude/settings.json` `hooks.SessionStart[]`
+      와 plugin-root `hooks/hooks.json` 양 channel 안 prereq-check entry 동시 정의 detect.
+      하나의 channel 만 SSOT (plugin-root first-class, settings.json fallback deprecated).
+      warning tier — continue-on-error: true. CFP-475 Phase 2 PR 가 actual wire 첫 사례 —
+      `scripts/check-no-duplicate-session-start-hook.sh` (bash + jq) + `hotfix-bypass:duplicate-session-start-hook` label.
+    detect_command: bash scripts/check-no-duplicate-session-start-hook.sh
+    workflow: templates/github-workflows/duplicate-session-start-hook-check.yml
+    current_tier: warning          # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:duplicate-session-start-hook
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0          # ADR-060 §결정 6 (b)
+      sibling_dependencies: []      # 본 entry 단독 — Story 4 진입 시 평가 sibling 부재
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-475
+    owner_adr: ADR-038
+    carrier_adr: ADR-038
+    status: Active
+
   # ─── CFP-481 Phase 2 (PR open 시 phase label 자동 부착, 2026-05-12) ───
   # ADR-024 Amendment 4 §결정 6.A.1 branch → phase mapping 표 SSOT 의 mechanical enforcement —
   # 3rd warning-tier entry (1st = adr-sunset-criteria / 2nd = decision-principle-vocab).

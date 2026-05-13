@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT (file structure adapted from superpowers v5.1.0)
+# SessionStart hook for codeforge plugin — TodoWrite/EnterWorktree/ExitWorktree/SendMessage deferred tool schema preload advisory
+#
+# Carrier: CFP-475 (Amendment 3 of ADR-038 — implementation correction of CFP-500 path mismatch root cause)
+#
+# 책임 경계 (ADR-038 §결정 9 verbatim retain):
+#   - 책임: schema/state 가용성 보장 layer — Orchestrator turn 진입 시점에 deferred tool
+#           schema 가 prompt cache 에 fresh 한 상태로 가용함을 plain stdout prompt-injection 으로 advise.
+#   - 비책임: behavioral attempt 의무 자체는 ADR-038 §결정 8 그대로 retain — hook 도
+#             prompt-level advisory 이며 mechanical function-call 강제가 아님.
+#
+# 정적 properties (§7.S §7.5 verified clean + AC-11 정합):
+#   (a) set -euo pipefail
+#   (b) single-quoted heredoc (<<'EOF') — env interpolation / command substitution 차단
+#   (c) filesystem touch 0 — no >, >>, mkdir, rm, mv, cp
+#   (d) network call 0 — no curl, wget, nc, gh api, git
+#   (e) exit 0 종료
+#   (f) plain stdout SSOT (AC-1 paradigm shift — Researcher §6.1 Round 4 verbatim quote 정합)
+#
+# Layered defense (ADR-038 §결정 7·8 retain):
+#   hook 미실행 / 실행 실패 → harness stdout 부재 처리 → Orchestrator runtime ToolSearch attempt fallback.
+#
+# Bypass:
+#   BYPASS_CODEFORGE_PREREQ=1 (preferred, AC-8) — stderr audit echo + exit 0
+#   BYPASS_PREREQ_CHECK=1 (deprecated, E-6 1 release grace) — stderr deprecation warning + exit 0
+
+set -euo pipefail
+
+# Bypass check — audit trail 의무 (ADR-058 §결정 5 + ADR-060 §결정 7 정합, §3 결정 2 verbatim)
+if [ "${BYPASS_CODEFORGE_PREREQ:-0}" = "1" ]; then
+  >&2 printf '[codeforge-prereq] BYPASS_CODEFORGE_PREREQ=1 — TodoWrite preload directive suppressed at %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  exit 0
+fi
+
+# Deprecated bypass — 1 release grace (E-6 정합)
+if [ "${BYPASS_PREREQ_CHECK:-0}" = "1" ]; then
+  >&2 printf '[codeforge-prereq] BYPASS_PREREQ_CHECK is deprecated, use BYPASS_CODEFORGE_PREREQ (suppressed at %s)\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  exit 0
+fi
+
+# Plain stdout SSOT — harness 가 자동 system-reminder wrap (AC-1, Researcher §6.1 Round 4 verbatim spec).
+# JSON output 부재 의무 (I5 invariant) — superpowers session-start 의 3-platform JSON dispatch 패턴 미차용.
+cat <<'EOF'
+[codeforge prereq-check]
+
+You MUST call the following as your first tool action in this session, before responding to any user message:
+
+- `ToolSearch("select:TodoWrite,EnterWorktree,ExitWorktree,SendMessage")` — load 4 deferred tool schemas in single call (ADR-038 §결정 9 / CFP-500 / CFP-463 / CFP-475)
+
+Tools loaded:
+- `TodoWrite` — progress visualization (CFP-385 / ADR-038 Amendment 1)
+- `EnterWorktree` / `ExitWorktree` — worktree-first workflow (ADR-040)
+- `SendMessage` — agent teammate communication (ADR-044)
+
+Failure to load these schemas will result in InputValidationError at first use. This is a hard requirement for codeforge orchestrator workflow.
+EOF
+
+exit 0

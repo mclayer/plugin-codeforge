@@ -1,4 +1,7 @@
 {
+  "_deprecated_since": "5.22.0",
+  "_migration": "plugin-root hooks/hooks.json (자동 활성, /plugins install 후 별도 등록 절차 불필요)",
+  "_scheduled_removal": "5.23.0 (별도 CFP — 1 release grace 후 file 삭제)",
   "_comment": "codeforge deferred tool schema prefetch advisory — SessionStart hook sample (CFP-500 / ADR-038 Amendment 2 §결정 9).",
   "_doc": "Append this hook definition to consumer's `.claude/settings.json` under `hooks.SessionStart[]` array. drift / worktree-gc 와 동일 등록 패턴. 등록 위치 = drift / worktree-gc 뒤 (3번째, 권장).",
   "_adr": "ADR-038 Amendment 2 §결정 9 — deferred tool 스키마 선제 로드 enforcement layer 를 (c) runtime advisory 에서 (b) SessionStart hook tier 로 격상. CFP-375 / CFP-385 runtime advisory 시도 2회 실패 history 의 3rd attempt.",
