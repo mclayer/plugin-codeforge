@@ -95,6 +95,35 @@ permissions:
    · **marketplace 영역은 별도** — ADR-063 (3-file atomic invariant) SSOT 참조, 본 self-check 영역 외 (cross-ref only)
    · **CFP-378 §3.5 self-lint 와 분리**: §3.5 = 6 deputy 산출물 input 표면 mechanical check (Change Plan author 진입 전) / 본 §5.5 = Phase 1 산출물 commit 직전 outer mechanical sync (Change Plan / ADR / Story 섹션 commit 직전)
 
+5.6.1. Phase 1 commit-time dimensional empirical grounding self-check (ADR-068 Amendment 1 / CFP-528 — Wave 2B 신설)
+   · §3 / §7 작성 시 quantitative parameter (10 dimension enum: **latency / scale / cardinality / throughput / cost / accuracy / lifecycle / volume / rate / count**) 마다 `[empirical-source: <ref>]` 또는 `[empirical-source: TBD]` annotation 부재 시 self-check FAIL.
+
+     **Trigger 4종 (anti-pattern entry condition)**:
+     1. **empirical-absent default** — wiretap/probe 없이 가정값 채택 (#319 RETRO-MCT-104 carrier: WS push interval 30s 가정 → 실측 200ms, 150x 오류)
+     2. **synthetic guess** — "통상 1MB" / "보통 100rps" round-number heuristic
+     3. **industry-assumption transplant** — "AWS p99 latency" / "PG max_connections 100" 컨텍스트 무관 import
+     4. **legacy inertia** — 이전 시스템 값 무비판 복제
+
+     **Mitigation 4종**:
+     - empirical-first (wiretap/probe step 의무화)
+     - explicit TBD 박제 (`[empirical-source: TBD]` marker)
+     - range-bound default (단일 numeric 대신 `[min, max] with fallback strategy`)
+     - dimensional checklist (per-dimension `empirical_source` field)
+
+     **Justification 조건** (annotation 면제): well-defined SLA / standardized protocol RFC / vendor doc explicit guarantee — 3종 부재 시 annotation 의무.
+
+     **Exemption** (trivial decision): SLA/quantitative metric 무관 (logging / naming / refactoring) — Story §1 명시 선언 의무.
+
+     **Verification format**: empirical-source-annotation — quantitative parameter 별 (a) value (b) unit (c) empirical_source (file path / wiretap script / ADR ref / TBD) 3-key 정합.
+
+   · 각 quantitative parameter = PASS (annotation 보유) / NA (Exemption 영역) / FAIL (annotation 누락) 중 하나로 분류
+   · 결과를 Change Plan `§13. Phase 1 산출물 self-check 결과` 에 C 항목으로 명시
+   · ArchitectPLAgent verdict packet 의 `dimensional_empirical_self_check_passed: bool` 필드로 forward (true = 모든 quantitative parameter annotation 보유 또는 NA, false = 1+ 누락 — review-verdict-v4 v4.4 schema)
+   · **FAIL 발견 시**: 본 에이전트가 누락 annotation 보완 후 commit. ArchitectPLAgent 가 false 발견하면 `pl_recommendation: FIX` + `findings[]` 에 dimensional-empirical-gap 누락 항목 each row append (severity P1, category `dimensional_empirical_gap`, type `"dimensional-empirical-gap"`) + ArchitectAgent re-spawn 명령
+   · **ADR-065 mechanical 7-item (§5.5) + ADR-068 boundary completeness 4-invariant (§5.6) 과 disjoint** — verdict packet 셋 별도 boolean field 동시 PASS 의무. `mechanical_self_check_passed` + `boundary_completeness_self_check_passed` + `dimensional_empirical_self_check_passed` 3 필드 모두 true 일 때만 Phase 1 commit 진행.
+   · **marketplace 영역 외**: ADR-063 SSOT (cross-ref only)
+   · ADR-068 Amendment 1 §결정 1 carrier reference: docs/adr/ADR-068-boundary-completeness-invariants.md (wrapper repo) — I-5 invariant 정의.
+
 5.6. Phase 1 commit-time semantic boundary completeness self-check (ADR-068 / CFP-527 — Wave 2A 신설)
    · Phase 1 산출물 (Change Plan §3/§7 + ADR + Story 섹션) commit 직전 본 에이전트가 4-invariant semantic 검증:
 
@@ -124,7 +153,7 @@ permissions:
 6. ArchitectPLAgent에 draft 반환
    · PL 검수 → PASS or RETURN (clarification context)
    · RETURN 시 본 에이전트 재스폰되어 누락·재해석 반영
-   · packet `mechanical_self_check_passed` (§5.5 결과) + `boundary_completeness_self_check_passed` (§5.6 결과) 양 필드 전달 (PL 가 review-verdict-v4 v4.3 packet 작성 시 채움)
+   · packet `mechanical_self_check_passed` (§5.5 결과) + `boundary_completeness_self_check_passed` (§5.6 결과) + `dimensional_empirical_self_check_passed` (§5.6.1 결과) 3 필드 전달 (PL 가 review-verdict-v4 v4.4 packet 작성 시 채움)
 ````
 
 ### WS Stream 계열 push_interval 실증 의무 (CFP-319)

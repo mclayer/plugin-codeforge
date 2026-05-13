@@ -2,6 +2,49 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.10.0] - 2026-05-13
+
+### CFP-528 — ADR-068 Amendment 1 I-5 dimensional empirical grounding self-check sibling sync (Wave 2B sibling, MINOR)
+
+ADR-068 Amendment 1 (wrapper plugin-codeforge) sibling 적용 — Wave 2B carrier. ArchitectAgent (chief author) §3 / §7 작성 시 10 dimension enum quantitative parameter (latency / scale / cardinality / throughput / cost / accuracy / lifecycle / volume / rate / count) 마다 `[empirical-source: <ref>]` 또는 `[empirical-source: TBD]` annotation 의무화. #319 RETRO-MCT-104 carrier (WS push interval 30s 가정 → 실측 200ms, 150x 오류) failure-class super-class 차단.
+
+#### Added
+
+- `agents/ArchitectAgent.md` — `§5.6.1 Phase 1 commit-time dimensional empirical grounding self-check (ADR-068 Amendment 1 / CFP-528 — Wave 2B 신설)` 섹션 신설:
+  - 10 dimension enum (latency / scale / cardinality / throughput / cost / accuracy / lifecycle / volume / rate / count)
+  - Trigger 4종 (empirical-absent default / synthetic guess / industry-assumption transplant / legacy inertia)
+  - Mitigation 4종 (empirical-first / explicit TBD 박제 / range-bound default / dimensional checklist)
+  - Justification 조건 (well-defined SLA / standardized protocol RFC / vendor doc explicit guarantee 3종 부재 시 의무)
+  - Exemption (Story §1 명시 선언)
+  - Verification format = empirical-source-annotation (value / unit / empirical_source 3-key)
+  - PASS / NA / FAIL 분류 + Change Plan §13 C 항목 명시 의무 + verdict packet forward 의무
+  - ADR-065 §5.5 + ADR-068 §5.6 와 disjoint — 3 boolean field 동시 PASS 의무
+- `agents/ArchitectPLAgent.md` — `Phase 3.6: Dimensional empirical grounding cross-validate (ADR-068 Amendment 1 — CFP-528)` 섹션 신설:
+  - `dimensional_empirical_self_check_passed: bool` (review-verdict-v4 v4.4 schema MINOR optional field) forward 의무
+  - false 시 FIX 처리 절차 (`pl_recommendation: FIX` + findings[] dimensional-empirical-gap row each + ArchitectAgent re-spawn)
+  - DesignReviewPL (Tier B) + CodeReviewPL (Tier C) dual-binding 정합
+  - 3 boolean field (`mechanical_self_check_passed` / `boundary_completeness_self_check_passed` / `dimensional_empirical_self_check_passed`) 셋 모두 true 일 때만 Phase 1 commit
+
+#### Changed
+
+- `.claude-plugin/plugin.json` — version 0.9.1 → 0.10.0 MINOR (agent definition schema 변경, ADR-037 정합). description CFP-528 entry append.
+
+#### Sibling sync
+
+- Source carrier: mclayer/plugin-codeforge#575 (CFP-528 Wave 2B, ADR-068 Amendment 1)
+- Canonical contract: mclayer/plugin-codeforge-review#31 (review-verdict-v4 v4.4 + review-pl-base §3 I-5 rule)
+- ADR-010 §4 sibling sync follow-up (wrapper merge 후, canonical 영역 = review-verdict-v4 in codeforge-review)
+
+#### Why
+
+#319 RETRO-MCT-104 dimensional extension anti-pattern (WS push interval 30s 가정 → 실측 200ms, 150x 오류) systemic super-class 차단. authoring-time enforce (Tier A, design lane) — DesignReview (Tier B) + CodeReview (Tier C) cross-lane dual-binding 의 첫 layer. 10 dimension enum + empirical-source-annotation verification format 으로 ArchitectAgent §3/§7 quantitative decision 모두 evidence-backed 강제.
+
+#### Cross-ref
+
+- Wrapper SSOT: [ADR-068 Amendment 1](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-068-boundary-completeness-invariants.md)
+- Wrapper Phase 1 PR (MERGED): https://github.com/mclayer/plugin-codeforge/pull/575
+- Canonical sibling sync: plugin-codeforge-review review-verdict-v4 v4.4 MINOR bump (#31 MERGED)
+
 ## [0.9.1] - 2026-05-13
 
 ### CFP-462-followup — phase-gate-mergeable workflow sync (PATCH)
