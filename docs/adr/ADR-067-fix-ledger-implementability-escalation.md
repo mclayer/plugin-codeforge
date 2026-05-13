@@ -16,7 +16,7 @@ related_adrs:
   - ADR-008
   - ADR-024
   - ADR-039
-  - ADR-050-parallel-epic-conflict-coordination   # multi-repo-story-key 가 아닌 parallel-epic-conflict-coordination 정합 (file disambiguation)
+  - ADR-050   # parallel-epic-conflict-coordination (file disambiguation — ADR-050 number 가 multi-repo-story-key 와 share)
   - ADR-052
   - ADR-054
   - ADR-058
