@@ -578,9 +578,23 @@ def stub_actor_drift(cfg: LintConfig) -> list[Finding]:
 # ---------------------------------------------------------------------------
 
 
-# Identifier pattern — snake_case or camelCase with ≥ 2 underscores or ≥ 1 hyphen
+# Identifier pattern — snake_case or kebab-case
+#
+# CodeQL py/redos remediation: the original pattern
+#   `[a-z_][a-z0-9_]{4,}(?:_[a-z0-9_]+){1,}`
+# placed `_` in both the long inner class `[a-z0-9_]{4,}` and the trailing
+# repeated group `(?:_[a-z0-9_]+){1,}`, causing exponential backtracking
+# (catastrophic worst case on strings like `0_0_0_…`).
+# Fix: enforce disjoint character classes by alternating maximal alphanumeric
+# runs (`[a-z0-9]+`) with explicit underscore runs (`_+`). Match coverage
+# verified equivalent against the repo corpus (single- and multi-underscore
+# identifiers both preserved); hyphenated branch unchanged.
 IDENTIFIER_RE = re.compile(
-    r"`([a-z_][a-z0-9_]{4,}(?:_[a-z0-9_]+){1,}|[a-z][a-zA-Z0-9]+(?:-[a-zA-Z0-9]+){1,})`"
+    r"`("
+    r"[a-z_][a-z0-9]*(?:_+[a-z0-9]+)+_*"
+    r"|"
+    r"[a-z][a-zA-Z0-9]+(?:-[a-zA-Z0-9]+){1,}"
+    r")`"
 )
 
 
