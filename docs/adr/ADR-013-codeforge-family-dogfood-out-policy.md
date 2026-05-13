@@ -12,6 +12,21 @@ related_stories:
   - CFP-45
   - CFP-56
   - CFP-299
+  - CFP-450  # Amendment 4 carrier (PAT consolidation)
+  - CFP-596  # Amendment 5 carrier (story-init workflow cross-repo write mandate)
+related_adrs:
+  - ADR-009
+  - ADR-012
+  - ADR-017  # Amendment 1 carrier
+  - ADR-041  # Amendment 2 doc-locations.yaml cross-ref
+  - ADR-058  # is_transitional + 해소 기준 mandate (본 ADR `is_transitional: false` 정합)
+  - ADR-060  # evidence-enforceable framework (Amendment 5 mechanical_enforcement_actions[] 연동)
+  - ADR-066  # Amendment 5 PAT scope normative minimum cross-ref
+mechanical_enforcement_actions:
+  - action: story-init-cross-repo-write
+    status: warning
+    target_section: §결정 3 (Amendment 5 supersede — destination-ownership semantics)
+    progress_note: "Amendment 5 (CFP-596) carrier. workflow story-init.yml 의 codeforge family detection branch + internal-docs cross-repo write 본문 동작이 §결정 3 의 destination-ownership semantics 의 mechanical enforcement. evidence-checks-registry warning tier entry 'story-init-cross-repo-write' 는 Phase 2 carrier (CFP-596 Phase 2 PR 안 등록). detect_command = workflow run conclusion + cross-repo Story file existence verification 가능 (별 lint carrier 가능)."
 is_transitional: false
 ---
 
@@ -22,6 +37,10 @@ Adopted (2026-04-30) — CFP-45 PR-I 머지 시점.
 **Amendment 1 (2026-05-01) — CFP-56**: Brainstorming/writing-plans skill override path enforcement 정책을 ADR-017로 추가. `docs/superpowers/specs/**`와 `docs/superpowers/plans/**`가 plugin repo PR에 나타나면 CI가 fail-closed 하며, internal-docs 경로가 authoritative artifact lane이다. 검사 로직은 `scripts/check-dogfood-artifact-paths.sh`, CI는 `.github/workflows/dogfood-artifact-paths.yml` (template: `templates/github-workflows/dogfood-artifact-paths.yml`).
 
 **Amendment 3 (2026-05-09) — CFP-299**: `docs/domain-knowledge/` cross-cutting pattern doc 작성 표준 추가. 신규 pattern doc 은 implementation-ready pseudocode (`## Pseudocode` 섹션) + edge case table (`## Edge Cases`, 최소 3 entry) 필수. 소급 재작성 면제 (단 기존 파일 수정 시 의무 적용). 상세는 본 ADR 말미 Amendment 3 절.
+
+**Amendment 4 (2026-05-12) — CFP-450**: codeforge-internal-docs visibility = PRIVATE 명문화 + 단일 PAT `CODEFORGE_CROSS_REPO_PAT` consolidation. cross-repo internal-docs read 가 필요한 모든 wrapper workflow 는 동일 secret 재사용 (신규 secret 도입 금지). 상세는 본 ADR 말미 Amendment 4 절.
+
+**Amendment 5 (2026-05-13) — CFP-596**: §결정 3 의 "Story workflow Action 위치 = internal-docs 측" **location-ownership semantics** 를 **destination-ownership semantics** 로 명시적 supersede. Story file destination SSOT = internal-docs 측 (§결정 1 정합), Action runtime location = wrapper repo (Issue Form trigger surface 유지, cross-repo push 책임). carrier workflow = `story-init.yml` (codeforge family detection branch + internal-docs cross-repo write 도입). Amendment 4 §결정 2 PAT consolidation 정합 (`CODEFORGE_CROSS_REPO_PAT` 재사용). `mechanical_enforcement_actions[]` row `story-init-cross-repo-write` (warning tier, Phase 2 carrier). 상세는 본 ADR 말미 Amendment 5 절.
 
 ## 컨텍스트
 
@@ -248,6 +267,141 @@ CFP-393 (#398, merged) §11 follow-up #2 가 식별: KPI workflow (`templates/gi
 - [templates/github-workflows/rate-limit-fallback-kpi.yml](../../templates/github-workflows/rate-limit-fallback-kpi.yml) — KPI workflow PAT 사용 영역
 - [templates/github-workflows/phase-gate-mergeable.yml](../../templates/github-workflows/phase-gate-mergeable.yml) — phase-gate cross-repo Story fetch (선례)
 - CFP-450 Story file (`mclayer/codeforge-internal-docs/wrapper/stories/CFP-450.md`)
+
+## Amendment 5 (2026-05-13) — CFP-596 — Story-init workflow cross-repo write 의무 codification (location-ownership → destination-ownership supersede)
+
+### 컨텍스트
+
+CFP-596 (본 Amendment carrier) 가 감사한 systemic failure 영역:
+
+- wrapper repo `mclayer/plugin-codeforge` 의 `story-init.yml` workflow 최근 30 run = 19 cancelled + 10 failure + 0 success `[verified]` (gh run list direct query).
+- failure 영역 = workflow 본문 line 164 `mkdir -p docs/stories` + line 226 `git add docs/stories/${KEY}.md` 가 wrapper `.gitignore` (line 35-37 `docs/stories/` ignore) 와 conflict → `git add` exit 1.
+- 본 .gitignore = ADR-013 §결정 1 (Plugin repo 잔류 = runtime SSOT 만, dogfood artifacts = internal-docs SSOT) 의 mechanical enforcement.
+- workflow header comment (line 4-6) "Consumer-distributable single-repo flavor (CFP-65 / F2 Phase 1)" + "codeforge family monorepo flavor 는 internal-docs 별도 유지" 로 codeforge family detection branch 부재 자체를 인정 — comment-implementation drift.
+- 본 §결정 3 원문 = "Story workflow Action **위치** (location): internal-docs 측 (story-owned). plugin-side 는 phase-gate-mergeable cross-repo validation 만" — 즉 wrapper repo 가 `story-init.yml` 을 보유한 자체가 §결정 3 위반 (잔류).
+- 6 lane plugin (`codeforge-{requirements,design,review,develop,test,pmo}`) 모두 `story-init.yml` 부재 `[verified]` (6 worktree 직접 inspection) — sibling 6 plugin 은 이미 정합 (workflow 없음), wrapper 만 위반.
+
+### 결정
+
+#### 결정 1 — Location semantics 재정의 (explicit supersede)
+
+§결정 3 의 "Story workflow Action **위치** (location)" semantics 를 다음 형태로 **명시적 supersede**:
+
+- **Story file destination SSOT** = internal-docs 측 (§결정 1 정합, invariant).
+- **Action runtime location** = wrapper repo 측 (Issue Form trigger surface 유지 — `on: issues: types: [opened, labeled]` 가 wrapper repo Issue 발화 catch). wrapper Actions runner 가 cross-repo push 책임.
+
+본 supersede 는 §결정 3 의 intent (Story file destination = internal-docs) 를 보존하면서 "Action 위치" 영역만 재정의. literal §결정 3 ("Action 위치 = internal-docs") 은 본 Amendment 5 이후 더 이상 신뢰 source 아님 (anti-drift, historic-preserving 정합 — 본 Amendment 가 신규 SSOT).
+
+#### 결정 2 — Cross-repo write 패턴 (workflow story-init.yml 영역)
+
+wrapper repo `story-init.yml` workflow 가 codeforge family detection branch 분기 도입:
+
+- **detection sentinel** = project.yaml `project.name` regex match `^codeforge` (wrapper `codeforge` + 6 lane `codeforge-{lane}` 7 plugin 모두 cover).
+- **codeforge family branch**: internal-docs (`mclayer/codeforge-internal-docs`) 측 cross-repo write — REST API contents PUT endpoint + branch refs create + cross-repo PR create.
+- **generic consumer branch** (`project.name != codeforge*`): 기존 local `mkdir -p docs/stories` + `git add` + `git commit` + `git push` 보존 (consumer 영향 0).
+
+**Plugin folder mapping** (codeforge family branch):
+- `codeforge` → `wrapper/`
+- `codeforge-requirements` → `requirements/`
+- `codeforge-design` → `design/`
+- `codeforge-review` → `review/`
+- `codeforge-develop` → `develop/`
+- `codeforge-test` → `test/`
+- `codeforge-pmo` → `pmo/`
+
+Bash logic = `folder=$(grep "^  name:" "$cfg" | awk '{print $2}' | sed 's/^codeforge-//;s/^codeforge$/wrapper/')`.
+
+#### 결정 3 — PAT 재사용 (Amendment 4 §결정 2 정합)
+
+cross-repo write 영역에서 `CODEFORGE_CROSS_REPO_PAT` 단일 secret 재사용 — Amendment 4 §결정 2 consolidation 정합. 신규 cross-repo secret 도입 금지.
+
+**PAT scope normative minimum** (ADR-066 §결정 2 verbatim):
+- `repo:read` — branch query (existence_check)
+- `repo:write` — branch create + contents PUT + PR create
+- `metadata:read` — basic repo access
+
+#### 결정 4 — 거부된 대안
+
+- **(a-bis) Action runtime 도 internal-docs 로 이전** (literal §결정 3 정합) — 거부 사유: wrapper Issue Form trigger surface 손실. `on: issues` 가 internal-docs 측 trigger 부재 → 별 trigger 발의 부담. 본 Amendment 5 의 destination semantics 가 우회.
+- **(b) workflow 폐지 + manual create** — 거부 사유: 사용자 사전 채택 옵션 (a) 충돌. wrapper Issue Form 자동 발화 흐름 손실.
+- **(c) wrapper repo 자체 dogfood-storage 도입** — 거부 사유: §결정 1 invariant 위반 (per-repo dogfood storage 부활 = ADR-013 본래 목적 무효화).
+- **(d) `dogfood_out: true` boolean field 신설** (옵션 (B)) — 거부 사유: project-config-schema 확장 + consumer onboarding cost. `project.name` regex match (옵션 (A)) 가 schema 변경 0. 5+ Story 후 retro 재검토 가능 (out-of-scope).
+
+#### 결정 5 — 잔여 #591-#595 처리 (CFP-510 retro carrier)
+
+본 Amendment 5 merge 후 carrier workflow 적용 직후, 5 잔여 Issue (`#591`, `#592`, `#593`, `#594`, `#595`) 의 Story file 을 internal-docs `wrapper/stories/CFP-{591..595}.md` 에 backfill. 2 옵션:
+
+- **(a) workflow rerun** via Issue label re-toggle — `phase:요구사항` label re-toggle → workflow `on: issues: types: [labeled]` 발화 → existence_check internal-docs branch 부재 → cross-repo write 진행. idempotent 정합.
+- **(b) manual bash script** — `scripts/backfill-stories-cfp-591-595.sh` (CFP-596 Phase 2 PR 동반). manual control.
+
+권고 = (a) workflow rerun (cross-repo workflow 동작 검증 + manual script 부담 회피).
+
+#### 결정 6 — 6 lane plugin sibling explicit no-op decision (propagation scope boundary)
+
+본 Amendment 5 carrier workflow (`story-init.yml` codeforge family detection branch + internal-docs cross-repo write) 는 **wrapper repo 단독 적용**. 6 lane plugin sibling (`codeforge-{requirements,design,review,develop,test,pmo}`) 측 workflow 신설 의무 **0** — explicit no-op decision.
+
+근거:
+
+1. 6 sibling 의 현 상태 = `story-init.yml` workflow 부재 (verified, 6 worktree direct inspection per CFP-596 Story §2.3). invariant A (`.gitignore docs/stories/` ignore) mechanical enforcement 이미 정합 — workflow 부재 = local write attempt 부재 = `.gitignore` conflict 발화 0.
+2. wrapper repo systemic failure (30 run = 19 cancelled + 10 failure + 0 success per CFP-596 Story §1 verbatim) 해소 = 본 Amendment 5 motivation. 6 sibling 의 manual flow → automated flow upgrade 는 별 motivation 영역 (사용자 directive / 6 sibling retro 발화 부재).
+3. 6 sibling 의 Issue Form 자동 발화 의무 발화 시점 (별 motivation) 시 별 CFP carrier — 본 Amendment 5 scope 외.
+
+본 결정 6 = propagation scope **explicit boundary** 결정. silent omission 차단 — `boundary_completeness_self_check_passed` (CFP-596 Change Plan §13.2) I-2 cross-module propagation completeness PASS rationale (propagation domain = {wrapper} singleton).
+
+§결정 2 의 Plugin folder mapping 표 (`codeforge-requirements` → `requirements/` 등) 는 **forward-compatibility 보존** — 향후 별 CFP carrier 가 6 sibling 측 workflow 신설 시 mapping 표 재사용 가능. 본 Amendment 5 scope = wrapper 만 active path, 6 sibling = inactive mapping (reserved).
+
+#### 결정 7 — Two-stage existence_check + automated reconcile path (idempotency 강화)
+
+§결정 2 의 cross-repo write 영역 idempotency 보장은 **two-stage check** 의무:
+
+- **Stage 1 — Remote branch existence**: `gh api repos/${TARGET_REPO}/branches/feat/${KEY}-${SLUG}` HTTP 200 OK
+- **Stage 2 — Story file existence on branch**: `gh api repos/${TARGET_REPO}/contents/${dogfood_folder}/stories/${KEY}.md?ref=feat/${KEY}-${SLUG}` HTTP 200 OK
+
+**Decision matrix**:
+
+| Stage 1 (branch) | Stage 2 (file) | 결정 |
+|---|---|---|
+| present | present | idempotent skip |
+| present | absent | **automated reconcile** (contents PUT 단일 step + PR existence check + 정상 후속 step) |
+| absent | (skip) | first firing 진행 |
+| 4xx/5xx | (skip) | fail-closed |
+
+본 결정 7 = Disconnect edge case (runner 단절 중 branch created + contents PUT 미완료 partial state) 의 manual reconcile 의무 영역 elimination. CI/CD 자동성 완전 회복.
+
+근거 (Codex proactive check #2 finding F-003 inline FIX):
+- Single-stage check (branch-only) 시 partial state → 다음 firing 의 branch existence 가 true → skip → silent loss → manual contents PUT 의무
+- Two-stage check 시 partial state → Stage 1 true + Stage 2 false → `auto_recovered=true` notice + contents PUT 단일 step + 후속 PR create 분기 (PR 존재 여부 check + skip 또는 정상 create)
+
+**적용 영역**: codeforge family branch 안 active (Amendment 5 §결정 2 cross-repo write 영역). consumer branch (generic consumer) = single-stage 보존 (consumer 영향 0).
+
+**Latency 영향**: +1 API call (Stage 2 query) ~ +200-500ms — workflow runtime ~30s 대비 1-2% 영향 (무시할 수준). rate-limit 한도 (5000 req/hour PAT) 영향 무시할 수준.
+
+상세 implementation = CFP-596 Change Plan §3.5 SSOT.
+
+### 위배 시 처리
+
+- wrapper Issue Form 제출 시 workflow run conclusion = fail/cancelled (cross-repo write step 영역) → `gh run view --log` 로 error message 식별 → PAT scope / internal-docs visibility / GitHub API rate-limit 영역 진단 후 fix.
+- 6 lane plugin Issue Form 제출 시 = 본 Amendment 5 scope 외 (workflow 부재 = manual flow 보존, 위배 영역 부재).
+- PAT scope 불충분 시 (`repo:write` 부재) → workflow exit 1 + error message `lacks repo:write scope — ADR-066 §결정 2 참조` → ADR-066 §결정 3 rotation 절차 실행 의무.
+- consumer (비-codeforge) project 측에서 본 cross-repo write 활성화 시 — `project.name != codeforge*` 분기 보장 → consumer 측 활성화 발생 0 (AC-5 정합).
+
+### 결과
+
+- wrapper repo 의 `story-init.yml` workflow systemic failure 해소 (cross-repo write 채택).
+- ADR-013 §결정 3 의 location-ownership drift (workflow yml 잔류) 가 destination-ownership semantics 로 명시적 supersede — 향후 audit 시 인지 drift 차단.
+- §결정 1 invariant (Plugin repo 잔류 = runtime SSOT 만) 강화 — workflow 가 wrapper repo `docs/stories/` 영역 write 시도 0 건 (생성 destination = internal-docs).
+- Amendment 4 §결정 2 PAT consolidation 의 첫 production write workflow 적용 — `CODEFORGE_CROSS_REPO_PAT` 사용 영역 = read (KPI / phase-gate) + write (본 Amendment 5 carrier) 양 영역 cover.
+- Consumer (비-codeforge) project 영향 0 — `project.name != codeforge*` 분기 보장.
+- 6 lane plugin Story-init flow 확장 영역 = out-of-scope (각 lane plugin 의 workflow 부재 정합, 후속 carrier 가능).
+
+### 관련 파일
+
+- [CFP-596 Change Plan](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/change-plans/2026-05-13-cfp-596-story-init-dogfood-out.md) — 본 Amendment 5 carrier Change Plan
+- [CFP-596 Story file](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/stories/CFP-596.md) — 본 Amendment 5 carrier Story
+- [`templates/github-workflows/story-init.yml`](../../templates/github-workflows/story-init.yml) — Amendment 5 carrier workflow (Phase 2 PR)
+- [`.github/workflows/story-init.yml`](../../.github/workflows/story-init.yml) — 위와 byte-identical (wrapper distribution 관습)
+- [ADR-066](ADR-066-pat-rotation-policy.md) — PAT scope normative minimum + rotation 절차 (Amendment 5 carrier prerequisite)
+- [ADR-040 Amendment 3](ADR-040-worktree-convention.md) — `mechanical_enforcement_actions[]` field SSOT (본 ADR frontmatter 적용 영역)
 
 ## 관련 파일
 
