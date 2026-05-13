@@ -141,7 +141,12 @@ fi
 ADR_057_FILE="$WRAPPER_PATH/docs/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md"
 ADR_042_FILE="$WRAPPER_PATH/docs/adr/ADR-042-agent-model-selection-policy.md"
 if [[ -f "$ADR_057_FILE" || -f "$ADR_042_FILE" ]]; then
-  # ADR 본문에서 "Sonnet 잔류" / "Sonnet 유지" 영역의 agent 이름 (CapitalizedAgent 패턴) 추출.
+  # ADR 본문의 ## §결정 N block scope 안에서만 agent 이름 (CapitalizedAgent 패턴) 추출.
+  # CFP-492 — awk state machine: 전체 file grep 대신 §결정 section 안으로 scope 한정.
+  # false-positive 회피: deprecated section / 거절 대안 / §배경 등 다른 영역의 agent 언급 SKIP.
+  # state 정의:
+  #   in_decision=0: §결정 block 외부 (기본)
+  #   in_decision=1: ## §결정 line 이후 ~ 다음 ## heading 전까지
   ADR_DETECTED_AGENTS=()
   for adr_f in "$ADR_057_FILE" "$ADR_042_FILE"; do
     [[ -f "$adr_f" ]] || continue
@@ -153,7 +158,12 @@ if [[ -f "$ADR_057_FILE" || -f "$ADR_042_FILE" ]]; then
         if [[ "$existing" == "$name" ]]; then already=1; break; fi
       done
       [[ $already -eq 0 ]] && ADR_DETECTED_AGENTS+=("$name")
-    done < <(grep -oE "\b(DeveloperPLAgent|DeveloperAgent|BackendDeveloperAgent|FrontendDeveloperAgent|IntegrationTestAgent|StatefulTestAgent|ChangeImpactAgent|CodebaseMapperAgent|RefactorAgent|QADeveloperAgent|InfraEngineerAgent|DataEngineerAgent)\b" "$adr_f" 2>/dev/null | sort -u)
+    done < <(awk '
+      /^## (§?결정|결정)$/ { in_decision=1; next }
+      /^### (결정|§결정)/ { in_decision=1; next }
+      /^## / && !/^## (§?결정|결정)$/ { in_decision=0 }
+      in_decision { print }
+    ' "$adr_f" 2>/dev/null | grep -oE "\b(DeveloperPLAgent|DeveloperAgent|BackendDeveloperAgent|FrontendDeveloperAgent|IntegrationTestAgent|StatefulTestAgent|ChangeImpactAgent|CodebaseMapperAgent|RefactorAgent|QADeveloperAgent|InfraEngineerAgent|DataEngineerAgent)\b" 2>/dev/null | sort -u)
   done
 
   # SONNET_AGENTS (8종 hardcode, CFP-448 Amendment 3 후) vs ADR detected — strict equal set 검증.
