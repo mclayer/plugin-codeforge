@@ -1054,6 +1054,49 @@ entries:
       count: 0
       promotion_trigger: none        # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
+
+  # ─── CFP-596 Phase 2 (story-init cross-repo write, 2026-05-13) ───
+  # ADR-013 Amendment 5 §결정 6/7 — codeforge family cross-repo write mechanical enforcement.
+  # 9th warning-tier entry (1st=adr-sunset-criteria / 2nd=decision-principle-vocab /
+  # 3rd=auto-phase-label / 4th=claude-md-line-cap / 5th=sibling-pr-label-author-check /
+  # 6th=ac-mapping-cross-ref / 7th=evidence-registry-naming / 8th=wording-ssot-grep-lint).
+  # detect_command = workflow run conclusion + cross-repo Story file existence verification.
+
+  - name: story-init-cross-repo-write
+    description: |
+      ADR-013 Amendment 5 §결정 6/7 mechanical verification — codeforge family Issue Form
+      발화 시 story-init.yml workflow 의 cross-repo write 정합성 검증.
+      detect_command = `gh run list --workflow=story-init.yml --limit 10 --json conclusion`
+      결과 + `gh api repos/mclayer/codeforge-internal-docs/contents/<folder>/stories/<KEY>.md`
+      존재 확인. wrapper repo Issue Form 발화 → internal-docs Story file 생성 sentinel.
+      codeforge family detection branch (project.name ^codeforge regex) 정합 + two-stage
+      existence_check (branch + file — automated reconcile path) 동작 확인.
+      warning tier — continue-on-error: true.
+    detect_command: gh run list --workflow=story-init.yml --limit 10 --json conclusion,number,headBranch
+    workflow: templates/github-workflows/story-init.yml
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:story-init-cross-repo-write
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-596  # carrier Story — story-init.yml cross-repo write 첫 actual wire
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - cross_repo_story_file_existence_proof
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # workflow yml integrity 검증 — modal phrase 검사 미포함
+    introduced_by: CFP-596
+    introduced_date: 2026-05-13
+    owner_adr: ADR-013                 # codeforge family dogfood-out policy SSOT
+    carrier_adr: ADR-013               # Amendment 5 carrier (destination-ownership supersede)
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active
+
   - name: workflow-permissions-block-presence
     description: |
       ADR-060 Amendment 8 §결정 21 mechanical verification —

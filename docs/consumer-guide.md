@@ -195,6 +195,36 @@ agent teams enabled context 에서도 다음 3 제약 유지 (`docs/domain-knowl
 - Worktree integration: [ADR-040](adr/ADR-040-worktree-convention.md)
 - review-verdict v4 schema: [docs/inter-plugin-contracts/review-verdict-v4.md](inter-plugin-contracts/review-verdict-v4.md)
 
+### 1h. codeforge family vs generic consumer distinction (CFP-596 / ADR-013 Amendment 5)
+
+codeforge 자체 (`wrapper` + 6 lane plugin) 에서 발화하는 Issue Form 과 일반 consumer 프로젝트 에서의 Issue Form 처리 방식이 다르다. `story-init.yml` workflow 는 `project.yaml` 의 `project.name` field 를 읽어 두 branch 로 분기한다.
+
+**Family detection sentinel**: `project.name` field regex `^codeforge` (Change Plan §3.1 — `codeforge` + `codeforge-{requirements,design,review,develop,test,pmo}` 모두 match).
+
+| 항목 | codeforge family (`project.name ^codeforge`) | generic consumer (`project.name != ^codeforge`) |
+|---|---|---|
+| Story file destination | `mclayer/codeforge-internal-docs` (`<folder>/stories/<KEY>.md`) | consumer repo 내 `docs/stories/<KEY>.md` |
+| PAT | `CODEFORGE_CROSS_REPO_PAT` (org-level secret, ADR-066 §결정 2) | `GITHUB_TOKEN` (repo-default) |
+| PR target repo | `mclayer/codeforge-internal-docs` | consumer repo (wrapper repo 기준) |
+| Issue body docs link | `https://github.com/mclayer/codeforge-internal-docs/blob/main/<folder>/stories/<KEY>.md` | `../blob/main/docs/stories/<KEY>.md` |
+| existence_check | two-stage (branch + Story file, §3.5 — automated reconcile path) | single-stage (branch-only, 기존 CFP-280 동작) |
+
+**Plugin folder mapping** (codeforge family):
+
+| `project.name` | internal-docs `<folder>` |
+|---|---|
+| `codeforge` | `wrapper` |
+| `codeforge-requirements` | `requirements` |
+| `codeforge-design` | `design` |
+| `codeforge-review` | `review` |
+| `codeforge-develop` | `develop` |
+| `codeforge-test` | `test` |
+| `codeforge-pmo` | `pmo` |
+
+**Consumer 영향 0 보장** (AC-5): `project.name` 이 `^codeforge` 에 match 하지 않으면 기존 local write + GITHUB_TOKEN branch 가 그대로 동작. schema 변경 0 (옵션 (A) — `dogfood_out: boolean` field 신규 도입 없음. 근거: §3.1 rationale). 정책 SSOT = [ADR-013 Amendment 5](adr/ADR-013-codeforge-family-dogfood-out-policy.md).
+
+**PAT scope 요구사항** (ADR-066 §결정 2): codeforge family branch 에서 `CODEFORGE_CROSS_REPO_PAT` 필요 scope — `repo:read` (branch query) + `repo:write` (branch create + contents PUT + PR create) + `metadata:read`. PAT rotation 정책은 [§1g](#1g-codeforge_cross_repo_pat-rotation-policy-cfp-521--adr-066) 참조.
+
 ### 1g. CODEFORGE_CROSS_REPO_PAT rotation policy (CFP-521 / [ADR-066](adr/ADR-066-pat-rotation-policy.md))
 
 codeforge family 가 사용하는 `CODEFORGE_CROSS_REPO_PAT` (cross-repo Story binding + KPI internal-docs clone — CFP-450 / ADR-013 Amendment 4 consolidation) 의 lifetime / rotation / compromise response 정책. 정책 SSOT = [ADR-066](adr/ADR-066-pat-rotation-policy.md), audit log SSOT = [`docs/security/pat-rotation-log.md`](security/pat-rotation-log.md).

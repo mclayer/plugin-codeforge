@@ -7,6 +7,23 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.58.0] - 2026-05-14 — CFP-596 Phase 2 (story-init.yml ADR-013 Amendment 5 dogfood-out cross-repo write)
+
+### Added (CFP-596 Phase 2 — story-init.yml codeforge family cross-repo write)
+
+ADR-013 Amendment 5 (destination-ownership) carrier Phase 2 구현 — wrapper Issue Form 발화 시 codeforge family detection (project.name `^codeforge` regex) 분기 → `mclayer/codeforge-internal-docs` cross-repo branch + Story file + PR 자동 생성. generic consumer 영향 0 (AC-5). 5.57.0 baseline: 6차 rebase cycle, origin/main 5.56.0 (post CFP-651 fast-forward) + ADR-064 broad coverage.
+
+- `.github/workflows/story-init.yml` + `templates/github-workflows/story-init.yml` byte-identical (AC-3, T-9) — codeforge family detection + cross-repo write + two-stage existence_check + consumer 영향 0
+- `tests/workflows/test_story-init-yml.sh` — T-1~T-10 (39 assertions all PASS)
+- `docs/consumer-guide.md` §1h, `docs/evidence-checks-registry.yaml` entry, `docs/inter-plugin-contracts/label-registry-v2.md` v2.12 (`hotfix-bypass:story-init-cross-repo-write` 19번째 family member)
+- `.claude-plugin/plugin.json` 5.57.0 → 5.58.0 MINOR + description CFP-596 entry
+
+### Sibling sync (separate PR)
+
+- mclayer/marketplace — `plugins[name=codeforge].version` 5.56.0 → 5.57.0 atomic invariant (ADR-063 §결정 5)
+>>>>>>> 25bc22b ([CFP-596] Phase 2 — story-init.yml dogfood-out cross-repo write + tests + plugin.json 5.43.0)
+
+<<<<<<< HEAD
 ## [5.57.0] - 2026-05-14 — CFP-658 Wave 1 of Epic CFP-431 (audit:from-mctrader-debut) — Action 차단 환경 agent direct write fallback path 표준화
 
 ### Added
@@ -43,6 +60,8 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 - `overlay/hooks/tests/test_validate_config.py` TDD red phase
 - `.claude/_overlay/project.yaml.example` 갱신
 - sibling plugin agent file 갱신 (plugin-codeforge-requirements RequirementsPLAgent.md + plugin-codeforge-design ArchitectPLAgent.md)
+
+=======
 
 ## [5.56.1] - 2026-05-14 — CFP-633 Story-2 sibling sync (Epic CFP-620 — mctrader 3-cycle post-mortem)
 
@@ -249,29 +268,6 @@ ArchitectPLAgent boundary-stretched §2-§6 (codeforge-requirements@mclayer v0.6
 - P2 #1 (rate-limit wording) FIX: "single PR 1 call → 영향 0" → "per workflow run 1 call + repeated synchronize events possible; authenticated 5000req/h 한도 안 실질 영향 낮음" 정정.
 - P2 #2 (empirical-source rationale-only) FIX: NFR 4행 안 `[empirical-source: ...]` annotation 정밀 — Lint runtime + Workflow trigger latency 2 행 `[empirical-source: TBD]` marker 전환 (ADR-068 Amendment 1 line 94 allowed format), Phase 2 PR 첫 실행 시 actual benchmark 의무.
 
-## [5.49.0] - 2026-05-14 — CFP-628 Story 2 (ADR-045 §D-5 retro alert pickup KPI sentinel)
-
-ADR-045 §D-5 신설 (CFP-628 Story 1, doc-only) 의 Layer (c) 구현 — retro alert pickup rate KPI sentinel script + SessionStart hook sample + monthly cron workflow + evidence-checks-registry entry + KPI seed + label-registry v2.9. ADR-037 MINOR bump: script behavior change (check-retro-alerts.sh SessionStart hook 신규 활성화).
-
-### Added
-
-- **`scripts/check-retro-alerts.sh`** (NEW, bash) — ADR-045 §D-5 retro alert pre-screen script. open `phase:완료` issue 안 `[PMO] retro alert` prefix comment scan. 35min filter (2100초 — retry 4회 완료 latency). exit 0 = no alert, exit 1 = alert detected + stdout prompt-injection (Orchestrator PMOAgent spawn 의무 알림). TDD 4 TC bats PASS (TC-1 no issue / TC-2 alert >35min / TC-3 alert <35min filter / TC-4 ESCALATE prefix skip). ADR-061 정합 (bash + jq, Python heredoc 금지).
-- **`tests/scripts/test_check_retro_alerts.bats`** (NEW) — TDD unit test (4 TC PASS). bats framework. gh stub (GH_STUB_RESPONSE_FILE env) 메커니즘. FAIL 먼저 확인 후 script 구현 (TDD 순서 정합).
-- **`templates/.claude/hooks/SessionStart-check-retro-alerts.json.sample`** (NEW) — SessionStart hook sample. command: `bash scripts/check-retro-alerts.sh`, blocking: false (non-blocking advisory). ADR-038 Amendment 2 §결정 9 hook tier 패턴 정합.
-- **`templates/github-workflows/retro-alert-pickup-kpi.yml`** (NEW) — ADR-060 warning-tier monthly cron KPI workflow. schedule `0 0 1 * *`. 분모 (지난 30일 `[PMO] retro alert` comment 수) / 분자 (30일 retro file 생성 수). `docs/kpi/retro-alert-pickup-rate.json` auto-PR. permissions T1 base (CFP-530 정합).
-- **`.github/workflows/retro-alert-pickup-kpi.yml`** (NEW, byte-identical) — self-app. diff 0 lines PASS (AC-6 evidence).
-- **`docs/evidence-checks-registry.yaml`** — 42번째 entry `retro-alert-pickup-rate` append. owner_adr: ADR-045, introduced_by: CFP-628, current_tier: warning, bypass_label: `hotfix-bypass:retro-alert-pickup`, sunset_gate: ≥90% 3 month rolling (ADR-058 3-tuple: metric/who/how). schema v1.2 recurrence field 정합 (CFP-509).
-- **`docs/kpi/retro-alert-pickup-rate.json`** (NEW, seed) — `{"value": null, "history": [], "schema_version": "1.1", "introduced_by": "CFP-628"}`.
-- **`docs/inter-plugin-contracts/label-registry-v2.md`** — v2.9 sub-entry `hotfix-bypass:retro-alert-pickup` (16번째 hotfix-bypass:* family member, ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합).
-
-### Changed
-
-- **`docs/inter-plugin-contracts/label-registry-v2.md`** — version v2.8 → v2.9 (PATCH bump, schema 무변경, §3 yaml row append).
-- bootstrap-labels.sh 3-way self-check PASS (58 dry-run lines / 58 invocations / 16 yaml hotfix-bypass rows — 자동 반영, script 직접 수정 불필요).
-
-### Sibling sync (separate PR)
-
-- mclayer/marketplace: plugins[codeforge].version 5.49.0 (marketplace 이미 5.49.0, description에 CFP-628 content append sync — ADR-063 atomic invariant, separate PR #106)
 
 ## [5.47.0] - 2026-05-14 — CFP-619 (retro-mandatory.yml workflow deploy — ADR-045 mandate restoration)
 
@@ -398,6 +394,23 @@ CFP-530 retro carrier #2 — `bootstrap-labels.sh` hotfix-bypass:* family dynami
 - `wrapper/stories/CFP-598.md` §1-§9 (internal-docs) — RequirementsPL §1-§6 + ArchitectPL §3·§7·§11 + Orchestrator §9.1 DesignReview PASS + §9.2 Codex proactive check #2 FIX-1 record.
 - **Codex proactive check #2** (ADR-052 Amendment 4 / CFP-532 mandatory) — P0:0 / P1:3 inline FIX-1 (F-3 base count / F-5 exit-code semantic / F-6 §8 test intent anchor) / P2:3 skip rationale.
 - **DesignReviewPL iter 1 = PASS** (review-verdict-v4 v4.4, 3 self-check 모두 verified true).
+
+## [5.43.0] - 2026-05-13 — CFP-596 Phase 2 (story-init.yml ADR-013 Amendment 5 dogfood-out cross-repo write)
+
+### Added (CFP-596 Phase 2 — story-init.yml codeforge family cross-repo write)
+
+ADR-013 Amendment 5 (destination-ownership) carrier Phase 2 구현 — wrapper Issue Form 발화 시 codeforge family detection (project.name `^codeforge` regex) 분기 → `mclayer/codeforge-internal-docs` cross-repo branch + Story file + PR 자동 생성. generic consumer 영향 0 (AC-5). 5.43.0 baseline: post-rebase CFP-582 Phase 2 (5.42.0) merged + CFP-597 Phase 2 merged 후 next MINOR (ADR-037 strictly increasing).
+
+- `.github/workflows/story-init.yml` + `templates/github-workflows/story-init.yml` — codeforge family detection step 신설 (project.name `^codeforge` regex sentinel, Change Plan §3.1) + cross-repo write step 신설 (branch create + Story file PUT + PR create in internal-docs, `CODEFORGE_CROSS_REPO_PAT` mount) + two-stage existence_check (Stage 1 branch + Stage 2 file — automated reconcile path, Change Plan §3.5) + consumer branch 기존 동작 보존 (AC-5). byte-identical sibling sync (AC-3, T-9).
+- `tests/workflows/test_story-init-yml.sh` — T-1~T-10 bash test suite (39 assertions): happy path / fail-closed sentinel / idempotency two-stage / consumer 영향 0 / special chars slug / byte-identical sibling.
+- `docs/consumer-guide.md` — §1h 신설 "codeforge family vs generic consumer distinction" (family detection sentinel + plugin folder mapping + consumer 영향 0 보장 + PAT scope 요구사항, Change Plan §6.7 정합).
+- `docs/evidence-checks-registry.yaml` — `story-init-cross-repo-write` warning tier entry append (schema v1.2, ADR-013 Amendment 5 carrier, 9th warning-tier entry, F-DR-004 정합).
+- `docs/inter-plugin-contracts/label-registry-v2.md` — v2.7 same-MINOR sub-entry append: `hotfix-bypass:story-init-cross-repo-write` (13번째 hotfix-bypass:* family member, ADR-024 Amendment 3 §결정 6.A, ADR-010 §결정 2 sibling sync 면제).
+- `.claude-plugin/plugin.json` — version 5.42.0 → 5.43.0 MINOR + description CFP-596 entry.
+
+### Sibling sync
+
+- mclayer/marketplace#92 (merged) — `plugins[name=codeforge].version` 5.42.0 → 5.43.0 atomic invariant (ADR-063 concurrent merge gate)
 
 ## [5.42.0] - 2026-05-13 — CFP-582 Phase 2 (ADR-059 Amendment 2 enforcement)
 

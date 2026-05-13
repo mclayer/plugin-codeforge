@@ -53,6 +53,12 @@ related_files:
 
 ## 변경 이력
 
+**v2.12 (CFP-596 / ADR-013 Amendment 5 §결정 6, 2026-05-14)**: PATCH bump (schema 무변경 — §3 yaml hotfix-bypass:* 19번째 family member append).
+- **추가**: `hotfix-bypass:story-init-cross-repo-write` (color `fef2c0` audit tier) — `templates/github-workflows/story-init.yml` warning-tier mechanical lint conditional skip + audit comment 자동 발의 channel (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합, **19번째 hotfix-bypass:* family member** — CFP-596 entry, 4차 rebase cycle 후 19th 위치 확정).
+- ADR-013 Amendment 5 §결정 6 evidence-enforceable warning-tier entry `story-init-cross-repo-write` carrier 동반 — story-init.yml workflow codeforge family cross-repo write (destination-ownership) 동작 확인 channel.
+- bypass 사용 시 `check-bypass-audit-comment.sh` 가 audit comment 발의 (reuse 패턴).
+- canonical-only (kind:registry — sibling sync scope 외 per ADR-010 §결정 2).
+- ADR-008 §결정 3 SSOT: schema 무변경 yaml row append = PATCH bump.
 **v2.12 (CFP-658 / ADR-027 Amendment 2, 2026-05-14)**: MINOR bump (신규 `fallback` category enum + 2 entry first-class).
 - **추가**: `fallback:manual` (color `c5def5` audit-trailed) — per-Issue ad-hoc override marker. Orchestrator 가 부착 시 `bootstrap.fallback_mode: action_blocked` (declarative trigger A) 와 무관 fallback path 활성. 우선순위 (C) > (A). ADR-027 Amendment 2 §결정 6.A carrier — Action 차단 환경 또는 일반 Action failure 시 manual agent direct write path 진입 의무.
 - **추가**: `fallback:rate-limited` (color `c5def5` audit-trailed) — `manual-story-init-fallback.sh` (Phase 2 carrier) 의 exponential backoff (1s/2s/4s) max 3 retry 초과 시 silent skip + 자동 부착 label. OpRiskArch 조건 4 carrier (rate-limit detection + audit-trailed channel).
@@ -95,7 +101,6 @@ related_files:
 - ADR-064 Amendment 2 wording-dictionary lint carrier 동반 — 카테고리 (a) forbid 어휘 (박제 / 못 박기 / pin / freezing) grep + 카테고리 (b) 어휘 (normative / sibling sync / kind:contract / ratchet / mirrored field) 평문 정의 동반 의무 advisory (ADR-060 framework warning-tier entry, 5 scope: docs/adr/** / docs/change-plans/** / CLAUDE.md / docs/orchestrator-playbook.md / templates/**).
 - `scripts/bootstrap-labels.sh` sync 동반 의무 (Phase 2 PR scope — bootstrap labels 데이터 row append, ADR-065 §결정 1 #1 self-check PASS gate).
 - canonical-only (kind:registry — sibling sync scope 외 per ADR-010).
-
 **v2.6 추가 entry (CFP-582 / ADR-059 Amendment 2 §결정 8 / ADR-024 Amendment 5, 2026-05-13)**: same MINOR sub-entry append (frontmatter `version: "2.5"` 미변경, sub-row only — ADR-008 §결정 SemVer rule 안 same MINOR 안 additive sub-entry 허용).
 - **추가**: `hotfix-bypass:debate-convergence-quality` (color `fef2c0` audit) — `templates/github-workflows/debate-convergence-quality.yml` warning-tier mechanical lint conditional skip + audit comment 자동 발의 channel (ADR-024 Amendment 5 §결정 6.A per-entry namespace 정합, **12번째 hotfix-bypass:* family member** — 기존 11: adr-sunset / decision-principle-vocab / auto-phase-label / marketplace-atomic / worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd} / claude-md-line-cap / sibling-pr-author-check / workflow-permissions / workflow-yaml-parse).
 - bypass 사용 시 `check-bypass-audit-comment.sh` 가 audit comment 발의 (reuse 패턴, 1st-11th entry 동일).
