@@ -86,6 +86,39 @@ Phase 2 PR 생성 전 반드시 아래 2단계를 순서대로 실행한다.
 2. **Base branch 고정**: `gh pr create` 호출 시 반드시 `--base main` 명시.
    - `--base` 옵션 생략 금지 (default 추론에 의존하면 stale branch 지정 위험).
 
+## Phase 2 PR body composition convention (CFP-507 / ADR-031 정합)
+
+Phase 2 PR description compose 시 본 에이전트 (또는 본 에이전트가 spawn 한 PR open subagent) 가 아래 convention 을 준수한다. 본 convention 은 CFP-490 (#490, merged) §7.5 origin investigation 의 carrier — `## Lane evidence` first heading auto-include 의 actual origin = codeforge-develop DeveloperPLAgent body composition convention 부재 + wrapper Orchestrator manual append 정책 부재 결합 (Story CFP-507 §2.3 verified facts) 의 정정.
+
+### Convention 4 룰
+
+1. **`## Lane evidence` heading 1회만 inject** — Phase 2 PR description 안 `## Lane evidence` heading 은 PR open 시 본 에이전트가 inject. 이 heading 은 PR lifetime 동안 **단 1회만** 등장. 두 번째 `## Lane evidence` heading 등장 = duplicate violation.
+
+2. **7-row format 사용 (wrapper SSOT 정합)** — heading 직후 7 lane row 의 format 은 wrapper `templates/github-pr-template.md` SSOT line 79 형식 verbatim 정합:
+   ```
+   ## Lane evidence
+
+   - 요구사항: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+   - 설계: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+   - 설계-리뷰: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+   - 구현: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+   - 구현-리뷰: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+   - 구현-테스트: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+   - 보안-테스트: <PASS|SKIPPED|FIX|ESCALATED|BYPASS>
+   ```
+
+3. **Orchestrator manual append 시 heading 재추가 금지** — 본 에이전트의 첫 heading inject 이후 Orchestrator (또는 Orchestrator-owned delegate subagent — wrapper playbook §3.0.6 정합) 가 lane status 갱신 append 시 row 만 수정. `## Lane evidence` heading 을 재추가하면 lane-evidence-check workflow 5a guard 가 duplicate heading 으로 detect 후 PR 차단.
+
+4. **Convention 위반 시 guard 발화** — `lane-evidence-check.yml` workflow 의 5a tie-break case A/B/C (CFP-490 §결정 1) 가 duplicate `## Lane evidence` heading 또는 7-row format 위반을 detect → PR 차단 + audit comment. Bypass channel = `hotfix-bypass:lane-evidence-check` label (ADR-024 Amendment 3 정합).
+
+### Cross-ref
+
+- wrapper `docs/orchestrator-playbook.md` §3.0.13 — Orchestrator manual append 정책 (본 convention 의 짝)
+- wrapper `templates/github-pr-template.md` line 79 — `## Lane evidence` heading 형식 SSOT
+- ADR-031 §결정 3 — Story §14 Lane Evidence enforcement layer
+- CFP-490 §결정 1 — `lane-evidence-check.yml` 5a guard tie-break
+- Story CFP-507 §2.3 — actual origin verified facts SSOT
+
 ## 구현 완료 → 구현 리뷰 레인 진입 흐름
 
 ```
