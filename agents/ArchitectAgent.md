@@ -95,10 +95,36 @@ permissions:
    · **marketplace 영역은 별도** — ADR-063 (3-file atomic invariant) SSOT 참조, 본 self-check 영역 외 (cross-ref only)
    · **CFP-378 §3.5 self-lint 와 분리**: §3.5 = 6 deputy 산출물 input 표면 mechanical check (Change Plan author 진입 전) / 본 §5.5 = Phase 1 산출물 commit 직전 outer mechanical sync (Change Plan / ADR / Story 섹션 commit 직전)
 
+5.6. Phase 1 commit-time semantic boundary completeness self-check (ADR-068 / CFP-527 — Wave 2A 신설)
+   · Phase 1 산출물 (Change Plan §3/§7 + ADR + Story 섹션) commit 직전 본 에이전트가 4-invariant semantic 검증:
+
+     I-1. API contract semantic completeness
+          · §3/§7 의 모든 public method/function 에 입력/출력 enum / state semantics docstring 명시 여부 확인
+          · verification format: docstring-template (템플릿 형식 코드 block — enum 값 × 의미 매핑표 포함)
+
+     I-2. Cross-module propagation completeness
+          · status enum 반환 method 의 모든 호출 site (caller) 에 enum 별 분기 처리 매핑 표 작성 여부
+          · verification format: propagation-matrix (caller × enum_value × 처리 결과 표)
+
+     I-3. Guard placement intent
+          · invariant guard (assertion / pre-condition / post-condition) 의 위치가 "함수 진입 시점 무조건" vs "특정 path 한정" 인지 §7 본문 또는 ADR §결정 표에 명시 여부
+          · verification format: guard-placement-diagram (guard 위치 + 조건부 여부 도식)
+
+     I-4. Wording SSOT
+          · Story §3 결정 / §7 아키텍처 ↔ ADR ↔ impl (enum identifier / method name / docstring noun phrase) 양 방향 wording 동기화 여부
+          · verification format: wording-sync-table (Story §3/§7 ↔ ADR ↔ impl 3-column 대조표)
+
+   · 각 항목 = PASS / NA (해당 영역 변경 없음) / FAIL 중 하나로 분류
+   · 결과를 Change Plan `§13. Phase 1 산출물 self-check 결과` 에 A (mechanical_self_check_passed) 와 나란히 B 항목으로 명시
+   · ArchitectPLAgent verdict packet 의 `boundary_completeness_self_check_passed: bool` 필드로 forward (true = I-1~I-4 모두 PASS 또는 NA, false = 1+ FAIL — review-verdict-v4 v4.3 schema)
+   · **FAIL 발견 시**: 본 에이전트가 누락 검증 format 보완 후 commit. ArchitectPLAgent 가 false 발견하면 `pl_recommendation: FIX` + ArchitectAgent re-spawn 명령
+   · **ADR-065 mechanical 7-item (§5.5) 과 분리**: §5.5 = syntactic structural 정합 (label-registry / doc-locations / workflow self-app 등), 본 §5.6 = semantic 의미 완결성 (API docstring / propagation / guard / wording). 양 필드 모두 true 일 때만 Phase 1 commit 진행.
+   · **marketplace 영역 외**: ADR-063 SSOT (cross-ref only)
+
 6. ArchitectPLAgent에 draft 반환
    · PL 검수 → PASS or RETURN (clarification context)
    · RETURN 시 본 에이전트 재스폰되어 누락·재해석 반영
-   · packet `mechanical_self_check_passed` 필드 전달 (PL 가 review-verdict-v4 packet 작성 시 채움)
+   · packet `mechanical_self_check_passed` (§5.5 결과) + `boundary_completeness_self_check_passed` (§5.6 결과) 양 필드 전달 (PL 가 review-verdict-v4 v4.3 packet 작성 시 채움)
 ````
 
 ### WS Stream 계열 push_interval 실증 의무 (CFP-319)
