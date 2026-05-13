@@ -958,15 +958,22 @@ entries:
       Hotfix bypass: hotfix-bypass:boundary-wording (ADR-024 Amendment 3 per-entry namespace).
       4 invariants (I-1 API contract semantic / I-2 cross-module propagation /
       I-3 guard placement intent / I-4 wording SSOT) 중 I-4 wording SSOT 의 mechanical enforcement.
+      CFP-529 Wave 3 Phase 2 = handoff wording linter expansion (scripts/check_handoff_wording.py +
+      3-direction enum forward/backward/lateral + 5 mechanical pre-screen patterns + 3 AI escalate
+      stub patterns). 본 entry 의 mechanical scope = ADR-068 wording SSOT 단방향 (§3 → src/scripts);
+      CFP-529 Phase 2 가 bidirectional + cross-section coverage 확장 (severity-propagation-v1 SSOT).
     detect_command: bash scripts/check-wording-ssot.sh
     workflow: templates/github-workflows/wording-ssot-check.yml
+    enforcement_script_phase_2: scripts/check_handoff_wording.py            # CFP-529 Phase 2 carrier (handoff wording linter, bidirectional + 3-direction enum)
+    enforcement_workflow_phase_2: templates/github-workflows/handoff-wording-check.yml  # CFP-529 Phase 2 carrier
+    carrier_story_phase_2: CFP-529   # mechanical impl carrier (severity-propagation-v1 SSOT + handoff wording linter)
     current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
     bypass_label: hotfix-bypass:boundary-wording
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse
     promotion_criteria:
       pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
       failure_threshold: 0           # ADR-060 §결정 6 (b)
-      sibling_dependencies: []       # 독립 entry — ADR-068 wording SSOT lint 외 의존 없음
+      sibling_dependencies: [CFP-529]  # CFP-529 Phase 2 handoff wording linter (bidirectional + 3-direction enum) 가 mechanical coverage 확장
       evidence_artifacts:
         - github_actions_run_history_url
         - lint_failure_count_zero_proof
@@ -975,6 +982,8 @@ entries:
     introduced_date: 2026-05-13
     owner_adr: ADR-068               # boundary completeness invariants SSOT — wording SSOT §결정 5
     carrier_adr: ADR-060             # framework carrier (warning mode entry)
+    related_contracts:               # CFP-529 — severity-propagation-v1 (RC#8 bidirectional binding SSOT)
+      - severity-propagation-v1
     recurrence:
       count: 0
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
