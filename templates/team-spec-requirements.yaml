@@ -2,17 +2,21 @@
 # CFP-137 / ADR-044 §결정 2 SSOT (dispatch_mode SSOT)
 # CFP-411 / ADR-052 Amendment 1 — Codex worker entry 신설 + dispatch_mode [default, auto_on_divergence]
 #                                  + divergence_detection 블록 + adversarial-debate dispatch_pattern entry
+# CFP-609 / ADR-064 Amendment 1 — ADR-056 implementation gap absorb (teammates 6-way fanout —
+#                                  ChangeImpactAgent / FeasibilityAgent / ContinuityAgent 추가).
+#                                  parallel-dispatch-protocol-v1 §5 4-분기 결정 tree 정합.
 # Trigger: story-init.yml Action (Issue Forms 제출) 후 Orchestrator 가 RequirementsPL spawn
 # Activation: CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1 (env=0 시 fallback to ADR-039 default subagent context)
 
 lane: requirements
 description: |
-  요구사항 lane — RequirementsPL (lead) + 3 sub-agent (Domain + Analyst + Researcher) 병렬
+  요구사항 lane — RequirementsPL (lead) + 요구사항 lane 전체 sub-agent 동시 spawn (count: 6)
   + Codex worker (proactive check producer, ADR-052 touchpoint #4).
-  3 sub-agent 모두 non-skippable (codeforge-requirements plugin SSOT). PL 이 dedup + 상충 조정.
+  모든 sub-agent non-skippable (codeforge-requirements plugin SSOT). PL 이 dedup + 상충 조정.
   Codex worker = §1~§6 완료 직후 1회 발화 (proactive check) + RequirementsPL semantic divergence 감지 시
   debate-protocol-v1 multi-round 자동 발동 (ADR-052 Amendment 1 — touchpoint #4 multi-round 격상).
   PL final synthesis = Story §2/§5/§6 self-write (review-verdict packet producer 아님 — synthesis lane).
+  CFP-609 absorb — ADR-056 implementation gap fix (3 sub-agent → 6 sub-agent fanout).
 
 teammates:
   - name: RequirementsPLAgent
@@ -43,6 +47,28 @@ teammates:
     spawn_mode: default
     dispatch_mode: default
 
+  # CFP-609 / ADR-064 Amendment 1 — ADR-056 implementation gap absorb (3 신규 deputy 추가)
+  - name: ChangeImpactAgent
+    role: deputy
+    system_prompt_path: agents/ChangeImpactAgent.md  # codeforge-requirements plugin canonical
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: FeasibilityAgent
+    role: deputy
+    system_prompt_path: agents/FeasibilityAgent.md  # codeforge-requirements plugin canonical
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
+  - name: ContinuityAgent
+    role: deputy
+    system_prompt_path: agents/ContinuityAgent.md  # codeforge-requirements plugin canonical
+    model: claude-opus-4-7
+    spawn_mode: default
+    dispatch_mode: default
+
   - name: CodexProactiveCheckAgent
     role: worker
     system_prompt_path: agents/codex-proactive-check.md  # codeforge-requirements plugin sibling sync (Phase 2 follow-up PR scope)
@@ -61,7 +87,7 @@ teammates:
 
 dispatch_pattern:
   - name: parallel
-    description: "3 sub-agent (Domain + Analyst + Researcher) 동시 spawn"
+    description: "요구사항 lane 전체 sub-agent 동시 spawn (count: 6)"  # CFP-609 ADR-056 absorb
   - name: post-synthesis-codex-check
     description: "§1~§6 완료 직후 Codex proactive check 1회 발화 (touchpoint #4 default 동작)"
     trigger: RequirementsPL §2/§5/§6 self-write 완료
@@ -83,8 +109,8 @@ hook_subscriptions:
   - TaskCompleted
 
 measurable_verification:
-  parallelization: "§14 Lane Evidence 의 3 sub-agent row spawned_at diff < 60s (ADR-044 §결정 5)"
-  post_synthesis_codex_check: "§14 Lane Evidence 의 CodexProactiveCheckAgent row spawned_at > 3 sub-agent end timestamp (sequence 검증)"
+  parallelization: "§14 Lane Evidence 의 6 sub-agent row spawned_at diff < 60s (ADR-044 §결정 5 + ADR-056 gap fix — CFP-609)"
+  post_synthesis_codex_check: "§14 Lane Evidence 의 CodexProactiveCheckAgent row spawned_at > 6 sub-agent end timestamp (sequence 검증)"
   adversarial_debate: "debate-protocol-v1 transcript Story §9 inline append + dialog_rounds_count >= 3 (min cap, ADR-059 §결정 1 정합). FIX 시 §10 FIX Ledger debate_artifact_ref 채움 (fix-event-v1 1.1 정합)"
 
 env_divergent_fallback:

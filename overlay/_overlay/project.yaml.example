@@ -122,3 +122,30 @@ progress_narration_verbosity: full
 #         components:
 #           - "<REPLACE — e.g. engine>"
 #         creates_repo_stories: true
+
+# Parallel Dispatch Protocol (CFP-609 / ADR-064 Amendment 1)
+# SSOT: docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md (kind:registry)
+# Consumer overlay default 영역. ADR-064 §결정 7 ratchet — 약화 방향 차단 (강화 방향만 허용).
+# 변경 시 ADR-058 §결정 5 sunset_justification 의무.
+parallel_dispatch:
+  # 1. pl_autonomous_parallel_authority — PL 의 자율 병렬 권한 default
+  #    enum 3-value (registry §6.1):
+  #      required — ADR-064 §결정 4 default parallel 준수 (강력 권장 default)
+  #      optional — consumer 가 명시적 sequential fallback 활성 (확장 channel)
+  #      disabled — broken-baseline 회피 advisory only (ratchet 차단 영역 — sunset_justification 의무)
+  #    변경 금지 — consumer 축소 불허 (ADR-064 §결정 7 ratchet 강제)
+  pl_autonomous_parallel_authority: required
+
+  # 2. plan_dag_hint_required — Orchestrator spawn prompt 에 DAG hint 박제 의무 여부
+  #    true (default) = §3.0.14 의무 4 항목 prompt 박제 (ADR-064 §결정 4 강제)
+  #    false (확장 영역) = consumer 명시적 opt-out (별 hotfix-bypass label 의무)
+  plan_dag_hint_required: true
+
+  # 3. dispatch_prompt_validation — `parallel-dispatch-prompt-check` lint enforcement level
+  #    'warn' (default) = ADR-060 warning tier (continue-on-error: true)
+  #    'block' (확장 영역) = consumer 자체 blocking enforcement (별 carrier CFP 의무)
+  dispatch_prompt_validation: warn
+
+  # 4. wall_clock_measurement — PMOAgent retro 에 wall-clock 기록 의무
+  #    true (default) = Story 단위 timestamp delta 기록 (MCT-160 sunset gate 측정 carrier)
+  wall_clock_measurement: true
