@@ -1501,8 +1501,11 @@ debate-protocol-v1 (§3.13) = **agent ↔ agent** debate domain. 본 §3.14 = **
 | **E9 streaming token** | Orchestrator 가 token stream 단계로 응답 (incremental flush) | **final flush 시 적용** — incremental token stream 단계는 preamble 의미 없음, 사용자 시점 = 1 turn 완료 (final flush) | final flush 시 적용 | active (streaming 중 사용자 추가 input 가능) | active (turn 끝 incident 검사) |
 | **E10 tool-call-only** | 사용자 화면에 prose 없는 turn (순수 file read / Bash 단발 호출 / mcp__* call 만) | **면제** (no user-facing prose = preamble 의미 없음) | **면제** | active | active (단 incident 영역은 prose turn 만 — tool-call-only turn 자체는 incident 분류 외) |
 | **E11 AskUserQuestion popup** | `AskUserQuestion` structured popup 발화 turn | **preamble = "AskUserQuestion 으로 답해주실 것:" 1 문장** (popup 이 본 발화의 결정 영역 cover — preamble 은 popup 진입 시그널만, popup 본문 verbatim 인용 불요) | popup 본문이 declare 충당 — separate Layer 2 줄 면제 | active (popup option_text 안 "추상" 등장 가능) | active |
+| **E12 trivial answer** | 응답 ≤ 1 줄 + 의문 부재 + 결정 부재 (3 criteria AND) | **면제** (trivial turn 자체가 preamble cognitive overhead 정당화 불가) | **면제** | active (1 줄 안 "추상" 등장 시 trigger) | active (trivial turn 도 pattern_dimension 분류 영역) |
 
 E10 tool-call-only 의 정량 정의 = **(a) 사용자 화면 prose 0 줄 + (b) cosmetic 1-줄 미만 (예: "잠시만요" / 빈 status report)**. (a) AND (b) 충족 시 tool-call-only 분류 — 정의 외 turn = E9 streaming 또는 일반 turn (Layer 1+2 적용).
+
+[empirical-source: derived default (analytical reasoning from Claude Code turn-shape model, no external corpus yet, frustration evidence carrier = CFP-612 §1 사용자 directive verbatim). circular self-citation 인정 + 후속 corpus 누적 후 ratchet 강화 영역 — [ADR-068 Amendment 1](../docs/adr/ADR-068-boundary-completeness-invariants.md) I-5 정합 (cognitive layer 영역의 derived default 첫 empirical annotation 사례).]
 
 E11 popup turn 의 Layer 2 면제 사유 = popup 본문 자체가 declare semantic 충당 — preamble + popup option_text + popup body = 3 channel 의 user-facing signal 이미 충분, Layer 2 추가 시 cognitive redundancy.
 
