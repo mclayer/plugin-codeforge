@@ -1030,14 +1030,15 @@ context:
 task: <Codex에게 요청할 구체적 작업>
 ```
 
-**결과 처리**:
+**결과 처리** (touchpoint #2 **mandatory** 분기 — CFP-532 / [ADR-052 Amendment 4](../docs/adr/ADR-052-codex-proactive-check-touchpoints.md), 나머지 5 touchpoint **optional** 유지):
 
-| recommendation | findings | 처리 |
-|---|---|---|
-| PROCEED | — | 그대로 다음 단계 |
-| ADDRESS_FIRST | P0 포함 | 해당 agent findings 반영 후 재진행 (blocking) |
-| ADDRESS_FIRST | P1-only | Orchestrator 판단으로 skip 가능 → story §10 기록 |
-| 판정 불일치 (#5 전용) | — | 사용자 에스컬레이션 |
+| recommendation | findings | 처리 (touchpoint #2 **mandatory**) | 처리 (touchpoint #1/#3/#4/#5/#6 optional) |
+|---|---|---|---|
+| PROCEED | — | 그대로 다음 단계 | 그대로 다음 단계 |
+| ADDRESS_FIRST | P0 포함 | 해당 agent findings 반영 후 재진행 (blocking) | 동일 |
+| ADDRESS_FIRST | P1-only | **inline FIX 의무 (skip 차단)** | Orchestrator 판단으로 skip 가능 → story §10 기록 |
+| ADDRESS_FIRST | P2-only | Orchestrator 판단으로 Story §10 deferred 기록 가능 | 동일 |
+| 판정 불일치 (#5 전용) | — | N/A (#5 = optional) | 사용자 에스컬레이션 |
 
 #### §3.10.1 Pre-question Review (iterative reformulation — CFP-446 / [ADR-052 Amendment 2](../docs/adr/ADR-052-codex-proactive-check-touchpoints.md))
 
@@ -1089,14 +1090,15 @@ Round 3: Codex dispatch (질문 초안 v3)
 | Round 영속화 | Story §9 transcript 의무 | Orchestrator turn 내 transient (영속화 불필요) |
 | FIX 흐름 | §10 ledger + reasoning carryover | N/A — verdict producer 영역 외 |
 
-#### §3.10.2 Design Synthesis Check
+#### §3.10.2 Design Synthesis Check (**mandatory** — CFP-532 / [ADR-052 Amendment 4](../docs/adr/ADR-052-codex-proactive-check-touchpoints.md))
 
 | 항목 | 내용 |
 |---|---|
 | 트리거 | ArchitectAgent Change Plan §3 초안 완료 → ArchitectPLAgent 전달 직전 (항상) |
+| **mandatory: true** | **Orchestrator 가 dispatch 결과 P0 + P1 finding 모두 inline FIX 의무 (skip 영역 차단). P2-only 만 Orchestrator 판단으로 Story §10 deferred 기록 가능. 6 sample success rate 100% sentinel: CFP-426 + CFP-427 + CFP-428 + CFP-429 + 2 carry-over Story — 모든 review lane FIX 회피 evidence** |
 | artifacts | §3 Change Plan 초안 + 6 deputy 산출물 요약 |
 | task | "6 deputy 산출물이 §3에 균형 있게 반영됐는지 검증. 모순·누락·순환 논리 포착" |
-| 출력 적용 | ADDRESS_FIRST 시 ArchitectAgent §3 수정 후 재전달 |
+| 출력 적용 | ADDRESS_FIRST 시 ArchitectAgent §3 수정 후 재전달 (P0 + P1 inline FIX 의무, P2-only deferred 가능) |
 
 #### §3.10.3 Development Rescue
 
