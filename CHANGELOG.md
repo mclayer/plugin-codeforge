@@ -7,6 +7,65 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.64.0] - 2026-05-15 — CFP-671 [RETRO-CFP-662] story-init.yml workflow 2 bug regression fix (combined single PR)
+
+### Fixed
+
+- **Bug 1 — KEY 추출 regex bug** (ADR-036 Amendment 1 carrier):
+  - 현재 `Compute story key` step 가 title 의 `[CFP-NNN]` reservation pattern 인식 못 함 → Issue # fallback only
+  - **Fix**: Python inline heredoc 안 `re.search(r'\[?([A-Z]+-\d+)\]?', title_clean)` pattern 추출 + prefix guard (`key_from_title.startswith(prefix + "-")`) + title pattern matched + prefix matched 시 title KEY 우선 + 부재 OR mismatch 시 `f"{prefix}-{issue_number}"` fallback (ADR-036 결정 1 race-free guarantee 보존)
+  - **Cross-project KEY injection 차단**: title `[ABC-123]` + PREFIX=CFP 시 prefix guard 가 Issue # fallback 으로 강등 (security guard)
+- **Bug 2 — CFP-596 cross-repo write code phantom changelog** (ADR-013 Amendment 5 + Amendment 6 carrier):
+  - CFP-596 의 두 commit (Phase 1 `150aac0` ADR-013 Amendment 5 + Phase 2 `b8dfddb` workflow yml cross-repo write code) 가 main branch 에 통합되지 않은 상태로 잔존 (verify-before-trust evidence: `git branch --all --contains 150aac0` = `CFP-596` branch 단독)
+  - CHANGELOG.md `[5.43.0]` / `[5.44.0]` entry 만 main 진입 — phantom changelog 영역 (declared ↔ actual 미반영 drift)
+  - **Fix**: CFP-596 의 ADR-013 Amendment 5 본문 + story-init.yml workflow body (6 step: project_config family detect + key + existence_check two-stage + parse + render + create-branch-codeforge + create-branch-consumer + cross-repo PR + Issue body cross-repo link) 전체 verbatim port via `git show b8dfddb:templates/github-workflows/story-init.yml > templates/github-workflows/story-init.yml`
+  - CFP-661 의 intended addition (PR create step `continue-on-error: true` + post-fail Issue comment) 동시 cherry-pick port (consumer branch 영역에만 적용)
+- **story-init.yml restoration scope**:
+  - 364 lines → 624 lines (CFP-596 base 610 + CFP-671 Bug 1 patch ~10 + CFP-661 graceful degradation 보존 ~50, net +260)
+  - `.github/workflows/story-init.yml` byte-identical mirror (ADR-005)
+
+### Added
+
+- **`docs/adr/ADR-036-project-key-atomic-reservation.md` Amendment 1**: Title regex precedence 명시.
+  - 결정 1: Title pattern matched + prefix matched → title KEY 우선
+  - 결정 1 fallback: pattern absent OR prefix mismatch → Issue # fallback (race-free guarantee 보존)
+  - 결정 2: Cross-project KEY injection 차단 (security guard)
+  - frontmatter `amendment_log[]` row 1 + `related_stories[]` CFP-671 append
+- **`docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md` Amendment 5 (CFP-596 verbatim port via CFP-671 actual integration)**: Story-init workflow cross-repo write 의무 codification.
+  - 결정 1-7 (location semantics 재정의 / cross-repo write 패턴 / PAT 재사용 / 거부된 대안 / 잔여 Issue 처리 / 6 lane sibling no-op / two-stage existence_check)
+- **`docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md` Amendment 6 (CFP-671 신설)**: CFP-596 phantom changelog incident retrospective.
+  - 결정 1: CFP-596 본문 actual integration via CFP-671
+  - 결정 2: phantom changelog detection lint carrier follow-up (별 CFP-NNN)
+  - 결정 3: CFP-661 PR description vs actual diff parity (별 retro carrier)
+- **`tests/workflows/test_story-init-yml.sh` (신설 — CFP-596 base T-1~T-10 restoration + T-11~T-14 CFP-671 신규)**:
+  - T-1~T-10: CFP-596 base (codeforge family / consumer / fail-closed / idempotency / commit message / byte-identical / slug normalize — 39 assertions)
+  - T-11~T-13: Bug 1 KEY title regex precedence + prefix guard + cross-project KEY injection 차단 (10 assertions)
+  - T-14: CFP-661 graceful degradation (pr_create_consumer + continue-on-error + post-fail fallback comment — 4 assertions)
+  - Total: **52 TC PASS**
+- **`tests/workflows/test_story-init-key-logic.py` (신설 — ADR-061 정합 외부 .py)**: 5 semantic TC PASS (T-11.S~T-15.S):
+  - T-11.S: title pattern matched → title KEY 우선
+  - T-12.S: no title pattern → Issue # fallback
+  - T-13.S: prefix mismatch → Issue # fallback (cross-project KEY injection 차단)
+  - T-14.S: title pattern without [STORY] prefix → title KEY 우선
+  - T-15.S: title pattern unbracketed → title KEY 우선
+
+### Changed
+
+- **`.claude-plugin/plugin.json` 5.63.0 → 5.64.0 MINOR bump**: ADR-037 — workflow behavior change carrier (KEY 추출 logic + cross-repo write 분기 + CFP-661 graceful degradation 통합).
+
+### Notes
+
+- **CFP-596 regression analysis (PMO retro carrier)**: 본 영역 진행 중 CFP-596 의 두 commit 이 main 미통합 + CFP-661 의 PR description (additions=191 / deletions=2) ↔ actual diff (454 lines, 242+/212-) mismatch 발견. ADR-013 Amendment 6 에 incident 명시 + 별 CFP-NNN 후속 carrier 의무 (PR description vs actual diff parity lint + phantom changelog detection lint).
+- **verify-before-trust evidence (ADR-070 / ADR-073)**:
+  - `git log -- templates/github-workflows/story-init.yml` 출력 = CFP-596 commit 부재
+  - `git branch --all --contains 150aac0` 결과 = `CFP-596` branch 단독 (main / origin/main 미포함)
+  - CFP-596 본문 b8dfddb verbatim port via `git show b8dfddb:templates/github-workflows/story-init.yml`
+  - 52 + 5 = 57 TC PASS evidence (RED→GREEN cycle 진행)
+- **doc-only fast-path 영역 외 (ADR-054)**: src 변경 (workflow yml 364 → 624 lines) + tests 신설 (52 + 5 TC) → regular Story scope. Combined single PR scope (Phase 1 + Phase 2) 정합 (작은 영역 — 1 workflow + 2 tests + 2 ADR Amendment + 1 plugin.json + 1 CHANGELOG entry).
+- **ADR-063 §결정 5 marketplace atomic sync 의무**: plugin.json 5.63.0 → 5.64.0 MINOR + marketplace.json mirrored field 4종 (`name`/`version`/`description`/`author`) sync. marketplace sibling PR 선행 merge 의무 (ordering invariant).
+- **ADR-061 정합**: `tests/workflows/test_story-init-key-logic.py` 외부 .py file 작성 (workflow yml 안 heredoc 와 verbatim 동일 logic mirror — testable). multi-line Python heredoc escape 영역 회피.
+- **Internal-docs cross-repo write**: `mclayer/codeforge-internal-docs/wrapper/stories/CFP-671.md` + `mclayer/codeforge-internal-docs/wrapper/change-plans/cfp-671-story-init-regression-fix.md` 작성 (ADR-013 dogfood-out 정합, manual fallback path — 본 carrier 가 story-init.yml 영역 정정 자체이므로 dogfood-out workflow 자동 미동작).
+
 ## [5.63.0] - 2026-05-14 — CFP-662 sibling (Issue #669) Phase 1 — wrapper sibling sync design-output-v2 v2.3 (canonical codeforge-design PR #42 SHA a6aa5502 verbatim mirror)
 
 ### Added
