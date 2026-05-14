@@ -465,7 +465,7 @@ labels:
     single_active: false
     attach_owner_plugin: "rate-limit-fallback-kpi.yml CI Action (자동)"
 
-  # hotfix-bypass:* (12종 — ADR-024 Amendment 3/5 §결정 6.A per-entry namespace)
+  # hotfix-bypass:* (13종 — ADR-024 Amendment 3/5 §결정 6.A per-entry namespace)
   # CFP-598 v2.7 PATCH backfill — §변경 이력 prose-only 상태에서 §3 yaml first-class 정규화.
   # color: fef2c0 (audit tier 동일 — bypass channel 은 audit 계열 색상 공유)
   # single_active: false (누적 가능 — 여러 entry bypass 동시 활성)
@@ -560,6 +560,13 @@ labels:
     description: "hotfix-bypass: debate convergence_quality_invariant 3 marker lint 조건부 skip + audit comment 자동 발의 (CFP-582 / ADR-059 Amendment 2 §결정 8 / ADR-024 Amendment 5 — templates/github-workflows/debate-convergence-quality.yml)"
     single_active: false
     attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  - name: hotfix-bypass:wording-dictionary
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "wording-dictionary lint warning 예외 채널 (ADR-064 Amendment 2 / CFP-610). PR description ### Bypass reason 섹션 기재 필수."
+    single_active: false
+    attach_owner_plugin: "wording-dictionary.yml CI Action (조건부 skip + audit comment 자동)"
 ```
 
 ## 4. 변경 규칙

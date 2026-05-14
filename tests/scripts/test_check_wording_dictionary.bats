@@ -133,6 +133,28 @@ EOF
   [ "$status" -eq 0 ]
 }
 
+# F-3 TC: word-boundary + case-insensitive + false-positive 차단 (FIX iter 1 / CFP-610 Story 2)
+@test "F-3 TC-1e: false-positive — 'scoping' 안 substring 'pin' 차단 (word-boundary)" {
+  echo "We are scoping this feature for next sprint" > "$TEST_DIR/test-wording-fp.md"
+  run bash "$(dirname "$BATS_TEST_FILENAME")/../../scripts/check-wording-dictionary.sh" "$TEST_DIR/test-wording-fp.md"
+  [ "$status" -eq 0 ]
+  [[ ! "$output" =~ "pin" ]]
+}
+
+@test "F-3 TC-1f: case-insensitive — 'Pin' / 'PIN' / 'FREEZING' 검출" {
+  echo "Pin this decision. PIN ban-list. FREEZING the spec." > "$TEST_DIR/test-wording-case.md"
+  run bash "$(dirname "$BATS_TEST_FILENAME")/../../scripts/check-wording-dictionary.sh" "$TEST_DIR/test-wording-case.md"
+  [ "$status" -eq 1 ]
+  [[ "$output" =~ "Pin" ]] || [[ "$output" =~ "PIN" ]] || [[ "$output" =~ "FREEZING" ]]
+}
+
+@test "F-3 TC-1g: word-boundary hit — 'pin to top' 의도된 검출" {
+  echo "Let's pin to top the spec" > "$TEST_DIR/test-wording-wb.md"
+  run bash "$(dirname "$BATS_TEST_FILENAME")/../../scripts/check-wording-dictionary.sh" "$TEST_DIR/test-wording-wb.md"
+  [ "$status" -eq 1 ]
+  [[ "$output" =~ "pin" ]]
+}
+
 # CI-only: hotfix-bypass label skip (CI 환경 only)
 @test "CI-1: hotfix-bypass:wording-dictionary label skip — CI 환경 only" {
   skip "CI-1 = GitHub Actions 환경 only (label API 상호작용)"

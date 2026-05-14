@@ -98,7 +98,7 @@ CFP-530 retro carrier #2 — `bootstrap-labels.sh` hotfix-bypass:* family dynami
 - **Codex proactive check #2** (ADR-052 Amendment 4 / CFP-532 mandatory) — P0:0 / P1:3 inline FIX-1 (F-3 base count / F-5 exit-code semantic / F-6 §8 test intent anchor) / P2:3 skip rationale.
 - **DesignReviewPL iter 1 = PASS** (review-verdict-v4 v4.4, 3 self-check 모두 verified true).
 
-## [5.43.0] - 2026-05-13 — CFP-610 Story 2 Phase 2 (ADR-064 Amendment 2 mechanical enforcement)
+## [5.44.0] - 2026-05-14 — CFP-610 Story 2 Phase 2 FIX iter 1 (ADR-064 Amendment 2 mechanical enforcement + marketplace atomic sync)
 
 ### Added (CFP-610 Story 2 — wording-dictionary lint)
 

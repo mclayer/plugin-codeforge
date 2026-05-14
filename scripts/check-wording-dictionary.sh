@@ -18,8 +18,8 @@
 set -uo pipefail
 
 # ─── 카테고리 (a): 사용 금지 어휘 ────────────────────────────────────────────
-# SSOT: docs/wording-dictionary.md 카테고리 (a) 표와 lockstep sync 의무
-FORBID_WORDS=(
+# Mirror of docs/wording-dictionary.md 카테고리 (a) — change in lockstep (CFP-610 / INV-1 / ADR-068 I-1)
+FORBID_DICTIONARY=(
   "박제"
   "못 박기"
   "pin"
@@ -27,8 +27,8 @@ FORBID_WORDS=(
 )
 
 # ─── 카테고리 (b): 평문 정의 동반 의무 어휘 ───────────────────────────────────
-# SSOT: docs/wording-dictionary.md 카테고리 (b) 표
-DEFINITION_REQUIRED_WORDS=(
+# Mirror of docs/wording-dictionary.md 카테고리 (b) — change in lockstep (CFP-610 / INV-1 / ADR-068 I-1)
+DEFINITION_REQUIRED_DICTIONARY=(
   "normative"
   "sibling sync"
   "kind:contract"
@@ -115,9 +115,19 @@ scan_file() {
   stripped="$(strip_exempt "$file")"
 
   # 카테고리 (a): 금지 어휘
-  for word in "${FORBID_WORDS[@]}"; do
+  # 영어 어휘: word-boundary regex + case-insensitive (false positive 차단 — "scoping" 안 "pin" 미검출)
+  # 한국어 어휘: substring match (POSIX \b = ASCII boundary only, 한국어 영역 의미 없음)
+  for word in "${FORBID_DICTIONARY[@]}"; do
     local hits
-    hits="$(echo "$stripped" | grep -nF "$word" || true)"
+    local escaped_pattern
+    if [[ "$word" =~ ^[a-zA-Z\ ]+$ ]]; then
+      # 영어 어휘 — word-boundary + case-insensitive
+      escaped_pattern="\\b${word}\\b"
+      hits="$(echo "$stripped" | grep -niEH -- "$escaped_pattern" || true)"
+    else
+      # 한국어 어휘 — substring (case-insensitive 의미 없으나 -i 무해)
+      hits="$(echo "$stripped" | grep -niH -- "$word" || true)"
+    fi
     if [ -n "$hits" ]; then
       echo "WARNING [wording-dictionary 카테고리 (a) forbid]: '$word' 발견 — $file"
       echo "$hits" | while IFS= read -r hit; do
@@ -128,9 +138,9 @@ scan_file() {
   done
 
   # 카테고리 (b): 평문 정의 동반 의무 (exit 0 advisory only)
-  for word in "${DEFINITION_REQUIRED_WORDS[@]}"; do
+  for word in "${DEFINITION_REQUIRED_DICTIONARY[@]}"; do
     local hits
-    hits="$(echo "$stripped" | grep -nF "$word" || true)"
+    hits="$(echo "$stripped" | grep -niH -- "$word" || true)"
     [ -z "$hits" ] && continue
 
     while IFS= read -r hit_line; do
