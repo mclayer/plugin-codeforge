@@ -65,6 +65,24 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 - **ADR-063 §결정 5 marketplace atomic sync 의무**: plugin.json 5.63.0 → 5.64.0 MINOR + marketplace.json mirrored field 4종 (`name`/`version`/`description`/`author`) sync. marketplace sibling PR 선행 merge 의무 (ordering invariant).
 - **ADR-061 정합**: `tests/workflows/test_story-init-key-logic.py` 외부 .py file 작성 (workflow yml 안 heredoc 와 verbatim 동일 logic mirror — testable). multi-line Python heredoc escape 영역 회피.
 - **Internal-docs cross-repo write**: `mclayer/codeforge-internal-docs/wrapper/stories/CFP-671.md` + `mclayer/codeforge-internal-docs/wrapper/change-plans/cfp-671-story-init-regression-fix.md` 작성 (ADR-013 dogfood-out 정합, manual fallback path — 본 carrier 가 story-init.yml 영역 정정 자체이므로 dogfood-out workflow 자동 미동작).
+## [5.63.0] - 2026-05-14 — CFP-662 Phase 2 — bootstrap-labels.yml workflow body + self-app + Test Contract (8 test)
+
+### Added
+
+- **`templates/github-workflows/bootstrap-labels.yml` 신설** (26번째 fixture, CFP-662 Phase 2): consumer repo PR open 시 codeforge 필수 label set 자동 bootstrap. `on.pull_request.types: [opened]` only (synchronize 제외 — chicken-and-egg + 무한 루프 회피). `concurrency.group: bootstrap-labels-${PR_NUMBER}`. `continue-on-error: true` (ADR-060 §결정 5 warning tier). `hotfix-bypass:bootstrap-labels` conditional skip + audit comment 자동 발의. token: `CODEFORGE_CROSS_REPO_PAT` fallback `GITHUB_TOKEN`. `bash scripts/bootstrap-labels.sh` (idempotent 3-fallback chain 활용, ADR-061 외부 script convention). `timeout-minutes: 5`. RETRO-MCT-104 carrier (mctrader-data MCT-104 Phase 2 PR #14 recurrence 방지).
+- **`.github/workflows/bootstrap-labels.yml` byte-identical mirror** (ADR-005 self-application invariant). diff 0 byte 확인.
+- **`tests/workflows/test_bootstrap_labels_workflow.bats`** 10 TC (T-1~T-8 + T-meta-1/2) — TDD RED(9f1bcd5) → GREEN(dd56276) 전환 완료.
+
+### Changed
+
+- **`.claude-plugin/plugin.json` 5.62.0 → 5.63.0 MINOR bump**: ADR-037 — workflow 신설 (consumer-impact, runtime 활성화 = behavior change).
+
+### Notes
+
+- **ADR-060 Amendment 10 §결정 24 정합**: warning tier 10번째 entry `bootstrap-labels-precondition` — Phase 1 PR에서 declarative SSOT 선확립, Phase 2 PR에서 workflow body 본 구현.
+- **ADR-005 self-application**: `templates/github-workflows/bootstrap-labels.yml` ↔ `.github/workflows/bootstrap-labels.yml` byte-identical diff 0 verified.
+- **mctrader-data PR replay sentinel (AC-4)**: bootstrap-labels.sh 이미 존재 + workflow 호출 경로 확립 → MCT-104 recurrence 방지 구조 완성.
+- **marketplace sync**: plugin.json 5.62.0 → 5.63.0 MINOR (ADR-037). marketplace.json 동반 sync 의무 (ADR-063 §결정 5 atomic invariant — 별 sibling PR, 선행 merge 의무).
 
 ## [5.63.0] - 2026-05-14 — CFP-662 sibling (Issue #669) Phase 1 — wrapper sibling sync design-output-v2 v2.3 (canonical codeforge-design PR #42 SHA a6aa5502 verbatim mirror)
 
