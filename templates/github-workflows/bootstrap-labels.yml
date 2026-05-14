@@ -72,12 +72,53 @@ jobs:
           fi
           exit 0  # continue-on-error 정합 — warning advisory tier
 
-      - name: Post audit comment (hotfix-bypass detected)
+      - name: Emit bypass audit comment (hotfix-bypass:bootstrap-labels detected)
         if: steps.bypass_check.outputs.bypassed == 'true'
         env:
           GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT || secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
+          set -euo pipefail
+          # Step A — audit comment 직접 발의 (ADR-024 Amendment 3 §결정 6.C)
+          # label applied_by — 가장 최근 labeled event 의 actor
+          LABEL_USER=$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/events" \
+            --jq '[.[] | select(.event == "labeled" and .label.name == "hotfix-bypass:bootstrap-labels")] | last | .actor.login' \
+            2>/dev/null || echo "unknown")
+
+          # bypass reason 추출 — PR description 의 `### Bypass reason` 섹션 본문
+          REASON=$(gh pr view "$PR_NUMBER" --json body --jq '.body' 2>/dev/null \
+            | awk '/^### Bypass reason/{flag=1;next} /^##/{flag=0} flag' \
+            | sed '/^$/d' | head -n 5 | tr '\n' ' ' | sed 's/  */ /g;s/^ *//;s/ *$//')
+          if [ -z "$REASON" ]; then
+            REASON="(PR description '### Bypass reason' 섹션 부재 — 후속 보완 의무)"
+          fi
+
+          # ISO8601 UTC Z suffix (fix-event-v1 schema clarification 정합)
+          TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          AUDIT="[hotfix-bypass-audit] PR=${PR_NUMBER} label_applied_by=${LABEL_USER} reason=${REASON} workflow=bootstrap-labels timestamp=${TS}"
+
+          BODY=$(printf '%s\n\n%s' \
+            "$AUDIT" \
+            "> ⓘ ADR-024 Amendment 3 §결정 6.C — audit trail 3중 안전망 1차 (audit comment 자동 발의). assertion lint = \`scripts/check-bypass-audit-comment.sh\`. hotfix-bypass:bootstrap-labels label 부착 시 bootstrap-labels workflow skip.")
+          gh pr comment "$PR_NUMBER" --body "$BODY"
+
+      - name: Audit assertion (bypass label 부착 시)
+        if: steps.bypass_check.outputs.bypassed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT || secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # Step B — check-bypass-audit-comment.sh 로 Step A 가 발의한 comment 존재 verify
+          # (assertion verifier — comment 미발의 시 WARN, warning mode 정합)
+          set +e
           bash "${{ github.workspace }}/scripts/check-bypass-audit-comment.sh" \
-            "${{ github.event.pull_request.number }}" \
+            "$PR_NUMBER" \
             "hotfix-bypass:bootstrap-labels" \
-            "bootstrap-labels workflow skip" 2>/dev/null || true
+            "bootstrap-labels workflow skip"
+          status=$?
+          set -e
+          if [ "$status" -ne 0 ]; then
+            echo "⚠ audit assertion FAIL (warning mode — PR merge 미차단)"
+          fi
+          exit 0  # continue-on-error 정합 — warning advisory tier
