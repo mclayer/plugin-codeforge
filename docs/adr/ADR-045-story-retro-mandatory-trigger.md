@@ -59,6 +59,13 @@ amendment_log:
     status: applied
     ref: §D-5 + CLAUDE.md SessionStart retro alert scan
     sunset_justification: null
+  - amendment_id: 5
+    cfp: CFP-665
+    date: 2026-05-14
+    scope: "§D-9 신설 — PMOAgent 가 retro write 시점 Cross-Story pattern 누적 ≥ 2 검출 시 ADR escalation trigger 의무화 (Mandatory framing). N=2 fixed threshold (industry lower bound: Google SRE / ITIL / NASA ASRS). hybrid 검출 전략 (primary = anchor_id strict / secondary = root_cause_class fallback). PMOAgent self-decide 영역 제거 — pmo-output-v1 v1.2 cross_story_pattern_adr_trigger field mandatory 채움 의무 (회피 불가). False positive 안전망 = escalation_action enum 2-value (adr_draft_emitted | escalate_user)."
+    status: applied
+    ref: §D-9 + pmo-output-v1 v1.2 + CLAUDE.md PMOAgent Cross-cutting
+    sunset_justification: null
 is_transitional: false
 ---
 
@@ -381,6 +388,35 @@ git push origin --delete retro-attempts-state/<KEY>
 **Sunset metric**: retro-alert-pickup-rate ≥ 90% (분모 = 발화 alert comment 수, 분자 = Orchestrator 5 turn 내 PMOAgent spawn 한 비율, monthly cron `retro-alert-pickup-kpi.yml` 자동 측정).
 
 **근거**: CFP-609 + CFP-612 + CFP-610 3 Story 연속 manual fallback evidence — behavioral directive 신설 없이는 silent miss 반복 예상. session 개시 = 자연 scan 시점.
+
+---
+
+### Amendment 5 — §D-9 신설: Cross-Story pattern threshold 도달 시 ADR escalation 의무 (CFP-665)
+
+**문제**: PMOAgent 가 Cross-Story pattern 을 발견하더라도 ADR 발의 여부를 자체 판단(self-decide)에 맡겨 발의 누락 또는 지연이 발생할 수 있었다. N=2 이상 반복은 PMOAgent 가 "우연이 아님" 을 판단해야 하는 영역이며 self-decide = 회피 가능한 회색지대였다.
+
+**결정**: §D-9 신설 — PMOAgent 가 retro write 시점 Cross-Story pattern 검출 직후 threshold check. 누적 ≥ 2 도달 시 ADR escalation 의무 (Mandatory framing).
+
+#### §D-9 — Cross-Story pattern threshold 도달 시 ADR escalation 의무
+
+**Threshold**: N = 2 (fixed, industry lower bound — Google SRE Workbook Chapter 15 "If you see the same issue twice, it is no longer a coincidence" + ITIL v4 Foundation Problem Management "Recurring incidents ≥ 2 → Problem Record" + NASA ASRS Significant Event Reporting "≥ 2 similar events"). consumer overlay 가변 = out-of-scope (별 follow-up CFP 분리).
+
+**검출 전략 = hybrid** (Sun et al. 2011 ASE best F1 score 정합):
+
+1. **(Primary) 동일 anchor_id ≥ 2 Story 재발**: review-verdict-v4 stable identifier strict matching — false positive 차단 우선.
+2. **(Secondary fallback) root_cause_taxonomy class 내 anchor_id ≥ 2**: anchor_id naming inconsistency 시 catch — false negative 보완.
+
+**Mandatory framing**: threshold 도달 시 PMOAgent self-decide 영역 제거 — `pmo_output v1.2.cross_story_pattern_adr_trigger` field mandatory 채움 의무 (회피 불가). False positive 안전망 = `escalation_action` enum 2-value:
+- `adr_draft_emitted` (정식 ADR draft 작성, default) — ArchitectAgent spawn
+- `escalate_user` (PMOAgent 가 trivial 판정 시 사용자 manual decide 의뢰)
+
+두 enum value 모두 `cross_story_pattern_adr_trigger` field mandatory 채움 의무 (forcing function 보존). 후속 처리 분기만 다름.
+
+**pmo-output-v1 v1.2 연동**: `cross_story_pattern_adr_trigger` optional field 신설 (additive, v1.0/v1.1 consumer 호환). schema 5 sub-field: `pattern_count_threshold` / `detected_anchor_id` / `fallback_root_cause_class` / `occurrences[]` / `escalation_action`. SSOT = [pmo-output-v1 §3](https://github.com/mclayer/plugin-codeforge/blob/main/docs/inter-plugin-contracts/pmo-output-v1.md).
+
+**강제 강도**: PMOAgent agent file mandate (codeforge-pmo CLAUDE.md §3 Cross-Story 패턴 분석 §4 ADR 후보 발의 — Mandatory 표기) + pmo-output-v1 v1.2 contract schema (threshold 도달 시 field 채움 의무).
+
+**근거**: ADR-045 D-8 D-2 framing 정합 — retro 의무화가 "발견 → 행동" forcing function 이듯이 본 §D-9 는 "pattern 누적 → ADR escalation" forcing function. CFP-665 Story DesignReview lane evidence = FIX iter 1 ADR ref 갱신 inline FIX 1건 외 정상 PASS.
 
 ## 해소 기준
 
