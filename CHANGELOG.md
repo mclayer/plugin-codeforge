@@ -7,6 +7,29 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.59.0] - 2026-05-14 — CFP-661 Wave 3 of Epic CFP-431 (audit:from-mctrader-debut) — Enterprise prerequisite docs + graceful degradation (doc-only fast-path ADR-054)
+
+### Added
+
+- **`README.md` §2a "Enterprise environment prerequisite" 신설**: GitHub Enterprise `default_workflow_permissions: write` + `Allow GitHub Actions to create and approve pull requests` 활성 의무 (권한 보유 환경) — repo Settings UI step + CLI 등가 명령 (`gh api --method PUT repos/<owner>/<repo>/actions/permissions/workflow`). 차단 환경 = graceful degradation 자동 활성 안내.
+- **`docs/consumer-guide.md` §1i "Enterprise environment setup" 신설**: enterprise admin 권한 보유 환경 prerequisite 활성 runbook (4 단계: UI step + CLI 명령 + 확인 명령 + 결정 매트릭스) + graceful degradation 자동 활성 안내 (CFP-658 Wave 1 fallback path 대체 진입점) + Enterprise admin 결정 매트릭스 4 행 (권한/cap 정책 조합) + sunset criteria (90% 신규 consumer install prerequisite default 활성 metric).
+- **`CLAUDE.md` §"세션 개시 의무" 1-line normative pointer**: Enterprise prerequisite SSOT cross-ref (`docs/consumer-guide.md §1i`) + graceful degradation step pair (continue-on-error + Issue comment fallback) 자동 활성 안내. line cap 330 — `hotfix-bypass:claude-md-line-cap` label 동반 의무 (audit-trailed exception channel, CFP-506 ADR-012 Amendment 1 정합).
+
+### Changed
+
+- **`templates/github-workflows/story-init.yml` `Create Phase 1 PR` step**: `id: pr_create` 부여 + `continue-on-error: true` 추가 — enterprise `default_workflow_permissions: read` 차단 시 graceful degradation. Story init silent skip 회피.
+- **`templates/github-workflows/story-init.yml` 신설 `Post manual PR fallback comment` step**: `pr_create.outcome == 'failure'` 조건 발화 — Issue comment 로 CFP-658 Wave 1 fallback path 안내 자동 게시 (4-step manual fallback runbook + `fallback:manual` label 부착 안내 + enterprise admin prerequisite gh api 등가 명령 + cross-ref §1h/§1i/ADR-027). Branch `feat/${KEY}-${SLUG}` push 완료 후 manual PR open 만 필요 — Story init 진행 무중단.
+- **`.github/workflows/story-init.yml`** — `templates/github-workflows/story-init.yml` byte-identical mirror (ADR-005 self-application).
+
+### Sibling sync (separate PR, 선행 merge 의무)
+
+- `mclayer/marketplace` `.claude-plugin/marketplace.json` plugins[name=codeforge].version 5.58.0 → 5.59.0 + description CFP-661 entry append (ADR-063 §결정 5 + §결정 9 atomic invariant — plugin.json MINOR bump 동반 marketplace sync required).
+
+### Notes
+
+- **ADR-054 doc-only fast-path scope justification**: 7 file 중 6 file = docs (README / consumer-guide / CLAUDE.md / CHANGELOG / plugin.json / marketplace sibling), 1 file = workflow yml `continue-on-error: true` 추가 + new step (declarative, runtime logic change 없음 — silent skip 회피 graceful degradation). `src/` + `tests/` 변경 0건. Phase 1 PR 1개 scope.
+- Wave 1 (CFP-658, 7 PR merged) 의 fallback path normative SSOT 와 Wave 3 의 enterprise prerequisite docs + graceful degradation 이 disjoint scope — Wave 1 = "차단 환경 대응 path" / Wave 3 = "권한 환경 prerequisite + 차단 환경 graceful degradation auto-trigger" (paired complement).
+- Wave 2 (CFP-660) 병렬 진행 — baseline drift 인지 (origin/main 5.58.0).
 ## [5.58.0] - 2026-05-14 — CFP-658 Phase 2 of Epic CFP-431 (audit:from-mctrader-debut) — Action 차단 환경 mechanical implementation
 
 ### Added

@@ -46,6 +46,8 @@ Lane internal · per-lane spawn detail · severity rule · GitHub workflow subse
 
 **SessionStart hook 2종** (`Deferred tool 선제 로드 (0i)` + `worktree-gc (0a-prime)`): wrapper repo `.claude/settings.json` 두 entry = TodoWrite preload + `check-worktree-stale.sh` — [playbook §1.1 0i + 0a-prime](docs/orchestrator-playbook.md) SSOT (ADR-038 Amendment 2 §결정 9 / CFP-500 + CFP-427 / ADR-040 §결정 5).
 
+**Enterprise environment prerequisite (CFP-661 / Wave 3 of Epic CFP-431)**: GitHub Enterprise `default_workflow_permissions: write` + `Allow GitHub Actions to create and approve pull requests` 활성 의무 (권한 보유 환경) — SSOT [`docs/consumer-guide.md §1i`](docs/consumer-guide.md). 차단 환경 = `story-init.yml` graceful degradation step pair (continue-on-error + Issue comment fallback 안내) → CFP-658 Wave 1 fallback path 자동 활성.
+
 **Git layer 안전망 (CFP-428)**: `templates/.git-hooks/{pre-checkout,pre-commit-main-block}.sample` + `scripts/install-git-hooks.sh` opt-in installer — [ADR-040 Amendment 3 §결정 7.D](docs/adr/ADR-040-worktree-convention.md) SSOT.
 
 **구조적 변경 재구동 (ADR-053)**: 직전 세션 구조 변경 시 재구동 완료 후 작업 — 상세 [playbook §1.1 0g](docs/orchestrator-playbook.md).
