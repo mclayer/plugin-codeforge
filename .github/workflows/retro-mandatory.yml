@@ -173,20 +173,55 @@ jobs:
 
           # Check if gate:retro-complete label attached
           ISSUE_LABELS=$(gh issue view "$ISSUE_NUM" --json labels --jq '[.labels[].name] | join(",")')
-          if echo "$ISSUE_LABELS" | grep -q "gate:retro-complete"; then
-            echo "::notice::Issue #$ISSUE_NUM has gate:retro-complete — retro write confirmed (first attempt success)"
+          GATE_PRESENT=$(echo "$ISSUE_LABELS" | grep -q "gate:retro-complete" && echo "true" || echo "false")
+
+          # L3 fix (CFP-650) — actual retro file 존재 cross-validate (gate label ↔ file mismatch 차단)
+          # internal-docs repo 안 wrapper/retros/ 디렉터리 file 검색
+          # file naming convention: <YYYY-MM-DD>-cfp-<NNN>.md / EPIC-RESULTS-CFP-<NNN>.md / cfp-<NNN>-slug.md 등
+          RETRO_FILE_EXISTS="false"
+          if [ -n "${GH_TOKEN:-}" ]; then
+            STORY_NUM=$(echo "$STORY_KEY" | grep -oE '[0-9]+')
+            if [ -n "$STORY_NUM" ]; then
+              RETRO_HITS=$(gh api repos/mclayer/codeforge-internal-docs/contents/wrapper/retros \
+                --jq "[.[] | select(.name | test(\"cfp-${STORY_NUM}\"; \"i\"))] | length" 2>/dev/null || echo "0")
+              [ "$RETRO_HITS" -gt 0 ] && RETRO_FILE_EXISTS="true"
+            fi
+          fi
+
+          # Outcome 분기 (L3 추가):
+          # - gate ✓ + file ✓ → pass (정상 retro 완료)
+          # - gate ✓ + file ✗ → missing_file_despite_gate (L3 mismatch — false positive gate label, retry trigger)
+          # - gate ✗ → missing_gate (기존 logic)
+          if [ "$GATE_PRESENT" = "true" ] && [ "$RETRO_FILE_EXISTS" = "true" ]; then
+            echo "::notice::Issue #$ISSUE_NUM has gate:retro-complete + retro file ✓ — retro write confirmed"
             echo "outcome=pass" >> $GITHUB_OUTPUT
-            echo "issue_num=$ISSUE_NUM" >> $GITHUB_OUTPUT
+          elif [ "$GATE_PRESENT" = "true" ] && [ "$RETRO_FILE_EXISTS" = "false" ]; then
+            echo "::warning::Issue #$ISSUE_NUM has gate:retro-complete but retro file MISSING (L3 mismatch — CFP-650)"
+            echo "outcome=missing_file_despite_gate" >> $GITHUB_OUTPUT
           else
             echo "::warning::Issue #$ISSUE_NUM missing gate:retro-complete after 5min grace (first attempt)"
             echo "outcome=missing_gate" >> $GITHUB_OUTPUT
-            echo "issue_num=$ISSUE_NUM" >> $GITHUB_OUTPUT
           fi
+          echo "issue_num=$ISSUE_NUM" >> $GITHUB_OUTPUT
+
+      - name: Auto-attach gate:retro-complete label (L4 fix — CFP-650)
+        if: |
+          steps.enabled.outputs.disabled != 'true' &&
+          steps.gate_check.outputs.outcome == 'pass' &&
+          steps.meta.outputs.story_key != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ISSUE_NUM='${{ steps.gate_check.outputs.issue_num }}'
+          # L4 fix (CFP-650) — gate ✓ + file ✓ 시 idempotent label add (이미 부착 시 no-op)
+          # 본 step 은 outcome=pass 시에만 실행 — false positive label 부착 방지
+          gh issue edit "$ISSUE_NUM" --add-label "gate:retro-complete" 2>/dev/null || true
+          echo "::notice::Auto-attached gate:retro-complete to Issue #$ISSUE_NUM (idempotent)"
 
       - name: Post comment + mark for retry (ADR-045 D-4)
         if: |
           steps.enabled.outputs.disabled != 'true' &&
-          steps.gate_check.outputs.outcome == 'missing_gate'
+          (steps.gate_check.outputs.outcome == 'missing_gate' || steps.gate_check.outputs.outcome == 'missing_file_despite_gate')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
