@@ -56,7 +56,7 @@ Type 정의:
 - `design_parallel`: 설계 동시 진행 가능 (구현은 target 후)
 - `impl_parallel`: 구현 동시 진행 가능 (target merge 와 무관)
 
-### 결정 4: Change Plan §3 contract pin 의무
+### 결정 4: Change Plan §3 contract 버전 고정 의무
 
 Consumer Story 의 Change Plan §3 에 명시:
 
@@ -75,9 +75,9 @@ Dependency graph 의 topological order 따라 merge. PMOAgent Epic 진행 시 en
 
 Producer repo merge 후 consumer 가 break 시:
 1. Producer revert PR open
-2. 모든 affected consumer 의 contract pin downgrade PR open
+2. 모든 affected consumer 의 contract 버전 하향 고정 PR open
 3. Producer 가 fix 후 새 minor SemVer release
-4. Consumer pin upgrade
+4. Consumer 버전 고정 갱신
 
 ### 결정 7: 단일 repo Story (cross-repo 아닌) 적용 룰
 
