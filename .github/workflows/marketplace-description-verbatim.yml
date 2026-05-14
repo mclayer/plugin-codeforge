@@ -64,10 +64,10 @@ jobs:
         run: |
           gh pr comment "${{ github.event.pull_request.number }}" --body "[audit] **marketplace-description-verbatim bypass 감지**
 
-\`hotfix-bypass:marketplace-description-verbatim\` label 부착 — ADR-063 Amendment 2 §결정 11 description verbatim check skip 됨.
+          \`hotfix-bypass:marketplace-description-verbatim\` label 부착 — ADR-063 Amendment 2 §결정 11 description verbatim check skip 됨.
 
-**의무** (ADR-024 Amendment 3 hotfix-bypass family 정합):
-- 24시간 이내 marketplace sync PR open + merge (description byte-identical 복원)
-- bypass 해제 후 description verbatim invariant 회복 확인
+          **의무** (ADR-024 Amendment 3 hotfix-bypass family 정합):
+          - 24시간 이내 marketplace sync PR open + merge (description byte-identical 복원)
+          - bypass 해제 후 description verbatim invariant 회복 확인
 
-Source: \`templates/github-workflows/marketplace-description-verbatim.yml\` (CFP-631 / ADR-063 Amendment 2 §결정 11)"
+          Source: \`templates/github-workflows/marketplace-description-verbatim.yml\` (CFP-631 / ADR-063 Amendment 2 §결정 11)"
