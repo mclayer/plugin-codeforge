@@ -7,6 +7,32 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.52.0] - 2026-05-14 — CFP-638 (Continuous "진행해" 패턴 mechanical detect — Epic CFP-635 Story D)
+
+Epic [CFP-635](https://github.com/mclayer/plugin-codeforge/issues/635) Story D sister carrier. doc-only fast-path (ADR-054). CFP-637 (Story A+B+C combined) merged 후 base (5.51.0 → 5.52.0 post-CFP-637 atomic realignment).
+
+ADR-064 Amendment 3 §결정 9 sister — Continuous "진행해" 패턴 mechanical detect 영역. Orchestrator 가 직전 N (≥3) user turn 안 "진행해" / "그대로" / "계속" / "ok" / "yes" / "go" / "맞아" pattern 누적 시 후속 turn 의 dialog format (numbered list / decision option) 발화 자동 차단.
+
+ADR-037 MINOR bump: registry entry runtime 활성화 (evidence-checks-registry 44번째 warning-tier entry — advisory only, turn-final hook 부재 platform 한계).
+
+### Added
+
+- `docs/evidence-checks-registry.yaml` 44번째 entry `stop-time-continuous-confirm-detect` (CFP-638, warning tier, advisory only). owner_adr: ADR-064 Amendment 3, carrier_adr: ADR-060, sibling_dependencies: [CFP-637], recurrence count=1 (Epic CFP-635 trigger evidence, 2026-05-14). post-CFP-631 atomic realignment.
+- `docs/inter-plugin-contracts/label-registry-v2.md` v2.11 hotfix-bypass:stop-time-continuous-confirm 18번째 family member append. ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합.
+
+### Changed
+
+- `docs/orchestrator-playbook.md` §3.0.14 Question quality 3-check 본문에 Continuous "진행해" 패턴 detect subsection 추가 — pattern 8종 + 3+ 누적 trigger + 5+ strong brevity signal + mechanical layer SSOT cross-ref + 미래 hook 도입 별 CFP follow-up 명시.
+
+### Sibling sync (separate PR)
+
+- mclayer/marketplace: plugins[codeforge].version 5.51.0 → 5.52.0 mirrored (ADR-063 atomic invariant). CFP-637 marketplace sync (#111 merged) 후 base.
+
+### Coordination with sibling Stories
+
+- CFP-637 (Story A+B+C combined, PR #640 MERGED) — 본 PR base.
+- CFP-639 (Story E cross-plugin, PR #642) — 본 Story merge 와 독립 진행 가능 (cross-plugin upstream PR 영역).
+
 ## [5.51.0] - 2026-05-14 — CFP-637 (ADR-064 Amendment 3 — Over-questioning anti-pattern 차단)
 
 Epic [CFP-635](https://github.com/mclayer/plugin-codeforge/issues/635) Story A+B+C combined carrier. doc-only fast-path (ADR-054). post-CFP-631 atomic realignment (5.50.0 → 5.51.0, rebase race 5th sample).
