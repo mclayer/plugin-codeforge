@@ -12,7 +12,7 @@
 # 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
 schema_version: "1.2"  # CFP-509 / ADR-060 Amendment 6 — recurrence field 정식 도입 (MINOR bump v1.1 → v1.2)
 introduced_by: CFP-389
-last_updated: 2026-05-14  # CFP-658 — section-1-verbatim-postmerge 45번째 entry append (ADR-027 Amendment 2 §결정 6.C carrier — manual fallback path §1 verbatim invariant post-merge lint warning tier, deferred-followup status, Phase 2 carrier 신설 후 Active 전환) | CFP-627 FIX iter 3/3 — marketplace-drift-detection entry deferred to Phase 2 carrier (ADR-067 §결정 3 cross-lane RESET 차원 전환) | CFP-638 — stop-time-continuous-confirm-detect 44번째 entry (ADR-064 Amendment 3 Story D) | CFP-631 — marketplace-description-verbatim 43번째 entry (ADR-063 Amendment 2 §결정 11 blocking-on-pr)
+last_updated: 2026-05-14  # CFP-662 — bootstrap-labels-precondition 46번째 entry (ADR-060 Amendment 10 §결정 24 carrier — PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier, deferred-followup status — Phase 2 carrier 신설 후 Active 전환) | CFP-660 — workflow-version-drift 45번째 entry (ADR-032 Amendment 2 §결정 6 carrier — strict-eligible 5번째 drift consumer workflow version drift, check 10 NEW carrier) | CFP-658 — section-1-verbatim-postmerge 44번째 entry append (ADR-027 Amendment 2 §결정 6.C carrier — manual fallback path §1 verbatim invariant post-merge lint warning tier, deferred-followup status, Phase 2 carrier 신설 후 Active 전환) | CFP-627 FIX iter 3/3 — marketplace-drift-detection entry deferred to Phase 2 carrier (ADR-067 §결정 3 cross-lane RESET 차원 전환) | CFP-638 — stop-time-continuous-confirm-detect 43번째 entry (ADR-064 Amendment 3 Story D) | CFP-631 — marketplace-description-verbatim 42번째 entry (ADR-063 Amendment 2 §결정 11 blocking-on-pr)
 
 entries:
   - name: adr-sunset-criteria
@@ -1520,3 +1520,39 @@ entries:
       promotion_trigger: advisory
       last_occurrence: null
     status: active  # check_bootstrap.py 본 PR 안 runtime 활성 (deferred-followup 아님 — runtime ready)
+
+  - name: bootstrap-labels-precondition
+    description: |
+      ADR-060 Amendment 10 §결정 24 mechanical verification — consumer repo PR open 시 codeforge
+      필수 label set (phase:* / gate:* / type:* / hotfix-bypass:* / severity:* / audit:* /
+      component:*) 부재 자동 감지 + bootstrap-labels.sh idempotent 호출 (RETRO-MCT-104 carrier,
+      mctrader-data MCT-104 Phase 2 PR #14 2026-05-09 replay sentinel). PR-time precondition
+      check pattern 의 첫 baseline (CFP-583 retro 후 framework legitimacy 회복 후 신규 entry
+      도입). workflow body = `bash scripts/bootstrap-labels.sh` 단일 외부 호출 (ADR-061 §결정 1
+      외부 script convention reuse — multi-line shell embed 회피, CFP-583 BODY heredoc
+      anti-pattern 차단). Token: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }} primary +
+      ${{ secrets.GITHUB_TOKEN }} fallback (ADR-066 90 day rotation lifetime).
+    detect_command: bash scripts/bootstrap-labels.sh   # CFP-662 Phase 2 — workflow body 본문 호출 대상
+    workflow: templates/github-workflows/bootstrap-labels.yml   # CFP-662 Phase 2 신설 (Active 전환)
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:bootstrap-labels
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # 1st-19th entry 동일 패턴
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: []       # 독립 entry — bootstrap-labels.sh reuse + workflow self-app 외 의존 없음
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = precondition check, modal phrase 검사 미포함
+    introduced_by: CFP-662
+    introduced_date: 2026-05-14
+    owner_adr: ADR-060               # framework SSOT — PR-time precondition check pattern 의 정책 owner
+    carrier_adr: ADR-060             # self-carrier (Amendment 10)
+    recurrence:
+      count: 1                       # MCT-104 Phase 2 mctrader-data PR #14 (2026-05-09) actual occurrence [empirical-source: spec PR #393 §"동인" + Issue #318]
+      threshold: 3                   # ADR-060 §결정 19 (Amendment 6) — advisory promotion signal
+      last_occurrence: 2026-05-09    # [empirical-source: mctrader-data PR #14 timestamp, RETRO-MCT-104]
+      promotion_trigger: advisory    # count=1 < threshold=3 → 발화 없음 (단일 발생 시점)
+    status: deferred-followup        # CFP-662 Phase 2 carrier 신설 후 Active 전환 (workflow self-app 시점)

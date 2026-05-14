@@ -463,6 +463,44 @@ Consumer 가 `/plugins install codeforge@mclayer` 만 수행하면 plugin-root `
 
 ---
 
+### §2h.2 bootstrap-labels workflow 자동 install (CFP-662 / ADR-060 Amendment 10 §결정 24 이후)
+
+Consumer repo 의 첫 PR open 시점에 codeforge 필수 label set (`phase:*` / `gate:*` / `type:*` / `hotfix-bypass:*` / `severity:*` / `audit:*` / `component:*`) 부재 시 `phase-gate-mergeable` CI check 가 초회 실행 FAIL — 본 영역 해소 carrier (RETRO-MCT-104, mctrader-data PR #14 2026-05-09 evidence).
+
+**자동 install 절차** (codeforge plugin install 직후 1회):
+
+1. `/plugins install codeforge@mclayer` 수행 (plugin-root `hooks/hooks.json` `SessionStart` entry 자동 활성).
+2. Consumer repo 의 `.claude/_overlay/` 활성 시 — SessionStart `regen-agents.sh` 가 매 세션 시 `cp -n` (no-clobber) 으로 신규 workflow file 자동 propagate (CFP-110 + §2c manifest-driven loop).
+3. `.github/workflows/bootstrap-labels.yml` 부재 시 — §2c `cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/*.yml .github/workflows/` glob copy 가 자동 포함 (별도 절차 불필요).
+4. 첫 PR open 시점에 workflow trigger → `scripts/bootstrap-labels.sh` 1회 실행 → 부재 label set 자동 주입 → 후속 lane (요구사항 / 설계 / 설계-리뷰 / 구현 / 구현-리뷰 / 구현-테스트 / 보안-테스트) 모두 보호.
+
+**Workflow 동작 spec** (Phase 2 PR carrier):
+
+| 영역 | 값 |
+|---|---|
+| Trigger | `on.pull_request.types: [opened]` only (synchronize / labeled / reopen 미발화 — PAT-loop prevention) |
+| Concurrency | `bootstrap-labels-${{ github.event.pull_request.number }}` per-PR dedup |
+| continue-on-error | `true` (warning tier first entry, chicken-and-egg deadlock 회피, first-PR-ever 보호) |
+| Script invocation | `bash ${{ github.workspace }}/scripts/bootstrap-labels.sh` (idempotent 3-fallback chain) |
+| Primary token | `${{ secrets.CODEFORGE_CROSS_REPO_PAT }}` (CFP-450 / ADR-066 — 90 day rotation) |
+| Fallback token | `${{ secrets.GITHUB_TOKEN }}` (PAT 부재 / scope 부족 시 silent advisory) |
+| Permissions | top-level `issues: write` + `pull-requests: write` (least privilege, ADR-060 Amendment 8 정합) |
+| Required check | branch protection `required_status_checks.contexts` **미부착** (warning advisory only) |
+
+**Bypass (advisory)**: 본 workflow 가 임의 사유로 발화 차단 필요 시 — `hotfix-bypass:bootstrap-labels` label 부착 시 workflow conditional skip + audit comment 자동 발의 (`scripts/check-bypass-audit-comment.sh` 1st-19th entry 동일 패턴, label-registry-v2 v2.14 PATCH 20번째 family member). PR description `### Bypass reason` 섹션 기재 필수.
+
+**Edge Cases**:
+1. **CRITICAL**: `.github/workflows/bootstrap-labels.yml` 부재 시 — §2c manifest-driven loop 수행 의무 (workflow file copy 누락 시 phase-gate-mergeable 여전히 실패).
+2. `CODEFORGE_CROSS_REPO_PAT` scope 부족 → silent fail + warning advisory (SecurityTestPL 수동 fallback 의무).
+3. bootstrap-labels.sh PyYAML 미설치 (Windows / minimal env) → CFP-598 fallback warning (silent skip 금지).
+4. label-registry-v2 version bump 후 workflow re-trigger 의무 = 별 Story 후속 scope 외 (Multi-family drift 패턴 검증).
+
+**책임 경계** — bootstrap-labels workflow = PR-time precondition check tier 한정 (ADR-060 §결정 5 default warning). mechanical enforcement 강제 아님 — `continue-on-error: true` warning advisory only. 실제 enforce 승격 (warning → blocking-on-pr) 은 ADR-060 §결정 6 AND condition (PR 누적 ≥ 20 + bypass 외 failure = 0) 충족 시 별 carrier Story 발의 후.
+
+**Cross-ref**: ADR-060 Amendment 10 §결정 24 SSOT (`docs/adr/ADR-060-evidence-enforceable-promotion-framework.md`) + label-registry-v2 v2.14 entry (`docs/inter-plugin-contracts/label-registry-v2.md`) + evidence-checks-registry `bootstrap-labels-precondition` entry (`docs/evidence-checks-registry.yaml`).
+
+---
+
 §2.1 ~ §2.7 = manual / advanced fallback (script 미작동 시 / 부분 customize 필요 시).
 
 ---

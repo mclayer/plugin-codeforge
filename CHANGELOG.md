@@ -45,27 +45,48 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 - **lint baseline**: 본 PR merge 시점 기존 32 file 안 `별` standalone 사용 검출 (warning tier, continue-on-error: true — PR merge 미차단). sweep batch 일괄 정리 = 새 CFP carrier 분리 (ADR-064 §결정 5 CFP scope unitary 정합 시연 — 본 Amendment 4 자체가 그 패턴).
 - **EXEMPT_FILES 자기 시연**: 본 PR 내 ADR-064 + wording-dictionary.md 안 의미 정의 표기 영역에서 `별` 어휘 의도된 등장 — EXEMPT_FILES 가 차단 → self-detection 회피.
 - **carrier framework 재사용**: Amendment 2 carrier (CFP-610 Story 2) 의 `scripts/check-wording-dictionary.sh` + `templates/github-workflows/wording-dictionary.yml` workflow + `hotfix-bypass:wording-dictionary` label + ADR-060 warning-tier registry entry 그대로 재사용 — entry 1 추가만, framework 신설 0건 / 새 workflow 0건 / 새 label 0건. mechanical enforcement 비용 0.
-- **marketplace sync**: plugin.json 5.60.0 → 5.61.0 MINOR (ADR-037 — Amendment 4 governance behavior change / lint script FORBID_DICTIONARY array entry runtime 활성화). marketplace.json 동반 sync 의무 (ADR-063 §결정 1 atomic invariant — 별 sibling PR).
+- **marketplace sync**: plugin.json 5.60.0 → 5.61.0 MINOR (ADR-037 — Amendment 4 governance behavior change / lint script FORBID_DICTIONARY array entry runtime 활성화). marketplace.json 동반 sync 의무 (ADR-063 §결정 1 atomic invariant — sibling PR).
 
-## [5.60.0] - 2026-05-14 — CFP-660 Wave 2 of Epic CFP-431 (audit:from-mctrader-debut) — Consumer workflow version drift detection
+## [5.60.0] - 2026-05-14 — CFP-660 Wave 2 of Epic CFP-431 (audit:from-mctrader-debut) — Consumer workflow version drift detection + CFP-662 Phase 1 RETRO-MCT-104 carrier
 
-### Added
+### Added (CFP-660)
 
 - **ADR-032 Amendment 2 §결정 6 신설**: Consumer workflow version drift = 5번째 strict-eligible drift (ADR-032 §결정 2 strict-eligible 4 → 5 종 확장). consumer `.github/workflows/<name>.yml` 가 wrapper `templates/github-workflows/<name>.yml` 와 SHA-256 / 핵심 line (concurrency / on / permissions) 불일치 시 drift 감지. lane orchestration semantics divergence (race condition / counter collision / silent skip) vector 차단 forcing function. 6 sub-decisions (6.A 5번째 drift 정의 + 6.B Tier 1 SHA + Tier 2 core marker 알고리즘 + 6.C strict mode integration + 6.D bypass channel + 6.E consumer recovery procedure + 6.F out-of-scope). frontmatter `amendments[]` append + `mechanical_enforcement_actions[]` (workflow-version-drift action_name, ADR-040 Amendment 3 §결정 7.A 정합).
 - **`overlay/hooks/check_bootstrap.py` check 10 NEW**: `check_workflow_version_drift()` function + `STRICT_ELIGIBLE_WORKFLOWS` set (7 file — phase-gate-mergeable / phase-label-invariant / story-init / story-section-1-immutable / subissue-from-impl-manifest / fix-ledger-sync / story-section-schema) + `WORKFLOW_CORE_MARKERS` regex tuple + `_normalized_core_markers()` helper + `_sha256_of_file()` helper + `_classify_strict_eligible()` 의 (e) 분기 + `main()` 의 `drift_warnings` wire. 9 check → 10 check.
 - **`overlay/hooks/tests/test_check_bootstrap.py` TDD test 8건 신설**: clean baseline / strict-eligible drift detection / whitespace-only superficial diff suppress / plugin_root missing / wrapper templates missing / consumer workflows dir missing / non-strict-eligible warning-only / strict mode main exit 1.
-- **`docs/evidence-checks-registry.yaml` 48번째 entry**: `workflow-version-drift` (warning tier, status `active` — check_bootstrap.py runtime ready). owner_adr: ADR-032 Amendment 2 §결정 6 / carrier_adr: ADR-060 evidence-enforceable framework.
+- **`docs/evidence-checks-registry.yaml` 45번째 entry**: `workflow-version-drift` (warning tier, status `active` — check_bootstrap.py runtime ready). owner_adr: ADR-032 Amendment 2 §결정 6 / carrier_adr: ADR-060 evidence-enforceable framework.
 - **신규 label** (label-registry-v2 v2.13 → v2.14 MINOR — schema 무변경, §3 yaml hotfix-bypass:* 20번째 family member append):
   - `hotfix-bypass:workflow-version-drift` (color `fef2c0`, audit-trailed) — check 10 conditional skip + audit comment 자동 발의 channel.
 - **`docs/consumer-guide.md` §2i-3 갱신**: Strict-eligible drift 4 → 5종 표 확장 + (e) drift 복구 절차 sweep 안내 + per-Issue bypass label.
 - **`docs/project-config-schema.md` `bootstrap.strict_mode` 주석 갱신**: 5번째 strict-eligible drift (e) consumer workflow version drift 명시 + STRICT_ELIGIBLE_WORKFLOWS 7 file enumeration.
 
+### Added (CFP-662)
+
+- **`docs/adr/ADR-060-evidence-enforceable-promotion-framework.md` Amendment 10 §결정 24 신설**: 10번째 warning-tier entry `bootstrap-labels-precondition` — consumer repo PR open 시 codeforge 필수 label set (`phase:*` / `gate:*` / `type:*` / `hotfix-bypass:*` / `severity:*` / `audit:*` / `component:*`) 부재 자동 감지 + `scripts/bootstrap-labels.sh` idempotent 호출. PR-time precondition check pattern 의 첫 baseline (RETRO-MCT-104 carrier, mctrader-data MCT-104 Phase 2 PR #14 2026-05-09 replay sentinel). amendment_log + related_stories: CFP-662 row append + sibling_dependencies append `[..., CFP-662]` (Amendment 2 §결정 6 (c) chain 정합 — 11 carrier 누적).
+- **`docs/inter-plugin-contracts/label-registry-v2.md` v2.14 → v2.15 PATCH**: `hotfix-bypass:bootstrap-labels` 21번째 hotfix-bypass:* family member 신설 + §3 yaml first-class entry append + §변경 이력 v2.15 prose entry. canonical-only (kind:registry — sibling sync scope 외, ADR-010 §결정 2). ADR-008 §결정 3 schema 무변경 row append = PATCH bump.
+- **`docs/evidence-checks-registry.yaml` 46번째 entry `bootstrap-labels-precondition` append**: warning tier, deferred-followup status (Phase 2 carrier 신설 후 Active 전환). recurrence count=1 / threshold=3 / promotion_trigger=advisory / last_occurrence=2026-05-09 [empirical-source: mctrader-data PR #14 RETRO-MCT-104]. ADR-068 Amendment 1 I-5 dimensional empirical grounding 정합.
+- **`docs/consumer-guide.md` §2h.2 신설**: `bootstrap-labels.yml` 자동 install 절차 (CFP-475 SessionStart hook `regen-agents.sh` no-clobber copy + §2c `*.yml` glob 자동 포함) + Workflow 동작 spec 표 + Edge Cases 4종 + Bypass channel (`hotfix-bypass:bootstrap-labels`) + 책임 경계 명시. Edge Case #1 CRITICAL (consumer copy 미수행) 해소 carrier.
+
+### Changed (CFP-662)
+
+- **`CLAUDE.md` §GitHub Workflow fixture count 25 → 26**: bootstrap-labels.yml entry append (8번째 evidence-enforceable warning, RETRO-MCT-104 carrier). 기존 7개 warning entry description 압축 (line cap 332 — `hotfix-bypass:claude-md-line-cap` label 동반 의무, audit-trailed exception channel CFP-506 ADR-012 Amendment 1 정합).
+- **`.claude-plugin/plugin.json` `version: 5.59.0` → `5.60.0`**: MINOR bump (workflow 신설 = consumer-impact, ADR-037 정합) + description CFP-662 carrier entry append.
+
+### Phase 2 PR scope (CFP-662 deferred)
+
+- `templates/github-workflows/bootstrap-labels.yml` 신설 (26번째 fixture) — `on.pull_request.types: [opened]` only + `concurrency.group: bootstrap-labels-${{ github.event.pull_request.number }}` + `continue-on-error: true` + `bash ${{ github.workspace }}/scripts/bootstrap-labels.sh` 단일 호출 + `${{ secrets.CODEFORGE_CROSS_REPO_PAT }}` primary token + `${{ secrets.GITHUB_TOKEN }}` fallback + top-level `permissions: { issues: write, pull-requests: write }` (least privilege, ADR-060 Amendment 8 정합).
+- `.github/workflows/bootstrap-labels.yml` byte-identical mirror (ADR-005 self-application).
+- Story §8 Test Contract write + Story §8.5 Performance Baseline N/A declare (§8.5_active = false, 4 conditions all N).
+- mctrader-data PR replay sentinel verify (AC-4).
+
 ### Notes
 
-- **TDD discipline**: 35/35 pytest PASS (CFP-103 27 기존 + CFP-660 8 신설).
-- **Out-of-scope** (별 CFP carrier 후보): `scripts/sync-consumer-workflows.sh` sweep helper / `templates/github-workflows/workflow-drift-detection.yml` cron-based reactive workflow / per-marker custom drift threshold.
-- **marketplace sync**: plugin.json 5.57.0 → 5.58.0 MINOR (ADR-037 — workflow-version-drift entry runtime 활성화 / Amendment 2 governance carrier). marketplace.json 동반 sync 의무 (ADR-063 §결정 1 atomic invariant — 별 sibling PR).
+- **TDD discipline (CFP-660)**: 35/35 pytest PASS (CFP-103 27 기존 + CFP-660 8 신설).
+- **Out-of-scope (CFP-660)** (별 CFP carrier 후보): `scripts/sync-consumer-workflows.sh` sweep helper / `templates/github-workflows/workflow-drift-detection.yml` cron-based reactive workflow / per-marker custom drift threshold.
+- **marketplace sync**: plugin.json 5.59.0 → 5.60.0 MINOR (ADR-037 — workflow-version-drift entry runtime 활성화 / CFP-662 bootstrap-labels-precondition entry + consumer-guide 신설). marketplace.json 동반 sync 의무 (ADR-063 §결정 1 atomic invariant — 별 sibling PR, 선행 merge 완료).
 - **ADR-027 Amendment 1 (ADR-032) ratchet**: strict-eligible 4 → 5 = additive only / supersede 아님. opt-in default-off 보존.
+- **ADR-054 doc-only fast-path 부적격 (CFP-662)**: Phase 2 PR 가 `templates/github-workflows/bootstrap-labels.yml` + `.github/workflows/bootstrap-labels.yml` workflow 신설 (runtime behavior change) 동반 → Phase 1 = SSOT only + Phase 2 = workflow self-app 분리 (ADR-024 Phase 1/2 split 표준).
+- **bootstrap-labels.sh 무변경 (CFP-662)**: workflow body 가 외부 script 호출 (ADR-061 §결정 1 외부 script convention reuse — multi-line shell embed 회피, CFP-583 BODY heredoc anti-pattern 차단). `hotfix-bypass:bootstrap-labels` row 는 CFP-598 dynamic read 분기 (`parse-hotfix-bypass-labels.py`) 가 자동 흡수.
 ## [5.59.0] - 2026-05-14 — CFP-661 Wave 3 of Epic CFP-431 (audit:from-mctrader-debut) — Enterprise prerequisite docs + graceful degradation (doc-only fast-path ADR-054)
 
 ### Added

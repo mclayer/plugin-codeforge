@@ -120,6 +120,37 @@ amendment_log:
       강화 방향 amendment, framework SSOT permanent governance) +
       sibling_dependencies append `[CFP-390, CFP-412, CFP-455, CFP-449, CFP-481, CFP-506,
       CFP-509, CFP-508, CFP-530]` (Amendment 2 §결정 6 (c) chain 정합).
+  - amendment: 10
+    carrier_story: CFP-662
+    date: 2026-05-14
+    summary: |
+      10번째 warning-tier entry `bootstrap-labels-precondition` 등록 carrier amendment —
+      consumer repo PR open 시점에 codeforge 필수 label set (phase:* / gate:* / type:* /
+      hotfix-bypass:* / severity:* / audit:* / component:*) 부재 자동 감지 + bootstrap-labels.sh
+      idempotent 호출 (RETRO-MCT-104 carrier, mctrader-data MCT-104 Phase 2 PR #14
+      2026-05-09 replay sentinel). PR-time precondition check pattern 의 첫 baseline
+      (CFP-583 retro 후 framework legitimacy 회복 직후 신규 entry 도입) +
+      registry yaml row append (Phase 2 PR scope) — schema 변경 0건 (Amendment 6 schema v1.2 정합,
+      `current_tier: warning` + `bypass_label: hotfix-bypass:bootstrap-labels` per-entry namespace) +
+      label-registry-v2 v2.13 → v2.14 PATCH 동반 (`hotfix-bypass:bootstrap-labels` 20번째 family member +
+      §3 yaml first-class entry, ADR-008 §결정 3 schema 무변경 row append) +
+      ADR-024 Amendment 3 §결정 6.A per-entry namespace pre-existing pattern reuse (별 Amendment 불필요) +
+      `bash scripts/bootstrap-labels.sh` reuse pattern (ADR-061 §결정 1 외부 script convention 정합,
+      workflow yml 본문에서 multi-line shell embed 회피 — CFP-583 BODY heredoc anti-pattern 차단) +
+      consumer-guide §2h.X 자동 install 절차 명시 (Edge Case #1 CRITICAL 해소 — `regen-agents.sh`
+      no-clobber copy + 신규 consumer onboarding 의무 step + §2c `*.yml` glob workflow file copy
+      자동 포함) +
+      chicken-and-egg deadlock 회피 (`continue-on-error: true` warning tier first entry default,
+      first-PR-ever 보호 + branch protection `required_status_checks.contexts` 미부착) +
+      PAT-loop prevention (`on.pull_request.types: [opened]` only filter +
+      `concurrency.group: bootstrap-labels-${{ github.event.pull_request.number }}` per-PR dedup) +
+      ADR-066 CODEFORGE_CROSS_REPO_PAT 90 day rotation lifetime 정합 (primary token) +
+      GITHUB_TOKEN fallback (silent advisory degradation) +
+      ratchet 위반 0건 — enum 값 / tier 추가 / bypass channel 동작 변경 없음, framework 의 자연스러운
+      사용 사례 entry 추가 only (ADR-058 §결정 5 sunset_justification 의무 통과 — 강화 방향 amendment,
+      framework SSOT permanent governance) +
+      sibling_dependencies append `[CFP-390, CFP-412, CFP-455, CFP-449, CFP-481, CFP-506,
+      CFP-509, CFP-508, CFP-530, CFP-583, CFP-662]` (Amendment 2 §결정 6 (c) chain 정합).
   - amendment: 9
     carrier_story: CFP-583
     date: 2026-05-13
@@ -172,6 +203,7 @@ related_stories:
   - CFP-508  # Amendment 7 carrier — evidence-registry-naming convention lint + §결정 20 신설 (entry name ↔ workflow file naming convention + Conservative no-rename policy + multi-job pattern 정식 인정)
   - CFP-530  # Amendment 8 carrier — N번째 warning-tier entry `workflow-permissions-block-presence` 등록 + 16 file remediation surface T1/T3 tier 매핑 + hotfix-bypass:workflow-permissions 10번째 family member + ADR-063 atomic invariant 발효
   - CFP-583  # Amendment 9 carrier — 7th warning-tier entry `workflow-yaml-parse` 등록 + 6 workflow yml BODY heredoc anti-pattern 정정 + framework zero-coverage sentinel 회복 (ADR-064 §결정 2 forbid-list mechanical lint + ADR-058 sunset criteria mandate + ADR-040 worktree-first 4 entry + ADR-024 Amendment 4 auto-phase-label + ADR-068 wording SSOT 등 framework SSOT 운영 정당성 회복) + §결정 23 BODY heredoc 정상 패턴 SSOT
+  - CFP-662  # Amendment 10 carrier — 10번째 warning-tier entry `bootstrap-labels-precondition` 등록 + RETRO-MCT-104 carrier (mctrader-data MCT-104 Phase 2 PR #14 2026-05-09 replay sentinel) + PR-time precondition check pattern 의 첫 baseline + label-registry-v2 v2.13 → v2.14 PATCH (`hotfix-bypass:bootstrap-labels` 20번째 family member) + ADR-061 §결정 1 외부 script convention pattern reuse (CFP-583 BODY heredoc anti-pattern 차단) + ADR-066 CODEFORGE_CROSS_REPO_PAT primary token 정합 + consumer-guide §2h.X 자동 install 절차 명시 (Edge Case #1 CRITICAL 해소)
 related_adrs:
   - ADR-008   # versioning (kind:registry 도 minor/major SemVer 정합)
   - ADR-010   # contract sibling sync (kind:registry scope 외 명시)
@@ -951,4 +983,82 @@ run: |
 #### ADR-061 cross-ref
 
 ADR-061 §결정 1 (Python script-writing convention) 는 multi-line Python > 5줄 외부 .py 의무 + bash heredoc 금지. 본 §결정 23 = 동일 root cause family 의 yaml-shell heredoc 영역 extension (multi-line quoted string 안 backtick / `$` / `\` 가 transmission boundary 마다 다른 escape semantics 적용). ADR-061 신규 Amendment 영역은 별도 carrier — 본 ADR-060 §결정 23 가 워킹플로우 yml 영역 mechanical enforcement carrier (registry entry + script + workflow self-app).
+
+## Amendment 10 (CFP-662, 2026-05-14)
+
+### Amendment 10-결정 24 (신설) — 10번째 warning-tier entry `bootstrap-labels-precondition` 등록
+
+**Carrier**: CFP-662 / Issue #670 / Story file `wrapper/stories/CFP-662.md` (codeforge-internal-docs SSOT).
+
+**Direct trigger**: [RETRO-MCT-104] (#318, 2026-05-09 발생) — mctrader-data PR #14 의 `phase-gate-mergeable` CI check 초회 실행 FAIL. 원인 = mctrader-data repo 에 `phase:보안-테스트` / `gate:security-test-pass` label 부재. SecurityTestPLAgent 가 수동으로 `scripts/bootstrap-labels.sh` 실행 후 통과. PR merge ~20분 지연. 사용자 directive (2026-05-14): "워크플로우 레벨 fix (권장)" 명시.
+
+**Background root cause**: CI gate 자체가 label set 부재를 사전 감지 못함 = root cause. consumer repo 가 codeforge plugin install 후 첫 PR open 시점에 codeforge 필수 label set (`phase:*` / `gate:*` / `type:*` / `hotfix-bypass:*` / `severity:*` / `audit:*` / `component:*`) 가 자동으로 보장되지 않음 — PR-time precondition check pattern 부재 (`templates/github-workflows/*.yml` 52 entry 중 `gh label create` 호출 workflow = `check-plugin-version-bump.yml` 1건만, 별도 axis).
+
+**Entry 필드 SSOT** (registry yaml row 형식, Phase 2 PR append target):
+
+```yaml
+  - name: bootstrap-labels-precondition
+    description: |
+      ADR-060 Amendment 10 mechanical verification — consumer repo PR open 시 codeforge
+      필수 label set (phase:* / gate:* / type:* / hotfix-bypass:* / severity:* / audit:* /
+      component:*) 부재 자동 감지 + bootstrap-labels.sh idempotent 호출 (RETRO-MCT-104
+      carrier, mctrader-data MCT-104 Phase 2 PR #14 2026-05-09 replay sentinel).
+      PR-time precondition check pattern 의 첫 baseline (CFP-583 retro 후 framework
+      legitimacy 회복 후 신규 entry 도입).
+    detect_command: bash scripts/bootstrap-labels.sh   # CFP-662 Phase 2 — workflow body 본문 호출 대상
+    workflow: templates/github-workflows/bootstrap-labels.yml   # CFP-662 Phase 2 신설
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:bootstrap-labels
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # 1st-19th entry 동일 패턴
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: []       # 독립 entry — bootstrap-labels.sh reuse + workflow self-app 외 의존 없음
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = precondition check, modal phrase 검사 미포함
+    introduced_by: CFP-662
+    introduced_date: 2026-05-14
+    owner_adr: ADR-060               # framework SSOT — PR-time precondition check pattern 의 정책 owner
+    carrier_adr: ADR-060             # self-carrier (Amendment 10)
+    recurrence:
+      count: 1                       # MCT-104 Phase 2 mctrader-data PR #14 (2026-05-09) [empirical-source: spec PR #393 §"동인" + Issue #318]
+      threshold: 3                   # ADR-060 §결정 19 (Amendment 6) — advisory promotion signal
+      last_occurrence: 2026-05-09    # [empirical-source: mctrader-data PR #14 timestamp]
+      promotion_trigger: advisory    # count=1 < threshold=3 → 발화 없음
+    status: Active                   # Phase 2 PR carrier merge 후 Active 전환 (workflow self-app 시점)
+```
+
+**Hotfix-bypass label 명명**: `hotfix-bypass:bootstrap-labels` — ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합, **20번째 hotfix-bypass:* family member** (기존 19: adr-sunset / decision-principle-vocab / auto-phase-label / marketplace-atomic / worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd} / claude-md-line-cap / sibling-pr-author-check / workflow-permissions / workflow-yaml-parse / debate-convergence-quality / wording-dictionary / retro-mandatory-deployed / retro-alert-pickup / marketplace-description-verbatim / stop-time-continuous-confirm / marketplace-drift-detection). label-registry-v2 v2.13 → v2.14 PATCH 동반 (frontmatter `version` bump — schema 무변경 yaml row append, ADR-008 §결정 3 정합).
+
+**Promotion criteria** (warning → blocking-on-pr, ADR-060 §결정 6 AND condition):
+- (a) pr_cumulative_min: 20 PR 누적 (velocity-normalized — §결정 10)
+- (b) failure_threshold: 0 bypass 외 failure (본 carrier PR merge 시점 = 0 발효 시작)
+- (c) sibling_dependencies: [] (독립 entry — bootstrap-labels.sh reuse + workflow self-app + consumer-guide §2h.X 외 의존 없음)
+
+승격 평가 책임 = 별도 carrier Story (warning → blocking-on-pr transition 자동 아님, governance 보존 — Amendment 6 §결정 19 정합).
+
+**PR-time precondition check pattern 의 첫 baseline**: CFP-583 retro 후 framework legitimacy 회복 (workflow yml ScannerError 6 file 정정 완료) 직후 신규 entry 도입. 본 entry 는 기존 warning-tier 9개 entry (adr-sunset / decision-principle-vocab / auto-phase-label / claude-md-line-cap / sibling-pr-author-check / workflow-permissions / workflow-yaml-parse / debate-convergence-quality / wording-dictionary) 와 패턴 정합 — `continue-on-error: true` + `hotfix-bypass:*` per-entry namespace + `check-bypass-audit-comment.sh` reuse + ADR-060 §결정 5 default tier.
+
+**ADR-061 §결정 1 외부 script convention pattern reuse**: workflow yml 본문 = `bash ${{ github.workspace }}/scripts/bootstrap-labels.sh` 단일 호출 (CFP-583 BODY heredoc anti-pattern 차단 — multi-line shell embed 회피, yaml scanner 영역 무관). script 자체는 209 line idempotent 3-fallback chain (`gh label create` → `gh label edit` → silent fail) 이미 보유 — workflow 신설 시 script 변경 0건.
+
+**ADR-066 CODEFORGE_CROSS_REPO_PAT primary token 정합**: 90 day rotation lifetime / 최대 180 day. PAT scope min = `public_repo` (public consumer repo) 또는 `repo` (private consumer repo). Fallback = `GITHUB_TOKEN` (silent advisory degradation, PAT 부재 / scope 부족 시).
+
+**Consumer-guide §2h.X 자동 install 절차 명시**: Edge Case #1 (consumer copy 미수행, CRITICAL) 해소 — `regen-agents.sh` no-clobber copy 자동 propagate + 신규 consumer onboarding 시 의무 step + §2c `cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/*.yml .github/workflows/` glob 보존 (workflow file copy 자동 포함).
+
+**ratchet 위반 0건** — enum 값 / tier 추가 / bypass channel 동작 변경 없음, framework 의 자연스러운 사용 사례 entry 추가 only (ADR-058 §결정 5 sunset_justification 의무 통과 — 강화 방향 amendment, framework SSOT permanent governance).
+
+**sibling_dependencies append**: `[CFP-390, CFP-412, CFP-455, CFP-449, CFP-481, CFP-506, CFP-509, CFP-508, CFP-530, CFP-583, CFP-662]` (Amendment 2 §결정 6 (c) chain 정합).
+
+**Mermaid 다이어그램 동기화** (Amendment 2 §결정 6 (c) chain 정합): 본 ADR `## 다이어그램` Mermaid 의 carrier chain row 갱신은 추후 다이어그램 갱신 carrier 가 통합 처리 (현재 chain length 11 — CFP-662 까지 보존 의무).
+
+#### Cross-ref
+
+- **RETRO-MCT-104**: #318 (2026-05-09 발생, priority:P2) — 본 Amendment 10 carrier 가 RETRO 해소 (Phase 1 PR open 후 #318 cross-ref comment + close, deduplication).
+- **CFP-598**: bootstrap-labels.sh hotfix-bypass:* dynamic read 분기 (label-registry-v2 §3 yaml first-class backfill v2.7) — 본 entry 의 `hotfix-bypass:bootstrap-labels` 20번째 family member 가 dynamic read 분기 자동 흡수 (script 변경 0건, registry yaml row append 만).
+- **CFP-474**: 6 mctrader repo prereq-check sweep (CLOSED, 2026-05-09) — 본 Story sentinel test 대상 (mctrader-data PR replay sentinel).
+- **CFP-583**: workflow-yaml-parse warning tier 7번째 entry — 본 Amendment 10 이 framework legitimacy 회복 직후 신규 entry 도입 timing 정합 (broken workflow 영역 차단 완료 후 신규 entry 도입).
+
 
