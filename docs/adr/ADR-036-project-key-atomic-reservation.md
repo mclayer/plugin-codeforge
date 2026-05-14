@@ -16,7 +16,14 @@ related_files:
 related_stories:
   - CFP-260 (carrier)
   - CFP-259 (parent Epic)
+  - CFP-671 (Amendment 1 — title regex precedence)
 is_transitional: false
+amendment_log:
+  - amendment_id: 1
+    date: 2026-05-14
+    carrier: CFP-671
+    summary: "Title regex precedence over Issue# fallback — cfp-reserve.yml reservation pattern 정합 보존"
+    sunset_justification: "ratchet 강화 (race-free guarantee 보존 + title pattern precedence 추가). 약화 방향 아님."
 ---
 
 # ADR-036: Project key atomic reservation — KEY = PREFIX-Issue#
@@ -205,3 +212,61 @@ spec / Phase 1 PR / Phase 2 PR 모두 KEY 인용 (race-free)
 ## CFP-658 cross-ref
 
 ADR-027 Amendment 2 (CFP-658, Wave 1 of Epic CFP-431) §결정 6.H = 본 ADR-036 §결정 1 (`KEY = PREFIX-${ISSUE_NUMBER}` atomic) invariant manual write 영역 보존 — `manual-story-init-fallback.sh` (Phase 2 carrier) 안 `templates/github-workflows/story-init.yml` L107-124 existence_check step verbatim port 로 race-condition 보호 활성. brainstorming 시점 KEY 사전 추측 금지 invariant 동일하게 manual fallback path 에서도 enforce.
+
+## Amendment 1 — Title regex precedence (CFP-671, 2026-05-14)
+
+### 발견된 영역
+
+ADR-036 결정 1 (`KEY = PREFIX-${ISSUE_NUMBER}` race-free) 와 결정 2 (cfp-reserve.yml reservation Issue Form) 가 별 영역에서 conflict — 사용자가 reservation Issue 발의 후 별 시간 격차로 Story Issue 를 발의하면 (다른 Issue #) title 의 `[CFP-NNN]` reservation pattern 과 Issue # 가 mismatch.
+
+**실제 사고 (RETRO-CFP-662, 2026-05-14)**: CFP-662 reservation 사전 확보 후 Story Issue #670 발의. Story title = `[STORY] [CFP-662] bootstrap-labels workflow 신설 ...`. story-init.yml workflow 가 KEY = `CFP-670` (Issue # only) 발급 → reservation pattern 무시. 사용자는 `CFP-662` 기대 → mismatch.
+
+### 결정 1 — Title pattern 우선 + Issue # fallback (race-free guarantee 보존)
+
+`Compute story key` step 갱신 logic:
+
+```python
+import os, re
+
+title = os.environ.get("ISSUE_TITLE", "")
+prefix = os.environ.get("PREFIX", "")
+issue_number = os.environ.get("ISSUE_NUMBER", "")
+
+title_clean = re.sub(r"^\[STORY\]\s*", "", title).strip()
+
+# Title pattern `[<PREFIX>-<N>]` or `<PREFIX>-<N>` 우선 추출
+m = re.search(r'\[?([A-Z]+-\d+)\]?', title_clean)
+key_from_title = m.group(1) if m else ""
+
+# Prefix guard — cross-project KEY injection 차단
+if key_from_title and key_from_title.startswith(prefix + "-"):
+    key = key_from_title
+else:
+    # Fallback to Issue # — ADR-036 결정 1 race-free guarantee 보존
+    key = f"{prefix}-{issue_number}"
+```
+
+**3 변경 영역**:
+1. **Title pattern matched + prefix matched** → title KEY 우선 (cfp-reserve.yml reservation 정합)
+2. **Title pattern absent** → Issue # fallback (race-free guarantee 보존 — ADR-036 결정 1 invariant)
+3. **Title pattern matched + prefix MISMATCH** (예: `[ABC-123]` 에 PREFIX=CFP) → Issue # fallback (cross-project KEY injection 차단 — security guard)
+
+### 결정 1 의 race-free guarantee 보존 근거
+
+본 Amendment 의 fallback path (`key = f"{prefix}-{issue_number}"`) 가 ADR-036 결정 1 의 atomic guarantee 동일 — GitHub Issue numbering 의 server-side atomic monotonic increment 위임.
+
+Title pattern matched 영역에서도 race-free — title 자체는 Issue 생성 시점에 immutable input (사용자 input). 같은 title 입력 → 같은 KEY 결정 (deterministic).
+
+### 결정 2 — Cross-project KEY injection 차단 (security guard)
+
+Title `[ABC-123] ...` (외부 project KEY) 에 PREFIX=CFP 인 repo 에서 발의 시 KEY = `CFP-${ISSUE_NUMBER}` fallback. cross-project KEY 의 wrapper repo 진입 차단.
+
+### 영향
+
+- consumer 영향 0 — title pattern 부재 시 기존 동작 (Issue # fallback) 그대로
+- codeforge family Story (reservation pattern 사용 시) = title KEY 정상 발급
+- Historical KEY ↔ Issue# misalignment 표 (결정 6) 무관 — 본 Amendment 는 going-forward only
+
+### Sunset justification
+
+ratchet 강화 (race-free guarantee 보존 + title pattern precedence 추가). 약화 방향 아님. ADR-058 §결정 5 정합.
