@@ -9,6 +9,10 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [5.45.0] - 2026-05-14 — CFP-612 Wave 5 (ADR-071 Orchestrator-user dialog convergence)
 
+### Closed (CFP-612 Phase 2 — full-lane closure, src/tests = 0, all code-lane N/A)
+
+full-lane Story convention 준수 Phase 2 closure. src/tests 변경 0 — 모든 effective 변경은 Phase 1 (#617) 에 포함. code-lane (Develop/CodeReview/SecurityTest) 모두 N/A 선언. ADR-045 mandate PMOAgent retro auto-trigger 발화 시점 (Phase 2 PR merge 후 5분 grace). Change Plan §10.1 declare: Phase 2 0 commit.
+
 ### Added (CFP-612 Phase 1 — Design lane, ADR-071 + playbook §3.14 + skill + Layer 4 file)
 
 CFP-525 Epic ancestor follow-up — Orchestrator-user dialog convergence (Wave 5). Phase 1 PR scope = §1-§7 (ADR + Change Plan + playbook §3.14 + skill SKILL.md + Layer 4 incidents file + CLAUDE.md cross-ref + plugin.json MINOR bump + CHANGELOG + ADR-064 related_adrs append + section-ownership.yaml 2 row append + ADR-RESERVATION row 71 active). 신규 ADR 동반 → ADR-054 §결정 1 full-lane Story 분류 (doc-only fast-path 미적용). src/tests 변경 0.
