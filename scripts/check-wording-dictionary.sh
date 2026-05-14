@@ -18,12 +18,16 @@
 set -uo pipefail
 
 # ─── 카테고리 (a): 사용 금지 어휘 ────────────────────────────────────────────
-# Mirror of docs/wording-dictionary.md 카테고리 (a) — change in lockstep (CFP-610 / INV-1 / ADR-068 I-1)
+# Mirror of docs/wording-dictionary.md 카테고리 (a) — change in lockstep (CFP-610 / CFP-672 / INV-1 / ADR-068 I-1)
+# 어휘 5 entry (Amendment 2: 박제 / 못 박기 / pin / freezing + Amendment 4: 별 standalone).
+# 한국어 어휘 = substring match (POSIX \b ASCII boundary only — 한국어 영역 의미 부재).
+# false-positive 완화 = blockquote (>) + fenced code block + EXEMPT_FILES (dictionary + ADR-064 본문) framework 그대로.
 FORBID_DICTIONARY=(
   "박제"
   "못 박기"
   "pin"
   "freezing"
+  "별"
 )
 
 # ─── 카테고리 (b): 평문 정의 동반 의무 어휘 ───────────────────────────────────
@@ -119,7 +123,9 @@ scan_file() {
 
   # 카테고리 (a): 금지 어휘
   # 영어 어휘: word-boundary regex + case-insensitive (false positive 차단 — "scoping" 안 "pin" 미검출)
-  # 한국어 어휘: substring match (POSIX \b = ASCII boundary only, 한국어 영역 의미 없음)
+  # 한국어 단일 character 어휘 (별 등): Hangul-boundary lookahead/lookbehind regex (PCRE)
+  #   — `별도` / `별개` / `특별` / `구별` 등 한자어 compound 차단 + standalone `별 도리` / `별 carrier` 만 detect
+  # 한국어 multi-character 어휘 (박제, 못 박기): substring match (POSIX \b 의미 부재, false-positive risk 낮음)
   for word in "${FORBID_DICTIONARY[@]}"; do
     local hits
     local escaped_pattern
@@ -127,8 +133,17 @@ scan_file() {
       # 영어 어휘 — word-boundary + case-insensitive
       escaped_pattern="\\b${word}\\b"
       hits="$(echo "$stripped" | grep -niEH -- "$escaped_pattern" || true)"
+    elif [ "$word" = "별" ]; then
+      # 한국어 단일 character (CFP-672 Amendment 4) — Hangul-boundary lookahead/lookbehind
+      # (?<![가-힣]) = 직전 character 가 Hangul 음절 (U+AC00-U+D7A3) 아님
+      # (?![가-힣])  = 직후 character 가 Hangul 음절 아님
+      # → standalone `별` (공백 / 구두점 / line edge 로 둘러싸인) 만 match.
+      # Perl regex (-P) 가 PCRE 지원 = Hangul Unicode class.
+      # LC_ALL UTF-8 강제 (Windows Git Bash / WSL / Linux 환경 공통).
+      escaped_pattern="(?<![가-힣])${word}(?![가-힣])"
+      hits="$(LC_ALL=en_US.UTF-8 echo "$stripped" | LC_ALL=en_US.UTF-8 grep -nHP -- "$escaped_pattern" 2>/dev/null || true)"
     else
-      # 한국어 어휘 — substring (case-insensitive 의미 없으나 -i 무해)
+      # 한국어 multi-character 어휘 — substring (case-insensitive 의미 없으나 -i 무해)
       hits="$(echo "$stripped" | grep -niH -- "$word" || true)"
     fi
     if [ -n "$hits" ]; then

@@ -1,7 +1,12 @@
 ---
 schema_version: "1.0"
 introduced_by: CFP-610
-last_updated: 2026-05-13
+last_updated: 2026-05-14
+amendments:
+  - amendment: 1
+    carrier_cfp: CFP-672
+    date: 2026-05-14
+    summary: "카테고리 (a) 4 → 5 어휘 (`별` standalone 추가, ADR-064 Amendment 4 lockstep)"
 title: "codeforge wording dictionary — 어휘 사전 (forbid + 평문 정의 의무)"
 ---
 
@@ -30,8 +35,9 @@ codeforge 의 표현 규율 (ADR-064 §결정 2 + §결정 9) 의 어휘 SSOT.
 | 못 박기 | 결정 noise — 미합의 상태에 사용 시 가짜 합의 인상. 한국어 형태 변화 처리 의무 (못박기 / 못박는 / 못 박았다 등) | "확정" / "결정 종결" | CFP-610 |
 | pin | 영어 jargon — 한국어 native 사용자 의미 불투명. 일반 영어 어휘 false-positive risk ("pin to top" 등) 있으므로 lint 는 word-boundary regex + 5 scope 한정 + blockquote exempt 로 완화. | "고정" / "확정" | CFP-610 |
 | freezing | 영어 jargon — 한국어 native 사용자 의미 불투명. 외부 인용 (blockquote `>` prefix) 영역 exempt. | "동결" / "변경 차단" | CFP-610 |
+| 별 (standalone) | native Korean reader 의미 confusion — standalone `별` 의 native 의미 = "star" (天文 / 별자리 / 별빛). codeforge family doc 안 의도된 의미 = 한자어 `別` ("separate" / "another"). 두 의미 가 동일 character form 으로 collision — cold reader 가독성 영역. CFP-620 Epic 진행 세션 (Issue #620) live evidence. | "별도" / "별개" / "별 도리" / "또 다른" / "또 하나의" / "추가" / "신규" — 의미 영역에 맞게 선택 | CFP-672 |
 
-> **시점 1 entry cap = 4 어휘** (Amendment 2 시점, 2026-05-13). 추가 entry 도입 = 별 CFP 의무 (ADR-064 §결정 5 CFP scope unitary 정합 — scope creep 차단).
+> **시점 2 entry cap = 5 어휘** (Amendment 1 시점, 2026-05-14). Amendment 2 (CFP-610, 2026-05-13) 4 어휘 + Amendment 4 (CFP-672, 2026-05-14) 5번째 어휘 `별` 추가. 추가 entry 도입 = 새 CFP 의무 (ADR-064 §결정 5 CFP scope unitary 정합 — scope creep 차단).
 
 ## 카테고리 (b) — 사용 허용 + 평문 정의 동반 의무
 

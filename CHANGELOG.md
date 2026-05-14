@@ -7,6 +7,27 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.61.0] - 2026-05-14 — CFP-672 ADR-064 Amendment 4 — wording-dictionary 카테고리 (a) 4 → 5 어휘 (`별` standalone)
+
+### Added
+
+- **ADR-064 Amendment 4 §결정 1-6 신설**: wording-dictionary 카테고리 (a) 4 어휘 → 5 어휘 확장 (Amendment 2 cap 4 → 5 ratchet). 5번째 어휘 = standalone `별` — native Korean reader 의미 confusion ("star" 天文 / 별자리 vs 한자어 `別` "separate" / "another" — codeforge family doc 안 의도된 의미). 두 의미 가 동일 character form 으로 collision — cold reader 가독성 영역 mitigation. CFP-620 Epic 진행 세션 (Issue #620) live evidence. self-application top-down ratchet 두 번째 사례 (첫 사례 = Amendment 2 forbid-list 8 → 12 어휘, 2026-05-13 — 본 = 카테고리 (a) 4 → 5 어휘, 2026-05-14). 6 sub-decisions (배경 / §결정 1 어휘 추가 + 권장 대체 7 form / §결정 2 Hangul-boundary regex 처리 / §결정 3 self-application + ratchet 정합 / §결정 4 review-verdict-v4 schema 영향 0 / §결정 5 marketplace atomic invariant ADR-063 / §결정 6 evidence track + sweep CFP 분리).
+- **`scripts/check-wording-dictionary.sh` FORBID_DICTIONARY array 4 → 5 entry**: `별` (standalone) 추가. 한국어 단일 character 어휘 dispatch branch 신설 — PCRE Hangul-boundary lookahead/lookbehind regex `(?<![가-힣])별(?![가-힣])` 적용 (LC_ALL=en_US.UTF-8 강제, Windows Git Bash / WSL / Linux 환경 공통). 한자어 compound (`별도` / `별개` / `특별` / `구별` / `차별`) false-positive 차단 + standalone (`별 도리` / `별 carrier` / `별 PR`) 만 detect. ad-hoc self-test 5 case PASS (compound 차단 + standalone detect 정합).
+- **`docs/wording-dictionary.md` 카테고리 (a) row append**: 5번째 어휘 `별` (standalone) entry 추가 + frontmatter `amendments[]` Amendment 1 row append (CFP-672, 2026-05-14) + 시점 1 cap 4 어휘 → 시점 2 cap 5 어휘 갱신. EXEMPT_FILES (본 file + ADR-064) framework 그대로 재사용 — self-detection 회피.
+
+### Changed
+
+- **`CLAUDE.md` 결정 원칙 단락 (§결정 내용 Trace 1)**: "Forbid-list dictionary 12 어휘" → "Forbid-list dictionary 13 어휘" (Amendment 2 — 8 → 12, CFP-610 / Amendment 4 — 12 → 13, CFP-672). lint reference Amendment 4 CFP-672 추가. wording dictionary 카테고리 (a) 4 → 5 어휘 mirror. 결정 menu 자체에서 제거 의무 wording 유지.
+- **`.claude-plugin/plugin.json` 5.60.0 → 5.61.0 MINOR bump**: ADR-037 — lint script FORBID_DICTIONARY array entry append (governance behavior change, runtime forbid 어휘 lint detection 확장).
+
+### Notes
+
+- **doc-only fast-path (ADR-054) 정합**: Phase 1 PR 단독 + marketplace sibling sync PR (ADR-063 §결정 5 atomic invariant). src/tests 무변경. Phase 2 PR 부재.
+- **lint baseline**: 본 PR merge 시점 기존 32 file 안 `별` standalone 사용 검출 (warning tier, continue-on-error: true — PR merge 미차단). sweep batch 일괄 정리 = 새 CFP carrier 분리 (ADR-064 §결정 5 CFP scope unitary 정합 시연 — 본 Amendment 4 자체가 그 패턴).
+- **EXEMPT_FILES 자기 시연**: 본 PR 내 ADR-064 + wording-dictionary.md 안 의미 정의 표기 영역에서 `별` 어휘 의도된 등장 — EXEMPT_FILES 가 차단 → self-detection 회피.
+- **carrier framework 재사용**: Amendment 2 carrier (CFP-610 Story 2) 의 `scripts/check-wording-dictionary.sh` + `templates/github-workflows/wording-dictionary.yml` workflow + `hotfix-bypass:wording-dictionary` label + ADR-060 warning-tier registry entry 그대로 재사용 — entry 1 추가만, framework 신설 0건 / 새 workflow 0건 / 새 label 0건. mechanical enforcement 비용 0.
+- **marketplace sync**: plugin.json 5.60.0 → 5.61.0 MINOR (ADR-037 — Amendment 4 governance behavior change / lint script FORBID_DICTIONARY array entry runtime 활성화). marketplace.json 동반 sync 의무 (ADR-063 §결정 1 atomic invariant — 별 sibling PR).
+
 ## [5.60.0] - 2026-05-14 — CFP-660 Wave 2 of Epic CFP-431 (audit:from-mctrader-debut) — Consumer workflow version drift detection
 
 ### Added
