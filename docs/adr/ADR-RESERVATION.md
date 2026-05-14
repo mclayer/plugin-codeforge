@@ -74,7 +74,7 @@ reservations: []
 | 69 | CFP-342 | active | 2026-05-13 (retroactive — CFP-570 renumber from collided ADR-050; ADR file = `ADR-069-multi-repo-story-key-system.md`) |
 | 70 | CFP-578 | active | 2026-05-13 (ArchitectAgent inline append per CFP-578 chief author scope — GitOpsAgent self-write 영역 inline carrier 정합. ADR file = `ADR-070-codex-verify-before-trust.md`) |
 | 71 | CFP-612 | active | 2026-05-13 (ArchitectAgent inline append per CFP-578 / ADR-070 chief author precedent. ADR file = `ADR-071-orchestrator-user-dialog-convergence.md`, status `reserved → active` 전환 2026-05-14 Phase 1) |
-| 72 | CFP-620 | reserved | 2026-05-14 (mctrader 3-cycle post-mortem Epic — Story-1 anchor ADR. ADR file = `ADR-72-production-evidence-deputy-and-epic-cutover-gate.md`) |
+| 72 | CFP-620 | active | 2026-05-14 (mctrader 3-cycle post-mortem Epic — Story-1 anchor ADR. ADR file = `ADR-72-production-evidence-deputy-and-epic-cutover-gate.md`. status `reserved → active` 전환 2026-05-14 Phase 1 PR #651 merged) |
 | 73 | CFP-622 | active | 2026-05-14 (Sentinel #4 strike #2 carrier — Orchestrator verify-before-assert. ADR-070 자매 ADR. ADR file = `ADR-073-orchestrator-verify-before-assert.md`) |
 
 ### 번호 해제 (archived)
