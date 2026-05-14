@@ -12,7 +12,7 @@
 # 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
 schema_version: "1.2"  # CFP-509 / ADR-060 Amendment 6 — recurrence field 정식 도입 (MINOR bump v1.1 → v1.2)
 introduced_by: CFP-389
-last_updated: 2026-05-13  # CFP-582 Phase 2 — debate-convergence-quality-marker-presence entry append (ADR-059 Amendment 2 §결정 8 carrier)
+last_updated: 2026-05-13  # CFP-609 Phase 1 — parallel-dispatch-prompt-check entry append (ADR-064 Amendment 1 §결정 4 carrier)
 
 entries:
   - name: adr-sunset-criteria
@@ -1138,6 +1138,43 @@ entries:
     introduced_date: 2026-05-13
     owner_adr: ADR-059
     carrier_adr: ADR-059
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: advisory
+      last_occurrence: null
+    status: Active
+
+  - name: parallel-dispatch-prompt-check
+    description: |
+      CFP-609 Phase 1 / ADR-064 Amendment 1 §결정 4 — parallel-dispatch-protocol-v1
+      §8 mechanical enforcement. Orchestrator → PL spawn prompt 의 4 의무 항목 박제
+      검사 (registry §4):
+        1. plan DAG batches list verbatim (registry §4.1)
+        2. pl_autonomous_parallel_authority required 박제 (disabled 차단, registry §4.2)
+        3. sequential_mandate_reasons 6 enum close-set 위반 detect (registry §3)
+        4. file_conflict_resolution_patterns 박제 (registry §4.4)
+        5. worker_count <= worker_count_max default 7 (registry §6.2, OpRiskArch §7.4.4)
+      parallel-dispatch-protocol-v1 kind:registry mechanical enforcement carrier.
+      ADR-060 warning-tier entry — execution-time enforcement (proposing-time anchor 와 직교).
+    detect_command: bash scripts/check-parallel-dispatch-prompt.sh
+    workflow: templates/github-workflows/parallel-dispatch-prompt-check.yml
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:parallel-dispatch-prompt
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-609
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-609
+    introduced_date: 2026-05-13
+    owner_adr: ADR-064  # Amendment 1 carrier
+    carrier_adr: ADR-060
     recurrence:
       count: 0
       threshold: 3

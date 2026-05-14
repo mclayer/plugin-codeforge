@@ -77,3 +77,10 @@ registries:
     files:
       - { file: severity-propagation-v1.md, version: "1.0", status: Active }  # CFP-529 Wave 3: review-verdict-v4 findings[].severity ↔ label-registry-v2 severity:* ↔ evidence-checks-registry current_tier 3-way bidirectional binding SSOT. RC#8 carrier (ADR-068). kind:registry (sibling sync 면제, ADR-010 §결정 2).
     description: "severity 어휘 cross-channel propagation SSOT (3-way bidirectional binding) — RC#8 carrier"
+
+  - name: parallel_dispatch_protocol
+    canonical_repo: mclayer/plugin-codeforge
+    canonical_path: docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md
+    files:
+      - { file: parallel-dispatch-protocol-v1.md, version: "1.0", status: Active }  # CFP-609 / ADR-064 Amendment 1: Plan task DAG 3 field + 6 sequential mandate enum + Orchestrator dispatch prompt 4 의무 항목 + PL 자율 병렬 결정 tree 4 분기. kind:registry (sibling sync 면제, ADR-008 §결정 2 + ADR-010 §결정 2 정합).
+    description: "Lane PL 병렬 dispatch 행동 registry — Plan task DAG schema + 6 enum + Orchestrator prompt 4 항목 + PL 4-분기 결정 tree (ADR-064 Amendment 1 implementation contract)"
