@@ -7,6 +7,29 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.55.0] - 2026-05-14 — CFP-632 Story-1 anchor (Epic CFP-620 — mctrader 3-cycle post-mortem)
+
+### Added
+
+- ADR-72 신설: ProductionEvidenceDeputyAgent (3rd CONDITIONAL deputy, 9th overall) + EPIC CLOSED gate evidence quad. 8 §결정 + frontmatter `mechanical_enforcement_actions[]` 2 entry (production-cutover-deputy-spawn-evidence + epic-cutover-gate-evidence-quad-check, deferred-followup status, warning tier).
+- CLAUDE.md "Deputy mandate 매트릭스" 6+2 → 6+3 CONDITIONAL (ProductionEvidence 9th deputy row + ADR-72 cross-ref).
+- `docs/evidence-checks-registry.yaml` +2 entry (production-cutover-deputy-spawn-evidence + epic-cutover-gate-evidence-quad-check, deferred-followup status, warning tier).
+- `docs/parallel-work/section-ownership.yaml` +1 row (production-evidence-deputy section, owner_adr=ADR-72).
+- 3 hotfix-bypass label: `hotfix-bypass:claude-md-line-cap` (기존) + `hotfix-bypass:prod-cutover-deputy-evidence` (NEW) + `hotfix-bypass:epic-cutover-quad-check` (NEW). (주: GitHub 50자 제한으로 원 지시명 단쳙)
+
+### Modified
+
+- `docs/orchestrator-playbook.md` — DesignLane spawn 시 ProductionEvidence trigger 조건 row 추가 (Gap 3 보강).
+
+### Deferred (Phase 1 PR open 후 후속 carrier 영역)
+
+- CFP-Z: review-verdict-v4 v4.5 → v4.6 MINOR bump, owner_deputy_kind enum `production_evidence` 신설.
+- CFP-Z’: PMOAgent retro epic_close_gate evidence quad workflow 통합 — Sibling Story-4 plugin-codeforge-pmo#18 prerequisite.
+
+### Sibling sync (separate PR)
+
+- mclayer/marketplace: plugins[codeforge].version 5.54.0 → 5.55.0 mirrored (ADR-063 atomic invariant).
+
 ## [5.54.0] - 2026-05-14 — CFP-631 Phase 2 (marketplace-description-verbatim lint script + workflow + bats 13 TC)
 
 CFP-631 Phase 2 실제 구현: `scripts/check-marketplace-description-verbatim.sh` (byte-identical lint, exit 0/1/2 ADR-060 §결정 15 3-tier) + `templates/github-workflows/marketplace-description-verbatim.yml` + `.github/workflows/marketplace-description-verbatim.yml` (ADR-005 self-app byte-identical mirror) + `tests/scripts/test_check_marketplace_description_verbatim.bats` (13 TC all PASS). Phase 1 선언 (§결정 11/12 + evidence-checks-registry entry) 의 mechanical enforce 체인 완성. 7th rebase race sentinel sample (cumulative 7 — CFP-619 + CFP-628 + CFP-631 FIX-1 + CFP-631 Phase 1 + CFP-631 Phase 2 + 2 more).
