@@ -282,6 +282,29 @@ Wave 3 (warning → blocking-on-pr)    ← ADR-073 Amendment 2 (TBD, ratchet 강
 - (D8-A) Wave 1 동시 mechanical_enforcement_actions[] 신설 — hook automation 영역 (pre-tool-use hook) 가 ADR-073 declaration 동시 영역에 codify 시 Wave 1 → Wave 2 progression chain 손실 (ADR-040 Amendment 3 self-application 패턴 위반)
 - (D8-B) hook automation 영구 면제 — verify-before-assert 의무가 behavioral directive layer 만 codified 시 strike #3+ 재발 risk + ratchet 강화 방향 차단 (ADR-058 §결정 5 정합 손실)
 
+## 결과
+
+본 ADR codify 결과:
+- Sentinel #4 strike #2 trigger 충족 (Issue #607 — 2번째 sample 발견 시 ADR 발의 임계 도달)
+- ADR-070 자매 layer 신설 (Codex external worker output verify ↔ Orchestrator self-assertion verify)
+- 3-layer coherence (ADR-070 + ADR-071 + ADR-073) cross-ref 확립
+- super-class anchor + 2 mechanism enumeration (M1 working tree mutation lag + M2 cross-repo origin lag) + future strike #N append schema
+- skill body amend (codeforge:brainstorm Phase 0 verify 의무)
+- spec/plan template `pre_lookup_evidence[]` field 신설
+- 본 carrier 자체 self-application paradox 시연 (Strike #3 + Strike #4) → mechanism 확장 후보 evidence (M3 Windows shell ref-mangling, M4 continuous race condition during rebase)
+- CFP-635 sister Epic (over-questioning) 와 super-class shared, scope disjoint
+
+## 관련 파일
+
+- `docs/adr/ADR-RESERVATION.md` — row 73 (CFP-622)
+- `CLAUDE.md` — "결정 원칙" section ADR-073 cross-ref
+- `skills/codeforge-brainstorm/SKILL.md` — Phase 0 자기 적용 의무 sub-section
+- `.claude-plugin/plugin.json` — version bump (CFP-622 carrier MINOR)
+- `CHANGELOG.md` — 5.53.0 entry + Strike #3 + Strike #4 sub-sections
+- `mclayer/marketplace/.claude-plugin/marketplace.json` — codeforge entry mirrored field sync (PR1 #109 merged)
+- `mclayer/codeforge-internal-docs/wrapper/{specs,plans,stories,change-plans}/CFP-622-*.md` — Story carrier (PR3 TBD)
+- `mclayer/codeforge-internal-docs/wrapper/templates/{spec,plan}.md` — pre_lookup_evidence[] field 신설
+
 ## 해소 기준
 
 N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (ratchet 강화 방향 only — verify scope 확장). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과. is_transitional: false (영구 정책).
