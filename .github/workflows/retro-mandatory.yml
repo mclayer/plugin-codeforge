@@ -230,14 +230,19 @@ jobs:
         # Idempotent: check if same story_key already recorded before appending.
         if: |
           steps.enabled.outputs.disabled != 'true' &&
-          steps.gate_check.outputs.outcome == 'missing_gate' &&
-          secrets.CODEFORGE_CROSS_REPO_PAT != ''
+          steps.gate_check.outputs.outcome == 'missing_gate'
         env:
           GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
           STORY_KEY: ${{ steps.meta.outputs.story_key }}
           PR_NUM: ${{ github.event.pull_request.number }}
         run: |
           set -euo pipefail
+          # CFP-645 fix — secrets context if-conditional 제거 (Actions runtime parse error 해소).
+          # PAT 부재 시 graceful skip (ADR-066 정합).
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::warning::CODEFORGE_CROSS_REPO_PAT secret not configured — skipping retro-attempts.jsonl append"
+            exit 0
+          fi
           INTERNAL_DOCS_REPO="mclayer/codeforge-internal-docs"
           JSONL_BRANCH="retro-attempts-state"
           JSONL_PATH="wrapper/retro-attempts.jsonl"
@@ -410,15 +415,27 @@ jobs:
     # Reads retro-attempts.jsonl from internal-docs via Contents API (Pattern A — no git clone).
     # State machine: attempt_n 1→2: 5min wait, 2→3: 10min wait, 3→4: 15min wait.
     # After attempt_n=4 fail: ESCALATE comment + status=escalated.
-    if: |
-      github.event_name == 'schedule' &&
-      secrets.CODEFORGE_CROSS_REPO_PAT != ''
+    if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
     steps:
+      - name: PAT presence check (CFP-645 fix — secrets context job-if 제거)
+        id: pat_check
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+        run: |
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "::warning::CODEFORGE_CROSS_REPO_PAT secret not configured — retry-state-machine job skipped (ADR-066 정합)"
+            echo "pat_present=false" >> $GITHUB_OUTPUT
+          else
+            echo "pat_present=true" >> $GITHUB_OUTPUT
+          fi
+
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+        if: steps.pat_check.outputs.pat_present == 'true'
 
       - name: Disable check (ADR-045 D-7)
         id: enabled
+        if: steps.pat_check.outputs.pat_present == 'true'
         run: |
           if [ -f .codeforge/post-merge-automation.disabled ]; then
             echo "disabled=true" >> $GITHUB_OUTPUT
@@ -430,7 +447,7 @@ jobs:
       - name: Fetch retro-attempts.jsonl via Contents API + run retry helper
         # FIX iter 1 C-1 fix: git clone → Contents API (Pattern A read path).
         # Write path (success/escalated/retry) also Pattern A below.
-        if: steps.enabled.outputs.disabled != 'true'
+        if: steps.pat_check.outputs.pat_present == 'true' && steps.enabled.outputs.disabled != 'true'
         env:
           GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
         run: |
@@ -473,7 +490,7 @@ jobs:
         # FIX iter 1 C-1 fix: 3 git push points (success/escalated/retry) → Pattern A.
         # Contents API PUT with SHA-based optimistic concurrency, retry max 3, jitter sleep.
         # Long-lived branch `retro-attempts-state` (ADR-026 §결정 4 — main 직접 push 금지).
-        if: steps.enabled.outputs.disabled != 'true'
+        if: steps.pat_check.outputs.pat_present == 'true' && steps.enabled.outputs.disabled != 'true'
         env:
           GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
