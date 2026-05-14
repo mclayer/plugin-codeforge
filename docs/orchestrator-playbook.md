@@ -530,6 +530,19 @@ Orchestrator 가 사용자 dialog turn 종료 시 다음 의무:
 
 **강제 강도**: behavioral directive only — mechanical enforce 불가 (turn-final hook 부재). retro audit signal (PMOAgent retro file §wording-discipline + §over-questioning 표) + sunset gate metric (frustration 발화 0건 / 3 Story 누적). sister Story CFP-638 = Continuous "진행해" 패턴 partial mechanical detect carrier.
 
+**Continuous "진행해" 패턴 detect (Amendment 3 sister, CFP-638)** — Orchestrator self-check (mechanical hook layer 부재 시 1차 안전망):
+
+직전 N (≥3) user turn 안 다음 pattern 누적 detection:
+- "진행해" / "그대로" / "계속" / "ok" / "yes" / "go" / "맞아" / "맞다"
+
+3+ 연속 → 후속 turn 의 dialog format (numbered list / decision option / "권장 = ..." 형식) 발화 자동 차단. **declare + 결과 보고 only** (사용자 정정 의무, §결정 3 룰 1 정합).
+
+5+ 연속 누적 → strong brevity signal. 후속 turn 은 numbered list 자체 발화 금지 (§결정 9 3-check 의 1+ 자동 trigger).
+
+mechanical layer: `docs/evidence-checks-registry.yaml` entry `stop-time-continuous-confirm-detect` (CFP-638, warning tier, advisory only — turn-final hook 부재 platform 한계). retro audit signal SSOT = PMOAgent retro file §over-questioning 표 — Story 단위 frustration count + "진행해" repetition trace tracking.
+
+미래 mechanical hook 도입 = 별 CFP follow-up (PreToolUse / PostToolUse hook 안 AskUserQuestion / numbered list output detection, platform hook capability 확장 의존).
+
 **wording dictionary 참조**: [`docs/wording-dictionary.md`](../docs/wording-dictionary.md) — 카테고리 (a) forbid + 카테고리 (b) 평문 정의 의무 entry SSOT.
 
 **§결정 10 — Skill body ↔ normative precedence (Amendment 3 신설, CFP-637)**:

@@ -12,7 +12,7 @@
 # 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
 schema_version: "1.2"  # CFP-509 / ADR-060 Amendment 6 — recurrence field 정식 도입 (MINOR bump v1.1 → v1.2)
 introduced_by: CFP-389
-last_updated: 2026-05-14  # CFP-631 — marketplace-description-verbatim 42번째 entry append (ADR-063 Amendment 2 carrier — blocking-on-pr 직접 시작, §결정 19 auto_blocking manual gate + 사용자 directive)
+last_updated: 2026-05-14  # CFP-638 — stop-time-continuous-confirm-detect 44번째 entry append (ADR-064 Amendment 3 Story D — over-questioning anti-pattern P7 carrier, post-CFP-631 atomic realignment, CFP-631 marketplace-description-verbatim 43rd → CFP-638 stop-time-continuous-confirm-detect 44th)
 
 entries:
   - name: adr-sunset-criteria
@@ -1318,4 +1318,49 @@ entries:
       threshold: 6                   # ADR-060 §결정 19 (Amendment 6) — recurrence threshold (count >= threshold = signal 발화)
       promotion_trigger: auto_blocking  # ADR-060 §결정 19 enum — actual transition 본 carrier Story 자체가 별도 carrier 의무 합병 (사용자 explicit directive Story §1)
       last_occurrence: 2026-05-14   # CFP-619 byte-identical fix commit c199dee [empirical-source: marketplace git log]
+    status: Active
+
+  - name: stop-time-continuous-confirm-detect
+    description: |-
+      CFP-638 / ADR-064 Amendment 3 §결정 9 sister carrier — Continuous "진행해" 패턴
+      mechanical detection 영역 (Epic CFP-635 Story D). Orchestrator 가 직전 N (≥3)
+      user turn 안 "진행해" / "그대로" / "계속" / "ok" / "yes" / "go" / "맞아"
+      pattern 누적 시 후속 turn 의 dialog format (numbered list / decision option /
+      "권장 = ..." 형식) 발화 자동 차단 — declare + 결과 보고 only.
+
+      현재 mechanical layer = behavioral directive advisory only (turn-final hook
+      부재, session-level user turn history 접근 platform 한계). retro audit signal
+      = PMOAgent retro file §over-questioning 표 — frustration timestamp delta +
+      "진행해" repetition count tracking.
+
+      sibling Story CFP-637 (ADR-064 Amendment 3 §결정 9 Question quality 3-check)
+      = behavioral directive carrier (1차 layer). 본 entry = retro audit signal
+      tracking carrier (2차 layer). 미래 mechanical hook (예: PreToolUse hook 안
+      AskUserQuestion / numbered list output detection) 도입 = 별 CFP follow-up
+      (platform hook capability 확장 의존).
+    detect_command: null  # behavioral directive only — mechanical detection script 부재 (Story D 1차 scope)
+    workflow: null        # turn-final / per-turn hook platform 한계 — retro audit signal SSOT
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode (advisory only)
+    bypass_label: hotfix-bypass:stop-time-continuous-confirm
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a)
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies: [CFP-637]  # ADR-064 Amendment 3 §결정 9 normative base
+      evidence_artifacts:
+        - pmo_retro_over_questioning_table   # PMOAgent retro file §over-questioning 표 (Story 단위 frustration count + 진행해 repetition)
+        - cross_story_recurrence_count       # 3 Story 누적 frustration 발화 count (sunset gate metric)
+    introduced_by: CFP-638
+    introduced_date: 2026-05-14
+    owner_adr: ADR-064  # Amendment 3 §결정 9 normative base
+    carrier_adr: ADR-060
+    sunset_gate:
+      metric: "사용자 frustration 발화 0건 / 3 Story 누적 + 연속 '진행해' pattern (5+ turn) 발화 후 dialog format reflex 0건"
+      who: "PMOAgent (cross-Story retro 패턴 분석)"
+      how: "PMOAgent retro file §over-questioning 표 (Story 단위 frustration count + 연속 '진행해' repetition trace)"
+    recurrence:
+      count: 1  # CFP-622 brainstorm Phase 1 session (2026-05-14 KST) — Epic CFP-635 trigger evidence
+      threshold: 3
+      promotion_trigger: advisory  # warning → blocking-on-pr 승격은 ADR-060 §결정 6 PR 20건 누적 + failure 0건 gate
+      last_occurrence: 2026-05-14
     status: Active
