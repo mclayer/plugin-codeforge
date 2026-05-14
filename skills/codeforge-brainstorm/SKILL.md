@@ -109,6 +109,16 @@ docs/domain-knowledge/ 디렉터리를 읽고 이 아이디어와 관련된
 `superpowers:brainstorming`의 checklist 1(project context explore)은 이미 수행됨 —
 Phase 0 결과로 대체. checklist 2부터 진행.
 
+**Priority precedence (CFP-637 / ADR-064 §결정 10, Amendment 3)**: 본 Phase 1 의 dialog format / AskUserQuestion / "사용자 confirm" 지시는 **CLAUDE.md ADR-064 §결정 3 룰 1 (Derived default) + §결정 9 Question quality 3-check 보다 후순위**. dialog 진입은 다음 모두 충족 시에만:
+
+1. **가치 판단 영역** 발견 (사용자 선호도 / 가치 판단 기준 / 미공개 컨텍스트 요구)
+2. **derived default 비자명** (Epic body / Story context / ADR / 사용자 직전 발화로 합리적 default 도출 불가)
+3. **2+ option 진짜 분기** (1-option 만 있는데 "그대로 진행할지?" 형식 발화 차단)
+
+위 3 self-check 미통과 영역 = derived default declare + 진행 (사용자 정정 의무). dialog format / numbered list / "권장 = ..." 형식 발화 금지. CFP-358 / CFP-374 (Subagent-Driven 자동 선택) 의 generalized precedent — 본 skill 의 dialog reflex 차단이 §결정 10 의 first applied case.
+
+본 precedence 는 superpowers:brainstorming 내부 checklist 도 동일 적용 (CFP-639 cross-plugin sister Story 가 upstream PR carrier).
+
 **Why-first 원칙**: brainstorming의 첫 질문은 반드시 "왜"를 향한다. 사용자가 요청한 내용(what)이 아니라 그 배경·동기·실제 필요(why)를 먼저 확립한다.
 
 - RequirementsAnalystAgent가 "불일치 가능성 있음"을 보고한 경우, brainstorming 초반에 이 점을 명시적으로 탐색한다 — "요청하신 것이 X인데, 실제로 해결하고 싶은 문제는 무엇인가요?"

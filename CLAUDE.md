@@ -102,9 +102,15 @@ Orchestrator 가 사용자에게 결정 제안 / 질문 시 6 룰 적용:
 5. **`AskUserQuestion` 범위 제한** — 가치 판단 / 미공개 컨텍스트 2 종 한정.
 6. **표현 발화 전 맥락 파악 + 문장 구조 self-check (Amendment 2 신설, CFP-610)** — 직전 turn 결정 / 미해결 분기 / 사용자 발화 요지 / 진행 단계 파악 + 완전한 문장 / jargon 사전 점검 ([`docs/wording-dictionary.md`](docs/wording-dictionary.md) 카테고리 a/b) / 식별자 평문 요약 / 다중 분기 numbered list 분리 self-check. behavioral directive only (mechanical enforce 불가). 룰 1/3/4 발동 전 상위 self-check 단계.
 
-### Stop-time 평문 정리 (Trace 5, Amendment 2 신설, CFP-610)
+### Stop-time + Question quality 3-check + Skill body precedence (Trace 5/6, Amendment 2 CFP-610 / Amendment 3 CFP-637)
 
-Orchestrator 가 사용자 dialog turn 종료 시 평문 정리 step 의무. cap = 300자 ± 50자. 포함 = 직전 turn 핵심 결정 / 다음 step / 미해결 분기. 생략 가능 = tool_use only turn / status report 평문 자체. behavioral directive only (mechanical enforce 불가 — turn-final hook 부재). SSOT = [ADR-064 §결정 9](docs/adr/ADR-064-decision-principle-mandate.md) + [playbook §3.0.14](docs/orchestrator-playbook.md).
+Orchestrator 가 사용자 dialog turn 종료 시 (a) 300자 ± 50자 평문 정리 (직전 결정 / 다음 step / 미해결 분기) + (b) 질문 발화 직전 3-check 의무. tool_use only turn / status report 평문 자체는 (a) 생략 가능.
+
+**Question quality 3-check (Amendment 3 신설, Trace 5 강화)**: `AskUserQuestion` / numbered list / "권장 = ..." / dialog format 발화 직전 — (1) 가치 판단 영역인가? (2) derived default 자명한가? (3) 1-option 만 있는데 묻는 것 아닌가? 1+ "묻지 말아야 함" → 발화 금지, derived default declare + 진행. 7 anti-pattern P1-P7 차단 (Implementation detail 묻기 / Skill body 무비판 수렴 / 1-option 묻기 / Confirm-of-confirm / Status report 가 사실은 질문 / 3-option numbered list reflex / Continuous "진행해" 인지 실패).
+
+**Skill body ↔ normative precedence (Trace 6, Amendment 3 신설)**: **Priority order = CLAUDE.md normative > ADR > skill body > external (superpowers / claude-plugins-official) skill body**. skill body 안 "AskUserQuestion" / "사용자 confirm" / "확인" / "묻기" / dialog format 지시는 §결정 3 룰 1 (Derived default) + §결정 9 3-check 후순위 — derived default 자명 영역에서 skill body 지시 무시 의무. CFP-358 / CFP-374 (Subagent-Driven 자동 선택) 의 generalized normative SSOT. 첫 applied case = `skills/codeforge-brainstorm/SKILL.md` Phase 1 dialog reflex 차단.
+
+behavioral directive only — mechanical enforce 불가 (turn-final hook 부재). sister Story CFP-638 = Continuous "진행해" 패턴 partial mechanical detect carrier, CFP-639 = `superpowers:brainstorming` cross-plugin upstream sync. SSOT = [ADR-064 §결정 9/§결정 10](docs/adr/ADR-064-decision-principle-mandate.md) + [playbook §3.0.14/§3.0.5](docs/orchestrator-playbook.md).
 
 ### 적용 속도 (Trace 4)
 
