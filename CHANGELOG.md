@@ -7,6 +7,45 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.51.0] - 2026-05-14 — CFP-637 (ADR-064 Amendment 3 — Over-questioning anti-pattern 차단)
+
+Epic [CFP-635](https://github.com/mclayer/plugin-codeforge/issues/635) Story A+B+C combined carrier. doc-only fast-path (ADR-054). post-CFP-631 atomic realignment (5.50.0 → 5.51.0, rebase race 5th sample).
+
+사용자 directive 2026-05-14 KST (verbatim, Epic body §사용자 directive): "이렇게 물을 필요 없는 질문 방금 왜한거야? 이렇게 된 원인을 심층적으로 파악하고 이 외에도 의미없는질문으로 user stop 걸지 않아야한다. 반드시" — 4-layer root cause + 7 anti-pattern (P1-P7) enumeration carrier.
+
+ADR-037 MINOR bump: CLAUDE.md 의미 변경 (§결정 9 강화 + §결정 10 신설 mirror) + ADR-064 본문 amendment + skill body amend.
+
+### Added
+
+- ADR-064 Amendment 3 frontmatter + amendment_log entry (carrier_story: CFP-637, direction: strengthen, sunset_justification: null — ratchet 강화 방향)
+- ADR-064 §결정 9 amendment — Stop-time pre-flight Question quality 3-check (가치 판단 영역 / derived default 자명 / 1-option 자기 검증) + 7 anti-pattern P1-P7 enumeration body
+- ADR-064 §결정 10 신설 — Skill body ↔ CLAUDE.md normative priority precedence (CLAUDE.md > ADR > skill body > external skill body). CFP-358 / CFP-374 (Subagent-Driven 자동 선택) generalized normative SSOT.
+- ADR-064 Amendment 3 section (Amendment 결정 1-7) — Story A 결정 (§결정 9 amend) / Story B 결정 (skill body amend) / Story C 결정 (§결정 10 신설) / Memory normative 승격 mapping (3 entry) / Self-application + ratchet / review-verdict-v4 영향 0건 / sister Story CFP-638·CFP-639 cross-ref.
+- `skills/codeforge-brainstorm/SKILL.md` Phase 1 priority precedence note — dialog format / AskUserQuestion / "사용자 confirm" 지시가 derived default 자명 영역에서 무효 명시.
+
+### Changed
+
+- `CLAUDE.md` `## 결정 원칙` 단락 Trace 5 (Stop-time 평문 정리) → Trace 5/6 통합 + Question quality 3-check + Skill body ↔ normative precedence 본문 추가
+- `docs/orchestrator-playbook.md` §3.0.14 — §결정 9 Question quality 3-check + §결정 10 Skill body precedence 본문 추가
+- `docs/orchestrator-playbook.md` §3.0.5 — Generalized normative SSOT cross-ref (§결정 10) 추가
+- `docs/orchestrator-playbook.md` §3.0.14 duplicate numbering 수정 → §3.0.15 Parallel Dispatch Protocol
+
+### Sibling sync (separate PR)
+
+- mclayer/marketplace: plugins[codeforge].version 5.50.0 → 5.51.0 mirrored (ADR-063 atomic invariant — marketplace 선행 merge → wrapper PR merge, post-CFP-631 realignment)
+
+### Memory normative 승격 (post-merge cleanup)
+
+본 PR merge 후 다음 3 memory entry 삭제 (single-source-of-truth, CLAUDE.md "behavioral directive → memory 금지" normative 정합):
+
+- `feedback_question_quality` → §결정 9 Question quality 3-check
+- `feedback_explain_before_ask` → §결정 3 룰 3 + 룰 6 (Amendment 2 carry, 본 amendment 검증 통과)
+- `feedback_subagent_driven_auto_select` → §결정 10 generalized precedent
+
+### CLAUDE.md line cap
+
+CLAUDE.md = 327 lines (ADR-012 Amendment 1 ≤320 cap 7 초과). `hotfix-bypass:claude-md-line-cap` label 부착 (CFP-628 / CFP-506 precedent 정합). compression scope = Trace 5 + Trace 6 통합 (Amendment 3 본문 압축 — ADR-064 본문 / playbook 가 detailed SSOT, CLAUDE.md 는 summary mirror).
+
 ## [5.50.0] - 2026-05-14 — CFP-631 (ADR-063 Amendment 2 — marketplace description verbatim PR-time proactive lint mandate)
 
 CFP-619 retro §5.2 carry-over — 6 sample 누적 description drift evidence (CFP-387 / CFP-393 / CFP-423 / CFP-597 / CFP-612 / CFP-619). ADR-063 §결정 1 mirrored field invariant 안 `description` field 만 PR-time enforce 부재 (version = `version-bump-atomic-check.yml` blocking-on-pr cover, name/author = `check-marketplace-parity.sh` warning sufficient) → mechanical proactive lint mandate (Amendment 2 §결정 11). Amendment 1 (design-time self-check, CFP-597) 와 layered 2-layer proactive forcing function.
