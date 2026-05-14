@@ -177,6 +177,95 @@ NIST SP 800-190 (Container Security) + CIS Docker Benchmark 의 secrets manageme
 - CFP-378 5 agent file 갱신 (codeforge-design plugin Phase 2 PR)
 - deputy-mandate skill cell sub-cell annotation (codeforge wrapper Phase 2 PR)
 
+## Amendment 3 (CFP-633, 2026-05-14): ProductionEvidenceDeputy boundary axis 명시
+
+### 동기
+
+CFP-632 (Story-1 anchor) 가 ProductionEvidenceDeputy (3rd CONDITIONAL deputy) 신설.
+신설 deputy 의 mandate scope (production evidence quad owner / EPIC CLOSED gate
+검증 / post-cutover wiring inspection) 가 OperationalRiskArchitectAgent §7.4 mandate
+(DR / Cancel-on-disconnect / Clock sync / Rate limit / Env isolation) 와 5/7 cell
+(71%) overlap 발견 — Fix-3 H17 (deputy mandate boundary 분쟁) 재발 risk.
+
+### 결정 6.1: Boundary axis 명시 (CFP-632 mitigation)
+
+OperationalRiskArchitectAgent 와 ProductionEvidenceDeputyAgent 의 책임 경계 axis:
+
+> **policy SSOT (OperationalRiskArch §7.4 — DR / disconnect / clock / rate / env
+> 의 invariant 정의) vs evidence SSOT (ProductionEvidenceDeputy production grounding
+> subsection — invariant 충족 실측 명시)**
+
+적용 범위:
+- §7.4.2 Cancel-on-disconnect / §7.4.4 Rate limit = OpRiskArch primary (정책 정의),
+  ProductionEvidence cross-ref (실측 evidence)
+- §7.4.1 DR / §7.4.3 Clock sync / §7.4.5 Env isolation = 양 측 consult (policy +
+  evidence 양 axis 동시 작성, ArchitectAgent chief author 통합)
+- EPIC CLOSED gate 검증 / Post-cutover wiring inspection = ProductionEvidence
+  primary (§7.4 reference 만)
+
+### 결정 6.2: Verdict packet field 신설 (review-verdict-v4 carrier)
+
+`findings[].owner_axis_kind: "policy" | "evidence" | "consult"` enum 신설 의무
+(별 CFP carrier — review-verdict-v4 MINOR bump). policy = SSOT 정의 axis (e.g.
+OpRiskArch §7.4 invariant 정의) / evidence = production grounding axis (e.g.
+ProductionEvidence 실측 명시) / consult = 양 axis 동시 작성 cell.
+
+**의미축 분리 원칙 (ADR-72 §결정 8 ↔ 본 §결정 6.2)**: 본 `owner_axis_kind` 는
+**axis 분류 영역** (policy / evidence / consult — boundary axis 의 mandate scope
+구분). ADR-72 §결정 8 의 `owner_deputy_kind: "production_evidence"` 는 **deputy
+identity 영역** (어느 deputy 가 owner 인가 — 8 → 9 deputy enum 확장). 두 field 는
+disjoint semantic axis 보유 — `owner_deputy_kind` 는 누가, `owner_axis_kind` 는
+어떤 책임축. 양 field 동시 carrier CFP-Z (review-verdict-v4 v4.5 → v4.6 MINOR
+bump) 에서 동시 신설 의무 (single PR atomic add).
+
+| Field | Axis | Enum value 예시 | 신설 carrier |
+|---|---|---|---|
+| `owner_deputy_kind` (ADR-72 §결정 8) | deputy identity (누가 owner) | `production_evidence` (8 → 9 deputy 확장) | CFP-Z review-verdict-v4 v4.6 MINOR |
+| `owner_axis_kind` (본 §결정 6.2) | mandate scope axis (어떤 책임) | `policy` / `evidence` / `consult` | CFP-Z review-verdict-v4 v4.6 MINOR (동일 PR 동시 add) |
+
+ArchitectPL dedup 시 사용 패턴 예시: `findings[N].owner_deputy_kind = "production_evidence"`
++ `findings[N].owner_axis_kind = "evidence"` = ProductionEvidenceDeputy 가 evidence
+axis 측면에서 보고한 finding (vs. policy axis = OpRiskArch primary).
+
+### 결정 6.3: Amendment 2 §결정 3 ↔ ADR-72 §결정 2 5번째 cell 3-way 충돌 처리
+
+Amendment 2 §결정 3 (env secret ownership 경계) 는 §7.4.5 Env isolation 의 단독
+owner 를 OperationalRiskArchitectAgent (containment owner) 로 정의 (SecurityArch
+threat owner 와 분리). 본 Amendment 3 §결정 6.1 (적용 범위 두 번째 bullet) 는
+§7.4.5 Env isolation 을 OpRiskArch + ProductionEvidence "양 측 consult" cell 로
+분류. 두 결정의 ownership 정의가 외형적으로 충돌 — 본 §결정 6.3 이 3-way axis 분리로
+해소:
+
+| Axis | Owner | Scope |
+|---|---|---|
+| **Threat axis** (Amendment 2 §결정 3 SecurityArch owner) | SecurityArchitectAgent | §7.5 vault path / runtime injection / key permission scope / secret 노출 위협 |
+| **Containment axis** (Amendment 2 §결정 3 OpRiskArch owner — policy SSOT 측면) | OperationalRiskArchitectAgent | §7.4.5 env isolation / staging-prod 분리 / IP allowlist / network mode boundary 의 정책 정의 |
+| **Evidence axis** (Amendment 3 §결정 6.1 ProductionEvidence consult — evidence SSOT 측면) | ProductionEvidenceDeputyAgent | §7.4.5 env isolation 의 production 실측 grounding (env config 실측 + IP allowlist 실효 verify + network boundary 실측 evidence 명시) |
+
+해소 원리: Amendment 2 §결정 3 는 **policy + threat 2-axis 분리** 시점 (OpRiskArch
+single-owner containment policy). Amendment 3 §결정 6.1 는 **policy + evidence
+2-axis 분리** 시점 (OpRiskArch policy + ProductionEvidence evidence consult).
+3-axis 통합 = threat (SecurityArch) + containment policy (OpRiskArch) + containment
+evidence (ProductionEvidence) — 동일 §7.4.5 cell 안 3 axis 가 disjoint mandate scope
+보유. ProductionEvidence consult 는 OpRiskArch single-owner containment policy 를
+대체하지 않음 — policy SSOT 정의는 OpRiskArch 단독 유지, evidence SSOT 명시만
+ProductionEvidence 추가 (Amendment 1 §결정 6 CONDITIONAL deputy 패턴 reuse — 단독
+owner mandate 와 consult mandate 양립).
+
+ArchitectAgent chief author 통합 시 우선순위: containment policy 본문 = OpRiskArch
+primary (Amendment 2 §결정 3 정합). Production cutover Story 에서 evidence subsection
+= ProductionEvidence primary (Amendment 3 §결정 6.1 정합). threat 본문 = SecurityArch
+§7.5 primary.
+
+### Cross-references
+
+- ADR-72 §결정 4 (boundary axis 1줄 명시 — 본 Amendment 양 방향 cross-ref)
+- ADR-72 §결정 8 (`owner_deputy_kind` deputy identity field — 본 §결정 6.2 `owner_axis_kind` axis 분류 field 와 disjoint semantic axis. 양 field 동시 carrier CFP-Z review-verdict-v4 v4.5 → v4.6 MINOR bump 단일 PR atomic add 의무)
+- [CFP-632 Story §5 EC-3](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/stories/CFP-632.md#%EC%97%A3%EC%A7%80-%EC%BC%80%EC%9D%B4%EC%8A%A4-edge-case-3) (Fix-3 H17 재발 risk mitigation — `### 엣지 케이스 (Edge Case 3)` heading 하위 EC-3 bullet, internal-docs main HEAD)
+- ADR-014 Amendment 1 §결정 6 (CONDITIONAL deputy 도입 패턴 reuse)
+- ADR-014 Amendment 2 §결정 1 (owner authority 분리 패턴 reuse)
+- ADR-014 Amendment 2 §결정 3 충돌 처리 (env containment OpRiskArch 단독 owner — Amendment 3 의 양 측 consult 와 충돌. policy axis 단독성 영역 외 evidence axis 분리 명시 — 본 Amendment 3 §결정 6.3 3-way axis 분리로 해소)
+
 ## Amended by
 
 ### CFP-128 / ADR-033 — Docker-first Infra Engineering (2026-05-07)
