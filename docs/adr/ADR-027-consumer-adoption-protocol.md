@@ -240,10 +240,10 @@ namespace 분리 = fallback path 침해 시 blast radius 최소화.
 #### §결정 6.G — Burst control + rate-limit (OpRiskArch 조건 3-4)
 
 `manual-story-init-fallback.sh` 안 exponential backoff:
-- 1차 retry: 1s 대기
-- 2차 retry: 2s 대기
-- 3차 retry: 4s 대기
-- 초과: silent skip + `fallback:rate-limited` label 부착
+- 1차 retry: 1s wait — `[empirical-source: AWS SDK Builders' Library 'Timeouts, retries, and backoff with jitter' base * 2^attempt formula]`
+- 2차 retry: 2s wait — `[empirical-source: 동상]`
+- 3차 retry: 4s wait — `[empirical-source: 동상]`
+- 초과: silent skip + `fallback:rate-limited` label 부착 — max 3 retry `[empirical-source: GitHub Actions secondary rate-limit conservative bound — 4xx burst 5+ retry 시 blocklist 진입 위험]`
 
 #### §결정 6.H — Existence check verbatim port (DataMigrationArch 조건)
 
