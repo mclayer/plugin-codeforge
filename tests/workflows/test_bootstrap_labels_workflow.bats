@@ -14,7 +14,10 @@ GITHUB_FILE="$REPO_ROOT/.github/workflows/bootstrap-labels.yml"
 import yaml, sys
 with open('$TEMPLATE_FILE', encoding='utf-8') as f:
     doc = yaml.safe_load(f)
-types = doc.get('on', {}).get('pull_request', {}).get('types', [])
+# YAML 1.1: 'on' keyword -> True (boolean). GitHub Actions 'on:' trigger key.
+on_key = True if True in doc else 'on'
+trigger = doc.get(on_key, {})
+types = trigger.get('pull_request', {}).get('types', []) if isinstance(trigger, dict) else []
 assert 'opened' in types, f'opened not in types: {types}'
 assert 'synchronize' not in types, f'synchronize must NOT be in types (chicken-and-egg/loop risk): {types}'
 print('PASS')
