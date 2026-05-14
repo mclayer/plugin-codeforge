@@ -106,6 +106,26 @@ CI 안전망: [ADR-017](adr/ADR-017-skill-override-path-enforcement.md) + Amendm
 
 **Acceptance criteria** (Phase 2-7 lane plugin PR): 각 lane plugin Phase PR 마다 본 protocol 준수 검증. CI lint check 2 가 자동 fail-closed. 정리 대상 분포: codeforge-review (3 ReviewPL) + codeforge-pmo (PMOAgent 1).
 
+## §5.5 Skill body ↔ CLAUDE.md normative priority precedence (CFP-639 / ADR-064 §결정 10)
+
+**Priority order**: CLAUDE.md normative > ADR > skill body > **external (superpowers / claude-plugins-official / 외부 plugin) skill body**.
+
+superpowers skill body 안 "AskUserQuestion" / "사용자 confirm" / "확인" / "묻기" / dialog format 지시는 **CLAUDE.md ADR-064 §결정 3 룰 1 (Derived default) + §결정 9 Question quality 3-check 보다 후순위**. 본 §5.5 = 본 integration SSOT 안 §결정 10 의 superpowers-specific application — 30 호출 지점 (§2 SSOT 표) 전체 적용.
+
+**Implementation pattern** (Orchestrator + agent 모두 적용):
+
+1. superpowers skill 호출 시 skill body 안 AskUserQuestion / confirm 지시 발견
+2. §결정 9 3-check 적용 — derived default 자명한가?
+3. 자명 → skill body 지시 무시, derived default declare + 진행
+4. 비자명 + 진짜 가치 판단 영역 → skill body 지시 적용 (AskUserQuestion 발화 허용)
+
+**Generalized precedent** (CFP-358 / CFP-374 / CFP-637 / CFP-639):
+- CFP-358 + CFP-374 — `superpowers:executing-plans` / `superpowers:subagent-driven-development` "구현 실행 방식 선택" 프롬프트 자동 Subagent-Driven 선택
+- CFP-637 — `codeforge:brainstorm` Phase 1 dialog reflex 차단 (§결정 10 first applied case)
+- CFP-639 — 본 §5.5 신설, `superpowers:brainstorming` + 기타 7 superpowers skill 전체 영역 generalized application
+
+**Upstream PR (Phase 2, deferred)**: `claude-plugins-official` 의 `superpowers:brainstorming` skill body 안 priority precedence 명시 추가는 cross-plugin upstream coordination 영역. wrapper 측 mitigation = 본 §5.5 + ADR-064 §결정 10 normative override 명시로 covered. upstream PR 은 별 follow-up (Story §3.2 PR draft text 참조).
+
 ## §6 Lane plugin 후속 CFP 가이드
 
 Phase 1 wrapper PR merge 직후 6 lane CFP batch open. 각 lane CFP scope:
