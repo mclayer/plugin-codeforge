@@ -7,6 +7,37 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.44.0] - 2026-05-14 — CFP-598 Phase 2 (bootstrap-labels.sh hotfix-bypass:* dynamic sync)
+
+CFP-530 retro carrier #2 (Phase 2) — `bootstrap-labels.sh` hotfix-bypass:* family dynamic sync + label-registry-v2 §3 yaml first-class backfill (pre-existing leak 해소). ADR-037 MINOR bump: script behavior change (13 hotfix-bypass:* label 동적 생성 신규).
+
+### Added
+
+- `docs/inter-plugin-contracts/label-registry-v2.md` v2.5 → v2.7 PATCH bump:
+  §3 yaml block 안 hotfix-bypass:* 13 row first-class 추가 (category: hotfix-bypass,
+  color: fef2c0, 기존 §변경 이력 prose-only → yaml 정규화). ADR-008 §결정 3 PATCH 정합.
+- `scripts/parse-hotfix-bypass-labels.py` 신설 (ADR-061 외부 .py 의무):
+  label-registry-v2.md §3 yaml block parse → stdout name\tcolor\tdescription.
+  yaml.safe_load 의무 / isinstance guard / Path.is_file() / exit 4-tier (0/1/2/3).
+- `scripts/bootstrap-labels.sh` hotfix-bypass:* dynamic read 분기 신설:
+  component:* 직전 삽입. REGISTRY_MD env override + SCRIPT_DIR 절대 경로.
+  process substitution `< <(...)` — subshell 회피로 LABEL_COUNT 부모 증분 보장.
+  DRY_RUN + actual 양 모드 모두 처리 (canonical-only).
+- `scripts/check-bootstrap-labels-count.sh` 3-way parity 확장 (CFP-598):
+  기존 2-way (dry-run lines == invocations) +
+  3rd: §3 yaml hotfix-bypass:* row count == dry-run hotfix-bypass lines.
+  exit 0 PASS / exit 1 drift / exit 2 meta-error.
+  sanity check: 55 lines == 55 invocations, yaml 13 rows == dry-run 13 lines.
+
+### Phase 1 산출물 (CFP-598 Phase 1 PR #602, merged main)
+
+- `wrapper/change-plans/2026-05-13-cfp-598-bootstrap-labels-hotfix-bypass-sync.md` (internal-docs)
+- `wrapper/stories/CFP-598.md` §1-§9 (internal-docs)
+
+### Sibling sync (separate PR)
+
+- mclayer/marketplace: plugins[codeforge].version 5.43.0 → 5.44.0 mirrored + description CFP-598 entry append (ADR-063 atomic invariant, sibling PR #98 MERGED 선행 2026-05-14T00:02:42Z)
+
 ## [5.43.0] - 2026-05-14 — CFP-609 (ADR-064 Amendment 1 + parallel-dispatch-protocol-v1)
 
 ### Added (CFP-609 — parallel-dispatch-protocol-v1 신설 + ADR-064 Amendment 1 mechanical enforcement Phase 1)
