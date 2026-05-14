@@ -7,6 +7,23 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.56.1] - 2026-05-14 — CFP-633 Story-2 sibling sync (Epic CFP-620 — mctrader 3-cycle post-mortem)
+
+### Added
+
+- ADR-014 Amendment 3 — ProductionEvidenceDeputy boundary axis 명시 (`policy SSOT vs evidence SSOT` 목적축 분리)
+  - §결정 6.1: Boundary axis 1줄 (Story-1 OpRiskArch deputy 산출 verbatim reuse)
+  - §결정 6.2: `findings[].owner_axis_kind` enum 신설 (별 CFP-Z carrier reservation, review-verdict-v4 v4.5 → v4.6 MINOR bump 영역)
+  - §결정 6.3: Amendment 2 §결정 3 ↔ ADR-72 §결정 2 5번째 cell 3-way 충돌 처리 단락 (chief author 자율 신설, AC-5 carrier 의무 충족)
+- Story-1 anchor (ADR-72) sibling sync 완료 (Epic CFP-620 sequential first sibling)
+
+### Notes
+
+- Codex TP#2 3 dispatch converge (1st FIX iter 1 + 2nd FIX iter 2 + 3rd false positive ack)
+- ADR-067 cap 2/3 보존 (escalation 회피)
+- ADR-064 §결정 8 forbid-list 카테고리 (a) 4 어휘 0 violations (3 file)
+- §10 FIX Ledger 8 row 명시 (Orchestrator monopoly, fix-event-v1 v1.2 schema 정합)
+
 ## [5.56.0] - 2026-05-14 — CFP-651 marketplace drift fast-forward + ADR-72 bypass_label 단축 정정 (doc-only fast-path, ADR-054)
 
 ### Fixed
