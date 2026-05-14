@@ -12,7 +12,7 @@
 # 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
 schema_version: "1.2"  # CFP-509 / ADR-060 Amendment 6 — recurrence field 정식 도입 (MINOR bump v1.1 → v1.2)
 introduced_by: CFP-389
-last_updated: 2026-05-14  # CFP-627 — marketplace-drift-detection 45번째 entry append (ADR-063 Amendment 3 §결정 13 carrier — 4-tuple reproduce evidence + recurrence count 3, ADR-060 framework warning tier 신규 entry 추가, post-CFP-638 base) | prior: CFP-638 — stop-time-continuous-confirm-detect 44번째 entry append (ADR-064 Amendment 3 Story D) | prior: CFP-631 — marketplace-description-verbatim 43번째 entry append (ADR-063 Amendment 2 §결정 11 blocking-on-pr)
+last_updated: 2026-05-14  # CFP-627 FIX iter 3/3 — marketplace-drift-detection entry deferred to Phase 2 carrier (ADR-067 §결정 3 cross-lane RESET 차원 전환, ADR-068 I-1 boundary completeness). Phase 1 doc-only scope = ADR-063 Amendment 3 declarative SSOT only | prior: CFP-638 — stop-time-continuous-confirm-detect 44번째 entry append (ADR-064 Amendment 3 Story D) | prior: CFP-631 — marketplace-description-verbatim 43번째 entry append (ADR-063 Amendment 2 §결정 11 blocking-on-pr)
 
 entries:
   - name: adr-sunset-criteria

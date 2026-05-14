@@ -23,6 +23,7 @@ related_adrs:
   - ADR-058
   - ADR-063
   - ADR-064
+  - ADR-073  # CFP-627 FIX iter 3 — PAT scope verify discipline 자매 (cross-repo state + assumption verify)
 amendments:
   - amendment: 2
     date: 2026-05-14
@@ -149,6 +150,16 @@ PAT leak / suspected leak (e.g., 실수 commit / log 노출 / org member 이탈)
 
 - **Phase 2 CFP-TBD**: 자동 만료 reminder workflow + audit log lint script + evidence-checks-registry warning tier entry.
 - **Consumer overlay schema 갱신**: `docs/project-config-schema.md` `security.pat_rotation_cadence_days` field 추가 (별도 CFP).
+
+## ADR-073 cross-ref (Orchestrator verify-before-assert)
+
+본 ADR 의 `CODEFORGE_CROSS_REPO_PAT` 영역 = **external service auth state verify 영역**. ADR-073 (Orchestrator verify-before-assert, CFP-622) §결정 1 cross-repo state 단정 의무 + assumption verify 의무 적용 — Orchestrator 가 PAT scope / 만료 일자 / 활성 상태 단정 시 GitHub PAT settings 또는 audit log SSOT (`docs/security/pat-rotation-log.md`) direct verify + `verified-via` annotation 의무.
+
+본 ADR 영역 적용 예:
+- "PAT 만료 일자 = 2026-08-12" 단정 시 → `git show origin/main:docs/security/pat-rotation-log.md` direct verify + `verified-via: pat-rotation-log.md row N` annotation
+- "PAT scope = `repo` + `workflow` + `read:org` + `marketplace:contents:read`" 단정 시 → GitHub PAT settings UI screenshot 또는 audit log latest row verify
+
+ADR-073 §결정 1 self-application = 본 ADR Amendment 2 §결정 2 scope minimum 4종 verify 의무 영역. PAT 발급 시점 ↔ Phase 2 carrier scheduled cron 활성 시점 사이 audit log placeholder row append 의무 (Phase 1 → Phase 2 carrier 동기화 시).
 
 ## 해소 기준
 

@@ -17,6 +17,7 @@ related_adrs:
   - ADR-010 (canonical / sibling sync within plugin repos)
   - ADR-013 (codeforge family dogfood-out policy)
   - ADR-054 (doc-only fast-path)
+  - ADR-073 (Orchestrator verify-before-assert, cross-repo state verify — CFP-627 FIX iter 3)
 amendments:
   - 1
   - 2
@@ -189,6 +190,16 @@ Registration + parity audit + unregister + lifecycle 통합 ADR.
 (Amendment 1 / CFP-55) 안정적으로 보이는 일부 의존성만 `plugin.json` 에 선언하고, 나머지는 `CLAUDE.md` 필수 의존성 SSOT에 남긴다. schema risk를 줄이면서 machine-readable metadata로 점진 이동하는 절충안이다.
 
 **거부 사유**: partial declaration은 어떤 의존성이 authoritative한지 모호하게 만들고, manifest와 `CLAUDE.md` 사이 drift를 새로 만든다. optional/required 의미가 문서화되지 않은 상태에서는 "일부만 선언"이 오히려 운영자와 installer 모두에게 잘못된 신호가 될 수 있다.
+
+## ADR-073 cross-ref (Orchestrator verify-before-assert)
+
+본 ADR 의 marketplace registration 영역 = **cross-repo registration state verify 영역**. ADR-073 (Orchestrator verify-before-assert, CFP-622, 2026-05-14) §결정 1 cross-repo state 단정 의무 적용 — Orchestrator 또는 ArchitectAgent 가 `mclayer/marketplace/.claude-plugin/marketplace.json` 안 codeforge family plugin entry state 단정 시 ground truth verify 의무.
+
+본 ADR §결정 1 family scope 7 plugin (wrapper + 6 lane) 검증 시:
+- "marketplace.json 안 codeforge family entry 7건 존재" 단정 → `gh api repos/mclayer/marketplace/contents/.claude-plugin/marketplace.json` direct verify + `verified-via: gh api` annotation
+- mirrored field 4종 sync 상태 단정 → `git fetch origin && git show origin/main:.claude-plugin/plugin.json` (wrapper) + 외부 marketplace fetch direct compare
+
+ADR-016 §결정 5 out-of-scope 의 "parity audit 자동화" (CFP-50 후보) 의 default 영역 = ADR-073 verify discipline 적용 의무 영역. 자동화 도입 전까지 manual verify 의무.
 
 ## 후속 CFP 후보
 

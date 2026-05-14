@@ -12,6 +12,7 @@ related_files:
   - docs/adr/ADR-016-marketplace-registration-policy.md
   - docs/adr/ADR-037-plugin-version-bump-rule.md
   - docs/adr/ADR-065-architect-phase1-mechanical-self-check.md
+  - docs/adr/ADR-073-orchestrator-verify-before-assert.md  # CFP-627 Amendment 3 FIX iter 3 — cross-repo state verify discipline 자매 ADR
   - docs/orchestrator-playbook.md
 related_stories:
   - CFP-387
@@ -36,10 +37,12 @@ amendments:
     summary: "§결정 13 신설 — 정기 detection 의무 (reactive scheduled channel, 4th defense layer). 3-layer proactive (§결정 9 Amendment 1 design-time + §결정 11 Amendment 2 PR-time) 위에 24h scheduled cron + workflow_dispatch + Issue auto-create reactive layer 추가. scripts/check-marketplace-drift.sh (CFP-50 base wrap) + templates/github-workflows/marketplace-drift-detection.yml + .github/workflows/marketplace-drift-detection.yml self-app. mechanical_enforcement_actions[] second self-application 사례 (marketplace-drift-detection entry, warning tier). 4-tuple reproduce evidence (CFP-609 / CFP-612 / CFP-610 Story 2 / 본 session live verify 3 day window observed). is_transitional: false 보존 (permanent governance). §결정 14 self-application — Amendment 3 ratchet 검증. Strengthening direction only — ADR-064 top-down ratchet 정합. ADR-066 Amendment 2 (PAT scope marketplace contents:read grant) + ADR-016 family scope cross-ref 단락 + ADR-060 warning-tier registry entry 동반."
     is_transitional: false
     sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 3 = 강화 방향 only, reactive scheduled detection layer 추가). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과."
-mechanical_enforcement_actions:
-  - action_name: marketplace-drift-detection  # registry entry name verbatim (docs/evidence-checks-registry.yaml)
-    binding_decision: 13  # §결정 13 (Amendment 3)
-    tier: warning  # ADR-060 evidence-enforceable tier (첫 도입 = warning, §결정 5 정합)
+mechanical_enforcement_actions: []
+# Amendment 3 §결정 13 = declarative SSOT mandate only (Phase 1 doc-only fast-path scope, ADR-054).
+# artifact (scripts/check-marketplace-drift.sh + workflow + registry entry) = Phase 2 carrier PR scope (별 Story).
+# ADR-067 §결정 3 cross-lane RESET 차원 전환 정합 — Phase 1 / Phase 2 boundary completeness (ADR-068 I-1) 회복.
+# Phase 2 carrier PR open 시 본 list 갱신 + `marketplace-drift-detection` entry append 의무 (Amendment 4 발의 또는 separate carrier annotation).
+# Amendment 2 (CFP-631 description verbatim, blocking-on-pr) = 이미 Phase 2 artifact merged → frontmatter row 별도 carrier 에서 append.
 ---
 
 # ADR-063: Marketplace ↔ plugin.json atomic invariant — 3-file coordination
@@ -293,7 +296,13 @@ ADR-065 의 `mechanical_self_check_passed` 와 **별 boolean field** 운영 (ver
 
 **Future amendment 발의 검증**: 본 ADR-063 amendment 발의 시 매번 ratchet 방향 검증 의무 — 강화 방향만 허용. Amendment 3+ 도입 시 (a) description 외 mirrored field 추가 PR-time enforce (예: keywords field 등 신규 mirrored field expansion) (b) lint frequency 강화 (예: per-commit hook) (c) 6 lane plugin description 확장 — 모두 강화 방향 후보. 약화 방향 (description warning tier 다운그레이드 / blocking 해제 / scope 축소) 미허용.
 
-### 결정 13: 정기 detection 의무 (reactive scheduled channel — 4th defense layer) (Amendment 3, CFP-627)
+### 결정 13: 정기 detection 의무 (reactive scheduled channel — 4th defense layer, **Phase 2 carrier 의무**) (Amendment 3, CFP-627)
+
+**Phase 1 / Phase 2 boundary 명시 (ADR-067 §결정 3 cross-lane RESET 차원 전환 정합, ADR-068 I-1 boundary completeness)**:
+
+본 §결정 13 = **declarative SSOT mandate** — Phase 1 PR (본 doc-only fast-path PR) scope. **artifact 도입 (`scripts/check-marketplace-drift.sh` + `templates/github-workflows/marketplace-drift-detection.yml` + `.github/workflows/marketplace-drift-detection.yml` + `docs/evidence-checks-registry.yaml` entry) = Phase 2 PR scope (별 carrier)**. evidence-registry-naming-check VIOLATION 회피 + Phase 1 doc-only fast-path (ADR-054) 정합 + boundary completeness (Phase 1 declarative vs Phase 2 artifact mechanical 분리 의도 회복) 동시 충족.
+
+**Phase 2 carrier 의무 명시** — 본 §결정 13 mandate 가 effective 하려면 Phase 2 carrier PR 이 반드시 follow-up 으로 open + merge 의무. ADR-067 §결정 3 cross-lane RESET 차원 전환 정합 — 본 Phase 1 PR 의 max FIX 3/3 도달 시 Phase 2 carrier defer = scope unitary (ADR-064 §결정 1.3 정합) — 별 Story 분리.
 
 **Context (proactive vs reactive 시점 갭 — 4-tuple reproduce evidence)**: §결정 1-12 (Amendment 1 §결정 9 + Amendment 2 §결정 11 포함) 가 모두 **proactive** (변경 시점 enforce — ArchitectAgent §3.6 self-check, PR-open `check-marketplace-parity.sh`, PR-time `version-bump-atomic-check.yml`, PR-time `check-marketplace-description-verbatim.sh`) 채널만 cover. drift 가 변경 시점 외 (rebase / 별 PR / direct commit / version collision resolve) 발생 시 사후 detection 부재 = root cause. 4-tuple reproduce evidence:
 
@@ -317,14 +326,16 @@ ADR-065 의 `mechanical_self_check_passed` 와 **별 boolean field** 운영 (ver
 | 3 (proactive) | PR-time `pull_request` event | GitHub Actions | `marketplace-description-verbatim.yml` (description) + `version-bump-atomic-check.yml` (version) PR 차단 | §결정 11 Amendment 2 + §결정 5 |
 | 4 (reactive) | 24h scheduled cron + manual workflow_dispatch | GitHub Actions scheduler | `scripts/check-marketplace-drift.sh` + Issue auto-create | **§결정 13 Amendment 3 (본 결정)** |
 
-**구체 의무**:
+**구체 의무 — Phase 2 carrier scope (별 Story)**:
 
-1. **Script**: `scripts/check-marketplace-drift.sh` (CFP-627 신설) 가 codeforge family 7 plugin (wrapper + 6 lane) mirrored field 4종 (`name` / `version` / `description` / `author`) 정기 비교. CFP-50 base script (`scripts/check-marketplace-parity.sh`) 의 `source` wrap pattern (lib 분리 X — 80줄 diff 로직 중복 0건).
-2. **Workflow**: `.github/workflows/marketplace-drift-detection.yml` (CFP-627 신설) 가 24h cron (`0 0 * * *` UTC) + `workflow_dispatch` manual fallback 양 channel 활성. `templates/github-workflows/marketplace-drift-detection.yml` 와 byte-identical self-app (ADR-005 정합).
-3. **Issue auto-create**: drift detected 시 `gh issue create` 자동 발의 — label `codeforge-improvement` + `drift-detection` + `phase:선정중` 표준. dedup 정책 = per-unique-`(plugin, field)` signature (active Issue lookup 후 동일 signature exist 시 skip — `gh issue list --label drift-detection --state open`).
-4. **PAT scope**: `CODEFORGE_CROSS_REPO_PAT` 의 marketplace `contents:read` grant 필수 (ADR-066 Amendment 2 §결정 2 scope minimum 4종 정합). Phase 2 진입 전 사용자 manual blocker.
-5. **Bypass channel**: `hotfix-bypass:marketplace-drift-detection` label (ADR-024 Amendment 3 §결정 6.A per-entry namespace) = audit comment 자동 발의 channel. §결정 4 `hotfix-bypass:marketplace-atomic` (proactive atomic invariant 영역) 과 분리 — 본 reactive detection 영역 단독 bypass.
-6. **Evidence-enforceable framework**: `docs/evidence-checks-registry.yaml` entry `marketplace-drift-detection` (warning tier, ADR-060 §결정 5 첫 도입 정합, recurrence.count: 3 / threshold: 3 / promotion_trigger: advisory).
+본 6 의무 모두 Phase 2 carrier 영역. Phase 1 PR (본 doc-only fast-path) 에서는 declarative mandate 만 codify. Phase 2 carrier PR 이 본 의무들의 artifact 구현 의무 (ADR-067 §결정 3 cross-lane RESET 차원 전환 정합 — Phase 1 + Phase 2 atomic 합병 시도 회피).
+
+1. **Script** (Phase 2): `scripts/check-marketplace-drift.sh` 가 codeforge family 7 plugin (wrapper + 6 lane) mirrored field 4종 (`name` / `version` / `description` / `author`) 정기 비교. CFP-50 base script (`scripts/check-marketplace-parity.sh`) 의 `source` wrap pattern (lib 분리 X — 80줄 diff 로직 중복 0건).
+2. **Workflow** (Phase 2): `.github/workflows/marketplace-drift-detection.yml` 가 24h cron (`0 0 * * *` UTC) + `workflow_dispatch` manual fallback 양 channel 활성. `templates/github-workflows/marketplace-drift-detection.yml` 와 byte-identical self-app (ADR-005 정합).
+3. **Issue auto-create** (Phase 2): drift detected 시 `gh issue create` 자동 발의 — label `codeforge-improvement` + `drift-detection` + `phase:선정중` 표준. dedup 정책 = per-unique-`(plugin, field)` signature (active Issue lookup 후 동일 signature exist 시 skip — `gh issue list --label drift-detection --state open`).
+4. **PAT scope** (Phase 1 declarative + Phase 2 grant): `CODEFORGE_CROSS_REPO_PAT` 의 marketplace `contents:read` grant 필수 (ADR-066 Amendment 2 §결정 2 scope minimum 4종 정합). Phase 1 declarative SSOT mandate (본 §결정 13) + Phase 2 PR 진입 전 사용자 manual grant blocker.
+5. **Bypass channel** (Phase 1 declarative + Phase 2 label-registry append): `hotfix-bypass:marketplace-drift-detection` label (ADR-024 Amendment 3 §결정 6.A per-entry namespace) = audit comment 자동 발의 channel. §결정 4 `hotfix-bypass:marketplace-atomic` (proactive atomic invariant 영역) 과 분리. Phase 1 declarative + Phase 2 carrier 가 label-registry-v2 yaml row append + bootstrap-labels.sh 실 활성.
+6. **Evidence-enforceable framework** (Phase 2): `docs/evidence-checks-registry.yaml` entry `marketplace-drift-detection` (warning tier, ADR-060 §결정 5 첫 도입 정합, recurrence.count: 3 / threshold: 3 / promotion_trigger: advisory). Phase 2 carrier PR 이 registry row append.
 7. **Edge case 분기** (Phase 2 implement 의무):
    - **E-1 PAT 미갱신 (401 auth failure, fail-closed manual blocker)**: `gh api` 401 → script exit 2 → `codeforge-kpi-infra-error` label Issue 발의 (drift Issue 와 별 분기). 사용자 PAT 재발급 의무 — 다음 cron run 자동 회복 불가 (rate-limit 과 분리 처리).
    - **E-2 marketplace schema drift (registration leak)**: marketplace.json `plugins[]` 안 codeforge family plugin entry 결손 → `[MARKETPLACE-DRIFT] codeforge family registration leak — <plugin-name>` Issue 발의 (ADR-016 §결정 1 family scope violation).
@@ -382,6 +393,18 @@ ADR-065 의 `mechanical_self_check_passed` 와 **별 boolean field** 운영 (ver
 - 모든 plugin family version bump 작업 (wrapper + 6 lane plugin)
 - marketplace sync PR open 의무 (Phase 2 PR pair → Phase 2 PR triplet)
 - 별도 follow-up: pre-commit hook / 신규 atomic lint
+
+## ADR-073 cross-ref (Orchestrator verify-before-assert)
+
+본 ADR 의 marketplace ↔ wrapper plugin.json atomic invariant 영역 = **cross-repo state verify 영역** (mclayer/marketplace ↔ mclayer/plugin-codeforge). ADR-073 (Orchestrator verify-before-assert, CFP-622, 2026-05-14) §결정 1 cross-repo state 단정 의무 영역 정합 — Orchestrator 가 marketplace state / plugin.json state 단정 시 ADR-073 §결정 1 `git fetch origin` + `git show origin/main:<path>` direct verify + `verified-via` annotation 의무 적용.
+
+| Layer | ADR | 영역 |
+|---|---|---|
+| Source of truth | **ADR-063 (본 ADR)** | marketplace ↔ plugin.json atomic invariant — **what** to sync |
+| Sync policy | ADR-016 | marketplace registration + mirrored field 4종 SSOT — **how** to register |
+| Verify discipline | ADR-073 | cross-repo state 단정 시 verify-before-assert 의무 — **how** to verify before asserting |
+
+본 ADR 영역에서 Orchestrator 또는 ArchitectAgent 가 marketplace state 인용 시 ADR-073 §결정 1 의무 발화. 예: "marketplace.json codeforge entry version = 5.54" 단정 = `git fetch origin && git show origin/main:.claude-plugin/plugin.json` (마켓플레이스 repo clone 시) 또는 `gh api repos/mclayer/marketplace/contents/.claude-plugin/marketplace.json` direct verify + `verified-via` annotation 의무.
 
 ## 해소 기준
 
