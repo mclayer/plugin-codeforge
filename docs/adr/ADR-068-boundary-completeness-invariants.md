@@ -91,7 +91,7 @@ ArchitectAgent §3 (관련 ADR / 결정) / §7 (Change Plan / 설계 서사) 작
   2. **synthetic guess** — "통상 1MB" / "보통 100rps" round-number heuristic
   3. **industry-assumption transplant** — "AWS p99 latency" / "PG max_connections 100" 컨텍스트 무관 import
   4. **legacy inertia** — 이전 시스템 값 무비판 복제
-- Mitigation 4종: empirical-first (wiretap/probe step 의무화) / explicit TBD 박제 (`[empirical-source: TBD]` marker) / range-bound default (단일 numeric 대신 `[min, max] with fallback strategy`) / dimensional checklist (per-dimension `empirical_source` field)
+- Mitigation 4종: empirical-first (wiretap/probe step 의무화) / explicit TBD 기재 (`[empirical-source: TBD]` marker) / range-bound default (단일 numeric 대신 `[min, max] with fallback strategy`) / dimensional checklist (per-dimension `empirical_source` field)
 - Justification 조건 (annotation 면제): well-defined SLA / standardized protocol RFC / vendor doc explicit guarantee — 3종 부재 시 annotation 의무
 - Exemption (trivial decision): SLA/quantitative metric 무관 (logging / naming / refactoring) — Story §1 명시 선언 의무
 - Verification format: **empirical-source-annotation** — quantitative parameter 별 (a) value (b) unit (c) empirical_source (file path / wiretap script / ADR ref / TBD) 3-key 정합
