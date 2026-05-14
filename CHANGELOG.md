@@ -7,6 +7,20 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.56.0] - 2026-05-14 — CFP-651 marketplace drift fast-forward + ADR-72 bypass_label 단축 정정 (doc-only fast-path, ADR-054)
+
+### Fixed
+
+- ADR-72 frontmatter `mechanical_enforcement_actions[]` 2 entry에 `bypass_label` 필드 신설 + GitHub 50자 제한 정합 단축 값 적용:
+  - `hotfix-bypass:production-cutover-deputy-spawn-evidence` (54자) → `hotfix-bypass:prod-cutover-deputy-evidence` (41자)
+  - `hotfix-bypass:epic-cutover-gate-evidence-quad-check` (51자) → `hotfix-bypass:epic-cutover-quad-check` (36자)
+  - action name 자체 (`production-cutover-deputy-spawn-evidence` / `epic-cutover-gate-evidence-quad-check`) 은 unchanged (evidence-checks-registry entry name = SSOT, ADR-060 §결정 20 정합).
+- `docs/evidence-checks-registry.yaml` 2 entry `bypass_label` 필드 동 단축 (action name 영역 외 bypass_label field only).
+
+### Sibling sync (separate PR)
+
+- `mclayer/marketplace` `.claude-plugin/marketplace.json` plugins[name=codeforge].version 5.55.0 → 5.56.0 + description CFP-651 entry append (ADR-063 §결정 5 선행 merge 의무).
+
 ## [5.55.0] - 2026-05-14 — CFP-632 Story-1 anchor (Epic CFP-620 — mctrader 3-cycle post-mortem)
 
 ### Added

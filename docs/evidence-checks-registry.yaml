@@ -1378,7 +1378,7 @@ entries:
     detect_command: null  # deferred-followup — CFP-Z carrier
     workflow: null
     current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
-    bypass_label: hotfix-bypass:production-cutover-deputy-spawn-evidence
+    bypass_label: hotfix-bypass:prod-cutover-deputy-evidence
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     promotion_criteria:
       pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
@@ -1413,7 +1413,7 @@ entries:
     detect_command: null  # deferred-followup — CFP-Z' carrier (retro-mandatory.yml 통합)
     workflow: null
     current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
-    bypass_label: hotfix-bypass:epic-cutover-gate-evidence-quad-check
+    bypass_label: hotfix-bypass:epic-cutover-quad-check
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     promotion_criteria:
       pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized

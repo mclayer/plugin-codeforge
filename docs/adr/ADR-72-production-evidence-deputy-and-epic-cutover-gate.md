@@ -26,13 +26,19 @@ related_files:
 mechanical_enforcement_actions:
   - action: production-cutover-deputy-spawn-evidence
     status: deferred-followup
-    progress_note: "ADR-72 신설 시점 registry entry 부재. follow-up CFP-Z (ProductionEvidence trigger lint — Change Plan §13 production_cutover_touching: true 선언 시 ProductionEvidenceDeputy spawn evidence verify) 가 evidence-checks-registry append + ArchitectPL verdict packet field-time check 신설 후 status 갱신 (deferred-followup → warning → blocking-on-pr)."
+    bypass_label: hotfix-bypass:prod-cutover-deputy-evidence
+    progress_note: "ADR-72 신설 시점 registry entry 부재. follow-up CFP-Z (ProductionEvidence trigger lint — Change Plan §13 production_cutover_touching: true 선언 시 ProductionEvidenceDeputy spawn evidence verify) 가 evidence-checks-registry append + ArchitectPL verdict packet field-time check 신설 후 status 갱신 (deferred-followup → warning → blocking-on-pr). bypass_label CFP-651 정정: 원본 hotfix-bypass:production-cutover-deputy-spawn-evidence (54자) → hotfix-bypass:prod-cutover-deputy-evidence (41자, GitHub 50자 제한 정합)."
     target_section: §결정 3
   - action: epic-cutover-gate-evidence-quad-check
     status: deferred-followup
-    progress_note: "ADR-72 신설 시점 registry entry 부재. follow-up CFP-Z' (PMOAgent retro epic_close_gate evidence quad lint — bucket prefix listing + WAL sample + Prometheus rate metric + drainage rate 4중 evidence 명시 verify) 가 evidence-checks-registry append + retro-mandatory.yml workflow 통합 후 status 갱신 (deferred-followup → warning → blocking-on-pr). Sibling Story-4 (plugin-codeforge-pmo#18) 의 PMOAgent retro template gate 본문 추가가 prerequisite."
+    bypass_label: hotfix-bypass:epic-cutover-quad-check
+    progress_note: "ADR-72 신설 시점 registry entry 부재. follow-up CFP-Z' (PMOAgent retro epic_close_gate evidence quad lint — bucket prefix listing + WAL sample + Prometheus rate metric + drainage rate 4중 evidence 명시 verify) 가 evidence-checks-registry append + retro-mandatory.yml workflow 통합 후 status 갱신 (deferred-followup → warning → blocking-on-pr). Sibling Story-4 (plugin-codeforge-pmo#18) 의 PMOAgent retro template gate 본문 추가가 prerequisite. bypass_label CFP-651 정정: 원본 hotfix-bypass:epic-cutover-gate-evidence-quad-check (51자) → hotfix-bypass:epic-cutover-quad-check (36자, GitHub 50자 제한 정합)."
     target_section: §결정 5
-amendment_log: []
+amendment_log:
+  - amendment_number: 1
+    date: 2026-05-14
+    carrier_story: CFP-651
+    summary: "frontmatter mechanical_enforcement_actions[] 2 entry에 bypass_label 필드 신설 + GitHub 50자 제한 정합 단축값 적용. action name 자체 unchanged. evidence-checks-registry.yaml 2 entry bypass_label 동 단축 (CFP-651 정정 동반)."
 ---
 
 # ADR-72: ProductionEvidence Deputy 신설 + EPIC cutover gate evidence quad — production-grounding 단일 owner 축
