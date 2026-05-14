@@ -102,6 +102,24 @@ docs/domain-knowledge/ 디렉터리를 읽고 이 아이디어와 관련된
 ================================
 ```
 
+### 자기 적용 의무 (ADR-073 §결정 1 첫 적용 사례 후 default)
+
+Phase 0 4 agent prompt 안 file path / cross-repo state 인용 시 의무 (ADR-073 §결정 6 source-of-truth):
+
+1. `cd <repo> && git fetch origin` 선행 (working tree stale 우려)
+2. `git show origin/main:<path>` 또는 `gh issue/pr view --json state` direct verify
+3. 인용 옆 `verified-via: <method>` annotation
+4. spec/plan frontmatter `pre_lookup_evidence[]` PL 수동 declare 의무 (mechanical layer 부재 시)
+
+agent prompt template 의 default behavior — Orchestrator 가 prompt 작성 시 사전 명시. Sentinel #4 (strike #1 + strike #2) anti-pattern 차단 forcing function.
+
+**예시** (DomainAgent prompt 안):
+
+```
+docs/domain-knowledge/ 디렉터리를 읽고...
+**verified-via 의무**: 인용 file path 옆 "verified-via: git show origin/main" 또는 "verified-via: gh issue view" annotation 의무.
+```
+
 ## Phase 1: 강화된 brainstorming 대화
 
 `superpowers:brainstorming` 스킬을 호출하되, 첫 메시지에 컨텍스트 패킷을 포함.
