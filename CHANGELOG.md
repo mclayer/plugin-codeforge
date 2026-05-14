@@ -7,6 +7,23 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.54.0] - 2026-05-14 — CFP-631 Phase 2 (marketplace-description-verbatim lint script + workflow + bats 13 TC)
+
+CFP-631 Phase 2 실제 구현: `scripts/check-marketplace-description-verbatim.sh` (byte-identical lint, exit 0/1/2 ADR-060 §결정 15 3-tier) + `templates/github-workflows/marketplace-description-verbatim.yml` + `.github/workflows/marketplace-description-verbatim.yml` (ADR-005 self-app byte-identical mirror) + `tests/scripts/test_check_marketplace_description_verbatim.bats` (13 TC all PASS). Phase 1 선언 (§결정 11/12 + evidence-checks-registry entry) 의 mechanical enforce 체인 완성. 7th rebase race sentinel sample (cumulative 7 — CFP-619 + CFP-628 + CFP-631 FIX-1 + CFP-631 Phase 1 + CFP-631 Phase 2 + 2 more).
+
+ADR-037 MINOR bump: script/workflow 신규 추가 (behavior change). plugin.json 5.53.0 → 5.54.0.
+
+### Added
+
+- `scripts/check-marketplace-description-verbatim.sh` — NEW bash lint script. byte-identical compare (trailing newline normalize). Exit 0=PASS / 1=DRIFT / 2=SETUP-error (ADR-060 §결정 15 3-tier). Test override: `CFP631_MARKETPLACE_PATH` / `CFP631_PLUGIN_JSON` env. DRIFT report: first-diff position + 200-char excerpt.
+- `templates/github-workflows/marketplace-description-verbatim.yml` — NEW workflow. Trigger: pull_request to main (opened/synchronize/reopened/labeled). blocking-on-pr tier. hotfix-bypass:marketplace-description-verbatim conditional skip + audit comment. permissions: `{}` top-level + job override `contents:read / pull-requests:write` (ADR-060 Amendment 8 정합).
+- `.github/workflows/marketplace-description-verbatim.yml` — ADR-005 self-app byte-identical mirror. SHA256: `ef6c3f6b70951496642a1d4965ca7a7f8bd848c157d8c009842196d9239d0689`.
+- `tests/scripts/test_check_marketplace_description_verbatim.bats` — 13 test cases (7 unit + 3 integration + 2 meta SETUP error). All 13 PASS (bats 1.13.0).
+
+### Sibling sync (separate PR)
+
+- mclayer/marketplace: plugins[codeforge].version 5.53.0 → 5.54.0 description mirrored (ADR-063 atomic invariant, Amendment 2 §결정 12 self-application 2nd PR).
+
 ## [5.53.0] - 2026-05-14 — CFP-622 (ADR-073 Orchestrator verify-before-assert — Sentinel #4 strike #2 carrier)
 
 ### Added
