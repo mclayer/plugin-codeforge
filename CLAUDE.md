@@ -24,6 +24,7 @@ PMOAgent 가 다음을 직접 write:
 | `gate:retro-complete` label add | story_completion (retro write 완료 후 — CFP-138 / ADR-045 forcing function) | `mcp__github__issue_write` |
 | Epic GitHub milestone | epic_creation / story_completion | `gh api repos/*/milestones*` |
 | GitHub comment `[PMO]` prefix | 모든 trigger | `mcp__github__add_issue_comment` |
+| `pmo_output v1.2.cross_story_pattern_adr_trigger` field 채움 + `adr_proposal` field 동시 채움 (status: Proposed inline ADR draft) | **Cross-Story pattern threshold reach (≥ 2)** — retro write 시점 patterns_observed[] 검출 직후 (CFP-665 / ADR-045 Amendment 5 §D-9, Mandatory framing — PMOAgent self-decide 영역 제거) | inline pmo_output return → Orchestrator forward to ArchitectAgent (codeforge-design lane spawn) |
 
 GitOpsAgent (CFP-139 신설 long-running teammate) 가 다음을 직접 write:
 

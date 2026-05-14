@@ -72,8 +72,17 @@ sentinel_refs:
 ## §5 cross-Story 패턴 (해당 시)
 복수 Story·CFP에서 반복 발견된 패턴 — 설계 지침 부재 신호. ADR 후보 발의 sentinel.
 
+**정량 임계값 (CFP-665 / [ADR-045 Amendment 5 §D-9](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-045-story-retro-mandatory-trigger.md))**: 누적 ≥ 2 회 도달 시 §6 ADR 후보 발의 의무 (Mandatory framing). 누적 < 2 = informational only (patterns_observed[] 만 기록).
+
+| 패턴 식별 | pattern_count | threshold reach | anchor_id (primary) | root_cause_class (fallback) | occurrences |
+|---|---|---|---|---|---|
+| <패턴 요약> | <int ≥ 1> | YES (≥ 2) / NO (< 2) | <review-verdict-v4 anchor_id> | <root_cause_taxonomy class> | <Story 키 N개 + finding ref> |
+
 ## §6 ADR 후보 발의 (해당 시)
-- 후보 1: <제목> — 근거: §5 패턴 N건
+
+**Mandatory framing (CFP-665 / ADR-045 Amendment 5 §D-9)**: §5 표 `threshold reach = YES` 인 모든 패턴에 대해 후보 1건 의무 작성. PMOAgent self-decide 영역 제거 (회피 불가, forcing function). False positive 안전망 = `escalation_action: escalate_user` 채택 시 사용자 manual decide 의뢰.
+
+- 후보 1: <제목> — 근거: §5 패턴 N건 (pattern_count: <int>, anchor_id: <id>, occurrences: <Story 키 N개>) — escalation_action: `adr_draft_emitted` | `escalate_user`
 - 후보 2: ...
 
 ---

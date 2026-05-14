@@ -56,7 +56,8 @@ permissions:
 | 트리거 | 수행 |
 |--------|------|
 | **Epic 창설 시** (1회) | Scope 분해 자문 — Story 분해·의존성 식별·**병렬/순차 판정** (§1 상세) |
-| **Story 완료 시 — Phase 2 PR merge 후 5분 grace 자동 trigger (CFP-138 / [ADR-045](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-045-story-retro-mandatory-trigger.md) mandate, 사용자 요청 불필요)** | retro write + Story §11 4 field schema update + Epic milestone 갱신 + `gate:retro-complete` label add (forcing function) + cross-Story patterns analysis |
+| **Story 완료 시 — Phase 2 PR merge 후 5분 grace 자동 trigger (CFP-138 / [ADR-045](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-045-story-retro-mandatory-trigger.md) mandate, 사용자 요청 불필요)** | retro write + Story §11 4 field schema update + Epic milestone 갱신 + `gate:retro-complete` label add (forcing function) + cross-Story patterns analysis + **Cross-Story pattern threshold check (CFP-665 / ADR-045 Amendment 5 §D-9, 누적 ≥ 2 도달 시 `cross_story_pattern_adr_trigger` field mandatory 채움 + ArchitectAgent spawn 의무)** |
+| **Cross-Story pattern threshold reach (≥ 2)** — retro write 시점 patterns_observed[] 검출 직후 (CFP-665 / ADR-045 Amendment 5 §D-9, Mandatory framing) | `pmo_output v1.2.cross_story_pattern_adr_trigger` field mandatory 채움 (anchor_id strict primary + root_cause_class fallback hybrid) → Orchestrator 가 ArchitectAgent spawn (status: Proposed ADR draft inline 전달) |
 | **사용자 요청 시** (주기적) | 다중 Story 감사 보고서 (예: 최근 5 Story의 FIX 패턴) |
 
 단일 Story 생명주기 내 lane 게이트 역할 **없음** — 본 에이전트는 Story 간 횡단 감사에 집중.
@@ -173,7 +174,7 @@ Story 분해안:
 
 ### 3. Cross-Story 패턴 분석 (다중 Story)
 
-사용자 요청 시 또는 Epic 완료 시. 입력: 다수 Story file §1-11 + 다수 FIX Ledger + `.claude-work/progress/_archive/**` (완료 Story 누적 progress trace, playbook §14.10).
+사용자 요청 시 또는 Epic 완료 시 또는 **Story 완료 retro write 시점 자동 (CFP-665 / ADR-045 Amendment 5 §D-9)**. 입력: 다수 Story file §1-11 + 다수 FIX Ledger + `.claude-work/progress/_archive/**` (완료 Story 누적 progress trace, playbook §14.10).
 
 패턴 검출 대상:
 - 반복되는 FIX 원인 유형 (예: "최근 5 Story 중 3건이 같은 Adapter 레이어 경계에서 P1 boundary 발생")
@@ -181,11 +182,21 @@ Story 분해안:
 - 성능 게이트 실패 트렌드
 - 같은 파일이 여러 Story에 걸쳐 수정되는 핫스팟
 
-산출물: `[PMOAgent Cross-Story 감사]` 보고서. 패턴이 "설계 지침 부재"로 해석되면 **ADR 후보 발의**.
+**Threshold-based mandatory escalation (CFP-665 / [ADR-045](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-045-story-retro-mandatory-trigger.md) Amendment 5 §D-9)**:
+
+- **누적 임계값 N = 2** (industry lower bound — Google SRE Workbook Chapter 15 "If you see the same issue twice, it is no longer a coincidence" + ITIL v4 Foundation Problem Management "Recurring incidents ≥ 2 → Problem Record" + NASA ASRS Significant Event Reporting "≥ 2 similar events"). single value fixed (consumer overlay 가변 = out-of-scope, 별 follow-up CFP)
+- **검출 전략 = hybrid** (Sun et al. 2011 ASE best F1 score 정합):
+  - **(b) 동일 anchor_id ≥ 2 Story 재발 = primary detection channel** (review-verdict-v4 stable identifier, strict matching, false positive 차단 우선)
+  - **(a) root_cause_taxonomy class 내 anchor_id ≥ 2 = secondary fallback channel** (loose matching, anchor_id naming inconsistency 시 catch — false negative 보완)
+- **Mandatory framing**: threshold 도달 시 PMOAgent self-decide 영역 제거 — `pmo_output v1.2.cross_story_pattern_adr_trigger` field mandatory 채움 의무 (회피 불가). False positive 안전망 = `escalation_action` enum 2-value (`adr_draft_emitted | escalate_user`) — PMOAgent 가 trivial 판정 시 `escalate_user` 채택 가능 (ArchitectAgent reject 가능 채널 보존).
+
+산출물: `[PMOAgent Cross-Story 감사]` 보고서. 패턴이 "설계 지침 부재"로 해석되면 **ADR 후보 발의 의무 (Mandatory)** — §4 정합.
 
 ### 4. ADR 후보 발의
 
-패턴 분석 결과 반복되는 이슈가 있으면 PMOAgent 가 Orchestrator 에 inline ADR draft 를 반환한다 (`pmo_output v1.adr_proposal` 필드 — pmo-output-v1 contract). Orchestrator 가 codeforge-design plugin 의 ArchitectAgent 를 spawn 하며 inline ADR draft content 를 입력으로 전달. ArchitectAgent 가 신규 ADR file `docs/adr/ADR-NNN-<slug>.md` 를 직접 author 한다. `adr-draft` write queue type 은 폐기 (CFP-26 Phase 0a deny rule).
+패턴 분석 결과 **누적 ≥ 2 회** 검출 시 (CFP-665 / ADR-045 Amendment 5 §D-9 정량 임계값 정의) PMOAgent 가 Orchestrator 에 inline ADR draft 를 반환한다 (`pmo_output v1.2.adr_proposal` 필드 + `cross_story_pattern_adr_trigger` 필드 동시 채움 — pmo-output-v1 contract). 본 발의는 **Mandatory** — PMOAgent self-decide 영역 제거 (회피 불가, forcing function). Orchestrator 가 codeforge-design plugin 의 ArchitectAgent 를 spawn 하며 inline ADR draft content 를 입력으로 전달. ArchitectAgent 가 신규 ADR file `docs/adr/ADR-NNN-<slug>.md` 를 직접 author 한다 (status: Proposed). `adr-draft` write queue type 은 폐기 (CFP-26 Phase 0a deny rule).
+
+**False positive 안전망** (Story §5.4 EC-3 정합 — trivial 판정 영역): `escalation_action` enum 2-value 보유 — `adr_draft_emitted` (정식 ADR draft 작성, default) | `escalate_user` (PMOAgent 가 trivial 판정 시 사용자 manual decide 의뢰). 두 enum value 모두 `cross_story_pattern_adr_trigger` field mandatory 채움 의무 (forcing function 보존), 단 후속 처리 분기만 다름. ArchitectAgent 가 status: Proposed → Accepted | Rejected 최종 결정 (ADR-035 Sonnet decider Deprecated 정합 — PMOAgent = proposer only, verdict 권한 없음).
 
 ADR draft 내용 예시 (Orchestrator 반환 payload `adr_proposal` 필드):
 
