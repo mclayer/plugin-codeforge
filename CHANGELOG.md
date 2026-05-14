@@ -7,6 +7,28 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.63.0] - 2026-05-14 — CFP-662 sibling (Issue #669) Phase 1 — wrapper sibling sync design-output-v2 v2.3 (canonical codeforge-design PR #42 SHA a6aa5502 verbatim mirror)
+
+### Added
+
+- **`docs/inter-plugin-contracts/design-output-v2.md` v2.2 → v2.3 verbatim mirror** (canonical codeforge-design PR #42 SHA `a6aa5502404ab5a9e7f81b865af62889466e829a`): `chief_author_artifact.spec_invariant_measurement_required: bool` optional field 신설 (default `false`). chief author artifact 가 spec invariant measurement 의무를 명시했는지 audit marker. additive minor — deputies_results / writes_completed 변경 없음. v2.2 consumer backward-compat 보장. ADR-010 sibling sync + ADR-008 §결정 2 MINOR bump 정합.
+- **frontmatter `mirrored_from_canonical` block** (sibling sync annotation — ADR-010 §결정 3): `repo: mclayer/plugin-codeforge-design`, `sha: a6aa5502404ab5a9e7f81b865af62889466e829a`, `pr: 42`.
+- **§6 Changelog `v2.3 (CFP-662)` sub-section** 신설: additive minor 상세 (trigger / purpose / schema enumeration).
+
+### Changed
+
+- **`docs/inter-plugin-contracts/MANIFEST.yaml` design_output entry**: `contract_version: "2.1"` → `"2.3"` 2-minor jump (Option A — SSOT alignment: 파일 자체 "2.3" 기준 / audit trail: skip v2.2 explicit 기록 / atomic: drift 0 해소 / rollback simplicity). Note: MANIFEST 은 "2.1" 상태였으나 파일은 "2.2" 였던 pre-existing drift 동시 해소.
+- **`.claude-plugin/plugin.json` 5.62.0 → 5.63.0 MINOR bump**: ADR-037 — inter-plugin contract version bump + new contract field 도입 (governance behavior change carrier).
+
+### Notes
+
+- **doc-only fast-path (ADR-054) 정합**: Phase 1 PR 단독. src/tests 무변경. Phase 2 PR 부재.
+- **ADR-010 §결정 3 sibling sync ordering 정합**: canonical codeforge-design PR #42 MERGED (2026-05-14T13:17:49Z, SHA `a6aa5502404ab5a9e7f81b865af62889466e829a`) → wrapper sibling sync PR 후속.
+- **ADR-008 §결정 2 MINOR 정합**: `chief_author_artifact.spec_invariant_measurement_required` optional field 추가 = additive minor = MINOR bump (MAJOR 미해당 — no mandatory field, no removal, no rename).
+- **2-minor jump justification (ADR-008 §결정 2 audit trail)**: "2.1" → "2.3" skip (MANIFEST pre-existing drift "2.1" vs file "2.2" 동시 정렬). 4 근거: (1) SSOT = 파일 자체가 "2.3" — MANIFEST 이 실제 상태 반영; (2) audit trail = skip 명시적 기록으로 오히려 명확; (3) atomic = single commit 에 drift = 0 도달; (4) rollback simplicity = 단일 version string 으로 rollback 가능.
+- **verify-before-trust evidence**: canonical SHA `a6aa5502404ab5a9e7f81b865af62889466e829a` `gh pr view 42 --repo mclayer/plugin-codeforge-design` mergeCommit.oid = MERGED (2026-05-14T13:17:49Z) verified. design-output-v2.md 본문 verbatim fetch (gh api raw content) + spec_invariant_measurement_required field 확인.
+- **marketplace sync**: plugin.json 5.62.0 → 5.63.0 MINOR (ADR-037). marketplace.json 동반 sync 의무 (ADR-063 §결정 5 atomic invariant — 별 sibling PR, wrapper PR merge 선행 의무).
+
 ## [5.62.0] - 2026-05-14 — CFP-665 sibling (Issue #668) Phase 1 — wrapper sibling sync pmo-output-v1 v1.2 + ADR-045 Amendment 5 §D-9
 
 ### Added
