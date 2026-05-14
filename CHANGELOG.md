@@ -7,6 +7,25 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.62.0] - 2026-05-14 — CFP-665 sibling (Issue #668) Phase 1 — wrapper sibling sync pmo-output-v1 v1.2 + ADR-045 Amendment 5 §D-9
+
+### Added
+
+- **`docs/inter-plugin-contracts/pmo-output-v1.md` v1.1 → v1.2 verbatim mirror** (canonical codeforge-pmo PR #19 SHA `5fdaf895c70e140c1ac9001114c01504f3b0a2a0`): `cross_story_pattern_adr_trigger` optional field 추가 (Cross-Story pattern 누적 ≥ 2 검출 시 ADR escalation trigger schema, additive). 5 sub-field (`pattern_count_threshold` / `detected_anchor_id` / `fallback_root_cause_class` / `occurrences[]` / `escalation_action`). ADR-010 sibling sync 정합.
+- **`docs/adr/ADR-045-story-retro-mandatory-trigger.md` Amendment 5 §D-9 신설**: Cross-Story pattern threshold N=2 도달 시 ADR escalation 의무 (Mandatory framing). PMOAgent self-decide 영역 제거. hybrid 검출 전략 (primary anchor_id strict / secondary root_cause_class fallback). `amendment_log[]` amendment_id 5 row append (frontmatter sync).
+
+### Changed
+
+- **`docs/inter-plugin-contracts/MANIFEST.yaml` pmo_output entry**: `contract_version: "1.1"` → `"1.2"` 갱신. ADR-010 sibling sync parity 정합.
+- **`.claude-plugin/plugin.json` 5.61.0 → 5.62.0 MINOR bump**: ADR-037 — inter-plugin contract version bump + ADR Amendment (governance behavior change carrier).
+
+### Notes
+
+- **doc-only fast-path (ADR-054) 정합**: Phase 1 PR 단독. src/tests 무변경. Phase 2 PR 부재.
+- **ADR-010 §결정 3 sibling sync ordering 정합**: canonical codeforge-pmo PR #19 MERGED (2026-05-14T12:34:03Z) → wrapper sibling sync PR 후속 (Story-1 패턴 reuse).
+- **verify-before-trust evidence**: canonical SHA `5fdaf895c70e140c1ac9001114c01504f3b0a2a0` `gh pr view 19 --repo mclayer/plugin-codeforge-pmo` mergeCommit.oid verified. pmo-output-v1.md 본문 verbatim fetch + diff 0 mirror.
+- **marketplace sync**: plugin.json 5.61.0 → 5.62.0 MINOR (ADR-037). marketplace.json 동반 sync 의무 (ADR-063 §결정 5 atomic invariant — 별 sibling PR, 선행 merge 의무).
+
 ## [5.61.0] - 2026-05-14 — CFP-672 ADR-064 Amendment 4 — wording-dictionary 카테고리 (a) 4 → 5 어휘 (`별` standalone)
 
 ### Added

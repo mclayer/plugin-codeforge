@@ -44,7 +44,7 @@ contracts:
     canonical_repo: mclayer/plugin-codeforge-pmo
     canonical_path: docs/inter-plugin-contracts/
     files:
-      - { file: pmo-output-v1.md, contract_version: "1.1", status: Active }  # CFP-139 / ADR-047: MINOR bump (worktree_manifest optional field)
+      - { file: pmo-output-v1.md, contract_version: "1.2", status: Active }  # CFP-139 / ADR-047: MINOR bump (worktree_manifest optional field). CFP-665: v1.1 → v1.2 MINOR bump (cross_story_pattern_adr_trigger optional field — ADR-045 Amendment 5 §D-9 Mandatory framing 정합)
 
   - name: git_ops_event
     canonical_repo: mclayer/plugin-codeforge-pmo
