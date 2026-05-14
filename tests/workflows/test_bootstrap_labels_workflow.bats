@@ -52,10 +52,24 @@ print('PASS')
   [[ "$output" == *"PASS"* ]]
 }
 
-# T-4: hotfix-bypass conditional skip + audit comment 자동 발의
-@test "T-4: hotfix-bypass:bootstrap-labels conditional skip present" {
+# T-4: hotfix-bypass conditional skip + audit comment 2-step pattern
+#   Step A: gh pr comment 직접 발의 (ADR-024 Amendment 3 §결정 6.C)
+#   Step B: check-bypass-audit-comment.sh assertion verify (comment 존재 검증)
+@test "T-4: hotfix-bypass:bootstrap-labels 2-step pattern — Step A gh pr comment + Step B assertion verify" {
   [ -f "$TEMPLATE_FILE" ] || skip "bootstrap-labels.yml 미존재 (RED state)"
+  # hotfix-bypass:bootstrap-labels label 감지 조건 존재
   run grep -E "hotfix-bypass:bootstrap-labels" "$TEMPLATE_FILE"
+  [ "$status" -eq 0 ]
+  # Step A verify: gh pr comment 직접 발의 step 존재 (audit comment inline post)
+  run grep -E "gh pr comment" "$TEMPLATE_FILE"
+  [ "$status" -eq 0 ]
+  # Step B verify: check-bypass-audit-comment.sh assertion step 존재 (comment 존재 verify)
+  run grep -E "check-bypass-audit-comment\.sh" "$TEMPLATE_FILE"
+  [ "$status" -eq 0 ]
+  # 2-step 구조: Emit step name + Audit assertion step name 모두 존재 (grep by name prefix)
+  run grep -E "Emit bypass audit comment" "$TEMPLATE_FILE"
+  [ "$status" -eq 0 ]
+  run grep -E "Audit assertion" "$TEMPLATE_FILE"
   [ "$status" -eq 0 ]
 }
 
