@@ -17,7 +17,7 @@ ADR-037 MINOR bump: script/workflow 신규 추가 (behavior change). plugin.json
 
 - `scripts/check-marketplace-description-verbatim.sh` — NEW bash lint script. byte-identical compare (trailing newline normalize). Exit 0=PASS / 1=DRIFT / 2=SETUP-error (ADR-060 §결정 15 3-tier). Test override: `CFP631_MARKETPLACE_PATH` / `CFP631_PLUGIN_JSON` env. DRIFT report: first-diff position + 200-char excerpt.
 - `templates/github-workflows/marketplace-description-verbatim.yml` — NEW workflow. Trigger: pull_request to main (opened/synchronize/reopened/labeled). blocking-on-pr tier. hotfix-bypass:marketplace-description-verbatim conditional skip + audit comment. permissions: `{}` top-level + job override `contents:read / pull-requests:write` (ADR-060 Amendment 8 정합).
-- `.github/workflows/marketplace-description-verbatim.yml` — ADR-005 self-app byte-identical mirror. SHA256: `ef6c3f6b70951496642a1d4965ca7a7f8bd848c157d8c009842196d9239d0689`.
+- `.github/workflows/marketplace-description-verbatim.yml` — ADR-005 self-app byte-identical mirror. SHA256: `681dff2222cf5f0327bb29a1b89d1e0f12a9b3341e68169783267002e6895c11` (FIX iter 1 후 갱신).
 - `tests/scripts/test_check_marketplace_description_verbatim.bats` — 13 test cases (7 unit + 3 integration + 2 meta SETUP error). All 13 PASS (bats 1.13.0).
 
 ### Sibling sync (separate PR)
