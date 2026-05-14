@@ -1247,3 +1247,39 @@ entries:
       promotion_trigger: advisory
       last_occurrence: null
     status: Active
+
+  - name: retro-alert-pickup-rate
+    description: |-
+      CFP-628 Story 2 / ADR-045 §D-5 — Orchestrator SessionStart retro alert scan
+      mandate 의 KPI sentinel. open `phase:완료` issue 안 `[PMO] retro alert` prefix
+      comment (35min filter 후) 발화 대비 retro file 생성 비율 측정.
+      pickup_rate ≥ 90% (3 month window) = sunset_gate 충족.
+      monthly cron `retro-alert-pickup-kpi.yml` 자동 측정.
+      scripts/check-retro-alerts.sh SessionStart hook 으로 Orchestrator prompt-injection.
+    script: scripts/check-retro-alerts.sh
+    detect_command: bash scripts/check-retro-alerts.sh
+    workflow: .github/workflows/retro-alert-pickup-kpi.yml
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:retro-alert-pickup
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a)
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - kpi_rate_json_history
+        - pr_cumulative_count_proof
+    introduced_by: CFP-628
+    introduced_date: 2026-05-14
+    owner_adr: ADR-045
+    carrier_adr: ADR-060
+    sunset_gate:
+      metric: "retro-alert-pickup-rate ≥ 90% (3 month rolling window)"
+      who: "PMOAgent (monthly cron retro-alert-pickup-kpi.yml 자동 측정)"
+      how: "docs/kpi/retro-alert-pickup-rate.json gate_status 3 consecutive months = ok → sunset 판정"
+    recurrence:
+      count: 0
+      promotion_trigger: none
+      last_occurrence: null
+    status: Active

@@ -76,6 +76,7 @@ DRIFT_ALLOWLIST = {
     ("evidence-registry-schema-validation", "evidence-registry-check.yml"): "ADR-060 Amendment 2 — schema validation lint basename divergence",
     ("wording-ssot-grep-lint",             "wording-ssot-check.yml"):       "ADR-068 §결정 5 wording SSOT lint — basename divergence (grep-lint vs check)",
     ("workflow-permissions-block-presence", "workflow-permissions-check.yml"): "ADR-060 Amendment 8 §결정 21 — workflow permissions lint basename divergence (block-presence vs check)",
+    ("retro-alert-pickup-rate",            "retro-alert-pickup-kpi.yml"):      "ADR-045 §D-5 CFP-628 — KPI sentinel basename divergence (rate vs kpi)",
 }
 
 REGISTRY_PATH = Path("docs/evidence-checks-registry.yaml")
