@@ -68,6 +68,16 @@ progress_narration_verbosity: full
 #   # ADR-027 §결정 3 Bypass (HOTFIX_BYPASS_CODEFORGE=1 + REASON) 와 별도 mechanism (Bypass priority HIGHEST).
 #   strict_mode: false
 #
+#   # CFP-658 Phase 2 / ADR-027 Amendment 2 §결정 6.A — Action 차단 환경 fallback mode (optional, default: auto)
+#   # Trigger (A) declarative: enterprise GitHub Actions default_workflow_permissions:read 차단 환경
+#   # Trigger (C): Issue 발의자 ad-hoc override 시 `fallback:manual` label 부착 (우선순위 (C) > (A))
+#   # 우선순위: CLI > env > yaml (ADR-032 일관성)
+#   #   "auto" (default): GitHub Actions story-init.yml 정상 동작 환경 — 수동 개입 없음
+#   #   "action_blocked": GitHub Actions 차단 확인된 환경 — agent direct write fallback path 활성화
+#   #                     → Orchestrator §3.15 fallback decision tree 발동
+#   #                     → manual-story-init-fallback.sh (또는 .ps1) 사용
+#   # fallback_mode: action_blocked  # (optional, default: auto) — ADR-027 Amendment 2 §결정 6.A
+#
 # bypass env vars (ADR-027 결정 3, CFP-104 후행) — informational only
 # 실제 bypass 는 hook 안에서 env 검사:
 # HOTFIX_BYPASS_CODEFORGE=1 + HOTFIX_BYPASS_REASON="<text>" 동시 설정 의무

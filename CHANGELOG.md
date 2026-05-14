@@ -7,6 +7,23 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.58.0] - 2026-05-14 — CFP-658 Phase 2 of Epic CFP-431 (audit:from-mctrader-debut) — Action 차단 환경 mechanical implementation
+
+### Added
+
+- **`templates/scripts/manual-story-init-fallback.sh`** (bash, POSIX): ADR-027 Amendment 2 §결정 6.H+6.E+6.G+6.I 정합 manual Story init fallback 스크립트. Issue 번호 인자 → existence_check → §1-§11 Story file write + branch + Phase 1 PR open. SecurityArch 조건 3 (shell injection 차단 — printf '%s' + heredoc single-quoted + 숫자 전용 검증) + OpRiskArch 조건 2/4 (exponential backoff 1s/2s/4s + fallback:rate-limited auto-label) + DataMigrationArch 조건 1 (existence_check verbatim port) + PR description checklist mirror (6 체크 항목) 모두 포함.
+- **`templates/scripts/manual-story-init-fallback.ps1`** (Windows PowerShell parity): Bash 동일 logic, PowerShell 5.1 semantics. `pre-push.sh.example` precedent 정합.
+- **`templates/github-workflows/section-1-verbatim-postmerge.yml`** (warning tier): ADR-027 Amendment 2 §결정 6.C + ADR-060 evidence-enforceable framework. `pull_request_target` closed+merged trigger → Story §1 ↔ Issue body §1 byte-identical 검증 → drift 시 warning audit comment 자동 발의. 4-step Python extract (ADR-061 heredoc single-quoted <<'EOF') + diff -q compare + hotfix-bypass label channel.
+- **`.github/workflows/section-1-verbatim-postmerge.yml`**: `templates/github-workflows/section-1-verbatim-postmerge.yml` 와 byte-identical (ADR-005 self-application invariant — diff -q exit 0 verified).
+- **`overlay/hooks/validate_config.py` 확장** (`bootstrap.fallback_mode` enum): `auto` | `action_blocked` enum 검증 추가. field 부재 = default `auto` (no error). 허용 외 값 = exit 4 (schema violation). ADR-027 Amendment 2 §결정 6.A SSOT 정합.
+- **`overlay/hooks/tests/test_validate_config.py` 확장** (TDD red→green): `TestBootstrapFallbackMode` class 7 TC 추가 — absent/auto/action_blocked/invalid/strict_mode_coexist/uppercase/empty_string. 32/32 PASS.
+- **`.claude/_overlay/project.yaml.example` 갱신**: `bootstrap.fallback_mode` commented 예시 추가 (Trigger (A)/(C) 설명 + 우선순위 CLI > env > yaml 명시).
+- **`docs/evidence-checks-registry.yaml` 갱신**: `section-1-verbatim-postmerge` entry `status: deferred-followup` → `Active` 전환 + `detect_command` + `workflow` 필드 채움 (Phase 2 carrier 신설 완료).
+
+### Sibling sync (별 PR — Orchestrator monopoly)
+
+- `mclayer/marketplace` plugins[name=codeforge].version 5.57.0 → 5.58.0 (ADR-063 §결정 5 atomic invariant — MINOR bump 동반 marketplace sync required).
+
 ## [5.57.0] - 2026-05-14 — CFP-658 Wave 1 of Epic CFP-431 (audit:from-mctrader-debut) — Action 차단 환경 agent direct write fallback path 표준화
 
 ### Added
