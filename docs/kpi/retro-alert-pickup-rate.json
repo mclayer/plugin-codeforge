@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.1",
+  "introduced_by": "CFP-628",
+  "value": null,
+  "gate_status": null,
+  "measured_at": null,
+  "window_months": 1,
+  "last_window": null,
+  "denominator": null,
+  "numerator": null,
+  "history": []
+}

@@ -1,0 +1,19 @@
+{
+  "_comment": "codeforge retro alert pre-screen — SessionStart hook sample (CFP-628 Story 2 / ADR-045 §D-5).",
+  "_doc": "Append this hook definition to consumer's `.claude/settings.json` under `hooks.SessionStart[]` array. drift / worktree-gc / prereq-check 와 동일 등록 패턴.",
+  "_purpose": "session 개시 시 open `phase:완료` issue 안 `[PMO] retro alert` prefix comment scan. 35min 경과 (retry 4회 완료 latency) 필터 적용. 미해소 alert 존재 시 Orchestrator 에 prompt-injection 으로 PMOAgent spawn 의무 알림.",
+  "_severity": "Advisory only (blocking: false) — exit 0 = no alert, exit 1 = alert detected + stdout prompt-injection. Session 진입 자체는 차단하지 않음 (non-blocking). Orchestrator 자율 결정 채널.",
+  "_bypass": "BYPASS_RETRO_ALERT_SCAN=1 env (debugging only). 35min 미만 comment = false positive 자동 filter (retry 진행 중 race condition 보호).",
+  "_filter": "pickup 대상: `[PMO] retro alert` prefix (정확 prefix 매칭). 제외 대상: `[PMO] Retro automation failed after 3 retries` (ESCALATE comment — 별 prefix, pickup 불필요).",
+  "_prerequisite": "gh CLI + jq. 미설치 시 exit 0 (advisory — non-blocking).",
+  "_ssot": "ADR-045 §D-5 — Orchestrator SessionStart retro alert scan mandate. CFP-628 Story 2 spec §3.3 verbatim.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "command": "bash scripts/check-retro-alerts.sh",
+        "blocking": false,
+        "description": "ADR-045 §D-5 — retro alert pre-screen (CFP-628 Story 2)"
+      }
+    ]
+  }
+}
