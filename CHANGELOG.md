@@ -2,6 +2,12 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.12.0] - 2026-05-14
+
+### Added
+
+- `design-output-v2` contract v2.2 → v2.3 MINOR — `chief_author_artifact.spec_invariant_measurement_required: bool` field 신설 (CFP-662 / Issue mclayer/plugin-codeforge#669, Epic CFP-620 sibling, codeforge-develop PR #25 canonical 정합, doc-only fast-path ADR-054).
+
 ## [0.11.0] - 2026-05-13
 
 ### CFP-582 — ADR-059 Amendment 2 / debate-protocol-v1 v1.2 sibling sync — Blanket Adversarial Debate Trigger (MINOR)
