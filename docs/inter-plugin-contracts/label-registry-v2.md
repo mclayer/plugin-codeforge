@@ -1,14 +1,14 @@
 ---
 kind: registry
 registry: label
-version: "2.12"
+version: "2.13"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
 created_date: 2026-05-09
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/label-registry-v2.md
-date: 2026-05-14  # CFP-627 v2.12 — hotfix-bypass:marketplace-drift-detection 19번째 family member (ADR-063 Amendment 3 §결정 13 carrier — marketplace reactive scheduled drift detection 4th defense layer + ADR-060 framework 45번째 entry warning-tier, post-CFP-638 base) | prior: CFP-638 v2.11 — hotfix-bypass:stop-time-continuous-confirm 18번째 family member (ADR-064 Amendment 3 §결정 9 sister carrier — Continuous '진행해' 패턴 mechanical detect advisory channel + ADR-060 framework 44번째 entry, post-CFP-631 atomic realignment) | CFP-631 v2.10 — hotfix-bypass:marketplace-description-verbatim 17번째 family member (ADR-063 Amendment 2 carrier — description proactive PR-time lint blocking-on-pr 직접 시작, §결정 19 auto_blocking manual gate + 사용자 directive Story §1) | CFP-628 v2.9 — hotfix-bypass:retro-alert-pickup 16번째 family member (ADR-045 §D-5 / ADR-060 framework 42번째 entry carrier — retro alert pickup KPI warning-tier sentinel) | CFP-619 v2.8 — hotfix-bypass:retro-mandatory-deployed 15번째 family member (ADR-045 mandate restoration + ADR-060 framework 41번째 entry carrier — retro-mandatory.yml byte-identical mirror deployment sentinel) | CFP-610 v2.6 sub-entry — hotfix-bypass:wording-dictionary 13번째 family member (ADR-064 Amendment 2 wording-dictionary lint warning-tier entry carrier) | CFP-582 v2.6 sub-entry — hotfix-bypass:debate-convergence-quality 12번째 family member (ADR-059 Amendment 2 §결정 8 + ADR-024 Amendment 5 carrier — convergence_quality_invariant 3 marker mechanical enforcement 첫 debate 영역 warning-tier entry) | CFP-583 v2.6 sub-entry — hotfix-bypass:workflow-yaml-parse 11번째 family member (ADR-060 Amendment 9 §결정 22 evidence-enforceable warning-tier entry carrier — 6 broken workflow yaml ScannerError sentinel 회복) | CFP-530 v2.5 sub-entry — hotfix-bypass:workflow-permissions 10번째 family member (ADR-060 Amendment 8 §결정 21 evidence-enforceable warning-tier entry carrier) | CFP-429 v2.5 — from-cfp-425-followup provenance label append (Epic CFP-425 gate FAIL 분기 후속 carrier) | CFP-521 v2.4 sub-entry — hotfix-bypass:sibling-pr-author-check 9번째 family member (ADR-010 Amendment 4 §결정 5 anti-misuse 안전망) | CFP-506 v2.4 sub-entry — hotfix-bypass:claude-md-line-cap 8번째 | CFP-481 v2.4 — phase:* attach_owner_plugin field 갱신 (auto-phase-label.yml 명시)
+date: 2026-05-14  # CFP-658 v2.13 — fallback:* family 신설 (fallback:manual + fallback:rate-limited, ADR-027 Amendment 2 §결정 6 carrier — Action-blocked agent direct write fallback path normative SSOT, post-CFP-627 v2.12 atomic rebase) | CFP-627 v2.12 — hotfix-bypass:marketplace-drift-detection 19번째 family member (ADR-063 Amendment 3 §결정 13 carrier — marketplace reactive scheduled drift detection 4th defense layer, post-CFP-638 base) | CFP-638 v2.11 — hotfix-bypass:stop-time-continuous-confirm 18번째 family member (ADR-064 Amendment 3 §결정 9 sister carrier — Continuous '진행해' 패턴 mechanical detect advisory channel) | CFP-631 v2.10 — hotfix-bypass:marketplace-description-verbatim 17번째 family member (ADR-063 Amendment 2 carrier — description proactive PR-time lint blocking-on-pr 직접 시작) | CFP-628 v2.9 — hotfix-bypass:retro-alert-pickup 16번째 family member (ADR-045 §D-5 retro alert pickup KPI warning-tier sentinel) | CFP-619 v2.8 — hotfix-bypass:retro-mandatory-deployed 15번째 family member (ADR-045 mandate restoration carrier) | CFP-610 v2.6 sub-entry — hotfix-bypass:wording-dictionary 13번째 (ADR-064 Amendment 2) | CFP-582 v2.6 sub-entry — hotfix-bypass:debate-convergence-quality 12번째 (ADR-059 Amendment 2 §결정 8) | CFP-583 v2.6 sub-entry — hotfix-bypass:workflow-yaml-parse 11번째 | CFP-530 v2.5 sub-entry — hotfix-bypass:workflow-permissions 10번째 | CFP-429 v2.5 — from-cfp-425-followup provenance label | CFP-521 v2.4 sub-entry — hotfix-bypass:sibling-pr-author-check 9번째 | CFP-506 v2.4 sub-entry — hotfix-bypass:claude-md-line-cap 8번째 | CFP-481 v2.4 — phase:* attach_owner_plugin field 갱신
 authors:
   - Claude (CFP-140 — ADR-049 type:* → native Issue Types cutover)
 related_adrs:
@@ -52,6 +52,15 @@ related_files:
 # label-registry v2
 
 ## 변경 이력
+
+**v2.12 (CFP-658 / ADR-027 Amendment 2, 2026-05-14)**: MINOR bump (신규 `fallback` category enum + 2 entry first-class).
+- **추가**: `fallback:manual` (color `c5def5` audit-trailed) — per-Issue ad-hoc override marker. Orchestrator 가 부착 시 `bootstrap.fallback_mode: action_blocked` (declarative trigger A) 와 무관 fallback path 활성. 우선순위 (C) > (A). ADR-027 Amendment 2 §결정 6.A carrier — Action 차단 환경 또는 일반 Action failure 시 manual agent direct write path 진입 의무.
+- **추가**: `fallback:rate-limited` (color `c5def5` audit-trailed) — `manual-story-init-fallback.sh` (Phase 2 carrier) 의 exponential backoff (1s/2s/4s) max 3 retry 초과 시 silent skip + 자동 부착 label. OpRiskArch 조건 4 carrier (rate-limit detection + audit-trailed channel).
+- **신규 category enum**: `fallback` — 기존 7 category (type / phase / gate / fix / hotfix / audit / hotfix-bypass / monitoring / conflict) 와 별 axis. ADR-008 §결정 1 BREAKING enum 추가 아님 — namespace 정합 (label name `fallback:` prefix 가 self-distinguishing). consumer overlay 영역 외, canonical-only.
+- `comment-prefix-registry-v1` `[SECURITY-FALLBACK]` prefix 신설 (SecurityArch 조건 4 carrier) — 본 entry 와 동행, separate PR.
+- `scripts/bootstrap-labels.sh` sync 동반 의무 (Phase 1 PR scope — fallback:* 2 entry 직접 hardcoded append, ADR-065 §결정 1 #1 self-check PASS gate).
+- canonical-only (kind:registry — sibling sync scope 외 per ADR-010 §결정 2).
+- ADR-063 §결정 18 정합: plugin.json MINOR bump 동반 (5.56.0 → 5.57.0) → marketplace.json sync required (별 PR, mclayer/marketplace repo, 선행 merge 의무).
 
 **v2.10 (CFP-631 / ADR-063 Amendment 2, 2026-05-14)**: PATCH bump (schema 무변경 — §3 yaml hotfix-bypass:* 17번째 family member append). rebase race 4th sample 반영 (버전 재산정: 5.48.0 → 5.50.0).
 - **추가**: `hotfix-bypass:marketplace-description-verbatim` (color `fef2c0` audit tier) — `templates/github-workflows/marketplace-description-verbatim.yml` (Phase 2 carrier) blocking-on-pr lint conditional skip + audit comment 자동 발의 channel (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합, **17번째 hotfix-bypass:* family member** — CFP-598 backfill 12 entry + CFP-610 wording-dictionary 14th + CFP-619 retro-mandatory-deployed 15th + CFP-628 retro-alert-pickup 16th + 본 entry 17th. ADR-063 Amendment 2 §결정 11 mandate carrier — description PR-time mechanical proactive lint, blocking-on-pr 직접 시작 근거 = ADR-060 §결정 5 default warning explicit exception + §결정 19 Amendment 6 (CFP-509) auto_blocking manual gate path + 사용자 directive Story §1 verbatim).
@@ -625,6 +634,23 @@ labels:
     description: "hotfix-bypass: marketplace ↔ wrapper plugin.json reactive scheduled drift detection workflow skip + audit comment 자동 발의 (CFP-627 / ADR-063 Amendment 3 §결정 13 / ADR-024 Amendment 3 §결정 6.A — templates/github-workflows/marketplace-drift-detection.yml Phase 2 carrier — warning tier 신규 entry, 4th defense layer reactive scheduled cron channel). 19번째 hotfix-bypass:* family member."
     single_active: false
     attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  # fallback:* (2종 — CFP-658 / ADR-027 Amendment 2 §결정 6.A carrier — Action 차단 환경 manual agent direct write path)
+  # 신규 category enum: fallback (별 axis). canonical-only (kind:registry — sibling sync scope 외 per ADR-010 §결정 2).
+  # plugin.json MINOR bump 동반 (5.56.0 → 5.57.0) — marketplace.json sync required (ADR-063 §결정 18).
+  - name: fallback:manual
+    category: fallback
+    color: "c5def5"
+    description: "fallback: per-Issue ad-hoc override marker (CFP-658 / ADR-027 Amendment 2 §결정 6.A). Orchestrator 가 부착 시 bootstrap.fallback_mode: action_blocked (declarative Trigger A) 와 무관 manual agent direct write path 활성. 우선순위 (C) > (A) — Issue 발의자 또는 Orchestrator 의 일시 outage / 사용자 explicit 선택 영역. RequirementsPL / ArchitectPL 의 manual `bash templates/scripts/manual-story-init-fallback.sh <ISSUE_NUMBER>` 호출 의무 (Phase 2 carrier 신설 후 활성). 4 required check + enforce_admins:true ratchet 유지."
+    single_active: false
+    attach_owner_plugin: "Orchestrator / 사용자 직접 (Issue 발의 시 또는 fallback path 진입 시점)"
+
+  - name: fallback:rate-limited
+    category: fallback
+    color: "c5def5"
+    description: "fallback: rate-limited skip audit marker (CFP-658 / ADR-027 Amendment 2 §결정 6.G). manual-story-init-fallback.sh (Phase 2 carrier) 의 exponential backoff (1s/2s/4s) max 3 retry 초과 시 silent skip + 자동 부착. OpRiskArch 조건 4 carrier — GitHub secondary content-creation rate-limit (503/429) 영역 audit-trailed channel."
+    single_active: false
+    attach_owner_plugin: "manual-story-init-fallback.sh (자동) / Orchestrator (수동 audit 시)"
 ```
 
 ## 4. 변경 규칙

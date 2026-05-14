@@ -114,6 +114,11 @@ create_label "conflict:section-locked" "d93f0b" "section-ownership.yaml locked �
 create_label "merge-order:1"           "0075ca" "병렬 에픽 충돌 시 먼저 merge해야 하는 PR (낮은 CFP 번호)"
 create_label "merge-order:2"           "e4e669" "병렬 에픽 충돌 시 merge-order:1 완료 후 git rebase main 의무"
 
+# fallback:* (2종 — CFP-658 / ADR-027 Amendment 2 §결정 6.A carrier — Action 차단 환경 manual agent direct write path)
+# label-registry-v2 v2.12 MINOR bump 동반. canonical-only (kind:registry — sibling sync scope 외).
+create_label "fallback:manual"        "c5def5" "fallback: per-Issue ad-hoc override marker (CFP-658 / ADR-027 Amendment 2 §결정 6.A) — Orchestrator 가 부착 시 bootstrap.fallback_mode: action_blocked 와 무관 manual agent direct write path 활성"
+create_label "fallback:rate-limited"  "c5def5" "fallback: rate-limited skip audit marker (CFP-658 / ADR-027 Amendment 2 §결정 6.G) — manual-story-init-fallback.sh exponential backoff max 3 retry 초과 시 자동 부착"
+
 # hotfix-bypass:* — full set via dynamic read (CFP-598 below).
 # CFP-610 / ADR-064 Amendment 2 — wording-dictionary entry now sourced from §3 yaml dynamic read (NOT hardcoded here).
 # CFP-619 — pre-existing CFP-610 leak resolution: prior hardcoded `create_label "hotfix-bypass:wording-dictionary"` removed
@@ -192,7 +197,7 @@ fi
 
 if [ $DRY_RUN -eq 0 ]; then
     echo ""
-    echo "✓ 33 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."
+    echo "✓ 35 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."
 fi
 
 # CFP-492 2-way self-check (DRY_RUN 모드에서만):

@@ -245,6 +245,56 @@ codeforge family 가 사용하는 `CODEFORGE_CROSS_REPO_PAT` (cross-repo Story b
 
 > **작업 규칙 (normative — CFP-341)**: 모든 변경 작업(lane spawn + ad-hoc)은 worktree 안에서 수행. 원본 clone directory 직접 편집 금지. `bash templates/scripts/worktree-create.sh <branch> origin/main` 으로 worktree 생성 후 작업 시작. 상세 [playbook §3.0.10](orchestrator-playbook.md).
 
+### 1h. Action 차단 환경 fallback (CFP-658 / [ADR-027 Amendment 2](adr/ADR-027-consumer-adoption-protocol.md))
+
+GitHub Enterprise org 의 admin policy 가 `default_workflow_permissions: read` cap 설정 시 — codeforge 6 핵심 workflow 가 silent skip. consumer workaround 금지 (ADR-039 inline whitelist) 와 codeforge 의무 사용 (ADR-027) 의무 충돌 해소를 위한 **manual fallback path** 의무.
+
+#### 활성 trigger 2종 (hybrid, 우선순위 (C) > (A))
+
+**(A) Declarative — environment default**:
+
+`.claude/_overlay/project.yaml` 에 `bootstrap.fallback_mode: action_blocked` enable:
+
+```yaml
+bootstrap:
+  fallback_mode: action_blocked  # default: auto
+```
+
+영구 차단 환경 default. Orchestrator 가 매 Story spawn 시 본 flag 검증 — true 시 자동 manual fallback path 활성.
+
+**(C) Explicit ad-hoc — per-Issue override**:
+
+Issue 발의자 또는 Orchestrator 가 `fallback:manual` label 부착. 일시 outage / 사용자 explicit 선택 시. environment default 와 무관 활성 (per-Issue override > env default).
+
+#### Consumer runbook
+
+1. `.claude/_overlay/project.yaml` 의 `bootstrap.fallback_mode: action_blocked` 설정 (영구 차단 환경)
+2. 신규 Story Issue 발의 시 `type: story + phase:요구사항` label 부착 — Orchestrator 가 fallback path 자동 진입
+3. RequirementsPL / ArchitectPL 가 manual `bash templates/scripts/manual-story-init-fallback.sh <ISSUE_NUMBER>` 호출 (Phase 2 carrier — 본 script 신설 후 활성)
+4. 4 required check (phase-gate-mergeable + doc frontmatter + doc section + invariant-check) 통과 의무 — admin override 차단 (`enforce_admins: true` ratchet 유지, CFP-70)
+5. `fallback:manual` label 부착 PR description 의 checklist 의무:
+
+```markdown
+## Manual fallback checklist
+- [ ] Issue body §1 verbatim copy (byte-identical 검증)
+- [ ] KEY = PREFIX-${ISSUE_NUMBER} (ADR-036 atomic)
+- [ ] Branch existence_check (`gh api repos/<owner>/<repo>/branches/<branch>`)
+- [ ] PR opened via `gh pr create`
+- [ ] phase:요구사항 label 부착
+- [ ] `fallback:manual` label 부착
+```
+
+#### 2-PAT 모델 (consumer 영역)
+
+| PAT name | Scope | 용도 |
+|---|---|---|
+| `CODEFORGE_CROSS_REPO_PAT` (기존) | repo + read:org | phase-gate-mergeable.yml + rate-limit-fallback-kpi.yml (§1g rotation policy) |
+| `CODEFORGE_FALLBACK_PAT` (신설) | repo only | manual fallback path 전용 — write:packages / admin:* 금지 |
+
+namespace 분리 = fallback path 침해 시 blast radius 최소화. ADR-066 90 days rotation 정합 (`docs/security/pat-rotation-log.md` audit entry 의무).
+
+상세 SSOT: [domain-knowledge `workflow-blocked-manual-fallback.md`](domain-knowledge/domain/github-actions/workflow-blocked-manual-fallback.md) + [ADR-027 §결정 6](adr/ADR-027-consumer-adoption-protocol.md) + [orchestrator-playbook §"fallback decision tree"](orchestrator-playbook.md).
+
 ## 2. Consumer 프로젝트 구조 초기화
 
 ```

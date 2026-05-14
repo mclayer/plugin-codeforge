@@ -201,3 +201,7 @@ spec / Phase 1 PR / Phase 2 PR 모두 KEY 인용 (race-free)
 - [`docs/adr/ADR-024-story-scoped-branch-policy.md`](ADR-024-story-scoped-branch-policy.md) — branch governance cross-ref
 - [Internal-docs Change Plan: CFP-260](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/change-plans/cfp-260-project-key-atomic-reservation.md)
 - [Internal-docs Epic spec: CFP-259](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-05-08-cfp-259-plugin-version-key-governance-epic-design.md)
+
+## CFP-658 cross-ref
+
+ADR-027 Amendment 2 (CFP-658, Wave 1 of Epic CFP-431) §결정 6.H = 본 ADR-036 §결정 1 (`KEY = PREFIX-${ISSUE_NUMBER}` atomic) invariant manual write 영역 보존 — `manual-story-init-fallback.sh` (Phase 2 carrier) 안 `templates/github-workflows/story-init.yml` L107-124 existence_check step verbatim port 로 race-condition 보호 활성. brainstorming 시점 KEY 사전 추측 금지 invariant 동일하게 manual fallback path 에서도 enforce.

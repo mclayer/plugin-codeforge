@@ -1635,6 +1635,62 @@ E11 popup turn 의 Layer 2 면제 사유 = popup 본문 자체가 declare semant
 
 ---
 
+### §3.15 Action-blocked fallback decision tree (CFP-658 / [ADR-027 Amendment 2](../docs/adr/ADR-027-consumer-adoption-protocol.md))
+
+enterprise org-level `default_workflow_permissions: read` 차단 환경 또는 일반 Action failure 시 codeforge 의무 사용 + ADR-039 inline whitelist 외 영역 modification 금지 의무 충돌 해소. Orchestrator 가 매 lane spawn 직전 본 decision tree 수행.
+
+#### Trigger detection 절차 (lane spawn 직전 의무)
+
+```
+매 lane spawn 직전:
+  ┌─ Step 1: Issue label `fallback:manual` 부착 여부 확인 (Trigger C)
+  │     YES → fallback path 활성 (per-Issue override)
+  │     NO → Step 2
+  │
+  └─ Step 2: `.claude/_overlay/project.yaml` 의 `bootstrap.fallback_mode` 확인 (Trigger A)
+        == "action_blocked" → fallback path 활성 (environment default)
+        == "auto" or absent → 정상 workflow path (story-init.yml 자동 실행 가정)
+```
+
+우선순위 (C) > (A). per-Issue 명시 의지 > environment default. (A) 활성 환경에서도 (C) label 없는 Issue 는 정상 workflow 시도 후 fail 시 사용자 escalate.
+
+**Option (B) Outage detection 폐기**: workflow run conclusion + N분 timeout 자동 감지 = workflow self-fail detection 불가 (silent failure, Researcher 위험 1) → 폐기.
+
+#### Fallback path 활성 시 Orchestrator 행동
+
+| Step | 행동 | Owner |
+|---|---|---|
+| 1 | RequirementsPLAgent spawn (mctrader-hub MCT-135 패턴 시 skip 가능 — ADR-064 §결정 3 룰 1 derived default) | Orchestrator |
+| 2 | ArchitectPLAgent spawn — Phase 1 PR manual `gh pr create` 책임 + Codex Touchpoint #2 dispatch (ADR-052 Amendment 4 mandatory) | Orchestrator |
+| 3 | `templates/scripts/manual-story-init-fallback.sh <ISSUE_NUMBER>` 호출 (Phase 2 carrier 신설 후 활성) | ArchitectPLAgent or RequirementsPLAgent |
+| 4 | phase label 수동 전이 (`codeforge:lane-self-write-boundary` skill 정합) | Orchestrator self-write |
+| 5 | Story §14 Lane Evidence row append (ADR-031) | Orchestrator |
+| 6 | Trigger (C) PR description 의 manual fallback checklist 6 항목 검증 | Orchestrator |
+
+#### Governance ratchet 약화 mitigation 3종 (자동 발화)
+
+| Invariant | Mitigation | Tier |
+|---|---|---|
+| §1 verbatim immutable | post-merge lint `section-1-verbatim-postmerge.yml` (Phase 2 carrier) warning tier | ADR-060 framework |
+| phase-label transition | Orchestrator 수동 의무 (본 §3.15 Step 4) | governance |
+| 4 required check | manual PR 도 phase-gate-mergeable + doc frontmatter + doc section + invariant-check 통과 의무 (`enforce_admins:true` ratchet 유지, CFP-70) | blocking |
+
+#### Codex Touchpoint #2 mandatory (ADR-052 Amendment 4)
+
+manual fallback path 활성 시에도 ArchitectAgent §3 직후 Codex proactive check dispatch 의무. `artifacts` 필드 verbatim attach (ADR-070) — manual write 영역의 governance ratchet 약화 vector 차단 forcing function.
+
+#### env=0 / env=1 동작 동일
+
+`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS` env 무관. agent teams platform capability 와 별 — fallback path 활성화는 Orchestrator detection 수준 결정.
+
+상세 SSOT:
+- [ADR-027 §결정 6](../docs/adr/ADR-027-consumer-adoption-protocol.md) — fallback path normative SSOT
+- [domain-knowledge `workflow-blocked-manual-fallback.md`](../docs/domain-knowledge/domain/github-actions/workflow-blocked-manual-fallback.md) — recovery runbook
+- [consumer-guide §1h](consumer-guide.md) — consumer runbook
+- [project-config-schema](project-config-schema.md) — `bootstrap.fallback_mode` schema
+
+---
+
 ## 3B. Preflight 체크 (lane 진입 직전)
 
 **doc-only fast-path 분기 (ADR-054)**: Story 분류 판정 직후, Orchestrator가 §결정 1 분류 표 적용. `doc-only fast-path` 해당 시: 설계 lane → 경량 설계리뷰 → 단일 PR close (구현 lane spawn 금지). `full-lane` 해당 시: 기존 5-lane 전체. 모호 시 full-lane 강제. 판정 표 SSOT: [ADR-054](../docs/adr/ADR-054-doc-only-story-fast-path.md).
