@@ -138,6 +138,15 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     # CFP-127 / ADR-032 amendment 1 — strict mode opt-in
     ("bootstrap.strict_mode", False, lambda v: isinstance(v, bool),
      "bootstrap.strict_mode (boolean, default false — CFP-127 / ADR-032 strict mode opt-in priority 3 (yaml < env < CLI)), optional"),
+    # CFP-658 Phase 2 / ADR-027 Amendment 2 §결정 6.A — fallback_mode enum
+    # Trigger (A): enterprise GitHub Actions default_workflow_permissions:read 차단 환경
+    # Trigger (C): Issue 발의자 ad-hoc override (`fallback:manual` label, 우선순위 (C) > (A))
+    # Default = "auto" (field 부재 시 적용, 에러 없음)
+    ("bootstrap.fallback_mode", False,
+     lambda v: isinstance(v, str) and v in ("auto", "action_blocked"),
+     "bootstrap.fallback_mode ('auto' | 'action_blocked'), optional, default 'auto' — "
+     "ADR-027 Amendment 2 §결정 6.A. 'action_blocked' = enterprise Actions 차단 환경 "
+     "agent direct write fallback path 활성화"),
     # CFP-114 / ADR-029 — progress narration verbosity
     ("progress_narration_verbosity", False, _is_progress_narration_verbosity,
      "progress_narration_verbosity ('full' | 'lane_only'), optional, default 'full'"),

@@ -1453,8 +1453,8 @@ entries:
       layer. Phase 2 carrier (CFP-658) 가 templates/github-workflows/section-1-verbatim-postmerge.yml
       + .github/workflows/section-1-verbatim-postmerge.yml byte-identical mirror
       배포 후 Active 전환.
-    detect_command: null  # deferred-followup — CFP-658 Phase 2 carrier (script + workflow 신설)
-    workflow: null  # templates/github-workflows/section-1-verbatim-postmerge.yml — Phase 2 carrier
+    detect_command: workflow inline — Python §1 extract + diff -q byte-identical compare  # CFP-658 Phase 2 Active
+    workflow: .github/workflows/section-1-verbatim-postmerge.yml  # CFP-658 Phase 2 신설 (byte-identical mirror ADR-005)
     current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
     bypass_label: hotfix-bypass:section-1-verbatim-postmerge
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
@@ -1477,4 +1477,4 @@ entries:
       threshold: 3
       promotion_trigger: advisory
       last_occurrence: null
-    status: deferred-followup  # ADR-060 framework — Phase 2 carrier 신설 후 Active 전환
+    status: Active  # CFP-658 Phase 2 carrier 신설 완료 → deferred-followup → Active 전환 (2026-05-14)

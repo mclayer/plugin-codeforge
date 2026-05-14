@@ -238,3 +238,68 @@ class TestE2E:
             # so validation passes (placeholders treated as valid filler, not enforced
             # value validation).
             assert res.returncode == 0, f"validator failed on {yaml_path}: {res.stderr}"
+
+
+# -----------------------------------------------------------------------------
+# CFP-658 Phase 2 — bootstrap.fallback_mode enum validator tests (TDD red phase)
+# ADR-027 Amendment 2 §결정 6.A — fallback_mode enum: "auto" | "action_blocked"
+# -----------------------------------------------------------------------------
+
+
+class TestBootstrapFallbackMode:
+    """bootstrap.fallback_mode enum 검증 테스트 (CFP-658 Phase 2 / ADR-027 Amendment 2 §결정 6.A).
+
+    fallback_mode:
+        - field 부재 = default "auto" (no error, no warning)
+        - "auto" = PASS
+        - "action_blocked" = PASS
+        - 그 외 문자열 = error (exit 4 / validate() 반환 비어있지 않음)
+    """
+
+    def test_fallback_mode_absent_default_auto(self):
+        """bootstrap.fallback_mode 부재 시 에러 없음 — default auto 적용."""
+        data = _minimal_valid_data()
+        data["bootstrap"] = {}  # fallback_mode 없이 bootstrap 섹션만
+        assert vc.validate(data) == []
+
+    def test_fallback_mode_auto_valid(self):
+        """bootstrap.fallback_mode: auto 는 유효."""
+        data = _minimal_valid_data()
+        data["bootstrap"] = {"fallback_mode": "auto"}
+        assert vc.validate(data) == []
+
+    def test_fallback_mode_action_blocked_valid(self):
+        """bootstrap.fallback_mode: action_blocked 는 유효."""
+        data = _minimal_valid_data()
+        data["bootstrap"] = {"fallback_mode": "action_blocked"}
+        assert vc.validate(data) == []
+
+    def test_fallback_mode_invalid_value_raises(self):
+        """bootstrap.fallback_mode: 허용 외 값 → 오류."""
+        data = _minimal_valid_data()
+        data["bootstrap"] = {"fallback_mode": "invalid_value"}
+        errs = vc.validate(data)
+        assert errs, "invalid fallback_mode 은 반드시 오류를 반환해야 한다"
+        assert any("fallback_mode" in e for e in errs)
+
+    def test_fallback_mode_strict_mode_coexist_valid(self):
+        """bootstrap.strict_mode: true + bootstrap.fallback_mode: action_blocked 동시 유효."""
+        data = _minimal_valid_data()
+        data["bootstrap"] = {"strict_mode": True, "fallback_mode": "action_blocked"}
+        assert vc.validate(data) == []
+
+    def test_fallback_mode_uppercase_invalid(self):
+        """bootstrap.fallback_mode: 'AUTO' (대문자) 는 enum 불일치 → 오류."""
+        data = _minimal_valid_data()
+        data["bootstrap"] = {"fallback_mode": "AUTO"}
+        errs = vc.validate(data)
+        assert errs, "'AUTO' 는 허용 값이 아니다"
+        assert any("fallback_mode" in e for e in errs)
+
+    def test_fallback_mode_empty_string_invalid(self):
+        """bootstrap.fallback_mode: '' (빈 문자열) 는 허용 값 아님 → 오류."""
+        data = _minimal_valid_data()
+        data["bootstrap"] = {"fallback_mode": ""}
+        errs = vc.validate(data)
+        assert errs, "빈 문자열은 허용 값이 아니다"
+        assert any("fallback_mode" in e for e in errs)
