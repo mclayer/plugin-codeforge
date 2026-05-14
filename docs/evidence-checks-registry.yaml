@@ -1405,7 +1405,7 @@ entries:
       ADR-72 §결정 5 mechanical verification — EPIC CLOSED gate (PMOAgent
       retro epic_close_gate) 의 production 실측 evidence quad (bucket prefix
       listing + WAL sample + Prometheus rate metric + L1 backlog drainage rate)
-      4중 박제 verify. ADR-72 신설 시점 detect script + workflow 부재
+      4중 명시 verify. ADR-72 신설 시점 detect script + workflow 부재
       (deferred-followup status). Sibling Story-4 (plugin-codeforge-pmo#18)
       가 PMOAgent retro template gate 본문 추가 prerequisite — follow-up
       CFP-Z' 가 retro-mandatory.yml 통합 + epic_close_gate evidence quad lint
