@@ -1,13 +1,15 @@
 ---
 title: CODEFORGE_CROSS_REPO_PAT rotation audit log
 status: Active
-date: 2026-05-13
+date: 2026-05-14
 related_adrs:
   - ADR-013
+  - ADR-063
   - ADR-066
 related_cfp:
   - CFP-450
   - CFP-521
+  - CFP-627
 ---
 
 # CODEFORGE_CROSS_REPO_PAT rotation audit log
@@ -21,6 +23,7 @@ CFP-450 (ADR-013 Amendment 4) PAT consolidation 후 단일 `CODEFORGE_CROSS_REPO
 | rotated_at (KST) | by | reason | expiration | revoked_at |
 |---|---|---|---|---|
 | 2026-05-12T??:??:??+09:00 | mccho@mclayer.it | CFP-450 initial issuance (Option B consolidation) | TBD — 사용자 확인 의무 | - |
+| 2026-05-14T??:??:??+09:00 (PENDING — Phase 2 PR description checklist 강제) | mccho@mclayer.it | **CFP-627 scope grant — marketplace contents:read** added for `marketplace-drift-detection.yml` workflow (ADR-066 Amendment 2 §결정 2 scope minimum 4종 정합 + ADR-063 Amendment 3 §결정 13 (post-rebase — CFP-631 occupied Amendment 2 §결정 11+12) reactive scheduled detection prerequisite). **Forcing function (DesignReview FIX iter 1 F-DR-004 option b)**: Phase 2 PR description checklist item "actual grant date update before merge (PENDING placeholder 해소 의무)" 의무 — Phase 2 PR merge 전 단일 placeholder 해소. audit trail integrity = manual update single-point-of-failure 차단. | TBD — Phase 2 진입 전 actual grant date + 90 days (ADR-066 §결정 1 권장 lifetime) | - |
 
 ## Schema
 

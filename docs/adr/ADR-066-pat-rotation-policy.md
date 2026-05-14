@@ -14,6 +14,7 @@ related_files:
 related_stories:
   - CFP-450
   - CFP-521
+  - CFP-627
 related_adrs:
   - ADR-013
   - ADR-016
@@ -22,6 +23,13 @@ related_adrs:
   - ADR-058
   - ADR-063
   - ADR-064
+amendments:
+  - amendment: 2
+    date: 2026-05-14
+    cfp: CFP-627
+    summary: "§결정 2 scope minimum 3종 → 4종 갱신 — marketplace `contents:read` grant 추가. ADR-063 Amendment 3 §결정 13 (post-rebase — CFP-631 occupied Amendment 2 §결정 11+12) reactive scheduled detection 의 `marketplace-drift-detection.yml` workflow 가 `mclayer/marketplace/.claude-plugin/marketplace.json` fetch 의무 → least-privilege 정합 신규 scope 의무. Strengthening direction only (scope 확장 = consolidation 정합) — ADR-064 top-down ratchet 정합. ADR-013 Amendment 4 단일 PAT consolidation 정책 무변경. Audit log row append placeholder (`docs/security/pat-rotation-log.md` Phase 1 placeholder + Phase 2 actual grant date — Phase 2 PR description checklist forcing function 의무, DesignReview FIX iter 1 F-DR-004 option b)."
+    is_transitional: false
+    sunset_justification: "N/A — permanent security policy. ADR-058 §결정 7 security ADR default presumption 정합 (is_transitional: false). ADR-064 §self-application top-down ratchet 정합 (Amendment 2 = scope 확장 강화 방향 only). 약화 방향 (scope 축소 / lifetime 연장 / rotation cadence 약화) 발의 차단."
 mechanical_enforcement_actions: []
 ---
 
@@ -56,15 +64,22 @@ CFP-450 이 도입한 consolidation 자체는 secret governance 의 첫 단계 (
 
 90 days 는 GitHub 권장 best practice + codeforge family 의 cross-repo 활성 활동 기간 (CFP cycle 평균 1-2 weeks × 8-10 Story = 분기 1회 회전이 정상 사용 cycle 과 align).
 
-### 결정 2 — Scope minimum (least privilege)
+### 결정 2 — Scope minimum (least privilege) (Amendment 2, CFP-627 — 3종 → 4종 갱신)
 
-PAT 발급 시 다음 3 scope 만 부여:
+PAT 발급 시 다음 4 scope 만 부여:
 
-- `repo:read` — internal-docs read scan (KPI workflow `rate-limit-fallback-kpi.yml`)
-- `repo:write` — cross-repo Issue comment / sub-issue link (`phase-gate-mergeable.yml`)
-- `metadata:read` — basic repo access
+| Scope | 사용처 | 도입 carrier |
+|---|---|---|
+| `repo:read` | internal-docs read scan (KPI workflow `rate-limit-fallback-kpi.yml`) | CFP-521 (initial) |
+| `repo:write` | cross-repo Issue comment / sub-issue link (`phase-gate-mergeable.yml`) | CFP-521 (initial) |
+| `metadata:read` | basic repo access | CFP-521 (initial) |
+| **`marketplace contents:read`** | **`marketplace-drift-detection.yml` (CFP-627) — `mclayer/marketplace/.claude-plugin/marketplace.json` fetch** | **CFP-627 ADR-066 Amendment 2 (binds ADR-063 Amendment 3 §결정 13 — post-rebase shift)** |
 
 `admin:org` / `delete_repo` / `workflow` / `gist` / 기타 광역 scope 부여 금지. 향후 신규 workflow 가 추가 scope 필요 시 별도 ADR 보완 의무.
+
+**Amendment 2 (CFP-627) rationale**: ADR-063 Amendment 3 §결정 13 (post-rebase — CFP-631 Amendment 2 §결정 11+12 occupied) reactive scheduled detection (`marketplace-drift-detection.yml`) 가 `mclayer/marketplace` repo 의 `marketplace.json` fetch 의무 → least-privilege 정합 신규 scope grant. ADR-013 Amendment 4 (PAT consolidation) 정책 무변경 — 단일 PAT scope 확장 (별 PAT 신설 X).
+
+**Grant 절차**: 본 ADR-066 §결정 3 5-step rotation 절차 inline trigger (사용자 manual blocker, Phase 2 진입 전 pre-clear). Phase 1 PR audit log entry placeholder (`docs/security/pat-rotation-log.md`) + Phase 2 진입 전 actual grant date 갱신 의무.
 
 ### 결정 3 — Rotation 절차 (5-step)
 

@@ -12,7 +12,7 @@
 # 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
 schema_version: "1.2"  # CFP-509 / ADR-060 Amendment 6 — recurrence field 정식 도입 (MINOR bump v1.1 → v1.2)
 introduced_by: CFP-389
-last_updated: 2026-05-14  # CFP-638 — stop-time-continuous-confirm-detect 44번째 entry append (ADR-064 Amendment 3 Story D — over-questioning anti-pattern P7 carrier, post-CFP-631 atomic realignment, CFP-631 marketplace-description-verbatim 43rd → CFP-638 stop-time-continuous-confirm-detect 44th)
+last_updated: 2026-05-14  # CFP-627 — marketplace-drift-detection 45번째 entry append (ADR-063 Amendment 3 §결정 13 carrier — 4-tuple reproduce evidence + recurrence count 3, ADR-060 framework warning tier 신규 entry 추가, post-CFP-638 base) | prior: CFP-638 — stop-time-continuous-confirm-detect 44번째 entry append (ADR-064 Amendment 3 Story D) | prior: CFP-631 — marketplace-description-verbatim 43번째 entry append (ADR-063 Amendment 2 §결정 11 blocking-on-pr)
 
 entries:
   - name: adr-sunset-criteria
@@ -1434,3 +1434,10 @@ entries:
       promotion_trigger: advisory
       last_occurrence: null
     status: deferred-followup  # ADR-060 framework — detect script + workflow 부재 영역, CFP-Z' carrier (Sibling Story-4 prerequisite) 후 Active 전환
+
+# marketplace-drift-detection entry deferred to Phase 2 carrier PR (CFP-627 FIX iter 3/3 — ADR-067 §결정 3 cross-lane RESET 차원 전환).
+# Phase 1 doc-only fast-path (ADR-054) scope = ADR-063 Amendment 3 §결정 13 declarative SSOT mandate only.
+# artifact (script + workflow + entry) = Phase 2 carrier PR scope (별 Story / 별 PR).
+# ADR-068 I-1 boundary completeness 정합 — Phase 1 declarative vs Phase 2 mechanical 분리 의도 회복.
+# evidence-registry-naming-check VIOLATION 회피 + Phase 1 doc-only scope 보존 동시 충족.
+# Phase 2 carrier 발의 시 본 entry append + workflow file 도입 의무.

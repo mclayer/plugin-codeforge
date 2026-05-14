@@ -203,6 +203,19 @@ Registration + parity audit + unregister + lifecycle 통합 ADR.
 
 N/A — permanent policy
 
+## Cross-ref: ADR-063 Amendment 3 (정기 detection) (CFP-627, 2026-05-14)
+
+ADR-063 Amendment 3 §결정 13 (CFP-627, 2026-05-14) = ADR-016 §결정 1 family scope (7 plugin = wrapper + 6 lane) 의 mirrored field 4종 atomic invariant 의 **reactive scheduled detection 의무** 신설. 본 ADR-016 의 family registration 의무가 ADR-063 atomic invariant 의 scope 범위 그대로 통과 (mirror invariant, ADR-068 I-1 boundary completeness 정합).
+
+- **Detection scope**: 본 ADR-016 §결정 1 family 7 plugin (wrapper + 6 lane) 전체 (`scripts/check-marketplace-drift.sh` PLUGINS array verbatim mirror)
+- **Detection field**: 본 ADR-016 §결정 2 mirrored field 4종 (`name` / `version` / `description` / `author`)
+- **Detection cadence**: 24h scheduled cron + `workflow_dispatch` manual fallback
+- **Mismatch 분기**: `[MARKETPLACE-DRIFT] codeforge family drift detected` Issue 발의 (ADR-063 §결정 13 정합)
+- **Registration leak 분기**: marketplace.json `plugins[]` 안 family plugin entry 결손 시 `[MARKETPLACE-DRIFT] codeforge family registration leak — <plugin-name>` Issue 발의 = **본 ADR-016 §결정 1 violation detection** (forward-looking 정책 §결정 4 enforcement)
+- **API failure 3-branch (DesignReview FIX iter 1 F-DR-005 ADR-068 I-3 guard placement intent 정합)**: 401 PAT expired = fail-closed manual blocker (사용자 PAT 재발급 의무) / 429 rate-limit = fail-open silent retry (24h cron 자연 회복) / 5xx network = fail-closed-with-retry (in-run 3회 exponential backoff)
+
+본 cross-ref 단락 = **Amendment 미발의** (append-only ratchet, ADR-064 §self-application top-down ratchet 정합). ADR-016 §결정 1-8 정책 무변경 — ADR-063 Amendment 3 의 detection 영역이 본 ADR-016 family scope 정의 그대로 차용함을 명시.
+
 ## 관련 파일
 
 - 본 ADR
@@ -211,5 +224,6 @@ N/A — permanent policy
 - [ADR-008](ADR-008-inter-plugin-contract-versioning.md) — inter-plugin contract versioning (mirrored field SemVer 룰의 inter-plugin 측 짝)
 - [ADR-010](ADR-010-inter-plugin-contract-sibling-sync.md) — canonical / sibling sync (within plugin repos)
 - [ADR-013](ADR-013-codeforge-family-dogfood-out-policy.md) — dogfood-out monorepo (spec/plan/change-plan 위치)
+- [ADR-063](ADR-063-marketplace-atomic-invariant.md) — Amendment 2 §결정 11 reactive scheduled detection 의무 (CFP-627, 본 cross-ref 단락 carrier)
 - `mclayer/marketplace/.claude-plugin/marketplace.json` — 정책 enforcement target
 - `mclayer/marketplace/README.md` — 등재 플러그인 표 mirror
