@@ -7,6 +7,40 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.53.0] - 2026-05-14 — CFP-622 (ADR-073 신설 — Orchestrator verify-before-assert mandate)
+
+Sentinel #4 strike #2 carrier ([Issue #607](https://github.com/mclayer/plugin-codeforge/issues/607) trigger 충족, [Issue #622](https://github.com/mclayer/plugin-codeforge/issues/622) ADR carrier). doc-only fast-path (ADR-054). ADR-070 자매 ADR (external worker output verify ↔ Orchestrator self-assertion verify).
+
+**Trigger**: 2026-05-14 KST 본 세션 CFP-613 abandoned evidence — turn 6 `grep` verify 가 `git fetch origin` 누락으로 false-negative → CFP-597 PR #41/#17 sibling backfill 인지 실패 → spec/plan/4 worktree 가짜 작업 ~30분 + 사용자 cognitive load 3회 confirm + 4 worktree setup→prune cascade.
+
+ADR-037 MINOR bump: CLAUDE.md 의미 변경 (§Verify-before-assert section 신설) + skill body amend + ADR 신설.
+
+### Added
+
+- `docs/adr/ADR-073-orchestrator-verify-before-assert.md` (NEW) — governance permanent, `is_transitional: false`. §결정 1-8: verify mandate / mechanism enumeration (M1 same-repo + M2 cross-repo) / 3-layer coherence (ADR-070 external + ADR-073 self-assertion + ADR-071 dialog) / subagent context staleness annotation / spec-plan `pre_lookup_evidence[]` field 신설 / brainstorm skill amend / GitHub API separate carrier / hook automation separate carrier.
+- `docs/adr/ADR-RESERVATION.md` row 73 active (CFP-622, 2026-05-14).
+- `CLAUDE.md` `### Verify-before-assert (ADR-073, CFP-622)` section 신설 — 4-step verify mandate + Mechanism enumeration M1/M2 + 3-layer coherence cross-ref.
+
+### Changed
+
+- `skills/codeforge-brainstorm/SKILL.md` Phase 0 자기 적용 의무 추가 — agent prompt 안 file path / cross-repo state 인용 시 `git fetch origin` + `git show origin/main:<path>` + `verified-via` annotation 의무.
+
+### Sibling sync (separate PR)
+
+- mclayer/marketplace: plugins[codeforge].version 5.52.0 → 5.53.0 mirrored (ADR-063 atomic invariant — marketplace 선행 merge → wrapper PR merge).
+
+### Future follow-up CFP (deferred)
+
+- evidence-checks-registry entry `verify-before-assert-spec-plan-frontmatter` (warning tier) — spec/plan frontmatter `pre_lookup_evidence[]` field 존재 lint
+- pre-tool-use hook `auto-git-fetch-before-cross-repo-read` — mechanical layer
+- spec/plan template canonical file 신설 (codeforge-internal-docs templates/spec.md + plan.md, 현재 부재)
+- superpowers:writing-plans skill body amend (cross-plugin upstream PR, ADR-064 §결정 10 normative override 가 wrapper mitigation)
+- GitHub API eventual consistency separate carrier
+
+### CLAUDE.md line cap
+
+CLAUDE.md = 331 lines (ADR-012 Amendment 1 ≤320 cap 11 초과). `hotfix-bypass:claude-md-line-cap` label 부착 (CFP-628 / CFP-637 / CFP-638 precedent 정합). 압축 plan = 별 follow-up CFP (ADR-073 section 자체는 compact 1-section addition, 기존 단락 압축 영역은 ratchet ADR-012 Amendment 2 carrier 분리).
+
 ## [5.52.0] - 2026-05-14 — CFP-638 (Continuous "진행해" 패턴 mechanical detect — Epic CFP-635 Story D)
 
 Epic [CFP-635](https://github.com/mclayer/plugin-codeforge/issues/635) Story D sister carrier. doc-only fast-path (ADR-054). CFP-637 (Story A+B+C combined) merged 후 base (5.51.0 → 5.52.0 post-CFP-637 atomic realignment).

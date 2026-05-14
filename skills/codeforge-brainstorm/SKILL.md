@@ -30,6 +30,8 @@ Phase 0 의 비용 (ResearcherAgent Opus tier 포함 4 에이전트 병렬 spawn
 
 > **템플릿 변수 주의**: `{USER_IDEA}`, `{OPEN_EPICS}`, `{DESIGN_SUMMARY}`는 Orchestrator가 에이전트 spawn 직전 실제 값으로 대체한다. 스킬 파일 내 이 변수들은 "여기에 해당 내용을 삽입하라"는 지시이며 실제 코드가 아니다.
 
+> **자기 적용 의무 (ADR-073 §결정 1)**: Phase 0 4 agent prompt 안 file path / cross-repo state 인용 시 `git fetch origin` 선행 + `git show origin/main:<path>` direct verify + `verified-via: <method>` annotation 의무. Orchestrator 가 agent prompt 작성 시 사전 명시 — agent 가 stale source 인용 anti-pattern 진입 차단. 적용 영역 = sibling plugin / cross-repo state 단정 발화. Inline whitelist (ADR-039 §결정 2) 영역 안 단순 file stat 는 inline 허용. SSOT = [ADR-073](../../docs/adr/ADR-073-orchestrator-verify-before-assert.md) §결정 1 / §결정 6.
+
 ### DomainAgent 프롬프트 템플릿
 
 ```
