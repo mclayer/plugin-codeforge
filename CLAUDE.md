@@ -254,6 +254,10 @@ FIX 루프 시작 시 `codeforge:root-cause-decision` 호출 (DeveloperPL 진단
 
 **PMOAgent (Cross-cutting)** — Epic 창설 / Story 완료 회고 (**자동 의무 trigger** — Phase 2 PR merge 후 5분 grace, CFP-138 / [ADR-045](docs/adr/ADR-045-story-retro-mandatory-trigger.md)) / 사용자 요청 시 spawn. 단일 Story lane 게이트 비개입. 상세: [codeforge-pmo CLAUDE.md](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/CLAUDE.md).
 
+### SessionStart retro alert scan (ADR-045 §D-5, CFP-628)
+
+Orchestrator 가 새 session 개시 시 미해소 `[PMO] retro alert` comment 자동 scan + PMOAgent 자동 spawn 의무. SessionStart hook (`scripts/check-retro-alerts.sh`) 가 mechanical pre-screen. SSOT: [ADR-045 §D-5](docs/adr/ADR-045-story-retro-mandatory-trigger.md).
+
 ### Lane plugin self-write boundary
 
 **Lane plugin self-write boundary**: `codeforge:lane-self-write-boundary` skill 호출 — 각 lane plugin owner path 상세 SSOT. lane spawn 직전 Orchestrator 의무 호출.
