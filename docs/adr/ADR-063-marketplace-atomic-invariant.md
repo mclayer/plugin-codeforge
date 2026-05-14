@@ -5,7 +5,7 @@ status: Accepted
 category: Team & Process
 date: 2026-05-12
 is_transitional: false
-sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 1 = 강화 방향 only, proactive trigger layer 추가). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과."
+sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 1 + Amendment 2 = 강화 방향 only, proactive trigger layer 추가). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과."
 related_files:
   - CLAUDE.md
   - scripts/check-marketplace-parity.sh
