@@ -36,9 +36,12 @@ DEFINITION_REQUIRED_DICTIONARY=(
   "mirrored field"
 )
 
-# ─── EXEMPT 파일 (사전 파일 자체) ─────────────────────────────────────────────
+# ─── EXEMPT 파일 (사전 파일 자체 + 어휘 정의 ADR) ──────────────────────────────
+# docs/wording-dictionary.md: 사전 파일 — 어휘 정의 목적
+# docs/adr/ADR-064-*: §결정 2 forbid-list 어휘 정의 표 — 의도된 등장 (외연 허용 영역, ADR-064 §결정 2 §142)
 EXEMPT_FILES=(
   "docs/wording-dictionary.md"
+  "docs/adr/ADR-064-decision-principle-mandate.md"
 )
 
 # ─── 기본 스캔 대상 (인자 없을 시) ────────────────────────────────────────────

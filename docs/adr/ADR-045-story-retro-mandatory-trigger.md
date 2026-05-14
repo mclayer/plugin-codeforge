@@ -52,6 +52,13 @@ amendment_log:
     scope: "§11.6 multi-runner race scenario informational mitigation enumeration (Issue #297) — Pattern A (Contents API SHA-based optimistic concurrency) 가 multi-runner concurrent write 를 처리함을 검증·문서화. CFP-138 security test 통과 근거: (1) SHA mismatch 시 409 Conflict 반환 → caller retry, (2) SHA collision 확률 무시 가능 (Git SHA-1 2^80 preimage resistance), (3) retro-attempts.jsonl write 경합 = last-writer-wins 없음 (모든 writer 가 최신 SHA fetch 후 CAS write). 코드 변경 불필요 — Pattern A 구현이 이미 이 보장을 내포. 검증된 동작을 ADR 에 informational note 로 기록."
     status: applied
     ref: §D-4 + §Amendments-3 (multi-runner-mitigation) + docs/domain-knowledge/jsonl-write/race-condition-handling-pattern.md
+  - amendment_id: 4
+    cfp: CFP-628
+    date: 2026-05-14
+    scope: "§D-5 신설 — Orchestrator 가 새 session 개시 시 mechanical scan 의무 (gh issue list + comment poll + created_at filter 35min) → 미해소 alert 발견 시 PMOAgent 자동 spawn. manual fallback retro 3 sample (CFP-609 + CFP-612 + CFP-610) 누적 evidence 해소."
+    status: applied
+    ref: §D-5 + CLAUDE.md SessionStart retro alert scan
+    sunset_justification: null
 is_transitional: false
 ---
 
@@ -352,6 +359,28 @@ git push origin --delete retro-attempts-state/<KEY>
 **보장**: git clone + bare push pattern (lost-update risk, D-4 금지) 과 달리 Pattern A 는 last-writer-wins 없음 — 모든 concurrent writer 가 CAS 로 직렬화되어 retro-attempts.jsonl 의 data integrity invariant (D-4 Idempotency invariant) 충족.
 
 **Scope**: 본 informational note 는 Pattern A 구현 코드의 동작을 ADR 레벨에서 확인·기록한 것. Pattern A 코드 자체는 `docs/domain-knowledge/jsonl-write/race-condition-handling-pattern.md` SSOT — 본 ADR 는 cross-reference 만.
+
+---
+
+### Amendment 4 — §D-5 신설: Orchestrator session 개시 retro alert scan 의무 (CFP-628)
+
+**문제**: CFP-609 + CFP-612 + CFP-610 3 Story 연속으로 retro-mandatory.yml workflow 발화에도 불구하고 Orchestrator 가 새 session 개시 시 미해소 `[PMO] retro alert` comment 를 인지하지 못해 manual fallback 이 반복됐다. behavioral scan 의무 부재가 원인.
+
+**결정**: §D-5 신설 — Orchestrator 가 새 session 개시 시 다음 mechanical scan 의무.
+
+#### §D-5 — Orchestrator session 개시 retro alert scan 의무
+
+1. `gh issue list --state open --label "phase:완료" --json number,labels` 조회
+2. 각 Issue 의 comment 안 `[PMO] retro alert` prefix comment 존재 + `created_at` filter (PR merge + 35min 경과 — retry 4회 완료 후)
+3. 미해소 alert 발견 시 PMOAgent 자동 spawn 의무
+
+**강제 강도**: behavioral directive — SessionStart hook (`scripts/check-retro-alerts.sh`, Layer c) 가 mechanical pre-screen.
+
+**ADR-039 §결정 7 cross-ref**: Orchestrator self-discipline 영역 확장 — `policy_violation_subdecision` 발화 차단.
+
+**Sunset metric**: retro-alert-pickup-rate ≥ 90% (분모 = 발화 alert comment 수, 분자 = Orchestrator 5 turn 내 PMOAgent spawn 한 비율, monthly cron `retro-alert-pickup-kpi.yml` 자동 측정).
+
+**근거**: CFP-609 + CFP-612 + CFP-610 3 Story 연속 manual fallback evidence — behavioral directive 신설 없이는 silent miss 반복 예상. session 개시 = 자연 scan 시점.
 
 ## 해소 기준
 

@@ -515,16 +515,16 @@ Orchestrator 가 사용자 dialog turn 종료 시 300자 ± 50자 평문 정리 
 
 #### §3.0.14 Parallel Dispatch Protocol (CFP-609 / ADR-064 Amendment 1)
 
-Orchestrator 가 lane PL agent spawn 시 **plan task DAG 분석 결과를 spawn prompt 에 박제** 의무. ADR-064 §결정 4 (Trace 4) "Orchestrator multi-task spawn default = parallel" normative declaration 의 execution-time enforcement carrier.
+Orchestrator 가 lane PL agent spawn 시 **plan task DAG 분석 결과를 spawn prompt 에 기재** 의무. ADR-064 §결정 4 (Trace 4) "Orchestrator multi-task spawn default = parallel" normative declaration 의 execution-time enforcement carrier.
 
 **SSOT** = [`docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md`](inter-plugin-contracts/parallel-dispatch-protocol-v1.md) (kind:registry, wrapper canonical, sibling sync 면제). 본 §3.0.14 = registry SSOT 의 1줄 요약 + 4 의무 항목 + 6 enum + 4-분기 cross-ref (DRY 구조 — verbatim mirror 차단).
 
 **4 의무 항목** (Orchestrator → PL spawn prompt — registry §4 full schema):
 
-1. plan DAG 분석 결과 batch list verbatim 박제 (registry §4.1)
+1. plan DAG 분석 결과 batch list verbatim 기재 (registry §4.1)
 2. PL 에 자율 병렬 권한 명시 — `pl_autonomous_parallel_authority: required` 3-value enum 중 `required` default (registry §4.2)
 3. sequential 의무 영역만 명시 — 6 enum 중 해당만 (registry §4.3)
-4. file-level conflict resolution 패턴 박제 — same-file-different-method / same-file-different-section / same-file-same-method (registry §4.4)
+4. file-level conflict resolution 패턴 기재 — same-file-different-method / same-file-different-section / same-file-same-method (registry §4.4)
 
 **6 sequential mandate enum** (close-set — full SSOT: registry §3):
 
@@ -551,7 +551,7 @@ Orchestrator 가 lane PL agent spawn 시 **plan task DAG 분석 결과를 spawn 
 - ADR-044 §결정 2 `dispatch_mode` enum — env=1 직교 차원
 - ADR-056 — team-spec-requirements 6-way teammates (CFP-609 absorb)
 - ADR-060 — evidence-enforceable promotion framework (warning tier entry)
-- §12 spawn prompt template — `[Parallel Dispatch Hint]` block 박제 의무 (registry §4.1 verbatim)
+- §12 spawn prompt template — `[Parallel Dispatch Hint]` block 기재 의무 (registry §4.1 verbatim)
 
 ### 3.1 7 레인 + Cross-cutting 스폰 순서 (요약)
 
@@ -848,7 +848,7 @@ mctrader 등 multi-repo consumer 의 cross-repo Epic 진행 시.
        target: <KEY>
        repo: <owner/repo>
    ```
-5. Change Plan §3 에 `consumes: { <producer>: <SemVer> }` pin 의무
+5. Change Plan §3 에 `consumes: { <producer>: <SemVer> }` 버전 고정 의무
 
 #### Epic 진행
 - **Topological merge order**: dependency graph 따라 producer 먼저 → consumer 나중
@@ -859,9 +859,9 @@ mctrader 등 multi-repo consumer 의 cross-repo Epic 진행 시.
 #### Epic Rollback
 producer merge 후 consumer break 시:
 1. Producer revert PR open
-2. 모든 affected consumer 의 contract pin downgrade PR
+2. 모든 affected consumer 의 contract 버전 하향 고정 PR
 3. Producer fix → 새 minor SemVer release
-4. Consumer pin upgrade
+4. Consumer 버전 고정 갱신
 
 #### Epic close — `EPIC-RESULTS-<EPIC_KEY>.md` artifact 의무 (CFP-83)
 
