@@ -162,20 +162,26 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           STORY_KEY: ${{ steps.meta.outputs.story_key }}
         run: |
-          # FIX iter 1 F-2 — Issue search hardening:
-          #   Before: gh issue list --search "CFP-138" → CFP-138 vs CFP-1380 vs CFP-1383 prefix collision
-          #   After: in:title qualifier + title regex post-filter (^STORY_KEY\b word boundary) → exact match only
-          ISSUE_NUM=$(gh issue list \
-            --label "type:story" \
-            --search "in:title ${STORY_KEY}" \
-            --json number,title \
-            --jq "[.[] | select(.title | test(\"^${STORY_KEY}\\\\b\"))] | .[0].number")
+          # L6 fix (CFP-659) — codeforge convention: CFP-NNN ↔ Issue #NNN direct mapping.
+          # search logic 제거 (title prefix + type:story label assumption systematic mismatch 차단).
+          # 이전 prefix collision 우려 (CFP-138 vs CFP-1380) 는 direct mapping 안전 (exact ID).
+          STORY_NUM=$(echo "$STORY_KEY" | grep -oE '[0-9]+')
 
-          if [ -z "$ISSUE_NUM" ] || [ "$ISSUE_NUM" = "null" ]; then
-            echo "::warning::No Issue found for ${STORY_KEY} (in:title exact match)"
+          if [ -z "$STORY_NUM" ]; then
+            echo "::warning::Failed to extract Issue number from STORY_KEY=${STORY_KEY}"
             echo "outcome=skip_no_issue" >> $GITHUB_OUTPUT
             exit 0
           fi
+
+          # Verify Issue exists (CFP-NNN ↔ Issue #N mapping)
+          ISSUE_STATE=$(gh issue view "$STORY_NUM" --json state --jq '.state' 2>/dev/null || echo "NOT_FOUND")
+          if [ "$ISSUE_STATE" = "NOT_FOUND" ]; then
+            echo "::warning::Issue #${STORY_NUM} not found (CFP-NNN ↔ Issue #N mapping fail)"
+            echo "outcome=skip_no_issue" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          ISSUE_NUM=$STORY_NUM
 
           # Check if gate:retro-complete label attached
           ISSUE_LABELS=$(gh issue view "$ISSUE_NUM" --json labels --jq '[.labels[].name] | join(",")')
@@ -632,17 +638,18 @@ jobs:
             NEW_ATTEMPT_N=$((ATTEMPT_N + 1))
             TIMESTAMP=$(date -u +%Y-%m-%dT%H:%M:%SZ)
 
-            # Find Story Issue
-            ISSUE_NUM=$(gh issue list \
-              --label "type:story" \
-              --search "in:title ${STORY_KEY}" \
-              --json number,title \
-              --jq "[.[] | select(.title | test(\"^${STORY_KEY}\\\\b\"))] | .[0].number" 2>/dev/null || echo "")
-
-            if [ -z "$ISSUE_NUM" ] || [ "$ISSUE_NUM" = "null" ]; then
-              echo "::warning::No Issue found for $STORY_KEY — skip retry"
+            # Find Story Issue (L6 fix CFP-659 — CFP-NNN ↔ Issue #NNN direct mapping)
+            STORY_NUM_RETRY=$(echo "$STORY_KEY" | grep -oE '[0-9]+')
+            if [ -z "$STORY_NUM_RETRY" ]; then
+              echo "::warning::Failed to extract Issue number from STORY_KEY=${STORY_KEY} — skip retry"
               continue
             fi
+            ISSUE_STATE_RETRY=$(gh issue view "$STORY_NUM_RETRY" --json state --jq '.state' 2>/dev/null || echo "NOT_FOUND")
+            if [ "$ISSUE_STATE_RETRY" = "NOT_FOUND" ]; then
+              echo "::warning::Issue #${STORY_NUM_RETRY} not found for $STORY_KEY — skip retry"
+              continue
+            fi
+            ISSUE_NUM=$STORY_NUM_RETRY
 
             # Check if gate:retro-complete already attached (success case)
             ISSUE_LABELS=$(gh issue view "$ISSUE_NUM" --json labels --jq '[.labels[].name] | join(",")' 2>/dev/null || echo "")
