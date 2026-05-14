@@ -5,7 +5,7 @@
 #
 # - ## 3. 항목 fenced yaml 블록 parse
 # - 각 prefix entry 의 필수 field 확인 (prefix, phase, current_owner, target_owner_plugin, posters, auto_mirror)
-# - prefix 개수 == 12 (10 phase + 1 Orchestrator Preflight + 1 GitOps, CFP-139)
+# - prefix 개수 == 13 (10 phase + 1 Orchestrator Preflight + 1 GitOps CFP-139 + 1 SECURITY-FALLBACK CFP-658)
 # - posters 는 빈 list 금지
 # - auto_mirror 는 bool
 #
@@ -24,7 +24,7 @@ except ImportError:
     sys.exit(0)
 
 REGISTRY = Path("docs/inter-plugin-contracts/comment-prefix-registry-v1.md")
-EXPECTED_COUNT = 12
+EXPECTED_COUNT = 13
 REQUIRED_FIELDS = {"prefix", "phase", "current_owner", "target_owner_plugin", "posters", "auto_mirror"}
 
 if not REGISTRY.exists():

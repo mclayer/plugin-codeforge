@@ -12,7 +12,7 @@
 # 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
 schema_version: "1.2"  # CFP-509 / ADR-060 Amendment 6 — recurrence field 정식 도입 (MINOR bump v1.1 → v1.2)
 introduced_by: CFP-389
-last_updated: 2026-05-14  # CFP-627 FIX iter 3/3 — marketplace-drift-detection entry deferred to Phase 2 carrier (ADR-067 §결정 3 cross-lane RESET 차원 전환, ADR-068 I-1 boundary completeness). Phase 1 doc-only scope = ADR-063 Amendment 3 declarative SSOT only | prior: CFP-638 — stop-time-continuous-confirm-detect 44번째 entry append (ADR-064 Amendment 3 Story D) | prior: CFP-631 — marketplace-description-verbatim 43번째 entry append (ADR-063 Amendment 2 §결정 11 blocking-on-pr)
+last_updated: 2026-05-14  # CFP-658 — section-1-verbatim-postmerge 45번째 entry append (ADR-027 Amendment 2 §결정 6.C carrier — manual fallback path §1 verbatim invariant post-merge lint warning tier, deferred-followup status, Phase 2 carrier 신설 후 Active 전환) | CFP-627 FIX iter 3/3 — marketplace-drift-detection entry deferred to Phase 2 carrier (ADR-067 §결정 3 cross-lane RESET 차원 전환) | CFP-638 — stop-time-continuous-confirm-detect 44번째 entry (ADR-064 Amendment 3 Story D) | CFP-631 — marketplace-description-verbatim 43번째 entry (ADR-063 Amendment 2 §결정 11 blocking-on-pr)
 
 entries:
   - name: adr-sunset-criteria
@@ -1441,3 +1441,40 @@ entries:
 # ADR-068 I-1 boundary completeness 정합 — Phase 1 declarative vs Phase 2 mechanical 분리 의도 회복.
 # evidence-registry-naming-check VIOLATION 회피 + Phase 1 doc-only scope 보존 동시 충족.
 # Phase 2 carrier 발의 시 본 entry append + workflow file 도입 의무.
+
+  - name: section-1-verbatim-postmerge
+    description: |
+      ADR-027 Amendment 2 §결정 6.C mechanical verification — manual fallback
+      path 의 §1 verbatim invariant post-merge lint. Story §1 ↔ Issue body §1
+      byte-identical 검증 (manual write 영역의 governance ratchet 약화 vector
+      차단 forcing function). drift 발견 시 hotfix-bypass:section-1-verbatim-postmerge
+      label audit comment 자동 발의 (warning tier — hard block 아님).
+      SecurityArch T1 위협 (§1 임의 변조) mitigation 의 mechanical enforcement
+      layer. Phase 2 carrier (CFP-658) 가 templates/github-workflows/section-1-verbatim-postmerge.yml
+      + .github/workflows/section-1-verbatim-postmerge.yml byte-identical mirror
+      배포 후 Active 전환.
+    detect_command: null  # deferred-followup — CFP-658 Phase 2 carrier (script + workflow 신설)
+    workflow: null  # templates/github-workflows/section-1-verbatim-postmerge.yml — Phase 2 carrier
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:section-1-verbatim-postmerge
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-658  # Phase 2 carrier — script + workflow 신설 (deferred-followup → warning 전환 prerequisite)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = byte-identical 검증, modal phrase 검사 미포함
+    introduced_by: CFP-658
+    introduced_date: 2026-05-14
+    owner_adr: ADR-027  # Amendment 2 §결정 6.C
+    carrier_adr: ADR-060  # evidence-enforceable promotion framework
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: advisory
+      last_occurrence: null
+    status: deferred-followup  # ADR-060 framework — Phase 2 carrier 신설 후 Active 전환

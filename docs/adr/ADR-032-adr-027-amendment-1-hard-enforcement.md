@@ -158,3 +158,7 @@ N/A — permanent policy
 - plan: `codeforge-internal-docs/wrapper/plans/2026-05-NN-cfp-127-adr-027-amendment-1-plan.md` (Phase 1 PR)
 - carrier story: `codeforge-internal-docs/wrapper/stories/CFP-127.md`
 - parent Epic: `codeforge-internal-docs/wrapper/stories/CFP-124.md`
+
+## CFP-658 cross-ref (Amendment 2 of ADR-027)
+
+ADR-027 Amendment 2 (CFP-658, Wave 1 of Epic CFP-431) 는 본 ADR-032 Amendment 1 의 strict-eligible 4종 (a-d) 영역과 disjoint — fallback path 활성 시에도 strict mode 가 활성이면 lane orchestration 가능성 검증 의무 보존. 향후 Wave 2 (CFP-660, consumer workflow drift detection) 에서 strict-eligible 4 → 5 종 확장 검토 (별 Story).

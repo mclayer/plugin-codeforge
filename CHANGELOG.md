@@ -7,6 +7,43 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.57.0] - 2026-05-14 — CFP-658 Wave 1 of Epic CFP-431 (audit:from-mctrader-debut) — Action 차단 환경 agent direct write fallback path 표준화
+
+### Added
+
+- **ADR-027 Amendment 2 §결정 6 신설**: Action 차단 시 agent direct write fallback path (normative SSOT 단일 위치). 9 §결정 (6.A trigger (A)+(C) hybrid + 6.B agent + 6.C governance ratchet mitigation 3종 + 6.D PAT scope 표 + 6.E shell injection 차단 + 6.F 2-PAT namespace 분리 + 6.G burst control + 6.H existence_check verbatim port + 6.I PR description checklist mirror). frontmatter `amendments[]` append + `mechanical_enforcement_actions[]` 신설 (section-1-verbatim-postmerge action_name, ADR-040 Amendment 3 §결정 7.A 정합).
+- **ADR-032 + ADR-036 cross-ref**: Amendment 2 와 strict-eligible 4종 disjoint + KEY atomic invariant manual write 영역 보존.
+- **신규 label** (label-registry-v2 v2.11 → v2.13 MINOR — 신규 `fallback` category enum, post-CFP-627 v2.12 atomic rebase):
+  - `fallback:manual` (color `c5def5`, audit-trailed) — per-Issue ad-hoc override marker. 우선순위 (C) > (A) > env default.
+  - `fallback:rate-limited` (color `c5def5`, audit-trailed) — manual-story-init-fallback.sh exponential backoff max 3 retry 초과 시 자동 부착.
+- **`scripts/bootstrap-labels.sh` 갱신**: fallback:* 2 entry hardcoded append (35 base label, 직전 33 base + 2). canonical-only (kind:registry — sibling sync scope 외, ADR-010 §결정 2).
+- **`docs/evidence-checks-registry.yaml` 45번째 entry**: `section-1-verbatim-postmerge` (warning tier, deferred-followup status — Phase 2 carrier 신설 후 Active 전환). owner_adr: ADR-027 Amendment 2 §결정 6.C / carrier_adr: ADR-060.
+- **`docs/domain-knowledge/domain/github-actions/workflow-blocked-manual-fallback.md` 신설**: recovery runbook SSOT — enterprise org-cap evidence + Researcher 위험 2종 + Trigger (A)/(C) detection + 7-step procedure + governance ratchet mitigation 3종 + shell injection 차단 + 2-PAT namespace + burst control + Edge case 4종 + sunset criteria.
+- **`docs/consumer-guide.md` §1h "Action 차단 환경 fallback" 신설**: consumer runbook — bootstrap.fallback_mode 설정 + manual-story-init-fallback.sh 호출 + 4 required check 통과 의무 + PR description checklist + 2-PAT 모델.
+- **`docs/orchestrator-playbook.md` §3.15 "Action-blocked fallback decision tree" 신설**: Orchestrator detection 절차 (lane spawn 직전 의무) + Trigger (C) > (A) 우선순위 + Codex Touchpoint #2 mandatory + env=0 / env=1 동작 동일.
+- **`docs/project-config-schema.md` `bootstrap.fallback_mode` enum 등재**: `auto` (default) / `action_blocked`. 우선순위 CLI > env > yaml (ADR-032 정합 일관성).
+- **`CLAUDE.md` §"오케스트레이션 규칙" 1-line normative pointer**: Action-blocked fallback path SSOT cross-ref (line cap 330 — `hotfix-bypass:claude-md-line-cap` label 동반 의무, audit-trailed exception channel).
+- **3 deputy 산출물 통합**: SecurityArch 4 조건 (post-merge lint + PAT scope + shell injection + audit-trailed channel) + OpRiskArch 4 조건 (PR description checklist + 2-PAT namespace + fallback:rate-limited label + burst control) + DataMigrationArch 1 조건 (existence_check verbatim port) — 모두 addressed.
+
+### Internal-docs (ADR-013 dogfood-out)
+
+- `<internal-docs>/wrapper/specs/2026-05-14-cfp-658-action-blocked-fallback.md` (Phase 0 burst evidence)
+- `<internal-docs>/wrapper/stories/CFP-658.md` (Story file §1-§7)
+- `<internal-docs>/wrapper/change-plans/cfp-658-action-blocked-fallback.md` (Change Plan §1-§13)
+
+### Sibling sync (separate PR, 선행 merge 의무)
+
+- `mclayer/marketplace` `.claude-plugin/marketplace.json` plugins[name=codeforge].version 5.56.0 → 5.57.0 + description CFP-658 entry append (ADR-063 §결정 5 + §결정 9 atomic invariant — plugin.json MINOR bump 동반 marketplace sync required).
+
+### Deferred (Phase 2 PR scope)
+
+- `templates/scripts/manual-story-init-fallback.sh` (bash, POSIX) + `manual-story-init-fallback.ps1` (Windows parity)
+- `templates/github-workflows/section-1-verbatim-postmerge.yml` + `.github/workflows/section-1-verbatim-postmerge.yml` (byte-identical mirror, ADR-005)
+- `overlay/hooks/validate_config.py` enum validator (`bootstrap.fallback_mode`)
+- `overlay/hooks/tests/test_validate_config.py` TDD red phase
+- `.claude/_overlay/project.yaml.example` 갱신
+- sibling plugin agent file 갱신 (plugin-codeforge-requirements RequirementsPLAgent.md + plugin-codeforge-design ArchitectPLAgent.md)
+
 ## [5.56.1] - 2026-05-14 — CFP-633 Story-2 sibling sync (Epic CFP-620 — mctrader 3-cycle post-mortem)
 
 ### Added

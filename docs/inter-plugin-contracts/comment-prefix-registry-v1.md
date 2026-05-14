@@ -1,28 +1,30 @@
 ---
 kind: registry
 registry: comment-prefix
-version: "1.1"
+version: "1.2"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/comment-prefix-registry-v1.md
-date: 2026-05-09
+date: 2026-05-14
 authors:
   - Claude (CFP-32 codification — CFP-31 ζ arc parent design 기반)
   - CFP-139 (2026-05-09) — v1.0 → v1.1 MINOR bump (`[GitOps]` prefix 추가, ADR-047)
+  - CFP-658 (2026-05-14) — v1.1 → v1.2 MINOR bump (`[SECURITY-FALLBACK]` prefix 추가, ADR-027 Amendment 2)
 related_adrs:
   - ADR-008 (Inter-plugin Contract Versioning)
   - ADR-009 (Wrapper-only core + writer-distributed lane plugins, CFP-31 신설 예정)
   - ADR-047 (GitOpsAgent — CFP-139, [GitOps] prefix carrier)
+  - ADR-027 Amendment 2 (Action-blocked fallback — CFP-658, [SECURITY-FALLBACK] prefix carrier)
 related_files:
   - agents/DocsAgent.md (이전 narrative SSOT — 본 registry 신설 후 cross-ref로 변경)
   - docs/orchestrator-playbook.md
 ---
 
-# comment-prefix-registry v1.1
+# comment-prefix-registry v1.2
 
 ## 1. 목적
 
-GitHub Issue 코멘트의 phase prefix (11종 + Orchestrator Preflight 1종 + GitOps 1종 = 총 12종, v1.1) machine-readable SSOT. ζ arc 진행에 따라 lane plugin이 자기 lane prefix로 직접 코멘트 게시 시점에 단일 형식·시맨틱·posters 보장.
+GitHub Issue 코멘트의 phase prefix (11종 + Orchestrator Preflight 1종 + GitOps 1종 + SECURITY-FALLBACK 1종 = 총 13종, v1.2) machine-readable SSOT. ζ arc 진행에 따라 lane plugin이 자기 lane prefix로 직접 코멘트 게시 시점에 단일 형식·시맨틱·posters 보장.
 
 ## 2. Schema
 
@@ -31,7 +33,7 @@ GitHub Issue 코멘트의 phase prefix (11종 + Orchestrator Preflight 1종 + Gi
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | prefix | string | Bracket 형식 (예: `[설계]`) |
-| phase | string | 레인 식별자 (requirements / design / design-review / implementation / code-review / test / security-test / pmo / fix / completed / preflight / **gitops** — v1.1 신규) |
+| phase | string | 레인 식별자 (requirements / design / design-review / implementation / code-review / test / security-test / pmo / fix / completed / preflight / **gitops** — v1.1 신규 / **security-fallback** — v1.2 신규) |
 | current_owner | string | CFP-32 시점 코멘트 게시 주체 |
 | target_owner_plugin | string | ζ arc 완료 후 owner plugin (또는 "core wrapper 잔류") |
 | posters | array&lt;string&gt; | 본 prefix 사용 권한이 있는 agent 또는 Action |
@@ -154,6 +156,17 @@ prefixes:
     posters:
       - GitOpsAgent
     auto_mirror: false
+
+  - prefix: "[SECURITY-FALLBACK]"              # NEW in v1.2 (CFP-658 / ADR-027 Amendment 2)
+    phase: security-fallback
+    current_owner: "SecurityArch deputy + Orchestrator (manual fallback path audit channel)"
+    target_owner_plugin: "core wrapper (Orchestrator 직접 게시 — manual fallback audit-trailed channel)"
+    scope: "fallback:manual label 부착 PR 의 audit-trailed channel comment — workflow-permission-blocked 사유 명시 의무"
+    example: "[SECURITY-FALLBACK] 본 PR 은 enterprise default_workflow_permissions:read 차단으로 Action 자동화 우회 — Trigger (A) bootstrap.fallback_mode=action_blocked 정합 (CFP-658 §결정 6.A)"
+    posters:
+      - Orchestrator   # manual fallback path audit comment final write
+      - SecurityArchitectAgent   # deputy review packet 안 audit rationale (PL 경유 Orchestrator 게시)
+    auto_mirror: false
 ```
 
 ## 4. 변경 규칙
@@ -172,3 +185,4 @@ prefixes:
 | CFP-35 | v1.0 | review verdict 3 prefix (`[설계-리뷰]` / `[구현-리뷰]` / `[보안-테스트]`) current_owner → DesignReviewPL / CodeReviewPL / SecurityTestPL (review-verdict-v2 self-write) |
 | CFP-61 | v1.0 | review verdict 3 prefix current_owner 재정의: DesignReviewPLAgent / CodeReviewPLAgent / SecurityTestPLAgent → **Orchestrator post-Sonnet** (ADR-022 review-verdict 5-step step 4). PL 은 packet return only — comment post 권한 제거. target_owner_plugin = core wrapper 잔류 |
 | **CFP-139** | **v1.1** | **MINOR bump** — `[GitOps]` prefix 추가 (GitOpsAgent self-write 영역, codeforge-pmo plugin sibling teammate). ADR-047 carrier. Append-only for v1.x rule 정합. 11 → 12 phase prefix taxonomy. |
+| **CFP-658** | **v1.2** | **MINOR bump** — `[SECURITY-FALLBACK]` prefix 추가 (manual fallback path audit-trailed channel, fallback:manual label 부착 PR scope). ADR-027 Amendment 2 carrier. Append-only for v1.x rule 정합. 12 → 13 phase prefix taxonomy. label-registry-v2 v2.12 changelog declaration ↔ comment-prefix-registry-v1 entry 양 channel 정합 (`F-CDX-004` 해소). [verified-via: git show origin/main:docs/inter-plugin-contracts/comment-prefix-registry-v1.md] |

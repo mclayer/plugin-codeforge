@@ -112,6 +112,24 @@ bootstrap:
   # Revert: false 또는 field 삭제 + commit.
   strict_mode: true | false             # 기본값: false (opt-in)
 
+  # CFP-658 / ADR-027 Amendment 2 — Action 차단 환경 fallback path (normative SSOT).
+  # enum: auto (default) / action_blocked
+  #   - auto: 기존 동작 — story-init.yml 등 6 핵심 workflow 자동 실행 가정
+  #   - action_blocked: enterprise org `default_workflow_permissions: read` 차단 환경 — manual fallback path 자동 활성
+  # Trigger 우선순위 (C) > (A):
+  #   (A) Declarative — 본 field (environment default)
+  #   (C) Explicit ad-hoc — Issue `fallback:manual` label (per-Issue override)
+  # Priority (CLI > env > yaml — ADR-032 정합 일관성):
+  #   1. CLI flag: --fallback-mode=action_blocked
+  #   2. Env: CODEFORGE_FALLBACK_MODE=action_blocked
+  #   3. YAML (lowest): bootstrap.fallback_mode: action_blocked (본 field)
+  # 활성 시 Orchestrator 가 RequirementsPL / ArchitectPL 의 manual `bash templates/scripts/manual-story-init-fallback.sh <ISSUE_NUMBER>` 호출 의무
+  # (Phase 2 carrier — 본 script 신설 후 활성).
+  # 4 required check (phase-gate-mergeable + doc frontmatter + doc section + invariant-check) 통과 의무 동일.
+  # `enforce_admins: true` ratchet 유지 (CFP-70) — admin override 차단.
+  # 상세 SSOT: ADR-027 Amendment 2 §결정 6 + domain-knowledge/domain/github-actions/workflow-blocked-manual-fallback.md.
+  fallback_mode: auto | action_blocked  # 기본값: auto
+
 # [선택] Infra 산출물 전략 (CFP-128 / ADR-033)
 # default = "docker_first" — InfraEngineerAgent 가 Dockerfile + compose.yml + .dockerignore 1st-class 산출
 # "legacy_systemd" — systemd unit / launchd plist (deprecated, opt-in only — ADR-033 §결정 3)
