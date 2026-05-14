@@ -25,7 +25,7 @@ contracts:
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: design-output-v1.md, contract_version: "1.0", status: Archived }
-      - { file: design-output-v2.md, contract_version: "2.1", status: Active }
+      - { file: design-output-v2.md, contract_version: "2.3", status: Active }  # CFP-128: v2.1 → v2.2 MINOR bump (container_considerations block, ADR-033). CFP-662: v2.2 → v2.3 MINOR bump (spec_invariant_measurement_required bool field — Issue #669 sibling sync, canonical codeforge-design PR #42 SHA a6aa5502). Note: MANIFEST was at "2.1" while file was "2.2" — both resolved to "2.3" in this 2-minor jump (Option A: SSOT alignment + audit trail + atomic + rollback simplicity).
 
   - name: develop_output
     canonical_repo: mclayer/plugin-codeforge-develop
