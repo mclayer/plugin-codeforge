@@ -86,6 +86,59 @@ Phase 2 PR 생성 전 반드시 아래 2단계를 순서대로 실행한다.
 2. **Base branch 고정**: `gh pr create` 호출 시 반드시 `--base main` 명시.
    - `--base` 옵션 생략 금지 (default 추론에 의존하면 stale branch 지정 위험).
 
+## spec invariant 명시 의무 (CFP-662 / ADR-068 §결정 1 I-3 + I-5 Tier D 강화)
+
+Phase 2 PR description 안 `## DevPL 보고` section 작성 시 **spec invariant 명시 표** 1회 inject 의무. Story §6 NFR / Change Plan §8 Test Contract / 관련 ADR §결정 안에 정의된 measurable invariant 별로 측정값 + 위치를 inline 표로 서술. 표 부재 시 `output_status: PASS` verdict 발화 차단 — `output_status: ESCALATE` 자동 전환 후 Orchestrator 경유 ArchitectPLAgent 회부 (Change Plan §8 갱신 의무).
+
+본 의무는 [ADR-068 §결정 1 I-3 (guard placement intent) + I-5 (dimensional empirical grounding, Amendment 1)](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-068-boundary-completeness-invariants.md) 의 **Tier D (DevPL self-PR submit-time)** 강화 — Tier A (ArchitectAgent authoring-time) / Tier B (DesignReviewPL design-review-time) / Tier C (CodeReviewPL code-review-time) 3-tier dual-binding 의 DevPL submit-time 영역 forcing function. ADR-068 본문 Tier D codification 자체는 별 carrier (FollowupCFP).
+
+Cross-ref: [ADR-073 §결정 1 verify-before-assert mandate](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-073-orchestrator-verify-before-assert.md) — 본 의무 = ADR-073 의 producer scope ("Orchestrator (자기)") 를 lane PL (DevPL 자기) 영역으로 확장하는 sibling pattern. ADR-073 §결정 4 Subagent context packet staleness annotation 의 DevPL self-PR 시점 강화.
+
+### spec invariant 명시 표 형식 (4 column)
+
+```
+## DevPL 보고
+
+### spec invariant 명시 표
+
+| NFR / AC | spec limit | 측정 방법 | 측정값 위치 |
+|---|---|---|---|
+| {Story §6 NFR-N or AC-N or Change Plan §8 invariant ID} | {예: read_bytes = 0, latency_ms <= 200, allocations <= 5} | {test 함수명 / perf test stdout grep / manual reviewer note} | {tests/<path>:<line> or <log file>:<line> or manual:<reviewer note>} |
+| ... | ... | ... | ... |
+```
+
+### 측정값 위치 enum (3 종, inline 기재)
+
+- **`tests/<path>:<line>`** — QADev 가 작성한 test code 안 actual measurement assertion (예: `assert read_bytes == 0`)
+- **`<output log file>:<line>`** — perf test stdout / TestAgent log file 안 numeric value
+- **`manual:<reviewer note>`** — runtime measurement infra 부재 영역의 manual reviewer confirmation (예: "DR scenario manual rehearsal — restore took 4min, spec limit 5min")
+
+### invariant guard 표 (NFR-2 pre-condition — `output_status: PASS` 발화 차단 logic)
+
+```
+| Pre-condition | 측정 방법 | 위반 시 처리 |
+|---|---|---|
+| spec invariant 명시 표 row count >= 1 | DevPL self-PR submit prompt 안 markdown grep | `output_status: ESCALATE` 자동 전환 + Orchestrator 회부 |
+| 각 row 의 "측정값 위치" column 비어있지 않음 (`tests/<path>:<line>` 또는 `<output log file>:<line>` 또는 `manual:<reviewer note>` 중 1 종) | row-by-row 검증 | 빈 row 검출 시 `output_status: ESCALATE` |
+| 각 row 의 "측정값 위치" column = QADev 매핑표 의 "측정 assertion 위치" column 과 1:1 cross-validate | QADev 매핑표 input cross-ref | 불일치 검출 시 `output_status: FIX_REQUIRED` (QADev 재spawn) |
+```
+
+### 면제 영역 (`spec_invariant_measurement_required: false`)
+
+- **doc-only fast-path Story (ADR-054)** — src/tests delta = 0, agent md / contract / ADR 갱신만. design-output v2.3 의 `chief_author_artifact.spec_invariant_measurement_required` field = `false` emit. 본 mandate 자체 면제.
+- **qualitative-only Story** — Story §6 NFR 안 측정 가능한 spec invariant 0 (모두 logging / naming / refactoring). design-output 의 동일 field = `false` emit.
+- **retroactive Story** — 본 mandate effective (CFP-662 Phase 1 PR merge) 이전에 진행 중인 Story (in-flight Phase 2 PR) — 면제 (transition cliff).
+
+면제 시 `## DevPL 보고` section 안 "spec invariant 명시 표 N/A — `<면제 사유>` (design-output `spec_invariant_measurement_required: false`)" 1 줄 declare 만.
+
+### partial measurement 영역 (EC-2)
+
+Story §6 NFR 안 invariant N개 중 M (M<N) 만 measurable 시 표 안 unmeasurable invariant row 별도 column "측정 불가 사유" 기재 + Orchestrator 경유 ArchitectPLAgent 회부 (Change Plan §8 갱신 의무) → ArchitectAgent (chief author) 가 §8 Test Contract 안 measurement strategy 보완 후 Phase 2 PR commit append.
+
+### `is_transitional: false` annotation (ADR-058 §결정 5 정합)
+
+본 spec invariant 명시 의무 = 영구 governance (ADR-058 §결정 7 보안 ADR default presumption 정합 — DevPL 보고 hallucination 차단은 영구 layer). 약화 방향 발의 시 sunset_justification 의무 (3-tuple metric / who / how).
+
 ## Phase 2 PR body composition convention (CFP-507 / ADR-031 정합)
 
 Phase 2 PR description compose 시 본 에이전트 (또는 본 에이전트가 spawn 한 PR open subagent) 가 아래 convention 을 준수한다. 본 convention 은 CFP-490 (#490, merged) §7.5 origin investigation 의 carrier — `## Lane evidence` first heading auto-include 의 actual origin = codeforge-develop DeveloperPLAgent body composition convention 부재 + wrapper Orchestrator manual append 정책 부재 결합 (Story CFP-507 §2.3 verified facts) 의 정정.
@@ -123,15 +176,20 @@ Phase 2 PR description compose 시 본 에이전트 (또는 본 에이전트가 
 
 ```
 1. roster + QADev 완료 보고 수집
-2. QADev 매핑표 수령 (Change Plan §8 Test Contract 대비 작성된 tests 매핑)
-3. **Impl Manifest 초안 구성** (파일 단위 변경 사실 + Change Plan 매핑)
-4. DeveloperPL 이 직접 Edit(docs/stories/<KEY>.md) 로 §8.5 Impl Manifest 매핑표 작성
+2. QADev 매핑표 수령 (Change Plan §8 Test Contract 대비 작성된 tests 매핑 + spec invariant ↔ test assertion 1:1 매핑)
+3. **spec invariant 명시 표 구성** (CFP-662 / ADR-068 Tier D — Story §6 NFR / Change Plan §8 invariant 별 측정값 + 위치 inline 기재)
+   · QADev 매핑표 의 "측정 assertion 위치" column 을 cross-validate input 으로 사용
+   · 표 row count 0 + design-output `spec_invariant_measurement_required: true` = `output_status: ESCALATE` 자동 (Orchestrator 회부)
+   · `spec_invariant_measurement_required: false` (doc-only / qualitative-only) = "N/A" 1 줄 declare
+4. **Impl Manifest 초안 구성** (파일 단위 변경 사실 + Change Plan 매핑)
+5. DeveloperPL 이 직접 Edit(docs/stories/<KEY>.md) 로 §8.5 Impl Manifest 매핑표 작성
    (codeforge-develop CLAUDE.md Self-write 책임 표 — owner agent direct write, CFP-39).
    Phase 2 PR commit 직후 wrapper repo 의 subissue-from-impl-manifest.yml Action 이
    §8.5 commit 감지 후 GitHub sub-issue 자동 생성.
-   · ArchitectPLAgent가 stateless 재스폰되어 매핑표 감사 + Impl Manifest ↔ Change Plan 정합 확인
-   · 매핑표 공백 또는 Impl Manifest 불일치 시 DevPL이 해당 Dev/QADev 재스폰 (Orchestrator 경유)
+   · ArchitectPLAgent가 stateless 재스폰되어 매핑표 감사 + Impl Manifest ↔ Change Plan 정합 + **spec invariant 명시 표 row count >= 1 (또는 N/A declare)** 확인
+   · 매핑표 공백 / Impl Manifest 불일치 / spec invariant 명시 표 부재 시 DevPL이 해당 Dev/QADev 재스폰 (Orchestrator 경유)
    · 감사 PASS 시 Orchestrator가 CodeReviewPL 스폰
+6. Phase 2 PR description 안 `## DevPL 보고` section 직속 sub-section "### spec invariant 명시 표" inject (CFP-662 4 column 표 형식 — heading 1회만, lifecycle 갱신 시 row 만 갱신)
 ```
 
 ### Impl Manifest 포맷
