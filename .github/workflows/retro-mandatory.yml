@@ -131,9 +131,15 @@ jobs:
             # 정확 doc-only 판정은 Story file phase 검사 영역 — 본 workflow scope 외 (Phase 2 implementation
             # 영역에서 cross-repo Story fetch 후 phase 검증 가능).
             TRIGGER_REASON="Phase 1 PR merge (doc-only Story candidate, D-3 fallback)"
+          elif [ -z "$PHASE" ] && [ "$IS_EPIC_PR" -eq 0 ]; then
+            # L5 fix (CFP-654) — Phase marker 부재 fallback (option C-prime PR convention).
+            # "[CFP-NNN] ..." title 패턴 + non-Epic → retro trigger (Phase marker 부재도 retro 의무 default).
+            # option C-prime PR = CFP-610 이후 single fix PR (Phase 1/2 marker 없는 단일 PR 패턴).
+            TRIGGER_REASON="Phase marker absent (option C-prime PR — L5 fallback, CFP-654)"
           else
-            echo "::notice::Phase marker not Phase 2 / Phase 1 non-Epic — skip retro check: $PR_TITLE"
-            echo "skip_reason=phase_marker_absent" >> $GITHUB_OUTPUT
+            # Epic PR + Phase marker 부재 → skip (Epic-level retro 는 child Story 단위 처리)
+            echo "::notice::Epic PR with Phase marker absent — skip retro check (Epic-level retro 영역 외): $PR_TITLE"
+            echo "skip_reason=epic_pr_phase_marker_absent" >> $GITHUB_OUTPUT
             echo "story_key=" >> $GITHUB_OUTPUT
             exit 0
           fi
