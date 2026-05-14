@@ -114,9 +114,11 @@ create_label "conflict:section-locked" "d93f0b" "section-ownership.yaml locked �
 create_label "merge-order:1"           "0075ca" "병렬 에픽 충돌 시 먼저 merge해야 하는 PR (낮은 CFP 번호)"
 create_label "merge-order:2"           "e4e669" "병렬 에픽 충돌 시 merge-order:1 완료 후 git rebase main 의무"
 
-# hotfix-bypass:* (warning-tier entry 예외 채널 — ADR-024 Amendment 3 §결정 6.A per-entry namespace)
-# CFP-610 / ADR-064 Amendment 2 — 13번째 family member (wording-dictionary lint warning-tier)
-create_label "hotfix-bypass:wording-dictionary" "fef2c0" "wording-dictionary lint warning 예외 채널 (ADR-064 Amendment 2 / CFP-610). PR description ### Bypass reason 섹션 기재 필수."
+# hotfix-bypass:* — full set via dynamic read (CFP-598 below).
+# CFP-610 / ADR-064 Amendment 2 — wording-dictionary entry now sourced from §3 yaml dynamic read (NOT hardcoded here).
+# CFP-619 — pre-existing CFP-610 leak resolution: prior hardcoded `create_label "hotfix-bypass:wording-dictionary"` removed
+#           (duplicate creation 발생 — dynamic read 가 yaml row 처리 + 본 hardcoded 라인 = 2 invocations, 3-way self-check FAIL).
+#           DRY status restored: hardcoded 0 + yaml row 1 = single source of truth via dynamic parse only.
 
 # monitoring:* (3종 — CFP-451 v2.3 sub-axis 다축 완결 / CFP-393 v2.2 신설 tier, ADR-057 Amendment 2 / ADR-060)
 # KPI / metric / dashboard / alert 영역. 기존 `audit` (후처리 분류) 와 분리.

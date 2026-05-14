@@ -7,6 +7,25 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.47.0] - 2026-05-14 — CFP-619 (retro-mandatory.yml workflow deploy — ADR-045 mandate restoration)
+
+CFP-612 retro carrier #1 — `retro-mandatory.yml` workflow 가 `.github/workflows/` 에 미배포 상태 → ADR-045 mandate (PMOAgent retro auto-trigger 5min grace + retry state machine + close-blocking) 의 mechanical enforcement 미작동. CFP-612 Phase 2 PR #618 merge (2026-05-14) 시점 첫 manual fallback observed → 본 carrier 가 sentinel #1 회복.
+
+ADR-037 MINOR bump: script behavior change (신규 workflow runtime 활성화 — 차 Phase 2 PR merge 부터 retro-check job 발화).
+
+### Added
+
+- `.github/workflows/retro-mandatory.yml` (NEW, byte-identical mirror of `templates/github-workflows/retro-mandatory.yml` per ADR-005 self-application invariant — SHA256 `d01bf23f4503049a5afa4336b575e357002467a3b0b5551ccc9b26927f142fd6`). Phase 1 + Phase 2 통합 form (CFP-138 + CFP-290 carrier prior art, FIX iter 1-3 PASS). 3 trigger (pull_request closed / issues closed / schedule cron `*/5 * * * *`) + 3 jobs (retro-check / close-blocking / retry-state-machine).
+- `docs/evidence-checks-registry.yaml` — 41번째 entry `retro-mandatory-deployed` append (CFP-610 wording-dictionary 40번째 entry 직후). owner_adr: ADR-045, introduced_by: CFP-619, current_tier: warning, bypass_label: `hotfix-bypass:retro-mandatory-deployed` (per-entry namespace, ADR-024 Amendment 3 §결정 6.A 정합).
+
+### Sibling sync (separate PR)
+
+- mclayer/marketplace: plugins[codeforge].version 5.46.0 → 5.47.0 mirrored (ADR-063 atomic invariant — marketplace 선행 merge → wrapper PR merge)
+
+### Lane boundary stretch declare
+
+본 Story = codeforge-requirements plugin 미로드 영역 (session-level constraint, Story scope 결정 아님) → ArchitectPLAgent 가 §2-§6 (Requirements lane) + §7 (Design lane) 통합 author. ADR-054-grade trivial mechanical scope + retro carrier compressed lifecycle 정합. Story §10.5 Git Ops Log gitops-cfp619-004 row 기록.
+
 ## [5.46.0] - 2026-05-14 — CFP-610 Story 2 Phase 2 FIX iter 1 (ADR-064 Amendment 2 mechanical enforcement + marketplace atomic sync)
 
 ### Added (CFP-610 Story 2 — wording-dictionary lint)

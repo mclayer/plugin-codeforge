@@ -12,7 +12,7 @@
 # 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
 schema_version: "1.2"  # CFP-509 / ADR-060 Amendment 6 — recurrence field 정식 도입 (MINOR bump v1.1 → v1.2)
 introduced_by: CFP-389
-last_updated: 2026-05-13  # CFP-609 Phase 1 — parallel-dispatch-prompt-check entry append (ADR-064 Amendment 1 §결정 4 carrier)
+last_updated: 2026-05-14  # CFP-619 — retro-mandatory-deployed entry append (ADR-045 mandate restoration + ADR-060 framework 41번째 entry, sentinel #1 carrier)
 
 entries:
   - name: adr-sunset-criteria
@@ -1209,6 +1209,38 @@ entries:
       metric: "Orchestrator user-facing 응답 안 forbid 어휘 발생률 < 1건/100 turn + 사용자 frustration 발화 0건/3 Story"
       who: "PMOAgent (cross-Story retro 패턴 분석)"
       how: "PMOAgent retro file §wording-discipline 표 (lint warning count + frustration timestamp delta)"
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: advisory
+      last_occurrence: null
+    status: Active
+
+  - name: retro-mandatory-deployed
+    description: |-
+      CFP-619 / ADR-045 mandate — retro-mandatory.yml workflow .github/workflows/
+      배포 sentinel. byte-identical mirror invariant (ADR-005) + workflow runtime
+      활성화 detection. drift 시 required-workflow-drift-check.yml 가 SSOT 와의
+      차이를 별도로 lint — 본 entry 는 deployment fact 자체의 evidence-enforceable
+      tracking (warning tier, ADR-060 framework 첫 deployment-class entry).
+      CFP-612 Phase 2 PR #618 merge 시점 manual fallback 첫 observed sample.
+    detect_command: bash -c 'test -f .github/workflows/retro-mandatory.yml && diff -q templates/github-workflows/retro-mandatory.yml .github/workflows/retro-mandatory.yml'
+    workflow: null  # static deployment detection — runtime workflow 별도 (retro-mandatory.yml 자체)
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:retro-mandatory-deployed
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a)
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-619
+    introduced_date: 2026-05-14
+    owner_adr: ADR-045
+    carrier_adr: ADR-060
     recurrence:
       count: 0
       threshold: 3
