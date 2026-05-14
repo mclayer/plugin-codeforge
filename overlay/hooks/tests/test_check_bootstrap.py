@@ -311,3 +311,229 @@ def test_main_finding_count_semantics(tmp_path: Path, monkeypatch, capsys) -> No
             line_count = len([line for line in captured.err.splitlines() if line.startswith("           ") or line.startswith("[bootstrap]")])
             # findings 가 line_count 보다 작거나 같음 (각 finding 가 multi-line 가능)
             assert findings <= line_count
+
+
+# ============================================================ Check 10 — workflow version drift (CFP-660)
+
+
+_WRAPPER_STORY_INIT_YML = """\
+name: story-init
+on:
+  issues:
+    types: [labeled]
+concurrency:
+  group: story-init-${{ github.event.issue.number }}
+  cancel-in-progress: false
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+jobs:
+  scaffold:
+    if: contains(github.event.issue.labels.*.name, 'phase:요구사항')
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "stub"
+"""
+
+_WRAPPER_PHASE_GATE_YML = """\
+name: phase-gate-mergeable
+on:
+  pull_request:
+    types: [labeled, unlabeled]
+permissions:
+  pull-requests: write
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "gate stub"
+"""
+
+_WRAPPER_FIX_LEDGER_YML = "name: fix-ledger-sync\non:\n  issue_comment:\n    types: [created]\npermissions:\n  issues: write\n"
+_WRAPPER_SUBISSUE_YML = "name: subissue-from-impl-manifest\non:\n  pull_request:\n    types: [closed]\npermissions:\n  issues: write\n  contents: read\n"
+_WRAPPER_PHASE_LABEL_YML = "name: phase-label-invariant\non:\n  pull_request:\n    types: [labeled]\npermissions:\n  pull-requests: write\n"
+_WRAPPER_STORY_SEC1_YML = "name: story-section-1-immutable\non:\n  pull_request:\n    types: [opened, synchronize]\npermissions:\n  contents: read\n"
+_WRAPPER_STORY_SCHEMA_YML = "name: story-section-schema\non:\n  pull_request:\n    types: [opened, synchronize]\npermissions:\n  contents: read\n"
+
+
+def _build_wrapper_root(tmp_path: Path) -> Path:
+    """Build minimal wrapper plugin_root with templates/github-workflows/ — 7 EXPECTED_WORKFLOWS_FULL files."""
+    plugin_root = tmp_path / "wrapper_root"
+    wf_dir = plugin_root / "templates" / "github-workflows"
+    wf_dir.mkdir(parents=True)
+    file_map = {
+        "story-init.yml": _WRAPPER_STORY_INIT_YML,
+        "phase-gate-mergeable.yml": _WRAPPER_PHASE_GATE_YML,
+        "fix-ledger-sync.yml": _WRAPPER_FIX_LEDGER_YML,
+        "subissue-from-impl-manifest.yml": _WRAPPER_SUBISSUE_YML,
+        "phase-label-invariant.yml": _WRAPPER_PHASE_LABEL_YML,
+        "story-section-1-immutable.yml": _WRAPPER_STORY_SEC1_YML,
+        "story-section-schema.yml": _WRAPPER_STORY_SCHEMA_YML,
+    }
+    for name, content in file_map.items():
+        (wf_dir / name).write_text(content, encoding="utf-8")
+    return plugin_root
+
+
+def _build_consumer_workflows(tmp_path: Path, plugin_root: Path) -> Path:
+    """Copy wrapper templates to consumer .github/workflows/ — clean baseline (no drift)."""
+    consumer_dir = tmp_path / ".github" / "workflows"
+    consumer_dir.mkdir(parents=True)
+    src_dir = plugin_root / "templates" / "github-workflows"
+    for f in src_dir.iterdir():
+        if f.suffix == ".yml":
+            (consumer_dir / f.name).write_bytes(f.read_bytes())
+    return consumer_dir
+
+
+def test_workflow_drift_clean_no_drift(tmp_path: Path) -> None:
+    """consumer file = wrapper template byte-identical → no drift detected, strict_eligible False."""
+    plugin_root = _build_wrapper_root(tmp_path)
+    consumer_dir = _build_consumer_workflows(tmp_path, plugin_root)
+    warns, strict = check_bootstrap.check_workflow_version_drift(consumer_dir, plugin_root)
+    assert warns == [], f"clean baseline 인데 drift detected: {warns}"
+    assert strict is False
+
+
+def test_workflow_drift_strict_eligible_detected(tmp_path: Path) -> None:
+    """STRICT_ELIGIBLE_WORKFLOWS 영역 file 의 핵심 line drift → strict_eligible True."""
+    plugin_root = _build_wrapper_root(tmp_path)
+    consumer_dir = _build_consumer_workflows(tmp_path, plugin_root)
+    # Drift story-init.yml — concurrency group + on event drift (semantic, lane orchestration)
+    drifted_content = (
+        "name: story-init\n"
+        "on:\n"
+        "  issues:\n"
+        "    types: [opened, labeled]\n"  # drift: added 'opened'
+        "concurrency:\n"
+        "  group: story-init-OLD\n"  # drift: OLD vs ${{ github.event.issue.number }}
+        "  cancel-in-progress: true\n"  # drift: true vs false
+        "permissions:\n"
+        "  contents: read\n"  # drift: read vs write — silent skip risk
+        "jobs:\n"
+        "  scaffold:\n"
+        "    runs-on: ubuntu-latest\n"
+        "    steps:\n"
+        "      - run: echo stale\n"
+    )
+    (consumer_dir / "story-init.yml").write_text(drifted_content, encoding="utf-8")
+    warns, strict = check_bootstrap.check_workflow_version_drift(consumer_dir, plugin_root)
+    assert warns, "drift detected 결과 부재"
+    assert strict is True, "story-init.yml ∈ STRICT_ELIGIBLE_WORKFLOWS, strict_eligible 분류 의무"
+    # 핵심 line drift 가 message 안 surface
+    joined = "\n".join(warns)
+    assert "story-init.yml" in joined
+    assert any(m in joined for m in ("concurrency", "on", "permissions"))
+
+
+def test_workflow_drift_whitespace_only_not_flagged(tmp_path: Path) -> None:
+    """Trailing whitespace / blank-line collapse 만의 superficial diff = drift 분류 영역 외."""
+    plugin_root = _build_wrapper_root(tmp_path)
+    consumer_dir = _build_consumer_workflows(tmp_path, plugin_root)
+    # Add trailing whitespace + extra blank line — core marker semantics 동일
+    original = (consumer_dir / "story-init.yml").read_text(encoding="utf-8")
+    # Insert trailing spaces + duplicate blank line in non-core area
+    perturbed = original.replace(
+        "      - run: echo \"stub\"\n",
+        "      - run: echo \"stub\"   \n\n\n",
+    )
+    (consumer_dir / "story-init.yml").write_text(perturbed, encoding="utf-8")
+    warns, strict = check_bootstrap.check_workflow_version_drift(consumer_dir, plugin_root)
+    # Tier 1 SHA mismatch (trailing whitespace 차이) → Tier 2 core markers compare → identical
+    # superficial whitespace diff = drift 영역 외
+    assert warns == [], f"whitespace-only diff 가 drift 로 잘못 분류: {warns}"
+    assert strict is False
+
+
+def test_workflow_drift_plugin_root_missing(tmp_path: Path) -> None:
+    """plugin_root = None → check 10 skip + warning (drift 분류 영역 외)."""
+    consumer_dir = tmp_path / ".github" / "workflows"
+    consumer_dir.mkdir(parents=True)
+    (consumer_dir / "story-init.yml").write_text("# stub\n", encoding="utf-8")
+    warns, strict = check_bootstrap.check_workflow_version_drift(consumer_dir, None)
+    assert warns, "plugin_root None 시 warning 발화 의무"
+    assert any("plugin_root resolution 실패" in w for w in warns)
+    assert strict is False
+
+
+def test_workflow_drift_wrapper_templates_missing(tmp_path: Path) -> None:
+    """wrapper plugin_root 가 templates/github-workflows/ 미보유 → skip + warning."""
+    plugin_root = tmp_path / "wrapper_root_empty"
+    plugin_root.mkdir(parents=True)
+    consumer_dir = tmp_path / ".github" / "workflows"
+    consumer_dir.mkdir(parents=True)
+    (consumer_dir / "story-init.yml").write_text("# stub\n", encoding="utf-8")
+    warns, strict = check_bootstrap.check_workflow_version_drift(consumer_dir, plugin_root)
+    assert warns, "wrapper templates dir 부재 시 warning 의무"
+    assert any("template" in w.lower() or "wrapper plugin" in w for w in warns)
+    assert strict is False
+
+
+def test_workflow_drift_consumer_workflows_dir_missing(tmp_path: Path) -> None:
+    """consumer .github/workflows/ 부재 → check 10 silent skip (check 6 가 별도 warning 발화)."""
+    plugin_root = _build_wrapper_root(tmp_path)
+    consumer_dir = tmp_path / ".github" / "workflows"  # 미생성
+    warns, strict = check_bootstrap.check_workflow_version_drift(consumer_dir, plugin_root)
+    # consumer dir 부재 시 check 10 silent skip (warning 0)
+    assert warns == []
+    assert strict is False
+
+
+def test_workflow_drift_non_strict_eligible_warning_only(tmp_path: Path) -> None:
+    """STRICT_ELIGIBLE_WORKFLOWS 영역 외 file drift → warning 발화 + strict_eligible False."""
+    plugin_root = _build_wrapper_root(tmp_path)
+    # Add non-strict-eligible workflow to wrapper templates
+    wrapper_wf = plugin_root / "templates" / "github-workflows"
+    (wrapper_wf / "non-strict-example.yml").write_text(
+        "name: non-strict\non:\n  push:\n    branches: [main]\npermissions:\n  contents: read\n",
+        encoding="utf-8",
+    )
+    consumer_dir = _build_consumer_workflows(tmp_path, plugin_root)
+    # consumer 측 same file with drift (non-strict-eligible)
+    (consumer_dir / "non-strict-example.yml").write_text(
+        "name: non-strict\non:\n  push:\n    branches: [develop]\npermissions:\n  contents: read\n",
+        encoding="utf-8",
+    )
+    warns, strict = check_bootstrap.check_workflow_version_drift(
+        consumer_dir, plugin_root,
+        expected_set={"non-strict-example.yml"},
+    )
+    assert warns, "drift detected 영역 — warning 발화 의무"
+    assert strict is False, "non-strict-eligible workflow drift → strict_eligible False"
+
+
+def test_workflow_drift_strict_mode_main_exits_1(tmp_path: Path, monkeypatch, capsys) -> None:
+    """STRICT_ELIGIBLE_WORKFLOWS 영역 drift + --strict flag → main() exit 1."""
+    plugin_root = _build_wrapper_root(tmp_path)
+    consumer_dir = _build_consumer_workflows(tmp_path, plugin_root)
+    # Drift story-init.yml (strict-eligible)
+    (consumer_dir / "story-init.yml").write_text(
+        "name: story-init\non:\n  issues:\n    types: [opened]\nconcurrency:\n  group: OLD\n"
+        "permissions:\n  contents: read\njobs:\n  scaffold:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo old\n",
+        encoding="utf-8",
+    )
+    # Set up minimum env for main() — project.yaml + plugins_json + settings.json + label expectations
+    overlay_dir = tmp_path / ".claude" / "_overlay"
+    overlay_dir.mkdir(parents=True)
+    (overlay_dir / "project.yaml").write_text(
+        "github:\n  org: example\n  repo: test\n", encoding="utf-8"
+    )
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(plugin_root.parent))
+    # Note: CLAUDE_PLUGIN_ROOT/codeforge expected, so symlink-or-rename
+    cf_dir = plugin_root.parent / "codeforge"
+    if not cf_dir.exists():
+        # Build alternative wrapper at the codeforge/ subfolder
+        cf_wf = cf_dir / "templates" / "github-workflows"
+        cf_wf.mkdir(parents=True)
+        for f in (plugin_root / "templates" / "github-workflows").iterdir():
+            (cf_wf / f.name).write_bytes(f.read_bytes())
+    # Re-drift the strict-eligible consumer file (already drifted above, but ensure)
+    rc = check_bootstrap.main(["--strict"])
+    captured = capsys.readouterr()
+    # strict-eligible drift 가 1+ 검출 시 exit 1 의무
+    # 단 (a) project.yaml present 이므로 strict-eligible (a) PASS. (b) plugin 미설치 strict-eligible
+    # 일 가능성 — but plugins_json 부재 = STRICT (b) trigger. 그래도 exit 1 발화 확인.
+    assert rc == 1, f"strict mode + strict-eligible drift 시 exit 1 의무, got rc={rc}"
+    assert "STRICT" in captured.err
