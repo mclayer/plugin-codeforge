@@ -7,6 +7,43 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.53.0] - 2026-05-14 — CFP-622 (ADR-073 Orchestrator verify-before-assert — Sentinel #4 strike #2 carrier)
+
+### Added
+
+- `docs/adr/ADR-073-orchestrator-verify-before-assert.md` 신설 — Sentinel #4 strike #2 carrier. ADR-070 자매 ADR (external worker output verify ↔ Orchestrator self-assertion verify). cross-repo state + assumption 기술 verify-before-assert 의무. 8 결정 + 3-layer coherence (ADR-070/071/073) + super-class anchor + 2 mechanism enumeration (M1 working tree mutation lag + M2 cross-repo origin lag) + future strike #N append schema.
+- `docs/adr/ADR-RESERVATION.md` row 73 (CFP-622).
+- `CLAUDE.md` ADR section ADR-073 cross-ref 추가 + L160 ADR-039 단락 압축 (cap residual 회피).
+- `skills/codeforge-brainstorm/SKILL.md` Phase 0 자기 적용 의무 sub-section 추가 (verify-before-assert ADR-073 §결정 1 → §결정 6 carrier).
+
+### Cross-ref
+
+- Issue #607 (Sentinel #4 carrier) — strike #2 evidence comment trigger 충족
+- Issue #622 (ADR-NNN carrier 예약) — 본 ADR codify
+- Sister Epic #635 (CFP-635 over-questioning) — super-class 공유, scope disjoint (cognitive layer)
+- ADR-071 (sister governance — dialog convergence) — 사용자 대화 표현 layer 와 분리
+
+### 본 carrier 처리 외 영역
+
+- E-1 hook automation (mechanical enforcement layer) = 별 follow-up CFP
+- GitHub API eventual consistency = 별 CFP
+- superpowers:writing-plans cross-plugin amend = upstream PR
+
+### Strike #3 — self-application paradox (rebase 정정)
+
+- **상황**: cfp-622 worktree base = 5.48.0 결정 시점에 origin/main 이 이미 5.49.0 (CFP-628) 으로 진행 중. Tasks 3-6 commit `983cf6d` 가 stale base 위 결정 → ADR-073 §결정 1 (verify-before-assert) 의무 위반 사례 (recursive self-application paradox).
+- **해소**: cfp-622 를 origin/main `fa69a40` (CFP-628 5.49.0 head) 위로 rebase + version 5.48.0 → 5.50.0 정정 (5.49.0 위 MINOR bump). plugin.json description = CFP-628 sentence (origin/main append) + CFP-622 sentence (cfp-622 append) 둘 다 preserve. CHANGELOG top order = 5.50.0 (CFP-622) > 5.49.0 (CFP-628) > 5.47.0 (older).
+- **Verify-before-assert evidence**: 매 step 시작 전 `git fetch origin` + plugin.json description verbatim mirror = `git show origin/main:.claude-plugin/plugin.json` direct verify (PowerShell native execution to avoid PS shell ref-mangling).
+- **Story §10 추가 의무**: 본 fix 가 Strike #3 evidence — Story §10 + retro 안 명시 의무 (Task 12 retro 영역 후속 task).
+
+### Strike #4 — continuous self-application paradox (2nd rebase 정정)
+
+- **상황**: PR #109 (marketplace cfp-622 → main) merge attempt 가 두 번째로 origin/main advance 발견. Strike #3 정정 (5.48.0 → 5.50.0) 후 PR open 사이 origin/main 이 또 3 commit advance — `ce3aaee CFP-631 5.50.0 sync` + `e08ce48 CFP-637 5.51.0 sync` + `6eb5890 CFP-638 5.52.0 sync`. wrapper plugin도 동일 stale (cfp-622 5.50.0 vs origin/main 5.52.0).
+- **해소**: 양 worktree (wrapper + marketplace) origin/main rebase + version 5.50.0 → **5.53.0** MINOR bump (5.52.0 위) + plugin.json description = origin/main 의 CFP-631+637+638 sentences preserve + CFP-622 sentence append. force-push (--force-with-lease) + PR #109 merge 재시도.
+- **Verify-before-assert evidence (Strike #3 보다 강화)**: 매 rebase + push 사이 origin advance 가능 성 명시 — 1 trip 안 (rebase → push → merge attempt) 즉시 진행 의무. Maximum 5 attempts. 5 회 fail 시 사용자 escalation.
+- **Recursive self-application paradox 시연**: 본 carrier 가 ADR-073 codify 카리어 인데 codify 전 진행 중 ADR-073 의 정확한 anti-pattern 을 자기 자신이 시연 (Strike #3 + Strike #4 누적). ADR-073 future amendment trigger evidence — N+1 mechanism (continuous race condition during rebase race) 후속 강화 candidate.
+- **Story §10 추가 의무**: 본 fix 가 Strike #4 evidence — Story §10 + retro 안 명시 의무 (Task 12 retro 영역 후속 task, Strike #3 와 동일 row group).
+
 ## [5.52.0] - 2026-05-14 — CFP-638 (Continuous "진행해" 패턴 mechanical detect — Epic CFP-635 Story D)
 
 Epic [CFP-635](https://github.com/mclayer/plugin-codeforge/issues/635) Story D sister carrier. doc-only fast-path (ADR-054). CFP-637 (Story A+B+C combined) merged 후 base (5.51.0 → 5.52.0 post-CFP-637 atomic realignment).
