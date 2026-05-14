@@ -7,7 +7,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
-## [5.48.0] - 2026-05-14 — CFP-628 Story 2 (ADR-045 §D-5 retro alert pickup KPI sentinel)
+## [5.49.0] - 2026-05-14 — CFP-628 Story 2 (ADR-045 §D-5 retro alert pickup KPI sentinel)
 
 ADR-045 §D-5 신설 (CFP-628 Story 1, doc-only) 의 Layer (c) 구현 — retro alert pickup rate KPI sentinel script + SessionStart hook sample + monthly cron workflow + evidence-checks-registry entry + KPI seed + label-registry v2.9. ADR-037 MINOR bump: script behavior change (check-retro-alerts.sh SessionStart hook 신규 활성화).
 
@@ -29,7 +29,7 @@ ADR-045 §D-5 신설 (CFP-628 Story 1, doc-only) 의 Layer (c) 구현 — retro 
 
 ### Sibling sync (separate PR)
 
-- mclayer/marketplace: plugins[codeforge].version 5.47.0 → 5.48.0 mirrored (ADR-063 atomic invariant — marketplace 선행 merge → wrapper PR merge)
+- mclayer/marketplace: plugins[codeforge].version 5.49.0 (marketplace 이미 5.49.0, description에 CFP-628 content append sync — ADR-063 atomic invariant, separate PR #106)
 
 ## [5.47.0] - 2026-05-14 — CFP-619 (retro-mandatory.yml workflow deploy — ADR-045 mandate restoration)
 
