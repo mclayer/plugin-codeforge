@@ -259,6 +259,22 @@ ReviewPL verdict packet의 `mechanical_category` 자격 충족 시 (`mechanical_
 - internal-docs PR #101 (merged): https://github.com/mclayer/codeforge-internal-docs/pull/101
 - ADR-010 §4 wrapper-first allowed pattern (sibling sync legitimacy)
 
+## 자율 병렬 결정 tree (parallel-dispatch-protocol-v1 §5)
+
+**SSOT**: `docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md` (wrapper canonical, kind:registry, sibling sync 면제).
+
+본 PL agent 가 plan task batch dispatch 시점에 적용하는 4-분기 결정 tree:
+
+1. **plan parallel_with hint 있음** → multi-instance subagent 병렬 dispatch (default)
+2. **parallel_with hint 부재 + 파일 disjoint + interface 의존 0** → 자율 병렬 dispatch (default — PL 자체 판단)
+3. **same-file-different-method + commit atomic 분리 capability 보유** → 병렬 dispatch + 완료 후 PL merge (capability 부재 시 분기 4 fallback)
+4. **same-file-same-method 또는 schema_migration** → sequential 의무 (6 enum 중 해당 명시)
+
+**6 순차 의무 사유 enum** (close-set, registry §3 verbatim):
+- `tdd_red_phase` / `schema_migration` / `adr_reservation_append` / `fix_ledger_append` / `sibling_sync_ordering` / `marketplace_sync_ordering`
+
+**Carrier**: CFP-609 ADR-064 Amendment 1 (mechanical enforcement Phase 1 — consumer mctrader MCT-159 Phase 2 55min wall-clock sequential bias 실측 trigger).
+
 ### Follow-up CFP (develop-output schema)
 
 develop-output v1 → v1.1 MINOR bump candidate: `cross_layer_dialog_rounds` field 추가 (env=1 활성 시 PL ↔ worker SendMessage round count). 본 Story 안 직접 도입 X — 별도 follow-up CFP 로 처리 (ADR-008 SemVer 룰 + ADR-010 sibling sync 패턴 정합).

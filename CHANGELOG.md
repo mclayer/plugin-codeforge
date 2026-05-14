@@ -2,6 +2,10 @@
 
 `codeforge-develop` plugin 릴리스 이력.
 
+## 0.7.0 (2026-05-14)
+
+- CFP-609: DeveloperPLAgent.md 자율 병렬 결정 tree 4-분기 신설 (parallel-dispatch-protocol-v1 §5 sibling sync — wrapper canonical mclayer/plugin-codeforge `docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md`)
+
 ## 0.6.0 — 2026-05-13 — CFP-507 DeveloperPLAgent Phase 2 PR body composition convention section 신설 (MINOR)
 
 CFP-490 (#490, merged) §7.5 origin investigation 의 sibling carrier. `## Lane evidence` first heading auto-include 의 actual origin 정정 — 가설 (wrapper PR template 부재) verified false, actual origin = 본 plugin DeveloperPLAgent body composition convention 부재 + wrapper Orchestrator manual append 정책 부재 결합 (Story CFP-507 §2.3).
