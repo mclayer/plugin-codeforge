@@ -252,11 +252,11 @@ FIX 루프 시작 시 `codeforge:root-cause-decision` 호출 (DeveloperPL 진단
 
 요약: DesignLane=설계 결정, DesignReview=문서 감사, CodeReview=구현 품질, SecurityTest=보안 검증. 중복 지적 시 해당 ReviewPL dedup → severity 높은 쪽 채택.
 
-### Deputy mandate 매트릭스 (codeforge-design lane) — 6 permanent + 2 CONDITIONAL
+### Deputy mandate 매트릭스 (codeforge-design lane) — 6 permanent + 3 CONDITIONAL
 
-설계 lane 진입 시 `codeforge:deputy-mandate` 호출 (ArchitectPLAgent deputy spawn 결정 전). 6+2 deputy §7/§11/§13 sub별 ownership 전체 테이블 포함.
+설계 lane 진입 시 `codeforge:deputy-mandate` 호출 (ArchitectPLAgent deputy spawn 결정 전). 6+3 deputy §7/§11/§13 sub별 ownership 전체 테이블 포함.
 
-요약: SecurityArch=§7.1/§7.2/§7.3/§7.5/§7.6, OpRiskArch=§7.4(DR/rate/env/clock), DataMigrationArch=§11 schema/migration/idempotency, TestContractArch=§8.5. CONDITIONAL LiveOps·LiveOrdering = Live touching Story만 spawn ([ADR-014](docs/adr/ADR-014-operational-risk-ssot-distribution.md)).
+요약: SecurityArch=§7.1/§7.2/§7.3/§7.5/§7.6, OpRiskArch=§7.4(DR/rate/env/clock), DataMigrationArch=§11 schema/migration/idempotency, TestContractArch=§8.5. CONDITIONAL LiveOps·LiveOrdering·ProductionEvidence = Live touching Story (LiveOps·LiveOrdering) 또는 production cutover Story (ProductionEvidence) 만 spawn ([ADR-014](docs/adr/ADR-014-operational-risk-ssot-distribution.md), [ADR-72](docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md)).
 
 **PMOAgent (Cross-cutting)** — Epic 창설 / Story 완료 회고 (**자동 의무 trigger** — Phase 2 PR merge 후 5분 grace, CFP-138 / [ADR-045](docs/adr/ADR-045-story-retro-mandatory-trigger.md)) / 사용자 요청 시 spawn. 단일 Story lane 게이트 비개입. 상세: [codeforge-pmo CLAUDE.md](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/CLAUDE.md).
 
