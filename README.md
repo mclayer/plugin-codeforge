@@ -60,6 +60,35 @@ Orchestrator (최상위 Claude 세션)
 
 세션 개시 시 자동 점검 · 미설치 시 blocking wait.
 
+### 2a. Enterprise environment prerequisite (CFP-661 / [ADR-027 Amendment 2](docs/adr/ADR-027-consumer-adoption-protocol.md))
+
+codeforge 의 6 핵심 workflow (`story-init.yml` 외 5종) 는 PR / branch create / Issue comment write 권한을 사용. GitHub Enterprise org 의 admin policy 가 `default_workflow_permissions: read` cap 으로 차단 시 workflow silent skip → Story init 실패. **enterprise admin 권한 보유 환경에서 다음 prerequisite 활성 의무**:
+
+#### 권한 있음 — repo Settings 활성
+
+repo Settings → Actions → General → "Workflow permissions" 영역:
+
+1. **"Read and write permissions"** 선택 (default `Read repository contents and packages permissions` 에서 전환)
+2. **"Allow GitHub Actions to create and approve pull requests"** 체크박스 활성
+
+CLI 등가 명령:
+
+```bash
+gh api --method PUT repos/<owner>/<repo>/actions/permissions/workflow \
+  -f default_workflow_permissions=write \
+  -F can_approve_pull_request_reviews=true
+```
+
+#### 권한 없음 — graceful degradation 자동 활성
+
+`default_workflow_permissions: read` 차단 환경에서는 `story-init.yml` 의 `Create Phase 1 PR` step 이 `continue-on-error: true` 로 graceful 실패 → 후속 step 이 Issue comment 로 manual fallback 안내 자동 게시. CFP-658 Wave 1 fallback path 가 대체 진입점으로 활성:
+
+- `.claude/_overlay/project.yaml` 에 `bootstrap.fallback_mode: action_blocked` 설정 (declarative trigger A)
+- 또는 Issue 발의자가 `fallback:manual` label 부착 (per-Issue override trigger C)
+- RequirementsPL / ArchitectPL 가 `bash templates/scripts/manual-story-init-fallback.sh <ISSUE_NUMBER>` 호출
+
+상세 SSOT: [`docs/consumer-guide.md §1h` Action 차단 환경 fallback](docs/consumer-guide.md) + [ADR-027 §결정 6](docs/adr/ADR-027-consumer-adoption-protocol.md).
+
 ### 3. Consumer 프로젝트 overlay 구성
 
 [`docs/consumer-guide.md`](docs/consumer-guide.md) 참조.

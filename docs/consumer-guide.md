@@ -295,6 +295,55 @@ namespace 분리 = fallback path 침해 시 blast radius 최소화. ADR-066 90 d
 
 상세 SSOT: [domain-knowledge `workflow-blocked-manual-fallback.md`](domain-knowledge/domain/github-actions/workflow-blocked-manual-fallback.md) + [ADR-027 §결정 6](adr/ADR-027-consumer-adoption-protocol.md) + [orchestrator-playbook §"fallback decision tree"](orchestrator-playbook.md).
 
+### 1i. Enterprise environment setup (CFP-661 / Wave 3 of Epic CFP-431)
+
+§1h 의 fallback path 는 **권한 차단 환경 대응**. 본 절은 **enterprise admin 권한 보유 환경에서 prerequisite 활성 운영** 의 SSOT — fallback 회피 정상 경로.
+
+#### prerequisite 활성 단계
+
+GitHub Enterprise org 의 admin policy 가 `default_workflow_permissions: read` cap 을 설정한 경우, codeforge 의 `story-init.yml` 외 5 workflow 가 silent skip 한다. consumer admin 이 다음 활성 의무:
+
+1. **repo Settings → Actions → General → "Workflow permissions" 영역**:
+   - `Read and write permissions` 선택 (default `Read repository contents and packages permissions` 에서 전환)
+   - `Allow GitHub Actions to create and approve pull requests` 체크박스 활성
+
+2. **CLI 등가 명령** (자동화 운영용):
+
+   ```bash
+   gh api --method PUT repos/<owner>/<repo>/actions/permissions/workflow \
+     -f default_workflow_permissions=write \
+     -F can_approve_pull_request_reviews=true
+   ```
+
+3. **확인 명령** (current state 검증):
+
+   ```bash
+   gh api repos/<owner>/<repo>/actions/permissions/workflow
+   # 기대 응답: {"default_workflow_permissions":"write","can_approve_pull_request_reviews":true}
+   ```
+
+#### Graceful degradation 자동 활성 (권한 차단 환경)
+
+위 prerequisite 미충족 시 `story-init.yml` 의 `Create Phase 1 PR` step (line 230-248) 이 `continue-on-error: true` 로 실패 흡수 → 후속 `Post manual PR fallback comment` step 이 Issue comment 로 manual fallback path 안내 자동 게시 (CFP-661 graceful degradation, ADR-054 doc-only fast-path scope). 이때 §1h 의 Wave 1 fallback path (`bootstrap.fallback_mode: action_blocked` declarative 또는 `fallback:manual` per-Issue label) 가 대체 진입점으로 활성 — Story init 진행 무중단.
+
+#### Enterprise admin 결정 매트릭스
+
+| 조건 | 권장 결정 | 대응 |
+|---|---|---|
+| Org admin 권한 보유 + cap 변경 가능 | prerequisite 활성 | 정상 workflow 경로 (PR auto-create) |
+| Org admin 권한 보유 + cap 변경 정책상 차단 | fallback path 활성 | `bootstrap.fallback_mode: action_blocked` declarative (영구) |
+| Org admin 권한 부재 + 일시 차단 | per-Issue override | `fallback:manual` label 부착 (per-Issue ad-hoc) |
+| Org admin 권한 부재 + 영구 차단 | fallback path declarative + manual fallback 운영 표준화 | §1h 4 step runbook |
+
+#### Sunset criteria
+
+본 graceful degradation 메커니즘은 enterprise org cap 정책 회피 reactive 안전망. 해소 기준:
+- **metric**: GitHub `default_workflow_permissions` API 가 org level inheritance broadcast 지원 + consumer org admin 이 일괄 default `write` 전환 — 90% 신규 consumer install 에서 prerequisite 활성 default
+- **who**: consumer org admin (codeforge 외부)
+- **how**: rollout audit (`docs/security/enterprise-prerequisite-rollout.md` log 신설 — Phase 2 carrier)
+
+상세 cross-ref: §1h Action 차단 환경 fallback + [ADR-027 Amendment 2 §결정 6](adr/ADR-027-consumer-adoption-protocol.md) + [`templates/github-workflows/story-init.yml`](../templates/github-workflows/story-init.yml) line 230-273 (graceful degradation step pair).
+
 ## 2. Consumer 프로젝트 구조 초기화
 
 ```

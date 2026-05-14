@@ -228,7 +228,12 @@ jobs:
           git push origin "$BRANCH"
 
       - name: Create Phase 1 PR
+        id: pr_create
         if: steps.existence_check.outputs.skip != 'true'
+        # CFP-661 Wave 3 graceful degradation — enterprise `default_workflow_permissions: read` 차단 시 step 실패 흡수.
+        # 후속 step `Post manual PR fallback comment` 가 Issue comment 로 CFP-658 Wave 1 fallback path 안내 자동 게시.
+        # SSOT: docs/consumer-guide.md §1i Enterprise environment setup + ADR-027 Amendment 2 §결정 6.
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           KEY: ${{ steps.key.outputs.key }}
@@ -246,6 +251,44 @@ jobs:
             --title "[${KEY}] ${TITLE_CLEAN}" \
             --body "$BODY" \
             --label "type:story,phase:요구사항"
+
+      - name: Post manual PR fallback comment (CFP-661 Wave 3 graceful degradation)
+        if: steps.existence_check.outputs.skip != 'true' && steps.pr_create.outcome == 'failure'
+        # CFP-661 Wave 3 — pr_create step `continue-on-error: true` 실패 흡수 시 Issue comment 로 manual fallback path 안내.
+        # Enterprise default_workflow_permissions: read 차단 환경에서 silent skip 회피 + CFP-658 Wave 1 fallback path 자동 활성 trigger.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          KEY: ${{ steps.key.outputs.key }}
+          SLUG: ${{ steps.key.outputs.slug }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --body "$(cat <<EOF
+          ## Enterprise GitHub Actions PR create permission 차단 — manual fallback 의무 (CFP-661 graceful degradation)
+
+          본 workflow 의 \`Create Phase 1 PR\` step 이 enterprise \`default_workflow_permissions: read\` 차단으로 실패. **CFP-658 Wave 1 fallback path 활성화 의무**:
+
+          1. \`.claude/_overlay/project.yaml\` 에 \`bootstrap.fallback_mode: action_blocked\` 설정 (영구 차단 환경 default, declarative trigger A)
+          2. RequirementsPL / ArchitectPL 가 manual fallback path 호출: \`bash templates/scripts/manual-story-init-fallback.sh ${ISSUE_NUMBER}\`
+          3. 또는 \`fallback:manual\` label 부착 (per-Issue ad-hoc override trigger C, ADR-027 Amendment 2 §결정 6.A)
+          4. 4 required check 통과 의무 — admin override 차단 (\`enforce_admins: true\` ratchet 유지, CFP-70)
+
+          **Enterprise admin 권한 보유 시 prerequisite 활성 권장** (fallback 회피 정상 경로):
+
+          \`\`\`bash
+          gh api --method PUT repos/${GITHUB_REPOSITORY}/actions/permissions/workflow \\
+            -f default_workflow_permissions=write \\
+            -F can_approve_pull_request_reviews=true
+          \`\`\`
+
+          참조 SSOT:
+          - [docs/consumer-guide.md §1h Action 차단 환경 fallback](../blob/main/docs/consumer-guide.md)
+          - [docs/consumer-guide.md §1i Enterprise environment setup](../blob/main/docs/consumer-guide.md)
+          - [ADR-027 Amendment 2 §결정 6](../blob/main/docs/adr/ADR-027-consumer-adoption-protocol.md)
+          - CFP-658 Phase 2 \`templates/scripts/manual-story-init-fallback.sh\`
+          - Branch: \`feat/${KEY}-${SLUG}\` (이미 push 완료 — manual PR open 만 필요)
+
+          Story init 진행 무중단 — fallback path 활성 시 정상 4 required check 통과 시 merge gate 통과.
+          EOF
+          )"
 
       - name: Post worktree-create reminder comment
         if: steps.existence_check.outputs.skip != 'true'
