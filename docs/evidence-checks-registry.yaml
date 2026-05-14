@@ -12,7 +12,7 @@
 # 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
 schema_version: "1.2"  # CFP-509 / ADR-060 Amendment 6 — recurrence field 정식 도입 (MINOR bump v1.1 → v1.2)
 introduced_by: CFP-389
-last_updated: 2026-05-14  # CFP-619 — retro-mandatory-deployed entry append (ADR-045 mandate restoration + ADR-060 framework 41번째 entry, sentinel #1 carrier)
+last_updated: 2026-05-14  # CFP-631 — marketplace-description-verbatim 42번째 entry append (ADR-063 Amendment 2 carrier — blocking-on-pr 직접 시작, §결정 19 auto_blocking manual gate + 사용자 directive)
 
 entries:
   - name: adr-sunset-criteria
@@ -1282,4 +1282,40 @@ entries:
       count: 0
       promotion_trigger: none
       last_occurrence: null
+    status: Active
+
+  - name: marketplace-description-verbatim
+    description: |-
+      CFP-631 / ADR-063 Amendment 2 §결정 11 — wrapper plugin.json description ↔
+      marketplace.json plugins[codeforge].description byte-identical verify (PR-time enforce).
+      mirrored field 4종 중 description 단독 PR-time enforce 추가 — name/author = check-marketplace-parity
+      warning sufficient, version = version-bump-atomic-check blocking-on-pr 기존 cover.
+      6 sample 누적 drift evidence (CFP-387/393/423/597/612/619, CFP-619 retro §5.2 SSOT).
+      blocking-on-pr tier 직접 시작 근거 = ADR-060 §결정 5 default warning explicit exception
+      + §결정 19 (Amendment 6, CFP-509) auto_blocking manual gate path (recurrence.count=6 +
+      threshold=6 + promotion_trigger=auto_blocking) + 사용자 directive Story §1 verbatim —
+      본 carrier Story 자체가 §결정 6 별도 promotion carrier 의무 합병.
+      Amendment 1 (design-time self-check, CFP-597) 와 layered 2-layer proactive forcing function.
+    detect_command: bash scripts/check-marketplace-description-verbatim.sh
+    workflow: templates/github-workflows/marketplace-description-verbatim.yml
+    current_tier: blocking-on-pr   # ADR-060 §결정 5 explicit exception + §결정 19 auto_blocking manual gate (Phase 2 PR 부터 active enforce)
+    bypass_label: hotfix-bypass:marketplace-description-verbatim
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies: []         # 독립 entry — 본 carrier Story 자체가 carrier
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-631
+    introduced_date: 2026-05-14
+    owner_adr: ADR-063
+    carrier_adr: ADR-060
+    recurrence:
+      count: 6                       # CFP-387/393/423/597/612/619 6 sample 누적 [empirical-source: CFP-619 retro §5.2]
+      threshold: 6                   # ADR-060 §결정 19 (Amendment 6) — recurrence threshold (count >= threshold = signal 발화)
+      promotion_trigger: auto_blocking  # ADR-060 §결정 19 enum — actual transition 본 carrier Story 자체가 별도 carrier 의무 합병 (사용자 explicit directive Story §1)
+      last_occurrence: 2026-05-14   # CFP-619 byte-identical fix commit c199dee [empirical-source: marketplace git log]
     status: Active

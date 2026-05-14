@@ -7,6 +7,38 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.50.0] - 2026-05-14 — CFP-631 (ADR-063 Amendment 2 — marketplace description verbatim PR-time proactive lint mandate)
+
+CFP-619 retro §5.2 carry-over — 6 sample 누적 description drift evidence (CFP-387 / CFP-393 / CFP-423 / CFP-597 / CFP-612 / CFP-619). ADR-063 §결정 1 mirrored field invariant 안 `description` field 만 PR-time enforce 부재 (version = `version-bump-atomic-check.yml` blocking-on-pr cover, name/author = `check-marketplace-parity.sh` warning sufficient) → mechanical proactive lint mandate (Amendment 2 §결정 11). Amendment 1 (design-time self-check, CFP-597) 와 layered 2-layer proactive forcing function.
+
+ADR-037 MINOR bump: governance behavior change (Amendment 2 mandate 신설 — blocking-on-pr tier 직접 시작, Phase 2 PR 부터 active enforce). rebase race 4th sample (CFP-619+CFP-628+CFP-631 FIX-1+CFP-631 PR sequence) — base 5.49.0 (CFP-628 Story 2 merge 후 재산정).
+
+### Added
+
+- ADR-063 Amendment 2 본문 — `docs/adr/ADR-063-marketplace-atomic-invariant.md` frontmatter `amendments[1]` row append + §결정 11 (description proactive lint mandate) + §결정 12 (self-application ratchet + 본 carrier 첫 사례 시연 의무).
+- `docs/evidence-checks-registry.yaml` — 42번째 entry `marketplace-description-verbatim` append (CFP-628 `retro-alert-pickup-rate` 42번째 entry 위 재편입 → CFP-631 이 43번째로 재배치). owner_adr: ADR-063, carrier_adr: ADR-060, current_tier: blocking-on-pr (ADR-060 §결정 5 default warning explicit exception + §결정 19 Amendment 6 CFP-509 auto_blocking manual gate path — 6 sample 누적 evidence base + 사용자 directive Story §1), bypass_label: `hotfix-bypass:marketplace-description-verbatim` (per-entry namespace, ADR-024 Amendment 3 §결정 6.A 정합, 17번째 hotfix-bypass family member). recurrence: count=6 / threshold=6 / promotion_trigger=auto_blocking / last_occurrence=2026-05-14.
+- `docs/inter-plugin-contracts/label-registry-v2.md` — v2.9 → v2.10 PATCH (schema 무변경 — §3 yaml `hotfix-bypass:marketplace-description-verbatim` 17번째 family member append). bootstrap-labels.sh dynamic read 분기 자동 sync (CFP-598).
+
+### Scope split (Phase 1 vs Phase 2)
+
+- **Phase 1 (본 PR)**: ADR-063 Amendment 2 + plugin.json + CHANGELOG + evidence-checks-registry + label-registry-v2 (doc/registry/version bump only).
+- **Phase 2 (별도 PR)**: `scripts/check-marketplace-description-verbatim.sh` (bash lint script) + `templates/github-workflows/marketplace-description-verbatim.yml` canonical SSOT + `.github/workflows/marketplace-description-verbatim.yml` byte-identical mirror (ADR-005). Phase 2 PR merge 후 future PR 부터 본 lint 활성 (chicken-and-egg 회피).
+
+### Sibling sync (separate PR)
+
+- mclayer/marketplace: plugins[codeforge].version 5.49.0 → 5.50.0 + description tail 갱신 (CFP-631 carrier note byte-identical) — ADR-063 §결정 1 atomic invariant + Amendment 2 §결정 12 self-application 첫 사례. ordering: marketplace 선행 merge → wrapper Phase 1 PR merge.
+
+### Lane boundary stretch declare
+
+ArchitectPLAgent boundary-stretched §2-§6 (codeforge-requirements@mclayer v0.6.0 plugin available but mechanical scope — §1 사용자 verbatim 6 sample 표 + 변경 영역 7-file delta + Test plan + Related ADR 완결 specify). CFP-619 precedent (Wave 5 동일 cycle) 정합.
+
+### Codex Touchpoint #2 inline FIX
+
+- P1 #1 (citation drift) FIX: ADR-060 "Amendment 4 §결정 16" false citation → "ADR-060 §결정 5 default warning explicit exception + §결정 19 Amendment 6 (CFP-509) auto_blocking manual gate path" 정정 (실제 §결정 16 = warning-tier bypass_label policy, §결정 19 = recurrence-based advisory promotion signal).
+- P1 #2 (Phase 1 artifacts missing) FIX: plugin.json 5.49.0 → 5.50.0 + CHANGELOG [5.50.0] + evidence-checks-registry entry + label-registry-v2 entry 본 PR 안 동반 commit (Phase 1 self-application 완료).
+- P2 #1 (rate-limit wording) FIX: "single PR 1 call → 영향 0" → "per workflow run 1 call + repeated synchronize events possible; authenticated 5000req/h 한도 안 실질 영향 낮음" 정정.
+- P2 #2 (empirical-source rationale-only) FIX: NFR 4행 안 `[empirical-source: ...]` annotation 정밀 — Lint runtime + Workflow trigger latency 2 행 `[empirical-source: TBD]` marker 전환 (ADR-068 Amendment 1 line 94 allowed format), Phase 2 PR 첫 실행 시 actual benchmark 의무.
+
 ## [5.49.0] - 2026-05-14 — CFP-628 Story 2 (ADR-045 §D-5 retro alert pickup KPI sentinel)
 
 ADR-045 §D-5 신설 (CFP-628 Story 1, doc-only) 의 Layer (c) 구현 — retro alert pickup rate KPI sentinel script + SessionStart hook sample + monthly cron workflow + evidence-checks-registry entry + KPI seed + label-registry v2.9. ADR-037 MINOR bump: script behavior change (check-retro-alerts.sh SessionStart hook 신규 활성화).
