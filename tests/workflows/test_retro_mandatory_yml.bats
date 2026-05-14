@@ -165,3 +165,48 @@ print('PASS')
   [ "$status" -eq 0 ]
   [[ "$output" == *"PASS"* ]]
 }
+
+# CFP-659 — L6 regression TC
+
+@test "L6 regression — STORY_NUM direct mapping present in workflow (CFP-659)" {
+  # direct mapping 의무: grep -oE '[0-9]+' 패턴이 workflow에 존재해야 함
+  run grep -F "grep -oE '[0-9]+'" "$WORKFLOW_FILE"
+  [ "$status" -eq 0 ]
+}
+
+@test "L6 regression — old search logic absent (no in:title, no type:story --search) (CFP-659)" {
+  # 구 search logic (in:title + --label type:story + --search) 은 L6 fix 후 제거됨
+  run grep -E "in:title|--label.*type:story.*--search|--search.*in:title" "$WORKFLOW_FILE"
+  [ "$status" -eq 1 ]
+  [ -z "$output" ]
+}
+
+@test "L6 regression — gh issue view direct lookup present (CFP-659)" {
+  # CFP-NNN ↔ Issue #N mapping: gh issue view STORY_NUM 존재 verify
+  run grep -F 'gh issue view "$STORY_NUM"' "$WORKFLOW_FILE"
+  [ "$status" -eq 0 ]
+}
+
+@test "L6 regression — ISSUE_NUM=STORY_NUM assignment present (CFP-659)" {
+  # direct mapping 최종 할당
+  run grep -F "ISSUE_NUM=\$STORY_NUM" "$WORKFLOW_FILE"
+  [ "$status" -eq 0 ]
+}
+
+@test "L6 unit — STORY_KEY CFP-659 → STORY_NUM=659 extraction (CFP-659)" {
+  run bash -c "STORY_KEY='CFP-659'; STORY_NUM=\$(echo \"\$STORY_KEY\" | grep -oE '[0-9]+'); echo \"\$STORY_NUM\""
+  [ "$status" -eq 0 ]
+  [ "$output" = "659" ]
+}
+
+@test "L6 unit — STORY_KEY CFP-138 → STORY_NUM=138 extraction (CFP-659, no prefix collision)" {
+  run bash -c "STORY_KEY='CFP-138'; STORY_NUM=\$(echo \"\$STORY_KEY\" | grep -oE '[0-9]+'); echo \"\$STORY_NUM\""
+  [ "$status" -eq 0 ]
+  [ "$output" = "138" ]
+}
+
+@test "L6 unit — invalid STORY_KEY (no digits) → empty STORY_NUM (CFP-659)" {
+  run bash -c "STORY_KEY='INVALID-KEY'; STORY_NUM=\$(echo \"\$STORY_KEY\" | grep -oE '[0-9]+'); echo \"\${STORY_NUM:-EMPTY}\""
+  [ "$status" -eq 0 ]
+  [ "$output" = "EMPTY" ]
+}
