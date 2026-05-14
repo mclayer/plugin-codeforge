@@ -4,7 +4,7 @@
 Cross-platform Python core. POSIX bash (`check-bootstrap.sh`) + Windows
 PowerShell (`check-bootstrap.ps1`) wrapper 둘 다 본 모듈을 호출.
 
-CFP-103 (Phase 2a of CFP-96 Epic). 9 check (CFP-127 NEW check 9):
+CFP-103 (Phase 2a of CFP-96 Epic). 10 check (CFP-660 NEW check 10):
   1. Workflow permissions (org-level) — 기존 (CFP-11)
   2. 18 plugin label 존재 — 기존 (CFP-11)
   3. workflow_distribution.mode=degraded missing_workflows 안내 — 기존 (CFP-86/89/95)
@@ -13,26 +13,30 @@ CFP-103 (Phase 2a of CFP-96 Epic). 9 check (CFP-127 NEW check 9):
   6. consumer .github/workflows/ file 존재 — 기존 (CFP-103)
   7. consumer .github/ISSUE_TEMPLATE/ 3종 sync — 기존 (CFP-103)
   8. consumer CODEOWNERS 정합 — 기존 (CFP-103)
-  9. .claude/settings.json 의 SessionStart × 2 + UserPromptSubmit × 1 hook 등록 — NEW (CFP-127)
+  9. .claude/settings.json 의 SessionStart × 2 + UserPromptSubmit × 1 hook 등록 — CFP-127
+  10. consumer .github/workflows/<name>.yml SHA / 핵심 line drift vs wrapper templates — NEW (CFP-660)
 
 Default non-blocking: 발견된 drift 는 WARN 으로만 출력 (stderr). exit 0. ADR-027 §결정 2 정합.
 
-Strict mode opt-in (CFP-127 / ADR-032 amendment 1):
+Strict mode opt-in (CFP-127 / ADR-032 amendment 1, CFP-660 / ADR-032 amendment 2):
   Priority CLI > env > yaml:
     1. CLI flag: `--strict`
     2. Env: `CODEFORGE_STRICT_BOOTSTRAP=1`
     3. YAML: `bootstrap.strict_mode: true` (.claude/_overlay/project.yaml)
-  Strict-eligible drift (4종 — Sonnet pick alpha CFP-127-001):
+  Strict-eligible drift (5종 — CFP-660 4 → 5 종 확장):
     (a) project.yaml 부재 → exit 1
     (b) plugin 11종 중 wrapper(1) + 6 lane(6) + superpowers(1) = 8 critical 미설치 → exit 1
     (c) settings.json 의 3 hook 미등록 → exit 1
     (d) 18 label 중 phase:* (7) + gate:* (3) = 10 critical 부재 → exit 1
+    (e) consumer workflow version drift — stale `.github/workflows/<name>.yml` vs wrapper
+        templates SHA / 핵심 line mismatch (CFP-660 / ADR-032 amendment 2 §결정 6) → exit 1
   Bypass precedence: HOTFIX_BYPASS_CODEFORGE=1 + REASON 양 env set → strict 무관 hook self skip.
 
 Skip 조건 (기존):
   - gh CLI 미설치 (check 1+2 skip)
   - gh auth status 실패 (check 1+2 skip)
   - .claude/_overlay/project.yaml 부재 (default mode = silent skip / strict mode = exit 1)
+  - plugin_root resolution 실패 (check 4 + check 10 skip)
 
 Required 의존: PyYAML (project.yaml parse, validate_config.py 와 동일).
 """
@@ -40,6 +44,7 @@ Required 의존: PyYAML (project.yaml parse, validate_config.py 와 동일).
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import os
 import re
@@ -110,6 +115,28 @@ STRICT_ELIGIBLE_LABELS = {
     "phase:구현-리뷰", "phase:구현-테스트", "phase:보안-테스트",
     "gate:design-review-pass", "gate:security-test-pass", "gate:live-entry-pass",
 }
+
+# CFP-660 / ADR-032 amendment 2 — Strict-eligible workflow subset for check 10
+# (consumer .github/workflows/<name>.yml SHA / 핵심 line drift vs wrapper templates)
+# 본 set 는 EXPECTED_WORKFLOWS_FULL 의 subset — lane orchestration semantics 영향 직접인 file 만.
+# story-section-schema.yml / fix-ledger-sync.yml 는 schema check / mirror 영역 — 별 set 검토.
+STRICT_ELIGIBLE_WORKFLOWS = {
+    "phase-gate-mergeable.yml",      # gate label transition — race-prone if stale
+    "phase-label-invariant.yml",     # phase label transition invariant — silent skip vector
+    "story-init.yml",                # Story scaffold + KEY 발급 atomic (ADR-036)
+    "story-section-1-immutable.yml", # §1 verbatim invariant
+    "subissue-from-impl-manifest.yml", # Impl Manifest sub-issue creation
+    "fix-ledger-sync.yml",           # FIX Ledger mirror — counter collision vector
+    "story-section-schema.yml",      # CFP-94 schema check
+}
+
+# CFP-660 / ADR-032 amendment 2 — Drift detection core marker lines (Tier 2 fallback when Tier 1 SHA unavailable)
+# Normalized whitespace 비교 (trailing whitespace / blank line collapse) — superficial diff 무시.
+WORKFLOW_CORE_MARKERS = (
+    re.compile(r"^concurrency:", re.MULTILINE),
+    re.compile(r"^on:", re.MULTILINE),
+    re.compile(r"^permissions:", re.MULTILINE),
+)
 
 
 def _resolve_overlay_yaml(env: dict[str, str]) -> Path:
@@ -522,6 +549,183 @@ def check_settings_hooks(settings_path: Path) -> tuple[list[str], bool]:
     return ([], False)
 
 
+# ---------------------------------------------------------------------- check 10
+
+
+def _sha256_of_file(path: Path) -> str | None:
+    """Return SHA-256 hex digest of file content, or None if read fails."""
+    try:
+        h = hashlib.sha256()
+        h.update(path.read_bytes())
+        return h.hexdigest()
+    except Exception:
+        return None
+
+
+def _normalized_core_markers(content: str) -> dict[str, str]:
+    """Extract core marker lines (concurrency / on / permissions) with normalized whitespace.
+
+    Returns dict mapping marker_name -> normalized block content (line until next top-level key).
+    Trailing whitespace stripped per line; blank lines collapsed.
+    """
+    result: dict[str, str] = {}
+    if not isinstance(content, str):
+        return result
+    lines = content.splitlines()
+    # Identify top-level key lines (col 0 + ends with ':' or starts with marker)
+    top_level_starts: list[tuple[int, str]] = []  # (line_idx, key)
+    for i, line in enumerate(lines):
+        if not line:
+            continue
+        # Top-level key = no leading whitespace + ends with ':' (yaml grammar)
+        stripped = line.rstrip()
+        if stripped and not stripped.startswith((" ", "\t", "#")) and stripped.endswith(":"):
+            key = stripped[:-1].strip()
+            top_level_starts.append((i, key))
+    # Extract block for each marker
+    for marker_name in ("concurrency", "on", "permissions"):
+        for idx, (line_idx, key) in enumerate(top_level_starts):
+            if key == marker_name:
+                end = top_level_starts[idx + 1][0] if idx + 1 < len(top_level_starts) else len(lines)
+                block_lines = lines[line_idx:end]
+                # Normalize: rstrip + collapse consecutive blank
+                normalized = []
+                prev_blank = False
+                for bl in block_lines:
+                    bl_stripped = bl.rstrip()
+                    is_blank = not bl_stripped
+                    if is_blank and prev_blank:
+                        continue
+                    normalized.append(bl_stripped)
+                    prev_blank = is_blank
+                result[marker_name] = "\n".join(normalized).rstrip()
+                break
+    return result
+
+
+def check_workflow_version_drift(
+    workflows_dir: Path,
+    plugin_root: Path | None,
+    expected_set: set[str] | None = None,
+) -> tuple[list[str], bool]:
+    """CFP-660 / ADR-032 amendment 2 — check 10 NEW: consumer workflow version drift.
+
+    Tier 1 (primary): SHA-256 byte-identical compare consumer file vs wrapper template.
+    Tier 2 (fallback when Tier 1 mismatch): core marker block (concurrency / on / permissions)
+      normalized compare — surface semantic drift, suppress whitespace-only diff.
+
+    Returns:
+      (warnings_list, is_strict_eligible_drift)
+      - warnings_list: empty if no drift, non-empty otherwise
+      - is_strict_eligible_drift: True if any strict-eligible workflow drifted (strict mode → exit 1)
+
+    Skip 조건 (warning + return):
+      - plugin_root is None (CLAUDE_PLUGIN_ROOT unset + fallback dir 부재)
+      - plugin_root/templates/github-workflows/ 부재 (wrapper templates 없음)
+      - workflows_dir 부재 (consumer 측 workflow dir 자체 없음 — check 6 영역 별도)
+
+    Args:
+      workflows_dir: consumer `.github/workflows/`
+      plugin_root: resolved wrapper plugin root (templates/github-workflows/ 의 parent.parent)
+      expected_set: scan target workflow basenames (default = EXPECTED_WORKFLOWS_FULL)
+    """
+    expected = expected_set if expected_set is not None else EXPECTED_WORKFLOWS_FULL
+
+    if plugin_root is None:
+        return (
+            [
+                "[bootstrap] WARN: plugin_root resolution 실패 — check 10 (workflow drift) skip",
+                "           → CLAUDE_PLUGIN_ROOT 환경변수 또는 fallback dir 확인",
+            ],
+            False,
+        )
+
+    wrapper_workflows_dir = plugin_root / "templates" / "github-workflows"
+    if not wrapper_workflows_dir.is_dir():
+        return (
+            [
+                f"[bootstrap] WARN: {wrapper_workflows_dir} 부재 — check 10 (workflow drift) skip",
+                "           → wrapper plugin install 확인 (codeforge@mclayer)",
+            ],
+            False,
+        )
+
+    if not workflows_dir.is_dir():
+        # consumer workflows dir 자체 부재 — check 6 가 별도 warning 발화. check 10 = skip.
+        return ([], False)
+
+    drifted: list[tuple[str, str, str, str]] = []  # (name, consumer_sha, wrapper_sha, tier2_diff)
+    strict_eligible_drift = False
+
+    for name in sorted(expected):
+        consumer_path = workflows_dir / name
+        wrapper_path = wrapper_workflows_dir / name
+        if not consumer_path.is_file():
+            # check 6 가 부재 warning 발화. check 10 = file 부재 시 drift 검증 skip (해당 file).
+            continue
+        if not wrapper_path.is_file():
+            # wrapper templates 에 없는 file = consumer-defined, drift 검증 영역 외.
+            continue
+
+        # Tier 1: SHA-256
+        consumer_sha = _sha256_of_file(consumer_path)
+        wrapper_sha = _sha256_of_file(wrapper_path)
+        if consumer_sha is None or wrapper_sha is None:
+            # Read error — skip this file (best-effort)
+            continue
+        if consumer_sha == wrapper_sha:
+            continue  # byte-identical, no drift
+
+        # Tier 2: core marker compare (surface semantic vs whitespace-only)
+        try:
+            consumer_content = consumer_path.read_text(encoding="utf-8", errors="replace")
+            wrapper_content = wrapper_path.read_text(encoding="utf-8", errors="replace")
+        except Exception:
+            consumer_content = ""
+            wrapper_content = ""
+
+        consumer_markers = _normalized_core_markers(consumer_content)
+        wrapper_markers = _normalized_core_markers(wrapper_content)
+
+        differing_markers: list[str] = []
+        for marker_name in ("concurrency", "on", "permissions"):
+            c_block = consumer_markers.get(marker_name, "")
+            w_block = wrapper_markers.get(marker_name, "")
+            if c_block != w_block:
+                differing_markers.append(marker_name)
+
+        if not differing_markers:
+            # Tier 1 SHA mismatch + Tier 2 core markers identical = superficial whitespace diff.
+            # 본 경우 = drift 분류 영역 외 (semantic-only invariant 영역).
+            continue
+
+        # Strict-eligible 분류: file ∈ STRICT_ELIGIBLE_WORKFLOWS → strict_eligible_drift = True
+        if name in STRICT_ELIGIBLE_WORKFLOWS:
+            strict_eligible_drift = True
+
+        tier2_diff_summary = ",".join(differing_markers)
+        drifted.append((name, consumer_sha[:8], wrapper_sha[:8], tier2_diff_summary))
+
+    if not drifted:
+        return ([], False)
+
+    warns = [
+        f"[bootstrap] WARN: {len(drifted)} workflow drift detected (consumer vs wrapper templates, CFP-660)",
+    ]
+    for (name, c_sha, w_sha, t2) in drifted[:5]:
+        strict_marker = " STRICT-ELIGIBLE" if name in STRICT_ELIGIBLE_WORKFLOWS else ""
+        warns.append(f"           {name}: SHA {c_sha}→{w_sha} drift markers=[{t2}]{strict_marker}")
+    if len(drifted) > 5:
+        warns.append(f"           ... ({len(drifted) - 5} more)")
+    warns.extend([
+        "           → cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/*.yml .github/workflows/",
+        "           → 또는 hotfix-bypass:workflow-version-drift label 부착 (audit-trailed channel, ADR-024 Amendment 3 §결정 6.A)",
+        "           → strict mode 활성 시 (e) strict-eligible drift → exit 1",
+    ])
+
+    return (warns, strict_eligible_drift)
+
+
 # --------------------------------------------------------------------- helpers
 
 
@@ -593,14 +797,18 @@ def _classify_strict_eligible(
     org: str,
     repo: str,
     gh_ready: bool,
+    workflows_dir: Path | None = None,
+    plugin_root: Path | None = None,
+    expected_workflows: set[str] | None = None,
 ) -> list[str]:
-    """CFP-127 / ADR-032 — Strict-eligible drift 4종 detection (Sonnet pick alpha).
+    """CFP-127 / ADR-032 — Strict-eligible drift 5종 detection (CFP-660 Wave 2 확장).
 
-    4 type (Story §3.1):
+    5 type:
       (a) project.yaml 부재 — 별도 main() 검사
       (b) plugin 11종 중 wrapper(1) + 6 lane(6) + superpowers(1) = 8 critical 미설치
       (c) settings.json 의 3 hook 미등록 (check 9)
       (d) 18 label 중 phase:* (7) + gate:* (3) = 10 critical 부재 (gh_ready 시만)
+      (e) consumer workflow drift — STRICT_ELIGIBLE_WORKFLOWS 영역 (CFP-660 NEW)
 
     Returns:
       list of strict-eligible drift findings (multi-line, ready to print).
@@ -652,6 +860,20 @@ def _classify_strict_eligible(
                     findings.append("           → 'bash scripts/bootstrap-labels.sh <org>/<repo>' 1회 실행")
         except Exception:
             pass
+
+    # (e) consumer workflow version drift (CFP-660 / ADR-032 amendment 2)
+    if workflows_dir is not None and plugin_root is not None:
+        _drift_warns, drift_strict = check_workflow_version_drift(
+            workflows_dir, plugin_root, expected_workflows
+        )
+        if drift_strict:
+            findings.append(
+                "[bootstrap] STRICT (e): consumer workflow drift — STRICT_ELIGIBLE_WORKFLOWS 영역 mismatch"
+            )
+            findings.append("           → check 10 detail 참조 (warning 영역 본문)")
+            findings.append(
+                "           → cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/*.yml .github/workflows/"
+            )
 
     return findings
 
@@ -734,20 +956,26 @@ def main(argv: list[str] | None = None) -> int:
     settings_path = Path(".claude/settings.json")
     hook_warnings, _ = check_settings_hooks(settings_path)
 
+    workflows_dir = Path(".github/workflows")
+    drift_warnings, _ = check_workflow_version_drift(
+        workflows_dir, plugin_root, expected_workflows
+    )
+
     all_results: list[list[str]] = [
         check_workflow_permissions(org, repo) if gh_ready else [],
         check_plugin_labels(org, repo) if gh_ready else [],
         check_workflow_distribution(overlay_yaml),
         check_consumer_scripts_manifest(plugin_root, overlay_yaml) if plugin_root is not None else [],
         check_plugins_installed(plugins_json),
-        check_consumer_workflows(Path(".github/workflows"), expected_workflows),
+        check_consumer_workflows(workflows_dir, expected_workflows),
         check_consumer_issue_forms(Path(".github/ISSUE_TEMPLATE")),
         check_codeowners(
             Path("CODEOWNERS"),
             Path(".github/CODEOWNERS"),
             Path("docs/CODEOWNERS"),
         ),
-        hook_warnings,  # CFP-127 NEW check 9
+        hook_warnings,    # CFP-127 NEW check 9
+        drift_warnings,   # CFP-660 NEW check 10
     ]
     findings_count = sum(1 for r in all_results if r)
     warnings = [line for r in all_results for line in r]
@@ -762,9 +990,14 @@ def main(argv: list[str] | None = None) -> int:
             print(w, file=sys.stderr)
         print(file=sys.stderr)
 
-    # CFP-127 / ADR-032 — Strict mode → strict-eligible drift 4종 검사
+    # CFP-127 / ADR-032 — Strict mode → strict-eligible drift 5종 검사 (CFP-660 Wave 2 확장)
     if strict_active:
-        strict_findings = _classify_strict_eligible(plugins_json, settings_path, org, repo, gh_ready)
+        strict_findings = _classify_strict_eligible(
+            plugins_json, settings_path, org, repo, gh_ready,
+            workflows_dir=workflows_dir,
+            plugin_root=plugin_root,
+            expected_workflows=expected_workflows,
+        )
         if strict_findings:
             print(f"[check-bootstrap] STRICT mode active (source={strict_source}) — strict-eligible drift detected:",
                   file=sys.stderr)

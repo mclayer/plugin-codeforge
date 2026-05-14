@@ -854,7 +854,7 @@ git commit -m "chore: opt-in bootstrap.strict_mode (CFP-127 / ADR-032)"
 
 "Most explicit wins" — CLI flag set 시 env / yaml 무시.
 
-#### 2i-3. Strict-eligible drift 4종
+#### 2i-3. Strict-eligible drift 5종 (CFP-660 4 → 5 확장)
 
 | # | Drift | Detection |
 |---|---|---|
@@ -862,8 +862,25 @@ git commit -m "chore: opt-in bootstrap.strict_mode (CFP-127 / ADR-032)"
 | (b) | plugin 8 critical (wrapper + 6 lane + superpowers) 미설치 | `~/.claude/plugins/installed_plugins.json` parse |
 | (c) | `.claude/settings.json` 의 SessionStart × 2 + UserPromptSubmit × 1 hook 미등록 | json hooks parse + command grep |
 | (d) | phase:* (7) + gate:* (3) = 10 critical label 부재 | `gh label list` |
+| **(e)** | **consumer `.github/workflows/*.yml` SHA / 핵심 line drift vs wrapper templates (CFP-660 / ADR-032 amendment 2)** | **`check_workflow_version_drift` (check 10) — Tier 1 SHA-256 + Tier 2 core marker (concurrency / on / permissions)** |
+
+(e) STRICT_ELIGIBLE_WORKFLOWS 영역 (7 file): `phase-gate-mergeable.yml` / `phase-label-invariant.yml` / `story-init.yml` / `story-section-1-immutable.yml` / `subissue-from-impl-manifest.yml` / `fix-ledger-sync.yml` / `story-section-schema.yml`. lane orchestration semantics 영향 직접인 file 만.
 
 Non-eligible (warning-only 유지): workflow permissions / consumer-scripts manifest drift / consumer .github/workflows/ file (Path B degraded 정합) / Issue forms / CODEOWNERS / 기타 advisory.
+
+##### (e) Drift 복구 절차 (sweep)
+
+drift 발견 시 즉시 sweep cp:
+
+```bash
+cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/*.yml .github/workflows/
+git add .github/workflows/
+git commit -m "chore: sync .github/workflows from wrapper templates (CFP-660 drift recovery)"
+```
+
+또는 strict mode 임시 비활성 (revert 표 참조). 또는 **per-Issue bypass**: `hotfix-bypass:workflow-version-drift` label 부착 (audit-trailed channel, ADR-024 Amendment 3 §결정 6.A).
+
+`scripts/sync-consumer-workflows.sh` sweep helper = **별 CFP carrier** (issue #467 sibling 후보, 본 Story scope 외 — single-Story 영역 보존).
 
 #### 2i-4. Revert procedure
 

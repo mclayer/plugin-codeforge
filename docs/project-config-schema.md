@@ -97,18 +97,26 @@ bootstrap:
   expected_workflows:                   # 부재 시 check_bootstrap.EXPECTED_WORKFLOWS_FULL 사용
     - <string>                          # e.g. "phase-gate-mergeable.yml"
 
-  # CFP-127 / ADR-032 amendment 1 — strict mode opt-in.
+  # CFP-127 / ADR-032 amendment 1 + CFP-660 / ADR-032 amendment 2 — strict mode opt-in.
   # default = false (warning-only, ADR-027 §결정 2 Tertiary trigger LLM-trust 정합).
-  # true 시 strict-eligible drift 4종 발견 → exit 1 (CFP-127 / ADR-032 §결정 2):
+  # true 시 strict-eligible drift 5종 발견 → exit 1 (CFP-660 4 → 5 종 확장):
   #   (a) project.yaml 부재
   #   (b) plugin 11종 중 wrapper(1) + 6 lane(6) + superpowers(1) = 8 critical 미설치
   #   (c) settings.json 의 SessionStart × 2 + UserPromptSubmit × 1 hook 미등록
   #   (d) 18 label 중 phase:* (7) + gate:* (3) = 10 critical 부재
+  #   (e) consumer .github/workflows/<name>.yml SHA / 핵심 line drift vs wrapper templates
+  #       (CFP-660 / ADR-032 amendment 2 §결정 6 — STRICT_ELIGIBLE_WORKFLOWS 7 file:
+  #        phase-gate-mergeable / phase-label-invariant / story-init / story-section-1-immutable /
+  #        subissue-from-impl-manifest / fix-ledger-sync / story-section-schema).
+  #       Tier 1 SHA-256 compare → Tier 2 core marker (concurrency / on / permissions) fallback.
+  #       Superficial whitespace-only diff = drift 분류 영역 외 (semantic-only invariant 영역).
   # Priority (CLI > env > yaml — most explicit wins):
   #   1. CLI flag: --strict
   #   2. Env: CODEFORGE_STRICT_BOOTSTRAP=1
   #   3. YAML (lowest): bootstrap.strict_mode: true (본 field)
   # Bypass precedence: HOTFIX_BYPASS_CODEFORGE=1 + REASON 양 env set → strict 무관 hook self skip (ADR-027 §결정 3).
+  # Per-drift bypass: hotfix-bypass:workflow-version-drift label 부착 (audit-trailed channel,
+  #   ADR-024 Amendment 3 §결정 6.A per-entry namespace, 20번째 hotfix-bypass:* family member).
   # Revert: false 또는 field 삭제 + commit.
   strict_mode: true | false             # 기본값: false (opt-in)
 

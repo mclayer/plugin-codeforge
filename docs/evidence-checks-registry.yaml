@@ -1478,3 +1478,45 @@ entries:
       promotion_trigger: advisory
       last_occurrence: null
     status: Active  # CFP-658 Phase 2 carrier 신설 완료 → deferred-followup → Active 전환 (2026-05-14)
+
+  - name: workflow-version-drift
+    description: |
+      CFP-660 / ADR-032 Amendment 2 §결정 6 — consumer `.github/workflows/<name>.yml`
+      가 wrapper `templates/github-workflows/<name>.yml` 와 SHA-256 / 핵심 line (concurrency
+      / on / permissions) 불일치 시 drift 감지. stale workflow = race condition / counter
+      collision / silent skip vector 차단 forcing function.
+
+      Tier 1 SHA-256 byte-identical compare → Tier 2 core marker normalized whitespace
+      compare (superficial whitespace-only diff suppress). 본 check 는 runtime detection
+      (SessionStart hook 시점). cron-based reactive detection workflow = 별 CFP carrier
+      후보 (CFP-627 marketplace drift 패턴 정합).
+
+      Strict mode (ADR-032 §결정 2 strict-eligible 5번째 drift, CFP-660 4 → 5 확장) 시
+      STRICT_ELIGIBLE_WORKFLOWS 영역 (7 file — phase-gate-mergeable / phase-label-invariant
+      / story-init / story-section-1-immutable / subissue-from-impl-manifest /
+      fix-ledger-sync / story-section-schema) drift = exit 1.
+    detect_command: python overlay/hooks/check_bootstrap.py --quiet  # check 10 runtime — main() 안 drift_warnings + strict mode
+    workflow: null  # 별 cron-based workflow yml 미신설 — 본 Story scope OUT (single-Story 영역 보존)
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:workflow-version-drift
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a)
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-660  # 본 entry carrier — Wave 2 of Epic CFP-431
+      evidence_artifacts:
+        - check_bootstrap_runtime_drift_count
+        - consumer_repo_sweep_pr_url       # cp sweep 적용 PR ref
+        - strict_mode_exit_1_history       # strict 활성 환경 strict-eligible drift block count
+    modal_anti_pattern_dictionary: {}  # 본 check = SHA byte compare + core marker compare, modal phrase 검사 미포함
+    introduced_by: CFP-660
+    introduced_date: 2026-05-14
+    owner_adr: ADR-032  # Amendment 2 §결정 6 carrier
+    carrier_adr: ADR-060  # evidence-enforceable promotion framework
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: advisory
+      last_occurrence: null
+    status: active  # check_bootstrap.py 본 PR 안 runtime 활성 (deferred-followup 아님 — runtime ready)

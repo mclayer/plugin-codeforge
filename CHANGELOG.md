@@ -7,6 +7,25 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.60.0] - 2026-05-14 — CFP-660 Wave 2 of Epic CFP-431 (audit:from-mctrader-debut) — Consumer workflow version drift detection
+
+### Added
+
+- **ADR-032 Amendment 2 §결정 6 신설**: Consumer workflow version drift = 5번째 strict-eligible drift (ADR-032 §결정 2 strict-eligible 4 → 5 종 확장). consumer `.github/workflows/<name>.yml` 가 wrapper `templates/github-workflows/<name>.yml` 와 SHA-256 / 핵심 line (concurrency / on / permissions) 불일치 시 drift 감지. lane orchestration semantics divergence (race condition / counter collision / silent skip) vector 차단 forcing function. 6 sub-decisions (6.A 5번째 drift 정의 + 6.B Tier 1 SHA + Tier 2 core marker 알고리즘 + 6.C strict mode integration + 6.D bypass channel + 6.E consumer recovery procedure + 6.F out-of-scope). frontmatter `amendments[]` append + `mechanical_enforcement_actions[]` (workflow-version-drift action_name, ADR-040 Amendment 3 §결정 7.A 정합).
+- **`overlay/hooks/check_bootstrap.py` check 10 NEW**: `check_workflow_version_drift()` function + `STRICT_ELIGIBLE_WORKFLOWS` set (7 file — phase-gate-mergeable / phase-label-invariant / story-init / story-section-1-immutable / subissue-from-impl-manifest / fix-ledger-sync / story-section-schema) + `WORKFLOW_CORE_MARKERS` regex tuple + `_normalized_core_markers()` helper + `_sha256_of_file()` helper + `_classify_strict_eligible()` 의 (e) 분기 + `main()` 의 `drift_warnings` wire. 9 check → 10 check.
+- **`overlay/hooks/tests/test_check_bootstrap.py` TDD test 8건 신설**: clean baseline / strict-eligible drift detection / whitespace-only superficial diff suppress / plugin_root missing / wrapper templates missing / consumer workflows dir missing / non-strict-eligible warning-only / strict mode main exit 1.
+- **`docs/evidence-checks-registry.yaml` 48번째 entry**: `workflow-version-drift` (warning tier, status `active` — check_bootstrap.py runtime ready). owner_adr: ADR-032 Amendment 2 §결정 6 / carrier_adr: ADR-060 evidence-enforceable framework.
+- **신규 label** (label-registry-v2 v2.13 → v2.14 MINOR — schema 무변경, §3 yaml hotfix-bypass:* 20번째 family member append):
+  - `hotfix-bypass:workflow-version-drift` (color `fef2c0`, audit-trailed) — check 10 conditional skip + audit comment 자동 발의 channel.
+- **`docs/consumer-guide.md` §2i-3 갱신**: Strict-eligible drift 4 → 5종 표 확장 + (e) drift 복구 절차 sweep 안내 + per-Issue bypass label.
+- **`docs/project-config-schema.md` `bootstrap.strict_mode` 주석 갱신**: 5번째 strict-eligible drift (e) consumer workflow version drift 명시 + STRICT_ELIGIBLE_WORKFLOWS 7 file enumeration.
+
+### Notes
+
+- **TDD discipline**: 35/35 pytest PASS (CFP-103 27 기존 + CFP-660 8 신설).
+- **Out-of-scope** (별 CFP carrier 후보): `scripts/sync-consumer-workflows.sh` sweep helper / `templates/github-workflows/workflow-drift-detection.yml` cron-based reactive workflow / per-marker custom drift threshold.
+- **marketplace sync**: plugin.json 5.57.0 → 5.58.0 MINOR (ADR-037 — workflow-version-drift entry runtime 활성화 / Amendment 2 governance carrier). marketplace.json 동반 sync 의무 (ADR-063 §결정 1 atomic invariant — 별 sibling PR).
+- **ADR-027 Amendment 1 (ADR-032) ratchet**: strict-eligible 4 → 5 = additive only / supersede 아님. opt-in default-off 보존.
 ## [5.59.0] - 2026-05-14 — CFP-661 Wave 3 of Epic CFP-431 (audit:from-mctrader-debut) — Enterprise prerequisite docs + graceful degradation (doc-only fast-path ADR-054)
 
 ### Added

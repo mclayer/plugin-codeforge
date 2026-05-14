@@ -9,6 +9,17 @@ parent_epic: CFP-124
 supersedes: null
 amends:
   - ADR-027
+amendments:
+  - id: amendment-2
+    carrier_story: CFP-660
+    effective_date: 2026-05-14
+    parent_epic: CFP-431
+    summary: |
+      Strict-eligible drift 4종 → 5종 확장 — 5번째 (e) consumer workflow version drift
+      (consumer `.github/workflows/<name>.yml` 가 wrapper `templates/github-workflows/<name>.yml`
+      과 SHA / 핵심 line 불일치). check_bootstrap.py check 10 (workflow_version_drift) 신설.
+      stale workflow = race condition / counter collision / silent skip vector 차단.
+      `hotfix-bypass:workflow-version-drift` 20번째 family member.
 related_files:
   - overlay/hooks/check_bootstrap.py
   - overlay/hooks/check-bootstrap.sh
@@ -18,7 +29,16 @@ related_files:
   - docs/project-config-schema.md
   - docs/consumer-guide.md
   - docs/adr/ADR-027-consumer-adoption-protocol.md
+  - docs/evidence-checks-registry.yaml  # CFP-660 47th entry workflow-version-drift
+  - docs/inter-plugin-contracts/label-registry-v2.md  # CFP-660 v2.14 — hotfix-bypass:workflow-version-drift 20번째 family member
+  - scripts/bootstrap-labels.sh  # dynamic read path 무변경 (registry-driven)
 is_transitional: false
+mechanical_enforcement_actions:
+  - action_name: workflow-version-drift
+    decision_anchor: "Amendment 2 §결정 6"
+    evidence_check_entry: workflow-version-drift
+    workflow_file: null  # check_bootstrap.py runtime check (별 workflow yml 미신설 — 본 Story scope OUT)
+    bypass_label: hotfix-bypass:workflow-version-drift
 ---
 
 # ADR-032: ADR-027 Amendment 1 — bootstrap strict mode opt-in
@@ -161,4 +181,125 @@ N/A — permanent policy
 
 ## CFP-658 cross-ref (Amendment 2 of ADR-027)
 
-ADR-027 Amendment 2 (CFP-658, Wave 1 of Epic CFP-431) 는 본 ADR-032 Amendment 1 의 strict-eligible 4종 (a-d) 영역과 disjoint — fallback path 활성 시에도 strict mode 가 활성이면 lane orchestration 가능성 검증 의무 보존. 향후 Wave 2 (CFP-660, consumer workflow drift detection) 에서 strict-eligible 4 → 5 종 확장 검토 (별 Story).
+ADR-027 Amendment 2 (CFP-658, Wave 1 of Epic CFP-431) 는 본 ADR-032 Amendment 1 의 strict-eligible 4종 (a-d) 영역과 disjoint — fallback path 활성 시에도 strict mode 가 활성이면 lane orchestration 가능성 검증 의무 보존. Wave 2 (CFP-660, consumer workflow drift detection) 가 strict-eligible 4 → 5 종 확장 — **본 ADR Amendment 2 §결정 6** 참조.
+
+---
+
+## Amendment 2 — Consumer workflow version drift (5번째 strict-eligible drift, CFP-660 Wave 2 of Epic CFP-431)
+
+**Effective**: 2026-05-14 (CFP-660 Wave 2 of Epic CFP-431 Phase 1 PR merged).
+
+**Carrier**: CFP-660 (`carrier_story`). Parent Epic CFP-431 (audit:from-mctrader-debut). Sibling: CFP-658 (Wave 1, MERGED — Action-blocked fallback path) / CFP-661 (Wave 3 — enterprise prerequisite docs + graceful degradation).
+
+본 amendment = ADR-032 §결정 2 "Strict-eligible drift 4종" 의 **5번째 drift 추가** (additive only, supersede 아님). §결정 6 신설.
+
+### 컨텍스트
+
+CFP-658 (Wave 1) merge 후 mctrader-hub 6-repo audit 에서 새 결함 form 발견 — consumer 측 `.github/workflows/<name>.yml` 가 wrapper `templates/github-workflows/<name>.yml` 와 **SHA / 핵심 line 불일치 (stale workflow)** 상태로 장기 유지 시:
+
+1. **race condition** — wrapper 가 concurrency group / on-event trigger / counter logic 갱신했는데 consumer 는 옛 version 유지 → 동일 Story 의 wrapper-mode vs consumer-mode 동작 분기
+2. **counter collision** — wrapper 가 atomic reservation step (예: KEY 발급) 갱신, consumer 는 race-prone 옛 path 유지
+3. **silent skip** — wrapper 가 label-conditional trigger 조건 갱신 (예: `phase:요구사항` only → `phase:요구사항 OR phase:설계`), consumer 는 옛 조건 → 정상 Issue silent skip
+
+이 3 form 모두 **lane orchestration 자체 불가** 영역 — ADR-032 §결정 2 의 strict-eligible 정의 (lane orchestration 자체를 불가능하게 하는 항목만) 와 정합. 따라서 strict-eligible 5번째 drift 로 분류 의무.
+
+### 결정 6 — Consumer workflow version drift = strict-eligible 5번째 drift
+
+#### §결정 6.A — 5번째 drift 정의 + 분류 기준
+
+ADR-032 §결정 2 표 의 **5번째 row 추가**:
+
+| Strict-eligible | 검사 | 차단 사유 |
+|---|---|---|
+| (a) `.claude/_overlay/project.yaml` 부재 | check_workflow_distribution | Orchestrator config 미인식 (기존) |
+| (b) plugin 11종 중 8 critical 미설치 | check_plugins_installed | lane orchestration 자체 불가 (기존) |
+| (c) `.claude/settings.json` 의 3 hook 미등록 | check_settings_hooks (check 9) | enforcement layer 자동 누락 (기존) |
+| (d) 18 label 중 10 critical 부재 | check_plugin_labels | Story-flow 차단 (기존) |
+| **(e)** consumer `.github/workflows/*.yml` 가 wrapper templates 와 SHA / 핵심 line drift | **check_workflow_version_drift (check 10 NEW — CFP-660)** | stale workflow = race condition / counter collision / silent skip vector |
+
+분류 기준: **lane orchestration semantics divergence** — consumer workflow 가 wrapper-defined semantics 와 다른 동작을 하면 동일 Story 의 dual-mode behavior 발생, debugging 자체 불가.
+
+#### §결정 6.B — Drift detection 알고리즘 (check 10 NEW)
+
+scan 대상 = `EXPECTED_WORKFLOWS_FULL` (현재 7 file) ∪ `project.yaml` `bootstrap.expected_workflows` (override).
+
+per-file 검사 2-tier:
+
+**Tier 1 — Git blob SHA compare** (primary):
+- wrapper resolve: `${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/<name>.yml` 의 `git hash-object` (또는 SHA-256 fallback when not under git)
+- consumer resolve: `.github/workflows/<name>.yml` 의 동일 hash
+- mismatch = drift detected
+
+**Tier 2 — Core marker line compare** (Tier 1 fail soft fallback when git 미설치):
+- `concurrency:` group declaration (race control)
+- `on:` event types + labels filter (trigger condition)
+- `permissions:` block (CFP-530 / ADR-060 Amendment 8 정합)
+- header version comment (선택 — `# version: <semver>` marker if present)
+
+각 marker 의 normalized whitespace 비교 (trailing whitespace / blank line collapse) — superficial diff 무시.
+
+#### §결정 6.C — Strict mode integration
+
+`_classify_strict_eligible()` 함수에 5번째 detection branch 추가:
+
+```
+(e) workflow_version_drift:
+    workflows_dir = Path(".github/workflows")
+    plugin_root_templates = plugin_root / "templates" / "github-workflows"
+    if plugin_root_templates is None or not workflows_dir.is_dir():
+        skip (warning 영역 — wrapper templates 없음 또는 consumer workflows dir 부재)
+    for each <name> in EXPECTED_WORKFLOWS:
+        if blob_sha(consumer_file) != blob_sha(wrapper_template):
+            findings.append("[bootstrap] STRICT (e): <name>.yml drift detected — consumer SHA=<...> vs wrapper SHA=<...>")
+```
+
+Default mode (strict 미활성) = warning only (stderr drift report, exit 0). Strict mode + drift detected = exit 1.
+
+#### §결정 6.D — Bypass channel + scope
+
+`hotfix-bypass:workflow-version-drift` label (label-registry-v2 v2.14 sub-entry, 20번째 hotfix-bypass:* family member) — issue-level conditional bypass (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합). 
+
+`HOTFIX_BYPASS_CODEFORGE=1 + REASON` env (ADR-027 §결정 3) priority HIGHEST — strict 무관 hook self skip.
+
+revert: `unset CODEFORGE_STRICT_BOOTSTRAP` / `bootstrap.strict_mode: false` / `--strict` flag 미사용 (ADR-032 §결정 5 표 정합 — 3 mechanism disable 동일).
+
+#### §결정 6.E — Consumer recovery procedure (warning mode default)
+
+drift 발견 시 consumer 가 즉시 cp sweep:
+
+```
+cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-workflows/*.yml .github/workflows/
+git add .github/workflows/
+git commit -m "chore: sync .github/workflows from wrapper templates"
+```
+
+**`scripts/sync-consumer-workflows.sh` sweep helper = out-of-scope** (별 CFP-TBD carrier 후보 — Phase 2 carrier 영역). 본 Story scope = runtime detection 만 (single-Story scope 보존).
+
+#### §결정 6.F — Out-of-scope (carrier 분리)
+
+- **Sweep automation script** (`scripts/sync-consumer-workflows.sh`) — 별 CFP carrier (issue #467 sibling 후보)
+- **Cron-based reactive detection workflow** (`templates/github-workflows/workflow-drift-detection.yml` scheduled daily 02:00 UTC) — 별 CFP carrier 후보 (CFP-627 marketplace drift 패턴 정합, 본 Story 검토 후 OUT 결정 — single-Story scope 보존)
+- **Per-marker custom drift threshold** (예: whitespace-only diff = false / semantic-only diff = true) — 본 Story = binary detection 만, threshold 별 CFP
+
+### 결과
+
+- **mctrader 6-repo (1 hub + 5 sister) audit** 결함 form 차단 — Story-flow 의 silent skip / counter collision evidence 만회
+- **ADR-032 §결정 2 strict-eligible 정의 보존** — "lane orchestration 자체를 불가능하게 하는 항목만" invariant 유지 (Workflow semantics divergence 가 invariant 영역 충족)
+- **Default mode 미변경** — Amendment 1 정합 (warning-only, opt-in only)
+
+### Risk + Mitigation
+
+| Risk | Mitigation |
+|---|---|
+| False-positive — superficial whitespace diff 도 drift 로 분류 | normalized whitespace 비교 (Tier 2) — ADR-005 self-application byte-identical 정합 영역 외, semantic line 만 |
+| Tier 1 git hash 의존 — git 미설치 환경 fail | Tier 2 core marker line compare 자동 fallback |
+| Strict mode flood — 점진 도입 환경에서 모든 5종 동시 발견 | Amendment 1 점진 도입 절차 (consumer-guide) — 단계 5 추가 (workflow sync) — opt-in only, default-off |
+| `plugin_root` resolution fail (CLAUDE_PLUGIN_ROOT unset + fallback dir 부재) | `_resolve_plugin_root()` 가 None 반환 시 check 10 skip + warning ("plugin root 부재 — workflow drift 검증 불가") |
+| Cron-based proactive detection 부재 — drift 가 다음 SessionStart 까지 surface 안 됨 | runtime detection = 1st defense layer / scheduled cron = 2nd layer (별 CFP carrier 후보, post-CFP-660). CFP-627 marketplace drift 패턴 정합 |
+
+### Out-of-scope (Amendment 2 영역)
+
+- Strict mode default-on 전환 (ADR-032 §결정 5 영역 — 30+ Story 후 평가, 본 Amendment 2 비-범위)
+- Wrapper-to-consumer sweep automation (별 CFP carrier 후보)
+- Multi-version compatibility — wrapper v5.59.0 consumer 와 wrapper v5.60.0 templates 호환성 검증 (별 CFP)
+- ADR-032 §결정 2-5 supersede (본 amendment = additive 만)
