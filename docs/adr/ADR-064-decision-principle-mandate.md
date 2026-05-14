@@ -45,6 +45,7 @@ related_adrs:
   - ADR-058
   - ADR-060
   - ADR-063
+  - ADR-071  # CFP-612 Wave 5 — Trace 2 (결정 제시 5 룰) mechanical version 승격 + scope 확장 (proposing-time → 전 turn). 본문 변경 0, cross-ref only (ADR-064 §결정 7 top-down ratchet 정합 — 강화 방향 only, ADR-071 §결정 11 ADR-039 inline whitelist 1번 entry cognitive 강화 declare).
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md

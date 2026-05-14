@@ -101,4 +101,23 @@ owned_sections:
     parallel_edit: append-only
     arbitrator: GitOpsAgent
 
+  # ADR-071 (CFP-612 Wave 5) — Orchestrator-user dialog convergence
+  - file: docs/orchestrator-playbook.md
+    section: "§3.14 Orchestrator-user dialog convergence"
+    owner_adr: ADR-071  # CFP-612 carrier — frame mode + 4 layer + sub-mechanism 본문 SSOT
+    parallel_edit: append-only
+    # NOTE (CFP-612): 본 §3.14 = matrix lookup/decision tree/4 layer/sub-mechanism enum 표 위주.
+    # ADR-071 §결정 9 schema fit 부적합 declare 정합 — debate-protocol-v1 (§3.13 / Wave 4)
+    # 3 marker import 절대 금지. 본문 의미 변경 (예: 4 layer 축소 / 4 차원 enum 축소) 은
+    # ADR-071 §"self-application top-down ratchet" + ADR-058 §결정 5 sunset_justification 으로
+    # 차단.
+
+  - file: docs/orchestrator-communication-incidents.md
+    section: "Incidents (table body)"
+    owner_adr: ADR-071  # CFP-612 carrier — Layer 4 영속 file
+    parallel_edit: append-only
+    arbitrator: orchestrator-self-write  # Orchestrator monopoly (lane plugin / sub-agent / user manual edit 금지)
+    # NOTE (CFP-612): wrapper repo 4번째 cross-Story append-only file (FIX Ledger / Git Ops Log
+    # / ADR-RESERVATION 패턴 정합). M=5 lifetime counter, manual reset only.
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)

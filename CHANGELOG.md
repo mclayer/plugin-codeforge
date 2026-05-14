@@ -7,6 +7,37 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.45.0] - 2026-05-14 — CFP-612 Wave 5 (ADR-071 Orchestrator-user dialog convergence)
+
+### Added (CFP-612 Phase 1 — Design lane, ADR-071 + playbook §3.14 + skill + Layer 4 file)
+
+CFP-525 Epic ancestor follow-up — Orchestrator-user dialog convergence (Wave 5). Phase 1 PR scope = §1-§7 (ADR + Change Plan + playbook §3.14 + skill SKILL.md + Layer 4 incidents file + CLAUDE.md cross-ref + plugin.json MINOR bump + CHANGELOG + ADR-064 related_adrs append + section-ownership.yaml 2 row append + ADR-RESERVATION row 71 active). 신규 ADR 동반 → ADR-054 §결정 1 full-lane Story 분류 (doc-only fast-path 미적용). src/tests 변경 0.
+
+- `docs/adr/ADR-071-orchestrator-user-dialog-convergence.md` (NEW) — governance permanent (`is_transitional: false`). 본질 anchor (mechanical rule 추종 회피 + 진짜 수렴 dialog) + §결정 1-11 (frame mode 4 step + frame mode 세부 룰 3 종 + 4 layer 검증 + sub-mechanism 2 종 + 사실/가치 결정 트리 + Layer 4 영속 file schema + "추상" keyword semantics + 3 memory entry normative 승격 mapping + CFP-582 conceptual cross-ref schema fit 부적합 declare + scope out + ADR-039 inline whitelist 1번 entry cognitive 강화 declare). `mechanical_enforcement_actions: []` (Wave 5 = cognitive + persistence layer only, Layer 1 mechanical lint 별 follow-up CFP). carrier_story = CFP-612.
+- `docs/orchestrator-communication-incidents.md` (NEW) — Layer 4 누적 detection file (cross-Story append-only, Orchestrator monopoly). 8-column schema (iter / timestamp / story_key / pattern_dimension / pattern_summary / trigger / different_dimension_after_halt / escalation_outcome). M=5 lifetime counter, manual reset only. wrapper repo 4번째 cross-Story append-only file 패턴 (FIX Ledger / Git Ops Log / ADR-RESERVATION 정합).
+- `skills/user-dialog-mode/SKILL.md` (NEW) — `codeforge:user-dialog-mode` skill. 매 user-facing turn 직전 호출. frame mode 4 step + 4 layer + sub-mechanism 2 종 lookup-table.
+- `docs/orchestrator-playbook.md` (UPDATE) — §3.14 Orchestrator-user dialog convergence 신설 (§3.13 debate-protocol-v1 직후). frame mode + 4 layer + sub-mechanism + Layer 4 file + 결정 트리 + memory entry mapping + CFP-582 schema fit 부적합 declare 본문 SSOT. logical position = agent ↔ agent debate (§3.13) ↔ Orchestrator ↔ user dialog (§3.14) 인접 짝.
+- `CLAUDE.md` (UPDATE) — Adversarial Debate Protocol 단락에 Wave 5 inline cross-ref 추가 (Wave 4 단락 안 same-paragraph append) + "Lane 진입 시 skill 호출 의무" 표 1 row 추가 (`매 user-facing turn 직전 (사용자 dialog turn)` → `codeforge:user-dialog-mode`). 320 cap compression 동반 — "Deferred tool 선제 로드 (0i)" + "SessionStart hook — worktree-gc (0a-prime)" 두 단락 1 단락으로 merge (net -2 lines, 신규 row 1 line 흡수 후 319/320).
+- `docs/adr/ADR-064-decision-principle-mandate.md` (UPDATE) — `related_adrs` field 에 ADR-071 append (본문 변경 0, backward compat). ADR-064 §결정 7 top-down ratchet 정합 — 강화 방향 only.
+- `docs/adr/ADR-RESERVATION.md` (UPDATE) — row 71 `reserved → active` 전환. ArchitectAgent inline append per CFP-578 / ADR-070 chief author precedent.
+- `docs/parallel-work/section-ownership.yaml` (UPDATE) — 2 row append: (1) `docs/orchestrator-playbook.md §3.14` (owner_adr ADR-071, append-only) (2) `docs/orchestrator-communication-incidents.md Incidents` (owner_adr ADR-071, append-only, arbitrator = orchestrator-self-write monopoly).
+- `.claude-plugin/plugin.json` (UPDATE) — version 5.44.0 → 5.45.0 MINOR + description CFP-612 Wave 5 entry (3rd rebase — CFP-598 P2 version collision resolved).
+
+### Codex Proactive Check #2 + #6 (CFP-612 carry-over to DesignReview lane)
+
+- **Touchpoint #2** (ArchitectAgent §3 / Change Plan §3 완료 직후) — DIVERGENCE_DETECTED 1 P1 finding (anchor `CFP-612-W5-S2-E9-E11-TURN-SHAPE` semantic-2 category): Story §5.3 Edge Case E9 streaming token / E10 tool-call-only / E11 AskUserQuestion popup turn-shape default 가 ADR-071 + playbook §3.14 + skill 모두 미명시 (E12 trivial answer 만 cover). **Inline FIX applied (ADR-052 Amendment 4 §결정 10 mandatory)** — playbook §3.14 "Turn-shape derived defaults" 표 3 row append (E9/E10/E11) + ADR-071 §결정 3 4 layer 표 turn-shape edge cross-ref + skill SKILL.md "Turn-shape edge 분기" 4 row table append. 모든 RequirementsPL §5.3 `[fact-check-pending]` marker resolved. verify-before-trust (ADR-070) Orchestrator 측 direct file Read 로 finding ground truth 확인 완료.
+- **Touchpoint #6** (ArchitectAgent ADR 초안 완료 직후) — ADR-071 draft 완료 직후 single-shot Codex check (FIX-1 적용 후 ADR-071 자체 = 330 lines, 신규 inline FIX 영역 reflect). 추가 divergence 미발견 expected.
+
+### 3 memory entry normative 승격 (Phase 2 PR merge 시점 effective)
+
+- `feedback_explain_before_ask` → playbook §3.14 (frame mode 본문 SSOT) + ADR-071 §결정 1 step 4 + §결정 4 sub-mechanism 1
+- `feedback_question_quality` → playbook §3.14 (frame mode 본문 SSOT) + ADR-071 §결정 2 (b) + §결정 5 결정 트리
+- `feedback_subagent_driven_auto_select` → **변경 없음** (playbook §3.0.5 기존 정책 유지, codeforge wrapper side SSOT 변경 0)
+
+### Sibling sync (separate PR)
+
+- mclayer/marketplace: plugins[codeforge].version 5.44.0 → 5.45.0 mirrored (ADR-063 atomic invariant, marketplace_sync_required: true — 3rd rebase sync PR cfp-612-codeforge-5.45.0-sync)
+
 ## [5.44.0] - 2026-05-14 — CFP-598 Phase 2 (bootstrap-labels.sh hotfix-bypass:* dynamic sync)
 
 CFP-530 retro carrier #2 (Phase 2) — `bootstrap-labels.sh` hotfix-bypass:* family dynamic sync + label-registry-v2 §3 yaml first-class backfill (pre-existing leak 해소). ADR-037 MINOR bump: script behavior change (13 hotfix-bypass:* label 동적 생성 신규).

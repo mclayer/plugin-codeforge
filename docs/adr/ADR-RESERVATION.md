@@ -73,6 +73,7 @@ reservations: []
 | 68 | CFP-527 | active | 2026-05-13 |
 | 69 | CFP-342 | active | 2026-05-13 (retroactive — CFP-570 renumber from collided ADR-050; ADR file = `ADR-069-multi-repo-story-key-system.md`) |
 | 70 | CFP-578 | active | 2026-05-13 (ArchitectAgent inline append per CFP-578 chief author scope — GitOpsAgent self-write 영역 inline carrier 정합. ADR file = `ADR-070-codex-verify-before-trust.md`) |
+| 71 | CFP-612 | active | 2026-05-13 (ArchitectAgent inline append per CFP-578 / ADR-070 chief author precedent. ADR file = `ADR-071-orchestrator-user-dialog-convergence.md`, status `reserved → active` 전환 2026-05-14 Phase 1) |
 
 ### 번호 해제 (archived)
 
