@@ -479,6 +479,8 @@ bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-version-drift.sh
 ### §2g.1 codeforge upgrade CLI (CFP-743 Wave 2 Story-3 / ADR-076 + reconcile-protocol-v1 v1.2)
 
 > **Phase 2 carrier 안내**: 본 절은 CFP-743 Phase 1 (설계/contract) 기준 사용법 명세. 실 CLI script (`scripts/codeforge-upgrade.{sh,ps1}`) + UpgradeAgent 는 Phase 2 PR (별 PR) 도입. Phase 2 merge 전까지는 §2g version drift 검사 + `/plugins update` 수작업 경로 유지.
+>
+> **Transitional 경로 안내 (CFP-744 #752, ArchitectPL Phase 1)**: consumer 의 manual upgrade (`/plugins update` 수작업 + CHANGELOG 수기 + `_overlay/CLAUDE.md` 갱신) 는 **현재 transitional 정상 경로**다. CFP-744 Phase 2 (AC-10 `consumer-scripts.manifest` 등록 + AC-11 `--repo` consumer_repo_root flag + AC-12 §2g.2 end-to-end flow 섹션) merge 시 consumer 자기 repo canonical upgrade flow 배포로 해소된다 (#752 = CFP-744 tracker, Phase 2 merge 시 close).
 
 codeforge family upgrade 의 **단일 진입점** — "한 번 명령 = 끝까지 자동 + 사용자 결정 0 자리" (Epic CFP-699 directive). 현재 7회 `/plugins update` 수작업 → 1 명령으로 수렴.
 
