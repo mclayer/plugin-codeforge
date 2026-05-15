@@ -12,7 +12,7 @@
 # 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
 schema_version: "1.2"  # CFP-509 / ADR-060 Amendment 6 — recurrence field 정식 도입 (MINOR bump v1.1 → v1.2)
 introduced_by: CFP-389
-last_updated: 2026-05-14  # CFP-662 — bootstrap-labels-precondition 46번째 entry (ADR-060 Amendment 10 §결정 24 carrier — PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier, deferred-followup status — Phase 2 carrier 신설 후 Active 전환) | CFP-660 — workflow-version-drift 45번째 entry (ADR-032 Amendment 2 §결정 6 carrier — strict-eligible 5번째 drift consumer workflow version drift, check 10 NEW carrier) | CFP-658 — section-1-verbatim-postmerge 44번째 entry append (ADR-027 Amendment 2 §결정 6.C carrier — manual fallback path §1 verbatim invariant post-merge lint warning tier, deferred-followup status, Phase 2 carrier 신설 후 Active 전환) | CFP-627 FIX iter 3/3 — marketplace-drift-detection entry deferred to Phase 2 carrier (ADR-067 §결정 3 cross-lane RESET 차원 전환) | CFP-638 — stop-time-continuous-confirm-detect 43번째 entry (ADR-064 Amendment 3 Story D) | CFP-631 — marketplace-description-verbatim 42번째 entry (ADR-063 Amendment 2 §결정 11 blocking-on-pr)
+last_updated: 2026-05-15  # CFP-695 — dialog-declare-schema 48번째 entry (ADR-071 Amendment 1 §결정 13 carrier — Layer 2 self declare strict subschema PR-time mechanical lint, warning tier, advisory only) | CFP-662 — bootstrap-labels-precondition 46번째 entry (ADR-060 Amendment 10 §결정 24 carrier — PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier, deferred-followup status — Phase 2 carrier 신설 후 Active 전환) | CFP-660 — workflow-version-drift 45번째 entry (ADR-032 Amendment 2 §결정 6 carrier — strict-eligible 5번째 drift consumer workflow version drift, check 10 NEW carrier) | CFP-658 — section-1-verbatim-postmerge 44번째 entry append (ADR-027 Amendment 2 §결정 6.C carrier — manual fallback path §1 verbatim invariant post-merge lint warning tier, deferred-followup status, Phase 2 carrier 신설 후 Active 전환) | CFP-627 FIX iter 3/3 — marketplace-drift-detection entry deferred to Phase 2 carrier (ADR-067 §결정 3 cross-lane RESET 차원 전환) | CFP-638 — stop-time-continuous-confirm-detect 43번째 entry (ADR-064 Amendment 3 Story D) | CFP-631 — marketplace-description-verbatim 42번째 entry (ADR-063 Amendment 2 §결정 11 blocking-on-pr)
 
 entries:
   - name: adr-sunset-criteria
@@ -1591,5 +1591,43 @@ entries:
     sunset_gate:
       metric: "drift Issue 자동 발의 0건 / 3 month rolling window"
       measured_by: github_actions_run_history + drift_issue_count
+      sunset_decision_owner: ArchitectPL or 사용자 directive
+    status: Active
+
+  - name: dialog-declare-schema
+    description: |
+      ADR-071 Amendment 1 §결정 13 carrier — Layer 2 self declare strict subschema 3 항목
+      표 형식 (자유 산문 → 고정 표 closed enum) PR-time mechanical lint.
+      항목 1: 사용자가 답해야 할 것 (free-text 1 sentence)
+      항목 2: 묻기 직전 derived default 시도 여부 (done / skipped / value-judgment enum)
+      항목 3: 가치 판단 vs 사실 판단 (value / fact / mixed enum)
+      advisory only — turn-final hook 부재 (Claude Code harness inherent 한계).
+      CFP-612 §결정 10 scope out "Layer 1 preamble mechanical lint = 별 follow-up CFP" 의
+      자리 채우기. self-attestation paradox 회피 + boilerplate decay 완화 + 본 carrier
+      자기적용 evidence forcing function.
+    detect_command: bash scripts/check-dialog-declare-schema.sh
+    workflow: templates/github-workflows/dialog-declare-schema.yml
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode (turn-final hook 부재 한계 인정)
+    bypass_label: hotfix-bypass:dialog-declare-schema
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a)
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:            # ADR-060 §결정 6 (c)
+        - CFP-695  # Phase 1 ADR-071 Amendment 1 + Phase 2 lint script + workflow + registry
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-695
+    introduced_date: 2026-05-15
+    owner_adr: ADR-071
+    carrier_adr: ADR-060
+    recurrence:
+      count: 0                # 본 entry 첫 도입 — recurrence 누적 없음
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    sunset_gate:
+      metric: "PR-time lint failure rate < 5% / 3 month rolling window + manual override count = 0"
+      measured_by: github_actions_run_history + hotfix-bypass:dialog-declare-schema label count
       sunset_decision_owner: ArchitectPL or 사용자 directive
     status: Active

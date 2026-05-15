@@ -1,0 +1,31 @@
+# .github/workflows/dialog-declare-schema.yml
+# CFP-695 / ADR-071 Amendment 1 §결정 13 carrier — Layer 2 self declare strict subschema PR-time mechanical lint (warning tier).
+# advisory only — turn-final hook 부재 (Claude Code harness inherent 한계).
+# byte-identical mirror of templates/github-workflows/dialog-declare-schema.yml (ADR-005).
+
+name: dialog-declare-schema
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # warning tier (ADR-060 §결정 5 default — 첫 도입 = warning mode)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run dialog declare schema lint
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO_OWNER: ${{ github.repository_owner }}
+          REPO_NAME: ${{ github.event.repository.name }}
+        run: |
+          bash scripts/check-dialog-declare-schema.sh ${{ github.event.pull_request.number }}

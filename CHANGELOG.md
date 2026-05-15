@@ -7,6 +7,25 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.67.0] - 2026-05-15
+
+### Added (ADR-071 Amendment 1 — Orchestrator-user dialog visible declare schema)
+
+- **CFP-695 ADR-071 Amendment 1 — Layer 2 self declare strict subschema 3 항목 표 형식 fix + Layer 1 preamble mechanical enforce 명시**: CFP-612 §결정 10 scope out "Layer 1 preamble mechanical lint = 별 follow-up CFP" 의 자리 채우기. 사용자 directive 2026-05-15 KST verbatim "사용자 질문을 하는데 맥락적으로 알 수 없는 질문을 하는 경우가 너무 빈발하다. 또 뭔말이냐고 물어보면 물어볼 필요도 없는 내용을 물어보는 경우가 빈번하다. 이 원인을 근본적으로 해결하고 가야되겠다" — Wave 5 effective 후에도 동일 vulnerability 2 종 (맥락 없는 질문 / 물어볼 필요 없는 질문) 빈발 reproduce.
+  - **§결정 12 신설** — Layer 2 self declare strict subschema (자유 산문 → 고정 표 closed enum 3 항목): (1) 사용자가 답해야 할 것 (free-text 1 sentence) / (2) 묻기 직전 derived default 시도 여부 (`done` / `skipped` / `value-judgment`) / (3) 가치 판단 vs 사실 판단 (`value` / `fact` / `mixed`). self-attestation paradox 회피 + boilerplate decay 완화 + mechanical lint 가능 + 본 carrier 자기적용 evidence forcing function.
+  - **§결정 13 신설** — Layer 1 preamble mechanical enforce (warning tier): `scripts/check-dialog-declare-schema.sh` (PR title/body 안 표 schema 정규식 lint) + `templates/github-workflows/dialog-declare-schema.yml` + `.github/workflows/dialog-declare-schema.yml` byte-identical self-app (ADR-005). advisory only — turn-final hook 부재 inherent 한계 인정 (Claude Code harness platform 한계).
+  - frontmatter `amendments_log[]` entry + `mechanical_enforcement_actions[]` 2 entry append (ADR-040 Amendment 3 §결정 7 정합).
+  - §결정 10 scope out "Layer 1 preamble mechanical lint" resolved 표시.
+  - **ADR-064 cross-link** — 결정 9 본문 안 ADR-071 Amendment 1 cross-link (Question quality 3-check ↔ declare schema 연동).
+  - **skill `codeforge:user-dialog-mode`** Layer 2 row 갱신 + strict subschema sub-section.
+  - **playbook §3.14** Layer 2 row + strict subschema sub-section + scope 외 정정.
+  - **CLAUDE.md** Wave 5 단락 안 Amendment 1 cross-ref (본질 anchor 격상은 별 follow-up CFP).
+  - **section-ownership.yaml** CLAUDE.md row NOTE.
+  - **evidence-checks-registry.yaml** 48번째 entry `dialog-declare-schema` warning tier (owner_adr: ADR-071, carrier_adr: ADR-060, sibling_dependencies: [CFP-695]).
+  - **label-registry-v2** v2.15 → v2.16 PATCH (`hotfix-bypass:dialog-declare-schema` 22번째 family member, schema 무변경 yaml row append).
+  - **plugin.json 5.66.0 → 5.67.0 MINOR** (ADR-037 — workflow 신설 runtime 활성화 governance behavior change, post-CFP-477 atomic realignment).
+  - **marketplace atomic sync** (ADR-063 §결정 5 — separate sibling PR, 선행 merge 의무).
+
 ## [5.66.0] - 2026-05-15
 
 ### Added (CFP-477 Phase 2 — pre-push auto-rebase hook sample carrier)

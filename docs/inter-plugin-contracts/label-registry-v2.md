@@ -1,14 +1,14 @@
 ---
 kind: registry
 registry: label
-version: "2.15"
+version: "2.16"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
 created_date: 2026-05-09
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/label-registry-v2.md
-date: 2026-05-14  # CFP-662 v2.15 — hotfix-bypass:bootstrap-labels 21번째 family member (ADR-060 Amendment 10 §결정 24 carrier — PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier 정합) | CFP-660 v2.14 — hotfix-bypass:workflow-version-drift 20번째 family member (ADR-032 Amendment 2 §결정 6 carrier — strict-eligible 5번째 drift consumer workflow version drift, CFP-660 Wave 2 of Epic CFP-431) | CFP-658 v2.13 — fallback:* family 신설 (fallback:manual + fallback:rate-limited, ADR-027 Amendment 2 §결정 6 carrier — Action-blocked agent direct write fallback path normative SSOT, post-CFP-627 v2.12 atomic rebase) | CFP-627 v2.12 — hotfix-bypass:marketplace-drift-detection 19번째 family member (ADR-063 Amendment 3 §결정 13 carrier — marketplace reactive scheduled drift detection 4th defense layer, post-CFP-638 base) | CFP-638 v2.11 — hotfix-bypass:stop-time-continuous-confirm 18번째 family member (ADR-064 Amendment 3 §결정 9 sister carrier — Continuous '진행해' 패턴 mechanical detect advisory channel) | CFP-631 v2.10 — hotfix-bypass:marketplace-description-verbatim 17번째 family member (ADR-063 Amendment 2 carrier — description proactive PR-time lint blocking-on-pr 직접 시작) | CFP-628 v2.9 — hotfix-bypass:retro-alert-pickup 16번째 family member (ADR-045 §D-5 retro alert pickup KPI warning-tier sentinel) | CFP-619 v2.8 — hotfix-bypass:retro-mandatory-deployed 15번째 family member (ADR-045 mandate restoration carrier) | CFP-610 v2.6 sub-entry — hotfix-bypass:wording-dictionary 13번째 (ADR-064 Amendment 2) | CFP-582 v2.6 sub-entry — hotfix-bypass:debate-convergence-quality 12번째 (ADR-059 Amendment 2 §결정 8) | CFP-583 v2.6 sub-entry — hotfix-bypass:workflow-yaml-parse 11번째 | CFP-530 v2.5 sub-entry — hotfix-bypass:workflow-permissions 10번째 | CFP-429 v2.5 — from-cfp-425-followup provenance label | CFP-521 v2.4 sub-entry — hotfix-bypass:sibling-pr-author-check 9번째 | CFP-506 v2.4 sub-entry — hotfix-bypass:claude-md-line-cap 8번째 | CFP-481 v2.4 — phase:* attach_owner_plugin field 갱신
+date: 2026-05-15  # CFP-695 v2.16 — hotfix-bypass:dialog-declare-schema 22번째 family member (ADR-071 Amendment 1 §결정 13 carrier — Layer 2 self declare strict subschema PR-time mechanical lint warning tier, advisory only) | CFP-662 v2.15 — hotfix-bypass:bootstrap-labels 21번째 family member (ADR-060 Amendment 10 §결정 24 carrier — PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier 정합) | CFP-660 v2.14 — hotfix-bypass:workflow-version-drift 20번째 family member (ADR-032 Amendment 2 §결정 6 carrier — strict-eligible 5번째 drift consumer workflow version drift, CFP-660 Wave 2 of Epic CFP-431) | CFP-658 v2.13 — fallback:* family 신설 (fallback:manual + fallback:rate-limited, ADR-027 Amendment 2 §결정 6 carrier — Action-blocked agent direct write fallback path normative SSOT, post-CFP-627 v2.12 atomic rebase) | CFP-627 v2.12 — hotfix-bypass:marketplace-drift-detection 19번째 family member (ADR-063 Amendment 3 §결정 13 carrier — marketplace reactive scheduled drift detection 4th defense layer, post-CFP-638 base) | CFP-638 v2.11 — hotfix-bypass:stop-time-continuous-confirm 18번째 family member (ADR-064 Amendment 3 §결정 9 sister carrier — Continuous '진행해' 패턴 mechanical detect advisory channel) | CFP-631 v2.10 — hotfix-bypass:marketplace-description-verbatim 17번째 family member (ADR-063 Amendment 2 carrier — description proactive PR-time lint blocking-on-pr 직접 시작) | CFP-628 v2.9 — hotfix-bypass:retro-alert-pickup 16번째 family member (ADR-045 §D-5 retro alert pickup KPI warning-tier sentinel) | CFP-619 v2.8 — hotfix-bypass:retro-mandatory-deployed 15번째 family member (ADR-045 mandate restoration carrier) | CFP-610 v2.6 sub-entry — hotfix-bypass:wording-dictionary 13번째 (ADR-064 Amendment 2) | CFP-582 v2.6 sub-entry — hotfix-bypass:debate-convergence-quality 12번째 (ADR-059 Amendment 2 §결정 8) | CFP-583 v2.6 sub-entry — hotfix-bypass:workflow-yaml-parse 11번째 | CFP-530 v2.5 sub-entry — hotfix-bypass:workflow-permissions 10번째 | CFP-429 v2.5 — from-cfp-425-followup provenance label | CFP-521 v2.4 sub-entry — hotfix-bypass:sibling-pr-author-check 9번째 | CFP-506 v2.4 sub-entry — hotfix-bypass:claude-md-line-cap 8번째 | CFP-481 v2.4 — phase:* attach_owner_plugin field 갱신
 authors:
   - Claude (CFP-140 — ADR-049 type:* → native Issue Types cutover)
 related_adrs:
@@ -54,6 +54,13 @@ related_files:
 # label-registry v2
 
 ## 변경 이력
+
+**v2.16 (CFP-695 / ADR-071 Amendment 1, 2026-05-15)**: PATCH bump (schema 무변경 — §3 yaml hotfix-bypass:* 22번째 family member append).
+- **추가**: `hotfix-bypass:dialog-declare-schema` (color `fef2c0` audit tier) — `templates/github-workflows/dialog-declare-schema.yml` (Phase 2 carrier) warning-tier mechanical lint conditional skip + audit comment 자동 발의 channel (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합, **22번째 hotfix-bypass:* family member** — 기존 21: adr-sunset / decision-principle-vocab / auto-phase-label / marketplace-atomic / worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd} / claude-md-line-cap / sibling-pr-author-check / workflow-permissions / workflow-yaml-parse / debate-convergence-quality / wording-dictionary / retro-mandatory-deployed / retro-alert-pickup / marketplace-description-verbatim / stop-time-continuous-confirm / marketplace-drift-detection / workflow-version-drift / bootstrap-labels).
+- bypass 사용 시 `check-bypass-audit-comment.sh` 가 audit comment 발의 (reuse 패턴, 1st-21st entry 동일). PR description `### Bypass reason` 섹션 기재 필수.
+- ADR-071 Amendment 1 §결정 13 carrier — Layer 2 self declare strict subschema 3 항목 표 형식 (자유 산문 → 고정 표 closed enum) 의 PR-time mechanical lint (advisory only — turn-final hook 부재 inherent 한계 인정). evidence-enforceable framework 48번째 entry `dialog-declare-schema` warning tier 동반.
+- canonical-only (kind:registry — sibling sync scope 외 per ADR-010 §결정 2).
+- ADR-008 §결정 3 SSOT: schema 무변경 yaml row append = PATCH bump.
 
 **v2.15 (CFP-662 / ADR-060 Amendment 10, 2026-05-14)**: PATCH bump (schema 무변경 — §3 yaml hotfix-bypass:* 21번째 family member append).
 - **추가**: `hotfix-bypass:bootstrap-labels` (color `fef2c0` audit tier) — `templates/github-workflows/bootstrap-labels.yml` (Phase 2 carrier) warning-tier mechanical lint conditional skip + audit comment 자동 발의 channel (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합, **21번째 hotfix-bypass:* family member** — 기존 20: adr-sunset / decision-principle-vocab / auto-phase-label / marketplace-atomic / worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd} / claude-md-line-cap / sibling-pr-author-check / workflow-permissions / workflow-yaml-parse / debate-convergence-quality / wording-dictionary / retro-mandatory-deployed / retro-alert-pickup / marketplace-description-verbatim / stop-time-continuous-confirm / marketplace-drift-detection / workflow-version-drift).
@@ -662,6 +669,13 @@ labels:
     category: hotfix-bypass
     color: "fef2c0"
     description: "hotfix-bypass: bootstrap-labels precondition workflow skip + audit comment 자동 발의 (CFP-662 / ADR-060 Amendment 10 §결정 24 / ADR-024 Amendment 3 §결정 6.A — templates/github-workflows/bootstrap-labels.yml Phase 2 carrier — warning tier 신규 entry, PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier). 21번째 hotfix-bypass:* family member."
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  - name: hotfix-bypass:dialog-declare-schema
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: Layer 2 self declare strict subschema 3 항목 표 형식 PR-time mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-695 / ADR-071 Amendment 1 §결정 13 / ADR-024 Amendment 3 §결정 6.A — templates/github-workflows/dialog-declare-schema.yml Phase 2 carrier — warning tier 신규 entry, advisory only / turn-final hook 부재 inherent 한계 인정). 22번째 hotfix-bypass:* family member."
     single_active: false
     attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
 
