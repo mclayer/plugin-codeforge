@@ -1556,3 +1556,40 @@ entries:
       last_occurrence: 2026-05-09    # [empirical-source: mctrader-data PR #14 timestamp, RETRO-MCT-104]
       promotion_trigger: advisory    # count=1 < threshold=3 → 발화 없음 (단일 발생 시점)
     status: deferred-followup        # CFP-662 Phase 2 carrier 신설 후 Active 전환 (workflow self-app 시점)
+
+  - name: marketplace-drift-detection
+    description: |-
+      CFP-673 / ADR-063 Amendment 3 §결정 13 — marketplace ↔ wrapper plugin.json drift
+      reactive scheduled detection (4th defense layer). 7 plugin × 4 mirrored field per
+      24h cron + workflow_dispatch manual fallback. drift detected 시 Issue auto-create
+      (dedup per-(plugin, field) signature). Proactive 3-layer (§결정 9 + §결정 11 +
+      §결정 5) 가 변경 시점 enforce, 본 §결정 13 reactive layer 가 변경 시점 외
+      (rebase / 별 PR / direct commit / version collision resolve) drift 차단.
+      4-tuple reproduce evidence (CFP-609 / CFP-612 / CFP-610 Story 2 / CFP-673 session live verify).
+    detect_command: bash scripts/check-marketplace-drift.sh
+    workflow: templates/github-workflows/marketplace-drift-detection.yml
+    current_tier: warning   # ADR-060 §결정 5 default — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:marketplace-drift-detection
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - drift_issue_zero_count_proof   # 3 month rolling window
+        - cron_run_history_url
+    introduced_by: CFP-673
+    introduced_date: 2026-05-14
+    owner_adr: ADR-063
+    carrier_adr: ADR-060
+    recurrence:
+      count: 4              # CFP-609 / CFP-612 / CFP-610 Story 2 / CFP-673 session live verify
+      threshold: 4
+      promotion_trigger: warning_first  # ADR-060 §결정 5 default warning
+      last_occurrence: 2026-05-14  # CFP-673 session live verify
+    sunset_gate:
+      metric: "drift Issue 자동 발의 0건 / 3 month rolling window"
+      measured_by: github_actions_run_history + drift_issue_count
+      sunset_decision_owner: ArchitectPL or 사용자 directive
+    status: Active

@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: label
-version: "2.14"
+version: "2.15"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
