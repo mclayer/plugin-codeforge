@@ -681,6 +681,13 @@ labels:
     single_active: false
     attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
 
+  - name: hotfix-bypass:claude-md-amendment-ref
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: CLAUDE.md Amendment ref drift detection lint skip + audit comment 자동 발의 (CFP-708 / ADR-074 / ADR-024 Amendment 3 §결정 6.A — templates/github-workflows/claude-md-amendment-ref-drift.yml carrier — CLAUDE.md 안 Amendment N (CFP-NNN) 참조 + ADR frontmatter amendment_log/amendments 길이 비교, warning tier 신규 entry, cross-section coherence lint CFP-263 lineage 답습). 23번째 hotfix-bypass:* family member."
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
   # fallback:* (2종 — CFP-658 / ADR-027 Amendment 2 §결정 6.A carrier — Action 차단 환경 manual agent direct write path)
   # 신규 category enum: fallback (별 axis). canonical-only (kind:registry — sibling sync scope 외 per ADR-010 §결정 2).
   # plugin.json MINOR bump 동반 (5.56.0 → 5.57.0) — marketplace.json sync required (ADR-063 §결정 18).
