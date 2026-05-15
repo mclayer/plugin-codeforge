@@ -84,9 +84,9 @@ ADR-064 §결정 3 룰 1 derived default 적용 = (A) 권장.
 
 본 lint 가 detect 하는 drift pattern:
 
-CLAUDE.md 본문 안 ADR cross-ref 단락 (예: `**Marketplace ↔ plugin.json atomic invariant** = [ADR-063](docs/adr/ADR-063-marketplace-atomic-invariant.md) — ...`) 가 inline 에 "Amendment N (CFP-NNN)" 형태 reference 를 포함한다. 본 lint 는:
+CLAUDE.md 본문 안 ADR cross-ref 단락 (예: `**Marketplace ↔ plugin.json atomic invariant** = [ADR-063](ADR-063-marketplace-atomic-invariant.md) — ...`) 가 inline 에 "Amendment N (CFP-NNN)" 형태 reference 를 포함한다. 본 lint 는:
 
-1. CLAUDE.md 안 모든 `ADR-NNN` link line 식별도 (markdown link 패턴 `[ADR-073](docs/adr/ADR-073-orchestrator-verify-before-assert.md)` regex)
+1. CLAUDE.md 안 모든 `ADR-NNN` link line 식별도 (markdown link 패턴 `[ADR-073](ADR-073-orchestrator-verify-before-assert.md)` regex)
 2. 같은 line 안 inline 패턴 매칭: `Amendment (\d+)` (예: `Amendment 3 §결정 13`)
 3. 해당 ADR file frontmatter `amendment_log[]` 길이 fetch
 4. inline reference 최대 Amendment N ≤ amendment_log length 검증 (stale = N > length, drift detect)
@@ -141,7 +141,7 @@ ADR-065 §결정 1 #4 (link target Phase 분배 — Phase 1 PR doc 안 Phase 2 f
 
 Stale ref detect 의 false positive 영역 명시:
 
-1. **inline pattern 외 ADR reference**: link target 만 있고 "Amendment N" 명시 없는 line (예: `[ADR-073](docs/adr/ADR-073-...md)`) → drift check skip (안전 — 명시적 stale 만 detect)
+1. **inline pattern 외 ADR reference**: link target 만 있고 "Amendment N" 명시 없는 line (예: `[ADR-073](ADR-073-...md)`) → drift check skip (안전 — 명시적 stale 만 detect)
 2. **multi-Amendment inline**: 같은 line 안 `Amendment 2 / Amendment 3` 처럼 다중 reference → 모두 amendment_log length 비교 (모두 stale 아님 확인). false positive 부재.
 3. **frontmatter amendment_log 부재 ADR**: 신규 ADR 또는 amendment 0건 ADR → `Amendment N` reference 0건 자연스러움. mismatch 0 (false positive 부재).
 4. **stale ref 에서 Amendment N = length 도 PASS**: 정확히 length 와 일치하면 PASS (latest amendment reference 정상).
@@ -196,7 +196,7 @@ Stale ref detect 의 false positive 영역 명시:
 
 **승격 carrier**: 별도 CFP-NNN (본 Story 외). ADR-058 §결정 5 ratchet 정합 (강화 방향 only).
 
-## 사후 cross-ref
+## 관련 파일
 
 ### 관련 ADR
 
