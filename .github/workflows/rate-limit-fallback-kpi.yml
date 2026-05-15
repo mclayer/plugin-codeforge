@@ -99,7 +99,7 @@ jobs:
           # CFP-453 — history.jsonl append (idempotent, last-line replace if same month)
           args+=(--history-out docs/kpi/rate-limit-fallback-history.jsonl)
 
-          # CFP-451: capture mode — aggregator exit code 별 sub-reason 분류 (detect_infra 가 GITHUB_OUTPUT.exit_code 참조).
+          # CFP-451: capture mode — aggregator exit code 별도 sub-reason 분류 (detect_infra 가 GITHUB_OUTPUT.exit_code 참조).
           bash scripts/measure-rate-limit-fallback.sh "${args[@]}"
           exit_code=$?
 
@@ -287,7 +287,7 @@ jobs:
             reasons="${reasons}internal-docs clone failure (network/auth); "
           fi
 
-          # (2) aggregate step failure — exit code 별 sub-reason.
+          # (2) aggregate step failure — exit code 별도 sub-reason.
           if [ "${agg_outcome}" = "failure" ]; then
             infra_error="true"
             case "${agg_exit}" in
