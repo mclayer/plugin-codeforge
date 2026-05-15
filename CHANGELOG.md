@@ -7,6 +7,16 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.68.0] - 2026-05-15
+
+### Added (CFP-685 — ADR-065 Amendment 1 §결정 6 family scope self-app invariant + sibling-workflow-parity enforcement)
+
+- **CFP-685 sub-PR (a)** — ADR-065 Amendment 1 §결정 6 신설: family scope self-app invariant (templates/github-workflows/*.yml ↔ .github/workflows/*.yml byte-identical parity 의무 포함 전체 family scope 확장) + ADR-005 §결정 2 cross-ref 강화 + MANIFEST.yaml 갱신 (PR #694, 2026-05-15).
+- **CFP-685 sub-PR (b)** — `scripts/check-sibling-workflow-parity.sh` 신설 (sha256sum/shasum 2-tier hash + exit 0/1/2 ADR-060 §결정 15 정합) + `templates/github-workflows/sibling-workflow-parity.yml` + `.github/workflows/sibling-workflow-parity.yml` (byte-identical self-app, ADR-005) + `docs/evidence-checks-registry.yaml` 51번째 entry `auto-phase-label-sibling-parity` (warning tier, owner_adr ADR-065) + `docs/inter-plugin-contracts/label-registry-v2.md` v2.16 MINOR (`hotfix-bypass:auto-phase-label-sibling-parity` 21번째 family member) (PR #705, 2026-05-15).
+- **CFP-685 sub-PR (c)** — `CLAUDE.md` GitHub Workflow 단락 갱신 (`templates/github-workflows/` 26종 → 27종 / 8 → 9 evidence-enforceable warning, `sibling-workflow-parity.yml` entry 추가) + `plugin.json` 5.66.0 → 5.68.0 MINOR (ADR-037 — 신규 workflow + script + evidence-registry entry 신설 runtime 활성화) + `CHANGELOG.md` [5.68.0] entry + marketplace atomic sync (ADR-063 §결정 5 — separate sibling PR, 2026-05-15).
+
+Cross-ref: ADR-065 / ADR-060 / ADR-005 / ADR-066 / label-registry-v2 v2.16.
+
 ## [5.67.0] - 2026-05-14
 
 ### Added (CFP-442 Phase 2 — evidence-registry anomaly lint carrier)
