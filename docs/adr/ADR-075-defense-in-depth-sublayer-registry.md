@@ -203,4 +203,4 @@ N/A — permanent governance policy.
 - `CLAUDE.md` — ADR-063 단락 + Inter-plugin Contract 단락 cross-ref
 - [ADR-008](ADR-008-inter-plugin-contract-versioning.md) — kind:registry versioning policy
 - [ADR-010](ADR-010-inter-plugin-contract-sibling-sync.md) — kind:registry sibling sync 면제
-- [ADR-054](ADR-054-doc-only-fast-path.md) — Phase 1 + Phase 2 combined (single PR) 정합
+- [ADR-054](ADR-054-doc-only-story-fast-path.md) — Phase 1 + Phase 2 combined (single PR) 정합
