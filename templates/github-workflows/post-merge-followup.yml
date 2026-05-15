@@ -171,28 +171,24 @@ jobs:
           fi
 
           # ── Step 2: Consumer config read — lanes.security_ai (fail-closed default) ─
-          # Mirror pattern: story-init.yml line 37-68 (yq → python3 fallback).
-          # Inv-2: fail-closed default = phase:보안-테스트 (option B — stricter, close trigger 차단).
+          # ADR-026 §결정 5.G / CFP-688 Amendment 3 — external script (ADR-061 §결정 1 strict).
+          # scripts/extract-security-ai.sh outputs: "true" | "false" | "missing".
+          # Inv-2 (ADR-026 §결정 5.A): fail-closed strict semantic:
+          #   - explicit "true"    → phase:보안-테스트  (security lane required)
+          #   - explicit "false"   → phase:구현-테스트  (security opt-in disabled, ADR-048/CFP-317)
+          #   - "missing"/read-err → phase:보안-테스트  (fail-closed default — stricter, close trigger 차단)
+          # TC-7: lanes.security_ai missing → terminal = phase:보안-테스트 (fail-closed strict).
           TERMINAL_PHASE="phase:보안-테스트"
-          _read_security_ai() {
-            local cfg="$1"
-            if command -v yq >/dev/null 2>&1; then
-              yq -r '.lanes.security_ai // "false"' "$cfg" 2>/dev/null || echo "false"
-            else
-              CFG_PATH="$cfg" python3 "${GITHUB_WORKSPACE}/scripts/lib/workflow_post_merge_followup.py"
-            fi
-          }
-          SECURITY_AI="false"
+          SECURITY_AI_RAW="missing"
           if [ -f ".codeforge/project.yaml" ]; then
-            SECURITY_AI=$(_read_security_ai ".codeforge/project.yaml")
+            SECURITY_AI_RAW=$(bash "${GITHUB_WORKSPACE}/scripts/extract-security-ai.sh" ".codeforge/project.yaml" || echo "missing")
           elif [ -f ".claude/_overlay/project.yaml" ]; then
-            SECURITY_AI=$(_read_security_ai ".claude/_overlay/project.yaml")
+            SECURITY_AI_RAW=$(bash "${GITHUB_WORKSPACE}/scripts/extract-security-ai.sh" ".claude/_overlay/project.yaml" || echo "missing")
           fi
-          if [ "$SECURITY_AI" = "true" ]; then
-            TERMINAL_PHASE="phase:보안-테스트"
-          else
+          if [ "$SECURITY_AI_RAW" = "false" ]; then
             TERMINAL_PHASE="phase:구현-테스트"
           fi
+          # "true" or "missing" or any unexpected value → TERMINAL_PHASE stays phase:보안-테스트 (fail-closed)
 
           # ── Step 3: Issue label re-fetch (PR label 신뢰 X — R-5 phase label race) ──
           ISSUE_LANE=$(gh issue view "$ISSUE_NUM" --json labels --jq '.labels[] | select(.name | startswith("phase:")) | .name' | head -1 || echo "")
