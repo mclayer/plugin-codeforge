@@ -34,7 +34,7 @@ schema_version: "1.0"
 | story_key | 발생 시점 active Story KEY (cross-Story 추적, 예: `CFP-612`) |
 | pattern_dimension | 4 차원 enum (표현 / 결정 구조 / 보고 형식 / 질문 자체) |
 | pattern_summary | 어떤 양상이 detect 됐는지 1 줄 |
-| trigger | `layer-3-keyword` (사용자 "추상" keyword) / `layer-4-n1` (같은 양상 다음 turn 재발) / `layer-4-m5` (escalation `AskUserQuestion`) |
+| trigger | `layer-3-keyword` (사용자 "추상" keyword) / `layer-4-n1` (같은 양상 다음 turn 재발) / `layer-4-m5` (escalation `AskUserQuestion`). retroactive baseline row 는 cell 에 `backfill (...)` marker 사용 — soft enum extension, schema/structure 무변경. |
 | different_dimension_after_halt | Sub-mechanism 1 — "이전과 다르게 한 점" 1 줄 (재작성 직후 동일 row 갱신) |
 | escalation_outcome | `layer-4-m5` trigger 시 사용자 답변 요약 (`AskUserQuestion` outcome). 다른 trigger 시 비어있음 |
 
