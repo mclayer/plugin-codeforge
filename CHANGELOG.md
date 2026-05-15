@@ -7,6 +7,40 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.69.0] - 2026-05-15
+
+### Changed (CFP-707 — ADR-038 Amendment 4 TodoWrite 4-marker vocabulary swap, doc-only fast-path ADR-054)
+
+- **ADR-038 §결정 2 — 4-marker vocabulary swap (직관성 정정)**:
+  - `⏳ pending` → `⬜` (TodoWrite checkbox 패러다임 정합 — 시작 안 됨 empty checkbox 직관)
+  - `🔄 in_progress` → `⏳` (모래시계 = 시간 흐름 = 진행 중 자연 인지 모델 align)
+  - `❌ FIX 원인 lane` → `🔄 FIX 검출 lane` (회전 = retry trigger semantic align, §결정 3 위치 swap 동반)
+  - `✅ completed` 변경 0건
+- **ADR-038 §결정 3 — FIX 마커 부여 위치 정정**: 원인 lane → **검출 lane** 부여 (직관 align — "검출한 쪽이 retry 를 trigger"). 책임 추적 (FIX-N 원인 판정) 의미 영역 변경 0건 — 원인 lane content suffix `FIX-N 원인 · <판정>` 으로 보존 (lane PASS evidence + FIX trigger origin 양 보존).
+- **ADR-038 §결정 6 — 재진입 row marker swap**: 기존 `❌` 표기 → 검출 lane `🔄` 마커 (§결정 3 정합).
+- **ADR-038 frontmatter `amendments[]` Amendment 4 entry append** + **`amendment_log` entry append** (sunset_justification metric/who/how 3-tuple — Story 100 cycle retro grep).
+- **playbook §14.3** sample swap + `⏸` deprecated → `⬜` 통일 (Story 시작 시 init marker).
+- **playbook §14.4** Status enum 표 4 row swap + blocked / waiting 정정 + 활성 lane row 예시 swap.
+- **playbook §14.5** Trigger 표 14 row swap (Story 개시 / Lane 진입 / Deputy spawn-return / 병렬 dispatch / CI gate / R11 fast-path / Lane PASS / Lane FIX / Lane 재진입 / RESET / Lane N/A).
+- **playbook §14.7** Render flow step 5 detail swap (Lane 진입 / Agent return / Lane PASS / Lane FIX 4 sub-bullet — semantic 정정 동반).
+- **playbook §14.8** Resume re-build 4-marker 변환 swap.
+- **CLAUDE.md L202** mirror reference 정정 (`(⏳ 🔄 ✅ ❌)` → `(⬜ ⏳ ✅ 🔄)` + 검출 lane / 원인 lane 의미 정정).
+
+### Rationale
+
+사용자 dialog 5 turn 합의 (2026-05-15 KST):
+- `⏳` (모래시계 글리프) 의 pending semantic 이 "시간 흐름 = 진행 중" 직관과 충돌
+- `❌` 가 root cause lane (= 잘못한 쪽) 에 부여되는 §결정 3 의 책임 추적 semantic 이 "검출한 쪽" 직관과 충돌
+- swap 후 시각 모델: `⬜` (시작 안 됨) / `⏳` (진행 중) / `✅` (완료) / `🔄` (FIX 검출, retry trigger 회전)
+
+### Cascade resolution
+
+- 5.67.0 skip: CFP-442 marketplace pre-sync drift (Phase 2 wrapper PR pending 시점 marketplace 만 사전 sync, 2026-05-14)
+- 5.68.0 skip: CFP-685 sub-PR (c) PR #714 merge 2026-05-15T05:37:02Z (CFP-707 worktree base 이후 발생)
+- 5.69.0 atomic align: ADR-063 §결정 5 marketplace sibling PR 동시 open + 선행 merge 의무
+
+Cross-ref: ADR-038 / ADR-054 / ADR-063 / ADR-067 §결정 3 (Pause-and-resume) / ADR-073 (verify-before-assert).
+
 ## [5.68.0] - 2026-05-15
 
 ### Added (CFP-685 — ADR-065 Amendment 1 §결정 6 family scope self-app invariant + sibling-workflow-parity enforcement)

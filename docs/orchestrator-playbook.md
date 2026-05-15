@@ -2718,43 +2718,43 @@ current_lane: <한국어 lane 이름>
 fix_cycle: <N>
 
 ✅ 요구사항 — <S3 snippet>
-🔄 설계 — 진행 중 (6/6 deputies, chief author 통합 중)
+⏳ 설계 — 진행 중 (6/6 deputies, chief author 통합 중)
    ├─ ✅ CodebaseMapperAgent
    ├─ ✅ RefactorAgent
    ├─ ✅ SecurityArchitectAgent
    ├─ ✅ OperationalRiskArchitectAgent
    ├─ ✅ TestContractArchitectAgent
    ├─ ✅ DataMigrationArchitectAgent
-   └─ 🔄 ArchitectAgent (chief author) — Change Plan §3 author 중
-⏸ 설계 리뷰
-⏸ 구현
-⏸ 구현 리뷰
-⏸ 구현 테스트
-⏸ 보안 테스트
+   └─ ⏳ ArchitectAgent (chief author) — Change Plan §3 author 중
+⬜ 설계 리뷰
+⬜ 구현
+⬜ 구현 리뷰
+⬜ 구현 테스트
+⬜ 보안 테스트
 ```
 
 - frontmatter 없이 plain markdown + yaml-style 메타 4줄
-- Story 시작 시 모든 lane `⏸` init
+- Story 시작 시 모든 lane `⬜` init (CFP-707 Amendment 4 — `⏸` deprecated, `⬜` empty checkbox 통일)
 - Story 완료 시 `_archive/<KEY>.md` 로 mv (PMO Cross-Story 분석 input 보존)
 
-### 14.4 Status enum (ADR-041, 4 marker)
+### 14.4 Status enum (ADR-041, 4 marker — CFP-707 Amendment 4 vocabulary swap)
 
 | 마커 | 의미 | TodoWrite native state | 사용 위치 |
 |---|---|---|---|
-| `⏳` | pending — 진행 예정 (모래시계) | `pending` | Lane row, agent sub-row |
-| `🔄` | in_progress — 진행 중 | `in_progress` | Lane row, agent sub-row |
-| `✅` | completed — PASS / N/A / 검출 성공 | `completed` | Lane row, agent sub-row |
-| `❌` | 원인 작업 — 통과 못해 새 단계 추가의 cause | `in_progress` (content prefix `❌`) | Lane row only |
+| `⬜` | pending — 시작 안 됨 (empty checkbox) | `pending` | Lane row, agent sub-row |
+| `⏳` | in_progress — 진행 중 (모래시계 시간 흐름) | `in_progress` | Lane row, agent sub-row |
+| `✅` | completed — PASS / N/A / 검출 성공 / FIX 원인 lane (content suffix `FIX-N 원인 · <판정>`) | `completed` | Lane row, agent sub-row |
+| `🔄` | FIX 검출 lane — retry trigger (회전 = 다시 시작) | `in_progress` (content `FIX-N detected (cause: <원인 lane>)`) | Lane row only |
 
 **검출 label 정규화**: review/test lane 의 terminal detection 이 FAIL 인 경우에도 TodoWrite content label 은 `FAIL detected` 를 쓰지 않고 `FIX-N detected` 로 정규화한다. RESET 이 필요한 경우에도 `FIX-N detected (cause: <원인 lane>, RESET-N)` 형식. `FAIL` 은 review/test 판정 흐름의 terminal outcome vocabulary 로만 남고, TodoWrite row label 은 `FIX-N detected` 가 canonical.
 
 **N/A**: ✅ marker + content prefix `N/A · <사유>`. PASS 와 시각 차별 (텍스트 차이).
-**RESET**: ✅ marker (검출 lane) + 새 lane row append (`(재진입 RESET-N)` suffix).
-**blocked / waiting**: 4-marker vocabulary 범위 밖. 대기 상태는 ⏳ pending 으로 표현, 진행 중 차단성 작업은 🔄 in_progress row 의 content 1줄 설명으로 표현.
+**RESET**: ✅ marker (원인 lane content suffix `FIX-N 원인 · <판정>` 보존) + 새 lane row append (`(재진입 RESET-N)` suffix).
+**blocked / waiting**: 4-marker vocabulary 범위 밖. 대기 상태는 ⬜ pending 으로 표현, 진행 중 차단성 작업은 ⏳ in_progress row 의 content 1줄 설명으로 표현.
 
-기존 8 marker (⏸ ⏳-blocked 🔄 ✅ ❌ FIX-N ❌ FIX-N(fast-path) ⊘ 🔁) 폐기. ⏳ semantic 변경 (blocked → pending). file / TodoWrite 두 channel 동일 어휘.
+기존 8 marker (⏸ ⏳-blocked 🔄 ✅ ❌ FIX-N ❌ FIX-N(fast-path) ⊘ 🔁) 폐기. **CFP-707 Amendment 4 vocab swap**: `⏳ pending` → `⬜` / `🔄 in_progress` → `⏳` / `❌ FIX 원인 lane` → `🔄 FIX 검출 lane` (semantic 정정 동반 — §결정 3). file / TodoWrite 두 channel 동일 어휘.
 
-활성 lane row 라인에 inline qualifier (예: `🔄 설계` content 미동반, sub-row 가 detail 표현. PASS 시 `✅ 설계 - PASS · Change Plan v1 + ADR-NNN`).
+활성 lane row 라인에 inline qualifier (예: `⏳ 설계` content 미동반, sub-row 가 detail 표현. PASS 시 `✅ 설계 - PASS · Change Plan v1 + ADR-NNN`).
 
 ### 14.5 트리거 SSOT
 
@@ -2762,21 +2762,21 @@ fix_cycle: <N>
 - `full` (default, ADR-029 §결정 1+4) — 모든 ✅ 표기 항목 narrate (sub-step 포함)
 - `lane_only` — lane-level event 만 narrate (CFP-20 기존 동작, sub-step 표기는 file-only 로 fallback)
 
-| 이벤트 | 영향 라인 | 갱신 동작 | terminal narration | TodoWrite 갱신 (ADR-041) | full/lane_only |
+| 이벤트 | 영향 라인 | 갱신 동작 | terminal narration | TodoWrite 갱신 (ADR-041 — CFP-707 Amendment 4) | full/lane_only |
 |---|---|---|---|---|---|
-| Story 개시 | 전체 | file create, 7 lane `⏸` | ✅ | 7 lane row ⏳ seed | both |
-| Lane 진입 | top | `⏸` → `🔄 진행 중`, current_lane 갱신 | ✅ | lane row ⏳ → 🔄 + agent sub-row 펼침 | both |
-| Deputy spawn | active sub-tree | `🔄 <Deputy>` 추가, qualifier 갱신 | ✅ | agent sub-row 추가 (status=in_progress) | full only |
-| Deputy return | active sub-tree | `🔄` → `✅`, qualifier 갱신 | ✅ | agent sub-row status=completed | full only |
-| 병렬 dispatch (R3·R4·R7·R9) | active sub-tree | 두 deputy 동시 `🔄` 라인 추가 | ✅ | agent sub-row 다수 동시 in_progress (multi-row deviation) | full only |
-| CI gate 시작 | 구현 테스트 | inline qualifier `(gh pr checks 🔄)` | ✅ | CI gate sub-row inline qualifier | both |
+| Story 개시 | 전체 | file create, 7 lane `⬜` | ✅ | 7 lane row ⬜ seed | both |
+| Lane 진입 | top | `⬜` → `⏳ 진행 중`, current_lane 갱신 | ✅ | lane row ⬜ → ⏳ + agent sub-row 펼침 | both |
+| Deputy spawn | active sub-tree | `⏳ <Deputy>` 추가, qualifier 갱신 | ✅ | agent sub-row 추가 (status=in_progress) | full only |
+| Deputy return | active sub-tree | `⏳` → `✅`, qualifier 갱신 | ✅ | agent sub-row status=completed | full only |
+| 병렬 dispatch (R3·R4·R7·R9) | active sub-tree | 두 deputy 동시 `⏳` 라인 추가 | ✅ | agent sub-row 다수 동시 in_progress (multi-row deviation) | full only |
+| CI gate 시작 | 구현 테스트 | inline qualifier `(gh pr checks ⏳)` | ✅ | CI gate sub-row inline qualifier | both |
 | CI gate 완료 | 구현 테스트 | qualifier 갱신 | ✅ | CI gate sub-row 갱신 | full only |
-| R11 fast-path | 해당 lane | `❌ FIX-N (fast-path)` 마커 | ✅ | lane row → ✅ collapsed, content "PASS · R11 mechanical fast-path" | both |
-| Lane PASS | top | `🔄` → `✅ — <S3 snippet>`, sub-tree 접음 | ✅ | lane row → ✅ + S3 snippet, agent sub-row 제거 | both |
-| Lane FIX | top | `🔄` → `❌ FIX-N — <evidence 1줄>`, fix_cycle 갱신 | ✅ | 검출 lane → ✅ + content "FIX-N detected (cause: X)" + 원인 lane → ❌ flip + 재진입 lane row append | both |
-| Lane 재진입 (FIX 후) | top | `❌ FIX-N` → `🔄 진행 중 (FIX-N)` | ✅ | 재진입 lane row → 🔄 + agent sub-row 펼침 | both |
+| R11 fast-path | 해당 lane | `🔄 FIX-N (fast-path)` 마커 | ✅ | lane row → ✅ collapsed, content "PASS · R11 mechanical fast-path" | both |
+| Lane PASS | top | `⏳` → `✅ — <S3 snippet>`, sub-tree 접음 | ✅ | lane row → ✅ + S3 snippet, agent sub-row 제거 | both |
+| Lane FIX | top | 검출 lane `⏳` → `🔄 FIX-N — <evidence 1줄>`, fix_cycle 갱신 | ✅ | 검출 lane → 🔄 + content "FIX-N detected (cause: X, retry trigger)" + 원인 lane → ✅ 유지 + content suffix "FIX-N 원인 · <판정>" + 재진입 lane row append | both |
+| Lane 재진입 (FIX 후) | top | 재진입 lane row append `⏳ 진행 중 (FIX-N 재진입)` | ✅ | 재진입 lane row → ⏳ + agent sub-row 펼침 | both |
 | RESET 마커 | 구현 리뷰 | `✅` → `🔁 RESET-N` | ✅ | 재진입 lane row append (suffix "(재진입 RESET-N)") | both |
-| Lane N/A (plugin meta) | top | `⏸` → `⊘ N/A — <사유>` | ✅ | lane row → ✅ + content "N/A · <사유>" | both |
+| Lane N/A (plugin meta) | top | `⬜` → `⊘ N/A — <사유>` | ✅ | lane row → ✅ + content "N/A · <사유>" | both |
 | 사용자 "진행상황 보여줘" | — | file 변경 없이 현재 §0 전체 emit | ✅ (deputy 포함 full) | TodoWrite 도 emit (file + TodoWrite 동시) | both |
 | Story 완료 | 전체 | 모두 `✅`, archive mv, index 갱신 | ✅ | 7 lane row 모두 ✅, 최종 state | both |
 
@@ -2836,11 +2836,11 @@ incremental patch 금지 — collision 의심 시 항상 full rewrite.
        └→ 6) Story 완료 시 _archive/<KEY>.md 로 mv + index.md 갱신
 ```
 
-**TodoWrite update (step 5) detail (ADR-041)**:
-- Lane 진입: lane row → 🔄 + agent sub-row 펼침 (PL → workers/deputies → chief 순)
+**TodoWrite update (step 5) detail (ADR-041 — CFP-707 Amendment 4)**:
+- Lane 진입: lane row → ⏳ + agent sub-row 펼침 (PL → workers/deputies → chief 순)
 - Agent return: 해당 agent sub-row 의 status=completed + content 갱신 (1-line 활동 결과)
 - Lane PASS: agent sub-row 제거, lane row content = `PASS · <S3 snippet>`
-- Lane FIX (검출 후): 검출 lane → ✅ + content `FIX-N detected (cause: <원인 lane>)`, 원인 lane → ❌ + content `FIX-N 원인 · <원인 판정 1줄>`, 재진입 lane row append (⏳ 시작)
+- Lane FIX (검출 후): 검출 lane → 🔄 + content `FIX-N detected (cause: <원인 lane>, retry trigger)`, 원인 lane → ✅ 유지 + content suffix `FIX-N 원인 · <원인 판정 1줄>` (lane PASS evidence 보존, FIX trigger origin 은 content text 로 책임 추적), 재진입 lane row append (⏳ 시작)
 - Multi-row in_progress 의도적 허용 (TodoWrite "ONE in_progress" 가이드 deviation, codeforge 병렬 agent 모델)
 - Single-Story 모드 — `[KEY]` prefix drop (모든 row 에서)
 - 시도 의무: step 5 건너뛰기는 ADR-038 §결정 8 위반 (시도 후 실패는 §결정 7 — non-blocking)
@@ -2853,9 +2853,9 @@ incremental patch 금지 — collision 의심 시 항상 full rewrite.
 1. `.claude-work/progress/<KEY>.md` 존재 여부 확인
 2. **존재해도 신뢰하지 않음** — state source(Story §10 + GitHub Issue phase label + Story §-fill state)에서 재 derive
 3. 재 derive 결과를 cache 재기록, last_processed_seq 갱신
-4. **★ TodoWrite re-build (ADR-041 NEW)**: §0 file 의 lane 별도 status 로 TodoWrite full rewrite
+4. **★ TodoWrite re-build (ADR-041 NEW — CFP-707 Amendment 4 vocab)**: §0 file 의 lane 별도 status 로 TodoWrite full rewrite
    - active lane 의 agent sub-row 는 빈 상태 (deputy 활성 정보 손실 허용 — 다음 deputy 이벤트에서 자동 충족)
-   - 4 marker (⏳ 🔄 ✅ ❌) 어휘로 변환
+   - 4 marker (⬜ ⏳ ✅ 🔄) 어휘로 변환
    - Single-Story 모드 — `[KEY]` prefix drop
    - best-effort — TodoWrite re-build 실패 시 아래 경고 출력 후 file-only 상태로 lane work 진행 (ADR-038 §결정 7):
      `⚠️ TodoWrite 재빌드 실패 — 진행상황 표시가 부정확할 수 있습니다. 현재 상태: <§14 Lane Evidence 최신 row>`
