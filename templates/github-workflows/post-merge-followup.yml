@@ -11,7 +11,7 @@ permissions: {}
 # CFP-476 / ADR-026 Amendment 1 §결정 5.D — PR number 기반 concurrent run serialization.
 # cancel-in-progress: false = 진행 중 run 보존 (cancel 시 partial Issue close state 위험 차단).
 concurrency:
-  group: post-merge-followup-${{ github.event.pull_request.number }}
+  group: post-merge-followup-${{ github.repository }}-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
@@ -89,13 +89,21 @@ jobs:
         id: action1
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          STORY_KEY: ${{ steps.meta.outputs.story_key }}  # T2 mitigation: env indirection (CFP-545 / §결정 5.E)
         continue-on-error: true
         run: |
+          # CFP-545 / ADR-026 Amendment 2 §결정 5.E: Strict regex matching — prior art retro-mandatory.yml lines 162-166 mirror.
+          # Before: gh issue list --search "$STORY_KEY" → CFP-545 vs CFP-5451 prefix collision (GitHub tokenizer)
+          # After: in:title qualifier + title regex post-filter (^STORY_KEY\b word boundary) → exact match only
           # CFP-74 Codex P1 #1 fix: read Issue label as source of truth (not PR label).
           # PR label may drift from Issue label — Issue label = canonical phase state.
-          ISSUE_NUM=$(gh issue list --label "type:story" --search "${{ steps.meta.outputs.story_key }}" --json number -q '.[0].number')
-          if [ -z "$ISSUE_NUM" ]; then
-            echo "::warning::No Issue found for ${{ steps.meta.outputs.story_key }}"
+          ISSUE_NUM=$(gh issue list \
+            --label "type:story" \
+            --search "in:title ${STORY_KEY}" \
+            --json number,title \
+            --jq "[.[] | select(.title | test(\"^${STORY_KEY}\\b\"))] | .[0].number")
+          if [ -z "$ISSUE_NUM" ] || [ "$ISSUE_NUM" = "null" ]; then
+            echo "::warning::No Issue found for ${{ steps.meta.outputs.story_key }} (in:title exact match)"
             echo "outcome=skip_no_issue" >> $GITHUB_OUTPUT
             exit 0
           fi
