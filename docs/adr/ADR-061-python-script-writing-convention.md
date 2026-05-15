@@ -8,10 +8,22 @@ is_transitional: false
 related_files:
   - CLAUDE.md
   - scripts/check-adr-sunset-criteria.sh
+  - scripts/lib/
   - templates/scripts/
+  - templates/github-workflows/
 related_stories:
   - CFP-418
   - CFP-423
+  - CFP-455
+  - CFP-478
+amendment_log:
+  - amendment: 1
+    date: 2026-05-14
+    carrier_story: CFP-478
+    summary: "Q2 §결정 6 ratchet (권장 (장기) → 표준 (즉시)) + Q3 workflow YAML scope inclusion (§결정 1 body 명시). 28-file scripts/lib/ post-CFP-478 SSOT 확립 evidence. ratchet ↑ direction — ADR-058 §결정 5 sunset_justification 면제 (strengthen direction)."
+    ratchet_direction: strengthen
+    sunset_justification_required: false
+mechanical_enforcement_actions: []
 ---
 
 # ADR-061: Python script-writing convention — heredoc escape guard + external .py 의무
@@ -160,6 +172,83 @@ flowchart TD
 
 - `CLAUDE.md` — "스크립트 작성 표준" 섹션 cross-ref 1-2줄
 - `scripts/check-adr-sunset-criteria.sh` — CFP-418 backfill trap 발견 채널 (lint enforcement evidence)
+- `scripts/lib/` — `scripts/lib/<name>.py` 외부 split 표준 위치 (Amendment 1 — CFP-478, 28 file SSOT)
 - `templates/scripts/` — 향후 reusable helper 위치 (결정 6 follow-up)
+- `templates/github-workflows/` — Amendment 1 (CFP-478) §결정 1 scope 명시 영역
 - `docs/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md` — 정합 ADR
 - `docs/adr/ADR-058-adr-sunset-criteria-mandate.md` — 본 ADR self-application 출처
+
+---
+
+## Amendment 1 (CFP-478 — 2026-05-14)
+
+### Context
+
+CFP-455 (Option A prior art) 가 `scripts/check-evidence-registry.sh` (8-line thin wrapper) + `scripts/lib/check_evidence_registry.py` (314 lines 외부 split) pattern 1 file 적용. CFP-478 = 동일 패턴 27 후보 (19 scripts/ + 8 templates/github-workflows/) bulk scale-up — `scripts/lib/` directory 1 → 28 file 전환. ADR-061 §결정 6 본문 verbatim "본 ADR scope 외 — 별도 follow-up CFP carrier" 명시 → CFP-478 = follow-up CFP carrier.
+
+본 Amendment 는 ratchet ↑ direction (강화 방향) — ADR-058 §결정 5 `sunset_justification` 의무 면제 (§결정 5 strengthen direction 정합).
+
+### 결정 (Amendment delta)
+
+#### Amendment §결정 1.A: 적용 범위 명시 (Q3 carrier)
+
+§결정 1 본문 "bash heredoc 안 multi-line Python (> 5 lines) 작성 **금지**" 의 적용 범위 = **`scripts/*` + `templates/github-workflows/*` 양 영역**.
+
+Rationale: heredoc verbatim transmission inconsistency (CFP-418 SOH+STX corruption evidence) = bash heredoc 자체 영역. workflow YAML `run: |` block 안 bash heredoc 도 동일 위험 surface. Amendment 1 본 단락이 §결정 1 본문 scope 명시화.
+
+위반 처리:
+- `scripts/*.sh` 안 heredoc Python > 5 lines = 금지 (§결정 1 invariant)
+- `templates/github-workflows/*.yml` 의 step `run:` block 안 heredoc Python > 5 lines = 금지 (Amendment 1 신설)
+
+#### Amendment §결정 6.A: `scripts/lib/` 표준 격상 (Q2 carrier — ratchet ↑)
+
+§결정 6 본문 "Reusable backfill helper 권장 (장기) — `scripts/lib/adr_transform.py` 같은 위치" 의 표현 강화:
+
+- **Before** (ADR-061 원본): "권장 (장기)" + "본 ADR scope 외 — 별도 follow-up CFP carrier"
+- **After** (Amendment 1): **표준 (즉시) — `scripts/lib/<name>.py` 위치 의무**. 외부 split 대상 `.py` 파일 = `scripts/lib/` 하위. file naming = snake_case from kebab-case (`scripts/check-foo-bar.sh` → `scripts/lib/check_foo_bar.py`). workflow YAML 외부 split = `scripts/lib/workflow_<purpose>.py` 또는 `scripts/lib/<workflow-prefix>_<purpose>.py` (CFP-478 Change Plan §3.x SSOT 정합).
+
+ratchet 방향 = 강화 (long-term recommendation → immediate standard). ADR-058 §결정 5 strengthen direction 정합 (`sunset_justification` 의무 면제).
+
+#### Amendment §결정 6.B: thin wrapper 표준 8-line template
+
+bash wrapper file 통일 패턴 — CFP-455 prior art verbatim:
+
+```bash
+#!/usr/bin/env bash
+# <One-line description>. Detail in scripts/lib/<name>.py header.
+# ADR-061 §결정 1 / Amendment 1 §결정 6.A — external .py split.
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+[ "$#" -eq 0 ] && cd "$SCRIPT_DIR/.."
+exec python3 "$SCRIPT_DIR/lib/<name>.py" "$@"
+```
+
+본 8-line template = `scripts/lib/` 외부 split bash wrapper 의 표준 형식. 작성자 / 리뷰어 / lint 채널 모두 본 template 정합 검증 가능.
+
+#### Amendment §결정 1.B: workflow YAML state-coupling preservation invariant
+
+workflow YAML 의 heredoc Python migration 시 **state-coupling preservation 의무**:
+
+- step-local `VAR=$(python3 path/to/file.py)` capture chain 보존 (NOT `/tmp/<output>.txt` redirect/read-back — race condition + cleanup 부담)
+- env injection 패턴 (`KEY=... TITLE_CLEAN=... python3 path/to/file.py`) + `.py` file 안 `os.environ.get(...)` 정합
+- `$GITHUB_OUTPUT` forwarding = workflow `run:` block 의 final shell line 책임 (Python file = stdout-only)
+
+Anti-pattern (금지): 동일 workflow file 안 N heredoc block 을 N 독립 GitHub Actions step 으로 분리 — shell-local 변수 capture chain (`$STORY_CONTENT` → `$CONTENT_B64` → `$GITHUB_OUTPUT`) 깨질 위험. CFP-478 evidence = `story-init.yml` 4 heredoc block.
+
+### 영향 영역 변경
+
+- **Before Amendment 1**: `scripts/lib/` directory = 1 file (CFP-455 prior art, `check_evidence_registry.py`)
+- **After Amendment 1 + CFP-478 Phase 2 merge**: `scripts/lib/` directory = 28 file (CFP-455 1 + CFP-478 27). naming convention SSOT = snake_case from kebab-case.
+
+향후 신규 lint/audit/validation script 작성자 = 본 Amendment §결정 6.A 의무 적용. ADR-061 §결정 1 / §결정 2 / §결정 3 invariants 무변경 (cap 5 lines + boundary + trap area 절대 금지 모두 유지).
+
+### Sunset justification
+
+`sunset_justification_required: false` — Amendment 1 = ratchet ↑ direction (강화 방향). ADR-058 §결정 5 정합. ADR-061 자체 `is_transitional: false` (permanent policy) — Amendment 1 도 동일 permanent.
+
+### Carrier evidence (CFP-478)
+
+- 27 candidate audit table (Change Plan §3 — wrapper/change-plans/cfp-478-heredoc-python-bulk-migration.md SSOT)
+- trap-evidence verified candidates (P0): `check-decision-principle-vocabulary.sh:90` + `check-story-section-schema.sh:79` + `check-story-section-9-typed.sh:58` — 모두 `replace("\\", "/")` (Windows path normalization, byte-level escape § 결정 3 영역)
+- state-coupling verified workflow: `templates/github-workflows/story-init.yml` 4 heredoc block (line 131-158 / 274-353 + 2 sub-blocks) — `$STORY_CONTENT` → `$CONTENT_B64` → `$GITHUB_OUTPUT` capture chain
+- pyyaml import 9 candidates 중 8 graceful (try/except ImportError → sys.exit(0)) — 1 outlier `test-cfp-140-ghec-governance.sh` migration 시 표준 패턴 통일 의무 (CFP-478 AC-11)
