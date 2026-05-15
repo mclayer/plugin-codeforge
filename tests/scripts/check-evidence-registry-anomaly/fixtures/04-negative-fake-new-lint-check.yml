@@ -1,0 +1,19 @@
+name: Fake new lint check (TC-4 fixture)
+# ADR-099 — 4-criteria PASS fake workflow fixture (NOT real)
+# continue-on-error: true
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/check-fake-new-lint.sh'
+permissions:
+  pull-requests: write
+  contents: read
+jobs:
+  fake-new-lint-check:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run fake lint
+        run: bash scripts/check-fake-new-lint.sh

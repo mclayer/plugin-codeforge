@@ -7,6 +7,22 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.67.0] - 2026-05-14
+
+### Added (CFP-442 Phase 2 — evidence-registry anomaly lint carrier)
+
+- **`scripts/check-evidence-registry-anomaly.sh`** — thin bash wrapper (8-10 lines, ADR-061 §결정 1 정합). `scripts/lib/check_evidence_registry_anomaly.py` 경유 실행.
+- **`scripts/lib/check_evidence_registry_anomaly.py`** — Python helper (~300 lines). 2 sub-check:
+  - sub-check 1: `docs/evidence-checks-registry.yaml` entries ↔ ADR-060 §결정 13 표 Group A 18 entry 1:1 inventory parity. status=Retired skip (EC-6, marketplace-sync 예외).
+  - sub-check 2: `scripts/check-*.sh` + `.github/workflows/*.yml` + `templates/github-workflows/*.yml` 4-criteria AND (detect_command / workflow trigger / owner_adr ADR-NNN / continue-on-error) 후보 식별 + registry 미등록 감지.
+  - ALLOWLIST 4-path self-exempt (purpose a: candidate exclude 3 paths) + start-up assertion (purpose b: 4 paths 전체 EC-9 drift guard). ADR-068 I-3 guard placement intent 정합.
+  - Exit code 3-tier (Amendment 2 §결정 15): 0=PASS / 1=anomaly DETECTED / 2=META-ERROR (EC-7/EC-8/EC-9).
+- **`templates/github-workflows/evidence-registry-anomaly-check.yml`** — warning mode workflow (continue-on-error: true). PR trigger: scripts/check-*.sh + .github/workflows/*.yml + templates/github-workflows/*.yml + docs/evidence-checks-registry.yaml + docs/adr/ADR-060-*.md.
+- **`.github/workflows/evidence-registry-anomaly-check.yml`** — byte-identical self-app mirror (ADR-005 정합).
+- **`docs/evidence-checks-registry.yaml` 51번째 entry** — `evidence-registry-anomaly` (warning tier, ADR-060 Amendment 11 §결정 25, self-carrier CFP-442 제외 convention, sibling_dependencies 11 entry chain).
+- **`tests/scripts/check-evidence-registry-anomaly/`** — pytest suite: TC-1 (positive current-state, mandatory) + TC-2 (negative missing lane-evidence-trail, mandatory) + TC-3 (ALLOWLIST self-exempt in-place, mandatory) + TC-4 (sub-check 2 fake lint, optional) + TC-5 (META-ERROR broken yaml, optional).
+- **ADR-060 Amendment 11 framework self-application 5-piece chain 완성**: CFP-389 → CFP-390 → CFP-455 → CFP-508 → **CFP-442** = framework self-aware governance 도달.
+
 ## [5.66.0] - 2026-05-15
 
 ### Added (CFP-477 Phase 2 — pre-push auto-rebase hook sample carrier)
