@@ -344,6 +344,43 @@ GitHub Enterprise org 의 admin policy 가 `default_workflow_permissions: read` 
 
 상세 cross-ref: §1h Action 차단 환경 fallback + [ADR-027 Amendment 2 §결정 6](adr/ADR-027-consumer-adoption-protocol.md) + [`templates/github-workflows/story-init.yml`](../templates/github-workflows/story-init.yml) line 230-273 (graceful degradation step pair).
 
+### 1j. Pre-push auto-rebase hook (opt-in, CFP-477)
+
+baseline drift cadence 가 work cadence 를 초과하는 작업 환경 (codeforge family active development 등) 에서 pre-push 시점 branch behind detection + 4-line guidance abort 으로 rebase friction 완화.
+
+본 hook 은 **advisory abort** 만 수행 — 직접 rebase 실행하지 않음. user 가 guidance 따라 manual rebase + 재 push.
+
+**Installation** (opt-in):
+
+```bash
+cp templates/.claude/hooks/pre-push-auto-rebase.sh.sample .git/hooks/pre-push
+chmod +x .git/hooks/pre-push
+```
+
+**Activation** (env-driven, default off):
+
+```bash
+export PRE_PUSH_AUTO_REBASE=1
+git push origin <branch>
+# branch behind origin/main 시 → abort + 4-line guidance
+```
+
+**Bypass** (one-off):
+
+```bash
+PRE_PUSH_AUTO_REBASE=0 git push origin <branch>
+```
+
+**4-line guidance 해석**:
+1. `BEHIND` 메시지 — 현재 branch 가 origin/main 보다 N 커밋 뒤처짐
+2. rebase 권고 — `git fetch origin main && git rebase origin/main`
+3. 충돌 시 — `git rebase --abort` 후 수동 resolve → 재시작
+4. bypass — `PRE_PUSH_AUTO_REBASE=0 git push <args>` (one-off)
+
+**Rollback**: `rm .git/hooks/pre-push` 또는 `PRE_PUSH_AUTO_REBASE=0` 환경변수 설정.
+
+Cross-ref: [ADR-063 §결정 5](adr/ADR-063-marketplace-atomic-invariant.md) sublayer (pre-push auto-rebase guidance) · CFP-447 `pre-push.sh.sample` (sibling atomic invariant hook).
+
 ## 2. Consumer 프로젝트 구조 초기화
 
 ```

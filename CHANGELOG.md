@@ -7,6 +7,15 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.66.0] - 2026-05-15
+
+### Added (CFP-477 Phase 2 — pre-push auto-rebase hook sample carrier)
+
+- **`templates/.claude/hooks/pre-push-auto-rebase.sh.sample`** — opt-in pre-push hook (env `PRE_PUSH_AUTO_REBASE=1`) advisory abort + 4-line guidance when branch behind origin/main. hook 안 직접 `git pull --rebase` 실행 금지 (git-scm hook semantics 정합 — advisory abort only). CFP-447 `pre-push.sh.sample` sibling pattern 차용. ADR-063 §결정 5 sublayer (pre-push auto-rebase guidance) carrier.
+- **`tests/scripts/pre-push-auto-rebase.bats`** — 5 TC bats (TC-1 env unset no-op / TC-2 up-to-date no-op / TC-3 behind abort+guidance / TC-4 fetch failure graceful exit 0 / TC-5 detached HEAD skip).
+- **`docs/consumer-guide.md` §1j** — consumer-facing opt-in usage instruction (4-line guidance 해석 포함).
+- **rebase friction relief** — 4-Story evidence (CFP-423 / CFP-436 / CFP-441 / CFP-455) + CFP-627 pause-and-resume (baseline drift cadence ~30분/commit) carrier resolution.
+
 ## [5.65.0] - 2026-05-15
 
 ### Added (Story flow + lane orchestration)
