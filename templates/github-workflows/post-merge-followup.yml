@@ -171,23 +171,7 @@ jobs:
             if command -v yq >/dev/null 2>&1; then
               yq -r '.lanes.security_ai // "false"' "$cfg" 2>/dev/null || echo "false"
             else
-              python3 - "$cfg" <<'PY'
-          import re, sys
-          path = sys.argv[1]
-          in_lanes = False
-          for raw in open(path, encoding="utf-8"):
-              line = raw.rstrip("\n")
-              if re.match(r"^[A-Za-z_][\w-]*:\s*$", line):
-                  in_lanes = line.split(":", 1)[0] == "lanes"
-                  continue
-              if in_lanes:
-                  m = re.match(r"^\s{2}security_ai:\s*(.*?)\s*$", line)
-                  if m:
-                      val = m.group(1).strip().strip('"').strip("'").lower()
-                      print("true" if val == "true" else "false")
-                      sys.exit(0)
-          print("false")
-          PY
+              CFG_PATH="$cfg" python3 "${GITHUB_WORKSPACE}/scripts/lib/workflow_post_merge_followup.py"
             fi
           }
           SECURITY_AI="false"
