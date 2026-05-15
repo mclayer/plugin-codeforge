@@ -7,6 +7,29 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.74.0] - 2026-05-15
+
+### Added (CFP-702 Wave 1 Story-2 Phase 2 — ADR-027 Amendment 3 §결정 7 D4 customization marker)
+
+- **`scripts/check-wrapper-managed-block.sh`** (NEW) — D4 `# BEGIN/END wrapper-managed` marker pair 정합성 lint. blocking-on-pr tier. 3 checks: orphan detection (count mismatch) / nesting detect (nested BEGIN/BEGIN reject — flat-only policy) / ordering validate (END ≤ BEGIN → reject). exit 0=PASS / 1=malformed / 2=setup error. `.yml/.yaml/.sh` = `#` prefix, `.md` = HTML comment `<!-- -->` variant.
+- **`scripts/migrate-existing-customization.sh`** (NEW) — retroactive idempotent marker wrap migration. `--dry-run` / `--repo-root` / `--plugin-root` args. `templates/consumer-scripts.manifest` driven. false-positive boundary: byte-diff-0 (템플릿과 동일 파일은 wrap 대상 제외). atomic wrap via `mktemp` + `mv`. mctrader 5 repo idempotent 대상.
+- **`templates/github-workflows/wrapper-managed-block.yml`** (NEW) — blocking-on-pr CI workflow. jobs: bypass-check / changed-file-detection / lint-run / audit-comment / bypass-audit-comment. `hotfix-bypass:wrapper-managed-block` bypass channel (ADR-024 Amendment 3 §결정 6.A).
+- **`.github/workflows/wrapper-managed-block.yml`** (NEW) — byte-identical self-app (ADR-065 §결정 1 정합).
+- **`scripts/test-check-wrapper-managed-block.sh`** (NEW) — QA test suite 11 TC all PASS (TC-1a~e / TC-2 역전 / TC-3 nesting / TC-4 idempotency / TC-5 false-positive-0 / TC-6 byte-identical / TC-7 dry-run).
+- **`docs/evidence-checks-registry.yaml`** — 56번째 entry `wrapper-managed-block` append (blocking-on-pr tier, owner_adr ADR-027, introduced_by CFP-702).
+- **`docs/inter-plugin-contracts/label-registry-v2.md`** — v2.18 MINOR: `hotfix-bypass:wrapper-managed-block` 26번째 family member (N-1 anomaly 정정 — Phase 1 §결정 7.D claim 23번째 → actual 26번째, parallel session CFP-685/688 반영).
+- **`docs/inter-plugin-contracts/reconcile-protocol-v1.md`** — v1.1 MINOR: `customization_preservation_entry.marker_block_syntax` 확장 — file-type별 comment prefix / flat-only nesting policy / lint/migration script / false-positive boundary / lint_tier SSOT.
+- **`CLAUDE.md`** — GitHub Workflow 섹션 26종 → 27종: `wrapper-managed-block.yml` blocking-on-pr entry 추가. `version-bump-atomic-check.yml` 단독 → `version-bump-atomic-check.yml` + `wrapper-managed-block.yml` 2개 blocking-on-pr 기재.
+
+### Why
+
+D4 customization marker 의무화 (ADR-027 Amendment 3 §결정 7): consumer `# BEGIN wrapper-managed` / `# END wrapper-managed` block 경계 lint로 plugin update 시 consumer customization wholesale loss 방지 (blocking-on-pr = HIGH risk). CFP-699 Wave 1 Story-2. Story-1 (CFP-701) reconcile-protocol-v1 §4.3(b) trigger prerequisite 충족.
+
+### Compatibility
+
+- 신규 blocking-on-pr CI: `wrapper-managed-block.yml` — marker 부재 기존 consumer는 `scripts/migrate-existing-customization.sh` retroactive wrap (idempotent, dry-run 지원)
+- label-registry-v2 v2.18 (MINOR) — 기존 hotfix-bypass label 경로 무변경
+
 ## [5.73.0] - 2026-05-15
 
 ### Added (CFP-688 Phase 2 sub-PR (c) — ADR-026 Amendment 3 §결정 5.G.b actionlint + §결정 5.G.d KPI sentinel + TC-4/TC-7 extract-security-ai)

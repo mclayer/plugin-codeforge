@@ -1793,3 +1793,44 @@ entries:
       threshold: 3                   # ADR-060 §결정 19 (Amendment 6) -- threshold 3 standard
       promotion_trigger: none        # count=1 < threshold=3 -- 발화 없음 (Option A)
     status: Active
+
+  # ─── CFP-702 — ADR-027 Amendment 3 §결정 7.D (D4 customization marker, 2026-05-15) ───
+  # blocking-on-pr tier — D4 marker 위반 = customization wholesale loss 직결 (HIGH risk)
+  # warning 시작점 아닌 blocking-on-pr 직접 도입 (ADR-027 §결정 7.F 근거).
+  # 56번째 entry.
+  - name: wrapper-managed-block
+    description: |
+      CFP-702 / ADR-027 Amendment 3 §결정 7.D — D4 customization marker block lint.
+      consumer file 안 # BEGIN / # END wrapper-managed marker pair 정합성 검증.
+      검증 3종: (1) BEGIN/END pairing (orphan = malformed), (2) 순서 invariant (역전 = malformed),
+      (3) flat-only nesting 금지 (nested = reject, ADR-027 §결정 7.D.1 Axis 2).
+      File type별 marker syntax (ADR-027 §결정 7.A.1):
+        .yml/.yaml/.sh: # BEGIN/END wrapper-managed
+        .md: <!-- BEGIN/END wrapper-managed -->
+        .json: sidecar manifest only (marker-incapable — Wave 2 Story-5 carrier)
+      D4 marker 위반 = Wave 2 Story-5 reconcile 시 consumer customization wholesale loss 직결.
+      Exit code 3-tier: 0 PASS / 1 malformed marker / 2 setup error (ADR-060 §결정 15).
+      sunset_justification 면제 — ADR-027 is_transitional: false (permanent policy, ratchet 강화 방향).
+    detect_command: bash scripts/check-wrapper-managed-block.sh
+    workflow: templates/github-workflows/wrapper-managed-block.yml
+    current_tier: blocking-on-pr   # ADR-027 §결정 7.F + ADR-060 §결정 5 — HIGH risk 직접 blocking-on-pr 도입
+    bypass_label: hotfix-bypass:wrapper-managed-block
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b) — bypass 외 failure 0
+      sibling_dependencies:
+        - CFP-702                    # self-carrier
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-702
+    introduced_date: 2026-05-15
+    owner_adr: ADR-027               # consumer adoption protocol + D4 marker SSOT
+    carrier_adr: ADR-060             # framework carrier (blocking-on-pr tier)
+    recurrence:
+      count: 0                       # 첫 도입 — prior incident 없음
+      threshold: 3                   # ADR-060 §결정 19 (Amendment 6) -- threshold 3 standard
+      promotion_trigger: none        # count=0 < threshold=3 -- 발화 없음 (Option A)
+    status: Active
