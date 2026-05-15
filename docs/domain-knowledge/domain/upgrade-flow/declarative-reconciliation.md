@@ -44,7 +44,7 @@ codeforge family upgrade 도메인이 ADR / domain-knowledge 어디에도 1st-cl
 
 1. **Desired state** = wrapper SSOT 9 영역 (github_workflow / session_start_hook / label_taxonomy / settings_json_toggle / codeowners / issue_templates / branch_protection / plugin_json_mirrored / changelog — ADR-076 §결정 2 verbatim)
 2. **Current state** = consumer overlay + plugin install state (consumer `.claude/_overlay/` + `.claude/plugins/installed_plugins.json` + `.github/workflows/` 등)
-3. **Customization layer** = wrapper-managed marker block 밖 영역 (preserved patch layer — Wave 1 Story-2 CFP-702 carrier 의 marker syntax)
+3. **Customization layer** = wrapper-managed marker block 밖 영역 (preserved patch layer). marker syntax = `# BEGIN wrapper-managed` / `# END wrapper-managed` pair (Ansible blockinfile-inspired, comment prefix per-filetype = ADR-027 Amendment 3 결정 영역). marker 안 = wrapper SSOT wins, 밖 = consumer wins. 부재 시 = wholesale_mirror_with_user_visible_loss_report. 상세 = §"Customization marker (D4)" + ADR-027 Amendment 3 (CFP-702 carrier)
 4. **3 mode CLI argument fix** — `--dry-run` (preview, filesystem touch 0) / `--apply` (transaction atomic unit) / `--rollback <version>` (snapshot restore)
 5. **사용자 결정 분기 = 0** (정해진 자리에서만, 매번 다르게 묻지 않음)
 6. **Snapshot ↔ ADR-067 RESET disjoint layer** (같은 단어 RESET 이 다른 layer 에서 다른 의미 — 본 entry Invariant 2 verbatim)
@@ -63,6 +63,8 @@ codeforge family upgrade 도메인이 ADR / domain-knowledge 어디에도 1st-cl
 - ADR-074 / ADR-075 (CFP-708 / CFP-709 carrier 영역) — 본 entry = CFP-701 carrier 단일 영역
 - ADR-076 §결정 본문 자체 (governance SSOT — ADR file SSOT)
 - reconcile-protocol-v1.md schema (schema SSOT — contract file SSOT)
+- ADR-027 Amendment 3 §결정 본문 자체 (D4 marker 의무 enforcement governance SSOT — ADR file SSOT, CFP-702 carrier). 본 entry §"Customization marker (D4)" = narrative anchor only
+- D4 marker lint / migration script 실 구현 (`scripts/check-wrapper-managed-block.sh` / `scripts/migrate-existing-customization.sh` — CFP-702 Phase 2 carrier)
 - Wave 2/3/4 carrier 의 runtime implementation (UpgradeAgent / CLI / atomic upgrade / 3-way merge / multi-version channel / codemod / uninstall)
 
 ## Conceptual model
@@ -74,6 +76,16 @@ codeforge family upgrade 도메인이 ADR / domain-knowledge 어디에도 1st-cl
 | **Desired state** | wrapper SSOT 영역 enumeration (workflow / hook / label / overlay / settings.json / CODEOWNERS / Issue templates / branch protection) | `mclayer/plugin-codeforge` repo + 6 lane plugin repos | wrapper / lane plugin author |
 | **Current state** | consumer `.claude/_overlay/` + `.claude/plugins/installed_plugins.json` + `.github/workflows/` + `.github/ISSUE_TEMPLATE/` 등 | consumer repo working tree + plugin install dir | consumer (정상) / drift detector (감지) |
 | **Customization layer** | consumer 의 wrapper-managed marker block 밖 영역 — preserved patch layer | consumer overlay / hook / workflow file 안 `# BEGIN/END wrapper-managed` block 외 | consumer (preserve) |
+
+#### Customization marker (D4 — CFP-702 carrier)
+
+Story-1 (CFP-701) contract `reconcile-protocol-v1.md` 의 `customization_preservation_entry: "marker_block"` + `marker_block_syntax_carrier: "CFP-702"` 가 영역 declare. 실 marker syntax + lint + migration = Wave 1 Story-2 (CFP-702) carrier — ADR-027 Amendment 3 SSOT.
+
+- **marker pair syntax**: `# BEGIN wrapper-managed` ... `# END wrapper-managed` block (comment prefix per-filetype = ADR-027 Amendment 3 §결정 영역 — yaml/sh `#` / md `<!-- -->` / settings.json marker-incapable sidecar 분기)
+- **ownership 모델 (npm/Helm 과 reverse)**: marker block **안** = wrapper SSOT wins (upgrade 시 mirror), **밖** = consumer wins (preserve). npm/Helm 의 "consumer wins" default 와 **reverse** — codeforge 는 SSOT-driven 모델이므로 marker 안에서 wrapper 우선이 안전 (Spec §3.2 Unknown unknowns "ownership boundary declaration 부재" 의 mechanical 실체)
+- **부재 시 fallback**: consumer 가 marker 미도입 상태에서 customize → `wholesale_mirror_with_user_visible_loss_report` (Story-1 contract `marker_block_absent_behavior` verbatim — silent overwrite 0, EPIC-AC-4 정합). retroactive mitigation = `scripts/migrate-existing-customization.sh` (mctrader 5 repo idempotent auto-wrap, CFP-702 Phase 2 carrier)
+- **외부 prior art**: Ansible `blockinfile` module (`# BEGIN ANSIBLE MANAGED BLOCK` / `# END ...` marker-pair idempotent replace) 가 가장 정합 — migration script idempotency + lint malformed detection 동형. Kustomize overlay (base + overlay 분리) = conceptual layer 분리 동형
+- **downstream 의존**: Wave 2 Story-5 (overlay reconcile 통합 — 3-way merge) 가 본 marker syntax 를 input 으로 받음 (Spec §8 "Story-2 marker 부재 시 Story-5 reconcile 시 customization loss" verbatim — sequential prerequisite)
 
 ### 4-stage upgrade flow
 
@@ -187,3 +199,4 @@ SessionStart hook ≠ UpgradeAgent ≠ CLI. 3 책임 분리 (ADR-038 Amendment 3
 - 2026-05-15 — Initial creation (CFP-701 carrier, RequirementsPL self-write — CFP-26 Phase 0a owner agent direct write 정합)
 - 2026-05-15 — ADR-074 → ADR-076 swap (parallel session anomaly resolution — CFP-708 / CFP-709 chronological precedence per PR #712 verbatim, user-confirmed Branch A via codeforge:user-dialog-mode skill)
 - 2026-05-15 — Section schema rename (Summary → 정의 / Conceptual model + Key invariants 분리 → 컨텍스트 + 핵심 규칙 + 경계 / Cross-reference → 관련 ADR / Update history → 변경 이력, CFP-701 ArchitectPL Phase 3 self-check 결과 — schema lint PASS prerequisite)
+- 2026-05-15 — Customization marker (D4) detail 보강 (CFP-702 Wave 1 Story-2 carrier, RequirementsPL self-write — Customization layer 영역 marker pair syntax / ownership 모델 / 부재 fallback / Ansible blockinfile prior art / Story-5 downstream 의존 추가. Story-1 placeholder → CFP-702 narrative anchor 전환. 실 ADR-027 Amendment 3 §결정 본문 = ADR file SSOT)
