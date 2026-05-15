@@ -20,6 +20,9 @@ owned_sections:
     section: "오케스트레이션 규칙"
     owner_adr: ADR-039
     parallel_edit: locked
+    # NOTE (CFP-695 / ADR-071 Amendment 1): Wave 5 단락 안 Amendment 1 cross-ref 영역 (Layer 2
+    # strict subschema + Layer 1 mechanical enforce). 본 단락 자체는 ADR-039 owned (locked) — 본
+    # Amendment 의 cross-ref 추가는 Wave 5 단락 안 1-2 줄 minimal append 영역에 한정.
 
   - file: CLAUDE.md
     section: "결정 원칙"

@@ -1537,7 +1537,7 @@ debate-protocol-v1 (§3.13) = **agent ↔ agent** debate domain. 본 §3.14 = **
 | Layer | 동작 | 위치 / 발화 시점 | trivial turn 면제 |
 |---|---|---|:-:|
 | **Layer 1 — 가시적 preamble** | 메시지 맨 위 "지금 답해주실 것" 1 문장 가시 | 매 user-facing turn 맨 윗줄 | ✅ (응답 ≤ 1 줄 + 의문/결정 부재 시) |
-| **Layer 2 — 자기 declare** | turn 끝 "주의한 가설" 1 줄 declare (보조 신호) | 매 turn 맨 아랫줄 | ✅ |
+| **Layer 2 — 자기 declare** (Amendment 1, §결정 12 — 표 형식 3 항목 strict subschema fix) | 메시지 맨 윗줄 (Layer 1 preamble 와 동일 위치 또는 직후) "표 형식 3 항목" declare | 매 turn 맨 윗줄 | ✅ |
 | **Layer 3 — keyword "추상" 즉시 halt** | 사용자 메시지 본문 "추상" 한글 token 등장 시 immediate halt + 재작성 | 사용자 token detection 시점 | ❌ (trivial turn 에서도 active) |
 | **Layer 4 — 누적 detection** | N=1 즉시 halt (같은 양상 다음 turn 재발) / M=5 max threshold `AskUserQuestion` escalation | 매 turn 끝 incident 검사 | ❌ |
 
@@ -1574,6 +1574,20 @@ E11 popup turn 의 Layer 2 면제 사유 = popup 본문 자체가 declare semant
 | **결정 구조** | 옵션 제시 방식 / derived default / AskUserQuestion 형식 | numbered list → 권장 1 + 대안 1 |
 | **보고 형식** | sub-agent 결과 표시 / 평이 번역 / 길이 | raw JSON → 평이 한글 (3 줄 제약 거부) |
 | **질문 자체** | 어떤 결정을 사용자에게 묻는지 자체 변경 | "방향 X / Y 중 어느 것" → "본 결정의 user value 우선순위는?" |
+
+#### Layer 2 strict subschema (Amendment 1, ADR-071 §결정 12 — CFP-695)
+
+Layer 2 self declare 본문 형식 = **표 형식 3 항목 closed enum** (자유 산문 금지). self-attestation paradox 회피 + boilerplate decay 완화 + mechanical lint 가능 + 본 carrier 자기적용 evidence forcing function. Amendment 1 (CFP-695, 2026-05-15 KST) 신설.
+
+| 항목 | 의미 | 값 enum |
+|---|---|---|
+| 사용자가 답해야 할 것 | 한 문장 | free-text 1 sentence (없으면 "없음 — 진행 보고") |
+| 묻기 직전 derived default 시도 여부 | 했음 / 안 했음 / 가치 판단 영역이라 묻기 의무 | `done` / `skipped` / `value-judgment` |
+| 가치 판단 vs 사실 판단 | value / fact / mixed | enum |
+
+**Sub-mechanism 1 ("이전과 다르게 한 점") 와 별 줄 정합**: 표 schema = Layer 2 self declare 본문 자체 (메시지 맨 윗줄), sub-mechanism 1 의 "이전과 다르게 한 점:" 줄 = 메시지 맨 아랫줄 별 줄. Layer 4 N=1 halt 후 재작성 turn 시 표 + sub-mechanism 1 줄 모두 의무.
+
+**Phase 2 mechanical lint** (§결정 13, advisory only — turn-final hook 부재 한계 인정): PR title/body 안 표 schema 정규식 lint (`scripts/check-dialog-declare-schema.sh` + `templates/github-workflows/dialog-declare-schema.yml`). `hotfix-bypass:dialog-declare-schema` label (16번째 family member, ADR-024 Amendment 3 §결정 6.A 정합).
 
 #### Layer 4 영속 file (ADR-071 §결정 6)
 
@@ -1623,7 +1637,7 @@ E11 popup turn 의 Layer 2 면제 사유 = popup 본문 자체가 declare semant
 
 #### scope 외 (ADR-071 §결정 10)
 
-- **Layer 1 preamble mechanical lint** — 별도 follow-up CFP (Wave 5 = cognitive + persistence layer 만, lint 별도 CFP 분리)
+- **Layer 1 preamble mechanical lint** — Amendment 1 (CFP-695) §결정 13 으로 in-scope (자리 채움). Wave 5 본문 자체는 cognitive + persistence layer 만 다뤘고, lint 는 follow-up Amendment 자리. **resolved**.
 - **agent ↔ agent debate** (§3.13 cover 완료)
 - **코드 품질 / 보안 / 성능**
 - **사용자 personal memory entry 자체 삭제** (사용자 영역 — codeforge wrapper scope 외)

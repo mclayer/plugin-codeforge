@@ -60,11 +60,25 @@ tools: Read
 | Layer | 동작 | 발화 위치 |
 |---|---|---|
 | **Layer 1 — 가시적 preamble** | 메시지 맨 위 "지금 답해주실 것" 1 문장 | 매 turn 맨 윗줄 (trivial turn 면제) |
-| **Layer 2 — 자기 declare** | turn 끝 "주의한 가설" 1 줄 (보조 신호) | 매 turn 맨 아랫줄 (trivial turn 면제) |
+| **Layer 2 — 자기 declare** (Amendment 1, §결정 12 — 표 형식 3 항목 strict subschema fix) | 메시지 맨 윗줄 (Layer 1 preamble 와 동일 위치 또는 직후) "표 형식 3 항목" declare | 매 turn 맨 윗줄 (trivial turn 면제 보존) |
 | **Layer 3 — keyword "추상" 즉시 halt** | 사용자 "추상" 한글 token (stem match) 등장 시 immediate halt + 재작성 | 사용자 token detection 시점 |
 | **Layer 4 — 누적 detection** | N=1 (같은 양상 다음 turn 재발 시) immediate halt + M=5 max threshold `AskUserQuestion` escalation | `docs/orchestrator-communication-incidents.md` cross-Story 영속 |
 
 **Hanja form ("抽象") 면제** (CLAUDE.md 한자 금지 정책 정합). **영문 alias ("abstract") = trigger 아님** (한글 token 만 anchor).
+
+### Layer 2 strict subschema (Amendment 1, ADR-071 §결정 12 — CFP-695)
+
+Layer 2 self declare 본문 형식 = **표 형식 3 항목 closed enum** (자유 산문 금지). self-attestation paradox 회피 + boilerplate decay 완화 + mechanical lint 가능 + 본 carrier 자기적용 evidence forcing function.
+
+| 항목 | 의미 | 값 enum |
+|---|---|---|
+| 사용자가 답해야 할 것 | 한 문장 | free-text 1 sentence (없으면 "없음 — 진행 보고") |
+| 묻기 직전 derived default 시도 여부 | 했음 / 안 했음 / 가치 판단 영역이라 묻기 의무 | `done` / `skipped` / `value-judgment` |
+| 가치 판단 vs 사실 판단 | value / fact / mixed | enum |
+
+**Sub-mechanism 1 ("이전과 다르게 한 점") 와 별 줄 정합**: 표 schema = Layer 2 self declare 본문 자체, sub-mechanism 1 의 "이전과 다르게 한 점:" 줄 = 표 와 별 줄 (메시지 맨 아랫줄). Layer 4 N=1 halt 후 재작성 turn 시 표 + sub-mechanism 1 줄 모두 의무.
+
+**Phase 2 mechanical lint** (§결정 13, advisory only — turn-final hook 부재 한계 인정): PR title/body 안 표 schema 정규식 lint. `hotfix-bypass:dialog-declare-schema` label.
 
 ### Turn-shape edge 분기 (E9 / E10 / E11 / E12, playbook §3.14 "Turn-shape derived defaults" SSOT)
 
