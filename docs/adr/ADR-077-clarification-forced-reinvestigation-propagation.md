@@ -127,13 +127,15 @@ design-reading 에이전트 (FeasibilityAgent / ContinuityAgent / ChangeImpactAg
 
 답변 burst → PL 재종합 1사이클 coalesce → 단일 fan-out 으로 backpressure 를 가한다. envelope = 3 sub-mechanism + 정량값:
 
-| 파라미터 | 정량값 | 근거 |
-|---|---|---|
-| P-1 debounce | `90s` | OpRiskArch — 답변 burst coalesce window. debounce 후 단일 fan-out |
-| P-1 max_wait_ceiling | `10min` | OpRiskArch — debounce 무한 연장 차단 상한. ceiling 도달 시 강제 fan-out |
-| P-1 coalesce 단위 | `1 fan-out per window` | OpRiskArch — window 내 N 답변 → 단일 fan-out (매 답변 재스폰 아님) |
-| P-2 recheck_counter_cap | `5` | OpRiskArch — ADR-059 max-round 5 + Du/Liang saturation 선례. cap 초과 = ESCALATE |
-| P-2 max_total_recheck_spawns | `35` (= 5 × 7) | OpRiskArch 보강-1 — per-Story 절대 ceiling. 5 cap × 7 (6 permanent + 조건부 PMO) 논리 fan-out 상한 |
+| 파라미터 | 정량값 (단위) | empirical_source | 근거 |
+|---|---|---|---|
+| P-1 debounce | `90` (s, latency) | `[empirical-source: TBD]` (wiretap required — Story-3 §8.3 Perf Baseline 실측 carry. ADR-077 신설 시점 라이브 telemetry 부재 — governance default, 실측 후 ratchet) | OpRiskArch — 답변 burst coalesce window. debounce 후 단일 fan-out |
+| P-1 max_wait_ceiling | `600` (s = 10min, latency) | `[empirical-source: TBD]` (wiretap required — Story-3 §8.3 carry) | OpRiskArch — debounce 무한 연장 차단 상한. ceiling 도달 시 강제 fan-out |
+| P-1 coalesce 단위 | `1` (fan-out per window, count) | `[empirical-source: derived]` (mechanism invariant — §1 6항 §4번 verbatim "coalesce → 단일 fan-out", 측정 무관 구조 결정) | OpRiskArch — window 내 N 답변 → 단일 fan-out (매 답변 재스폰 아님) |
+| P-2 recheck_counter_cap | `5` (count) | `[empirical-source: docs/adr/ADR-059-debate-protocol-v1.md §결정 4 max-round 5]` (selection precedent — ADR-059 adversarial debate max-round 5 + Du/Liang saturation literature anchor, OpRiskArch 채택) | OpRiskArch — cap 초과 = ESCALATE |
+| P-2 max_total_recheck_spawns | `35` (count = 5 × 7) | `[empirical-source: derived]` (= recheck_counter_cap × fan-out 멤버 수, §결정 2 6 permanent + 조건부 PMO = 7. 산술 derived, 별도 실측 무관) | OpRiskArch 보강-1 — per-Story 절대 ceiling 논리 fan-out 상한 |
+
+> **empirical-source-annotation (ADR-068 Amendment 1 I-5)**: P-1 latency 2종 (`debounce` / `max_wait_ceiling`) = `TBD` 명시 — ADR-077 = governance policy 신설 시점, 라이브 재조사 fan-out wall-clock telemetry 부재 (anti-pattern 1 empirical-absent default 회피 = explicit TBD marker mitigation 2 채택). 실측 carrier = Story-3 §8.3 Perf Baseline (재조사 fan-out wall-clock / spawn count / ESCALATE 도달 metric). P-2 `recheck_counter_cap` = ADR-059 §결정 4 max-round 5 selection precedent (standardized internal precedent, synthetic guess 아님). `coalesce 단위` / `max_total_recheck_spawns` = derived (mechanism invariant + 산술) — 측정 무관. ratchet 방향 (§결정 9): TBD → 실측값 전환 = 강화 (Story-3 후속), 약화 = ADR-058 §결정 5 sunset_justification 의무.
 
 - **circuit-breaker (Researcher §6.1 개념-3 외부 anchor)**: recheck_counter_cap 초과 = circuit open → 사용자 직결 ESCALATE (결정 6 참조). debounce + max-wait ceiling + circuit-breaker = bounded backpressure envelope 3 sub-mechanism (R2 외부 anchor 부착).
 - **envelope = ADR-039 §결정 9 deferred risk 부분 충당 (inherit-not-resolve, over-claim 금지)**: 본 envelope 는 ADR-039 §결정 9 spawn cost telemetry deferred risk 의 **재조사 범위 부분** 만 mechanical bound 한다. spawn cost telemetry 자체는 ADR-039 §결정 9 Phase 2 잔존 (본 ADR 이 resolve 하지 않음 — inherit only). over-claim 금지 normative.
