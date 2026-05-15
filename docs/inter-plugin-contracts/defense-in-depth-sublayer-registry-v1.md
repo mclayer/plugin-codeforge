@@ -1,8 +1,12 @@
 ---
 kind: registry
+registry: defense-in-depth-sublayer-registry
 contract_name: defense-in-depth-sublayer-registry
 version: "1.0"
 status: Active
+date: 2026-05-14
+authors:
+  - ArchitectAgent (CFP-709)
 owner_adr: ADR-075
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/defense-in-depth-sublayer-registry-v1.md
