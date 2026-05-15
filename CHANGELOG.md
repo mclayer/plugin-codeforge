@@ -7,6 +7,20 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.72.0] - 2026-05-15
+
+### Added (CFP-708 Phase 2 — ADR-074 CLAUDE.md Amendment ref drift detection lint)
+
+- **`scripts/check-claude-md-amendment-ref.sh`** — bash wrapper (ADR-061 §결정 1 정합, 25+ lines = Python 위임). `scripts/lib/check_claude_md_amendment_ref.py` 경유 실행.
+- **`scripts/lib/check_claude_md_amendment_ref.py`** — Python 구현 (~270 lines). CLAUDE.md 안 `[ADR-NNN](...)` 링크 + 인접 `Amendment N (CFP-NNN)` 패턴 detect + ADR frontmatter `amendment_log[]`/`amendments[]` 배열 길이 비교. exit code 3-tier (0=PASS/1=drift/2=setup error). `amendment_log` + `amendments` 두 형식 모두 지원.
+- **`templates/github-workflows/claude-md-amendment-ref-drift.yml`** — PR-time warning tier lint workflow (paths: CLAUDE.md + docs/adr/**). `hotfix-bypass:claude-md-amendment-ref` label bypass + audit comment 자동 발의 (ADR-024 Amendment 3 §결정 6.A).
+- **`.github/workflows/claude-md-amendment-ref-drift.yml`** — byte-identical self-app (ADR-005 §결정 2 정합).
+- **`tests/scripts/check-claude-md-amendment-ref.bats`** — 5 TC TDD Red-Green PASS: TC-1 stale / TC-2 latest / TC-3 no-amendment-log / TC-4 multi-Amendment / TC-5 setup-error.
+- **`docs/evidence-checks-registry.yaml`** — 53번째 entry `claude-md-amendment-ref-drift-check` append (warning tier, owner_adr ADR-074, recurrence count=2 threshold=2, promotion_trigger adr_draft_emitted).
+- **`docs/inter-plugin-contracts/label-registry-v2.md`** — v2.17 MINOR: `hotfix-bypass:claude-md-amendment-ref` 23번째 family member.
+
+Cross-ref: ADR-074 / ADR-060 / ADR-024 Amendment 3 / CFP-477 retro 후보 3 carrier / 2 drift evidence (CFP-627 + CFP-477 F-DR-001 P1). 5.69.0/5.70.0/5.71.0 skip: CFP-707/CFP-688 main forward 경쟁 (rebase friction 7th wave — CFP-477 hook 직접 적용 영역).
+
 ## [5.71.0] - 2026-05-15
 
 ### Fixed (CFP-688 Phase 2 sub-PR (b) — ADR-026 Amendment 2 §결정 5.E + §결정 5.F drift fix, 5.70.0 skip: CFP-708 marketplace pre-sync collision)

@@ -1680,3 +1680,40 @@ entries:
       threshold: 3                   # ADR-060 §결정 19 (Amendment 6) — advisory promotion signal
       promotion_trigger: none        # count=0 < threshold=3 → 발화 없음 (Option A)
     status: Active
+
+  # ─── CFP-708 Phase 2 (CLAUDE.md Amendment ref drift detection lint, 2026-05-14) ───
+  # ADR-074 -- SSOT cross-section coherence lint (CFP-263 doc-locations lint lineage 답습)
+  # CLAUDE.md 안 "Amendment N (CFP-NNN)" 참조 + ADR frontmatter amendment_log/amendments 길이 비교
+  # 2 drift evidence: CFP-627 stale ref + CFP-477 DesignReview F-DR-001 P1 detection
+  - name: claude-md-amendment-ref-drift-check
+    description: |
+      CFP-708 / ADR-074 -- CLAUDE.md Amendment ref drift detection lint.
+      CLAUDE.md 본문 안 "[ADR-NNN](...)" 링크 + 인접 "Amendment N (CFP-NNN)" 패턴 detect +
+      해당 ADR frontmatter amendment_log[] 또는 amendments[] 배열 길이와 비교.
+      claimed Amendment N != actual length = drift (stale 또는 phantom).
+      exit code 3-tier (ADR-060 Amendment 2 §결정 15): 0 PASS / 1 drift / 2 setup error.
+      2 occurrence evidence: CFP-627 (CLAUDE.md L296 ADR-063 stale) +
+      CFP-477 DesignReview F-DR-001 P1 (Amendment 2 §결정 11 -> 실제 Amendment 3 §결정 13).
+      ADR-074 lineage: CFP-263 doc-locations lint cross-section coherence pattern 답습.
+    detect_command: bash scripts/check-claude-md-amendment-ref.sh
+    workflow: templates/github-workflows/claude-md-amendment-ref-drift.yml
+    current_tier: warning            # ADR-060 §결정 5 -- 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:claude-md-amendment-ref
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: []       # 독립 entry -- CLAUDE.md + ADR drift cross-section lint 외 의존 없음
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-708
+    introduced_date: 2026-05-14
+    owner_adr: ADR-074               # CLAUDE.md Amendment ref drift SSOT
+    carrier_adr: ADR-060             # framework carrier (warning mode entry)
+    recurrence:
+      count: 2                       # CFP-627 + CFP-477 2 occurrence evidence (threshold reach)
+      threshold: 2                   # ADR-060 §결정 19 (Amendment 6) -- threshold 2 (drift x2 pattern)
+      promotion_trigger: adr_draft_emitted  # count=2 >= threshold=2 -> ADR 초안 발행 (ADR-074 = 본 entry)
+    status: Active
