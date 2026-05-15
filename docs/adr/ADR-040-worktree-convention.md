@@ -156,7 +156,7 @@ cfp-NNN/retro                    # Retro branch (rare)
 - Parent branch = `cfp-NNN` (Story root). Phase 2 PR merge 시 Story root → main, sub-branch 는 prune.
 - ADR-024 v1 의 `cfp-NNN[-<slug>]` flat 패턴은 **Amendment 1** 로 superset 으로 흡수 — flat 도 hierarchical 의 special case (depth=0).
 
-**근거**: CFP-137 (phase-scoped agent teams) 가 lane 별 parallel agent spawn 시 lane sub-branch 별도 worktree 필요. flat naming 으로는 hierarchy 표현 불가.
+**근거**: CFP-137 (phase-scoped agent teams) 가 lane 별도 parallel agent spawn 시 lane sub-branch 별도 worktree 필요. flat naming 으로는 hierarchy 표현 불가.
 
 ### 결정 3 — Lifecycle hooks
 
@@ -221,7 +221,7 @@ on_story_close       → GitOpsAgent prunes all sub-worktrees (Story root 제외
 ### 긍정
 
 - **File 충돌 0**: worktree isolation 으로 multi-session 병렬 작업 안전.
-- **CFP-137 prerequisite 충족**: phase-scoped agent teams 가 lane 별 worktree 보유 가능.
+- **CFP-137 prerequisite 충족**: phase-scoped agent teams 가 lane 별도 worktree 보유 가능.
 - **CFP-139 prerequisite 충족**: GitOpsAgent lifecycle hook contract SSOT 확보.
 - **ADR-024 amendment 1**: hierarchical branch convention 도입 → Story 내 lane / sub-task 분기 표현력 향상.
 - **Cross-platform 지원**: Windows / macOS / Linux 일관 경로 처리.
@@ -244,7 +244,7 @@ on_story_close       → GitOpsAgent prunes all sub-worktrees (Story root 제외
 | **Multiple repo clone** (`plugin-codeforge-1`, `plugin-codeforge-2`) | disk × N, `.git/` duplicate, fetch / pull sync 부담. worktree 가 native 해결책. |
 | **Docker container per session** | overkill — file isolation 만 필요, full OS isolation 불필요. ADR-033 docker-first 와 무관 (개발 환경 isolation ≠ deploy artifact). |
 | **VSCode multi-root workspace** | IDE-specific, Claude Code Agent tool 무관. file isolation 미보장. |
-| **flat branch (ADR-024 v1 유지)** | CFP-137 lane parallel spawn 표현력 부족 — sub-task 별 worktree 필요. |
+| **flat branch (ADR-024 v1 유지)** | CFP-137 lane parallel spawn 표현력 부족 — sub-task 별도 worktree 필요. |
 
 ## Amendment 1 — CFP-139 (2026-05-09)
 

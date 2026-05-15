@@ -97,7 +97,7 @@ CLAUDE.md 본문 top (intro 직후) 에 본 ADR 의 5-line summary + ADR link in
 **비용**:
 - 3 cross-repo backfill PR (codeforge-{test, design, requirements}) — audit gap 해소
 - ADR-012 자동 강제 수단 부재 (linter 후속 CFP)
-- documentation-quality asymmetry — lane plugin 별 self-contained 깊이 차이 (review/pmo/develop 는 agent md 영역 의존)
+- documentation-quality asymmetry — lane plugin 별도 self-contained 깊이 차이 (review/pmo/develop 는 agent md 영역 의존)
 
 **검증**:
 - 압축 후 CLAUDE.md line count = 377 (target 330 미달, ≤ 380 cap 충족)

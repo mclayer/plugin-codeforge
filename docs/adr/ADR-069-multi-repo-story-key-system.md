@@ -117,7 +117,7 @@ Story file frontmatter 에 신규 4 필드 도입. 기존 frontmatter (`key` / `
 
 ### 결정 3: `.codeforge/counters.json` file-lock counter 메커니즘
 
-Hub repo root 의 `.codeforge/counters.json` 가 각 repo 별 독립 시퀀스 SSOT. **GitHub Issue 번호에 의존하지 않음** — offline 작동 + Story file 선행 생성 보장.
+Hub repo root 의 `.codeforge/counters.json` 가 각 repo 별도 독립 시퀀스 SSOT. **GitHub Issue 번호에 의존하지 않음** — offline 작동 + Story file 선행 생성 보장.
 
 ```json
 {
@@ -174,7 +174,7 @@ ADR-020 Amendment 1 §결정 8 Mode B (hub-centralized) 가 본 시스템의 **d
 
 - **Mode A (repo-local) 정합**: `codeforge.stories.repos[]` 에 `role: implementation` repo 만 declare + `creates_repo_stories: true` → 각 repo 자체 story_dir 보유 (Mode A automation)
 - **Mode B (hub-centralized) 정합**: `role: governance` 1개 + `role: implementation` N개 + 각 impl repo `creates_repo_stories: true` → hub story (governance) + repo story (impl) 분리 (mctrader 패턴, 본 시스템 default)
-- **Mode C (mechanical Epic) 정합**: ADR-020 Amendment 2 §Mode C 와 직교 — mechanical batch 는 child story Issue 미발행 + parent Story §11 link 모음. 본 시스템의 hub story 는 substantive 결정 carrier — Mode C 와 별 axis (Mode C = wrapper / hub 단일 owner, hub story `delegates[]` 미사용)
+- **Mode C (mechanical Epic) 정합**: ADR-020 Amendment 2 §Mode C 와 직교 — mechanical batch 는 child story Issue 미발행 + parent Story §11 link 모음. 본 시스템의 hub story 는 substantive 결정 carrier — Mode C 와 별도 axis (Mode C = wrapper / hub 단일 owner, hub story `delegates[]` 미사용)
 
 **§결정 9 (Joint-phase narrow form) 정합**: 1 Story 가 multi-repo 의 joint Phase N PR 보유 가능. 본 시스템에서 = hub story `delegates[]` 다중 entry → 각 impl repo story 가 동일 Story 의 일부 phase 진행. PR title / commit footer 가 동일 Story key reference (예: `mctrader-data#MCT-001` + `mctrader-engine#MCT-002` 가 hub `mctrader-hub#MCT-112` 의 joint Phase 2).
 
@@ -194,7 +194,7 @@ ADR-020 의 Amendment 3 로 본 시스템 mechanism 모두 흡수.
 
 ### 대안 B: Story prefix multi (예: `MCT-DATA-001`)
 
-각 impl repo 별 prefix 세그먼트 (`{prefix}-{repo-id}-{seq}`) 도입.
+각 impl repo 별도 prefix 세그먼트 (`{prefix}-{repo-id}-{seq}`) 도입.
 
 - **거부 사유**:
   - 가독성 손상 (key length 증가, GitHub renderer auto-link 깨짐)

@@ -51,7 +51,7 @@ mechanical_enforcement_actions:
 
 ## 컨텍스트
 
-mctrader-hub MCT-150 Phase 2 case study (Epic CFP-525 brainstorm spec L17) — design-review PASS 후 code-review 에서 **반복 발견된 boundary completeness gap 4회** (양 reviewer independent identification). 4 gap 의 type 별 분류:
+mctrader-hub MCT-150 Phase 2 case study (Epic CFP-525 brainstorm spec L17) — design-review PASS 후 code-review 에서 **반복 발견된 boundary completeness gap 4회** (양 reviewer independent identification). 4 gap 의 type 별도 분류:
 
 1. **API contract semantics 누락** — public method 의 return enum 의미가 docstring 에 부재 → caller 임의 해석
 2. **Cross-module status enum propagation 누락** — module A 가 SUCCESS/BLOCKED/ESCALATED 3-state enum 반환, module B caller 가 1-state 만 분기 처리 → silent pass-through
@@ -73,12 +73,12 @@ ArchitectAgent §3 (관련 ADR / 결정) / §7 (Change Plan / 설계 서사) 작
 - Verification format: **docstring-template** — public surface 각 method 의 docstring 이 (a) parameter 의 valid enum value 열거 + (b) return value 의 enum/state semantics 열거 + (c) error/escalation path 의 trigger condition 명시 3-key 정합.
 
 **I-2: Cross-module propagation completeness**
-- 정의: module A method 가 status enum 을 반환할 때, 호출 site (module B/C) 가 enum 별 분기 처리 의무. 미처리 enum 값 = silent pass-through = caller gap.
-- Verification format: **propagation-matrix** — Story §7 본문 또는 ADR §결정 표에 enum 별 caller-side 분기 매핑 (row: enum value × column: caller module × cell: handling logic 요약). 미처리 enum × caller pair 부재 의무.
+- 정의: module A method 가 status enum 을 반환할 때, 호출 site (module B/C) 가 enum 별도 분기 처리 의무. 미처리 enum 값 = silent pass-through = caller gap.
+- Verification format: **propagation-matrix** — Story §7 본문 또는 ADR §결정 표에 enum 별도 caller-side 분기 매핑 (row: enum value × column: caller module × cell: handling logic 요약). 미처리 enum × caller pair 부재 의무.
 
 **I-3: Unconditional vs conditional guard placement intent**
 - 정의: invariant guard (assertion / pre-condition / post-condition) 의 위치가 "함수 진입 시점 무조건" 인지 "특정 path 한정" 인지 ADR 본문에 명시 의무. caller 가 guard 위치 가정 오류 = re-fix.
-- Verification format: **guard-placement-diagram** — Story §7 또는 ADR §결정 본문에 guard 별 (a) placement (function entry / branch entry / loop body / cleanup path 등) + (b) condition (unconditional / conditional with predicate) + (c) failure mode (assertion error / state transition / log + continue) 3-key 명시.
+- Verification format: **guard-placement-diagram** — Story §7 또는 ADR §결정 본문에 guard 별도 (a) placement (function entry / branch entry / loop body / cleanup path 등) + (b) condition (unconditional / conditional with predicate) + (c) failure mode (assertion error / state transition / log + continue) 3-key 명시.
 
 **I-4: Wording SSOT**
 - 정의: Story 본문 (§3 결정 / §7 아키텍처) ↔ ADR ↔ impl (enum identifier / method name / docstring noun phrase) 양 방향 wording 동기화 의무. 13곳 desync (MCT-150 evidence) baseline.
@@ -94,16 +94,16 @@ ArchitectAgent §3 (관련 ADR / 결정) / §7 (Change Plan / 설계 서사) 작
 - Mitigation 4종: empirical-first (wiretap/probe step 의무화) / explicit TBD 기재 (`[empirical-source: TBD]` marker) / range-bound default (단일 numeric 대신 `[min, max] with fallback strategy`) / dimensional checklist (per-dimension `empirical_source` field)
 - Justification 조건 (annotation 면제): well-defined SLA / standardized protocol RFC / vendor doc explicit guarantee — 3종 부재 시 annotation 의무
 - Exemption (trivial decision): SLA/quantitative metric 무관 (logging / naming / refactoring) — Story §1 명시 선언 의무
-- Verification format: **empirical-source-annotation** — quantitative parameter 별 (a) value (b) unit (c) empirical_source (file path / wiretap script / ADR ref / TBD) 3-key 정합
+- Verification format: **empirical-source-annotation** — quantitative parameter 별도 (a) value (b) unit (c) empirical_source (file path / wiretap script / ADR ref / TBD) 3-key 정합
 
 ### 결정 2 — Dual-binding (design lane authoring + code-review cross-validate)
 
 3-tier enforcement:
 
 **Tier A (authoring-time)**: ArchitectAgent prompt 의무
-- §3 / §7 작성 시 4 invariants 별 verification format self-check 수행
+- §3 / §7 작성 시 4 invariants 별도 verification format self-check 수행
 - verdict packet `boundary_completeness_self_check_passed: bool` emit (review-verdict-v4 v4.3 optional field)
-- 4 invariants 모두 PASS 일 때만 true emit. 1+ FAIL 시 false emit + `findings[]` 에 미통과 invariant 별 evidence 동반 (`findings[].type: "boundary-completeness"`)
+- 4 invariants 모두 PASS 일 때만 true emit. 1+ FAIL 시 false emit + `findings[]` 에 미통과 invariant 별도 evidence 동반 (`findings[].type: "boundary-completeness"`)
 - I-5 (Amendment 1, CFP-528) self-check 수행 시 `dimensional_empirical_self_check_passed: bool` 별도 field emit (review-verdict-v4 v4.4 optional field). 10 dimension enum 의 모든 quantitative parameter 가 `[empirical-source: <ref>]` 또는 `[empirical-source: TBD]` annotation 보유 시 true. 1+ 누락 시 false + `findings[].type: "dimensional-empirical-gap"` 동반.
 
 **Tier B (design-review-time)**: DesignReviewPL 의무

@@ -383,7 +383,7 @@ CFP-455 + CFP-449 retro 식별 sentinel 2 (Codex review verdict EVIDENCE_FRAMEWO
 
 #### §결정 6.A.1 (신설) — branch → phase mapping 표 SSOT
 
-ADR-024 Amendment 1 hierarchical convention `cfp-NNN[/<lane>[/<sub>]]` 의 lane 별 phase:* label 매핑:
+ADR-024 Amendment 1 hierarchical convention `cfp-NNN[/<lane>[/<sub>]]` 의 lane 별도 phase:* label 매핑:
 
 | branch pattern | phase:* label | 비고 |
 |---|---|---|

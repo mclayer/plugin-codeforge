@@ -116,7 +116,7 @@ Migration Epic = ADR-020 Cross-Repo Epic Pattern의 codeforge framework-specific
 
 - **§1 Framework Delta Summary**: codeforge 버전 범위, 변경된 ADR 목록, 신규/변경 deputy, 변경된 §section
 - **§2 Affected Artifact Inventory**: 진행 중 Stories + Change Plans + ADRs + hooks + labels 영향 목록
-- **§3 Deputy Migration Notes**: deputy별 domain-specific retrofit 가이드 (§결정 3 포맷)
+- **§3 Deputy Migration Notes**: deputy별도 domain-specific retrofit 가이드 (§결정 3 포맷)
 - **§4 Migration Story Backlog**: PMO-owned 순서화된 remediation Story 목록 + AC (각 Story = 1 consumer repo 또는 1 §section 단위)
 - **§5 Completion Gate** (3 측정 가능 invariant, TestContractArch consult):
   - **Gate-1 Bootstrap PASS**: ADR-027/032 enforcement 재검증 통과 (consumer `.claude/_overlay/` 무결성 + plugin install 상태)

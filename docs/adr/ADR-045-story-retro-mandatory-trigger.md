@@ -399,7 +399,7 @@ git push origin --delete retro-attempts-state/<KEY>
 
 #### §D-9 — Cross-Story pattern threshold 도달 시 ADR escalation 의무
 
-**Threshold**: N = 2 (fixed, industry lower bound — Google SRE Workbook Chapter 15 "If you see the same issue twice, it is no longer a coincidence" + ITIL v4 Foundation Problem Management "Recurring incidents ≥ 2 → Problem Record" + NASA ASRS Significant Event Reporting "≥ 2 similar events"). consumer overlay 가변 = out-of-scope (별 follow-up CFP 분리).
+**Threshold**: N = 2 (fixed, industry lower bound — Google SRE Workbook Chapter 15 "If you see the same issue twice, it is no longer a coincidence" + ITIL v4 Foundation Problem Management "Recurring incidents ≥ 2 → Problem Record" + NASA ASRS Significant Event Reporting "≥ 2 similar events"). consumer overlay 가변 = out-of-scope (별도 follow-up CFP 분리).
 
 **검출 전략 = hybrid** (Sun et al. 2011 ASE best F1 score 정합):
 

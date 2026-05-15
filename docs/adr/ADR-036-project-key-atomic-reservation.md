@@ -217,7 +217,7 @@ ADR-027 Amendment 2 (CFP-658, Wave 1 of Epic CFP-431) §결정 6.H = 본 ADR-036
 
 ### 발견된 영역
 
-ADR-036 결정 1 (`KEY = PREFIX-${ISSUE_NUMBER}` race-free) 와 결정 2 (cfp-reserve.yml reservation Issue Form) 가 별 영역에서 conflict — 사용자가 reservation Issue 발의 후 별 시간 격차로 Story Issue 를 발의하면 (다른 Issue #) title 의 `[CFP-NNN]` reservation pattern 과 Issue # 가 mismatch.
+ADR-036 결정 1 (`KEY = PREFIX-${ISSUE_NUMBER}` race-free) 와 결정 2 (cfp-reserve.yml reservation Issue Form) 가 별도 영역에서 conflict — 사용자가 reservation Issue 발의 후 별도 시간 격차로 Story Issue 를 발의하면 (다른 Issue #) title 의 `[CFP-NNN]` reservation pattern 과 Issue # 가 mismatch.
 
 **실제 사고 (RETRO-CFP-662, 2026-05-14)**: CFP-662 reservation 사전 확보 후 Story Issue #670 발의. Story title = `[STORY] [CFP-662] bootstrap-labels workflow 신설 ...`. story-init.yml workflow 가 KEY = `CFP-670` (Issue # only) 발급 → reservation pattern 무시. 사용자는 `CFP-662` 기대 → mismatch.
 

@@ -80,7 +80,7 @@ is_transitional: false
 
 ### Gap
 
-1. **Phase-scoped sequential team lifecycle SSOT 부재** — ADR-035 D2 결정 본문에 "lane 진입 시 TeamCreate, 완료 시 TeamDelete" 만 명시. lane 별 team-spec / teammate roster / hook subscription 미정의.
+1. **Phase-scoped sequential team lifecycle SSOT 부재** — ADR-035 D2 결정 본문에 "lane 진입 시 TeamCreate, 완료 시 TeamDelete" 만 명시. lane 별도 team-spec / teammate roster / hook subscription 미정의.
 2. **team-spec yaml schema 부재** — 7 lane 의 teammate roster 정의 file 없음.
 3. **hook 3종 (TeammateIdle / TaskCreated / TaskCompleted) 미등록** — 현재 `templates/.claude/hooks/` 에 SessionStart × 2 만.
 4. **review-verdict v3 → v4 cutover 미수행** — ADR-022 Deprecated 후 v3 의 Sonnet decider 영역 (decision_state 7 state / sonnet_final_status / decider_decision_ref / write_errors step enum) 이 NO-OP passthrough. v4 MAJOR bump 가 정식 제거 carrier — 본 ADR scope.
@@ -106,7 +106,7 @@ is_transitional: false
 7. FIX 시 → TEAM-FIX 새 team (parallel diagnosis)
 ```
 
-**Lead = Orchestrator** (Story 전 기간 fixed, ADR-035 D2 + ADR-009 정합). Phase-scoped = lane 별 짧은 lifecycle (`/resume` no-resumption risk 회피, ADR-035 §결과 cross-ref).
+**Lead = Orchestrator** (Story 전 기간 fixed, ADR-035 D2 + ADR-009 정합). Phase-scoped = lane 별도 짧은 lifecycle (`/resume` no-resumption risk 회피, ADR-035 §결과 cross-ref).
 
 **거절된 대안**:
 - (B) Story-long single team — `/resume` 후 in-process teammate 미복원 위험. ADR-035 D2 §근거 정합.
@@ -265,7 +265,7 @@ default  >  auto_on_divergence  >  user_request_only
 ### 긍정
 
 - ADR-035 D2 implementation level SSOT 확보 — Phase-scoped sequential team lifecycle / team-spec yaml 7종 / hook 3종 / review-verdict v3 → v4 cutover 통합
-- `/resume` no-resumption risk 회피 (Phase-scoped = lane 별 짧은 lifecycle)
+- `/resume` no-resumption risk 회피 (Phase-scoped = lane 별도 짧은 lifecycle)
 - Lane PL ↔ Worker continuous dialog 가능 (SendMessage round) — 토큰 비효율 회피 (사용자 directive turn 5+8 정합)
 - Adversarial debate measurable (worker_dialog_rounds field) — 5 권장 패턴 Adversarial 검증 가능
 - review-verdict v4 단순화 (Sonnet decider 영역 정식 제거) — 8-value state machine → 4-step linear path
@@ -291,7 +291,7 @@ default  >  auto_on_divergence  >  user_request_only
 
 | 대안 | 거부 이유 |
 |---|---|
-| **Story-long single team** | `/resume` 후 in-process teammate 미복원 위험 (도메인 지식 entry §"`/resume` risk"). Phase-scoped = lane 별 짧은 lifecycle 으로 mitigation. ADR-035 D2 §근거 정합. |
+| **Story-long single team** | `/resume` 후 in-process teammate 미복원 위험 (도메인 지식 entry §"`/resume` risk"). Phase-scoped = lane 별도 짧은 lifecycle 으로 mitigation. ADR-035 D2 §근거 정합. |
 | **Nested team / team-of-teams** | codeforge 정책 nested team 금지 (re-entrancy 제약 3종). team-spec yaml depth 1 강제. |
 | **6 lane plugin self-write 보유 sibling sync 동시 (Phase 1 PR pair)** | wrapper-first (ADR-010 §4 허용 패턴) 가 사용자 turn 11 directive ("worktree 해서 작업") + memory `feedback_internal_docs_branch_safety.md` + Story §5.5 B1 default 와 정합. 동시 7 PR pair 는 reviewer cognitive load + merge order race. wrapper-first 후 follow-up PR 6개 채택. |
 | **review-verdict v4 deprecation period 6개월** | consumer scope 0이라 불필요 overhead. 즉시 cutover (Story §5.5 R3 default 채택) 가 단순. |

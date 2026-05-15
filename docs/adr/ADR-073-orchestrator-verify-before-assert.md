@@ -31,7 +31,7 @@ related_files:
 is_transitional: false
 mechanical_enforcement_actions: []
 # Wave 1 = behavioral directive only (Orchestrator self-discipline forcing function).
-# Layer 2 mechanical lint (pre-tool-use hook 또는 evidence-checks-registry warning-tier) = 별 follow-up CFP 분리.
+# Layer 2 mechanical lint (pre-tool-use hook 또는 evidence-checks-registry warning-tier) = 별도 follow-up CFP 분리.
 # 본 ADR effective 후 신설 evidence-enforceable entry 가 follow-up CFP carrier 에서 추가될 때
 # mechanical_enforcement_actions[] 갱신 + Amendment 발의 (강화 방향만 — ADR-058 §결정 5 / ADR-064 §결정 7
 # top-down ratchet 정합).
@@ -95,7 +95,7 @@ working tree mutable        ← 가장 stale (uncommitted edits)
 < GitHub API eventual       ← API cache (eventual consistency)
 ```
 
-Orchestrator 가 단정 발화 시 사용해야 하는 ground truth = **origin/main canonical** (working tree 와 local main 은 staleness 영역). GitHub API staleness 는 별 영역 (§결정 7 scope 외 분리).
+Orchestrator 가 단정 발화 시 사용해야 하는 ground truth = **origin/main canonical** (working tree 와 local main 은 staleness 영역). GitHub API staleness 는 별도 영역 (§결정 7 scope 외 분리).
 
 ### 현 SSOT 결격 영역
 
@@ -234,7 +234,7 @@ pre_lookup_evidence:
 
 **적용 영역 한정** (cross-plugin amend 분리):
 - `skills/codeforge-brainstorm/SKILL.md` (codeforge wrapper plugin own skill) — **본 ADR scope**
-- `superpowers:writing-plans` (claude-plugins-official upstream plugin) — **본 ADR scope 외** (별 carrier 분리, CFP-622 §10 후속 carrier 영역 declare)
+- `superpowers:writing-plans` (claude-plugins-official upstream plugin) — **본 ADR scope 외** (별도 carrier 분리, CFP-622 §10 후속 carrier 영역 declare)
 
 **거절된 대안 D6**:
 - (D6-A) `superpowers:writing-plans` skill body 도 동시 amend — cross-plugin 영역 (claude-plugins-official upstream 협의 의무 발화) — Story scope 침범 + ADR-013 dogfood-out 영역 외
@@ -242,16 +242,16 @@ pre_lookup_evidence:
 
 ### §결정 7 — GitHub API staleness 분리 (scope 외)
 
-`gh issue / pr list / view` 결과도 GitHub API eventual consistency 영역 — local git state staleness 와 별 영역 (4-layer staleness hierarchy 의 4번째 layer).
+`gh issue / pr list / view` 결과도 GitHub API eventual consistency 영역 — local git state staleness 와 별도 영역 (4-layer staleness hierarchy 의 4번째 layer).
 
 **본 ADR scope = local git state 한정** (working tree / local main / origin/main 3-layer 영역).
 
-GitHub API staleness 영역 = 별 CFP carrier 분리:
+GitHub API staleness 영역 = 별도 CFP carrier 분리:
 - cross-repo state SSOT 영역 (issue / PR / branch 단정 verify 영역)
 - API ETag / cache invalidation pattern 영역
 - gh CLI vs MCP github tool selection 영역
 
-**Cross-ref**: ADR-073 본문에 GitHub API staleness 영역은 "scope 외 declare" 만 하고 mechanism / mitigation 영역은 별 CFP carrier 위임 (super-class 동일 children 으로 분리 가능).
+**Cross-ref**: ADR-073 본문에 GitHub API staleness 영역은 "scope 외 declare" 만 하고 mechanism / mitigation 영역은 별도 CFP carrier 위임 (super-class 동일 children 으로 분리 가능).
 
 **거절된 대안 D7**:
 - (D7-A) GitHub API staleness 도 본 ADR 흡수 — scope 비대화 + 4-layer hierarchy mechanism 영역 침범 (gh CLI / MCP github tool 영역 = wrapper repo wrapper-only ζ arc 영역)
@@ -263,7 +263,7 @@ GitHub API staleness 영역 = 별 CFP carrier 분리:
 
 **본 ADR scope = behavioral directive layer only** (Wave 1 = []  empty mechanical_enforcement_actions[]).
 
-**별 follow-up CFP 분리 영역**:
+**별도 follow-up CFP 분리 영역**:
 - pre-tool-use hook 도입 (file Read 액션 hook)
 - evidence-checks-registry warning-tier entry (`orchestrator-verify-before-assert-declared`) 등록
 - ADR-040 Amendment 3 §결정 7.A schema 정합 mechanical_enforcement_actions[] 갱신

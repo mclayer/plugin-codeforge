@@ -242,7 +242,7 @@ CFP-57 (ADR-018) 결정 8 패턴 generalized to Sonnet:
 
 - 사용자 stop 빈도 절감 유지 (CFP-57 의 motivation 보존). Sonnet 자동 결정.
 - 외부 auth axis 4 종 제거 (`GEMINI_API_KEY` / Plus subscription / Vertex / GCA / OAuth login) — 단일 path 단순화. consumer plugin 설치 시 setup 부담 감소.
-- Anthropic = controller (Opus) + decider (Sonnet) 단일 vendor — 외부 vendor 의존성 제거. Codex (OpenAI) 가 audit/cross-review 별 vendor 로 vendor diversity 일부 보존.
+- Anthropic = controller (Opus) + decider (Sonnet) 단일 vendor — 외부 vendor 의존성 제거. Codex (OpenAI) 가 audit/cross-review 별도 vendor 로 vendor diversity 일부 보존.
 - Decider 모델 invariant 명문화 — single-model bias 방지 + 향후 모델 stack 변경 시 prompt 단계 review forcing.
 - decision-packet v2 schema = model-agnostic naming (`decider_decision`) — 향후 decider 모델 변경 시 schema 변경 없이 protocol 본문만 갱신 가능.
 - Phase 1 = doc-only 유지 — agent/code 추가 없음 (ADR-009 무영향).

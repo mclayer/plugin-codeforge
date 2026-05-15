@@ -59,7 +59,7 @@ codex:codex-rescue subagent (ADR-052 Codex Proactive Check 6 touchpoint 자동 d
 
 (b) 가 systemic 원인. ADR-052 의 6 touchpoint 자동 dispatch 영역에서 Orchestrator 가 Codex finding 의 ground truth 확정 채널 부재 = governance hole.
 
-기존 ADR-052 Amendment 1/2/3/4 는 6 touchpoint 별 동작 강화 영역 (multi-round debate / iterative reformulation / divergence detection 4번째 영역 / mandatory 전환) 을 커버하나 **Codex 발화 evidence 자체의 신뢰 boundary** 는 normative anchor 부재.
+기존 ADR-052 Amendment 1/2/3/4 는 6 touchpoint 별도 동작 강화 영역 (multi-round debate / iterative reformulation / divergence detection 4번째 영역 / mandatory 전환) 을 커버하나 **Codex 발화 evidence 자체의 신뢰 boundary** 는 normative anchor 부재.
 
 ## 결정
 
