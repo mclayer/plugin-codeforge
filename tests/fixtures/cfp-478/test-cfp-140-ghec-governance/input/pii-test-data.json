@@ -1,0 +1,10 @@
+[
+  {
+    "actor_email": "user1@example.com",
+    "actor_ip": "1.2.3.4"
+  },
+  {
+    "actor_email": "admin@example.com",
+    "actor_ip": "5.6.7.8"
+  }
+]

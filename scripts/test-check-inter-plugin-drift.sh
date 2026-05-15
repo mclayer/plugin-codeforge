@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # CFP-E — Test harness for check-inter-plugin-drift.sh
+# CFP-478 / ADR-061 §결정 1 + Amendment 1 §결정 6.A — build_baseline_fixture() PYEOF heredoc
+# 외부 .py 분리 (scripts/lib/test_check_inter_plugin_drift.py SSOT).
 #
 # 8 test cases (T-1 ~ T-8 per CFP-E spec §8). Each case:
 #   1. Build canonical fixture from current sibling state (baseline = drift 0)
@@ -13,7 +15,8 @@
 
 set -uo pipefail
 
-cd "$(dirname "$0")/.."
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/.."
 REPO_ROOT="$(pwd)"
 LINT_SCRIPT="$REPO_ROOT/scripts/check-inter-plugin-drift.sh"
 
@@ -26,30 +29,10 @@ trap "rm -rf '$TOP_TMP'" EXIT
 
 # 정상 fixture 생성 — 5 active contract canonical 을 sibling 본문에서
 # 정규화 결과와 동일한 형태로 만듦 (drift 0 baseline).
-# 정규화 함수와 동일 로직 사용 (frontmatter 유지 + sibling-only meta 도 그대로 둠)
-# 실행 시 양쪽 normalize() 가 적용되므로 fixture 가 sibling raw 와 동일해도 OK.
+# CFP-478: Python body → scripts/lib/test_check_inter_plugin_drift.py
 build_baseline_fixture() {
   local fix_dir="$1"
-  python3 <<PYEOF
-import pathlib, yaml
-fix_dir = pathlib.Path("$fix_dir")
-manifest = yaml.safe_load(pathlib.Path("docs/inter-plugin-contracts/MANIFEST.yaml").read_text(encoding="utf-8"))
-for contract in (manifest or {}).get("contracts", []):
-    repo = contract.get("canonical_repo", "")
-    repo_basename = repo.split("/")[-1]
-    for fent in contract.get("files", []):
-        fname = fent.get("file", "")
-        status = fent.get("status", "")
-        if status != "Active":
-            continue
-        sibling = pathlib.Path("docs/inter-plugin-contracts") / fname
-        if not sibling.exists():
-            continue
-        # canonical fixture = sibling raw content (양쪽 normalize 가 동일 적용되므로 drift 0)
-        target_dir = fix_dir / repo_basename
-        target_dir.mkdir(parents=True, exist_ok=True)
-        (target_dir / fname).write_text(sibling.read_text(encoding="utf-8"), encoding="utf-8")
-PYEOF
+  python3 "$SCRIPT_DIR/lib/test_check_inter_plugin_drift.py" "$fix_dir"
 }
 
 # Reset all sibling files to git HEAD

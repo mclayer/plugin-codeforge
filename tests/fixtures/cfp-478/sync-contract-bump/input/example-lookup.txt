@@ -1,0 +1,3 @@
+Contract name: review_verdict
+MANIFEST path: docs/inter-plugin-contracts/MANIFEST.yaml
+Expected output: JSON with canonical_repo, canonical_path, active_file, name fields

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 # audit-trail-fetch.sh — CFP-140 / ADR-048
+# CFP-478 / ADR-061 §결정 1 + Amendment 1 §결정 6.A — pii_redact() Python heredoc 외부 .py 분리
+# (scripts/lib/audit_trail_pii_redact.py SSOT). 나머지 bash 로직 보존.
 # Fetch GitHub audit log events for codeforge governance trace.
 # Usage: audit-trail-fetch.sh [--story-key KEY] [--since ISO8601] [--until ISO8601]
 #                              [--org ORG] [--enterprise SLUG] [--output FILE]
@@ -59,31 +61,14 @@ if [[ -n "$CURSOR_FILE" && -f "$CURSOR_FILE" ]]; then
   [[ -n "$CURSOR" ]] && echo "Resuming from cursor: ${CURSOR:0:20}..."
 fi
 
-# PII redaction helper
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# PII redaction helper (CFP-478: Python body → scripts/lib/audit_trail_pii_redact.py)
+# stdin_pipe 패턴 보존: json.load(sys.stdin) via pipe.
 pii_redact() {
   # Hash email + IP fields using HMAC-SHA256 (first 12 chars)
   # AUDIT_PII_KEY must be set (validated at startup)
-  AUDIT_PII_KEY="${AUDIT_PII_KEY}" python3 - <<'PY'
-import json, sys, hashlib, hmac, os
-
-def hash_val(v, key_bytes):
-    if not v:
-        return v
-    return "hmac256:" + hmac.new(key_bytes, v.encode(), hashlib.sha256).hexdigest()[:12]
-
-key_bytes = os.environ['AUDIT_PII_KEY'].encode()
-data = json.load(sys.stdin)
-if isinstance(data, list):
-    for entry in data:
-        if isinstance(entry, dict):
-            if 'actor_email' in entry:
-                entry['actor_email'] = hash_val(entry.get('actor_email', ''), key_bytes)
-            if 'actor_ip' in entry:
-                entry['actor_ip'] = hash_val(entry.get('actor_ip', ''), key_bytes)
-            if '@ip' in entry:
-                entry['@ip'] = hash_val(entry.get('@ip', ''), key_bytes)
-print(json.dumps(data, indent=2))
-PY
+  AUDIT_PII_KEY="${AUDIT_PII_KEY}" python3 "$SCRIPT_DIR/lib/audit_trail_pii_redact.py"
 }
 
 # Exponential backoff retry
