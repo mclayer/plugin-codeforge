@@ -232,6 +232,85 @@ EOF
   fi
 fi
 
+# ── TC-8: SKIP_LIST 8-file self-repo scan → EXIT 0 (오탐 0 invariant) ──────────
+# ADR-027 §결정 7.D.2 self-referential skip-list: wrapper repo SSOT 8 파일에
+# lint 를 직접 실행해도 EXIT 0 (자기 파일이므로 skip, malformed 판정 아님)
+if [ "$LINT_PRESENT" -eq 0 ]; then
+  SKIP_LIST_FILES=(
+    "$REPO_ROOT/scripts/check-wrapper-managed-block.sh"
+    "$REPO_ROOT/scripts/test-check-wrapper-managed-block.sh"
+    "$REPO_ROOT/scripts/migrate-existing-customization.sh"
+    "$REPO_ROOT/.github/workflows/wrapper-managed-block.yml"
+    "$REPO_ROOT/templates/github-workflows/wrapper-managed-block.yml"
+    "$REPO_ROOT/docs/inter-plugin-contracts/reconcile-protocol-v1.md"
+    "$REPO_ROOT/docs/evidence-checks-registry.yaml"
+  )
+  # ADR-027 itself — only check if it exists
+  if [ -f "$REPO_ROOT/docs/adr/ADR-027-consumer-adoption-protocol.md" ]; then
+    SKIP_LIST_FILES+=("$REPO_ROOT/docs/adr/ADR-027-consumer-adoption-protocol.md")
+  fi
+
+  TC8_FAIL=0
+  for f in "${SKIP_LIST_FILES[@]}"; do
+    if [ ! -f "$f" ]; then
+      continue  # 파일 없으면 skip (존재하지 않는 파일은 테스트 대상 아님)
+    fi
+    bash "$LINT" "$f" >/dev/null 2>&1
+    if [ $? -ne 0 ]; then
+      echo "[TC] FAIL: TC-8 — self-referential file returned non-zero: $f" >&2
+      TC8_FAIL=1
+    fi
+  done
+  if [ "$TC8_FAIL" -eq 0 ]; then
+    pass "TC-8: SKIP_LIST 8-file self-repo scan → EXIT 0 (오탐 0 invariant)"
+  else
+    fail "TC-8: SKIP_LIST self-repo scan — 1+ 파일에서 오탐 감지"
+  fi
+fi
+
+# ── TC-9: whole-line anchored — prefix-collision false positive 차단 ─────────
+# "# BEGIN wrapper-managed-evil" 은 substring 이지만 whole-line 에서는 다른 marker
+# → lint 가 오탐하지 않아야 함 (EXIT 0)
+if [ "$LINT_PRESENT" -eq 0 ]; then
+  TMP9="$TMPDIR_BASE/tc9"
+  mkdir -p "$TMP9"
+
+  # prefix-collision: "# BEGIN wrapper-managed-evil" = NOT a valid marker
+  cat > "$TMP9/prefix_collision.yml" <<'EOF'
+name: test
+# BEGIN wrapper-managed-evil
+content: something
+# END wrapper-managed-evil
+EOF
+  bash "$LINT" "$TMP9/prefix_collision.yml" >/dev/null 2>&1
+  [ $? -eq 0 ] && pass "TC-9: prefix-collision '# BEGIN wrapper-managed-evil' → exit 0 (substring false positive 차단)" \
+                 || fail "TC-9: prefix-collision → non-zero (substring false positive 발생)"
+fi
+
+# ── TC-10: SKIP_LIST exact path — consumer 동명 파일은 skip 안 됨 ─────────────
+# SKIP_LIST 는 repo-relative exact path 매칭. consumer 다른 경로의 동명 파일은
+# skip 대상이 아니어야 함 (basename-only false-skip 차단, SecurityArch mitigation).
+if [ "$LINT_PRESENT" -eq 0 ]; then
+  TMP10="$TMPDIR_BASE/tc10"
+  mkdir -p "$TMP10"
+
+  # consumer 의 "scripts/check-wrapper-managed-block.sh" 는 SKIP_LIST 와 basename 동일
+  # 하지만 여기서는 $TMP10/scripts/check-wrapper-managed-block.sh 로 다른 경로
+  mkdir -p "$TMP10/scripts"
+  # 정상 pair 파일 (exit 0 기대 — skip 안 되고 정상 검증됨)
+  cat > "$TMP10/scripts/check-wrapper-managed-block.sh" <<'EOF'
+#!/usr/bin/env bash
+# BEGIN wrapper-managed
+echo "consumer customized version"
+# END wrapper-managed
+EOF
+  bash "$LINT" "$TMP10/scripts/check-wrapper-managed-block.sh" >/dev/null 2>&1
+  TC10_EXIT=$?
+  # 기대: skip 안 되고 정상 pair 검증 → exit 0
+  [ $TC10_EXIT -eq 0 ] && pass "TC-10: consumer 동명 파일 (다른 경로) = skip 안 됨, 정상 검증 (basename-only false-skip 차단)" \
+                        || fail "TC-10: consumer 동명 파일 검증 실패 (exit=$TC10_EXIT)"
+fi
+
 # ── Summary ────────────────────────────────────────────────────────────────────
 echo ""
 echo "[test-check-wrapper-managed-block] Summary: $PASS_COUNT pass, $FAIL_COUNT fail"

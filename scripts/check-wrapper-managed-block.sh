@@ -13,6 +13,15 @@
 #   .md:             <!-- BEGIN wrapper-managed -->  /  <!-- END wrapper-managed -->
 #   .json:           sidecar manifest only (marker-incapable — Wave 2 Story-5 carrier)
 #
+# Matching policy (ADR-027 §결정 7.D.3 whole-line anchored):
+#   whole-line anchored regex — leading whitespace 허용, trailing whitespace 허용.
+#   substring matching 금지 (e.g. "# BEGIN wrapper-managed-evil" 는 marker 아님).
+#
+# Self-exclusion (ADR-027 §결정 7.D.2 self-referential skip-list):
+#   SKIP_LIST 8-entry repo-relative exact path: lint 자신 + 그 lint 를 설명/테스트/구현하는
+#   wrapper plugin SSOT 파일 = self-referential → skip. consumer customization 영역만 검사.
+#   basename-only 매칭 금지 (consumer 동명 파일 false-skip vector 차단, SecurityArch mitigation).
+#
 # Usage:
 #   bash check-wrapper-managed-block.sh [file...]
 #   bash check-wrapper-managed-block.sh  # 인수 없으면 변경된 파일 자동 감지 (git diff)
@@ -32,23 +41,87 @@ if [[ "$BYPASS_LABEL" == "1" ]]; then
   exit 0
 fi
 
-# ── marker 정의 ───────────────────────────────────────────────────────────────
-readonly MARKER_BEGIN_HASH="# BEGIN wrapper-managed"
-readonly MARKER_END_HASH="# END wrapper-managed"
-readonly MARKER_BEGIN_HTML="<!-- BEGIN wrapper-managed -->"
-readonly MARKER_END_HTML="<!-- END wrapper-managed -->"
+# ── SKIP_LIST (ADR-027 §결정 7.D.2 self-referential skip-list) ────────────────
+# repo-relative exact path (leading ./ normalize 후 비교)
+# (1) lint 자신  (2) test fixture  (3) migration 구현 (marker 문자열 로직 보유)
+# (4) lint workflow self-app  (5) lint workflow template
+# (6) marker syntax 문서 SSOT  (7) marker reference  (8) ADR 자신 (marker syntax 정의)
+readonly SKIP_LIST=(
+  "scripts/check-wrapper-managed-block.sh"
+  "scripts/test-check-wrapper-managed-block.sh"
+  "scripts/migrate-existing-customization.sh"
+  ".github/workflows/wrapper-managed-block.yml"
+  "templates/github-workflows/wrapper-managed-block.yml"
+  "docs/inter-plugin-contracts/reconcile-protocol-v1.md"
+  "docs/evidence-checks-registry.yaml"
+  "docs/adr/ADR-027-consumer-adoption-protocol.md"
+)
 
-# ── 파일 타입별 marker 판별 ───────────────────────────────────────────────────
+# repo-relative path 정규화 (leading ./ 제거)
+normalize_path() {
+  local p="$1"
+  # strip leading ./ if present
+  p="${p#./}"
+  echo "$p"
+}
+
+# SKIP_LIST 에 포함 여부 (repo-relative exact path 매칭 — basename-only 금지)
+is_skip_listed() {
+  local file
+  file="$(normalize_path "$1")"
+  local entry
+  for entry in "${SKIP_LIST[@]}"; do
+    if [[ "$file" == "$entry" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# ── marker 정의 (whole-line anchored regex, ADR-027 §결정 7.D.3) ──────────────
+# 각 파일 타입별 anchored pattern: ^[[:space:]]* ... [[:space:]]*$
+# grep -E 사용 (ERE anchored whole-line)
+get_begin_pattern() {
+  local file="$1"
+  case "${file##*.}" in
+    yml|yaml|sh|*)
+      echo '^[[:space:]]*# BEGIN wrapper-managed[[:space:]]*$'
+      ;;
+    md)
+      echo '^[[:space:]]*<!-- BEGIN wrapper-managed -->[[:space:]]*$'
+      ;;
+    json)
+      echo ""
+      ;;
+  esac
+}
+
+get_end_pattern() {
+  local file="$1"
+  case "${file##*.}" in
+    yml|yaml|sh|*)
+      echo '^[[:space:]]*# END wrapper-managed[[:space:]]*$'
+      ;;
+    md)
+      echo '^[[:space:]]*<!-- END wrapper-managed -->[[:space:]]*$'
+      ;;
+    json)
+      echo ""
+      ;;
+  esac
+}
+
+# ── 파일 타입별 marker 판별 (표시용 — grep -n 에 사용할 pattern 반환) ─────────
 get_markers() {
   local file="$1"
   case "${file##*.}" in
     yml|yaml|sh)
-      echo "$MARKER_BEGIN_HASH"
-      echo "$MARKER_END_HASH"
+      echo "# BEGIN wrapper-managed"
+      echo "# END wrapper-managed"
       ;;
     md)
-      echo "$MARKER_BEGIN_HTML"
-      echo "$MARKER_END_HTML"
+      echo "<!-- BEGIN wrapper-managed -->"
+      echo "<!-- END wrapper-managed -->"
       ;;
     json)
       # JSON = marker-incapable (Wave 2 Story-5 sidecar manifest 영역)
@@ -57,8 +130,8 @@ get_markers() {
       ;;
     *)
       # 미지원 확장자 = hash prefix marker 로 fallback (보수적)
-      echo "$MARKER_BEGIN_HASH"
-      echo "$MARKER_END_HASH"
+      echo "# BEGIN wrapper-managed"
+      echo "# END wrapper-managed"
       ;;
   esac
 }
@@ -79,22 +152,21 @@ check_file() {
     return 0
   fi
 
-  # marker 읽기
-  local markers
-  mapfile -t markers < <(get_markers "$file")
-  local begin_marker="${markers[0]}"
-  local end_marker="${markers[1]}"
+  # ── whole-line anchored pattern 획득 ──────────────────────────────────────
+  local begin_pattern end_pattern
+  begin_pattern="$(get_begin_pattern "$file")"
+  end_pattern="$(get_end_pattern "$file")"
 
   # marker 없는 파일 타입 = skip
-  if [[ -z "$begin_marker" ]]; then
+  if [[ -z "$begin_pattern" ]]; then
     return 0
   fi
 
-  # ── 검증 1: BEGIN / END count ──────────────────────────────────────────────
+  # ── 검증 1: BEGIN / END count (whole-line anchored, ADR-027 §결정 7.D.3) ──
   local begin_count end_count
-  # grep -c 는 no-match 시 exit 1 + "0" 출력 (BSD/GNU 모두). || true 로 exit code 무시
-  begin_count=$(grep -cF "$begin_marker" "$file" 2>/dev/null) || begin_count=0
-  end_count=$(grep -cF "$end_marker" "$file" 2>/dev/null) || end_count=0
+  # grep -cE whole-line: no-match 시 exit 1 + "0" 출력. assignment-with-fallback 패턴
+  begin_count=$(grep -cE "$begin_pattern" "$file" 2>/dev/null) || begin_count=0
+  end_count=$(grep -cE "$end_pattern" "$file" 2>/dev/null) || end_count=0
   # 빈 값 fallback
   begin_count="${begin_count:-0}"
   end_count="${end_count:-0}"
@@ -114,8 +186,9 @@ check_file() {
   # ── 검증 3: 순서 invariant (BEGIN 이 END 보다 앞) ─────────────────────────
   if [[ "$begin_count" -eq 1 ]] && [[ "$end_count" -eq 1 ]]; then
     local begin_line end_line
-    begin_line=$(grep -nF "$begin_marker" "$file" | head -1 | cut -d: -f1)
-    end_line=$(grep -nF "$end_marker" "$file" | head -1 | cut -d: -f1)
+    # 표시용 fixed-string (행 번호 추출용 — grep -nE anchored 도 동일하나 가독성을 위해 패턴 재사용)
+    begin_line=$(grep -nE "$begin_pattern" "$file" | head -1 | cut -d: -f1)
+    end_line=$(grep -nE "$end_pattern" "$file" | head -1 | cut -d: -f1)
 
     if [[ -n "$begin_line" ]] && [[ -n "$end_line" ]]; then
       if [[ "$end_line" -le "$begin_line" ]]; then
@@ -137,9 +210,10 @@ check_file() {
 
 # ── 검증 대상 파일 수집 ───────────────────────────────────────────────────────
 collect_files() {
+  local raw_files=()
   if [[ $# -gt 0 ]]; then
     # 명시적 인수
-    printf '%s\n' "$@"
+    raw_files=("$@")
   else
     # git diff 기반 자동 감지
     if ! command -v git &>/dev/null; then
@@ -148,15 +222,28 @@ collect_files() {
     fi
     # PR 컨텍스트 (CI) vs 로컬 실행 분기
     local base_ref="${GITHUB_BASE_REF:-}"
+    local git_files
     if [[ -n "$base_ref" ]]; then
-      git diff --name-only "origin/${base_ref}...HEAD" 2>/dev/null \
-        | grep -E '\.(yml|yaml|sh|md)$' || true
+      mapfile -t git_files < <(git diff --name-only "origin/${base_ref}...HEAD" 2>/dev/null \
+        | grep -E '\.(yml|yaml|sh|md)$' || true)
     else
       # 로컬: staged + unstaged
-      { git diff --name-only HEAD 2>/dev/null; git diff --cached --name-only 2>/dev/null; } \
-        | grep -E '\.(yml|yaml|sh|md)$' | sort -u || true
+      mapfile -t git_files < <({ git diff --name-only HEAD 2>/dev/null; git diff --cached --name-only 2>/dev/null; } \
+        | grep -E '\.(yml|yaml|sh|md)$' | sort -u || true)
     fi
+    raw_files=("${git_files[@]+"${git_files[@]}"}")
   fi
+
+  # SKIP_LIST 필터링 (repo-relative exact path 매칭 — ADR-027 §결정 7.D.2)
+  local file
+  for file in "${raw_files[@]+"${raw_files[@]}"}"; do
+    [[ -z "$file" ]] && continue
+    if is_skip_listed "$file"; then
+      echo "$SCRIPT_NAME SKIP (self-referential): $file" >&2
+      continue
+    fi
+    echo "$file"
+  done
 }
 
 # ── 메인 ─────────────────────────────────────────────────────────────────────
@@ -175,7 +262,7 @@ main() {
   done < <(collect_files "$@")
 
   if [[ "$checked" -eq 0 ]]; then
-    echo "$SCRIPT_NAME INFO: 검증 대상 파일 없음 (marker block 미사용 또는 변경 없음)" >&2
+    echo "$SCRIPT_NAME INFO: 검증 대상 파일 없음 (marker block 미사용, self-referential skip, 또는 변경 없음)" >&2
     exit 0
   fi
 
