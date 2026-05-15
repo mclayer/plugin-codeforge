@@ -12,15 +12,33 @@ related_stories:
   - CFP-393
   - CFP-411
   - CFP-438
+  - CFP-685   # Amendment 1 carrier — family scope 확장 (wrapper-only → 7-repo)
 related_adrs:
-  - ADR-016
+  - ADR-005   # CFP-685 정정 audit trail — ADR-005 (lane N/A 표준화) ≠ self-app convention SSOT
+  - ADR-010   # CFP-685 cross-ref — kind:workflow sibling sync 면제 vs family scope self-app 분리
+  - ADR-013   # CFP-685 cross-ref — dogfood-out family 7-repo SSOT
+  - ADR-016   # family scope 정의 source (marketplace registration 7-repo)
   - ADR-031
   - ADR-039
   - ADR-041
   - ADR-049
   - ADR-050
+  - ADR-060   # CFP-685 carrier — sibling-parity entry warning tier (Amendment 11)
   - ADR-063
-mechanical_enforcement_actions: []
+  - ADR-066   # CFP-685 cross-ref — Phase 2 sibling sync PR open 시 CODEFORGE_CROSS_REPO_PAT 의무 영역
+  - ADR-073   # CFP-685 cross-ref — Orchestrator verify-before-assert (cross-repo state 단정 의무)
+amendments:
+  - amendment: 1
+    date: 2026-05-15
+    cfp: CFP-685
+    summary: "§결정 1 row 3 family scope 확장 — wrapper-only self-app convention 의 7-repo (wrapper + 6 lane plugin sibling) byte-identical mandate. §결정 6 신설 (family scope self-app invariant — Anchor Issue #626 / CFP-609 retro Finding D 영역). §결정 1 본문 변경 0 (row 3 wording 유지 — wrapper Phase 1 commit-time self-check). 본 Amendment 가 row 3 의 sibling-family scope 확장 + drift detection mechanism (scripts/check-sibling-workflow-parity.sh + templates/github-workflows/sibling-workflow-parity.yml warning tier) 도입. mechanical_enforcement_actions[] append — `sibling-workflow-parity` entry status: deferred-followup → warning (Phase 1 PR merge 후). ratchet 강화 방향만 (wrapper-only scope 축소 금지 — ADR-064 top-down ratchet 정합)."
+    is_transitional: false
+    sunset_justification: "N/A — permanent policy 의 ratchet 강화. ADR-058 §결정 7 governance default presumption 정합 (is_transitional: false). ADR-064 §self-application top-down ratchet 정합 (Amendment 1 = scope 확장 강화 방향 only). 약화 방향 (family scope → wrapper-only / sibling drift detection 면제 / Conservative no-rename policy revoke) 발의 차단."
+mechanical_enforcement_actions:
+  - action: sibling-workflow-parity
+    status: deferred-followup
+    progress_note: "ADR-065 Amendment 1 (CFP-685) 신설 시점 — verdict field-only enforcement (workflow self-fire weekly cron). evidence-checks-registry entry `auto-phase-label-sibling-parity` warning tier 도입. blocking-on-pr 승격 후보 — 별도 CFP 가 첫 20 PR sample 누적 + failure_threshold 0 + sibling Story merged 도달 시 status 갱신 (deferred-followup → warning → blocking-on-pr)."
+    target_section: §결정 1 row 3 (family scope 확장) / §결정 6 (신설)
 ---
 
 # ADR-065: ArchitectAgent Phase 1 산출물 mechanical sync self-check 의무 (non-marketplace 영역)
@@ -113,6 +131,45 @@ cross-ref only — 중복 codification 회피.
 
 **marketplace 영역 ArchitectAgent Phase 1 self-check trigger = [ADR-063 §결정 9](ADR-063-marketplace-atomic-invariant.md) (CFP-597 Amendment 1) 참조.**
 
+### 결정 6 — Family scope self-app invariant (Amendment 1, CFP-685)
+
+§결정 1 row 3 (wrapper repo `templates/github-workflows/X.yml ↔ .github/workflows/X.yml` byte-identical) 의 **family scope 확장**. wrapper repo 자체 self-app 외에 codeforge family 7-repo (wrapper + 6 lane plugin sibling: codeforge-{requirements,design,develop,test,review,pmo}) 의 `.github/workflows/<X>.yml` 도 wrapper `templates/github-workflows/<X>.yml` 와 byte-identical 의무 영역.
+
+**적용 scope (whitelist — 확장 시 별도 CFP 의무)**:
+
+| 영역 | 적용 여부 | 근거 |
+|---|---|---|
+| `auto-phase-label.yml` | **YES** (Amendment 1 첫 entry) | CFP-685 carrier — Anchor #626 evidence (develop#23 stuck) |
+| `phase-label-invariant.yml` | NO (Amendment 1 시점) | 별 Epic carrier 후보 (§결정 6 whitelist 확장 시) |
+| `claude-md-line-cap.yml` | NO (Amendment 1 시점) | 별 Epic carrier 후보 |
+| `wording-dictionary.yml` | NO (Amendment 1 시점) | 별 Epic carrier 후보 |
+| `bootstrap-labels.yml` | NO | CFP-662 prior-art (label registration parity 영역, workflow file parity 와 분리) |
+| 기타 wrapper workflow | NO | 별 CFP 의무 |
+
+**검증 mode (E-5 mode-mixing 회피, CFP-685 §5.3 E-5 정합)**:
+- **raw-byte equality + enforced LF** (1 mode 단독): `.gitattributes` 강제 LF (`<file>.yml text eol=lf` 의무) + `cmp -s` byte-level diff exit 0
+- normalized semantic equality (whitespace / comment 차이 무시) 금지 — drift hiding risk 차단
+
+**drift detection mechanism (CFP-685 Phase 1 carrier)**:
+- `scripts/check-sibling-workflow-parity.sh` (신설, exit 0=PASS / exit 1=drift / exit 2=SETUP error — `check-marketplace-parity.sh:13-15` 패턴 verbatim 차용)
+- `templates/github-workflows/sibling-workflow-parity.yml` (신설, warning tier, cron weekly Monday 10:00 UTC + `workflow_dispatch` manual trigger — `required-workflow-drift-check.yml:9` 패턴 차용)
+- evidence-checks-registry entry `auto-phase-label-sibling-parity` (warning tier, `bypass_label: hotfix-bypass:auto-phase-label-sibling-parity` 22번째 family member — label-registry-v2 v2.16)
+
+**Phase 2 sibling sync mechanism (cross-repo file write)**:
+- 6 sibling repo `.github/workflows/auto-phase-label.yml` 신규 생성 PR 6건 (parallel open — parallel-dispatch-protocol-v1 정합, state-independent)
+- PAT = `CODEFORGE_CROSS_REPO_PAT` (ADR-066 §결정 2 Amendment 2 정합, `repo:write` cover, 추가 secret 신설 0건)
+- `GITHUB_TOKEN` 미사용 (same-repo scope 만, cross-repo write 불가 — CFP-685 §5.3 E-7 verified)
+
+**ADR-005 cross-ref (audit trail)**:
+- ADR-005 = "Plugin Self-Application N/A 표준화" (lane N/A handling 정책) — **본 ADR-065 §결정 6 family scope self-app convention 과 무관**
+- CFP-685 FIX iter 1 정정 (Codex TP#4 F-5 finding `[verified]`) — ADR-005 ≠ workflow self-app convention SSOT
+- 본 ADR-065 §결정 1 row 3 (Amendment 1 family scope 확장 포함) 이 actual self-app convention SSOT
+
+**ratchet direction (top-down, ADR-064 §self-application top-down ratchet 정합)**:
+- 강화 방향만 허용: family scope 확장 / 검증 mode 강화 / drift detection cadence 증가
+- 약화 방향 차단: family scope → wrapper-only / sibling drift detection 면제 / Conservative no-rename policy (ADR-060 Amendment 7) revoke
+- ADR-058 §결정 5 sunset_justification 의무 적용 — Amendment 차수 추가 시 강화 방향 evidence 의무
+
 ## 결과
 
 ### 긍정적 결과
@@ -144,3 +201,12 @@ N/A — permanent policy
 - `plugin-codeforge-design/agents/ArchitectPLAgent.md` — verdict packet `mechanical_self_check_passed` 필드
 - `plugin-codeforge-design/templates/change-plan.md` — §13 Phase 1 self-check 결과 섹션
 - `plugin-codeforge-review/docs/inter-plugin-contracts/review-verdict-v4.md` — canonical v4.2 MINOR bump
+
+### Amendment 1 (CFP-685) 신설 파일
+
+- [`scripts/check-sibling-workflow-parity.sh`](../../scripts/check-sibling-workflow-parity.sh) — Phase 2 carrier (drift detection lint, exit 0/1/2 3-tier)
+- [`templates/github-workflows/sibling-workflow-parity.yml`](../../templates/github-workflows/sibling-workflow-parity.yml) — Phase 2 carrier (warning tier workflow, cron + dispatch + Issue auto-create)
+- [`.github/workflows/sibling-workflow-parity.yml`](../../.github/workflows/sibling-workflow-parity.yml) — Phase 2 byte-identical self-app
+- [`docs/evidence-checks-registry.yaml`](../evidence-checks-registry.yaml) — `auto-phase-label-sibling-parity` entry append (warning tier, Phase 1)
+- [`docs/inter-plugin-contracts/label-registry-v2.md`](../inter-plugin-contracts/label-registry-v2.md) — v2.15 → v2.16 MINOR (hotfix-bypass:auto-phase-label-sibling-parity 22번째 family member, Phase 1)
+- 6 sibling repo `.github/workflows/auto-phase-label.yml` — Phase 2 byte-identical deploy (6 cross-repo PR)
