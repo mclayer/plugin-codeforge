@@ -1,12 +1,15 @@
 #!/usr/bin/env bash
 # sync-required-workflows.sh — CFP-140 / ADR-048
+# CFP-478 / ADR-061 §결정 1 + Amendment 1 §결정 6.A — parse_spec() Python heredoc 외부 .py 분리
+# (scripts/lib/sync_required_workflows.py SSOT). 나머지 bash 로직 보존.
 # Sync required-workflows-spec.yaml to GitHub enterprise required workflows.
 # Usage: sync-required-workflows.sh [--dry-run] [--apply] [--spec FILE] [--enterprise SLUG]
 # Default mode: --dry-run
 # Exit codes: 0=ok/no-diff, 2=dry-run would-change, 1=error
 set -euo pipefail
 
-REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 SPEC_FILE="${REPO_ROOT}/templates/required-workflows-spec.yaml"
 MODE="dry-run"
 ENTERPRISE_SLUG=""
@@ -31,16 +34,9 @@ if [[ ! -f "$SPEC_FILE" ]]; then
   exit 1
 fi
 
-# Parse spec (requires python3 + pyyaml, or yq)
+# Parse spec (CFP-478: Python body → scripts/lib/sync_required_workflows.py)
 parse_spec() {
-  python3 - "$SPEC_FILE" <<'PY'
-import sys, yaml
-data = yaml.safe_load(open(sys.argv[1]))
-enterprise = data.get('enterprise_slug', '')
-source_repo = data.get('source_repo', '')
-for wf in data.get('required_workflows', []):
-    print(f"{enterprise}\t{source_repo}\t{wf['id']}\t{wf['source_workflow']}\t{wf['target']}")
-PY
+  python3 "$SCRIPT_DIR/lib/sync_required_workflows.py" "$SPEC_FILE"
 }
 
 # Graceful degradation: check enterprise vs org-level

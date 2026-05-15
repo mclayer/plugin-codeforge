@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # test-cfp-140-ghec-governance.sh — AC-23 e2e fixture tests (CFP-140 / §8.2)
 # Tests run from the repo root (cd to worktree before executing).
+# CFP-478 / ADR-061 §결정 1 + Amendment 1 §결정 6.A — T3 PII redaction heredoc
+# 외부 .py 분리 (scripts/lib/test_cfp_140_ghec_governance.py SSOT).
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -90,26 +92,8 @@ print('drift:spec=%s,live=%s' % (spec_e, live_e) if spec_e != live_e else 'no-dr
 test_t3_audit_log_pii_redaction() {
   log "T3: Audit log + PII redaction (AC-23 fixture 3)"
 
-  # PII redaction logic
-  RESULT=$(python3 - <<'PY'
-import json, hashlib
-
-def hash_val(v):
-    return "sha256:" + hashlib.sha256(v.encode()).hexdigest()[:12] if v else v
-
-data = [
-    {"actor_email": "user1@example.com", "actor_ip": "1.2.3.4"},
-    {"actor_email": "admin@example.com", "actor_ip": "5.6.7.8"}
-]
-for e in data:
-    e["actor_email"] = hash_val(e["actor_email"])
-    e["actor_ip"] = hash_val(e["actor_ip"])
-
-raw_emails = [e for e in data if '@' in e.get('actor_email','')]
-hash_ok = all(e["actor_email"].startswith("sha256:") for e in data)
-print("ok" if not raw_emails and hash_ok else "fail")
-PY
-)
+  # PII redaction logic (CFP-478: Python body → scripts/lib/test_cfp_140_ghec_governance.py)
+  RESULT=$(python3 "$SCRIPT_DIR/lib/test_cfp_140_ghec_governance.py")
 
   [[ "$RESULT" == "ok" ]] && pass "T3: PII redaction — no raw emails, sha256: prefix confirmed" \
     || fail "T3: PII redaction failed"
