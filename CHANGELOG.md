@@ -7,6 +7,18 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.75.0] - 2026-05-16
+
+### Added (CFP-743 Wave 2 Story-3 Phase 2 — upgrade CLI + UpgradeAgent (C1+C2+C3))
+
+- **`scripts/codeforge-upgrade.sh`** (NEW) — POSIX bash thin dispatcher. 3 mode CLI: `--dry-run` / `--apply` / `--rollback <version>`. enum whitelist reject (unknown arg exit 1). user_decision_branches: 0 (no prompt). §4.4 drift-check 직접 호출 금지 (UpgradeAgent Plan stage 귀속). §4.5 path normalization via `scripts/lib/path_normalize.py`.
+- **`scripts/codeforge-upgrade.ps1`** (NEW) — PowerShell thin dispatcher. sh 와 동일 reconcile semantic (9 영역 / 3 mode / user_decision_branches: 0). cross-platform parity 의무 (§4.5 path_normalize.py 공유 단일 소스).
+- **`scripts/lib/path_normalize.py`** (NEW) — §4.5 6 입력 형태 path 정규화 헬퍼 (ADR-061 외부 .py 의무). 수용 형태: MSYS2/Git-Bash POSIX / Windows backslash / Windows forward-slash / 상대 / 공백 / non-ASCII UTF-8. canonical output: repo_root 절대 + forward-slash + UTF-8. 정규화 불가 = SystemExit 2 + abort-before-touch 보장. CFP-702 `_to_canonical()` precedent 동형.
+- **`templates/agents/UpgradeAgent.md`** (NEW) — Orchestrator default subagent one-shot (ADR-039 §결정 1). Plan+Apply 책임 (ADR-076 §결정 5 — SessionStart hook detect 침범 0). 9 영역 reconcile + snapshot lifecycle + 사후 sanity check 3종 + event log. §7.4.1 DR 6종 (a-f) 처리 (prompt 0 보장). §11.6 idempotency.
+- **`templates/upgrade-event.md`** (NEW) — C2 event log schema (doc type `upgrade_events`, ADR-041 doc-locations.yaml Phase 1 등록 완료). snapshot mirror + reconcile 결과 + (marker block 부재 시) `## Wholesale mirror losses` § 포함.
+- **`scripts/tests/test_path_normalize.py`** (NEW) — §8 Test Contract impl: 18 pytest TC all PASS. 6 입력 형태 × canonical output / abort-before-touch 경계 / sh↔ps1 parity (TC-9 parity matrix).
+- **`scripts/tests/test-codeforge-upgrade.sh`** (NEW) — CLI argument parser 단위 테스트: 17 bash TC all PASS. AC-1~AC-4 / §8.2 경계 조건 (unknown arg / 추가 인자 / --rollback 미제공) / TC-9 thin dispatcher drift-check 미직접 호출 / TC-10 no prompt invariant / TC-12 reconcile_protocol_version: 1.2.
+
 ## [5.74.0] - 2026-05-15
 
 ### Added (CFP-702 Wave 1 Story-2 Phase 2 — ADR-027 Amendment 3 §결정 7 D4 customization marker)
