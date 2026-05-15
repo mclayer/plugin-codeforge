@@ -7,6 +7,20 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.71.0] - 2026-05-15
+
+### Fixed (CFP-688 Phase 2 sub-PR (b) — ADR-026 Amendment 2 §결정 5.E + §결정 5.F drift fix, 5.70.0 skip: CFP-708 marketplace pre-sync collision)
+
+- **F6.1 — Action 1 §결정 5.E strict regex matching** (`post-merge-followup.yml` Action 1 ISSUE_NUM 해석 블록):
+  - `in:title` qualifier 추가: `--search "in:title ${STORY_KEY}"` (기존 bare search → GitHub tokenizer prefix collision 차단)
+  - env indirection 추가: `STORY_KEY: ${{ steps.meta.outputs.story_key }}` (T2 HIGH shell expansion 완화, CFP-545 §결정 5.E)
+  - jq post-filter word boundary: `select(.title | test("^${STORY_KEY}\\b"))` (CFP-545 vs CFP-5451 exact match 보장)
+  - null jq 결과 방어: `[ -z "$ISSUE_NUM" ] || [ "$ISSUE_NUM" = "null" ]`
+- **F6.2 — concurrency.group §결정 5.F namespace prefix** (`concurrency.group`):
+  - `${{ github.repository }}-` prefix 추가 → `post-merge-followup-mclayer/plugin-codeforge-<PR#>` (namespace clarity + forward-compat)
+  - `cancel-in-progress: false` 보존 (§결정 5.D partial Issue close state 차단 invariant)
+- **byte-identical mirror**: `templates/github-workflows/post-merge-followup.yml` + `.github/workflows/post-merge-followup.yml` 동기화 (AC-4)
+
 ## [5.69.0] - 2026-05-15
 
 ### Changed (CFP-707 — ADR-038 Amendment 4 TodoWrite 4-marker vocabulary swap, doc-only fast-path ADR-054)
