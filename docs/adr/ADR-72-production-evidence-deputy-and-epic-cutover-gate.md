@@ -60,7 +60,7 @@ mctrader 3-cycle 누적 패턴 분석 (CFP-620 post-mortem) 결과 동일 root c
 
 ### Scope 분리 (boundary axis)
 
-ProductionEvidenceDeputy 의 책임은 **runtime-evidence** (production state 실측 명시) — OpRiskArch §7.4 의 **design-time SSOT** (invariant 정의) 와 별 축. 두 deputy 의 mandate overlap 영역 (DR backup verify / env secret state / clock drift 실측 / rate metric / bucket prefix env isolation) 70%+ 발생 추정 — boundary axis 명시 의무 (§결정 4 명시). Story-2 (#633) 가 ADR-014 Amendment 3 본문 작성 시 양 ADR 의 cross-ref 양 방향 의무.
+ProductionEvidenceDeputy 의 책임은 **runtime-evidence** (production state 실측 명시) — OpRiskArch §7.4 의 **design-time SSOT** (invariant 정의) 와 별도 축. 두 deputy 의 mandate overlap 영역 (DR backup verify / env secret state / clock drift 실측 / rate metric / bucket prefix env isolation) 70%+ 발생 추정 — boundary axis 명시 의무 (§결정 4 명시). Story-2 (#633) 가 ADR-014 Amendment 3 본문 작성 시 양 ADR 의 cross-ref 양 방향 의무.
 
 ## 결정
 

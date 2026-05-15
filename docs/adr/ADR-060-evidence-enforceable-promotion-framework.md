@@ -134,7 +134,7 @@ amendment_log:
       `current_tier: warning` + `bypass_label: hotfix-bypass:bootstrap-labels` per-entry namespace) +
       label-registry-v2 v2.13 → v2.14 PATCH 동반 (`hotfix-bypass:bootstrap-labels` 20번째 family member +
       §3 yaml first-class entry, ADR-008 §결정 3 schema 무변경 row append) +
-      ADR-024 Amendment 3 §결정 6.A per-entry namespace pre-existing pattern reuse (별 Amendment 불필요) +
+      ADR-024 Amendment 3 §결정 6.A per-entry namespace pre-existing pattern reuse (별도 Amendment 불필요) +
       `bash scripts/bootstrap-labels.sh` reuse pattern (ADR-061 §결정 1 외부 script convention 정합,
       workflow yml 본문에서 multi-line shell embed 회피 — CFP-583 BODY heredoc anti-pattern 차단) +
       consumer-guide §2h.X 자동 install 절차 명시 (Edge Case #1 CRITICAL 해소 — `regen-agents.sh`

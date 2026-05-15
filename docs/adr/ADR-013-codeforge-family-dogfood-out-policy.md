@@ -331,9 +331,9 @@ cross-repo write 영역에서 `CODEFORGE_CROSS_REPO_PAT` 단일 secret 재사용
 
 본 Amendment 5 carrier workflow 는 **wrapper repo 단독 적용**. 6 lane plugin sibling 측 workflow 신설 의무 **0** — explicit no-op decision.
 
-근거: 6 sibling 의 현 상태 = `story-init.yml` workflow 부재. workflow 부재 = local write attempt 부재 = `.gitignore` conflict 발화 0. 6 sibling 의 Issue Form 자동 발화 의무는 별 motivation 영역.
+근거: 6 sibling 의 현 상태 = `story-init.yml` workflow 부재. workflow 부재 = local write attempt 부재 = `.gitignore` conflict 발화 0. 6 sibling 의 Issue Form 자동 발화 의무는 별도 motivation 영역.
 
-§결정 2 의 Plugin folder mapping 표는 forward-compatibility 보존 — 향후 별 CFP carrier 가 6 sibling 측 workflow 신설 시 mapping 표 재사용 가능.
+§결정 2 의 Plugin folder mapping 표는 forward-compatibility 보존 — 향후 별도 CFP carrier 가 6 sibling 측 workflow 신설 시 mapping 표 재사용 가능.
 
 #### 결정 7 — Two-stage existence_check + automated reconcile path (idempotency 강화)
 
@@ -387,19 +387,19 @@ CFP-596 (Amendment 5 carrier) 의 두 commit (Phase 1: `150aac0` ADR-013 Amendme
 
 ### 결정 2 — phantom changelog detection lint carrier follow-up
 
-본 영역 = CHANGELOG entry 표기 ↔ actual file state 사이 drift 영역. 별 CFP-NNN carrier:
+본 영역 = CHANGELOG entry 표기 ↔ actual file state 사이 drift 영역. 별도 CFP-NNN carrier:
 
 - `scripts/check-changelog-actual-integration.sh` lint — CHANGELOG `[N.N.N]` entry 마다 plugin.json `version` 일치 + 해당 entry 의 carrier commit 가 main 에 merged 인지 verify
 - evidence-checks-registry warning tier entry 신설
 
-### 결정 3 — CFP-661 PR description vs actual diff parity (별 영역 — 다른 retro carrier)
+### 결정 3 — CFP-661 PR description vs actual diff parity (별도 영역 — 다른 retro carrier)
 
-본 Amendment 6 와 disjoint 영역. CFP-671 Change Plan §12 에 명시된 별 follow-up carrier:
+본 Amendment 6 와 disjoint 영역. CFP-671 Change Plan §12 에 명시된 별도 follow-up carrier:
 
 - PR description 의 declared file list ↔ `git diff --name-only base..head` set comparison lint
 - Net additions/deletions sanity check
 
-CFP-596 phantom changelog 영역과 CFP-661 unintentional revert 영역 = 별 distinct failure-class. 각자 별 carrier 발의 의무.
+CFP-596 phantom changelog 영역과 CFP-661 unintentional revert 영역 = 별도 distinct failure-class. 각자 별도 carrier 발의 의무.
 
 ### Sunset justification
 

@@ -181,10 +181,10 @@ GHEC governance 4 영역 (rulesets-as-code / required workflows enterprise sync 
 - ADR-009 wrapper-only invariant 무손상 (D3 = lane plugin 영역)
 - ADR-024 backward compat 유지 (D4 = additive sub-branch 영역만)
 - Phase-scoped sequential team — `/resume` no-resumption + Story-long team risk 회피
-- 6 child Story 분할 + Wave 별 병렬 (Amendment 1: 5 → 6) — drift 위험 낮음
+- 6 child Story 분할 + Wave 별도 병렬 (Amendment 1: 5 → 6) — drift 위험 낮음
 
 부정:
-- 5 CFP 분할 → CI / merge 순서 복잡 — Wave 별 병렬 + Epic Issue 의 dependency graph 명시 + PMOAgent topological enforce (ADR-020 §결정 5) 로 mitigation
+- 5 CFP 분할 → CI / merge 순서 복잡 — Wave 별도 병렬 + Epic Issue 의 dependency graph 명시 + PMOAgent topological enforce (ADR-020 §결정 5) 로 mitigation
 - review-verdict v3 → v4 contract bump (CFP-137 scope) — consumer breaking, MAJOR bump + migration guide. mctrader debut audit 까지 0건 (consumer 영향 0)
 - Experimental agent teams API 의존 — Hotfix path 유지 + SessionStart hook 검증 의무
 

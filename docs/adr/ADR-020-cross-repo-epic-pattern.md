@@ -129,7 +129,7 @@ cross-repo Epic 진행 시 child Story file 위치 = 두 모드 중 consumer 가
 - 각 작업 repo 의 `docs/stories/<KEY>.md` 자체 보유
 - 채택 조건:
   - Implementation repo 가 자체 storyboard / governance lifecycle 운영
-  - Repo 별 자율 release cycle 유지 의도
+  - Repo 별도 자율 release cycle 유지 의도
   - Hub repo 가 별도 존재하지 않거나 doc 책임 미가짐
 - backward compat 유지 — CFP-1 ~ CFP-59 + 단일 repo Story 모두 본 모드
 
@@ -279,7 +279,7 @@ PR title 에 `(Phase X of <CFP-NNN> Epic)` 명시 (Mode B 와 동일 형식).
 #### Mode C 의 risk
 
 - **부주의로 substantive 차이 발생** — mechanical 가정으로 진행했는데 한 lane 만 다른 행동 필요한 경우. 완화: Mode C 검증 시점 = parent Epic 의 §3 도입할 설계 작성 직후 (Sonnet 무발화 직전 PL 가 4 조건 (a)~(d) 점검 의무).
-- **Audit trail thin** — child Story 부재로 Phase 2-N 별 review log 분산 보존 안 됨. 완화: parent Story §9 에 N row 누적 (lane 별 1 row), §11 에 N PR link 모음.
+- **Audit trail thin** — child Story 부재로 Phase 2-N 별도 review log 분산 보존 안 됨. 완화: parent Story §9 에 N row 누적 (lane 별도 1 row), §11 에 N PR link 모음.
 
 ### 적용 사례 (post-hoc, Amendment 2 ratification)
 

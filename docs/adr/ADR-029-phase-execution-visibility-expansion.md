@@ -154,7 +154,7 @@ CFP-104 의 UserPromptSubmit hook 이 매 prompt submit 시 §0 progress 일부 
 - Stop discipline 정책 변경 (ADR-022 + ADR-025 + Amendment 1 SSOT 그대로 — §결정 3 cross-reference 만)
 - 6 lane plugin (codeforge-{requirements,design,develop,test,review,pmo}) CLAUDE.md 변경 (§결정 5 — Writer 단독 invariant)
 - §0 Live Progress file 동작 (CFP-20 무변화 — terminal output 만 확장)
-- Per-deputy narration content 표준 (deputy 별 작성자 책임 — 본 ADR §결정 2 sanitize policy 만 강제)
+- Per-deputy narration content 표준 (deputy 별도 작성자 책임 — 본 ADR §결정 2 sanitize policy 만 강제)
 
 ## 해소 기준
 

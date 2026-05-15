@@ -18,7 +18,7 @@ Accepted (2026-05-02)
 
 ## 컨텍스트
 
-데뷔 평가 카테고리 #2 (mctrader debut Codex 평가 7 카테고리 중 "phase 별 gap + 과부하 모니터링") 가 사용자 명시 (2026-05-02) "특화 agent 포함해서 codeforge 의 모든 phase 의 gap 이나 과부하" 일반화 적용. 단 Codex audit (2026-05-02, gpt-5.5 high) #5 FAIL: "missing agent / overload / phase gap / responsibility leak 모두 정의 없이 쓰이면 매 Story 마다 noise성 Issue 발생, #1 (Lane progression) 과 중복 → 데뷔 평가 자체 신뢰 불가".
+데뷔 평가 카테고리 #2 (mctrader debut Codex 평가 7 카테고리 중 "phase 별도 gap + 과부하 모니터링") 가 사용자 명시 (2026-05-02) "특화 agent 포함해서 codeforge 의 모든 phase 의 gap 이나 과부하" 일반화 적용. 단 Codex audit (2026-05-02, gpt-5.5 high) #5 FAIL: "missing agent / overload / phase gap / responsibility leak 모두 정의 없이 쓰이면 매 Story 마다 noise성 Issue 발생, #1 (Lane progression) 과 중복 → 데뷔 평가 자체 신뢰 불가".
 
 본 ADR = #2 카테고리의 mechanical / reproducible measurable signal 4 룰 정의.
 

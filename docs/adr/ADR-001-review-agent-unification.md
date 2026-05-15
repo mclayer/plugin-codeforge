@@ -48,7 +48,7 @@ agents/
 ### 검토한 대안
 
 **대안 A — 워커만 통합, PL도 단일화** (full unification): 1 ReviewPLAgent가 lane∈{design, code, security} 파라미터로 분기.
-- 단점: lane invariant(보안 1차 layer fetch 의무·FIX 카운터 정책·라벨 매핑·model 강제)가 prompt에서 packet 작성자(Orchestrator) 책임으로 이동 → 빠뜨려도 즉시 안 잡힘. 보안 사고 비용을 고려하면 ROI 낮음. GitHub Actions(특히 `phase-gate-mergeable.yml`)의 lane별 gate label 매핑은 외부에 그대로 남으므로 통합 절약은 PL 본문 1군데에 한정.
+- 단점: lane invariant(보안 1차 layer fetch 의무·FIX 카운터 정책·라벨 매핑·model 강제)가 prompt에서 packet 작성자(Orchestrator) 책임으로 이동 → 빠뜨려도 즉시 안 잡힘. 보안 사고 비용을 고려하면 ROI 낮음. GitHub Actions(특히 `phase-gate-mergeable.yml`)의 lane별도 gate label 매핑은 외부에 그대로 남으므로 통합 절약은 PL 본문 1군데에 한정.
 - 채택 안 함.
 
 **대안 B — 워커 통합 + PL 3개 유지 + 공통 base 추출** (이 ADR이 채택하는 방향).

@@ -206,7 +206,7 @@ OperationalRiskArchitectAgent 와 ProductionEvidenceDeputyAgent 의 책임 경�
 ### 결정 6.2: Verdict packet field 신설 (review-verdict-v4 carrier)
 
 `findings[].owner_axis_kind: "policy" | "evidence" | "consult"` enum 신설 의무
-(별 CFP carrier — review-verdict-v4 MINOR bump). policy = SSOT 정의 axis (e.g.
+(별도 CFP carrier — review-verdict-v4 MINOR bump). policy = SSOT 정의 axis (e.g.
 OpRiskArch §7.4 invariant 정의) / evidence = production grounding axis (e.g.
 ProductionEvidence 실측 명시) / consult = 양 axis 동시 작성 cell.
 
@@ -272,7 +272,7 @@ primary (Amendment 2 §결정 3 정합). Production cutover Story 에서 evidenc
 
 [ADR-033](ADR-033-docker-first-infra-engineering.md) §결정 5 가 본 ADR-014 의 §7.4 OpRiskArch mandate 를 확장. 4 새 항목 추가:
 
-1. **Container restart policy** — `always` / `on-failure` / `unless-stopped` / `no` 결정 + 근거. compose service 별 명시.
+1. **Container restart policy** — `always` / `on-failure` / `unless-stopped` / `no` 결정 + 근거. compose service 별도 명시.
 2. **Volume DR** — anonymous vs named volume vs bind mount 의 data persistence 전략. backup strategy. host path leak 방지.
 3. **Health check tuning** — `interval` / `timeout` / `retries` / `start_period`. service dependency 의 `condition: service_healthy` 사용.
 4. **Network mode boundary** — bridge (default) / host / overlay / macvlan 결정. internal service 의 host 노출 금지.

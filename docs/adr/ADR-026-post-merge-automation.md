@@ -86,7 +86,7 @@ stop-event-v1 (CFP-73 deferred) 와의 관계: 본 ADR 의 telemetry counter = l
 ## 대안 검토
 
 ### 대안 A — 4 sub-decomposition (β)
-- I.a / I.b / I.c / I.d 각각 별 PR 분리
+- I.a / I.b / I.c / I.d 각각 별도 PR 분리
 - 거부 사유: delivery 시간 4배 증가 (각 sub × Phase 1+2 dogfood). root cause 명확하니 incremental 의미 marginal. Sonnet pick reasoning 정합 (CFP-74-001).
 
 ### 대안 B — Enforcement 즉시 도입 (γ)

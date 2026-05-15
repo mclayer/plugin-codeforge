@@ -65,8 +65,8 @@ jobs:
 
       - name: Verify all required test categories PASS
         run: |
-          # JSON artifact 에서 test category 별 PASS 여부 검증
-          # (consumer 측 test 가 category 별 grouping + status 기록 의무)
+          # JSON artifact 에서 test category 별도 PASS 여부 검증
+          # (consumer 측 test 가 category 별도 grouping + status 기록 의무)
           IFS=',' read -ra categories <<< "${{ inputs.required_test_categories }}"
 
           violations=0

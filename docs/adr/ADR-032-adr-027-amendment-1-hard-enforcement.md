@@ -37,7 +37,7 @@ mechanical_enforcement_actions:
   - action_name: workflow-version-drift
     decision_anchor: "Amendment 2 §결정 6"
     evidence_check_entry: workflow-version-drift
-    workflow_file: null  # check_bootstrap.py runtime check (별 workflow yml 미신설 — 본 Story scope OUT)
+    workflow_file: null  # check_bootstrap.py runtime check (별도 workflow yml 미신설 — 본 Story scope OUT)
     bypass_label: hotfix-bypass:workflow-version-drift
 ---
 
@@ -273,13 +273,13 @@ git add .github/workflows/
 git commit -m "chore: sync .github/workflows from wrapper templates"
 ```
 
-**`scripts/sync-consumer-workflows.sh` sweep helper = out-of-scope** (별 CFP-TBD carrier 후보 — Phase 2 carrier 영역). 본 Story scope = runtime detection 만 (single-Story scope 보존).
+**`scripts/sync-consumer-workflows.sh` sweep helper = out-of-scope** (별도 CFP-TBD carrier 후보 — Phase 2 carrier 영역). 본 Story scope = runtime detection 만 (single-Story scope 보존).
 
 #### §결정 6.F — Out-of-scope (carrier 분리)
 
-- **Sweep automation script** (`scripts/sync-consumer-workflows.sh`) — 별 CFP carrier (issue #467 sibling 후보)
-- **Cron-based reactive detection workflow** (`templates/github-workflows/workflow-drift-detection.yml` scheduled daily 02:00 UTC) — 별 CFP carrier 후보 (CFP-627 marketplace drift 패턴 정합, 본 Story 검토 후 OUT 결정 — single-Story scope 보존)
-- **Per-marker custom drift threshold** (예: whitespace-only diff = false / semantic-only diff = true) — 본 Story = binary detection 만, threshold 별 CFP
+- **Sweep automation script** (`scripts/sync-consumer-workflows.sh`) — 별도 CFP carrier (issue #467 sibling 후보)
+- **Cron-based reactive detection workflow** (`templates/github-workflows/workflow-drift-detection.yml` scheduled daily 02:00 UTC) — 별도 CFP carrier 후보 (CFP-627 marketplace drift 패턴 정합, 본 Story 검토 후 OUT 결정 — single-Story scope 보존)
+- **Per-marker custom drift threshold** (예: whitespace-only diff = false / semantic-only diff = true) — 본 Story = binary detection 만, threshold 별도 CFP
 
 ### 결과
 
@@ -295,11 +295,11 @@ git commit -m "chore: sync .github/workflows from wrapper templates"
 | Tier 1 git hash 의존 — git 미설치 환경 fail | Tier 2 core marker line compare 자동 fallback |
 | Strict mode flood — 점진 도입 환경에서 모든 5종 동시 발견 | Amendment 1 점진 도입 절차 (consumer-guide) — 단계 5 추가 (workflow sync) — opt-in only, default-off |
 | `plugin_root` resolution fail (CLAUDE_PLUGIN_ROOT unset + fallback dir 부재) | `_resolve_plugin_root()` 가 None 반환 시 check 10 skip + warning ("plugin root 부재 — workflow drift 검증 불가") |
-| Cron-based proactive detection 부재 — drift 가 다음 SessionStart 까지 surface 안 됨 | runtime detection = 1st defense layer / scheduled cron = 2nd layer (별 CFP carrier 후보, post-CFP-660). CFP-627 marketplace drift 패턴 정합 |
+| Cron-based proactive detection 부재 — drift 가 다음 SessionStart 까지 surface 안 됨 | runtime detection = 1st defense layer / scheduled cron = 2nd layer (별도 CFP carrier 후보, post-CFP-660). CFP-627 marketplace drift 패턴 정합 |
 
 ### Out-of-scope (Amendment 2 영역)
 
 - Strict mode default-on 전환 (ADR-032 §결정 5 영역 — 30+ Story 후 평가, 본 Amendment 2 비-범위)
-- Wrapper-to-consumer sweep automation (별 CFP carrier 후보)
-- Multi-version compatibility — wrapper v5.59.0 consumer 와 wrapper v5.60.0 templates 호환성 검증 (별 CFP)
+- Wrapper-to-consumer sweep automation (별도 CFP carrier 후보)
+- Multi-version compatibility — wrapper v5.59.0 consumer 와 wrapper v5.60.0 templates 호환성 검증 (별도 CFP)
 - ADR-032 §결정 2-5 supersede (본 amendment = additive 만)

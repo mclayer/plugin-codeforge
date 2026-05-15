@@ -192,7 +192,7 @@ review_verdict:
 | `write_partial` | Sonnet pick 완료 + 일부 write 실패 (write_errors 채워짐) | populated |
 | `write_complete` | 모든 required write 성공 | populated |
 
-**`write_partial` → `write_complete` 전환 (Codex Round 2 신규 gap fix)**: user/operator 가 외부 시스템 복구 후 (예: GitHub MCP 재인증, 라벨 부착 수동) Orchestrator 가 다음 spawn 사이클에 본 verdict 의 missing write 재시도 가능. `writes_completed` 의 모든 required field = true 로 갱신되면 `decision_state=write_complete` 로 transition. retry 누적 한도 = 각 sub-step 별 3 회 (initial + 2 retry). 한도 초과 시 user escalation (decision_state=write_partial 잔존 + Story §10 / §12 에 final state mark).
+**`write_partial` → `write_complete` 전환 (Codex Round 2 신규 gap fix)**: user/operator 가 외부 시스템 복구 후 (예: GitHub MCP 재인증, 라벨 부착 수동) Orchestrator 가 다음 spawn 사이클에 본 verdict 의 missing write 재시도 가능. `writes_completed` 의 모든 required field = true 로 갱신되면 `decision_state=write_complete` 로 transition. retry 누적 한도 = 각 sub-step 별도 3 회 (initial + 2 retry). 한도 초과 시 user escalation (decision_state=write_partial 잔존 + Story §10 / §12 에 final state mark).
 
 **v2 → v3 변경 요약**:
 
@@ -342,7 +342,7 @@ trigger enum 5 종 모두 동일 row format. review-verdict trigger 행:
 
 #### 결정 7.4 — Audit policy
 
-**첫 5 review-verdict packet scheduled self-audit (Codex P2 #3)** — 각 packet 별 다음 checklist 통과 의무:
+**첫 5 review-verdict packet scheduled self-audit (Codex P2 #3)** — 각 packet 별도 다음 checklist 통과 의무:
 
 - [ ] `decider_decision.model = claude-sonnet-4-6` (model-ID exact match)
 - [ ] Sonnet 응답이 결정 5.3 schema 준수 (decision / reasoning_summary / confidence + PACKET_REQUIRES_REVIEW_REOPEN 시 packet_gap_summary)

@@ -50,7 +50,7 @@ mechanical_enforcement_actions:
   - action_name: "debate-convergence-quality-lint"
     owner_adr: "ADR-060 Amendment 2"
     owner_section: "docs/evidence-checks-registry.yaml (warning tier entry, scripts/check_debate_convergence_quality.py)"
-    status: "deferred — Phase 2 carrier (별 CFP Story, mechanical script + workflow + registry row 신설 시점)"
+    status: "deferred — Phase 2 carrier (별도 CFP Story, mechanical script + workflow + registry row 신설 시점)"
     decision_binding: "§결정 8 (3 marker pattern + 3-tuple AND 검증)"
 ---
 
@@ -222,7 +222,7 @@ ArchitectAgent §3 mandatory Codex proactive check (ADR-052 Amendment 4 / CFP-53
 
 debate-protocol-v1 v1.2 schema 갱신은 lane-agnostic 정신 유지 (CFP-391 §결정 5 정합) — convergence_quality_invariant block + dispatch_mode 4번째 enum value (`blanket_cross_module_designlane`) 는 DesignLane blanket 외 미래 lane (CodeReview / SecurityTest 의 blanket 적용) 에도 재사용 가능한 일반 schema. lane-specific trigger 조건 (cross-module 판정 등) 만 lane plugin 측에 분리.
 
-CodeReview / SecurityTest blanket invocation 도입 시 신규 ADR (Amendment X) — 본 §결정 10 의 schema reuse 의무로 별 v-bump 면제 (additive lane enum 추가는 MINOR, schema 구조 변경 시에만 추가 MINOR — ADR-008 §결정 2 정합).
+CodeReview / SecurityTest blanket invocation 도입 시 신규 ADR (Amendment X) — 본 §결정 10 의 schema reuse 의무로 별도 v-bump 면제 (additive lane enum 추가는 MINOR, schema 구조 변경 시에만 추가 MINOR — ADR-008 §결정 2 정합).
 
 ## 해소 기준
 
