@@ -1593,3 +1593,40 @@ entries:
       measured_by: github_actions_run_history + drift_issue_count
       sunset_decision_owner: ArchitectPL or 사용자 directive
     status: Active
+
+  # ─── CFP-685 Phase 1 sub-PR (b) (templates ↔ self-app byte-identical parity lint, 2026-05-15) ───
+  # ADR-065 §결정 1 row 3 mechanical enforcement — wrapper templates/github-workflows/*.yml ↔
+  # .github/workflows/*.yml SHA-256 byte-identical parity. CFP-609 retro Finding D carrier.
+  # owner_adr = ADR-065 (TP#2 정정 결과 — TP#1 ADR-005 재설정, ADR-065 §결정 1 row 3 SSOT 직접 ownership).
+
+  - name: auto-phase-label-sibling-parity
+    description: |
+      CFP-685 / ADR-065 §결정 1 row 3 — wrapper templates/github-workflows/*.yml ↔
+      .github/workflows/*.yml SHA-256 byte-identical parity 검증. drift 발견 시
+      GitHub Issue 자동 생성 (warning tier, ADR-060 §결정 5). cron weekly Monday 10:00 UTC
+      + workflow_dispatch manual trigger. CFP-609 retro Finding D carrier (sibling
+      workflow parity enforcement forcing function). prior-art: check-marketplace-parity.sh
+      + check-superpowers-schema-drift.sh 패턴 차용. exit code 3-tier (ADR-060 Amendment 2
+      §결정 15): 0 PASS / 1 drift detected (count mismatch) / 2 SETUP error
+      (directory 부재 / sha256sum+shasum both unavailable).
+    detect_command: bash scripts/check-sibling-workflow-parity.sh
+    workflow: templates/github-workflows/sibling-workflow-parity.yml
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:auto-phase-label-sibling-parity
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: []       # 독립 entry — templates ↔ self-app parity lint 외 의존 없음
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-685
+    introduced_date: 2026-05-15
+    owner_adr: ADR-065               # §결정 1 row 3 — templates ↔ self-app byte-identical SSOT
+    carrier_adr: ADR-060             # framework carrier (warning mode entry)
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+    status: Active
