@@ -11,9 +11,9 @@ tags:
   - helm-pattern
   - snapshot-semantic
   - reconcile-protocol-v1
-  - adr-074
+  - adr-076
 related_adrs:
-  - ADR-074  # 본 entry 의 carrier ADR (선언적 reconciliation upgrade flow SSOT)
+  - ADR-076  # 본 entry 의 carrier ADR (선언적 reconciliation upgrade flow SSOT)
   - ADR-027  # consumer adoption protocol (boundary disjoint)
   - ADR-053  # 구조적 변경 재구동 (transaction completion prerequisite)
   - ADR-067  # FIX ledger RESET (disjoint layer anchor)
@@ -34,7 +34,7 @@ updated: 2026-05-15
 
 codeforge upgrade 의 architecture 패턴 = **선언적 reconciliation** (Helm `helm upgrade` / Kubernetes Kustomize / Terraform plan-apply 패턴 차용). wrapper SSOT = desired state, consumer 측 overlay + plugin install = current state, upgrade 명령 = converge. 사용자 결정 분기 0 자리 (CLI argument 로 dry-run / rollback / apply fix, prompt 없음).
 
-본 entry = ADR-074 §결정 본문의 narrative SSOT — codeforge 도메인 1st-class 정의 anchor. ArchitectAgent / DeveloperAgent / Researcher / DomainAgent / 후속 Wave carrier 가 참조하는 단일 정의.
+본 entry = ADR-076 §결정 본문의 narrative SSOT — codeforge 도메인 1st-class 정의 anchor. ArchitectAgent / DeveloperAgent / Researcher / DomainAgent / 후속 Wave carrier 가 참조하는 단일 정의.
 
 ## Conceptual model
 
@@ -90,9 +90,9 @@ codeforge upgrade 의 architecture 패턴 = **선언적 reconciliation** (Helm `
 | Concept | Layer | 정의 | 위치 |
 |---|---|---|---|
 | **ADR-067 RESET** | Story progression layer | Story §10 FIX Ledger 의 `RESET?` column 마커 (`RESET <lane>` / `cross-lane-pause:<lane>`) — lane FIX cycle 의 cycle 재시작 표기 | Story file §10 row |
-| **본 ADR-074 snapshot** | Upgrade transaction layer | upgrade 의 pre-state sentinel — rollback 의 입력 state | consumer `.claude/_snapshots/` 또는 wrapper `docs/upgrade-events/` (ADR-074 §결정 영역) |
+| **본 ADR-076 snapshot** | Upgrade transaction layer | upgrade 의 pre-state sentinel — rollback 의 입력 state | consumer `.claude/_snapshots/` 또는 wrapper `docs/upgrade-events/` (ADR-076 §결정 영역) |
 
-**두 개념 disjoint** — cross-pollinate 금지. ADR-074 §결정 본문 + reconcile-protocol-v1 contract schema + 본 domain-knowledge entry 3 곳 모두 명시적 분리 declare 의무.
+**두 개념 disjoint** — cross-pollinate 금지. ADR-076 §결정 본문 + reconcile-protocol-v1 contract schema + 본 domain-knowledge entry 3 곳 모두 명시적 분리 declare 의무.
 
 ### Invariant 3 — Codeforge family scope = 7 plugin atomic
 
@@ -118,7 +118,7 @@ SessionStart hook ≠ UpgradeAgent ≠ CLI. 3 책임 분리 (ADR-038 Amendment 3
 | **Terraform** | `.tf` files | State file | `terraform plan` | `terraform apply` | state versioning (S3 backend) |
 | **Kustomize** | base + overlay | Manifests | `kustomize build` | `kubectl apply` | git tag |
 | **Ansible** | playbook | inventory state | `--check` mode | `ansible-playbook` | (없음 — idempotent only) |
-| **codeforge (ADR-074)** | wrapper SSOT 영역 enumeration | consumer overlay + plugin install state | `--dry-run` | `--apply` | upgrade event log + snapshot file |
+| **codeforge (ADR-076)** | wrapper SSOT 영역 enumeration | consumer overlay + plugin install state | `--dry-run` | `--apply` | upgrade event log + snapshot file |
 
 **가장 정합한 reference = Helm 패턴** (release history revision N = rollback sentinel). Terraform state file 패턴 = too heavy (codeforge 는 file-system declarative, state cache 불필요). Kustomize overlay = customization marker block (D4) 와 conceptually 가장 가까움.
 
@@ -126,8 +126,8 @@ SessionStart hook ≠ UpgradeAgent ≠ CLI. 3 책임 분리 (ADR-038 Amendment 3
 
 | 도메인 | Boundary 시점 | 본 entry 와의 관계 |
 |---|---|---|
-| **ADR-027 consumer adoption protocol** | bootstrap detection + 3-trigger enforcement | trigger 시점 disjoint (ADR-027 = bootstrap + Story phase / ADR-074 = upgrade event). Layer disjoint (ADR-027 = detection layer / ADR-074 = execution layer). |
-| **ADR-053 구조적 변경 재구동** | 다음 작업 진입 blocking 조건 | ADR-053 D2 (marketplace sync + consumer install + version drift PASS) = 본 ADR-074 transaction completion criterion prerequisite. 정합 (sequential dependency). |
+| **ADR-027 consumer adoption protocol** | bootstrap detection + 3-trigger enforcement | trigger 시점 disjoint (ADR-027 = bootstrap + Story phase / ADR-076 = upgrade event). Layer disjoint (ADR-027 = detection layer / ADR-076 = execution layer). |
+| **ADR-053 구조적 변경 재구동** | 다음 작업 진입 blocking 조건 | ADR-053 D2 (marketplace sync + consumer install + version drift PASS) = 본 ADR-076 transaction completion criterion prerequisite. 정합 (sequential dependency). |
 | **ADR-067 FIX ledger RESET** | Story §10 lane FIX cycle 재시작 | snapshot ↔ RESET disjoint layer (Invariant 2 verbatim). |
 | **ADR-038 SessionStart hook static invariant** | filesystem touch 0 + network call 0 | hook = detect / UpgradeAgent = execute 분리 (Invariant 4 verbatim). |
 | **ADR-016 marketplace registration policy** | codeforge family 7 plugin 등록 + mirrored field sync | family scope unit = 7 plugin atomic (Invariant 3 verbatim). |
@@ -135,7 +135,7 @@ SessionStart hook ≠ UpgradeAgent ≠ CLI. 3 책임 분리 (ADR-038 Amendment 3
 
 ## Cross-reference
 
-- **Carrier ADR**: `docs/adr/ADR-074-declarative-reconciliation-upgrade.md` (ArchitectAgent 신설 — Phase 1 PR scope)
+- **Carrier ADR**: `docs/adr/ADR-076-declarative-reconciliation-upgrade.md` (ArchitectAgent 신설 — Phase 1 PR scope)
 - **Contract**: `docs/inter-plugin-contracts/reconcile-protocol-v1.md` (kind:registry, sibling sync 면제 — ADR-010 §결정 2)
 - **Parent Epic Issue**: https://github.com/mclayer/plugin-codeforge/issues/699
 - **본 Story Issue**: https://github.com/mclayer/plugin-codeforge/issues/701 (Wave 1 Story-1)
