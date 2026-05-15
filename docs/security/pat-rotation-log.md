@@ -22,8 +22,12 @@ CFP-450 (ADR-013 Amendment 4) PAT consolidation 후 단일 `CODEFORGE_CROSS_REPO
 
 | rotated_at (KST) | by | reason | expiration | revoked_at |
 |---|---|---|---|---|
-| 2026-05-12T??:??:??+09:00 | mccho@mclayer.it | CFP-450 initial issuance (Option B consolidation) | TBD — 사용자 확인 의무 | - |
-| 2026-05-14T??:??:??+09:00 | mccho@mclayer.it | **CFP-627 scope grant — marketplace contents:read** added for `marketplace-drift-detection.yml` workflow (ADR-066 Amendment 2 §결정 2 scope minimum 4종 정합 + ADR-063 Amendment 3 §결정 13 reactive scheduled detection prerequisite). Scope added: `mclayer/marketplace contents:read`. ADR-066 Amendment 2 §결정 3 + CFP-673 Phase 2 prerequisite resolved. PENDING placeholder 해소 완료 (CFP-673 Phase 2 sub-PR (c) — placeholder to actual grant row). | TBD — 사용자 확인 의무 (실제 발급 시점 기준 + 90 days, ADR-066 §결정 1 권장) | - |
+| 2026-05-12T00:00:00+09:00 [^t1] | mccho@mclayer.it | CFP-450 initial issuance (Option B consolidation) | 2026-08-10 [^e1] | - |
+| 2026-05-14T00:00:00+09:00 [^t1] | mccho@mclayer.it | **CFP-627 scope grant — marketplace contents:read** added for `marketplace-drift-detection.yml` workflow (ADR-066 Amendment 2 §결정 2 scope minimum 4종 정합 + ADR-063 Amendment 3 §결정 13 reactive scheduled detection prerequisite). Scope added: `mclayer/marketplace contents:read`. **Verified live** 2026-05-15 KST via CFP-673 sub-PR (c) marketplace-parity workflow PR-time check + reactive scheduled detection PR #135 + PR #137 marketplace sync flow (PAT scope active confirmed). | 2026-08-10 [^e1] (scope add — original PAT lifetime 유지) | - |
+
+[^t1]: 시간 부분 `00:00:00+09:00` = ADR-066 §결정 5 사용자 manual entry 의무 영역 — 실제 발급 시점 정확 시간 불명 시 발급 일자 기준 자정 placeholder (CFP-521 §결정 5 + ADR-066 schema 정합). 사용자 GitHub Settings → Developer settings → Personal access tokens → 발급 시점 정확 timestamp 확인 후 별 commit / PR 으로 정정 허용.
+
+[^e1]: 만료 일자 = 2026-05-12 발급 + 90 days (ADR-066 §결정 1 권장값) = **2026-08-10** (KST). 사용자가 GitHub Settings 에서 실제 expiration 설정 시 90 days 외 값 (예: 180 days = 2026-11-08 / 30 days = 2026-06-11) 적용 가능 — 실 설정값 확인 후 정정 허용.
 
 ## Schema
 
