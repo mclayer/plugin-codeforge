@@ -22,7 +22,7 @@ related_adrs:
 
 `Active` (2026-05-14). ADR-075 §결정 1 carrier.
 
-## 목적
+## 1. 목적
 
 codeforge plugin family 의 marketplace ↔ plugin.json atomic invariant (ADR-063) defense-in-depth 의 **sublayer enumeration SSOT**. ADR-063 §결정 5 본문 표 의 sublayer enumeration 영역 의 registry pattern 분리 (ADR-075 §결정 5).
 
@@ -42,7 +42,7 @@ codeforge plugin family 의 marketplace ↔ plugin.json atomic invariant (ADR-06
 | 4 (reactive) | 24h scheduled cron | ADR-063 §결정 13 (Phase 2 carrier 영역 — 본 registry 와 별도 mechanism) |
 | 추가 (local) | local pre-push hook | **본 registry 영역** (id=2 local pre-push advisory = CFP-447 / id=3 local pre-push auto-rebase guidance = CFP-477) |
 
-## Schema (kind:registry)
+## 2. Schema
 
 | Field | Type | Required | 설명 |
 |---|---|---|---|
@@ -73,7 +73,7 @@ codeforge plugin family 의 marketplace ↔ plugin.json atomic invariant (ADR-06
   - `blocking-on-pr` — pull_request event 시 required check, fail 시 PR 차단
   - `blocking-on-merge` — branch protection required check, fail 시 merge 차단
 
-## Sublayer entries (backfill 3 row)
+## 3. 항목
 
 ### Entry 1: PR-time CI atomic
 
@@ -128,7 +128,7 @@ codeforge plugin family 의 marketplace ↔ plugin.json atomic invariant (ADR-06
   status: active
 ```
 
-## 향후 sublayer 추가 절차
+## 4. 변경 규칙
 
 신규 sublayer (4th / 5th / ...) 도입 시:
 

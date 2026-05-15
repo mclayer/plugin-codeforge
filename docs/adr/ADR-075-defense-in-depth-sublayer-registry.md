@@ -1,5 +1,5 @@
 ---
-adr_number: 74
+adr_number: 75
 title: Defense-in-depth sublayer registry — sublayer enumeration SSOT 분리
 status: Proposed
 category: governance
