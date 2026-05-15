@@ -24,6 +24,7 @@ related_stories:
 amendments:
   - ADR-032
   - ADR-027-Amendment-2-CFP-658  # CFP-658 Wave 1 of Epic CFP-431 — Action-blocked manual fallback path normative SSOT
+  - ADR-027-Amendment-3-CFP-702  # CFP-699 Wave 1 Story-2 — D4 customization marker 의무 추가 (# BEGIN/END wrapper-managed block)
 mechanical_enforcement_actions:
   - action_name: section-1-verbatim-postmerge
     decision_binding: "Amendment 2 §결정 6.A — manual fallback path 의 §1 verbatim invariant post-merge lint (warning tier)"
@@ -31,6 +32,12 @@ mechanical_enforcement_actions:
     bypass_label: hotfix-bypass:section-1-verbatim-postmerge
     carrier_cfp: CFP-658  # Phase 1 = SSOT 등재, Phase 2 = workflow + script 신설
     introduced_by_amendment: 2
+  - action_name: wrapper-managed-block
+    decision_binding: "Amendment 3 §결정 7 — consumer customization 영역의 # BEGIN/END wrapper-managed marker block 정합성 lint (blocking-on-pr tier). marker block 안 = wrapper SSOT desired state, 밖 = consumer customization preserve invariant 의 mechanical enforcement"
+    evidence_registry_entry: wrapper-managed-block  # docs/evidence-checks-registry.yaml row (Phase 2 PR append, blocking-on-pr tier)
+    bypass_label: hotfix-bypass:wrapper-managed-block
+    carrier_cfp: CFP-702  # Phase 1 = ADR Amendment 3 + change-plan SSOT, Phase 2 = lint + workflow + migration script 신설
+    introduced_by_amendment: 3
 supersedes: null
 superseded_by: null
 is_transitional: false
@@ -282,3 +289,107 @@ Cross-ref:
 - `docs/consumer-guide.md` §"Action 차단 환경 fallback" — consumer runbook
 - `docs/orchestrator-playbook.md` §"fallback decision tree" — Orchestrator detection 절차
 - `docs/project-config-schema.md` `bootstrap.fallback_mode` — schema
+
+## Amendment 3 — D4 customization marker 의무화 (CFP-702)
+
+**Effective**: 2026-05-15 (CFP-699 Wave 1 Story-2 Phase 1 PR merged 시점).
+
+**Carrier**: CFP-702 (`carrier_story`). Parent Epic CFP-699 (선언적 reconciliation 기반 codeforge upgrade flow). Sibling Wave 1 Story-1: CFP-701 (reconciliation contract + ADR-076 + reconcile-protocol-v1, **MERGED prerequisite**).
+
+본 ADR §결정 1 (bootstrap 검증 책임 = wrapper plugin overlay/hooks/) + §결정 5 (consumer-guide.md SSOT) 정합. ADR-076 (Story-1 carrier) 의 reconcile-protocol-v1 contract 가 `customization_preservation_entry: "marker_block"` + `marker_block_syntax_carrier: "CFP-702"` 로 본 Amendment 3 에 syntax 영역을 명시적 위임. 본 amendment = ADR-027 §결정 추가 (additive, supersede 아님). §결정 7 신설.
+
+### 결정 7 — D4 customization marker block 의무 (normative SSOT)
+
+#### §결정 7.A — marker block syntax 정식 정의
+
+Consumer customization 영역과 wrapper SSOT desired state 영역을 박제하는 marker block:
+
+```
+# BEGIN wrapper-managed
+<wrapper SSOT desired state mirror 영역 — upgrade 시 wrapper 최신 버전 기준 mirror>
+# END wrapper-managed
+```
+
+**Comment prefix per-filetype** (§결정 7.A.1 — Axis 1 결정):
+
+| File type | BEGIN marker | END marker | 적용 영역 |
+|---|---|---|---|
+| `.yml` / `.yaml` (project.yaml, workflow) | `# BEGIN wrapper-managed` | `# END wrapper-managed` | overlay project.yaml / consumer-local workflow |
+| `.sh` / shell hook | `# BEGIN wrapper-managed` | `# END wrapper-managed` | `.claude/hooks/` fragment |
+| `.md` (CLAUDE.md overlay) | `<!-- BEGIN wrapper-managed -->` | `<!-- END wrapper-managed -->` | `.claude/_overlay/CLAUDE.md` |
+| `.json` (settings.json) — **marker-incapable** | (sidecar manifest) | (sidecar manifest) | `.claude/_overlay/.wrapper-managed-manifest.json` sidecar — JSON 은 주석 불가, key-path allowlist 방식 (실 구현 = Wave 2 Story-5 carrier, 본 Amendment 3 = sidecar 영역 declare only) |
+
+**결정 근거** (Axis 1): file-type 별 native comment prefix variant 채택 — 단일 `#` 강제는 `.md` (markdown 은 `#` 가 heading) 충돌, JSON 은 주석 자체 불가. comment-syntax-bearing 영역 (`.yml`/`.sh`)은 `#`, markdown 은 HTML comment, JSON 은 sidecar manifest. 외부 prior art = Ansible blockinfile `marker` 파라미터 (file-type 별 comment prefix 주입 패턴, Story §6.2 표 정합도 "가장 높음").
+
+#### §결정 7.B — marker block 안 = wrapper SSOT, 밖 = consumer customization preserve invariant
+
+- **marker block 안 영역** = wrapper SSOT desired state target. upgrade 시 wrapper 최신 버전 기준 **wholesale mirror** (consumer 변경 무시 — wrapper wins inside block).
+- **marker block 밖 영역** = consumer customization = **preserve** (upgrade 시 wrapper 가 절대 침범 0 — consumer wins outside block).
+
+이는 reconcile-protocol-v1 §3.2 Rule 3.2.1 의 verbatim cross-ref. codeforge 모델 = "wrapper SSOT wins inside marker block, consumer wins outside" — npm / Helm 의 'consumer wins' default 와 **reverse** (SSOT-driven 모델, Story §6.1 Unknown unknowns 정합). 외부 prior art 동형 = Kustomize base(wrapper SSOT) + overlay(consumer customization) 분리.
+
+#### §결정 7.C — marker 부재 fallback = wholesale_mirror_with_user_visible_loss_report
+
+Consumer 가 marker block 도입 전 customization 영역 보유 시 (mctrader 5 repo 등 기존 adopter):
+
+- snapshot 안 해당 file 전체 보존 (full backup — reconcile-protocol-v1 Rule 3.2.2 cross-ref)
+- wholesale mirror 후 **user-visible loss report 생성** (`docs/upgrade-events/<date>-<version>.md` 안 `## Wholesale mirror losses` § 명시)
+- **silent overwrite 0** invariant (EPIC-AC-4 "충돌 시 명시적 보고 (silent overwrite 0)" verbatim 정합)
+
+reconcile-protocol-v1 `marker_block_absent_behavior: "wholesale_mirror_with_user_visible_loss_report"` field 의 verbatim cross-ref. 본 fallback = graceful degradation (marker 부재 = breaking 아님, additive governance — backward-compat).
+
+#### §결정 7.D — lint mechanical enforcement (blocking-on-pr tier)
+
+`scripts/check-wrapper-managed-block.sh` (Phase 2 carrier) — marker block 정합성 검증:
+
+- **BEGIN/END pairing**: 모든 BEGIN 은 대응 END 보유 (orphan BEGIN / orphan END = malformed → exit ≠ 0)
+- **순서 invariant**: BEGIN 이 END 보다 앞 (역전 = malformed)
+- **nesting 정책** (§결정 7.D.1 — Axis 2 결정): **flat only — nesting 금지** (BEGIN ... BEGIN ... END ... END = lint reject). 결정 근거: nested marker 는 wrapper SSOT 영역 안에 consumer customization 을 중첩 = "marker 안 = 100% wrapper, 밖 = 100% consumer" invariant (§결정 7.B) 와 모순. depth tracking 복잡도 회피 + Ansible blockinfile flat-only 패턴 동형.
+- **evidence-checks-registry tier**: `current_tier: blocking-on-pr` (Story §5.2 AC-3 + Spec §7 Story-2 row verbatim). bypass channel = `hotfix-bypass:wrapper-managed-block` label (ADR-024 §결정 6.A per-entry namespace).
+- **workflow self-app**: `templates/github-workflows/wrapper-managed-block.yml` ↔ `.github/workflows/wrapper-managed-block.yml` byte-identical (ADR-065 §결정 1 정합).
+
+#### §결정 7.E — retroactive migration (idempotent)
+
+`scripts/migrate-existing-customization.sh` (Phase 2 carrier) — 기존 marker-부재 consumer (mctrader 5 repo, Tier B-extended) retroactive auto-wrap:
+
+- **idempotency invariant**: N회 실행 = 1회 effect (이미 wrap 된 영역 재wrap 0). 2차 실행 = file hash 동일 (Story §5.2 AC-4 testable predicate). 외부 prior art = Ansible blockinfile marker-pair replace idempotency 동형.
+- **false-positive boundary** (§결정 7.E.1 — Axis 3 결정): **wrapper SSOT template 과 byte-diff 가 0 인 영역 + `consumer-scripts.manifest` 등재 영역만 wrap** (conservative — consumer customize 영역은 marker 밖 보존). 결정 근거: byte-diff 0 = consumer 가 손대지 않은 순수 wrapper SSOT mirror 영역임이 mechanical 확정 → false-positive 0. manifest 등재 = wrapper 가 consumer 에 배포하는 영역의 explicit SSOT (Story §2 Refactor perspective — `consumer-scripts.manifest` 가 wrapper SSOT mirror 영역 anchor).
+- **사용자 결정 분기 0 invariant**: false-positive boundary 가 사용자 prompt 없이 mechanical 판정 (byte-diff + manifest = 결정론적). dry-run preview 는 정보 제공만 = 결정 분기 아님 (reconcile-protocol-v1 `dry_run_classified_as_decision_branch: false` verbatim 정합, CFP-699 Epic §1 WHY "0 자리" directive 정합).
+
+#### §결정 7.F — lint promotion_criteria (Axis 4 결정)
+
+`wrapper-managed-block` evidence-checks-registry entry 의 promotion_criteria (blocking-on-pr 첫 도입이므로 Story-1 `worktree-first-pre-checkout` entry 패턴 reference):
+
+| Field | 값 | 근거 |
+|---|---|---|
+| `pr_cumulative_min` | 20 | ADR-060 §결정 6 (a) 표준값 — `worktree-first-pre-checkout` L634 verbatim 동형 |
+| `failure_threshold` | 0 | ADR-060 §결정 6 (b) — bypass 외 failure 0 |
+| `current_tier` | `blocking-on-pr` | Spec §7 Story-2 row verbatim ("blocking-on-pr"). ADR-060 4-tier enum 의 2번째 tier — D4 marker 위반 = customization wholesale loss 직결 (HIGH risk) → warning tier 시작점 아닌 blocking-on-pr 직접 도입 정당 (Story §5.3 AC-3 edge 정합) |
+
+#### §결정 7.G — reconcile-protocol-v1 4.3 (b) trigger 발동
+
+Story-1 contract `reconcile-protocol-v1.md` §4.3 (b): "Wave 1 Story-2 (CFP-702) merge — marker block syntax 확정 시 `customization_preservation_entry` 영역 확장". 본 Amendment 3 에서 marker syntax 정식 확정 (§결정 7.A) → contract 4.3 (b) trigger 발동. **단 contract 갱신 = Phase 2 PR scope** (kind:registry MINOR sibling sync 면제, ADR-008 §결정 2 + ADR-010 §결정 2). Phase 1 (본 ADR Amendment 3) = syntax SSOT 확정만, contract `customization_preservation_entry` 영역 확장 반영 = Phase 2 PR 에서 동반 (Story §4.0.1 "reconcile-protocol-v1.md 수정 = Phase 1 또는 Phase 2 (ArchitectAgent 결정)" → **Phase 2 결정** — marker syntax 가 lint script 와 atomic 하게 검증되어야 contract 영역 확장이 mechanical 유효).
+
+### Bypass 정합
+
+§결정 3 `HOTFIX_BYPASS_CODEFORGE=1 + REASON` 양 env set → strict 무관 hook self skip. Amendment 3 marker lint 활성 시에도 §결정 3 bypass mechanism 그대로 작동. 추가로 marker lint per-entry bypass = `hotfix-bypass:wrapper-managed-block` label (ADR-024 §결정 6.A per-entry namespace, ADR-060 framework 정합) — 별도 mechanism.
+
+### Default 미변경 = additive only
+
+본 amendment = additive 만. marker 부재 consumer = §결정 7.C wholesale_mirror_with_user_visible_loss_report fallback (graceful degradation, backward-compat). 기존 consumer 동작 즉시 변경 0 — migration script (§결정 7.E) 가 retroactive opt-in 보장.
+
+### 해소 기준 정합
+
+ADR-027 frontmatter `is_transitional: false` (permanent policy, 기존 §"해소 기준" = "N/A — permanent policy" verbatim). Amendment 3 = D4 marker 의무 추가 = governance 강화 방향 ratchet — ADR-058 §결정 5 sunset_justification 불요 (강화 방향, ADR-064 top-down self-application 정합).
+
+상세 Change Plan: `codeforge-internal-docs/wrapper/change-plans/cfp-702-d4-customization-marker.md`.
+
+Cross-ref:
+- [ADR-076](ADR-076-declarative-reconciliation-upgrade.md) — Story-1 carrier, reconcile semantic SSOT (boundary disjoint — ADR-076 = upgrade transaction layer / 본 Amendment 3 = consumer customization marker enforcement layer)
+- `docs/inter-plugin-contracts/reconcile-protocol-v1.md` §3.2 Rule 3.2.1/3.2.2 + §4.3 (b) — customization preservation entry SSOT
+- [ADR-053](ADR-053-structural-change-restart-prerequisite.md) §D2 — 본 Story 구조적 변경 (scripts/+workflow 신규) → Wave 2 Story-5 진입 prerequisite (dogfood-out 면제 분기)
+- [ADR-060](ADR-060-evidence-enforceable-promotion-framework.md) — blocking-on-pr tier 첫 도입 (`wrapper-managed-block` registry entry)
+- [ADR-065](ADR-065-architect-phase1-mechanical-self-check.md) §결정 1 — workflow templates/ ↔ .github/ byte-identical self-app
+- [ADR-040](ADR-040-worktree-convention.md) §결정 7.A — `mechanical_enforcement_actions[]` frontmatter 의무 (본 Amendment 3 = `wrapper-managed-block` entry append)
+- `docs/domain-knowledge/domain/upgrade-flow/declarative-reconciliation.md` — Customization layer marker syntax detail (RequirementsPL 본 lane 보강)
+- `docs/consumer-guide.md` §"D4 customization marker" — consumer runbook (Phase 2 carrier)
