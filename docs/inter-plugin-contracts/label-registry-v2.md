@@ -1,14 +1,14 @@
 ---
 kind: registry
 registry: label
-version: "2.16"
+version: "2.17"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
 created_date: 2026-05-09
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/label-registry-v2.md
-date: 2026-05-15  # CFP-685 v2.16 — hotfix-bypass:auto-phase-label-sibling-parity 22번째 family member (ADR-065 §결정 1 row 3 carrier — templates ↔ self-app byte-identical parity warning-tier entry, CFP-609 retro Finding D carrier) | CFP-662 v2.15 — hotfix-bypass:bootstrap-labels 21번째 family member (ADR-060 Amendment 10 §결정 24 carrier — PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier 정합) | CFP-660 v2.14 — hotfix-bypass:workflow-version-drift 20번째 family member (ADR-032 Amendment 2 §결정 6 carrier — strict-eligible 5번째 drift consumer workflow version drift, CFP-660 Wave 2 of Epic CFP-431) | CFP-658 v2.13 — fallback:* family 신설 (fallback:manual + fallback:rate-limited, ADR-027 Amendment 2 §결정 6 carrier — Action-blocked agent direct write fallback path normative SSOT, post-CFP-627 v2.12 atomic rebase) | CFP-627 v2.12 — hotfix-bypass:marketplace-drift-detection 19번째 family member (ADR-063 Amendment 3 §결정 13 carrier — marketplace reactive scheduled drift detection 4th defense layer, post-CFP-638 base) | CFP-638 v2.11 — hotfix-bypass:stop-time-continuous-confirm 18번째 family member (ADR-064 Amendment 3 §결정 9 sister carrier — Continuous '진행해' 패턴 mechanical detect advisory channel) | CFP-631 v2.10 — hotfix-bypass:marketplace-description-verbatim 17번째 family member (ADR-063 Amendment 2 carrier — description proactive PR-time lint blocking-on-pr 직접 시작) | CFP-628 v2.9 — hotfix-bypass:retro-alert-pickup 16번째 family member (ADR-045 §D-5 retro alert pickup KPI warning-tier sentinel) | CFP-619 v2.8 — hotfix-bypass:retro-mandatory-deployed 15번째 family member (ADR-045 mandate restoration carrier) | CFP-610 v2.6 sub-entry — hotfix-bypass:wording-dictionary 13번째 (ADR-064 Amendment 2) | CFP-582 v2.6 sub-entry — hotfix-bypass:debate-convergence-quality 12번째 (ADR-059 Amendment 2 §결정 8) | CFP-583 v2.6 sub-entry — hotfix-bypass:workflow-yaml-parse 11번째 | CFP-530 v2.5 sub-entry — hotfix-bypass:workflow-permissions 10번째 | CFP-429 v2.5 — from-cfp-425-followup provenance label | CFP-521 v2.4 sub-entry — hotfix-bypass:sibling-pr-author-check 9번째 | CFP-506 v2.4 sub-entry — hotfix-bypass:claude-md-line-cap 8번째 | CFP-481 v2.4 — phase:* attach_owner_plugin field 갱신
+date: 2026-05-15  # CFP-688 v2.17 — hotfix-bypass:actionlint 24번째 + hotfix-bypass:post-merge-followup-success-rate 25번째 family member (ADR-026 Amendment 3 §결정 5.G.b + §결정 5.G.d carriers — actionlint prevention layer + KPI detection sentinel, CFP-688 Phase 2 sub-PR (c)) | CFP-708 Phase 2 v2.16 back-ref: hotfix-bypass:claude-md-amendment-ref 23번째 family member (see below) | CFP-685 v2.16 — hotfix-bypass:auto-phase-label-sibling-parity 22번째 family member (ADR-065 §결정 1 row 3 carrier — templates ↔ self-app byte-identical parity warning-tier entry, CFP-609 retro Finding D carrier) | CFP-662 v2.15 — hotfix-bypass:bootstrap-labels 21번째 family member (ADR-060 Amendment 10 §결정 24 carrier — PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier 정합) | CFP-660 v2.14 — hotfix-bypass:workflow-version-drift 20번째 family member (ADR-032 Amendment 2 §결정 6 carrier — strict-eligible 5번째 drift consumer workflow version drift, CFP-660 Wave 2 of Epic CFP-431) | CFP-658 v2.13 — fallback:* family 신설 (fallback:manual + fallback:rate-limited, ADR-027 Amendment 2 §결정 6 carrier — Action-blocked agent direct write fallback path normative SSOT, post-CFP-627 v2.12 atomic rebase) | CFP-627 v2.12 — hotfix-bypass:marketplace-drift-detection 19번째 family member (ADR-063 Amendment 3 §결정 13 carrier — marketplace reactive scheduled drift detection 4th defense layer, post-CFP-638 base) | CFP-638 v2.11 — hotfix-bypass:stop-time-continuous-confirm 18번째 family member (ADR-064 Amendment 3 §결정 9 sister carrier — Continuous '진행해' 패턴 mechanical detect advisory channel) | CFP-631 v2.10 — hotfix-bypass:marketplace-description-verbatim 17번째 family member (ADR-063 Amendment 2 carrier — description proactive PR-time lint blocking-on-pr 직접 시작) | CFP-628 v2.9 — hotfix-bypass:retro-alert-pickup 16번째 family member (ADR-045 §D-5 retro alert pickup KPI warning-tier sentinel) | CFP-619 v2.8 — hotfix-bypass:retro-mandatory-deployed 15번째 family member (ADR-045 mandate restoration carrier) | CFP-610 v2.6 sub-entry — hotfix-bypass:wording-dictionary 13번째 (ADR-064 Amendment 2) | CFP-582 v2.6 sub-entry — hotfix-bypass:debate-convergence-quality 12번째 (ADR-059 Amendment 2 §결정 8) | CFP-583 v2.6 sub-entry — hotfix-bypass:workflow-yaml-parse 11번째 | CFP-530 v2.5 sub-entry — hotfix-bypass:workflow-permissions 10번째 | CFP-429 v2.5 — from-cfp-425-followup provenance label | CFP-521 v2.4 sub-entry — hotfix-bypass:sibling-pr-author-check 9번째 | CFP-506 v2.4 sub-entry — hotfix-bypass:claude-md-line-cap 8번째 | CFP-481 v2.4 — phase:* attach_owner_plugin field 갱신
 authors:
   - Claude (CFP-140 — ADR-049 type:* → native Issue Types cutover)
 related_adrs:
@@ -55,6 +55,14 @@ related_files:
 # label-registry v2
 
 ## 변경 이력
+
+**v2.17 (CFP-688 / ADR-026 Amendment 3 §결정 5.G.b + §결정 5.G.d, 2026-05-15)**: PATCH bump (schema 무변경 — §3 yaml hotfix-bypass:* 24번째 + 25번째 family member append, combined single version bump per Change Plan §2.3 coordination directive).
+- **추가**: `hotfix-bypass:actionlint` (color `fef2c0` audit tier) — `templates/github-workflows/actionlint-check.yml` warning-tier mechanical lint conditional skip + audit comment 자동 발의 channel (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합, **24번째 hotfix-bypass:* family member** — 기존 23: adr-sunset / decision-principle-vocab / auto-phase-label / marketplace-atomic / worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd} / claude-md-line-cap / sibling-pr-author-check / workflow-permissions / workflow-yaml-parse / debate-convergence-quality / wording-dictionary / retro-mandatory-deployed / retro-alert-pickup / marketplace-description-verbatim / stop-time-continuous-confirm / marketplace-drift-detection / workflow-version-drift / bootstrap-labels / auto-phase-label-sibling-parity / claude-md-amendment-ref). ADR-026 Amendment 3 §결정 5.G.b carrier — actionlint prevention layer (born-broken 재발 차단 forcing function, CFP-688 P0 incident evidence).
+- **추가**: `hotfix-bypass:post-merge-followup-success-rate` (color `fef2c0` audit tier) — `templates/github-workflows/post-merge-followup-success-rate-kpi.yml` KPI sentinel breach Issue auto-create conditional skip + audit comment 자동 발의 channel (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합, **25번째 hotfix-bypass:* family member**). ADR-026 Amendment 3 §결정 5.G.d carrier — rolling 14-day success rate ≥ 90% sentinel, 9번째 warning-tier entry (ADR-026 §5.G.d 명시).
+- bypass 사용 시 `check-bypass-audit-comment.sh` 가 audit comment 발의 (reuse 패턴, 1st-23rd entry 동일). PR description `### Bypass reason` 섹션 기재 필수.
+- `scripts/bootstrap-labels.sh` dynamic read 자동 흡수 (CFP-598 parse-hotfix-bypass-labels.py 분기 — yaml row 추가만으로 bootstrap 자동 반영, script 변경 0건).
+- canonical-only (kind:registry — sibling sync scope 외 per ADR-010 §결정 2).
+- ADR-008 §결정 3 SSOT: schema 무변경 yaml row append = PATCH bump.
 
 **v2.16 (CFP-685 / ADR-065 §결정 1 row 3, 2026-05-15)**: PATCH bump (schema 무변경 — §3 yaml hotfix-bypass:* 22번째 family member append).
 - **추가**: `hotfix-bypass:auto-phase-label-sibling-parity` (color `fef2c0` audit tier) — `templates/github-workflows/sibling-workflow-parity.yml` (Phase 1 sub-PR (b) carrier) warning-tier mechanical lint conditional skip + audit comment 자동 발의 channel (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합, **22번째 hotfix-bypass:* family member** — 기존 21: adr-sunset / decision-principle-vocab / auto-phase-label / marketplace-atomic / worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd} / claude-md-line-cap / sibling-pr-author-check / workflow-permissions / workflow-yaml-parse / debate-convergence-quality / wording-dictionary / retro-mandatory-deployed / retro-alert-pickup / marketplace-description-verbatim / stop-time-continuous-confirm / marketplace-drift-detection / workflow-version-drift / bootstrap-labels).
@@ -685,6 +693,23 @@ labels:
     category: hotfix-bypass
     color: "fef2c0"
     description: "hotfix-bypass: CLAUDE.md Amendment ref drift detection lint skip + audit comment 자동 발의 (CFP-708 / ADR-074 / ADR-024 Amendment 3 §결정 6.A — templates/github-workflows/claude-md-amendment-ref-drift.yml carrier — CLAUDE.md 안 Amendment N (CFP-NNN) 참조 + ADR frontmatter amendment_log/amendments 길이 비교, warning tier 신규 entry, cross-section coherence lint CFP-263 lineage 답습). 23번째 hotfix-bypass:* family member."
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  # hotfix-bypass:actionlint + hotfix-bypass:post-merge-followup-success-rate (2종 — CFP-688 / ADR-026 Amendment 3 §결정 5.G.b + §결정 5.G.d carrier)
+  # actionlint prevention layer + KPI detection layer. canonical-only (kind:registry — sibling sync scope 외 per ADR-010 §결정 2).
+  # plugin.json PATCH bump 동반 (5.72.0 → 5.73.0) — marketplace.json sync required (ADR-063 §결정 18).
+  - name: hotfix-bypass:actionlint
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: actionlint workflow syntax validation lint skip + audit comment 자동 발의 (CFP-688 / ADR-026 Amendment 3 §결정 5.G.b / ADR-024 Amendment 3 §결정 6.A — templates/github-workflows/actionlint-check.yml carrier — .github/workflows/*.yml YAML parse + syntax validation, actionlint v1.7.12, warning tier 신규 entry, born-broken 재발 차단 forcing function). ADR-026 §5.G.b 승격 target = blocking-on-pr (tier reconciliation: 첫 도입 warning, ADR-060 §결정 5). 24번째 hotfix-bypass:* family member."
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  - name: hotfix-bypass:post-merge-followup-success-rate
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: post-merge-followup.yml rolling 14-day success rate KPI sentinel breach Issue auto-create skip + audit comment 자동 발의 (CFP-688 / ADR-026 Amendment 3 §결정 5.G.d / ADR-024 Amendment 3 §결정 6.A — templates/github-workflows/post-merge-followup-success-rate-kpi.yml carrier — weekly cron + workflow_dispatch 측정, sentinel ≥ 90%, 9번째 warning-tier entry ADR-026 §5.G.d 명시). 25번째 hotfix-bypass:* family member."
     single_active: false
     attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
 

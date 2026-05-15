@@ -42,12 +42,12 @@ mechanical_enforcement_actions:
   # ADR-040 Amendment 3 §결정 7.A schema 정합 — list[object] verbatim entry name + status + progress_note + target_section
   # 본 mechanical_enforcement_actions[] field 도입 = CFP-688 Amendment 3 §결정 5.G binding (ADR-040 Amendment 3 §결정 7.A 정합)
   - action: workflow-actionlint-precommit
-    status: deferred-followup
-    progress_note: "Phase 2 sub-PR (b) carrier — actionlint pre-commit hook + CI step. evidence-checks-registry 신규 entry append 의무 (warning tier 첫 도입). hotfix-bypass channel = `hotfix-bypass:actionlint` (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합). 본 Phase 1 sub-PR (a) doc-only scope 외 — Phase 2 sub-PR (b) 진입 후 registry yaml row append + workflow self-app 동반."
+    status: active
+    progress_note: "Phase 2 sub-PR (c) 완료 — actionlint-check.yml + templates mirror (byte-identical, ADR-005) + templates/.git-hooks/pre-commit.sample opt-in hook + evidence-checks-registry 54번째 entry (warning tier, 2026-05-15). hotfix-bypass channel = `hotfix-bypass:actionlint` (label-registry-v2 v2.17 24번째 family member). ADR-026 §5.G.b 승격 target = blocking-on-pr (별도 CFP carrier 의무)."
     target_section: §결정 5.G.b
   - action: post-merge-followup-workflow-success-rate-kpi
-    status: deferred-followup
-    progress_note: "Phase 2 sub-PR (c) carrier — KPI registry warning-tier 9번째 entry. sentinel ≥ 90% rolling 14-day window. evidence-checks-registry 신규 entry append + cron workflow + check-script 동반. hotfix-bypass channel = `hotfix-bypass:post-merge-followup-success-rate` (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합). 본 Phase 1 sub-PR (a) doc-only scope 외 — Phase 2 sub-PR (c) 진입 후 actual measurement window 진입."
+    status: active
+    progress_note: "Phase 2 sub-PR (c) 완료 — post-merge-followup-success-rate-kpi.yml + templates mirror (byte-identical, ADR-005) + scripts/check-post-merge-followup-success-rate.sh + evidence-checks-registry 55번째 entry (warning tier, 9번째 warning-tier entry, 2026-05-15). hotfix-bypass channel = `hotfix-bypass:post-merge-followup-success-rate` (label-registry-v2 v2.17 25번째 family member). 14-day measurement window 진입 중."
     target_section: §결정 5.G.d
 supersedes: null
 superseded_by: null

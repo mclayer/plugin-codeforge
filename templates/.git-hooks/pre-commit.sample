@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# pre-commit.sample — CFP-688 Amendment 3 §결정 5.G.b (opt-in actionlint pre-commit hook)
+#
+# Install (opt-in):
+#   cp templates/.git-hooks/pre-commit.sample .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+#
+# Or use the installer (CFP-428 pattern, scripts/install-git-hooks.sh):
+#   bash scripts/install-git-hooks.sh
+#
+# actionlint install:
+#   Binary not on PyPI — install via official script:
+#   bash <(curl -sSf https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.12
+#   Then move binary to a PATH directory (e.g. /usr/local/bin/actionlint).
+#
+# ADR-026 §결정 5.G.b: binary absent → warning emit + bypass (no forced install).
+# T-NEW-1 (CFP-688 §9.3): forced install from unknown source 차단 — opt-in install only.
+
+set -euo pipefail
+
+# ── actionlint pre-commit hook (CFP-688 Amendment 3 §결정 5.G.b) ──────────────
+if command -v actionlint >/dev/null 2>&1; then
+  echo "Running actionlint on .github/workflows/*.yml …"
+  actionlint .github/workflows/*.yml || exit 1
+  echo "actionlint PASS"
+else
+  echo "::warning::actionlint not installed — skipping workflow lint (opt-in install: bash <(curl -sSf https://raw.githubusercontent.com/rhysd/actionlint/main/scripts/download-actionlint.bash) 1.7.12)"
+fi
