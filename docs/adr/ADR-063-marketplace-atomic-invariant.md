@@ -22,6 +22,7 @@ related_stories:
   - CFP-597
   - CFP-631
   - CFP-627
+  - CFP-477  # §결정 5 본문 표 sublayer 확장 (local pre-push auto-rebase guidance row, Amendment 발의 0건)
 amendments:
   - amendment: 1
     date: 2026-05-13
@@ -156,7 +157,9 @@ production 장애 / security incident 대응 시 atomic invariant 일시 bypass 
 |---|---|---|
 | plugin.json ↔ CHANGELOG | `invariant-check` workflow | 그대로 |
 | plugin.json ↔ marketplace.json | `check-marketplace-parity.sh` post-PR | pre-commit hook (local) 권장 |
-| 3-file atomic 강제 | 부재 | `check-version-bump-atomic.sh` (신규, 별도 CFP) |
+| 3-file atomic 강제 | 부재 | `check-version-bump-atomic.sh` (CFP-441 / Phase 2 PR-time CI) |
+| local pre-push (advisory) | 부재 | `templates/.claude/hooks/pre-push.sh.sample` (CFP-447 opt-in advisory + `PRE_PUSH_BLOCKING=1` blocking 분기) |
+| local pre-push (auto-rebase guidance) | 부재 | `templates/.claude/hooks/pre-push-auto-rebase.sh.sample` (CFP-477 opt-in env `PRE_PUSH_AUTO_REBASE=1`) — advisory abort + 4-line guidance, hook 안 직접 `git pull --rebase` 실행 금지 (git-scm hook semantics 정합) |
 
 ### 결정 6: ADR-016 vs ADR-063 분리 — scope 명확화
 
