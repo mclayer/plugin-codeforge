@@ -23,7 +23,7 @@ CFP-450 (ADR-013 Amendment 4) PAT consolidation 후 단일 `CODEFORGE_CROSS_REPO
 | rotated_at (KST) | by | reason | expiration | revoked_at |
 |---|---|---|---|---|
 | 2026-05-12T??:??:??+09:00 | mccho@mclayer.it | CFP-450 initial issuance (Option B consolidation) | TBD — 사용자 확인 의무 | - |
-| 2026-05-14T??:??:??+09:00 (PENDING — Phase 2 PR description checklist 강제) | mccho@mclayer.it | **CFP-627 scope grant — marketplace contents:read** added for `marketplace-drift-detection.yml` workflow (ADR-066 Amendment 2 §결정 2 scope minimum 4종 정합 + ADR-063 Amendment 3 §결정 13 (post-rebase — CFP-631 occupied Amendment 2 §결정 11+12) reactive scheduled detection prerequisite). **Forcing function (DesignReview FIX iter 1 F-DR-004 option b)**: Phase 2 PR description checklist item "actual grant date update before merge (PENDING placeholder 해소 의무)" 의무 — Phase 2 PR merge 전 단일 placeholder 해소. audit trail integrity = manual update single-point-of-failure 차단. | TBD — Phase 2 진입 전 actual grant date + 90 days (ADR-066 §결정 1 권장 lifetime) | - |
+| 2026-05-14T??:??:??+09:00 | mccho@mclayer.it | **CFP-627 scope grant — marketplace contents:read** added for `marketplace-drift-detection.yml` workflow (ADR-066 Amendment 2 §결정 2 scope minimum 4종 정합 + ADR-063 Amendment 3 §결정 13 reactive scheduled detection prerequisite). Scope added: `mclayer/marketplace contents:read`. ADR-066 Amendment 2 §결정 3 + CFP-673 Phase 2 prerequisite resolved. PENDING placeholder 해소 완료 (CFP-673 Phase 2 sub-PR (c) — placeholder to actual grant row). | TBD — 사용자 확인 의무 (실제 발급 시점 기준 + 90 days, ADR-066 §결정 1 권장) | - |
 
 ## Schema
 

@@ -1,0 +1,28 @@
+{
+  "kpi_name": "marketplace-drift-rate",
+  "owner_adr": "ADR-063",
+  "carrier_adr": "ADR-060",
+  "carrier_story": "CFP-673",
+  "metric_definition": {
+    "name": "drift_issue_auto_create_count",
+    "unit": "Issue/3-month-rolling-window",
+    "target": "0",
+    "measured_by": "gh issue list --label drift-detection --created >=$(date -d '3 months ago')"
+  },
+  "gate_status": "warming",
+  "gate_status_history": [
+    {
+      "status": "warming",
+      "transitioned_at": "2026-05-15",
+      "reason": "초기 도입 — 첫 3 month rolling window 측정 시작",
+      "transitioned_by": "CFP-673 Phase 2 sub-PR (c)"
+    }
+  ],
+  "sunset_criteria": {
+    "metric_threshold": "drift_issue_auto_create_count == 0",
+    "window": "3 month rolling",
+    "promotion_path": "warming → ready (after 3 months 0 drift) → sunset (after 6 months 0 drift + ArchitectPL ratification)"
+  },
+  "last_measured_at": null,
+  "last_measured_value": null
+}
