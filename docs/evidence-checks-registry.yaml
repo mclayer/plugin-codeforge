@@ -1584,10 +1584,10 @@ entries:
     owner_adr: ADR-063
     carrier_adr: ADR-060
     recurrence:
-      count: 4              # CFP-609 / CFP-612 / CFP-610 Story 2 / CFP-673 session live verify
-      threshold: 4
-      promotion_trigger: warning_first  # ADR-060 §결정 5 default warning
-      last_occurrence: 2026-05-14  # CFP-673 session live verify
+      count: 5              # CFP-609 / CFP-612 / CFP-610 Story 2 / CFP-673 prep verify 2026-05-14 / CFP-673 sub-PR (b) PR #682 live 2026-05-15 — CFP-686 Amendment 4 ratchet UP 4 → 5
+      threshold: 5          # CFP-686 Amendment 4 ratchet UP: 4 → 5
+      promotion_trigger: warning_first  # ADR-060 §결정 5 default warning (Amendment 4 preserved)
+      last_occurrence: 2026-05-15  # CFP-673 sub-PR (b) PR #682 CI fail live (5th reproduce — marketplace-parity workflow plugin.json 5.63.0 ↔ marketplace 5.64.0 drift)
     sunset_gate:
       metric: "drift Issue 자동 발의 0건 / 3 month rolling window"
       measured_by: github_actions_run_history + drift_issue_count

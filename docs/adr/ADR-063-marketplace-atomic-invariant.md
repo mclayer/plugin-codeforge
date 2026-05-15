@@ -37,6 +37,12 @@ amendments:
     summary: "§결정 13 신설 — 정기 detection 의무 (reactive scheduled channel, 4th defense layer). 3-layer proactive (§결정 9 Amendment 1 design-time + §결정 11 Amendment 2 PR-time) 위에 24h scheduled cron + workflow_dispatch + Issue auto-create reactive layer 추가. scripts/check-marketplace-drift.sh (CFP-50 base wrap) + templates/github-workflows/marketplace-drift-detection.yml + .github/workflows/marketplace-drift-detection.yml self-app. mechanical_enforcement_actions[] second self-application 사례 (marketplace-drift-detection entry, warning tier). 4-tuple reproduce evidence (CFP-609 / CFP-612 / CFP-610 Story 2 / 본 session live verify 3 day window observed). is_transitional: false 보존 (permanent governance). §결정 14 self-application — Amendment 3 ratchet 검증. Strengthening direction only — ADR-064 top-down ratchet 정합. ADR-066 Amendment 2 (PAT scope marketplace contents:read grant) + ADR-016 family scope cross-ref 단락 + ADR-060 warning-tier registry entry 동반."
     is_transitional: false
     sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 3 = 강화 방향 only, reactive scheduled detection layer 추가). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과."
+  - amendment: 4
+    date: 2026-05-15
+    cfp: CFP-686
+    summary: "§결정 13 #6 recurrence ratchet UP — count 3 → 5, threshold 3 → 5, promotion_trigger advisory → warning_first. CFP-673 Phase 2 carrier session 안 5-tuple reproduce evidence 누적: (1) CFP-609 PR #613 marketplace 5.43.0 sync wrapper plugin.json 누락 / (2) CFP-612 PR #618 정상 sync control sample / (3) CFP-610 Story 2 PR #616 commit f3391d4 marketplace 5.46.0 declared wrapper 5.45.0 stuck (3rd) / (4) CFP-673 session prep verify 2026-05-14 KST initial baseline / (5) CFP-673 sub-PR (b) PR #682 CI fail 2026-05-15 KST live — marketplace-parity workflow 가 plugin.json 5.63.0 ↔ marketplace 5.64.0 drift 검출 (Phase 2 carrier 가 본래 검출하려던 패턴 자체 실시간 발생). Story §7.3.1 + evidence-checks-registry entry (PR #682 merged) count: 4 forward-looking — 본 Amendment 4 가 5-tuple 정합화. Strengthening direction only — ADR-064 §결정 7 top-down ratchet + ADR-058 §결정 5 약화 방향 차단. Codex F-CR2-003 deferred §10 reconciliation."
+    is_transitional: false
+    sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 4 = ratchet UP 강화 방향 only — recurrence count 3 → 5, threshold 3 → 5, promotion_trigger advisory → warning_first). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과."
 mechanical_enforcement_actions: []
 # Amendment 3 §결정 13 = declarative SSOT mandate only (Phase 1 doc-only fast-path scope, ADR-054).
 # artifact (scripts/check-marketplace-drift.sh + workflow + registry entry) = Phase 2 carrier PR scope (별 Story).
@@ -335,7 +341,14 @@ ADR-065 의 `mechanical_self_check_passed` 와 **별 boolean field** 운영 (ver
 3. **Issue auto-create** (Phase 2): drift detected 시 `gh issue create` 자동 발의 — label `codeforge-improvement` + `drift-detection` + `phase:선정중` 표준. dedup 정책 = per-unique-`(plugin, field)` signature (active Issue lookup 후 동일 signature exist 시 skip — `gh issue list --label drift-detection --state open`).
 4. **PAT scope** (Phase 1 declarative + Phase 2 grant): `CODEFORGE_CROSS_REPO_PAT` 의 marketplace `contents:read` grant 필수 (ADR-066 Amendment 2 §결정 2 scope minimum 4종 정합). Phase 1 declarative SSOT mandate (본 §결정 13) + Phase 2 PR 진입 전 사용자 manual grant blocker.
 5. **Bypass channel** (Phase 1 declarative + Phase 2 label-registry append): `hotfix-bypass:marketplace-drift-detection` label (ADR-024 Amendment 3 §결정 6.A per-entry namespace) = audit comment 자동 발의 channel. §결정 4 `hotfix-bypass:marketplace-atomic` (proactive atomic invariant 영역) 과 분리. Phase 1 declarative + Phase 2 carrier 가 label-registry-v2 yaml row append + bootstrap-labels.sh 실 활성.
-6. **Evidence-enforceable framework** (Phase 2): `docs/evidence-checks-registry.yaml` entry `marketplace-drift-detection` (warning tier, ADR-060 §결정 5 첫 도입 정합, recurrence.count: 3 / threshold: 3 / promotion_trigger: advisory). Phase 2 carrier PR 이 registry row append.
+6. **Evidence-enforceable framework** (Phase 2): `docs/evidence-checks-registry.yaml` entry `marketplace-drift-detection` (warning tier, ADR-060 §결정 5 첫 도입 정합, **Amendment 4 ratchet UP: recurrence.count: 5 / threshold: 5 / promotion_trigger: warning_first** — Amendment 3 도입 시점 3/3/advisory → CFP-686 Amendment 4 후 5/5/warning_first, 5-tuple reproduce evidence 정합). Phase 2 carrier PR 이 registry row append.
+
+   **5-tuple reproduce evidence (Amendment 4 ratchet 근거, CFP-686)**:
+   1. **CFP-609** (PR #613, 2026-05-14) — marketplace 5.43.0 sync, wrapper plugin.json bump 누락 → CFP-598 P2 정정
+   2. **CFP-612** (PR #618, 2026-05-14) — 정상 sync (control sample)
+   3. **CFP-610 Story 2** (PR #616, commit `f3391d4`, 2026-05-14) — marketplace 5.46.0 declared, wrapper 5.45.0 stuck (**3rd reproduce**)
+   4. **CFP-673 session prep verify** (2026-05-14 KST) — Phase 2 carrier 진입 시점 initial baseline observed
+   5. **CFP-673 sub-PR (b) PR #682 CI fail live** (2026-05-15 KST) — marketplace-parity workflow 가 plugin.json 5.63.0 ↔ marketplace 5.64.0 drift 검출 (Phase 2 carrier 가 본래 검출하려던 패턴 자체 실시간 발생, **5th reproduce**)
 7. **Edge case 분기** (Phase 2 implement 의무):
    - **E-1 PAT 미갱신 (401 auth failure, fail-closed manual blocker)**: `gh api` 401 → script exit 2 → `codeforge-kpi-infra-error` label Issue 발의 (drift Issue 와 별 분기). 사용자 PAT 재발급 의무 — 다음 cron run 자동 회복 불가 (rate-limit 과 분리 처리).
    - **E-2 marketplace schema drift (registration leak)**: marketplace.json `plugins[]` 안 codeforge family plugin entry 결손 → `[MARKETPLACE-DRIFT] codeforge family registration leak — <plugin-name>` Issue 발의 (ADR-016 §결정 1 family scope violation).
