@@ -476,6 +476,36 @@ bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-version-drift.sh
 
 ---
 
+### §2g.1 codeforge upgrade CLI (CFP-743 Wave 2 Story-3 / ADR-076 + reconcile-protocol-v1 v1.2)
+
+> **Phase 2 carrier 안내**: 본 절은 CFP-743 Phase 1 (설계/contract) 기준 사용법 명세. 실 CLI script (`scripts/codeforge-upgrade.{sh,ps1}`) + UpgradeAgent 는 Phase 2 PR (별 PR) 도입. Phase 2 merge 전까지는 §2g version drift 검사 + `/plugins update` 수작업 경로 유지.
+
+codeforge family upgrade 의 **단일 진입점** — "한 번 명령 = 끝까지 자동 + 사용자 결정 0 자리" (Epic CFP-699 directive). 현재 7회 `/plugins update` 수작업 → 1 명령으로 수렴.
+
+```bash
+# 1) 변경 영향 사전 확인 (실 변경 0, filesystem touch 0)
+bash scripts/codeforge-upgrade.sh --dry-run        # POSIX
+pwsh scripts/codeforge-upgrade.ps1 --dry-run       # Windows PowerShell (동일 reconcile semantic)
+#    → 9 desired_state_domains (workflow / hook / label / settings / codeowners /
+#      issue templates / branch protection / plugin.json mirror / changelog) diff preview
+
+# 2) 적용 (snapshot 자동 생성 → reconcile → 사후 sanity check 단일 transaction)
+bash scripts/codeforge-upgrade.sh --apply
+#    → 부분 실패 / 사후 sanity 실패 시 자동 rollback to snapshot (사용자 prompt 0)
+#    → consumer .github/ 영역 reconcile = PR 자동 open (자동 merge 아님 — PR review 후 merge 결정)
+#    → 완료 시 docs/upgrade-events/<date>-<version>.md event log 자동 생성
+
+# 3) rollback (upgrade 후 critical 이슈 발견 시)
+bash scripts/codeforge-upgrade.sh --rollback <version>
+#    → 해당 version snapshot 복원 (snapshot retention = 최근 5개, overlay override 가능)
+```
+
+**핵심 동작 보증**: ① 사용자 결정 분기 0 (`--dry-run`/`--apply`/`--rollback` argument fix, 중간 prompt 0) ② dry-run = 미리보기만 (working tree 변경 0) ③ apply = all-or-rollback atomic ④ reconcile PR 은 자동 merge 안 함 — consumer 가 PR review gate 최종 결정권 보유 ⑤ marker block (`# BEGIN/END wrapper-managed`) 안 = wrapper SSOT 적용, 밖 = consumer customization 보존. marker 미도입 영역 = wholesale mirror + event log `## Wholesale mirror losses` § 손실 가시화.
+
+**PAT 요구사항 (ADR-066 Amendment 3)**: reconcile PR open 은 `CODEFORGE_CROSS_REPO_PAT` 에 `reconcile-target-repos contents:write + pull_requests:write` scope 필요 (consumer reconcile 대상 repo 한정 — org-wide write 아님). 상세 = [ADR-066 §결정 2](adr/ADR-066-pat-rotation-policy.md) + §1.f PAT rotation 정책.
+
+---
+
 ### §2h.1 SessionStart prereq-check hook 자동 활성 (CFP-475 / ADR-038 Amendment 3 이후)
 
 Codeforge orchestration 의 critical path tool 인 **TodoWrite** 는 Claude Code harness 의 **deferred tool** — turn 0 시점에 schema 가 노출되지 않아 `ToolSearch("select:TodoWrite")` 로 lazy-fetch 해야 호출 가능. CFP-475 / ADR-038 Amendment 3 이후 **plugin-root `hooks/hooks.json` 에 자동 등록** — 별도 consumer `.claude/settings.json` 등록 절차 불필요.

@@ -5,8 +5,8 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.0  
-**Last regen**: 2026-05-11T14:05:13Z  
-**Registered doc types**: 12
+**Last regen**: 2026-05-15T14:59:56Z  
+**Registered doc types**: 13
 
 ## Summary table
 
@@ -23,7 +23,8 @@
 | 9 | `decision_packet` | dogfood | `orchestrator` | CFP-61 |
 | 10 | `inter_plugin_contract` | single_repo | `each_lane_plugin` | CFP-29 |
 | 11 | `evidence_check_registry` | single_repo | `orchestrator` | CFP-389 |
-| 12 | `kpi_artifact` | single_repo | `orchestrator` | CFP-393 |
+| 12 | `upgrade_events` | single_repo | `orchestrator` | CFP-743 |
+| 13 | `kpi_artifact` | single_repo | `orchestrator` | CFP-393 |
 
 ## Per-doc-type details
 
@@ -203,6 +204,28 @@
   > MANIFEST.yaml `registries:` 블록 entry = `evidence_check_registry` (versioning 추적).
   > parallel-edit policy = append-only (docs/parallel-work/section-ownership.yaml).
   > Write owner = Orchestrator + carrier Story ArchitectAgent (wrapper governance).
+
+### `upgrade_events`
+
+- **single_repo**: `<owner-repo>/docs/upgrade-events/<version>.md`
+- **owner_agent**: `orchestrator`
+- **introduced_by**: CFP-743
+- **naming_pattern**: `[0-9]{4}-[0-9]{2}-[0-9]{2}-[a-z0-9.-]+\.md`
+- **frontmatter_required**: False
+- **examples**:
+  - mclayer/plugin-codeforge/docs/upgrade-events/2026-05-15-5.74.0.md
+
+  **notes**:
+  > CFP-743 Wave 2 Story-3 (Epic CFP-699) carrier — C2 upgrade event log artifact.
+  > reconcile-protocol-v1 v1.2 snapshot.persistence_locations.mirror = 본 디렉터리
+  > (`docs/upgrade-events/<date>-<version>.md` — snapshot mirror + reconcile 결과 audit trail).
+  > Naming = `<date>-<version>.md` (date = upgrade transaction 시점 KST, version = 도달 plugin version).
+  > Schema = `templates/upgrade-event.md` (Phase 2 carrier — UpgradeAgent 자동 생성).
+  > Write owner = UpgradeAgent (`--apply` transaction 완료 시 자동 생성, 사용자 manual edit 금지).
+  > marker block 부재 시 `## Wholesale mirror losses` § 포함 (reconcile-protocol-v1 Rule 3.2.2).
+  > Phase 1 = doc type 등록 + `docs/upgrade-events/.gitkeep` 영역 신설 (CFP-743 Phase 1).
+  > Phase 2 = `templates/upgrade-event.md` schema + UpgradeAgent 자동 생성 로직 (별 PR).
+  > parallel-edit policy = append-only (event log = immutable audit trail).
 
 ### `kpi_artifact`
 

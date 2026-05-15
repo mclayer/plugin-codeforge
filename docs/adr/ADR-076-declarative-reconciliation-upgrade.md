@@ -13,7 +13,7 @@ amendment_log: []
 related_stories:
   - CFP-701  # 본 Story carrier — Wave 1 Story-1 (A1+B1 scope)
   - CFP-702  # Wave 1 Story-2 (D4 customization marker — sequential prerequisite for Wave 2)
-  - CFP-703  # Wave 2 Story-3 (UpgradeAgent + CLI runtime carrier)
+  - CFP-743  # Wave 2 Story-3 (UpgradeAgent + CLI runtime carrier) — KEY 정정 CFP-703→CFP-743 (CFP-743, Wave 1 작성 시점 placeholder drift / 동일 Story / fact 영향 0)
 related_adrs:
   - ADR-027  # Consumer adoption protocol (boundary disjoint — detection layer)
   - ADR-053  # 구조적 변경 재구동 + consumer 배포 (transaction completion prerequisite)
@@ -234,7 +234,7 @@ domain-knowledge `upgrade-flow/declarative-reconciliation.md` Invariant 3 verbat
 ### 후속 carrier dependency 명시
 
 - **Wave 1 Story-2 (CFP-702)**: customization marker block 도입 — 본 ADR §결정 6 의 sequential prerequisite. 본 Story-1 merge 완료 의무.
-- **Wave 2 Story-3 (CFP-703)**: UpgradeAgent + CLI runtime carrier — 본 ADR §결정 5 의 reconcile execution responsibility 분리 정합.
+- **Wave 2 Story-3 (CFP-743)**: UpgradeAgent + CLI runtime carrier — 본 ADR §결정 5 의 reconcile execution responsibility 분리 정합. (KEY 정정: Wave 1 작성 시점 placeholder `CFP-703` → 실제 발의 Issue `CFP-743`. 동일 Story, fact 영향 0, 추적성만 정정 — ADR-068 I-4 wording SSOT 정합.)
 - **Wave 2 Story-4**: 7 plugin atomic upgrade runtime — 본 ADR §결정 8 의 atomicity boundary `runtime implementation` 영역 ratchet carrier (의미 invariant `family_7_plugin_atomic` 자체는 ADR-016 §결정 1 SSOT, 본 carrier 가 runtime catch-up).
 - **Wave 2 Story-5**: overlay 3-way merge runtime — 본 ADR §결정 1 의 Kustomize-inspired customization layer reconcile.
 - **Wave 4 E1/E2/E3**: multi-version channel / codemod registry / uninstall — 본 ADR `reconcile-protocol-v1` 의 `version_handshake` + `reconcile_strategy` enum placeholder 영역 활용.

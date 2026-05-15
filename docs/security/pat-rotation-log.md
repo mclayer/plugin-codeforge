@@ -24,10 +24,13 @@ CFP-450 (ADR-013 Amendment 4) PAT consolidation 후 단일 `CODEFORGE_CROSS_REPO
 |---|---|---|---|---|
 | 2026-05-12T00:00:00+09:00 [^t1] | mccho@mclayer.it | CFP-450 initial issuance (Option B consolidation) | 2026-08-10 [^e1] | - |
 | 2026-05-14T00:00:00+09:00 [^t1] | mccho@mclayer.it | **CFP-627 scope grant — marketplace contents:read** added for `marketplace-drift-detection.yml` workflow (ADR-066 Amendment 2 §결정 2 scope minimum 4종 정합 + ADR-063 Amendment 3 §결정 13 reactive scheduled detection prerequisite). Scope added: `mclayer/marketplace contents:read`. **Verified live** 2026-05-15 KST via CFP-673 sub-PR (c) marketplace-parity workflow PR-time check + reactive scheduled detection PR #135 + PR #137 marketplace sync flow (PAT scope active confirmed). | 2026-08-10 [^e1] (scope add — original PAT lifetime 유지) | - |
+| PLACEHOLDER (Phase 2 진입 전 actual grant date 갱신 의무) [^t2] | mccho@mclayer.it | **CFP-743 scope grant — reconcile-target-repos contents:write + pull_requests:write** added for `scripts/codeforge-upgrade.{sh,ps1}` + UpgradeAgent reconcile PR open (ADR-066 Amendment 3 §결정 2 scope minimum 5종 정합 + reconcile-protocol-v1 v1.2 §2 desired_state_domains `github_workflow` / `issue_templates` / `codeowners` consumer `.github/` PR open prerequisite). Scope added: `reconcile-target-repos contents:write` + `reconcile-target-repos pull_requests:write` (consumer reconcile 대상 repo 한정 — org-wide write 금지, least-privilege invariant). **Phase 1 placeholder** — actual grant + live verify = Phase 2 PR 진입 전 사용자 manual blocker (ADR-066 §결정 2 Grant 절차 정합). | TBD (Phase 2 actual grant 시 90 days 기준 갱신) | - |
 
 [^t1]: 시간 부분 `00:00:00+09:00` = ADR-066 §결정 5 사용자 manual entry 의무 영역 — 실제 발급 시점 정확 시간 불명 시 발급 일자 기준 자정 placeholder (CFP-521 §결정 5 + ADR-066 schema 정합). 사용자 GitHub Settings → Developer settings → Personal access tokens → 발급 시점 정확 timestamp 확인 후 별 commit / PR 으로 정정 허용.
 
 [^e1]: 만료 일자 = 2026-05-12 발급 + 90 days (ADR-066 §결정 1 권장값) = **2026-08-10** (KST). 사용자가 GitHub Settings 에서 실제 expiration 설정 시 90 days 외 값 (예: 180 days = 2026-11-08 / 30 days = 2026-06-11) 적용 가능 — 실 설정값 확인 후 정정 허용.
+
+[^t2]: CFP-743 Amendment 3 = **Phase 1 placeholder row** (ADR-066 §결정 2 Grant 절차 + §결정 5 audit log SSOT 정합). 실제 scope grant + live verify 는 Phase 2 PR (UpgradeAgent + CLI 실 구현) 진입 전 사용자 manual blocker. Phase 2 진입 시 본 row 의 `rotated_at` 을 actual grant timestamp 로 갱신 + scope active 를 reconcile PR open 1건으로 live verify (ADR-073 verify-before-assert 정합) 후 placeholder 표기 제거 의무.
 
 ## Schema
 

@@ -1771,6 +1771,33 @@ ADR-005 plugin-meta-na 패턴(§8/§9 lane 게이트 면제)으로 진행되는 
 
 ---
 
+### §3.16 UpgradeAgent dispatch protocol (CFP-743 Wave 2 Story-3 / [ADR-076](../docs/adr/ADR-076-declarative-reconciliation-upgrade.md) §결정 5 + [reconcile-protocol-v1 v1.2](../docs/inter-plugin-contracts/reconcile-protocol-v1.md))
+
+codeforge family upgrade 의 선언적 reconciliation 실행 주체. **3 책임 분리** (ADR-076 §결정 5): SessionStart hook (detect only — filesystem touch 0 / network 0) ≠ UpgradeAgent (Plan + Apply) ≠ CLI (`scripts/codeforge-upgrade.{sh,ps1}` 단일 진입점).
+
+**Dispatch 절차** (Phase 2 carrier — CLI/UpgradeAgent 실 구현 후 활성):
+
+```
+사용자 → bash scripts/codeforge-upgrade.{sh|ps1} <mode>
+  mode = --dry-run | --apply | --rollback <version>   # CLI argument fix, 사용자 결정 분기 0
+  │
+  └─ Orchestrator → UpgradeAgent spawn (ADR-039 default subagent one-shot, 재귀 spawn 금지 platform inherent)
+       │
+       ├─ --dry-run  : 9 desired_state_domains diff preview (filesystem touch 0, network call 가능)
+       ├─ --apply    : snapshot 생성 → 9 영역 reconcile → 사후 sanity check 단일 transaction
+       │                (partial 실패 / sanity 실패 = automatic_rollback_to_snapshot, 사용자 prompt 0)
+       │                consumer .github/ 영역 reconcile = PR open (자동 merge 0, PR review gate 보존)
+       └─ --rollback <version> : 해당 version snapshot restore
+       │
+       └─ transaction 완료 → event log artifact docs/upgrade-events/<date>-<version>.md 자동 생성 (C2)
+```
+
+**핵심 invariant**: ① SessionStart hook detect 책임 침범 0 (ADR-038 Amendment 3 §결정 12) ② `user_decision_branches: 0` (Epic CFP-699 §1 WHY "0 자리" verbatim) ③ transaction completion = ADR-053 §D2 3조건 AND (marketplace sync PR merged + consumer install 완료 + drift check PASS) ④ reconcile PR scope = ADR-066 Amendment 3 (reconcile-target-repos contents:write + pull_requests:write, target/action 한정 least-privilege) ⑤ path-form 정규화 의무 (MSYS2 `/c/` — CFP-702 normalize_path bug precedent 회피). 상세 SSOT = reconcile-protocol-v1 v1.2 `mechanical_implementation_binding` block.
+
+> **CLAUDE.md cross-ref 부재 사유 (ArchitectPL 설계 결정)**: CLAUDE.md 가 line cap (≤320, ADR-012 Amendment 1 §결정 6) 을 이미 초과 (334 lines, pre-existing warning) — UpgradeAgent dispatch 는 operational reference-tier (anchor-tier 아님 — Orchestrator 가 매 turn 자기검열 대상 아님, ADR-051 Amendment 1 판정자 기준) 이므로 본 playbook §3.16 + consumer-guide 가 SSOT. CLAUDE.md line-delta 0 (over-cap 악화 회피).
+
+---
+
 ## 4. 병렬 스폰 판단
 
 ### 4.1 병렬 가능 조건 (AND)

@@ -23,7 +23,7 @@ related_stories:
   - CFP-699  # parent Epic
   - CFP-701  # 본 carrier Story (Wave 1 Story-1)
   - CFP-702  # Wave 1 Story-2 (D4 marker — sequential prerequisite)
-  - CFP-703  # Wave 2 Story-3 (UpgradeAgent + CLI — runtime carrier)
+  - CFP-743  # Wave 2 Story-3 (UpgradeAgent + CLI — runtime carrier) — KEY 정정 CFP-703→CFP-743 (Wave 1 placeholder drift / 동일 Story / fact 영향 0)
 created: 2026-05-15
 updated: 2026-05-15
 ---
@@ -181,7 +181,7 @@ SessionStart hook ≠ UpgradeAgent ≠ CLI. 3 책임 분리 (ADR-038 Amendment 3
 - **Parent Epic Issue**: https://github.com/mclayer/plugin-codeforge/issues/699
 - **본 Story Issue**: https://github.com/mclayer/plugin-codeforge/issues/701 (Wave 1 Story-1)
 - **Sequential prerequisite Story**: CFP-702 (Wave 1 Story-2 — D4 customization marker)
-- **Runtime carrier Story**: CFP-703 (Wave 2 Story-3 — UpgradeAgent + CLI)
+- **Runtime carrier Story**: CFP-743 (Wave 2 Story-3 — UpgradeAgent + CLI). KEY 정정: Wave 1 작성 시점 placeholder `CFP-703` → 실제 발의 Issue `CFP-743` (동일 Story, fact 영향 0, 추적성만 정정 — ADR-068 I-4 wording SSOT 정합)
 - **Atomicity carrier Story**: (Wave 2 Story-4 — 7 plugin atomic upgrade)
 - **3-way merge carrier Story**: (Wave 2 Story-5 — overlay 영역 reconcile 통합)
 
