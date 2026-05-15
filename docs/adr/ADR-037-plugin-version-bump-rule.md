@@ -12,11 +12,29 @@ related_files:
   - docs/adr/ADR-008-inter-plugin-contract-versioning.md
   - docs/adr/ADR-009-wrapper-only-decomposition.md
   - docs/adr/ADR-016-marketplace-registration-policy.md
+  - docs/adr/ADR-076-declarative-reconciliation-upgrade.md   # Amendment 1 cross-ref — atomic upgrade runtime carrier (§결정 8 runtime ratchet)
+  - docs/inter-plugin-contracts/reconcile-protocol-v1.md     # Amendment 1 — atomicity_boundary_runtime ratchet (v1.3) + 0 drift invariant 검증 channel
+  - scripts/check-codeforge-version-drift.sh                 # Amendment 1 — 0 drift invariant 사후 검증 mechanism (--plugin 7회 invocation)
+  - scripts/atomic-upgrade-7-plugins.sh                      # Amendment 1 — atomic upgrade 후 0 drift invariant 박제 carrier (Phase 2)
 related_stories:
   - CFP-261 (carrier)
   - CFP-259 (parent Epic)
   - CFP-262 (downstream — drift severity cross-reference)
+  - CFP-744 (Amendment 1 carrier — Wave 2 Story-4, atomic upgrade 후 0 drift invariant)
 is_transitional: false
+amendments:
+  - id: 1
+    carrier_story: CFP-744
+    date: 2026-05-16
+    title: "Atomic upgrade 후 0 drift invariant (7-plugin family atomic upgrade 정책 박제)"
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy, 해소 기준 = permanent policy). Amendment 1 = ratchet 강화 방향 (기존 detect-only drift check 위에 atomic upgrade 후 0 drift 의무 신설 — scope 확장, 약화 0). ADR-058 §결정 5 정합 — 강화 방향 amendment sunset_justification 면제 사유 (permanent policy 자기 강화)."
+mechanical_enforcement_actions:
+  # ADR-040 Amendment 3 §결정 7.A schema (list[object]: action / status / target_section [+ optional progress_note]).
+  # action name = docs/evidence-checks-registry.yaml entry name verbatim. governance category → mechanical action binding 의무.
+  - action: marketplace-parity
+    status: warning
+    progress_note: "Amendment 1 의 '0 drift invariant' = atomic upgrade 후 7 plugin version pin ↔ marketplace SSOT drift 0. 기존 marketplace-parity entry (scripts/check-marketplace-parity.sh, current_tier: warning, owner_adr ADR-016/ADR-023) 가 mirrored field cross-repo drift 를 cross-validate — Amendment 1 의 사후 0 drift 검증 mechanism reuse (신규 entry 신설 회피, ADR-060 framework 정합). 신규 evidence-check entry 는 별도 후속 CFP (atomic-upgrade-7-plugins.sh self-test) 영역."
+    target_section: "Amendment 1"
 ---
 
 # ADR-037: Plugin version bump rule SSOT — Option β + α
@@ -124,6 +142,50 @@ wrapper plugin (codeforge) 은 (1)-(12) 자체 surface 변경 외에 다음 3 tr
 - 7 plugin 자체 첫 적용 시점 = 각 plugin 의 next bump 시점 (각 plugin maintainer 자체 PR 로 적용)
 - `release-please` bot 도입 = 별도 PR / CFP (Phase 2 spillover beyond CFP-261)
 
+## Amendment 1 — Atomic upgrade 후 0 drift invariant (CFP-744, 2026-05-16)
+
+> **Carrier**: CFP-744 (Epic CFP-699 Wave 2 Story-4 — 7 plugin family atomic upgrade A2). **Source directive** (Epic Issue #699 §1 WHY verbatim, 사용자 2026-05-14 KST): *"consumer 에서 버전을 한 곳에만 잘 유지하고 있다면 어긋날 일도 없고."* 본 Amendment = 이 directive 의 mechanical 정책 박제.
+
+### Amendment 1 컨텍스트
+
+base ADR-037 (결정 1-5) 은 plugin version **bump 기준** SSOT 를 정의했다. `scripts/check-codeforge-version-drift.sh` (CFP-262) 는 drift 를 **detect only** — drift 검출 시 hard-stop blocking 하나, drift 자체가 발생하지 않도록 강제하는 invariant 는 부재했다. 사용자 directive ("버전을 한 곳에만 잘 유지하고 있다면 어긋날 일도 없고") 는 "drift 발생 후 차단" 이 아니라 **"drift 자체가 구조적으로 발생 불가능"** 을 요구한다. CFP-743 (Wave 2 Story-3, MERGED) 이 per-plugin runtime SSOT (`scripts/codeforge-upgrade.{sh,ps1}` + UpgradeAgent) 를 완성했고, CFP-744 = per-family (7 plugin) atomic upgrade runtime 신설 시점.
+
+### Amendment 1 결정
+
+**결정 A1-1 — 0 drift invariant 정의 (정책 박제)**
+
+> **codeforge family 7 plugin (wrapper `codeforge` + 6 lane plugin `codeforge-{requirements,design,review,develop,test,pmo}`) 은 atomic upgrade `--apply` 완료 직후 version pin drift 가 0 (none) 이어야 한다.** drift > 0 검출 = atomic upgrade transaction 실패 분류 → 전체 7 plugin 이전 version pin 으로 atomic rollback (per-family transaction boundary, Epic EPIC-AC-3 "부분 실패 시 전체 rollback" verbatim).
+
+본 invariant 의 의미: version 의 단일 진실원천(marketplace SSOT) 으로부터 7 plugin 이 atomic 하게 sync 되면, sync 직후 상태에서 drift 가 존재할 **구조적 가능성 자체가 없다**. drift 가 존재한다는 것 = atomic transaction 이 미완결 (= 실패) 이라는 신호. 따라서 0 drift 는 검증 대상이 아니라 **transaction 완결의 정의 자체** — "버전을 한 곳에만 잘 유지" (marketplace SSOT 단일 origin + atomic sync) 가 성립하면 "어긋날 일도 없고" (post-atomic drift 0) 가 자동 따라온다.
+
+**결정 A1-2 — 검증 scope = codeforge family 7 plugin 한정 (codex / superpowers 제외)**
+
+`scripts/check-codeforge-version-drift.sh` `PLUGIN_MARKETPLACE` map = **9 plugin** (codeforge family 7 + `codex` openai-codex/marketplace + `superpowers` claude-plugins-official/marketplace). `codex` / `superpowers` 는 **외부 marketplace** = codeforge atomic upgrade 대상이 아니다 (독립 lifecycle). 무필터 9-plugin 검사 시 codex/superpowers 독립 drift 가 **false transaction-fail → 불필요 전체 rollback** 을 유발한다. 따라서 0 drift invariant 검증 scope = **codeforge family 7 plugin 한정** — codex/superpowers 제외 보장 의무 (false rollback = 0).
+
+**결정 A1-3 — 검증 mechanism = `--plugin <name>` 7회 invocation (F-002 옵션 A 채택, drift script 변경 0)**
+
+0 drift invariant 사후 검증 = `scripts/atomic-upgrade-7-plugins.sh` 가 `bash scripts/check-codeforge-version-drift.sh --plugin <codeforge-N>` 를 7-family 명단 (`codeforge` / `codeforge-requirements` / `codeforge-design` / `codeforge-review` / `codeforge-develop` / `codeforge-test` / `codeforge-pmo`) 으로 **7회 invocation** 후 종합. **`check-codeforge-version-drift.sh` 변경 0** (`--plugin` filter 는 line 62 에 이미 존재 = contract-sanctioned scoping primitive). drift script 에 `--family` flag 신설 (옵션 B) 미채택 — 매 세션 실행되는 SSOT drift gate (CLAUDE.md "세션 개시 의무") 의 mutation 은 caller-side scoping 으로 충분히 회피 가능한 regression risk (Mapper 보수 변호 + ADR-064 minimal-change 정합). 7회 invocation 의 7-name 명단 자체가 codex/superpowers 를 구조적으로 배제 (결정 A1-2 보장).
+
+**결정 A1-4 — base ADR-037 surface table 와의 관계**
+
+본 Amendment 1 은 base 결정 1 surface table (12 surface MAJOR/MINOR/PATCH 분류) 을 **변경하지 않는다**. atomic upgrade 는 version *bump* 가 아니라 version *pin sync* (consumer 측 installed pin ← marketplace SSOT) — bump 기준 SSOT (base) 와 sync invariant (Amendment 1) 는 직교 영역. 7 plugin 자체의 plugin.json bump 결정은 여전히 base 결정 1-5 SSOT.
+
+**결정 A1-5 — reconcile-protocol-v1 §4.3 (d) ratchet 동반**
+
+본 Amendment 1 = reconcile-protocol-v1 v1.2 → **v1.3** MINOR bump (§4.3 (d) trigger 발동, `atomicity_boundary_runtime_v1` per_plugin → `atomicity_boundary_runtime_future` family_7_plugin runtime catch-up). 의미 invariant `atomicity_boundary_semantic_invariant: family_7_plugin_atomic` = ADR-016 §결정 1 SSOT, **변경 0** (runtime catch-up only — 의미 invariant 변경 시 ADR-016 §결정 1 변경 trigger 별도 carrier 의무). T3 trigger (결정 2) 미발동 — base ADR-037 surface 무변경 (결정 A1-4) + family invariant ADR (ADR-016) supersede 0.
+
+### Amendment 1 mechanical enforcement binding (ADR-040 Amendment 3 §결정 7.A)
+
+- **action**: `marketplace-parity` (evidence-checks-registry entry verbatim, current_tier: warning, scripts/check-marketplace-parity.sh)
+- **binding 근거**: marketplace-parity entry 는 wrapper + 6 lane plugin 의 mirrored field (name/version/description/author) cross-repo drift 를 검증 — Amendment 1 의 "atomic upgrade 후 version pin drift 0" 의 사후 cross-validate mechanism 으로 reuse. 신규 evidence-check entry (atomic-upgrade-7-plugins.sh self-test) 신설은 별도 후속 CFP 영역 (ADR-060 framework — 신규 entry minimal 추가 원칙 정합, 기존 entry reuse 우선).
+- **retroactive 면제**: 본 Amendment 1 = ADR-040 Amendment 3 (§결정 7.C) 발효 후 신설 amendment → `mechanical_enforcement_actions[]` 의무 적용 대상 (frontmatter 부착 완료).
+
+### Amendment 1 영향
+
+- **wrapper plugin (codeforge)**: Phase 2 `scripts/atomic-upgrade-7-plugins.sh` 신설 = 선택 setup script 추가 → base 결정 1 (i) Bootstrap script MINOR. Phase 1 (본 PR) = ADR Amendment (additive) + contract MINOR — base 결정 1 (h) additive amendment = MINOR signal (plugin.json bump = Phase 2 carrier).
+- **6 lane plugin**: 영향 0 (atomic upgrade = version pin sync, lane plugin 자체 surface 무변경).
+- **consumer**: atomic upgrade 실행 시 7 plugin pin sync 후 drift 0 자동 보증 (사용자 directive mechanical 박제 완성). consumer-guide upgrade troubleshooting cross-ref = Phase 2.
+
 ## 결과
 
 ### 긍정
@@ -150,7 +212,7 @@ wrapper plugin (codeforge) 은 (1)-(12) 자체 surface 변경 외에 다음 3 tr
 
 ## 해소 기준
 
-N/A — permanent policy
+N/A — permanent policy (`is_transitional: false`). base 결정 1-5 + Amendment 1 (0 drift invariant) 모두 permanent governance — codeforge plugin family 가 deprecate 되지 않는 한 영구 유효. Amendment 는 강화 방향만 허용 (ADR-058 §결정 5 + ADR-064 top-down self-application). Amendment 1 = ratchet 강화 (detect-only → atomic 후 0 drift 의무 신설, scope 확장) — sunset_justification 면제 (frontmatter `amendments[].sunset_justification` 명시).
 
 
 
