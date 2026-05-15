@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+# CFP-477 — pre-push-auto-rebase hook sample (opt-in local check)
+#
+# Installs to: .git/hooks/pre-push (per worktree, opt-in)
+#
+# 검증 1종:
+#   BEHIND-rebase abort — branch 가 origin/main 보다 BEHIND 시 abort + 4-line guidance.
+#   hook 안에서 직접 git pull --rebase 실행 금지 (git-scm hook semantics 정합 —
+#   hook 은 advisory abort 만 수행, user 가 guidance 따라 manual rebase + 재 push).
+#
+# Activation (default off):
+#   export PRE_PUSH_AUTO_REBASE=1
+#   git push origin <branch>
+#
+# Bypass (one-off):
+#   PRE_PUSH_AUTO_REBASE=0 git push origin <branch>
+#
+# 설치 (opt-in):
+#   cp templates/.claude/hooks/pre-push-auto-rebase.sh.sample .git/hooks/pre-push
+#   chmod +x .git/hooks/pre-push
+#
+# 비활성화: rm .git/hooks/pre-push 또는 PRE_PUSH_AUTO_REBASE=0 환경변수 설정
+#
+# Cross-ref:
+#   ADR-063 §결정 5 sublayer — pre-push auto-rebase guidance (CFP-477 carrier)
+#   CFP-447 — pre-push.sh.sample (atomic invariant advisory, sibling hook pattern)
+#   CFP-627 — baseline drift detection (동기 배경: ~30분/commit cadence)
+
+set -uo pipefail
+
+# --- Activation guard ---
+
+PRE_PUSH_AUTO_REBASE="${PRE_PUSH_AUTO_REBASE:-0}"
+
+if [[ "$PRE_PUSH_AUTO_REBASE" != "1" ]]; then
+    # Default off — silent no-op
+    exit 0
+fi
+
+# --- Step 1: current branch detection ---
+
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")
+
+if [[ -z "$CURRENT_BRANCH" ]]; then
+    echo "ℹ pre-push-auto-rebase: branch 감지 실패 — skip" >&2
+    exit 0
+fi
+
+if [[ "$CURRENT_BRANCH" == "HEAD" ]]; then
+    # detached HEAD — skip safely (tag checkout 등)
+    echo "ℹ pre-push-auto-rebase: detached HEAD 감지 — skip" >&2
+    exit 0
+fi
+
+# --- Step 2: fetch origin (best-effort, timeout 10s) ---
+
+if ! git fetch origin main --quiet --timeout=10 2>/dev/null; then
+    # Fetch 실패 — network 일시 issue 가능성 → graceful warning + exit 0 (false-block 방지)
+    echo "⚠ pre-push-auto-rebase: origin fetch 실패 — behind 판정 skip (network issue 가능)" >&2
+    echo "  권고: 연결 복구 후 수동으로 'git fetch origin main' 실행하여 상태 확인" >&2
+    exit 0
+fi
+
+# --- Step 3: BEHIND count computation ---
+
+if ! git rev-parse origin/main >/dev/null 2>&1; then
+    echo "ℹ pre-push-auto-rebase: origin/main ref 없음 — skip" >&2
+    exit 0
+fi
+
+BEHIND_COUNT=$(git rev-list --count "${CURRENT_BRANCH}..origin/main" 2>/dev/null || echo "0")
+
+if [[ "$BEHIND_COUNT" -le 0 ]]; then
+    # up-to-date — no-op
+    exit 0
+fi
+
+# --- Step 4: abort + 4-line guidance ---
+
+echo "" >&2
+echo "❌ pre-push-auto-rebase: branch '${CURRENT_BRANCH}' 가 origin/main 보다 ${BEHIND_COUNT} 커밋 BEHIND" >&2
+echo "   rebase 권고: git fetch origin main && git rebase origin/main" >&2
+echo "   충돌 시: git rebase --abort 후 수동 resolve → 재시작" >&2
+echo "   bypass: PRE_PUSH_AUTO_REBASE=0 git push <args>" >&2
+echo "" >&2
+
+exit 1
