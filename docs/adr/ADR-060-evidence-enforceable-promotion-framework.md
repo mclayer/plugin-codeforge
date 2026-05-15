@@ -8,6 +8,14 @@ is_transitional: false
 carrier_story: CFP-389
 supersedes: []
 amends: []
+mechanical_enforcement_actions:
+  # ADR-040 Amendment 3 §결정 7.A (A안 list[object]) — Amendment 13 (CFP-722) 신규 mechanical action 도입.
+  # ADR-060 본문 §결정 1-25 = framework 자체 (개별 entry 의 mechanical action 은 registry yaml SSOT).
+  # 본 field = Amendment 가 신규 lint carrier 일 때 §결정 N ↔ entry binding 명시 (Amendment 12 doc-only 면제와 상이).
+  - action: story-section-ownership          # docs/evidence-checks-registry.yaml entries[].name verbatim (Phase 2 row append)
+    status: warning                          # ADR-060 §결정 5 첫 도입 = warning (continue-on-error, never block)
+    progress_note: "CFP-722 Amendment 13 carrier — Phase 1 = ADR/Story §3·§7/Change Plan, Phase 2 = script/lib/2 workflow/registry row/fixture. blocking-on-pr 승격 target = §결정 27.E (data-loss expedited-gate = FUTURE labeled option, STANDARD §결정 6 threshold ship)"
+    target_section: §결정 27                  # 본 Amendment 13 의 mechanical action ↔ §결정 binding
 amendment_log:
   - amendment: 1
     carrier_story: CFP-390
@@ -268,6 +276,57 @@ amendment_log:
       sibling_dependencies append `[CFP-390, CFP-412, CFP-455, CFP-449, CFP-481, CFP-506,
       CFP-509, CFP-508, CFP-530, CFP-583, CFP-662]` (Amendment 2 §결정 6 (c) chain 정합,
       self-carrier CFP-734 제외).
+  - amendment: 13
+    carrier_story: CFP-722
+    date: 2026-05-16
+    direction: strengthen
+    sunset_justification: null  # ADR-058 §결정 5 trigger = `is_transitional: true` ADR 의 amendment. ADR-060 = `is_transitional: false` 영구 framework (§결정 11 permanent SSOT host) → trigger 자체 미해당 (약화/강화 방향 무관 — trigger 는 is_transitional 값 기준). 강화 방향 amendment (behavioral-directive-only → +mechanical-enforcement-layer 추가 = ratchet-UP) — 선행 사례 (Amendment 3/4/5/10/11) 정합. ADR-064 약화-차단 self-application 과 별개 개념.
+    summary: |
+      신설 §결정 27 — 11번째 warning-tier evidence-checks-registry entry
+      `story-section-ownership` 등록 carrier amendment. cross-repo
+      internal-docs Story PR 의 per-section diff 를 append-only
+      (additions-dominant) vs destructive (high-delete-ratio, incident
+      PR #441 = +216/-850 signature) 분류 + monopoly section
+      (§10 CFP-32 fix-event-v1 / §13 ArchitectPL verdict / §14 ADR-031
+      lane-evidence / §10.5 GitOps) author-identity attribution.
+      `codeforge:lane-self-write-boundary` skill (normative behavioral
+      directive SSOT) 의 mechanical-enforcement layer 추가 — ownership
+      semantic 신설/재정의 0건 (ADR-031 §결정 1 FROZEN / CFP-32
+      fix-event-v1 / ADR-013 dogfood-out = cross-ref only, 검증 강화).
+      구조 = story-section-9-typed (CFP-410) precedent verbatim 차용
+      (thin-wrapper bash + scripts/lib python SSOT ADR-061 §결정 1 +
+      template/self-app byte-identical ADR-005 + continue-on-error
+      warning-tier + tests/fixtures + registry row). git-ref
+      failure-handling layer = NEW combination (story-section-1-immutable
+      try/catch/skip MECHANICS + story-section-9-typed exit-0 VERDICT —
+      어느 선례도 verbatim base 아님, 명시 설계). dual-deployment =
+      wrapper template (consumer docs/stories/*.md) + wrapper self-app
+      (byte-identical, sibling-workflow-parity 자동) + internal-docs
+      adapted self-app (*/stories/*.md, SHA-pin 양 deployment 동일 —
+      story-section-1-immutable.yml dual-deployment 선례 답습; SEC-F1
+      trust-minimal = ZERO cross-repo gh api/git fetch + 신규 PAT 0건,
+      3 독립 per-repo self-app, wrapper-fetches-internal-docs = net trust
+      expansion = DesignReview blocker). registry yaml row append
+      (Phase 2 PR scope) — schema_version 1.2 무변경 (Amendment 2 schema
+      v1.1 → v1.2 Amendment 6 정합, current_tier: warning + bypass_label:
+      hotfix-bypass:story-section-ownership per-entry namespace
+      ADR-024 Amd3). ADR-040 Amendment 3 §결정 7.A frontmatter
+      mechanical_enforcement_actions[] 신규 추가 (Amendment 12 doc-only
+      action 0건 면제와 상이 — 본 Amd13 = 신규 lint carrier) + §결정 27
+      ↔ story-section-ownership entry binding (§결정 7.B Pattern I).
+      ratchet 위반 0건 — enum 값 / tier 추가 / bypass channel 동작 변경
+      없음, framework 의 자연스러운 사용 사례 entry 추가 + behavioral
+      directive 의 mechanical layer 강화 only (ADR-058 §결정 5
+      sunset_justification 의무 = is_transitional:false 영구 framework
+      이므로 trigger 자체 미해당 — 강화 방향 amendment). lane 분류 =
+      full-lane (신규 script/workflow 동반 → ADR-054 §결정 5 doc-only
+      부적격). Phase 1 = ADR Amd13 + Story §3·§7 + Change Plan,
+      Phase 2 = script/lib/2 workflow/registry row/skill cross-ref/
+      ownership-yaml/regression entry/fixture.
+      sibling_dependencies append `[CFP-390, CFP-412, CFP-455, CFP-449,
+      CFP-481, CFP-506, CFP-509, CFP-508, CFP-530, CFP-583, CFP-662,
+      CFP-734]` (Amendment 2 §결정 6 (c) chain 정합, self-carrier
+      CFP-722 제외).
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
@@ -1379,3 +1438,53 @@ KPI 의 metric-sample history 누적 패턴 선택은 다음 **결정 가능한 
 - **ADR-013** (dogfood-out): Story file = `mclayer/codeforge-internal-docs:wrapper/stories/CFP-734.md`. 정책 SSOT = `mclayer/plugin-codeforge` 본 ADR.
 - **§결정 6 / §결정 11** (본 ADR 본문): sunset gate 측정이 history 누적을 암묵 전제 → KPI history governance = framework 하위 (Amendment host 구조적 정합 / framework permanent SSOT 정합).
 
+## Amendment 13 (CFP-722, 2026-05-16)
+
+### Amendment 13-결정 27 (신설) — 11번째 warning-tier entry `story-section-ownership` 등록 + lane-self-write-boundary mechanical-enforcement layer
+
+**Carrier**: CFP-722 / Issue [mclayer/plugin-codeforge#722](https://github.com/mclayer/plugin-codeforge/issues/722) / Story file `wrapper/stories/CFP-722.md` (codeforge-internal-docs SSOT, ADR-013 dogfood-out 정합) / Change Plan `wrapper/change-plans/CFP-722.md`.
+
+**Direct trigger**: CFP-688 Phase 2 sub-PR (b) 진행 중 (2026-05-15 KST) DeveloperPLAgent 가 Story §8 self-write 시 **destructive rewrite** — PR [mclayer/codeforge-internal-docs#441](https://github.com/mclayer/codeforge-internal-docs/pull/441) (closed-no-merge, additions:216 / deletions:850 / changes:1066). DeveloperPL owner boundary = §8/§8.5 only ([`codeforge:lane-self-write-boundary`](https://github.com/mclayer/plugin-codeforge/blob/main/skills/lane-self-write-boundary/SKILL.md) SSOT) 이나 §1.1/§2/§3/§4/§5/§6/§7/§9/§10 (Orchestrator fix-event-v1 monopoly CFP-32)/§13 (ArchitectPL verdict)/§14 (Orchestrator monopoly ADR-031) destructive 다수 침범. §1 verbatim invariant 만 우연히 보존 (`story-section-1-immutable.yml` 가 §1 만 cover). PR #441 close 후 Orchestrator inline append-only redo (PR #442, MERGED `5940799`)로 복구.
+
+**Background root cause**: `story-section-1-immutable.yml` = §1 verbatim 영역만 mechanical guard. §2-§14 per-lane ownership matrix 위반 = mechanical detection 영역 외. `codeforge:lane-self-write-boundary` skill = normative SSOT (behavioral directive) — **mechanical enforcement layer 부재** 가 진짜 결함이다 (skill 자체 아님). cross-repo internal-docs Story PR 의 per-section diff ownership cross-validate 책임 lane 미지정 (CodeReview lane = plugin-codeforge code PR 영역). per-section ownership governance = evidence-enforceable framework 의 자연스러운 신규 warning-tier entry — 신규 standalone ADR 아닌 ADR-060 Amendment host 가 구조적으로 정합 (§결정 11 framework permanent SSOT 정합 — Amendment 3/4/5/10/11 선례 동형, 모두 신규 warning-tier entry = Amendment 형식).
+
+#### 27.A — 결정 (신규 entry `story-section-ownership` + warning-tier)
+
+`docs/evidence-checks-registry.yaml` 에 신규 entry `story-section-ownership` append (Phase 2 PR scope — schema_version `1.2` 무변경, row-append only). entry schema = 기존 `story-section-9-typed` entry 17-field verbatim 차용 (name / description / detect_command `bash scripts/check-story-section-ownership.sh` / workflow `templates/github-workflows/story-section-ownership-check.yml` / `current_tier: warning` / `bypass_label: hotfix-bypass:story-section-ownership` / `bypass_audit_lint` / `promotion_criteria{pr_cumulative_min:20, failure_threshold:0, sibling_dependencies:[], evidence_artifacts}` / `introduced_by: CFP-722` / `owner_adr: ADR-031` (lane-self-write-boundary ownership semantic source) / `carrier_adr: ADR-060` / `recurrence{count:0, promotion_trigger:none}` / `status`).
+
+**tier = warning (ADR-060 §결정 5 첫 도입)**: `continue-on-error: true` workflow + script `sys.exit(0)` always. 모든 fixture (destructive PR #441 +216/-850 reproduction 포함) exit-code 0 — violations stdout-report only, never block PR.
+
+#### 27.B — mechanical action ↔ §결정 binding (ADR-040 Amendment 3 §결정 7.B Pattern I)
+
+**Mechanical enforcement**: `story-section-ownership` (status: warning) — 본 §결정 27 의 mechanical lint 는 `docs/evidence-checks-registry.yaml` 의 동명 entry SSOT. frontmatter `mechanical_enforcement_actions[]` (ADR-040 Amendment 3 §결정 7.A A안 list[object]) 의 단일 entry 와 binding. Amendment 12 (§결정 26 doc-only, mechanical action 0건) 와 상이 — 본 Amd13 = 신규 lint carrier 이므로 §결정 7.A mandate 적용 (ADR-060 frontmatter 에 `mechanical_enforcement_actions[]` field 신규 추가). detect/workflow/tier 의 entry-level SSOT = registry yaml (frontmatter 중복 보유 금지, ADR-040 §결정 7.A B안 거부 사유 정합).
+
+#### 27.C — ratchet 방향 + sunset_justification (ADR-058 §결정 5)
+
+ADR-058 §결정 5 의 trigger = **`is_transitional: true` ADR 의 amendment** 시 amendment_log `sunset_justification` 명시 의무. ADR-060 = `is_transitional: false` 영구 framework (frontmatter line 7 + §결정 11 permanent SSOT host) → §결정 5 trigger **자체 미해당** (약화/강화 방향 무관 — trigger 는 `is_transitional` 값 기준). 본 Amendment 13 = 강화 방향 (behavioral-directive-only `lane-self-write-boundary` skill → **+mechanical-enforcement-layer** 추가 = detection coverage 확대 ratchet-UP, 약화 0). amendment_log `sunset_justification: null` = 선행 강화-방향 amendment (Amendment 3/4/5/10/11, ADR-040 Amd) 와 정합. **별개 개념 주의**: ADR-064 의 "약화 방향 차단" self-application narrative 은 ADR-064-specific ratchet concept 이며 ADR-058 §결정 5 의 `is_transitional`-based trigger 정의와 분리 (혼합 금지).
+
+#### 27.D — ADR-031 / CFP-32 / ADR-013 cross-ref only (재정의 0건)
+
+본 §결정 27 = 기존 ownership 정책의 mechanical-enforcement layer 추가. 다음은 cross-ref only — ownership semantic 신설/재정의 0건:
+
+- **ADR-031 §결정 1 FROZEN + Amendment 1 (CFP-275)**: §14 Lane Evidence = Orchestrator self-write monopoly. Amendment 1 = Orchestrator-owned delegate subagent 의 §14 write 도 "Orchestrator self-write" 정의 포함 (mechanism-level subagent 경유여도 ownership identity = Orchestrator; lane plugin agent 자체 임의 §14 직접 append 만 금지 — lane plugin spawn ≠ Orchestrator-owned delegate spawn). 본 lint 의 monopoly attribution = 이 정의 검증 (lane-plugin-direct = FAIL / Orchestrator + Orchestrator-owned delegate subagent = PASS).
+- **CFP-32 fix-event-v1 Amendment (CFP-275)**: §10 FIX Ledger Orchestrator monopoly (행 삭제·수정·재정렬 금지) — §14 와 동형 delegate-subagent 정의. monopoly INV-DI-2 (ANY base-row mutation = candidate violation) 의 근거.
+- **ADR-013 dogfood-out**: codeforge family Story file = `mclayer/codeforge-internal-docs:<plugin>/stories/` — cross-repo 경계 (충돌 아님, dual-deployment scope 정의). SEC-F1 trust-minimal (per-repo self-app, ZERO cross-repo fetch/PAT) 가 이 경계의 보안 invariant.
+
+#### 27.E — blocking-on-pr 승격 target (FUTURE labeled option — STANDARD ship)
+
+본 Amendment = warning-tier 만 ship (ADR-060 §결정 5 framework warning-first 준수). promotion_criteria = ADR-060 §결정 6 **STANDARD threshold** (`pr_cumulative_min: 20` / `failure_threshold: 0`). data-loss severity (PR #441 미검출 merge 시 ~700 LOC upstream lane work 영구 손실 risk) 가 expedited promotion gate 를 정성적으로 정당화하나 — 본 Amendment 는 expedited gate 를 **encode 하지 않는다**. ADR-064 §결정 1 CFP-scope-unitary ("한 CFP 안 '경량 → full' 단계 채택 금지") 정합 — expedited-gate 는 prose/registry comment 의 **FUTURE labeled option** 으로만 기록, 별 follow-up CFP 의 독립 brainstorm + Story + PR 영역. blocking-on-pr 승격 precondition 1 항목: internal-docs CODEOWNERS 부재 (cross-repo bypass-authz path 가 incident-carrier repo 에서 inoperative — warning-tier 동안은 무의미하나 blocking 승격 시 해소 필요).
+
+#### 27.F — lane 분류 (ADR-054 §결정 5)
+
+**full-lane** (doc-only fast-path **부적격**). 근거: 신규 `scripts/check-story-section-ownership.sh` + `scripts/lib/check_story_section_ownership.py` + `templates/github-workflows/story-section-ownership-check.yml` + `.github/workflows/` self-app + `tests/fixtures/` 동반 → ADR-054 §결정 5 (workflow/script 변경 = full-lane) 트리거. Phase 1 PR (doc §1-§7 + Change Plan + 본 ADR Amd13) + Phase 2 PR (script/lib/2 workflow/registry row/skill cross-ref/ownership-yaml/regression entry/fixture). 신규 standalone ADR 미도입 → ADR-RESERVATION row append 불요 (Amendment = 번호 예약 대상 아님, Amendment 12 §26.G 선례 동형). 신규 §결정 번호 = 27 (본문 §결정 1-12 + Amendment §결정 13-26 다음 sequential).
+
+#### Cross-ref
+
+- **ADR-031 §결정 1 + Amendment 1 (CFP-275)** / **CFP-32 fix-event-v1 Amendment (CFP-275)**: §14/§10 monopoly + delegate-subagent ownership 정의 — 본 lint attribution 규칙의 ground truth (cross-ref only, 재정의 0건).
+- **ADR-013 (dogfood-out)**: cross-repo Story file 경계 — SEC-F1 trust-minimal per-repo self-app.
+- **ADR-005 (byte-identical mirror)**: wrapper template ↔ self-app byte-identity = `sibling-workflow-parity` 자동 강제 (신규 parity check 불요). internal-docs adapted self-app = 의도적 path divergence (`*/stories/*.md`) 만, SHA-pin 양 deployment 동일 (internal-docs 의 unpinned actions = 선재 incidental defect, 답습 금지).
+- **ADR-061 §결정 1**: thin-wrapper bash + scripts/lib python SSOT (NO heredoc) — story-section-9-typed precedent 동형.
+- **ADR-040 Amendment 3 §결정 7.A/7.B**: frontmatter `mechanical_enforcement_actions[]` + 본문 §결정 27 reference (Pattern I) — Amendment 12 doc-only 면제와 상이 (신규 lint carrier).
+- **ADR-058 §결정 5**: `is_transitional` 기준 trigger — `is_transitional: false` 영구 framework 이므로 미해당 + 강화 방향 (ADR-064 self-application 과 별개).
+- **ADR-064 §결정 1**: CFP-scope-unitary — 27.E expedited-gate = FUTURE option 만 (경량→full 번들 금지).
+- **§결정 5 / §결정 6 / §결정 11** (본 ADR 본문): warning-first / standard promotion threshold / framework permanent SSOT host — 본 Amendment 정합.
