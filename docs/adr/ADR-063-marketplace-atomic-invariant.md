@@ -157,9 +157,7 @@ production 장애 / security incident 대응 시 atomic invariant 일시 bypass 
 |---|---|---|
 | plugin.json ↔ CHANGELOG | `invariant-check` workflow | 그대로 |
 | plugin.json ↔ marketplace.json | `check-marketplace-parity.sh` post-PR | pre-commit hook (local) 권장 |
-| 3-file atomic 강제 | 부재 | `check-version-bump-atomic.sh` (CFP-441 / Phase 2 PR-time CI) |
-| local pre-push (advisory) | 부재 | `templates/.claude/hooks/pre-push.sh.sample` (CFP-447 opt-in advisory + `PRE_PUSH_BLOCKING=1` blocking 분기) |
-| local pre-push (auto-rebase guidance) | 부재 | `templates/.claude/hooks/pre-push-auto-rebase.sh.sample` (CFP-477 opt-in env `PRE_PUSH_AUTO_REBASE=1`) — advisory abort + 4-line guidance, hook 안 직접 `git pull --rebase` 실행 금지 (git-scm hook semantics 정합) |
+| sublayer enumeration (defense-in-depth) | 부재 | **[defense-in-depth-sublayer-registry-v1](../inter-plugin-contracts/defense-in-depth-sublayer-registry-v1.md)** (CFP-709 / ADR-075) — id=1 PR-time CI atomic (CFP-441 / `check-version-bump-atomic.sh` + `version-bump-atomic-check.yml`) / id=2 local pre-push advisory (CFP-447 / `pre-push.sh.sample` + `PRE_PUSH_BLOCKING=1`) / id=3 local pre-push auto-rebase guidance (CFP-477 / `pre-push-auto-rebase.sh.sample` + `PRE_PUSH_AUTO_REBASE=1` env, advisory abort + 4-line guidance, hook 안 직접 `git pull --rebase` 실행 금지). 향후 sublayer 추가 시 registry row append 만 — 본 ADR-063 본문 영향 0건. |
 
 ### 결정 6: ADR-016 vs ADR-063 분리 — scope 명확화
 
@@ -356,7 +354,7 @@ ADR-065 의 `mechanical_self_check_passed` 와 **별도 boolean field** 운영 (
    - **E-1 PAT 미갱신 (401 auth failure, fail-closed manual blocker)**: `gh api` 401 → script exit 2 → `codeforge-kpi-infra-error` label Issue 발의 (drift Issue 와 별도 분기). 사용자 PAT 재발급 의무 — 다음 cron run 자동 회복 불가 (rate-limit 과 분리 처리).
    - **E-2 marketplace schema drift (registration leak)**: marketplace.json `plugins[]` 안 codeforge family plugin entry 결손 → `[MARKETPLACE-DRIFT] codeforge family registration leak — <plugin-name>` Issue 발의 (ADR-016 §결정 1 family scope violation).
    - **E-3 drift 0건 idempotent**: silent success (Issue 발의 0건, workflow status `success`).
-   - **E-4 API 호출 실패 — 3 분기 (DesignReview FIX iter 1 F-DR-005 ADR-068 I-3 guard placement intent 정합)**: `gh api` / `gh issue list` 응답 코드별 분기 처리. 단일 "fail-closed" 추상화 회피 — drift detection semantics 분기 강제 의무.
+   - **E-4 API 호출 실패 — 3 분기 (DesignReview FIX iter 1 F-DR-005 ADR-068 I-3 guard placement intent 정합)**: `gh api` / `gh issue list` 응답 코드별도 분기 처리. 단일 "fail-closed" 추상화 회피 — drift detection semantics 분기 강제 의무.
      - **E-4a 401 (PAT expired, fail-closed manual blocker)**: workflow FAIL + `codeforge-kpi-infra-error` Issue 발의. 사용자 PAT 재발급 의무 — 다음 cron run 자연 회복 불가. E-1 과 동일 분기.
      - **E-4b 429 (rate-limit exceeded, fail-open silent retry)**: warning log + workflow status `success` (silent dedup 회복). 다음 cron run (24h 후) 자연 회복 — silent duplicate Issue 발의 차단 보다 false-negative 단기 허용 우선 (rate-limit 5000 req/h per-PAT vs 8 req/cron 0.16% util — 419 status occurrence 자체가 외부 traffic surge signal). guard placement intent = invariant 우선순위 = false-positive Issue 발의 (회복 후 cron run 자동 detection) > false-negative 단기 (24h delay).
      - **E-4c 5xx / network error (fail-closed-with-retry within same run)**: in-run retry 3회 (exponential backoff 1s/2s/4s) 후 모두 실패 시 workflow FAIL + `codeforge-kpi-infra-error` Issue 발의. transient network spike 회복 patch — 다음 cron 까지 (24h) 대기 회피.
