@@ -1,15 +1,17 @@
 ---
 kind: registry
 registry: reconcile-protocol
-version: "1.0"
+version: "1.1"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/reconcile-protocol-v1.md
 date: 2026-05-15
 authors:
   - ArchitectAgent (CFP-701 Wave 1 Story-1 carrier — declarative reconciliation upgrade flow schema SSOT)
+  - DeveloperPLAgent (CFP-702 Wave 1 Story-2 Phase 2 — §4.3 (b) trigger 발동, marker_block_syntax_* fields 확장)
 version_history:
   - { version: "1.0", date: 2026-05-15, carrier: CFP-701, change: "initial — declarative reconciliation upgrade flow schema SSOT. 9 영역 desired state enumeration + dry-run/snapshot/transaction 3 mode enum + customization preservation entry (marker block, Story-2 prerequisite) + version_handshake / reconcile_strategy placeholder reserve (Wave 4 carrier)." }
+  - { version: "1.1", date: 2026-05-15, carrier: CFP-702, change: "§4.3 (b) trigger 발동 — Wave 1 Story-2 marker block syntax 확정. customization_preservation_entry 영역 확장: marker_block_syntax_* 4 fields 정식화 (comment prefix per-filetype / nesting_policy / lint_behavior / migration_script). ADR-027 Amendment 3 §결정 7.A-7.E verbatim cross-ref." }
 owner_adr: ADR-076
 carrier_story: CFP-701
 sibling_sync_exempt: true
@@ -153,10 +155,33 @@ reconcile_protocol:
   
   # === Customization preservation entry (Story-2 prerequisite cross-ref) ===
   customization_preservation_entry: "marker_block"  # Wave 1 Story-2 carrier (CFP-702) — D4 customization marker
-  marker_block_syntax_carrier: "CFP-702"  # 본 contract = 영역 declare only
+  marker_block_syntax_carrier: "CFP-702"  # §4.3 (b) trigger 발동 완료 — marker syntax 확정
   marker_block_absent_behavior: "wholesale_mirror_with_user_visible_loss_report"
   # consumer 가 marker block 도입 전 customization 영역 = 본 Story-1 scope 안 fallback 정의 의무.
   # Story-2 carrier 의 retroactive migration script (scripts/migrate-existing-customization.sh) 가 사후 marker wrap mitigation.
+  # === §4.3 (b) trigger 발동 — marker_block_syntax 영역 확장 (CFP-702 Phase 2, v1.0 → v1.1) ===
+  marker_block_syntax:
+    # ADR-027 Amendment 3 §결정 7.A.1 Axis 1 — file-type별 comment prefix variant
+    comment_prefix_per_filetype:
+      yml_yaml_sh: { begin: "# BEGIN wrapper-managed", end: "# END wrapper-managed" }
+      md: { begin: "<!-- BEGIN wrapper-managed -->", end: "<!-- END wrapper-managed -->" }
+      json: { kind: "sidecar_manifest", path: ".claude/_overlay/.wrapper-managed-manifest.json", carrier: "Wave 2 Story-5" }
+    # ADR-027 Amendment 3 §결정 7.D.1 Axis 2 — nesting 정책
+    nesting_policy: "flat_only"  # nested marker = lint reject (BEGIN...BEGIN...END...END = malformed)
+    # ADR-027 Amendment 3 §결정 7.D — lint 행동
+    lint_behavior:
+      orphan_begin: "exit_nonzero"   # BEGIN 만 있고 END 없음 = malformed
+      orphan_end: "exit_nonzero"     # END 만 있고 BEGIN 없음 = malformed
+      reversed_order: "exit_nonzero" # END 가 BEGIN 보다 앞 = malformed
+      nested: "exit_nonzero"         # nested marker pair = malformed
+      normal_pair: "exit_zero"       # BEGIN ... END 정상 pair = PASS
+    lint_script: "scripts/check-wrapper-managed-block.sh"
+    lint_tier: "blocking-on-pr"      # ADR-027 §결정 7.F + ADR-060 §결정 5
+    # ADR-027 Amendment 3 §결정 7.E.1 Axis 3 — migration false-positive boundary
+    migration_script: "scripts/migrate-existing-customization.sh"
+    migration_false_positive_boundary: "byte_diff_zero_AND_manifest_registered"
+    migration_idempotency: "n_runs_equals_1_run_effect"  # Ansible blockinfile 동형
+    dry_run_classified_as_decision_branch: false  # reconcile-protocol-v1 §4.3 + Epic §1 WHY "0 자리" 정합
   
   # === Snapshot ↔ ADR-067 RESET disjoint layer (Invariant carrier, ADR-076 §결정 4 verbatim) ===
   snapshot_reset_disjoint_layer:
