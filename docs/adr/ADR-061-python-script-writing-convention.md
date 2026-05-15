@@ -186,7 +186,7 @@ flowchart TD
 
 CFP-455 (Option A prior art) 가 `scripts/check-evidence-registry.sh` (8-line thin wrapper) + `scripts/lib/check_evidence_registry.py` (314 lines 외부 split) pattern 1 file 적용. CFP-478 = 동일 패턴 27 후보 (19 scripts/ + 8 templates/github-workflows/) bulk scale-up — `scripts/lib/` directory 1 → 28 file 전환. ADR-061 §결정 6 본문 verbatim "본 ADR scope 외 — 별도 follow-up CFP carrier" 명시 → CFP-478 = follow-up CFP carrier.
 
-본 Amendment 는 ratchet ↑ direction (강화 방향) — ADR-058 §결정 5 `sunset_justification` 의무 면제 (§결정 5 strengthen direction 정합).
+본 Amendment 는 **ratchet ↑ direction** (강화 방향 — 정책 scope 확장 + 의무 강도 격상, 약화 방향 변경 0건) — ADR-058 §결정 5 `sunset_justification` 의무 면제 (§결정 5 strengthen direction 정합. ADR-058 §결정 5 SSOT: ratchet ↑ = `is_transitional: false → true` 다운그레이드 또는 forbid-list dictionary 축소 등의 약화 변경이 아닌 경우).
 
 ### 결정 (Amendment delta)
 
