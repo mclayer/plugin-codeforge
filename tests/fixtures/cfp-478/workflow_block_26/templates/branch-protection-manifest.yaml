@@ -1,0 +1,6 @@
+required_status_checks:
+  contexts:
+    - name: doc-frontmatter-check
+    - name: doc-section-schema-check
+    - name: invariant-check
+    - name: phase-gate-mergeable

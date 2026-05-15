@@ -89,31 +89,7 @@ jobs:
             exit 0
           fi
           # §1 섹션 추출: "## 1. 사용자 요구사항" ~ 다음 "## " 헤딩 전까지
-          # ADR-061: heredoc single-quoted <<'EOF'
-          python3 - <<'PYEOF'
-          import sys, re
-          from pathlib import Path
-          import os
-          key = os.environ["KEY"]
-          story_file = Path(f"docs/stories/{key}.md")
-          content = story_file.read_text(encoding="utf-8")
-          # §1 섹션 추출 (## 1. 이후 ~ 다음 ## 이전)
-          m = re.search(
-              r'^##\s+1\.[^\n]*\n(.*?)(?=^##\s|\Z)',
-              content, re.MULTILINE | re.DOTALL
-          )
-          if not m:
-              print("::notice::Story §1 섹션 부재 — skip")
-              with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-                  f.write("skip=true\n")
-              sys.exit(0)
-          section_text = m.group(1).strip()
-          # 임시 파일에 저장 (shell injection 차단 — printf '%s' 패턴)
-          with open("/tmp/story-section-1.txt", "w", encoding="utf-8") as f:
-              f.write(section_text)
-          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-              f.write("skip=false\n")
-          PYEOF
+          python3 "${GITHUB_WORKSPACE}/scripts/lib/workflow_section1_verbatim_postmerge_a.py"
 
       - name: Fetch Issue body §1 from GitHub API
         id: issue_section
@@ -144,27 +120,9 @@ jobs:
             exit 0
           fi
 
-          # Issue body §1 섹션 추출 (ADR-061: heredoc single-quoted <<'EOF')
+          # Issue body §1 섹션 추출 — /tmp/issue-body.txt pre-written above (shell injection 차단)
           printf '%s' "$ISSUE_BODY" > /tmp/issue-body.txt
-          python3 - <<'PYEOF'
-          import re, sys, os
-          content = open("/tmp/issue-body.txt", encoding="utf-8").read()
-          # ### 사용자 요구사항 ~ 다음 ### 이전
-          m = re.search(
-              r'^###\s+사용자 요구사항[^\n]*\n(.*?)(?=^###\s|\Z)',
-              content, re.MULTILINE | re.DOTALL
-          )
-          if not m:
-              print("::notice::Issue body 에서 사용자 요구사항 섹션 부재 — skip")
-              with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-                  f.write("skip=true\n")
-              sys.exit(0)
-          section_text = m.group(1).strip()
-          with open("/tmp/issue-section-1.txt", "w", encoding="utf-8") as f:
-              f.write(section_text)
-          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
-              f.write("skip=false\n")
-          PYEOF
+          python3 "${GITHUB_WORKSPACE}/scripts/lib/workflow_section1_verbatim_postmerge_b.py"
 
       - name: Compare §1 byte-identical
         id: compare
