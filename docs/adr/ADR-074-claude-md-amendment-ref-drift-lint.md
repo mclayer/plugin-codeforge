@@ -141,7 +141,7 @@ ADR-065 §결정 1 #4 (link target Phase 분배 — Phase 1 PR doc 안 Phase 2 f
 
 Stale ref detect 의 false positive 영역 명시:
 
-1. **inline pattern 외 ADR reference**: link target 만 있고 "Amendment N" 명시 없는 line (예: `[ADR-073](ADR-073-...md)`) → drift check skip (안전 — 명시적 stale 만 detect)
+1. **inline pattern 외 ADR reference**: link target 만 있고 "Amendment N" 명시 없는 line (예: `[ADR-073](ADR-073-orchestrator-verify-before-assert.md)`) → drift check skip (안전 — 명시적 stale 만 detect)
 2. **multi-Amendment inline**: 같은 line 안 `Amendment 2 / Amendment 3` 처럼 다중 reference → 모두 amendment_log length 비교 (모두 stale 아님 확인). false positive 부재.
 3. **frontmatter amendment_log 부재 ADR**: 신규 ADR 또는 amendment 0건 ADR → `Amendment N` reference 0건 자연스러움. mismatch 0 (false positive 부재).
 4. **stale ref 에서 Amendment N = length 도 PASS**: 정확히 length 와 일치하면 PASS (latest amendment reference 정상).
