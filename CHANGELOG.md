@@ -7,6 +7,12 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.65.0] - 2026-05-15
+
+### Added (Story flow + lane orchestration)
+
+- **CFP-673 marketplace-drift-detection artifact Phase 2 sub-PR (c) — verification + version bump (ADR-063 Amendment 3 §결정 13 Phase 2 carrier complete)**: bats TC-6~10 5 TCs append (E-4a 401 Issue create + E-4b 429 fail-open + E-4c 5xx fail-closed-with-retry + E-2 registration leak + TC-10 KPI seed gate_status warming verify) + `docs/kpi/marketplace-drift-rate.json` seed (gate_status: warming, owner_adr: ADR-063, carrier_story: CFP-673) + `docs/security/pat-rotation-log.md` PENDING placeholder → actual grant row (ADR-066 Amendment 2 §결정 3 + CFP-673 prerequisite resolved) + plugin.json 5.64.0 → 5.65.0 MINOR (ADR-037) + marketplace atomic sync (ADR-063 §결정 5 — separate sibling PR 선행 merge 의무).
+
 ## [5.64.0] - 2026-05-15 — CFP-671 [RETRO-CFP-662] story-init.yml workflow 2 bug regression fix (combined single PR)
 
 ### Fixed

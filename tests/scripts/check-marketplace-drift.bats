@@ -3,12 +3,17 @@
 # CFP-673 Phase 2 — check-marketplace-drift.sh unit tests
 # Story §7.4 / Change Plan §8 test plan verbatim
 #
-# Test cases (TC-1..TC-5):
+# Test cases (TC-1..TC-10):
 #   TC-1: drift 0건 silent success (E-3) — mock 7-plugin all 4 field identical → exit 0, Issue 발의 0건
 #   TC-2: drift detected 1건 → Issue create + signature substring 포함
 #   TC-3: dedup signature match → Issue create skip (active Issue already exists)
 #   TC-4: hotfix-bypass label active → workflow skip simulation + audit comment message
 #   TC-5: Issue auto-create label correctness (drift-detection + codeforge-improvement + phase:선정중)
+#   TC-6: E-4a 401 fail-closed + Issue create + exit 2 (TC-4 without SKIP_ISSUE_CREATE)
+#   TC-7: E-4b 429 fail-open silent + warning log + exit 0 (false-negative 24h 허용)
+#   TC-8: E-4c 5xx fail-closed + Issue create + exit 2 (retry exhausted)
+#   TC-9: E-2 marketplace.json missing plugin entry → registration leak warning
+#   TC-10: KPI seed file docs/kpi/marketplace-drift-rate.json gate_status=warming verify
 
 SCRIPT="$(dirname "$BATS_TEST_FILENAME")/../../scripts/check-marketplace-drift.sh"
 
@@ -259,4 +264,148 @@ STUB_LABELS
   grep -q "issue create" "$CALL_LOG"
   # label drift-detection 포함
   grep -q "drift-detection" "$CALL_LOG"
+}
+
+# ------------------------------------------------------------------ TC-6: E-4a 401 fail-closed + Issue 발의 + exit 2
+@test "TC-6: CFP673_API_MOCK_401=1 + Issue create — fail-closed exit 2 + gh issue create called" {
+  # 401 fail-closed 시 Issue create 까지 포함하여 검증 (TC-4는 SKIP_ISSUE_CREATE=1, TC-6은 Issue create 경로 포함)
+  CALL_LOG="$TEST_DIR/gh_calls_tc6.log"
+  cat > "$TEST_DIR/bin/gh" <<STUB_TC6
+#!/usr/bin/env bash
+echo "\$@" >> "$CALL_LOG"
+if [[ "\$1 \$2" == "issue create" ]]; then
+  echo "https://github.com/mclayer/plugin-codeforge/issues/1001 (stub)"
+  exit 0
+fi
+echo "gh stub: unexpected call: \$*" >&2
+exit 0
+STUB_TC6
+  chmod +x "$TEST_DIR/bin/gh"
+
+  run env \
+    CFP673_API_MOCK_401="1" \
+    bash "$SCRIPT"
+
+  echo "# output: $output" >&3
+  echo "# gh calls: $(cat "$CALL_LOG" 2>/dev/null || echo '(none)')" >&3
+
+  # 401 fail-closed → exit 2
+  [ "$status" -eq 2 ]
+  # 오류 메시지에 401 언급
+  [[ "$output" == *"401"* ]]
+  # codeforge-kpi-infra-error 언급
+  [[ "$output" == *"codeforge-kpi-infra-error"* ]]
+  # gh issue create 호출됨 (call log 기록)
+  [[ -f "$CALL_LOG" ]]
+  grep -q "issue create" "$CALL_LOG"
+}
+
+# ------------------------------------------------------------------ TC-7: E-4b 429 fail-open silent + warning log
+@test "TC-7: CFP673_API_MOCK_429=1 — fail-open exit 0 + warning log (next cron retry)" {
+  run env \
+    CFP673_API_MOCK_429="1" \
+    CFP673_SKIP_ISSUE_CREATE="1" \
+    bash "$SCRIPT"
+
+  echo "# output: $output" >&3
+
+  # 429 fail-open → exit 0 (false-negative 24h 허용, not a hard failure)
+  [ "$status" -eq 0 ]
+  # warning log 포함 (::warning:: prefix 또는 "429" 언급)
+  [[ "$output" == *"429"* ]]
+  # Issue create 없음 (fail-open = silent pass)
+  [[ "$output" != *"DRIFT"* ]]
+  [[ "$output" != *"issue create"* ]]
+}
+
+# ------------------------------------------------------------------ TC-8: E-4c 5xx fail-closed-with-retry + exit 2 + Issue
+@test "TC-8: CFP673_API_MOCK_500=1 — fail-closed exit 2 + codeforge-kpi-infra-error + Issue create" {
+  CALL_LOG="$TEST_DIR/gh_calls_tc8.log"
+  cat > "$TEST_DIR/bin/gh" <<STUB_TC8
+#!/usr/bin/env bash
+echo "\$@" >> "$CALL_LOG"
+if [[ "\$1 \$2" == "issue create" ]]; then
+  echo "https://github.com/mclayer/plugin-codeforge/issues/1002 (stub)"
+  exit 0
+fi
+echo "gh stub: unexpected call: \$*" >&2
+exit 0
+STUB_TC8
+  chmod +x "$TEST_DIR/bin/gh"
+
+  run env \
+    CFP673_API_MOCK_500="1" \
+    bash "$SCRIPT"
+
+  echo "# output: $output" >&3
+  echo "# gh calls: $(cat "$CALL_LOG" 2>/dev/null || echo '(none)')" >&3
+
+  # 5xx fail-closed → exit 2
+  [ "$status" -eq 2 ]
+  # codeforge-kpi-infra-error 언급 (5xx 불복구)
+  [[ "$output" == *"codeforge-kpi-infra-error"* ]]
+  # gh issue create 호출됨 (retry 후 실패 = Issue 발의)
+  [[ -f "$CALL_LOG" ]]
+  grep -q "issue create" "$CALL_LOG"
+}
+
+# ------------------------------------------------------------------ TC-9: E-2 marketplace.json family registration leak
+@test "TC-9: E-2 marketplace.json missing entry — registration leak warning" {
+  # marketplace.json 에 codeforge-design entry 누락 (registration leak)
+  MARKETPLACE_JSON="$TEST_DIR/marketplace.json"
+  _make_marketplace_json "$MARKETPLACE_JSON" \
+    "codeforge"              "5.56.0" "Claude Code SW 개발 오케스트레이션 wrapper-only plugin." "mclayer" \
+    "codeforge-requirements" "2.10.0" "codeforge requirements lane plugin."                    "mclayer"
+  # codeforge-design 누락 — registration leak
+
+  _make_plugin_json "$FIXTURE_DIR/codeforge.json"              "codeforge"              "5.56.0" "Claude Code SW 개발 오케스트레이션 wrapper-only plugin." "mclayer"
+  _make_plugin_json "$FIXTURE_DIR/codeforge-requirements.json" "codeforge-requirements" "2.10.0" "codeforge requirements lane plugin."                    "mclayer"
+  _make_plugin_json "$FIXTURE_DIR/codeforge-design.json"       "codeforge-design"       "3.5.0"  "codeforge design lane plugin."                          "mclayer"
+
+  run env \
+    CFP673_PLUGINS_OVERRIDE="codeforge,codeforge-requirements,codeforge-design" \
+    CFP673_MARKETPLACE_PATH="$MARKETPLACE_JSON" \
+    CFP673_PLUGIN_JSON_DIR="$FIXTURE_DIR" \
+    CFP673_SKIP_ISSUE_CREATE="1" \
+    bash "$SCRIPT"
+
+  echo "# output: $output" >&3
+
+  # warning tier — exit 0 (registration leak = warning, not hard failure)
+  [ "$status" -eq 0 ]
+  # registration leak 경고 포함 (plugin not registered 언급)
+  [[ "$output" == *"not registered"* ]] || [[ "$output" == *"codeforge-design"* ]]
+}
+
+# ------------------------------------------------------------------ TC-10: KPI json gate_status warming seed 존재 확인
+@test "TC-10: KPI seed file docs/kpi/marketplace-drift-rate.json — gate_status warming" {
+  # KPI seed 파일이 존재하고 gate_status = warming 인지 확인
+  KPI_FILE="$(dirname "$BATS_TEST_FILENAME")/../../docs/kpi/marketplace-drift-rate.json"
+
+  # 파일 존재 확인
+  [[ -f "$KPI_FILE" ]] || fail "KPI seed file not found: $KPI_FILE"
+
+  # jq parse 가능 확인
+  run jq empty "$KPI_FILE"
+  [ "$status" -eq 0 ]
+
+  # gate_status = warming
+  local gate_status
+  gate_status="$(jq -r '.gate_status' "$KPI_FILE")"
+  [[ "$gate_status" == "warming" ]]
+
+  # kpi_name 확인
+  local kpi_name
+  kpi_name="$(jq -r '.kpi_name' "$KPI_FILE")"
+  [[ "$kpi_name" == "marketplace-drift-rate" ]]
+
+  # owner_adr 확인
+  local owner_adr
+  owner_adr="$(jq -r '.owner_adr' "$KPI_FILE")"
+  [[ "$owner_adr" == "ADR-063" ]]
+
+  # metric_definition.target = "0" (zero drift target)
+  local target
+  target="$(jq -r '.metric_definition.target' "$KPI_FILE")"
+  [[ "$target" == "0" ]]
 }
