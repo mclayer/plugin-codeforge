@@ -30,11 +30,40 @@ updated: 2026-05-15
 
 # codeforge upgrade flow 의 선언적 reconciliation 개념 정의
 
-## Summary
+## 정의
 
 codeforge upgrade 의 architecture 패턴 = **선언적 reconciliation** (Helm `helm upgrade` / Kubernetes Kustomize / Terraform plan-apply 패턴 차용). wrapper SSOT = desired state, consumer 측 overlay + plugin install = current state, upgrade 명령 = converge. 사용자 결정 분기 0 자리 (CLI argument 로 dry-run / rollback / apply fix, prompt 없음).
 
 본 entry = ADR-076 §결정 본문의 narrative SSOT — codeforge 도메인 1st-class 정의 anchor. ArchitectAgent / DeveloperAgent / Researcher / DomainAgent / 후속 Wave carrier 가 참조하는 단일 정의.
+
+## 컨텍스트
+
+codeforge family upgrade 도메인이 ADR / domain-knowledge 어디에도 1st-class 로 정의되어 있지 않은 상태가 carrier Story CFP-701 의 직접 동인. 현 self-app partial cover 영역 4건 (regen-agents.sh / merge.py / check_bootstrap.py / hooks/session-start) 모두 detection only 또는 partial propagate — 선언적 reconciliation 1st-class 정의 부재 = "결정 트리 박제" (CFP-699 Epic §1 WHY) 불가의 mechanical 원인. 본 entry = CFP-699 Epic Wave 1 Story-1 (CFP-701) 의 narrative SSOT carrier — ADR-076 §결정 본문 + reconcile-protocol-v1.md schema 와 함께 3-SSOT 분리 (Governance + Schema + Narrative) 구조 정합.
+
+## 핵심 규칙
+
+1. **Desired state** = wrapper SSOT 9 영역 (github_workflow / session_start_hook / label_taxonomy / settings_json_toggle / codeowners / issue_templates / branch_protection / plugin_json_mirrored / changelog — ADR-076 §결정 2 verbatim)
+2. **Current state** = consumer overlay + plugin install state (consumer `.claude/_overlay/` + `.claude/plugins/installed_plugins.json` + `.github/workflows/` 등)
+3. **Customization layer** = wrapper-managed marker block 밖 영역 (preserved patch layer — Wave 1 Story-2 CFP-702 carrier 의 marker syntax)
+4. **3 mode CLI argument fix** — `--dry-run` (preview, filesystem touch 0) / `--apply` (transaction atomic unit) / `--rollback <version>` (snapshot restore)
+5. **사용자 결정 분기 = 0** (정해진 자리에서만, 매번 다르게 묻지 않음)
+6. **Snapshot ↔ ADR-067 RESET disjoint layer** (같은 단어 RESET 이 다른 layer 에서 다른 의미 — 본 entry Invariant 2 verbatim)
+7. **Family scope 7 plugin atomic unit** (ADR-016 §결정 1 정합 — wrapper + 6 lane plugin)
+
+상세 4-stage upgrade flow / 4 invariants / external pattern reference / conceptual boundary 표 = 본 entry 본문 § 참조.
+
+## 경계
+
+본 entry 영역 (in scope):
+- 선언적 reconciliation 의 1st-class 도메인 정의 (3 layer / 3 mode / 4-stage flow / 4 invariants)
+- 외부 패턴 reference (Helm / Terraform / Kustomize / Ansible)
+- conceptual boundary (다른 도메인 영역과의 disjoint)
+
+본 entry 영역 외 (out of scope):
+- ADR-074 / ADR-075 (CFP-708 / CFP-709 carrier 영역) — 본 entry = CFP-701 carrier 단일 영역
+- ADR-076 §결정 본문 자체 (governance SSOT — ADR file SSOT)
+- reconcile-protocol-v1.md schema (schema SSOT — contract file SSOT)
+- Wave 2/3/4 carrier 의 runtime implementation (UpgradeAgent / CLI / atomic upgrade / 3-way merge / multi-version channel / codemod / uninstall)
 
 ## Conceptual model
 
@@ -133,16 +162,18 @@ SessionStart hook ≠ UpgradeAgent ≠ CLI. 3 책임 분리 (ADR-038 Amendment 3
 | **ADR-016 marketplace registration policy** | codeforge family 7 plugin 등록 + mirrored field sync | family scope unit = 7 plugin atomic (Invariant 3 verbatim). |
 | **ADR-039 subagent default** | Orchestrator 의 모든 work = subagent spawn (inline whitelist 외) | UpgradeAgent = subagent 등록 정합 (Story-3 carrier 영역). |
 
-## Cross-reference
+## 관련 ADR
 
 - **Carrier ADR**: `docs/adr/ADR-076-declarative-reconciliation-upgrade.md` (ArchitectAgent 신설 — Phase 1 PR scope)
-- **Contract**: `docs/inter-plugin-contracts/reconcile-protocol-v1.md` (kind:registry, sibling sync 면제 — ADR-010 §결정 2)
+- **Contract SSOT**: `docs/inter-plugin-contracts/reconcile-protocol-v1.md` (kind:registry, sibling sync 면제 — ADR-010 §결정 2)
 - **Parent Epic Issue**: https://github.com/mclayer/plugin-codeforge/issues/699
 - **본 Story Issue**: https://github.com/mclayer/plugin-codeforge/issues/701 (Wave 1 Story-1)
 - **Sequential prerequisite Story**: CFP-702 (Wave 1 Story-2 — D4 customization marker)
 - **Runtime carrier Story**: CFP-703 (Wave 2 Story-3 — UpgradeAgent + CLI)
 - **Atomicity carrier Story**: (Wave 2 Story-4 — 7 plugin atomic upgrade)
 - **3-way merge carrier Story**: (Wave 2 Story-5 — overlay 영역 reconcile 통합)
+
+직접 cross-ref ADR 목록: ADR-076 / ADR-027 / ADR-053 / ADR-067 / ADR-038 / ADR-016 / ADR-008 / ADR-010 / ADR-058 / ADR-064 / ADR-039 / ADR-040 / ADR-073.
 
 ## 알려진 한계 (본 v1 정의 영역 외)
 
@@ -151,6 +182,8 @@ SessionStart hook ≠ UpgradeAgent ≠ CLI. 3 책임 분리 (ADR-038 Amendment 3
 - **Plugin uninstall protocol** (반대 방향 cleanup) — Wave 4 sub-Epic E3 영역.
 - **3-way merge binary file 영역** — git merge-file 차용 가능하나 binary (image / pdf) 영역 불가. Wave 2 Story-5 carrier 의 fallback behavior 결정 영역.
 
-## Update history
+## 변경 이력
 
 - 2026-05-15 — Initial creation (CFP-701 carrier, RequirementsPL self-write — CFP-26 Phase 0a owner agent direct write 정합)
+- 2026-05-15 — ADR-074 → ADR-076 swap (parallel session anomaly resolution — CFP-708 / CFP-709 chronological precedence per PR #712 verbatim, user-confirmed Branch A via codeforge:user-dialog-mode skill)
+- 2026-05-15 — Section schema rename (Summary → 정의 / Conceptual model + Key invariants 분리 → 컨텍스트 + 핵심 규칙 + 경계 / Cross-reference → 관련 ADR / Update history → 변경 이력, CFP-701 ArchitectPL Phase 3 self-check 결과 — schema lint PASS prerequisite)

@@ -91,3 +91,10 @@ registries:
     files:
       - { file: defense-in-depth-sublayer-registry-v1.md, version: "1.0", status: Active }  # CFP-709 / ADR-075: marketplace atomic invariant defense-in-depth sublayer enumeration SSOT — ADR-063 §결정 5 본문 표 sublayer enumeration 영역 의 kind:registry 분리. 3 row backfill (id=1 PR-time CI atomic CFP-441 / id=2 local pre-push advisory CFP-447 / id=3 local pre-push auto-rebase guidance CFP-477). kind:registry (sibling sync 면제, ADR-010 §결정 2 정합).
     description: "Defense-in-depth sublayer enumeration registry — marketplace atomic invariant (ADR-063) 의 sublayer 단위 metadata SSOT. 향후 sublayer 추가 시 registry row append 만으로 ADR-063 본문 영향 0건 (ADR-075 §결정 5)"
+
+  - name: reconcile_protocol
+    canonical_repo: mclayer/plugin-codeforge
+    canonical_path: docs/inter-plugin-contracts/reconcile-protocol-v1.md
+    files:
+      - { file: reconcile-protocol-v1.md, version: "1.0", status: Active }  # CFP-701 Wave 1 Story-1 / ADR-076: declarative reconciliation upgrade flow schema SSOT — 9 영역 desired state enumeration + dry-run/snapshot/transaction 3 mode enum + customization_preservation_entry (marker_block Story-2 prerequisite) + snapshot_reset_disjoint_layer invariant + version_handshake / reconcile_strategy placeholder (Wave 3/4 carrier reserve). kind:registry (sibling sync 면제, ADR-008 §결정 2 + ADR-010 §결정 2 정합).
+    description: "codeforge family upgrade declarative reconciliation schema SSOT — desired state ↔ current state ↔ customization layer 3-way reconcile semantic (ADR-076 implementation contract)"

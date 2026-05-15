@@ -78,6 +78,7 @@ reservations: []
 | 73 | CFP-622 | active | 2026-05-14 (Sentinel #4 strike #2 carrier — Orchestrator verify-before-assert. ADR-070 자매 ADR. ADR file = `ADR-073-orchestrator-verify-before-assert.md`) |
 | 74 | CFP-708 | active | 2026-05-14 (ArchitectAgent inline append per CFP-578 / ADR-070 chief author precedent. CFP-477 retro §6 후보 3 `escalation_action: adr_draft_emitted` carrier — CLAUDE.md Amendment ref drift detection lint. ADR file = `ADR-074-claude-md-amendment-ref-drift-lint.md`, status `reserved → active` 전환 2026-05-15 Phase 1 PR #711 merged) |
 | 75 | CFP-709 | active | 2026-05-14 (Defense-in-depth sublayer registry — ADR-063 §결정 5 본문 표 sublayer enumeration 영역 의 kind:registry 분리. 3 carrier 누적 마찰 evidence: CFP-441/447/477. ADR file = `ADR-075-defense-in-depth-sublayer-registry.md`) |
+| 76 | CFP-701 | active | 2026-05-15 (CFP-699 Epic Wave 1 Story-1 carrier — declarative reconciliation upgrade flow SSOT. ADR-074 / ADR-075 (CFP-708 / CFP-709 chronological precedence resolution per PR #712 verbatim, 2026-05-15) 점유 결과 CFP-701 = ADR-076 swap. User-confirmed Branch A (2026-05-15 KST, codeforge:user-dialog-mode skill 경유). ArchitectAgent inline append per ADR-070 / CFP-578 chief author precedent. ADR file = `ADR-076-declarative-reconciliation-upgrade.md`. Note: ADR-74/75 row append 는 CFP-708/709 carrier 책임 — 본 row 는 CFP-701 단독 self-write.) |
 
 ### 번호 해제 (archived)
 
