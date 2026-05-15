@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: reconcile-protocol
-version: "1.1"
+version: "1.2"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/reconcile-protocol-v1.md
@@ -9,9 +9,11 @@ date: 2026-05-15
 authors:
   - ArchitectAgent (CFP-701 Wave 1 Story-1 carrier — declarative reconciliation upgrade flow schema SSOT)
   - DeveloperPLAgent (CFP-702 Wave 1 Story-2 Phase 2 — §4.3 (b) trigger 발동, marker_block_syntax_* fields 확장)
+  - ArchitectPLAgent (CFP-743 Wave 2 Story-3 — §4.3 (c) trigger 발동, mechanical_implementation_binding block 신설 + KEY cross-ref 정정 CFP-703→CFP-743)
 version_history:
   - { version: "1.0", date: 2026-05-15, carrier: CFP-701, change: "initial — declarative reconciliation upgrade flow schema SSOT. 9 영역 desired state enumeration + dry-run/snapshot/transaction 3 mode enum + customization preservation entry (marker block, Story-2 prerequisite) + version_handshake / reconcile_strategy placeholder reserve (Wave 4 carrier)." }
   - { version: "1.1", date: 2026-05-15, carrier: CFP-702, change: "§4.3 (b) trigger 발동 — Wave 1 Story-2 marker block syntax 확정. customization_preservation_entry 영역 확장: marker_block_syntax_* 4 fields 정식화 (comment prefix per-filetype / nesting_policy / lint_behavior / migration_script). ADR-027 Amendment 3 §결정 7.A-7.E verbatim cross-ref." }
+  - { version: "1.2", date: 2026-05-15, carrier: CFP-743, change: "§4.3 (c) trigger 발동 — Wave 2 Story-3 UpgradeAgent + CLI 실 implementation hook (`scripts/codeforge-upgrade.{sh,ps1}` 신설). mechanical_implementation_binding block 신설 (§4.5 reference → CLI 3 mode entrypoint + UpgradeAgent Plan+Apply 책임 binding + reconcile PR open scope = ADR-066 Amendment 3 cross-ref). KEY cross-ref 정정: §4.3 (c) `CFP-703` → `CFP-743` (Wave 1 작성 시점 placeholder drift — 동일 Story, fact 영향 0 추적성 정정). MINOR bump (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 2). user_decision_branches: 0 invariant / atomicity_boundary semantic / transaction.completion_criterion 무변경 (ratchet 강화 only — ADR-064 §self-application 정합)." }
 owner_adr: ADR-076
 carrier_story: CFP-701
 sibling_sync_exempt: true
@@ -322,7 +324,7 @@ consumer 가 D4 marker block 도입 전 customization 영역 보유 시:
 
 - (a) ADR-076 Amendment 시 (carrier ADR 변경 동반 의무)
 - (b) Wave 1 Story-2 (CFP-702) merge — marker block syntax 확정 시 `customization_preservation_entry` 영역 확장
-- (c) Wave 2 Story-3 (CFP-703) merge — UpgradeAgent + CLI 영역 mode_enum 실 implementation hook (`scripts/codeforge-upgrade.{sh,ps1}` 신설)
+- (c) Wave 2 Story-3 (CFP-743) merge — UpgradeAgent + CLI 영역 mode_enum 실 implementation hook (`scripts/codeforge-upgrade.{sh,ps1}` 신설). **v1.2 발동 완료 (본 contract)** — §4.5 mechanical_implementation_binding block 신설. (Wave 1 작성 시점 placeholder `CFP-703` → 실제 발의 Issue `CFP-743` 정정. 동일 Story, fact 영향 0, 추적성만 정정 — ADR-068 I-4 wording SSOT 정합.)
 - (d) Wave 2 Story-4 merge — `transaction.atomicity_boundary_runtime_v1` per_plugin → `atomicity_boundary_runtime_future` family_7_plugin ratchet (의미 invariant `atomicity_boundary_semantic_invariant: family_7_plugin_atomic` 변경 0)
 - (e) Wave 3 Story-6 merge — `version_handshake` field 활성 (현재 placeholder_reserve, validation_status_v1_0: non_normative_placeholder_reserve)
 - (f) Wave 4 sub-Epic merge — `reconcile_strategy.enum_reserved_wave_4` 값 활성
@@ -338,9 +340,9 @@ consumer 가 D4 marker block 도입 전 customization 영역 보유 시:
 - `transaction.atomicity_boundary_semantic_invariant: family_7_plugin_atomic` 약화 = ADR-016 §결정 1 변경 trigger 의무 (별도 carrier)
 - `desired_state_domains[]` row 삭제 = 차단 (자기 영역 축소 = self-app coverage 후퇴)
 
-### 4.5 Wave 2 Story-3 mechanical implementation 참조
+### 4.5 Wave 2 Story-3 mechanical implementation 참조 (v1.2 — CFP-743 binding 발동)
 
-본 contract 의 mechanical enforcement = `scripts/codeforge-upgrade.{sh,ps1}` (Wave 2 Story-3 carrier).
+본 contract 의 mechanical enforcement = `scripts/codeforge-upgrade.{sh,ps1}` (Wave 2 Story-3 carrier — CFP-743).
 
 검증 mechanism (Wave 2 carrier 영역):
 - mechanical pre-screen (9 영역 desired state diff)
@@ -348,4 +350,55 @@ consumer 가 D4 marker block 도입 전 customization 영역 보유 시:
 - transaction rollback path verification (snapshot restore dry-run)
 - post-apply sanity check (workflow lint / hook signature / label registry 정합)
 
-Wave 2 Story-3 PR (별 PR) merge 시 mechanical lint 활성.
+Phase 1 (CFP-743) merge 시 본 §4.5 binding block 활성 (schema declare). Phase 2 (별 PR) merge 시 CLI/UpgradeAgent 실 구현 + mechanical lint 활성.
+
+#### mechanical_implementation_binding (v1.2 신설, CFP-743 §4.3 (c) 발동)
+
+```yaml
+mechanical_implementation_binding:
+  carrier_story: CFP-743  # Wave 2 Story-3 (Wave 1 placeholder CFP-703 정정)
+  status: schema_declared_phase1   # Phase 1 = schema binding declare / Phase 2 = 실 script 구현
+  cli_entrypoint:
+    posix: "scripts/codeforge-upgrade.sh"
+    powershell: "scripts/codeforge-upgrade.ps1"
+    parity_invariant: "두 script 동일 reconcile semantic (9 desired_state_domains 동일 / 3 mode 동일 / user_decision_branches: 0 동일). parity 차이 = post-apply sanity check 검출 영역."
+    path_form_invariant: "MSYS2 / Git-Bash `/c/` path-form 일관 정규화 의무 (CFP-702 normalize_path bug precedent 회피 — path-form mismatch = silent reconcile target miss = HIGH severity)."
+    path_form_normalization:   # v1.2 FIX iter 2 ACCEPT-5 — Change Plan §4.5 canonical 규칙 contract-level SSOT (구현 lane binding). ratchet 강화 only (path_form_invariant 의 명시화 — weakening 0).
+      accepted_input_forms:    # 정규화 함수 수용 의무 6종 (Change Plan §4.5 enumeration verbatim)
+        - msys2_posix              # /c/Users/...
+        - windows_backslash        # C:\Users\...
+        - windows_forward_slash    # C:/Users/...
+        - relative                 # ./ ../ root 기준 resolve
+        - whitespace_containing    # 공백 포함 path (raw 보존, shell 전달 시점만 quote)
+        - non_ascii_utf8           # UTF-8 segment byte-level 보존 (locale-dependent 변환 금지)
+      canonical_output_rule:
+        base: "repo_root (consumer project root) 기준 절대 경로"
+        separator: "forward_slash_single"    # backslash → / 변환, drive 환경별 일관 mapping
+        encoding: "utf8_explicit"            # non-ASCII byte-level 보존
+        relative_resolution: "root_기준_absolute (symlink 미해소 — 정책 단순화)"
+        precedent: "CFP-702 _to_canonical() 함수 semantic 동형 (신규 발명 금지)"
+      parity_obligation: "sh ↔ ps1 동일 canonical 함수 semantic (동일 입력 → byte-identical output). divergence = post-apply sanity check 검출 → automatic_rollback_to_snapshot."
+      failure_behavior: "abort_before_touch"   # 정규화 불가 입력 = filesystem touch 0 상태에서 abort (snapshot 무생성, dry_run filesystem_touch:false 정합). Change Plan §7.4.1(e) DR entry 정합.
+      adr_061_cross_ref: "정규화 로직 > 5줄 / backslash escape 포함 시 외부 .py helper 의무 (sh↔ps1 single source parity 구조적 강제) — ADR-061 Python script convention."
+  mode_dispatch:  # reconcile-protocol-v1 §2 mode_enum verbatim binding
+    "--dry-run": "mode_enum.dry_run (filesystem_touch: false, network_call_allowed: true) — Helm `helm diff` 동형"
+    "--apply": "mode_enum.transaction (snapshot 생성 → 9 영역 reconcile → post-apply sanity check 단일 atomic unit, partial_failure_behavior: automatic_rollback_to_snapshot)"
+    "--rollback <version>": "mode_enum.snapshot restore (동일 snapshot scope re-application)"
+  upgrade_agent_binding:
+    agent_file: "templates/agents/UpgradeAgent.md"
+    responsibility: "Plan + Apply (ADR-076 §결정 5 — SessionStart hook detect 책임 침범 0 invariant)"
+    spawn_model: "Orchestrator default subagent one-shot (ADR-039 §결정 1 — 재귀 spawn 금지 platform inherent)"
+  reconcile_pr_scope_binding:
+    cross_ref: "ADR-066 Amendment 3 §결정 2 — reconcile-target-repos contents:write + pull_requests:write"
+    pr_open_only: true   # silent direct push 금지 — consumer PR review gate 보존 (ADR-024 + ADR-027 정합)
+    affected_domains:    # 9 desired_state_domains 중 consumer .github/ PR open 요구 영역
+      - github_workflow            # byte_identical_mirror
+      - issue_templates            # byte_identical_mirror
+      - codeowners                 # template_export_manual_instantiate
+  ratchet_invariant_preserved:   # ADR-064 §self-application — v1.2 = 강화 only, weakening 0
+    user_decision_branches_0: unchanged
+    atomicity_boundary_semantic_invariant: unchanged   # family_7_plugin_atomic (ADR-016 §결정 1)
+    transaction_completion_criterion: unchanged        # ADR-053 §D2 verbatim
+    snapshot_reset_disjoint_layer: unchanged           # ADR-067 cross-pollinate forbidden
+```
+

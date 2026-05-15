@@ -15,6 +15,7 @@ related_stories:
   - CFP-450
   - CFP-521
   - CFP-627
+  - CFP-743  # Amendment 3 — reconcile PR cross-repo write scope 추가 (Wave 2 Story-3, UpgradeAgent + CLI consumer .github/workflows/ 자동 생성 PR 인증 carrier)
 related_adrs:
   - ADR-013
   - ADR-016
@@ -31,6 +32,12 @@ amendments:
     summary: "§결정 2 scope minimum 3종 → 4종 갱신 — marketplace `contents:read` grant 추가. ADR-063 Amendment 3 §결정 13 (post-rebase — CFP-631 occupied Amendment 2 §결정 11+12) reactive scheduled detection 의 `marketplace-drift-detection.yml` workflow 가 `mclayer/marketplace/.claude-plugin/marketplace.json` fetch 의무 → least-privilege 정합 신규 scope 의무. Strengthening direction only (scope 확장 = consolidation 정합) — ADR-064 top-down ratchet 정합. ADR-013 Amendment 4 단일 PAT consolidation 정책 무변경. Audit log row append placeholder (`docs/security/pat-rotation-log.md` Phase 1 placeholder + Phase 2 actual grant date — Phase 2 PR description checklist forcing function 의무, DesignReview FIX iter 1 F-DR-004 option b)."
     is_transitional: false
     sunset_justification: "N/A — permanent security policy. ADR-058 §결정 7 security ADR default presumption 정합 (is_transitional: false). ADR-064 §self-application top-down ratchet 정합 (Amendment 2 = scope 확장 강화 방향 only). 약화 방향 (scope 축소 / lifetime 연장 / rotation cadence 약화) 발의 차단."
+  - amendment: 3
+    date: 2026-05-15
+    cfp: CFP-743
+    summary: "§결정 2 scope minimum 4종 → 5종 갱신 — `reconcile-target-repos contents:write + pull_requests:write` grant 추가. CFP-743 (Wave 2 Story-3) UpgradeAgent + `scripts/codeforge-upgrade.{sh,ps1}` CLI 의 reconcile 가 9 desired_state_domains 중 `github_workflow` / `issue_templates` / `codeowners` 영역 reconcile 시 consumer repo `.github/` 영역에 자동 생성 PR 을 open 해야 함 (reconcile-protocol-v1 §2 desired_state_domains `byte_identical_mirror` / `template_export_manual_instantiate` mode). 현재 4 scope 는 cross-repo Issue comment / sub-issue / marketplace contents:read 만 — consumer repo content write + PR open 권한 부재 (FeasibilityAgent §4.2 MEDIUM 장벽). least-privilege 정합 — scope target = consumer reconcile 대상 repo 한정 (org-wide write 금지), action = `contents:write` (file mirror) + `pull_requests:write` (PR open) 2종만. Strengthening direction only (scope 확장 = ADR-064 top-down ratchet 정합 — weakening 아님). ADR-013 Amendment 4 단일 PAT consolidation 정책 무변경 (별도 PAT 신설 X — 단일 PAT scope 확장). Audit log placeholder row append (`docs/security/pat-rotation-log.md` Phase 1 placeholder + Phase 2 actual grant date — Phase 2 PR description checklist forcing function 의무, Amendment 2 F-DR-004 option b precedent 답습)."
+    is_transitional: false
+    sunset_justification: "N/A — permanent security policy. ADR-058 §결정 7 security ADR default presumption 정합 (is_transitional: false). ADR-064 §self-application top-down ratchet 정합 (Amendment 3 = scope 확장 강화 방향 only — reconcile target 한정 least-privilege). 약화 방향 (scope 축소 / org-wide write 확대 / lifetime 연장 / rotation cadence 약화) 발의 차단."
 mechanical_enforcement_actions: []
 ---
 
@@ -65,9 +72,9 @@ CFP-450 이 도입한 consolidation 자체는 secret governance 의 첫 단계 (
 
 90 days 는 GitHub 권장 best practice + codeforge family 의 cross-repo 활성 활동 기간 (CFP cycle 평균 1-2 weeks × 8-10 Story = 분기 1회 회전이 정상 사용 cycle 과 align).
 
-### 결정 2 — Scope minimum (least privilege) (Amendment 2, CFP-627 — 3종 → 4종 갱신)
+### 결정 2 — Scope minimum (least privilege) (Amendment 3, CFP-743 — 4종 → 5종 갱신)
 
-PAT 발급 시 다음 4 scope 만 부여:
+PAT 발급 시 다음 5 scope 만 부여:
 
 | Scope | 사용처 | 도입 carrier |
 |---|---|---|
@@ -75,10 +82,30 @@ PAT 발급 시 다음 4 scope 만 부여:
 | `repo:write` | cross-repo Issue comment / sub-issue link (`phase-gate-mergeable.yml`) | CFP-521 (initial) |
 | `metadata:read` | basic repo access | CFP-521 (initial) |
 | **`marketplace contents:read`** | **`marketplace-drift-detection.yml` (CFP-627) — `mclayer/marketplace/.claude-plugin/marketplace.json` fetch** | **CFP-627 ADR-066 Amendment 2 (binds ADR-063 Amendment 3 §결정 13 — post-rebase shift)** |
+| **`reconcile-target-repos contents:write + pull_requests:write`** | **`scripts/codeforge-upgrade.{sh,ps1}` + UpgradeAgent (CFP-743) — reconcile 가 9 desired_state_domains 중 `github_workflow` / `issue_templates` / `codeowners` 영역 reconcile 시 consumer reconcile 대상 repo `.github/` 영역에 자동 생성 PR open. scope target = consumer reconcile 대상 repo 한정 (org-wide write 금지), action = `contents:write` (file mirror) + `pull_requests:write` (PR open) 2종만** | **CFP-743 ADR-066 Amendment 3 (binds reconcile-protocol-v1 §2 desired_state_domains `byte_identical_mirror` / `template_export_manual_instantiate` mode)** |
 
-`admin:org` / `delete_repo` / `workflow` / `gist` / 기타 광역 scope 부여 금지. 향후 신규 workflow 가 추가 scope 필요 시 별도 ADR 보완 의무.
+`admin:org` / `delete_repo` / `workflow` / `gist` / org-wide `contents:write` / 기타 광역 scope 부여 금지. `reconcile-target-repos contents:write + pull_requests:write` 는 **fine-grained PAT 의 repository access 를 reconcile 대상 consumer repo 로 명시 제한** (org-wide 금지 — least-privilege 핵심 invariant). 향후 신규 workflow 가 추가 scope 필요 시 별도 ADR 보완 의무.
 
 **Amendment 2 (CFP-627) rationale**: ADR-063 Amendment 3 §결정 13 (post-rebase — CFP-631 Amendment 2 §결정 11+12 occupied) reactive scheduled detection (`marketplace-drift-detection.yml`) 가 `mclayer/marketplace` repo 의 `marketplace.json` fetch 의무 → least-privilege 정합 신규 scope grant. ADR-013 Amendment 4 (PAT consolidation) 정책 무변경 — 단일 PAT scope 확장 (별도 PAT 신설 X).
+
+**Amendment 3 (CFP-743) rationale (SecurityArch deputy perspective primary owner)**:
+
+CFP-743 (Wave 2 Story-3) 가 `scripts/codeforge-upgrade.{sh,ps1}` CLI + UpgradeAgent 를 신설. reconcile-protocol-v1 §2 의 9 desired_state_domains 중 다음 3 영역이 consumer repo `.github/` content write + PR open 을 요구:
+
+- `github_workflow` (`templates/github-workflows/*.yml` → consumer `.github/workflows/*.yml`, `byte_identical_mirror` mode)
+- `issue_templates` (`templates/.github/ISSUE_TEMPLATE/*.yml` → consumer `.github/ISSUE_TEMPLATE/*.yml`, `byte_identical_mirror` mode)
+- `codeowners` (`templates/CODEOWNERS.template` → consumer `.github/CODEOWNERS`, `template_export_manual_instantiate` mode)
+
+reconcile 의 `--apply` 가 silent direct push 가 아닌 **PR open 경유** (ADR-024 branch governance + ADR-027 consumer adoption 정합 — direct main push 금지, 사용자 review gate 보존). PR open 에는 consumer repo `contents:write` (file mirror to feature branch) + `pull_requests:write` (PR 생성) 2 action 필요. 현재 4 scope (Amendment 2 까지) 는 cross-repo Issue comment / sub-issue / marketplace contents:read 만 — consumer repo content write + PR open 권한 부재 (FeasibilityAgent §4.2 MEDIUM 장벽 — Spec line 120).
+
+**Least-privilege 핵심 결정 (보안 변호자 입장)**:
+
+1. **Scope target 한정** — `reconcile-target-repos` = consumer 가 reconcile 대상으로 명시 등록한 repo 만 (fine-grained PAT 의 repository access list 로 강제). org-wide `contents:write` 절대 금지 — reconcile 무관 repo 노출 차단.
+2. **Action 한정 2종** — `contents:write` (file mirror) + `pull_requests:write` (PR open) 만. `workflows:write` / `admin` / `secrets` 등 escalation scope 미부여 — consumer workflow 가 자기 자신을 수정하는 self-modification escalation 차단 (consumer 가 PR review 로 최종 gate).
+3. **PR review gate 보존** — reconcile PR 은 자동 merge 아님. consumer 가 PR review 후 merge 결정 (사용자 결정 분기 0 invariant 와 무충돌 — reconcile-protocol-v1 `user_decision_branches: 0` 은 codeforge-upgrade CLI 내부 결정 분기 0 의미이지, consumer governance gate 제거 아님. §7.4 / §7.6 위협↔완화 매핑 참조).
+4. **ADR-064 top-down ratchet 정합** — scope 확장은 강화 방향. 단 target/action 한정으로 blast radius 최소화 (scope 확장 ≠ 무제한 권한).
+
+ADR-013 Amendment 4 (PAT consolidation) 정책 무변경 — 단일 PAT scope 확장 (별도 PAT 신설 X — single-PAT consolidation invariant 보존).
 
 **Grant 절차**: 본 ADR-066 §결정 3 5-step rotation 절차 inline trigger (사용자 manual blocker, Phase 2 진입 전 pre-clear). Phase 1 PR audit log entry placeholder (`docs/security/pat-rotation-log.md`) + Phase 2 진입 전 actual grant date 갱신 의무.
 

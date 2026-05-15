@@ -1,0 +1,10 @@
+# docs/upgrade-events/ — C2 upgrade event log artifact 영역 (CFP-743 Wave 2 Story-3)
+#
+# reconcile-protocol-v1 v1.2 snapshot.persistence_locations.mirror destination.
+# UpgradeAgent (`--apply` transaction 완료 시) 가 `<date>-<version>.md` 자동 생성.
+# Schema = templates/upgrade-event.md (Phase 2 carrier).
+# Doc type SSOT = docs/doc-locations.yaml `upgrade_events` (ADR-041).
+# Write owner = UpgradeAgent (사용자 manual edit 금지 — append-only immutable audit trail).
+#
+# Phase 1 (CFP-743): 본 .gitkeep + doc type 등록 + reconcile-protocol-v1 v1.2 binding.
+# Phase 2 (별 PR): templates/upgrade-event.md schema + UpgradeAgent 자동 생성 로직.
