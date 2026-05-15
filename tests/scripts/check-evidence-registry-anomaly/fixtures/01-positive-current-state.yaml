@@ -1,0 +1,209 @@
+# TC-1 positive fixture — CFP-442 Phase 2
+# Group A 18 entry SSOT (ADR-060 §결정 13 표) 전체 포함 + evidence-registry-anomaly 51번째 entry 포함
+# Expected: exit 0 (PASS) — sub-check 1 mismatch 0 + sub-check 2 candidate 0 (fixture-only env)
+#
+# NOTE: 본 fixture 는 sub-check 2 (scripts/check-*.sh glob) 는 실제 worktree 환경에서 테스트 시
+# 기존 등록된 entry 에 대응하는 script 가 모두 존재해 violation 없음을 가정.
+# TC-3 (ALLOWLIST self-exempt) 은 현행 SSOT 활용 (fixture-less in-place test).
+schema_version: "1.2"
+introduced_by: CFP-389
+last_updated: 2026-05-14
+
+entries:
+  # ── Group A 18 entry (ADR-060 §결정 13 표 verbatim) ──
+  - name: lane-evidence-trail
+    description: ADR-031 §결정 3 + fix-event-v1 — lane evidence trail lint (TC-1 stub)
+    detect_command: bash scripts/check-lane-evidence.sh
+    workflow: .github/workflows/lane-evidence-check.yml
+    current_tier: warning
+    introduced_by: CFP-390
+    owner_adr: ADR-031
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: doc-locations-registry
+    description: ADR-041 — doc-locations registry lint (TC-1 stub)
+    detect_command: bash scripts/check-doc-locations.sh --full
+    workflow: .github/workflows/doc-locations-check.yml
+    current_tier: warning
+    introduced_by: CFP-390
+    owner_adr: ADR-041
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: marketplace-parity
+    description: ADR-016 / ADR-023 — marketplace parity lint (TC-1 stub)
+    detect_command: bash scripts/check-marketplace-parity.sh
+    workflow: .github/workflows/marketplace-parity.yml
+    current_tier: warning
+    introduced_by: CFP-390
+    owner_adr: ADR-016
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: invariant-check
+    description: ADR-002 — invariant check lint (TC-1 stub)
+    detect_command: workflow inline
+    workflow: .github/workflows/invariant-check.yml
+    current_tier: blocking-on-pr
+    introduced_by: CFP-390
+    owner_adr: ADR-002
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: phase-gate-mergeable
+    description: ADR-031 — phase gate mergeable lint (TC-1 stub)
+    detect_command: workflow inline
+    workflow: .github/workflows/phase-gate-mergeable.yml
+    current_tier: blocking-on-merge
+    introduced_by: CFP-390
+    owner_adr: ADR-031
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: inter-plugin-contracts
+    description: ADR-008 / ADR-010 — inter-plugin contracts lint (TC-1 stub)
+    detect_command: bash scripts/check-inter-plugin-contracts.sh
+    workflow: .github/workflows/contract-lint.yml
+    current_tier: warning
+    introduced_by: CFP-390
+    owner_adr: ADR-008
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: inter-plugin-drift
+    description: ADR-011 — inter-plugin drift lint (TC-1 stub)
+    detect_command: bash scripts/check-inter-plugin-drift.sh
+    workflow: .github/workflows/contract-lint.yml
+    current_tier: warning
+    introduced_by: CFP-390
+    owner_adr: ADR-011
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: comment-prefix-registry
+    description: comment-prefix-registry-v1 — comment prefix registry lint (TC-1 stub)
+    detect_command: bash scripts/check-comment-prefix.sh
+    workflow: .github/workflows/contract-lint.yml
+    current_tier: warning
+    introduced_by: CFP-390
+    owner_adr: comment-prefix-registry-v1
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: label-registry-sync
+    description: label-registry-v2 — label registry sync lint (TC-1 stub)
+    detect_command: bash scripts/check-label-registry.sh
+    workflow: .github/workflows/contract-lint.yml
+    current_tier: warning
+    introduced_by: CFP-390
+    owner_adr: label-registry-v2
+    carrier_adr: ADR-060
+    status: Active
+
+  # marketplace-sync: status=Retired — sub-check 1 에서 skip (EC-6 정합)
+  - name: marketplace-sync
+    description: ADR-016 — marketplace sync lint (retired CFP-457)
+    detect_command: bash scripts/check-marketplace-sync.sh
+    workflow: .github/workflows/contract-lint.yml
+    current_tier: warning
+    introduced_by: CFP-390
+    owner_adr: ADR-016
+    carrier_adr: ADR-060
+    status: Retired
+
+  - name: dogfood-artifact-paths
+    description: ADR-013 / ADR-017 — dogfood artifact paths lint (TC-1 stub)
+    detect_command: bash scripts/check-dogfood-artifact-paths.sh
+    workflow: .github/workflows/dogfood-artifact-paths.yml
+    current_tier: warning
+    introduced_by: CFP-390
+    owner_adr: ADR-013
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: superpowers-integration
+    description: ADR-028 — superpowers integration lint (TC-1 stub)
+    detect_command: bash scripts/check-superpowers-integration.sh
+    workflow: .github/workflows/superpowers-integration.yml
+    current_tier: warning
+    introduced_by: CFP-390
+    owner_adr: ADR-028
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: superpowers-schema-drift
+    description: ADR-028 — superpowers schema drift lint (TC-1 stub)
+    detect_command: bash scripts/check-superpowers-schema-drift.sh
+    workflow: .github/workflows/superpowers-schema-drift.yml
+    current_tier: warning
+    introduced_by: CFP-390
+    owner_adr: ADR-028
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: parallel-epic-conflict
+    description: ADR-050 — parallel epic conflict lint (TC-1 stub)
+    detect_command: workflow inline
+    workflow: .github/workflows/parallel-epic-conflict-check.yml
+    current_tier: warning
+    introduced_by: CFP-390
+    owner_adr: ADR-050
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: branch-protection-drift
+    description: ADR-024 — branch protection drift lint (TC-1 stub)
+    detect_command: workflow inline
+    workflow: .github/workflows/branch-protection-drift-check.yml
+    current_tier: warning
+    introduced_by: CFP-390
+    owner_adr: ADR-024
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: required-workflow-drift
+    description: ADR-048 — required workflow drift lint (TC-1 stub)
+    detect_command: workflow inline
+    workflow: .github/workflows/required-workflow-drift-check.yml
+    current_tier: warning
+    introduced_by: CFP-390
+    owner_adr: ADR-048
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: rulesets-drift
+    description: ADR-048 — rulesets drift lint (TC-1 stub)
+    detect_command: workflow inline
+    workflow: .github/workflows/rulesets-drift-check.yml
+    current_tier: warning
+    introduced_by: CFP-390
+    owner_adr: ADR-048
+    carrier_adr: ADR-060
+    status: Active
+
+  - name: write-permission-redistribution
+    description: ADR-009 — write permission redistribution lint (TC-1 stub)
+    detect_command: bash scripts/check-write-permission-redistribution.sh
+    workflow: .github/workflows/lint.yml
+    current_tier: warning
+    introduced_by: CFP-390
+    owner_adr: ADR-009
+    carrier_adr: ADR-060
+    status: Active
+
+  # ── 51번째 entry (CFP-442 carrier) ──
+  - name: evidence-registry-anomaly
+    description: |
+      ADR-060 Amendment 11 §결정 25 — 메타 anomaly lint (TC-1 stub).
+    detect_command: bash scripts/check-evidence-registry-anomaly.sh
+    workflow: templates/github-workflows/evidence-registry-anomaly-check.yml
+    current_tier: warning
+    introduced_by: CFP-442
+    owner_adr: ADR-060
+    carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: Active

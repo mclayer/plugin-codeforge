@@ -1,0 +1,19 @@
+# TC-4 negative fixture — CFP-442 Phase 2
+# fake-new-lint 이 registry 에 미등록된 상태 시뮬레이션
+# sub-check 2: fake-new-lint script 4-criteria PASS + registry 미등록 → exit 1 expected
+# (실제 테스트는 isolated dir 에 fake script + workflow 배치 후 python helper 직접 호출 필요)
+schema_version: "1.2"
+introduced_by: CFP-389
+last_updated: 2026-05-14
+
+entries:
+  # fake-new-lint 의도적 미등록 — sub-check 2 detection 대상
+  - name: evidence-registry-anomaly
+    description: ADR-060 Amendment 11 §결정 25 — 메타 anomaly lint (TC-4 stub).
+    detect_command: bash scripts/check-evidence-registry-anomaly.sh
+    workflow: templates/github-workflows/evidence-registry-anomaly-check.yml
+    current_tier: warning
+    introduced_by: CFP-442
+    owner_adr: ADR-060
+    carrier_adr: ADR-060
+    status: Active
