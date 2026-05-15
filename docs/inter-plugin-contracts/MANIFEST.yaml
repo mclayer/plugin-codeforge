@@ -84,3 +84,10 @@ registries:
     files:
       - { file: parallel-dispatch-protocol-v1.md, version: "1.0", status: Active }  # CFP-609 / ADR-064 Amendment 1: Plan task DAG 3 field + 6 sequential mandate enum + Orchestrator dispatch prompt 4 의무 항목 + PL 자율 병렬 결정 tree 4 분기. kind:registry (sibling sync 면제, ADR-008 §결정 2 + ADR-010 §결정 2 정합).
     description: "Lane PL 병렬 dispatch 행동 registry — Plan task DAG schema + 6 enum + Orchestrator prompt 4 항목 + PL 4-분기 결정 tree (ADR-064 Amendment 1 implementation contract)"
+
+  - name: defense_in_depth_sublayer_registry
+    canonical_repo: mclayer/plugin-codeforge
+    canonical_path: docs/inter-plugin-contracts/defense-in-depth-sublayer-registry-v1.md
+    files:
+      - { file: defense-in-depth-sublayer-registry-v1.md, version: "1.0", status: Active }  # CFP-709 / ADR-075: marketplace atomic invariant defense-in-depth sublayer enumeration SSOT — ADR-063 §결정 5 본문 표 sublayer enumeration 영역 의 kind:registry 분리. 3 row backfill (id=1 PR-time CI atomic CFP-441 / id=2 local pre-push advisory CFP-447 / id=3 local pre-push auto-rebase guidance CFP-477). kind:registry (sibling sync 면제, ADR-010 §결정 2 정합).
+    description: "Defense-in-depth sublayer enumeration registry — marketplace atomic invariant (ADR-063) 의 sublayer 단위 metadata SSOT. 향후 sublayer 추가 시 registry row append 만으로 ADR-063 본문 영향 0건 (ADR-075 §결정 5)"

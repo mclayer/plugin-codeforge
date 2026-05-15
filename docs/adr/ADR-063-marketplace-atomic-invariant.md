@@ -157,9 +157,7 @@ production 장애 / security incident 대응 시 atomic invariant 일시 bypass 
 |---|---|---|
 | plugin.json ↔ CHANGELOG | `invariant-check` workflow | 그대로 |
 | plugin.json ↔ marketplace.json | `check-marketplace-parity.sh` post-PR | pre-commit hook (local) 권장 |
-| 3-file atomic 강제 | 부재 | `check-version-bump-atomic.sh` (CFP-441 / Phase 2 PR-time CI) |
-| local pre-push (advisory) | 부재 | `templates/.claude/hooks/pre-push.sh.sample` (CFP-447 opt-in advisory + `PRE_PUSH_BLOCKING=1` blocking 분기) |
-| local pre-push (auto-rebase guidance) | 부재 | `templates/.claude/hooks/pre-push-auto-rebase.sh.sample` (CFP-477 opt-in env `PRE_PUSH_AUTO_REBASE=1`) — advisory abort + 4-line guidance, hook 안 직접 `git pull --rebase` 실행 금지 (git-scm hook semantics 정합) |
+| sublayer enumeration (defense-in-depth) | 부재 | **[defense-in-depth-sublayer-registry-v1](../inter-plugin-contracts/defense-in-depth-sublayer-registry-v1.md)** (CFP-709 / ADR-075) — id=1 PR-time CI atomic (CFP-441 / `check-version-bump-atomic.sh` + `version-bump-atomic-check.yml`) / id=2 local pre-push advisory (CFP-447 / `pre-push.sh.sample` + `PRE_PUSH_BLOCKING=1`) / id=3 local pre-push auto-rebase guidance (CFP-477 / `pre-push-auto-rebase.sh.sample` + `PRE_PUSH_AUTO_REBASE=1` env, advisory abort + 4-line guidance, hook 안 직접 `git pull --rebase` 실행 금지). 향후 sublayer 추가 시 registry row append 만 — 본 ADR-063 본문 영향 0건. |
 
 ### 결정 6: ADR-016 vs ADR-063 분리 — scope 명확화
 
