@@ -57,8 +57,30 @@ readonly SKIP_LIST=(
   "docs/adr/ADR-027-consumer-adoption-protocol.md"
 )
 
+# ── path canonical form 정규화 helper ────────────────────────────────────────
+# 환경 간 path form 차이를 통일:
+#   MSYS2/Git-Bash: /c/Users/...  → C:/Users/...
+#   Windows native: C:\Users\...  → C:/Users/...
+#   Unix:           /home/...     → /home/...  (변환 없음)
+#   leading ./:     ./path        → path
+#
+# 판정 기준: /[a-zA-Z]/ 패턴 (leading slash + single letter + slash) = MSYS2 drive form
+_to_canonical() {
+  local p="$1"
+  # backslash → forward slash (Windows native)
+  p="${p//\\//}"
+  # MSYS2 drive form: /c/... → C:/...
+  if [[ "$p" =~ ^/([a-zA-Z])/(.*) ]]; then
+    local drive="${BASH_REMATCH[1]}"
+    local rest="${BASH_REMATCH[2]}"
+    p="${drive^^}:/${rest}"
+  fi
+  echo "$p"
+}
+
 # ── repo root 해석 (absolute path → repo-relative 변환에 사용) ─────────────────
 # git rev-parse 성공 시 사용, 실패 시 script 위치 기준 상위 디렉터리로 fallback
+# 반환값은 항상 _to_canonical() 통과 후 저장 (C:/ form 통일)
 _REPO_ROOT=""
 _resolve_repo_root() {
   if [[ -n "$_REPO_ROOT" ]]; then
@@ -66,36 +88,40 @@ _resolve_repo_root() {
   fi
   if command -v git &>/dev/null; then
     local gr
-    gr="$(git rev-parse --show-toplevel 2>/dev/null)" && _REPO_ROOT="$gr" && return 0
+    gr="$(git rev-parse --show-toplevel 2>/dev/null)" \
+      && _REPO_ROOT="$(_to_canonical "$gr")" && return 0
   fi
   # fallback: script 가 <repo>/scripts/ 에 위치 → 한 단계 위
   local script_dir
   script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-  _REPO_ROOT="$(dirname "$script_dir")"
+  _REPO_ROOT="$(_to_canonical "$(dirname "$script_dir")")"
 }
 
-# repo-relative path 정규화 (ADR-027 §결정 7.D.2 — absolute + ./ 양 invocation form 처리)
-#   1. absolute path (Unix /… 또는 Windows C:/…) → repo root prefix strip → repo-relative
-#   2. leading ./ strip
-#   → SKIP_LIST repo-relative exact 매칭이 CI path-form (repo-relative) / test path-form (absolute) 모두 robust
+# repo-relative path 정규화 (ADR-027 §결정 7.D.2)
+# 처리 순서:
+#   1. _to_canonical: MSYS2 /c/... → C:/... + backslash → / (양쪽 동일 canonical form)
+#   2. absolute path 판정: Unix /... 또는 Windows C:/... → repo root prefix strip
+#   3. leading ./ strip
+# _resolve_repo_root() 도 _to_canonical() 통과값 저장 → input/root 양쪽 동일 form 비교
 normalize_path() {
   local p="$1"
 
-  # absolute path 판정: Unix (/) 또는 Windows drive (C:/ D:/ etc.)
-  if [[ "$p" == /* ]] || [[ "$p" =~ ^[A-Za-z]:[\\/] ]]; then
+  # Step 1: canonical form (MSYS2 drive + backslash 정규화)
+  p="$(_to_canonical "$p")"
+
+  # Step 2: absolute path → repo-relative (Unix /... 또는 Windows C:/...)
+  if [[ "$p" == /* ]] || [[ "$p" =~ ^[A-Za-z]:/ ]]; then
     _resolve_repo_root
     if [[ -n "$_REPO_ROOT" ]]; then
-      # repo root prefix (trailing slash normalize) strip
+      # repo root (trailing slash normalize) + / suffix 로 prefix strip
       local repo_with_slash="${_REPO_ROOT%/}/"
       if [[ "$p" == "${repo_with_slash}"* ]]; then
         p="${p#"${repo_with_slash}"}"
       fi
-      # Windows: normalize backslash → forward slash (optional safety)
-      p="${p//\\//}"
     fi
   fi
 
-  # strip leading ./ if present
+  # Step 3: strip leading ./ if present
   p="${p#./}"
   echo "$p"
 }
