@@ -57,9 +57,44 @@ readonly SKIP_LIST=(
   "docs/adr/ADR-027-consumer-adoption-protocol.md"
 )
 
-# repo-relative path 정규화 (leading ./ 제거)
+# ── repo root 해석 (absolute path → repo-relative 변환에 사용) ─────────────────
+# git rev-parse 성공 시 사용, 실패 시 script 위치 기준 상위 디렉터리로 fallback
+_REPO_ROOT=""
+_resolve_repo_root() {
+  if [[ -n "$_REPO_ROOT" ]]; then
+    return 0
+  fi
+  if command -v git &>/dev/null; then
+    local gr
+    gr="$(git rev-parse --show-toplevel 2>/dev/null)" && _REPO_ROOT="$gr" && return 0
+  fi
+  # fallback: script 가 <repo>/scripts/ 에 위치 → 한 단계 위
+  local script_dir
+  script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  _REPO_ROOT="$(dirname "$script_dir")"
+}
+
+# repo-relative path 정규화 (ADR-027 §결정 7.D.2 — absolute + ./ 양 invocation form 처리)
+#   1. absolute path (Unix /… 또는 Windows C:/…) → repo root prefix strip → repo-relative
+#   2. leading ./ strip
+#   → SKIP_LIST repo-relative exact 매칭이 CI path-form (repo-relative) / test path-form (absolute) 모두 robust
 normalize_path() {
   local p="$1"
+
+  # absolute path 판정: Unix (/) 또는 Windows drive (C:/ D:/ etc.)
+  if [[ "$p" == /* ]] || [[ "$p" =~ ^[A-Za-z]:[\\/] ]]; then
+    _resolve_repo_root
+    if [[ -n "$_REPO_ROOT" ]]; then
+      # repo root prefix (trailing slash normalize) strip
+      local repo_with_slash="${_REPO_ROOT%/}/"
+      if [[ "$p" == "${repo_with_slash}"* ]]; then
+        p="${p#"${repo_with_slash}"}"
+      fi
+      # Windows: normalize backslash → forward slash (optional safety)
+      p="${p//\\//}"
+    fi
+  fi
+
   # strip leading ./ if present
   p="${p#./}"
   echo "$p"
