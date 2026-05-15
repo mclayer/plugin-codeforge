@@ -35,17 +35,7 @@ jobs:
 
       - name: Extract expected contexts from manifest
         run: |
-          python3 - <<'EOF'
-          import yaml, sys
-
-          with open("templates/branch-protection-manifest.yaml") as f:
-              manifest = yaml.safe_load(f)
-
-          contexts = manifest["required_status_checks"]["contexts"]
-          names = sorted(c["name"] for c in contexts)
-          with open("/tmp/expected_contexts.txt", "w") as f:
-              f.write("\n".join(names) + "\n")
-          EOF
+          python3 "${GITHUB_WORKSPACE}/scripts/lib/workflow_branch_protection_drift_check.py"
 
           echo "=== Expected contexts ==="
           cat /tmp/expected_contexts.txt
