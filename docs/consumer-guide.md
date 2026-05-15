@@ -110,6 +110,36 @@ bash scripts/check-lint.sh --fix     # ruff auto-fix 적용
 
 **Windows 환경 caveat**: `.venv/Scripts/Activate.ps1` 경로 권한 / WSL bash 호출 issue 시 manual 실행 fallback. 자세한 워크어라운드는 별도 follow-up CFP.
 
+#### BEHIND-rebase awareness + auto-rebase guidance (CFP-477 확장 — 선택)
+
+`pre-push-auto-rebase.sh.sample` 은 CFP-447 `pre-push.sh.sample` 의 상위 호환 (advisory + blocking 양립). 기존 hook 을 대체하거나 병용 가능.
+
+**추가 기능**:
+- `origin/main` 보다 BEHIND 된 상태 감지 → advisory (기본) 또는 blocking (opt-in)
+- `PRE_PUSH_AUTO_REBASE=1` 설정 시 BEHIND 감지 → exit 1 + 4-line 수동 rebase 가이드 출력 (자동 pull 금지 — 충돌 시 히스토리 변경 위험)
+- atomic invariant 위반 감지 시 exit 1 + `ADR-063` cross-ref
+
+**Install (opt-in)**:
+
+```bash
+cp templates/.claude/hooks/pre-push-auto-rebase.sh.sample .git/hooks/pre-push
+chmod +x .git/hooks/pre-push
+export PRE_PUSH_AUTO_REBASE=1   # BEHIND 시 차단 활성 (선택)
+```
+
+**BEHIND 감지 시 표시되는 4-line guidance**:
+
+```
+1. git pull --rebase origin main
+2. bash scripts/check-version-bump-atomic.sh   # rebase 후 atomic 재verify (ADR-063)
+3. git push --force-with-lease=<refname>:<expected-old-SHA>   # expect form 의무
+4. bypass: unset PRE_PUSH_AUTO_REBASE && git push   또는   git push --no-verify
+```
+
+**Bypass**: `git push --no-verify` 또는 `unset PRE_PUSH_AUTO_REBASE && git push`
+
+**Cross-ref**: `ADR-063 §결정 5` (atomic invariant) · `CFP-447` (advisory 원본)
+
 ### 1f. Agent teams 적극 도입 (CFP-137 / [ADR-044](adr/ADR-044-phase-scoped-sequential-team.md))
 
 > **Optional**: agent teams 적극 도입 = wrapper / consumer Orchestrator 모두 적용 가능. 활성 시 Phase-scoped sequential team + SendMessage continuous dialog + Adversarial debate 패턴 사용 가능. 비활성 시 ADR-039 default subagent context (one-shot Agent tool) fallback — 본 CFP-137 도입 전 동작과 동일.

@@ -1,0 +1,152 @@
+#!/usr/bin/env bash
+# CFP-477 — pre-push auto-rebase hook sample (opt-in, 선택 설치)
+#
+# Installs to: .git/hooks/pre-push (per worktree, opt-in)
+#
+# 기능:
+#   (1) BEHIND-rebase awareness — origin/main 보다 뒤처진 경우 감지
+#   (2) PRE_PUSH_AUTO_REBASE=1 설정 시 → exit 1 + 4-line 수동 rebase 가이드 출력
+#       (자동 pull --rebase 실행 금지 — 충돌 발생 시 사용자 인지 없이 히스토리 변경 위험)
+#   (3) atomic invariant 위반 감지 시 → exit 1 + ADR-063 cross-ref 출력
+#
+# 옵트인 설정:
+#   export PRE_PUSH_AUTO_REBASE=1   → BEHIND 감지 시 exit 1 + guidance
+#   (미설정)                        → advisory only (exit 0, CFP-447 답습)
+#
+# EC (Edge Case) 처리:
+#   EC-1: detached HEAD → skip (exit 0)
+#   EC-2: main 직접 push → skip (branch protection 이 처리)
+#   EC-7: AUTO_REBASE + PRE_PUSH_BLOCKING 동시: AUTO_REBASE 우선 (더 강함)
+#   EC-11/12: git 호출 실패 시 || true 또는 explicit fallback (CFP-447 패턴)
+#   EC-14: bare `-f` 감지 시 --force-with-lease expect form 권장 warning
+#
+# 설치 (opt-in):
+#   cp templates/.claude/hooks/pre-push-auto-rebase.sh.sample .git/hooks/pre-push
+#   chmod +x .git/hooks/pre-push
+#   export PRE_PUSH_AUTO_REBASE=1   # (선택) BEHIND 시 차단 활성
+#
+# 비활성화:
+#   rm .git/hooks/pre-push
+#   unset PRE_PUSH_AUTO_REBASE
+#
+# advisory only 유지 (CFP-447 호환):
+#   PRE_PUSH_AUTO_REBASE 미설정 → BEHIND 경고만 출력 후 push 진행
+#
+# Cross-ref:
+#   ADR-063 §결정 5 — 작성 시점 enforce (PR-time CI 보완)
+#   CFP-441 — check-version-bump-atomic.sh
+#   CFP-447 — pre-push.sh.sample (advisory 원본)
+#   CFP-477 — 본 hook sample (auto-rebase guidance 확장)
+
+set -uo pipefail
+
+# ---- 환경 변수 ----
+AUTO_REBASE="${PRE_PUSH_AUTO_REBASE:-0}"
+# MOCK_ATOMIC_FAIL=1 : 테스트 전용 atomic 위반 시뮬레이션
+MOCK_ATOMIC_FAIL="${MOCK_ATOMIC_FAIL:-0}"
+
+HAS_BEHIND=0
+HAS_ATOMIC_FAIL=0
+
+# ---- Step 0: EC-1 detached HEAD 감지 → skip ----
+
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "HEAD")
+
+if [[ -z "$CURRENT_BRANCH" || "$CURRENT_BRANCH" == "HEAD" ]]; then
+    echo "ℹ pre-push-auto-rebase: detached HEAD — skip" >&2
+    exit 0
+fi
+
+# ---- EC-2: main 직접 push → skip (branch protection 이 처리) ----
+if [[ "$CURRENT_BRANCH" == "main" ]]; then
+    exit 0
+fi
+
+# ---- EC-14: bare -f 인수 감지 → warning ----
+for arg in "$@"; do
+    if [[ "$arg" == "-f" ]]; then
+        echo "⚠ pre-push-auto-rebase: bare \`-f\` 사용 감지" >&2
+        echo "  권장: --force-with-lease=<refname>:<expected-old-SHA> (expect form)" >&2
+        break
+    fi
+done
+
+# ---- Step 1: origin fetch + BEHIND count ----
+
+# origin 연결 여부 확인 (EC-11: ls-remote 실패 시 skip)
+if git ls-remote origin >/dev/null 2>&1; then
+    git fetch origin main --quiet 2>/dev/null || true
+fi
+
+BEHIND_COUNT=0
+if git rev-parse origin/main >/dev/null 2>&1; then
+    BEHIND_COUNT=$(git rev-list --count "${CURRENT_BRANCH}..origin/main" 2>/dev/null || echo "0")
+fi
+
+if [[ "$BEHIND_COUNT" -gt 0 ]]; then
+    HAS_BEHIND=1
+fi
+
+# ---- Step 2: atomic invariant 확인 ----
+
+PLUGIN_JSON=".claude-plugin/plugin.json"
+
+if [[ "$MOCK_ATOMIC_FAIL" == "1" ]]; then
+    # 테스트 전용: atomic 위반 강제 시뮬레이션
+    HAS_ATOMIC_FAIL=1
+elif [[ -f "$PLUGIN_JSON" ]] && git rev-parse origin/main >/dev/null 2>&1; then
+    DIFF=$(git diff origin/main -- "$PLUGIN_JSON" 2>/dev/null || true)
+
+    if [[ -n "$DIFF" ]]; then
+        MIRRORED_CHANGED=0
+        for field in name version description author; do
+            if echo "$DIFF" | grep -qE "^[-+]\s*\"${field}\":"; then
+                MIRRORED_CHANGED=1
+                break
+            fi
+        done
+
+        if [[ "$MIRRORED_CHANGED" -eq 1 ]] && [[ -x scripts/check-version-bump-atomic.sh ]]; then
+            echo "ℹ pre-push-auto-rebase: plugin.json mirrored field 변경 감지 — atomic invariant check 실행" >&2
+            if ! bash scripts/check-version-bump-atomic.sh >&2; then
+                HAS_ATOMIC_FAIL=1
+            fi
+        fi
+    fi
+fi
+
+# ---- Step 3: AUTO_REBASE=1 + BEHIND → exit 1 + 4-line guidance ----
+
+if [[ "$AUTO_REBASE" == "1" && "$HAS_BEHIND" -eq 1 ]]; then
+    echo "" >&2
+    echo "❌ pre-push-auto-rebase: branch '$CURRENT_BRANCH' 가 origin/main 보다 $BEHIND_COUNT 커밋 BEHIND" >&2
+    echo "" >&2
+    echo "  수동 rebase 절차 (PRE_PUSH_AUTO_REBASE=1 활성 — 자동 실행 금지):" >&2
+    echo "  1. git pull --rebase origin main" >&2
+    echo "  2. bash scripts/check-version-bump-atomic.sh   # rebase 후 atomic 재verify (ADR-063)" >&2
+    echo "  3. git push --force-with-lease=<refname>:<expected-old-SHA>   # expect form 의무" >&2
+    echo "  4. bypass: unset PRE_PUSH_AUTO_REBASE && git push   또는   git push --no-verify" >&2
+    exit 1
+fi
+
+# ---- Step 4: atomic 위반 → exit 1 + ADR-063 ref ----
+
+if [[ "$HAS_ATOMIC_FAIL" -eq 1 ]]; then
+    echo "" >&2
+    echo "❌ pre-push-auto-rebase: atomic invariant 위반 감지" >&2
+    echo "  참조: docs/adr/ADR-063-marketplace-atomic-invariant.md" >&2
+    echo "  plugin.json mirrored field 변경 시 marketplace.json + CHANGELOG.md 동시 갱신 필요" >&2
+    echo "  bypass: git push --no-verify" >&2
+    exit 1
+fi
+
+# ---- Step 5: advisory (AUTO_REBASE 미설정 + BEHIND 있음) ----
+
+if [[ "$HAS_BEHIND" -eq 1 ]]; then
+    echo "" >&2
+    echo "⚠ pre-push-auto-rebase: branch '$CURRENT_BRANCH' 가 origin/main 보다 $BEHIND_COUNT 커밋 BEHIND" >&2
+    echo "  권고: git pull --rebase origin main 실행 후 push" >&2
+    echo "  차단 모드: export PRE_PUSH_AUTO_REBASE=1" >&2
+fi
+
+exit 0

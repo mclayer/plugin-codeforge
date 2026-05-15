@@ -7,6 +7,16 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.66.0] - 2026-05-14
+
+### Added (git hook + consumer guide)
+
+- **CFP-477 Phase 2 — pre-push-auto-rebase hook sample (BEHIND-rebase awareness + opt-in blocking, ADR-063 §결정 5 확장)**:
+  - `templates/.claude/hooks/pre-push-auto-rebase.sh.sample` 신설 (~120L bash): CFP-447 `pre-push.sh.sample` 상위 호환 advisory + blocking 양립. `PRE_PUSH_AUTO_REBASE=1` opt-in 시 `origin/main` BEHIND 감지 → exit 1 + 4-line 수동 rebase 가이드 출력 (자동 pull --rebase 금지 — 충돌 히스토리 변경 위험). atomic invariant 위반 감지 시 exit 1 + ADR-063 cross-ref. EC-1 (detached HEAD) / EC-2 (main 직접) / EC-7 (AUTO_REBASE > BLOCKING 우선) / EC-11/12 (git call fallback) / EC-14 (bare -f warning) 처리.
+  - `tests/unit/pre-push-auto-rebase-test.sh` 신설 (5 TC TDD, 5/5 GREEN): (a) BEHIND 0 exit 0 / (b) BEHIND unset advisory exit 0 / (c) BEHIND AUTO_REBASE=1 exit 1 + guidance / (d) atomic violation exit 1 + ADR-063 ref / (e) detached HEAD exit 0 (EC-1)
+  - `docs/consumer-guide.md §1e` BEHIND-rebase 시나리오 단락 추가 (install + 4-line guidance + bypass + cross-ref)
+  - plugin.json 5.65.0 → 5.66.0 MINOR (ADR-037 §결정 1(c) — 선택 hook 추가)
+
 ## [5.65.0] - 2026-05-15
 
 ### Added (Story flow + lane orchestration)
