@@ -348,6 +348,32 @@ reconcile-protocol-v1 `marker_block_absent_behavior: "wholesale_mirror_with_user
 - **evidence-checks-registry tier**: `current_tier: blocking-on-pr` (Story §5.2 AC-3 + Spec §7 Story-2 row verbatim). bypass channel = `hotfix-bypass:wrapper-managed-block` label (ADR-024 §결정 6.A per-entry namespace).
 - **workflow self-app**: `templates/github-workflows/wrapper-managed-block.yml` ↔ `.github/workflows/wrapper-managed-block.yml` byte-identical (ADR-065 §결정 1 정합).
 
+##### §결정 7.D.2 — lint file-scope = consumer customization 영역 한정 (self-referential skip-list, Axis 5 결정 / CFP-702 FIX iter 2 설계 회귀)
+
+wrapper-managed-block lint 의 검사 대상 file-scope = **consumer customization 영역 한정**. wrapper plugin 자기 meta 파일은 **skip-list 제외** — marker 문자열을 데이터 / 로직 / 문서 / fixture 로 보유하는 self-referential 파일이 actual marker block 으로 오탐되는 것 차단.
+
+**Skip-list (dogfooding self-detection 회피 invariant)** — 다음 generalized 패턴:
+
+1. **lint 구현 자체**: `scripts/check-wrapper-managed-block.sh` (marker 문자열 = grep 패턴 데이터)
+2. **lint test fixture**: `scripts/test-check-wrapper-managed-block.sh` (marker 문자열 = malformed/정상 fixture)
+3. **migration 구현**: `scripts/migrate-existing-customization.sh` (marker 문자열 = wrap 삽입 데이터)
+4. **lint 을 설명하는 SSOT 문서**: `docs/inter-plugin-contracts/reconcile-protocol-v1.md` + `docs/evidence-checks-registry.yaml` + `docs/adr/ADR-027-consumer-adoption-protocol.md` (본 ADR 자신 — marker syntax 문서화 영역)
+5. **lint workflow YAML**: `.github/workflows/wrapper-managed-block.yml` + `templates/github-workflows/wrapper-managed-block.yml` (marker 문자열 = workflow step 데이터)
+
+**generalized rule** (enumeration 외 future-proof): "wrapper-managed-block lint 자신 + 그 lint 를 설명·테스트·구현하는 wrapper plugin SSOT 파일" = self-referential → skip. consumer customization 영역 (overlay 4-layer + consumer-local workflow) 만 actual 검사 대상. 결정 근거: D4 marker 의 의미적 scope (§결정 7.B) = **consumer 측 customization 영역의 wrapper SSOT ↔ consumer 경계 박제** — wrapper plugin 자기 meta 파일은 애초에 marker block 의미 적용 영역 자체가 아님 (consumer 가 customize 하는 파일 아님). under-specified 설계 (FIX iter 2 이전 §결정 7.D 가 file-scope 미명세) 가 Phase 2 dogfooding 에서 7-file false positive 노출 → 본 §결정 7.D.2 가 의미적 scope 를 mechanical scope 로 박제.
+
+##### §결정 7.D.3 — marker 매칭 = whole-line anchored (substring 매칭 금지, Axis 5 결정 / CFP-702 FIX iter 2 설계 회귀)
+
+lint 의 marker detection = **whole-line anchored 매칭** 의무:
+
+- shell 구현: `grep -xF "<marker>"` (full-line fixed-string) 또는 `grep -E '^# BEGIN wrapper-managed$'` (anchored 정규식)
+- **substring 매칭 금지**: `grep -F` (substring) 은 `# BEGIN wrapper-managed-other` / 주석 안 `# ... # BEGIN wrapper-managed ...` / 문서 inline reference 같은 prefix-collision 및 부분문자열 false positive 유발 — FIX iter 2 root cause (현 Phase 2 구현 L96-97 `grep -cF` substring 매칭).
+- comment prefix per-filetype (§결정 7.A.1) 별 anchored 패턴: `.yml`/`.sh` = `^# BEGIN wrapper-managed$` / `.md` = `^<!-- BEGIN wrapper-managed -->$` (선/후행 whitespace tolerance 는 구현 spec — change-plan §3, leading whitespace trim 후 anchor).
+
+결정 근거: marker block = **줄 단위 boundary 선언** (§결정 7.A syntax — marker 는 자체 라인 점유). substring 매칭은 marker 의 줄 단위 의미를 위반 → whole-line anchor 가 marker syntax 의 의미적 정합. Ansible blockinfile 의 marker 도 전용 라인 점유 (동형 prior art).
+
+**additive 정합**: §결정 7.D.2 / §결정 7.D.3 = additive (supersede 0). §결정 7.D.1 flat-only nesting + §결정 7.D evidence-tier / workflow self-app 모두 무손상 유지. governance 강화 방향 ratchet (false positive 차단 = lint 정밀도 강화) — ADR-058 §결정 5 sunset_justification 불요 (강화 방향).
+
 #### §결정 7.E — retroactive migration (idempotent)
 
 `scripts/migrate-existing-customization.sh` (Phase 2 carrier) — 기존 marker-부재 consumer (mctrader 5 repo, Tier B-extended) retroactive auto-wrap:
