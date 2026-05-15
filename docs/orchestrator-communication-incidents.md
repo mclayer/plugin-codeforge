@@ -42,9 +42,7 @@ schema_version: "1.0"
 
 | iter | timestamp | story_key | pattern_dimension | pattern_summary | trigger | different_dimension_after_halt | escalation_outcome |
 |------|-----------|-----------|-------------------|-----------------|---------|-------------------------------|--------------------|
-
-<!-- 비어있는 table — Orchestrator 가 incident detect 시 row append.
-     ADR-071 §결정 6 schema 준수. -->
+| 1 | 2026-05-16T08:42:00+09:00 | CFP-750 | 보고 형식 | 백그라운드 task (codex:codex-rescue boroux55j) dispatch 후 liveness gate 부재로 ~2h silent hang 동안 Orchestrator 가 deputy idle notification 에 응답하며 "대기"만 수동 반복. Codex output mtime / content 미점검. 같은 dispatch-and-forget pattern 이 동일 세션 내 누적 (story-init §1 파서 silent empty #753, 팀원 inbox delivery gap). | layer-4-n1 | dispatch 시점부터 max-wait timeout + 능동 liveness 점검 (output mtime + content grep) + stall 시 fallback path 사전 정의로 차원 전환 (passive 대기 보고 → 능동 liveness gate). 사용자 발화 "멈춰있는거 같은데? 이런 일이 왜자꾸 반복되나 이거 개선해야할듯" = improvement directive → codeforge-improvement Story #763 carrier 발의로 normative 반영. | (codeforge-improvement Story #763 carrier 발의) |
 
 ## 관련 파일
 
