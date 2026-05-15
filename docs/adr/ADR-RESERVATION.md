@@ -76,6 +76,7 @@ reservations: []
 | 71 | CFP-612 | active | 2026-05-13 (ArchitectAgent inline append per CFP-578 / ADR-070 chief author precedent. ADR file = `ADR-071-orchestrator-user-dialog-convergence.md`, status `reserved → active` 전환 2026-05-14 Phase 1) |
 | 72 | CFP-620 | active | 2026-05-14 (mctrader 3-cycle post-mortem Epic — Story-1 anchor ADR. ADR file = `ADR-72-production-evidence-deputy-and-epic-cutover-gate.md`. status `reserved → active` 전환 2026-05-14 Phase 1 PR #651 merged) |
 | 73 | CFP-622 | active | 2026-05-14 (Sentinel #4 strike #2 carrier — Orchestrator verify-before-assert. ADR-070 자매 ADR. ADR file = `ADR-073-orchestrator-verify-before-assert.md`) |
+| 74 | CFP-708 | reserved | 2026-05-14 (ArchitectAgent inline append per CFP-578 / ADR-070 chief author precedent. CFP-477 retro §6 후보 3 `escalation_action: adr_draft_emitted` carrier — CLAUDE.md Amendment ref drift detection lint. ADR file = `ADR-074-claude-md-amendment-ref-drift-lint.md`) |
 
 ### 번호 해제 (archived)
 
