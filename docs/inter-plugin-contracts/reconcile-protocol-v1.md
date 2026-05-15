@@ -430,6 +430,7 @@ family_atomic_implementation_binding:   # v1.3 신설, CFP-744 §4.3 (d) 발동
     post_atomic_verification: "bash scripts/check-codeforge-version-drift.sh --plugin <codeforge-N> 7회 invocation (7-family 명단) 후 종합"
     drift_script_change: 0   # --plugin filter (line 62) reuse — F-002 옵션 A (옵션 B `--family` flag 신설 미채택, drift script SSOT mutation 회피)
     drift_gt_0_behavior: "transaction 실패 분류 → 전체 7 plugin atomic rollback (0 drift invariant — ADR-037 Amendment 1 결정 A1-1)"
+    evidence_check_entry: "atomic-upgrade-zero-drift"   # FIX Iter 2 (Codex TP#2 F-P1) — ADR-037 Amendment 1 전용 evidence-checks-registry entry (旧 marketplace-parity mismapping 정정, 의미 disjoint: marketplace-parity = wrapper-side publishing-time mirrored-field / 본 entry = consumer-side runtime 0-drift). owner_adr: ADR-037, current_tier: warning, status: deferred-followup (Phase 2 atomic-upgrade-7-plugins.sh Active 전환)
     external_marketplace_exclusion: "codex (openai-codex) / superpowers (claude-plugins-official) = atomic upgrade 비대상 — 7-name loop 가 구조적 배제 (false rollback 0)"
   ratchet_invariant_preserved:   # ADR-064 §self-application — v1.3 = 강화 only, weakening 0
     user_decision_branches_0: unchanged

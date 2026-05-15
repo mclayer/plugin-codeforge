@@ -14,8 +14,9 @@ related_files:
   - docs/adr/ADR-016-marketplace-registration-policy.md
   - docs/adr/ADR-076-declarative-reconciliation-upgrade.md   # Amendment 1 cross-ref — atomic upgrade runtime carrier (§결정 8 runtime ratchet)
   - docs/inter-plugin-contracts/reconcile-protocol-v1.md     # Amendment 1 — atomicity_boundary_runtime ratchet (v1.3) + 0 drift invariant 검증 channel
-  - scripts/check-codeforge-version-drift.sh                 # Amendment 1 — 0 drift invariant 사후 검증 mechanism (--plugin 7회 invocation)
-  - scripts/atomic-upgrade-7-plugins.sh                      # Amendment 1 — atomic upgrade 후 0 drift invariant 박제 carrier (Phase 2)
+  - docs/evidence-checks-registry.yaml                       # Amendment 1 mechanical enforcement — atomic-upgrade-zero-drift entry (ADR-040 Amd3 §결정 7 binding)
+  - scripts/check-codeforge-version-drift.sh                 # Amendment 1 — 0 drift invariant 사후 검증 detect mechanism (--plugin 7회 invocation, CFP-262 기존 script reuse)
+  - scripts/atomic-upgrade-7-plugins.sh                      # Amendment 1 — atomic upgrade 후 0 drift invariant 실 enforcement carrier (Phase 2, post-atomic gate)
 related_stories:
   - CFP-261 (carrier)
   - CFP-259 (parent Epic)
@@ -31,9 +32,13 @@ amendments:
 mechanical_enforcement_actions:
   # ADR-040 Amendment 3 §결정 7.A schema (list[object]: action / status / target_section [+ optional progress_note]).
   # action name = docs/evidence-checks-registry.yaml entry name verbatim. governance category → mechanical action binding 의무.
-  - action: marketplace-parity
-    status: warning
-    progress_note: "Amendment 1 의 '0 drift invariant' = atomic upgrade 후 7 plugin version pin ↔ marketplace SSOT drift 0. 기존 marketplace-parity entry (scripts/check-marketplace-parity.sh, current_tier: warning, owner_adr ADR-016/ADR-023) 가 mirrored field cross-repo drift 를 cross-validate — Amendment 1 의 사후 0 drift 검증 mechanism reuse (신규 entry 신설 회피, ADR-060 framework 정합). 신규 evidence-check entry 는 별도 후속 CFP (atomic-upgrade-7-plugins.sh self-test) 영역."
+  # FIX Iter 2 (Codex TP#2 F-P1 verified-true): 旧 action `marketplace-parity` = 의미 mismapping 정정.
+  # marketplace-parity = wrapper-side publishing-time mirrored-field parity (plugin.json ↔ marketplace.json) — Amendment 1
+  # consumer-side runtime 0-drift invariant 과 의미 disjoint, mechanically enforce 불가 (ADR-040 Amd3 §결정 7 위반).
+  # → 신규 전용 entry `atomic-upgrade-zero-drift` 로 정정 (consumer-side installed pin ↔ marketplace SSOT post-atomic drift 0).
+  - action: atomic-upgrade-zero-drift
+    status: deferred-followup
+    progress_note: "ADR-037 Amendment 1 '0 drift invariant' 의 전용 mechanical action. detect mechanism = scripts/check-codeforge-version-drift.sh `--plugin <codeforge-N>` 7회 invocation (F-002 옵션 A, codex/superpowers 제외 — CFP-262 기존 script 실재). 실 enforcement carrier = Phase 2 scripts/atomic-upgrade-7-plugins.sh post-atomic 0-drift gate (drift > 0 → 전체 7 plugin atomic rollback). status: deferred-followup — Phase 1 = registry declare (detect mechanism 실재) / Phase 2 = atomic-upgrade-7-plugins.sh + workflow self-app 시점 Active 전환 (bootstrap-labels-precondition 패턴 동형). current_tier: warning (ADR-060 §결정 5 첫 도입). cross-validation only (enforcing 아님): marketplace-parity = wrapper-side publishing-time mirrored-field parity (plugin.json↔marketplace.json) — Amendment 1 consumer-side runtime 0-drift invariant 과 의미 disjoint, NOT the invariant 자체 (cross-ref only)."
     target_section: "Amendment 1"
 ---
 
@@ -176,9 +181,10 @@ base ADR-037 (결정 1-5) 은 plugin version **bump 기준** SSOT 를 정의했�
 
 ### Amendment 1 mechanical enforcement binding (ADR-040 Amendment 3 §결정 7.A)
 
-- **action**: `marketplace-parity` (evidence-checks-registry entry verbatim, current_tier: warning, scripts/check-marketplace-parity.sh)
-- **binding 근거**: marketplace-parity entry 는 wrapper + 6 lane plugin 의 mirrored field (name/version/description/author) cross-repo drift 를 검증 — Amendment 1 의 "atomic upgrade 후 version pin drift 0" 의 사후 cross-validate mechanism 으로 reuse. 신규 evidence-check entry (atomic-upgrade-7-plugins.sh self-test) 신설은 별도 후속 CFP 영역 (ADR-060 framework — 신규 entry minimal 추가 원칙 정합, 기존 entry reuse 우선).
-- **retroactive 면제**: 본 Amendment 1 = ADR-040 Amendment 3 (§결정 7.C) 발효 후 신설 amendment → `mechanical_enforcement_actions[]` 의무 적용 대상 (frontmatter 부착 완료).
+- **action**: `atomic-upgrade-zero-drift` (evidence-checks-registry entry verbatim, current_tier: warning, status: deferred-followup, detect_command: `scripts/check-codeforge-version-drift.sh` `--plugin <codeforge-N>` 7회 invocation)
+- **binding 근거**: `atomic-upgrade-zero-drift` entry 가 Amendment 1 "0 drift invariant" 자체를 mechanically enforce — consumer-side installed 7-plugin version pin ↔ marketplace SSOT post-atomic drift 0. detect mechanism = 기존 `scripts/check-codeforge-version-drift.sh` (CFP-262, 실재) `--plugin` 7회 종합 (F-002 옵션 A, codex/superpowers 제외 구조적 배제). 실 enforcement carrier = Phase 2 `scripts/atomic-upgrade-7-plugins.sh` post-atomic 0-drift gate. status: deferred-followup (Phase 1 = registry declare / Phase 2 = script + workflow self-app 시점 Active 전환, `bootstrap-labels-precondition` 패턴 동형).
+- **marketplace-parity 와의 의미 분리 (FIX Iter 2 — Codex TP#2 F-P1 verified-true)**: `marketplace-parity` entry 는 **wrapper-side publishing-time** mirrored field (name/version/description/author) cross-repo parity (plugin.json ↔ marketplace.json) 를 검증 — Amendment 1 의 **consumer-side runtime** 0-drift invariant 과 의미 **disjoint**. marketplace-parity 는 Amendment 1 을 mechanically enforce 하지 못함 (초기 mismapping = ADR-040 Amendment 3 §결정 7 위반 — action 이 §결정 enforce 의무 불충족, FIX Iter 2 로 정정). marketplace-parity = `related_cross_validation_evidence` cross-ref 로만 강등 (enforcing action 아님).
+- **retroactive 면제**: 본 Amendment 1 = ADR-040 Amendment 3 (§결정 7.C) 발효 후 신설 amendment → `mechanical_enforcement_actions[]` 의무 적용 대상 (frontmatter 부착 + 전용 entry 정정 완료).
 
 ### Amendment 1 영향
 
