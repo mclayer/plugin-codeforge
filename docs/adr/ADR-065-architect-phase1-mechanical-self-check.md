@@ -89,7 +89,7 @@ ArchitectAgent chief author 는 Phase 1 산출물 commit 직전 다음 7 항목 
 |---|---|---|
 | 1 | `label-registry-v2.md` 변경 시 `scripts/bootstrap-labels.sh` sync 동반 | `bash scripts/check-labels-bootstrap-strict.sh` PASS |
 | 2 | `doc-locations.yaml` 변경 시 `bash scripts/check-doc-locations.sh --regen` 실행 | regenerate 후 `doc-location-registry.md` mirror diff 0 |
-| 3 | 신규 `templates/github-workflows/*.yml` 시 `.github/workflows/` self-app copy 동반 | `diff -q templates/github-workflows/X.yml .github/workflows/X.yml` exit 0 (byte-identical) |
+| 3 | 신규 `templates/github-workflows/*.yml` 시 `.github/workflows/` self-app copy 동반 | `diff -q templates/github-workflows/X.yml .github/workflows/X.yml` exit 0 (byte-identical) (see §결정 6 for family scope, Amendment 1 CFP-685) |
 | 4 | CLAUDE.md / docs/** 내 link target 이 Phase 1 분배인지 확인 | Phase 2 file 참조 시 dangling — markdown internal link lint PASS |
 | 5 | `docs/inter-plugin-contracts/MANIFEST.yaml` registries 블록 갱신 필요성 확인 | 신규 registry 도입 시 row append, MANIFEST `check-inter-plugin-contracts.sh` PASS |
 | 6 | `docs/parallel-work/section-ownership.yaml` 정책 필요 시 row append | 동시 편집 영향 받는 신규 section 도입 시 row append |
