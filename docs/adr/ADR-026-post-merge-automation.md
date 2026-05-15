@@ -24,6 +24,7 @@ related_stories:
   - CFP-476   # Amendment 1 carrier — PR-Issue close trigger algorithm + line 47 stale 정정 + byte-identity invariant §결정 5.B
   - CFP-545   # Amendment 2 §결정 5.E + §결정 5.F unified carrier — Action 1 strict regex + concurrency.group namespace prefix
   - CFP-546   # §결정 5.F absorbed (concurrency.group namespace, framing errata) — standalone PR 폐기, CFP-545 안 통합 (Codex 종합 리뷰 2026-05-13)
+  - CFP-688   # Amendment 3 §결정 5.G carrier — workflow file integrity safeguards (actionlint pre-commit hook + CI step + canary deploy mandate + KPI registry warning-tier sentinel)
 amendment_log:
   - date: 2026-05-12
     carrier: CFP-476
@@ -33,6 +34,21 @@ amendment_log:
     carrier: CFP-545
     section: "Amendment 2 — §결정 5.E (신설) + §결정 5.F (신설, CFP-546 absorbed)"
     summary: "Amendment 2 = 2 sub-decision unified — (5.E) Action 1 (Phase label transition) Issue resolution 영역의 strict regex matching 의무화 — CFP-476 hotfix scope 외 잔존 결함 (line 96 bare search + inline `${{ ... }}` shell expansion) closure. `in:title` qualifier + jq post-filter `^${STORY_KEY}\\\\b` word boundary + env indirection (`env: STORY_KEY`) 의무. prior art SSOT = `retro-mandatory.yml` lines 162-166 verbatim mirror. semantic 분리 — 5.E 는 Issue title regex (5.A 는 PR body regex, 별개). T2 HIGH 잔존 영역 (Action 1 inline shell expansion) 동시 해소 — §결정 5.D 정합 강화. CFP-541 Epic A 1주 SLA emergency hotfix child #2. (5.F) concurrency.group key namespace clarity 강화 — `${{ github.repository }}` prefix 의무 (CFP-546 worktree content absorbed). CFP-476 retro §4.1 carrier #8 원문 'cross-repo number collision' framing 부정확 — GitHub Actions concurrency scope = repository-level verified (Discussion #78332). 진짜 사유 = namespace clarity / sibling consistency / forward-compat. 6 sibling sweep cross-ref = CFP-569 carrier (별도). retro errata = CFP-568 carrier (별도). Codex 종합 리뷰 (2026-05-13) 권고 정합 — CFP-546 standalone PR 폐기, ADR 내용만 본 Amendment 2 안 통합."
+  - date: 2026-05-15
+    carrier: CFP-688
+    section: "Amendment 3 — §결정 5.G (신설)"
+    summary: "Amendment 3 = workflow file integrity safeguards SSOT — CFP-688 carrier (post-merge-followup.yml 100% FAILURE born-broken state, 17h 18min, 100/100 FAILURE, P0 hotfix). 4 sub-결정 통합: (5.G.a) inline Python heredoc grace policy explicit — ADR-061 §결정 1 strict default 유지 + workflow yml 안 inline ≤ 25 lines + `bash -n` PASS + `actionlint` PASS 3-key 정합 시 grace (본 fix 가 외부 `scripts/extract-security-ai.sh` 분리 path 채택, ADR-061 strict 적용으로 grace clause 미발효 — declarative path 만 명시). (5.G.b) actionlint pre-commit hook 도입 + CI step (prevention layer) — `templates/.git-hooks/pre-commit.sample` 안 actionlint step opt-in + `.github/workflows/actionlint-check.yml` + `templates/github-workflows/actionlint-check.yml` byte-identical mirror 신설 (ADR-005 정합). born-broken 재발 차단의 mechanical forcing function. (5.G.c) canary deploy mandate — post-merge 첫 sister PR merge wait + 5 action outcome telemetry live verify (workflow run conclusion success/no_op enum verify, AC-9 deliverable). (5.G.d) KPI registry warning-tier 9번째 entry `post-merge-followup-workflow-success-rate` — sentinel rolling 14-day window, success rate ≥ 90%, ADR-060 framework 정합 + hotfix-bypass channel `hotfix-bypass:post-merge-followup-success-rate` (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합). sunset_justification 면제 — ratchet 강화 방향 (Amendment 1 algorithmic invariant + Amendment 2 strict regex / namespace 보존 + §결정 5.G integrity safeguards 추가, ADR-058 §결정 5 정합). 본 Amendment 3 = fail-to-run defect fix only 아닌 새 design layer 도입 (workflow file integrity governance = 3-layer chain — silent dead detection + prevention layer + canary detection layer)."
+mechanical_enforcement_actions:
+  # ADR-040 Amendment 3 §결정 7.A schema 정합 — list[object] verbatim entry name + status + progress_note + target_section
+  # 본 mechanical_enforcement_actions[] field 도입 = CFP-688 Amendment 3 §결정 5.G binding (ADR-040 Amendment 3 §결정 7.A 정합)
+  - action: workflow-actionlint-precommit
+    status: deferred-followup
+    progress_note: "Phase 2 sub-PR (b) carrier — actionlint pre-commit hook + CI step. evidence-checks-registry 신규 entry append 의무 (warning tier 첫 도입). hotfix-bypass channel = `hotfix-bypass:actionlint` (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합). 본 Phase 1 sub-PR (a) doc-only scope 외 — Phase 2 sub-PR (b) 진입 후 registry yaml row append + workflow self-app 동반."
+    target_section: §결정 5.G.b
+  - action: post-merge-followup-workflow-success-rate-kpi
+    status: deferred-followup
+    progress_note: "Phase 2 sub-PR (c) carrier — KPI registry warning-tier 9번째 entry. sentinel ≥ 90% rolling 14-day window. evidence-checks-registry 신규 entry append + cron workflow + check-script 동반. hotfix-bypass channel = `hotfix-bypass:post-merge-followup-success-rate` (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합). 본 Phase 1 sub-PR (a) doc-only scope 외 — Phase 2 sub-PR (c) 진입 후 actual measurement window 진입."
+    target_section: §결정 5.G.d
 supersedes: null
 superseded_by: null
 is_transitional: false
@@ -379,6 +395,147 @@ concurrency:
 ### 결정 1 (line 47 inline 정정)
 
 본 Amendment 1 §결정 5.A terminal-phase gate 와 정합. 본문 결정 1 step 3 `phase:완료` stale → `terminal phase 도달 시` 정정 (playbook line 228 SSOT 정합). frontmatter `amendment_log[]` row 1 verbatim cross-ref.
+
+## Amendment 3 (CFP-688, 2026-05-15) — workflow file integrity safeguards
+
+### 컨텍스트
+
+`post-merge-followup.yml` workflow 가 CFP-476 Phase 2 merge (commit `5b8e5dc`, 2026-05-13) 이래 **17시간 18분 100/100 FAILURE born-broken state** 발생. `event: push` fallback signature (정상 `event: pull_request` 대신) + `gh run view --log-failed` "log not found" + jobs[] empty = silent dead 의 전형적 fingerprint. CFP-688 (P0 hotfix, sister carrier #689 P1 retro-mandatory.yml L6 mapping regression).
+
+5 critical action (Phase label transition + Story §9 writer + Carrier Issue close + Sibling PR auto-close + Telemetry counter) 모두 silent dead — manual cleanup mandate 가 사람 행동 의존 = ADR-026 mandate 의 design intent (mechanical enforce) 가 normative directive 로 격하 = systemic regression.
+
+Amendment 1 (§결정 5.A-5.D) = algorithmic invariant 정식화 (PR-Issue close trigger) + Amendment 2 (§결정 5.E-5.F) = Action 1 strict regex + concurrency.group namespace prefix. 두 Amendment 모두 **algorithmic / semantic invariant layer**. 본 Amendment 3 = **workflow file integrity governance layer** = 새 design dimension 도입:
+
+1. **silent dead detection layer** — 100/100 FAILURE + `event: push` fallback 의 3-signature fingerprint 검출
+2. **prevention layer** — actionlint pre-commit hook + CI step (born-broken 재발 차단 mechanical forcing function)
+3. **canary detection layer** — Phase 2 PR merge 직후 첫 sister PR live verify + KPI registry warning-tier sentinel (사후 detection)
+
+본 Amendment 3 = fail-to-run defect fix only 가 아닌 새 design layer (workflow file integrity governance) 의 SSOT.
+
+### 결정 5.G (신설) — Workflow file integrity safeguards
+
+Workflow file (`post-merge-followup.yml` + sibling 5 workflow) 의 YAML parse-time integrity governance — 4 sub-결정 (5.G.a ~ 5.G.d) 의무.
+
+#### 5.G.a — Inline Python heredoc grace policy explicit (ADR-061 §결정 1 localization)
+
+**Default**: ADR-061 §결정 1 strict — multi-line Python (> 5줄 또는 backslash escape 포함) 작성 시 외부 `.py` 또는 `.sh` 파일 분리 의무.
+
+**Grace clause (localized to workflow yml inline scope)**: 본 ADR-026 §결정 5.G.a 안 workflow yml 안 inline Python heredoc (`<<'PY' ... PY` 패턴) 의 grace 영역 = 다음 3-key AND 정합 시:
+
+1. inline ≤ 25 lines (workflow yml self-contained convention 보존)
+2. `bash -n .github/workflows/<name>.yml` syntax check PASS
+3. `actionlint .github/workflows/<name>.yml` YAML + bash + shellcheck integrate PASS
+
+3-key 모두 PASS 시 inline retain 허용 (ADR-061 strict 면제). 한 key 라도 FAIL 시 외부 분리 의무 (ADR-061 §결정 1 default 환원).
+
+**Rationale**:
+- workflow yml 안 inline = self-contained convention (cross-file dependency 차단) 의 value 가 있음 (debug audit trail 친화)
+- but actionlint PASS 가 prevention layer (5.G.b) 의 forcing function — grace clause 가 actionlint 의 PASS 의무 binding
+- Story §3 / Change Plan §3.3 ADR-061 Amendment 후보 분기에서 inline retain 선택 시 본 grace 영역 적용
+
+**본 Story (CFP-688) 적용**: Phase 2 sub-PR (b) 가 외부 `scripts/extract-security-ai.sh` 분리 path 채택 (ADR-061 strict default + ADR-064 §결정 4 broad coverage 정합). 따라서 본 5.G.a grace clause 미발효 — declarative path 만 명시 (future workflow yml inline 도입 시 grace 영역 reference SSOT).
+
+#### 5.G.b — actionlint pre-commit hook + CI step (prevention layer)
+
+Workflow file YAML parse-time defect 사전 차단 = born-broken 재발 차단 mechanical forcing function.
+
+**1. CI step** (deployed):
+
+`.github/workflows/actionlint-check.yml` + `templates/github-workflows/actionlint-check.yml` 신규 (byte-identical, ADR-005 정합):
+
+- trigger: `pull_request: [opened, synchronize]` with `paths: ['.github/workflows/**', 'templates/github-workflows/**']`
+- step: `pip install actionlint==<pinned-version>` → `actionlint .github/workflows/*.yml`
+- exit non-zero = fail-closed default (PR merge 차단)
+
+**2. Pre-commit hook** (opt-in):
+
+`templates/.git-hooks/pre-commit.sample` 안 actionlint step 신설:
+
+```bash
+# templates/.git-hooks/pre-commit.sample
+# actionlint pre-commit hook (CFP-688 Amendment 3 §결정 5.G.b)
+if command -v actionlint >/dev/null 2>&1; then
+  actionlint .github/workflows/*.yml || exit 1
+else
+  echo "::warning::actionlint not installed — skipping workflow lint (opt-in install: pip install actionlint)"
+  # binary 부재 시 warning emit + bypass (local DX 보존, hotfix-bypass channel)
+fi
+```
+
+- binary 부재 시 warning emit + bypass (local DX 보존)
+- opt-in install (CFP-428 pattern 동등 — wrapper opt-in installer + sample)
+
+**3. Hotfix-bypass channel**: `hotfix-bypass:actionlint` label (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합). false positive 또는 emergency hotfix 시 CI step bypass channel.
+
+**Sibling workflow scope**: 본 5.G.b 의 actionlint CI step 은 `.github/workflows/**` 전체 sweep — 6 sibling workflow (auto-phase-label / post-merge-followup / sibling-pr-label-author-check / story-init / retro-mandatory / rate-limit-fallback-kpi) + 신규 actionlint-check.yml + KPI workflow 등 모두 coverage.
+
+**mechanical_enforcement_actions[] binding**: frontmatter `mechanical_enforcement_actions[]` 안 `workflow-actionlint-precommit` entry (status: deferred-followup, target_section: §결정 5.G.b, carrier: CFP-688 Phase 2 sub-PR (b)).
+
+#### 5.G.c — Canary deploy mandate (live verify)
+
+Workflow yml fix 후 즉시 production verify 의무. 본 5.G.c 는 ADR-026 본문 결정 4 (Disable-by-flag safety + main 직접 push 금지) 의 extension.
+
+**Sequence**:
+
+1. Phase 2 sub-PR (b) (workflow yml + hook + tests) merge
+2. **첫 sister PR merge wait** (canary trigger) — 본 ADR-026 5 action 발화 trigger 발생
+3. workflow run live verify:
+   - `gh run list --workflow=post-merge-followup.yml --limit=1 --json conclusion,event,headSha` → `conclusion: success` + `event: pull_request` 의무
+   - jobs[] = 1 (followup job)
+   - 5 action outcome 각각 명시 (`success` / `no_op` / `skip_*` enum) — log 안 grep 의무
+   - aggregate outcome = `auto_completed` / `manual_only` / `partial` 정확 분류
+4. Story §9.4 Gate evidence row append (canary verify timestamp + outcome verbatim)
+
+**Fail-closed default**: 첫 sister PR canary 가 FAILURE 시 즉시 Phase 2 sub-PR (b) revert + root cause 재분석 (born-broken 재현 차단).
+
+**AC-9 deliverable mapping**: Story §5.2 AC-9 정합 — canary deploy verification 가 Story §9.4 evidence collection 영역.
+
+#### 5.G.d — KPI registry warning-tier sentinel (post-detection layer)
+
+사후 detection layer — silent dead 재발 시 사용자 visibility 0 차단의 mechanical forcing function.
+
+**Entry**: `post-merge-followup-workflow-success-rate` (warning-tier 9번째 entry, `docs/evidence-checks-registry.yaml`)
+
+**Metric**:
+
+```bash
+gh run list \
+  --workflow=post-merge-followup.yml \
+  --created=>=$(date -u -d '14 days ago' +%Y-%m-%d) \
+  --json conclusion \
+  --jq '[.[] | select(.conclusion=="success")] | length / (length)' # success ratio
+```
+
+**Sentinel**: ≥ 90% rolling 14-day window.
+
+**Sentinel breach 시 action**:
+- Issue auto-create (label `hotfix-bypass:post-merge-followup-success-rate` + audit comment)
+- KPI workflow cron weekly 발화 (`templates/github-workflows/post-merge-followup-success-rate-kpi.yml`)
+- workflow_dispatch ad-hoc trigger 허용
+
+**4-tier framework 정합**: ADR-060 §결정 3 4-tier enum (`warning` / `blocking-on-pr` / `blocking-on-merge` / `hotfix-bypass`) — 본 entry 첫 도입 default = `warning`. 14-day window 누적 + sample sentinel collect 후 별 CFP (Phase 3 review-promotion) 가 `blocking-on-pr` 승격 결정.
+
+**Hotfix-bypass channel**: `hotfix-bypass:post-merge-followup-success-rate` (ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합). emergency bypass channel.
+
+**mechanical_enforcement_actions[] binding**: frontmatter `mechanical_enforcement_actions[]` 안 `post-merge-followup-workflow-success-rate-kpi` entry (status: deferred-followup, target_section: §결정 5.G.d, carrier: CFP-688 Phase 2 sub-PR (c)).
+
+### Reversibility (Amendment 3 scope)
+
+- §결정 5.G.b (actionlint hook + CI step): Phase 2 sub-PR (b) revert 시 `actionlint-check.yml` 삭제 + `pre-commit.sample` 안 step revert. CI step 부재 시 born-broken 재발 risk 복원 (ADR-026 Amendment 3 pre-state) — but workflow yml 본체 fix 는 그대로 유지.
+- §결정 5.G.c (canary deploy mandate): declarative SSOT만, ADR file revert 가능. 실제 canary deploy 자체는 Phase 2 sub-PR (b) merge 시점에 이미 실행됨 — reversibility 없음.
+- §결정 5.G.d (KPI registry warning-tier entry): Phase 2 sub-PR (c) revert 시 registry yaml row 삭제 + workflow + label-registry-v2 row 동시 rollback. workflow 본체 무영향.
+- ADR-026 Amendment 3 자체 revert: ADR file revert (workflow / hook 본체 무영향, declarative SSOT 만 revert) — but Amendment 3 의 design intent (workflow file integrity governance layer) 이 normative directive 로 격하.
+
+### Out-of-scope (Amendment 3 scope)
+
+- Sister carrier #689 (`retro-mandatory.yml` L6 mapping regression) — 분리 결정 (RequirementsPL synthesis CL-1 = SEPARATE, Codex R1 concur). 본 Amendment 3 scope 외, distinct root cause.
+- Sibling sweep CFP-569 (6 sibling workflow audit-wide expansion of namespace clarity §결정 5.F) — 별 carrier, 본 Amendment 3 scope 외.
+- ADR-061 Amendment (workflow yml inline Python heredoc grace period explicit) — 본 §결정 5.G.a 가 localized grace clause 명시, ADR-061 본문 Amendment 불필요 (broad coverage default 정합).
+- Wrapper repo Python project 도입 (`unit-tests` / `integration-tests` 활성화) — 분리 Story 후보.
+
+### 해소 기준 (Amendment 3 scope)
+
+N/A — `is_transitional: false` (permanent governance mandate). 본 Amendment 3 = ratchet 강화 방향 (Amendment 1 algorithmic invariant + Amendment 2 strict regex / namespace 보존 + §결정 5.G integrity safeguards 추가) — ADR-058 §결정 5 정합. sunset_justification 면제.
 
 ## 관련 ADR
 
