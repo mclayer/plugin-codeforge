@@ -7,9 +7,9 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
-## [5.70.0] - 2026-05-15
+## [5.71.0] - 2026-05-15
 
-### Fixed (CFP-688 Phase 2 sub-PR (b) — ADR-026 Amendment 2 §결정 5.E + §결정 5.F drift fix)
+### Fixed (CFP-688 Phase 2 sub-PR (b) — ADR-026 Amendment 2 §결정 5.E + §결정 5.F drift fix, 5.70.0 skip: CFP-708 marketplace pre-sync collision)
 
 - **F6.1 — Action 1 §결정 5.E strict regex matching** (`post-merge-followup.yml` Action 1 ISSUE_NUM 해석 블록):
   - `in:title` qualifier 추가: `--search "in:title ${STORY_KEY}"` (기존 bare search → GitHub tokenizer prefix collision 차단)
