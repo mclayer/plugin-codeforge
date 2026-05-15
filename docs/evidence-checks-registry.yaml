@@ -1854,7 +1854,7 @@ entries:
       entry (wrapper-side publishing-time mirrored-field cross-repo drift) 와는
       의미 disjoint — 본 entry = consumer-side runtime 0-drift invariant 자체.
     detect_command: bash scripts/check-codeforge-version-drift.sh   # 7-plugin family scope (--plugin <codeforge-N> aggregated, F-002 옵션 A). 기존 script reuse — detect mechanism 실재 (CFP-262 Accepted)
-    workflow: templates/github-workflows/atomic-upgrade-zero-drift.yml   # Phase 2 carrier 신설 (Active 전환 시점). Phase 1 = registry declare only
+    workflow: templates/github-workflows/atomic-upgrade-zero-drift.yml   # Phase 2 신설 완료 (.github/ self-app byte-identical, ADR-005). Active 전환됨
     current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
     bypass_label: hotfix-bypass:atomic-upgrade-zero-drift   # warning-tier bypass_label optional (ADR-060 Amendment 2 §결정 16) — 미래 promotion 대비 namespace 예약 (ADR-024 Amendment 3 per-entry namespace 정합)
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # 기존 entry 동일 패턴
@@ -1875,4 +1875,4 @@ entries:
       count: 0                       # 첫 도입 — prior incident 없음
       threshold: 3                   # ADR-060 §결정 19 (Amendment 6) — threshold 3 standard
       promotion_trigger: none        # count=0 < threshold=3 → 발화 없음 (Option A)
-    status: deferred-followup        # Phase 1 = registry declare (detect mechanism check-codeforge-version-drift.sh 실재) / Phase 2 = scripts/atomic-upgrade-7-plugins.sh + workflow self-app 시점 Active 전환 (bootstrap-labels-precondition 패턴 동형)
+    status: Active                   # Phase 2 (CFP-744) — scripts/atomic-upgrade-7-plugins.sh + templates/.github atomic-upgrade-zero-drift.yml byte-identical self-app land 완료 → deferred-followup → Active 전환 (Phase 1 = registry declare only, bootstrap-labels-precondition 패턴 동형)

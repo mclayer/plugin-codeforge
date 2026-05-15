@@ -7,6 +7,21 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.76.0] - 2026-05-16
+
+### Added (CFP-744 Wave 2 Story-4 Phase 2 — 7-plugin family atomic upgrade (A2) + #752 consumer-distribution)
+
+- **`scripts/atomic-upgrade-7-plugins.sh`** (NEW) — per-family transaction orchestration shell. codeforge family 7 plugin (codeforge + codeforge-{requirements,design,review,develop,test,pmo}) atomic upgrade. §4.1 CLI: `--apply` / `--dry-run` / `--rollback` / `--repo <path>` / `--help`. §4.2 algorithm: idempotency pre-check (ALL none → no-op 정상 종료, AC-9 (a)) → per-family pre-atomic snapshot → 7 plugin per-plugin reconcile (Story-3 `codeforge-upgrade.sh` 위임, semantic 분산 0 §4.4) → 사후 7-plugin 0-drift 검증 (`check-codeforge-version-drift.sh --plugin <codeforge-N>` 7회, F-002 옵션 A — codex/superpowers 구조적 배제) → drift 0 commit / drift > 0 또는 부분 실패 = 전체 7 plugin atomic rollback. §7.4.1 (a)-(i) 9 failure mode DR. ADR-037 Amendment 1 0-drift invariant. ADR-061 정합 (heredoc-python 0). user_decision_branches: 0.
+
+### Changed (CFP-744 Wave 2 Story-4 Phase 2)
+
+- **`scripts/codeforge-upgrade.sh` / `scripts/codeforge-upgrade.ps1`** — AC-11 parser refactor: single-positional `case "${1}"` → `while [[ $# -gt 0 ]]` loop parser. **§3.7.2-parser 7-invariant byte-level binding** 보존 (기존 `--dry-run`/`--apply`/`--rollback <version>` 동작·exit code·error 문구 byte-identical / `--repo <path>` orthogonal / mode 정확히 1개 강제 / unknown arg enum whitelist reject / downstream `_to_canonical()`→`CANONICAL_REPO_ROOT`→`input_repo_root` pipeline 무변경 / fallback byte-identical). `--repo <path>`/`CODEFORGE_REPO_ROOT` env/fallback resolve chain (AC-11 consumer_repo_root parameterization). §4.5/§7.4.1 (i) wrong-target abort-before-touch (실재 디렉터리 AND `.git` 보유 검증). Story-3 per-plugin runtime SSOT semantic 재작업 0 (additive backward-compat, AC-6 정합 — 기존 invocation 동작 byte 불변).
+- **`templates/consumer-scripts.manifest`** — AC-10: 4 entry append (`scripts/codeforge-upgrade.sh` / `scripts/codeforge-upgrade.ps1` / `scripts/lib/path_normalize.py` / `scripts/atomic-upgrade-7-plugins.sh`, workflow-invoked 아님 = dependent-workflow 미부착) + 4 script `chmod +x` (git mode 100755, Check 4 executable-bit — Linux CI PASS). `bootstrap-consumer.sh` Stage 7 가 consumer repo 에 mirror.
+- **`docs/consumer-guide.md`** — AC-12: §2g.2 신설 (consumer 자기 repo 7-plugin atomic upgrade end-to-end flow — 배포 경로 + `--repo` + dry-run/apply/rollback + 사후 0-drift, #752 consumer-distribution 완전 해소).
+- **`docs/evidence-checks-registry.yaml`** — `atomic-upgrade-zero-drift` entry status `deferred-followup` → `Active` (Phase 2 workflow self-app land 완료).
+- **`templates/github-workflows/atomic-upgrade-zero-drift.yml`** + **`.github/workflows/atomic-upgrade-zero-drift.yml`** (NEW) — byte-identical self-app (ADR-005). warning tier (ADR-060 §결정 5), `hotfix-bypass:atomic-upgrade-zero-drift` bypass channel. evidence-registry-naming-check PASS (ad-hoc `hotfix-bypass:evidence-naming` 무효화).
+- **`.claude-plugin/plugin.json`** — 5.75.0 → 5.76.0 MINOR (선택 setup script 추가 — ADR-037 base 결정 1 (i)). version + description mirrored field bump → marketplace atomic sync 별도 sibling PR 의무 (ADR-063 §결정 5).
+
 ## [5.75.0] - 2026-05-16
 
 ### Added (CFP-743 Wave 2 Story-3 Phase 2 — upgrade CLI + UpgradeAgent (C1+C2+C3))
