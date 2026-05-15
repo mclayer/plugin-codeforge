@@ -229,6 +229,45 @@ amendment_log:
       의무 통과 — 강화 방향 amendment, framework legitimacy 회복 의무) +
       sibling_dependencies append `[CFP-390, CFP-412, CFP-455, CFP-449, CFP-481, CFP-506,
       CFP-509, CFP-508, CFP-530, CFP-583]` (Amendment 2 §결정 6 (c) chain 정합).
+  - amendment: 12
+    carrier_story: CFP-734
+    date: 2026-05-15
+    direction: strengthen
+    sunset_justification: null  # 강화 방향 amendment (신규 §결정 26 — KPI history governance scope 확장) — sunset_justification 무관 영역 (ADR-058 §결정 5 / §결정 11 framework permanent SSOT 정합)
+    summary: |
+      신설 §결정 26 — KPI history accumulation 메커니즘 선택 결정 규칙 SSOT.
+      codeforge 의 3 KPI snapshot (rate-limit-fallback / retro-alert-pickup-rate /
+      marketplace-drift-rate) 가 history 누적을 3 상이 메커니즘 (별도 *-history.jsonl /
+      embedded "history" 배열 / embedded "gate_status_history" 배열) 으로 처리 — 결정 규칙
+      SSOT 부재가 진짜 결함 (3 메커니즘 자체 아님). framework 의 sunset gate 측정
+      (§결정 6 N consecutive months / rolling window) 이 history 누적을 암묵 전제하므로
+      KPI history 메커니즘 = ADR-060 framework 의 data-substrate 하위 영역 — 신규 ADR 아닌
+      Amendment host 가 구조적으로 정합 (§결정 11 framework permanent SSOT 정합).
+      §결정 26 = (a) 결정 규칙 (scope boundary = metric-sample-history 만 규율,
+      gate-transition/lifecycle-status log 는 scope 외 — category error 방지 +
+      decidable 입력 window_shape + entry_cardinality → pattern 출력, source-of-truth
+      deterministic priority = registry sunset_gate window > JSON window_months) +
+      tie-break (E-1: 모호 시 jsonl / E-2: dual-window = registry gate window 우선 /
+      E-2.1: governing-window 자체 미해소 시 분류 보류 + 잠정 jsonl) +
+      (b) 통일 history key 명 = "history" (신규 KPI 강제, 기존 entry grandfather) +
+      (c) 3-KPI 분류표 (rate-limit 정합 무변경 / retro-alert = 분류 보류 (deferred,
+      dual-window 미해소 → OOS-D1 선결) / marketplace = 26.A scope 외
+      (gate_status_history = transition-log ≠ metric-history) → OOS-D2) + (d) 각 패턴
+      rationale (G-1 지식 공백 retroactive 해소) + (e) 본 Amendment 미해소 영역
+      follow-up CFP 경계 (ADR-064 §결정 5 CFP-scope-unitary — 실제 jsonl 마이그레이션 /
+      marketplace gate_status_history semantic 처리 (D-2 data-bearing + ADR-063 결합 +
+      scope-out semantic) / D-1 registry-json window 불일치 정정 (retro-alert 최종
+      분류 선결) = 각 독립 CFP). 모든 26.D verdict 는 26.A scope + 26.A 규칙 + 26.B
+      에서 기계적으로 도출 가능 (SSOT 존재 이유 — 임의 단정 0건). lane 분류 = doc-only fast-path (ADR-054 §결정 1 — Amendment +
+      src/tests/`templates/github-workflows/**` 무변경 / §결정 4 신규 ADR 회피).
+      mechanical enforcement 0건 (declarative 규칙 — 분류표 검증은 향후 별 evidence-check
+      entry 후보로 §결정 26 경계에 명시, 본 Amendment scope 외).
+      ratchet 위반 0건 — enum 값 / tier 추가 / bypass channel 동작 변경 없음, framework
+      governance scope 확장 only (ADR-058 §결정 5 sunset_justification 의무 통과 — 강화
+      방향 amendment, framework SSOT permanent governance).
+      sibling_dependencies append `[CFP-390, CFP-412, CFP-455, CFP-449, CFP-481, CFP-506,
+      CFP-509, CFP-508, CFP-530, CFP-583, CFP-662]` (Amendment 2 §결정 6 (c) chain 정합,
+      self-carrier CFP-734 제외).
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
@@ -241,6 +280,7 @@ related_stories:
   - CFP-530  # Amendment 8 carrier — N번째 warning-tier entry `workflow-permissions-block-presence` 등록 + 16 file remediation surface T1/T3 tier 매핑 + hotfix-bypass:workflow-permissions 10번째 family member + ADR-063 atomic invariant 발효
   - CFP-583  # Amendment 9 carrier — 7th warning-tier entry `workflow-yaml-parse` 등록 + 6 workflow yml BODY heredoc anti-pattern 정정 + framework zero-coverage sentinel 회복 (ADR-064 §결정 2 forbid-list mechanical lint + ADR-058 sunset criteria mandate + ADR-040 worktree-first 4 entry + ADR-024 Amendment 4 auto-phase-label + ADR-068 wording SSOT 등 framework SSOT 운영 정당성 회복) + §결정 23 BODY heredoc 정상 패턴 SSOT
   - CFP-662  # Amendment 10 carrier — 10번째 warning-tier entry `bootstrap-labels-precondition` 등록 + RETRO-MCT-104 carrier (mctrader-data MCT-104 Phase 2 PR #14 2026-05-09 replay sentinel) + PR-time precondition check pattern 의 첫 baseline + label-registry-v2 v2.13 → v2.14 PATCH (`hotfix-bypass:bootstrap-labels` 20번째 family member) + ADR-061 §결정 1 외부 script convention pattern reuse (CFP-583 BODY heredoc anti-pattern 차단) + ADR-066 CODEFORGE_CROSS_REPO_PAT primary token 정합 + consumer-guide §2h.X 자동 install 절차 명시 (Edge Case #1 CRITICAL 해소)
+  - CFP-734  # Amendment 12 carrier — 신설 §결정 26 KPI history accumulation 메커니즘 선택 결정 규칙 SSOT + 3-KPI 분류표 + 통일 "history" key 명 grandfather 정책 + follow-up CFP 경계 (ADR-064 §결정 5). lane 분류 = doc-only fast-path (ADR-054 §결정 1). G-1 지식 공백 (패턴 rationale 부재) retroactive 해소
 related_adrs:
   - ADR-008   # versioning (kind:registry 도 minor/major SemVer 정합)
   - ADR-010   # contract sibling sync (kind:registry scope 외 명시)
@@ -1237,4 +1277,105 @@ ALLOWLIST 4-path 은 **두 목적** serving (multi-purpose semantic 명시 — A
 - **Amendment 2 §결정 14** (CFP-455 / 2026-05-12): anomaly vs schema validation 분리 결정 — 본 Amendment 11 = anomaly axis deliver (schema validation = CFP-455 separate).
 - **CFP-508 §결정 20** (Amendment 7 / 2026-05-13): entry name ↔ workflow basename partial match 정합. 본 entry 자동 흡수 (별도 hardcode 불필요).
 - **CFP-509 Amendment 6 §결정 19**: schema v1.2 recurrence field — 본 entry recurrence `{count: 0, threshold: 3, promotion_trigger: none}` Option A.
+
+## Amendment 12 (CFP-734, 2026-05-15)
+
+### Amendment 12-결정 26 (신설) — KPI history accumulation 메커니즘 선택 결정 규칙 SSOT
+
+**Carrier**: CFP-734 / Issue [mclayer/plugin-codeforge#734](https://github.com/mclayer/plugin-codeforge/issues/734) / Story file `wrapper/stories/CFP-734.md` (codeforge-internal-docs SSOT, ADR-013 dogfood-out 정합).
+
+**Direct trigger**: codeforge 의 KPI snapshot JSON 들이 historical metric 누적을 3 상이 메커니즘으로 처리 중 (origin/main `git show` verify) — (a) `rate-limit-fallback` (CFP-453) = 별도 append-only `docs/kpi/rate-limit-fallback-history.jsonl` + `*.json` 안 `history_file` pointer + `scripts/measure-rate-limit-fallback.sh --history-out` (idempotent month-keyed), (b) `retro-alert-pickup-rate` (CFP-628) = embedded `"history": []` 배열 (`docs/kpi/retro-alert-pickup-rate.json` 내부) + `retro-alert-pickup-kpi.yml` 인라인 jq, (c) `marketplace-drift-rate` (CFP-673) = embedded `"gate_status_history"` 배열 (key 명 상이, `docs/kpi/marketplace-drift-rate.json` 내부). trend tooling 입력 계약이 KPI 마다 달라 일관성·테스트 격리·diff-noise 측면에서 비결정적.
+
+**Background root cause**: 3 메커니즘 자체가 결함이 아니라, "어떤 KPI 가 어떤 패턴을 써야 하는가" 의 **결정 규칙 SSOT 부재** 가 결함이다 (Story §2 C-1). 새 KPI 작성자가 매번 ad-hoc 판단 → drift 영구 누적. 또한 3 메커니즘 중 어느 것도 "왜 이 패턴인가" 의 rationale 이 SSOT 에 명시돼 있지 않음 (Story §2.5 G-1 지식 공백). KPI history 누적은 ADR-060 framework 의 sunset gate 측정 (§결정 6 `N consecutive months` / rolling window 판정) 을 위한 **data-substrate 하위 영역** — 독립 설계 도메인이 아니므로 신규 ADR 가 아닌 본 framework 의 Amendment host 가 구조적으로 정합 (§결정 11 framework permanent SSOT 정합 — KPI history governance = framework 운영의 자연스러운 sub-decision).
+
+#### 26.A — 결정 규칙 (decidable 입력 → pattern 출력)
+
+**규칙 적용 범위 (scope boundary — 본 §결정 26 이 governance 하는 데이터 종류)**:
+
+본 §결정 26 은 **metric-sample history** 만 규율한다 — 즉 *window 단위로 누적되는 KPI metric 측정값* (예: 월별 fallback rate / pickup rate / drift count 의 시계열 누적). 다음 두 데이터 종류는 **명시적으로 scope 외** (별개 semantic, 본 규칙 미적용):
+
+- **gate-transition / lifecycle-status log** — gate 의 상태 전이 기록 (예: `marketplace-drift-rate.json` 의 `gate_status_history` = `{status, transitioned_at, reason, transitioned_by}` 형태의 warming→ready→sunset 상태 전이 audit log). metric 측정값의 시계열 누적이 *아님* (값이 아닌 상태 변화 사건 기록). `last_measured_value` 가 존재하지 않거나 history array 의 entry 가 metric 값이 아닌 상태 전이 record 이면 본 범위 외로 판정한다.
+- **이미 별 ADR/contract 가 owner 인 비-KPI 시계열** (예: ADR-RESERVATION append, FIX Ledger row) — 본 framework KPI 도메인 외.
+
+scope 외 데이터에 26.A~26.D 를 적용하지 않는다 (category error 방지 — state-transition-log 에 metric-history 패턴 규칙을 강제하면 잘못된 jsonl-migration verdict 발생). 해당 KPI 에 *metric-sample history* 가 신설되면 그 시점에 26.A 를 새로 적용한다 (26.D marketplace 행 참조).
+
+KPI 의 metric-sample history 누적 패턴 선택은 다음 **결정 가능한 입력 2 변수** 로 deterministic 결정한다 (LLM judgment 미사용 — 두 입력 모두 관측 가능한 SSOT field 에서 기계적으로 도출):
+
+| 입력 변수 | 정의 | 값 | **산정 source-of-truth (deterministic priority)** |
+|---|---|---|---|
+| `window_shape` | gate 판정에 쓰이는 history window 의 형태 | `rolling-multi-month` (예: 3-month rolling) / `single-fixed-window` (예: 1-month flat) | **(1) `docs/evidence-checks-registry.yaml` 해당 entry `sunset_gate` window 표현** (gate 판정의 실제 SSOT) → (2) 없으면 KPI JSON `window_months` → (3) 그래도 모호하면 26.B E-1. registry window 와 JSON `window_months` 가 불일치 (dual-window) 하면 **registry `sunset_gate` window 가 우선** (E-2) |
+| `entry_cardinality` | metric history entry 1건의 구조 + 누적 성장 특성 | `multi-field-or-unbounded` (entry 가 다중 metric field 보유 OR 무한 누적 성장) / `flat-bounded` (단일/소수 field + 유한 소규모) | KPI JSON / jsonl 의 **선언·관측 가능한 entry field** 로 산정 — entry 최대 field 개수 + bounded/unbounded 누적 선언 (registry/json 의 declared schema). 주관적 "성장 가능성" 추정 금지 — 선언된 schema field 와 window 형태에서만 도출 |
+
+**패턴 출력 규칙**:
+
+| `window_shape` | `entry_cardinality` | 선택 패턴 |
+|---|---|---|
+| `rolling-multi-month` | `multi-field-or-unbounded` | **별도 append-only `docs/kpi/<kpi>-history.jsonl`** (+ snapshot `*.json` 안 `history_file` pointer + measure script `--history-out` idempotent month/window-keyed replace) |
+| `rolling-multi-month` | `flat-bounded` | **별도 jsonl** (window_shape 가 rolling = 무한 누적 본질 — jsonl 우선, 26.B tie-break 정합) |
+| `single-fixed-window` | `flat-bounded` | **embedded `"history"` 배열** (snapshot `*.json` 내부, 단일 file atomic read, pointer 불요) |
+| `single-fixed-window` | `multi-field-or-unbounded` | **별도 jsonl** (entry_cardinality 가 확장/성장 본질 — jsonl 우선, 26.B tie-break 정합) |
+
+규칙 1줄 요약: **`window_shape == rolling-multi-month` OR `entry_cardinality == multi-field-or-unbounded` 이면 별도 jsonl, 둘 다 아니면 (`single-fixed-window` AND `flat-bounded`) embedded `"history"` 배열.**
+
+#### 26.B — Tie-break / fallback (E-1)
+
+규칙 입력만으로 패턴이 자명하지 않은 KPI (예: window 은 1-month 선언이나 entry 가 multi-field rolling 의도 / 두 window 동시 보유) → **모호 시 별도 jsonl 채택**. 근거: jsonl 이 테스트 격리 (snapshot json 과 history file 분리 → 측정 로직 단위 테스트가 history 오염 없음) · 무한 확장성 · diff-noise 최소 (append-only) 측면에서 안전 방향 (ADR-064 §결정 1 best-effort / broad-coverage 정합 — fail-safe 가 격리·확장 우위 패턴).
+
+**E-2 (dual-window KPI — mechanical priority)**: KPI 가 두 window 를 동시에 가지면 (예: JSON `window_months` 와 registry `sunset_gate` window 가 불일치) → 26.A source-of-truth priority 표 verbatim 적용 = **registry `sunset_gate` window 가 deterministic 우선** (display/JSON window 가 아닌 *gate 판정에 실제로 쓰이는 window*). registry `sunset_gate` window 가 rolling-multi-month 이면 `window_shape == rolling-multi-month` → 26.A → jsonl. 이 priority 가 부재하면 D-1 같은 registry/json window 불일치에서 작성자가 임의로 어느 window 를 쓸지 선택 (subjective drift) → 분류표 verdict 가 규칙에서 도출 불가능해진다.
+
+**E-2.1 (dual-window 의 governing-window 자체가 미해소일 때 — 분류 보류 규칙)**: dual-window KPI 인데 registry window ↔ JSON window 불일치가 *아직 정정되지 않은 상태* (즉 어느 표현이 정정 후 최종 governing window 가 될지 별 follow-up CFP 로 위임된 상태) 라면 → 분류표 (26.D) 는 해당 KPI 를 **"분류 보류 (deferred)"** 로 기록하고, **26.B tie-break 의 안전 방향 = 잠정 jsonl** 을 적용하며, **최종 분류는 해당 window-불일치 정정 follow-up CFP (예: OOS-D1) 해소 후 26.A 로 재산정** 한다. 이 경우 분류표가 "정합 무변경" 같은 단정을 절대 발화하지 않는다 (window 불일치가 미해소인데 embedded 정합을 단정하면 곧 E-2 와 모순 + 정정 CFP 를 사실상 pre-judge — 26.E follow-up 경계 위반). 잠정 jsonl 은 *방향 권고* 일 뿐 즉시 마이그레이션 강제가 아니다 (실행은 OOS-migration / 해당 OOS follow-up CFP, data 0건이면 E-4 trivially 정합).
+
+#### 26.C — 통일 history key 명 + grandfather 정책 (AC-2 / E-5)
+
+- **신규 KPI**: embedded 패턴 채택 시 history 배열 key 명 = **`"history"`** 로 강제한다. `gate_status_history` 같은 변종 key 명 신규 도입 금지.
+- **기존 entry grandfather**: 본 Amendment 발효 시점 기존 3 KPI 의 현행 key 명은 **grandfather** (즉시 rename 강제 아님). 규칙은 "신규 KPI 부터 적용 + 기존 KPI 는 분류표가 정렬 필요로 판정 시 별 follow-up CFP" 의 적용 시점을 명시한다 (E-5 — 기존 embedded 를 전부 jsonl 강제하면 ADR-064 §결정 5 폭발 → backward-compat 보장).
+- **data 0건 trivially 정합 (E-4)**: 규칙 적용 결과가 패턴 변경을 요구해도 history data 가 0건이면 (`history: []` / 0-byte jsonl) "정렬 trivially 정합" 으로 분류 — 불필요한 follow-up CFP 양산 방지.
+
+#### 26.D — 3-KPI 분류표 (AC-3)
+
+> 표의 모든 verdict 는 26.A scope boundary + 26.A 패턴 규칙 + 26.B (E-2 / E-2.1) 에서 *기계적으로 도출* 가능해야 한다 (= 본 SSOT 의 존재 이유). 도출 과정을 verdict 칸에 명시한다.
+
+| KPI | 도입 CFP | 현행 패턴 | 26.A scope | `window_shape` (source-of-truth) | `entry_cardinality` | 규칙 산정 패턴 | 규칙 적용 결과 (도출 경로 명시) |
+|---|---|---|---|---|---|---|---|
+| `rate-limit-fallback` | CFP-453 | 별도 `*-history.jsonl` + `history_file` pointer (`window_months: 3`) `[verified origin/main]` | **in-scope** (metric-sample history — sonnet_spawn/fallback rate 시계열) | `rolling-multi-month` (registry `rate-limit-fallback-rate` "3 month rolling window" = JSON `window_months: 3` 와 일치, dual-window 아님) | `multi-field-or-unbounded` (sonnet_spawn_total / fallback_count / fallback_rate_percent 등 multi-field, 월 누적 무한) | 별도 jsonl (26.A: rolling-multi-month → jsonl) | **정합 — 무변경**. 도출: in-scope ∧ window_shape=rolling-multi-month → 26.A 1줄규칙 = jsonl = 현행. jsonl precedent 자체 (ADR-057 Amendment 2 owner) |
+| `retro-alert-pickup-rate` | CFP-628 | embedded `"history": []` (JSON `window_months: 1`) `[verified origin/main]` | **in-scope** (metric-sample history — pickup rate 시계열, value/numerator/denominator) | **dual-window 미해소** — registry `retro-alert-pickup-rate` `sunset_gate.metric` = "≥ 90% (**3 month rolling window**)" / `description` "3 month window" / `how` "gate_status 3 consecutive months → sunset" `[verified origin/main]` ↔ JSON `window_months: 1`. E-2 priority → governing = registry **rolling-multi-month**. 단 정정 미실행 (OOS-D1 위임) → **E-2.1 발동** | `flat-bounded` (value / numerator / denominator flat) | E-2 엄격 적용 시 rolling-multi-month → jsonl. **단 E-2.1 (governing-window 자체 미해소)** | **분류 보류 (deferred)**. 도출: dual-window ∧ window 불일치 미정정 → E-2.1 → 26.B tie-break **잠정 jsonl** (안전 방향 권고, 즉시 마이그레이션 강제 아님 — 현재 `history: []` 0건 = E-4 trivially 정합). **최종 분류는 OOS-D1 (registry↔JSON window 정정) 해소 후 26.A 재산정**. "정합 무변경" 단정 *불가* (E-2 와 모순 + OOS-D1 pre-judge 회피). key 명은 이미 `"history"` (26.C grandfather 무관) |
+| `marketplace-drift-rate` | CFP-673 | embedded `"gate_status_history"` (1 entry: `{status: warming, transitioned_at: 2026-05-15, reason, transitioned_by}`) `[verified origin/main]` | **out-of-scope** — 유일 history array = `gate_status_history` = **gate-transition / lifecycle-status log** semantic (warming→ready→sunset 상태 전이 audit), metric-sample history *아님*; `last_measured_value: null` (누적 metric 측정값 0건) `[verified origin/main]` | N/A (scope 외 — 26.A 미적용) | N/A (scope 외) | **26.A 미적용** (scope boundary) | **26.A scope 외 — 본 규칙 미적용**. `gate_status_history` = gate-transition-log (≠ metric-sample-history). 향후 marketplace-drift 에 *metric-sample history* (예: 월별 `drift_issue_auto_create_count` 시계열) 가 신설되면 그 시점에 26.A 재적용. 현행 `gate_status_history` 의 key 명·표현 semantic 처리 (통일 여부/별 어휘) = **OOS-D2 별 follow-up CFP** (data-bearing 1 entry + ADR-063 atomic invariant + state-transition-log ↔ metric-history semantic 분리 결정 필요). 본 규칙은 marketplace 마이그레이션을 *함의하지 않음* (R-1 — scope 외이므로 jsonl 정렬 verdict 발화 자체가 category error) |
+
+#### 26.E — 본 Amendment 미해소 영역 follow-up CFP 경계 (AC-5 / R-1 / ADR-064 §결정 5)
+
+본 Amendment 는 **결정 규칙 SSOT + 분류표 + 통일 key 정책** 까지만 정의한다. 규칙이 정렬을 요구하는 항목의 **실제 실행은 각 독립 follow-up CFP** (독립 brainstorm + 독립 Story + 독립 PR — ADR-064 §결정 5 CFP-scope-unitary verbatim: "한 CFP 안에서 '경량 → full' 단계 채택 금지. 별개 CFP 분리는 허용"):
+
+- **OOS-D2 (marketplace `gate_status_history` semantic 처리)** = 별 follow-up CFP. **본 §결정 26 scope 외 항목** (26.D marketplace 행 = "26.A 미적용"). OOS-D2 의 역할 = scope 외 데이터를 *어떻게 다룰지* 결정 (본 규칙이 결정하지 않음). 사유 3중 (각 독립적으로 별-CFP 강제): (1) **scope-out semantic** — `gate_status_history` = gate-transition / lifecycle-status log (≠ metric-sample-history); OOS-D2 가 "state-transition-log 를 별 어휘로 둘지 / metric-history 와 통일할지" 를 결정해야 함 (본 규칙은 이 결정을 하지 않음 — 26.A scope boundary), (2) **data-bearing** — origin/main 실측 `gate_status_history` 1 entry 보유 (status `warming`, transitioned 2026-05-15), 0-entry 아님 → 어떤 변경이든 데이터 변환 동반, (3) **ADR-063 atomic invariant 결합** — marketplace-drift 는 ADR-063 owner, schema bump 시 plugin.json/CHANGELOG.md/marketplace.json 3-file atomic coordination 의무. **본 규칙은 marketplace jsonl 마이그레이션을 함의하지 않는다** (scope 외 → R-1: THIS rule ⇒ no marketplace migration). 향후 marketplace-drift 에 metric-sample history 가 신설되면 그때 26.A 가 그 신규 history 에 새로 적용된다 (현행 `gate_status_history` 와 무관).
+- **OOS-D1 (retro-alert registry/JSON window 불일치 정정)** = 별 follow-up CFP. **26.D retro-alert 행의 "분류 보류 (deferred)" 를 해소하는 선결 follow-up** — 본 §결정 26 의 분류 자체가 OOS-D1 미해소를 전제로 잠정 verdict (E-2.1) 만 발화하므로, OOS-D1 = 26.D retro-alert 최종 분류의 prerequisite. `docs/evidence-checks-registry.yaml` `retro-alert-pickup-rate` entry `sunset_gate.metric` = "retro-alert-pickup-rate ≥ 90% (3 month rolling window)" + `description` "3 month window" + `how` "gate_status 3 consecutive months = ok → sunset 판정" 인데 `docs/kpi/retro-alert-pickup-rate.json` + `retro-alert-pickup-kpi.yml` 은 `window_months: 1` 하드코딩 `[verified origin/main]`. 26.B E-2 (registry `sunset_gate` window deterministic 우선) 적용 시 governing window = registry **rolling-multi-month** → 26.A = jsonl 방향. 그러나 *어느 표현이 정정 후 SSOT 가 될지* (registry 를 1-month 로 정정 vs JSON/workflow 를 3-month 로 정정) 자체가 미결정 → 26.D 는 E-2.1 로 분류 보류 + 잠정 jsonl 만 기록. 정정 실행이 별 CFP 인 사유: registry `sunset_gate.metric`/`description`/`how` 는 `evidence-check-registry-v1` schema-lint 및 ADR-045 §D-5 owner semantics 와 결합 → gate 판정 window 의미 변경 = owner-ADR-coupled 변경, ADR-064 §결정 5 번들 금지 대상. OOS-D1 해소 후 26.A 로 retro-alert 최종 분류 재산정 (정정 결과가 1-month 로 수렴하면 single-fixed-window×flat-bounded → embedded `"history"` 정합 무변경; 3-month 로 수렴하면 rolling-multi-month → jsonl 정렬 필요 — *둘 다 26.A 에서 도출 가능*).
+- **OOS-migration (실제 jsonl 마이그레이션 일반)** = 별 follow-up CFP. 규칙이 어떤 KPI 를 "jsonl 로 가야 한다" 분류해도 그 마이그레이션 실행 (schema bump + measure script + workflow rewrite) 은 본 Amendment scope 외.
+
+**적용 시점**: 본 §결정 26 은 **Amendment 발효 후 신규/변경 KPI 부터 binding** (retroactive 강제 아님). 기존 3 KPI 의 분류표 (26.D) 상태: `rate-limit-fallback` = 현행 추인 (in-scope, 규칙 = 현행 jsonl), `retro-alert-pickup-rate` = **분류 보류** (dual-window 미해소 → E-2.1, 최종 분류는 OOS-D1 선결), `marketplace-drift-rate` = **26.A scope 외** (gate-transition-log, metric-sample-history 아님 → 본 규칙 미적용; semantic 처리 = OOS-D2). 어떤 기존 KPI 도 즉시 마이그레이션을 강제하지 않는다 (jsonl 방향 권고는 실행 follow-up CFP 위임 + data 0건 E-4 trivially 정합).
+
+#### 26.F — 각 패턴 rationale (AC-4 — G-1 지식 공백 retroactive 해소)
+
+| 패턴 | rationale (왜 이 패턴인가) |
+|---|---|
+| 별도 append-only jsonl | (1) **diff-noise 최소** — 한 줄=한 entry, append 만 → versioned JSON 의 전체 array 재작성 diff 회피. (2) **테스트 격리** — snapshot json (측정 로직 단위 테스트 대상) 과 history file 물리 분리 → 측정 테스트가 history 오염 없음. (3) **무한 확장성** — rolling multi-month 누적이 json 비대화 없이 file rotation/분리 용이. (4) grep/tail/jq stream 친화. 비용: 별도 file·`history_file` pointer·schema_version 동기화. ⇒ rolling/multi-field/unbounded 에서 우월. |
+| embedded `"history"` 배열 | (1) **단일 file atomic read** — pointer 불요, snapshot 1회 read 로 history 동시 획득. (2) **단순성** — measure script 가 별도 file lifecycle 관리 불요. 비용: entry 추가마다 전체 json 재작성 → array diff-noise, 무한 누적 시 json 비대화, 측정 로직 테스트가 history array 와 결합. ⇒ single fixed-window·flat·소규모 유한에서 단순성 우월. |
+
+#### 26.G — lane 분류 결과 (W-1 / AC-7 — ADR-054 §결정 1/4 근거)
+
+- **형식 결정**: 신규 ADR 아닌 **ADR-060 Amendment 12** (KPI history 누적 = framework data-substrate 하위, 구조적 종속 — §결정 11 framework permanent SSOT host 정합).
+- **lane 분류**: **doc-only fast-path** (ADR-054 §결정 1 표 verbatim — "SSOT 문서 변경 + 기존 ADR Amendment + src/tests 무변경"). 근거: (a) 신규 ADR 미도입 → ADR-054 §결정 4 (신규 ADR = full-lane 강제) **트리거 회피**, (b) src/tests 변경 0건 — 본 Amendment 는 declarative 규칙만 (measure script / workflow / KPI json 무변경), (c) `templates/github-workflows/**` 변경 0건 → ADR-054 §결정 5 (workflow 변경 = full-lane) 트리거 회피.
+- **모호성 평가**: ADR-054 §결정 2 (모호 시 full-lane 강제) **미발동** — host 결정이 결정적 (framework 구조적 종속 + Story §6.3 ADR 정합성 점검 + Requirements §4.2 framing 이 ADR-060 Amendment 로 수렴). 신규 standalone ADR 채택은 framework SSOT 파편화 + full-lane 무익 강제로 *덜* 방어 가능한 선택.
+- **ADR-RESERVATION**: 신규 ADR 미도입 → ADR-RESERVATION row 신규 append **불요** (Amendment 는 번호 예약 대상 아님). 신규 §결정 번호 = 26 (ADR-060 본문 §결정 1-12 + Amendment §결정 13-25 다음 sequential).
+
+#### 26.H — mechanical enforcement 경계 (ADR-040 Amendment 3 §결정 7.C 정합)
+
+본 §결정 26 = **declarative governance 규칙** (분류 판정·key 명·rationale). 즉시 mechanical enforcement 0건 (lint script / workflow 신설 없음 — doc-only fast-path 정합). 분류표 (26.D) 정합성을 신규/변경 KPI 에 대해 자동 검증하는 evidence-check entry (`kpi-history-pattern-conformance` 후보) 는 **별 follow-up CFP** 의 ADR-060 framework 자연스러운 entry 추가 영역 (본 Amendment scope 외 — ADR-040 Amendment 3 §결정 7.C retroactive 면제 / ADR-060 §결정 5 첫 도입 = warning). 본 Amendment 는 normative ADR-060 의 amendment 이나 신규 mechanical action 무도입 → `mechanical_enforcement_actions[]` 신규 entry append 불요 (기존 framework entry 변경 0건).
+
+#### Cross-ref
+
+- **ADR-054 §결정 1/2/4/5** (CFP-363 / 2026-05-10): doc-only fast-path 분류 — 본 Amendment = Amendment + src/tests/workflow 무변경 → doc-only fast-path. 신규 ADR 회피로 §결정 4 트리거 회피.
+- **ADR-064 §결정 5** (CFP-445 / 2026-05-12): CFP-scope-unitary — 26.E follow-up CFP 경계가 verbatim 정합 (마이그레이션 번들 0건).
+- **ADR-057 Amendment 2**: rate-limit jsonl extension owner — 26.D rate-limit 행이 jsonl precedent 으로 추인 (무충돌, registry "3 month rolling window" = JSON `window_months: 3` 일치 = dual-window 아님).
+- **ADR-045 §D-5** (CFP-628): retro-alert KPI owner — 26.D retro-alert 행은 **추인이 아니라 "분류 보류 (deferred)"**. registry `sunset_gate` window (3-month rolling) ↔ JSON `window_months: 1` 불일치가 dual-window 이므로 E-2.1 발동 → 잠정 jsonl 권고 + 최종 분류는 OOS-D1 (window 불일치 정정, ADR-045 owner 영역 결합) 선결. 본 §결정 26 은 retro-alert 의 embedded 패턴을 추인하지 *않는다* (단정 시 E-2 와 모순).
+- **ADR-063** (marketplace atomic invariant): marketplace-drift 결합 — 26.E OOS-D2 별 CFP 권고의 atomic invariant 결합 근거.
+- **ADR-013** (dogfood-out): Story file = `mclayer/codeforge-internal-docs:wrapper/stories/CFP-734.md`. 정책 SSOT = `mclayer/plugin-codeforge` 본 ADR.
+- **§결정 6 / §결정 11** (본 ADR 본문): sunset gate 측정이 history 누적을 암묵 전제 → KPI history governance = framework 하위 (Amendment host 구조적 정합 / framework permanent SSOT 정합).
 
