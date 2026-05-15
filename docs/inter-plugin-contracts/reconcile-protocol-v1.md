@@ -363,6 +363,23 @@ mechanical_implementation_binding:
     powershell: "scripts/codeforge-upgrade.ps1"
     parity_invariant: "두 script 동일 reconcile semantic (9 desired_state_domains 동일 / 3 mode 동일 / user_decision_branches: 0 동일). parity 차이 = post-apply sanity check 검출 영역."
     path_form_invariant: "MSYS2 / Git-Bash `/c/` path-form 일관 정규화 의무 (CFP-702 normalize_path bug precedent 회피 — path-form mismatch = silent reconcile target miss = HIGH severity)."
+    path_form_normalization:   # v1.2 FIX iter 2 ACCEPT-5 — Change Plan §4.5 canonical 규칙 contract-level SSOT (구현 lane binding). ratchet 강화 only (path_form_invariant 의 명시화 — weakening 0).
+      accepted_input_forms:    # 정규화 함수 수용 의무 6종 (Change Plan §4.5 enumeration verbatim)
+        - msys2_posix              # /c/Users/...
+        - windows_backslash        # C:\Users\...
+        - windows_forward_slash    # C:/Users/...
+        - relative                 # ./ ../ root 기준 resolve
+        - whitespace_containing    # 공백 포함 path (raw 보존, shell 전달 시점만 quote)
+        - non_ascii_utf8           # UTF-8 segment byte-level 보존 (locale-dependent 변환 금지)
+      canonical_output_rule:
+        base: "repo_root (consumer project root) 기준 절대 경로"
+        separator: "forward_slash_single"    # backslash → / 변환, drive 환경별 일관 mapping
+        encoding: "utf8_explicit"            # non-ASCII byte-level 보존
+        relative_resolution: "root_기준_absolute (symlink 미해소 — 정책 단순화)"
+        precedent: "CFP-702 _to_canonical() 함수 semantic 동형 (신규 발명 금지)"
+      parity_obligation: "sh ↔ ps1 동일 canonical 함수 semantic (동일 입력 → byte-identical output). divergence = post-apply sanity check 검출 → automatic_rollback_to_snapshot."
+      failure_behavior: "abort_before_touch"   # 정규화 불가 입력 = filesystem touch 0 상태에서 abort (snapshot 무생성, dry_run filesystem_touch:false 정합). Change Plan §7.4.1(e) DR entry 정합.
+      adr_061_cross_ref: "정규화 로직 > 5줄 / backslash escape 포함 시 외부 .py helper 의무 (sh↔ps1 single source parity 구조적 강제) — ADR-061 Python script convention."
   mode_dispatch:  # reconcile-protocol-v1 §2 mode_enum verbatim binding
     "--dry-run": "mode_enum.dry_run (filesystem_touch: false, network_call_allowed: true) — Helm `helm diff` 동형"
     "--apply": "mode_enum.transaction (snapshot 생성 → 9 영역 reconcile → post-apply sanity check 단일 atomic unit, partial_failure_behavior: automatic_rollback_to_snapshot)"
