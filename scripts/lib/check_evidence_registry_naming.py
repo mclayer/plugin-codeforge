@@ -38,6 +38,8 @@ DRIFT_ALLOWLIST = {
     ("workflow-permissions-block-presence", "workflow-permissions-check.yml"): "ADR-060 Amendment 8 §결정 21 — workflow permissions lint basename divergence (block-presence vs check)",
     ("retro-alert-pickup-rate",            "retro-alert-pickup-kpi.yml"):      "ADR-045 §D-5 CFP-628 — KPI sentinel basename divergence (rate vs kpi)",
     ("auto-phase-label-sibling-parity",    "sibling-workflow-parity.yml"):     "CFP-685 carrier — CFP-481/ADR-060 Amendment 4 lineage 보존, family scope self-app naming",
+    ("workflow-actionlint-precommit",      "actionlint-check.yml"):            "CFP-688 §5.G.b — ADR-026 prescribed frontmatter action name (ADR-040 Amd3 §7.A verbatim binding) vs workflow basename divergence",
+    ("post-merge-followup-workflow-success-rate-kpi", "post-merge-followup-success-rate-kpi.yml"): "CFP-688 §5.G.d — ADR-026 prescribed entry name (workflow infix) vs workflow basename divergence",
 }
 
 REGISTRY_PATH = Path("docs/evidence-checks-registry.yaml")

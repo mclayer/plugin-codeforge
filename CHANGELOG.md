@@ -7,6 +7,26 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.73.0] - 2026-05-15
+
+### Added (CFP-688 Phase 2 sub-PR (c) — ADR-026 Amendment 3 §결정 5.G.b actionlint + §결정 5.G.d KPI sentinel + TC-4/TC-7 extract-security-ai)
+
+- **`scripts/extract-security-ai.sh`** (NEW) — ADR-061 §결정 1 외부 script. lanes.security_ai 3-state extraction (true / false / missing). yq primary → python3 fallback. TC-4 carrier. Inv-2 fail-closed strict: missing → caller treats as phase:보안-테스트.
+- **`.github/workflows/actionlint-check.yml`** (NEW) — PR-time actionlint v1.7.12 syntax validation warning-tier CI step. `hotfix-bypass:actionlint` bypass channel. ADR-026 §5.G.b prevention layer.
+- **`templates/github-workflows/actionlint-check.yml`** (NEW) — byte-identical mirror (ADR-005 §결정 2 정합).
+- **`templates/.git-hooks/pre-commit.sample`** (NEW) — opt-in actionlint pre-commit hook. binary 부재 시 warning emit + bypass (T-NEW-1 forced install 차단). scripts/install-git-hooks.sh 자동 디스커버리 대상.
+- **`.github/workflows/post-merge-followup-success-rate-kpi.yml`** (NEW) — rolling 14-day success rate sentinel (sentinel ≥ 90%). cron weekly Monday 09:00 UTC + workflow_dispatch. breach 시 Issue 자동 생성. ADR-026 §5.G.d KPI detection layer.
+- **`templates/github-workflows/post-merge-followup-success-rate-kpi.yml`** (NEW) — byte-identical mirror (ADR-005 §결정 2 정합).
+- **`scripts/check-post-merge-followup-success-rate.sh`** (NEW) — thin bash wrapper. gh run list 14-day aggregation. exit 0/1/2 (ADR-060 §결정 15 3-tier). SENTINEL_PCT/WINDOW_DAYS env override 지원.
+- **`docs/evidence-checks-registry.yaml`** — 54번째 entry `workflow-actionlint-precommit` + 55번째 entry `post-merge-followup-workflow-success-rate-kpi` append (각 warning tier, owner_adr ADR-026, introduced_by CFP-688).
+- **`docs/inter-plugin-contracts/label-registry-v2.md`** — v2.17 PATCH: `hotfix-bypass:actionlint` 24번째 + `hotfix-bypass:post-merge-followup-success-rate` 25번째 family member (combined single bump). (label-registry-v2 frontmatter CFP-708 Phase 2 v2.17 bump 선행 정정 동반 — CFP-708이 CHANGELOG에 v2.17 기록 후 frontmatter 미갱신, 본 sub-PR에서 PATCH 추가).
+
+### Changed (CFP-688 Phase 2 sub-PR (c))
+
+- **`.github/workflows/post-merge-followup.yml`** — Step 2 TC-7 semantic fix: lanes.security_ai 3-state unified (explicit false → phase:구현-테스트 / missing|true → phase:보안-테스트 fail-closed). inline _read_security_ai() heredoc → `scripts/extract-security-ai.sh` external call (ADR-061 §결정 1 + ADR-026 §결정 5.G.b). dead-code TERMINAL_PHASE pre-set 수정.
+- **`templates/github-workflows/post-merge-followup.yml`** — byte-identical mirror (ADR-005 §결정 2 정합).
+- **`docs/adr/ADR-026-post-merge-automation.md`** — frontmatter mechanical_enforcement_actions[] 2 entry `status: deferred-followup` → `active` + progress_note 갱신.
+
 ## [5.72.0] - 2026-05-15
 
 ### Added (CFP-708 Phase 2 — ADR-074 CLAUDE.md Amendment ref drift detection lint)
