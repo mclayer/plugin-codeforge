@@ -42,6 +42,9 @@ schema_version: "1.0"
 
 | iter | timestamp | story_key | pattern_dimension | pattern_summary | trigger | different_dimension_after_halt | escalation_outcome |
 |------|-----------|-----------|-------------------|-----------------|---------|-------------------------------|--------------------|
+| 1 | 2026-05-14 22:36 | CFP-672 | 보고 형식 | stale SessionStart snapshot 을 ground truth 로 보고·진행 → parallel 세션 merge(`270ae26`) 미인지, ~30분 duplicate work | backfill (retroactive baseline — not realtime layer-3/4 detect) | N/A — backfill (no halt-rewrite cycle) |  |
+| 2 | 2026-05-15 03:16 | CFP-701 | 보고 형식 | git log 0-hit 만으로 "정상 진행" 보고 → open PR ADR-claim scan 누락, ArchitectPL 단계 뒤늦은 ESCALATE (CFP-672 와 동일 dimension 재발) | backfill (retroactive baseline — not realtime layer-3/4 detect) | N/A — backfill (no halt-rewrite cycle) |  |
+| 3 | 2026-05-15 12:00 | CFP-707 | 질문 자체 | multi-PR version field contention 을 묻지 않고 plugin.json bump 단정 진행 → cascade collision, Pause-and-resume | backfill (retroactive baseline — not realtime layer-3/4 detect) | N/A — backfill (no halt-rewrite cycle) |  |
 
 <!-- 비어있는 table — Orchestrator 가 incident detect 시 row append.
      ADR-071 §결정 6 schema 준수. -->
