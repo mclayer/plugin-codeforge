@@ -7,6 +7,17 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.78.0] - 2026-05-16
+
+### Changed (CFP-751 Phase 2 — deputy 일반 명사 → SubAgent 전수 sweep, ADR-080 normative 적용)
+
+- **51 file / 282 mechanical replacements** (wrapper repo) — `docs/**` + `CLAUDE.md` + `skills/**` 영역의 lowercase 일반 명사 `deputy` → `SubAgent` (Class-A 치환). 의미 보존 (역할 / 위계 0 변경).
+- **Class-B 보존 verified** — 15 `*DeputyAgent` (agent identifiers) / 41 `Deputy` (capitalized concept) / 11 `codeforge:deputy-mandate` (skill name) / 3 `skills/deputy-mandate/` (path). Phase 1 ADR-080 §결정 1-2 정합.
+- **Sweep script** `.tmp/sweep_deputy_subagent.py` (ADR-061 외부 `.py`, heredoc 금지) — regex `(?<![/"'\w-])deputy(?!-)(?![A-Za-z0-9_])` (hyphen+quote lookbehind + ASCII lookahead Korean rescue), fenced code block toggle preservation. 3-iter regex refinement (Korean follow / SKILL.md basename collision / path-slug+quoted-verbatim breakage). 21 residual lowercase `deputy` 잔존 — 모두 Class-B 정당 보존 (fenced yaml schema / inline-code field names / `.yaml` files out of script scope).
+- **ADR-RESERVATION row 80 verbatim user directive 보존** — `"deputy라는 표현을 쓰는데"` + `"deputy" 일반 명사` quoted text intact (Iter 3 regex fix evidence).
+- **`.claude-plugin/plugin.json`** — 5.77.0 → 5.78.0 MINOR (ADR-080 normative 적용 carrier — Phase 2 deploying canonical SubAgent terminology). version + description mirrored field bump → marketplace atomic sync (ADR-063 §결정 2 선행 ordering).
+- **ADR-010 §결정 2 cross-plugin sibling sync** — `mclayer/plugin-codeforge-design` 동형 paired PR (13 file / 142 replacement, 0.12.0 → 0.12.1 PATCH).
+
 ## [5.77.0] - 2026-05-16
 
 ### Changed (CFP-750 Phase 2 — 박제 enforcement 강화: lint scope 확장 + per-word decoupling + 전수 sweep + R9 perf fix)
