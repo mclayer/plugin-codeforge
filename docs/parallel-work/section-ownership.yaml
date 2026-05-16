@@ -131,4 +131,15 @@ owned_sections:
     # vs evidence SSOT). cross_ref = ADR-014 (Amendment 3 carrier = Sibling Story-2 #633).
     # F-NEW-4 FIX iter 2 carrier (Codex TP#2 verify-after-fix iter 1 신규 P2 finding).
 
+  # ADR-079 (CFP-770) — KST timestamp display mandate Layer-bounded
+  - file: CLAUDE.md
+    section: "시각 표시 정책 (KST, ISO 8601)"
+    owner_adr: ADR-079  # CFP-770 carrier — KST display mandate 신규 단락 (display layer/contract field layer disjoint)
+    carrier_story: CFP-770
+    parallel_edit: append-only
+    # NOTE (CFP-770): 본 단락 = ADR-079 §결정 1-10 의 normative 요약 (anchor only, 상세는 ADR-079).
+    # display layer KST 강제 + contract field layer UTC strict 0건 변경 invariant 선언.
+    # consumer overlay tz override 불가 (ADR-057 정합).
+    # Phase 2 CFP-771 Amendment 1 이 mechanical lint wire 채움.
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)
