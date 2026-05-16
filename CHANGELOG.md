@@ -7,6 +7,18 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.80.0] - 2026-05-17
+
+### Changed (CFP-795 Phase 2 — post-merge-fix phase-gate fast-pass 4번째 source)
+
+- [CFP-795] phase-gate-mergeable.yml 4번째 fast-pass source `isPostMergeFix` (3-조건 AND: ① post-merge-fix label ② hub Story §10 FIX Ledger row binding + ALLOWED_HUB_REPOS strict match (zero-trust, Codex TP#2 P1 FIX) ③ 원 MERGED PR §7 보안 non-touch 양면 SECURITY_PATHS). ADR-026 Amendment 4 §결정 6 mechanical 이행.
+- [CFP-795] label-registry-v2 v2.21 — post-merge-fix entry 신설 (category: fast-pass 신규, kind:registry MINOR). cross-repo land_order 후 safe defect 정정 hotfix 경로.
+- [CFP-795] hotfix-playbook cross-repo land_order post-merge 경로 신설 (§6).
+- [CFP-795] consumer-guide post-merge-fix exemption 사용법 + CI terminal state classification 확장.
+- [CFP-795] CLAUDE.md "GitHub Workflow" fast-pass 3→4 source + "Inter-plugin Contract" label-registry v2.21 반영.
+- [CFP-795] tests/workflows/test_phase-gate-mergeable-yml.sh 신규 fixture (28 TC TDD RED→GREEN).
+- [CFP-795] byte-identical self-app: templates/ ↔ .github/ phase-gate-mergeable.yml (ADR-005).
+
 ## [5.79.0] - 2026-05-16
 
 ### Changed (CFP-777 Phase 2 — DialogFidelityAgent wrapper 반영)

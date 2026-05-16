@@ -1871,7 +1871,37 @@ echo "[ci-watch] terminal state reached, exit=$ec"
 |---|---|---|
 | `phase-gate-mergeable` on type:epic 라벨 PR | (resolved CFP-106 #143 fast-pass) → 자동 success | (의도 fast-pass — admin merge 불필요) |
 | `phase-gate-mergeable` on doc-only PR (`docs/`/`wrapper/`/`templates/`/`scripts/`/`.github/`/`.claude-plugin/`/`.claude/_overlay/`/`.codeforge/`/`scope_manifests/`/`*.md` 등) | (resolved CFP-106 #143 + CFP-758 fast-pass) → 자동 success | (의도 fast-pass) |
+| `phase-gate-mergeable` on post-merge-fix 라벨 PR (3-조건 AND 충족) | (CFP-795 / ADR-026 Amendment 4 §결정 6 fast-pass) → 자동 success | (의도 fast-pass — 아래 절차 참조) |
 | 기타 ACTION_REQUIRED | 사전 등재 X | 사용자 보고 + 진단 |
+
+### post-merge-fix exemption 사용법 (CFP-795 / ADR-026 Amendment 4)
+
+cross-repo Story land_order 후 safe defect 발견 시 (MCT-183 류 — byte-equivalence INV 위반, lint auto-fix 의도치 않은 적용 등) 아래 절차로 admin override 없이 hotfix PR 을 land 할 수 있다.
+
+**전제 조건** (3가지 모두 필수):
+1. 정정 대상 원 PR 이 이미 MERGED 상태
+2. hotfix PR 이 신규 코드·로직 추가 없는 safe defect 정정
+3. 정정 대상 원 PR 이 보안 영역 (`docs/adr/ADR-*.md` 보안 분류 / `docs/security/`) 미접촉
+
+**Orchestrator 절차**:
+
+```bash
+# 1. hotfix PR body 에 marker 기재
+story_uri: https://github.com/<hub-owner>/<hub-repo>/blob/main/<plugin>/stories/<KEY>.md
+corrects_pr: <owner>/<repo>#<N>     # 정정 대상 원 MERGED PR
+
+# 2. hub Story §10 FIX Ledger row append (Orchestrator monopoly — fix-event-v1)
+#    현재 hotfix PR 번호 포함 의무 (예: mclayer/mctrader-data#71)
+
+# 3. hotfix PR 에 post-merge-fix label 수동 부착
+#    fix-event-v1 §10 row 작성 완료 후 부착 (순서 의무)
+
+# → phase-gate-mergeable CI 가 3-조건 AND 자동 검증 → fast-pass success
+```
+
+**consumer hub repo 화이트리스트**: dogfood default = `github.com/mclayer/codeforge-internal-docs`. consumer hub repo 가 다른 경우 `ALLOWED_HUB_REPOS` workflow env 에 추가 (`phase_gate.allowed_hub_repos[]` overlay 확장, ADR-057 정합 — 축소 불가). `docs/hotfix-playbook.md §6` 상세 참조.
+
+**EC-2 경계**: `post-merge-fix` ≠ `hotfix:minimal` (별 경로). `hotfix:minimal` = 운영 장애 단일 파일 수정, 보안테스트 필수. `post-merge-fix` = cross-repo land_order 정정 전용, 보안 non-touch 역참조 시 보안테스트 실질 N/A.
 
 ### enforce_admins toggle 기법 (BLOCKED + MERGEABLE 케이스)
 
