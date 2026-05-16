@@ -33,6 +33,10 @@ KST_TS_RE = re.compile(
     r'\b\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(Z|[+-]\d{2}:\d{2})'
 )
 
+# E-7: KST parenthetical 패턴 — `(HH:MM KST)` 또는 `(HH:MM:SS KST)` 형식
+# E-8 옵션 A adjacency: KST-paren 직전 인접 timestamp 만 exempt (token-level)
+KST_PAREN_RE = re.compile(r'\((\d{1,2}:\d{2}(?::\d{2})?)\s+KST\)')
+
 EXPECTED_OFFSET = '+09:00'
 
 # ─── 5 scope glob (Story §3.3 결정 1 verbatim) ───
@@ -159,7 +163,20 @@ def scan_file(p):
             continue
 
         # KST_TS_RE scan — 한 라인에 복수 timestamp 가능
+        # E-8 옵션 A: KST-paren 직전 인접 timestamp 만 exempt (token-level adjacency guard)
+        kst_paren_matches = list(KST_PAREN_RE.finditer(raw_line))
         for m in KST_TS_RE.finditer(raw_line):
+            # 인접성 검사: m 이 어떤 kst_paren 의 직전 token 인가?
+            is_adjacent_to_kst_paren = False
+            for kp in kst_paren_matches:
+                # m.end() ≤ kp.start() (m 이 kp 앞에 위치) + 사이가 whitespace 만
+                if m.end() <= kp.start():
+                    gap = raw_line[m.end():kp.start()]
+                    if gap.strip() == "":  # whitespace only
+                        is_adjacent_to_kst_paren = True
+                        break
+            if is_adjacent_to_kst_paren:
+                continue  # KST-paren 인접 exempt
             offset = m.group(1)
             if offset != EXPECTED_OFFSET:
                 findings.append((line_num, raw_line.rstrip(), m.group(0), offset))

@@ -254,3 +254,91 @@ EOF
     run bash scripts/check-kst-timestamp.sh docs/adr/ADR-988-missing.md
     [ "$status" -eq 0 ]
 }
+
+# ─── KST parenthetical exempt (E-7/E-8, CFP-810 신규 5 case) ───
+
+@test "case 16: Z timestamp + (HH:MM KST) 인접 부기 -> exit 0 (KST-paren exempt)" {
+    # E-8 옵션 A: UTC Z + 바로 뒤 (15:30 KST) = 인접 exempt
+    cat > docs/adr/ADR-987-kst-paren-happy.md <<'EOF'
+---
+adr_number: 987
+title: KST paren happy fixture
+---
+
+# KST parenthetical 허용 패턴
+
+quote-external = UTC verbatim + KST parenthetical 부기 허용 (2026-05-16T06:30:00Z (15:30 KST)).
+EOF
+    run bash scripts/check-kst-timestamp.sh docs/adr/ADR-987-kst-paren-happy.md
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"PASS"* ]]
+}
+
+@test "case 17: Z timestamp 단독 (KST paren 없음) -> exit 1 WARN" {
+    # KST paren 부기 없는 Z timestamp = 위반
+    cat > docs/adr/ADR-986-z-solo.md <<'EOF'
+---
+adr_number: 986
+title: Z solo violation fixture
+---
+
+# Z timestamp 단독
+
+처리 시각: 2026-05-16T06:30:00Z
+EOF
+    run bash scripts/check-kst-timestamp.sh docs/adr/ADR-986-z-solo.md
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"violation"* ]] || [[ "$output" == *"WARN"* ]]
+}
+
+@test "case 18: 복수 Z timestamp — 첫 번째 KST-paren 인접 exempt + 두 번째 위반" {
+    # first Z = KST paren 인접 → exempt, second Z = 단독 → violation
+    cat > docs/adr/ADR-985-multi-ts.md <<'EOF'
+---
+adr_number: 985
+title: multi timestamp fixture
+---
+
+# 복수 timestamp
+
+시작: 2026-05-16T06:30:00Z (15:30 KST) 완료
+다른 작업: 2026-05-16T07:00:00Z 처리됨
+EOF
+    run bash scripts/check-kst-timestamp.sh docs/adr/ADR-985-multi-ts.md
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"violation 1건"* ]]
+}
+
+@test "case 19: 잘못된 시각 (99:99 KST) paren + Z timestamp -> exit 0 (regex 패턴 매칭, semantic 검증 OOS)" {
+    # (99:99 KST) 도 KST_PAREN_RE 에 매칭 → 인접 Z exempt (semantic invalid time = OOS)
+    cat > docs/adr/ADR-984-bad-time.md <<'EOF'
+---
+adr_number: 984
+title: negative regex fixture
+---
+
+# semantic 무효 시각 (OOS)
+
+처리: 2026-05-16T06:30:00Z (99:99 KST)
+EOF
+    run bash scripts/check-kst-timestamp.sh docs/adr/ADR-984-bad-time.md
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"PASS"* ]]
+}
+
+@test "case 20: Z timestamp + (HH:MM:SS KST) HMS 변형 부기 -> exit 0 (초 포함 KST paren exempt)" {
+    # HH:MM:SS KST 변형도 KST_PAREN_RE 에 매칭 → exempt
+    cat > docs/adr/ADR-983-hms-kst.md <<'EOF'
+---
+adr_number: 983
+title: HMS KST paren fixture
+---
+
+# 초 포함 KST parenthetical
+
+실행: 2026-05-16T06:30:45Z (15:30:45 KST)
+EOF
+    run bash scripts/check-kst-timestamp.sh docs/adr/ADR-983-hms-kst.md
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"PASS"* ]]
+}
