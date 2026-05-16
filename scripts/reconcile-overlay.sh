@@ -130,12 +130,10 @@ if [[ "${MODE}" == "rollback" ]]; then
     fi
 
     echo "${SCRIPT_NAME} snapshot 복원: $(basename "${local_latest_snapshot}")"
-    local overlay_parent
-    overlay_parent="$(dirname "${CONSUMER_OVERLAY_DIR}")"
-    local overlay_base
-    overlay_base="$(basename "${CONSUMER_OVERLAY_DIR}")"
+    local_overlay_parent="$(dirname "${CONSUMER_OVERLAY_DIR}")"
+    local_overlay_base="$(basename "${CONSUMER_OVERLAY_DIR}")"
 
-    tar xzf "${local_latest_snapshot}" -C "${overlay_parent}" 2>/dev/null || {
+    tar xzf "${local_latest_snapshot}" -C "${local_overlay_parent}" 2>/dev/null || {
         echo "${SCRIPT_NAME} snapshot 복원 실패 (corrupt?)" >&2
         exit 1
     }

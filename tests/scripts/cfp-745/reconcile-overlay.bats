@@ -612,22 +612,31 @@ new-content
 # ─────────────────────────────────────────────────────────────────────────────
 # TC-19: --rollback mode: Story-3 snapshot restore 위임 (별 entrypoint 불요)
 # ─────────────────────────────────────────────────────────────────────────────
-@test "TC-19: --rollback mode — delegates to Story-3 snapshot restore (exit 0 or documented error)" {
-  # Create a valid snapshot to roll back to
+@test "TC-19: --rollback mode — snapshot restore succeeds (exit 0) + prior-state restored" {
+  # Arrange: overlay 파일을 "current-state"로 설정
   local fname="rollback-test.sh"
+  local overlay_basename
+  overlay_basename="$(basename "${OVERLAY_DIR}")"
   echo "current-state" > "${OVERLAY_DIR}/${fname}"
 
+  # snapshot tar 구조: rollback 코드는 tar xzf -C $(dirname OVERLAY_DIR) 를 실행.
+  # 따라서 tar 내부 경로 = overlay_basename/fname 이어야 OVERLAY_DIR/fname 으로 추출됨.
   local snap_tmp="${TEST_DIR}/snap_tmp19"
-  mkdir -p "${snap_tmp}/.claude/_overlay"
-  echo "prior-state" > "${snap_tmp}/.claude/_overlay/${fname}"
+  mkdir -p "${snap_tmp}/${overlay_basename}"
+  echo "prior-state" > "${snap_tmp}/${overlay_basename}/${fname}"
   (cd "${snap_tmp}" && tar czf "${SNAPSHOT_DIR}/20260516T190000Z-5.77.0.tar.gz" .)
 
   run bash "${SCRIPT}" --rollback
 
-  # --rollback should either succeed (exit 0) restoring from snapshot,
-  # or report clearly (no interactive prompt)
-  [ "$status" -eq 0 ] || [ "$status" -eq 1 ]
-  # Should not produce interactive prompts (no "Enter" / "Press any key" etc.)
+  # rollback 은 exit 0 (성공) 고정 기댓값
+  [ "$status" -eq 0 ]
+
+  # prior-state 복원 positive assert: OVERLAY_DIR/fname 이 "prior-state" 내용이어야 함
+  grep -q "prior-state" "${OVERLAY_DIR}/${fname}"
+  # "current-state" 는 남아있으면 안 됨 (복원 완료)
+  ! grep -q "current-state" "${OVERLAY_DIR}/${fname}"
+
+  # 대화형 프롬프트 없음 (prompt 0 invariant)
   [[ "$output" != *"Enter"* ]]
   [[ "$output" != *"Press any key"* ]]
 }
