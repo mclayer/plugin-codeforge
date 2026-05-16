@@ -302,7 +302,7 @@ Cross-ref:
 
 #### §결정 7.A — marker block syntax 정식 정의
 
-Consumer customization 영역과 wrapper SSOT desired state 영역을 박제하는 marker block:
+Consumer customization 영역과 wrapper SSOT desired state 영역을 명문화·구분하는 marker block:
 
 ```
 # BEGIN wrapper-managed
@@ -360,7 +360,7 @@ wrapper-managed-block lint 의 검사 대상 file-scope = **consumer customizati
 4. **lint 을 설명하는 SSOT 문서**: `docs/inter-plugin-contracts/reconcile-protocol-v1.md` + `docs/evidence-checks-registry.yaml` + `docs/adr/ADR-027-consumer-adoption-protocol.md` (본 ADR 자신 — marker syntax 문서화 영역)
 5. **lint workflow YAML**: `.github/workflows/wrapper-managed-block.yml` + `templates/github-workflows/wrapper-managed-block.yml` (marker 문자열 = workflow step 데이터)
 
-**generalized rule** (enumeration 외 future-proof): "wrapper-managed-block lint 자신 + 그 lint 를 설명·테스트·구현하는 wrapper plugin SSOT 파일" = self-referential → skip. consumer customization 영역 (overlay 4-layer + consumer-local workflow) 만 actual 검사 대상. 결정 근거: D4 marker 의 의미적 scope (§결정 7.B) = **consumer 측 customization 영역의 wrapper SSOT ↔ consumer 경계 박제** — wrapper plugin 자기 meta 파일은 애초에 marker block 의미 적용 영역 자체가 아님 (consumer 가 customize 하는 파일 아님). under-specified 설계 (FIX iter 2 이전 §결정 7.D 가 file-scope 미명세) 가 Phase 2 dogfooding 에서 7-file false positive 노출 → 본 §결정 7.D.2 가 의미적 scope 를 mechanical scope 로 박제.
+**generalized rule** (enumeration 외 future-proof): "wrapper-managed-block lint 자신 + 그 lint 를 설명·테스트·구현하는 wrapper plugin SSOT 파일" = self-referential → skip. consumer customization 영역 (overlay 4-layer + consumer-local workflow) 만 actual 검사 대상. 결정 근거: D4 marker 의 의미적 scope (§결정 7.B) = **consumer 측 customization 영역의 wrapper SSOT ↔ consumer 경계 명문화** — wrapper plugin 자기 meta 파일은 애초에 marker block 의미 적용 영역 자체가 아님 (consumer 가 customize 하는 파일 아님). under-specified 설계 (FIX iter 2 이전 §결정 7.D 가 file-scope 미명세) 가 Phase 2 dogfooding 에서 7-file false positive 노출 → 본 §결정 7.D.2 가 의미적 scope 를 mechanical scope 로 확정·명문화.
 
 ##### §결정 7.D.3 — marker 매칭 = whole-line anchored (substring 매칭 금지, Axis 5 결정 / CFP-702 FIX iter 2 설계 회귀)
 

@@ -69,7 +69,7 @@ codeforge plugin family upgrade 의 architecture pattern 이 ADR / domain-knowle
 - `check_bootstrap.py` check 10 (CFP-660) = workflow SHA drift **detection only**, propagation 0
 - `hooks/session-start` = plain stdout SSOT (filesystem touch 0 + network call 0 invariant, ADR-038 Amendment 3 §결정 12) — hook 자체가 reconcile execution 책임 **불가**
 
-위 partial cover 가 Epic §1 WHY 의 "빠짐" 증상의 mechanical 원인. 1st-class 도메인 정의 부재 → 결정 트리 박제 불가 → 사용자 결정 분기가 매번 다르게 surfacing.
+위 partial cover 가 Epic §1 WHY 의 "빠짐" 증상의 mechanical 원인. 1st-class 도메인 정의 부재 → `결정 트리 박제` (CFP-699 §1 WHY verbatim — 결정 분기 명문화) 불가 → 사용자 결정 분기가 매번 다르게 surfacing.
 
 ### 본 ADR 영역 (A1 + B1)
 
@@ -122,7 +122,7 @@ wrapper plugin (codeforge) self 영역의 desired state 단위 enumeration (Stor
 
 ### 결정 3 — dry-run / snapshot / transaction 3 enum 정의
 
-본 결정이 Epic §1 WHY 의 "결정 트리 박제" 직접 carrier. 3 enum = CLI argument fix 로 사용자 결정 분기 0:
+본 결정이 Epic §1 WHY 의 `결정 트리 박제` (CFP-699 §1 WHY verbatim) 직접 carrier. 3 enum = CLI argument fix 로 사용자 결정 분기 0:
 
 #### dry-run
 - **Semantic**: desired state diff current state 계산 + 결과 preview (실 변경 0).
@@ -258,7 +258,7 @@ domain-knowledge `upgrade-flow/declarative-reconciliation.md` Invariant 3 verbat
 - atomicity_boundary runtime implementation ratchet (per-plugin → family_7_plugin — Wave 2 Story-4 carrier 시점, 의미 invariant 변경 0)
 - snapshot retention policy 추가 (per-MAJOR-version — Wave 4 E1 carrier 시점)
 
-약화 방향 (예: 사용자 결정 분기 0 invariant 약화 / disjoint layer 합치) = ADR-058 §결정 5 sunset_justification 3-tuple (metric / who / how) 정량 명시 없이 차단. 본 ADR 의 사용자 directive verbatim (CFP-699 Epic §1 WHY "결정 트리 박제") 정합.
+약화 방향 (예: 사용자 결정 분기 0 invariant 약화 / disjoint layer 합치) = ADR-058 §결정 5 sunset_justification 3-tuple (metric / who / how) 정량 명시 없이 차단. 본 ADR 의 사용자 directive verbatim (CFP-699 Epic §1 WHY `결정 트리 박제`) 정합.
 
 ## 관련 파일
 
