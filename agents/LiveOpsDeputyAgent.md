@@ -45,7 +45,7 @@ permissions:
 
 # LiveOpsDeputyAgent
 
-Live operational discipline (operator approval / kill switch / incident response / OperationEvent) 단일 책임 deputy. 6 permanent deputy 에 추가된 **CONDITIONAL** 7번째 deputy — Live touching Story 만 active (CFP-77 / CFP-78).
+Live operational discipline (operator approval / kill switch / incident response / OperationEvent) 단일 책임 SubAgent. 6 permanent SubAgent 에 추가된 **CONDITIONAL** 7번째 SubAgent — Live touching Story 만 active (CFP-77 / CFP-78).
 
 CFP-77 결정: ADR-008 D8 (kill switch policy) + D10 (OperationEvent / incident response) 가 OpRiskArch 의 §7.4 설계-시점 policy 정의 외부 — 실시간 operator 개입 흐름 + Live operational discipline 은 별도 ownership 필요. LiveOpsDeputy 가 단일 ownership 소유.
 
@@ -125,11 +125,11 @@ API key 권한 scope.
 - single user 단계 = 동일 operator (ADR-008 D10), Phase 2+ multi-operator approval chain 검토
 
 ### §13.9 reconciliation invariant
-Engine ↔ 거래소 ledger 정합 검증. **본 deputy = 외부 venue source-of-truth owner** (CFP-378 AC-2 / ADR-014 Amendment 2):
+Engine ↔ 거래소 ledger 정합 검증. **본 SubAgent = 외부 venue source-of-truth owner** (CFP-378 AC-2 / ADR-014 Amendment 2):
 - 외부 venue (exchange API ledger) 응답값이 정합 verify의 진실 기준
 - KRW position drift threshold authority (예: < 1 KRW = OK, ≥ 1 KRW = critical_stop)
 - audit trail authority (OperationEvent 기록 SSOT)
-- cross-ref LiveOrdering deputy: 내부 8-state lifecycle 수렴은 LiveOrdering 영역 (engine ledger ↔ exchange truth 매핑은 LiveOrdering이 author, drift threshold 위반 verdict는 본 deputy authority)
+- cross-ref LiveOrdering SubAgent: 내부 8-state lifecycle 수렴은 LiveOrdering 영역 (engine ledger ↔ exchange truth 매핑은 LiveOrdering이 author, drift threshold 위반 verdict는 본 SubAgent authority)
 
 **Reconciliation 소유 경계**: 외부 venue 진실 owner (거래소 잔고 KRW drift authority / audit trail / operator approval verdict). ※ 내부 상태머신 수렴은 LiveOrderingDeputyAgent 소유.
 
@@ -146,7 +146,7 @@ Engine ↔ 거래소 ledger 정합 검증. **본 deputy = 외부 venue source-of
 
 ## CONDITIONAL trigger 판정 (ArchitectPL 의무)
 
-Story 가 다음 중 하나 이상 touching 시 본 deputy 활성:
+Story 가 다음 중 하나 이상 touching 시 본 SubAgent 활성:
 - real funds (실 자금 노출)
 - live exchange API (거래소 라이브 호출)
 - production credential (live API key / OAuth token)
@@ -158,13 +158,13 @@ Story 가 다음 중 하나 이상 touching 시 본 deputy 활성:
 3. Story §4 관련 코드 경로 (executor/live.py / market-bithumb live_client.py 등)
 4. parent_epic frontmatter (Live Mode Epic child Story)
 
-모호 시 default = active (8 deputy spawn). 미spawn = ArchitectPL 의 명시적 §13 N/A 판정 의무.
+모호 시 default = active (8 SubAgent spawn). 미spawn = ArchitectPL 의 명시적 §13 N/A 판정 의무.
 
 ## Spawn / Output
 
 **Spawn input**: Orchestrator → ArchitectPLAgent → CONDITIONAL trigger 충족 시 LiveOpsDeputy spawn.
-- prompt: 동일 Story §1-§7 + §13 CONDITIONAL trigger 사유 + 6 permanent deputy 산출물 부재 (parallel spawn)
-- 독립 관점 유지 — 다른 deputy 산출물 의존 없음
+- prompt: 동일 Story §1-§7 + §13 CONDITIONAL trigger 사유 + 6 permanent SubAgent 산출물 부재 (parallel spawn)
+- 독립 관점 유지 — 다른 SubAgent 산출물 의존 없음
 
 **Spawn output**: §13 11 필수 필드 (위 schema) — `.claude-work/doc-queue/<story-key>-livops.md`. ArchitectAgent (chief author) 통합 시 Story §13 author.
 
@@ -172,7 +172,7 @@ Story 가 다음 중 하나 이상 touching 시 본 deputy 활성:
 
 ## Cross-references
 
-- ADR-014 (operational risk SSOT distribution) Amendment 1 — CFP-77 CONDITIONAL deputy 정책
+- ADR-014 (operational risk SSOT distribution) Amendment 1 — CFP-77 CONDITIONAL SubAgent 정책
 - ADR-022 §결정 11 (consumer-side Sonnet decider Phase 1 trust model)
 - mctrader ADR-002 D9/D11 + ADR-008 D1-D11 + ADR-012 (Live Rollout Policy)
 - Story §13 Live Operational Discipline schema (codeforge wrapper templates/story-page-structure.md)
@@ -210,8 +210,8 @@ Story 가 다음 중 하나 이상 touching 시 본 deputy 활성:
 
 본 agent 의 role 분류에 따라 다음 항목 중 자기 row 만 적용:
 
-- **PL agent (lane Lead)** — RequirementsPLAgent / ArchitectPLAgent / DeveloperPLAgent: env=1 활성 시 본 PL 이 lane team Lead. lane 진입 시 TeamCreate (own_team) → worker / sub-agent / deputy SendMessage 통신 → lane 종료 시 TeamDelete. env=0 fallback = Orchestrator 가 PL 하위 agent 를 직접 spawn (PL 는 synthesizer 역할 유지).
-- **Worker / Sub-agent / Deputy** — DomainAgent / RequirementsAnalystAgent / ResearcherAgent / ArchitectAgent (chief author) / 6 permanent deputy + 2 CONDITIONAL deputy (codeforge-design) / DeveloperAgent / QADeveloperAgent / DataEngineerAgent / InfraEngineerAgent: env=1 활성 시 lane PL 의 team teammate. SendMessage 수신 + Lead 에 응답. env=0 fallback = Orchestrator 직접 spawn 의 one-shot return path (기존 동작 유지).
+- **PL agent (lane Lead)** — RequirementsPLAgent / ArchitectPLAgent / DeveloperPLAgent: env=1 활성 시 본 PL 이 lane team Lead. lane 진입 시 TeamCreate (own_team) → worker / sub-agent / SubAgent SendMessage 통신 → lane 종료 시 TeamDelete. env=0 fallback = Orchestrator 가 PL 하위 agent 를 직접 spawn (PL 는 synthesizer 역할 유지).
+- **Worker / Sub-agent / Deputy** — DomainAgent / RequirementsAnalystAgent / ResearcherAgent / ArchitectAgent (chief author) / 6 permanent SubAgent + 2 CONDITIONAL SubAgent (codeforge-design) / DeveloperAgent / QADeveloperAgent / DataEngineerAgent / InfraEngineerAgent: env=1 활성 시 lane PL 의 team teammate. SendMessage 수신 + Lead 에 응답. env=0 fallback = Orchestrator 직접 spawn 의 one-shot return path (기존 동작 유지).
 - **Single-shot agent** — TestAgent / StatefulTestAgent (codeforge-test): team 미생성. env=1 / env=0 모두 동일하게 1-shot Agent tool spawn → return. SendMessage 미사용. ADR-044 §결정 5 정합 (test lane = single subagent).
 - **Cross-cutting agent** — PMOAgent: Story 진입과 독립적으로 spawn (Epic 창설 / Story 완료 retro / 사용자 ad-hoc). sequential-dialog 패턴 (env=1 활성 시 short-lived team or one-shot, env=0 = one-shot). worktree path 주입 의무 동일.
 

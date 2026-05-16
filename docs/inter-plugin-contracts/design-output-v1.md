@@ -133,7 +133,7 @@ design_output:
 
 ## 5. v1 → v2 변경 가능성
 
-- 새 deputy 추가 (overlay/preset 진화) — minor (deputies_results schema 확장)
+- 새 SubAgent 추가 (overlay/preset 진화) — minor (deputies_results schema 확장)
 - 새 mirror section 추가 (§12 등) — minor
 
 ## 6. 동결 ATTRIBUTION
