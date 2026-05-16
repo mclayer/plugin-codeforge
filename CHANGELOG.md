@@ -7,6 +7,25 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.77.0] - 2026-05-16
+
+### Changed (CFP-750 Phase 2 — 박제 enforcement 강화: lint scope 확장 + per-word decoupling + 전수 sweep + R9 perf fix)
+
+- **`scripts/check-wording-dictionary.sh`** — ADR-064 Amendment 5 (CFP-750) 구현:
+  - `FORBID_DICTIONARY` array → `declare -A WORD_TARGETS` per-word map (박제/못 박기/pin/freezing = expanded `docs CLAUDE.md CHANGELOG.md templates` / 별 = 5-scope 유지). per-word scope decoupling = scope axis 정밀화 (어휘 추가 시 scope 자동 확장 차단). R2 mitigation (`별` standalone fp collateral 차단, #718 F4 disjoint carrier).
+  - Bash 4+ guard (`((BASH_VERSINFO[0] < 4)) && exit 1`) + 4 precedent script consistency anchor (`check-codeforge-version-drift.sh:45` / `measure-rate-limit-fallback.sh:312-313` / `migrate-label-to-issue-type.sh:44+143`).
+  - inline code-span (`` `...` ``) strip 로직 추가 (single-backtick, blockquote/fenced 분기 보존). 메타-언급 정밀 EXEMPT (file 전체 EXEMPT 차단).
+  - **R9 perf algorithmic mitigation 달성 (>30x)** — `strip_exempt` per-line `printf|sed` subshell loop O(lines×fork) → 단일 awk 1-pass + filesystem memo (mktemp -d cache, strip 결과 tmp file 1회 + path 반환, grep file 직접 read). CLAUDE.md 단일 원래 >수분 → 4.5s. Windows Git Bash residual = MSYS fork-emulation-bound (algorithmic 회귀 아님). CI ubuntu-latest authoritative per R9 §4.2 (P2 advisory continue-on-error).
+- **`docs/wording-dictionary.md`** — 카테고리 (a) lint scope 문구 갱신 (per-word decoupling) + frontmatter `amendments` row append (amendment 2, carrier_cfp CFP-750). Phase 1 scope gap catch-up (Phase 1 lane 실행 누락 catch-up via Phase 2).
+- **`docs/evidence-checks-registry.yaml`** — `wording-dictionary` entry `detect_command` (no-arg per-word lookup mode) + `description` scope 갱신 (current_tier: warning 유지).
+- **`CLAUDE.md`** — 결정원칙 forbid-list lint scope mirror 갱신 (per-word decoupling — 박제/못박기/pin/freezing expanded / 별 5-scope, CFP-750 cross-ref).
+- **`templates/github-workflows/wording-dictionary.yml`** + **`.github/workflows/wording-dictionary.yml`** (byte-identical excl `name:`) — `on.pull_request.paths` 에 `CHANGELOG.md` 명시 + lint invocation step `run:` no-arg 전환 (per-word lookup mode default).
+- **`tests/scripts/test_check_wording_dictionary.bats`** (+241) — INV-T1~T5 bats fixture (TDD): IT-4/IT-4a~d/IT-5/IT-self-app/IT-treaty-invariance + edge case (adjacent/unbalanced/double backtick/multiline) + 기존 박제 fixture 4건 (TC-1~4 + IT-1/2 + F-3) 보존. 합성 repo tree + no-arg per-word lookup mode 정합. **40/40 GREEN PASS**.
+- **`tests/contracts/test_cfp750_treaty_invariance.sh`** (+103, NEW) — INV-T2 treaty invariance helper (TestContractArchitect §8.1 #6). first-cell-identifier semantic — 표 row 변경은 field/enum/invariant 명 집합 변경 시만 flag, description cell 내부 prose 어휘 치환 허용. Change Plan §6.4 정합 (§8.0 literal vs §6.4 semantic 모순 후속 carrier).
+- **박제 전수 sweep (12 file)** — Class-Q (blockquote `>` 사용자 verbatim) 절대 보존 + Class-B (non-quote body) `명시`/`확정`/`기재`/`포함` 문맥별 치환 + 메타-언급 inline code-span 화. parallel-dispatch-protocol-v1.md 10회 / CLAUDE.md / CHANGELOG.md / ADR-027/037/076 / domain-knowledge×2 / contracts×4 sweep. 의미 보존 (schema 층 무변경, contract version bump 0, sibling sync 면제 ADR-008/010). pre-existing baseline debt (ADR-027/076/CLAUDE.md L290 + **ADR-037 pin baseline option A catch-up**, §6.2 item6 list 확장) 동반 정리.
+- **`.claude-plugin/plugin.json`** — 5.76.0 → 5.77.0 MINOR (lint script behavior change + CLAUDE.md 의미 변경 — ADR-037 base 결정 1). version + description mirrored field bump → marketplace atomic sync MERGED `mclayer/marketplace#150` (ADR-063 §결정 2 선행 ordering).
+- **Phase 1 wording-dictionary.md scope gap catch-up (§10 Iter 3)** — Phase 1 lane 실행 gap (Change Plan §6.1 정확 명시, Phase 1 PR 작성 시 wording-dictionary.md 미포함) Phase 2 흡수. retroactive 불가, 추가 PR 0. ADR-068 I-4 wording SSOT lockstep + INV-1 (CFP-610 mirror) = Phase 2 종료 시점 충족.
+
 ## [5.76.0] - 2026-05-16
 
 ### Added (CFP-744 Wave 2 Story-4 Phase 2 — 7-plugin family atomic upgrade (A2) + #752 consumer-distribution)
