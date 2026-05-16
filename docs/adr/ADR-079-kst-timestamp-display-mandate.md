@@ -183,7 +183,7 @@ N/A — permanent policy (`is_transitional: false`, ADR-058 §결정 7 governanc
 - [ADR-058](ADR-058-adr-sunset-criteria-mandate.md) — §결정 7 governance presumption / §결정 5 ratchet
 - [ADR-040](ADR-040-worktree-convention.md) — Amendment 3 §결정 7.D mechanical_enforcement_actions[] self-application
 - [ADR-057](ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) — consumer overlay 축소 불가 패턴
-- [ADR-031](ADR-031-lane-spawn-evidence.md) — §14 Lane Evidence schema (dual-layer co-existence 근거)
+- [ADR-031](ADR-031-lane-spawn-evidence-trail.md) — §14 Lane Evidence schema (dual-layer co-existence 근거)
 - `CLAUDE.md` — 신규 단락 "시각 표시 정책 (KST, ISO 8601)"
 - `docs/orchestrator-playbook.md` — normative cross-ref 5곳
 - `docs/domain-knowledge/concept/kst-display-invariant.md` — 신설 (개념 SSOT)
