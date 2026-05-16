@@ -1263,6 +1263,8 @@ Codex worker 결과 수신 후 Orchestrator 는 finding evidence 의 ground trut
 | 판정 불일치 (#5 전용) | — | N/A (#5 = optional) | 사용자 에스컬레이션 |
 | verify mismatch 검출 (모든 touchpoint) | — | finding reject + Story §10 false positive count tally + override rationale (ADR-070 §결정 D3) | 동일 |
 
+**Boilerplate composition SSOT (CFP-819 / [ADR-081](../docs/adr/ADR-081-codex-worker-prompt-boilerplate.md) + ADR-052 Amendment 6)**: Codex worker prompt 본문 3 mandatory section (dogfood-out Story path verbatim / lane stage 표기 = current_lane + phase / sandbox boundary = sandbox_outside_paths) + verify-before-trust scope 5 sub-scope 분리 (file scope grep+quote / dir scope recursive grep+count / cross-repo gh api+commit SHA / grep count claim active vs historical 차원 / ADR §결정 번호 정확성) + 3-lane partition 표 (Codex factual citation 영역 / DesignReviewPL boundary completeness 영역 [ADR-068 4 invariants + Amd 1 I-5] / CodeReviewPL post-impl style + historical reference 보존성 영역 disjoint scope) = ADR-081 SSOT. declaration-only retain (ADR-070 §D5 precedent), mechanical lint 부재.
+
 #### §3.10.1 Pre-question Review (iterative reformulation — CFP-446 / [ADR-052 Amendment 2](../docs/adr/ADR-052-codex-proactive-check-touchpoints.md))
 
 | 항목 | 내용 |
