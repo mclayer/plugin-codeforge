@@ -7,6 +7,12 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.79.0] - 2026-05-16
+
+### Changed (CFP-777 Phase 2 — DialogFidelityAgent wrapper 반영)
+
+- CFP-777 (Epic #761 Story-1) Phase 2 — DialogFidelityAgent sibling codeforge-pmo 0.2.0 신설 + wrapper CLAUDE.md Development Agent Team 표 codeforge-pmo 2→3 + playbook §3.14 verifier auxiliary 단락 (ADR-071 Amendment 1 / ADR-042 Amendment 6 carrier, ADR-063 6-file atomic).
+
 ## [5.78.0] - 2026-05-16
 
 ### Changed (CFP-751 Phase 2 — deputy 일반 명사 → SubAgent 전수 sweep, ADR-080 normative 적용)

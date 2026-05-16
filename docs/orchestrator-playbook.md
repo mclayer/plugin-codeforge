@@ -1635,6 +1635,19 @@ E11 popup turn 의 Layer 2 면제 사유 = popup 본문 자체가 declare semant
 - **Layer 3 false positive 처리 advanced policy** = 첫 incident 시점 사용자 결정 영역
 - **Layer 4 file rotate / archive 자동화** = 별도 CFP
 
+#### DialogFidelityAgent verifier auxiliary (ADR-071 Amendment 1 / CFP-777)
+
+DialogFidelityAgent = codeforge-pmo **cross-cutting read-only verifier** (additive auxiliary, **5번째 cognitive layer 신설 금지** — Layer 1-4 enum 보존 invariant, ADR-071 §결정 12).
+
+**Spawn trigger 3-anchor** (ADR-039 §결정 2 inline whitelist 보존, 자동 hook 부재 → Orchestrator 자율 채택):
+- `post_user_turn`: 사용자 turn 응답 직후 (Layer 3 "추상" detect / numbered list 발화 / AskUserQuestion 직전)
+- `pre_architectpl_synthesis`: ArchitectPL synthesis 완료 직전 (Codex TP#2 augment)
+- `pre_fix_rootcause`: FIX 루프 root cause 판정 직전 (Codex TP#3 augment)
+
+**Output Port closed enum**: `verify_result: fidelity_ok | drift_detected | ledger_gap` + `correction_action_hint: rescan_ledger | escalate_user | self_correct | no_action | null` (free-form 차단, generator 역할 침범 금지).
+
+**verify-before-trust 의무** ([ADR-070](../docs/adr/ADR-070-codex-verify-before-trust.md)): `evidence_path[]` direct Read verify 의무, mismatch 시 verdict reject + Story §10 tally + override rationale 명시.
+
 ---
 
 ### §3.15 Action-blocked fallback decision tree (CFP-658 / [ADR-027 Amendment 2](../docs/adr/ADR-027-consumer-adoption-protocol.md))
