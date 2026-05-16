@@ -18,7 +18,7 @@ Adopted (2026-04-30) — CFP-47 carrier. CFP-46 ADR-014 (Operational Risk SSOT) 
 
 ## 컨텍스트
 
-CFP-46 (ADR-014) 가 §7.4 운영 리스크 5 sub-item + §11.6 idempotency CONDITIONAL 을 설계 단계에서 정형화 (OperationalRiskArchitectAgent 6th deputy 신설 + design-output v1→v2 BREAKING bump). 그러나 검증 단계 (codeforge-test lane) 는 여전히 functional/integration/infra/perf 4 카테고리만 보유. 결과:
+CFP-46 (ADR-014) 가 §7.4 운영 리스크 5 sub-item + §11.6 idempotency CONDITIONAL 을 설계 단계에서 정형화 (OperationalRiskArchitectAgent 6th SubAgent 신설 + design-output v1→v2 BREAKING bump). 그러나 검증 단계 (codeforge-test lane) 는 여전히 functional/integration/infra/perf 4 카테고리만 보유. 결과:
 
 - §7.4 boundary 가 코드에서 시간 흐름 + 재시작 차원에서 지켜지는가 검증할 카테고리 부재
 - §11.6 idempotency invariant 의 replay 동작 검증 mechanism 부재
@@ -32,9 +32,9 @@ CFP-46 (ADR-014) 가 §7.4 운영 리스크 5 sub-item + §11.6 idempotency COND
 
 `change-plan.md` §8 Test Contract 에 `§8.5 Stateful / restart invariant tests (CONDITIONAL)` 신규 sub-section 추가. CFP-46 §11.6 dual 패턴 (CONDITIONAL + N/A 사유 강제). 적용 조건 4종 (long-running connection / stateful cache / background worker / process restart-aware) 중 1+ Y 이면 §8.5.1+ 본문 필수, 4종 모두 N + substantive reason 이면 §8.5 N/A 허용.
 
-### 결정 2 — TestContractArchitectAgent mandate 확장 (신규 deputy 미도입)
+### 결정 2 — TestContractArchitectAgent mandate 확장 (신규 SubAgent 미도입)
 
-design lane 5th deputy TestContractArchitectAgent 가 §8.5 도 author. 신규 deputy 도입 안 함 — design lane 6 deputy 유지 (CodebaseMapper / Refactor / SecurityArch / OperationalRiskArch / TestContractArch / DataMigrationArch). §8.5 는 §8 도메인 자연 확장이므로 cross-domain 신설 명분 없음.
+design lane 5th SubAgent TestContractArchitectAgent 가 §8.5 도 author. 신규 SubAgent 도입 안 함 — design lane 6 SubAgent 유지 (CodebaseMapper / Refactor / SecurityArch / OperationalRiskArch / TestContractArch / DataMigrationArch). §8.5 는 §8 도메인 자연 확장이므로 cross-domain 신설 명분 없음.
 
 ### 결정 3 — codeforge-test 1→2 agent split
 
@@ -63,7 +63,7 @@ vague reason 차단 정규식 + 30자 minimum (CFP-46 의 10자보다 강화 —
 
 - §7.4 / §11.6 의 검증-side 짝 완성 — DR/disconnect/clock/rate/env/idempotency 가 시간+재시작 차원에서 검증
 - 트레이딩 시스템 production-readiness invariant universal core 보유 (CFP-48 overlay 가 chaos 확장)
-- design lane 6 deputy 유지 (TestContract mandate 확장만)
+- design lane 6 SubAgent 유지 (TestContract mandate 확장만)
 - consumer 영향 zero — 모든 bump minor (additive)
 - TestAgent ↔ StatefulTestAgent ownership 매트릭스 명시 (TestPL 부재 보완)
 - decision table 4 row granular split (cache/queue/restart/replay 별도 path)
@@ -85,9 +85,9 @@ vague reason 차단 정규식 + 30자 minimum (CFP-46 의 10자보다 강화 —
 ## 거부된 대안
 
 - **(α) 단일 TestAgent mode-switch**: 1 agent 가 functional + stateful 두 mode 처리. 거부 — file responsibility 흐려짐 (codeforge plugin 자체 원칙 위반), Codex review prompt blur 지적
-- **(γ) StatefulTestArchitectAgent 신설** (design lane 7th deputy): TestContractArch 와 분리. 거부 — §8 도메인 내부 cross-domain 신설 명분 부재 (CFP-46 OpRiskArch cross-domain 명분 부재). Codex 동의
+- **(γ) StatefulTestArchitectAgent 신설** (design lane 7th SubAgent): TestContractArch 와 분리. 거부 — §8 도메인 내부 cross-domain 신설 명분 부재 (CFP-46 OpRiskArch cross-domain 명분 부재). Codex 동의
 - **TestPL 도입**: 거부 — CFP-38 ζ arc 단순성 유지. 향후 chaos integration / 3+ test agent 도입 시 별도 CFP
-- **design-output v3 BREAKING bump**: 거부 — §7/§11 sub-numbering shift 없음 + deputies_results 변경 없음 + 신규 deputy 없음 = 순수 additive. v2.1 minor in-place 가 적합
+- **design-output v3 BREAKING bump**: 거부 — §7/§11 sub-numbering shift 없음 + deputies_results 변경 없음 + 신규 SubAgent 없음 = 순수 additive. v2.1 minor in-place 가 적합
 - **chaos / fault injection 통합** (option c): 거부 — chaos infra 의존 (Toxiproxy / chaos-mesh / faketime) opinionated. CFP-48 overlay `domain_critical_invariants[]` 로 분리
 
 ## 해소 기준

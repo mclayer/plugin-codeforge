@@ -57,7 +57,7 @@ Phase 1 internal-docs PR (mclayer/codeforge-internal-docs#67) merged at 2026-05-
 | Decision | 채택안 | 거절 대안 |
 |---|---|---|
 | D2 Lever | InfraEngineer mandate 재작성 (이 ADR) | presets/docker overlay / DockerEngineer 신설 / template fixture only |
-| D3 Agent 재편 | mandate + 책임 매트릭스 cell update only | ContainerArch deputy 신설 / InfraEngineer 분할 / consumer overlay 위임 |
+| D3 Agent 재편 | mandate + 책임 매트릭스 cell update only | ContainerArch SubAgent 신설 / InfraEngineer 분할 / consumer overlay 위임 |
 | D4 Prod scope | Dockerfile + compose 1st-class, K8s = preset opt-in | K8s 1st-class only / image+compose only / 3 다 1st-class |
 | D5 Migration | Effective date 기반 + grandfather | hard cutoff / overlay flag / 30-day grace |
 
@@ -115,7 +115,7 @@ trivy false positive mitigation:
 
 reusable workflow = `mclayer/plugin-codeforge/templates/github-workflows/container-image-scan.yml` (NEW).
 
-### §결정 5 — CONDITIONAL deputy 매트릭스 cell annotation update
+### §결정 5 — CONDITIONAL SubAgent 매트릭스 cell annotation update
 
 CLAUDE.md § "Deputy mandate 매트릭스 (codeforge-design lane)" 5 cell parenthetical 만 update (새 row 0 — boundary 모호 회피, ADR-014 SSOT 영향 최소화):
 
@@ -203,7 +203,7 @@ archive: `mclayer/codeforge-internal-docs/wrapper/decisions/CFP-128-001-codex-sp
 
 **달성** (Phase 2 wrapper PR merge 시):
 - InfraEngineerAgent default 출력 = Docker-first (Dockerfile + compose.yml + .dockerignore) — framework default 명시화
-- 4 SSOT 매트릭스 (책임 + decision + 6 deputy mandate) cell update — boundary 모호 회피 (새 row 0, cell annotation only)
+- 4 SSOT 매트릭스 (책임 + decision + 6 SubAgent mandate) cell update — boundary 모호 회피 (새 row 0, cell annotation only)
 - §7.4 OpRiskArch mandate 4 항목 확장 (container restart / volume DR / health check / network mode) — ADR-014 amend
 - SecurityTest 1st-layer trivy + hadolint 추가 — image CVE / Dockerfile lint 자동화
 - consumer-side `infra_strategy` enum (docker_first / legacy_systemd / none) — opt-in / opt-out 명확
@@ -211,7 +211,7 @@ archive: `mclayer/codeforge-internal-docs/wrapper/decisions/CFP-128-001-codex-sp
 
 **비용**:
 - 1 ADR 신설 (ADR-033) + 1 ADR amend (ADR-014)
-- CLAUDE.md 4 SSOT 매트릭스 row append (책임 +7 / decision +7 / 6 deputy 5 cell annotation)
+- CLAUDE.md 4 SSOT 매트릭스 row append (책임 +7 / decision +7 / 6 SubAgent 5 cell annotation)
 - 4 sibling repo 동기 PR (wrapper canonical → develop / design / review sibling per ADR-010)
 - 1 marketplace mirror PR (ADR-016, 4 plugin version bump)
 - examples/ Docker fixture 추가 (webapp + cli-tool, library opt-out)
@@ -232,7 +232,7 @@ archive: `mclayer/codeforge-internal-docs/wrapper/decisions/CFP-128-001-codex-sp
 본 ADR §결정 = 6 substantive decision (D1-D6, brainstorming 5 turn). 각 결정의 거절 대안:
 
 - **D2 거절**: presets/docker overlay (의도 희석 — 일부 consumer 만 Docker), DockerEngineer 신설 (agent 수 증가 + boundary 모호), template fixture only (agent contract 명시 없으면 귀결성 부재)
-- **D3 거절**: ContainerArch deputy 신설 (boundary 모호 + ADR-014 SSOT 영향), InfraEngineer 분할 (ROI 낮음 — Docker / compose / CI publish = 자연 묶음), consumer overlay 위임 (framework opinion 부재)
+- **D3 거절**: ContainerArch SubAgent 신설 (boundary 모호 + ADR-014 SSOT 영향), InfraEngineer 분할 (ROI 낮음 — Docker / compose / CI publish = 자연 묶음), consumer overlay 위임 (framework opinion 부재)
 - **D4 거절**: K8s 1st-class (small-prod consumer 과잉), image+compose only (orchestration 책임 회피), 3 다 1st-class (mandate 과잉 + decision fatigue)
 - **D5 거절**: hard cutoff (mctrader 동력 손실), overlay flag (drift 가능성), 30-day grace (solo-dev 일정 주도권 과잉)
 - **D6 거절**: sec tooling 미도입 (Docker-first inconsistency), trivy + hadolint 둘 다 동시 (false positive 관리 부담), trivy-only (Dockerfile syntax 검증 공백)

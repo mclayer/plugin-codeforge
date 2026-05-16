@@ -24,7 +24,7 @@ Proposed (2026-05-09) — CFP-316 carrier.
 
 ## 컨텍스트
 
-consumer 작업이 커지면서 codeforge framework 진화(새 deputy 추가, §section 변경, ADR 변경 등) 시 기존 Stories/Change Plans/ADRs의 구조 재편이 필요한 경우가 빈번하게 발생한다.
+consumer 작업이 커지면서 codeforge framework 진화(새 SubAgent 추가, §section 변경, ADR 변경 등) 시 기존 Stories/Change Plans/ADRs의 구조 재편이 필요한 경우가 빈번하게 발생한다.
 
 **기존 메커니즘의 한계**:
 - DataMigrationArchitectAgent (ADR-007): scope = story-time DB schema migration (§11). Framework-level migration은 명시적 비-범위 (ADR-007 §결정 4)
@@ -60,12 +60,12 @@ PMOAgent의 기존 trigger (Story 완료 회고, Epic 관리, Cross-Story 패턴
 2. 기존 진행 중인 Stories/Change Plans의 §section 구조 점검
 3. Material drift 판별:
    - patch bump / advisory-only ADR: "no migration needed" 보고서
-   - minor/major bump 또는 신규 deputy 또는 §section 신설: Migration Epic 후보 평가
+   - minor/major bump 또는 신규 SubAgent 또는 §section 신설: Migration Epic 후보 평가
 4. Migration Epic 생성 또는 "no action" 결정 → Story §11에 기록
 
 ### 결정 3 — Deputy Migration Notes 의무화 (Option 4)
 
-각 design deputy는 자신이 owning하는 §section이 변경될 때 Migration Notes 게시 의무:
+각 design SubAgent는 자신이 owning하는 §section이 변경될 때 Migration Notes 게시 의무:
 
 | Deputy | Owned §section | Migration Notes 트리거 |
 |---|---|---|
@@ -76,7 +76,7 @@ PMOAgent의 기존 trigger (Story 완료 회고, Epic 관리, Cross-Story 패턴
 | DataMigrationArchitectAgent | §11 데이터 마이그레이션 | §11 sub-section 추가/변경 |
 | OperationalRiskArchitectAgent | §7.4 DR/failover | §7.4 sub-section 추가/변경 |
 
-**CONDITIONAL deputy (LiveOpsDeputy / LiveOrderingDeputy)**: Live touching Story에만 active (ADR-014 §CONDITIONAL 정책). CONDITIONAL deputy owned §section (§13 Live Operational Discipline / §11 ledger invariant) 변경 시 — 해당 deputy active consumer에만 Migration Notes 적용 의무. Live-inactive consumer는 N/A (사유 1줄).
+**CONDITIONAL SubAgent (LiveOpsDeputy / LiveOrderingDeputy)**: Live touching Story에만 active (ADR-014 §CONDITIONAL 정책). CONDITIONAL SubAgent owned §section (§13 Live Operational Discipline / §11 ledger invariant) 변경 시 — 해당 SubAgent active consumer에만 Migration Notes 적용 의무. Live-inactive consumer는 N/A (사유 1줄).
 
 **Migration Notes 포맷**:
 ```
@@ -93,7 +93,7 @@ PMOAgent의 기존 trigger (Story 완료 회고, Epic 관리, Cross-Story 패턴
 |---|---|---|
 | Type A — Version bump | codeforge version bump in consumer project | patch: advisory review / minor·major: Migration Epic 후보 |
 | Type B — ADR 변경 | Story 구조/lane 동작에 영향을 주는 신규·실질적 ADR 변경 (예: inter-plugin contract schema 변경 — review-verdict-v4 MAJOR bump 등, GitHub workflow fixture 변경 — story-init.yml 등) | 영향 범위 평가 후 Migration Epic 여부 결정 |
-| Type C — Deputy 변경 | 신규 deputy 추가 또는 deputy mandate 변경 (새 필수 §section 발생) | 진행 중 Story에 새 §section 추가 Migration Story 생성 |
+| Type C — Deputy 변경 | 신규 SubAgent 추가 또는 SubAgent mandate 변경 (새 필수 §section 발생) | 진행 중 Story에 새 §section 추가 Migration Story 생성 |
 | Type D — Bootstrap 변경 | ADR-027/ADR-032 enforcement 변경 | consumer-guide 업데이트 + bootstrap 재검증 Migration Story |
 
 ### 결정 5 — Migration Epic Pattern + Tiered §5 Template (Option 5)
@@ -106,17 +106,17 @@ Migration Epic = ADR-020 Cross-Repo Epic Pattern의 codeforge framework-specific
 
 | Delta 크기 | 필수 §section | 면제 (N/A 허용) |
 |---|---|---|
-| Small (1-2 ADR 변경, 새 deputy 없음) | §1 + §4 | §2, §3, §5 (N/A 사유 1줄) |
-| Medium (새 deputy mandate, 새 §section 추가) | §1 + §2 + §3 + §4 | §5 (N/A 허용) |
+| Small (1-2 ADR 변경, 새 SubAgent 없음) | §1 + §4 | §2, §3, §5 (N/A 사유 1줄) |
+| Medium (새 SubAgent mandate, 새 §section 추가) | §1 + §2 + §3 + §4 | §5 (N/A 허용) |
 | Large (breaking change, §structure 재편) | §1 + §2 + §3 + §4 + §5 | — |
 
-**Tier 충돌 시 우선순위**: 동일 delta에서 여러 Tier 기준이 충돌할 경우 (예: 1개 ADR 변경이 새 deputy mandate를 유발) — (1) 새 deputy 추가 ≻ (2) 새 §section 추가 ≻ (3) ADR 수 기준으로 상위 Tier 적용. PMOAgent가 결정, 사용자 확인 optional.
+**Tier 충돌 시 우선순위**: 동일 delta에서 여러 Tier 기준이 충돌할 경우 (예: 1개 ADR 변경이 새 SubAgent mandate를 유발) — (1) 새 SubAgent 추가 ≻ (2) 새 §section 추가 ≻ (3) ADR 수 기준으로 상위 Tier 적용. PMOAgent가 결정, 사용자 확인 optional.
 
 **Migration Epic §5 필수 섹션**:
 
-- **§1 Framework Delta Summary**: codeforge 버전 범위, 변경된 ADR 목록, 신규/변경 deputy, 변경된 §section
+- **§1 Framework Delta Summary**: codeforge 버전 범위, 변경된 ADR 목록, 신규/변경 SubAgent, 변경된 §section
 - **§2 Affected Artifact Inventory**: 진행 중 Stories + Change Plans + ADRs + hooks + labels 영향 목록
-- **§3 Deputy Migration Notes**: deputy별도 domain-specific retrofit 가이드 (§결정 3 포맷)
+- **§3 Deputy Migration Notes**: SubAgent별도 domain-specific retrofit 가이드 (§결정 3 포맷)
 - **§4 Migration Story Backlog**: PMO-owned 순서화된 remediation Story 목록 + AC (각 Story = 1 consumer repo 또는 1 §section 단위)
 - **§5 Completion Gate** (3 측정 가능 invariant, TestContractArch consult):
   - **Gate-1 Bootstrap PASS**: ADR-027/032 enforcement 재검증 통과 (consumer `.claude/_overlay/` 무결성 + plugin install 상태)
@@ -135,7 +135,7 @@ Migration Epic = ADR-020 Cross-Repo Epic Pattern의 codeforge framework-specific
 ### 부정적
 
 - PMOAgent 책임 확장 → 회고 + epic management + Version Delta Review = 3 trigger 처리
-- Deputy Migration Notes 작성 의무가 모든 deputy에게 추가 부담 (단, N/A 조건 명시로 완화)
+- Deputy Migration Notes 작성 의무가 모든 SubAgent에게 추가 부담 (단, N/A 조건 명시로 완화)
 
 ### Trade-off
 
@@ -146,7 +146,7 @@ Migration Epic = ADR-020 Cross-Repo Epic Pattern의 codeforge framework-specific
 | Risk | Mitigation |
 |---|---|
 | PMOAgent Version Delta Review 누락 (OpRiskArch consult) | (1차) Framework Delta Event = well-defined 4-type. (2차 detection) PMOAgent Story 완료 회고 trigger (ADR-045) 시 직전 5분 grace 내 Delta Event 미처리 자동 점검. (3차 fallback) 사용자 수동 trigger `/pmo version-delta-review` skill 호출. (장기) SessionStart hook 에 version bump 감지 추가 별도 CFP. |
-| Deputy Migration Notes 게시 지연 | deputy mandate에 명시 (§결정 3). DesignReview P1로 감사 |
+| Deputy Migration Notes 게시 지연 | SubAgent mandate에 명시 (§결정 3). DesignReview P1로 감사 |
 | Migration Epic tiered 분류 오류 (small vs medium) | PMOAgent가 delta 크기 판별 → 사용자 확인 optional (Requirements CL-3 정합) |
 | Type D bootstrap 변경 감지 책임 (SecurityArch consult) | Type D 발생 시 PMOAgent 가 ADR-027/032 cross-ref 의무 검증 → consumer-guide §X migration row 추가 |
 | 전용 agent 재검토 기준 불명확 | §결정 1 재검토 3개 조건 명시 — 별도 CFP 트리거로 사용 |
@@ -158,7 +158,7 @@ Migration Epic = ADR-020 Cross-Repo Epic Pattern의 codeforge framework-specific
 - codeforge version bump 자동 감지 CI/CD (별도 CFP — SessionStart hook 확장 후보)
 - ADR-007 DataMigrationArch scope 변경 (story-time DB migration 유지)
 - ADR-027/032 기존 bootstrap enforcement 변경 (Delta Event Type D는 감지만)
-- Deputy Migration Notes 별도 파일 시스템 분리 (Refactor deputy 의견, 본 ADR scope에서 인라인 포맷 유지 — 별도 CFP 후보 / Requirements CL-2 정합)
+- Deputy Migration Notes 별도 파일 시스템 분리 (Refactor SubAgent 의견, 본 ADR scope에서 인라인 포맷 유지 — 별도 CFP 후보 / Requirements CL-2 정합)
 - Story §11 데이터 마이그레이션 (DataMigrationArch §11.6) 와의 통합 (framework meta-migration vs data migration 분리 유지)
 - Type B에서 inter-plugin contract MINOR/PATCH bump, workflow cosmetic fix는 advisory-only (Migration Epic 후보 아님 — §결정 4 Type B 명시 예시 외 변경은 PMOAgent advisory review 만 수행)
 

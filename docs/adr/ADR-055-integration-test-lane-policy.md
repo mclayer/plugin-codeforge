@@ -68,7 +68,7 @@ ADR-048 §결정 4의 deprecated 결정을 **Amendment**한다:
 
 ### §결정 4: §8.6 Integration Test Contract 신설
 
-TestContractArchitectAgent(설계 lane deputy)가 작성. Story가 컴포넌트 경계 2개 이상 포함 시 **필수**:
+TestContractArchitectAgent(설계 lane SubAgent)가 작성. Story가 컴포넌트 경계 2개 이상 포함 시 **필수**:
 - 경계 유형, 커버리지 목표(Given/When/Then), 환경 의존성, 실행 격리 전략, 동적 테스트 요건
 - 미작성 시 설계리뷰에서 P1 blocking
 

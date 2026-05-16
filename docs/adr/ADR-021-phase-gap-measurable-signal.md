@@ -53,7 +53,7 @@ R1 의 "사용자 manual review 제공 evidence" = Story §10 FIX Ledger row 의
 
 ### 결정 6: R2 author 메타 추적 = Change Plan §3/§7/§11 frontmatter
 
-Change Plan §3 / §7 / §11 의 본문 시작 부분에 `<!-- author: <agent-name> -->` HTML comment 추가 의무 (Phase 2 implementation 시 ArchitectAgent + 6 deputy 작성 시 자동 삽입).
+Change Plan §3 / §7 / §11 의 본문 시작 부분에 `<!-- author: <agent-name> -->` HTML comment 추가 의무 (Phase 2 implementation 시 ArchitectAgent + 6 SubAgent 작성 시 자동 삽입).
 
 ## 거부된 대안
 

@@ -184,7 +184,7 @@ row 2 시점 = Metric A (cumulative P0≥2 AND cumulative P1≥5) 동시 hit. ro
 
 ### 결정 7 — `reasoning_carryover` security invariant
 
-`disputed_claims` sub-field 본문에 PII / secret / credential / API key / private path 포함 금지 (SecurityArchitect deputy SSOT — §7.5 민감 데이터 분류 정합).
+`disputed_claims` sub-field 본문에 PII / secret / credential / API key / private path 포함 금지 (SecurityArchitect SubAgent SSOT — §7.5 민감 데이터 분류 정합).
 
 근거: §10 FIX Ledger = public PR description 에 자동 mirror (`fix-ledger-sync.yml` Action) — secret 노출 surface. ArchitectPL verdict packet 작성 시 사용자 escalation 대비 disputed_claims sub-field 의 모든 entry 가 design vocabulary level 로 abstraction 유지 의무.
 

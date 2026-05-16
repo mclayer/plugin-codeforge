@@ -166,7 +166,7 @@ auto_on_divergence  >  mechanical_fast_path_inline  >  user_request_only
 
 ### 결정 7 — DesignLane blanket trigger (Amendment 2, CFP-582)
 
-DesignReview lane 의 `auto_on_divergence` (Amendment 1, CFP-391) 외에 **DesignLane internal (ArchitectPL + ArchitectAgent + 6 deputy)** 으로 debate-protocol-v1 적용 영역 확장. trigger condition = **모든 cross-module Story 자동 발동** (signal-driven `divergence_detected` 와 분리된 structural-driven trigger).
+DesignReview lane 의 `auto_on_divergence` (Amendment 1, CFP-391) 외에 **DesignLane internal (ArchitectPL + ArchitectAgent + 6 SubAgent)** 으로 debate-protocol-v1 적용 영역 확장. trigger condition = **모든 cross-module Story 자동 발동** (signal-driven `divergence_detected` 와 분리된 structural-driven trigger).
 
 **cross-module Story 정의 (mechanical heuristic)**:
 - `touched_top_level_paths >= 2` (file-path 기반) OR
@@ -179,7 +179,7 @@ OR-merge 로 false negative 차단. 단일 lane 또는 단일 top-level path Sto
 
 ArchitectPLAgent spawn 시 Orchestrator 가 cross-module 판정 후 prompt 에 `invoke_blanket_debate: true` 명시 + Story §14 Lane Evidence `[debate-blanket-invoked:<reason>]` row append 의무.
 
-**참여자 (participants[])**: ArchitectPLAgent (PL) + ArchitectAgent (chief author) + 활성 deputy 들 (mandate matrix 기반) + Codex worker (proactive check touchpoint #2 carry-over — §결정 9). binary fanout round-robin (Codex × deputy pair) 으로 schema breaking 회피.
+**참여자 (participants[])**: ArchitectPLAgent (PL) + ArchitectAgent (chief author) + 활성 SubAgent 들 (mandate matrix 기반) + Codex worker (proactive check touchpoint #2 carry-over — §결정 9). binary fanout round-robin (Codex × SubAgent pair) 으로 schema breaking 회피.
 
 **Exemption**: 없음. 사용자 directive 2026-05-13 "모든 cross-module Story" 충실. 후속 Amendment 시 escape hatch 도입 검토 (ADR-058 §결정 5 governance 강화 ratchet 정합 — 약화 방향 차단).
 

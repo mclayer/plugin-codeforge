@@ -59,7 +59,7 @@ is_transitional: false
 ## 컨텍스트
 
 Orchestrator(Claude)가 설계 레인 등에서 "꼬임" 현상이 발생한다:
-- 6 deputy 산출물 통합 시 모순·순환 논리·누락이 생겨도 스스로 포착 불가
+- 6 SubAgent 산출물 통합 시 모순·순환 논리·누락이 생겨도 스스로 포착 불가
 - AskUserQuestion 품질이 낮으면 모든 레인의 사용자 결정이 부정확해짐
 - FIX root cause 판정이 단일 판정자(ArchitectPLAgent)에 의존 — 오판 시 레인 2~3개 재실행
 - RequirementsPLAgent §1-§6 통합 후 설계 진입 전 독립 검증 없음

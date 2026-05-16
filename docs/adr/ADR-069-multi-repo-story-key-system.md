@@ -276,9 +276,9 @@ Schema + 문서 + counter mechanism + Story dispatcher 모두 단일 PR.
 - Counter file lock library 의존성 결정 (`filelock` vs custom `fcntl`)
 - Agent prompt multi-repo target 결정 로직 추가 (lane plugin 자체 결정)
 
-## 6 deputy synthesis (audit trail)
+## 6 SubAgent synthesis (audit trail)
 
-본 결정은 codeforge-design lane 의 6 deputy 통합 산출물을 ArchitectAgent (chief author) 가 합성. 각 deputy 핵심 input:
+본 결정은 codeforge-design lane 의 6 SubAgent 통합 산출물을 ArchitectAgent (chief author) 가 합성. 각 SubAgent 핵심 input:
 
 | Deputy | §섹션 input | 핵심 채택 / 반박 |
 |---|---|---|
@@ -289,7 +289,7 @@ Schema + 문서 + counter mechanism + Story dispatcher 모두 단일 PR.
 | **DataMigrationArchitectAgent** | §11 Migration: legacy MCT-1~111 backward compat (rename/move 0) + counter 초기화 (hub `next: 112`, impl `next: 1`) + `story_scope` opt-in (manual) + `superseded_by` optional | 채택: 모든 결정. 반박: legacy story 의 `superseded_by` field = optional (사용자 결정), invariant 강제 X |
 | **OperationalRiskArchitectAgent** | §7.4: counter file lock (concurrent creation race) + atomic write (rename pattern) + reconciliation rule (file-system max ↔ counter `next`) + Phase 2 retry policy | 채택: lock semantic 명시 + reconciliation rule 정의. **CONDITIONAL N/A**: §7.4.1 (DR / disconnect — multi-repo 가 networked dependency 아님), §7.4.4 (rate limit — local file ops 만), §7.4.5 (env isolation — hub repo 단일). §7.4.2 (cancel-on-disconnect) + §7.4.3 (clock sync) = N/A |
 
-### 6 deputy 7-row mandate matrix 충족 (CFP-46 / ADR-014)
+### 6 SubAgent 7-row mandate matrix 충족 (CFP-46 / ADR-014)
 
 | §섹션 sub | Owner | Coverage |
 |---|---|---|

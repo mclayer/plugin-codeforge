@@ -22,7 +22,7 @@ Adopted (2026-04-29) — CFP-41 ζ arc 회고에서 Proposed → Accepted → Ad
 
 ε arc (CFP-25 ~ CFP-29) 가 review subsystem 1개를 별도 plugin (codeforge-review) 으로 추출해 plugin 분리 패턴을 처음 검증했지만, codeforge core 는 여전히 19 core 에이전트 + 7 lane 구조를 보유. 사용자 진단:
 
-> "core 가 아직도 너무 크다. 변경 시 결합·역할 모호 발생. CFP-18 (TestContractArch) · CFP-21 (DataMigrationArch) deputy 추가가 매번 5+ 파일을 흔든 게 통증의 원인."
+> "core 가 아직도 너무 크다. 변경 시 결합·역할 모호 발생. CFP-18 (TestContractArch) · CFP-21 (DataMigrationArch) SubAgent 추가가 매번 5+ 파일을 흔든 게 통증의 원인."
 
 CFP-25 §10.1 "DocsAgent 영구 fixture" 결정 + §3.5 "DeveloperAgents overlay 충분, 분리 안 함" 결정이 ε arc 모델의 잔존 통증을 인정한 것이지만 wrapper-only 끝까지 가지 않은 결과.
 
@@ -46,7 +46,7 @@ CFP-25 §10.1 "DocsAgent 영구 fixture" 결정 + §3.5 "DeveloperAgents overlay
 
 **달성**:
 - core agent 19 → 0 (wrapper-only)
-- 새 deputy/template 추가 시 wrapper 무손상 (CFP-18·CFP-21 통증 패턴 종결)
+- 새 SubAgent/template 추가 시 wrapper 무손상 (CFP-18·CFP-21 통증 패턴 종결)
 - 각 lane 의 자율 진화 가능 (independent release cadence)
 - consumer 측 lane 단위 opt-out 가능 (예: PMO 미사용 시 codeforge-pmo 제외)
 - Inter-plugin contract 6종 + invariant SSOT 3종 + harness 자동 검증
@@ -58,14 +58,14 @@ CFP-25 §10.1 "DocsAgent 영구 fixture" 결정 + §3.5 "DeveloperAgents overlay
 - DocsAgent 해체로 일반 docs/** writes 가 Orchestrator 직접 처리로 이동 (top-level 세션 path-scoped 권한 무관)
 
 **검증**:
-- 가상 시나리오 "새 architect deputy 추가" — codeforge-design 안에서만 변경, wrapper 무손상 ✓
+- 가상 시나리오 "새 architect SubAgent 추가" — codeforge-design 안에서만 변경, wrapper 무손상 ✓
 - 가상 시나리오 "새 role:dev (예: ML Engineer)" — codeforge-develop preset 추가, wrapper 무관 ✓
 - 모든 lint (10종) PASS — invariant SSOT + contract harness + workflow fixture + marketplace drift
 
 ## 거부된 대안
 
 - **payload-only model** (CFP-25 review 패턴 답습) — DocsAgent 가 verdict 받아 write. 거부: 사용자 wrapper-only 채택 시 모든 lane이 self-write 일관 필요
-- **agent-cluster split** (Codex round 1 1차 권고) — arch-deputies 만 분리 + ArchitectAgent chief + ArchitectPL 잔류. 거부: 명목상 decoupling 이지 새 deputy 추가 시 여전히 core SSOT 흔듦 (Codex round 1 후반 자기 판정으로 lane-coherence 우위)
+- **agent-cluster split** (Codex round 1 1차 권고) — arch-deputies 만 분리 + ArchitectAgent chief + ArchitectPL 잔류. 거부: 명목상 decoupling 이지 새 SubAgent 추가 시 여전히 core SSOT 흔듦 (Codex round 1 후반 자기 판정으로 lane-coherence 우위)
 - **DocsAgent 영구 fixture** (CFP-25 §10.1) — overrule. 모든 invariant 가 단일 agent 가 아니라 CI Action + phase label single-active 으로 enforcement
 - **DeveloperAgents overlay 충분 잔류** (CFP-25 §3.5 + Codex round 2) — overrule. wrapper-only end-state 일관성 위해 codeforge-develop 으로 추출
 - **Big-bang single CFP** — 6 plugin 동시 추출. 거부: 1 contract 1 CFP 데이터 (CFP-29) 무시 + ADR-008 manual versioning 한계 초과

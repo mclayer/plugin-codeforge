@@ -41,7 +41,7 @@ CI 안전망: [ADR-017](adr/ADR-017-skill-override-path-enforcement.md) + Amendm
 | design | ArchitectAgent | 설계 lane R2 (대안 탐색) | superpowers:brainstorming | YES | §3 row 2 | plugin-codeforge-design Phase 2 |
 | design | ArchitectAgent | FIX 수령 (root cause) | superpowers:systematic-debugging | NO | §3 row 4 | plugin-codeforge-design Phase 2 |
 | design | ArchitectPLAgent | 설계 lane synthesis | superpowers:writing-plans | YES | §3 row 1 | plugin-codeforge-design Phase 2 |
-| design | ArchitectPLAgent | 6 deputy 병렬 spawn | superpowers:dispatching-parallel-agents | NO | §3 row 6 | plugin-codeforge-design Phase 2 |
+| design | ArchitectPLAgent | 6 SubAgent 병렬 spawn | superpowers:dispatching-parallel-agents | NO | §3 row 6 | plugin-codeforge-design Phase 2 |
 | design | ArchitectPLAgent | FIX 수령 | superpowers:systematic-debugging | NO | §3 row 4 | plugin-codeforge-design Phase 2 |
 | design | DataMigrationArchitectAgent | §11 author input | superpowers:writing-plans | YES | §3 row 1 | plugin-codeforge-design Phase 2 |
 | design | RefactorAgent | §6 author input | superpowers:writing-plans | YES | §3 row 1 | plugin-codeforge-design Phase 2 |

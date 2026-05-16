@@ -75,7 +75,7 @@ Wrapper plugin (codeforge) CLAUDE.md content scope 는 다음으로 strictly lim
    - Design / Code / Security 책임 매트릭스
    - 원인 판정 decision table
    - FIX Ledger §10 schema + Orchestrator monopoly + RESET 룰
-   - **Cross-lane §7 운영 리스크 책임 매트릭스 행 + 원인 판정 §7.4 / §11 idempotency 행 + 6 deputy mandate 매트릭스** ([ADR-014](ADR-014-operational-risk-ssot-distribution.md) carrier — codeforge-design plugin SSOT 인 §7.4 schema 자체 와 분리되는 cross-lane disambiguation 영역)
+   - **Cross-lane §7 운영 리스크 책임 매트릭스 행 + 원인 판정 §7.4 / §11 idempotency 행 + 6 SubAgent mandate 매트릭스** ([ADR-014](ADR-014-operational-risk-ssot-distribution.md) carrier — codeforge-design plugin SSOT 인 §7.4 schema 자체 와 분리되는 cross-lane disambiguation 영역)
 
 **Excluded** (lane plugin SSOT 또는 playbook 으로 위임):
 - per-lane spawn detail · agent role description
@@ -104,7 +104,7 @@ CLAUDE.md 본문 top (intro 직후) 에 본 ADR 의 5-line summary + ADR link in
 - §5.2 grep test (CFP-44 spec): 압축 대상 헤더 잔존 0
 - ADR-012 frontmatter + section schema PASS
 
-**2026-04-30 amendment (CFP-46)** — 4번째 SSOT 예외 추가. operational risk schema (§7.4) 가 codeforge-design plugin SSOT 라 wrapper 의 cross-lane 책임 매트릭스·decision table·deputy mandate matrix 만 wrapper 보유. 향후 §7.X / §11.X 추가 시 동일 패턴 (좁은 명명 + 짝꿍 ADR 개정) 의무 — H16 exception creep 차단.
+**2026-04-30 amendment (CFP-46)** — 4번째 SSOT 예외 추가. operational risk schema (§7.4) 가 codeforge-design plugin SSOT 라 wrapper 의 cross-lane 책임 매트릭스·decision table·SubAgent mandate matrix 만 wrapper 보유. 향후 §7.X / §11.X 추가 시 동일 패턴 (좁은 명명 + 짝꿍 ADR 개정) 의무 — H16 exception creep 차단.
 
 ### 결정 5: wrapper CLAUDE.md scope 4-층 재해석 (CFP-506 Amendment 1)
 

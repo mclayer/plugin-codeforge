@@ -48,7 +48,7 @@ carrier_story: CFP-139
 | **PMOAgent** (sibling) | `BRANCH_TREE_DECOMPOSE` / `BRANCH_MERGE_CONFLICT` (cross-lane escalation) |
 | **lane PL agents** (sibling teammate) | `BRANCH_MERGE_OK` / `BRANCH_MERGE_CONFLICT` (single-lane) |
 
-**비-consumer**: lane plugin 내부 deputy / worker 는 직접 수신 금지 — lane PL 경유 의무 (ADR-044 §결정 1 SendMessage scope 제약 정합).
+**비-consumer**: lane plugin 내부 SubAgent / worker 는 직접 수신 금지 — lane PL 경유 의무 (ADR-044 §결정 1 SendMessage scope 제약 정합).
 
 ## §3 Envelope
 
@@ -138,7 +138,7 @@ payload:
 ```
 
 **다음 액션**:
-- `peer_recipient: lane_pl` → 해당 lane PL teammate SendMessage → deputy 재작업 dialog → 해소 후 retry
+- `peer_recipient: lane_pl` → 해당 lane PL teammate SendMessage → SubAgent 재작업 dialog → 해소 후 retry
 - `peer_recipient: pmo` → PMOAgent escalation → Orchestrator 협의 → 사용자 판단 트리거 가능
 
 **분기 기준** (§5.5 Q3 답변):

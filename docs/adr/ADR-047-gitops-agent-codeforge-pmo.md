@@ -66,7 +66,7 @@ is_transitional: false
 
 1. **TeamCreate 직전 N 개 worktree 동시 생성 책임 부재** — 현 상태 = Orchestrator inline (책임 비대화). N=3-5 teammate 동시 spawn 시 race condition 회피 mechanism 부재.
 2. **TeamDelete 직전 sequential merge orchestration 부재** — sub-worktree → lane branch race condition 회피 sequential merge 책임자 부재.
-3. **충돌 escalation 흐름 ad-hoc** — Orchestrator 가 lane PL ↔ deputy 협의 중재 (turn 3 verbatim "PMOAgent 또는 다른 PL Agent와 통신하여 충돌을 해결" 의도 미반영).
+3. **충돌 escalation 흐름 ad-hoc** — Orchestrator 가 lane PL ↔ SubAgent 협의 중재 (turn 3 verbatim "PMOAgent 또는 다른 PL Agent와 통신하여 충돌을 해결" 의도 미반영).
 4. **FIX iteration worktree 재구성 수동** — `cfp-NNN/fix-iter-<N>` branch + worktree 자동 생성 책임자 부재.
 5. **Stale worktree GC SessionStart hook 만 (능동 cleanup 부재)** — ADR-040 §결정 5 의 "Note: gh API check 는 GitOpsAgent 진입 시 ADR amendment" 미충족.
 6. **§10.5 Git Ops Log audit trail 부재** — Orchestrator 가 worktree event 추적 visibility 부재.
@@ -364,4 +364,4 @@ N/A — permanent policy
 - **ADR-035** codeforge agent teams Epic SSOT: 본 ADR = D-2 worktree convention + D-3 GitOpsAgent foundation 결정 implementation. amendment_log[] 에 `amendment_id: 3 (CFP-139)` 추가 의무 (codeforge-pmo Phase 2 PR pair scope).
 - **ADR-039** Orchestrator subagent default: env=0 fallback (default subagent context) 시 GitOpsAgent 미spawn → Orchestrator inline 복귀. NFR-5 정합.
 - **ADR-040** Worktree convention SSOT: GitOpsAgent 가 호출하는 worktree script + base path / branch hierarchy / cross-platform path = ADR-040 §결정 1-4 verbatim. Amendment 1 (GitOpsAgent hook 실행 주체 명시) Phase 2 PR pair scope 에서 finalize.
-- **ADR-044** Phase-scoped sequential team: GitOpsAgent = long-running teammate (Story 전 기간 active). agent teams enabled context (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) prerequisite. SendMessage scope 제약 정합 — peer = PMOAgent + lane PL + Orchestrator 만, lane plugin deputy / worker SendMessage 금지.
+- **ADR-044** Phase-scoped sequential team: GitOpsAgent = long-running teammate (Story 전 기간 active). agent teams enabled context (`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1`) prerequisite. SendMessage scope 제약 정합 — peer = PMOAgent + lane PL + Orchestrator 만, lane plugin SubAgent / worker SendMessage 금지.

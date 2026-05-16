@@ -120,7 +120,7 @@ SecurityArchitectAgent consult 결과 통합.
 
 - **CFP-B (잠정)**: `scripts/check-adr-sunset-criteria.sh` CI lint + branch protection required check 추가. warning mode → enforce mode 단계 적용.
 - **CFP-C (잠정)**: ADR-057 amendment 로 sunset criteria 본문 backfill + KPI dashboard (rate-limit fallback rate 측정 인프라). 본 정책 첫 적용 사례.
-- **CFP-D (잠정)**: 기존 Active 잠재 안전망 ADR retroactive backfill — ADR-024 Amendment, ADR-027 Proposed→Accepted 전이 시점, ADR-030 Phase 1 require-only 등 후보. CodebaseMapper deputy 식별 목록 활용.
+- **CFP-D (잠정)**: 기존 Active 잠재 안전망 ADR retroactive backfill — ADR-024 Amendment, ADR-027 Proposed→Accepted 전이 시점, ADR-030 Phase 1 require-only 등 후보. CodebaseMapper SubAgent 식별 목록 활용.
 
 본 ADR 의 효력 발생 시점 = Accepted 직후 (선언 효력). CFP-B merge 까지는 author 자발적 준수 + DesignReview lane review 가 1차 안전망.
 

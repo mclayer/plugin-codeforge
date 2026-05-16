@@ -55,7 +55,7 @@ CLAUDE.md 내 4개 SSOT 예외 테이블 (~160줄)은 특정 lane 진입 시 또
    - `codeforge:review-responsibility` — 책임 매트릭스
    - `codeforge:root-cause-decision` — 원인 판정 decision table
    - `codeforge:fix-ledger-schema` — §10 FIX Ledger 스키마
-   - `codeforge:deputy-mandate` — deputy mandate matrix
+   - `codeforge:deputy-mandate` — SubAgent mandate matrix
 
 4. **Trigger 명시 의무**: 각 skill description 필드 + CLAUDE.md 오케스트레이션 규칙 섹션 상단 "Lane 진입 시 skill 호출 의무" trigger 테이블에 호출 시점 명시.
 
@@ -103,7 +103,7 @@ ADR-051 추출 기준 3종 (≥20줄 / lane-conditional / inline 존재 ADR-012 
 
 ## 결과
 
-**ADR-012 §3 amendment**: 본 결정에 의해 ADR-012 §3 "4 SSOT 예외 항목 (책임 매트릭스 / 원인 판정 decision table / FIX Ledger §10 schema / 6 deputy mandate matrix)"은 CLAUDE.md inline 유지에서 skill 분리 방식으로 전환된다. ADR-012 cap(≤380줄) 수호 수단을 확장하는 amendment이며 ADR-012 본문에 cross-reference 추가 권장.
+**ADR-012 §3 amendment**: 본 결정에 의해 ADR-012 §3 "4 SSOT 예외 항목 (책임 매트릭스 / 원인 판정 decision table / FIX Ledger §10 schema / 6 SubAgent mandate matrix)"은 CLAUDE.md inline 유지에서 skill 분리 방식으로 전환된다. ADR-012 cap(≤380줄) 수호 수단을 확장하는 amendment이며 ADR-012 본문에 cross-reference 추가 권장.
 
 **달성** (Phase 2 구현 완료 후 검증):
 - CLAUDE.md ~453 → ~312줄 예측 (ADR-012 ≤380줄 cap 충족, headroom +68줄)

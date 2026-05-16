@@ -122,4 +122,4 @@ CFP-275 case 의 29s latency 는 lower bound 아닌 sample. server load / concur
 
 ## 변경 이력
 
-- **2026-05-09** — 신규 작성 (CFP-280 carrier Story Phase 1 PR scope). PL synthesis grounded in Story file §6 Researcher 산출물 (§6.1 N+1 firing law / §6.2 PAT vs GITHUB_TOKEN / §6.3 dedup pattern 4종 / §6.4 reference). chief author 가 inline drafts 미제공 — PL 이 deputy synthesis 로 보강.
+- **2026-05-09** — 신규 작성 (CFP-280 carrier Story Phase 1 PR scope). PL synthesis grounded in Story file §6 Researcher 산출물 (§6.1 N+1 firing law / §6.2 PAT vs GITHUB_TOKEN / §6.3 dedup pattern 4종 / §6.4 reference). chief author 가 inline drafts 미제공 — PL 이 SubAgent synthesis 로 보강.

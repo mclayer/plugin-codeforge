@@ -196,9 +196,9 @@ exit=0 이어야 통과. 16 assertion check.
 ## v0.13 → v0.14
 
 ### 변경 사항
-- **신규 에이전트 1종**: `DataMigrationArchitectAgent` (설계 lane 6번째 deputy, 데이터 무결성 advocate for §11 데이터 마이그레이션)
+- **신규 에이전트 1종**: `DataMigrationArchitectAgent` (설계 lane 6번째 SubAgent, 데이터 무결성 advocate for §11 데이터 마이그레이션)
 - **agent count**: 23 → 24
-- **ArchitectPLAgent**: deputy 4 → 5 (Phase 1 spawn diagram + Phase 1.5 sanity check 1 항목 + 메타-규칙 1번 §11 매핑 1행 추가)
+- **ArchitectPLAgent**: SubAgent 4 → 5 (Phase 1 spawn diagram + Phase 1.5 sanity check 1 항목 + 메타-규칙 1번 §11 매핑 1행 추가)
 - **ArchitectAgent (chief author)**: §11 author input 통합 절차 추가 — Change Plan §1-§10 → §1-§11
 - **`templates/change-plan.md`**: §10 다음 §11 데이터 마이그레이션 신설 (§11.1 Schema 영향 / §11.2 Migration 전략 / §11.3 Rollback 경로 / §11.4 Data integrity invariant / §11.5 Backfill / §11.6 N/A)
 - **DesignReview checklist**: §11 audit 절 신설 + 3 P0 차단 룰 (§11 누락 / §11.6 N/A 사유 부재 / DataMigrationArch 매핑 미반영)
@@ -231,7 +231,7 @@ exit=0 이어야 통과. 16 assertion check.
 
 ### 토큰 비용
 
-- 설계 lane peak: 175k → 200k (+25k DataMigrationArch deputy)
+- 설계 lane peak: 175k → 200k (+25k DataMigrationArch SubAgent)
 - 1 Story당 5-10k 토큰 추가 추정 (실제 §11 작성 시점에만 소요, §11.6 N/A 케이스는 minimal)
 
 ### 자기 적용 paradox
@@ -243,7 +243,7 @@ exit=0 이어야 통과. 16 assertion check.
 ## v0.11.0 → v0.12.0
 
 ### 변경 사항
-- **신규 에이전트 1종**: `TestContractArchitectAgent` (설계 lane 5번째 deputy, QA perspective contributor for §8 Test Contract)
+- **신규 에이전트 1종**: `TestContractArchitectAgent` (설계 lane 5번째 SubAgent, QA perspective contributor for §8 Test Contract)
 - **ArchitectPL 검수 메타-규칙 압축**: 4 항목 enumerate -> 2 항목 메타-규칙 (Refactor STRONG ROI 채택)
 - **ADR-005 status 전이**: Proposed -> Accepted (결정 1·2·3 한정 — N/A 표기 형식·면제 분류·N/A inheritance 차단)
 - **ADR-006 신규 발행**: TestContractArch 도입 근거 + 사용자 5 BLOCKING 결정 verbatim 인용
@@ -261,7 +261,7 @@ exit=0 이어야 통과. 16 assertion check.
 ## v0.10.0 → v0.11.0
 
 ### 변경 사항
-- **신규 에이전트 2종**: `ArchitectPLAgent` (설계 lane PL), `SecurityArchitectAgent` (설계 lane deputy)
+- **신규 에이전트 2종**: `ArchitectPLAgent` (설계 lane PL), `SecurityArchitectAgent` (설계 lane SubAgent)
 - **ArchitectAgent 역할 변경**: 단독 PL → ArchitectPL 직속 chief author (Change Plan §1-§10 + ADR draft + §8 Test Contract author)
 - **Change Plan template 신규 §7 보안 설계 섹션** — 신규 Story부터 적용 (외부 입력·인증·민감데이터 무관 시 §7.6 N/A 권한)
 - **ADR-004** 발행: 설계 lane 재구조화 결정 기록
