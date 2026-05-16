@@ -12,7 +12,7 @@
 # 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
 schema_version: "1.2"  # CFP-509 / ADR-060 Amendment 6 — recurrence field 정식 도입 (MINOR bump v1.1 → v1.2)
 introduced_by: CFP-389
-last_updated: 2026-05-14  # CFP-442 Phase 2 — evidence-registry-anomaly 51번째 entry (ADR-060 Amendment 11 §결정 25 carrier — framework self-application 5-piece chain 완성) | CFP-662 — bootstrap-labels-precondition 46번째 entry (ADR-060 Amendment 10 §결정 24 carrier — PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier, deferred-followup status — Phase 2 carrier 신설 후 Active 전환) | CFP-660 — workflow-version-drift 45번째 entry (ADR-032 Amendment 2 §결정 6 carrier — strict-eligible 5번째 drift consumer workflow version drift, check 10 NEW carrier) | CFP-658 — section-1-verbatim-postmerge 44번째 entry append (ADR-027 Amendment 2 §결정 6.C carrier — manual fallback path §1 verbatim invariant post-merge lint warning tier, deferred-followup status, Phase 2 carrier 신설 후 Active 전환) | CFP-627 FIX iter 3/3 — marketplace-drift-detection entry deferred to Phase 2 carrier (ADR-067 §결정 3 cross-lane RESET 차원 전환) | CFP-638 — stop-time-continuous-confirm-detect 43번째 entry (ADR-064 Amendment 3 Story D) | CFP-631 — marketplace-description-verbatim 42번째 entry (ADR-063 Amendment 2 §결정 11 blocking-on-pr)
+last_updated: 2026-05-16  # CFP-722 Phase 2 — story-section-ownership 57번째 entry (ADR-060 Amendment 13 §결정 27 carrier — per-section ownership mechanical lint, warning tier, PR #441 incident prevention) | CFP-442 Phase 2 — evidence-registry-anomaly 51번째 entry (ADR-060 Amendment 11 §결정 25 carrier — framework self-application 5-piece chain 완성) | CFP-662 — bootstrap-labels-precondition 46번째 entry (ADR-060 Amendment 10 §결정 24 carrier — PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier, deferred-followup status — Phase 2 carrier 신설 후 Active 전환) | CFP-660 — workflow-version-drift 45번째 entry (ADR-032 Amendment 2 §결정 6 carrier — strict-eligible 5번째 drift consumer workflow version drift, check 10 NEW carrier) | CFP-658 — section-1-verbatim-postmerge 44번째 entry append (ADR-027 Amendment 2 §결정 6.C carrier — manual fallback path §1 verbatim invariant post-merge lint warning tier, deferred-followup status, Phase 2 carrier 신설 후 Active 전환) | CFP-627 FIX iter 3/3 — marketplace-drift-detection entry deferred to Phase 2 carrier (ADR-067 §결정 3 cross-lane RESET 차원 전환) | CFP-638 — stop-time-continuous-confirm-detect 43번째 entry (ADR-064 Amendment 3 Story D) | CFP-631 — marketplace-description-verbatim 42번째 entry (ADR-063 Amendment 2 §결정 11 blocking-on-pr)
 
 entries:
   - name: adr-sunset-criteria
@@ -1912,3 +1912,48 @@ entries:
       threshold: 3                   # ADR-060 §결정 19 (Amendment 6) — threshold 3 standard
       promotion_trigger: none        # count=0 < threshold=3 → 발화 없음 (Option A)
     status: Active                   # CFP-771 Phase 1 — scripts/check-kst-timestamp.sh + templates/.github kst-timestamp-display.yml byte-identical self-app + registry row 동시 land
+
+  # ─── CFP-722 Phase 2 (ADR-060 Amendment 13 §결정 27 — per-section ownership mechanical lint, 2026-05-16) ───
+  # Incident origin: PR #441 (mclayer/codeforge-internal-docs, DeveloperPL destructive rewrite §1.1/§2/§3/§4/§5/§6/§7/§9/§10/§13/§14 +216/-850)
+  # story-section-9-typed 17-field schema verbatim (CFP-410 선례 정합, warning-tier entry).
+  # ADR-040 Amendment 3 §결정 7 — 신규 mechanical action 도입 → mechanical_enforcement_actions[] binding 의무 (ADR-060 Amendment 13 frontmatter).
+  - name: story-section-ownership
+    description: |
+      CFP-722 / ADR-060 Amendment 13 §결정 27 — Story per-section ownership mechanical lint.
+      per-section diff 를 heading-anchored content slice(NOT line-range — EC-2 parallel-session
+      line-shift resilient, story-section-1-immutable.yml:52-53 선례 일반화) 로 분류:
+        INV-DI-1 (lane-owned §2/§3/§5/§6/§7/§8/§11): semantic-normalize 후 token-level
+          deletion 존재 + non-owner lane 작성 → violation (PR #441 +216/-850 signature).
+        INV-DI-2 (monopoly §10/§13/§14/§10.5): ANY base-row mutation without
+          Orchestrator/delegate attribution → violation (CFP-32 fix-event-v1 + ADR-031 §14 FROZEN).
+      §1 = story-section-1-immutable.yml 영역 cross-ref ONLY (중복 codification 회피).
+      proxy attribution: branch `cfp-NNN[/<lane>]` + phase:* label → Orchestrator vs lane-plugin.
+      carrier-Story exemption: bootstrap_exempt_protocols `policy:lane-self-write-boundary-mechanical`
+        AND carrier_story == own story key (ADR-062 EC-4, first short-circuit).
+      Warning tier: continue-on-error: true + sys.exit(0) always (ADR-060 §결정 5).
+      Exit code 3-tier: 0 always (warning mode — blocking-on-pr promotion = expedited candidate
+        given data-loss severity, evidence gate applies).
+      sunset_justification: N/A — ADR-060 is_transitional: false (permanent framework, ratchet UP).
+    detect_command: bash scripts/check-story-section-ownership.sh
+    workflow: templates/github-workflows/story-section-ownership-check.yml
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode (blocking-on-pr expedited candidate — data-loss severity, §결정 6 evidence gate)
+    bypass_label: hotfix-bypass:story-section-ownership  # ADR-024 Amendment 3 per-entry namespace (§결정 6.A verbatim)
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b) — bypass 외 failure 0
+      sibling_dependencies:
+        - CFP-722                    # self-carrier (Phase 2 = impl)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-722
+    introduced_date: 2026-05-16
+    owner_adr: ADR-031               # §14 Lane Evidence monopoly SSOT + Amendment 1 delegate subagent
+    carrier_adr: ADR-060             # evidence-enforceable framework carrier (Amendment 13)
+    recurrence:
+      count: 0                       # 첫 도입 — incident = PR #441 (pre-lint era, 별도 historical entry 아님)
+      threshold: 3                   # ADR-060 §결정 19 (Amendment 6) — threshold 3 standard
+      promotion_trigger: none        # count=0 < threshold=3 → 발화 없음 (Option A)
+    status: Active                   # Phase 2 (CFP-722) impl 완료 (script + lib + 2 workflow self-app + fixture 19건 all-green)

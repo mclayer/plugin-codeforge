@@ -1,0 +1,7 @@
+{
+  "pr_branch": "cfp-801",
+  "pr_labels": [
+    "phase:구현"
+  ],
+  "path_pattern": "docs/stories/*.md"
+}

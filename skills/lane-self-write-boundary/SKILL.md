@@ -32,3 +32,5 @@ tools: Read
 문서화 표준 4 single-owner doc 템플릿은 [`templates/`](../../templates/) — change-plan / adr 현재 존재, domain-knowledge schema / retro schema CFP-27 신설. owner agent는 본인 owner path write 시 해당 템플릿 schema 준수 필수 — `scripts/check-write-permission-redistribution.sh` (CFP-26) + 향후 frontmatter/section schema lint (CFP-27)에서 강제.
 
 자세한 owner path / mechanism / trigger 는 각 lane plugin 의 `CLAUDE.md` `Self-write 책임` 표 (codeforge-{review,pmo,requirements,test,develop,design}) 참조.
+
+**machine_readable_ssot**: `docs/domain-knowledge/domain/governance-principle/lane-self-write-ownership-matrix.yaml` — per-section owner-agent mapping YAML SSOT (CFP-722 §13.A, 2026-05-16). 본 SKILL.md = human-readable mirror; drift-sync: yaml ↔ SKILL.md ↔ story-page-structure.md headings ↔ lint regex (3-way, follow-up CFP §13.B).

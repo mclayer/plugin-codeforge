@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # test_cfp_478_regression.py — CFP-478 Phase 2 regression test runner
-# ADR-061 §결정 1 + Amendment 1 §결정 6.A — 19 candidate migration verification.
+# ADR-061 §결정 1 + Amendment 1 §결정 6.A — 20 candidate migration verification (CFP-722 Phase 2 +1).
 #
 # 검사: 각 scripts/*.sh thin wrapper 가 대응하는 scripts/lib/*.py 를 정상 호출하는지 확인.
 # 검사 항목:
@@ -17,7 +17,7 @@ import re
 
 REPO_ROOT = pathlib.Path(__file__).parent.parent.parent
 
-# 19 candidates: (shell_wrapper_name, lib_py_name)
+# 20 candidates: (shell_wrapper_name, lib_py_name)
 CANDIDATES = [
     ("check-doc-section-schema.sh",            "check_doc_section_schema.py"),
     ("check-doc-locations.sh",                  "check_doc_locations.py"),
@@ -38,6 +38,8 @@ CANDIDATES = [
     ("test-check-inter-plugin-drift.sh",        "test_check_inter_plugin_drift.py"),
     ("test-cfp-140-ghec-governance.sh",         "test_cfp_140_ghec_governance.py"),
     ("sync-required-workflows.sh",              "sync_required_workflows.py"),
+    # CFP-722 Phase 2 — 20번째 entry (pure thin-wrapper, NOT HYBRID)
+    ("check-story-section-ownership.sh",        "check_story_section_ownership.py"),
 ]
 
 # Wrappers that retain non-trivial bash logic (not full thin-wrapper pattern)
