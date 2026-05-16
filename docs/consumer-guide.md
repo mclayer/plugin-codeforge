@@ -479,6 +479,8 @@ bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-version-drift.sh
 ### §2g.1 codeforge upgrade CLI (CFP-743 Wave 2 Story-3 / ADR-076 + reconcile-protocol-v1 v1.2)
 
 > **Phase 2 carrier 안내**: 본 절은 CFP-743 Phase 1 (설계/contract) 기준 사용법 명세. 실 CLI script (`scripts/codeforge-upgrade.{sh,ps1}`) + UpgradeAgent 는 Phase 2 PR (별 PR) 도입. Phase 2 merge 전까지는 §2g version drift 검사 + `/plugins update` 수작업 경로 유지.
+>
+> **Transitional 경로 안내 (CFP-744 #752, ArchitectPL Phase 1)**: consumer 의 manual upgrade (`/plugins update` 수작업 + CHANGELOG 수기 + `_overlay/CLAUDE.md` 갱신) 는 **현재 transitional 정상 경로**다. CFP-744 Phase 2 (AC-10 `consumer-scripts.manifest` 등록 + AC-11 `--repo` consumer_repo_root flag + AC-12 §2g.2 end-to-end flow 섹션) merge 시 consumer 자기 repo canonical upgrade flow 배포로 해소된다 (#752 = CFP-744 tracker, Phase 2 merge 시 close).
 
 codeforge family upgrade 의 **단일 진입점** — "한 번 명령 = 끝까지 자동 + 사용자 결정 0 자리" (Epic CFP-699 directive). 현재 7회 `/plugins update` 수작업 → 1 명령으로 수렴.
 
@@ -503,6 +505,58 @@ bash scripts/codeforge-upgrade.sh --rollback <version>
 **핵심 동작 보증**: ① 사용자 결정 분기 0 (`--dry-run`/`--apply`/`--rollback` argument fix, 중간 prompt 0) ② dry-run = 미리보기만 (working tree 변경 0) ③ apply = all-or-rollback atomic ④ reconcile PR 은 자동 merge 안 함 — consumer 가 PR review gate 최종 결정권 보유 ⑤ marker block (`# BEGIN/END wrapper-managed`) 안 = wrapper SSOT 적용, 밖 = consumer customization 보존. marker 미도입 영역 = wholesale mirror + event log `## Wholesale mirror losses` § 손실 가시화.
 
 **PAT 요구사항 (ADR-066 Amendment 3)**: reconcile PR open 은 `CODEFORGE_CROSS_REPO_PAT` 에 `reconcile-target-repos contents:write + pull_requests:write` scope 필요 (consumer reconcile 대상 repo 한정 — org-wide write 아님). 상세 = [ADR-066 §결정 2](adr/ADR-066-pat-rotation-policy.md) + §1.f PAT rotation 정책.
+
+---
+
+### §2g.2 consumer 자기 repo 7-plugin atomic upgrade end-to-end flow (CFP-744 Wave 2 Story-4 / ADR-037 Amendment 1 / #752 해소)
+
+§2g.1 은 per-plugin upgrade CLI 명세다. 본 §2g.2 는 consumer 가 **자기 repo 를 reconcile target 으로 지정**해 codeforge family **7 plugin (wrapper + 6 lane) 을 단일 atomic transaction 으로 upgrade** 하는 end-to-end 경로다 (#752 consumer-distribution 완전 해소 — CFP-744 Phase 2 land 시점).
+
+**(a) 배포 경로 (bootstrap-consumer.sh Stage 7 mirror)**
+
+CFP-744 Phase 2 이후 `templates/consumer-scripts.manifest` 에 다음 4 script 가 등록된다:
+
+```
+scripts/codeforge-upgrade.sh        # per-plugin upgrade CLI (POSIX)
+scripts/codeforge-upgrade.ps1       # per-plugin upgrade CLI (PowerShell, parity)
+scripts/lib/path_normalize.py       # §4.5 path 정규화 헬퍼 (sh↔ps1 공유)
+scripts/atomic-upgrade-7-plugins.sh # per-family 7-plugin atomic transaction shell
+```
+
+`scripts/bootstrap-consumer.sh` Stage 7 가 이 manifest 를 consumer repo `scripts/` 로 1:1 mirror → consumer 는 자기 repo 에서 위 4 script 에 직접 접근 가능 (별도 수동 복사 불요).
+
+**(b) consumer_repo_root 지정 (`--repo <path>`)**
+
+consumer 가 자기 repo 를 reconcile target 으로 명시 지정한다. resolve 우선순위: `--repo <path>` (명시) > `CODEFORGE_REPO_ROOT` env > script 자기 부모 (미지정 시 fallback — 현 동작 보존, backward-compat). `--repo` 는 mode 인자와 **순서 무관** (orthogonal). 지정 path 가 실재 git repo 아니면 (오타 / 다른 repo / non-git 디렉터리) **abort-before-touch** (filesystem 1 byte 도 변경 전 차단, per-family snapshot 무생성).
+
+**(c) dry-run → apply → 사후 0-drift 자동 검증**
+
+```bash
+# 1) 7-plugin family drift 사전 확인 (filesystem touch 0, snapshot 무생성)
+bash scripts/atomic-upgrade-7-plugins.sh --dry-run --repo /path/to/your-consumer-repo
+
+# 2) per-family atomic transaction 적용
+#    idempotency pre-check (7 plugin 이미 최신 = no-op 정상 종료)
+#    → per-family pre-atomic snapshot → 7 plugin per-plugin reconcile
+#    → 사후 0-drift 검증 (codeforge family 7 only — codex/superpowers 제외)
+#    → drift 0 = commit / drift > 0 또는 부분 실패 = 전체 7 plugin atomic rollback
+bash scripts/atomic-upgrade-7-plugins.sh --apply --repo /path/to/your-consumer-repo
+```
+
+사후 0-drift 검증은 ADR-037 Amendment 1 invariant 다 — atomic upgrade `--apply` 완료 직후 7 plugin installed pin ↔ marketplace SSOT drift = 0 (none) 이어야 한다. `atomic-upgrade-zero-drift` evidence-check entry (warning tier) 가 이 정합을 추적한다. 검증 scope = codeforge family 7 plugin 한정 (`codex`/`superpowers` 외부 marketplace 제외 — F-002 옵션 A 7-name loop 구조적 배제, false transaction-fail 0).
+
+**(d) rollback (per-family snapshot)**
+
+```bash
+# 직전 per-family pre-atomic snapshot 복원 (7 plugin 일괄 — partial state 0)
+bash scripts/atomic-upgrade-7-plugins.sh --rollback --repo /path/to/your-consumer-repo
+```
+
+per-family rollback 은 7 plugin 을 직전 snapshot 시점으로 **일괄** 복원한다 (per-plugin 부분 rollback 없음). snapshot retention = 최근 5개 (FIFO evict). snapshot tar 손상 / checksum 검증 실패 시 silent partial-state 0 — 명시적 escalation (사용자에게 corrupt + 수동 복구 필요 보고). 정상 flow 의 사용자 결정 분기 0 invariant 는 유지 (abort 도 prompt 0).
+
+**(e) transitional → canonical 전환**
+
+§2g.1 머리 "Transitional 경로 안내" 의 manual upgrade (`/plugins update` 수작업 + CHANGELOG 수기 + `_overlay/CLAUDE.md` 갱신) 는 본 §2g.2 canonical flow 가 land 된 시점부터 canonical 경로로 supersede 된다. consumer 는 본 §2g.2 flow 를 우선 사용하고, manual 경로는 환경 제약 (script mirror 미배포 등) 시 fallback 으로만 사용한다 (transitional 정상 경로 — degraded mode 아님).
 
 ---
 
@@ -1816,7 +1870,7 @@ echo "[ci-watch] terminal state reached, exit=$ec"
 | 패턴 | 원인 | 자동 action |
 |---|---|---|
 | `phase-gate-mergeable` on type:epic 라벨 PR | (resolved CFP-106 #143 fast-pass) → 자동 success | (의도 fast-pass — admin merge 불필요) |
-| `phase-gate-mergeable` on doc-only PR (`docs/`/`wrapper/`/`*.md`) | (resolved CFP-106 #143 fast-pass) → 자동 success | (의도 fast-pass) |
+| `phase-gate-mergeable` on doc-only PR (`docs/`/`wrapper/`/`templates/`/`scripts/`/`.github/`/`.claude-plugin/`/`.claude/_overlay/`/`.codeforge/`/`scope_manifests/`/`*.md` 등) | (resolved CFP-106 #143 + CFP-758 fast-pass) → 자동 success | (의도 fast-pass) |
 | 기타 ACTION_REQUIRED | 사전 등재 X | 사용자 보고 + 진단 |
 
 ### enforce_admins toggle 기법 (BLOCKED + MERGEABLE 케이스)

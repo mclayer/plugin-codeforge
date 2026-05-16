@@ -34,7 +34,7 @@ schema_version: "1.0"
 | story_key | 발생 시점 active Story KEY (cross-Story 추적, 예: `CFP-612`) |
 | pattern_dimension | 4 차원 enum (표현 / 결정 구조 / 보고 형식 / 질문 자체) |
 | pattern_summary | 어떤 양상이 detect 됐는지 1 줄 |
-| trigger | `layer-3-keyword` (사용자 "추상" keyword) / `layer-4-n1` (같은 양상 다음 turn 재발) / `layer-4-m5` (escalation `AskUserQuestion`) |
+| trigger | `layer-3-keyword` (사용자 "추상" keyword) / `layer-4-n1` (같은 양상 다음 turn 재발) / `layer-4-m5` (escalation `AskUserQuestion`). retroactive baseline row 는 cell 에 `backfill (...)` marker 사용 — soft enum extension, schema/structure 무변경. |
 | different_dimension_after_halt | Sub-mechanism 1 — "이전과 다르게 한 점" 1 줄 (재작성 직후 동일 row 갱신) |
 | escalation_outcome | `layer-4-m5` trigger 시 사용자 답변 요약 (`AskUserQuestion` outcome). 다른 trigger 시 비어있음 |
 
@@ -42,6 +42,9 @@ schema_version: "1.0"
 
 | iter | timestamp | story_key | pattern_dimension | pattern_summary | trigger | different_dimension_after_halt | escalation_outcome |
 |------|-----------|-----------|-------------------|-----------------|---------|-------------------------------|--------------------|
+| 1 | 2026-05-14 22:36 | CFP-672 | 보고 형식 | stale SessionStart snapshot 을 ground truth 로 보고·진행 → parallel 세션 merge(`270ae26`) 미인지, ~30분 duplicate work | backfill (retroactive baseline — not realtime layer-3/4 detect) | N/A — backfill (no halt-rewrite cycle) |  |
+| 2 | 2026-05-15 03:16 | CFP-701 | 보고 형식 | git log 0-hit 만으로 "정상 진행" 보고 → open PR ADR-claim scan 누락, ArchitectPL 단계 뒤늦은 ESCALATE (CFP-672 와 동일 dimension 재발) | backfill (retroactive baseline — not realtime layer-3/4 detect) | N/A — backfill (no halt-rewrite cycle) |  |
+| 3 | 2026-05-15 12:00 | CFP-707 | 질문 자체 | multi-PR version field contention 을 묻지 않고 plugin.json bump 단정 진행 → cascade collision, Pause-and-resume | backfill (retroactive baseline — not realtime layer-3/4 detect) | N/A — backfill (no halt-rewrite cycle) |  |
 
 <!-- 비어있는 table — Orchestrator 가 incident detect 시 row append.
      ADR-071 §결정 6 schema 준수. -->

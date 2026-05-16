@@ -173,6 +173,9 @@ jobs:
               f.filename.startsWith('templates/') ||
               f.filename.startsWith('scripts/') ||
               f.filename.startsWith('.claude-plugin/') ||
+              f.filename.startsWith('.claude/_overlay/') ||   // CFP-758 #758 — consumer overlay SSOT (state-only)
+              f.filename.startsWith('.codeforge/') ||          // CFP-758 #503/#723 — counter reservation (non-executable state)
+              f.filename.startsWith('scope_manifests/') ||     // CFP-758 #503/#723 — Epic scope manifest (governance state)
               f.filename === 'CHANGELOG.md' ||
               f.filename === 'README.md' ||
               f.filename === 'CONTRIBUTING.md'

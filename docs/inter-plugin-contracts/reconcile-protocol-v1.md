@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: reconcile-protocol
-version: "1.2"
+version: "1.3"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/reconcile-protocol-v1.md
@@ -10,10 +10,12 @@ authors:
   - ArchitectAgent (CFP-701 Wave 1 Story-1 carrier — declarative reconciliation upgrade flow schema SSOT)
   - DeveloperPLAgent (CFP-702 Wave 1 Story-2 Phase 2 — §4.3 (b) trigger 발동, marker_block_syntax_* fields 확장)
   - ArchitectPLAgent (CFP-743 Wave 2 Story-3 — §4.3 (c) trigger 발동, mechanical_implementation_binding block 신설 + KEY cross-ref 정정 CFP-703→CFP-743)
+  - ArchitectPLAgent (CFP-744 Wave 2 Story-4 — §4.3 (d) trigger 발동, atomicity_boundary_runtime per_plugin → family_7_plugin ratchet 활성 + stale placeholder 정정 v1.0→v1.1 → v1.2→v1.3)
 version_history:
   - { version: "1.0", date: 2026-05-15, carrier: CFP-701, change: "initial — declarative reconciliation upgrade flow schema SSOT. 9 영역 desired state enumeration + dry-run/snapshot/transaction 3 mode enum + customization preservation entry (marker block, Story-2 prerequisite) + version_handshake / reconcile_strategy placeholder reserve (Wave 4 carrier)." }
   - { version: "1.1", date: 2026-05-15, carrier: CFP-702, change: "§4.3 (b) trigger 발동 — Wave 1 Story-2 marker block syntax 확정. customization_preservation_entry 영역 확장: marker_block_syntax_* 4 fields 정식화 (comment prefix per-filetype / nesting_policy / lint_behavior / migration_script). ADR-027 Amendment 3 §결정 7.A-7.E verbatim cross-ref." }
   - { version: "1.2", date: 2026-05-15, carrier: CFP-743, change: "§4.3 (c) trigger 발동 — Wave 2 Story-3 UpgradeAgent + CLI 실 implementation hook (`scripts/codeforge-upgrade.{sh,ps1}` 신설). mechanical_implementation_binding block 신설 (§4.5 reference → CLI 3 mode entrypoint + UpgradeAgent Plan+Apply 책임 binding + reconcile PR open scope = ADR-066 Amendment 3 cross-ref). KEY cross-ref 정정: §4.3 (c) `CFP-703` → `CFP-743` (Wave 1 작성 시점 placeholder drift — 동일 Story, fact 영향 0 추적성 정정). MINOR bump (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 2). user_decision_branches: 0 invariant / atomicity_boundary semantic / transaction.completion_criterion 무변경 (ratchet 강화 only — ADR-064 §self-application 정합)." }
+  - { version: "1.3", date: 2026-05-16, carrier: CFP-744, change: "§4.3 (d) trigger 발동 완료 — Wave 2 Story-4 7-plugin family atomic upgrade runtime (`scripts/atomic-upgrade-7-plugins.sh` 신설). `transaction.atomicity_boundary_runtime_v1` per_plugin → `atomicity_boundary_runtime_future` family_7_plugin runtime catch-up ACTIVE (ADR-076 §결정 8 pre-designated ratchet). 의미 invariant `atomicity_boundary_semantic_invariant: family_7_plugin_atomic` 변경 0 (ADR-016 §결정 1 SSOT 무변경 — runtime catch-up only). ADR-037 Amendment 1 (atomic upgrade 후 0 drift invariant) carrier 동반. stale placeholder 정정: 본 contract line 144 comment + ADR-076 line 147 의 'MINOR bump v1.0 → v1.1 의무' (Wave 1 작성 시점 placeholder — v1.1/v1.2 신설 전 작성된 stale text) → 실제 'v1.2 → v1.3 (Wave 2 Story-4)' 정정 (CFP-743 CFP-703→CFP-743 정정 패턴 답습, fact 영향 0 추적성만 — ADR-068 I-4 wording SSOT 정합). schema field 명 `_future` 유지 (field-name stability — ratchet 활성은 comment + version_history + §4.3 (d) marker 로 표기, §4.3 (c) v1.2 패턴 동형). MINOR bump (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 2). user_decision_branches: 0 / atomicity_boundary_semantic_invariant / transaction.completion_criterion / adr_053_d2_verbatim_quote 무변경 (ratchet 강화 only — ADR-064 §self-application 정합)." }
 owner_adr: ADR-076
 carrier_story: CFP-701
 sibling_sync_exempt: true
@@ -140,8 +142,8 @@ reconcile_protocol:
       # === atomicity_boundary 3-field split (FIX iter 1 / Codex TP#2 F-001 re-frame, 2026-05-15 KST) ===
       # 의미 invariant vs runtime implementation 두 영역 분리 declare (ADR-076 §결정 8 verbatim)
       atomicity_boundary_semantic_invariant: "family_7_plugin_atomic"  # [empirical-source: ADR-016 §결정 1 — wrapper + 6 lane plugin SSOT]. 본 invariant 자체는 본 contract 신설 영역 외 (ADR-016 SSOT).
-      atomicity_boundary_runtime_v1: "per_plugin"  # Story-1 scope semantic SSOT only — Wave 2 Story-3 (UpgradeAgent + CLI) runtime carrier 영역.
-      atomicity_boundary_runtime_future: "family_7_plugin"  # Wave 2 Story-4 carrier ratchet (`scripts/atomic-upgrade-7-plugins.sh` 신설 시점, 본 contract MINOR bump v1.0 → v1.1 의무).
+      atomicity_boundary_runtime_v1: "per_plugin"  # Story-3 (CFP-743, MERGED) runtime SSOT — UpgradeAgent + CLI per-plugin atomic unit (`scripts/codeforge-upgrade.{sh,ps1}`).
+      atomicity_boundary_runtime_future: "family_7_plugin"  # Wave 2 Story-4 (CFP-744) ratchet ACTIVE — `scripts/atomic-upgrade-7-plugins.sh` 신설 시점, 본 contract MINOR bump v1.2 → v1.3 발동 완료 (CFP-744). [stale placeholder 정정: 旧 comment "본 contract MINOR bump v1.0 → v1.1 의무" = Wave 1 작성 시점 placeholder (v1.1/v1.2 신설 전 작성된 stale text) → 실제 v1.2 → v1.3 (Wave 2 Story-4) 정정, CFP-743 CFP-703→CFP-743 정정 패턴 답습, fact 영향 0 추적성만 — ADR-068 I-4 wording SSOT 정합. 의미 invariant `family_7_plugin_atomic` 변경 0 — ADR-016 §결정 1 SSOT (field 명 `_future` 유지 = schema field-name stability, ratchet 활성은 comment + version_history + §4.3 (d) marker 로 표기 — §4.3 (c) v1.2 패턴 동형).]
       partial_failure_behavior: "automatic_rollback_to_snapshot"
       post_apply_sanity_check_failure_behavior: "automatic_rollback_to_snapshot"
       user_decision_branches: 0  # --apply 단일 명령
@@ -325,7 +327,7 @@ consumer 가 D4 marker block 도입 전 customization 영역 보유 시:
 - (a) ADR-076 Amendment 시 (carrier ADR 변경 동반 의무)
 - (b) Wave 1 Story-2 (CFP-702) merge — marker block syntax 확정 시 `customization_preservation_entry` 영역 확장
 - (c) Wave 2 Story-3 (CFP-743) merge — UpgradeAgent + CLI 영역 mode_enum 실 implementation hook (`scripts/codeforge-upgrade.{sh,ps1}` 신설). **v1.2 발동 완료 (본 contract)** — §4.5 mechanical_implementation_binding block 신설. (Wave 1 작성 시점 placeholder `CFP-703` → 실제 발의 Issue `CFP-743` 정정. 동일 Story, fact 영향 0, 추적성만 정정 — ADR-068 I-4 wording SSOT 정합.)
-- (d) Wave 2 Story-4 merge — `transaction.atomicity_boundary_runtime_v1` per_plugin → `atomicity_boundary_runtime_future` family_7_plugin ratchet (의미 invariant `atomicity_boundary_semantic_invariant: family_7_plugin_atomic` 변경 0)
+- (d) Wave 2 Story-4 (CFP-744) merge — `transaction.atomicity_boundary_runtime_v1` per_plugin → `atomicity_boundary_runtime_future` family_7_plugin ratchet. **v1.3 발동 완료 (본 contract)** — `scripts/atomic-upgrade-7-plugins.sh` 신설 + ADR-037 Amendment 1 (atomic upgrade 후 0 drift invariant) carrier 동반. 의미 invariant `atomicity_boundary_semantic_invariant: family_7_plugin_atomic` 변경 0 (ADR-016 §결정 1 SSOT 무변경 — runtime catch-up only). (Wave 1 작성 시점 §3 transaction 영역 + ADR-076 line 147 의 stale placeholder "v1.0 → v1.1 의무" → 실제 v1.2 → v1.3 정정 동반 — fact 영향 0 추적성만, ADR-068 I-4 wording SSOT 정합. CFP-743 §4.3 (c) CFP-703→CFP-743 정정 패턴 답습.)
 - (e) Wave 3 Story-6 merge — `version_handshake` field 활성 (현재 placeholder_reserve, validation_status_v1_0: non_normative_placeholder_reserve)
 - (f) Wave 4 sub-Epic merge — `reconcile_strategy.enum_reserved_wave_4` 값 활성
 
@@ -401,4 +403,42 @@ mechanical_implementation_binding:
     transaction_completion_criterion: unchanged        # ADR-053 §D2 verbatim
     snapshot_reset_disjoint_layer: unchanged           # ADR-067 cross-pollinate forbidden
 ```
+
+### 4.6 Wave 2 Story-4 per-family mechanical implementation 참조 (v1.3 — CFP-744 §4.3 (d) binding 발동)
+
+본 §4.5 mechanical_implementation_binding (v1.2, per-plugin) 위에 **per-family transaction layer** 1단을 추가한다. per-plugin reconcile semantic = §4.5 SSOT 재사용 (변경 0), per-family orchestration 만 신설.
+
+```yaml
+family_atomic_implementation_binding:   # v1.3 신설, CFP-744 §4.3 (d) 발동
+  carrier_story: CFP-744  # Wave 2 Story-4
+  status: schema_declared_phase1   # Phase 1 = schema binding declare / Phase 2 = scripts/atomic-upgrade-7-plugins.sh 실 구현
+  entrypoint: "scripts/atomic-upgrade-7-plugins.sh"   # per-family runtime (per-plugin = §4.5 codeforge-upgrade.{sh,ps1} SSOT 재사용)
+  family_scope:          # codeforge family 7 plugin 한정 (codex/superpowers 외부 marketplace 제외 — ADR-037 Amendment 1 결정 A1-2)
+    - codeforge
+    - codeforge-requirements
+    - codeforge-design
+    - codeforge-review
+    - codeforge-develop
+    - codeforge-test
+    - codeforge-pmo
+  per_family_transaction_boundary:
+    semantic: "7 plugin version pin sync = 단일 atomic unit (부분 실패 = 전체 7 plugin atomic rollback, Epic EPIC-AC-3 verbatim)"
+    snapshot_layer: "per-family snapshot tar (per-plugin Story-3 snapshot 위 1 layer — DataMigrationArch §11 SSOT)"
+    partial_failure_behavior: "automatic_rollback_to_pre_atomic_family_snapshot"  # per-plugin rollback (§4.5) 재사용 + per-family 전체 atomic
+    per_plugin_delegation: "Story-3 UpgradeAgent per-plugin invocation 재사용 (ADR-039 §결정 1 one-shot, semantic 분산 0)"
+  zero_drift_invariant_binding:   # ADR-037 Amendment 1 결정 A1-1/A1-3
+    post_atomic_verification: "bash scripts/check-codeforge-version-drift.sh --plugin <codeforge-N> 7회 invocation (7-family 명단) 후 종합"
+    drift_script_change: 0   # --plugin filter (line 62) reuse — F-002 옵션 A (옵션 B `--family` flag 신설 미채택, drift script SSOT mutation 회피)
+    drift_gt_0_behavior: "transaction 실패 분류 → 전체 7 plugin atomic rollback (0 drift invariant — ADR-037 Amendment 1 결정 A1-1)"
+    evidence_check_entry: "atomic-upgrade-zero-drift"   # FIX Iter 2 (Codex TP#2 F-P1) — ADR-037 Amendment 1 전용 evidence-checks-registry entry (旧 marketplace-parity mismapping 정정, 의미 disjoint: marketplace-parity = wrapper-side publishing-time mirrored-field / 본 entry = consumer-side runtime 0-drift). owner_adr: ADR-037, current_tier: warning, status: deferred-followup (Phase 2 atomic-upgrade-7-plugins.sh Active 전환)
+    external_marketplace_exclusion: "codex (openai-codex) / superpowers (claude-plugins-official) = atomic upgrade 비대상 — 7-name loop 가 구조적 배제 (false rollback 0)"
+  ratchet_invariant_preserved:   # ADR-064 §self-application — v1.3 = 강화 only, weakening 0
+    user_decision_branches_0: unchanged
+    atomicity_boundary_semantic_invariant: unchanged   # family_7_plugin_atomic (ADR-016 §결정 1 — runtime catch-up only, 의미 invariant 변경 0)
+    transaction_completion_criterion: unchanged        # ADR-053 §D2 verbatim
+    snapshot_reset_disjoint_layer: unchanged           # ADR-067 cross-pollinate forbidden
+    adr_053_d2_verbatim_quote: unchanged               # L150-151 weakening 차단
+```
+
+Phase 1 (CFP-744) merge 시 본 §4.6 binding block 활성 (schema declare). Phase 2 (별 PR) merge 시 `scripts/atomic-upgrade-7-plugins.sh` 실 구현 + per-family transaction mechanical 활성.
 
