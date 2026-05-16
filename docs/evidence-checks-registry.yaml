@@ -1184,11 +1184,13 @@ entries:
 
   - name: wording-dictionary
     description: |-
-      CFP-610 / ADR-064 Amendment 2 — wording-dictionary lint.
-      카테고리 (a) forbid 어휘 발견 시 exit 1 warning (박제 / 못 박기 / pin / freezing).
+      CFP-610 / ADR-064 Amendment 2 + Amendment 5 (CFP-750) — wording-dictionary lint (per-word scope decoupling).
+      카테고리 (a) forbid 어휘 발견 시 exit 1 warning: `박제` / `못 박기` / `pin` / `freezing` / `별` standalone (5 entry).
       카테고리 (b) 어휘 평문 정의 누락 시 exit 0 advisory (normative / sibling sync / kind:contract / ratchet / mirrored field).
-      SSOT: docs/wording-dictionary.md. 5 scope: docs/adr/** / docs/change-plans/** / CLAUDE.md / docs/orchestrator-playbook.md / templates/**
-    detect_command: bash scripts/check-wording-dictionary.sh docs/adr docs/change-plans CLAUDE.md docs/orchestrator-playbook.md templates
+      SSOT: docs/wording-dictionary.md. per-word scope (ADR-064 Amendment 5 §결정 2):
+      `박제`/`못 박기`/`pin`/`freezing` = docs/** + CLAUDE.md + CHANGELOG.md + templates/** (expanded scope);
+      `별` standalone = docs/adr/** + docs/change-plans/** + CLAUDE.md + docs/orchestrator-playbook.md + templates/** (5-scope 유지, false-positive carrier 분리).
+    detect_command: bash scripts/check-wording-dictionary.sh
     workflow: .github/workflows/wording-dictionary.yml
     current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
     bypass_label: hotfix-bypass:wording-dictionary

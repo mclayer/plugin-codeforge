@@ -61,7 +61,7 @@ codeforge family upgrade 의 declarative reconciliation 의 schema SSOT. wrapper
 
 > "한 번 명령 = 끝까지 자동 + 사용자 결정은 정해진 자리에서만 (= 0 자리). 단순 누락 방지가 아니라 결정 트리 자체를 박제 해서 매번 다르게 묻지 않게 하는 일."
 
-본 contract = 결정 트리 박제의 mechanical SSOT carrier — dry-run/snapshot/transaction 3 mode enum + 결정 분기 0 invariant + customization preservation entry boundary.
+본 contract = `결정 트리 박제` (CFP-699 §1 WHY verbatim) 의 mechanical SSOT carrier 로, 사용자 결정 분기를 정해진 자리에 명문화한다 — dry-run/snapshot/transaction 3 mode enum + 결정 분기 0 invariant + customization preservation entry boundary.
 
 ### Cross-channel boundary
 
@@ -69,7 +69,7 @@ reconcile 어휘는 다음 영역에 동시 등장:
 
 1. **wrapper plugin self-app**: `templates/github-workflows/*.yml` ↔ `.github/workflows/*.yml` byte-identical mirror (ADR-005)
 2. **consumer overlay**: `.claude/_overlay/*` consumer customization ↔ wrapper SSOT desired state diff (ADR-027 boundary)
-3. **plugin install state**: `.claude/plugins/installed_plugins.json` family 7 plugin version pin ↔ marketplace SSOT (ADR-016 + ADR-063)
+3. **plugin install state**: `.claude/plugins/installed_plugins.json` family 7 plugin version `pin` ↔ marketplace SSOT (ADR-016 + ADR-063)
 4. **CI gate label**: phase:* ↔ gate:* ↔ severity:* (label-registry-v2 / severity-propagation-v1) — workflow desired state 정합
 
 본 contract 4 영역의 reconcile semantic 일관성 보장 — drift 시 단일 진입점 (`scripts/codeforge-upgrade.{sh,ps1}` Wave 2 carrier) 의미 무너짐.

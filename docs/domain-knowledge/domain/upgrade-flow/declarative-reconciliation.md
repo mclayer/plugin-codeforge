@@ -38,7 +38,7 @@ codeforge upgrade 의 architecture 패턴 = **선언적 reconciliation** (Helm `
 
 ## 컨텍스트
 
-codeforge family upgrade 도메인이 ADR / domain-knowledge 어디에도 1st-class 로 정의되어 있지 않은 상태가 carrier Story CFP-701 의 직접 동인. 현 self-app partial cover 영역 4건 (regen-agents.sh / merge.py / check_bootstrap.py / hooks/session-start) 모두 detection only 또는 partial propagate — 선언적 reconciliation 1st-class 정의 부재 = "결정 트리 박제" (CFP-699 Epic §1 WHY) 불가의 mechanical 원인. 본 entry = CFP-699 Epic Wave 1 Story-1 (CFP-701) 의 narrative SSOT carrier — ADR-076 §결정 본문 + reconcile-protocol-v1.md schema 와 함께 3-SSOT 분리 (Governance + Schema + Narrative) 구조 정합.
+codeforge family upgrade 도메인이 ADR / domain-knowledge 어디에도 1st-class 로 정의되어 있지 않은 상태가 carrier Story CFP-701 의 직접 동인. 현 self-app partial cover 영역 4건 (regen-agents.sh / merge.py / check_bootstrap.py / hooks/session-start) 모두 detection only 또는 partial propagate — 선언적 reconciliation 1st-class 정의 부재 = `결정 트리 박제` (CFP-699 Epic §1 WHY verbatim — 사용자 결정 분기를 정해진 자리에 명문화) 불가의 mechanical 원인. 본 entry = CFP-699 Epic Wave 1 Story-1 (CFP-701) 의 narrative SSOT carrier — ADR-076 §결정 본문 + reconcile-protocol-v1.md schema 와 함께 3-SSOT 분리 (Governance + Schema + Narrative) 구조 정합.
 
 ## 핵심 규칙
 

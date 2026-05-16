@@ -20,7 +20,7 @@ related_adrs:
   - ADR-060  # evidence-enforceable promotion framework (warning → blocking tier)
   - ADR-024  # hotfix-bypass:* per-entry namespace exempt channel
 related_stories:
-  - CFP-610  # wording-dictionary 신설 + 박제 등 4 어휘 등록 (Amendment 2)
+  - CFP-610  # wording-dictionary 신설 + `박제` 등 4 어휘 등록 (Amendment 2)
   - CFP-672  # 별 standalone 추가 (Amendment 4 — entry 추가 = ratchet 첫 패턴군)
   - CFP-750  # lint scope 확장 + 기존 전수 sweep (Amendment 5 — scope 확장 = ratchet 두 번째 축)
 created: 2026-05-16
@@ -37,10 +37,10 @@ updated: 2026-05-16
 
 ## 컨텍스트
 
-본 SSOT 정립 동인은 CFP-750 (사용자 directive verbatim: "박제라는 단어 쓰지 못하게 하라", 2026-05-16 KST) 이다. `박제` 는 CFP-610 / ADR-064 Amendment 2 로 이미 wording-dictionary 카테고리 (a) 에 등록돼 있었으나, 거버넌스 문서 전반에서 실사용이 지속되고 있었다. 원인은 enforcement layer 의 2 공백:
+본 SSOT 정립 동인은 CFP-750 (사용자 directive verbatim: `박제라는 단어 쓰지 못하게 하라`, 2026-05-16 KST) 이다. `박제` 는 CFP-610 / ADR-064 Amendment 2 로 이미 wording-dictionary 카테고리 (a) 에 등록돼 있었으나, 거버넌스 문서 전반에서 실사용이 지속되고 있었다. 원인은 enforcement layer 의 2 공백:
 
 1. **tier 공백** — `scripts/check-wording-dictionary.sh` 가 ADR-060 warning tier (exit 1 경고만, PR 머지 미차단). 작성자가 경고를 무시하면 그대로 merge.
-2. **scope 공백** — lint 적용 영역이 5-scope (`docs/adr/**` / `docs/change-plans/**` / `CLAUDE.md` / `docs/orchestrator-playbook.md` / `templates/**`) 한정. `docs/inter-plugin-contracts/**` / `CHANGELOG.md` 등 미커버 영역에서 `박제` 잔존 (예: `parallel-dispatch-protocol-v1.md` 의 "의무 박제" 등 핵심 용어 ~10회).
+2. **scope 공백** — lint 적용 영역이 5-scope (`docs/adr/**` / `docs/change-plans/**` / `CLAUDE.md` / `docs/orchestrator-playbook.md` / `templates/**`) 한정. `docs/inter-plugin-contracts/**` / `CHANGELOG.md` 등 미커버 영역에서 `박제` 잔존 (예: `parallel-dispatch-protocol-v1.md` 의 `의무 박제` 등 핵심 용어 ~10회 — CFP-750 Amendment 5 전수 sweep 으로 해소).
 
 이 패턴은 codeforge governance 의 일반 현상이다 — ADR-064 §결정 8 (Declaration only) 이 명문화하듯, codeforge 는 normative declaration 과 mechanical enforcement 를 의도적으로 분리해 evidence-enforceable 점진 적용 (ADR-060) 한다. 그 결과 "등록됐으나 강제되지 않는" 중간 상태가 구조적으로 발생하며, 본 SSOT 는 그 상태의 해소 행동 패턴을 정립한다.
 
