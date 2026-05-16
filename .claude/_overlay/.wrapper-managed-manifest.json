@@ -1,0 +1,8 @@
+{
+  "schema_version": "1",
+  "managed_paths": [
+    "/hooks/SessionStart/0/command",
+    "/permissions/allow/-"
+  ],
+  "_comment": "wrapper-managed JSON key-path allowlist (RFC 6901 JSON Pointer). Only these paths are mirrored from wrapper SSOT; all other keys are consumer-preserved. Replaces D4 marker blocks for JSON files (settings.json etc). SSOT: reconcile-protocol-v1 §4.7 sidecar_manifest_schema (CFP-745 Wave 2 Story-5, ADR-027 §decision 7.A.1). Consumer may modify managed_paths as needed."
+}

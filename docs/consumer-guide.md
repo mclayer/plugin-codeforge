@@ -381,6 +381,77 @@ PRE_PUSH_AUTO_REBASE=0 git push origin <branch>
 
 Cross-ref: [ADR-063 §결정 5](adr/ADR-063-marketplace-atomic-invariant.md) sublayer (pre-push auto-rebase guidance) · CFP-447 `pre-push.sh.sample` (sibling atomic invariant hook).
 
+### 1k. Overlay 영역 reconcile (CFP-745 / [ADR-076](adr/ADR-076-declarative-reconciliation-upgrade.md))
+
+codeforge upgrade 후 `.claude/_overlay/` 영역의 wrapper-managed content 를 consumer customization 을 보존하면서 선언적 3-way merge 로 갱신. **`bash scripts/reconcile-overlay.sh`** 단일 명령으로 overlay 영역 reconcile 완료 (사용자 결정 분기 0 — reconcile-protocol-v1 §결정 `user_decision_branches: 0`).
+
+#### 사용법
+
+```bash
+# 기본 (--apply mode): overlay 영역 3-way merge reconcile 실행
+bash scripts/reconcile-overlay.sh
+
+# dry-run: 변경 preview (filesystem touch 0)
+bash scripts/reconcile-overlay.sh --dry-run
+
+# rollback: 직전 snapshot 에서 복원 (Story-3 snapshot infra 재사용)
+bash scripts/reconcile-overlay.sh --rollback
+```
+
+#### 동작 원리 (base×marker 2×2 dispatch, ADR-076 §결정 1 Kustomize-inspired)
+
+| base 상태 | marker/sidecar | 동작 |
+|---|---|---|
+| BASE_OK (snapshot 존재) | MARKER_VALID | 3-way merge (base / wrapper-new / consumer-current) — marker 안 wrapper 갱신, marker 밖 consumer 보존 |
+| BASE_ABSENT (첫 reconcile) | MARKER_VALID | marker-aware 2-way first-reconcile — marker 안 wrapper mirror, marker 밖 consumer byte-identical 보존 |
+| (base 무관) | MARKER_NONE | wholesale mirror + loss report (preservation scope 부재 → ADR-027 §결정 7.C) |
+| BASE_CORRUPT | (무관) | abort-before-touch (partial state 0) |
+
+#### Customization 보존 원칙 (EPIC-AC-4 silent overwrite 0)
+
+- **D4 marker block** (`# BEGIN/END wrapper-managed` — ADR-027 §결정 7.A.1) **안** = wrapper SSOT mirror (codeforge upgrade 전파)
+- **marker 밖** = consumer customization byte-identical preserve (reconcile 후 변경 0 invariant)
+- **.json 파일**: sidecar manifest `.claude/_overlay/.wrapper-managed-manifest.json` 의 `managed_paths` (RFC 6901 JSON Pointer) 경로만 wrapper mirror, 그 외 consumer key 보존
+- **loss 발생 시**: `=== LOSS REPORT ===` stdout 출력 + exit nonzero (consumer 인지 의무 채널)
+
+#### Sidecar manifest (.json 파일 managed key 선언)
+
+```bash
+cat .claude/_overlay/.wrapper-managed-manifest.json
+```
+
+```json
+{
+  "schema_version": "1",
+  "managed_paths": [
+    "/hooks/SessionStart/0/command",
+    "/permissions/allow/-"
+  ]
+}
+```
+
+`managed_paths` 는 RFC 6901 JSON Pointer 형식 — wrapper mirror 할 key-path 만 기재. 나머지 consumer JSON key 는 reconcile 후에도 그대로 보존.
+
+#### D4 marker block 없는 파일 (기존 consumer overlay 마이그레이션)
+
+```bash
+# D4 marker block 추가 (retroactive wrap)
+bash scripts/migrate-existing-customization.sh .claude/_overlay/settings.yml
+
+# 추가 후 reconcile
+bash scripts/reconcile-overlay.sh
+```
+
+`migrate-existing-customization.sh` 는 기존 파일 전체를 `# BEGIN wrapper-managed` ... `# END wrapper-managed` 로 wrap — 이후 reconcile 에서 3-way merge 경로 활성.
+
+#### 실행 빈도 / 트리거
+
+- codeforge family upgrade (`bash scripts/atomic-upgrade-7-plugins.sh`) 자동 후행 (Story-4 §10 post-atomic gate 정합)
+- 수동 ad-hoc: `bash scripts/reconcile-overlay.sh --dry-run` 으로 preview 후 `--apply`
+- SessionStart hook 내 자동 실행 = 미권장 (성능 영향 — overlay reconcile = ad-hoc upgrade-time 전용)
+
+참조: [reconcile-protocol-v1 §4.7](inter-plugin-contracts/reconcile-protocol-v1.md) · [ADR-076](adr/ADR-076-declarative-reconciliation-upgrade.md) · [ADR-027 §결정 7.A.1](adr/ADR-027-consumer-adoption-protocol.md)
+
 ## 2. Consumer 프로젝트 구조 초기화
 
 ```

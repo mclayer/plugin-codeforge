@@ -12,7 +12,7 @@
 # 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
 schema_version: "1.2"  # CFP-509 / ADR-060 Amendment 6 — recurrence field 정식 도입 (MINOR bump v1.1 → v1.2)
 introduced_by: CFP-389
-last_updated: 2026-05-16  # CFP-722 Phase 2 — story-section-ownership 57번째 entry (ADR-060 Amendment 13 §결정 27 carrier — per-section ownership mechanical lint, warning tier, PR #441 incident prevention) | CFP-442 Phase 2 — evidence-registry-anomaly 51번째 entry (ADR-060 Amendment 11 §결정 25 carrier — framework self-application 5-piece chain 완성) | CFP-662 — bootstrap-labels-precondition 46번째 entry (ADR-060 Amendment 10 §결정 24 carrier — PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier, deferred-followup status — Phase 2 carrier 신설 후 Active 전환) | CFP-660 — workflow-version-drift 45번째 entry (ADR-032 Amendment 2 §결정 6 carrier — strict-eligible 5번째 drift consumer workflow version drift, check 10 NEW carrier) | CFP-658 — section-1-verbatim-postmerge 44번째 entry append (ADR-027 Amendment 2 §결정 6.C carrier — manual fallback path §1 verbatim invariant post-merge lint warning tier, deferred-followup status, Phase 2 carrier 신설 후 Active 전환) | CFP-627 FIX iter 3/3 — marketplace-drift-detection entry deferred to Phase 2 carrier (ADR-067 §결정 3 cross-lane RESET 차원 전환) | CFP-638 — stop-time-continuous-confirm-detect 43번째 entry (ADR-064 Amendment 3 Story D) | CFP-631 — marketplace-description-verbatim 42번째 entry (ADR-063 Amendment 2 §결정 11 blocking-on-pr)
+last_updated: 2026-05-17  # CFP-745 Phase 2 — wrapper-template-managed-coverage 59번째 entry (CFP-722 57th + CFP-771 58th + CFP-745 59th, authoring-guard lint Phase 2 §8.2 declare, post-CFP-810/795/801/777/751 collision rebase) | CFP-722 Phase 2 — story-section-ownership 57번째 entry (ADR-060 Amendment 13 §결정 27 carrier — per-section ownership mechanical lint, warning tier, PR #441 incident prevention) | CFP-442 Phase 2 — evidence-registry-anomaly 51번째 entry (ADR-060 Amendment 11 §결정 25 carrier — framework self-application 5-piece chain 완성) | CFP-662 — bootstrap-labels-precondition 46번째 entry (ADR-060 Amendment 10 §결정 24 carrier — PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier, deferred-followup status — Phase 2 carrier 신설 후 Active 전환) | CFP-660 — workflow-version-drift 45번째 entry (ADR-032 Amendment 2 §결정 6 carrier — strict-eligible 5번째 drift consumer workflow version drift, check 10 NEW carrier) | CFP-658 — section-1-verbatim-postmerge 44번째 entry append (ADR-027 Amendment 2 §결정 6.C carrier — manual fallback path §1 verbatim invariant post-merge lint warning tier, deferred-followup status, Phase 2 carrier 신설 후 Active 전환) | CFP-627 FIX iter 3/3 — marketplace-drift-detection entry deferred to Phase 2 carrier (ADR-067 §결정 3 cross-lane RESET 차원 전환) | CFP-638 — stop-time-continuous-confirm-detect 43번째 entry (ADR-064 Amendment 3 Story D) | CFP-631 — marketplace-description-verbatim 42번째 entry (ADR-063 Amendment 2 §결정 11 blocking-on-pr)
 
 entries:
   - name: adr-sunset-criteria
@@ -1957,3 +1957,43 @@ entries:
       threshold: 3                   # ADR-060 §결정 19 (Amendment 6) — threshold 3 standard
       promotion_trigger: none        # count=0 < threshold=3 → 발화 없음 (Option A)
     status: Active                   # Phase 2 (CFP-722) impl 완료 (script + lib + 2 workflow self-app + fixture 19건 all-green)
+
+  # ─── CFP-745 Phase 2 (wrapper template managed coverage authoring-guard lint, 2026-05-16) ───
+  # §8.2 Phase 2 lint declare — authoring drift guard (Codex TP#2 P2 Dim3 ACCEPT → deferred §10)
+  # wrapper template overlay 파일 안 wrapper-managed content 가 D4 marker block / sidecar 안에 위치하는지
+  # authoring-time lint. runtime reconcile-overlay.sh 보완 (authoring-time guard = disjoint).
+
+  - name: wrapper-template-managed-coverage
+    description: |
+      CFP-745 §8.2 authoring-guard lint — wrapper plugin template overlay 파일 안
+      wrapper-managed content 가 D4 marker block (`# BEGIN/END wrapper-managed`) 또는
+      sidecar manifest managed_paths 안에 위치하는지 authoring-time 검증.
+      authoring drift (wrapper 저작자가 wrapper-managed 라인을 marker 밖으로 이동) 시
+      reconcile-overlay.sh 의 marker 밖 preserve 가 해당 변경 전파를 차단하는 silent
+      authoring gap 을 early-detection. runtime reconcile-overlay.sh 와 책임 disjoint
+      (consumer runtime 무관 — wrapper template self-audit).
+      reconcile-protocol-v1 §4.7 / ADR-027 Amendment 3 §결정 7.D carrier.
+      warning tier (ADR-060 §결정 5) — authoring drift = PR merge 차단 아님 (early warning).
+      Exit 0 always (warning mode) / --strict exit 1 (opt-in).
+    detect_command: bash scripts/check-wrapper-template-managed-coverage.sh
+    workflow: templates/github-workflows/wrapper-template-managed-coverage.yml
+    current_tier: warning             # ADR-060 §결정 5 — 첫 도입 = warning mode (authoring drift guard)
+    bypass_label: hotfix-bypass:wrapper-template-managed-coverage
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20           # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0            # ADR-060 §결정 6 (b)
+      sibling_dependencies: []        # 독립 entry — reconcile-overlay.sh + validate_sidecar.py 재사용
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-745
+    introduced_date: 2026-05-16
+    owner_adr: ADR-027                # D4 marker block syntax SSOT (Amendment 3 §결정 7.D)
+    carrier_adr: ADR-060              # evidence-enforceable framework carrier
+    recurrence:
+      count: 0
+      threshold: 3                    # ADR-060 §결정 19 (Amendment 6)
+      promotion_trigger: none         # count=0 < threshold=3 → 발화 없음
+    status: Active                    # Phase 2 (CFP-745) — scripts/ + templates/ 실 구현 land 완료 → Active
