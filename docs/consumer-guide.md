@@ -1870,7 +1870,7 @@ echo "[ci-watch] terminal state reached, exit=$ec"
 | 패턴 | 원인 | 자동 action |
 |---|---|---|
 | `phase-gate-mergeable` on type:epic 라벨 PR | (resolved CFP-106 #143 fast-pass) → 자동 success | (의도 fast-pass — admin merge 불필요) |
-| `phase-gate-mergeable` on doc-only PR (`docs/`/`wrapper/`/`*.md`) | (resolved CFP-106 #143 fast-pass) → 자동 success | (의도 fast-pass) |
+| `phase-gate-mergeable` on doc-only PR (`docs/`/`wrapper/`/`templates/`/`scripts/`/`.github/`/`.claude-plugin/`/`.claude/_overlay/`/`.codeforge/`/`scope_manifests/`/`*.md` 등) | (resolved CFP-106 #143 + CFP-758 fast-pass) → 자동 success | (의도 fast-pass) |
 | 기타 ACTION_REQUIRED | 사전 등재 X | 사용자 보고 + 진단 |
 
 ### enforce_admins toggle 기법 (BLOCKED + MERGEABLE 케이스)
