@@ -1,12 +1,13 @@
 ---
 template: epic-results
 version: 1.0
-date: 2026-05-04
+date: 2026-05-04  # KST 일자 의미 (ADR-079 §결정 2 — date-only KST 일자, Korea 고정 +9 DST 영구 부재)
 introduced_by: CFP-83
 related_adrs:
   - ADR-020 (Cross-repo Epic 패턴 + Amendment 1)
   - ADR-022 (Sonnet decider)
   - ADR-025 + Amendment 1 (Stop discipline + Epic-level continuity)
+  - ADR-079 (KST timestamp display mandate — date:/opened_at/closed_at KST 일자 의미)
 ---
 
 # EPIC-RESULTS template (CFP-83)
@@ -27,7 +28,7 @@ related_adrs:
 ```markdown
 # Epic <EPIC_KEY> — <Title>
 
-**Closed**: <YYYY-MM-DD>
+**Closed**: <YYYY-MM-DD>  <!-- KST 일자 의미 — ADR-079 §결정 2 (date-only = KST 일자, `+09:00` zoned 형식 아님) -->
 **Status**: Phase 1 (1 doc PR) + Phase 2~N (N implementation PRs) + Phase N+1 close PR merged. All CIs green.
 
 <one-paragraph 요약 — domain context + key invariant 이 본 Epic 으로 충족된 점>

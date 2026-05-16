@@ -782,7 +782,7 @@ epic_key: string                    # e.g. "CFP-373"
 status: pending | in_progress | pass | fail
 lock_holder: string | null          # 현재 write 중인 세션 ID (UUID 권장). null = unlocked
 ledger_version: int                 # write 시마다 +1 (낙관적 CAS 용)
-last_updated: ISO8601               # 마지막 write timestamp (KST)
+last_updated: ISO8601               # 마지막 write timestamp (KST `+09:00` zoned — display layer, ADR-079 §결정 2)
 session_resume_hint: string | null  # 세션 재시작 시 다음 액션 힌트
 
 stories:
@@ -1751,6 +1751,7 @@ Body: |
   체크 3 (외부 의존성): {PASS | FAIL — 사유}
   (FAIL 시) 권장 복구 / 사용자 ESCALATE 여부
 Source: <자동 — Orchestrator §3B Preflight>
+Timestamp: <YYYY-MM-DDTHH:MM:SS+09:00>  # KST zoned (display layer — ADR-079 §결정 2)
 ```
 
 코멘트 prefix는 `[<phase>] Orchestrator: Preflight {PASS|FAIL}`. 기록 누락 시 PMO 완료 회고에서 P1 결함으로 감사 보고됨.
@@ -2447,7 +2448,7 @@ Pre-CFP-32 의 deprecated write queue type (`adr-draft`, `change-plan`, `domain-
 story_cache[<story-key>] = {
   "file_path": "docs/stories/<KEY>.md",
   "mtime": <unix timestamp>,
-  "fetched_at": <ISO 8601>,
+  "fetched_at": <ISO 8601>,             # KST `+09:00` zoned (display layer — ADR-079 §결정 2)
   "sections": {
     "§1": {body, updated_at},
     "§2": {body, updated_at},
@@ -2496,7 +2497,7 @@ Story file Context Packet과 병행해 **`.claude/_overlay/project.yaml`의 obje
 
 ```
 project_config_cache = {
-  "loaded_at": <ISO 8601>,                   # 세션 시작 시 1회 로드
+  "loaded_at": <ISO 8601>,                   # 세션 시작 시 1회 로드 — KST `+09:00` zoned (display layer — ADR-079 §결정 2)
   "raw": {
     "project": {name},
     "github": {org, repo, default_branch, pr_title_prefix_template, story_key_prefix, codeowners, discussions, milestone},
@@ -2940,7 +2941,7 @@ Orchestrator 는 매 agent spawn 시 **Spawn ID 대장**을 `.claude-work/progre
 - spawn_id 형식: `spawn-NNN` (전역 단조 증가, Story 전체 통합 카운터).
 - `agent_type` = agent file 식별자 (예: `ArchitectAgent`, `role:dev:SoftwareDeveloperAgent`).
 - `lane` = 해당 spawn 의 진입 레인 (예: 설계, 구현, 구현-리뷰).
-- `spawn_at` = ISO 8601 UTC.
+- `spawn_at` = ISO 8601 UTC. **§14 본문 markdown 표 Start/End column = KST `+09:00` (display layer — ADR-079 §결정 9 dual-layer co-existence)**. schema field `spawned_at`/`returned_at` = UTC strict 보존 (contract field layer).
 
 **팀 컨텍스트 (env=1)**:
 - `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 시 SendMessage 대상 지정에 spawn_id 를 사용 (teammate 이름 중복 시 spawn_id 로 disambiguate).
