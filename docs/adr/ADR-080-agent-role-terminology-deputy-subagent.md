@@ -1,5 +1,6 @@
 ---
 title: "ADR-080: Agent role terminology — deputy → SubAgent canonical form + identifier preservation"
+adr_number: 80
 status: Active
 category: governance
 date: 2026-05-16
