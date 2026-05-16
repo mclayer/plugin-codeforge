@@ -37,3 +37,14 @@ templates/scripts/worktree-merge.sh
 templates/scripts/worktree-prune.sh
 templates/scripts/check-worktree-stale.sh
 templates/scripts/worktree-path-util.sh
+
+# CFP-744 Wave 2 Story-4 (#752 AC-10) — consumer 자기 repo 7-plugin atomic
+# upgrade canonical flow 배포. Story-3 (CFP-743) per-plugin upgrade CLI +
+# path 정규화 헬퍼 + Story-4 per-family transaction shell. workflow-invoked
+# 아님 (CLI ad-hoc 단발) = dependent-workflow 미부착. bootstrap-consumer.sh
+# Stage 7 가 consumer repo scripts/ 에 1:1 mirror → consumer 가 자기 repo 에서
+# `--repo <consumer-repo-root>` 로 canonical upgrade flow 접근 (AC-11 §2g.2).
+scripts/codeforge-upgrade.sh
+scripts/codeforge-upgrade.ps1
+scripts/lib/path_normalize.py
+scripts/atomic-upgrade-7-plugins.sh

@@ -508,6 +508,58 @@ bash scripts/codeforge-upgrade.sh --rollback <version>
 
 ---
 
+### §2g.2 consumer 자기 repo 7-plugin atomic upgrade end-to-end flow (CFP-744 Wave 2 Story-4 / ADR-037 Amendment 1 / #752 해소)
+
+§2g.1 은 per-plugin upgrade CLI 명세다. 본 §2g.2 는 consumer 가 **자기 repo 를 reconcile target 으로 지정**해 codeforge family **7 plugin (wrapper + 6 lane) 을 단일 atomic transaction 으로 upgrade** 하는 end-to-end 경로다 (#752 consumer-distribution 완전 해소 — CFP-744 Phase 2 land 시점).
+
+**(a) 배포 경로 (bootstrap-consumer.sh Stage 7 mirror)**
+
+CFP-744 Phase 2 이후 `templates/consumer-scripts.manifest` 에 다음 4 script 가 등록된다:
+
+```
+scripts/codeforge-upgrade.sh        # per-plugin upgrade CLI (POSIX)
+scripts/codeforge-upgrade.ps1       # per-plugin upgrade CLI (PowerShell, parity)
+scripts/lib/path_normalize.py       # §4.5 path 정규화 헬퍼 (sh↔ps1 공유)
+scripts/atomic-upgrade-7-plugins.sh # per-family 7-plugin atomic transaction shell
+```
+
+`scripts/bootstrap-consumer.sh` Stage 7 가 이 manifest 를 consumer repo `scripts/` 로 1:1 mirror → consumer 는 자기 repo 에서 위 4 script 에 직접 접근 가능 (별도 수동 복사 불요).
+
+**(b) consumer_repo_root 지정 (`--repo <path>`)**
+
+consumer 가 자기 repo 를 reconcile target 으로 명시 지정한다. resolve 우선순위: `--repo <path>` (명시) > `CODEFORGE_REPO_ROOT` env > script 자기 부모 (미지정 시 fallback — 현 동작 보존, backward-compat). `--repo` 는 mode 인자와 **순서 무관** (orthogonal). 지정 path 가 실재 git repo 아니면 (오타 / 다른 repo / non-git 디렉터리) **abort-before-touch** (filesystem 1 byte 도 변경 전 차단, per-family snapshot 무생성).
+
+**(c) dry-run → apply → 사후 0-drift 자동 검증**
+
+```bash
+# 1) 7-plugin family drift 사전 확인 (filesystem touch 0, snapshot 무생성)
+bash scripts/atomic-upgrade-7-plugins.sh --dry-run --repo /path/to/your-consumer-repo
+
+# 2) per-family atomic transaction 적용
+#    idempotency pre-check (7 plugin 이미 최신 = no-op 정상 종료)
+#    → per-family pre-atomic snapshot → 7 plugin per-plugin reconcile
+#    → 사후 0-drift 검증 (codeforge family 7 only — codex/superpowers 제외)
+#    → drift 0 = commit / drift > 0 또는 부분 실패 = 전체 7 plugin atomic rollback
+bash scripts/atomic-upgrade-7-plugins.sh --apply --repo /path/to/your-consumer-repo
+```
+
+사후 0-drift 검증은 ADR-037 Amendment 1 invariant 다 — atomic upgrade `--apply` 완료 직후 7 plugin installed pin ↔ marketplace SSOT drift = 0 (none) 이어야 한다. `atomic-upgrade-zero-drift` evidence-check entry (warning tier) 가 이 정합을 추적한다. 검증 scope = codeforge family 7 plugin 한정 (`codex`/`superpowers` 외부 marketplace 제외 — F-002 옵션 A 7-name loop 구조적 배제, false transaction-fail 0).
+
+**(d) rollback (per-family snapshot)**
+
+```bash
+# 직전 per-family pre-atomic snapshot 복원 (7 plugin 일괄 — partial state 0)
+bash scripts/atomic-upgrade-7-plugins.sh --rollback --repo /path/to/your-consumer-repo
+```
+
+per-family rollback 은 7 plugin 을 직전 snapshot 시점으로 **일괄** 복원한다 (per-plugin 부분 rollback 없음). snapshot retention = 최근 5개 (FIFO evict). snapshot tar 손상 / checksum 검증 실패 시 silent partial-state 0 — 명시적 escalation (사용자에게 corrupt + 수동 복구 필요 보고). 정상 flow 의 사용자 결정 분기 0 invariant 는 유지 (abort 도 prompt 0).
+
+**(e) transitional → canonical 전환**
+
+§2g.1 머리 "Transitional 경로 안내" 의 manual upgrade (`/plugins update` 수작업 + CHANGELOG 수기 + `_overlay/CLAUDE.md` 갱신) 는 본 §2g.2 canonical flow 가 land 된 시점부터 canonical 경로로 supersede 된다. consumer 는 본 §2g.2 flow 를 우선 사용하고, manual 경로는 환경 제약 (script mirror 미배포 등) 시 fallback 으로만 사용한다 (transitional 정상 경로 — degraded mode 아님).
+
+---
+
 ### §2h.1 SessionStart prereq-check hook 자동 활성 (CFP-475 / ADR-038 Amendment 3 이후)
 
 Codeforge orchestration 의 critical path tool 인 **TodoWrite** 는 Claude Code harness 의 **deferred tool** — turn 0 시점에 schema 가 노출되지 않아 `ToolSearch("select:TodoWrite")` 로 lazy-fetch 해야 호출 가능. CFP-475 / ADR-038 Amendment 3 이후 **plugin-root `hooks/hooks.json` 에 자동 등록** — 별도 consumer `.claude/settings.json` 등록 절차 불필요.
