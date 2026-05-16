@@ -143,11 +143,11 @@ codeforge/
 │       └── agents/
 │           ├── BackendDeveloperAgent.md
 │           └── FrontendDeveloperAgent.md
-├── templates/                    # 공통 문서 양식 SSOT
-│   ├── change-plan.md
-│   ├── adr.md
-│   ├── story-page-structure.md
-│   └── impl-manifest.md
+├── templates/                    # 공통 문서 양식 SSOT (wrapper-local)
+│   ├── story-page-structure.md   # wrapper-local SSOT
+│   ├── epic-results.md           # wrapper-local SSOT
+│   ├── impl-manifest.md          # wrapper-local SSOT
+│   # change-plan.md / adr.md = codeforge-design plugin SSOT (ADR-079 §결정 8 / CLAUDE.md L290)
 ├── overlay/                      # consumer 측 overlay tooling
 │   ├── hooks/
 │   │   ├── regen-agents.sh       # SessionStart hook entry

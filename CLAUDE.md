@@ -83,6 +83,17 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 
 요약: full 6 레인 + CI gate 통과 (Hotfix 경로 2종 예외 — [hotfix-playbook.md](docs/hotfix-playbook.md)). 1 Story = Phase 1 PR (§1-7) + Phase 2 PR (§8-11). doc-only fast-path (ADR-054) = 1 PR. Epic = Phase 1 doc + N impl PRs + close PR. Preflight 3체크 = phase라벨 정합 / 선행섹션 / 외부의존성. 세부 SSOT: [playbook §3](docs/orchestrator-playbook.md) + 각 lane plugin CLAUDE.md.
 
+## 시각 표시 정책 (KST, ISO 8601)
+
+governance display layer 의 모든 시각 표기 = **KST `+09:00` ISO 8601 zoned 강제** (ADR-079 first historical decision). contract field layer (7 inter-plugin contract timestamp field + Story §14 schema field) = **UTC strict 0건 변경 invariant** (Layer-bounded 핵심 원칙 — 값 변환 없음, notation rule only).
+
+| Layer | 시각 표기 | 형식 |
+|---|---|---|
+| display layer (dialog / CLAUDE.md / playbook / ADR amendment_log / retro / EPIC-RESULTS / Story §10·§14 본문 표·§9) | **KST `+09:00` 강제** | 영속 artifact: `YYYY-MM-DDTHH:MM:SS+09:00` / prose: `YYYY-MM-DD HH:MM KST` / frontmatter date-only: `YYYY-MM-DD` (KST 일자 의미) |
+| contract field layer (fix-event-v1 / git-ops-event-v1 / debate-protocol-v1 / stop-event-v1 / evidence-check-registry-v1 + §14 schema field `spawned_at`/`returned_at`) | **0건 변경** | UTC strict Z suffix 보존 (CFP-295 / Issue #302 sealed) |
+
+external timestamp (GitHub API / git commit) = 변조 금지 — UTC verbatim + KST parenthetical 부기 허용 (`2026-05-16T06:30:00Z (15:30 KST)`). consumer overlay tz override = wrapper-canonical KST 강제 (ADR-057 정합, 축소 불가). forward-only (2026-05-16 KST 이후 신규 작성분만 — ADR-079 §결정 6). SSOT: [ADR-079](docs/adr/ADR-079-kst-timestamp-display-mandate.md).
+
 ## 결정 원칙 (ADR-064 normative SSOT)
 
 codeforge 의 모든 결정 제안 시점 (proposing-time) 에 적용. 외연 영역 (`hotfix-bypass:*` operational-time, deprecation 사후 운영, source code fallback / safe-default 런타임 로직) 은 본 단락 scope 외. 정책 SSOT: [ADR-064](docs/adr/ADR-064-decision-principle-mandate.md) — 행동 패턴 + 적용 사례 SSOT = [`docs/domain-knowledge/domain/governance-principle/decision-style.md`](docs/domain-knowledge/domain/governance-principle/decision-style.md).
