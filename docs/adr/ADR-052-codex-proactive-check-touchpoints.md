@@ -32,7 +32,7 @@ amendments:
   - id: 6
     date: 2026-05-17
     carrier_story: CFP-819
-    summary: "Codex worker prompt boilerplate composition SSOT 영역을 신규 ADR-081 로 분리 (cross-ref). D1/D2/D3/D4 + Amendment 1-5 본문 의미 변경 없음 — boilerplate composition (3 mandatory section: dogfood-out path / lane stage / sandbox boundary) + verify-before-trust scope 분리 (file/dir/cross-repo + grep count active vs historical + ADR §결정 번호 정확성) + 3-lane partition (Codex factual citation / DesignReview boundary completeness / CodeReview style+history disjoint) 영역의 normative anchor 가 cross-document 분산 상태였음 (ADR-052 Amendment 5 + ADR-070 D2). 6-Story carry-over evidence sentinel (CFP-770/771 fp 8 baseline → CFP-786/801/792/795/810 fp 0 carry-over 5 consecutive) + ADR-045 Amendment 5 §D-9 cross_story_pattern_adr_trigger forcing function (pattern_count 5 reach YES, escalation_action: adr_draft_emitted) carrier. is_transitional=false, sunset_justification=N/A (permanent strengthening, ADR-070 §D5 precedent 정합 declaration-only retain). 본 Amendment 6 scope = ADR-052 본문 sub-section append (cross-ref 1 paragraph) — D1/D2/D3/D4 + Amendment 1-5 본문 의미 변경 0건. ADR-054 §결정 1 신규 ADR-081 동반 carrier 영역 정합 (full-lane 강제)."
+    summary: "Codex worker prompt boilerplate composition SSOT 영역을 신규 ADR-081 로 분리 (cross-ref). D1/D2/D3/D4 + Amendment 1-5 본문 의미 변경 없음 — boilerplate composition (3 mandatory section: dogfood-out path / lane stage / sandbox boundary) + verify-before-trust scope 분리 (file/dir/cross-repo + grep count active vs historical + ADR §결정 번호 정확성) + 3-lane partition (Codex factual citation / DesignReview boundary completeness / CodeReview style+history disjoint) 영역의 normative anchor 가 cross-document 분산 상태였음 (ADR-052 Amendment 5 + ADR-070 D2). 6-Story carry-over evidence sentinel (1 baseline cluster CFP-770/771 paired + 5 consecutive fp-0 CFP-786/801/792/795/810; 6 units / 7 retro file) + ADR-045 Amendment 5 §D-9 cross_story_pattern_adr_trigger forcing function (pattern_count 5 reach YES, escalation_action: adr_draft_emitted) carrier. is_transitional=false, sunset_justification=N/A (permanent strengthening, ADR-070 §D5 precedent 정합 declaration-only retain). 본 Amendment 6 scope = ADR-052 본문 sub-section append (cross-ref 1 paragraph) — D1/D2/D3/D4 + Amendment 1-5 본문 의미 변경 0건. ADR-054 §결정 1 신규 ADR-081 동반 carrier 영역 정합 (full-lane 강제)."
 related_stories:
   - CFP-354
   - CFP-411
@@ -637,10 +637,10 @@ ADR-064 결정 원칙 4 어휘 anchor (best-effort / broad coverage / full-scope
 
 ADR-052 Amendment 5 (D2 verbatim 첨부 의무) + ADR-070 D2 (file content verbatim 첨부) 가 두 가지 normative anchor 를 명문화한 이후, **Codex worker prompt 본문의 mandatory section composition** 영역의 normative anchor 가 cross-document 분산 상태로 잔존. playbook §3.10 dispatch prompt template 이 SSOT 역할을 도덕적 강제로 수행 중이었다.
 
-6-Story carry-over evidence sentinel:
+6-Story carry-over evidence sentinel (**"6-Story" 정의** — 1 baseline cluster CFP-770/771 paired + 5 consecutive fp-0 = 6 units / 7 retro file):
 
-- baseline: CFP-770 / CFP-771 (fp 8 합산, 2026-05-16, boilerplate pre-application)
-- carry-over fp 0: CFP-786 / CFP-801 / CFP-792 / CFP-795 / CFP-810 (5 consecutive, 2026-05-17)
+- baseline cluster (1 unit, paired carrier): CFP-770 / CFP-771 (fp 8 합산, same incident, 2026-05-16, boilerplate pre-application)
+- carry-over fp 0 (5 units): CFP-786 / CFP-801 / CFP-792 / CFP-795 / CFP-810 (5 consecutive, 2026-05-17)
 - threshold reach: CFP-810 retro §6 carrier 5/7 sentinel reach YES
 
 ADR-045 Amendment 5 §D-9 (`cross_story_pattern_adr_trigger`, pattern_count ≥ 2 forcing function) 충족 — escalation_action: `adr_draft_emitted` 영역 진입.
@@ -670,14 +670,14 @@ ADR-081 §결정 영역:
 본 Amendment = 강화 방향 (ratchet 강화):
 
 - `is_transitional: false` 본 ADR 유지 (permanent governance)
-- `sunset_justification: "N/A — permanent strengthening (6-Story carry-over evidence + ADR-070 §D5 declaration-only retain precedent)"`
+- `sunset_justification: "N/A — permanent strengthening (6-Story carry-over evidence — 1 baseline cluster CFP-770/771 paired + 5 consecutive fp-0 CFP-786/801/792/795/810; 6 units / 7 retro file + ADR-070 §D5 declaration-only retain precedent)"`
 - ADR-058 §결정 5 sunset_justification 의무는 약화 방향 (boilerplate 영역 축소) 에만 발효 → 본 Amendment 는 면제
 
 **A4. ADR-064 §결정 (Trace 1) active amendment + full-scope 정합**
 
 ADR-064 결정 원칙 4 어휘 anchor (best-effort / broad coverage / full-scope / active amendment) 중 **active amendment** + **full-scope** 정합:
 
-- Amendment 발의 시점 = 6-Story carry-over sentinel reach 후 즉시 (active amendment ratchet 강화 방향)
+- Amendment 발의 시점 = 6-Story carry-over sentinel reach 후 즉시 (1 baseline cluster + 5 consecutive fp-0 = 6 units / 7 retro file, active amendment ratchet 강화 방향)
 - 적용 영역 = 6 touchpoint 모두 (full-scope, 단일 touchpoint 한정 아님)
 - forbid-list 13 어휘 (ADR-064 §결정 1 + Amendment 2/4/5) 사용 0 건 self-attest
 

@@ -60,6 +60,8 @@ ADR-052 (Codex Proactive Check 6 touchpoints) + ADR-070 (verify-before-trust pat
 
 ### 6-Story carry-over evidence sentinel (boilerplate 도입 효과 측정)
 
+**"6-Story" 정의 (label vs file count disambiguation)** — 6-Story = **1 baseline cluster (CFP-770/771 paired carrier, same fp:8 incident) + 5 consecutive fp-0 (CFP-786/801/792/795/810)** = 총 **6 units** (1 cluster + 5 individual Story). file count 차원 = 7 retro file (cluster 안 2 file + 5 individual 1 file 씩).
+
 [verified] 7 retro file 본 worktree 안 존재 (`Glob` + `ls` 결과, codeforge-internal-docs `wrapper/retros/` 영역):
 
 | retro file | Story | codex_fp_tally | boilerplate evidence |
@@ -72,7 +74,7 @@ ADR-052 (Codex Proactive Check 6 touchpoints) + ADR-070 (verify-before-trust pat
 | `wrapper/retros/2026-05-17-cfp-795-post-merge-fix-exemption.md` | CFP-795 | **0** + TRUE positive 적중 100% | carry-over boilerplate + 정확 적중 |
 | `wrapper/retros/2026-05-17-cfp-810-kst-paren-exempt.md` | CFP-810 | **0** + cosmetic TRUE positive 적중 | carry-over boilerplate + carrier 5/7 sentinel reach YES |
 
-**6-Story 누적 evidence**: CFP-770/771 (fp 8 baseline) → CFP-786/801/792/795/810 (5 consecutive fp 0 carry-over). boilerplate codification 정당성 충족.
+**6-Story 누적 evidence (1 baseline cluster CFP-770/771 paired + 5 consecutive fp-0)**: CFP-770/771 (fp 8 baseline cluster, paired carrier) → CFP-786/801/792/795/810 (5 consecutive fp 0 carry-over). 6 units 차원 = 1 cluster + 5 individual. file count 차원 = 7 retro file. boilerplate codification 정당성 충족.
 
 ### ADR-045 Amendment 5 §D-9 forcing function trace
 
@@ -81,7 +83,7 @@ PMOAgent `cross_story_pattern_adr_trigger` (pattern_count ≥ 2 → §6 ADR 후�
 - pattern_count = 5 consecutive carry-over Story (threshold reach YES)
 - anchor_id = `codex_worker_prompt_boilerplate_drift`
 - escalation_action = `adr_draft_emitted` → 본 ADR-081
-- cross-Story chain: CFP-770/771/786/801/792/795/810 (7-Story baseline → carry-over) → CFP-819 (carrier)
+- cross-Story chain: [CFP-770/771 (1 baseline cluster, paired carrier)] + CFP-786/801/792/795/810 (5 consecutive fp-0) → CFP-819 (carrier). 6 units 차원 (1 cluster + 5) / 7 retro file 차원.
 
 ### Amendment 5 ↔ 본 ADR 영역 분리 (Story §2.4 PL synthesis verbatim)
 
@@ -265,7 +267,7 @@ N/A — permanent policy (boilerplate composition + verify-before-trust scope + 
 | 항목 | 값 |
 |---|---|
 | `is_transitional` (§결정 1) | `false` (permanent governance) |
-| `## 해소 기준` 섹션 본문 (§결정 2) | `N/A — permanent strengthening (6-Story carry-over evidence ratchet 정합)` |
+| `## 해소 기준` 섹션 본문 (§결정 2) | `N/A — permanent strengthening (6-Story carry-over evidence ratchet 정합 — 1 baseline cluster CFP-770/771 paired + 5 consecutive fp-0 CFP-786/801/792/795/810; 6 units / 7 retro file)` |
 | metric (§결정 3) | `codex_false_positive_tally` — Story §10 FIX Ledger row append count |
 | who (§결정 3) | Orchestrator (verify-before-trust 단계 / ADR-070 D3 정합) — Story §10 FIX Ledger row append 주체 |
 | how (§결정 3) | Story §10 FIX Ledger row 안 `[codex-false-positive]` sub-tag (fix-event-v1 MINOR bump 별 carrier) — `mcp__github__get_file_contents("internal-docs/wrapper/stories/CFP-NNN.md") + Grep "codex-false-positive"` |
