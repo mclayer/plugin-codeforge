@@ -53,7 +53,7 @@ mechanical_enforcement_actions:
 
 **Active (2026-05-16 KST)** — CFP-770 carrier. RESERVATION row 79 sequential append 동반 (본 Story Phase 1 PR). Phase 2 mechanical lint = CFP-771 (blocks-on CFP-770, Amendment 1 이 `mechanical_enforcement_actions[]` 채움).
 
-## 맥락 (Why)
+## 컨텍스트
 
 ### 직접 동인
 
@@ -165,7 +165,7 @@ Story `§14 Lane Evidence` 는 한 섹션 안에 **두 layer 가 disjoint co-exi
 | **§14 schema field KST 전환** | `check-lane-evidence.sh` lint + cross-validation 의 machine layer 직결 — 전환 시 lint regex breaking + ADR-031 §14 schema 정의 변경 (contract-adjacent). 결정 9 dual-layer 로 해소 (전환 불요). |
 | **cross-plugin template (adr/change-plan/retro) wrapper Phase 1 직접 변경** | memory `project_stale_skill_ownership_lore` cross-plugin ownership 잘못 가정 — ADR-013 sibling sync 위반. 결정 8 declare-only 로 해소. |
 
-## 영향
+## 결과
 
 - **Phase 1 (CFP-770)**: ADR-079 신설 + RESERVATION row 79 + CLAUDE.md 신규 단락 + playbook 5 cross-ref + wrapper-local 2 template frontmatter + 2 domain-knowledge 신설 + section-ownership.yaml row. dogfood self-app (본 Story §10/§14/§9 즉시 KST).
 - **Phase 2 (CFP-771, blocks-on CFP-770)**: mechanical lint workflow + script + evidence-checks-registry row + label-registry MINOR + ADR-079 Amendment 1 (`mechanical_enforcement_actions[]` 채움) + cross-plugin template sibling Story trigger + legacy retroactive sweep.
