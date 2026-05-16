@@ -119,6 +119,10 @@ create_label "merge-order:2"           "e4e669" "병렬 에픽 충돌 시 merge-
 create_label "fallback:manual"        "c5def5" "fallback: per-Issue ad-hoc override marker (CFP-658 / ADR-027 Amendment 2 §결정 6.A) — Orchestrator 가 부착 시 bootstrap.fallback_mode: action_blocked 와 무관 manual agent direct write path 활성"
 create_label "fallback:rate-limited"  "c5def5" "fallback: rate-limited skip audit marker (CFP-658 / ADR-027 Amendment 2 §결정 6.G) — manual-story-init-fallback.sh exponential backoff max 3 retry 초과 시 자동 부착"
 
+# fast-pass:* category — CFP-795 / ADR-026 Amendment 4 §결정 6 carrier — cross-repo land_order post-merge hotfix 3-조건 AND fast-pass gate 조건 1
+# label-registry-v2 v2.21 MINOR bump 동반 (신규 category `fast-pass` 신설). canonical-only (kind:registry — sibling sync scope 외).
+create_label "post-merge-fix"         "0e8a16" "cross-repo Story land_order 후 발견된 safe defect 의 post-merge hotfix PR — phase-gate-mergeable.yml 4번째 fast-pass source (3-조건 AND 중 조건 1). 단독 부착 ≠ fast-pass (조건 2 hub Story §10 FIX Ledger row binding + 조건 3 원 MERGED PR §7 보안 non-touch 양면 AND 필수). ADR-026 Amendment 4 §결정 6 carrier. 사용법: Orchestrator 가 post-merge hotfix PR open 시 수동 부착 — fix-event-v1 §10 row 작성 (Orchestrator monopoly, CFP-32) + corrects_pr: marker PR body 기재 + story_uri: marker 병기 의무."
+
 # hotfix-bypass:* — full set via dynamic read (CFP-598 below).
 # CFP-610 / ADR-064 Amendment 2 — wording-dictionary entry now sourced from §3 yaml dynamic read (NOT hardcoded here).
 # CFP-619 — pre-existing CFP-610 leak resolution: prior hardcoded `create_label "hotfix-bypass:wording-dictionary"` removed
@@ -197,7 +201,7 @@ fi
 
 if [ $DRY_RUN -eq 0 ]; then
     echo ""
-    echo "✓ 35 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."
+    echo "✓ 36 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."
 fi
 
 # CFP-492 2-way self-check (DRY_RUN 모드에서만):
