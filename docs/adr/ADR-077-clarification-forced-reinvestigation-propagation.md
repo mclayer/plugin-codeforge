@@ -39,11 +39,11 @@ related_files:
 mechanical_enforcement_actions:
   - action: adr-077-ratchet-declared
     status: deferred-followup
-    progress_note: "ADR-077 신설 시점 registry entry 부재 (declarative only — §결정 9 ratchet 방향 normative 선언). evidence-checks-registry row append + warning-tier lint (grep-testable: §결정 9 ratchet 선언 + ADR-058 §결정 5 sunset_justification 문구 + frontmatter is_transitional:false 존재) = Story-3 carrier. hotfix-bypass:adr-077-ratchet (예약, namespace per-entry — ADR-024 Amendment 3 정합)."
+    progress_note: "evidence-checks-registry row appended Story-3 Phase 1 (CFP-785) — status: deferred-followup. lint script+workflow land 시 status: Active 전환 = Phase 2 carrier (bootstrap-labels-precondition / atomic-upgrade-zero-drift 패턴 동형). hotfix-bypass:adr-077-ratchet family member appended (label-registry-v2 v2.21)."
     target_section: §결정 9
   - action: adr-077-design-reading-mandate-declared
     status: deferred-followup
-    progress_note: "ADR-077 신설 시점 registry entry 부재 (declarative only — §결정 3 design-reading mandate normative 선언). evidence-checks-registry row append + warning-tier lint (grep-testable: §결정 3 'skim 금지 + 의도/근거 파악' 선언 + 적용 3 agent Feasibility/Continuity/ChangeImpact 명시) = Story-3 carrier. hotfix-bypass:adr-077-design-reading (예약)."
+    progress_note: "evidence-checks-registry row appended Story-3 Phase 1 (CFP-785) — status: deferred-followup. lint script+workflow land 시 status: Active 전환 = Phase 2 carrier. hotfix-bypass:adr-077-design-reading family member appended (label-registry-v2 v2.21)."
     target_section: §결정 3
 # Story-1 scope = ADR 본문 신설 + RESERVATION row 77 전이만. mechanical lint wire = Story-3
 # (evidence-checks-registry row append + workflow). ADR-040 Amendment 3 §결정 7.D self-application
