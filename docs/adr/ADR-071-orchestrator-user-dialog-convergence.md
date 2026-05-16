@@ -15,6 +15,12 @@ amendments:
     issue: https://github.com/mclayer/plugin-codeforge/issues/777
     summary: DialogFidelityAgent external verifier auxiliary layer additive (Layer 1-4 보존, sunset_justification null 강화 ratchet)
     sunset_justification: null
+  - amendment_id: 2
+    date: "2026-05-17"
+    carrier_story: CFP-818
+    issue: https://github.com/mclayer/plugin-codeforge/issues/818
+    summary: DialogFidelityAgent 3-anchor 운영 정의 + turn-shape edge × 3-anchor 12 cell 활성 표 신설 + ADR-039 inline whitelist 1번 entry 정합 명문화 + ADR-064 §결정 9 Q-3check disjoint scope cross-ref (additive, Layer 1-4 보존 + 5번째 cognitive layer 신설 금지 invariant 보존, sunset_justification null 강화 ratchet)
+    sunset_justification: null
 related_stories:
   - CFP-612  # carrier
   - CFP-525  # ancestor Epic (closed 2026-05-13)
@@ -25,6 +31,9 @@ related_stories:
   - CFP-438  # ADR-065 mechanical self-check carrier
   - CFP-411  # ADR-052 Amendment 1 (touchpoint #4) carrier
   - CFP-578  # ADR-070 verify-before-trust carrier
+  - CFP-777  # Amendment 1 carrier (DialogFidelityAgent additive auxiliary)
+  - CFP-761  # parent Epic (DialogFidelityAgent 도입)
+  - CFP-818  # Amendment 2 carrier (spawn trigger 운영 정의)
 related_adrs:
   - ADR-064  # 결정 원칙 mandate — proposing-time 5 룰 mother policy (mechanical version 승격 source)
   - ADR-058  # sunset criteria mandate (is_transitional: false 정합)
@@ -389,6 +398,101 @@ ADR-039 **§결정 2** Inline whitelist 4-entry (사용자 dialog / TodoWrite sc
 본 Amendment = **additive ratchet** (Layer 1-4 골격 보존, 검증 mechanism 만 추가). 강화 방향 only — `is_transitional: false` 보존, ADR-058 §결정 5 약화 차단 영역 미적용.
 
 `sunset_justification: null` 적격.
+
+## §결정 13. DialogFidelityAgent spawn trigger 운영 정의 (Amendment 2, CFP-818)
+
+### 13.1 결정 요약
+
+Amendment 1 (§결정 12) 가 도입한 DialogFidelityAgent (cross-cutting read-only verifier, codeforge-pmo) 의 **spawn trigger 운영 정의** + ADR-039 inline whitelist 1번 entry **정합 명문화** + turn-shape edge × 3-anchor **12 cell 활성 표** 신설 + ADR-064 §결정 9 Q-3check **disjoint scope cross-ref**.
+
+Story-2 (CFP-818) 채택 = **spawn-on-marker (closed 3-anchor)** — Anthropic Constitutional AI critique pattern (Bai et al. 2022) selective spawn 패턴 정합 + ADR-052 6 touchpoint precedent (codeforge 내부 precedent — 전수 아닌 6 touchpoint 만 활성) + verifier-narrower-than-generator forcing function (Epic CFP-761 spec § "근거 1" verbatim).
+
+회피 대안:
+- **spawn-everywhere** (전수 spawn, 매 user-facing turn) — cover 100% 단 30x overhead + verifier-narrower-than-generator 위반 (검증 범위 ≥ 생성 범위 시 검증자 역설). 회피.
+- **gradient spawn** (사용자 turn 형태별 활성 비율) — 비율 정의 자체 추가 결정 영역 + 12 cell discrete 표 보다 mental model 복잡 + Story-3 effectiveness metric carrier 가 closed enum baseline 측정 후 확장 영역. 회피 (closed 3-enum + 별 CFP 의무 — §13.6).
+
+본 §결정 13 = additive 강화 (Layer 1-4 보존 + 5번째 cognitive layer 신설 금지 invariant 보존 + Inline whitelist 4-entry 보존 + Q-3check 7 anti-pattern 보존). §결정 12 family 정합 — 새 §결정 family 분리 (5-element squash 회피 패턴 정합).
+
+### 13.2 3-anchor 발화 형태 매핑 표
+
+§결정 12.5 의 3-anchor enum 의 운영 정의 (각 anchor 가 어떤 turn shape 직전 활성):
+
+| anchor | 발동 시점 | 발화 형태 매핑 (UC) | Codex touchpoint dedup |
+|---|---|---|---|
+| `post_user_turn` | 사용자 turn 응답 직후 (Layer 3 "추상" detect / numbered list 발화 / `AskUserQuestion` 직전) | UC-1 (`AskUserQuestion` 발화 직전) / UC-2 (numbered list 또는 dialog format 발화 직전) / Layer 3 "추상" stem detect 직후 | 없음 (Codex 6 touchpoint 와 disjoint) |
+| `pre_architectpl_synthesis` | ArchitectPL synthesis 완료 직전 (사용자 보고 발화 직전) | UC-3 (Orchestrator 가 ArchitectPL synthesis 결과 사용자 보고 발화 직전) | **Codex TP#2 (mandatory, [ADR-052](ADR-052-codex-proactive-check-touchpoints.md) Amendment 4) 와 동일 위치** — 양 verifier 활성 (EC-6 dedup) |
+| `pre_fix_rootcause` | FIX 루프 root cause 판정 직전 (ArchitectPL 1차 진단 후 최종 판정 직전) | UC-4 (Orchestrator 가 FIX 루프 root cause 판정 직전) | **Codex TP#3 (FIX 2+ 감지 시) 와 동일 위치** — 양 verifier 활성 (EC-5 dedup) |
+
+dedup 패턴 (EC-5/EC-6): 동일 위치 활성 시 — Codex = P0/P1 inline FIX mandatory (TP#2) / single-shot 검토 (TP#3) / DialogFidelityAgent = correction_action_hint 5-enum 권고. Orchestrator 가 양 verdict 통합 (verify-before-trust ADR-070 의무).
+
+### 13.3 turn-shape edge × 3-anchor 12 cell 활성 표
+
+[playbook §3.14 "Turn-shape derived defaults" 표](../orchestrator-playbook.md) 의 E9/E10/E11/E12 edge × 3-anchor cross-product 활성 매핑:
+
+| anchor \ edge | E9 streaming token | E10 tool-call-only | E11 AskUserQuestion popup | E12 trivial answer |
+|---|---|---|---|---|
+| `post_user_turn` | **final flush 시 활성** (mid-stream spawn 금지 — idempotency) | **면제** (사용자 발화 직접 미발생) | **active** (popup 본문 자체가 dialog convergence anchor — popup option_text/body Layer 3 "추상" detect 영역) | **면제** (cost > benefit, trivial turn 3-criteria AND 충족 시 cognitive overhead 정당화 불가) |
+| `pre_architectpl_synthesis` | active (edge-independent — Story 1회 발동, ArchitectPL synthesis 완료 직전 fixed timepoint) | active | active | active |
+| `pre_fix_rootcause` | active (edge-independent — FIX 발동 시점 fixed, ADR-067 FIX 3 카운터 범위 안 ≤ 3/Story) | active | active | active |
+
+cell 값 enum: `active` (spawn 의무) / `면제` (spawn 금지) / `final flush 시 활성` (E9 streaming 의 final flush 단계 1회만 spawn — mid-stream 금지).
+
+12 cell 모두 derived default 값 (Story §5.5 OQ-3 채택, 사실 측 분류 — 본 §결정 3 (4 layer) + playbook §3.14 SSOT 정합).
+
+**E11 popup × `post_user_turn` 결정 근거**: popup 본문 자체가 dialog convergence anchor — Layer 1 가시적 preamble (= "AskUserQuestion 으로 답해주실 것: ..." 1 문장, playbook §3.14 E11 derived default) 의 발화가 곧 dialog turn, popup option_text 안 Layer 3 "추상" stem detect 영역 = active 의무.
+
+empirical-source annotation (ADR-068 Amendment 1 I-5 dimensional empirical grounding):
+- **latency**: `[hypothesis]` subagent one-shot ~ 2-10 sec (codeforge telemetry 부재 — Story-3 effectiveness metric carrier 영역)
+- **cost**: `[hypothesis]` read-only inspection ~ 5-15k input + 0.5-2k output (model tier `inherit` Story-1 [ADR-042 Amendment 6](ADR-042-agent-model-selection-policy.md))
+- **count**: `[verified]` max upper bound ≤ 34/Story (`post_user_turn` ≤ 30 — `AskUserQuestion` / numbered list / 추상-detect trigger subset / `pre_architectpl_synthesis` 1 + `pre_fix_rootcause` ≤ 3 — [ADR-067 §결정 3](ADR-067-fix-loop-max-and-implementability-reassessment.md) FIX 3 카운터 정합)
+
+### 13.4 ADR-039 Inline whitelist 1번 entry 정합 명문화
+
+[ADR-039 §결정 2](ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) Inline whitelist 4-entry **closed enumeration** 보존 (5번째 entry 신설 금지 invariant).
+
+DialogFidelityAgent verifier subagent spawn = 1번 entry (사용자 dialog) **scope 안** cognitive 보강:
+- 사용자 dialog **본 발화** = inline 유지 (Inline whitelist 1번 entry 원래 mandate)
+- 본 발화 **직전/직후** verifier subagent spawn = ADR-039 §결정 1 default subagent spawn 정합 (subagent 형태 자체는 inline 영역 외 — 정상 default 적용)
+
+5번째 entry 신설 X — 새 카테고리 enumeration 추가 아님, 기존 1번 entry 의 "cognitive 보강 채널" 1 문장 명문화. closed enumeration 보존 invariant + 5번째 entry 신설 시 Amendment 의무 invariant 양 보존.
+
+ADR-039 §결정 2 표 row 1 Mechanism rationale 컬럼이 본 정합 1 문장 verbatim 명시 (CFP-818 Phase 1 PR Edit).
+
+### 13.5 ADR-064 §결정 9 Q-3check disjoint scope cross-ref
+
+[ADR-064 §결정 9](ADR-064-decision-principle-mandate.md) Question quality 3-check = **Orchestrator self-check** (proposing-time + stop-time).
+
+DialogFidelityAgent = **외부 verifier** (발화 entity ≠ 검증 entity 분리, self-referential trap 회피 — 본 §결정 12 anchor 단락 가설 E 다층 방어 메커니즘 정합).
+
+disjoint scope — 양자 cross-cutting 보강:
+
+| 영역 | 3-check cover | DialogFidelityAgent cover |
+|---|---|---|
+| turn-internal cognitive frame (1-option 묻기 / Implementation detail 묻기 / Confirm-of-confirm 등 7 anti-pattern P1-P7) | ✅ | — |
+| 누적 결정 ledger drift (Layer 4 영속 file `docs/orchestrator-communication-incidents.md` row 일관성) | — | ✅ |
+| 세션 개시 요건 일관성 (Story §1 immutable verbatim vs 현 turn 출력) | — | ✅ |
+| 가치 판단 vs 사실 판단 분류 self-check (§결정 9 Question quality 3-check 1번 항목) | ✅ | — |
+| derived default 자명성 self-check (§결정 9 Question quality 3-check 2번 항목) | ✅ | — |
+
+양자 동시 활성 (3-check 의 anti-pattern 7종 + DialogFidelityAgent output 4-enum) 이 dialog fidelity 보장 강화 forcing function. ADR-064 §결정 9 단락 말미가 본 disjoint scope 1 단락 verbatim 명시 (CFP-818 Phase 1 PR Edit).
+
+### 13.6 closed enum 확장 시 별 CFP 의무 codification
+
+3-anchor enum (`post_user_turn` / `pre_architectpl_synthesis` / `pre_fix_rootcause`) = **closed enumeration**. 확장 후보 3종 발생 시 (Story §5.4 IA-4 정합):
+
+- `pre_lane_spawn`: 매 lane spawn 직전 verifier dispatch
+- `pre_phase_transition`: phase label transition 직전 (요구사항 → 설계 / 설계 → 설계-리뷰 등)
+- `pre_pause_decision`: ADR-067 §결정 3 Pause/Resume 결정 직전
+
+→ **별 CFP 신설 의무** (사용자 burden 변화 영역 — spawn frequency 증가 + ROI 측정 baseline 갱신 의무). ADR-064 §결정 7 top-down ratchet 정합 (강화 방향 only) + ADR-058 §결정 5 sunset_justification 의무 (anchor 축소 시).
+
+본 §13.6 codification = scope creep 차단 forcing function (Story §5.4 IA-4 + §결정 12 5번째 cognitive layer 신설 금지 invariant pattern 정합).
+
+### 13.7 sunset_justification: null (additive ratchet, §결정 12 family 정합)
+
+본 Amendment 2 = **additive 강화** (Layer 1-4 보존 + Inline whitelist 4-entry 보존 + Q-3check 7 anti-pattern 보존 + closed 3-anchor 보존). 강화 방향 only — `is_transitional: false` 보존, ADR-058 §결정 5 약화 차단 영역 미적용.
+
+`sunset_justification: null` 적격 (§결정 12 family pattern 정합).
 
 ## self-application top-down ratchet
 

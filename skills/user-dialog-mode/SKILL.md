@@ -138,3 +138,44 @@ tools: Read
 - 사용자 personal memory entry 자체 삭제 (사용자 영역)
 - consumer overlay 영역 customization (overlay 가 정책 축소 불허)
 - debate-protocol-v1 3 marker import (schema 직접 채택 절대 금지)
+
+## DialogFidelityAgent spawn anchor (ADR-071 §결정 13 / CFP-818)
+
+> normative SSOT = [playbook §3.14 verifier auxiliary](../../docs/orchestrator-playbook.md) + [ADR-071 §결정 12·13](../../docs/adr/ADR-071-orchestrator-user-dialog-convergence.md). 본 sub-section = **lookup mirror only** (skill body precedence 정합 — [ADR-064 §결정 10](../../docs/adr/ADR-064-decision-principle-mandate.md) normative > skill body 우선).
+
+### 3-anchor 발화 형태 매핑
+
+| anchor | 발동 시점 | 발화 형태 (UC) |
+|---|---|---|
+| `post_user_turn` | 사용자 turn 응답 직후 (Layer 3 "추상" detect / numbered list 발화 / AskUserQuestion 직전) | UC-1 (AskUserQuestion) / UC-2 (numbered list / dialog format) / Layer 3 stem detect |
+| `pre_architectpl_synthesis` | ArchitectPL synthesis 완료 직전 (사용자 보고 발화 직전) | UC-3 (ArchitectPL 결과 보고) — Codex TP#2 mandatory dedup |
+| `pre_fix_rootcause` | FIX 루프 root cause 판정 직전 | UC-4 (root cause 판정) — Codex TP#3 dedup |
+
+### turn-shape edge × 3-anchor 12 cell 활성 표
+
+| anchor \ edge | E9 streaming | E10 tool-call-only | E11 popup | E12 trivial |
+|---|---|---|---|---|
+| `post_user_turn` | final flush 시 활성 | 면제 | active | 면제 |
+| `pre_architectpl_synthesis` | active | active | active | active |
+| `pre_fix_rootcause` | active | active | active | active |
+
+cell 값: `active` (spawn 의무) / `면제` (spawn 금지) / `final flush 시 활성` (E9 streaming 의 final flush 1회만).
+
+### Output Port closed enum (Story-1 결정 SSOT, 변경 0)
+
+- `verify_result: fidelity_ok | drift_detected | ledger_gap`
+- `correction_action_hint: rescan_ledger | escalate_user | self_correct | no_action | null`
+
+free-form output 차단 (generator 역할 침범 금지).
+
+### Inline whitelist 1번 entry 정합
+
+DialogFidelityAgent spawn (subagent 형태) = [ADR-039 §결정 2](../../docs/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) Inline whitelist 4-entry 1번 entry (사용자 dialog) scope **안** cognitive 보강. 5번째 entry 신설 아님 (closed enumeration 보존).
+
+### Q-3check disjoint scope
+
+[ADR-064 §결정 9](../../docs/adr/ADR-064-decision-principle-mandate.md) Q-3check = Orchestrator self-check. DialogFidelityAgent = 외부 verifier. disjoint — 양자 cross-cutting 보강.
+
+### closed enum 확장 시 별 CFP 의무
+
+3-anchor closed. 확장 후보 (`pre_lane_spawn` / `pre_phase_transition` / `pre_pause_decision`) 발생 시 별 CFP 신설 의무.
