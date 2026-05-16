@@ -1646,6 +1646,8 @@ DialogFidelityAgent = codeforge-pmo **cross-cutting read-only verifier** (additi
 
 **Output Port closed enum**: `verify_result: fidelity_ok | drift_detected | ledger_gap` + `correction_action_hint: rescan_ledger | escalate_user | self_correct | no_action | null` (free-form 차단, generator 역할 침범 금지).
 
+**Orchestrator dispatch**: verifier output 수신 후 `correction_action_hint` enum (rescan_ledger / escalate_user / self_correct / no_action / null) 에 따라 Orchestrator 가 직접 action 분기 — verifier 는 권고만, 실제 메시지 변경 / ledger append / 사용자 escalation 은 Orchestrator monopoly.
+
 **verify-before-trust 의무** ([ADR-070](../docs/adr/ADR-070-codex-verify-before-trust.md)): `evidence_path[]` direct Read verify 의무, mismatch 시 verdict reject + Story §10 tally + override rationale 명시.
 
 ---
