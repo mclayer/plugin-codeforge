@@ -8,7 +8,13 @@ carrier_story: CFP-612
 parent_epic: CFP-525  # ancestor
 supersedes: null
 amends: null
-amendments: []
+amendments:
+  - amendment_id: 1
+    date: "2026-05-16"
+    carrier_story: CFP-777
+    issue: https://github.com/mclayer/plugin-codeforge/issues/777
+    summary: DialogFidelityAgent external verifier auxiliary layer additive (Layer 1-4 보존, sunset_justification null 강화 ratchet)
+    sunset_justification: null
 related_stories:
   - CFP-612  # carrier
   - CFP-525  # ancestor Epic (closed 2026-05-13)
@@ -304,6 +310,85 @@ CFP-612 §1 verbatim "Scope 가 아닌 것" + RequirementsPL §5.4 정합:
 - **frame mode marker 형식** = playbook §3.14 본문 결정 영역
 - **Layer 3 stem vs exact match** = playbook §3.14 본문 결정 영역
 - **Layer 4 file rotate / archive** = playbook §3.14 본문 결정 영역
+
+## §결정 12. DialogFidelityAgent external verifier auxiliary layer (Amendment 1, CFP-777)
+
+### 12.1 결정 요약
+
+Layer 1-4 = ADR-071 **§결정 3** 의 4-layer cognitive enum (preamble 의무 / declare 의무 / "추상" halt / N=1+M=5 incidents append) 골격 **보존 invariant**.
+
+별개 §결정 family 분리 (5-element squash 회피):
+- frame mode 4 step = ADR-071 **§결정 1** (4-step protocol — 사용자 요건 파악 / mental model 추정 / 1-sentence frame / forcing-function declare)
+- sub-mechanism 2 종 = ADR-071 **§결정 4** (turn-final hook 부재 → cognitive substitute)
+- Layer 4 영속 file = ADR-071 **§결정 6** (cross-Story incidents.md ledger Orchestrator monopoly)
+
+DialogFidelityAgent = **additive auxiliary layer**, 신규 **5번째 cognitive layer 신설 금지** (§결정 3 의 4-layer cognitive enum scope 만, 다른 §결정 family 와 무관).
+
+발화 entity (Orchestrator) 와 검증 entity (DialogFidelityAgent) **분리** — ADR-071 anchor 단락 (line 57) 가설 E (mechanism 만 codify, 본질 미codify 한계 — self-defeating trap) 다층 방어 채널 (mechanism scaffolding 강화 + 본질 anchor 동시 보존).
+
+### 12.2 Mandate scope (read-only inspection only)
+
+verifier-narrower-than-generator 패턴 강제:
+
+| 항목 | scope |
+|---|---|
+| input | (a) 세션 개시 요건 (Story §1 immutable verbatim) + (b) 누적 결정/제약 ledger (Layer 4 incidents file verbatim row) + (c) 현 Orchestrator turn 출력 (SHA-256 hash-pinned verbatim) |
+| output | `verify_result: enum<fidelity_ok \| drift_detected \| ledger_gap>` + `evidence_path[]` (non-empty when != ledger_gap) + `incident_row_match: {row_id, layer, criterion}` + `correction_action_hint: enum<rescan_ledger \| escalate_user \| self_correct \| no_action> \| null` |
+| 추론 재실행 | **금지** (검증자 역설 회피, generator 역할 침범 금지) |
+
+### 12.3 Layer 1-4 보존 invariant (ADR-071 §결정 3 의 4-layer cognitive enum scope)
+
+| Layer (§결정 3 cognitive enum) | AS-IS | 본 Amendment 후 |
+|---|---|---|
+| Layer 1 (preamble 의무) | mechanical lint deferred (§결정 10 정합) | 보존, 무변경 |
+| Layer 2 (declare 의무) | behavioral directive | 보존, 무변경 |
+| Layer 3 ("추상" halt) | behavioral directive | 보존, 무변경 |
+| Layer 4 (N=1 + M=5 incidents append) | Orchestrator monopoly write (§결정 6) | 보존, 무변경. DialogFidelityAgent read-only inspection only |
+
+**신규 5번째 cognitive layer 신설 금지 invariant** (§결정 3 enum scope 만, 다른 §결정 family 와 무관): pattern_dimension 4 차원 enum closed (보고 형식 / 질문 자체 / sub-mechanism 2종 — §결정 4 carrier) 보존. verifier 도입 = mechanism (verification entity) 추가, §결정 3 cognitive layer count 변경 아님.
+
+### 12.4 ADR-071 anchor 단락 line 57 가설 E 다층 방어 채널
+
+`[verified — git show origin/main:docs/adr/ADR-071-orchestrator-user-dialog-convergence.md line 57 anchor 단락 verbatim]` ADR-071 anchor 단락 본문:
+> "본 ADR 의 모든 §결정 ... 은 본질을 보조하는 scaffolding — mechanism 만 codify 하고 본질을 놓치면 가설 E (mechanical 규칙 자체 한계) 의 self-defeating trap"
+
+본질 anchor = 발화 entity ≠ 검증 entity 분리 (Orchestrator self-check 만으로는 mechanical 규칙이 본질을 놓침). 가설 E location = **§결정 11 본문이 아닌 anchor 단락 line 57** (§결정 family 보다 상위 framing context).
+
+**다층 방어 메커니즘**: 발화 entity (Orchestrator) ≠ 검증 entity (DialogFidelityAgent codeforge-pmo agent). mechanism scaffolding 강화 + 본질 anchor (entity 분리) 동시 보존. 4-layer mechanical defense (Change Plan CFP-777 §7.3):
+
+| Layer | mitigation |
+|---|---|
+| M1 | `tools:` field read-only subset only `[Read, Grep, Glob, ToolSearch]` — Write/Edit/Bash/SendMessage/Agent 차단 (input integrity input scope 제한) |
+| M2 | output schema closed enum (verify_result 3-value `fidelity_ok \| drift_detected \| ledger_gap` + correction_action_hint 4-value `rescan_ledger \| escalate_user \| self_correct \| no_action` + `null`) — narrative free-form 차단 (generator 영역 reasoning 재실행 차단 = M1 + M2 combined forcing function) |
+| M3 | input contract SHA-256 hash-pinned (current_output_hash) — Orchestrator turn output verbatim 이 spawn 시점과 동일한지 확인 (input integrity verification only, reasoning re-execution 차단은 M1+M2 combined 위임) |
+| ADR-070 §B final safety net | Orchestrator post-verify ground truth direct Read: evidence_path[] direct Read verify 의무, mismatch 시 verdict reject + tally |
+
+### 12.5 Spawn anchor 3종 (ADR-039 §결정 2 inline whitelist 보존)
+
+ADR-039 **§결정 2** Inline whitelist 4-entry (사용자 dialog / TodoWrite scratchpad / Read-only Q&A 답변 / Status report) **보존 invariant**. 매 user-facing turn spawn 금지. (note: base ADR-071 §결정 11 본문이 ADR-039 §결정 7 을 인용한 self-error — 본 Amendment 는 §결정 2 정확 cite 채택.)
+
+선별 anchor 3종:
+
+| anchor | 발동 시점 |
+|---|---|
+| `post_user_turn` | 사용자 turn 응답 직후 (Layer 3 "추상" detect / numbered list 발화 / AskUserQuestion 직전) |
+| `pre_architectpl_synthesis` | ArchitectPL synthesis 완료 직전 (Codex TP#2 augment) |
+| `pre_fix_rootcause` | FIX 루프 root cause 판정 직전 (Codex TP#3 augment) |
+
+자동 발동 hook 부재 (turn-final hook unavailable, ADR-039 §결정 9 deferred 영역 정합). Orchestrator 자율 채택 layer (behavioral directive).
+
+### 12.6 Cross-ref (deputy 산출물 통합 anchor)
+
+- **SecurityArch §7.1-§7.6** (Change Plan CFP-777 §7): trust boundary / threat (T1 tampering, T2 silent drift) / mitigation M1/M2/M3 / auth / audit
+- **TestContractArch §8** (Change Plan CFP-777 §8): unit AC-U1/U2/U3 / integration 5 baseline incident catch / boundary AC-B1-B4 / stateful §8.5
+- **DataMigrationArch §11** (Change Plan CFP-777 §11): 분기 A schema 무변경 / 5 baseline integrity invariants / ADR-079 KST timestamp display 정합
+- **OpRiskArch §7.4** (Change Plan CFP-777 §7.4): DR (non-blocking + Story §14 outcome marker) / rate-limit (3-anchor only) / env (env=0 default) / sibling cross-repo (ADR-063 6-file atomic)
+
+### 12.7 sunset_justification: null (ADR-058 §결정 5 정합)
+
+본 Amendment = **additive ratchet** (Layer 1-4 골격 보존, 검증 mechanism 만 추가). 강화 방향 only — `is_transitional: false` 보존, ADR-058 §결정 5 약화 차단 영역 미적용.
+
+`sunset_justification: null` 적격.
 
 ## self-application top-down ratchet
 
