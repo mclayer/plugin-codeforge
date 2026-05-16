@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: reconcile-protocol
-version: "1.3"
+version: "1.4"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/reconcile-protocol-v1.md
@@ -11,11 +11,13 @@ authors:
   - DeveloperPLAgent (CFP-702 Wave 1 Story-2 Phase 2 — §4.3 (b) trigger 발동, marker_block_syntax_* fields 확장)
   - ArchitectPLAgent (CFP-743 Wave 2 Story-3 — §4.3 (c) trigger 발동, mechanical_implementation_binding block 신설 + KEY cross-ref 정정 CFP-703→CFP-743)
   - ArchitectPLAgent (CFP-744 Wave 2 Story-4 — §4.3 (d) trigger 발동, atomicity_boundary_runtime per_plugin → family_7_plugin ratchet 활성 + stale placeholder 정정 v1.0→v1.1 → v1.2→v1.3)
+  - ArchitectPLAgent (CFP-745 Wave 2 Story-5 — §4.3 (g) trigger 신설 발동, §4.7 overlay_reconcile_implementation_binding block 신설 + marker_block_syntax.json carrier → realized_in cross-ref (§2.5 FORM 옵션 (i)))
 version_history:
   - { version: "1.0", date: 2026-05-15, carrier: CFP-701, change: "initial — declarative reconciliation upgrade flow schema SSOT. 9 영역 desired state enumeration + dry-run/snapshot/transaction 3 mode enum + customization preservation entry (marker block, Story-2 prerequisite) + version_handshake / reconcile_strategy placeholder reserve (Wave 4 carrier)." }
   - { version: "1.1", date: 2026-05-15, carrier: CFP-702, change: "§4.3 (b) trigger 발동 — Wave 1 Story-2 marker block syntax 확정. customization_preservation_entry 영역 확장: marker_block_syntax_* 4 fields 정식화 (comment prefix per-filetype / nesting_policy / lint_behavior / migration_script). ADR-027 Amendment 3 §결정 7.A-7.E verbatim cross-ref." }
   - { version: "1.2", date: 2026-05-15, carrier: CFP-743, change: "§4.3 (c) trigger 발동 — Wave 2 Story-3 UpgradeAgent + CLI 실 implementation hook (`scripts/codeforge-upgrade.{sh,ps1}` 신설). mechanical_implementation_binding block 신설 (§4.5 reference → CLI 3 mode entrypoint + UpgradeAgent Plan+Apply 책임 binding + reconcile PR open scope = ADR-066 Amendment 3 cross-ref). KEY cross-ref 정정: §4.3 (c) `CFP-703` → `CFP-743` (Wave 1 작성 시점 placeholder drift — 동일 Story, fact 영향 0 추적성 정정). MINOR bump (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 2). user_decision_branches: 0 invariant / atomicity_boundary semantic / transaction.completion_criterion 무변경 (ratchet 강화 only — ADR-064 §self-application 정합)." }
   - { version: "1.3", date: 2026-05-16, carrier: CFP-744, change: "§4.3 (d) trigger 발동 완료 — Wave 2 Story-4 7-plugin family atomic upgrade runtime (`scripts/atomic-upgrade-7-plugins.sh` 신설). `transaction.atomicity_boundary_runtime_v1` per_plugin → `atomicity_boundary_runtime_future` family_7_plugin runtime catch-up ACTIVE (ADR-076 §결정 8 pre-designated ratchet). 의미 invariant `atomicity_boundary_semantic_invariant: family_7_plugin_atomic` 변경 0 (ADR-016 §결정 1 SSOT 무변경 — runtime catch-up only). ADR-037 Amendment 1 (atomic upgrade 후 0 drift invariant) carrier 동반. stale placeholder 정정: 본 contract line 144 comment + ADR-076 line 147 의 'MINOR bump v1.0 → v1.1 의무' (Wave 1 작성 시점 placeholder — v1.1/v1.2 신설 전 작성된 stale text) → 실제 'v1.2 → v1.3 (Wave 2 Story-4)' 정정 (CFP-743 CFP-703→CFP-743 정정 패턴 답습, fact 영향 0 추적성만 — ADR-068 I-4 wording SSOT 정합). schema field 명 `_future` 유지 (field-name stability — ratchet 활성은 comment + version_history + §4.3 (d) marker 로 표기, §4.3 (c) v1.2 패턴 동형). MINOR bump (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 2). user_decision_branches: 0 / atomicity_boundary_semantic_invariant / transaction.completion_criterion / adr_053_d2_verbatim_quote 무변경 (ratchet 강화 only — ADR-064 §self-application 정합)." }
+  - { version: "1.4", date: 2026-05-16, carrier: CFP-745, change: "§4.3 (g) trigger 신설 발동 완료 — Wave 2 Story-5 overlay 영역 (skill/agent/hook) 3-way merge reconcile runtime (`scripts/reconcile-overlay.sh` 신설, Phase 2 carrier). §4.7 `overlay_reconcile_implementation_binding` block 신설 (per-file 3-way merge layer base/wrapper-new/consumer-current + marker_preserve_binding marker 안=wrapper-new mirror·밖=consumer-current byte-identical preserve + sidecar_manifest_schema RFC 6901 JSON Pointer key-path allowlist + base_acquisition_binding Story-3 snapshot wrapper-managed 영역 재사용). marker_block_syntax.comment_prefix_per_filetype.json `carrier: \"Wave 2 Story-5\"` → `realized_in: \"§4.7 overlay_reconcile_implementation_binding.sidecar_manifest_schema\"` cross-ref 추가 (carrier reservation → realized — ADR-027 §결정 7.A.1 carrier 실현, AC-10 contract integration OUTCOME). carrier key 유지 (field-name stability — consumer schema key 의존 보존, ADR-068 I-4). Story-3 §4.5/§4.6 (c)/(d) trigger + binding block 패턴 verbatim 답습 (§2.5 FORM 옵션 (i)). MINOR bump (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 2). user_decision_branches: 0 / atomicity_boundary_semantic_invariant: family_7_plugin_atomic / marker_block_absent_behavior: wholesale_mirror_with_user_visible_loss_report / snapshot_reset_disjoint_layer / transaction.completion_criterion / adr_053_d2_verbatim_quote 무변경 (ratchet 강화 only — overlay coverage 확장, ADR-064 §self-application 정합). [FIX Iter 2 — Codex TP#2 P1 verified-true: base_acquisition_binding 에 orthogonality_invariant + base_state_resolution(base_ok/base_corrupt/base_absent) 추가 + base_absent_first_reconcile 정정 (base 가용성 ≠ marker scope orthogonal 분리 — base 부재+MARKER_VALID = marker-aware 2-way first-reconcile marker 밖 byte-identical preserve / MARKER_NONE base무관 = wholesale_mirror / base corrupt = abort. 초기 'base 부재 = marker 부재 fallback 동형' conflation 정정). v1.4 schema 정정 — MINOR 유지, ratchet 강화 only (base_absent 가 marker_absent 와 분리됨을 명시 = 강화, marker_block_absent_behavior/user_decision_branches:0 무변경).]" }
 owner_adr: ADR-076
 carrier_story: CFP-701
 sibling_sync_exempt: true
@@ -169,7 +171,7 @@ reconcile_protocol:
     comment_prefix_per_filetype:
       yml_yaml_sh: { begin: "# BEGIN wrapper-managed", end: "# END wrapper-managed" }
       md: { begin: "<!-- BEGIN wrapper-managed -->", end: "<!-- END wrapper-managed -->" }
-      json: { kind: "sidecar_manifest", path: ".claude/_overlay/.wrapper-managed-manifest.json", carrier: "Wave 2 Story-5" }
+      json: { kind: "sidecar_manifest", path: ".claude/_overlay/.wrapper-managed-manifest.json", carrier: "Wave 2 Story-5", realized_in: "§4.7 overlay_reconcile_implementation_binding.sidecar_manifest_schema (CFP-745 v1.4 — carrier reservation → realized, RFC 6901 JSON Pointer key-path allowlist 실 schema. carrier key 유지 = field-name stability ADR-068 I-4)" }
     # ADR-027 Amendment 3 §결정 7.D.1 Axis 2 — nesting 정책
     nesting_policy: "flat_only"  # nested marker = lint reject (BEGIN...BEGIN...END...END = malformed)
     # ADR-027 Amendment 3 §결정 7.D — lint 행동
@@ -330,6 +332,7 @@ consumer 가 D4 marker block 도입 전 customization 영역 보유 시:
 - (d) Wave 2 Story-4 (CFP-744) merge — `transaction.atomicity_boundary_runtime_v1` per_plugin → `atomicity_boundary_runtime_future` family_7_plugin ratchet. **v1.3 발동 완료 (본 contract)** — `scripts/atomic-upgrade-7-plugins.sh` 신설 + ADR-037 Amendment 1 (atomic upgrade 후 0 drift invariant) carrier 동반. 의미 invariant `atomicity_boundary_semantic_invariant: family_7_plugin_atomic` 변경 0 (ADR-016 §결정 1 SSOT 무변경 — runtime catch-up only). (Wave 1 작성 시점 §3 transaction 영역 + ADR-076 line 147 의 stale placeholder "v1.0 → v1.1 의무" → 실제 v1.2 → v1.3 정정 동반 — fact 영향 0 추적성만, ADR-068 I-4 wording SSOT 정합. CFP-743 §4.3 (c) CFP-703→CFP-743 정정 패턴 답습.)
 - (e) Wave 3 Story-6 merge — `version_handshake` field 활성 (현재 placeholder_reserve, validation_status_v1_0: non_normative_placeholder_reserve)
 - (f) Wave 4 sub-Epic merge — `reconcile_strategy.enum_reserved_wave_4` 값 활성
+- (g) Wave 2 Story-5 (CFP-745) merge — overlay 영역 (skill/agent/hook) 3-way merge reconcile runtime (`scripts/reconcile-overlay.sh` 신설, Phase 2 carrier). **v1.4 발동 완료 (본 contract)** — §4.7 `overlay_reconcile_implementation_binding` block 신설 (per-file 3-way merge layer + marker_preserve_binding + sidecar_manifest_schema + base_acquisition_binding). marker_block_syntax.comment_prefix_per_filetype.json `carrier: "Wave 2 Story-5"` → `realized_in` cross-ref (carrier reservation → realized — ADR-027 §결정 7.A.1 carrier 실현, AC-10 contract integration OUTCOME). §1 out-of-scope "3-way merge runtime (overlay reconcile, Wave 2 Story-5 carrier)" = 본 trigger 발동으로 carrier-declare → realized (단 §1 OOS 표기는 "Wave 2 Story-5 carrier" 추적성 유지 — carrier 가 §4.7 로 realized 됨을 표기). 의미 invariant 변경 0 (overlay reconcile = runtime catch-up, ADR-076 §결정 1 SSOT). §4.3 (c) v1.2 / (d) v1.3 trigger + binding block 패턴 verbatim 답습 (§2.5 FORM 옵션 (i)).
 
 ### 4.4 Ratchet 보존 의무 (downgrade 차단)
 
@@ -441,4 +444,69 @@ family_atomic_implementation_binding:   # v1.3 신설, CFP-744 §4.3 (d) 발동
 ```
 
 Phase 1 (CFP-744) merge 시 본 §4.6 binding block 활성 (schema declare). Phase 2 (별 PR) merge 시 `scripts/atomic-upgrade-7-plugins.sh` 실 구현 + per-family transaction mechanical 활성.
+
+### 4.7 Wave 2 Story-5 overlay reconcile mechanical implementation 참조 (v1.4 — CFP-745 §4.3 (g) binding 발동)
+
+본 §4.5 (per-plugin) / §4.6 (per-family) mechanical_implementation_binding 위에 **overlay 영역 (skill/agent/hook) 3-way merge reconcile layer** 1단을 추가한다. per-plugin/per-family reconcile semantic = §4.5/§4.6 SSOT 재사용 (변경 0), overlay 영역 customization-preserving 3-way merge orchestration 만 신설. marker_block_syntax.comment_prefix_per_filetype.json `carrier: "Wave 2 Story-5"` 의 realized 영역 (carrier reservation → 실 schema, ADR-027 §결정 7.A.1 carrier 실현, AC-10 contract integration OUTCOME).
+
+```yaml
+overlay_reconcile_implementation_binding:   # v1.4 신설, CFP-745 §4.3 (g) 발동
+  carrier_story: CFP-745  # Wave 2 Story-5 (overlay 영역 3-way merge reconcile)
+  status: schema_declared_phase1   # Phase 1 = schema binding declare / Phase 2 = scripts/reconcile-overlay.sh 실 구현
+  entrypoint: "scripts/reconcile-overlay.sh"   # overlay 영역 3-way merge orchestration shell (per-plugin = §4.5 / per-family = §4.6 SSOT 재사용, semantic 분산 0)
+  scope: "consumer .claude/ overlay (skill / agent md / hook sh / settings.json) — wrapper SSOT mirror 영역 + D4 customization marker block"
+  mode_dispatch:
+    "--apply": "base 확보 → overlay file 분류 → per-file 3-way merge → customization integrity 검증 → 단일 reconcile unit (no_prompt_invariant: true, user_decision_branches: 0)"
+    "--dry-run": "overlay 영역 desired (wrapper SSOT) vs current diff + 3-way merge preview, filesystem touch 0 (dry_run_classified_as_decision_branch: false)"
+    "--rollback": "Story-3 snapshot restore SSOT 재사용 (overlay reconcile = Story-3 snapshot scope 안 — 별 entrypoint 불요)"
+  three_way_merge_binding:
+    base: "Story-3 snapshot infra (.claude/_snapshots/<UTC>-<ver>.tar.gz) 의 wrapper-managed 영역 = 3-way merge ancestor (ADR-076 §결정 3 snapshot granularity = marker block 밖 wrapper SSOT mirror 영역, consumer customization marker block 안은 snapshot scope 외 — base 에 consumer customization 미혼입)"
+    wrapper_new: "wrapper plugin 현재 overlay template (desired SSOT)"
+    consumer_current: "consumer 현재 overlay file content"
+    text_merge: "git merge-file 차용 (3-way text merge) — conflict = 명시적 보고 (silent overwrite 0, EPIC-AC-4)"
+    binary_fallback: "git merge-file 불가 (image/pdf) = wholesale mirror + user-visible loss report (skip 미채택 — '빠짐' 통증 직접 해소, silent corrupt 0)"
+    agent_frontmatter_delegation: "merge.py (overlay/hooks/merge.py) agent-fm 2-way merge SSOT 위임 (reconcile-overlay.sh 가 frontmatter deep-merge 로직 재구현 절대 금지 — semantic 분산 0)"
+    three_way_scope: "marker block 안 영역 한정 — marker block 밖 = base 비교 skip + consumer-current 무조건 preserve (2-way, base 불요). 3-way merge 는 marker 안만 적용 (base-stale risk 표면 축소)"
+  marker_preserve_binding:
+    inside_marker: "wrapper-new mirror (wrapper SSOT — wrapper 변경분 누락 0, '빠짐' 직접 해소)"
+    outside_marker: "consumer-current byte-identical preserve (customization 침범 0 — EPIC-AC-4 silent overwrite 0)"
+    boundary_identification: "whole-line anchored (ADR-027 §결정 7.D.3 — substring 위조 marker `# BEGIN wrapper-managed-evil` injection 차단)"
+    malformed_marker: "check-wrapper-managed-block.sh (CFP-702 SSOT) exit_nonzero → reconcile abort-before-touch (filesystem touch 0). reconcile-overlay.sh = marker lint 로직 재구현 절대 금지 (CFP-702 SSOT 호출만)"
+    customization_integrity_invariant: "marker block 밖 = reconcile 전/후 byte-identical (AC-9(c)). 위반 = silent loss = Story-3 snapshot rollback + 명시적 escalation. base-stale edge (snapshot 이후 marker 밖→안 이동) 의 명시적 안전망"
+  sidecar_manifest_schema:   # marker_block_syntax.comment_prefix_per_filetype.json carrier="Wave 2 Story-5" → realized (ADR-027 §결정 7.A.1 carrier 실현)
+    path: ".claude/_overlay/.wrapper-managed-manifest.json"
+    rationale: "JSON 주석 불가 → in-file marker 불가 (ADR-027 §결정 7.A.1). sidecar manifest 가 wrapper-managed key-path 를 RFC 6901 JSON Pointer 로 allowlist. allowlist 안 = 3-way merge mirror (wrapper SSOT), 밖 = consumer preserve (marker block 안/밖 semantic 의 JSON 등가, Kustomize patchesStrategicMerge target path 패턴 동형)"
+    schema:
+      schema_version: "string (현재 \"1\")"
+      managed_paths: "list[string] — RFC 6901 JSON Pointer (예: /hooks/SessionStart/0/command, /permissions/allow/-). allowlist 안 path = 3-way merge mirror, 밖 = consumer preserve"
+    absent_or_malformed_behavior: "wholesale_mirror_with_user_visible_loss_report (sidecar 부재/JSON parse fail/JSON Pointer syntax 위반/managed_paths[] 부재 = marker 부재 fallback 과 동형 — silent loss 0, ADR-027 §결정 7.C 정합. partial key-path merge 진입 절대 금지)"
+    path_traversal_guard: "RFC 6901 JSON Pointer syntax bound (filesystem path 아님 = path traversal surface 0)"
+  base_acquisition_binding:
+    source: "Story-3 snapshot infra (.claude/_snapshots/) 재사용 — 신규 state artifact 신설 0 (ADR-064 minimal-change + snapshot ↔ base cross-pollinate 회피, snapshot_reset_disjoint_layer 정합)"
+    orthogonality_invariant: "base 가용성 (3-way ancestor 존재 = 3-way 가능 여부) 과 marker/sidecar 유효성 (preservation scope 존재) 은 ORTHOGONAL 2 조건 — 동일 fallback 에 conflate 금지 (CFP-745 FIX Iter 2 Codex TP#2 P1 verified-true: conflate 시 valid marker 보유 consumer 첫 reconcile = marker 밖 customization wholesale overwrite = marker_preserve_binding hybrid invariant + EPIC-AC-4 silent overwrite 0 위반)"
+    integrity: "Story-3 §11.4 tarball checksum verify 재사용. checksum verify 완료 전 per-file 3-way merge 진입 금지 (partial-state 0)"
+    base_state_resolution:   # base 가용성 3-state (marker scope 와 독립 판정)
+      base_ok: "snapshot 존재 + checksum OK → 3-way merge 경로 (MARKER_VALID 시)"
+      base_corrupt: "tarball checksum fail → abort-before-touch + 명시 보고 (corrupt base 진입 절대 금지, partial-state 0 — Story-3 §4.5 failure_behavior. 현 설계 sound 유지)"
+      base_absent: "snapshot 부재 (첫 reconcile) → marker scope 와 교차 (아래 base_absent_first_reconcile)"
+    base_absent_first_reconcile: "snapshot 부재 (첫 reconcile) + marker/sidecar 유효 (MARKER_VALID) = marker-aware 2-way first-reconcile (3-way 아님 — base 없음): marker 안 = wrapper-new mirror + prior inside-marker consumer 편집 loss report 명시 / marker 밖 = consumer-current byte-identical preserve (base 불요 — marker 밖 base 비교 자체 불필요) / JSON sidecar managed_paths = wrapper mirror + 그 외 JSON key = consumer-current preserve. marker/sidecar 부재·malformed (MARKER_NONE — base 가용성 무관) = wholesale_mirror_with_user_visible_loss_report (진짜 fallback — preservation scope 자체 부재가 사유, base-absent 아님). base corrupt = abort-before-touch (base_state_resolution.base_corrupt). 다음 reconcile 부터 snapshot = base_ok (3-way 정상). CFP-745 FIX Iter 2 정정 — base-absent ≠ marker-absent 분리 (orthogonality_invariant 정합. v1.4 schema 정정 — MINOR 유지, ratchet 강화 only: marker_block_absent_behavior 무변경 / user_decision_branches:0 무변경 / base_absent 가 marker_absent 와 분리됨을 명시 = 강화)"
+  failure_modes:   # Change Plan §7.4.1 (a)-(h) overlay reconcile DR 8 failure mode SSOT cross-ref
+    - "(a) base 부재/corrupt — base 가용성 ≠ marker scope orthogonal 분리 (FIX Iter 2): base corrupt → abort-before-touch / base 부재+MARKER_VALID → marker-aware 2-way first-reconcile (marker 밖 preserve, wholesale 아님) / MARKER_NONE(base무관) → wholesale_mirror (silent loss 0)"
+    - "(b) 3-way merge conflict (marker 안 wrapper-new ↔ consumer-current) → 명시적 보고 (silent overwrite 0)"
+    - "(c) binary file git merge-file 불가 → wholesale mirror + loss report (silent corrupt 0)"
+    - "(d) marker malformed (orphan/reversed/nested) → check-wrapper-managed-block.sh exit_nonzero → reconcile abort"
+    - "(e) idempotent re-run (overlay 이미 wrapper SSOT 일치) → no-op 정상 종료 (snapshot 미생성)"
+    - "(f) sidecar manifest 부재/malformed → wholesale_mirror fallback (partial key-path merge 금지)"
+    - "(g) customization 영역 침범 (marker 밖 byte-diff) → Story-3 snapshot rollback + 명시적 escalation"
+    - "(h) cross-platform path encoding → Story-3 §4.5 path_form_normalization SSOT 재사용 (overlay layer 신규 detection 0)"
+  ratchet_invariant_preserved:   # ADR-064 §self-application — v1.4 = 강화 only (overlay coverage 확장), weakening 0
+    user_decision_branches_0: unchanged
+    atomicity_boundary_semantic_invariant: unchanged   # family_7_plugin_atomic (ADR-016 §결정 1 — overlay reconcile = runtime catch-up only)
+    marker_block_absent_behavior: unchanged             # wholesale_mirror_with_user_visible_loss_report (ADR-027 §결정 7.C)
+    transaction_completion_criterion: unchanged        # ADR-053 §D2 verbatim
+    snapshot_reset_disjoint_layer: unchanged           # ADR-067 cross-pollinate forbidden (base = Story-3 snapshot 재사용, 신규 layer 0)
+    adr_053_d2_verbatim_quote: unchanged               # L150-151 weakening 차단
+```
+
+Phase 1 (CFP-745) merge 시 본 §4.7 binding block 활성 (schema declare — marker_block_syntax.json carrier reservation → realized). Phase 2 (별 PR) merge 시 `scripts/reconcile-overlay.sh` 실 구현 + `.claude/_overlay/.wrapper-managed-manifest.json` sidecar manifest 실 형식 + overlay 3-way merge mechanical 활성.
 
