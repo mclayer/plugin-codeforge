@@ -131,11 +131,11 @@ bootstrap_exempt_protocols:
 
 ## 관련 ADR
 
-- [ADR-031](../../../adr/ADR-031-lane-spawn-evidence.md): Lane Evidence §14 monopoly mandate (§결정 1 + Amendment 1 delegate rule)
+- [ADR-031](../../../adr/ADR-031-lane-spawn-evidence-trail.md): Lane Evidence §14 monopoly mandate (§결정 1 + Amendment 1 delegate rule)
 - [ADR-013](../../../adr/ADR-013-codeforge-family-dogfood-out-policy.md): codeforge family dogfood-out — Story file storage policy
 - [ADR-060](../../../adr/ADR-060-evidence-enforceable-promotion-framework.md): evidence-enforceable promotion framework — Amendment 13 §결정 27 (`story-section-ownership` warning-tier entry carrier)
 - [ADR-061](../../../adr/ADR-061-python-script-writing-convention.md): Python script-writing convention — lint Python SSOT 외부 .py 의무 모체
-- [ADR-062](../../../adr/ADR-062-carrier-story-bootstrap-exemption.md): carrier-Story bootstrap exemption (EC-4)
+- [ADR-062](../../../adr/ADR-062-carrier-bootstrap-dependency-rule.md): carrier-Story bootstrap exemption (EC-4)
 - `fix-event-v1` contract: §10 FIX Ledger Orchestrator monopoly (CFP-32)
 - yaml SSOT: [`lane-self-write-ownership-matrix.yaml`](lane-self-write-ownership-matrix.yaml) (same dir)
 - Skill mirror: [`skills/lane-self-write-boundary/SKILL.md`](../../../../skills/lane-self-write-boundary/SKILL.md)

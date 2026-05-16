@@ -33,48 +33,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Check internal links in markdown
-        run: |
-          python3 <<'EOF'
-          import re, sys
-          from pathlib import Path
-
-          LINK_RE = re.compile(r'\[[^\]]*\]\(([^)]+)\)')
-          FENCE_RE = re.compile(r'^[ \t]*```')
-          ROOT = Path(".")
-          md_files = list(ROOT.rglob("*.md"))
-          md_files = [p for p in md_files if ".claude/agents" not in str(p)]
-
-          errors: list[str] = []
-          for md in md_files:
-              in_fence = False
-              for lineno, line in enumerate(md.read_text(encoding="utf-8").splitlines(), start=1):
-                  # Toggle on fenced code block boundaries; skip everything inside
-                  if FENCE_RE.match(line):
-                      in_fence = not in_fence
-                      continue
-                  if in_fence:
-                      continue
-                  for match in LINK_RE.finditer(line):
-                      target = match.group(1).strip()
-                      # Skip external URLs, anchors, mailto
-                      if target.startswith(("http://", "https://", "#", "mailto:")):
-                          continue
-                      # Skip placeholder targets (e.g., <REPLACE>, ${VAR}, {key})
-                      if "<" in target or "$" in target or target.startswith("{"):
-                          continue
-                      # Strip anchor fragment
-                      file_part = target.split("#", 1)[0]
-                      if not file_part:
-                          continue
-                      resolved = (md.parent / file_part).resolve()
-                      if not resolved.exists():
-                          errors.append(f"{md}:{lineno}: broken link -> {target}")
-
-          if errors:
-              print("\n".join(errors))
-              sys.exit(1)
-          print(f"all internal links OK across {len(md_files)} markdown files")
-          EOF
+        run: python3 scripts/check-markdown-links.py
 
   agent-frontmatter:
     name: agent frontmatter contract
