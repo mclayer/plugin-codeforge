@@ -1,0 +1,182 @@
+# lane-self-write-ownership-matrix.yaml
+# Per-section owner-agent mapping SSOT — machine-readable
+# Carrier: CFP-722 §13.A (2026-05-16)
+# Human-readable mirror: lane-self-write-ownership-matrix.md (same dir)
+# Drift-sync: yaml ↔ SKILL.md (skills/lane-self-write-boundary/SKILL.md) ↔ story-page-structure.md headings ↔ lint regex
+# Follow-up 3-way sync-check: Change Plan §13.B (separate CFP)
+#
+# owner_agents: canonical agent/lane identifiers
+#   requirements   = RequirementsPL (codeforge-requirements)
+#   design         = ArchitectAgent / DesignLane (codeforge-design)
+#   develop        = DeveloperPL (codeforge-develop)
+#   pmo            = PMOAgent (codeforge-pmo)
+#   review         = ReviewPL (codeforge-review)
+#   orchestrator   = Orchestrator (top-level Claude session) — monopoly
+#
+# monopoly: true = Orchestrator-only write (CFP-32 / ADR-031)
+# excluded: true = handled by different lint (cross-ref only, no duplicate codification)
+#
+# lint_invariant:
+#   INV-DI-1: lane-owned section — semantic-normalize + token-level deletion by non-owner = violation
+#   INV-DI-2: monopoly section — ANY base-row mutation without Orchestrator/delegate attribution = violation
+#   EXCLUDED: handled by story-section-1-immutable.yml, cross-ref only
+
+---
+schema_version: "1.0"
+introduced_by: CFP-722
+date: 2026-05-16
+ssot_skill: skills/lane-self-write-boundary/SKILL.md
+lint_script: scripts/lib/check_story_section_ownership.py
+lint_workflow: templates/github-workflows/story-section-ownership-check.yml
+
+sections:
+  - section: "1"
+    heading: "개요"
+    owner_agents: []
+    monopoly: false
+    excluded: true
+    excluded_reason: "story-section-1-immutable.yml 영역 — 중복 codification 금지 (cross-ref only)"
+    lint_invariant: EXCLUDED
+
+  - section: "2"
+    heading: "도메인 컨텍스트"
+    owner_agents: ["requirements"]
+    monopoly: false
+    excluded: false
+    lint_invariant: INV-DI-1
+
+  - section: "3"
+    heading: "ADR 결정 매트릭스"
+    owner_agents: ["design"]
+    monopoly: false
+    excluded: false
+    lint_invariant: INV-DI-1
+
+  - section: "4"
+    heading: "요구사항 분석"
+    owner_agents: ["requirements"]
+    monopoly: false
+    excluded: false
+    lint_invariant: INV-DI-1
+    notes: "§4.0, §4.1, §4.2, §4.3 sub-sections 포함"
+
+  - section: "5"
+    heading: "요구사항 확장 해석"
+    owner_agents: ["requirements"]
+    monopoly: false
+    excluded: false
+    lint_invariant: INV-DI-1
+
+  - section: "6"
+    heading: "외부 지식"
+    owner_agents: ["requirements"]
+    monopoly: false
+    excluded: false
+    lint_invariant: INV-DI-1
+
+  - section: "7"
+    heading: "설계 서사"
+    owner_agents: ["design"]
+    monopoly: false
+    excluded: false
+    lint_invariant: INV-DI-1
+
+  - section: "8"
+    heading: "개발 서사"
+    owner_agents: ["develop"]
+    monopoly: false
+    excluded: false
+    lint_invariant: INV-DI-1
+
+  - section: "8.5"
+    heading: "Impl Manifest"
+    owner_agents: ["develop"]
+    monopoly: false
+    excluded: false
+    lint_invariant: INV-DI-1
+
+  - section: "9"
+    heading: "리뷰 결과"
+    owner_agents: ["review", "design", "develop", "requirements"]
+    monopoly: false
+    excluded: false
+    lint_invariant: INV-DI-1
+    notes: |
+      §9.1/§9.2/§9.3/§9.4 sub-sections 각 lane PL 이 작성 (review-verdict-v4 packet).
+      final §9 verdict append = Orchestrator (CFP-134/ADR-035 정정 후).
+      본 lint 는 §9 writer가 §9를 수정하는 경우 INV-DI-1 적용 (다른 lane이 §9 수정하는 경우).
+
+  - section: "10"
+    heading: "FIX Ledger"
+    owner_agents: ["orchestrator"]
+    monopoly: true
+    excluded: false
+    lint_invariant: INV-DI-2
+    ssot_references:
+      - "fix-event-v1 contract (CFP-32 monopoly)"
+      - "docs/inter-plugin-contracts/fix-event-v1.md"
+
+  - section: "10.5"
+    heading: "GitOps"
+    owner_agents: ["orchestrator"]
+    monopoly: true
+    excluded: false
+    lint_invariant: INV-DI-2
+    ssot_references:
+      - "GitOpsAgent Orchestrator-delegate (ADR-031 Amendment 1)"
+
+  - section: "11"
+    heading: "PMO"
+    owner_agents: ["design", "pmo"]
+    monopoly: false
+    excluded: false
+    lint_invariant: INV-DI-1
+    notes: |
+      ArchitectAgent writes §11 Change Plan context (design lane).
+      PMOAgent writes §11 retro/sprint-review (pmo lane).
+
+  - section: "12"
+    heading: "회고 / Retro"
+    owner_agents: ["pmo"]
+    monopoly: false
+    excluded: false
+    lint_invariant: INV-DI-1
+
+  - section: "13"
+    heading: "ArchitectPL Verdict"
+    owner_agents: ["orchestrator"]
+    monopoly: true
+    excluded: false
+    lint_invariant: INV-DI-2
+    ssot_references:
+      - "ArchitectPLAgent verdict packet (review-verdict-v4)"
+      - "Issue #722 (b) monopoly classification"
+
+  - section: "14"
+    heading: "Lane Evidence"
+    owner_agents: ["orchestrator"]
+    monopoly: true
+    excluded: false
+    lint_invariant: INV-DI-2
+    ssot_references:
+      - "ADR-031 §결정 1 + Amendment 1 (delegate subagent PASS)"
+      - "docs/adr/ADR-031-lane-spawn-evidence-mandate.md"
+
+delegate_subagent_rule:
+  description: |
+    Orchestrator-owned delegate subagent (ADR-031 Amendment 1 / fix-event-v1 Amendment, CFP-275)
+    이 monopoly section 을 수정하는 경우 = PASS attribution (Orchestrator identity 귀속).
+    Attribution 판정 = branch proxy (cfp-NNN flat = Orchestrator pattern) + phase:* label.
+    Lane plugin spawn ≠ Orchestrator-owned delegate spawn 분기 = §7.3 proxy attribution SSOT.
+  orchestrator_branch_pattern: "^cfp-\\d+$"  # flat branch (no /lane suffix) = Orchestrator pattern
+  lane_plugin_branch_pattern: "cfp-\\d+/<lane>"  # hierarchical = lane plugin pattern
+  fail_open_on_ambiguous: true  # ambiguous attribution → violation still reported (content-diff basis)
+
+bootstrap_exempt_rule:
+  description: |
+    Carrier-Story self-app exemption (ADR-062 §결정 1 / EC-4 §7.6).
+    Story frontmatter 에 bootstrap_exempt_protocols 목록 중
+    "policy:lane-self-write-boundary-mechanical" 포함 AND carrier_story == own story key 시
+    모든 ownership check BYPASS (first short-circuit).
+  exempt_protocol_id: "policy:lane-self-write-boundary-mechanical"
+  audit: "::notice:: carrier-exempt audit" (매 exemption 적용 시)

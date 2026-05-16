@@ -38,6 +38,8 @@ CANDIDATES = [
     ("test-check-inter-plugin-drift.sh",        "test_check_inter_plugin_drift.py"),
     ("test-cfp-140-ghec-governance.sh",         "test_cfp_140_ghec_governance.py"),
     ("sync-required-workflows.sh",              "sync_required_workflows.py"),
+    # CFP-722 Phase 2 — 20번째 entry (pure thin-wrapper, NOT HYBRID)
+    ("check-story-section-ownership.sh",        "check_story_section_ownership.py"),
 ]
 
 # Wrappers that retain non-trivial bash logic (not full thin-wrapper pattern)
