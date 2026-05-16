@@ -1834,3 +1834,45 @@ entries:
       threshold: 3                   # ADR-060 §결정 19 (Amendment 6) -- threshold 3 standard
       promotion_trigger: none        # count=0 < threshold=3 -- 발화 없음 (Option A)
     status: Active
+
+  # ─── CFP-744 Wave 2 Story-4 (ADR-037 Amendment 1 — atomic upgrade 후 0 drift invariant, 2026-05-16) ───
+  # Codex TP#2 FIX Iter 2 F-P1 — ADR-040 Amendment 3 §결정 7 mechanical action binding 의무.
+  # 旧 mismapping (marketplace-parity = wrapper-side publishing-time mirrored-field parity) 정정 → 신규 전용 entry.
+  # marketplace-parity 와 의미 분리: marketplace-parity = plugin.json ↔ marketplace.json mirrored field (publishing-time, wrapper-side) /
+  # 본 entry = consumer-side installed 7-plugin version pin ↔ marketplace SSOT drift after atomic upgrade (runtime, consumer-side).
+  - name: atomic-upgrade-zero-drift
+    description: |
+      ADR-037 Amendment 1 mechanical verification — codeforge family 7 plugin
+      (codeforge + codeforge-{requirements,design,review,develop,test,pmo})
+      atomic upgrade `--apply` 완료 후 consumer-side installed version pin ↔
+      marketplace SSOT drift 0 (none) invariant. detect mechanism = 기존
+      scripts/check-codeforge-version-drift.sh 를 `--plugin <codeforge-N>` 7회
+      invocation (F-002 옵션 A 정합 — codex/superpowers 외부 marketplace 제외,
+      7-name loop 구조적 배제). 실 enforcement carrier = Phase 2
+      scripts/atomic-upgrade-7-plugins.sh 의 post-atomic 0-drift gate (drift > 0
+      = transaction 실패 분류 → 전체 7 plugin atomic rollback). marketplace-parity
+      entry (wrapper-side publishing-time mirrored-field cross-repo drift) 와는
+      의미 disjoint — 본 entry = consumer-side runtime 0-drift invariant 자체.
+    detect_command: bash scripts/check-codeforge-version-drift.sh   # 7-plugin family scope (--plugin <codeforge-N> aggregated, F-002 옵션 A). 기존 script reuse — detect mechanism 실재 (CFP-262 Accepted)
+    workflow: templates/github-workflows/atomic-upgrade-zero-drift.yml   # Phase 2 신설 완료 (.github/ self-app byte-identical, ADR-005). Active 전환됨
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:atomic-upgrade-zero-drift   # warning-tier bypass_label optional (ADR-060 Amendment 2 §결정 16) — 미래 promotion 대비 namespace 예약 (ADR-024 Amendment 3 per-entry namespace 정합)
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # 기존 entry 동일 패턴
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: []       # 독립 entry — check-codeforge-version-drift.sh (CFP-262 기존) reuse + Phase 2 atomic-upgrade-7-plugins.sh 외 의존 없음
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = post-atomic drift gate, modal phrase 검사 미포함
+    introduced_by: CFP-744
+    introduced_date: 2026-05-16
+    owner_adr: ADR-037               # Amendment 1 SSOT — atomic upgrade 후 0 drift invariant 정책 owner
+    carrier_adr: ADR-060             # evidence-enforceable framework carrier
+    recurrence:
+      count: 0                       # 첫 도입 — prior incident 없음
+      threshold: 3                   # ADR-060 §결정 19 (Amendment 6) — threshold 3 standard
+      promotion_trigger: none        # count=0 < threshold=3 → 발화 없음 (Option A)
+    status: Active                   # Phase 2 (CFP-744) — scripts/atomic-upgrade-7-plugins.sh + templates/.github atomic-upgrade-zero-drift.yml byte-identical self-app land 완료 → deferred-followup → Active 전환 (Phase 1 = registry declare only, bootstrap-labels-precondition 패턴 동형)

@@ -15,7 +15,6 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 NORMALIZE_PY="${SCRIPT_DIR}/lib/path_normalize.py"
 
 # --------------------------------------------------------------------------
@@ -39,17 +38,21 @@ _to_canonical() {
 # --------------------------------------------------------------------------
 _usage() {
     cat <<'USAGE'
-codeforge-upgrade.sh — codeforge plugin 업그레이드 CLI (CFP-743)
+codeforge-upgrade.sh — codeforge plugin 업그레이드 CLI (CFP-743 / CFP-744 AC-11)
 
 사용법:
   bash scripts/codeforge-upgrade.sh --dry-run
   bash scripts/codeforge-upgrade.sh --apply
   bash scripts/codeforge-upgrade.sh --rollback <version>
+  bash scripts/codeforge-upgrade.sh --apply --repo <consumer-repo-root>
 
 옵션:
   --dry-run               desired state diff preview (filesystem touch 0, network call 가능)
   --apply                 snapshot → 9 영역 reconcile → 사후 sanity check (단일 atomic unit)
   --rollback <version>    해당 version snapshot restore (예: --rollback 5.74.0)
+  --repo <path>           reconcile 대상 consumer repo root 명시 지정 (CFP-744 AC-11,
+                          mode 와 순서 무관 — orthogonal). 미지정 시
+                          CODEFORGE_REPO_ROOT env → 없으면 SCRIPT_DIR 부모 (현 동작 보존)
 
 원칙:
   - 사용자 결정 분기 0 (no prompt — reconcile-protocol-v1 user_decision_branches: 0)
@@ -63,6 +66,8 @@ USAGE
 # --------------------------------------------------------------------------
 MODE=""
 ROLLBACK_VERSION=""
+INPUT_REPO=""        # CFP-744 AC-11 — --repo <path> override (미지정 = "")
+MODE_SET_COUNT=0     # §3.7.2-parser (d) — mode 정확히 1개 강제
 
 if [[ $# -eq 0 ]]; then
     _usage >&2
@@ -70,45 +75,105 @@ if [[ $# -eq 0 ]]; then
     exit 1
 fi
 
-case "${1}" in
-    --dry-run)
-        MODE="dry_run"
-        shift
-        ;;
-    --apply)
-        MODE="transaction"
-        shift
-        ;;
-    --rollback)
-        MODE="snapshot_restore"
-        if [[ $# -lt 2 ]]; then
-            echo "오류: --rollback 에는 version 인자가 필요합니다. 예: --rollback 5.74.0" >&2
+# §3.7.2-parser (CFP-744 AC-11) — single-positional case → while/case loop parser.
+# 7-invariant byte-level 보존:
+#   (a) 기존 mode invocation 동작·exit code·error 문구 byte-identical
+#   (b) --repo orthogonal (mode 와 순서 무관, loop 가 각각 독립 consume)
+#   (c) --rollback value-taking 보존 (다음 토큰 consume, shift 2 semantic)
+#   (d) mode 정확히 1개 강제 + 중복/충돌 reject (MODE_SET_COUNT)
+#   (e) unknown arg = enum whitelist reject (loop 내 즉시 reject, §7.1)
+#   (f) downstream pipeline 무변경 (REPO_ROOT resolve 후 _to_canonical 동일)
+#   (g) --repo/env 미지정 fallback = $(cd "${SCRIPT_DIR}/.." && pwd) byte-identical
+while [[ $# -gt 0 ]]; do
+    case "${1}" in
+        --dry-run)
+            MODE="dry_run"
+            MODE_SET_COUNT=$((MODE_SET_COUNT + 1))
+            shift
+            ;;
+        --apply)
+            MODE="transaction"
+            MODE_SET_COUNT=$((MODE_SET_COUNT + 1))
+            shift
+            ;;
+        --rollback)
+            MODE="snapshot_restore"
+            MODE_SET_COUNT=$((MODE_SET_COUNT + 1))
+            if [[ $# -lt 2 ]]; then
+                echo "오류: --rollback 에는 version 인자가 필요합니다. 예: --rollback 5.74.0" >&2
+                exit 1
+            fi
+            ROLLBACK_VERSION="${2}"
+            shift 2
+            ;;
+        --repo)
+            # CFP-744 AC-11 — consumer_repo_root 명시 지정 (orthogonal, value-taking)
+            if [[ $# -lt 2 ]]; then
+                echo "오류: --repo 에는 path 인자가 필요합니다. 예: --repo /path/to/consumer-repo" >&2
+                exit 1
+            fi
+            INPUT_REPO="${2}"
+            shift 2
+            ;;
+        --help|-h)
+            _usage
+            exit 0
+            ;;
+        *)
+            # unknown arg = enum whitelist reject (§7.1 free-text injection surface 0)
+            echo "오류: 알 수 없는 인자: '${1}'" >&2
+            echo "허용 인자: --dry-run / --apply / --rollback <version> / --repo <path>" >&2
+            echo "unknown arg = enum whitelist reject (Change Plan §7.1 trust boundary)" >&2
             exit 1
-        fi
-        ROLLBACK_VERSION="${2}"
-        shift 2
-        ;;
-    --help|-h)
-        _usage
-        exit 0
-        ;;
-    *)
-        # unknown arg = enum whitelist reject (§7.1 free-text injection surface 0)
-        echo "오류: 알 수 없는 인자: '${1}'" >&2
-        echo "허용 인자: --dry-run / --apply / --rollback <version>" >&2
-        echo "unknown arg = enum whitelist reject (Change Plan §7.1 trust boundary)" >&2
-        exit 1
-        ;;
-esac
+            ;;
+    esac
+done
 
-# 추가 인자 거부 (free-text injection 차단)
-if [[ $# -gt 0 ]]; then
-    echo "오류: 예상치 못한 추가 인자: '$*'" >&2
+# §3.7.2-parser (d) — mode 정확히 1개 강제 (0개 = 인자 필요 / 2개+ = mode 충돌)
+if [[ "${MODE_SET_COUNT}" -eq 0 ]]; then
+    _usage >&2
+    echo "오류: 인자가 필요합니다. --dry-run / --apply / --rollback <version> 중 하나를 지정하세요." >&2
+    exit 1
+fi
+if [[ "${MODE_SET_COUNT}" -gt 1 ]]; then
+    echo "오류: mode 인자는 정확히 1개여야 합니다 (--dry-run / --apply / --rollback 중복/충돌)." >&2
     exit 1
 fi
 
 # --------------------------------------------------------------------------
+# §3.7.2-parser (g) — consumer_repo_root resolve (CFP-744 AC-11 §4.5)
+#   우선순위: --repo <path> > CODEFORGE_REPO_ROOT env > SCRIPT_DIR 부모 (현 동작 byte-identical)
+# --------------------------------------------------------------------------
+if [[ -n "${INPUT_REPO}" ]]; then
+    REPO_ROOT="${INPUT_REPO}"
+elif [[ -n "${CODEFORGE_REPO_ROOT:-}" ]]; then
+    REPO_ROOT="${CODEFORGE_REPO_ROOT}"
+else
+    # fallback = 현 Story-3 line 17-18 그대로 (byte-identical, §3.7.2-parser (g))
+    REPO_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
+fi
+
+# --------------------------------------------------------------------------
+# §4.5 / §7.4.1 (i) — --repo wrong-target 검증 (실재 디렉터리 AND .git 보유)
+#   미지정 fallback (SCRIPT_DIR 부모) 은 plugin repo = 검증 skip (현 동작 보존)
+# --------------------------------------------------------------------------
+if [[ -n "${INPUT_REPO}" || -n "${CODEFORGE_REPO_ROOT:-}" ]]; then
+    if [[ ! -d "${REPO_ROOT}" ]]; then
+        echo "[repo_target_failure] 지정 repo 가 실재 디렉터리 아님: ${REPO_ROOT}" >&2
+        echo "abort-before-touch: filesystem touch 없이 종료 (Change Plan §4.5 / §7.4.1(i))" >&2
+        exit 2
+    fi
+    if [[ ! -d "${REPO_ROOT}/.git" ]]; then
+        echo "[repo_target_failure] 지정 repo 가 git repo 아님 (.git 부재): ${REPO_ROOT}" >&2
+        echo "reconcile target 재확인 요망 (오타 / 다른 repo / non-git 디렉터리)" >&2
+        echo "abort-before-touch: filesystem touch 없이 종료 (Change Plan §4.5 / §7.4.1(i))" >&2
+        exit 2
+    fi
+fi
+
+# --------------------------------------------------------------------------
 # repo root path 정규화 (§4.5 — abort-before-touch on failure)
+# §3.7.2-parser (f) — resolve source 만 확장, downstream pipeline byte 무변경
 # --------------------------------------------------------------------------
 CANONICAL_REPO_ROOT="$(_to_canonical "${REPO_ROOT}")"
 
