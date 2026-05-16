@@ -69,13 +69,13 @@ codeforge-design lane 의 ArchitectAgent (chief author) 가 Phase 1 산출물을
 
 ### 공통 root cause
 
-- chief author 가 6 deputy 산출물 통합 후 Change Plan + ADR draft 만 write, 주변 mechanical sync 파일을 별도 checklist 로 확인하지 않음
+- chief author 가 6 SubAgent 산출물 통합 후 Change Plan + ADR draft 만 write, 주변 mechanical sync 파일을 별도 checklist 로 확인하지 않음
 - 매 Story 에서 동일 결함 type 재발 (label-registry / doc-locations / workflow self-app / link target / MANIFEST.yaml)
 - CI lint 가 사후 감지 channel 로 동작 — Phase 1 PR commit 시점 forcing function 부재
 
 ### 기존 SSOT 의 한계
 
-- ArchitectAgent.md 본문 §3.5 self-lint (CFP-378) = 6 deputy 산출물 input 표면 형식 / Story §1 cross-ref / 외부 입력 무결성 — **design decision input 표면 check 만**. mechanical sync (label-registry / doc-locations / workflow self-app) 영역 미포함
+- ArchitectAgent.md 본문 §3.5 self-lint (CFP-378) = 6 SubAgent 산출물 input 표면 형식 / Story §1 cross-ref / 외부 입력 무결성 — **design decision input 표면 check 만**. mechanical sync (label-registry / doc-locations / workflow self-app) 영역 미포함
 - ADR-063 marketplace atomic invariant = `plugin.json` / `CHANGELOG.md` / `marketplace.json` 3-file atomic — **marketplace 영역만**. label-registry / doc-locations / workflow self-app 등 non-marketplace 영역 미포함
 - review-verdict-v4 schema = `pl_recommendation` 단일 final verdict — chief author self-check pass 여부 explicit marker 부재
 

@@ -75,7 +75,7 @@ blocked / waiting 처리: 4-marker vocabulary 범위 밖. ⬜ pending 으로 표
 
 ### 결정 5 — Hierarchical 2-level
 
-lane row (0-indent) + agent sub-row (2-space indent). active lane 만 펼침. 다중 in_progress (TodoWrite "ONE in_progress" 가이드 deviation) 의도적 허용 — codeforge 의 병렬 agent 모델 (deputy 6/8 / workers parallel / parallel diagnosis) 본질상 불가피. 본 ADR 가 wrapper-specific deviation 명시.
+lane row (0-indent) + agent sub-row (2-space indent). active lane 만 펼침. 다중 in_progress (TodoWrite "ONE in_progress" 가이드 deviation) 의도적 허용 — codeforge 의 병렬 agent 모델 (SubAgent 6/8 / workers parallel / parallel diagnosis) 본질상 불가피. 본 ADR 가 wrapper-specific deviation 명시.
 
 cross-plugin generalization (lane plugins 에 동일 protocol 적용) 은 별도 CFP — 본 ADR scope 외부.
 

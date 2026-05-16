@@ -18,7 +18,7 @@ authors:
 
 # design_output v1 — Inter-plugin Contract (ARCHIVED)
 
-> **ARCHIVED 2026-04-30** — 본 v1 은 [v2](design-output-v2.md) 로 대체됨 (CFP-46, ADR-014). v2 는 OperationalRiskArchitectAgent 추가 (5 deputy → 6 deputy) + §11.6 Idempotency invariant CONDITIONAL 신설 BREAKING bump.
+> **ARCHIVED 2026-04-30** — 본 v1 은 [v2](design-output-v2.md) 로 대체됨 (CFP-46, ADR-014). v2 는 OperationalRiskArchitectAgent 추가 (5 SubAgent → 6 SubAgent) + §11.6 Idempotency invariant CONDITIONAL 신설 BREAKING bump.
 
 **상위 SSOT 위치**:
 - `mclayer/plugin-codeforge-design/docs/inter-plugin-contracts/design-output-v1.md`: **canonical** (codeforge-design repo)
@@ -140,7 +140,7 @@ design_output:
 
 ## 5. v1 → v2 변경 가능성
 
-- 새 deputy 추가 (overlay/preset 진화) — minor (deputies_results schema 확장)
+- 새 SubAgent 추가 (overlay/preset 진화) — minor (deputies_results schema 확장)
 - 새 mirror section 추가 (§12 등) — minor
 
 ## 6. 동결 ATTRIBUTION

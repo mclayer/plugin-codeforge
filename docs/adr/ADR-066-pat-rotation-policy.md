@@ -88,7 +88,7 @@ PAT 발급 시 다음 5 scope 만 부여:
 
 **Amendment 2 (CFP-627) rationale**: ADR-063 Amendment 3 §결정 13 (post-rebase — CFP-631 Amendment 2 §결정 11+12 occupied) reactive scheduled detection (`marketplace-drift-detection.yml`) 가 `mclayer/marketplace` repo 의 `marketplace.json` fetch 의무 → least-privilege 정합 신규 scope grant. ADR-013 Amendment 4 (PAT consolidation) 정책 무변경 — 단일 PAT scope 확장 (별도 PAT 신설 X).
 
-**Amendment 3 (CFP-743) rationale (SecurityArch deputy perspective primary owner)**:
+**Amendment 3 (CFP-743) rationale (SecurityArch SubAgent perspective primary owner)**:
 
 CFP-743 (Wave 2 Story-3) 가 `scripts/codeforge-upgrade.{sh,ps1}` CLI + UpgradeAgent 를 신설. reconcile-protocol-v1 §2 의 9 desired_state_domains 중 다음 3 영역이 consumer repo `.github/` content write + PR open 을 요구:
 

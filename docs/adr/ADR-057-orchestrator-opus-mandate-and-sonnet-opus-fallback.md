@@ -226,7 +226,7 @@ ADR-060 §결정 12 = "CFP-C 잠정 = ADR-057 amendment + KPI dashboard — 본 
 
 ### 6 agent decision matrix (axis-A × axis-B × axis-C × Codex review × LangGraph precedent)
 
-ArchitectPLAgent + 5 deputy (CodebaseMapper / Refactor / SecurityArch / OpRisk / TestContract) 산출물 통합 결과:
+ArchitectPLAgent + 5 SubAgent (CodebaseMapper / Refactor / SecurityArch / OpRisk / TestContract) 산출물 통합 결과:
 
 | Agent | axis-A (cost) | axis-B (mandate 깊이) | axis-C (CL-6 SSOT) | Codex review (CFP-379) | LangGraph precedent | 최종 |
 |---|---|---|---|---|---|---|

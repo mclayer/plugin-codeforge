@@ -40,7 +40,7 @@ related_files:
 producers:
   - Orchestrator  # dispatch packet writer (PL spawn prompt 작성)
   - codeforge-develop/DeveloperPLAgent  # PL → worker fan-out
-  - codeforge-design/ArchitectPLAgent  # deputy multi-instance 병렬 (이미 부분 적용)
+  - codeforge-design/ArchitectPLAgent  # SubAgent multi-instance 병렬 (이미 부분 적용)
   - codeforge-requirements/RequirementsPLAgent  # 6-way sub-agent 병렬 (ADR-056 gap absorb)
 consumers:
   - codeforge-pmo/PMOAgent  # retro file 의 wall-clock 측정 (sunset gate carrier)

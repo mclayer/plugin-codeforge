@@ -120,7 +120,7 @@ is_transitional: false
 |---|---|:-:|:-:|---|
 | `team-spec-decompose.yaml` | Stage 0 (Epic 분해) | 2 (PMOAgent + Orchestrator) | 2 | sequential dialog |
 | `team-spec-requirements.yaml` | 요구사항 | 4 (PL + Domain + Analyst + Researcher) | 4 | parallel sub-task fan-out |
-| `team-spec-design.yaml` | 설계 | 8 (PL + chief + 6 deputy) | 8 (CONDITIONAL +2 Live deputy) | parallel deputy fan-out |
+| `team-spec-design.yaml` | 설계 | 8 (PL + chief + 6 SubAgent) | 8 (CONDITIONAL +2 Live SubAgent) | parallel SubAgent fan-out |
 | `team-spec-design-review.yaml` | 설계 리뷰 | **2** (PL + Claude worker) | **3** (PL + Claude + Codex worker) | adversarial debate |
 | `team-spec-develop.yaml` | 구현 | 5-7 (PL + QADev + role:dev × N) | 5-7 | cross-layer (dev ↔ QA) |
 | `team-spec-code-review.yaml` | 구현 리뷰 | **2** (PL + Claude worker) | **3** (PL + Claude + Codex worker) | adversarial debate |
@@ -230,7 +230,7 @@ default  >  auto_on_divergence  >  user_request_only
 | 패턴 | codeforge 매핑 lane | Measurable verification | Lint / fixture 위치 |
 |---|---|---|---|
 | **Specialization** | 7 lane 전체 (teammate 좁은 system prompt) | team-spec yaml `system_prompt_path` 가 lane PL agent prompt line count 보다 적음 | subjective — Phase 2 e2e fixture spot-check |
-| **Parallelization** | TEAM-DESIGN 6 deputy / 2 review worker 동시 | §14 Lane Evidence 의 `spawned_at` (deputy 6 row) 차이 < 60s | `scripts/check-lane-evidence.sh` lint 확장 (Phase 2 PR scope) |
+| **Parallelization** | TEAM-DESIGN 6 SubAgent / 2 review worker 동시 | §14 Lane Evidence 의 `spawned_at` (SubAgent 6 row) 차이 < 60s | `scripts/check-lane-evidence.sh` lint 확장 (Phase 2 PR scope) |
 | **Adversarial** | TEAM-{DESIGN,CODE,SECURITY}-REVIEW Claude vs Codex worker (Codex on request) | review-verdict v4 packet `worker_dialog_rounds: int >= 2` (Codex 활성 시) | review-verdict-v4 schema 신규 field (본 ADR 결정 4) |
 | **Cross-layer** | TEAM-DEVELOP dev ↔ QA continuous coordination | develop-output v1 → v1.1 MINOR bump 후보 (`cross_layer_dialog_rounds: int >= 1`) | codeforge-develop sibling sync follow-up |
 | **Escalation** | lane FIX 시 lane team → TEAM-FIX (parallel diagnosis) | §10 FIX Ledger row + §14 lane=`<원래>-fix-iter-N` row pair 동시 존재 | `scripts/check-fix-evidence.sh` 신설 후보 (Phase 2 deferred) |

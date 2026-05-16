@@ -363,7 +363,7 @@ PreToolUse hook 으로 inline write detect → 즉시 차단.
 
 - 6 lane plugin (codeforge-{requirements,design,review,develop,test,pmo}) 변경 없음 (ADR-039 §결정 5 lane plugin 0 변경 invariant 정합)
 - Inter-plugin contract 6 (requirements_output / design_output / review_verdict v3 / test_verdict / develop_output / pmo_output) 변경 0건
-- design lane 6 deputy + 2 CONDITIONAL deputy 변경 0건
+- design lane 6 SubAgent + 2 CONDITIONAL SubAgent 변경 0건
 - Stop discipline (ADR-025) 5 종 whitelist 무변 — stop-event-v1 = ADR-025 §결정 10 deferred slot 채움, whitelist 자체 변경 X
 - ADR-031 §14 lane evidence write monopoly 무변 (ownership 무변)
 - Story §10 FIX Ledger Orchestrator monopoly 무변 (cold tier proxy 재사용 — 신규 channel 신설 X)

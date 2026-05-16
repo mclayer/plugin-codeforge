@@ -186,4 +186,4 @@ CFP-280 = (a) + (b). pattern (b) 는 CFP-260 / ADR-036 Option B 잔존 — backw
 
 ## 변경 이력
 
-- **2026-05-09** — 신규 작성 (CFP-280 carrier Story Phase 1 PR scope). PL synthesis grounded in Story file §6 Researcher 산출물 (§6.3 dedup pattern 4종 비교). chief author 가 inline drafts 미제공 — PL 이 deputy synthesis 로 보강.
+- **2026-05-09** — 신규 작성 (CFP-280 carrier Story Phase 1 PR scope). PL synthesis grounded in Story file §6 Researcher 산출물 (§6.3 dedup pattern 4종 비교). chief author 가 inline drafts 미제공 — PL 이 SubAgent synthesis 로 보강.

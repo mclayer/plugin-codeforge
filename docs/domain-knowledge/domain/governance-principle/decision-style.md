@@ -219,7 +219,7 @@ Trace 4 measurable signal:
 
 - §1 사용자 directive 4 회 누적 = normative SSOT 정립 동인 (memory ephemeral 한계 해소)
 - §3 RequirementsPL §2-§6 ↔ §7 ArchitectPL §7-§11 = state dependency = sequential (lane 진행 자체)
-- 3 deputy (CodebaseMapper / Refactor / TestContractArch) spawn = parallel (state dependency 부재)
+- 3 SubAgent (CodebaseMapper / Refactor / TestContractArch) spawn = parallel (state dependency 부재)
 - Architect §7 → DesignReview = state dependency = sequential
 - CFP-446 + CFP-449 = state dependency 부재 = parallel-eligible sibling Story (본 Story merge 후 동시 진행 가능)
 
@@ -247,7 +247,7 @@ Trace 4 measurable signal:
 - **사후 운영 emergency channel** — deployment 후 incident response / 운영 장애 hotfix / Live touching emergency 영역. 본 결정 원칙은 proposing-time 한정이며, 사후 emergency 채널은 ADR-058 `is_transitional: true` 안전망 / `hotfix-bypass:*` label family (ADR-024 Amendment 3) / Hotfix playbook (`docs/hotfix-playbook.md`) 가 owner.
 - **ADR-058 안전망 ADR 영역** — `is_transitional: true` 선언 ADR 의 안전망 적용 영역. 본 원칙의 4 어휘 운영 + forbid-list 는 ADR-058 §해소 기준 충족 후 ratchet 가능, 안전망 상태 자체는 외연.
 - **Hotfix-bypass label family** — `hotfix-bypass:*` label 부착 PR 은 본 원칙 lint advisory 면제 (per-entry namespace, audit-trailed exception channel — ADR-060 §결정 4 정합).
-- **Live touching emergency** — Live system (DB primary / production deploy / payment system 등) touching 영역의 emergency rollback / kill-switch 발화. ADR-014 + ADR-030 + LiveOps / LiveOrdering deputy SSOT 영역.
+- **Live touching emergency** — Live system (DB primary / production deploy / payment system 등) touching 영역의 emergency rollback / kill-switch 발화. ADR-014 + ADR-030 + LiveOps / LiveOrdering SubAgent SSOT 영역.
 - **Product domain MVP 어휘** — proposing-time 결정 후보 영역 외 product domain 영역의 MVP 어휘는 본 forbid-list 외연.
 
 ## 관련 ADR

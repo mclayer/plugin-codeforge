@@ -50,7 +50,7 @@ Story file frontmatter 또는 PR body 에서 Live touching 여부 식별:
 
 - **Story file frontmatter**: `live_touching: true` (Live touching Story 작성 시 명시 의무)
 - **PR body marker**: `live_touching: true` (Phase 2 PR body 에 명시)
-- **CONDITIONAL deputy presence**: §13 schema 가 작성됨 + LiveOpsDeputy / LiveOrderingDeputy 산출물 존재 → 자동 detect (Phase 2 보강)
+- **CONDITIONAL SubAgent presence**: §13 schema 가 작성됨 + LiveOpsDeputy / LiveOrderingDeputy 산출물 존재 → 자동 detect (Phase 2 보강)
 
 Phase 1 = frontmatter / PR body marker explicit declare 의무. Phase 2 = §13 schema presence 자동 detect (별도 CFP).
 

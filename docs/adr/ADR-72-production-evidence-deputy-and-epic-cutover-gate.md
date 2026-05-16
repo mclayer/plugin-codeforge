@@ -53,27 +53,27 @@ mctrader 3-cycle 누적 패턴 분석 (CFP-620 post-mortem) 결과 동일 root c
 
 - **Cycle N**: review lane 4 lane (DesignReview / CodeReview / IntegrationTest / SecurityTest) PASS → EPIC CLOSED → production cutover 시점 wiring / data flow 결함 검출 → mctrader hotfix Story 신설 → 추가 cycle 진입
 - 모든 4 lane PASS evidence = **mock-only 검증 자체** (ArchitectAgent §7 design spec → QADev §8 Test Contract → integration test = mock service / fixture / synthetic data 기반). production env compose.yml / production deploy state / collector emit schema 실측 grounding 부재.
-- ArchitectPL Phase 1 deputy 6 permanent + 2 CONDITIONAL (LiveOps + LiveOrdering) 중 **production state 실측 grounding owner 부재** — OpRiskArch 는 §7.4 (DR / disconnect / clock / rate / env) **design-time policy SSOT** 정의 owner (ADR-014 §결정 1 정합). 실 production env 의 invariant 충족 evidence 명시 owner 책임 공백.
+- ArchitectPL Phase 1 SubAgent 6 permanent + 2 CONDITIONAL (LiveOps + LiveOrdering) 중 **production state 실측 grounding owner 부재** — OpRiskArch 는 §7.4 (DR / disconnect / clock / rate / env) **design-time policy SSOT** 정의 owner (ADR-014 §결정 1 정합). 실 production env 의 invariant 충족 evidence 명시 owner 책임 공백.
 - EPIC CLOSED gate (PMOAgent retro epic_close_gate) 가 **mock test PASS + CI PASS + PR merge** 만 의무 — production 실측 evidence (bucket prefix listing / WAL sample / Prometheus rate metric / drainage rate 4중) gate 항목 부재.
 
-본 누적 결함 패턴을 차단하기 위해 **production-grounding 단일 owner 축** 필요. ADR-014 Amendment 1 (CFP-77 LiveOps + LiveOrdering CONDITIONAL deputy 신설) 패턴 reuse — 3번째 CONDITIONAL deputy 로 ProductionEvidenceDeputy 신설.
+본 누적 결함 패턴을 차단하기 위해 **production-grounding 단일 owner 축** 필요. ADR-014 Amendment 1 (CFP-77 LiveOps + LiveOrdering CONDITIONAL SubAgent 신설) 패턴 reuse — 3번째 CONDITIONAL SubAgent 로 ProductionEvidenceDeputy 신설.
 
 ### Scope 분리 (boundary axis)
 
-ProductionEvidenceDeputy 의 책임은 **runtime-evidence** (production state 실측 명시) — OpRiskArch §7.4 의 **design-time SSOT** (invariant 정의) 와 별도 축. 두 deputy 의 mandate overlap 영역 (DR backup verify / env secret state / clock drift 실측 / rate metric / bucket prefix env isolation) 70%+ 발생 추정 — boundary axis 명시 의무 (§결정 4 명시). Story-2 (#633) 가 ADR-014 Amendment 3 본문 작성 시 양 ADR 의 cross-ref 양 방향 의무.
+ProductionEvidenceDeputy 의 책임은 **runtime-evidence** (production state 실측 명시) — OpRiskArch §7.4 의 **design-time SSOT** (invariant 정의) 와 별도 축. 두 SubAgent 의 mandate overlap 영역 (DR backup verify / env secret state / clock drift 실측 / rate metric / bucket prefix env isolation) 70%+ 발생 추정 — boundary axis 명시 의무 (§결정 4 명시). Story-2 (#633) 가 ADR-014 Amendment 3 본문 작성 시 양 ADR 의 cross-ref 양 방향 의무.
 
 ## 결정
 
-### §결정 1 — ProductionEvidenceDeputyAgent 신설 (3번째 CONDITIONAL deputy)
+### §결정 1 — ProductionEvidenceDeputyAgent 신설 (3번째 CONDITIONAL SubAgent)
 
-ADR-014 §결정 1 (6 permanent deputy) + Amendment 1 §결정 6 (2 CONDITIONAL = LiveOps + LiveOrdering) 가 **6 permanent + 3 CONDITIONAL** 로 확장:
+ADR-014 §결정 1 (6 permanent SubAgent) + Amendment 1 §결정 6 (2 CONDITIONAL = LiveOps + LiveOrdering) 가 **6 permanent + 3 CONDITIONAL** 로 확장:
 
 - **ProductionEvidenceDeputyAgent** (CONDITIONAL — Live touching Story OR production cutover 영향 Story 한정, §결정 3 spawn condition 정합)
 - canonical agent file = sibling PR (codeforge-design plugin) `agents/production-evidence-deputy.md` NEW
 - wrapper 책임 = CLAUDE.md "Deputy mandate 매트릭스" 9번째 row 추가 (ADR-012 §3 4번째 예외 — wrapper SSOT 보유 영역 = matrix row only)
 - agent file 본문 작성 = 본 ADR-72 정책 ground 후 sibling PR (codeforge-design plugin) carrier
 
-본 deputy 는 ArchitectPL 의 deputy spawn 결정 분기 (§결정 3 spawn condition 충족 시) 에 추가됨. 6+2 → 6+3 CONDITIONAL 확장 (ADR-014 Amendment 1 패턴 reuse).
+본 SubAgent 는 ArchitectPL 의 SubAgent spawn 결정 분기 (§결정 3 spawn condition 충족 시) 에 추가됨. 6+2 → 6+3 CONDITIONAL 확장 (ADR-014 Amendment 1 패턴 reuse).
 
 ### §결정 2 — Mandate scope (3 책임 + 7-cell mandate matrix overlap 명시)
 
@@ -101,7 +101,7 @@ ProductionEvidenceDeputy 의 mandate scope 3 책임:
 
 overlap density 5/7 = 71% — boundary axis 명시 의무 (§결정 4) 정합. ADR-014 Amendment 2 §결정 3 (env secret ownership 경계: SecurityArch threat owner / OpRiskArch containment owner) 가 5번째 cell (env isolation) 의 직접 영향 — Story-2 (#633) ADR-014 Amendment 3 가 SecurityArch / OpRiskArch / ProductionEvidence 3-way 충돌 처리 단락 작성 의무 (Story-2 carrier).
 
-### §결정 3 — Spawn condition (Live touching ↔ production cutover disjoint trigger axis + deputy spawn both 의무)
+### §결정 3 — Spawn condition (Live touching ↔ production cutover disjoint trigger axis + SubAgent spawn both 의무)
 
 ProductionEvidenceDeputy spawn 조건 = **Live touching Story OR production cutover 영향 Story** 한정 (Change Plan §13 안 `production_cutover_touching: true` 선언 또는 §13 Live Operational Discipline 본문 보유 Story).
 
@@ -109,18 +109,18 @@ ProductionEvidenceDeputy spawn 조건 = **Live touching Story OR production cuto
 
 | Story 유형 | LiveOps | LiveOrdering | OpRiskArch | ProductionEvidence | 비고 |
 |---|---|---|---|---|---|
-| Backtest/Paper-only | X | X | ✓ | X | 6 permanent deputy 만 |
-| Live touching pre-cutover | ✓ | ✓ | ✓ | X | 8 deputy (6 + LiveOps + LiveOrdering) — production cutover 영역 외 |
-| Production cutover | ✓ | ✓ | ✓ | ✓ | 9 deputy (6 + LiveOps + LiveOrdering + ProductionEvidence) — both spawn 의무 |
+| Backtest/Paper-only | X | X | ✓ | X | 6 permanent SubAgent 만 |
+| Live touching pre-cutover | ✓ | ✓ | ✓ | X | 8 SubAgent (6 + LiveOps + LiveOrdering) — production cutover 영역 외 |
+| Production cutover | ✓ | ✓ | ✓ | ✓ | 9 SubAgent (6 + LiveOps + LiveOrdering + ProductionEvidence) — both spawn 의무 |
 | wrapper governance (예: 본 Story) | X | X | ✓ | X (wrapper-self-app N/A) | §결정 6 정합 |
 
-**deputy spawn both 의무**: Live touching + production cutover both = OpRiskArch + LiveOps + LiveOrdering + ProductionEvidence both spawn (총 9 deputy). 한쪽만 spawn 금지 — boundary axis (design-time vs runtime-evidence) 의 정합 검증 의무. ProductionEvidence trigger ⊂ Live touching trigger (reverse 는 false — Live touching but pre-cutover Story 는 OpRiskArch + LiveOps + LiveOrdering 만 spawn, ProductionEvidence inactive).
+**SubAgent spawn both 의무**: Live touching + production cutover both = OpRiskArch + LiveOps + LiveOrdering + ProductionEvidence both spawn (총 9 SubAgent). 한쪽만 spawn 금지 — boundary axis (design-time vs runtime-evidence) 의 정합 검증 의무. ProductionEvidence trigger ⊂ Live touching trigger (reverse 는 false — Live touching but pre-cutover Story 는 OpRiskArch + LiveOps + LiveOrdering 만 spawn, ProductionEvidence inactive).
 
 ArchitectPL 의 spawn 결정 분기 (`docs/orchestrator-playbook.md` §3.2 표):
 
-- Backtest/Paper-only: 6 deputy
-- Live touching pre-cutover: 8 deputy (6 + 2 CONDITIONAL Live)
-- Production cutover: **9 deputy (6 + 3 CONDITIONAL — Live + ProductionEvidence)**
+- Backtest/Paper-only: 6 SubAgent
+- Live touching pre-cutover: 8 SubAgent (6 + 2 CONDITIONAL Live)
+- Production cutover: **9 SubAgent (6 + 3 CONDITIONAL — Live + ProductionEvidence)**
 
 Token cost 영향: production cutover Story 가 Live Mode Epic 의 ~30% 추정 (cutover 시점 child Story 한정) — 평균 Live touching Story 의 token overhead 추가 ~10-15%.
 
@@ -130,7 +130,7 @@ Token cost 영향: production cutover Story 가 Live Mode Epic 의 ~30% 추정 (
 
 본 boundary axis 1줄 명시 = ADR-014 Amendment 3 (Story-2 carrier #633) 가 양 방향 cross-ref 의무. Story-2 가 ADR-014 본문에 본 boundary axis verbatim 통합 + ADR-014 Amendment 2 §결정 3 (SecurityArch / OpRiskArch env secret ownership 경계) 와 본 ADR-72 §결정 2 5번째 cell (env isolation 양 측 consult) 의 3-way 충돌 처리 단락 작성 의무 (Story-2 직접 작성 영역 — 본 ADR-72 는 의무만 명시).
 
-본 boundary axis 의 enforcement = ArchitectPL deputy spawn 결정 분기 (§결정 3) + DesignReviewPL §7.4 / production grounding subsection 정합성 검증 (sibling Story-3 영역, plugin-codeforge-review#34). 본 ADR-72 author 시점 = boundary axis 1줄 명시만, mechanical enforcement = follow-up CFP scope (frontmatter `mechanical_enforcement_actions[].status: deferred-followup` 정합).
+본 boundary axis 의 enforcement = ArchitectPL SubAgent spawn 결정 분기 (§결정 3) + DesignReviewPL §7.4 / production grounding subsection 정합성 검증 (sibling Story-3 영역, plugin-codeforge-review#34). 본 ADR-72 author 시점 = boundary axis 1줄 명시만, mechanical enforcement = follow-up CFP scope (frontmatter `mechanical_enforcement_actions[].status: deferred-followup` 정합).
 
 ### §결정 5 — EPIC CLOSED gate evidence quad 신설
 
@@ -152,17 +152,17 @@ PMOAgent retro epic_close_gate 본문 = sibling PR (codeforge-pmo plugin) `templ
 
 wrapper plugin 자체 = production cutover 영역 외 (plugin = code 0 + runtime behavior 0 + production deploy state 부재). 따라서 ProductionEvidenceDeputy 의 wrapper-self-app trigger = **영구적으로 N/A**.
 
-본 ADR-72 가 도입하는 ProductionEvidenceDeputy 자체는 Live touching consumer Story (mctrader 등) 에서 spawn 되나, wrapper plugin 자체 변경 Story (governance / docs / deputy mandate matrix 추가 등) 는 본 deputy spawn 영역 외. ADR-005 (Plugin Self-Application N/A 표준화) §결정 1 N/A 표기 형식 (`plugin-meta-na` 면제 분류) 정합.
+본 ADR-72 가 도입하는 ProductionEvidenceDeputy 자체는 Live touching consumer Story (mctrader 등) 에서 spawn 되나, wrapper plugin 자체 변경 Story (governance / docs / SubAgent mandate matrix 추가 등) 는 본 SubAgent spawn 영역 외. ADR-005 (Plugin Self-Application N/A 표준화) §결정 1 N/A 표기 형식 (`plugin-meta-na` 면제 분류) 정합.
 
 본 ADR-72 자체 = wrapper governance ADR (code 0 + runtime behavior 0) — `production_cutover_touching: false` 명시 의무 (Change Plan §13 정합).
 
-### §결정 7 — Agent model = Opus tier (ADR-042 mandate-depth deputy)
+### §결정 7 — Agent model = Opus tier (ADR-042 mandate-depth SubAgent)
 
 ProductionEvidenceDeputyAgent = **Opus tier** (claude-opus-4-7).
 
 근거 (ADR-042 §결정 1 (d) Security / safety boundary owner 정합):
 - production state 실측 grounding = high-stakes domain interpretation (mctrader Live trading + KRW exchange + real funds 컨텍스트)
-- mandate-depth deputy = 6 permanent deputy (SecurityArch / OpRiskArch / DataMigrationArch / TestContractArch) 와 동일 tier. 2 CONDITIONAL Live (LiveOps / LiveOrdering — ADR-042 §결정 1 (e) inheritance Opus) 와 동일 tier
+- mandate-depth SubAgent = 6 permanent SubAgent (SecurityArch / OpRiskArch / DataMigrationArch / TestContractArch) 와 동일 tier. 2 CONDITIONAL Live (LiveOps / LiveOrdering — ADR-042 §결정 1 (e) inheritance Opus) 와 동일 tier
 - mctrader 3-cycle 누적 결함 패턴의 catch-rate 우선 결정 — Sonnet swap 시 production state 실측 evidence 누락 / mismatch surface 약화 위험 (cycle 0 목표 미달성 risk)
 
 ADR-042 §결정 3 (신규 agent 도입 시 ADR 의무) 정합 — 본 ADR-72 §결정 7 이 model selection ADR 의무 충족.
@@ -180,20 +180,20 @@ ADR-042 §결정 3 (신규 agent 도입 시 ADR 의무) 정합 — 본 ADR-72 §
 - **CFP-Z (잠정)**: review-verdict-v4 v4.5 → v4.6 MINOR bump (`owner_deputy_kind` enum `production_evidence` 추가) + sibling sync (6 lane plugin mirror, ADR-010) + ProductionEvidenceDeputy spawn evidence verdict packet field-time check (ADR-072 frontmatter `mechanical_enforcement_actions[0].status: deferred-followup → warning` 승격)
 - **CFP-Z' (잠정)**: PMOAgent retro epic_close_gate evidence quad workflow 통합 (retro-mandatory.yml 확장) + evidence-checks-registry append (`epic-cutover-gate-evidence-quad-check` warning tier 등록)
 
-본 §결정 8 = ADR-72 author 시점 schema gap 명시 + 후속 carrier 의무 명시. ratchet 강화 방향 (mandate scope 확장 — 8 → 9 deputy enum) — ADR-058 §결정 5 정합 (sunset_justification 불필요, 강화 방향).
+본 §결정 8 = ADR-72 author 시점 schema gap 명시 + 후속 carrier 의무 명시. ratchet 강화 방향 (mandate scope 확장 — 8 → 9 SubAgent enum) — ADR-058 §결정 5 정합 (sunset_justification 불필요, 강화 방향).
 
 ## 관련 ADR
 
 | ADR | 관계 |
 |---|---|
-| ADR-014 (Operational Risk SSOT Distribution) + Amendment 1 (CFP-77 CONDITIONAL deputy) + Amendment 2 (CFP-378 reconciliation 경계) | **직접 패턴 source** — 6 permanent + 2 CONDITIONAL deputy 패턴 reuse. boundary axis (design-time SSOT vs runtime-evidence) 정합 검증 의무 = Amendment 3 (Story-2 #633 carrier). 본 ADR-72 §결정 4 가 boundary axis 1줄 명시 + Amendment 3 cross-ref. Amendment 2 §결정 3 (env secret ownership 경계) ↔ 본 §결정 2 5번째 cell (env isolation 양 측 consult) 3-way 충돌 처리 = Story-2 carrier 본문 작성 의무. |
+| ADR-014 (Operational Risk SSOT Distribution) + Amendment 1 (CFP-77 CONDITIONAL SubAgent) + Amendment 2 (CFP-378 reconciliation 경계) | **직접 패턴 source** — 6 permanent + 2 CONDITIONAL SubAgent 패턴 reuse. boundary axis (design-time SSOT vs runtime-evidence) 정합 검증 의무 = Amendment 3 (Story-2 #633 carrier). 본 ADR-72 §결정 4 가 boundary axis 1줄 명시 + Amendment 3 cross-ref. Amendment 2 §결정 3 (env secret ownership 경계) ↔ 본 §결정 2 5번째 cell (env isolation 양 측 consult) 3-way 충돌 처리 = Story-2 carrier 본문 작성 의무. |
 | ADR-005 (Plugin Self-Application N/A 표준화) | **wrapper-self-app N/A 표준** — §결정 6 정합. wrapper governance Story / Epic = ProductionEvidenceDeputy spawn 영역 외 (`plugin-meta-na` 면제 분류). |
-| ADR-042 (Agent Model Selection Policy) + Amendment 5 | **신규 agent ADR 의무** — §결정 3 정합. ProductionEvidenceDeputy = Opus tier (§결정 7). mandate-depth deputy = 6 permanent deputy + 2 CONDITIONAL Live 와 동일 tier. |
+| ADR-042 (Agent Model Selection Policy) + Amendment 5 | **신규 agent ADR 의무** — §결정 3 정합. ProductionEvidenceDeputy = Opus tier (§결정 7). mandate-depth SubAgent = 6 permanent SubAgent + 2 CONDITIONAL Live 와 동일 tier. |
 | ADR-058 (ADR Sunset Criteria Mandate) | **`is_transitional: false` (governance permanent) 정합** — §결정 7 보안 ADR default presumption + governance default 동일 적용. sunset 기준 부재 + amendment 시 ratchet 강화 방향만 허용 (§결정 5 정합). |
 | ADR-068 (Boundary Completeness Invariants) + Amendment 1 (CFP-528 I-5 dimensional empirical grounding) | **production grounding = empirical grounding 의 specialization** — Story-3 (sibling carrier #34 plugin-codeforge-review) 가 I-5 verdict field-time enforcement 추가 시 production_grounding_present sub-field 추가 가능. ADR-72 §결정 5 evidence quad = I-5 의 production-specific 적용 사례. |
 | ADR-070 (Codex Verify-Before-Trust) | **design-stage verify-before-trust specialization** — ProductionEvidence = design-stage production grounding evidence verification (verify-before-trust 의 production env 적용). chief author 가 production state 실측 evidence 직접 verify 의무 (file path reference 만 사용 금지 정합). |
 | ADR-040 (Worktree Convention) + Amendment 3 (mechanical_enforcement_actions[]) | **frontmatter `mechanical_enforcement_actions[]` 의무** — 본 ADR-72 frontmatter 2 entry (production-cutover-deputy-spawn-evidence + epic-cutover-gate-evidence-quad-check) 보유. `status: deferred-followup` — evidence-checks-registry append 완료 (CFP-632 FIX iter 1, deferred-followup status). detect script + workflow integration 만 follow-up CFP-Z / CFP-Z' carrier 영역. schema verbatim (ADR-040 §결정 7.A) 정합. |
-| ADR-063 (Marketplace Atomic Invariant) | **plugin.json bump 검증** — 본 ADR-72 = wrapper governance change. plugin.json bump 영역 = §결정 1 + §결정 2 가 wrapper CLAUDE.md "Deputy mandate 매트릭스" row 추가 만 변경 (deputy mandate scope 정의는 wrapper SSOT 보유 영역 = ADR-014 §결정 2 정합). plugin.json MINOR bump 후보 = false (wrapper SSOT 본문 변경 없음 — matrix row 추가만, ADR-005 plugin-meta-na 정합). marketplace_sync_declared = false (Phase 1 PR 영역). 단 follow-up CFP-Z 가 review-verdict-v4 MINOR bump 시 sibling sync + plugin.json MINOR bump 동반 가능 (별도 carrier scope). |
+| ADR-063 (Marketplace Atomic Invariant) | **plugin.json bump 검증** — 본 ADR-72 = wrapper governance change. plugin.json bump 영역 = §결정 1 + §결정 2 가 wrapper CLAUDE.md "Deputy mandate 매트릭스" row 추가 만 변경 (SubAgent mandate scope 정의는 wrapper SSOT 보유 영역 = ADR-014 §결정 2 정합). plugin.json MINOR bump 후보 = false (wrapper SSOT 본문 변경 없음 — matrix row 추가만, ADR-005 plugin-meta-na 정합). marketplace_sync_declared = false (Phase 1 PR 영역). 단 follow-up CFP-Z 가 review-verdict-v4 MINOR bump 시 sibling sync + plugin.json MINOR bump 동반 가능 (별도 carrier scope). |
 | ADR-045 (Story Retro Mandatory Trigger) | **EPIC CLOSED gate evidence quad sibling** — Story-4 (#18 plugin-codeforge-pmo) 가 PMOAgent retro Cross-Story pattern ≥2 ADR trigger 추가. 본 ADR-72 §결정 5 evidence quad 가 PMOAgent retro template 확장 영역 (Story-4 sibling carrier). |
 
 ## 해소 기준
@@ -212,17 +212,17 @@ Amendment 시 ratchet 강화 방향만 허용 (ADR-058 §결정 5 sunset_justifi
 ### 긍정
 
 - mctrader 3-cycle 누적 결함 패턴 차단 — production-grounding 단일 owner 축 (ProductionEvidenceDeputy) 신설로 cycle 0 목표
-- ArchitectPL Phase 1 deputy 6+2 → 6+3 CONDITIONAL 확장 (ADR-014 Amendment 1 패턴 reuse 검증된 mechanism)
+- ArchitectPL Phase 1 SubAgent 6+2 → 6+3 CONDITIONAL 확장 (ADR-014 Amendment 1 패턴 reuse 검증된 mechanism)
 - EPIC CLOSED gate evidence quad 의무로 production 실측 evidence 명시 강제 (mock-only 검증의 silent pass-through 차단)
-- boundary axis (design-time SSOT vs runtime-evidence) 명시 명시로 OpRiskArch ↔ ProductionEvidenceDeputy mandate 분쟁 차단 (Fix-3 H17 deputy mandate boundary 분쟁 재발 risk 차단)
+- boundary axis (design-time SSOT vs runtime-evidence) 명시 명시로 OpRiskArch ↔ ProductionEvidenceDeputy mandate 분쟁 차단 (Fix-3 H17 SubAgent mandate boundary 분쟁 재발 risk 차단)
 - ADR-068 I-5 dimensional empirical grounding 의 production-specific 적용 사례 추가 — empirical grounding invariant ratchet 강화 방향
 
 ### 부정 / 트레이드오프
 
-- production cutover Story = 9 deputy spawn (6+3 CONDITIONAL) — token overhead 평균 ~10-15% 추가 (Live touching Story 의 30% 추정 적용 시)
+- production cutover Story = 9 SubAgent spawn (6+3 CONDITIONAL) — token overhead 평균 ~10-15% 추가 (Live touching Story 의 30% 추정 적용 시)
 - sibling PR 2종 (codeforge-design + codeforge-pmo) coordination overhead — wrapper PR merge 후 즉시 진행 의무 (ADR-010 sibling sync)
 - ProductionEvidenceDeputy agent 본문 작성 = sibling PR scope (codeforge-design plugin) — 본 ADR-72 author 시점 = mandate ground 만, agent file 본문 부재 시 ArchitectPL fallback (현재 OperationalRiskArchitectAgent + 추가 chief authoring 패턴, ADR-014 Amendment 1 §결정 8 정합)
-- mandate matrix 7 cell overlap 71% 영역 — boundary axis enforcement 부재 시 두 deputy 동시 spawn 시 verdict packet `findings[].owner_deputy` field 충돌 (verdict_v4 field-level 분쟁) → ArchitectPL dedup 책임. follow-up CFP-Z = review-verdict-v4 v4.5 → v4.6 MINOR bump (`owner_deputy_kind` enum `production_evidence` 추가) carrier 의무
+- mandate matrix 7 cell overlap 71% 영역 — boundary axis enforcement 부재 시 두 SubAgent 동시 spawn 시 verdict packet `findings[].owner_deputy` field 충돌 (verdict_v4 field-level 분쟁) → ArchitectPL dedup 책임. follow-up CFP-Z = review-verdict-v4 v4.5 → v4.6 MINOR bump (`owner_deputy_kind` enum `production_evidence` 추가) carrier 의무
 - mechanical enforcement 부재 (Phase 1 = `deferred-followup` tier) — follow-up CFP-Z + CFP-Z' merge 까지 author 자발적 준수 + DesignReview lane review 가 1차 안전망
 
 ### Trade-off
@@ -232,12 +232,12 @@ Amendment 시 ratchet 강화 방향만 허용 (ADR-058 §결정 5 sunset_justifi
 
 ## 거부된 대안
 
-본 ADR 은 결정 = ProductionEvidenceDeputy 신설 (CONDITIONAL 3번째 deputy) — 아래 대안 거부:
+본 ADR 은 결정 = ProductionEvidenceDeputy 신설 (CONDITIONAL 3번째 SubAgent) — 아래 대안 거부:
 
-- **(b) OpRiskArch mandate 확장 옵션** — OpRiskArch §7.4 에 production grounding subsection 추가만 (신규 deputy 신설 X). 거부 사유: OpRiskArch mandate 비대 (5 sub + production grounding subsection 추가 시 6 sub 영역) + design-time policy 와 runtime-evidence 두 axis 혼재 + ADR-014 Amendment 2 §결정 3 (env secret ownership 경계) 정합 깨짐. Phase 0 brainstorm Researcher boundary axis 분리 의무 (사용자 default 6번) + Continuity 70%+ overlap 분석 + ADR-014 H17 (deputy 경계 분쟁) 재발 risk evidence 종합 결과 reject.
-- **(c) ProductionEvidence 책임을 LiveOps + LiveOrdering 양 deputy 에 분산** — production evidence quad owner = LiveOps / EPIC CLOSED gate 검증 = LiveOrdering 분산. 거부 사유: 책임 split 시 dedup 책임 ArchitectPL 에 떠넘겨짐 + production state 실측 evidence 의 단일 owner 축 약화 + mandate matrix 7 cell overlap 영역의 정합 검증 owner 부재.
-- **(d) PMOAgent retro template 만 확장 (deputy 신설 X)** — EPIC CLOSED gate evidence quad 만 PMOAgent retro 본문에 추가, design-stage production grounding owner 부재. 거부 사유: design 시점 production grounding 의무 부재 → review lane 4 lane PASS 후 EPIC close 직전 evidence quad 검증 시점에 결함 검출 → 차기 cycle 진입 (mctrader 3-cycle 패턴 재발). design-stage owner 신설이 cycle 0 목표 정합.
-- **(e) 자연 확장 (ADR-014 변경 없음, ProductionEvidence 책임 chief author 가 직접 흡수)** — ArchitectAgent chief author 가 production grounding 책임 직접 보유. 거부 사유: chief author 의 multi-source synthesis 책임 (8 deputy 산출물 통합) 과 production state 실측 grounding 책임 (single-mandate advocate) 혼재. mandate-depth deputy 패턴 (ADR-042 §결정 1 (d) 정합) 위반.
+- **(b) OpRiskArch mandate 확장 옵션** — OpRiskArch §7.4 에 production grounding subsection 추가만 (신규 SubAgent 신설 X). 거부 사유: OpRiskArch mandate 비대 (5 sub + production grounding subsection 추가 시 6 sub 영역) + design-time policy 와 runtime-evidence 두 axis 혼재 + ADR-014 Amendment 2 §결정 3 (env secret ownership 경계) 정합 깨짐. Phase 0 brainstorm Researcher boundary axis 분리 의무 (사용자 default 6번) + Continuity 70%+ overlap 분석 + ADR-014 H17 (SubAgent 경계 분쟁) 재발 risk evidence 종합 결과 reject.
+- **(c) ProductionEvidence 책임을 LiveOps + LiveOrdering 양 SubAgent 에 분산** — production evidence quad owner = LiveOps / EPIC CLOSED gate 검증 = LiveOrdering 분산. 거부 사유: 책임 split 시 dedup 책임 ArchitectPL 에 떠넘겨짐 + production state 실측 evidence 의 단일 owner 축 약화 + mandate matrix 7 cell overlap 영역의 정합 검증 owner 부재.
+- **(d) PMOAgent retro template 만 확장 (SubAgent 신설 X)** — EPIC CLOSED gate evidence quad 만 PMOAgent retro 본문에 추가, design-stage production grounding owner 부재. 거부 사유: design 시점 production grounding 의무 부재 → review lane 4 lane PASS 후 EPIC close 직전 evidence quad 검증 시점에 결함 검출 → 차기 cycle 진입 (mctrader 3-cycle 패턴 재발). design-stage owner 신설이 cycle 0 목표 정합.
+- **(e) 자연 확장 (ADR-014 변경 없음, ProductionEvidence 책임 chief author 가 직접 흡수)** — ArchitectAgent chief author 가 production grounding 책임 직접 보유. 거부 사유: chief author 의 multi-source synthesis 책임 (8 SubAgent 산출물 통합) 과 production state 실측 grounding 책임 (single-mandate advocate) 혼재. mandate-depth SubAgent 패턴 (ADR-042 §결정 1 (d) 정합) 위반.
 
 ## 다이어그램
 
@@ -274,13 +274,13 @@ Amendment 시 ratchet 강화 방향만 허용 (ADR-058 §결정 5 sunset_justifi
 ## 관련 파일
 
 - `CLAUDE.md` (wrapper) — "Deputy mandate 매트릭스" 섹션 6+2 → 6+3 CONDITIONAL 갱신 + 9번째 row (ProductionEvidence) 추가
-- `docs/orchestrator-playbook.md` — §3.2 ArchitectPL deputy spawn 결정 분기 표 갱신 (Backtest/Paper / Live pre-cutover / production cutover 3 분기)
+- `docs/orchestrator-playbook.md` — §3.2 ArchitectPL SubAgent spawn 결정 분기 표 갱신 (Backtest/Paper / Live pre-cutover / production cutover 3 분기)
 - `docs/parallel-work/section-ownership.yaml` — ADR-50 cross-section conflict detection (Story-2 ADR-014 Amendment 3 충돌 방지 row 추가 검토)
 - `docs/adr/ADR-RESERVATION.md` — row 72 = `reserved → active` 전환 (Phase 1 merge 시 GitOpsAgent self-write)
 - **Sibling PR 2종 (declaration only)**:
-  - `mclayer/plugin-codeforge-design/agents/ArchitectPLAgent.md` — deputy roster 9번째 entry (CONDITIONAL) 추가
+  - `mclayer/plugin-codeforge-design/agents/ArchitectPLAgent.md` — SubAgent roster 9번째 entry (CONDITIONAL) 추가
   - `mclayer/plugin-codeforge-design/agents/production-evidence-deputy.md` (NEW) — agent 본문 작성 (본 ADR-72 가 spec mandate ground)
-  - `mclayer/plugin-codeforge-design/CLAUDE.md` — deputy roster 매트릭스 갱신 (8 → 9 = PL + chief + 7 deputy)
+  - `mclayer/plugin-codeforge-design/CLAUDE.md` — SubAgent roster 매트릭스 갱신 (8 → 9 = PL + chief + 7 SubAgent)
   - `mclayer/plugin-codeforge-pmo/templates/retro.md` — epic_close_gate 섹션 안 production evidence quad 4중 항목 추가
 - **Follow-up carrier**:
   - CFP-Z (잠정) — review-verdict-v4 v4.5 → v4.6 MINOR bump (`owner_deputy_kind` enum `production_evidence` 추가) + ProductionEvidenceDeputy spawn evidence verdict packet field-time check
@@ -299,4 +299,4 @@ Amendment 시 ratchet 강화 방향만 허용 (ADR-058 §결정 5 sunset_justifi
 
 ## 변경이력
 
-- **2026-05-14 v1 (Accepted, CFP-632)**: 초기 결정 — ProductionEvidenceDeputyAgent 신설 (CONDITIONAL 3번째 deputy) + EPIC CLOSED gate evidence quad + boundary axis (design-time SSOT vs runtime-evidence) 명시 + 7-cell mandate overlap matrix + Live touching ↔ production cutover disjoint trigger axis + Opus tier + wrapper-self-app N/A + follow-up CFP-Z reservation.
+- **2026-05-14 v1 (Accepted, CFP-632)**: 초기 결정 — ProductionEvidenceDeputyAgent 신설 (CONDITIONAL 3번째 SubAgent) + EPIC CLOSED gate evidence quad + boundary axis (design-time SSOT vs runtime-evidence) 명시 + 7-cell mandate overlap matrix + Live touching ↔ production cutover disjoint trigger axis + Opus tier + wrapper-self-app N/A + follow-up CFP-Z reservation.

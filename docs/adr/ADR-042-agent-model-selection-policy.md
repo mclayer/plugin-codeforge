@@ -82,7 +82,7 @@ is_transitional: false
 - 5 PL: RequirementsPLAgent · ArchitectPLAgent · DesignReviewPLAgent · CodeReviewPLAgent · SecurityTestPLAgent
 - ArchitectAgent (chief author, multi-deputy synthesis → §1-§11 + ADR draft)
 - ClaudeReviewAgent (Opus peer with Codex GPT-5)
-- 5 design deputy: CodebaseMapperAgent · RefactorAgent · SecurityArchitectAgent · TestContractArchitectAgent · DataMigrationArchitectAgent
+- 5 design SubAgent: CodebaseMapperAgent · RefactorAgent · SecurityArchitectAgent · TestContractArchitectAgent · DataMigrationArchitectAgent
 - DomainAgent · ResearcherAgent · PMOAgent
 
 **Opus 4.7 (3, inherited via no `model:` field)**: OperationalRiskArchitectAgent · LiveOpsDeputyAgent · LiveOrderingDeputyAgent
@@ -109,7 +109,7 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 
 | Tier | Model | Role pattern criteria |
 |------|-------|----------------------|
-| **Opus** | claude-opus-4-7 | (a) Multi-source synthesis (3+ deputy / lane / contract input dedup + 종합 판정) — 모든 PL · ArchitectAgent chief. (b) Independent reasoning peer to external GPT-5 (ClaudeReviewAgent — Codex 와의 의도적 reasoning depth 매칭). (c) High-stakes domain interpretation (DomainAgent — Live trading / 금융 / 헬스 데이터 등 invariant 누설 위험). (d) Security / safety boundary owner (SecurityArchitectAgent · OperationalRiskArchitectAgent · DataMigrationArchitectAgent · TestContractArchitectAgent — §7 trust boundary / §7.4 DR / §11 schema rollback / §8 perf baseline). (e) Real-funds risk owner (LiveOpsDeputyAgent · LiveOrderingDeputyAgent — CFP-77 CONDITIONAL). (f) Cross-Story pattern analysis + ADR proposal (PMOAgent). (g) Deep research with reshape mandate (ResearcherAgent — per [ADR-046](ADR-046-researcher-role-redefinition.md) (2026-05-09)). |
+| **Opus** | claude-opus-4-7 | (a) Multi-source synthesis (3+ SubAgent / lane / contract input dedup + 종합 판정) — 모든 PL · ArchitectAgent chief. (b) Independent reasoning peer to external GPT-5 (ClaudeReviewAgent — Codex 와의 의도적 reasoning depth 매칭). (c) High-stakes domain interpretation (DomainAgent — Live trading / 금융 / 헬스 데이터 등 invariant 누설 위험). (d) Security / safety boundary owner (SecurityArchitectAgent · OperationalRiskArchitectAgent · DataMigrationArchitectAgent · TestContractArchitectAgent — §7 trust boundary / §7.4 DR / §11 schema rollback / §8 perf baseline). (e) Real-funds risk owner (LiveOpsDeputyAgent · LiveOrderingDeputyAgent — CFP-77 CONDITIONAL). (f) Cross-Story pattern analysis + ADR proposal (PMOAgent). (g) Deep research with reshape mandate (ResearcherAgent — per [ADR-046](ADR-046-researcher-role-redefinition.md) (2026-05-09)). |
 | **Sonnet** | claude-sonnet-4-6 | (a) Single-mandate advocacy within multi-deputy debate — read-only 조사 + 자기 mandate 측 단일 축 주장 (CodebaseMapperAgent — existing facts only, RefactorAgent — pattern advocacy only). (b) Implementation work — code write / refactor / test 구현 (DeveloperAgent · DeveloperPLAgent · 2 webapp preset). |
 
 > **Amendment 4 (2026-05-11)**: CodebaseMapperAgent·RefactorAgent는 Opus로 복원됨 — ADR-057 참조.
@@ -123,7 +123,7 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 - CodebaseMapperAgent: Opus 4.7 → **Sonnet 4.6**
 - RefactorAgent: Opus 4.7 → **Sonnet 4.6**
 
-근거: 양 agent 모두 3-way deputy debate (Mapper = existing codebase fact 보고, Refactor = decoupling/pattern advocacy, SecurityArch = threat) 안에서 **single-mandate advocacy** 패턴. read-only 조사 + 자기 축 단일 주장. multi-source synthesis 책임은 ArchitectAgent chief (Opus) 가 수행. Sonnet 4.6 의 reasoning depth 가 본 mandate 를 fully cover.
+근거: 양 agent 모두 3-way SubAgent debate (Mapper = existing codebase fact 보고, Refactor = decoupling/pattern advocacy, SecurityArch = threat) 안에서 **single-mandate advocacy** 패턴. read-only 조사 + 자기 축 단일 주장. multi-source synthesis 책임은 ArchitectAgent chief (Opus) 가 수행. Sonnet 4.6 의 reasoning depth 가 본 mandate 를 fully cover.
 
 > **Amendment 4 역전 (2026-05-11, ADR-057)**: Codex 독립 리뷰 결과 CodebaseMapperAgent·RefactorAgent의 Sonnet mandate에서 symbol resolution 정확도 및 advocacy 품질 부족이 확인되어 Opus로 복원. 본 §결정2의 해당 배정은 Amendment 4에 의해 무효화됨.
 >
@@ -169,15 +169,15 @@ agent file frontmatter 의 `model:` field 부재 시 platform default 가 inheri
 
 ### 왜 PL · ArchitectAgent chief 는 Opus 인가
 
-PL 의 책임 = lane synthesis (3+ sub-agent finding dedup + severity 종합 + `pl_recommendation` 결정). ArchitectAgent chief 의 책임 = 6-8 deputy 산출물 (CodebaseMapper / Refactor / SecurityArch / OpRisk / TestContract / DataMigration + 2 CONDITIONAL Live) 통합 → Story §1-§11 + Change Plan §3 + ADR draft 작성. 양쪽 다 multi-source 가 충돌 / 누락 / 모순 케이스에서 architectural judgment 필요. Sonnet 으로 swap 시 dedup / 종합 판정 layer 가 shallow 해져 FIX root cause 오판 / responsibility leak 발생 위험 — [ADR-021](ADR-021-phase-gap-measurable-signal.md) R4 detection source 자체 약화.
+PL 의 책임 = lane synthesis (3+ sub-agent finding dedup + severity 종합 + `pl_recommendation` 결정). ArchitectAgent chief 의 책임 = 6-8 SubAgent 산출물 (CodebaseMapper / Refactor / SecurityArch / OpRisk / TestContract / DataMigration + 2 CONDITIONAL Live) 통합 → Story §1-§11 + Change Plan §3 + ADR draft 작성. 양쪽 다 multi-source 가 충돌 / 누락 / 모순 케이스에서 architectural judgment 필요. Sonnet 으로 swap 시 dedup / 종합 판정 layer 가 shallow 해져 FIX root cause 오판 / responsibility leak 발생 위험 — [ADR-021](ADR-021-phase-gap-measurable-signal.md) R4 detection source 자체 약화.
 
 ### 왜 ClaudeReviewAgent 는 Opus 인가
 
 [ADR-001](ADR-001-review-agent-unification.md) (review agent unification) 은 lane-agnostic 2-vendor (Claude + Codex) worker pattern 을 채택. Codex 측 = GPT-5 (high reasoning). Claude 측이 Sonnet 이면 reasoning depth 비대칭 → "Claude 가 Codex 의 finding 을 dedup 하지 못한다" 패턴 발생. 의도적으로 Opus = GPT-5 peer matching.
 
-### 왜 SecurityArch / OpRisk / DataMigration / TestContract deputy 는 Opus 인가
+### 왜 SecurityArch / OpRisk / DataMigration / TestContract SubAgent 는 Opus 인가
 
-[deputy mandate 매트릭스](../../CLAUDE.md) 에서 본 4 deputy 는 §7 / §7.4 / §11 / §8 의 primary owner. 각 영역의 invariant 누락 = SecurityTest / 보안 테스트 / 구현 테스트 단계에서 P0 차단 trigger. Sonnet 으로 swap 시 invariant 정의 누락 위험 ↑ — review-verdict v3 의 P0 차단이 사후 발견. 비용보다 catch-rate 우선 결정.
+[SubAgent mandate 매트릭스](../../CLAUDE.md) 에서 본 4 SubAgent 는 §7 / §7.4 / §11 / §8 의 primary owner. 각 영역의 invariant 누락 = SecurityTest / 보안 테스트 / 구현 테스트 단계에서 P0 차단 trigger. Sonnet 으로 swap 시 invariant 정의 누락 위험 ↑ — review-verdict v3 의 P0 차단이 사후 발견. 비용보다 catch-rate 우선 결정.
 
 ### 왜 DomainAgent 는 Opus 인가
 
@@ -197,9 +197,9 @@ PMOAgent 의 mandate = (a) Epic 창설 (multi-Story dependency graph) + (b) Stor
 - CodebaseMapperAgent: 기존 codebase fact 만 보고 (file structure / API surface / 의존성 그래프) — read-only mode
 - RefactorAgent: pattern decoupling / 일관성 advocacy 만 — 자기 축 단일 주장
 
-3-way debate 의 dedup / 종합은 ArchitectAgent chief (Opus) 가 수행. 양 deputy 는 자기 축 사실 / 주장만 정확히 전달하면 충분 — Sonnet 4.6 reasoning depth fully cover.
+3-way debate 의 dedup / 종합은 ArchitectAgent chief (Opus) 가 수행. 양 SubAgent 는 자기 축 사실 / 주장만 정확히 전달하면 충분 — Sonnet 4.6 reasoning depth fully cover.
 
-핵심 원칙 발현: "Sonnet 으로 대체 가능 = role 재정의 시그널" 의 역방향 적용 — 본 2 deputy 는 처음부터 single-mandate 로 정의되었으므로 Sonnet 이 적정. **Amendment 5 의 mandate text 재정의 의무는 본 invariant 의 enforcement mechanism — model field 와 role definition 의 동시 정합 보장**.
+핵심 원칙 발현: "Sonnet 으로 대체 가능 = role 재정의 시그널" 의 역방향 적용 — 본 2 SubAgent 는 처음부터 single-mandate 로 정의되었으므로 Sonnet 이 적정. **Amendment 5 의 mandate text 재정의 의무는 본 invariant 의 enforcement mechanism — model field 와 role definition 의 동시 정합 보장**.
 
 ### 왜 DeveloperPLAgent · DeveloperAgent · webapp preset 은 Sonnet 인가
 
@@ -335,7 +335,7 @@ Amendment 4 (CFP-379, 2026-05-11) 의 6 agent Sonnet → Opus 상향 중 3종 se
    - 본문 mandate / 책무 / 산출물 section 의 read-only invariant + structured output template 명시 의무
 
 2. **RefactorAgent** (`plugin-codeforge-design/agents/RefactorAgent.md`):
-   - `description` frontmatter 강화 의무 — "리팩터링 옹호자" → "리팩터링 옹호자 — **decoupling / pattern / 인터페이스 분리 3 카테고리** 안에서 advocacy. 카테고리 외 영역 (security / data integrity / op risk) 발화 금지 (해당 deputy 영역)"
+   - `description` frontmatter 강화 의무 — "리팩터링 옹호자" → "리팩터링 옹호자 — **decoupling / pattern / 인터페이스 분리 3 카테고리** 안에서 advocacy. 카테고리 외 영역 (security / data integrity / op risk) 발화 금지 (해당 SubAgent 영역)"
    - 본문 mandate / advocacy axis (3 카테고리) / 산출물 section 의 boundary 명시 의무
 
 본 mandate text 재정의 산출물은 Phase 2 PR scope (sibling plugin) — codeforge-design plugin agent file edit (PATCH bump). codeforge-design plugin sibling PR 시 본 Amendment 5 cross-ref 의무.

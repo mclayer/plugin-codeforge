@@ -162,7 +162,7 @@ CFP-455 retro action_item #1 (severity: blocking, 2026-05-12) — `templates/git
 
 3 결함 결합: (a) `gh issue list --search "$STORY_KEY"` fuzzy match + `head -1` 비결정적 선택 → false target Issue close. (b) PR title 기반 phase gate (`grep "Phase 2"`) — PR title 안 "Phase 2" 문자열 우연 일치 시 false-positive (Phase 1 PR cross-reference / retro doc / EPIC plan). (c) `phase:완료` (결정 1 본문) stale — playbook line 228 SSOT 와 부정합 (terminal phase = `phase:보안-테스트` default / `phase:구현-테스트` if `lanes.security_ai: false`).
 
-추가 보안 발견 (SecurityArch deputy, CFP-476): line 41 `PR_TITLE='${{ github.event.pull_request.title }}'` 및 Action 3 본체 inline `${{ ... }}` shell 삽입 — **T1 CRITICAL** PR body shell injection + **T2 HIGH** PR_TITLE single-quote escape 가능. env indirection (`env: PR_BODY: ${{ ... }}` + `"$PR_BODY"`) 마이그레이션 의무.
+추가 보안 발견 (SecurityArch SubAgent, CFP-476): line 41 `PR_TITLE='${{ github.event.pull_request.title }}'` 및 Action 3 본체 inline `${{ ... }}` shell 삽입 — **T1 CRITICAL** PR body shell injection + **T2 HIGH** PR_TITLE single-quote escape 가능. env indirection (`env: PR_BODY: ${{ ... }}` + `"$PR_BODY"`) 마이그레이션 의무.
 
 본 Amendment 1 = 4 결함 + 2 위협 + 1 stale doc 통합 정정 carrier.
 
