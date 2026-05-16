@@ -1,6 +1,6 @@
 ---
 key: CFP-801
-title: F11b drift sync test
+title: F11b LOUD heading-drift guard test
 status: phase:구현
 type: story
 ---
@@ -11,10 +11,12 @@ type: story
 
 ## 2. 도메인 컨텍스트
 
-§2 내용.
-§2 추가 (RequirementsPL — PASS).
+§2 내용 (RequirementsPL owner).
+§2 추가 (RequirementsPL — owner append).
 
 ## 8. 개발 서사
 
-§8 내용.
-§8 추가 (DeveloperPL — PASS).
+§8 내용 (DeveloperPL owner).
+
+## 10. FIX Ledger
+

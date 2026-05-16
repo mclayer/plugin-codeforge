@@ -9,7 +9,7 @@ import sys, json, pathlib
 
 # Allow import from same directory
 sys.path.insert(0, str(pathlib.Path(__file__).parent))
-from check_story_section_ownership import classify, parse_frontmatter
+from check_story_section_ownership import classify, parse_frontmatter, drift_warning_line
 
 FIXTURE_ROOT = pathlib.Path(__file__).parent.parent.parent / "tests/fixtures/cfp-722/check-story-section-ownership"
 VERBOSE = "--verbose" in sys.argv or "-v" in sys.argv
@@ -29,7 +29,8 @@ def run_classify(base_text, head_text, ctx):
     branch = ctx.get("pr_branch", "")
     labels = ctx.get("pr_labels", [])
     fm = parse_frontmatter(head_text)
-    violations, carrier_exempt = classify(base_text, head_text, branch, labels, fm)
+    violations, carrier_exempt, drift_warnings = classify(
+        base_text, head_text, branch, labels, fm)
     lines = []
     if carrier_exempt:
         story_key = fm.get("key", "unknown")
@@ -38,6 +39,9 @@ def run_classify(base_text, head_text, ctx):
             f"notice carrier-exempt: {story_key} declares bootstrap_exempt_protocols "
             f"including {EXEMPT_PROTOCOL_ID} — ownership checks bypassed"
         )
+    # EC-1 LOUD heading-drift warnings (Story §7.6 + Change Plan §13.B mandate)
+    for sec_num in drift_warnings:
+        lines.append(drift_warning_line(sec_num))
     for v in violations:
         lines.append(v.to_warning_line())
     return "\n".join(lines), "0"  # always exit 0 (warning tier)

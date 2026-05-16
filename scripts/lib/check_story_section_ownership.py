@@ -52,6 +52,20 @@ MONOPOLY_SECTIONS = {"10", "10.5", "13", "14"}
 # §1 excluded — handled by story-section-1-immutable.yml
 EXCLUDED_SECTIONS = {"1"}
 
+# Canonical Story section numbers — used by EC-1 LOUD heading-drift guard
+# (per CFP-722.md actual usage — §12 deliberately omitted, PMO-monopoly when present)
+# SSOT cross-ref: docs/stories/<KEY>.md template + story-page-structure.md headings.
+# Story §7.6 + Change Plan §13.B mandate: empty/degenerate slice on structured Story →
+# emit `warning: heading-SSOT drift suspected — guard may be silently disabled`
+# (절대 silent-PASS 아님 — §9-typed/§1-immutable 답습 차단).
+CANONICAL_SECTION_NUMBERS = [
+    "1", "2", "3", "4", "5", "6", "7", "8", "8.5", "9", "10", "11", "13", "14",
+]
+
+# Threshold: file must have >=3 headings to be considered "structured Story"
+# (heuristic — protects EC-3 new-file fixtures with only 2 headings from FP).
+DRIFT_GUARD_HEADING_THRESHOLD = 3
+
 # Section ownership map — lane plugin lanes that own each section
 # Key = section number string, Value = list of owning lane identifiers
 # "any" = any lane (Orchestrator-only writes are MONOPOLY, not any-lane)
@@ -221,6 +235,56 @@ def infer_lane(branch: str, labels: list[str]) -> Optional[str]:
             return "develop"
     return None
 
+# ─── EC-1 LOUD heading-drift guard (Story §7.6 + Change Plan §13.B mandate) ──
+
+def detect_heading_drift(
+    base_text: str,
+    head_text: str,
+    base_sections: dict[str, str],
+    head_sections: dict[str, str],
+) -> list[str]:
+    """
+    EC-1 LOUD heading-drift guard. Returns list of section numbers (str) for
+    which a `heading-SSOT drift suspected` warning must be emitted.
+
+    Detection rule (Story §7.6 + Change Plan §13.B verbatim mandate):
+      - head_text has >= DRIFT_GUARD_HEADING_THRESHOLD heading occurrences
+        (= "structured Story file") AND
+      - For each canonical section number §N that appears in base_text
+        headings, head slice for §N is empty/whitespace-only or §N is
+        missing from head's section map entirely.
+
+    LOUD warning emitted instead of silent-PASS (§9-typed/§1-immutable 답습 차단).
+    """
+    # Count head headings — only "structured Story" files trigger this guard
+    head_heading_matches = list(SECTION_HEADING_RE.finditer(head_text))
+    if len(head_heading_matches) < DRIFT_GUARD_HEADING_THRESHOLD:
+        return []
+
+    drift_sections: list[str] = []
+    base_keys = set(base_sections.keys())
+
+    for sec_num in CANONICAL_SECTION_NUMBERS:
+        if sec_num not in base_keys:
+            # §N never existed in base → not a drift, just absent
+            continue
+        head_content = head_sections.get(sec_num, None)
+        if head_content is None:
+            # §N existed in base but missing from head section map → drift
+            drift_sections.append(sec_num)
+        elif not head_content.strip():
+            # §N heading present but slice empty/whitespace → drift
+            drift_sections.append(sec_num)
+
+    return drift_sections
+
+
+def drift_warning_line(sec_num: str) -> str:
+    """Format LOUD heading-drift warning line per Story §7.6 verbatim wording."""
+    return (f"warning: heading-SSOT drift suspected for §{sec_num} "
+            f"— guard may be silently disabled")
+
+
 # ─── Main classify function ───────────────────────────────────────────────────
 
 class Violation:
@@ -247,14 +311,17 @@ def classify(
     branch: str,
     labels: list[str],
     frontmatter: Optional[dict] = None,
-) -> tuple[list[Violation], bool]:
+) -> tuple[list[Violation], bool, list[str]]:
     """
     Pure classifier function — no I/O.
 
     Returns:
-        (violations, carrier_exempt)
+        (violations, carrier_exempt, drift_warnings)
         - violations: list[Violation] (empty = PASS)
         - carrier_exempt: bool — True if bootstrap-exempt short-circuit fired
+        - drift_warnings: list[str] — section numbers with heading-SSOT drift
+          (EC-1 LOUD guard, Story §7.6 + Change Plan §13.B mandate). Emitted
+          via drift_warning_line() into stdout (warning-tier, exit-0 invariant).
     """
     if frontmatter is None:
         frontmatter = parse_frontmatter(head_text)
@@ -267,15 +334,21 @@ def classify(
             and EXEMPT_PROTOCOL_ID in exempt_protocols
             and story_key == story_self_key
             and story_key):
-        return [], True
+        return [], True, []
 
     # EC-3 new-file: base empty → non-violation (skip)
     if not base_text or not base_text.strip():
-        return [], False
+        return [], False, []
 
     # Slice sections from both base and head
     base_sections = slice_sections(base_text)
     head_sections = slice_sections(head_text)
+
+    # EC-1 LOUD heading-drift guard (Story §7.6 + Change Plan §13.B mandate)
+    # Detect BEFORE ownership classification — drift may itself silently
+    # disable ownership checks, so emit warning regardless of violation count.
+    drift_warnings = detect_heading_drift(base_text, head_text,
+                                          base_sections, head_sections)
 
     # Infer lane from branch/labels
     lane = infer_lane(branch, labels)
@@ -335,7 +408,7 @@ def classify(
                         branch=branch,
                     ))
 
-    return violations, False
+    return violations, False, drift_warnings
 
 # ─── File-based runner ────────────────────────────────────────────────────────
 
@@ -365,12 +438,18 @@ def run_on_file(filepath: str, base_sha: str, head_sha: str,
     if head_text is None:
         print(f"info: {filepath} head not found at {head_sha} — skip")
         return []
-    violations, carrier_exempt = classify(base_text, head_text, branch, labels)
+    violations, carrier_exempt, drift_warnings = classify(
+        base_text, head_text, branch, labels)
     if carrier_exempt:
         fm = parse_frontmatter(head_text)
         story_key = fm.get("key", filepath)
         print(f"notice carrier-exempt: {story_key} declares bootstrap_exempt_protocols "
               f"including {EXEMPT_PROTOCOL_ID} — ownership checks bypassed")
+    # EC-1 LOUD heading-drift warnings (Story §7.6 + Change Plan §13.B mandate)
+    # Emit BEFORE violations so silent-PASS suspicion is visible regardless of
+    # ownership-check outcome. Warning-tier exit-0 invariant unaffected.
+    for sec_num in drift_warnings:
+        print(drift_warning_line(sec_num))
     return violations
 
 
