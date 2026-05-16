@@ -61,18 +61,19 @@ Phase 2 PR merge 후 자동 trigger 의무 — 사용자 요청 불필요. FIX i
 
 ## GitOpsAgent (CFP-139)
 
-본 plugin 은 PMOAgent (one-shot trigger-driven, Cross-cutting 회고·감사) + **GitOpsAgent (long-running teammate, Story 전 기간 active git operations orchestrator)** 2 agent 로 구성. 두 agent 는 sibling — 책임 영역 명확히 분리.
+본 plugin 은 PMOAgent (one-shot trigger-driven, Cross-cutting 회고·감사) + **GitOpsAgent (long-running teammate, Story 전 기간 active git operations orchestrator)** + **DialogFidelityAgent (one-shot read-only verifier, 세션 요건·누적 결정 fidelity 검수, verifier-narrower-than-generator)** 3 agent 로 구성. 세 agent 는 sibling — 책임 영역 명확히 분리.
 
-| 영역 | PMOAgent | GitOpsAgent |
-|------|:--------:|:-----------:|
-| 회고 / Cross-Story 패턴 / ADR 발의 / Epic 분해 자문 | ✅ | — |
-| Hierarchical branch tree / Worktree lifecycle / Sequential merge / FIX iteration 재구성 / Stale cleanup | — | ✅ |
+| 영역 | PMOAgent | GitOpsAgent | DialogFidelityAgent |
+|------|:--------:|:-----------:|:-------------------:|
+| 회고 / Cross-Story 패턴 / ADR 발의 / Epic 분해 자문 | ✅ | — | — |
+| Hierarchical branch tree / Worktree lifecycle / Sequential merge / FIX iteration 재구성 / Stale cleanup | — | ✅ | — |
+| Orchestrator-user dialog turn fidelity 검수 (세션 요건·Layer 4 ledger 정합 검사, read-only) | — | — | ✅ |
 
 GitOpsAgent 는 Orchestrator + 모든 lane PL agent 의 git 작업 (branch / worktree / merge / cleanup) 단일 위임 대상. PMOAgent 와 병렬로 작동 — Story 도메인 결정 영역 무관 (코드 / 회고 영역 deny).
 
 **SendMessage peer protocol**: GitOpsAgent ↔ Orchestrator (lead) / PMOAgent (sibling, hotspot 패턴 보고) / 각 lane PL agent (sibling, conflict escalation + TeamCreate/Delete request). 직접 sub-agent spawn 불가 — Orchestrator 경유 (codeforge family ADR-009 invariant).
 
-Agent 상세 SSOT: [`agents/GitOpsAgent.md`](agents/GitOpsAgent.md).
+Agent 상세 SSOT: [`agents/GitOpsAgent.md`](agents/GitOpsAgent.md) / [`agents/DialogFidelityAgent.md`](agents/DialogFidelityAgent.md).
 
 ## Cross-Story patterns 입력 → ADR 발의 hand-off
 

@@ -1,7 +1,7 @@
 {
   "name": "codeforge-pmo",
-  "version": "0.1.3",
-  "description": "codeforge ζ arc PMO lane plugin (CFP-36) — Epic 분해 보조 · Story 완료 회고 감사 · Cross-Story 패턴 분석 · ADR 후보 발의 + docs/retros/ direct write + Story §11 self-write + Epic milestone 관리 · GitOpsAgent git-ops-event-v1 canonical producer (CFP-139). codeforge core 의존. + CFP-534 ADR-050 Amendment 1 GitOpsAgent intersection 로직 확장 (cross-section conflict detection). + CFP-597 GitOpsAgent §3.6 marketplace sync proactive PR dispatch (ADR-063 Amendment 1, 2026-05-13).",
+  "version": "0.2.0",
+  "description": "codeforge ζ arc PMO lane plugin (CFP-36) — Epic 분해 보조 · Story 완료 회고 감사 · Cross-Story 패턴 분석 · ADR 후보 발의 + docs/retros/ direct write + Story §11 self-write + Epic milestone 관리 · GitOpsAgent git-ops-event-v1 canonical producer (CFP-139). codeforge core 의존. + CFP-534 ADR-050 Amendment 1 GitOpsAgent intersection 로직 확장 (cross-section conflict detection). + CFP-597 GitOpsAgent §3.6 marketplace sync proactive PR dispatch (ADR-063 Amendment 1, 2026-05-13). + CFP-777 (Epic #761 Story-1, 2026-05-16) — DialogFidelityAgent 신규 cross-cutting read-only verifier (세션 요건·대화 결정 fidelity, verifier-narrower-than-generator, ADR-071 Amendment 1 external verifier auxiliary layer / ADR-042 Amendment 6 Opus pilot tier). agent count 2→3.",
   "author": {
     "name": "Josh"
   },

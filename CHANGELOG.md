@@ -4,6 +4,40 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.2.0] - 2026-05-16
+
+### CFP-777 (Epic #761 Story-1) — DialogFidelityAgent 신규 cross-cutting verifier agent 추가 (MINOR)
+
+ADR-071 Amendment 1 external verifier auxiliary layer 채널 신설. Orchestrator-user dialog turn 의 세션 개시 요건 + 누적 결정/제약 ledger (Layer 4 incidents) 이탈 여부를 외부 read-only agent 가 검수 — verifier-narrower-than-generator 패턴 (ADR-071 가설 E self-referential trap 해소).
+
+#### Added
+
+- `agents/DialogFidelityAgent.md` — 신규 cross-cutting verifier agent:
+  - Input Port: closed enum spawn_anchor 3-value (`post_user_turn | pre_architectpl_synthesis | pre_fix_rootcause`) + current_output_hash + ledger_path + decision_ledger + current_output_verbatim
+  - Output Port: closed enum verify_result 3-value (`fidelity_ok | drift_detected | ledger_gap`) + evidence_path[] + incident_row_match + correction_action_hint 4+null
+  - 3-anchor spawn trigger (ADR-039 §결정 2 inline whitelist 보존)
+  - verifier-narrower-than-generator 3 mechanical mitigation (M1 read-only tools / M2 closed enum output / M3 SHA-256 hash-pin)
+  - ADR-070 verify-before-trust 의무 / ADR-079 KST timestamp / ADR-042 Amendment 6 Opus pilot tier
+  - Story §14 spawn evidence trail row schema
+
+#### Changed
+
+- `CLAUDE.md` — agent count 2→3: DialogFidelityAgent 추가. agent 책임 영역 표 3열 확장. Agent 상세 SSOT 링크 추가.
+- `.claude-plugin/plugin.json` — version `0.1.3` → `0.2.0` (MINOR: 신규 agent 추가). description 끝에 CFP-777 신설 내용 append.
+
+#### Why
+
+ADR-071 Amendment 1 §결정 12 — external verifier auxiliary layer additive invariant. Orchestrator 자기 자신이 dialog fidelity 를 검증하는 구조(self-referential trap, 가설 E)는 blind spot 내재 → codeforge-pmo 소속 외부 agent 위임으로 해소. ADR-042 Amendment 6 Opus pilot tier 정합 (verifier 역할의 정밀도 요건).
+
+#### Cross-references
+
+- ADR-071 Amendment 1 §결정 12 (external verifier auxiliary layer)
+- ADR-042 Amendment 6 (Opus pilot tier)
+- ADR-070 §B verify-before-trust chain
+- ADR-039 §결정 2 (Inline whitelist 4-entry 보존)
+- ADR-079 (KST timestamp display layer)
+- Story file (internal-docs): `wrapper/stories/CFP-777.md`
+
 ## [0.1.3] - 2026-05-13
 
 ### CFP-597 — GitOpsAgent §3.6 marketplace sync proactive PR dispatch (ADR-063 Amendment 1, PATCH)
