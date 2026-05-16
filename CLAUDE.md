@@ -246,7 +246,7 @@ DesignReview lane 에서 Claude worker 와 Codex worker 가 review-verdict-v4 `f
 
 **원인 판정 최종 결정자** (CFP-134 / ADR-035 정정 후): PL 이 자기 lane review-verdict 의 final pl_recommendation 작성. Sonnet decider 자동 발동 무효 (ADR-022 Deprecated — CFP-134). FIX root cause 원인 판정 (설계 vs 구현) 은 ArchitectPLAgent 가 DeveloperPL 1차 진단 받은 후 최종 결정. 사용자 explicit request 시에만 ad-hoc Sonnet 호출 가능.
 
-**카운터 SSOT** = `docs/stories/<KEY>.md` §10 "FIX Ledger" — Orchestrator 단독 관리 ([fix-event-v1](docs/inter-plugin-contracts/fix-event-v1.md) contract, CFP-32 monopoly). GitHub Issue 라벨은 보조 (fix-ledger-sync.yml Action mirror).
+**카운터 SSOT** = `docs/stories/<KEY>.md` §10 "FIX Ledger" — Orchestrator 단독 관리 ([fix-event-v1](docs/inter-plugin-contracts/fix-event-v1.md) contract, CFP-32 monopoly). GitHub Issue 라벨은 보조 (fix-ledger-sync.yml Action mirror). 재조사 카운터(ADR-077 §결정 5, recheck_counter_cap=5)는 §10 FIX Ledger와 disjoint 제3 채널 — §9.0 Clarification 재스폰 이력 (RequirementsPL, fix:* 미부착). cross-pollinate 금지.
 
 **debate-protocol-v1 발동 FIX**: §10 row 의 `debate_artifact_ref` optional 필드 (fix-event-v1 1.1, CFP-391 / ADR-059) 가 Story §9 transcript section anchor link 보유 (예: `#debate-transcript-F-001`). ArchitectPLAgent re-spawn 시 transcript 가 verbatim 입력으로 흘러들어 reasoning carryover 보장. 미debate FIX 행은 `null` 또는 column 자체 생략 (backward-compat).
 
@@ -272,7 +272,7 @@ FIX 루프 시작 시 `codeforge:root-cause-decision` 호출 (DeveloperPL 진단
 
 요약: SecurityArch=§7.1/§7.2/§7.3/§7.5/§7.6, OpRiskArch=§7.4(DR/rate/env/clock), DataMigrationArch=§11 schema/migration/idempotency, TestContractArch=§8.5. CONDITIONAL LiveOps·LiveOrdering·ProductionEvidence = Live touching Story (LiveOps·LiveOrdering) 또는 production cutover Story (ProductionEvidence) 만 spawn ([ADR-014](docs/adr/ADR-014-operational-risk-ssot-distribution.md), [ADR-72](docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md)).
 
-**PMOAgent (Cross-cutting)** — Epic 창설 / Story 완료 회고 (**자동 의무 trigger** — Phase 2 PR merge 후 5분 grace, CFP-138 / [ADR-045](docs/adr/ADR-045-story-retro-mandatory-trigger.md)) / 사용자 요청 시 spawn. 단일 Story lane 게이트 비개입. 상세: [codeforge-pmo CLAUDE.md](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/CLAUDE.md).
+**PMOAgent (Cross-cutting)** — Epic 창설 / Story 완료 회고 (**자동 의무 trigger** — Phase 2 PR merge 후 5분 grace, CFP-138 / [ADR-045](docs/adr/ADR-045-story-retro-mandatory-trigger.md)) / 사용자 요청 시 spawn. 단일 Story lane 게이트 비개입. 단 clarification 답변 영향이 Epic/Story 구조 도달 시 조건부 합류 (재분해 — ADR-077 §결정 2 contrapositive invariant, ADR-045 retro trigger와 origin disjoint). 상세: [codeforge-pmo CLAUDE.md](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/CLAUDE.md).
 
 ### SessionStart retro alert scan (ADR-045 §D-5, CFP-628)
 
