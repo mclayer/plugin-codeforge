@@ -9,7 +9,12 @@ carrier_story: CFP-770
 parent_epic: null
 supersedes: []
 amends: []
-amendment_log: []
+amendment_log:
+  - amendment: 1
+    date: 2026-05-16
+    carrier_story: CFP-771
+    summary: "Phase 2 mechanical enforcement wire — evidence-checks-registry row append (warning-tier) + kst-timestamp-display.yml workflow + scripts/lib/check_kst_timestamp.py SSOT + label-registry-v2 v2.19 hotfix-bypass:kst-timestamp-display 27th family. mechanical_enforcement_actions[0].status deferred-followup → Active (ADR-040 Amendment 3 §결정 7.D self-application — declarative governance ADR 의 deferred-followup mechanical action 이 Phase 2 carrier 에서 Active 전환). §결정 본문 무변경 (status field + amendment_log only). self-app 근거 = established `.github/workflows/` byte-identical convention (CLAUDE.md L313 ADR-060 단락 Amendment 4 auto-phase-label.yml 선례 + decision-principle-vocabulary.yml exemplar 동형 — ADR-005 인용 아님: ADR-005 = Plugin Self-Application N/A 표준화, workflow byte-identical 정책 아님). 강화 방향 (검출 능력 추가) — ADR-058 §결정 5 ratchet 정합."
+    direction: strengthen
 related_stories:
   - CFP-770  # 본 Story carrier — Phase 1 (ADR-079 신설 + RESERVATION row 79 reserved 미경유 직접 active + CLAUDE.md/playbook/template/domain-knowledge)
   - CFP-771  # Phase 2 mechanical lint carrier (blocks-on CFP-770) — Amendment 1 이 mechanical_enforcement_actions[] 채움
@@ -36,8 +41,8 @@ related_files:
   - docs/parallel-work/section-ownership.yaml  # CLAUDE.md 신규 단락 owned_sections row append (Layer A self-application, AC-3)
 mechanical_enforcement_actions:
   - action: kst-timestamp-display
-    status: deferred-followup
-    progress_note: "ADR-079 신설 시점 (Phase 1) registry entry 부재 — display-invariant = notation rule normative 선언만. evidence-checks-registry row append + warning-tier lint (grep-testable: governance display layer 영속 artifact 의 ISO 8601 `+09:00` colon-offset form 강제 + contract field layer UTC strict 0건 변경 invariant + frontmatter date-only KST 일자 의미) = Phase 2 CFP-771 Amendment 1 carrier. hotfix-bypass:kst-timestamp-display (예약, namespace per-entry — ADR-024 Amendment 3 정합)."
+    status: Active
+    progress_note: "Phase 2 CFP-771 Amendment 1 (2026-05-16 KST) 가 evidence-checks-registry row append (58번째 entry, current_tier:warning) + kst-timestamp-display.yml warning-tier workflow + scripts/lib/check_kst_timestamp.py SSOT (ADR-064 check_decision_principle_vocabulary.py framework 구조 차용 — cp949 L13-18 / normalize_path L54 / collect / in_scope / scan_file, FORBID_DICTIONARY → KST_TS_RE RFC 3339 §5.6 colon-offset regex 교체) + label-registry-v2 v2.19 (hotfix-bypass:kst-timestamp-display 27th family) wire 완료. Phase 1 시점 registry entry 부재 deferred-followup → Phase 2 carrier 에서 Active 전환 (ADR-040 Amendment 3 §결정 7.D self-application). grep-testable: governance display layer 영속 artifact (KST_SCOPE_GLOBS 5 = CLAUDE.md / playbook / ADR-*.md 전체 파일 scan / retros / epic-results) 의 ISO 8601 `+09:00` colon-offset form 강제 + contract field layer (docs/inter-plugin-contracts/ EXEMPT_PREFIX) UTC strict 0건 변경 invariant + frontmatter `^date:` date-only KST 일자 의미 Guard. hotfix-bypass:kst-timestamp-display (namespace per-entry — ADR-024 Amendment 3 정합)."
     target_section: §결정 2
 # Phase 1 scope = ADR 본문 신설 + RESERVATION row 79 + CLAUDE.md/playbook/template/domain-knowledge
 # 일괄 적용만. mechanical lint wire (evidence-checks-registry row append + workflow + script) =
