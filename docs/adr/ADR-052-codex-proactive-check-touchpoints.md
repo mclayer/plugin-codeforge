@@ -29,6 +29,10 @@ amendments:
     date: 2026-05-13
     carrier_story: CFP-578
     summary: "6 touchpoint 자동 dispatch 영역의 dispatch prompt template 안 file content verbatim 첨부 의무 본문 명시. ADR-070 (verify-before-trust pattern) §결정 D2 / D4 cross-ref. Codex worker 의 sandbox access 실패 (CFP-506 / CFP-520 / CFP-530 3 회 reproduce sentinel) 가 systemic 원인 — file path reference 만 사용 시 silent fallback 외부 source 인용 risk. 본 Amendment scope = ADR-052 본문 + playbook §3.10 dispatch prompt template patch + CLAUDE.md blockquote 갱신 (doc-only fast-path 영역, ADR-054 §결정 1 신규 ADR-070 동반 carrier 영역 정합). D1/D2/D3/D4 결정 본문 + Amendment 1/2/3/4 본문 의미 변경 없음."
+  - id: 6
+    date: 2026-05-17
+    carrier_story: CFP-819
+    summary: "Codex worker prompt boilerplate composition SSOT 영역을 신규 ADR-081 로 분리 (cross-ref). D1/D2/D3/D4 + Amendment 1-5 본문 의미 변경 없음 — boilerplate composition (3 mandatory section: dogfood-out path / lane stage / sandbox boundary) + verify-before-trust scope 분리 (file/dir/cross-repo + grep count active vs historical + ADR §결정 번호 정확성) + 3-lane partition (Codex factual citation / DesignReview boundary completeness / CodeReview style+history disjoint) 영역의 normative anchor 가 cross-document 분산 상태였음 (ADR-052 Amendment 5 + ADR-070 D2). 6-Story carry-over evidence sentinel (CFP-770/771 fp 8 baseline → CFP-786/801/792/795/810 fp 0 carry-over 5 consecutive) + ADR-045 Amendment 5 §D-9 cross_story_pattern_adr_trigger forcing function (pattern_count 5 reach YES, escalation_action: adr_draft_emitted) carrier. is_transitional=false, sunset_justification=N/A (permanent strengthening, ADR-070 §D5 precedent 정합 declaration-only retain). 본 Amendment 6 scope = ADR-052 본문 sub-section append (cross-ref 1 paragraph) — D1/D2/D3/D4 + Amendment 1-5 본문 의미 변경 0건. ADR-054 §결정 1 신규 ADR-081 동반 carrier 영역 정합 (full-lane 강제)."
 related_stories:
   - CFP-354
   - CFP-411
@@ -36,6 +40,7 @@ related_stories:
   - CFP-510
   - CFP-532
   - CFP-578
+  - CFP-819
 related_adrs:
   - ADR-039
   - ADR-034
@@ -43,6 +48,7 @@ related_adrs:
   - ADR-059
   - ADR-064
   - ADR-070
+  - ADR-081  # Amendment 6 (CFP-819) — boilerplate composition SSOT 분리 cross-ref
 related_files:
   - docs/orchestrator-playbook.md
   - docs/superpowers-integration.md
@@ -624,3 +630,72 @@ ADR-064 결정 원칙 4 어휘 anchor (best-effort / broad coverage / full-scope
 - (Amendment-R) **자동 file content injection layer 도입** (Orchestrator 가 spawn prompt 파싱 → file path reference 자동 verbatim 변환) — Orchestrator turn 내 inline action 영역 외 (별도 carrier 필요), mechanical injection layer 신설 = 별도 ADR carrier 영역. ADR-070 §결정 D2 거절 대안 (D2-C) 정합.
 - (Amendment-S) **verify-before-trust 채널 도덕적 강제로 한정** (normative anchor 부재) — 3 회 reproduce sentinel 누적 evidence 가 normative 승격 정당성 충족. ADR-070 §결정 D1 거절 대안 (D1-C) 정합.
 - (Amendment-T) **mechanical lint 도입** (Codex spawn prompt 안 file path reference 검출 static regex 또는 Codex output 안 sandbox access 실패 ERR 패턴 검출) — ADR-070 §결정 D5 (declaration-only retain) 정합. (a)/(b)/(c) 4 후보 모두 robustness risk 보유. evidence-checks-registry entry append 면제.
+
+## Amendment 6 (2026-05-17 KST, CFP-819)
+
+### Context
+
+ADR-052 Amendment 5 (D2 verbatim 첨부 의무) + ADR-070 D2 (file content verbatim 첨부) 가 두 가지 normative anchor 를 명문화한 이후, **Codex worker prompt 본문의 mandatory section composition** 영역의 normative anchor 가 cross-document 분산 상태로 잔존. playbook §3.10 dispatch prompt template 이 SSOT 역할을 도덕적 강제로 수행 중이었다.
+
+6-Story carry-over evidence sentinel:
+
+- baseline: CFP-770 / CFP-771 (fp 8 합산, 2026-05-16, boilerplate pre-application)
+- carry-over fp 0: CFP-786 / CFP-801 / CFP-792 / CFP-795 / CFP-810 (5 consecutive, 2026-05-17)
+- threshold reach: CFP-810 retro §6 carrier 5/7 sentinel reach YES
+
+ADR-045 Amendment 5 §D-9 (`cross_story_pattern_adr_trigger`, pattern_count ≥ 2 forcing function) 충족 — escalation_action: `adr_draft_emitted` 영역 진입.
+
+### 결정 (Amendment 6)
+
+본 Amendment scope = ADR-052 본문 sub-section append (cross-ref 1 paragraph) 만. D1/D2/D3/D4 + Amendment 1-5 본문 의미 변경 0건.
+
+**A1. boilerplate composition SSOT 분리 — 신규 ADR-081 cross-ref**
+
+본 ADR 의 boilerplate composition 영역 (3 mandatory section + verify-before-trust scope 분리 + 3-lane partition) 을 신규 ADR-081 (Codex worker prompt boilerplate composition SSOT) 로 분리.
+
+ADR-081 §결정 영역:
+
+- D1 — 3 mandatory boilerplate 영역 (D1.A dogfood-out Story path / D1.B lane stage / D1.C sandbox boundary)
+- D2 — verify-before-trust scope 5 sub-scope (D2.A file / D2.B dir / D2.C cross-repo / D2.D grep count active vs historical / D2.E ADR §결정 번호 정확성)
+- D3 — 3-lane partition (Codex factual citation / DesignReview boundary completeness / CodeReview style + history disjoint)
+- D4 — ADR-052 / ADR-070 본문 정책 SSOT 보존 invariant
+- D5 — evidence-enforceable framework entry append 면제 (declaration-only retain, ADR-070 §D5 precedent verbatim)
+
+**A2. ADR-052 본문 정책 SSOT 보존 invariant**
+
+본 Amendment 6 = sub-section append 패턴 (Amendment 1/2/3/4/5 패턴 정합). D1/D2/D3/D4 결정 본문 + Amendment 1-5 본문 의미 변경 없음. Codex worker dispatch 자체 흐름 invariant 정합.
+
+**A3. ADR-058 §결정 5 ratchet 정합 (강화 방향 명시)**
+
+본 Amendment = 강화 방향 (ratchet 강화):
+
+- `is_transitional: false` 본 ADR 유지 (permanent governance)
+- `sunset_justification: "N/A — permanent strengthening (6-Story carry-over evidence + ADR-070 §D5 declaration-only retain precedent)"`
+- ADR-058 §결정 5 sunset_justification 의무는 약화 방향 (boilerplate 영역 축소) 에만 발효 → 본 Amendment 는 면제
+
+**A4. ADR-064 §결정 (Trace 1) active amendment + full-scope 정합**
+
+ADR-064 결정 원칙 4 어휘 anchor (best-effort / broad coverage / full-scope / active amendment) 중 **active amendment** + **full-scope** 정합:
+
+- Amendment 발의 시점 = 6-Story carry-over sentinel reach 후 즉시 (active amendment ratchet 강화 방향)
+- 적용 영역 = 6 touchpoint 모두 (full-scope, 단일 touchpoint 한정 아님)
+- forbid-list 13 어휘 (ADR-064 §결정 1 + Amendment 2/4/5) 사용 0 건 self-attest
+
+**A5. doc-only fast-path 영역 정합 (ADR-054 §결정 1)**
+
+본 Amendment 6 자체 = ADR-052 본문 patch (sub-section append) — doc-only fast-path 적격. 단 carrier Story (CFP-819) 는 신규 ADR-081 동반 = ADR-054 §결정 1 거부 조건 (신규 ADR 도입 Story = full-lane 강제) 영역 정합 → 전체 full-lane 진행.
+
+### 결과 (Amendment 6)
+
+- boilerplate composition SSOT (3 mandatory section + verify-before-trust scope 5 sub-scope + 3-lane partition) 영역의 normative anchor 신규 ADR-081 로 분리 — A1 SSOT
+- D1/D2/D3/D4 + Amendment 1-5 본문 의미 변경 0건 (sub-section append 패턴) — A2 SSOT
+- ADR-058 §결정 5 ratchet 정합 (강화 방향, sunset_justification N/A — permanent strengthening) — A3 SSOT
+- ADR-064 §결정 active amendment + full-scope 정합 (forbid-list 13 어휘 사용 0 건) — A4 SSOT
+- doc-only fast-path 영역 정합 (본 Amendment 6 자체) — carrier Story (CFP-819) 전체는 신규 ADR-081 동반 full-lane 진행 — A5 SSOT
+
+### 거절된 대안 (Amendment 6)
+
+- (Amendment-U) **ADR-052 본문 안 boilerplate composition section 직접 inline append** (별 ADR 신설 회피) — Amendment scope 가 크다 (cross-document 4-region 통합 영역). ADR-070 자매 패턴 (separate ADR + cross-ref) 정합성 부재. 영역 type 분리 (boilerplate composition ≠ touchpoint behavior) 차단 → 신규 ADR-081 채택 (ADR-070 자매 패턴 정합).
+- (Amendment-V) **3-lane partition 표를 ADR-068 (boundary completeness invariants) 안에 inline append** — 영역 type mismatch (factual citation ≠ boundary completeness self-check). Codex output 영역 (외부 worker) vs DesignReview lane invariants (내부 lane behavior) 분리 차단 → ADR-081 안 partition 표 박제 + ADR-068 cross-ref 만 채택.
+- (Amendment-W) **verify scope marker 어휘 신설 (`[verified-file]` / `[verified-dir]` / `[verified-cross-repo]`)** — CFP-810 retro §6 후보 5 정합, **별 carrier** 분리. 본 Amendment scope = verify scope 분리 의무 본문 명시만 — marker 어휘 변경 없음 → 별 carrier 영역.
+- (Amendment-X) **mechanical lint 도입** (Codex spawn prompt 안 3 mandatory section 존재 검출 static regex 또는 Codex output 안 5 sub-scope marker 발화 검출) — ADR-070 §결정 D5 (declaration-only retain) 정합. ADR-081 §D5 본문 표 (a)/(b)/(c)/(d) 4 후보 모두 robustness risk 보유. evidence-checks-registry entry append 면제.
