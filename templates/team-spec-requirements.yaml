@@ -35,14 +35,14 @@ teammates:
 
   - name: RequirementsAnalyst
     role: deputy
-    system_prompt_path: agents/RequirementsAnalyst.md
+    system_prompt_path: agents/RequirementsAnalystAgent.md
     model: claude-opus-4-7
     spawn_mode: default
     dispatch_mode: default
 
   - name: Researcher
     role: deputy
-    system_prompt_path: agents/Researcher.md
+    system_prompt_path: agents/ResearcherAgent.md
     model: claude-opus-4-7
     spawn_mode: default
     dispatch_mode: default
@@ -68,6 +68,17 @@ teammates:
     model: claude-opus-4-7
     spawn_mode: default
     dispatch_mode: default
+
+  # ADR-077 §결정 2 — 조건부 PMO 합류 (답변 영향이 Epic/Story 구조 도달 시 재분해).
+  # ADR-045 PMO retro mandatory trigger 와 origin disjoint (재분해 spawn ≠ retro spawn).
+  - name: PMOAgent
+    role: deputy
+    system_prompt_path: agents/PMOAgent.md
+    model: claude-opus-4-7
+    spawn_mode: conditional
+    activation_condition: epic_structure_change
+    contrapositive_invariant: "PMO 합류 미발동 = Epic 구조 무변경"
+    dispatch_mode: [default]
 
   - name: CodexProactiveCheckAgent
     role: worker
