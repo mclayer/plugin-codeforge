@@ -7,6 +7,35 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.81.0] - 2026-05-17
+
+### Added (CFP-745 Wave 2 Story-5 Phase 2 — overlay 영역 3-way merge reconcile runtime, CFP-810/795/801/777/751 collision rebase)
+
+- **`scripts/reconcile-overlay.sh`** (NEW, 746L) — overlay 영역 3-way merge reconcile runtime. base×marker 2×2 dispatch: BASE_OK+MARKER_VALID=3-way / BASE_ABSENT+MARKER_VALID=marker-aware first-reconcile / MARKER_NONE=wholesale_mirror / BASE_CORRUPT=abort-before-touch. EPIC-AC-4 silent overwrite 0. AC-9(a) idempotency. orphan marker abort. 4 test seam env vars. ADR-061 heredoc-python 0 (validate_sidecar.py 위임). 20/20 BATS TC PASS (TDD: RED→GREEN→REFACTOR).
+- **`scripts/lib/validate_sidecar.py`** (NEW, 48L) — ADR-061 external .py. sidecar manifest schema validation.
+- **`scripts/lib/reconcile_json_sidecar.py`** (NEW, 153L) — JSON sidecar RFC 6901 key-path merge helper.
+- **`.claude/_overlay/.wrapper-managed-manifest.json`** (NEW) — sidecar manifest template.
+- **`scripts/check-wrapper-template-managed-coverage.sh`** (NEW, 175L) — authoring-guard lint warning tier.
+- **`templates/github-workflows/wrapper-template-managed-coverage.yml`** + **`.github/workflows/wrapper-template-managed-coverage.yml`** (NEW, byte-identical self-app ADR-005).
+- **`tests/scripts/cfp-745/reconcile-overlay.bats`** (NEW, 645L, 20 TC) — AC-9 a/b/c + base×marker 2×2 + §7.4.1 8 failure mode TC, FIX Iter 4 TC-19 discriminating 강화.
+
+### Changed (CFP-745 Wave 2 Story-5 Phase 2)
+
+- **`docs/evidence-checks-registry.yaml`** — 60번째 entry `wrapper-template-managed-coverage` append (warning tier, owner_adr ADR-027, carrier_adr ADR-060). CFP-722 57th + CFP-771 58th + CFP-745 59th 정합.
+- **`docs/consumer-guide.md`** — §1k 신설 overlay reconcile 가이드.
+- **`.claude-plugin/plugin.json`** — 5.80.0 → 5.81.0 MINOR (신규 runtime script + workflow 활성화 — ADR-037). marketplace 별 sibling PR sync 의무 (ADR-063 §결정 5, codeforge-improvement (i) sanity guard 적용).
+
+### Fixed (CFP-745 Phase 2 FIX Iter 4 — CodeReviewPL findings, 구현 원인)
+
+- **F-CR-745-1 (P1 runtime-error)**: `scripts/reconcile-overlay.sh` L133/L135 `local` keyword removed (top-level if 블록 안 함수 외부 사용 fatal). `local_overlay_parent`/`local_overlay_base` variable name prefix 컨벤션 (L122 동형). `--rollback` snapshot restore 정상화.
+- **F-CR-745-2 (P1 test-quality)**: `tests/scripts/cfp-745/reconcile-overlay.bats` TC-19 강화 (exit 0 단일 + prior-state positive assert + current-state negative assert). RED proof: F-CR-745-1 미수정 시 `not ok 19: line 632 [ status -eq 0 ] failed` (genuine discriminating).
+- **F-CR-745-3 (P2)**: `wrapper/stories/CFP-745.md` §8 TC 매핑 표 20 row 실제 .bats layout 정정 (§8.5 Impl Manifest 12/12 preserve).
+
+### Incident & Lessons
+
+- **P0 marketplace.json 0-byte 파괴 (Iter 3)**: PR #152 (`15fdca4 +0/-97`) 가 marketplace.json 전체 파괴 (git empty-blob `e69de29b`). Orchestrator strict-verify-gate 가 plugin-codeforge #798 OPEN 시점 적발 → fix-forward PR #153 (`a3dfd42`) merge → marketplace.json 복구 + ADR-063 4-field parity ALL TRUE 독립 재verify.
+- **codeforge-improvement 후보 신규 (Epic close batch)**: (i) marketplace 3-file atomic write 후 git diff stat sanity check + 0-byte abort guard / (j) cross-repo state false-claim verify = gh api blob sha empty-detection 표준 / (k) bash top-level vs function-scope keyword (local/declare/typeset) lint warning-tier.
+
 ## [5.80.0] - 2026-05-17
 
 ### Changed (CFP-795 Phase 2 — post-merge-fix phase-gate fast-pass 4번째 source)
