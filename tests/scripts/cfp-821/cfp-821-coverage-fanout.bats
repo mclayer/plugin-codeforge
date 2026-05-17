@@ -429,8 +429,8 @@ PYEOF
   run grep -c "^- name:" "${REGISTRY}"
   [ "$status" -ne 0 ]  # grep must find ZERO column-0 "- name:" lines
 
-  # All 66 entries must be at 2-space indent
+  # All 68 entries must be at 2-space indent (CFP-841 +2: corpus-claim-verify + cross-plugin-ownership-verify)
   run grep -c "^  - name:" "${REGISTRY}"
   [ "$status" -eq 0 ]
-  [ "$output" -eq 66 ]
+  [ "$output" -eq 68 ]
 }
