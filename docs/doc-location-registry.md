@@ -5,8 +5,8 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.0  
-**Last regen**: 2026-05-15T14:59:56Z  
-**Registered doc types**: 13
+**Last regen**: 2026-05-17T23:53:35Z  
+**Registered doc types**: 14
 
 ## Summary table
 
@@ -25,6 +25,7 @@
 | 11 | `evidence_check_registry` | single_repo | `orchestrator` | CFP-389 |
 | 12 | `upgrade_events` | single_repo | `orchestrator` | CFP-743 |
 | 13 | `kpi_artifact` | single_repo | `orchestrator` | CFP-393 |
+| 14 | `architecture_doc` | dogfood / single_repo | `codeforge-design:ArchitectAgent` | CFP-919 |
 
 ## Per-doc-type details
 
@@ -244,4 +245,29 @@
   > append-only policy + comment workflow-only-write semantic).
   > Lint scope = JSON valid (jq parse) + invariant (분자 ≤ 분모 등, aggregator 가 강제).
   > 향후 history 누적 정책 별도 carrier (CFP-393 §11 follow-up #4).
+
+### `architecture_doc`
+
+- **single_repo**: `<owner-repo>/docs/architecture/<topic>.md`
+- **dogfood**: `mclayer/codeforge-internal-docs/<plugin-folder>/architecture/<topic>.md`
+- **owner_agent**: `codeforge-design:ArchitectAgent`
+- **introduced_by**: CFP-919
+- **naming_pattern**: `[a-z0-9-]+\.md`
+- **frontmatter_required**: True
+- **examples**:
+  - mclayer/plugin-codeforge/docs/architecture/codeforge-family.md
+  - mclayer/codeforge-internal-docs/wrapper/architecture/wrapper-overview.md (dogfood)
+
+  **notes**:
+  > CFP-919 (Epic B Story-1) carrier — ADR-078 (살아있는 구조 설계 문서 유지 정책 SSOT).
+  > Story key 독립 (고정 경로 docs/architecture/) + 누적 현재 상태 SSOT.
+  > 4 영역 closed-enum: 모듈 / 경계 / 인터페이스 계약 / 데이터 흐름.
+  > 라인 수준 (클래스/함수/변수) 금지 — anti-scope guard (ADR-078 §결정 1).
+  > 각 plugin self-owned (single_repo + dogfood variant 양 지원, Q1 derived default 정합).
+  > ADR-076 declarative reconciliation 3-layer pattern 재사용 (desired/current/converge).
+  > Change Plan (델타) 와 상보 관계 — disjoint SSOT (ADR-078 §결정 3).
+  > Write owner = ArchitectAgent (codeforge-design lane chief author).
+  > Phase 1 (CFP-919) = doc type 등록 + ADR-078 anchor 만. template schema = S2 (#920) carrier.
+  > lane 게이트 = S3 (#921) carrier. drift lint = S4 (#923) carrier.
+  > parallel-edit policy = locked (architecture_doc = ArchitectAgent monopoly + design lane verdict gate).
 
