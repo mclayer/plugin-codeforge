@@ -1,14 +1,14 @@
 ---
 kind: registry
 registry: label
-version: "2.21"
+version: "2.22"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
 created_date: 2026-05-09
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/label-registry-v2.md
-date: 2026-05-17  # CFP-795 v2.21 — post-merge-fix fast-pass source label 신설 (ADR-026 Amendment 4 §결정 6 carrier — cross-repo post-merge hotfix 3-조건 AND fast-pass gate 조건 1, MINOR bump: 신규 fast-pass category 신설) | CFP-722 v2.20 — hotfix-bypass:story-section-ownership 28번째 family member (ADR-060 Amendment 13 §결정 27 carrier — Story per-section ownership mechanical lint warning-tier, CFP-722 Phase 2 rebase post-CFP-771) | CFP-771 v2.19 — hotfix-bypass:kst-timestamp-display 27번째 family member (ADR-079 Amendment 1 carrier — KST timestamp display mechanical lint warning-tier, CFP-771) | CFP-702 v2.18 — hotfix-bypass:wrapper-managed-block 26번째 family member (ADR-027 Amendment 3 §결정 7.D carrier — D4 customization marker block lint blocking-on-pr, CFP-699 Wave 1 Story-2) | CFP-688 v2.17 — hotfix-bypass:actionlint 24번째 + hotfix-bypass:post-merge-followup-success-rate 25번째 family member (ADR-026 Amendment 3 §결정 5.G.b + §결정 5.G.d carriers — actionlint prevention layer + KPI detection sentinel, CFP-688 Phase 2 sub-PR (c)) | CFP-708 Phase 2 v2.16 back-ref: hotfix-bypass:claude-md-amendment-ref 23번째 family member (see below) | CFP-685 v2.16 — hotfix-bypass:auto-phase-label-sibling-parity 22번째 family member (ADR-065 §결정 1 row 3 carrier — templates ↔ self-app byte-identical parity warning-tier entry, CFP-609 retro Finding D carrier) | CFP-662 v2.15 — hotfix-bypass:bootstrap-labels 21번째 family member (ADR-060 Amendment 10 §결정 24 carrier — PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier 정합) | CFP-660 v2.14 — hotfix-bypass:workflow-version-drift 20번째 family member (ADR-032 Amendment 2 §결정 6 carrier — strict-eligible 5번째 drift consumer workflow version drift, CFP-660 Wave 2 of Epic CFP-431) | CFP-658 v2.13 — fallback:* family 신설 (fallback:manual + fallback:rate-limited, ADR-027 Amendment 2 §결정 6 carrier — Action-blocked agent direct write fallback path normative SSOT, post-CFP-627 v2.12 atomic rebase) | CFP-627 v2.12 — hotfix-bypass:marketplace-drift-detection 19번째 family member (ADR-063 Amendment 3 §결정 13 carrier — marketplace reactive scheduled drift detection 4th defense layer, post-CFP-638 base) | CFP-638 v2.11 — hotfix-bypass:stop-time-continuous-confirm 18번째 family member (ADR-064 Amendment 3 §결정 9 sister carrier — Continuous '진행해' 패턴 mechanical detect advisory channel) | CFP-631 v2.10 — hotfix-bypass:marketplace-description-verbatim 17번째 family member (ADR-063 Amendment 2 carrier — description proactive PR-time lint blocking-on-pr 직접 시작) | CFP-628 v2.9 — hotfix-bypass:retro-alert-pickup 16번째 family member (ADR-045 §D-5 retro alert pickup KPI warning-tier sentinel) | CFP-619 v2.8 — hotfix-bypass:retro-mandatory-deployed 15번째 family member (ADR-045 mandate restoration carrier) | CFP-610 v2.6 sub-entry — hotfix-bypass:wording-dictionary 13번째 (ADR-064 Amendment 2) | CFP-582 v2.6 sub-entry — hotfix-bypass:debate-convergence-quality 12번째 (ADR-059 Amendment 2 §결정 8) | CFP-583 v2.6 sub-entry — hotfix-bypass:workflow-yaml-parse 11번째 | CFP-530 v2.5 sub-entry — hotfix-bypass:workflow-permissions 10번째 | CFP-429 v2.5 — from-cfp-425-followup provenance label | CFP-521 v2.4 sub-entry — hotfix-bypass:sibling-pr-author-check 9번째 | CFP-506 v2.4 sub-entry — hotfix-bypass:claude-md-line-cap 8번째 | CFP-481 v2.4 — phase:* attach_owner_plugin field 갱신
+date: 2026-05-17  # CFP-785 v2.22 — hotfix-bypass:adr-077-ratchet 29번째 + hotfix-bypass:adr-077-design-reading 30번째 family member (v2.21 CFP-795 collision rebase: PATCH re-index v2.22) | CFP-795 v2.21 — post-merge-fix fast-pass source label 신설 (ADR-026 Amendment 4 §결정 6 carrier — cross-repo post-merge hotfix 3-조건 AND fast-pass gate 조건 1, MINOR bump: 신규 fast-pass category 신설) | CFP-722 v2.20 — hotfix-bypass:story-section-ownership 28번째 family member (ADR-060 Amendment 13 §결정 27 carrier — Story per-section ownership mechanical lint warning-tier, CFP-722 Phase 2 rebase post-CFP-771) | CFP-771 v2.19 — hotfix-bypass:kst-timestamp-display 27번째 family member (ADR-079 Amendment 1 carrier — KST timestamp display mechanical lint warning-tier, CFP-771) | CFP-702 v2.18 — hotfix-bypass:wrapper-managed-block 26번째 family member (ADR-027 Amendment 3 §결정 7.D carrier — D4 customization marker block lint blocking-on-pr, CFP-699 Wave 1 Story-2) | CFP-688 v2.17 — hotfix-bypass:actionlint 24번째 + hotfix-bypass:post-merge-followup-success-rate 25번째 family member (ADR-026 Amendment 3 §결정 5.G.b + §결정 5.G.d carriers — actionlint prevention layer + KPI detection sentinel, CFP-688 Phase 2 sub-PR (c)) | CFP-708 Phase 2 v2.16 back-ref: hotfix-bypass:claude-md-amendment-ref 23번째 family member (see below) | CFP-685 v2.16 — hotfix-bypass:auto-phase-label-sibling-parity 22번째 family member (ADR-065 §결정 1 row 3 carrier — templates ↔ self-app byte-identical parity warning-tier entry, CFP-609 retro Finding D carrier) | CFP-662 v2.15 — hotfix-bypass:bootstrap-labels 21번째 family member (ADR-060 Amendment 10 §결정 24 carrier — PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier 정합) | CFP-660 v2.14 — hotfix-bypass:workflow-version-drift 20번째 family member (ADR-032 Amendment 2 §결정 6 carrier — strict-eligible 5번째 drift consumer workflow version drift, CFP-660 Wave 2 of Epic CFP-431) | CFP-658 v2.13 — fallback:* family 신설 (fallback:manual + fallback:rate-limited, ADR-027 Amendment 2 §결정 6 carrier — Action-blocked agent direct write fallback path normative SSOT, post-CFP-627 v2.12 atomic rebase) | CFP-627 v2.12 — hotfix-bypass:marketplace-drift-detection 19번째 family member (ADR-063 Amendment 3 §결정 13 carrier — marketplace reactive scheduled drift detection 4th defense layer, post-CFP-638 base) | CFP-638 v2.11 — hotfix-bypass:stop-time-continuous-confirm 18번째 family member (ADR-064 Amendment 3 §결정 9 sister carrier — Continuous '진행해' 패턴 mechanical detect advisory channel) | CFP-631 v2.10 — hotfix-bypass:marketplace-description-verbatim 17번째 family member (ADR-063 Amendment 2 carrier — description proactive PR-time lint blocking-on-pr 직접 시작) | CFP-628 v2.9 — hotfix-bypass:retro-alert-pickup 16번째 family member (ADR-045 §D-5 retro alert pickup KPI warning-tier sentinel) | CFP-619 v2.8 — hotfix-bypass:retro-mandatory-deployed 15번째 family member (ADR-045 mandate restoration carrier) | CFP-610 v2.6 sub-entry — hotfix-bypass:wording-dictionary 13번째 (ADR-064 Amendment 2) | CFP-582 v2.6 sub-entry — hotfix-bypass:debate-convergence-quality 12번째 (ADR-059 Amendment 2 §결정 8) | CFP-583 v2.6 sub-entry — hotfix-bypass:workflow-yaml-parse 11번째 | CFP-530 v2.5 sub-entry — hotfix-bypass:workflow-permissions 10번째 | CFP-429 v2.5 — from-cfp-425-followup provenance label | CFP-521 v2.4 sub-entry — hotfix-bypass:sibling-pr-author-check 9번째 | CFP-506 v2.4 sub-entry — hotfix-bypass:claude-md-line-cap 8번째 | CFP-481 v2.4 — phase:* attach_owner_plugin field 갱신
 authors:
   - Claude (CFP-140 — ADR-049 type:* → native Issue Types cutover)
 related_adrs:
@@ -55,6 +55,12 @@ related_files:
 # label-registry v2
 
 ## 변경 이력
+
+**v2.22 (CFP-785 / ADR-077 §결정 3 + §결정 9, 2026-05-17)**: PATCH bump (schema 무변경 — §3 yaml hotfix-bypass:* 29번째 + 30번째 family member append, v2.21 CFP-795 collision rebase 재인덱스).
+
+`hotfix-bypass:adr-077-ratchet` (29번째) + `hotfix-bypass:adr-077-design-reading` (30번째) 2 family member append. ADR-008 §결정 3 SSOT: schema 무변경 yaml row append = PATCH bump.
+
+Story-3 Phase 1 carrier — evidence-checks-registry `adr-077-ratchet-declared` / `adr-077-design-reading-mandate-declared` 2 warning-tier row 의 bypass label per-entry namespace. ADR-077 §결정 9 ratchet 선언 + §결정 3 design-reading mandate lint skip (deferred-followup → Phase 2 land 시 Active).
 
 **v2.21 (CFP-795 / ADR-026 Amendment 4 §결정 6, 2026-05-17)**: MINOR bump (신규 label entry + 신규 category `fast-pass` 신설).
 - **추가**: `post-merge-fix` (color `0e8a16`, category `fast-pass`) — `phase-gate-mergeable.yml` 4번째 fast-pass source `isPostMergeFix` 의 조건 1 (3-조건 AND 중 label). 단독 부착 ≠ fast-pass (조건 2 hub Story §10 binding + 조건 3 원 PR §7 보안 non-touch 양면 AND 필수). ADR-026 Amendment 4 §결정 6 carrier — cross-repo land_order 후 발견된 safe defect 정정 경로. Orchestrator 수동 부착 의무 (fix-event-v1 §10 row 작성과 동시).
@@ -794,6 +800,24 @@ labels:
     description: "cross-repo Story land_order 후 발견된 safe defect 의 post-merge hotfix PR — phase-gate-mergeable.yml 4번째 fast-pass source (3-조건 AND 중 조건 1). 단독 부착 ≠ fast-pass (조건 2 hub Story §10 FIX Ledger row binding + 조건 3 원 MERGED PR §7 보안 non-touch 양면 AND 필수). ADR-026 Amendment 4 §결정 6 carrier. 사용법: Orchestrator 가 post-merge hotfix PR open 시 수동 부착 — fix-event-v1 §10 row 작성 (Orchestrator monopoly, CFP-32) + corrects_pr: marker PR body 기재 + story_uri: marker 병기 의무."
     single_active: false
     attach_owner_plugin: "Orchestrator (post-merge hotfix PR open 시 수동 부착 — fix-event-v1 §10 row 작성과 동시)"
+
+  # hotfix-bypass:adr-077-ratchet (CFP-785 / ADR-077 §결정 9 ratchet 선언 mechanical lint warning-tier)
+  # 29번째 hotfix-bypass:* family member (v2.22 PATCH bump, v2.21 CFP-795 collision rebase 재인덱스).
+  - name: hotfix-bypass:adr-077-ratchet
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: ADR-077 §결정 9 ratchet lint (`adr-077-ratchet-declared`) skip — Story-3 carrier (CFP-785), Phase 2 wire 후 enforce. lint script: scripts/check-adr-077-ratchet.sh. Phase 1 status: deferred-followup → Phase 2 land 시 Active. ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합."
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
+
+  # hotfix-bypass:adr-077-design-reading (CFP-785 / ADR-077 §결정 3 design-reading mandate lint warning-tier)
+  # 30번째 hotfix-bypass:* family member (v2.22 PATCH bump, v2.21 CFP-795 collision rebase 재인덱스).
+  - name: hotfix-bypass:adr-077-design-reading
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: ADR-077 §결정 3 design-reading mandate lint (`adr-077-design-reading-mandate-declared`) skip — Story-3 carrier (CFP-785), Phase 2 wire 후 enforce. lint script: scripts/check-adr-077-design-reading-mandate.sh. ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합."
+    single_active: false
+    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
 ```
 
 ## 4. 변경 규칙

@@ -1997,3 +1997,66 @@ entries:
       threshold: 3                    # ADR-060 §결정 19 (Amendment 6)
       promotion_trigger: none         # count=0 < threshold=3 → 발화 없음
     status: Active                    # Phase 2 (CFP-745) — scripts/ + templates/ 실 구현 land 완료 → Active
+
+  # ─── CFP-785 Phase 2 carrier (ADR-077 ratchet + design-reading mandate declared, 2026-05-17) ───
+  - name: adr-077-ratchet-declared
+    description: |
+      ADR-077 §결정 9 ratchet 선언 mechanical verification — ADR-077 계열 ADR 수정 PR 에서
+      (a) §결정 9 ratchet 선언 문구, (b) ADR-058 §결정 5 sunset_justification 문구,
+      (c) frontmatter `is_transitional: false` 존재 여부 lint.
+      grep-testable artifact 존재 (scripts/check-adr-077-ratchet.sh).
+    detect_command: null   # Phase 2 carrier 신설 후 detect_command 채움 (deferred-followup)
+    workflow: templates/github-workflows/adr-077-ratchet-declared.yml   # Phase 2 신설 완료 시 Active 전환
+    current_tier: warning
+    bypass_label: hotfix-bypass:adr-077-ratchet
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-785
+    introduced_date: 2026-05-17
+    owner_adr: ADR-077
+    carrier_adr: ADR-077
+    recurrence:
+      count: 0
+      threshold: 3
+      last_occurrence: null
+      promotion_trigger: advisory
+    status: deferred-followup   # Phase 2 carrier lint script+workflow self-app land 시 Active 전환
+
+  - name: adr-077-design-reading-mandate-declared
+    description: |
+      ADR-077 §결정 3 design-reading 깊이 강화 mandate mechanical verification — ADR-077 계열
+      ADR 수정 PR 에서 (a) §결정 3 "skim 금지 + 의도/근거 파악" 선언 문구,
+      (b) 적용 3 agent (ChangeImpactAgent/FeasibilityAgent/ContinuityAgent) verbatim 명시
+      여부 lint. grep-testable artifact 존재 (scripts/check-adr-077-design-reading-mandate.sh).
+    detect_command: null   # Phase 2 carrier 신설 후 채움 (deferred-followup)
+    workflow: templates/github-workflows/adr-077-design-reading-mandate-declared.yml   # Phase 2 신설 완료 시 Active 전환
+    current_tier: warning
+    bypass_label: hotfix-bypass:adr-077-design-reading
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-785
+    introduced_date: 2026-05-17
+    owner_adr: ADR-077
+    carrier_adr: ADR-077
+    recurrence:
+      count: 0
+      threshold: 3
+      last_occurrence: null
+      promotion_trigger: advisory
+    status: deferred-followup   # Phase 2 carrier lint script+workflow self-app land 시 Active 전환
