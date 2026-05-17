@@ -166,4 +166,29 @@ owned_sections:
     # bump (v1.7/v1.8/v1.9) 이 동시 진행 시 trigger marker collision 회피 의무. sibling_epic_overlap
     # #882 (Wave 4 sub-Epic) = CFP-858 closure 후 진입 merge-order 결정.
 
+  # CFP-898 (ArchitectPLAgent Phase 1 — §4.10 dependency_bundle_integrity_binding lock)
+  - file: docs/inter-plugin-contracts/reconcile-protocol-v1.md
+    section: "§4.10 dependency_bundle_integrity_binding block"
+    owner_adr: ADR-076
+    carrier_story: CFP-898  # Wave 4 sub-Epic CFP-858 S1 base layer
+    parallel_edit: append-only
+    arbitrator: ArchitectPLAgent
+    # NOTE (CFP-898): ADR-064 Trace 4 ordering invariant — version_history monotone + §4.10 binding
+    # block 자체 append-only (CFP-743 §4.5 / CFP-744 §4.6 / CFP-745 §4.7 / CFP-820 §4.8 / CFP-821 §4.9
+    # 동형 패턴 보존). sibling Epic #882 (Wave 4 sub-Epic) race 회피 — CFP-858 closure 후 진입
+    # merge-order. v1.7 (CFP-898) → v1.8/v1.9 (S2 CFP-899 / S3 CFP-900) sequential MINOR bump 영역.
+
+  # CFP-898 (ArchitectPLAgent Phase 1 — ADR-076 Amendment 1 lock)
+  - file: docs/adr/ADR-076-declarative-reconciliation-upgrade.md
+    section: "§결정 2 enumeration + §결정 6 marker_block_absent_behavior fail-closed sub-clause"
+    owner_adr: ADR-076
+    carrier_story: CFP-898  # Wave 4 sub-Epic CFP-858 S1 base layer
+    parallel_edit: append-only
+    arbitrator: ArchitectPLAgent
+    # NOTE (CFP-898): ADR-076 Amendment lock — §결정 2 표 row append (CFP-821 PR template row 7,
+    # CFP-898 scripts/ workflow_dependency_closure row 11) + §결정 6 fail-closed clause sub-section
+    # 추가 (ADR-064 §self-application ratchet 강화 only — 의미 invariant marker_block_absent_behavior
+    # 무변경 + sub-clause append). amendment_log monotone (CFP-821 = 표 row append only, CFP-898 =
+    # Amendment 1 first formal entry). sibling Epic #882 race 회피 — CFP-858 closure 후 진입.
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)
