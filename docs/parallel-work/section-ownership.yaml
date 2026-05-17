@@ -155,4 +155,15 @@ owned_sections:
     # SSOT (Story key 독립). Change Plan (델타) 와 disjoint 상보 (ADR-078 §결정 3).
     # 4 H2 closed-enum (모듈/경계/인터페이스 계약/데이터 흐름) drift lint = S4 (#923).
 
+  # CFP-858 (GitOpsAgent sequential append — reconcile-protocol-v1 §4.3 trigger marker area)
+  - file: docs/inter-plugin-contracts/reconcile-protocol-v1.md
+    section: "§4.3 area trigger marker append"
+    owner_adr: ADR-076
+    parallel_edit: append-only
+    arbitrator: GitOpsAgent
+    # NOTE (CFP-858): reconcile-protocol-v1 version_history monotone invariant + §4.3 (a)-(k) trigger
+    # marker sequential ordering. ADR-064 Trace 4 ordering invariant 정합. Epic S1/S2/S3 sequential
+    # bump (v1.7/v1.8/v1.9) 이 동시 진행 시 trigger marker collision 회피 의무. sibling_epic_overlap
+    # #882 (Wave 4 sub-Epic) = CFP-858 closure 후 진입 merge-order 결정.
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)
