@@ -2,6 +2,7 @@
 # tests/scripts/check-3way-version-parity/check-3way-version-parity.bats
 # CFP-820 Phase 2 — check-3way-version-parity.sh bats tests
 # Story §5.2 AC-9 + Change Plan §8.1 TC-1..TC-14 (14 discriminating TC)
+#   FIX iter 1: TC-15..TC-19 신설 (guards 4/5/6 + 5xx/network scenarios)
 # TDD: RED written before script exists — each assertion is discriminating (tautology 0)
 #
 # TC 분류 (Change Plan §8.1 + Story §5.2 AC-9):
@@ -19,6 +20,11 @@
 #   TC-12: §7.4(c)   marketplace 401 → exit 2 + "PAT" or "401" (fail-closed)
 #   TC-13: §7.4(c)   marketplace 429 → exit 0 + warning (fail-open)
 #   TC-14: §7.4(e)   version format mismatch (v5.81.0 vs 5.81.0) → exit 1 + format hint
+#   TC-15: §7.4.1(4) sister plugin entries mutation → exit 2 + guard(4) FAIL
+#   TC-16: §7.4.1(5) plugin.json multi-line edit anomaly → exit 1 + guard(5) FAIL
+#   TC-17: §7.4.1(6) version collision (2 entries same version) → exit 2 + guard(6) FAIL
+#   TC-18: §7.4(c)   5xx error then success on retry → exit 0 (recover)
+#   TC-19: §7.4(c)   5xx persistent 3 retries exhausted → exit 2 (fail-closed)
 
 SCRIPT="$(dirname "$BATS_TEST_FILENAME")/../../../scripts/check-3way-version-parity.sh"
 
@@ -149,6 +155,69 @@ case "$GH_STUB_MODE" in
       printf '{"schema_version":"1.0","plugins":[{"name":"codeforge","version":"5.80.0","description":"Test plugin","author":"mclayer"}]}'
     fi
     exit 0
+    ;;
+
+  sister_mutation)
+    # TC-15: first raw fetch returns normal sister entries, second raw fetch returns mutated sister
+    # Track call count via GH_CALL_COUNT_FILE env (set by test setup)
+    if [[ "$IS_RAW" -eq 0 ]]; then
+      echo '{"sha":"abc123","size":99999,"name":"marketplace.json"}'
+      exit 0
+    fi
+    CALL_COUNT_FILE="${GH_CALL_COUNT_FILE:-/tmp/gh_raw_call_count_default}"
+    COUNT=0
+    if [[ -f "$CALL_COUNT_FILE" ]]; then
+      COUNT=$(cat "$CALL_COUNT_FILE")
+    fi
+    COUNT=$((COUNT + 1))
+    echo "$COUNT" > "$CALL_COUNT_FILE"
+    if [[ "$COUNT" -eq 1 ]]; then
+      printf '{"schema_version":"1.0","plugins":[{"name":"codeforge","version":"5.81.0","description":"Test plugin","author":"mclayer"},{"name":"s1","version":"1.0","description":"s","author":"x"},{"name":"s2","version":"1.0","description":"s","author":"x"},{"name":"s3","version":"1.0","description":"s","author":"x"},{"name":"s4","version":"1.0","description":"s","author":"x"},{"name":"s5","version":"1.0","description":"s","author":"x"},{"name":"s6","version":"1.0","description":"s","author":"x"}]}'
+    else
+      # Second fetch: sister entry s6 mutated
+      printf '{"schema_version":"1.0","plugins":[{"name":"codeforge","version":"5.81.0","description":"Test plugin","author":"mclayer"},{"name":"s1","version":"1.0","description":"s","author":"x"},{"name":"s2","version":"1.0","description":"s","author":"x"},{"name":"s3","version":"1.0","description":"s","author":"x"},{"name":"s4","version":"1.0","description":"s","author":"x"},{"name":"s5","version":"1.0","description":"s","author":"x"},{"name":"s6","version":"2.0","description":"MUTATED","author":"x"}]}'
+    fi
+    exit 0
+    ;;
+
+  version_collision)
+    # TC-17: two entries share the same version string → guard (6) detects collision
+    if [[ "$IS_RAW" -eq 0 ]]; then
+      echo '{"sha":"abc123","size":99999,"name":"marketplace.json"}'
+    else
+      printf '{"schema_version":"1.0","plugins":[{"name":"codeforge","version":"5.81.0","description":"Test plugin","author":"mclayer"},{"name":"other-plugin","version":"5.81.0","description":"Other","author":"other"}]}'
+    fi
+    exit 0
+    ;;
+
+  server_error_then_recover)
+    # TC-18: first meta call fails with 502, subsequent calls succeed
+    # Use GH_CALL_COUNT_FILE env var for stable cross-invocation counting
+    RECOVER_COUNT_FILE="${GH_CALL_COUNT_FILE:-/tmp/gh_recover_count_default}"
+    COUNT=0
+    if [[ -f "$RECOVER_COUNT_FILE" ]]; then
+      COUNT=$(cat "$RECOVER_COUNT_FILE")
+    fi
+    COUNT=$((COUNT + 1))
+    echo "$COUNT" > "$RECOVER_COUNT_FILE"
+    if [[ "$COUNT" -eq 1 ]]; then
+      # First call: 502 error (captured via 2>&1 in script)
+      echo '502 Bad Gateway'
+      exit 1
+    fi
+    # Subsequent calls: success (recovery)
+    if [[ "$IS_RAW" -eq 0 ]]; then
+      echo '{"sha":"abc123","size":99999,"name":"marketplace.json"}'
+    else
+      printf '{"schema_version":"1.0","plugins":[{"name":"codeforge","version":"5.81.0","description":"Test plugin","author":"mclayer"}]}'
+    fi
+    exit 0
+    ;;
+
+  server_error_persistent)
+    # TC-19: all calls fail with 503 (persistent 5xx) → retry exhausted → exit 2
+    echo '503 Service Unavailable' >&2
+    exit 1
     ;;
 
   *)
@@ -423,4 +492,107 @@ EOF
   run bash "$SCRIPT"
   [ "$status" -eq 1 ]
   [[ "$output" =~ "v5.81.0" || "$output" =~ [Ff]ormat || "$output" =~ "exact" || "$output" =~ "5.81.0" ]] || false
+}
+
+# ── TC-15: sanity guard (4) sister plugin entries mutation → exit 2 ──
+
+@test "TC-15: guard(4) sister plugin entries mutation detected → exit 2" {
+  export GH_STUB_MODE=sister_mutation
+  # Provide a stable cross-invocation counter file for the stub
+  export GH_CALL_COUNT_FILE="$TEST_DIR/gh_call_count_tc15"
+  rm -f "$GH_CALL_COUNT_FILE"
+
+  run bash "$SCRIPT"
+  [ "$status" -eq 2 ]
+  [[ "$output" =~ "guard (4)" || "$output" =~ "sister" || "$output" =~ "mutation" ]] || false
+}
+
+# ── TC-16: sanity guard (5) plugin.json multi-line edit anomaly → exit 1 ──
+
+@test "TC-16: guard(5) plugin.json multi-line edit anomaly → exit 1" {
+  # Set up a minimal git repo inside TEST_DIR for git diff to work
+  GUARD5_DIR="$TEST_DIR/git_repo_tc16"
+  mkdir -p "$GUARD5_DIR/.claude-plugin" "$GUARD5_DIR/.claude/_overlay"
+
+  # Copy read_version_pin.py so SCRIPT_DIR resolution works (SCRIPT_DIR = scripts/)
+  # The script resolves READ_PIN_PY relative to its own dir — no need to copy here
+  # since PLUGIN_JSON_PATH and CONSUMER_PROJECT_YAML_PATH are injected
+
+  # Initial plugin.json
+  cat > "$GUARD5_DIR/.claude-plugin/plugin.json" <<'PJSON'
+{
+  "name": "codeforge",
+  "version": "5.80.0",
+  "description": "Old description",
+  "author": "mclayer"
+}
+PJSON
+  # Consumer project.yaml (version_pin matches marketplace stub 5.81.0 — pin check irrelevant here)
+  cp "$CONSUMER_PROJECT_YAML_PATH" "$GUARD5_DIR/.claude/_overlay/project.yaml"
+
+  # Init git repo and commit the initial state
+  (
+    cd "$GUARD5_DIR"
+    git init -q
+    git config user.email "test@test.com"
+    git config user.name "Test"
+    git config core.autocrlf false
+    git add .
+    git commit -q -m "init"
+  )
+
+  # Now make a multi-line change to plugin.json (>4 changed lines to trigger guard 5)
+  cat > "$GUARD5_DIR/.claude-plugin/plugin.json" <<'PJSON'
+{
+  "name": "codeforge",
+  "version": "5.81.0",
+  "description": "New description changed substantially here",
+  "author": "mclayer",
+  "extra_field": "injected_value"
+}
+PJSON
+
+  export PLUGIN_JSON_PATH="$GUARD5_DIR/.claude-plugin/plugin.json"
+  export CONSUMER_PROJECT_YAML_PATH="$GUARD5_DIR/.claude/_overlay/project.yaml"
+  # Run from within GUARD5_DIR so git diff HEAD -- .claude-plugin/plugin.json resolves
+  run bash -c "cd '$GUARD5_DIR' && bash '$SCRIPT'"
+  [ "$status" -eq 1 ]
+  [[ "$output" =~ "guard (5)" || "$output" =~ "multi-line" || "$output" =~ "anomaly" ]] || false
+}
+
+# ── TC-17: sanity guard (6) version collision → exit 2 ──
+
+@test "TC-17: guard(6) marketplace version collision (2 entries same version) → exit 2" {
+  export GH_STUB_MODE=version_collision
+  # stub returns codeforge + other-plugin both at 5.81.0 → guard(6) detects collision
+
+  run bash "$SCRIPT"
+  [ "$status" -eq 2 ]
+  [[ "$output" =~ "guard (6)" || "$output" =~ "collision" || "$output" =~ "collision" ]] || false
+}
+
+# ── TC-18: 5xx error then success on retry → exit 0 (recover) ──
+
+@test "TC-18: 5xx error then recover on retry → exit 0 (fail-closed-with-retry recover)" {
+  export GH_STUB_MODE=server_error_then_recover
+  # Provide stable cross-invocation counter file for stub
+  export GH_CALL_COUNT_FILE="$TEST_DIR/gh_call_count_tc18"
+  rm -f "$GH_CALL_COUNT_FILE"
+  # First meta call fails with 502, subsequent calls succeed — overall PASS expected
+
+  run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  # Should not emit a hard failure
+  [[ ! "$output" =~ "retry 후 영속 실패" ]] || false
+}
+
+# ── TC-19: 5xx persistent retry exhausted → exit 2 (fail-closed) ──
+
+@test "TC-19: 5xx persistent retry exhausted (3 retries) → exit 2 fail-closed" {
+  export GH_STUB_MODE=server_error_persistent
+  # All calls fail with 503 → exponential backoff 1s/2s/4s → exit 2
+
+  run bash "$SCRIPT"
+  [ "$status" -eq 2 ]
+  [[ "$output" =~ "retry" || "$output" =~ "영속 실패" || "$output" =~ "fail-closed" ]] || false
 }

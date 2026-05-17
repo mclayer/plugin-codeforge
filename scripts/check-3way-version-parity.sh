@@ -6,7 +6,13 @@
 #   (registry)   `mclayer/marketplace/.claude-plugin/marketplace.json` .plugins[codeforge].version
 #   (consumer)   `.claude/_overlay/project.yaml` .codeforge.version_pin.version
 #
-# 3-way byte-identical version field compare + sanity guard 6-tuple (Story §5.2 AC-13)
+# 3-way byte-identical version field compare + sanity guard 6-tuple (Story §5.2 AC-13):
+#   (1) size > 40000         (empty-blob / truncated fetch 방어)                     → exit 2
+#   (2) JSON parse           (malformed JSON 방어)                                   → exit 2
+#   (3) 4-field parity       (name/version/description/author 필수 — ADR-016)        → exit 2
+#   (4) 6 non-codeforge byte-identical (sister plugin entries untouched verify)       → exit 2
+#   (5) git diff stat        (single-line edit invariant on plugin.json)              → exit 1
+#   (6) global version pattern unique (multi-version collision detect)               → exit 2
 # fallback: consumer pin 미등록 = warning-first exit 0 (orthogonality invariant §7.4 / AC-2)
 #
 # Exit codes:
@@ -81,7 +87,7 @@ MARKETPLACE_META_RAW=$(gh api repos/mclayer/marketplace/contents/.claude-plugin/
 MARKETPLACE_META_EXIT=$?
 
 if [[ $MARKETPLACE_META_EXIT -ne 0 ]]; then
-  # Classify error: 401 vs 429 vs other
+  # Classify error: 401 vs 429 vs 5xx/network (fail-closed-with-retry) vs other
   if echo "$MARKETPLACE_META_RAW" | grep -qi "bad credentials\|401\|Unauthorized"; then
     echo "❌ check-3way-version-parity: marketplace fetch 실패 — PAT 인증 오류 (401)"
     echo "  Recovery: CODEFORGE_CROSS_REPO_PAT 갱신 후 재실행 (ADR-066 §결정 2)"
@@ -93,8 +99,30 @@ if [[ $MARKETPLACE_META_EXIT -ne 0 ]]; then
     echo "  다음 run 자동 재검증 (false-negative ≤24h delay 허용 — §7.4(c))"
     exit 0
   fi
-  echo "⚠ check-3way-version-parity: marketplace fetch 실패 — skip"
-  exit 0
+  # 5xx / network error → fail-closed-with-retry (Story §7.4(c) / Change Plan §13.4)
+  # exponential backoff 1s / 2s / 4s, 3회 retry 후 영속 실패 시 exit 2
+  if echo "$MARKETPLACE_META_RAW" | grep -qi \
+      "5[0-9][0-9]\|Bad Gateway\|Service Unavailable\|Internal Server\|Gateway Timeout\|could not resolve\|connection refused\|network\|timed out"; then
+    echo "⚠ check-3way-version-parity: marketplace fetch 5xx/network 오류 — fail-closed-with-retry (3회)"
+    for _wait in 1 2 4; do
+      sleep "$_wait"
+      MARKETPLACE_META_RAW=$(gh api repos/mclayer/marketplace/contents/.claude-plugin/marketplace.json 2>&1)
+      MARKETPLACE_META_EXIT=$?
+      if [[ $MARKETPLACE_META_EXIT -eq 0 ]]; then
+        echo "  ✓ retry 성공 (backoff ${_wait}s)"
+        break
+      fi
+      echo "  retry 실패 (backoff ${_wait}s — 다음 시도 대기)"
+    done
+    if [[ $MARKETPLACE_META_EXIT -ne 0 ]]; then
+      echo "❌ check-3way-version-parity: marketplace fetch 3회 retry 후 영속 실패 — fail-closed exit 2"
+      echo "  Recovery: 네트워크 상태 확인 / marketplace repo 접근 권한 재확인 (ADR-066 §결정 2)"
+      exit 2
+    fi
+  else
+    echo "⚠ check-3way-version-parity: marketplace fetch 실패 (분류 불가) — skip"
+    exit 0
+  fi
 fi
 
 # Sanity guard (1): size > 40000 (Story §5.2 AC-13 / Change Plan §7.4.1)
@@ -142,6 +170,51 @@ MARKETPLACE_VERSION=$(echo "$MARKETPLACE_ENTRY" | jq -r '.version' 2>/dev/null |
 
 if [[ -z "$MARKETPLACE_VERSION" || "$MARKETPLACE_VERSION" == "null" ]]; then
   echo "❌ check-3way-version-parity: marketplace.json .version field 추출 실패"
+  exit 2
+fi
+
+# Sanity guard (4): 6 non-codeforge sister plugin entries byte-identical
+# (read-only invariant 자기증명 — sister entry untouched verify, §7.4.1 guard 4)
+SISTER_COUNT=$(echo "$MARKETPLACE_RAW" | jq '[.plugins[] | select(.name != "'"$PLUGIN_NAME"'")] | length' 2>/dev/null || echo "0")
+if [[ "$SISTER_COUNT" -ge 6 ]]; then
+  # Re-fetch to compare (ADR-070 verify-before-trust — 2nd raw fetch for cross-check)
+  MARKETPLACE_RAW2=$(gh api -H "Accept: application/vnd.github.raw" \
+    repos/mclayer/marketplace/contents/.claude-plugin/marketplace.json 2>/dev/null || echo "")
+  SISTER_ENTRIES_1=$(echo "$MARKETPLACE_RAW"  | jq -c '[.plugins[] | select(.name != "'"$PLUGIN_NAME"'")]' 2>/dev/null || echo "[]")
+  SISTER_ENTRIES_2=$(echo "$MARKETPLACE_RAW2" | jq -c '[.plugins[] | select(.name != "'"$PLUGIN_NAME"'")]' 2>/dev/null || echo "[]")
+  if [[ "$SISTER_ENTRIES_1" != "$SISTER_ENTRIES_2" ]]; then
+    echo "❌ check-3way-version-parity: sanity guard (4) FAIL — marketplace sister plugin entries mutation detected"
+    echo "  sister entries differ between two fetches (unexpected mutation — read-only invariant violation)"
+    echo "  Recovery: marketplace repo 상태 확인 / 재시도"
+    exit 2
+  fi
+fi
+
+# Sanity guard (5): git diff stat single-line invariant on plugin.json
+# (Phase 2 self-app PR 시 plugin.json version 변경 = 1 line edit, §7.4.1 guard 5)
+if command -v git >/dev/null 2>&1; then
+  GIT_DIFF_STAT=$(git diff --stat HEAD -- ".claude-plugin/plugin.json" 2>/dev/null || echo "")
+  if [[ -n "$GIT_DIFF_STAT" ]]; then
+    # Count changed lines (+ and - combined) — should be ≤ 2 for single version field bump
+    CHANGED_LINES=$(git diff HEAD -- ".claude-plugin/plugin.json" 2>/dev/null | grep -c '^[+-][^+-]' || echo "0")
+    if [[ "$CHANGED_LINES" -gt 4 ]]; then
+      echo "❌ check-3way-version-parity: sanity guard (5) FAIL — plugin.json multi-line edit anomaly"
+      echo "  plugin.json diff lines=$CHANGED_LINES (expected ≤4 for single version field bump)"
+      echo "  git diff --stat HEAD -- .claude-plugin/plugin.json:"
+      echo "$GIT_DIFF_STAT"
+      echo "  Recovery: plugin.json 변경 내용 검토 (version field 만 변경 의무)"
+      exit 1
+    fi
+  fi
+fi
+
+# Sanity guard (6): global version pattern unique — codeforge entry version 은 정확히 1건 match
+# (multi-version collision detect — version string 이 다른 entry 에도 출현 시 wrong-match 차단, §7.4.1 guard 6)
+VERSION_MATCH_COUNT=$(echo "$MARKETPLACE_RAW" | jq "[.plugins[] | select(.version == \"$MARKETPLACE_VERSION\")] | length" 2>/dev/null || echo "0")
+if [[ "$VERSION_MATCH_COUNT" -gt 1 ]]; then
+  echo "❌ check-3way-version-parity: sanity guard (6) FAIL — marketplace version pattern collision"
+  echo "  version=$MARKETPLACE_VERSION matches $VERSION_MATCH_COUNT plugin entries (expected exactly 1)"
+  echo "  version collision 시 wrong-match 위험 — marketplace.json 내 version 중복 확인 의무"
   exit 2
 fi
 
