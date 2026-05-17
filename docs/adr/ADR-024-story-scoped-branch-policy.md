@@ -5,8 +5,8 @@ status: Accepted
 category: governance
 date: 2026-05-03
 is_transitional: false
-amended_by: CFP-582
-amended_date: 2026-05-13
+amended_by: CFP-825
+amended_date: 2026-05-17
 amendments:
   - by: "CFP-134"
     date: "2026-05-08"
@@ -32,6 +32,10 @@ amendments:
     date: "2026-05-13"
     scope: "Amendment 5 — §결정 6.A per-entry namespace 의 12번째 신규 `hotfix-bypass:debate-convergence-quality` label entry 추가 (ADR-059 Amendment 2 §결정 8 동반 — convergence_quality_invariant 첫 debate 영역 warning-tier entry `debate-convergence-quality-marker-presence`, ADR-060 framework 정합). prior art `hotfix-bypass:adr-sunset` (CFP-389) + 4 `hotfix-bypass:worktree-*` (CFP-426) + `hotfix-bypass:auto-phase-label` (CFP-481) + `hotfix-bypass:claude-md-line-cap` (CFP-506) + `hotfix-bypass:sibling-pr-author-check` (CFP-521) + `hotfix-bypass:workflow-permissions` (CFP-530) + `hotfix-bypass:workflow-yaml-parse` (CFP-583) 직접 mirror, 단일 audit lint `scripts/check-bypass-audit-comment.sh` reuse."
     sunset_justification: "N/A — is_transitional: false (permanent governance policy). hotfix-bypass:debate-convergence-quality = §결정 6.A per-entry namespace 의무의 영구 확장 (debate 영역 첫 family member)."
+  - by: "CFP-825"
+    date: "2026-05-17"
+    scope: "Amendment 6 — §결정 6.A per-entry namespace 누적 사용 카운터 lint (bypass-label-counter, 63번째 evidence-checks-registry entry, warning tier first iteration) + 31번째 family member `hotfix-bypass:bypass-label-counter` (self-meta loop 회피) + 32번째 family member `hotfix-bypass:exempt:<entry>` template (rare 정당 declare 채널, narrative audit trail mechanical enforce = 후속 carrier). ratchet 룰: per-(plugin, label) signature ≥3 reach-merged PR 누적 시 carrier Issue 자동 발의 + dedup (window=all-time / dedup_unit=PR number / exempt 2종). CFP-771 retro §8 제안 1 carrier — exception → norm mutation 위험 누적 monitoring 부재 차단."
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). bypass-label-counter = forbid scope 확장 (ratchet-up 강화 방향, ADR-058 §결정 5 정합). 2 신규 family member = §결정 6.A per-entry namespace 의무의 영구 확장 (self-meta + rare 정당 declare 2종 channel)."
 related_files:
   - CLAUDE.md
   - docs/consumer-guide.md
@@ -45,14 +49,21 @@ related_files:
   - templates/branch-protection-manifest.yaml
   - templates/github-workflows/branch-protection-drift-check.yml
   - templates/github-workflows/debate-convergence-quality.yml
+  - templates/github-workflows/bypass-label-counter.yml
+  - scripts/check-bypass-label-counter.py
+  - scripts/check-bypass-label-counter.sh
 mechanical_enforcement_actions:
   # ADR-040 Amendment 3 §결정 7.A 의무 — 본 ADR-024 Amendment 4 (CFP-481, 2026-05-12)
   # 가 ADR-040 Amendment 3 발효 (CFP-426 Phase 1 PR merge) 이후 작성된 normative
-  # ADR amendment 이므로 §결정 7.C retroactive 면제 외 — 본 Amendment 4 부터 mandate 적용.
+  # ADR amendment 이므로 §결정 7.C retroactive 면제 외 — Amendment 4 부터 mandate 적용.
   # 기존 ADR-024 Amendment 1·2·3 = retroactive 면제 (§결정 7.C 정합).
   - action: auto-phase-label
     status: deferred-followup     # registry yaml row append = CFP-481 Phase 2 PR scope
     target_section: §결정 6.A.1   # branch → phase mapping 표 SSOT (1순위 inference 로직)
+  # Amendment 6 (CFP-825, 2026-05-17) — 본 Amendment 의 mechanical enforcement self-application
+  - action: bypass-label-counter
+    status: deferred-followup     # registry yaml row append = CFP-825 Phase 2 PR scope
+    target_section: §결정 6.A.2   # per-entry namespace 누적 사용 카운터 lint ratchet 룰 (3-tuple: threshold / dedup / window)
 ---
 
 # ADR-024: Story-scoped branch policy — main 직접 수정 금지 + Phase 2 enforcement deferred
@@ -488,3 +499,97 @@ ADR-060 framework 정합 의무: 모든 warning-tier evidence check entry 는 AD
 - `templates/github-workflows/debate-convergence-quality.yml` — 3 marker mechanical lint workflow
 - `scripts/check_debate_convergence_quality.py` — 3 marker regex lint (CFP-582 Phase 2 산출물)
 - `scripts/check-bypass-audit-comment.sh` (CFP-389 prior art) — audit lint reuse
+
+## Amendment 6 — `hotfix-bypass:*` per-entry namespace 누적 사용 카운터 lint + 31/32번째 family member (CFP-825, 2026-05-17)
+
+### 컨텍스트
+
+ADR-024 Amendment 3 §결정 6.A `hotfix-bypass:<entry>` per-entry namespace 가 audit-trailed exception channel 의도로 도입된 후 28 entry 누적 (label-registry-v2 v2.20 / CFP-722 `story-section-ownership` 28번째 family member 시점). CFP-771 (2026-05-16) retro §8 제안 1 이 evidence cluster 5+ 사용 발견 carrier:
+
+- CFP-770/771 PR #788 admin merge — `hotfix-bypass:claude-md-line-cap` + `hotfix-bypass:wording-dictionary` 2 label 동시 부착
+- CFP-819 PR #823 — `hotfix-bypass:wording-dictionary` cosmetic 7 occurrences
+- CFP-786/801/795 carrier — `hotfix-bypass:unit-tests` pre-existing pytest 부재 사유 누적
+
+정당 예외 채널이 누적되며 정상 경로화하는 거버넌스 erosion (bypass-as-norm mutation) — 사용 빈도 monitoring 부재 시 잠재. ADR-024 Amendment 3 §결정 6.C audit trail 3중 안전망 (PR comment 자동 발의 + audit assertion lint + audit log 집계) 가 개별 PR scope cover 하나, **per-(plugin, label) signature 단위의 시계열 누적 패턴 감지 channel 부재** — 본 Amendment 6 이 그 gap 해소.
+
+### Amendment
+
+#### §결정 6.A.2 (신설) — per-entry namespace 누적 사용 카운터 lint ratchet 룰
+
+`hotfix-bypass:*` family member 의 per-(plugin, label) signature 단위 누적 사용 횟수가 threshold reach 시 carrier Issue 자동 발의 의무. ratchet 3-tuple:
+
+| 항목 | 값 | 근거 (empirical-source) |
+|---|---|---|
+| **threshold** | per-(plugin, label) signature 누적 ≥3 reach-merged PR | CFP-770/771/819 corpus 5+ 사용 evidence cluster (verified-via: gh pr view #788 #823 --json labels, Phase 2 PR open 시 재 verify-before-trust 의무). dimension category = `count` (PR 누적 횟수). units = `merged PR count per (plugin, label) signature`. |
+| **dedup unit** | PR number (merged PR 고유 idempotent) | docs/domain-knowledge/domain/github-actions/workflow-idempotency-patterns.md §schedule trigger 정합 (cron 반복 → concurrency group 부족 → file-marker 부적합 → signature dedup 의무, L174 verbatim) |
+| **measurement window** | all-time | rolling window (30d/90d) 도입 시 dedup signature 가 stale signature pollution 영구 carry-forward 차단 못함 — 전체 history 누적 행위 패턴 감지 의무. |
+| **exempt channels (2종)** | (1) `hotfix-bypass:bypass-label-counter` (self-meta loop 회피) / (2) `hotfix-bypass:exempt:<entry>` template (rare 정당 declare, narrative audit trail mechanical enforce = 후속 carrier 영역) | self-meta loop 차단 절대 invariant + rare 정당 declare 채널 보존 |
+
+**자동 발의 carrier Issue 본문 의무 (Phase 2 PR scope)**: signature `<plugin>::<label>` + PR 누적 list + ADR-024 Amendment 6 cross-ref + 후속 평가 영역 (threshold 재calibration vs blocking-on-merge 격상 vs 정당 사용 영역 declare).
+
+**self-meta loop 회피 invariant**: 본 lint workflow 자체의 PR (예: `bypass-label-counter.yml` 수정 PR) 에 `hotfix-bypass:bypass-label-counter` 부착 시 해당 PR signature 누적 count 제외. lint 가 자기 자신을 trigger 하는 재귀 차단.
+
+**multi-signature 동시 reach 처리**: 단일 cron 실행에서 다중 (plugin, label) signature 가 동시에 threshold reach 시 각 signature 별 독립 carrier Issue 발의 (signature aggregation 금지 — 후속 evaluation 의 dedup 영역 별도).
+
+#### §결정 6.A (확장) — `hotfix-bypass:bypass-label-counter` 31번째 + `hotfix-bypass:exempt:<entry>` 32번째 family member
+
+기존 `hotfix-bypass:*` family (Amendment 3 §결정 6.A 정합 + Amendment 4/5 확장 정합 + CFP-426~CFP-722 추가 entry 누적):
+
+| 신규 entry | family position | 의미 |
+|---|---|---|
+| `hotfix-bypass:bypass-label-counter` | **31번째** | 본 lint workflow self-meta loop 회피 — 본 entry 부착 PR 은 누적 count 제외 |
+| `hotfix-bypass:exempt:<entry>` | **32번째** (template) | rare 정당 declare 채널 — `<entry>` 부분 가 specific entry name (예: `hotfix-bypass:exempt:wording-dictionary`). narrative audit trail mechanical enforce 는 후속 carrier 영역 (본 Amendment 6 = label 등록만) |
+
+**audit lint**: `scripts/check-bypass-audit-comment.sh` reuse (CFP-389 prior art 단일 lint, `BYPASS_LABEL_PREFIX=hotfix-bypass:` env scan 으로 all-family detect — 별도 lint 신설 0건).
+
+**bypass scope**: `bypass-label-counter.yml` workflow 의 per-signature tally + Issue auto-create step 만 skip — phase-gate-mergeable.yml / phase-label-invariant.yml / 기타 4 core required check 영향 0건 (Amendment 3 §결정 6.B 정합).
+
+**bypass-as-norm mutation 영역 첫 family member**: 기존 30 family member 는 개별 evidence check 의 1회 hotfix bypass 영역. 본 Amendment 6 의 31번째/32번째 family member 는 family 자체의 누적 사용 패턴 monitoring 영역 — 첫 진입.
+
+### Compatibility
+
+- ADR-024 §결정 1~6 + Phase 2 partial (CFP-70) + CFP-72 + Amendment 1 (CFP-134) + Amendment 2 (CFP-280) + Amendment 3 (CFP-389) + Amendment 4 (CFP-481) + Amendment 5 (CFP-582) 전부 유지 — 본 Amendment 6 은 Amendment 3 §결정 6.A 의 호환 확장 (per-entry namespace 31/32번째 family member + §결정 6.A.2 ratchet 룰 신설) only.
+- ADR-060 framework 외 영역 (4 core required check + 기존 evidence check + Amendment 1~5 entry) 에는 영향 X.
+- ADR-058 §결정 5 sunset_justification ratchet — 본 Amendment 6 = forbid scope 확장 (per-entry → 누적 카운터 monitoring 추가) = ratchet-up 강화 방향, sunset_justification_required: false.
+- warning tier 첫 도입 (ADR-060 §결정 5 정합 — 모든 신규 entry 는 warning 시작 강제). blocking-on-merge 격상 = empirical evidence 누적 후 별 CFP carrier 영역 (ADR-060 승격 gate AND condition 통과 의무).
+
+### scope_boundary (CFP scope unitary, ADR-064 §결정 1 정합)
+
+본 Amendment 6 **포함** 영역:
+
+- per-(plugin, label) signature 단위 카운터 lint (warning tier only)
+- bypass-as-norm mutation 누적 monitoring (Issue auto-create + dedup)
+- 2 신규 family member (self-meta exempt + rare 정당 declare template)
+
+본 Amendment 6 **out-of-scope** (후속 carrier 영역):
+
+- **per-plugin scope 누적 카운터** (단일 plugin 5 entry 각 1회 = 5회 분산이지만 근본은 동일 plugin 의 체계적 회피) — 별 CFP carrier
+- **blocking-on-merge tier escalation** — 별 CFP, ADR-060 승격 gate AND condition 통과 후
+- **bypass narrative audit trail mechanical enforce** (`[bypass-justification]` PR 코멘트 marker) — 별 CFP
+- **cross-repo bypass counter extension** (codeforge-internal-docs / marketplace) — 별 CFP, EC-1 정합
+- **carrier Issue 코멘트 append** (이미 발의된 Issue 에 추가 PR 정보 append) — 별 CFP
+
+### Related
+
+- ADR-024 Amendment 3 §결정 6.A (prior art — per-entry namespace audit-trail SSOT)
+- ADR-024 Amendment 3 §결정 6.C (prior art — audit trail 3중 안전망: PR comment + audit assertion lint + audit log 집계)
+- ADR-060 (framework — 63번째 evidence-checks-registry entry `bypass-label-counter` warning tier 등록)
+- ADR-058 §결정 5 (ratchet-up 강화 방향 정합 — sunset_justification_required: false)
+- ADR-061 (Python script convention — 본 신설 script = `.py` file + thin bash wrapper)
+- ADR-040 Amendment 3 §결정 7.D (mechanical_enforcement_actions[] self-application — `bypass-label-counter` entry 추가)
+- ADR-068 Amendment 1 I-5 (dimensional empirical grounding — threshold ≥3 의 `count` dimension + empirical-source annotation 의무)
+- ADR-005 (workflow self-app byte-identical mirror)
+- ADR-010 §결정 2 (label-registry-v2 v2.22 → v2.23 MINOR bump = wrapper-local, sibling sync 면제)
+- ADR-063 (marketplace ↔ plugin.json atomic invariant — 본 carrier 적용 제외, plugin.json MINOR bump 미동반)
+- ADR-066 (CODEFORGE_CROSS_REPO_PAT rotation policy — 본 workflow `permissions: issues: write` 단일 PAT consolidation)
+- ADR-008 (contract versioning — v2.22 → v2.23 MINOR bump 룰)
+- ADR-027 Amendment 2 §결정 6.C (manual fallback path 정합 — workflow trigger 시 PAT 환경 검증 의무)
+- CFP-627 (precedent — marketplace-drift-detection 24h cron + workflow_dispatch + Issue auto-create + per-(plugin, field) signature dedup 동일 구조 reuse)
+- CFP-771 retro §8 제안 1 (carrier — bypass-label-namespace 카운터 lint 제안)
+- CFP-389 prior art (`scripts/check-bypass-audit-comment.sh` audit lint reuse)
+- `docs/inter-plugin-contracts/label-registry-v2.md` v2.22 → v2.23 MINOR (CFP-825 — 31번째 `hotfix-bypass:bypass-label-counter` + 32번째 `hotfix-bypass:exempt:<entry>` template)
+- `docs/evidence-checks-registry.yaml` (CFP-825 Phase 2 — `bypass-label-counter` 60번째 entry append, warning tier, bypass_label `hotfix-bypass:bypass-label-counter`)
+- `templates/github-workflows/bypass-label-counter.yml` (CFP-825 Phase 2 — 24h cron + workflow_dispatch + Issue auto-create)
+- `scripts/check-bypass-label-counter.py` (CFP-825 Phase 2 — gh api query + signature tally + threshold check + Issue auto-create)
+- `scripts/check-bypass-label-counter.sh` (CFP-825 Phase 2 — thin bash wrapper, ADR-061 정합)
+- `tests/scripts/test-check-bypass-label-counter.bats` (CFP-825 Phase 2 — TC 5+ baseline)
