@@ -2060,3 +2060,42 @@ entries:
       last_occurrence: null
       promotion_trigger: advisory
     status: deferred-followup   # Phase 2 carrier lint script+workflow self-app land 시 Active 전환
+
+  # ─── CFP-825 Phase 1 (ADR-024 Amendment 6 §결정 6.A.2 — bypass-as-norm mutation 누적 monitoring 첫 진입, 2026-05-17) ───
+  # Incident origin: CFP-770/771 PR #788 admin merge (claude-md-line-cap + wording-dictionary 2 label 동시 부착)
+  # + CFP-819 PR #823 (wording-dictionary cosmetic 7건) + CFP-786/801/795 (unit-tests pre-existing) — 5+ evidence cluster.
+  - name: bypass-label-counter
+    description: |
+      hotfix-bypass:<entry> per-entry namespace label family 의 per-(plugin, label)
+      signature 누적 사용 카운터 lint — signature ≥3 reach-merged PR 누적 시 carrier
+      Issue 자동 발의 (window=all-time / dedup_unit=PR number / dedup by (plugin,label)
+      signature). exception → norm mutation (bypass-as-norm mutation) 위험 누적
+      monitoring. self-meta loop 회피: hotfix-bypass:bypass-label-counter 부착 PR +
+      hotfix-bypass:exempt:<entry> 부착 PR 은 누적 count 제외.
+      grep-testable artifact 존재 예정 (scripts/check-bypass-label-counter.sh,
+      Phase 2 carrier). CFP-627 marketplace-drift-detection precedent (24h cron +
+      workflow_dispatch + Issue auto-create).
+    detect_command: null   # Phase 2 carrier 신설 후 채움 (deferred-followup)
+    workflow: templates/github-workflows/bypass-label-counter.yml   # Phase 2 신설 완료 시 Active 전환
+    current_tier: warning
+    bypass_label: hotfix-bypass:bypass-label-counter
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-825
+    introduced_date: 2026-05-17
+    owner_adr: ADR-024            # Amendment 6 §결정 6.A.2 (ratchet 룰 SSOT)
+    carrier_adr: ADR-060          # evidence-enforceable framework carrier
+    recurrence:
+      count: 5                    # CFP-770/771 #788 (2) + CFP-819 #823 (1) + CFP-786/801/795 unit-tests (2) — 5+ evidence cluster
+      threshold: 3                # ADR-060 §결정 19 (Amendment 6) — threshold 3 standard
+      last_occurrence: CFP-819
+      promotion_trigger: advisory # count=5 ≥ threshold=3 → advisory (본 carrier 자체가 monitoring 도입)
+    status: deferred-followup     # Phase 2 carrier (script + workflow self-app) land 시 Active 전환
