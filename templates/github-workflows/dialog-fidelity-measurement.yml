@@ -1,0 +1,60 @@
+name: DialogFidelityAgent effectiveness measurement (ADR-071 sunset gate)
+# CFP-833 Phase 2 — Epic CFP-761 Story-3 closing-the-loop
+# ADR-071 Amendment 3 / ADR-060 evidence-enforceable framework
+# evidence-checks-registry.yaml entry: dialog-fidelity-effect (current_tier=warning)
+#
+# 책임:
+#   Monthly cron 으로 docs/orchestrator-communication-incidents.md 의
+#   realtime detect row append rate A-B baseline delta 를 측정.
+#   advisory warning tier — PR block 안 함, dashboard 출력만.
+#
+# proxy signal qualification:
+#   before=backfill / after=realtime collection mode 상이.
+#   delta = instrumentation mode change / backfill completeness /
+#            reviewer behavior 변화도 반영 가능.
+#   advisory operational signal only, not causal effectiveness measure.
+#
+# permissions: minimal (contents: read only — read-only metric, no write).
+# continue-on-error: true (warning tier, cron 실패 graceful).
+
+on:
+  schedule:
+    # 매월 1일 00:00 UTC (KST 09:00)
+    - cron: '0 0 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dialog-fidelity-measurement
+  cancel-in-progress: false
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run dialog-fidelity-effect measurement
+        id: measure
+        continue-on-error: true
+        run: |
+          bash scripts/check-dialog-fidelity-effect.sh
+
+      - name: Write job summary (advisory)
+        if: always()
+        run: |
+          echo "## DialogFidelityAgent Effectiveness Measurement" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**advisory operational signal only — not causal effectiveness measure**" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "proxy notice: before=backfill / after=realtime collection mode differ." >> "$GITHUB_STEP_SUMMARY"
+          echo "delta reflects instrumentation mode change / backfill completeness / reviewer behavior changes, not solely DialogFidelityAgent effect." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "See [ADR-071 §결정 14](docs/adr/ADR-071-orchestrator-user-dialog-convergence.md) + [evidence-checks-registry.yaml dialog-fidelity-effect entry](docs/evidence-checks-registry.yaml) for metric SSOT." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "warning tier — advisory dashboard only, no PR block." >> "$GITHUB_STEP_SUMMARY"
