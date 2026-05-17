@@ -236,3 +236,14 @@ EOF
 
     cd "$TEST_DIR"
 }
+
+# ─── case 10: guard (4) self-referential exemption — sibling bats fixture → pass (F-CR-841-3) ───
+# RED-first: pre-FIX (allowlist 미추가) 시 line 42 corpus token flag → exit 1 (FAIL)
+# post-FIX: SELF_REF_ALLOWLIST_PATTERNS 에 sibling 추가 → exit 0 PASS
+
+@test "case 10 (guard-4 sibling-bats): test-check-cross-plugin-ownership-verify.bats 를 corpus lint 인자 → exit 0 PASS (sibling allowlist 면제, F-CR-841-3)" {
+    run python3 "$REPO_ROOT/scripts/check-corpus-claim-verify.py" \
+        "$REPO_ROOT/tests/scripts/test-check-cross-plugin-ownership-verify.bats"
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"PASS"* ]] || [[ "$output" == *"0 violation"* ]]
+}

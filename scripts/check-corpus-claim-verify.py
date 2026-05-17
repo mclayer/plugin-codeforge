@@ -54,6 +54,7 @@ SELF_REF_ALLOWLIST_PATTERNS = [
     r'change-plans/.*cfp-841.*\.md',
     r'check-corpus-claim-verify',     # 본 스크립트 self-flag 차단
     r'test-check-corpus-claim-verify',  # 본 bats fixture self-flag 차단
+    r'test-check-cross-plugin-ownership-verify',  # sibling bats fixture self-flag 차단 (F-CR-841-3)
 ]
 SELF_REF_RE = re.compile('|'.join(SELF_REF_ALLOWLIST_PATTERNS))
 
