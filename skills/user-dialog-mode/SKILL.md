@@ -132,7 +132,7 @@ tools: Read
 
 ## scope 외 (ADR-071 §결정 10)
 
-- Layer 1 preamble mechanical lint — 별 follow-up CFP
+- Layer 1 preamble mechanical lint — 별도 follow-up CFP
 - agent ↔ agent debate (CFP-582 cover)
 - 코드 품질 / 보안 / 성능
 - 사용자 personal memory entry 자체 삭제 (사용자 영역)
@@ -176,9 +176,9 @@ DialogFidelityAgent spawn (subagent 형태) = [ADR-039 §결정 2](../../docs/ad
 
 [ADR-064 §결정 9](../../docs/adr/ADR-064-decision-principle-mandate.md) Q-3check = Orchestrator self-check. DialogFidelityAgent = 외부 verifier. disjoint — 양자 cross-cutting 보강.
 
-### closed enum 확장 시 별 CFP 의무
+### closed enum 확장 시 별도 CFP 의무
 
-3-anchor closed. 확장 후보 (`pre_lane_spawn` / `pre_phase_transition` / `pre_pause_decision`) 발생 시 별 CFP 신설 의무.
+3-anchor closed. 확장 후보 (`pre_lane_spawn` / `pre_phase_transition` / `pre_pause_decision`) 발생 시 별도 CFP 신설 의무.
 
 ## Conversational reporting frequency suppression (ADR-071 §결정 15 / CFP-851 / Amendment 4)
 
@@ -206,10 +206,10 @@ DialogFidelityAgent spawn (subagent 형태) = [ADR-039 §결정 2](../../docs/ad
 - DialogFidelityAgent 3-anchor spawn (§결정 12/13)
 - §결정 14 incident append-rate measurement
 
-### closed enum 확장 시 별 CFP 의무
+### closed enum 확장 시 별도 CFP 의무
 
-4번째 touchpoint 신설 시 별 CFP 의무 (ADR-064 §결정 7 top-down ratchet + ADR-058 §결정 5 sunset_justification + Story §1 사용자 explicit 승인 의무). 본 ADR-071 안 3번째 closed enumeration 인스턴스 (3-anchor enum / 4 차원 enum / 3 touchpoint enum 동형).
+4번째 touchpoint 신설 시 별도 CFP 의무 (ADR-064 §결정 7 top-down ratchet + ADR-058 §결정 5 sunset_justification + Story §1 사용자 explicit 승인 의무). 본 ADR-071 안 3번째 closed enumeration 인스턴스 (3-anchor enum / 4 차원 enum / 3 touchpoint enum 동형).
 
-### mechanical lint = 별 follow-up CFP
+### mechanical lint = 별도 follow-up CFP
 
-§결정 15 = behavioral directive only. 3 touchpoint 외 발화 자동 감지 + 억제-induced rework 측정 = 별 follow-up CFP scope (§결정 10 패턴 정합, dialog-fidelity-effect precedent runtime cron measurement 동형).
+§결정 15 = behavioral directive only. 3 touchpoint 외 발화 자동 감지 + 억제-induced rework 측정 = 별도 follow-up CFP scope (§결정 10 패턴 정합, dialog-fidelity-effect precedent runtime cron measurement 동형).
