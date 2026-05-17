@@ -27,6 +27,12 @@ related_files:
   - docs/hotfix-playbook.md
   - docs/change-plans/cfp-275-orchestrator-subagent-default.md
   - docs/domain-knowledge/orchestrator-discipline/spawn-default.md
+amendment_log:
+  - amendment: 1
+    date: 2026-05-17
+    summary: §결정 14 신설 (Pre-spawn-pin mandate) — DeveloperPL + 모든 branch-creating subagent 가 새 branch 생성 시 current origin/main HEAD pin 의무 (CFP-699/702/848 3차 누적 stale-base recurrence 차단)
+    direction: strengthening
+    sunset_justification: N/A (ratchet — closed enumeration 확장만, 약화 0)
 is_transitional: false
 ---
 
@@ -152,7 +158,7 @@ ADR-025 / ADR-029 precedent 정합 (Phase 1 doc-only trust pattern) — Phase 2 
 - **spawn cost telemetry** (token / latency 정량 측정). Researcher §6.F fact gap (spawn latency 정량 데이터 부재) 충당.
 - **rate-limited error → unwanted user-stop** second-order risk 측정 (OpRiskArch §7.4.4 운영 risk surfacing).
 
-ROI 평가 후 enforcement 강도 결정. 본 Story scope = Phase 1 doc-only.
+ROI 평가 후 enforcement 강도 결정. 본 Story scope = Phase 1 doc-only. **Update (Amendment 1, CFP-895)**: Pre-spawn-pin mandate (§결정 14 신설) = Phase 1 doc-only enforcement 의 일부분으로 자연 흡수. Phase 2 hook enforcement layer 가 발효되면 본 §결정 14 mandate 도 hook-level 자동 verify 로 격상.
 
 ### 결정 10 — ADR-009 amends 관계
 
@@ -200,6 +206,46 @@ ADR-022 (Sonnet decider 5-trigger 자동 발동) = Deprecated by ADR-035 (CFP-13
 **Effective date** = 본 ADR 가 포함된 Phase 1 PR merge 시점 = 4 SSOT doc 모두 갱신된 시점 (동일 PR commit batch 보장). retroactive 미적용.
 
 DeveloperPL Phase 2 lane 경유 안 함 — ArchitectPL 직접 4 doc edit (chief author 통과 방향 유지, 편차 제거).
+
+### 결정 14 — Pre-spawn-pin mandate (DeveloperPL + branch-creating subagent — Amendment 1, CFP-895)
+
+새 git branch 를 생성하는 모든 subagent (특히 DeveloperPLAgent, codeforge-develop:DeveloperAgent, 기타 codeforge-develop role:dev 가 PR 생성 시) 는 **branch 생성 직전 Step 0** 에서 current origin/main HEAD 를 explicit pin 의무. self-claim / Orchestrator packet-provided SHA / local working dir HEAD / 이전 memory SHA 무조건 신뢰 금지 ([[feedback_verify_pin_head_sha]] codification).
+
+**의무 절차** (subagent prompt Step 0 cohort):
+
+```bash
+# Step 0 — pin current origin/main HEAD (subagent self-execution, single source of truth)
+git fetch origin
+MAIN_HEAD=$(git rev-parse origin/main)
+# 또는: MAIN_HEAD=$(gh api repos/<org>/<repo>/commits/main --jq .sha)
+echo "PINNED_MAIN_HEAD=$MAIN_HEAD"
+# 모든 후속 branch 생성 + git rebase --onto + PR open 시 본 SHA 사용 의무
+# packet-provided reference SHA = 단순 baseline 참고 (subagent self-pin 우선)
+```
+
+**근거** — 3차 누적 systemic incident pattern (CFP-895 §1 evidence):
+
+| Story | DeveloperPL stale base | current origin/main at spawn time | 회복 cost |
+|---|---|---|---|
+| CFP-699 / Wave 1 Story-1 | (parallel session, memory 기록) | (parallel session) | strict-verify-gate 3회 적발 + 사용자 RESET trigger |
+| CFP-702 / Wave 1 Story-2 | (parallel session, memory 기록) | (parallel session) | DeveloperPL 2× 거짓 self-claim → ADR-070 reject |
+| **CFP-848 / Epic A Story-5** | `65901ac5` (CFP-785 #809 stale) | `eafc726` (CFP-833 Phase 2, 3 commits ahead) | FIX Iter1 rebase + 2차 mid-flight rebase (CFP-841/833 추월 additive) |
+
+**Orchestrator post-spawn verify** (mandate codify — playbook §3.0.16 짝, 본 §결정 cross-ref):
+
+DeveloperPL 또는 branch-creating subagent return 직후 Orchestrator 가 `mcp__github__pull_request_read get` 의 `head.sha` parent commit 을 `gh api repos/<org>/<repo>/commits/main --jq .sha` (또는 `mcp__github__list_commits main`) 와 비교. **mismatch = FIX trigger** (구현-side stale-base, RESET=NO, 동일 subagent 재dispatch with explicit current-main-HEAD pin). spurious merge gate 차단 forcing function.
+
+**self-reset 금지** (memory `feedback_no_permission_prompts` lineage + CFP-785 InfraEng T2 self-reset 선례):
+
+re-dispatch 시 subagent prompt 안 **"self-reset 금지 / 기존 작업 content 보존, only rebase the base"** 명시 의무. `git reset --hard origin/<branch>` 같은 destructive 회복 = 이전 작업 손실 → DeveloperPL 의 production 이력 회복 곤란 (Story-5 FIX Iter1 evidence).
+
+**Closed enumeration (§결정 1 binary always-spawn 무손상)** — 본 amendment 는 **§결정 1 의 mechanism level 강화** (pre-spawn-pin Step 0 추가) 일 뿐, §결정 1 의 default subagent spawn 정책 자체는 무변. §결정 2 Inline whitelist 4-entry 도 무변 (closed enumeration 확장 0).
+
+**Verification evidence**:
+- 본 ADR Amendment 1 evidence 표 (위 3 row)
+- CFP-895 Issue body §verified-via (memory + Story-5 PR #849 commit lineage 53c2851 parent stale-base)
+- CFP-895 Issue 본문 §제안 deliverable (a/b/c 3-touchpoint codify)
+
 
 ## 회피된 대안
 
