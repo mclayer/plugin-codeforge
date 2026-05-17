@@ -1,0 +1,51 @@
+# BEGIN wrapper-managed
+name: Codeforge Improvement
+description: codeforge 플러그인 개선 제안 (debut audit lineage — mctrader-debut 사용 관찰)
+title: "[IMPROVEMENT] "
+labels: ["type:story", "codeforge-improvement", "phase:요구사항"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Codeforge 개선 제안
+        codeforge 플러그인 자체에 대한 개선·버그·정책 변경을 제안합니다.
+        mctrader-debut 운영 중 발견한 개선 사항도 이 form을 사용하세요.
+        (label: `audit:from-mctrader-debut` 추가 권장)
+  - type: textarea
+    id: problem
+    attributes:
+      label: 관찰된 문제 / 개선 포인트
+      description: 어떤 상황에서 어떤 문제를 발견했는가
+    validations:
+      required: true
+  - type: textarea
+    id: proposed-fix
+    attributes:
+      label: 제안하는 해결 방법 (선택)
+      description: 구체적인 방법론이 있으면 기술
+      placeholder: |
+        - ADR-NNN Amendment N
+        - 새 script/workflow 신설
+    validations:
+      required: false
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 근거 / 증거
+      description: 로그·스크린샷·Story §10 FIX Ledger 등
+    validations:
+      required: false
+  - type: dropdown
+    id: improvement-category
+    attributes:
+      label: 개선 카테고리
+      options:
+        - 에이전트 행동 (Agent behavior)
+        - 정책·ADR (Policy/ADR)
+        - CI/Workflow
+        - 문서·CLAUDE.md
+        - 스크립트·도구
+        - 기타
+    validations:
+      required: true
+# END wrapper-managed

@@ -2277,3 +2277,38 @@ entries:
       last_occurrence: null
       promotion_trigger: advisory
     status: deferred-followup  # Phase 1 declare / CFP-841 Phase 2 actual wire 후 Active 전환
+
+  # ─── CFP-821 Phase 2 — branch-protection-sync (ADR-024 Amendment 2 §결정 A carrier) ───
+  # CFP-841 Phase 1 merge 후 충돌 해소 rebase: branch-protection-sync entry 를 cross-plugin-ownership-verify 뒤에 append.
+  # v2.25 claim 충돌 해소 → v2.26 으로 bump (CFP-841 이 v2.25 선점). 36번째 hotfix-bypass:* family member.
+  - name: branch-protection-sync
+    description: >
+      CFP-821 D2 — branch protection manifest drift 감지 warning.
+      templates/branch-protection-manifest.yaml (ADR-024 Amendment 2 §결정 A SSOT) 와
+      실 GitHub API state (GET branches/main/protection) 비교.
+      FORM (b) dry-run/manifest helper (setup-branch-protection.sh) 출력을 기반으로 drift 경고.
+      실 등록 = consumer admin operator manual (Administration:write 보유 주체).
+      drift = informational (CI fail 아님 — FORM (b) 핵심). repair = operator manual step.
+    detect_command: bash templates/scripts/setup-branch-protection.sh --dry-run
+    workflow: templates/github-workflows/branch-protection-drift-check.yml  # 기존 detect-only workflow 재사용
+    current_tier: warning
+    bypass_label: hotfix-bypass:branch-protection-sync
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-821
+    introduced_date: 2026-05-17
+    owner_adr: ADR-024         # branch protection context SSOT — Amendment 2 §결정 A/B/C
+    carrier_adr: ADR-060       # evidence-enforceable framework carrier
+    recurrence:
+      count: 0
+      threshold: 3
+      last_occurrence: null
+      promotion_trigger: none
+    status: Active
