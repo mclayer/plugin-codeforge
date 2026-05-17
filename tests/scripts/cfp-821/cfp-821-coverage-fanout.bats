@@ -6,7 +6,8 @@
 # TC map (Change Plan §8):
 #   TC-D1-1: D1 Issue template files exist (5 forms + config.yml)
 #   TC-D1-2: D1 PULL_REQUEST_TEMPLATE.md byte-identical with .github/
-#   TC-D1-3: D1 D4 marker block presence (whole-line anchored)
+#   TC-D1-3: D1 D4 marker block presence on *.yml (whole-line anchored)
+#   TC-D1-3b: D1 D4 marker block presence on PULL_REQUEST_TEMPLATE.md (<!-- BEGIN/END wrapper-managed -->)
 #   TC-D1-4: TC-D1-4 byte-identical: templates/.github/ forms == .github/ISSUE_TEMPLATE/ (3 new forms)
 #   TC-D2-1: D2 setup-branch-protection.sh exists + --dry-run triggers ZERO API writes
 #   TC-D2-2: D2 core 4 invariant: missing core context → exit 1
@@ -100,6 +101,31 @@ teardown() {
     # Count must be exactly 1 pair (flat-only §결정 7.D.1)
     [ "${begin_count}" -eq 1 ]
   done
+}
+
+@test "TC-D1-3b: templates/.github/PULL_REQUEST_TEMPLATE.md has whole-line-anchored <!-- BEGIN/END wrapper-managed --> marker" {
+  # ADR-027 Amendment 5 §결정 9.B: .md PR template = <!-- BEGIN wrapper-managed --> / <!-- END wrapper-managed -->
+  TMPL_PR="${WORKTREE_ROOT}/templates/.github/PULL_REQUEST_TEMPLATE.md"
+  LIVE_PR="${WORKTREE_ROOT}/.github/PULL_REQUEST_TEMPLATE.md"
+
+  [ -f "${TMPL_PR}" ]
+  [ -f "${LIVE_PR}" ]
+
+  # Both must have exactly 1 whole-line-anchored <!-- BEGIN wrapper-managed --> marker
+  for f in "${TMPL_PR}" "${LIVE_PR}"; do
+    run grep -c "^<!-- BEGIN wrapper-managed -->$" "${f}"
+    [ "$status" -eq 0 ]
+    [ "$output" -eq 1 ]
+
+    run grep -c "^<!-- END wrapper-managed -->$" "${f}"
+    [ "$status" -eq 0 ]
+    [ "$output" -eq 1 ]
+  done
+
+  # byte-identical after marker addition (ADR-005)
+  run diff "${TMPL_PR}" "${LIVE_PR}"
+  [ "$status" -eq 0 ]
+  [ -z "$output" ]
 }
 
 @test "TC-D1-4: .github/ISSUE_TEMPLATE/{story,discussion,codeforge-improvement}.yml + config.yml byte-identical with templates/" {

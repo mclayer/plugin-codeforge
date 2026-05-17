@@ -1,3 +1,4 @@
+<!-- BEGIN wrapper-managed -->
 <!--
   CodeForge PR Template — 다음 두 형식 중 하나를 사용하세요.
 
@@ -66,3 +67,4 @@ Closes #<Story Issue 번호>
 ---
 
 🤖 Generated with [CodeForge plugin](https://github.com/mctrader/plugin-codeforge)
+<!-- END wrapper-managed -->
