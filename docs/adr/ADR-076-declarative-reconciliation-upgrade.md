@@ -9,11 +9,18 @@ carrier_story: CFP-701
 parent_epic: CFP-699
 supersedes: []
 amends: []
-amendment_log: []
+amendment_log:
+  - amendment: 1
+    date: 2026-05-17
+    cfp: CFP-906
+    summary: "§결정 9 신설 — 3-tier channel taxonomy declaration (Wave 4 sub-Epic #1 Story-1, Epic CFP-882). codeforge family plugin distribution 의 release channel 1st-class 정의 anchor. 3-tier enum (stable / beta / canary) closed-enum invariant + per-tier semantic (LOW / MEDIUM / HIGH risk class) + production-impact awareness (canary tier admin tier 권장 advisory) + channel selection authority asymmetry (SecurityArch §2 T-2.1 silent canary uptake 차단) + sensitive data exposure tier asymmetry (canary tier production features = HIGH exposure, ProductionEvidenceDeputy Story-3 spawn trigger) + disjoint invariant (codeforge.channel.tier release tier ≠ codeforge.version_pin.version specifier — 독립 차원, 동일 block embedding 금지). project-config-schema codeforge.channel field 신설 (peer block, version_pin sibling) + reconcile-protocol-v1 v1.6 → v1.7 §4.3 (i) trigger 발동 + §4.10 multi_version_channel_pin_binding block carrier 동반. ADR-016 Amendment 3 (family_7_plugin_atomic × channel pin invariant) + ADR-063 Amendment 6 §결정 17 (mirrored field × channel matrix) + label-registry-v2 v2.28 → v2.29 (3 channel:* label + 신규 category enum channel) sibling cross-ref. Strengthening direction only — ADR-064 §self-application top-down ratchet 정합 (channel taxonomy = scope 확장, weakening 0). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과 (is_transitional: false 보존)."
+    is_transitional: false
+    sunset_justification: "N/A — permanent governance invariant. ADR-064 §self-application top-down ratchet 정합 (Amendment 1 = 3-tier channel taxonomy 강화 방향 only, scope 확장 — codeforge family plugin distribution 의 release channel 1st-class declare). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과 (channel taxonomy 축소 / disjoint invariant 합치 = sunset_justification 3-tuple 의무)."
 related_stories:
   - CFP-701  # 본 Story carrier — Wave 1 Story-1 (A1+B1 scope)
   - CFP-702  # Wave 1 Story-2 (D4 customization marker — sequential prerequisite for Wave 2)
   - CFP-743  # Wave 2 Story-3 (UpgradeAgent + CLI runtime carrier) — KEY 정정 CFP-703→CFP-743 (CFP-743, Wave 1 작성 시점 placeholder drift / 동일 Story / fact 영향 0)
+  - CFP-906  # Amendment 1 carrier — Wave 4 sub-Epic #1 Story-1 (channel schema SSOT 3-tier taxonomy declare layer, Epic CFP-882)
 related_adrs:
   - ADR-027  # Consumer adoption protocol (boundary disjoint — detection layer)
   - ADR-053  # 구조적 변경 재구동 + consumer 배포 (transaction completion prerequisite)
@@ -31,6 +38,8 @@ related_adrs:
   - ADR-068  # Boundary completeness invariants (4 semantic + Amendment 1 I-5 dimensional)
   - ADR-070  # Codex verify-before-trust (Touchpoint #2 carry-over)
   - ADR-073  # Orchestrator verify-before-assert (fact claim marker 5종)
+  - ADR-063  # Marketplace ↔ plugin.json atomic invariant (Amendment 6 §결정 17 mirrored field × channel matrix carrier sibling — CFP-906 Amendment 1)
+  - ADR-072  # ProductionEvidenceDeputy spawn (§결정 1 canary tier production-impact trigger — CFP-906 §결정 9 canary tier semantic cross-ref)
 related_files:
   - docs/inter-plugin-contracts/reconcile-protocol-v1.md  # 본 ADR 의 schema carrier (kind:registry)
   - docs/inter-plugin-contracts/MANIFEST.yaml             # registries[] row append
@@ -51,6 +60,8 @@ mechanical_enforcement_actions: []
 **Active (2026-05-15)** — CFP-701 (Wave 1 Story-1) carrier. parent_epic CFP-699 (declarative reconciliation upgrade Epic).
 
 `is_transitional: false` — permanent architecture invariant. codeforge family upgrade 도메인의 1st-class 정의 anchor.
+
+**Amendment 1 (2026-05-17) — CFP-906**: §결정 9 신설 — 3-tier channel taxonomy declaration (Wave 4 sub-Epic #1 Story-1, Epic CFP-882). codeforge family plugin distribution 의 **release channel** 1st-class 정의 anchor. 3-tier enum (`stable` / `beta` / `canary`) closed-enum invariant + per-tier semantic (LOW / MEDIUM / HIGH risk class) + production-impact awareness (canary tier admin tier 권장 advisory) + channel selection authority asymmetry sub-§ (silent canary uptake 차단) + sensitive data exposure tier asymmetry sub-§ (canary tier production features = HIGH exposure, ProductionEvidenceDeputy Story-3 spawn trigger) + disjoint invariant (channel tier ≠ version specifier — 독립 차원). `project-config-schema.md codeforge.channel` field 신설 (peer block, `version_pin` sibling) + `reconcile-protocol-v1` v1.6 → v1.7 §4.3 (i) trigger 발동 + §4.10 `multi_version_channel_pin_binding` block carrier 동반. ADR-016 Amendment 3 (`family_7_plugin_atomic × channel pin invariant`) + ADR-063 Amendment 6 §결정 17 (`mirrored field × channel matrix`) + label-registry-v2 v2.28 → v2.29 (3 `channel:*` label + 신규 category enum `channel`) sibling cross-ref. Strengthening direction only — ADR-064 §self-application top-down ratchet 정합. Story-1 = declare layer SSOT only (runtime UpgradeAgent multi-channel dispatch = Wave 4 sub-Epic #1 Story-2 carrier / ProductionEvidence canary tier activation = Story-3 carrier / promotion criteria = Story-4 carrier / downgrade invariant = Story-5 carrier).
 
 ## 컨텍스트
 
@@ -220,6 +231,112 @@ ADR-016 §결정 1 정합 — wrapper + 6 lane plugin = 7 plugin atomic unit (�
 **rationale**: 본 Story-1 = semantic SSOT only, runtime 0건. 의미 invariant 자체는 본 ADR-076 신설 영역 외 (ADR-016 이미 SSOT) — 본 §결정 8 = 위 invariant 의 reconcile-protocol 시점 declare carrier. runtime per-plugin / per-family 분리 = Wave별 carrier 분리 (ADR-067 §결정 4 sequential ordering 정합). per-family runtime carrier = Wave 2 Story-4 진입 시점 본 ADR Amendment trigger (ratchet 강화, ADR-058 §결정 5 정합) — 단 ratchet 자체는 invariant 변경 아님 (이미 family_7_plugin invariant, Wave 2 = runtime catch-up).
 
 domain-knowledge `upgrade-flow/declarative-reconciliation.md` Invariant 3 verbatim 정합 — "Codeforge family scope = 7 plugin atomic" 의 reconcile-protocol layer 시점 declare 영역.
+
+### 결정 9 — 3-tier channel taxonomy declaration (Wave 4 sub-Epic #1 carrier, Story-1 schema SSOT only) (Amendment 1, CFP-906)
+
+codeforge family plugin distribution 에서 **release channel** 은 **version specifier 와 독립적인 차원**. 본 결정이 channel taxonomy 의 1st-class 선언 carrier (Wave 4 sub-Epic #1 Story-1, Epic CFP-882).
+
+#### 9.1 3-tier channel taxonomy
+
+| Channel tier | 정의 | Risk class | Production impact | consumer 사용 시점 | empirical anchor |
+|---|---|---|---|---|---|
+| **stable** | 현재 활성 stable release (기본값) | LOW | none | 대부분의 consumer (default) | npm `dist-tag: latest` / Chrome stable channel |
+| **beta** | opt-in incremental track | MEDIUM | observable but reversible | mid-trust consumer | npm `dist-tag: beta` / Chrome beta channel (4주 cycle) |
+| **canary** | preview + production-impact tier | **HIGH (production cutover)** | production cutover (canary deployment semantic) | early adopter / dogfood consumer (admin tier 권장) | Chrome canary channel / K8s alpha→beta→GA precedent |
+
+3-tier enum (`stable | beta | canary`) = **closed-enum strict invariant**. undeclared 값 = validator FAIL (warning-first, ADR-027 Amendment 2 `bootstrap.fallback_mode` 패턴 답습).
+
+#### 9.2 본 결정 scope (Story-1)
+
+- **channel taxonomy declare** (3-tier enum 정의 + per-tier semantic SSOT)
+- **`project-config-schema.md` `codeforge.channel` field 신설** (peer block, `codeforge.version_pin` sibling — disjoint invariant 보존)
+- **`reconcile-protocol-v1` v1.7 §4.10 `multi_version_channel_pin_binding` block** carrier (3-tier closed-enum + family_7_plugin_atomic × channel pin invariant + per-channel marketplace.json channels[] matrix + 3-way channel invariant)
+- **ADR-016 Amendment 3** (family_7_plugin_atomic × channel pin invariant declare) sibling
+- **ADR-063 Amendment 6 §결정 17** (mirrored field × channel matrix declare) sibling
+- **label-registry-v2 v2.29** (3 `channel:*` label + 신규 category enum `channel`) sibling
+
+본 결정 scope **외** (Wave 4 sub-Epic #1 후속 Story carrier 분리, ADR-067 §결정 4 sequential ordering 정합):
+
+- **Story-2 carrier**: runtime UpgradeAgent multi-channel dispatch + CLI `--channel` flag + channel-drift-detection workflow + `scripts/check-3way-version-parity.sh` 의 channel 차원 확장
+- **Story-3 carrier**: ProductionEvidenceDeputy canary tier activation (ADR-072 §결정 1 trigger) + IntegrationTestAgent Epic-level reactivation
+- **Story-4 carrier**: promotion criteria quantitative declare + canary coord + `gate:channel-*-promotion` label scheme (Story-4 carrier 영역, Story-1 영역 외)
+- **Story-5 carrier**: downgrade invariant declare (canary → beta → stable demotion 시 feature regression warning) + Wave 4 sub-Epic #1 close + retro
+
+#### 9.3 Disjoint invariant — channel ≠ version specifier
+
+`codeforge.channel.tier` (release tier) ≠ `codeforge.version_pin.version` (version specifier) — 두 field 는 **독립 차원**, 동일 block 내 embedding 금지. `version_pin` 안 `channel` sub-field 형태 (`version_pin.channel: stable`) 는 SRP 위배:
+
+| Block | 책임 축 | 변경 trigger |
+|---|---|---|
+| `codeforge.version_pin.version` | **version specifier** — 어떤 특정 버전 (semver string) 을 사용하는가 | 버전 업그레이드 시 |
+| `codeforge.channel` (CFP-906 신설) | **release tier** — 어떤 채널 (stable/beta/canary) 을 추적하는가 | 채널 정책 변경 시 |
+
+두 변경 축 (axis of change) 이 서로 다르므로, 독립 peer block 으로 분리 의무. 결합 시 (a) consumer 가 채널만 바꾸고 싶은 경우 version_pin block 전체 맥락을 읽어야 함 (불필요한 coupling) + (b) version_pin.version 이 고정값인 동안 channel 은 drift detection 에서 독립적으로 움직이는 개념 — 같은 block 에 두면 validator 로직의 orthogonality 파괴.
+
+#### 9.4 Channel selection authority asymmetry (canary tier production-impact)
+
+| Tier | Risk class | Default behavior | Selection authority |
+|---|---|---|---|
+| `stable` | LOW | default | developer self-service OK |
+| `beta` | MEDIUM | explicit opt-in | developer + reviewer awareness 충분 |
+| `canary` | **HIGH (production-impact)** | explicit opt-in + production-impact awareness | **admin tier 권장** (consumer-side 책임, codeforge wrapper 영역 외 — CODEOWNERS auto-review path 권장 advisory) |
+
+**Mitigation hook** (Story-1 declare scope):
+- (M-1) `project-config-schema.md codeforge.channel` field description 안 `production_impact` semantic 명시 (canary tier 한정)
+- (M-2) `reconcile-protocol-v1` §4.10 `multi_version_channel_pin_binding.canary_tier_authority: admin_review_recommended` field 명시 — semantic advisory only
+- (M-3) consumer CODEOWNERS auto-review path 권장 (consumer-side 책임, codeforge wrapper enforcement 0 — Story-2 carrier 시점 consumer-guide 안 권장 단락)
+
+**위협 시나리오** (SecurityArch §1 T-1.1.a): silent canary uptake — consumer A 가 `codeforge.channel: stable` 선언 (의도: 보수적 보존), 동일 consumer 의 다른 contributor B 가 PR 로 `codeforge.channel: canary` 변경, PR review 시 channel 변경 자체의 의미가 reviewer 에게 surfaced 되지 않음, merge 후 다음 upgrade 에서 family 7 plugin = canary tier install, consumer org 가 production-impact 변경을 "stable 의도" 컨텍스트로 흡수.
+
+#### 9.5 Sensitive data exposure tier asymmetry
+
+| Data class | Owner | Tier-aware exposure | Marking obligation |
+|---|---|---|---|
+| `codeforge.channel` field value | consumer overlay | low | none |
+| consumer `installed_plugins.json` channel pin state | consumer install dir | low | none |
+| canary tier 가 enable 하는 production features | **consumer domain layer** | **HIGH** | ProductionEvidence deputy spawn time mandatory (Wave 4 sub-Epic #1 Story-3 carrier) |
+
+**Story-1 declaration-level**:
+- ProductionEvidenceDeputy = **NOT-spawn** (Story-1 declare-only — Live touching = FALSE, ADR-072 §결정 1 정합. canary tier semantic = declare only / canary tier 실 activation = Wave 4 sub-Epic #1 Story-3 carrier 시점 ProductionEvidenceDeputy spawn trigger)
+- IntegrationTestAgent Epic-level reactivation = Story-3 carrier (Story-1 영역 외)
+
+#### 9.6 Empirical anchor — 3-tier channel pattern industry precedent
+
+3-tier release channel pattern 의 empirical grounding (ADR-068 I-5 dimensional empirical grounding 정합):
+
+| Industry exemplar | 3-tier mapping | empirical-source |
+|---|---|---|
+| **npm dist-tag** | `latest` (stable) / `next` (beta) / `canary` | npm cli docs (`dist-tag` field semantic) |
+| **Chrome release channels** | Stable (대다수 user) / Beta (4주 cycle) / Canary (daily) | Google Chrome release schedule (chromium.org) |
+| **Rust release channels** | stable (6주) / beta (6주 pre-stable) / nightly | rust-lang.org release model |
+| **Kubernetes feature stages** | GA / Beta / Alpha | K8s API versioning convention |
+
+`[empirical-source: 4 industry exemplars verified — npm dist-tag / Chrome 3-channel / Rust 3-channel / K8s 3-stage]`. 본 ADR-076 §결정 9 의 3-tier (stable/beta/canary) = industry-standard pattern 직접 transplant (CFP-906 RequirementsPL §1-§6 fact source 정합 — Wave 4 sub-Epic brainstorm Phase 1 confirmation 시점 사용자 derived default).
+
+#### 9.7 Sequential ordering (Wave 4 sub-Epic #1 Story 1 → 5)
+
+본 §결정 9 = Wave 4 sub-Epic #1 (multi-version channel pin) carrier 의 첫 sequential entry. Wave 4 sub-Epic #1 의 5-Story sequential carrier:
+
+| Story | scope | trigger |
+|---|---|---|
+| **Story-1 (CFP-906, 본 carrier)** | schema SSOT — declare layer (channel taxonomy + binding block + sibling ADR Amendment) | Wave 4 sub-Epic #1 entry, Live touching = FALSE |
+| Story-2 (별 CFP) | runtime — UpgradeAgent multi-channel dispatch + CLI + channel-drift-detection workflow | Story-1 merge 후 sequential prerequisite |
+| Story-3 (별 CFP) | ProductionEvidenceDeputy canary tier activation + IntegrationTestAgent Epic-level reactivation | Live touching = TRUE (canary tier production cutover) |
+| Story-4 (별 CFP) | promotion criteria quantitative declare + canary coord + gate:channel-*-promotion label scheme | Story-1+2+3 merge 후 |
+| Story-5 (별 CFP) | downgrade invariant declarative carrier + Wave 4 sub-Epic #1 close + retro | sequential terminus |
+
+ADR-067 §결정 4 sequential ordering 정합 (Story 간 cross-pollinate 차단).
+
+#### 9.8 Cross-references
+
+- `docs/inter-plugin-contracts/reconcile-protocol-v1.md` v1.7 §4.10 `multi_version_channel_pin_binding` (본 §결정 9 의 contract carrier)
+- `docs/project-config-schema.md codeforge.channel` (본 §결정 9 의 schema carrier, peer block)
+- `docs/adr/ADR-016-marketplace-registration-policy.md` Amendment 3 (family_7_plugin_atomic × channel pin invariant)
+- `docs/adr/ADR-063-marketplace-atomic-invariant.md` Amendment 6 §결정 17 (mirrored field × channel matrix + 3-way channel invariant)
+- `docs/adr/ADR-072-production-evidence-deputy-and-epic-cutover-gate.md` §결정 1 (canary tier production-impact = ProductionEvidenceDeputy spawn trigger, Story-3 carrier 영역)
+- `docs/inter-plugin-contracts/label-registry-v2.md` v2.29 (3 `channel:*` label + 신규 category enum `channel`)
+- `<internal-docs>/wrapper/stories/CFP-906.md` (본 ADR Amendment 1 carrier Story)
+- `<internal-docs>/wrapper/change-plans/cfp-906-channel-schema-ssot.md` (Phase 1 PR change plan)
 
 ## 결과
 
