@@ -72,22 +72,28 @@ def get_effective_date() -> date:
 
 
 def get_file_blame_dates(filepath: str) -> List[Optional[date]]:
-    """git blame 로 각 라인의 commit date 반환 (파일 없으면 None 목록)."""
+    """git blame --line-porcelain 으로 각 소스 line 의 commit date 반환 (1:1 index-aligned).
+
+    --line-porcelain: 모든 소스 line 마다 full commit info(author-time 포함) emit.
+    --porcelain 대비: commit-block 당 1회 → 소스 line 당 1회로 index 정렬 정합.
+    encoding="utf-8", errors="replace": non-UTF-8 locale UnicodeDecodeError 차단.
+    """
     try:
         result = subprocess.run(
-            ["git", "blame", "--porcelain", filepath],
-            capture_output=True, text=True, timeout=10
+            ["git", "blame", "--line-porcelain", filepath],
+            capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=10
         )
         if result.returncode != 0:
             return []
+        import datetime
         dates = []
         for line in result.stdout.splitlines():
             if line.startswith("author-time "):
-                import datetime
                 ts = int(line.split()[1])
                 dates.append(datetime.date.fromtimestamp(ts))
         return dates
-    except Exception:
+    except (subprocess.SubprocessError, OSError, ValueError) as e:
+        print(f"WARN: git blame failed for {filepath}: {e}", file=sys.stderr)
         return []
 
 

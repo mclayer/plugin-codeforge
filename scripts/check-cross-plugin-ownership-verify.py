@@ -58,7 +58,7 @@ def load_yaml_ssot(repo_root: str) -> Optional[Dict[str, Any]]:
     try:
         with open(yaml_path, encoding="utf-8", errors="replace") as f:
             content = f.read()
-        if CROSS_PLUGIN_KEY in content:
+        if re.search(r'(?m)^\s*' + re.escape(CROSS_PLUGIN_KEY) + r'\s*:', content):
             return {"entries": [], "_text_fallback": True}
         return None
     except Exception:

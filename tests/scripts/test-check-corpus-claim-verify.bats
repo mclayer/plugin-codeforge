@@ -151,3 +151,88 @@ EOF
     run bash scripts/check-corpus-claim-verify.sh
     [ "$status" -eq 0 ]
 }
+
+# ─── case 8: guard-3 forward-only — effective-date 이전 commit line → 면제 (exit 0) ───
+# FIX iter1: F-CR-841-1 --line-porcelain 수정으로 guard-3 정상 동작 검증
+# RED-first: pre-FIX (--porcelain, guard-3 inert) 시 flag→exit 1 (FAIL), post-FIX 시 exit 0 (GREEN)
+
+@test "case 8 (guard-3 legacy-exempt): effective-date 이전 commit line -> exit 0 PASS (legacy 면제)" {
+    # temp git repo 초기화
+    git init -q "$TEST_DIR/gitrepo"
+    cd "$TEST_DIR/gitrepo"
+    git config user.email "test@test.com"
+    git config user.name "Test"
+    mkdir -p docs/adr
+
+    # corpus-claim line 포함 파일 작성
+    cat > docs/adr/ADR-legacy.md <<'EOF'
+---
+adr_number: 994
+title: legacy fixture
+---
+
+# legacy
+
+전무 docs/adr/ADR-082-write-time-self-write-verification-mandate.md 관련 corpus 0건.
+EOF
+
+    # effective-date(2026-05-17) 이전 날짜로 commit
+    GIT_AUTHOR_DATE="2026-01-01T00:00:00+00:00" \
+    GIT_COMMITTER_DATE="2026-01-01T00:00:00+00:00" \
+    git add docs/adr/ADR-legacy.md
+    GIT_AUTHOR_DATE="2026-01-01T00:00:00+00:00" \
+    GIT_COMMITTER_DATE="2026-01-01T00:00:00+00:00" \
+    git commit -q -m "legacy commit"
+
+    cp "$REPO_ROOT/scripts/check-corpus-claim-verify.py" scripts/ 2>/dev/null || \
+        cp "$REPO_ROOT/scripts/check-corpus-claim-verify.py" .
+
+    # CORPUS_VERIFY_EFFECTIVE_DATE = 2026-05-17 (이전 commit = 면제 대상)
+    CORPUS_VERIFY_EFFECTIVE_DATE="2026-05-17" \
+        run python3 "$REPO_ROOT/scripts/check-corpus-claim-verify.py" docs/adr/ADR-legacy.md
+    [ "$status" -eq 0 ]
+    [[ "$output" == *"PASS"* ]] || [[ "$output" == *"0 violation"* ]]
+
+    cd "$TEST_DIR"
+}
+
+# ─── case 9: guard-3 forward-only — effective-date 이후 commit + annotation 부재 → flag (exit 1) ───
+# FIX iter1: F-CR-841-1 --line-porcelain 수정으로 guard-3 비면제 정상 동작 검증
+# post-FIX: annotation 부재 new-commit line → exit 1 (정상 비면제)
+
+@test "case 9 (guard-3 new-commit-flag): effective-date 이후 commit + annotation 부재 -> exit 1 FAIL" {
+    # temp git repo 초기화
+    git init -q "$TEST_DIR/gitrepo2"
+    cd "$TEST_DIR/gitrepo2"
+    git config user.email "test@test.com"
+    git config user.name "Test"
+    mkdir -p docs/adr
+
+    # corpus-claim line 포함 파일 작성
+    cat > docs/adr/ADR-new.md <<'EOF'
+---
+adr_number: 993
+title: new fixture
+---
+
+# new
+
+전무 docs/adr/ADR-082-write-time-self-write-verification-mandate.md 관련 corpus 0건.
+EOF
+
+    # effective-date(2026-05-17) 이후 날짜로 commit (annotation 부재)
+    GIT_AUTHOR_DATE="2026-05-18T00:00:00+00:00" \
+    GIT_COMMITTER_DATE="2026-05-18T00:00:00+00:00" \
+    git add docs/adr/ADR-new.md
+    GIT_AUTHOR_DATE="2026-05-18T00:00:00+00:00" \
+    GIT_COMMITTER_DATE="2026-05-18T00:00:00+00:00" \
+    git commit -q -m "new commit"
+
+    # CORPUS_VERIFY_EFFECTIVE_DATE = 2026-05-17 (이후 commit = 비면제 → annotation 부재면 flag)
+    CORPUS_VERIFY_EFFECTIVE_DATE="2026-05-17" \
+        run python3 "$REPO_ROOT/scripts/check-corpus-claim-verify.py" docs/adr/ADR-new.md
+    [ "$status" -eq 1 ]
+    [[ "$output" == *"FAIL"* ]] || [[ "$output" == *"violation"* ]] || [[ "$output" == *"CORPUS_CLAIM_UNVERIFIED"* ]]
+
+    cd "$TEST_DIR"
+}
