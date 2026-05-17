@@ -25,6 +25,7 @@ amendments:
   - ADR-032
   - ADR-027-Amendment-2-CFP-658  # CFP-658 Wave 1 of Epic CFP-431 — Action-blocked manual fallback path normative SSOT
   - ADR-027-Amendment-3-CFP-702  # CFP-699 Wave 1 Story-2 — D4 customization marker 의무 추가 (# BEGIN/END wrapper-managed block)
+  - ADR-027-Amendment-4-CFP-820  # CFP-699 Wave 3 Story-6 — consumer adoption 시 codeforge.version_pin schema detection 의무 (3-way version atomic invariant consumer layer, ADR-063 Amendment 5 §결정 15 동반). §결정 8 신설
 mechanical_enforcement_actions:
   - action_name: section-1-verbatim-postmerge
     decision_binding: "Amendment 2 §결정 6.A — manual fallback path 의 §1 verbatim invariant post-merge lint (warning tier)"
@@ -419,3 +420,60 @@ Cross-ref:
 - [ADR-040](ADR-040-worktree-convention.md) §결정 7.A — `mechanical_enforcement_actions[]` frontmatter 의무 (본 Amendment 3 = `wrapper-managed-block` entry append)
 - `docs/domain-knowledge/domain/upgrade-flow/declarative-reconciliation.md` — Customization layer marker syntax detail (RequirementsPL 본 lane 보강)
 - `docs/consumer-guide.md` §"D4 customization marker" — consumer runbook (Phase 2 carrier)
+
+## Amendment 4 — consumer adoption 시 codeforge.version_pin schema detection 의무 (CFP-820)
+
+**Effective**: 2026-05-17 (CFP-699 Wave 3 Story-6 Phase 1 PR merged 시점).
+
+**Carrier**: CFP-820 (Wave 3 Story-6). Parent Epic CFP-699 (선언적 reconciliation 기반 codeforge upgrade flow). Sibling carrier: ADR-063 Amendment 5 §결정 15 (marketplace ↔ plugin.json atomic invariant 의 consumer-side 3-way 확장 — 본 Amendment 4 = ADR-027 consumer adoption protocol 측 schema detection 영역, ADR-063 = 3-way invariant 영역. 두 ADR boundary disjoint, cross-ref 정합).
+
+본 ADR §결정 1 (bootstrap 검증 책임 = wrapper plugin overlay/hooks/) + §결정 5 (consumer-guide.md SSOT) 정합. ADR-063 Amendment 5 §결정 15 (3-way version atomic invariant) 가 consumer pin SSOT location 으로 `.claude/_overlay/project.yaml codeforge.version_pin` (FORM (b), 사용자 confirm 2026-05-17 KST) 를 확정 → 본 Amendment 4 = consumer adoption protocol 의 bootstrap/reconcile detection 영역에 `codeforge.version_pin` schema detection 의무를 codify. 본 amendment = ADR-027 §결정 추가 (additive, supersede 아님). §결정 8 신설.
+
+**ADR collision 회피 (신규 ADR 아닌 Amendment — CFP-820 Story §3.1.5 판정 정합)**: ADR-027 = consumer adoption protocol SSOT — `bootstrap.fallback_mode` (Amendment 2) + `bootstrap.strict_mode` (Amendment 1) 패턴이 이미 consumer-side detection + fallback semantic 의 carrier. `codeforge.version_pin` warning-first → blocking fallback = ADR-027 Amendment 2 `bootstrap.fallback_mode` 의 동형 패턴 → 신규 ADR 신설 시 consumer adoption 영역 2 ADR 분산 (SSOT drift). Amendment = ADR-064 top-down ratchet 강화 방향 only (consumer adoption scope 확장 — version pin detection 추가).
+
+### 결정 8 — consumer adoption 시 codeforge.version_pin schema detection (normative SSOT)
+
+#### §결정 8.A — version_pin schema detection 의무
+
+Consumer adoption 시 (bootstrap / reconcile) wrapper plugin overlay/hooks/ (`validate_config.py` — §결정 1 책임 영역) 가 `.claude/_overlay/project.yaml` 의 `codeforge.version_pin` block 등록 여부 detect:
+
+| State | Detection 결과 | 동작 |
+|---|---|---|
+| `codeforge.version_pin` block 부재 | pin 미등록 (신규 consumer / 미설정) | **warning-first** — 3-way version parity lint skip + warn message "consumer pin SSOT 미등록 — codeforge.version_pin 등록 후 3-way enforce 활성" (exit 0). onboarding 마찰 0 |
+| `codeforge.version_pin.version` 등록 (semver string) | pin 등록 | 3-way version parity enforce 활성 (publisher↔registry↔consumer pin byte-identical, mismatch = blocking-on-pr exit 1) |
+| `codeforge.version_pin` 존재하나 `version` field 부재 / 비-semver | pin malformed | `validate_config.py` exit 4 (required field 누락/타입 위반 정합 — project-config-schema §6 verbatim) + actionable message. silent skip 금지 |
+
+**결정 근거 (Axis — orthogonality invariant)**: `pin 가용성` (block 등록 여부 = enforce 가능 여부) 과 `version 정합성` (값 일치 여부 = drift 존재 여부) 은 ORTHOGONAL 2 조건 — 동일 fallback 에 conflate 금지 (CFP-745 FIX Iter 2 base-absent≠marker-absent verified-true precedent 답습. conflate 시 결함: pin 미등록 신규 consumer 즉시 blocking = onboarding 마찰 false-positive / pin 등록 consumer 실 drift 가 warning 약화 false-negative). 외부 prior art = ADR-027 Amendment 2 `bootstrap.fallback_mode: auto | action_blocked` 의 동형 패턴 (consumer onboarding 마찰 회피 → 등록 후 enforce).
+
+#### §결정 8.B — warning-first → 등록 후 blocking fallback semantic (사용자 confirm 2026-05-17 KST)
+
+- **pin 미등록** = warning-only (lint skip + warn, exit 0). pin 부재 = mismatch 판정 불성립 (비교 대상 없음 — false-positive 차단). onboarding 마찰 0 (ADR-027 Amendment 2 `bootstrap.fallback_mode` 패턴 답습)
+- **pin 등록 후 mismatch** = blocking-on-pr (exit 1, PR 차단). drift 0 strict enforce (등록 영역)
+
+이는 ADR-063 Amendment 5 §결정 15 `version_handshake_3way_binding.fallback_semantic` (reconcile-protocol-v1 v1.5 §4.8) 의 verbatim cross-ref. codeforge 모델 = "pin 미등록 = graceful skip (additive governance — backward-compat), pin 등록 = strict enforce". consumer-authored invariant 보존 — 모든 codeforge agent 는 `codeforge.version_pin` field write 금지 (project-config-schema §4b verbatim). 3-way lint = read-only compare-only (write surface 0).
+
+#### §결정 8.C — schema location SSOT = project.yaml codeforge.version_pin (FORM (b))
+
+consumer pin location = `.claude/_overlay/project.yaml` `codeforge.version_pin` block (기존 `codeforge:` block sibling sub-key — 기존 SSOT 확장, 신규 file 0, consumer 1-file 정책 정합). 별도 file (`.wrapper-plugin-pin.yaml`) / runtime artifact (`installed_plugins.json`) / hidden config root (`.codeforge/version-pin.yaml`) = 기각 (consumer 1-file 정책 위배 / 의도 declare semantic mismatch — CFP-820 Story §3.1.3 ALTERNATIVE 표 SSOT). schema 정의 = `docs/project-config-schema.md` `codeforge.version_pin` block (본 Amendment 4 동반 MINOR — `updated: 2026-05-17`).
+
+#### §결정 8.D — mechanical enforcement = ADR-063 §결정 15 version-3way-atomic cross-ref (중복 codification 회피)
+
+본 §결정 8 = consumer adoption protocol detection mandate (declarative SSOT). 실 mechanical lint = ADR-063 Amendment 5 §결정 15 의 `version-3way-atomic` evidence-check entry (blocking-on-pr tier, ADR-063 frontmatter `mechanical_enforcement_actions[]` 등재) 가 cover — `scripts/check-3way-version-parity.sh` (Phase 2 carrier) 가 3-way byte-identical version parity 검증. 본 Amendment 4 측 별도 mechanical action 신설은 **중복 codification 회피** (ADR-065 §결정 5 "cross-ref only — 중복 codification 회피" 정합) — ADR-063 marketplace 영역 ↔ ADR-027 consumer adoption 영역 boundary 정합. ADR-027 frontmatter `mechanical_enforcement_actions[]` = Amendment 2/3 entry 보존, Amendment 4 별도 entry 미추가 (ADR-063 §결정 15 entry 가 SSOT).
+
+#### §결정 8.E — validate_config.py validator (Phase 2 carrier)
+
+`overlay/hooks/validate_config.py` `SCHEMA_RULES` 에 `codeforge.version_pin` validator 추가 (Phase 2 carrier — PyYAML only, jsonschema 의존 회피, 기존 SCHEMA_RULES 패턴 정합 — project-config-schema §6 verbatim). Phase 1 (CFP-820) = declarative SSOT mandate (본 §결정 8). Phase 2 = validate_config.py validator 실 구현 + `overlay/_overlay/project.yaml.example` `codeforge.version_pin` 예시 row + `docs/consumer-guide.md` §2g.N consumer runbook.
+
+### 해소 기준 정합
+
+ADR-027 frontmatter `is_transitional: false` (permanent policy, 기존 §"해소 기준" = "N/A — permanent policy" verbatim). Amendment 4 = consumer adoption 시 version_pin schema detection 의무 추가 = governance 강화 방향 ratchet — ADR-058 §결정 5 sunset_justification 불요 (강화 방향, ADR-064 top-down self-application 정합 — consumer adoption scope 확장 only, weakening 0).
+
+상세 Change Plan: `codeforge-internal-docs/wrapper/change-plans/cfp-820-3way-version-atomic.md`.
+
+Cross-ref:
+- [ADR-063](ADR-063-marketplace-atomic-invariant.md) Amendment 5 §결정 15 — 3-way version atomic invariant (본 Amendment 4 sibling carrier, boundary disjoint: ADR-063 = 3-way invariant 영역 / 본 Amendment 4 = consumer adoption protocol schema detection 영역)
+- `docs/inter-plugin-contracts/reconcile-protocol-v1.md` v1.5 §4.8 `version_handshake_3way_binding` — fallback semantic + orthogonality invariant SSOT (§결정 8.B verbatim cross-ref)
+- `docs/project-config-schema.md` `codeforge.version_pin` block — schema 정의 SSOT (본 Amendment 4 동반 MINOR — `updated: 2026-05-17`)
+- [ADR-066](ADR-066-pat-rotation-policy.md) §결정 2 — `marketplace contents:read` reuse (3-way lint read-only, Amendment 3 write scope 미사용 — 추가 PAT grant 0)
+- [ADR-064](ADR-064-decision-principle-mandate.md) §self-application — Amendment 4 = consumer adoption scope 확장 강화 방향 only (weakening 0)
+- `docs/consumer-guide.md` §2g.N — consumer pin setup runbook (Phase 2 carrier)
