@@ -182,3 +182,21 @@ teardown() {
   [[ "$output" != *"[DRY-RUN]"* ]]
   [[ "$output" == *"PASS"* ]]
 }
+
+# ------------------------------------------------------------------ TC-extra-4: rate-limit-disconnected sentinel (F-CR-845-P1-1)
+@test "TC-extra-4: empty CBL_MOCK_PRS_JSON='[]' -- env key exists, no live gh api call (rate-limit-disconnected)" {
+  # F-CR-845-P1-1 FIX 검증: CBL_MOCK_PRS_JSON key 가 set 되어 있으면 live gh api fallback 금지.
+  # '[]' empty JSON array = explicit empty mock (no PRs) -> PASS below threshold.
+  run env \
+    CBL_MOCK_PRS_JSON='[]' \
+    CBL_SKIP_ISSUE_CREATE="1" \
+    bash "$SCRIPT" --repo mclayer/plugin-codeforge --plugin-name plugin-codeforge --threshold 5
+
+  echo "# status: $status" >&3
+  echo "# output: $output" >&3
+
+  # empty mock -> no bypass PRs -> PASS
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"[DRY-RUN]"* ]]
+  [[ "$output" == *"PASS"* ]]
+}

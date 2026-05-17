@@ -113,7 +113,7 @@ teardown() {
 
   DOCS_JSON='{"number":703,"labels":[{"name":"hotfix-bypass:wording-dictionary"}]}'
 
-  MKT_JSON=''  # no PRs
+  MKT_JSON='[]'  # explicit empty JSON array (intentionally no PRs — F-CR-845-P1-1 FIX)
 
   run env \
     CRC_MOCK_PRS_JSON_PLUGIN="$PLUGIN_JSON" \
@@ -137,8 +137,8 @@ teardown() {
   PLUGIN_JSON+='{"number":802,"labels":[{"name":"hotfix-bypass:wording-dictionary"}]}'$'\n'
   PLUGIN_JSON+='{"number":803,"labels":[{"name":"hotfix-bypass:wording-dictionary"}]}'
 
-  DOCS_JSON=''
-  MKT_JSON=''
+  DOCS_JSON='[]'  # explicit empty JSON array (F-CR-845-P1-1 FIX)
+  MKT_JSON='[]'  # explicit empty JSON array (F-CR-845-P1-1 FIX)
 
   run env \
     CRC_MOCK_PRS_JSON_PLUGIN="$PLUGIN_JSON" \
@@ -165,8 +165,8 @@ teardown() {
   PLUGIN_JSON+='{"number":902,"labels":[{"name":"hotfix-bypass:wording-dictionary"},{"name":"hotfix-bypass:cross-repo-bypass-counter"}]}'$'\n'
   PLUGIN_JSON+='{"number":903,"labels":[{"name":"hotfix-bypass:wording-dictionary"},{"name":"hotfix-bypass:cross-repo-bypass-counter"}]}'
 
-  DOCS_JSON=''
-  MKT_JSON=''
+  DOCS_JSON='[]'  # explicit empty JSON array (F-CR-845-P1-1 FIX)
+  MKT_JSON='[]'  # explicit empty JSON array (F-CR-845-P1-1 FIX)
 
   run env \
     CRC_MOCK_PRS_JSON_PLUGIN="$PLUGIN_JSON" \
@@ -179,6 +179,32 @@ teardown() {
   echo "# status: $status" >&3
   echo "# output: $output" >&3
 
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"[DRY-RUN]"* ]]
+  [[ "$output" == *"PASS"* ]]
+}
+
+# ------------------------------------------------------------------ TC-extra-4: rate-limit-disconnected sentinel (F-CR-845-P1-1)
+@test "TC-extra-4: empty mock lists via explicit '[]' -- env key exists, no live gh api call (rate-limit-disconnected)" {
+  # F-CR-845-P1-1 FIX 검증: CRC_MOCK_PRS_JSON_* key 가 set 되어 있으면 (빈 string 포함)
+  # live gh api fallback 금지. '[]' empty JSON array = explicit empty mock.
+  # 네트워크 없이 결정론적 PASS 를 보장 (rate-limit-disconnected).
+  PLUGIN_JSON='[]'   # explicit empty (no PRs in wrapper)
+  DOCS_JSON='[]'     # explicit empty (no PRs in docs)
+  MKT_JSON='[]'      # explicit empty (no PRs in marketplace)
+
+  run env \
+    CRC_MOCK_PRS_JSON_PLUGIN="$PLUGIN_JSON" \
+    CRC_MOCK_PRS_JSON_DOCS="$DOCS_JSON" \
+    CRC_MOCK_PRS_JSON_MARKETPLACE="$MKT_JSON" \
+    CBL_SKIP_ISSUE_CREATE="1" \
+    bash "$SCRIPT" --threshold 3 \
+    --repos "mclayer/plugin-codeforge,mclayer/codeforge-internal-docs,mclayer/marketplace"
+
+  echo "# status: $status" >&3
+  echo "# output: $output" >&3
+
+  # 3 repo 모두 empty mock -> no bypass PRs -> PASS, no Issue
   [ "$status" -eq 0 ]
   [[ "$output" != *"[DRY-RUN]"* ]]
   [[ "$output" == *"PASS"* ]]

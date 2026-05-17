@@ -87,17 +87,20 @@ def fetch_merged_bypass_prs(repo):
     """
     # Test override: CRC_MOCK_PRS_JSON_<SLUG>
     slug = REPO_SLUG_MAP.get(repo, repo.replace("/", "_").upper())
-    mock_prs = os.environ.get(f"CRC_MOCK_PRS_JSON_{slug}", "")
-    if mock_prs:
+    mock_var_name = f"CRC_MOCK_PRS_JSON_{slug}"
+    if mock_var_name in os.environ:
+        mock_prs = os.environ[mock_var_name]
         prs = []
         for line in mock_prs.strip().splitlines():
             line = line.strip()
             if line:
                 obj = json.loads(line)
-                prs.append({
-                    "number": obj["number"],
-                    "labels": [lbl["name"] for lbl in obj.get("labels", [])],
-                })
+                # dict = single PR object, list (예: '[]') = PR 없음, skip
+                if isinstance(obj, dict):
+                    prs.append({
+                        "number": obj["number"],
+                        "labels": [lbl["name"] for lbl in obj.get("labels", [])],
+                    })
         return prs
 
     raw_output = run_gh([
@@ -254,9 +257,9 @@ def main():
 
     repos = [r.strip() for r in args.repos.split(",") if r.strip()]
 
-    # gh CLI 존재 확인
+    # gh CLI 존재 확인 (mock env key 가 set 되어 있으면 live gh 불필요 — key existence 기반)
     needs_gh = not any(
-        os.environ.get(f"CRC_MOCK_PRS_JSON_{REPO_SLUG_MAP.get(r, r.replace('/', '_').upper())}", "")
+        f"CRC_MOCK_PRS_JSON_{REPO_SLUG_MAP.get(r, r.replace('/', '_').upper())}" in os.environ
         for r in repos
     )
     if needs_gh:

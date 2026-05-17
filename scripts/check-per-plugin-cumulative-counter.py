@@ -71,17 +71,22 @@ def fetch_merged_bypass_prs(repo):
     repo 의 merged PR 중 hotfix-bypass:* label 이 부착된 것을 수집.
     Returns: list of {number: int, labels: [str]}
     """
-    mock_prs = os.environ.get("CBL_MOCK_PRS_JSON", "")
-    if mock_prs:
+    mock_var_name = "CBL_MOCK_PRS_JSON"
+    if mock_var_name in os.environ:
+        mock_prs = os.environ[mock_var_name]
         prs = []
         for line in mock_prs.strip().splitlines():
             line = line.strip()
             if line:
                 obj = json.loads(line)
-                prs.append({
-                    "number": obj["number"],
-                    "labels": [lbl["name"] for lbl in obj.get("labels", [])],
-                })
+                # '[]' 빈 JSON array 또는 dict 형식 모두 허용
+                # dict = single PR object, list = newline-delimited 파싱 완충
+                if isinstance(obj, dict):
+                    prs.append({
+                        "number": obj["number"],
+                        "labels": [lbl["name"] for lbl in obj.get("labels", [])],
+                    })
+                # list 인 경우 (예: '[]' empty JSON array) = PR 없음, skip
         return prs
 
     raw_output = run_gh([
@@ -240,8 +245,8 @@ def main():
     )
     args = parser.parse_args()
 
-    # gh CLI 존재 확인
-    if not os.environ.get("CBL_MOCK_PRS_JSON", ""):
+    # gh CLI 존재 확인 (mock env key 가 set 되어 있으면 live gh 불필요)
+    if "CBL_MOCK_PRS_JSON" not in os.environ:
         try:
             subprocess.run(["gh", "--version"], capture_output=True, check=True)
         except (subprocess.CalledProcessError, FileNotFoundError):

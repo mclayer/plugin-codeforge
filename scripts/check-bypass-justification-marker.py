@@ -67,17 +67,20 @@ def fetch_merged_bypass_prs(repo):
     repo 의 merged PR 중 hotfix-bypass:* label 이 부착된 것을 수집.
     Returns: list of {number: int, labels: [str]}
     """
-    mock_prs = os.environ.get("CBJ_MOCK_PRS_JSON", "")
-    if mock_prs:
+    mock_var_name = "CBJ_MOCK_PRS_JSON"
+    if mock_var_name in os.environ:
+        mock_prs = os.environ[mock_var_name]
         prs = []
         for line in mock_prs.strip().splitlines():
             line = line.strip()
             if line:
                 obj = json.loads(line)
-                prs.append({
-                    "number": obj["number"],
-                    "labels": [lbl["name"] for lbl in obj.get("labels", [])],
-                })
+                # dict = single PR object, list (예: '[]') = PR 없음, skip
+                if isinstance(obj, dict):
+                    prs.append({
+                        "number": obj["number"],
+                        "labels": [lbl["name"] for lbl in obj.get("labels", [])],
+                    })
         return prs
 
     raw_output = run_gh([
@@ -116,14 +119,17 @@ def fetch_pr_comments(repo, pr_number):
     review comments (pull_request_review_comment) 는 제외.
     Returns: list of str (comment bodies)
     """
-    mock_comments = os.environ.get("CBJ_MOCK_COMMENTS_JSON", "")
-    if mock_comments:
+    mock_comments_var = "CBJ_MOCK_COMMENTS_JSON"
+    if mock_comments_var in os.environ:
+        mock_comments = os.environ[mock_comments_var]
         bodies = []
         for line in mock_comments.strip().splitlines():
             line = line.strip()
             if line:
                 obj = json.loads(line)
-                bodies.append(obj.get("body", ""))
+                # dict = single comment object, list (예: '[]') = comment 없음, skip
+                if isinstance(obj, dict):
+                    bodies.append(obj.get("body", ""))
         return bodies
 
     raw = run_gh([
@@ -168,9 +174,10 @@ def main():
     )
     args = parser.parse_args()
 
-    # gh CLI 존재 확인
-    mock_prs = os.environ.get("CBJ_MOCK_PRS_JSON", "")
-    if not mock_prs and not os.environ.get("CBJ_MOCK_COMMENTS_JSON", ""):
+    # gh CLI 존재 확인 (mock env key 가 set 되어 있으면 live gh 불필요)
+    mock_prs_set = "CBJ_MOCK_PRS_JSON" in os.environ
+    mock_comments_set = "CBJ_MOCK_COMMENTS_JSON" in os.environ
+    if not mock_prs_set and not mock_comments_set:
         try:
             subprocess.run(["gh", "--version"], capture_output=True, check=True)
         except (subprocess.CalledProcessError, FileNotFoundError):
@@ -184,16 +191,19 @@ def main():
     if args.pr_number is not None:
         # single PR mode (PR-time workflow 용)
         # labels 는 gh api 로 별도 fetch (mock 없을 때)
-        if mock_prs:
+        if mock_prs_set:
+            mock_prs_val = os.environ["CBJ_MOCK_PRS_JSON"]
             prs = []
-            for line in mock_prs.strip().splitlines():
+            for line in mock_prs_val.strip().splitlines():
                 line = line.strip()
                 if line:
                     obj = json.loads(line)
-                    prs.append({
-                        "number": obj["number"],
-                        "labels": [lbl["name"] for lbl in obj.get("labels", [])],
-                    })
+                    # dict = single PR object, list (예: '[]') = PR 없음, skip
+                    if isinstance(obj, dict):
+                        prs.append({
+                            "number": obj["number"],
+                            "labels": [lbl["name"] for lbl in obj.get("labels", [])],
+                        })
             prs = [p for p in prs if p["number"] == args.pr_number]
         else:
             try:
