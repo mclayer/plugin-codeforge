@@ -1662,7 +1662,7 @@ dedup 패턴 (EC-5/EC-6): 동일 위치 활성 시 Orchestrator 가 양 verdict 
 |---|---|---|---|---|
 | `post_user_turn` | **final flush 시 활성** (mid-stream spawn 금지 — idempotency, EC-4 derived default) | **면제** (사용자 발화 직접 미발생, EC-3 derived default) | **active** (popup 본문 자체가 dialog convergence anchor — popup option_text/body Layer 3 "추상" detect 영역, EC-2 derived default) | **면제** (cost > benefit, trivial turn 3-criteria AND 충족 시 cognitive overhead 정당화 불가, EC-1 derived default) |
 | `pre_architectpl_synthesis` | active (edge-independent — Story 1회 발동, ArchitectPL synthesis 완료 직전 fixed timepoint) | active | active | active |
-| `pre_fix_rootcause` | active (edge-independent — FIX 발동 시점 fixed, [ADR-067](../docs/adr/ADR-067-fix-loop-max-and-implementability-reassessment.md) FIX 3 카운터 범위 안 ≤ 3/Story) | active | active | active |
+| `pre_fix_rootcause` | active (edge-independent — FIX 발동 시점 fixed, [ADR-067](../docs/adr/ADR-067-fix-ledger-implementability-escalation.md) FIX 3 카운터 범위 안 ≤ 3/Story) | active | active | active |
 
 cell 값 enum: `active` (spawn 의무) / `면제` (spawn 금지) / `final flush 시 활성` (E9 streaming 의 final flush 단계 1회만 spawn — mid-stream 금지).
 

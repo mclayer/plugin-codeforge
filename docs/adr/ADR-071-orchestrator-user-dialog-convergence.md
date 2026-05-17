@@ -444,7 +444,7 @@ cell 값 enum: `active` (spawn 의무) / `면제` (spawn 금지) / `final flush 
 empirical-source annotation (ADR-068 Amendment 1 I-5 dimensional empirical grounding):
 - **latency**: `[hypothesis]` subagent one-shot ~ 2-10 sec (codeforge telemetry 부재 — Story-3 effectiveness metric carrier 영역)
 - **cost**: `[hypothesis]` read-only inspection ~ 5-15k input + 0.5-2k output (model tier `inherit` Story-1 [ADR-042 Amendment 6](ADR-042-agent-model-selection-policy.md))
-- **count**: `[verified]` max upper bound ≤ 34/Story (`post_user_turn` ≤ 30 — `AskUserQuestion` / numbered list / 추상-detect trigger subset / `pre_architectpl_synthesis` 1 + `pre_fix_rootcause` ≤ 3 — [ADR-067 §결정 3](ADR-067-fix-loop-max-and-implementability-reassessment.md) FIX 3 카운터 정합)
+- **count**: `[verified]` max upper bound ≤ 34/Story (`post_user_turn` ≤ 30 — `AskUserQuestion` / numbered list / 추상-detect trigger subset / `pre_architectpl_synthesis` 1 + `pre_fix_rootcause` ≤ 3 — [ADR-067 §결정 3](ADR-067-fix-ledger-implementability-escalation.md) FIX 3 카운터 정합)
 
 ### 13.4 ADR-039 Inline whitelist 1번 entry 정합 명문화
 
