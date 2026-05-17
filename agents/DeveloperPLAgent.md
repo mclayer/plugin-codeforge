@@ -72,10 +72,27 @@ Orchestrator
 - 계약 인터페이스(포트·스키마·API): **소유 에이전트 우선 구현 → 소비 에이전트 후행**
 - 공통 자산 수정 시 영향 범위 식별을 ArchitectAgent (chief author)가 Change Plan에 기록
 
-## PR 생성 Pre-flight Guard (CFP-317)
+## PR 생성 Pre-flight Guard (CFP-317 / ADR-039 §결정 14 Amendment 1 CFP-895)
 
-Phase 2 PR 생성 전 반드시 아래 2단계를 순서대로 실행한다.
+Phase 2 PR 생성 전 반드시 아래 3단계를 순서대로 실행한다.
 중단 시 Orchestrator에 즉시 에스컬레이션 — 자체 복구 시도 금지.
+
+0. **Pre-spawn-pin** (ADR-039 §결정 14, CFP-895 — 3차 누적 stale-base recurrence 차단):
+   ```bash
+   git fetch origin
+   MAIN_HEAD=$(git rev-parse origin/main)
+   # 또는: MAIN_HEAD=$(gh api repos/<org>/<repo>/commits/main --jq .sha)
+   echo "PINNED_MAIN_HEAD=$MAIN_HEAD"
+   ```
+   - 새 branch 생성 직전 본 SHA 를 pin. 후속 모든 branch 생성 + rebase + PR open 시 본 SHA 사용 의무.
+   - **self-claim / packet-provided SHA / local working dir HEAD / 이전 memory SHA 무조건 신뢰 금지** — 모두 stale 가능 (parallel session main churn).
+   - mid-flight churn 대비 — rebase 시점에 `git fetch origin && MAIN_HEAD=$(git rev-parse origin/main)` 재pin 의무 (parallel session advance 가능).
+   - **self-reset 금지** — Orchestrator FIX re-dispatch 시에도 `git reset --hard origin/<branch>` 같은 destructive 회복 금지 (기존 작업 content 보존, only rebase the base). CFP-785 InfraEng T2 self-reset 선례 재발 차단.
+
+   근거 evidence — 3차 누적 ([ADR-039 §결정 14 표](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md)):
+   - CFP-699 / Wave 1 Story-1 — strict-verify-gate 3회 적발 + 사용자 RESET trigger
+   - CFP-702 / Wave 1 Story-2 — DeveloperPL 2× 거짓 self-claim → ADR-070 reject
+   - CFP-848 / Epic A Story-5 — stale `65901ac5` (CFP-785 #809) → FIX Iter1 rebase + 2차 mid-flight rebase
 
 1. **Branch 확인**: `git branch --show-current`
    - 결과가 `main`이면 → **HALT**.
