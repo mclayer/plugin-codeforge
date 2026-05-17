@@ -1,0 +1,37 @@
+name: per-plugin-cumulative-counter
+# CFP-845 / ADR-024 Amendment 8 section 6.A.3
+# per-plugin scope cumulative bypass counter lint.
+# Detects single plugin accumulating hotfix-bypass:* across all entries (systemic bypass signal).
+#
+# PAT scope requirement (OQ-1, ADR-066 single PAT):
+#   CODEFORGE_CROSS_REPO_PAT must have: issues:write + repo:read (contents:read)
+#
+# Warning tier (ADR-060 4-tier framework):
+#   Script exits 0 on threshold reach + Issue auto-create (warning, not blocking).
+#   continue-on-error: true (first iteration, ADR-060 section 5)
+#
+# Bypass: hotfix-bypass:per-plugin-cumulative-counter label (37th family member, label-registry-v2 v2.27)
+on:
+  schedule:
+    - cron: '0 1 * * *'  # daily 01:00 UTC = 10:00 KST
+  workflow_dispatch:
+
+permissions:
+  issues: write    # carrier Issue auto-create
+  contents: read   # gh api search/issues (merged PR label scan)
+
+jobs:
+  per-plugin-count:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # warning tier -- ADR-060 section 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run per-plugin cumulative counter
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}  # ADR-066 single PAT
+        run: |
+          bash scripts/check-per-plugin-cumulative-counter.sh \
+            --repo mclayer/plugin-codeforge \
+            --plugin-name plugin-codeforge \
+            --threshold 5
