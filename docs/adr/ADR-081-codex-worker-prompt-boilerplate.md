@@ -8,7 +8,14 @@ carrier_story: CFP-819
 parent_epic: null
 supersedes: null
 amends: null
-amendments: []
+amendments:
+  - amendment_id: 1
+    cfp: CFP-844
+    date: 2026-05-17
+    scope: "신규 §결정 D6 (Codex worker severity calibration rubric) append — Codex finding severity ↔ PL synthesis severity bidirectional calibration anchor (over-rate 금지 + security-relevant under-rate 금지). ground truth = DesignReviewPL final verdict severity (primary) / CodeReviewPL standalone fallback / 양쪽 dispatch 시 higher severity 기준. boundary-completeness exception (Codex P0 boundary-completeness × DesignReview P1 = over-rate 아님, +1 tier 허용). codex_severity_inflation (calibration) ≠ codex_false_positive_tally (accuracy) disjoint axis — full fp 0 chain sentinel 무영향. tracking = 기존 Story §9/§10 prose marker (`[codex-severity-inflation: ...]`, review-verdict-v4 contract field 신설 0 — doc-only fast-path 유지, ADR-081 §D5 declaration-only retain precedent verbatim 정합). D1-D5 본문 의미 변경 0건 — §결정 D6 sub-section append only. ADR-052 Amendment 7 + ADR-070 Amendment 2 cross-ref sibling. is_transitional false 유지 (permanent governance). mechanical_enforcement_actions[]=[] retain (§D5 declaration-only, §결정 D6.e known-limitation explicit binding — ADR-040 Amendment 3 DesignReview missing flag 회피)."
+    status: applied
+    ref: "## Amendment 1 / 본문 ### D6 + 거절된 대안 D6"
+    sunset_justification: "ratchet 강화 방향 (verify-before-trust scope 에 severity calibration 차원 추가 — over-rate + security-relevant under-rate bidirectional anchor 신설). 약화 영역 0건 (D1-D5 본문 의미 변경 0, scope 축소 0). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
 related_stories:
   - CFP-819  # carrier
   - CFP-770  # baseline fp 8
@@ -18,9 +25,11 @@ related_stories:
   - CFP-792  # carry-over fp 0 #3
   - CFP-795  # carry-over fp 0 #4
   - CFP-810  # carry-over fp 0 #5 (sentinel reach)
+  - CFP-844  # Amendment 1 — 신규 §결정 D6 severity calibration rubric (CFP-825 retro §6 후보 2)
 related_adrs:
-  - ADR-052  # Codex Proactive Check 6 touchpoints (parent — Amendment 6 cross-ref)
-  - ADR-070  # verify-before-trust pattern (sibling — D1/D2/D5 cross-ref)
+  - ADR-052  # Codex Proactive Check 6 touchpoints (parent — Amendment 6 + Amendment 7 (CFP-844) cross-ref)
+  - ADR-070  # verify-before-trust pattern (sibling — D1/D2/D5 cross-ref + Amendment 2 (CFP-844) D6 보완)
+  - ADR-082  # write-time self-write verification mandate (D5 declaration-only retain 선례 super-class)
   - ADR-058  # ADR sunset criteria mandate (§결정 1/2/3 정합)
   - ADR-060  # evidence-enforceable promotion framework (declaration-only retain)
   - ADR-064  # decision principle mandate (active amendment + forbid-list)
@@ -245,6 +254,77 @@ ADR-070 §결정 D5 precedent verbatim 정합. mechanical lint 가 검출 가능
 - (D5-B) (c) runtime probe 자동화 (3 verdict packet anchor_id cross-diff layer) — platform inherent 영역 침범 (Codex output schema parsing layer 신설 = 별도 carrier 영역)
 - (D5-C) declaration-only retain 영역에서도 evidence-checks-registry entry append (warning tier 0-validation) — registry schema scope 침해 (ADR-070 §D5-C 거절된 대안 정합)
 - (D5-D) marker 어휘 신설 (예: `[verified-file]` / `[verified-dir]` / `[verified-cross-repo]`) — CFP-810 retro §6 후보 5 정합, **별 carrier** 분리. 본 ADR scope = verify scope 분리 의무 본문 명시만, marker 어휘 변경 없음
+
+---
+
+## Amendment 1 (2026-05-17, CFP-844)
+
+### Context (Amendment 1)
+
+CFP-825 retro §6 후보 2 (PMOAgent `cross_story_pattern_adr_trigger`, `escalation_action: adr_draft_emitted`) carrier. D2 (verify-before-trust 5 sub-scope) 는 Codex finding **factual citation 정확성** (file:line / verbatim / grep count / ADR §결정 번호) 을 다룬다 — finding 의 **사실 근거** 검증 layer. 그러나 finding 의 **severity 경중 calibration** 영역 (Codex 가 발화한 P0/P1/P2 가 실제 review lane ground truth severity 와 정합하는가) 은 D1-D5 normative anchor 부재였다.
+
+[verified] review-verdict-v4 v4.5 에 `codex_severity_inflation` field 미존재 (verified-via: `git show origin/main:docs/inter-plugin-contracts/review-verdict-v4.md` grep empty, `contract_version: "4.5"` CFP-597). 즉 severity calibration 추적 영역은 contract surface 부재 — 기존 prose channel (Story §9 verdict / §10 FIX Ledger 비고) 만 활용 가능. 본 Amendment 는 이 영역을 declaration-only normative anchor (신규 §결정 D6) 로 승격한다. D1-D5 본문 의미 변경 0건 — §결정 D6 sub-section append only (Amendment 패턴 = ADR-052 Amendment 1-6 / ADR-070 Amendment 1 정합).
+
+### D6. Codex worker severity calibration rubric (declaration-only normative anchor)
+
+ADR-081 §D5 declaration-only retain invariant (ADR-070 §D5 precedent verbatim) 정합 — §결정 D6 = declaration-only normative anchor, mechanical lint 부재. codex_severity_inflation tracking = 기존 Story §9/§10 prose marker (신규 review-verdict-v4 contract field 신설 0 — contract bump 회피, doc-only fast-path 유지).
+
+#### D6.a — bidirectional severity anchor
+
+Codex finding severity ↔ PL synthesis severity **양방향** calibration 의무:
+
+1. **over-rate 금지**: Codex severity > PL synthesis severity (factual citation scope = D2.A-E) 시 PL 이 ground truth severity 로 calibrate. Codex sensitivity inflation 차단.
+2. **security-relevant under-rate 금지**: Codex severity < 실제 보안 경중 시 PL 이 실제 severity 로 calibrate. over-rate 만 anchor 시 보안 blind spot 발생 risk (Researcher Unknown #2) — bidirectional anchor 가 차단 (ADR-064 broad coverage 정합).
+
+#### D6.b — ground truth severity 우선순위
+
+| 차원 | ground truth | 근거 |
+|---|---|---|
+| **primary** | DesignReviewPL final verdict severity | 설계 lane Codex proactive check (touchpoint #2) 표준 path |
+| **fallback** | CodeReviewPL standalone severity | touchpoint #3 단독 dispatch 시 (DesignReview 미경유) |
+| **양쪽 dispatch** | higher severity PL 기준 | codeforge `review-responsibility` skill dedup rule SSOT 정합 (ADR-081 D3 3-lane partition 정합) |
+
+#### D6.c — boundary-completeness exception
+
+Codex P0 boundary-completeness finding (review-verdict-v4 `findings[].type="boundary-completeness"`, ADR-068 I-1~I-5) × DesignReviewPL P1 final verdict = over-rate **아님** (PL incomplete audit 신호 — Codex sensitivity 정상, +1 tier 허용). 단 factual citation scope (D2.A-E) severity 불일치 = 순수 calibration 대상 (exception 미적용).
+
+#### D6.d — disjoint axis preservation invariant
+
+`codex_severity_inflation` (calibration axis) ≠ `codex_false_positive_tally` (accuracy axis) — 별개 axis. carry-over fp 0 chain sentinel (CFP-770/771 baseline → CFP-786/801/792/795/810 5 consecutive fp 0; ADR-081 6-Story sentinel) 무영향 — severity calibration 은 finding accuracy 와 무관 (finding 자체는 TRUE positive 이되 severity 만 mis-rate 한 경우 fp 0 chain 영향 0).
+
+#### D6.e — tracking = 기존 Story §9/§10 prose marker (declaration-only)
+
+PL 이 verdict 시 Codex finding severity ↔ PL synthesis severity delta 를 Story §9 verdict prose 또는 §10 FIX Ledger 비고에 marker 기재:
+
+```
+[codex-severity-inflation: Codex:P0 vs PL:P1 <scope>]
+```
+
+기존 prose channel 활용 — 신규 review-verdict-v4 contract field 신설 0 (contract bump 회피, doc-only fast-path 유지, ADR-081 §D5 declaration-only retain precedent verbatim 정합). mechanical lint = 별개 후속 carrier (sentinel 조건 = 2+ mechanical-detectable sample 누적 시, 현재 0 sample). **§결정 D6.e known-limitation explicit binding** — `mechanical_enforcement_actions[]=[]` retain 이 의도된 declaration-only 선택임을 명시 (ADR-040 Amendment 3 DesignReview missing-flag 회피, ADR-082 §결정 6 / ADR-070 §D5 선례 정합).
+
+#### D6.f — sunset trigger 아님 명시
+
+`codex_severity_inflation` count 자체 = calibration 추적 metric, ADR-081 유효성 indicator 아님. `is_transitional: false` (permanent governance). metric 0 수렴 = Codex accuracy 향상 + PL calibration 정착 둘 다 정상 (ADR-081 폐기 트리거 아님 — accuracy axis sunset gate 와 disjoint, D6.d 정합).
+
+### 거절된 대안 D6
+
+- (D6-A) review-verdict-v4 신규 `codex_severity_inflation` contract field 신설 (structured severity delta surface) — contract MINOR bump + sibling sync (ADR-008/010) + Phase 2 PR 필요 = doc-only fast-path 이탈. ADR-081 §D5 declaration-only retain precedent 위배. prose marker 채택 (mechanical lint 부재 영역 = contract surface 부적합, ADR-070 §D5-C 정합).
+- (D6-B) over-rate 단방향 anchor (Codex severity > PL 만 차단) — security-relevant under-rate blind spot 미차단 (Researcher Unknown #2). bidirectional 채택 (ADR-064 broad coverage).
+- (D6-C) boundary-completeness exception 미도입 (Codex P0 × DesignReview P1 = 무조건 over-rate) — ADR-068 I-1~I-5 incomplete audit 신호 (Codex sensitivity 정상) 를 false over-rate 로 오분류. +1 tier exception 채택 (D6.c).
+- (D6-D) codex_severity_inflation 을 ADR-081 sunset metric 으로 채택 — accuracy axis (`codex_false_positive_tally`) 와 disjoint (D6.d). severity calibration metric 0 수렴 = 정상 (폐기 신호 아님). is_transitional false 유지 (D6.f).
+
+### 결과 (Amendment 1)
+
+- Codex finding severity ↔ PL synthesis severity bidirectional calibration normative anchor 신설 — D6 SSOT (declaration-only retain, §D5 precedent)
+- ground truth severity 우선순위 (DesignReviewPL primary / CodeReviewPL fallback / higher PL 양쪽) 명시 — D6.b SSOT
+- boundary-completeness exception (Codex P0 × DesignReview P1 = over-rate 아님, +1 tier) — D6.c SSOT
+- disjoint axis preservation invariant (calibration ≠ accuracy, fp 0 chain 무영향) — D6.d SSOT
+- tracking = 기존 Story §9/§10 prose marker (`[codex-severity-inflation: ...]`, contract field 신설 0) — D6.e SSOT
+- D1-D5 본문 의미 변경 0건 — §결정 D6 sub-section append only (ADR-052 Amendment 1-6 / ADR-070 Amendment 1 패턴 정합, §D4 SSOT 보존 invariant 정합)
+- ADR-052 Amendment 7 (D6 cross-ref sub-section append) + ADR-070 Amendment 2 (D6 보완 관계 cross-ref-only) sibling
+- CLAUDE.md L170 blockquote severity calibration cross-ref 1 줄 추가 (line-cap 320 invariant 정합)
+- ADR-RESERVATION 무접촉 (Amendment 영역 — row 81 = CFP-819 active 유지, ADR file 동일)
+- `mechanical_enforcement_actions[]=[]` retain (declaration-only, §결정 D6.e known-limitation explicit binding)
 
 ## 결과
 
