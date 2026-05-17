@@ -28,6 +28,7 @@ related_adrs:
   - ADR-064
   - ADR-065
   - ADR-067
+  - ADR-082  # I-5 directly-analogous pattern 재사용 backref (ADR-082 Amendment 1 scope (a) corpus-claim-verify lint, cross-ref only — I-5 본문 0건 변경, CFP-841)
 mechanical_enforcement_actions:
   - action: boundary-completeness-self-check
     status: deferred-followup
@@ -211,6 +212,7 @@ Schema verbatim (ADR-040 §결정 7.A CFP-531 정정 후 + CFP-427 progress_note
 | ADR-064 (Decision principle mandate) | **normative anchor 정합** — 4 어휘 (best-effort / broad coverage / full-scope / active amendment) + forbid-list 8 어휘 lint. dual-binding (cross-lane enforce) = `broad coverage` / `full-scope` 직접 적용. |
 | ADR-008 (Inter-plugin contract versioning) | **review-verdict-v4 v4.2 → v4.3 MINOR bump** — `boundary_completeness_self_check_passed: bool` optional field + `findings[].type: "boundary-completeness"` literal 추가. backward-compat 의무 (기존 v4.2 packet 모두 valid). Amendment 1 (CFP-528, 2026-05-13) 가 v4.3 → v4.4 MINOR bump (`dimensional_empirical_self_check_passed: bool` + `findings[].type: "dimensional-empirical-gap"`). |
 | ADR-059 (Debate protocol v1) | **positive sibling** — dual-binding cross-validate divergence (DesignReview ↔ CodeReview) 시 `auto_on_divergence` 발동 surface 확장. CFP-530 (Wave 4) Amendment 1 정합. |
+| ADR-082 (Write-time self-write verification mandate) Amendment 1 | **I-5 directly-analogous pattern 재사용 backref (cross-ref only)** — ADR-082 §결정 2(a) corpus-claim-verify lint (CFP-841 Phase 2 carrier) 가 I-5 `[empirical-source: <ref>]` annotation 패턴을 verbatim 재사용 (`[verified: git show <ref>:<path>]` annotation 동형 mechanical 패턴). 본 ADR-068 I-5 본문 정책 (10 dimension enum / verdict field `dimensional_empirical_self_check_passed` / mitigation 4종) **0건 변경 invariant** — ADR-082 Amendment 1 = pattern 재사용 명시만 (양방향 backref). 충돌 0. |
 
 ## 해소 기준
 
@@ -236,6 +238,7 @@ Amendment 시 ratchet 강화 방향만 허용 (ADR-058 §결정 5 sunset_justifi
 
 - **2026-05-13 v1 (Accepted, CFP-527)**: 초기 결정 — 4 invariants (I-1~I-4) + dual-binding + ADR-065 분리 운영.
 - **2026-05-13 Amendment 1 (CFP-528)**: I-5 dimensional empirical grounding invariant 신설 (10 dimension enum 의 quantitative parameter `[empirical-source]` annotation 의무). review-verdict-v4 v4.3 → v4.4 MINOR bump (`dimensional_empirical_self_check_passed: bool` optional field + `findings[].type: "dimensional-empirical-gap"` literal). ratchet 강화 방향 (4 → 5 invariants, ADR-058 §결정 5 정합). #319 (RETRO-MCT-104 stream latency 150x oversight) keep-linked + close as absorbed (distinct failure-class but systemic super-class — empirical-grounded design discipline).
+- **2026-05-17 cross-ref backref (CFP-841 — ADR-068 본문 정책 0건 변경)**: ADR-082 Amendment 1 (§결정 6 behavioral→mechanical 전환) 의 scope (a) `corpus-claim-verify` lint 가 I-5 `[empirical-source: <ref>]` annotation 패턴을 directly-analogous 하게 재사용 (`[verified: git show <ref>:<path>]` annotation 동형 mechanical 패턴). **본 변경이력 entry = backref 등록만 — I-5 invariant 본문 / verdict field / 10 dimension enum / mitigation 4종 0건 변경 invariant** (Amendment 아님, `## 관련 ADR` 표 ADR-082 row + `related_adrs` frontmatter backref 동반). 양방향 backref 정합 (ADR-082 frontmatter `related_adrs: ADR-068` + 본 entry).
 
 ## 관련 파일
 
