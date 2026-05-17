@@ -29,6 +29,7 @@ related_adrs:
   - ADR-031
   - ADR-035
   - ADR-039
+  - ADR-082  # Amendment 6 — §D-9 cross_story_pattern_adr_trigger 적용 evidence (ADR-082 = pattern_count 3 산물)
 supersedes: null
 superseded_by: null
 amends:
@@ -65,6 +66,13 @@ amendment_log:
     scope: "§D-9 신설 — PMOAgent 가 retro write 시점 Cross-Story pattern 누적 ≥ 2 검출 시 ADR escalation trigger 의무화 (Mandatory framing). N=2 fixed threshold (industry lower bound: Google SRE / ITIL / NASA ASRS). hybrid 검출 전략 (primary = anchor_id strict / secondary = root_cause_class fallback). PMOAgent self-decide 영역 제거 — pmo-output-v1 v1.2 cross_story_pattern_adr_trigger field mandatory 채움 의무 (회피 불가). False positive 안전망 = escalation_action enum 2-value (adr_draft_emitted | escalate_user)."
     status: applied
     ref: §D-9 + pmo-output-v1 v1.2 + CLAUDE.md PMOAgent Cross-cutting
+    sunset_justification: null
+  - amendment_id: 6
+    cfp: CFP-776
+    date: 2026-05-17
+    scope: "§D-9 cross_story_pattern_adr_trigger 적용 evidence (Amendment 5 forcing function 산물 기록) — CFP-746 retro §6 후보 1 (corpus-claim write-time verification) + CFP-770 retro §6 후보 1 (self-write artifact source/value/ownership claim write-time verification) = pattern_count 3 ≥ threshold 2 → Mandatory framing + escalation_action escalate_user → 사용자 단일 super-class ADR 통합 결정 (2026-05-16 KST) → ADR-082 (Write-time self-write verification mandate) 산출. §D-9 forcing function 이 'pattern 누적 → ADR escalation' 으로 실제 동작한 첫 cross-Story 산물 evidence. §D-9 결정 본문 / threshold / hybrid 검출 전략 의미 변경 없음 — evidence-only Amendment."
+    status: applied
+    ref: §D-9 + ADR-082 (산물) + Issue #776 pattern corpus 3건
     sunset_justification: null
 is_transitional: false
 ---
@@ -418,6 +426,24 @@ git push origin --delete retro-attempts-state/<KEY>
 
 **근거**: ADR-045 D-8 D-2 framing 정합 — retro 의무화가 "발견 → 행동" forcing function 이듯이 본 §D-9 는 "pattern 누적 → ADR escalation" forcing function. CFP-665 Story DesignReview lane evidence = FIX iter 1 ADR ref 갱신 inline FIX 1건 외 정상 PASS.
 
+### Amendment 6 — §D-9 cross_story_pattern_adr_trigger 적용 evidence: ADR-082 산물 (CFP-776)
+
+**문제 (해당 없음 — evidence-only)**: 본 Amendment 는 §D-9 결정 본문을 변경하지 않는다. Amendment 5 §D-9 가 신설한 "pattern 누적 → ADR escalation" forcing function 이 cross-Story 에서 실제로 작동한 첫 산물을 evidence 로 기록한다 (Amendment 5 self-application paradox 시연 — forcing function 이 명목상 존재만 하는지 실제 동작하는지의 evidence).
+
+**적용 evidence**:
+
+| 항목 | 값 |
+|---|---|
+| pattern_count | 3 (≥ threshold 2 = Mandatory framing 발동) |
+| occurrences | CFP-746 D-7 corpus slip (#1a) / CFP-746 CFP-531 정정-2nd-slip (#1b) / CFP-770 CR-004 §9 evidence stale (#2) / CFP-770 §결정 8 Phase 0 cross-plugin 추정 (#3) |
+| detected pattern | self-write artifact 의 source/value/ownership claim 을 write-time verification 없이 단언 (super-class) |
+| trigger source | CFP-746 retro §6 후보 1 (corpus-claim write-time verification lint) + CFP-770 retro §6 후보 1 (self-write artifact source/value/ownership claim write-time verification 의무) |
+| escalation_action | `escalate_user` (PMOAgent → 사용자 manual decide 의뢰 — 단일 super-class ADR 통합 vs per-area 분할) |
+| 사용자 결정 | 2026-05-16 KST — 단일 super-class ADR 통합 (ADR-064 §결정 1 unitary scope 정합) |
+| 산물 | ADR-082 (Write-time self-write verification mandate) — CFP-776 carrier, doc-only fast-path |
+
+**결정**: §D-9 forcing function 이 "pattern 누적 → ADR escalation" 으로 실제 작동했음을 ADR-082 산출로 확인. §D-9 결정 본문 / threshold N=2 / hybrid 검출 전략 / Mandatory framing 의미 변경 없음 — evidence-only Amendment. ADR-082 §결정 1 layer disjoint 표가 ADR-045 §D 를 4-layer 중 "retro corpus enumeration (PMOAgent §5 pattern_count)" layer 로 명시 (verify-before-trust governance 의 retro pattern aggregation layer).
+
 ## 해소 기준
 
 N/A — permanent policy
@@ -446,3 +472,4 @@ N/A — permanent policy
 - **ADR-031** Lane evidence: retro = lane 외 phase. §14 lane enum 미수정 (영향 없음).
 - **ADR-035** codeforge agent teams Epic SSOT: 본 ADR = D5 Foundation 결정 implementation. amendment_log[] 에 `amendment_id: 2 (CFP-138)` 추가 의무 (CFP-137 first merge 시 본 lane rebase + amendment_id 다음 값으로 갱신).
 - **ADR-039** Orchestrator subagent default: retro 자동 trigger 동작 = Orchestrator → PMOAgent subagent spawn (inline write 금지). 본 ADR 정합.
+- **ADR-082** Write-time self-write verification mandate: Amendment 6 — §D-9 cross_story_pattern_adr_trigger forcing function 이 cross-Story pattern_count 3 ≥ threshold 2 → escalation_action escalate_user → ADR-082 산출. §D-9 가 명목상 존재가 아니라 실제 동작한 첫 cross-Story 산물 evidence. ADR-082 §결정 1 layer disjoint 표가 ADR-045 §D 를 "retro corpus enumeration" layer 로 명시. 충돌 0 (evidence-only Amendment).
