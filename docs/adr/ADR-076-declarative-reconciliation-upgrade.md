@@ -114,11 +114,12 @@ wrapper plugin (codeforge) self 영역의 desired state 단위 enumeration (Stor
 | **Settings.json toggle** | `templates/.claude/settings.json.sample` (consumer reference) + wrapper repo `.claude/settings.json` (dogfood self-app) | template export — consumer overlay merge 시점 적용 |
 | **CODEOWNERS** | `templates/CODEOWNERS.template` | template export — consumer 측 manual instantiate (org-specific team list 영역) |
 | **Issue templates** | `templates/.github/ISSUE_TEMPLATE/*.yml` | template export — consumer overlay 시점 byte-identical mirror |
+| **PR template** | `templates/.github/PULL_REQUEST_TEMPLATE.md` (현 `.github/PULL_REQUEST_TEMPLATE.md` byte-identical mirror) | template export — consumer overlay 시점 byte-identical mirror (Wave 3 Story-7 CFP-821 D1 carrier — Issue templates row 동형 enumeration 확장. ADR-027 Amendment 5 §결정 9 + reconcile-protocol-v1 v1.6 §4.9 동반) |
 | **Branch protection** | `.github/branch-protection-manifest.json` (declarative) | API call required — consumer `gh api` apply (Story-3 carrier 영역) |
 | **plugin.json mirrored field** | `name` / `version` / `description` / `author` 4종 (ADR-063 atomic invariant) | atomic — marketplace sync PR 선행 merge 의무 |
 | **CHANGELOG.md** | wrapper repo SSOT | append-only — version bump 동반 |
 
-위 9 영역이 wrapper plugin 의 declarative SSOT 단위. 본 enumeration 이 Story-3 carrier (UpgradeAgent + CLI) 의 reconcile target 정의 의 input. 6 lane plugin (codeforge-{requirements,design,review,develop,test,pmo}) 의 self 영역 enumeration 은 ADR-016 family scope 정합 후속 carrier 영역 (본 Story-1 scope 외, Wave 2 Story-4 atomic upgrade carrier).
+위 10 영역이 wrapper plugin 의 declarative SSOT 단위 (旧 "9 영역" = Story-1 작성 시점 — Wave 3 Story-7 CFP-821 D1 carrier 가 `PR template` row 1행 additive append → 10 영역 정정. 표 row append = ratchet 강화 방향 only, ADR-064 §self-application 정합, fact 영향 0 추적성/count 정정만 — ADR-068 I-4 wording SSOT). 본 enumeration 이 Story-3 carrier (UpgradeAgent + CLI) 의 reconcile target 정의 의 input. 6 lane plugin (codeforge-{requirements,design,review,develop,test,pmo}) 의 self 영역 enumeration 은 ADR-016 family scope 정합 후속 carrier 영역 (본 Story-1 scope 외, Wave 2 Story-4 atomic upgrade carrier).
 
 ### 결정 3 — dry-run / snapshot / transaction 3 enum 정의
 

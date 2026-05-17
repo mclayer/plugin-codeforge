@@ -26,6 +26,7 @@ amendments:
   - ADR-027-Amendment-2-CFP-658  # CFP-658 Wave 1 of Epic CFP-431 — Action-blocked manual fallback path normative SSOT
   - ADR-027-Amendment-3-CFP-702  # CFP-699 Wave 1 Story-2 — D4 customization marker 의무 추가 (# BEGIN/END wrapper-managed block)
   - ADR-027-Amendment-4-CFP-820  # CFP-699 Wave 3 Story-6 — consumer adoption 시 codeforge.version_pin schema detection 의무 (3-way version atomic invariant consumer layer, ADR-063 Amendment 5 §결정 15 동반). §결정 8 신설
+  - ADR-027-Amendment-5-CFP-821  # CFP-699 Wave 3 Story-7 — consumer adoption 시 Issue Forms enumeration 정정 (3종 → audit+bug+story+discussion+codeforge-improvement 5 forms + config.yml) + D4 marker form-level wrap cross-ref (D1 coverage fan-out, ADR-076 §결정 2 표 PR template row 동반). §결정 9 신설
 mechanical_enforcement_actions:
   - action_name: section-1-verbatim-postmerge
     decision_binding: "Amendment 2 §결정 6.A — manual fallback path 의 §1 verbatim invariant post-merge lint (warning tier)"
@@ -81,7 +82,7 @@ Consumer 측 책임은 `.claude/settings.json` 에 hook 등록 + `.claude/_overl
 추가 검증:
 
 - consumer `.github/workflows/` 11종 (CFP-105 close 후 14종) sync
-- consumer `.github/ISSUE_TEMPLATE/` 3종 (audit + bug + story) sync
+- consumer `.github/ISSUE_TEMPLATE/` 5 forms (audit + bug + story + discussion + codeforge-improvement) + `config.yml` sync (Amendment 5 §결정 9 정정 — 旧 stale "3종 (audit + bug + story)" = enumeration gap, reality audit + bug 2종 only / D1 fan-out 후 5 forms + config.yml SSOT. ADR-068 I-4 wording SSOT 정합)
 - `CODEOWNERS` + branch protection 정합
 - `.claude/_overlay/project.yaml` schema validation (per `docs/project-config-schema.md`)
 
@@ -477,3 +478,75 @@ Cross-ref:
 - [ADR-066](ADR-066-pat-rotation-policy.md) §결정 2 — `marketplace contents:read` reuse (3-way lint read-only, Amendment 3 write scope 미사용 — 추가 PAT grant 0)
 - [ADR-064](ADR-064-decision-principle-mandate.md) §self-application — Amendment 4 = consumer adoption scope 확장 강화 방향 only (weakening 0)
 - `docs/consumer-guide.md` §2g.N — consumer pin setup runbook (Phase 2 carrier)
+
+## Amendment 5 — consumer adoption 시 Issue Forms enumeration 정정 + D4 marker form-level wrap cross-ref (CFP-821)
+
+**Effective**: 2026-05-17 (CFP-699 Wave 3 Story-7 Phase 1 PR merged 시점).
+
+**Carrier**: CFP-821 (Wave 3 Story-7 — coverage fan-out D1+D2+D3). Parent Epic CFP-699 (선언적 reconciliation 기반 codeforge upgrade flow). Sibling carrier: ADR-076 §결정 2 표 PR template row append (Amendment 아닌 표 1행 additive — Issue templates row 동형) + reconcile-protocol-v1 v1.6 §4.3 (h) trigger + §4.9 `coverage_fan_out_implementation_binding` block.
+
+**번호 정정 (설계 lane strict-verify)**: 본 Amendment = **Amendment 5 §결정 9** (Story §1-§6 RequirementsPL synthesis 1차 view 의 'Amendment 4' = frontmatter 미검증 hypothesis — 설계 lane strict-verify origin/main direct Read 결과 **CFP-820 (Wave 3 Story-6) 이 Amendment 4 / §결정 8 점유** → 본 Story-7 = Amendment 5 §결정 9 정정. 동반 reconcile-protocol-v1 version = **v1.6 §4.3 (h)** (Story-7 §3.5 1차 view 'v1.5 §4.3 (h)' = CFP-820 이 v1.5 §4.3 (e) 점유 collision → v1.6 §4.3 (h) 정정). Codex TP#2 verify-before-trust 8-mirror 교훈 + CFP-820 §4.3 (e) "Amendment 번호 정정" 패턴 verbatim 답습 — fact 영향 0, 추적성/번호 정정만 (ADR-068 I-4 wording SSOT 정합).
+
+본 ADR §결정 1 (bootstrap 검증 책임 = wrapper plugin overlay/hooks/) + §결정 5 (consumer-guide.md SSOT) + §결정 7 (Amendment 3 D4 marker syntax) 정합. ADR-076 §결정 2 9 영역 enumeration 표가 wrapper SSOT desired state 단위를 정의 → 본 Story-7 D1 = Issue/PR template fan-out 으로 §결정 1 line 84 의 systemic enumeration gap (`3종 (audit + bug + story)` ↔ reality audit + bug 2종 only, story 부재) 를 정정 + D4 marker (Amendment 3 §결정 7.A.1) 의 신설 form 적용 cross-ref. 본 amendment = ADR-027 §결정 추가 (additive, supersede 아님). §결정 9 신설.
+
+**ADR collision 회피 (신규 ADR 아닌 Amendment — CFP-821 Story §3.1.2 판정 정합)**: ADR-027 = consumer adoption protocol SSOT — `.github/ISSUE_TEMPLATE/` sync enumeration (§결정 1) + D4 marker syntax (Amendment 3 §결정 7) 이 이미 consumer-side template adoption 의 carrier. Issue Forms enumeration 정정 + D4 marker form-level wrap = ADR-027 §결정 1 + Amendment 3 §결정 7.A.1 의 동형 영역 확장 → 신규 ADR 신설 시 consumer adoption 영역 SSOT 분산. Amendment = ADR-064 top-down ratchet 강화 방향 only (consumer adoption scope 확장 — Issue Forms 3종 → 5 forms + config.yml + D4 marker 신설 form 적용).
+
+### 결정 9 — consumer adoption 시 Issue Forms enumeration 정정 + D4 marker form-level wrap (normative SSOT)
+
+#### §결정 9.A — Issue Forms enumeration 정정 (§결정 1 line 84 systemic gap 해소)
+
+§결정 1 line 84 의 `consumer .github/ISSUE_TEMPLATE/ 3종 (audit + bug + story) sync` = systemic enumeration gap (실제 origin/main `.github/ISSUE_TEMPLATE/` = audit.yml + bug.yml 2종 only, story 부재). D1 fan-out 후 정식 enumeration:
+
+| Form | 역할 | SSOT location (Phase 2 carrier) |
+|---|---|---|
+| `audit.yml` | audit Issue Form (기존 — SSOT 승격) | `templates/.github/ISSUE_TEMPLATE/audit.yml` |
+| `bug.yml` | bug Issue Form (기존 — SSOT 승격) | `templates/.github/ISSUE_TEMPLATE/bug.yml` |
+| `story.yml` | Story Issue Form (신설) | `templates/.github/ISSUE_TEMPLATE/story.yml` |
+| `discussion.yml` | Discussion Issue Form (신설) | `templates/.github/ISSUE_TEMPLATE/discussion.yml` |
+| `codeforge-improvement.yml` | codeforge-improvement Issue Form (신설) | `templates/.github/ISSUE_TEMPLATE/codeforge-improvement.yml` |
+| `config.yml` | Issue selector controller (`blank_issues_enabled` + `contact_links[]`, form 아님) | `templates/.github/ISSUE_TEMPLATE/config.yml` |
+| `PULL_REQUEST_TEMPLATE.md` | PR template (현 `.github/` byte-identical mirror — consumer-distributable SSOT) | `templates/.github/PULL_REQUEST_TEMPLATE.md` |
+
+prior art = microsoft/TypeScript 5 forms + config.yml 패턴 (정합도 최고). `templates/.github/` = consumer-distributable SSOT 신설 영역 (현 `.github/` = wrapper self-app, ADR-005 byte-identical). **본 §결정 9.A = declarative enumeration 정정 (normative SSOT)** — 실 file 신설 = Phase 2 carrier (구현 lane, §결정 9.E).
+
+#### §결정 9.B — D4 marker form-level wrap (Amendment 3 §결정 7.A.1 신설 form 적용)
+
+신설 `templates/.github/ISSUE_TEMPLATE/*.yml` + `PULL_REQUEST_TEMPLATE.md` 의 D4 customization marker 적용 = **form 전체 wrap** (Amendment 3 §결정 7.A.1 comment prefix per-filetype + §결정 7.D.3 whole-line anchored + §결정 7.D.1 flat-only 정합):
+
+- `.yml` Issue Form / config.yml = `# BEGIN wrapper-managed` / `# END wrapper-managed` (form 전체를 marker block 으로 wrap — body[] sub-block partial marker 금지)
+- `.md` PR template = `<!-- BEGIN wrapper-managed -->` / `<!-- END wrapper-managed -->`
+- marker 안 = wrapper SSOT desired state / 밖 = consumer customization preserve (Amendment 3 §결정 7.B verbatim)
+
+**결정 근거 (Axis — form-level wrap vs body[] partial)**: Issue Form yaml = structured spec — body[] sub-block 안 partial marker 는 yaml structure 파편화 risk + GitHub Issue Form parser 가 `#` 주석 무시 → form 전체 wrap 이 의미 정합 (Amendment 3 §결정 7.D.1 nesting 금지 flat-only + Ansible blockinfile flat 패턴 동형). consumer customization = D4 marker 밖 별도 form 추가 또는 marker 부재 form (Amendment 3 §결정 7.C `wholesale_mirror_with_user_visible_loss_report` 재사용 — D1 first-reconcile silent overwrite 0, EPIC-AC-4 보존).
+
+#### §결정 9.C — D1 reconcile = reconcile-protocol-v1 §4.7 SSOT 재사용 (재구현 0)
+
+D1 `.github/` 영역 consumer reconcile = reconcile-protocol-v1 v1.4 §4.7 `overlay_reconcile_implementation_binding` (marker-aware 2-way / `wholesale_mirror_with_user_visible_loss_report`) SSOT 재사용 — `.github/` 영역 area handler 추가 (algorithm 재구현 0, path 매핑만 신규). reconcile-protocol-v1 v1.6 §4.9 `coverage_fan_out_implementation_binding.d1_issue_pr_template_fan_out.reconcile_reuse` verbatim cross-ref. consumer (예: mctrader 5 repo) `.github/ISSUE_TEMPLATE/` marker 부재 시 first-reconcile = wholesale mirror + loss report (silent overwrite 0).
+
+#### §결정 9.D — D2 branch protection FORM (b) + ADR-066 무변경 (F-P1-A 해소, cross-ref)
+
+D2 = `templates/scripts/setup-branch-protection.sh` FORM (b) (manifest 합성 + dry-run preview only, gh api PUT = 0 — 실 등록 = consumer admin operator manual OOS). GitHub API write 자체 0 → fine-grained PAT `Administration:write` 불요 → **ADR-066 §결정 2 scope 5종 무변경 (ADR-066 무접촉)**. Codex TP#4 F-P1-A (D2 credential gap, P1 hidden-assumption) 해소 = scope-down OOS = least-privilege ratchet-safe (ADR-064 minimal-change). 본 §결정 9 = D1 Issue Forms enumeration carrier 가 primary — D2 FORM (b) ADR-066 무변경 = cross-ref only (reconcile-protocol-v1 v1.6 §4.9 `d2_branch_protection_setup_helper` SSOT, ADR-066 별도 entry 미추가).
+
+#### §결정 9.E — Phase split (Phase 1 = declarative SSOT / Phase 2 = 구현 lane)
+
+Phase 1 (CFP-821 본 PR) = declarative SSOT mandate (본 §결정 9 + ADR-076 §결정 2 표 PR template row + reconcile-protocol-v1 v1.6 §4.3 (h)/§4.9 + MANIFEST.yaml row + change-plan + Story §3.1/§7/§11 미러링 — pure design-SSOT, template/script/doc 실 file 0건, CFP-743/744/745/820 선례 정합). Phase 2 (별 PR, 구현 lane) = `templates/.github/ISSUE_TEMPLATE/*.yml` 5종 + `config.yml` + `templates/.github/PULL_REQUEST_TEMPLATE.md` 실 file + `.github/` byte-identical self-app + `templates/scripts/setup-branch-protection.sh` (FORM (b)) + `docs/script-boundary.md` + `docs/consumer-guide.md` §2 line 472/814 enumeration 정정 + §N D2 operator manual 절차 + reconcile-overlay.sh `.github/` area handler 실 연계.
+
+#### §결정 9.F — mechanical enforcement (중복 codification 회피)
+
+본 §결정 9 = consumer adoption protocol enumeration 정정 + D4 marker form-level wrap declarative mandate. D4 marker mechanical lint = Amendment 3 §결정 7.D `wrapper-managed-block` evidence-check entry (blocking-on-pr tier, frontmatter `mechanical_enforcement_actions[]` 이미 등재) 가 cover (신설 form 도 동일 lint 적용). 본 Amendment 5 측 별도 mechanical action 신설은 **중복 codification 회피** (ADR-065 §결정 5 "cross-ref only" 정합) — ADR-027 frontmatter `mechanical_enforcement_actions[]` = Amendment 2/3 entry 보존, Amendment 5 별도 entry 미추가 (Amendment 3 §결정 7.D `wrapper-managed-block` entry 가 D4 marker SSOT). D3 script boundary mechanical lint = §3.3 OOS 별도 follow-up Issue (codeforge-improvement (k) bash top-level local lint — ADR-064 minimal-change, Story scope creep 회피).
+
+### 해소 기준 정합
+
+ADR-027 frontmatter `is_transitional: false` (permanent policy, 기존 §"해소 기준" = "N/A — permanent policy" verbatim). Amendment 5 = consumer adoption 시 Issue Forms enumeration 정정 (3종 → 5 forms + config.yml) + D4 marker form-level wrap cross-ref = governance 강화 방향 ratchet — ADR-058 §결정 5 sunset_justification 불요 (강화 방향, ADR-064 top-down self-application 정합 — consumer adoption scope 확장 only, weakening 0).
+
+상세 Change Plan: `codeforge-internal-docs/wrapper/change-plans/cfp-821-coverage-fan-out.md`.
+
+Cross-ref:
+- [ADR-076](ADR-076-declarative-reconciliation-upgrade.md) §결정 2 — Wrapper SSOT 영역 enumeration scheme (본 Amendment 5 sibling carrier: ADR-076 §결정 2 표 PR template row append 동반 — Issue templates row 동형 `template export — consumer overlay 시점 byte-identical mirror`)
+- `docs/inter-plugin-contracts/reconcile-protocol-v1.md` v1.6 §4.9 `coverage_fan_out_implementation_binding` — D1/D2/D3 fan-out binding SSOT (§결정 9.A-9.D verbatim cross-ref)
+- ADR-027 Amendment 3 §결정 7.A.1 / 7.B / 7.C / 7.D.1 / 7.D.3 — D4 marker syntax (본 Amendment 5 §결정 9.B 가 신설 form 에 적용 — comment prefix per-filetype + whole-line anchored + flat-only)
+- [ADR-066](ADR-066-pat-rotation-policy.md) §결정 2 — scope 5종 무변경 (D2 FORM (b) — Administration:write grant 0, F-P1-A 해소 = scope-down OOS, 본 Amendment 5 = ADR-066 무접촉 cross-ref only)
+- [ADR-024](ADR-024-story-scoped-branch-policy.md) Amendment 2 §결정 A·C — branch-protection-manifest SSOT (D2 setup-branch-protection.sh = §결정 C 운영 규칙 mechanical helper, ADR-024 Amendment 6 회피 — 본문 무변경)
+- [ADR-005](ADR-005-plugin-self-application-na-standardization.md) — `templates/.github/*` ↔ `.github/*` byte-identical self-app (D1 Phase 2)
+- [ADR-064](ADR-064-decision-principle-mandate.md) §self-application — Amendment 5 = consumer adoption scope 확장 강화 방향 only (신규 ADR 회피 + D2 scope-down least-privilege ratchet-safe, weakening 0)
+- `docs/consumer-guide.md` §2 line 472/814 enumeration 정정 + §N D2 operator manual — consumer runbook (Phase 2 carrier)
