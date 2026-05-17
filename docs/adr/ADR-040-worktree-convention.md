@@ -816,19 +816,21 @@ bats / SecurityTestPL dynamic probe 의 live GitHub repo 부수효과 (Issue 생
 
 #836 spurious artifact (`CBL_SKIP_ISSUE_CREATE` 미적용 경로 2026-05-17T03:07:06Z) = 본 §7.J.3 동근원 evidence.
 
-##### §7.J.4 — Self-block 회피 5-layer 동형 적용 (Amendment 5 패턴 verbatim)
+##### §7.J.4 — Self-block 회피 5-layer 동형 적용 (CFP-428 R3 self-block 5-layer 동형 적용 — spawn-evidence-cwd context semantic adaptation)
 
-§7.J.2 lint scope 확장이 **본 Amendment 6 작업 자체를 block** 하는 self-block 재현 위험 (PMO 주요 위험). Amendment 5 의 5-layer self-block 회피 패턴을 동형 적용:
+§7.J.2 lint scope 확장이 **본 Amendment 6 작업 자체를 block** 하는 self-block 재현 위험 (PMO 주요 위험). CFP-428 carrier (`worktree-first-pre-checkout` / `worktree-first-pre-commit-main-block` entries) frontmatter `mechanical_enforcement_actions[]` `progress_note` 의 R3 self-block 회피 5-layer 패턴을 spawn-evidence-cwd context 로 semantic 재유도해 동형 적용:
 
-| layer | Amendment 5 패턴 | Amendment 6 동형 적용 |
+| layer | CFP-428 R3 canonical 패턴 | Amendment 6 동형 적용 (spawn-evidence-cwd context) |
 |---|---|---|
-| (1) worktree-internal work allow | lint script 가 worktree 안 작업을 violation 으로 판정 안 함 | write target 이 worktree root membership 충족 시 PASS (확장된 검증도 worktree-internal 정합 PASS) |
-| (2) warning → blocking 점진 | skeleton warning → actual blocking-on-pr | scope 확장 부분 = warning sub-tier 진입 (구형 worktree 없는 환경 = warning), 기존 CWD 검증 = blocking-on-pr 유지 |
-| (3) enforce-from filter | 본 Story merged at 이후 신규 Story 만 | scope 확장 검증 = CFP-843 merged at 이후 신규 agent transcript 만 (false-positive 회피) |
-| (4) `BYPASS_WORKTREE_FIRST=1` env bypass | 4 lint script 전체 short-circuit | 동일 env = scope 확장 검증도 short-circuit (panic 채널 보존) |
+| (1) worktree-internal work | lint script 가 worktree 안 작업을 violation 으로 판정 안 함 | write target 이 worktree root membership 충족 시 PASS (확장된 검증도 worktree-internal 정합 PASS) |
+| (2) opt-in install | install-git-hooks.sh 미설치 환경 = lint 미발동 | scope 확장 부분 = warning sub-tier 진입 (구형 worktree 없는 환경 = warning), 기존 CWD 검증 = blocking-on-pr 유지 (semantic 재유도: opt-in → tier 점진) |
+| (3) warning tier exit 0 | warning tier exit 0 (PR block 안 함) | scope 확장 검증 = CFP-843 merged at 이후 신규 agent transcript 만 (enforce-from filter, false-positive 회피) |
+| (4) `BYPASS_WORKTREE_FIRST=1` env | 4 lint script 전체 short-circuit | 동일 env = scope 확장 검증도 short-circuit (panic 채널 보존) |
 | (5) common-dir skip | `--git-dir` vs `--git-common-dir` in worktree | worktree common-dir resolve 시 main-vs-worktree ambiguity skip 동형 |
 
-fallback 호환 = worktree 없는 구형 환경 = warning tier (Amendment 5 점진 정합 — actual violation = 0 검증 전 false-positive 차단). `hotfix-bypass:worktree-spawn-evidence-cwd` label 채널 (audit comment 자동 발의) = 동일 panic 채널 보존.
+> layer numbering = spawn-evidence-cwd PR-workflow context 재mapping. canonical CFP-428 ordering = (1) worktree-internal work / (2) opt-in install / (3) warning tier exit 0 / (4) BYPASS_WORKTREE_FIRST=1 / (5) common-dir skip.
+
+fallback 호환 = worktree 없는 구형 환경 = warning tier (tier 점진 정합 — actual violation = 0 검증 전 false-positive 차단). `hotfix-bypass:worktree-spawn-evidence-cwd` label 채널 (audit comment 자동 발의) = 동일 panic 채널 보존.
 
 ##### §7.J.5 — §결정 7.A schema 무손상
 
@@ -882,7 +884,7 @@ fallback 호환 = worktree 없는 구형 환경 = warning tier (Amendment 5 점�
 - CFP-825 retro §6 후보 1 + §3 RC-1 ([#825](https://github.com/mclayer/plugin-codeforge/issues/825) CLOSED) — escalation_action `adr_draft_emitted` 의 fulfillment carrier
 - Issue #836 (spurious test artifact, CLOSED) — test-isolation gap 동근원 evidence
 - ADR-040 Amendment 3 §결정 7.D self-application 패턴 (본 Amendment 6 동형)
-- ADR-040 Amendment 5 §7.I.4 self-block 회피 5-layer (본 Amendment 6 §7.J.4 동형 verbatim)
+- ADR-040 frontmatter mechanical_enforcement_actions[] CFP-428 carrier (worktree-first-pre-checkout / pre-commit-main-block) progress_note R3 self-block 회피 5-layer (본 Amendment 6 §7.J.4 동형 적용 — layer (2) spawn-evidence-cwd context 재유도)
 - ADR-060 §결정 6 (promotion gate — tier 무변경, 재평가 불요)
 - ADR-024 Amendment 3 §결정 6.A (hotfix-bypass label family — 기존 label 활성 유지)
 - ADR-058 §결정 5 (ratchet strengthening only — scope 확장 정합)
