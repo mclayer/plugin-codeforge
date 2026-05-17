@@ -2520,4 +2520,4 @@ entries:
       threshold: 3
       last_occurrence: null
       promotion_trigger: advisory    # ADR-060 §결정 19 (Amendment 6) — advisory-only first iteration
-    status: Phase1Declared           # Phase 1 = registry SSOT 신설만. Phase 2 = script + workflow + bats TC self-app 동반 land 후 status: Active 전환
+    status: warning                  # Phase 2 (CFP-842) land — script + workflow + bats 5 TC self-app 동반. warning-tier 첫 iteration (ADR-060 §결정 5). Active 전환 gate: pr_cumulative_min=20 + failure_threshold=0
