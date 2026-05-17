@@ -181,6 +181,15 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
      "codeforge.stories.repos (list of repo entry dicts), optional — "
      "each entry requires name (str) + role ('governance'|'implementation'); "
      "role=implementation also requires path (str) + github (str)"),
+    # CFP-820 / ADR-063 Amendment 5 §결정 15 — 3-way version atomic invariant consumer pin
+    # Consumer 가 version_pin 블록을 선언하면 `check-3way-version-parity.sh` 가
+    # publisher(plugin.json) ↔ registry(marketplace.json) ↔ consumer(project.yaml) 3-way 검증.
+    # 블록 부재 = warning-first (exit 0, orthogonality invariant — PIN_ABSENT ≠ PIN_MISMATCH).
+    ("codeforge.version_pin", False, dict, "codeforge.version_pin section (mapping), optional — "
+     "ADR-063 Amendment 5 §결정 15 consumer side of 3-way version atomic invariant"),
+    ("codeforge.version_pin.version", False, _is_str,
+     "codeforge.version_pin.version (non-empty string, e.g. '5.82.0'), optional — "
+     "must match publisher plugin.json + registry marketplace.json version"),
     # CFP-609 / ADR-064 Amendment 1 — Parallel Dispatch Protocol consumer overlay
     # SSOT: docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md (kind:registry)
     # ADR-064 §결정 7 ratchet — 약화 방향 차단 (강화 방향만 허용).

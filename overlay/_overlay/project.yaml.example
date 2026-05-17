@@ -133,6 +133,17 @@ progress_narration_verbosity: full
 #           - "<REPLACE — e.g. engine>"
 #         creates_repo_stories: true
 
+# 3-way version atomic pin (CFP-820 / ADR-063 Amendment 5 §결정 15)
+# Consumer 가 이 블록을 선언하면 version-3way-atomic.yml workflow 가
+# publisher(plugin.json) ↔ registry(marketplace.json) ↔ consumer(project.yaml) 3-way 버전 일치 검증.
+# 블록 부재 = warning-first exit 0 (orthogonality invariant — pin 미선언 ≠ 버전 불일치).
+# 선언 후 버전 불일치 = blocking exit 1 (ADR-063 Amendment 5 §결정 15 AC-1).
+#
+# codeforge:
+#   version_pin:
+#     # codeforge plugin 설치 버전과 byte-identical 이어야 함
+#     version: "<REPLACE — e.g. 5.82.0>"
+
 # Parallel Dispatch Protocol (CFP-609 / ADR-064 Amendment 1)
 # SSOT: docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md (kind:registry)
 # Consumer overlay default 영역. ADR-064 §결정 7 ratchet — 약화 방향 차단 (강화 방향만 허용).

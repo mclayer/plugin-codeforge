@@ -693,6 +693,44 @@ Consumer repo 의 첫 PR open 시점에 codeforge 필수 label set (`phase:*` / 
 
 ---
 
+### §2i. 3-way version atomic pin 설정 (CFP-820 / ADR-063 Amendment 5 §결정 15)
+
+Consumer repo 에서 **codeforge version 을 고정(pin)** 하고 PR-time 에 publisher ↔ registry ↔ consumer 3-way 버전 일치를 자동 검증하는 선택 기능이다.
+
+**동작 원리**:
+- **publisher** = `.claude-plugin/plugin.json` `.version`
+- **registry** = `mclayer/marketplace` `.claude-plugin/marketplace.json` `.plugins[codeforge].version`
+- **consumer** = `.claude/_overlay/project.yaml` `codeforge.version_pin.version`
+- `version-3way-atomic.yml` workflow 가 PR-time 에 3개 값 byte-identical 비교 (blocking-on-pr tier)
+
+**설정 절차**:
+
+1. `.claude/_overlay/project.yaml` 에 아래 블록 추가:
+
+```yaml
+codeforge:
+  version_pin:
+    version: "5.82.0"  # 현재 설치된 codeforge 버전으로 치환
+```
+
+2. `version-3way-atomic.yml` workflow 가 `.github/workflows/` 에 복사되어 있는지 확인 (§2c manifest-driven loop 수행 시 자동 포함).
+
+3. PR 머지 후 `check-3way-version-parity.sh` 수동 실행으로 현재 상태 verify:
+
+```bash
+bash scripts/check-3way-version-parity.sh
+```
+
+**Fallback (pin 미선언)**: `codeforge.version_pin` 블록 부재 시 workflow 는 **warning-first exit 0** (orthogonality invariant — pin 미선언 ≠ 버전 불일치). 버전 고정이 필요하지 않으면 생략 가능.
+
+**codeforge upgrade 후 pin 갱신**: `/plugins update codeforge@mclayer` 수행 후 `project.yaml` 의 `codeforge.version_pin.version` 값도 새 버전으로 갱신 의무. `version-3way-atomic.yml` 이 불일치 감지 시 PR blocking.
+
+**Bypass (24시간 이내 sync 의무)**: 긴급 상황에서 일시 bypass 가 필요한 경우 PR 에 `hotfix-bypass:version-3way-atomic` label 부착 → 24시간 이내 3-way sync 완료 + label 제거 의무 (ADR-024 Amendment 3 hotfix-bypass family 정합).
+
+**Cross-ref**: ADR-063 Amendment 5 §결정 15/16 SSOT + `docs/evidence-checks-registry.yaml` `version-3way-atomic` entry + `label-registry-v2` v2.24 + `scripts/check-3way-version-parity.sh` + `scripts/read_version_pin.py`.
+
+---
+
 §2.1 ~ §2.7 = manual / advanced fallback (script 미작동 시 / 부분 customize 필요 시).
 
 ---

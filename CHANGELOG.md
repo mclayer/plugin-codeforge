@@ -7,6 +7,26 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.82.0] - 2026-05-17
+
+### Added (CFP-820 Epic CFP-699 Wave 3 Story-6 Phase 2 — ADR-063 Amendment 5 §결정 15/16 3-way version atomic invariant enforcement)
+
+- **`scripts/check-3way-version-parity.sh`** (NEW) — publisher (`.claude-plugin/plugin.json`) ↔ registry (`marketplace.json`) ↔ consumer (`project.yaml` `codeforge.version_pin.version`) 3-way byte-identical version compare. PIN_ABSENT = warning-first exit 0 (orthogonality invariant — pin 미선언 ≠ 버전 불일치). PIN_MALFORMED = exit 2. 3-way mismatch = blocking exit 1. ADR-063 Amendment 5 §결정 15 AC-1~AC-13 전 항목 커버. 14/14 BATS TC PASS (TDD RED→GREEN — 3 FIX iterations).
+- **`scripts/read_version_pin.py`** (NEW, ADR-061 외부 .py) — `project.yaml` `codeforge.version_pin.version` YAML 파싱 helper. Stdout protocol: PIN_ABSENT / PIN_MALFORMED:<reason> / PIN_VERSION:<version>. Exit codes: 0/10(no PyYAML)/11(parse error).
+- **`templates/github-workflows/version-3way-atomic.yml`** (NEW) — PR-time 3-way version atomic invariant check workflow. blocking-on-pr tier. Triggers on plugin.json / CHANGELOG.md / project.yaml / scripts 변경. `hotfix-bypass:version-3way-atomic` label bypass channel.
+- **`.github/workflows/version-3way-atomic.yml`** (NEW, byte-identical self-app ADR-005).
+- **`tests/scripts/check-3way-version-parity/check-3way-version-parity.bats`** (NEW, 14 TC) — TC-1~TC-14 discriminating fixture.
+
+### Changed (CFP-820 Phase 2)
+
+- **`docs/evidence-checks-registry.yaml`** — `version-3way-atomic` entry append (blocking-on-pr tier, owner_adr ADR-063, carrier_adr ADR-060, bypass_label hotfix-bypass:version-3way-atomic, CFP-820).
+- **`docs/inter-plugin-contracts/label-registry-v2.md`** — v2.23 → v2.24 PATCH (hotfix-bypass:version-3way-atomic 33번째 family member, §3 yaml entry append, ADR-063 Amendment 5 §결정 16 carrier).
+- **`overlay/hooks/validate_config.py`** — `codeforge.version_pin` (optional dict) + `codeforge.version_pin.version` (optional str) SCHEMA_RULES 추가 (CFP-820 / ADR-063 Amendment 5).
+- **`overlay/_overlay/project.yaml.example`** — `codeforge.version_pin` commented 예시 블록 추가.
+- **`docs/consumer-guide.md`** — §2i 신설 (3-way version atomic pin 설정 가이드, CFP-820 / ADR-063 Amendment 5 §결정 15).
+- **`CLAUDE.md`** — GitHub Workflow 27종 → 28종 (`version-3way-atomic.yml` blocking-on-pr 3번째 entry 추가). blocking-on-pr 2 → 3.
+- **`.claude-plugin/plugin.json`** — 5.81.0 → 5.82.0 MINOR (신규 lint script + workflow blocking-on-pr 활성화 — ADR-037). marketplace 별 sibling PR sync 의무 (ADR-063 §결정 5).
+
 ## [5.81.0] - 2026-05-17
 
 ### Added (CFP-745 Wave 2 Story-5 Phase 2 — overlay 영역 3-way merge reconcile runtime, CFP-810/795/801/777/751 collision rebase)
