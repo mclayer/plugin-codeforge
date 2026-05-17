@@ -2075,8 +2075,8 @@ entries:
       grep-testable artifact 존재 예정 (scripts/check-bypass-label-counter.sh,
       Phase 2 carrier). CFP-627 marketplace-drift-detection precedent (24h cron +
       workflow_dispatch + Issue auto-create).
-    detect_command: null   # Phase 2 carrier 신설 후 채움 (deferred-followup)
-    workflow: templates/github-workflows/bypass-label-counter.yml   # Phase 2 신설 완료 시 Active 전환
+    detect_command: bash scripts/check-bypass-label-counter.sh
+    workflow: templates/github-workflows/bypass-label-counter.yml
     current_tier: warning
     bypass_label: hotfix-bypass:bypass-label-counter
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
@@ -2096,6 +2096,6 @@ entries:
     recurrence:
       count: 5                    # CFP-770/771 #788 (2) + CFP-819 #823 (1) + CFP-786/801/795 unit-tests (2) — 5+ evidence cluster
       threshold: 3                # ADR-060 §결정 19 (Amendment 6) — threshold 3 standard
-      last_occurrence: CFP-819
+      last_occurrence: "2026-05-16T23:01:11Z"  # CFP-819 PR #823 wording-dictionary cosmetic 7건 (verified: gh pr view 823 --json mergedAt = 2026-05-16T23:01:11Z)
       promotion_trigger: advisory # count=5 ≥ threshold=3 → advisory (본 carrier 자체가 monitoring 도입)
-    status: deferred-followup     # Phase 2 carrier (script + workflow self-app) land 시 Active 전환
+    status: Active
