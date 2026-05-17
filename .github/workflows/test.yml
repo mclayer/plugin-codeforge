@@ -32,7 +32,13 @@ jobs:
 
       - name: Run unit tests
         # Consumer: 경로를 자신의 구조에 맞게 수정 (예: tests/unit/, test/, src/tests/)
-        run: pytest tests/unit/ -v --tb=short
+        # No Python tests in path → skip (doc-only fast-path support, exit 0)
+        run: |
+          if find tests/unit -name "*.py" -not -name "__init__.py" 2>/dev/null | head -1 | grep -q .; then
+            pytest tests/unit/ -v --tb=short
+          else
+            echo "[OK] No Python tests in tests/unit/ -- skipping pytest (doc-only fast-path support, exit 0)"
+          fi
 
   integration-tests:
     runs-on: ubuntu-latest
