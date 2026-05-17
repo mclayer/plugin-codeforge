@@ -5,7 +5,7 @@ status: Accepted
 category: governance
 date: 2026-05-03
 is_transitional: false
-amended_by: CFP-825
+amended_by: CFP-845
 amended_date: 2026-05-17
 amendments:
   - by: "CFP-134"
@@ -36,6 +36,14 @@ amendments:
     date: "2026-05-17"
     scope: "Amendment 6 — §결정 6.A per-entry namespace 누적 사용 카운터 lint (bypass-label-counter, 63번째 evidence-checks-registry entry, warning tier first iteration) + 31번째 family member `hotfix-bypass:bypass-label-counter` (self-meta loop 회피) + 32번째 family member `hotfix-bypass:exempt:<entry>` template (rare 정당 declare 채널, narrative audit trail mechanical enforce = 후속 carrier). ratchet 룰: per-(plugin, label) signature ≥3 reach-merged PR 누적 시 carrier Issue 자동 발의 + dedup (window=all-time / dedup_unit=PR number / exempt 2종). CFP-771 retro §8 제안 1 carrier — exception → norm mutation 위험 누적 monitoring 부재 차단."
     sunset_justification: "N/A — is_transitional: false (permanent governance policy). bypass-label-counter = forbid scope 확장 (ratchet-up 강화 방향, ADR-058 §결정 5 정합). 2 신규 family member = §결정 6.A per-entry namespace 의무의 영구 확장 (self-meta + rare 정당 declare 2종 channel)."
+  - by: "CFP-841"
+    date: "2026-05-17"
+    scope: "Amendment 7 — §결정 6.A per-entry namespace 의 34번째 신규 `hotfix-bypass:corpus-claim-verify` + 35번째 신규 `hotfix-bypass:cross-plugin-ownership-verify` family member 추가 (ADR-082 Amendment 1 carrier — §결정 6 behavioral→mechanical 전환, ADR-060 framework 2 신규 warning-tier evidence-checks-registry entry `corpus-claim-verify` + `cross-plugin-ownership-verify`). write-time semantic truth verify 영역 첫 family member."
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). 2 신규 family member = §결정 6.A per-entry namespace 의무의 영구 확장 (write-time semantic truth verify 영역 첫 진입)."
+  - by: "CFP-845"
+    date: "2026-05-17"
+    scope: "Amendment 8 — bypass-as-norm-mutation 후속 escalation 3 sub-decision 통합 (CFP-825 Amendment 6 §scope_boundary 의 4 out-of-scope 후속 carrier 영역 중 3 즉시 통합, 4번째 `blocking-on-merge tier 격상` = Story-2 #861 RESERVED 별 carrier evidence-gated 분리). §결정 6.A.3 (신설) per-plugin 전체 누적 카운터 ratchet — 단일 plugin 의 모든 hotfix-bypass:* family entry 누적 ≥5 reach-merged PR (signature = plugin-only, dedup_unit = PR number, window = all-time) 시 carrier Issue 자동 발의. §결정 6.A.4 (신설) `[bypass-justification]` PR comment marker mechanical enforce — hotfix-bypass:* label 부착 PR 의 marker presence grep-only lint (semantic adequacy 불가 = false-positive risk 명시, reviewer responsibility). §결정 6.A.5 (신설) cross-repo bypass counter extension — wrapper (plugin-codeforge) 단일 → internal-docs / marketplace sibling repo 3-repo 동시 cover, signature = (repo, plugin, label) 3-tuple, 단일 PAT (CODEFORGE_CROSS_REPO_PAT) reuse. §결정 6.A (확장) `hotfix-bypass:per-plugin-cumulative-counter` 37번째 + `hotfix-bypass:bypass-justification-marker` 38번째 + `hotfix-bypass:cross-repo-bypass-counter` 39번째 family member."
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). 3 신규 sub-decision = bypass-as-norm mutation 누적 monitoring 의 ratchet-up 강화 방향 (per-entry → per-plugin / narrative audit / cross-repo 확장). ADR-058 §결정 5 정합. 3 신규 family member = §결정 6.A per-entry namespace 의무의 영구 확장."
 related_files:
   - CLAUDE.md
   - docs/consumer-guide.md
@@ -50,8 +58,17 @@ related_files:
   - templates/github-workflows/branch-protection-drift-check.yml
   - templates/github-workflows/debate-convergence-quality.yml
   - templates/github-workflows/bypass-label-counter.yml
+  - templates/github-workflows/per-plugin-cumulative-counter.yml
+  - templates/github-workflows/bypass-justification-marker.yml
+  - templates/github-workflows/cross-repo-bypass-counter.yml
   - scripts/check-bypass-label-counter.py
   - scripts/check-bypass-label-counter.sh
+  - scripts/check-per-plugin-cumulative-counter.py
+  - scripts/check-per-plugin-cumulative-counter.sh
+  - scripts/check-bypass-justification-marker.py
+  - scripts/check-bypass-justification-marker.sh
+  - scripts/check-cross-repo-bypass-counter.py
+  - scripts/check-cross-repo-bypass-counter.sh
 mechanical_enforcement_actions:
   # ADR-040 Amendment 3 §결정 7.A 의무 — 본 ADR-024 Amendment 4 (CFP-481, 2026-05-12)
   # 가 ADR-040 Amendment 3 발효 (CFP-426 Phase 1 PR merge) 이후 작성된 normative
@@ -64,6 +81,16 @@ mechanical_enforcement_actions:
   - action: bypass-label-counter
     status: deferred-followup     # registry yaml row append = CFP-825 Phase 2 PR scope
     target_section: §결정 6.A.2   # per-entry namespace 누적 사용 카운터 lint ratchet 룰 (3-tuple: threshold / dedup / window)
+  # Amendment 8 (CFP-845, 2026-05-17) — bypass-as-norm-mutation 후속 escalation 3 sub-decision self-application
+  - action: per-plugin-cumulative-counter
+    status: deferred-followup     # registry yaml row append = Phase 1 PR; actual lint+workflow wire = Phase 2 PR scope
+    target_section: §결정 6.A.3   # per-plugin 전체 누적 카운터 ratchet (단일 plugin scope 분산 bypass 탐지)
+  - action: bypass-justification-marker
+    status: deferred-followup     # registry yaml row append = Phase 1 PR; actual lint+workflow wire = Phase 2 PR scope
+    target_section: §결정 6.A.4   # PR comment marker grep-presence lint (false-positive risk 명시, reviewer responsibility)
+  - action: cross-repo-bypass-counter
+    status: deferred-followup     # registry yaml row append = Phase 1 PR; actual lint+workflow wire = Phase 2 PR scope
+    target_section: §결정 6.A.5   # cross-repo extension (wrapper + internal-docs + marketplace 3-repo signature)
 ---
 
 # ADR-024: Story-scoped branch policy — main 직접 수정 금지 + Phase 2 enforcement deferred
@@ -650,3 +677,152 @@ ADR-060 framework 정합 의무: 모든 warning-tier evidence check entry 는 AD
 - `templates/github-workflows/corpus-claim-verify.yml` / `cross-plugin-ownership-verify.yml` (CFP-841 Phase 2 — annotation presence lint workflow)
 - `scripts/check-corpus-claim-verify.{py,sh}` / `scripts/check-cross-plugin-ownership-verify.{py,sh}` (CFP-841 Phase 2 — ADR-061 정합 외부 .py + thin bash wrapper)
 - `tests/scripts/test-check-corpus-claim-verify.bats` / `test-check-cross-plugin-ownership-verify.bats` (CFP-841 Phase 2 — TC 5+ baseline 각)
+
+## Amendment 8 — bypass-as-norm-mutation 후속 escalation 3 sub-decision 통합 + 37/38/39번째 family member (CFP-845, 2026-05-17)
+
+### 컨텍스트
+
+CFP-825 Amendment 6 §결정 6.A.2 가 `bypass-label-counter` warning-tier lint 로 per-(plugin, label) signature 누적 모니터링 channel 을 도입했으나 **§scope_boundary 가 명시한 4 out-of-scope 후속 carrier 영역** (per-plugin scope 누적 / blocking-on-merge tier 격상 / `[bypass-justification]` narrative audit / cross-repo extension) 의 후속 carrier 영역 미해소. CFP-845 (carrier) brainstorm Phase 0 4-agent 수렴 결과 = "옵션 B 2-Story 분할 권장" — 본 Amendment 8 (Story-1) = 4 영역 중 3 즉시 통합 (per-plugin / `[bypass-justification]` marker / cross-repo), 4번째 (blocking-on-merge tier 격상) = Story-2 (#861 RESERVED) evidence-gated 분리. ADR-064 §결정 1 (CFP scope unitary) 정합 — Story-2 분리 사유 = ADR-060 promotion gate AND-condition (PR≥20 + bypass외 failure=0 + sibling merged) 가 외부 시간 의존 gate, "경량→full" 단계 한 CFP 묶임 차단.
+
+본 Amendment 8 적용 영역 = 3 신규 sub-decision (§결정 6.A.3 / §결정 6.A.4 / §결정 6.A.5) + §결정 6.A 확장 (3 신규 family member: 37/38/39번째). bypass-as-norm mutation governance erosion 영역의 **multi-axis monitoring 확장** (entry-axis → plugin-axis → cross-repo-axis + narrative audit axis).
+
+### Amendment
+
+#### §결정 6.A.3 (신설) — per-plugin 전체 누적 카운터 ratchet 룰
+
+`hotfix-bypass:*` family member 의 per-(plugin) signature 단위 (label entry 무관 cross-entry 집계) 누적 사용 횟수가 threshold reach 시 carrier Issue 자동 발의 의무. §결정 6.A.2 (per-entry namespace) 의 **상위 layer 집계 channel** — 단일 plugin 이 5 entry 각 1회 = 5회 분산 사용 시 §결정 6.A.2 미발의 (각 entry 1회 < threshold 3) but **근본은 동일 plugin 의 체계적 회피** (per-plugin scope norm mutation). 본 §결정 6.A.3 이 그 gap 해소.
+
+ratchet 3-tuple:
+
+| 항목 | 값 | 근거 (empirical-source) |
+|---|---|---|
+| **threshold** | per-(plugin) signature 누적 ≥5 reach-merged PR | per-entry threshold 3 (§결정 6.A.2) 보다 보수적 (5) — entry 다양성 cover 의 noise floor. dimension category = `count` (PR 누적 횟수). units = `merged PR count per plugin signature (cross-entry aggregate)`. empirical-source = CFP-825 evidence cluster (single plugin 5+ entry 사용 corpus) + CFP-845 Research §unknown unknown 1 (per-plugin threshold calibration evidence 부족 → 보수적 시작, Phase 2 actual wire 후 별 calibration carrier) |
+| **dedup unit** | PR number (merged PR 고유 idempotent) | §결정 6.A.2 와 동일 — docs/domain-knowledge/domain/github-actions/workflow-idempotency-patterns.md §schedule trigger 정합 |
+| **measurement window** | all-time | §결정 6.A.2 와 동일 — rolling window 의 stale signature pollution 차단 |
+| **exempt channels (3종)** | (1) `hotfix-bypass:per-plugin-cumulative-counter` (self-meta loop 회피) / (2) `hotfix-bypass:exempt:<entry>` template (rare 정당 declare, CFP-825 prior art) / (3) `hotfix-bypass:exempt:per-plugin` template (per-plugin scope 정당 declare, 본 §결정 6.A.3 신규) | self-meta loop 차단 + per-entry/per-plugin scope 양 declare 채널 보존 |
+
+**자동 발의 carrier Issue 본문 의무 (Phase 2 PR scope)**: signature `<plugin>` + entry breakdown (entry 별 PR list) + PR 누적 list + ADR-024 Amendment 8 cross-ref + 후속 평가 영역 (threshold 재calibration vs blocking-on-merge 격상 vs 정당 사용 영역 declare).
+
+**self-meta loop 회피 invariant**: 본 lint workflow 자체의 PR (예: `per-plugin-cumulative-counter.yml` 수정 PR) 에 `hotfix-bypass:per-plugin-cumulative-counter` 부착 시 해당 PR signature 누적 count 제외.
+
+**§결정 6.A.2 와 disjoint invariant**: 동일 PR 가 §결정 6.A.2 (per-entry) + §결정 6.A.3 (per-plugin) 양 trigger 시 양 carrier Issue 각 발의 (signature aggregation 금지, 각 carrier 가 별 evaluation 영역).
+
+#### §결정 6.A.4 (신설) — `[bypass-justification]` PR comment marker mechanical enforce
+
+`hotfix-bypass:*` label 부착 PR 의 `[bypass-justification]` prefix PR comment 존재 의무 — narrative audit trail mechanical enforce. `scripts/check-bypass-justification-marker.sh` lint = grep-presence only (semantic adequacy 검증 불가):
+
+| 항목 | 값 | 근거 (empirical-source) |
+|---|---|---|
+| **lint scope** | hotfix-bypass:* label 부착 PR 의 PR comment (review comment 제외 — top-level only) | comment-prefix-registry-v1 v1.3 신규 `[bypass-justification]` prefix (CFP-845 carrier) — 14번째 phase prefix. dimension category = `count` (PR per-presence boolean) |
+| **grep pattern** | `^\[bypass-justification\]` (line start anchor, case-sensitive) | comment-prefix-registry-v1 §3 entry 표준 형식 정합 (Bracket prefix + 빈칸 + 본문) |
+| **semantic adequacy** | grep-only — **semantic 진위 검증 불가** | false-positive risk 명시 (CFP-845 Research §unknown unknown 2) — reviewer responsibility, lint 가 narrative 정당성 평가 X |
+| **false-positive policy** | grep PASS but body 부적합 (예: 빈 marker, 단순 "ok") = lint PASS but reviewer reject 영역 | Phase 2 workflow PR comment 안 reminder 자동 발의 (사용자 가이드 + warning marker) — 별 carrier |
+
+**bypass scope**: `bypass-justification-marker.yml` workflow 의 grep-presence lint step skip — phase-gate-mergeable.yml / phase-label-invariant.yml / 기타 4 core required check 영향 0건 (Amendment 3 §결정 6.B 정합).
+
+**self-meta loop 회피 invariant**: 본 lint workflow 자체의 PR 에 `hotfix-bypass:bypass-justification-marker` 부착 시 marker presence check skip.
+
+**marker 의무 scope**: hotfix-bypass:* label 부착 PR only — label 부착 없는 PR 은 marker 의무 X.
+
+**audit trail 영구화**: PR comment 는 GitHub-side state (영구 보존, PR close 후도 유지) — file marker 와 disjoint, dedup 불요 (PR 별 1회 발화).
+
+#### §결정 6.A.5 (신설) — cross-repo bypass counter extension
+
+현 wrapper (`mclayer/plugin-codeforge`) 단일 cover → **3-repo 동시 cover** 확장: `mclayer/plugin-codeforge` + `mclayer/codeforge-internal-docs` + `mclayer/marketplace`. signature = (repo, plugin, label) 3-tuple, threshold 별 calibration:
+
+| 항목 | 값 | 근거 (empirical-source) |
+|---|---|---|
+| **scope repos (3종)** | wrapper plugin-codeforge / internal-docs / marketplace | ADR-013 §결정 family scope 7 plugin (wrapper + 6 lane plugin, 단 lane plugin 의 hotfix-bypass 사용은 wrapper-only governance — sibling sync 면제 정합, ADR-010 §결정 2). 본 §결정 6.A.5 cover = 3 cross-repo 중 hotfix-bypass label 사용 영역 (wrapper governance / internal-docs dogfood artifact / marketplace publication) |
+| **threshold** | per-(repo, plugin, label) signature 누적 ≥3 reach-merged PR | §결정 6.A.2 와 동일 (3) — repo namespace 분리 시 per-repo 독립 trigger. dimension category = `count`. units = `merged PR count per (repo, plugin, label) signature` |
+| **aggregate trigger** | 3 repo 동일 (plugin, label) signature 동시 reach 시 단일 aggregate carrier Issue 발의 (multi-repo signature) | per-repo 단독 trigger + aggregate trigger 양 channel disjoint — aggregate = 3-repo systemic mutation 신호, per-repo = 단일 repo local mutation 신호 |
+| **dedup unit** | (repo, PR number) 2-tuple (cross-repo PR number 충돌 회피) | 3 repo 동일 PR number 가능 — repo namespace 의무 |
+| **PAT scope** | 단일 PAT (CODEFORGE_CROSS_REPO_PAT, ADR-066) reuse — 3 repo `issues:read` + `repo:read` 권한 | 신규 secret 0건, ADR-066 rotation policy 적용 (90 day rotation / 180 day max lifetime) |
+| **exempt channels** | `hotfix-bypass:cross-repo-bypass-counter` (self-meta loop 회피) + §결정 6.A.2/6.A.3 의 exempt 채널 carry-over | 3 axis lint self-meta loop 차단 |
+
+**자동 발의 carrier Issue 본문 의무 (Phase 2 PR scope)**: signature `(repo)::<plugin>::<label>` 또는 aggregate `<plugin>::<label>` (3-repo) + repo breakdown (repo 별 PR list) + ADR-024 Amendment 8 cross-ref + 후속 평가 영역 + ADR-066 PAT audit trail.
+
+**carrier Issue repository**: aggregate carrier = `mclayer/plugin-codeforge` (wrapper governance owner SSOT, ADR-013 정합). per-repo carrier = 해당 repo (각 repo 의 local governance).
+
+**ADR-066 PAT 의존 invariant**: 본 §결정 6.A.5 작동 의무 = CODEFORGE_CROSS_REPO_PAT secret 활성 + 3 repo `issues:read` + `repo:read` 권한 보유 — PAT 만료 시 workflow 실패 (warning tier 정합, blocking 미발효).
+
+#### §결정 6.A (확장) — 3 신규 family member (37/38/39번째)
+
+기존 `hotfix-bypass:*` family (Amendment 3 §결정 6.A 정합 + Amendment 4/5/6/7 확장 정합 + CFP-426~CFP-841 추가 entry 누적, 36 active member — v2.26 CFP-821 `branch-protection-sync` 36번째):
+
+| 신규 entry | family position | 의미 |
+|---|---|---|
+| `hotfix-bypass:per-plugin-cumulative-counter` | **37번째** | §결정 6.A.3 per-plugin scope 누적 카운터 self-meta loop 회피 — 본 entry 부착 PR 은 per-plugin 누적 count 제외 |
+| `hotfix-bypass:bypass-justification-marker` | **38번째** | §결정 6.A.4 PR comment marker presence lint conditional skip — narrative audit 영역 첫 family member |
+| `hotfix-bypass:cross-repo-bypass-counter` | **39번째** | §결정 6.A.5 cross-repo 3-tuple signature 누적 카운터 self-meta loop 회피 — cross-repo 영역 첫 family member |
+
+(family member 카운트 = 36 active member (v2.26 CFP-821 36번째 `branch-protection-sync` 시점) + 본 Amendment 8 = 37/38/39번째 → 39 total. label-registry-v2 v2.26 → v2.27 MINOR bump 동반 — 3 신규 family member 동시 추가.)
+
+**audit lint**: `scripts/check-bypass-audit-comment.sh` reuse (CFP-389 prior art 단일 lint, `BYPASS_LABEL_PREFIX=hotfix-bypass:` env scan 으로 all-family detect — 신규 audit lint 0건).
+
+**bypass scope**: `per-plugin-cumulative-counter.yml` / `bypass-justification-marker.yml` / `cross-repo-bypass-counter.yml` workflow 의 각 lint step 만 skip — phase-gate-mergeable.yml / phase-label-invariant.yml / 기타 4 core required check 영향 0건 (Amendment 3 §결정 6.B 정합).
+
+**bypass-as-norm mutation 다차 axis monitoring 영역 진입**: 기존 36 family member 는 단일 axis (per-entry signature) cover. 본 Amendment 8 의 37/38/39번째 family member 는 **3 신규 axis** (per-plugin scope / narrative audit / cross-repo extension) 동시 진입 — bypass-as-norm mutation governance erosion 의 multi-axis monitoring 완비.
+
+### Compatibility
+
+- ADR-024 §결정 1~6 + Phase 2 partial (CFP-70) + CFP-72 + Amendment 1 (CFP-134) + Amendment 2 (CFP-280) + Amendment 3 (CFP-389) + Amendment 4 (CFP-481) + Amendment 5 (CFP-582) + Amendment 6 (CFP-825) + Amendment 7 (CFP-841) 전부 유지 — 본 Amendment 8 은 Amendment 3 §결정 6.A 의 호환 확장 (per-entry namespace 37/38/39번째 family member + §결정 6.A.3/6.A.4/6.A.5 ratchet 룰 신설) only.
+- ADR-060 framework 외 영역 (4 core required check + 기존 evidence check + Amendment 1~7 entry) 에는 영향 X.
+- ADR-058 §결정 5 sunset_justification ratchet — 본 Amendment 8 = forbid scope 확장 (per-entry → per-plugin scope 추가 + narrative audit 추가 + cross-repo 추가) = ratchet-up 강화 방향, sunset_justification_required: false.
+- ADR-024 Amendment 6 §scope_boundary 4 out-of-scope 영역 중 3 영역 흡수 (per-plugin / `[bypass-justification]` marker / cross-repo) — 4번째 (blocking-on-merge tier 격상) = Story-2 #861 RESERVED 별 carrier evidence-gated 분리, ADR-064 §결정 1 CFP scope unitary 정합.
+- warning tier 첫 도입 (ADR-060 §결정 5 정합 — 모든 신규 entry 는 warning 시작 강제). blocking-on-merge 격상 = empirical evidence 누적 후 별 CFP carrier 영역 (ADR-060 승격 gate AND condition 통과 의무, Story-2 #861).
+- comment-prefix-registry-v1 v1.2 → v1.3 MINOR bump 동반 (§결정 6.A.4 `[bypass-justification]` 14번째 prefix 신설) — ADR-008 MINOR (entry 추가 = append-only for v1.x rule 정합), kind:registry sibling sync 면제 (ADR-010 §결정 2).
+- ADR-066 단일 PAT (CODEFORGE_CROSS_REPO_PAT) reuse — 신규 secret 0건, rotation policy 영향 0.
+
+### scope_boundary (CFP scope unitary, ADR-064 §결정 1 정합)
+
+본 Amendment 8 **포함** 영역 (Story-1 = 본 #845 ACTIVE):
+
+- §결정 6.A.3 per-plugin scope 누적 카운터 ratchet (warning tier only)
+- §결정 6.A.4 `[bypass-justification]` PR comment marker presence lint (grep-only, false-positive risk 명시)
+- §결정 6.A.5 cross-repo bypass counter extension (wrapper + internal-docs + marketplace 3-repo)
+- 3 신규 family member (37/38/39번째)
+- comment-prefix-registry-v1 v1.3 MINOR bump (`[bypass-justification]` 14번째 prefix)
+
+본 Amendment 8 **out-of-scope** (Story-2 #861 RESERVED 별 carrier 영역):
+
+- **blocking-on-merge tier escalation** — ADR-060 승격 gate AND condition (PR 누적 ≥20 + bypass 외 failure=0 + sibling Story merged) 통과 후 별 carrier (#861 evidence-gated). 본 Amendment 8 = 3 신규 entry warning tier first iteration only.
+
+본 Amendment 8 **후속 carrier 영역** (Phase 2 actual wire 후 별 carrier):
+
+- per-plugin threshold 재calibration (현 5 = 보수적 시작, Phase 2 evidence 누적 후 재평가)
+- cross-repo aggregate threshold 재calibration (현 3 = per-entry 동일, multi-repo systemic 신호 noise floor 평가)
+- `[bypass-justification]` marker semantic adequacy 자동 평가 (현 grep-only, NLP 평가는 별 carrier — Research §unknown unknown 2 deferred)
+- per-plugin 외 추가 axis (예: per-author cumulative — Phase 2 actual wire 후 evidence 누적 시 별 carrier)
+
+### Related
+
+- ADR-024 Amendment 3 §결정 6.A (prior art — per-entry namespace audit-trail SSOT)
+- ADR-024 Amendment 3 §결정 6.C (prior art — audit trail 3중 안전망: PR comment + audit assertion lint + audit log 집계)
+- ADR-024 Amendment 6 §결정 6.A.2 (prior art — per-entry namespace 누적 사용 카운터 ratchet 룰)
+- ADR-024 Amendment 6 §scope_boundary (본 Amendment 8 의 4 out-of-scope 영역 중 3 영역 흡수, 4번째 = Story-2 #861 RESERVED)
+- ADR-060 (framework — 3 신규 warning-tier evidence-checks-registry entry `per-plugin-cumulative-counter` + `bypass-justification-marker` + `cross-repo-bypass-counter` 등록, Phase 1 entry append + Phase 2 actual wire)
+- ADR-058 §결정 5 (ratchet-up 강화 방향 정합 — sunset_justification_required: false)
+- ADR-061 (Python script convention — 본 신설 3 lint script = `.py` file + thin bash wrapper 각)
+- ADR-040 Amendment 3 §결정 7.D (mechanical_enforcement_actions[] self-application — `per-plugin-cumulative-counter` + `bypass-justification-marker` + `cross-repo-bypass-counter` 3 entry 추가)
+- ADR-068 Amendment 1 I-5 (dimensional empirical grounding — threshold ≥5 `count` dimension + threshold ≥3 `count` dimension 각 empirical-source annotation 의무)
+- ADR-005 (workflow self-app byte-identical mirror — 3 신규 workflow yml templates/ ↔ .github/workflows/ 동기)
+- ADR-010 §결정 2 (label-registry-v2 v2.26 → v2.27 MINOR + comment-prefix-registry-v1 v1.2 → v1.3 MINOR = wrapper-canonical kind:registry, sibling sync 면제)
+- ADR-008 (contract versioning — 2 kind:registry MINOR bump 룰, 신규 entry append = minor)
+- ADR-063 (marketplace ↔ plugin.json atomic invariant — 본 carrier plugin.json MINOR bump 미동반 → atomic invariant 비발효)
+- ADR-066 (CODEFORGE_CROSS_REPO_PAT rotation policy — 본 §결정 6.A.5 cross-repo workflow `permissions: issues: write` + `repo: read` 단일 PAT reuse, rotation 90 day 정합)
+- ADR-027 Amendment 2 §결정 6.C (manual fallback path 정합 — workflow trigger 시 PAT 환경 검증 의무)
+- ADR-013 (family scope SSOT — 3 cross-repo = wrapper + internal-docs + marketplace)
+- ADR-064 §결정 1 (CFP scope unitary — Story-1 (본 #845) 3 즉시 통합 + Story-2 (#861 RESERVED) 1 deferred 분리 정합)
+- CFP-825 retro §6 후보 3 (carrier — bypass-as-norm mutation 후속 escalation 4 영역 발의)
+- CFP-825 Amendment 6 §scope_boundary (out-of-scope 4 영역 verbatim 인용 → 본 Amendment 8 = 3 영역 흡수)
+- CFP-845 Issue body + scope-split comment (2026-05-17 KST) — 옵션 B 2-Story 분할 권장 (Researcher / PMO / Analyst 3-agent 합치)
+- CFP-861 RESERVED (Story-2 — blocking-on-merge tier 격상 carrier, evidence-gated)
+- CFP-771 retro §8 제안 1 (prior art lineage — bypass-label-namespace 카운터 lint 제안, CFP-825 Amendment 6 첫 carrier)
+- CFP-627 (precedent — marketplace-drift-detection 24h cron + workflow_dispatch + Issue auto-create + per-(plugin, field) signature dedup 동일 구조 cross-repo reuse)
+- CFP-389 prior art (`scripts/check-bypass-audit-comment.sh` audit lint reuse)
+- `docs/inter-plugin-contracts/label-registry-v2.md` v2.26 → v2.27 MINOR (CFP-845 — 37번째 `hotfix-bypass:per-plugin-cumulative-counter` + 38번째 `hotfix-bypass:bypass-justification-marker` + 39번째 `hotfix-bypass:cross-repo-bypass-counter`)
+- `docs/inter-plugin-contracts/comment-prefix-registry-v1.md` v1.2 → v1.3 MINOR (CFP-845 — 14번째 `[bypass-justification]` prefix 신설)
+- `docs/evidence-checks-registry.yaml` (CFP-845 Phase 1 — `per-plugin-cumulative-counter` + `bypass-justification-marker` + `cross-repo-bypass-counter` 3 entry append, warning tier, deferred-followup status, Phase 2 actual wire)
+- `templates/github-workflows/per-plugin-cumulative-counter.yml` / `bypass-justification-marker.yml` / `cross-repo-bypass-counter.yml` (CFP-845 Phase 2 — 24h cron + PR-time lint 각)
+- `scripts/check-per-plugin-cumulative-counter.{py,sh}` / `check-bypass-justification-marker.{py,sh}` / `check-cross-repo-bypass-counter.{py,sh}` (CFP-845 Phase 2 — ADR-061 정합 외부 .py + thin bash wrapper 각)
+- `tests/scripts/test-check-per-plugin-cumulative-counter.bats` / `test-check-bypass-justification-marker.bats` / `test-check-cross-repo-bypass-counter.bats` (CFP-845 Phase 2 — TC 5+ baseline 각)

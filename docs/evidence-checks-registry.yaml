@@ -2162,6 +2162,143 @@ entries:
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
+  # ─── CFP-845 Phase 1 (ADR-024 Amendment 8 §결정 6.A.3 — per-plugin scope 누적 카운터 첫 진입, 2026-05-17) ───
+  # bypass-as-norm-mutation 후속 escalation 3 sub-decision 통합 Phase 1 (Story-1 = 본 #845 ACTIVE).
+  # CFP-825 Amendment 6 §scope_boundary 4 out-of-scope 중 1번 영역 (per-plugin scope 누적 카운터) 흡수.
+  - name: per-plugin-cumulative-counter
+    description: |
+      ADR-024 Amendment 8 §결정 6.A.3 — per-(plugin) signature 단위 cross-entry aggregate
+      hotfix-bypass:* family member 누적 사용 카운터 lint. 단일 plugin 의 모든 entry 누적
+      ≥5 reach-merged PR 시 carrier Issue 자동 발의 (signature = plugin-only, dedup_unit =
+      PR number, window = all-time). §결정 6.A.2 (per-entry namespace, CFP-825) 의 상위
+      layer 집계 channel — 단일 plugin 이 5 entry 각 1회 = 5회 분산 사용 시 §결정 6.A.2
+      미발의 but 본 §결정 6.A.3 발의 (per-plugin scope norm mutation 신호). self-meta
+      loop 회피: hotfix-bypass:per-plugin-cumulative-counter 부착 PR + hotfix-bypass:exempt:per-plugin
+      template 부착 PR 은 누적 count 제외. §결정 6.A.2 와 disjoint invariant — 동일 PR
+      가 양 trigger 시 양 carrier Issue 각 발의 (signature aggregation 금지).
+      grep-testable artifact 존재 예정 (scripts/check-per-plugin-cumulative-counter.{py,sh},
+      Phase 2 carrier). CFP-825 bypass-label-counter precedent 직접 답습 (24h cron +
+      workflow_dispatch + Issue auto-create + per-signature dedup).
+    detect_command: bash scripts/check-per-plugin-cumulative-counter.sh
+    workflow: templates/github-workflows/per-plugin-cumulative-counter.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:per-plugin-cumulative-counter
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+        - per_plugin_threshold_calibration_evidence  # Phase 2 actual wire 후 별 calibration carrier (현 5 = 보수적 시작)
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-845
+    introduced_date: 2026-05-17
+    owner_adr: ADR-024            # Amendment 8 §결정 6.A.3 (per-plugin scope 누적 카운터 ratchet 룰 SSOT)
+    carrier_adr: ADR-060          # evidence-enforceable framework carrier
+    recurrence:
+      count: 0                    # Phase 1 entry append, Phase 2 actual wire 후 evidence 누적 시점 별 update
+      threshold: 5                # ADR-024 Amendment 8 §결정 6.A.3 — per-plugin scope 보수적 시작 (per-entry threshold 3 의 entry 다양성 cover noise floor)
+      last_occurrence: null       # Phase 2 actual wire 후 first reach 시점 update
+      promotion_trigger: none     # Phase 1 = entry append only, Phase 2 actual wire 후 advisory 격상
+    status: deferred-followup    # Phase 2 carrier wire (lint script + workflow + bats) 후 Active 전환
+
+  # ─── CFP-845 Phase 1 (ADR-024 Amendment 8 §결정 6.A.4 — `[bypass-justification]` PR comment marker presence lint, 2026-05-17) ───
+  # narrative audit 영역 첫 evidence-checks-registry entry.
+  # CFP-825 Amendment 6 §scope_boundary 4 out-of-scope 중 3번 영역 (`[bypass-justification]` marker) 흡수.
+  - name: bypass-justification-marker
+    description: |
+      ADR-024 Amendment 8 §결정 6.A.4 — hotfix-bypass:* label 부착 PR 의
+      `^\[bypass-justification\]` top-level PR comment grep-presence lint. comment-prefix-registry-v1
+      v1.3 14번째 prefix `[bypass-justification]` 신설 정합 (CFP-845 carrier). semantic
+      adequacy 불가 (grep-only) — false-positive risk 명시, reviewer responsibility.
+      grep PASS but body 부적합 (예: 빈 marker, 단순 "ok") = lint PASS but reviewer reject
+      영역 (CFP-845 Research §unknown unknown 2 — NLP 평가 별 carrier deferred).
+      lint scope = hotfix-bypass:* label 부착 PR 의 top-level PR comment only (review
+      comment 제외). marker 의무 scope = hotfix-bypass:* 부착 PR only (label 부착 없는
+      PR 은 marker 의무 X). self-meta loop 회피: hotfix-bypass:bypass-justification-marker
+      부착 PR 은 marker presence check skip. workflow event filter 의무 = `on:
+      pull_request` (opened/synchronize/reopened) + `on: pull_request_review_comment`
+      (top-level body parse) 양 event cover. audit trail 영구화 = PR comment 는
+      GitHub-side state (PR close 후도 유지). grep-testable artifact 존재 예정
+      (scripts/check-bypass-justification-marker.{py,sh}, Phase 2 carrier).
+    detect_command: bash scripts/check-bypass-justification-marker.sh
+    workflow: templates/github-workflows/bypass-justification-marker.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:bypass-justification-marker
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+        - false_positive_rate_evidence  # grep-only lint 의 false-positive rate 누적 measurement (Phase 2 actual wire 후 별 measurement carrier)
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-845
+    introduced_date: 2026-05-17
+    owner_adr: ADR-024            # Amendment 8 §결정 6.A.4 (PR comment marker mechanical enforce SSOT)
+    carrier_adr: ADR-060          # evidence-enforceable framework carrier
+    recurrence:
+      count: 0                    # Phase 1 entry append, Phase 2 actual wire 후 evidence 누적 시점 별 update
+      threshold: 1                # PR per-presence boolean (binary) — 단일 PR scope, 누적 threshold 미적용
+      last_occurrence: null       # Phase 2 actual wire 후 first reach 시점 update
+      promotion_trigger: none     # Phase 1 = entry append only, Phase 2 actual wire 후 advisory 격상
+    status: deferred-followup    # Phase 2 carrier wire (lint script + workflow + bats) 후 Active 전환
+
+  # ─── CFP-845 Phase 1 (ADR-024 Amendment 8 §결정 6.A.5 — cross-repo 3-repo bypass counter extension, 2026-05-17) ───
+  # cross-repo 영역 첫 evidence-checks-registry entry.
+  # CFP-825 Amendment 6 §scope_boundary 4 out-of-scope 중 4번 영역 (cross-repo extension) 흡수.
+  - name: cross-repo-bypass-counter
+    description: |
+      ADR-024 Amendment 8 §결정 6.A.5 — 3-repo (mclayer/plugin-codeforge wrapper +
+      mclayer/codeforge-internal-docs + mclayer/marketplace) cross-repo per-(repo,
+      plugin, label) signature 누적 카운터 lint. threshold = per-(repo, plugin, label)
+      signature 누적 ≥3 reach-merged PR (§결정 6.A.2 와 동일 — repo namespace 분리 시
+      per-repo 독립 trigger). aggregate trigger = 3 repo 동일 (plugin, label) signature
+      동시 reach 시 단일 aggregate carrier Issue 발의 (multi-repo signature, 3-repo
+      systemic mutation 신호). per-repo 단독 trigger + aggregate trigger 양 channel
+      disjoint. dedup_unit = (repo, PR number) 2-tuple (cross-repo PR number 충돌 회피).
+      single PAT (CODEFORGE_CROSS_REPO_PAT, ADR-066) reuse — 3 repo `issues:read` +
+      `repo:read` 권한, 신규 secret 0건. rotation 90 day / max 180 day lifetime
+      정합 (ADR-066). carrier Issue repository = aggregate carrier = mclayer/plugin-codeforge
+      (wrapper governance owner SSOT, ADR-013 정합), per-repo carrier = 해당 repo
+      (각 repo local governance). self-meta loop 회피: hotfix-bypass:cross-repo-bypass-counter
+      부착 PR 은 cross-repo 누적 count 제외. grep-testable artifact 존재 예정
+      (scripts/check-cross-repo-bypass-counter.{py,sh}, Phase 2 carrier). CFP-627
+      marketplace-drift-detection precedent (24h cron + workflow_dispatch + Issue
+      auto-create + per-signature dedup) cross-repo 확장.
+    detect_command: bash scripts/check-cross-repo-bypass-counter.sh
+    workflow: templates/github-workflows/cross-repo-bypass-counter.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:cross-repo-bypass-counter
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+        - cross_repo_aggregate_threshold_calibration_evidence  # aggregate trigger threshold 재calibration evidence (Phase 2 actual wire 후 별 calibration carrier)
+        - pat_rotation_audit_log_evidence                       # ADR-066 PAT rotation log 정합 (90 day rotation / 180 day max lifetime)
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-845
+    introduced_date: 2026-05-17
+    owner_adr: ADR-024            # Amendment 8 §결정 6.A.5 (cross-repo extension SSOT)
+    carrier_adr: ADR-060          # evidence-enforceable framework carrier
+    recurrence:
+      count: 0                    # Phase 1 entry append, Phase 2 actual wire 후 evidence 누적 시점 별 update
+      threshold: 3                # ADR-024 Amendment 8 §결정 6.A.5 — per-(repo, plugin, label) signature 단위 §결정 6.A.2 와 동일 (3)
+      last_occurrence: null       # Phase 2 actual wire 후 first reach 시점 update
+      promotion_trigger: none     # Phase 1 = entry append only, Phase 2 actual wire 후 advisory 격상
+    status: deferred-followup    # Phase 2 carrier wire (lint script + workflow + bats) 후 Active 전환
+
   # ─── CFP-820 Phase 2 — version-3way-atomic (ADR-063 Amendment 5 §결정 15 carrier) ───
   # Epic CFP-699 Wave 3 Story-6 B2 — blocking-on-pr tier 직접 시작 (ADR-060 §결정 11 / ADR-063 §결정 11 패턴 답습)
   # Epic §8 scope_manifest planned_label_registry_bumps 3rd entry 정합
@@ -2171,7 +2308,7 @@ entries:
       publisher (wrapper plugin.json .version) ↔ registry (marketplace.json .plugins[codeforge].version)
       ↔ consumer (.claude/_overlay/project.yaml .codeforge.version_pin.version)
       byte-identical version field compare. consumer pin 미등록 = warning-first exit 0
-      (orthogonality invariant — pin 부재 ≠ version mismatch, ADR-027 Amendment 4 fallback).
+      (orthogonality invariant — pin 미지정 ≠ version mismatch, ADR-027 Amendment 4 fallback) [verified: git show origin/main:scripts/check-3way-version-parity.sh].
       pin 등록 + 3-way mismatch = blocking-on-pr exit 1.
       sanity guard 6-tuple (Story §5.2 AC-13) + ADR-070 verify-before-trust 통합.
     detect_command: bash scripts/check-3way-version-parity.sh
