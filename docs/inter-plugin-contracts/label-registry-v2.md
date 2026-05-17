@@ -68,7 +68,7 @@ related_files:
 
 - **추가**: `channel:stable` (color `0e8a16`, category `channel`) — consumer `.claude/_overlay/project.yaml codeforge.channel.tier: stable` 선언 시 GitHub Issue/PR channel-aware annotation marker. ADR-076 §결정 9.1 3-tier taxonomy 의 default tier (LOW risk class). Wave 4 sub-Epic #1 Story-1 (CFP-906) carrier.
 - **추가**: `channel:beta` (color `d4c5f9`, category `channel`) — beta tier marker (MEDIUM risk class, opt-in incremental track).
-- **추가**: `channel:canary` (color `f9d0c4`, category `channel`) — canary tier marker (HIGH risk class, production-impact awareness — ADR-076 §결정 9.4 channel selection authority asymmetry + ADR-072 §결정 1 ProductionEvidenceDeputy spawn trigger semantic anchor, Story-3 carrier 영역).
+- **추가**: `channel:canary` (color `f9d0c4`, category `channel`) — canary tier marker (HIGH risk class, production-impact awareness — ADR-076 §결정 9.4 channel selection authority asymmetry + ADR-72 §결정 1 ProductionEvidenceDeputy spawn trigger semantic anchor, Story-3 carrier 영역).
 - **신규 category enum**: `channel` — 기존 axis (type/phase/gate/fix/hotfix/audit/hotfix-bypass/monitoring/conflict/fallback/fast-pass) 와 별 axis. CFP-658 v2.13 `fallback:` 신설 / CFP-795 v2.21 `fast-pass` 신설 선례 정합. ADR-008 §결정 1 BREAKING enum 추가 아님 (label name self-distinguishing).
 - `scripts/bootstrap-labels.sh` dynamic read 자동 흡수 (CFP-598 parse-hotfix-bypass-labels.py 분기 — yaml row 추가만으로 bootstrap 자동 반영, script 변경 0건).
 - canonical-only (kind:registry — sibling sync scope 외 per ADR-010 §결정 2, marketplace.json sync 면제 — plugin.json MINOR bump 미동반 — declare layer SSOT only).

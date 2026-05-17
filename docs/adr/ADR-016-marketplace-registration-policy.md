@@ -156,7 +156,7 @@ CFP-391 retro follow-up — wrapper plugin.json mirrored field 변경 시 별도
 |---|---|---|
 | `stable` | LOW (default) | family 7 plugin 모두 stable branch version atomic resolve |
 | `beta` | MEDIUM | family 7 plugin 모두 beta branch version atomic resolve |
-| `canary` | HIGH (production cutover) | family 7 plugin 모두 canary branch version atomic resolve — Wave 4 sub-Epic #1 Story-3 ProductionEvidenceDeputy spawn trigger 영역 (ADR-072 §결정 1 정합) |
+| `canary` | HIGH (production cutover) | family 7 plugin 모두 canary branch version atomic resolve — Wave 4 sub-Epic #1 Story-3 ProductionEvidenceDeputy spawn trigger 영역 (ADR-72 §결정 1 정합) |
 
 **Story-1 scope (declare)**: 본 §결정 9 = declarative SSOT mandate. runtime mechanism (UpgradeAgent mixed channel detection + abort, marketplace.json `channels[]` per-plugin 7 entry mirrored, CLI `--channel` flag dispatch) = Wave 4 sub-Epic #1 후속 Story-2 carrier 영역. Story-1 = ADR + contract MINOR bump + project-config-schema MINOR + label-registry MINOR — declare layer only (marketplace.json 자체 변경 0, plugin.json bump 0 — `marketplace_sync_declared: false`).
 
@@ -167,7 +167,7 @@ CFP-391 retro follow-up — wrapper plugin.json mirrored field 변경 시 별도
 - ADR-076 §결정 9 (3-tier channel taxonomy declaration) — 본 Amendment 3 의 sibling carrier
 - ADR-063 Amendment 6 §결정 17 (mirrored field × channel matrix + 3-way channel invariant) — 본 Amendment 3 의 marketplace-side sibling carrier
 - reconcile-protocol-v1 v1.7 §4.10 `multi_version_channel_pin_binding` — 본 Amendment 3 의 contract carrier (`family_atomic_channel_invariant` block)
-- ADR-072 §결정 1 (ProductionEvidenceDeputy spawn trigger) — canary tier production-impact 영역 Story-3 carrier cross-ref
+- ADR-72 §결정 1 (ProductionEvidenceDeputy spawn trigger) — canary tier production-impact 영역 Story-3 carrier cross-ref
 - label-registry-v2 v2.29 (3 `channel:*` label + 신규 category enum `channel`) — annotation marker sibling
 
 ## 결과

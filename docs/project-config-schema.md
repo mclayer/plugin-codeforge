@@ -205,7 +205,7 @@ codeforge:
   #   - canary: preview + production-impact tier. HIGH risk class (production cutover semantic).
   #       admin tier 권장 (consumer-side 책임, ADR-076 §결정 9.4 channel selection authority asymmetry).
   #       canary tier 선언 시 Wave 4 sub-Epic #1 Story-3 ProductionEvidenceDeputy spawn trigger 영역
-  #         (ADR-072 §결정 1 정합 — Live touching = TRUE 영역, declare layer 본 Story-1 영역 외).
+  #         (ADR-72 §결정 1 정합 — Live touching = TRUE 영역, declare layer 본 Story-1 영역 외).
   # Fallback semantic (orthogonality invariant — channel 가용성 ≠ channel 정합성, conflate 금지):
   #   - channel block 미등록 (본 block 부재) = default stable 자연 fallback (warning 0, lint skip 0).
   #       기존 consumer overlay 영향 0 (additive only — schema rule §1.1 선택 필드 추가, backward-compat invariant).
