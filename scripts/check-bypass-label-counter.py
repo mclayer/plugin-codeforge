@@ -92,7 +92,7 @@ def fetch_merged_bypass_prs(repo):
     # 대신 전체 PR 목록에서 hotfix-bypass: prefix label 필터링
     # NOTE: GitHub search API 는 label: wildcard 미지원.
     # 전략: is:pr is:merged 전체에서 hotfix-bypass: prefix label 가진 것 수집.
-    # --jq 로 서버 측 필터 적용 (label 이름 prefix 확인).
+    # --jq 로 client-side 필터 적용 (gh --paginate 응답 fetch 후 jq 적용 — GitHub search API label: wildcard 미지원, 전체 merged PR fetch 후 prefix 필터).
     raw_output = run_gh([
         "api", "-X", "GET", "search/issues",
         "-f", f"q=repo:{repo} is:pr is:merged",
@@ -196,9 +196,14 @@ def create_carrier_issue(repo, label, pr_numbers, dry_run=False):
         f"## Context\n\n"
         f"per-entry namespace `{label}` label attached to {len(pr_numbers)} merged PRs.\n"
         f"threshold=3 reached (ADR-024 Amendment 6 section 6.A.2 ratchet rule).\n\n"
-        f"## Action\n\n"
-        f"exception -> norm mutation (bypass-as-norm mutation) risk accumulation review required.\n"
-        f"Subsequent carrier decides blocking-on-merge tier escalation.\n\n"
+        f"## Follow-up Evaluation (ADR-024 Amendment 6 section 6.A.2)\n\n"
+        f"Review the following 3-axis evaluation for this signature:\n\n"
+        f"1. **Threshold recalibration**: Is threshold=3 appropriate? Adjust if this signature\n"
+        f"   represents legitimate repeated use rather than bypass-as-norm mutation.\n\n"
+        f"2. **Blocking-on-merge tier escalation**: If mutation risk confirmed, promote from\n"
+        f"   warning to blocking-on-merge tier (ADR-060 4-tier promotion gate).\n\n"
+        f"3. **Legitimate-use-area declaration**: If this signature is an accepted exception,\n"
+        f"   attach `hotfix-bypass:exempt:{label}` to future PRs to exclude from monitoring.\n\n"
         f"---\n"
         f"Source: `scripts/check-bypass-label-counter.py` (CFP-825 / ADR-024 Amendment 6)\n"
         f"ADR: [ADR-024](docs/adr/ADR-024-story-scoped-branch-policy.md)"
