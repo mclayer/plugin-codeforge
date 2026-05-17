@@ -7,6 +7,24 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.84.0] - 2026-05-17
+
+### Changed (CFP-851 ADR-071 Amendment 4 — Conversational reporting frequency suppression contract)
+
+- **`docs/adr/ADR-071-orchestrator-user-dialog-convergence.md`** — Amendment 4 신설 (`amendment_log` entry `amendment_id: 4` + `carrier_story: CFP-851` + `sunset_justification: null` + family pattern 정합, related_stories CFP-851 append). 본문 §결정 15 신설 — Orchestrator ↔ user dialog 의 발화 허용 touchpoint 3종 closed enumeration 명문화 + frequency vs richness 분리 invariant codify. 7 sub-section: §15.1 본질 anchor (frequency vs richness 분리 + verifiable outcome surface 경계) / §15.2 3 touchpoint closed enumeration ((a) 결과-명세 확인 / (b) 사용자만 풀 수 있는 차단 / (c) 최종 완료 보고 1회) + 산출물 channel enumeration (Story / change-plan / ADR / PR / TodoWrite panel) / §15.3 무약화 invariant — §결정 2(c) richness 보존 + Layer 1-4 + DialogFidelityAgent auxiliary + Sub-mechanism 1/2 + §결정 14 measurement 모두 보존 + 5번째 cognitive layer 신설 금지 invariant 정합 / §15.4 ADR-039 inline whitelist 1번·4번 entry scope 안 작동 declare (closed 4-entry 보존, 신규 entry 신설 0) / §15.5 closed-enum 확장 패턴 (4번째 touchpoint 신설 시 별 CFP 의무 — §결정 13.6 정합, 본 ADR 안 3번째 closed enumeration 인스턴스) / §15.6 measurement gap declare — behavioral directive only (mechanical lint = 별 follow-up CFP) / §15.7 sunset_justification: null 적격 (Amendment 1/2/3/4 family pattern). self-application top-down ratchet 단락 약화 방향 enum 확장 (3 touchpoint enum 축소 + §결정 2(c) richness 약화 차단 명시).
+- **`docs/orchestrator-playbook.md` §3.14**: `Conversational reporting frequency suppression (ADR-071 §결정 15 / CFP-851 / Amendment 4)` sub-section 신설 (closed enum 확장 단락 다음, §3.15 fallback decision tree 직전). 본질 anchor + 3 touchpoint 표 + 산출물 channel enumeration + 무약화 invariant + closed enum 확장 패턴 + mechanical lint 별 follow-up CFP 단락.
+- **`CLAUDE.md` L199 (오케스트레이션 규칙 / Adversarial Debate Protocol Wave 5 단락)**: Wave 5 single-line inline 안에 `Amendment 4 (CFP-851 / §결정 15)` sentence append — 3 touchpoint closed enumeration + 무약화 invariant + ADR-039 inline whitelist 1번·4번 entry scope + 4번째 touchpoint 확장 별 CFP 의무. line cap 320 invariant 보존 (inline 확장만, 별 줄 추가 0).
+- **`skills/user-dialog-mode/SKILL.md`**: `Conversational reporting frequency suppression (ADR-071 §결정 15 / CFP-851 / Amendment 4)` lookup mirror sub-section 신설 — playbook §3.14 + ADR-071 §결정 15 SSOT, skill body = mirror only (ADR-064 §결정 10 normative > skill body 우선 정합). 본질 anchor + 3 touchpoint 표 + 무약화 invariant + closed enum 확장 + mechanical lint 별 CFP.
+
+### Scope (CFP-851 invariants)
+
+- **doc-only fast-path (ADR-054)** — src/tests 무변경, ADR-071 Amendment + SSOT 문서 4종만 갱신, 단일 PR, Story §1·§2·§11 필수 + §3-§10 = `N/A — doc-only fast-path (ADR-054)` 선언.
+- **additive ratchet only** (ADR-058 §결정 5 정합) — Layer 1-4 / DialogFidelityAgent auxiliary / §결정 2(c) richness / 3-anchor enum / 4 차원 enum / Inline whitelist 4-entry 모두 보존. `is_transitional: false` 유지, `sunset_justification: null` 적격.
+- **frequency vs richness 분리 invariant** — 본 Amendment 가 좁히는 것은 발화 횟수·시점 만, 발화 시 풍부함 (3 줄 제약 거부 / 배경 포함 / Layer 1·2 preamble·declare) 모두 보존. 약화 방향 다운그레이드 (3 touchpoint enum 축소 / §결정 2(c) richness 약화) = ADR-058 §결정 5 `sunset_justification` 의무로 차단.
+- **behavioral directive only** — mechanical lint (3 touchpoint 외 발화 자동 감지 / 억제-induced rework 측정) = 별 follow-up CFP scope (§결정 10 패턴 정합, dialog-fidelity-effect precedent runtime cron measurement 동형 advisory warning tier).
+- **plugin.json 5.83.0 → 5.84.0 MINOR** (ADR-037 정합 — ADR Amendment 발의 = governance behavior change MINOR).
+- **marketplace atomic sync** (ADR-063 §결정 5) — 별도 sibling PR 의무 (Orchestrator 책임 영역, codeforge PR merge 직후 즉시 open·merge). mirrored field 4종 (`name`/`version`/`description`/`author`) 의 verbatim parity.
+
 ## [5.83.0] - 2026-05-17
 
 ### Added (CFP-821 Epic CFP-699 Wave 3 Story-7 Phase 2 — D1+D2+D3 coverage fan-out)

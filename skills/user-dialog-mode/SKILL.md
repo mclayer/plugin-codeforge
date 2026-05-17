@@ -179,3 +179,37 @@ DialogFidelityAgent spawn (subagent 형태) = [ADR-039 §결정 2](../../docs/ad
 ### closed enum 확장 시 별 CFP 의무
 
 3-anchor closed. 확장 후보 (`pre_lane_spawn` / `pre_phase_transition` / `pre_pause_decision`) 발생 시 별 CFP 신설 의무.
+
+## Conversational reporting frequency suppression (ADR-071 §결정 15 / CFP-851 / Amendment 4)
+
+> normative SSOT = [playbook §3.14 frequency suppression](../../docs/orchestrator-playbook.md) + [ADR-071 §결정 15](../../docs/adr/ADR-071-orchestrator-user-dialog-convergence.md). 본 sub-section = **lookup mirror only** (skill body precedence 정합 — [ADR-064 §결정 10](../../docs/adr/ADR-064-decision-principle-mandate.md) normative > skill body 우선).
+
+### 본질 anchor — frequency vs richness 분리 invariant
+
+본 정책이 좁히는 것은 **말 거는 횟수·시점** (frequency / timing) 만. **말할 때의 풍부함은 §결정 2(c) "3 줄 제약 거부 · 길이 자유 · 배경 포함" 그대로 보존**. 두 축 분리 = ADR-058 §결정 5 약화 차단 (`sunset_justification: null`) 근거.
+
+### 3 touchpoint closed enumeration
+
+| touchpoint | 발화 사유 | scope |
+|---|---|---|
+| **(a) 결과-명세 확인** | 사용자 선언 결과 자체 모호 + 잘못 추측 시 rollback 비싼 경우 (verifiable outcome surface 안전판) | `AskUserQuestion` 발화 (§결정 5 결정 트리 — 모호 → 가치 측 분류) |
+| **(b) 사용자만 풀 수 있는 차단** | 인증·권한 등 codeforge 자체 해소 불가 | ADR-039 inline whitelist 1번 entry (사용자 dialog) scope 안 |
+| **(c) 최종 완료 보고 1회** | 요청한 작업 단위 전체 완료 | ADR-039 inline whitelist 4번 entry (Status report) scope 안 |
+
+그 외 진행·중간 결정·근거·중간 결과 = 산출물 channel (대화 turn 아님): Story file / change-plan / ADR / PR description / Issue comment / TodoWrite panel.
+
+### 무약화 invariant — turn 발생 시 적용
+
+3 touchpoint 발화 시 다음 모두 그대로 적용:
+- Layer 1 가시적 preamble + Layer 2 자기 declare (turn-shape edge derived default 무변경)
+- §결정 2(c) richness (raw packet 노출 금지, 평이한 한글, 3 줄 제약 거부, "왜 / trade-off / 걸려있는 것" 배경 포함)
+- DialogFidelityAgent 3-anchor spawn (§결정 12/13)
+- §결정 14 incident append-rate measurement
+
+### closed enum 확장 시 별 CFP 의무
+
+4번째 touchpoint 신설 시 별 CFP 의무 (ADR-064 §결정 7 top-down ratchet + ADR-058 §결정 5 sunset_justification + Story §1 사용자 explicit 승인 의무). 본 ADR-071 안 3번째 closed enumeration 인스턴스 (3-anchor enum / 4 차원 enum / 3 touchpoint enum 동형).
+
+### mechanical lint = 별 follow-up CFP
+
+§결정 15 = behavioral directive only. 3 touchpoint 외 발화 자동 감지 + 억제-induced rework 측정 = 별 follow-up CFP scope (§결정 10 패턴 정합, dialog-fidelity-effect precedent runtime cron measurement 동형).
