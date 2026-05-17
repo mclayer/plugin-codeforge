@@ -8,14 +8,23 @@ carrier_story: CFP-578
 parent_epic: null
 supersedes: null
 amends: null
-amendments: []
+amendments:
+  - amendment_id: 1
+    cfp: CFP-776
+    date: 2026-05-17
+    scope: "ADR-082 cross-ref 보완 관계 명시 (disjoint 보완) — ADR-070 = 외부 worker(Codex) output verify 한정 ↔ ADR-082 = internal lane agent self-write(§9 evidence / Phase 0 mapping / corpus enumeration) write-time semantic truth verify. 두 layer disjoint, scope 침범 0. ADR-082 §결정 1 layer disjoint 4-layer 표가 공통 anchor (ADR-073 / ADR-070 / ADR-082 / ADR-045 §D). ADR-070 D5 declaration-only retain 패턴 = ADR-082 §결정 6 known-limitation 선례. 본문 D1-D5 의미 변경 없음 — cross-ref-only Amendment."
+    status: applied
+    ref: "## Amendments / Amendment 1 + ADR-082 §결정 1 / §결정 6"
+    sunset_justification: null
 related_stories:
   - CFP-578  # carrier
   - CFP-506  # sentinel 1 reproduce
   - CFP-520  # sentinel 2 reproduce (skip option B)
   - CFP-530  # sentinel 3 reproduce (ADR 발의 timing 도달)
+  - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
 related_adrs:
   - ADR-052  # Codex proactive check 6 touchpoint
+  - ADR-082  # disjoint super-class (internal lane agent self-write verify — 외부 worker output ↔ lane agent self-write; D5 declaration-only retain 선례)
   - ADR-022  # Codex review 자동 발동 Deprecated (CFP-134 / ADR-035)
   - ADR-060  # evidence-enforceable promotion framework
   - ADR-040  # mechanical_enforcement_actions self-application 패턴
@@ -182,6 +191,19 @@ Codex worker 의 sandbox access 실패 = platform inherent (Claude Code agent ru
 - playbook §3.10 dispatch prompt template patch (verbatim 첨부 의무 본문 명시) — Amendment 5 본문 cross-ref
 - ADR-RESERVATION row append (ADR-070 reserved 등록 — GitOpsAgent self-write 영역, 본 carrier 는 ArchitectAgent inline append)
 
+## Amendments
+
+### Amendment 1 — ADR-082 cross-ref (disjoint 보완 관계, CFP-776)
+
+**문제**: ADR-070 = Codex external worker output verify 의무 (외부 worker output 한정). 그러나 lane agent 가 §9 evidence 작성 / Phase 0 mapping / corpus enumeration 시 write-time semantic truth 를 verify 없이 단언하는 영역 (pattern_count 3 누적, CFP-746/CFP-770) 은 ADR-070 scope 외 — internal lane self-write 미포함.
+
+**결정**: ADR-082 (Write-time self-write verification mandate) 신설로 해당 gap 을 disjoint super-class layer 로 codify. ADR-070 ↔ ADR-082 = **disjoint 보완 관계**:
+
+- **ADR-070** = 외부 worker(Codex) output 한정 (Codex finding evidence ground truth 를 Orchestrator direct file Read 로 verify, mismatch 시 verdict reject)
+- **ADR-082** = internal lane agent self-write 한정 (§9 evidence / Phase 0 mapping / corpus enumeration write-time 에 작성 값 자체의 사실성 source direct verify)
+
+두 layer 는 verify 대상 / 행위 주체가 disjoint — scope 침범 0. ADR-082 §결정 1 layer disjoint 4-layer 표 (ADR-073 / ADR-070 / ADR-082 / ADR-045 §D) 가 공통 anchor. 추가로 본 ADR-070 §D5 evidence-enforceable framework entry append 면제 (declaration-only retain) = ADR-082 §결정 6 `mechanical_enforcement_actions: []` known-limitation rationale 의 직접 선례. 본 Amendment 는 cross-ref-only — ADR-070 D1-D5 의미 변경 없음.
+
 ## 해소 기준
 
 N/A — permanent policy (verify-before-trust = Codex worker 사용 영구 invariant, sandbox 영역 변경 없으면 permanent retain). ADR-058 §결정 1-3 정합:
@@ -198,3 +220,4 @@ N/A — permanent policy (verify-before-trust = Codex worker 사용 영구 invar
 - [`docs/evidence-checks-registry.yaml`](../evidence-checks-registry.yaml) — declaration-only retain 정합 (entry append 면제)
 - [`docs/adr/ADR-RESERVATION.md`](ADR-RESERVATION.md) — ADR-070 reserved 등록 SSOT
 - [`docs/inter-plugin-contracts/fix-event-v1.md`](../inter-plugin-contracts/fix-event-v1.md) — Story §10 FIX Ledger schema (D3 영역 false positive count tally 적용 대상)
+- [`docs/adr/ADR-082-write-time-self-write-verification-mandate.md`](ADR-082-write-time-self-write-verification-mandate.md) — disjoint super-class (Amendment 1 cross-ref, CFP-776; D5 declaration-only retain = §결정 6 선례)
