@@ -593,3 +593,60 @@ ADR-024 Amendment 3 §결정 6.A `hotfix-bypass:<entry>` per-entry namespace 가
 - `scripts/check-bypass-label-counter.py` (CFP-825 Phase 2 — gh api query + signature tally + threshold check + Issue auto-create)
 - `scripts/check-bypass-label-counter.sh` (CFP-825 Phase 2 — thin bash wrapper, ADR-061 정합)
 - `tests/scripts/test-check-bypass-label-counter.bats` (CFP-825 Phase 2 — TC 5+ baseline)
+
+## Amendment 7 — `hotfix-bypass:corpus-claim-verify` 34번째 + `hotfix-bypass:cross-plugin-ownership-verify` 35번째 family member (CFP-841, 2026-05-17)
+
+### 컨텍스트
+
+CFP-841 (ADR-082 Amendment 1 carrier — §결정 6 behavioral→mechanical 전환) 가 ADR-060 framework 의 2 신규 warning-tier evidence check entry 를 신설한다:
+
+- `corpus-claim-verify` (ADR-082 §결정 2(a)) — Story/Change-Plan/ADR 본문 corpus/fixture enumeration ("예시 N건 / 전무 / 부재 / 다수" + file-path 인용 co-occurrence) 의 `[verified: git show <ref>:<path>]` annotation 부재 검출 (ADR-068 I-5 directly-analogous pattern 재사용). `scripts/check-corpus-claim-verify.{py,sh}` + `templates/github-workflows/corpus-claim-verify.yml` (CFP-841 Phase 2 carrier).
+- `cross-plugin-ownership-verify` (ADR-082 §결정 2(d)) — ChangeImpactAgent Phase 0 mapping `templates/*` wrapper-local 단정 전 `lane-self-write-ownership-matrix.yaml` cross_plugin_doc_ownership sub-tree query 1-step annotation 부재 검출 + §13.B 4-way drift-sync invariant. `scripts/check-cross-plugin-ownership-verify.{py,sh}` + workflow (CFP-841 Phase 2 carrier).
+
+ADR-060 framework 정합 의무: 모든 warning-tier evidence check entry 는 ADR-024 Amendment 3 §결정 6.A per-entry namespace `hotfix-bypass:*` family member 와 1:1 mapping 의무 (audit-trailed exception channel SSOT). 34번째 + 35번째 family member 등록이 본 Amendment 7 의 의무 (verified-via: `git show origin/main:docs/inter-plugin-contracts/label-registry-v2.md` — v2.24 CFP-820 `hotfix-bypass:version-3way-atomic` 33번째 family member 가 현 최신, 본 Amendment 7 = 34/35번째).
+
+### Amendment
+
+#### §결정 6.A (확장) — `hotfix-bypass:corpus-claim-verify` 34번째 + `hotfix-bypass:cross-plugin-ownership-verify` 35번째 family member
+
+기존 `hotfix-bypass:*` family (Amendment 3 §결정 6.A 정합 + Amendment 4/5/6 확장 정합 + CFP-426~CFP-820 추가 entry 누적, 33 active member):
+
+| 신규 entry | family position | 의미 |
+|---|---|---|
+| `hotfix-bypass:corpus-claim-verify` | **34번째** | ADR-082 §결정 2(a) corpus annotation lint conditional skip — Story/Change-Plan/ADR corpus enumeration `[verified]` annotation lint (warning tier, CFP-841 Phase 2 carrier) |
+| `hotfix-bypass:cross-plugin-ownership-verify` | **35번째** | ADR-082 §결정 2(d) cross-plugin ownership queryable lint conditional skip — `lane-self-write-ownership-matrix.yaml` cross_plugin_doc_ownership sub-tree query + §13.B 4-way drift-sync invariant lint (warning tier, CFP-841 Phase 2 carrier) |
+
+(family member 카운트 = 33 active member (v2.24 CFP-820 33번째 `version-3way-atomic` 시점) + 본 Amendment 7 = 34/35번째 → 35 total. label-registry-v2 v2.24 → v2.25 MINOR bump 동반 — 2 신규 family member 동시 추가.)
+
+**audit lint**: `scripts/check-bypass-audit-comment.sh` reuse (CFP-389 prior art 단일 lint, `BYPASS_LABEL_PREFIX=hotfix-bypass:` env scan 으로 all-family detect — 독립 lint 신설 0건).
+
+**bypass scope**: `corpus-claim-verify.yml` / `cross-plugin-ownership-verify.yml` workflow 의 annotation presence lint step skip — phase-gate-mergeable.yml / phase-label-invariant.yml / 기타 4 core required check 영향 0건 (Amendment 3 §결정 6.B 정합).
+
+**write-time semantic truth verify 영역 첫 family member**: 기존 33 family member 는 syntactic / structural / debate / governance mechanical lint 대응. 본 Amendment 7 의 34/35번째 family member 는 ADR-082 write-time self-write semantic truth verify (corpus 단정 / cross-plugin ownership) 영역 첫 진입 — ADR-082 §결정 1 layer disjoint 표의 internal lane agent self-write layer 의 mechanical enforcement 활성.
+
+### Compatibility
+
+- ADR-024 §결정 1~6 + Phase 2 partial (CFP-70) + CFP-72 + Amendment 1 (CFP-134) + Amendment 2 (CFP-280) + Amendment 3 (CFP-389) + Amendment 4 (CFP-481) + Amendment 5 (CFP-582) + Amendment 6 (CFP-825) 전부 유지 — 본 Amendment 7 은 Amendment 3 §결정 6.A 의 호환 확장 (per-entry namespace 34/35번째 family member) only.
+- ADR-060 framework 외 영역 (4 core required check + 기존 evidence check + Amendment 1~6 entry) 에는 영향 X.
+- ADR-082 Amendment 1 carrier 동반 — ADR-082 §결정 2(a)/2(d) mechanical_enforcement_actions[] deferred-followup 2 entry 와 1:1 mapping.
+- ADR-058 §결정 5 sunset_justification ratchet — 본 Amendment 7 = forbid scope 확장 (per-entry namespace 2 추가) = ratchet-up 강화 방향, `sunset_justification_required: false`.
+- warning tier 첫 도입 (ADR-060 §결정 5 정합 — 모든 신규 entry 는 warning 시작 강제). blocking-on-pr 격상 = empirical evidence 누적 후 별 CFP carrier 영역.
+
+### Related
+
+- ADR-082 Amendment 1 (carrier — §결정 6 behavioral→mechanical 전환, scope 2(a) corpus-claim-verify + scope 2(d) cross-plugin-ownership-verify)
+- ADR-068 I-5 (scope 2(a) lint = I-5 `[empirical-source]` annotation directly-analogous pattern 재사용, cross-ref only)
+- ADR-060 (framework — 2 신규 warning-tier evidence-checks-registry entry `corpus-claim-verify` + `cross-plugin-ownership-verify` 등록)
+- ADR-024 Amendment 3 §결정 6.A (prior art — per-entry namespace audit-trail SSOT) + §결정 6.C (audit trail 3중 안전망)
+- ADR-058 §결정 5 (ratchet-up 강화 방향 정합 — sunset_justification_required: false)
+- ADR-010 §결정 2 (label-registry-v2 v2.24 → v2.25 MINOR = wrapper-canonical kind:registry, sibling sync 면제)
+- ADR-008 (contract versioning — v2.24 → v2.25 MINOR bump 룰, 신규 label entry append = minor)
+- ADR-063 (marketplace ↔ plugin.json atomic invariant — 본 carrier plugin.json MINOR bump 미동반 → atomic invariant 비발효)
+- CFP-841 retro/Change Plan §3 (Phase 2 carrier — lint script + workflow + bats + yaml cross-plugin sub-tree 확장 + §13.B 4-way sync)
+- CFP-389 prior art (`scripts/check-bypass-audit-comment.sh` audit lint reuse)
+- `docs/adr/ADR-082-write-time-self-write-verification-mandate.md` Amendment 1 (carrier)
+- `docs/inter-plugin-contracts/label-registry-v2.md` v2.24 → v2.25 MINOR (CFP-841 — 34번째 `hotfix-bypass:corpus-claim-verify` + 35번째 `hotfix-bypass:cross-plugin-ownership-verify`)
+- `docs/evidence-checks-registry.yaml` (CFP-841 — `corpus-claim-verify` + `cross-plugin-ownership-verify` 2 entry append, warning tier, deferred-followup status, Phase 2 actual wire)
+- `templates/github-workflows/corpus-claim-verify.yml` / `cross-plugin-ownership-verify.yml` (CFP-841 Phase 2 — annotation presence lint workflow)
+- `scripts/check-corpus-claim-verify.{py,sh}` / `scripts/check-cross-plugin-ownership-verify.{py,sh}` (CFP-841 Phase 2 — ADR-061 정합 외부 .py + thin bash wrapper)
+- `tests/scripts/test-check-corpus-claim-verify.bats` / `test-check-cross-plugin-ownership-verify.bats` (CFP-841 Phase 2 — TC 5+ baseline 각)
