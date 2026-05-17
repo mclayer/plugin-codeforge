@@ -2161,3 +2161,39 @@ entries:
       count: 0
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
+
+  # ─── CFP-820 Phase 2 — version-3way-atomic (ADR-063 Amendment 5 §결정 15 carrier) ───
+  # Epic CFP-699 Wave 3 Story-6 B2 — blocking-on-pr tier 직접 시작 (ADR-060 §결정 11 / ADR-063 §결정 11 패턴 답습)
+  # Epic §8 scope_manifest planned_label_registry_bumps 3rd entry 정합
+  - name: version-3way-atomic
+    description: |
+      ADR-063 Amendment 5 §결정 15 — 3-way version atomic invariant check.
+      publisher (wrapper plugin.json .version) ↔ registry (marketplace.json .plugins[codeforge].version)
+      ↔ consumer (.claude/_overlay/project.yaml .codeforge.version_pin.version)
+      byte-identical version field compare. consumer pin 미등록 = warning-first exit 0
+      (orthogonality invariant — pin 부재 ≠ version mismatch, ADR-027 Amendment 4 fallback).
+      pin 등록 + 3-way mismatch = blocking-on-pr exit 1.
+      sanity guard 6-tuple (Story §5.2 AC-13) + ADR-070 verify-before-trust 통합.
+    detect_command: bash scripts/check-3way-version-parity.sh
+    workflow: templates/github-workflows/version-3way-atomic.yml
+    current_tier: blocking-on-pr  # ADR-063 Amendment 5 §결정 16 + ADR-060 §결정 11 blocking-on-pr 직접 시작 (Epic §8 scope_manifest 정합)
+    bypass_label: hotfix-bypass:version-3way-atomic
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 0   # blocking-on-pr 직접 시작 — promotion 불필요 (ADR-063 §결정 11 패턴)
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-820
+    introduced_date: 2026-05-17
+    owner_adr: ADR-063         # 정책 ADR — marketplace atomic invariant Amendment 5 §결정 15
+    carrier_adr: ADR-060       # framework carrier (CFP-388 / ADR-060 §결정 12 family)
+    recurrence:
+      count: 0
+      threshold: 3
+      last_occurrence: null
+      promotion_trigger: advisory
+    status: Active

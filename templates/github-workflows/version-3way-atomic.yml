@@ -1,0 +1,91 @@
+# CFP-820 / ADR-063 Amendment 5 §결정 15 — 3-way version atomic invariant check (PR-time enforcement)
+#
+# 검증 (ADR-063 Amendment 5 §결정 15 verbatim):
+#   publisher (.claude-plugin/plugin.json .version)
+#   ↔ registry (mclayer/marketplace .claude-plugin/marketplace.json .plugins[codeforge].version)
+#   ↔ consumer (.claude/_overlay/project.yaml .codeforge.version_pin.version)
+#   3-way byte-identical version field compare
+#
+# fallback: consumer pin 미등록 = warning-first exit 0 (orthogonality invariant §7.4 / AC-2)
+# blocking-on-pr tier — ADR-060 evidence-enforceable framework
+#
+# Hotfix bypass: hotfix-bypass:version-3way-atomic label 부착 시 skip
+# (ADR-024 Amendment 3 hotfix-bypass label family 정합, 24시간 이내 sync 의무)
+#
+# ADR refs: ADR-063 Amendment 5 §결정 15/16, ADR-060 (blocking-on-pr), ADR-066 (PAT read-only),
+#           ADR-027 Amendment 4 (fallback), ADR-024 Amendment 3 (bypass channel)
+
+name: version-3way-atomic
+
+on:
+  pull_request:
+    paths:
+      - '.claude-plugin/plugin.json'
+      - 'CHANGELOG.md'
+      - '.claude/_overlay/project.yaml'
+      - 'scripts/check-3way-version-parity.sh'
+      - 'scripts/read_version_pin.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write  # bypass audit comment
+
+jobs:
+  three-way-atomic-check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python (for read_version_pin.py / PyYAML)
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install PyYAML
+        run: pip install pyyaml --quiet
+
+      - name: Check hotfix bypass label
+        id: bypass
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LABELS=$(gh pr view "${{ github.event.pull_request.number }}" --json labels --jq '.labels[].name' || echo "")
+          if echo "$LABELS" | grep -q "^hotfix-bypass:version-3way-atomic$"; then
+            echo "bypass=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::version-3way-atomic: hotfix-bypass:version-3way-atomic label detected — skipping (ADR-024 Amendment 3, 24h sync 의무)"
+          else
+            echo "bypass=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run check-3way-version-parity.sh
+        if: steps.bypass.outputs.bypass != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT || github.token }}
+        run: |
+          chmod +x scripts/check-3way-version-parity.sh
+          chmod +x scripts/read_version_pin.py
+          bash scripts/check-3way-version-parity.sh
+
+      - name: Bypass audit comment
+        if: steps.bypass.outputs.bypass == 'true' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" --body "[audit] **version-3way-atomic bypass 감지**
+
+          \`hotfix-bypass:version-3way-atomic\` label 부착 — ADR-063 Amendment 5 §결정 15 3-way atomic invariant check skip 됨.
+
+          **의무** (ADR-024 Amendment 3 hotfix-bypass family 정합):
+          - 24시간 이내 3-way version sync 완료:
+            - wrapper plugin.json .version
+            - marketplace.json .plugins[codeforge].version
+            - .claude/_overlay/project.yaml .codeforge.version_pin.version
+          - bypass label 제거 후 3-way invariant 회복 확인
+
+          Source: \`templates/github-workflows/version-3way-atomic.yml\` (CFP-820 / ADR-063 Amendment 5 §결정 15)"
