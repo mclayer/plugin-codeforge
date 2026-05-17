@@ -2211,8 +2211,8 @@ entries:
       (1) file-path co-occurrence guard (2) citation≠assertion 면제 (ADR-082 §결정 4)
       (3) forward-only effective-date (본 carrier merge 후 신규 line) (4) self-referential exemption
       (ADR-082 §결정 6 EC-3 — ADR-082 본문 / CFP-776·CFP-841 Story·Change Plan corpus 인용 self-flag 차단).
-    detect_command: bash scripts/check-corpus-claim-verify.sh   # CFP-841 Phase 2 carrier 신설
-    workflow: templates/github-workflows/corpus-claim-verify.yml  # CFP-841 Phase 2 carrier 신설
+    detect_command: bash scripts/check-corpus-claim-verify.sh
+    workflow: templates/github-workflows/corpus-claim-verify.yml
     current_tier: warning   # ADR-060 §결정 5 — 모든 신규 entry warning 시작 강제
     bypass_label: hotfix-bypass:corpus-claim-verify
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
@@ -2235,7 +2235,7 @@ entries:
       threshold: 3
       last_occurrence: null
       promotion_trigger: advisory
-    status: deferred-followup  # Phase 1 declare / CFP-841 Phase 2 actual wire 후 Active 전환
+    status: warning  # CFP-841 Phase 2 actual wire 완료 — lint script + workflow land (2026-05-17)
 
   # ─── CFP-841 Phase 1 — cross-plugin-ownership-verify (ADR-082 Amendment 1 §결정 2(d) carrier) ───
   # §결정 6 behavioral→mechanical 전환 scope 2(d). lane-self-write-ownership-matrix.yaml
@@ -2252,8 +2252,8 @@ entries:
       4-way sync, yaml-as-canonical single-direction (yaml=SSOT, 나머지 3=derived mirror, mismatch=flag —
       lint 가 yaml read-only, 4번째 target 추가가 drift surface 확대하지 않음).
       CFP-722 §13.A machine_readable_ssot 실재 기반 cross-plugin 영역 확장 (신규 registry 창설 아님).
-    detect_command: bash scripts/check-cross-plugin-ownership-verify.sh   # CFP-841 Phase 2 carrier 신설
-    workflow: templates/github-workflows/cross-plugin-ownership-verify.yml  # CFP-841 Phase 2 carrier 신설
+    detect_command: bash scripts/check-cross-plugin-ownership-verify.sh
+    workflow: templates/github-workflows/cross-plugin-ownership-verify.yml
     current_tier: warning   # ADR-060 §결정 5 — 모든 신규 entry warning 시작 강제
     bypass_label: hotfix-bypass:cross-plugin-ownership-verify
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
@@ -2276,7 +2276,7 @@ entries:
       threshold: 3
       last_occurrence: null
       promotion_trigger: advisory
-    status: deferred-followup  # Phase 1 declare / CFP-841 Phase 2 actual wire 후 Active 전환
+    status: warning  # CFP-841 Phase 2 actual wire 완료 — lint script + workflow land (2026-05-17)
 
   # ─── CFP-821 Phase 2 — branch-protection-sync (ADR-024 Amendment 2 §결정 A carrier) ───
   # CFP-841 Phase 1 merge 후 충돌 해소 rebase: branch-protection-sync entry 를 cross-plugin-ownership-verify 뒤에 append.
