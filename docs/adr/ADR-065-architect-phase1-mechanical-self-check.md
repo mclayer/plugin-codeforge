@@ -13,6 +13,7 @@ related_stories:
   - CFP-411
   - CFP-438
   - CFP-685   # Amendment 1 carrier — family scope 확장 (wrapper-only → 7-repo)
+  - CFP-911   # Amendment 2 carrier — 8th item frontmatter YAML parse self-validate (CFP-851 incident gap 보완)
 related_adrs:
   - ADR-005   # CFP-685 정정 audit trail — ADR-005 (lane N/A 표준화) ≠ self-app convention SSOT
   - ADR-010   # CFP-685 cross-ref — kind:workflow sibling sync 면제 vs family scope self-app 분리
@@ -34,11 +35,21 @@ amendments:
     summary: "§결정 1 row 3 family scope 확장 — wrapper-only self-app convention 의 7-repo (wrapper + 6 lane plugin sibling) byte-identical mandate. §결정 6 신설 (family scope self-app invariant — Anchor Issue #626 / CFP-609 retro Finding D 영역). §결정 1 본문 변경 0 (row 3 wording 유지 — wrapper Phase 1 commit-time self-check). 본 Amendment 가 row 3 의 sibling-family scope 확장 + drift detection mechanism (scripts/check-sibling-workflow-parity.sh + templates/github-workflows/sibling-workflow-parity.yml warning tier) 도입. mechanical_enforcement_actions[] append — `sibling-workflow-parity` entry status: deferred-followup → warning (Phase 1 PR merge 후). ratchet 강화 방향만 (wrapper-only scope 축소 금지 — ADR-064 top-down ratchet 정합)."
     is_transitional: false
     sunset_justification: "N/A — permanent policy 의 ratchet 강화. ADR-058 §결정 7 governance default presumption 정합 (is_transitional: false). ADR-064 §self-application top-down ratchet 정합 (Amendment 1 = scope 확장 강화 방향 only). 약화 방향 (family scope → wrapper-only / sibling drift detection 면제 / Conservative no-rename policy revoke) 발의 차단."
+  - amendment: 2
+    date: 2026-05-17
+    cfp: CFP-911
+    summary: "§결정 1 표(7-row) 에 row 8 append — Phase 1 산출물 commit 직전 chief author 가 변경한 frontmatter 보유 .md file 의 YAML parse self-validate (검증 방법: `bash scripts/check-doc-frontmatter.sh <path>` PASS, CFP-28 strict mode cross-ref). §결정 7 신설 — Amendment 2 narrative (incident reference + family pattern 정합 + cascade obligation invariant + sunset_justification quoted-string-form 보존). §결정 1 row 1-7 본문 변경 0 (row 8 append 만), §결정 2-6 변경 0. mechanical_enforcement_actions[] append — `doc-frontmatter-yaml-parse` entry status: existing-warning-cross-ref (신규 lint script 신설 0건, 기존 CFP-28 `check-doc-frontmatter.sh` PR-time strict check 의 commit-time forcing function cross-ref only). Story §5.4 Out-of-Scope 7 항목 정합 — 신규 ADR 0건, 신규 lint script 0건, 신규 workflow yml 0건, 신규 mechanical_enforcement_actions[] action name 0건(기존 안전망 cross-ref only — `doc-frontmatter-yaml-parse` 가 `check-doc-frontmatter.sh` existing entry alias), 6 lane sibling PR 0건, review-verdict-v4 schema bump 0건, cascade lint 신설 0건(별도 CFP carrier). CFP-851 incident evidence (Phase 2 PR #885 ADR-071 amendment_log entry `is_transitional: false` colon-space plain scalar nested mapping ScannerError, FIX iter 1 commit `79a4fdda0c9b4ee249edfcdb3769ef95b8113628` equals form 정정으로 해소, 현재 file state HEAD 재현 불가 — git history SSOT) 가 chief author commit-time forcing function 부재 gap 입증. ratchet 강화 방향만 (7→8 ratchet 확장 only — 8th item 제거 / `check-doc-frontmatter.sh` cross-ref 해제 발의 차단)."
+    is_transitional: false
+    sunset_justification: "N/A — permanent policy 의 ratchet 강화 (Amendment 1 family pattern 정합). ADR-064 §self-application top-down ratchet 정합. 약화 방향(8th item 제거 / check-doc-frontmatter.sh cross-ref 해제) 발의 차단."
 mechanical_enforcement_actions:
   - action: sibling-workflow-parity
     status: deferred-followup
     progress_note: "ADR-065 Amendment 1 (CFP-685) 신설 시점 — verdict field-only enforcement (workflow self-fire weekly cron). evidence-checks-registry entry `auto-phase-label-sibling-parity` warning tier 도입. blocking-on-pr 승격 후보 — 별도 CFP 가 첫 20 PR sample 누적 + failure_threshold 0 + sibling Story merged 도달 시 status 갱신 (deferred-followup → warning → blocking-on-pr)."
     target_section: §결정 1 row 3 (family scope 확장) / §결정 6 (신설)
+  - action: doc-frontmatter-yaml-parse
+    status: existing-warning-cross-ref
+    progress_note: "ADR-065 Amendment 2 (CFP-911) 신설 시점 — 신규 lint script 신설 0건. 기존 CFP-28 `scripts/check-doc-frontmatter.sh` (thin wrapper, `scripts/lib/check_doc_frontmatter.py` SSOT, ADR-061 §결정 1 정합) PR-time strict check 의 commit-time forcing function cross-ref only. row 8 의 검증 방법 wording 은 thin wrapper + Python SSOT 두 file 의 strict mode contract 의존 — cascade obligation invariant (§결정 7 §7.3 본문 cascade 1줄 신설로 codify, manual review 의존, cascade 자동 검출 lint 별도 follow-up CFP carrier — Story §5.4 row 7 정합). evidence-checks-registry 신규 entry 0건 (기존 안전망 cross-ref only). status 승격 trigger 없음 — `existing-warning-cross-ref` 영구 (별도 CFP 가 신규 lint script 발의 시에만 status 갱신)."
+    target_section: §결정 1 row 8 (Amendment 2 CFP-911) / §결정 7 (신설)
 ---
 
 # ADR-065: ArchitectAgent Phase 1 산출물 mechanical sync self-check 의무 (non-marketplace 영역)
@@ -94,6 +105,9 @@ ArchitectAgent chief author 는 Phase 1 산출물 commit 직전 다음 7 항목 
 | 5 | `docs/inter-plugin-contracts/MANIFEST.yaml` registries 블록 갱신 필요성 확인 | 신규 registry 도입 시 row append, MANIFEST `check-inter-plugin-contracts.sh` PASS |
 | 6 | `docs/parallel-work/section-ownership.yaml` 정책 필요 시 row append | 동시 편집 영향 받는 신규 section 도입 시 row append |
 | 7 | `docs/doc-locations.yaml` 신규 doc type row 필요성 확인 | 신규 doc type 도입 시 row append, `check-doc-locations.sh` PASS |
+| 8 | Phase 1 산출물 commit 직전 chief author 가 변경한 frontmatter 보유 `.md` file 의 YAML parse self-validate (Amendment 2 CFP-911) | `bash scripts/check-doc-frontmatter.sh <path>` PASS 확인 (CFP-28 strict mode cross-ref) |
+
+**Row 8 cascade obligation (Amendment 2 / CFP-911)**: 본 row 8 의 검증 방법 wording 은 `scripts/check-doc-frontmatter.sh` (thin wrapper) / `scripts/lib/check_doc_frontmatter.py` (Python SSOT, ADR-061 §결정 1 정합) 의 strict mode contract 의존. 두 file 의 contract (exit code semantic / strict-mode 분기 / target path coverage) 가 변경되는 PR (예: CFP-NNN script behavior change) 는 ADR-065 §결정 1 row 8 wording 갱신 cascade 의무 — 갱신 누락 시 row 8 forcing function silently drift. cascade 검출은 manual review 의존 (별도 follow-up CFP carrier — cascade 자동 검출 lint 신설 검토, Story §5.4 row 7 정합).
 
 각 항목 = chief author 가 본인 Phase 1 산출물 commit 직전 self-check. NA (해당 영역 변경 없음) = 명시적 PASS 로 분류.
 
@@ -170,6 +184,54 @@ cross-ref only — 중복 codification 회피.
 - 약화 방향 차단: family scope → wrapper-only / sibling drift detection 면제 / Conservative no-rename policy (ADR-060 Amendment 7) revoke
 - ADR-058 §결정 5 sunset_justification 의무 적용 — Amendment 차수 추가 시 강화 방향 evidence 의무
 
+### 결정 7 — 8th item frontmatter YAML parse self-validate (Amendment 2, CFP-911)
+
+§결정 1 표(원 7-row) 에 row 8 append 로 chief author self-check 항목을 8개로 확장. 신규 8번째 항목 = **"Phase 1 산출물 commit 직전 chief author 가 변경한 frontmatter 보유 `.md` file 의 YAML parse self-validate"** — 검증 방법 `bash scripts/check-doc-frontmatter.sh <path>` PASS (CFP-28 strict mode cross-ref).
+
+**7.1 Incident reference (CFP-851)**:
+
+CFP-851 Phase 2 PR (#885) 의 `docs/adr/ADR-071-orchestrator-user-dialog-convergence.md` amendment_log entry summary 안 `is_transitional: false` 의 콜론-공백 패턴이 YAML plain scalar 내부에서 nested mapping 으로 오해석돼 ScannerError 발생. CI (`scripts/check-doc-frontmatter.sh` strict mode — CFP-28 PR-time check) 가 사후 감지하여 FIX iter 1 로 해소 (commit `79a4fdda0c9b4ee249edfcdb3769ef95b8113628`, 2026-05-17 KST — `is_transitional: false` → `is_transitional=false` equals form, semantic 동일하지만 YAML scanner parse safe). 현재 file state HEAD 기준 재현 불가 — incident SSOT = git history (`git log --grep=CFP-851`, PR #885 commit chain `1c15e79 → 79a4fdd → 0fdfe6d`).
+
+**핵심 gap**: PR-time CI 가 사후 감지 channel 로 작동 — chief author 의 **commit-time** forcing function 부재. row 8 신설이 이 gap 보완.
+
+**7.2 Family pattern 정합 (Amendment 1 verbatim mirror)**:
+
+- additive·strengthen 방향 only (7→8 항목 ratchet 확장)
+- `sunset_justification: null` 금지 (quoted string form 의무) — ADR-071 family 의 `amendment_id` / `carrier_story` / `sunset_justification: null` 패밀리 schema 와 cross-pollination 차단 (Codex TP#4 P0 finding 흡수 결과)
+- `is_transitional: false` 보존 (governance permanent, ADR-058 §결정 7 default presumption 정합)
+- 기존 §결정 1 row 1-7 본문 변경 0
+- §결정 2-6 변경 0
+- `mechanical_enforcement_actions[]` = 기존 `check-doc-frontmatter.sh` cross-ref (신규 lint script 0건, `existing-warning-cross-ref` status)
+
+**7.3 Cascade obligation invariant**:
+
+§결정 1 row 8 의 검증 방법 wording 안 `bash scripts/check-doc-frontmatter.sh <path>` dependency 는 **두 file** 의 strict mode contract 의존:
+
+- `scripts/check-doc-frontmatter.sh` (thin wrapper, ADR-061 §결정 1 정합)
+- `scripts/lib/check_doc_frontmatter.py` (Python SSOT, exec target)
+
+두 file 의 contract (exit code semantic / strict-mode 분기 / target path coverage) 가 변경되는 PR (예: 별도 CFP 가 script behavior change 발의 시) 는 ADR-065 §결정 1 row 8 wording 갱신 cascade 의무. 갱신 누락 시 row 8 forcing function silently drift — 사전 codified invariant 가 안전망. **cascade 검출 = manual review 의존** (별도 follow-up CFP carrier — cascade 자동 검출 lint 신설 검토, Story §5.4 row 7 정합).
+
+**7.4 Doc-only fast-path 정합 (ADR-054)**:
+
+본 Amendment 2 = 기존 ADR-065 본문 Amendment 만 (신규 ADR 0건). 단일 PR 안 deliverable:
+- ADR-065 본문 Amendment 2 (frontmatter `amendments[]` row append + `mechanical_enforcement_actions[]` entry append + 본문 §결정 1 표 row 8 append + cascade obligation 1줄 + §결정 7 narrative + `## 관련 파일` Amendment 2 sub-section)
+- `plugin.json` MINOR bump (ADR-037 governance behavior change — chief author 검증 의무 ratchet)
+- `CHANGELOG.md` entry append (ADR-063 atomic)
+- `marketplace.json` sibling sync (ADR-063 §결정 5 — 별도 sibling PR, codeforge PR merge 직후 즉시 open·merge)
+
+src/tests 무변경, 신규 ADR / 신규 lint script / 신규 workflow yml / mechanical_enforcement_actions[] 신규 action name 0건 (Story §5.4 Out-of-Scope 7 항목 정합).
+
+**7.5 무약화 invariant (Self-application top-down ratchet, ADR-064 §결정 정합)**:
+
+- 강화 방향만 허용: 8th item 보존 / `check-doc-frontmatter.sh` cross-ref 강화 / 9th item ratchet 확장 (별도 CFP 발의 시)
+- **약화 방향 차단**: 8th item 제거 / `check-doc-frontmatter.sh` cross-ref 해제 / `sunset_justification` quoted string → null 다운그레이드 / row 1-7 본문 약화 / Amendment 1 family pattern revoke
+- ADR-058 §결정 5 sunset_justification 의무 적용 — `sunset_justification` 본문 안 약화 방향 발의 차단 명문화 ("약화 방향(8th item 제거 / check-doc-frontmatter.sh cross-ref 해제) 발의 차단" verbatim)
+
+**7.6 Schema invariant (review-verdict-v4 v4.2 무변경)**:
+
+review-verdict-v4 schema `mechanical_self_check_passed: bool` field semantic 무변경. 검증 항목 7→8 양적 확장만 — schema MINOR bump 0건. 6 lane plugin sibling PR 동반 의무 0건 (sibling sync 면제, Story §5.3 Non-Goals 정합).
+
 ## 결과
 
 ### 긍정적 결과
@@ -210,3 +272,14 @@ N/A — permanent policy
 - [`docs/evidence-checks-registry.yaml`](../evidence-checks-registry.yaml) — `auto-phase-label-sibling-parity` entry append (warning tier, Phase 1)
 - [`docs/inter-plugin-contracts/label-registry-v2.md`](../inter-plugin-contracts/label-registry-v2.md) — v2.15 → v2.16 MINOR (hotfix-bypass:auto-phase-label-sibling-parity 22번째 family member, Phase 1)
 - 6 sibling repo `.github/workflows/auto-phase-label.yml` — Phase 2 byte-identical deploy (6 cross-repo PR)
+
+### Amendment 2 (CFP-911) 신설 파일
+
+- **이 ADR 본문** (`docs/adr/ADR-065-architect-phase1-mechanical-self-check.md`) — frontmatter `amendments[]` amendment 2 entry + `mechanical_enforcement_actions[]` `doc-frontmatter-yaml-parse` entry + `related_stories` CFP-911 + 본문 §결정 1 표 row 8 + §7.3 cascade obligation 1줄 + §결정 7 narrative section + 본 `### Amendment 2 (CFP-911) 신설 파일` sub-section
+- [`scripts/check-doc-frontmatter.sh`](../../scripts/check-doc-frontmatter.sh) — **무수정** (기존 CFP-28 thin wrapper, row 8 cross-ref target)
+- [`scripts/lib/check_doc_frontmatter.py`](../../scripts/lib/check_doc_frontmatter.py) — **무수정** (Python SSOT, ADR-061 §결정 1 정합, row 8 cross-ref target)
+- [`.claude-plugin/plugin.json`](../../.claude-plugin/plugin.json) — version 5.84.0 → 5.85.0 MINOR (ADR-037 governance behavior change — chief author 검증 의무 ratchet 7→8)
+- [`CHANGELOG.md`](../../CHANGELOG.md) — `[5.85.0] - 2026-05-17` entry append (ADR-063 atomic)
+- `mclayer/marketplace:marketplace.json` `plugins[name=codeforge]` mirrored field (`name`/`version`/`description`/`author`) — Phase 2 atomic sibling sync (ADR-063 §결정 5, 별도 sibling PR, codeforge PR merge 직후 즉시 open·merge)
+
+**신규 lint script / 신규 workflow yml / 신규 ADR / 신규 evidence-checks-registry entry / 신규 mechanical_enforcement_actions[] action name / 6 lane sibling PR / review-verdict-v4 schema bump / cascade 자동 검출 lint = 0건** (Story §5.4 Out-of-Scope 7 항목 정합).
