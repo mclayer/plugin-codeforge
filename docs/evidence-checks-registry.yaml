@@ -2490,9 +2490,11 @@ entries:
     description: |
       ADR-067 Amendment 1 / CFP-842 — fix-event-v1 v1.3 depth-aware scope 의 mechanical
       enforcement advisory layer. broken-link / path 정정 FIX (§10 row 의 트리거 또는 재실행 범위
-      에 'broken-link' / 'path 정정' / 'relative path' / 'doc-location-registry move' /
-      'link target' / 'href' / 'cross-module path' / 'over-correction' 어휘 patterns
-      grep-detect) 인데 affected_paths_with_depth 필드 누락 또는 null 시 advisory comment 부착.
+      에 'broken-link' / 'path 정정' / 'link 정정' / 'relative path' / 'doc-location-registry' /
+      'link target' / 'href' / 'cross-module path' / 'over-correction' / 'dangling' / '404'
+      어휘 patterns grep-detect — **informal example list, canonical SSOT 는 script regex**
+      `scripts/check-fix-event-depth-scope-presence.py` line 73-76, CFP-914 F-3 ADR-068 I-4
+      annotation) 인데 affected_paths_with_depth 필드 누락 또는 null 시 advisory comment 부착.
       CFP-770 §8 CR-005→CR-006→CR-007 over-correction regression chain lesson directly
       차단 forcing function — depth 정보 부재가 directly carrier 였음. exit 0 advisory only
       (false-positive risk 명시 — 어휘 grep heuristic, semantic precision 불가). Phase 2

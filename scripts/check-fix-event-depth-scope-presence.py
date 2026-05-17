@@ -114,7 +114,6 @@ def parse_fix_ledger_rows(lines, section_start):
     """
     rows = []
     in_table = False
-    header_col_count = 0
 
     for idx in range(section_start + 1, len(lines)):
         line = lines[idx]
@@ -127,11 +126,6 @@ def parse_fix_ledger_rows(lines, section_start):
         # 표 헤더 행 탐지
         if HEADER_ROW_PATTERN.match(stripped):
             in_table = True
-            # 헤더 column 수 파악
-            header_cols = [c.strip() for c in stripped.split("|")]
-            # 앞뒤 빈 문자열 제거 (| 로 시작·끝나는 경우)
-            header_cols = [c for c in header_cols if c]
-            header_col_count = len(header_cols)
             continue
 
         # 구분선 행 스킵
@@ -140,9 +134,7 @@ def parse_fix_ledger_rows(lines, section_start):
 
         # 데이터 행 파싱
         if in_table and stripped.startswith("|") and stripped.endswith("|"):
-            cols = [c.strip() for c in stripped.split("|")]
-            cols = [c for c in cols if c or True]  # 빈 문자열 포함하여 분할 후
-            # | 로 split 하면 앞뒤 빈 str 이 생김 -제거
+            # | 로 split 하면 앞뒤 빈 str 이 생김 - 제거 후 strip
             cols_raw = stripped.split("|")
             # 첫·마지막 빈 원소 제거
             if cols_raw and cols_raw[0] == "":
