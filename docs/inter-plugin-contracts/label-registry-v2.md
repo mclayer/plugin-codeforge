@@ -64,7 +64,7 @@ related_files:
 
 ## 변경 이력
 
-**v2.29 (CFP-906 / ADR-076 §결정 9 + ADR-016 Amendment 3 + ADR-063 Amendment 6 §결정 17, 2026-05-17)**: MINOR bump (3 신규 label entry append + 신규 category enum `channel` 신설 — Wave 4 sub-Epic #1 Story-1 multi-version channel pin declare layer, Epic CFP-882).
+**v2.30 (CFP-906 / ADR-076 §결정 9 + ADR-016 Amendment 3 + ADR-063 Amendment 6 §결정 17, 2026-05-17)**: MINOR bump (3 신규 label entry append + 신규 category enum `channel` 신설 — Wave 4 sub-Epic #1 Story-1 multi-version channel pin declare layer, Epic CFP-882).
 
 - **추가**: `channel:stable` (color `0e8a16`, category `channel`) — consumer `.claude/_overlay/project.yaml codeforge.channel.tier: stable` 선언 시 GitHub Issue/PR channel-aware annotation marker. ADR-076 §결정 9.1 3-tier taxonomy 의 default tier (LOW risk class). Wave 4 sub-Epic #1 Story-1 (CFP-906) carrier.
 - **추가**: `channel:beta` (color `d4c5f9`, category `channel`) — beta tier marker (MEDIUM risk class, opt-in incremental track).
@@ -72,7 +72,7 @@ related_files:
 - **신규 category enum**: `channel` — 기존 axis (type/phase/gate/fix/hotfix/audit/hotfix-bypass/monitoring/conflict/fallback/fast-pass) 와 별 axis. CFP-658 v2.13 `fallback:` 신설 / CFP-795 v2.21 `fast-pass` 신설 선례 정합. ADR-008 §결정 1 BREAKING enum 추가 아님 (label name self-distinguishing).
 - `scripts/bootstrap-labels.sh` dynamic read 자동 흡수 (CFP-598 parse-hotfix-bypass-labels.py 분기 — yaml row 추가만으로 bootstrap 자동 반영, script 변경 0건).
 - canonical-only (kind:registry — sibling sync scope 외 per ADR-010 §결정 2, marketplace.json sync 면제 — plugin.json MINOR bump 미동반 — declare layer SSOT only).
-- ADR-008 §결정 3 SSOT: 신규 label entry append + 신규 category 신설 = MINOR bump (v2.28 → v2.29 MINOR increment).
+- ADR-008 §결정 3 SSOT: 신규 label entry append + 신규 category 신설 = MINOR bump (v2.29 → v2.30 MINOR increment).
 - Wave 4 sub-Epic #1 carrier (Epic CFP-882) — 후속 Wave 4 sub-Epic #1 Story-2/3/4/5 sequential 진행 시 channel:* family 의 mechanical lint (channel-drift-detection / channel promotion gate / channel demotion warning) 활성 영역.
 
 **v2.28 (CFP-842 / ADR-067 Amendment 1 §결정 4, 2026-05-17)**: MINOR bump (§3 yaml hotfix-bypass:* 40번째 family member append — fix-event-v1 v1.3 depth-aware scope presence warning-tier lint bypass channel).
@@ -309,7 +309,7 @@ Story-3 Phase 1 carrier — evidence-checks-registry `adr-077-ratchet-declared` 
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | name | string | label 이름 (예: `phase:설계`) |
-| category | enum | type / phase / gate / fix / hotfix / audit / hotfix-bypass / monitoring / conflict / fallback / fast-pass / channel (channel = CFP-906 v2.29 신설) |
+| category | enum | type / phase / gate / fix / hotfix / audit / hotfix-bypass / monitoring / conflict / fallback / fast-pass / channel (channel = CFP-906 v2.30 신설) |
 | color | string | 6자리 hex (gh label spec) |
 | description | string | label 설명 |
 | single_active | bool | 같은 category에서 1개만 active 가능 (phase만 true) |

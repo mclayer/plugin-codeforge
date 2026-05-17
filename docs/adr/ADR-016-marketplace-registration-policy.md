@@ -168,7 +168,7 @@ CFP-391 retro follow-up — wrapper plugin.json mirrored field 변경 시 별도
 - ADR-063 Amendment 6 §결정 17 (mirrored field × channel matrix + 3-way channel invariant) — 본 Amendment 3 의 marketplace-side sibling carrier
 - reconcile-protocol-v1 v1.7 §4.10 `multi_version_channel_pin_binding` — 본 Amendment 3 의 contract carrier (`family_atomic_channel_invariant` block)
 - ADR-72 §결정 1 (ProductionEvidenceDeputy spawn trigger) — canary tier production-impact 영역 Story-3 carrier cross-ref
-- label-registry-v2 v2.29 (3 `channel:*` label + 신규 category enum `channel`) — annotation marker sibling
+- label-registry-v2 v2.30 (3 `channel:*` label + 신규 category enum `channel`) — annotation marker sibling
 
 ## 결과
 
