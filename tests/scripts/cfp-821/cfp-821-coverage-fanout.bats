@@ -17,6 +17,7 @@
 #   TC-D3-2: D3 ADR cross-ref (ADR-039 + ADR-061) + (k) follow-up note
 #   TC-INT-1: INT reconcile-protocol-v1 v1.6 + MANIFEST + ADR-027 Amd5 present (Phase 1 verify)
 #   TC-AC11-1: AC-11 ZERO Administration:write — no gh api PUT/PATCH/POST to branch_protection
+#   TC-YAML-1: evidence-checks-registry.yaml YAML parse + branch-protection-sync entry reachable + indent invariant
 
 WORKTREE_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME")/../../.." && pwd)"
 
@@ -404,4 +405,32 @@ STUB
   # And no curl PUT to branch_protection either
   run grep -E "curl.*-X PUT.*branch.?protection" "${SETUP_SCRIPT}"
   [ "$status" -ne 0 ]
+}
+
+@test "TC-YAML-1: evidence-checks-registry.yaml YAML parse + branch-protection-sync entry reachable + indent invariant" {
+  REGISTRY="${WORKTREE_ROOT}/docs/evidence-checks-registry.yaml"
+  [ -f "${REGISTRY}" ]
+
+  # YAML must parse cleanly (no column-0 orphan sequence items)
+  PARSE_PY="${BATS_TMPDIR}/parse_registry_$$.py"
+  cat > "${PARSE_PY}" <<'PYEOF'
+import sys, yaml
+with open(sys.argv[1], 'r', encoding='utf-8') as f:
+    data = yaml.safe_load(f)
+entries = data.get('entries', [])
+names = [e['name'] for e in entries]
+assert 'branch-protection-sync' in names, f"branch-protection-sync not found in entries: {names[:5]}"
+print(f"PARSE OK: {len(entries)} entries, branch-protection-sync found")
+PYEOF
+  run python "${PARSE_PY}" "${REGISTRY}"
+  [ "$status" -eq 0 ]
+
+  # No column-0 sequence items (all entries must be 2-space indented)
+  run grep -c "^- name:" "${REGISTRY}"
+  [ "$status" -ne 0 ]  # grep must find ZERO column-0 "- name:" lines
+
+  # All 66 entries must be at 2-space indent
+  run grep -c "^  - name:" "${REGISTRY}"
+  [ "$status" -eq 0 ]
+  [ "$output" -eq 66 ]
 }
