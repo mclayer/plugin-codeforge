@@ -2148,11 +2148,27 @@ debate-protocol-v1 v1.1 의 debate_artifact_ref pattern과 직교 — debate 발
 ### 6.7 §10 관리 세부
 
 - **Orchestrator가 단독 갱신** (CFP-32 ζ arc F1부터 — fix-event-v1 monopoly). append-only, 행 삭제·수정 금지
-- Schema SSOT: [`docs/inter-plugin-contracts/fix-event-v1.md`](../docs/inter-plugin-contracts/fix-event-v1.md) — row 필드 + append 규칙 + RESET 시맨틱스
+- Schema SSOT: [`docs/inter-plugin-contracts/fix-event-v1.md`](../docs/inter-plugin-contracts/fix-event-v1.md) — row 필드 + append 규칙 + RESET 시맨틱스. **현재 schema = v1.3 (CFP-842 — depth-aware scope optional fields, 11 column)**.
 - Stale-read 방지: Orchestrator가 Edit 직전 `git pull --rebase` 또는 file mtime 비교 후 append. 충돌 시 fail-fast + 사용자 ESCALATE (자동 재시도 금지 — append-only ledger 손상 위험)
 - Lane plugin은 FIX event를 Orchestrator에 verdict로 보고 (status=FIX 또는 test FAIL). lane plugin이 §10 직접 Edit 금지 — CFP-34 deliverable `story-section-write-guard.yml`이 enforce
 - §10 조회 실패(파일 부재 등) → ArchitectPLAgent 판정 정지 → 사용자 판단 요청
 - GitHub 라벨은 `fix-ledger-sync.yml` Action이 §10 commit 감지 시 자동 부착 — 단방향 mirror (§10 → label/comment). 대시보드 search syntax 필터용
+
+**v1.3 depth-aware scope 필드 의무 (CFP-842, broken-link/path 정정 FIX 한정)**:
+
+`affected_paths_with_depth` 필드는 broken-link / path 정정 FIX (cross-module relative path adjust / doc-location-registry move / link target 갱신 등) 시 **의무**. 그 외 FIX (logic bug / API change / perf regression / wording desync 등) = optional. 누락 시 `fix-event-depth-scope-presence` warning-tier lint (advisory only, blocking-on-pr 미승격) 적발.
+
+기록 형식:
+```yaml
+affected_paths_with_depth:
+  - {path: "docs/adr/ADR-067.md", depth: 2}
+  - {path: "templates/github-workflows/fix-ledger-sync.yml", depth: 2}
+  - {path: "CLAUDE.md", depth: 0}
+```
+
+`depth` = repo root 기준 dir depth (root level file = 0, depth 1 dir 안 file = 1, ...). 정정 규칙 적용 범위 (예: `depth >= 2 then path adjust = '../../'`) 의 mechanical reasoning trace 보존 — CFP-770 §8 CR-005→CR-006→CR-007 over-correction regression chain lesson directly 차단 carrier. broken-link/path FIX 시 depth 정보 부재가 directly carrier 였음.
+
+`affected_scope` 필드 (enum: single-file / cross-module / cross-repo / cross-plugin) 는 broken-link/path FIX 영역과 무관하게 **모든 FIX** 에서 optional — RESET 범위 결정 input. cross-module / cross-repo / cross-plugin scope = ArchitectPL 가 cross-lane RESET 적극 검토 (ADR-067 §결정 4 Amendment 1). single-file scope = 동일 lane FIX iter 유지 (RESET 회피).
 
 ### 6.8 원인 판정 decision table
 

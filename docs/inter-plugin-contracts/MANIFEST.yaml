@@ -2,7 +2,8 @@
 # SSOT for kind:contract files completeness — referenced by ADR-010
 # Owner: codeforge wrapper repo. Updated when adding/removing kind:contract.
 # Scope: kind:contract files only. kind:registry files (comment-prefix-registry,
-# fix-event, label-registry, decision-packet [versions: v1 archived, v2.1 deprecated (CFP-134)],
+# fix-event [v1.3 — CFP-842 depth-aware scope optional fields: affected_scope + affected_paths_with_depth],
+# label-registry, decision-packet [versions: v1 archived, v2.1 deprecated (CFP-134)],
 # stop-event [v1 active — CFP-283 / ADR-042]) are managed by check-doc-frontmatter.sh chain.
 contracts:
   - name: review_verdict
