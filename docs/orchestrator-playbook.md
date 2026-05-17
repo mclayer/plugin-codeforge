@@ -607,6 +607,36 @@ Orchestrator 가 lane PL agent spawn 시 **plan task DAG 분석 결과를 spawn 
 - ADR-060 — evidence-enforceable promotion framework (warning tier entry)
 - §12 spawn prompt template — `[Parallel Dispatch Hint]` block 기재 의무 (registry §4.1 verbatim)
 
+#### §3.0.16 — DeveloperPL + branch-creating subagent pre-spawn-pin mandate (CFP-895 / ADR-039 Amendment 1)
+
+ADR-039 §결정 14 (Amendment 1) 의 Orchestrator-side codification. DeveloperPL 또는 새 branch 를 생성하는 subagent (codeforge-develop:DeveloperAgent / role:dev 등) 가 Phase 2 PR open 또는 cross-repo paired PR open 시 stale base 회피 mandate.
+
+**Orchestrator 의 의무 절차** (subagent return 직후):
+
+1. **post-spawn verify** — `mcp__github__pull_request_read get` 의 `head.sha` parent commit 을 `mcp__github__list_commits sha=main perPage=1` (또는 `gh api repos/<owner>/<repo>/commits/main --jq .sha`) 와 비교.
+2. **mismatch detection** — branch HEAD parent ≠ current origin/main 이면 stale-base → 즉시 **FIX trigger** (구현-side, RESET=NO).
+3. **re-dispatch 의무** — 동일 subagent 재spawn 시 prompt 에 (a) explicit current-main-HEAD SHA (Orchestrator pinned just now) + (b) "self-reset 금지 / 기존 작업 content 보존, only rebase the base" + (c) 추가 mid-flight churn 대비 "rebase 시 main HEAD 재pin (parallel session advance 가능)" 명시.
+4. **§10 FIX Ledger row append** — stale-base rebase iteration = Orchestrator monopoly write (fix-event-v1 contract, CFP-32). 형식 = `구현 (Orchestrator verify-before-trust, 구현리뷰 이전 적발)` lane.
+
+**근거 evidence**: CFP-699/CFP-702/CFP-848 3차 누적 (ADR-039 Amendment 1 §결정 14 표).
+
+**SubAgent prompt Step 0 의무** — Orchestrator 가 DeveloperPL spawn 시 packet 에 다음 Step 0 명시:
+
+```text
+## CRITICAL Step 0 — pre-spawn-pin (mandatory, ADR-039 §결정 14)
+
+Branch 생성 직전:
+```bash
+git fetch origin
+MAIN_HEAD=$(git rev-parse origin/main)
+echo "PINNED_MAIN_HEAD=$MAIN_HEAD"
+```
+
+모든 후속 branch 생성 + rebase + PR open 시 본 SHA 사용. self-claim / packet reference / local HEAD / memory SHA 무조건 신뢰 금지. mid-flight main churn 가능 — rebase 시점에 재pin 의무.
+```
+
+**Cross-ref**: ADR-039 §결정 14 / §결정 9 (Amendment 1 enforcement Phase 2 hook 격상 경로) / [[feedback_verify_pin_head_sha]] / [[feedback_no_permission_prompts]] / codeforge-develop:`agents/DeveloperPLAgent.md` "PR 생성 Pre-flight Guard" Step 0 확장 (CFP-895 paired PR).
+
 ### 3.1 7 레인 + Cross-cutting 스폰 순서 (요약)
 
 ```
