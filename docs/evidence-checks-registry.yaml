@@ -2308,7 +2308,7 @@ entries:
       publisher (wrapper plugin.json .version) ↔ registry (marketplace.json .plugins[codeforge].version)
       ↔ consumer (.claude/_overlay/project.yaml .codeforge.version_pin.version)
       byte-identical version field compare. consumer pin 미등록 = warning-first exit 0
-      (orthogonality invariant — pin 부재 ≠ version mismatch, ADR-027 Amendment 4 fallback).
+      (orthogonality invariant — pin 미지정 ≠ version mismatch, ADR-027 Amendment 4 fallback) [verified: git show origin/main:scripts/check-3way-version-parity.sh].
       pin 등록 + 3-way mismatch = blocking-on-pr exit 1.
       sanity guard 6-tuple (Story §5.2 AC-13) + ADR-070 verify-before-trust 통합.
     detect_command: bash scripts/check-3way-version-parity.sh

@@ -906,7 +906,7 @@ labels:
   - name: hotfix-bypass:cross-plugin-ownership-verify
     category: hotfix-bypass
     color: "fef2c0"
-    description: "hotfix-bypass: cross-plugin-ownership-verify warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-841 / ADR-082 Amendment 1 §결정 2(d) / ADR-024 Amendment 7 — templates/github-workflows/cross-plugin-ownership-verify.yml Phase 2 carrier — ChangeImpactAgent Phase 0 mapping templates/* wrapper-local 단정 전 lane-self-write-ownership-matrix.yaml cross_plugin_doc_ownership sub-tree query 1-step annotation 부재 검출 + §13.B 4-way drift-sync invariant (yaml ↔ SKILL.md ↔ story-page-structure.md ↔ lint regex, yaml-as-canonical single-direction). CFP-722 §13.A machine_readable_ssot 실재 기반 cross-plugin 영역 확장 (신규 registry 창설 아님). ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합). 35번째 hotfix-bypass:* family member."
+    description: "hotfix-bypass: cross-plugin-ownership-verify warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-841 / ADR-082 Amendment 1 §결정 2(d) / ADR-024 Amendment 7 — templates/github-workflows/cross-plugin-ownership-verify.yml Phase 2 carrier — ChangeImpactAgent Phase 0 mapping templates/* wrapper-local 단정 전 lane-self-write-ownership-matrix.yaml cross_plugin_doc_ownership sub-tree query 1-step annotation 미보유 검출 [verified: git show origin/main:templates/github-workflows/cross-plugin-ownership-verify.yml] + §13.B 4-way drift-sync invariant (yaml ↔ SKILL.md ↔ story-page-structure.md ↔ lint regex, yaml-as-canonical single-direction). CFP-722 §13.A machine_readable_ssot 실재 기반 cross-plugin 영역 확장 (신규 registry 창설 아님). ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합). 35번째 hotfix-bypass:* family member."
     single_active: false
     attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
 
