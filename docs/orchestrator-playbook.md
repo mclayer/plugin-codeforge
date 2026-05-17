@@ -1683,6 +1683,30 @@ cell 값 enum: `active` (spawn 의무) / `면제` (spawn 금지) / `final flush 
 
 **closed enum 확장 시 별 CFP 의무 (ADR-071 §결정 13.6 / CFP-818)**: 3-anchor enum closed enumeration 보존. 확장 후보 3종 (`pre_lane_spawn` / `pre_phase_transition` / `pre_pause_decision`) 발생 시 별 CFP 신설 의무 ([ADR-064 §결정 7](../docs/adr/ADR-064-decision-principle-mandate.md) top-down ratchet + [ADR-058 §결정 5](../docs/adr/ADR-058-adr-sunset-criteria-mandate.md) sunset_justification 정합).
 
+#### Conversational reporting frequency suppression (ADR-071 §결정 15 / CFP-851 / Amendment 4)
+
+Orchestrator 가 사용자에게 **말 거는 시점·빈도** (frequency / timing) 의 closed enumeration 계약. 본질 anchor = **frequency vs richness 분리 invariant** — 본 정책이 좁히는 것은 발화 횟수·시점 만, **말할 때의 풍부함은 §결정 2(c) "3 줄 제약 거부 · 길이 자유 · 배경 포함" 그대로 보존**. SSOT = [ADR-071 §결정 15](../docs/adr/ADR-071-orchestrator-user-dialog-convergence.md), 본 §3.14 = lookup mirror.
+
+**3 touchpoint closed enumeration** — Orchestrator 사용자 발화 허용 시점:
+
+| touchpoint | 발화 사유 | scope |
+|---|---|---|
+| **(a) 결과-명세 확인** | 사용자가 선언한 결과 자체가 모호 + 잘못 추측 시 rollback 비싼 경우 (verifiable outcome surface 안전판 — wrong-dataset risk 차단) | 가치 / 명세 판단 — `AskUserQuestion` 발화 (§결정 5 결정 트리 — 모호 → 가치 측 분류) |
+| **(b) 사용자만 풀 수 있는 차단** | 인증·권한 등 codeforge 자체 해소 불가, 사용자 행동 필요 | ADR-039 inline whitelist 1번 entry (사용자 dialog) scope 안 |
+| **(c) 최종 완료 보고 1회** | 요청한 작업 단위 전체 완료 (산출물 = 최종 결과 자체) | ADR-039 inline whitelist 4번 entry (Status report) scope 안 |
+
+그 외 진행·중간 결정·근거·중간 결과 = **산출물 channel** 전용 기록 (대화 turn 아님): `docs/stories/<KEY>.md` / `docs/change-plans/<slug>.md` / `docs/adr/ADR-NNN-<slug>.md` / PR description / GitHub Issue comment / TodoWrite panel ([ADR-038](../docs/adr/ADR-038-progress-visualization-todowrite.md) progress visualization).
+
+**무약화 invariant** — 3 touchpoint 발화 시:
+- Layer 1 가시적 preamble + Layer 2 자기 declare 의무 — turn-shape edge derived default (E9/E10/E11/E12 표) 무변경
+- §결정 2(c) richness 보존 — raw packet 노출 금지, 평이한 한글, 3 줄 제약 거부, "왜 / trade-off / 걸려있는 것" 배경 포함
+- DialogFidelityAgent auxiliary 3-anchor spawn 보존 — §결정 12/13 family pattern 정합
+- §결정 14 incident append-rate measurement 보존
+
+**closed enum 확장 패턴** — 4번째 touchpoint 신설 시 별 CFP 의무 (ADR-064 §결정 7 top-down ratchet + ADR-058 §결정 5 sunset_justification + Story §1 사용자 explicit 승인 의무). 본 ADR-071 안 3번째 closed enumeration 인스턴스 (3-anchor enum / 4 차원 enum / 3 touchpoint enum 동형).
+
+**mechanical lint = 별 follow-up CFP** (§결정 10 패턴 정합 — behavioral directive only, advisory warning tier 첫 도입 시 evidence-checks-registry entry append + dialog-fidelity-effect precedent 동형 runtime cron measurement).
+
 ---
 
 ### §3.15 Action-blocked fallback decision tree (CFP-658 / [ADR-027 Amendment 2](../docs/adr/ADR-027-consumer-adoption-protocol.md))

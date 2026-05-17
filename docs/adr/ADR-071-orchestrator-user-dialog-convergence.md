@@ -27,6 +27,12 @@ amendments:
     issue: https://github.com/mclayer/plugin-codeforge/issues/833
     summary: DialogFidelityAgent effectiveness measurement wiring (Epic CFP-761 Story-3 closing-the-loop) — Layer 4 incident realtime detect incident append-rate delta (proxy signal — not causal effectiveness measure) metric + evidence-checks-registry.yaml dialog-fidelity-effect warning-tier entry (owner_adr ADR-071 / carrier_adr ADR-060, precedent rate-limit-fallback-rate 동형) + mechanical_enforcement_actions[] 갱신 (ADR-040 §결정 7.A governance 의무) + 본문 §결정 14 신설. additive — Layer 1-4 + DialogFidelityAgent auxiliary layer 보존, ## 해소 기준 무변경 (permanent governance recursive sunset 회피), ADR-058 §결정 3 측정성 self-application 강화 ratchet. Epic plan Task 4 invariant 5 (label-registry MINOR) deviation = precedent override (OQ-3 사용자 확정 2026-05-17 KST, ADR-064 §결정 10 precedence)
     sunset_justification: null
+  - amendment_id: 4
+    date: "2026-05-17"
+    carrier_story: CFP-851
+    issue: https://github.com/mclayer/plugin-codeforge/issues/851
+    summary: Conversational reporting frequency suppression contract — Orchestrator ↔ user dialog 의 발화 허용 touchpoint 3종 closed enumeration codify (§결정 15 신설). (a) 결과-명세 확인 (사용자 선언 결과 자체 모호 + rollback 비싼 경우, verifiable outcome surface 안전판) / (b) 사용자만 풀 수 있는 차단 (인증·권한 등 codeforge 자체 해소 불가) / (c) 최종 완료 보고 1회 (요청 작업 단위 전체 완료). 그 외 진행·중간 결정·근거·중간 결과 = 산출물 (Story / change-plan / ADR / PR / TodoWrite panel) 전용 기록. 무약화 invariant — frequency 축소 ≠ richness 축소, §결정 2(c) "3 줄 제약 거부 · 길이 자유 · 배경 포함" 보존 + Layer 1/2 preamble·declare 의무 turn 발생 시 그대로 적용. ADR-039 inline whitelist 1번·4번 entry scope 안 작동 (closed 4-entry 보존, 신규 entry 신설 0). 4번째 touchpoint 확장 시 별 CFP 의무 (§결정 13.6 closed-enum 확장 패턴 정합). mechanical lint = behavioral directive only, 별 follow-up CFP (§결정 10 패턴 정합). additive — Layer 1-4 / DialogFidelityAgent auxiliary / §결정 2(c) 무약화, is_transitional: false 보존, ADR-058 §결정 5 약화 차단 영역 미적용
+    sunset_justification: null
 related_stories:
   - CFP-612  # carrier
   - CFP-525  # ancestor Epic (closed 2026-05-13)
@@ -41,6 +47,7 @@ related_stories:
   - CFP-761  # parent Epic (DialogFidelityAgent 도입)
   - CFP-818  # Amendment 2 carrier (spawn trigger 운영 정의)
   - CFP-833  # Amendment 3 carrier (effectiveness measurement wiring — closing-the-loop)
+  - CFP-851  # Amendment 4 carrier (conversational reporting frequency suppression contract)
 related_adrs:
   - ADR-064  # 결정 원칙 mandate — proposing-time 5 룰 mother policy (mechanical version 승격 source)
   - ADR-058  # sunset criteria mandate (is_transitional: false 정합)
@@ -542,9 +549,103 @@ Epic plan (`mclayer/codeforge-internal-docs:wrapper/plans/2026-05-16-dialog-fide
 - **사용자 확정**: 2026-05-17 KST AskUserQuestion — OQ-3 = precedent 우선, label-registry MINOR 면제 명시 결정.
 - **EPIC-RESULTS cross-ref 의무**: Epic close 시 `EPIC-RESULTS-CFP-761` 에 본 deviation 기록 의무 (PMOAgent Epic close 영역, Story §11 회고 cross-ref). 본 §14.5 + Change Plan CFP-833 §3.7 = SSOT 이중 anchor.
 
+## §결정 15. Conversational reporting frequency suppression contract (Amendment 4, CFP-851)
+
+> Story-1 (CFP-777) DialogFidelityAgent 도입 + Story-2 (CFP-818) spawn trigger 운영 정의 + Story-3 (CFP-833) effectiveness measurement wiring 이후 **누적 governance gap** — Orchestrator ↔ user dialog 의 **말 거는 시점·빈도** (frequency / timing) 가 SSOT 미codified 상태. carrier: CFP-851, issue https://github.com/mclayer/plugin-codeforge/issues/851. additive 강화 — Layer 1-4 + DialogFidelityAgent auxiliary + §결정 2(c) richness 보존, frequency 축소 layer 추가만.
+
+### 15.1 본질 anchor — frequency vs richness 분리 (가장 중요한 invariant)
+
+본 Amendment 4 가 좁히는 것은 Orchestrator 가 사용자에게 **말 거는 횟수·시점** (frequency / timing) 만이다. **말할 때의 풍부함은 보존된다.** 두 축 분리 invariant:
+
+| 축 | 본 Amendment 4 의 작용 | SSOT |
+|---|---|---|
+| **frequency / timing** (말 거는 횟수·시점) | 좁힘 — 3 touchpoint closed enumeration (§15.2) | 본 §결정 15 신설 |
+| **richness** (말할 때의 풍부함 — 길이 / 배경 / 평이 번역) | 보존 — 무약화 | §결정 2(c) verbatim 유지 (3 줄 제약 거부 · 길이 자유 · 배경 포함) |
+
+이 분리가 본 Amendment 의 핵심 invariant 이며 ADR-058 §결정 5 약화 차단 (`sunset_justification: null`) 의 근거다. 3 touchpoint 발화 시 Layer 1 가시적 preamble + Layer 2 자기 declare + §결정 2(c) richness 그대로 적용 — turn-shape edge (E9/E10/E11/E12) derived default 도 무변경 (playbook §3.14 본문 결정 영역).
+
+**Verifiable outcome surface 경계** (RE 안전판): 본 Amendment 가 억제하는 것은 **"how" (구현 과정)** 의 중간 보고이고, 억제하지 않는 것은 **"what" (요구 명세)** 의 disambiguation. 사용자가 선언한 결과가 모호하여 잘못 추측 시 rollback 비용이 큰 경우, 그 명세를 확인하는 것은 **요구사항 disambiguation** 이며 억제 대상이 아니다 (touchpoint (a)). 전면 보고 / 질문 억제 = 검증되지 않은 한쪽 극단 (wrong-dataset risk — requirements ambiguity 미해소 → 끝까지 wrong deliverable → rollback 비용 ≫ 보고 비용). SI 아웃소싱 / SQL 개발자 비유 (Story §1 사용자 directive verbatim) 도 동일 구조 — 고객은 "어떻게 뽑았는지" 의 중간 보고 불요지만 "무엇을 뽑을지" 의 명세는 ambiguous 시 SI 가 확인한다.
+
+### 15.2 3 touchpoint closed enumeration
+
+Orchestrator 의 사용자 발화 허용 시점 = closed enumeration 3 종. 그 외 진행·중간 결정·근거·중간 결과는 **산출물** (Story / change-plan / ADR / PR / TodoWrite panel) 전용 기록.
+
+| touchpoint | 발화 사유 | 분류 |
+|---|---|---|
+| **(a) 결과-명세 확인** | 사용자가 선언한 결과 자체가 모호 + 잘못 추측 시 rollback 비싼 경우 | 가치 / 명세 판단 (§결정 5 결정 트리 — 모호 → 가치 측 분류, `AskUserQuestion` 의무) |
+| **(b) 사용자만 풀 수 있는 차단** | 인증·권한 등 codeforge 자체 해소 불가, 사용자 행동 필요 | 차단 해소 (ADR-039 inline whitelist 1번 entry scope 안 — 사용자 dialog) |
+| **(c) 최종 완료 보고 1회** | 요청한 작업 단위 전체 완료 | 산출물 = 최종 결과 자체 (ADR-039 inline whitelist 4번 entry scope 안 — Status report) |
+
+**산출물 channel enumeration** (대화 turn 아닌 정상 기록 경로):
+- `docs/stories/<KEY>.md` (Story file — §0 Live Progress / §9 / §10 FIX Ledger / §14 Lane Evidence)
+- `docs/change-plans/<slug>.md` (Change Plan)
+- `docs/adr/ADR-NNN-<slug>.md` (ADR)
+- PR description / GitHub Issue comment
+- TodoWrite panel (ADR-038 progress visualization — 산출물 channel, 대화 turn 아님)
+
+### 15.3 무약화 invariant — §결정 2(c) 와의 정합
+
+`[verified — Read ADR-071 §결정 2(c) lines 142-147]` 기존 §결정 2(c) "sub-agent 결과의 사용자용 평이 번역" = `3 줄 제약 명시적 거부 — 길이 자유` + `"왜 / trade-off / 걸려있는 것" 배경 포함`. 본 Amendment 4 는 이 정책을 **무약화** — 3 touchpoint 발화 시 Layer 1/2 preamble·declare + §결정 2(c) 풍부함 그대로 적용된다.
+
+| Layer / 정책 | 본 Amendment 4 후 |
+|---|---|
+| Layer 1 가시적 preamble (§결정 3) | 보존 — 3 touchpoint 발화 시 매 turn 맨 윗줄 "지금 답해주실 것" 1 문장 (turn-shape edge derived default 무변경) |
+| Layer 2 자기 declare (§결정 3) | 보존 — 3 touchpoint 발화 시 매 turn 맨 아랫줄 "주의한 가설" 1 줄 (E11 popup 면제 derived default 무변경) |
+| Layer 3 "추상" halt (§결정 3) | 보존 — 모든 user-facing turn 에서 active |
+| Layer 4 누적 detection (§결정 3 / §결정 6) | 보존 — cross-Story 영속 file append-only Orchestrator monopoly |
+| §결정 2(c) richness (3 줄 제약 거부 + 배경 포함) | 보존 — 3 touchpoint 발화 시 그대로 적용 |
+| Sub-mechanism 1/2 (§결정 4) | 보존 — halt 후 재작성 시 "이전과 다르게 한 점" + 4 차원 enum 강제 전환 |
+| DialogFidelityAgent auxiliary (§결정 12) | 보존 — read-only inspection only, generator 역할 침범 금지 |
+| DialogFidelityAgent 3-anchor spawn (§결정 13) | 보존 — closed 3-anchor enum 무변경 |
+| §결정 14 measurement (CFP-833) | 보존 — incident append-rate delta proxy signal |
+
+**5번째 cognitive layer 신설 금지 invariant (§결정 12 carrier) 와의 정합**: 본 §결정 15 = mechanism (말 거는 시점 closed enumeration) 추가, §결정 3 cognitive layer count 변경 아님 (§결정 12 §12.3 family pattern 정합 — verifier 도입 = mechanism 추가, cognitive layer 신설 아님 동형).
+
+### 15.4 ADR-039 inline whitelist 정합 — closed 4-entry 보존
+
+[ADR-039 §결정 2](ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) Inline whitelist 4-entry **closed enumeration** 보존 invariant. 3 touchpoint 는 기존 entry scope 안에서 작동 — 신규 entry 신설 0.
+
+| touchpoint | ADR-039 inline whitelist entry |
+|---|---|
+| (a) 결과-명세 확인 | 1번 entry (사용자 dialog) — `AskUserQuestion` 발화 |
+| (b) 사용자만 풀 수 있는 차단 | 1번 entry (사용자 dialog) — 사용자 행동 요청 발화 |
+| (c) 최종 완료 보고 1회 | 4번 entry (Status report) — 작업 완료 통지 |
+
+**5번째 entry 신설 X** — 새 카테고리 enumeration 추가 아님, 기존 1번·4번 entry 의 frequency 영역 명문화. closed enumeration 보존 invariant + 5번째 entry 신설 시 Amendment 의무 invariant 양 보존 (§결정 13.4 ADR-039 정합 명문화 family pattern 정합).
+
+### 15.5 closed-enum 확장 패턴 (§결정 13.6 정합)
+
+3 touchpoint enum = **closed enumeration**. 확장 후보 발생 시 (예: "사용자 explicit 과정 설명 요청" / "FIX 3 회 escalation 시점" / "보안 incident detect 시점") → **별 CFP 신설 의무** (사용자 burden 변화 영역 — 발화 frequency 증가).
+
+| 룰 | 적용 |
+|---|---|
+| ADR-064 §결정 7 top-down ratchet | 강화 방향 only (touchpoint 추가 = 발화 빈도 증가 강화 ratchet) |
+| ADR-058 §결정 5 sunset_justification | touchpoint 축소 시 의무 (frequency 축소 = 사용자 burden 추가 변화 영역) |
+| Story §1 사용자 explicit 승인 | 별 CFP 의 Story §1 verbatim 명시 의무 (CFP-851 §1 declared outcome 1번 항목 verbatim pattern 정합) |
+
+본 §15.5 codification = scope creep 차단 forcing function (§결정 13.6 closed-enum 확장 패턴 verbatim 적용 — 본 ADR 안 3번째 closed enumeration 인스턴스: 3-anchor enum (§13.6) / 4 차원 enum (§4) / 3 touchpoint enum (§15.5)).
+
+### 15.6 measurement gap declare — behavioral directive only
+
+본 §결정 15 = **behavioral directive only** (mechanical lint 부재). 3 touchpoint 외 발화 자동 감지 / 억제-induced rework 측정 채널 = 별 follow-up CFP scope (ADR-071 §결정 10 "Layer 1 preamble mechanical lint = 별 follow-up CFP" 패턴 정합 + §결정 14 measurement wiring precedent — advisory operational signal, blocking 승격 의미 부적용).
+
+| 측정 axis | 본 Amendment 4 scope | 별 follow-up CFP scope |
+|---|---|---|
+| 3 touchpoint 외 발화 detect | — | mechanical lint (별 CFP, advisory warning tier 첫 도입 시 evidence-checks-registry entry 추가) |
+| 억제-induced rework 빈도 | — | runtime cron metric (precedent `dialog-fidelity-effect` / `rate-limit-fallback-rate` 동형) |
+| 사용자 explicit 과정 설명 요청 후 발화 frequency | — | 별 CFP scope (확장 candidate, §15.5 정합) |
+
+**ADR-058 §결정 3 측정성 self-application 정합**: 본 Amendment 가 measurement wiring 없이 영구화되면 안 됨을 인지. 단 measurement 자체 = behavioral baseline 누적 후 별 CFP carrier 영역 — Amendment 4 effective 후 incident pattern (Layer 4 file row pattern_dimension="보고 형식") + PMOAgent retro user feedback 누적 가 baseline. §결정 14 measurement (CFP-833) precedent 동형 — measurement entry 가 ADR 본문 외부 (registry yaml) 에서 wiring.
+
+### 15.7 sunset_justification: null (ADR-058 §결정 5 정합)
+
+본 Amendment 4 = **additive 강화** (Layer 1-4 + DialogFidelityAgent auxiliary + §결정 2(c) richness + Inline whitelist 4-entry + 3-anchor enum + 4 차원 enum 모두 보존, frequency 축소 layer 추가만). 강화 방향 only — `is_transitional: false` 보존, ADR-058 §결정 5 약화 차단 영역 미적용.
+
+`sunset_justification: null` 적격 (§12.7 / §13.7 / §14.4 family pattern 정합 — Amendment 1/2/3/4 모두 동일).
+
 ## self-application top-down ratchet
 
-본 ADR amendment 는 [ADR-064 §결정 7](ADR-064-decision-principle-mandate.md) top-down ratchet 정합 — 강화 방향만 허용 (scope 확장 / 강도 강화). 약화 방향 (`is_transitional: false → true` 다운그레이드 / 4 layer 축소 / 3 memory entry mapping 회수 / Sub-mechanism 2 차원 enum 축소) 은 [ADR-058 §결정 5](ADR-058-adr-sunset-criteria-mandate.md) `sunset_justification` 의무로 차단. 본 ADR-071 = ADR-064 ratchet 의 직접 carrier (mechanical version 승격 + scope 확장 = strict superset).
+본 ADR amendment 는 [ADR-064 §결정 7](ADR-064-decision-principle-mandate.md) top-down ratchet 정합 — 강화 방향만 허용 (scope 확장 / 강도 강화). 약화 방향 (`is_transitional: false → true` 다운그레이드 / 4 layer 축소 / 3 memory entry mapping 회수 / Sub-mechanism 2 차원 enum 축소 / **3 touchpoint enum 축소 — §결정 15 Amendment 4** / **§결정 2(c) richness 약화 — frequency 축소 ≠ richness 축소 invariant 위반**) 은 [ADR-058 §결정 5](ADR-058-adr-sunset-criteria-mandate.md) `sunset_justification` 의무로 차단. 본 ADR-071 = ADR-064 ratchet 의 직접 carrier (mechanical version 승격 + scope 확장 = strict superset). Amendment 1/2/3/4 = `sunset_justification: null` family pattern.
 
 ## 해소 기준
 
