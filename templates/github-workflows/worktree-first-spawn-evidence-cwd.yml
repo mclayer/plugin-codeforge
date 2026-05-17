@@ -6,6 +6,8 @@ name: worktree-first spawn evidence cwd check (blocking-on-pr mode)
 # CFP-531 Amendment 5 — actual warning → blocking-on-pr 승격 (2026-05-13).
 # §14 Lane Evidence row 의 `Working dir:` field 가 worktree path 또는
 # `N/A — <30자 이상 사유>` (ADR-031 §결정 4 bypass mechanism) 인지 검증.
+# CFP-843 Amendment 6 — write-target-path scope 확장: agent transcript Write/Edit tool target path
+# + agent-internal git write target path 의 worktree-membership 추가 검증 (2026-05-17).
 
 on:
   pull_request:
@@ -13,6 +15,9 @@ on:
     paths:
       - 'docs/stories/**.md'
       - 'scripts/check-worktree-first-spawn-evidence-cwd.sh'
+      - 'scripts/check-write-target-membership.sh'
+      - 'scripts/check-write-target-membership.py'
+      - 'scripts/check-probe-sandbox-env.sh'
       - '.github/workflows/worktree-first-spawn-evidence-cwd.yml'
       - 'templates/github-workflows/worktree-first-spawn-evidence-cwd.yml'
 

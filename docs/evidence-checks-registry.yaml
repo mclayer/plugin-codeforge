@@ -705,9 +705,12 @@ entries:
       → worktree root membership resolve) = Phase 2 carrier (본 SSOT = Phase 1 declarative 선언,
       Amendment 5 declaration → Phase 2 wire 패턴 동형). tier 무변경 (blocking-on-pr 유지, scope
       확장만 — ADR-060 §결정 6 promotion gate 재평가 불요).
-    detect_command: bash scripts/check-worktree-first-spawn-evidence-cwd.sh
+    detect_command: bash scripts/check-worktree-first-spawn-evidence-cwd.sh && bash scripts/check-write-target-membership.sh
+    # CFP-843 Phase 2 actual wire: detect_command 이중 체인
+    #   1. check-worktree-first-spawn-evidence-cwd.sh — §14 Lane Evidence Working dir: CWD field lint (기존 blocking-on-pr)
+    #   2. check-write-target-membership.sh — Write/Edit tool target path + git write target worktree-membership lint (CFP-843 신규, warning sub-tier)
     workflow: templates/github-workflows/worktree-first-spawn-evidence-cwd.yml
-    current_tier: blocking-on-pr  # CFP-531 / ADR-040 Amendment 5 — warning → blocking-on-pr 승격 (2026-05-13). CFP-843 / ADR-040 Amendment 6 — scope CWD → write-target-path 확장 (tier 무변경, 2026-05-17)
+    current_tier: blocking-on-pr  # CFP-531 / ADR-040 Amendment 5 — warning → blocking-on-pr 승격 (2026-05-13). CFP-843 / ADR-040 Amendment 6 — scope CWD → write-target-path 확장, Phase 2 actual wire 완료 (2026-05-17)
     bypass_label: hotfix-bypass:worktree-spawn-evidence-cwd
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     promotion_criteria:

@@ -54,6 +54,17 @@ Tools loaded:
 - `SendMessage` — agent teammate communication (ADR-044)
 
 Failure to load these schemas will result in InputValidationError at first use. This is a hard requirement for codeforge orchestrator workflow.
+
+[codeforge probe-sandbox-env advisory — CFP-843 §3.3 / ADR-040 Amendment 6 §결정 7.J.3]
+
+When running probes or integration tests that call live GitHub APIs, set the following env var to prevent spurious artifact creation (#836 동근원 차단):
+
+  CBL_SKIP_ISSUE_CREATE=1   — suppresses live GitHub Issue create in probe/test context (read-only default)
+
+Env var scope (disjoint — not a superset of BYPASS_WORKTREE_FIRST or BYPASS_WORKTREE_GC):
+  CBL_SKIP_ISSUE_CREATE  ≠  BYPASS_WORKTREE_FIRST  ≠  BYPASS_WORKTREE_GC
+
+SecurityTestPL dynamic probe spawn: set CBL_SKIP_ISSUE_CREATE=1 in spawn prompt unless write opt-in is explicit.
 EOF
 
 exit 0
