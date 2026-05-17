@@ -2523,3 +2523,44 @@ entries:
       last_occurrence: null
       promotion_trigger: advisory    # ADR-060 §결정 19 (Amendment 6) — advisory-only first iteration
     status: warning                  # Phase 2 (CFP-842) land — script + workflow + bats 5 TC self-app 동반. warning-tier 첫 iteration (ADR-060 §결정 5). Active 전환 gate: pr_cumulative_min=20 + failure_threshold=0
+
+  # ─── CFP-894 Phase 1 (inter-plugin-contract MANIFEST↔frontmatter parity lint, 2026-05-17) ───
+  # ADR-060 §결정 6 evidence-enforceable warning-tier entry — INV-1 wrapper-local parity.
+  # Story-4 (CFP-834) §11.4 INV-1 carrier — CFP-42 backfill 류 silent drift 재발 차단.
+
+  - name: inter-plugin-contracts-parity
+    description: |
+      CFP-894 — inter-plugin-contract MANIFEST.yaml ↔ wrapper sibling .md frontmatter
+      contract_version byte-identical parity 자동 검증. Story-4 (CFP-834) 가 표면화한
+      silent drift class (wrapper sibling frontmatter "1.1" ↔ body payload "1.0"
+      backfill 잔재) 의 wrapper-local mechanical enforcement.
+      Phase 1 scope = MANIFEST row contract_version ↔ frontmatter contract_version
+      2-touchpoint parity. Phase 2 scope = body `## N.` payload + cross-repo canonical
+      frontmatter (CODEFORGE_CROSS_REPO_PAT 의존, ADR-066) 별 carrier CFP.
+      Active 만 검증 (Archived = historical record, parity 면제). Missing file =
+      separation of concerns (check_inter_plugin_contracts.py CFP-42 영역) — 본 lint 는
+      silent skip.
+    detect_command: bash scripts/check-inter-plugin-contracts-parity.sh
+    workflow: templates/github-workflows/inter-plugin-contracts-parity.yml
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:inter-plugin-contracts-parity
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: []       # 독립 entry — MANIFEST self-app + wrapper-local scope only
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # exact-equality byte-identical compare, modal 어휘 무관
+    introduced_by: CFP-894
+    introduced_date: 2026-05-17
+    owner_adr: ADR-010               # Inter-plugin Contract Sibling Sync — parity invariant SSOT
+    carrier_adr: ADR-060             # evidence-enforceable warning-tier framework
+    recurrence:
+      count: 1                       # CFP-834 silent drift (wrapper sibling 1.1↔body 1.0)
+      threshold: 3
+      last_occurrence: "2026-05-15T00:00:00Z"  # CFP-834 FIX-Iter1 5-touchpoint reconcile (ISO8601 UTC Z per registry schema)
+      promotion_trigger: advisory
+    status: Active                   # script+workflow self-app land 동반 (CFP-894 Phase 1 carrier)
