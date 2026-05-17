@@ -1,0 +1,33 @@
+name: bypass-label-counter
+# CFP-825 / ADR-024 Amendment 6 section 6.A.2
+# per-(plugin, label) signature cumulative use counter lint.
+# Detects hotfix-bypass:<entry> label accumulation (exception -> norm mutation risk).
+#
+# PAT scope requirement (OQ-1, Change Plan section 3.3 EC-3):
+#   CODEFORGE_CROSS_REPO_PAT must have: issues:write + repo:read (contents:read)
+#   ADR-066 single PAT consolidation (shared with rate-limit-fallback-kpi.yml).
+#
+# Warning tier (ADR-060 4-tier framework):
+#   Script exits 0 on threshold reach + Issue auto-create (warning, not blocking).
+#   Cron failure is visible via workflow conclusion (alerting) -- continue-on-error: false.
+#
+# Bypass: hotfix-bypass:bypass-label-counter label (31st family member, label-registry-v2 v2.23)
+on:
+  schedule:
+    - cron: '0 0 * * *'  # daily 00:00 UTC = 09:00 KST
+  workflow_dispatch:
+
+permissions:
+  issues: write    # Issue auto-create (carrier Issue per signature)
+  contents: read   # gh api search/issues (merged PR label scan)
+
+jobs:
+  count-and-issue:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run bypass-label counter
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}  # ADR-066 single PAT
+        run: bash scripts/check-bypass-label-counter.sh --repo mclayer/plugin-codeforge
