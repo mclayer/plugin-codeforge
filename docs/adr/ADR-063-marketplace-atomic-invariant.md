@@ -44,7 +44,18 @@ amendments:
     summary: "§결정 13 #6 recurrence ratchet UP — count 3 → 5, threshold 3 → 5, promotion_trigger advisory → warning_first. CFP-673 Phase 2 carrier session 안 5-tuple reproduce evidence 누적: (1) CFP-609 PR #613 marketplace 5.43.0 sync wrapper plugin.json 누락 / (2) CFP-612 PR #618 정상 sync control sample / (3) CFP-610 Story 2 PR #616 commit f3391d4 marketplace 5.46.0 declared wrapper 5.45.0 stuck (3rd) / (4) CFP-673 session prep verify 2026-05-14 KST initial baseline / (5) CFP-673 sub-PR (b) PR #682 CI fail 2026-05-15 KST live — marketplace-parity workflow 가 plugin.json 5.63.0 ↔ marketplace 5.64.0 drift 검출 (Phase 2 carrier 가 본래 검출하려던 패턴 자체 실시간 발생). Story §7.3.1 + evidence-checks-registry entry (PR #682 merged) count: 4 forward-looking — 본 Amendment 4 가 5-tuple 정합화. Strengthening direction only — ADR-064 §결정 7 top-down ratchet + ADR-058 §결정 5 약화 방향 차단. Codex F-CR2-003 deferred §10 reconciliation."
     is_transitional: false
     sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 4 = ratchet UP 강화 방향 only — recurrence count 3 → 5, threshold 3 → 5, promotion_trigger advisory → warning_first). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과."
-mechanical_enforcement_actions: []
+  - amendment: 5
+    date: 2026-05-17
+    cfp: CFP-820
+    summary: "§결정 15 신설 — 3-way version atomic invariant 확장 (Wave 3 Story-6, Epic CFP-699 B2 carrier). 기존 §결정 1 3-file atomic invariant (plugin.json + CHANGELOG.md + marketplace.json = wrapper-side publishing-time) 위에 consumer-side runtime pin layer (`.claude/_overlay/project.yaml codeforge.version_pin.version`) 1단 추가 = publisher↔registry↔consumer 3-way version invariant. CHANGELOG.md 3-way 미포함 (plugin.json same-PR sibling, 기존 invariant-check enforce — 4-way 중복 회피 ADR-064 minimal-change). consumer pin FORM = `.claude/_overlay/project.yaml codeforge.version_pin` block (사용자 confirm 2026-05-17 KST — 기존 project.yaml SSOT 확장, consumer 1-file 정책 정합, project-config-schema MINOR). fallback semantic = warning-first → 등록 후 blocking (pin 미등록 = warning only exit 0 / pin 등록 후 mismatch = blocking-on-pr enforce — ADR-027 Amendment 2 bootstrap.fallback_mode 패턴 답습 + orthogonality invariant: pin 가용성 ≠ version 정합성, conflate 금지 Story-5 base-absent≠marker-absent precedent). 3-way lint = read-only fetch (ADR-066 §결정 2 marketplace contents:read reuse, Amendment 3 reconcile-target write scope 미사용 — 추가 PAT grant 0). reconcile-protocol-v1 v1.4 → v1.5 §4.3 (e) trigger 발동 동반 (version_handshake placeholder → active + 3 stale 정정). ADR-027 Amendment 4 동반 (consumer adoption protocol — version pin schema detection). carrier components Phase 2 (scripts/check-3way-version-parity.sh + templates/github-workflows/version-3way-atomic.yml + .github/workflows/... self-app + docs/evidence-checks-registry.yaml entry blocking-on-pr + label-registry-v2 MINOR hotfix-bypass:version-3way-atomic). Strengthening direction only (publisher↔registry 2-way → 3-way invariant 확장 = scope 확장 + invariant 강도 상승) — ADR-064 §self-application top-down ratchet + ADR-058 §결정 5 약화 방향 차단 logic 통과. § \"Amendment 번호 정정 note\": Story §1-§6 RequirementsPL synthesis 의 'ADR-063 Amendment 4' 표기 = frontmatter amendments[] 미검증 결과 (CFP-686 이 amendment:4 점유) → 설계 lane strict-verify-gate 가 frontmatter direct Read 후 Amendment 5 로 정정 (fact 영향 0 추적성만 — Codex TP#2 verify-before-trust 8-mirror 교훈 정합)."
+    is_transitional: false
+    sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 5 = 3-way 확장 강화 방향 only — consumer pin layer 추가, publisher↔registry 2-way → 3-way invariant). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과."
+mechanical_enforcement_actions:
+  - action: version-3way-atomic
+    binding_decision: 15
+    tier: blocking-on-pr
+    bypass_label: "hotfix-bypass:version-3way-atomic"
+    carrier_phase: 2  # Phase 2 carrier — Phase 1 declarative SSOT mandate only (ADR-054 doc-only fast-path 정합). artifact (scripts/check-3way-version-parity.sh + templates/github-workflows/version-3way-atomic.yml + .github/workflows/... + docs/evidence-checks-registry.yaml entry) = Phase 2 PR scope (follow-up carrier PR). Phase 2 carrier PR open 시 본 entry actual wire + evidence-checks-registry row append.
 # Amendment 3 §결정 13 = declarative SSOT mandate only (Phase 1 doc-only fast-path scope, ADR-054).
 # artifact (scripts/check-marketplace-drift.sh + workflow + registry entry) = Phase 2 carrier PR scope (별도 Story).
 # ADR-067 §결정 3 cross-lane RESET 차원 전환 정합 — Phase 1 / Phase 2 boundary completeness (ADR-068 I-1) 회복.
@@ -391,6 +402,76 @@ ADR-065 의 `mechanical_self_check_passed` 와 **별도 boolean field** 운영 (
 
 본 ADR-063 amendment 발의 시 매번 ratchet 방향 검증 의무 — 강화 방향만 허용.
 
+### 결정 15: 3-way version atomic invariant — consumer pin layer 확장 (Amendment 5, CFP-820)
+
+**Context (publisher-side only 한계)**: §결정 1-14 (Amendment 1-4 포함) = 모두 **wrapper-side publishing-time** 영역만 cover — 3-file atomic invariant (plugin.json + CHANGELOG.md + marketplace.json) 은 publisher 가 SSOT 를 3 file 에 redundantly 표현하는 영역. **consumer 가 어떤 wrapper plugin version 으로 작동 중인가** 의 runtime provenance 영역은 미codify. consumer pin SSOT 부재 시 — 어떤 version 으로 reconcile / upgrade / debug 했는지 추적 불가 + publisher/registry drift 가 consumer 에 도달했는지 감지 채널 부재. Epic CFP-699 §1 WHY (사용자 directive 2026-05-14 KST verbatim) "consumer 에서 버전을 한 곳에만 잘 유지하고 있다면 어긋날 일도 없고. 사용자에게 물어볼 일은 따로 없는 거 같아." = 본 §결정 15 root motivation (결정 분기 박제 아닌 결정 분기 자체 제거 — 단일 consumer pin SSOT 로 drift 발생 불가능 구조).
+
+본 §결정 15 = **3-way version atomic invariant normative**.
+
+**Phase 1 / Phase 2 boundary 명시 (ADR-068 I-1 boundary completeness, ADR-067 §결정 3 cross-lane RESET 차원 전환 정합)**:
+
+본 §결정 15 = **declarative SSOT mandate** — Phase 1 PR (declarative doc-only) scope. **artifact 도입 (`scripts/check-3way-version-parity.sh` + `templates/github-workflows/version-3way-atomic.yml` + `.github/workflows/version-3way-atomic.yml` byte-identical self-app + `docs/evidence-checks-registry.yaml` entry + `docs/inter-plugin-contracts/label-registry-v2.md` MINOR) = Phase 2 PR scope (별도 carrier)**. ADR-054 doc-only fast-path 정합 + boundary completeness (Phase 1 declarative vs Phase 2 artifact mechanical 분리 의도 회복) 동시 충족. Phase 2 carrier PR open 시 frontmatter `mechanical_enforcement_actions[]` actual wire + evidence-checks-registry row append 의무.
+
+**3-way invariant 정의**:
+
+| Layer | File | Repo | 영역 |
+|---|---|---|---|
+| publisher | `.claude-plugin/plugin.json` `.version` | plugin repo (예: mclayer/plugin-codeforge) | publishing-time (§결정 1 base — 변경 0) |
+| registry | `.claude-plugin/marketplace.json` `.plugins[name=codeforge].version` | mclayer/marketplace | publishing-time (ADR-016 sibling sync — 변경 0) |
+| **consumer (신규)** | `.claude/_overlay/project.yaml` `.codeforge.version_pin.version` | consumer project repo | **runtime pin (본 §결정 15 신설)** |
+
+`CHANGELOG.md` 는 3-way 미포함 — wrapper plugin.json 의 same-PR sibling (기존 `invariant-check` workflow 가 plugin.json ↔ CHANGELOG version field 이미 enforce, §결정 1 base scope). 4-way 로 확장하면 중복 coverage (ADR-064 minimal-change 위배) — 3-way (publisher ↔ registry ↔ consumer pin) 가 최소 충분 set.
+
+**3-way invariant**: 3 layer 모두 byte-identical version string (exact-string match — semver normalize 안 함, `5.81.0` ≠ `5.81` ≠ `v5.81.0` 모두 mismatch. publisher SSOT 가 canonical, consumer verbatim mirror 의무).
+
+**Consumer pin location FORM (사용자 confirm 2026-05-17 KST)**: `.claude/_overlay/project.yaml` `codeforge.version_pin` block (기존 `codeforge:` block sibling sub-key — 기존 SSOT 확장, 신규 file 0, consumer 1-file 정책 정합, project-config-schema MINOR). 별도 file (`.wrapper-plugin-pin.yaml`) / runtime artifact (`installed_plugins.json`) / hidden config root (`.codeforge/version-pin.yaml`) = 기각 (consumer 1-file 정책 위배 / 의도 declare semantic mismatch — CFP-820 Story §3.1.3 ALTERNATIVE 표 SSOT).
+
+**Fallback semantic (사용자 confirm 2026-05-17 KST) — orthogonality invariant**:
+
+`pin 가용성` (consumer 가 `codeforge.version_pin` 을 등록했는가 = enforce 가능 여부) 과 `version 정합성` (pin 값이 publisher/registry 와 일치하는가 = drift 존재 여부) 은 **ORTHOGONAL 2 조건** — 동일 fallback 에 conflate 금지 (CFP-745 FIX Iter 2 base-absent≠marker-absent verified-true precedent 답습). conflate 시 결함: pin 미등록 신규 consumer 즉시 blocking = onboarding 마찰 (false-positive) 또는 pin 등록 consumer 실 drift 가 warning 약화 (false-negative).
+
+| | pin 가용성 = absent | pin 가용성 = present |
+|---|---|---|
+| version = match | warning-first (skip, exit 0) | PASS (exit 0) |
+| version = mismatch | warning-first (pin 부재 시 mismatch 판정 불성립 — 비교 대상 없음, false-positive 차단) | **blocking FAIL (exit 1, blocking-on-pr)** |
+
+- pin 미등록 = warning-only (lint skip + warn message `"consumer pin SSOT 미등록 — codeforge.version_pin 등록 후 3-way enforce 활성"` + exit 0). ADR-027 Amendment 2 `bootstrap.fallback_mode` 패턴 답습 (onboarding 마찰 0)
+- pin 등록 후 mismatch = blocking-on-pr (exit 1, PR 차단). drift 0 strict enforce (등록 영역)
+
+**3-way lint = read-only by design (write surface 0)**:
+- publisher plugin.json = same-repo local read (PR checkout, auth 불요)
+- registry marketplace.json = `gh api repos/mclayer/marketplace/contents/.claude-plugin/marketplace.json` — ADR-066 §결정 2 5-scope set 중 **`marketplace contents:read`** (Amendment 2 이미 grant) reuse
+- consumer project.yaml = same-repo local read (auth 불요)
+- ADR-066 Amendment 3 `reconcile-target-repos contents:write + pull_requests:write` **미사용** (lint = compare-only, write 0, PR open 0) → 추가 PAT grant 0 invariant (least-privilege 정합)
+
+**Sanity guard 6-tuple (marketplace fetch 시, CFP-745 retro carry (i) 첫 carrier reference impl)**: (1) size > 40000 (2) JSON parse (3) 4-field parity (4) 6 non-codeforge byte-identical (5) git diff stat single-line (6) global version pattern unique. ADR-070 verify-before-trust + CFP-745 carry (j) `gh api blob sha` empty-detection 사전 단계.
+
+**E-4 fetch failure 3-branch (ADR-068 I-3 guard placement intent — §결정 13 E-4 패턴 답습)**: 401 = fail-closed (PAT expired manual blocker, exit 2 actionable) / 429 = fail-open (rate-limit, warning log + exit 0 다음 run 회복) / 5xx·network = fail-closed-with-retry (in-run 3회 exponential backoff 1s/2s/4s 후 exit 2). single "fail-closed" 추상화 회피.
+
+**reconcile-protocol-v1 v1.4 → v1.5 동반** (§4.3 (e) trigger 발동 — `version_handshake` placeholder → active + 3 stale placeholder 정정. kind:registry sibling sync 면제 ADR-010 §결정 2). **ADR-027 Amendment 4 동반** (consumer adoption protocol — `codeforge.version_pin` schema detection 의무 codify, 신규 ADR 아닌 Amendment — ADR collision 회피 CFP-820 Story §3.1.5 판정).
+
+**Bypass channel**: `hotfix-bypass:version-3way-atomic` label (ADR-024 Amendment 3 §결정 6.A per-entry namespace family member, Phase 2 label-registry-v2 MINOR carrier). bypass audit comment 자동 발의 (24h 이내 3-way sync 의무 명시). audit-trailed exception only — 정상 운영 사용 금지.
+
+**ADR-068 boundary completeness invariants 5종 self-check** (ADR-068 Amendment 1 정합):
+- **I-1 API contract semantic completeness**: 3-way invariant = (publisher↔registry↔consumer pin) 명시 완결. CHANGELOG.md 미포함 사유 명시 (same-PR sibling 기존 enforce). Phase 1 declarative vs Phase 2 artifact boundary 명시.
+- **I-2 cross-module propagation**: ADR-063 / ADR-016 / ADR-066 / ADR-076 / ADR-027 / ADR-037 cross-ref 의무 (본문 + frontmatter related_adrs + CFP-820 Change Plan §4). reconcile-protocol-v1 §4.3 (e) → v1.5 → MANIFEST sync propagation 완결.
+- **I-3 unconditional vs conditional guard placement intent**: E-4 3-branch (401 fail-closed / 429 fail-open / 5xx fail-closed-with-retry) + pin 가용성 absent/present conditional guard (orthogonality 2×2). single "fail-closed" 추상화 회피 — guard placement intent 명시.
+- **I-4 wording SSOT**: ADR-064 §결정 3 forbid-list dictionary 13 어휘 (`docs/wording-dictionary.md` SSOT) 회피 — 본 §결정 15 본문 lint clean. "version pin" = 외부 표준 도메인 용어 (npm package-lock / Helm chart / terraform provider — CFP-820 Story §6.1), 거버넌스 freeze 어휘 "박제"/"못 박기"/"freezing" 미사용 (Epic §1 WHY verbatim 인용은 user-input 변조 금지 보존, 본문 신규 거버넌스 문장 = "명문화"/"확정"/"codify").
+- **I-5 dimensional empirical grounding**: sanity guard count = 6 [empirical-source: CFP-745 marketplace_sync_5_81.py 6-guard pattern]. size guard 하한 > 40000 [empirical-source: CFP-745 marketplace.json byte size + empty-blob e69de29b incident]. 3-way layer count = 3 [empirical-source: §결정 1 3-file - CHANGELOG same-PR sibling + consumer pin 1 추가]. retry count = 3회 1s/2s/4s [empirical-source: §결정 13 E-4c verbatim].
+
+### 결정 16: Self-application — Amendment 5 ratchet 검증 + mechanical enforcement 세번째 사례
+
+본 Amendment 5 = 강화 방향 only (publisher↔registry 2-way → publisher↔registry↔consumer pin 3-way invariant 확장 = scope 확장 + invariant 강도 상승). ADR-064 self-application top-down ratchet 정합 — 약화 방향 (예: 3-way → 2-way 축소 / consumer pin layer 제거 / blocking → warning 다운그레이드) 미해당. ADR-058 §결정 5 sunset_justification = frontmatter 명시 (`N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 5 = 3-way 확장 강화 방향 only). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과.`).
+
+**Mechanical enforcement 세번째 self-application 사례** (ADR-040 Amendment 3 §결정 7 정합): frontmatter `mechanical_enforcement_actions[]` row append (`version-3way-atomic` entry, binding_decision: 15, tier: blocking-on-pr, carrier_phase: 2). ADR-063 자체가 normative ADR (category = `Team & Process` governance 영역) → mechanical enforcement actions 의무 영역. Amendment 2 §결정 11 (description verbatim, blocking-on-pr) = 첫 사례 / Amendment 3 §결정 13 (drift detection, warning) = 두번째 사례 / 본 Amendment 5 §결정 15 (3-way version atomic, blocking-on-pr) = 세번째 사례. Phase 1 = declarative SSOT mandate only (artifact = Phase 2 carrier — ADR-067 §결정 3 cross-lane RESET 차원 전환 정합, Phase 1 + Phase 2 atomic 합병 시도 회피).
+
+**Blocking-on-pr tier 직접 시작 근거** (Amendment 2 §결정 11 precedent 답습):
+- ADR-060 §결정 5 default warning-mode 의 explicit exception (Epic CFP-699 §1 WHY 사용자 directive — drift 0 invariant)
+- ADR-060 §결정 19 (Amendment 6, CFP-509) `auto_blocking` manual gate path (carrier-driven transition — 본 Story-6 자체가 carrier)
+- 3-Wave drift evidence (§결정 13 4-tuple reproduce) 의 consumer-side 확장 — publisher drift 가 consumer 에 도달하는 4th defense layer
+
+본 ADR-063 amendment 발의 시 매번 ratchet 방향 검증 의무 — 강화 방향만 허용.
+
 ## 결과
 
 ### 긍정
@@ -407,6 +488,7 @@ ADR-065 의 `mechanical_self_check_passed` 와 **별도 boolean field** 운영 (
 - 모든 plugin family version bump 작업 (wrapper + 6 lane plugin)
 - marketplace sync PR open 의무 (Phase 2 PR pair → Phase 2 PR triplet)
 - 별도 follow-up: pre-commit hook / 신규 atomic lint
+- **(Amendment 5 §결정 15)** consumer 영역 확장 — consumer `.claude/_overlay/project.yaml codeforge.version_pin` 등록 시 publisher↔registry↔consumer 3-way version invariant enforce (pin 미등록 = warning-first, ADR-027 Amendment 4 동반). reconcile-protocol-v1 v1.4 → v1.5 §4.3 (e) trigger 발동 (version_handshake active)
 
 ## ADR-073 cross-ref (Orchestrator verify-before-assert)
 
@@ -438,6 +520,11 @@ flowchart TD
     CI -->|PASS| Merge[plugin PR merge]
     CI -->|FAIL| Reorder[marketplace PR merge<br/>+ plugin PR rerun]
     Reorder --> CI
+    Merge --> Pin{consumer pin<br/>codeforge.version_pin<br/>등록?}
+    Pin -->|absent| Warn[warning-first<br/>exit 0 skip<br/>orthogonality:<br/>pin 부재 ≠ mismatch]
+    Pin -->|present| ThreeWay{3-way byte-identical?<br/>plugin.json ↔<br/>marketplace.json ↔<br/>project.yaml pin}
+    ThreeWay -->|match| Pass3[3-way PASS exit 0]
+    ThreeWay -->|mismatch| Block[blocking-on-pr<br/>exit 1 PR 차단<br/>Amendment 5 §결정 15]
 ```
 
 ## 관련 파일
@@ -454,3 +541,12 @@ flowchart TD
 - `docs/adr/ADR-024-story-scoped-branch-policy.md` — hotfix-bypass label family (Amendment 3)
 - `docs/adr/ADR-061-python-script-writing-convention.md` — sanity check 3종 정합
 - `docs/adr/ADR-060-evidence-enforceable-promotion-framework.md` — §결정 5 default warning exception + §결정 19 (Amendment 6, CFP-509) auto_blocking manual gate (Amendment 2 carrier evidence base — blocking-on-pr 직접 시작 근거 SSOT)
+- `docs/inter-plugin-contracts/reconcile-protocol-v1.md` — Amendment 5 §결정 15 동반 (v1.4 → v1.5 §4.3 (e) trigger — version_handshake placeholder → active. CFP-820 carrier)
+- `docs/project-config-schema.md` — Amendment 5 §결정 15 consumer pin location (`codeforge.version_pin` block MINOR — FORM (b) 사용자 confirm)
+- `docs/adr/ADR-027-consumer-adoption-protocol.md` — Amendment 5 §결정 15 동반 (ADR-027 Amendment 4 — consumer adoption protocol version pin schema detection)
+- `docs/adr/ADR-066-pat-rotation-policy.md` — Amendment 5 §결정 15 cross-ref (§결정 2 marketplace contents:read reuse, Amendment 3 write scope 미사용 — 추가 grant 0)
+- `docs/adr/ADR-070-codex-verify-before-trust.md` — Amendment 5 §결정 15 sanity guard 6-tuple + gh api blob sha empty-detection (CFP-745 carry (i)/(j) lineage)
+- `scripts/check-3way-version-parity.sh` — Amendment 5 carrier (CFP-820 / §결정 15 — 3-way version parity PR-time read-only lint, Phase 2 carrier)
+- `templates/github-workflows/version-3way-atomic.yml` + `.github/workflows/version-3way-atomic.yml` — Amendment 5 canonical workflow SSOT + self-app mirror (ADR-005 byte-identical, Phase 2 carrier)
+- `docs/evidence-checks-registry.yaml` — Amendment 5 entry `version-3way-atomic` (blocking-on-pr tier, Phase 2 carrier)
+- `docs/inter-plugin-contracts/label-registry-v2.md` — Amendment 5 carrier `hotfix-bypass:version-3way-atomic` family member (MINOR, Phase 2 carrier)

@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: reconcile-protocol
-version: "1.4"
+version: "1.5"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/reconcile-protocol-v1.md
@@ -12,11 +12,13 @@ authors:
   - ArchitectPLAgent (CFP-743 Wave 2 Story-3 — §4.3 (c) trigger 발동, mechanical_implementation_binding block 신설 + KEY cross-ref 정정 CFP-703→CFP-743)
   - ArchitectPLAgent (CFP-744 Wave 2 Story-4 — §4.3 (d) trigger 발동, atomicity_boundary_runtime per_plugin → family_7_plugin ratchet 활성 + stale placeholder 정정 v1.0→v1.1 → v1.2→v1.3)
   - ArchitectPLAgent (CFP-745 Wave 2 Story-5 — §4.3 (g) trigger 신설 발동, §4.7 overlay_reconcile_implementation_binding block 신설 + marker_block_syntax.json carrier → realized_in cross-ref (§2.5 FORM 옵션 (i)))
+  - ArchitectPLAgent (CFP-820 Wave 3 Story-6 — §4.3 (e) trigger 발동, version_handshake placeholder_reserve → active + 3 stale placeholder 정정 (becomes_normative_at_version v1.1→v1.5 / validation_status_v1_0→validation_status_v1_5 rename / field_schema_future v1.0→v1.1 comment → v1.4→v1.5 active schema) + §4.8 version_handshake_3way_binding block 신설 (ADR-063 Amendment 5 §결정 15 carrier))
 version_history:
   - { version: "1.0", date: 2026-05-15, carrier: CFP-701, change: "initial — declarative reconciliation upgrade flow schema SSOT. 9 영역 desired state enumeration + dry-run/snapshot/transaction 3 mode enum + customization preservation entry (marker block, Story-2 prerequisite) + version_handshake / reconcile_strategy placeholder reserve (Wave 4 carrier)." }
   - { version: "1.1", date: 2026-05-15, carrier: CFP-702, change: "§4.3 (b) trigger 발동 — Wave 1 Story-2 marker block syntax 확정. customization_preservation_entry 영역 확장: marker_block_syntax_* 4 fields 정식화 (comment prefix per-filetype / nesting_policy / lint_behavior / migration_script). ADR-027 Amendment 3 §결정 7.A-7.E verbatim cross-ref." }
   - { version: "1.2", date: 2026-05-15, carrier: CFP-743, change: "§4.3 (c) trigger 발동 — Wave 2 Story-3 UpgradeAgent + CLI 실 implementation hook (`scripts/codeforge-upgrade.{sh,ps1}` 신설). mechanical_implementation_binding block 신설 (§4.5 reference → CLI 3 mode entrypoint + UpgradeAgent Plan+Apply 책임 binding + reconcile PR open scope = ADR-066 Amendment 3 cross-ref). KEY cross-ref 정정: §4.3 (c) `CFP-703` → `CFP-743` (Wave 1 작성 시점 placeholder drift — 동일 Story, fact 영향 0 추적성 정정). MINOR bump (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 2). user_decision_branches: 0 invariant / atomicity_boundary semantic / transaction.completion_criterion 무변경 (ratchet 강화 only — ADR-064 §self-application 정합)." }
   - { version: "1.3", date: 2026-05-16, carrier: CFP-744, change: "§4.3 (d) trigger 발동 완료 — Wave 2 Story-4 7-plugin family atomic upgrade runtime (`scripts/atomic-upgrade-7-plugins.sh` 신설). `transaction.atomicity_boundary_runtime_v1` per_plugin → `atomicity_boundary_runtime_future` family_7_plugin runtime catch-up ACTIVE (ADR-076 §결정 8 pre-designated ratchet). 의미 invariant `atomicity_boundary_semantic_invariant: family_7_plugin_atomic` 변경 0 (ADR-016 §결정 1 SSOT 무변경 — runtime catch-up only). ADR-037 Amendment 1 (atomic upgrade 후 0 drift invariant) carrier 동반. stale placeholder 정정: 본 contract line 144 comment + ADR-076 line 147 의 'MINOR bump v1.0 → v1.1 의무' (Wave 1 작성 시점 placeholder — v1.1/v1.2 신설 전 작성된 stale text) → 실제 'v1.2 → v1.3 (Wave 2 Story-4)' 정정 (CFP-743 CFP-703→CFP-743 정정 패턴 답습, fact 영향 0 추적성만 — ADR-068 I-4 wording SSOT 정합). schema field 명 `_future` 유지 (field-name stability — ratchet 활성은 comment + version_history + §4.3 (d) marker 로 표기, §4.3 (c) v1.2 패턴 동형). MINOR bump (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 2). user_decision_branches: 0 / atomicity_boundary_semantic_invariant / transaction.completion_criterion / adr_053_d2_verbatim_quote 무변경 (ratchet 강화 only — ADR-064 §self-application 정합)." }
+  - { version: "1.5", date: 2026-05-17, carrier: CFP-820, change: "§4.3 (e) trigger 발동 완료 — Wave 3 Story-6 3-way version atomic invariant 확장 (B2, Epic CFP-699). `version_handshake.status: placeholder_reserve → active` 활성화 (Wave 1 Story-1 CFP-701 사전 declare `carrier_story: CFP-Wave-3-Story-6` 실현). §4.8 `version_handshake_3way_binding` block 신설 (publisher plugin.json ↔ registry marketplace.json ↔ consumer project.yaml codeforge.version_pin 3-way byte-identical invariant + warning-first→blocking fallback orthogonality + read-only lint scope + sanity guard 6-tuple + ADR-063 Amendment 5 §결정 15 carrier). 3 stale placeholder 정정 (CFP-744 v1.0→v1.1→v1.2→v1.3 / CFP-745 carrier→realized 정정 패턴 답습 — fact 영향 0 추적성만, ADR-068 I-4 wording SSOT 정합): (1) `becomes_normative_at_version: \"v1.1\" → \"v1.5\"` (Wave 1 작성 시점 placeholder, 현재 v1.4 → carrier 시점 v1.5 정정) (2) `validation_status_v1_0:` key → `validation_status_v1_5:` rename + value `non_normative_placeholder_reserve` → `normative — v1.5 consumer enforce (3-way version parity validator active)` (3) `field_schema_future: \"TBD (...v1.0 → v1.1)\"` → active field schema (3-way binding semantic, comment \"v1.4 → v1.5\"). marker_block_syntax / 의미 invariant `atomicity_boundary_semantic_invariant: family_7_plugin_atomic` (ADR-016 §결정 1) 변경 0 — consumer pin layer = runtime catch-up only (publisher↔registry 영역 무변경). MINOR bump (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 2). user_decision_branches: 0 / atomicity_boundary semantic / snapshot_reset_disjoint_layer / transaction.completion_criterion / adr_053_d2_verbatim_quote / marker_block_absent_behavior 무변경 (ratchet 강화 only — 3-way version invariant 확장, ADR-064 §self-application 정합). § \"Amendment 번호 정정\": ADR-063 carrier = Amendment 5 §결정 15 (Story §1-§6 RequirementsPL synthesis 의 'Amendment 4' = frontmatter 미검증 — CFP-686 이 amendment:4 점유, 설계 lane strict-verify direct Read 후 Amendment 5 정정, Codex TP#2 verify-before-trust 8-mirror 교훈)." }
   - { version: "1.4", date: 2026-05-16, carrier: CFP-745, change: "§4.3 (g) trigger 신설 발동 완료 — Wave 2 Story-5 overlay 영역 (skill/agent/hook) 3-way merge reconcile runtime (`scripts/reconcile-overlay.sh` 신설, Phase 2 carrier). §4.7 `overlay_reconcile_implementation_binding` block 신설 (per-file 3-way merge layer base/wrapper-new/consumer-current + marker_preserve_binding marker 안=wrapper-new mirror·밖=consumer-current byte-identical preserve + sidecar_manifest_schema RFC 6901 JSON Pointer key-path allowlist + base_acquisition_binding Story-3 snapshot wrapper-managed 영역 재사용). marker_block_syntax.comment_prefix_per_filetype.json `carrier: \"Wave 2 Story-5\"` → `realized_in: \"§4.7 overlay_reconcile_implementation_binding.sidecar_manifest_schema\"` cross-ref 추가 (carrier reservation → realized — ADR-027 §결정 7.A.1 carrier 실현, AC-10 contract integration OUTCOME). carrier key 유지 (field-name stability — consumer schema key 의존 보존, ADR-068 I-4). Story-3 §4.5/§4.6 (c)/(d) trigger + binding block 패턴 verbatim 답습 (§2.5 FORM 옵션 (i)). MINOR bump (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 2). user_decision_branches: 0 / atomicity_boundary_semantic_invariant: family_7_plugin_atomic / marker_block_absent_behavior: wholesale_mirror_with_user_visible_loss_report / snapshot_reset_disjoint_layer / transaction.completion_criterion / adr_053_d2_verbatim_quote 무변경 (ratchet 강화 only — overlay coverage 확장, ADR-064 §self-application 정합). [FIX Iter 2 — Codex TP#2 P1 verified-true: base_acquisition_binding 에 orthogonality_invariant + base_state_resolution(base_ok/base_corrupt/base_absent) 추가 + base_absent_first_reconcile 정정 (base 가용성 ≠ marker scope orthogonal 분리 — base 부재+MARKER_VALID = marker-aware 2-way first-reconcile marker 밖 byte-identical preserve / MARKER_NONE base무관 = wholesale_mirror / base corrupt = abort. 초기 'base 부재 = marker 부재 fallback 동형' conflation 정정). v1.4 schema 정정 — MINOR 유지, ratchet 강화 only (base_absent 가 marker_absent 와 분리됨을 명시 = 강화, marker_block_absent_behavior/user_decision_branches:0 무변경).]" }
 owner_adr: ADR-076
 carrier_story: CFP-701
@@ -82,7 +84,7 @@ reconcile 어휘는 다음 영역에 동시 등장:
 - dry-run / snapshot / transaction 3 mode enum semantic
 - customization preservation entry boundary (marker block prerequisite — Story-2 carrier)
 - snapshot ↔ ADR-067 RESET disjoint layer declare
-- version_handshake placeholder (Wave 3 Story-6 carrier reserve)
+- version_handshake 3-way binding (Wave 3 Story-6 CFP-820 carrier — v1.5 active, §4.8 version_handshake_3way_binding block. ADR-063 Amendment 5 §결정 15)
 - reconcile_strategy placeholder enum (Wave 4 E1/E2/E3 carrier reserve)
 - atomicity_boundary semantic (per-plugin Story-1 scope, per-family Wave 2 Story-4 carrier)
 
@@ -235,12 +237,12 @@ reconcile_protocol:
   # === Placeholder field (Wave 3/4 carrier reserve) ===
   # validation_status_v1_0 + becomes_normative_at_version 의무 (FIX iter 1 / Codex TP#2 F-003 — v1.0 validation semantic 명시)
   version_handshake:
-    status: "placeholder_reserve"
-    validation_status_v1_0: "non_normative_placeholder_reserve — v1.0 consumer ignore (validator skip 의무)"  # FIX iter 1 / Codex TP#2 F-003 annotation
-    becomes_normative_at_version: "v1.1 (Wave 3 Story-6 carrier MINOR bump 시점)"
-    carrier_story: "CFP-Wave-3-Story-6"  # 3-way version atomic invariant 확장
-    semantic_intent: "wrapper plugin major version ↔ 6 lane plugin major version ↔ marketplace SSOT 3-way handshake"
-    field_schema_future: "TBD (Wave 3 Story-6 carrier 시점 본 contract MINOR bump v1.0 → v1.1)"
+    status: "active"   # CFP-820 Wave 3 Story-6 §4.3 (e) trigger 발동 — placeholder_reserve → active (Wave 1 Story-1 CFP-701 사전 declare 실현)
+    validation_status_v1_5: "normative — v1.5 consumer enforce (3-way version parity validator active). validator (scripts/check-3way-version-parity.sh Phase 2 carrier) 가 publisher↔registry↔consumer pin 3-way byte-identical version 검증"  # CFP-820 정정: 旧 validation_status_v1_0 "non_normative_placeholder_reserve — v1.0 consumer ignore" → v1.5 normative rename (3 stale placeholder 정정 (2) — CFP-744/745 stale 정정 패턴, fact 영향 0 추적성만 ADR-068 I-4)
+    becomes_normative_at_version: "v1.5 (CFP-820 Wave 3 Story-6 carrier MINOR bump 시점 — 旧 stale \"v1.1\" 정정: Wave 1 작성 시점 placeholder, 현재 v1.4 → carrier 시점 v1.5. CFP-744 v1.0→v1.1 stale 정정 precedent 답습, fact 영향 0 추적성만)"
+    carrier_story: "CFP-820"  # 3-way version atomic invariant 확장 (旧 placeholder "CFP-Wave-3-Story-6" → 실제 Issue KEY CFP-820 실현. Wave 1 Story-1 CFP-701 사전 declare 의 carrier 확정 — carrier reservation → realized, ADR-027 §결정 7.A.1 carrier 실현 패턴 동형)
+    semantic_intent: "publisher (wrapper .claude-plugin/plugin.json .version) ↔ registry (mclayer/marketplace .claude-plugin/marketplace.json .plugins[name=codeforge].version) ↔ consumer (.claude/_overlay/project.yaml .codeforge.version_pin.version) 3-way byte-identical version handshake (ADR-063 Amendment 5 §결정 15 carrier)"
+    field_schema_active: "§4.8 version_handshake_3way_binding block (3-way binding semantic — CFP-820 v1.4 → v1.5. 旧 stale field_schema_future \"TBD (...v1.0 → v1.1)\" → active schema 정정, CFP-745 carrier→realized 정정 패턴 답습)"
   
   reconcile_strategy:
     status: "placeholder_reserve"
@@ -260,12 +262,15 @@ reconcile_protocol:
       - "multi_version_channel_pin"  # Wave 4 E1 carrier (LTS vs latest)
       - "uninstall_cleanup"  # Wave 4 E3 carrier (reverse direction)
 
-# === Placeholder field validation semantic SSOT (FIX iter 1 / Codex TP#2 F-003) ===
-# 본 v1.0 contract validator (`scripts/check-inter-plugin-contracts.sh`) 의 placeholder field skip 의무:
+# === Placeholder field validation semantic SSOT (FIX iter 1 / Codex TP#2 F-003 — CFP-820 v1.5 갱신) ===
+# contract validator (`scripts/check-inter-plugin-contracts.sh`) 의 placeholder field skip 의무:
 # - status: "placeholder_reserve" 보유 field = validator schema validation skip (non-normative)
-# - validation_status_v1_0 명시 의무 ("non_normative_placeholder_reserve — v1.0 consumer ignore" 또는 동등)
+# - validation_status_v1_<N> 명시 의무 (active 시 "normative — v1.<N> consumer enforce" / placeholder 시 "non_normative_placeholder_reserve — v1.<N> consumer ignore" 또는 동등)
 # - becomes_normative_at_version 명시 의무 (활성 carrier version)
-# 본 SSOT = Wave 3 Story-6 carrier 시점 validator promotion path 의 prerequisite.
+# CFP-820 Wave 3 Story-6 §4.3 (e) trigger 발동 후 상태:
+# - version_handshake: status "active" (v1.5 normative — §4.8 version_handshake_3way_binding block. carrier_story CFP-820 실현)
+# - reconcile_strategy: status "placeholder_reserve" 유지 (enum_reserved_wave_4 = Wave 4 sub-Epic carrier, becomes_fully_normative_at_version v2.0)
+# 본 SSOT = placeholder → active promotion path 의 검증 prerequisite (version_handshake 가 첫 promotion 실현 사례 — CFP-820).
 ```
 
 ## 3. 항목
@@ -306,6 +311,8 @@ consumer 가 D4 marker block 도입 전 customization 영역 보유 시:
 - **ADR-053 §D2 (consumer 배포 포함)**: 본 contract `transaction.completion_criterion` 의 prerequisite 정의.
 - **ADR-016 §결정 1 (codeforge family 7 plugin)**: 본 contract `family_scope` 의 unit_count = 7 정합.
 - **ADR-063 §결정 5 (marketplace ↔ plugin.json atomic invariant)**: 본 contract `plugin_json_mirrored` domain 의 atomic_sync_required mode 정합.
+- **ADR-063 Amendment 5 §결정 15 (3-way version atomic invariant — CFP-820)**: 본 contract §4.8 `version_handshake_3way_binding` block 의 carrier ADR. version_handshake placeholder → active 활성 + publisher↔registry↔consumer pin 3-way byte-identical invariant + warning-first→blocking fallback orthogonality. (Story §1-§6 'Amendment 4' = frontmatter 미검증 — CFP-686=amendment:4 점유, 설계 lane strict-verify Amendment 5 정정.)
+- **ADR-027 Amendment 4 (consumer adoption protocol — CFP-820)**: 본 contract §4.8 consumer pin (`codeforge.version_pin`) schema detection 의 cross-ref. project-config-schema MINOR + validate_config.py validator (Phase 2 carrier).
 - **ADR-038 Amendment 3 §결정 12 (SessionStart hook static invariant)**: 본 contract 의 detect/execute boundary 정합 — hook = detect only, UpgradeAgent + CLI = execute.
 - **ADR-027 (consumer adoption protocol)**: trigger 시점 disjoint — ADR-027 = bootstrap detection + 3-trigger enforcement / 본 contract = upgrade event reconcile.
 - **domain-knowledge `upgrade-flow/declarative-reconciliation.md`**: 본 contract 의 narrative SSOT anchor (3 Invariant + 4 책임 분리 + External pattern reference).
@@ -330,7 +337,7 @@ consumer 가 D4 marker block 도입 전 customization 영역 보유 시:
 - (b) Wave 1 Story-2 (CFP-702) merge — marker block syntax 확정 시 `customization_preservation_entry` 영역 확장
 - (c) Wave 2 Story-3 (CFP-743) merge — UpgradeAgent + CLI 영역 mode_enum 실 implementation hook (`scripts/codeforge-upgrade.{sh,ps1}` 신설). **v1.2 발동 완료 (본 contract)** — §4.5 mechanical_implementation_binding block 신설. (Wave 1 작성 시점 placeholder `CFP-703` → 실제 발의 Issue `CFP-743` 정정. 동일 Story, fact 영향 0, 추적성만 정정 — ADR-068 I-4 wording SSOT 정합.)
 - (d) Wave 2 Story-4 (CFP-744) merge — `transaction.atomicity_boundary_runtime_v1` per_plugin → `atomicity_boundary_runtime_future` family_7_plugin ratchet. **v1.3 발동 완료 (본 contract)** — `scripts/atomic-upgrade-7-plugins.sh` 신설 + ADR-037 Amendment 1 (atomic upgrade 후 0 drift invariant) carrier 동반. 의미 invariant `atomicity_boundary_semantic_invariant: family_7_plugin_atomic` 변경 0 (ADR-016 §결정 1 SSOT 무변경 — runtime catch-up only). (Wave 1 작성 시점 §3 transaction 영역 + ADR-076 line 147 의 stale placeholder "v1.0 → v1.1 의무" → 실제 v1.2 → v1.3 정정 동반 — fact 영향 0 추적성만, ADR-068 I-4 wording SSOT 정합. CFP-743 §4.3 (c) CFP-703→CFP-743 정정 패턴 답습.)
-- (e) Wave 3 Story-6 merge — `version_handshake` field 활성 (현재 placeholder_reserve, validation_status_v1_0: non_normative_placeholder_reserve)
+- (e) Wave 3 Story-6 (CFP-820) merge — `version_handshake` field 활성. **v1.5 발동 완료 (본 contract)** — `version_handshake.status: placeholder_reserve → active` + §4.8 `version_handshake_3way_binding` block 신설 (publisher↔registry↔consumer pin 3-way byte-identical invariant + warning-first→blocking fallback orthogonality + read-only lint scope + sanity guard 6-tuple — ADR-063 Amendment 5 §결정 15 carrier). 3 stale placeholder 정정 (`becomes_normative_at_version: "v1.1" → "v1.5"` / `validation_status_v1_0` key → `validation_status_v1_5` rename + value normative / `field_schema_future` "TBD v1.0→v1.1" → `field_schema_active` §4.8 reference — CFP-744 v1.0→v1.1→v1.2→v1.3 / CFP-745 carrier→realized 정정 패턴 답습, fact 영향 0 추적성만 ADR-068 I-4 wording SSOT). carrier_story placeholder "CFP-Wave-3-Story-6" → 실제 Issue KEY "CFP-820" 실현 (Wave 1 Story-1 CFP-701 사전 declare 의 carrier 확정). 의미 invariant 변경 0 (3-way version invariant = runtime catch-up, ADR-016 §결정 1 SSOT 무변경). §4.3 (c) v1.2 / (d) v1.3 / (g) v1.4 trigger + binding block 패턴 verbatim 답습 (§2.5 FORM 옵션 (i)).
 - (f) Wave 4 sub-Epic merge — `reconcile_strategy.enum_reserved_wave_4` 값 활성
 - (g) Wave 2 Story-5 (CFP-745) merge — overlay 영역 (skill/agent/hook) 3-way merge reconcile runtime (`scripts/reconcile-overlay.sh` 신설, Phase 2 carrier). **v1.4 발동 완료 (본 contract)** — §4.7 `overlay_reconcile_implementation_binding` block 신설 (per-file 3-way merge layer + marker_preserve_binding + sidecar_manifest_schema + base_acquisition_binding). marker_block_syntax.comment_prefix_per_filetype.json `carrier: "Wave 2 Story-5"` → `realized_in` cross-ref (carrier reservation → realized — ADR-027 §결정 7.A.1 carrier 실현, AC-10 contract integration OUTCOME). §1 out-of-scope "3-way merge runtime (overlay reconcile, Wave 2 Story-5 carrier)" = 본 trigger 발동으로 carrier-declare → realized (단 §1 OOS 표기는 "Wave 2 Story-5 carrier" 추적성 유지 — carrier 가 §4.7 로 realized 됨을 표기). 의미 invariant 변경 0 (overlay reconcile = runtime catch-up, ADR-076 §결정 1 SSOT). §4.3 (c) v1.2 / (d) v1.3 trigger + binding block 패턴 verbatim 답습 (§2.5 FORM 옵션 (i)).
 
@@ -509,4 +516,53 @@ overlay_reconcile_implementation_binding:   # v1.4 신설, CFP-745 §4.3 (g) 발
 ```
 
 Phase 1 (CFP-745) merge 시 본 §4.7 binding block 활성 (schema declare — marker_block_syntax.json carrier reservation → realized). Phase 2 (별 PR) merge 시 `scripts/reconcile-overlay.sh` 실 구현 + `.claude/_overlay/.wrapper-managed-manifest.json` sidecar manifest 실 형식 + overlay 3-way merge mechanical 활성.
+
+### 4.8 Wave 3 Story-6 version_handshake 3-way binding (v1.5 — CFP-820 §4.3 (e) trigger 발동, ADR-063 Amendment 5 §결정 15 carrier)
+
+본 §4.5 (per-plugin) / §4.6 (per-family) / §4.7 (overlay) mechanical_implementation_binding 위에 **version_handshake 3-way binding layer** 1단을 추가한다. version_handshake placeholder (Wave 1 Story-1 CFP-701 사전 declare `carrier_story: CFP-Wave-3-Story-6`) 의 realized 영역 (placeholder_reserve → active, ADR-027 §결정 7.A.1 carrier 실현 패턴 동형). per-plugin/per-family/overlay reconcile semantic = §4.5/§4.6/§4.7 SSOT 재사용 (변경 0), version provenance 3-way invariant 만 신설.
+
+```yaml
+version_handshake_3way_binding:   # v1.5 신설, CFP-820 §4.3 (e) 발동
+  carrier_story: CFP-820  # Wave 3 Story-6 (Epic CFP-699 B2 — 3-way version atomic invariant)
+  carrier_adr: "ADR-063 Amendment 5 §결정 15"   # 설계 lane strict-verify 정정: Story §1-§6 'Amendment 4' = frontmatter 미검증 (CFP-686=amend:4 점유) → Amendment 5 (Codex TP#2 verify-before-trust 8-mirror 교훈)
+  status: schema_declared_phase1   # Phase 1 = schema binding declare / Phase 2 = scripts/check-3way-version-parity.sh 실 구현
+  entrypoint: "scripts/check-3way-version-parity.sh"   # 3-way read-only version parity lint (per-plugin = §4.5 / per-family = §4.6 / overlay = §4.7 SSOT 재사용, semantic 분산 0). check-version-bump-atomic.sh 166-line 2-way pattern 답습 + consumer pin sub-check 1 추가
+  three_way_layers:
+    publisher: ".claude-plugin/plugin.json .version (plugin repo 예: mclayer/plugin-codeforge — same-repo local read, auth 불요)"
+    registry: ".claude-plugin/marketplace.json .plugins[name=codeforge].version (mclayer/marketplace — gh api repos/mclayer/marketplace/contents/.claude-plugin/marketplace.json, ADR-066 §결정 2 marketplace contents:read reuse)"
+    consumer_pin: ".claude/_overlay/project.yaml .codeforge.version_pin.version (consumer project repo — same-repo local read, consumer-authored, codeforge agent write 금지 invariant 절대 보존 project-config-schema §4b)"
+  changelog_exclusion: "CHANGELOG.md 3-way 미포함 — wrapper plugin.json same-PR sibling (기존 invariant-check workflow plugin.json↔CHANGELOG version field 이미 enforce, ADR-063 §결정 1 base scope). 4-way = 중복 coverage (ADR-064 minimal-change 위배). 3-way (publisher↔registry↔consumer pin) = 최소 충분 set"
+  invariant: "3 layer byte-identical version string (exact-string match — semver normalize 안 함: 5.81.0 ≠ 5.81 ≠ v5.81.0 모두 mismatch. publisher SSOT canonical, consumer verbatim mirror 의무)"
+  orthogonality_invariant: "pin 가용성 (consumer 가 codeforge.version_pin 등록했는가 = enforce 가능 여부) 과 version 정합성 (pin 값이 publisher/registry 와 일치하는가 = drift 존재 여부) 은 ORTHOGONAL 2 조건 — 동일 fallback 에 conflate 금지 (CFP-745 FIX Iter 2 base-absent≠marker-absent verified-true precedent 답습. conflate 시 결함: pin 미등록 신규 consumer 즉시 blocking = onboarding 마찰 false-positive / pin 등록 consumer 실 drift 가 warning 약화 false-negative)"
+  fallback_semantic:   # 사용자 confirm 2026-05-17 KST — ADR-027 Amendment 2 bootstrap.fallback_mode 패턴 답습
+    pin_absent: "warning-first (lint skip + warn message 'consumer pin SSOT 미등록 — codeforge.version_pin 등록 후 3-way enforce 활성' + exit 0). pin 부재 = mismatch 판정 불성립 (비교 대상 없음, false-positive 차단). onboarding 마찰 0"
+    pin_present_match: "PASS (exit 0)"
+    pin_present_mismatch: "blocking FAIL (exit 1, blocking-on-pr). drift 0 strict enforce (등록 영역). mismatch layer 명시 (wrapper-only / marketplace-only / consumer-pin-only / 2-layer)"
+  read_only_scope:
+    write_surface: 0   # publisher↔registry 무변경 + consumer pin = consumer-authored + lint = compare-only
+    pat_scope: "ADR-066 §결정 2 5-scope set 중 marketplace contents:read (Amendment 2 이미 grant) reuse. Amendment 3 reconcile-target-repos contents:write+pull_requests:write 미사용 (lint = compare-only, write 0, PR open 0). 추가 PAT grant 0 invariant (least-privilege)"
+  sanity_guard_6tuple:   # CFP-745 retro carry (i) marketplace_sync_5_81.py 6-guard pattern 답습 (첫 carrier reference impl, ADR-070 verify-before-trust + carry (j) gh api blob sha empty-detection 사전 단계)
+    - "(1) size > 40000 (empty-blob/truncated fetch 방어 — CFP-745 P0 gh api blob sha empty-blob e69de29b incident lineage)"
+    - "(2) JSON parse (malformed JSON 방어)"
+    - "(3) 4-field parity (codeforge entry name/version/description/author — ADR-016 mirrored field 정합)"
+    - "(4) 6 non-codeforge byte-identical (sister plugin entry untouched verify — read-only invariant 자기증명)"
+    - "(5) git diff stat single-line (version 변경 single-line edit invariant — Phase 2 self-app PR)"
+    - "(6) global version pattern unique (multi-version collision detect — wrong-match 차단)"
+  fetch_failure_3branch:   # ADR-068 I-3 guard placement intent — §결정 13 E-4 패턴 답습 (single fail-closed 추상화 회피)
+    "401": "fail-closed (PAT expired manual blocker, exit 2 actionable). 다음 run 자연 회복 불가"
+    "429": "fail-open (rate-limit, warning log + exit 0 다음 run 회복). false-negative 24h delay < false-positive Issue 발의"
+    "5xx_network": "fail-closed-with-retry (in-run 3회 exponential backoff 1s/2s/4s 후 exit 2). transient spike 회복 patch"
+  reconcile_pr_scope_binding:
+    cross_ref: "본 lint = compare-only — ADR-066 Amendment 3 reconcile-target write scope 무관 (read-only). §4.5 reconcile_pr_scope_binding 과 disjoint layer"
+    pr_open: false   # lint = PR-time CI check (read-only), PR open 행위 0
+  ratchet_invariant_preserved:   # ADR-064 §self-application — v1.5 = 강화 only (3-way version invariant 확장), weakening 0
+    user_decision_branches_0: unchanged
+    atomicity_boundary_semantic_invariant: unchanged   # family_7_plugin_atomic (ADR-016 §결정 1 — 3-way version invariant = runtime catch-up only)
+    marker_block_absent_behavior: unchanged             # wholesale_mirror_with_user_visible_loss_report (ADR-027 §결정 7.C)
+    transaction_completion_criterion: unchanged        # ADR-053 §D2 verbatim
+    snapshot_reset_disjoint_layer: unchanged           # ADR-067 cross-pollinate forbidden (consumer pin = consumer-authored, snapshot layer 무관)
+    adr_053_d2_verbatim_quote: unchanged               # L150-151 weakening 차단
+```
+
+Phase 1 (CFP-820) merge 시 본 §4.8 binding block 활성 (schema declare — version_handshake placeholder_reserve → active). Phase 2 (별 PR) merge 시 `scripts/check-3way-version-parity.sh` 실 구현 + `templates/github-workflows/version-3way-atomic.yml` + `.github/workflows/version-3way-atomic.yml` byte-identical self-app + `docs/evidence-checks-registry.yaml` `version-3way-atomic` entry (blocking-on-pr) + consumer `.claude/_overlay/project.yaml codeforge.version_pin` 실 등록 시 3-way version parity mechanical 활성.
 
