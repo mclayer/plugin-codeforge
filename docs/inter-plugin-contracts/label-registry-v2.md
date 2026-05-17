@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: label
-version: "2.26"
+version: "2.27"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
@@ -911,3 +911,9 @@ labels:
 - **v2.x append-only**: 새 label 추가는 minor (v2.1). 기존 label 삭제 또는 이름 변경은 v3.0 BREAKING (ADR-008)
 - **`single_active: true` invariant**: phase:* 카테고리만 single-active
 - **`bootstrap-labels.sh` SSOT 역전 (CFP-33 contract harness 후)**: 현재 script 가 hardcoded source. CFP-33 에서 본 registry → script 자동 생성으로 전환
+### v2.27 변경 이력 (CFP-848)
+
+- 신규 `hotfix-bypass:adr-077-integration` family member 추가 — ADR-077 stale 게이트·envelope·4-layer disjoint runtime mechanical lint (evidence-checks-registry `adr-077-integration` entry 의 bypass channel). ADR-024 Amendment 3 hotfix-bypass:* family pattern 정합 (audit-trailed exception, warning tier).
+- introduced_by: CFP-848 (Epic A Story-5 Phase 2 carrier)
+- carrier_adr: ADR-060 (evidence-enforceable warning-tier framework)
+- date: 2026-05-17

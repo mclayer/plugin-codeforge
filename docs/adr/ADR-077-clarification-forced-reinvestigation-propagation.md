@@ -38,12 +38,12 @@ related_files:
   - docs/evidence-checks-registry.yaml  # adr-077-ratchet-declared / adr-077-design-reading-mandate-declared (registry row append = Story-3, ADR frontmatter 는 declare)
 mechanical_enforcement_actions:
   - action: adr-077-ratchet-declared
-    status: deferred-followup
-    progress_note: "evidence-checks-registry row appended Story-3 Phase 1 (CFP-785) — status: deferred-followup. lint script+workflow land 시 status: Active 전환 = Phase 2 carrier (bootstrap-labels-precondition / atomic-upgrade-zero-drift 패턴 동형). hotfix-bypass:adr-077-ratchet family member appended (label-registry-v2 v2.21)."
+    status: Active
+    progress_note: "CFP-848 Story-5 Phase 2 carrier (2026-05-17 KST) — deferred-followup → Active 전환. lint script (check-adr-077-ratchet.sh / check_adr_077_ratchet.py) + workflow (adr-077-ratchet-declared.yml) 이미 CFP-785 Phase 2 에서 land 완료. evidence-checks-registry detect_command + status 전이 동반. hotfix-bypass:adr-077-ratchet label-registry-v2 v2.22 기 append."
     target_section: §결정 9
   - action: adr-077-design-reading-mandate-declared
-    status: deferred-followup
-    progress_note: "evidence-checks-registry row appended Story-3 Phase 1 (CFP-785) — status: deferred-followup. lint script+workflow land 시 status: Active 전환 = Phase 2 carrier. hotfix-bypass:adr-077-design-reading family member appended (label-registry-v2 v2.21)."
+    status: Active
+    progress_note: "CFP-848 Story-5 Phase 2 carrier (2026-05-17 KST) — deferred-followup → Active 전환. lint script (check-adr-077-design-reading-mandate.sh / check_adr_077_design_reading_mandate.py) + workflow (adr-077-design-reading-mandate-declared.yml) 이미 CFP-785 Phase 2 에서 land 완료. evidence-checks-registry detect_command + status 전이 동반. hotfix-bypass:adr-077-design-reading label-registry-v2 v2.22 기 append."
     target_section: §결정 3
 # Story-1 scope = ADR 본문 신설 + RESERVATION row 77 전이만. mechanical lint wire = Story-3
 # (evidence-checks-registry row append + workflow). ADR-040 Amendment 3 §결정 7.D self-application
