@@ -31,7 +31,7 @@ amendments:
     date: "2026-05-17"
     carrier_story: CFP-851
     issue: https://github.com/mclayer/plugin-codeforge/issues/851
-    summary: Conversational reporting frequency suppression contract — Orchestrator ↔ user dialog 의 발화 허용 touchpoint 3종 closed enumeration codify (§결정 15 신설). (a) 결과-명세 확인 (사용자 선언 결과 자체 모호 + rollback 비싼 경우, verifiable outcome surface 안전판) / (b) 사용자만 풀 수 있는 차단 (인증·권한 등 codeforge 자체 해소 불가) / (c) 최종 완료 보고 1회 (요청 작업 단위 전체 완료). 그 외 진행·중간 결정·근거·중간 결과 = 산출물 (Story / change-plan / ADR / PR / TodoWrite panel) 전용 기록. 무약화 invariant — frequency 축소 ≠ richness 축소, §결정 2(c) "3 줄 제약 거부 · 길이 자유 · 배경 포함" 보존 + Layer 1/2 preamble·declare 의무 turn 발생 시 그대로 적용. ADR-039 inline whitelist 1번·4번 entry scope 안 작동 (closed 4-entry 보존, 신규 entry 신설 0). 4번째 touchpoint 확장 시 별 CFP 의무 (§결정 13.6 closed-enum 확장 패턴 정합). mechanical lint = behavioral directive only, 별 follow-up CFP (§결정 10 패턴 정합). additive — Layer 1-4 / DialogFidelityAgent auxiliary / §결정 2(c) 무약화, is_transitional=false 보존, ADR-058 §결정 5 약화 차단 영역 미적용
+    summary: Conversational reporting frequency suppression contract — Orchestrator ↔ user dialog 의 발화 허용 touchpoint 3종 closed enumeration codify (§결정 15 신설). (a) 결과-명세 확인 (사용자 선언 결과 자체 모호 + rollback 비싼 경우, verifiable outcome surface 안전판) / (b) 사용자만 풀 수 있는 차단 (인증·권한 등 codeforge 자체 해소 불가) / (c) 최종 완료 보고 1회 (요청 작업 단위 전체 완료). 그 외 진행·중간 결정·근거·중간 결과 = 산출물 (Story / change-plan / ADR / PR / TodoWrite panel) 전용 기록. 무약화 invariant — frequency 축소 ≠ richness 축소, §결정 2(c) "3 줄 제약 거부 · 길이 자유 · 배경 포함" 보존 + Layer 1/2 preamble·declare 의무 turn 발생 시 그대로 적용. ADR-039 inline whitelist 1번·4번 entry scope 안 작동 (closed 4-entry 보존, 신규 entry 신설 0). 4번째 touchpoint 확장 시 별도 CFP 의무 (§결정 13.6 closed-enum 확장 패턴 정합). mechanical lint = behavioral directive only, 별도 follow-up CFP (§결정 10 패턴 정합). additive — Layer 1-4 / DialogFidelityAgent auxiliary / §결정 2(c) 무약화, is_transitional=false 보존, ADR-058 §결정 5 약화 차단 영역 미적용
     sunset_justification: null
 related_stories:
   - CFP-612  # carrier
@@ -428,7 +428,7 @@ Story-2 (CFP-818) 채택 = **spawn-on-marker (closed 3-anchor)** — Anthropic C
 
 회피 대안:
 - **spawn-everywhere** (전수 spawn, 매 user-facing turn) — cover 100% 단 30x overhead + verifier-narrower-than-generator 위반 (검증 범위 ≥ 생성 범위 시 검증자 역설). 회피.
-- **gradient spawn** (사용자 turn 형태별 활성 비율) — 비율 정의 자체 추가 결정 영역 + 12 cell discrete 표 보다 mental model 복잡 + Story-3 effectiveness metric carrier 가 closed enum baseline 측정 후 확장 영역. 회피 (closed 3-enum + 별 CFP 의무 — §13.6).
+- **gradient spawn** (사용자 turn 형태별 활성 비율) — 비율 정의 자체 추가 결정 영역 + 12 cell discrete 표 보다 mental model 복잡 + Story-3 effectiveness metric carrier 가 closed enum baseline 측정 후 확장 영역. 회피 (closed 3-enum + 별도 CFP 의무 — §13.6).
 
 본 §결정 13 = additive 강화 (Layer 1-4 보존 + 5번째 cognitive layer 신설 금지 invariant 보존 + Inline whitelist 4-entry 보존 + Q-3check 7 anti-pattern 보존). §결정 12 family 정합 — 새 §결정 family 분리 (5-element squash 회피 패턴 정합).
 
@@ -495,7 +495,7 @@ disjoint scope — 양자 cross-cutting 보강:
 
 양자 동시 활성 (3-check 의 anti-pattern 7종 + DialogFidelityAgent output 4-enum) 이 dialog fidelity 보장 강화 forcing function. ADR-064 §결정 9 단락 말미가 본 disjoint scope 1 단락 verbatim 명시 (CFP-818 Phase 1 PR Edit).
 
-### 13.6 closed enum 확장 시 별 CFP 의무 codification
+### 13.6 closed enum 확장 시 별도 CFP 의무 codification
 
 3-anchor enum (`post_user_turn` / `pre_architectpl_synthesis` / `pre_fix_rootcause`) = **closed enumeration**. 확장 후보 3종 발생 시 (Story §5.4 IA-4 정합):
 
@@ -503,7 +503,7 @@ disjoint scope — 양자 cross-cutting 보강:
 - `pre_phase_transition`: phase label transition 직전 (요구사항 → 설계 / 설계 → 설계-리뷰 등)
 - `pre_pause_decision`: ADR-067 §결정 3 Pause/Resume 결정 직전
 
-→ **별 CFP 신설 의무** (사용자 burden 변화 영역 — spawn frequency 증가 + ROI 측정 baseline 갱신 의무). ADR-064 §결정 7 top-down ratchet 정합 (강화 방향 only) + ADR-058 §결정 5 sunset_justification 의무 (anchor 축소 시).
+→ **별도 CFP 신설 의무** (사용자 burden 변화 영역 — spawn frequency 증가 + ROI 측정 baseline 갱신 의무). ADR-064 §결정 7 top-down ratchet 정합 (강화 방향 only) + ADR-058 §결정 5 sunset_justification 의무 (anchor 축소 시).
 
 본 §13.6 codification = scope creep 차단 forcing function (Story §5.4 IA-4 + §결정 12 5번째 cognitive layer 신설 금지 invariant pattern 정합).
 
@@ -615,27 +615,27 @@ Orchestrator 의 사용자 발화 허용 시점 = closed enumeration 3 종. 그 
 
 ### 15.5 closed-enum 확장 패턴 (§결정 13.6 정합)
 
-3 touchpoint enum = **closed enumeration**. 확장 후보 발생 시 (예: "사용자 explicit 과정 설명 요청" / "FIX 3 회 escalation 시점" / "보안 incident detect 시점") → **별 CFP 신설 의무** (사용자 burden 변화 영역 — 발화 frequency 증가).
+3 touchpoint enum = **closed enumeration**. 확장 후보 발생 시 (예: "사용자 explicit 과정 설명 요청" / "FIX 3 회 escalation 시점" / "보안 incident detect 시점") → **별도 CFP 신설 의무** (사용자 burden 변화 영역 — 발화 frequency 증가).
 
 | 룰 | 적용 |
 |---|---|
 | ADR-064 §결정 7 top-down ratchet | 강화 방향 only (touchpoint 추가 = 발화 빈도 증가 강화 ratchet) |
 | ADR-058 §결정 5 sunset_justification | touchpoint 축소 시 의무 (frequency 축소 = 사용자 burden 추가 변화 영역) |
-| Story §1 사용자 explicit 승인 | 별 CFP 의 Story §1 verbatim 명시 의무 (CFP-851 §1 declared outcome 1번 항목 verbatim pattern 정합) |
+| Story §1 사용자 explicit 승인 | 별도 CFP 의 Story §1 verbatim 명시 의무 (CFP-851 §1 declared outcome 1번 항목 verbatim pattern 정합) |
 
 본 §15.5 codification = scope creep 차단 forcing function (§결정 13.6 closed-enum 확장 패턴 verbatim 적용 — 본 ADR 안 3번째 closed enumeration 인스턴스: 3-anchor enum (§13.6) / 4 차원 enum (§4) / 3 touchpoint enum (§15.5)).
 
 ### 15.6 measurement gap declare — behavioral directive only
 
-본 §결정 15 = **behavioral directive only** (mechanical lint 부재). 3 touchpoint 외 발화 자동 감지 / 억제-induced rework 측정 채널 = 별 follow-up CFP scope (ADR-071 §결정 10 "Layer 1 preamble mechanical lint = 별 follow-up CFP" 패턴 정합 + §결정 14 measurement wiring precedent — advisory operational signal, blocking 승격 의미 부적용).
+본 §결정 15 = **behavioral directive only** (mechanical lint 부재). 3 touchpoint 외 발화 자동 감지 / 억제-induced rework 측정 채널 = 별도 follow-up CFP scope (ADR-071 §결정 10 "Layer 1 preamble mechanical lint = 별도 follow-up CFP" 패턴 정합 + §결정 14 measurement wiring precedent — advisory operational signal, blocking 승격 의미 부적용).
 
-| 측정 axis | 본 Amendment 4 scope | 별 follow-up CFP scope |
+| 측정 axis | 본 Amendment 4 scope | 별도 follow-up CFP scope |
 |---|---|---|
-| 3 touchpoint 외 발화 detect | — | mechanical lint (별 CFP, advisory warning tier 첫 도입 시 evidence-checks-registry entry 추가) |
+| 3 touchpoint 외 발화 detect | — | mechanical lint (별도 CFP, advisory warning tier 첫 도입 시 evidence-checks-registry entry 추가) |
 | 억제-induced rework 빈도 | — | runtime cron metric (precedent `dialog-fidelity-effect` / `rate-limit-fallback-rate` 동형) |
-| 사용자 explicit 과정 설명 요청 후 발화 frequency | — | 별 CFP scope (확장 candidate, §15.5 정합) |
+| 사용자 explicit 과정 설명 요청 후 발화 frequency | — | 별도 CFP scope (확장 candidate, §15.5 정합) |
 
-**ADR-058 §결정 3 측정성 self-application 정합**: 본 Amendment 가 measurement wiring 없이 영구화되면 안 됨을 인지. 단 measurement 자체 = behavioral baseline 누적 후 별 CFP carrier 영역 — Amendment 4 effective 후 incident pattern (Layer 4 file row pattern_dimension="보고 형식") + PMOAgent retro user feedback 누적 가 baseline. §결정 14 measurement (CFP-833) precedent 동형 — measurement entry 가 ADR 본문 외부 (registry yaml) 에서 wiring.
+**ADR-058 §결정 3 측정성 self-application 정합**: 본 Amendment 가 measurement wiring 없이 영구화되면 안 됨을 인지. 단 measurement 자체 = behavioral baseline 누적 후 별도 CFP carrier 영역 — Amendment 4 effective 후 incident pattern (Layer 4 file row pattern_dimension="보고 형식") + PMOAgent retro user feedback 누적 가 baseline. §결정 14 measurement (CFP-833) precedent 동형 — measurement entry 가 ADR 본문 외부 (registry yaml) 에서 wiring.
 
 ### 15.7 sunset_justification: null (ADR-058 §결정 5 정합)
 

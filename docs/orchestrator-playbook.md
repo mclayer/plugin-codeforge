@@ -1681,7 +1681,7 @@ cell 값 enum: `active` (spawn 의무) / `면제` (spawn 금지) / `final flush 
 
 **Q-3check disjoint scope cross-ref (ADR-071 §결정 13.5 / CFP-818)**: [ADR-064 §결정 9](../docs/adr/ADR-064-decision-principle-mandate.md) Question quality 3-check = Orchestrator self-check (proposing/stop-time). DialogFidelityAgent = 외부 verifier (발화 entity ≠ 검증 entity 분리, self-referential trap 회피). disjoint scope — 양자 cross-cutting 보강 (3-check 가 cover 못하는 누적 결정 ledger drift / 세션 개시 요건 일관성 = DialogFidelityAgent cover, DialogFidelityAgent 가 cover 못하는 turn-internal cognitive frame / 7 anti-pattern P1-P7 = 3-check cover).
 
-**closed enum 확장 시 별 CFP 의무 (ADR-071 §결정 13.6 / CFP-818)**: 3-anchor enum closed enumeration 보존. 확장 후보 3종 (`pre_lane_spawn` / `pre_phase_transition` / `pre_pause_decision`) 발생 시 별 CFP 신설 의무 ([ADR-064 §결정 7](../docs/adr/ADR-064-decision-principle-mandate.md) top-down ratchet + [ADR-058 §결정 5](../docs/adr/ADR-058-adr-sunset-criteria-mandate.md) sunset_justification 정합).
+**closed enum 확장 시 별도 CFP 의무 (ADR-071 §결정 13.6 / CFP-818)**: 3-anchor enum closed enumeration 보존. 확장 후보 3종 (`pre_lane_spawn` / `pre_phase_transition` / `pre_pause_decision`) 발생 시 별도 CFP 신설 의무 ([ADR-064 §결정 7](../docs/adr/ADR-064-decision-principle-mandate.md) top-down ratchet + [ADR-058 §결정 5](../docs/adr/ADR-058-adr-sunset-criteria-mandate.md) sunset_justification 정합).
 
 #### Conversational reporting frequency suppression (ADR-071 §결정 15 / CFP-851 / Amendment 4)
 
@@ -1703,9 +1703,9 @@ Orchestrator 가 사용자에게 **말 거는 시점·빈도** (frequency / timi
 - DialogFidelityAgent auxiliary 3-anchor spawn 보존 — §결정 12/13 family pattern 정합
 - §결정 14 incident append-rate measurement 보존
 
-**closed enum 확장 패턴** — 4번째 touchpoint 신설 시 별 CFP 의무 (ADR-064 §결정 7 top-down ratchet + ADR-058 §결정 5 sunset_justification + Story §1 사용자 explicit 승인 의무). 본 ADR-071 안 3번째 closed enumeration 인스턴스 (3-anchor enum / 4 차원 enum / 3 touchpoint enum 동형).
+**closed enum 확장 패턴** — 4번째 touchpoint 신설 시 별도 CFP 의무 (ADR-064 §결정 7 top-down ratchet + ADR-058 §결정 5 sunset_justification + Story §1 사용자 explicit 승인 의무). 본 ADR-071 안 3번째 closed enumeration 인스턴스 (3-anchor enum / 4 차원 enum / 3 touchpoint enum 동형).
 
-**mechanical lint = 별 follow-up CFP** (§결정 10 패턴 정합 — behavioral directive only, advisory warning tier 첫 도입 시 evidence-checks-registry entry append + dialog-fidelity-effect precedent 동형 runtime cron measurement).
+**mechanical lint = 별도 follow-up CFP** (§결정 10 패턴 정합 — behavioral directive only, advisory warning tier 첫 도입 시 evidence-checks-registry entry append + dialog-fidelity-effect precedent 동형 runtime cron measurement).
 
 ---
 
