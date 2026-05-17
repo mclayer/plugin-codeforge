@@ -2202,8 +2202,8 @@ entries:
       count: 0                    # Phase 1 entry append, Phase 2 actual wire 후 evidence 누적 시점 별 update
       threshold: 5                # ADR-024 Amendment 8 §결정 6.A.3 — per-plugin scope 보수적 시작 (per-entry threshold 3 의 entry 다양성 cover noise floor)
       last_occurrence: null       # Phase 2 actual wire 후 first reach 시점 update
-      promotion_trigger: none     # Phase 1 = entry append only, Phase 2 actual wire 후 advisory 격상
-    status: deferred-followup    # Phase 2 carrier wire (lint script + workflow + bats) 후 Active 전환
+      promotion_trigger: none     # Phase 2 actual wire 완료, 첫 evidence 누적 후 advisory 격상 예정
+    status: warning              # Phase 2 wire 완료 (CFP-845 Phase 2, 2026-05-17) — lint script + workflow + bats 모두 Active
 
   # ─── CFP-845 Phase 1 (ADR-024 Amendment 8 §결정 6.A.4 — `[bypass-justification]` PR comment marker presence lint, 2026-05-17) ───
   # narrative audit 영역 첫 evidence-checks-registry entry.
@@ -2247,8 +2247,8 @@ entries:
       count: 0                    # Phase 1 entry append, Phase 2 actual wire 후 evidence 누적 시점 별 update
       threshold: 1                # PR per-presence boolean (binary) — 단일 PR scope, 누적 threshold 미적용
       last_occurrence: null       # Phase 2 actual wire 후 first reach 시점 update
-      promotion_trigger: none     # Phase 1 = entry append only, Phase 2 actual wire 후 advisory 격상
-    status: deferred-followup    # Phase 2 carrier wire (lint script + workflow + bats) 후 Active 전환
+      promotion_trigger: none     # Phase 2 actual wire 완료, 첫 evidence 누적 후 advisory 격상 예정
+    status: warning              # Phase 2 wire 완료 (CFP-845 Phase 2, 2026-05-17) — lint script + workflow + bats 모두 Active
 
   # ─── CFP-845 Phase 1 (ADR-024 Amendment 8 §결정 6.A.5 — cross-repo 3-repo bypass counter extension, 2026-05-17) ───
   # cross-repo 영역 첫 evidence-checks-registry entry.
@@ -2296,8 +2296,8 @@ entries:
       count: 0                    # Phase 1 entry append, Phase 2 actual wire 후 evidence 누적 시점 별 update
       threshold: 3                # ADR-024 Amendment 8 §결정 6.A.5 — per-(repo, plugin, label) signature 단위 §결정 6.A.2 와 동일 (3)
       last_occurrence: null       # Phase 2 actual wire 후 first reach 시점 update
-      promotion_trigger: none     # Phase 1 = entry append only, Phase 2 actual wire 후 advisory 격상
-    status: deferred-followup    # Phase 2 carrier wire (lint script + workflow + bats) 후 Active 전환
+      promotion_trigger: none     # Phase 2 actual wire 완료, 첫 evidence 누적 후 advisory 격상 예정
+    status: warning              # Phase 2 wire 완료 (CFP-845 Phase 2, 2026-05-17) — lint script + workflow + bats 모두 Active
 
   # ─── CFP-820 Phase 2 — version-3way-atomic (ADR-063 Amendment 5 §결정 15 carrier) ───
   # Epic CFP-699 Wave 3 Story-6 B2 — blocking-on-pr tier 직접 시작 (ADR-060 §결정 11 / ADR-063 §결정 11 패턴 답습)

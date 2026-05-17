@@ -1,0 +1,49 @@
+name: bypass-justification-marker
+# CFP-845 / ADR-024 Amendment 8 section 6.A.4
+# [bypass-justification] PR comment marker grep-presence lint.
+# Checks that PRs with hotfix-bypass:* labels have a [bypass-justification] narrative comment.
+#
+# Trigger: PR open/synchronize/reopened + pull_request_review_comment (event filter, Story section 7.2)
+#
+# Semantic adequacy: grep-presence only -- false-positive risk, reviewer responsibility.
+# Warning tier (ADR-060): exit 1 on missing marker (warning, not blocking on first iteration).
+# continue-on-error: true (warning tier first iteration, ADR-060 section 5)
+#
+# Bypass: hotfix-bypass:bypass-justification-marker label (38th family member, label-registry-v2 v2.27)
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  pull_request_review_comment:
+    types: [created]
+  schedule:
+    - cron: '0 2 * * *'  # daily 02:00 UTC = 11:00 KST (full scan of merged PRs)
+  workflow_dispatch:
+
+permissions:
+  issues: read     # read PR labels and comments
+  contents: read   # repo content access
+  pull-requests: read  # PR comment access
+
+jobs:
+  justification-marker-check:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # warning tier -- ADR-060 section 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check bypass justification marker (PR-time)
+        if: github.event_name == 'pull_request' || github.event_name == 'pull_request_review_comment'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bash scripts/check-bypass-justification-marker.sh \
+            --repo ${{ github.repository }} \
+            --pr-number ${{ github.event.pull_request.number || github.event.pull_request_review_comment.pull_request.number }}
+
+      - name: Check bypass justification marker (full scan cron)
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}  # ADR-066 single PAT
+        run: |
+          bash scripts/check-bypass-justification-marker.sh \
+            --repo mclayer/plugin-codeforge
