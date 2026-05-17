@@ -504,7 +504,7 @@ ADR-060 framework 정합 의무: 모든 warning-tier evidence check entry 는 AD
 
 ### 컨텍스트
 
-ADR-024 Amendment 3 §결정 6.A `hotfix-bypass:<entry>` per-entry namespace 가 audit-trailed exception channel 의도로 도입된 후 28 entry 누적 (label-registry-v2 v2.20 / CFP-722 `story-section-ownership` 28번째 family member 시점). CFP-771 (2026-05-16) retro §8 제안 1 이 evidence cluster 5+ 사용 발견 carrier:
+ADR-024 Amendment 3 §결정 6.A `hotfix-bypass:<entry>` per-entry namespace 가 audit-trailed exception channel 의도로 도입된 후 30 entry 누적 (label-registry-v2 v2.22 / CFP-785 `adr-077-design-reading` 30번째 family member 시점, post-CFP-825 carrier base; CFP-771 retro §8 발의 시점 = 17 entry era). CFP-771 (2026-05-16) retro §8 제안 1 이 evidence cluster 5+ 사용 발견 carrier:
 
 - CFP-770/771 PR #788 admin merge — `hotfix-bypass:claude-md-line-cap` + `hotfix-bypass:wording-dictionary` 2 label 동시 부착
 - CFP-819 PR #823 — `hotfix-bypass:wording-dictionary` cosmetic 7 occurrences
@@ -588,7 +588,7 @@ ADR-024 Amendment 3 §결정 6.A `hotfix-bypass:<entry>` per-entry namespace 가
 - CFP-771 retro §8 제안 1 (carrier — bypass-label-namespace 카운터 lint 제안)
 - CFP-389 prior art (`scripts/check-bypass-audit-comment.sh` audit lint reuse)
 - `docs/inter-plugin-contracts/label-registry-v2.md` v2.22 → v2.23 MINOR (CFP-825 — 31번째 `hotfix-bypass:bypass-label-counter` + 32번째 `hotfix-bypass:exempt:<entry>` template)
-- `docs/evidence-checks-registry.yaml` (CFP-825 Phase 2 — `bypass-label-counter` 60번째 entry append, warning tier, bypass_label `hotfix-bypass:bypass-label-counter`)
+- `docs/evidence-checks-registry.yaml` (CFP-825 Phase 2 — `bypass-label-counter` 63번째 entry append, warning tier, bypass_label `hotfix-bypass:bypass-label-counter`)
 - `templates/github-workflows/bypass-label-counter.yml` (CFP-825 Phase 2 — 24h cron + workflow_dispatch + Issue auto-create)
 - `scripts/check-bypass-label-counter.py` (CFP-825 Phase 2 — gh api query + signature tally + threshold check + Issue auto-create)
 - `scripts/check-bypass-label-counter.sh` (CFP-825 Phase 2 — thin bash wrapper, ADR-061 정합)
