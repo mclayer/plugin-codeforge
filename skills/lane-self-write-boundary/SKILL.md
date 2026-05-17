@@ -33,4 +33,4 @@ tools: Read
 
 자세한 owner path / mechanism / trigger 는 각 lane plugin 의 `CLAUDE.md` `Self-write 책임` 표 (codeforge-{review,pmo,requirements,test,develop,design}) 참조.
 
-**machine_readable_ssot**: `docs/domain-knowledge/domain/governance-principle/lane-self-write-ownership-matrix.yaml` — per-section owner-agent mapping YAML SSOT (CFP-722 §13.A, 2026-05-16). 본 SKILL.md = human-readable mirror; drift-sync: yaml ↔ SKILL.md ↔ story-page-structure.md headings ↔ lint regex (3-way, follow-up CFP §13.B).
+**machine_readable_ssot**: `docs/domain-knowledge/domain/governance-principle/lane-self-write-ownership-matrix.yaml` — per-section owner-agent mapping YAML SSOT (CFP-722 §13.A, 2026-05-16) + `cross_plugin_doc_ownership` sub-tree (CFP-841 §13.B, 2026-05-17). 본 SKILL.md = human-readable mirror; drift-sync: yaml ↔ SKILL.md ↔ story-page-structure.md headings ↔ lint regex (4-way, yaml-as-canonical single-direction — CFP-841 Phase 2 §13.B 해소).

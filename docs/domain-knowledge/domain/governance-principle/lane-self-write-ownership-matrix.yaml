@@ -172,6 +172,94 @@ delegate_subagent_rule:
   lane_plugin_branch_pattern: "cfp-\\d+/<lane>"  # hierarchical = lane plugin pattern
   fail_open_on_ambiguous: true  # ambiguous attribution → violation still reported (content-diff basis)
 
+# ─── CFP-841 Phase 2 — cross_plugin_doc_ownership sub-tree (append-only, sections 1-12 무접촉) ───
+# §13.B 4-way drift-sync invariant SSOT (Change Plan §3.2):
+#   yaml cross_plugin_doc_ownership (canonical) ↔ SKILL.md owner path 표 ↔ story-page-structure.md ↔ lint regex
+#   yaml-as-canonical single-direction: 나머지 3 = derived mirror, mismatch = flag
+# INV-DI semantic 보존 — 기존 sections: 1-12 sub-tree 와 disjoint
+# cross_ref_ssot: CODEOWNERS (docs/adr/** = architect team review) + ADR-013 behavioral scope-out
+
+cross_plugin_doc_ownership:
+  schema_version: "1.0"
+  introduced_by: CFP-841
+  date: 2026-05-17
+  description: |
+    doc_type x owner_plugin cross-plugin ownership registry.
+    ChangeImpactAgent Phase 0 mapping artifact 의 wrapper-local 단정 line 이
+    [ownership-verified: <yaml-query-path>] annotation 보유 여부 검출 시 참조 SSOT.
+    §13.B 4-way drift-sync invariant: yaml=canonical, SKILL.md+story-page-structure.md+lint-regex=derived.
+  entries:
+    - doc_type: adr
+      paths:
+        - "docs/adr/ADR-*.md"
+      owner_plugin: codeforge-design
+      owner_agent: ArchitectAgent
+      write_authority: owner_agent_direct
+      cross_ref_ssot:
+        - "CODEOWNERS docs/adr/** => @mclayer/architects"
+        - "ADR-013 §결정 3 behavioral scope-out (dogfood-out policy)"
+        - "docs/adr/ADR-026-story-scoped-phase-policy.md §3 owner path"
+      notes: "ADR = codeforge-design lane ArchitectAgent direct write (CFP-26 Phase 0a). wrapper-canonical."
+
+    - doc_type: change_plan
+      paths:
+        - "docs/change-plans/*.md"
+      owner_plugin: codeforge-design
+      owner_agent: ArchitectAgent
+      write_authority: owner_agent_direct
+      cross_ref_ssot:
+        - "CODEOWNERS docs/change-plans/** => @mclayer/architects"
+        - "ADR-013 §결정 3 behavioral scope-out"
+        - "skills/lane-self-write-boundary/SKILL.md L18 (codeforge-design row)"
+      notes: "Change Plan = ArchitectAgent direct write. wrapper-canonical."
+
+    - doc_type: retro
+      paths:
+        - "docs/retros/*.md"
+      owner_plugin: codeforge-pmo
+      owner_agent: PMOAgent
+      write_authority: owner_agent_direct
+      cross_ref_ssot:
+        - "ADR-013 §결정 3 behavioral scope-out"
+        - "skills/lane-self-write-boundary/SKILL.md L22 (codeforge-pmo row)"
+      notes: "Retro = PMOAgent direct write. wrapper-canonical."
+
+    - doc_type: domain_knowledge
+      paths:
+        - "docs/domain-knowledge/**/*.md"
+        - "docs/domain-knowledge/**/*.yaml"
+      owner_plugin: codeforge-design
+      owner_agent: ArchitectAgent
+      write_authority: owner_agent_direct
+      cross_ref_ssot:
+        - "ADR-013 §결정 3 behavioral scope-out"
+        - "docs/doc-locations.yaml domain_knowledge entry"
+      notes: "Domain knowledge = ArchitectAgent direct write. wrapper-canonical."
+
+    - doc_type: spec
+      paths:
+        - "docs/specs/*.md"
+        - "docs/specs/**/*.md"
+      owner_plugin: codeforge-requirements
+      owner_agent: RequirementsPLAgent
+      write_authority: owner_agent_direct
+      cross_ref_ssot:
+        - "ADR-013 §결정 3 behavioral scope-out"
+        - "docs/doc-locations.yaml spec entry"
+      notes: "Spec = RequirementsPLAgent direct write (Stage 0 brainstorm artifact)."
+
+    - doc_type: plan
+      paths:
+        - "docs/plans/*.md"
+        - "docs/plans/**/*.md"
+      owner_plugin: codeforge-design
+      owner_agent: ArchitectAgent
+      write_authority: owner_agent_direct
+      cross_ref_ssot:
+        - "ADR-013 §결정 3 behavioral scope-out"
+        - "docs/doc-locations.yaml plan entry"
+      notes: "Plan = ArchitectAgent direct write (implementation plan artifact)."
+
 bootstrap_exempt_rule:
   description: |
     Carrier-Story self-app exemption (ADR-062 §결정 1 / EC-4 §7.6).
