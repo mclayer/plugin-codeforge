@@ -2496,7 +2496,7 @@ entries:
       `scripts/check-fix-event-depth-scope-presence.py` line 73-76, CFP-914 F-3 ADR-068 I-4
       annotation) 인데 affected_paths_with_depth 필드 누락 또는 null 시 advisory comment 부착.
       CFP-770 §8 CR-005→CR-006→CR-007 over-correction regression chain lesson directly
-      차단 forcing function — depth 정보 부재가 directly carrier 였음. exit 0 advisory only
+      차단 forcing function — depth 정보 누락이 directly carrier 였음. exit 0 advisory only
       (false-positive risk 명시 — 어휘 grep heuristic, semantic precision 불가). Phase 2
       carrier = scripts/check-fix-event-depth-scope-presence.sh + workflow self-app + bats TC.
     detect_command: bash scripts/check-fix-event-depth-scope-presence.sh   # Phase 2 carrier
