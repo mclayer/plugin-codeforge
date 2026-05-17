@@ -7,6 +7,36 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.83.0] - 2026-05-17
+
+### Added (CFP-821 Epic CFP-699 Wave 3 Story-7 Phase 2 — D1+D2+D3 coverage fan-out)
+
+- **`templates/.github/ISSUE_TEMPLATE/story.yml`** (NEW) — Story 제출 Issue Form (phase:요구사항 label 자동 부착). D4 marker form-level wrap (ADR-027 Amendment 5 §결정 9 / §결정 7.A.1).
+- **`templates/.github/ISSUE_TEMPLATE/discussion.yml`** (NEW) — Q&A·토론·제안 Issue Form (type:discussion label).
+- **`templates/.github/ISSUE_TEMPLATE/codeforge-improvement.yml`** (NEW) — codeforge 개선 제안 Form (codeforge-improvement label, mctrader-debut lineage).
+- **`templates/.github/ISSUE_TEMPLATE/config.yml`** (NEW) — Issue selector controller (`blank_issues_enabled: false` + contact_links).
+- **`templates/.github/ISSUE_TEMPLATE/audit.yml`** (UPGRADED) — 기존 `.github/` SSOT 승격 + D4 marker form-level wrap 추가.
+- **`templates/.github/ISSUE_TEMPLATE/bug.yml`** (UPGRADED) — 기존 `.github/` SSOT 승격 + D4 marker form-level wrap 추가.
+- **`templates/.github/PULL_REQUEST_TEMPLATE.md`** (NEW) — 기존 `.github/PULL_REQUEST_TEMPLATE.md` byte-identical mirror (consumer-distributable SSOT, ADR-005).
+- **`.github/ISSUE_TEMPLATE/story.yml`** (NEW, ADR-005 self-app) — byte-identical mirror of templates/.
+- **`.github/ISSUE_TEMPLATE/discussion.yml`** (NEW, ADR-005 self-app) — byte-identical mirror.
+- **`.github/ISSUE_TEMPLATE/codeforge-improvement.yml`** (NEW, ADR-005 self-app) — byte-identical mirror.
+- **`.github/ISSUE_TEMPLATE/config.yml`** (NEW, ADR-005 self-app) — byte-identical mirror.
+- **`templates/scripts/setup-branch-protection.sh`** (NEW) — D2 FORM (b) branch protection manifest 합성 + dry-run preview helper. **API write 0건** (no `gh api -X PUT/POST/PATCH/DELETE`). Administration:write 불요. ADR-066 §결정 2 scope 5종 무변경. exit 0 (no drift) / 2 (drift, informational) / 1 (error). ADR-024 Amendment 2 §결정 C step 1 자동화.
+- **`docs/script-boundary.md`** (NEW) — D3 script ownership boundary taxonomy 3 분류 declarative SSOT: (1) Wrapper SSOT / (2) Consumer overlay / (3) Mixed-zone distributed templates. ADR-039/ADR-061 cross-ref.
+- **`docs/evidence-checks-registry.yaml`** — `branch-protection-sync` warning-tier entry append (ADR-024 §결정 A/B/C owner, ADR-060 carrier).
+
+### Changed (CFP-821 Phase 2)
+
+- **`.github/ISSUE_TEMPLATE/audit.yml`** — D4 marker form-level wrap 추가 (templates/ SSOT 승격 후 byte-identical).
+- **`.github/ISSUE_TEMPLATE/bug.yml`** — D4 marker form-level wrap 추가.
+- **`docs/consumer-guide.md`** — §2 Issue template enumeration 3종 → 5종 + config.yml 정정 (ADR-027 Amendment 5 §결정 9 정합). §2e branch protection D2 operator manual 절차 신설 (FORM (b) drift 확인 + `setup-branch-protection.sh` 사용법).
+- **`.claude-plugin/plugin.json`** — 5.82.0 → 5.83.0 MINOR.
+
+### Tests
+
+- **`tests/scripts/cfp-821/cfp-821-coverage-fanout.bats`** (NEW, 12 TC TDD RED→GREEN) — TC-D1-1~TC-D1-4 / TC-D2-1~TC-D2-4 / TC-D3-1~TC-D3-2 / TC-INT-1 / TC-AC11-1.
+
 ## [5.82.0] - 2026-05-17
 
 ### Added (CFP-820 Epic CFP-699 Wave 3 Story-6 Phase 2 — ADR-063 Amendment 5 §결정 15/16 3-way version atomic invariant enforcement)

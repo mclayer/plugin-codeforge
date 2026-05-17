@@ -469,7 +469,7 @@ bash scripts/reconcile-overlay.sh
 │   └── settings.local.json             # (선택) 로컬 오버라이드
 ├── .github/
 │   ├── workflows/                      # Plugin 워크플로우 7종 consumer-distributable (수동 cp, CFP-94)
-│   ├── ISSUE_TEMPLATE/                 # Plugin Issue Forms 3종 (audit + bug + story) + config.yml
+│   ├── ISSUE_TEMPLATE/                 # Plugin Issue Forms 5종 (audit + bug + story + discussion + codeforge-improvement) + config.yml
 │   ├── PULL_REQUEST_TEMPLATE.md        # Plugin PR template
 │   └── CODEOWNERS                      # architect/domain-expert team 매핑
 ├── docs/
@@ -849,14 +849,10 @@ while IFS= read -r line; do
     chmod +x "${script_path}"
 done < "${CLAUDE_PLUGIN_ROOT}/codeforge/templates/consumer-scripts.manifest"
 
-# Issue Forms 3개 복사 (audit + bug + story)
+# Issue Forms 5개 복사 (audit + bug + story + discussion + codeforge-improvement) + config.yml
+# CFP-821 D1 fan-out: templates/.github/ISSUE_TEMPLATE/ SSOT (ADR-027 Amendment 5 §결정 9)
 mkdir -p .github/ISSUE_TEMPLATE
-cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-issue-forms/*.yml .github/ISSUE_TEMPLATE/
-
-# blank issue 비활성화 (Forms만 강제)
-cat > .github/ISSUE_TEMPLATE/config.yml <<EOF
-blank_issues_enabled: false
-EOF
+cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/.github/ISSUE_TEMPLATE/*.yml .github/ISSUE_TEMPLATE/
 
 # PR template 복사
 cp ${CLAUDE_PLUGIN_ROOT}/codeforge/templates/github-pr-template.md .github/PULL_REQUEST_TEMPLATE.md
@@ -993,6 +989,35 @@ git push → PR 생성 → gh pr view <N> --json mergedAt (non-null 확인) → 
 - **merge 확인 명령**: `gh pr view <PR_NUMBER> --json mergedAt --jq .mergedAt` → non-null 이면 merge 완료.
 - **protection 감지**: `gh api "repos/$(gh repo view --json nameWithOwner --jq .nameWithOwner)/branches/main" --jq '.protected'` — `true` 면 직접 merge 금지, PR-only.
 - solo-dev (`required_approving_review_count:0`) + `enforce_admins=false` 환경에서도 동일 순서 적용. `phase-gate-mergeable` check 통과 후 자동 merge 가능하나, worktree 정리는 항상 `mergedAt` 확인 후.
+
+#### Branch protection manifest drift 확인 + operator 적용 절차 (CFP-821 D2)
+
+CFP-821 Phase 2 이후 `templates/scripts/setup-branch-protection.sh` (FORM (b) dry-run helper)를 사용해 drift를 확인할 수 있다.
+
+**사용법** (manifest dry-run preview — GitHub API write 0):
+
+```bash
+# Wrapper SSOT manifest + 현재 API state 비교 (read-only GET만 수행)
+bash templates/scripts/setup-branch-protection.sh --dry-run
+
+# 합성 manifest 파일로 출력 (operator 검토용)
+bash templates/scripts/setup-branch-protection.sh --manifest-out /tmp/bp-manifest.yaml
+```
+
+**종료 코드**: 0 = no drift / 2 = drift detected (informational, CI fail 아님) / 1 = error
+
+**실제 branch protection 등록 (operator manual — Administration:write 권한 필요)**:
+
+```bash
+# ADR-024 Amendment 2 §결정 C step 2: consumer admin operator가 수동 적용
+gh api -X PUT repos/$ORG_REPO/branches/main/protection \
+  -F required_status_checks='{"strict":true,"contexts":["phase-gate-mergeable","invariant-check","doc frontmatter schema (CFP-28 — strict)","doc section schema (CFP-28 — strict)"]}' \
+  -F required_pull_request_reviews='{"required_approving_review_count":0,"require_code_owner_reviews":false}' \
+  -F enforce_admins=true \
+  -F restrictions=null
+```
+
+> **FORM (b) constraint**: `setup-branch-protection.sh` 자체는 API write를 수행하지 않는다 (Administration:write credential 불요). 실제 등록은 consumer org admin의 기존 권한으로 수행한다. drift-check.yml (weekly cron)이 망각한 경우를 재감지하는 safety net 역할을 한다. [ADR-066 §결정 2 무변경 — F-P1-A 해소]
 
 #### phase-gate-mergeable label mapping (CFP-479)
 

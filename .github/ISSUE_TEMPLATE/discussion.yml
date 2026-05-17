@@ -1,0 +1,42 @@
+# BEGIN wrapper-managed
+name: Discussion / Q&A
+description: 질문·토론·제안 (Story 아닌 대화 스레드)
+title: "[DISCUSSION] "
+labels: ["type:discussion"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Discussion / Q&A
+        Story가 아닌 질문·토론·제안을 위한 form입니다.
+        Story로 발전할 가능성이 있으면 Story form을 사용하세요.
+  - type: textarea
+    id: topic
+    attributes:
+      label: 주제 / 질문
+      description: 무엇을 논의하고 싶은가
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 배경 컨텍스트
+      description: 관련 ADR·Story·코드 경로 등
+      placeholder: |
+        - 관련 ADR: ADR-NNN
+        - 관련 Story: CFP-NNN
+    validations:
+      required: false
+  - type: dropdown
+    id: topic-type
+    attributes:
+      label: 토론 유형
+      options:
+        - 질문 (Question)
+        - 제안 (Proposal)
+        - 설계 토론 (Design debate)
+        - 운영 이슈 (Ops issue)
+        - 기타
+    validations:
+      required: true
+# END wrapper-managed
