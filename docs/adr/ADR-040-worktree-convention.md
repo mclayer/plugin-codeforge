@@ -32,6 +32,11 @@ amendments:
     date: 2026-05-13
     title: Actual warning → blocking-on-pr 승격 (4/4 actual wire 완료 + (b) infrastructure regression 분리 후 actual violation = 0 검증)
     sunset_justification: "N/A — is_transitional: false (permanent governance mandate). 본 Amendment 5 = §결정 7.A self-application 의 closing-the-loop closing moment — Amendment 3 (declaration mandate) → Amendment 4 (4/4 actual wire 완료 declaration) → Amendment 5 (actual enforce 활성 declaration) 3-step chain 의 최종 closing 단계. ratchet 강화 방향 (warning → blocking-on-pr, ADR-058 §결정 5 정합) — sunset 면제."
+  - id: 6
+    carrier_story: CFP-843
+    date: 2026-05-17
+    title: Agent-internal write worktree-membership enforcement (harness CWD reset gap + lint scope CWD → write-target-path 확장 + test/probe sandbox boundary + self-block 회피 5-layer 동형)
+    sunset_justification: "N/A — is_transitional: false (permanent governance mandate). 본 Amendment 6 = enforcement scope 확장 (lane spawn CWD → agent-internal write target path). ratchet 강화 방향 (worktree-first enforcement boundary 확장, ADR-058 §결정 5 정합) — sunset 면제. CFP-825 retro §6 후보 1 / §3 RC-1 동근원 + #836 spurious artifact evidence 가 enforcement gap 정량 입증."
 mechanical_enforcement_actions:
   # FIX iter 1 F-1 (CFP-427) 정정: status enum 정합 (warning / enforcing / deferred-followup) 환원 +
   # progress_note optional string field 신설 (entry-level 진척 추적). schema 변경 = MINOR (backward compatible).
@@ -50,7 +55,7 @@ mechanical_enforcement_actions:
     target_section: §결정 7
   - action: worktree-first-spawn-evidence-cwd
     status: enforcing
-    progress_note: "actual wire CFP-427 (Story 2 — scripts/check-spawn-evidence-cwd.sh + enforce-from filter). CFP-429 (Story 4) Amendment 4 declaration — gate (b) FAIL → warning tier 유지 + actual 승격 follow-up CFP. CFP-531 (본 Amendment 5) actual 승격 완료 — current_tier: warning → blocking-on-pr 전환 + status: warning → enforcing."
+    progress_note: "actual wire CFP-427 (Story 2 — scripts/check-spawn-evidence-cwd.sh + enforce-from filter). CFP-429 (Story 4) Amendment 4 declaration — gate (b) FAIL → warning tier 유지 + actual 승격 follow-up CFP. CFP-531 (본 Amendment 5) actual 승격 완료 — current_tier: warning → blocking-on-pr 전환 + status: warning → enforcing. CFP-843 (본 Amendment 6) scope 확장 — 기존 §14 Lane Evidence `Working dir:` field (lane spawn CWD) 검증 외 agent transcript Write/Edit tool target path + git write target 의 worktree-membership 검증 추가 (Researcher Unknown #1 — git write only 누락 차단). lint timing = 사후 (artifact 검증, post-hoc 패턴 정합). self-block 회피 5-layer 동형 (§결정 7.J.4). actual script 확장 = Phase 2 carrier (SSOT 선언 = 본 Amendment 6 Phase 1)."
     target_section: §결정 5
 related_stories:
   - CFP-134
@@ -64,6 +69,7 @@ related_stories:
   - CFP-428  # Story 3 — git layer 안전망 (worktree-first-pre-checkout + worktree-first-pre-commit-main-block actual wire)
   - CFP-429  # Story 4 — Amendment 4 carrier (closing the loop declaration)
   - CFP-531  # Story 5 — Amendment 5 carrier (actual warning → blocking-on-pr 승격 declaration, closing-the-loop 최종 closing moment)
+  - CFP-843  # Amendment 6 carrier — agent-internal write worktree-membership enforcement (CFP-825 retro §6 후보 1 + §3 RC-1 동근원 + #836 spurious artifact evidence)
 related_adrs:
   - ADR-009
   - ADR-024  # Amendment 3 hotfix-bypass label family 동반
@@ -749,6 +755,142 @@ ADR-060 §결정 5 EC-B 운영 가이드 verbatim:
 - ADR-058 §결정 5 (ratchet strengthening only — warning → blocking-on-pr 정합)
 - ADR-005 self-application (4 workflow yml + 4 template mirror byte-identical invariant)
 - ADR-065 (ArchitectAgent Phase 1 mechanical sync self-check — verdict packet `mechanical_self_check_passed: true`)
+
+
+## Amendment 6 — Agent-internal write worktree-membership enforcement (CFP-843, 2026-05-17)
+
+**제목**: harness CWD reset gap 차단 — agent spawn prompt `git -C <worktree_abs_path>` 강제 directive injection + `worktree-first-spawn-evidence-cwd` lint scope CWD → agent-internal write-target-path 확장 + test/probe sandbox boundary env scoping + self-block 회피 5-layer 동형 적용
+
+**상태**: Proposed → CFP-843 Phase 2 PR merge 시점 Accepted (mechanical 구현 carrier).
+
+### 컨텍스트
+
+ADR-040 Amendment 5 (CFP-531) 가 4 worktree-first entry 를 `blocking-on-pr` tier 로 승격해 worktree-first enforcement 의 closing-the-loop 를 완료했다. 그러나 enforcement boundary 가 **lane spawn CWD 표면만** cover — agent 실행 시점의 **내부 write target path** (Write/Edit tool absolute path + agent-internal git write) 는 cover 외였다.
+
+CFP-825 retro §6 후보 1 — 신규 패턴 첫 식별 (`worktree-first-enforcement-gap`, ADR-045 §D-9 threshold 2 reach). harness 가 bash CWD 를 worktree 로 reset 하나 `git -C <worktree_abs_path>` 미사용 시 상대경로가 main repo 로 resolve → agent-internal write 가 main repo working tree 에 landing.
+
+| occurrence | 동근원 signal | evidence |
+|---|---|---|
+| CFP-825 §3 RC-1 (a) | ArchitectPL Phase 1 산출물 main landing | CFP-825 retro §3 RC-1 |
+| CFP-825 §3 RC-1 (b) | Orchestrator recovery sed/python main landing + ArchitectPL working tree divergence (3rd signal) | CFP-825 retro §3 RC-1 |
+| #836 spurious artifact | CFP-825 Phase 2 SecurityTestPL injection probe B / bats 가 live repo 에 spurious Issue #836 생성 (`CBL_SKIP_ISSUE_CREATE` 미적용 경로, 2026-05-17T03:07:06Z) | Issue #836 (CLOSED) — test-isolation gap 동근원 |
+
+본 Amendment 6 = 3 occurrence 동근원 (worktree-membership 미강제) + test-isolation gap (live repo side-effect 누설) 의 enforcement boundary 확장. CFP-825 §3 RC-1 escalation_action `adr_draft_emitted` (ArchitectAgent ADR-040 Amendment draft author 의무) 의 fulfillment.
+
+### Amendment
+
+#### §결정 7.J — Agent-internal write worktree-membership enforcement (Amendment 6, CFP-843, 2026-05-17)
+
+##### §7.J.1 — agent spawn prompt `git -C <worktree_abs_path>` 강제 directive injection
+
+Orchestrator 가 sub-agent spawn 시 (lane spawn / SubAgent / role:dev / ad-hoc 구분 없이) spawn prompt 에 다음 directive 의무:
+
+> **All file operations MUST target `<worktree_abs_path>`.** git command = `git -C <worktree_abs_path> <subcommand>` (절대 상대경로 git 호출 금지). Write/Edit tool = absolute path rooted at `<worktree_abs_path>`. path 정규형 = forward slash (cross-platform MSYS Git Bash 정합 — Windows `C:\...` ↔ POSIX `/c/...` resolve drift 차단).
+
+근거: harness 가 bash 호출 간 cwd 를 reset 한다 (env note `Agent threads always have their cwd reset between bash calls`). 상대경로 git/tool 호출은 reset 후 main repo root 로 resolve → agent-internal write 가 main working tree 에 landing (CFP-825 §3 RC-1 (a)/(b) 동근원). `git -C <abs>` 와 absolute tool path 가 reset 에 robust한 유일 경로.
+
+scope = git command (CFP-825 §3 RC-1 (b) recovery sed/python landing) **+ Write/Edit tool absolute path** (CFP-825 §3 RC-1 (a) ArchitectPL Phase 1 산출물 landing) — broad coverage (Researcher Unknown #1 정합: git write only 누락 차단). SSOT = playbook §3.5 sub-agent spawn prompt 표준 + §12 Context Packet + §14 spawn prompt 표준 (Amendment 6 Phase 1 doc 동반 갱신).
+
+##### §7.J.2 — `worktree-first-spawn-evidence-cwd` lint scope 확장 (CWD → write-target-path)
+
+기존 lint scope = §14 Lane Evidence row `Working dir:` field (lane spawn CWD) 의 worktree path 정합 검증.
+
+본 Amendment 6 scope 확장: **agent transcript Write/Edit tool target path + agent-internal git write target 의 worktree-membership 검증** 추가. lint timing = **사후** (agent 실행 후 artifact 검증 — 기존 post-hoc 패턴 정합, real-time intercept 아님).
+
+| dimension | 기존 (Amendment 3~5) | Amendment 6 확장 |
+|---|---|---|
+| 검증 대상 | §14 Lane Evidence `Working dir:` field | + agent transcript Write/Edit target path + git write target |
+| timing | 사후 (post-hoc artifact scan) | 사후 (동형 — real-time intercept 도입 0) |
+| evidence source | `docs/stories/**.md` §14 row | + agent transcript / git diff target path resolution |
+| tier | blocking-on-pr (Amendment 5) | blocking-on-pr 유지 (scope 확장만, tier 무변경) |
+
+actual script 확장 알고리즘 (write target path → worktree root membership resolve) = **Phase 2 carrier** (본 Amendment 6 = Phase 1 SSOT 선언, Amendment 5 의 declaration → Phase 2 wire 패턴 동형). evidence-checks-registry `worktree-first-spawn-evidence-cwd` entry description 동반 갱신 (scope 확장 SSOT 선언, Phase 2 actual `detect_command` 변경 전 declarative).
+
+##### §7.J.3 — Test/probe sandbox boundary (live GitHub repo side-effect 누설 차단)
+
+bats / SecurityTestPL dynamic probe 의 live GitHub repo 부수효과 (Issue 생성 / label 부착 / comment 등) 누설 차단:
+
+1. **표준 env var**: `CBL_SKIP_ISSUE_CREATE` 류 (read-only token default) — bats `setup`/`teardown` export + SessionStart hook + spawn prompt 표준 (모든 probe entry point cover, broad coverage — #836 동근원 누락 경로 0 목표).
+2. **read-only token default**: probe 실행 컨텍스트 default 가 live mutation 불가 (write 필요 시 explicit opt-in).
+3. **known-limitation explicit binding**: dedicated sandbox repo (`mclayer/codeforge-sandbox`) capability-confinement 는 **본 Amendment 6 scope 외 후속 carrier**. environment-level confinement = stronger guarantee but heavier infra — 본 Amendment 6 = directive + lint + env scoping 1차 (minimal scope, CFP-scope-unitary 정합). 후속 carrier 발의 의무 명시 (§이행 의무).
+
+#836 spurious artifact (`CBL_SKIP_ISSUE_CREATE` 미적용 경로 2026-05-17T03:07:06Z) = 본 §7.J.3 동근원 evidence.
+
+##### §7.J.4 — Self-block 회피 5-layer 동형 적용 (CFP-428 R3 self-block 5-layer 동형 적용 — spawn-evidence-cwd context semantic adaptation)
+
+§7.J.2 lint scope 확장이 **본 Amendment 6 작업 자체를 block** 하는 self-block 재현 위험 (PMO 주요 위험). CFP-428 carrier (`worktree-first-pre-checkout` / `worktree-first-pre-commit-main-block` entries) frontmatter `mechanical_enforcement_actions[]` `progress_note` 의 R3 self-block 회피 5-layer 패턴을 spawn-evidence-cwd context 로 semantic 재유도해 동형 적용:
+
+| layer | CFP-428 R3 canonical 패턴 | Amendment 6 동형 적용 (spawn-evidence-cwd context) |
+|---|---|---|
+| (1) worktree-internal work | lint script 가 worktree 안 작업을 violation 으로 판정 안 함 | write target 이 worktree root membership 충족 시 PASS (확장된 검증도 worktree-internal 정합 PASS) |
+| (2) opt-in install | install-git-hooks.sh 미설치 환경 = lint 미발동 | scope 확장 부분 = warning sub-tier 진입 (구형 worktree 없는 환경 = warning), 기존 CWD 검증 = blocking-on-pr 유지 (semantic 재유도: opt-in → tier 점진) |
+| (3) warning tier exit 0 | warning tier exit 0 (PR block 안 함) | scope 확장 검증 = CFP-843 merged at 이후 신규 agent transcript 만 (enforce-from filter, false-positive 회피) |
+| (4) `BYPASS_WORKTREE_FIRST=1` env | 4 lint script 전체 short-circuit | 동일 env = scope 확장 검증도 short-circuit (panic 채널 보존) |
+| (5) common-dir skip | `--git-dir` vs `--git-common-dir` in worktree | worktree common-dir resolve 시 main-vs-worktree ambiguity skip 동형 |
+
+> layer numbering = spawn-evidence-cwd PR-workflow context 재mapping. canonical CFP-428 ordering = (1) worktree-internal work / (2) opt-in install / (3) warning tier exit 0 / (4) BYPASS_WORKTREE_FIRST=1 / (5) common-dir skip.
+
+fallback 호환 = worktree 없는 구형 환경 = warning tier (tier 점진 정합 — actual violation = 0 검증 전 false-positive 차단). `hotfix-bypass:worktree-spawn-evidence-cwd` label 채널 (audit comment 자동 발의) = 동일 panic 채널 보존.
+
+##### §7.J.5 — §결정 7.A schema 무손상
+
+`mechanical_enforcement_actions[]` schema (action / status / progress_note / target_section) 변경 0. `worktree-first-spawn-evidence-cwd` entry 의 `progress_note` 만 Amendment 6 scope 확장 narrative append (status `enforcing` 유지, target_section `§결정 5` 유지). MINOR bump 0 (data update only — allowed enum 내 무전환).
+
+##### §7.J.6 — §결정 7.C retroactive 면제 무손상
+
+본 Amendment 6 도 host ADR-040 §결정 7.C scope 안 — CFP-426 merge timestamp 이전 ADR retroactive 면제 mandate 변경 0.
+
+##### §7.J.7 — §결정 7.E `BYPASS_WORKTREE_FIRST` env contract 무손상
+
+본 Amendment 6 env contract 변경 0. `BYPASS_WORKTREE_FIRST=1` env 활성 시 scope 확장 검증 포함 4 lint script 전체 short-circuit 유지 (§7.J.4 layer 4). `CBL_SKIP_ISSUE_CREATE` (§7.J.3) = test/probe sandbox 전용 신규 env — `BYPASS_WORKTREE_FIRST` / `BYPASS_WORKTREE_GC` 와 disjoint scope (§결정 7.E env 분리 패턴 동형, scope superset 아님).
+
+##### §7.J.8 — §결정 7.D self-application 패턴 동형
+
+§결정 7.D self-application 패턴 동형 — 본 Amendment 6 frontmatter `mechanical_enforcement_actions[]` 의 `worktree-first-spawn-evidence-cwd` entry (기존 entry scope 확장 갱신, 신규 entry 추가 아님) = §결정 7.A mandate self-application. ADR-040 Amendment 3 §결정 7.A `mechanical_enforcement_actions[]` 의무 정합 (Amendment 6 = host ADR-040 의 Amendment → §결정 7.A 적용 대상).
+
+### 이행 의무
+
+- 본 Phase 1 PR (CFP-843) 에:
+  - ADR-040 frontmatter `amendments[]` row 6 append + `mechanical_enforcement_actions[]` `worktree-first-spawn-evidence-cwd` entry `progress_note` Amendment 6 scope 확장 narrative append + `related_stories` CFP-843 append + 본 §결정 7.J sub-section append
+  - `docs/evidence-checks-registry.yaml` `worktree-first-spawn-evidence-cwd` entry `description` scope 확장 SSOT 선언 (Phase 2 actual `detect_command` 변경 전 declarative)
+  - `docs/orchestrator-playbook.md` §3.5 sub-agent spawn prompt 표준 + §12 Context Packet + §14 spawn prompt 표준 `git -C <worktree_abs_path>` directive 1줄 append-safe
+  - `CLAUDE.md` worktree-first 단락 Amendment 6 cross-ref 1 sentence (≤320줄 cap maintain)
+- 본 Phase 2 PR (CFP-843) 에:
+  - `scripts/check-worktree-first-spawn-evidence-cwd.sh` (또는 actual `detect_command` script) scope 확장 알고리즘 (write target path → worktree root membership resolve)
+  - test/probe sandbox env (`CBL_SKIP_ISSUE_CREATE` 류) bats setup/teardown + SessionStart hook + spawn prompt 표준 wire
+  - bats TC 추가 (write-target-path membership PASS/FAIL + env-scoped probe side-effect skip)
+- **후속 carrier 발의 의무**: dedicated sandbox repo (`mclayer/codeforge-sandbox`) capability-confinement environment-level enforcement = §7.J.3 known-limitation. 본 Amendment 6 Phase 2 PR merge 후 별 CFP 발의 (heavier infra, CFP-scope-unitary 정합 — 본 carrier = directive + lint + env scoping 1차 minimal scope).
+
+### 정합성 검증
+
+- **ADR-058 §결정 5 정합**: enforcement scope 확장 (CWD → write-target-path) = strengthening direction (ratchet 강화 방향) — `is_transitional: false` permanent direction. frontmatter `amendments[]` row 6 `sunset_justification` 의무 명시 정합.
+- **ADR-060 §결정 6 정합**: tier 무변경 (blocking-on-pr 유지) — promotion gate 재평가 불요. scope 확장 부분 = warning sub-tier 진입 (§7.J.4 layer 2 점진 — actual violation = 0 검증 전 false-positive 차단).
+- **ADR-024 Amendment 3 §결정 6.A 정합**: `hotfix-bypass:worktree-spawn-evidence-cwd` label family 활성 유지 (label 추가 0 — 기존 entry scope 확장이므로 신규 label 불요). audit trail 3중 안전망 보존.
+- **ADR-009 invariant 무손상**: 본 Amendment 6 = directive + lint scope 확장 + env scoping — wrapper agent 신설 0.
+- **ADR-040 §결정 1-6 + Amendment 1-5 무손상**: §결정 7.J sub-section 추가만, 기존 결정 변경 없음.
+- **ADR-005 self-application 정합**: Phase 2 actual workflow yml 갱신 시 `.github/workflows/` ↔ `templates/github-workflows/` byte-identical mirror invariant 유지 (Phase 2 carrier scope).
+- **ADR-065 정합**: ArchitectAgent Phase 1 commit 직전 7-item mechanical sync self-check 의무 (label-registry sync N/A / doc-locations regen N/A / workflow self-app N/A — Phase 1 doc only, Phase 2 workflow 변경 / link target Phase 분배 YES / MANIFEST.yaml N/A / section-ownership row N/A / doc-locations row N/A). verdict packet `mechanical_self_check_passed: true` 의무.
+- **ADR-068 정합**: §7.J.2 표 dimension (검증 대상 / timing / evidence source / tier) = boundary completeness invariant I-1~I-4 정합. I-5 dimensional empirical grounding N/A (본 Amendment 6 quantitative parameter 0 — directive + scope 확장 declarative, threshold 신설 0).
+
+### Compatibility
+
+- 기존 normative ADR (ADR-001 ~ ADR-079) `mechanical_enforcement_actions[]` 미보유 — retroactive 면제 (§결정 7.C). frontmatter lint schema 정합 위반 0.
+- 본 Amendment 6 = data update only (progress_note narrative append) / no schema change / no MINOR bump (§결정 7.A allowed enum 내 무전환).
+- `BYPASS_WORKTREE_FIRST=1` env = Amendment 3 정의 + reserved. 본 Amendment 6 env contract 변경 0. `CBL_SKIP_ISSUE_CREATE` 류 = 본 Amendment 6 신규 정의 (test/probe sandbox 전용, disjoint scope).
+- scope 확장 검증 = enforce-from filter (CFP-843 merged at 이후 신규 agent transcript) → 기존 merged Story retroactive 미적용 (false-positive 0 보장).
+
+### Related
+
+- CFP-825 retro §6 후보 1 + §3 RC-1 ([#825](https://github.com/mclayer/plugin-codeforge/issues/825) CLOSED) — escalation_action `adr_draft_emitted` 의 fulfillment carrier
+- Issue #836 (spurious test artifact, CLOSED) — test-isolation gap 동근원 evidence
+- ADR-040 Amendment 3 §결정 7.D self-application 패턴 (본 Amendment 6 동형)
+- ADR-040 frontmatter mechanical_enforcement_actions[] CFP-428 carrier (worktree-first-pre-checkout / pre-commit-main-block) progress_note R3 self-block 회피 5-layer (본 Amendment 6 §7.J.4 동형 적용 — layer (2) spawn-evidence-cwd context 재유도)
+- ADR-060 §결정 6 (promotion gate — tier 무변경, 재평가 불요)
+- ADR-024 Amendment 3 §결정 6.A (hotfix-bypass label family — 기존 label 활성 유지)
+- ADR-058 §결정 5 (ratchet strengthening only — scope 확장 정합)
+- ADR-005 self-application (Phase 2 workflow yml byte-identical mirror invariant)
+- ADR-065 (ArchitectAgent Phase 1 mechanical sync self-check — verdict packet `mechanical_self_check_passed: true`)
+- memory `feedback_branch_protection_worktree_cleanup`
 
 
 ## 해소 기준

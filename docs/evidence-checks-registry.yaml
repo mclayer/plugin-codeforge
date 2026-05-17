@@ -695,9 +695,19 @@ entries:
       CFP-429 (Story 4) Amendment 4 declaration: 4/4 actual wire 완료 + ADR-060 §결정 6 promotion
       gate (b) bypass 외 failure > 0 FAIL → current_tier: warning 유지 + actual 승격 follow-up CFP
       carrier (from-cfp-425-followup label). Self-test integration test: tests/integration/stories/CFP-425/self-test-worktree-block.sh E4-2 (Phase 2 PR CFP-429).
+      CFP-843 (ADR-040 Amendment 6) scope 확장 SSOT 선언: 기존 §14 Lane Evidence `Working dir:`
+      field (lane spawn CWD) 검증 외 agent transcript Write/Edit tool target path + agent-internal
+      git write target 의 worktree-membership 검증 추가 (harness CWD reset gap 차단 — CFP-825 §3
+      RC-1 (a)/(b) 동근원 + #836 spurious artifact). lint timing = 사후 (post-hoc artifact scan,
+      real-time intercept 도입 0). self-block 회피 5-layer 동형 (ADR-040 §결정 7.J.4 — enforce-from
+      filter CFP-843 merged at 이후 + worktree 없는 구형 = warning sub-tier + BYPASS_WORKTREE_FIRST=1
+      short-circuit + common-dir skip). actual detect_command scope 확장 알고리즘 (write target path
+      → worktree root membership resolve) = Phase 2 carrier (본 SSOT = Phase 1 declarative 선언,
+      Amendment 5 declaration → Phase 2 wire 패턴 동형). tier 무변경 (blocking-on-pr 유지, scope
+      확장만 — ADR-060 §결정 6 promotion gate 재평가 불요).
     detect_command: bash scripts/check-worktree-first-spawn-evidence-cwd.sh
     workflow: templates/github-workflows/worktree-first-spawn-evidence-cwd.yml
-    current_tier: blocking-on-pr  # CFP-531 / ADR-040 Amendment 5 — warning → blocking-on-pr 승격 (2026-05-13)
+    current_tier: blocking-on-pr  # CFP-531 / ADR-040 Amendment 5 — warning → blocking-on-pr 승격 (2026-05-13). CFP-843 / ADR-040 Amendment 6 — scope CWD → write-target-path 확장 (tier 무변경, 2026-05-17)
     bypass_label: hotfix-bypass:worktree-spawn-evidence-cwd
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     promotion_criteria:
@@ -707,16 +717,17 @@ entries:
         - CFP-427
         - CFP-428
         - CFP-429
+        - CFP-843              # ADR-040 Amendment 6 — agent-internal write-target-path scope 확장 carrier
       evidence_artifacts:
         - github_actions_run_history_url
         - lint_failure_count_zero_proof
         - pr_cumulative_count_proof
     introduced_by: CFP-426
-    owner_adr: ADR-040
+    owner_adr: ADR-040          # ADR-040 Amendment 6 (CFP-843) scope 확장 carrier — owner 무변경
     carrier_adr: ADR-040
     recurrence:
-      count: 0
-      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
+      count: 1                  # ADR-040 Amendment 6 (CFP-843) — `worktree-first-enforcement-gap` 패턴 recurrence (CFP-825 §3 RC-1 (a)/(b) 동근원 3 signal + #836 spurious artifact test-isolation gap, ADR-045 §D-9 threshold 2 reach → adr_draft_emitted)
+      promotion_trigger: none   # ADR-060 §결정 19 (Amendment 6) — scope 확장만, tier 무변경 (blocking-on-pr 유지). Phase 2 actual wire 후 재평가 영역
     status: Active
 
   - name: evidence-registry-schema-validation

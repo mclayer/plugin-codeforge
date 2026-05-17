@@ -441,7 +441,7 @@ Orchestrator 가 사용자에게 substantive path 를 제시하거나 외부 sys
 모든 coding work 는 git worktree 안에서 수행. 원본 working directory(`git checkout <branch>`) 직접 편집 금지.
 
 - **Story 시작 시**: `bash templates/scripts/worktree-create.sh cfp-NNN origin/main` 선행 → cwd = worktree path
-- **Subagent spawn 시**: prompt 에 `Working dir: <worktree-path>` 명시 — lane spawn (§3.5) 과 ad-hoc spawn 동일
+- **Subagent spawn 시**: prompt 에 `Working dir: <worktree-path>` 명시 — lane spawn (§3.5) 과 ad-hoc spawn 동일. **추가 `git -C <worktree_abs_path>` directive (ADR-040 Amendment 6 / CFP-843)**: 모든 file operation (git command + Write/Edit absolute path, forward-slash 정규형) 을 worktree abs path 기준 강제 — harness cwd reset gap 차단 (§3.5 SSOT)
 - **Ad-hoc 작업 포함**: lane spawn 외 일반 subagent spawn, 사용자 직접 작업 모두 동일 적용
 - **Consumer 동일 적용**: consumer project 에서 codeforge 사용 시 동일 rule
 - **위반 판정**: 원본 working directory 에서 file edit/write/bash 수행 = stop discipline 위반 (ADR-025 §결정 2 `policy_violation`)
@@ -1050,6 +1050,7 @@ Phase 2 (follow-up CFP): `scripts/codeforge-story-counter.py` 자동 발급 (fil
    ```
 
 2. **sub-agent spawn 시**: prompt 에 `Working dir: <worktree-path>` 명시. sub-agent 가 cd 해서 작업.
+   - **`git -C <worktree_abs_path>` 강제 directive (ADR-040 Amendment 6 / CFP-843)**: spawn prompt 에 "All file operations MUST target `<worktree_abs_path>` — git command = `git -C <worktree_abs_path> <subcommand>` (상대경로 git 호출 금지), Write/Edit tool = absolute path rooted at `<worktree_abs_path>`, path 정규형 = forward slash (cross-platform MSYS Git Bash 정합)" 1줄 의무. 근거: harness 가 bash 호출 간 cwd 를 reset → 상대경로 git/tool 호출이 main repo root 로 resolve → agent-internal write 가 main working tree 에 landing (CFP-825 §3 RC-1 동근원).
 
 3. **sub-agent return 후**: Orchestrator 또는 sub-agent 가 자기 sub-branch 에 commit. Sequential merge:
    ```bash
@@ -2557,6 +2558,8 @@ story_cache[<story-key>] = {
 ```
 
 에이전트는 prompt 내 packet을 SSOT로 사용 — 추가 `Read` 호출 생략 (packet 외 섹션 필요 시 명시 요청).
+
+> **Worktree-membership directive (ADR-040 Amendment 6 / CFP-843)**: Context Packet 주입 시 packet 외 1줄 추가 — "All file operations MUST target `<worktree_abs_path>` (git = `git -C <abs>`, Write/Edit = absolute path, forward-slash 정규형)". harness cwd reset gap 차단 — §3.5 sub-agent spawn 표준 SSOT 정합.
 
 ### 12.4 Packet vs path-only 선택
 
