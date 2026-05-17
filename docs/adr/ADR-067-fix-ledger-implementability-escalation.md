@@ -9,9 +9,17 @@ carrier_story: CFP-526
 parent_epic: CFP-525
 supersedes: []
 amends: []
-amendment_log: []
+amendment_log:
+  - date: 2026-05-17
+    amendment: 1
+    cfp: CFP-842
+    summary: "§결정 4 cross-lane RESET 정책 의 mechanical 정확도 carrier — fix-event-v1 v1.2 → v1.3 MINOR bump (affected_scope enum + affected_paths_with_depth array optional fields). cross-module / cross-repo / cross-plugin scope 결정의 mechanical evidence 보존 + broken-link/path 정정 FIX 시 over-correction regression chain (CFP-770 §8 CR-005→CR-006→CR-007 lesson) 직접 차단. fix-event-depth-scope-presence warning-tier lint (advisory only) 동반."
+    scope_change: "ratchet 강화 only — 기존 §결정 4 Pause-and-resume 의미 invariant 변경 0. scope-aware mechanical input 추가로 RESET decision evidence trail 보존."
+    breaking: false
+    backward_compat: true
 related_stories:
   - CFP-526
+  - CFP-842   # Amendment 1 — fix-event-v1 v1.3 depth-aware scope MINOR bump carrier
 related_adrs:
   - ADR-008
   - ADR-024
@@ -21,12 +29,14 @@ related_adrs:
   - ADR-054
   - ADR-058
   - ADR-059
+  - ADR-060   # Amendment 1 carrier — fix-event-depth-scope-presence warning-tier evidence-checks-registry entry
   - ADR-063
   - ADR-064
 related_files:
   - skills/fix-ledger-schema/SKILL.md
   - docs/inter-plugin-contracts/fix-event-v1.md
   - docs/orchestrator-playbook.md
+  - docs/evidence-checks-registry.yaml   # Amendment 1 — fix-event-depth-scope-presence warning-tier entry
   - CLAUDE.md
 mechanical_enforcement_actions: []
 ---
@@ -108,6 +118,30 @@ implementability reassessment 진행 중 (또는 사용자 escalation 대기 중
 - `RESET?` column 시맨틱 확장 복잡도 증가 (`"cross-lane-bundle:<lane>"` value family 도입 필요)
 
 Pause-and-resume 의 latency trade-off 는 acceptance — escalation 자체가 사용자 dialog 대기 시점이므로 cross-lane FIX latency 가 직접 critical path 영향 0.
+
+#### Amendment 1 (CFP-842, 2026-05-17) — depth-aware scope mechanical 정확도 carrier
+
+본 결정 4 의 cross-lane RESET 결정 input 의 mechanical evidence 보존 carrier — fix-event-v1 v1.2 → v1.3 MINOR bump 2 optional 필드 신설:
+
+- **`affected_scope`** enum (`single-file` / `cross-module` / `cross-repo` / `cross-plugin`) — Orchestrator 가 FIX root cause 판정 직후 결정. RESET 결정 영향 표:
+
+  | affected_scope | ArchitectPL 행동 |
+  |---|---|
+  | `single-file` | 동일 lane FIX iter 유지 (RESET 회피) |
+  | `cross-module` | cross-lane RESET 적극 검토 (본 §결정 4 Pause-and-resume 발동 후보) |
+  | `cross-repo` | cross-lane RESET + sibling sync 영역 진단 (ADR-010 정합) |
+  | `cross-plugin` | cross-lane RESET + marketplace atomic invariant 진단 (ADR-063 정합) |
+
+- **`affected_paths_with_depth`** array of `{path, depth}` — broken-link / path 정정 FIX 영역 한정 의무. `depth` = repo root 기준 dir depth. 정정 규칙 적용 범위 (예: `depth >= 2 then path adjust = '../../'`) 의 mechanical reasoning trace 보존 — CFP-770 §8 CR-005→CR-006→CR-007 over-correction regression chain lesson directly carrier (depth 정보 부재가 directly carrier 였음).
+
+**ratchet 강화 only**: 본 §결정 4 의 Pause-and-resume 의미 invariant 변경 0 — mechanical input 추가만. backward-compat 100% (2 optional field, 기존 9-column row null 또는 column 생략 valid).
+
+**mechanical enforcement**: `fix-event-depth-scope-presence` warning-tier lint (advisory only, blocking-on-pr 미승격) — broken-link/path FIX 인데 `affected_paths_with_depth` 누락 시 적발. `hotfix-bypass:fix-event-depth-scope` label 부착 PR = lint skip + audit comment 자동 발의. SSOT = [`docs/evidence-checks-registry.yaml`](../evidence-checks-registry.yaml).
+
+cross-ref:
+- [`docs/inter-plugin-contracts/fix-event-v1.md`](../inter-plugin-contracts/fix-event-v1.md) v1.3 §2 Schema + §3 항목 (affected_scope / affected_paths_with_depth)
+- [`docs/orchestrator-playbook.md`](../orchestrator-playbook.md) §6.7 v1.3 depth-aware scope 의무
+- [`templates/story-page-structure.md`](../../templates/story-page-structure.md) §10 column expansion
 
 ### 결정 5 — `reasoning_carryover` field 3-part structured 구조 + fix-event-v1 v1.2 MINOR bump
 

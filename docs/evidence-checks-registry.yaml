@@ -2480,3 +2480,44 @@ entries:
       last_occurrence: null
       promotion_trigger: advisory
     status: Active             # script+workflow self-app land 동반 (CFP-848 Phase 2 carrier)
+
+  # ─── CFP-842 Phase 1 (fix-event-v1 v1.3 depth-aware scope presence lint, 2026-05-17) ───
+  # ADR-067 Amendment 1 §결정 4 mechanical 정확도 carrier — broken-link/path 정정 FIX 시
+  # §10 FIX Ledger row 의 affected_paths_with_depth 필드 presence advisory.
+  # Phase 1 = registry SSOT 신설만, Phase 2 = script + workflow self-app + bats TC.
+
+  - name: fix-event-depth-scope-presence
+    description: |
+      ADR-067 Amendment 1 / CFP-842 — fix-event-v1 v1.3 depth-aware scope 의 mechanical
+      enforcement advisory layer. broken-link / path 정정 FIX (§10 row 의 트리거 또는 재실행 범위
+      에 'broken-link' / 'path 정정' / 'relative path' / 'doc-location-registry move' /
+      'link target' / 'href' / 'cross-module path' / 'over-correction' 어휘 patterns
+      grep-detect) 인데 affected_paths_with_depth 필드 누락 또는 null 시 advisory comment 부착.
+      CFP-770 §8 CR-005→CR-006→CR-007 over-correction regression chain lesson directly
+      차단 forcing function — depth 정보 부재가 directly carrier 였음. exit 0 advisory only
+      (false-positive risk 명시 — 어휘 grep heuristic, semantic precision 불가). Phase 2
+      carrier = scripts/check-fix-event-depth-scope-presence.sh + workflow self-app + bats TC.
+    detect_command: bash scripts/check-fix-event-depth-scope-presence.sh   # Phase 2 carrier
+    workflow: templates/github-workflows/fix-event-depth-scope-presence.yml  # Phase 2 carrier
+    current_tier: warning            # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:fix-event-depth-scope
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse
+    promotion_criteria:
+      pr_cumulative_min: 20          # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0           # ADR-060 §결정 6 (b)
+      sibling_dependencies: []       # 독립 entry — fix-event-v1 v1.3 schema self-app + ADR-067 Amendment 1 정합
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # heuristic grep, modal 어휘 검사 미포함
+    introduced_by: CFP-842
+    introduced_date: 2026-05-17
+    owner_adr: ADR-067 Amendment 1   # cross-lane RESET scope-aware mechanical 정확도 SSOT
+    carrier_adr: ADR-060             # evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0
+      threshold: 3
+      last_occurrence: null
+      promotion_trigger: advisory    # ADR-060 §결정 19 (Amendment 6) — advisory-only first iteration
+    status: Phase1Declared           # Phase 1 = registry SSOT 신설만. Phase 2 = script + workflow + bats TC self-app 동반 land 후 status: Active 전환
