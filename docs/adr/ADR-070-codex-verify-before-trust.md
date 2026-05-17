@@ -16,14 +16,23 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 1 + ADR-082 §결정 1 / §결정 6"
     sunset_justification: null
+  - amendment_id: 2
+    cfp: CFP-844
+    date: 2026-05-17
+    scope: "ADR-081 §결정 D6 (Codex worker severity calibration rubric, Amendment 1) cross-ref 보완 관계 명시 (disjoint). ADR-070 = Codex finding evidence 의 factual ground truth verify (file content direct Read, mismatch 시 verdict reject) ↔ ADR-081 §결정 D6 = Codex finding 의 severity 경중 calibration (Codex severity ↔ PL synthesis severity bidirectional, ground truth = DesignReviewPL/CodeReviewPL final verdict severity). 두 layer disjoint — ADR-070 = 사실 근거 layer (finding evidence 가 ground truth 와 일치하는가) / ADR-081 D6 = severity 경중 layer (finding severity 가 review lane ground truth severity 와 정합하는가). scope 침범 0. ADR-070 §D5 declaration-only retain 패턴 = ADR-081 §D5 / §결정 D6.e known-limitation 직접 선례 (ADR-082 §결정 6 선례 chain 연속). 본문 D1-D5 의미 변경 없음 — cross-ref-only Amendment."
+    status: applied
+    ref: "## Amendments / Amendment 2 + ADR-081 §결정 D6 (Amendment 1)"
+    sunset_justification: null
 related_stories:
   - CFP-578  # carrier
   - CFP-506  # sentinel 1 reproduce
   - CFP-520  # sentinel 2 reproduce (skip option B)
   - CFP-530  # sentinel 3 reproduce (ADR 발의 timing 도달)
   - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
+  - CFP-844  # Amendment 2 — ADR-081 §결정 D6 severity calibration cross-ref (disjoint 보완)
 related_adrs:
   - ADR-052  # Codex proactive check 6 touchpoint
+  - ADR-081  # Codex worker severity calibration rubric §결정 D6 (Amendment 2 disjoint 보완 — 사실 근거 layer ↔ severity 경중 layer)
   - ADR-082  # disjoint super-class (internal lane agent self-write verify — 외부 worker output ↔ lane agent self-write; D5 declaration-only retain 선례)
   - ADR-022  # Codex review 자동 발동 Deprecated (CFP-134 / ADR-035)
   - ADR-060  # evidence-enforceable promotion framework
@@ -204,6 +213,17 @@ Codex worker 의 sandbox access 실패 = platform inherent (Claude Code agent ru
 
 두 layer 는 verify 대상 / 행위 주체가 disjoint — scope 침범 0. ADR-082 §결정 1 layer disjoint 4-layer 표 (ADR-073 / ADR-070 / ADR-082 / ADR-045 §D) 가 공통 anchor. 추가로 본 ADR-070 §D5 evidence-enforceable framework entry append 면제 (declaration-only retain) = ADR-082 §결정 6 `mechanical_enforcement_actions: []` known-limitation rationale 의 직접 선례. 본 Amendment 는 cross-ref-only — ADR-070 D1-D5 의미 변경 없음.
 
+### Amendment 2 — ADR-081 §결정 D6 cross-ref (disjoint 보완 관계, CFP-844)
+
+**문제**: ADR-070 = Codex finding evidence 의 **factual ground truth** verify 의무 (file content direct Read, mismatch 시 verdict reject) — finding 의 *사실 근거* 가 ground truth 와 일치하는가 검증 layer. 그러나 Codex finding 의 **severity 경중 calibration** (Codex 가 발화한 P0/P1/P2 가 review lane ground truth severity 와 정합하는가) 영역은 ADR-070 scope 외 — finding evidence 가 TRUE positive 이되 severity 만 mis-rate 한 경우 ADR-070 verify 통과 (사실 근거 정합) 후에도 severity inflation 잔존 가능.
+
+**결정**: ADR-081 Amendment 1 (신규 §결정 D6 Codex worker severity calibration rubric) 이 해당 gap 을 disjoint 보완 layer 로 codify. ADR-070 ↔ ADR-081 §결정 D6 = **disjoint 보완 관계**:
+
+- **ADR-070** = Codex finding evidence 의 factual ground truth verify (사실 근거 layer — finding evidence 가 file content direct Read 결과와 일치하는가)
+- **ADR-081 §결정 D6** = Codex finding 의 severity 경중 calibration (severity 경중 layer — finding severity 가 DesignReviewPL/CodeReviewPL final verdict ground truth severity 와 정합하는가, bidirectional: over-rate + security-relevant under-rate 양방향)
+
+두 layer 는 verify 대상이 disjoint — ADR-070 = evidence 사실성 / ADR-081 D6 = severity 경중. scope 침범 0. ADR-070 §D5 declaration-only retain (mechanical lint 부재, 본문 normative anchor SSOT) = ADR-081 §D5 / §결정 D6.e known-limitation 직접 선례 (ADR-082 §결정 6 선례 chain 연속 — ADR-070 D5 → ADR-082 §6 → ADR-081 D5/D6.e). 본 Amendment 는 cross-ref-only — ADR-070 D1-D5 의미 변경 없음 (Amendment 1 패턴 정합).
+
 ## 해소 기준
 
 N/A — permanent policy (verify-before-trust = Codex worker 사용 영구 invariant, sandbox 영역 변경 없으면 permanent retain). ADR-058 §결정 1-3 정합:
@@ -215,6 +235,7 @@ N/A — permanent policy (verify-before-trust = Codex worker 사용 영구 invar
 ## 관련 파일
 
 - [`docs/adr/ADR-052-codex-proactive-check-touchpoints.md`](ADR-052-codex-proactive-check-touchpoints.md) — Amendment 5 cross-ref 본문 SSOT
+- [`docs/adr/ADR-081-codex-worker-prompt-boilerplate.md`](ADR-081-codex-worker-prompt-boilerplate.md) — §결정 D6 (severity calibration) Amendment 2 disjoint 보완 cross-ref source (사실 근거 layer ↔ severity 경중 layer)
 - [`docs/orchestrator-playbook.md`](../orchestrator-playbook.md) — §3.10 dispatch prompt template SSOT
 - [`CLAUDE.md`](../../CLAUDE.md) — 오케스트레이션 규칙 § "Codex Proactive Check" blockquote SSOT
 - [`docs/evidence-checks-registry.yaml`](../evidence-checks-registry.yaml) — declaration-only retain 정합 (entry append 면제)

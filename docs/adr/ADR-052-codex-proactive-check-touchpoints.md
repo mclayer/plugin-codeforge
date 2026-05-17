@@ -33,6 +33,10 @@ amendments:
     date: 2026-05-17
     carrier_story: CFP-819
     summary: "Codex worker prompt boilerplate composition SSOT 영역을 신규 ADR-081 로 분리 (cross-ref). D1/D2/D3/D4 + Amendment 1-5 본문 의미 변경 없음 — boilerplate composition (3 mandatory section: dogfood-out path / lane stage / sandbox boundary) + verify-before-trust scope 분리 (file/dir/cross-repo + grep count active vs historical + ADR §결정 번호 정확성) + 3-lane partition (Codex factual citation / DesignReview boundary completeness / CodeReview style+history disjoint) 영역의 normative anchor 가 cross-document 분산 상태였음 (ADR-052 Amendment 5 + ADR-070 D2). 6-Story carry-over evidence sentinel (1 baseline cluster CFP-770/771 paired + 5 consecutive fp-0 CFP-786/801/792/795/810; 6 units / 7 retro file) + ADR-045 Amendment 5 §D-9 cross_story_pattern_adr_trigger forcing function (pattern_count 5 reach YES, escalation_action: adr_draft_emitted) carrier. is_transitional=false, sunset_justification=N/A (permanent strengthening, ADR-070 §D5 precedent 정합 declaration-only retain). 본 Amendment 6 scope = ADR-052 본문 sub-section append (cross-ref 1 paragraph) — D1/D2/D3/D4 + Amendment 1-5 본문 의미 변경 0건. ADR-054 §결정 1 신규 ADR-081 동반 carrier 영역 정합 (full-lane 강제)."
+  - id: 7
+    date: 2026-05-17
+    carrier_story: CFP-844
+    summary: "ADR-081 Amendment 1 (신규 §결정 D6 Codex worker severity calibration rubric) cross-ref sub-section append. D6 = Codex finding severity ↔ PL synthesis severity bidirectional calibration anchor (over-rate 금지 + security-relevant under-rate 금지) + ground truth = DesignReviewPL final verdict severity primary (CodeReviewPL fallback / higher PL 양쪽) + boundary-completeness exception (Codex P0 boundary-completeness × DesignReview P1 = over-rate 아님, +1 tier) + disjoint axis preservation (codex_severity_inflation calibration ≠ codex_false_positive_tally accuracy, fp 0 chain sentinel 무영향) + tracking = 기존 Story §9/§10 prose marker (review-verdict-v4 contract field 신설 0 — doc-only fast-path 유지, ADR-081 §D5 declaration-only retain precedent verbatim). D1/D2/D3/D4 + Amendment 1-6 본문 의미 변경 0건 — sub-section append only (Amendment 1-6 패턴 정합). is_transitional=false, sunset_justification=permanent strengthening (verify-before-trust scope 에 severity calibration 차원 추가 — ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합, 약화 영역 0). doc-only fast-path 자체 적격 — 단 carrier Story (CFP-844) 는 ADR-081 Amendment 1 (신규 §결정 D6) 동반 = ADR-054 §결정 1 (신규 ADR 도입 아님, 기존 ADR Amendment + src/tests 무변경) doc-only fast-path 단일 PR 적격."
 related_stories:
   - CFP-354
   - CFP-411
@@ -41,6 +45,7 @@ related_stories:
   - CFP-532
   - CFP-578
   - CFP-819
+  - CFP-844  # Amendment 7 — ADR-081 Amendment 1 (§결정 D6 severity calibration) cross-ref
 related_adrs:
   - ADR-039
   - ADR-034
@@ -48,7 +53,7 @@ related_adrs:
   - ADR-059
   - ADR-064
   - ADR-070
-  - ADR-081  # Amendment 6 (CFP-819) — boilerplate composition SSOT 분리 cross-ref
+  - ADR-081  # Amendment 6 (CFP-819) boilerplate SSOT 분리 + Amendment 7 (CFP-844) §결정 D6 severity calibration cross-ref
 related_files:
   - docs/orchestrator-playbook.md
   - docs/superpowers-integration.md
@@ -699,3 +704,39 @@ ADR-064 결정 원칙 4 어휘 anchor (best-effort / broad coverage / full-scope
 - (Amendment-V) **3-lane partition 표를 ADR-068 (boundary completeness invariants) 안에 inline append** — 영역 type mismatch (factual citation ≠ boundary completeness self-check). Codex output 영역 (외부 worker) vs DesignReview lane invariants (내부 lane behavior) 분리 차단 → ADR-081 안 partition 표 박제 + ADR-068 cross-ref 만 채택.
 - (Amendment-W) **verify scope marker 어휘 신설 (`[verified-file]` / `[verified-dir]` / `[verified-cross-repo]`)** — CFP-810 retro §6 후보 5 정합, **별 carrier** 분리. 본 Amendment scope = verify scope 분리 의무 본문 명시만 — marker 어휘 변경 없음 → 별 carrier 영역.
 - (Amendment-X) **mechanical lint 도입** (Codex spawn prompt 안 3 mandatory section 존재 검출 static regex 또는 Codex output 안 5 sub-scope marker 발화 검출) — ADR-070 §결정 D5 (declaration-only retain) 정합. ADR-081 §D5 본문 표 (a)/(b)/(c)/(d) 4 후보 모두 robustness risk 보유. evidence-checks-registry entry append 면제.
+
+---
+
+## Amendment 7 (2026-05-17 KST, CFP-844)
+
+### Context (Amendment 7)
+
+ADR-081 (Codex worker prompt boilerplate composition SSOT) 가 Amendment 1 (CFP-844) 로 신규 §결정 D6 (Codex worker severity calibration rubric) 를 도입했다. CFP-825 retro §6 후보 2 (PMOAgent `cross_story_pattern_adr_trigger`, `escalation_action: adr_draft_emitted`) carrier.
+
+ADR-081 D2 (verify-before-trust 5 sub-scope) 는 Codex finding 의 **factual citation 정확성** (file:line / verbatim / grep count / ADR §결정 번호) 을 다룬다 — finding 사실 근거 검증 layer. 그러나 finding 의 **severity 경중 calibration** (Codex 가 발화한 P0/P1/P2 가 review lane ground truth severity 와 정합하는가) 은 ADR-081 D6 (Amendment 1) 로 신설된 신규 영역. 본 Amendment 7 = 해당 ADR-081 §결정 D6 신규 영역의 cross-ref sub-section append (ADR-081 Amendment 1 ↔ ADR-052 Amendment 6 ↔ ADR-070 Amendment 1 sibling 패턴 정합).
+
+### 결정 (Amendment 7)
+
+Touchpoint #2 (ArchitectAgent §3 완료 직후, mandatory — Amendment 4) + Touchpoint #3 (CodeReviewPL standalone, fallback) Codex proactive check dispatch 결과의 finding severity 처리 시, **Codex finding severity ↔ PL synthesis severity bidirectional calibration** 의무는 ADR-081 §결정 D6 SSOT 를 따른다:
+
+- **D6.a bidirectional**: over-rate 금지 (Codex severity > PL synthesis severity, factual citation scope) + security-relevant under-rate 금지 (Codex severity < 실제 보안 경중)
+- **D6.b ground truth**: DesignReviewPL final verdict severity (primary, touchpoint #2 path) / CodeReviewPL standalone (fallback, touchpoint #3 단독 dispatch) / 양쪽 dispatch 시 higher severity PL 기준
+- **D6.c boundary-completeness exception**: Codex P0 boundary-completeness × DesignReview P1 = over-rate 아님 (+1 tier 허용)
+- **D6.d disjoint axis**: `codex_severity_inflation` (calibration) ≠ `codex_false_positive_tally` (accuracy, ADR-052 Amendment 6 / ADR-081 6-Story sentinel) — fp 0 chain 무영향
+- **D6.e tracking**: 기존 Story §9 verdict prose 또는 §10 FIX Ledger 비고 marker (`[codex-severity-inflation: Codex:P0 vs PL:P1 <scope>]`) — review-verdict-v4 신규 contract field 신설 0 (ADR-081 §D5 declaration-only retain precedent verbatim 정합, contract bump 회피)
+
+본 Amendment 7 = sub-section append 패턴 (Amendment 1-6 패턴 정합). D1/D2/D3/D4 결정 본문 + Amendment 1-6 본문 의미 변경 없음. Codex worker dispatch 자체 흐름 invariant 정합 (severity calibration = dispatch 후 결과 처리 단계 추가만 — dispatch 발동 자체 D2 invariant 무변경).
+
+### 결과 (Amendment 7)
+
+- ADR-081 §결정 D6 (Codex worker severity calibration rubric) cross-ref sub-section append — ADR-081 Amendment 1 SSOT 본문 (의미 변경 0)
+- Touchpoint #2/#3 Codex finding severity 처리 = ADR-081 §결정 D6 SSOT 위임 명시 (ADR-052 본문 patch — D1-D4 + Amendment 1-6 의미 변경 0)
+- `codex_severity_inflation` (calibration) ≠ `codex_false_positive_tally` (accuracy, Amendment 6 sentinel) disjoint axis 명시 — Amendment 6 sentinel invariant 보존
+- CLAUDE.md L170 blockquote severity calibration cross-ref 1 줄 추가 (line-cap 320 invariant 정합)
+- doc-only fast-path 영역 정합 (본 Amendment 7 자체) — carrier Story (CFP-844) 는 ADR-081 Amendment 1 동반 = 신규 ADR 도입 아님 (기존 ADR Amendment + src/tests 무변경) → ADR-054 §결정 1 doc-only fast-path 단일 PR 적격 — A6 SSOT
+
+### 거절된 대안 (Amendment 7)
+
+- (Amendment-Y) **ADR-052 본문 안 severity calibration rubric 직접 inline append** (ADR-081 D6 cross-ref 회피) — 영역 type mismatch (touchpoint behavior ≠ Codex worker severity calibration). ADR-081 자매 패턴 (boilerplate composition SSOT 분리 — Amendment 6 정합) 정합성 부재 → ADR-081 D6 안 rubric SSOT + ADR-052 cross-ref 만 채택.
+- (Amendment-Z) **severity calibration 을 새 touchpoint (#7) 로 도입** — touchpoint = dispatch 발동 지점 정의. severity calibration 은 기존 #2/#3 dispatch 후 결과 처리 단계 — 새 dispatch 지점 아님. D2 6-touchpoint invariant 보존 (touchpoint count 무변경) → 기존 #2/#3 결과 처리 단계 추가만 채택.
+- (Amendment-AA) **review-verdict-v4 신규 `codex_severity_inflation` contract field 신설** — contract MINOR bump + sibling sync (ADR-008/010) + Phase 2 PR = doc-only fast-path 이탈. ADR-081 §D5 declaration-only retain precedent 위배 → 기존 Story §9/§10 prose marker 채택 (ADR-081 §결정 D6.e SSOT 정합).
