@@ -16,6 +16,13 @@ amendments:
     status: applied
     ref: "## Amendment 1 / 본문 ### D6 + 거절된 대안 D6"
     sunset_justification: "ratchet 강화 방향 (verify-before-trust scope 에 severity calibration 차원 추가 — over-rate + security-relevant under-rate bidirectional anchor 신설). 약화 영역 0건 (D1-D5 본문 의미 변경 0, scope 축소 0). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
+  - amendment_id: 2
+    cfp: CFP-892
+    date: 2026-05-17
+    scope: "신규 §결정 D7 (Codex worker digest-parse self-verification + quantitative P0/P1/P2/P3 severity grading rubric + ground-truth divergence escape hatch explicit declaration) append — D6 calibration anchor 의 mechanical pre-screen 보완. (1) D7.a digest-parse self-verification step (yaml/json indentation re-check before issuing severity rating, ANCHOR-2 FP class 차단 — Story-4 CFP-834 digest-indentation 오독 carrier), (2) D7.b quantitative P0/P1/P2/P3 grading rubric (block / blocker / improvement / nit 4-tier explicit criteria, D6.b ground truth severity 의 정량화), (3) D7.c ground-truth divergence escape hatch (Codex P0 + PL divergence 시 ADR-070 strict-verify-gate 자동 trigger — declaration-only, mechanical lint 부재). D1-D6 본문 의미 변경 0건 — §결정 D7 sub-section append only. is_transitional false 유지 (permanent governance). mechanical_enforcement_actions[]=[] retain (§D5 declaration-only precedent 정합)."
+    status: applied
+    ref: "## Amendment 2 / 본문 ### D7 + 거절된 대안 D7"
+    sunset_justification: "ratchet 강화 방향 (severity calibration rubric quantification + digest-parse pre-screen + escape hatch declaration). 약화 영역 0건 (D1-D6 본문 의미 변경 0, scope 축소 0). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
 related_stories:
   - CFP-819  # carrier
   - CFP-770  # baseline fp 8
@@ -325,6 +332,82 @@ PL 이 verdict 시 Codex finding severity ↔ PL synthesis severity delta 를 St
 - CLAUDE.md L170 blockquote severity calibration cross-ref 1 줄 추가 (line-cap 320 invariant 정합)
 - ADR-RESERVATION 무접촉 (Amendment 영역 — row 81 = CFP-819 active 유지, ADR file 동일)
 - `mechanical_enforcement_actions[]=[]` retain (declaration-only, §결정 D6.e known-limitation explicit binding)
+
+## Amendment 2 (CFP-892)
+
+CFP-892 carrier (Epic A close follow-up CFP 후보 1/6, PMO retro Story-4/5 carry-over). Issue #892 §3 sub-pattern 분류 verbatim — 3 outstanding gap:
+
+1. **Codex digest-indentation 오독** (ANCHOR-2 FP class, Story-4 CFP-834) — Codex 가 yaml block 안 nested key indentation 잘못 읽음. D6 calibration anchor 가 severity calibration 영역 cover 하나 digest-parse mechanical pre-screen 부재.
+2. **Codex severity over-claim** — D6.a/b/c 가 이미 cover. 단 quantitative P0/P1/P2/P3 grading 정량 기준 부재 — D6.b 의 ground truth severity ordering 만 있고 per-tier criteria 없음.
+3. **ground-truth divergence escape hatch** — ADR-070 strict-verify-gate 가 이미 작동 중이나 ADR-081 § 안 explicit cross-ref 부재.
+
+본 Amendment 2 = D6 보완 (D6 의미 변경 0건, §결정 D7 sub-section append only).
+
+### D7. Codex worker digest-parse + severity rubric + escape hatch (declaration-only normative anchor)
+
+ADR-081 §D5 declaration-only retain invariant 정합 — §결정 D7 = declaration-only normative anchor (mechanical lint 부재, D6 정합).
+
+#### D7.a — digest-parse self-verification step (ANCHOR-2 FP class 차단)
+
+Codex worker 가 yaml / json / markdown table 영역 finding 발화 직전 **indentation re-check** 의무:
+
+- yaml block 안 nested key 의 indentation 을 visually verbatim re-read
+- "이 contract_version 이 reinvestigation_tracking top-level block 의 일부인가, 아니면 contract-level field 인가" 류 ambiguous structural 판정 시 finding 발화 보류 + Story 본문 directly cite (file:line + 7 line 전후 context)
+- self-verification 발화 marker: `[digest-parsed: <field-path> @ L<N> (indent <level>)]` Story §10 prose 안 inline
+
+본 step 은 ANCHOR-2 FP class (Story-4 CFP-834 F-DESIGNREVIEW-CFP834-1 digest-indentation 오독) directly 차단 forcing function. CFP-892 §3 sub-pattern 1 carrier.
+
+#### D7.b — quantitative P0/P1/P2/P3 grading rubric (D6.b 정량화)
+
+| Tier | 의미 | criteria (Codex finding) | examples |
+|---|---|---|---|
+| **P0 (block)** | ship 차단 | (a) 정책 SSOT 위반 + verbatim grep 가능 evidence / (b) 보안 boundary 침해 (auth / secret / injection) / (c) data integrity invariant 위반 (rollback path 부재 schema bump) | "phase-gate-mergeable.yml 안 required check 명단 변경 시 ADR-024 §결정 위반 가능", "API key plaintext logging" |
+| **P1 (blocker)** | ship 강력 차단 (PL 재량 review) | (a) ADR-068 boundary-completeness 4 invariant 부재 + Story §3 영향 area 명시 / (b) §7.4 OperationalRisk N/A 사유 부재 / (c) §8 Test Contract coverage 0 boundary | "P1 — design lane §3 cross-module propagation completeness 미충족 (I-2 위반)" |
+| **P2 (improvement)** | defer 허용 (severity ≠ ship 차단) | (a) refactor 권장 / (b) wording 정확성 / (c) documentation gap (정책 SSOT 영역 외) / (d) historical pattern reference 보존 (CodeReview style+history) | "P2 — README example outdated, defer 가능", "P2 — comment 정확성 개선 권장" |
+| **P3 (nit / cosmetic)** | non-blocking | (a) 어휘 선택 / (b) markdown formatting / (c) self-meta text precision (lint 자체 spec 인용 등) | "P3-cosmetic — section header 어휘 선택" |
+
+**boundary-completeness exception (D6.c 정합)** — Codex P0 boundary-completeness × DesignReview P1 = +1 tier 허용 (PL incomplete audit 신호, calibration over-rate 아님).
+
+**security-relevant under-rate 차단 (D6.a 정합)** — Codex 가 보안 영역 P2 / P3 발화 시 PL 이 실제 severity 로 calibrate (security blind spot 차단).
+
+본 표 = D6.b ground truth severity ordering (DesignReviewPL primary / CodeReviewPL fallback) 의 per-tier criteria. ADR-064 broad coverage 정합 (4-tier criteria → grading ambiguity 차단).
+
+#### D7.c — ground-truth divergence escape hatch (ADR-070 cross-ref explicit)
+
+Codex P0 claim 시 Orchestrator strict-verify-gate (ADR-070 verify-before-trust) 가 **자동 trigger** — Codex P0 finding 의 ground truth (file content / grep / ADR §결정 verbatim) 를 Orchestrator 가 direct Read 로 verify. mismatch 감지 시:
+
+- 1차: Codex finding reject + Story §10 false positive count tally + override rationale prose
+- 2차: review-verdict-v4 v4.5 `codex_false_positive_tally` count + 1
+
+본 escape hatch = ADR-070 §결정 1 mandate (Codex finding evidence ground-truth direct verify) 의 ADR-081 D6/D7 calibration framework 안 explicit cross-ref. 신규 mechanism 아님 — ADR-070 기존 mechanism 의 declaration-only 명시화 (declaration-only retain precedent §D5 정합).
+
+#### D7.d — disjoint axis preservation (D6.d 재확인)
+
+D7.a (digest-parse), D7.b (P0/P1/P2/P3 rubric), D7.c (escape hatch) 셋 모두 D6.d disjoint axis invariant 정합:
+
+- `codex_severity_inflation` (calibration axis, D6) ≠ `codex_false_positive_tally` (accuracy axis, ADR-070) — 별개 measurement
+- D7.a digest-parse FP 는 **accuracy axis** 영향 (FP count +1) — calibration 무관
+- D7.b severity rubric 정량화 는 **calibration axis** 강화 — accuracy 무관
+- D7.c escape hatch 는 **accuracy axis** layer (FP detection forcing function) — calibration 영역 외
+
+fp 0 chain sentinel (CFP-770/771 baseline → CFP-786/801/792/795/810 5 consecutive fp 0) 무영향 (D7 = declaration-only, mechanical detection 부재).
+
+### 거절된 대안 D7
+
+- (D7-A) review-verdict-v4 신규 `codex_severity_grade` enum field (P0/P1/P2/P3) 신설 — contract MINOR bump + sibling sync. doc-only fast-path 이탈. D6.e prose marker 채택 precedent 정합 (declaration-only retain).
+- (D7-B) digest-parse self-verification mechanical lint (Codex worker output 안 `[digest-parsed: ...]` marker grep) — D6.e mechanical lint 부재 invariant 위반. declaration-only retain.
+- (D7-C) ADR-070 §결정 1 본문 amend (ADR-081 D7.c escape hatch 를 ADR-070 안 직접 codify) — ADR-070 본문 의미 변경 (D5 SSOT 보존 invariant 위반). cross-ref-only 채택.
+- (D7-D) P0/P1/P2/P3 + P4 (5-tier) 확장 — codeforge ground-truth 4-tier (review-verdict-v4 + severity-propagation-v1 v1.0) 와 mismatch. 4-tier 유지 (contract surface 정합).
+
+### 결과 (Amendment 2)
+
+- Codex worker digest-parse self-verification step normative anchor — D7.a SSOT (ANCHOR-2 FP class directly 차단)
+- quantitative P0/P1/P2/P3 grading rubric (4-tier criteria) — D7.b SSOT (D6.b 정량화)
+- ground-truth divergence escape hatch ADR-070 cross-ref explicit — D7.c SSOT (declaration-only)
+- disjoint axis preservation invariant (D6.d 재확인) — D7.d SSOT
+- D1-D6 본문 의미 변경 0건 — §결정 D7 sub-section append only (Amendment 1 패턴 정합)
+- `mechanical_enforcement_actions[]=[]` retain (declaration-only, §D5 + D6.e precedent)
+- is_transitional false 유지 (permanent governance, ratchet 강화 only)
 
 ## 결과
 
