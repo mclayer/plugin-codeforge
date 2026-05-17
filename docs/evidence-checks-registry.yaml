@@ -12,7 +12,7 @@
 # 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
 schema_version: "1.2"  # CFP-509 / ADR-060 Amendment 6 — recurrence field 정식 도입 (MINOR bump v1.1 → v1.2)
 introduced_by: CFP-389
-last_updated: 2026-05-17  # CFP-745 Phase 2 — wrapper-template-managed-coverage 59번째 entry (CFP-722 57th + CFP-771 58th + CFP-745 59th, authoring-guard lint Phase 2 §8.2 declare, post-CFP-810/795/801/777/751 collision rebase) | CFP-722 Phase 2 — story-section-ownership 57번째 entry (ADR-060 Amendment 13 §결정 27 carrier — per-section ownership mechanical lint, warning tier, PR #441 incident prevention) | CFP-442 Phase 2 — evidence-registry-anomaly 51번째 entry (ADR-060 Amendment 11 §결정 25 carrier — framework self-application 5-piece chain 완성) | CFP-662 — bootstrap-labels-precondition 46번째 entry (ADR-060 Amendment 10 §결정 24 carrier — PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier, deferred-followup status — Phase 2 carrier 신설 후 Active 전환) | CFP-660 — workflow-version-drift 45번째 entry (ADR-032 Amendment 2 §결정 6 carrier — strict-eligible 5번째 drift consumer workflow version drift, check 10 NEW carrier) | CFP-658 — section-1-verbatim-postmerge 44번째 entry append (ADR-027 Amendment 2 §결정 6.C carrier — manual fallback path §1 verbatim invariant post-merge lint warning tier, deferred-followup status, Phase 2 carrier 신설 후 Active 전환) | CFP-627 FIX iter 3/3 — marketplace-drift-detection entry deferred to Phase 2 carrier (ADR-067 §결정 3 cross-lane RESET 차원 전환) | CFP-638 — stop-time-continuous-confirm-detect 43번째 entry (ADR-064 Amendment 3 Story D) | CFP-631 — marketplace-description-verbatim 42번째 entry (ADR-063 Amendment 2 §결정 11 blocking-on-pr)
+last_updated: 2026-05-17  # CFP-833 Phase 1 — dialog-fidelity-effect entry append (Epic CFP-761 Story-3 closing-the-loop, ADR-071 Amendment 3 carrier, owner_adr ADR-071 / carrier_adr ADR-060, precedent rate-limit-fallback-rate 동형 runtime cron metric pattern, warning tier advisory, bypass_label omit OQ-3 사용자 확정, entries[] 말미 relative append) | CFP-745 Phase 2 — wrapper-template-managed-coverage 59번째 entry (CFP-722 57th + CFP-771 58th + CFP-745 59th, authoring-guard lint Phase 2 §8.2 declare, post-CFP-810/795/801/777/751 collision rebase) | CFP-722 Phase 2 — story-section-ownership 57번째 entry (ADR-060 Amendment 13 §결정 27 carrier — per-section ownership mechanical lint, warning tier, PR #441 incident prevention) | CFP-442 Phase 2 — evidence-registry-anomaly 51번째 entry (ADR-060 Amendment 11 §결정 25 carrier — framework self-application 5-piece chain 완성) | CFP-662 — bootstrap-labels-precondition 46번째 entry (ADR-060 Amendment 10 §결정 24 carrier — PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier, deferred-followup status — Phase 2 carrier 신설 후 Active 전환) | CFP-660 — workflow-version-drift 45번째 entry (ADR-032 Amendment 2 §결정 6 carrier — strict-eligible 5번째 drift consumer workflow version drift, check 10 NEW carrier) | CFP-658 — section-1-verbatim-postmerge 44번째 entry append (ADR-027 Amendment 2 §결정 6.C carrier — manual fallback path §1 verbatim invariant post-merge lint warning tier, deferred-followup status, Phase 2 carrier 신설 후 Active 전환) | CFP-627 FIX iter 3/3 — marketplace-drift-detection entry deferred to Phase 2 carrier (ADR-067 §결정 3 cross-lane RESET 차원 전환) | CFP-638 — stop-time-continuous-confirm-detect 43번째 entry (ADR-064 Amendment 3 Story D) | CFP-631 — marketplace-description-verbatim 42번째 entry (ADR-063 Amendment 2 §결정 11 blocking-on-pr)
 
 entries:
   - name: adr-sunset-criteria
@@ -2098,4 +2098,52 @@ entries:
       threshold: 3                # ADR-060 §결정 19 (Amendment 6) — threshold 3 standard
       last_occurrence: "2026-05-16T23:01:11Z"  # CFP-819 PR #823 wording-dictionary cosmetic 7건 (verified: gh pr view 823 --json mergedAt = 2026-05-16T23:01:11Z)
       promotion_trigger: advisory # count=5 ≥ threshold=3 → advisory (본 carrier 자체가 monitoring 도입)
+    status: Active
+
+  # ─── CFP-833 Phase 1 — dialog-fidelity-effect entry (Epic CFP-761 Story-3 closing-the-loop) ───
+  # ADR-071 Amendment 3 carrier. precedent rate-limit-fallback-rate 동형 (runtime cron metric pattern).
+  # Phase 1 = skeleton (non-null detect_command, #827 회피). Phase 2 carrier = workflow yml 2종 + check script + lib .py.
+  - name: dialog-fidelity-effect
+    description: |
+      ADR-071 incident append-rate delta (proxy signal — not causal effectiveness
+      measure). Epic CFP-761 Story-3 closing-the-loop — DialogFidelityAgent 도입 전후
+      Layer 4 incident realtime detect row append rate A-B baseline delta.
+      분자 = Story-1 merge (577f96f, 2026-05-17 KST) 이후 월간 realtime detect row
+      count (trigger ∈ layer-3-keyword/layer-4-n1/layer-4-m5). 분모 = measurement
+      window 월 수 (1, 1 month rolling). before(baseline) = backfill marker row
+      (Story-0 retroactive 3 row CFP-672/701/707) 를 timestamp occurrence span
+      (2026-05-14~05-15, ~2 day) 으로 normalize 한 monthly-equivalent rate
+      (= 3 / span_days × 30, 단순 3/1month 고정 아님). after = Story-1 merge 이후
+      realtime detect only 의 month-bucketed rate. delta = after − before(monthly-eq)
+      rate (음수 = verifier 효과 proxy 신호). proxy 한계: before=backfill /
+      after=realtime collection mode 상이 → delta 는 instrumentation mode change /
+      backfill completeness / reviewer behavior 변화도 반영 가능 (advisory operational
+      signal only, 효과 판정 아님). runtime cron metric pattern (vs static lint) —
+      advisory dashboard, no PR block. ADR-058 §결정 3 측정성 self-application
+      (verifier 도 측정 없이 영구화 금지). sample insufficient sentinel (월간 realtime
+      detect row < 3 = N/A — advisory only, pragmatic noise floor: 1-2 row =
+      single-incident high-variance noise, 3 = month-over-month 비교 minimum viable
+      data point. precedent rate-limit-fallback-rate "월 < 50 = N/A" 동일 성격).
+    detect_command: bash scripts/check-dialog-fidelity-effect.sh
+    workflow: templates/github-workflows/dialog-fidelity-measurement.yml
+    current_tier: warning  # advisory dashboard, no PR block — semantic = "warning mode 의 runtime metric extension" (precedent rate-limit-fallback-rate 동형)
+    # bypass_label: omit — runtime metric pattern 에서 의미 부적용 (OQ-3 사용자 확정 2026-05-17 KST, precedent 동형)
+    # bypass_audit_lint: omit — bypass_label 미정의
+    promotion_criteria:
+      # 본 entry 의 promotion 의미 = lint warning→blocking promotion 아닌,
+      # sample size sufficient 도달 시 ADR-071 effectiveness sunset gate measurement.
+      # pr_cumulative_min=0 = promotion semantic 부적용 표기 (precedent 동형).
+      pr_cumulative_min: 0
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - dialog_fidelity_ab_delta_rolling_window_evidence  # sunset 판정 carrier PR 의 산출물 (별도 carrier)
+    # modal_anti_pattern_dictionary: omit — lint 가 모달 어휘 검사 미포함
+    introduced_by: CFP-833
+    introduced_date: 2026-05-17
+    owner_adr: ADR-071           # 정책 ADR — dialog convergence permanent governance, effectiveness sunset gate owner
+    carrier_adr: ADR-060         # framework carrier (CFP-388 / ADR-060 §결정 12 non-sunset application family)
+    recurrence:
+      count: 0
+      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
