@@ -1,12 +1,14 @@
 #!/usr/bin/env bats
 # tests/scripts/test-check-worktree-first-spawn-evidence-cwd.bats
 # CFP-843 Phase 2 — write-target-path worktree-membership lint + CBL_SKIP_ISSUE_CREATE probe env TC
-# Change Plan §6 Test Contract verbatim (6 TC)
+# Change Plan §6 Test Contract verbatim (6 TC) + FIX-1 no-offset TC (TC-3a/TC-3b)
 #
 # Test cases:
 #   TC-1: write target = worktree root membership → PASS (exit 0, no WARN)
 #   TC-2: write target = main repo working tree (cwd reset 재현) → FAIL (WARN emitted, exit 0 — warning tier)
-#   TC-3: enforce-from filter — CFP-843 merged at 이전 target path → skip (false-positive 0)
+#   TC-3: enforce-from filter — Z-suffix future ENFORCE_FROM → skip (false-positive 0)
+#   TC-3a: no-offset future ENFORCE_FROM (no Z/+HH:MM) → exit 0, skip (not TypeError exit 1)
+#   TC-3b: no-offset past ENFORCE_FROM → exit 0, enforce (violation WARN emitted)
 #   TC-4: BYPASS_WORKTREE_FIRST=1 → short-circuit (exit 0, no scan)
 #   TC-5: common-dir skip — worktree common-dir ambiguity → skip (exit 0, no WARN)
 #   TC-6: env-scoped probe — CBL_SKIP_ISSUE_CREATE=1 → live Issue create skip (#836 재현 차단)
@@ -164,4 +166,47 @@ teardown() {
   [ "$status" -eq 0 ]
   # sentinel 파일 미생성 = Issue create 호출 안 됨 (#836 차단 확인)
   [ ! -f "$SENTINEL" ]
+}
+
+# ------------------------------------------------------------------ TC-3a: no-offset future ENFORCE_FROM → exit 0 (FIX-1 RED target)
+@test "TC-3a: no-offset future ENFORCE_FROM (no Z/+HH:MM) → exit 0 skip (not TypeError)" {
+  # FIX-1 RED target: 현 parse_iso8601 는 offset-naive datetime 반환 → line-91 aware 비교 TypeError → exit 1
+  # 수정 후: offset-naive → UTC 가정 attach → aware 비교 → future → skip, exit 0
+  MOCK_WORKTREE_ROOT="/c/Users/test/.claude/worktrees/plugin-codeforge/cfp-843-phase2"
+  MOCK_WRITE_TARGET="/c/workspace/mclayer/plugin-codeforge/scripts/some-script.sh"
+
+  run env \
+    WRITE_TARGET_PATHS="$MOCK_WRITE_TARGET" \
+    EXPECTED_WORKTREE_ROOT="$MOCK_WORKTREE_ROOT" \
+    ENFORCE_FROM="2099-01-01T00:00:00" \
+    bash "$WRITE_MEMBERSHIP_SCRIPT"
+
+  echo "# status: $status" >&3
+  echo "# output: $output" >&3
+
+  # 수정 전: exit 1 (TypeError) → 수정 후: exit 0 (future → skip)
+  [ "$status" -eq 0 ]
+  # future → skip, violation WARN 없음
+  [[ "$output" != *"violation"* ]]
+}
+
+# ------------------------------------------------------------------ TC-3b: no-offset past ENFORCE_FROM → exit 0 + enforce
+@test "TC-3b: no-offset past ENFORCE_FROM → exit 0 + violation WARN emitted (enforce active)" {
+  # 수정 후: offset-naive past → UTC 가정 → past → enforce → violation WARN (exit 0 유지)
+  MOCK_WORKTREE_ROOT="/c/Users/test/.claude/worktrees/plugin-codeforge/cfp-843-phase2"
+  MOCK_WRITE_TARGET="/c/workspace/mclayer/plugin-codeforge/scripts/some-script.sh"
+
+  run env \
+    WRITE_TARGET_PATHS="$MOCK_WRITE_TARGET" \
+    EXPECTED_WORKTREE_ROOT="$MOCK_WORKTREE_ROOT" \
+    ENFORCE_FROM="2020-01-01T00:00:00" \
+    bash "$WRITE_MEMBERSHIP_SCRIPT"
+
+  echo "# status: $status" >&3
+  echo "# output: $output" >&3
+
+  # warning tier — exit 0 유지
+  [ "$status" -eq 0 ]
+  # past ENFORCE_FROM → enforce active → violation WARN 발화 의무
+  [[ "$output" == *"WARN"* ]] || [[ "$output" == *"violation"* ]] || [[ "$output" == *"FAIL"* ]]
 }

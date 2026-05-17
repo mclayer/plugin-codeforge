@@ -63,11 +63,15 @@ def path_is_within_root(target: str, root: str) -> bool:
 
 
 def parse_iso8601(ts: str):
-    """ISO8601 timestamp → datetime (UTC). 파싱 실패 시 None."""
+    """ISO8601 timestamp → datetime (UTC, tz-aware). 파싱 실패 시 None."""
     try:
         # Python 3.7+ fromisoformat (Z suffix 처리)
         ts_clean = ts.replace('Z', '+00:00')
-        return datetime.fromisoformat(ts_clean)
+        dt = datetime.fromisoformat(ts_clean)
+        if dt.tzinfo is None:
+            # offset-naive → UTC 가정 (line-91 aware 비교 TypeError 회피, FIX-1)
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
     except Exception:
         return None
 

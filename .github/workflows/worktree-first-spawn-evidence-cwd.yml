@@ -62,6 +62,20 @@ jobs:
           echo "exit_status=$status" >> "$GITHUB_OUTPUT"
           exit $status  # blocking-on-pr mode — lint fail 시 step fail propagation (CFP-531)
 
+      - name: Run write-target-membership lint (warning sub-tier, non-blocking)
+        # CFP-843 Amendment 6 §결정 7.J.2 Phase 2 — agent-internal write-target-path scope 확장
+        # Tier: warning sub-tier (Change Plan §3.2 + §9 "scope 확장 부분만 warning sub-tier" 정합)
+        # 기존 CWD check (위 step) = blocking-on-pr 유지, 신규 write-target-path check = non-blocking
+        # WRITE_TARGET_PATHS 미설정 시 graceful skip (post-hoc scan — Phase 2 env-injection model)
+        if: steps.bypass.outputs.bypass == 'false'
+        continue-on-error: true  # warning sub-tier — exit fail propagation 차단 (blocking-on-pr 미격상)
+        run: |
+          set +e
+          bash scripts/check-write-target-membership.sh 2>&1 | tee /tmp/write-target-lint.out
+          status=${PIPESTATUS[0]}
+          echo "[write-target-membership] exit_status=$status (warning sub-tier — non-blocking)"
+          exit 0  # warning tier — always exit 0 (continue-on-error 이중 보호)
+
       - name: Post lint result comment (sticky)
         # CFP-531 FIX iter 2 (CodeReview F-1): if always() ensure audit trail comment runs even on lint failure
         if: always() && steps.bypass.outputs.bypass == 'false'
