@@ -16,11 +16,22 @@ amendment_log:
     summary: "§결정 9 신설 — 3-tier channel taxonomy declaration (Wave 4 sub-Epic #1 Story-1, Epic CFP-882). codeforge family plugin distribution 의 release channel 1st-class 정의 anchor. 3-tier enum (stable / beta / canary) closed-enum invariant + per-tier semantic (LOW / MEDIUM / HIGH risk class) + production-impact awareness (canary tier admin tier 권장 advisory) + channel selection authority asymmetry (SecurityArch §2 T-2.1 silent canary uptake 차단) + sensitive data exposure tier asymmetry (canary tier production features = HIGH exposure, ProductionEvidenceDeputy Story-3 spawn trigger) + disjoint invariant (codeforge.channel.tier release tier ≠ codeforge.version_pin.version specifier — 독립 차원, 동일 block embedding 금지). project-config-schema codeforge.channel field 신설 (peer block, version_pin sibling) + reconcile-protocol-v1 v1.6 → v1.7 §4.3 (i) trigger 발동 + §4.10 multi_version_channel_pin_binding block carrier 동반. ADR-016 Amendment 3 (family_7_plugin_atomic × channel pin invariant) + ADR-063 Amendment 6 §결정 17 (mirrored field × channel matrix) + label-registry-v2 v2.29 → v2.30 (3 channel:* label + 신규 category enum channel) sibling cross-ref. Strengthening direction only — ADR-064 §self-application top-down ratchet 정합 (channel taxonomy = scope 확장, weakening 0). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과 (is_transitional: false 보존)."
     is_transitional: false
     sunset_justification: "N/A — permanent governance invariant. ADR-064 §self-application top-down ratchet 정합 (Amendment 1 = 3-tier channel taxonomy 강화 방향 only, scope 확장 — codeforge family plugin distribution 의 release channel 1st-class declare). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과 (channel taxonomy 축소 / disjoint invariant 합치 = sunset_justification 3-tuple 의무)."
+  - amendment: 2
+    date: 2026-05-17
+    carrier_story: CFP-898  # Wave 4 sub-Epic CFP-858 base layer (S1 — S2 CFP-899 / S3 CFP-900 prerequisite)
+    description: |
+      §결정 2 enumeration 표 11번째 row append (`scripts/` workflow_dependency_closure, `mode: bundled_with_referencing_workflow`)
+      + §결정 6 본문 Amendment 2 sub-section 추가 (의미 invariant `marker_block_absent_behavior: wholesale_mirror_with_user_visible_loss_report` 무변경 + dependency_missing → fail-closed sub-clause). reconcile-protocol-v1 v1.6 → v1.7 MINOR bump (§4.3 (i) trigger + §4.10 `dependency_bundle_integrity_binding` block) 동반.
+      Architect lane derived default (ADR-064 §결정 3 룰 1 정합): AM-1 = regex_primary (stdlib only) / AM-2 = transitive_depth_limit=1 / AM-3 = templates/scripts/ location (self-app 면제) / AM-4 = self-loop 0 invariant.
+      ratchet 강화 only (ADR-058 §결정 5 + ADR-064 §self-application 정합) — 약화 0건. `mechanical_enforcement_actions: []` declaration-only retain (ADR-082 §결정 6 + ADR-070 §D5 패턴 답습 — Phase 2 PR 시점 `templates/scripts/mirror-dependency-closure.py` self-test 가 mechanical detection 책임).
+      `is_transitional: false` 무변경. sunset_justification N/A (permanent governance invariant).
+      mctrader-data#81 14 failing checks evidence (Epic CFP-858 §1 motivation verbatim) — wholesale_mirror 시 silent partial bundle 의 real harm 사례.
 related_stories:
   - CFP-701  # 본 Story carrier — Wave 1 Story-1 (A1+B1 scope)
   - CFP-702  # Wave 1 Story-2 (D4 customization marker — sequential prerequisite for Wave 2)
   - CFP-743  # Wave 2 Story-3 (UpgradeAgent + CLI runtime carrier) — KEY 정정 CFP-703→CFP-743 (CFP-743, Wave 1 작성 시점 placeholder drift / 동일 Story / fact 영향 0)
   - CFP-906  # Amendment 1 carrier — Wave 4 sub-Epic #1 Story-1 (channel schema SSOT 3-tier taxonomy declare layer, Epic CFP-882)
+  - CFP-898  # Amendment 2 carrier — Wave 4 sub-Epic CFP-858 base layer (S1) (§결정 2 11번째 row + §결정 6 fail-closed clause + reconcile-protocol-v1 v1.7 §4.3 (i) trigger 동반)
 related_adrs:
   - ADR-027  # Consumer adoption protocol (boundary disjoint — detection layer)
   - ADR-053  # 구조적 변경 재구동 + consumer 배포 (transaction completion prerequisite)
@@ -34,23 +45,29 @@ related_adrs:
   - ADR-039  # Orchestrator subagent default (UpgradeAgent Story-3 영역 정합)
   - ADR-040  # Worktree convention + Amendment 3 §결정 7.D self-app invariant
   - ADR-050  # Parallel epic conflict coordination (ADR-RESERVATION row 76)
+  - ADR-061  # Python script-writing convention (Amendment 1 carrier — 외부 .py 의무)
   - ADR-065  # ArchitectAgent Phase 1 mechanical sync self-check
   - ADR-068  # Boundary completeness invariants (4 semantic + Amendment 1 I-5 dimensional)
   - ADR-070  # Codex verify-before-trust (Touchpoint #2 carry-over)
   - ADR-073  # Orchestrator verify-before-assert (fact claim marker 5종)
   - ADR-063  # Marketplace ↔ plugin.json atomic invariant (Amendment 6 §결정 17 mirrored field × channel matrix carrier sibling — CFP-906 Amendment 1)
   - ADR-72  # ProductionEvidenceDeputy spawn (§결정 1 canary tier production-impact trigger — CFP-906 §결정 9 canary tier semantic cross-ref)
+  - ADR-082  # Write-time self-write verification mandate (Amendment 2 / CFP-898 ratchet 강화 패턴 답습)
 related_files:
   - docs/inter-plugin-contracts/reconcile-protocol-v1.md  # 본 ADR 의 schema carrier (kind:registry)
   - docs/inter-plugin-contracts/MANIFEST.yaml             # registries[] row append
   - docs/domain-knowledge/domain/upgrade-flow/declarative-reconciliation.md  # narrative SSOT anchor
   - CLAUDE.md                                              # GitHub Workflow + ADR 단락 cross-ref
   - docs/orchestrator-playbook.md                          # §3 Lane 실행 cross-ref
+  - templates/scripts/mirror-dependency-closure.py        # Amendment 1 carrier — Phase 2 신설 (closure resolver script, ADR-061 외부 .py 의무 정합)
+  - scripts/reconcile-overlay.sh                           # Amendment 1 carrier — Phase 2 hook insertion (line 437 직전, MARKER_NONE branch first-line)
 mechanical_enforcement_actions: []
 # declarative SSOT only — mechanical lint (snapshot file schema lint / contract schema 정합 / 
 # upgrade event log artifact lint) = Wave 2 carrier (Story-3 UpgradeAgent + CLI 영역).
 # ADR-040 Amendment 3 §결정 7.D self-application invariant 정합 — 빈 list `[]` 가 declarative 
 # only Story 영역의 valid declaration.
+# Amendment 2 (CFP-898) declaration-only retain (ADR-082 §결정 6 + ADR-070 §D5 패턴 답습) —
+# Phase 2 PR 시점 `templates/scripts/mirror-dependency-closure.py` self-test 가 mechanical detection 책임.
 ---
 
 # ADR-076: 선언적 reconciliation upgrade flow SSOT
@@ -58,6 +75,8 @@ mechanical_enforcement_actions: []
 ## 상태
 
 **Active (2026-05-15)** — CFP-701 (Wave 1 Story-1) carrier. parent_epic CFP-699 (declarative reconciliation upgrade Epic).
+
+**Amendment 2 (2026-05-17)** — CFP-898 carrier (Wave 4 sub-Epic CFP-858 S1, base layer for S2 CFP-899 / S3 CFP-900). §결정 2 11번째 row + §결정 6 fail-closed clause. ratchet 강화 only — 약화 0건.
 
 `is_transitional: false` — permanent architecture invariant. codeforge family upgrade 도메인의 1st-class 정의 anchor.
 
@@ -82,6 +101,8 @@ codeforge plugin family upgrade 의 architecture pattern 이 ADR / domain-knowle
 
 위 partial cover 가 Epic §1 WHY 의 "빠짐" 증상의 mechanical 원인. 1st-class 도메인 정의 부재 → `결정 트리 박제` (CFP-699 §1 WHY verbatim — 결정 분기 명문화) 불가 → 사용자 결정 분기가 매번 다르게 surfacing.
 
+**Amendment 2 동인 (CFP-898)**: ADR-076 Wave 1 / Wave 2 / Wave 3 후 6 Story 진행 결과 — wholesale_mirror fallback 의 dependency closure gap 이 mctrader-data#81 14 failing checks 영역에서 surfacing. workflow yml 만 mirror, 의존 `scripts/check-*.sh` 미동반 → consumer exit 127. `wholesale_mirror_with_user_visible_loss_report` invariant 의 silent skip 0 강도 강화 필요 (§결정 6 sub-clause 추가) + 영역 11 `scripts/` workflow_dependency_closure enumeration ratchet 강화 (§결정 2 row append).
+
 ### 본 ADR 영역 (A1 + B1)
 
 - **A1 (self-app SSOT)**: wrapper 자체 영역 enumeration (workflow / hook / label / overlay / settings.json / CODEOWNERS / Issue templates / branch protection) + declarative reconcile 의 자기 적용 semantic
@@ -96,6 +117,7 @@ codeforge plugin family upgrade 의 architecture pattern 이 ADR / domain-knowle
 - D1/D2/D3 (Issue/PR template fan-out / branch protection / script boundary) — Wave 3 Story-7
 - D4 (customization marker 의무화) — Wave 1 Story-2 (본 Story sequential prerequisite 분리)
 - E1/E2/E3 (multi-version channel / codemod registry / uninstall protocol) — Wave 4 sub-Epic
+- **Wave 4 sub-Epic CFP-858 base layer (S1) Amendment 2**: dependency bundle integrity — workflow yml + 의존 closure atomic bundle (CFP-898 carrier) ← **본 Amendment 2 신설 영역**
 
 ## 결정
 
@@ -129,8 +151,9 @@ wrapper plugin (codeforge) self 영역의 desired state 단위 enumeration (Stor
 | **Branch protection** | `.github/branch-protection-manifest.json` (declarative) | API call required — consumer `gh api` apply (Story-3 carrier 영역) |
 | **plugin.json mirrored field** | `name` / `version` / `description` / `author` 4종 (ADR-063 atomic invariant) | atomic — marketplace sync PR 선행 merge 의무 |
 | **CHANGELOG.md** | wrapper repo SSOT | append-only — version bump 동반 |
+| **scripts/ (workflow_dependency_closure)** | `templates/github-workflows/*.yml` (영역 1 `github_workflow`) 안 `run:` block 의 의존 `scripts/check-*.sh` / `python3 templates/scripts/*.py` closure | **bundled_with_referencing_workflow** — 본 영역 자체는 별 mirror target 아님 (영역 1 byte_identical_mirror 의 atomic bundle 단위로 동반). closure resolver (`templates/scripts/mirror-dependency-closure.py`) 가 wholesale_mirror 진입 전 dependency closure resolve + missing 시 fail-closed (Amendment 2 / CFP-898 — Wave 4 sub-Epic CFP-858 S1 carrier. reconcile-protocol-v1 v1.7 §4.3 (i) trigger + §4.10 `dependency_bundle_integrity_binding` block 동반. ADR-064 §self-application ratchet 강화 only) |
 
-위 10 영역이 wrapper plugin 의 declarative SSOT 단위 (旧 "9 영역" = Story-1 작성 시점 — Wave 3 Story-7 CFP-821 D1 carrier 가 `PR template` row 1행 additive append → 10 영역 정정. 표 row append = ratchet 강화 방향 only, ADR-064 §self-application 정합, fact 영향 0 추적성/count 정정만 — ADR-068 I-4 wording SSOT). 본 enumeration 이 Story-3 carrier (UpgradeAgent + CLI) 의 reconcile target 정의 의 input. 6 lane plugin (codeforge-{requirements,design,review,develop,test,pmo}) 의 self 영역 enumeration 은 ADR-016 family scope 정합 후속 carrier 영역 (본 Story-1 scope 외, Wave 2 Story-4 atomic upgrade carrier).
+위 11 영역이 wrapper plugin 의 declarative SSOT 단위 (旧 "9 영역" = Story-1 작성 시점 → CFP-821 D1 carrier 가 `PR template` row 1행 append → 10 영역 정정 → **Amendment 2 / CFP-898 이 `scripts/` workflow_dependency_closure row 1행 append → 11 영역 ratchet**. 표 row append = ratchet 강화 방향 only, ADR-064 §self-application 정합, fact 영향 0 추적성/count 정정만 — ADR-068 I-4 wording SSOT). 본 enumeration 이 Story-3 carrier (UpgradeAgent + CLI) 의 reconcile target 정의 의 input. 6 lane plugin (codeforge-{requirements,design,review,develop,test,pmo}) 의 self 영역 enumeration 은 ADR-016 family scope 정합 후속 carrier 영역 (본 Story-1 scope 외, Wave 2 Story-4 atomic upgrade carrier).
 
 ### 결정 3 — dry-run / snapshot / transaction 3 enum 정의
 
@@ -139,13 +162,13 @@ wrapper plugin (codeforge) self 영역의 desired state 단위 enumeration (Stor
 #### dry-run
 - **Semantic**: desired state diff current state 계산 + 결과 preview (실 변경 0).
 - **Behavior**: 3-way merge (base / wrapper-new / consumer-current) preview 출력 + drift summary report. filesystem touch 0. network call 가능 (Helm-inspired `helm diff` pattern).
-- **Scope**: 9 영역 (결정 2 verbatim) 모두 dry-run 가능. consumer customization marker block 안 영역 = preserve 표기. marker block 밖 영역 = wholesale mirror 표기.
+- **Scope**: 11 영역 (결정 2 verbatim 정합 — Amendment 2 / CFP-898 후 ratchet) 모두 dry-run 가능. consumer customization marker block 안 영역 = preserve 표기. marker block 밖 영역 = wholesale mirror 표기. dependency missing 시 `[dry-run] missing deps: <list>` 표기 (return 0 preview only, reconcile-protocol-v1 v1.7 §4.10 `dry_run_behavior` 정합).
 - **Invariant**: 사용자 결정 분기 0 (정보 제공만). dry-run 결과 보고 후 사용자가 별도 명령 (`--apply` / `--rollback` / abort) 으로 진행.
 
 #### snapshot
 - **Semantic**: upgrade transaction 의 pre-state sentinel — rollback 의 입력 state.
 - **Behavior**: `--apply` 직전 자동 생성. consumer-side `.claude/_snapshots/<UTC-timestamp>-<version-pre>.tar.gz` (또는 동등 archival) + upgrade event log artifact (`docs/upgrade-events/<date>-<version>.md` — Wave 2 Story-3 영역 file schema).
-- **Granularity**: 9 영역 (결정 2) union — wrapper SSOT 영역 + consumer customization marker block 외 영역. marker block 안 customization 영역은 snapshot scope 외 (consumer responsibility preserve).
+- **Granularity**: 11 영역 (결정 2 Amendment 1 정합) union — wrapper SSOT 영역 + consumer customization marker block 외 영역. marker block 안 customization 영역은 snapshot scope 외 (consumer responsibility preserve).
 - **Persistence location**: consumer `.claude/_snapshots/` (primary) + wrapper `docs/upgrade-events/<date>.md` (event log mirror, audit trail). git tag 영역 보조 (Wave 4 multi-version channel E1 carrier).
 - **Lifecycle / retention**: N most-recent (default `N=5` `[empirical-source: derived default — Helm release history N=10 보다 보수적, codeforge family scope 7 plugin × N=5 = 35 file 보존 비용 vs rollback 가용성 절충, FIX iter 1 / Codex TP#2 F-002 annotation]`, configurable via consumer `.claude/_overlay/project.yaml` `upgrade.snapshot_retention_count`). per-MAJOR-version retention 영역은 Wave 4 E1 carrier.
 - **Invariant**: `--rollback <version>` 시 동일 snapshot scope re-application. snapshot 자체 = state migration unit (data migration 영역, ADR-007 정합).
@@ -199,6 +222,24 @@ consumer customization preservation 의 entry = `# BEGIN wrapper-managed` / `# E
 **Story-2 carrier scope**: marker syntax 정의 + lint script + migration script (retroactive marker wrap) + workflow.
 
 본 Story-1 의 contract field declare = Story-2 의 sequential prerequisite. Story-2 진입 시점 본 Story-1 merge 완료 의무 (Wave 1 sequential ordering, Epic spec §8 의존 순서).
+
+#### Amendment 2 — Dependency missing fail-closed sub-clause (CFP-898 Wave 4 sub-Epic CFP-858 S1 carrier)
+
+**의미 invariant 무변경** (`marker_block_absent_behavior: wholesale_mirror_with_user_visible_loss_report` 자체는 그대로). **ratchet 강화 방향** sub-clause 1개 추가:
+
+> wholesale_mirror branch 진입 전 의존 closure resolve 의무 — workflow yml (영역 1 `github_workflow`) 의 `run:` block 안 `bash scripts/check-*.sh` / `python3 templates/scripts/*.py` 패턴이 wrapper-side 에서 enumerate (영역 11 `scripts/` workflow_dependency_closure) 가능한 경우, mirror 전 closure 가 모두 resolve 되어야 한다. **dependency missing 시 fail-closed** (exit 1 + visible error log `[ERR] Dependency missing: scripts/check-XXX.sh (referenced by: .github/workflows/YYY.yml)` + 부분 mirror 산출물 commit 금지). silent skip 0 invariant 강화 (의미 invariant `wholesale_mirror_with_user_visible_loss_report` 안 dependency missing 영역 fallback 명세 — user_visible_loss_report scope 확장: 旧 consumer customization overwrite 보고 only → 신 + dependency missing fail-closed report).
+
+**rationale (Amendment 1)**: 의미 invariant 자체는 무변경 (`wholesale_mirror_with_user_visible_loss_report` 의 두 단어 그대로) — 단 invariant 안 fallback behavior scope 가 silent skip → fail-closed 방향으로 강화. ratchet weakening 0건 (ADR-064 §self-application 정합 + ADR-058 §결정 5 sunset_justification 의무 회피 — 강화 방향만).
+
+**mechanical carrier**: reconcile-protocol-v1 v1.7 §4.10 `dependency_bundle_integrity_binding` block (`fail_closed_behavior.on_dependency_missing: exit_1_with_error_log` field). 본 ADR §결정 6 Amendment 1 = semantic declare / contract §4.10 = mechanical declare 분리 (CFP-743/744/745/820/821 §결정 본문 vs §4.5/§4.6/§4.7/§4.8/§4.9 binding block 분리 패턴 답습).
+
+**Architect lane derived default (ADR-064 §결정 3 룰 1 정합)**:
+- AM-1 `closure_resolve_algorithm` = `regex_primary` (stdlib only, pyyaml 의존 0 — consumer 측 가용성 미보장 영역 cover)
+- AM-2 `transitive_depth_limit` = `1` (wrapper-side script.sh 내부 sub-script 호출은 wrapper SSOT 가 보장, depth 2+ false-positive 폭증 회피)
+- AM-3 `closure_resolver_location` = `templates/scripts/mirror-dependency-closure.py` (consumer-distributable, ADR-005 self-app 면제 영역 — wrapper-side `scripts/` mirror 부재 정합)
+- AM-4 `self_loop_invariant` = `본 file 자체가 workflow yml 안 의존되지 않음` (self-loop 0 invariant, Phase 2 TC-DEP-14 검증 의무)
+
+**evidence**: mctrader-data#81 14 failing checks (Epic CFP-858 §1 motivation verbatim) — wholesale_mirror 시 silent partial bundle 의 real harm 사례. consumer (`mctrader-data`) 44개 workflow `bash: scripts/check-XXX.sh: No such file or directory` (exit 127).
 
 ### 결정 7 — Transaction completion criterion = ADR-053 D2 prerequisite (verbatim quote + interpretation note 분리)
 
@@ -342,12 +383,13 @@ ADR-067 §결정 4 sequential ordering 정합 (Story 간 cross-pollinate 차단)
 
 ### 즉각적 결과
 
-1. **`docs/inter-plugin-contracts/reconcile-protocol-v1.md` 신규** — kind:registry, schema field 6종 (`customization_preservation_entry` / `marker_block_absent_behavior` / `version_handshake` / `reconcile_strategy` enum / `snapshot_semantic` / `atomicity_boundary`) + dry-run/snapshot/transaction 3 mode enum + placeholder reserve 영역 (Wave 4 carrier).
+1. **`docs/inter-plugin-contracts/reconcile-protocol-v1.md` 신규** — kind:registry, schema field 6종 (`customization_preservation_entry` / `marker_block_absent_behavior` / `version_handshake` / `reconcile_strategy` enum / `snapshot_semantic` / `atomicity_boundary`) + dry-run/snapshot/transaction 3 mode enum + placeholder reserve 영역 (Wave 4 carrier). **Amendment 2 (CFP-898)**: v1.6 → v1.7 MINOR bump (§4.3 (i) trigger + §4.10 `dependency_bundle_integrity_binding` block 신설).
 2. **`docs/domain-knowledge/domain/upgrade-flow/declarative-reconciliation.md` 신설** — RequirementsPL self-write 이미 완료 (CFP-26 Phase 0a owner agent direct write). 본 ADR § narrative SSOT anchor.
-3. **`docs/inter-plugin-contracts/MANIFEST.yaml` registries[] row append** — `reconcile_protocol` entry (v1.0 Active, sibling sync 면제 ADR-010 §결정 2).
-4. **`CLAUDE.md` 2 단락 cross-ref** — "GitHub Workflow" + "ADR (`docs/adr/` SSOT)" 단락 ADR-076 1-line cross-ref.
+3. **`docs/inter-plugin-contracts/MANIFEST.yaml` registries[] row append** — `reconcile_protocol` entry (v1.0 Active, sibling sync 면제 ADR-010 §결정 2). **Amendment 2 (CFP-898)**: row 갱신 (v1.6 → v1.7).
+4. **`CLAUDE.md` 2 단락 cross-ref** — "GitHub Workflow" + "ADR (`docs/adr/` SSOT)" 단락 ADR-076 1-line cross-ref. **Amendment 2 (CFP-898)**: "Inter-plugin Contract" 단락 reconcile-protocol-v1 v1.7 + Amendment 2 reference 추가.
 5. **`docs/orchestrator-playbook.md` cross-ref** — §3 Lane 실행 영역 narrative anchor 1-2 line.
 6. **`docs/adr/ADR-RESERVATION.md` row 76 append** — CFP-701 carrier, status active, reserved_at 2026-05-15. ADR-050 §결정 1 정합 (ArchitectAgent inline carrier, ADR-070 / CFP-578 precedent — chief author scope 영역).
+7. **Amendment 2 (CFP-898) 추가 carrier**: `docs/parallel-work/section-ownership.yaml` row append (reconcile-protocol-v1 §4.10 + ADR-076 §결정 영역 lock — parallel session collision 회피, ADR-050 §결정 4 정합).
 
 ### 후속 carrier dependency 명시
 
@@ -356,6 +398,8 @@ ADR-067 §결정 4 sequential ordering 정합 (Story 간 cross-pollinate 차단)
 - **Wave 2 Story-4**: 7 plugin atomic upgrade runtime — 본 ADR §결정 8 의 atomicity boundary `runtime implementation` 영역 ratchet carrier (의미 invariant `family_7_plugin_atomic` 자체는 ADR-016 §결정 1 SSOT, 본 carrier 가 runtime catch-up).
 - **Wave 2 Story-5**: overlay 3-way merge runtime — 본 ADR §결정 1 의 Kustomize-inspired customization layer reconcile.
 - **Wave 4 E1/E2/E3**: multi-version channel / codemod registry / uninstall — 본 ADR `reconcile-protocol-v1` 의 `version_handshake` + `reconcile_strategy` enum placeholder 영역 활용.
+- **Wave 4 sub-Epic CFP-858 S2 (CFP-899)**: repo-kind detection truth-table (`.claude-plugin/plugin.json` 부재 → consumer signal). Amendment 2 (CFP-898) merge 후 진입.
+- **Wave 4 sub-Epic CFP-858 S3 (CFP-900)**: upgrade-event log result enum 확장 (`SUCCESS_WITH_DEGRADATION` / `PARTIAL_FAILURE`) + phase-gate-mergeable fast-pass content sanity. S1 + S2 merge 후 진입.
 
 ### 검증 영역
 
@@ -364,6 +408,7 @@ ADR-067 §결정 4 sequential ordering 정합 (Story 간 cross-pollinate 차단)
 - **AC-3 (3 enum 정의 + 외부 reference)**: 본 §결정 3 + Helm/Kustomize/Terraform cross-ref verbatim.
 - **AC-4 (snapshot ↔ ADR-067 RESET disjoint phrasing)**: 본 §결정 4 verbatim "disjoint" + "layer" phrasing 보유. 3 곳 cross-ref (ADR / contract / domain-knowledge) 완성.
 - **AC-5 (ADR-053 D2 compliance)**: 본 §결정 7 verbatim cross-ref. dogfood-out 영역 면제 분기 명시.
+- **Amendment 2 (CFP-898) AC**: Story CFP-898 §2 AC-5 verbatim — §결정 2 표 11번째 row append (workflow_dependency_closure / scripts/ + bundled_with_referencing_workflow, 10→11 영역 ratchet) + §결정 6 Amendment 2 sub-section (fail-closed clause) + amendment_log entry 2 + `is_transitional: false` 무변경 + `mechanical_enforcement_actions: []` declaration-only retain (ADR-082 §결정 6 + ADR-070 §D5 패턴 답습).
 
 ## 해소 기준
 
@@ -371,34 +416,41 @@ ADR-067 §결정 4 sequential ordering 정합 (Story 간 cross-pollinate 차단)
 
 본 ADR 은 codeforge family upgrade 도메인의 1st-class 정의 anchor — codeforge plugin family 가 deprecate 되지 않는 한 영구 유효. Amendment 는 강화 방향만 허용 (ADR-058 §결정 5 + ADR-064 top-down self-application 정합):
 
-- 새 영역 enumeration 추가 (결정 2 표 row append)
+- 새 영역 enumeration 추가 (결정 2 표 row append) — **Amendment 2 / CFP-898 = `scripts/` workflow_dependency_closure row append (11번째 row, 10 → 11 영역 ratchet 강화)**
 - 새 reconcile_strategy enum 값 추가 (결정 3 placeholder 활성)
 - atomicity_boundary runtime implementation ratchet (per-plugin → family_7_plugin — Wave 2 Story-4 carrier 시점, 의미 invariant 변경 0)
 - snapshot retention policy 추가 (per-MAJOR-version — Wave 4 E1 carrier 시점)
+- **결정 6 fallback behavior scope 확장 (Amendment 2 / CFP-898 = silent skip → fail-closed sub-clause 추가, `marker_block_absent_behavior: wholesale_mirror_with_user_visible_loss_report` 의미 invariant 무변경)**
 
-약화 방향 (예: 사용자 결정 분기 0 invariant 약화 / disjoint layer 합치) = ADR-058 §결정 5 sunset_justification 3-tuple (metric / who / how) 정량 명시 없이 차단. 본 ADR 의 사용자 directive verbatim (CFP-699 Epic §1 WHY `결정 트리 박제`) 정합.
+약화 방향 (예: 사용자 결정 분기 0 invariant 약화 / disjoint layer 합치 / dependency missing 시 silent skip 허용) = ADR-058 §결정 5 sunset_justification 3-tuple (metric / who / how) 정량 명시 없이 차단. 본 ADR 의 사용자 directive verbatim (CFP-699 Epic §1 WHY `결정 트리 박제`) 정합.
 
 ## 관련 파일
 
-- `docs/inter-plugin-contracts/reconcile-protocol-v1.md` — 본 ADR 의 schema carrier (kind:registry, v1.0, Active)
-- `docs/inter-plugin-contracts/MANIFEST.yaml` — registries[] `reconcile_protocol` row
+- `docs/inter-plugin-contracts/reconcile-protocol-v1.md` — 본 ADR 의 schema carrier (kind:registry, v1.7 Amendment 1 후 Active)
+- `docs/inter-plugin-contracts/MANIFEST.yaml` — registries[] `reconcile_protocol` row (Amendment 1 후 v1.7)
 - `docs/domain-knowledge/domain/upgrade-flow/declarative-reconciliation.md` — narrative SSOT anchor (RequirementsPL self-write)
 - `docs/adr/ADR-027-consumer-adoption-protocol.md` — boundary disjoint (detection layer vs upgrade transaction layer)
 - `docs/adr/ADR-053-structural-change-restart-prerequisite.md` — transaction completion prerequisite (§결정 7 cross-ref)
 - `docs/adr/ADR-067-fix-ledger-implementability-escalation.md` — Story progression layer RESET (§결정 4 disjoint cross-ref)
 - `docs/adr/ADR-038-progress-visualization-todowrite.md` — Amendment 3 §결정 12 SessionStart hook static invariant (§결정 5 cross-ref)
 - `docs/adr/ADR-016-marketplace-registration-policy.md` — codeforge family scope 7 plugin atomic (§결정 8 cross-ref)
-- `docs/adr/ADR-008-inter-plugin-contract-versioning.md` — reconcile-protocol-v1 v1.0 신규 정합
+- `docs/adr/ADR-008-inter-plugin-contract-versioning.md` — reconcile-protocol-v1 v1.0 / v1.7 MINOR bump (Amendment 1 정합)
 - `docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md` — kind:registry sibling sync 면제 정합
 - `docs/adr/ADR-058-adr-sunset-criteria-mandate.md` — is_transitional: false 정합 (해소 기준 § verbatim)
-- `docs/adr/ADR-064-decision-principle-mandate.md` — derived default + forbid-list + parallel default 정합
+- `docs/adr/ADR-061-python-script-writing-convention.md` — Amendment 1 carrier `templates/scripts/mirror-dependency-closure.py` 신설 (외부 .py 의무 정합)
+- `docs/adr/ADR-064-decision-principle-mandate.md` — derived default + forbid-list + parallel default 정합 (Amendment 1 AM-1/2/3/4 derived default 정합)
 - `docs/adr/ADR-040-worktree-convention.md` — Amendment 3 §결정 7.D self-app invariant (frontmatter `mechanical_enforcement_actions: []` 정합)
-- `docs/adr/ADR-050-parallel-epic-conflict-coordination.md` — ADR-RESERVATION row 76 append 의 회피 mechanism
+- `docs/adr/ADR-050-parallel-epic-conflict-coordination.md` — ADR-RESERVATION row 76 append 의 회피 mechanism + Amendment 1 section-ownership.yaml row append 정합
 - `docs/adr/ADR-065-architect-phase1-mechanical-self-check.md` — ArchitectAgent Phase 1 commit-time 7-item self-check 정합
 - `docs/adr/ADR-068-boundary-completeness-invariants.md` — 4 semantic invariants + Amendment 1 I-5 dimensional empirical grounding 정합
-- `docs/adr/ADR-070-codex-verify-before-trust.md` — Touchpoint #2 (ArchitectAgent §3 직후) carry-over 정합
+- `docs/adr/ADR-070-codex-verify-before-trust.md` — Touchpoint #2 (ArchitectAgent §3 직후) carry-over 정합 + Amendment 1 mechanical_enforcement_actions [] declaration-only retain 패턴 답습 (§D5 precedent)
 - `docs/adr/ADR-073-orchestrator-verify-before-assert.md` — fact claim marker 5종 정합
-- `CLAUDE.md` — "GitHub Workflow" + "ADR" 단락 cross-ref
+- `docs/adr/ADR-082-write-time-self-write-verification-mandate.md` — Amendment 1 ratchet 강화 패턴 답습 (§결정 6 mechanical_enforcement_actions 정합)
+- `CLAUDE.md` — "GitHub Workflow" + "ADR" + "Inter-plugin Contract" 단락 cross-ref (Amendment 1 후 추가)
 - `docs/orchestrator-playbook.md` — §3 Lane 실행 cross-ref
+- `templates/scripts/mirror-dependency-closure.py` — **Amendment 1 carrier — Phase 2 신설** (closure resolver script, ADR-061 외부 .py 의무 정합, consumer-distributable AM-3 derived default location)
+- `scripts/reconcile-overlay.sh` — **Amendment 1 carrier — Phase 2 hook insertion** (line 437 직전, MARKER_NONE branch first-line, `MIRROR_DEP_PY` env 가용 시 invocation + return 2 abort on missing dependency)
 - `<internal-docs>/wrapper/stories/CFP-701.md` — 본 ADR carrier Story (Wave 1 Story-1)
-- `<internal-docs>/wrapper/change-plans/cfp-701-reconciliation-contract.md` — Phase 1 PR change plan
+- `<internal-docs>/wrapper/change-plans/cfp-701-reconciliation-contract.md` — Phase 1 PR change plan (Wave 1)
+- `<internal-docs>/wrapper/stories/CFP-898.md` — Amendment 2 carrier Story (Wave 4 sub-Epic CFP-858 S1)
+- `<internal-docs>/wrapper/change-plans/cfp-898-dependency-bundle-integrity.md` — Amendment 2 Phase 1 PR change plan
