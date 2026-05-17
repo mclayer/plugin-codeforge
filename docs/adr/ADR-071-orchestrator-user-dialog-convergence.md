@@ -21,6 +21,12 @@ amendments:
     issue: https://github.com/mclayer/plugin-codeforge/issues/818
     summary: DialogFidelityAgent 3-anchor 운영 정의 + turn-shape edge × 3-anchor 12 cell 활성 표 신설 + ADR-039 inline whitelist 1번 entry 정합 명문화 + ADR-064 §결정 9 Q-3check disjoint scope cross-ref (additive, Layer 1-4 보존 + 5번째 cognitive layer 신설 금지 invariant 보존, sunset_justification null 강화 ratchet)
     sunset_justification: null
+  - amendment_id: 3
+    date: "2026-05-17"
+    carrier_story: CFP-833
+    issue: https://github.com/mclayer/plugin-codeforge/issues/833
+    summary: DialogFidelityAgent effectiveness measurement wiring (Epic CFP-761 Story-3 closing-the-loop) — Layer 4 incident realtime detect incident append-rate delta (proxy signal — not causal effectiveness measure) metric + evidence-checks-registry.yaml dialog-fidelity-effect warning-tier entry (owner_adr ADR-071 / carrier_adr ADR-060, precedent rate-limit-fallback-rate 동형) + mechanical_enforcement_actions[] 갱신 (ADR-040 §결정 7.A governance 의무) + 본문 §결정 14 신설. additive — Layer 1-4 + DialogFidelityAgent auxiliary layer 보존, ## 해소 기준 무변경 (permanent governance recursive sunset 회피), ADR-058 §결정 3 측정성 self-application 강화 ratchet. Epic plan Task 4 invariant 5 (label-registry MINOR) deviation = precedent override (OQ-3 사용자 확정 2026-05-17 KST, ADR-064 §결정 10 precedence)
+    sunset_justification: null
 related_stories:
   - CFP-612  # carrier
   - CFP-525  # ancestor Epic (closed 2026-05-13)
@@ -34,6 +40,7 @@ related_stories:
   - CFP-777  # Amendment 1 carrier (DialogFidelityAgent additive auxiliary)
   - CFP-761  # parent Epic (DialogFidelityAgent 도입)
   - CFP-818  # Amendment 2 carrier (spawn trigger 운영 정의)
+  - CFP-833  # Amendment 3 carrier (effectiveness measurement wiring — closing-the-loop)
 related_adrs:
   - ADR-064  # 결정 원칙 mandate — proposing-time 5 룰 mother policy (mechanical version 승격 source)
   - ADR-058  # sunset criteria mandate (is_transitional: false 정합)
@@ -44,6 +51,7 @@ related_adrs:
   - ADR-070  # Codex verify-before-trust (fact-check marker source)
   - ADR-040  # mechanical_enforcement_actions[] frontmatter 의무 (governance category)
   - ADR-039  # inline whitelist 1번 entry (사용자 dialog) cognitive layer 강화
+  - ADR-060  # evidence-enforceable framework (Amendment 3 dialog-fidelity-effect entry carrier — CFP-833)
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md
@@ -51,8 +59,12 @@ related_files:
   - skills/user-dialog-mode/SKILL.md
   - docs/parallel-work/section-ownership.yaml
 is_transitional: false
-mechanical_enforcement_actions: []
-# Wave 5 = cognitive + persistence layer only.
+mechanical_enforcement_actions:
+  - action: dialog-fidelity-effect
+    status: deferred-followup
+    progress_note: "Phase 1 (CFP-833) = registry entry skeleton (non-null detect_command, #827 회피) + ADR-071 Amendment 3 + 본문 §결정 14. Phase 2 carrier (동일 Story CFP-833 후속 PR) = dialog-fidelity-measurement.yml workflow 2종 byte-identical + check-dialog-fidelity-effect.sh thin wrapper + lib .py. warning tier advisory (no PR block) — runtime cron metric, blocking 승격 의미 부적용 (precedent rate-limit-fallback-rate 동형)"
+    target_section: §결정 14
+# Wave 5 = cognitive + persistence layer. Amendment 3 (CFP-833) = effectiveness measurement layer (additive — Layer 1-4 + auxiliary 보존).
 # Layer 1 mechanical lint (preamble presence check) = 별도 follow-up CFP 분리 (Story §1 verbatim).
 # 본 ADR effective 후 신설 evidence-enforceable entry 가 follow-up CFP carrier 에서 추가될 때
 # mechanical_enforcement_actions[] 갱신 + Amendment 발의 (강화 방향만 — ADR-058 §결정 5 / ADR-064 §결정 7
@@ -493,6 +505,42 @@ disjoint scope — 양자 cross-cutting 보강:
 본 Amendment 2 = **additive 강화** (Layer 1-4 보존 + Inline whitelist 4-entry 보존 + Q-3check 7 anti-pattern 보존 + closed 3-anchor 보존). 강화 방향 only — `is_transitional: false` 보존, ADR-058 §결정 5 약화 차단 영역 미적용.
 
 `sunset_justification: null` 적격 (§결정 12 family pattern 정합).
+
+## §결정 14. DialogFidelityAgent effectiveness measurement wiring (Amendment 3, CFP-833)
+
+> Epic CFP-761 Story-3 (마지막 Story — closing-the-loop). carrier: CFP-833, issue https://github.com/mclayer/plugin-codeforge/issues/833. additive 강화 — Layer 1-4 + DialogFidelityAgent auxiliary layer 보존, measurement layer 추가만.
+
+### 14.1 WHY (ADR-058 §결정 3 측정성 self-application)
+
+Story-1 (CFP-777) 이 DialogFidelityAgent 를 신설하고 Story-2 (CFP-818) 가 spawn trigger 를 운영 정의했다. 그러나 **그 verifier 가 실제로 맥락 fidelity 손실을 줄였는지 정량 측정하지 않으면 ADR-071 이 측정 기준 없는 영구 안전망으로 굳는다** (ADR-058 §결정 3 측정성 forcing function 미적용 상태). 본 §결정 14 = ADR-058 의 측정성 mandate 를 DialogFidelityAgent 효과에 wiring 하는 self-application — verifier 자신이 ADR-058 §결정 3 forcing function 의 적용 대상이 된다 (verifier 도 측정 없이 영구화되면 안 됨).
+
+### 14.2 measurement SSOT 분리 (`## 해소 기준` 무변경 invariant)
+
+ADR-071 = `is_transitional: false` permanent governance → `## 해소 기준` = "N/A — permanent policy" **무변경** (permanent governance recursive sunset 회피 invariant — 측정 metric 을 `## 해소 기준` 섹션 자체에 적지 않는다). measurement 실체 = 분리된 2 SSOT:
+
+1. **본 amendment_log Amendment 3** (`sunset_justification: null` 강화 ratchet — Amendment 1/2 family pattern)
+2. **`docs/evidence-checks-registry.yaml` `dialog-fidelity-effect` warning-tier entry** (`owner_adr: ADR-071` / `carrier_adr: ADR-060`) = metric 의 mechanical SSOT
+
+ADR 본문 = cross-ref only (precedent `rate-limit-fallback-rate` ↔ ADR-057 §결정 2 sunset gate wiring 동형 — registry entry 가 measurement SSOT, ADR 본문은 reference).
+
+### 14.3 metric 정의 + proxy signal qualification (Codex TP#2 P1 정합)
+
+metric = **incident append-rate delta (proxy signal — not causal effectiveness measure)**. DialogFidelityAgent 도입 (Story-1 merge `577f96f`, 2026-05-17 KST) 전후 Layer 4 incident realtime detect row append rate A-B baseline delta. 정량 3-tuple (metric/who/how) + sample insufficient sentinel + baseline normalization 의 SSOT = `dialog-fidelity-effect` registry entry `description` (Change Plan CFP-833 §3.1 cross-ref).
+
+**proxy 한계 명시 (over-claim 차단 — ADR-058 §결정 3 metric 정직성 정합)**: `before` = Story-0 retroactive backfill marker row / `after` = Story-1 merge 이후 realtime detect row → 두 collection mode 가 상이하므로 delta 는 DialogFidelityAgent 효과뿐 아니라 instrumentation mode change / backfill completeness / reviewer detection behavior 변화도 반영할 수 있다. 따라서 본 metric 은 **advisory operational signal only — 효과 "판정" 이 아니라 측정 "신호"** (Story §5.4 가정 2 + EC-3 정합). sunset 판정 자체 (DialogFidelityAgent archive / 강화 amendment) 는 별도 후속 carrier (precedent `rate-limit-fallback-rate` 의 `kpi_dashboard_3month_window_evidence` 도 독립 carrier).
+
+### 14.4 strengthening ratchet 정합 (sunset_justification: null 근거)
+
+measurement wiring = **강화 방향** (측정성 forcing function 도입 = ADR-058 carrier WHY 동형). ADR-064 §결정 7 top-down ratchet + ADR-058 §결정 5 sunset_justification ratchet 차단 정합 — `sunset_justification: null` 적격 (Amendment 1 §12.7 / Amendment 2 §13.7 family pattern). additive 강화: Layer 1-4 + DialogFidelityAgent auxiliary 보존, measurement layer 추가만. `is_transitional: false` 보존, ADR-058 §결정 5 약화 차단 영역 미적용.
+
+### 14.5 Epic plan Task 4 invariant 5 deviation (precedent override)
+
+Epic plan (`mclayer/codeforge-internal-docs:wrapper/plans/2026-05-16-dialog-fidelity-agent-epic.md` Task 4 invariant 5) = "label-registry MINOR — `hotfix-bypass:dialog-fidelity` 1 entry + frontmatter version MINOR bump". **본 Story-3 는 이 invariant 5 를 deviation 한다**:
+
+- **deviation 사유**: Epic plan invariant 5 는 evidence-check entry 가 static-lint (PR block) 임을 가정한 산물. 본 metric pattern = runtime cron measurement (precedent `rate-limit-fallback-rate` 동형 — advisory warning tier, PR block 안 함) → bypass label 의 의미 (PR block conditional skip) 부적용. label 신설 시 dead label 발생.
+- **precedence**: ADR-064 §결정 10 = normative 우선순위 ADR > planning doc. Epic plan = planning artifact (normative SSOT 아님). precedent (`rate-limit-fallback-rate`) + ADR-060 §결정 3 (warning tier bypass 의미) 가 Epic plan invariant 5 보다 우선.
+- **사용자 확정**: 2026-05-17 KST AskUserQuestion — OQ-3 = precedent 우선, label-registry MINOR 면제 명시 결정.
+- **EPIC-RESULTS cross-ref 의무**: Epic close 시 `EPIC-RESULTS-CFP-761` 에 본 deviation 기록 의무 (PMOAgent Epic close 영역, Story §11 회고 cross-ref). 본 §14.5 + Change Plan CFP-833 §3.7 = SSOT 이중 anchor.
 
 ## self-application top-down ratchet
 
