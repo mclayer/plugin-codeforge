@@ -8,9 +8,17 @@ carrier_story: CFP-622
 parent_epic: null
 supersedes: null
 amends: null
-amendments: []
+amendments:
+  - amendment_id: 1
+    cfp: CFP-776
+    date: 2026-05-17
+    scope: "ADR-082 cross-ref 보완 관계 명시 (disjoint 보완) — ADR-073 = Orchestrator 행위(cross-repo state + assumption) 한정 ↔ ADR-082 = internal lane agent self-write(§9 evidence / Phase 0 mapping / corpus enumeration) write-time semantic truth verify. 두 layer disjoint, scope 침범 0. ADR-082 §결정 1 layer disjoint 4-layer 표가 공통 anchor (ADR-073 / ADR-070 / ADR-082 / ADR-045 §D). 본문 §결정 / mechanism 의미 변경 없음 — cross-ref-only Amendment."
+    status: applied
+    ref: "## Amendments / Amendment 1 + ADR-082 §결정 1"
+    sunset_justification: null
 related_stories:
   - CFP-622  # carrier
+  - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
   - CFP-597  # sentinel #4 strike #1 origin (CLAUDE.md cap + playbook §3.6 false alarm)
   - CFP-578  # ADR-070 verify-before-trust 자매 (external worker output)
   - CFP-612  # ADR-071 dialog convergence 자매 governance
@@ -18,6 +26,7 @@ related_stories:
 related_adrs:
   - ADR-070  # 자매 ADR (external worker output verify ↔ self-assertion verify)
   - ADR-071  # sister governance (dialog convergence layer)
+  - ADR-082  # disjoint super-class (internal lane agent self-write verify — Orchestrator 행위 ↔ lane agent self-write)
   - ADR-039  # Inline whitelist boundary (verify 액션 분류 추가 row)
   - ADR-058  # sunset_justification (false 정합)
   - ADR-064  # decision principle mandate (self-application top-down ratchet)
@@ -294,9 +303,23 @@ Wave 3 (warning → blocking-on-pr)    ← ADR-073 Amendment 2 (TBD, ratchet 강
 - 본 carrier 자체 self-application paradox 시연 (Strike #3 + Strike #4) → mechanism 확장 후보 evidence (M3 Windows shell ref-mangling, M4 continuous race condition during rebase)
 - CFP-635 sister Epic (over-questioning) 와 super-class shared, scope disjoint
 
+## Amendments
+
+### Amendment 1 — ADR-082 cross-ref (disjoint 보완 관계, CFP-776)
+
+**문제**: ADR-073 = Orchestrator 가 cross-repo state / assumption 단정 시 verify 의무 (Orchestrator 행위 한정). 그러나 lane agent 가 §9 evidence 작성 / Phase 0 mapping / corpus enumeration 시 write-time semantic truth 를 verify 없이 단언하는 영역 (pattern_count 3 누적, CFP-746/CFP-770) 은 ADR-073 scope 외 — internal lane self-write 미포함.
+
+**결정**: ADR-082 (Write-time self-write verification mandate) 신설로 해당 gap 을 disjoint super-class layer 로 codify. ADR-073 ↔ ADR-082 = **disjoint 보완 관계**:
+
+- **ADR-073** = Orchestrator 행위 한정 (cross-repo state + assumption 기술 시 `git fetch` + `git show origin/main:<path>` direct verify + `verified-via` annotation)
+- **ADR-082** = internal lane agent self-write 한정 (§9 evidence / Phase 0 mapping / corpus enumeration write-time 에 작성 값 자체의 사실성 source direct verify)
+
+두 layer 는 verify 대상 / 행위 주체가 disjoint — scope 침범 0. ADR-082 §결정 1 layer disjoint 4-layer 표 (ADR-073 / ADR-070 / ADR-082 / ADR-045 §D) 가 공통 anchor. 본 Amendment 는 cross-ref-only — ADR-073 §결정 1-8 / mechanism enumeration 의 의미 변경 없음.
+
 ## 관련 파일
 
 - `docs/adr/ADR-RESERVATION.md` — row 73 (CFP-622)
+- `docs/adr/ADR-082-write-time-self-write-verification-mandate.md` — disjoint super-class (Amendment 1 cross-ref, CFP-776)
 - `CLAUDE.md` — "결정 원칙" section ADR-073 cross-ref
 - `skills/codeforge-brainstorm/SKILL.md` — Phase 0 자기 적용 의무 sub-section
 - `.claude-plugin/plugin.json` — version bump (CFP-622 carrier MINOR)
