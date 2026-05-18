@@ -16,6 +16,13 @@ amendments:
     status: applied
     ref: "## Amendment 1 / 본문 ### D6 + 거절된 대안 D6"
     sunset_justification: "ratchet 강화 방향 (verify-before-trust scope 에 severity calibration 차원 추가 — over-rate + security-relevant under-rate bidirectional anchor 신설). 약화 영역 0건 (D1-D5 본문 의미 변경 0, scope 축소 0). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
+  - amendment_id: 3
+    cfp: CFP-946
+    date: 2026-05-18
+    scope: "신규 §결정 D1.D (sandbox_network_required toggle) append — Codex worker spawn prompt 가 sandbox-restricted network operation (gh api / git fetch cross-repo / 외부 HTTP) 필요 여부 declare 의무 codify. CFP-946 option 1 (Codex CLI sandbox 모드 토글 정의 + Orchestrator spawn prompt 의무 field) carrier. true = substitution path activate 영역 (ADR-052 Amendment 8 3-enum cross-matrix 정합), false = sandbox-내부 file scope only verify 완결 영역. D1.A (dogfood-out path) + D1.B (current lane/phase) + D1.C (sandbox_outside_paths) + D1.D (sandbox_network_required) = 4 mandatory boilerplate field. D1.A-C 본문 의미 변경 0건 — D1.D disjoint append only. mechanical injection layer 부재 (declaration-only retain — Amendment 1/2 family pattern 정합). cross-ref ADR-052 Amendment 8 + ADR-070 Amendment 3 (substitution-side mechanism) — 양 면 chain 완결 (option 1 + option 2 + option 3 통합). is_transitional false 유지 (permanent governance). mechanical_enforcement_actions[]=[] retain (§D5 declaration-only precedent 정합)."
+    status: applied
+    ref: "## Amendment 3 / 본문 ### D1.D + cross-ref"
+    sunset_justification: "ratchet 강화 방향 (spawn prompt boilerplate 4번째 mandatory field 신설 — sandbox network requirement explicit declaration 의무 codify). 약화 영역 0건 (D1.A-C 본문 의미 변경 0, scope 축소 0, Amendment 1/2 D6/D7 영향 0). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
   - amendment_id: 2
     cfp: CFP-892
     date: 2026-05-17
@@ -166,6 +173,33 @@ sandbox_outside_paths:
 - Codex worker 가 own working directory 안 Read 불가 영역 식별
 - 모든 sandbox_outside_paths file content = verbatim 첨부 의무 (ADR-070 D2 + ADR-052 Amendment 5 A1 정합)
 - mechanical injection layer 부재 — Orchestrator turn 내 verbatim composition 수동 (declaration-only retain 정합)
+
+#### D1.D — sandbox network requirement 명시 (`sandbox_network_required` toggle, Amendment 3 CFP-946 option 1)
+
+Codex worker 가 spawn 시점에 sandbox-restricted 네트워크 operation (`gh api` / `git fetch` cross-repo / 외부 HTTP) 필요 여부를 명시적으로 declare 의무. CFP-946 option 1 (Codex CLI sandbox 모드 토글) carrier.
+
+```yaml
+sandbox_network_required: <bool>
+```
+
+운영적 정의:
+
+- **`sandbox_network_required: true`** — Codex worker 가 cross-repo state / external resource fetch 필요 영역. 실패 시 Orchestrator-side substitution path activate 의무 (ADR-052 Amendment 8 3-enum: `inline_orchestrator_verify` default / `manual_substitution_declare` / `fallback_skip_with_marker` cross-matrix 정합).
+- **`sandbox_network_required: false`** — Codex worker 가 sandbox-내부 file scope (Read / Grep / Glob) 만으로 verify 완결 영역. 즉시 finding emit 가능, substitution path 비활성.
+
+운영적 정합:
+
+- Codex CLI 자체 sandbox 모드 toggle 가능성은 codex@openai-codex plugin runtime 영역 — 본 field 는 codeforge 측 spawn prompt declaration only (mechanical injection layer 부재, declaration-only retain — Amendment 1/2 family pattern 정합)
+- `true` declare 시 Orchestrator 는 dispatch 직후 sandbox failure mode 대응 plan 활성 (ADR-070 §결정 1 expansion substitution scope 3-path enum SSOT)
+- `false` declare 시 sandbox failure = unexpected (Codex worker 가 unexpected sandbox restriction 발화 시 ADR-070 strict-verify-gate trigger — ADR-081 D7.c escape hatch 정합)
+- D1.A (dogfood-out story path) + D1.B (current lane / phase) + D1.C (sandbox_outside_paths) + D1.D (sandbox_network_required) = 4 mandatory boilerplate field (Amendment 1/2 D1.A-C 영역 + 본 Amendment 3 D1.D 영역 disjoint append, D1.A-C 본문 의미 변경 0건)
+
+cross-ref:
+
+- ADR-052 Amendment 8 (CFP-946-A) — substitution path 3-enum SSOT (Orchestrator 측 dispatch policy)
+- ADR-070 Amendment 3 (CFP-946-A) — §결정 1 expansion (substitution scope codify, Orchestrator inline verify-before-trust 자동화)
+- ADR-081 D7.c (Amendment 2) — ground-truth divergence escape hatch (sandbox failure / strict-verify-gate trigger SSOT)
+- 본 D1.D = spawn-prompt-side declaration / ADR-052 Amd 8 + ADR-070 Amd 3 = substitution-side mechanism. 양 면 chain 완결 (CFP-946 option 1 + option 2 + option 3 통합).
 
 ### D2. verify-before-trust scope 분리 (5 sub-scope)
 
