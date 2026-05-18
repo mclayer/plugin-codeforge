@@ -9,8 +9,8 @@
 #   TC-3  (P1): default fallback — codeforge.channel 블록 부재 시 derived default stable
 #   TC-4  (P1): invalid enum reject — SKIP (Story-2 runtime carrier)
 #   TC-5  (P0): ADR-076 §결정 9 anchor grep-presence
-#   TC-6  (P0): reconcile-protocol-v1 v1.7 frontmatter version + version_history last carrier CFP-906
-#   TC-7  (P0): label-registry-v2 v2.30 channel:* 3-label + category: channel
+#   TC-6  (P0): reconcile-protocol-v1 v1.10 frontmatter version + version_history last carrier CFP-906
+#   TC-7  (P0): label-registry-v2 v2.34 channel:* 3-label + category: channel
 #   TC-8  (P0): ADR-016 amendments[3] + ADR-063 amendments[] last = amendment:6 CFP-906
 #   TC-9  (P0 critical): ADR-016 §결정 1 8-anchor propagation (Wave 3 CFP-795 lesson)
 #   TC-10 (P0 critical): ADR-063 §결정 5 mirrored field × channel matrix 8-anchor
@@ -145,10 +145,10 @@ EOF
 
 # ──────────────────────────────────────── TC-6 ───────────────────────────────
 
-@test "TC-6 (P0): reconcile-protocol-v1 frontmatter version = 1.7 (yaml.safe_load)" {
+@test "TC-6 (P0): reconcile-protocol-v1 frontmatter version = 1.10 (yaml.safe_load)" {
   [ -f "${RECONCILE}" ]
 
-  run python "${ORACLE}" frontmatter_version "${RECONCILE}" "1.7"
+  run python "${ORACLE}" frontmatter_version "${RECONCILE}" "1.10"
   [ "$status" -eq 0 ]
 }
 
@@ -161,10 +161,10 @@ EOF
 
 # ──────────────────────────────────────── TC-7 ───────────────────────────────
 
-@test "TC-7 (P0): label-registry-v2 version = 2.30 (yaml.safe_load frontmatter)" {
+@test "TC-7 (P0): label-registry-v2 version = 2.34 (yaml.safe_load frontmatter)" {
   [ -f "${LABEL_REGISTRY}" ]
 
-  run python "${ORACLE}" frontmatter_version "${LABEL_REGISTRY}" "2.30"
+  run python "${ORACLE}" frontmatter_version "${LABEL_REGISTRY}" "2.34"
   [ "$status" -eq 0 ]
 }
 
