@@ -487,8 +487,10 @@ _reconcile_file() {
                     return 1
                     ;;
             esac
-            # §4.13: S2 exit code 집계 (F-CR-899-10 류 방지 — explicit capture)
-            if [[ "${_ec}" -gt "${_S2_MAX_EXIT}" ]]; then _S2_MAX_EXIT="${_ec}"; fi
+            # §4.13: classification exit (_ec 0-3) 은 severity channel 미사용
+            # _S2_MAX_EXIT 는 genuine abort 시에만 갱신 (위 crash catch-all *, unknown, * enum-pollution 분기)
+            # CFP-986 FIX: 이 위치에서 _ec → _S2_MAX_EXIT 무조건 전파 삭제
+            # — consumer(_ec=1) 정상 처리를 FAILED 로 오분류하는 근본 원인
             case "${_repo_kind}" in
                 plugin|mixed)
                     # F-CR-899-2 FIX: plugin + mixed = 전체 workflow mirror (0 skip)
