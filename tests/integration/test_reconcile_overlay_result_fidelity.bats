@@ -4,7 +4,10 @@
 # CFP-900 Phase 2 — Integration tests for result_fidelity_binding
 # reconcile-protocol-v1 v1.10 §4.13 hook_integration
 #
-# Test cases (7 TC):
+# CFP-990 Phase 2 — .claude/_overlay/ prefix exclude discriminating tests
+# reconcile-protocol-v1 §4.13 impact_report_diff_scope EC-4 enumeration 확장 impl
+#
+# Test cases (7+3 TC):
 #   TC-INT-RF-1: reconcile-overlay.sh syntax valid (bash -n)
 #   TC-INT-RF-2: post-mirror stage 도달 verify (§4.13 hook_integration — step_4)
 #   TC-INT-RF-3: S1 fail-closed exit → result FAILED (MARKER_NONE dep-closure abort path)
@@ -12,6 +15,9 @@
 #   TC-INT-RF-5: all OK → result SUCCESS (정직 기록 verify)
 #   TC-INT-RF-6: result-fidelity-aggregator.py 자체 실행 가능 확인 (ADR-061)
 #   TC-INT-RF-7: dry-run mode → result field 미적용 (EC-2)
+#   TC-INT-RF-8: (discriminating) consumer .claude/_overlay/ 존재 + wrapper SSOT 미존재 → SUCCESS NOT SUCCESS_WITH_DEGRADATION
+#   TC-INT-RF-9: (regression) CFP-986 scenario + .claude/_overlay/ 부재 → SUCCESS 유지
+#   TC-INT-RF-10: (behavior preserve) .claude/_overlay/ 안 wrapper SSOT 충돌 file → diff check 보존 (TC-1 EC-OOS-1 별 carrier)
 #
 # F-CR-899-6 류 방지: reconcile-overlay.sh 실 실행 검증 (proxy-only 회피)
 # mock consumer overlay fixture + post-mirror stage 도달 verify
@@ -228,6 +234,106 @@ PYEOF
   [ "$status" -eq 0 ]
   # JSON output 없음 (result field 미적용)
   [[ "$output" != *'"result"'* ]]
+
+  rm -rf "${tmp_w}" "${tmp_c}"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TC-INT-RF-8: discriminating test — CFP-990 핵심
+# consumer .claude/_overlay/project.yaml 존재 + wrapper SSOT 미존재 → SUCCESS
+# (NOT SUCCESS_WITH_DEGRADATION — EC-4 false-positive 차단 verify)
+# §4.13 impact_report_diff_scope EC-4 enumeration (b): .claude/_overlay/ prefix
+# + wrapper SSOT 미존재 path = consumer-only customization → exclude
+# ─────────────────────────────────────────────────────────────────────────────
+@test "TC-INT-RF-8: consumer .claude/_overlay/ 존재 + wrapper SSOT 미존재 → result SUCCESS (NOT SUCCESS_WITH_DEGRADATION)" {
+  [[ -f "${AGGREGATOR_PY}" ]] || skip "result-fidelity-aggregator.py not found"
+
+  local tmp_w tmp_c
+  tmp_w="$(mktemp -d)"
+  tmp_c="$(mktemp -d)"
+
+  # wrapper SSOT: ok.yml 1개 (consumer에 mirror 대상)
+  echo "name: ok" > "${tmp_w}/ok.yml"
+
+  # consumer: mirror된 파일 + .claude/_overlay/ consumer-only customization
+  echo "name: ok" > "${tmp_c}/ok.yml"
+  mkdir -p "${tmp_c}/.claude/_overlay"
+  echo "org: my-org" > "${tmp_c}/.claude/_overlay/project.yaml"
+  echo "stack: python" >> "${tmp_c}/.claude/_overlay/project.yaml"
+
+  # .claude/_overlay/project.yaml 은 wrapper SSOT 에 없으므로
+  # CFP-990 이전 코드: extra = actual - expected 에 진입 → SUCCESS_WITH_DEGRADATION (false positive)
+  # CFP-990 이후 코드: .claude/_overlay/ prefix exclude → extra 에서 제외 → SUCCESS (correct)
+  run python3 "${AGGREGATOR_PY}" \
+    --s1-exit 0 \
+    --s2-exit 0 \
+    --wrapper-dir "${tmp_w}" \
+    --consumer-dir "${tmp_c}"
+
+  # discriminating assertion: SUCCESS (exit 0) — SUCCESS_WITH_DEGRADATION (exit 2) 아님
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'"result": "SUCCESS"'* ]]
+  [[ "$output" != *'"result": "SUCCESS_WITH_DEGRADATION"'* ]]
+
+  rm -rf "${tmp_w}" "${tmp_c}"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TC-INT-RF-9: regression guard — CFP-986 scenario + .claude/_overlay/ 부재
+# consumer overlay 디렉토리 없이도 기존 정상 동작 유지 (회귀 차단)
+# ─────────────────────────────────────────────────────────────────────────────
+@test "TC-INT-RF-9: .claude/_overlay/ 부재 consumer → result SUCCESS 유지 (CFP-986 regression guard)" {
+  [[ -f "${AGGREGATOR_PY}" ]] || skip "result-fidelity-aggregator.py not found"
+
+  local tmp_w tmp_c
+  tmp_w="$(mktemp -d)"
+  tmp_c="$(mktemp -d)"
+
+  # wrapper == consumer (동일 파일 세트, .claude/_overlay/ 없음)
+  echo "name: ok" > "${tmp_w}/ok.yml"
+  echo "name: ok" > "${tmp_c}/ok.yml"
+
+  run python3 "${AGGREGATOR_PY}" \
+    --s1-exit 0 \
+    --s2-exit 0 \
+    --wrapper-dir "${tmp_w}" \
+    --consumer-dir "${tmp_c}"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" == *'"result": "SUCCESS"'* ]]
+
+  rm -rf "${tmp_w}" "${tmp_c}"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TC-INT-RF-10: behavior preserve — .claude/_overlay/ 안 wrapper SSOT 충돌 file
+# wrapper SSOT 에 동일 경로 존재 시 diff check 영역 보존 (EC-OOS-1 별 carrier 확인)
+# ADR-027 explicit consumer override = 별 carrier, 본 Story scope 외
+# 현재 동작: wrapper SSOT 충돌 path = expected set 안 존재 → diff check 보존 → PARTIAL_FAILURE
+# ─────────────────────────────────────────────────────────────────────────────
+@test "TC-INT-RF-10: .claude/_overlay/ 안 wrapper SSOT 충돌 file → diff check 보존 (behavior 유지, EC-OOS-1 별 carrier)" {
+  [[ -f "${AGGREGATOR_PY}" ]] || skip "result-fidelity-aggregator.py not found"
+
+  local tmp_w tmp_c
+  tmp_w="$(mktemp -d)"
+  tmp_c="$(mktemp -d)"
+
+  # wrapper SSOT에 .claude/_overlay/shared.yml 존재 (wrapper SSOT 에도 있음 → EC-4 (b) 조건 불충족)
+  mkdir -p "${tmp_w}/.claude/_overlay"
+  echo "name: shared" > "${tmp_w}/.claude/_overlay/shared.yml"
+
+  # consumer에는 해당 파일 없음 → missing → PARTIAL_FAILURE expected
+  # (wrapper에 있으므로 "wrapper SSOT 미존재" 불충족 → exclude 안 됨)
+
+  run python3 "${AGGREGATOR_PY}" \
+    --s1-exit 0 \
+    --s2-exit 0 \
+    --wrapper-dir "${tmp_w}" \
+    --consumer-dir "${tmp_c}"
+
+  # wrapper SSOT 충돌: diff check 보존 → missing → PARTIAL_FAILURE (exit 1)
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"PARTIAL_FAILURE"* ]]
 
   rm -rf "${tmp_w}" "${tmp_c}"
 }
