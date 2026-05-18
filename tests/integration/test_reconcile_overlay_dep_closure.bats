@@ -41,11 +41,7 @@ jobs:
         run: python3 templates/scripts/missing-dep.py
 YML
 
-  # Run mirror-dependency-closure.py against the test yml
-  run python3 "${MIRROR_DEP_PY}" \
-    --yml "${tmp_root}/.github/workflows/test-missing-dep.yml" \
-    --dry-run=false 2>&1
-  # Workaround: --dry-run=false is not a valid flag; use without --dry-run
+  # Run mirror-dependency-closure.py against the test yml (F-3 FIX: dead code removed)
   run env MIRROR_DEP_WRAPPER_ROOT="${tmp_root}" python3 "${MIRROR_DEP_PY}" \
     --yml "${tmp_root}/.github/workflows/test-missing-dep.yml"
 
@@ -118,4 +114,79 @@ YML
   # bash -n performs syntax check without execution
   run bash -n "${RECONCILE_SH}"
   [ "$status" -eq 0 ]
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TC-INT-4: F-2 FIX regression guard — dry_run propagation to hook
+# mirror-dependency-closure.py must receive --dry-run flag when caller dry_run=true
+# → exit 0 + preview even when dependencies are missing
+# ─────────────────────────────────────────────────────────────────────────────
+@test "TC-INT-4: dry_run=true propagation — hook exits 0 with preview (F-2 FIX guard)" {
+  [[ -f "${MIRROR_DEP_PY}" ]] || skip "mirror-dependency-closure.py not found"
+
+  local tmp_root
+  tmp_root="$(mktemp -d)"
+
+  # Create a workflow yml referencing a MISSING script
+  mkdir -p "${tmp_root}/.github/workflows"
+  cat > "${tmp_root}/.github/workflows/dry-run-test.yml" <<'YML'
+name: dry-run-test
+on: push
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - run: python3 templates/scripts/not-exist-dry-run.py
+YML
+
+  # Invoke hook directly with --dry-run flag (simulating dry_run=true propagation)
+  run env MIRROR_DEP_WRAPPER_ROOT="${tmp_root}" python3 "${MIRROR_DEP_PY}" \
+    --yml "${tmp_root}/.github/workflows/dry-run-test.yml" \
+    --dry-run
+
+  # dry-run → exit 0 even with missing dep
+  [ "$status" -eq 0 ]
+  # Preview output must be present
+  [[ "$output" == *"[dry-run]"* ]]
+  [[ "$output" == *"not-exist-dry-run.py"* ]]
+
+  rm -rf "${tmp_root}"
+}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TC-INT-5: F-5 FIX regression guard — real-world GitHub Actions trigger syntax
+# Workflow yml with `types: [opened, synchronize, ...]` inline sequence
+# must NOT trigger false-positive exit 2 (old _MALFORMED_PATTERNS pattern)
+# ─────────────────────────────────────────────────────────────────────────────
+@test "TC-INT-5: real-world trigger types inline sequence — no false-positive exit 2 (F-5 FIX guard)" {
+  [[ -f "${MIRROR_DEP_PY}" ]] || skip "mirror-dependency-closure.py not found"
+
+  local tmp_root
+  tmp_root="$(mktemp -d)"
+
+  # Create a workflow yml with valid GitHub Actions inline sequence triggers
+  mkdir -p "${tmp_root}/.github/workflows"
+  cat > "${tmp_root}/.github/workflows/pr-trigger-test.yml" <<'YML'
+name: pr-trigger-test
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    branches: [main, develop]
+  push:
+    tags: [v*]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: echo step
+        run: echo "no local deps"
+YML
+
+  run env MIRROR_DEP_WRAPPER_ROOT="${tmp_root}" python3 "${MIRROR_DEP_PY}" \
+    --yml "${tmp_root}/.github/workflows/pr-trigger-test.yml"
+
+  # Valid YAML inline sequence → exit 0 (no false-positive)
+  [ "$status" -eq 0 ]
+
+  rm -rf "${tmp_root}"
 }

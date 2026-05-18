@@ -82,14 +82,15 @@ def _extract_deps_from_yml(yml_path: Path) -> list[str]:
     except OSError as exc:
         raise ValueError(f"Cannot read yml file: {exc}") from exc
 
-    # Reject clearly malformed content early (basic structural check)
-    # A valid GitHub Actions workflow must have `name:` or `on:` or `jobs:` at root
-    # We use a lightweight heuristic: detect YAML braces/brackets that indicate
-    # template/flow scalars used outside proper YAML quoting (common parse errors).
-    # This covers the test case: "name: [\nbroken: yaml: {{ invalid"
+    # Reject clearly malformed content early (lightweight heuristic).
+    # AM-1 regex_primary: only patterns that do NOT false-positive on valid
+    # GitHub Actions YAML (e.g. `types: [opened, ...]` is valid inline sequence).
+    # Pattern: unclosed Jinja/flow mapping `{{ ...` without closing `}}` on same line.
+    # This covers the test case: "broken: yaml: {{ invalid"
+    # Deliberately excluded: `^\s*\w+:\s*\[` (false-positives on `types:`/`branches:`/
+    # `paths:`/`tags:`/`runs-on:` inline sequences — valid GitHub Actions YAML).
     _MALFORMED_PATTERNS = [
-        re.compile(r'^\s*\w+:\s*\['),  # bare sequence on mapping value without quotes
-        re.compile(r'\{\{[^}]*$'),      # unclosed flow mapping / Jinja template
+        re.compile(r'\{\{[^}]*$'),  # unclosed flow mapping / Jinja template (no closing }})
     ]
     for line_no, raw_line in enumerate(text.splitlines()):
         for mp in _MALFORMED_PATTERNS:

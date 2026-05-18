@@ -417,11 +417,14 @@ def test_dep_12_comment_only_not_false_positive(tmp_path):
 # TC-DEP-13: negative case — yml parse error → exit 2
 # ─────────────────────────────────────────────────────────────────────────────
 def test_dep_13_yml_parse_error_exits_2(tmp_path):
-    """TC-DEP-13: malformed yml with bare bracket / unclosed braces → exit 2 (abort)."""
-    # This pattern triggers the _MALFORMED_PATTERNS heuristic:
-    # "name: [" is a bare sequence on mapping value without quotes
-    # "{{ invalid" is an unclosed flow mapping / Jinja template
-    malformed = "name: [\nbroken: yaml: {{ invalid"
+    """TC-DEP-13: malformed yml with unclosed Jinja/flow braces → exit 2 (abort).
+
+    Triggers _MALFORMED_PATTERNS: unclosed `{{ ... ` without closing `}}` on same line.
+    Note: `name: [...]` inline sequences are valid GitHub Actions YAML (F-5 FIX iter 1).
+    Only the `{{[^}]*$` pattern (unclosed Jinja template) triggers exit 2.
+    """
+    # `{{ invalid` (unclosed) triggers the heuristic → exit 2
+    malformed = "name: workflow\non: push\njobs:\n  check:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo {{ invalid"
     yml_path = make_yml(malformed)
     try:
         rc, stdout, stderr = run_script(
@@ -488,5 +491,45 @@ def test_dep_15_runtime_dep_out_of_scope(tmp_path):
             extra_env={"MIRROR_DEP_WRAPPER_ROOT": str(tmp_path)},
         )
         assert rc == 0, f"Runtime deps are out-of-scope, should exit 0, got {rc}"
+    finally:
+        os.unlink(yml_path)
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# TC-DEP-Trigger-1: F-5 regression guard — GitHub Actions inline sequence
+# `types: [opened, synchronize, ...]` is valid YAML, must NOT trigger exit 2
+# (F-5 FIX iter 1 — _MALFORMED_PATTERNS first pattern removed)
+# ─────────────────────────────────────────────────────────────────────────────
+def test_dep_trigger_1_github_actions_inline_sequence_not_false_positive(tmp_path):
+    """TC-DEP-Trigger-1: valid GitHub Actions yml with inline sequence triggers → exit 0.
+
+    Regression guard for F-5 (_MALFORMED_PATTERNS false-positive fix).
+    `types: [opened, synchronize, reopened, labeled, unlabeled]` is valid YAML.
+    `branches: [main, develop]` is valid YAML.
+    These must NOT be treated as malformed YAML (old first pattern `^\\s*\\w+:\\s*\\[`).
+    """
+    yml_content = textwrap.dedent("""\
+        name: test-pull-request-workflow
+        on:
+          pull_request:
+            types: [opened, synchronize, reopened, labeled, unlabeled]
+            branches: [main, develop]
+        jobs:
+          check:
+            runs-on: ubuntu-latest
+            steps:
+              - name: lint check
+                run: echo "no local dep script here"
+    """)
+    yml_path = make_yml(yml_content)
+    try:
+        rc, stdout, stderr = run_script(
+            "--yml", yml_path,
+            extra_env={"MIRROR_DEP_WRAPPER_ROOT": str(tmp_path)},
+        )
+        assert rc == 0, (
+            f"Valid GitHub Actions inline sequence must not be a false positive (F-5), "
+            f"got exit {rc}. stderr={stderr}"
+        )
     finally:
         os.unlink(yml_path)
