@@ -121,6 +121,9 @@ elif [[ "$FRONTMATTER_TOUCH" == "false" ]] && [[ "$LABEL_TOUCH" == "false" ]]; t
   PROD_CUTOVER_TOUCHING="false"
 elif [[ "$FRONTMATTER_TOUCH" == "absent" ]] && [[ "$LABEL_TOUCH" == "false" ]]; then
   PROD_CUTOVER_TOUCHING="false"
+elif [[ "$FRONTMATTER_TOUCH" == "null" ]] && [[ "$LABEL_TOUCH" == "false" ]]; then
+  # Story file absent + label absent = production_cutover_touching not declared (skip scope)
+  PROD_CUTOVER_TOUCHING="false"
 else
   # Mismatch: 1 source true + 1 source false/absent
   MISMATCH=1

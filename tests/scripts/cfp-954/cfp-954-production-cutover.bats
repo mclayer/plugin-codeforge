@@ -42,6 +42,7 @@ _yaml_get() {
   local jq_path="$2"
   python3 - "$file" "$jq_path" <<'PYEOF'
 import sys, yaml
+sys.stdout.reconfigure(encoding="utf-8")
 from pathlib import Path
 file_path = Path(sys.argv[1])
 path = sys.argv[2]
@@ -197,7 +198,7 @@ PYEOF
 
   run _yaml_get "$registry" ".version"
   [ "$status" -eq 0 ]
-  [ "$output" = "2.33" ]
+  [ "$output" = "2.34" ]
 
   run grep -c "name: production-touching" "$registry"
   [ "$status" -eq 0 ]
@@ -258,8 +259,8 @@ PYEOF
   run bash "$script"
   # baseline yaml은 frontmatter 없음 → MS-2 absent + label true 이지만 wrapper 영역에서 Tier-1 exemption PASS 시도
   # 본 fixture는 실제 wrapper-self-app exemption 활성 영역 (declare-time scope 확인)
-  # 기대: exit 0 OR exit 1 (Tier-1 declare file presence verify)
-  [ "$status" -eq 0 ] || [ "$status" -eq 1 ]
+  # 기대: exit 0 (wrapper Tier-1 declare-time exemption — ADR-72 §결정 6 정합, deterministic)
+  [ "$status" -eq 0 ]
 
   # Fixture #2 (PASS — non-touching repo): production_cutover_touching 미선언 (absent) + label 미부착 → skip pass
   CFP954_REPO_OVERRIDE="mclayer/mctrader-engine" \
@@ -332,7 +333,8 @@ EOF
   CFP954_LABEL_LIST="production-touching" \
   run bash "$script"
   # frontmatter=false + label=true → mismatch → workflow run as TRUE → Tier-2 → MS-1+MS-2 present → exit 0 with warning
-  [ "$status" -eq 0 ] || [ "$status" -eq 1 ]
+  # 기대: exit 0 (Tier-2 PASS — 4-tuple anchor present, deterministic)
+  [ "$status" -eq 0 ]
   rm -f "$good_yaml"
 }
 
@@ -450,7 +452,7 @@ EOF
   [ "$status" -eq 0 ]
   [ "$output" -ge 1 ]
 
-  run grep -c "explicit user go-ahead" "$guide"
+  run grep -c "user explicit go-ahead" "$guide"
   [ "$status" -eq 0 ]
   [ "$output" -ge 1 ]
 }
@@ -494,7 +496,7 @@ EOF
   [ "$status" -eq 0 ]
   [ "$output" -ge 1 ]
 
-  run grep -c "label 34종" "$script"
+  run grep -cE "label [0-9]+종" "$script"
   [ "$status" -eq 0 ]
   [ "$output" -ge 1 ]
 
@@ -516,23 +518,23 @@ EOF
   # Anchor 1: ADR-72 file body (excluding self-reference 'ADR-072' which is forbidden anti-pattern)
   local adr="${REPO_ROOT}/docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md"
   run grep -cE "ADR-072|ADR-76(\$|[^0-9])" "$adr"
-  [ "$status" -eq 0 ] || [ "$status" -eq 1 ]
-  # grep -c returns count (status 0 if matches, 1 if 0 matches). Either way, count must be 0.
-  if [ "$status" -eq 0 ]; then
-    [ "$output" -eq 0 ]
-  fi
+  # grep -c: status 1 = 0 matches (forbidden variant 0건 invariant 충족), status 0 = matches exist = FAIL
+  # 기대: exit 1 (0 matches — ADR-72 파일에 ADR-072/ADR-76 forbidden variant 부재)
+  [ "$status" -eq 1 ]
 
   # Anchor 2: label-registry-v2.md (CFP-954 added section only — entire file may contain historical ADR-072 from changelog entries before CFP-954 fix)
   # Wrapper-scope: production-touching entry description + CFP-954 changelog entry
   local registry="${REPO_ROOT}/docs/inter-plugin-contracts/label-registry-v2.md"
   run grep -cE "ADR-072|ADR-76(\$|[^0-9])" "$registry"
   # Pre-existing ADR-076 references must NOT match the regex (ADR-076 is canonical, ADR-76 alone is forbidden)
-  [ "$status" -eq 0 ] || [ "$status" -eq 1 ]
+  # 기대: exit 1 (0 matches — label-registry에 forbidden variant 부재)
+  [ "$status" -eq 1 ]
 
   # Anchor 3: evidence-checks-registry.yaml CFP-954 entries
   local ecr="${REPO_ROOT}/docs/evidence-checks-registry.yaml"
   run grep -cE "ADR-072|ADR-76(\$|[^0-9])" "$ecr"
-  [ "$status" -eq 0 ] || [ "$status" -eq 1 ]
+  # 기대: exit 1 (0 matches — evidence-checks-registry에 forbidden variant 부재)
+  [ "$status" -eq 1 ]
 
   # Anchor 4: CLAUDE.md L287 단락 (CFP-954 area)
   local claude="${REPO_ROOT}/CLAUDE.md"
@@ -545,9 +547,9 @@ EOF
   # Anchor 5: baseline yaml
   local baseline="${REPO_ROOT}/tests/integration/stories/CFP-882/baseline-v1-cfp-954.yaml"
   run grep -cE "ADR-072|ADR-76(\$|[^0-9])" "$baseline"
-  # baseline contains 'ADR-72' (canonical) and 'forbid_variants: [...ADR-072, ADR-76 (?![0-9])...]' literal string for self-documenting purpose.
-  # The literal ADR-072 in the yaml `forbid_variants` field is a quoted string declaring what to forbid — counted as 1 grep match but is semantically a meta-declaration not an actual usage.
-  [ "$status" -eq 0 ] || [ "$status" -eq 1 ]
+  # baseline yaml: ADR-072/ADR-76 forbidden variant 실제 부재 (stale comment 정정)
+  # 기대: exit 1 (0 matches — grep -c count=0 의미)
+  [ "$status" -eq 1 ]
 }
 
 # ==================================================================
@@ -662,7 +664,7 @@ EOF
   CFP954_STORY_FILE_PATH="$f5" \
   CFP954_LABEL_LIST="production-touching" \
   run bash "$script"
-  # Tier-1 declare-time exemption → PASS exit 0 OR 1 (depends on file presence)
-  [ "$status" -eq 0 ] || [ "$status" -eq 1 ]
+  # Tier-1 declare-time exemption → PASS exit 0 (wrapper repo + production_cutover_touching=true + label=true, deterministic)
+  [ "$status" -eq 0 ]
   rm -f "$f5"
 }
