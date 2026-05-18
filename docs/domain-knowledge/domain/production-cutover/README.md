@@ -1,11 +1,16 @@
 ---
-title: Production Cutover — narrative SSOT hub
+kind: domain_fact
+type: domain-knowledge
 area: production-cutover
-introduced_by: CFP-954
-parent_epic: CFP-882
-grandparent_epic: CFP-699
-status: active
-date: 2026-05-18
+topic_slug: production-cutover-readme
+title: Production Cutover — narrative SSOT hub
+status: Active
+tags:
+  - production-cutover
+  - production-evidence-deputy
+  - narrative-ssot-hub
+  - release-lifecycle
+  - cfp-954
 related_adrs:
   - ADR-72   # ProductionEvidenceDeputy mandate SSOT (§결정 1-7)
   - ADR-076  # §결정 9.4 canary tier production-impact authority advisory
@@ -16,14 +21,12 @@ related_adrs:
   - ADR-040  # worktree-first convention
   - ADR-073  # verify-before-assert (frozen-SHA pin)
   - ADR-082  # write-time self-write verification mandate
-related_files:
-  - docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md
-  - docs/adr/ADR-076-declarative-reconciliation-upgrade.md
-  - docs/adr/ADR-055-integration-test-lane-policy.md
-  - docs/evidence-checks-registry.yaml
-  - docs/inter-plugin-contracts/label-registry-v2.md
-  - templates/github-workflows/production-cutover-evidence.yml
-  - scripts/check-production-cutover-evidence.sh
+related_stories:
+  - CFP-699  # grandparent Epic
+  - CFP-882  # parent Epic (Wave 4 sub-Epic)
+  - CFP-954  # 본 carrier Story (Story-3)
+created: 2026-05-18
+updated: 2026-05-18
 ---
 
 # Production Cutover — narrative SSOT hub

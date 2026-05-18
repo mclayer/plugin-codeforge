@@ -1,10 +1,16 @@
 ---
-title: Integration Test — Epic-level reactivation narrative SSOT hub
+kind: domain_fact
+type: domain-knowledge
 area: integration-test
-introduced_by: CFP-954
-parent_epic: CFP-882
-status: active
-date: 2026-05-18
+topic_slug: integration-test-readme
+title: Integration Test — Epic-level reactivation narrative SSOT hub
+status: Active
+tags:
+  - integration-test
+  - epic-level-reactivation
+  - narrative-ssot-hub
+  - single-shot-pattern
+  - cfp-954
 related_adrs:
   - ADR-055  # Amendment 3 — Epic-level baseline first activation
   - ADR-044  # §결정 5 — IntegrationTestAgent single-shot pattern
@@ -12,11 +18,11 @@ related_adrs:
   - ADR-041  # doc location registry (integration_test_baseline 15th entry)
   - ADR-073  # verify-before-assert (frozen-SHA pin discipline)
   - ADR-082  # write-time self-write verification mandate
-related_files:
-  - docs/adr/ADR-055-integration-test-lane-policy.md
-  - docs/doc-locations.yaml
-  - tests/integration/stories/CFP-882/baseline-v1-cfp-954.yaml
-  - docs/domain-knowledge/domain/integration-test/epic-level-baseline-semantics.md
+related_stories:
+  - CFP-882  # parent Epic (Wave 4 sub-Epic)
+  - CFP-954  # 본 carrier Story (Story-3)
+created: 2026-05-18
+updated: 2026-05-18
 ---
 
 # Integration Test — Epic-level reactivation narrative SSOT hub
