@@ -232,6 +232,64 @@ owned_sections:
     # sequential). boundary disjoint invariant 보존 (ADR-027 = consumer-side signal SSOT / ADR-083 =
     # wrapper-side filter mechanism). sibling Epic #882 race 회피 — CFP-858 closure 후 진입.
 
+  # CFP-900 (ArchitectPLAgent Phase 1 — §4.13 result_fidelity_binding lock — Epic CFP-858 마지막 Story)
+  - file: docs/inter-plugin-contracts/reconcile-protocol-v1.md
+    section: "§4.13 result_fidelity_binding block"
+    owner_adr: ADR-076  # Amendment 3 §결정 3 sub-clause (sibling ADR-026 Amendment 5 §결정 7 = gate-time signal layer, boundary disjoint)
+    carrier_story: CFP-900  # Wave 4 sub-Epic CFP-858 S3 (Epic 마지막 Story — honest result reporting layer)
+    parallel_edit: append-only
+    arbitrator: ArchitectPLAgent
+    # NOTE (CFP-900): ADR-064 Trace 4 ordering invariant — version_history monotone (v1.7 CFP-898 →
+    # v1.8 CFP-932 → v1.9 CFP-899 → v1.10 CFP-900) + §4.13 binding block 자체 append-only (CFP-743 §4.5 /
+    # CFP-744 §4.6 / CFP-745 §4.7 / CFP-820 §4.8 / CFP-821 §4.9 / CFP-906 §4.10 / CFP-898 §4.11 /
+    # CFP-899 §4.12 동형 패턴 보존). v1.10 = Epic CFP-858 마지막 (3-layer composite 완결: S1 §4.11
+    # vertical + S2 §4.12 horizontal + S3 §4.13 temporal-post). sibling Epic #882 (Wave 4 sub-Epic)
+    # race 회피 — CFP-858 closure 후 진입 merge-order. CFP-898 §4.11 + CFP-899 §4.12 binding block
+    # 패턴 verbatim 답습 (algorithm 재구현 0, post-mirror result fidelity layer 1 추가).
+
+  # CFP-900 (ArchitectPLAgent Phase 1 — ADR-076 Amendment 3 lock)
+  - file: docs/adr/ADR-076-declarative-reconciliation-upgrade.md
+    section: "§결정 3 transaction 사후 sanity check 위 result fidelity sub-clause (Amendment 3)"
+    owner_adr: ADR-076
+    carrier_story: CFP-900  # Wave 4 sub-Epic CFP-858 S3 (Epic 마지막 Story)
+    parallel_edit: append-only
+    arbitrator: ArchitectPLAgent
+    # NOTE (CFP-900): ADR-076 Amendment lock — amendment_log[] append (Amendment 3 entry, CFP-906
+    # Amendment 1 → CFP-898 Amendment 2 → CFP-900 Amendment 3 monotone) + related_stories[] append +
+    # §결정 3 transaction 본문 Amendment 3 sub-section append (의미 invariant marker_block_absent_behavior
+    # 무변경 + result fidelity sub-clause = ratchet 강화 only, ADR-064 §self-application 정합). is_transitional
+    # false 무변경. mechanical_enforcement_actions: [] declaration-only retain (ADR-082 §결정 6 패턴
+    # 답습). sibling Epic #882 race 회피 — CFP-858 closure 후 진입.
+
+  # CFP-900 (ArchitectPLAgent Phase 1 — ADR-026 Amendment 5 lock)
+  - file: docs/adr/ADR-026-post-merge-automation.md
+    section: "Amendment 5 §결정 7 (`.github/` fast-pass content sanity 1차 신호 orthogonal warning layer)"
+    owner_adr: ADR-026
+    carrier_story: CFP-900  # Wave 4 sub-Epic CFP-858 S3 (Epic 마지막 Story)
+    parallel_edit: append-only
+    arbitrator: ArchitectPLAgent
+    # NOTE (CFP-900): ADR-026 Amendment lock — amendment_log[] append (Amendment 5 §결정 7 entry,
+    # Amendment 4 §결정 6 CFP-795 → Amendment 5 §결정 7 CFP-900 sequential) + related_stories[] append +
+    # 본문 EOF Amendment 5 단락 append (§결정 7 + 거부된 옵션 + Reversibility + Out-of-scope + 해소 기준)
+    # + mechanical_enforcement_actions[] append (post-merge-fix-fast-pass-content-sanity-signal entry —
+    # declaration-only-Wave-1, ADR-082 §결정 6 패턴 답습) + 관련 ADR cross-ref append. fast-pass OR-gate
+    # 무변경 invariant (orthogonal warning layer 1단 추가 = gate 강화 방향, ratchet 강화 only ADR-064
+    # §self-application 정합). is_transitional false 무변경. sibling Epic #882 race 회피 — CFP-858 closure 후 진입.
+
+  # CFP-900 (DeveloperPLAgent Phase 2 — phase-gate-mergeable.yml content sanity warning layer lock)
+  - file: templates/github-workflows/phase-gate-mergeable.yml
+    section: "`.github/` fast-pass content sanity 1차 신호 (Phase 2 carrier — ADR-026 Amendment 5 §결정 7 mechanical 구현)"
+    owner_adr: ADR-026
+    carrier_story: CFP-900  # Wave 4 sub-Epic CFP-858 S3 (Epic 마지막 Story)
+    parallel_edit: append-only
+    arbitrator: DeveloperPLAgent
+    # NOTE (CFP-900): Phase 2 PR 영역 (Develop lane) — fast-pass OR-gate (isEpicLabel || isSiblingPr ||
+    # isDocOnly || isPostMergeFix) 무변경 + orthogonal content sanity warning layer 1단 추가 (변경
+    # `.github/workflows/*.yml` 안 의존 script reference mismatch detect, warning tier, S1 closure
+    # resolver CFP-898 §4.11 algorithm 재사용 gate-time mirror). `.github/workflows/phase-gate-mergeable.yml`
+    # byte-identical self-app mirror 동시 갱신 의무 (ADR-005). declaration-only-Wave-1 → Phase 2
+    # 구현 완료 시 mechanical_enforcement_actions[] status: active 전환.
+
   # ADR-078 / design-output-v2 v2.4 (CFP-921 Epic B Story-3) — ArchitectAgent self-write + lane gate
   - file: docs/inter-plugin-contracts/design-output-v2.md
     section: "(전체 — sibling sync byte-identical canonical mirror)"
