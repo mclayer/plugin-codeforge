@@ -30,6 +30,8 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # --- PLUGINS 7-tuple (codeforge family) ---
 if [[ -n "${CFP932_PLUGINS_OVERRIDE:-}" ]]; then
   IFS=',' read -ra PLUGINS <<< "$CFP932_PLUGINS_OVERRIDE"
@@ -187,23 +189,18 @@ _compute_sig() {
   printf '%s|channel|%s|%s' "$plugin" "$consumer_tier" "$registry_tier" | sha256sum | cut -c1-16
 }
 
-# --- consumer project.yaml tier 취득 helper (yaml_oracle.py 미사용 — shell inline for drift script) ---
+# --- consumer project.yaml tier 취득 helper ---
+# spec §3.3 + §7.1 EP-3: absent(graceful stable) ≠ broken(명시 error) 분기 보존
+#   absent  → echo "absent"; exit 0  (graceful stable fallback)
+#   broken  → PARSE_ERROR stderr + exit 2  (silent fallback 금지)
+# ADR-061 §결정 5: multi-line Python → 외부 scripts/get_consumer_tier.py 위임
 _get_consumer_tier() {
   local project_yaml="${1:-}"
   if [[ -z "${project_yaml}" ]] || [[ ! -f "${project_yaml}" ]]; then
     echo "absent"
     return 0
   fi
-  # python3 yaml.safe_load inline (ADR-061 §결정 5 — 5줄 이하 허용)
-  python3 - "${project_yaml}" 2>/dev/null <<'PYEOF' || echo "unknown"
-import sys, yaml
-with open(sys.argv[1]) as f:
-    data = yaml.safe_load(f)
-codeforge = (data or {}).get("codeforge", {}) or {}
-channel = codeforge.get("channel") or {}
-tier = (channel if isinstance(channel, dict) else {}).get("tier", "stable")
-print(tier)
-PYEOF
+  python3 "${SCRIPT_DIR}/get_consumer_tier.py" "${project_yaml}"
 }
 
 # --- 메인 루프: PLUGINS × 3-tuple drift ---

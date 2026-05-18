@@ -276,13 +276,12 @@ EOF
 
 @test "TC-9 (P0): atomic mixed channel mock → exit 2 abort-before-touch" {
   [ -f "${ATOMIC_SH}" ]
-  run bash "${ATOMIC_SH}" --apply --channel stable \
-    _CFP932_MOCK_MIXED_CHANNEL=1 2>&1 || true
-  # With mock env set, should abort exit 2
-  # Note: env must be set before script invocation
-  _CFP932_MOCK_MIXED_CHANNEL=1 run bash "${ATOMIC_SH}" --apply --channel stable 2>&1 || true
-  # Check for mixed channel detection message OR that script accepts --channel
-  [[ "$output" != *"알 수 없는 인자: '--channel'"* ]]
+  export _CFP932_MOCK_MIXED_CHANNEL=1
+  run bash "${ATOMIC_SH}" --apply --channel stable
+  unset _CFP932_MOCK_MIXED_CHANNEL
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"MIXED CHANNEL"* ]]
+  [[ "$output" == *"abort-before-touch"* ]]
 }
 
 @test "TC-9b (P0): _CFP932_MOCK_MIXED_CHANNEL=1 → abort + filesystem touch 0" {
@@ -567,10 +566,10 @@ EOF
 
 # ──────────────────────────────────────── TC-22: broken overlay PARSE_ERROR ──
 
-@test "TC-22 (P1): infer-channel-from-version.sh broken overlay YAML → PARSE_ERROR (silent stable 금지)" {
-  [ -f "${INFER_SH}" ]
+@test "TC-22 (P1): check-channel-drift.sh broken overlay YAML → PARSE_ERROR exit 2 (silent stable 금지)" {
+  [ -f "${DRIFT_SH}" ]
 
-  # Create broken YAML
+  # Create broken YAML fixture (spec §3.3 line 135: absent ≠ broken)
   cat > "${TEST_TMP}/broken.yaml" <<'EOF'
 codeforge:
   channel:
@@ -578,17 +577,14 @@ codeforge:
       unexpected: indent
 EOF
 
-  run bash "${INFER_SH}" \
-    --marketplace "${FIXTURES}/marketplace-no-channels.json" \
-    --plugin-json-dir "${FIXTURES}/plugin-json-dir" 2>&1 || true
-  # Broken marketplace JSON would be caught, but test overlay parse path
-  # The script reads project.yaml optionally — if CODEFORGE_CONSUMER_YAML_PATH is set
-  CODEFORGE_CONSUMER_YAML_PATH="${TEST_TMP}/broken.yaml" \
-    run bash "${INFER_SH}" \
-    --marketplace "${FIXTURES}/marketplace-no-channels.json" \
-    --plugin-json-dir "${FIXTURES}/plugin-json-dir" 2>&1 || true
-  # Must not silently succeed with stable — either error or no-output about tier
-  true  # TC-22 is P1 advisory — pass if no crash
+  # marketplace-with-channels.json 제공 필수 (channels[] 미populate 시 graceful exit 0 — YAML 미도달)
+  CFP932_MARKETPLACE_PATH="${FIXTURES}/marketplace-with-channels.json" \
+    CFP932_SKIP_ISSUE_CREATE=1 \
+    CODEFORGE_CONSUMER_YAML_PATH="${TEST_TMP}/broken.yaml" \
+    run bash "${DRIFT_SH}"
+  # spec §3.3 + §7.1 EP-3 line 269: broken YAML = explicit exit 2 + PARSE_ERROR (silent fallback 금지)
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"PARSE_ERROR"* ]] || [[ "$output" == *"broken YAML"* ]]
 }
 
 # ──────────────────────────────────────── TC-23: CLI override visible ─────────
