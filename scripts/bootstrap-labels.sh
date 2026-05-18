@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# bootstrap-labels.sh — Plugin이 사용하는 GitHub label 41종 일괄 생성 (1회).
+# bootstrap-labels.sh — Plugin이 사용하는 GitHub label 42종 일괄 생성 (1회).
+# CFP-954: production-touching label 정식 추가 (41 → 42종, label-registry-v2 v2.33 → v2.34 정합 — CFP-949 v2.33 collision rebase ratchet, dual-carrier: CFP-949 5 entry 보존 + CFP-954 production-touching append).
 #
 # CFP-11 end-to-end 실증에서 발견된 bootstrap drift — 신규 repo에 plugin 적용 시
 # type:* / phase:* / gate:* / fix:* / hotfix:* / audit:* 라벨 부재로 Issue Form
@@ -141,6 +142,12 @@ create_label "channel:stable"         "0e8a16" "channel: stable tier marker (LOW
 create_label "channel:beta"           "d4c5f9" "channel: beta tier marker (MEDIUM risk class — opt-in incremental track). ADR-076 §결정 9.1 3-tier taxonomy intermediate. CFP-906 Wave 4 sub-Epic #1 Story-1 (Epic CFP-882) declare carrier."
 create_label "channel:canary"         "f9d0c4" "channel: canary tier marker (HIGH risk class — production-impact awareness). ADR-076 §결정 9.4 channel selection authority asymmetry + ADR-72 §결정 1 ProductionEvidenceDeputy spawn trigger semantic anchor (Wave 4 sub-Epic #1 Story-3 carrier 영역). CFP-906 Wave 4 sub-Epic #1 Story-1 (Epic CFP-882) declare carrier."
 
+# production-impact:* (1 entry — CFP-954 / ADR-72 §결정 1 + §결정 5, Wave 4 sub-Epic #882 Story-3 production cutover layer mandate activation declare scope).
+# 신규 category enum production-impact (channel category 와 2-axis disjoint — channel = release lifecycle / production-impact = production risk, DataMigrationArch §G.3 정합).
+# label-registry-v2 v2.33 정합 (frontmatter 정식 entry, severity:high binding via severity-propagation-v1 v1.0 cross-ref only).
+# 기존 GitHub label list 이미 존재 — registry drift 정정 carrier (DataMigrationArch §G.2 정합).
+create_label "production-touching"    "b60205" "Story touches production cutover surface — explicit user go-ahead required before lane entry (ADR-72 §결정 3 trigger axis 정합). HIGH severity invariant (severity-propagation-v1 v1.0 binding). canary tier (channel:canary) 와 2-axis disjoint (양 label 동시 부착 가능). CFP-954 Wave 4 sub-Epic #882 Story-3 carrier."
+
 # hotfix-bypass:* — full set via dynamic read (CFP-598 below).
 # CFP-610 / ADR-064 Amendment 2 — wording-dictionary entry now sourced from §3 yaml dynamic read (NOT hardcoded here).
 # CFP-619 — pre-existing CFP-610 leak resolution: prior hardcoded `create_label "hotfix-bypass:wording-dictionary"` removed
@@ -219,7 +226,7 @@ fi
 
 if [ $DRY_RUN -eq 0 ]; then
     echo ""
-    echo "✓ 41 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."
+    echo "✓ 42 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."  # CFP-954: 41 → 42 base label (production-touching 정식 추가, label-registry-v2 v2.33 → v2.34 CFP-949 collision rebase ratchet)
 fi
 
 # CFP-492 2-way self-check (DRY_RUN 모드에서만):

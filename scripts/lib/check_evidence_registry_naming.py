@@ -22,7 +22,7 @@ except ImportError:
     print("check-evidence-registry-naming: pyyaml 미설치 (meta-error)", file=sys.stderr)
     sys.exit(2)
 
-# ─── DRIFT allowlist (ADR-060 Amendment 7 §결정 20 — 10건 hardcode) ───
+# ─── DRIFT allowlist (ADR-060 Amendment 7 §결정 20 — CFP-954 +2 production-cutover pair) ───
 DRIFT_ALLOWLIST = {
     ("rate-limit-fallback-rate",       "rate-limit-fallback-kpi.yml"):       "ADR-057 KPI dashboard — basename divergence (rate vs kpi)",
     ("lane-evidence-trail",            "lane-evidence-check.yml"):           "ADR-031 lane evidence — basename divergence (trail vs check)",
@@ -40,6 +40,8 @@ DRIFT_ALLOWLIST = {
     ("auto-phase-label-sibling-parity",    "sibling-workflow-parity.yml"):     "CFP-685 carrier — CFP-481/ADR-060 Amendment 4 lineage 보존, family scope self-app naming",
     ("workflow-actionlint-precommit",      "actionlint-check.yml"):            "CFP-688 §5.G.b — ADR-026 prescribed frontmatter action name (ADR-040 Amd3 §7.A verbatim binding) vs workflow basename divergence",
     ("post-merge-followup-workflow-success-rate-kpi", "post-merge-followup-success-rate-kpi.yml"): "CFP-688 §5.G.d — ADR-026 prescribed entry name (workflow infix) vs workflow basename divergence",
+    ("production-cutover-deputy-spawn-evidence", "production-cutover-evidence.yml"): "CFP-954 / ADR-72 §결정 3 — entry name semantic 'deputy-spawn-evidence' 보존 (ProductionEvidenceDeputy spawn trigger gate), workflow 는 broader 'production-cutover-evidence' cover (Conservative no-rename §결정 20)",
+    ("epic-cutover-gate-evidence-quad-check", "production-cutover-evidence.yml"): "CFP-954 / ADR-72 §결정 5 — entry name semantic 'epic-cutover-gate-evidence-quad' 보존 (EPIC CLOSED gate 4-evidence-quad verify), workflow 는 broader 'production-cutover-evidence' cover (Conservative no-rename §결정 20)",
 }
 
 REGISTRY_PATH = Path("docs/evidence-checks-registry.yaml")

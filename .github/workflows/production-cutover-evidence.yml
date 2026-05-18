@@ -1,0 +1,80 @@
+# templates/github-workflows/production-cutover-evidence.yml
+#
+# CFP-954 / ADR-72 §결정 3 — ProductionEvidenceDeputy spawn evidence verifier (warning tier).
+#
+# Trigger (D2 consensus 2-trigger split):
+#   - pull_request: opened/synchronize/labeled — production-touching label PR open 시 evidence verify
+#   - workflow_dispatch — operations team manual pre-verify (Helm `helm test` precedent)
+#
+# Tier (ADR-060 §결정 5 warning-first default):
+#   - continue-on-error: true (PR merge 차단 0)
+#   - hotfix-bypass:prod-cutover-deputy-evidence label 부착 시 skip
+#
+# Wrapper-self-app exemption (D3 consensus Tier-1 declare-time + Tier-2 runtime split):
+#   - Tier-1 (repo=wrapper): frontmatter/amendment_log/cross-ref presence verify only
+#   - Tier-2 (repo=consumer): 실 4-evidence-quad measurement
+#
+# Cross-ref: ADR-72 §결정 3 / §결정 6 (wrapper-self-app N/A) / CLAUDE.md L287 단락 갱신
+# Untrusted env policy (SecurityArch §C.1): PR title/body/actor = env-quoted reference only.
+
+name: production-cutover-evidence
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: production-cutover-evidence-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Verify production cutover evidence
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    continue-on-error: true
+    steps:
+      - name: Check bypass label
+        id: bypass
+        env:
+          PR_LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
+        run: |
+          if echo "$PR_LABELS" | grep -q '"hotfix-bypass:prod-cutover-deputy-evidence"'; then
+            echo "bypass=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::production-cutover-evidence: hotfix-bypass label detected — skip evidence verify"
+          else
+            echo "bypass=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.bypass.outputs.bypass != 'true'
+        uses: actions/checkout@v4
+
+      - name: Verify wrapper-self-app exemption tier
+        if: steps.bypass.outputs.bypass != 'true'
+        id: tier
+        env:
+          REPO: ${{ github.repository }}
+        run: |
+          if [[ "$REPO" == "mclayer/plugin-codeforge" ]]; then
+            echo "tier=1" >> "$GITHUB_OUTPUT"
+            echo "::notice::production-cutover-evidence: Tier-1 declare-time exemption (wrapper repo, ADR-72 §결정 6)"
+          else
+            echo "tier=2" >> "$GITHUB_OUTPUT"
+            echo "::notice::production-cutover-evidence: Tier-2 runtime evidence verify (consumer repo)"
+          fi
+
+      - name: Run check-production-cutover-evidence
+        if: steps.bypass.outputs.bypass != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          bash scripts/check-production-cutover-evidence.sh
