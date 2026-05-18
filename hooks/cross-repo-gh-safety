@@ -1,0 +1,97 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT (file structure adapted from superpowers v5.1.0)
+# PreToolUse hook for codeforge plugin — cross-repo `gh` CLI write safety net
+#
+# Trigger: INCIDENT-2026-05-17 disk-pressure retro (mctrader-data#94 §6 carry-over)
+#          + cross-repo PMO audit (mctrader-hub#394) — self-incident 1건 박제.
+#
+# 사고 박제: 2026-05-17 cross-repo 세션 (mctrader-data + mctrader-hub) 작업 중
+#   `gh pr edit 94` 가 mctrader-hub cwd 에서 실행 → 의도된 mctrader-data#94
+#   (인시던트 retro) 가 아닌 mctrader-hub#94 (2026-05-05 merged 다른 PR) description
+#   덮어씀. `gh` CLI 가 cwd 의 git remote 로 repo 를 silent resolve 하기 때문.
+#   원 description GitHub API 미노출로 복원 불가.
+#
+# 책임 경계:
+#   - 책임: `gh pr|issue <write-verb>` 호출에 `--repo`/`-R` 명시 부재 + `GH_REPO`
+#           env 부재 시 PreToolUse 단계에서 물리 차단 (silent cross-repo write 방지).
+#   - 비책임: read-only verb (view/list/checks/status/diff) = 정보 조회만 (write 사고
+#           영향 0) → 차단 안 함. skill 가이드라인 (lane-self-write-boundary) 이
+#           가이드 차원 보완 (2중 안전망).
+#
+# 정적 properties (session-start hook 패턴 정합):
+#   (a) set -euo pipefail
+#   (b) filesystem touch 0 (no >, >>, mkdir, rm, mv, cp — stdin/stderr 만)
+#   (c) network call 0
+#   (d) jq 비의존 (hook 환경 jq 부재 가능 — POSIX grep/sed 파싱)
+#
+# PreToolUse block contract (Claude Code): exit 2 + stderr = block (Claude 재시도 판단).
+#   exit 0 = allow. 미매칭 / 비-Bash tool = exit 0 통과.
+#
+# Bypass:
+#   BYPASS_CROSS_REPO_GH_SAFETY=1 — stderr audit echo + exit 0
+#   (scope disjoint — BYPASS_CODEFORGE_PREREQ / BYPASS_WORKTREE_FIRST 와 별 env)
+
+set -euo pipefail
+
+# Bypass check — audit trail 의무 (session-start hook bypass 패턴 정합)
+if [ "${BYPASS_CROSS_REPO_GH_SAFETY:-0}" = "1" ]; then
+  >&2 printf '[cross-repo-gh-safety] BYPASS_CROSS_REPO_GH_SAFETY=1 — gh --repo guard suppressed at %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  exit 0
+fi
+
+# stdin = PreToolUse JSON payload. jq 비의존 — tool_input.command 만 추출 필요.
+PAYLOAD="$(cat 2>/dev/null || true)"
+
+# 비-Bash tool 또는 payload 부재 → 통과 (guard scope 외)
+case "$PAYLOAD" in
+  *'"tool_name"'*'"Bash"'*) : ;;
+  *'"tool_name": "Bash"'*) : ;;
+  *) exit 0 ;;
+esac
+
+# command 문자열 추출 — "command": "<...>" 의 값 (escape 보존 위해 보수적 추출).
+# jq 부재 환경 대비: sed 로 첫 "command" 키 값 캡처 (single-line tool_input 가정,
+# 멀티라인 escape 시 fail-open — false-negative 가 false-positive 보다 안전).
+CMD="$(printf '%s' "$PAYLOAD" | sed -n 's/.*"command"[[:space:]]*:[[:space:]]*"\(.*\)/\1/p' | sed 's/".*//' | head -1)"
+
+if [ -z "$CMD" ]; then
+  exit 0  # command 추출 실패 → fail-open (guard 는 best-effort 1차 안전망)
+fi
+
+# `gh pr|issue <write-verb>` 매칭 — read-only verb 는 scope 외 (정보 조회, write 사고 0).
+# write verbs: create / edit / comment / close / reopen / merge / review / ready /
+#              lock / unlock / delete / transfer / develop / pin / unpin
+if printf '%s' "$CMD" | grep -Eq '(^|[;&|]|[[:space:]])gh[[:space:]]+(pr|issue)[[:space:]]+(create|edit|comment|close|reopen|merge|review|ready|lock|unlock|delete|transfer|develop|pin|unpin)([[:space:]]|$)'; then
+  # write verb 매칭됨 — --repo / -R 명시 또는 GH_REPO env 확인
+  HAS_REPO_FLAG=0
+  if printf '%s' "$CMD" | grep -Eq '(^|[[:space:]])(--repo([[:space:]]|=)|-R[[:space:]])'; then
+    HAS_REPO_FLAG=1
+  fi
+  # command 라인 인라인 GH_REPO=... prefix 또는 외부 env 둘 다 인정
+  if printf '%s' "$CMD" | grep -Eq '(^|[;&|][[:space:]]*)GH_REPO='; then
+    HAS_REPO_FLAG=1
+  fi
+  if [ -n "${GH_REPO:-}" ]; then
+    HAS_REPO_FLAG=1
+  fi
+
+  if [ "$HAS_REPO_FLAG" -eq 0 ]; then
+    >&2 cat <<'BLOCKMSG'
+[cross-repo-gh-safety] BLOCKED — `gh pr|issue <write-verb>` 에 `--repo <owner/repo>` 명시 의무.
+
+사유: `gh` CLI 는 cwd 의 git remote 로 대상 repo 를 silent resolve 합니다. cross-repo
+세션 (예: mctrader-data + mctrader-hub) 에서 worktree/cd 위치에 따라 의도와 다른 repo 의
+같은 번호 PR/issue 를 덮어쓰는 사고가 발생할 수 있습니다 (INCIDENT-2026-05-17 박제:
+`gh pr edit 94` 가 mctrader-hub#94 description 을 덮어쓴 후 복원 불가).
+
+해소: 명령에 `--repo <owner/repo>` (또는 `-R <owner/repo>`) 를 명시하세요.
+  예) gh pr comment 94 --repo mclayer/mctrader-data --body "..."
+
+bypass (의도된 단일-repo 작업 확신 시): BYPASS_CROSS_REPO_GH_SAFETY=1 환경변수 설정.
+참조: codeforge skill `lane-self-write-boundary` cross-repo gh rule.
+BLOCKMSG
+    exit 2
+  fi
+fi
+
+exit 0
