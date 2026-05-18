@@ -445,6 +445,64 @@ _reconcile_file() {
                 return 2
             }
         fi
+
+        # ── §4.12 consumer-applicability filter hook (CFP-899 Phase 2) ──────
+        # §4.12 hook_integration: sequential composition closure → filter → cp
+        # dependency closure (§4.11) 직후 sibling line 삽입 (plugin-only skip)
+        #
+        # F-CR-899-4 FIX: env var ID = binding-spec 정합 (FILTER_REPO_KIND_PY / CONSUMER_APPLICABLE_WHITELIST)
+        local FILTER_REPO_KIND_PY="${FILTER_REPO_KIND_PY:-${SCRIPT_DIR}/../templates/scripts/detect-repo-kind.py}"
+        local CONSUMER_APPLICABLE_WHITELIST="${CONSUMER_APPLICABLE_WHITELIST:-${SCRIPT_DIR}/../templates/scripts/consumer_applicable_workflows.txt}"
+        if [[ -f "${wrapper_file}" ]] && [[ "${wrapper_file}" == *.yml ]]; then
+            local _repo_kind _ec
+            # F-CR-899-10 FIX: explicit $? capture (bash subshell || semantics regression fix)
+            # detect-repo-kind.py exit code = classification carrier (0=plugin/1=consumer/2=mixed/3=unknown)
+            # WRONG: `$(...) || _repo_kind="unknown"` — consumer(exit 1) + mixed(exit 2) silently reclassified
+            # RIGHT: capture stdout + exit code independently, then dispatch on _ec
+            _repo_kind=$(python3 "${FILTER_REPO_KIND_PY}" --repo-root "${CONSUMER_ROOT:-${CONSUMER_OVERLAY_DIR%/.claude/_overlay}}" 2>/dev/null)
+            _ec=$?
+            # validate _ec is a known classification exit code before dispatching on stdout
+            case ${_ec} in
+                0|1|2|3) ;;  # valid: plugin=0 consumer=1 mixed=2 unknown=3
+                *)
+                    echo "${SCRIPT_NAME} [ERR] detect-repo-kind crash (exit ${_ec}) — fail-closed abort (§4.12)" >&2
+                    return 1
+                    ;;
+            esac
+            case "${_repo_kind}" in
+                plugin|mixed)
+                    # F-CR-899-2 FIX: plugin + mixed = 전체 workflow mirror (0 skip)
+                    # ADR-083 §결정 5 pseudocode verbatim: plugin|mixed → full set
+                    # ADR-083 §결정 6: wrapper self-app 76 .yml 모두 적용 + 0 skip invariant
+                    ;;
+                consumer)
+                    # consumer only: positive whitelist filter 적용
+                    local _wf_basename
+                    _wf_basename="$(basename "${wrapper_file}")"
+                    if [[ -f "${CONSUMER_APPLICABLE_WHITELIST}" ]]; then
+                        if ! grep -Fxq "${_wf_basename}" "${CONSUMER_APPLICABLE_WHITELIST}" 2>/dev/null; then
+                            [[ "${dry_run}" == "true" ]] && echo "${SCRIPT_NAME} [dry-run] [FILTER] skip plugin-only workflow: ${_wf_basename}"
+                            [[ "${dry_run}" == "false" ]] && echo "${SCRIPT_NAME} [FILTER] skip plugin-only workflow: ${_wf_basename}"
+                            return 0
+                        fi
+                    fi
+                    ;;
+                unknown)
+                    # F-CR-899-1 FIX: return 1 (filter abort, §4.11 closure return 2 와 분리)
+                    # §4.12 fail_closed_unknown: 신호 없음 → abort
+                    echo "${SCRIPT_NAME} [ERR] repo-kind unknown (signal absent) — fail-closed abort (§4.12)" >&2
+                    return 1
+                    ;;
+                *)
+                    # F-CR-899-3 FIX: catch-all = fail-closed (ADR-083 §결정 4 직접 적용)
+                    # 알 수 없는 enum 값 = enum 오염 → abort (fail-open 차단)
+                    echo "${SCRIPT_NAME} [ERR] Consumer-applicability filter: unknown repo_kind enum value '${_repo_kind}'" >&2
+                    return 1
+                    ;;
+            esac
+        fi
+        # ── §4.12 filter hook end ────────────────────────────────────────────
+
         local had_consumer_diff=false
         if [[ -f "${consumer_file}" ]] && ! diff -q "${consumer_file}" "${wrapper_file}" > /dev/null 2>&1; then
             had_consumer_diff=true
