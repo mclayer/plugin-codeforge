@@ -128,22 +128,34 @@ REPO_ROOT="$(dirname "$BATS_TEST_FILENAME")/../.."
 # ─────────────────────────────────────────────────────────────────────────────
 # TC-CAF-MIXED-1: wrapper self-app (mixed) → skip count = 0
 # ADR-083 §결정 6: wrapper self-app 76 .yml 모두 적용 + 0 skip invariant
-# F-CR-899-6 신설
+# F-CR-899-6 신설 / F-CR-899-6-remaining FIX: proxy 검증 → 실 실행 검증 강화
 # ─────────────────────────────────────────────────────────────────────────────
-@test "TC-CAF-MIXED-1: wrapper self-app detect-repo-kind → mixed (0 skip invariant)" {
+@test "TC-CAF-MIXED-1: wrapper self-app mixed → reconcile-overlay.sh dry-run skip count = 0" {
   [[ -f "${DETECT_SCRIPT}" ]] || skip "detect-repo-kind.py not found"
+  [[ -f "${RECONCILE_SH}" ]] || skip "reconcile-overlay.sh not found"
 
-  # wrapper repo root 에서 실행 — plugin.json + _overlay 동시 존재 = mixed
+  # 1) detect-repo-kind.py 출력 proxy 검증 (기존)
   run python3 "${DETECT_SCRIPT}" --repo-root "${REPO_ROOT}"
-
-  # mixed = exit 2 (full set, ADR-083 §결정 5 pseudocode: plugin|mixed → all)
   [ "$status" -eq 2 ]
   [ "$output" = "mixed" ]
 
-  # .github/workflows/ 안 .yml 파일 수 ≥ 1 (skip 0 검증 proxy: wrapper 가 mixed 라도 exit 0 아님)
-  local wf_count
-  wf_count=$(ls "${REPO_ROOT}/.github/workflows/"*.yml 2>/dev/null | wc -l || echo 0)
-  [ "${wf_count}" -ge 1 ]
+  # 2) reconcile-overlay.sh 실 실행 검증 (F-CR-899-6-remaining FIX)
+  #    mixed → hook plugin|mixed branch → [FILTER] skip 라인 0개 invariant
+  #    env 주입:
+  #      CONSUMER_ROOT          = wrapper root (mixed 신호 위치)
+  #      FILTER_REPO_KIND_PY    = 본 테스트 DETECT_SCRIPT
+  #      CONSUMER_APPLICABLE_WHITELIST = 본 테스트 WHITELIST_FILE
+  #    --dry-run: filesystem touch 0 (preview only)
+  local skip_count
+  skip_count=$(
+    CONSUMER_ROOT="${REPO_ROOT}" \
+    FILTER_REPO_KIND_PY="${DETECT_SCRIPT}" \
+    CONSUMER_APPLICABLE_WHITELIST="${WHITELIST_FILE}" \
+      bash "${RECONCILE_SH}" --dry-run 2>&1 | grep -c '\[FILTER\] skip' || true
+  )
+
+  # ADR-083 §결정 6: mixed = 0 skip invariant
+  [ "${skip_count}" -eq 0 ]
 }
 
 # ─────────────────────────────────────────────────────────────────────────────

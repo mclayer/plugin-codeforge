@@ -454,9 +454,21 @@ _reconcile_file() {
         local FILTER_REPO_KIND_PY="${FILTER_REPO_KIND_PY:-${SCRIPT_DIR}/../templates/scripts/detect-repo-kind.py}"
         local CONSUMER_APPLICABLE_WHITELIST="${CONSUMER_APPLICABLE_WHITELIST:-${SCRIPT_DIR}/../templates/scripts/consumer_applicable_workflows.txt}"
         if [[ -f "${wrapper_file}" ]] && [[ "${wrapper_file}" == *.yml ]]; then
-            local _repo_kind
-            # F-CR-899-7 FIX: stderr 보존 + exit code propagate (2>/dev/null + || true 제거)
-            _repo_kind=$(python3 "${FILTER_REPO_KIND_PY}" --repo-root "${CONSUMER_ROOT:-${CONSUMER_OVERLAY_DIR%/.claude/_overlay}}" 2>&1) || _repo_kind="unknown"
+            local _repo_kind _ec
+            # F-CR-899-10 FIX: explicit $? capture (bash subshell || semantics regression fix)
+            # detect-repo-kind.py exit code = classification carrier (0=plugin/1=consumer/2=mixed/3=unknown)
+            # WRONG: `$(...) || _repo_kind="unknown"` — consumer(exit 1) + mixed(exit 2) silently reclassified
+            # RIGHT: capture stdout + exit code independently, then dispatch on _ec
+            _repo_kind=$(python3 "${FILTER_REPO_KIND_PY}" --repo-root "${CONSUMER_ROOT:-${CONSUMER_OVERLAY_DIR%/.claude/_overlay}}" 2>/dev/null)
+            _ec=$?
+            # validate _ec is a known classification exit code before dispatching on stdout
+            case ${_ec} in
+                0|1|2|3) ;;  # valid: plugin=0 consumer=1 mixed=2 unknown=3
+                *)
+                    echo "${SCRIPT_NAME} [ERR] detect-repo-kind crash (exit ${_ec}) — fail-closed abort (§4.12)" >&2
+                    return 1
+                    ;;
+            esac
             case "${_repo_kind}" in
                 plugin|mixed)
                     # F-CR-899-2 FIX: plugin + mixed = 전체 workflow mirror (0 skip)
