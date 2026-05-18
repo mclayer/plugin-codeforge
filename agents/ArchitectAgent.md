@@ -199,6 +199,59 @@ mirrored field 변경 0건 = Change Plan §13 안 `marketplace_sync_required: fa
 - ADR-065 §결정 5 cross-ref 1줄 추가 (boundary 보존)
 - review-verdict-v4 v4.5 schema MINOR bump
 
+5.8. Phase 1 commit-time cross-document SSOT reconcile self-check (CFP-44 — mctrader 5회 누적 escalation)
+
+**동기**: mctrader consumer 측 cross-document SSOT desync 5회 동형 재발 (MCT-179/182/183 iter1-3 + cross-Epic MCT-189/ADR-032). Option A (1차 FIX 시 4 산출물 동반 reconcile self-discipline) = MCT-183 동형 3회 추가 재발로 한계 실증. mctrader-hub §3.6.1 gate v2 (glob-scope + 변형포괄 regex + self-verify TEST1/TEST2) = post-LAND repo-wide grep 0줄 + 구현-리뷰 PASS FIX 0회 효과 검증. Plugin-level 일반화 필요.
+
+**의무 (chief author Phase 1 commit 직전, mctrader §3.6.1 gate v2 패턴 generalize)**:
+
+1. **glob-scope auto-discovery** — Story 영향 범위 자동 매핑:
+   - `docs/adr/ADR-*.md` (touched ADR + related_adrs[] 명단)
+   - `docs/stories/<KEY>.md` (frontmatter related_adrs / related_stories)
+   - `docs/change-plans/<KEY>-*.md` (Story 의 change-plan)
+   - `scope_manifests/EPIC-*.yaml` (Epic 단위 scope manifest, 존재 시)
+2. **canonical extraction** — amendment marker 자동 인식 (`~~old~~ → new`, `<del>` strike-through, "previously: X" 패턴). 정정 지침 후보 enumerate.
+3. **변형포괄 grep pattern auto-generation** — 정정 지침 적용 후 잔존 검사 시 조사 변형(예 "의/이/가")·따옴표 변형(`'`/`"`)·구분자 변형(공백/하이픈)·ko-en 변형(`§결정` vs `decision` 등) 포괄 regex 자동 생성.
+4. **self-verify TEST1/TEST2 의무**:
+   - **TEST1 (포착력)**: 의도적 stale 발화 1개 inject → regex 가 catch 함 verify. 미catch 시 pattern 재설계.
+   - **TEST2 (false positive 0)**: 코드 fenced block / blockquote / 변경 무관 영역 등 정당 사용을 catch 안 함 verify.
+5. **sibling Story scope 자동 포함** — frontmatter `related_adrs` + Continuity 표 traverse 로 인접 Story scope 포함 (carry stale 차단).
+6. **2-시점 실행**:
+   - **pre-LAND** (DesignReview verdict 직전): 본 self-check 결과 Change Plan §13 declarative sub-row 작성
+   - **post-LAND** (Phase 1 PR merge 직후): repo-wide grep 재실행 — 0줄 invariant. Non-zero = follow-up FIX iter trigger
+
+**Change Plan §13 declarative sub-row 형식**:
+
+```yaml
+ssot_reconcile_self_check:
+  status: PASS | FAIL | N/A  # N/A — Story 가 amendment marker 0건
+  glob_scope:
+    - docs/adr/ADR-NNN-*.md
+    - docs/stories/<KEY>.md
+    - docs/change-plans/<KEY>-*.md
+  canonical_extraction: <amendment marker 패턴 enumerate>
+  variant_regex: <generated regex 또는 패턴 요약>
+  test1_pass: true | false   # 포착력 self-verify
+  test2_pass: true | false   # FP 0 self-verify
+  post_land_grep_invariant: scheduled  # post-LAND repo-wide grep 0줄 예약
+```
+
+**verdict packet field 영향 — 후속 carrier (별도 CFP)**:
+
+review-verdict-v4 v4.5 → v4.6 MINOR bump 후보 (`ssot_reconcile_self_check_passed: bool` optional field 신설). 본 sub-PR scope 외 — cross-plugin sibling sync (codeforge-review schema 동시 갱신) 필요로 별도 carrier 의무. 본 §5.8 = ArchitectAgent 행동 directive only, verdict packet forwarding 은 follow-up CFP scope.
+
+**ADR-065 / ADR-082 boundary 보존**:
+
+- ADR-065 §결정 1 7-item (Phase 1 mechanical sync — label-registry / doc-locations / workflow self-app 등) 영역 그대로 유지. 본 §5.8 = cross-document SSOT reconcile (개념적 인접하지만 mechanism disjoint).
+- ADR-082 (write-time self-write verification mandate) Amendment 1 scope b (design-lane self-check + 정정 재귀) 직접 인접 — sister carrier. 본 §5.8 = mctrader Option B v2 generalize 영역. ADR-082 Amendment 가 별 carrier 로 확장 가능.
+
+**Cross-reference (mctrader consumer 박제)**:
+
+- mctrader-hub/docs/retros/PMO-AUDIT-MCT-183.md §4 (5회 누적 evidence)
+- mctrader-hub/docs/retros/PMO-AUDIT-MCT-182.md §4 (Option A 선행)
+- mctrader-hub/docs/change-plans/MCT-183-change-plan.md §3.6.1 (Option B gate v2 패턴 SSOT)
+- 자매 ADR-032 (VERIFIED badge evidence triad) — cross-Epic 자매 sentinel
+
 6. ArchitectPLAgent에 draft 반환
    · PL 검수 → PASS or RETURN (clarification context)
    · RETURN 시 본 에이전트 재스폰되어 누락·재해석 반영
