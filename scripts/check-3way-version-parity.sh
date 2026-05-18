@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
 # CFP-820 / ADR-063 Amendment 5 §결정 15 — 3-way version atomic invariant check
+# CFP-932 OQ-5 — channel dimension cross-ref (consumer overlay channel.tier ↔ marketplace channels[])
 #
 # 검증 대상 (ADR-063 Amendment 5 §결정 15 verbatim):
 #   (publisher)  `.claude-plugin/plugin.json` .version
 #   (registry)   `mclayer/marketplace/.claude-plugin/marketplace.json` .plugins[codeforge].version
 #   (consumer)   `.claude/_overlay/project.yaml` .codeforge.version_pin.version
+#
+# OQ-5 channel dimension: consumer overlay codeforge.channel.tier ↔ marketplace channels[*].versions[]
+#   membership drift detection = companion script check-channel-drift.sh (CFP-932 D5)
+#   rationale: 3-way-version-parity covers version axis; channel axis = orthogonal separate check
+#   check-3way-version-parity.sh does NOT check channel tier — delegates to check-channel-drift.sh
 #
 # 3-way byte-identical version field compare + sanity guard 6-tuple (Story §5.2 AC-13):
 #   (1) size > 40000         (empty-blob / truncated fetch 방어)                     → exit 2
@@ -28,6 +34,7 @@
 # ADR refs: ADR-063 Amendment 5 §결정 15/16, ADR-066 §결정 2 (PAT scope — read-only reuse),
 #           ADR-070 (verify-before-trust), ADR-027 Amendment 4 (fallback semantic),
 #           ADR-061 (Python >5 lines = external .py file — scripts/read_version_pin.py)
+# channel refs: CFP-932 / reconcile-protocol-v1 §4.10 / check-channel-drift.sh (OQ-5 companion)
 
 set -uo pipefail
 

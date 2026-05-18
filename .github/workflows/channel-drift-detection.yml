@@ -1,0 +1,75 @@
+name: channel-drift-detection
+# CFP-932 / ADR-063 Amendment 3 §결정 13 — channel drift scheduled detection
+# Tier: warning (ADR-060 evidence-enforceable, continue-on-error: true)
+# evidence-checks-registry.yaml entry: channel-drift-detection
+#
+# 검증: 3-tuple drift
+#   (a) consumer .claude/_overlay/project.yaml codeforge.channel.tier
+#   (b) install .claude-plugin/plugin.json .version → channel tier 매핑
+#   (c) registry marketplace.json plugins[name=codeforge].channels[*].versions[] membership tier
+#   drift 감지 → Issue auto-create (signature dedup)
+#
+# channels[] 미populate (Story-4 전) = warning-first exit 0 (graceful — INV-8)
+#
+# 트리거:
+#   schedule: 24h UTC daily (ADR-063 §결정 13 SLA window)
+#   workflow_dispatch: manual override for ad-hoc verification
+#
+# Hotfix bypass:
+#   hotfix-bypass:channel-drift-detection label 부착 시 skip + audit comment
+#   (ADR-024 Amendment 3 hotfix-bypass family 정합, 42번째 family member)
+#
+# E-4 3-branch (check-marketplace-drift.sh verbatim 차용 — DC-2):
+#   401 fail-closed (exit 2 + Issue)
+#   429 fail-open silent (warning log + exit 0)
+#   5xx in-run retry 3회 (1s/2s/4s) → 실패 시 exit 2 + Issue
+#
+# Permissions: minimum (top-level deny-all + job override, CFP-530 / ADR-060 Amendment 8)
+# Test override env: CFP932_* namespace (DC-3 §7.4.5)
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 24h UTC daily — ADR-063 §결정 13 SLA window
+  workflow_dispatch:     # Manual override for ad-hoc verification
+
+permissions: {}  # top-level deny-all
+
+jobs:
+  drift-detection:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # warning tier — drift does not block CI
+    permissions:
+      contents: read   # marketplace.json + plugin.json fetch
+      issues: write    # Issue auto-create
+
+    concurrency:
+      group: channel-drift-detection
+      cancel-in-progress: false  # E-6 race 차단 — 진행 중 run 완료 보장
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check hotfix-bypass label
+        id: bypass
+        # TODO: hotfix-bypass mechanism in sub-PR (b)
+        # Placeholder: bypass disabled in sub-PR (a)
+        run: |
+          echo "bypass=false" >> "$GITHUB_OUTPUT"
+
+      - name: Run channel-drift-detection
+        if: steps.bypass.outputs.bypass != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}  # ADR-066 reuse (marketplace contents:read scope, 신규 secret 0)
+          CFP932_SKIP_ISSUE_CREATE: ${{ vars.CFP932_SKIP_ISSUE_CREATE || '' }}  # DC-3 test override
+        run: |
+          chmod +x scripts/check-channel-drift.sh
+          bash scripts/check-channel-drift.sh
+
+      - name: Bypass audit comment
+        if: steps.bypass.outputs.bypass == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+        run: |
+          # TODO: sub-PR (b) — bypass audit comment via Issue or PR comment
+          echo "channel-drift-detection bypass active — audit comment pending sub-PR (b) implementation"
