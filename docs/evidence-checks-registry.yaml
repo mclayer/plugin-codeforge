@@ -2700,8 +2700,8 @@ entries:
       2-occurrence sentinel evidence (2026-05-18 KST). deferred-followup status
       — actual script + workflow + hook json sample = sibling Story-2 CFP-967
       mechanical wire Phase 2 carrier 후 Active 전환.
-    detect_command: bash scripts/check-parallel-work-sentinel.sh  # Story-2 CFP-967 carrier
-    workflow: .github/workflows/parallel-work-sentinel-check.yml  # Story-2 CFP-967 carrier
+    detect_command: null  # deferred-followup — sibling Story-2 CFP-967 carrier (scripts/check-parallel-work-sentinel.{sh,py} populate 후 갱신). null = naming check skip (precedent production-cutover-deputy-spawn-evidence / epic-cutover-gate-evidence-quad-check 답습, Codex #2 FIX iter 4)
+    workflow: null  # deferred-followup — sibling Story-2 CFP-967 carrier (.github/workflows/parallel-work-sentinel-check.yml + self-app populate 후 갱신, deferred-followup → warning → blocking-on-pr)
     current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
     bypass_label: hotfix-bypass:parallel-work-sentinel-pickup
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
