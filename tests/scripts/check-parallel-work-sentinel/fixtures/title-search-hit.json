@@ -1,0 +1,14 @@
+[
+  {
+    "number": 953,
+    "title": "CFP-953 duplicate incident — verify-before-trust 실패 + memory rule 6 신설",
+    "labels": [{"name": "parent:CFP-882"}],
+    "closedAt": "2026-05-18T07:30:00Z"
+  },
+  {
+    "number": 967,
+    "title": "CFP-967 Parallel work sentinel polling mechanical wire (Story-2 carrier)",
+    "labels": [{"name": "phase:구현"}, {"name": "parent:CFP-967"}],
+    "closedAt": null
+  }
+]

@@ -65,6 +65,20 @@ Env var scope (disjoint — not a superset of BYPASS_WORKTREE_FIRST or BYPASS_WO
   CBL_SKIP_ISSUE_CREATE  ≠  BYPASS_WORKTREE_FIRST  ≠  BYPASS_WORKTREE_GC
 
 SecurityTestPL dynamic probe spawn: set CBL_SKIP_ISSUE_CREATE=1 in spawn prompt unless write opt-in is explicit.
+
+[codeforge parallel-work-poll advisory — CFP-967 / ADR-073 Amendment 2 §결정 1-B cold start]
+
+Before performing any lane spawn, PR open, or merge transition — run the parallel work sentinel
+to detect mid-flight parallel race conditions (memory rule 6 + rule 7 mechanical binding):
+
+  bash scripts/check-parallel-work-sentinel.sh --mode=title-search
+  bash scripts/check-parallel-work-sentinel.sh --mode=epic-state-poll --epic-id=<EPIC_ID>
+  bash scripts/check-parallel-work-sentinel.sh --mode=head-compare-sibling-commits
+
+Bypass (audit-trailed): BYPASS_PARALLEL_WORK_SENTINEL=1
+Evidence-checks-registry entry: parallel-work-sentinel-pickup (ADR-073 Amendment 2)
+
+Graceful degradation: gh API failure → local git log fallback (non-blocking, warning tier).
 EOF
 
 exit 0
