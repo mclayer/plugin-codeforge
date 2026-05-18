@@ -41,6 +41,12 @@ amendments:
     summary: "§결정 1 표(7-row) 에 row 8 append — Phase 1 산출물 commit 직전 chief author 가 변경한 frontmatter 보유 .md file 의 YAML parse self-validate (검증 방법: `bash scripts/check-doc-frontmatter.sh <path>` PASS, CFP-28 strict mode cross-ref). §결정 7 신설 — Amendment 2 narrative (incident reference + family pattern 정합 + cascade obligation invariant + sunset_justification quoted-string-form 보존). §결정 1 row 1-7 본문 변경 0 (row 8 append 만), §결정 2-6 변경 0. mechanical_enforcement_actions[] append — `doc-frontmatter-yaml-parse` entry status: existing-warning-cross-ref (신규 lint script 신설 0건, 기존 CFP-28 `check-doc-frontmatter.sh` PR-time strict check 의 commit-time forcing function cross-ref only). Story §5.4 Out-of-Scope 7 항목 정합 — 신규 ADR 0건, 신규 lint script 0건, 신규 workflow yml 0건, 신규 mechanical_enforcement_actions[] action name 0건(기존 안전망 cross-ref only — `doc-frontmatter-yaml-parse` 가 `check-doc-frontmatter.sh` existing entry alias), 6 lane sibling PR 0건, review-verdict-v4 schema bump 0건, cascade lint 신설 0건(별도 CFP carrier). CFP-851 incident evidence (Phase 2 PR #885 ADR-071 amendment_log entry `is_transitional: false` colon-space plain scalar nested mapping ScannerError, FIX iter 1 commit `79a4fdda0c9b4ee249edfcdb3769ef95b8113628` equals form 정정으로 해소, 현재 file state HEAD 재현 불가 — git history SSOT) 가 chief author commit-time forcing function 부재 gap 입증. ratchet 강화 방향만 (7→8 ratchet 확장 only — 8th item 제거 / `check-doc-frontmatter.sh` cross-ref 해제 발의 차단)."
     is_transitional: false
     sunset_justification: "N/A — permanent policy 의 ratchet 강화 (Amendment 1 family pattern 정합). ADR-064 §self-application top-down ratchet 정합. 약화 방향(8th item 제거 / check-doc-frontmatter.sh cross-ref 해제) 발의 차단."
+  - amendment: 3
+    date: 2026-05-18
+    cfp: CFP-930
+    summary: "§결정 1 표(8-row) 에 row 9 append — Story 본문 self-declared correction(strike-through `~~old~~ → new` / `<del>` HTML / 'previously: X' 류 패턴) 의 chief author commit 실제 적용 verify. 검증 방법: Story §2/§6 등 declared correction enumerate → `git diff` / repo-wide grep 로 실제 적용 cross-check, 누락 검출 시 RETURN to ArchitectPLAgent (chief author 재호출, ADR-004 author ≠ judge 보존). §결정 1 row 1-8 본문 변경 0 (row 9 append 만), §결정 2-7 변경 0. mechanical_enforcement_actions[] append `story-self-declared-correction-verify` entry status: deferred-followup (mechanical lint 자동 검출 별 carrier). cross-Story pattern threshold reach (≥ 2, ADR-045 §D-9): CFP-795 first occurrence (Architect §3 mandatory P1 finding inline FIX 시 8 anchor 동시 갱신 누락, F-1 lesson) + CFP-906 second occurrence (Story §2.2 `~~ADR-072~~ → ADR-72` 18 occurrence 미적용, F-DR-906-1 P0 broken-link + F-DR-906-2 P1 wording-SSOT). chief author mechanical self-check 신뢰도 저하 + DesignReviewPL 사후 catch FIX iter 추가 evidence. ADR-082 Amendment 1 scope b (design-lane self-check + 정정 재귀) 직접 인접 — sister carrier. review-verdict-v4 schema 영향 별 carrier (cross-plugin sibling sync 필요, 본 Amendment scope 외). ratchet 강화 방향만 (8→9 ratchet 확장 only)."
+    is_transitional: false
+    sunset_justification: "N/A — permanent policy 의 ratchet 강화 (Amendment 1/2 family pattern 정합). ADR-064 §self-application top-down ratchet 정합. 약화 방향(9th item 제거 / verify 의무 해제) 발의 차단."
 mechanical_enforcement_actions:
   - action: sibling-workflow-parity
     status: deferred-followup
@@ -50,6 +56,10 @@ mechanical_enforcement_actions:
     status: existing-warning-cross-ref
     progress_note: "ADR-065 Amendment 2 (CFP-911) 신설 시점 — 신규 lint script 신설 0건. 기존 CFP-28 `scripts/check-doc-frontmatter.sh` (thin wrapper, `scripts/lib/check_doc_frontmatter.py` SSOT, ADR-061 §결정 1 정합) PR-time strict check 의 commit-time forcing function cross-ref only. row 8 의 검증 방법 wording 은 thin wrapper + Python SSOT 두 file 의 strict mode contract 의존 — cascade obligation invariant (§결정 7 §7.3 본문 cascade 1줄 신설로 codify, manual review 의존, cascade 자동 검출 lint 별도 follow-up CFP carrier — Story §5.4 row 7 정합). evidence-checks-registry 신규 entry 0건 (기존 안전망 cross-ref only). status 승격 trigger 없음 — `existing-warning-cross-ref` 영구 (별도 CFP 가 신규 lint script 발의 시에만 status 갱신)."
     target_section: §결정 1 row 8 (Amendment 2 CFP-911) / §결정 7 (신설)
+  - action: story-self-declared-correction-verify
+    status: deferred-followup
+    progress_note: "ADR-065 Amendment 3 (CFP-930) 신설 시점 — chief author 의 commit-time manual self-check (Story declared correction enumerate + `git diff` cross-check). mechanical lint 자동 검출 = 별도 follow-up CFP scope (Story body 의 strike-through 패턴 자동 enumerate + commit diff 비교). evidence-checks-registry 신규 entry 0건 (manual self-check tier). 본 status 승격 trigger = mechanical lint 신설 별 CFP merge 시점. ADR-082 Amendment 1 scope b (design-lane self-check + 정정 재귀) sister carrier — review-verdict-v4 schema 영향 (cross-plugin sibling sync 필요) 별 carrier 분리."
+    target_section: §결정 1 row 9 (Amendment 3 CFP-930) / §결정 8 (신설)
 ---
 
 # ADR-065: ArchitectAgent Phase 1 산출물 mechanical sync self-check 의무 (non-marketplace 영역)
@@ -106,6 +116,7 @@ ArchitectAgent chief author 는 Phase 1 산출물 commit 직전 다음 7 항목 
 | 6 | `docs/parallel-work/section-ownership.yaml` 정책 필요 시 row append | 동시 편집 영향 받는 신규 section 도입 시 row append |
 | 7 | `docs/doc-locations.yaml` 신규 doc type row 필요성 확인 | 신규 doc type 도입 시 row append, `check-doc-locations.sh` PASS |
 | 8 | Phase 1 산출물 commit 직전 chief author 가 변경한 frontmatter 보유 `.md` file 의 YAML parse self-validate (Amendment 2 CFP-911) | `bash scripts/check-doc-frontmatter.sh <path>` PASS 확인 (CFP-28 strict mode cross-ref) |
+| 9 | Story 본문 self-declared correction (`~~old~~ → new` strike-through / `<del>` HTML / "previously: X" 류 패턴) 의 chief author commit 실제 적용 verify (Amendment 3 CFP-930) | Story §2/§6 등 declared correction 패턴 enumerate → 각 패턴이 본 PR commit 안 actual diff 로 적용되었는지 `git diff` / repo-wide grep cross-check. 누락 검출 시 RETURN to ArchitectPLAgent (chief author 재호출) |
 
 **Row 8 cascade obligation (Amendment 2 / CFP-911)**: 본 row 8 의 검증 방법 wording 은 `scripts/check-doc-frontmatter.sh` (thin wrapper) / `scripts/lib/check_doc_frontmatter.py` (Python SSOT, ADR-061 §결정 1 정합) 의 strict mode contract 의존. 두 file 의 contract (exit code semantic / strict-mode 분기 / target path coverage) 가 변경되는 PR (예: CFP-NNN script behavior change) 는 ADR-065 §결정 1 row 8 wording 갱신 cascade 의무 — 갱신 누락 시 row 8 forcing function silently drift. cascade 검출은 manual review 의존 (별도 follow-up CFP carrier — cascade 자동 검출 lint 신설 검토, Story §5.4 row 7 정합).
 
@@ -250,6 +261,44 @@ review-verdict-v4 schema `mechanical_self_check_passed: bool` field semantic 무
 ### Trade-off
 
 - chief author 가 한 번 더 mechanical check 수행 → 5-10 min overhead vs Phase 1 PR FIX iteration 1회 (30+ min) 차단
+
+### 결정 8 — 9th item Story self-declared correction commit application verify (Amendment 3, CFP-930)
+
+§결정 1 표(8-row, post-Amendment-2) 에 row 9 append 로 chief author self-check 항목을 9개로 확장. 신규 9번째 항목 = **"Story 본문 self-declared correction (`~~old~~ → new` strike-through / `<del>` HTML / 'previously: X' 류 패턴) 의 chief author commit 실제 적용 verify"** — 검증 방법: Story §2/§6 등 declared correction 패턴 enumerate → 각 패턴이 본 PR commit 안 actual diff 로 적용되었는지 `git diff` / repo-wide grep cross-check. 누락 검출 시 RETURN to ArchitectPLAgent (chief author 재호출, ADR-004 author ≠ judge 보존).
+
+#### 8.1 동기 (cross-Story pattern threshold reach, ADR-045 §D-9)
+
+`chief_author_mechanical_sync_gap` 누적 2 occurrence — threshold reach (≥ 2):
+
+- **CFP-795 first occurrence**: Architect §3 mandatory P1 finding inline FIX 시 ADR 본문 표·단락 8 anchor 동시 갱신 누락 (`feedback_codex_tp2_verify_before_trust` 8-mirror checklist lesson, retro F-1)
+- **CFP-906 second occurrence**: Story §2.2 self-declared correction (`~~ADR-072~~ → ADR-72`) 18 occurrence 미적용 → DesignReviewPL Iter 1 P0 broken-link (F-DR-906-1) + P1 wording-SSOT (F-DR-906-2) 적발. ArchitectAgent §13.A row 4 "link target Phase 1 분배 PASS" mechanically false self-claim.
+
+기존 7-item (§결정 1) + 8-item (Amendment 2 row 8 frontmatter YAML parse) 은 label-registry / doc-locations / workflow self-app / link target / MANIFEST / section-ownership / doc-locations / frontmatter YAML 영역 cover. **Story 본문에 self-declared 된 정정 지침이 commit 작성 step 에서 mechanical sync 누락**되어도 self-check 가 PASS self-claim 하는 gap 부재.
+
+#### 8.2 신규 row 9 schema
+
+- **검증 대상**: Story 본문 (§2 / §5 / §6 / §11.3 / 기타 author-editable section) 의 correction 패턴 — `~~text~~` strike-through, `<del>text</del>` HTML, "previously: X / now: Y" 류 prose, "before: X → after: Y" 류 prose
+- **검증 방법**: Phase 1 산출물 commit 직전 chief author 가:
+  1. Story 본문 안 correction 패턴 grep enumerate (예: `grep -E "(~~|<del>|previously:|before:.*→.*after:)" docs/stories/<KEY>.md`)
+  2. 각 enumerate 된 패턴마다 `git diff <pre-commit>..<HEAD>` cross-check — actual diff 안 적용 verify
+  3. repo-wide grep (`git grep "old token"`) — stale carry-over 0 verify
+- **누락 검출 시**: ArchitectPLAgent 에 RETURN (mechanical_self_check_passed=false). PL 이 chief author 재호출 (ADR-004 author ≠ judge 보존)
+
+#### 8.3 mechanical 자동 검출 deferred
+
+본 §결정 8 = chief author **manual self-check** 만 codify. mechanical lint (Story body strike-through 패턴 자동 enumerate + commit diff 비교) = 별 follow-up CFP scope. `mechanical_enforcement_actions[]` `story-self-declared-correction-verify` entry status: `deferred-followup` — mechanical lint 신설 별 CFP merge 시점 status 승격.
+
+#### 8.4 ADR-082 Amendment 1 scope b sister
+
+[ADR-082 Amendment 1](ADR-082-write-time-self-write-verification-mandate.md) scope b (design-lane self-check + 정정 재귀) 와 직접 인접 sister carrier. ADR-082 = write-time verification SSOT, 본 ADR-065 §결정 8 = chief author commit-time self-check 의 sub-scope. boundary preserved — review-verdict-v4 carrier field 영향 (cross-plugin sibling sync 필요) 별 carrier 분리.
+
+#### 8.5 row 1-8 본문 변경 0 invariant
+
+§결정 1 row 1-8 본문 변경 0 (row 9 append 만). §결정 2-7 변경 0. Amendment 1 (family scope) + Amendment 2 (frontmatter YAML parse) family pattern 정합 — additive ratchet only (9th item 제거 / verify 의무 해제 발의 차단, ADR-058 §결정 5).
+
+#### 8.6 sunset_justification: null (Amendment 1/2 family 정합)
+
+`is_transitional: false` 보존 + `sunset_justification: "N/A — permanent policy 의 ratchet 강화..."` quoted-string-form 의무 (Amendment 2 §7.2 cross-pollination 차단 invariant 정합).
 
 ## 해소 기준
 

@@ -7,6 +7,23 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.88.0] - 2026-05-18
+
+### Changed (CFP-930 ADR-065 Amendment 3 — 9th item Story self-declared correction commit application verify)
+
+- **`docs/adr/ADR-065-architect-phase1-mechanical-self-check.md`** — Amendment 3 신설. frontmatter `amendments[]` `amendment: 3` entry append (`date: 2026-05-18` + `cfp: CFP-930` + `summary` 안 §결정 1 표 row 9 ratchet 확장 + §결정 8 narrative + cross-Story pattern threshold reach (CFP-795 + CFP-906 evidence, ADR-045 §D-9) + ADR-082 Amendment 1 scope b sister + `is_transitional: false` + `sunset_justification: "N/A — permanent policy 의 ratchet 강화 (Amendment 1/2 family pattern 정합). 약화 방향(9th item 제거 / verify 의무 해제) 발의 차단."` quoted string form). `mechanical_enforcement_actions[]` `story-self-declared-correction-verify` entry append (status: `deferred-followup` — mechanical lint 자동 검출 별도 follow-up CFP scope, manual self-check tier). `related_stories[]` `CFP-930` append. 본문 §결정 1 표 row 9 append (`Story 본문 self-declared correction (~~old~~ → new / <del> HTML / 'previously: X' 패턴) chief author commit 실제 적용 verify` 항목 + 검증 방법: enumerate + `git diff` cross-check + repo-wide grep stale carry-over 0 verify). 본문 §결정 8 narrative section 신설 — 6 sub-section: §8.1 동기 (CFP-795 + CFP-906 occurrence evidence) / §8.2 신규 row 9 schema (검증 대상 + 검증 방법 3 step + RETURN 조건) / §8.3 mechanical 자동 검출 deferred / §8.4 ADR-082 Amendment 1 scope b sister / §8.5 row 1-8 본문 변경 0 invariant / §8.6 sunset_justification null quoted-string-form 의무.
+- **`.claude-plugin/plugin.json`** — version `5.87.0` → `5.88.0` MINOR (ADR-037 정합 — ADR Amendment 발의 = governance behavior change MINOR, chief author 검증 의무 ratchet 8→9 item). `description` 안 CFP-930 entry append.
+- **`CHANGELOG.md`** — [5.88.0] entry 신설.
+
+### Scope (CFP-930 invariants)
+
+- **doc-only fast-path (ADR-054)** — src/tests 무변경, ADR-065 Amendment 3 (본 ADR 본문) + plugin.json + CHANGELOG + marketplace sibling = 4 file 만 (marketplace 는 별도 sibling PR). 신규 ADR / 신규 lint script / 신규 workflow yml / 신규 evidence-checks-registry entry / `story-self-declared-correction-verify` action `deferred-followup` (mechanical lint 신설 별 carrier scope) / 6 lane sibling PR 0 / review-verdict-v4 schema bump 0 (cross-plugin sibling sync 필요 영역 = 별 carrier).
+- **additive ratchet only** (ADR-058 §결정 5 / ADR-064 §self-application top-down ratchet 정합) — §결정 1 row 1-8 본문 변경 0, §결정 2-7 변경 0, Amendment 1/2 family pattern 보존, `is_transitional: false` 보존, `sunset_justification` quoted string form 의무. 약화 방향 enum 차단: 9th item 제거 / verify 의무 해제 / sunset_justification 다운그레이드 / row 1-8 본문 약화 / Amendment 1/2 family pattern revoke.
+- **Cross-Story pattern threshold reach evidence** — CFP-795 (first occurrence, `feedback_codex_tp2_verify_before_trust` 8-mirror checklist) + CFP-906 (second occurrence, `~~ADR-072~~ → ADR-72` 18 occurrence 미적용 → DesignReviewPL Iter 1 P0+P1 적발). ADR-045 §D-9 정량 threshold (≥ 2) 도달.
+- **marketplace atomic sync (ADR-063 §결정 5)** — 별도 sibling PR 의무 (Orchestrator 책임 영역, codeforge PR merge 직후 즉시 open · merge). mirrored field 4종 (`name`/`version`/`description`/`author`) verbatim parity.
+
+
+
 ## [5.87.0] - 2026-05-18
 
 ### Added (CFP-898 Phase 2 — dependency bundle integrity closure resolver runtime)
