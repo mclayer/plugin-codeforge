@@ -305,4 +305,21 @@ owned_sections:
     # boundary / dimensional / architecture_doc + marketplace_sync_declared).
     # ADR-008 §결정 2 MINOR additive optional field (default false backward-compat).
 
+  # CFP-966 (ArchitectAgent Phase 1 — ADR-073 Amendment 2 lock)
+  - file: docs/adr/ADR-073-orchestrator-verify-before-assert.md
+    section: "frontmatter amendments[] + mechanical_enforcement_actions[] + ## Amendments / ### Amendment 2 sub-section"
+    owner_adr: ADR-073
+    carrier_story: CFP-966  # Story-1 declarative anchor (sibling Story-2 = CFP-967 mechanical wire)
+    parallel_edit: append-only
+    arbitrator: codeforge-design:ArchitectAgent
+    # NOTE (CFP-966): ADR-073 Amendment lock — frontmatter amendments[] append
+    # (amendment_id: 2 entry, amendment_id: 1 CFP-776 ADR-082 cross-ref 보존) +
+    # mechanical_enforcement_actions[] 첫 row entry append ([] → [parallel-work-sentinel-pickup],
+    # ADR-040 Amendment 3 §결정 7.D self-application) + 본문 ## Amendments 안 ### Amendment 2
+    # sub-section append (§결정 1-A/1-B/1-C — transition trigger enum + cold start + sustained
+    # polling). ADR-058 §결정 5 / ADR-064 §self-application ratchet 강화 only — base §결정 1-8 +
+    # Amendment 1 (CFP-776) 의미 invariant 무변경, sub-section append only. sunset_justification
+    # N/A 정당 (is_transitional: false 영구 정책). sibling Story-2 CFP-967 mechanical wire 가
+    # script + workflow + hook json sample carrier (declaration-only-Wave-1 status).
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)

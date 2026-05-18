@@ -1154,6 +1154,50 @@ dispatch trigger: Phase 2 PR carrier (Orchestrator monopoly, ADR-039 subagent de
 - CFP-139 (GitOpsAgent) — Orchestrator 의 worktree management 책임을 GitOpsAgent 로 이관 (Wave 3)
 - CFP-597 (ADR-063 Amendment 1) — marketplace sync PR proactive dispatch trigger
 
+#### §3.5.1 Parallel work sentinel polling (CFP-966 / [ADR-073 Amendment 2](../docs/adr/ADR-073-orchestrator-verify-before-assert.md))
+
+> **NORMATIVE — ADR-073 Amendment 2 §결정 1-A/1-B/1-C declarative anchor**. lane spawn 직전 (§3.5 step 1) 시점에 적용되는 mid-flight parallel race 차단 polling 의무. mechanical wire (lint script + workflow + hook json sample) = sibling Story-2 CFP-967 carrier — 본 §3.5.1 = behavioral directive + declarative anchor (declaration-only-Wave-1 status).
+
+**동인 (sentinel evidence)**: 2026-05-18 KST same-day 2/2 parallel race incidents — CFP-953 (first, label-based search miss → CFP-932 carrier miss) + CFP-946 (second, 11분 gap Epic close miss → PR #962 "Closes #946" 충돌). long-running Orchestrator session 의 turn-0-only SessionStart snapshot staleness 영역.
+
+**Transition trigger enum 3종 (closed set)** — 각 transition 직전 polling 의무:
+
+| ID | 발화 시점 | Polling 의무 |
+|----|---|---|
+| `lane_spawn` | lane 진입 직전 (§3.5 step 1 — Agent tool spawn 직전) | title-based search + Epic state poll + HEAD compare |
+| `pr_open` | PR open 직전 (`gh pr create` 직전, Phase 1 / Phase 2 / retro PR) | 동일 3-step + sibling Story PR list cross-ref |
+| `merge_transition` | PR merge 직전 (`gh pr merge` 직전) + 직후 (gate label / phase label transition 직전) | 동일 3-step + Epic state final poll (close eligibility check) |
+
+closed enum — 4번째 trigger 추가 = ADR-073 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합).
+
+**HEAD compare pattern (verify-before-trust 4-layer governance Layer 1)** — 매 transition trigger 직전 3-step 의무:
+
+```bash
+# Step 1 — title-based search (memory rule 6 의무, CFP-953 incident carrier)
+gh issue list --search "<keyword>" --state all --json number,title,labels,closedAt
+# label-based search 만 (rule 6 위반) → CFP-953 incident reproduction risk
+
+# Step 2 — Epic state poll (memory rule 7 의무, CFP-946 incident carrier)
+gh issue view <epic_number> --json state,closedAt,closedBy,labels
+# polling 직전 5+ min 경과 session state cache (TodoWrite / Story §0 / .claude-work/progress) 무조건 stale 가정
+
+# Step 3 — HEAD compare sibling commits (mid-flight race 차단)
+PRIOR_HEAD=<session state cache 의 pinned HEAD — stale 가능>
+CURRENT_HEAD=$(git ls-remote origin <branch> | cut -f1)   # direct verify (re-pin)
+gh api repos/{owner}/{repo}/compare/${PRIOR_HEAD}...${CURRENT_HEAD} --jq '.commits[].sha'
+```
+
+**Cold start `session_start` 보강**: session 첫 turn additionalContext 안 active CFP context list + open Epic state list + current branch HEAD vs origin/main delta 3-item preload (SessionStart hook tier 위임 — Story-2 CFP-967 `templates/.claude/hooks/SessionStart-parallel-work-poll.json.sample` mechanical wire). additionalContext = layer 1 fallback 만 — actual sustained polling = 매 transition trigger 직전 §3.5.1 3-step.
+
+**Sustained in-session polling 의무**: turn-0-only SessionStart hook 한계 해소 — long-running session 안 매 transition trigger 직전 HEAD SHA re-pin 의무 (session state cache stale 무조건 가정).
+
+**Cross-ref**:
+- [ADR-073 Amendment 2](../docs/adr/ADR-073-orchestrator-verify-before-assert.md) §결정 1-A/1-B/1-C — declarative anchor SSOT
+- `docs/evidence-checks-registry.yaml` `parallel-work-sentinel-pickup` entry — warning tier (declaration-only-Wave-1, recurrence count 2 / threshold 3 / promotion_trigger auto_blocking)
+- [`docs/domain-knowledge/domain/orchestrator-discipline/parallel-work-sentinel-polling.md`](../docs/domain-knowledge/domain/orchestrator-discipline/parallel-work-sentinel-polling.md) — narrative SSOT (sentinel batch + escalation matrix)
+- memory rule 6 (title-based search 의무, CFP-953 carrier) + rule 7 (Epic 진행 중 polling 의무, CFP-946 carrier) — declarative cross-ref normative anchor
+- sibling Story-2 [CFP-967](https://github.com/mclayer/plugin-codeforge/issues/967) — mechanical wire (script + hook + workflow + bats), sequential (Story-1 merge 후)
+
 ### §3.6 TeamCreate / TeamDelete protocol (CFP-137 / [ADR-044](../docs/adr/ADR-044-phase-scoped-sequential-team.md))
 
 > **Activation**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` env 활성 시에만 본 §3.6 적용. env=0 또는 미설정 시 = ADR-039 default subagent context fallback (§3.0 + 기존 §3.1 one-shot Agent tool 패턴).
