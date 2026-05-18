@@ -17,6 +17,8 @@
 #   - prerequisite check: gh CLI mock path missing → graceful (exit 0)
 #   - plain stdout SSOT I5: JSON output parseable by python3 -m json.tool
 
+bats_require_minimum_version 1.5.0
+
 BATS_TEST_DIRNAME="$(cd "$(dirname "$BATS_TEST_FILENAME")" && pwd)"
 FIXTURES_DIR="${BATS_TEST_DIRNAME}/fixtures"
 SCRIPT_DIR="${BATS_TEST_DIRNAME}/../../../scripts"
@@ -108,13 +110,15 @@ assert len(d['delta_commits']) >= 1, f'expected commits, got {d}'
   export CFP967_GH_MOCK_RESPONSE="${FIXTURES_DIR}/api-403.json"
   export CFP_CONTEXT="CFP-967"
 
-  # The mock returns 403 JSON — the script should parse it as error and fallback
-  # Since mock always returns rc=0 with file content, we simulate by checking
-  # that the script handles unexpected fixture gracefully
-  run _run_sentinel --mode=title-search
+  # The mock returns 403 JSON ({"message":..,"status":"403"}) at rc=0 — script detects
+  # non-list response, routes to _handle_api_quota_exceeded, falls back to git log grep.
+  # --separate-stderr ensures $output contains only stdout (valid JSON); $stderr has warnings.
+  run --separate-stderr python3 "${PYTHON_SSOT}" --mode=title-search
   [ "$status" -eq 0 ]
-  # Output should be valid JSON regardless
+  # stdout-only output should be valid JSON
   echo "$output" | python3 -m json.tool > /dev/null
+  # assert degradation marker present in stdout JSON
+  [[ "$output" == *"api_quota_exceeded"* ]] || [[ "$output" == *"parallel-work-sentinel-api-failed"* ]]
 }
 
 # ---------------------------------------------------------------------------

@@ -176,6 +176,17 @@ def mode_title_search(epic_id: Optional[str] = None) -> None:
     except json.JSONDecodeError:
         issues = []
 
+    # F-CR-967-1: API error dict defense — gh API may return {"message":..,"status":"403"}
+    # instead of a list when quota/auth errors slip through rc==0 (mock seam rc=0 path).
+    if not isinstance(issues, list):
+        if isinstance(issues, dict):
+            status_str = str(issues.get("status", ""))
+            if status_str in ("403", "429"):
+                _handle_api_quota_exceeded("title-search", search_fragment)
+                return
+        # Any non-list unexpected payload — degrade gracefully
+        issues = []
+
     # whole-word regex filter (CFP-953 false-positive 차단)
     matches = []
     for issue in issues:
@@ -302,6 +313,10 @@ def mode_head_compare(branch: str = "origin/main") -> None:
 
 def _check_stale_grace(prior_sha: str) -> None:
     """Check if prior_sha timestamp is older than STALE_GRACE_SEC — emit marker if stale."""
+    # F-CR-967-2: skip stale check in mock-context (CFP967_GIT_LOG_MOCK set) to prevent
+    # fixture SHA age false-positive stderr pollution (existing mock seam pattern — ADR-061).
+    if os.environ.get(GIT_LOG_MOCK_ENV):
+        return None
     try:
         result = subprocess.run(
             ["git", "log", "--format=%ci", "-1", prior_sha],
