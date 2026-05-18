@@ -1296,6 +1296,20 @@ Codex worker 결과 수신 후 Orchestrator 는 finding evidence 의 ground trut
 
 **Boilerplate composition SSOT (CFP-819 / [ADR-081](../docs/adr/ADR-081-codex-worker-prompt-boilerplate.md) + ADR-052 Amendment 6)**: Codex worker prompt 본문 3 mandatory section (dogfood-out Story path verbatim / lane stage 표기 = current_lane + phase / sandbox boundary = sandbox_outside_paths) + verify-before-trust scope 5 sub-scope 분리 (file scope grep+quote / dir scope recursive grep+count / cross-repo gh api+commit SHA / grep count claim active vs historical 차원 / ADR §결정 번호 정확성) + 3-lane partition 표 (Codex factual citation 영역 / DesignReviewPL boundary completeness 영역 [ADR-068 4 invariants + Amd 1 I-5] / CodeReviewPL post-impl style + historical reference 보존성 영역 disjoint scope) = ADR-081 SSOT. declaration-only retain (ADR-070 §D5 precedent), mechanical lint 부재.
 
+**Substitution scope 3-path enum (CFP-946-A / [ADR-052 Amendment 8](../docs/adr/ADR-052-codex-proactive-check-touchpoints.md) + [ADR-070](../docs/adr/ADR-070-codex-verify-before-trust.md) §결정 D1 expansion / Amendment 3)**: Codex worker spawn 결정 시점에 substitution scope explicit declare 의무 — 운영적 substitution behavior 의 normative codification. 9 occurrence sentinel (CFP-756 Epic close retro Sentinel #4 strike #8) 산물.
+
+| Enum value | semantics | 적용 trigger | Story §10 marker (의무) |
+|---|---|---|---|
+| `inline_orchestrator_verify` (default) | Orchestrator 가 own working directory file Read 로 ground truth 확정 후 Codex finding accept/reject | Codex worker output 정상 수신 (sandbox network-block 없음) + finding evidence 영역 = Orchestrator working directory 안 | (면제 — default, marker 부재 = 암묵 default) |
+| `manual_substitution_declare` | Codex worker spawn 직전 substitution scope 명시 declare (spawn prompt `task` field 또는 sub-field `substitution_scope` + Story §10 marker carrier) | sandbox 영역 외 file (internal-docs / sibling repo / cross-plugin path) verify task 필요 시 | `[codex-substitution-scope-declared: <scope-enum>]` (1 회/spawn) |
+| `fallback_skip_with_marker` | Codex worker spawn 자체 skip + Orchestrator 가 substitution 후속 동작 단독 수행 (verify-before-trust 5 sub-scope 全 적용) | Codex CLI 미가용 / sandbox network-block 확정 / 8+ occurrence sentinel reentrant 위험 영역 | `[codex-sandbox-fallback: <fail-mode>]` (1 회/spawn, fail-mode enum = `api_missing` / `version_skew` / `enterprise_blocked` / `gh_api_network_blocked` / `manual_substitution_declared` / `inline_orchestrator_verify_only`) |
+
+**verify-before-trust 5 sub-scope 무조건 적용**: substitution path 3-enum 어느 case 채택해도 Orchestrator verify-before-trust 5 sub-scope (file scope grep+quote / dir scope recursive grep+count / cross-repo gh api+commit SHA / grep count claim active vs historical 차원 / ADR §결정 번호 정확성, [ADR-081 §결정 D2](../docs/adr/ADR-081-codex-worker-prompt-boilerplate.md)) 무조건 적용. substitution = "Codex worker substitution" 이지 verify-before-trust 면제 아님.
+
+**6 touchpoint × 3-enum cross-matrix**: 각 touchpoint 의 default + manual_substitution_declare trigger + fallback_skip_with_marker trigger = [ADR-052 Amendment 8](../docs/adr/ADR-052-codex-proactive-check-touchpoints.md) §A1 표 SSOT.
+
+**narrative SSOT**: [`docs/domain-knowledge/domain/codex-collaboration/`](../docs/domain-knowledge/domain/codex-collaboration/) (ADR-052/070/081 cross-ref hub + substitution scope decision tree).
+
 #### §3.10.1 Pre-question Review (iterative reformulation — CFP-446 / [ADR-052 Amendment 2](../docs/adr/ADR-052-codex-proactive-check-touchpoints.md))
 
 | 항목 | 내용 |
