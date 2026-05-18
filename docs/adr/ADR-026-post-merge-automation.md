@@ -26,6 +26,7 @@ related_stories:
   - CFP-546   # §결정 5.F absorbed (concurrency.group namespace, framing errata) — standalone PR 폐기, CFP-545 안 통합 (Codex 종합 리뷰 2026-05-13)
   - CFP-688   # Amendment 3 §결정 5.G carrier — workflow file integrity safeguards (actionlint pre-commit hook + CI step + canary deploy mandate + KPI registry warning-tier sentinel)
   - CFP-795   # Amendment 4 §결정 6 carrier — post-merge-fix phase-gate fast-pass exemption (3-조건 AND: post-merge-fix label + hub Story §10 binding + 원 MERGED PR §7 보안 non-touch 역참조)
+  - CFP-900   # Amendment 5 §결정 7 carrier — `.github/` fast-pass content sanity 1차 신호 orthogonal warning layer (Wave 4 sub-Epic CFP-858 S3, Epic 마지막 Story. fast-pass OR-gate 무변경 + content mismatch warning emit 1단 추가. ADR-076 Amendment 3 §결정 3 sub-clause sibling)
 amendment_log:
   - date: 2026-05-12
     carrier: CFP-476
@@ -43,6 +44,10 @@ amendment_log:
     carrier: CFP-795
     section: "Amendment 4 — §결정 6 (신설) + §결정 2 (cross-repo PAT scope read 정합 cross-ref)"
     summary: "Amendment 4 = post-merge-fix phase-gate fast-pass exemption SSOT — CFP-795 carrier (mctrader consumer MCT-183 Phase 2 PR1 post-merge hotfix mctrader-data#71 trigger, cross-repo Story land_order 후 발견된 safe defect 의 정정 PR 이 phase-gate-mergeable.yml 의 PR-label-only fallback 추론으로 구조적 무한 BLOCK = consumer admin override / 불필요한 보안테스트 lane 재실행 강요 = escalate-and-fix 철학 / enforce_admins:true invariant 위배). §결정 6 (신설) = phase-gate-mergeable.yml 의 기존 3-source fast-pass OR-gate (isEpicLabel || isSiblingPr || isDocOnly) 에 4번째 source isPostMergeFix 추가 — 단순 라벨 단독 통과 금지, 3-조건 AND gate: (조건 1) post-merge-fix label 존재 (조건 2) hub Story §10 FIX Ledger 에 해당 hotfix PR 을 가리키는 row binding 존재 (cross-repo audit trail, Orchestrator monopoly fix-event-v1 contract CFP-32) (조건 3) 정정 대상 원(MERGED) PR 이 §7 보안 영역 non-touch (3a 원 PR 변경 파일 보안경로 non-match ∧ 3b hotfix PR 자체 변경 파일 보안경로 non-match — SecurityArch 양면 강화, revert 가 보안 패치 무력화 차단 = 역참조). 옵션 1 단독 (단순 라벨 exemption) 거부 = self-declare 위조 → 보안테스트 우회 attack surface (4 에이전트 독립 수렴). 옵션 3 단독 (admin-override 정책화) 거부 = enforce_admins:true invariant 정면 충돌 + escalate-and-fix 위배 — 단 consumer 즉시 unblock 의 interim-only 경로 (hotfix-playbook §3 사후 감사 trail + admin-override-with-justification) 는 정책 아닌 운영 fallback 으로 유효. 조건 2 cross-repo read 는 phase-gate-mergeable.yml 의 기존 story_uri PR-body marker + CODEFORGE_CROSS_REPO_PAT contents fetch 메커니즘 (L31-90) 재사용 — internal-docs hub Story §10 read 는 기존 PAT contents:write scope 가 read 포함하므로 충족 (§결정 2 cross-ref, scope 확장 불요). fail-closed default (판정 불가 = BLOCK 유지, false-negative 보안우회 < false-positive 불필요BLOCK). label-registry-v2 post-merge-fix entry MINOR + plugin.json MINOR (ADR-063 atomic 3-file + marketplace.json sync). is_transitional: false 유지 — sunset_justification 면제 = ratchet 강화 방향 (fast-pass 3-source → 4-source 는 gate 강화이며 약화 아님; 조건 2/3 AND 가 옵션 1 단순 라벨보다 엄격, ADR-058 §결정 5 정합). 본 Amendment 4 = ADR-024 enforce_admins:true invariant 보호 (admin override 정상화 거부) + escalate-and-fix 철학 실행 (consumer workaround 금지, 정책 기반 자동 gate pass). **Codex TP#2 inline FIX (2026-05-17, verified-true P1)**: §3.2 (hub Story §10 read) 에 hub repo 화이트리스트 (`ALLOWED_HUB_REPOS` workflow env / plugin config 주입, PR body derive 금지) 의무 추가 — story_uri spoofing forged §10 row attack 차단. zero-trust anchor. consumer overlay `phase_gate.allowed_hub_repos[]` 확장 가능 (ADR-057 정합 축소 불가). ADR-052 Amendment 4 P1 mandatory inline FIX 이행."
+  - date: 2026-05-18
+    carrier: CFP-900
+    section: "Amendment 5 — §결정 7 (신설)"
+    summary: "Amendment 5 = `.github/` fast-pass content sanity 1차 신호 orthogonal warning layer SSOT — CFP-900 carrier (Wave 4 sub-Epic CFP-858 S3, Epic 마지막 Story. ADR-076 Amendment 3 §결정 3 result fidelity sub-clause sibling carrier). Epic CFP-858 §1 부가 결함 verbatim: phase-gate-mergeable.yml 의 `.github/` 경로 fast-pass (isDocOnly line 180 `f.filename.startsWith('.github/')` + isSiblingPr line 173) 가 file path prefix match 만 수행 → workflow yml 안 의존 script reference (`run: bash scripts/check-*.sh` / `python3 templates/scripts/*.py`) content 비정합 silent pass → consumer 가 'fast-pass PASS = 안전' 오인 후 머지 → 전체 CI 마비 P0급 피해 (현재는 close 로 회피). §결정 7 (신설) = fast-pass OR-gate (isEpicLabel || isSiblingPr || isDocOnly || isPostMergeFix) 위 orthogonal content sanity warning layer 1단 추가 — 변경된 `.github/workflows/*.yml` 안 의존 script reference 가 동일 PR diff 안 OR repo 안 존재하는지 mismatch detect (S1 closure resolver CFP-898 §4.11 의 phase-gate-mergeable layer mirror — mirror-time vertical vs gate-time signal, layer 분리 invariant). severity = warning tier (AM-1 derived default — fast-pass PASS 자체 보존, fast-pass 정책 약화 = ADR-064 ratchet 위배 회피, content mismatch 시 1차 warning emit + PR comment). fast-pass OR-gate 자체 변경 0 invariant (orthogonal warning layer = gate 강화 방향, ADR-026 Amendment 4 §결정 6 3-source → 4-source ratchet 강화 패턴 답습 — gate 약화 0). blocking 승격 = evidence-checks-registry tier 승격 gate AND condition 충족 후 future CFP separate (CFP scope unitary ADR-064 §결정 1.3). is_transitional: false 유지 — sunset_justification 면제 = ratchet 강화 방향 (orthogonal warning layer 1단 추가 = gate 강화이며 약화 아님, ADR-058 §결정 5 정합, CFP-795 Amendment 4 동형). mechanical_enforcement_actions[] entry `post-merge-fix-fast-pass-content-sanity-signal` append (status: declaration-only-Wave-1, ADR-082 §결정 6 + ADR-070 §D5 패턴 답습 — Phase 2 PR 시점 phase-gate-mergeable.yml content sanity assertion + tests/workflows/ fixture 가 mechanical detection 책임). reconcile-protocol-v1 v1.9 → v1.10 §4.13 `result_fidelity_binding.fast_pass_content_sanity` field = mechanical declare / 본 ADR §결정 7 = semantic declare 분리 (CFP-743/744/745/820/821/898/899 §결정 본문 vs binding block 분리 패턴 답습). 신규 ADR 미신설 — S3 = ADR-026 Amendment 5 + ADR-076 Amendment 3 ratchet 강화로 충분 (S1 ADR-076 Amendment 2 / S2 ADR-083 신규 와 비대칭, Architect lane minimal-change 결정, ADR-RESERVATION row 84 reserve 불요)."
 mechanical_enforcement_actions:
   # ADR-040 Amendment 3 §결정 7.A schema 정합 — list[object] verbatim entry name + status + progress_note + target_section
   # 본 mechanical_enforcement_actions[] field 도입 = CFP-688 Amendment 3 §결정 5.G binding (ADR-040 Amendment 3 §결정 7.A 정합)
@@ -58,6 +63,10 @@ mechanical_enforcement_actions:
     status: deferred-followup
     progress_note: "CFP-795 Amendment 4 §결정 6 carrier. mechanical enforce = phase-gate-mergeable.yml + .github/workflows/phase-gate-mergeable.yml (byte-identical, ADR-005) 의 4번째 fast-pass source isPostMergeFix (3-조건 AND: post-merge-fix label ∧ hub Story §10 row binding ∧ 원 MERGED PR §7 보안 non-touch 양면). Phase 2 PR (구현 lane) 가 workflow Actions script 구현 + tests/workflows/ fixture (8-조합 truth table + fail-closed + self-application 회귀) carrier. evidence-checks-registry entry 신설 불요 — phase-gate-mergeable.yml 자체가 required status check (branch protection 1번째) 로 이미 mechanical gate, 본 4번째 source 는 그 gate 의 fast-pass 분기 확장 (별도 lint/sentinel 영역 아님). 본 entry 는 ADR-040 Amendment 3 §결정 7.A schema 정합용 declarative binding (Phase 2 구현 완료 시 status: active 전환)."
     target_section: §결정 6
+  - action: post-merge-fix-fast-pass-content-sanity-signal
+    status: declaration-only-Wave-1
+    progress_note: "CFP-900 Amendment 5 §결정 7 carrier (Wave 4 sub-Epic CFP-858 S3, Epic 마지막 Story). mechanical enforce = phase-gate-mergeable.yml + .github/workflows/phase-gate-mergeable.yml (byte-identical, ADR-005) 의 `.github/` fast-pass (isDocOnly line 180 / isSiblingPr line 173) 위 orthogonal content sanity warning layer — 변경 `.github/workflows/*.yml` 안 의존 script reference (`run: bash scripts/check-*.sh` / `python3 templates/scripts/*.py`) 가 동일 PR diff 안 OR repo 안 존재 mismatch detect, warning tier (fast-pass OR-gate 무변경). Phase 2 PR (구현 lane) 가 phase-gate-mergeable.yml content sanity assertion 구현 + tests/workflows/test_phase-gate-mergeable-yml.sh content sanity 1차 신호 assertion + self-application 회귀 fixture carrier. evidence-checks-registry entry 신설 불요 — fast-pass content sanity = orthogonal warning emit (fast-pass OR-gate 자체는 이미 required status check, 본 layer 는 그 위 advisory warning 1단). 본 entry 는 ADR-040 Amendment 3 §결정 7.A schema 정합용 declarative binding (declaration-only-Wave-1 — ADR-082 §결정 6 + ADR-070 §D5 declaration-only retain 패턴 답습, CFP-898/CFP-899 precedent 정합. Phase 2 구현 완료 시 status: active 전환). reconcile-protocol-v1 v1.10 §4.13 result_fidelity_binding.fast_pass_content_sanity field = mechanical declare cross-ref."
+    target_section: §결정 7
 supersedes: null
 superseded_by: null
 is_transitional: false
@@ -617,6 +626,57 @@ Amendment 1 (§결정 5.A-5.D) = PR-Issue close trigger algorithm + Amendment 2 
 
 N/A — `is_transitional: false` (permanent governance mandate). 본 Amendment 4 = ratchet **강화** 방향: fast-pass 3-source → 4-source 는 gate **강화** 이며 약화 아님 (4번째 source 의 3-조건 AND 가 옵션 1 단순 라벨보다 엄격 — label 단독 거부 + Story §10 binding + 원 PR §7 보안 양면 non-touch). escalate-and-fix 철학 실행 (consumer workaround 금지, 정책 기반 자동 gate pass) + `enforce_admins:true` invariant 보호 (admin override 정상화 거부). ADR-058 §결정 5 정합 — sunset_justification 면제.
 
+## Amendment 5 (CFP-900, 2026-05-18) — `.github/` fast-pass content sanity 1차 신호 (Wave 4 sub-Epic CFP-858 S3, Epic 마지막 Story)
+
+### 컨텍스트
+
+Epic CFP-858 (reconcile wholesale-mirror fallback 부가 결함 해소) 의 S3 (마지막 Story). S1 (CFP-898 dependency bundle integrity, vertical closure resolver mirror-전) + S2 (CFP-899 consumer-applicability filter, horizontal gating mirror-전) 위 honest reporting layer (mirror-후 temporal-post, 3-layer composite 완결). 본 Amendment 5 = ADR-076 Amendment 3 §결정 3 result fidelity sub-clause 의 sibling carrier (ADR-076 = upgrade-event log result enum 정직 반영 + post-mirror sanity check / 본 ADR-026 Amendment 5 = phase-gate-mergeable `.github/` fast-pass content sanity 1차 신호 — gate-time signal layer, mirror-time 집계 layer 와 분리).
+
+**Epic CFP-858 §1 부가 결함 verbatim**: `phase-gate-mergeable.yml` 의 `.github/` 경로 fast-pass (현 `isDocOnly` line 180 `f.filename.startsWith('.github/')` + `isSiblingPr` line 173) 는 file path **prefix match 만** 수행 — workflow yml 안 의존 script reference (`run: bash scripts/check-*.sh` / `python3 templates/scripts/*.py`) 의 content 정합성 검사 부재. consumer 가 fast-pass PASS 만 보고 머지 시, mirror 된 workflow yml 의 의존 script 가 부재하면 전체 CI 마비 (P0급 피해). 현재는 close 로 회피 (구조적 거버넌스 부재). mctrader-data#81 14 failing checks class 가 evidence (S1 closure missing 차단의 gate-time dual axis).
+
+Amendment 1 (§결정 5.A-5.D PR-Issue close algorithm) + Amendment 2 (§결정 5.E-5.F Action 1 strict regex / namespace) + Amendment 3 (§결정 5.G workflow file integrity governance) + Amendment 4 (§결정 6 post-merge-fix fast-pass 4번째 source). 본 Amendment 5 = **fast-pass content sanity advisory layer** = 새 design dimension (`.github/` fast-pass 의 path prefix match 만으론 탐지 못하는 content 비정합 1차 신호).
+
+### 거부된 옵션 + 사유 (6 SubAgent 독립 수렴)
+
+- **옵션 A 단독 (fast-pass OR-gate 에서 `.github/` 제거 / blocking 승격)**: **거부.** fast-pass 정책 약화 = ADR-064 §self-application top-down ratchet 위배 (fast-pass = operational tooling 자율성 보존 의도, CFP-260/261/262 SSOT). `.github/` fast-pass 제거 = 모든 workflow yml 변경이 full lane 강요 → escalate-and-fix 철학 위배 (불필요 BLOCK). content sanity 는 fast-pass 정책과 **orthogonal** — fast-pass PASS 보존 + content mismatch warning 별도 emit (SecurityArch + Refactor + OpRiskArch 독립 수렴: orthogonal warning layer ≠ gate 약화).
+- **옵션 C 단독 (semantic-level content equivalence diff)**: **거부 (본 Story scope).** workflow logic equivalence diff = parser dependency + false-positive 폭증 (CFP-898 §4.11 AM-1 stdlib only 패턴 동형 reasoning). 본 Amendment 5 = syntax-level 1차 신호 (의존 script reference 존재성 mismatch) — semantic depth = future CFP separate (CFP scope unitary ADR-064 §결정 1.3, TestContractArch + DataMigrationArch 독립 수렴).
+
+### 결정 7 (신설) — `.github/` fast-pass content sanity 1차 신호 (orthogonal warning layer)
+
+`templates/github-workflows/phase-gate-mergeable.yml` (+ `.github/workflows/phase-gate-mergeable.yml` byte-identical self-app mirror, ADR-005) 의 기존 4-source fast-pass OR-gate (`isEpicLabel || isSiblingPr || isDocOnly || isPostMergeFix`) **위** orthogonal content sanity warning layer 1단 추가. **fast-pass OR-gate 자체 변경 0** — gate 통과 보존 + content mismatch warning 별도 emit.
+
+| # | 항목 | 정의 | trust anchor |
+|---|---|---|---|
+| 1 | trigger 영역 | PR 변경 file 이 `.github/workflows/*.yml` 포함 ∧ fast-pass (isDocOnly OR isSiblingPr) 적용 시 | 객관 file path + diff (PR author 위조 불가) |
+| 2 | content sanity signal | 변경된 `.github/workflows/*.yml` 안 의존 script reference (`run: bash scripts/check-*.sh` / `python3 templates/scripts/*.py`) 가 동일 PR diff 안 존재 OR repo 안 존재하는지 mismatch detect (S1 closure resolver CFP-898 §4.11 의 phase-gate-mergeable layer mirror — mirror-time vertical vs gate-time signal, layer 분리 invariant) | 객관 grep + diff (S1 closure resolver algorithm 재사용) |
+| 3 | severity | **warning tier** (AM-1 derived default) — fast-pass PASS 자체 보존, content mismatch 시 1차 warning emit + PR comment | fast-pass 정책 무변경 invariant |
+
+**fast-pass OR-gate 무변경 invariant**: 본 §결정 7 = fast-pass OR-gate (`isEpicLabel || isSiblingPr || isDocOnly || isPostMergeFix`) 자체 변경 0 — content sanity = orthogonal warning layer 1단 추가 (Amendment 4 §결정 6 3-source → 4-source ratchet 강화 패턴 답습 = gate 강화 방향, gate 약화 0). content mismatch 발견 시에도 fast-pass PASS 는 보존 (warning emit 만).
+
+**warning tier rationale (AM-1 derived default, ADR-064 §결정 3 룰 1)**: fast-pass 정책 약화 (blocking 승격) = ADR-064 §self-application top-down ratchet 위배. content mismatch = 1차 warning + PR comment advisory (GitHub required vs optional check pattern 동형 — optional = warning emit but merge 미차단). blocking 승격 = evidence-checks-registry tier 승격 gate AND condition 충족 후 future CFP separate (CFP scope unitary ADR-064 §결정 1.3).
+
+**S1 closure resolver algorithm 재사용 (Refactor 검토)**: 의존 script reference detect = CFP-898 §4.11 `dependency_bundle_integrity_binding.closure_resolve_algorithm: regex_primary` (stdlib only, transitive_depth_limit=1) 동형 — algorithm 재구현 0 (mirror-time closure resolver 의 gate-time signal mirror). 본 §결정 7 = phase-gate-mergeable.yml workflow Actions script 의 fast-pass 분기 안 content sanity 평가 (조건 1 trigger 시에만 short-circuit 진입 — `.github/workflows/*.yml` 미포함 시 skip).
+
+**self-application 회귀 invariant**: 본 Amendment 5 의 Phase 2 PR 자체가 `phase-gate-mergeable.yml` 변경 → Phase 2 PR 의 gate 가 변경된 workflow 자신으로 평가. content sanity = orthogonal warning layer (fast-pass OR-gate 무변경 → Phase 2 PR gate 통과 무영향). "신규 warning layer 가 기존 fast-pass path 를 오염시키지 않음" 입증 = Phase 2 PR gate 통과 + `tests/workflows/test_phase-gate-mergeable-yml.sh` self-application 회귀 fixture.
+
+### Reversibility (Amendment 5 scope)
+
+- §결정 7 (content sanity warning layer): Phase 2 PR 의 `phase-gate-mergeable.yml` 변경에서 content sanity 평가 블록 제거 = 기존 4-source fast-pass 동작 복원 (orthogonal 특성상 clean rollback, fast-pass OR-gate 무영향). `.github/workflows/` mirror 동시 revert (ADR-005).
+- ADR-026 Amendment 5 자체 revert: ADR file revert (workflow 본체 무영향, declarative SSOT 만 revert) — but Amendment 5 design intent (`.github/` fast-pass content sanity governance) 가 normative directive 로 격하.
+- reconcile-protocol-v1 v1.10 §4.13 `result_fidelity_binding.fast_pass_content_sanity` field: 별 revert (kind:registry, sibling sync 면제).
+
+### Out-of-scope (Amendment 5 scope)
+
+- 옵션 A 단독 (fast-pass `.github/` 제거 / blocking 승격) / 옵션 C 단독 (semantic-level content equivalence) — 명시적 거부 (위 "거부된 옵션").
+- `phase-gate-mergeable.yml` content sanity mechanical 구현 — Phase 2 구현 lane (Change Plan §3/§7/§8 SSOT 이행, declaration-only-Wave-1).
+- content sanity blocking tier 승격 — evidence-checks-registry tier 승격 gate AND condition 충족 후 future CFP separate.
+- semantic-level workflow logic equivalence diff — AM-3 derived default 외, future CFP separate (CFP scope unitary).
+- mctrader-data#81 14 failing checks backfill remediate — cross-repo, Epic CFP-858 close 후 별 work (Epic §위험 신호 verbatim).
+
+### 해소 기준 (Amendment 5 scope)
+
+N/A — `is_transitional: false` (permanent governance mandate). 본 Amendment 5 = ratchet **강화** 방향: orthogonal content sanity warning layer 1단 추가 = gate **강화** 이며 약화 아님 (fast-pass OR-gate 무변경 + content mismatch 1차 warning emit — fast-pass PASS 보존하면서 silent content 비정합 가시화). escalate-and-fix 철학 실행 (consumer 가 fast-pass PASS = 안전 오인 → 전체 CI 마비 P0 차단). ADR-058 §결정 5 정합 — sunset_justification 면제 (CFP-795 Amendment 4 동형).
+
 ## 관련 ADR
 
 - **ADR-022** §결정 1 User Override hierarchy: workflow 가 merge 결정 안 함, follow-up 만 (사용자 admin merge 결정 보존)
@@ -632,4 +692,11 @@ N/A — `is_transitional: false` (permanent governance mandate). 본 Amendment 4
 - **ADR-005** (Amendment 4): self-application byte-identical mirror — `templates/github-workflows/phase-gate-mergeable.yml` ↔ `.github/workflows/phase-gate-mergeable.yml` 동시 갱신 의무 (4번째 source append).
 - **ADR-066** (Amendment 4): CODEFORGE_CROSS_REPO_PAT rotation policy — 조건 2 cross-repo §10 read 가 기존 PAT (`contents:write on internal-docs` ⊇ read) 재사용. consumer hub repo 일반화 시 consumer PAT `contents:read` scope cross-ref.
 - **ADR-013 / ADR-017** (Amendment 4): codeforge family dogfood-out — 본 Amendment 4 의 Change Plan / Story file = internal-docs `wrapper/`, ADR home = 본 plugin-codeforge `docs/adr/`.
+- **ADR-076** (Amendment 5): declarative reconciliation upgrade flow — 본 Amendment 5 §결정 7 (`.github/` fast-pass content sanity 1차 신호 gate-time signal) = ADR-076 Amendment 3 §결정 3 result fidelity sub-clause (upgrade-event log result enum 정직 반영 + post-mirror sanity check mirror-time 집계) 의 sibling carrier (Wave 4 sub-Epic CFP-858 S3, Epic 마지막 Story). gate-time signal layer ↔ mirror-time 집계 layer 분리 invariant.
+- **ADR-064** (Amendment 5): §self-application top-down ratchet — 본 Amendment 5 = orthogonal content sanity warning layer 1단 추가 (gate 강화 방향, fast-pass OR-gate 무변경 = 약화 0). 옵션 A 단독 (fast-pass `.github/` 제거) 거부 = fast-pass 정책 약화 ratchet 위배 회피. semantic-level depth = future CFP separate (CFP scope unitary §결정 1.3).
+- **ADR-058** (Amendment 5): §결정 5 sunset_justification — Amendment 5 = ratchet 강화 방향 (orthogonal warning layer 1단 추가는 gate 강화), `is_transitional: false` 유지, sunset_justification 면제 (CFP-795 Amendment 4 동형).
+- **ADR-082 / ADR-070** (Amendment 5): write-time self-write verification mandate / Codex verify-before-trust — 본 Amendment 5 `mechanical_enforcement_actions[]` entry `post-merge-fix-fast-pass-content-sanity-signal` = declaration-only-Wave-1 (Phase 2 PR content sanity assertion 가 mechanical detection 책임, ADR-082 §결정 6 + ADR-070 §D5 declaration-only retain 패턴 답습, CFP-898/CFP-899 precedent 정합).
+- **ADR-005** (Amendment 5): self-application byte-identical mirror — `templates/github-workflows/phase-gate-mergeable.yml` ↔ `.github/workflows/phase-gate-mergeable.yml` 동시 갱신 의무 (content sanity warning layer Phase 2 추가).
+- **ADR-083 / CFP-898 / CFP-899** (Amendment 5): Wave 4 sub-Epic CFP-858 3-layer composite — S1 (CFP-898 ADR-076 Amendment 2 vertical dependency closure) + S2 (CFP-899 ADR-083 horizontal consumer-applicability filter) 위 S3 (CFP-900 본 Amendment 5 + ADR-076 Amendment 3 honest reporting layer, mirror-후 temporal-post). content sanity signal = S1 closure resolver (CFP-898 §4.11) 의 phase-gate-mergeable layer mirror (algorithm 재사용, gate-time signal).
+- **ADR-013 / ADR-017** (Amendment 5): codeforge family dogfood-out — 본 Amendment 5 의 Change Plan / Story file = internal-docs `wrapper/`, ADR home = 본 plugin-codeforge `docs/adr/`.
 - **ADR-058** (Amendment 4): §결정 5 sunset_justification — Amendment 4 = ratchet 강화 방향 (fast-pass 3→4 source 는 gate 강화), `is_transitional: false` 유지, sunset_justification 면제.
