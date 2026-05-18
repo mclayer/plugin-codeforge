@@ -16,9 +16,20 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 1 + ADR-082 §결정 1"
     sunset_justification: null
+  - amendment_id: 2
+    cfp: CFP-966
+    date: 2026-05-18
+    scope: "§결정 1 expansion — transition trigger enum 3종 (lane_spawn / pr_open / merge_transition) + cold start session_start 보강 + sustained in-session polling 의무 (turn-0-only SessionStart hook 한계 해소). 본 Amendment 는 §결정 1-8 본문 scope 강화 only (ADR-058 §결정 5 ratchet 정합) — 약화 / scope 축소 0건. evidence-checks-registry warning-tier entry parallel-work-sentinel-pickup (recurrence count 2 / threshold 3 / promotion_trigger auto_blocking, schema v1.2 정합) 가 measurement carrier. memory rule 6 (title-based search) + rule 7 (Epic state poll) = declarative cross-ref normative anchor (mechanical enforcement = sibling Story-2 CFP-967 carrier). Sentinel: 2026-05-18 KST same-day 2/2 parallel race incidents (CFP-953 first label-based search miss + CFP-946 second 11분 gap Epic close miss)."
+    status: applied
+    ref: "## Amendments / Amendment 2 + CFP-966 carrier"
+    sunset_justification: null
 related_stories:
   - CFP-622  # carrier
   - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
+  - CFP-966  # Amendment 2 — transition trigger enum + sustained polling (declarative anchor)
+  - CFP-967  # Amendment 2 sibling — mechanical wire (script + hook + workflow + bats)
+  - CFP-953  # Amendment 2 sentinel evidence (first parallel race — label-based search miss)
+  - CFP-946  # Amendment 2 sentinel evidence (second parallel race — 11분 gap Epic close miss)
   - CFP-597  # sentinel #4 strike #1 origin (CLAUDE.md cap + playbook §3.6 false alarm)
   - CFP-578  # ADR-070 verify-before-trust 자매 (external worker output)
   - CFP-612  # ADR-071 dialog convergence 자매 governance
@@ -38,8 +49,11 @@ related_files:
   - <internal-docs>/wrapper/templates/spec.md  # pre_lookup_evidence[] field 신설
   - <internal-docs>/wrapper/templates/plan.md  # pre_lookup_evidence[] field 신설
 is_transitional: false
-mechanical_enforcement_actions: []
-# Wave 1 = behavioral directive only (Orchestrator self-discipline forcing function).
+mechanical_enforcement_actions:
+  - parallel-work-sentinel-pickup  # CFP-966 Amendment 2 — declarative anchor (warning tier, declaration-only-Wave-1, actual lint script + workflow wire = sibling Story-2 CFP-967 carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합)
+# Wave 1 = behavioral directive only (Orchestrator self-discipline forcing function) — Amendment 2 (CFP-966)
+# 가 첫 mechanical_enforcement_actions[] row entry append (declarative anchor only — script + workflow
+# 실 binding 은 sibling Story-2 CFP-967 carrier).
 # Layer 2 mechanical lint (pre-tool-use hook 또는 evidence-checks-registry warning-tier) = 별도 follow-up CFP 분리.
 # 본 ADR effective 후 신설 evidence-enforceable entry 가 follow-up CFP carrier 에서 추가될 때
 # mechanical_enforcement_actions[] 갱신 + Amendment 발의 (강화 방향만 — ADR-058 §결정 5 / ADR-064 §결정 7
@@ -316,17 +330,88 @@ Wave 3 (warning → blocking-on-pr)    ← ADR-073 Amendment 2 (TBD, ratchet 강
 
 두 layer 는 verify 대상 / 행위 주체가 disjoint — scope 침범 0. ADR-082 §결정 1 layer disjoint 4-layer 표 (ADR-073 / ADR-070 / ADR-082 / ADR-045 §D) 가 공통 anchor. 본 Amendment 는 cross-ref-only — ADR-073 §결정 1-8 / mechanism enumeration 의 의미 변경 없음.
 
+### Amendment 2 — Transition trigger enum + sustained polling expansion (CFP-966)
+
+**문제**: ADR-073 base §결정 1 (CFP-622) + Amendment 1 (CFP-776 ADR-082 cross-ref) 은 Orchestrator 가 cross-repo state / assumption 을 **단정 발화** 하는 순간 (한 turn 내 1회 event) 의 verify 의무를 codify. 그러나 long-running Orchestrator session 안에서 발생하는 **mid-flight parallel race incidence** 영역은 base + Amendment 1 scope 외 — session 시작 시점 (turn 0) state snapshot 이 stale 화 하면서 동일 session 안 후속 turn 의 단정 발화 도 동시 정합 invariant 가 깨진다.
+
+Sentinel evidence (2026-05-18 KST same-day 2/2 occurrence):
+- **CFP-953** (first incident): Epic CFP-882 Wave 4 Story-2 진행 시 label-based search (`gh issue list --label parent:CFP-882`) 만 수행 → CFP-932 (실제 Wave 4 Story-2 carrier, label `parent:CFP-699` 만 부착) miss → #953 brainstorm Phase 0/2 + spec PR #624 진행 후 발견 → #953 closed not_planned + spec deprecation PR #625. memory rule 6 신설 carrier (title-based search 의무).
+- **CFP-946** (second incident, same day, 11분 gap): Epic CFP-946 brainstorm + Story-A (#957) PR #961 merged `06:42:12Z` → 11분 후 parallel session PR #962 `[CFP-946 option 1]` merged `06:53:30Z` "Closes #946" → Epic #946 CLOSED. Story-B (#958) ArchitectPL spawn 직전 HEAD re-pin 시 #962 검출. Story-B scope 분할 (declaration absorbed by #962 + mechanical layer carry-forward = #963 P2). memory rule 7 신설 carrier (Epic 진행 중 polling 의무).
+
+**결정**: §결정 1 의 verify-before-assert mandate 를 **mid-flight transition state** 영역까지 expansion. 다음 3 요소 신설:
+
+#### Amendment 2 §결정 1-A — Transition trigger enum 3종 (closed set)
+
+Orchestrator (또는 subagent) 가 다음 transition 직전 시점에 추가 verify 의무 발화:
+
+| ID | Transition trigger | 발화 시점 | Verify 의무 |
+|----|---|---|---|
+| `lane_spawn` | lane 진입 직전 (Requirements / Design / DesignReview / Develop / CodeReview / SecurityTest / IntegrationTest / PMO retro lane spawn) | Agent tool spawn 직전 | Issue body / current CFP context title-based search + Epic state poll + HEAD re-pin (`git ls-remote origin <branch>`) + HEAD compare (`gh api repos/.../compare/<prior>...<current>`) |
+| `pr_open` | PR open 직전 (Phase 1 / Phase 2 / retro PR) | `gh pr create` 직전 | 동일 3-step (title-based search + Epic poll + HEAD compare) + sibling Story PR list cross-ref |
+| `merge_transition` | PR merge 직전 (`gh pr merge` 직전) + merge 직후 (gate label / phase label transition 직전) | merge command 직전 + 직후 transition action 직전 | 동일 3-step + Epic state final poll (close eligibility check, ADR-077 §결정 4 정합) |
+
+closed enum — 4번째 trigger 추가 시 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합).
+
+#### Amendment 2 §결정 1-B — Cold start session_start 보강
+
+기존 SessionStart hook tier (`templates/.claude/hooks/SessionStart-codeforge-prereq-check.json.sample` + ADR-038 Amendment 2 §결정 9 TodoWrite preload pattern) 는 **turn 0 prompt-injection 단독 layer** — additionalContext 가 first user turn 직전 1회 발화. mid-flight parallel race (CFP-953 / CFP-946 evidence) 차단 영역은 cover 부족.
+
+본 Amendment 2 는 cold start session_start 도 transition trigger 4번째 가상 entry 로 amplify:
+- session 첫 turn additionalContext 안 **active CFP context list** + **open Epic state list** + **current branch HEAD vs origin/main delta** 3-item preload 의무 (SessionStart hook tier 위임 — Story-2 carrier `templates/.claude/hooks/SessionStart-parallel-work-poll.json.sample` mechanical wire)
+- additionalContext 안 layer 1 fallback 만 — actual sustained polling = §결정 1-C 영역
+
+#### Amendment 2 §결정 1-C — Sustained in-session polling 의무 mandate (turn-0-only 한계 해소)
+
+base §결정 1 (Orchestrator 단정 발화 시점 verify) + 본 Amendment §결정 1-A (transition trigger 3종) 의 **sustained polling** discipline normative anchor:
+
+- Long-running session 안 **매 transition trigger 직전 HEAD SHA re-pin** 의무 — TodoWrite scratchpad / Story §0 Live Progress / `.claude-work/progress/<KEY>.md` 등 session state cache 가 stale (이미 polling 후 5+ min 경과) 일 가능성 무조건 가정
+- mechanical polling source (parallel branch HEAD list + open Epic list + recent merged PR list) = sibling Story-2 CFP-967 mechanical wire (`scripts/check-parallel-work-sentinel.{sh,py}` + workflow event dispatch) 영역
+- 본 ADR scope = behavioral directive + declarative anchor (§결정 1-A enum + §결정 1-B cold start ratchet + §결정 1-C polling mandate). actual lint script + workflow yaml + hook json sample = Story-2 carrier 위임 (declaration-only-Wave-1 patterns, ADR-082 §결정 6 + ADR-060 Amendment 10 §결정 24 precedent 답습)
+
+#### Amendment 2 — mechanical_enforcement_actions[] 첫 entry append
+
+본 Amendment 2 가 ADR-073 frontmatter `mechanical_enforcement_actions[]` 의 첫 row entry (`parallel-work-sentinel-pickup`) append 발의 — base + Amendment 1 의 `[]` empty Wave 1 → Amendment 2 의 1-entry warning-tier Wave 1 ratchet (ADR-040 Amendment 3 §결정 7.D self-application 정합).
+
+| Wave | Status | Carrier |
+|---|---|---|
+| Wave 1 base (declaration mandate) | `mechanical_enforcement_actions: []` | CFP-622 (ADR-073 base, 2026-05-14) |
+| Wave 1 + Amendment 1 (ADR-082 cross-ref) | `mechanical_enforcement_actions: []` (unchanged) | CFP-776 (Amendment 1, 2026-05-17) |
+| **Wave 1.5 + Amendment 2 (declarative anchor entry)** | `mechanical_enforcement_actions: [parallel-work-sentinel-pickup]` (warning tier) | **CFP-966 (본 Amendment 2, 2026-05-18) — declarative anchor only** |
+| Wave 1.6 + Story-2 mechanical wire | (entry unchanged, status warning → blocking-on-pr 자동 승격 trigger 활성) | CFP-967 (Story-2 mechanical wire, sequential — Story-1 merge 후) |
+| Wave 2 (recurrence count ≥ 3 자동 승격) | (entry current_tier: blocking-on-pr 전환) | post-CFP-967 follow-up CFP (recurrence.threshold=3 auto-firing) |
+
+#### Amendment 2 — Disjoint scope cross-ref (Edge 3 정합)
+
+본 Amendment 2 는 ADR-082 Amendment 1 (CFP-841 Phase 1 declare — write-time self-write verification scope 2(a) corpus-claim-verify + scope 2(d) cross-plugin-ownership-verify deferred-followup) 과 **disjoint scope**:
+
+- **ADR-082 Amendment 1** = internal lane agent self-write **write-time** semantic truth verify (corpus annotation + cross-plugin ownership) — 작성 값 자체의 사실성 source verify
+- **ADR-073 Amendment 2** (본) = Orchestrator **transition state** verify (lane spawn / PR open / merge transition 직전 mid-flight parallel race state poll) — write-time 영역 외, session state cache staleness 영역
+
+ADR-082 §결정 1 layer disjoint 4-layer 표 anchor 정합 — 두 Amendment 가 별 layer 안 ratchet 강화 진행, scope 침범 0건. 본 Amendment 2 본문 자체 안 ADR-082 cross-ref 영역 변조 0 (Amendment 1 disjoint 보완 관계 그대로 보존).
+
+#### Amendment 2 — sunset_justification N/A 정당
+
+`is_transitional: false` (영구 governance policy) 보존 — Amendment 2 scope = §결정 1-A/1-B/1-C 강화 방향 only (transition trigger enum 추가 + cold start 보강 + sustained polling mandate). 약화 / scope 축소 / 면제 영역 0건. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과 (Amendment 1 동형 precedent).
+
 ## 관련 파일
 
 - `docs/adr/ADR-RESERVATION.md` — row 73 (CFP-622)
 - `docs/adr/ADR-082-write-time-self-write-verification-mandate.md` — disjoint super-class (Amendment 1 cross-ref, CFP-776)
-- `CLAUDE.md` — "결정 원칙" section ADR-073 cross-ref
+- `CLAUDE.md` — "결정 원칙" section + "Verify-before-trust 4-layer governance" 단락 ADR-073 cross-ref
 - `skills/codeforge-brainstorm/SKILL.md` — Phase 0 자기 적용 의무 sub-section
 - `.claude-plugin/plugin.json` — version bump (CFP-622 carrier MINOR)
 - `CHANGELOG.md` — 5.53.0 entry + Strike #3 + Strike #4 sub-sections
 - `mclayer/marketplace/.claude-plugin/marketplace.json` — codeforge entry mirrored field sync (PR1 #109 merged)
 - `mclayer/codeforge-internal-docs/wrapper/{specs,plans,stories,change-plans}/CFP-622-*.md` — Story carrier (PR3 TBD)
 - `mclayer/codeforge-internal-docs/wrapper/templates/{spec,plan}.md` — pre_lookup_evidence[] field 신설
+- **Amendment 2 (CFP-966, 2026-05-18) 관련**:
+  - `docs/evidence-checks-registry.yaml` — `parallel-work-sentinel-pickup` 신규 entry (warning tier, declaration-only-Wave-1, recurrence count 2 / threshold 3 / promotion_trigger auto_blocking)
+  - `docs/domain-knowledge/domain/orchestrator-discipline/parallel-work-sentinel-polling.md` — narrative SSOT (sentinel batch + escalation matrix)
+  - `docs/orchestrator-playbook.md` §3.5 — lane spawn 직전 polling 의무 enum + HEAD compare pattern
+  - `docs/parallel-work/section-ownership.yaml` — ADR-073 file lock row append (Amendment 2 신설 carrier)
+  - `mclayer/codeforge-internal-docs/wrapper/stories/CFP-966.md` — Story-1 declarative anchor (본 Amendment 2 carrier)
+  - `mclayer/codeforge-internal-docs/wrapper/change-plans/CFP-966.md` — Change Plan (declarative)
+  - **sibling Story-2**: CFP-967 mechanical wire (`scripts/check-parallel-work-sentinel.{sh,py}` + `templates/.claude/hooks/SessionStart-parallel-work-poll.json.sample` + `templates/github-workflows/parallel-work-sentinel-check.yml` + `tests/bats/test_parallel_work_sentinel.bats`)
 
 ## 해소 기준
 
