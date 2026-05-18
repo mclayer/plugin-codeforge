@@ -37,6 +37,10 @@ amendments:
     date: 2026-05-17
     carrier_story: CFP-844
     summary: "ADR-081 Amendment 1 (신규 §결정 D6 Codex worker severity calibration rubric) cross-ref sub-section append. D6 = Codex finding severity ↔ PL synthesis severity bidirectional calibration anchor (over-rate 금지 + security-relevant under-rate 금지) + ground truth = DesignReviewPL final verdict severity primary (CodeReviewPL fallback / higher PL 양쪽) + boundary-completeness exception (Codex P0 boundary-completeness × DesignReview P1 = over-rate 아님, +1 tier) + disjoint axis preservation (codex_severity_inflation calibration ≠ codex_false_positive_tally accuracy, fp 0 chain sentinel 무영향) + tracking = 기존 Story §9/§10 prose marker (review-verdict-v4 contract field 신설 0 — doc-only fast-path 유지, ADR-081 §D5 declaration-only retain precedent verbatim). D1/D2/D3/D4 + Amendment 1-6 본문 의미 변경 0건 — sub-section append only (Amendment 1-6 패턴 정합). is_transitional=false, sunset_justification=permanent strengthening (verify-before-trust scope 에 severity calibration 차원 추가 — ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합, 약화 영역 0). doc-only fast-path 자체 적격 — 단 carrier Story (CFP-844) 는 ADR-081 Amendment 1 (신규 §결정 D6) 동반 = ADR-054 §결정 1 (신규 ADR 도입 아님, 기존 ADR Amendment + src/tests 무변경) doc-only fast-path 단일 PR 적격."
+  - id: 8
+    date: 2026-05-18
+    carrier_story: CFP-946-A
+    summary: "6 touchpoint substitution path 3-enum cross-ref (Amendment 5 verbatim 첨부 의무 SSOT + ADR-070 §결정 1 expansion SSOT 보존). 신설 §결정 영역 = 6 touchpoint × substitution path 3-enum (inline_orchestrator_verify default / manual_substitution_declare / fallback_skip_with_marker) cross-matrix. ADR-070 §결정 1 expansion (substitution scope 3-path enum codify) SSOT 본문 cross-ref. Codex sandbox 8 occurrence sentinel (CFP-756 Epic close retro Sentinel #4 strike #8, parent_epic CFP-946) escalate_user 산물. D1/D2/D3/D4 + Amendment 1-7 본문 의미 변경 0건 — sub-section append 패턴 (Amendment 1-7 패턴 정합). is_transitional=false, sunset_justification=N/A — permanent strengthening (substitution path 3-enum codification = Codex worker sandbox 영역 변경 없으면 permanent retain). doc-only fast-path 자체 적격 — carrier Story (CFP-946-A) 는 ADR-070 §결정 1 expansion + 신규 domain-knowledge 페이지 동반 = ADR-054 §결정 1 (신규 ADR 도입 아님, 기존 ADR Amendment + 신규 domain-knowledge + src/tests 무변경) doc-only fast-path 단일 PR 적격."
 related_stories:
   - CFP-354
   - CFP-411
@@ -46,6 +50,7 @@ related_stories:
   - CFP-578
   - CFP-819
   - CFP-844  # Amendment 7 — ADR-081 Amendment 1 (§결정 D6 severity calibration) cross-ref
+  - CFP-946-A  # Amendment 8 — substitution path 3-enum cross-ref (parent_epic CFP-946)
 related_adrs:
   - ADR-039
   - ADR-034
@@ -59,6 +64,7 @@ related_files:
   - docs/superpowers-integration.md
   - CLAUDE.md
 is_transitional: false
+mechanical_enforcement_actions: []  # declaration-only retain — ADR-070 §D5 + ADR-082 §결정 6 + ADR-081 §D5 + ADR-076 §결정 6 fail-closed clause precedent chain 정합. Amendment 8 영역 mechanical lint 후보 = ADR-070 §D5 (a)/(b)/(c)/(d) 4 후보 모두 robustness risk 보유 evidence. evidence-checks-registry entry append 면제.
 ---
 
 # ADR-052: Codex Proactive Check — 6 Touchpoints
@@ -740,3 +746,90 @@ Touchpoint #2 (ArchitectAgent §3 완료 직후, mandatory — Amendment 4) + To
 - (Amendment-Y) **ADR-052 본문 안 severity calibration rubric 직접 inline append** (ADR-081 D6 cross-ref 회피) — 영역 type mismatch (touchpoint behavior ≠ Codex worker severity calibration). ADR-081 자매 패턴 (boilerplate composition SSOT 분리 — Amendment 6 정합) 정합성 부재 → ADR-081 D6 안 rubric SSOT + ADR-052 cross-ref 만 채택.
 - (Amendment-Z) **severity calibration 을 새 touchpoint (#7) 로 도입** — touchpoint = dispatch 발동 지점 정의. severity calibration 은 기존 #2/#3 dispatch 후 결과 처리 단계 — 새 dispatch 지점 아님. D2 6-touchpoint invariant 보존 (touchpoint count 무변경) → 기존 #2/#3 결과 처리 단계 추가만 채택.
 - (Amendment-AA) **review-verdict-v4 신규 `codex_severity_inflation` contract field 신설** — contract MINOR bump + sibling sync (ADR-008/010) + Phase 2 PR = doc-only fast-path 이탈. ADR-081 §D5 declaration-only retain precedent 위배 → 기존 Story §9/§10 prose marker 채택 (ADR-081 §결정 D6.e SSOT 정합).
+
+---
+
+## Amendment 8 (2026-05-18 KST, CFP-946-A)
+
+### Context (Amendment 8)
+
+Codex worker (codex:codex-rescue subagent) 의 sandbox-level file system access 실패가 누적 9 회 occurrence (CFP-506 / CFP-520 / CFP-530 / CFP-578 carrier 3 회 + CFP-756 Epic B 4 Story CFP-919/920/921/923 4 회 + Sentinel #4 strike #8 carrier CFP-946 Epic close retro 1 회 + 본 Story-A Phase 1 PR DesignReview lane reentrant 9th = 9 occurrence 누적, parent_epic CFP-946 P1 escalate_user). 본 Amendment 8 carrier Story (CFP-946-A) 가 Codex worker substitution path 3-enum 의 normative anchor codification.
+
+기존 ADR-070 §결정 D1 default substitution = "Orchestrator inline verify-before-trust" (file Read / Glob / Grep direct verify) — 운영적으로 단일 substitution behavior 만 codify. 실제 운영에서 3 가지 substitution path 가 활용되어 왔으나 (sandbox 영역 외 file 의 sentinel sample 8 retro 분석 결과) normative SSOT 부재 — Codex worker spawn 결정 시점 의 substitution scope declare gap.
+
+본 Amendment 8 = ADR-070 §결정 1 expansion (substitution scope 3-path enum codify, ADR-070 Amendment 3 동반 carrier) 의 ADR-052 본문 cross-ref. 6 touchpoint 각각의 dispatch prompt template 안 substitution path enum 명시 의무 = D2 6-touchpoint 자동 활성 invariant 의 확장 영역 (dispatch 발동 시점에 substitution scope explicit declare).
+
+### 결정 (Amendment 8)
+
+**A1. 6 touchpoint × substitution path 3-enum cross-matrix**
+
+| Touchpoint | Default substitution path | manual_substitution_declare 채택 trigger | fallback_skip_with_marker 채택 trigger |
+|---|---|---|---|
+| #1 Pre-question Review | `inline_orchestrator_verify` | 질문 초안 인용 source 가 cross-repo / sibling plugin file (sandbox 영역 외) 인 경우 | Codex CLI 미가용 / sandbox network-block 확정 (Orchestrator 가 단독 발화) |
+| #2 Design Synthesis Check (**mandatory**) | `inline_orchestrator_verify` | Change Plan 또는 ADR 본문 cross-repo state 인용 시 (예: marketplace.json mirrored field) | EC-1 recursive substitution cascade (본 Story-A 자체 Phase 1 PR DesignReview lane 의 reentrant) |
+| #3 Development Rescue | `inline_orchestrator_verify` | 구현 블로커 evidence 가 worktree 외 영역 (sibling plugin 코드 / cross-repo CI log) | 일반적으로 발생 0 — DeveloperPLAgent 가 own worktree scope 안 |
+| #4 Requirements Output Review (multi-round debate, Amendment 1) | `inline_orchestrator_verify` | Codex finding 의 fact-check sub-criterion (cross-repo state verification) 인 경우 | 일반적으로 발생 0 — Story §1-§6 = internal-docs path 가 sandbox 영역 외 → debate-protocol-v1 Round 0 input verbatim 첨부 의무 (Amendment 5 SSOT) |
+| #5 FIX Root Cause 2nd Opinion | `inline_orchestrator_verify` | review findings evidence pack 안 cross-repo file path 인 경우 | Codex CLI 미가용 / D4 사용자 escalation 직접 진입 |
+| #6 ADR Draft Review | `inline_orchestrator_verify` | ADR cross-ref ADR 본문 (sibling plugin docs/adr/ path) 인 경우 | EC-1 recursive substitution cascade (본 ADR-052 Amendment 8 자체 작성 시점 — manual_substitution_declare 사전 declare 의무) |
+
+본 표 = ADR-070 §결정 1 expansion 본문 3-enum SSOT 의 ADR-052 본문 cross-ref. 결정 본문 SSOT = ADR-070 §결정 1 expansion (substitution path 3-enum semantics + Story §10 marker 의무 + 적용 trigger).
+
+**A2. ProactiveCheckPacket schema 변경 없음 (Amendment 5/6/7 패턴 정합)**
+
+기존 D3 ProactiveCheckPacket v1 schema 유지. substitution path enum 명시는 Codex worker spawn prompt 본문 안 (`task` field 본문 또는 별도 sub-field `substitution_scope`) — schema MINOR bump 불필요. ADR-070 §결정 1 expansion 의 결정 본문 SSOT 가 normative anchor — playbook §3.10 dispatch prompt template 안 본문 명시 patch.
+
+**A3. Story §10 marker 의무 (substitution path enum 2/3 한정)**
+
+| Enum value | Story §10 marker (FIX Ledger row) | grep 대상 |
+|---|---|---|
+| `inline_orchestrator_verify` (default) | (면제 — marker 부재 = 암묵 default) | N/A |
+| `manual_substitution_declare` | `[codex-substitution-scope-declared: <scope-enum>]` (1 회/spawn) | sandbox 영역 외 file 인용 evidence + Orchestrator override rationale |
+| `fallback_skip_with_marker` | `[codex-sandbox-fallback: <fail-mode>]` (1 회/spawn) | fail-mode enum = `api_missing` / `version_skew` / `enterprise_blocked` / `gh_api_network_blocked` / `manual_substitution_declared` / `inline_orchestrator_verify_only` |
+
+본 표 = ADR-070 §결정 1 expansion 의 Story §10 marker SSOT 의 cross-ref. KPI 영역 (`substitution_count` + `verify_failure_rate` 정량 측정 threshold=5 / 15%) 는 post-merge follow-up CFP carrier 영역 — 본 Amendment 8 의무 = prose tally only (Story §10 marker grep count, lint 없음).
+
+**A4. ADR-070 §결정 1 expansion SSOT 위임 (cross-ref-only Amendment 패턴)**
+
+본 Amendment 8 = sub-section append 패턴 (Amendment 1-7 패턴 정합). D1/D2/D3/D4 결정 본문 + Amendment 1-7 본문 의미 변경 없음. Codex worker dispatch 자체 흐름 invariant 정합 (substitution path enum 명시 = dispatch 발동 시점 substitution scope declare 단계 추가만 — dispatch 발동 자체 D2 invariant 무변경).
+
+**A5. ADR-058 §결정 5 ratchet 정합 (강화 방향 명시)**
+
+본 Amendment = 강화 방향 (ratchet 강화):
+
+- `is_transitional: false` 본 ADR 유지 (permanent governance, substitution path 3-enum codification = permanent strengthening — Codex worker sandbox 영역 변경 없으면 permanent retain)
+- `sunset_justification: "N/A — permanent strengthening (substitution path 3-enum codification = ADR-070 §결정 1 expansion SSOT 의 ADR-052 본문 cross-ref. ADR-070 §D5 declaration-only retain precedent + ADR-082 §결정 6 + ADR-081 §D5/§D6.e + ADR-076 §결정 6 fail-closed clause precedent chain 5번째 link)"`
+- ADR-058 §결정 5 sunset_justification 의무는 약화 방향 (substitution path 3-enum 축소 또는 declare 의무 약화) 에만 발효 → 본 Amendment 는 면제
+
+**A6. ADR-064 §결정 (Trace 1) active amendment + full-scope 정합**
+
+ADR-064 결정 원칙 4 어휘 anchor (best-effort / broad coverage / full-scope / active amendment) 중 **active amendment** + **full-scope** 정합:
+
+- Amendment 발의 시점 = 9 occurrence 누적 sentinel reach 후 즉시 (Sentinel #4 strike #8 carrier CFP-756 Epic close retro + parent_epic CFP-946 P1 escalate_user, active amendment ratchet 강화 방향)
+- 적용 영역 = 6 touchpoint 모두 (full-scope, 단일 touchpoint 한정 아님)
+- forbid-list 13 어휘 (ADR-064 §결정 1 + Amendment 2/4/5) 사용 0 건 self-attest
+
+**A7. doc-only fast-path 적용 (ADR-054 §결정 1)**
+
+본 Amendment 8 자체 = ADR-052 본문 patch (Amendment row append + sub-section append) — doc-only fast-path 적격. 단 carrier Story (CFP-946-A) 는 ADR-070 §결정 1 expansion + 신규 domain-knowledge 페이지 동반 = ADR-054 §결정 1 (신규 ADR 도입 아님, 기존 ADR Amendment + 신규 domain-knowledge + src/tests 무변경) doc-only fast-path 단일 PR 적격.
+
+**A8. D1/D2/D3/D4 결정 본문 + Amendment 1-7 본문 의미 변경 없음**
+
+기존 D1 (codex:codex-rescue dispatch 채널) / D2 (6 touchpoint 자동 활성) / D3 (ProactiveCheckPacket v1) / D4 (#5 판정 불일치 = 사용자 escalation) + Amendment 1-7 본문 의미 변경 없음. 본 Amendment 8 = 6 touchpoint × substitution path 3-enum cross-matrix 명시만 — sub-section append 패턴 (Amendment 1-7 패턴 정합).
+
+### 결과 (Amendment 8)
+
+- 6 touchpoint × substitution path 3-enum cross-matrix 본문 명시 — A1 SSOT
+- Story §10 marker 의무 (`[codex-substitution-scope-declared]` / `[codex-sandbox-fallback]`) — A3 SSOT
+- ADR-070 §결정 1 expansion SSOT 위임 (cross-ref-only Amendment 패턴) — A4 SSOT
+- ADR-058 §결정 5 ratchet 정합 (강화 방향, sunset_justification N/A — permanent strengthening) — A5 SSOT
+- ADR-064 §결정 active amendment + full-scope 정합 (forbid-list 13 어휘 사용 0 건) — A6 SSOT
+- doc-only fast-path 영역 정합 (본 Amendment 8 자체) — A7 SSOT
+- D1/D2/D3/D4 + Amendment 1-7 본문 의미 변경 0건 (sub-section append 패턴) — A8 SSOT
+
+### 거절된 대안 (Amendment 8)
+
+- (Amendment-AB) **substitution path 3-enum 의 normative anchor SSOT 를 ADR-052 본문에 inline 작성** (ADR-070 §결정 1 expansion 회피) — 영역 type mismatch (touchpoint behavior ↔ verify-before-trust pattern substitution scope). ADR-070 = verify-before-trust pattern 의 normative anchor SSOT (sandbox access invariant) — substitution path = verify pattern 의 sub-scope. ADR-081 자매 패턴 (boilerplate composition SSOT 분리 — Amendment 6) 정합성 부재 → ADR-070 §결정 1 expansion 안 3-enum SSOT + ADR-052 cross-ref 만 채택.
+- (Amendment-AC) **substitution path 4번째 enum value 추가** (auto-retry / multi-source consensus / 외부 verify proxy 등) — 본 Story-A scope 외 (Story §5.3 verbatim "Out-of-Scope" 영역). 별 follow-up CFP carrier 분리. 본 Amendment 8 = 3-enum exhaustive retain.
+- (Amendment-AD) **review-verdict-v4 신규 `codex_substitution_path` contract field 신설** — contract MINOR bump + sibling sync (ADR-008/010) + Phase 2 PR = doc-only fast-path 이탈. ADR-070 §D5 + ADR-081 §D5 + Amendment 7 (AA) declaration-only retain precedent 위배 → Story §10 prose marker 채택 (ADR-070 §결정 1 expansion §A3 SSOT 정합).
+- (Amendment-AE) **mechanical lint 도입** (Codex spawn prompt 안 substitution path enum value 명시 검출 static regex) — ADR-070 §결정 D5 (declaration-only retain) 정합. (a)/(b)/(c)/(d) 4 후보 모두 robustness risk 보유. evidence-checks-registry entry append 면제 — `mechanical_enforcement_actions: []` retain.
+
