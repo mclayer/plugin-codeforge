@@ -4,6 +4,7 @@
 # Change Plan §3.4 algorithm (7-step) / §4.1 CLI / §4.2 per-file 3-way merge
 # §4.4 ownership 경계 / §4.5 sidecar manifest schema / §7.4.1 (a)-(h) DR
 # Story AC-1..AC-10 + EPIC-AC-4 (silent overwrite 0) + reconcile-protocol-v1 v1.4 §4.7
+# CFP-900 §4.13 result_fidelity_binding — post-mirror sanity check + result enum 집계
 #
 # 역할: overlay 3-way merge orchestration shell ONLY (Refactor 결론, §4.4)
 #   - agent-fm 2-way merge = merge.py SSOT 위임 (semantic 분산 0)
@@ -16,6 +17,9 @@
 #   RECONCILE_OVERLAY_SNAPSHOT_DIR   — snapshot 디렉터리 경로
 #   RECONCILE_OVERLAY_WRAPPER_DIR    — wrapper SSOT overlay 템플릿 경로
 #   RECONCILE_OVERLAY_CONSUMER_OVERLAY_DIR — consumer overlay 경로
+#   RESULT_FIDELITY_AGGREGATOR_PY    — §4.13 result fidelity aggregator 경로 (CFP-900)
+#   CONSUMER_APPLICABLE_WHITELIST    — consumer-applicable workflows whitelist (§4.12/§4.13)
+#   RESULT_FIDELITY_OUTPUT_FILE      — result enum 출력 파일 경로 (optional, CFP-900)
 #
 # SecurityArch §7.2: whole-line anchored marker (substring injection 차단, ADR-027 §결정 7.D.3)
 # ADR-061 정합 — heredoc-python 0 (multi-line python = 외부 .py 의무, bash POSIX only here)
@@ -34,6 +38,10 @@ WRAPPER_SSOT_DIR="${RECONCILE_OVERLAY_WRAPPER_DIR:-${SCRIPT_DIR}/../.claude/_ove
 CONSUMER_OVERLAY_DIR="${RECONCILE_OVERLAY_CONSUMER_OVERLAY_DIR:-${SCRIPT_DIR}/../.claude/_overlay}"
 JSON_MERGE_PY="${SCRIPT_DIR}/lib/reconcile_json_sidecar.py"
 VALIDATE_SIDECAR_PY="${SCRIPT_DIR}/lib/validate_sidecar.py"
+# CFP-900 §4.13 result_fidelity_binding seams (test-injectable)
+RESULT_FIDELITY_AGGREGATOR_PY="${RESULT_FIDELITY_AGGREGATOR_PY:-${SCRIPT_DIR}/../templates/scripts/result-fidelity-aggregator.py}"
+CONSUMER_APPLICABLE_WHITELIST="${CONSUMER_APPLICABLE_WHITELIST:-${SCRIPT_DIR}/../templates/scripts/consumer_applicable_workflows.txt}"
+RESULT_FIDELITY_OUTPUT_FILE="${RESULT_FIDELITY_OUTPUT_FILE:-}"
 
 # Normalize to absolute paths
 WRAPPER_SSOT_DIR="$(cd "${WRAPPER_SSOT_DIR}" 2>/dev/null && pwd || echo "${WRAPPER_SSOT_DIR}")"
@@ -439,11 +447,19 @@ _reconcile_file() {
             local _dep_dry_flag=""
             [[ "${dry_run}" == "true" ]] && _dep_dry_flag="--dry-run"
             # shellcheck disable=SC2086
-            python3 "${MIRROR_DEP_PY}" --yml "${wrapper_file}" ${_dep_dry_flag} > /dev/null 2>&1 || {
+            # CFP-900 §4.13: S1 exit code explicit capture (F-CR-899-10 류 방지 — || fallback 회피)
+            local _s1_ec
+            python3 "${MIRROR_DEP_PY}" --yml "${wrapper_file}" ${_dep_dry_flag} > /dev/null 2>&1
+            _s1_ec=$?
+            if [[ "${_s1_ec}" -ne 0 ]] && [[ "${dry_run}" != "true" ]]; then
                 echo "${SCRIPT_NAME} [ERR] dependency closure missing for ${rel_path} — reconcile abort (§4.11)" >&2
                 echo "${SCRIPT_NAME} 힌트: templates/scripts/mirror-dependency-closure.py --yml ${wrapper_file} 로 누락 deps 확인 후 보완" >&2
+                # §4.13: S1 fail-closed → _S1_MAX_EXIT 갱신
+                if [[ "${_s1_ec}" -gt "${_S1_MAX_EXIT}" ]]; then _S1_MAX_EXIT="${_s1_ec}"; fi
                 return 2
-            }
+            fi
+            # §4.13: S1 exit code 집계 (degraded 포함)
+            if [[ "${_s1_ec}" -gt "${_S1_MAX_EXIT}" ]]; then _S1_MAX_EXIT="${_s1_ec}"; fi
         fi
 
         # ── §4.12 consumer-applicability filter hook (CFP-899 Phase 2) ──────
@@ -452,7 +468,7 @@ _reconcile_file() {
         #
         # F-CR-899-4 FIX: env var ID = binding-spec 정합 (FILTER_REPO_KIND_PY / CONSUMER_APPLICABLE_WHITELIST)
         local FILTER_REPO_KIND_PY="${FILTER_REPO_KIND_PY:-${SCRIPT_DIR}/../templates/scripts/detect-repo-kind.py}"
-        local CONSUMER_APPLICABLE_WHITELIST="${CONSUMER_APPLICABLE_WHITELIST:-${SCRIPT_DIR}/../templates/scripts/consumer_applicable_workflows.txt}"
+        local _CONSUMER_APPLICABLE_WHITELIST_LOCAL="${CONSUMER_APPLICABLE_WHITELIST:-${SCRIPT_DIR}/../templates/scripts/consumer_applicable_workflows.txt}"
         if [[ -f "${wrapper_file}" ]] && [[ "${wrapper_file}" == *.yml ]]; then
             local _repo_kind _ec
             # F-CR-899-10 FIX: explicit $? capture (bash subshell || semantics regression fix)
@@ -466,9 +482,13 @@ _reconcile_file() {
                 0|1|2|3) ;;  # valid: plugin=0 consumer=1 mixed=2 unknown=3
                 *)
                     echo "${SCRIPT_NAME} [ERR] detect-repo-kind crash (exit ${_ec}) — fail-closed abort (§4.12)" >&2
+                    # §4.13: S2 exit code 집계
+                    if [[ "${_ec}" -gt "${_S2_MAX_EXIT}" ]]; then _S2_MAX_EXIT="${_ec}"; fi
                     return 1
                     ;;
             esac
+            # §4.13: S2 exit code 집계 (F-CR-899-10 류 방지 — explicit capture)
+            if [[ "${_ec}" -gt "${_S2_MAX_EXIT}" ]]; then _S2_MAX_EXIT="${_ec}"; fi
             case "${_repo_kind}" in
                 plugin|mixed)
                     # F-CR-899-2 FIX: plugin + mixed = 전체 workflow mirror (0 skip)
@@ -479,8 +499,8 @@ _reconcile_file() {
                     # consumer only: positive whitelist filter 적용
                     local _wf_basename
                     _wf_basename="$(basename "${wrapper_file}")"
-                    if [[ -f "${CONSUMER_APPLICABLE_WHITELIST}" ]]; then
-                        if ! grep -Fxq "${_wf_basename}" "${CONSUMER_APPLICABLE_WHITELIST}" 2>/dev/null; then
+                    if [[ -f "${_CONSUMER_APPLICABLE_WHITELIST_LOCAL}" ]]; then
+                        if ! grep -Fxq "${_wf_basename}" "${_CONSUMER_APPLICABLE_WHITELIST_LOCAL}" 2>/dev/null; then
                             [[ "${dry_run}" == "true" ]] && echo "${SCRIPT_NAME} [dry-run] [FILTER] skip plugin-only workflow: ${_wf_basename}"
                             [[ "${dry_run}" == "false" ]] && echo "${SCRIPT_NAME} [FILTER] skip plugin-only workflow: ${_wf_basename}"
                             return 0
@@ -491,12 +511,15 @@ _reconcile_file() {
                     # F-CR-899-1 FIX: return 1 (filter abort, §4.11 closure return 2 와 분리)
                     # §4.12 fail_closed_unknown: 신호 없음 → abort
                     echo "${SCRIPT_NAME} [ERR] repo-kind unknown (signal absent) — fail-closed abort (§4.12)" >&2
+                    # §4.13: S2 abort = exit 1 (fail-closed)
+                    if [[ "1" -gt "${_S2_MAX_EXIT}" ]]; then _S2_MAX_EXIT=1; fi
                     return 1
                     ;;
                 *)
                     # F-CR-899-3 FIX: catch-all = fail-closed (ADR-083 §결정 4 직접 적용)
                     # 알 수 없는 enum 값 = enum 오염 → abort (fail-open 차단)
                     echo "${SCRIPT_NAME} [ERR] Consumer-applicability filter: unknown repo_kind enum value '${_repo_kind}'" >&2
+                    if [[ "1" -gt "${_S2_MAX_EXIT}" ]]; then _S2_MAX_EXIT=1; fi
                     return 1
                     ;;
             esac
@@ -739,6 +762,16 @@ fi
 
 echo "${SCRIPT_NAME} overlay 영역 reconcile 시작 (mode: ${MODE})"
 
+# ─────────────────────────────────────────────────────────────────────────────
+# §4.13 result_fidelity_binding — S1/S2 exit code 추적 (CFP-900)
+# F-CR-899-10 류 방지: bash subshell || fallback 패턴 회피
+# explicit _S1_EXIT/_S2_EXIT 변수로 exit code 명시적 capture
+# ─────────────────────────────────────────────────────────────────────────────
+# S1 (§4.11 closure resolver) 최대 exit code 추적 (per-file dispatch 중 누적)
+_S1_MAX_EXIT=0
+# S2 (§4.12 consumer-applicability filter) 최대 exit code 추적
+_S2_MAX_EXIT=0
+
 # §4.2 step 1: idempotency pre-check (AC-9(a))
 if _idempotency_check "${WRAPPER_SSOT_DIR}" "${CONSUMER_OVERLAY_DIR}"; then
     echo "${SCRIPT_NAME} overlay 이미 wrapper SSOT 와 일치 — no-op 정상 종료 (AC-9(a))"
@@ -807,6 +840,59 @@ fi
 
 # Loss report (EPIC-AC-4 surfacing)
 _print_loss_report
+
+# ─────────────────────────────────────────────────────────────────────────────
+# §4.13 result_fidelity_binding — post-mirror sanity check + result enum 집계
+# (CFP-900 Phase 2 — reconcile-protocol-v1 v1.10)
+#
+# hook_integration 순서:
+#   step_1: §4.11 closure resolver hook (완료 — _S1_MAX_EXIT 누적)
+#   step_2: §4.12 consumer-applicability filter hook (완료 — _S2_MAX_EXIT 누적)
+#   step_3: cp 실행 (위 per-file loop 완료)
+#   step_4: §4.13 post-mirror sanity check + result enum 집계 (본 블록)
+#
+# dry-run: EC-2 — result field 미적용 (preview only, ADR-076 §결정 3 dry-run semantic)
+# filesystem-only invariant: network call 0 / gh api 0 (SecurityArch primary)
+# ─────────────────────────────────────────────────────────────────────────────
+if [[ -f "${RESULT_FIDELITY_AGGREGATOR_PY}" ]]; then
+    if [[ "${DRY_RUN}" == "true" ]]; then
+        echo "${SCRIPT_NAME} [dry-run] §4.13 result fidelity: preview only (EC-2, result field 미적용)"
+        python3 "${RESULT_FIDELITY_AGGREGATOR_PY}" \
+            --s1-exit "${_S1_MAX_EXIT}" \
+            --s2-exit "${_S2_MAX_EXIT}" \
+            --wrapper-dir "${WRAPPER_SSOT_DIR}" \
+            --consumer-dir "${CONSUMER_OVERLAY_DIR}" \
+            --whitelist "${CONSUMER_APPLICABLE_WHITELIST:-${SCRIPT_DIR}/../templates/scripts/consumer_applicable_workflows.txt}" \
+            --dry-run 2>/dev/null || true
+    else
+        # F-CR-899-10 류 방지: explicit exit code capture (bash subshell || fallback 회피)
+        local_agg_args=(
+            "--s1-exit" "${_S1_MAX_EXIT}"
+            "--s2-exit" "${_S2_MAX_EXIT}"
+            "--wrapper-dir" "${WRAPPER_SSOT_DIR}"
+            "--consumer-dir" "${CONSUMER_OVERLAY_DIR}"
+            "--whitelist" "${CONSUMER_APPLICABLE_WHITELIST:-${SCRIPT_DIR}/../templates/scripts/consumer_applicable_workflows.txt}"
+        )
+        if [[ -n "${RESULT_FIDELITY_OUTPUT_FILE:-}" ]]; then
+            local_agg_args+=("--output-file" "${RESULT_FIDELITY_OUTPUT_FILE}")
+        fi
+        # explicit exit code capture (F-CR-899-10 방지 — || 미사용)
+        _AGG_OUTPUT=$(python3 "${RESULT_FIDELITY_AGGREGATOR_PY}" "${local_agg_args[@]}" 2>/dev/null)
+        _AGG_EC=$?
+        if [[ "${_AGG_EC}" -eq 3 ]]; then
+            echo "${SCRIPT_NAME} [WARN] §4.13 result fidelity aggregator internal error (exit 3) — honest report 불가" >&2
+        else
+            echo "${SCRIPT_NAME} §4.13 result fidelity: ${_AGG_OUTPUT}"
+            # upgrade_event_honest_record: result field 정직 출력 (SUCCESS hardcode forbidden)
+            local _result_value
+            _result_value=$(echo "${_AGG_OUTPUT}" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('result','UNKNOWN'))" 2>/dev/null || echo "UNKNOWN")
+            echo "${SCRIPT_NAME} result: ${_result_value}"
+        fi
+    fi
+else
+    echo "${SCRIPT_NAME} [WARN] §4.13 result_fidelity_aggregator.py 미발견 — result enum 집계 skip" >&2
+    echo "${SCRIPT_NAME} [WARN] 경로: ${RESULT_FIDELITY_AGGREGATOR_PY}" >&2
+fi
 
 if [[ "${OVERALL_EXIT}" -eq 0 ]]; then
     echo "${SCRIPT_NAME} overlay reconcile 완료 (loss 0)"

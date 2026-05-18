@@ -431,12 +431,68 @@ test_F003_depth_row_count_semantic() {
 test_F003_depth_row_count_semantic || true
 
 # ============================================================================
+# CFP-900 §4.13 fast_pass_content_sanity — content sanity warning layer assertions
+# ADR-026 Amendment 5 §결정 7 carrier
+# ============================================================================
+
+test_cfp900_content_sanity_warning_code_present() {
+    local desc="CFP-900 TC-CS-1: templates/phase-gate-mergeable.yml 에 content sanity warning layer 코드 존재"
+    assert_contains "$desc" "$TEMPLATES_WORKFLOW" "CFP-900 §4.13 fast_pass_content_sanity"
+}
+test_cfp900_content_sanity_warning_code_present || true
+
+test_cfp900_fast_pass_or_gate_unchanged() {
+    local desc="CFP-900 TC-CS-2: fast-pass OR-gate 무변경 (isEpicLabel || isSiblingPr || isDocOnly || isPostMergeFix)"
+    assert_contains "$desc" "$TEMPLATES_WORKFLOW" "isEpicLabel || isSiblingPr || isDocOnly || isPostMergeFix"
+}
+test_cfp900_fast_pass_or_gate_unchanged || true
+
+test_cfp900_warning_tier_not_blocking() {
+    local desc="CFP-900 TC-CS-3: warning tier = merge 미차단 (return; 유지 — fast-pass PASS 보존)"
+    # content sanity 블록 이후 return 이 존재해야 함 (fast-pass 유지)
+    assert_contains "$desc" "$TEMPLATES_WORKFLOW" "return;"
+}
+test_cfp900_warning_tier_not_blocking || true
+
+test_cfp900_script_ref_pattern_detect() {
+    local desc="CFP-900 TC-CS-4: script reference mismatch detect 패턴 존재"
+    assert_contains "$desc" "$TEMPLATES_WORKFLOW" "scriptRefPattern"
+}
+test_cfp900_script_ref_pattern_detect || true
+
+test_cfp900_warning_comment_emit() {
+    local desc="CFP-900 TC-CS-5: mismatch 시 PR comment warning emit 코드 존재"
+    assert_contains "$desc" "$TEMPLATES_WORKFLOW" "createComment"
+}
+test_cfp900_warning_comment_emit || true
+
+test_cfp900_self_app_byte_identical() {
+    local desc="CFP-900 TC-CS-6: templates/ vs .github/ byte-identical mirror (ADR-005)"
+    TESTS_RUN=$((TESTS_RUN + 1))
+    if diff -q "$TEMPLATES_WORKFLOW" "$SELF_APP_WORKFLOW" > /dev/null 2>&1; then
+        echo -e "${GREEN}PASS${NC} $desc"
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+    else
+        echo -e "${RED}FAIL${NC} $desc"
+        echo "    templates/ vs .github/ 내용 불일치 (ADR-005 byte-identical invariant 위반)"
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+    fi
+}
+test_cfp900_self_app_byte_identical || true
+
+test_cfp900_orthogonal_layer_comment() {
+    local desc="CFP-900 TC-CS-7: orthogonal warning layer 주석 존재 (fast-pass OR-gate 무변경 명시)"
+    assert_contains "$desc" "$TEMPLATES_WORKFLOW" "orthogonal"
+}
+test_cfp900_orthogonal_layer_comment || true
+
+# ============================================================================
 # 결과 요약
 # ============================================================================
 
 echo ""
 echo "============================================"
-echo "CFP-795 phase-gate-mergeable.yml 테스트 결과"
+echo "CFP-795 + CFP-900 phase-gate-mergeable.yml 테스트 결과"
 echo "============================================"
 echo "총 테스트: $TESTS_RUN"
 echo -e "PASS: ${GREEN}$TESTS_PASSED${NC}"

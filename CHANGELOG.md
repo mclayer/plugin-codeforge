@@ -7,6 +7,29 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.91.0] - 2026-05-18
+
+### Added (CFP-900 Phase 2 — §4.13 result_fidelity_binding runtime, Epic CFP-858 S3 마지막 Story)
+
+- **`templates/scripts/result-fidelity-aggregator.py`** — 신설. §4.13 result enum 집계 CLI (Python stdlib only, ADR-061 외부 .py). 입력: S1 exit code (§4.11 closure resolver) + S2 exit code (§4.12 consumer-applicability filter) + post-mirror sanity check. 출력: `SUCCESS` / `SUCCESS_WITH_DEGRADATION` / `PARTIAL_FAILURE` / `FAILED` 4-value closed-set. exit code contract: 0=SUCCESS / 1=PARTIAL_FAILURE·FAILED / 2=SUCCESS_WITH_DEGRADATION / 3=internal error. `--dry-run` EC-2 (result field 미적용) 지원. `--output-file` artifact 파일 출력. filesystem-only invariant (network call 0 / gh api 0).
+- **`scripts/reconcile-overlay.sh`** — §4.13 post-mirror sanity stage 삽입 (wholesale_mirror cp 후 step_4). `_S1_MAX_EXIT` / `_S2_MAX_EXIT` explicit capture (F-CR-899-10 bash subshell `||` fallback 패턴 방지). `RESULT_FIDELITY_AGGREGATOR_PY` + `CONSUMER_APPLICABLE_WHITELIST` + `RESULT_FIDELITY_OUTPUT_FILE` env seam. upgrade_event_honest_record: `result: SUCCESS` hardcode forbidden invariant 적용.
+- **`templates/github-workflows/phase-gate-mergeable.yml`** — §4.13 `fast_pass_content_sanity` warning layer 추가. `.github/workflows/*.yml` 변경 시 의존 script reference mismatch detect (warning emit + PR comment). fast-pass OR-gate (`isEpicLabel || isSiblingPr || isDocOnly || isPostMergeFix`) 무변경 — orthogonal warning layer (ADR-026 Amendment 5 §결정 7, EC-5 fast-pass PASS 보존).
+- **`.github/workflows/phase-gate-mergeable.yml`** — byte-identical mirror (ADR-005).
+- **`docs/upgrade-events/README.md`** — upgrade event log artifact schema (result enum 4-value + EC 규칙 + 관련 SSOT).
+- **`tests/test_result_fidelity_aggregator.py`** — 신설. 25 TC TDD. 8 RF (degradation_propagation matrix) + 5 SAN (post-mirror sanity) + 7 EC (edge cases EC-1~7) + 4 EXIT (exit code contract) + 4 PAT (F-CR-899 pattern avoidance). pytest framework.
+- **`tests/integration/test_reconcile_overlay_result_fidelity.bats`** — 신설. 7 bats TC. TC-INT-RF-1~7. reconcile-overlay.sh 실 실행 검증 (F-CR-899-6 교훈 proxy-only 회피) + post-mirror stage 도달 verify + S1/S2 fail-closed/abort → FAILED 정직 기록 + dry-run EC-2 + ADR-061 invariant.
+- **`tests/workflows/test_phase-gate-mergeable-yml.sh`** — §4.13 content sanity 7 assertion 추가 (TC-CS-1~7). byte-identical self-app verify 포함.
+
+### Scope (CFP-900 Phase 2 invariants)
+
+- **ADR-076 Amendment 3 §결정 3 sub-clause carrier** — transaction 사후 sanity check + result fidelity false SUCCESS 차단 clause runtime 활성화.
+- **ADR-026 Amendment 5 §결정 7 carrier** — `.github/` fast-pass content sanity 1차 신호 orthogonal warning layer.
+- **degradation_propagation deterministic mapping** — exit code → result enum pure function (side-effect 0). silent false SUCCESS 차단 core invariant.
+- **hook_integration 순서** — S1 closure resolver → S2 consumer-applicability filter → cp → §4.13 post-mirror sanity check + result enum 집계 (mirror-전 S1/S2 vs mirror-후 layer 분리).
+- **F-CR-899 패턴 방지** — F-CR-899-1(exit code spec verbatim) / F-CR-899-2(wrapper self-app honest) / F-CR-899-4(env var binding spec 정합) / F-CR-899-10(bash subshell || fallback 회피) / F-CR-899-6(bats 실 실행 검증).
+- **Epic CFP-858 3-layer composite 완결**: S1 vertical closure resolver (mirror-전) + S2 horizontal consumer-applicability filter (mirror-전) + S3 temporal-post result fidelity (mirror-후).
+- **marketplace atomic sync (ADR-063 §결정 5)** — 별도 sibling PR 의무 (Orchestrator 책임 영역).
+
 ## [5.90.0] - 2026-05-18
 
 ### Added (CFP-899 Phase 2 — Consumer-applicability filter runtime)
