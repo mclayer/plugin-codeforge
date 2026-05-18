@@ -7,6 +7,26 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.86.0] - 2026-05-18
+
+### Added (INCIDENT-2026-05-17 — cross-repo gh CLI safety net)
+
+- **`hooks/cross-repo-gh-safety`** — 신규 PreToolUse hook (extensionless bash, polyglot wrapper 패턴 정합 — `run-hook.cmd` dispatch). `gh pr|issue <write-verb>` (create/edit/comment/close/reopen/merge/review/ready/lock/unlock/delete/transfer/develop/pin/unpin) 명령에 `--repo`/`-R` flag 또는 `GH_REPO` env (inline prefix 포함) 부재 시 `exit 2` 차단 + 한글 차단 메시지. read-only verb (view/list/checks/status/diff) = scope 외 (정보 조회, write 사고 영향 0). 비-Bash tool / command 추출 실패 = fail-open (best-effort 1차 안전망). `BYPASS_CROSS_REPO_GH_SAFETY=1` escape (scope disjoint — `BYPASS_CODEFORGE_PREREQ` / `BYPASS_WORKTREE_FIRST` 와 별 env). 정적 properties = session-start hook 패턴 정합 (set -euo pipefail / filesystem touch 0 / network call 0 / jq 비의존 POSIX grep·sed 파싱).
+- **`hooks/hooks.json`** — `PreToolUse` matcher `Bash` entry 신설 (`run-hook.cmd cross-repo-gh-safety`).
+- **`skills/lane-self-write-boundary/SKILL.md`** — Cross-cutting rule cross-ref 신설: 모든 lane plugin + Orchestrator 의 GitHub self-write 시 `--repo` 명시 의무 + 물리 안전망(hook) / 가이드 차원(skill) 2중 안전망 + bypass env 명시.
+
+### Trigger
+
+- INCIDENT-2026-05-17 disk-pressure incident retro (`mctrader-data#94` §6 carry-over Action Item) + cross-repo PMO audit (`mctrader-hub#394`). self-incident 1건 박제: 2026-05-17 cross-repo 세션에서 `gh pr edit 94` 가 mctrader-hub cwd 에서 실행되어 의도된 mctrader-data#94 가 아닌 mctrader-hub#94 (다른 merged PR) description 을 silent overwrite, GitHub API 미노출로 원 description 복원 불가.
+
+### Changed
+
+- **`.claude-plugin/plugin.json`** — version `5.85.0` → `5.86.0` MINOR (ADR-037 §결정 1 (c) — 선택 hook 추가 = governance behavior change MINOR). `description` 안 INCIDENT-2026-05-17 carrier entry append. marketplace mirrored field 4종 (`name`/`version`/`description`/`author`) verbatim parity (별도 sibling PR, ADR-063 §결정 5).
+
+### Scope
+
+- src 무변경 (hook script + skill + plugin.json + CHANGELOG + marketplace sibling). 신규 ADR / lint workflow yml / evidence-checks-registry entry / 6 lane sibling PR = 0건. ADR 본문 publish (codeforge governance ADR 후보) = 별 codeforge governance 세션 scope (retro #94 §6 + hub#394 가 trigger SSOT, mandate Out-of-scope 정합).
+
 ## [5.85.0] - 2026-05-17
 
 ### Changed (CFP-911 ADR-065 Amendment 2 — 8th item frontmatter YAML parse self-validate)

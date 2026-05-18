@@ -27,6 +27,14 @@ tools: Read
 - general `docs/**` write (lane plugin owner 외)
 - branch protection · CI workflow · cross-plugin schema templates
 
+**Cross-cutting rule — cross-repo `gh` CLI write 시 `--repo <owner/repo>` 명시 의무** (INCIDENT-2026-05-17, mctrader-data#94 §6 carry-over):
+
+모든 lane plugin + Orchestrator 의 GitHub self-write (`gh pr|issue <write-verb>` — create/edit/comment/close/merge/review 등) 는 **`--repo <owner/repo>` (또는 `-R`) 를 명시**해야 한다. `gh` CLI 는 cwd 의 git remote 로 대상 repo 를 silent resolve 하므로, cross-repo 세션 (예: mctrader-data + mctrader-hub) 에서 worktree/cd 위치에 따라 의도와 다른 repo 의 같은 번호 PR/issue 를 덮어쓰는 사고가 발생한다 (2026-05-17 박제: `gh pr edit 94` 가 mctrader-hub#94 description 을 덮어쓴 후 GitHub API 미노출로 복원 불가).
+
+- **물리 안전망**: `hooks/cross-repo-gh-safety` (PreToolUse, `matcher: Bash`) 가 write-verb + `--repo`/`-R`/`GH_REPO` 부재 시 `exit 2` 차단. read-only verb (view/list/checks) = scope 외 (정보 조회, write 사고 0).
+- **가이드 차원**: 본 rule = hook 미적용 환경 (다른 plugin / hook bypass) fallback 인지 경로.
+- **bypass**: 의도된 단일-repo 작업 확신 시 `BYPASS_CROSS_REPO_GH_SAFETY=1` (scope disjoint — `BYPASS_CODEFORGE_PREREQ` / `BYPASS_WORKTREE_FIRST` 와 별 env).
+
 **4 single-owner doc** (CFP-26 Phase 0a 이후): `docs/{change-plans,adr,domain-knowledge,retros}/**` 는 owner agent direct write — lane plugin 의 ArchitectAgent / DomainAgent / PMOAgent 자기 owner path write.
 
 문서화 표준 4 single-owner doc 템플릿은 [`templates/`](../../templates/) — change-plan / adr 현재 존재, domain-knowledge schema / retro schema CFP-27 신설. owner agent는 본인 owner path write 시 해당 템플릿 schema 준수 필수 — `scripts/check-write-permission-redistribution.sh` (CFP-26) + 향후 frontmatter/section schema lint (CFP-27)에서 강제.
