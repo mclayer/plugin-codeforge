@@ -191,6 +191,47 @@ owned_sections:
     # 무변경 + sub-clause append). amendment_log monotone (CFP-821 = 표 row append only, CFP-898 =
     # Amendment 1 first formal entry). sibling Epic #882 race 회피 — CFP-858 closure 후 진입.
 
+  # CFP-899 (ArchitectPLAgent Phase 1 — §4.12 consumer_applicability_filter_binding lock)
+  - file: docs/inter-plugin-contracts/reconcile-protocol-v1.md
+    section: "§4.12 consumer_applicability_filter_binding block"
+    owner_adr: ADR-083  # 신규 wrapper-side filter mechanism SSOT (sibling ADR-027 Amendment 6 §결정 10 = consumer-side signal SSOT, boundary disjoint)
+    carrier_story: CFP-899  # Wave 4 sub-Epic CFP-858 S2 base layer (S3 CFP-900 prerequisite)
+    parallel_edit: append-only
+    arbitrator: ArchitectPLAgent
+    # NOTE (CFP-899): ADR-064 Trace 4 ordering invariant — version_history monotone (v1.7 CFP-898 →
+    # v1.8 CFP-932 → v1.9 CFP-899) + §4.12 binding block 자체 append-only (CFP-743 §4.5 / CFP-744 §4.6 /
+    # CFP-745 §4.7 / CFP-820 §4.8 / CFP-821 §4.9 / CFP-906 §4.10 / CFP-898 §4.11 동형 패턴 보존).
+    # sibling Epic #882 (Wave 4 sub-Epic) race 회피 — CFP-858 closure 후 진입 merge-order. v1.9
+    # (CFP-899) → 미래 v1.10 (S3 CFP-900) sequential MINOR bump 영역. CFP-898 §4.11 vertical closure
+    # resolver hook 과 sequential composition (filter 먼저 → closure 다음 = hook order:
+    # closure resolver → consumer-applicability filter → cp). algorithm 재구현 0.
+
+  # CFP-899 (ArchitectPLAgent Phase 1 — ADR-083 신규 lock)
+  - file: docs/adr/ADR-083-consumer-applicability-filter.md
+    section: "신규 ADR 전체 (§결정 1-6 + Context + Decision + Consequences + Cross-references)"
+    owner_adr: ADR-083
+    carrier_story: CFP-899  # Wave 4 sub-Epic CFP-858 S2 base layer
+    parallel_edit: append-only
+    arbitrator: ArchitectPLAgent
+    # NOTE (CFP-899): 신규 ADR file — append-only invariant 적용 영역 외 (file 자체 신설 = atomic
+    # commit). 후속 Amendment carrier (Phase 2 PR / S3 CFP-900) 가 amendment_log[] / amendments[] append
+    # 영역. ADR-RESERVATION row 83 reserved → active 동반 의무 (sibling commit). sibling Epic #882
+    # (Wave 4 sub-Epic) race 회피 — ADR 번호 예약 SSOT (ADR-RESERVATION row 83 = CFP-899 점유 verified).
+
+  # CFP-899 (ArchitectPLAgent Phase 1 — ADR-027 Amendment 6 §결정 10 lock)
+  - file: docs/adr/ADR-027-consumer-adoption-protocol.md
+    section: "Amendment 6 §결정 10 (consumer adoption detection signals 4-way truth-table SSOT)"
+    owner_adr: ADR-027
+    carrier_story: CFP-899  # Wave 4 sub-Epic CFP-858 S2 base layer
+    parallel_edit: append-only
+    arbitrator: ArchitectPLAgent
+    # NOTE (CFP-899): ADR-027 Amendment lock — amendments[] append (Amendment 6 entry) + 본문 EOF
+    # Amendment 6 단락 append (§결정 10.A-10.F) + mechanical_enforcement_actions[] append
+    # (consumer-applicability-filter-detection entry — declaration-only-Wave-1, ADR-082 §결정 6 패턴
+    # 답습). amendment_log monotone (Amendment 5 §결정 9 CFP-821 → Amendment 6 §결정 10 CFP-899
+    # sequential). boundary disjoint invariant 보존 (ADR-027 = consumer-side signal SSOT / ADR-083 =
+    # wrapper-side filter mechanism). sibling Epic #882 race 회피 — CFP-858 closure 후 진입.
+
   # ADR-078 / design-output-v2 v2.4 (CFP-921 Epic B Story-3) — ArchitectAgent self-write + lane gate
   - file: docs/inter-plugin-contracts/design-output-v2.md
     section: "(전체 — sibling sync byte-identical canonical mirror)"

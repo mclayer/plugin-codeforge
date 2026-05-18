@@ -27,6 +27,7 @@ amendments:
   - ADR-027-Amendment-3-CFP-702  # CFP-699 Wave 1 Story-2 — D4 customization marker 의무 추가 (# BEGIN/END wrapper-managed block)
   - ADR-027-Amendment-4-CFP-820  # CFP-699 Wave 3 Story-6 — consumer adoption 시 codeforge.version_pin schema detection 의무 (3-way version atomic invariant consumer layer, ADR-063 Amendment 5 §결정 15 동반). §결정 8 신설
   - ADR-027-Amendment-5-CFP-821  # CFP-699 Wave 3 Story-7 — consumer adoption 시 Issue Forms enumeration 정정 (3종 → audit+bug+story+discussion+codeforge-improvement 5 forms + config.yml) + D4 marker form-level wrap cross-ref (D1 coverage fan-out, ADR-076 §결정 2 표 PR template row 동반). §결정 9 신설
+  - ADR-027-Amendment-6-CFP-899  # CFP-858 Wave 4 sub-Epic S2 — consumer adoption detection signals 4-way truth-table SSOT (.claude-plugin/plugin.json + .claude/_overlay/project.yaml 2-signal cross-product → consumer/plugin/mixed/unknown 4-way enum, ADR-083 §결정 1 sibling carrier). §결정 10 신설
 mechanical_enforcement_actions:
   - action_name: section-1-verbatim-postmerge
     decision_binding: "Amendment 2 §결정 6.A — manual fallback path 의 §1 verbatim invariant post-merge lint (warning tier)"
@@ -40,6 +41,12 @@ mechanical_enforcement_actions:
     bypass_label: hotfix-bypass:wrapper-managed-block
     carrier_cfp: CFP-702  # Phase 1 = ADR Amendment 3 + change-plan SSOT, Phase 2 = lint + workflow + migration script 신설
     introduced_by_amendment: 3
+  - action_name: consumer-applicability-filter-detection
+    decision_binding: "Amendment 6 §결정 10 — consumer adoption detection signals 4-way truth-table (`.claude-plugin/plugin.json` + `.claude/_overlay/project.yaml` 2-signal cross-product → consumer/plugin/mixed/unknown 4-way enum). ADR-083 §결정 1 sibling carrier — wrapper-side filter SSOT 와 boundary disjoint (ADR-027 = consumer-side signal SSOT / ADR-083 = wrapper-side filter mechanism). status: declaration-only-Wave-1 (Phase 2 carrier deferred — `templates/scripts/detect-repo-kind.py` 실 구현 + tests/integration/test_reconcile_overlay_consumer_filter.bats integration + evidence-checks-registry warning tier wire)"
+    evidence_registry_entry: consumer-applicability-filter-detection  # docs/evidence-checks-registry.yaml row (Phase 2 PR append, warning tier — ADR-082 §결정 6 declaration-only retain pattern 답습)
+    bypass_label: hotfix-bypass:consumer-applicability-filter-detection
+    carrier_cfp: CFP-899  # Phase 1 = ADR-083 신설 + ADR-027 Amendment 6 §결정 10 + reconcile-protocol-v1 v1.9 §4.12 schema declare, Phase 2 = detect-repo-kind.py + whitelist populate + reconcile-overlay.sh hook + test suite
+    introduced_by_amendment: 6
 supersedes: null
 superseded_by: null
 is_transitional: false
@@ -550,3 +557,94 @@ Cross-ref:
 - [ADR-005](ADR-005-plugin-self-application-na-standardization.md) — `templates/.github/*` ↔ `.github/*` byte-identical self-app (D1 Phase 2)
 - [ADR-064](ADR-064-decision-principle-mandate.md) §self-application — Amendment 5 = consumer adoption scope 확장 강화 방향 only (신규 ADR 회피 + D2 scope-down least-privilege ratchet-safe, weakening 0)
 - `docs/consumer-guide.md` §2 line 472/814 enumeration 정정 + §N D2 operator manual — consumer runbook (Phase 2 carrier)
+
+## Amendment 6 — consumer adoption detection signals 4-way truth-table SSOT (CFP-899)
+
+**Effective**: 2026-05-18 (CFP-858 Wave 4 sub-Epic S2 Phase 1 PR merged 시점).
+
+**Carrier**: CFP-899 (Wave 4 sub-Epic CFP-858 S2 — consumer-applicability filter). Parent Epic CFP-858 (reconcile wholesale-mirror fix). Sibling carrier: ADR-083 신설 §결정 1 4-way truth-table (wrapper-side filter SSOT) + reconcile-protocol-v1 v1.9 §4.12 `consumer_applicability_filter_binding` block + MANIFEST.yaml v1.8 → v1.9 row update.
+
+본 Amendment = ADR-027 §결정 1 (bootstrap 검증 책임 = wrapper plugin overlay/hooks/) + Amendment 3 §결정 7 (D4 customization marker) + Amendment 4 §결정 8 (codeforge.version_pin schema detection) 정합 — consumer adoption signal SSOT 영역 확장 (detection 차원 추가). ADR-027 = consumer-side signal SSOT (검증 항목 정의) / ADR-083 = wrapper-side filter mechanism (검증 결과 적용 mechanism) — **boundary disjoint** invariant 보존.
+
+**ADR collision 회피 (Amendment vs 신규 ADR 판정)**:
+
+- ADR-083 신규 = wrapper-side filter mechanism (4-way enum closed-set + positive whitelist + mixed exemption + fail-closed unknown 의 mechanism SSOT) — 신규 ADR 정당 (별 카테고리 별 super-class)
+- ADR-027 Amendment 6 = consumer-side signal SSOT (signal 정의 + signal 의미) — Amendment 정당 (consumer adoption protocol scope 확장)
+- 두 ADR sibling carrier 관계 (boundary disjoint) — 단일 ADR 통합 시 consumer-side signal SSOT 와 wrapper-side filter mechanism 가 한 ADR 안 dual-domain 혼재 (ADR-068 I-4 wording SSOT 위배)
+- Amendment = ADR-064 top-down ratchet 강화 방향 only (consumer adoption signal scope 확장, weakening 0)
+
+### 결정 10 — consumer adoption detection signals 4-way truth-table (normative SSOT)
+
+#### §결정 10.A — 2-signal cross-product 4-way enum
+
+Consumer adoption detection signals = filesystem-only **2-signal cross-product**:
+
+| Signal A: `.claude-plugin/plugin.json` 존재 | Signal B: `.claude/_overlay/project.yaml` 존재 | repo_kind | semantic |
+|---|---|---|---|
+| ✅ | ❌ | `plugin` | wrapper-only repo (codeforge family plugin 자체 — repo 가 plugin SSOT, consumer overlay 부재) |
+| ❌ | ✅ | `consumer` | consumer repo (codeforge plugin 사용자 — consumer overlay 활성, plugin SSOT 부재) |
+| ✅ | ✅ | `mixed` | dogfood repo (codeforge wrapper repo 자체 — plugin SSOT + 자기 자신의 consumer overlay self-app) |
+| ❌ | ❌ | `unknown` | signal 부재 (consumer bootstrap 미완료 또는 비-codeforge repo) |
+
+**4-way enum closed-set**: `plugin` / `consumer` / `mixed` / `unknown`. open-set 확장 (예: `library` / `monorepo` / `archived` 등) = 별 ADR carrier 영역 (본 Amendment scope 외).
+
+#### §결정 10.B — Filesystem-only invariant (network call 0)
+
+본 2-signal 모두 consumer-side filesystem 안 — **network call 0 / gh api 0 / marketplace.json membership check 0**:
+
+- (a) **Offline-first invariant** — ADR-066 PAT scope 최소화 정합 (consumer adoption protocol 가 cross-repo PAT 의존 시 enterprise org `default_workflow_permissions: read` 차단 영역 graceful degradation 의무 발생, ADR-027 Amendment 2 §결정 6 fallback path 패턴 의존성 증가)
+- (b) **Trust boundary 명확** — filesystem-only = consumer 권한 area only / cross-repo trust 영역 0 (signal spoofing surface 최소)
+- (c) **Primary signal 단일 read 비용** — file existence check (`Test-Path` / `[[ -f ... ]]`) 만 = O(1) syscall, < 1ms
+
+`marketplace.json` 영역 cross-repo gh api 는 본 ADR + ADR-083 scope 외 (별 ADR carrier 발의 시 enterprise org 차단 영역 graceful degradation 의무 검토).
+
+#### §결정 10.C — Signal semantic invariant
+
+각 signal 의 의미 invariant:
+
+| Signal | Schema SSOT | Detection mechanism | semantic |
+|---|---|---|---|
+| `.claude-plugin/plugin.json` | Claude Code plugin spec (external — anthropic 제공) | `[[ -f .claude-plugin/plugin.json ]]` (existence check only — content parsing 미요구) | "본 repo = Claude Code plugin SSOT" (mclayer/plugin-codeforge / mclayer/plugin-codeforge-{requirements,design,develop,test,review,pmo} 등) |
+| `.claude/_overlay/project.yaml` | ADR-027 §결정 1 / ADR-027 Amendment 4 §결정 8 (codeforge.version_pin schema) | `[[ -f .claude/_overlay/project.yaml ]]` (existence check only — content parsing 미요구) | "본 repo = codeforge consumer (consumer overlay bootstrap 완료)" |
+
+**Existence check only invariant**: content parsing (예: `plugin.json` 안 `name` field 검사 / `project.yaml` 안 `codeforge.version_pin` 검사) 은 본 Amendment scope 외 — 해당 schema 검증은 ADR-027 §결정 1 (`check-bootstrap.{sh,ps1}` Phase 2) + Amendment 4 §결정 8 (version_pin schema detection) 별 trigger 영역. **Signal detection = file existence 만** (분리 invariant).
+
+#### §결정 10.D — wrapper self-app exemption (mixed repo dogfood)
+
+본 wrapper repo (`mclayer/plugin-codeforge`) = mixed repo 분류:
+
+- Signal A (`.claude-plugin/plugin.json`) 존재 — codeforge plugin SSOT 자체
+- Signal B (`.claude/_overlay/project.yaml`) 존재 — consumer overlay self-app dogfood (wrapper repo 가 자기 자신의 consumer 영역으로도 동작 — codeforge family dogfood-out policy ADR-013 정합)
+- 분류 우선순위 invariant — `mixed` = `plugin` 우선 적용 (filter skip — ADR-083 §결정 3 sibling carrier verbatim)
+
+**self-loop bug 차단**: `consumer` 분류 (consumer signal 활성 + plugin signal 부재) 가 wrapper repo 에 false-positive 적용되면 wrapper dogfood workflow 손실 — Signal A 존재 보장으로 `mixed` 우선 분류가 self-loop 차단 (ADR-083 §결정 6 sibling carrier verbatim).
+
+#### §결정 10.E — fail-closed unknown (silent default 차단)
+
+`repo_kind == "unknown"` (Signal A + Signal B 모두 부재) = **fail-closed** (silent default 차단, no copy + abort with error log) — ADR-083 §결정 4 sibling carrier verbatim. silent default → wrapper-only 무차별 유입 silent harm 재발 (Epic CFP-858 결함 2 root cause) 차단.
+
+**예외 0 invariant**: `--force-unknown-as-consumer` flag 신설 금지 — `hotfix-bypass:consumer-applicability-filter-detection` label 영역 외 (bypass label = PR-time mechanical enforcement 회피용, runtime fail-closed 회피는 위배 vector — ADR-083 §결정 4 sibling carrier verbatim).
+
+#### §결정 10.F — ADR-083 sibling carrier boundary invariant
+
+ADR-083 = wrapper-side filter mechanism SSOT (4-way enum 적용 + positive whitelist + hook insertion point + mechanical action). ADR-027 Amendment 6 = consumer-side signal SSOT (signal 정의 + filesystem-only invariant + semantic invariant + wrapper self-app exemption + fail-closed unknown).
+
+**Boundary disjoint invariant**: 두 ADR 한 ADR 안 dual-domain 혼재 금지 (ADR-068 I-4 wording SSOT 정합). 단일 carrier 통합 시 = consumer-side signal 변경 (예: 새 signal 추가) 이 wrapper-side filter mechanism 변경 영역 으로 의도하지 않은 cascade — disjoint 보존 시 = consumer-side signal scope 확장 (ADR-027 Amendment N) ↔ wrapper-side filter mechanism scope 확장 (ADR-083 Amendment N) 별 carrier 분리 가능.
+
+### 해소 기준 (Amendment 6)
+
+ADR-027 frontmatter `is_transitional: false` (permanent policy, 기존 §"해소 기준" = "N/A — permanent policy" verbatim). Amendment 6 = consumer adoption signal SSOT scope 확장 (detection 차원 추가) = governance 강화 방향 ratchet — ADR-058 §결정 5 sunset_justification 불요 (강화 방향, ADR-064 top-down self-application 정합 — consumer adoption scope 확장 only, weakening 0).
+
+상세 Change Plan: `codeforge-internal-docs/wrapper/change-plans/cfp-899-consumer-applicability-filter.md`.
+
+Cross-ref:
+- [ADR-083](ADR-083-consumer-applicability-filter.md) §결정 1-6 — wrapper-side filter mechanism SSOT (boundary disjoint sibling carrier)
+- [ADR-076](ADR-076-declarative-reconciliation-upgrade.md) §결정 2 — Wrapper SSOT 영역 enumeration scheme (본 Amendment 6 = ADR-076 §결정 2 11 영역 wholesale_mirror branch 의 consumer-applicability gating layer)
+- `docs/inter-plugin-contracts/reconcile-protocol-v1.md` v1.9 §4.12 `consumer_applicability_filter_binding` — 본 Amendment 6 § 결정 10.A-10.F verbatim cross-ref carrier contract
+- ADR-027 §결정 1 — bootstrap 검증 책임 = wrapper plugin overlay/hooks/ (본 Amendment 6 = 검증 항목 detection signals 차원 추가)
+- ADR-027 Amendment 3 §결정 7 — D4 customization marker (본 Amendment 6 = consumer signal 활성 후 marker block 적용 sequential)
+- ADR-027 Amendment 4 §결정 8 — codeforge.version_pin schema detection (본 Amendment 6 = signal existence check / Amendment 4 = signal content schema check, sequential composition)
+- ADR-027 Amendment 5 §결정 9 — Issue Forms enumeration 정정 (D1 fan-out, consumer-applicable forms 영역 — 본 Amendment 6 = wrapper-only forms vs consumer-applicable forms filter mechanism 의 signal SSOT)
+- [ADR-064](ADR-064-decision-principle-mandate.md) §self-application — Amendment 6 = consumer adoption signal scope 확장 강화 방향 only (신규 ADR-083 = filter mechanism 신설, weakening 0)
+- [ADR-082](ADR-082-write-time-self-write-verification-mandate.md) §결정 6 — `mechanical_enforcement_actions: []` declaration-only Wave 1 retain pattern (본 Amendment 6 의 `consumer-applicability-filter-detection` entry status: declaration-only-Wave-1)
+- `docs/consumer-guide.md` §N consumer adoption signal detection runbook — consumer-side documentation (Phase 2 carrier)

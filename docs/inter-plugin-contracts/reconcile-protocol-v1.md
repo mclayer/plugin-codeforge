@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: reconcile-protocol
-version: "1.8"
+version: "1.9"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/reconcile-protocol-v1.md
@@ -17,6 +17,7 @@ authors:
   - ArchitectAgent (CFP-906 Wave 4 sub-Epic #1 Story-1 — §4.3 (i) trigger 신설 발동, §4.10 multi_version_channel_pin_binding block 신설 (3-tier channel taxonomy declare layer + family_7_plugin_atomic × channel pin invariant + per-channel marketplace.json channels[] matrix). ADR-076 §결정 9 + ADR-016 Amendment 3 + ADR-063 Amendment 6 §결정 17 carrier. reconcile_strategy.enum_reserved_wave_4[multi_version_channel_pin] placeholder → partial active (codemod_apply / uninstall_cleanup 2 entry 무변경). §4.8 version_handshake placeholder → active 단독 promotion 선례 답습.)
   - ArchitectPLAgent (CFP-898 Wave 4 sub-Epic Epic CFP-858 S1 — §4.3 (i) trigger 신설 발동 + §4.11 dependency_bundle_integrity_binding block 신설. ADR-076 Amendment 2 §결정 2 11번째 row append + §결정 6 fail-closed clause sub-section carrier. mctrader-data#81 14 failing checks evidence)
   - ArchitectAgent (CFP-932 Wave 4 sub-Epic #1 Story-2 — §4.10 status schema_declared_phase1 → runtime_active 전환 + registry_channel_matrix.story_1_scope_declare_only A2 정정 (channels[] populate carrier = Story-4, Story-2 = read-only drift source — Issue #932 OOS formal contract-pin 상충 해소, DataMigrationArch §11.7 load-bearing dissent 채택). channel_drift_detection / three_way_channel_invariant runtime_carrier ACTIVE 반영. schema shape 무변경. MINOR bump (kind:registry sibling sync 면제, plugin.json bump 0 = marketplace_sync_declared:false).)
+  - ArchitectPLAgent (CFP-899 Wave 4 sub-Epic CFP-858 S2 — §4.3 (j) trigger 신설 발동 + §4.12 consumer_applicability_filter_binding block 신설. ADR-083 신규 §결정 1-6 + ADR-027 Amendment 6 §결정 10 sibling carrier. mctrader-data#81 14 failing checks horizontal filter layer (CFP-898 vertical closure resolver 와 sequential composition). 9 sub-field schema: truth_table_schema / repo_kind_detection_signals / whitelist_file_format / mixed_repo_handling / fail_closed_unknown / self_app_exemption / hook_integration / out_of_scope / ratchet_invariant_preserved. MINOR bump (kind:registry sibling sync 면제, plugin.json bump 0 = marketplace_sync_declared:false). [FIX iter 1 — F-DR-899-3 narrative 6 field → 9 sub-field 정정 (body 정확, ADR-068 I-4 wording SSOT 정합 — fact 영향 0 추적성만).])
 version_history:
   - { version: "1.0", date: 2026-05-15, carrier: CFP-701, change: "initial — declarative reconciliation upgrade flow schema SSOT. 9 영역 desired state enumeration + dry-run/snapshot/transaction 3 mode enum + customization preservation entry (marker block, Story-2 prerequisite) + version_handshake / reconcile_strategy placeholder reserve (Wave 4 carrier)." }
   - { version: "1.1", date: 2026-05-15, carrier: CFP-702, change: "§4.3 (b) trigger 발동 — Wave 1 Story-2 marker block syntax 확정. customization_preservation_entry 영역 확장: marker_block_syntax_* 4 fields 정식화 (comment prefix per-filetype / nesting_policy / lint_behavior / migration_script). ADR-027 Amendment 3 §결정 7.A-7.E verbatim cross-ref." }
@@ -28,6 +29,7 @@ version_history:
   - { version: "1.6", date: 2026-05-17, carrier: CFP-821, change: "§4.3 (h) trigger 신설 발동 완료 — Wave 3 Story-7 coverage fan-out (D1+D2+D3, Epic CFP-699). §4.9 `coverage_fan_out_implementation_binding` block 신설 (D1 Issue/PR template fan-out: `templates/.github/ISSUE_TEMPLATE/*.yml` 5 forms + config.yml + `templates/.github/PULL_REQUEST_TEMPLATE.md` byte-identical mirror, D4 marker form-level wrap ADR-027 §결정 7.A.1 / D2 branch protection setup helper FORM (b): `templates/scripts/setup-branch-protection.sh` manifest 합성 + dry-run preview only — API write 0, 실 등록 = consumer admin operator manual OOS / D3 script boundary taxonomy: `docs/script-boundary.md` 3 category declarative (wrapper SSOT / consumer overlay / mixed-zone distributed templates)). reconcile semantic = §4.7 overlay_reconcile_implementation_binding (marker-aware 2-way / wholesale_mirror_with_user_visible_loss_report) SSOT 재사용 (D1 `.github/` 영역 area handler 추가, algorithm 재구현 0). ADR-027 Amendment 5 §결정 9 (Issue Forms enumeration 정정 3종 → 5 forms + config.yml + D4 marker cross-ref) + ADR-076 §결정 2 표 PR template row append carrier 동반. ADR-066 무변경 (FORM (b) — Administration:write grant 0, F-P1-A 해소 = scope-down OOS, least-privilege ratchet-safe). § \"Amendment / version 번호 정정\": ADR-027 carrier = Amendment 5 §결정 9 (Story §1-§6 RequirementsPL synthesis 의 'Amendment 4' = frontmatter 미검증 — CFP-820 이 ADR-027 amendment 4 / §결정 8 점유, 설계 lane strict-verify direct Read 후 Amendment 5 §결정 9 정정) / 본 contract version = v1.6 (Story-7 §3.5/§4.3 의 'v1.5' = Story-6 collision 점유 — CFP-820 이 v1.5 §4.3 (e) 점유, 설계 lane strict-verify origin/main direct Read 후 v1.6 §4.3 (h) 정정, Codex TP#2 verify-before-trust 8-mirror 교훈). MINOR bump (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 2). user_decision_branches: 0 / atomicity_boundary_semantic_invariant: family_7_plugin_atomic / marker_block_absent_behavior: wholesale_mirror_with_user_visible_loss_report / snapshot_reset_disjoint_layer / transaction.completion_criterion / adr_053_d2_verbatim_quote 무변경 (ratchet 강화 only — D1/D2/D3 coverage fan-out 확장, ADR-064 §self-application 정합). §4.3 (c) v1.2 / (d) v1.3 / (g) v1.4 / (e) v1.5 trigger + binding block 패턴 verbatim 답습 (§2.5 FORM 옵션 (i))." }
   - { version: "1.5", date: 2026-05-17, carrier: CFP-820, change: "§4.3 (e) trigger 발동 완료 — Wave 3 Story-6 3-way version atomic invariant 확장 (B2, Epic CFP-699). `version_handshake.status: placeholder_reserve → active` 활성화 (Wave 1 Story-1 CFP-701 사전 declare `carrier_story: CFP-Wave-3-Story-6` 실현). §4.8 `version_handshake_3way_binding` block 신설 (publisher plugin.json ↔ registry marketplace.json ↔ consumer project.yaml codeforge.version_pin 3-way byte-identical invariant + warning-first→blocking fallback orthogonality + read-only lint scope + sanity guard 6-tuple + ADR-063 Amendment 5 §결정 15 carrier). 3 stale placeholder 정정 (CFP-744 v1.0→v1.1→v1.2→v1.3 / CFP-745 carrier→realized 정정 패턴 답습 — fact 영향 0 추적성만, ADR-068 I-4 wording SSOT 정합): (1) `becomes_normative_at_version: \"v1.1\" → \"v1.5\"` (Wave 1 작성 시점 placeholder, 현재 v1.4 → carrier 시점 v1.5 정정) (2) `validation_status_v1_0:` key → `validation_status_v1_5:` rename + value `non_normative_placeholder_reserve` → `normative — v1.5 consumer enforce (3-way version parity validator active)` (3) `field_schema_future: \"TBD (...v1.0 → v1.1)\"` → active field schema (3-way binding semantic, comment \"v1.4 → v1.5\"). marker_block_syntax / 의미 invariant `atomicity_boundary_semantic_invariant: family_7_plugin_atomic` (ADR-016 §결정 1) 변경 0 — consumer pin layer = runtime catch-up only (publisher↔registry 영역 무변경). MINOR bump (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 2). user_decision_branches: 0 / atomicity_boundary semantic / snapshot_reset_disjoint_layer / transaction.completion_criterion / adr_053_d2_verbatim_quote / marker_block_absent_behavior 무변경 (ratchet 강화 only — 3-way version invariant 확장, ADR-064 §self-application 정합). § \"Amendment 번호 정정\": ADR-063 carrier = Amendment 5 §결정 15 (Story §1-§6 RequirementsPL synthesis 의 'Amendment 4' = frontmatter 미검증 — CFP-686 이 amendment:4 점유, 설계 lane strict-verify direct Read 후 Amendment 5 정정, Codex TP#2 verify-before-trust 8-mirror 교훈)." }
   - { version: "1.7", date: 2026-05-17, carrier: CFP-898, change: "§4.3 (i) trigger 신설 발동 완료 — Wave 4 sub-Epic CFP-858 S1 carrier (Epic CFP-858 S1 base layer — S2 CFP-899 / S3 CFP-900 prerequisite). §4.11 `dependency_bundle_integrity_binding` block 신설 (workflow yml + 의존 `scripts/check-*.sh` + `templates/scripts/*.py` closure resolve + missing 시 fail-closed + atomic bundle invariant). closure_resolve_algorithm=regex_primary AM-1 (stdlib only, pyyaml 의존 0) / transitive_depth_limit=1 AM-2 (false-positive 폭증 회피) / dependency_scope=shell_script_only_v1 AM-3 (.sh + .py 패턴, runtime 의존 + dynamic fetch out-of-scope) / self_app_exemption=templates/scripts/mirror-dependency-closure.py AM-4 (consumer-distributable, ADR-005 byte-identical mirror rule 면제 영역, self-loop 0 invariant) / fail_closed_behavior=exit_1_with_error_log (silent_skip_0_invariant 강화) / dry_run_behavior=preview_only_with_return_0 (ADR-076 §결정 3 dry-run semantic 정합) / hook_integration=scripts/reconcile-overlay.sh line 437 직전 MARKER_NONE branch first-line + return 2 abort pattern (MARKER_LINT 답습). ADR-076 Amendment 1 §결정 6 fail-closed clause 추가 동반 (의미 invariant `marker_block_absent_behavior: wholesale_mirror_with_user_visible_loss_report` 무변경 — sub-clause 1 추가 = ratchet 강화 only, ADR-064 §self-application 정합). mctrader-data#81 14 failing checks evidence (Epic CFP-858 §1 motivation verbatim — wholesale_mirror 시 silent partial bundle 의 real harm). user_decision_branches: 0 / atomicity_boundary_semantic_invariant: family_7_plugin_atomic / snapshot_reset_disjoint_layer / transaction.completion_criterion / adr_053_d2_verbatim_quote / marker_block_absent_behavior 의미 무변경 (CFP-743 §4.5 mechanical_implementation_binding 패턴 + CFP-821 §4.9 SSOT 재사용 패턴 verbatim 답습). MINOR bump (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 2). §4.3 (c) v1.2 / (d) v1.3 / (g) v1.4 / (e) v1.5 / (h) v1.6 trigger + binding block 패턴 verbatim 답습 (§2.5 FORM 옵션 (i))." }
+  - { version: "1.9", date: 2026-05-18, carrier: CFP-899, change: "§4.3 (j) trigger 신설 발동 완료 — Wave 4 sub-Epic CFP-858 S2 carrier (Epic CFP-858 결함 2 horizontal filter layer — S1 CFP-898 vertical closure resolver 와 sequential composition). §4.12 `consumer_applicability_filter_binding` block 신설 (9 sub-field schema: truth_table_schema / repo_kind_detection_signals / whitelist_file_format / mixed_repo_handling / fail_closed_unknown / self_app_exemption / hook_integration / out_of_scope / ratchet_invariant_preserved). ADR-083 신규 §결정 1-6 (wrapper-side filter mechanism SSOT — 4-way enum + positive whitelist + mixed exemption + fail-closed unknown + hook insertion) + ADR-027 Amendment 6 §결정 10 (consumer-side signal SSOT — filesystem-only 2-signal cross-product 4-way truth-table + boundary disjoint invariant) sibling carrier. mctrader-data#81 14 failing checks evidence (wrapper-only workflow 무차별 유입 silent harm super-class — CFP-898 closure missing 차단의 dual axis). 9 sub-field schema verbatim cross-ref ADR-083 §결정 1-6 + §4.12 body (FIX iter 1 — F-DR-899-3 narrative 6 field → 9 sub-field 정정, body 정확). hook_integration=scripts/reconcile-overlay.sh line 437 직전 (CFP-898 §4.11 hook pattern 답습 + sequential composition: CFP-898 closure resolver hook → CFP-899 consumer-applicability filter hook → cp). exit_code_contract: 0=filter OK proceed / 1=filter abort (unknown repo_kind) → return 1 ABORT / 2=filter warning degraded (Phase 2 reserve). filesystem-only invariant (network call 0 / gh api 0 / marketplace.json membership check 0) — offline-first + trust boundary 명확 + primary signal 단일 read 비용 < 1ms. user_decision_branches: 0 / atomicity_boundary_semantic_invariant: family_7_plugin_atomic / snapshot_reset_disjoint_layer / transaction.completion_criterion / adr_053_d2_verbatim_quote / marker_block_absent_behavior 의미 무변경 (CFP-898 §4.11 vertical closure resolver hook 패턴 verbatim 답습 + sequential composition layer 1 추가만, algorithm 재구현 0). MINOR bump (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 2, plugin.json bump 0 = marketplace_sync_declared:false). §4.3 (c) v1.2 / (d) v1.3 / (g) v1.4 / (e) v1.5 / (h) v1.6 / (i) v1.7 trigger + binding block 패턴 verbatim 답습 (§2.5 FORM 옵션 (i))." }
 owner_adr: ADR-076
 carrier_story: CFP-701
 sibling_sync_exempt: true
@@ -43,6 +45,7 @@ related_adrs:
   - ADR-063  # marketplace atomic invariant
   - ADR-064  # decision principle mandate
   - ADR-067  # FIX ledger RESET (disjoint layer anchor)
+  - ADR-083  # consumer-applicability filter — wrapper-side filter mechanism SSOT (v1.9 §4.12 carrier ADR, CFP-899 sibling)
 related_files:
   - docs/adr/ADR-076-declarative-reconciliation-upgrade.md
   - docs/domain-knowledge/domain/upgrade-flow/declarative-reconciliation.md
@@ -352,6 +355,7 @@ consumer 가 D4 marker block 도입 전 customization 영역 보유 시:
 - (h) Wave 3 Story-7 (CFP-821) merge — coverage fan-out D1/D2/D3 (Issue/PR template fan-out + branch protection setup helper FORM (b) + script boundary taxonomy, Phase 2 carrier 실 file). **v1.6 발동 완료 (본 contract)** — §4.9 `coverage_fan_out_implementation_binding` block 신설 (D1 `templates/.github/ISSUE_TEMPLATE/*.yml` 5 forms + config.yml + `templates/.github/PULL_REQUEST_TEMPLATE.md` byte-identical mirror + D4 marker form-level wrap §결정 7.A.1 / D2 `templates/scripts/setup-branch-protection.sh` manifest 합성 + dry-run preview only — API write 0 / D3 `docs/script-boundary.md` 3 category declarative taxonomy). reconcile semantic = §4.7 `overlay_reconcile_implementation_binding` (marker-aware 2-way / wholesale_mirror_with_user_visible_loss_report) SSOT 재사용 (D1 `.github/` 영역 area handler 추가, algorithm 재구현 0). ADR-027 Amendment 5 §결정 9 (Issue Forms enumeration 정정 3종 → 5 forms + config.yml + D4 marker cross-ref) + ADR-076 §결정 2 표 PR template row append carrier 동반. ADR-066 무변경 (FORM (b) — Administration:write grant 0, F-P1-A 해소 = scope-down OOS, least-privilege ratchet-safe). 의미 invariant 변경 0 (coverage fan-out = self-app enumeration 확장, ADR-076 §결정 1/§결정 2 SSOT). § "Amendment / version 번호 정정": ADR-027 carrier = Amendment 5 §결정 9 (Story §1-§6 'Amendment 4' = frontmatter 미검증 — CFP-820 이 amendment 4 / §결정 8 점유, 설계 lane strict-verify Amendment 5 §결정 9 정정) / 본 contract version = v1.6 §4.3 (h) (Story-7 §3.5 'v1.5 §4.3 (h)' = Story-6 collision 점유, CFP-820 이 v1.5 §4.3 (e) 점유 → 설계 lane strict-verify origin/main direct Read 후 v1.6 §4.3 (h) 정정, Codex TP#2 verify-before-trust 8-mirror 교훈, CFP-820 §4.3 (e) Amendment 번호 정정 패턴 답습). §4.3 (c) v1.2 / (d) v1.3 / (g) v1.4 / (e) v1.5 trigger + binding block 패턴 verbatim 답습 (§2.5 FORM 옵션 (i)).
 - (i) Wave 4 sub-Epic #1 Story-1 (CFP-906) merge — multi-version channel pin declare layer (Epic CFP-882). **v1.7 발동 완료 (본 contract, 1st carrier)** — `reconcile_strategy.enum_reserved_wave_4[multi_version_channel_pin]` placeholder → ACTIVE (partial activation — `codemod_apply` / `uninstall_cleanup` 2 entry 무변경, CFP scope unitary ADR-064 §결정 1.3 정합). §4.10 `multi_version_channel_pin_binding` block 신설 (3-tier channel taxonomy stable/beta/canary + consumer `.claude/_overlay/project.yaml codeforge.channel` field SSOT + family_7_plugin_atomic × channel pin invariant + per-channel marketplace.json channels[] matrix + 3-way channel invariant publisher↔registry↔consumer 확장). ADR-076 §결정 9 (3-tier channel taxonomy declaration) + ADR-016 Amendment 3 (family_7_plugin_atomic × channel pin invariant) + ADR-063 Amendment 6 §결정 17 (mirrored field × channel matrix) + project-config-schema MINOR (codeforge.channel field 신설) + label-registry-v2 v2.29 → v2.30 MINOR (channel:stable / channel:beta / channel:canary 3 신규 label + 신규 category enum `channel`) carrier 동반. `reconcile_strategy.status: "placeholder_reserve"` field-level 유지 (§4.8 `version_handshake.status: placeholder_reserve → active` 단독 promotion 선례 답습 — partial-active state 도입 회피 = minimal-change). 의미 invariant `atomicity_boundary_semantic_invariant: family_7_plugin_atomic` 변경 0 (ADR-016 §결정 1 SSOT 무변경 — channel pin = runtime catch-up layer 확장만, 의미 invariant 자체는 ADR-016 Amendment 3 가 family scope 의 channel 차원 declare). MINOR bump (kind:registry sibling sync 면제). user_decision_branches: 0 / atomicity_boundary semantic / marker_block_absent_behavior / snapshot_reset_disjoint_layer / transaction.completion_criterion / adr_053_d2_verbatim_quote 무변경 (ratchet 강화 only — multi-version channel pin coverage 확장, ADR-064 §self-application 정합). Live touching: FALSE (declare layer scope — Story-1 = schema SSOT only, runtime UpgradeAgent multi-channel dispatch = Wave 4 sub-Epic #1 Story-2 carrier, ProductionEvidence canary tier activation = Wave 4 sub-Epic #1 Story-3 carrier — ADR-72 §결정 1 정합). §4.3 (c) v1.2 / (d) v1.3 / (g) v1.4 / (e) v1.5 / (h) v1.6 trigger + binding block 패턴 verbatim 답습 (§2.5 FORM 옵션 (i)).
 - (i) Wave 4 sub-Epic CFP-858 S1 (CFP-898) merge — dependency bundle integrity (closure resolver fail-closed semantic). **v1.7 발동 완료 (본 contract, 2nd carrier — CFP-906 §4.3 (i) 1st carrier 와 같은 version v1.7, 두 trigger 동일 번호 공동 적용)** — §4.11 `dependency_bundle_integrity_binding` block 신설 (MARKER_NONE wholesale_mirror branch 진입 전 workflow yml + 의존 `scripts/check-*.sh` / `templates/scripts/*.py` closure atomic bundle invariant + missing 시 fail-closed exit 1 + visible error log + 부분 mirror 산출물 commit 금지). reconcile semantic = §4.7 `overlay_reconcile_implementation_binding` (MARKER_NONE wholesale_mirror branch) SSOT 재사용 (closure resolver layer 1 추가, algorithm 재구현 0). ADR-076 Amendment 2 §결정 2 11번째 row append (`scripts/` workflow_dependency_closure, bundled_with_referencing_workflow) + §결정 6 fail-closed clause sub-section carrier 동반 (의미 invariant `marker_block_absent_behavior: wholesale_mirror_with_user_visible_loss_report` 무변경 — sub-clause 1 추가 = ratchet 강화 only, ADR-064 §self-application 정합). closure_resolve_algorithm: regex_primary (AM-1 derived default — stdlib only) / transitive_depth_limit: 1 (AM-2 — false-positive 폭증 회피) / dependency_scope: shell_script_only_v1 (AM-3 — .sh + .py 패턴, runtime 의존 + dynamic fetch out-of-scope) / self_app_exemption: templates/scripts/mirror-dependency-closure.py (AM-4 — consumer-distributable, ADR-005 byte-identical mirror rule 면제 영역, self-loop 0 invariant). mctrader-data#81 14 failing checks evidence (Epic CFP-858 §1 motivation verbatim). MINOR bump (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 2). 의미 invariant family_7_plugin_atomic 변경 0 (ADR-016 §결정 1 SSOT 무변경 — closure resolve = wholesale_mirror atomic bundle 강화 only). §4.3 (c) v1.2 / (d) v1.3 / (g) v1.4 / (e) v1.5 / (h) v1.6 trigger + binding block 패턴 verbatim 답습 (§2.5 FORM 옵션 (i)).
+- (j) Wave 4 sub-Epic CFP-858 S2 (CFP-899) merge — consumer-applicability filter (repo-kind detection truth-table + positive whitelist horizontal filter layer). **v1.9 발동 완료 (본 contract)** — §4.12 `consumer_applicability_filter_binding` block 신설 (4-way enum closed-set `plugin`/`consumer`/`mixed`/`unknown` + positive whitelist `consumer_applicable_workflows.txt` + mixed repo full workflow set exemption + fail-closed unknown semantic + hook insertion point CFP-898 §4.11 hook pattern 답습 sequential composition). ADR-083 신규 §결정 1-6 (wrapper-side filter mechanism SSOT — 4-way enum + positive whitelist + mixed exemption + fail-closed unknown + hook insertion point + wrapper self-app verify) + ADR-027 Amendment 6 §결정 10 (consumer-side signal SSOT — filesystem-only 2-signal cross-product `.claude-plugin/plugin.json` + `.claude/_overlay/project.yaml` 4-way truth-table + signal semantic invariant + wrapper self-app exemption + fail-closed unknown + boundary disjoint invariant) sibling carrier. CFP-898 §4.11 vertical closure resolver 와 sequential composition (filter 먼저 → closure 다음 = hook order: CFP-898 closure resolver → CFP-899 consumer-applicability filter → cp). exit_code_contract: 0 = filter OK + proceed to cp / 1 = filter abort (unknown repo_kind / detect-repo-kind.py error) → return 1 ABORT (CFP-898 return 2 와 분리 — filter 는 return 1) / 2 = filter warning (degraded — Phase 2 reserve). filesystem-only invariant (network call 0 / gh api 0 / marketplace.json membership check 0 — offline-first + trust boundary 명확 + primary signal 단일 read 비용 < 1ms, SecurityArch + OpRiskArch deputy primary recommendation). mctrader-data#81 14 failing checks horizontal filter layer evidence (Epic CFP-858 결함 2 root cause — wrapper-only workflow 무차별 유입 silent harm super-class — CFP-898 closure missing 차단의 dual axis). MINOR bump (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 2, plugin.json bump 0 = marketplace_sync_declared:false). 의미 invariant family_7_plugin_atomic 변경 0 (ADR-016 §결정 1 SSOT 무변경 — consumer-applicability filter = wholesale_mirror branch horizontal gating layer 1 추가만). §4.3 (c) v1.2 / (d) v1.3 / (g) v1.4 / (e) v1.5 / (h) v1.6 / (i) v1.7 trigger + binding block 패턴 verbatim 답습 (§2.5 FORM 옵션 (i)).
 
 ### 4.4 Ratchet 보존 의무 (downgrade 차단)
 
@@ -763,5 +767,133 @@ dependency_bundle_integrity_binding:   # v1.7 신설, CFP-898 §4.3 (i) 발동, 
 ```
 
 Phase 1 (CFP-898) merge 시 본 §4.11 binding block 활성 (schema declare — dependency bundle integrity 영역 declaration). Phase 2 (별 PR, Develop lane) merge 시 `templates/scripts/mirror-dependency-closure.py` 신설 (Python stdlib only, regex_primary AM-1 algorithm, 60+ workflow yml × < 50ms per-file budget) + `scripts/reconcile-overlay.sh` line 437 직전 hook insertion (MARKER_LINT return 2 abort pattern 답습) + `tests/test_mirror_dependency_closure.py` 15 TC unit tests + `tests/integration/test_reconcile_overlay_dep_closure.bats` 통합 테스트 (TC-DEP-5/9 self-app) + `docs/evidence-checks-registry.yaml` `dependency-closure-self-test` entry (선택, warning-tier) + `CHANGELOG.md` row append.
+
+### 4.12 Wave 4 sub-Epic CFP-858 S2 consumer-applicability filter binding (v1.9 — CFP-899 §4.3 (j) trigger 신설 발동, ADR-083 신규 + ADR-027 Amendment 6 §결정 10 carrier)
+
+본 §4.11 (CFP-898 vertical closure resolver) 위에 **horizontal consumer-applicability filter layer** 1단을 추가한다. ADR-083 신규 §결정 1-6 + ADR-027 Amendment 6 §결정 10 sibling carrier — wrapper-only workflow yml 가 consumer repo 로 무차별 유입 silent harm super-class 차단 (Epic CFP-858 결함 2, mctrader-data#81 14 failing checks evidence). reconcile semantic = §4.7 `overlay_reconcile_implementation_binding` (MARKER_NONE wholesale_mirror branch) SSOT 재사용 (filter resolver layer 1 추가, algorithm 재구현 0). CFP-898 §4.11 vertical closure resolver 와 sequential composition (filter 먼저 → closure 다음).
+
+```yaml
+consumer_applicability_filter_binding:   # v1.9 신설, CFP-899 §4.3 (j) 발동, ADR-083 §결정 1-6 + ADR-027 Amendment 6 §결정 10 carrier
+  carrier_story: CFP-899  # Wave 4 sub-Epic CFP-858 S2 base layer (S3 CFP-900 prerequisite)
+  carrier_adrs:
+    - "ADR-083 §결정 1-6 (wrapper-side filter mechanism SSOT)"
+    - "ADR-027 Amendment 6 §결정 10 (consumer-side signal SSOT — boundary disjoint)"
+  status: schema_declared_phase1   # Phase 1 = schema binding declare / Phase 2 = templates/scripts/detect-repo-kind.py + templates/consumer_applicable_workflows.txt populate + scripts/reconcile-overlay.sh hook insertion + test suite (Develop lane)
+  scope: "MARKER_NONE wholesale_mirror branch — wrapper `.github/workflows/*.yml` consumer copy 영역 한정 (CFP-898 §4.11 dependency bundle integrity binding 의 horizontal counterpart, sequential composition layer 추가)"
+
+  truth_table_schema:   # ADR-083 §결정 1 + ADR-027 Amendment 6 §결정 10.A verbatim cross-ref
+    type: "4-way enum closed-set (open-set 확장은 별 ADR carrier — 본 contract scope 외)"
+    enum_values:
+      plugin:
+        signal_a_plugin_json: present   # .claude-plugin/plugin.json 존재
+        signal_b_overlay_yaml: absent    # .claude/_overlay/project.yaml 부재
+        semantic: "wrapper-only repo (codeforge family plugin 자체) — full workflow set 적용 (filter skip)"
+        copy_behavior: full_workflow_set
+      consumer:
+        signal_a_plugin_json: absent
+        signal_b_overlay_yaml: present
+        semantic: "consumer repo (codeforge plugin 사용자) — positive whitelist filter 적용"
+        copy_behavior: whitelist_filtered
+      mixed:
+        signal_a_plugin_json: present
+        signal_b_overlay_yaml: present
+        semantic: "dogfood repo (codeforge wrapper repo 자체 — plugin SSOT + 자기 자신의 consumer overlay self-app) — plugin 분류 우선 (filter skip)"
+        copy_behavior: full_workflow_set   # mixed = plugin 우선 적용 invariant (ADR-083 §결정 3 sibling carrier)
+      unknown:
+        signal_a_plugin_json: absent
+        signal_b_overlay_yaml: absent
+        semantic: "signal 부재 (consumer bootstrap 미완료 또는 비-codeforge repo) — fail-closed"
+        copy_behavior: abort_no_copy   # fail-closed unknown invariant (ADR-083 §결정 4 + ADR-027 Amendment 6 §결정 10.E sibling carrier)
+
+  repo_kind_detection_signals:   # ADR-027 Amendment 6 §결정 10.B/10.C verbatim cross-ref
+    filesystem_only_invariant: true   # network call 0 / gh api 0 / marketplace.json membership check 0
+    rationale:
+      - "Offline-first invariant — ADR-066 PAT scope 최소화 정합 (cross-repo PAT 의존 영역 차단)"
+      - "Trust boundary 명확 — filesystem-only = consumer 권한 area only, cross-repo trust surface 0"
+      - "Primary signal 단일 read 비용 < 1ms — `Test-Path` / `[[ -f ... ]]` O(1) syscall"
+    signal_a:
+      path: ".claude-plugin/plugin.json"
+      schema_ssot: "Claude Code plugin spec (external — anthropic 제공)"
+      detection_mechanism: "file existence check only ([[ -f ... ]]) — content parsing 미요구"
+      semantic: "본 repo = Claude Code plugin SSOT"
+    signal_b:
+      path: ".claude/_overlay/project.yaml"
+      schema_ssot: "ADR-027 §결정 1 / Amendment 4 §결정 8 (codeforge.version_pin schema)"
+      detection_mechanism: "file existence check only ([[ -f ... ]]) — content parsing 미요구"
+      semantic: "본 repo = codeforge consumer (consumer overlay bootstrap 완료)"
+    existence_check_only_invariant: "content parsing (예: plugin.json name field / project.yaml codeforge.version_pin) = 본 binding scope 외 — ADR-027 §결정 1 (check-bootstrap.{sh,ps1} Phase 2) + Amendment 4 §결정 8 별 trigger 영역. Signal detection = file existence 만 (분리 invariant)."
+
+  whitelist_file_format:   # ADR-083 §결정 2 verbatim cross-ref + DataMigrationArch §11 schema
+    path: "templates/consumer_applicable_workflows.txt"
+    format: plain_text
+    line_format: "1-per-line, relative filename only (디렉토리 prefix 0)"
+    comment_prefix: "#"   # comment line
+    blank_line_behavior: skip   # blank = skip
+    encoding: utf-8_lf
+    positive_list_invariant: "whitelist 안 = consumer copy / whitelist 밖 = consumer skip. default = skip (fail-closed unknown semantic 동형). 반대 (blacklist) 금지 — 새 workflow 신설 시 blacklist 부재 = consumer silent 유입 silent harm 재발 (Epic CFP-858 결함 2 root cause 재발)."
+    self_app_exemption:
+      adr_005_dual_channel: exempt   # ADR-005 byte-identical mirror rule 면제 영역 (consumer-distributable SSOT only, wrapper-side `.github/workflows/*.yml` mirror 부재)
+      rationale: "AM-3 derived default (CFP-898 §4.11 self_app_exemption 패턴 답습)"
+
+  mixed_repo_handling:   # ADR-083 §결정 3 + §결정 6 + ADR-027 Amendment 6 §결정 10.D verbatim cross-ref
+    classification_priority_invariant: "mixed = plugin 우선 적용 (filter skip — full workflow set 적용)"
+    wrapper_self_app_exemption: "본 wrapper repo (mclayer/plugin-codeforge) = mixed 분류 (Signal A + Signal B 양 존재) — full 76 .github/workflows/*.yml 모두 적용 보존 (self-app dogfood 변경 0 invariant)"
+    self_loop_bug_prevention: "consumer 분류 false-positive 차단 — Signal A (.claude-plugin/plugin.json) 존재 보장으로 mixed 우선 분류 → wrapper dogfood workflow 손실 0"
+    verify_phase_2_tc: "TC-CAF-MIXED-1 — 본 wrapper repo 에서 detect-repo-kind.py 실행 → `mixed` 출력 + reconcile-overlay.sh 실행 → 76 .yml 모두 적용 + 0 file skip"
+
+  fail_closed_unknown:   # ADR-083 §결정 4 + ADR-027 Amendment 6 §결정 10.E verbatim cross-ref
+    behavior: abort_with_error_log_no_copy
+    error_log_format: |
+      [ERR] Consumer-applicability filter: repo_kind=unknown (.claude-plugin/plugin.json absent + .claude/_overlay/project.yaml absent)
+      [ERR] Reconcile-overlay aborted. Initialize consumer overlay (codeforge bootstrap) or run from a known repo kind.
+      [ERR] Exit code 1.
+    silent_default_blocked_rationale:
+      - "(a) silent default → wrapper-only 무차별 유입 silent harm 재발 (Epic CFP-858 결함 2 root cause)"
+      - "(b) 명시적 fail = consumer-side 명시적 bootstrap 의무 (ADR-027 consumer adoption protocol 정합)"
+      - "(c) ADR-076 §결정 6 Amendment 1 fail-closed clause 패턴 답습 (CFP-898 closure resolver silent_skip_invariant: 0)"
+    exception_zero_invariant: "`--force-unknown-as-consumer` flag 신설 금지 — hotfix-bypass:consumer-applicability-filter-detection label 영역 외 (bypass label = PR-time mechanical enforcement 회피용, runtime fail-closed 회피는 위배 vector). 사용자가 unknown 영역에 reconcile 강제 적용 필요 시 = .claude/_overlay/project.yaml minimal bootstrap (consumer signal 활성) 의무."
+
+  self_app_exemption:   # ADR-083 §결정 5 self_app_exemption verbatim cross-ref + CFP-898 §4.11 pattern 답습
+    closure_resolver_script: "templates/scripts/detect-repo-kind.py"
+    whitelist_file: "templates/consumer_applicable_workflows.txt"
+    reason: "ADR-005 dual-channel template ↔ live byte-identical mirror rule 면제 영역 — consumer 측 실행 only (wrapper-side `scripts/` 미존재, consumer-side `.claude/_overlay/` 또는 `scripts/` 으로만 deploy). CFP-898 §4.11 mirror-dependency-closure.py 동형 패턴."
+    adr_005_exemption_declared: true
+    self_loop_invariant: "본 detect-repo-kind.py + consumer_applicable_workflows.txt 자체가 workflow yml 안 의존되지 않음 (Phase 2 TC 검증 의무 — TC-CAF-SELFLOOP-1: grep -r 'detect-repo-kind\\|consumer_applicable_workflows' .github/workflows/*.yml = 0 hits)"
+
+  hook_integration:
+    file: "scripts/reconcile-overlay.sh"
+    invocation_point: "line 437 직전 (CFP-898 §4.11 closure resolver hook 직후, cp 직전 추가 layer — sequential composition order: closure → filter → cp)"
+    sequential_composition_order:
+      - step_1: "CFP-898 §4.11 closure resolver hook (closure missing 시 fail-closed return 1)"
+      - step_2: "CFP-899 §4.12 consumer-applicability filter hook (closure full but consumer-non-applicable 시 skip 또는 fail-closed unknown 시 return 1)"
+      - step_3: "cp 실행 (filter PASS 시점)"
+    pattern: "if [[ -n \"${FILTER_REPO_KIND_PY:-}\" ]] && [[ -x \"${FILTER_REPO_KIND_PY}\" || -f \"${FILTER_REPO_KIND_PY}\" ]]; then ... fi"
+    exit_code_contract:
+      "0": "filter OK + proceed to cp"
+      "1": "filter abort (unknown repo_kind / detect-repo-kind.py error) → return 1 (ABORT) from reconcile-overlay.sh — CFP-898 MARKER_LINT return 2 와 분리 (filter 는 return 1, closure 는 return 2)"
+      "2": "filter warning (degraded — Phase 2 reserve, e.g., malformed whitelist file) → exit 0 from caller + warning log"
+    env_passthrough:
+      FILTER_REPO_KIND_PY: "templates/scripts/detect-repo-kind.py absolute path"
+      CONSUMER_APPLICABLE_WHITELIST: "templates/consumer_applicable_workflows.txt absolute path"
+      CONSUMER_ROOT: "reconcile-overlay.sh detected consumer repo root"
+    caller_pattern_evidence: "CFP-898 §4.11 hook 동형 패턴 — `return 1` / `return 0` / `return 2` 분기 (FIX_NEEDED / OK / ABORT, MARKER_LINT 정합) 자연 통합 가능 [hypothesis — verify in Phase 2 PR implementation step, CFP-898 hook precedent 의존]"
+    development_lane_phase: "Phase 2 PR 영역 (본 Phase 1 PR scope 외 — Develop lane DeveloperAgent 영역)"
+
+  out_of_scope:
+    - cross_repo_marketplace_membership_check   # marketplace.json 안 codeforge plugin family 검사 (network call 영역, 본 binding filesystem-only invariant 위배) — 별 ADR carrier 영역
+    - open_set_repo_kind_extension   # library / monorepo / archived 등 4-way enum closed-set 확장 — 별 ADR carrier 영역
+    - content_parsing_signal_validation   # plugin.json schema 검증 / project.yaml codeforge.version_pin 검증 — ADR-027 §결정 1 + Amendment 4 §결정 8 별 trigger 영역
+    - marker_valid_branch                # MARKER_VALID branch 진입 시 filter 미invoke (caller responsibility, reconcile-overlay.sh top-level guard — CFP-898 §4.11 동형 pattern)
+
+  ratchet_invariant_preserved:   # ADR-064 §self-application — v1.9 = 강화 only (consumer-applicability filter layer 추가), weakening 0
+    user_decision_branches_0: unchanged
+    atomicity_boundary_semantic_invariant: unchanged   # family_7_plugin_atomic (ADR-016 §결정 1 SSOT — 본 binding 은 wholesale_mirror branch horizontal gating, family scope 무변경)
+    marker_block_absent_behavior: unchanged             # wholesale_mirror_with_user_visible_loss_report (의미 invariant 무변경 + filter layer 추가는 ratchet 강화 방향, ADR-076 §결정 6 Amendment 1 SSOT)
+    transaction_completion_criterion: unchanged
+    snapshot_reset_disjoint_layer: unchanged
+    adr_053_d2_verbatim_quote: unchanged
+```
+
+Phase 1 (CFP-899) merge 시 본 §4.12 binding block 활성 (schema declare — consumer-applicability filter 영역 declaration). Phase 2 (별 PR, Develop lane) merge 시 `templates/scripts/detect-repo-kind.py` 신설 (Python stdlib only, ADR-061 외부 .py file 의무, file existence check primary signal + 4-way enum classification + < 10ms latency budget) + `templates/consumer_applicable_workflows.txt` populate (76 wrapper workflows 검수 후 consumer-applicable subset 결정) + `scripts/reconcile-overlay.sh` line 437 직전 hook insertion (CFP-898 §4.11 hook pattern 답습 + sequential composition) + `tests/test_detect_repo_kind.py` 20 TC unit tests (4-way matrix × 4 base + 6 EC + whitelist edge 5 + integration 3 + mixed self-app 1 + self-loop 1) + `tests/integration/test_reconcile_overlay_consumer_filter.bats` 통합 테스트 (TC-CAF-MIXED-1 wrapper self-app verify + TC-CAF-SELFLOOP-1 self-loop 0 invariant) + `docs/evidence-checks-registry.yaml` `consumer-applicability-filter-detection` entry (warning-tier) + `CHANGELOG.md` row append.
 
 
