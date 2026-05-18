@@ -185,7 +185,7 @@ DesignReview lane 의 DesignReviewPL / DesignReviewAgent 는 **inter-plugin cont
 **D7.2 (Q2-B) reconcile-protocol-v1 §4.12/§4.13 cross-ref 갱신 Phase 1 PR scope 포함 — 거절**:
 - CFP-986 `b6d7eb5` first applied case = 이미 §4.12 / §4.13 안에 D2-1 충족 (classification_severity_disjoint_invariant + classification_not_severity_clause clause 존재).
 - ADR-084 가 generalization codify 만 하면 첫 instance 의 D2 충족 표면 보존 — reconcile-protocol-v1 자체 cross-ref 갱신 불필요.
-- scope expansion 회피 + ADR-054 doc-only fast-path 단일 PR 정합 보존. cross-ref 갱신 (다른 contract — severity-propagation-v1 등 — 안 numeric-space-sharing site enumerate) 은 후속 CFP 별 entry 적격 (sentinel reach 시 별 carrier 적격).
+- scope expansion 회피 + ADR-054 doc-only fast-path 단일 PR 정합 보존. cross-ref 갱신 (다른 contract — severity-propagation-v1 등 — 안 numeric-space-sharing site enumerate) 은 분리 후속 CFP entry 적격 (sentinel reach 시 분리 carrier 적격).
 
 **D7.3 (Q3-B) registry audit lint entry warning tier 즉시 신설 — 거절**:
 - pattern_count 1 (CFP-986 single sample, recurrence 0 sample). 실 추가 sample 발생 시 (ADR-052 touchpoint(1-6) + severity(0-2) + ADR-067 max-FIX(0-3) 3-way cohabitation 등 후보 site — Researcher §6 enumerate 영역) 신속 promotion 영역 명시 sentinel clause 가 ratchet-up direction promise + 실 추가 sample 발생 시 신속 promotion 영역 명시로 충분.
@@ -199,7 +199,7 @@ DesignReview lane 의 DesignReviewPL / DesignReviewAgent 는 **inter-plugin cont
 - **신규 inter-plugin contract 작성 시** (kind:contract / kind:registry 모두): D1 조건 A+B+C AND 충족 시 D2 3-곳 명시 declare 의무 자동 적용. ArchitectAgent §3/§7 self-check 영역 + DesignReviewPL audit 영역 (D4 behavioral directive).
 - **기존 inter-plugin contract retroactive validation**:
   - CFP-986 `b6d7eb5` first applied case = 본 ADR §D3 검증 완료 (3-곳 declare 충족 — §4.12 contract 본문 + 본 ADR §D3 ADR 본문 + 동반 신설 domain-knowledge entry).
-  - 기타 contract (review-verdict-v4 severity / fix-event-v1 affected_scope / label-registry-v2 numeric metadata / severity-propagation-v1 numeric severity ↔ tier mapping 등) retroactive validation = **별 follow-up CFP carrier 영역** (sentinel clause D6.3 pattern_count ≥ 2 reach 시 mandatory).
+  - 기타 contract (review-verdict-v4 severity / fix-event-v1 affected_scope / label-registry-v2 numeric metadata / severity-propagation-v1 numeric severity ↔ tier mapping 등) retroactive validation = **분리 후속 CFP carrier 영역** (sentinel clause D6.3 pattern_count ≥ 2 reach 시 mandatory).
 - **DesignReview lane MUST flag**: D4 behavioral directive 발효 (Phase 2 follow-up `codeforge:review-responsibility` skill / codeforge-review CLAUDE.md DesignReviewPL 체크항목 행 추가 영역 — 본 Story scope 외).
 
 ### 비-효력 (Not effective)
@@ -208,7 +208,7 @@ DesignReview lane 의 DesignReviewPL / DesignReviewAgent 는 **inter-plugin cont
 - marketplace.json mirrored 4 field 변경 0건 (`name` / `version` / `description` / `author`, ADR-063 atomic invariant 발효 0건).
 - plugin.json version bump 0건 (doc-only fast-path).
 - reconcile-protocol-v1 자체 cross-ref 갱신 0건 (Q2-A retroactive validation only).
-- evidence-checks-registry warning tier entry 추가 0건 (Q3-A declaration-only retain — sentinel reach 시 별 CFP carrier).
+- evidence-checks-registry warning tier entry 추가 0건 (Q3-A declaration-only retain — sentinel reach 시 분리 CFP carrier).
 - label-registry-v2 MINOR bump 0건 (sentinel reach 시 동반).
 
 ## 해소 기준
