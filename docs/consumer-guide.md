@@ -631,6 +631,48 @@ per-family rollback 은 7 plugin 을 직전 snapshot 시점으로 **일괄** 복
 
 ---
 
+### §2g.3 codeforge channel CLI + migration tool (CFP-932 Wave 4 sub-Epic #1 Story-2 / ADR-076 §결정 9 + reconcile-protocol-v1 v1.8)
+
+codeforge family 7 plugin (wrapper + 6 lane plugin) 은 **release channel** 차원을 갖는다 — version specifier 와 독립적인 추적 트랙 (어떤 maturity track 을 따르는가). channel 은 family 단위로 atomic 하게 pin 되며 (per-plugin override 불가), consumer 는 1회 선언으로 7 plugin 을 동시에 동일 channel 로 resolve 한다 (사용자 결정 분기 0 invariant 보존).
+
+**3-tier 선택 가이드** (ADR-076 §결정 9.1):
+
+| tier | risk class | 권장 사용자 | 의미 |
+|---|---|---|---|
+| `stable` | **LOW** (production impact: none) | developer self-service OK | 기본값 (default). 검증 완료된 current active channel |
+| `beta` | **MEDIUM** (observable but reversible) | developer + reviewer awareness 충분 | opt-in incremental track |
+| `canary` | **HIGH** (production-impact tier) | **admin 권장** (ADR-076 §결정 9.4) | preview + production cutover 영향. consumer CODEOWNERS auto-review path 권장 (consumer-side governance — codeforge wrapper enforcement 0) |
+
+> **canary tier admin advisory**: `canary` tier 선언은 production-impact 결정이다. consumer org 는 `.claude/_overlay/project.yaml codeforge.channel.tier: canary` 변경 PR 을 CODEOWNERS auto-review path (admin 검토) 로 게이트할 것을 권장한다. silent canary uptake (developer self-service via PR edit) 차단 = consumer governance gate 책임.
+
+**channel CLI 사용법** (`codeforge.channel.tier` 미선언 시 derived default `stable`):
+
+```bash
+# consumer overlay 의 codeforge.channel.tier resolve (CLI --channel 미지정)
+bash scripts/codeforge-upgrade.sh --dry-run
+
+# CLI 로 명시 channel pin (overlay 보다 우선 — CLI override 시 stdout 에 visible 출력)
+bash scripts/codeforge-upgrade.sh --channel beta --apply
+
+# 7-plugin family atomic channel bump (mixed channel 감지 시 abort-before-touch)
+bash scripts/atomic-upgrade-7-plugins.sh --channel stable --apply
+```
+
+CLI `--channel` 명시값은 consumer overlay `codeforge.channel.tier` 보다 우선한다 (`--repo` 우선순위 패턴 동형). 충돌 시 stdout 에 `CLI override: overlay=<X> → CLI=<Y>` 가 visible 출력된다 (사용자 결정 분기 0 invariant 보존 — prompt 없이 가시화만). **override 대상이 `canary` tier 인 경우** stderr 에 `[PRODUCTION-IMPACT WARNING]` 가 추가 emit 된다 (production-impact 결정의 가시성 보강 — 진행은 정상, abort 없음).
+
+**migration tool — 기존 consumer (channel 미선언) 의 tier 역추론**:
+
+```bash
+# 현 install plugin.json version → channel tier 역추론 + project.yaml block 제안 (출력만, write 0)
+bash scripts/infer-channel-from-version.sh
+```
+
+`infer-channel-from-version.sh` 는 현 install plugin.json `.version` 을 registry marketplace.json `channels[*].versions[]` membership 로 역추론하여 적합한 `codeforge.channel.tier` 를 **제안 출력만** 한다 (stdout). **consumer project.yaml 을 직접 write 하지 않는다** (ADR-027 §4b consumer-authored write boundary 절대 invariant — agent/script write 0). consumer 는 stdout block 을 검토 후 `.claude/_overlay/project.yaml` 에 수동 paste 한다 (human-in-the-loop gate). 매칭 tier 가 없으면 (registry channels[] 미populate 등) `unknown` + `stable` 권장을 출력한다 (graceful — 정상 transitional 동작).
+
+**channel drift 자동 감지**: `channel-drift-detection.yml` workflow (24h cron + manual `workflow_dispatch`) 가 3-tuple drift — (a) consumer `codeforge.channel.tier` ↔ (b) 실 install plugin.json `.version` ↔ (c) registry marketplace.json `channels[*].versions[]` membership — 를 감지하여 drift 시 Issue auto-create (signature dedup) 한다. warning-first failure mode (CI block 0, advisory Issue). `hotfix-bypass:channel-drift-detection` label 로 조건부 skip 가능 (audit comment 자동 발의 동반).
+
+---
+
 ### §2h.1 SessionStart prereq-check hook 자동 활성 (CFP-475 / ADR-038 Amendment 3 이후)
 
 Codeforge orchestration 의 critical path tool 인 **TodoWrite** 는 Claude Code harness 의 **deferred tool** — turn 0 시점에 schema 가 노출되지 않아 `ToolSearch("select:TodoWrite")` 로 lazy-fetch 해야 호출 가능. CFP-475 / ADR-038 Amendment 3 이후 **plugin-root `hooks/hooks.json` 에 자동 등록** — 별도 consumer `.claude/settings.json` 등록 절차 불필요.
