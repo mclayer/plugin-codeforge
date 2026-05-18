@@ -1023,6 +1023,47 @@ labels:
     description: "channel: canary tier marker (CFP-906 / ADR-076 §결정 9.1 + §결정 9.4 — preview + production-impact tier). consumer `codeforge.channel.tier: canary` 선언 PR/Issue channel-aware annotation. HIGH risk class (production cutover semantic — admin tier 권장, consumer-side 책임 + CODEOWNERS auto-review path 권장 advisory). canary tier 선언 시 Wave 4 sub-Epic #1 Story-3 ProductionEvidenceDeputy spawn trigger 영역 (ADR-72 §결정 1 정합 — Story-1 declare layer 영역 외). Wave 4 sub-Epic #1 Story-1 carrier."
     single_active: false
     attach_owner_plugin: "Orchestrator (consumer codeforge.channel.tier 선언 PR/Issue open 시 부착) / 사용자 직접 / channel-drift-detection.yml (Wave 4 sub-Epic #1 Story-2 carrier 시점 자동 부착 영역)"
+
+  # parent:* (CFP-949 추가 — Sub-Epic 6 lane plugin self-owned architecture doc seed)
+  # 기존 parent:CFP-* family pattern 답습 (parent:CFP-541 / parent:CFP-425 / parent:CFP-525 / parent:CFP-548 선례).
+  # bootstrap-labels.sh L112 ↔ registry 양방향 sync (CFP-33 STRICT lint).
+  - name: parent:CFP-949
+    category: parent
+    color: "ededed"
+    description: "Child Story of Sub-Epic CFP-949 (6 lane plugin self-owned architecture doc seed)"
+    single_active: false
+    attach_owner_plugin: "Orchestrator (Sub-Epic CFP-949 child Story Issue open 시 부착) / GitOpsAgent (sub-issue 생성 시 자동 부착)"
+
+  # plugin:* (CFP-949 추가 — 4 lane plugin namespace marker)
+  # Wave 1 CFP-968/969/970 + Wave 2 CFP-972 carrier. plugin:codeforge-{review,pmo} 는 사전 wrapper repo 환경에서 부트스트랩 형태로 이미 존재.
+  # bootstrap-labels.sh L116-119 ↔ registry 양방향 sync (CFP-33 STRICT lint).
+  - name: plugin:codeforge-requirements
+    category: plugin
+    color: "ededed"
+    description: "Plugin namespace: codeforge-requirements (요구사항 lane)"
+    single_active: false
+    attach_owner_plugin: "Orchestrator (plugin scope PR/Issue open 시 부착) / GitOpsAgent (lane-targeted sub-issue 생성 시 자동 부착)"
+
+  - name: plugin:codeforge-design
+    category: plugin
+    color: "ededed"
+    description: "Plugin namespace: codeforge-design (설계 lane)"
+    single_active: false
+    attach_owner_plugin: "Orchestrator (plugin scope PR/Issue open 시 부착) / GitOpsAgent (lane-targeted sub-issue 생성 시 자동 부착)"
+
+  - name: plugin:codeforge-develop
+    category: plugin
+    color: "ededed"
+    description: "Plugin namespace: codeforge-develop (구현 lane)"
+    single_active: false
+    attach_owner_plugin: "Orchestrator (plugin scope PR/Issue open 시 부착) / GitOpsAgent (lane-targeted sub-issue 생성 시 자동 부착)"
+
+  - name: plugin:codeforge-test
+    category: plugin
+    color: "ededed"
+    description: "Plugin namespace: codeforge-test (통합테스트 lane)"
+    single_active: false
+    attach_owner_plugin: "Orchestrator (plugin scope PR/Issue open 시 부착) / GitOpsAgent (lane-targeted sub-issue 생성 시 자동 부착)"
 ```
 
 ## 4. 변경 규칙
