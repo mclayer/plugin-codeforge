@@ -94,6 +94,6 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 
 ---
 
-## anti-scope guard (ADR-078 §결정 1 verbatim — 작성자 필독)
+### anti-scope guard (ADR-078 §결정 1 verbatim — 작성자 필독)
 
 본 doc 은 **구조 수준 only**. 4종 패턴 금지: (1) 클래스/함수/변수 라인 단위 열거 (2) import graph 라인-level (3) 함수 signature/parameter/return type (4) src/ 1:1 디렉터리 dump. 라인 수준 필요 시 = 코드/Change Plan/ADR 영역.
