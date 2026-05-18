@@ -6,6 +6,8 @@ kind: architecture_doc
 
 > **목표 invariant (ADR-078 §결정 1 verbatim)**: 코드 직접 read 없이 architecture_doc 1개 read 로 전체 구조 (모듈 + 경계 + 인터페이스 + 데이터 흐름) 파악.
 
+> **시각 diagram 허용 (CFP-951)**: 위 4 H2 안에 `mermaid` / `plantuml` fenced code block embed 허용. 4 H2 closed-enum invariant + anti-scope guard 4종("코드 mirror") 보존 (diagram = abstraction layer, 코드 line mirror 아님). fenced code block 은 architecture-drift lint(CFP-923 detection class d) 의 exempt 영역이므로 별도 governance 변경 없이 사용 가능.
+
 <!--
   architecture_doc = docs/architecture/ 경로 하 영속 markdown SSOT.
   Story key 독립 (고정 경로) + 누적 *현재 상태* 영역 only (델타 X — 델타는 change_plan SSOT).
