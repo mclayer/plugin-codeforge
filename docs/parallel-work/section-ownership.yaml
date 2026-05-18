@@ -142,4 +142,17 @@ owned_sections:
     # consumer overlay tz override 불가 (ADR-057 정합).
     # Phase 2 CFP-771 Amendment 1 이 mechanical lint wire 채움.
 
+  # ADR-078 (CFP-920 Epic B Story-2) — living architecture doc seed + template
+  - file: docs/architecture/codeforge-family.md
+    section: "(전체 — architecture_doc seed, 4 H2 closed-enum)"
+    owner_adr: ADR-078  # CFP-920 carrier — living architecture doc 유지 정책 SSOT
+    carrier_story: CFP-920
+    parallel_edit: locked
+    arbitrator: codeforge-design:ArchitectAgent
+    # NOTE (CFP-920): architecture_doc = ArchitectAgent monopoly (doc-locations
+    # architecture_doc entry owner_agent 정합) + design lane verdict gate (S3 #921
+    # lane gate carrier). locked — 동시 수정 시 merge-order 의무. 누적 *현재 상태*
+    # SSOT (Story key 독립). Change Plan (델타) 와 disjoint 상보 (ADR-078 §결정 3).
+    # 4 H2 closed-enum (모듈/경계/인터페이스 계약/데이터 흐름) drift lint = S4 (#923).
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)
