@@ -7,6 +7,15 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.91.1] - 2026-05-18
+
+### Fixed (CFP-986 post-merge — S3 result-fidelity classification↔severity disjoint, Epic CFP-858)
+
+- **`scripts/reconcile-overlay.sh`** — `detect-repo-kind.py` 의 **classification** exit code (`0=plugin / 1=consumer / 2=mixed / 3=unknown`) 를 **severity** 채널 `_S2_MAX_EXIT` 에 무조건 전파하던 line 490-491 (`if [[ "${_ec}" -gt "${_S2_MAX_EXIT}" ]]; then _S2_MAX_EXIT="${_ec}"; fi`) 삭제. 정상 consumer repo (`detect-repo-kind` exit 1 = consumer, NORMAL) reconcile 이 `result-fidelity-aggregator.py s2_exit_to_result(1)=FAILED` 로 false `result: FAILED` 기록하던 결함 해소 (codeforge PRIMARY use case; Epic CFP-858 honest-reporting mandate 의 inverse 위반 — false SUCCESS 의 inverse = false FAILED). genuine abort case (unknown=3 / crash / enum-pollution) 의 severity signal 은 per-branch handler 가 독립 보존 (fail-closed 무약화). Epic CFP-858 IntegrationTest gate 검출 + ADR-070 verify-before-trust 직접 재현.
+- **`docs/inter-plugin-contracts/reconcile-protocol-v1.md`** — §4.12 `classification_severity_disjoint_invariant` + §4.13 `classification_not_severity_clause` 명세 명확성 보강 (classification exit ≠ severity signal — ratchet-strengthening only, 의미 invariant 무변경, ADR-064 §self-application). reconcile-protocol-v1 version 무변경 (v1.10 유지, body 정확화).
+- **`tests/integration/test_reconcile_overlay_consumer_filter.bats`** — discriminating end-to-end TC 4종 추가 (TC-INT-RF-CONSUMER → SUCCESS / TC-INT-RF-UNKNOWN → FAILED 보존 / TC-INT-RF-PLUGIN → SUCCESS / TC-INT-RF-MIXED → SUCCESS). `tests/test_result_fidelity_aggregator.py` TC-RF-3 (aggregator severity contract `s2_exit=1→FAILED`) 무변경 (aggregator 가 결함 아님).
+- ADR-026 isPostMergeFix fast-pass 경로. Issue #986 (parent Epic CFP-858, relates CFP-900). ArchitectPL root-cause ADR-035 = impl + 명세 명확성 보강 (NOT design defect — §4.13 degradation_propagation semantic 자체는 sound).
+
 ## [5.91.0] - 2026-05-18
 
 ### Added (CFP-900 Phase 2 — §4.13 result_fidelity_binding runtime, Epic CFP-858 S3 마지막 Story)
