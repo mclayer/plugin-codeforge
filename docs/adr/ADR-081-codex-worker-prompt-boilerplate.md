@@ -30,6 +30,13 @@ amendments:
     status: applied
     ref: "## Amendment 2 / 본문 ### D7 + 거절된 대안 D7"
     sunset_justification: "ratchet 강화 방향 (severity calibration rubric quantification + digest-parse pre-screen + escape hatch declaration). 약화 영역 0건 (D1-D6 본문 의미 변경 0, scope 축소 0). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
+  - amendment_id: 4
+    cfp: CFP-963
+    date: 2026-05-19
+    scope: "§결정 D1.D body 확장 — `sandbox_network_required: <bool>` boolean toggle → `network_scope: <4-tier enum>` strict ratchet-up codify. 4-tier enum value SSOT: `offline` (file-IO-only sandbox 영역 verify 완결) / `repo-fetch-only` (own-repo file-IO + own-repo git fetch 한정) / `web-fetch` (external HTTP / cross-repo gh api / git fetch cross-repo 허용 — 기존 boolean true 의 broad path) / `offline_substitution_declared` (Codex CLI 미가용 / sandbox network-block 확정 → Orchestrator substitution path activate, boolean equivalent 부재 — strict ratchet-up). Boolean → enum backward-compat mapping (advisory grace): `false ↔ offline` / `true ↔ web-fetch` (default broad path) / `true ↔ repo-fetch-only` (narrower variant explicit declare). Boolean legacy grace window = open-ended until ratchet trigger (declarative-only `ratchet_trigger`: `pr_cumulative_min: 20` enum-only window — ADR-060 §결정 6(b) default precedent-aligned per ADR-068 I-5 dimensional empirical grounding / OR explicit user/PMO escalation — manual proposal on trigger reach, auto-firing 부재). 본 Amendment 4 = enum 도입; boolean 폐기 = 별 follow-up Amendment 5 reservation. unconditional guard placement (ADR-068 I-3): boolean grace = unconditional advisory (lint emits `[legacy-boolean-detected]` comment but exits 0 unconditionally during grace window — no lint flag gating). declaration-only retain invariant **유지** (§D5 precedent — mechanical injection layer 부재). 단 `mechanical_enforcement_actions[]` 신설: `codex-network-scope-presence` warning-tier evidence-checks-registry entry binding (ADR-040 Amendment 3 §결정 7.A 의무 — declaration ≠ presence check 영역 분리, CFP-722 story-section-ownership / CFP-841 corpus-claim-verify precedent 동형). D1.A-C 본문 의미 변경 0건. D6/D7 영역 영향 0. is_transitional false 유지 (permanent governance)."
+    status: applied
+    ref: "## Amendment 4 / 본문 ### D1.D 확장"
+    sunset_justification: "ratchet 강화 방향 (boolean 2-state → 4-state enum, 정보 손실 0, scope 축소 0 + declaration-only retain → +mechanical presence-grep warning lint binding = ADR-040 Amendment 3 §결정 7.A self-application). 약화 영역 0건 (D1.A-C/D6/D7 본문 의미 변경 0, boolean legacy grace 미축소 — open-ended until ratchet trigger). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
 related_stories:
   - CFP-819  # carrier
   - CFP-770  # baseline fp 8
@@ -59,7 +66,14 @@ related_files:
   - docs/orchestrator-playbook.md
   - CLAUDE.md
 is_transitional: false
-mechanical_enforcement_actions: []
+mechanical_enforcement_actions:
+  # Amendment 4 (CFP-963, 2026-05-19) — D1.D `network_scope: <4-tier enum>` 확장 시
+  # ADR-040 Amendment 3 §결정 7.A 의무 발효 (D1-D7 본문 의미 변경 0, declaration-only retain
+  # 유지하면서 presence-grep mechanical lint layer 추가 = CFP-722 story-section-ownership /
+  # CFP-841 corpus-claim-verify 선례 동형). registry yaml row + workflow yml = Phase 2 PR scope.
+  - action: codex-network-scope-presence
+    status: deferred-followup     # registry yaml row append = Phase 1 PR; actual lint script + workflow wire = Phase 2 PR scope
+    target_section: §결정 D1.D    # spawn prompt 안 network_scope field presence-grep heuristic (4-tier enum value OR boolean legacy advisory grace)
 ---
 
 # ADR-081: Codex worker prompt boilerplate composition SSOT (3 mandatory section + verify-before-trust scope + 3-lane partition)
@@ -442,6 +456,92 @@ fp 0 chain sentinel (CFP-770/771 baseline → CFP-786/801/792/795/810 5 consecut
 - D1-D6 본문 의미 변경 0건 — §결정 D7 sub-section append only (Amendment 1 패턴 정합)
 - `mechanical_enforcement_actions[]=[]` retain (declaration-only, §D5 + D6.e precedent)
 - is_transitional false 유지 (permanent governance, ratchet 강화 only)
+
+## Amendment 4 (CFP-963, 2026-05-19 KST)
+
+### Context (Amendment 4)
+
+PR #962 merge (CFP-946 closing) 가 §결정 D1.D `sandbox_network_required: <bool>` boolean toggle 을 spawn-prompt boilerplate 4번째 mandatory field 로 codify. 도입 시점부터 boolean 2-state (true / false) 가 substitution path 3-enum (`inline_orchestrator_verify` / `manual_substitution_declare` / `fallback_skip_with_marker`, ADR-052 Amendment 8) 의 입력 신호로 작동 — 단 boolean 표현력이 **codex CLI 실제 sandbox network 행위 폭** 을 cover 하지 못한다.
+
+Researcher Phase 0 evidence [verified] (`github.com/openai/codex` README + `docs/sandbox.md` cross-ref via CFP-946-A): codex CLI 는 `--allow-network` flag + `sandbox.network_access` config 노출, file IO ↔ network egress disjoint control. 즉 spawn-prompt declaration layer 도 (a) **file-IO-only sandbox 영역** (codex 자체 sandbox 안 own working directory file Read 만 verify) vs (b) **own-repo git fetch 한정 영역** (cross-repo 미허용) vs (c) **broad external egress 영역** (gh api / cross-repo git fetch / 외부 HTTP) vs (d) **fallback substitution path activated 영역** (codex CLI 미가용 / sandbox network-block 확정 → Orchestrator substitution) 4-tier semantics 분리가 정합한 표현.
+
+boolean 2-state (true ↔ {b, c} ambiguous / false ↔ a only) 는 (b) / (c) / (d) 영역 disambiguation 부재. CFP-963 = boolean → 4-tier enum strict ratchet-up (정보 손실 0, scope 축소 0). D1.A-C 본문 의미 변경 0건 — D1.D 본문만 확장.
+
+또한 ADR-040 Amendment 3 §결정 7.A self-application: 본 Amendment 4 가 신규 lint carrier (`codex-network-scope-presence`, ADR-060 Amendment 14) 도입 → `mechanical_enforcement_actions[]` frontmatter binding 의무 발효 (Amendment 1/2 D6/D7 영역 = declaration-only retain mechanical_enforcement_actions[]=[] 정합, 본 Amendment 4 만 신규 lint carrier 이므로 ADR-040 Amendment 3 §결정 7.A mandate 적용 — `[]` → list[object] 전환).
+
+### D1.D 확장 — `network_scope: <4-tier enum>` (boolean → 4-tier strict ratchet-up)
+
+기존 §결정 D1.D 본문 (`sandbox_network_required: <bool>`) 의 in-place 확장. boolean field 명 (`sandbox_network_required`) 폐기 + 신규 field 명 (`network_scope`) 으로 rename + type change. 단 backward-compat grace 윈도우 의무 (아래 §D1.D.legacy_grace_window 정합).
+
+```yaml
+network_scope: <4-tier enum value>
+```
+
+#### D1.D 운영적 정의 (4-tier enum value SSOT)
+
+| Enum value | Semantics | spawn-prompt declare 조건 | substitution path 3-enum mapping (ADR-052 Amd 8) |
+|---|---|---|---|
+| `offline` | codex CLI sandbox 안 own working directory file Read 만으로 verify 완결. network egress 0. | Codex worker 가 single file 영역 grep / quote / line-anchor verify task — sandbox-내부 file scope 만 | `inline_orchestrator_verify` (default) — codex worker output 정상 수신 + finding evidence 영역 = own working directory 안 |
+| `repo-fetch-only` | codex CLI sandbox 안 own-repo file Read + own-repo `git fetch` 허용. cross-repo egress 0. | Codex worker 가 own-repo 안 dir scope recursive grep / commit-anchor verify task — own-repo file history 영역 | `inline_orchestrator_verify` (default — own-repo 영역 = Orchestrator working directory 인접) |
+| `web-fetch` | codex CLI sandbox 가 cross-repo `gh api` / cross-repo `git fetch` / 외부 HTTP egress 허용. external egress 활성. | Codex worker 가 cross-repo state (sibling plugin / marketplace.json / internal-docs) verify task — cross-repo state 5-tuple verify scope (ADR-081 §결정 D2.C 정합) | `manual_substitution_declare` (sandbox 영역 외 file verify task 필요 시) |
+| `offline_substitution_declared` | codex CLI 자체 미가용 / sandbox network-block 확정 / 8+ occurrence sentinel reentrant 위험 영역 → Orchestrator substitution path activate. spawn 자체 skip. | Codex CLI 미가용 (api_missing / version_skew / enterprise_blocked, playbook L1349 fail-mode 6-enum 정합) | `fallback_skip_with_marker` (codex worker spawn 자체 skip + Orchestrator verify-before-trust 5 sub-scope 全 적용) |
+
+#### D1.D 운영적 정합
+
+- `offline` / `repo-fetch-only` / `web-fetch` = codex worker **spawn 활성** 영역 (codex CLI 가용). codex spawn-prompt 본문에 `network_scope` declare → codex CLI 자체 sandbox toggle (codex@openai-codex plugin runtime) 의 입력 신호.
+- `offline_substitution_declared` = codex worker **spawn 자체 skip** 영역 (codex CLI 미가용). Orchestrator inline substitution path (verify-before-trust 5 sub-scope D2.A-E 단독 수행). Story §10 marker `[codex-sandbox-fallback: <fail-mode>]` 동반 의무 (playbook L1349 6-enum 정합).
+- 4 enum value 모두 codeforge 측 spawn-prompt declaration only — **declaration-only retain 유지 (§D5 precedent)**, codex CLI sandbox 자체 행위 변경 = codex@openai-codex plugin runtime 영역 (codeforge 비소유).
+- `network_scope` value semantic ↔ ADR-070 substitution scope 3-enum / playbook L1349 fail-mode 6-enum 사이 orthogonal:
+  - `network_scope` = **WHAT scope** (4-tier: offline / repo-fetch-only / web-fetch / offline_substitution_declared)
+  - substitution path = **HOW substitute** (3-enum: inline_orchestrator_verify / manual_substitution_declare / fallback_skip_with_marker)
+  - fail-mode = **WHY failed** (6-enum: api_missing / version_skew / enterprise_blocked / gh_api_network_blocked / manual_substitution_declared / inline_orchestrator_verify_only)
+  - 3-축 disjoint, 1 spawn 안 동시 declare 가능 (orthogonal — 의미 overlap 0).
+
+#### D1.D.legacy_grace_window — boolean → 4-tier enum backward-compat 운영 정합
+
+PR #962 merge 후 (CFP-946) `sandbox_network_required: <bool>` boolean field 가 codified — 본 Amendment 4 적용 시점에 신규 Story 가 이미 boolean 사용 가능성 존재 (Story §4.1.3 파괴적 변경 후보 verify 영역). backward-compat grace 운영:
+
+- **boolean → enum advisory mapping** (read-side, lint 영역):
+  - `sandbox_network_required: false` ↔ `network_scope: offline` (file-IO-only 영역 정합)
+  - `sandbox_network_required: true` ↔ `network_scope: web-fetch` (default broad path) **OR** `network_scope: repo-fetch-only` (narrower variant, explicit declare 필요 — boolean → enum mapping ambiguous, 신규 declare 시 explicit recommendation)
+  - `offline_substitution_declared` = boolean equivalent 부재 (strict ratchet-up — Amendment 4 신규 영역)
+- **write-side recommendation**: 본 Amendment 4 merge 후 신규 Codex worker spawn-prompt 작성 시 `network_scope: <4-tier enum>` 형식 권장 (boolean legacy 회피).
+- **lint 운영** (`codex-network-scope-presence` warning tier, ADR-060 Amendment 14 carrier):
+  - `network_scope: <4-tier enum>` present = PASS
+  - `sandbox_network_required: <bool>` legacy present + `network_scope` absent = **advisory warn** `[legacy-boolean-detected]` PR comment, **exit 0 unconditionally** (warning tier first, ADR-068 I-3 unconditional guard placement 정합 — 본 grace 는 lint flag gating 없이 무조건 advisory)
+  - 둘 다 absent = **advisory warn** (presence missing) PR comment, exit 0
+  - 둘 다 present + value 정합 = PASS (legacy coexist 정합)
+- **grace window 종료 trigger** (declarative-only, manual proposal on trigger reach — auto-firing 부재):
+  - **`pr_cumulative_min: 20`** (ADR-060 §결정 6(b) default precedent-aligned per ADR-068 I-5 dimensional empirical grounding — `dimension category: count, units: merged-PR-count-with-enum-only-network-scope-usage, empirical-source: ADR-060 §결정 6(b) STANDARD threshold 22 entry retroactive verified prior art, conservative ratchet`) 안 enum-only 사용 PR count = 20 reach + boolean usage = 0 의 OR
+  - **explicit user/PMO escalation** (사용자 directive 또는 PMO retro carrier)
+- **grace window 종료 시 별 follow-up Amendment 5 reservation**: boolean field name 폐기 + lint hard-fail 승격. 본 Amendment 4 = 4-tier enum 도입만 (CFP scope unitary ADR-064 §결정 1 정합 — "경량 → full" 단계 차단).
+
+#### D1.D 결정 영역 (cross-ref)
+
+- ADR-052 Amendment 8 (CFP-946-A) — substitution path 3-enum SSOT (Orchestrator 측 dispatch policy). `network_scope` 4-tier ↔ substitution 3-enum 표준 mapping 위 D1.D 운영적 정의 표.
+- ADR-070 Amendment 3 (CFP-946-A) — §결정 1 expansion (substitution scope codify, Orchestrator inline verify-before-trust 자동화). graceful degradation step (b) base SSOT.
+- ADR-081 D7.c (Amendment 2) — ground-truth divergence escape hatch. `offline_substitution_declared` value 의 substitution scope 3-path enum trigger 영역 = D7.c escape hatch 자동 trigger.
+- playbook §3.10 (CFP-963 graceful degradation step pair (a)(b)(c) sub-section) — step (a) detect (codex --help / codex --version / gh api /rate_limit) → step (b) declare `network_scope: offline_substitution_declared` + verify-before-trust 5 sub-scope full apply → step (c) Story §10 marker + §14 `network_scope_actual` field.
+- 본 D1.D = spawn-prompt-side declaration / ADR-052 Amd 8 + ADR-070 Amd 3 = substitution-side mechanism. 양 면 chain 완결 (CFP-946 option 1 + option 2 + option 3 통합 + CFP-963 mechanical layer = closing-the-loop).
+
+### 거절된 대안 D1.D-amend
+
+- (D1.D-A) boolean retain + 4-tier enum 신설 (양 field coexist 영구) — surface 분기 + grace window 무한 = scope 모호. 4-tier enum 으로 단일 source (boolean legacy grace = open-ended until trigger) 채택 (ADR-064 broad coverage).
+- (D1.D-B) 4-tier 대신 5-tier 확장 (`offline` + `repo-fetch-only` + `cross-repo-fetch-only` + `web-fetch` + `offline_substitution_declared`) — cross-repo / external HTTP 분리. codex CLI 자체 toggle 영역에서 cross-repo vs external HTTP disambiguation 부재 (codex CLI sandbox 단일 toggle, `--allow-network` 만 노출) → 추가 분기 의미 없음. 4-tier 유지 (CFP-966 lesson "신규 unique drift value 회피" 정합).
+- (D1.D-C) boolean → enum 즉시 폐기 (grace window 0) — PR #962 merge 직후 환경에서 신규 Story breaking change risk. open-ended grace window (declarative-only `pr_cumulative_min: 20` enum-only + manual escalation) 채택.
+- (D1.D-D) `codex-network-scope-presence` lint mechanical injection layer 신설 (declaration-only retain invariant 폐기) — §D5 declaration-only retain precedent 위반 + mechanical injection layer = codex@openai-codex plugin runtime 영역 침범. **declaration-only retain 유지 + presence-grep warning lint (ADR-060 framework entry)** 채택 — 보완 관계 (declaration ≠ presence verification axis), CFP-722 story-section-ownership / CFP-841 corpus-claim-verify 선례 동형.
+- (D1.D-E) ADR-052 Amendment 9 신설 (fail-mode 6-enum mechanical detection cross-ref) — Amendment 8 cross-matrix 이미 codify, 신규 enum value 0. cross-ref-only (ADR-081 D1.D 본문에 정합) 채택 (CFP-966 lesson "신규 unique drift value 회피" 정합, §결정 1 CFP scope unitary).
+
+### 결과 (Amendment 4)
+
+- §결정 D1.D body 확장 — `network_scope: <4-tier enum>` strict ratchet-up codify (boolean 2-state → 4-state, 정보 손실 0)
+- 4-tier enum value SSOT 표 (offline / repo-fetch-only / web-fetch / offline_substitution_declared + substitution-path mapping + fail-mode orthogonality) — D1.D 운영적 정의 SSOT
+- backward-compat grace window 운영 정합 — D1.D.legacy_grace_window SSOT (boolean → enum advisory mapping, `[legacy-boolean-detected]` warn + exit 0 unconditional, `pr_cumulative_min: 20` enum-only ratchet trigger + manual escalation)
+- `mechanical_enforcement_actions[]` 전환 — frontmatter list[object] entry `codex-network-scope-presence` (status: deferred-followup, target_section: §결정 D1.D) 신설. ADR-040 Amendment 3 §결정 7.A self-application 정합 (Amendment 1/2 D6/D7 영역 = declaration-only retain mechanical_enforcement_actions[]=[] 정합 별도 보존, 본 Amendment 4 = 신규 lint carrier 영역만 list[object] 전환).
+- declaration-only retain invariant **유지** (§D5 precedent — mechanical injection layer 부재, presence-grep warning lint 은 ADR-060 framework 의 별 entry 영역, CFP-722 / CFP-841 선례 동형 — 보완 관계 = 상충 0)
+- D1.A-C / D2 / D3 / D4 / D5 / D6 / D7 본문 의미 변경 0건 — §결정 D1.D body 확장 only
+- ADR-052 Amendment 8 + ADR-070 Amendment 3 + playbook §3.10 (CFP-963 graceful degradation step pair sub-section) cross-ref chain 완결 — CFP-946 option 1+2+3 + CFP-963 mechanical layer = closing-the-loop
+- is_transitional false 유지 (permanent governance, ratchet 강화 only — ADR-058 §결정 5 sunset_justification 통과)
 
 ## 결과
 

@@ -1354,6 +1354,46 @@ Codex worker 결과 수신 후 Orchestrator 는 finding evidence 의 ground trut
 
 **narrative SSOT**: [`docs/domain-knowledge/domain/codex-collaboration/`](../docs/domain-knowledge/domain/codex-collaboration/) (ADR-052/070/081 cross-ref hub + substitution scope decision tree).
 
+#### §3.10.1-bis Graceful degradation step pair (a)(b)(c) (CFP-963 / [ADR-081 Amendment 4](../docs/adr/ADR-081-codex-worker-prompt-boilerplate.md) §결정 D1.D body 확장 + [ADR-060 Amendment 14](../docs/adr/ADR-060-evidence-enforceable-promotion-framework.md) §결정 28 carrier)
+
+ADR-081 Amendment 4 §결정 D1.D body 확장 (`sandbox_network_required: <bool>` → `network_scope: <4-tier enum>`: `offline` / `repo-fetch-only` / `web-fetch` / `offline_substitution_declared`) 이 codex worker spawn-prompt boilerplate 의 4-tier declaration 영역 codify. 본 sub-section = Codex CLI 미가용 / sandbox network-block 확정 / 8+ occurrence sentinel reentrant 위험 영역의 **graceful degradation step pair (a)(b)(c)** 명시 — playbook L1349 fail-mode 6-enum 의 mechanical detection layer SSOT (신규 enum value 0, 기존 6-enum 재사용 — `api_missing` / `version_skew` / `enterprise_blocked` / `gh_api_network_blocked` / `manual_substitution_declared` / `inline_orchestrator_verify_only`).
+
+**step (a) — Codex spawn 직전 detect (fail-mode 6-enum membership)**:
+
+Orchestrator 가 Codex worker spawn (Agent tool spawn / SendMessage to codex worker) **직전** 다음 3 detect probe 수행 — playbook L1349 fail-mode 6-enum 의 subset (api_missing / version_skew / enterprise_blocked) detection:
+
+| Detect probe | mechanism | fail-mode binding |
+|---|---|---|
+| `codex --help 2>&1 \| grep -q -- '--allow-network'` 실패 | Codex CLI 자체 미가용 — codex@openai-codex plugin 미설치 / PATH 영역 외 | `api_missing` |
+| `codex --version 2>&1` semver parse 실패 또는 minimum required version 미달 | Codex CLI version skew — `--allow-network` flag syntax 또는 `sandbox.network_access` config syntax 미지원 | `version_skew` |
+| `gh api /rate_limit 2>&1` HTTP 403 (enterprise org policy gate) | enterprise org network egress 정책 차단 — codex CLI 자체는 가용하나 외부 HTTP 403 | `enterprise_blocked` |
+
+3 detect probe 모두 PASS = step (b) inline_orchestrator_verify default path (substitution 비활성, 정상 Codex spawn). 1+ probe 실패 = step (b) `offline_substitution_declared` declare path 진입.
+
+**step (b) — `network_scope: offline_substitution_declared` declare + verify-before-trust 5 sub-scope 全 적용**:
+
+step (a) 1+ probe 실패 시 Orchestrator 는 다음 action:
+
+1. **Codex worker spawn 자체 skip** — codex CLI 미가용 / sandbox network-block 영역, dispatch 자체 무의미.
+2. **`network_scope: offline_substitution_declared` 4-tier enum value declare** — ADR-081 Amendment 4 §결정 D1.D body 정합 (boolean equivalent 부재 영역, strict ratchet-up). spawn-prompt body 가 사후 audit trail 용도로 declare 보유 (실제 spawn 미발생, declaration retain).
+3. **Orchestrator inline 단독 substitution path 진입** — substitution path 3-enum `fallback_skip_with_marker` (ADR-052 Amendment 8 / ADR-070 Amendment 3 §결정 1 expansion 정합). Codex finding evidence ground truth 를 own working directory file Read / Glob / Grep 로 단독 verify (ADR-070 §결정 D1 무조건 적용).
+4. **verify-before-trust 5 sub-scope 全 적용** — substitution = "Codex worker substitution" 이지 verify-before-trust 면제 아님 ([ADR-081 §결정 D2](../docs/adr/ADR-081-codex-worker-prompt-boilerplate.md) 5 sub-scope 무조건 적용):
+   - D2.A file scope verify (single file 안 grep count)
+   - D2.B dir scope verify (recursive grep)
+   - D2.C cross-repo scope verify (gh api / git fetch origin — enterprise_blocked 영역은 본 sub-scope 자체 실패 가능, ADR-073 §결정 D1 정합 fallback)
+   - D2.D grep count claim verify (active vs historical 차원)
+   - D2.E ADR §결정 번호 정확성 verify
+
+**step (c) — Story §10 marker + §14 `network_scope_actual` field**:
+
+substitution path activation 시 Orchestrator 는 다음 audit trail 의무:
+
+1. **Story §10 marker (1 회/spawn)**: `[codex-sandbox-fallback: <fail-mode>]` row append — fail-mode 6-enum 안 정확 1 value 보유 의무 (api_missing / version_skew / enterprise_blocked / gh_api_network_blocked / manual_substitution_declared / inline_orchestrator_verify_only). fix-event-v1 contract 정합 (Orchestrator monopoly, CFP-32). `codex-network-scope-presence` lint (ADR-060 Amendment 14 §결정 28 / CFP-963 Phase 2 carrier) 가 marker enum 정합 membership check 검증.
+2. **§14 Lane Evidence row 의 `network_scope_actual` field** (optional 13번째 field — evidence-check-registry-v1 v1.3 신규 schema, ADR-031 §14 12 field 영향 0 backward-compat): 본 lane row 의 actual scope (`offline_substitution_declared`) 기록. Codex dispatch 아닌 lane row = omit (omit-on-N/A pattern). present 시 4-tier enum 안 정확 1 value 보유 의무 (offline / repo-fetch-only / web-fetch / offline_substitution_declared). `codex-network-scope-presence` lint 가 §14 row 안 본 field membership check 검증.
+3. **PMOAgent retro trigger 영역 carry-over** (선택): substitution 발화 누적 ≥3 occurrence within Story = ADR-045 §D-9 cross-Story pattern threshold reach 후보 (PMO retro carrier evaluation 영역).
+
+**ratchet trigger (사용자/PMO escalation)**: 본 step pair (a)(b)(c) 의 `[codex-sandbox-fallback: <fail-mode>]` marker 누적 count 가 운영 중 ≥10 회 reach 시 ADR-052 Amendment 4 (touchpoint #2 mandatory) 의 codex CLI 가용 영역 가정 자체 재평가 후보. 본 정책 변경 = 별 follow-up CFP 의무 (ADR-064 §결정 1 scope unitary 정합).
+
 #### §3.10.1 Pre-question Review (iterative reformulation — CFP-446 / [ADR-052 Amendment 2](../docs/adr/ADR-052-codex-proactive-check-touchpoints.md))
 
 | 항목 | 내용 |
