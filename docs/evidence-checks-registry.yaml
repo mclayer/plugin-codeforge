@@ -2806,7 +2806,7 @@ entries:
       verbatim cite (Chrome 3-channel Stable/Beta/Canary primary + npm dist-tag +
       Rust 3-channel + K8s 3-stage 보조 reference, ADR-076 §결정 9.6 SSOT).
     detect_command: bash scripts/check-canary-compatibility.sh
-    workflow_path: templates/github-workflows/canary-promotion-criteria.yml
+    workflow: templates/github-workflows/canary-promotion-criteria.yml
     current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
     bypass_label: hotfix-bypass:canary-promotion-criteria
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
