@@ -12,15 +12,19 @@ related_stories:
   - CFP-49
   - CFP-55
   - CFP-409
+  - CFP-906  # Amendment 3 carrier — Wave 4 sub-Epic #1 Story-1 (family_7_plugin_atomic × channel pin invariant)
 related_adrs:
   - ADR-008 (inter-plugin contract versioning)
   - ADR-010 (canonical / sibling sync within plugin repos)
   - ADR-013 (codeforge family dogfood-out policy)
   - ADR-054 (doc-only fast-path)
   - ADR-073 (Orchestrator verify-before-assert, cross-repo state verify — CFP-627 FIX iter 3)
+  - ADR-076 (declarative reconciliation upgrade — §결정 9 3-tier channel taxonomy + reconcile-protocol-v1 v1.7 §4.10 multi_version_channel_pin_binding carrier sibling, CFP-906 Amendment 3)
+  - ADR-063 (marketplace ↔ plugin.json atomic invariant — Amendment 6 §결정 17 mirrored field × channel matrix carrier sibling, CFP-906 Amendment 3)
 amendments:
   - 1
   - 2
+  - 3
 is_transitional: false
 ---
 
@@ -33,6 +37,8 @@ Accepted (2026-05-01) — CFP-49 carrier. ADR-010 (canonical/sibling sync within
 **Amendment 1 (2026-05-01) — CFP-55**: `.claude-plugin/plugin.json` 의 `dependencies` 필드 사용 정책 (결정 6) + Migration trigger (결정 7) 추가. Codex 2-round (gpt-5.5 high) 검증 후 D-A 채택 — Claude Code v2.1.110+ 가 표준 dep 필드 인식하지만 schema 미문서화 + first-adopter risk + malformed install fail reverse-risk 회피 우선. CLAUDE.md "필수 의존성 SSOT" + SessionStart hook 이 권위 SSOT 유지. ADR-013 amend (skill override path lane 의무) 는 concern 분리 위해 별도 ADR-017 (CFP-56) 로 deferred.
 
 **Amendment 2 (2026-05-12) — CFP-409**: marketplace mirrored field 변경 시 sibling PR 동행 부담 검토 결과 명시 (결정 8). CFP-391 retro follow-up CFP-D (P3) — 3 Story 반복 marketplace PR 부담 (`mclayer/marketplace` #45 / #46 / #47) 가시화. 검토 안 (a) wrapper-marketplace 단일 PR = GitHub 플랫폼 제약으로 무효 / (b) 자동 sibling PR open Action = ROI 부정적 (frequency × complexity), deferred / (c) 현재 정책 유지 + CFP-408 `scripts/sync-contract-bump.sh` Stage 3 활용 권고 = 채택. ADR-016 §결정 3 (Sync trigger) 정책 무변경 — sibling PR 동행 의무 그대로 유지. 운영자 부담 경감은 sync-contract-bump.sh Stage 3 marketplace plan emitter 가 담당. doc-only fast-path (ADR-054) 로 처리, 신규 ADR 미도입.
+
+**Amendment 3 (2026-05-17) — CFP-906**: §결정 9 신설 — `family_7_plugin_atomic × channel pin invariant` (Wave 4 sub-Epic #1 Story-1 declare layer, Epic CFP-882). 본 ADR-016 §결정 1 family scope (wrapper + 6 lane = 7 plugin atomic unit) 의 **channel 차원 확장**. consumer `.claude/_overlay/project.yaml codeforge.channel.tier: <stable|beta|canary>` 선언 시 family 7 plugin 모두 동일 channel 으로 resolve 의무. per-plugin channel override 거부 (mixed channel 운영 = §결정 1 family scope invariant 위배). ADR-076 §결정 9 (3-tier channel taxonomy declaration) + ADR-063 Amendment 6 §결정 17 (mirrored field × channel matrix + 3-way channel invariant) sibling carrier. Strengthening direction only — family scope 7 plugin 의 channel 차원 자동 확장 (scope 축소 0, ADR-064 §self-application top-down ratchet 정합 + ADR-058 §결정 5 약화 방향 차단 logic 통과). Story-1 = declarative SSOT mandate. runtime mechanism (Wave 4 sub-Epic #1 Story-2 carrier UpgradeAgent mixed channel detection + abort) = scope 외.
 
 ## 컨텍스트
 
@@ -132,6 +138,37 @@ CFP-391 retro follow-up — wrapper plugin.json mirrored field 변경 시 별도
 - (c) 는 정책 단일 SSOT 보존 + 도구 layering 분리 — sync-contract-bump.sh 가 Stage 3 marketplace mirror 책임 명확화
 
 본 Amendment 2 = ADR-054 doc-only fast-path 처리 (신규 ADR 미도입, src/tests 무변경, 정책 무변경 — Amendment 본문만 append).
+
+### 결정 9: family_7_plugin_atomic × channel pin invariant (Amendment 3 / CFP-906)
+
+**Context**: CFP-820 Wave 3 Story-6 (ADR-063 Amendment 5 §결정 15 / reconcile-protocol-v1 v1.5 §4.8) = publisher↔registry↔consumer 3-way version atomic invariant 확장. 본 Amendment 3 (CFP-906 Wave 4 sub-Epic #1 Story-1, Epic CFP-882) = §결정 1 family scope (7 plugin atomic unit) 의 **channel 차원 확장** — multi-version channel pin declare layer.
+
+**Mandate**:
+
+- ADR-016 §결정 1 family scope 7 plugin (wrapper + codeforge-{requirements, design, develop, test, review, pmo}) = **동일 channel atomic 운영 의무**
+- consumer `.claude/_overlay/project.yaml codeforge.channel.tier: <stable|beta|canary>` 선언 시 family 7 plugin 모두 해당 channel 으로 resolve
+- per-plugin channel override = **거부** (ADR-016 §결정 1 family scope invariant 위배 — mixed channel 운영 시 6 lane plugin 간 contract version skew 발생, inter-plugin contract MANIFEST invariant 위배 risk)
+- Wave 4 sub-Epic #1 Story-2 (runtime carrier, 별 CFP) UpgradeAgent = mixed channel detection + abort 의무 (declare layer = mandate semantic, runtime detection = Story-2 carrier 영역)
+
+**3-tier channel taxonomy** (ADR-076 §결정 9.1 verbatim 정합):
+
+| Tier | Risk class | Family scope 적용 |
+|---|---|---|
+| `stable` | LOW (default) | family 7 plugin 모두 stable branch version atomic resolve |
+| `beta` | MEDIUM | family 7 plugin 모두 beta branch version atomic resolve |
+| `canary` | HIGH (production cutover) | family 7 plugin 모두 canary branch version atomic resolve — Wave 4 sub-Epic #1 Story-3 ProductionEvidenceDeputy spawn trigger 영역 (ADR-72 §결정 1 정합) |
+
+**Story-1 scope (declare)**: 본 §결정 9 = declarative SSOT mandate. runtime mechanism (UpgradeAgent mixed channel detection + abort, marketplace.json `channels[]` per-plugin 7 entry mirrored, CLI `--channel` flag dispatch) = Wave 4 sub-Epic #1 후속 Story-2 carrier 영역. Story-1 = ADR + contract MINOR bump + project-config-schema MINOR + label-registry MINOR — declare layer only (marketplace.json 자체 변경 0, plugin.json bump 0 — `marketplace_sync_declared: false`).
+
+**Ratchet 강화 only**: family scope 7 plugin 의 channel 차원 자동 확장 — scope 축소 0 (ADR-064 §self-application top-down ratchet 정합 + ADR-058 §결정 5 약화 방향 발의 차단 logic 통과). channel 차원 축소 (예: 3-tier → 2-tier / per-plugin channel override 허용 / family atomic 약화) = sunset_justification 3-tuple (metric / who / how) 의무.
+
+**Cross-references**:
+
+- ADR-076 §결정 9 (3-tier channel taxonomy declaration) — 본 Amendment 3 의 sibling carrier
+- ADR-063 Amendment 6 §결정 17 (mirrored field × channel matrix + 3-way channel invariant) — 본 Amendment 3 의 marketplace-side sibling carrier
+- reconcile-protocol-v1 v1.7 §4.10 `multi_version_channel_pin_binding` — 본 Amendment 3 의 contract carrier (`family_atomic_channel_invariant` block)
+- ADR-72 §결정 1 (ProductionEvidenceDeputy spawn trigger) — canary tier production-impact 영역 Story-3 carrier cross-ref
+- label-registry-v2 v2.30 (3 `channel:*` label + 신규 category enum `channel`) — annotation marker sibling
 
 ## 결과
 

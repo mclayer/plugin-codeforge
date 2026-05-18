@@ -189,6 +189,35 @@ codeforge:
   version_pin:
     version: <string>                  # 예: "5.81.0" — pin 할 wrapper plugin version (publisher↔registry↔consumer 3-way SSOT)
 
+  # [선택] Multi-version channel pin — codeforge family 7 plugin release tier selector
+  #   (CFP-906 Wave 4 sub-Epic #1 Story-1 / ADR-076 §결정 9 / ADR-016 Amendment 3 / ADR-063 Amendment 6 §결정 17 / reconcile-protocol-v1 v1.7 §4.10)
+  # 3-tier closed-enum (stable | beta | canary) — release tier selector (version specifier 와 독립 차원).
+  # codeforge.version_pin (version specifier) 과 disjoint peer block — 동일 block 내 embedding 금지
+  #   (ADR-076 §결정 9.3 disjoint invariant — channel ≠ version specifier, 두 변경 축 axis of change 분리).
+  # family_7_plugin_atomic × channel pin invariant (ADR-016 §결정 1 + Amendment 3):
+  #   consumer codeforge.channel: <C> 선언 시 family 7 plugin (wrapper + codeforge-{requirements,design,develop,test,review,pmo}) 모두 동일 channel <C> 으로 resolve.
+  #   per-plugin channel override 거부 (mixed channel 운영 = ADR-016 §결정 1 family scope invariant 위배).
+  # 3-way channel invariant (ADR-063 Amendment 6 §결정 17):
+  #   publisher (wrapper <C>-branch version) ↔ registry (marketplace.json plugins[name=codeforge].channels[tier=<C>].version) ↔ consumer (본 codeforge.channel.tier resolved version) 3-way byte-identical.
+  # Per-tier semantic (ADR-076 §결정 9.1):
+  #   - stable (default): current active stable release. LOW risk class. developer self-service OK.
+  #   - beta: opt-in incremental track. MEDIUM risk class. developer + reviewer awareness 충분.
+  #   - canary: preview + production-impact tier. HIGH risk class (production cutover semantic).
+  #       admin tier 권장 (consumer-side 책임, ADR-076 §결정 9.4 channel selection authority asymmetry).
+  #       canary tier 선언 시 Wave 4 sub-Epic #1 Story-3 ProductionEvidenceDeputy spawn trigger 영역
+  #         (ADR-72 §결정 1 정합 — Live touching = TRUE 영역, declare layer 본 Story-1 영역 외).
+  # Fallback semantic (orthogonality invariant — channel 가용성 ≠ channel 정합성, conflate 금지):
+  #   - channel block 미등록 (본 block 부재) = default stable 자연 fallback (warning 0, lint skip 0).
+  #       기존 consumer overlay 영향 0 (additive only — schema rule §1.1 선택 필드 추가, backward-compat invariant).
+  #   - channel.tier 등록 후 invalid enum value (stable/beta/canary 외) = validator FAIL (warning-first → Wave 4 sub-Epic #1 Story-2 runtime carrier blocking-on-pr).
+  #   - channel.tier 등록 후 family 7 plugin 중 1+ mixed channel 검출 = Wave 4 sub-Epic #1 Story-2 runtime UpgradeAgent abort (declare layer = mandate semantic, runtime detection = Story-2 carrier).
+  # consumer-authored (project-config-schema §4b write 금지 invariant 절대 보존 — codeforge agent write 0)
+  # Channel drift detection (Wave 4 sub-Epic #1 Story-2 carrier):
+  #   3-tuple drift — (a) consumer codeforge.channel.tier ↔ (b) 실 install plugin .version ↔ (c) marketplace channels[*].versions[] membership.
+  #   24h cron + workflow_dispatch + Issue auto-create (ADR-063 Amendment 3 §결정 13 marketplace-drift-detection 패턴 답습, warning-first).
+  channel:
+    tier: stable | beta | canary       # 3-tier closed-enum strict (default: stable). undeclared 값 = validator FAIL (Story-2 runtime carrier active).
+
 # [선택] Lane 활성화 설정 (CFP-317 / ADR-048)
 # default = security_ai: false (5-lane + CI gate 모드)
 # security_ai: true 시 SecurityTestPL (Claude+Codex 2차 AI 보안 분석) spawn 활성
@@ -379,6 +408,9 @@ codeforge:
   # CFP-820 Wave 3 Story-6 — 3-way version atomic invariant consumer pin (선택, ADR-063 Amendment 5 §결정 15)
   version_pin:
     version: "5.81.0"   # wrapper plugin version pin — 미등록 시 warning-first, 등록 시 blocking-on-pr 3-way enforce
+  # CFP-906 Wave 4 sub-Epic #1 Story-1 — Multi-version channel pin (선택, ADR-076 §결정 9 declare layer)
+  channel:
+    tier: stable        # 3-tier closed-enum (stable | beta | canary, default: stable) — release tier selector, version_pin disjoint peer
 ```
 
 **통합테스트 설정 예시 — mctrader-engine (FastAPI + PostgreSQL + Redis)**:

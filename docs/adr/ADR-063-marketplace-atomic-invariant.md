@@ -23,6 +23,7 @@ related_stories:
   - CFP-631
   - CFP-627
   - CFP-477  # §결정 5 본문 표 sublayer 확장 (local pre-push auto-rebase guidance row, Amendment 발의 0건)
+  - CFP-906  # Amendment 6 §결정 17 carrier — Wave 4 sub-Epic #1 Story-1 (mirrored field × channel matrix + 3-way channel invariant)
 amendments:
   - amendment: 1
     date: 2026-05-13
@@ -50,6 +51,12 @@ amendments:
     summary: "§결정 15 신설 — 3-way version atomic invariant 확장 (Wave 3 Story-6, Epic CFP-699 B2 carrier). 기존 §결정 1 3-file atomic invariant (plugin.json + CHANGELOG.md + marketplace.json = wrapper-side publishing-time) 위에 consumer-side runtime pin layer (`.claude/_overlay/project.yaml codeforge.version_pin.version`) 1단 추가 = publisher↔registry↔consumer 3-way version invariant. CHANGELOG.md 3-way 미포함 (plugin.json same-PR sibling, 기존 invariant-check enforce — 4-way 중복 회피 ADR-064 minimal-change). consumer pin FORM = `.claude/_overlay/project.yaml codeforge.version_pin` block (사용자 confirm 2026-05-17 KST — 기존 project.yaml SSOT 확장, consumer 1-file 정책 정합, project-config-schema MINOR). fallback semantic = warning-first → 등록 후 blocking (pin 미등록 = warning only exit 0 / pin 등록 후 mismatch = blocking-on-pr enforce — ADR-027 Amendment 2 bootstrap.fallback_mode 패턴 답습 + orthogonality invariant: pin 가용성 ≠ version 정합성, conflate 금지 Story-5 base-absent≠marker-absent precedent). 3-way lint = read-only fetch (ADR-066 §결정 2 marketplace contents:read reuse, Amendment 3 reconcile-target write scope 미사용 — 추가 PAT grant 0). reconcile-protocol-v1 v1.4 → v1.5 §4.3 (e) trigger 발동 동반 (version_handshake placeholder → active + 3 stale 정정). ADR-027 Amendment 4 동반 (consumer adoption protocol — version pin schema detection). carrier components Phase 2 (scripts/check-3way-version-parity.sh + templates/github-workflows/version-3way-atomic.yml + .github/workflows/... self-app + docs/evidence-checks-registry.yaml entry blocking-on-pr + label-registry-v2 MINOR hotfix-bypass:version-3way-atomic). Strengthening direction only (publisher↔registry 2-way → 3-way invariant 확장 = scope 확장 + invariant 강도 상승) — ADR-064 §self-application top-down ratchet + ADR-058 §결정 5 약화 방향 차단 logic 통과. § \"Amendment 번호 정정 note\": Story §1-§6 RequirementsPL synthesis 의 'ADR-063 Amendment 4' 표기 = frontmatter amendments[] 미검증 결과 (CFP-686 이 amendment:4 점유) → 설계 lane strict-verify-gate 가 frontmatter direct Read 후 Amendment 5 로 정정 (fact 영향 0 추적성만 — Codex TP#2 verify-before-trust 8-mirror 교훈 정합)."
     is_transitional: false
     sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 5 = 3-way 확장 강화 방향 only — consumer pin layer 추가, publisher↔registry 2-way → 3-way invariant). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과."
+  - amendment: 6
+    date: 2026-05-17
+    cfp: CFP-906
+    summary: "§결정 17 신설 — mirrored field × channel matrix 확장 (Wave 4 sub-Epic #1 Story-1, Epic CFP-882). 기존 §결정 1 mirrored field 4종 (name/version/description/author) 위에 channel 차원 확장. marketplace.json `plugins[name=codeforge].channels[]` array 신설 (per-channel version snapshot). mirrored field per-channel split: `name` / `description` / `author` 모두 channel 동일 (불변, identity 영역) — `version` 만 channel 별 분리 (per-channel version snapshot). family scope 7 plugin (wrapper + 6 lane) 의 marketplace.json entry 모두 동일 channels[] structure 의무. 3-way version invariant × channel 차원 확장 = publisher (per-channel branch/tag version) ↔ registry (marketplace.json channels[tier=<C>].version) ↔ consumer (codeforge.channel.tier resolved version) 3-way byte-identical (§결정 15 Amendment 5 mirror). marketplace.json channels[] field supply-chain trust = wrapper-canonical SSOT (label-registry-v2 v2.30 `channel:*` 3-label = enum SSOT, marketplace.json mirror only — 3rd party PR channels[] tampering 방지). Story-1 = declarative SSOT mandate. runtime channel resolution + marketplace.json channels[] 실 등록 = Wave 4 sub-Epic #1 Story-2 carrier (declare layer scope — marketplace_sync_declared: false). bypass channel = `hotfix-bypass:marketplace-atomic` label (§결정 4) reuse (channel matrix 별 bypass 신설 0, single bypass family 보존). Strengthening direction only (mirrored field 4종 scope 의 channel 차원 자동 확장 = scope 확장) — ADR-064 §self-application top-down ratchet + ADR-058 §결정 5 약화 방향 발의 차단 logic 통과. ADR-076 §결정 9 (3-tier channel taxonomy declaration) + ADR-016 Amendment 3 (family_7_plugin_atomic × channel pin invariant) sibling cross-ref. reconcile-protocol-v1 v1.6 → v1.7 §4.3 (i) trigger 발동 + §4.10 multi_version_channel_pin_binding block carrier 동반."
+    is_transitional: false
+    sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 6 = mirrored field × channel matrix 확장 강화 방향 only — channel 차원 추가, scope 확장). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과 (channel 차원 축소 / per-channel mirrored field merge / channels[] supply-chain trust 약화 = sunset_justification 3-tuple 의무)."
 mechanical_enforcement_actions:
   - action: version-3way-atomic
     binding_decision: 15
@@ -469,6 +476,78 @@ ADR-065 의 `mechanical_self_check_passed` 와 **별도 boolean field** 운영 (
 - ADR-060 §결정 5 default warning-mode 의 explicit exception (Epic CFP-699 §1 WHY 사용자 directive — drift 0 invariant)
 - ADR-060 §결정 19 (Amendment 6, CFP-509) `auto_blocking` manual gate path (carrier-driven transition — 본 Story-6 자체가 carrier)
 - 3-Wave drift evidence (§결정 13 4-tuple reproduce) 의 consumer-side 확장 — publisher drift 가 consumer 에 도달하는 4th defense layer
+
+본 ADR-063 amendment 발의 시 매번 ratchet 방향 검증 의무 — 강화 방향만 허용.
+
+### 결정 17: Mirrored field × channel matrix 확장 (Amendment 6 / CFP-906)
+
+**Context**: §결정 1 (3-file atomic invariant — plugin.json + CHANGELOG.md + marketplace.json) + §결정 15 (Amendment 5 / CFP-820 — publisher↔registry↔consumer 3-way version atomic invariant). 본 Amendment 6 (CFP-906 Wave 4 sub-Epic #1 Story-1, Epic CFP-882) = multi-version channel 운영 시 **mirrored field × channel matrix 확장**.
+
+**Mandate**:
+
+- `mclayer/marketplace/.claude-plugin/marketplace.json` `plugins[name=codeforge].channels[]` **array 신설** (per-channel version snapshot)
+- mirrored field 4종 (§결정 1) 의 channel 별 분리 정책:
+
+  | Field | Channel 별 분리 여부 | 근거 |
+  |---|---|---|
+  | `name` | **불변** (모든 channel 동일) | identity 영역 |
+  | `version` | **channel 별 분리** (per-channel version snapshot) | 본 Amendment 6 §결정 17 핵심 |
+  | `description` | **불변** (모든 channel 동일) | ADR-063 §결정 11 description verbatim PR-time lint 정합 (Amendment 2, CFP-631) |
+  | `author` | **불변** (모든 channel 동일) | identity 영역 |
+
+- family scope 7 plugin (wrapper + codeforge-{requirements, design, develop, test, review, pmo}) 의 marketplace.json entry **모두 동일 channels[] structure 의무** (ADR-016 §결정 1 + Amendment 3 family_7_plugin_atomic × channel pin invariant 정합)
+- marketplace sibling sync PR = `channels[]` array 변경 시 의무 발화 (§결정 3 sync trigger 의 channel 차원 확장)
+
+**marketplace.json `channels[]` schema** (Amendment 6 후):
+
+```yaml
+plugins:
+  - name: codeforge
+    description: "..."  # mirrored (channel 무관 — §결정 1 + §결정 11)
+    author: "..."       # mirrored (channel 무관 — §결정 1)
+    source: { ... }     # marketplace.json 자체 SSOT (mirror 대상 아님 — §결정 2)
+    # === Amendment 6 §결정 17 신설 — channel × version matrix ===
+    channels:
+      - tier: stable
+        version: "5.83.0"
+      - tier: beta
+        version: "5.84.0-beta.1"
+      - tier: canary
+        version: "5.85.0-canary.1"
+```
+
+**3-way version invariant × channel 차원 확장** (§결정 15 mirror):
+
+- **publisher**: per-channel branch/tag (`origin/stable` `origin/beta` `origin/canary` 또는 동등 tagging convention) — Wave 4 sub-Epic #1 Story-2 carrier 시점 publisher convention 확정
+- **registry**: `marketplace.json plugins[name=codeforge].channels[tier=<C>].version` (본 Amendment 6 §결정 17 신설)
+- **consumer**: `.claude/_overlay/project.yaml codeforge.channel.tier: <C>` 선언 + 동 file `codeforge.version_pin.version` (§결정 15 Amendment 5 consumer pin layer) — channel 선언 시 publisher `<C>`-branch version ↔ registry channels[tier=`<C>`].version ↔ consumer pin 3-way byte-identical
+
+**marketplace.json channels[] supply-chain trust**:
+
+- channels[] field = **wrapper-canonical SSOT** (label-registry-v2 v2.30 `channel:*` 3-label = enum SSOT — `channel:stable` / `channel:beta` / `channel:canary` 외 enum 값 invalid)
+- marketplace.json channels[] = **mirror only** (3rd party PR channels[] tampering 방지 — wrapper SSOT enforce, marketplace 측 sibling PR review 의무)
+- ADR-076 §결정 9.4 channel selection authority asymmetry 정합 (canary tier admin tier 권장 advisory)
+
+**Story-1 scope (declare)**: 본 §결정 17 = declarative SSOT mandate. 실 marketplace.json `channels[]` field 추가 = Wave 4 sub-Epic #1 Story-2 (runtime UpgradeAgent multi-channel dispatch carrier) 영역. Story-1 = ADR + contract MINOR bump + project-config-schema MINOR + label-registry MINOR — declare layer only (marketplace.json 자체 변경 0, plugin.json bump 0 — `marketplace_sync_declared: false`).
+
+**Bypass channel**: `hotfix-bypass:marketplace-atomic` label (§결정 4) reuse — channel matrix 별 bypass 신설 0 (single bypass family 보존, ADR-024 Amendment 3 §결정 6.A per-entry namespace 영역에서 별도 family member 신설 회피 = minimal-change ADR-064).
+
+**Ratchet 강화 only**: mirrored field 4종 scope 의 channel 차원 자동 확장 (scope 확장) — scope 축소 0. channel 차원 축소 (예: per-channel mirrored field merge / channels[] supply-chain trust 약화 / channel:* enum 축소) = ADR-058 §결정 5 sunset_justification 3-tuple (metric / who / how) 의무.
+
+**Cross-references**:
+
+- ADR-076 §결정 9 (3-tier channel taxonomy declaration) — 본 Amendment 6 의 sibling carrier
+- ADR-016 §결정 1 + Amendment 3 (family_7_plugin_atomic × channel pin invariant) — 본 Amendment 6 의 family-side sibling carrier
+- reconcile-protocol-v1 v1.7 §4.10 `multi_version_channel_pin_binding` — 본 Amendment 6 의 contract carrier (`registry_channel_matrix` block + `three_way_channel_invariant` block)
+- §결정 15 (Amendment 5, CFP-820) — 3-way version atomic invariant 의 publisher↔registry↔consumer 영역 base — 본 §결정 17 의 channel 차원 확장 base layer
+- §결정 11 (Amendment 2, CFP-631) — description verbatim PR-time lint 정합 (channel 별 description 불변 invariant)
+- label-registry-v2 v2.30 (3 `channel:*` label + 신규 category enum `channel`) — channels[] enum SSOT
+
+### 결정 18: Self-application — Amendment 6 ratchet 검증
+
+본 Amendment 6 = 강화 방향 only (mirrored field 4종 scope 의 channel 차원 자동 확장 = scope 확장 + invariant 강도 상승 — 3-way version invariant 위에 channel 차원 추가). ADR-064 self-application top-down ratchet 정합 — 약화 방향 (예: channel matrix 축소 / per-channel mirrored field merge / channels[] supply-chain trust 약화 / single channel 으로 회귀) 미해당. ADR-058 §결정 5 sunset_justification = frontmatter 명시 (`N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 6 = mirrored field × channel matrix 확장 강화 방향 only). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과.`).
+
+**Story-1 declare layer scope invariant**: Amendment 6 본문 = declarative SSOT mandate only. mechanical enforcement (channels[] schema lint + per-channel description verbatim re-check + 3-way channel invariant lint) = Wave 4 sub-Epic #1 Story-2 carrier (runtime UpgradeAgent multi-channel dispatch 영역, 별 CFP). frontmatter `mechanical_enforcement_actions[]` Amendment 6 row append = Story-2 carrier 시점 (Phase 1 = declare-only invariant, ADR-076 §결정 9 + ADR-067 §결정 4 sequential ordering 정합).
 
 본 ADR-063 amendment 발의 시 매번 ratchet 방향 검증 의무 — 강화 방향만 허용.
 

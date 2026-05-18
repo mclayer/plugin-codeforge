@@ -123,6 +123,13 @@ create_label "fallback:rate-limited"  "c5def5" "fallback: rate-limited skip audi
 # label-registry-v2 v2.21 MINOR bump 동반 (신규 category `fast-pass` 신설). canonical-only (kind:registry — sibling sync scope 외).
 create_label "post-merge-fix"         "0e8a16" "cross-repo Story land_order 후 발견된 safe defect 의 post-merge hotfix PR — phase-gate-mergeable.yml 4번째 fast-pass source (3-조건 AND 중 조건 1). 단독 부착 ≠ fast-pass (조건 2 hub Story §10 FIX Ledger row binding + 조건 3 원 MERGED PR §7 보안 non-touch 양면 AND 필수). ADR-026 Amendment 4 §결정 6 carrier. 사용법: Orchestrator 가 post-merge hotfix PR open 시 수동 부착 — fix-event-v1 §10 row 작성 (Orchestrator monopoly, CFP-32) + corrects_pr: marker PR body 기재 + story_uri: marker 병기 의무."
 
+# channel:* category — CFP-906 / Wave 4 sub-Epic #1 Story-1 (Epic CFP-882) — multi-version channel pin declare layer.
+# label-registry-v2 v2.30 MINOR bump 동반 (신규 category `channel` 신설, 3 신규 family member). canonical-only (kind:registry — sibling sync scope 외, marketplace.json sync 면제 — declare layer only, plugin.json bump 미동반).
+# 3-tier closed-enum (stable/beta/canary) annotation marker — consumer `.claude/_overlay/project.yaml codeforge.channel.tier: <enum>` 선언 시 GitHub Issue/PR channel-aware marker. ADR-076 §결정 9 + ADR-016 Amendment 3 + ADR-063 Amendment 6 §결정 17 carrier. ADR-72 §결정 1 cross-ref (canary tier production-impact = ProductionEvidenceDeputy spawn trigger semantic anchor, Wave 4 sub-Epic #1 Story-3 carrier 영역).
+create_label "channel:stable"         "0e8a16" "channel: stable tier marker (LOW risk class — default tier). consumer .claude/_overlay/project.yaml codeforge.channel.tier: stable 선언 시 Issue/PR channel-aware annotation. ADR-076 §결정 9.1 3-tier taxonomy default. CFP-906 Wave 4 sub-Epic #1 Story-1 (Epic CFP-882) declare carrier."
+create_label "channel:beta"           "d4c5f9" "channel: beta tier marker (MEDIUM risk class — opt-in incremental track). ADR-076 §결정 9.1 3-tier taxonomy intermediate. CFP-906 Wave 4 sub-Epic #1 Story-1 (Epic CFP-882) declare carrier."
+create_label "channel:canary"         "f9d0c4" "channel: canary tier marker (HIGH risk class — production-impact awareness). ADR-076 §결정 9.4 channel selection authority asymmetry + ADR-72 §결정 1 ProductionEvidenceDeputy spawn trigger semantic anchor (Wave 4 sub-Epic #1 Story-3 carrier 영역). CFP-906 Wave 4 sub-Epic #1 Story-1 (Epic CFP-882) declare carrier."
+
 # hotfix-bypass:* — full set via dynamic read (CFP-598 below).
 # CFP-610 / ADR-064 Amendment 2 — wording-dictionary entry now sourced from §3 yaml dynamic read (NOT hardcoded here).
 # CFP-619 — pre-existing CFP-610 leak resolution: prior hardcoded `create_label "hotfix-bypass:wording-dictionary"` removed
