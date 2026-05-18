@@ -46,7 +46,11 @@ mechanical_enforcement_actions:
 sunset_justification: "N/A — permanent governance policy 의 architecture invariant. ADR-064 §self-application top-down ratchet 정합 — consumer-applicability filter 영구화는 wholesale_mirror branch 의 silent harm (mctrader-data#81 14 failing checks evidence) 차단 의 super-class. 약화 방향 (filter 약화 / fail-open default / whitelist 축소) 발의 차단."
 ---
 
-## Context — wholesale_mirror 무차별 유입 의 silent harm
+## 상태
+
+Accepted (2026-05-18 KST) — CFP-899 Phase 1 carrier. Wave 4 sub-Epic CFP-858 S2 base layer. consumer-applicability filter = horizontal filter layer (CFP-898 §4.11 vertical closure resolver 위에 sequential composition). Phase 2 (CFP-899) 에서 실 구현 (detect-repo-kind.py + consumer_applicable_workflows.txt + reconcile-overlay.sh hook + test suite + evidence-checks-registry warning tier) 완료 예정.
+
+## 컨텍스트 — wholesale_mirror 무차별 유입 의 silent harm
 
 Epic CFP-858 (Wave 4 sub-Epic) = `reconcile-protocol-v1` v1.7 §4.11 (CFP-898 S1) dependency bundle integrity binding 으로 **closure missing** 영역은 fail-closed 차단. 그러나 **closure 가 full 인 wrapper-only workflow yml 가 consumer repo 로 무차별 유입** 시 silent harm 의 별 super-class 가 존속 — mctrader-data#81 14 failing checks evidence (Epic CFP-858 §1 motivation verbatim).
 
@@ -201,11 +205,7 @@ fi
 
 **self-loop bug 차단**: `consumer` 분류 (consumer signal 활성 + plugin signal 부재) 가 wrapper repo 에 false-positive 적용되면 wrapper dogfood workflow 손실 — 본 wrapper repo `.claude-plugin/plugin.json` (codeforge plugin SSOT) 존재 보장으로 `mixed` 우선 분류 (§결정 3) 가 self-loop 차단.
 
-## Decision
-
-본 ADR-083 은 codeforge family upgrade flow 의 **horizontal consumer-applicability filter layer** 신설로 채택한다. CFP-898 §4.11 vertical closure resolver 와 sequential composition (filter 먼저 → closure 다음) 으로 reconcile-overlay.sh MARKER_NONE branch 의 silent harm super-class (wrapper-only 무차별 유입) 차단. 4-way truth-table + positive whitelist + mixed repo self-app exemption + fail-closed unknown 의 4-tuple invariant.
-
-## Consequences
+## 결과
 
 ### Positive
 
@@ -226,7 +226,7 @@ fi
 - 본 ADR Phase 1 = SSOT 등재 + schema declare only. Phase 2 = 실 구현 (`templates/scripts/detect-repo-kind.py` 신설 + `templates/consumer_applicable_workflows.txt` populate + reconcile-overlay.sh hook insertion + test suite + evidence-checks-registry warning tier entry wire)
 - ADR-027 Amendment 6 §결정 10 sibling carrier (consumer adoption signal SSOT cross-ref — boundary disjoint 보존, ADR-083 = wrapper-side filter / ADR-027 = consumer-side template adoption)
 
-## Cross-references
+## 관련 파일
 
 - **ADR-076** §결정 2 11 영역 enumeration = wrapper SSOT desired state — 본 ADR-083 = consumer-applicability gating layer 1단 추가 (orthogonal axis, ADR-076 본문 변경 0)
 - **ADR-027 Amendment 6 §결정 10** = consumer adoption signal SSOT 정합 cross-ref (sibling carrier)
