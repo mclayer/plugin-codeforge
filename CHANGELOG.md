@@ -7,6 +7,38 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.87.0] - 2026-05-18
+
+### Added (CFP-898 Phase 2 — dependency bundle integrity closure resolver runtime)
+
+- **`templates/scripts/mirror-dependency-closure.py`** — 신규 Python stdlib 전용 closure resolver.
+  AM-1 (regex_primary, PyYAML 의존 0) / AM-2 (transitive_depth_limit=1) /
+  AM-3 (shell_script_only_v1: `scripts/check-[a-z0-9-]+\\.sh` + `templates/scripts/[a-z0-9-]+\\.py`) /
+  AM-4 (self_app_exemption: 자체 self-loop 0 invariant). CLI: `--yml <path>` / `--all` / `--dry-run`.
+  exit code 0/1/2. perf baseline: avg 0.42ms/file × 74 workflow yml (max 2.39ms, budget < 50ms).
+- **`scripts/reconcile-overlay.sh` §4.11 hook** — MARKER_NONE branch 첫 라인에 dep-closure hook
+  삽입 (MARKER_LINT return 2 abort pattern 답습). wrapper yml dep missing 시 reconcile abort.
+- **`tests/test_mirror_dependency_closure.py`** — 15 TC unit tests (TC-DEP-1~15),
+  pytest framework (ADR-005 정합). TDD RED→GREEN cycle 완료. 14 PASS + 1 SKIP (Windows symlink).
+- **`tests/integration/test_reconcile_overlay_dep_closure.bats`** — 통합 테스트
+  (TC-INT-1: dep-closure missing → exit 1, TC-INT-2: self-app no self-loop, TC-INT-3: syntax check).
+- **`docs/evidence-checks-registry.yaml` `dependency-closure-self-test` entry** — warning-tier
+  신규 entry (75번째). ADR-060 framework 정합. script: `python3 templates/scripts/mirror-dependency-closure.py --all --dry-run`.
+
+### Changed
+
+- **`scripts/reconcile-overlay.sh`** — MARKER_NONE 분기에 §4.11 dependency closure hook 추가
+  (기존 로직 무변경, hook 삽입만). `MIRROR_DEP_PY` env var injectable (test seam 보존).
+- **`.claude-plugin/plugin.json`** — version `5.86.0` → `5.87.0` MINOR
+  (ADR-037 §결정 1 (c) — runtime behavior 추가 = MINOR). marketplace mirrored field 4종 sync 의무
+  (ADR-063 atomic invariant — marketplace sibling PR 별도 open, CFP-898 Epic close 전 완료).
+
+### Scope
+
+- reconcile-protocol-v1 §4.11 binding block Phase 2 runtime landing. Phase 1 = ADR-076 Amendment 2 + §4.11 schema declare (wrapper PR #925).
+- Story drift cleanup (Amendment 1 → 2, §4.10 → §4.11 stale refs) — sibling internal-docs PR 동반.
+- ADR-068 I-1~I-5 self-check PASS (API contract / cross-module propagation / guard placement / wording SSOT / dimensional empirical).
+
 ## [5.86.0] - 2026-05-18
 
 ### Added (INCIDENT-2026-05-17 — cross-repo gh CLI safety net)

@@ -2638,3 +2638,38 @@ entries:
       promotion_trigger: none
     status: Active
 
+  - name: dependency-closure-self-test
+    description: >
+      CFP-898 §4.11 dependency bundle integrity closure resolver self-test.
+      mirror-dependency-closure.py --all --dry-run 으로 wrapper-side workflow yml 74개
+      전체를 순회 후 누락 deps preview (fail-open, dry-run). warning-tier 도입.
+      AM-1 (regex_primary) / AM-2 (transitive_depth_limit=1) /
+      AM-3 (shell_script_only_v1: scripts/check-*.sh + templates/scripts/*.py) /
+      AM-4 (self_app_exemption) 4 constraint 검증.
+    detect_command: python3 templates/scripts/mirror-dependency-closure.py --all --dry-run
+    workflow: ~                      # optional — Phase 2 scope 내 자율 결정: 별도 workflow yml 없음 (후속 carrier 가능)
+    current_tier: warning
+    bypass_label: hotfix-bypass:dependency-closure-self-test
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - unit_test_pass_15_15_proof
+        - integration_test_bats_pass_proof
+        - perf_baseline_max_2_39ms_per_file_proof
+    mechanical_enforcement_actions:
+      - dependency-closure-self-test   # ADR-040 Amendment 3 §결정 7.D cross-ref
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-898
+    introduced_date: 2026-05-18
+    owner_adr: ADR-076               # declarative reconciliation upgrade SSOT
+    carrier_adr: ADR-060             # evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0
+      threshold: 3
+      last_occurrence: ~
+      promotion_trigger: advisory
+    status: Active

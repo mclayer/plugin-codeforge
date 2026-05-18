@@ -428,6 +428,16 @@ _reconcile_file() {
 
     # ── MARKER_NONE: wholesale_mirror_with_user_visible_loss_report ──────────
     if [[ "${capability}" == "text_marker_none" ]]; then
+        # ── §4.11 dependency bundle integrity closure check (CFP-898 Phase 2) ──
+        # MARKER_LINT return 2 abort pattern 답습 — hook first-line + return 2 abort
+        local MIRROR_DEP_PY="${MIRROR_DEP_PY:-${SCRIPT_DIR}/../templates/scripts/mirror-dependency-closure.py}"
+        if [[ -f "${wrapper_file}" ]] && [[ "${wrapper_file}" == *.yml ]]; then
+            python3 "${MIRROR_DEP_PY}" --yml "${wrapper_file}" > /dev/null 2>&1 || {
+                echo "${SCRIPT_NAME} [ERR] dependency closure missing for ${rel_path} — reconcile abort (§4.11)" >&2
+                echo "${SCRIPT_NAME} 힌트: templates/scripts/mirror-dependency-closure.py --yml ${wrapper_file} 로 누락 deps 확인 후 보완" >&2
+                return 2
+            }
+        fi
         local had_consumer_diff=false
         if [[ -f "${consumer_file}" ]] && ! diff -q "${consumer_file}" "${wrapper_file}" > /dev/null 2>&1; then
             had_consumer_diff=true
