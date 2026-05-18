@@ -9,7 +9,22 @@ carrier_story: CFP-919
 parent_epic: CFP-756
 supersedes: []
 amends: []
-amendment_log: []
+amendment_log:
+  - amendment: 1
+    date: 2026-05-18
+    carrier: CFP-923
+    summary: |
+      mechanical_enforcement_actions [] → [architecture-drift] — Epic B Story-4 S4 carrier
+      (architecture_doc drift mechanical lint warning-tier wire). §결정 4 "드리프트 체크"
+      의무의 mechanical actuator binding. ADR-040 Amendment 3 §결정 7.D self-application
+      invariant 정합 — 본 ADR 신설 시 P-S4 mechanism 위임 declared, S4 carrier (CFP-923)
+      merge 후 actual wire 동반. evidence-checks-registry.yaml `architecture-drift` entry
+      warning-tier + `hotfix-bypass:architecture-drift` 43번째 label family member 동반.
+    direction: strengthening
+    sunset_justification: |
+      N/A — ratchet 강화 only (declarative-only [] → 1 entry 추가, mechanical enforcement
+      ratchet up). ADR-058 §결정 5 sunset_justification mandate 적용 영역 외 (약화 방향
+      아님). 약화 시 sunset_justification 3-tuple 의무.
 related_stories:
   - CFP-919  # 본 Story carrier — Story-1 (anchor only, ADR + doc 타입 신설)
   - CFP-756  # Epic B parent — 설계 레인 영속 구조 설계 문서 유지 정책
@@ -37,12 +52,12 @@ related_files:
   - templates/architecture-doc.md          # 후속 Story-2 (#920) template carrier (본 Story 비-생성)
   - scripts/check-architecture-drift.sh    # 후속 Story-4 (#923) lint carrier (본 Story 비-생성)
   - templates/github-workflows/architecture-drift.yml  # 후속 Story-4 (#923) workflow carrier (본 Story 비-생성)
-mechanical_enforcement_actions: []
-# declarative SSOT only — mechanical lint (template schema lint / lane gate / drift lint) 은
-# 후속 Story 위임 (S2 / S3 / S4 carrier). ADR-040 Amendment 3 §결정 7.D self-application
-# invariant 정합 — 빈 list `[]` 는 declarative-only Story 영역의 valid declaration
-# (ADR-076 / ADR-070 / ADR-082 carrier 동일 패턴 precedent). 후속 mechanical wire 시점에서
-# Amendment 1 carrier 가 본 list 갱신 의무 (S4 = drift lint entry / S3 = lane gate review-verdict field).
+mechanical_enforcement_actions:
+  - architecture-drift   # Amendment 1 (CFP-923, 2026-05-18) — S4 carrier wire 완료 (ADR-060 framework warning-tier entry, hotfix-bypass:architecture-drift 43번째 family member)
+# Amendment 1 (CFP-923, 2026-05-18) — S4 carrier (architecture_doc drift mechanical lint) wire
+# 완료. ADR-040 Amendment 3 §결정 7.D self-application invariant 충족 (declared → active wire).
+# 후속 mechanism (S3 lane gate verdict carrier `architecture_doc_updated: bool` design-output-v2
+# v2.4 + S2 template schema lint) 은 별 carrier 발의 영역 — 본 entry 와 disjoint axis.
 ---
 
 # ADR-078: 살아있는 구조 설계 문서 (living architecture doc) 유지 정책 SSOT

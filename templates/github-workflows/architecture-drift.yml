@@ -1,0 +1,105 @@
+name: architecture drift lint (warning mode)
+# CFP-923 / ADR-078 P-S4 mechanism — architecture-drift mechanical lint
+# Tier: warning (continue-on-error, non-required check)
+# Bypass channel: hotfix-bypass:architecture-drift label (ADR-024 Amendment 3 + ADR-060 §결정 7)
+# Lint scope: docs/architecture/**/*.md (ADR-078 §결정 1 4 H2 closed-enum + 3 detection class)
+# Regex / detection SSOT: scripts/lib/check_architecture_drift.py
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    paths:
+      - 'docs/architecture/**'
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  architecture-drift:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # warning tier (ADR-060 §결정 5)
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect changed architecture doc files
+        id: changed
+        run: |
+          set -euo pipefail
+          git diff --name-only origin/${{ github.base_ref }}...HEAD \
+            | grep -E '^docs/architecture/.*\.md$' \
+            > /tmp/changed_arch.txt || true
+          if [ -s /tmp/changed_arch.txt ]; then
+            echo "has_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check bypass label
+        id: bypass
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          labels=$(gh pr view "$PR_NUMBER" --json labels --jq '[.labels[].name] | join(",")' 2>/dev/null || echo "")
+          case ",$labels," in
+            *,hotfix-bypass:architecture-drift,*)
+              echo "bypass=true" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "bypass=false" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      - name: Run architecture drift lint
+        id: lint
+        if: steps.changed.outputs.has_changed == 'true' && steps.bypass.outputs.bypass == 'false'
+        run: |
+          set +e
+          mapfile -t files < /tmp/changed_arch.txt
+          bash scripts/check-architecture-drift.sh "${files[@]}" 2>&1 | tee /tmp/lint.out
+          status=${PIPESTATUS[0]}
+          echo "exit_status=$status" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Post lint result comment
+        if: steps.changed.outputs.has_changed == 'true' && steps.bypass.outputs.bypass == 'false'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          LINT_STATUS: ${{ steps.lint.outputs.exit_status }}
+        run: |
+          set -euo pipefail
+          LINT_OUT="$(cat /tmp/lint.out 2>/dev/null || echo '(lint output 부재)')"
+          if [ "${LINT_STATUS:-1}" = "0" ]; then
+            HEADER="## OK architecture drift lint — PASS (warning mode)"
+            FOOTER="violation 0건. ADR-078 §결정 1 4 H2 closed-enum + 3 detection class 정합."
+          else
+            HEADER="## WARN architecture drift lint — violation 감지 (warning mode)"
+            FOOTER=$'**warning mode (CFP-923 / ADR-060 §결정 5)**: lint fail 이 PR merge 를 차단하지 않습니다. drift 정정: 코드 변경 시 docs/architecture/codeforge-family.md 4 H2 섹션 동시 갱신 (ADR-078 §결정 4).\n\n**hotfix bypass channel** (ADR-024 Amendment 3): `hotfix-bypass:architecture-drift` label + PR description `### Bypass reason` 본문.'
+          fi
+          BODY=$(printf '%s\n\n```\n%s\n```\n\n%s' "$HEADER" "$LINT_OUT" "$FOOTER")
+          gh pr comment "$PR_NUMBER" --body "$BODY"
+
+      - name: Emit bypass audit comment
+        if: steps.changed.outputs.has_changed == 'true' && steps.bypass.outputs.bypass == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          set -euo pipefail
+          REASON=$(gh pr view "$PR_NUMBER" --json body --jq '.body' 2>/dev/null \
+            | awk '/^### Bypass reason/{flag=1;next} /^##/{flag=0} flag' \
+            | sed '/^$/d' | head -n 5 | tr '\n' ' ' | sed 's/  */ /g;s/^ *//;s/ *$//')
+          if [ -z "$REASON" ]; then
+            REASON="(PR description '### Bypass reason' 섹션 부재 — 후속 보완 의무)"
+          fi
+          LABEL_USER=$(gh api "repos/${{ github.repository }}/issues/${PR_NUMBER}/events" \
+            --jq '[.[] | select(.event == "labeled" and .label.name == "hotfix-bypass:architecture-drift")] | last | .actor.login' \
+            2>/dev/null || echo "unknown")
+          TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          AUDIT="[hotfix-bypass-audit] PR=${PR_NUMBER} label_applied_by=${LABEL_USER} reason=${REASON} timestamp=${TS}"
+          gh pr comment "$PR_NUMBER" --body "$AUDIT"

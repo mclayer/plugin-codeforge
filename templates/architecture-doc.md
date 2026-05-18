@@ -47,7 +47,7 @@ kind: architecture_doc
 
 ---
 
-## anti-scope guard (ADR-078 §결정 1 verbatim — 작성자 필독)
+### anti-scope guard (ADR-078 §결정 1 verbatim — 작성자 필독)
 
 본 doc 은 **구조 수준 only**. closed-enum 4 영역 외 다음 4종 패턴은 **금지** (라인 수준 허용 시 갱신 즉시 stale + "코드에 한 단계 더한 것" 전락 — Epic §위험신호 §1):
 

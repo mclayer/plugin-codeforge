@@ -2602,3 +2602,39 @@ entries:
       last_occurrence: "2026-05-15T00:00:00Z"  # CFP-834 FIX-Iter1 5-touchpoint reconcile (ISO8601 UTC Z per registry schema)
       promotion_trigger: advisory
     status: Active                   # script+workflow self-app land 동반 (CFP-894 Phase 1 carrier)
+
+  # CFP-923 / ADR-078 P-S4 mechanism (Epic B Story-4 single-Phase land, 2026-05-18) ---
+  # architecture-drift mechanical lint — docs/architecture/**/*.md scope
+  # 4 H2 closed-enum + 3 detection class active (a/b/d) / 2 deferred (c/e)
+  - name: architecture-drift
+    description: |
+      ADR-078 §결정 1 + §결정 4 mechanical verification — architecture_doc 본문의 4 H2 closed-enum
+      (모듈/경계/인터페이스 계약/데이터 흐름) + 3 detection class 정합 lint.
+      (a) module enumeration parity / (b) inter-plugin-contracts enumeration parity /
+      (d) anti-scope guard violation (line-level patterns + H2 closed-enum 외 H2)
+      Deferred: (c) agent count / (e) frontmatter freshness — 후속 carrier
+      4-guard FP 완화 (CFP-841 corpus-claim-verify prior art 재사용)
+    detect_command: bash scripts/check-architecture-drift.sh
+    workflow: templates/github-workflows/architecture-drift.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:architecture-drift
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-923
+    introduced_date: 2026-05-18
+    owner_adr: ADR-078
+    carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: Active
+
