@@ -305,6 +305,61 @@ owned_sections:
     # boundary / dimensional / architecture_doc + marketplace_sync_declared).
     # ADR-008 §결정 2 MINOR additive optional field (default false backward-compat).
 
+  # CFP-991 (ArchitectAgent Phase 1 — §4.14 canary_compatibility_check_binding lock + ADR-72 Amendment 3 lock)
+  - file: docs/inter-plugin-contracts/reconcile-protocol-v1.md
+    section: "§4.14 canary_compatibility_check_binding block"
+    owner_adr: ADR-72  # Amendment 3 carrier (sibling ADR-076 §결정 9.2/9.6 + ADR-070 §결정 D6 cross-ref)
+    carrier_story: CFP-991  # Wave 4 sub-Epic #1 Story-4 canary promotion criteria enforcement layer
+    parallel_edit: append-only
+    arbitrator: codeforge-design:ArchitectAgent
+    # NOTE (CFP-991): ADR-064 Trace 4 ordering invariant — version_history monotone
+    # (v1.7 CFP-898 → v1.8 CFP-932 → v1.9 CFP-899 → v1.10 CFP-900 → v1.11 CFP-991) +
+    # §4.14 binding block 자체 append-only (CFP-743 §4.5 / CFP-744 §4.6 / CFP-745 §4.7 /
+    # CFP-820 §4.8 / CFP-821 §4.9 / CFP-906 §4.10 / CFP-898 §4.11 / CFP-899 §4.12 /
+    # CFP-900 §4.13 동형 패턴 보존). §4.10 ↔ §4.14 axis disjoint (channel state vs
+    # promotion gate, embedding_forbidden:true RefactorAgent C-4). Story-4 = §4.10
+    # registry_channel_matrix.story_4_scope_write_carrier A3 정정 entry forward-effective
+    # realize point (v1.8 A2 = predict / v1.11 A3 = enact, DataMigrationArch §11.7
+    # load-bearing dissent verbatim 채택). 5 threat × mitigation matrix carrier
+    # (T-1.1/T-2.1/T-3.1/T-4.1/T-5.1). ADR-070 §결정 D6 (CFP-988 Amendment 4)
+    # cross-ref T-4.1 mitigation. sibling Epic #882 race 회피 — Wave 4 sub-Epic #1
+    # Story-1/Story-2/Story-3 merge 후 진입 merge-order. algorithm 재구현 0 (CFP-906
+    # §4.10 channel state binding + CFP-898 §4.11/§4.12/§4.13 SSOT 재사용 +
+    # canary promotion criteria enforcement layer 1 추가).
+
+  # CFP-991 (ArchitectAgent Phase 1 — ADR-72 Amendment 3 lock — production-evidence-deputy section append)
+  - file: docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md
+    section: "amendment_log Amendment 3 + §결정 3 trigger axis 표 wrapper governance row append + §결정 5 evidence quad 표 row append (Amendment 3)"
+    owner_adr: ADR-72
+    carrier_story: CFP-991  # Wave 4 sub-Epic #1 Story-4 carrier
+    parallel_edit: append-only
+    arbitrator: codeforge-design:ArchitectAgent
+    # NOTE (CFP-991): ADR-72 Amendment lock — amendment_log[] append (Amendment 3
+    # entry, Amendment 1 CFP-651 → Amendment 2 CFP-954 → Amendment 3 CFP-991 monotone)
+    # + §결정 3 trigger axis 표 wrapper governance row append (Story-4 carrier entry)
+    # + §결정 5 evidence quad 표 row append (5번째 row — canary promotion criteria
+    # 4-tuple SSOT cross-ref). mechanical_enforcement_actions retain status `warning`
+    # (Story-4 declare-only 영역, blocking-on-pr 승격 carrier = follow-up CFP).
+    # ratchet 강화 only (ADR-058 §결정 5 sunset_justification 영역 외 — declare →
+    # enforcement transition + scope 확장 only). is_transitional: false 무변경.
+
+  # CFP-991 (ArchitectAgent Phase 1 — canary_compatibility_check section lock — RefactorAgent A-2 + B-3 + C-4 패턴 답습)
+  - file: docs/inter-plugin-contracts/reconcile-protocol-v1.md
+    section: "canary_compatibility_check (§4.14 binding block — axis disjoint from §4.10 multi_version_channel_pin)"
+    owner_adr: ADR-72  # Amendment 3 + ADR-076 §결정 9.6
+    carrier_story: CFP-991
+    parallel_edit: serialized
+    arbitrator: codeforge-design:ArchitectPLAgent
+    # NOTE (CFP-991): canary_compatibility_check section = §4.14 binding block 활성
+    # (Story-4 enforcement layer). RefactorAgent C-4 axis_disjoint_declaration
+    # invariant (§4.10 channel state ↔ §4.14 promotion gate, embedding_forbidden:true).
+    # §4.10 무변경 invariant (story_1_scope_declare_only + Story-2 read-only drift
+    # source 보존) + §4.10 안 story_4_scope_write_carrier sub-block append-only
+    # (DataMigrationArch §11.7 load-bearing dissent verbatim 채택). precedent =
+    # production-evidence-deputy section (CFP-632, line 125) byte-copy 금지 +
+    # structural pattern only. wrapper-self-app Tier-1 exemption invariant 보존
+    # (ADR-72 §결정 6). serialized parallel_edit — 동시 수정 시 merge-order 의무.
+
   # CFP-966 (ArchitectAgent Phase 1 — ADR-073 Amendment 2 lock)
   - file: docs/adr/ADR-073-orchestrator-verify-before-assert.md
     section: "frontmatter amendments[] + mechanical_enforcement_actions[] + ## Amendments / ### Amendment 2 sub-section"
