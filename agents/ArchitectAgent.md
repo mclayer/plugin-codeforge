@@ -68,7 +68,41 @@ permissions:
      - 외부 입력 무결성 (deputy 수신 input scope = frontmatter 명시 scope 일치)
    · 결격 detected 시 ArchitectPLAgent에 RETURN — PL이 deputy 재spawn 결정 (ADR-004 author≠judge 원칙 보존)
    · **본 self-lint = mechanical pre-check only. Design decision judgment 영역 아님 — 결격 시 ArchitectPLAgent에 RETURN, PL이 deputy 재spawn 결정 (ADR-004 author≠judge 원칙 보존).**
-   · PASS 시 흐름 4 진입
+   · PASS 시 흐름 3.6 / 4 진입
+
+3.6. Story §6 amend → scope_manifest drift sync (CFP-35 guidance — mctrader MCT-147 1 instance escalation)
+
+본 step 은 Story §6 design decision amend 가 발생할 때 (D-N wording 변경 / 신규 risk register 추가 / planned_files 신규) 적용 의무. 동일 Epic 의 `scope_manifests/<epic>.yaml` 4 영역 동기 갱신 누락 차단.
+
+**동기 (MCT-147 evidence)**: mctrader MCT-147 (mctrader-hub#246) D2 amend 시 scope_manifest 5 개소 drift (D2/D8/CLAUDE.md/R7/R10) → SecurityTest ST3 (scope_manifest 정합 검증, codeforge-test plugin) 가 detection SSOT 역할. 그 전 lane (DesignReview / CodeReview) drift 확인 0. ST3 비활성 (PoC Story / phase1_only Story) 시 drift land 까지 silent propagate. MCT-149 (mctrader-hub#251) 재발 0 — author 단계 self-check 부재 가 root cause.
+
+**동기 갱신 4 영역 의무**:
+
+1. **decisions[N].decision body** — Story §6 D-N wording 정합 (verbatim 또는 의미 동등)
+2. **risk_register R-counter** — Story §7 risk amend 시 yaml entry 신규 추가 또는 wording 갱신
+3. **planned_claude_md_sections** — Story §3 도입 ADR / CLAUDE.md change pointer 영역 갱신 시 entry 추가·갱신
+4. **planned_files** — Story §3·§7·§11 영향 산출 file list 갱신 (Phase 1 PR commit 직전 actual diff 매핑)
+
+**Synthesizer self-check 5축 checklist (본 §3.6 의 author 의무)**:
+
+- [ ] decision row body (`decisions[N].decision`) vs Story §6 D-N body wording diff = 0
+- [ ] risk register R-counter 신규/amend 시 yaml entry 동시 갱신
+- [ ] CLAUDE.md change pointer (`planned_claude_md_sections`) entry 정합
+- [ ] planned_files entry 정합 (Phase 1 PR commit file list)
+- [ ] R-counter ↔ preflight reservation marker 정합 (Epic scope manifest 예약 단계 영역)
+
+**RETURN 조건**: 4 영역 중 1+ 누락 검출 시 ArchitectPLAgent 에 RETURN — PL 이 chief author 재호출 (ADR-004 author ≠ judge 원칙 보존). drift 없음 시 흐름 4 진입.
+
+**Option B (별 carrier, deferred)**: scope_manifest_drift_check mechanical gate (Story §6 D-N wording 과 yaml decisions[N] diff 자동 비교 + RETURN). 1 instance 단발 사례 대비 over-engineering — 재발 시 별 follow-up CFP carrier 로 격상.
+
+**Severity / Re-open trigger**: MEDIUM — MCT-147 1 instance + MCT-149 재발 0. ADR 발의 보류. 재발 시 본 §3.6 guidance 강화 또는 Option B 활성화 carrier reopen.
+
+**Cross-reference**:
+
+- mctrader-hub/docs/retros/RETRO-EPIC-cold-tier-stage-1-complete.md §4.2 (MEDIUM ADR 후보 2)
+- mctrader-hub/docs/retros/RETRO-MCT-147.md §11.3 (1차 발의)
+- ADR-031 §14 Lane Evidence + ST3 SecurityTest cross-ref (codeforge-test plugin scope_manifest 정합 검증)
+- §5.8 (CFP-44 cross-document SSOT reconcile) sister carrier — §3.6 = scope_manifest 4 영역 disjoint sub-scope
 
 4. 신규 ADR draft 작성 (필요 시 — Codex #7 명문화)
    · §10 판단에서 신규 ADR 필요 시 본 에이전트가 `docs/adr/ADR-NNN-<slug>.md` 직접 write (CFP-26 Phase 0a)
