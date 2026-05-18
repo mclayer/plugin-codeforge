@@ -5,7 +5,7 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.0  
-**Last regen**: 2026-05-17T23:53:35Z  
+**Last regen**: 2026-05-18T06:41:26Z  
 **Registered doc types**: 14
 
 ## Summary table
@@ -131,9 +131,13 @@
 - **frontmatter_required**: True
 - **examples**:
   - mctrader-hub/docs/domain-knowledge/exchange/bithumb-rest-api.md
+  - mclayer/plugin-codeforge/docs/domain-knowledge/domain/codex-collaboration/README.md (CFP-946-A — ADR-052/070/081 narrative SSOT hub)
+  - mclayer/plugin-codeforge/docs/domain-knowledge/domain/codex-collaboration/substitution-scope-decision-tree.md (CFP-946-A)
 
   **notes**:
   > Mode-agnostic. DomainAgent self-write owner path (CFP-26 Phase 0a).
+  > CFP-946-A — `codex-collaboration/` sub-tree 신설 (ADR-052/070/081 narrative SSOT hub).
+  > Write owner extension = ArchitectAgent (codex-collaboration sub-tree = governance narrative).
 
 ### `spec`
 
