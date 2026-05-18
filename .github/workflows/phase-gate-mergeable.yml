@@ -325,6 +325,52 @@ jobs:
                 : isDocOnly
                 ? `doc-only PR fast-pass — files: ${files.map(f=>f.filename).slice(0,3).join(', ')}${files.length>3?'...':''} (CFP-106 #143 fix)`
                 : `post-merge-fix 3-조건 AND fast-pass (ADR-026 Amendment 4 §결정 6 — label ∧ Story §10 binding ∧ 원 PR §7 보안 non-touch 양면)`;
+
+              // ── CFP-900 §4.13 fast_pass_content_sanity — warning tier (orthogonal layer) ──
+              // fast-pass OR-gate PASS 자체 보존 (게이트 약화 0 — ADR-064 ratchet invariant).
+              // `.github/workflows/*.yml` 변경 시 의존 script reference mismatch detect.
+              // warning emit only — merge 미차단 (ADR-026 Amendment 5 §결정 7 carrier).
+              // EC-5: fast-pass PASS 후 content mismatch 발견 = warning tier emit + fast-pass PASS 보존.
+              try {
+                const changedWorkflowFiles = files.filter(f =>
+                  (f.filename.startsWith('.github/workflows/') || f.filename.startsWith('templates/github-workflows/')) &&
+                  f.filename.endsWith('.yml')
+                );
+                if (changedWorkflowFiles.length > 0) {
+                  // PR diff 안 script reference mismatch 1차 신호 detect (warning tier)
+                  const prDiffFilenames = new Set(files.map(f => f.filename));
+                  const scriptRefPattern = /(?:bash\s+|python3?\s+)(scripts\/[\w.\-/]+\.sh|templates\/scripts\/[\w.\-/]+\.py)/g;
+                  const mismatches = [];
+                  for (const wfFile of changedWorkflowFiles) {
+                    // 변경된 workflow yml 의 script reference 가 PR diff 에 있는지 또는 존재하는지 확인
+                    // (1차 신호 — path reference level detect, semantic-level 검사 out-of-scope)
+                    const patch = wfFile.patch || '';
+                    let m;
+                    while ((m = scriptRefPattern.exec(patch)) !== null) {
+                      const refScript = m[1];
+                      // PR diff 안에 script 변경이 없으면 mismatch signal (warning)
+                      if (!prDiffFilenames.has(refScript)) {
+                        mismatches.push({ workflow: wfFile.filename, script: refScript });
+                      }
+                    }
+                  }
+                  if (mismatches.length > 0) {
+                    const warnMsg = `[CFP-900 §4.13 content sanity — warning] script reference mismatch detected in fast-pass PR:\n` +
+                      mismatches.map(x => `  ${x.workflow} → ${x.script} (not in PR diff)`).join('\n') +
+                      `\nfast-pass PASS 유지. 참고: scripts/ 동반 변경 누락 여부 확인 권장 (ADR-026 Amendment 5 §결정 7 — warning tier only, merge 미차단).`;
+                    try {
+                      await github.rest.issues.createComment({
+                        owner: context.repo.owner,
+                        repo: context.repo.repo,
+                        issue_number: pr.number,
+                        body: warnMsg
+                      });
+                    } catch (_) { /* comment 실패 = silent (warning tier) */ }
+                  }
+                }
+              } catch (_) { /* content sanity 실패 = silent (warning tier, fast-pass 보존) */ }
+              // ── content sanity warning end ───────────────────────────────────────────────
+
               await github.rest.checks.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
