@@ -87,42 +87,15 @@ if [[ "${CFP673_API_MOCK_500:-}" == "1" ]]; then
   exit 2
 fi
 
-# --- Retry helper (5xx in-run retry 3회, 1s/2s/4s exponential) ---
-_gh_api_with_retry() {
-  local url="$1"
-  local attempt=0
-  local delays=(1 2 4)
-  while [[ $attempt -lt 3 ]]; do
-    local http_code
-    local response
-    response="$(gh api "$url" 2>&1)" && echo "$response" && return 0
-    http_code="$?"
-    if echo "$response" | grep -q "429"; then
-      echo "::warning::check-marketplace-drift: 429 rate limit on $url — fail-open, skipping run"
-      exit 0
-    fi
-    if echo "$response" | grep -q "401"; then
-      echo "[codeforge-kpi-infra-error] check-marketplace-drift: 401 Unauthorized on $url — fail-closed"
-      exit 2
-    fi
-    attempt=$((attempt + 1))
-    if [[ $attempt -lt 3 ]]; then
-      sleep "${delays[$((attempt-1))]}"
-    fi
-  done
-  echo "[codeforge-kpi-infra-error] check-marketplace-drift: 5xx unrecoverable on $url after 3 retries"
-  if [[ "${CFP673_SKIP_ISSUE_CREATE:-}" != "1" ]]; then
-    gh issue create \
-      --repo mclayer/plugin-codeforge \
-      --label "drift-detection" \
-      --title "[MARKETPLACE-DRIFT] API server error — $url" \
-      --body "check-marketplace-drift.sh 가 '$url' 요청 실패 — 3회 retry 후에도 5xx 오류.
+# --- Retry helper sourced from shared lib (CFP-954 D1 consensus — 3-way WET 해소) ---
+# Previously inline _gh_api_with_retry function (CFP-673 origin). Extracted to scripts/lib/gh-api-helpers.sh.
+# Behavior unchanged: 401 fail-closed (exit 2) / 429 fail-open (exit 0) / 5xx 3-retry exponential.
+_SCRIPT_DIR_MKT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+# shellcheck disable=SC1091
+source "${_SCRIPT_DIR_MKT}/lib/gh-api-helpers.sh"
 
-[codeforge-kpi-infra-error] CFP-673 / ADR-063 Amendment 3 §결정 13" \
-      2>/dev/null || true
-  fi
-  exit 2
-}
+export _GH_HELPER_CALLER="check-marketplace-drift"
+# Existing 1-arg callers (`_gh_api_with_retry "<url>"`) preserve compatibility — helper $2 defaults to $_GH_HELPER_CALLER.
 
 # --- Marketplace JSON 취득 ---
 MARKETPLACE_JSON=""

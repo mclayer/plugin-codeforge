@@ -25,20 +25,28 @@ related_files:
   - docs/parallel-work/section-ownership.yaml
 mechanical_enforcement_actions:
   - action: production-cutover-deputy-spawn-evidence
-    status: deferred-followup
+    status: warning
     bypass_label: hotfix-bypass:prod-cutover-deputy-evidence
-    progress_note: "ADR-72 신설 시점 registry entry 부재. follow-up CFP-Z (ProductionEvidence trigger lint — Change Plan §13 production_cutover_touching: true 선언 시 ProductionEvidenceDeputy spawn evidence verify) 가 evidence-checks-registry append + ArchitectPL verdict packet field-time check 신설 후 status 갱신 (deferred-followup → warning → blocking-on-pr). bypass_label CFP-651 정정: 원본 hotfix-bypass:production-cutover-deputy-spawn-evidence (54자) → hotfix-bypass:prod-cutover-deputy-evidence (41자, GitHub 50자 제한 정합)."
+    script_path: scripts/check-production-cutover-evidence.sh
+    workflow_path: templates/github-workflows/production-cutover-evidence.yml
+    progress_note: "CFP-954 (Story-3) 가 status 승격: deferred-followup → warning. detect_command (scripts/check-production-cutover-evidence.sh) + workflow (templates/github-workflows/production-cutover-evidence.yml) 신설 + .github/workflows/ byte-identical mirror 동반. 4 prerequisite measurement source mechanical anchor 4-tuple (MS-1 live_touching / MS-2 production_cutover_touching dual-source AND / MS-3 marketplace_publish_touching / MS-4 consumer_impact_blast_radius) Change Plan §3.5 정의. ratchet 강화 방향 (deferred-followup → warning) — ADR-058 §결정 5 sunset_justification 영역 외. follow-up CFP-Z 신설 영역 — review-verdict-v4 v4.5 → v4.6 MINOR bump (owner_deputy_kind enum production_evidence 추가) + verdict packet field-time check (warning → blocking-on-pr 승격 carrier). bypass_label CFP-651 정정 (54자 → 41자 GitHub 50자 제한 정합) 유지."
     target_section: §결정 3
   - action: epic-cutover-gate-evidence-quad-check
-    status: deferred-followup
+    status: warning
     bypass_label: hotfix-bypass:epic-cutover-quad-check
-    progress_note: "ADR-72 신설 시점 registry entry 부재. follow-up CFP-Z' (PMOAgent retro epic_close_gate evidence quad lint — bucket prefix listing + WAL sample + Prometheus rate metric + drainage rate 4중 evidence 명시 verify) 가 evidence-checks-registry append + retro-mandatory.yml workflow 통합 후 status 갱신 (deferred-followup → warning → blocking-on-pr). Sibling Story-4 (plugin-codeforge-pmo#18) 의 PMOAgent retro template gate 본문 추가가 prerequisite. bypass_label CFP-651 정정: 원본 hotfix-bypass:epic-cutover-gate-evidence-quad-check (51자) → hotfix-bypass:epic-cutover-quad-check (36자, GitHub 50자 제한 정합)."
+    script_path: scripts/check-production-cutover-evidence.sh
+    workflow_path: templates/github-workflows/production-cutover-evidence.yml
+    progress_note: "CFP-954 (Story-3) 가 status 승격: deferred-followup → warning. detect_command + workflow 신설 (production-cutover-evidence.yml 가 EPIC CLOSED gate evidence quad lint 통합 영역 — PR-open trigger 안 epic close gate sub-section verify). Sibling Story-4 (plugin-codeforge-pmo#18) PMOAgent retro epic_close_gate template 본문 작성 = warning → blocking-on-pr 승격 prerequisite (별 carrier). 4중 evidence (bucket prefix listing / WAL sample / Prometheus rate metric / drainage rate) verify scope = consumer Live touching Epic 한정 (wrapper-self-app N/A, §결정 6 정합). ratchet 강화 방향 — ADR-058 §결정 5 sunset_justification 영역 외. bypass_label CFP-651 정정 (51자 → 36자) 유지."
     target_section: §결정 5
 amendment_log:
   - amendment_number: 1
     date: 2026-05-14
     carrier_story: CFP-651
     summary: "frontmatter mechanical_enforcement_actions[] 2 entry에 bypass_label 필드 신설 + GitHub 50자 제한 정합 단축값 적용. action name 자체 unchanged. evidence-checks-registry.yaml 2 entry bypass_label 동 단축 (CFP-651 정정 동반)."
+  - amendment_number: 2
+    date: 2026-05-18
+    carrier_story: CFP-954
+    summary: "Wave 4 sub-Epic #882 Story-3 carrier. (a) frontmatter mechanical_enforcement_actions[0/1].status `deferred-followup → warning` 2 entry 동시 승격 (production-cutover-deputy-spawn-evidence + epic-cutover-gate-evidence-quad-check) — Story-3 progress_note `follow-up CFP-Z` 의 정확한 carrier. (b) `script_path: scripts/check-production-cutover-evidence.sh` + `workflow_path: templates/github-workflows/production-cutover-evidence.yml` 2 신설 field-time 추가 — null → populated. (c) **4 prerequisite measurement source SSOT 신설** — MS-1 live_touching (Story frontmatter yaml.safe_load) / MS-2 production_cutover_touching (dual-source AND: frontmatter + GitHub label `production-touching` — false-positive 0 보장 + dual-source mismatch fail-loud Issue auto-create) / MS-3 marketplace_publish_touching (git diff plugin.json `.version` + marketplace.json channels[] field touch — Story-4 carrier 영역 best-effort declare) / MS-4 consumer_impact_blast_radius (marketplace.json channels[] consumer count proxy, ADR-068 I-5 empirical anchor). (d) Story-3 = 4 prerequisite mechanical anchor declare scope only — 실 first ProductionEvidenceDeputy spawn = consumer Story 영역 (예: mctrader live touching production cutover Story). wrapper-self-app N/A invariant (§결정 6) 정합 — Story-3 자체는 declare-time Tier-1 exemption 영역. (e) production-cutover-evidence.yml = PR-open + workflow_dispatch 2-trigger split (D2 consensus, cron 24h 미권고 — production cutover = event-driven not continuous monitoring). (f) wrapper-self-app exemption 2-tier (D3 consensus): Tier-1 (repo=wrapper, declare-time scope check) + Tier-2 (repo=consumer, runtime 4-evidence-quad measurement). (g) ratchet 강화 방향 — ADR-058 §결정 5 sunset_justification 영역 외. follow-up CFP-Z = review-verdict-v4 v4.5 → v4.6 MINOR bump (owner_deputy_kind enum production_evidence 추가) carrier (warning → blocking-on-pr 승격 prerequisite). always-pass 패턴 3rd occurrence 차단 = 3-layer defense (`|| true` 금지 lint + 2-assertion 의무 + discriminating fixture TDD RED phase) D5 consensus 적용. 8-mirror checklist self-application — ADR-72 / ADR-076 정식 form 사용, non-canonical 3-digit / 2-digit ADR ref 변종 도입 0건 invariant (CFP-906 pattern_count 18 + CFP-932 pattern_count 9 → CFP-954 = 3-Story pattern_count 차단 적기)."
 ---
 
 # ADR-72: ProductionEvidence Deputy 신설 + EPIC cutover gate evidence quad — production-grounding 단일 owner 축
@@ -111,8 +119,8 @@ ProductionEvidenceDeputy spawn 조건 = **Live touching Story OR production cuto
 |---|---|---|---|---|---|
 | Backtest/Paper-only | X | X | ✓ | X | 6 permanent SubAgent 만 |
 | Live touching pre-cutover | ✓ | ✓ | ✓ | X | 8 SubAgent (6 + LiveOps + LiveOrdering) — production cutover 영역 외 |
-| Production cutover | ✓ | ✓ | ✓ | ✓ | 9 SubAgent (6 + LiveOps + LiveOrdering + ProductionEvidence) — both spawn 의무 |
-| wrapper governance (예: 본 Story) | X | X | ✓ | X (wrapper-self-app N/A) | §결정 6 정합 |
+| Production cutover (consumer Story) | ✓ | ✓ | ✓ | ✓ | 9 SubAgent (6 + LiveOps + LiveOrdering + ProductionEvidence) — both spawn 의무 |
+| wrapper governance (예: 본 ADR-72 Phase 1 = CFP-632 + mandate activation = CFP-954) | X | X | ✓ | X (wrapper-self-app N/A) | §결정 6 정합 — Amendment 2 (CFP-954) 가 mandate 의 **first activation declare** 영역 (production-cutover-evidence.yml workflow + check-production-cutover-evidence.sh + evidence-checks-registry 2 entry status 승격), 실 first spawn = consumer Story 영역 |
 
 **SubAgent spawn both 의무**: Live touching + production cutover both = OpRiskArch + LiveOps + LiveOrdering + ProductionEvidence both spawn (총 9 SubAgent). 한쪽만 spawn 금지 — boundary axis (design-time vs runtime-evidence) 의 정합 검증 의무. ProductionEvidence trigger ⊂ Live touching trigger (reverse 는 false — Live touching but pre-cutover Story 는 OpRiskArch + LiveOps + LiveOrdering 만 spawn, ProductionEvidence inactive).
 
@@ -177,7 +185,7 @@ ADR-042 §결정 3 (신규 agent 도입 시 ADR 의무) 정합 — 본 ADR-72 §
 
 본 enum 추가 = **별도 CFP-Z carrier 영역** (본 ADR-72 = mandate ground 만, contract schema 변경은 follow-up CFP). carrier 의무 명시:
 
-- **CFP-Z (잠정)**: review-verdict-v4 v4.5 → v4.6 MINOR bump (`owner_deputy_kind` enum `production_evidence` 추가) + sibling sync (6 lane plugin mirror, ADR-010) + ProductionEvidenceDeputy spawn evidence verdict packet field-time check (ADR-072 frontmatter `mechanical_enforcement_actions[0].status: deferred-followup → warning` 승격)
+- **CFP-Z (잠정)**: review-verdict-v4 v4.5 → v4.6 MINOR bump (`owner_deputy_kind` enum `production_evidence` 추가) + sibling sync (6 lane plugin mirror, ADR-010) + ProductionEvidenceDeputy spawn evidence verdict packet field-time check. CFP-954 Story-3 가 status `deferred-followup → warning` 1차 승격 carrier (amendment_log Amendment 2). CFP-Z = warning → blocking-on-pr 2차 승격 prerequisite carrier (별 carrier scope).
 - **CFP-Z' (잠정)**: PMOAgent retro epic_close_gate evidence quad workflow 통합 (retro-mandatory.yml 확장) + evidence-checks-registry append (`epic-cutover-gate-evidence-quad-check` warning tier 등록)
 
 본 §결정 8 = ADR-72 author 시점 schema gap 명시 + 후속 carrier 의무 명시. ratchet 강화 방향 (mandate scope 확장 — 8 → 9 SubAgent enum) — ADR-058 §결정 5 정합 (sunset_justification 불필요, 강화 방향).

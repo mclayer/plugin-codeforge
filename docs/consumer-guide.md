@@ -771,6 +771,46 @@ bash scripts/check-3way-version-parity.sh
 
 **Cross-ref**: ADR-063 Amendment 5 §결정 15/16 SSOT + `docs/evidence-checks-registry.yaml` `version-3way-atomic` entry + `label-registry-v2` v2.24 + `scripts/check-3way-version-parity.sh` + `scripts/read_version_pin.py`.
 
+### §2j. Production cutover surface 진입 (CFP-954 / ADR-72 §결정 1 + §결정 5)
+
+Consumer repo Story 가 **production cutover surface** (real funds / live exchange API / production credential / live order placement) 에 진입하는 경우의 governance discipline + ProductionEvidenceDeputy 발동 trigger.
+
+**동작 원리 (5 layer)**:
+- **L1 mandate declare** = wrapper plugin 자체 (CFP-632 Phase 1 + CFP-954 mandate activation declare) — ADR-72 §결정 1-7 SSOT
+- **L2 trigger axis** = Live touching + production cutover both → 9 SubAgent (6 permanent + LiveOps + LiveOrdering + ProductionEvidence) spawn 의무 (ADR-72 §결정 3)
+- **L3 evidence quad** = bucket prefix listing / WAL sample / drainage rate / cadence trigger 4중 (ADR-72 §결정 5)
+- **L4 EPIC CLOSED gate** = PMOAgent retro epic_close_gate (Sibling Story-4 plugin-codeforge-pmo#18 carrier — Story-3 = warning tier, blocking-on-pr 승격 = follow-up CFP-Z' carrier)
+- **L5 user explicit go-ahead** = Phase 1 PR open 전 사용자 명시 confirm 의무 (production-touching label 부착 + Story frontmatter `production_cutover_touching: true` dual-source AND, ADR-72 §결정 6 wrapper-self-app N/A invariant 정합)
+
+**4 prerequisite measurement source mechanical anchor 4-tuple (Change Plan §3.5 + ADR-72 amendment_log Amendment 2)**:
+
+| Anchor | Measurement source | 측정 방식 |
+|---|---|---|
+| MS-1 `live_touching` | Story file frontmatter (`live_touching: bool`) | `yaml.safe_load` (grep parse 금지, CFP-699 CR-821-6 strict-verify 정합) |
+| MS-2 `production_cutover_touching` | Story frontmatter AND GitHub label `production-touching` (dual-source AND) | dual-source mismatch = fail-loud Issue auto-create dedup signature |
+| MS-3 `marketplace_publish_touching` | `git diff plugin.json .version` + `marketplace.json channels[]` field touch | Story-4 carrier — Phase 1 declare-time = best-effort detection |
+| MS-4 `consumer_impact_blast_radius` | `marketplace.json plugins[codeforge].channels[]` consumer count proxy | ADR-068 I-5 dimensional empirical anchor (proxy approximation, exact count = consumer survey 영역 OOS) |
+
+**설정 절차 (consumer Story 영역)**:
+
+1. **Story §1 frontmatter 작성** — `live_touching: true` + `production_cutover_touching: true` 양 field 명시.
+2. **GitHub Issue 부착** — `production-touching` label 부착 (사용자 직접 OR Orchestrator 자동 부착).
+3. **사용자 explicit go-ahead** — Phase 1 PR open 전 사용자 명시 confirm 의무 (Story body 안 `[user-input]` marker 정합).
+4. **ArchitectPL deputy spawn** — Live touching + production cutover both = ProductionEvidence + LiveOps + LiveOrdering 3 CONDITIONAL SubAgent both spawn (총 9 SubAgent).
+5. **`production-cutover-evidence.yml` workflow trigger** — PR-open 시 evidence verify 자동 발동 (warning tier `continue-on-error: true`, blocking 0).
+6. **EPIC CLOSED gate** — PMOAgent retro epic_close_gate 안 4-evidence-quad 명시 의무 (Sibling Story-4 carrier — production cutover Epic close 시점 evidence quad lint warning tier).
+
+**Wrapper-self-app exemption (ADR-72 §결정 6 정합)**:
+- wrapper plugin 자체 (`mclayer/plugin-codeforge` repo) = production cutover 영역 외 (code 0 + runtime behavior 0 + production deploy state 부재) — ProductionEvidenceDeputy spawn N/A
+- Tier-1 declare-time exemption (repo=wrapper) = frontmatter/amendment_log/cross-ref presence verify only (실 4-evidence-quad measurement skip)
+- Tier-2 runtime (repo=consumer) = 실 4-evidence-quad measurement 의무
+
+**Bypass (24시간 이내 sync 의무)**: `hotfix-bypass:prod-cutover-deputy-evidence` label 부착 시 workflow skip + `[bypass-justification]` PR comment marker 의무 (CFP-845 framework 자동 cover, ADR-024 Amendment 8 §결정 6.A.4 정합).
+
+**CODEFORGE_CROSS_REPO_PAT (5번째 consumer)**: production-cutover-evidence.yml 은 same-repo Story file + label 만 inspect (cross-repo PAT 사용 0건 권고) — wrapper-self-app N/A 영역 cross-repo inspect 의무 부재. 단 Tier-2 (consumer Story 영역) 가 marketplace.json `channels[]` consumer count proxy 측정 시 PAT 사용 가능 (ADR-066 audit log entry update 의무 — 5번째 consumer 명시).
+
+**Cross-ref**: ADR-72 §결정 1-7 SSOT + ADR-055 Amendment 3 (Epic-level integration test baseline first activation) + ADR-76 §결정 9.4 (canary tier production-impact authority advisory) + `label-registry-v2` v2.33 (`production-touching` entry + `production-impact` category) + `docs/evidence-checks-registry.yaml` 2 entry (`production-cutover-deputy-spawn-evidence` + `epic-cutover-gate-evidence-quad-check`, warning tier) + `templates/github-workflows/production-cutover-evidence.yml` + `scripts/check-production-cutover-evidence.sh` + `docs/domain-knowledge/domain/production-cutover/` (4 industry exemplars empirical anchor: K8s / Chrome / AWS CodeDeploy / Helm rollback).
+
 ---
 
 §2.1 ~ §2.7 = manual / advanced fallback (script 미작동 시 / 부분 customize 필요 시).

@@ -5,7 +5,7 @@
 # Regen markdown: scripts/check-doc-locations.sh --regen
 schema_version: "1.0"
 introduced_by: CFP-276 (issue #276)
-last_updated: 2026-05-18  # CFP-949 — Sub-Epic 6 lane plugin self-owned architecture_doc seed completion (architecture_doc entry 의 examples row expand; 신규 doc type 추가 없음)
+last_updated: 2026-05-18  # CFP-949 — Sub-Epic 6 lane plugin self-owned architecture_doc seed completion (architecture_doc entry 의 examples row expand; 신규 doc type 추가 없음). CFP-954 — integration_test_baseline 신설 (Wave 4 sub-Epic #882 Story-3 carrier — IntegrationTestAgent Epic-level reactivation first activation, ADR-055 Amendment 3 + ADR-72 §결정 1 mandate first activation 동반). CFP-946-A — codex-collaboration narrative SSOT 신설 (domain_knowledge entry 의 examples row append; 신규 doc type 추가 없음)
 
 allowed_variants:
   - single_repo
@@ -29,6 +29,8 @@ allowed_placeholders:
   - <sprint>
   - <packet_id>
   - <version>
+  - <N>              # CFP-954 — integration_test_baseline version (v1/v2/v3 incremental, immutable append-only)
+  - <carrier-key>    # CFP-954 — integration_test_baseline carrier Story KEY (예: cfp-954)
 
 dogfood_scope:
   repo: mclayer/codeforge-internal-docs
@@ -249,6 +251,27 @@ doc_types:
       append-only policy + comment workflow-only-write semantic).
       Lint scope = JSON valid (jq parse) + invariant (분자 ≤ 분모 등, aggregator 가 강제).
       향후 history 누적 정책 별도 carrier (CFP-393 §11 follow-up #4).
+
+  - name: integration_test_baseline
+    variants:
+      single_repo: "<owner-repo>/tests/integration/stories/<EPIC_KEY>/baseline-v<N>-<carrier-key>.yaml"
+    owner_agent: codeforge-test:IntegrationTestAgent
+    introduced_by: CFP-954
+    naming_pattern: "baseline-v[0-9]+-cfp-[0-9]+\\.yaml"
+    frontmatter_required: true
+    examples:
+      - "mclayer/plugin-codeforge/tests/integration/stories/CFP-882/baseline-v1-cfp-954.yaml (Wave 4 sub-Epic #882 first Epic-level baseline, declarative-only)"
+    notes: |
+      CFP-954 (Wave 4 sub-Epic #882 Story-3) carrier — ADR-055 Amendment 3 (Epic-level baseline first activation) + ADR-72 §결정 1 (ProductionEvidenceDeputy mandate first activation) 동반.
+      Epic-level integration test baseline 자동 승격 SSOT (Story-level vs Epic-level disjoint axis).
+      Story-level integration test (`tests/integration/<story-key>/`) ≠ Epic-level baseline (`tests/integration/stories/<EPIC_KEY>/`) — 양 layer 동시 존재 가능.
+      Naming convention: `baseline-v<N>-<carrier-key>.yaml` immutable append-only (DataMigrationArch §G.5 정합 — v1/v2/v3 incremental promotion + 기존 v1 file 보존, history immutable).
+      Story-3 = v1 (declarative-only, story_keys cross-Story consistency check 3 entry + frozen_shas pin discipline ADR-073 정합).
+      Story-4 = v2 (promotion criteria 4-tuple executable baseline 진입).
+      Story-5 = v3 (downgrade asymmetry invariant + Wave 4 sub-Epic close final pin).
+      frontmatter_required = true (carrier_story + story_keys + frozen_shas + cross_story_consistency_checks + declarative_only field 의무).
+      IntegrationTestAgent single-shot pattern (ADR-044 §결정 5 정합) — declarative baseline = single-shot read-only verify (실 spawn 0건, mandate activation scope only).
+      parallel-edit policy = locked (IntegrationTestAgent monopoly + integration-test lane verdict gate).
 
   - name: architecture_doc
     variants:

@@ -5,8 +5,8 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.0  
-**Last regen**: 2026-05-18T08:58:53Z  
-**Registered doc types**: 14
+**Last regen**: 2026-05-18T09:49:36Z  
+**Registered doc types**: 15
 
 ## Summary table
 
@@ -25,7 +25,8 @@
 | 11 | `evidence_check_registry` | single_repo | `orchestrator` | CFP-389 |
 | 12 | `upgrade_events` | single_repo | `orchestrator` | CFP-743 |
 | 13 | `kpi_artifact` | single_repo | `orchestrator` | CFP-393 |
-| 14 | `architecture_doc` | dogfood / single_repo | `codeforge-design:ArchitectAgent` | CFP-919 |
+| 14 | `integration_test_baseline` | single_repo | `codeforge-test:IntegrationTestAgent` | CFP-954 |
+| 15 | `architecture_doc` | dogfood / single_repo | `codeforge-design:ArchitectAgent` | CFP-919 |
 
 ## Per-doc-type details
 
@@ -249,6 +250,28 @@
   > append-only policy + comment workflow-only-write semantic).
   > Lint scope = JSON valid (jq parse) + invariant (분자 ≤ 분모 등, aggregator 가 강제).
   > 향후 history 누적 정책 별도 carrier (CFP-393 §11 follow-up #4).
+
+### `integration_test_baseline`
+
+- **single_repo**: `<owner-repo>/tests/integration/stories/<EPIC_KEY>/baseline-v<N>-<carrier-key>.yaml`
+- **owner_agent**: `codeforge-test:IntegrationTestAgent`
+- **introduced_by**: CFP-954
+- **naming_pattern**: `baseline-v[0-9]+-cfp-[0-9]+\.yaml`
+- **frontmatter_required**: True
+- **examples**:
+  - mclayer/plugin-codeforge/tests/integration/stories/CFP-882/baseline-v1-cfp-954.yaml (Wave 4 sub-Epic #882 first Epic-level baseline, declarative-only)
+
+  **notes**:
+  > CFP-954 (Wave 4 sub-Epic #882 Story-3) carrier — ADR-055 Amendment 3 (Epic-level baseline first activation) + ADR-72 §결정 1 (ProductionEvidenceDeputy mandate first activation) 동반.
+  > Epic-level integration test baseline 자동 승격 SSOT (Story-level vs Epic-level disjoint axis).
+  > Story-level integration test (`tests/integration/<story-key>/`) ≠ Epic-level baseline (`tests/integration/stories/<EPIC_KEY>/`) — 양 layer 동시 존재 가능.
+  > Naming convention: `baseline-v<N>-<carrier-key>.yaml` immutable append-only (DataMigrationArch §G.5 정합 — v1/v2/v3 incremental promotion + 기존 v1 file 보존, history immutable).
+  > Story-3 = v1 (declarative-only, story_keys cross-Story consistency check 3 entry + frozen_shas pin discipline ADR-073 정합).
+  > Story-4 = v2 (promotion criteria 4-tuple executable baseline 진입).
+  > Story-5 = v3 (downgrade asymmetry invariant + Wave 4 sub-Epic close final pin).
+  > frontmatter_required = true (carrier_story + story_keys + frozen_shas + cross_story_consistency_checks + declarative_only field 의무).
+  > IntegrationTestAgent single-shot pattern (ADR-044 §결정 5 정합) — declarative baseline = single-shot read-only verify (실 spawn 0건, mandate activation scope only).
+  > parallel-edit policy = locked (IntegrationTestAgent monopoly + integration-test lane verdict gate).
 
 ### `architecture_doc`
 

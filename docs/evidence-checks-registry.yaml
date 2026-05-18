@@ -1386,13 +1386,19 @@ entries:
       ADR-72 §결정 3 mechanical verification — Change Plan §13 안
       `production_cutover_touching: true` 선언 시 ProductionEvidenceDeputy
       spawn evidence (verdict packet `production_evidence_deputy_spawned: true`
-      + Story §14 Lane Evidence row append) 의무. ADR-72 신설 시점 detect
-      script + workflow 부재 (deferred-followup status). follow-up CFP-Z 가
-      detect_command (review-verdict-v4 v4.5 → v4.6 MINOR bump
-      `owner_deputy_kind` enum production_evidence 신설 동반) + lint workflow
-      append 후 status 갱신 (deferred-followup → warning → blocking-on-pr).
-    detect_command: null  # deferred-followup — CFP-Z carrier
-    workflow: null
+      + Story §14 Lane Evidence row append) 의무. CFP-954 Story-3 carrier 가
+      detect_command (scripts/check-production-cutover-evidence.sh) + workflow
+      (templates/github-workflows/production-cutover-evidence.yml + .github/
+      byte-identical mirror) 신설 + status 승격 (deferred-followup → warning).
+      4 prerequisite measurement source mechanical anchor 4-tuple (MS-1
+      live_touching / MS-2 production_cutover_touching dual-source AND /
+      MS-3 marketplace_publish_touching / MS-4 consumer_impact_blast_radius)
+      Change Plan §3.5 + ADR-72 amendment_log Amendment 2 본문 SSOT.
+      follow-up CFP-Z = review-verdict-v4 v4.5 → v4.6 MINOR bump
+      (owner_deputy_kind enum production_evidence 추가) + verdict packet
+      field-time check 신설 후 warning → blocking-on-pr 승격 carrier.
+    detect_command: bash scripts/check-production-cutover-evidence.sh
+    workflow: templates/github-workflows/production-cutover-evidence.yml
     current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
     bypass_label: hotfix-bypass:prod-cutover-deputy-evidence
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
@@ -1400,13 +1406,15 @@ entries:
       pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
       failure_threshold: 0             # ADR-060 §결정 6 (b)
       sibling_dependencies:
-        - CFP-Z  # review-verdict-v4 v4.5 → v4.6 MINOR — owner_deputy_kind enum production_evidence (placeholder, ADR-72 §결정 3 carrier)
+        - CFP-Z  # review-verdict-v4 v4.5 → v4.6 MINOR — owner_deputy_kind enum production_evidence (placeholder, ADR-72 §결정 3 carrier — Story-3 = warning tier 활성, blocking-on-pr 승격 영역 외)
       evidence_artifacts:
         - github_actions_run_history_url
         - lint_failure_count_zero_proof
         - pr_cumulative_count_proof
     introduced_by: CFP-632
     introduced_date: 2026-05-14
+    activated_by: CFP-954  # Story-3 status 승격 + script/workflow path populate
+    activated_date: 2026-05-18
     owner_adr: ADR-72
     carrier_adr: ADR-060
     recurrence:
@@ -1414,20 +1422,21 @@ entries:
       threshold: 3
       promotion_trigger: advisory
       last_occurrence: null
-    status: deferred-followup  # ADR-060 framework — detect script + workflow 부재 영역, CFP-Z carrier 후 Active 전환
+    status: warning  # CFP-954 Story-3: deferred-followup → warning 승격 (script + workflow 신설 동반)
 
   - name: epic-cutover-gate-evidence-quad-check
     description: |-
       ADR-72 §결정 5 mechanical verification — EPIC CLOSED gate (PMOAgent
       retro epic_close_gate) 의 production 실측 evidence quad (bucket prefix
       listing + WAL sample + Prometheus rate metric + L1 backlog drainage rate)
-      4중 명시 verify. ADR-72 신설 시점 detect script + workflow 부재
-      (deferred-followup status). Sibling Story-4 (plugin-codeforge-pmo#18)
-      가 PMOAgent retro template gate 본문 추가 prerequisite — follow-up
-      CFP-Z' 가 retro-mandatory.yml 통합 + epic_close_gate evidence quad lint
-      append 후 status 갱신 (deferred-followup → warning → blocking-on-pr).
-    detect_command: null  # deferred-followup — CFP-Z' carrier (retro-mandatory.yml 통합)
-    workflow: null
+      4중 명시 verify. CFP-954 Story-3 가 status 승격 (deferred-followup →
+      warning) + detect_command/workflow path populate. production-cutover-
+      evidence.yml workflow 의 PR-open trigger 안 EPIC CLOSED gate sub-section
+      verify 영역 통합 (Story-3 declare scope, Sibling Story-4 plugin-codeforge
+      -pmo#18 = retro template 본문 작성 prerequisite for warning → blocking
+      -on-pr 승격).
+    detect_command: bash scripts/check-production-cutover-evidence.sh
+    workflow: templates/github-workflows/production-cutover-evidence.yml
     current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
     bypass_label: hotfix-bypass:epic-cutover-quad-check
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
@@ -1435,13 +1444,15 @@ entries:
       pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
       failure_threshold: 0             # ADR-060 §결정 6 (b)
       sibling_dependencies:
-        - CFP-Z'  # PMOAgent retro epic_close_gate workflow integration (Sibling Story-4 plugin-codeforge-pmo#18 prerequisite)
+        - CFP-Z'  # PMOAgent retro epic_close_gate workflow integration (Sibling Story-4 plugin-codeforge-pmo#18 prerequisite for blocking-on-pr 승격)
       evidence_artifacts:
         - github_actions_run_history_url
         - lint_failure_count_zero_proof
         - pr_cumulative_count_proof
     introduced_by: CFP-632
     introduced_date: 2026-05-14
+    activated_by: CFP-954  # Story-3 status 승격 + script/workflow path populate
+    activated_date: 2026-05-18
     owner_adr: ADR-72
     carrier_adr: ADR-060
     recurrence:
@@ -1449,7 +1460,7 @@ entries:
       threshold: 3
       promotion_trigger: advisory
       last_occurrence: null
-    status: deferred-followup  # ADR-060 framework — detect script + workflow 부재 영역, CFP-Z' carrier (Sibling Story-4 prerequisite) 후 Active 전환
+    status: warning  # CFP-954 Story-3: deferred-followup → warning 승격 (script + workflow 신설 동반, Sibling Story-4 plugin-codeforge-pmo#18 = blocking-on-pr 승격 prerequisite)
 
 # marketplace-drift-detection entry deferred to Phase 2 carrier PR (CFP-627 FIX iter 3/3 — ADR-067 §결정 3 cross-lane RESET 차원 전환).
 # Phase 1 doc-only fast-path (ADR-054) scope = ADR-063 Amendment 3 §결정 13 declarative SSOT mandate only.
