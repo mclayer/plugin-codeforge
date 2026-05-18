@@ -1,6 +1,6 @@
 ---
 kind: contract
-contract_version: "2.3"
+contract_version: "2.4"
 status: Active
 related_plugins:
   - codeforge (wrapper, consumer)
@@ -24,22 +24,13 @@ authors:
   - CFP-47 — TestContractArch §8.5 mandate (additive minor, 2026-04-30) [v2.1]
   - CFP-128 — Docker-first infra (§7.4.6 Container considerations, additive minor, 2026-05-07) [v2.2]
   - CFP-662 — spec_invariant_measurement_required field (additive minor, 2026-05-14) [v2.3]
-mirrored_from_canonical:
-  repo: mclayer/plugin-codeforge-design
-  sha: a6aa5502404ab5a9e7f81b865af62889466e829a
-  pr: 42
 ---
 
 # design_output v2 — Inter-plugin Contract
 
-**상위 SSOT 위치**:
-- `mclayer/plugin-codeforge-design/docs/inter-plugin-contracts/design-output-v2.md`: **canonical** (codeforge-design repo)
-- 본 file (codeforge wrapper repo): sibling reference (canonical 변경 시 sync 의무 — ADR-010 + CFP-24 marketplace sync 정책 동질)
-- ADR-008 (versioning 룰): codeforge wrapper repo `docs/adr/ADR-008-inter-plugin-contract-versioning.md`
-- ADR-010 (본 contract 의 sibling sync 정책): codeforge wrapper repo `docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md`
-- ADR-014 (carrier — v1 → v2 BREAKING bump): codeforge wrapper repo `docs/adr/ADR-014-operational-risk-ssot-distribution.md`
-
 `codeforge-design` plugin → `codeforge` core (Orchestrator) 단방향 schema. ArchitectPLAgent 가 **6 deputies** 병렬 spawn 후 ArchitectAgent (chief author) 가 Change Plan + ADR + Story §3/§7/§11 mirror self-write.
+
+**상위 SSOT**: `mclayer/plugin-codeforge-design/docs/inter-plugin-contracts/design-output-v2.md`
 
 **Carrier ADR**: [ADR-014 — Operational Risk SSOT distribution](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-014-operational-risk-ssot-distribution.md) (CFP-46)
 
@@ -294,3 +285,41 @@ ArchitectAgent (chief author) 가 6 SubAgent 산출물을 받아 Change Plan §1
 - v2.1 동결: 2026-04-30 (CFP-47 — TestContractArch §8.5 mandate, additive minor in-place)
 - v2.2 동결: 2026-05-07 (CFP-128 — §7.4.6 Container considerations, additive minor in-place; ADR-014 amended by ADR-033)
 - v2.3 동결: 2026-05-14 (CFP-662 — chief_author_artifact.spec_invariant_measurement_required field 신설, additive minor in-place)
+
+---
+
+## v2.4 MINOR — `architecture_doc_updated` field (CFP-921)
+
+**Carrier**: CFP-921 (Epic B Story-3) — ADR-078 lane gate mechanism.
+
+### 신설 field
+
+| Field | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `architecture_doc_updated` | bool | optional | `false` | ADR-078 lane gate carrier. `true` = ArchitectAgent 가 `docs/architecture/<path>.md` 4 영역 (modules/boundaries/interfaces/data_flow) 중 1+ 갱신 완료 보고. `false` = Change Plan §10.A `architecture_doc_impact` all false + `none_rationale` declare (skip 정당화). 누락 / mismatch = ArchitectPL `pl_recommendation: FIX` |
+
+### Migration (v2.3 → v2.4)
+
+- **Backward-compat MINOR** (ADR-008 §결정 2 — optional field default false)
+- 기존 v2.3 producer → field omit 시 default `false` 적용
+- 신규 v2.4 producer (post-CFP-921 ArchitectPL) → field 의무 emit (true 시 `docs/architecture/<path>.md` direct write 동반)
+- Validator → field 부재 = `false` 가정 (backward-compat)
+- Effective date: 2026-05-18 KST 이후 신규 design lane verdict packet (forward-only, ADR-079 §결정 6 동형)
+
+### Disjoint axis (review-verdict-v4 v4.5 + design-output-v2 v2.4 동시 emit)
+
+ADR-082 §결정 1 layer disjoint 정합 — design lane verdict packet 의 4 self-check boolean field 동시 emit:
+
+- `mechanical_self_check_passed` (ADR-065) — 7-item mechanical sync
+- `boundary_completeness_self_check_passed` (ADR-068) — I-1~I-4 semantic
+- `dimensional_empirical_self_check_passed` (ADR-068 Amendment 1) — I-5 dimensional empirical
+- **`architecture_doc_updated` (ADR-078, v2.4 신설)** — design-lane self-write verification (scope (b))
+- `marketplace_sync_declared` (ADR-063 Amendment 1) — atomic invariant declare
+
+### Cross-references
+
+- [ADR-078 architecture doc lane gate](../../../plugin-codeforge/docs/adr/ADR-078-living-architecture-doc.md) §결정 1 (4 wording SSOT)
+- [ADR-082 write-time self-write verification](../../../plugin-codeforge/docs/adr/ADR-082-write-time-self-write-verification-mandate.md) scope (b)
+- [ADR-008 inter-plugin contract versioning](../../../plugin-codeforge/docs/adr/ADR-008-inter-plugin-contract-versioning.md) §결정 2 (MINOR additive)
+- [ADR-010 sibling sync ordering](../../../plugin-codeforge/docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md) §결정 1 (canonical first → sibling follow)
+
