@@ -88,8 +88,9 @@ def main(argv):
 
     fm_block = _extract_frontmatter(content)
     if not fm_block:
-        print(f"PARSE_ERROR: frontmatter block absent in {story_path}", file=sys.stderr)
-        return 2
+        # frontmatter block absent = field absent (exit 1, not SETUP error)
+        # Covers: plain YAML files (.yaml), markdown with no frontmatter block.
+        return 1
 
     try:
         data = yaml.safe_load(fm_block)  # CR-821-6 strict mandate

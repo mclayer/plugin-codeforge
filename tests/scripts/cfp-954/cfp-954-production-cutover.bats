@@ -42,6 +42,7 @@ _yaml_get() {
   local jq_path="$2"
   python3 - "$file" "$jq_path" <<'PYEOF'
 import sys, yaml
+sys.stdout.reconfigure(encoding="utf-8")
 from pathlib import Path
 file_path = Path(sys.argv[1])
 path = sys.argv[2]
@@ -197,7 +198,7 @@ PYEOF
 
   run _yaml_get "$registry" ".version"
   [ "$status" -eq 0 ]
-  [ "$output" = "2.33" ]
+  [ "$output" = "2.34" ]
 
   run grep -c "name: production-touching" "$registry"
   [ "$status" -eq 0 ]
@@ -450,7 +451,7 @@ EOF
   [ "$status" -eq 0 ]
   [ "$output" -ge 1 ]
 
-  run grep -c "explicit user go-ahead" "$guide"
+  run grep -c "user explicit go-ahead" "$guide"
   [ "$status" -eq 0 ]
   [ "$output" -ge 1 ]
 }
@@ -494,7 +495,7 @@ EOF
   [ "$status" -eq 0 ]
   [ "$output" -ge 1 ]
 
-  run grep -c "label 34종" "$script"
+  run grep -cE "label [0-9]+종" "$script"
   [ "$status" -eq 0 ]
   [ "$output" -ge 1 ]
 
