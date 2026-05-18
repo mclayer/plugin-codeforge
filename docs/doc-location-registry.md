@@ -5,7 +5,7 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.0  
-**Last regen**: 2026-05-18T06:41:26Z  
+**Last regen**: 2026-05-18T08:58:53Z  
 **Registered doc types**: 14
 
 ## Summary table
@@ -260,6 +260,12 @@
 - **frontmatter_required**: True
 - **examples**:
   - mclayer/plugin-codeforge/docs/architecture/codeforge-family.md
+  - mclayer/plugin-codeforge-requirements/docs/architecture/codeforge-requirements.md (CFP-968)
+  - mclayer/plugin-codeforge-design/docs/architecture/codeforge-design.md (CFP-969)
+  - mclayer/plugin-codeforge-develop/docs/architecture/codeforge-develop.md (CFP-970)
+  - mclayer/plugin-codeforge-review/docs/architecture/codeforge-review.md (CFP-971)
+  - mclayer/plugin-codeforge-test/docs/architecture/codeforge-test.md (CFP-972)
+  - mclayer/plugin-codeforge-pmo/docs/architecture/codeforge-pmo.md (CFP-973)
   - mclayer/codeforge-internal-docs/wrapper/architecture/wrapper-overview.md (dogfood)
 
   **notes**:
@@ -274,4 +280,5 @@
   > Phase 1 (CFP-919) = doc type 등록 + ADR-078 anchor 만. template schema = S2 (#920) carrier.
   > lane 게이트 = S3 (#921) carrier. drift lint = S4 (#923) carrier.
   > parallel-edit policy = locked (architecture_doc = ArchitectAgent monopoly + design lane verdict gate).
+  > Sub-Epic CFP-949 (2026-05-18) — 6 lane plugin self-owned seed (codeforge-{requirements,design,develop,review,test,pmo}) 추가, closing-the-loop 7 seed completion (wrapper 1 + lane 6).
 
