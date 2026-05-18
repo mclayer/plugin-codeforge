@@ -75,7 +75,7 @@ related_files:
 - ADR-008 §결정 3 SSOT: 신규 label entry append + 신규 category 신설 = MINOR bump (v2.33 → v2.34 MINOR increment, CFP-949 v2.33 점유로 collision rebase ratchet).
 - **MANIFEST.yaml ratchet**: row label-registry-v2 `"2.33"` (CFP-949 #975 main 반영 baseline) → `"2.34"` (CFP-954 carrier ratchet). 직전 stale drift (`"2.31"` CFP-923 sync miss) 는 CFP-949 v2.33 carrier 가 main 에서 이미 정정 — 본 rebase 는 v2.33 → v2.34 단일 MINOR ratchet. DataMigrationArch §G.1 critical pre-existing drift evidence (`scripts/check-inter-plugin-contracts.sh` INV-1 parity lint warn 차단).
 - ratchet 강화 방향 — ADR-058 §결정 5 sunset_justification 영역 외 (`is_transitional: false` invariant, scope 확장 only).
-- 8-mirror checklist self-application — ADR-72 / ADR-076 정식 form, ADR-072 / ADR-76 변종 0건 invariant (CFP-906 ADR-072 18 + CFP-932 ADR-76 9 pattern_count 3 reach 차단).
+- 8-mirror checklist self-application — ADR-72 / ADR-076 정식 form 정확 사용 invariant. variant form 도입 0건 의무 (memory `feedback_codex_tp2_verify_before_trust_pattern` lineage — CFP-906 + CFP-932 lessons 에서 pattern_count 2 reach, 본 Story-3 = 3 reach 차단 carrier). 변종 literal string 직접 인용은 registry SSOT 영역 (kind:registry actual usage context) 에서 회피 — anti-pattern enumeration 은 bats TC-16 self-documenting test (`tests/scripts/cfp-954/cfp-954-production-cutover.bats` line 509-549) + ADR-065 amendment_log historical context + ADR-080 corpus list (식별자 발생 원천 history) 영역 위임.
 
 **v2.33 (CFP-949 / Sub-Epic 6 lane plugin self-owned architecture doc seed completion, 2026-05-18)**: MINOR bump (5 신규 label entry append — Sub-Epic CFP-949 child Story sub-issue marker + 4 lane plugin namespace marker, parent Epic CFP-756 / ADR-078 closing-the-loop 7 seed completion).
 

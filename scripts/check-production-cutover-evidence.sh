@@ -10,9 +10,15 @@
 #   MS-4: consumer_impact_blast_radius     — marketplace.json channels[] consumer count proxy
 #
 # 3-tier exit code (ADR-060 §결정 15):
-#   0 = PASS  (exemption pass OR all 4-tuple anchor present + dual-source match)
-#   1 = missing (production_cutover_touching=true but anchor field 부재)
+#   0 = PASS  (exemption pass OR Tier-2 runtime MS-1/MS-2 anchor present + dual-source match;
+#             MS-3/MS-4 = Story-4 carrier declare-time scope, runtime full implementation deferred)
+#   1 = missing (production_cutover_touching=true but anchor field 부재 — MS-1/MS-2 scope)
 #   2 = mechanical anchor invalid (yaml parse fail / dual-source mismatch / cross-repo fetch fail)
+#
+# Story-3 scope (declare-time vs runtime — measurement_source disjoint):
+#   - Runtime verify: MS-1 (live_touching) + MS-2 (production_cutover_touching) — full executable
+#   - Declare-time scope: MS-3 (marketplace_publish_touching) + MS-4 (consumer_impact_blast_radius)
+#     → Story-4 carrier (promotion criteria 4-tuple executable, real proxy measurement)
 #
 # Trigger axis (Story-3 D2 consensus): PR-open + workflow_dispatch (cron 24h 미권고).
 #
@@ -192,13 +198,17 @@ if [[ -n "$STORY_FILE" ]] && [[ -f "$STORY_FILE" ]]; then
 fi
 
 # MS-3: marketplace_publish_touching (plugin.json + marketplace.json diff)
-# Story-3 scope: best-effort detection — Phase 1 declare-time scope only.
-# Runtime full implementation = Story-4 carrier (promotion criteria 4-tuple executable).
+# Story-3 = Story-4 carrier (promotion criteria 4-tuple executable, declare-time scope only).
+# Declare-time scope: MS-1/MS-2 만 runtime verify — MS-3 = absent (hardcoded sentinel).
+# Runtime full implementation (plugin.json .version diff + marketplace.json channels[] touch)
+# = Story-4 carrier (별 PR, promotion criteria 4-tuple executable measurement).
 MARKETPLACE_PUBLISH="absent"
 
 # MS-4: consumer_impact_blast_radius (marketplace.json channels[] consumer count proxy)
-# Story-3 scope: declare-time = "best-effort empirical anchor" annotation only.
-# Phase 2 carrier = real proxy measurement (Story-4 / Story-5).
+# Story-3 = Story-4 carrier (promotion criteria 4-tuple executable, declare-time scope only).
+# Declare-time scope: MS-1/MS-2 만 runtime verify — MS-4 = best_effort_pending (hardcoded sentinel).
+# Runtime full proxy measurement (marketplace.json channels[] consumer count aggregate)
+# = Story-4 / Story-5 carrier (별 PR, real proxy measurement).
 CONSUMER_BLAST="best_effort_pending"
 
 # --- (8) Runtime declare-time presence verify (Tier-2 minimal scope) ---
