@@ -84,8 +84,17 @@ PYEOF
     RESULT_FIDELITY_OUTPUT_FILE="${result_file}" \
     bash "${RECONCILE_SH}" --apply
 
-  # post-mirror stage 도달 = output에 §4.13 관련 메시지 포함
-  [[ "$output" == *"result"* ]] || [[ "$output" == *"4.13"* ]] || [[ -f "${result_file}" ]]
+  # F-CR-900-1 회귀 방지: reconcile-overlay.sh 가 §4.13 abort (exit 1 = set -e trigger) 로 종료하지 않아야 함
+  # 허용 exit code: 0 (완료) 또는 2 (WHOLESALE MIRROR loss — OVERALL_EXIT=2 정상 경로)
+  # 금지 exit code: 1 (§4.13 블록 내 local 키워드 set -e abort = F-CR-900-1 regression)
+  [ "$status" -ne 1 ]
+
+  # §4.13 post-mirror stage 도달 검증: "result:" echo 가 output 에 포함되어야 함
+  # (F-CR-900-1 미fix 상태 = local top-level → set -e abort 전 echo 미도달 → 이 assertion FAIL → 회귀 검출)
+  [[ "$output" == *"result:"* ]]
+
+  # result artifact 생성 확인 (RESULT_FIDELITY_OUTPUT_FILE 기록 — §4.13 honest record)
+  [[ -f "${result_file}" ]]
 
   # Cleanup
   rm -rf "${tmp_wrapper}" "${tmp_consumer}" "${tmp_detect}"

@@ -447,15 +447,49 @@ class TestCfp899PatternAvoidance:
         assert "--consumer-dir" in src
 
     def test_tc_pat_4_no_bash_subshell_fallback_pattern(self):
-        """TC-PAT-4: F-CR-899-10 류 — bash subshell || fallback 패턴 회피 검증"""
-        # aggregator.py 는 Python — 내부에서 || fallback 없음 (bash only pattern)
-        # reconcile-overlay.sh 의 aggregator 호출 코드 확인
+        """TC-PAT-4: F-CR-899-10 류 — bash subshell || fallback 패턴 회피 + 실 실행 검증.
+
+        F-CR-900-2 강화:
+          (a) source-grep: explicit _AGG_EC=$? capture 존재 확인
+          (b) source-grep: local 키워드가 top-level (_reconcile_file 함수 밖) §4.13 블록에 없음 (F-CR-900-1 regression guard)
+          (c) real-execution: aggregator 가 exit 0 을 반환하면 reconcile-overlay.sh §4.13 블록이
+              "result:" echo 를 출력하는지 subprocess 실행으로 검증
+        """
         reconcile_sh = REPO_ROOT / "scripts" / "reconcile-overlay.sh"
         src = reconcile_sh.read_text(encoding="utf-8")
-        # §4.13 aggregator 호출 영역에서 explicit exit code capture 확인
+
+        # (a) explicit exit code capture 확인
+        # 패턴: _AGG_EC=0; _AGG_OUTPUT=$(...) || _AGG_EC=$? (set -euo pipefail 아래 exit code 명시 캡처)
+        assert "_AGG_EC=0" in src, \
+            "F-CR-899-10: reconcile-overlay.sh aggregator 호출 시 _AGG_EC=0 초기화 필요"
         assert "_AGG_EC=$?" in src, \
             "F-CR-899-10: reconcile-overlay.sh aggregator 호출 시 explicit _AGG_EC=$? capture 필요"
-        # || fallback 없이 explicit capture 확인
         agg_section = src[src.find("RESULT_FIDELITY_AGGREGATOR_PY"):]
-        # _AGG_OUTPUT 이후 || 없는 explicit capture 패턴
         assert "_AGG_OUTPUT=$(" in agg_section, "aggregator stdout capture must be explicit"
+
+        # (b) F-CR-900-1 regression guard: §4.13 블록 (line 844 이후) 에서 'local _result_value' 없음
+        #     _reconcile_file 함수 (line ~385-752) 이후의 §4.13 블록을 추출
+        adr_block_start = src.find("# §4.13 result_fidelity_binding")
+        assert adr_block_start != -1, "§4.13 블록 미발견"
+        adr_block = src[adr_block_start:]
+        assert "local _result_value" not in adr_block, \
+            "F-CR-900-1: top-level §4.13 블록에 'local _result_value' 사용 금지 (set -euo pipefail abort trigger)"
+
+        # (c) real-execution: aggregator 직접 실행 → exit 0 + result 출력 확인
+        #     mock wrapper/consumer with matching yml → SUCCESS path
+        w, c = self._setup_dirs()
+        r = run_aggregator(["--s1-exit", "0", "--s2-exit", "0", "--wrapper-dir", w, "--consumer-dir", c])
+        assert r.returncode == 0, f"TC-PAT-4(c): aggregator SUCCESS exit must be 0, got {r.returncode}"
+        data = parse_result(r.stdout)
+        assert data.get("result") == "SUCCESS", \
+            f"TC-PAT-4(c): aggregator real-exec must produce result=SUCCESS, got {data}"
+
+    def _setup_dirs(self):
+        """Helper: matching wrapper/consumer dirs for SUCCESS path."""
+        import tempfile
+        w = tempfile.mkdtemp()
+        c = tempfile.mkdtemp()
+        # matching files → sanity PASS
+        for d in (w, c):
+            Path(d).joinpath("ok.yml").write_text("name: ok\n", encoding="utf-8")
+        return w, c

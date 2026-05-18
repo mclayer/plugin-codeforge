@@ -866,7 +866,7 @@ if [[ -f "${RESULT_FIDELITY_AGGREGATOR_PY}" ]]; then
             --dry-run 2>/dev/null || true
     else
         # F-CR-899-10 류 방지: explicit exit code capture (bash subshell || fallback 회피)
-        local_agg_args=(
+        _agg_arg_list=(
             "--s1-exit" "${_S1_MAX_EXIT}"
             "--s2-exit" "${_S2_MAX_EXIT}"
             "--wrapper-dir" "${WRAPPER_SSOT_DIR}"
@@ -874,17 +874,20 @@ if [[ -f "${RESULT_FIDELITY_AGGREGATOR_PY}" ]]; then
             "--whitelist" "${CONSUMER_APPLICABLE_WHITELIST:-${SCRIPT_DIR}/../templates/scripts/consumer_applicable_workflows.txt}"
         )
         if [[ -n "${RESULT_FIDELITY_OUTPUT_FILE:-}" ]]; then
-            local_agg_args+=("--output-file" "${RESULT_FIDELITY_OUTPUT_FILE}")
+            _agg_arg_list+=("--output-file" "${RESULT_FIDELITY_OUTPUT_FILE}")
         fi
-        # explicit exit code capture (F-CR-899-10 방지 — || 미사용)
-        _AGG_OUTPUT=$(python3 "${RESULT_FIDELITY_AGGREGATOR_PY}" "${local_agg_args[@]}" 2>/dev/null)
-        _AGG_EC=$?
+        # explicit exit code capture (F-CR-899-10 준수 — set -euo pipefail 아래서 non-zero 서브셸 exit 캡처)
+        # 패턴: _AGG_EC=0; _AGG_OUTPUT=$(...) || _AGG_EC=$?
+        # 설명: || _AGG_EC=$? 는 "대체 실행 fallback" 이 아니라 "exit code 명시 캡처" — F-CR-899-10 spirit 준수
+        # (F-CR-899-10 금지 대상 = $(...) || <다른_명령> 형태의 silent fallback, 본 패턴 = exit code assign only)
+        _AGG_EC=0
+        _AGG_OUTPUT=$(python3 "${RESULT_FIDELITY_AGGREGATOR_PY}" "${_agg_arg_list[@]}" 2>/dev/null) || _AGG_EC=$?
         if [[ "${_AGG_EC}" -eq 3 ]]; then
             echo "${SCRIPT_NAME} [WARN] §4.13 result fidelity aggregator internal error (exit 3) — honest report 불가" >&2
         else
             echo "${SCRIPT_NAME} §4.13 result fidelity: ${_AGG_OUTPUT}"
             # upgrade_event_honest_record: result field 정직 출력 (SUCCESS hardcode forbidden)
-            local _result_value
+            # F-CR-900-1 FIX: top-level scope 에서 local 키워드 사용 불가 (set -euo pipefail 활성 시 즉시 abort)
             _result_value=$(echo "${_AGG_OUTPUT}" | python3 -c "import sys,json; d=json.load(sys.stdin); print(d.get('result','UNKNOWN'))" 2>/dev/null || echo "UNKNOWN")
             echo "${SCRIPT_NAME} result: ${_result_value}"
         fi

@@ -46,7 +46,6 @@ ADR-076 Amendment 3 §결정 3 sub-clause carrier
 import argparse
 import json
 import os
-import subprocess
 import sys
 from pathlib import Path
 
@@ -192,6 +191,11 @@ def _actual_path_set(consumer_dir: str) -> set:
     """
     consumer-side mirrored file set 산출.
     반환: relative path set (str).
+
+    제외 대상 (EC-4 false-positive 차단 — §4.13 post_mirror_sanity_check.impact_report_diff_scope):
+      - `.snapshots/` prefix: reconcile transaction artifact (reconcile-overlay.sh _create_snapshot 생성)
+        → expected set 에 없으므로 extra 분류 → false SUCCESS_WITH_DEGRADATION 차단
+      - `.wrapper-managed-manifest.json` 동형 패턴 (wrapper SSOT 파일이 아닌 reconcile runtime 산출물)
     """
     actual = set()
     cd = Path(consumer_dir)
@@ -203,6 +207,12 @@ def _actual_path_set(consumer_dir: str) -> set:
             continue
         rel = f.relative_to(cd)
         rel_str = str(rel).replace("\\", "/")
+
+        # reconcile transaction artifact 제외 (§4.13 EC-4 false-positive 차단)
+        # .snapshots/ = reconcile-overlay.sh _create_snapshot() 생성 디렉토리
+        if rel_str.startswith(".snapshots/"):
+            continue
+
         actual.add(rel_str)
     return actual
 
