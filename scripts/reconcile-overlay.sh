@@ -428,6 +428,23 @@ _reconcile_file() {
 
     # ── MARKER_NONE: wholesale_mirror_with_user_visible_loss_report ──────────
     if [[ "${capability}" == "text_marker_none" ]]; then
+        # ── §4.11 dependency bundle integrity closure check (CFP-898 Phase 2) ──
+        # MARKER_LINT return 2 abort pattern 답습 — hook first-line + return 2 abort
+        local MIRROR_DEP_PY="${MIRROR_DEP_PY:-${SCRIPT_DIR}/../templates/scripts/mirror-dependency-closure.py}"
+        if [[ -f "${wrapper_file}" ]] && [[ "${wrapper_file}" == *.yml ]]; then
+            # F-2 FIX (CFP-898 FIX iter 1): propagate caller dry_run to hook invocation.
+            # ADR-076 §결정 3 dry-run semantic: '정보 제공만, 실 변경 0, abort 영역 외'
+            # dry_run=true → pass --dry-run flag (exit 0 + preview, no abort)
+            # dry_run=false → normal closure check (exit 1 on missing dep → return 2)
+            local _dep_dry_flag=""
+            [[ "${dry_run}" == "true" ]] && _dep_dry_flag="--dry-run"
+            # shellcheck disable=SC2086
+            python3 "${MIRROR_DEP_PY}" --yml "${wrapper_file}" ${_dep_dry_flag} > /dev/null 2>&1 || {
+                echo "${SCRIPT_NAME} [ERR] dependency closure missing for ${rel_path} — reconcile abort (§4.11)" >&2
+                echo "${SCRIPT_NAME} 힌트: templates/scripts/mirror-dependency-closure.py --yml ${wrapper_file} 로 누락 deps 확인 후 보완" >&2
+                return 2
+            }
+        fi
         local had_consumer_diff=false
         if [[ -f "${consumer_file}" ]] && ! diff -q "${consumer_file}" "${wrapper_file}" > /dev/null 2>&1; then
             had_consumer_diff=true
