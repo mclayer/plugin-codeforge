@@ -159,6 +159,7 @@ Story 분해안:
 3. **Epic milestone description 갱신** (`gh api repos/{owner}/{repo}/milestones/{N}`)
 4. **`gate:retro-complete` label add** (`mcp__github__issue_write` — Story Issue) — **forcing function 의 핵심 단계** (label 부착 시 Story close 가능)
 5. **`[PMO]` prefix comment** (Story Issue body) — `[PMO] Retro complete: <retro file link> + <summary>`
+6. **§14 Lane Evidence 보존 invariant (CFP-940 / ADR-031 정합)** — PMOAgent retro 작성 시 Story §14 **절대 수정 금지**. §14 는 Orchestrator monopoly (각 lane spawn 시 row append, `spawned_at` / `returned_at` / `lane` / `agent_id` / `outcome` schema). retro 단계에서 §14 를 "종합 summary" 형태로 status-marker(`- 요구사항: PASS` 등) 로 collapse 하면 schema 위반 + 정보 손실(agent_id 추적성 + 시간대 + outcome 본문). §14 collapse 발견 시 retro 본문에서 gap flag 만 보고, **§14 자체 편집은 Orchestrator 의 별도 backfill 영역**. PMOAgent self-write 범위 (§11 + retro file + Epic milestone + label + comment) 에 §14 미포함 명문화.
 
 **Partial-write protocol (ADR-045 D-4)** — FIX iter 1 F-1 verbatim 6-source sync: 1-5 단계 중 일부 fail 시 (예: Epic milestone API fail) — **4 attempts total** (1 initial + 3 retries) cumulative offset from PR merge:
 
