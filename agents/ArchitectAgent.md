@@ -322,3 +322,21 @@ PMOAgent 가 cross-Story 패턴 분석에서 ADR 후보를 발의하면 (`pmo_ou
 - canonical PR #21 (merged): https://github.com/mclayer/plugin-codeforge-review/pull/21
 - internal-docs PR #101 (merged): https://github.com/mclayer/codeforge-internal-docs/pull/101
 - ADR-010 §4 wrapper-first allowed pattern (sibling sync legitimacy)
+
+## Architecture doc lane gate (ADR-078 §결정 1 / CFP-921)
+
+매 Change Plan merge 시 본 chief author 가 **architecture doc 4 영역** 갱신 의무:
+
+| 영역 | 갱신 trigger | wording (I-4 SSOT) |
+|---|---|---|
+| **modules** | 신규 module 도입 / 기존 module 제거 / module 책임 재분배 | `modules` byte-identical |
+| **boundaries** | 신규 trust boundary / lane boundary / plugin boundary 변경 | `boundaries` byte-identical |
+| **interfaces** | API contract / inter-plugin contract / agent prompt schema 변경 | `interfaces` byte-identical |
+| **data_flow** | 데이터 흐름 / event stream / handoff sequence 변경 | `data_flow` byte-identical |
+
+**Anti-scope guard cross-ref** ([ADR-078 §결정 1 anti-scope guard](../../plugin-codeforge/docs/adr/ADR-078-living-architecture-doc.md)): 클래스/함수/변수 라인 단위 / import graph / 함수 signature / src 1:1 mirror 금지 — 모듈/경계/계약/흐름 서술만.
+
+**Mapping 룰**: Change Plan §3 (구조) / §5 (인터페이스) / §11 (데이터) 변경이 architecture doc 4 영역 중 1+ 에 mapping 가능하면 갱신 의무 발동. mapping 불가 = Change Plan §10.A `architecture_doc_impact: all false + none_rationale` declare 의무 (skip 차단).
+
+**Verdict packet binding**: ArchitectPL `architecture_doc_updated: bool` self-check field (design-output-v2 v2.4 carrier). true = 갱신 완료 / false = §10.A `none_rationale` declared / 누락·mismatch = FIX 의무.
+

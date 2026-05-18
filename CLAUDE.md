@@ -27,6 +27,7 @@ codeforge core (>= 5.0.0) 의존.
 | `docs/stories/<KEY>.md §11 데이터 마이그레이션 mirror` | ArchitectAgent |
 | GitHub comment `[설계]` prefix | ArchitectPLAgent |
 | `phase:설계` → `phase:설계-리뷰` transition | ArchitectPLAgent |
+| `docs/architecture/<path>.md` | ArchitectAgent (lane gate — ADR-078 §결정 1 4 영역 갱신 의무, 매 Change Plan merge 시) |
 
 ## 4-way 이념 대립 — 6 permanent + 2 CONDITIONAL SubAgent 의 독립 관점
 

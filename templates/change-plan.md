@@ -234,6 +234,38 @@ TestContractArch primary, OperationalRiskArchitectAgent + DataMigrationArchitect
 - Change Plan 결정이 기존 ADR과 일치 / 주의 / 위반 (위반 시 신규 ADR 필요)
 - 신규 ADR 필요 여부 (새 ADR은 [`adr.md`](adr.md) 템플릿 따름)
 
+
+### §10.A architecture_doc_impact (ADR-078 lane gate carrier, CFP-921)
+
+ArchitectAgent 가 본 Change Plan 의 §3 (구조) / §5 (인터페이스) / §11 (데이터) 변경이 architecture doc 4 영역에 미치는 영향을 4-enum bool field 로 declare. ArchitectPL verdict packet `architecture_doc_updated: bool` self-check 의 input layer.
+
+```yaml
+architecture_doc_impact:
+  modules: <true|false>      # 신규 module 도입 / 제거 / 책임 재분배
+  boundaries: <true|false>   # trust / lane / plugin boundary 변경
+  interfaces: <true|false>   # API / inter-plugin contract / agent prompt schema 변경
+  data_flow: <true|false>    # 데이터 흐름 / event stream / handoff sequence 변경
+```
+
+**All false 시 rationale 의무 (skip 차단)**:
+
+```yaml
+architecture_doc_impact:
+  modules: false
+  boundaries: false
+  interfaces: false
+  data_flow: false
+  none_rationale: |
+    <Change Plan §3/§5/§11 변경이 architecture doc 4 영역에 도달하지 않는 사유 — file path / module 명 / interface 명 verbatim 인용 의무>
+```
+
+**ArchitectPL 검증** (verdict packet `architecture_doc_updated` field, design-output-v2 v2.4):
+- 1+ true → ArchitectAgent 가 `docs/architecture/<path>.md` direct write 의무 → `architecture_doc_updated: true`
+- All false + `none_rationale` 명시 → `architecture_doc_updated: false` (skip 정당화)
+- All false + `none_rationale` 부재 OR §3/§5/§11 변경 ↔ 4-enum mismatch → FIX 의무
+
+**Wording SSOT (I-4 byte-identical)**: 4 wording (`modules` / `boundaries` / `interfaces` / `data_flow`) = ADR-078 §결정 1 verbatim.
+
 ### §11. 데이터 마이그레이션 (DataMigrationArchitectAgent 입력 — 누락 시 DesignReview P0 차단)
 
 DataMigrationArchitectAgent의 산출물을 ArchitectAgent (chief author)가 통합. SecurityArchitect §7 동형 패턴 — 외부 입력·schema·migration 무관 시 §11.7 N/A 명시 + 사유 1줄. 누락 시 DesignReview P0 차단 ([CFP-21 spec](../docs/superpowers/specs/2026-04-28-cfp-21-datamigration-architect-design.md)).
@@ -297,6 +329,8 @@ ArchitectAgent chief author 가 Phase 1 산출물 (Change Plan + ADR + Story fil
 | 5 | `docs/inter-plugin-contracts/MANIFEST.yaml` registries 블록 갱신 필요성 확인 | □ | <근거 또는 NA 사유> |
 | 6 | `docs/parallel-work/section-ownership.yaml` 정책 필요 시 row append | □ | <근거 또는 NA 사유> |
 | 7 | `docs/doc-locations.yaml` 신규 doc type row 필요성 확인 | □ | <근거 또는 NA 사유> |
+
+8. ☐ **ADR-078 architecture_doc 4 영역 갱신 자기 검증 (CFP-921)** — §10.A `architecture_doc_impact` 4-enum bool field declare 완료 + 1+ true 시 `docs/architecture/<path>.md` direct write 완료 OR all false 시 `none_rationale` 명시 (skip 차단). ArchitectPL verdict packet `architecture_doc_updated: bool` self-check binding (design-output-v2 v2.4 carrier).
 
 **Overall**: `mechanical_self_check_passed: <true | false>`
 
