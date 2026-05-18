@@ -1,0 +1,4 @@
+# fixture: missing channel block — default stable fallback (TC-3 oracle)
+codeforge:
+  version_pin:
+    version: "5.83.0"
