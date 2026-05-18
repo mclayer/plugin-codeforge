@@ -369,6 +369,67 @@ class TestEdgeCases:
         assert data.get("result") == "SUCCESS_WITH_DEGRADATION", \
             f"EC-7: degraded must NOT silently report SUCCESS: {data}"
 
+    def test_tc_ec_8_whitelist_symmetry_invariant_no_false_degradation(self):
+        """TC-EC-8: §4.13 whitelist_symmetry_invariant — F-CR-900-3 discriminating test.
+
+        시나리오: wrapper에 consumer-ok.yml + plugin-only.yml 존재.
+        consumer에 두 파일 모두 정상 미러됨 (실제 성공적인 mirror 상태).
+        whitelist = consumer-ok.yml 만 포함 (plugin-only.yml 비대상).
+
+        Pre-fix (비대칭): _expected_path_set 은 whitelist 필터 적용 → plugin-only.yml 제외.
+                         _actual_path_set 은 whitelist 필터 미적용 → plugin-only.yml 포함.
+                         extra = {plugin-only.yml} → WARNING → false SUCCESS_WITH_DEGRADATION.
+
+        Post-fix (대칭): _actual_path_set 에도 동일 whitelist 필터 적용 →
+                        expected = {consumer-ok.yml}, actual = {consumer-ok.yml}.
+                        extra = {} → sanity PASS → SUCCESS.
+
+        이 테스트는 pre-fix 코드에서 FAIL (SUCCESS_WITH_DEGRADATION 반환),
+        post-fix 코드에서 PASS (SUCCESS 반환) — 판별적 (discriminating) 테스트.
+        """
+        # wrapper: whitelist 대상 파일 + 비대상 파일 둘 다 존재
+        wf = {
+            "consumer-ok.yml": "name: consumer-ok\non: push\n",
+            "plugin-only.yml": "name: plugin-only\non: push\n",
+        }
+        w = make_tmp_dir_with_files(wf)
+        # consumer: 두 파일 모두 정상 미러됨 (올바른 mirror 상태)
+        c = make_tmp_dir_with_files(wf)
+
+        # whitelist = consumer-ok.yml 만 (reconcile integration path 에서 S2 filter 결과)
+        whitelist_content = "consumer-ok.yml\n"
+        tmp_wl = tempfile.NamedTemporaryFile(
+            mode="w", suffix=".txt", delete=False, encoding="utf-8"
+        )
+        tmp_wl.write(whitelist_content)
+        tmp_wl.close()
+
+        try:
+            r = run_aggregator([
+                "--s1-exit", "0",
+                "--s2-exit", "0",
+                "--wrapper-dir", w,
+                "--consumer-dir", c,
+                "--whitelist", tmp_wl.name,
+            ])
+            data = parse_result(r.stdout)
+            # 정상 mirror 상태에서 whitelist 비대상 파일 때문에 degradation 발생하면 안 됨
+            # §4.13 whitelist_symmetry_invariant: expected ↔ actual 대칭 필터 → extra 0 → SUCCESS
+            assert data.get("result") == "SUCCESS", (
+                f"TC-EC-8: §4.13 whitelist_symmetry_invariant 위반 — "
+                f"정상 mirror 상태에서 false {data.get('result')} 발생 "
+                f"(non-whitelisted .yml 이 actual extra 에 진입 = F-CR-900-3 재발). "
+                f"full output: {data}"
+            )
+            # extra 가 없어야 함 (whitelist 대칭 적용 → plugin-only.yml 양측 모두 제외)
+            warnings = data.get("sanity_warnings", [])
+            for w_msg in warnings:
+                assert "plugin-only.yml" not in w_msg, (
+                    f"TC-EC-8: plugin-only.yml 이 extra 경고에 등장 = whitelist asymmetry 잔존: {warnings}"
+                )
+        finally:
+            Path(tmp_wl.name).unlink(missing_ok=True)
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # TC-EXIT: exit code contract

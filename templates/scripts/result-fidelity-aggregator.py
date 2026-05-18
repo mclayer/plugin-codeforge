@@ -187,15 +187,21 @@ def _expected_path_set(wrapper_dir: str, whitelist: set | None) -> set:
     return expected
 
 
-def _actual_path_set(consumer_dir: str) -> set:
+def _actual_path_set(consumer_dir: str, whitelist: set | None) -> set:
     """
     consumer-side mirrored file set 산출.
+    whitelist 적용: _expected_path_set 과 대칭 — whitelist 지정 시 whitelist에 없는 .yml 파일 제외.
+    §4.13 whitelist_symmetry_invariant: expected ↔ actual 양측 동일 whitelist 필터 적용
+    (비대칭 시 정상 mirror된 비-whitelist .yml 이 extra = actual - expected 에 진입
+    → false WARNING → false SUCCESS_WITH_DEGRADATION 발생 차단)
+
     반환: relative path set (str).
 
     제외 대상 (EC-4 false-positive 차단 — §4.13 post_mirror_sanity_check.impact_report_diff_scope):
       - `.snapshots/` prefix: reconcile transaction artifact (reconcile-overlay.sh _create_snapshot 생성)
         → expected set 에 없으므로 extra 분류 → false SUCCESS_WITH_DEGRADATION 차단
       - `.wrapper-managed-manifest.json` 동형 패턴 (wrapper SSOT 파일이 아닌 reconcile runtime 산출물)
+      - whitelist 미포함 .yml (whitelist 지정 시) — _expected_path_set 와 대칭 적용
     """
     actual = set()
     cd = Path(consumer_dir)
@@ -212,6 +218,15 @@ def _actual_path_set(consumer_dir: str) -> set:
         # .snapshots/ = reconcile-overlay.sh _create_snapshot() 생성 디렉토리
         if rel_str.startswith(".snapshots/"):
             continue
+
+        # whitelist 적용 — §4.13 whitelist_symmetry_invariant
+        # _expected_path_set 와 완전 대칭: whitelist 지정 시 whitelist에 없는 .yml 제외
+        # (정상 mirror된 비-whitelist .yml 이 extra 로 진입하는 false-positive 차단)
+        if whitelist is not None and rel_str.endswith(".yml"):
+            basename = Path(rel_str).name
+            if basename not in whitelist:
+                # whitelist에 없는 plugin-only workflow = skip (expected 와 동일 기준)
+                continue
 
         actual.add(rel_str)
     return actual
@@ -260,7 +275,7 @@ def run_post_mirror_sanity_check(
     syntax_warnings = []
 
     expected = _expected_path_set(wrapper_dir, whitelist)
-    actual = _actual_path_set(consumer_dir)
+    actual = _actual_path_set(consumer_dir, whitelist)
 
     # path set diff
     missing = expected - actual
