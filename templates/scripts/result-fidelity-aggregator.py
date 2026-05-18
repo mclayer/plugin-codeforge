@@ -187,7 +187,11 @@ def _expected_path_set(wrapper_dir: str, whitelist: set | None) -> set:
     return expected
 
 
-def _actual_path_set(consumer_dir: str, whitelist: set | None) -> set:
+def _actual_path_set(
+    consumer_dir: str,
+    whitelist: set | None,
+    expected: set | None = None,
+) -> set:
     """
     consumer-side mirrored file set 산출.
     whitelist 적용: _expected_path_set 과 대칭 — whitelist 지정 시 whitelist에 없는 .yml 파일 제외.
@@ -202,6 +206,17 @@ def _actual_path_set(consumer_dir: str, whitelist: set | None) -> set:
         → expected set 에 없으므로 extra 분류 → false SUCCESS_WITH_DEGRADATION 차단
       - `.wrapper-managed-manifest.json` 동형 패턴 (wrapper SSOT 파일이 아닌 reconcile runtime 산출물)
       - whitelist 미포함 .yml (whitelist 지정 시) — _expected_path_set 와 대칭 적용
+      - `.claude/_overlay/` prefix + wrapper SSOT 미존재 path (CFP-990 Phase 2, EC-4 enumeration (b)):
+        consumer 자기 customization layer (ADR-027 §결정 1 SSOT) — wrapper desired state 와 disjoint.
+        cross-product check: rel_str.startswith(".claude/_overlay/") AND rel_str NOT IN expected
+        → consumer-only customization 분류 → extra 에서 제외 → false SUCCESS_WITH_DEGRADATION 차단.
+        wrapper SSOT 충돌 path (IN expected) = diff check 영역 보존 (EC-OOS-1 별 carrier).
+
+    인자:
+      consumer_dir: consumer overlay 루트 절대 경로
+      whitelist: _expected_path_set 에 전달된 동일 whitelist (whitelist_symmetry_invariant)
+      expected: wrapper SSOT expected path set (EC-4 (b) .claude/_overlay/ cross-product check 용).
+                None 시 .claude/_overlay/ prefix 전체 제외 (보수적 safe direction).
     """
     actual = set()
     cd = Path(consumer_dir)
@@ -218,6 +233,16 @@ def _actual_path_set(consumer_dir: str, whitelist: set | None) -> set:
         # .snapshots/ = reconcile-overlay.sh _create_snapshot() 생성 디렉토리
         if rel_str.startswith(".snapshots/"):
             continue
+
+        # CFP-990 Phase 2: .claude/_overlay/ prefix + wrapper SSOT 미존재 path 제외
+        # EC-4 enumeration (b): consumer 자기 customization layer (ADR-027 §결정 1 정합)
+        # wrapper desired state 와 disjoint 영역 → extra 에서 제외 → false SUCCESS_WITH_DEGRADATION 차단
+        # cross-product:
+        #   .claude/_overlay/ prefix AND NOT IN expected → consumer-only → 제외
+        #   .claude/_overlay/ prefix AND IN expected     → wrapper SSOT 충돌 → diff check 보존 (EC-OOS-1)
+        if rel_str.startswith(".claude/_overlay/"):
+            if expected is None or rel_str not in expected:
+                continue  # consumer-only customization: exclude
 
         # whitelist 적용 — §4.13 whitelist_symmetry_invariant
         # _expected_path_set 와 완전 대칭: whitelist 지정 시 whitelist에 없는 .yml 제외
@@ -275,7 +300,8 @@ def run_post_mirror_sanity_check(
     syntax_warnings = []
 
     expected = _expected_path_set(wrapper_dir, whitelist)
-    actual = _actual_path_set(consumer_dir, whitelist)
+    # CFP-990 Phase 2: expected set 전달 → EC-4 (b) .claude/_overlay/ cross-product check
+    actual = _actual_path_set(consumer_dir, whitelist, expected=expected)
 
     # path set diff
     missing = expected - actual
