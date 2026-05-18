@@ -1610,6 +1610,44 @@ entries:
       sunset_decision_owner: ArchitectPL or 사용자 directive
     status: Active
 
+  # ─── CFP-932 Wave 4 sub-Epic #1 Story-2 (channel 3-tuple drift reactive scheduled detection, 2026-05-18) ───
+  # reconcile-protocol-v1 §4.10 channel_drift_detection.story_1_scope → Story-2 carrier 실현.
+  # ADR-063 Amendment 3 §결정 13 marketplace-drift-detection precedent byte-pattern 답습 (3-tuple = marketplace 2-leg 확장).
+
+  - name: channel-drift-detection
+    description: |-
+      CFP-932 / ADR-063 Amendment 3 §결정 13 + reconcile-protocol-v1 §4.10 — consumer
+      codeforge.channel.tier ↔ install plugin.json .version ↔ registry marketplace.json
+      channels[*].versions[] membership 3-tuple drift reactive scheduled detection.
+      24h cron + workflow_dispatch manual fallback. drift detected 시 Issue auto-create
+      (dedup per signature sha256("<plugin>|channel|<consumer-tier>|<registry-tier>")|head -c 16).
+      marketplace-drift-detection.yml byte-pattern 답습 — E-4 3-branch (401 fail-closed /
+      429 fail-open / 5xx 3-retry) + warning-first (drift 감지해도 exit 0, Issue 통보 channel).
+      (c) registry leg 미populate (Story-4 전) = warning-first graceful (blocking 0,
+      transitional valid — reconcile §4.10 failure_mode_default: warning-first).
+    detect_command: bash scripts/check-channel-drift.sh
+    workflow: templates/github-workflows/channel-drift-detection.yml
+    current_tier: warning   # ADR-060 §결정 5 default — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:channel-drift-detection
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: []
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - channel_drift_issue_zero_count_proof   # 3 month rolling window
+        - cron_run_history_url
+    introduced_by: CFP-932
+    introduced_date: 2026-05-18
+    owner_adr: ADR-063
+    carrier_adr: ADR-060
+    sunset_gate:
+      metric: "channel drift Issue 자동 발의 0건 / 3 month rolling window (단 Story-4 channels[] populate 후 측정 — populate 전 = (c) leg unknown graceful, sunset 측정 미발동)"
+      measured_by: github_actions_run_history + channel_drift_issue_count
+      sunset_decision_owner: ArchitectPL or 사용자 directive
+    status: Active
+
   # ─── CFP-685 Phase 1 sub-PR (b) (templates ↔ self-app byte-identical parity lint, 2026-05-15) ───
   # ADR-065 §결정 1 row 3 mechanical enforcement — wrapper templates/github-workflows/*.yml ↔
   # .github/workflows/*.yml SHA-256 byte-identical parity. CFP-609 retro Finding D carrier.
