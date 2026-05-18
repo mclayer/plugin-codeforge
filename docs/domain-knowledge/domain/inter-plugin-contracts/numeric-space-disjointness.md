@@ -1,5 +1,9 @@
 ---
 title: Numeric-space-sharing channel disjointness — narrative SSOT for ADR-084 D2-3 declaration obligation
+kind: domain_fact
+status: Active
+topic_slug: numeric-space-disjointness
+updated: 2026-05-19
 area: inter-plugin-contracts
 topic: numeric-space-disjointness
 type: domain-knowledge
@@ -16,9 +20,21 @@ introduced_by: CFP-989
 
 # Numeric-space-sharing channel disjointness
 
+## 정의
+
 ADR-084 의 D2-3 declaration obligation 의 3rd location narrative SSOT. inter-plugin contract 안 두 (이상) channel 이 동일 numeric domain (integer / enum / ordinal) 을 encoding 으로 share 할 때, **encoding overlap 은 사실, semantic overlap 은 금지** 의 원리 + sample fixture + 위반 시 failure mode + audit checklist 를 narrative 로 풀어 쓴 entry.
 
-## 핵심 원리 (3-tier 통찰)
+**numeric-space-sharing channel**: 두 channel (이상) 이 동일 numeric domain (예: integer range 0-3 vs 0-2) 을 encoding 으로 share 하는 두 channel. encoding overlap = 사실 (value 동등 가능), semantic overlap = 금지 (값 동등 ≠ 의미 동등).
+
+## 컨텍스트
+
+P-3 패턴 (Epic CFP-858 retro §6.3 emission): spec 자체는 sound 했으나 disjointness invariant 가 implicit 으로 남겨진 영역 → defensible-misread (reviewer / implementer 가 합리적 추론으로 implicit identity 가정) → post-merge defect (CFP-986 reconcile-overlay.sh:490-491 silent false `result: FAILED` 발생).
+
+CFP-986 §4.12 + §4.13 b6d7eb5 spec clarification = first applied case. ADR-084 = first applied case 의 일반화 codification.
+
+ADR-082 §결정 1 disjoint 4-layer 표 governance pattern (ADR-073 / ADR-070 / ADR-082 / ADR-045 §D) 의 inter-plugin contract level 동형 layer 확장 영역.
+
+## 핵심 규칙
 
 ### Tier 1 — encoding overlap fact ≠ semantic overlap forbidden
 
@@ -34,11 +50,24 @@ channel A → channel B propagate 시 boundary 자체가 contract surface. bound
 
 ### Tier 3 — implicit clause = under-specified-contract → defensible-misread → post-merge defect
 
-P-3 패턴 (Epic CFP-858 retro emission): spec 자체는 sound 했으나 disjointness invariant 가 implicit 으로 남겨진 영역 → defensible-misread (reviewer / implementer 가 합리적 추론으로 implicit identity 가정) → post-merge defect (CFP-986 reconcile-overlay.sh:490-491 silent false `result: FAILED` 발생).
-
 implicit clause = **무한 defensible-misread surface**. 1 reviewer 가 catch 해도 다음 reviewer / maintainer / implementer / Codex worker 가 동일 misread 재현 가능. explicit codify 만이 defensible-misread surface 차단.
 
-## Sample fixture (CFP-986 first applied case)
+## 경계
+
+### EC-1: Single contract 내 numeric-space 분리 + cross-propagation path 부재
+
+단일 contract 내 numeric-space 분리 + cross-propagation path 부재 시 ADR-084 의무 미발효:
+
+- 예: `label-registry-v2.md` 안 `severity: {0,1,2}` enum + `tier: {0,1,2}` enum — 둘 다 0-2 range 이나 cross-channel propagation path 부재 (label registry 자체가 source-of-truth, propagation target 채널 없음).
+- 예: 동일 yaml schema 안 두 enum field 가 의미 자명 disjoint + cross-propagation path 부재 (예: `priority: {0,1,2,3}` + `phase: {0,1,2}` 동일 doc 안).
+
+이 영역은 lint false positive 영역 — DesignReviewPL 인지 의존 (ADR-084 D4 behavioral directive 만 적용, lint 자동 grep 불가).
+
+### EC-2: ADR-082 disjoint 4-layer 표 axis disjoint
+
+본 narrative SSOT scope = inter-plugin contract level codify boundary axis. ADR-082 §결정 1 4-layer 표 (ADR-073 / ADR-070 / ADR-082 / ADR-045 §D) write-time semantic truth layer 와 disjoint axis. ADR-068 boundary completeness invariants (ArchitectAgent §3/§7 self-check axis) 와 scope disjoint.
+
+## 핵심 적용 사례 (CFP-986 first applied case)
 
 ### Setup
 
@@ -106,20 +135,11 @@ inter-plugin contract 신설 / 갱신 (kind:contract / kind:registry 모두) tou
   - D2-3: `docs/domain-knowledge/domain/inter-plugin-contracts/<topic>.md` narrative SSOT entry 존재
 - [ ] **미충족 시 P1 finding emit**: `finding.type: "numeric-space-disjointness-implicit"` + `finding.evidence: <field-A>+<field-B>+<numeric-range>+<propagation-path>` + suggested FIX = D2-1/2/3 3-곳 declare 추가
 
-## False positive 영역 (EC-1)
-
-단일 contract 내 numeric-space 분리 + cross-propagation path 부재 시 ADR-084 의무 미발효 (EC-1):
-
-- 예: `label-registry-v2.md` 안 `severity: {0,1,2}` enum + `tier: {0,1,2}` enum — 둘 다 0-2 range 이나 cross-channel propagation path 부재 (label registry 자체가 source-of-truth, propagation target 채널 없음).
-- 예: 동일 yaml schema 안 두 enum field 가 의미 자명 disjoint + cross-propagation path 부재 (e.g., `priority: {0,1,2,3}` + `phase: {0,1,2}` 동일 doc 안).
-
-이 영역은 lint false positive 영역 — DesignReviewPL 인지 의존 (D4 behavioral directive 만 적용, lint 자동 grep 불가).
-
 ## Sentinel pattern_count counter
 
 현재 pattern_count = **1** (CFP-986 b6d7eb5 single sample).
 
-**Sentinel reach 조건** (ADR-084 D6.3): pattern_count ≥ 2 recurrence (CFP-986 외 추가 instance 1+ 발생) → follow-up CFP MUST promote to mechanical lint.
+**Sentinel reach 조건** (ADR-084 D5 sentinel clause): pattern_count ≥ 2 recurrence (CFP-986 외 추가 instance 1+ 발생) → follow-up CFP MUST promote to mechanical lint.
 
 **후속 candidate site (Researcher §6 enumerate)** [hypothesis — sentinel reach 시 carrier 검증 영역]:
 1. ADR-052 touchpoint(1-6) ↔ severity(0-2) ↔ ADR-067 max-FIX(0-3) 3-way cohabitation
@@ -137,10 +157,20 @@ implicit identity propagation 시 다음 failure mode 발현:
 3. **Cumulative misread cascade**: 1 maintainer catch 해도 다음 maintainer 가 동일 misread 재현 — implicit clause = defensible-misread surface 무한 재발
 4. **Post-merge unit test silently green**: unit-level test 가 single-aggregator bypass 영역 (TC-RF-3 evidence, CFP-986 root cause) → reconcile-integration path actual exec 만 catch
 
+## 관련 ADR
+
+- [ADR-084](../../../adr/ADR-084-numeric-space-sharing-channel-disjointness.md) — 본 narrative SSOT 의 carrier ADR (3-곳 declare 의무 3rd location)
+- [ADR-076](../../../adr/ADR-076-declarative-reconciliation-upgrade.md) — reconcile-protocol-v1 declarative reconciliation host
+- [ADR-082](../../../adr/ADR-082-write-time-self-write-verification-mandate.md) — disjoint 4-layer 표 governance pattern source
+- [ADR-068](../../../adr/ADR-068-boundary-completeness-invariants.md) — boundary completeness invariants (scope disjoint — ArchitectAgent self-check axis ↔ inter-plugin contract codify axis)
+
+## 변경 이력
+
+| 일자 (KST) | CFP | 변경 내용 |
+|---|---|---|
+| 2026-05-19 | CFP-989 | 최초 작성 — ADR-084 D2-3 3rd location narrative SSOT 신설 (numeric-space-sharing channel disjointness invariant codification). CFP-986 b6d7eb5 first applied case retroactive narrative + Audit checklist (D4 behavioral directive) + Sentinel pattern_count counter + 위반 시 failure mode (4 axes). |
+
 ## 관련 파일
 
-- [ADR-084](../../adr/ADR-084-numeric-space-sharing-channel-disjointness.md) — 본 narrative SSOT 의 carrier ADR (3-곳 declare 의무 3rd location)
-- [ADR-076](../../adr/ADR-076-declarative-reconciliation-upgrade.md) — reconcile-protocol-v1 declarative reconciliation host
-- [ADR-082](../../adr/ADR-082-write-time-self-write-verification-mandate.md) — disjoint 4-layer 표 governance pattern source
 - `docs/inter-plugin-contracts/reconcile-protocol-v1.md` — CFP-986 §4.12/§4.13 first applied case (b6d7eb5)
 - [EPIC-RESULTS-CFP-858](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/retros/EPIC-RESULTS-CFP-858.md) — §6.3 P-3 systemic cluster (본 ADR-084 E-3 emission origin)
