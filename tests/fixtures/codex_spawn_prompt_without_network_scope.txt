@@ -1,0 +1,17 @@
+## Codex Worker Spawn Prompt — CFP-963 fixture WITHOUT network_scope field
+# CX-963-3 P2 boundary mandate — lint WARN expected (field absent)
+
+**Story path**: mclayer/codeforge-internal-docs/wrapper/stories/CFP-963.md
+**Lane**: 구현 / phase: 구현
+
+**sandbox boundary**: local Phase 2 worktrees only
+
+## Task
+
+Perform analysis of the following files within the worktree:
+- scripts/check-codex-network-scope.sh
+- scripts/lib/check_codex_network_scope.py
+
+Return findings in the standard review-verdict-v4 format.
+
+NOTE: This fixture intentionally omits network_scope field to test lint detection.
