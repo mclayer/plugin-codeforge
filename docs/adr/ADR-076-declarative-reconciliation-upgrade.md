@@ -26,12 +26,23 @@ amendment_log:
       ratchet 강화 only (ADR-058 §결정 5 + ADR-064 §self-application 정합) — 약화 0건. `mechanical_enforcement_actions: []` declaration-only retain (ADR-082 §결정 6 + ADR-070 §D5 패턴 답습 — Phase 2 PR 시점 `templates/scripts/mirror-dependency-closure.py` self-test 가 mechanical detection 책임).
       `is_transitional: false` 무변경. sunset_justification N/A (permanent governance invariant).
       mctrader-data#81 14 failing checks evidence (Epic CFP-858 §1 motivation verbatim) — wholesale_mirror 시 silent partial bundle 의 real harm 사례.
+  - amendment: 3
+    date: 2026-05-18
+    carrier_story: CFP-900  # Wave 4 sub-Epic CFP-858 S3 (Epic CFP-858 마지막 Story — honest result reporting layer)
+    description: |
+      §결정 3 transaction 본문 Amendment 3 sub-section 추가 — `사후 sanity check` (line 177-178 verbatim "snapshot 생성 → apply → 사후 sanity check 까지 단일 unit", "사후 sanity check 실패 시 자동 rollback") 위 **result fidelity sub-clause** stacked. upgrade-event 로그 `result: SUCCESS` 거짓 기록 차단 = result enum 4-value closed-set (SUCCESS / SUCCESS_WITH_DEGRADATION / PARTIAL_FAILURE / FAILED) + exit code → result enum deterministic mapping (S1 §4.11 fail-closed → result ≠ SUCCESS 강제 / S2 §4.12 abort → result ≠ SUCCESS 강제 / degraded → SUCCESS_WITH_DEGRADATION). 의미 invariant `marker_block_absent_behavior: wholesale_mirror_with_user_visible_loss_report` 무변경 — honest reporting scope 확장 sub-clause append (旧 dependency missing fail-closed report (Amendment 2) → 신 + result enum 정직 반영 + post-mirror sanity check honest verify). reconcile-protocol-v1 v1.9 → v1.10 MINOR bump (§4.3 (k) trigger + §4.13 `result_fidelity_binding` block) 동반.
+      Architect lane derived default (ADR-064 §결정 3 룰 1 정합): AM-1 = phase-gate content sanity warning tier (fast-pass 정책 약화 = ADR-064 ratchet 위배 회피) / AM-2 = ImpactReport file path set diff (syntax, semantic depth = future CFP) / AM-3 = sanity check syntax-level 1차 신호 (CFP-898 AM-1 stdlib only 패턴 답습) / AM-4 = Phase 1 schema/binding declare only (실 rollback runtime = Phase 2 carrier, ADR-076 §결정 3 line 178 자동 rollback runtime over-commit 회피).
+      ratchet 강화 only (ADR-058 §결정 5 + ADR-064 §self-application 정합) — 약화 0건. `mechanical_enforcement_actions: []` declaration-only retain (ADR-082 §결정 6 + ADR-070 §D5 패턴 답습 — Phase 2 PR 시점 reconcile-overlay.sh result enum 집계 + post-mirror sanity check self-test 가 mechanical detection 책임).
+      `is_transitional: false` 무변경. sunset_justification N/A (permanent governance invariant).
+      신규 ADR 미신설 — S3 = ADR-026 Amendment 5 + ADR-076 Amendment 3 ratchet 강화로 충분 (S1 ADR-076 Amendment 2 / S2 ADR-083 신규 와 비대칭, Architect lane minimal-change 결정 — ADR-RESERVATION max row 83 CFP-899 점유, row 84 reserve 불요).
+      mctrader-data#81 14 failing checks class 재발 차단 (post-mirror verify) + Epic CFP-858 §1 motivation verbatim ('upgrade-event 로그 result: SUCCESS ... 가 결함을 가린다'). Epic CFP-858 마지막 Story — S1 (CFP-898 vertical) + S2 (CFP-899 horizontal) 위 honest result reporting layer (mirror-후 temporal-post, 3-layer composite 완결).
 related_stories:
   - CFP-701  # 본 Story carrier — Wave 1 Story-1 (A1+B1 scope)
   - CFP-702  # Wave 1 Story-2 (D4 customization marker — sequential prerequisite for Wave 2)
   - CFP-743  # Wave 2 Story-3 (UpgradeAgent + CLI runtime carrier) — KEY 정정 CFP-703→CFP-743 (CFP-743, Wave 1 작성 시점 placeholder drift / 동일 Story / fact 영향 0)
   - CFP-906  # Amendment 1 carrier — Wave 4 sub-Epic #1 Story-1 (channel schema SSOT 3-tier taxonomy declare layer, Epic CFP-882)
   - CFP-898  # Amendment 2 carrier — Wave 4 sub-Epic CFP-858 base layer (S1) (§결정 2 11번째 row + §결정 6 fail-closed clause + reconcile-protocol-v1 v1.7 §4.3 (i) trigger 동반)
+  - CFP-900  # Amendment 3 carrier — Wave 4 sub-Epic CFP-858 S3 (Epic 마지막 Story) (§결정 3 transaction 사후 sanity check 위 result fidelity sub-clause + reconcile-protocol-v1 v1.10 §4.3 (k) trigger + §4.13 result_fidelity_binding block 동반 / ADR-026 Amendment 5 §결정 7 sibling)
 related_adrs:
   - ADR-027  # Consumer adoption protocol (boundary disjoint — detection layer)
   - ADR-053  # 구조적 변경 재구동 + consumer 배포 (transaction completion prerequisite)
@@ -187,6 +198,26 @@ wrapper plugin (codeforge) self 영역의 desired state 단위 enumeration (Stor
 
   **본 ADR-076 interpretation note** (verbatim ≠ interpretation 분리): "consumer 배포 완료" 의 mechanical 충족 = (a) marketplace sync PR open · merge 완료 (ADR-016 mirrored field 4종 atomic — ADR-063 §결정 5) AND (b) consumer install 완료 (`/plugins install codeforge@mclayer` verbatim 명령 또는 동등 effect UI / script — 예: VSCode `Claude Code: Install Plugin` UI / npm `install` script 등) AND (c) `bash scripts/check-codeforge-version-drift.sh` PASS (no drift). 본 3 조건 AND 충족 = transaction 의 atomic unit 완결.
 - **Invariant**: 사용자 결정 분기 0. `--apply` 단일 명령으로 snapshot + apply + sanity 모두 자동 진행.
+
+#### Amendment 3 — Result fidelity sub-clause (CFP-900 Wave 4 sub-Epic CFP-858 S3 carrier — Epic 마지막 Story)
+
+**의미 invariant 무변경** (§결정 3 transaction 의 "snapshot 생성 → apply → 사후 sanity check 까지 단일 unit" / "사후 sanity check 실패 시 자동 rollback" line 177-178 verbatim 그대로). **ratchet 강화 방향** sub-clause 1개 추가 — transaction `사후 sanity check` 위 **result fidelity layer** stacked (mirror-후 honest reporting, S1 Amendment 2 dependency integrity + S2 ADR-083 consumer-applicability filter 위 3-layer composite 완결):
+
+> transaction 의 `사후 sanity check` stage 는 upgrade-event log artifact (`docs/upgrade-events/<date>-<version>.md` — §결정 3 snapshot layer event log mirror) 의 `result:` field 를 **정직 반영** 해야 한다. result enum = 4-value closed-set (`SUCCESS` / `SUCCESS_WITH_DEGRADATION` / `PARTIAL_FAILURE` / `FAILED`). exit code → result enum **deterministic mapping** 의무: **S1 dependency missing fail-closed** (Amendment 2 §결정 6 sub-clause / reconcile-protocol-v1 §4.11 `fail_closed_behavior.on_dependency_missing: exit_1`) 발생 → result ≠ `SUCCESS` 강제 (`FAILED` 또는 atomic skip 시 `PARTIAL_FAILURE`, 부분 mirror 산출물 commit forbidden invariant 정합) / **S2 consumer-applicability filter abort** (ADR-083 / reconcile-protocol-v1 §4.12 `exit_code_contract: 1 = filter abort unknown repo_kind`) 발생 → result ≠ `SUCCESS` 강제 (`FAILED`) / **degraded but proceeded** (S1·S2 exit 2 warning tier + cp 진행) → result = `SUCCESS_WITH_DEGRADATION`. **silent false `SUCCESS` 차단 invariant**: result field 미기록 / `SUCCESS` hardcode = forbidden — upgrade-event 로그 `result: SUCCESS` 거짓 기록이 S1 fail-closed / S2 abort / degraded 결함을 가리는 super-class 차단 (Epic CFP-858 §1 motivation verbatim — 'upgrade-event 로그 `result: SUCCESS` ... 가 결함을 가린다'). 추가로 `사후 sanity check` stage 는 wrapper SSOT (S2 whitelist filter 적용 expected set) vs consumer actual mirrored file set ImpactReport diff 1차 verify (filesystem-only, syntax-level 1차 신호 — file 존재성 + path set diff + workflow yml `bash -n`/yaml parse OK, marker block 안 customization preserve 영역 제외, mctrader-data#81 14 failing checks class 재발 차단).
+
+**rationale (Amendment 3)**: 의미 invariant 자체는 무변경 (§결정 3 transaction "사후 sanity check" / "자동 rollback" 두 표현 그대로) — 단 sanity check stage 안 result reporting scope 가 silent `SUCCESS` → exit code deterministic mapping 방향으로 강화 + post-mirror ImpactReport diff honest verify 추가. honest reporting scope 확장: Amendment 2 (dependency missing fail-closed report) → Amendment 3 (+ result enum 정직 반영 + post-mirror sanity check honest verify). ratchet weakening 0건 (ADR-064 §self-application 정합 + ADR-058 §결정 5 sunset_justification 의무 회피 — 강화 방향만). 의미 invariant `marker_block_absent_behavior: wholesale_mirror_with_user_visible_loss_report` (§결정 6) 무변경 — user_visible_loss_report scope 가 result fidelity 영역으로 확장 (旧 consumer customization overwrite + dependency missing fail-closed → 신 + result enum 정직 반영 + post-mirror diff honest verify).
+
+**mechanical carrier**: reconcile-protocol-v1 v1.10 §4.13 `result_fidelity_binding` block (`result_enum_schema` 4-value + `degradation_propagation` exit code → enum mapping + `post_mirror_sanity_check` filesystem-only + `upgrade_event_honest_record` false SUCCESS 차단 field). 본 ADR §결정 3 Amendment 3 = semantic declare / contract §4.13 = mechanical declare 분리 (CFP-743/744/745/820/821/898/899 §결정 본문 vs §4.5/§4.6/§4.7/§4.8/§4.9/§4.11/§4.12 binding block 분리 패턴 답습). ADR-026 Amendment 5 §결정 7 (`.github/` fast-pass content sanity 1차 신호 orthogonal warning layer) = sibling carrier (fast-pass gate-time signal, 본 §결정 3 result fidelity = mirror-time 집계 — layer 분리).
+
+**Architect lane derived default (ADR-064 §결정 3 룰 1 정합)**:
+- AM-1 `fast_pass_content_sanity_severity` = `warning_tier` (fast-pass 정책 약화 = ADR-064 ratchet 위배 회피 — fast-pass OR-gate 무변경 orthogonal warning layer 1단 추가, blocking 승격 = evidence-checks-registry tier gate 충족 후 future CFP)
+- AM-2 `impact_report_diff_scope` = `file_path_set_diff` (syntax — content hash diff semantic depth = future CFP separate, CFP scope unitary ADR-064 §결정 1.3)
+- AM-3 `sanity_check_depth` = `syntax_level_v1` (file 존재성 + path set diff + yaml parse OK — CFP-898 §4.11 AM-1 stdlib only 패턴 답습, parser dependency 0)
+- AM-4 `sanity_check_failure_behavior` = Phase 1 schema/binding declare only (실 rollback runtime = Phase 2 carrier — ADR-076 §결정 3 line 178 "자동 rollback" runtime over-commit 회피, CFP-898 §4.11 schema_declared_phase1 패턴 답습)
+
+**no new ADR (Architect lane minimal-change 결정)**: S3 = ADR-026 Amendment 5 §결정 7 + 본 ADR-076 Amendment 3 §결정 3 sub-clause ratchet 강화로 충분 — S1 (ADR-076 Amendment 2) / S2 (ADR-083 신규) 와 비대칭 (S3 honest reporting layer 가 기존 ADR-026/ADR-076 §결정 영역 ratchet 강화로 자연 cover). ADR-RESERVATION max row = 83 (CFP-899 점유, [verified]) → row 84 reserve 불요.
+
+**evidence**: mctrader-data#81 14 failing checks (Epic CFP-858 §1 motivation verbatim) — wholesale_mirror 시 silent partial bundle + silent `SUCCESS` 거짓 기록 의 real harm 사례. consumer 가 upgrade-event `result: SUCCESS` + phase-gate fast-pass PASS 만 보고 머지 → 전체 CI 마비 P0급 피해.
 
 ### 결정 4 — Snapshot ↔ ADR-067 RESET disjoint layer invariant (AC-4 carrier)
 
@@ -454,3 +485,6 @@ ADR-067 §결정 4 sequential ordering 정합 (Story 간 cross-pollinate 차단)
 - `<internal-docs>/wrapper/change-plans/cfp-701-reconciliation-contract.md` — Phase 1 PR change plan (Wave 1)
 - `<internal-docs>/wrapper/stories/CFP-898.md` — Amendment 2 carrier Story (Wave 4 sub-Epic CFP-858 S1)
 - `<internal-docs>/wrapper/change-plans/cfp-898-dependency-bundle-integrity.md` — Amendment 2 Phase 1 PR change plan
+- `<internal-docs>/wrapper/stories/CFP-900.md` — Amendment 3 carrier Story (Wave 4 sub-Epic CFP-858 S3 — Epic 마지막 Story)
+- `<internal-docs>/wrapper/change-plans/cfp-900-result-fidelity.md` — Amendment 3 Phase 1 PR change plan
+- `docs/adr/ADR-026-post-merge-automation.md` — Amendment 3 sibling carrier (Amendment 5 §결정 7 `.github/` fast-pass content sanity 1차 신호 orthogonal warning layer)
