@@ -1,15 +1,16 @@
 ---
 kind: registry
 registry: evidence-check
-version: "1.2"
+version: "1.3"
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/evidence-check-registry-v1.md
-date: 2026-05-13
+date: 2026-05-19
 status: Active
 authors:
   - CFP-389 (Initial v1.0 — evidence-enforceable promotion framework SSOT, ADR-060 carrier)
   - CFP-455 (MINOR bump v1.0 → v1.1 — current_tier required 전환 + 4-tier enum 본문 강조, ADR-060 Amendment 2 carrier)
   - CFP-509 (MINOR bump v1.1 → v1.2 — recurrence field 정식 도입 + ADR-060 promotion gate auto-firing, ADR-060 Amendment 6 carrier)
+  - CFP-963 (MINOR bump v1.2 → v1.3 — neighbor `network_scope_actual` optional schema field 신설 §14 Lane Evidence row 13번째 optional field carrier, ADR-081 Amendment 4 §결정 D1.D 본문 확장의 mechanical enforcement layer + ADR-060 Amendment 14 §결정 28 신설 동반 carrier, Codex TP#4 CX-963-4 P3 finding integration)
 related_adrs:
   - ADR-008  # Inter-plugin Contract Versioning (kind:registry SemVer 정합)
   - ADR-010  # Inter-plugin Contract Sibling Sync (kind:registry scope 외 명시)
@@ -72,6 +73,21 @@ codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-0
 | `recurrence.threshold` | int | optional (default `3`) | promotion gate auto-firing threshold. recurrence.count ≥ threshold 시 warning → blocking-on-pr 승격 자동 발화 신호 (별도 carrier 가 actual blocking 부여). |
 | `recurrence.promotion_trigger` | enum | optional (default `none`) | recurrence-based promotion 행동 enum. enum = `none` / `advisory` (PR comment 만) / `auto_blocking` (별도 carrier 강제). 기본 `none`. |
 
+### 3.1 §14 Lane Evidence row 의 optional field (v1.3, CFP-963 — ADR-081 Amendment 4 + ADR-060 Amendment 14 carrier)
+
+**`network_scope_actual`** (Codex worker dispatch lane evidence 영역 신규 optional field — Lane Evidence row 13번째 field) — v1.3 MINOR bump 신규 codify (CFP-963 / ADR-060 Amendment 14 §결정 28 + ADR-081 Amendment 4 §결정 D1.D 본문 확장 carrier, Codex TP#4 CX-963-4 P3 finding integration).
+
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `lane_evidence[].network_scope_actual` | enum | optional (Codex dispatch lane only — omit-on-N/A pattern) | Codex worker dispatch 시점에 실제 적용된 network scope. 4-tier enum value SSOT (ADR-081 Amendment 4 §결정 D1.D 정합): `offline` / `repo-fetch-only` / `web-fetch` / `offline_substitution_declared`. spawn-prompt 안 `network_scope` declare value 와 실제 invocation 의 actual scope 간 mismatch 추적 영역 (graceful degradation step (c) 의 §14 evidence trace SSOT). 본 field present 시 4-tier enum 안 정확 1 value 보유 의무 — `codex-network-scope-presence` lint 가 membership check 만 (semantic adequacy 검증 불가). Codex dispatch 아닌 lane row = omit (backward-compat default — ADR-031 §14 기존 12 field schema 영향 0). |
+
+**backward-compat**: 본 field 는 optional + omit-on-N/A pattern — ADR-031 §14 기존 12 field schema 영향 0 (1.1↔1.2↔1.3 backward-compat 보존). 기존 entry / 기존 §14 lane_evidence row 는 본 field 없이 정상 통과 (warning tier first, ADR-060 §결정 5 정합).
+
+**field semantic**:
+- 4-tier enum value 의미 = ADR-081 Amendment 4 §결정 D1.D 본문 SSOT (offline = file-IO-only / repo-fetch-only = own-repo + git fetch / web-fetch = cross-repo egress 허용 / offline_substitution_declared = codex CLI 미가용 substitution path activate)
+- spawn-prompt 의 `network_scope` declare 와 실제 invocation 의 actual scope mismatch 감지 시 record (예: spawn declare = `web-fetch` but actual = `repo-fetch-only` 영역 fallback — Story §10 marker `[codex-substitution-scope-declared: <scope-enum>]` 와 cross-validate)
+- `codex-network-scope-presence` lint (ADR-060 Amendment 14 §결정 28 / CFP-963 Phase 2 carrier) 가 §14 row 안 본 field 의 4-tier enum 정합 (membership check) 검증
+
 ## 4. 변경 규칙 (SemVer, ADR-008 정합 + 4-tier enforcement enum 정식 도입)
 
 **4-tier enum SSOT (v1.1, CFP-455 / ADR-060 Amendment 2 — required 전환 완료)**: 모든 registry yaml entry 는 다음 4 enum 중 정확히 하나의 `current_tier` 보유 의무 (대소문자 / 공백 정확 일치). 위반 시 `scripts/check-evidence-registry.sh` exit 1 (validation FAIL) + warning mode 단계 PR comment 경고 + blocking mode 승격 시 PR block.
@@ -86,6 +102,8 @@ codeforge wrapper repo 의 **evidence-enforceable governance check** SSOT. ADR-0
 **v1.0 → v1.1 MINOR bump (CFP-455, 2026-05-12)**: `current_tier` 필드 optional → **required** 전환 + 기존 22 entry retroactive 분류 검증 (모두 현행 `current_tier` 보유 verified — mechanical regression 0건). schema 정합 mechanical 강제 = `scripts/check-evidence-registry.sh` (Phase 2 PR scope) + `templates/github-workflows/evidence-registry-check.yml` (Phase 2 PR scope, warning mode 첫 도입).
 
 **v1.1 → v1.2 MINOR bump (CFP-509, 2026-05-13)**: `recurrence:` field 정식 도입 (optional object — count / last_occurrence / threshold / promotion_trigger). machine-usable recurrence metric framework 제공 — CFP-490 description-only `recurrence_count` (lane-evidence-trail entry) 의 schema 흡수 + ADR-060 §결정 새 추가 (recurrence.count ≥ recurrence.threshold 시 promotion gate auto-firing advisory). 22 entry retroactive 분류 검증 (기존 entry 는 recurrence 미정의 = backward-compat default).
+
+**v1.2 → v1.3 MINOR bump (CFP-963, 2026-05-19)**: `lane_evidence[].network_scope_actual` optional field 정식 도입 (§14 Lane Evidence row 13번째 optional field — 4-tier enum value SSOT `offline` / `repo-fetch-only` / `web-fetch` / `offline_substitution_declared`, ADR-081 Amendment 4 §결정 D1.D 본문 확장 정합). ADR-060 Amendment 14 §결정 28 carrier — 12번째 warning-tier evidence-checks-registry entry `codex-network-scope-presence` 가 §14 row 안 본 field membership check 검증. Codex TP#4 CX-963-4 P3 finding integration. 기존 entry / 기존 §14 row 는 본 field 없이 정상 통과 (optional + omit-on-N/A pattern, backward-compat). **MANIFEST drift catch-up 동반**: `docs/inter-plugin-contracts/MANIFEST.yaml` registries 블록 `evidence-check-registry-v1.md` row 의 `version: "1.1"` (CFP-509 v1.1→v1.2 sibling MANIFEST sync miss 영역의 silent stale — INV-1 parity drift) → `"1.3"` atomic catch-up (CFP-509 v1.1→v1.2 sibling sync 영역 + CFP-963 v1.2→v1.3 신규 MINOR 양 layer 단일 PR row write, INV-1 parity ratchet). 본 catch-up annotation = MANIFEST row inline comment SSOT.
 
 ## 5. Bypass channel 운영 (ADR-024 Amendment 3 + ADR-060 §결정 7-8)
 
@@ -143,6 +161,7 @@ warning → blocking-on-pr / blocking-on-merge 승격 = 3 condition AND:
 
 - **v1.1 (CFP-455, 2026-05-12 — Accepted)**: `current_tier` optional → required 전환 + tier enum 정식 분류 (기존 22 entry retroactive 분류 검증 — 모두 보유 verified, mechanical regression 0건). MINOR bump. ADR-060 Amendment 2 carrier. CFP-391 (Issue #396) / CFP-412 (Issue #412) 의 closed without delivery 후 재재예약 carrier.
 - **v1.2 (CFP-509, 2026-05-13 — Accepted)**: `recurrence:` field 정식 도입 (optional object). MINOR bump (신규 optional field). ADR-060 Amendment 6 carrier. CFP-490 description-only `recurrence_count` (lane-evidence-trail entry, CFP-500 FIX-5 + CFP-451 transient 2회) 의 schema 흡수.
+- **v1.3 (CFP-963, 2026-05-19 — Accepted)**: `lane_evidence[].network_scope_actual` optional field 정식 도입 (§14 Lane Evidence row 13번째 optional field — 4-tier enum value SSOT). MINOR bump (신규 optional field + omit-on-N/A pattern backward-compat). ADR-060 Amendment 14 + ADR-081 Amendment 4 carrier. Codex worker dispatch lane evidence 영역 — `codex-network-scope-presence` lint (12번째 warning-tier entry, ADR-060 Amendment 14 §결정 28) 가 §14 row 안 본 field membership check 검증. **MANIFEST drift catch-up 동반** (`docs/inter-plugin-contracts/MANIFEST.yaml` row "1.1" → "1.3" — CFP-509 v1.1→v1.2 sibling MANIFEST sync miss INV-1 parity 영역 + CFP-963 v1.2→v1.3 신규 MINOR 양 layer atomic).
 
 ### 예상 변경 (forward-looking)
 

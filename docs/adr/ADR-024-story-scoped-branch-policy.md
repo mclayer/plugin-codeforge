@@ -5,8 +5,8 @@ status: Accepted
 category: governance
 date: 2026-05-03
 is_transitional: false
-amended_by: CFP-845
-amended_date: 2026-05-17
+amended_by: CFP-963
+amended_date: 2026-05-19
 amendments:
   - by: "CFP-134"
     date: "2026-05-08"
@@ -44,6 +44,10 @@ amendments:
     date: "2026-05-17"
     scope: "Amendment 8 — bypass-as-norm-mutation 후속 escalation 3 sub-decision 통합 (CFP-825 Amendment 6 §scope_boundary 의 4 out-of-scope 후속 carrier 영역 중 3 즉시 통합, 4번째 `blocking-on-merge tier 격상` = Story-2 #861 RESERVED 별 carrier evidence-gated 분리). §결정 6.A.3 (신설) per-plugin 전체 누적 카운터 ratchet — 단일 plugin 의 모든 hotfix-bypass:* family entry 누적 ≥5 reach-merged PR (signature = plugin-only, dedup_unit = PR number, window = all-time) 시 carrier Issue 자동 발의. §결정 6.A.4 (신설) `[bypass-justification]` PR comment marker mechanical enforce — hotfix-bypass:* label 부착 PR 의 marker presence grep-only lint (semantic adequacy 불가 = false-positive risk 명시, reviewer responsibility). §결정 6.A.5 (신설) cross-repo bypass counter extension — wrapper (plugin-codeforge) 단일 → internal-docs / marketplace sibling repo 3-repo 동시 cover, signature = (repo, plugin, label) 3-tuple, 단일 PAT (CODEFORGE_CROSS_REPO_PAT) reuse. §결정 6.A (확장) `hotfix-bypass:per-plugin-cumulative-counter` 37번째 + `hotfix-bypass:bypass-justification-marker` 38번째 + `hotfix-bypass:cross-repo-bypass-counter` 39번째 family member."
     sunset_justification: "N/A — is_transitional: false (permanent governance policy). 3 신규 sub-decision = bypass-as-norm mutation 누적 monitoring 의 ratchet-up 강화 방향 (per-entry → per-plugin / narrative audit / cross-repo 확장). ADR-058 §결정 5 정합. 3 신규 family member = §결정 6.A per-entry namespace 의무의 영구 확장."
+  - by: "CFP-963"
+    date: "2026-05-19"
+    scope: "Amendment 9 — §결정 6.A per-entry namespace 의 44번째 신규 `hotfix-bypass:codex-sandbox-substitution` family member 추가 (ADR-060 Amendment 14 §결정 28 carrier — 12번째 warning-tier evidence-checks-registry entry `codex-network-scope-presence` bypass channel + ADR-081 Amendment 4 §결정 D1.D 본문 확장 mechanical enforcement layer). historical-with-template-count convention citation (Codex TP#2 F-CX-963-A P2 calibration verdict 정합) — `^  - name: hotfix-bypass:` direct grep count = 42 active concrete entry + CFP-825 Amendment 6 §결정 6.A.2 `hotfix-bypass:exempt:<entry>` 32번째 template (rare 정당 declare 채널, template-not-concretely-instantiated 영역 — historical Nth count 1 포함) + 직전 family member `hotfix-bypass:architecture-drift` 43번째 (CFP-923 self-describe L1011 정합) → 신규 = 44번째 historical Nth count convention. label-registry-v2 v2.34 → v2.35 MINOR bump 동반 (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 3 row append). prior art `hotfix-bypass:adr-sunset` (CFP-389) + `hotfix-bypass:worktree-*` 4 (CFP-426) + `hotfix-bypass:auto-phase-label` (CFP-481) + `hotfix-bypass:claude-md-line-cap` (CFP-506) + `hotfix-bypass:sibling-pr-author-check` (CFP-521) + `hotfix-bypass:workflow-permissions` (CFP-530) + `hotfix-bypass:workflow-yaml-parse` (CFP-583) + `hotfix-bypass:debate-convergence-quality` (CFP-582) + `hotfix-bypass:wording-dictionary` (CFP-610) + `hotfix-bypass:retro-mandatory-deployed` (CFP-619) + `hotfix-bypass:retro-alert-pickup` (CFP-628) + `hotfix-bypass:marketplace-description-verbatim` (CFP-631) + `hotfix-bypass:stop-time-continuous-confirm` (CFP-638) + `hotfix-bypass:marketplace-drift-detection` (CFP-627) + `hotfix-bypass:workflow-version-drift` (CFP-660) + `hotfix-bypass:bootstrap-labels` (CFP-662) + `hotfix-bypass:auto-phase-label-sibling-parity` (CFP-685) + `hotfix-bypass:claude-md-amendment-ref` (CFP-708) + `hotfix-bypass:actionlint` + `hotfix-bypass:post-merge-followup-success-rate` (CFP-688) + `hotfix-bypass:wrapper-managed-block` (CFP-702) + `hotfix-bypass:kst-timestamp-display` (CFP-771) + `hotfix-bypass:story-section-ownership` (CFP-722) + `hotfix-bypass:adr-077-ratchet` + `hotfix-bypass:adr-077-design-reading` (CFP-785) + `hotfix-bypass:bypass-label-counter` + `hotfix-bypass:exempt:<entry>` template (CFP-825) + `hotfix-bypass:version-3way-atomic` (CFP-820) + `hotfix-bypass:corpus-claim-verify` + `hotfix-bypass:cross-plugin-ownership-verify` (CFP-841) + `hotfix-bypass:branch-protection-sync` (CFP-821) + `hotfix-bypass:per-plugin-cumulative-counter` + `hotfix-bypass:bypass-justification-marker` + `hotfix-bypass:cross-repo-bypass-counter` (CFP-845) + `hotfix-bypass:fix-event-depth-scope` (CFP-842) + `hotfix-bypass:inter-plugin-contracts-parity` (CFP-894) + `hotfix-bypass:channel-drift-detection` (CFP-932) + `hotfix-bypass:architecture-drift` (CFP-923) 직접 mirror, 단일 audit lint `scripts/check-bypass-audit-comment.sh` reuse."
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). 1 신규 family member = §결정 6.A per-entry namespace 의무의 영구 확장 (codex worker collaboration mechanical layer bypass channel 영역 첫 family member). ratchet-UP 강화 방향 (active concrete grep count 42 → 43 정합 + historical Nth 43 → 44 convention 정합 ADR-058 §결정 5 정합)."
 related_files:
   - CLAUDE.md
   - docs/consumer-guide.md
@@ -91,6 +95,13 @@ mechanical_enforcement_actions:
   - action: cross-repo-bypass-counter
     status: deferred-followup     # registry yaml row append = Phase 1 PR; actual lint+workflow wire = Phase 2 PR scope
     target_section: §결정 6.A.5   # cross-repo extension (wrapper + internal-docs + marketplace 3-repo signature)
+  # Amendment 9 (CFP-963, 2026-05-19) — 44번째 family member `hotfix-bypass:codex-sandbox-substitution`
+  # ADR-060 Amendment 14 §결정 28 carrier + ADR-081 Amendment 4 §결정 D1.D body 확장 mechanical
+  # enforcement layer (warning-tier evidence-checks-registry entry `codex-network-scope-presence` bypass channel).
+  # historical-with-template-count convention citation (active concrete 42 + CFP-825 template 43 = 44 new).
+  - action: codex-network-scope-presence
+    status: deferred-followup     # registry yaml row append = Phase 1 PR; actual lint script + workflow + bats fixture pair wire = Phase 2 PR scope
+    target_section: §결정 6.A     # 44th family member append — codex worker collaboration mechanical layer bypass channel 영역 첫 family member
 ---
 
 # ADR-024: Story-scoped branch policy — main 직접 수정 금지 + Phase 2 enforcement deferred
@@ -826,3 +837,67 @@ ratchet 3-tuple:
 - `templates/github-workflows/per-plugin-cumulative-counter.yml` / `bypass-justification-marker.yml` / `cross-repo-bypass-counter.yml` (CFP-845 Phase 2 — 24h cron + PR-time lint 각)
 - `scripts/check-per-plugin-cumulative-counter.{py,sh}` / `check-bypass-justification-marker.{py,sh}` / `check-cross-repo-bypass-counter.{py,sh}` (CFP-845 Phase 2 — ADR-061 정합 외부 .py + thin bash wrapper 각)
 - `tests/scripts/test-check-per-plugin-cumulative-counter.bats` / `test-check-bypass-justification-marker.bats` / `test-check-cross-repo-bypass-counter.bats` (CFP-845 Phase 2 — TC 5+ baseline 각)
+
+## Amendment 9 — `hotfix-bypass:codex-sandbox-substitution` 44번째 family member (CFP-963, 2026-05-19 KST)
+
+### 컨텍스트
+
+CFP-963 = CFP-946 Epic (Codex worker network_scope mechanical layer) Story-B carry-forward. ADR-081 Amendment 4 §결정 D1.D body 확장 (boolean `sandbox_network_required: <bool>` → 4-tier `network_scope: <enum>` strict ratchet-up) + ADR-060 Amendment 14 §결정 28 신설 (12번째 warning-tier evidence-checks-registry entry `codex-network-scope-presence`) 동반.
+
+ADR-060 framework 의 신규 warning-tier entry 도입 시 ADR-024 §결정 6.A per-entry namespace bypass channel 의무 동반 (Amendment 3 §결정 6.A 정합). 본 Amendment 9 = 44번째 family member `hotfix-bypass:codex-sandbox-substitution` 추가.
+
+### Amendment
+
+#### §결정 6.A (확장) — 44번째 신규 family member
+
+| 신규 entry | family position | 의미 |
+|---|---|---|
+| `hotfix-bypass:codex-sandbox-substitution` | **44번째** (historical-with-template-count convention) | ADR-060 Amendment 14 §결정 28 `codex-network-scope-presence` warning-tier mechanical lint conditional skip + audit comment 자동 발의 channel. ADR-081 Amendment 4 §결정 D1.D body 확장 (4-tier `network_scope` enum) 의 mechanical enforcement layer 의 bypass channel. codex worker collaboration mechanical layer 영역 첫 family member. |
+
+**카운트 convention (Codex TP#2 F-CX-963-A P2 calibration 정합)**:
+
+active concrete entry direct grep count (`^  - name: hotfix-bypass:` line-anchor):
+- v2.34 시점 grep count = 42 entries (직접 verified — label-registry-v2.md §3 active hotfix-bypass entries)
+- CFP-825 Amendment 6 §결정 6.A.2 historical Nth count = 32 `hotfix-bypass:exempt:<entry>` template (rare 정당 declare 채널, template not concretely instantiated — historical Nth count 1 포함)
+- 직전 family member 43번째 = `hotfix-bypass:architecture-drift` (CFP-923 self-describe L1011 "43번째 family member" 정합 — `42 active concrete + 1 template historical = 43 historical Nth`)
+- 신규 = **44번째 historical Nth** (`43 historical Nth + 1 = 44 new`)
+
+historical-with-template-count convention 채택 사유:
+- ADR-024 Amendment 6 §결정 6.A.2 (CFP-825) 가 31번째 + 32번째 family member 동시 추가 시 32번째 = `hotfix-bypass:exempt:<entry>` template (rare 정당 declare 채널) → 본 convention 의 first precedent
+- Amendment 7 (CFP-841) / Amendment 8 (CFP-845) 모두 직전 family member 의 historical Nth + N convention 답습 (raw grep count divergence 영역 의식적 보존)
+- 본 Amendment 9 = convention 답습 (raw grep 42 + 1 = 43 vs historical Nth 43 + 1 = 44, **historical convention 채택**)
+
+label-registry-v2 v2.34 → v2.35 MINOR bump 동반 (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 3 row append).
+
+**자동 발의 carrier Issue 본문**: bypass label 부착 PR 마다 `scripts/check-bypass-audit-comment.sh` audit lint (CFP-389 prior art reuse, 단일 lint 모든 family entry detect) 가 audit comment 의무 검증 + audit log 집계.
+
+#### Bypass scope
+
+`codex-network-scope-presence.yml` workflow 의 lint step (`scripts/check-codex-network-scope.sh` Python SSOT invocation) 의 conditional skip — phase-gate-mergeable.yml / phase-label-invariant.yml / 기타 4 core required check 영향 0건 (Amendment 3 §결정 6.B 정합).
+
+**self-meta loop 회피**: 본 lint workflow / script 자체의 PR 에 `hotfix-bypass:codex-sandbox-substitution` 부착 시 본 lint step skip. **carrier_story self-exempt**: 본 entry 도입 carrier (CFP-963) Story file 자체의 Phase 1+2 PR 은 carrier 영역 bootstrap-exempt 정합 (ADR-062 §결정 8 self-application precedent / CFP-722 §결정 27 carrier-Story exemption 동형).
+
+### Compatibility
+
+- ADR-024 §결정 1~6 + Phase 2 partial (CFP-70) + CFP-72 + Amendment 1~8 전부 유지 — 본 Amendment 9 은 Amendment 3 §결정 6.A 의 호환 확장 (per-entry namespace 44번째 family member append) only.
+- ADR-060 framework 외 영역 (4 core required check + 기존 evidence check + Amendment 1~13 entry) 에는 영향 X.
+- ADR-058 §결정 5 sunset_justification ratchet — 본 Amendment 9 = forbid scope 확장 (44th family member append) = ratchet-up 강화 방향, sunset_justification_required: false.
+- warning tier 첫 도입 (ADR-060 §결정 5 정합 — 모든 신규 entry 는 warning 시작 강제). blocking-on-pr 격상 = empirical evidence 누적 후 별 CFP carrier 영역 (ADR-060 승격 gate AND condition 통과 의무).
+- label-registry-v2 v2.34 → v2.35 MINOR bump 동반 (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 3 — 신규 entry append = MINOR).
+- ADR-008 §결정 3 정합 (kind:registry MINOR rule). plugin.json bump 0 → ADR-063 marketplace atomic invariant 미발효 (mirrored field 무변경, marketplace_sync_declared:false).
+
+### Related
+
+- ADR-060 Amendment 14 §결정 28 (CFP-963 carrier — 12번째 warning-tier entry `codex-network-scope-presence`)
+- ADR-081 Amendment 4 §결정 D1.D body 확장 (boolean → 4-tier `network_scope` enum strict ratchet-up)
+- ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합 (44번째 family member)
+- ADR-024 Amendment 6 §결정 6.A.2 historical-with-template-count convention first precedent (`hotfix-bypass:exempt:<entry>` 32번째 template)
+- ADR-010 §결정 2 + ADR-008 §결정 3 (kind:registry sibling sync 면제 + MINOR append rule)
+- ADR-040 Amendment 3 §결정 7.A self-application — 본 Amendment 9 mechanical_enforcement_actions entry binding (action: `codex-network-scope-presence`, target_section: §결정 6.A)
+- ADR-058 §결정 5 정합 (is_transitional:false 영구 governance, ratchet-up 강화 방향, sunset_justification_required:false)
+- `docs/inter-plugin-contracts/label-registry-v2.md` v2.34 → v2.35 MINOR (CFP-963 — 44번째 `hotfix-bypass:codex-sandbox-substitution`)
+- `docs/evidence-checks-registry.yaml` (CFP-963 Phase 1 — `codex-network-scope-presence` entry append, warning tier, deferred-followup status, Phase 2 actual wire)
+- `templates/github-workflows/codex-network-scope-presence.yml` + `.github/workflows/` self-app (CFP-963 Phase 2 — byte-identical ADR-005)
+- `scripts/check-codex-network-scope.{sh,py}` (CFP-963 Phase 2 — ADR-061 정합 외부 .py + thin bash wrapper)
+- `tests/bats/test_codex_network_scope.bats` + `tests/fixtures/codex_spawn_prompt_{with,without}_network_scope.txt` (CFP-963 Phase 2 — CX-963-3 P2 boundary fixture pair mandate)
+- Codex TP#2 F-CX-963-A P2 calibration verdict (`[codex-severity-inflation: F-CX-963-A P1→P2]` Story §10 marker per ADR-081 §결정 D6.e tracking convention)
