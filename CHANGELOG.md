@@ -7,6 +7,22 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.89.0] - 2026-05-18
+
+### Changed (CFP-946 option 1 — ADR-081 Amendment 3 §D1.D sandbox_network_required toggle)
+
+- **`docs/adr/ADR-081-codex-worker-prompt-boilerplate.md`** — Amendment 3 신설. frontmatter `amendments[]` `amendment_id: 3` entry append. 본문 §결정 D1 표(D1.A/B/C 3-row) 에 §D1.D append (sandbox_network_required toggle codification). 4 mandatory boilerplate field: D1.A (dogfood-out path) + D1.B (current lane/phase) + D1.C (sandbox_outside_paths) + D1.D (sandbox_network_required). D1.A-C 본문 의미 변경 0건. cross-ref: ADR-052 Amendment 8 + ADR-070 Amendment 3 (CFP-946-A merged earlier — substitution-side mechanism). 본 D1.D = spawn-prompt-side declaration. 양면 chain 완결 (option 1 + option 2 + option 3 통합).
+- **`.claude-plugin/plugin.json`** — version `5.88.0` → `5.89.0` MINOR.
+- **`CHANGELOG.md`** — [5.89.0] entry 신설.
+
+### Scope (CFP-946 option 1 invariants)
+
+- **declaration-only retain** — mechanical injection layer 부재. Codex CLI runtime 자체 sandbox toggle 가능성은 codex@openai-codex plugin runtime 영역 (codeforge 측 declaration 만). Amendment 1/2 family pattern 정합 (§D5 precedent).
+- **additive ratchet only** (ADR-058 §결정 5 + ADR-064 §결정 7) — D1.A-C 본문 의미 변경 0, scope 축소 0, Amendment 1/2 D6/D7 영향 0.
+- **marketplace atomic sync (ADR-063 §결정 5)** — 별도 sibling PR 의무.
+
+
+
 ## [5.88.0] - 2026-05-18
 
 ### Changed (CFP-930 ADR-065 Amendment 3 — 9th item Story self-declared correction commit application verify)
