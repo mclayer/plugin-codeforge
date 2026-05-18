@@ -191,4 +191,19 @@ owned_sections:
     # 무변경 + sub-clause append). amendment_log monotone (CFP-821 = 표 row append only, CFP-898 =
     # Amendment 1 first formal entry). sibling Epic #882 race 회피 — CFP-858 closure 후 진입.
 
+  # ADR-078 / design-output-v2 v2.4 (CFP-921 Epic B Story-3) — ArchitectAgent self-write + lane gate
+  - file: docs/inter-plugin-contracts/design-output-v2.md
+    section: "(전체 — sibling sync byte-identical canonical mirror)"
+    owner_adr: ADR-010  # canonical = codeforge-design / sibling = wrapper
+    carrier_story: CFP-921
+    parallel_edit: locked
+    arbitrator: codeforge-design:ArchitectPLAgent
+    # NOTE (CFP-921 Epic B Story-3): design-output-v2 v2.3 → v2.4 MINOR bump
+    # (architecture_doc_updated optional bool field, ADR-078 lane gate carrier).
+    # Sibling sync ADR-010 §결정 1 4단계 — canonical PR #45 (codeforge-design)
+    # MERGED 49870ed8 → wrapper sibling sync byte-identical mirror.
+    # ADR-082 §결정 1 layer disjoint 정합 (4 self-check boolean field: mechanical /
+    # boundary / dimensional / architecture_doc + marketplace_sync_declared).
+    # ADR-008 §결정 2 MINOR additive optional field (default false backward-compat).
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)
