@@ -1,0 +1,112 @@
+name: Codex network_scope presence lint (warning mode)
+# CFP-963 / ADR-081 Amendment 4 §결정 D1.D / ADR-060 Amendment 14 §결정 28
+# Tier: warning (continue-on-error: true, non-required check)
+# Bypass channel: hotfix-bypass:codex-sandbox-substitution label (ADR-024 Amendment 9)
+#
+# Checks Codex worker spawn-prompt body files for network_scope: <4-tier enum> field.
+# 4-tier enum (ADR-081 Amendment 4 D1.D SSOT):
+#   offline / repo-fetch-only / web-fetch / offline_substitution_declared
+# Boolean legacy (sandbox_network_required: true/false) = advisory only (grace window).
+#
+# SecurityArch §7.2 TH-2 constraint: permissions: contents: read only (no PR write).
+# No CODEFORGE_CROSS_REPO_PAT in lint output (PAT guard).
+#
+# Carrier: CFP-963 / dual-binding: ADR-081 Amendment 4 (declaration source) +
+#                                  ADR-060 Amendment 14 (enforcement source)
+#
+# Promotion path (ADR-060 §결정 28.E):
+#   warning → blocking-on-pr: remove continue-on-error + branch protection update
+#   (requires pr_cumulative_min: 20 evidence gate, ADR-060 §결정 6(b))
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+concurrency:
+  group: codex-network-scope-presence-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  codex-network-scope-presence:
+    runs-on: ubuntu-latest
+    # warning mode (ADR-060 §결정 28 / §결정 5) — lint fail does NOT block PR merge.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check bypass label
+        id: bypass
+        env:
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          set +x  # SecurityArch TH-2: no debug trace
+          labels="${PR_LABELS:-}"
+          case ",$labels," in
+            *,hotfix-bypass:codex-sandbox-substitution,*)
+              echo "bypass=true" >> "$GITHUB_OUTPUT"
+              echo "::notice::hotfix-bypass:codex-sandbox-substitution detected — codex-network-scope-presence lint bypassed (ADR-024 Amendment 9)"
+              ;;
+            *)
+              echo "bypass=false" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      - name: Run codex-network-scope-presence lint
+        id: lint
+        if: steps.bypass.outputs.bypass == 'false'
+        run: |
+          set +x  # SecurityArch TH-2: no debug trace (PAT guard)
+          set +e
+          # Lint changed files that could contain Codex worker spawn prompts
+          # Discovery: grep PR diff for network_scope / sandbox_network_required patterns
+          # (warning tier = advisory only, cross-repo Story fetch via PAT optional)
+          #
+          # Step (a) graceful degradation: detect fail-mode → declare (playbook §3.10.1-bis)
+          # Step (b) verify-before-trust: ADR-070 §결정 D1 substitution scope 3-path enum
+          # Step (c) Story §10 marker: [codex-sandbox-fallback: <fail-mode>] + network_scope_actual
+
+          # Scan PR diff for Codex spawn-prompt body files (heuristic)
+          CHANGED_FILES="$(git diff --name-only origin/${{ github.base_ref }}...HEAD 2>/dev/null || true)"
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "::notice::codex-network-scope-presence: no changed files detected — PASS (advisory)"
+            echo "exit_status=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Run lint on each changed file (warning tier — non-blocking)
+          MAX_EXIT=0
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            [ -f "$f" ] || continue
+            python3 scripts/lib/check_codex_network_scope.py "$f" 2>&1 || {
+              status=$?
+              if [ "$status" -gt "$MAX_EXIT" ]; then
+                MAX_EXIT="$status"
+              fi
+            }
+          done <<< "$CHANGED_FILES"
+
+          echo "exit_status=$MAX_EXIT" >> "$GITHUB_OUTPUT"
+          # warning tier: always exit 0 (continue-on-error + warning-tier semantic)
+          exit 0
+
+      - name: Emit lint summary
+        if: steps.bypass.outputs.bypass == 'false' && always()
+        env:
+          LINT_STATUS: ${{ steps.lint.outputs.exit_status }}
+        run: |
+          set +x  # SecurityArch TH-2
+          status="${LINT_STATUS:-0}"
+          if [ "$status" = "0" ]; then
+            echo "::notice::codex-network-scope-presence: PASS — network_scope field present (ADR-081 Amendment 4 D1.D)"
+          elif [ "$status" = "1" ]; then
+            echo "::warning::codex-network-scope-presence: WARNING — network_scope field absent or invalid enum in Codex worker spawn-prompt body. Add: network_scope: <offline|repo-fetch-only|web-fetch|offline_substitution_declared> (ADR-081 Amendment 4 D1.D). hotfix bypass: hotfix-bypass:codex-sandbox-substitution label (ADR-024 Amendment 9)."
+          else
+            echo "::warning::codex-network-scope-presence: META-ERROR (exit $status) — lint infrastructure issue. Non-blocking (warning tier)."
+          fi

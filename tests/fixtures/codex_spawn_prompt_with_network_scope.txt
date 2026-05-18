@@ -1,0 +1,17 @@
+## Codex Worker Spawn Prompt — CFP-963 fixture WITH network_scope field
+# CX-963-3 P2 boundary mandate — lint PASS expected (field present, valid enum)
+
+**Story path**: mclayer/codeforge-internal-docs/wrapper/stories/CFP-963.md
+**Lane**: 구현 / phase: 구현
+
+**sandbox boundary**: local Phase 2 worktrees only
+**network_scope: offline**
+sandbox_network_required: false
+
+## Task
+
+Perform analysis of the following files within the worktree:
+- scripts/check-codex-network-scope.sh
+- scripts/lib/check_codex_network_scope.py
+
+Return findings in the standard review-verdict-v4 format.

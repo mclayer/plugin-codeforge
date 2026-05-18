@@ -2773,8 +2773,8 @@ entries:
       substitution-side mechanism = 양 면 chain 완결). CFP-722 story-section-ownership /
       CFP-841 corpus-claim-verify / CFP-966 parallel-work-sentinel-pickup precedent
       동형 (declaration-only normative + presence-grep warning lint 보완 관계).
-    detect_command: null  # deferred-followup — CFP-963 Phase 2 carrier (scripts/check-codex-network-scope.{sh,py} populate 후 갱신). null = naming check skip (precedent parallel-work-sentinel-pickup / production-cutover-deputy-spawn-evidence / epic-cutover-gate-evidence-quad-check 답습)
-    workflow: null  # deferred-followup — CFP-963 Phase 2 carrier (.github/workflows/codex-network-scope-presence.yml + templates/github-workflows/ byte-identical self-app + tests/bats + tests/fixtures pair populate 후 갱신, deferred-followup → warning → blocking-on-pr)
+    detect_command: bash scripts/check-codex-network-scope.sh  # CFP-963 Phase 2 ACTIVE — thin bash wrapper (ADR-061 §결정 1) → scripts/lib/check_codex_network_scope.py Python SSOT. Exit 0=PASS / 1=WARNING / 2=META-ERROR (ADR-060 §결정 15 3-tier)
+    workflow: .github/workflows/codex-network-scope-presence.yml  # CFP-963 Phase 2 ACTIVE — byte-identical self-app pair (templates/github-workflows/ + .github/workflows/). continue-on-error: true (warning tier). SecurityArch TH-2: permissions: contents: read only
     current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
     bypass_label: hotfix-bypass:codex-sandbox-substitution
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
@@ -2797,4 +2797,4 @@ entries:
       count: 0                      # CFP-963 ratchet 확장 carrier — sentinel-driven 도입 아닌 framework entry count 11 → 12 ratchet-UP (CFP-722 §결정 27 / channel-drift-detection / story-section-9-typed default 정합)
       threshold: 3                  # ADR-060 §결정 19 Amendment 6 / schema v1.2 standard default
       promotion_trigger: none       # count=0 < threshold=3 → 발화 없음 (Option A — parallel-work-sentinel-pickup count=2 sentinel 영역과 분리)
-    status: deferred-followup  # declarative anchor only — CFP-963 Phase 2 mechanical wire (detect script + workflow + bats + fixture pair) 후 Active 전환 (L1417/L1452/L1574/L2729 established 5-instance precedent 답습 — 신규 unique drift value 회피, schema enum 확장 = 별 follow-up CFP, ADR-064 §결정 1 scope unitary)
+    status: warning  # CFP-963 Phase 2 ACTIVE — mechanical wire complete: detect_command + workflow + bats fixture pair (CX-963-3 P2 boundary mandate per Codex TP#4) ALL populated (2026-05-19 KST). deferred-followup → warning transition (ADR-060 §결정 6 — Phase 2 carrier merge 의무 충족). blocking-on-pr 승격 = pr_cumulative_min 20 + failure_threshold 0 + sibling_dependency merge (별 follow-up CFP)
