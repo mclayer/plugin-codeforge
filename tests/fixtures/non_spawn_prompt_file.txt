@@ -1,0 +1,19 @@
+# Regular documentation file — TC-BAT-NEG (F-CR-963-2 filter test)
+# This file simulates a changed PR file that is NOT a Codex worker spawn prompt.
+# It contains no ADR-081 D1.A-D field anchors.
+# The workflow content pre-screen should NOT select this file for lint.
+
+## Purpose
+
+This fixture verifies the blast-surface reduction in the workflow:
+files without Codex spawn prompt field patterns are excluded from lint scope.
+
+## Regular content
+
+This document describes a general configuration approach.
+The system uses standard authentication via token rotation every 90 days.
+Integration with the CI pipeline runs on pull request events.
+Artifact retention is set to 30 days for non-production builds.
+The deployment target is ubuntu-latest runners.
+Label management follows the established taxonomy.
+Version bumps must be atomic across the three relevant files.

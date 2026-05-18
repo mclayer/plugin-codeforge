@@ -5,8 +5,7 @@
 **Lane**: 구현 / phase: 구현
 
 **sandbox boundary**: local Phase 2 worktrees only
-**network_scope: offline**
-sandbox_network_required: false
+network_scope: offline
 
 ## Task
 

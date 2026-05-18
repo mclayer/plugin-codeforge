@@ -26,6 +26,7 @@ WORKFLOW_TEMPLATE="${WORKTREE_ROOT}/templates/github-workflows/codex-network-sco
 WORKFLOW_SELFAPP="${WORKTREE_ROOT}/.github/workflows/codex-network-scope-presence.yml"
 FIXTURE_WITH="${WORKTREE_ROOT}/tests/fixtures/codex_spawn_prompt_with_network_scope.txt"
 FIXTURE_WITHOUT="${WORKTREE_ROOT}/tests/fixtures/codex_spawn_prompt_without_network_scope.txt"
+FIXTURE_NON_SPAWN="${WORKTREE_ROOT}/tests/fixtures/non_spawn_prompt_file.txt"
 
 # ──────────────────────────────────────── helpers ────────────────────────────
 
@@ -48,6 +49,8 @@ teardown() {
   [ -f "${FIXTURE_WITH}" ]
   run bash "${WRAPPER_SH}" "${FIXTURE_WITH}"
   [ "$status" -eq 0 ]
+  # F-CR-963-1: verify enum-detection path engaged (output must contain network_scope=offline)
+  echo "$output" | grep -q "network_scope=offline"
 }
 
 # ──────────────────────────────────────── TC-BAT-2: wrapper WARN exit propagation ─
@@ -95,6 +98,10 @@ teardown() {
   run bash "${WRAPPER_SH}" "${FIXTURE_WITH}"
   # CX-963-3 P2 boundary: WITH field = PASS
   [ "$status" -eq 0 ]
+  # F-CR-963-1: discriminating assertion — enum path engaged (network_scope=offline in output)
+  echo "$output" | grep -q "network_scope=offline"
+  # F-CR-963-1: legacy-grace path NOT triggered (no legacy-boolean-detected in output)
+  ! echo "$output" | grep -q "legacy-boolean-detected"
 }
 
 @test "TC-BAT-6 (P2): fixture WITHOUT network_scope — wrapper exit 1 (discriminating)" {
@@ -125,4 +132,24 @@ teardown() {
   [ "$status" -eq 0 ]
   # diff output must be empty
   [ -z "$output" ]
+}
+
+# ──────────────────────────────────────── TC-BAT-NEG: non-spawn-prompt filter (F-CR-963-2) ─
+
+@test "TC-BAT-NEG (P2): non-spawn-prompt file does NOT trigger lint warning (content pre-screen)" {
+  [ -f "${WRAPPER_SH}" ]
+  [ -f "${FIXTURE_NON_SPAWN}" ]
+  # Non-spawn-prompt file must NOT contain spawn-prompt markers (pre-screen grep must find nothing)
+  # This validates the F-CR-963-2 filter logic: files without spawn-prompt anchors skip lint.
+  run grep -E "(sandbox_network_required|network_scope|Codex Worker Spawn Prompt|spawn prompt boilerplate)" "${FIXTURE_NON_SPAWN}"
+  # grep must find NO match (exit 1 = no match)
+  [ "$status" -eq 1 ]
+  # Running wrapper directly on non-spawn-prompt file returns WARNING (field absent)
+  # BUT with the content pre-screen in the workflow, this file is never linted.
+  # The test verifies that the fixture itself has no spawn-prompt markers (filter criterion).
+  # Complementary: wrapper invoked directly exits 1 (absent) but workflow pre-screen skips it.
+  run bash "${WRAPPER_SH}" "${FIXTURE_NON_SPAWN}"
+  [ "$status" -eq 1 ]
+  # Verify NO enum-detection output (confirms no false positive from spawn-prompt path)
+  ! echo "$output" | grep -q "network_scope=offline"
 }

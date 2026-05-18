@@ -79,18 +79,32 @@ jobs:
             exit 0
           fi
 
-          # Run lint on each changed file (warning tier — non-blocking)
+          # Content pre-screen: filter to spawn-prompt candidate files only (F-CR-963-2 fix)
+          # Reduces blast surface — only files with ADR-081 D1.A-D field anchors are linted.
+          # Rationale: CLAUDE.md / ADRs / README / source files do NOT contain these markers.
+          CANDIDATE_FILES=$(echo "$CHANGED_FILES" | while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            [ -f "$f" ] || continue
+            grep -l -E "(sandbox_network_required|network_scope|Codex Worker Spawn Prompt|spawn prompt boilerplate)" "$f" 2>/dev/null || true
+          done)
+
+          if [ -z "$CANDIDATE_FILES" ]; then
+            echo "::notice::codex-network-scope-presence: no Codex worker spawn-prompt candidates in PR diff — lint scope empty, PASS (advisory)"
+            echo "exit_status=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Run lint only on candidate spawn-prompt files (warning tier — non-blocking)
           MAX_EXIT=0
           while IFS= read -r f; do
             [ -z "$f" ] && continue
-            [ -f "$f" ] || continue
             python3 scripts/lib/check_codex_network_scope.py "$f" 2>&1 || {
               status=$?
               if [ "$status" -gt "$MAX_EXIT" ]; then
                 MAX_EXIT="$status"
               fi
             }
-          done <<< "$CHANGED_FILES"
+          done <<< "$CANDIDATE_FILES"
 
           echo "exit_status=$MAX_EXIT" >> "$GITHUB_OUTPUT"
           # warning tier: always exit 0 (continue-on-error + warning-tier semantic)

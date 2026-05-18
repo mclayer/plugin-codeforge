@@ -229,12 +229,30 @@ def test_field_empty_warning(impl, tmp_path):
 
 # ---------------------------------------------------------------------------
 # TC-11: fixture_pair_discriminator_with_field (CX-963-3 P2 boundary mandate)
+# Strengthened: verify ENUM path engaged, NOT legacy-grace path (F-CR-963-1 fix)
 # ---------------------------------------------------------------------------
 def test_fixture_pair_with_field_pass(impl, fixture_with_network_scope):
-    """Fixture WITH network_scope field → PASS (discriminating fixture)."""
+    """Fixture WITH network_scope field → PASS via enum-detection path (discriminating fixture).
+
+    F-CR-963-1 strengthened:
+    - result["enum_value"] == "offline" (enum path engaged)
+    - "[legacy-boolean-detected" NOT in advisory_markers (legacy-grace path NOT triggered)
+    """
     result = impl.check_network_scope_presence(str(fixture_with_network_scope))
     assert result["exit_code"] == 0
     assert result["status"] == "PASS"
+    # F-CR-963-1: must detect via enum path, not legacy-grace path
+    assert result.get("enum_value") == "offline", (
+        f"Expected enum_value='offline' (enum-detection path), got {result.get('enum_value')!r}. "
+        "Fixture must have bare 'network_scope: offline' (no markdown bold wrapping)."
+    )
+    markers = result.get("advisory_markers", [])
+    legacy_triggered = any("legacy-boolean-detected" in m for m in markers)
+    assert not legacy_triggered, (
+        f"Legacy-grace path triggered unexpectedly — advisory_markers={markers}. "
+        "WITH-fixture must NOT have sandbox_network_required field "
+        "(F-CR-963-1: disambiguate enum vs legacy path)."
+    )
 
 
 # ---------------------------------------------------------------------------
