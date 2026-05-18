@@ -445,6 +445,43 @@ _reconcile_file() {
                 return 2
             }
         fi
+
+        # ── §4.12 consumer-applicability filter hook (CFP-899 Phase 2) ──────
+        # §4.12 hook_integration: sequential composition closure → filter → cp
+        # dependency closure (§4.11) 직후 sibling line 삽입 (plugin-only skip)
+        local DETECT_REPO_KIND_PY="${DETECT_REPO_KIND_PY:-${SCRIPT_DIR}/../templates/scripts/detect-repo-kind.py}"
+        local CONSUMER_APPLICABLE_LIST="${CONSUMER_APPLICABLE_LIST:-${SCRIPT_DIR}/../templates/scripts/consumer_applicable_workflows.txt}"
+        if [[ -f "${wrapper_file}" ]] && [[ "${wrapper_file}" == *.yml ]]; then
+            local _repo_kind
+            _repo_kind=$(python3 "${DETECT_REPO_KIND_PY}" --repo-root "${CONSUMER_ROOT:-${CONSUMER_OVERLAY_DIR%/.claude/_overlay}}" --skip-marketplace-check 2>/dev/null) || true
+            case "${_repo_kind}" in
+                plugin)
+                    # plugin repo: 전체 workflow mirror (filter 없음)
+                    ;;
+                consumer|mixed)
+                    # consumer / mixed: positive whitelist filter 적용
+                    local _wf_basename
+                    _wf_basename="$(basename "${wrapper_file}")"
+                    if [[ -f "${CONSUMER_APPLICABLE_LIST}" ]]; then
+                        if ! grep -Fxq "${_wf_basename}" "${CONSUMER_APPLICABLE_LIST}" 2>/dev/null; then
+                            [[ "${dry_run}" == "true" ]] && echo "${SCRIPT_NAME} [dry-run] [FILTER] skip plugin-only workflow: ${_wf_basename}"
+                            [[ "${dry_run}" == "false" ]] && echo "${SCRIPT_NAME} [FILTER] skip plugin-only workflow: ${_wf_basename}"
+                            return 0
+                        fi
+                    fi
+                    ;;
+                unknown)
+                    # §4.12 fail_closed_unknown: 신호 없음 → abort
+                    echo "${SCRIPT_NAME} [ERR] repo-kind unknown (signal absent) — fail-closed abort (§4.12)" >&2
+                    return 2
+                    ;;
+                *)
+                    # detect 스크립트 부재 등 — 안전 방향: 계속 진행 (filter skip)
+                    ;;
+            esac
+        fi
+        # ── §4.12 filter hook end ────────────────────────────────────────────
+
         local had_consumer_diff=false
         if [[ -f "${consumer_file}" ]] && ! diff -q "${consumer_file}" "${wrapper_file}" > /dev/null 2>&1; then
             had_consumer_diff=true

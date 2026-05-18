@@ -7,6 +7,29 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.90.0] - 2026-05-18
+
+### Added (CFP-899 Phase 2 — Consumer-applicability filter runtime)
+
+- **`templates/scripts/detect-repo-kind.py`** — 신설. §4.12 truth-table 4-way repo-kind 분류 CLI (Python stdlib only, ADR-061 외부 .py). 출력: `plugin`/`consumer`/`mixed`/`unknown`. exit code 0/1/2/3 매핑. Primary signal 3종 (`.claude-plugin/plugin.json` + `.claude/_overlay/project.yaml` + marketplace membership). `--skip-marketplace-check` offline fallback. `--check-signal` 단일 신호 probe. self_app_exemption invariant (§4.12, ADR-040 Amendment 3 §결정 7.D).
+- **`templates/scripts/consumer_applicable_workflows.txt`** — 신설. consumer-applicable workflow positive whitelist manifest (per-line yml basename, `#` comment 허용). 30 consumer-applicable entries + plugin-only omit 목록 주석. §4.12 whitelist_file_format 정합.
+- **`scripts/reconcile-overlay.sh`** — §4.12 consumer-applicability filter hook 삽입 (MARKER_NONE branch, §4.11 dep closure hook 직후 sibling line). `detect-repo-kind.py` 호출 → `plugin`: 전체 mirror / `consumer|mixed`: whitelist filter → plugin-only workflow skip / `unknown`: fail-closed return 2. `DETECT_REPO_KIND_PY` + `CONSUMER_APPLICABLE_LIST` env seam (test-injectable). dry-run propagation 보존 (CFP-898 FIX iter 1 lesson).
+- **`tests/test_detect_repo_kind.py`** — 신설. 20 TC TDD (RED→GREEN). 4 MATRIX + 6 EC + 5 WHITELIST + 3 INTEGRATION + 1 MIXED + 1 SELFLOOP. pytest framework.
+- **`tests/integration/test_reconcile_overlay_consumer_filter.bats`** — 신설. 5 bats TC (TC-INT-1~5): consumer/plugin/unknown/mixed/dry-run propagation. §4.12 hook 통합 검증.
+- **`.claude-plugin/plugin.json`** — version `5.89.0` → `5.90.0` MINOR (ADR-037 정합 — runtime script 신설 + workflow hook 삽입 = behavior change MINOR). `description` 안 CFP-899 Phase 2 entry 선행 삽입.
+- **`CHANGELOG.md`** — [5.90.0] entry 신설.
+
+### Scope (CFP-899 Phase 2 invariants)
+
+- **ADR-061 정합** — detect-repo-kind.py: 외부 .py 파일, shebang `#!/usr/bin/env python3`, UTF-8, stdlib only.
+- **ADR-040 Amendment 3 §결정 7.D self-app verify** — detect-repo-kind.py 를 wrapper repo root 에서 실행 시 plugin 판정 (exit 0/2 = plugin/mixed). self_app_exemption invariant 20 TC SELFLOOP 검증.
+- **reconcile-protocol-v1 v1.9 §4.12 hook_integration 정합** — sequential composition: §4.11 closure → §4.12 filter → cp.
+- **ADR-083 Wave-1 declaration → Wave-2 runtime** — consumer_applicability_filter_detection action runtime 활성화.
+- **fail_closed_unknown** — 신호 없는 repo = unknown → §4.12 abort (return 2), 안전 방향.
+- **dry-run propagation** — MARKER_NONE branch dry_run=true 시 filter 판정 출력만, 실 abort 0 (ADR-076 §결정 3 정합).
+- **marketplace atomic sync (ADR-063 §결정 5)** — 별도 sibling PR 의무 (Orchestrator 책임 영역).
+- **tests 무변경 범위** — 기존 test_mirror_dependency_closure.py / test_reconcile_overlay_dep_closure.bats 변경 0.
+
 ## [5.89.0] - 2026-05-18
 
 ### Changed (CFP-946 option 1 — ADR-081 Amendment 3 §D1.D sandbox_network_required toggle)
