@@ -1,0 +1,6 @@
+# fixture: valid stable channel (TC-1, TC-2 PASS oracle)
+codeforge:
+  version_pin:
+    version: "5.83.0"
+  channel:
+    tier: stable
