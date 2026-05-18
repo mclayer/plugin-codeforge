@@ -18,7 +18,7 @@ Usage:
       → exit 0 if frontmatter version field matches expected_version
       → exit 1 if mismatch or parse error
 
-  python yaml_oracle.py frontmatter_version_history_last_carrier <md_file> <expected_carrier>
+  python yaml_oracle.py frontmatter_carrier_presence <md_file> <expected_carrier>
       → exit 0 if last version_history entry matches expected_carrier
       → exit 1 if mismatch
 
@@ -126,7 +126,7 @@ def cmd_frontmatter_version(md_file, expected_version):
     sys.exit(0)
 
 
-def cmd_frontmatter_version_history_last_carrier(md_file, expected_carrier):
+def cmd_frontmatter_carrier_presence(md_file, expected_carrier):
     """
     Exit 0 if version_history contains an entry with matching carrier.
     Note: version_history ordering may not be strictly chronological (insertion order).
@@ -181,9 +181,14 @@ def cmd_label_registry_channel(md_file):
             parsed = yaml.safe_load(block)
         except Exception:
             continue
-        if not isinstance(parsed, list):
+        # Handle both dict shape {labels: [...]} and bare list shape (F-CR-906-1, CFP-906 retro)
+        if isinstance(parsed, dict) and "labels" in parsed:
+            items = parsed["labels"]
+        elif isinstance(parsed, list):
+            items = parsed
+        else:
             continue
-        for item in parsed:
+        for item in items:
             if isinstance(item, dict) and item.get("category") == "channel":
                 channel_entries.append(item)
 
@@ -284,7 +289,7 @@ COMMANDS = {
     "channel": cmd_channel,
     "validate_enum": cmd_validate_enum,
     "frontmatter_version": cmd_frontmatter_version,
-    "frontmatter_version_history_last_carrier": cmd_frontmatter_version_history_last_carrier,
+    "frontmatter_carrier_presence": cmd_frontmatter_carrier_presence,
     "label_registry_channel": cmd_label_registry_channel,
     "adr016_amendments": cmd_adr016_amendments,
     "adr063_amendment6": cmd_adr063_amendment6,

@@ -155,7 +155,7 @@ EOF
 @test "TC-6b (P0): reconcile-protocol-v1 version_history last entry carrier = CFP-906" {
   [ -f "${RECONCILE}" ]
 
-  run python "${ORACLE}" frontmatter_version_history_last_carrier "${RECONCILE}" "CFP-906"
+  run python "${ORACLE}" frontmatter_carrier_presence "${RECONCILE}" "CFP-906"
   [ "$status" -eq 0 ]
 }
 
