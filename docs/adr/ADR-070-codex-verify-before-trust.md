@@ -30,6 +30,13 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 3 + ## 결정 / D1 expansion"
     sunset_justification: null
+  - amendment_id: 4
+    cfp: CFP-988
+    date: 2026-05-19
+    scope: "신규 §결정 D6 — mandatory-real-execution-evidence STANDING normative codify + Epic-gate verify-don't-dismiss sub-clause. E-1 (DeveloperPL false-self-claim lineage pattern_count=4: CFP-699 + CFP-702 + CFP-899 + CFP-900-iter0/iter1) → STANDING 4-tuple (a) CR-own discriminating revert / (b) reconcile-integration path / (c) DevPL pasted stdout 미신뢰 / (d) single-aggregator/single-unit bypass forbidden. E-2 (Epic IntegrationTestAgent flagged 'non-blocking observation' verify-don't-dismiss STANDING super-class) → Epic close 전 미verify flagged observation in deliverable domain = Epic close 차단 invariant. ADR-070 §결정 D1 scope (Codex external worker output) ratchet-up direction 확장 — DevPL self-claim + IntegrationTestAgent flagged observation 영역 일반화 (ADR-082 §결정 1 disjoint 4-layer 표 scope 침범 0 verify, ADR-082 = write-time semantic truth layer 와 disjoint axis = read-time attestation 신뢰성). ADR-070 §D5 declaration-only retain precedent chain 4번째 instance — `mechanical_enforcement_actions: []` retain (Amendment 1/2/3 패턴 정합, Q1-A/Q2-A/Q3-A 채택 doc-only fast-path 적격). is_transitional: false (permanent — 약화 차단 ratchet, ADR-058 §결정 5 sunset_justification ratchet-up direction). ADR-045 §D-9 cross-Story pattern forcing function origin (pattern_count=4 ≥ threshold 2 mandatory adr_draft_emitted). ADR-055 Epic IntegrationTest gate (E-2 catching layer SSOT). ADR-067 max FIX 3/3 cycle axis disjoint (per-iteration verify content ↔ post-failure boundary reassessment) — cycle conflict 0건. D1-D5 + Amendment 1/2/3 본문 의미 변경 없음 — 신규 §결정 D6 추가 only."
+    status: applied
+    ref: "## Amendments / Amendment 4 + ## 결정 / D6"
+    sunset_justification: null
 related_stories:
   - CFP-578  # carrier
   - CFP-506  # sentinel 1 reproduce
@@ -38,6 +45,7 @@ related_stories:
   - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
   - CFP-844  # Amendment 2 — ADR-081 §결정 D6 severity calibration cross-ref (disjoint 보완)
   - CFP-946-A  # Amendment 3 — §결정 1 substitution scope 3-path enum codify (parent_epic CFP-946)
+  - CFP-988  # Amendment 4 — mandatory-real-execution-evidence STANDING + Epic-gate verify-don't-dismiss (E-1 pattern_count=4 + E-2 super-class)
 related_adrs:
   - ADR-052  # Codex proactive check 6 touchpoint
   - ADR-081  # Codex worker severity calibration rubric §결정 D6 (Amendment 2 disjoint 보완 — 사실 근거 layer ↔ severity 경중 layer)
@@ -48,6 +56,9 @@ related_adrs:
   - ADR-064  # decision principle mandate (forbid-list 8 어휘)
   - ADR-059  # debate-protocol-v1 (영역 분리)
   - ADR-039  # default subagent context (env=0 정합)
+  - ADR-045  # §D-9 cross-Story pattern forcing function — Amendment 4 forcing function origin (pattern_count=4 ≥ threshold 2 mandatory adr_draft_emitted)
+  - ADR-055  # Epic IntegrationTest gate — Amendment 4 E-2 sub-clause catching layer SSOT (flagged observation discipline)
+  - ADR-067  # Max FIX 3/3 + RESET — Amendment 4 STANDING 의 per-iteration verify content 와 axis disjoint (post-failure boundary reassessment)
 related_files:
   - docs/adr/ADR-052-codex-proactive-check-touchpoints.md
   - docs/orchestrator-playbook.md
@@ -221,6 +232,85 @@ Codex worker 의 sandbox access 실패 = platform inherent (Claude Code agent ru
 - (D5-B) (c) runtime probe 자동화 (Codex finding evidence + Read 결과 verbatim diff layer) — platform inherent 영역 침범 (Codex output schema parsing layer 신설 = 별도 carrier 영역)
 - (D5-C) declaration-only retain 영역에서도 evidence-checks-registry entry append (warning tier 0-validation) — registry schema scope 침해 (실행 가능한 mechanical lint 부재 entry append 는 schema 의미 약화)
 
+### D6. mandatory-real-execution-evidence STANDING + Epic-gate verify-don't-dismiss (Amendment 4 / CFP-988)
+
+기존 §결정 D1 scope (Codex external worker output 한정) 의 verify-before-trust pattern 을 **두 추가 영역**으로 ratchet-up direction 확장. D1-D5 본문 의미 변경 없음 — 신규 §결정 D6 으로 적용 대상 enumeration 확장 only.
+
+#### D6.1 — mandatory-real-execution-evidence STANDING (E-1 carrier, pattern_count=4)
+
+**Trust boundary 명시 (TB-1)**: DeveloperPL self-asserted output (stdout / pasted log / claim 텍스트) = 신뢰 외측. CodeReviewPL own discriminating real-execution + Orchestrator working-directory direct read = 신뢰 내측. boundary 검증 책임 = CR + Orchestrator dual-layer (single-layer collapse 금지).
+
+**FIX verification 시 normative requirement** (`[user-input verbatim — Issue #988 §P-1 + EPIC-RESULTS-CFP-858.md §6.1 결정 제안 본문 그대로 codify]`):
+
+> "FIX verification 시 DeveloperPL self-claim 은 ground truth 아님. CodeReviewPL/Orchestrator 가 다음 4-tuple 의 real-execution evidence 를 independently 재현해야 verdict PASS. DeveloperPL pasted stdout 무신뢰. **STANDING normative for ALL FIX verification (per-Story ad-hoc 폐기).**"
+
+4-tuple (a/b/c/d) verbatim:
+
+- **(a)** CR-own discriminating revert (pre-fix FAIL ↔ post-fix PASS) — CodeReviewPL 이 자기 환경에서 fix 전 FAIL + fix 후 PASS 양쪽 재현 의무
+- **(b)** reconcile-integration path — single-aggregator / single-unit / pasted-stdout 단축 path 금지, 실 integration path 통과 의무
+- **(c)** DeveloperPL pasted stdout 미신뢰 — DevPL "fix 성공" 단언 자체는 verdict 입력 아님, independent reproducer (CR + Orchestrator) ground truth 가 verdict source
+- **(d)** single-aggregator/single-unit bypass forbidden — CR-own real-execution evidence 가 integration-path 대신 aggregator/unit 단축 path 만 검증 시 verdict reject (CFP-986 §결정 violation evidence — `_S2_MAX_EXIT` cross-channel propagation conflation 영역)
+
+**위협 ↔ 완화 매핑**:
+
+- **THR-1** (false-self-claim, governance attestation integrity violation) → 4-tuple sub-(a) + sub-(c) 완화
+- **THR-3** (single-aggregator/single-unit bypass, defense-in-depth bypass) → 4-tuple sub-(b) + sub-(d) 완화
+
+**Lineage evidence** (`[verified: EPIC-RESULTS-CFP-858.md §5 P-1 4-instance + CFP-900 §10 FIX Ledger row 2 + CFP-986 CR re-audit comment 4477586384]`):
+
+- 4 pre-Amendment instance: CFP-699 / CFP-702 / CFP-899 / CFP-900-iter0/iter1
+- BREAK 지점: CFP-900 FIX iter-2 (CodeReviewPL iter-2 mandatory-real-execution-evidence requirement 첫 적용)
+- HELD evidence: CFP-986 post-merge fix (CR re-audit "still-broken (NO 5th) — every DevPL claim independently CR-reproduced + confirmed true; iter-2 mandatory-real-exec discipline HELD across this post-merge fix")
+
+#### D6.2 — Epic-gate verify-don't-dismiss STANDING (E-2 sub-clause, super-class single sample)
+
+**Trust boundary 명시 (TB-2)**: Epic IntegrationTestAgent flagged "non-blocking observation" / "minor warning" / "informational" tier 발화 = 신뢰 외측 (silent dismissal 금지 boundary). Orchestrator direct reproduction (Epic close 직전, Epic deliverable domain scope) = 신뢰 내측.
+
+**STANDING discipline normative requirement** (`[user-input verbatim — Issue #988 §P-2 + EPIC-RESULTS-CFP-858.md §6.2 결정 제안 본문 그대로 codify]`):
+
+> "Epic IntegrationTest gate (ADR-055) 가 Epic 자체 deliverable domain 에서 flag 한 'non-blocking observation' 은 Orchestrator 가 rationalize 금지 — ADR-070 verify-before-trust 적용 direct reproduction 의무. Epic close 전 미verify observation = Epic close 차단."
+
+**위협 ↔ 완화 매핑**:
+
+- **THR-2** (Epic-gate observation dismissal → Epic close → consumer downstream defect leak, blast radius CRITICAL) → D6.2 sub-clause 완화
+
+**Catching evidence** (`[verified: CFP-986 fix-event comment 4477435338 verbatim]`):
+
+> "Discovered by Epic IntegrationTest gate + ADR-070 verify-before-trust NOT dismissing a flagged 'non-blocking observation' — codeforge governance working as designed."
+
+**Operational gate impact**: Epic close 결정자 = Orchestrator (Epic owner) — IntegrationTestAgent advisory layer 보존. Pre-Amendment ad-hoc rationalize → Post-Amendment STANDING direct reproduction. operational role boundary 침범 0건 (ADR-055 IntegrationTestAgent 자체 role 변경 0). ADR-082 §결정 1 disjoint 4-layer 표 정합 — IntegrationTestAgent = internal lane agent, 본 §결정 D6.2 = read-time attestation 신뢰성 layer (ADR-082 write-time semantic truth layer 와 disjoint axis), scope 침범 0 verify.
+
+**Failure mode + mitigation**:
+
+- (FM-1) IntegrationTestAgent 자체 false positive — Orchestrator verify-before-trust 1회 추가 cost (Epic close decision 자체는 reproduction 결과 ground truth 기반)
+- (FM-2) IntegrationTestAgent false negative — D6.2 catch surface 가 IntegrationTestAgent flag 의존, 후속 carrier 영역 (ADR-055 verdict format 안 explicit observation marker 신설 follow-up)
+
+#### D6.3 — Scope ratchet-up direction + ADR-082 §결정 1 disjoint 4-layer 표 cross-ref
+
+본 §결정 D6 = `verify-before-trust pattern` (ADR-070 §결정 D1 본문) 의 **적용 대상 enumeration** ratchet-up 확장 — pattern 자체 (verify-before-trust 의 sub-scope discipline) 가 invariant 이고, D1 scope (Codex external worker output) → D6.1 (DeveloperPL self-claim) + D6.2 (IntegrationTestAgent flagged observation) 영역 확장. **scope 확장 ratchet-up direction** (ADR-064 §결정 7 정합, 약화 0).
+
+ADR-082 §결정 1 disjoint 4-layer 표 cross-ref:
+
+| layer | scope | D6.1 (DevPL self-claim) | D6.2 (IntegrationTestAgent flagged observation) |
+|---|---|---|---|
+| ADR-073 | Orchestrator cross-repo state | — | — |
+| ADR-070 (D1 + 본 D6 확장) | Codex external worker output → DevPL self-claim + IntegrationTestAgent flagged observation | scope expansion (read-time attestation 신뢰성 layer) | scope expansion (read-time attestation 신뢰성 layer) |
+| ADR-082 | internal lane agent self-write semantic truth | DevPL self-write 영역 (§9 evidence write) overlap, disjoint axis (write-time source 사실성) | IntegrationTestAgent self-write (§14 evidence) overlap, disjoint axis |
+| ADR-045 §D | cross-Story pattern forcing function | pattern_count=4 origin (E-1 forcing function) | pattern_count=1 super-class origin (E-2 forcing function) |
+
+**scope 침범 0건 verify**: 본 §결정 D6 의 normative content = read-time attestation 신뢰성 (외부 worker output / DevPL self-claim / IntegrationTestAgent observation = 모두 "주장의 신뢰성 검증" axis). ADR-082 write-time semantic truth (source/value/ownership write-time verify axis) 와 disjoint. ADR-073 Orchestrator cross-repo state verify 와 disjoint. ADR-045 §D forcing function (pattern_count threshold trigger) 와 disjoint. 4-layer scope invariant 0건 변경.
+
+#### D6.4 — `mechanical_enforcement_actions: []` retain (Amendment 1/2/3 precedent 4번째 instance)
+
+본 Amendment 4 = ADR-070 §D5 declaration-only retain precedent chain 4번째 instance. `mechanical_enforcement_actions: []` retain. Amendment 1 (CFP-776 cross-ref-only) + Amendment 2 (CFP-844 cross-ref-only) + Amendment 3 (CFP-946-A D1 expansion) 패턴 정합. ADR-040 Amendment 3 §결정 7.D normative ADR 5 category enum (governance / security / tooling-infrastructure / dogfood-out / lifecycle) 안 본 ADR-070 category `workflow-policy` 부재 → mechanical_enforcement_actions[] 의무 면제. 단 declaration 명시 보존 (Amendment 1/2/3 패턴 답습).
+
+**거절된 대안 D6**:
+
+- (D6-A) review-verdict-v4 v4.5 → v4.6 MINOR carrier 신설 (`developerpl_realexec_independently_reproduced: bool` field) — sibling sync 의무 (ADR-010, codeforge-review canonical) + dual-PR cost + doc-only fast-path 이탈. 본 Story = Q1-A 채택 (declaration-only retain), Q1-B = 별 carrier sentinel 조건 (false-self-claim post-Amendment 1+ recurrence 영역, 현재 sentinel 0 sample).
+- (D6-B) ADR-045 Amendment 7 (§D-9 sister clause) — E-2 분리 carrier. CFP scope unitary 위배 가능성 (ADR-064 §결정 5) + single Story = 2 ADR Amendment 분산 cost. 본 Story = Q2-A 채택 (E-1 + E-2 super-class 통합).
+- (D6-C) ADR-082 Amendment — write-time semantic truth layer 와 disjoint axis (E-2 = read-time observation dismissal discipline, ADR-082 scope mismatch).
+- (D6-D) 신규 ADR-084 신설 — E-3 (channel-disjointness contract codification) 의 carrier 영역, 본 E-1/E-2 와 disjoint pattern (후속 CFP-989 carrier).
+
 ## 결과
 
 - ADR-052 6 touchpoint 자동 dispatch 영역에 verify-before-trust 채널 normative anchor 신설 — Codex 발화 evidence ground truth 확정 의무
@@ -269,6 +359,24 @@ Codex worker 의 sandbox access 실패 = platform inherent (Claude Code agent ru
 
 본 Amendment 3 = D1 본문 expansion + D2/D3/D4/D5 결정 본문 + Amendment 1/2 본문 의미 변경 없음. 본 ADR-070 §결정 1 expansion = 운영적 substitution behavior 의 normative codification (기존 single-substitution behavior → 3-enum exhaustive).
 
+### Amendment 4 (2026-05-19 KST, CFP-988)
+
+**참조**: [`mclayer/codeforge-internal-docs:wrapper/stories/CFP-988.md`](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/stories/CFP-988.md) — Amendment 4 carrier (ADR-070 신규 §결정 D6 추가)
+
+**상황**: ADR-045 §D-9 forcing function emission from Epic CFP-858 retro (EPIC-RESULTS-CFP-858.md §6.1 E-1 + §6.2 E-2). pattern_count=4 ≥ threshold 2 mandatory adr_draft_emitted. 4 instance lineage (CFP-699 + CFP-702 + CFP-899 + CFP-900-iter0/iter1) DeveloperPL false-self-claim recurrence. ADR-070 §결정 D1 scope (Codex external worker output) 안 verify-before-trust pattern 의 적용 대상 enumeration 확장 ratchet-up direction 필요.
+
+**결정**: §결정 D6 (Amendment 4) 신설 — D6.1 mandatory-real-execution-evidence STANDING normative + D6.2 Epic-gate verify-don't-dismiss sub-clause + D6.3 scope ratchet-up direction + ADR-082 §결정 1 disjoint 4-layer 표 cross-ref + D6.4 `mechanical_enforcement_actions: []` retain (precedent chain 4번째 instance).
+
+본 §결정 D6 ↔ ADR-082 §결정 1 4-layer 표 = **disjoint axis** (D6 = read-time attestation 신뢰성 layer / ADR-082 = write-time semantic truth layer). scope 침범 0건 verify.
+
+본 §결정 D6 ↔ ADR-045 §D-9 = **forcing function origin** (ADR-045 §D-9 = cross-Story pattern_count threshold trigger / 본 D6 = trigger 산물 normative anchor).
+
+본 §결정 D6 ↔ ADR-055 = **catching layer SSOT** (E-2 sub-clause 의 IntegrationTest gate 영역 cross-ref).
+
+본 §결정 D6 ↔ ADR-067 = **per-iteration verify content vs post-failure boundary reassessment** axis disjoint (cycle conflict 0건).
+
+ADR-070 §D5 declaration-only retain precedent chain 4번째 instance — `mechanical_enforcement_actions: []` retain (Amendment 1 ADR-082 cross-ref + Amendment 2 ADR-081 §D6 severity calibration cross-ref + Amendment 3 D1 expansion 3-enum codify 패턴 정합). 본 Amendment 4 = D1-D5 + Amendment 1/2/3 본문 의미 변경 없음 — 신규 §결정 D6 추가 only.
+
 ## 해소 기준
 
 N/A — permanent policy (verify-before-trust = Codex worker 사용 영구 invariant, sandbox 영역 변경 없으면 permanent retain). ADR-058 §결정 1-3 정합:
@@ -287,3 +395,6 @@ N/A — permanent policy (verify-before-trust = Codex worker 사용 영구 invar
 - [`docs/adr/ADR-RESERVATION.md`](ADR-RESERVATION.md) — ADR-070 reserved 등록 SSOT
 - [`docs/inter-plugin-contracts/fix-event-v1.md`](../inter-plugin-contracts/fix-event-v1.md) — Story §10 FIX Ledger schema (D3 영역 false positive count tally 적용 대상)
 - [`docs/adr/ADR-082-write-time-self-write-verification-mandate.md`](ADR-082-write-time-self-write-verification-mandate.md) — disjoint super-class (Amendment 1 cross-ref, CFP-776; D5 declaration-only retain = §결정 6 선례)
+- [`docs/adr/ADR-045-story-retro-mandatory-trigger.md`](ADR-045-story-retro-mandatory-trigger.md) — §D-9 cross-Story pattern forcing function origin (Amendment 4 forcing function)
+- [`docs/adr/ADR-055-integration-test-lane-policy.md`](ADR-055-integration-test-lane-policy.md) — Epic IntegrationTest gate (Amendment 4 D6.2 catching layer SSOT)
+- [`docs/adr/ADR-067-fix-ledger-implementability-escalation.md`](ADR-067-fix-ledger-implementability-escalation.md) — Max FIX 3/3 + RESET (Amendment 4 D6 per-iteration verify content 와 axis disjoint)
