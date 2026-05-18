@@ -12,8 +12,9 @@
 # Consumer-applicable: consumer repo 에 mirror 해야 하는 workflow
 # Plugin-only: wrapper/plugin repo 자체 관리 전용 (consumer 에 불필요)
 #
-# §4.12 mixed_repo_handling: both filter applied, union
-#   → mixed repo 도 이 whitelist 를 기준으로 consumer 측 workflow 선택
+# §4.12 mixed_repo_handling: ADR-083 §결정 5 pseudocode verbatim
+#   → mixed repo = plugin|mixed → full workflow mirror (filter skip)
+#   → 본 whitelist 는 consumer 분류 시만 적용 (mixed 는 0 skip invariant)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Story / Phase lifecycle workflows (consumer 필수)
@@ -66,22 +67,51 @@ workflow-yaml-parse.yml
 
 # ─────────────────────────────────────────────────────────────────────────────
 # OMITTED (plugin-only — consumer 에 미전파):
-#   version-bump-atomic-check.yml     — plugin version 관리 전용
-#   marketplace-drift-detection.yml   — marketplace membership 관리 전용
-#   marketplace-description-verbatim.yml — plugin description 체크 전용
-#   check-plugin-version-bump.yml     — plugin SemVer 전용
-#   inter-plugin-contracts-parity.yml — plugin family 내부 contract
-#   sibling-workflow-parity.yml       — plugin sibling 동기화 전용
-#   atomic-upgrade-zero-drift.yml     — plugin atomic upgrade 전용
-#   architecture-drift.yml            — plugin 내부 설계 drift 전용
-#   architecture-drift-weekly.yml     — 위 동일
-#   carrier-bootstrap-check.yml       — plugin 내부 carrier 전용
-#   channel-drift-detection.yml       — plugin inter-plugin contract 전용
-#   per-plugin-cumulative-counter.yml — plugin family 카운터 전용
-#   superpowers-integration.yml       — plugin superpowers 연동 전용
-#   superpowers-schema-drift.yml      — plugin superpowers 스키마 전용
-#   cross-plugin-ownership-verify.yml — plugin cross-ownership 전용
-#   adr-077-*.yml                     — plugin ADR-077 전용 (3종)
-#   rate-limit-fallback-kpi.yml       — plugin Sonnet/Opus KPI 전용
-#   post-merge-followup-success-rate-kpi.yml — plugin KPI 전용
+#
+# 분류 기준 (generalized rule):
+#   (A) marketplace-* 류       — marketplace registry 관리 전용
+#   (B) *-version-bump* 류     — plugin SemVer 관리 전용
+#   (C) *-parity 류            — plugin sibling 동기화 전용
+#   (D) *-ssot-check / *-wording* 류 — plugin SSOT 자기 검증 전용
+#   (E) *-postmerge 류         — plugin post-merge followup 전용
+#   (F) corpus-* 류            — plugin corpus/ownership 검증 전용
+#   (G) architecture-drift* 류 — plugin 내부 설계 drift 전용
+#   (H) adr-077-* 류           — plugin ADR-077 전용 (codeforge 내부 governance)
+#   (I) *-kpi 류               — plugin KPI measurement 전용
+#   (J) superpowers-* 류       — plugin superpowers 연동 전용
+#   (K) *-inter-plugin* 류     — plugin family 내부 contract 전용
+#   (L) carrier-* 류           — plugin 내부 carrier 전용
+#
+# 구체 항목:
+#   version-bump-atomic-check.yml     — (B)
+#   marketplace-drift-detection.yml   — (A)
+#   marketplace-description-verbatim.yml — (A)
+#   check-plugin-version-bump.yml     — (B)
+#   inter-plugin-contracts-parity.yml — (K)
+#   sibling-workflow-parity.yml       — (C)
+#   atomic-upgrade-zero-drift.yml     — (G)
+#   architecture-drift.yml            — (G)
+#   architecture-drift-weekly.yml     — (G)
+#   carrier-bootstrap-check.yml       — (L)
+#   channel-drift-detection.yml       — (K)
+#   per-plugin-cumulative-counter.yml — (I)
+#   superpowers-integration.yml       — (J)
+#   superpowers-schema-drift.yml      — (J)
+#   cross-plugin-ownership-verify.yml — (F)
+#   corpus-claim-verify.yml           — (F)
+#   adr-077-design-reading-mandate-declared.yml — (H)
+#   adr-077-integration.yml           — (H)
+#   adr-077-ratchet-declared.yml      — (H)
+#   rate-limit-fallback-kpi.yml       — (I)
+#   post-merge-followup-success-rate-kpi.yml — (I)(E)
+#   section-1-verbatim-postmerge.yml  — (E)
+#   wording-ssot-check.yml            — (D)
+#   story-section-9-typed-check.yml   — plugin §9 verdict schema 전용
+#   handoff-wording-check.yml         — (D)
+#   parallel-dispatch-prompt-check.yml — plugin dispatch protocol 전용
+#   reservation-cleanup.yml           — plugin ADR-RESERVATION 전용
+#   cross-repo-bypass-counter.yml     — plugin bypass 카운터 전용
+#   dialog-fidelity-measurement.yml   — plugin dialog fidelity 전용
+#   fix-event-depth-scope-presence.yml — plugin fix-event 전용
+#   debate-convergence-quality.yml    — plugin debate protocol 전용
 # ─────────────────────────────────────────────────────────────────────────────

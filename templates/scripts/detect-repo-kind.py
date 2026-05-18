@@ -8,14 +8,13 @@ reconcile-protocol-v1 v1.9 §4.12 consumer_applicability_filter_binding
 ADR-083 Wave-1 declaration → Wave-2 runtime implementation
 
 §4.12 truth-table (4-way matrix):
-  - plugin.json 존재 + marketplace member  = plugin   (exit 0)
+  - plugin.json 존재 (overlay 무관)        = plugin   (exit 0)
+  - plugin.json 존재 + overlay 존재        = mixed    (exit 2)
   - plugin.json 부재 + overlay project.yaml = consumer (exit 1)
-  - plugin.json 존재 + .claude/_overlay 존재 = mixed   (exit 2)
   - 신호 없음                               = unknown  (exit 3, fail-closed)
 
 CLI:
   python3 detect-repo-kind.py [--repo-root <path>] [--check-signal <signal>]
-                               [--skip-marketplace-check]
 
 Exit codes:
   0 = plugin
@@ -27,14 +26,18 @@ Output (stdout): one of: plugin / consumer / mixed / unknown
 
 ADR-061 정합: 외부 .py 파일, explicit absolute path
 ADR-083 §결정 1: consumer_applicability_filter_detection (Wave-1 declaration)
+ADR-083 §결정 2: filesystem_only_invariant = true (cross-repo marketplace check = out_of_scope)
 ADR-027 Amendment 6 §결정 10: 4-way truth-table signals
 reconcile-protocol-v1 v1.9 §4.12 repo_kind_detection_signals
+
+F-CR-899-5 FIX: marketplace membership check 제거 (filesystem_only_invariant 위반)
+  - _has_marketplace_membership() 함수 제거
+  - --skip-marketplace-check flag 제거
+  - marketplace_membership signal 제거
+  - filesystem-only: .claude-plugin/plugin.json + .claude/_overlay/project.yaml 2 signal only
 """
 
 import argparse
-import json
-import os
-import subprocess
 import sys
 from pathlib import Path
 
@@ -43,21 +46,15 @@ from pathlib import Path
 # ─────────────────────────────────────────────────────────────────────────────
 _SIGNAL_PLUGIN_JSON = "plugin_json"
 _SIGNAL_OVERLAY_PROJECT_YAML = "overlay_project_yaml"
-_SIGNAL_MARKETPLACE_MEMBERSHIP = "marketplace_membership"
 
 _VALID_SIGNALS = (
     _SIGNAL_PLUGIN_JSON,
     _SIGNAL_OVERLAY_PROJECT_YAML,
-    _SIGNAL_MARKETPLACE_MEMBERSHIP,
 )
-
-# marketplace.json 위치 (wrapper repo root 기준 — SSOT: mclayer/marketplace)
-_MARKETPLACE_REPO = "mclayer/marketplace"
-_MARKETPLACE_PATH = "marketplace.json"
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# 신호 탐지 함수
+# 신호 탐지 함수 (filesystem-only, ADR-083 §결정 2)
 # ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -66,72 +63,21 @@ def _has_plugin_json(repo_root: Path) -> bool:
 
     §4.12 repo_kind_detection_signals Primary 1:
       `.claude-plugin/plugin.json` 존재.
+
+    latency: Path.exists() = O(1) syscall, < 1ms (empirically <0.1ms on NVMe).
     """
     return (repo_root / ".claude-plugin" / "plugin.json").exists()
 
 
 def _has_overlay_project_yaml(repo_root: Path) -> bool:
-    """Primary signal 3: .claude/_overlay/project.yaml 존재 여부.
+    """Primary signal 2: .claude/_overlay/project.yaml 존재 여부.
 
     §4.12 repo_kind_detection_signals Primary 3:
       `.claude/_overlay/project.yaml`.
+
+    latency: Path.exists() = O(1) syscall, < 1ms (empirically <0.1ms on NVMe).
     """
     return (repo_root / ".claude" / "_overlay" / "project.yaml").exists()
-
-
-def _has_marketplace_membership(repo_root: Path, skip: bool) -> bool | None:
-    """Primary signal 2: marketplace.json membership check.
-
-    §4.12 repo_kind_detection_signals Primary 2:
-      `marketplace.json` membership (cross-repo gh api, ADR-066 PAT).
-
-    Returns:
-      True  = membership 확인
-      False = 비멤버
-      None  = 확인 불가 (skip or API 실패)
-    """
-    if skip:
-        return None
-
-    # plugin.json 에서 name 추출
-    plugin_json = repo_root / ".claude-plugin" / "plugin.json"
-    if not plugin_json.exists():
-        return False
-
-    try:
-        data = json.loads(plugin_json.read_text(encoding="utf-8"))
-        plugin_name = data.get("name", "")
-    except (json.JSONDecodeError, OSError):
-        return None
-
-    if not plugin_name:
-        return None
-
-    # gh api 로 marketplace.json content 조회
-    pat = os.environ.get("CODEFORGE_CROSS_REPO_PAT", "")
-    env = {**os.environ}
-    if pat:
-        env["GH_TOKEN"] = pat
-
-    try:
-        result = subprocess.run(
-            [
-                "gh",
-                "api",
-                f"repos/{_MARKETPLACE_REPO}/contents/{_MARKETPLACE_PATH}",
-                "--jq",
-                f'.content | @base64d | fromjson | .plugins[] | select(.name == "{plugin_name}") | .name',
-            ],
-            capture_output=True,
-            text=True,
-            env=env,
-            timeout=15,
-        )
-        if result.returncode == 0 and result.stdout.strip():
-            return True
-        return False
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
-        return None
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -139,10 +85,16 @@ def _has_marketplace_membership(repo_root: Path, skip: bool) -> bool | None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 
-def detect_repo_kind(repo_root: Path, skip_marketplace: bool) -> str:
-    """§4.12 truth-table 4-way 분류.
+def detect_repo_kind(repo_root: Path) -> str:
+    """§4.12 truth-table 4-way 분류 (filesystem-only).
 
     Returns: 'plugin' | 'consumer' | 'mixed' | 'unknown'
+
+    ADR-083 §결정 5 pseudocode:
+      if has_plugin and has_overlay → mixed
+      if has_plugin                 → plugin
+      if has_overlay                → consumer
+      else                          → unknown (fail-closed)
     """
     has_plugin = _has_plugin_json(repo_root)
     has_overlay = _has_overlay_project_yaml(repo_root)
@@ -153,9 +105,6 @@ def detect_repo_kind(repo_root: Path, skip_marketplace: bool) -> str:
 
     # plugin: plugin.json 존재 (overlay 없음)
     if has_plugin:
-        # marketplace membership check (ADR-066 PAT)
-        membership = _has_marketplace_membership(repo_root, skip=skip_marketplace)
-        # skip 또는 확인 불가 시 plugin.json 단독으로 판정 (offline fallback)
         return "plugin"
 
     # consumer: plugin.json 부재 + overlay project.yaml 존재
@@ -166,23 +115,15 @@ def detect_repo_kind(repo_root: Path, skip_marketplace: bool) -> str:
     return "unknown"
 
 
-def _check_single_signal(repo_root: Path, signal: str, skip_marketplace: bool) -> str:
+def _check_single_signal(repo_root: Path, signal: str) -> str:
     """단일 신호 probe (--check-signal 옵션).
 
-    Returns: 'present' | 'absent' | 'unknown'
+    Returns: 'present' | 'absent'
     """
     if signal == _SIGNAL_PLUGIN_JSON:
         return "present" if _has_plugin_json(repo_root) else "absent"
     elif signal == _SIGNAL_OVERLAY_PROJECT_YAML:
         return "present" if _has_overlay_project_yaml(repo_root) else "absent"
-    elif signal == _SIGNAL_MARKETPLACE_MEMBERSHIP:
-        result = _has_marketplace_membership(repo_root, skip=skip_marketplace)
-        if result is True:
-            return "present"
-        elif result is False:
-            return "absent"
-        else:
-            return "unknown"
     else:
         raise ValueError(f"알 수 없는 signal: {signal}")
 
@@ -206,7 +147,10 @@ _EXIT_CODE_MAP = {
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Detect repo kind for CFP-899 consumer-applicability filter (§4.12)",
+        description=(
+            "Detect repo kind for CFP-899 consumer-applicability filter (§4.12). "
+            "filesystem-only: 2 primary signals only (ADR-083 §결정 2)."
+        ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
@@ -217,12 +161,7 @@ def main() -> int:
     parser.add_argument(
         "--check-signal",
         choices=list(_VALID_SIGNALS),
-        help="Single signal probe (plugin_json | overlay_project_yaml | marketplace_membership)",
-    )
-    parser.add_argument(
-        "--skip-marketplace-check",
-        action="store_true",
-        help="Skip cross-repo marketplace API check (offline / consumer self-managed)",
+        help="Single signal probe (plugin_json | overlay_project_yaml)",
     )
     args = parser.parse_args()
 
@@ -230,16 +169,12 @@ def main() -> int:
 
     if args.check_signal:
         # 단일 신호 probe 모드
-        result = _check_single_signal(
-            repo_root,
-            signal=args.check_signal,
-            skip_marketplace=args.skip_marketplace_check,
-        )
+        result = _check_single_signal(repo_root, signal=args.check_signal)
         print(result)
         return 0
 
     # 4-way 분류 모드
-    kind = detect_repo_kind(repo_root, skip_marketplace=args.skip_marketplace_check)
+    kind = detect_repo_kind(repo_root)
     print(kind)
     return _EXIT_CODE_MAP[kind]
 

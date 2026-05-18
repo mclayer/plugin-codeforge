@@ -449,21 +449,26 @@ _reconcile_file() {
         # ── §4.12 consumer-applicability filter hook (CFP-899 Phase 2) ──────
         # §4.12 hook_integration: sequential composition closure → filter → cp
         # dependency closure (§4.11) 직후 sibling line 삽입 (plugin-only skip)
-        local DETECT_REPO_KIND_PY="${DETECT_REPO_KIND_PY:-${SCRIPT_DIR}/../templates/scripts/detect-repo-kind.py}"
-        local CONSUMER_APPLICABLE_LIST="${CONSUMER_APPLICABLE_LIST:-${SCRIPT_DIR}/../templates/scripts/consumer_applicable_workflows.txt}"
+        #
+        # F-CR-899-4 FIX: env var ID = binding-spec 정합 (FILTER_REPO_KIND_PY / CONSUMER_APPLICABLE_WHITELIST)
+        local FILTER_REPO_KIND_PY="${FILTER_REPO_KIND_PY:-${SCRIPT_DIR}/../templates/scripts/detect-repo-kind.py}"
+        local CONSUMER_APPLICABLE_WHITELIST="${CONSUMER_APPLICABLE_WHITELIST:-${SCRIPT_DIR}/../templates/scripts/consumer_applicable_workflows.txt}"
         if [[ -f "${wrapper_file}" ]] && [[ "${wrapper_file}" == *.yml ]]; then
             local _repo_kind
-            _repo_kind=$(python3 "${DETECT_REPO_KIND_PY}" --repo-root "${CONSUMER_ROOT:-${CONSUMER_OVERLAY_DIR%/.claude/_overlay}}" --skip-marketplace-check 2>/dev/null) || true
+            # F-CR-899-7 FIX: stderr 보존 + exit code propagate (2>/dev/null + || true 제거)
+            _repo_kind=$(python3 "${FILTER_REPO_KIND_PY}" --repo-root "${CONSUMER_ROOT:-${CONSUMER_OVERLAY_DIR%/.claude/_overlay}}" 2>&1) || _repo_kind="unknown"
             case "${_repo_kind}" in
-                plugin)
-                    # plugin repo: 전체 workflow mirror (filter 없음)
+                plugin|mixed)
+                    # F-CR-899-2 FIX: plugin + mixed = 전체 workflow mirror (0 skip)
+                    # ADR-083 §결정 5 pseudocode verbatim: plugin|mixed → full set
+                    # ADR-083 §결정 6: wrapper self-app 76 .yml 모두 적용 + 0 skip invariant
                     ;;
-                consumer|mixed)
-                    # consumer / mixed: positive whitelist filter 적용
+                consumer)
+                    # consumer only: positive whitelist filter 적용
                     local _wf_basename
                     _wf_basename="$(basename "${wrapper_file}")"
-                    if [[ -f "${CONSUMER_APPLICABLE_LIST}" ]]; then
-                        if ! grep -Fxq "${_wf_basename}" "${CONSUMER_APPLICABLE_LIST}" 2>/dev/null; then
+                    if [[ -f "${CONSUMER_APPLICABLE_WHITELIST}" ]]; then
+                        if ! grep -Fxq "${_wf_basename}" "${CONSUMER_APPLICABLE_WHITELIST}" 2>/dev/null; then
                             [[ "${dry_run}" == "true" ]] && echo "${SCRIPT_NAME} [dry-run] [FILTER] skip plugin-only workflow: ${_wf_basename}"
                             [[ "${dry_run}" == "false" ]] && echo "${SCRIPT_NAME} [FILTER] skip plugin-only workflow: ${_wf_basename}"
                             return 0
@@ -471,12 +476,16 @@ _reconcile_file() {
                     fi
                     ;;
                 unknown)
+                    # F-CR-899-1 FIX: return 1 (filter abort, §4.11 closure return 2 와 분리)
                     # §4.12 fail_closed_unknown: 신호 없음 → abort
                     echo "${SCRIPT_NAME} [ERR] repo-kind unknown (signal absent) — fail-closed abort (§4.12)" >&2
-                    return 2
+                    return 1
                     ;;
                 *)
-                    # detect 스크립트 부재 등 — 안전 방향: 계속 진행 (filter skip)
+                    # F-CR-899-3 FIX: catch-all = fail-closed (ADR-083 §결정 4 직접 적용)
+                    # 알 수 없는 enum 값 = enum 오염 → abort (fail-open 차단)
+                    echo "${SCRIPT_NAME} [ERR] Consumer-applicability filter: unknown repo_kind enum value '${_repo_kind}'" >&2
+                    return 1
                     ;;
             esac
         fi
