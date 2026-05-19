@@ -83,9 +83,9 @@ related_contracts:
 
 본 4-tuple SSOT 는 wrapper Story scope 외 (consumer canary tier 활성 Story carrier 영역). wrapper PR (Story-4 carrier) = schema declare + workflow + scripts/lib + label-registry entry append 영역만 (code 0 + runtime 0 + secret/credential 0 변경 invariant). 실 promotion gate evaluation = consumer canary→beta promotion PR open 시점 (Tier-2 runtime measurement, ProductionEvidenceDeputy spawn 영역).
 
-### downgrade scope 외 (Story-5 carrier)
+### downgrade scope 외 (Story-5 CFP-1014 carrier 완료, wired 활성)
 
-stable → beta demotion / beta → canary demotion 영역 = Story-5 carrier (placeholder_reserve). 본 4-tuple SSOT = forward path (canary → beta → stable promotion) 한정. downgrade asymmetry marker = §4.14 `downgrade_asymmetry_marker.status: placeholder_reserve` field 영역 (Story-5 Phase 1 = wired 단독 promotion 의무, §4.8 version_handshake placeholder_reserve→active 선례 verbatim 답습).
+stable → beta demotion / beta → canary demotion 영역 = Story-5 CFP-1014 carrier 완료 (`wired` 활성). 본 4-tuple SSOT = forward path (canary → beta → stable promotion) 한정 — downgrade asymmetry invariant 가 reconcile-protocol-v1 v1.12 §4.14 `downgrade_asymmetry_marker.status: wired` field 로 declarative SSOT carrier 완결 (Story-5 Phase 1 = wired 단독 promotion 활성 완료, §4.8 version_handshake placeholder_reserve→active 선례 verbatim 답습, partial-active state 도입 0 / field shape 변경 0 / closed_enum length=2 invariant + open_extension:false 명시). downgrade execution runtime path = 별 future carrier (declare-only disjoint declarative SSOT only — runtime demotion execution = sequential carrier OOS).
 
 ### marketplace.json channels[] real populate scope 외
 

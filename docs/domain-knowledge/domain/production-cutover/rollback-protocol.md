@@ -72,7 +72,7 @@ rollback (canary 이전 state 복귀) vs forward-fix (canary 유지 + hotfix Sto
 ### Step 5 — Execute
 
 **5a. rollback path**
-- marketplace.json `plugins[codeforge].channels[*].versions[]` revert (Story-5 downgrade asymmetry invariant 정합)
+- marketplace.json `plugins[codeforge].channels[*].versions[]` revert (reconcile-protocol-v1 v1.12 §4.14 `downgrade_asymmetry_marker.status: wired` declarative invariant 정합 — Story-5 CFP-1014 carrier 완료. rollback ≠ demotion boundary annotation: rollback = operational version revert layer (사용자 explicit go-ahead 의무) / demotion = channel tier 하향 declare 차단 layer (forward-only ratchet wired). 두 layer disjoint — rollback path 는 invariant 준수 검증 영역, demotion path 는 invariant 자체로 차단)
 - consumer environment 의 plugin install version 강제 downgrade (`/plugins install codeforge@<previous-version>`)
 - production WAL sample re-verify (rollback 후 4-evidence-quad 재measurement)
 
@@ -88,7 +88,7 @@ ProductionEvidenceDeputy 4-evidence-quad re-run + cross-Story consistency check 
 - CSC-1: label-registry-v2 sequential MINOR bump (current 정합)
 - CSC-2: ADR-72 amendment_log monotonic (current 정합)
 - CSC-3: reconcile-protocol-v1 schema version (current 정합)
-- **CSC-4 (신규, rollback path 만)**: rollback 정합 verify (downgrade asymmetry invariant + marketplace.json channels[] revert 정합)
+- **CSC-4 (신규, rollback path 만)**: rollback 정합 verify (reconcile-protocol-v1 v1.12 §4.14 `downgrade_asymmetry_marker.status: wired` declarative invariant — Story-5 CFP-1014 carrier 완료 + marketplace.json channels[] revert 정합 + rollback ≠ demotion boundary disjoint annotation 정합)
 
 ### Step 7 — Postmortem
 
