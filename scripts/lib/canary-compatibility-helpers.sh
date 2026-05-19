@@ -68,48 +68,32 @@ _extract_4tuple_measurement_source() {
       ;;
   esac
 
-  # yaml.safe_load 의무 (INV-1, grep parse 금지) — Python stdlib only (pyyaml 의존 0)
-  local result
-  result=$(python3 -c "
-import sys
-import re
+  # ADR-061 §결정 1 — 외부 Python 파일 위임 (inline heredoc 금지, Windows Git Bash $var 치환 충돌 해소)
+  # extract_4tuple_measurement_source.py: POSIX/Windows 경로 양형 지원 + sub_field enum 검증 포함
+  local _extract_py="${_CFP991_SCRIPT_DIR:-$(dirname "${BASH_SOURCE[0]}")}/extract_4tuple_measurement_source.py"
+  if [[ ! -f "$_extract_py" ]]; then
+    # Fallback: lib 디렉토리 상대 탐색
+    _extract_py="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/extract_4tuple_measurement_source.py"
+  fi
 
-with open('$yaml_path', 'r', encoding='utf-8') as f:
-    content = f.read()
+  if [[ ! -f "$_extract_py" ]]; then
+    echo "[canary-compat] ERROR: extract_4tuple_measurement_source.py not found" >&2
+    return 2
+  fi
 
-# Locate canary_compatibility_check_binding block (reconcile-protocol-v1.md §4.14)
-block_match = re.search(r'canary_compatibility_check_binding:.*?(?=^[a-z_]+:|\Z)', content, re.MULTILINE | re.DOTALL)
-if not block_match:
-    print('NOT_FOUND', file=sys.stderr)
-    sys.exit(1)
+  local result rc
+  result=$(python3 "$_extract_py" "$yaml_path" "$sub_field" 2>/dev/null)
+  rc=$?
 
-block = block_match.group(0)
+  if [[ $rc -eq 2 ]]; then
+    echo "[canary-compat] ERROR: measurement_source parse error for '$sub_field' in $yaml_path" >&2
+    return 2
+  fi
 
-# Locate promotion_criteria_4tuple sub-block
-sub_block_match = re.search(r'promotion_criteria_4tuple:.*?(?=^  [a-z_]+:|\Z)', block, re.MULTILINE | re.DOTALL)
-if not sub_block_match:
-    print('NOT_FOUND', file=sys.stderr)
-    sys.exit(1)
-
-sub_block = sub_block_match.group(0)
-
-# Locate sub_field block
-field_match = re.search(rf'^      {re.escape(\"$sub_field\")}:\s*\n(.*?)(?=^      [a-z_]+:|\Z)', sub_block, re.MULTILINE | re.DOTALL)
-if not field_match:
-    print('NOT_FOUND', file=sys.stderr)
-    sys.exit(1)
-
-# Locate measurement_source within field block
-ms_match = re.search(r'measurement_source:\s*\"([^\"]+)\"', field_match.group(1))
-if not ms_match:
-    print('NOT_FOUND', file=sys.stderr)
-    sys.exit(1)
-
-print(ms_match.group(1))
-" 2>/dev/null) || {
+  if [[ $rc -ne 0 ]] || [[ -z "$result" ]]; then
     echo "[canary-compat] WARNING: measurement_source for '$sub_field' not found in $yaml_path" >&2
     return 1
-  }
+  fi
 
   echo "$result"
   return 0
