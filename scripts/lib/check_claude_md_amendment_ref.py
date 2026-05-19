@@ -159,9 +159,9 @@ def check(claude_md_path: str, adr_dir_path: str) -> int:
     content = claude_md.read_text(encoding="utf-8")
     lines = content.splitlines()
 
-    # CLAUDE.md 전체에서 두 패턴을 결합 detect:
-    #   Pattern A: "Amendment N" 바로 옆에 "[ADR-NNN]" 링크가 같은 라인 또는 근접 컨텍스트에 존재
-    #   Pattern B: "[ADR-NNN](...)" 링크 detect → 주변 ±3 줄 안에 "Amendment N" 패턴 있는지 확인
+    # CLAUDE.md 전체에서 두 패턴을 same-line strict pure 로 결합 detect (ADR-074 Amendment 1 §결정 9):
+    #   "[ADR-NNN](...)" 링크 AND "Amendment M (CFP-K)" 인용이 동일 line 에 있어야 pair 성립.
+    #   cross-context window (±5) 완전 제거 — phantom-ahead/stale-behind false-pair class 차단.
 
     # ADR 링크 regex
     adr_link_re = re.compile(r"\[ADR-(\d+)\]\([^)]+\)")
@@ -176,12 +176,11 @@ def check(claude_md_path: str, adr_dir_path: str) -> int:
         if not adr_matches:
             continue
 
-        # 이 라인에 ADR 링크가 있음 — ±5 줄 범위에서 Amendment 참조 탐색
-        context_start = max(0, line_idx - 5)
-        context_end = min(len(lines), line_idx + 6)
-        context_block = "\n".join(lines[context_start:context_end])
-
-        amend_matches = list(amend_re.finditer(context_block))
+        # 이 라인에 ADR 링크가 있음 — 동일 라인에서만 Amendment 참조 탐색 (same-line strict pure)
+        # option (b) Same-line strict pure: ADR-N 링크와 Amendment M (CFP-K) 인용이
+        # 반드시 같은 line 에 존재해야 pairing 성립. ±5 cross-context window 제거.
+        # 근거: ADR-074 Amendment 1 §결정 9 (CFP-1009 carrier).
+        amend_matches = list(amend_re.finditer(line))
         if not amend_matches:
             continue
 
