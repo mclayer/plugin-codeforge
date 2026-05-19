@@ -4,7 +4,7 @@ title: CLAUDE.md Amendment ref drift detection lint — cross-section coherence 
 status: Proposed
 category: governance
 date: 2026-05-14
-amended_by: CFP-1009  # Amendment 1 carrier — regex precision (Dual-anchor + historical reference recognition)
+amended_by: CFP-1009  # Amendment 1 carrier — regex precision (option (b) Same-line strict pure)
 amended_date: 2026-05-20
 is_transitional: false
 carrier_story: CFP-708
@@ -27,7 +27,7 @@ related_stories:
   - CFP-263  # doc-locations lint lineage (cross-section coherence pattern 답습)
   - CFP-1000  # Amendment 1 evidence (CFP-1000 1st false-pair occurrence — L189 phantom-ahead)
   - CFP-1001  # Amendment 1 escalation carrier (CFP-1001 retro pattern_count = 2 reach, ADR-045 §D-9 mandate)
-  - CFP-1009  # Amendment 1 carrier (regex precision option (b+h) Dual-anchor + historical reference recognition)
+  - CFP-1009  # Amendment 1 carrier (regex precision option (b) Same-line strict pure, post-Codex TP#2 FIX iter 1)
 related_files:
   - CLAUDE.md
   - scripts/check-claude-md-amendment-ref.sh  # Phase 2 carrier
