@@ -1,5 +1,7 @@
 ---
 kind: domain_fact
+area: production-cutover
+title: "Promotion Criteria 4-tuple — Canary→Beta→Stable Promotion Gate Evidence Quad"
 domain: production-cutover
 topic_slug: promotion-criteria-4tuple
 status: Active
