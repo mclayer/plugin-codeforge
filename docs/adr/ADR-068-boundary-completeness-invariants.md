@@ -29,6 +29,14 @@ related_adrs:
   - ADR-065
   - ADR-067
   - ADR-082  # I-5 directly-analogous pattern 재사용 backref (ADR-082 Amendment 1 scope (a) corpus-claim-verify lint, cross-ref only — I-5 본문 0건 변경, CFP-841)
+amendments:
+  - amendment_id: 1
+    cfp: CFP-528
+    date: 2026-05-13
+    scope: "신규 I-5 dimensional empirical grounding invariant 추가 — 10 dimension enum (latency / scale / cardinality / throughput / cost / accuracy / lifecycle / volume / rate / count) 의 quantitative parameter 마다 `[empirical-source: <ref>]` 또는 `[empirical-source: TBD]` annotation 의무. empirical evidence 없는 default lock-in 차단 (anti-pattern 4종: empirical-absent default / synthetic guess / industry-assumption transplant / legacy inertia). Mitigation 4종 (empirical-first / explicit TBD / range-bound default / dimensional checklist) + Justification 면제 조건 (well-defined SLA / standardized protocol RFC / vendor doc explicit guarantee) + Exemption (SLA/quantitative metric 무관 trivial decision). Verification format = empirical-source-annotation 3-key (value / unit / empirical_source). review-verdict-v4 v4.3 → v4.4 MINOR — `dimensional_empirical_self_check_passed: bool` field + `findings[].type: \"dimensional-empirical-gap\"` literal. boundary completeness 4 invariants (I-1/I-2/I-3/I-4) → 5 invariants ratchet 강화. #319 (RETRO-MCT-104) absorb close (distinct failure-class but systemic super-class)."
+    status: applied
+    ref: "본문 I-5 declaration L88-L98"
+    sunset_justification: "ratchet 강화 방향 (4 → 5 invariants, scope 축소 0건). I-1/I-2/I-3/I-4 본문 의미 변경 0건 — I-5 disjoint append only. is_transitional false 유지 (permanent governance). ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
 mechanical_enforcement_actions:
   - action: boundary-completeness-self-check
     status: deferred-followup

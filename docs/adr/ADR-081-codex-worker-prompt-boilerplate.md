@@ -457,6 +457,28 @@ fp 0 chain sentinel (CFP-770/771 baseline → CFP-786/801/792/795/810 5 consecut
 - `mechanical_enforcement_actions[]=[]` retain (declaration-only, §D5 + D6.e precedent)
 - is_transitional false 유지 (permanent governance, ratchet 강화 only)
 
+## Amendment 3 (CFP-946, 2026-05-18 KST)
+
+### Context (Amendment 3)
+
+CFP-946 carrier (option 1 — Codex CLI sandbox 모드 토글 정의 + Orchestrator spawn prompt 의무 field). PR #962 merge 직후 본 ADR-081 frontmatter `amendments[]` 에 `amendment_id: 3` entry 가 declare 되었으나 body `## Amendment 3` 헤더 backfill 누락 — CFP-963 ArchitectPL discovery (2026-05-19 KST, ADR-064 §결정 1 derived default 정합 per scope unitary, CFP-963 ratchet-up D1.D 본문 확장 carrier 영역과 disjoint). CFP-1001 Story Tier-A scope (ADR amendment_log drift cleanup) 가 본 backfill carrier — 본문 의미 변경 0건 invariant 보존 (frontmatter L19-L25 `scope` field verbatim 반영).
+
+### 결정 (Amendment 3 verbatim scope, frontmatter L19-L25 mirror)
+
+신규 §결정 D1.D (sandbox_network_required toggle) append — Codex worker spawn prompt 가 sandbox-restricted network operation (gh api / git fetch cross-repo / 외부 HTTP) 필요 여부 declare 의무 codify. CFP-946 option 1 (Codex CLI sandbox 모드 토글 정의 + Orchestrator spawn prompt 의무 field) carrier. true = substitution path activate 영역 (ADR-052 Amendment 8 3-enum cross-matrix 정합), false = sandbox-내부 file scope only verify 완결 영역. D1.A (dogfood-out path) + D1.B (current lane/phase) + D1.C (sandbox_outside_paths) + D1.D (sandbox_network_required) = 4 mandatory boilerplate field. D1.A-C 본문 의미 변경 0건 — D1.D disjoint append only. mechanical injection layer 부재 (declaration-only retain — Amendment 1/2 family pattern 정합). cross-ref ADR-052 Amendment 8 + ADR-070 Amendment 3 (substitution-side mechanism) — 양 면 chain 완결 (option 1 + option 2 + option 3 통합). is_transitional false 유지 (permanent governance). mechanical_enforcement_actions[]=[] retain (§D5 declaration-only precedent 정합).
+
+### 결과 (Amendment 3)
+
+- §결정 D1.D `sandbox_network_required: <bool>` boolean toggle Codex worker spawn prompt mandatory field 신설 (4번째 boilerplate field — D1.A/D1.B/D1.C 동반)
+- ADR-052 Amendment 8 (6 touchpoint × substitution path 3-enum cross-matrix) + ADR-070 Amendment 3 (substitution-side §결정 D1 expansion) chain 완결 — option 1 (본 Amendment) + option 2 (ADR-070) + option 3 (ADR-052) 통합
+- D1.A-C / D6 / D7 본문 의미 변경 0건 — D1.D disjoint append only (Amendment 1/2/4 패턴 정합)
+- `mechanical_enforcement_actions[]=[]` retain (§D5 declaration-only, mechanical injection layer 부재)
+- is_transitional false 유지 (permanent governance)
+
+### Cross-ref note (CFP-963 ArchitectPL discovery — body header backfill carrier)
+
+본 `## Amendment 3` 헤더 본문 = CFP-946 PR #962 merge 시점 frontmatter `amendments[]` L19-L25 entry 와 동시 작성되었어야 하나 누락. CFP-963 ArchitectPL spawn 시점 discovery (2026-05-19 KST) → ADR-064 §결정 1 (CFP scope unitary) 정합 deferred = CFP-1001 carrier 분리 (CFP-963 = D1.D ratchet-up 본문 확장 scope, CFP-1001 = ADR amendment_log drift cleanup scope, 양 CFP disjoint). 본 carrier 의 effect = frontmatter `amendments[]` ↔ body `## Amendment N` 2-way sync invariant 복원 (ADR-068 I-1 API contract semantic completeness 정합 — body declaration ↔ frontmatter array 2-way sync scoped to ADR-081 Amendment 3).
+
 ## Amendment 4 (CFP-963, 2026-05-19 KST)
 
 ### Context (Amendment 4)
