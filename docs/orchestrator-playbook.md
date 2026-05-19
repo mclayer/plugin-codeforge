@@ -1999,6 +1999,56 @@ codeforge family upgrade 의 선언적 reconciliation 실행 주체. **3 책임 
 
 > **CLAUDE.md cross-ref 부재 사유 (ArchitectPL 설계 결정)**: CLAUDE.md 가 line cap (≤320, ADR-012 Amendment 1 §결정 6) 을 이미 초과 (334 lines, pre-existing warning) — UpgradeAgent dispatch 는 operational reference-tier (anchor-tier 아님 — Orchestrator 가 매 turn 자기검열 대상 아님, ADR-051 Amendment 1 판정자 기준) 이므로 본 playbook §3.16 + consumer-guide 가 SSOT. CLAUDE.md line-delta 0 (over-cap 악화 회피).
 
+### §3.17 Orchestrator-authored Issue body pre-publish verify mandate (CFP-1016 / [ADR-082 Amendment 2](../docs/adr/ADR-082-write-time-self-write-verification-mandate.md))
+
+**적용 trigger**: Orchestrator 가 Issue body 를 author 할 때 — 즉 사용자 GitHub Issue Form submit 이 아닌 **Orchestrator-initiated** body authorship:
+
+1. **retro time follow-up Issue** — PMOAgent retro 완료 후 codeforge-improvement / from-cfp-NNN-retro 등 follow-up Issue body 작성
+2. **brainstorm Phase 0 후속 Issue** — `codeforge:codeforge-brainstorm` Phase 2 후 별 carrier Story 발의
+3. **ADR amendment carrier reservation Issue** — ADR-RESERVATION row 점유 + carrier Story Issue 발의
+4. **pattern_count escalation forcing function 산물** — ADR-045 §D-9 pattern_count ≥ threshold 2 → escalation_action `escalate_user` → ADR strengthening carrier Issue 발의
+
+위 4 trigger 중 1+ 시 본 §3.17 mandate 적용.
+
+**verify-before-trust 의무** (Wave 1 behavioral mandate, ADR-082 §결정 1 layer 1 sub-scope (1-B)):
+
+Orchestrator 가 Issue body 안 fact claim 마다 source direct verify 후 author. 모든 fact citation (file path / registry value / lint output / cross-repo state / ADR frontmatter value / amendment count / 카운터 / file existence 등) 을 다음 mechanism 으로 verify:
+
+| claim 종류 | verify mechanism (Orchestrator inline 또는 subagent delegate) |
+|---|---|
+| local file path / existence | `Bash: ls <path>` 또는 `Read <abs-path>` |
+| local file content / line | `Read <abs-path>` 또는 `Grep` |
+| origin/main state (cross-repo state assertion) | `git fetch origin && git show origin/main:<path>` (ADR-073 §결정 1 정합) |
+| GitHub Issue state | `gh issue view <N> --repo <org>/<repo>` 또는 `mcp__github__issue_read` |
+| GitHub file content (cross-repo, 권한 영역) | `mcp__github__get_file_contents` |
+| registry value / yaml field | `Read <yaml path>` + 수동 verify |
+| ADR frontmatter value | `Read docs/adr/ADR-NNN-*.md` (offset/limit 활용, 첫 50줄) |
+| amendment count / amendment_id | `Read docs/adr/ADR-NNN-*.md` frontmatter `amendments[]` array length verify |
+| lint output verbatim 인용 | lint output 의 source state 자체 verify (lint regex FP 가능성 — citation ≠ assertion 분리, ADR-082 §결정 4) |
+
+**Issue body 작성 절차** (4-step):
+
+1. **claim enumerate** — Issue body 초안에 포함된 모든 fact claim 을 1-line 단위 분해
+2. **verify per claim** — 위 mechanism 표로 claim 각각 verify
+3. **verified-via annotation** — Issue body 안 fact citation 옆에 `[verified: <mechanism> <timestamp KST>]` annotation 부착 (또는 verify 결과 본문 통합)
+4. **publish** — `mcp__github__issue_write` 또는 `gh issue create` 발화
+
+**Story-level forcing function** (Wave 1 mechanical, ADR-082 Amendment 2 alternative (a)):
+
+본 §3.17 trigger 4종 1+ 충족 시 Orchestrator 가 Story file frontmatter `issue_origin: orchestrator_authored_followup` 부착 의무 → RequirementsPL 이 Story §2.1 verified state table 작성 의무 (story-page-structure.md §2 template 정합). §2.1 = Issue body verbatim claim ↔ verified state ↔ Pivot 판정 4-column schema.
+
+**precedent**:
+- **CFP-1000 §2.1** (9-row drift mapping) — 3 inversions catch: `prod-cutover-deputy-evidence` registry presence INVERTED + baseline label-registry 개수 stale (42→44) + `.claude-work/label-registry-bootstrap.json` inexistent
+- **CFP-1001 §2.1** (4 claim verify) — L189 lint regex `±5-line context window` cross-paired L185 ADR-040 ↔ L189 ADR-038 → cross-context FALSE POSITIVE catch (Pivot 1 진단)
+- **CFP-1002 §2.1** (2 row verify) — ADR-054 filename `-fast-path.md` cited but actual `-story-fast-path.md` catch (1-character-level edit)
+- **CFP-1016 §2.1** (META self-application) — 본 ADR-082 Amendment 2 carrier Story, Issue body 4 claims 검증
+
+**Bypass**: 본 mandate 는 behavioral mandate (Wave 1). 응급 fast-publish 영역 (hotfix Issue 등) 에서 `BYPASS_ISSUE_BODY_VERIFY=1` env (Wave 2 mechanical lint 도입 후) → audit trail 보존. Wave 1 = audit trail prose-only (Story §2.1 표 자체).
+
+**Wave 2 progression** (deferred-followup): `scripts/check-story-section-issue-origin.sh` (warning tier, ADR-060 §결정 5 정합) — `issue_origin: orchestrator_authored_followup` 시 §2.1 verified state table 존재 + 4-column schema 정합 lint. 별 CFP carrier (brainstorm 단계 결정).
+
+**Wave 3 progression** (cross-repo, 후순위 ratchet, CFP-1002 precedent 정합): RequirementsPL spawn prompt template (`mclayer/plugin-codeforge-requirements` canonical) explicit verify-before-trust mandate — cross-repo sibling sync 동반 가치 판단 영역, 별 canonical CFP carrier 분리.
+
 ---
 
 ## 4. 병렬 스폰 판단
