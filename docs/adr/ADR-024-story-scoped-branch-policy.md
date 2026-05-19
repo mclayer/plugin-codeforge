@@ -5,7 +5,7 @@ status: Accepted
 category: governance
 date: 2026-05-03
 is_transitional: false
-amended_by: CFP-1006
+amended_by: CFP-1025
 amended_date: 2026-05-19
 amendments:
   - by: "CFP-134"
@@ -56,6 +56,10 @@ amendments:
     date: "2026-05-19"
     scope: "Amendment 11 — Tier-B 4-way sync bidirectional drift sweep (Wave 1): §결정 6.A per-entry namespace 의 47/48/49/50번째 (raw) 4 신규 family member registry-side late codify (gh→registry missing direction): `hotfix-bypass:comment-prefix-registry` (12+ PR audit-trail Issue #1011 bypass-counter signature reach, CFP-845 historical carrier — comment-prefix-registry-v1 contract bump governance ceremony skip) + `hotfix-bypass:epic-cutover-quad-check` (ADR-72 §결정 1/§결정 5 production-cutover-evidence.yml workflow + evidence-checks-registry epic-cutover-gate-evidence-quad-check entry backing, CFP-954 carrier) + `hotfix-bypass:evidence-naming` (ADR-060 framework + scripts/lib/check_evidence_registry_naming.py + templates/github-workflows/evidence-registry-naming-check.yml backing) + `hotfix-bypass:markdown-internal-links` (11+ PR audit-trail Issue #1013 bypass-counter signature reach, general doc maintenance lint forward reference scope). 1 naming mismatch resolution: registry §3 entry rename `hotfix-bypass:claude-md-amendment-ref` → `hotfix-bypass:claude-md-amendment-ref-drift` (conservative direction matches gh repo label + workflow filename claude-md-amendment-ref-drift.yml + 5+ PR audit history; rename target never-instantiated in gh = registry-side 0 effect on gh consumers, §4 변경 규칙 v2.x append-only exception 영역). label-registry-v2 v2.38 → v2.39 MINOR bump 동반 (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 3 row append + rename). MANIFEST.yaml row \"2.38\" → \"2.39\". 35 of 36 registry→gh missing 자동 해소 expected via bootstrap-labels.yml workflow PR open auto-fire (CFP-598 dynamic registry-driven pattern via parse-hotfix-bypass-labels.py — §3 yaml read auto-emit, registry append + rename 만으로 5 entry 자동 처리). 카운트 convention: raw active concrete grep (CFP-1000 Amendment 10 답습 — historical-with-template-count convention 미답습, Amendment 9 CFP-963 disjoint). pre-edit raw count 47 (46 active + 1 exempt template) → post-edit raw count 51 (50 active + 1 exempt template). issue_origin: orchestrator_authored_followup (ADR-082 Amendment 2 §2.1 carrier — CFP-1000 retro PMOAgent-authored Tier-B carry-forward, §3.17 4-step procedure 적용). pivot finding (write-time): 1 entry shifted between morning verification (Issue body 35+6=41) ↔ pre-spawn verify-before-trust (36+5=41 raw drift, 41 total invariant). 5 of 5 gh→registry missing 모두 legitimate operational provenance (3 with backing CFP/workflow + 2 with 11-12+ PR bypass-counter audit-trail). Tier-B Wave 2 (registry→gh sync verify) + Wave 3 (sync drift lint) = 별 CFP carrier 분리 (ADR-064 §결정 1 CFP scope unitary 정합). prior art Amendment 10 (CFP-1000) 직전 carrier 정합."
     sunset_justification: "N/A — is_transitional: false (permanent governance policy). 4 신규 family member + 1 rename = §결정 6.A per-entry namespace 의무의 영구 확장 (Tier-B bidirectional drift sweep Wave 1 영역, gh→registry missing direction first closure). ratchet-UP 강화 방향 (active concrete grep count 46 → 50 정합 raw active concrete, registry-gh 4-way sync gap 부분 closure, 약화 영역 0건 ADR-058 §결정 5 정합)."
+  - by: "CFP-1025"
+    date: "2026-05-19"
+    scope: "Amendment 12 — Tier-B Wave 2 registry→gh backfill + CFP-1006 Wave-1 auto-resolve FALSIFICATION record + bootstrap-labels token-permission(CODEFORGE_CROSS_REPO_PAT label-write gap ROOT) / scripts/bootstrap-labels.sh:53 2>/dev/null error-mask(META-ROOT) 2-layer root cause codify + Wave 2 closure + Wave 3 sync-drift-lint OOS (별 CFP) + PAT user-domain residual flag (ADR-066). CFP-1006 Amendment 11 scope 의 '35 of 36 registry→gh missing 자동 해소 expected via bootstrap-labels.yml workflow PR open auto-fire' assumption 은 실측 거짓 입증 (run 26080174058 success but gh hotfix-bypass count 15 unchanged, NO PyYAML SKIP, 115 blanket label-write failure incl base labels — Orchestrator pre-spawn PyYAML hypothesis REFUTED, runner ubuntu-24.04 PyYAML present). 진짜 root cause = (ROOT) workflow token = secrets.CODEFORGE_CROSS_REPO_PAT || secrets.GITHUB_TOKEN → PAT in effect (secret set 2026-05-14) but ADR-066/CFP-450 provisioned scope (phase-gate-mergeable + rate-limit-fallback-kpi) 가 label-write (Issues:write on mclayer/plugin-codeforge) 미포함 / (META-ROOT) scripts/bootstrap-labels.sh:53-55 create_label() 의 2>/dev/null 가 실제 HTTP 403/404 삼킴 → generic 메시지 + 오인성 'Bootstrap completed successfully' (CFP-1006 mis-diagnosis 직접 원인). 본 Amendment 12 = root-cause/process codification only (신규 family member append 0, 신규 ordinal 0, registry §3 content 변경 0건 v2.39 retain). Phase 2 src: scripts/bootstrap-labels.sh:53-70 error-unmask (captured stderr verbatim echo, --dry-run path 무영향 LABEL_COUNT parity 108==108 보존) + .github/workflows/bootstrap-labels.yml + templates/ byte-identical false-success visibility step (fail_count >= 10 시 ::warning::, continue-on-error/warning tier 보존, ADR-005 diff empty). 35 registry→gh missing = owner-context one-time idempotent backfill (NOT CI re-trigger — token-blocked, 재-fire 는 동일 실패 = falsified Wave-defer 반복 차단). residual: CODEFORGE_CROSS_REPO_PAT Issues:write 미획득 시 CI self-heal 불가 = user secret-domain accepted (ADR-066, AC-5). issue_origin: orchestrator_authored_followup (ADR-082 Amendment 2 §2.1 — CFP-1006 retro PMOAgent-authored Tier-B carry-forward, §3.17 4-step procedure 적용). src 변경 동반으로 doc-only fast-path (ADR-054) 미적용 = full-lane. memory feedback_wave_defer_empirical_verify (deferred Wave auto-resolve assumption empirical-verify 의무) + feedback_architect_script_behavior_claim_verify (script-behavior claim 실측 의무) lineage 교훈. prior art Amendment 11 (CFP-1006) 직전 carrier 정합."
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). ratchet 강화 방향 (Wave-defer empirical-verify discipline + error-mask remediation 추가, forbid scope 축소 0, 약화 영역 0건). ADR-058 §결정 5 + ADR-064 §self-application top-down ratchet 정합."
 related_files:
   - CLAUDE.md
   - docs/consumer-guide.md
@@ -1097,3 +1101,56 @@ CFP-1000 Amendment 10 = raw active concrete grep count convention 채택 (Amendm
 - ADR-077 §결정 5 reinvestigation_tracking 정합 (본 Story §1 verbatim claim 검증 → §2.1 verified state table 10 row mandatory)
 - Issue #1011 (`comment-prefix-registry` 12+ reach bypass-counter) + Issue #1013 (`markdown-internal-links` 11+ reach bypass-counter) — bypass-as-norm mutation evidence anchors
 - CLAUDE.md L295 prose 인용 = 본 Story OOS (Tier-B CFP #1004 reconciliation 영역)
+
+## Amendment 12 — Tier-B Wave 2: registry→gh backfill + Wave-1 auto-resolve assumption FALSIFICATION + bootstrap token-permission/error-mask root cause codify (CFP-1025, 2026-05-19 KST)
+
+### 결정 6.A 호환 확장 — Tier-B 4-way sync bidirectional drift sweep (Wave 2: registry→gh direction closure)
+
+CFP-1006 Amendment 11 = Tier-B Wave 1 (gh→registry 5 entries + 1 rename, registry §3 late codify). Amendment 11 §"Effective behavior" L1071-1072 asserted: "35 of 36 registry→gh missing 자동 해소 expected — bootstrap-labels.yml workflow PR open 시 fire → 35 entries 가 gh repo `gh api 201 created` 발효". 본 Amendment 12 = **해당 assumption 의 empirical FALSIFICATION 기록 + 진짜 root cause codify + registry→gh direction (35 missing) 의 owner-context backfill 으로 Tier-B Wave 2 영역 close**. registry §3 content 변경 0건 (label-registry-v2 v2.39 retain — 본 Amendment 12 = 신규 family member append 아님, root-cause/process codification only → 신규 ordinal 없음).
+
+### Pivot finding (write-time, ADR-070/ADR-082 §결정 1 verify-before-trust) — Wave 1 auto-resolve FALSIFIED
+
+CFP-1006 Wave 1 의 "bootstrap-labels.yml CFP-598 dynamic pattern 이 PR open 시 35 registry→gh missing 자동 해소" assumption 은 **실측으로 거짓 입증** (memory `feedback_wave_defer_empirical_verify` — deferred Wave 의 auto-resolve assumption 은 predecessor close 전 empirical verify 의무):
+
+- bootstrap-labels.yml DID fire on CFP-1006 PR (run `26080174058`, 2026-05-19T06:23:45Z, conclusion=success)
+- gh `hotfix-bypass:*` count = **15 — UNCHANGED** (auto-resolve 0 effect)
+- run log: NO `PyYAML 미설치 SKIPPED` line (Orchestrator pre-spawn PyYAML hypothesis **REFUTED** — runner=`ubuntu-24.04`, PyYAML present, parse succeeded, all 50+ entries enumerated)
+- 모든 `gh label create` (hotfix-bypass:* AND base labels `audit:spec-amendment`/`channel:beta` 포함) = `! <name>: create/edit 실패 (권한 문제 가능)`
+
+### Root cause (CONFIRMED) — token-permission gap + `2>/dev/null` error-mask
+
+1. **Token gap (ROOT)**: `bootstrap-labels.yml` token = `secrets.CODEFORGE_CROSS_REPO_PAT || secrets.GITHUB_TOKEN`. `CODEFORGE_CROSS_REPO_PAT` IS set (secret updated 2026-05-14) → PAT in effect. 해당 PAT 는 ADR-066/CFP-450 에서 phase-gate-mergeable + rate-limit-fallback-kpi 용도로 provisioned — **label-write (Issues: write on `mclayer/plugin-codeforge`) 미포함** (fine-grained PAT repo-allowlist / permission-set 영역 외). 대조: 사용자 admin `gh` (admin:true) probe `gh label create` + `gh label delete` SUCCEEDED → backfill feasible via owner context.
+2. **Error-mask (META-ROOT)**: `scripts/bootstrap-labels.sh:53-55` `create_label()` 의 `2>/dev/null` 가 실제 HTTP 403/404 error 를 삼킴 → generic `권한 문제 가능` + 오인성 `Bootstrap completed successfully` (script `exit 0` + workflow `continue-on-error: true`). **이 masking 이 CFP-1006 mis-diagnosis + Wave-defer false-confidence 의 직접 원인.**
+3. Issue #1025 candidate causes (a) PR-diff-scoped loop / (b) conditional `gh label create` loop / (c) bulk-vs-incremental logic gap — **3 전부 REFUTED** (parse emits all 51, loop full-registry-scoped, all attempted).
+
+### Effective behavior (Wave 2 closure)
+
+- **`scripts/bootstrap-labels.sh` `create_label()` error-unmask** (production script — Phase 2): `2>/dev/null` → captured-stderr; terminal failure 시 captured `gh` error verbatim echo. control flow (`create || edit || fail-echo`) + exit semantics 불변. `--dry-run` branch (L48-51) untouched → `LABEL_COUNT` 2-way self-check parity 보존 (`check-bootstrap-labels-count.sh` 영향 0).
+- **bootstrap-labels.yml false-success visibility step** (byte-identical pair, ADR-005): post-Bootstrap non-fatal step 가 stdout 의 `^  ! .*: ` 실패 line count → 임계 초과 시 `::warning::bootstrap-labels: N label create/edit FAILED — token may lack Issues:write (ADR-066 / CFP-1025)`. `continue-on-error: true` + warning tier 보존 (chicken-and-egg / required-check regression 0).
+- **35 registry→gh missing owner-context backfill** (operational, idempotent, one-time): 사용자 admin `gh` context (probe-proven). NOT via CI (token-blocked — 재-fire 는 동일 실패; 이 반복이 정확히 falsified Wave-defer). `gh label create` 멱등 (already-exists → `gh label edit` no-op/benign). `hotfix-bypass:exempt:<entry>` template 제외 (gh API 가 literal `<entry>` placeholder reject — gh-side never persisted; 50 active = 51 raw − 1 template).
+- registry §3 content / label-registry-v2 version 변경 0건 (v2.39 retain). plugin.json bump 0 → ADR-063 marketplace atomic invariant 미발효, `marketplace_sync_declared: false`.
+
+### Residual (user-domain, accepted — AC-5)
+
+`CODEFORGE_CROSS_REPO_PAT` 가 `Issues: write` on `mclayer/plugin-codeforge` 획득하기 전까지 (ADR-066, 사용자 secret-domain) CI mechanism 은 future registry→gh drift self-heal 불가. 본 Amendment 12 backfill = one-time manual reconcile. Wave 3 sync-drift lint (별 CFP, ADR-064 §결정 1 unitary) 는 PAT remediate 전까지 detection-only. 문서화된 accepted residual — 본 Story blocker 아님.
+
+### Compatibility
+
+- ADR-024 §결정 1~6 + Phase 2 partial (CFP-70) + CFP-72 + Amendment 1~11 전부 유지 — 본 Amendment 12 = root-cause/process codification (신규 family member append 0, 신규 ordinal 0).
+- ADR-058 §결정 5 sunset_justification — 본 Amendment 12 = process visibility 강화 (error-unmask = ratchet-up 방향, scope 약화 0), `is_transitional: false` 영구 governance, `sunset_justification_required: false`.
+- ADR-005 byte-identical workflow pair invariant 호환 (post-edit `diff templates/github-workflows/bootstrap-labels.yml .github/workflows/bootstrap-labels.yml` = empty 의무).
+- 본 Amendment 12 = src 변경 동반 (production `scripts/bootstrap-labels.sh`) → doc-only fast-path (ADR-054) **미적용** → full-lane (Phase 1 design + Phase 2 impl).
+
+### Related
+
+- ADR-024 Amendment 11 (CFP-1006 — Tier-B Wave 1, gh→registry 5 + rename) — 본 Amendment 12 = Tier-B Wave 2 (registry→gh 35 + root cause)
+- ADR-005 (templates/ ↔ .github/ byte-identical workflow invariant)
+- ADR-066 / CFP-450 (`CODEFORGE_CROSS_REPO_PAT` rotation/scope — label-write 미포함 = 본 Story 의 underlying gap, user secret-domain follow-up)
+- ADR-070 (verify-before-trust — post-merge verify 가 falsification surface + write-time PyYAML hypothesis refute)
+- ADR-082 Amendment 2 §2.1 / §3.17 (`issue_origin: orchestrator_authored_followup` — CFP-1006 retro PMOAgent-authored, 4-step procedure)
+- ADR-064 §결정 1 (CFP scope unitary — Wave 3 sync-drift lint 별 CFP)
+- ADR-054 (doc-only fast-path — src 변경 동반으로 미적용, full-lane)
+- CFP-598 / CFP-662 (dynamic registry-driven bootstrap pattern — 구조적으로 sound, token-blocked)
+- memory `feedback_wave_defer_empirical_verify` (deferred Wave auto-resolve assumption empirical-verify 의무 — 본 Story 의 lineage 교훈) + `feedback_architect_script_behavior_claim_verify` (script-behavior claim 실측 의무 — root cause = script behavior)
+- `scripts/bootstrap-labels.sh` `create_label()` L53-55 (Phase 2 error-unmask target)
+- `templates/github-workflows/bootstrap-labels.yml` + `.github/workflows/bootstrap-labels.yml` (Phase 2 byte-identical visibility-step pair)

@@ -62,15 +62,36 @@ jobs:
           GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT || secrets.GITHUB_TOKEN }}
         run: |
           set +e
-          bash "${{ github.workspace }}/scripts/bootstrap-labels.sh"
+          # CFP-1025 (ADR-024 Amendment 12) — capture stdout 로 create/edit 실패 line count
+          # (false-success detection signal). exit_code 만으로는 충분치 않음: bootstrap-labels.sh
+          # 가 모든 label 실패해도 exit 0 (continue-on-error 정합) → 오인성 success 발생.
+          out=$(bash "${{ github.workspace }}/scripts/bootstrap-labels.sh" 2>&1)
           exit_code=$?
+          echo "$out"
+          fail_count=$(printf '%s\n' "$out" | grep -cE '^  ! .+: create/edit 실패' || true)
           echo "exit_code=$exit_code" >> "$GITHUB_OUTPUT"
+          echo "fail_count=$fail_count" >> "$GITHUB_OUTPUT"
           if [ $exit_code -eq 0 ]; then
-            echo "Bootstrap completed successfully."
+            echo "Bootstrap completed (exit 0; create/edit 실패 line count=$fail_count)."
           else
             echo "Bootstrap failed (exit $exit_code) — warning advisory only (continue-on-error: true)."
           fi
           exit 0  # continue-on-error 정합 — warning advisory tier
+
+      - name: False-success visibility (label create/edit 대량 실패 감지)
+        # CFP-1025 (ADR-024 Amendment 12) — non-fatal. fail_count >= 10 시 prominent
+        # ::warning:: 발화 (token 이 Issues:write 미보유 시 모든 label 실패 + 오인성 success
+        # 발생하던 masked-failure 재발 차단 — CFP-1006 Wave-1 falsification 의 직접 원인).
+        # warning tier 보존 (continue-on-error 무관 — 본 step 자체 exit 0).
+        if: steps.bypass_check.outputs.bypassed == 'false' && steps.bootstrap.outputs.fail_count != ''
+        run: |
+          fc="${{ steps.bootstrap.outputs.fail_count }}"
+          if [ "${fc:-0}" -ge 10 ]; then
+            echo "::warning title=bootstrap-labels::${fc} label create/edit FAILED — token may lack Issues:write on this repo (see ADR-066 / CFP-1025). registry→gh sync did NOT occur; one-time owner-context backfill required."
+          else
+            echo "bootstrap-labels: fail_count=${fc:-0} (below visibility threshold 10) — OK."
+          fi
+          exit 0
 
       - name: Emit bypass audit comment (hotfix-bypass:bootstrap-labels detected)
         if: steps.bypass_check.outputs.bypassed == 'true'

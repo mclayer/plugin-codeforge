@@ -50,9 +50,24 @@ create_label() {
         return 0
     fi
     # shellcheck disable=SC2086
-    gh label create "$name" --color "$color" --description "$desc" $REPO_ARG 2>/dev/null \
-        || gh label edit "$name" --color "$color" --description "$desc" $REPO_ARG 2>/dev/null \
-        || echo "  ! $name: create/edit 실패 (권한 문제 가능)"
+    # CFP-1025 (ADR-024 Amendment 12) — error-unmask. 이전 `2>/dev/null` 가 실제 gh HTTP
+    # error (403/404 — 예: workflow token 이 Issues:write 미보유) 를 삼켜 generic 메시지 +
+    # 오인성 "Bootstrap completed successfully" 를 만들었다 (CFP-1006 Wave-1 mis-diagnosis 직접 원인).
+    # 이제 captured stderr 를 terminal-failure 시 verbatim echo → masked false-success 재발 차단.
+    # control flow (create || edit || fail-echo) + exit semantics 불변. --dry-run path (위)
+    # 무영향 → LABEL_COUNT 2-way self-check parity 보존 (check-bootstrap-labels-count.sh).
+    local _create_err _edit_err
+    if _create_err=$(gh label create "$name" --color "$color" --description "$desc" $REPO_ARG 2>&1); then
+        return 0
+    fi
+    if _edit_err=$(gh label edit "$name" --color "$color" --description "$desc" $REPO_ARG 2>&1); then
+        return 0
+    fi
+    # already-exists 는 create 실패 + edit 성공으로 위에서 return 0 처리됨 (멱등 보존).
+    # 여기 도달 = create AND edit 모두 실패 = 진짜 실패 (권한/네트워크/API).
+    local _gh_err="${_edit_err:-$_create_err}"
+    _gh_err=$(printf '%s' "$_gh_err" | tr '\n' ' ' | sed 's/  */ /g;s/^ *//;s/ *$//')
+    echo "  ! $name: create/edit 실패 — ${_gh_err:-(gh stderr 비어있음 — 권한/네트워크 점검)}"
 }
 
 [ $DRY_RUN -eq 0 ] && echo "Plugin label 부트스트랩..."
