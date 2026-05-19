@@ -266,6 +266,79 @@ primary (Amendment 2 §결정 3 정합). Production cutover Story 에서 evidenc
 - ADR-014 Amendment 2 §결정 1 (owner authority 분리 패턴 reuse)
 - ADR-014 Amendment 2 §결정 3 충돌 처리 (env containment OpRiskArch 단독 owner — Amendment 3 의 양 측 consult 와 충돌. policy axis 단독성 영역 외 evidence axis 분리 명시 — 본 Amendment 3 §결정 6.3 3-way axis 분리로 해소)
 
+## Amendment 4 (CFP-676, 2026-05-19): OperationalRiskArchitect → InfraOperationalArchitect rename + §7.4 primary/cross-ref shell 분류 + ProductionEvidence dual-spawn disjoint axis
+
+> **형식 주의 (EC-5)**: 본 ADR-014 의 amendment 는 body `## Amendment N` section 방식 (frontmatter amendment_log field 부재 — frontmatter `amendments: [ADR-033]` 만). ADR-042 (frontmatter amendment_log id 방식) 와 format 상이. 본 Amendment 4 = Amendment 1/2/3 동일 body section 방식.
+
+### 동기
+
+CFP-1026 Epic Story-1 (W1 backbone) 이 design lane agent 구조 재편 정책 SSOT 를 단일 atomic carrier 로 확정. OperationalRiskArchitectAgent → InfraOperationalArchitectAgent rename ([ADR-042](ADR-042-agent-model-selection-policy.md) Amendment 7 CFP-676 atomic carrier) 에 따라 본 ADR-014 의 wrapper SSOT 3 영역 (책임 매트릭스 §7.4/§11 행 + 원인 판정 decision table §7.4/§11 행 + SubAgent mandate 경계 매트릭스 — 결정 2 정합) 의 매트릭스 deputy 명칭 갱신 + §7.4 primary / cross-ref shell 분류 명문화 + ProductionEvidence dual-spawn disjoint axis 명시.
+
+본 Amendment 4 = **wrapper SSOT 3 영역 매트릭스 갱신만** ([ADR-012](ADR-012-wrapper-claudemd-ssot-boundary.md) §3 4번째 예외 — 결정 2 정합). §7.4 schema 자체 정의 (5 sub-item + Container 4 항목) = codeforge-design plugin SSOT (결정 1 정합) — 실 schema 변경은 W2 S3 codeforge-design sibling Story 영역, 본 S1 무변경.
+
+### 결정 1 — OperationalRiskArchitect → InfraOperationalArchitect rename (mandate scope 보존)
+
+OperationalRiskArchitectAgent → **InfraOperationalArchitectAgent** rename. mandate scope **무변경** — §7.4 (DR / Cancel-on-disconnect / Clock sync CONDITIONAL / Rate limit / Env isolation) + Container Docker 4 항목 (ADR-033 amend — restart policy / volume DR / health check / network mode boundary) 그대로 계승. rename 사유 = design lane agent 구조 재편 (mctrader debut evidence) 의 명칭 일관성 — operational risk 가 infra 운영 축 (Docker-first 컨테이너 운영 + DR + env isolation) 의 primary owner 임을 명칭에 반영. **순삭제 0** (deputy 제거 아님 — rename).
+
+본 결정 1 의 §7.4 schema 실 정의 (5 sub + Container 4 항목 본문) = codeforge-design plugin canonical (`agents/infra-operational-architect.md` rename = W2 S3 sibling PR). 본 ADR-014 wrapper SSOT = 책임 매트릭스 row deputy 명칭 갱신만 (CLAUDE.md "Deputy mandate 매트릭스" + skills/deputy-mandate/SKILL.md — CFP-676 S1 동시 갱신).
+
+### 결정 2 — §7.4 primary 4-sub + cross-ref shell 2-sub 분류 (evidence-driven 3-axis split)
+
+InfraOperationalArchitect §7.4 의 6 sub 를 **primary 4-sub** (정책 값 설계 시점 결정 가능) + **cross-ref shell 2-sub** (policy 값 측정 후 결정 — evidence-driven) 로 분류:
+
+| §7.4 sub | 분류 | InfraOperationalArchitect 책임 | 비고 |
+|---|---|---|---|
+| §7.4.1 DR | **primary** | backup / restore / failover policy 설계 시점 결정 | ProductionEvidence consult (실측 evidence — ADR-72 §결정 2 정합) |
+| §7.4.3 Clock sync (CONDITIONAL) | **primary** | tolerance budget 설계 시점 결정 | ProductionEvidence consult (drift 실측) |
+| §7.4.5 Env isolation | **primary** | staging-prod 분리 / IP allowlist / network mode boundary containment policy | SecurityArch threat axis + ProductionEvidence evidence axis 3-way (Amendment 2 §결정 3 + Amendment 3 §결정 6.3 정합 — 본 Amendment 4 무변경) |
+| §7.4.6 Container Docker | **primary** | restart policy / volume DR / health check / network mode boundary (ADR-033 4 항목) | InfraEngineer (codeforge-develop, Haiku) 구현 분담 |
+| §7.4.2 Cancel-on-disconnect | **cross-ref shell** | policy 값 미결정 — evidence-driven design 3-axis split | Phase 1 = 측정 대상 정의 + §8.6 IntegrationTest contract pointer / Phase 2 = 측정 / Phase 1 follow-up PR = 실측값으로 policy 결정 |
+| §7.4.4 Rate limit | **cross-ref shell** | policy 값 미결정 — evidence-driven design 3-axis split | 동일 3-axis split |
+
+**evidence-driven 3-axis split (§7.4.4 / §7.4.2)**:
+- **Axis 1 (Phase 1)**: 측정 대상 정의 + §8.6 IntegrationTest contract pointer 정의 — DesignReviewPL audit 영역
+- **Axis 2 (Phase 2)**: 실측 수행 — FIX 루프와 disjoint (측정 단계, 실패 분류 아님)
+- **Axis 3 (Phase 1 follow-up PR)**: 실측값으로 policy 결정
+
+**§7.4.4/§7.4.2 policy 공백 = FIX root-cause decision table 과 disjoint** (측정 대상이지 실패 원인 아님 — Story §2.2 PL 판정 정합). audit gate = DesignReviewPL 이 §8.6 cross-ref pointer **존재만 mandatory check** (policy 값 공백 자체는 PASS — pointer 누락만 FIX). 본 disjointness 명문화 = Story §5.2 AC-3 정합.
+
+### 결정 3 — ProductionEvidenceDeputy ↔ InfraOperationalArchitect disjoint axis (dual-spawn 가능)
+
+InfraOperationalArchitect (rename 후) 와 ProductionEvidenceDeputyAgent ([ADR-72](ADR-72-production-evidence-deputy-and-epic-cutover-gate.md) §결정 1 3번째 CONDITIONAL SubAgent) 의 책임 경계 axis 계승 (Amendment 3 §결정 6.1 boundary axis 무변경 — rename 만 반영):
+
+> **policy SSOT (InfraOperationalArchitect §7.4 — DR / disconnect / clock / rate / env / container 의 invariant 정의) vs evidence SSOT (ProductionEvidenceDeputy production grounding subsection — invariant 충족 실측 명시)**
+
+- InfraOperationalArchitect = **상시 운영 리스크 설계 결정** owner (§7.4 design-time policy SSOT — Backtest/Paper 포함 모든 Story 의 6 permanent SubAgent 중 1)
+- ProductionEvidenceDeputy = **production cutover evidence gate** owner (production state 실측 — CONDITIONAL, Live touching OR production cutover Story 한정, ADR-72 §결정 3)
+
+**dual-spawn 가능성 + wrapper-self-app N/A 명문화** (Epic #1026 ProductionEvidence boundary 단락 SSOT):
+- **consumer production cutover Story** 에서 InfraOperationalArchitect + ProductionEvidence **dual-spawn 가능** — 영역 disjoint (design-time policy vs runtime-evidence). ADR-72 §결정 3 "SubAgent spawn both 의무" (production cutover = 9 SubAgent: 6 permanent + LiveOps + LiveOrdering + ProductionEvidence) 정합. 한쪽만 spawn 금지 (boundary axis 정합 검증 의무).
+- **wrapper-self-app 시 ProductionEvidence N/A** (ADR-72 §결정 6 + [ADR-005](ADR-005-plugin-self-application-na-standard.md) `plugin-meta-na` 정합 — codeforge dogfood Epic = production cutover 부재. CFP-954 precedent). 본 CFP-676 자체 = wrapper governance Story (code 0 + runtime behavior 0) → InfraOperationalArchitect (6 permanent 상시) 만, ProductionEvidence N/A.
+
+Amendment 2 §결정 3 (env secret ownership: SecurityArch threat / OpRiskArch containment) + Amendment 3 §결정 6.3 (3-way axis 분리: threat / containment policy / containment evidence) = **본 Amendment 4 무변경** (rename 만 반영 — OpRiskArch → InfraOperationalArchitect, ownership axis 정의 그대로 계승). semantic regression 0 (Codex S-CFP676-ADR014-AMD4-SCOPE P1 — Amendment 3 policy/evidence disjointness 보존 invariant).
+
+### 결정 4 — ADR-033 Docker-first 4 sub-item 보존 invariant (semantic regression 금지)
+
+본 Amendment 4 는 `## Amended by ### CFP-128 / ADR-033` section 의 Container 관련 4 항목 (restart policy / volume DR / health check / network mode boundary) **0건 변경 invariant**. ADR-033 §결정 5 의 §7.4 OpRiskArch mandate 확장 4 항목은 InfraOperationalArchitect rename 후에도 §7.4.6 Container Docker sub (결정 2 표) 로 그대로 계승 — ProductionEvidence folding 또는 cross-ref shell 강등 0건. Amendment 4 = rename + primary/shell 분류 + dual-spawn axis 명시만, ADR-033 4 sub-item semantic 손상 0 (Codex S-CFP676-ADR014-AMD4-SCOPE P1 binding).
+
+### 결정 5 — InfraArchitect 신설 철회 cross-ref (ADR-042 Amendment 7 SSOT)
+
+별도 InfraArchitectAgent (AWS / K8s / multi-host topology 전담) 신설 = 철회. SSOT = ADR-042 Amendment 7 § "InfraArchitect 신설 철회 명문화". 사유 요약: Docker-first ([ADR-033](ADR-033-docker-first-infra-engineering.md)) + AWS / K8s 없음 — InfraOperationalArchitect §7.4.6 Container + InfraEngineer (codeforge-develop Haiku) 2-agent 분담 충분. 미래 AWS / K8s / multi-host topology 도입 시 carrier 재발의 trigger (미도입 결정 — ratchet 위반 아님, ADR-058 §결정 5 sunset_justification 불필요).
+
+### 기존 정책 변경 0건 (ADR-014 본문)
+
+본 Amendment 4 = ADR-014 결정 1~5 본문 변경 0건. 변경 = (a) 본 `## Amendment 4` body section (b) deputy 명칭 rename 반영 (OpRiskArch → InfraOperationalArchitect — wrapper SSOT 3 영역 매트릭스). §7.4 schema 자체 codeforge-design SSOT (결정 1) + wrapper SSOT 3 영역 한정 (결정 2) + §11 idempotency CONDITIONAL (결정 3) + N/A allowed 조항 (결정 4) + design-output BREAKING bump (결정 5 — 본 CFP-676 contract bump 0건, agent file = W2 S3) 모두 정책 변경 0건. ratchet 강화 방향 (rename + primary/shell 분류 명문화 — scope 명시 확장, ADR-058 §결정 5 정합) → sunset_justification 불필요.
+
+### Cross-references
+
+- ADR-042 Amendment 7 (CFP-676 atomic carrier — OperationalRiskArch → InfraOperationalArchitect rename model tier SSOT)
+- ADR-72 §결정 1/§결정 3/§결정 6 (ProductionEvidenceDeputy ↔ InfraOperationalArchitect disjoint axis + wrapper-self-app N/A)
+- ADR-72 mirror cross-ref 단락 (CFP-676 — 양 방향 cross-ref)
+- ADR-014 Amendment 2 §결정 3 + Amendment 3 §결정 6.1/6.3 (env secret 3-way axis — 본 Amendment 4 무변경 계승)
+- ADR-033 §결정 5 (Docker-first §7.4 4 항목 — 본 Amendment 4 보존 invariant)
+- CLAUDE.md "Deputy mandate 매트릭스 (codeforge-design lane)" + skills/deputy-mandate/SKILL.md (CFP-676 S1 동시 갱신 — 6 → 5 permanent + 3 CONDITIONAL)
+- CFP-676 Story §1 verbatim + Change Plan §3.1 (deputy 재편 논리)
+
 ## Amended by
 
 ### CFP-128 / ADR-033 — Docker-first Infra Engineering (2026-05-07)

@@ -305,6 +305,31 @@ default  >  auto_on_divergence  >  user_request_only
 - **ADR-035** (Epic architecture) — D2 = Phase-scoped sequential team 의 implementation level SSOT 본 ADR. ADR-035 §amendment_log[0] = `planned → applied` flip (CFP-137 carrier 본 Story).
 - **ADR-039** (Orchestrator subagent default) — env-divergent fallback (§결정 8). env=0 default subagent context = ADR-039 always-spawn invariant 유지. env=1 enabled context = mechanism enrichment (continuous dialog), ownership 무변.
 
+## CFP-676 reaffirm — flat spawn invariant (codeforge-design lane 4-tuple)
+
+> **reaffirm 단락 (신규 §결정 아님 — 본 ADR-044 §결정 1~8 본문 변경 0건)**. CFP-1026 S1 ([ADR-042](ADR-042-agent-model-selection-policy.md) Amendment 7 atomic carrier) 의 design lane agent 구조 재편이 CodebaseMapperAgent / RefactorAgent / ArchitectAnalystAgent (신규, PriorArtAgent rename) 를 "4-tuple" 로 그룹핑함에 따른 invariant reaffirm. **본 단락은 nested team / sub-lead 격상 / team-of-teams 의 신규 가능성 도입 0건** — 기존 flat spawn invariant 의 재확인 (reaffirm only, Codex S-CFP676-FLAT-SPAWN P2 binding).
+
+**"4-tuple" = 논리적 그룹핑 (물리적 spawn 계층 아님)**:
+
+CFP-1026 S1 이 CodebaseMapper / Refactor / ArchitectAnalyst 를 design lane sub-agent "4-tuple" (chief author 포함 시 4 — ArchitectAgent chief + 3 sub-agent) 로 명명하나, 이는 **어떤 sub-agent 가 어느 deputy 영역 Context Packet 으로 Orchestrator flat spawn 됐는지** 의 논리적 그룹핑 (spawn-time Context Packet specialization — overlay 정적 메커니즘과 구분, playbook §12 / [ADR-039](ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) 정합). 물리적 spawn 계층 (sub-agent 가 sub-agent 를 spawn) 아님. deputy sub-lead 격상 0건 보존.
+
+**flat spawn invariant SSOT (본 ADR-044 기존 보유 — CFP-676 신규 도입 0)**:
+
+본 ADR-044 는 flat spawn invariant 를 이미 다음 위치에 보유 (CFP-676 reaffirm = 아래 anchor 의 재확인만):
+
+- 본 ADR-044 `## 회피된 대안` 표 "Nested team / team-of-teams" row — "codeforge 정책 nested team 금지 (re-entrancy 제약 3종). team-spec yaml depth 1 강제."
+- 본 ADR-044 `## 외부 fact` 단락 — "one-team-per-lead 강제 (codeforge 정책 + platform 동일) / 재귀 spawn 금지 + nested team 금지 (codeforge 정책 SSOT)"
+- [ADR-009](ADR-009-wrapper-only-decomposition.md) — Orchestrator (top-level Claude 세션) **단일 lead invariant** (본 ADR-044 `## ADR 정합성` ADR-009 row 가 cross-ref)
+- [ADR-039](ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) §결정 1 — default subagent context 의 재귀 spawn 금지 (Lead·teammate 공통, platform inherent)
+
+> **인용 정확성 mandate (Story §5.2 AC-7 / Codex CX-676-TP4-3 fact-check 정합)**: CFP-676 carrier 가 flat spawn / nested team 금지 / one-team-per-lead 를 인용할 때 본 ADR-044 **§결정 1 직접 인용 금지**. §결정 1 = "Phase-scoped sequential team lifecycle (ADR-035 D2 implementation)" 으로 flat spawn invariant 의 직접 근거 아님 (lifecycle sequence 정의). 정확 인용 위치 = 위 4 anchor (회피된 대안 표 + 외부 fact 단락 + ADR-009 단일 lead + ADR-039 §결정 1). §결정 1 mis-citation = wording SSOT (ADR-068 I-4) 위반 → 경량 설계리뷰 FIX.
+
+**CFP-676 적용 사례 (4-tuple flat spawn)**:
+
+design lane sub-agent (CodebaseMapper / Refactor / ArchitectAnalyst) 는 ArchitectPLAgent 의 deputy spawn 결정 시 Orchestrator 가 **flat spawn** (각 sub-agent 에 영역별 Context Packet 주입 — CodebaseMapper = existing codebase fact / Refactor = pattern advocacy / ArchitectAnalyst = 기존 설계 (ADR/Change Plan/Story) 분석). chief author (ArchitectAgent, Opus) 가 multi-source synthesis (sub-agent 산출물 + 5 permanent deputy 산출물 dedup + 종합). sub-agent 간 직접 통신 / sub-agent 의 추가 spawn / sub-lead 격상 0건 — 기존 invariant 무손상 (env=0 default subagent context = one-shot Agent tool, env=1 = SendMessage sibling teammate 통신 but 재귀 spawn / nested team 여전히 금지 — 본 ADR-044 §결정 1 "거절된 대안 (C)" + `## 외부 fact` SSOT 정합).
+
+**Scope 경계**: 본 reaffirm 단락 = ADR-044 정책 SSOT 무변경 declare 만. design lane sub-agent file (ArchitectAnalystAgent 신설 등) 실 작성 = W2 S3 (codeforge-design sibling). 본 CFP-676 S1 = wrapper 정책 SSOT (ADR / CLAUDE.md / skill) 만 (doc-only fast-path — [ADR-054](ADR-054-doc-only-fast-path.md)).
+
 ## 외부 fact (도메인 지식 entry SSOT)
 
 `docs/domain-knowledge/agent-teams/agent-teams-platform-capability.md` (CFP-137 신설) 가 외부 reference SSOT. Anthropic Claude Code experimental agent teams docs 의 verbatim transcribe 가 아니라 codeforge 내부 정책 SSOT — 외부 docs link rot risk 회피.
