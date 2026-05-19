@@ -30,7 +30,11 @@ authors:
 
 `codeforge-design` plugin → `codeforge` core (Orchestrator) 단방향 schema. ArchitectPLAgent 가 **6 deputies** 병렬 spawn 후 ArchitectAgent (chief author) 가 Change Plan + ADR + Story §3/§7/§11 mirror self-write.
 
-**상위 SSOT**: `mclayer/plugin-codeforge-design/docs/inter-plugin-contracts/design-output-v2.md`
+**상위 SSOT 위치**:
+- `mclayer/plugin-codeforge-design/docs/inter-plugin-contracts/design-output-v2.md`: **canonical** (codeforge-design repo, producer + self-writer)
+- 본 file (codeforge wrapper repo): sibling reference (canonical 변경 시 sync 의무 — ADR-010 + CFP-24 marketplace sync 정책 동질)
+- ADR-008 (versioning 룰): codeforge wrapper repo `docs/adr/ADR-008-inter-plugin-contract-versioning.md`
+- ADR-010 (본 contract 의 sibling sync 정책): codeforge wrapper repo `docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md`
 
 **Carrier ADR**: [ADR-014 — Operational Risk SSOT distribution](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-014-operational-risk-ssot-distribution.md) (CFP-46)
 

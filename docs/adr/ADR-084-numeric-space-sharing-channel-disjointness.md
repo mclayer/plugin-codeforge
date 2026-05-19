@@ -226,7 +226,7 @@ self-referential 주의: 본 ADR 의 해소기준 부재 선언 자체가 D1 조
 - [ADR-081](ADR-081-codex-worker-prompt-boilerplate.md) — §결정 D6.e declaration-only retain precedent chain
 - [ADR-064](ADR-064-decision-principle-mandate.md) — §self-application top-down ratchet (강화 방향만 허용) + §결정 1 CFP scope unitary
 - [ADR-058](ADR-058-adr-sunset-criteria-mandate.md) — §결정 5 sunset_justification ratchet (is_transitional 약화 차단)
-- [ADR-054](ADR-054-doc-only-fast-path.md) — doc-only fast-path 단일 PR 적격 (본 Story flow 근거)
+- [ADR-054](ADR-054-doc-only-story-fast-path.md) — doc-only fast-path 단일 PR 적격 (본 Story flow 근거)
 - [ADR-040](ADR-040-worktree-convention.md) — Amendment 3 §결정 7.D normative 5 category enum (workflow-policy 부재 → mechanical_enforcement_actions[] 면제 정합)
 - [ADR-045](ADR-045-story-retro-mandatory-trigger.md) — §D-9 cross-Story pattern forcing function (본 carrier = E-3 emission, EPIC-RESULTS-CFP-858.md §6.3 P-3 systemic cluster)
 - [ADR-008](ADR-008-inter-plugin-contract-versioning.md) — Inter-plugin Contract Versioning (affected contract MINOR bump 적격 분기 영역)
