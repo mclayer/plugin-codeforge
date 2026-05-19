@@ -37,6 +37,13 @@ amendments:
     status: applied
     ref: "## Amendment 4 / 본문 ### D1.D 확장"
     sunset_justification: "ratchet 강화 방향 (boolean 2-state → 4-state enum, 정보 손실 0, scope 축소 0 + declaration-only retain → +mechanical presence-grep warning lint binding = ADR-040 Amendment 3 §결정 7.A self-application). 약화 영역 0건 (D1.A-C/D6/D7 본문 의미 변경 0, boolean legacy grace 미축소 — open-ended until ratchet trigger). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
+  - amendment_id: 5
+    cfp: CFP-1003
+    date: 2026-05-19
+    scope: "§결정 D1.A-D 4 mandatory boilerplate field 의 적용 scope codify — proactive 6 touchpoint scope 한정 (codeforge 강제 invariant) explicit anchor + reactive `codex:rescue` 채널 (사용자 ad-hoc invocation, ADR-022 Deprecated default 영역) best-effort 가이드 anchor 확장 적용. 기존 D1.A (dogfood-out Story path) + D1.B (current lane / phase) + D1.C (sandbox_outside_paths) + D1.D (`network_scope: <4-tier enum>`) 4 mandatory field 의미 변경 0건 — proactive 영역 codeforge 강제 invariant 정합 보존. 추가 SSOT: reactive 영역 4 field 채택 = 사용자 자율 선택 (codeforge 강제 0 invariant 보존, ADR-070 D1 L110 `사용자 책임 영역 (적용 외)` 정합). ADR-052 Amendment 9 + ADR-070 Amendment 5 chain — Codex TP#4 CX-963 deferred scope (CFP-963 §6.3 OOS + §3 EC-2) closure. D1.A-D / D2 / D3 / D4 / D5 / D6 / D7 본문 의미 변경 0건 — proactive/reactive scope 적용 영역 표 본문 강화 only (D1 sub-section new row). `mechanical_enforcement_actions[]` 변경 0건 (Amendment 4 의 `codex-network-scope-presence` entry retain, scope expansion = Wave 2 별 CFP carrier 분리 ADR-064 §결정 1 unitary 정합). declaration-only retain invariant 유지 (§D5 precedent — mechanical injection layer 부재 + Wave 2 reactive mechanical lint = 별 CFP carrier). is_transitional false 유지 (permanent governance, ratchet 강화 방향 only — proactive 영역 codeforge 강제 invariant + reactive 영역 사용자 책임 영역 invariant 양립 보존)."
+    status: applied
+    ref: "## Amendment 5 / 본문 ### D1 적용 scope (proactive/reactive 표)"
+    sunset_justification: "ratchet 강화 방향 (D1.A-D 4 mandatory boilerplate field 적용 scope codify — proactive 6 touchpoint scope 한정 explicit anchor + reactive 영역 best-effort 가이드 anchor 확장 적용). 약화 영역 0건 (D1.A-D / D2-D7 본문 의미 변경 0, codeforge 강제 영역 축소 0, mechanical_enforcement_actions[] Amendment 4 entry retain). reactive 영역 codeforge 강제 = 사용자 책임 영역 invariant 위배 → best-effort 가이드 anchor 채택 = ADR-070 D1 L110 정합 + ratchet 강화 양립. ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
 related_stories:
   - CFP-819  # carrier
   - CFP-770  # baseline fp 8
@@ -47,6 +54,7 @@ related_stories:
   - CFP-795  # carry-over fp 0 #4
   - CFP-810  # carry-over fp 0 #5 (sentinel reach)
   - CFP-844  # Amendment 1 — 신규 §결정 D6 severity calibration rubric (CFP-825 retro §6 후보 2)
+  - CFP-1003 # Amendment 5 — D1.A-D 4 mandatory field 적용 scope codify (proactive 강제 + reactive best-effort 가이드, ADR-052 Amd 9 + ADR-070 Amd 5 chain — Codex TP#4 CX-963 deferred scope closure)
 related_adrs:
   - ADR-052  # Codex Proactive Check 6 touchpoints (parent — Amendment 6 + Amendment 7 (CFP-844) cross-ref)
   - ADR-070  # verify-before-trust pattern (sibling — D1/D2/D5 cross-ref + Amendment 2 (CFP-844) D6 보완)
@@ -564,6 +572,100 @@ PR #962 merge 후 (CFP-946) `sandbox_network_required: <bool>` boolean field 가
 - D1.A-C / D2 / D3 / D4 / D5 / D6 / D7 본문 의미 변경 0건 — §결정 D1.D body 확장 only
 - ADR-052 Amendment 8 + ADR-070 Amendment 3 + playbook §3.10 (CFP-963 graceful degradation step pair sub-section) cross-ref chain 완결 — CFP-946 option 1+2+3 + CFP-963 mechanical layer = closing-the-loop
 - is_transitional false 유지 (permanent governance, ratchet 강화 only — ADR-058 §결정 5 sunset_justification 통과)
+
+## Amendment 5 (CFP-1003, 2026-05-19 KST)
+
+### Context (Amendment 5)
+
+본 ADR-081 의 §결정 D1.A-D 4 mandatory boilerplate field (D1.A dogfood-out Story path / D1.B current lane / phase / D1.C sandbox_outside_paths / D1.D `network_scope: <4-tier enum>`) 는 Codex worker spawn prompt 본문 안 의무 선언 영역으로 codify. 단 본 4 field 의 적용 scope = ADR-052 6 touchpoint proactive dispatch 영역 (codeforge 강제 invariant 정합).
+
+CFP-963 Codex TP#4 가 reactive `codex:rescue` 채널 (사용자 ad-hoc invocation, ADR-022 Deprecated default 영역, ADR-070 D1 L110 `사용자 책임 영역 (적용 외)`) 의 boilerplate composition deferred 결정 (CFP-963 Story §6.3 OOS row L374 verbatim `Codex CLI reactive channel (codex:rescue) network_scope lint = OUT (derived default) proactive 6 touchpoint spawn 한정 (ADR-052 proactive/reactive 분리) — reactive 확장 = 별 CFP` + §3 EC-2 L328 동형). 본 deferred scope = CFP-1003 carrier closure.
+
+본 Amendment 5 = **D1.A-D 4 mandatory field 의 적용 scope codify** (proactive 영역 codeforge 강제 invariant explicit anchor + reactive 영역 best-effort 가이드 anchor 확장 적용). D1.A-D / D2-D7 본문 의미 변경 0건 — sub-section append 패턴 (Amendment 1-4 정합).
+
+ADR-052 Amendment 9 + ADR-070 Amendment 5 + 본 ADR-081 Amendment 5 = chain (ADR-052 = proactive 채널 SSOT 본문 보존 cross-ref / ADR-070 = reactive 영역 substitution scope + sandbox boundary normative anchor / ADR-081 = reactive 영역 spawn prompt boilerplate 4 mandatory field 확장 적용).
+
+### 결정 (Amendment 5)
+
+**A1. D1.A-D 4 mandatory field 의 적용 scope 표 (proactive 강제 + reactive best-effort)**
+
+기존 §결정 D1.A-D 본문 의미 변경 0건. 본 Amendment 5 = D1.A-D 4 field 의 적용 scope explicit codify:
+
+| Field | proactive 6 touchpoint (codeforge 강제) | reactive `codex:rescue` (사용자 ad-hoc, ADR-022 Deprecated default + ADR-070 D1 L110 사용자 책임 영역) |
+|---|---|---|
+| **D1.A — dogfood-out Story path verbatim 첨부** | **강제 invariant** (ADR-052 Amendment 5 본문 SSOT 정합) | **best-effort 가이드 anchor** (사용자 자율 선택, codeforge 강제 0) — 사용자 ad-hoc invocation 시 verify 대상 §섹션 verbatim 첨부 권장 |
+| **D1.B — current_lane / phase 표기** | **강제 invariant** (ADR-052 6 touchpoint behavior SSOT 정합) | **best-effort 가이드 anchor** — 사용자 ad-hoc invocation 시 current_lane / phase 명시 권장 (사용자 자율 선택) |
+| **D1.C — sandbox_outside_paths enumerate** | **강제 invariant** (ADR-070 D2 verbatim 첨부 의무 정합) | **best-effort 가이드 anchor** — 사용자 ad-hoc invocation 시 sandbox 영역 외 file path enumerate 권장 (사용자 자율 선택) |
+| **D1.D — `network_scope: <4-tier enum>` declare** | **강제 invariant** (4-tier enum 의무 — offline / repo-fetch-only / web-fetch / offline_substitution_declared) | **best-effort 가이드 anchor** — 사용자 ad-hoc invocation 시 4-tier enum 채택 권장 (사용자 자율 선택, codeforge 강제 0) |
+
+본 표 = D1.A-D 4 mandatory field 적용 scope SSOT. proactive 영역 = codeforge 강제 invariant (Amendment 1-4 정합) + reactive 영역 = best-effort 가이드 anchor (사용자 자율 선택, ADR-070 D1 L110 사용자 책임 영역 invariant 보존). D1.A-D 본문 의미 변경 0건.
+
+**A2. reactive 영역 best-effort 가이드 anchor 본문 (사용자 ad-hoc invocation 시 4 field 채택 권장)**
+
+reactive `codex:rescue` 채널 사용자 ad-hoc invocation 시 D1.A-D 4 mandatory field 채택 권장 (codeforge 강제 미발효, 사용자 자율 선택 영역):
+
+1. **D1.A 채택 권장** — spawn prompt 본문 안 verify 대상 §섹션 verbatim 첨부 (ADR-070 D2 best-effort 가이드 anchor 정합). 부재 시 risk: silent fallback 외부 web fetch 또는 GPT-5.4 training data 기반 finding 발화 risk (ADR-070 §컨텍스트 sentinel 1-3 evidence 동일).
+2. **D1.B 채택 권장** — current_lane / phase 표기 (예: `current_lane: design-review / phase: phase:설계-리뷰`). Codex finding severity / category 의 review lane scope 정합성 cross-check 영역. 부재 시 risk: 3-lane partition (Codex / DesignReview / CodeReview, ADR-081 §결정 D3) scope mismatch.
+3. **D1.C 채택 권장** — sandbox_outside_paths enumerate (cross-repo / cross-plugin path 포함). 부재 시 risk: Codex worker 가 own working directory 안 Read 불가 영역 식별 부재 → sandbox failure 시 substitution path activate trigger 모호.
+4. **D1.D 채택 권장** — `network_scope: <4-tier enum>` declare (offline / repo-fetch-only / web-fetch / offline_substitution_declared). 부재 시 risk: TH-1 (sandbox bypass misdeclaration — sandbox-restricted network operation 발화 가능성) + TH-2 (PAT exposure — Codex worker 가 cross-repo state verify task 수행 시 CODEFORGE_CROSS_REPO_PAT 또는 user gh CLI auth context 노출).
+
+본 4-anchor = reactive 영역 best-effort 가이드. 사용자 ad-hoc invocation 시점에 anchor 채택 / 비채택 = 사용자 책임 영역. codeforge 측 강제 미발효 invariant retain (ADR-070 D1 L110 `사용자 책임 영역 (적용 외)` 본문 정합).
+
+**A3. reactive 영역 mechanical lint scope = Wave 2 carrier 분리 (ADR-064 §결정 1 unitary)**
+
+`codex-network-scope-presence` lint (Amendment 4 의 `mechanical_enforcement_actions[]` entry, evidence-checks-registry entry SSOT) 의 mechanical detection scope = proactive 6 touchpoint spawn prompt 한정 (CFP-963 Story §6.3 OOS row L374 derived default 정합) — reactive 영역 mechanical lint 확장 = 별 CFP carrier 분리 (Wave 2). ADR-064 §결정 1 (CFP scope unitary) 정합. 본 Amendment 5 = `mechanical_enforcement_actions[]` 변경 0건 (Amendment 4 entry retain, scope expansion = Wave 2 carrier).
+
+Wave 2 follow-up CFP scope (별 carrier 분리):
+
+- evidence-checks-registry entry description scope 확장 — proactive 6 touchpoint + reactive 채널 양면 (현재 entry description 본문 patch = Amendment 5 Wave 1 declarative-only scope 영역)
+- `scripts/lib/check_codex_network_scope.py` reactive spawn prompt detection logic 확장 (mechanical lint scope expansion)
+- bats fixture pair (reactive spawn prompt with/without 4 field) — discriminating
+- Story §10 marker 신규 enum value 또는 disjoint marker (`[codex-rescue-fallback: <fail-mode>]` reactive variant)
+
+본 Wave 2 carrier = CFP-1003 retro 발의 시점 (또는 사용자 directive 시점) 별 CFP 분리.
+
+**A4. D1.A-D 본문 의미 변경 0건 + D2-D7 + Amendment 1-4 본문 의미 변경 0건**
+
+본 Amendment 5 = D1 sub-section 안 적용 scope 표 본문 강화 only (proactive 강제 + reactive best-effort 가이드 2-column). D1.A-D 본문 의미 변경 0건 (codeforge 강제 invariant 정합 보존) + D2/D3/D4/D5/D6/D7 + Amendment 1/2/3/4 본문 의미 변경 0건 — sub-section append 패턴 (Amendment 1-4 정합).
+
+**A5. ADR-081 §D5 declaration-only retain precedent chain 6번째 instance**
+
+`mechanical_enforcement_actions[]` Amendment 4 의 `codex-network-scope-presence` entry retain (변경 0건). reactive 영역 mechanical lint scope expansion = Wave 2 carrier 분리 (A3 SSOT) — 본 Amendment 5 = declaration-only normative anchor only. ADR-082 §결정 6 known-limitation rationale precedent chain 6번째 instance (ADR-070 D5 → ADR-082 §6 → ADR-081 D5/D6.e → ADR-070 Amd 5 → ADR-081 Amd 5).
+
+**A6. ADR-058 §결정 5 ratchet 정합 (강화 방향 명시)**
+
+- `is_transitional: false` 본 ADR 유지 (permanent governance, D1.A-D 4 mandatory field 적용 scope codify = permanent strengthening — proactive codeforge 강제 + reactive best-effort 가이드 양립)
+- `sunset_justification: "N/A — permanent strengthening (D1.A-D 4 mandatory field 적용 scope codify, proactive 6 touchpoint codeforge 강제 invariant + reactive `codex:rescue` 사용자 책임 영역 invariant 양립 보존, 약화 영역 0. ADR-081 §D5 declaration-only retain precedent chain 6번째 instance — mechanical_enforcement_actions[] Amendment 4 entry retain, scope expansion = Wave 2 별 CFP carrier 분리 ADR-064 §결정 1 unitary 정합)"`
+- 약화 방향 영역 0건 (D1.A-D / D2-D7 + Amendment 1-4 본문 의미 변경 0, codeforge 강제 영역 축소 0, mechanical_enforcement_actions[] Amendment 4 entry retain)
+
+**A7. ADR-064 §결정 (Trace 1) active amendment + full-scope 정합**
+
+- Amendment 발의 시점 = CFP-963 Codex TP#4 deferred scope closure (active amendment ratchet 강화 방향)
+- 적용 영역 = D1.A-D 4 mandatory field × {proactive 강제, reactive best-effort 가이드} 2-column scope (full-scope, 단일 field 한정 아님)
+- forbid-list 13 어휘 (ADR-064 §결정 1 + Amendment 2/4/5) 사용 0 건 self-attest
+
+**A8. doc-only fast-path 적용 (ADR-054 §결정 1)**
+
+본 Amendment 5 자체 = ADR-081 본문 patch (Amendment row append + sub-section append) — doc-only fast-path 적격. carrier Story (CFP-1003) = ADR-052 Amendment 9 + ADR-070 Amendment 5 + ADR-081 Amendment 5 + registry entry description patch + playbook §3.10 reactive variant codify = ADR-054 §결정 1 (신규 ADR 도입 아님, 기존 ADR Amendment + src/tests 무변경) doc-only fast-path 단일 PR 적격.
+
+### 결과 (Amendment 5)
+
+- D1.A-D 4 mandatory field 적용 scope 표 본문 codify (proactive 강제 + reactive best-effort 가이드 2-column) — A1 SSOT
+- reactive 영역 4-anchor best-effort 가이드 본문 명시 (사용자 ad-hoc invocation 시 4 field 채택 권장, codeforge 강제 0 invariant 보존) — A2 SSOT
+- reactive 영역 mechanical lint scope = Wave 2 carrier 분리 (ADR-064 §결정 1 unitary, mechanical_enforcement_actions[] Amendment 4 entry retain) — A3 SSOT
+- D1.A-D / D2-D7 + Amendment 1-4 본문 의미 변경 0건 (sub-section append 패턴) — A4 SSOT
+- ADR-081 §D5 declaration-only retain precedent chain 6번째 instance — A5 SSOT
+- ADR-058 §결정 5 ratchet 정합 (강화 방향, sunset_justification N/A — permanent strengthening) — A6 SSOT
+- ADR-064 §결정 active amendment + full-scope 정합 (forbid-list 13 어휘 사용 0 건) — A7 SSOT
+- doc-only fast-path 영역 정합 (본 Amendment 5 자체) — A8 SSOT
+
+### 거절된 대안 (Amendment 5)
+
+- (Amendment 5-A) **reactive 영역 D1.A-D codeforge 강제 적용** (사용자 책임 영역 invariant 폐기) — ADR-022 Deprecated default + ADR-070 D1 L110 `사용자 책임 영역 (적용 외)` invariant 위배. codex:rescue subagent 자체 = codex@openai-codex plugin runtime 영역, codeforge 강제 권한 외. 사용자 책임 영역 retain + best-effort 가이드 anchor 강화 채택 (ADR-064 §결정 7 top-down ratchet 정합 — 약화 방향 = 사용자 책임 영역 폐기, 차단).
+- (Amendment 5-B) **reactive 영역 mechanical lint inline 본 Amendment 5** (Wave 1 + Wave 2 단일 CFP 통합) — ADR-064 §결정 1 (CFP scope unitary) 위배. Wave 1 declarative + Wave 2 mechanical 별 CFP 분리 채택 (CFP-963 Phase 1+2 패턴 답습).
+- (Amendment 5-C) **reactive 영역 normative anchor 자체 부재 invariant 보존** (D1.A-D 적용 scope = proactive 한정, reactive 영역 anchor 도입 0) — Codex TP#4 CX-963 deferred scope closure 책무 부재 → CFP-963 retro deferred scope 영구 미해소 risk. best-effort 가이드 anchor (사용자 자율 선택, codeforge 강제 0) 채택 = ADR-064 ratchet 강화 방향 + 사용자 책임 영역 invariant 보존 양립.
+- (Amendment 5-D) **D1.A-D 신규 5번째 field (예: D1.E reactive_authorization_token) 추가** — D1.A-D 4 field 의미 변경 0건 invariant 위배. reactive 영역 normative anchor 강화 = D1.A-D 4 field 의 적용 scope codify (proactive 강제 + reactive best-effort) only, 신규 field 도입 0 (CFP-966 lesson "신규 unique drift value 회피" 정합). 4-field exhaustive retain.
+- (Amendment 5-E) **ADR-052 본문 또는 ADR-070 본문 inline reactive boilerplate scope** (ADR-081 Amendment 5 회피) — 영역 type mismatch. ADR-081 = boilerplate composition SSOT (D1.A-D 4 mandatory field), ADR-052 = touchpoint behavior SSOT (proactive 채널 한정), ADR-070 = verify-before-trust pattern SSOT (substitution scope + sandbox boundary). 3 ADR normative anchor 분리 정합 — ADR-081 Amendment 5 본문 SSOT (reactive 영역 boilerplate field 채택) + ADR-052 Amendment 9 + ADR-070 Amendment 5 = cross-ref-only 채택.
 
 ## 결과
 

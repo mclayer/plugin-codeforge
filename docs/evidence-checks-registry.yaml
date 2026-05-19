@@ -2773,6 +2773,14 @@ entries:
       substitution-side mechanism = 양 면 chain 완결). CFP-722 story-section-ownership /
       CFP-841 corpus-claim-verify / CFP-966 parallel-work-sentinel-pickup precedent
       동형 (declaration-only normative + presence-grep warning lint 보완 관계).
+
+      **Scope: proactive 6 touchpoint spawn prompt 한정** (CFP-1003 / ADR-052
+      Amendment 9 + ADR-070 Amendment 5 + ADR-081 Amendment 5 — proactive/reactive
+      disjoint codify). reactive `codex:rescue` 채널 (사용자 ad-hoc invocation,
+      ADR-022 Deprecated default + ADR-070 D1 L110 `사용자 책임 영역 (적용 외)`)
+      = lint scope 외 — best-effort 가이드 anchor (ADR-081 Amendment 5 A2 SSOT,
+      사용자 자율 선택, codeforge 강제 0 invariant 보존). reactive 영역 mechanical
+      lint scope 확장 = 별 CFP carrier (Wave 2, ADR-064 §결정 1 unitary 정합).
     detect_command: bash scripts/check-codex-network-scope.sh  # CFP-963 Phase 2 ACTIVE — thin bash wrapper (ADR-061 §결정 1) → scripts/lib/check_codex_network_scope.py Python SSOT. Exit 0=PASS / 1=WARNING / 2=META-ERROR (ADR-060 §결정 15 3-tier)
     workflow: .github/workflows/codex-network-scope-presence.yml  # CFP-963 Phase 2 ACTIVE — byte-identical self-app pair (templates/github-workflows/ + .github/workflows/). continue-on-error: true (warning tier). SecurityArch TH-2: permissions: contents: read only
     current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
