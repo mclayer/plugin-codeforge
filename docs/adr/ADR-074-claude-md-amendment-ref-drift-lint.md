@@ -4,28 +4,38 @@ title: CLAUDE.md Amendment ref drift detection lint — cross-section coherence 
 status: Proposed
 category: governance
 date: 2026-05-14
+amended_by: CFP-1009  # Amendment 1 carrier — regex precision (Dual-anchor + historical reference recognition)
+amended_date: 2026-05-20
 is_transitional: false
 carrier_story: CFP-708
 supersedes: []
 amends: []
 related_adrs:
   - ADR-012  # wrapper CLAUDE.md SSOT boundary — CLAUDE.md 본문이 본 lint scope target file
-  - ADR-058  # ADR sunset criteria mandate — frontmatter amendment_log 가 drift 비교 SSOT
+  - ADR-058  # ADR sunset criteria mandate — frontmatter amendment_log 가 drift 비교 SSOT (Amendment 1 sunset_justification 의무 source)
   - ADR-060  # Evidence-enforceable promotion framework — 본 lint 가 9번째 warning-tier entry
+  - ADR-061  # Python script-writing convention — Amendment 1 의 외부 .py 답습 정합 source
   - ADR-063  # Marketplace atomic invariant — CFP-477 F-DR-001 detection 의 stale ref source (Amendment 2 §결정 11 → 실제 Amendment 3 §결정 13)
+  - ADR-064  # Decision principle mandate — Amendment 1 의 derived default + 권장 1 + 대안 1 patterning source
   - ADR-065  # ArchitectAgent Phase 1 mechanical self-check — 7-item mechanical sync 의 자매 (cross-section coherence 확장)
   - ADR-068  # Boundary completeness invariants — I-4 wording SSOT 와 cousin (semantic 검증 vs mechanical 검증 분리)
+  - ADR-082  # Write-time self-write verification mandate — Amendment 1 carrier (CFP-1009) §2.2 mid-author catch 의 scope (b) 실 사례
 related_stories:
   - CFP-708  # 본 carrier
   - CFP-627  # 1차 evidence (pause-and-resume drift, CLAUDE.md line 296 stale)
   - CFP-477  # 2차 evidence (F-DR-001 P1 detection)
   - CFP-263  # doc-locations lint lineage (cross-section coherence pattern 답습)
+  - CFP-1000  # Amendment 1 evidence (CFP-1000 1st false-pair occurrence — L189 phantom-ahead)
+  - CFP-1001  # Amendment 1 escalation carrier (CFP-1001 retro pattern_count = 2 reach, ADR-045 §D-9 mandate)
+  - CFP-1009  # Amendment 1 carrier (regex precision option (b+h) Dual-anchor + historical reference recognition)
 related_files:
   - CLAUDE.md
   - scripts/check-claude-md-amendment-ref.sh  # Phase 2 carrier
+  - scripts/lib/check_claude_md_amendment_ref.py  # Amendment 1 primary algorithm touch
+  - tests/scripts/check-claude-md-amendment-ref.bats  # Amendment 1 TC-6/7/8 carrier
   - templates/github-workflows/claude-md-amendment-ref-drift.yml  # Phase 2 carrier
   - .github/workflows/claude-md-amendment-ref-drift.yml  # Phase 2 self-app
-  - docs/evidence-checks-registry.yaml  # Phase 2 row append
+  - docs/evidence-checks-registry.yaml  # Phase 2 row append (Amendment 1 invariant — tier 보존)
   - docs/inter-plugin-contracts/label-registry-v2.md  # Phase 2 hotfix-bypass label entry
 mechanical_enforcement_actions:
   - name: claude-md-amendment-ref-drift-check
@@ -34,7 +44,13 @@ mechanical_enforcement_actions:
     enforcement_workflow: templates/github-workflows/claude-md-amendment-ref-drift.yml
     bypass_label: hotfix-bypass:claude-md-amendment-ref
     audit_lint: bash scripts/check-bypass-audit-comment.sh
-    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 default
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 default (Amendment 1 invariant — tier 변경 0)
+amendment_log:
+  - amendment: 1
+    carrier_story: CFP-1009
+    date: 2026-05-20
+    summary: "Regex precision — option (b) Same-line strict pure. ±5-line cross-context window → same-line equality (line-equality only). False-pair root cause = cross-bullet contamination (both L189 phantom and L281 stale). Codex TP#2 mandatory touchpoint #2 catch reverted earlier (b+h) hybrid draft. bats TC-1/3/4/5 fixture rewrite (adjacent-line → same-line join) preserves assertion semantics. Address CFP-1000 (L189 phantom-ahead) + CFP-1001 (L281 stale-behind) pattern_count = 2 escalation. AC-1 (false-pair = 0) + AC-5 (test intent invariant + fixture-format adaptive) + AC-8 (self-amend, no new ADR)."
+    sunset_justification: "N/A — ratchet-strengthen direction (precision 강화). scope 약화 0, false-pair retention 0, detection capability 0 weakening. ADR-058 §결정 5 strengthening direction invariant 정합."
 ---
 
 # ADR-074: CLAUDE.md Amendment ref drift detection lint
@@ -195,6 +211,139 @@ Stale ref detect 의 false positive 영역 명시:
 | `sibling_dependencies: []` | 현재 sibling carrier 부재 — 추후 carrier 진입 시 append | promotion carrier PR description |
 
 **승격 carrier**: 별도 CFP-NNN (본 Story 외). ADR-058 §결정 5 ratchet 정합 (강화 방향 only).
+
+## Amendment 1 (CFP-1009, 2026-05-20 KST) — Regex precision: Same-line strict pure
+
+> **REVISION NOTE (Amendment 1 FIX iter 1, 2026-05-20 23:30 KST)** — Codex TP#2 proactive review (ADR-052 Amendment 4 mandatory touchpoint #2 post-§3) returned 2 P1 findings. ADR-070 verify-before-trust empirical reproduction (Python regex `Amendment\s+(\d+)\s*\(CFP-\d+\)` on CLAUDE.md L185/189/279/281) confirmed **both TRUE POSITIVE**. Original drafted option = (b+h) Dual-anchor + historical reference. Revised option after FIX = **(b) Same-line strict pure**. 두 false-pair 모두 cross-bullet contamination (regex 매칭 cite 가 cross-bullet ±5 window 안 진입) mechanism, historical reference recognition (option h) 의 적용 영역 0 occurrence (L279/L281 의 self-cite 가 date-suffixed canonical form `(CFP-NNN, YYYY-MM-DD)` 으로 regex 자체가 미매칭).
+
+### 배경
+
+CFP-708 base lint 가 도입한 ±5-line cross-context window pairing 알고리즘 (Python helper L174~L194) 이 wrapper CLAUDE.md narrative 의 dense bullet structure 안에서 **cross-bullet contamination false-pair** 를 2 occurrence 생성. CFP-1001 retro (ADR-045 Amendment 5 §D-9 mandatory framing, pattern_count = 2 reach) 의 escalation_action `adr_draft_emitted` 결과 본 Amendment 발의.
+
+**2 occurrence sentinel** (ArchitectPL Python regex empirical reproduction verified):
+
+1. **CFP-1000 1st** — `CLAUDE.md L189` (TodoWrite narrative bullet, `[ADR-038](docs/adr/ADR-038-progress-visualization-todowrite.md)` literal markdown link) + ±5 window L184~L194 안 **L185** cite `**Amendment 6 (CFP-843)**` (canonical regex 매칭 form) → cross-pair → `ADR-038 Amendment 6 claim is phantom (ahead)` (ADR-038 frontmatter `amendments[]` length = 4) **false-pair (cross-context contamination)**.
+2. **CFP-1001 2nd** — `CLAUDE.md L281` (Evidence-enforceable framework bullet, `[ADR-060](docs/adr/ADR-060-evidence-enforceable-promotion-framework.md)` literal markdown link) + ±5 window L276~L286 안 **L283** cite `**Amendment 1 (CFP-841)**` (canonical regex 매칭 form, ADR-082 narrative bullet 안) → cross-pair → `ADR-060 Amendment 1 claim is stale (behind)` (ADR-060 frontmatter `amendment_log[]` length = 14) **false-pair (cross-context contamination)**.
+
+L281 line 자체의 self-cite `Amendment 1 (CFP-390, 2026-05-11)` 은 date-suffixed canonical form 으로 regex `\(CFP-\d+\)` 미매칭 (CFP-390 직후 `,` 가 따라옴) → lint algorithm 의 인식 영역 외, false-pair source 아님.
+
+### §결정 9 — Algorithm precision: Same-line strict pure (option (b))
+
+본 Amendment 가 도입하는 algorithm = **option (b) Same-line strict pure** (CFP-1009 Change Plan §3.1 채택, post-FIX iter 1):
+
+```
+for each line L in CLAUDE.md:
+  for each [ADR-N](...) literal markdown link match on line L (regex \[ADR-(\d+)\]\([^)]+\)):
+    for each "Amendment M (CFP-K)" canonical cite match on same line L (regex Amendment\s+(\d+)\s*\(CFP-\d+\)):
+      pair (ADR-N, M, line=L) emit
+      look up ADR-N frontmatter amendment_log[] / amendments[] length actual_count:
+        case a — actual_count == 0 AND M > 0:
+          → [DRIFT] no amendment_log
+        case b — M == actual_count [latest]:
+          → [OK matches latest]
+        case c — M > actual_count [phantom-ahead]:
+          → [DRIFT phantom (ahead)]
+        case d — M < actual_count [stale-behind]:
+          → [DRIFT stale (behind)]
+```
+
+**핵심 변경 1종**:
+
+1. **±5 window → same-line strict** (option b 의 핵심) — Python helper L180~L182 region. `context_start = line_idx` / `context_end = line_idx + 1`. 11-line cartesian pairing 제거, line-equality only.
+
+**변경 0건** (FIX iter 1 simplification):
+
+- regex 변경 0 — `amend_re = Amendment\s+(\d+)\s*\(CFP-\d+\)` 보존 (current capture group 1 = Amendment N 의미 동일).
+- helper 신설 0 — `_match_historical_amendment` / `_get_amendment_entries` 신설 제거. 기존 `_get_amendment_count` length-only API 보존.
+- output classification 변경 0 — 기존 4종 분류 (`OK matches latest` / `DRIFT phantom (ahead)` / `DRIFT stale (behind)` / `DRIFT no amendment_log` + setup-error) 보존. 신규 `[OK historical]` 분류 도입 제거 (vacuous coverage).
+
+### §결정 10 — sunset_justification (ADR-058 §결정 5 정합)
+
+본 Amendment = **ratchet-strengthen direction** (false-pair precision 강화, scope 약화 0). 약화 영역 enumeration:
+
+- detection capability 약화: **0** (legitimate phantom-ahead / stale-behind 모두 retain — TC-1 fixture 가 stale 시나리오 검증, post-rewrite GREEN).
+- scope 축소: **0** (lint scope = wrapper CLAUDE.md 만 유지, consumer overlay 미진입 invariant 보존).
+- tier 약화: **0** (warning tier 유지, blocking 미승격, evidence-checks-registry schema 변경 0).
+- bypass label 약화: **0** (`hotfix-bypass:claude-md-amendment-ref` 보존).
+
+→ **sunset_justification: "N/A — strengthening direction. ratchet 강화 (precision 강화, scope/detection/tier/bypass 모두 약화 0)."**
+
+ADR-058 §결정 5 sunset_justification 의무 정합.
+
+### §결정 11 — option choice rationale (ADR-064 §결정 3 룰 2, post-FIX iter 1)
+
+**옵션 dump 금지 — 권장 1 안 + 대안 1 안 명시**:
+
+- **권장 = option (b) Same-line strict pure** (본 §결정 9) — 두 false-pair (L189 + L281) 모두 cross-bullet contamination mechanism. same-line strict 만으로 두 false-pair 모두 해결 (link line 안 same-line canonical cite 0건 → 0 pair → drift 미출력). AC-1 (false-pair = 0) + AC-5 (test intent invariant + fixture-format adaptive) 동시 달성.
+- **대안 = option (c) Per-ADR scope (semantic anchor binding)** — narrative bullet anchor ADR implicit semantic ownership. CLAUDE.md narrative complexity 향후 증가 시 신규 CFP 로 전환. CFP-1009 시점 multi-ADR same-line `[ADR-N]` literal link 0 occurrence → (c) 의 추가 가치 = 향후 future-proofing 만 (CFP-1009 §5.3 EC-7 carrier).
+- **제외 = option (b+h) Dual-anchor with historical reference recognition** — original ArchitectAgent §2.2 초안의 hybrid option. ArchitectPL FIX iter 1 의 Python regex empirical reproduction 가 L279/L281 self-cite 가 date-suffixed canonical form 으로 regex 미매칭 임을 확인 → historical match 의 적용 영역 0 occurrence at current CLAUDE.md state → (h) layer vacuous → 제거. 향후 narrative author 가 date-suffix 없는 `Amendment N (CFP-K)` same-line self-reference 등장 시 신규 CFP 로 재발의.
+- **제외 = option (a) Same-line strict 단독 (window ±5 → ±0) without (b) dual-anchor structure** — option (b) 와 본질적으로 동일하나 dual-anchor structure (link + cite paired emit) 명시성 부족. 본 Amendment 의 option (b) = (a) 의 same-line strict + (b) 의 dual-anchor emit pattern 명시.
+
+### §결정 12 — fixture / TDD design (TC-6/7/8 신설 + TC-1/3/4/5 line-join rewrite, AC-3 + AC-5 정합)
+
+본 Amendment 의 Phase 2 산출물 (CFP-1009 단일 PR scope) 안:
+
+**A. 신규 bats test 3종 (AC-3)**:
+
+- **TC-6 phantom-ahead (cross-context contamination 해결 verify)**: fixture CLAUDE.md 안 line A 의 `[ADR-A](...)` literal link + line A 안 same-line canonical cite 부재 + line A+2 narrative cite `Amendment N (CFP-X)` (N > ADR-A frontmatter length, ±5 window 안 cross-pair source) → option (b) same-line strict 적용 시 line A 0 pair generated → exit 0 + drift 미출력.
+- **TC-7 stale-behind (cross-context contamination 해결 verify)**: fixture 안 line B 의 `[ADR-B](...)` literal link + line B 안 same-line canonical cite 부재 + line B+1 narrative cite `Amendment 1 (CFP-Y)` (B+1 = ±5 window 안) → option (b) 적용 시 line B 0 pair generated → exit 0 + drift 미출력.
+- **TC-8 legitimate same-line drift verify**: fixture 안 line C 의 `[ADR-C](...)` literal link + line C 안 same-line canonical cite `Amendment 2 (CFP-Z)` + ADR-C frontmatter `amendment_log[]` length = 5 → option (b) 적용 시 same-line pair → `Amendment 2 < 5` → exit 1 + `[DRIFT stale (behind)]` 출력 (legitimate drift retained).
+
+**B. TC-1/3/4/5 fixture line-join rewrite (AC-5 backward compat)**:
+
+기존 (CFP-708 base) fixture 가 link line + cite line 의 adjacent-line form:
+
+```
+**Marketplace atomic invariant** = [ADR-063](docs/adr/ADR-063-...)
+(Amendment 2 (CFP-631) §결정 11 신설 ...)
+```
+
+option (b) same-line strict 적용 시 0 pair → exit 0 → TC-1/3/4/5 backward FAIL. Phase 2 fixture rewrite (line-join):
+
+```
+**Marketplace atomic invariant** = [ADR-063](docs/adr/ADR-063-...) (Amendment 2 (CFP-631) §결정 11 신설 ...)
+```
+
+assertion semantics (exit code + drift message presence + ADR identifier mention) 보존. author 본래 narrative intent (link + cite = same bullet) 보존, single-bullet/multi-line layout → single-bullet/single-line layout 의 trivial re-format.
+
+### §결정 13 — backward compatibility (AC-5 invariant, post-FIX iter 1)
+
+TC-1 ~ TC-5 (CFP-708 base) 의 **test intent (assertion semantics)** 모두 보존 + **fixture-format** 은 same-line strict 적용 영역으로 rewrite. 두 차원의 backward compat dual condition:
+
+- **TC-1 stale (post-rewrite)**: link + cite same-line + length=4 + claimed=2 → same-line pair → `Amendment 2 < 4` → `[DRIFT stale (behind)]` → exit 1 + drift message + ADR-063 mention (정합).
+- **TC-2 latest**: 기존 fixture 도 link + cite same-line (verify-needed in Phase 2) — same-line strict 적용 시 latest match → `[OK]` → exit 0 (정합).
+- **TC-3 no-amendment-log (post-rewrite)**: link + cite same-line + length=0 + claimed=1 → `Amendment 1 > 0` → drift (no amendment_log path) → exit 1 + ADR-999 mention (정합).
+- **TC-4 multi-Amendment (post-rewrite)**: 20-line separation 보존 (각 sub-block 안 link + cite same-line) → ADR-060 cite `Amendment 2 (CFP-455)` length=8 → stale (M=2<8) → exit 1 + ADR-060 drift. ADR-999 cite `Amendment 1 (CFP-500)` length=1 → latest → `[OK]`. 종합 exit 1 (drift 1건 존재) + ADR-060 drift assertion (정합).
+- **TC-5 setup-error (post-rewrite)**: link + cite same-line + ADR file 부재 → exit 2 + setup-error (정합).
+
+→ AC-5 invariant 만족 (test intent + fixture-format dual condition).
+
+### §결정 14 — Phase 분배 (CFP-1009 carrier scope, post-FIX simplification)
+
+| 산출물 | Phase | 책임 | 비고 |
+|---|---|---|---|
+| 본 ADR-074 Amendment 1 (declarative SSOT, 본 단락) | Phase 1 | ArchitectAgent (direct write) | CFP-26 Phase 0a owner direct write 정합. |
+| CFP-1009 Change Plan §3.1 (option (b) Same-line strict pure algorithm 정의) | Phase 1 | ArchitectAgent | wrapper `docs/change-plans/cfp-1009-amendment-ref-regex-precision.md`. |
+| CFP-1009 Story file §3 reference + §7/§11/§13 N/A + §9.0 Codex TP#2 trail + §10 FIX Ledger row | Phase 1 | ArchitectPLAgent | internal-docs `wrapper/stories/CFP-1009.md`. |
+| `scripts/lib/check_claude_md_amendment_ref.py` algorithm 정밀화 | Phase 2 | DeveloperAgent | ~5 lines (L180~L182 same-line strict edit). |
+| `tests/scripts/check-claude-md-amendment-ref.bats` TC-1/3/4/5 line-join rewrite + TC-6/7/8 신설 | Phase 2 | QADeveloperAgent | ~150 lines (5 TC fixture rewrite ~30 + 3 신규 TC ~120). |
+
+ADR-065 §결정 1 #4 (link target Phase 분배 — Phase 1 doc 안 Phase 2 file 참조 시 dangling 차단) 정합. 본 Amendment 1 본문 안 Phase 2 file 참조 모두 "Phase 2 carrier" 명시.
+
+### Result — false-pair 0 + true-drift retention 정량 (post-FIX iter 1)
+
+Phase 2 merge 후 AC-1 verify:
+
+- **CLAUDE.md 현 (HEAD `6f54c64`) lint baseline (pre-fix)** — 4 lines: L185 OK / **L189 DRIFT phantom (ahead) `ADR-038 Amendment 6`** / L279 OK / **L281 DRIFT stale (behind) `ADR-060 Amendment 1`**.
+- **post-fix expected output (option (b) Same-line strict pure)** — 1 line: L185 OK (link `[ADR-040]` + same-line canonical cite `Amendment 6 (CFP-843)` + frontmatter length=6 → latest match).
+  - L189: link `[ADR-038]` + same-line canonical cite 0건 (`Amendment 4 vocab swap` / `Amendment 1 §결정 8` 모두 parenthetical CFP form 미충족, regex 미매칭) → 0 pair → 미출력.
+  - L279: link `[ADR-068]` + same-line canonical cite 0건 (`Amendment 1 (CFP-528, 2026-05-13)` date-suffixed form regex 미매칭) → 0 pair → 미출력.
+  - L281: link `[ADR-060]` + same-line canonical cite 0건 (`Amendment 1 (CFP-390, 2026-05-11)` date-suffixed form regex 미매칭) → 0 pair → 미출력.
+- **false-pair count: 0** → AC-1 satisfied.
+- **lint exit code post-fix: 0** (clean) — L185 OK only.
+- **legitimate drift retain**: Phase 2 후 신규 legitimate stale 발생 시 (예: 새 ADR Amendment 도입 후 CLAUDE.md narrative `[ADR-N](...)` link + same-line canonical cite `Amendment M (CFP-X)` 의 M 가 frontmatter length 와 mismatch 시) → `[DRIFT stale (behind)]` 또는 `[DRIFT phantom (ahead)]` 정상 출력. 본 capacity = TC-8 / TC-1-rewrite verified.
+
+---
 
 ## 관련 파일
 
