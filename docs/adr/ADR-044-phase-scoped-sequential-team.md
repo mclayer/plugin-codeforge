@@ -328,7 +328,7 @@ CFP-1026 S1 이 CodebaseMapper / Refactor / ArchitectAnalyst 를 design lane sub
 
 design lane sub-agent (CodebaseMapper / Refactor / ArchitectAnalyst) 는 ArchitectPLAgent 의 deputy spawn 결정 시 Orchestrator 가 **flat spawn** (각 sub-agent 에 영역별 Context Packet 주입 — CodebaseMapper = existing codebase fact / Refactor = pattern advocacy / ArchitectAnalyst = 기존 설계 (ADR/Change Plan/Story) 분석). chief author (ArchitectAgent, Opus) 가 multi-source synthesis (sub-agent 산출물 + 5 permanent deputy 산출물 dedup + 종합). sub-agent 간 직접 통신 / sub-agent 의 추가 spawn / sub-lead 격상 0건 — 기존 invariant 무손상 (env=0 default subagent context = one-shot Agent tool, env=1 = SendMessage sibling teammate 통신 but 재귀 spawn / nested team 여전히 금지 — 본 ADR-044 §결정 1 "거절된 대안 (C)" + `## 외부 fact` SSOT 정합).
 
-**Scope 경계**: 본 reaffirm 단락 = ADR-044 정책 SSOT 무변경 declare 만. design lane sub-agent file (ArchitectAnalystAgent 신설 등) 실 작성 = W2 S3 (codeforge-design sibling). 본 CFP-676 S1 = wrapper 정책 SSOT (ADR / CLAUDE.md / skill) 만 (doc-only fast-path — [ADR-054](ADR-054-doc-only-fast-path.md)).
+**Scope 경계**: 본 reaffirm 단락 = ADR-044 정책 SSOT 무변경 declare 만. design lane sub-agent file (ArchitectAnalystAgent 신설 등) 실 작성 = W2 S3 (codeforge-design sibling). 본 CFP-676 S1 = wrapper 정책 SSOT (ADR / CLAUDE.md / skill) 만 (doc-only fast-path — [ADR-054](ADR-054-doc-only-story-fast-path.md)).
 
 ## 외부 fact (도메인 지식 entry SSOT)
 

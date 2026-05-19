@@ -325,7 +325,7 @@ Amendment 시 ratchet 강화 방향만 허용 (ADR-058 §결정 5 sunset_justifi
 - §결정 3 spawn condition 표 (Backtest/Paper = 6 / Live pre-cutover = 8 / production cutover = 9 = 6 + LiveOps + LiveOrdering + ProductionEvidence) 의 "6 permanent SubAgent" = SecurityArchitect / TestContractArchitect / DataArchitect (DataMigrationArchitect rename) / InfraOperationalArchitect (OperationalRiskArch rename) / CodeArchitect (CFP-676 신설) + (4-tuple sub-agent CodebaseMapper/Refactor/ArchitectAnalyst 는 deputy column 아님 — flat-spawn sub-tuple, ADR-044 CFP-676 reaffirm 단락 정합). **deputy 명단 = 5 permanent + 3 CONDITIONAL** (CLAUDE.md "Deputy mandate 매트릭스" + skills/deputy-mandate/SKILL.md CFP-676 S1 동시 갱신).
 - **wrapper-self-app N/A invariant 무변경** (§결정 6 — ADR-005 `plugin-meta-na`): CFP-676 자체 = wrapper governance Story (code 0 + runtime behavior 0) → ProductionEvidence spawn 영역 외. InfraOperationalArchitect rename 은 deputy 명칭 SSOT 변경 (정책 문서) — production cutover trigger 무관.
 
-**Scope 경계**: 본 cross-ref 단락 = ADR-72 정책 SSOT 무변경 declare 만. ProductionEvidenceDeputyAgent agent file 본문 (`agents/production-evidence-deputy.md`) + InfraOperationalArchitect agent file rename = W2 S3 (codeforge-design sibling Story) 영역. 본 CFP-676 S1 = wrapper 정책 SSOT (ADR / CLAUDE.md / skill) 만 (doc-only fast-path — [ADR-054](ADR-054-doc-only-fast-path.md)).
+**Scope 경계**: 본 cross-ref 단락 = ADR-72 정책 SSOT 무변경 declare 만. ProductionEvidenceDeputyAgent agent file 본문 (`agents/production-evidence-deputy.md`) + InfraOperationalArchitect agent file rename = W2 S3 (codeforge-design sibling Story) 영역. 본 CFP-676 S1 = wrapper 정책 SSOT (ADR / CLAUDE.md / skill) 만 (doc-only fast-path — [ADR-054](ADR-054-doc-only-story-fast-path.md)).
 
 ---
 

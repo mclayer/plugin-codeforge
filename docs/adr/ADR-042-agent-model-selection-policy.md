@@ -447,7 +447,7 @@ CodeArchitect / ArchitectAnalyst = §결정 2 invariant ("Sonnet 으로 대체 �
 
 ### Scope 경계 (S1 = 정책 SSOT 만)
 
-본 Amendment 7 = **정책 SSOT codify 만**. agent file (`.md`) 실 신설 / rename / 내용 작성 = W2 S3 (codeforge-design plugin sibling Story) 영역. ADR-042 §결정 3 의 "해당 lane plugin agent file 의 `model:` field 와 동기" 의무 = W2 S3 sibling PR 에서 충족 (codeforge-design plugin MINOR bump trigger — [ADR-023](ADR-023-lane-plugin-lifecycle.md) / [ADR-037](ADR-037-plugin-version-bump-rule.md) 정합). 본 S1 PR 의 agent file 변경 0건 invariant (doc-only fast-path — [ADR-054](ADR-054-doc-only-fast-path.md)).
+본 Amendment 7 = **정책 SSOT codify 만**. agent file (`.md`) 실 신설 / rename / 내용 작성 = W2 S3 (codeforge-design plugin sibling Story) 영역. ADR-042 §결정 3 의 "해당 lane plugin agent file 의 `model:` field 와 동기" 의무 = W2 S3 sibling PR 에서 충족 (codeforge-design plugin MINOR bump trigger — [ADR-023](ADR-023-lane-plugin-lifecycle.md) / [ADR-037](ADR-037-plugin-version-bump-rule.md) 정합). 본 S1 PR 의 agent file 변경 0건 invariant (doc-only fast-path — [ADR-054](ADR-054-doc-only-story-fast-path.md)).
 
 ### Cross-ref
 

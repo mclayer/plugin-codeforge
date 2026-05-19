@@ -313,7 +313,7 @@ InfraOperationalArchitect (rename 후) 와 ProductionEvidenceDeputyAgent ([ADR-7
 
 **dual-spawn 가능성 + wrapper-self-app N/A 명문화** (Epic #1026 ProductionEvidence boundary 단락 SSOT):
 - **consumer production cutover Story** 에서 InfraOperationalArchitect + ProductionEvidence **dual-spawn 가능** — 영역 disjoint (design-time policy vs runtime-evidence). ADR-72 §결정 3 "SubAgent spawn both 의무" (production cutover = 9 SubAgent: 6 permanent + LiveOps + LiveOrdering + ProductionEvidence) 정합. 한쪽만 spawn 금지 (boundary axis 정합 검증 의무).
-- **wrapper-self-app 시 ProductionEvidence N/A** (ADR-72 §결정 6 + [ADR-005](ADR-005-plugin-self-application-na-standard.md) `plugin-meta-na` 정합 — codeforge dogfood Epic = production cutover 부재. CFP-954 precedent). 본 CFP-676 자체 = wrapper governance Story (code 0 + runtime behavior 0) → InfraOperationalArchitect (6 permanent 상시) 만, ProductionEvidence N/A.
+- **wrapper-self-app 시 ProductionEvidence N/A** (ADR-72 §결정 6 + [ADR-005](ADR-005-plugin-self-application-na-standardization.md) `plugin-meta-na` 정합 — codeforge dogfood Epic = production cutover 부재. CFP-954 precedent). 본 CFP-676 자체 = wrapper governance Story (code 0 + runtime behavior 0) → InfraOperationalArchitect (6 permanent 상시) 만, ProductionEvidence N/A.
 
 Amendment 2 §결정 3 (env secret ownership: SecurityArch threat / OpRiskArch containment) + Amendment 3 §결정 6.3 (3-way axis 분리: threat / containment policy / containment evidence) = **본 Amendment 4 무변경** (rename 만 반영 — OpRiskArch → InfraOperationalArchitect, ownership axis 정의 그대로 계승). semantic regression 0 (Codex S-CFP676-ADR014-AMD4-SCOPE P1 — Amendment 3 policy/evidence disjointness 보존 invariant).
 
