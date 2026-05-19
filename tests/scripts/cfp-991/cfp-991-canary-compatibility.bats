@@ -335,6 +335,9 @@ codeforge-extra:5.92.0"
   # negative — ADR-008 §결정 3 (PATCH) 혼동 단독 인용 없음 (ADR-008 §결정 2 = MINOR only, §결정 3 = PATCH)
   # 둘 다 있어야 함 (단, backward_compat 영역 특정 §결정 2)
   grep -q "§결정 2" "$RECONCILE_CONTRACT"
+  # F-CR-991-D FIX: §결정 3 confusion disallowed — backward_compat 영역 안에 §결정 3 단독 참조 금지
+  # inter_plugin_contract_backward_compat_verify 블록 5줄 스캔 후 §결정 3 단독 존재 시 FAIL
+  ! grep -A 5 "inter_plugin_contract_backward_compat_verify:" "$RECONCILE_CONTRACT" | grep -q "§결정 3"
 }
 
 @test "TC-26 (P0): 스크립트 helper lib — idempotent source guard 존재 (multi-source 시 redefine 회피)" {
@@ -514,4 +517,95 @@ codeforge-extra:5.92.0"
   run _three_way_version_diff "5.91.0" "5.92.0" "5.92.0"
   [ "$status" -eq 2 ]
   [[ "$output" != "MATCH" ]]
+}
+
+# ─────────────────── TC-DISC-4/5: F-CR-991-B/C regression guard (FIX iter 1) ────
+
+@test "TC-DISC-4 (P1): discriminating — mock member_enum name 검증 (F-CR-991-B regression guard)" {
+  [ -f "$HELPER_LIB" ]
+  source "$HELPER_LIB"
+  # negative: 임의 이름 7개 주입 → exit 2 (member_enum closed-set 위배 hard fail)
+  # F-CR-991-B FIX 이전 = exit 1 오분류 (silent PASS) — 회귀 방지
+  export _CFP991_MOCK_FAMILY_VERSIONS="random-plugin-1:5.0.0
+random-plugin-2:5.0.0
+random-plugin-3:5.0.0
+random-plugin-4:5.0.0
+random-plugin-5:5.0.0
+random-plugin-6:5.0.0
+random-plugin-7:5.0.0"
+  run _enumerate_family_7_canary_versions "canary"
+  [ "$status" -eq 2 ]
+  # positive: exit 2 시 ERROR 메시지 포함 (member_enum 위배 명시)
+  [[ "${output}" == *"NOT in member_enum"* ]] || [[ "${lines[*]}" == *"NOT in member_enum"* ]]
+}
+
+@test "TC-DISC-5 (P1): discriminating — python3 absent (command -v guard) → exit 2 hard fail (F-CR-991-C regression guard)" {
+  [ -f "$HELPER_LIB" ]
+  # python3 미존재 시뮬레이션 — function override로 command -v 실패 재현
+  # F-CR-991-C FIX 이전 = python3 호출 후 rc 결과로만 판단 → exit 1 오분류 (silent warning)
+  # FIX 후: command -v python3 사전 check → 실패 시 즉시 exit 2 hard fail
+  # Note: bats subshell 내에서 command 를 재정의해 command -v 실패 시뮬레이션
+  run bash -c "
+    command() {
+      if [[ \"\$1\" == '-v' && \"\$2\" == 'python3' ]]; then
+        return 1  # python3 absent 시뮬레이션
+      fi
+      builtin command \"\$@\"
+    }
+    export -f command
+    source '${HELPER_LIB}'
+    _extract_4tuple_measurement_source '${RECONCILE_CONTRACT}' functional
+    echo exit:\$?
+  " 2>&1
+  # exit 2 = hard fail (F-CR-991-C FIX 후 기대값)
+  # 'exit:2' 문자열이 output에 포함되어야 함
+  [[ "${output}" == *"exit:2"* ]] || [[ "${lines[*]}" == *"exit:2"* ]]
+  # ERROR 메시지 포함 (python3 unavailable 명시)
+  [[ "${output}" == *"python3"* ]]
+}
+
+# ─────────────── TC-DISC-6/7: F-CR-991-G mock env var wire (FIX iter 1 2nd round) ─
+
+@test "TC-DISC-6 (P1): discriminating — _CFP991_MOCK_MARKETPLACE_CHANNELS mock env wire (F-CR-991-G)" {
+  [ -f "$HELPER_LIB" ]
+  # Note: bats `run` 은 stdout+stderr 를 합쳐 output 에 캡처 (bats v1.x default --keep-empty-lines)
+  # _three_way_version_diff 는 mock 주입 시 WARNING(stderr) + MATCH(stdout) 복합 출력
+  # 따라서 `output == "MATCH"` 대신 `*"MATCH"*` wildcard 사용 (multi-line output 대응)
+
+  # positive: mock channels 주입 시 registry version 이 mock canary tier 버전으로 교체되어 3-way MATCH
+  # _CFP991_MOCK_MARKETPLACE_CHANNELS format: "tier=canary version=<ver>" KV
+  run bash -c "source '${HELPER_LIB}' && export _CFP991_MOCK_MARKETPLACE_CHANNELS='tier=canary version=5.92.0' && _three_way_version_diff '5.92.0' 'stale_registry_version' '5.92.0'" 2>&1
+  # mock channels 로 registry version 이 5.92.0 으로 교체 → 3-way MATCH → exit 0
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"MATCH"* ]]
+  # WARNING 메시지 포함 (mock-injected 명시)
+  [[ "$output" == *"mock-injected"* ]]
+
+  # negative: mock channels 주입 후에도 mismatch 발생 시 exit 2
+  run bash -c "source '${HELPER_LIB}' && export _CFP991_MOCK_MARKETPLACE_CHANNELS='tier=canary version=5.91.0' && _three_way_version_diff '5.92.0' 'stale_registry_version' '5.92.0'" 2>&1
+  # mock canary = 5.91.0 ≠ publisher 5.92.0 → 3-way MISMATCH → exit 2
+  [ "$status" -eq 2 ]
+  [[ "$output" == *"MISMATCH"* ]]
+}
+
+@test "TC-DISC-7 (P1): discriminating — _CFP991_MOCK_DRIFT_THRESHOLD mock env wire (F-CR-991-G)" {
+  [ -f "$HELPER_LIB" ]
+  # Note: _three_way_version_diff 는 drift_threshold=0 시 WARNING(stderr)를 출력
+  # bats `run` output 은 multi-line (WARNING + MATCH). *"MATCH"* wildcard 사용
+
+  # positive: drift_threshold=0 override (instant detection mode) — WARNING 메시지 포함
+  run bash -c "source '${HELPER_LIB}' && export _CFP991_MOCK_DRIFT_THRESHOLD=0 && _three_way_version_diff '5.92.0' '5.92.0' '5.92.0'" 2>&1
+  # threshold=0 이어도 3-way MATCH → exit 0 (threshold = advisory only, MATCH 판정 무영향)
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"MATCH"* ]]
+  # WARNING 메시지 포함 (drift_threshold=0s test override 명시)
+  [[ "$output" == *"0s"* ]] || [[ "$output" == *"drift_threshold"* ]]
+
+  # negative: invalid threshold 값 → fallback to 86400 + WARNING
+  run bash -c "source '${HELPER_LIB}' && export _CFP991_MOCK_DRIFT_THRESHOLD='not_a_number' && _three_way_version_diff '5.92.0' '5.92.0' '5.92.0'" 2>&1
+  # invalid threshold = fallback 86400s + WARNING 출력 + 3-way MATCH → exit 0
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"MATCH"* ]]
+  # WARNING 메시지 포함 (invalid threshold 명시)
+  [[ "$output" == *"invalid"* ]] || [[ "$output" == *"WARNING"* ]]
 }
