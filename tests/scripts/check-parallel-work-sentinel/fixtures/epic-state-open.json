@@ -1,0 +1,7 @@
+{
+  "state": "OPEN",
+  "closedAt": null,
+  "closedBy": null,
+  "labels": [{"name": "parent:CFP-882"}, {"name": "phase:구현"}],
+  "body": "## Epic CFP-882 Wave 4 sub-Epic channel\n\n<!-- scope_manifest -->\nplanned_stories: [CFP-906, CFP-932, CFP-954, CFP-967]\nplanned_adrs: [ADR-076, ADR-073]\n<!-- /scope_manifest -->\n\nSentinel evidence: CFP-953 (2026-05-18) + CFP-946 (2026-05-18) same-day 2-occurrence.\n"
+}

@@ -1,0 +1,141 @@
+name: parallel-work-sentinel-check
+# CFP-967 / ADR-073 Amendment 2 §결정 1-A/1-B/1-C — parallel work sentinel mechanical check
+# Tier: warning (ADR-060 evidence-enforceable, continue-on-error: true)
+# evidence-checks-registry.yaml entry: parallel-work-sentinel-pickup
+#
+# 검증:
+#   PR open 시점 + scheduled daily — parallel race detection via 3 polling mode:
+#   - title-search (memory rule 6, CFP-953 incident carrier)
+#   - epic-state-poll (memory rule 7, CFP-946 incident carrier)
+#   - head-compare-sibling-commits (self-demo lane evidence)
+#
+# 트리거:
+#   pull_request: opened (PR-time sentinel check)
+#   schedule: 24h UTC daily (sustained polling §결정 1-C)
+#   workflow_dispatch: manual ad-hoc verification
+#
+# Hotfix bypass:
+#   hotfix-bypass:parallel-work-sentinel-pickup label 부착 시 skip + audit comment
+#   (ADR-024 Amendment 3 hotfix-bypass family 43번째 member)
+#
+# E-4 3-branch graceful degradation:
+#   401 fail-closed (exit 2 SETUP error — gh auth 미설정)
+#   429 fail-open silent (warning log + exit 0)
+#   5xx noop + advisory stderr marker
+#
+# Permissions: deny-all top-level + job minimal (CFP-530 / ADR-060 Amendment 8)
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  schedule:
+    - cron: '0 0 * * *'  # 24h UTC daily — sustained polling §결정 1-C
+  workflow_dispatch:       # manual override for ad-hoc verification
+
+permissions: {}  # top-level deny-all (CFP-530 / ADR-060 Amendment 8)
+
+jobs:
+  parallel-work-sentinel:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # warning tier — sentinel check does not block CI
+    permissions:
+      contents: read   # checkout + git log fetch
+      issues: write    # audit comment (bypass channel)
+
+    concurrency:
+      group: parallel-work-sentinel-${{ github.ref }}
+      cancel-in-progress: false  # complete in-flight runs
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 50  # sufficient for git log -50 fallback
+
+      - name: Check hotfix-bypass label
+        id: bypass
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Check if hotfix-bypass:parallel-work-sentinel-pickup label is present
+          if [ -n "${{ github.event.pull_request.number }}" ]; then
+            LABELS=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '[.labels[].name] | @json' 2>/dev/null || echo '[]')
+            if echo "$LABELS" | grep -q "hotfix-bypass:parallel-work-sentinel-pickup"; then
+              echo "bypass=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "bypass=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "bypass=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bypass audit comment
+        if: steps.bypass.outputs.bypass == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "[parallel-work-sentinel] hotfix-bypass:parallel-work-sentinel-pickup active — sentinel check skipped"
+          echo "[bypass-justification] hotfix-bypass:parallel-work-sentinel-pickup applied on PR #${{ github.event.pull_request.number }}"
+          if [ -n "${{ github.event.pull_request.number }}" ]; then
+            gh pr comment ${{ github.event.pull_request.number }} \
+              --body "[parallel-work-sentinel] bypass active — hotfix-bypass:parallel-work-sentinel-pickup label detected. Audit trail: $(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              2>/dev/null || true
+          fi
+
+      - name: Run title-search sentinel (memory rule 6)
+        if: steps.bypass.outputs.bypass != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CFP_CONTEXT: ${{ github.head_ref }}
+        run: |
+          chmod +x scripts/check-parallel-work-sentinel.sh
+          # E-4: 401 fail-closed, 429 fail-open, 5xx retry graceful
+          bash scripts/check-parallel-work-sentinel.sh --mode=title-search 2>&1 || {
+            EXIT_CODE=$?
+            if [ $EXIT_CODE -eq 2 ]; then
+              echo "::warning::parallel-work-sentinel title-search SETUP error (exit 2) — gh auth or dependency absent"
+            fi
+            exit 0  # warning tier: non-blocking
+          }
+
+      - name: Run epic-state-poll sentinel (memory rule 7)
+        if: steps.bypass.outputs.bypass != 'true' && github.event.pull_request.number != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Attempt to extract Epic parent from PR labels
+          EPIC_ID=$(gh pr view ${{ github.event.pull_request.number }} \
+            --json labels --jq '[.labels[].name | select(startswith("parent:"))] | first | ltrimstr("parent:CFP-")' \
+            2>/dev/null || echo "")
+          if [ -n "$EPIC_ID" ] && [ "$EPIC_ID" != "null" ]; then
+            bash scripts/check-parallel-work-sentinel.sh --mode=epic-state-poll --epic-id="$EPIC_ID" 2>&1 || {
+              EXIT_CODE=$?
+              if [ $EXIT_CODE -eq 2 ]; then
+                echo "::warning::parallel-work-sentinel epic-state-poll SETUP error (exit 2)"
+              fi
+              exit 0
+            }
+          else
+            echo "[parallel-work-sentinel] No parent:CFP-* label — epic-state-poll skipped"
+          fi
+
+      - name: Run head-compare sentinel
+        if: steps.bypass.outputs.bypass != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CFP_PRIOR_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          if [ -n "${CFP_PRIOR_SHA:-}" ]; then
+            bash scripts/check-parallel-work-sentinel.sh \
+              --mode=head-compare-sibling-commits \
+              --branch=origin/${{ github.base_ref || 'main' }} \
+              2>&1 || {
+              EXIT_CODE=$?
+              if [ $EXIT_CODE -eq 2 ]; then
+                echo "::warning::parallel-work-sentinel head-compare SETUP error (exit 2)"
+              fi
+              exit 0
+            }
+          else
+            echo "[parallel-work-sentinel] CFP_PRIOR_SHA absent — head-compare skipped (schedule run)"
+          fi

@@ -1,0 +1,19 @@
+{
+  "//": "CFP-967 / ADR-073 Amendment 2 — parallel-work-poll SessionStart hook sample",
+  "//2": "Consumer overlay opt-in sample. plugin-root hooks/hooks.json first-class (ADR-038 Amd 3 §결정 10).",
+  "//3": "Deprecated channel — 1 release grace. Prefer: hooks/session-start advisory block (already included).",
+  "//4": "To activate: copy to .claude/settings.json hooks.SessionStart[] or merge with existing hooks array.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-parallel-work-sentinel.sh --mode=title-search 2>&1 || true"
+          }
+        ]
+      }
+    ]
+  }
+}

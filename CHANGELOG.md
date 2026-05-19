@@ -7,6 +7,29 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.92.0] - 2026-05-19
+
+### Added (CFP-967 — parallel work sentinel mechanical wire, ADR-073 Amendment 2 §결정 1-A/1-B/1-C)
+
+- **`scripts/check-parallel-work-sentinel.sh`** — ADR-061 thin bash wrapper dispatching Python SSOT. 3 모드 (`--mode=title-search` / `--mode=epic-state-poll` / `--mode=head-compare-sibling-commits`). `BYPASS_PARALLEL_WORK_SENTINEL=1` audit-trailed bypass (43번째 family member).
+- **`scripts/lib/check_parallel_work_sentinel.py`** — Python SSOT 3 polling mode 구현: (A) title-search = CFP-NNN pattern GitHub search + 요청 CFP title 교집합, (B) epic-state-poll = Epic Issue `scope_manifest` block parse + open/closed state, (C) head-compare-sibling-commits = git log 기반 sibling commit delta. graceful degradation 3 fail-mode (`api_quota_exceeded` / `hook_self_fail` / `stale_label_grace`). exit-code 3-tier (ADR-060 §결정 15: 0=PASS / 1=reserved / 2=SETUP error).
+- **`templates/github-workflows/parallel-work-sentinel-check.yml`** + **`.github/workflows/parallel-work-sentinel-check.yml`** — byte-identical self-app (ADR-005). warning-tier (continue-on-error: true). PR open/sync + daily cron + workflow_dispatch trigger. permissions top-level deny-all + job-level minimal (contents:read / issues:write).
+- **`templates/.claude/hooks/SessionStart-parallel-work-poll.json.sample`** — consumer opt-in cold start 등록 sample (deprecated channel 명시).
+- **`tests/scripts/check-parallel-work-sentinel/test_parallel_work_sentinel.bats`** — bats 8 TC (TC-1 title-search hit / TC-2 miss / TC-3 epic OPEN / TC-4 head-compare delta / TC-5 graceful 403 / TC-6 hook_self_fail / TC-7 idempotent / TC-8 BYPASS).
+- **`scripts/lib/test_check_parallel_work_sentinel.py`** — pytest 13 TC (TestTitleSearchHit 3 + TestEpicStatePoll 3 + TestHeadCompare 3 + TestArgparse 2 + TestExitCodes 2).
+- **`tests/scripts/check-parallel-work-sentinel/fixtures/`** — 6 JSON/text fixtures (CFP-953 evidence: title-search-hit.json / title-search-miss.json / epic-state-open.json / head-compare-delta.txt / compare-api.json / api-403.json).
+
+### Changed
+
+- **`hooks/session-start`** — `[codeforge parallel-work-poll advisory — CFP-967 / ADR-073 Amendment 2 §결정 1-B cold start]` block 추가. lane spawn / PR open / merge transition 직전 3-mode poll 실행 지시.
+- **`docs/evidence-checks-registry.yaml`** — `parallel-work-sentinel-pickup` entry `status: deferred-followup` → `warning` + `detect_command` + `workflow` path 채움 (ADR-073 Amendment 2 §결정 1-A mechanical enforcement 첫 wire).
+- **`docs/inter-plugin-contracts/label-registry-v2.md`** — v2.34 → v2.35: `hotfix-bypass:parallel-work-sentinel-pickup` 43번째 family member 신설.
+- **`docs/inter-plugin-contracts/MANIFEST.yaml`** — label_registry version v2.34 → v2.35 + CFP-967 changelog 1-line prepend.
+- **`CLAUDE.md`** — GitHub Workflow 섹션 `33종` → `34종` fixture + `15 evidence-enforceable warning` → `16 evidence-enforceable warning` + `parallel-work-sentinel-check.yml — CFP-967 / ADR-073 Amendment 2` 1-line 신설.
+- **`.claude-plugin/plugin.json`** — version `5.91.1` → `5.92.0` MINOR (ADR-037 — 신규 lint script + workflow runtime 활성화 = governance behavior change MINOR).
+
+ADR-073 Amendment 2 carrier: §결정 1-A (script wire) / §결정 1-B (hooks/session-start cold start) / §결정 1-C (workflow warning tier). CFP-953 (title-based search miss evidence) + CFP-946 (Epic close 11분 gap evidence) 동일 세션 same-day 2-occurrence sentinel = escalation evidence threshold.
+
 ## [5.91.1] - 2026-05-18
 
 ### Fixed (CFP-986 post-merge — S3 result-fidelity classification↔severity disjoint, Epic CFP-858)
