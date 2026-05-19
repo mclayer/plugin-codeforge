@@ -55,7 +55,7 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 | Lane | Plugin | Agent count | SSOT |
 |---|---|---|---|
 | 요구사항 | codeforge-requirements | 7 (PL + DomainAgent + RequirementsAnalyst + Researcher + ChangeImpactAgent + FeasibilityAgent + ContinuityAgent) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-requirements/blob/main/CLAUDE.md) |
-| 설계 | codeforge-design | 8 (PL + ArchitectAgent chief + 6 SubAgent) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-design/blob/main/CLAUDE.md) |
+| 설계 | codeforge-design | PL + ArchitectAgent chief + 5 permanent SubAgent + 3 CONDITIONAL + 4-tuple sub-tuple (CFP-676 / ADR-042 Amd 7 — 정확 roster·count SSOT = codeforge-design CLAUDE.md, agent file 실 신설 = W1 S2/W2 S3) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-design/blob/main/CLAUDE.md) |
 | 설계리뷰 / 구현리뷰 / 보안테스트 | codeforge-review | 5 (3 PL + 2 worker) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-review/blob/main/CLAUDE.md) |
 | 구현 | codeforge-develop | 5 (PL + QADev + 3 role:dev core) + preset/overlay 동적 | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-develop/blob/main/CLAUDE.md) |
 | 통합테스트 | codeforge-test | 1 (IntegrationTestAgent) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-test/blob/main/CLAUDE.md) |
@@ -226,11 +226,11 @@ FIX 루프 시작 시 `codeforge:root-cause-decision` 호출 (DeveloperPL 진단
 
 요약: DesignLane=설계 결정, DesignReview=문서 감사, CodeReview=구현 품질, SecurityTest=보안 검증. 중복 지적 시 해당 ReviewPL dedup → severity 높은 쪽 채택.
 
-### Deputy mandate 매트릭스 (codeforge-design lane) — 6 permanent + 3 CONDITIONAL
+### Deputy mandate 매트릭스 (codeforge-design lane) — 5 permanent + 3 CONDITIONAL
 
-설계 lane 진입 시 `codeforge:deputy-mandate` 호출 (ArchitectPLAgent SubAgent spawn 결정 전). 6+3 SubAgent §7/§11/§13 sub별도 ownership 전체 테이블 포함.
+설계 lane 진입 시 `codeforge:deputy-mandate` 호출 (ArchitectPLAgent SubAgent spawn 결정 전). 5+3 SubAgent §3/§7/§11/§13 sub별도 ownership 전체 테이블 포함 (CFP-676 / ADR-042 Amendment 7 — design lane agent 구조 재편).
 
-요약: SecurityArch=§7.1/§7.2/§7.3/§7.5/§7.6, OpRiskArch=§7.4(DR/rate/env/clock), DataMigrationArch=§11 schema/migration/idempotency, TestContractArch=§8.5. CONDITIONAL LiveOps·LiveOrdering·ProductionEvidence = Live touching Story (LiveOps·LiveOrdering) 또는 production cutover Story (ProductionEvidence) 만 spawn ([ADR-014](docs/adr/ADR-014-operational-risk-ssot-distribution.md), [ADR-72](docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md)).
+요약: SecurityArch=§7.1/§7.2/§7.3/§7.5/§7.6, InfraOperationalArch=§7.4(DR/rate/env/clock/container — OperationalRiskArch rename), DataArch=§3 data + §11 전체 데이터 구조/migration/idempotency (DataMigrationArch rename+확장), TestContractArch=§8.5, CodeArch=§3 code(layered/hexagonal/clean/DDD/module boundary — 신설 Sonnet). CONDITIONAL LiveOps·LiveOrdering·ProductionEvidence = Live touching Story (LiveOps·LiveOrdering) 또는 production cutover Story (ProductionEvidence) 만 spawn ([ADR-014](docs/adr/ADR-014-operational-risk-ssot-distribution.md), [ADR-72](docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md), [ADR-042 Amendment 7](docs/adr/ADR-042-agent-model-selection-policy.md)). ArchitectAnalyst (PriorArt rename, Sonnet) = 4-tuple sub-tuple (CodebaseMapper·Refactor·ArchitectAnalyst flat spawn — [ADR-044 CFP-676 reaffirm](docs/adr/ADR-044-phase-scoped-sequential-team.md), deputy 아님). InfraArchitect 신설 철회 (Docker-first + AWS 없음 — 미도입 결정, ADR-042 Amendment 7 SSOT).
 
 **PMOAgent (Cross-cutting)** — Epic 창설 / Story 완료 회고 (**자동 의무 trigger** — Phase 2 PR merge 후 5분 grace, CFP-138 / [ADR-045](docs/adr/ADR-045-story-retro-mandatory-trigger.md)) / 사용자 요청 시 spawn. 단일 Story lane 게이트 비개입. 단 clarification 답변 영향이 Epic/Story 구조 도달 시 조건부 합류 (재분해 — ADR-077 §결정 2 contrapositive invariant, ADR-045 retro trigger와 origin disjoint). 상세: [codeforge-pmo CLAUDE.md](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/CLAUDE.md).
 

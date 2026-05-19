@@ -209,6 +209,7 @@ ADR-042 §결정 3 (신규 agent 도입 시 ADR 의무) 정합 — 본 ADR-72 §
 | ADR-040 (Worktree Convention) + Amendment 3 (mechanical_enforcement_actions[]) | **frontmatter `mechanical_enforcement_actions[]` 의무** — 본 ADR-72 frontmatter 2 entry (production-cutover-deputy-spawn-evidence + epic-cutover-gate-evidence-quad-check) 보유. `status: deferred-followup` — evidence-checks-registry append 완료 (CFP-632 FIX iter 1, deferred-followup status). detect script + workflow integration 만 follow-up CFP-Z / CFP-Z' carrier 영역. schema verbatim (ADR-040 §결정 7.A) 정합. |
 | ADR-063 (Marketplace Atomic Invariant) | **plugin.json bump 검증** — 본 ADR-72 = wrapper governance change. plugin.json bump 영역 = §결정 1 + §결정 2 가 wrapper CLAUDE.md "Deputy mandate 매트릭스" row 추가 만 변경 (SubAgent mandate scope 정의는 wrapper SSOT 보유 영역 = ADR-014 §결정 2 정합). plugin.json MINOR bump 후보 = false (wrapper SSOT 본문 변경 없음 — matrix row 추가만, ADR-005 plugin-meta-na 정합). marketplace_sync_declared = false (Phase 1 PR 영역). 단 follow-up CFP-Z 가 review-verdict-v4 MINOR bump 시 sibling sync + plugin.json MINOR bump 동반 가능 (별도 carrier scope). |
 | ADR-045 (Story Retro Mandatory Trigger) | **EPIC CLOSED gate evidence quad sibling** — Story-4 (#18 plugin-codeforge-pmo) 가 PMOAgent retro Cross-Story pattern ≥2 ADR trigger 추가. 본 ADR-72 §결정 5 evidence quad 가 PMOAgent retro template 확장 영역 (Story-4 sibling carrier). |
+| ADR-042 Amendment 7 + ADR-014 Amendment 4 (CFP-676 atomic carrier) | **InfraOperationalArchitect rename mirror cross-ref** — OperationalRiskArchitectAgent → InfraOperationalArchitectAgent rename 후에도 본 ADR-72 §결정 2/§결정 4 boundary axis (policy SSOT vs evidence SSOT) 무변경 계승. ProductionEvidenceDeputy ↔ InfraOperationalArchitect disjoint axis 정합. 하단 "CFP-676 mirror cross-ref" 단락 참조. |
 
 ## 해소 기준
 
@@ -311,6 +312,24 @@ Amendment 시 ratchet 강화 방향만 허용 (ADR-058 §결정 5 sunset_justifi
 
 ---
 
+## CFP-676 mirror cross-ref — InfraOperationalArchitect rename boundary axis 무변경 (신규 §결정 아님)
+
+> **번호 미부여 cross-ref 단락** (collision 0 — 본 ADR-72 §결정 1~8 본문 변경 0건). CFP-1026 S1 ([ADR-042](ADR-042-agent-model-selection-policy.md) Amendment 7 + [ADR-014](ADR-014-operational-risk-ssot-distribution.md) Amendment 4 atomic carrier) 의 design lane agent 구조 재편이 OperationalRiskArchitectAgent → **InfraOperationalArchitectAgent** rename 을 수행함에 따른 mirror cross-ref. 본 단락 = ADR-72 ↔ ADR-014 양 방향 cross-ref 정합 유지만, 신규 §결정 / mandate scope 변경 / spawn condition 변경 0건.
+
+**식별자 정합 (Codex S-CFP676-ADR72-FORM P2 / Story §5.3 EC-1 / memory CFP-932 sentinel)**: 본 ADR file 의 정식 식별자 = **`ADR-72`** (2-digit form, frontmatter `adr_number: 72`, file `docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md`). `ADR-072` (3-digit zero-pad) 는 본 ADR 의 식별자 아님 — CFP-676 carrier 전 anchor (ADR-042 Amendment 7 / ADR-014 Amendment 4 / CLAUDE.md / skills/deputy-mandate/SKILL.md / Change Plan / Story §3·§7) 에서 2-digit form 통일 의무 (ADR-068 I-4 wording SSOT 정합). CFP-906 + CFP-932 + CFP-954 3-form 혼동 lineage pattern_count 차단.
+
+**ProductionEvidenceDeputy ↔ InfraOperationalArchitect disjoint axis (rename 후 무변경)**:
+
+- 본 ADR-72 §결정 1 (ProductionEvidenceDeputy 신설 3번째 CONDITIONAL) + §결정 2 (7-cell mandate matrix) + §결정 4 (boundary axis: policy SSOT vs evidence SSOT) 의 OperationalRiskArch 측 owner = rename 후 **InfraOperationalArchitect** 로 verbatim substitute (mandate scope / overlap cell / boundary axis 정의 0건 변경 — rename 만).
+- **InfraOperationalArchitect** = §7.4 design-time policy SSOT owner (DR / disconnect / clock / rate / env / container invariant 정의 — 상시 6 permanent SubAgent). **ProductionEvidenceDeputy** = production state runtime-evidence owner (실측 명시 — CONDITIONAL, Live touching OR production cutover Story 한정).
+- §결정 3 spawn condition 표 (Backtest/Paper = 6 / Live pre-cutover = 8 / production cutover = 9 = 6 + LiveOps + LiveOrdering + ProductionEvidence) 의 "6 permanent SubAgent" = SecurityArchitect / TestContractArchitect / DataArchitect (DataMigrationArchitect rename) / InfraOperationalArchitect (OperationalRiskArch rename) / CodeArchitect (CFP-676 신설) + (4-tuple sub-agent CodebaseMapper/Refactor/ArchitectAnalyst 는 deputy column 아님 — flat-spawn sub-tuple, ADR-044 CFP-676 reaffirm 단락 정합). **deputy 명단 = 5 permanent + 3 CONDITIONAL** (CLAUDE.md "Deputy mandate 매트릭스" + skills/deputy-mandate/SKILL.md CFP-676 S1 동시 갱신).
+- **wrapper-self-app N/A invariant 무변경** (§결정 6 — ADR-005 `plugin-meta-na`): CFP-676 자체 = wrapper governance Story (code 0 + runtime behavior 0) → ProductionEvidence spawn 영역 외. InfraOperationalArchitect rename 은 deputy 명칭 SSOT 변경 (정책 문서) — production cutover trigger 무관.
+
+**Scope 경계**: 본 cross-ref 단락 = ADR-72 정책 SSOT 무변경 declare 만. ProductionEvidenceDeputyAgent agent file 본문 (`agents/production-evidence-deputy.md`) + InfraOperationalArchitect agent file rename = W2 S3 (codeforge-design sibling Story) 영역. 본 CFP-676 S1 = wrapper 정책 SSOT (ADR / CLAUDE.md / skill) 만 (doc-only fast-path — [ADR-054](ADR-054-doc-only-story-fast-path.md)).
+
+---
+
 ## 변경이력
 
 - **2026-05-14 v1 (Accepted, CFP-632)**: 초기 결정 — ProductionEvidenceDeputyAgent 신설 (CONDITIONAL 3번째 SubAgent) + EPIC CLOSED gate evidence quad + boundary axis (design-time SSOT vs runtime-evidence) 명시 + 7-cell mandate overlap matrix + Live touching ↔ production cutover disjoint trigger axis + Opus tier + wrapper-self-app N/A + follow-up CFP-Z reservation.
+- **2026-05-19 mirror cross-ref (CFP-676 — ADR-72 본문 정책 0건 변경)**: CFP-1026 S1 (ADR-042 Amendment 7 + ADR-014 Amendment 4 atomic carrier) 의 OperationalRiskArchitectAgent → InfraOperationalArchitectAgent rename 에 따른 mirror cross-ref 단락 추가 (번호 미부여, 신규 §결정 아님). §결정 1~8 본문 / mandate scope / spawn condition / boundary axis 정의 **0건 변경 invariant** — rename 반영 + 2-digit form (ADR-72) 식별자 정합 명문화 (Codex S-CFP676-ADR72-FORM P2 / wording SSOT ADR-068 I-4). `## 관련 ADR` 표 ADR-042 Amendment 7 + ADR-014 Amendment 4 row 동반 (양방향 backref).

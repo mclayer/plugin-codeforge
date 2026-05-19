@@ -48,8 +48,21 @@ amendment_log:
     sunset_justification: null
     affected_agents:
       - DialogFidelityAgent (new entry, codeforge-pmo)
+  - amendment_id: 7
+    date: "2026-05-19"
+    status: applied
+    summary: "CFP-1026 S1 ADR carrier 묶음 — design lane agent 구조 재편 model tier SSOT. CodeArchitectAgent 신설 (Sonnet, §결정 1 Sonnet (a) single-mandate advocacy — §3 code: layered/hexagonal/clean/DDD bounded context/module boundary/dependency direction) + ArchitectAnalystAgent 신설 (PriorArt rename, Sonnet, §결정 1 Sonnet (a) — 변경 전 ADR/Change Plan/Story 기존 설계 분석, 4-tuple sub-tuple component) + DataMigrationArchitectAgent → DataArchitectAgent rename + mandate 확장 (§3 data + §11 전체 데이터 구조: entity/aggregate/value object/DB schema/event schema/DTO/API contract data/persistence model/데이터 흐름 + migration) + OperationalRiskArchitectAgent → InfraOperationalArchitectAgent rename. 4종 모두 §결정 3 (신규 agent/model 변경 시 ADR 의무) 정합. model tier (Sonnet) = brainstorm Phase 0+1 ArchitectAgent+Codex 최종 확정 carry-over (재론 금지). InfraArchitect 신설 철회 명문화 (Docker-first + AWS 없음 — 미도입 결정, ratchet 위반 아님)."
+    ref: CFP-676
+    carrier_story: CFP-676
+    sunset_justification: null
+    affected_agents:
+      - CodeArchitectAgent (new entry, codeforge-design — Sonnet)
+      - ArchitectAnalystAgent (new entry, codeforge-design — Sonnet, PriorArtAgent rename)
+      - DataArchitectAgent (DataMigrationArchitectAgent rename + mandate 확장, codeforge-design — Opus 유지)
+      - InfraOperationalArchitectAgent (OperationalRiskArchitectAgent rename, codeforge-design — Opus inheritance 유지)
 related_stories:
   - CFP-448
+  - CFP-676
 related_adrs:
   - ADR-009
   - ADR-013
@@ -123,7 +136,9 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 
 > **Amendment 4 (2026-05-11)**: CodebaseMapperAgent·RefactorAgent는 Opus로 복원됨 — ADR-057 참조.
 >
-> **Amendment 5 (2026-05-12, CFP-448)**: Amendment 4 의 6 agent 상향 중 3종 (CodebaseMapperAgent · RefactorAgent · DeveloperPLAgent) Opus → Sonnet 복귀. 나머지 3종 (FeasibilityAgent · ContinuityAgent · ChangeImpactAgent) Opus 유지. ADR-057 Amendment 3 cross-ref. **CodebaseMapper / Refactor 의 mandate text 재정의 동시 산출물 의무 발화로 §결정 2 invariant 정합 — 단순 model field downgrade 금지. DeveloperPLAgent 는 사용자 framing (CFP-448) verbatim ('아키텍트가 짜준 디자인 명세에서 제한되게 움직여 고도의 추론이 필요하지 않기 때문이다') 직접 적용 + ADR-042 §결정 1 (b) "Implementation work — code write / refactor / test 구현" verbatim 정의 정합 회귀 → mandate text 재정의 면제 + Codex re-review 면제**. 자세한 결정 matrix 는 본 ADR Amendment 5 본문 + ADR-057 Amendment 3 §결정 3 표 참조.
+> **Amendment 5 (2026-05-12, CFP-448)**: Amendment 4 의 6 agent 상향 중 3종 (CodebaseMapperAgent · RefactorAgent · DeveloperPLAgent) Opus → Sonnet 복귀. 나머지 3종 (FeasibilityAgent · ContinuityAgent · ChangeImpactAgent) Opus 유지. ADR-057 Amendment 3 cross-ref.
+>
+> **Amendment 7 (2026-05-19, CFP-676)**: Sonnet (a) "Single-mandate advocacy within multi-deputy debate" 에 **CodeArchitectAgent** (§3 code 설계 단일 축 advocacy — layered/hexagonal/clean/DDD bounded context/module boundary/dependency direction) + **ArchitectAnalystAgent** (변경 전 기존 설계 분석 단일 축 — PriorArtAgent rename, 4-tuple sub-tuple component) 2종 추가. CodebaseMapper/Refactor 동질 패턴 (single-mandate advocate, multi-source synthesis = ArchitectAgent chief Opus). §결정 2 invariant ("Sonnet 으로 fully cover 가능 = role 재정의 시그널") 충족 — 처음부터 single-mandate 정의이므로 Sonnet 적정. DataMigrationArchitectAgent → **DataArchitectAgent** rename + mandate 확장 / OperationalRiskArchitectAgent → **InfraOperationalArchitectAgent** rename — 본 § 의 Sonnet criteria 무관 (Opus tier 유지, §결정 1 (d) Security/safety boundary owner / 결정 4 inheritance). 상세 = 본 ADR `## Amendment 7` 본문 section. **CodebaseMapper / Refactor 의 mandate text 재정의 동시 산출물 의무 발화로 §결정 2 invariant 정합 — 단순 model field downgrade 금지. DeveloperPLAgent 는 사용자 framing (CFP-448) verbatim ('아키텍트가 짜준 디자인 명세에서 제한되게 움직여 고도의 추론이 필요하지 않기 때문이다') 직접 적용 + ADR-042 §결정 1 (b) "Implementation work — code write / refactor / test 구현" verbatim 정의 정합 회귀 → mandate text 재정의 면제 + Codex re-review 면제**. 자세한 결정 matrix 는 본 ADR Amendment 5 본문 + ADR-057 Amendment 3 §결정 3 표 참조.
 | **Haiku** | claude-haiku-4-5 | (a) Test runner / 결과 수집 — minimal reasoning (TestAgent). (b) External tool wrapper — 본체 reasoning 은 external (Codex GPT-5 / GPT-5.4) 가 수행, Claude 는 prompt 조립 / output relay 만 (CodexReviewAgent · RequirementsAnalystAgent). (c) Mechanical pattern execution — 입력 명세(Change Plan §3 + Story §8)가 충분히 structured되어 creative/diagnostic reasoning 없이 패턴 기반 생성이 가능하고, 오류 발생 시 FIX 루프가 CI/테스트로 즉시 감지 가능한 경우 (InfraEngineerAgent · QADeveloperAgent · DataEngineerAgent — Amendment 2). |
 
 > **Amendment 6 (2026-05-16, CFP-777)**: DialogFidelityAgent 신규 entry 추가 (codeforge-pmo / Opus pilot tier). verifier mandate = 누적 대화 fidelity 검증, 의미적 모순 판정 영역. mandate depth = 다축 (semantic match + ledger consistency + 4 차원 enum closed + Story §1 immutable cross-ref + Layer 4 incidents row inspection). single-axis 외형은 single-axis 검수이나 contradiction detection 은 deep reasoning 영역 — **Opus pilot 시작 → N=20 baseline 후 §결정 2 invariant 적용 재판정** (별도 carrier). **Codex 평행 평가 의무** (CFP-379 / CFP-448 pattern) — TP#4 dispatch 시 본 Amendment 입력 verbatim 전달, Opus vs Sonnet baseline divergence detect. ADR-071 Amendment 1 (DialogFidelityAgent external verifier auxiliary layer) cross-ref.
@@ -390,3 +405,55 @@ axis-A (operational cost trade-off) × axis-B (role redefinition signal, ADR-042
 - codeforge-design: CodebaseMapperAgent + RefactorAgent model field + mandate text 재정의 — MINOR bump (mandate text 변경)
 - codeforge-develop: DeveloperPLAgent model field — PATCH bump (사용자 framing verbatim 직접 적용, mandate text 재정의 면제 → mandate 본문 변경 없음, model field 만 변경)
 - marketplace.json: wrapper + codeforge-design + codeforge-develop 3 entry version sync (ADR-063 atomic invariant)
+
+---
+
+## Amendment 7 — CFP-1026 S1 design lane agent 구조 재편 model tier SSOT (CFP-676)
+
+**날짜**: 2026-05-19
+
+### 동기
+
+mctrader codeforge 데뷔 evidence 누적 (chief author 부담 Story §1 24 mention + CodebaseMapper/Refactor 저활용 + OperationalRiskArch §7.4.4/§7.4.2 설계만으로 결정 불가). CFP-1026 Epic 의 Story-1 (W1 backbone) 이 design lane agent 구조 재편 정책 SSOT 를 단일 atomic carrier 로 확정. 신규 agent 2종 (CodeArchitect / ArchitectAnalyst) 도입 + deputy 2종 rename (DataMigrationArchitect → DataArchitect / OperationalRiskArchitect → InfraOperationalArchitect) 의 model tier 결정 = §결정 3 (신규 agent / model 변경 시 ADR 의무) 발동.
+
+### 변경 사항
+
+| Agent | 변경 | model tier | §결정 1 매트릭스 row |
+|---|---|---|---|
+| **CodeArchitectAgent** | **신설** — §3 code 설계 단일 축 advocacy (layered / hexagonal / clean / DDD bounded context / module boundary / dependency direction) | **Sonnet** (claude-sonnet-4-6) | **Sonnet (a)** "Single-mandate advocacy within multi-deputy debate — read-only 조사 + 자기 mandate 측 단일 축 주장" |
+| **ArchitectAnalystAgent** | **신설** (PriorArtAgent rename) — 변경 전 기존 설계 (ADR / Change Plan / Story) 분석 단일 축. 4-tuple sub-tuple component (deputy 아님) | **Sonnet** (claude-sonnet-4-6) | **Sonnet (a)** 동일 |
+| DataMigrationArchitectAgent | **rename → DataArchitectAgent** + mandate 확장 (§3 data + §11 전체 데이터 구조: entity / aggregate / value object / DB schema / event schema / DTO / API contract data / persistence model / 데이터 흐름 + migration) | **Opus 유지** (claude-opus-4-7) — §결정 1 (d) Security / safety boundary owner (§11 schema rollback) 정합 | (d) 무변경 |
+| OperationalRiskArchitectAgent | **rename → InfraOperationalArchitectAgent** (mandate scope 보존 — §7.4 DR / disconnect / clock / rate / env + Container Docker primary) | **Opus 유지** (§결정 4 inheritance — `model:` field 부재 platform default Opus, §결정 1 (d) 정합) | (d) 무변경 |
+
+### model tier 결정 근거 (Sonnet — 재론 금지 carry-over)
+
+CodeArchitect / ArchitectAnalyst = §결정 2 invariant ("Sonnet 으로 대체 가능한 수준의 얕은 역할만 맡고 있다면 역할이 제대로 잡히지 않은 것이다") 의 **역방향 적용** — 본 2 agent 는 처음부터 single-mandate advocacy 로 정의 (CodeArchitect = §3 code 설계 단일 축 주장 / ArchitectAnalyst = 기존 설계 분석 단일 축 보고). multi-source synthesis (deputy 산출물 dedup + 종합 판정) 책임은 ArchitectAgent chief (Opus) 단독 보유 — 본 2 agent 는 자기 축 사실 / 주장만 정확히 전달하면 충분. CodebaseMapperAgent (existing codebase fact 보고) · RefactorAgent (pattern advocacy) 와 동질 패턴 (§ "왜 CodebaseMapper · Refactor 는 Sonnet 인가" + Amendment 5 mandate text 재정의 invariant 정합). Sonnet 4.6 reasoning depth 가 본 mandate 를 fully cover.
+
+**model tier (Sonnet) 의사결정 재수행 금지** — brainstorm Phase 0+1 (사용자 7-turn 대화) 에서 ArchitectAgent + Codex 최종 확정 carry-over. 본 Amendment 7 = codify 만 (Sonnet vs Opus 토론 텍스트 부재 — 확정 전제 기술만). DataArchitect / InfraOperationalArchitect = rename only — model tier 무변경 (Opus 유지, §결정 1 (d) + 결정 4 inheritance 정합).
+
+### InfraArchitect 신설 철회 명문화 (미도입 결정 — ratchet 위반 아님)
+
+설계 lane 에 별도 `InfraArchitectAgent` (AWS / K8s / multi-host topology 전담) 신설은 **철회**. 사유:
+
+- codeforge 의 infra 영역 = **Docker-first** ([ADR-033](ADR-033-docker-first-infra-engineering.md) §결정 5) + AWS / K8s 없음 (현 consumer = mctrader Docker compose 기반)
+- InfraOperationalArchitect §7.4 Container Docker sub (restart policy / volume DR / health check / network mode boundary — ADR-033 4 항목) + InfraEngineerAgent (codeforge-develop lane, Haiku — ADR-033 Docker-first preset 기반 파일 생성) 의 2-agent 분담으로 infra 영역 충분 cover
+- 별도 InfraArchitect = mandate overlap (InfraOperationalArchitect §7.4 Container + InfraEngineer 구현) + agent 수 비대
+
+**미래 재발의 trigger** (ratchet 위반 아님 — 미도입 결정이므로 ADR-058 §결정 5 sunset_justification 불필요): consumer 가 AWS / K8s / multi-host topology 도입 시 InfraArchitect 신설 carrier 재발의 trigger. 본 철회는 약화 (scope 축소) 아닌 미도입 결정 — ratchet top-down 강화 방향 무관.
+
+### 기존 정책 변경 0건 (ADR-042 본문)
+
+본 Amendment 7 은 ADR-042 의 결정 1~6 본문 변경 0건. 변경 = (a) §결정 1 inline marker (Amendment 7 발화 marker — Sonnet (a) 2 agent 추가) (b) 본 `## Amendment 7` body section (c) frontmatter amendment_log row 7 + related_stories CFP-676 append. tier criteria (결정 1) + invariant (결정 2) + 신규 agent ADR 의무 (결정 3) + inheritance (결정 4) + Haiku rollback (결정 5) + 재-audit (결정 6) 모두 정책 변경 0건. ratchet 강화 방향 (신규 agent 2종 도입 — scope 확장, ADR-058 §결정 5 정합) → sunset_justification 불필요 (frontmatter amendment_id:7 `sunset_justification: null`).
+
+### Scope 경계 (S1 = 정책 SSOT 만)
+
+본 Amendment 7 = **정책 SSOT codify 만**. agent file (`.md`) 실 신설 / rename / 내용 작성 = W2 S3 (codeforge-design plugin sibling Story) 영역. ADR-042 §결정 3 의 "해당 lane plugin agent file 의 `model:` field 와 동기" 의무 = W2 S3 sibling PR 에서 충족 (codeforge-design plugin MINOR bump trigger — [ADR-023](ADR-023-lane-plugin-lifecycle.md) / [ADR-037](ADR-037-plugin-version-bump-rule.md) 정합). 본 S1 PR 의 agent file 변경 0건 invariant (doc-only fast-path — [ADR-054](ADR-054-doc-only-story-fast-path.md)).
+
+### Cross-ref
+
+- ADR-014 Amendment 4 (CFP-676 atomic carrier) — InfraOperationalArchitect §7.4 primary 4-sub + ProductionEvidence dual-spawn disjoint axis
+- ADR-72 mirror cross-ref (CFP-676) — ProductionEvidenceDeputy ↔ InfraOperationalArchitect disjoint
+- ADR-044 reaffirm 단락 (CFP-676) — CodeArchitect / ArchitectAnalyst = 4-tuple flat spawn (논리적 그룹핑)
+- ADR-068 I-5 적용 declare (CFP-676) — spawn token cost dimensional empirical grounding
+- CLAUDE.md "Deputy mandate 매트릭스 (codeforge-design lane)" — 6 → 5 permanent + 3 CONDITIONAL (+ ArchitectAnalyst sub-tuple)
+- [ADR-046](ADR-046-researcher-role-redefinition.md) — ResearcherAgent (Opus, reshape mandate) ≠ ArchitectAnalyst (Sonnet, single-axis 기존 설계 분석) — 두 analyst 역할 disjoint (reshape vs read-only prior-art)
