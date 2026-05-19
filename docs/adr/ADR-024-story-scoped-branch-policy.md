@@ -5,7 +5,7 @@ status: Accepted
 category: governance
 date: 2026-05-03
 is_transitional: false
-amended_by: CFP-1000
+amended_by: CFP-1006
 amended_date: 2026-05-19
 amendments:
   - by: "CFP-134"
@@ -52,6 +52,10 @@ amendments:
     date: "2026-05-19"
     scope: "Amendment 10 — §결정 6.A per-entry namespace 의 45번째 (raw) 신규 `hotfix-bypass:prod-cutover-deputy-evidence` family member registry-side late codify (CFP-954 carrier originally registered in gh repo at PR-time but missed registry §3 declaration — bidirectional drift Tier-A closure, CFP-963 retro 식별 + CFP-1000 Tier-A carrier). gh-side 1 hit verified 2026-05-19 KST, registry §3 yaml append 누락 sync gap closure. ADR-72 §결정 5 evidence-checks-registry 2 entry (production-cutover-deputy-spawn-evidence + epic-cutover-gate-evidence-quad-check) warning-tier bypass channel — Wave 4 sub-Epic #882 Story-3 ProductionEvidenceDeputy mandate first activation declare layer + Epic close-time quad-check. label-registry-v2 v2.36 → v2.37 MINOR bump 동반 (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 3 row append). `hotfix-bypass:inter-plugin-contracts-parity` (CFP-894 v2.29 L994 이미 declared, gh-side 0 hits) 는 bootstrap-labels.yml workflow PR open 시 auto-run 의무 발효 영역 — registry §3 변경 0건, gh CLI 실행만 추가 (CFP-598 dynamic registry-driven pattern 자동, scripts/parse-hotfix-bypass-labels.py가 §3 yaml read auto-emit). 카운트 convention: raw active concrete grep (Amendment 9 historical-with-template-count convention 과 disjoint — template-vs-concrete 모호성 영역 외, entry-specific calibration). CFP-967 v2.36 self-describe \"45번째 (historical-with-template-count)\" 와 본 Amendment 10 raw count 45번째 는 동일 숫자 우연 — CFP-967 = pre-edit raw 44 + historical adjustment 1 = 45 historical / 본 Amendment 10 = post-edit raw 45 (pre-edit 44 + 1 new). 동일 숫자 occurrence 는 convention divergence calibration artifact. CLAUDE.md L295 prose `hotfix-bypass:prod-cutover-deputy-evidence 44번째` 인용 = CFP-954 PR-time historical-with-template-count attribution 보존 (본 Story OOS — Tier-B CFP #1004 영역). Tier-B (bidirectional drift 잔여 34 entries reconcile sweep) = 별 CFP #1004 (post-merge open) 영역 (ADR-064 §결정 1 CFP scope unitary 정합 — 한 CFP 안 Tier-A → Tier-B 단계 채택 금지). prior art Amendment 9 (CFP-963) 직전 carrier 정합."
     sunset_justification: "N/A — is_transitional: false (permanent governance policy). 1 신규 family member = §결정 6.A per-entry namespace 의무의 영구 확장 (production-cutover evidence 영역 first registry-side codify). ratchet-UP 강화 방향 (active concrete grep count 44 → 45 정합 raw active concrete, registry-gh 4-way sync gap 부분 closure, 약화 영역 0건 ADR-058 §결정 5 정합)."
+  - by: "CFP-1006"
+    date: "2026-05-19"
+    scope: "Amendment 11 — Tier-B 4-way sync bidirectional drift sweep (Wave 1): §결정 6.A per-entry namespace 의 47/48/49/50번째 (raw) 4 신규 family member registry-side late codify (gh→registry missing direction): `hotfix-bypass:comment-prefix-registry` (12+ PR audit-trail Issue #1011 bypass-counter signature reach, CFP-845 historical carrier — comment-prefix-registry-v1 contract bump governance ceremony skip) + `hotfix-bypass:epic-cutover-quad-check` (ADR-72 §결정 1/§결정 5 production-cutover-evidence.yml workflow + evidence-checks-registry epic-cutover-gate-evidence-quad-check entry backing, CFP-954 carrier) + `hotfix-bypass:evidence-naming` (ADR-060 framework + scripts/lib/check_evidence_registry_naming.py + templates/github-workflows/evidence-registry-naming-check.yml backing) + `hotfix-bypass:markdown-internal-links` (11+ PR audit-trail Issue #1013 bypass-counter signature reach, general doc maintenance lint forward reference scope). 1 naming mismatch resolution: registry §3 entry rename `hotfix-bypass:claude-md-amendment-ref` → `hotfix-bypass:claude-md-amendment-ref-drift` (conservative direction matches gh repo label + workflow filename claude-md-amendment-ref-drift.yml + 5+ PR audit history; rename target never-instantiated in gh = registry-side 0 effect on gh consumers, §4 변경 규칙 v2.x append-only exception 영역). label-registry-v2 v2.38 → v2.39 MINOR bump 동반 (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 3 row append + rename). MANIFEST.yaml row \"2.38\" → \"2.39\". 35 of 36 registry→gh missing 자동 해소 expected via bootstrap-labels.yml workflow PR open auto-fire (CFP-598 dynamic registry-driven pattern via parse-hotfix-bypass-labels.py — §3 yaml read auto-emit, registry append + rename 만으로 5 entry 자동 처리). 카운트 convention: raw active concrete grep (CFP-1000 Amendment 10 답습 — historical-with-template-count convention 미답습, Amendment 9 CFP-963 disjoint). pre-edit raw count 47 (46 active + 1 exempt template) → post-edit raw count 51 (50 active + 1 exempt template). issue_origin: orchestrator_authored_followup (ADR-082 Amendment 2 §2.1 carrier — CFP-1000 retro PMOAgent-authored Tier-B carry-forward, §3.17 4-step procedure 적용). pivot finding (write-time): 1 entry shifted between morning verification (Issue body 35+6=41) ↔ pre-spawn verify-before-trust (36+5=41 raw drift, 41 total invariant). 5 of 5 gh→registry missing 모두 legitimate operational provenance (3 with backing CFP/workflow + 2 with 11-12+ PR bypass-counter audit-trail). Tier-B Wave 2 (registry→gh sync verify) + Wave 3 (sync drift lint) = 별 CFP carrier 분리 (ADR-064 §결정 1 CFP scope unitary 정합). prior art Amendment 10 (CFP-1000) 직전 carrier 정합."
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). 4 신규 family member + 1 rename = §결정 6.A per-entry namespace 의무의 영구 확장 (Tier-B bidirectional drift sweep Wave 1 영역, gh→registry missing direction first closure). ratchet-UP 강화 방향 (active concrete grep count 46 → 50 정합 raw active concrete, registry-gh 4-way sync gap 부분 closure, 약화 영역 0건 ADR-058 §결정 5 정합)."
 related_files:
   - CLAUDE.md
   - docs/consumer-guide.md
@@ -1006,3 +1010,90 @@ bidirectional drift 잔여 34 entries (gh→registry 5 + registry→gh 29) recon
 - `scripts/bootstrap-labels.sh` 변경 0건 (CFP-598 dynamic registry-driven pattern — L165-191 `parse-hotfix-bypass-labels.py` 가 §3 yaml read auto-emit)
 - `templates/github-workflows/bootstrap-labels.yml` (CFP-662 baseline — PR open 시 auto-run 의무 발효 영역, `hotfix-bypass:inter-plugin-contracts-parity` gh-side 등록 mechanism)
 - CLAUDE.md L295 prose "44번째 = `hotfix-bypass:prod-cutover-deputy-evidence` (CFP-954)" 인용 = 본 Story OOS (CFP-954 PR-time historical attribution invariant 보존, Tier-B CFP #1004 reconciliation 영역)
+
+## Amendment 11 — Tier-B 4-way sync bidirectional drift sweep (Wave 1): 47-50번째 (raw) family member + 1 naming mismatch resolution (CFP-1006, 2026-05-19 KST)
+
+### 결정 6.A 호환 확장 — Tier-B 4-way sync bidirectional drift sweep (Wave 1)
+
+CFP-1000 (Tier-A) 가 1 registered-but-not-declared entry (`prod-cutover-deputy-evidence`) registry-side late codify 으로 Tier-A 영역 close — Tier-B 영역 (35 registry→gh missing + 5 gh→registry missing + 1 naming mismatch = 41 raw drift, Issue body CFP-1000 retro 2026-05-19 morning verification 값) 은 별 CFP carrier 분리 (ADR-064 §결정 1 CFP scope unitary 정합 + CFP-963 retro escalation candidate). 본 Amendment 11 = CFP-1006 carrier 영역 Tier-B Wave 1 (gh→registry missing 5 entries + 1 naming mismatch).
+
+**Pivot finding (write-time)**: pre-spawn verify-before-trust 시점 (`84ed75b2` HEAD pinned) verified state:
+- 1 entry shifted between morning verification (Issue body 35 registry→gh + 6 gh→registry = 41) ↔ pre-spawn verify (36 registry→gh + 5 gh→registry = 41 raw drift, 41 total invariant)
+- 5 of 5 gh→registry missing 모두 legitimate operational provenance 보유 (3 with backing CFP carrier / 2 with 11-12+ PR audit-trail evidence)
+
+**4 신규 entry registry-side late codify** (gh→registry missing direction):
+
+1. **`hotfix-bypass:comment-prefix-registry`** (registered-but-not-declared): gh repo ≥ 12 PR audit-trail (Issue #1011 bypass-counter signature reach 12+ evidence). registry §3 yaml 미선언. Operational scope = comment-prefix-registry-v1 contract version bump governance ceremony (ADR-008 contract MINOR/PATCH) conditional skip. Backing CFP carrier = CFP-845 Amendment 8 §결정 6.A.4 historical (v1.3 `[bypass-justification]` 14번째 prefix 신설 시 사용). No dedicated workflow file (pure governance audit-trail channel).
+2. **`hotfix-bypass:epic-cutover-quad-check`** (registered-but-not-declared): gh repo pre-existing + `docs/evidence-checks-registry.yaml:1441` + `ADR-72:36` provenance. registry §3 yaml 미선언. Operational scope = production-touching Epic-cutover PR 4-tuple evidence quad (live_touching / production_cutover_touching / marketplace_publish_touching / consumer_impact_blast_radius) check skip. Backing carrier = ADR-72 §결정 1/§결정 5 (Wave 4 sub-Epic #882 Story-3, CFP-954). Workflow = `production-cutover-evidence.yml`. wrapper-self-app Tier-1 declare-time 면제 invariant 보존.
+3. **`hotfix-bypass:evidence-naming`** (registered-but-not-declared): gh repo pre-existing + `docs/evidence-checks-registry.yaml:1053` + `scripts/lib/check_evidence_registry_naming.py:160` + `templates/github-workflows/evidence-registry-naming-check.yml:30` provenance. registry §3 yaml 미선언. Operational scope = evidence-checks-registry.yaml row name convention warning-tier lint skip. Backing = ADR-060 framework.
+4. **`hotfix-bypass:markdown-internal-links`** (registered-but-not-declared): gh repo ≥ 11 PR audit-trail (Issue #1013 bypass-counter signature reach 11+ evidence). registry §3 yaml 미선언. Operational scope = doc-only fast-path PR forward reference 영역 / planned-but-deferred docs 미실재 ADR placeholder 인용 시 broken-link detection lint skip. No dedicated workflow file (general doc maintenance lint scope).
+
+**1 naming mismatch resolution** (conservative direction — registry §3 entry rename to match gh repo + workflow filename + 12+ PR audit history):
+
+- **PREVIOUS** registry §3 entry name: `hotfix-bypass:claude-md-amendment-ref` (CFP-708 originally / never registered in gh repo with this name)
+- **NEW** registry §3 entry name: `hotfix-bypass:claude-md-amendment-ref-drift`
+- **Conservative direction rationale**:
+  1. gh repo label is `claude-md-amendment-ref-drift` (with `-drift` suffix) — actively used in 5+ PR bypass annotations
+  2. Workflow file is `templates/github-workflows/claude-md-amendment-ref-drift.yml` (with `-drift` suffix) — matches gh repo label naming
+  3. Workflow lint detection scope = "CLAUDE.md Amendment ref drift" — semantic of `-drift` suffix preserved
+  4. registry §3 entry name `claude-md-amendment-ref` (no suffix) was never instantiated in gh — rename = registry-side 0 effect on gh repo (no `gh label delete` + `gh label create` required, no PR audit-trail invalidation)
+- **Convention compatibility**: `§4 변경 규칙` "v2.x append-only" + "기존 label 삭제 또는 이름 변경은 v3.0 BREAKING" rule 호환 → 본 rename = exception 영역 (rename target never-instantiated, gh-side 0 effect, no contract consumer impact). v2.39 MINOR 정합 (append-only invariant 보존, rename-of-never-instantiated-entry = effective no-op for gh consumers).
+
+**Family member ordinal positions (raw active concrete grep count convention 답습 = CFP-1000 Amendment 10 precedent)**:
+
+- Pre-edit raw count (84ed75b2): 47 unique `hotfix-bypass:*` entries in §3 yaml (46 active + 1 `exempt:<entry>` template)
+- Post-edit (CFP-1006 v2.39):
+  - 23번째 family member position preserved → renamed `hotfix-bypass:claude-md-amendment-ref-drift` (historical attribution invariant)
+  - 47번째 = `hotfix-bypass:comment-prefix-registry` (new)
+  - 48번째 = `hotfix-bypass:epic-cutover-quad-check` (new)
+  - 49번째 = `hotfix-bypass:evidence-naming` (new)
+  - 50번째 = `hotfix-bypass:markdown-internal-links` (new)
+- Post-edit raw count: 51 unique entries (50 active + 1 `exempt:<entry>` template)
+
+### 결정 6.A.2 호환 — bypass-as-norm-mutation 누적 카운터 (per-entry namespace)
+
+`scripts/check-bypass-label-counter.py` (CFP-825 / Amendment 6 §결정 6.A.2) lint 가 본 Amendment 11 4 신규 entry 부착 PR 누적 시 자동 escalation Issue 생성 (warning-tier). 본 Amendment 11 = `comment-prefix-registry` (12+ reach 기존 Issue #1011) + `markdown-internal-links` (11+ reach 기존 Issue #1013) 영역 이미 escalated — 본 registry §3 late codify 가 escalation Issue history invalidate 아니라 codification carrier 영역 (ADR-024 Amendment 6 §결정 6.A.2 ratchet rule audit-trail 정합).
+
+### 결정 6.A.3 호환 — per-plugin scope 누적 카운터 (CFP-845 Amendment 8 §결정 6.A.3)
+
+본 Amendment 11 = `mclayer/plugin-codeforge` plugin scope 단독 — `scripts/check-per-plugin-cumulative-counter.py` 누적 4 신규 entry 부착 시 자동 escalation Issue 생성 영역 (warning-tier).
+
+### Convention re-anchor — raw active concrete grep count 답습
+
+CFP-1000 Amendment 10 = raw active concrete grep count convention 채택 (Amendment 9 CFP-963 historical-with-template-count convention 과 disjoint). 본 Amendment 11 = CFP-1000 Amendment 10 답습 — 47/48/49/50번째 = post-edit grep count - 1 (50 active 신규 끝 = 50번째). Convention divergence 영역 없음 (Amendment 10 노선 단일 유지).
+
+### Effective behavior
+
+- v2.39 MINOR bump 후 hotfix-bypass:* 가족 50 활성 entry (51 raw, 1 `exempt:<entry>` template). 본 Amendment 11 = 23 entry rename + 47-50번째 (raw) 4 신규 entry append.
+- `templates/github-workflows/bootstrap-labels.yml` PR open 시 auto-run — 4 신규 labels gh-side idempotent invariant (gh API 422 already-exists swallow / 201 created — depend on per-label, 4 of 4 entries 이미 gh-side active 따라서 모두 422 already-exists swallow).
+- `scripts/bootstrap-labels.sh` 변경 0건 (CFP-598 dynamic registry-driven pattern — L165-191 `parse-hotfix-bypass-labels.py` 가 §3 yaml read auto-emit, registry append + rename 만으로 5 entry 자동 처리).
+- `claude-md-amendment-ref` 23번째 family member rename → `claude-md-amendment-ref-drift` 효과 = `parse-hotfix-bypass-labels.py` 출력 name field 갱신 (rename 적용). bootstrap-labels.yml auto-run 시 gh repo 에서 `claude-md-amendment-ref-drift` label 이미 존재 (5+ PR 부착 이력) → 422 already-exists swallow. **registry-side rename 효과 = gh-side 0 effect (rename target never-instantiated in gh)**.
+- **35 of 36 registry→gh missing 자동 해소 expected** — bootstrap-labels.yml workflow PR open 시 fire → `parse-hotfix-bypass-labels.py` § yaml read → **51 entries emit** (50 active + 1 `exempt:<entry>` template; parser filter is ONLY `category == 'hotfix-bypass'` per L92-121, NO template-name skip logic — F-DR-1006-1 mechanistic correction) → `create_label` 호출 → 36 entries 중 35 entries 가 gh repo `gh api 201 created` 발효 (1 entry = `exempt:<entry>` template 가 gh API 에서 literal `<entry>` placeholder 로 인해 silently rejected at create-label time). 4 신규 entry (47-50번째) = 4 of 4 이미 gh-side active 따라서 422 already-exists swallow.
+- 1 of 36 registry→gh missing 자동 해소 미지 영역: `exempt:<entry>` template = **gh API silent rejection at `gh label create` time** (NOT parser-side skip; parser emits all 51 entries — F-DR-1006-1 mechanistic correction. gh API silently rejects literal `<entry>` placeholder during create-label invocation, effective gh-side outcome = template never persisted in gh repo).
+
+### Compatibility
+
+- ADR-024 §결정 1~6 + Phase 2 partial (CFP-70) + CFP-72 + Amendment 1~10 전부 유지 — 본 Amendment 11 = Amendment 3 §결정 6.A 의 호환 확장 (per-entry namespace 47-50번째 (raw) family member append + 23번째 rename) only.
+- ADR-060 framework 외 영역 (4 core required check + 기존 evidence check + Amendment 1~10 entry) 에는 영향 X.
+- ADR-058 §결정 5 sunset_justification ratchet — 본 Amendment 11 = forbid scope 확장 (4 신규 family member append) = ratchet-up 강화 방향, sunset_justification_required: false.
+- `§4 변경 규칙` v2.x append-only invariant 호환 (rename target never-instantiated in gh, exception 영역). MAJOR v3.0 BREAKING 회피 (ADR-008 §결정 3 정합).
+
+### Related
+
+- ADR-024 Amendment 10 (CFP-1000 — Tier-A 1 entry registry-side late codify, 45번째 (raw)) — 본 Amendment 11 = Tier-B Wave 1 carrier (35 + 5 = 41 raw drift 영역 sweep)
+- ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합 (47-50번째 (raw) family member)
+- ADR-024 Amendment 6 §결정 6.A.2 (bypass-as-norm mutation 누적 카운터 — Issue #1011 + Issue #1013 evidence)
+- ADR-024 Amendment 8 §결정 6.A.3/6.A.4 (per-plugin scope + bypass-justification marker 정합)
+- ADR-008 §결정 3 정합 (kind:registry MINOR rule). plugin.json bump 0 → ADR-063 marketplace atomic invariant 미발효 (mirrored field 무변경, `marketplace_sync_declared: false`).
+- ADR-010 §결정 2 (kind:registry sibling sync 면제)
+- ADR-082 Amendment 2 §2.1 (`issue_origin: orchestrator_authored_followup` — CFP-1000 retro PMOAgent-authored Tier-B carry-forward, §3.17 4-step procedure 적용)
+- ADR-064 §결정 1 (CFP scope unitary) — Tier-B Wave 2/Wave 3 (registry→gh sync verify + sync drift lint) 분리 결정 anchor
+- ADR-054 (doc-only fast-path — 1 PR + Phase split 없음 + 구현 lane skip)
+- ADR-058 §결정 5 정합 (is_transitional:false 영구 governance, ratchet-up 강화 방향, sunset_justification_required:false)
+- `docs/inter-plugin-contracts/label-registry-v2.md` v2.38 → v2.39 MINOR
+- `docs/inter-plugin-contracts/MANIFEST.yaml` label-registry-v2 row "2.38" → "2.39"
+- `scripts/bootstrap-labels.sh` 변경 0건 (CFP-598 dynamic registry-driven pattern)
+- `templates/github-workflows/bootstrap-labels.yml` (CFP-662 baseline — PR open 시 auto-run 의무 발효 영역, 35 registry→gh missing 자동 해소 expected)
+- ADR-077 §결정 5 reinvestigation_tracking 정합 (본 Story §1 verbatim claim 검증 → §2.1 verified state table 10 row mandatory)
+- Issue #1011 (`comment-prefix-registry` 12+ reach bypass-counter) + Issue #1013 (`markdown-internal-links` 11+ reach bypass-counter) — bypass-as-norm mutation evidence anchors
+- CLAUDE.md L295 prose 인용 = 본 Story OOS (Tier-B CFP #1004 reconciliation 영역)
