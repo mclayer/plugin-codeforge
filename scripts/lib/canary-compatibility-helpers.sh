@@ -81,12 +81,25 @@ _extract_4tuple_measurement_source() {
     return 2
   fi
 
+  # F-CR-991-C FIX: python3 미존재 / 인터프리터 오류(rc≥3) → exit 2 (hard fail)
+  # rc=127 = interpreter absent, rc=1 = generic error — 모두 warning(exit 1) 오분류 차단
+  command -v python3 >/dev/null 2>&1 || {
+    echo "[canary-compat] ERROR: python3 unavailable — interpreter-absent는 data-gap(warning)이 아닌 tool-fail(hard fail)" >&2
+    return 2
+  }
+
   local result rc
   result=$(python3 "$_extract_py" "$yaml_path" "$sub_field" 2>/dev/null)
   rc=$?
 
   if [[ $rc -eq 2 ]]; then
     echo "[canary-compat] ERROR: measurement_source parse error for '$sub_field' in $yaml_path" >&2
+    return 2
+  fi
+
+  # rc >= 3: 예상 외 인터프리터 오류 → hard fail (3-tier contract: 0/1/2 외 rc = 설명불가 오류)
+  if [[ $rc -ge 3 ]]; then
+    echo "[canary-compat] ERROR: python3 unexpected rc=$rc (not in 3-tier contract 0/1/2) — hard fail" >&2
     return 2
   fi
 
@@ -122,6 +135,25 @@ _enumerate_family_7_canary_versions() {
       echo "[canary-compat] ERROR: mock family_versions length=$count != invariant=$_CFP991_FAMILY_LENGTH_INVARIANT (RefactorAgent C-3 / DataMigrationArch INV-C)" >&2
       return 2
     fi
+    # F-CR-991-B FIX: mock path 안 plugin name enum 검증
+    # 라인별 <name>:<version> 파싱 후 name ∈ _CFP991_FAMILY_MEMBER_ENUM 확인
+    # 임의 이름(random-plugin-*) 주입 시 exit 2 hard fail — member_enum open_extension:false 정합
+    local line name
+    while IFS= read -r line; do
+      name="${line%%:*}"
+      local found=0
+      local member
+      for member in "${_CFP991_FAMILY_MEMBER_ENUM[@]}"; do
+        if [[ "$name" == "$member" ]]; then
+          found=1
+          break
+        fi
+      done
+      if [[ $found -eq 0 ]]; then
+        echo "[canary-compat] ERROR: mock plugin name '$name' NOT in member_enum — closed-set invariant 위배 (F-CR-991-B fix)" >&2
+        return 2
+      fi
+    done <<< "$_CFP991_MOCK_FAMILY_VERSIONS"
     return 1  # warning: mock env active
   fi
 
@@ -146,15 +178,46 @@ _enumerate_family_7_canary_versions() {
 # Usage: _three_way_version_diff "<publisher-version>" "<registry-version>" "<consumer-version>"
 #   $1 = publisher .claude-plugin/plugin.json .version
 #   $2 = registry marketplace.json plugins[name=<plugin>].channels[tier=canary].version
+#        (mock override: _CFP991_MOCK_MARKETPLACE_CHANNELS — channels[] verbatim 주입)
 #   $3 = consumer .codeforge.channel.tier=canary declared (placeholder OR actual)
 # Output: stdout = "MATCH" (3-way byte-identical) OR "MISMATCH: <details>" (stderr 동반)
-# Exit: 0 = MATCH / 2 = MISMATCH (ADR-063 Amendment 5 §결정 15 invariant 위배)
+# Exit: 0 = MATCH / 1 = warning (mock env active OR drift within threshold)
+#       2 = MISMATCH (ADR-063 Amendment 5 §결정 15 invariant 위배)
 # §4.8 orthogonality_invariant 재사용 — pin 가용성 ≠ version 정합성 conflate 금지
+# _CFP991_MOCK_MARKETPLACE_CHANNELS mock env: cross-repo gh api fetch 대체 (test-only)
+# _CFP991_MOCK_DRIFT_THRESHOLD mock env: configurable threshold override (default 24h=86400s, test 0s override)
 # ----------------------------------------------------------------------
 _three_way_version_diff() {
   local pub_v="$1"
   local reg_v="$2"
   local con_v="$3"
+
+  # F-CR-991-G FIX: _CFP991_MOCK_MARKETPLACE_CHANNELS mock env wire
+  # production: registry version = marketplace.json channels[tier=canary].version (cross-repo gh api fetch)
+  # test-only: _CFP991_MOCK_MARKETPLACE_CHANNELS 주입 시 reg_v 를 mock channels[] 에서 파싱
+  if [[ -n "${_CFP991_MOCK_MARKETPLACE_CHANNELS:-}" ]]; then
+    # mock channels[] 에서 canary tier version 추출 (format: "tier=canary version=<ver>" 단순 KV)
+    local mock_canary_ver
+    mock_canary_ver=$(echo "$_CFP991_MOCK_MARKETPLACE_CHANNELS" | grep "tier=canary" | grep -o "version=[^[:space:]]*" | cut -d= -f2)
+    if [[ -n "$mock_canary_ver" ]]; then
+      reg_v="$mock_canary_ver"
+      echo "[canary-compat] WARNING: _CFP991_MOCK_MARKETPLACE_CHANNELS active — registry version mock-injected: $reg_v" >&2
+    fi
+  fi
+
+  # F-CR-991-G FIX: _CFP991_MOCK_DRIFT_THRESHOLD mock env wire
+  # production: drift threshold = 86400s (24h default, ADR-040 Amendment 6 §결정 7.D probe sandbox env scoping)
+  # test-only: 0s override for instant drift detection in discriminating fixture
+  local drift_threshold="${_CFP991_MOCK_DRIFT_THRESHOLD:-86400}"
+  # drift_threshold 범위 검증 (0 이상 정수 — 음수 및 비정수 = warning tier, override 적용 안 함)
+  if ! [[ "$drift_threshold" =~ ^[0-9]+$ ]]; then
+    echo "[canary-compat] WARNING: _CFP991_MOCK_DRIFT_THRESHOLD invalid='$drift_threshold' — falling back to default 86400s" >&2
+    drift_threshold=86400
+  fi
+  # drift_threshold read 확인 (production run 시 default 24h 적용 — 테스트 0s override 경로 분기)
+  if [[ "$drift_threshold" -eq 0 ]]; then
+    echo "[canary-compat] WARNING: drift_threshold=0s (test override active — instant detection mode)" >&2
+  fi
 
   # Empty input handling (warning tier — Phase 1 = data 부재 OK)
   if [[ -z "$pub_v" || -z "$reg_v" || -z "$con_v" ]]; then

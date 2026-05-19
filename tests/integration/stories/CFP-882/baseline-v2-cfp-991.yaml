@@ -237,7 +237,7 @@ cross_ref:
     - ADR-055  # Integration Test lane policy (Amendment 2 §결정 3 item 8 Baseline 자동승격, Amendment 4 §결정 10 importlib)
     - ADR-073  # verify-before-assert (frozen-SHA pin discipline)
     - ADR-082  # write-time self-write verification mandate
-    - ADR-072  # ProductionEvidenceDeputy + Epic cutover gate (Amendment 3 carrier = Story-4)
+    - ADR-72  # ProductionEvidenceDeputy + Epic cutover gate (Amendment 3 carrier = Story-4)
     - ADR-041  # doc location registry (integration_test_baseline 15th entry)
   predecessor_baseline:
     - "tests/integration/stories/CFP-882/baseline-v1-cfp-954.yaml (declarative_only: true — 본 v2 위 토대)"
