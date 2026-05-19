@@ -1116,7 +1116,7 @@ canary_compatibility_check_binding:   # v1.11 신설, CFP-991 §4.3 (l) 발동, 
     open_extension: false
     default: "warning_first"   # ADR-060 §결정 5 default 정합 — Phase 1 = warning tier 활성
     escalation_path: "warning_first → blocking_on_pr (ADR-060 evidence-enforceable 4-tier promotion gate 정합, 역방향 약화 = ADR-058 §결정 5 sunset_justification 의무) — Phase 2 (별 PR, Develop lane) = warning → blocking-on-pr 승격 carrier (별 follow-up CFP)"
-    bypass_label: "hotfix-bypass:canary-promotion-criteria"   # label-registry-v2 v2.35 신규 entry (45번째 family member)
+    bypass_label: "hotfix-bypass:canary-promotion-criteria"   # label-registry-v2 v2.37 신규 entry (46번째 family member)
     bypass_audit_lint: "bash scripts/check-bypass-audit-comment.sh (audit comment 자동 발의 — reuse 패턴, 기존 entry 동일)"
 
   downgrade_asymmetry_marker:   # RefactorAgent B-2 (§4.8 placeholder_reserve → active 단독 promotion 선례 답습) — SecurityArch T-5.1 Story-5 carrier prerequisite
