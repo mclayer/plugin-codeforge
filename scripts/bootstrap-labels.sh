@@ -77,6 +77,10 @@ create_label "gate:security-test-pass"   "0e8a16" "Security test PASS"
 create_label "gate:live-entry-pass"      "0e8a16" "Live Epic lane-entry pass (3-condition AND: mode==live + --confirm-live + isolated runtime)"
 # gate:retro-complete (v1.5 / CFP-138 / ADR-045) — Story 완료 회고 작성 mandate forcing function
 create_label "gate:retro-complete"       "0e8a16" "Story 완료 회고 작성됨 (PMOAgent self-write — CFP-138 / ADR-045). 미부착 시 retro-mandatory.yml 가 close 차단."
+# gate:channel-*-promotion (3종 — CFP-991 / ADR-72 Amd 3 + ADR-076 §결정 9.6) — consumer canary→beta→stable 4-tuple evidence quad marker (Tier-2 admin advisory)
+create_label "gate:channel-canary-promotion"  "0e8a16" "Canary tier 활성 PR 4-tuple evidence quad 충족 marker (CFP-991, consumer Tier-2 advisory)"
+create_label "gate:channel-beta-promotion"    "0e8a16" "Beta tier promotion gate marker (canary→beta transition, CFP-991)"
+create_label "gate:channel-stable-promotion"  "0e8a16" "Stable tier promotion gate marker (beta→stable transition, CFP-991)"
 
 # fix:* (4종)
 for r in 설계-리뷰 구현-리뷰 구현-테스트 보안-테스트; do
