@@ -1394,6 +1394,24 @@ substitution path activation 시 Orchestrator 는 다음 audit trail 의무:
 
 **ratchet trigger (사용자/PMO escalation)**: 본 step pair (a)(b)(c) 의 `[codex-sandbox-fallback: <fail-mode>]` marker 누적 count 가 운영 중 ≥10 회 reach 시 ADR-052 Amendment 4 (touchpoint #2 mandatory) 의 codex CLI 가용 영역 가정 자체 재평가 후보. 본 정책 변경 = 별 follow-up CFP 의무 (ADR-064 §결정 1 scope unitary 정합).
 
+#### §3.10.1-ter Graceful degradation step pair (a)(b)(c) — reactive variant (CFP-1003 / [ADR-052 Amendment 9](../docs/adr/ADR-052-codex-proactive-check-touchpoints.md) + [ADR-070 Amendment 5](../docs/adr/ADR-070-codex-verify-before-trust.md) + [ADR-081 Amendment 5](../docs/adr/ADR-081-codex-worker-prompt-boilerplate.md))
+
+§3.10.1-bis = proactive 6 touchpoint scope 한정 (codeforge 강제 invariant). 본 sub-section = reactive `codex:rescue` 채널 (사용자 ad-hoc invocation, ADR-022 Deprecated default 영역, ADR-070 D1 L110 `사용자 책임 영역 (적용 외)`) 의 best-effort 가이드 anchor — codeforge 강제 미발효, 사용자 자율 선택 영역.
+
+**적용 trigger**: 사용자가 직접 `codex:rescue` subagent 를 ad-hoc invoke 한 경우 (proactive 6 touchpoint 자동 dispatch 영역 아님, ADR-052 D1 L84/L90 분리 invariant 정합).
+
+**best-effort 가이드 anchor (사용자 자율 선택, codeforge 강제 0)**:
+
+| step | proactive 변형 (§3.10.1-bis) | reactive 변형 (본 sub-section) |
+|---|---|---|
+| **step (a) detect** | Orchestrator Codex spawn 직전 3 detect probe 의무 (codeforge 강제 invariant) | 사용자 ad-hoc invocation 직전 3 detect probe 권장 (사용자 자율 선택) — `codex --help / --version / gh api /rate_limit` 동일 mechanism |
+| **step (b) declare + verify-before-trust 5 sub-scope** | Orchestrator `network_scope: offline_substitution_declared` declare + verify-before-trust 5 sub-scope 全 적용 (codeforge 강제) | 사용자 자율 선택 — ad-hoc invocation prompt 본문 안 `network_scope: <4-tier enum>` declare 권장 + ADR-070 verify-before-trust pattern 채택 권장 (codeforge 강제 0, ADR-081 Amendment 5 A2 SSOT) |
+| **step (c) Story §10 marker + §14 `network_scope_actual` field** | Orchestrator audit trail 의무 (`[codex-sandbox-fallback: <fail-mode>]` row + `network_scope_actual` field) | reactive 변형 marker = `[codex-rescue-fallback: <fail-mode>]` 권장 (사용자 자율 선택, Wave 2 mechanical lint scope 확장 시 marker enum value codify 결정 영역) — 사용자 ad-hoc invocation 시 codeforge 강제 0 |
+
+**mechanical lint scope 확장 (Wave 2)**: `codex-network-scope-presence` lint (evidence-checks-registry entry, ADR-060 Amendment 14 §결정 28 carrier) 의 mechanical detection scope = proactive 6 touchpoint spawn prompt 한정 (CFP-1003 / ADR-052 Amendment 9 + ADR-070 Amendment 5 + ADR-081 Amendment 5 — proactive/reactive disjoint codify). reactive 영역 mechanical lint 확장 = 별 CFP carrier 분리 (Wave 2, ADR-064 §결정 1 unitary 정합).
+
+**사용자 책임 영역 invariant 보존**: 본 sub-section 의 4-anchor best-effort 가이드 = 사용자 ad-hoc invocation 시점에 anchor 채택 / 비채택 = 사용자 책임 영역. codeforge 측 강제 미발효 invariant retain (ADR-070 D1 L110 + ADR-022 Deprecated 정합). proactive 6 touchpoint scope 강제 invariant 와 disjoint axis.
+
 #### §3.10.1 Pre-question Review (iterative reformulation — CFP-446 / [ADR-052 Amendment 2](../docs/adr/ADR-052-codex-proactive-check-touchpoints.md))
 
 | 항목 | 내용 |

@@ -41,6 +41,10 @@ amendments:
     date: 2026-05-18
     carrier_story: CFP-946-A
     summary: "6 touchpoint substitution path 3-enum cross-ref (Amendment 5 verbatim 첨부 의무 SSOT + ADR-070 §결정 1 expansion SSOT 보존). 신설 §결정 영역 = 6 touchpoint × substitution path 3-enum (inline_orchestrator_verify default / manual_substitution_declare / fallback_skip_with_marker) cross-matrix. ADR-070 §결정 1 expansion (substitution scope 3-path enum codify) SSOT 본문 cross-ref. Codex sandbox 8 occurrence sentinel (CFP-756 Epic close retro Sentinel #4 strike #8, parent_epic CFP-946) escalate_user 산물. D1/D2/D3/D4 + Amendment 1-7 본문 의미 변경 0건 — sub-section append 패턴 (Amendment 1-7 패턴 정합). is_transitional=false, sunset_justification=N/A — permanent strengthening (substitution path 3-enum codification = Codex worker sandbox 영역 변경 없으면 permanent retain). doc-only fast-path 자체 적격 — carrier Story (CFP-946-A) 는 ADR-070 §결정 1 expansion + 신규 domain-knowledge 페이지 동반 = ADR-054 §결정 1 (신규 ADR 도입 아님, 기존 ADR Amendment + 신규 domain-knowledge + src/tests 무변경) doc-only fast-path 단일 PR 적격."
+  - id: 9
+    date: 2026-05-19
+    carrier_story: CFP-1003
+    summary: "**proactive/reactive disjoint scope codify** — D1 본문 L84 'codex:rescue 사후 대응(reactive) 채널' + D1 L90 'codex:codex-rescue proactive check 채널 분리' 의 명시적 boundary anchor 강화. 본 ADR-052 의 D1-D4 + Amendment 1-8 = **proactive 6 touchpoint scope 한정** invariant explicit codify. reactive codex:rescue 채널 (사용자 ad-hoc invocation, ADR-022 Deprecated default 영역) 의 network_scope declare 의무 + verify-before-trust + boilerplate composition = ADR-070 Amendment 5 + ADR-081 Amendment 5 본문 SSOT 위임 (본 ADR 본문은 cross-ref only). Codex TP#4 (CFP-963 §6.3 OOS row + §3 EC-2 derived default — '`codex:rescue` lint = OUT, proactive 한정') 의 deferred scope = 본 Amendment 9 + ADR-070 Amd 5 + ADR-081 Amd 5 chain 으로 closure. D1/D2/D3/D4 + Amendment 1-8 본문 의미 변경 0건 — proactive/reactive disjoint anchor 명시 cross-ref sub-section append only. mechanical lint scope 확장 = 별 CFP (Wave 2, ADR-064 §결정 1 CFP scope unitary). is_transitional=false, sunset_justification=N/A — permanent strengthening (proactive/reactive disjoint boundary explicit codify, scope 축소 0). doc-only fast-path 자체 적격 (ADR-054 §결정 1, 기존 ADR Amendment + src/tests 무변경)."
 related_stories:
   - CFP-354
   - CFP-411
@@ -51,6 +55,7 @@ related_stories:
   - CFP-819
   - CFP-844  # Amendment 7 — ADR-081 Amendment 1 (§결정 D6 severity calibration) cross-ref
   - CFP-946-A  # Amendment 8 — substitution path 3-enum cross-ref (parent_epic CFP-946)
+  - CFP-1003   # Amendment 9 — proactive/reactive disjoint scope codify (Codex TP#4 CX-963-deferred closure, reactive codex:rescue 영역 ADR-070 Amd 5 + ADR-081 Amd 5 본문 SSOT 위임 cross-ref)
 related_adrs:
   - ADR-039
   - ADR-034
@@ -832,4 +837,108 @@ ADR-064 결정 원칙 4 어휘 anchor (best-effort / broad coverage / full-scope
 - (Amendment-AC) **substitution path 4번째 enum value 추가** (auto-retry / multi-source consensus / 외부 verify proxy 등) — 본 Story-A scope 외 (Story §5.3 verbatim "Out-of-Scope" 영역). 별 follow-up CFP carrier 분리. 본 Amendment 8 = 3-enum exhaustive retain.
 - (Amendment-AD) **review-verdict-v4 신규 `codex_substitution_path` contract field 신설** — contract MINOR bump + sibling sync (ADR-008/010) + Phase 2 PR = doc-only fast-path 이탈. ADR-070 §D5 + ADR-081 §D5 + Amendment 7 (AA) declaration-only retain precedent 위배 → Story §10 prose marker 채택 (ADR-070 §결정 1 expansion §A3 SSOT 정합).
 - (Amendment-AE) **mechanical lint 도입** (Codex spawn prompt 안 substitution path enum value 명시 검출 static regex) — ADR-070 §결정 D5 (declaration-only retain) 정합. (a)/(b)/(c)/(d) 4 후보 모두 robustness risk 보유. evidence-checks-registry entry append 면제 — `mechanical_enforcement_actions: []` retain.
+
+---
+
+## Amendment 9 (2026-05-19 KST, CFP-1003)
+
+### Context (Amendment 9)
+
+본 ADR-052 의 D1 본문은 두 채널 분리를 codify 한다:
+
+- L84 `기존 codex:rescue는 사후 대응(reactive) 채널 — stuck 상황에서만 호출. 이 ADR은 사전 예방(proactive) 채널을 별도로 정의한다.`
+- L90 D1 본문 `Orchestrator가 6개 touchpoint에서 Agent(subagent_type="codex:codex-rescue") 를 proactive check 용도로 자동 dispatch. 기존 codex:rescue(reactive) 와 채널 분리.`
+
+즉 본 ADR-052 의 결정 본문 + Amendment 1-8 전부 = **proactive 6 touchpoint scope 한정** (D1 / D2 자동 활성 / D3 ProactiveCheckPacket / D4 #5 사용자 escalation + Amendment 1 #4 multi-round debate + Amendment 2 #1 iterative reformulation + Amendment 3 #4 fact-check / Amendment 4 #2 mandatory / Amendment 5 verbatim 첨부 / Amendment 6 boilerplate cross-ref / Amendment 7 severity calibration cross-ref / Amendment 8 6 touchpoint × substitution path 3-enum cross-matrix).
+
+CFP-963 Codex TP#4 가 reactive codex:rescue 채널 (사용자 ad-hoc invocation, ADR-022 Deprecated default 영역, ADR-070 D1 L110 `사용자 책임 영역 (적용 외)`) 의 network_scope declare / verify-before-trust / boilerplate composition 영역 deferred 결정 (CFP-963 Story §6.3 OOS row L374 verbatim `Codex CLI reactive channel (codex:rescue) network_scope lint = OUT (derived default) proactive 6 touchpoint spawn 한정 (ADR-052 proactive/reactive 분리) — reactive 확장 = 별 CFP` + §3 EC-2 L328 동형). 본 deferred scope = CFP-1003 carrier closure.
+
+본 Amendment 9 = **proactive/reactive disjoint scope explicit codify** + reactive 영역 SSOT 위임 cross-ref. ADR-052 본문 정책 SSOT (proactive 채널 SSOT) 보존 invariant 정합 — reactive 영역 normative anchor = ADR-070 Amendment 5 (substitution scope + sandbox boundary) + ADR-081 Amendment 5 (spawn prompt boilerplate 4 mandatory field reactive 영역 확장) 본문 SSOT 위임.
+
+### 결정 (Amendment 9)
+
+**A1. proactive/reactive 채널 disjoint scope explicit codify (D1 L84/L90 boundary 강화)**
+
+기존 D1 본문 의미 변경 0건. 본 Amendment 9 = D1 L84/L90 의 proactive/reactive disjoint anchor 를 explicit Amendment level 에서 cross-ref 강화. proactive 채널 SSOT (본 ADR-052) ↔ reactive 채널 SSOT (ADR-022 Deprecated + 사용자 ad-hoc invocation + ADR-070 D1 L110 적용 외 영역) disjoint scope 표:
+
+| 영역 | proactive 채널 | reactive 채널 |
+|---|---|---|
+| **dispatch trigger** | 6 touchpoint 자동 (D2 invariant) | 사용자 ad-hoc invocation (ADR-022 Deprecated default + user explicit request) |
+| **normative anchor SSOT** | 본 ADR-052 D1-D4 + Amendment 1-9 | ADR-070 Amendment 5 (substitution + sandbox) + ADR-081 Amendment 5 (boilerplate) |
+| **boilerplate composition (3+1 field)** | ADR-081 §결정 D1.A-D (4 mandatory field) | ADR-081 Amendment 5 본문 SSOT (reactive 영역 4 field 확장 적용) |
+| **verify-before-trust** | ADR-070 §결정 D1 본문 + Amendment 3 (substitution 3-enum) | ADR-070 Amendment 5 본문 SSOT (reactive 영역 substitution scope codify) |
+| **network_scope declare 의무** | ADR-081 §결정 D1.D (4-tier enum 의무) | ADR-081 Amendment 5 본문 SSOT (reactive 영역 4-tier enum 확장 적용) |
+| **codex-network-scope-presence lint scope** | proactive 6 touchpoint spawn prompt 한정 (현재 scope, evidence-checks-registry entry 본문 SSOT) | scope 외 (Wave 2 mechanical lint 확장 별 CFP carrier, ADR-064 §결정 1 unitary) |
+
+**A2. reactive 영역 normative anchor SSOT 위임 (cross-ref-only Amendment 패턴)**
+
+본 ADR-052 본문은 proactive 채널 SSOT (D1 분리 invariant 정합). reactive 영역 normative anchor = ADR-070 Amendment 5 + ADR-081 Amendment 5 본문 SSOT 위임. cross-ref-only pattern (Amendment 6/7/8 패턴 정합 — Amendment 6 = ADR-081 boilerplate SSOT 위임, Amendment 7 = ADR-081 §결정 D6 severity calibration cross-ref, Amendment 8 = ADR-070 §결정 1 expansion substitution 3-enum SSOT 위임).
+
+**A3. proactive/reactive boundary preservation 적용 영역 (Wave 1 declarative-only)**
+
+본 Amendment 9 Wave 1 적용 영역:
+
+- 본 ADR-052 본문 Amendment 9 row + sub-section append (proactive 채널 SSOT 보존 cross-ref)
+- ADR-070 Amendment 5 본문 (reactive substitution scope + sandbox boundary codify, declaration-only retain)
+- ADR-081 Amendment 5 본문 (reactive spawn prompt boilerplate 4 mandatory field 확장 적용, declaration-only retain)
+- `docs/evidence-checks-registry.yaml` `codex-network-scope-presence` entry description 본문 (proactive 6 touchpoint scope explicit 명시 + reactive 영역 OUT explicit codify, registry entry text 본문 patch — current_tier / detect_command / workflow 변경 없음, scope clarification only)
+- `docs/orchestrator-playbook.md` §3.10 graceful degradation step pair reactive variant (declarative-only, Wave 1 mechanical lint 부재)
+
+Wave 2 (별 CFP carrier 분리, ADR-064 §결정 1 unitary):
+
+- `scripts/lib/check_codex_network_scope.py` reactive spawn prompt detection logic 확장 (mechanical lint scope expansion)
+- evidence-checks-registry entry description scope 확장 (proactive + reactive 양면)
+- bats test fixture pair (reactive spawn prompt with/without network_scope)
+- §10 Story marker 신규 enum value 또는 disjoint marker (`[codex-rescue-fallback: <fail-mode>]` reactive variant)
+
+**A4. ADR-070 + ADR-081 본문 SSOT 위임 cross-ref binding**
+
+본 ADR-052 ↔ ADR-070 Amendment 5 + ADR-081 Amendment 5 = **cross-ref binding** (Amendment 6/7/8 패턴 정합):
+
+- **ADR-052 Amendment 9** = proactive 채널 SSOT 본문 보존 (D1 L84/L90 disjoint anchor 강화)
+- **ADR-070 Amendment 5** = reactive 영역 substitution scope + sandbox boundary normative anchor (verify-before-trust pattern reactive 확장)
+- **ADR-081 Amendment 5** = reactive 영역 spawn prompt boilerplate 4 mandatory field 확장 적용 (D1.A-D codify reactive 변형)
+
+3 ADR 의 normative anchor 분리 — ADR-052 = touchpoint behavior SSOT (proactive 채널 한정), ADR-070 = verify-before-trust pattern SSOT (reactive 영역 substitution + sandbox), ADR-081 = boilerplate composition SSOT (reactive 영역 field 적용). scope 침범 0건.
+
+**A5. ADR-058 §결정 5 ratchet 정합 (강화 방향 명시)**
+
+본 Amendment = 강화 방향:
+
+- `is_transitional: false` 본 ADR 유지 (permanent governance, proactive/reactive disjoint boundary explicit codify = permanent strengthening)
+- `sunset_justification: "N/A — permanent strengthening (proactive/reactive disjoint scope explicit codify + reactive 영역 SSOT 위임 cross-ref. ADR-052 본문 정책 SSOT (proactive 6 touchpoint scope 한정) 보존 invariant 정합, scope 축소 0 + Amendment 1-8 본문 의미 변경 0. ADR-070 §D5 + ADR-081 §D5 declaration-only retain precedent chain 연속)"`
+- ADR-058 §결정 5 sunset_justification 의무는 약화 방향에만 발효 → 본 Amendment 는 면제
+
+**A6. ADR-064 §결정 (Trace 1) active amendment + full-scope 정합**
+
+- Amendment 발의 시점 = CFP-963 Codex TP#4 deferred scope closure (Codex TP#4 CX-963 deferred scope 의 별 CFP carrier closure 책무, active amendment ratchet 강화 방향)
+- 적용 영역 = proactive 6 touchpoint + reactive 채널 모두 (full-scope, 단일 채널 한정 아님 — 단 reactive 영역 SSOT 본문 위임 cross-ref pattern)
+- forbid-list 13 어휘 (ADR-064 §결정 1 + Amendment 2/4/5) 사용 0 건 self-attest
+
+**A7. doc-only fast-path 적용 (ADR-054 §결정 1)**
+
+본 Amendment 9 자체 = ADR-052 본문 patch (Amendment row append + sub-section append) — doc-only fast-path 적격. carrier Story (CFP-1003) = ADR-052 Amendment 9 + ADR-070 Amendment 5 + ADR-081 Amendment 5 + registry entry description patch + playbook §3.10 reactive variant codify = ADR-054 §결정 1 (신규 ADR 도입 아님, 기존 ADR Amendment + src/tests 무변경) doc-only fast-path 단일 PR 적격.
+
+**A8. D1/D2/D3/D4 결정 본문 + Amendment 1-8 본문 의미 변경 없음**
+
+기존 D1 (codex:codex-rescue dispatch 채널) / D2 (6 touchpoint 자동 활성) / D3 (ProactiveCheckPacket v1) / D4 (#5 판정 불일치 = 사용자 escalation) + Amendment 1-8 본문 의미 변경 없음. 본 Amendment 9 = proactive/reactive disjoint scope explicit codify + reactive 영역 SSOT 위임 cross-ref only — sub-section append 패턴 (Amendment 1-8 패턴 정합).
+
+### 결과 (Amendment 9)
+
+- proactive/reactive 채널 disjoint scope explicit codify (A1 SSOT 표) — D1 L84/L90 boundary 강화
+- reactive 영역 normative anchor SSOT 위임 (ADR-070 Amendment 5 + ADR-081 Amendment 5 본문 SSOT) — A2 cross-ref-only Amendment 패턴 (Amendment 6/7/8 정합)
+- proactive/reactive boundary preservation 적용 영역 Wave 1 declarative-only 명시 (A3) — Wave 2 mechanical lint scope 확장 = 별 CFP carrier 분리 (ADR-064 §결정 1 unitary)
+- ADR-052 ↔ ADR-070 Amd 5 ↔ ADR-081 Amd 5 cross-ref binding (A4 SSOT) — 3 ADR normative anchor 분리, scope 침범 0건
+- ADR-058 §결정 5 ratchet 정합 (강화 방향, sunset_justification N/A — permanent strengthening) — A5 SSOT
+- ADR-064 §결정 active amendment + full-scope 정합 (forbid-list 13 어휘 사용 0 건) — A6 SSOT
+- doc-only fast-path 영역 정합 (본 Amendment 9 자체) — A7 SSOT
+- D1/D2/D3/D4 + Amendment 1-8 본문 의미 변경 0건 (sub-section append 패턴) — A8 SSOT
+
+### 거절된 대안 (Amendment 9)
+
+- (Amendment-AF) **reactive 영역 normative anchor SSOT 를 ADR-052 본문 inline** (ADR-070 Amendment 5 + ADR-081 Amendment 5 회피) — 영역 type mismatch. ADR-052 = touchpoint behavior SSOT (dispatch prompt template), reactive 영역 substitution scope + boilerplate composition = ADR-070 + ADR-081 pattern SSOT 영역. Amendment 6/7/8 cross-ref-only 패턴 (verify-before-trust pattern / boilerplate composition / substitution 3-enum SSOT 모두 본문 외 ADR 위임) 정합 → reactive 영역 SSOT 본문 위임 채택.
+- (Amendment-AG) **proactive 채널 SSOT 본문 자체에 reactive 영역 SSOT inline append** (ADR-052 본문 scope 확장) — ADR-052 본문 정책 SSOT (proactive 채널 한정) 보존 invariant 위배. Amendment 1-8 정합 = proactive 채널 영역만 강화 (substitution / verbatim 첨부 / boilerplate cross-ref / severity calibration cross-ref / fact-check / mandatory 전환 / multi-round debate / iterative reformulation). reactive 영역 = ADR-022 Deprecated + ADR-070 D1 L110 적용 외 = 본 ADR 외 영역 → 별 ADR (ADR-070/ADR-081) 본문 SSOT 위임 채택.
+- (Amendment-AH) **Wave 1 + Wave 2 단일 CFP 통합** (mechanical lint 동시 도입) — ADR-064 §결정 1 (CFP scope unitary, "경량 → full" 단계 채택 금지) 위배. Wave 1 declarative + Wave 2 mechanical 별 CFP 분리 = ADR-064 §결정 1 정합 + CFP-963 Phase 2 mechanical lint 패턴 답습 (CFP-963 = Phase 1 declare + Phase 2 mechanical).
+- (Amendment-AI) **reactive 채널 deprecate** (codex:rescue 자체 폐기 + proactive 채널 단독 SSOT) — ADR-022 Deprecated 와 별개 (codex:rescue subagent 자체 존재 = codex@openai-codex plugin runtime 영역, codeforge 측 deprecate 권한 외). ADR-070 D1 L110 `사용자 책임 영역 (적용 외)` 정합 retain — reactive 영역 normative anchor 강화 (Wave 1 + Wave 2 ratchet) + 사용자 책임 영역 invariant 보존 채택.
+- (Amendment-AJ) **codex-network-scope-presence lint scope 확장 (proactive + reactive 양면) inline 본 Amendment 9** — Wave 2 mechanical 영역, ADR-064 §결정 1 (CFP scope unitary) 정합 별 CFP carrier 분리. 본 Amendment 9 Wave 1 declarative-only 영역 = registry entry description text 본문 patch (scope clarification only, detect_command / workflow / current_tier 변경 0건).
 
