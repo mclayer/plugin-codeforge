@@ -12,6 +12,22 @@ tools: Read
 
 설계 lane 진입 시. ArchitectPLAgent가 5 → 8(+ProductionEvidence=9) deputy parallel spawn 여부를 결정하기 전 호출.
 
+추가 trigger (CFP-681 / W1 S2):
+- ArchitectPLAgent 가 4-tuple sub-tuple (CodebaseMapper / Refactor / ArchitectAnalyst — chief author 포함) flat spawn 을 결정하기 전. 본 skill 의 "4-tuple sub-tuple spawn 가이드" 섹션 + playbook §12.8 (deputy 영역별 specialized Context Packet 4종 spec) cross-ref.
+- doc-only fast-path mechanism codify Story 진입 시 (실 설계 결정 0) — 본 skill 매트릭스 + 4-tuple 가이드를 읽고 chief author 중심 + 자기 mandate deputy consult 만으로 codify 범위를 확정.
+
+## 4-tuple sub-tuple spawn 가이드 (CFP-681 / W1 S2 — ADR-044 CFP-676 reaffirm)
+
+> **deputy column 아님 — flat spawn 논리적 그룹핑**. 본 가이드는 deputy mandate 매트릭스 (5 permanent + 3 CONDITIONAL) 와 disjoint 한 별개 축이다. 4-tuple = ArchitectAgent (chief author, Opus — multi-source synthesizer) + CodebaseMapper (Sonnet, existing codebase fact) + Refactor (Sonnet, decoupling/pattern advocacy) + **ArchitectAnalyst** (Sonnet, PriorArtAgent rename — 변경 전 기존 설계 ADR/Change Plan/Story 분석 단일 축). single-mandate advocacy 패턴 (ADR-042 Amendment 7 SSOT — `abcd92bf`).
+
+**"4-tuple = 논리적 그룹핑" 정의**: 4-tuple 은 어느 sub-agent 가 어느 deputy 영역 Context Packet 으로 spawn 됐는지를 표기하는 **논리적 그룹핑**일 뿐 **물리적 spawn 계층(nested)이 아니다**. 4 component 모두 Orchestrator 가 flat spawn (재귀 spawn 금지 — platform inherent / nested team 금지 / sub-lead 격상 0건 — ADR-044 CFP-676 reaffirm 단락 + ADR-009 §결정 1 + ADR-039 정합). "4-level nested spawn" 오해 차단 (Story §1 deliverable 3 verbatim — CFP-681 EC-6).
+
+**spawn 주체·시점**:
+- spawn 주체 = **Orchestrator** (flat spawn, ADR-039 §결정 1 default subagent context). ArchitectPLAgent 는 PL synthesizer 역할 — 4-tuple 산출물 통합 검수만, sub-agent 를 재귀 spawn 하지 않는다 (env=0 fallback = Orchestrator 직접 spawn one-shot).
+- Context Packet = spawn-time **동적** 주입 (매 spawn — playbook §12.8). consumer overlay SessionStart merge (정적 desired state) 와 명시적 구분.
+
+**chief author 포함 의미**: ArchitectAgent (chief author) 는 4-tuple 의 component 이지만 deputy 가 아니다. deputy 5 permanent + 3 CONDITIONAL (자기 mandate 단일 축 advocacy) 산출물 + 나머지 3 sub-tuple (Mapper/Refactor/ArchitectAnalyst) 산출물을 **multi-source synthesis** 하는 Opus chief 역할. ArchitectAnalyst (Sonnet) 는 chief 가 아니라 "기존 설계 분석 단일 축" advocate.
+
 ## Deputy mandate 매트릭스 — 5 permanent + 3 CONDITIONAL (CFP-676 / ADR-042 Amendment 7)
 
 ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72. design lane deputy가 §3/§7/§11/§13 sub별 owning 범위 명시 — H17 책임 분쟁 차단.
@@ -57,4 +73,4 @@ ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72. design lane 
 
 §7.4 schema 자체는 codeforge-design plugin SSOT. wrapper는 본 매트릭스만 SSOT 보유 ([ADR-014](../../docs/adr/ADR-014-operational-risk-ssot-distribution.md) + Amendment 4, [ADR-72](../../docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md), [ADR-042 Amendment 7](../../docs/adr/ADR-042-agent-model-selection-policy.md)).
 
-> **W1 S2 forward pointer (state dependency on CFP-676 S1)**: 본 skill 의 full mandate matrix 재작성 (per-cell 상세 + Context Packet 4종 spec + CodeArch/ArchitectAnalyst mandate 본문 세부) = W1 S2 영역. 본 S1 = drift 동시 해소 (heading/count/description/deputy 명칭 rename + CodeArch column + ArchitectAnalyst sub-tuple + ProductionEvidence reflection) — CLAUDE.md "Deputy mandate 매트릭스" 단락과 byte-consistent (Codex S-CFP676-DEPUTY-MATRIX-6TO5 P1 drift 해소). agent file 실 신설/rename = W2 S3 (codeforge-design sibling).
+> **W1 S2 보강 완료 (CFP-681 — state dependency on CFP-676 S1 해소)**: S1 (CFP-676, wrapper main `abcd92bf`) 이 5+3 mandate matrix 본문 + frontmatter + §13 Live Discipline 행을 full 재작성 완료. 본 S2 = **매트릭스 본문 재작성 0 (S1 산출물 보존)** + additive 보강만: (a) "호출 시점" 4-tuple spawn trigger 추가 (b) 신규 "4-tuple sub-tuple spawn 가이드" 섹션 (CodebaseMapper/Refactor/ArchitectAnalyst + chief author — flat spawn 논리적 그룹핑, nested 금지 reaffirm) (c) playbook §12.8 (deputy 영역별 specialized Context Packet 4종 spec) + ADR-039 §결정 1 cross-ref (d) CLAUDE.md "Deputy mandate 매트릭스" 단락 (`abcd92bf` L229-233) 과 deputy 명칭 5종 + 3 CONDITIONAL + ArchitectAnalyst sub-tuple 표현 byte-consistent 재확인. "full 재작성" 의 §1 의도 = S1+S2 누적으로 5+3 매트릭스 + 4-tuple/Context Packet spec 최종 형태 SSOT 존재 — 충족 (CFP-681 §2.5 상충 조정 / AC-1). agent file 실 신설/rename = W2 S3 (codeforge-design sibling).

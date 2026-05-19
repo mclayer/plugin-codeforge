@@ -2923,6 +2923,42 @@ Packet 주입은 Orchestrator의 토큰 최적화 수단이지 필수 규약 아
 
 **적용 범위**: wrapper + 모든 consumer project Orchestrator 세션.
 
+### 12.8 Deputy 영역별 specialized flat spawn Context Packet 4종 spec (CFP-681 / W1 S2 — CFP-1026 design lane 재편)
+
+설계 lane 에서 Orchestrator 가 4-tuple sub-tuple (CodebaseMapper / RefactorAgent / ArchitectAnalyst + ArchitectAgent chief author) 및 deputy 를 spawn 할 때 주입하는 영역별 specialized Context Packet spec. deputy mandate 매트릭스 SSOT = `skills/deputy-mandate/SKILL.md` (5 permanent + 3 CONDITIONAL — ADR-042 Amendment 7 / ADR-014 Amendment 4). 본 §12.8 은 그 매트릭스의 spawn-time 주입 mechanism.
+
+#### (a) Orchestrator flat spawn (재귀 spawn 금지 / nested team 금지 / sub-lead 격상 0건)
+
+- spawn 주체 = **Orchestrator** (top-level Claude 세션). 4 component (chief author + Mapper + Refactor + ArchitectAnalyst) 모두 Orchestrator 가 직접 flat spawn. ArchitectPLAgent 는 PL synthesizer 역할 (산출물 통합 검수) — sub-agent 를 재귀 spawn 하지 않는다.
+- **재귀 spawn 금지** = platform inherent (Lead 와 teammate 모두 Agent tool 추가 spawn 불가, env=0 default subagent context). **nested team 금지** = team-of-teams 불가. **sub-lead 격상 0건** = 4-tuple 안 어느 component 도 다른 component 의 spawn 주체가 되지 않음.
+- 근거 SSOT: 본 nested team 금지 / flat spawn 원칙은 ADR-044 (phase-scoped sequential team — 대안검토표 + 결론 단락의 nested team 금지 SSOT) + ADR-009 §결정 1 (wrapper-only decomposition) + ADR-039 (Orchestrator subagent default) 정합. CFP-676 CX-676-TP4-3 reaffirm 정합 (S1 ADR-044 reaffirm 단락 cross-ref).
+
+#### (b) "4-tuple = 논리적 그룹핑" — 물리적 spawn 계층 아님
+
+4-tuple 은 **어느 sub-agent 가 어느 deputy 영역 Context Packet 으로 spawn 됐는지를 표기하는 논리적 그룹핑**이다. 물리적 spawn 계층 (4-level nested) 이 아니다. 모든 component 는 동일 평면(flat)에서 Orchestrator 로부터 spawn 되며 서로의 상위/하위가 아니다. "4-tuple" 의 "4" 가 4단계 nested spawn 으로 오해되는 것을 명시적으로 차단 (CFP-681 EC-6 — Story §1 deliverable 3 verbatim).
+
+| 4-tuple component | spawn 주체 | deputy 영역 packet | model tier |
+|---|---|---|---|
+| ArchitectAgent (chief author) | Orchestrator (flat) | 전 deputy + 3 sub-tuple 산출물 multi-source synthesis | Opus |
+| CodebaseMapper | Orchestrator (flat) | existing codebase fact (as-is) | Sonnet |
+| RefactorAgent | Orchestrator (flat) | decoupling / pattern advocacy (to-be) | Sonnet |
+| ArchitectAnalyst (PriorArtAgent rename) | Orchestrator (flat) | 변경 전 기존 설계 (ADR / Change Plan / Story) 분석 단일 축 | Sonnet |
+
+#### (c) 정적 overlay 메커니즘 vs 동적 spawn-time Context Packet — 명시적 대비
+
+| 축 | 정적 overlay 메커니즘 | 동적 spawn-time Context Packet |
+|---|---|---|
+| 주입 시점 | consumer SessionStart merge hook (세션 개시 1회) | **매 spawn** (Orchestrator 가 sub-agent 프롬프트에 주입) |
+| 내용 | `.claude/_overlay/project.yaml` objective SSOT 상수 + `.claude/_overlay/CLAUDE.md` narrative (도메인 해설) | Story file 섹션 캐시 (§12.1-§12.3) + deputy 영역별 specialized slice (본 §12.8) |
+| 성격 | desired state (Helm-style 정적 — 프로젝트 불변 상수) | 동적 (Story·spawn 마다 달라지는 컨텍스트) |
+| SSOT | §12.5 Project Config Packet (project.yaml 슬라이스) | §12.3 Context Packet 주입 형식 + 본 §12.8 deputy 영역별 specialization |
+
+> **혼동 차단 (CFP-681 §2.5 / Researcher disambiguation)**: 정적 overlay (consumer SessionStart merge — Helm-style desired state) 와 동적 spawn-time Context Packet (매 spawn 주입) 은 별개 메커니즘이다. deputy 영역별 specialized packet 은 후자 — Story·spawn 마다 어느 deputy 영역 slice 를 주입할지 동적으로 결정. overlay 의 정적 상수 (project.yaml) 와 cross-pollinate 금지.
+
+#### (d) ADR-039 §결정 1 cross-ref
+
+본 §12.8 의 모든 spawn 은 [ADR-039](adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) §결정 1 (codeforge 수정 작업 = Orchestrator default subagent spawn) 정합. inline 수행은 §결정 2 의 4-entry whitelist (사용자 dialog / TodoWrite scratchpad / Read-only Q&A / Status report) 외 영역 금지. 4-tuple flat spawn = ADR-039 default subagent context 의 design lane instantiation (env=0 = one-shot Agent tool spawn, env=1 = phase-scoped sequential team — ADR-044, 단 nested team 금지 동일).
+
 ---
 
 ## 13. PMOAgent 프로젝트 관리 (Cross-cutting)
