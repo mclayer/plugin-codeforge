@@ -2783,6 +2783,37 @@ entries:
       failure_threshold: 0          # ADR-060 §결정 6 (b)
       sibling_dependencies:
         - CFP-963                   # self-carrier Phase 2 PR (script + lib + workflow + bats + fixture pair + bootstrap parity) merge 의무
+    status: deferred-followup  # declarative anchor only — CFP-967 mechanical wire Phase 2 carrier (detect script + workflow + hook json sample) 후 Active 전환 (L1417/L1452/L1574 established 4-instance precedent 답습 — 신규 unique drift value 회피, Codex #2 F#2 schema-enum-systemic conform FIX iter 2). schema enum 확장 = 별 follow-up CFP (ADR-064 §결정 1 scope unitary, §10 deferred marker)
+
+  # CFP-991 / ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14 canary_compatibility_check_binding carrier — Wave 4 sub-Epic #1 Story-4 canary promotion criteria enforcement layer
+  - name: canary-compatibility-check
+    description: |
+      ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14
+      canary_compatibility_check_binding mechanical verification — consumer
+      canary→beta promotion gate evaluation 시점 promotion criteria 4-tuple
+      (functional + security + monitoring + testing measurement source) + family_7
+      atomic canary pin (publisher↔registry↔consumer 3-way match length_invariant=7)
+      + canary_consumer_evidence_origin enum closed-set (wrapper_self / consumer_self
+      / mixed open_extension:false) + inter_plugin_contract_backward_compat_verify
+      (ADR-008 MINOR-only rule invariant guard) + promotion_gate_failure_mode (enum
+      warning_first / blocking_on_pr default warning_first) + downgrade_asymmetry_marker
+      (placeholder_reserve Story-5 carrier) 7 field schema verify. 5 threat × mitigation
+      matrix carrier (SecurityArch T-1.1/T-2.1/T-3.1/T-4.1/T-5.1). ADR-070 §결정 D6
+      (CFP-988 Amendment 4) mandatory-real-execution-evidence STANDING cross-ref
+      T-4.1 4-tuple measurement spoofing mitigation. wrapper-self-app Tier-1
+      exemption (production_cutover_touching=true AND repo=wrapper AND code_change=0
+      triple-AND fast-PASS, ADR-72 §결정 6 invariant 정합). 4 industry exemplar
+      verbatim cite (Chrome 3-channel Stable/Beta/Canary primary + npm dist-tag +
+      Rust 3-channel + K8s 3-stage 보조 reference, ADR-076 §결정 9.6 SSOT).
+    detect_command: bash scripts/check-canary-compatibility.sh
+    workflow: templates/github-workflows/canary-promotion-criteria.yml
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:canary-promotion-criteria
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized
+      failure_threshold: 0          # ADR-060 §결정 6 (b)
+      sibling_dependencies: []      # Phase 2 carrier = 별 follow-up CFP (blocking-on-pr 승격)
       evidence_artifacts:
         - github_actions_run_history_url
         - lint_failure_count_zero_proof
@@ -2798,3 +2829,19 @@ entries:
       threshold: 3                  # ADR-060 §결정 19 Amendment 6 / schema v1.2 standard default
       promotion_trigger: none       # count=0 < threshold=3 → 발화 없음 (Option A — parallel-work-sentinel-pickup count=2 sentinel 영역과 분리)
     status: warning  # CFP-963 Phase 2 ACTIVE — mechanical wire complete: detect_command + workflow + bats fixture pair (CX-963-3 P2 boundary mandate per Codex TP#4) ALL populated (2026-05-19 KST). deferred-followup → warning transition (ADR-060 §결정 6 — Phase 2 carrier merge 의무 충족). blocking-on-pr 승격 = pr_cumulative_min 20 + failure_threshold 0 + sibling_dependency merge (별 follow-up CFP)
+        - canary_compatibility_check_binding_7_field_verify_proof
+        - family_7_atomic_canary_pin_three_way_match_proof
+        - canary_consumer_evidence_origin_enum_closed_set_proof
+    mechanical_enforcement_actions:
+      - canary-compatibility-check   # ADR-040 Amendment 3 §결정 7.D cross-ref
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-991
+    introduced_date: 2026-05-19
+    owner_adr: ADR-72-Amendment-3   # ProductionEvidenceDeputy mandate Amendment 3 (CFP-991 carrier — promotion criteria 4-tuple wiring)
+    carrier_adr: ADR-060            # evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0
+      threshold: 3
+      last_occurrence: ~
+      promotion_trigger: advisory
+    status: Active

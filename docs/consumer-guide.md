@@ -673,6 +673,43 @@ bash scripts/infer-channel-from-version.sh
 
 ---
 
+### §2g.4 canary promotion criteria 4-tuple gate (CFP-991 Wave 4 sub-Epic #1 Story-4 / ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14)
+
+§2g.3 channel CLI 가 `codeforge.channel.tier: canary` 활성 후, consumer 는 **canary → beta → stable promotion** 경로를 따른다. 본 §2g.4 는 promotion gate 평가 시점의 **4-tuple evidence quad** (functional + security + monitoring + testing) measurement source SSOT 와 consumer obligation 을 정의한다 (wrapper Tier-1 declare-time scope 외 — consumer canary tier 활성 Story carrier 영역).
+
+**4-tuple measurement source SSOT** (ADR-076 §결정 9.6 / reconcile-protocol-v1 v1.11 §4.14):
+
+| Sub | measurement source | gate_state enum |
+|---|---|---|
+| **functional** | consumer Story functional test pass-rate (bats GREEN ratio + integration test PASS evidence) | `pass` / `fail` / `n_a` |
+| **security** | consumer Story SecurityTestPLAgent verdict + ProductionEvidenceDeputy spawn evidence | `pass` / `fail` / `n_a` |
+| **monitoring** | consumer production-side monitoring metric (Prometheus rate / WAL sample / drainage rate) | `pass` / `fail` / `n_a` |
+| **testing** | consumer Story IntegrationTestAgent verdict (Epic-level baseline) | `pass` / `fail` / `n_a` |
+
+**aggregation rule**: 4 sub all `pass` OR (`pass` + `n_a` 조합) = promotion gate proceed / 1+ `fail` = promotion abort (warning_first → blocking_on_pr fallback orthogonality, ADR-060 §결정 5 default).
+
+**4 industry exemplar (verbatim SSOT cite, ADR-076 §결정 9.6)**:
+- **Chrome 3-channel** primary — Stable / Beta / Canary (Chrome 4-channel 변종 도입 0건 invariant)
+- **npm dist-tag** 보조 — latest / next / canary
+- **Rust 3-channel** 보조 — stable / beta / nightly
+- **K8s 3-stage** 보조 — GA / Beta / Alpha
+- 추가 reference (sub-bullet): K8s KEP-5241 Implementing User Friendly Production Readiness (2024-12) / AWS CodeDeploy Blue-Green Linear/Canary deployment / Helm release lifecycle
+
+**consumer obligation** (Tier-2 admin-tier 권장 advisory, wrapper enforcement 0):
+
+1. **canary tier 활성 PR 의 CODEOWNERS auto-review** — `.claude/_overlay/project.yaml codeforge.channel.tier: canary` 변경 PR 을 admin tier 검토 경로로 게이트 (ADR-076 §결정 9.4 silent canary uptake mitigation 정합)
+2. **promotion gate label 부착 의무** — canary → beta promotion PR open 시 `gate:channel-canary-promotion` label 부착 (label-registry-v2 v2.35 entry, attach_owner_plugin: consumer_repo_only invariant) + 4-tuple evidence quad measurement 결과 PR body 안 명시
+3. **4-tuple evidence quad measurement 의무 (Tier-2 runtime)** — ProductionEvidenceDeputy spawn 영역 (consumer Live touching Epic carrier, ADR-72 §결정 1 정합)
+4. **single-aggregator bypass 금지** (ADR-070 §결정 D6 / CFP-988 Amendment 4 mandatory-real-execution-evidence STANDING 4-tuple): (a) CR-own discriminating revert / (b) reconcile-integration path / (c) DevPL pasted stdout 미신뢰 / (d) single-aggregator/single-unit bypass forbidden — real execution evidence direct verify 의무
+
+**canary promotion criteria 자동 lint** (warning tier): `canary-promotion-criteria.yml` workflow (PR-open + workflow_dispatch 2-trigger split, ADR-72 §결정 5 production-cutover-evidence.yml byte-pattern 답습) 가 PR 의 4-tuple measurement source + family_7_atomic_canary_pin three_way_match + enum closed-set invariant 자동 verify. warning-first failure mode (CI block 0, advisory). `hotfix-bypass:canary-promotion-criteria` label 로 조건부 skip 가능 (audit comment 자동 발의 동반, label-registry-v2 v2.35 43번째 hotfix-bypass family member).
+
+**wrapper-self-app exemption (Tier-1, ADR-72 §결정 6 invariant)**: wrapper plugin 자체 = production cutover 영역 외 (plugin = code 0 + runtime behavior 0 + production deploy state 부재). wrapper PR 의 triple-AND fast-PASS 조건 (`production_cutover_touching=true AND repo=wrapper AND code_change=0`) 충족 시 promotion criteria check 영구 fast-PASS — consumer canary tier 활성 Story 만 Tier-2 runtime measurement 영역.
+
+**downgrade 경로 (canary → beta → stable demotion)**: §2g.4 = forward path (promotion) 한정. downgrade asymmetry marker = `reconcile-protocol-v1 v1.11 §4.14 downgrade_asymmetry_marker.status: placeholder_reserve` field 영역 (Story-5 carrier 별 CFP, §4.8 version_handshake placeholder_reserve→active 단독 promotion 선례 답습).
+
+---
+
 ### §2h.1 SessionStart prereq-check hook 자동 활성 (CFP-475 / ADR-038 Amendment 3 이후)
 
 Codeforge orchestration 의 critical path tool 인 **TodoWrite** 는 Claude Code harness 의 **deferred tool** — turn 0 시점에 schema 가 노출되지 않아 `ToolSearch("select:TodoWrite")` 로 lazy-fetch 해야 호출 가능. CFP-475 / ADR-038 Amendment 3 이후 **plugin-root `hooks/hooks.json` 에 자동 등록** — 별도 consumer `.claude/settings.json` 등록 절차 불필요.

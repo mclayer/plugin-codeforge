@@ -1,0 +1,144 @@
+# templates/github-workflows/canary-promotion-criteria.yml
+#
+# CFP-991 / ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14
+# canary_compatibility_check_binding — canary promotion criteria 4-tuple verifier (warning tier).
+#
+# Wave 4 sub-Epic #1 Story-4 — canary promotion criteria enforcement layer carrier.
+#
+# Trigger (ADR-72 §결정 5 production-cutover-evidence.yml D2 consensus 2-trigger split 답습):
+#   - pull_request: opened/synchronize/labeled — consumer canary tier 활성 PR open 시 promotion criteria verify
+#   - workflow_dispatch — operations team manual pre-verify (Helm `helm test` precedent)
+#
+# Tier (ADR-060 §결정 5 warning-first default):
+#   - continue-on-error: true (PR merge 차단 0)
+#   - hotfix-bypass:canary-promotion-criteria label 부착 시 skip (label-registry v2.35 45번째 family member)
+#
+# Wrapper-self-app exemption (D3 consensus Tier-1 declare-time + Tier-2 runtime split, ADR-72 §결정 6 invariant 정합):
+#   - Tier-1 (repo=wrapper AND code_change=0): triple-AND fast-PASS (production_cutover_touching=true AND repo=wrapper AND code_change=0)
+#   - Tier-2 (repo=consumer): 실 4-tuple measurement quad (functional + security + monitoring + testing)
+#
+# T-3.1 mitigation core field — wrapper-self-app trigger 차단:
+#   - `if: github.repository != 'mclayer/plugin-codeforge'` mechanical guard (label mis-attach 차단)
+#
+# Cross-ref:
+#   - ADR-72 Amendment 3 §결정 1 표 wrapper governance row + §결정 5 표 row (5번째)
+#   - ADR-076 §결정 9.6 (Chrome 3-channel Stable/Beta/Canary verbatim 4 industry exemplar SSOT)
+#   - ADR-070 §결정 D6 (CFP-988 Amendment 4 mandatory-real-execution-evidence STANDING — T-4.1 mitigation)
+#   - reconcile-protocol-v1 v1.11 §4.14 canary_compatibility_check_binding (7 field schema)
+#   - label-registry-v2 v2.35 gate:channel-{canary,beta,stable}-promotion 3 entry
+#   - CLAUDE.md GitHub Workflow paragraph 16th evidence-enforceable warning entry
+#
+# Untrusted env policy (SecurityArch §7.1): PR title/body/actor = env-quoted reference only.
+
+name: canary-promotion-criteria
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled]
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: canary-promotion-criteria-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  check:
+    name: Verify canary promotion criteria 4-tuple
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: read
+    continue-on-error: true
+    steps:
+      - name: Check bypass label
+        id: bypass
+        env:
+          PR_LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
+        run: |
+          if echo "$PR_LABELS" | grep -q '"hotfix-bypass:canary-promotion-criteria"'; then
+            echo "bypass=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::canary-promotion-criteria: hotfix-bypass label detected — skip promotion criteria verify"
+          else
+            echo "bypass=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.bypass.outputs.bypass != 'true'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect Tier-1 wrapper-self-app exemption
+        if: steps.bypass.outputs.bypass != 'true'
+        id: tier
+        env:
+          PR_LABELS: ${{ toJson(github.event.pull_request.labels.*.name) }}
+        run: |
+          # T-3.1 mitigation: wrapper-self-app trigger 차단 (mechanical guard)
+          # repo=wrapper detect via GITHUB_REPOSITORY
+          REPO_KIND="consumer"
+          if [[ "${GITHUB_REPOSITORY:-}" == "mclayer/plugin-codeforge" ]]; then
+            REPO_KIND="wrapper"
+          fi
+          echo "repo_kind=${REPO_KIND}" >> "$GITHUB_OUTPUT"
+
+          # production_cutover_touching label detection
+          PROD_TOUCHING="false"
+          if echo "$PR_LABELS" | grep -q '"production-touching"'; then
+            PROD_TOUCHING="true"
+          fi
+          echo "production_cutover_touching=${PROD_TOUCHING}" >> "$GITHUB_OUTPUT"
+
+          # code_change detection (heuristic: any non-doc file change)
+          CODE_CHANGE="0"
+          if [[ -n "${GITHUB_BASE_REF:-}" ]]; then
+            if git diff --name-only "origin/${GITHUB_BASE_REF}..HEAD" 2>/dev/null | grep -vE '^(docs/|\.github/|CLAUDE\.md|README\.md|CHANGELOG\.md)' | grep -q .; then
+              CODE_CHANGE="1"
+            fi
+          fi
+          echo "code_change=${CODE_CHANGE}" >> "$GITHUB_OUTPUT"
+
+          # Triple-AND Tier-1 exemption
+          if [[ "${PROD_TOUCHING}" == "true" && "${REPO_KIND}" == "wrapper" && "${CODE_CHANGE}" == "0" ]]; then
+            echo "tier1_exempt=true" >> "$GITHUB_OUTPUT"
+            echo "::notice::canary-promotion-criteria: Tier-1 wrapper-self-app exemption (triple-AND fast-PASS, ADR-72 §결정 6 invariant 정합)"
+          else
+            echo "tier1_exempt=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run canary compatibility check (Tier-1 exempt path)
+        if: steps.bypass.outputs.bypass != 'true' && steps.tier.outputs.tier1_exempt == 'true'
+        env:
+          PRODUCTION_CUTOVER_TOUCHING: ${{ steps.tier.outputs.production_cutover_touching }}
+          REPO_KIND: ${{ steps.tier.outputs.repo_kind }}
+          CODE_CHANGE: ${{ steps.tier.outputs.code_change }}
+        run: |
+          bash scripts/check-canary-compatibility.sh
+
+      - name: Run canary compatibility check (Tier-2 runtime path)
+        if: steps.bypass.outputs.bypass != 'true' && steps.tier.outputs.tier1_exempt != 'true'
+        env:
+          PRODUCTION_CUTOVER_TOUCHING: ${{ steps.tier.outputs.production_cutover_touching }}
+          REPO_KIND: ${{ steps.tier.outputs.repo_kind }}
+          CODE_CHANGE: ${{ steps.tier.outputs.code_change }}
+          # Tier-2 runtime fields (consumer canary tier 활성 Story carrier 영역)
+          CANARY_CONSUMER_EVIDENCE_ORIGIN: ${{ vars.CANARY_CONSUMER_EVIDENCE_ORIGIN || 'consumer_self' }}
+          PROMOTION_GATE_FAILURE_MODE: ${{ vars.PROMOTION_GATE_FAILURE_MODE || 'warning_first' }}
+          CONSUMER_CHANNEL_TIER: ${{ vars.CONSUMER_CHANNEL_TIER || 'canary' }}
+          RECONCILE_CONTRACT_PATH: docs/inter-plugin-contracts/reconcile-protocol-v1.md
+        run: |
+          bash scripts/check-canary-compatibility.sh || {
+            RC=$?
+            if [[ $RC -eq 1 ]]; then
+              echo "::warning::canary-promotion-criteria: warning tier (advisory only, hotfix-bypass:canary-promotion-criteria bypass 가능)"
+              exit 0  # continue-on-error: true 정합 — warning emit but merge 미차단
+            fi
+            if [[ $RC -eq 2 ]]; then
+              echo "::error::canary-promotion-criteria: mechanical anchor invalid (schema breach OR real divergence) — Phase 2 blocking-on-pr 승격 carrier"
+              exit 1  # warning tier still emits exit 1 for visibility
+            fi
+            exit 0
+          }
