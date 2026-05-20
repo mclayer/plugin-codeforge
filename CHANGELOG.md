@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.8.0 — 2026-05-20
+
+### Changed
+- review-verdict-v4 v4.5 → v4.6 MINOR (canonical SSOT sync, ADR-010 sibling sync mirror from wrapper CFP-1086-S1)
+  - `deputy_axis_restructure_self_check_passed` optional bool field 신설 (ADR-042 Amendment 8 + ADR-086 P7 framework self-application 첫 사례 carrier)
+  - `boundary_completeness_self_check_passed` scope expansion (ADR-068 Amendment 2 wording SSOT chief tie-break ladder cross-ref)
+
 `codeforge-review` plugin 릴리스 이력.
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
