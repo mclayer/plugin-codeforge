@@ -2837,9 +2837,6 @@ entries:
       threshold: 3                  # ADR-060 §결정 19 Amendment 6 / schema v1.2 standard default
       promotion_trigger: none       # count=0 < threshold=3 → 발화 없음 (Option A — parallel-work-sentinel-pickup count=2 sentinel 영역과 분리)
     status: warning  # CFP-963 Phase 2 ACTIVE — mechanical wire complete: detect_command + workflow + bats fixture pair (CX-963-3 P2 boundary mandate per Codex TP#4) ALL populated (2026-05-19 KST). deferred-followup → warning transition (ADR-060 §결정 6 — Phase 2 carrier merge 의무 충족). blocking-on-pr 승격 = pr_cumulative_min 20 + failure_threshold 0 + sibling_dependency merge (별 follow-up CFP)
-        - canary_compatibility_check_binding_7_field_verify_proof
-        - family_7_atomic_canary_pin_three_way_match_proof
-        - canary_consumer_evidence_origin_enum_closed_set_proof
     mechanical_enforcement_actions:
       - canary-compatibility-check   # ADR-040 Amendment 3 §결정 7.D cross-ref
     modal_anti_pattern_dictionary: {}

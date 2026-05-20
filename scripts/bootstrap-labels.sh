@@ -167,6 +167,14 @@ create_label "channel:canary"         "f9d0c4" "channel: canary tier marker (HIG
 # 기존 GitHub label list 이미 존재 — registry drift 정정 carrier (DataMigrationArch §G.2 정합).
 create_label "production-touching"    "b60205" "Story touches production cutover surface — explicit user go-ahead required before lane entry (ADR-72 §결정 3 trigger axis 정합). HIGH severity invariant (severity-propagation-v1 v1.0 binding). canary tier (channel:canary) 와 2-axis disjoint (양 label 동시 부착 가능). CFP-954 Wave 4 sub-Epic #882 Story-3 carrier."
 
+# axis:* category — CFP-1086 Wave 1 Story-1 (Epic CFP-1086 BackendArchitect) — deputy axis 1st-class taxonomy.
+# 4 deputy axis = AggregateArch (RDB OLTP) / APIContractArch (transport) / ModuleArch (module boundary) / DataArch (OLAP).
+# ADR-042 Amendment 8 (5+3 → 7+3+1 roster) carrier. label-registry-v2 v2.41 정합.
+create_label "axis:aggregate-architect"     "5319e7" "AggregateArchitect deputy axis — RDB OLTP aggregate invariant + 트랜잭션 경계 + Alembic 정책 (tool-agnostic policy layer). CFP-1086 Wave 1 Story-1 (ADR-042 Amendment 8) declare carrier."
+create_label "axis:api-contract-architect"  "5319e7" "APIContractArchitect deputy axis — transport contract (REST/GraphQL/gRPC/WebSocket) + API versioning + DTO + OpenAPI/GraphQL schema + contract testing. CFP-1086 Wave 1 Story-1 (ADR-042 Amendment 8) declare carrier."
+create_label "axis:module-architect"        "5319e7" "ModuleArchitect deputy axis — module/package boundary + dependency direction + layered/hexagonal/clean (module-level). Rename from axis:code-architect (CFP-1026 W2 S3 신설 → CFP-1086 rename). CFP-1086 Wave 1 Story-1 (ADR-042 Amendment 8) declare carrier."
+create_label "axis:data-architect"          "5319e7" "DataArchitect deputy axis — 빅데이터 OLAP only (Parquet/객체저장소/DuckDB/streaming). RDB 영역은 axis:aggregate-architect 로 분리. CFP-1086 Wave 1 Story-1 (ADR-042 Amendment 8) declare carrier."
+
 # hotfix-bypass:* — full set via dynamic read (CFP-598 below).
 # CFP-610 / ADR-064 Amendment 2 — wording-dictionary entry now sourced from §3 yaml dynamic read (NOT hardcoded here).
 # CFP-619 — pre-existing CFP-610 leak resolution: prior hardcoded `create_label "hotfix-bypass:wording-dictionary"` removed
@@ -245,7 +253,7 @@ fi
 
 if [ $DRY_RUN -eq 0 ]; then
     echo ""
-    echo "✓ 42 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."  # CFP-954: 41 → 42 base label (production-touching 정식 추가, label-registry-v2 v2.33 → v2.34 CFP-949 collision rebase ratchet)
+    echo "✓ 46 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."  # CFP-1086: 42 → 46 base label (4 axis:* labels — AggregateArch / APIContractArch / ModuleArch / DataArch, label-registry-v2 v2.40 → v2.41 ADR-042 Amendment 8 carrier)
 fi
 
 # CFP-492 2-way self-check (DRY_RUN 모드에서만):

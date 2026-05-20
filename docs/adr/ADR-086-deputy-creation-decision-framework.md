@@ -149,7 +149,7 @@ deferred carrier path 진입 시 본 Story 의 신설 결정 = 보류 (chief aut
 | **current state** | consumer overlay + plugin install 상태 | 기존 N deputy axis enumeration (deputy-mandate skill 매트릭스) |
 | **converge** | 3 mode enum (`dry-run` / `snapshot` / `transaction`) | 5-checklist self-app + deferred carrier path |
 
-ratchet 강화 방향 invariant 동형 — desired 우선, current = override 아님, converge = mechanism 명시. ADR-076 §결정 9 multi-version channel pin declare layer 와 본 §결정 3 deferred carrier path 패턴 동형 (sequential composition).
+ratchet 강화 방향 invariant 동형 — desired 우선, current = override 아님, converge = mechanism 명시. ADR-076 §결정 9 multi-version channel declare layer 와 본 §결정 3 deferred carrier path 패턴 동형 (sequential composition).
 
 ## 관련 ADR
 
