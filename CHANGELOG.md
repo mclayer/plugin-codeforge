@@ -4,6 +4,32 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [1.7.0] - 2026-05-20
+
+### CFP-698 — ADR-014 Amendment 4 + ADR-042 Amendment 7 cross-repo sibling sync (MINOR)
+
+Wrapper Phase 1 PR (mclayer/plugin-codeforge#1035 `abcd92bf` CFP-676 merged 2026-05-19) Epic CFP-1026 Wave 2 Story-4 carrier. ADR-014 Amendment 4 (OpRiskArch → InfraOperationalArch rename + §7.4 primary/cross-ref shell evidence-driven 3-axis split) + ADR-042 Amendment 7 (DataMigrationArch → DataArch rename, 5+3 deputy matrix) 의 codeforge-review repo cross-repo sibling 반영. ADR-054 Category 2 doc-only fast-path. ADR-010 §4 wrapper-first allowed pattern 정합.
+
+#### Changed (mechanical rename, 7 occurrence)
+
+- `templates/review-checklists/design.md` — `OperationalRiskArchitectAgent` → `InfraOperationalArchitectAgent` (L5 + L71 + L89 = 3 occurrence) + `DataMigrationArchitectAgent` → `DataArchitectAgent` (L141 + L172 = 2 occurrence) + `DataMigrationArch` → `DataArch` (L31 + L196 = 2 occurrence)
+- `agents/DesignReviewPLAgent.md` — L105 `DataMigrationArch` → `DataArch` (1 occurrence)
+
+#### Added
+
+- `templates/review-pl-base.md` — §8.6 audit gate normative 1-line append (pointer-existence vs policy-effectiveness disjoint axis, ADR-014 Amd 4 §결정 2 cross-ref shell 분류 정합). DesignReviewPL Story §8.6 (IntegrationTest contract pointer) audit 시 pointer 존재 mechanical check only invariant. policy 값 공백 PASS / pointer 부재 P1 FIX. boundary-completeness flag (ADR-068 I-3 unconditional guard placement).
+- `docs/architecture/codeforge-review.md` — Governance ADR anchor 영역 §8.6 audit gate 1-line cross-ref (ADR-078 living architecture doc SSOT 정합).
+
+#### Why
+
+S1 CFP-676 wrapper#1035 `abcd92bf` merged 시점에 wrapper SSOT 만 갱신되어 codeforge-review repo 의 cross-repo sibling 반영 미완 상태. RequirementsPL ground truth verify (`OperationalRiskArchitectAgent` 6 occurrence × 2 file = 7, `DataMigrationArchitectAgent` 5 occurrence × 2 file). design-time existence layer (DesignReviewPL §8.6) + runtime enforcement layer (IntegrationTest §7.4, codeforge-test sibling) 의 2-layer split 정착으로 "정책 효력 (effectiveness) vs 정책 존재 (existence)" disjoint axis 명문화. 이전 root-cause confusion (pointer 부재 P1 vs policy 공백 PASS 구분 불가) 차단.
+
+#### Compatibility
+
+- **Wire**: deputy 명칭 rename = mandate scope 보존 (ADR-033 4 sub-item Container Docker 0 변경 invariant). §8.6 audit gate 1-line = 신규 normative (pointer mandatory). ratchet 강화 방향 (ADR-058 §결정 5 정합).
+- **Marketplace sync**: 본 MINOR bump 의 marketplace.json mirror = ADR-063 atomic invariant 발효 (별 sync PR carrier).
+- **Carrier**: CFP-698 (Epic CFP-1026 Wave 2 Story-4, sibling Story = codeforge-test 1.2.0).
+
 ## [1.6.0] - 2026-05-13
 
 ### CFP-582 — ADR-059 Amendment 2 / debate-protocol-v1 v1.2 sibling sync — review-pl-base.md cross-ref + 3 marker pattern verification (MINOR)

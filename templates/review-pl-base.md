@@ -508,6 +508,10 @@ FIX → Orchestrator → DeveloperPLAgent 1차 원인 진단 → ArchitectPLAgen
 - **다른 lane 판정 관여 금지** — 각 lane 별도 PL이 판정
 - **직접 subagent 스폰 불가** — Orchestrator가 워커 병렬 스폰 대행
 
+### §8.6 Story §8.6 IntegrationTest contract audit gate (ADR-014 Amendment 4 §결정 2 정합)
+
+DesignReviewPL 이 Story §8.6 (IntegrationTest contract pointer) audit 시 — **pointer 존재 mechanical check only**. policy 값 공백 (예: rate limit 임계값 미결정 / disconnect tolerance budget 미명시) 자체는 PASS. **pointer 부재만 P1 FIX** (boundary-completeness flag, ADR-068 I-3 unconditional guard placement 정합). policy 결정 영역 = Phase 1 follow-up PR (FIX 루프 disjoint axis — ADR-014 Amd 4 §결정 2 evidence-driven 3-axis 정합). cross-ref: ADR-014 Amendment 4 (CFP-676 wrapper#1035 `abcd92bf` merged 2026-05-19) §결정 2 cross-ref shell 2 sub (cancel-on-disconnect / rate limit).
+
 ---
 
 ## 9. 활용 플러그인/스킬 (공통)

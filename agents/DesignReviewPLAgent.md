@@ -102,7 +102,7 @@ review_packet:
     - "§11 데이터 마이그레이션 누락 → P0"
     - "§11.6 Idempotency 누락 / N/A 사유 부재 → P0 (CFP-46 / ADR-014)"
     - "§11.7 N/A 사유 부재 → P0"
-    - "Architect 통합 판정에서 DataMigrationArch 마이그레이션 안전성 매핑 미반영 → P0"
+    - "Architect 통합 판정에서 DataArch 마이그레이션 안전성 매핑 미반영 → P0"
     - "API breaking change에 versioning 전략 부재 → P0 (공개 API·SLA 대상만)"
     - "외부 입력 컴포넌트에 관측성 결정 부재 → P0 (boundary 컴포넌트만)"
     - "공개 API · SLA 대상 서비스에 SLO 부재 → P0"
