@@ -51,6 +51,32 @@ sections:
     monopoly: false
     excluded: false
     lint_invariant: INV-DI-1
+    # CFP-1086 Story-5 (W3 S5) — deputy sub-ownership column (P6 carrier)
+    # ADR-042 Amendment 8 + ADR-086 (7+3+1 roster) + ADR-068 Amendment 2 (chief tie-break ladder)
+    # ownership_kind enum: primary (single-axis owner) / co-author (cross-layer joint) / contributor (advisory)
+    # 4-way RACI matrix host = skills/deputy-mandate/SKILL.md (canonical mapping)
+    deputy_sub_ownership:
+      - sub_section: "3 도메인 모델 / aggregate invariant (RDB OLTP)"
+        deputy: AggregateArchitectAgent
+        ownership_kind: primary
+        applicability_field: "aggregate_arch.applicable"
+        cross_ref: "ADR-042 Amendment 8 §Roster (AggregateArch 신설, Sonnet single-mandate)"
+      - sub_section: "3 데이터 / 빅데이터 OLAP (Parquet / DuckDB / streaming)"
+        deputy: DataArchitectAgent
+        ownership_kind: primary
+        cross_ref: "ADR-042 Amendment 8 §Roster (DataArch mandate 축소 — RDB OLTP 영역 제거)"
+      - sub_section: "3 데이터 ↔ RDB OLTP cross-layer (ELT/ETL/CDC)"
+        deputy: [AggregateArchitectAgent, DataArchitectAgent]
+        ownership_kind: co-author
+        cross_ref: "ADR-042 Amendment 8 §3 cross-layer ELT/ETL/CDC"
+      - sub_section: "3 module boundary / dependency direction / layered/hexagonal/clean"
+        deputy: ModuleArchitectAgent
+        ownership_kind: primary
+        cross_ref: "ADR-042 Amendment 8 §Roster (CodeArch rename → ModuleArch, axis 정정)"
+      - sub_section: "3 API contract (REST/GraphQL/gRPC/WebSocket + DTO + OpenAPI/GraphQL schema)"
+        deputy: APIContractArchitectAgent
+        ownership_kind: primary
+        cross_ref: "ADR-042 Amendment 8 §Roster (APIContractArch 신설, Sonnet, body 심화 S2)"
 
   - section: "4"
     heading: "요구사항 분석"
@@ -80,6 +106,21 @@ sections:
     monopoly: false
     excluded: false
     lint_invariant: INV-DI-1
+    # CFP-1086 Story-5 (W3 S5) — deputy sub-ownership column (P6 carrier)
+    # ADR-014 (OperationalRisk SSOT distribution) + ADR-042 Amendment 8 cross-ref
+    deputy_sub_ownership:
+      - sub_section: "7.1~7.3 보안 architecture (threat model / authn-authz / crypto)"
+        deputy: SecurityArchitectAgent
+        ownership_kind: primary
+        cross_ref: "ADR-014 §7 SecurityArch primary mandate"
+      - sub_section: "7.4 운영 리스크 (DR / rate limit / env / clock / container)"
+        deputy: InfraOperationalArchitectAgent
+        ownership_kind: primary
+        cross_ref: "ADR-014 §7.4 OperationalRiskArch rename → InfraOperationalArch (ADR-042 Amd 7)"
+      - sub_section: "7.5~7.6 보안 architecture (data classification / incident response)"
+        deputy: SecurityArchitectAgent
+        ownership_kind: primary
+        cross_ref: "ADR-014 §7 SecurityArch primary mandate"
 
   - section: "8"
     heading: "개발 서사"
@@ -134,6 +175,23 @@ sections:
     notes: |
       ArchitectAgent writes §11 Change Plan context (design lane).
       PMOAgent writes §11 retro/sprint-review (pmo lane).
+    # CFP-1086 Story-5 (W3 S5) — deputy sub-ownership column (P6 carrier)
+    # ADR-042 Amendment 8 (Aggregate/Data split) + ADR-72 (ProductionEvidence CONDITIONAL)
+    deputy_sub_ownership:
+      - sub_section: "11 RDB OLTP migration (schema rollback / aggregate invariant 보존)"
+        deputy: AggregateArchitectAgent
+        ownership_kind: primary
+        applicability_field: "aggregate_arch.applicable"
+        cross_ref: "ADR-042 Amendment 8 §Roster + consumer-guide §1l"
+      - sub_section: "11 빅데이터 OLAP migration (Parquet schema / streaming backfill / 시계열 백필)"
+        deputy: DataArchitectAgent
+        ownership_kind: primary
+        cross_ref: "ADR-042 Amendment 8 §Roster (DataArch OLAP-only)"
+      - sub_section: "11 production cutover evidence (Live touching / production touching Story)"
+        deputy: ProductionEvidenceDeputyAgent
+        ownership_kind: conditional
+        trigger: "Live touching Story OR production cutover Story (ADR-72)"
+        cross_ref: "ADR-72 §결정 1 + ADR-042 Amendment 7 CONDITIONAL spawn"
 
   - section: "12"
     heading: "회고 / Retro"
