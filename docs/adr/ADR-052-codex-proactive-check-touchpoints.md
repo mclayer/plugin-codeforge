@@ -49,6 +49,10 @@ amendments:
     date: 2026-05-20
     carrier_story: CFP-1056
     summary: "ADR-070 Amendment 6 cross-ref — fail-mode 6-set → 7-set 확장 (`subagent_recursion_blocked` 7번째 enum value 추가). CFP-1041 DesignReview lane PL spawn evidence: Agent SDK subagent context 안 Codex worker subagent spawn 시 ADR-039 platform-inherent recursion guard 차단 → `fallback_skip_with_marker` 활성 + fail-mode 7-enum 정합 declare. 추가 normative anchor — DesignReviewPL spawn pattern (Orchestrator parent context 직접 spawn 권장, subagent → subagent 회피 시 Codex worker substitution path 안정성 향상). D1/D2/D3/D4 + Amendment 1-9 본문 의미 변경 0건 — cross-ref sub-section append (Amendment 1-9 패턴 정합) + Amendment 8 6 touchpoint × 3-path enum cross-matrix 의 fail-mode enum 7-set 동기 정합. is_transitional=false, sunset_justification=N/A — permanent strengthening (subagent_recursion_blocked fail-mode codify, scope 축소 0). doc-only fast-path 자체 적격 (ADR-054 §결정 1, 기존 ADR Amendment + ADR-070 Amendment 6 cross-ref + Story file + src/tests 무변경)."
+  - id: 11
+    date: 2026-05-21
+    carrier_story: CFP-1131
+    summary: "Codex touchpoint **wrapper-self trim** (6 → 4 conditional skip — touchpoint 2 + 5 wrapper-self 영역 conditional skip). ratchet 축소 2번째 carrier — CFP-1126 ADR-058 §결정 5 first applied paradigm 연장. Amendment 4 (CFP-532, touchpoint 2 mandatory) 의 partial rollback (wrapper-self 영역만, consumer 영역 mandatory 보존). evidence-grounded justification 3 axis — (a) **empirical**: wrapper-self Codex FP 0 streak 11+ Story (CFP-770/771/776/786/795/801/810/819/825/844/851 +) Codex calibration 정확 evidence. (b) **duplication axis**: touchpoint 5 (ArchitectPLAgent root cause 직후) = touchpoint 3 (DeveloperPLAgent FIX 2+) follow-on 중복 — ArchitectPL verdict packet 자체 fact-check marker 4종 + verify-before-trust scope 5 sub-scope (ADR-070) cover; touchpoint 2 (ArchitectAgent §3 직후) = ADR-082 §결정 2 scope (a-d) write-time verify (CFP-841 Amendment 1) + §결정 1 sub-scope (1-C) USER-UTTERANCE-VERBATIM block (CFP-1110 Amendment 5) + ADR-071 Amendment 6 §결정 17 back-translation gate (CFP-1110) cover. (c) **ratchet 축소 paradigm 연장** — CFP-1126 ADR-042 Amendment 10 first applied 의 2번째 application. retain (4 touchpoint) = #1 AskUserQuestion 직전 / #3 DeveloperPL FIX 2+ / #4 RequirementsPL §1-§6 (multi-round debate, Amendment 1) / #6 ArchitectAgent ADR 초안 (ADR audit critical). drop (2 conditional skip in wrapper-self) = #2 ArchitectAgent §3 / #5 ArchitectPLAgent root cause. scope = wrapper-self only (codeforge plugin family 자체 변경, dogfood 영역). consumer Story (mctrader 등 외부 product) = 별 carrier (evidence base 부재 — Codex FP 0 streak wrapper-self 한정). minimal path Story (CFP-1110/CFP-1126/본 CFP) = lane spawn 0 이미 touchpoint 발생 0, 본 trim 영역 외. 사용자 직권 minimal path 3번째 application (Story file 0 / Lane spawn 0 / FIX iter 0 / Phase 분리 0 / Retro 0 / ADR-013 명시 위배 사용자 승인 2026-05-21 KST). is_transitional=false, sunset_justification=ADR-058 §결정 5 second applied carrier (약화 방향 evidence-grounded — wrapper-self 영역 conditional skip codify, consumer scope 보존, mechanical 약화 차단 logic 통과). doc-only fast-path 자체 적격 (ADR-054 §결정 1, 기존 ADR Amendment + CLAUDE.md cross-ref + src/tests 무변경)."
 related_stories:
   - CFP-354
   - CFP-411
@@ -61,6 +65,7 @@ related_stories:
   - CFP-946-A  # Amendment 8 — substitution path 3-enum cross-ref (parent_epic CFP-946)
   - CFP-1003   # Amendment 9 — proactive/reactive disjoint scope codify (Codex TP#4 CX-963-deferred closure, reactive codex:rescue 영역 ADR-070 Amd 5 + ADR-081 Amd 5 본문 SSOT 위임 cross-ref)
   - CFP-1056   # Amendment 10 — ADR-070 Amendment 6 cross-ref (fail-mode 7-set 확장, subagent_recursion_blocked enum value, CFP-1041 DesignReviewPL subagent context evidence)
+  - CFP-1131   # Amendment 11 — Codex touchpoint wrapper-self trim (6 → 4, touchpoint 2 + 5 conditional skip, ratchet 축소 2번째 carrier, ADR-058 §결정 5 second applied, 사용자 직권 minimal path 3번째)
 related_adrs:
   - ADR-039
   - ADR-034
@@ -946,4 +951,103 @@ Wave 2 (별 CFP carrier 분리, ADR-064 §결정 1 unitary):
 - (Amendment-AH) **Wave 1 + Wave 2 단일 CFP 통합** (mechanical lint 동시 도입) — ADR-064 §결정 1 (CFP scope unitary, "경량 → full" 단계 채택 금지) 위배. Wave 1 declarative + Wave 2 mechanical 별 CFP 분리 = ADR-064 §결정 1 정합 + CFP-963 Phase 2 mechanical lint 패턴 답습 (CFP-963 = Phase 1 declare + Phase 2 mechanical).
 - (Amendment-AI) **reactive 채널 deprecate** (codex:rescue 자체 폐기 + proactive 채널 단독 SSOT) — ADR-022 Deprecated 와 별개 (codex:rescue subagent 자체 존재 = codex@openai-codex plugin runtime 영역, codeforge 측 deprecate 권한 외). ADR-070 D1 L110 `사용자 책임 영역 (적용 외)` 정합 retain — reactive 영역 normative anchor 강화 (Wave 1 + Wave 2 ratchet) + 사용자 책임 영역 invariant 보존 채택.
 - (Amendment-AJ) **codex-network-scope-presence lint scope 확장 (proactive + reactive 양면) inline 본 Amendment 9** — Wave 2 mechanical 영역, ADR-064 §결정 1 (CFP scope unitary) 정합 별 CFP carrier 분리. 본 Amendment 9 Wave 1 declarative-only 영역 = registry entry description text 본문 patch (scope clarification only, detect_command / workflow / current_tier 변경 0건).
+
+---
+
+## Amendment 11 (2026-05-21 KST, CFP-1131)
+
+**Codex touchpoint wrapper-self trim — touchpoint 2 + 5 conditional skip (Amendment 4 partial rollback in wrapper-self scope, ratchet 축소 2번째 carrier).**
+
+### 컨텍스트
+
+CFP-1110 paired Amendment (ADR-082 Amendment 5 + ADR-071 Amendment 6) merge + CFP-1126 ADR-042 Amendment 10 (AggregateArch + ModuleArch 통합, ADR-058 §결정 5 first applied carrier) merge 후 본 Amendment 11 carrier = **사용자 직권 minimal path 3번째 application** + **ratchet 축소 2번째 carrier**. Researcher (general-purpose) + Codex (codex:rescue, GPT-5) 병렬 critical evaluation 수렴 결과 direct follow-through (Researcher net 35% 정당화 + Codex ROI indeterminate-부정쪽 confidence medium).
+
+### 결정 (Amendment 11)
+
+#### A11-1 — wrapper-self 정식 process Story 영역 touchpoint 2 + 5 conditional skip
+
+| Touchpoint | wrapper-self 정식 process Story 영역 | consumer Story 영역 | minimal path Story |
+|---|---|---|---|
+| **#1 AskUserQuestion 직전** | retain (Amendment 2 iterative reformulation max 3 rounds) | retain | retain (inline whitelist 1번 entry) |
+| **#2 ArchitectAgent §3 직후 mandatory (Amendment 4)** | **conditional skip** — ADR-082 §결정 2 scope (a-d) write-time verify (CFP-841 Amendment 1) + §결정 1 sub-scope (1-C) USER-UTTERANCE-VERBATIM block (CFP-1110 Amendment 5) + ADR-071 Amendment 6 §결정 17 back-translation gate (CFP-1110) cover | retain mandatory (Amendment 4 본문) | N/A (lane spawn 0) |
+| **#3 DeveloperPLAgent FIX 2+ 감지 시** | retain (FIX root cause critical) | retain | N/A (lane spawn 0) |
+| **#4 RequirementsPLAgent §1-§6 완료 직후 (multi-round debate, Amendment 1)** | retain (multi-round adversarial debate 영역) | retain | N/A (lane spawn 0) |
+| **#5 ArchitectPLAgent root cause 판정 직후** | **conditional skip** — touchpoint 3 의 follow-on 중복, ArchitectPL verdict packet 자체 fact-check marker 4종 + verify-before-trust scope 5 sub-scope (ADR-070) cover | retain | N/A (lane spawn 0) |
+| **#6 ArchitectAgent ADR 초안 완료 직후** | retain (ADR audit critical, Amendment 5 verify-before-trust source) | retain | N/A (Opus inline 작성, lane PL spawn 0) |
+
+**Effective**: wrapper-self 정식 process Story 영역 = 6 → 4 touchpoint (33% reduction). consumer 영역 + minimal path 영역 무변경.
+
+#### A11-2 — evidence-grounded justification 3 axis
+
+**(a) empirical evidence** — wrapper-self Codex FP 0 streak 11+ Story sentinel:
+
+CFP-770 / CFP-771 / CFP-776 / CFP-786 / CFP-795 / CFP-801 / CFP-810 / CFP-819 / CFP-825 / CFP-844 / CFP-851 + 이후 (CFP-906/932/954/991/1014/1041/1086/etc.) — Codex calibration 정확 evidence. Amendment 7 (codex_severity_inflation calibration) + Amendment 8 (substitution scope 3-path enum) 가 calibration 영역 reinforce 후 FP 0 streak 유지.
+
+**(b) duplication axis** — touchpoint 2 / 5 의 verify coverage 중복:
+
+- touchpoint 2 (ArchitectAgent §3 mandatory) verify scope = corpus enumeration / ADR frontmatter value / cross-plugin ownership / §9 evidence 영역 → ADR-082 §결정 2 scope (a-d) write-time verify mandate (CFP-841 Amendment 1 deferred-followup → CFP-1110 Amendment 5 sub-scope (1-C) verbatim anchor) 이미 internal lane agent self-write 영역 cover. ADR-071 Amendment 6 §결정 17 back-translation gate 도 lane return divergence detection 영역 추가 cover.
+- touchpoint 5 (ArchitectPLAgent root cause 판정 직후) verify scope = DeveloperPL 1차 진단 + ArchitectPL final 판정 cross-validate → touchpoint 3 (DeveloperPLAgent FIX 2+) 가 1차 verify, ArchitectPL verdict packet 자체 fact-check marker 4종 (`[verified]` / `[hypothesis]` / `[fact-check-pending]` / `[user-input]`) + verify-before-trust scope 5 sub-scope (ADR-070 Amendment 3) cover. touchpoint 5 추가 verify = 중복.
+
+**(c) ratchet 축소 paradigm 연장** — CFP-1126 ADR-042 Amendment 10 first applied 의 2번째 application:
+
+CFP-1126 = ADR-058 §결정 5 sunset_justification first applied carrier (boundary axis 영역 ratchet 축소). 본 Amendment 11 = 2번째 application — Codex spawn count axis 의 ratchet 축소. paradigm 정합:
+- Amendment N (확대) — Amendment 4 (CFP-532) touchpoint 2 mandatory 전환
+- 평가 evidence 누적 — Researcher net 35% / Codex ROI indeterminate / wrapper-self FP 0 streak 11+
+- Amendment N+M (부분 rollback) — 본 Amendment 11 = wrapper-self 영역 partial rollback (consumer 영역 invariant carrier 보존)
+
+#### A11-3 — ADR-064 §self-application top-down ratchet evidence-gated exception 2번째 carrier
+
+CFP-1126 Amendment 10 = 약화 방향 evidence-gated exception 첫 carrier. 본 Amendment 11 = 2번째 carrier. mechanism = forbid-scope 축소 아닌 scope conditional split (wrapper-self / consumer / minimal path 3 영역 분리, consumer 영역 invariant carrier mandatory 보존). ADR-064 §self-application 의 약화 방향 mechanical 차단 logic 통과 — 약화 영역 = wrapper-self only, consumer scope 보존 (Codex FP 0 streak evidence wrapper-self 한정).
+
+#### A11-4 — scope_boundary (wrapper-self only)
+
+**포함**:
+- wrapper-self 정식 process Story (codeforge plugin family 자체 변경 dogfood) — touchpoint 2 + 5 conditional skip 적용
+- ADR-052 본문 + CLAUDE.md cross-ref (declarative anchor)
+
+**out-of-scope** (별 carrier 또는 reject):
+- **consumer Story** (mctrader 등 외부 product) — Codex FP 0 streak evidence wrapper-self 한정, consumer 영역 별 carrier (evidence base 부재). 본 Amendment 11 의 wrapper-self trim 적용 시점 후 consumer 영역 동등 evidence 누적 가능 (Wave 3 별 CFP carrier).
+- **minimal path Story** (CFP-1110 / CFP-1126 / 본 CFP-1131) — lane spawn 0 이미 touchpoint 발생 0, 본 trim 영역 외.
+- **Wave 2 mechanical lint** (`scripts/check-codex-touchpoint-wrapper-self-skip.sh`) = 별 CFP carrier (deferred-followup, brainstorm 단계 결정). lint scope = wrapper-self Story 안 touchpoint 2 / 5 spawn 발화 발견 시 warning advisory.
+- **touchpoint 1 / 3 / 4 / 6 영역 변경** = 별 carrier (본 Amendment 11 scope 외, retain 영역).
+
+### Compatibility
+
+- D1/D2/D3/D4 + Amendment 1-10 본문 의미 변경 0건 — sub-section append 패턴 (Amendment 1-10 정합).
+- Amendment 4 (touchpoint 2 mandatory) 본문 = consumer 영역 retain (Amendment 11 wrapper-self only scope split). consumer 영역 mandatory invariant 보존.
+- ADR-082 §결정 2 + §결정 1 sub-scope (1-C) cover (CFP-841 + CFP-1110) — touchpoint 2 의 verify coverage 영역 disjoint complement.
+- ADR-070 Amendment 3 verify-before-trust scope 5 sub-scope — touchpoint 5 의 verify coverage 영역 disjoint complement.
+- ADR-071 Amendment 6 §결정 17 (CFP-1110) — touchpoint 2 의 lane return divergence detection 영역 disjoint complement.
+- ADR-064 §self-application top-down ratchet — evidence-gated exception 2번째 carrier (Amendment 10 CFP-1126 first applied 정합).
+- ADR-058 §결정 5 약화 방향 sunset_justification — 본 Amendment 11 만족 (3 axis evidence-grounded justification).
+- `is_transitional: false` 유지 (영구 정책, scope conditional split codify).
+
+### Related (Amendment 11 동반)
+
+- ADR-082 §결정 2 + §결정 1 sub-scope (1-C) (CFP-841 + CFP-1110) — touchpoint 2 verify coverage disjoint complement source
+- ADR-070 Amendment 3 (verify-before-trust scope 5 sub-scope) — touchpoint 5 verify coverage disjoint complement source
+- ADR-071 Amendment 6 §결정 17 (CFP-1110) — touchpoint 2 lane return divergence detection disjoint complement source
+- ADR-042 Amendment 10 (CFP-1126) — ratchet 축소 first applied paradigm 정합 source
+- ADR-058 §결정 5 — 약화 방향 sunset_justification 의무 mandate (second applied carrier)
+- ADR-064 §self-application top-down ratchet — evidence-gated exception 2번째 carrier
+- CFP-1110 — paired Amendment paradox-break first application (lineage source)
+- CFP-1126 — ratchet 축소 first applied carrier (paradigm source)
+- CLAUDE.md — Codex Proactive Check 단락 6 → 4 wrapper-self trim cross-ref 1줄 추가
+
+### 결과 (Amendment 11)
+
+- Codex touchpoint wrapper-self trim codify (6 → 4 conditional skip, touchpoint 2 + 5 wrapper-self 영역 conditional skip)
+- ADR-058 §결정 5 second applied carrier (약화 방향 evidence-grounded justification 3 axis)
+- ADR-064 §self-application top-down ratchet evidence-gated exception 2번째 carrier
+- scope conditional split (wrapper-self / consumer / minimal path 3 영역 disjoint codify)
+- consumer scope invariant 보존 (Codex FP 0 streak evidence wrapper-self 한정)
+- D1/D2/D3/D4 + Amendment 1-10 본문 의미 변경 0건 (sub-section append 패턴)
+- 사용자 직권 minimal path 3번째 application (Story file 0 / Lane spawn 0 / FIX iter 0 / Phase 분리 0 / Retro 0 / ADR-013 명시 위배 사용자 승인)
+
+### 거절된 대안 (Amendment 11)
+
+- (Amendment-AK) **6 touchpoint 전체 wrapper-self conditional skip** — over-aggressive. touchpoint 1 / 3 / 4 / 6 verify coverage 중복 axis 부재 (touchpoint 1 = 사용자 dialog quality 독립 / touchpoint 3 = FIX root cause critical / touchpoint 4 = multi-round adversarial debate (Amendment 1) / touchpoint 6 = ADR audit critical). 4 retain + 2 drop 채택.
+- (Amendment-AL) **touchpoint 2 / 5 wrapper-self + consumer 양면 conditional skip** — consumer 영역 evidence base 부재 (Codex FP 0 streak wrapper-self 한정). consumer 영역 invariant carrier (touchpoint 2 mandatory) 보존 + Wave 3 별 carrier (consumer evidence 누적 후) 채택.
+- (Amendment-AM) **Amendment 4 (touchpoint 2 mandatory) 전체 rollback** — Amendment 4 6 sample success rate 100% sentinel (CFP-426/427/428/429 + 2 carry-over) evidence wrapper-self / consumer 양면 적용. consumer 영역 evidence 보존 = Amendment 4 본문 retain + wrapper-self 영역 scope split 만 채택. partial rollback (wrapper-self only) 적용.
+- (Amendment-AN) **Wave 1 + Wave 2 mechanical lint 단일 carrier 통합** — ADR-064 §결정 1 (CFP scope unitary) 위배. Wave 1 declarative + Wave 2 mechanical 별 CFP 분리 채택 (CFP-963 / CFP-1126 패턴 정합).
 
