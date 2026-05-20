@@ -4,7 +4,9 @@ title: 선언적 reconciliation upgrade flow SSOT
 status: Active
 category: governance
 date: 2026-05-15
-is_transitional: false
+is_transitional: true
+sunset_carrier_cfp: CFP-1111-Wave-4-Story-11
+sunset_justification_metric_source: walker integration test (`tests/walker/test-desired-state-coverage.bats`)
 carrier_story: CFP-701
 parent_epic: CFP-699
 supersedes: []
@@ -36,6 +38,12 @@ amendment_log:
       `is_transitional: false` 무변경. sunset_justification N/A (permanent governance invariant).
       신규 ADR 미신설 — S3 = ADR-026 Amendment 5 + ADR-076 Amendment 3 ratchet 강화로 충분 (S1 ADR-076 Amendment 2 / S2 ADR-083 신규 와 비대칭, Architect lane minimal-change 결정 — ADR-RESERVATION max row 83 CFP-899 점유, row 84 reserve 불요).
       mctrader-data#81 14 failing checks class 재발 차단 (post-mirror verify) + Epic CFP-858 §1 motivation verbatim ('upgrade-event 로그 result: SUCCESS ... 가 결함을 가린다'). Epic CFP-858 마지막 Story — S1 (CFP-898 vertical) + S2 (CFP-899 horizontal) 위 honest result reporting layer (mirror-후 temporal-post, 3-layer composite 완결).
+  - amendment_id: 4
+    amendment_date: 2026-05-21
+    amendment_cfp: CFP-1125 (CFP-1111-W1-S1)
+    amendment_summary: sunset_justification 3-tuple declarative + is_transitional false → true. carrier = CFP-1111 Wave 4 Story-11. β2 audit (#1113) Anchor 1 LOSSLESS 판정.
+    sunset_justification: null
+    is_transitional: true
 related_stories:
   - CFP-701  # 본 Story carrier — Wave 1 Story-1 (A1+B1 scope)
   - CFP-702  # Wave 1 Story-2 (D4 customization marker — sequential prerequisite for Wave 2)
@@ -443,9 +451,19 @@ ADR-067 §결정 4 sequential ordering 정합 (Story 간 cross-pollinate 차단)
 
 ## 해소 기준
 
-**N/A — permanent governance invariant** (`is_transitional: false`).
+### sunset_justification (CFP-1111 carrier)
 
-본 ADR 은 codeforge family upgrade 도메인의 1st-class 정의 anchor — codeforge plugin family 가 deprecate 되지 않는 한 영구 유효. Amendment 는 강화 방향만 허용 (ADR-058 §결정 5 + ADR-064 top-down self-application 정합):
+본 ADR 의 효용은 [CFP-1111 (Imperative changelog walk paradigm 도입)](https://github.com/mclayer/plugin-codeforge/issues/1111) 으로 paradigm replace 진행. 다음 3-tuple 충족 시 `is_transitional: true → false (Sunsetted)` 전환 (Wave 4 Story-11 carrier).
+
+- **metric**: imperative-walker-protocol-v1 walker run 후 11-영역 desired state coverage 가 누적 1 month 의 walk 실행 후 100% 도달 + walker entry 의 `entry_type` enum 이 11-영역 1:1 대응 확인 + 3-mode (dry-run / snapshot / transaction) semantic equivalence verify
+- **who**: imperative-walker-protocol-v1 (`docs/inter-plugin-contracts/imperative-walker-protocol-v1.md`, Wave 1 Story-3 codify) + UpgradeAgent runtime (ownership = Wave 1 Story-2 ADR-α7 결정)
+- **how**: walker integration test (`tests/walker/test-desired-state-coverage.bats`) 가 11-영역 walk entry 발생 + dry-run mode + transaction mode + snapshot mode 의 3-mode semantic equivalence 검증 + ADR-076 §결정 4 disjoint invariant (ADR-067 RESET vs walker step pause 보존) cross-ref
+
+**cross-ref**: [β2 audit (CFP-1113)](https://github.com/mclayer/plugin-codeforge/issues/1113) — Anchor 1 LOSSLESS 판정. carrier mechanism = walker entry `applicable_to` + `entry_type` + `customization_marker_preserve` 3 field 조합 + 3-mode = dry-run flag + step status + 4-field 완료 보고.
+
+### 강화 방향 (sunset 전까지 Amendment 정합)
+
+본 ADR 은 sunset 전까지 codeforge family upgrade 도메인의 1st-class 정의 anchor 로 유효. Amendment 는 강화 방향만 허용 (ADR-058 §결정 5 + ADR-064 top-down self-application 정합):
 
 - 새 영역 enumeration 추가 (결정 2 표 row append) — **Amendment 2 / CFP-898 = `scripts/` workflow_dependency_closure row append (11번째 row, 10 → 11 영역 ratchet 강화)**
 - 새 reconcile_strategy enum 값 추가 (결정 3 placeholder 활성)

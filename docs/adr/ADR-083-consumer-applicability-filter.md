@@ -9,7 +9,12 @@ parent_epic: CFP-858
 supersedes: null
 amends: null
 amendments: []
-amendment_log: []
+amendment_log:
+  - amendment_id: 1
+    date: 2026-05-21
+    cfp: CFP-1125
+    summary: "is_transitional false → true toggle + sunset_justification declarative (CFP-1111 Wave-4 Story-11 walker paradigm carry). 4-way repo-kind detection truth-table + positive whitelist + fail-closed unknown + mixed repo self-app exemption 의 효용은 walker integration test (consumer/plugin/mixed mock 3 사례 cover) + walker per-step applicable_to filter 로 carry. cross-ref CFP-1113 β2 audit Anchor 2 LOSSLESS 판정. ratchet 강화 (declaration-only Wave-1 → walker Wave-4 carry), 약화 0건."
+sunset_carrier_cfp: CFP-1111-Wave-4-Story-11
 related_stories:
   - CFP-899  # carrier (Wave 4 sub-Epic CFP-858 S2 base layer — S3 CFP-900 prerequisite)
   - CFP-898  # sibling S1 (dependency bundle integrity binding — closure resolver hook pattern 답습)
@@ -37,18 +42,30 @@ related_files:
   - templates/scripts/detect-repo-kind.py  # Phase 2 carrier (ADR-061 외부 .py file 의무 — repo-kind detection truth-table 실 구현)
   - templates/scripts/mirror-dependency-closure.py  # CFP-898 §4.11 closure resolver — 본 ADR §결정 5 filter hook 과 sequential composition (filter 먼저 → closure 다음)
   - scripts/reconcile-overlay.sh  # MARKER_NONE branch line 437 직전 filter hook insertion (CFP-898 closure resolver hook pattern 답습, layer 1 추가 algorithm 재구현 0)
-is_transitional: false   # ADR-058 §결정 5 — permanent architecture invariant. consumer-applicability filter = codeforge family upgrade flow 의 영구 구조 결정 (Epic CFP-858 결함 2 = wholesale_mirror branch 무차별 유입 의 super-class 차단). 약화 방향 (whitelist 축소 / fail-closed unknown → fail-open) = ADR-058 §결정 5 sunset_justification 차단 (top-down ratchet 강화 only — ADR-064 §self-application 정합).
+is_transitional: true   # CFP-1125 Amendment 1 — false → true toggle. CFP-1111 Wave-4 Story-11 walker paradigm 으로 4-way detection + positive whitelist + fail-closed unknown + mixed self-app exemption 효용 carry. 약화 방향 (filter 약화 / fail-open default / whitelist 축소) 발의 차단 invariant 보존 (ADR-058 §결정 5 sunset_justification ratchet 강화 only — ADR-064 §self-application 정합).
 mechanical_enforcement_actions:
   - action: consumer-applicability-filter-detection
     decision_binding: "§결정 5 — reconcile-overlay.sh MARKER_NONE branch filter hook (consumer signal detect → whitelist filter → fail-closed unknown). evidence-checks-registry warning tier entry (Phase 2 carrier — `templates/scripts/detect-repo-kind.py` 실 구현 + tests/test_detect_repo_kind.py 18 TC + tests/integration/test_reconcile_overlay_consumer_filter.bats integration after Phase 2 PR)"
     status: declaration-only-Wave-1   # ADR-082 §결정 6 declaration-only retain pattern 답습 (ADR-RESERVATION row 81 CFP-819 / row 82 CFP-776 동일 패턴)
     progress_note: "ADR-083 Phase 1 신설 시점 — 신규 lint script 신설 0건 (Phase 2 PR 영역). evidence-checks-registry yaml row append + lint script 실 wire = Phase 2 Develop lane carrier. Wave 1 = behavioral mandate (ArchitectAgent / DesignReviewPL self-check + reconcile-overlay.sh hook 의무) + Phase 2 = mechanical enforcement (test suite + workflow yml + drift detection). status 승격 trigger = Phase 2 PR merge + Wave 4 sub-Epic CFP-858 S3 (CFP-900) closure (upgrade-event result enum 의 SUCCESS_FILTERED branch report)."
-sunset_justification: "N/A — permanent governance policy 의 architecture invariant. ADR-064 §self-application top-down ratchet 정합 — consumer-applicability filter 영구화는 wholesale_mirror branch 의 silent harm (mctrader-data#81 14 failing checks evidence) 차단 의 super-class. 약화 방향 (filter 약화 / fail-open default / whitelist 축소) 발의 차단."
+sunset_justification: "CFP-1111 Wave-4 Story-11 walker paradigm carry. metric = walker 실행 결과 consumer repo 에서 wrapper-only step 실행 0건 / N walk 실행 (N ≥ 100) + walker integration test 안 mock consumer + mock plugin + mock mixed 3 사례 cover + fail-closed unknown 0건 silent default. who = walker 의 repo-kind detection hook (detect-repo-kind.py 재사용) + walker per-step applicable_to: {consumer/wrapper/both} filter logic. how = walker integration test (tests/walker/test-applicable-to-filter.bats) 가 4-way enum 정확 분류 + positive whitelist semantic equivalent + fail-closed unknown 행위 검증. cross-ref CFP-1113 β2 audit Anchor 2 LOSSLESS 판정. 약화 방향 (filter 약화 / fail-open default / whitelist 축소) 발의 차단 invariant 보존 (top-down ratchet 강화 only)."
 ---
 
 ## 상태
 
 Accepted (2026-05-18 KST) — CFP-899 Phase 1 carrier. Wave 4 sub-Epic CFP-858 S2 base layer. consumer-applicability filter = horizontal filter layer (CFP-898 §4.11 vertical closure resolver 위에 sequential composition). Phase 2 (CFP-899) 에서 실 구현 (detect-repo-kind.py + consumer_applicable_workflows.txt + reconcile-overlay.sh hook + test suite + evidence-checks-registry warning tier) 완료 예정.
+
+## 해소 기준
+
+(sunset_justification, CFP-1111 carrier)
+
+본 ADR 의 효용 (4-way repo-kind detection truth-table + positive whitelist + fail-closed unknown + mixed repo self-app exemption) 은 [CFP-1111](https://github.com/mclayer/plugin-codeforge/issues/1111) walker paradigm 으로 carry 진행.
+
+- **metric**: walker 실행 결과 consumer repo 에서 wrapper-only step 실행 0건 / N walk 실행 (N ≥ 100) + walker integration test 안 mock consumer + mock plugin + mock mixed 3 사례 cover + fail-closed unknown 0건 silent default
+- **who**: walker 의 repo-kind detection hook (`detect-repo-kind.py` 재사용) + walker per-step `applicable_to: {consumer/wrapper/both}` filter logic
+- **how**: walker integration test (`tests/walker/test-applicable-to-filter.bats`) 가 4-way enum 정확 분류 + positive whitelist semantic equivalent + fail-closed unknown 행위 검증. cross-ref ADR-027 Amd 6 (consumer-side signal SSOT, disjoint scope 유지).
+
+**cross-ref**: [β2 audit (CFP-1113)](https://github.com/mclayer/plugin-codeforge/issues/1113) Anchor 2 LOSSLESS 판정. carrier = detect-repo-kind.py 재사용 + walker `applicable_to` per-entry.
 
 ## 컨텍스트 — wholesale_mirror 무차별 유입 의 silent harm
 

@@ -30,6 +30,14 @@ amendments:
   - ADR-027-Amendment-5-CFP-821  # CFP-699 Wave 3 Story-7 — consumer adoption 시 Issue Forms enumeration 정정 (3종 → audit+bug+story+discussion+codeforge-improvement 5 forms + config.yml) + D4 marker form-level wrap cross-ref (D1 coverage fan-out, ADR-076 §결정 2 표 PR template row 동반). §결정 9 신설
   - ADR-027-Amendment-6-CFP-899  # CFP-858 Wave 4 sub-Epic S2 — consumer adoption detection signals 4-way truth-table SSOT (.claude-plugin/plugin.json + .claude/_overlay/project.yaml 2-signal cross-product → consumer/plugin/mixed/unknown 4-way enum, ADR-083 §결정 1 sibling carrier). §결정 10 신설
   - ADR-027-Amendment-7-CFP-1059  # CFP-1059 Story-1 — consumer adoption 시 project.yaml `deploy.*` schema 확장 (5 sub-field: host_mapping / docker_hub / traefik / 1password / ssh_targets) — codeforge-deploy lane 신설 정합. §결정 11 신설
+  - ADR-027-Amendment-8-CFP-1125  # CFP-1125 (CFP-1111 Wave-4 Story-11) — Amendment 6 sunset_boundary declarative (β2 audit #1113 Anchor 4 LOSSLESS 판정 carry). Amendment 6 §결정 10 4-way detection signals + D4 customization marker preserve invariant 의 효용을 CFP-1111 walker paradigm 으로 carry — walker repo-kind detection hook (detect-repo-kind.py 재사용) 동일 truth-table + walker per-step customization_marker_preserve flag 0 silent overwrite. is_transitional 본체 false 무변경 (영역 분리 — Amendment 6 영역만 sunset boundary 명시, 본체 다른 amendment 영향 0). ratchet 강화 only (declaration-only Wave-1 → walker Wave-4 carry), 약화 0건
+amendment_log:
+  - amendment_id: 8
+    date: 2026-05-21
+    cfp: CFP-1125
+    summary: "Amendment 6 sunset boundary declarative (CFP-1111 Wave-4 Story-11 walker paradigm carry). Amendment 6 §결정 10 4-way detection signals (`.claude-plugin/plugin.json` + `.claude/_overlay/project.yaml` 2-signal cross-product → consumer/plugin/mixed/unknown) + D4 customization marker preserve invariant (Amendment 3 §결정 7) 의 효용을 walker per-step customization_marker_preserve flag + walker repo-kind detection hook (detect-repo-kind.py 재사용) 으로 carry. β2 audit (#1113) Anchor 4 LOSSLESS 판정. is_transitional 본체 false 무변경 (영역 분리 — Amendment 6 영역만 sunset boundary 명시, 다른 amendment 영역 영향 0). sister CFP-1115 (β5 ADR-027 Amendment 7) 가 D4 marker block imperative walk 정합 별 carrier. ratchet 강화 only (Wave-1 detection signals SSOT → Wave-4 walker integration test 안 4-way enum 정확 분류 + D4 marker pair preserve verify), 약화 0건 — ADR-058 §결정 5 ratchet 강화 only 정합."
+    is_transitional: false
+    sunset_justification: "Amendment 6 영역 한정 sunset boundary — 본체 `is_transitional: false` permanent governance invariant 무변경 (영역 분리 명시). Amendment 6 효용 (4-way detection signals + D4 marker preserve invariant) 은 CFP-1111 Wave-4 Story-11 walker paradigm 으로 carry. metric = walker integration test (4-way enum 정확 분류 + D4 marker pair preserve verify, N walk 실행 0 silent overwrite). who = walker repo-kind detection hook (detect-repo-kind.py 재사용) + walker per-step customization_marker_preserve flag. how = walker integration test 안 mock consumer + mock plugin + mock mixed 3 사례 cover + D4 marker pair preserve verify. cross-ref CFP-1113 β2 audit Anchor 4 LOSSLESS 판정 + sister CFP-1115 (β5 Amendment 7 별 carrier — D4 marker block imperative walk 정합)."
 mechanical_enforcement_actions:
   - action_name: section-1-verbatim-postmerge
     decision_binding: "Amendment 2 §결정 6.A — manual fallback path 의 §1 verbatim invariant post-merge lint (warning tier)"
@@ -650,6 +658,18 @@ Cross-ref:
 - [ADR-064](ADR-064-decision-principle-mandate.md) §self-application — Amendment 6 = consumer adoption signal scope 확장 강화 방향 only (신규 ADR-083 = filter mechanism 신설, weakening 0)
 - [ADR-082](ADR-082-write-time-self-write-verification-mandate.md) §결정 6 — `mechanical_enforcement_actions: []` declaration-only Wave 1 retain pattern (본 Amendment 6 의 `consumer-applicability-filter-detection` entry status: declaration-only-Wave-1)
 - `docs/consumer-guide.md` §N consumer adoption signal detection runbook — consumer-side documentation (Phase 2 carrier)
+
+### Amendment 6 sunset boundary (CFP-1125 carrier)
+
+본 Amendment 6 (§결정 10 consumer-applicability filter 와 ADR-083 wrapper-side filter mechanism disjoint scope 선언) 의 효용은 CFP-1111 walker paradigm 으로 carry.
+
+- **metric**: walker 의 repo-kind detection (`detect-repo-kind.py` 재사용) 이 Amendment 6 detection signals (`.claude-plugin/plugin.json` + `.claude/_overlay/project.yaml` 2-signal cross-product) 동일 truth-table 재사용 + D4 customization marker block (Amendment 3) preserve invariant 0 silent overwrite / N walk 실행
+- **who**: walker repo-kind detection hook + walker per-step `customization_marker_preserve: true` flag
+- **how**: walker integration test 안 4-way enum 정확 분류 + D4 marker pair preserve verify
+
+**cross-ref**: [β2 audit (#1113)](https://github.com/mclayer/plugin-codeforge/issues/1113) Anchor 4 LOSSLESS 판정. D4 marker preserve = CFP-1111 §3 결정 3 C 명시 + Sister CFP-1115 (β5 ADR-027 Amendment 7) 가 D4 marker block imperative walk 정합 별 carrier.
+
+**영역 분리 명시**: 본 sunset boundary 는 Amendment 6 영역 한정 — ADR-027 본체 frontmatter `is_transitional: false` (permanent policy) 무변경 + 다른 amendment (2/3/4/5/7) 영역 영향 0. ratchet 강화 only (Wave-1 detection signals SSOT → Wave-4 walker integration test 안 4-way enum 정확 분류 + D4 marker pair preserve verify), 약화 0건 — ADR-058 §결정 5 ratchet 강화 only 정합.
 
 ## Amendment 7 — consumer adoption 시 project.yaml `deploy.*` schema 확장 (CFP-1059)
 
