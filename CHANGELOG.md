@@ -7,6 +7,61 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.99.0] - 2026-05-20
+
+### Changed (CFP-1086 Story-5 — W3 S5 Cross-Story 통합 검증 + P6/P5/P2 carrier)
+
+본 release = CFP-1086 BackendArchEpic Phase 2 Story-5 carrier (W3 sequential — S3 + S4 merged baseline 위 마무리). Cross-Story 통합 검증 (S1~S4 atomic alignment) + P6/P5/P2 carrier 정합. doc-only fast-path (ADR-054 Category 2 — src/tests 변경 0).
+
+#### Changed
+
+- **`docs/domain-knowledge/domain/governance-principle/lane-self-write-ownership-matrix.yaml`** — §3/§7/§11 sections 에 `deputy_sub_ownership:` 신규 column 추가 (P6 carrier). 7+3+1 roster mapping codify:
+  - **§3 ADR 결정 매트릭스** (5 sub-section): AggregateArch primary (RDB OLTP, `aggregate_arch.applicable` field-gated) / DataArch primary (빅데이터 OLAP) / AggregateArch + DataArch co-author (cross-layer ELT/ETL/CDC) / ModuleArch primary (module boundary, dependency direction, layered/hexagonal/clean) / APIContractArch primary (REST/GraphQL/gRPC/WebSocket + DTO + OpenAPI/GraphQL + contract testing)
+  - **§7 설계 서사** (3 sub-section): SecurityArch primary §7.1~§7.3 (threat model / authn-authz / crypto) + §7.5~§7.6 (data classification / incident response) / InfraOperationalArch primary §7.4 (DR / rate limit / env / clock / container)
+  - **§11 PMO / 데이터 마이그레이션** (3 sub-section): AggregateArch primary (RDB OLTP migration, applicability field-gated) / DataArch primary (빅데이터 OLAP migration — Parquet schema / streaming backfill / 시계열 백필) / ProductionEvidence conditional (Live touching OR production cutover Story trigger — ADR-72)
+  - `ownership_kind` enum: `primary` (single-axis owner) / `co-author` (cross-layer joint) / `conditional` (CONDITIONAL trigger)
+  - 4-way RACI matrix host cross-ref = `skills/deputy-mandate/SKILL.md` (canonical, Story-3 carrier)
+  - 기존 `sections[]` schema 유지 — 신규 optional field 추가만 (backward-compat invariant)
+
+- **`docs/domain-knowledge/domain/agent-teams/agent-teams-platform-capability.md`** — "6 SubAgent" 3 발화 사이트 정정 (P5 carrier — pre-S1 W2 S3 stale count → post-S1 7+3+1 roster):
+  - line 48 (5 권장 패턴 매핑 prose) — "TEAM-DESIGN 6 SubAgent" → "TEAM-DESIGN 7+3+1 deputy roster — 7 permanent + 3 CONDITIONAL + 4-tuple sub-tuple, 8 SubAgent core + chief; CFP-1086 Amendment 8"
+  - line 113 (5 권장 패턴 매핑 표 Parallelization row) — "TEAM-DESIGN 6 SubAgent / 2 review worker" → "TEAM-DESIGN 7+3+1 deputy roster (7 permanent + 3 CONDITIONAL + 4-tuple sub-tuple — CFP-1086 Amendment 8) / 2 review worker"
+  - line 170 (변경 이력 표 CFP-582 row) — "6 SubAgent" 영역은 historical row 보존 (immutable history), 신규 row 2026-05-20 CFP-1086 W3 S5 append: "5 권장 패턴 매핑 + Parallelization row '6 SubAgent' → '7+3+1 deputy roster' 정정"
+  - frontmatter `related_stories[]` append `CFP-1086` (carrier 정합), `updated: 2026-05-13` → `2026-05-20`
+
+- **`docs/consumer-guide.md` §1l AggregateArchitect deputy applicability + migration tool** — verify-PASS (no body change needed). S1 carrier (commit `e51f51a`) 가 다음 모두 완비:
+  - `aggregate_arch.applicable` CONDITIONAL spawn field (default `true`, bool)
+  - `aggregate_arch.migration_tool` 9-enum (alembic default / prisma-migrate / typeorm / goose / golang-migrate / flyway / liquibase / sqlx-migrate / custom)
+  - 7 permanent deputy 명단 (SecurityArch / InfraOperationalArch / TestContractArch / DataArch / ModuleArch / **AggregateArch** / APIContractArch)
+  - `applicable: false` 사용 가이드 (frontend-only / API-only / external-managed RDB)
+  - 미정의 시 default 동작 + Alembic 7 원칙 (tool-agnostic policy layer) + Write boundary (consumer-authored only)
+  - ADR-042 Amendment 8 + ADR-086 cross-ref
+
+#### Cross-Story 통합 검증 결과
+
+| Story | Carrier | Status |
+|---|---|---|
+| S1 | CFP-1086 Story-1 (ADR-042 Amd 8 + ADR-068 Amd 2 + ADR-086 신설 atomic) | MERGED `be4b982` |
+| S2 | APIContractArch body 심화 | MERGED (codeforge-design plugin) |
+| S3 | deputy-mandate skill RACI 4-way matrix (12 cells) | MERGED `8aaae1d` |
+| S4 | ArchitectAgent chief 통합 mechanism + chief tie-break ladder body + mctrader 5 repo evidence | MERGED `3855bdd` |
+| S5 (본 release) | Cross-Story 통합 검증 + P6/P5/P2 (yaml + platform-capability + consumer-guide verify) | THIS PR |
+
+#### Invariant declare
+
+- **doc-only fast-path (ADR-054 Category 2)** — src/tests 변경 0, ADR cross-ref-only changes
+- **backward-compat invariant** — yaml `sections[]` schema 확장만 (신규 optional `deputy_sub_ownership:` field), 기존 entry 영역 변경 0
+- **history immutable** — agent-teams-platform-capability.md 변경 이력 표 historical row (2026-05-13 CFP-582 "6 SubAgent" 발화) 보존, 신규 row append-only
+
+#### Related ADRs
+
+- ADR-042 Amendment 8 (S1 carrier — 7+3+1 roster + AggregateArch + APIContractArch 신설 + ModuleArch rename + DataArch 축소)
+- ADR-068 Amendment 2 (S1 declare + S4 implementation note — wording SSOT chief tie-break ladder)
+- ADR-086 (S1 carrier — Deputy 신설 결정 framework P7)
+- ADR-014 (OperationalRisk SSOT distribution — §7.4 InfraOperationalArch primary)
+- ADR-72 (ProductionEvidence CONDITIONAL spawn — §11 production cutover trigger)
+- ADR-054 (doc-only fast-path Category 2)
+
 ## [5.98.0] - 2026-05-20
 
 ### Changed (CFP-1086 Story-4 — ADR-068 Amendment 2 implementation note + chief author body cross-ref binding)

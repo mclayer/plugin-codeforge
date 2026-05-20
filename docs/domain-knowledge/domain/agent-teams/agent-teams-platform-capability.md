@@ -26,8 +26,9 @@ related_stories:
   - CFP-137  # 본 entry 의 carrier
   - CFP-391  # Adversarial 패턴 자동 발동 (debate-protocol-v1 v1.0) — 5 권장 패턴 매핑 확장
   - CFP-582  # Adversarial 패턴 dispatch_mode 4번째 enum (blanket_cross_module_designlane) 추가 (Wave 4)
+  - CFP-1086  # BackendArchEpic Phase 2 — 7+3+1 deputy roster (Parallelization row 정정 carrier W3 S5)
 created: 2026-05-09
-updated: 2026-05-13
+updated: 2026-05-20
 ---
 
 # Claude Code agent teams (experimental) — platform capability + codeforge re-entrancy 제약
@@ -45,7 +46,7 @@ Claude Code experimental `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 활성 시 사
 
 **env=0 fallback**: ADR-039 default subagent context (one-shot Agent tool spawn). TeamCreate / SendMessage / TaskCreate 미사용. team-spec yaml 미사용.
 
-5 권장 패턴 매핑: Specialization (lane teammate system_prompt) / Parallelization (TEAM-DESIGN 6 SubAgent) / Adversarial (review Claude vs Codex — 두 가지 dispatch_mode 지원: (1) `user_request_only` — 사용자 explicit request 시, (2) `auto_on_divergence` — DesignReview lane 에서 finding 불일치 자동 감지 시 multi-round debate 발동 [debate-protocol-v1, CFP-391 / ADR-059]) / Cross-layer (TEAM-DEVELOP dev ↔ QA) / Escalation (lane FIX).
+5 권장 패턴 매핑: Specialization (lane teammate system_prompt) / Parallelization (TEAM-DESIGN 7+3+1 deputy roster — 7 permanent + 3 CONDITIONAL + 4-tuple sub-tuple, 8 SubAgent core + chief; CFP-1086 Amendment 8) / Adversarial (review Claude vs Codex — 두 가지 dispatch_mode 지원: (1) `user_request_only` — 사용자 explicit request 시, (2) `auto_on_divergence` — DesignReview lane 에서 finding 불일치 자동 감지 시 multi-round debate 발동 [debate-protocol-v1, CFP-391 / ADR-059]) / Cross-layer (TEAM-DEVELOP dev ↔ QA) / Escalation (lane FIX).
 
 ## Usage
 
@@ -110,7 +111,7 @@ env=0 fallback 동작은 모든 lane plugin agent prompt 가 명시 의무 — S
 | 패턴 | codeforge 매핑 lane | 적용 evidence |
 |---|---|---|
 | Specialization | 7 lane teammate 좁은 system prompt | team-spec yaml `system_prompt_path` |
-| Parallelization | TEAM-DESIGN 6 SubAgent / 2 review worker 동시 | §14 Lane Evidence `spawned_at` diff |
+| Parallelization | TEAM-DESIGN 7+3+1 deputy roster (7 permanent + 3 CONDITIONAL + 4-tuple sub-tuple — CFP-1086 Amendment 8) / 2 review worker 동시 | §14 Lane Evidence `spawned_at` diff |
 | Adversarial | DesignReview (`auto_on_divergence`) / DesignLane (`blanket_cross_module_designlane`, CFP-582) / Requirements (CFP-392 deferred) — debate-protocol-v1 v1.2 SSOT | review-verdict v4 packet `worker_dialog_rounds` + Story §9 `### Debate transcript: <anchor_id>` section (debate-protocol-v1 schema) + §10 FIX Ledger `debate_artifact_ref` 필드 (fix-event-v1 1.1) |
 | Cross-layer | TEAM-DEVELOP 의 dev ↔ QA continuous coordination | develop-output `cross_layer_dialog_rounds` |
 | Escalation | lane FIX 시 lane team → TEAM-FIX (parallel diagnosis) | §10 FIX Ledger + §14 fix-iter row pair |
@@ -168,3 +169,4 @@ env=0 fallback 동작은 모든 lane plugin agent prompt 가 명시 의무 — S
 | 2026-05-09 | doc-section-schema strict 정합 — `## 핵심 규칙` + `## 경계` + `## 변경 이력` 필수 섹션 추가 (CFP-137 ArchitectPL lane Phase 1 PR commit batch) | CFP-137 (본 Story) |
 | 2026-05-11 | Adversarial 패턴 확장 (CFP-391 / ADR-059 / ADR-044 Amendment 1) — `dispatch_mode: auto_on_divergence` 추가, debate-protocol-v1 자동 발동 정책 명시, 5 권장 패턴 매핑 + 핵심 규칙 #4 + Adversarial row evidence (Story §9 transcript + §10 debate_artifact_ref) 업데이트. consumer-guide §1f 정합 | CFP-391 |
 | 2026-05-13 | Adversarial 패턴 dispatch_mode 4번째 enum value `blanket_cross_module_designlane` 추가 (DesignLane internal blanket trigger — ArchitectPL + ArchitectAgent + 6 SubAgent). 5 권장 매핑 표 갱신. ADR-059 Amendment 2 carrier. | CFP-582 |
+| 2026-05-20 | 5 권장 패턴 매핑 + Parallelization row "6 SubAgent" → "7+3+1 deputy roster" 정정 (BackendArchEpic Phase 2 — AggregateArch + APIContractArch 신설 + ModuleArch rename + DataArch 축소). ADR-042 Amendment 8 / ADR-068 Amendment 2 / ADR-086 cross-ref. | CFP-1086 (W3 S5) |
