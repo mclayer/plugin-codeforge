@@ -9,6 +9,8 @@ on:
       - 'wrapper/stories/**/*.md'
       - 'docs/stories/CFP-*.md'
   workflow_dispatch:
+permissions:
+  contents: read
 jobs:
   check:
     runs-on: ubuntu-latest
