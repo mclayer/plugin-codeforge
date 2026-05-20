@@ -267,9 +267,9 @@
   > Epic-level integration test baseline 자동 승격 SSOT (Story-level vs Epic-level disjoint axis).
   > Story-level integration test (`tests/integration/<story-key>/`) ≠ Epic-level baseline (`tests/integration/stories/<EPIC_KEY>/`) — 양 layer 동시 존재 가능.
   > Naming convention: `baseline-v<N>-<carrier-key>.yaml` immutable append-only (DataMigrationArch §G.5 정합 — v1/v2/v3 incremental promotion + 기존 v1 file 보존, history immutable).
-  > Story-3 = v1 (declarative-only, story_keys cross-Story consistency check 3 entry + frozen_shas pin discipline ADR-073 정합).
+  > Story-3 = v1 (declarative-only, story_keys cross-Story consistency check 3 entry + frozen_shas 고정 discipline ADR-073 정합).
   > Story-4 = v2 (promotion criteria 4-tuple executable baseline 진입).
-  > Story-5 = v3 (downgrade asymmetry invariant + Wave 4 sub-Epic close final pin).
+  > Story-5 = v3 (downgrade asymmetry invariant + Wave 4 sub-Epic close final 고정).
   > frontmatter_required = true (carrier_story + story_keys + frozen_shas + cross_story_consistency_checks + declarative_only field 의무).
   > IntegrationTestAgent single-shot pattern (ADR-044 §결정 5 정합) — declarative baseline = single-shot read-only verify (실 spawn 0건, mandate activation scope only).
   > parallel-edit policy = locked (IntegrationTestAgent monopoly + integration-test lane verdict gate).
