@@ -44,6 +44,13 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 5 + ## 결정 / D1 적용 scope L107-L111"
     sunset_justification: null
+  - amendment_id: 6
+    cfp: CFP-1056
+    date: 2026-05-20
+    scope: "§결정 D1 expansion (Amendment 3) fail-mode 6-set → 7-set 확장 — `subagent_recursion_blocked` 7번째 enum value 추가. CFP-1041 DesignReview lane PL spawn = Agent SDK subagent context (recursive Agent tool spawn blocked by ADR-039 platform-inherent recursion guard) 시 Codex worker subagent spawn 차단 evidence. 본 Amendment 는 fail-mode enum 의 ratchet-up 확장 only (6-set retain + 7번째 append) — D1-D6 + Amendment 1-5 본문 의미 변경 0건. ADR-052 Amendment 10 cross-ref binding (6 touchpoint × 3-path enum cross-matrix 안 fallback_skip_with_marker 의 fail-mode 7-set 동기 정합). ADR-070 §D5 declaration-only retain precedent chain 6번째 instance — `mechanical_enforcement_actions: []` retain. is_transitional: false (permanent — ratchet 강화 only, scope 축소 0). ADR-058 §결정 5 sunset_justification N/A. ADR-054 §결정 1 doc-only fast-path 적격 (carrier CFP-1056 — 기존 ADR Amendment + ADR-052 cross-ref Amendment + Story file, src/tests 무변경)."
+    status: applied
+    ref: "## Amendments / Amendment 6 + ## 결정 / D1 expansion (Amendment 3) fail-mode enum"
+    sunset_justification: null
 related_stories:
   - CFP-578  # carrier
   - CFP-506  # sentinel 1 reproduce
@@ -134,7 +141,7 @@ Orchestrator 는 codex:codex-rescue subagent (ADR-052 6 touchpoint 자동 dispat
 |---|---|---|---|
 | `inline_orchestrator_verify` (default) | Orchestrator 가 own working directory file Read 로 ground truth 확정 후 Codex finding accept/reject (D1 default substitution behavior 보존) | Codex worker output 정상 수신 (sandbox network-block 없음) + finding evidence 영역 = Orchestrator working directory 안 | (면제 — default behavior, marker 부재 = 암묵 default) |
 | `manual_substitution_declare` | Codex worker spawn 직전 substitution scope 명시 declare (spawn prompt `task` field 본문 또는 별도 sub-field `substitution_scope` + Story §10 marker carrier) | sandbox 영역 외 file (internal-docs / sibling repo / cross-plugin path) verify task 필요 시 — Codex output 미수신 가능성 사전 인지 영역 | `[codex-substitution-scope-declared: <scope-enum>]` (1 회/spawn) |
-| `fallback_skip_with_marker` | Codex worker spawn 자체 skip + Orchestrator 가 substitution 후속 동작 단독 수행 (verify-before-trust 5 sub-scope 全 적용, ADR-081 §결정 D2) | Codex CLI 미가용 / sandbox network-block 확정 / 8+ occurrence sentinel reentrant 위험 영역 | `[codex-sandbox-fallback: <fail-mode>]` (1 회/spawn, fail-mode enum = api_missing / version_skew / enterprise_blocked / gh_api_network_blocked / manual_substitution_declared / inline_orchestrator_verify_only) |
+| `fallback_skip_with_marker` | Codex worker spawn 자체 skip + Orchestrator 가 substitution 후속 동작 단독 수행 (verify-before-trust 5 sub-scope 全 적용, ADR-081 §결정 D2) | Codex CLI 미가용 / sandbox network-block 확정 / 8+ occurrence sentinel reentrant 위험 영역 / DesignReviewPL 등 subagent context 안 spawn 시 recursive Agent tool spawn 차단 (Amendment 6 / CFP-1056 신설) | `[codex-sandbox-fallback: <fail-mode>]` (1 회/spawn, fail-mode 7-enum = api_missing / version_skew / enterprise_blocked / gh_api_network_blocked / manual_substitution_declared / inline_orchestrator_verify_only / subagent_recursion_blocked) |
 
 **3-enum exhaustive invariant**: 4번째 path 발생 = D1 expansion 거절된 대안 영역 (자동 retry / 외부 verify proxy / multi-source consensus 등). 본 ADR-070 scope 외 — 별 follow-up CFP carrier 영역 (CFP-946-B 도 미포함).
 

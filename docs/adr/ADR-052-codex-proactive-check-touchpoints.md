@@ -45,6 +45,10 @@ amendments:
     date: 2026-05-19
     carrier_story: CFP-1003
     summary: "**proactive/reactive disjoint scope codify** — D1 본문 L84 'codex:rescue 사후 대응(reactive) 채널' + D1 L90 'codex:codex-rescue proactive check 채널 분리' 의 명시적 boundary anchor 강화. 본 ADR-052 의 D1-D4 + Amendment 1-8 = **proactive 6 touchpoint scope 한정** invariant explicit codify. reactive codex:rescue 채널 (사용자 ad-hoc invocation, ADR-022 Deprecated default 영역) 의 network_scope declare 의무 + verify-before-trust + boilerplate composition = ADR-070 Amendment 5 + ADR-081 Amendment 5 본문 SSOT 위임 (본 ADR 본문은 cross-ref only). Codex TP#4 (CFP-963 §6.3 OOS row + §3 EC-2 derived default — '`codex:rescue` lint = OUT, proactive 한정') 의 deferred scope = 본 Amendment 9 + ADR-070 Amd 5 + ADR-081 Amd 5 chain 으로 closure. D1/D2/D3/D4 + Amendment 1-8 본문 의미 변경 0건 — proactive/reactive disjoint anchor 명시 cross-ref sub-section append only. mechanical lint scope 확장 = 별 CFP (Wave 2, ADR-064 §결정 1 CFP scope unitary). is_transitional=false, sunset_justification=N/A — permanent strengthening (proactive/reactive disjoint boundary explicit codify, scope 축소 0). doc-only fast-path 자체 적격 (ADR-054 §결정 1, 기존 ADR Amendment + src/tests 무변경)."
+  - id: 10
+    date: 2026-05-20
+    carrier_story: CFP-1056
+    summary: "ADR-070 Amendment 6 cross-ref — fail-mode 6-set → 7-set 확장 (`subagent_recursion_blocked` 7번째 enum value 추가). CFP-1041 DesignReview lane PL spawn evidence: Agent SDK subagent context 안 Codex worker subagent spawn 시 ADR-039 platform-inherent recursion guard 차단 → `fallback_skip_with_marker` 활성 + fail-mode 7-enum 정합 declare. 추가 normative anchor — DesignReviewPL spawn pattern (Orchestrator parent context 직접 spawn 권장, subagent → subagent 회피 시 Codex worker substitution path 안정성 향상). D1/D2/D3/D4 + Amendment 1-9 본문 의미 변경 0건 — cross-ref sub-section append (Amendment 1-9 패턴 정합) + Amendment 8 6 touchpoint × 3-path enum cross-matrix 의 fail-mode enum 7-set 동기 정합. is_transitional=false, sunset_justification=N/A — permanent strengthening (subagent_recursion_blocked fail-mode codify, scope 축소 0). doc-only fast-path 자체 적격 (ADR-054 §결정 1, 기존 ADR Amendment + ADR-070 Amendment 6 cross-ref + Story file + src/tests 무변경)."
 related_stories:
   - CFP-354
   - CFP-411
@@ -56,6 +60,7 @@ related_stories:
   - CFP-844  # Amendment 7 — ADR-081 Amendment 1 (§결정 D6 severity calibration) cross-ref
   - CFP-946-A  # Amendment 8 — substitution path 3-enum cross-ref (parent_epic CFP-946)
   - CFP-1003   # Amendment 9 — proactive/reactive disjoint scope codify (Codex TP#4 CX-963-deferred closure, reactive codex:rescue 영역 ADR-070 Amd 5 + ADR-081 Amd 5 본문 SSOT 위임 cross-ref)
+  - CFP-1056   # Amendment 10 — ADR-070 Amendment 6 cross-ref (fail-mode 7-set 확장, subagent_recursion_blocked enum value, CFP-1041 DesignReviewPL subagent context evidence)
 related_adrs:
   - ADR-039
   - ADR-034
