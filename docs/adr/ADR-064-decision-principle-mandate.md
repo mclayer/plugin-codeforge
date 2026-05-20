@@ -61,6 +61,16 @@ amendment_log:
       ratchet 강화 방향 (is_transitional: false 정합). 약화 amendment (lint scope 축소 / per-word scope decoupling 폐기) = ADR-058 §결정 5 sunset_justification 의무 (대칭 추론).
     direction: strengthen
     sunset_justification: null  # ratchet 강화 방향 (lint scope 확장) — sunset_justification 무관 영역
+  - amendment: 6
+    carrier_story: CFP-1060
+    date: 2026-05-20
+    summary: |
+      §결정 2 forbid-list 의 `별` standalone 영역 안 `별 + carrier-noun` hand-off vocabulary pattern exemption codify (Wave 1 declarative — wording-dictionary.md Amendment 3 lockstep). 의도된 "별도의 N" hand-off vocabulary pattern (별 sub-CFP / 별 carrier / 별 session / 별 Story / 별 Issue / 별 PR / 별 lane / 별 sub-Epic / 별 Epic / 별 Wave 등 carrier-noun 결합) = forbid-list exempt. CFP-1041 carrier evidence — declarative SSOT 13+ occurrence (ADR-085 + Story file), DesignReview F-DR-1041-3 P2 INFORMATIONAL 권고 (b) bypass channel 채택 = bypass-as-design pattern 누적.
+      Wave 1 = declarative only (wording-dictionary.md Amendment 3 + 본 Amendment 6 SSOT codify). Wave 2 = `scripts/lib/check_wording_dictionary.py` exemption regex pre-screen 추가 (별 sub-CFP carrier deferred).
+      ratchet 강화 방향 (forbid-list 의 false-positive 영역 축소 ≠ scope 축소 — bypass-as-design pattern 의 explicit codification, 자동 PASS 자격 영역 확장). is_transitional: false 정합. ADR-058 §결정 5 sunset_justification N/A.
+      Backward-compat: 기존 `hotfix-bypass:wording-dictionary` label 사용 carrier 유지 (Wave 2 후 의도된 hand-off vocabulary 영역은 자동 PASS, label 채택 불요).
+    direction: strengthen
+    sunset_justification: null  # ratchet 강화 방향 (bypass-as-design explicit codification)
 mechanical_enforcement_actions:
   - action: parallel-dispatch-prompt-check
     binding: 본 Amendment 1 §결정 4 Trace 4 implementation contract (`docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md` §3 의 4 의무 항목) — Orchestrator → PL spawn prompt 검증 lint (warning tier, ADR-060 framework 정합)

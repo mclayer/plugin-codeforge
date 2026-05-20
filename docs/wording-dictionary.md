@@ -11,6 +11,10 @@ amendments:
     carrier_cfp: CFP-750
     date: 2026-05-16
     summary: "lint scope per-word decoupling (FORBID_DICTIONARY array → WORD_TARGETS map). 박제/못 박기/pin/freezing = expanded scope (docs/** + CLAUDE.md + CHANGELOG.md + templates/**) / 별 = 5-scope 유지. ADR-064 Amendment 5 lockstep"
+  - amendment: 3
+    carrier_cfp: CFP-1060
+    date: 2026-05-20
+    summary: "`별 + carrier-noun` hand-off vocabulary exemption codify (Wave 1 declarative). 의도된 '별도의 N' 패턴 (별 sub-CFP / 별 carrier / 별 session / 별 Story / 별 Issue / 별 PR / 별 lane / 별 sub-Epic / 별 Epic / 별 Wave 등) = forbid-list exempt. CFP-1041 evidence (13+ occurrence declarative SSOT, DesignReview F-DR-1041-3 bypass-as-design pattern). Wave 2 mechanical lint update = 별 sub-CFP carrier deferred. ADR-064 Amendment 6 lockstep."
 title: "codeforge wording dictionary — 어휘 사전 (forbid + 평문 정의 의무)"
 ---
 
@@ -39,6 +43,16 @@ codeforge 의 표현 규율 (ADR-064 §결정 2 + §결정 9) 의 어휘 SSOT.
 > **per-word scope decoupling 동기**: scope 확장 (5 → 전체) 시 `별` standalone 어휘를 동일 scope 에 두면 `각 packet 별` / `tier 별` / `별 layer` 등 한자어 `別` / 분류 접미사 `~별` 정당 사용이 expanded scope (특히 `docs/inter-plugin-contracts/**`) 에서 false-positive 로 증폭된다. **이는 expanded scope 도입의 known collateral** (silent bug 아님 — documented expected state). `별` 5-scope 유지 = §1 scope 위반 차단 + Amendment 4 carrier 분리 정합. (ADR-064 Amendment 5 §Amendment 결정 2 / `docs/domain-knowledge/domain/governance-principle/wording-discipline-enforcement.md` §규칙 5 와 3곳 mirror.)
 
 **예외 채널**: `hotfix-bypass:wording-dictionary` label (ADR-024 Amendment 3 per-entry namespace 정합) + PR description `### Bypass reason` 본문 의무.
+
+### Amendment 3 (CFP-1060) — `별 + carrier-noun` hand-off vocabulary exemption (Wave 1 declarative)
+
+`별` standalone forbid-list 의 의도된 hand-off vocabulary pattern exemption codify. ADR / Story file 안 `별 sub-CFP` / `별 carrier` / `별 session` / `별 Story` / `별 Issue` / `별 PR` / `별 lane` / `별 sub-Epic` / `별 Epic` / `별 Wave` 등 carrier-noun 결합 = 의도된 "out of scope, separate carrier" hand-off vocabulary. CFP-1041 carrier evidence — declarative SSOT 13+ occurrence (ADR-085 + Story file). DesignReview F-DR-1041-3 P2 INFORMATIONAL 권고 (b) bypass channel 채택 = bypass-as-design pattern.
+
+**규칙** (Wave 1 declarative-only): `별\s+(sub-CFP|carrier|session|Story|Issue|PR|lane|sub-Epic|Epic|Wave|layer|sub-axis|sub-CFP carrier|sub-Story)` 패턴 = forbid-list exempt (semantic = "별도의 N" 의도된 hand-off). 본 패턴 외 standalone `별` (예: "별 layer 만" 자체) = forbid-list 유지.
+
+**Wave 2 mechanical lint update (별 sub-CFP carrier deferred)**: `scripts/lib/check_wording_dictionary.py` (또는 `scripts/check-wording-dictionary.sh`) 안 exemption regex pre-screen 추가. 본 Wave 1 = declarative SSOT only (lint script 무변경, bypass label 계속 사용).
+
+**Backward-compat**: 기존 `hotfix-bypass:wording-dictionary` label 사용 carrier 유지 (Wave 2 mechanical wire 후 의도된 hand-off vocabulary 영역은 자동 PASS, label 채택 불요).
 
 | 어휘 | 평문 정의 (사용자에게 보이는 의미) | 권장 대체 | 도입 CFP |
 |---|---|---|---|
