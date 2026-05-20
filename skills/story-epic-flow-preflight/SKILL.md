@@ -4,19 +4,25 @@ description: Story flow / Epic flow / Cross-repo Epic / Preflight 결정 시 (la
 tools: Read
 ---
 
-# Story / Epic Flow + Preflight 체크 (CFP-45 + ADR-020 + ADR-031)
+# Story / Epic Flow + Preflight 체크 (CFP-45 + ADR-020 + ADR-031 + CFP-1059 / ADR-087+088)
 
 > 참조 테이블 skill — lane 진입 전 Story / Epic flow 패턴과 Preflight 체크 요건을 확인하세요.
 
-## 레인 6개 · 단계 정의
+## 레인 8개 · 단계 정의 (CFP-1059 / [ADR-087](../../docs/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](../../docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — 6 → 8 lane 확장)
 
 ```
 [Story] 요구사항 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → [CI gate]  ← N회 반복
                                                                    ↓ 전체 Story PASS 후 1회
                                                            [Epic 통합테스트]
+                                                                   ↓ Epic 묶음 모든 Story merged 후
+                                                           [배포] → [배포 리뷰] → Epic close
 ```
 
-모든 Story는 **full 6 레인 + CI gate** 통과. Fast-path 없음 (단 **Hotfix 경로** 2종은 예외 — 운영 장애 대응, 사후 감사 의무. 상세는 [`docs/hotfix-playbook.md`](../../docs/hotfix-playbook.md)). **CI gate** = 구현 리뷰 PASS 후 Orchestrator가 `gh pr checks <PR_NUMBER> --watch`로 GitHub CI 결과 polling (최대 30분 timeout). PASS 시 merge gate 진입 (`lanes.security_ai: true` consumer는 SecurityTestPL spawn 추가). FAIL 시 DeveloperPL 1차 진단 → ArchitectPL 최종 판정 → FIX loop (CFP-317 / ADR-048).
+모든 Story는 **full 8 레인 + CI gate** 통과 (CFP-1059 후 — 배포 + 배포 리뷰 신설). Fast-path 없음 (단 **Hotfix 경로** 2종은 예외 — 운영 장애 대응, 사후 감사 의무. 상세는 [`docs/hotfix-playbook.md`](../../docs/hotfix-playbook.md)). **CI gate** = 구현 리뷰 PASS 후 Orchestrator가 `gh pr checks <PR_NUMBER> --watch`로 GitHub CI 결과 polling (최대 30분 timeout). PASS 시 merge gate 진입 (`lanes.security_ai: true` consumer는 SecurityTestPL spawn 추가). FAIL 시 DeveloperPL 1차 진단 → ArchitectPL 최종 판정 → FIX loop (CFP-317 / ADR-048).
+
+**배포 lane (Phase 1 declarative — CFP-1059 / ADR-087)**: Epic 묶음 종료 후 (모든 Story merged) Orchestrator → DeployPLAgent 자동 trigger. 변경 repo enumeration + DeployWorkerAgent N 병렬 dispatch (repo 단위). 배포 매커니즘 = blue-green + atomic swap + 3-시간 보존 + 자동 rollback (단일 매커니즘 고정). FAIL 시 자동 rollback + FIX dispatch. 활성 조건 = consumer `project.yaml` 안 `deploy:` block 등록 + codeforge-deploy plugin install (opt-in).
+
+**배포 리뷰 lane (Phase 1 declarative — CFP-1059 / ADR-088)**: 배포 lane PASS 직후 mandatory. DeployReviewPLAgent (Opus + debate-protocol-v1 trigger 의무) 검증 3종 = smoke / 성능 비교 / cutover 사후 검증. ProductionEvidenceDeputy ownership 이관 (codeforge-design CONDITIONAL → codeforge-deploy-review 정식). 성능 미충족 시 multi-round adversarial debate 자동 발동 (RequirementsPL ↔ ArchitectPL ↔ DeveloperPL).
 
 ## Story flow (default — single-repo Story 또는 Epic 외 1 child Story)
 

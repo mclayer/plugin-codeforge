@@ -7,6 +7,7 @@ date: 2026-04-30
 related_stories:
   - CFP-46 (parent — Operational Risk Architect 신설 + §7.4 SSOT 분산)
   - CFP-128 (amends — Docker-first §7.4 mandate 4 항목 확장)
+  - CFP-1059 (Amendment 5 — InfraOperationalArchitect ↔ DeployPL boundary axis 명시, 운영 risk SSOT vs 배포 행위 disjoint)
 related_files:
   - docs/adr/ADR-008-inter-plugin-contract-versioning.md
   - docs/adr/ADR-009-wrapper-only-decomposition.md
@@ -353,5 +354,52 @@ Amendment 2 §결정 3 (env secret ownership: SecurityArch threat / OpRiskArch c
 amendment 형태: ADR-014 의 SSOT distribution 결정 자체 (codeforge-design plugin canonical / wrapper matrix sibling) 는 그대로 유효. §7.4 schema 의 5 sub (DR / Cancel-on-disconnect / Clock sync CONDITIONAL / Rate limit / Env isolation) 외에 Container 관련 4 항목 cell annotation 으로 추가. supersede 아님.
 
 OpRiskArch 의 cell annotation update SSOT = wrapper CLAUDE.md § "Deputy mandate 매트릭스" §7.4 row (CFP-128 spec §3.2.3). codeforge-design canonical 변경 = OperationalRiskArchitectAgent.md (sibling sync PR per ADR-010, CFP-128 scope 내).
+
+## Amendment 5 (CFP-1059, 2026-05-20): InfraOperationalArchitect ↔ DeployPL boundary axis 명시 (운영 risk SSOT vs 배포 행위 disjoint)
+
+> **형식 주의 (EC-5)**: 본 ADR-014 의 amendment 는 body `## Amendment N` section 방식 (frontmatter amendment_log field 부재 — frontmatter `amendments: [ADR-033]` 만 + `related_stories` Amendment 5 row). Amendment 1/2/3/4 동일 패턴 답습.
+
+### 결정 6 — InfraOperationalArchitect (codeforge-design) ↔ DeployPL (codeforge-deploy) disjoint axis SSOT
+
+CFP-1059 Story-1 sibling carrier (ADR-087 Deploy lane + ADR-088 Deploy Review lane 신설 atomic). 본 Amendment 5 = ADR-014 결정 1~5 본문 변경 0건 — InfraOperationalArchitect deputy 의 §7.4 mandate **scope 보존** + DeployPL deputy 의 새 §12 Deploy mandate 와의 **boundary axis 명시** declaration.
+
+### Disjoint axis 분리 matrix
+
+| 축 | InfraOperationalArchitect (codeforge-design) | DeployPL (codeforge-deploy) |
+|---|---|---|
+| 책임 영역 | **운영 risk SSOT 작성** (Story §7.4 schema 5+4 sub) | **배포 행위 step 수행** (Story §12 Deploy section 6 step) |
+| Owner story section | §7.4 | §12 |
+| Owner lane | codeforge-design (설계) | codeforge-deploy (배포 — ADR-023 Amendment 1 신설) |
+| Model tier | Opus (multi-source synthesis — DR / Cancel-on-disconnect / Clock sync CONDITIONAL / Rate limit / Env isolation / Container 4) | Sonnet (single-mandate advocacy — deploy step 단순 절차) |
+| Spawn trigger | Story §7 작성 시 (설계 lane) | Story §12 작성 시 (배포 lane — production cutover-touching Story 한정) |
+| §7.4 schema 5+4 sub | DR / Cancel-on-disconnect / Clock sync CONDITIONAL / Rate limit / Env isolation + Container restart policy / Volume DR / Health check tuning / Network mode boundary (Amendment 4) | N/A — DeployPL 은 §7.4 schema **수행자** 이지 **author 아님** (§7.4 = InfraOpArch SSOT) |
+| Story §12 Deploy 6 step | N/A — InfraOpArch 는 §7.4 SSOT author, deploy step 수행자 아님 | blue stack provision / database expand / healthcheck poll / traffic switch / green decommission / blue retention 6-step (ADR-087 §결정 5 SSOT) |
+| Cross-ref | ADR-72 ProductionEvidence (별도 deputy, disjoint axis — Amendment 4 §결정 1 SSOT) | ADR-087 §결정 5 6-step + ADR-088 §결정 3 ProductionEvidence ownership 이관 |
+
+### 결정 7 — boundary disjoint invariant (혼재 금지)
+
+- **InfraOperationalArchitect 가 §12 Deploy step 직접 작성 금지** — §7.4 schema author scope 외 영역, §12 = DeployPL SSOT
+- **DeployPL 이 §7.4 schema 직접 작성 금지** — InfraOpArch 가 §7.4 schema author, DeployPL 은 §7.4 수행자 (referenced, not authored)
+- **혼재 시 ADR-068 I-4 wording SSOT 위배** — 단일 deputy 가 dual-domain SSOT 보유 시 wording desync surface 증가
+
+본 boundary axis = ADR-088 §결정 3 ProductionEvidence ownership transfer (wrapper → codeforge-deploy-review) 와 sibling carrier 보존 (3-deputy disjoint axis 정합 — InfraOpArch §7.4 운영 risk SSOT / DeployPL §12 배포 행위 / ProductionEvidence (codeforge-deploy-review) §13 review evidence quad — ADR-088 §결정 3 sibling).
+
+### 결정 8 — ADR-72 (ProductionEvidence) → ADR-088 (codeforge-deploy-review) ownership 이관 cross-ref
+
+ADR-72 §결정 1 (ProductionEvidence Deputy 신설) 의 ownership 위치 = wrapper-side deputy (Amendment 4 §결정 1) → ADR-088 §결정 3 (CFP-1059 Story-1 carrier) 으로 정식 이관. 본 ADR-014 Amendment 5 = ownership transfer declarative cross-ref only — ADR-014 §결정 1~5 본문 변경 0건, ADR-72 §결정 1 본문 변경 = ADR-72 자체 Amendment 4 carrier scope.
+
+### 기존 정책 변경 0건 (ADR-014 본문)
+
+본 Amendment 5 = ADR-014 결정 1~5 본문 변경 0건. 변경 = (a) 본 `## Amendment 5` body section (b) `related_stories` frontmatter row append (CFP-1059). §7.4 schema 자체 codeforge-design SSOT (결정 1) + wrapper SSOT 3 영역 한정 (결정 2) + §11 idempotency CONDITIONAL (결정 3) + N/A allowed 조항 (결정 4) + design-output BREAKING bump (결정 5) 모두 정책 변경 0건. ratchet 강화 방향 (InfraOpArch ↔ DeployPL boundary axis 명시 — scope 명시 확장, ADR-058 §결정 5 정합) → sunset_justification 불필요 (강화 방향 only).
+
+### Cross-references
+
+- ADR-023 Amendment 1 (CFP-1059 / Story-1 sibling carrier — lane plugin 6 → 8 확장 atomic)
+- ADR-087 (CFP-1059 / Story-1 신설 — Deploy lane as 7th lane plugin, §결정 5 6-step Deploy procedure SSOT)
+- ADR-088 (CFP-1059 / Story-1 신설 — Deploy Review lane as 8th lane plugin + ProductionEvidence transfer §결정 3 carrier)
+- ADR-042 Amendment 9 (CFP-1059 / Story-1 sibling — 4 신설 agent tier DeployPL / DeployWorker / DeployReviewPL / DeployReviewWorker)
+- ADR-72 §결정 1 (ProductionEvidence Deputy 신설) — ownership 이관 cross-ref (wrapper → codeforge-deploy-review)
+- ADR-068 I-4 wording SSOT (혼재 금지 boundary disjoint invariant 정합)
+- ADR-058 §결정 5 sunset_justification (ratchet 강화 방향 only — 약화 0)
 
 cross-ref: CFP-128 spec §3.4 / Change Plan §3.5 / Story §3.1.

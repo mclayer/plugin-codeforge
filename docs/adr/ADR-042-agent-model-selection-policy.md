@@ -76,10 +76,28 @@ amendment_log:
       - ADR-068 Amendment 2 (CFP-1086 / Story-1 carrier — wording SSOT chief tie-break ladder P1 sibling)
       - ADR-086 (CFP-1086 / Story-1 신설 carrier — Deputy 신설 결정 framework P7, 본 Amendment 8 = self-application 첫 사례)
       - CFP-1079 (OpsExecutionArchitect 신설 + InfraOperationalArch §7.4 mandate 보강 sibling Epic — Phase 1 PR open 시점 OPEN PR 0건, 본 Amendment 8 = 선점, CFP-1079 후속 = Amendment 9 별 session)
+  - amendment_id: 9
+    date: "2026-05-20"
+    status: applied
+    summary: "CFP-1059 Story-1 — codeforge-deploy + codeforge-deploy-review lane plugin 신설 (ADR-023 Amendment 1 / ADR-087 / ADR-088 sibling carrier). 4 신설 agent tier 결정 — (a) DeployPLAgent (codeforge-deploy lane PL, Sonnet — §결정 1 Sonnet (b) implementation/test work 정합, deploy 행위 = blue stack provision + database expand + healthcheck + traffic switch + green decommission + blue retention 단순 절차 수행, OpRiskArch 가 별도 §7.4 SSOT 보유, lane PL 추가 합성 책임 없음) / (b) DeployWorkerAgent (codeforge-deploy lane worker, Sonnet — §결정 1 Sonnet (a) single-mandate advocacy, deploy step 1 step at a time advocacy + Story §12 Deploy section author) / (c) DeployReviewPLAgent (codeforge-deploy-review lane PL, Opus — §결정 1 Opus (a) multi-source synthesis — production evidence quad 4-tuple (bucket prefix listing / WAL sample / Prometheus rate metric / drainage rate) cross-source synthesis + ADR-72 §결정 5 epic-cutover-gate-evidence-quad-check ownership ADR-088 §결정 3 carrier 이관) / (d) DeployReviewWorkerAgent (codeforge-deploy-review lane worker, Sonnet — §결정 1 Sonnet (a) single-mandate advocacy, 4-tuple evidence 개별 검증 advocacy + Story §13 Deploy Review section author). 4종 모두 §결정 3 (신규 agent / model 변경 시 ADR 의무) 정합 — ADR-087 §결정 1+§결정 2 + ADR-088 §결정 1+§결정 2+§결정 3 carrier 통과. spawn count empirical grounding (ADR-068 I-5 cross-ref) — 2 lane × 2 agent = 4 spawn point per Story (production cutover-touching Story 한정, wrapper-self-app N/A) [empirical-source: TBD — consumer mctrader production cutover Story 첫 적용 시 측정 lock-in]. ratchet 강화 방향 (agent roster 0 → 4 신설 = scope 확장 only)."
+    ref: CFP-1059
+    carrier_story: CFP-1059-S1
+    sunset_justification: null
+    affected_agents:
+      - DeployPLAgent (new entry, codeforge-deploy — Sonnet)
+      - DeployWorkerAgent (new entry, codeforge-deploy — Sonnet)
+      - DeployReviewPLAgent (new entry, codeforge-deploy-review — Opus, §결정 1 Opus (a) multi-source synthesis 정합)
+      - DeployReviewWorkerAgent (new entry, codeforge-deploy-review — Sonnet)
+    cross_ref:
+      - ADR-023 Amendment 1 (CFP-1059 / Story-1 sibling carrier — lane plugin 6 → 8 확장 첫 실 적용)
+      - ADR-087 (CFP-1059 / Story-1 신설 carrier — Deploy lane as 7th lane plugin)
+      - ADR-088 (CFP-1059 / Story-1 신설 carrier — Deploy Review lane + ProductionEvidence transfer)
+      - ADR-068 §결정 1 I-5 dimensional empirical grounding (spawn count empirical-source TBD annotation)
 related_stories:
   - CFP-448
   - CFP-676
   - CFP-1086
+  - CFP-1059  # Amendment 9 carrier — 4 신설 agent tier (DeployPL/DeployWorker/DeployReviewPL/DeployReviewWorker)
 related_adrs:
   - ADR-009
   - ADR-013
@@ -89,8 +107,11 @@ related_adrs:
   - ADR-039
   - ADR-046
   - ADR-057
-  - ADR-068  # Amendment 2 cross-ref (CFP-1086 / Story-1 carrier — wording SSOT chief tie-break ladder P1 sibling)
+  - ADR-068  # Amendment 2 cross-ref (CFP-1086 / Story-1 carrier — wording SSOT chief tie-break ladder P1 sibling) + Amendment 9 §결정 1 I-5 cross-ref (CFP-1059 / Story-1 — spawn count empirical grounding)
   - ADR-086  # 신설 cross-ref (CFP-1086 / Story-1 — Deputy 신설 결정 framework P7, 본 Amendment 8 = self-application 첫 사례)
+  - ADR-023  # Amendment 1 sibling cross-ref (CFP-1059 / Story-1 — lane plugin 6 → 8 확장)
+  - ADR-087  # 신설 cross-ref (CFP-1059 / Story-1 — Deploy lane as 7th lane plugin, Amendment 9 carrier)
+  - ADR-088  # 신설 cross-ref (CFP-1059 / Story-1 — Deploy Review lane + ProductionEvidence transfer, Amendment 9 carrier)
 related_files:
   - .claude-plugin/plugin.json
   - CLAUDE.md

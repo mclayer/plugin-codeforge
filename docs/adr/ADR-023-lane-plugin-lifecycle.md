@@ -8,6 +8,16 @@ carrier_story: CFP-51
 supersedes: null
 superseded_by: null
 is_transitional: false
+related_stories:
+  - CFP-51   # 본 ADR 신설 carrier
+  - CFP-1059 # Amendment 1 carrier — codeforge-deploy + codeforge-deploy-review lane 신설 ("신규 추가" path 첫 실 적용)
+amendments:
+  - amendment_id: 1
+    date: 2026-05-20
+    carrier_story: CFP-1059
+    title: "Lane plugin family 6 → 8 확장 (codeforge-deploy + codeforge-deploy-review 신설)"
+    description: "ADR-087 (Deploy lane as 7th lane plugin) + ADR-088 (Deploy Review lane + ProductionEvidence transfer) 신설 sibling carrier. 본 ADR 결정 1 (Add path) 의무 절차 첫 실 적용 — 2 신규 lane plugin (codeforge-deploy / codeforge-deploy-review) 정식 등록. wrapper CLAUDE.md composition map 표 6 lane → 8 lane 확장. internal-docs structure {codeforge-deploy,codeforge-deploy-review}/{specs,plans,stories,decisions,retros,change-plans}/ 디렉터리 생성 (ADR-013 정합). inter-plugin contract `deploy-output-v1` + `deploy-review-output-v1` 신설 sibling sync (ADR-010 정합). marketplace.json plugins[] 배열 7 → 9 entry 확장 (ADR-016 정합). ratchet 강화 방향 (lane plugin family scope 확장 — 6 → 8, weakening 0)."
+    sunset_justification: null
 ---
 
 # ADR-023: Lane plugin lifecycle — add / deprecate / rename governance
@@ -112,3 +122,44 @@ N/A — permanent policy
 - [ADR-010](ADR-010-inter-plugin-contract-sibling-sync.md) — sibling sync 정책
 - ADR-022 (cfp-61 in flight, Sonnet Review-Verdict Decider — separate scope)
 - CFP-50 (parity CI follow-up) — 결정 5 enforcement
+- [ADR-087](ADR-087-deploy-lane-and-lifecycle-extension.md) — Deploy lane as 7th lane plugin (CFP-1059 Amendment 1 sibling carrier — 결정 1 Add path 첫 실 적용)
+- [ADR-088](ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — Deploy Review lane as 8th lane plugin + ProductionEvidence transfer (CFP-1059 Amendment 1 sibling carrier)
+
+## Amendment 1 — Lane plugin family 6 → 8 확장 (CFP-1059, 2026-05-20)
+
+**Effective**: 2026-05-20 (CFP-1059 Story-1 Phase 1 PR merge 시점).
+
+**Carrier**: CFP-1059 Story-1 (ADR carrier 묶음 — ADR-087 + ADR-088 + ADR-089 + ADR-090 4 신설 sibling). 본 Amendment 1 = ADR-023 결정 1 (Add path) 의무 절차 **첫 실 적용** — 2 신규 lane plugin (codeforge-deploy / codeforge-deploy-review) 정식 등록.
+
+### Lane plugin composition map 확장 (6 → 8)
+
+| Lane | Plugin | Agent count | 진입 단계 |
+|---|---|---|---|
+| 요구사항 | codeforge-requirements | 7 | Story §1-6 |
+| 설계 | codeforge-design | 7+3+1 | Story §3/§7/§11 |
+| 설계리뷰 / 구현리뷰 / 보안테스트 | codeforge-review | 5 | review-verdict-v4 |
+| 구현 | codeforge-develop | 5+dynamic | Story §8/§8.5 |
+| 통합테스트 | codeforge-test | 1 | test-verdict-v1 |
+| Cross-cutting | codeforge-pmo | 3 | Epic open/close + retro |
+| **배포 (신설)** | **codeforge-deploy** | **2** (DeployPL + DeployWorker — ADR-042 Amendment 9 carrier) | **Story §12 Deploy** |
+| **배포리뷰 (신설)** | **codeforge-deploy-review** | **2** (DeployReviewPL + DeployReviewWorker — ADR-042 Amendment 9 carrier) | **Story §13 Deploy Review** |
+
+### 결정 1 (Add path) 의무 절차 첫 실 적용 — 7-step verify
+
+| Step | Item | CFP-1059 Story-1 산출물 |
+|---|---|---|
+| 1 | CFP Story 작성 | Story file `codeforge-internal-docs/wrapper/stories/CFP-1059.md` §1-7 (직전 T2-T5 commit `9a4b716` 산출) |
+| 2 | ADR 신설 | ADR-087 (Deploy lane) + ADR-088 (Deploy Review lane) 4 ADR 묶음 신설 (T2-T5 산출, commit `9a4b716`) |
+| 3 | 신규 plugin repo 생성 | Wave 2 (별 CFP) — wrapper-canonical SSOT 우선 (`is_transitional: true` defer marker 부재 — Wave 1 declaration only) |
+| 4 | Marketplace 등록 | Phase 2 PR (별 CFP) — ADR-063 atomic invariant 정합 (3-file coordination — plugin.json + CHANGELOG.md + marketplace.json) |
+| 5 | Wrapper CLAUDE.md update | T14 (CLAUDE.md L150-L160 composition map 표 6 → 8 lane 확장) |
+| 6 | Internal-docs structure | T17 (`codeforge-internal-docs/codeforge-deploy/{specs,plans,...}` + `codeforge-deploy-review/{...}` 디렉터리 생성) |
+| 7 | Inter-plugin contract | T20 (`deploy-output-v1` + `deploy-review-output-v1` 신설 — sibling sync ADR-010 정합) |
+
+### ratchet 강화 invariant
+
+- 6 lane → 8 lane = scope 확장 only (weakening 0)
+- ADR-058 §결정 5 sunset_justification 영역 외 (강화 방향, is_transitional: false 보존)
+- ADR-064 §self-application top-down ratchet 정합
+
+본 Amendment 1 = ADR-023 결정 1 (Add path) 자체 변경 0건 — 절차 첫 실 적용 declarative carrier. 본문 절차 (CFP Story / ADR / plugin repo / marketplace / CLAUDE.md / internal-docs / inter-plugin contract) verbatim 답습.

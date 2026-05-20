@@ -107,7 +107,7 @@ CFP-1086 Amendment 8 이전 baseline (5+3 roster):
 ## CONDITIONAL deputy 활성 정책 (CFP-77 / ADR-72)
 
 - **LiveOpsDeputy + LiveOrderingDeputy** = Live touching Story만 active (real funds / live exchange API / production credential / live order placement 중 하나 이상). Backtest/Paper-only Story = 미spawn.
-- **ProductionEvidenceDeputy** (ADR-72 §결정 1/3) = Live touching Story **OR** production cutover 영향 Story 만 active (Change Plan §13 `production_cutover_touching: true` 선언 또는 §13 Live Operational Discipline 본문 보유). wrapper-self-app N/A (ADR-72 §결정 6 — ADR-005 `plugin-meta-na`).
+- **ProductionEvidenceDeputy** (ADR-72 §결정 1/3) = Live touching Story **OR** production cutover 영향 Story 만 active (Change Plan §13 `production_cutover_touching: true` 선언 또는 §13 Live Operational Discipline 본문 보유). wrapper-self-app N/A (ADR-72 §결정 6 — ADR-005 `plugin-meta-na`). **Ownership 이관 (CFP-1059 / [ADR-088](../../docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) §결정 3)**: codeforge-design CONDITIONAL → codeforge-deploy-review 정식 이관. mandate body 자체는 보존 (ADR-72 §결정 1-7 그대로 — 4 prerequisite measurement source enforcement). ownership 만 이전 (axis 정합: production 환경 평가 = production 환경 lane 영역, 설계 lane 의 design 결정 layer 와 axis 불일치). Phase 1 declarative — 실 이관 = codeforge-deploy-review plugin seed 신설 (S3 sub-Story carrier) 후 활성. 이관 후 = codeforge-deploy-review 의 정규 deputy (CONDITIONAL 아님, mandatory 부분).
 - ArchitectPLAgent가 Story의 §13 CONDITIONAL trigger 검토 후 spawn 결정:
   - Backtest/Paper-only: 5 permanent deputy
   - Live touching pre-cutover: 8 (5 + LiveOps + LiveOrdering + [4-tuple sub-tuple])

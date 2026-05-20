@@ -344,6 +344,64 @@ Consumer 프로젝트의 통합테스트 Baseline Suite와 실행 환경을 구�
 
 - **write boundary**: consumer-authored. 모든 codeforge agent 는 본 field write 금지 (§4b write 금지 invariant 절대 보존). AggregateArchitect deputy = read-only (consumer overlay value 를 spawn-time Context Packet 으로 수신 후 mandate 결정에 반영).
 
+### `deploy` 섹션 설명 (CFP-1059 / [ADR-087](adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md))
+
+Deploy lane + Deploy Review lane (CFP-1059 / 6 → 8 lane 확장) 의 consumer overlay 영역. Phase 1 declarative — 실 DeployPLAgent / DeployReviewPLAgent spawn = lane plugin seed (codeforge-deploy / codeforge-deploy-review) 신설 후 활성 (별 sub-Story carrier).
+
+```yaml
+# .claude/_overlay/project.yaml
+
+# [선택] Deploy lane settings (CFP-1059 / ADR-087)
+deploy:
+  # 배포 매커니즘 = blue-green + atomic swap + 3-시간 보존 + 자동 rollback (ADR-087 §결정 5 — 단일 매커니즘 고정).
+  # 본 block 부재 시 deploy lane 가 트리거 안 됨 (Epic close 후 wrapper trigger skip — opt-in).
+
+  # [필수, deploy block 활성 시] 5 sub-field 모두 declare 의무.
+
+  # host_mapping — 배포 대상 호스트 ↔ container 매핑 (multi-host topology declare)
+  host_mapping:
+    - host: <string>                   # SSH target hostname (e.g. "deploy-01.acme.io")
+      containers:                      # 해당 host 에 배포될 container image list
+        - <string>                     # e.g. "acme/api:latest"
+        - <string>                     # e.g. "acme/worker:latest"
+
+  # docker_hub — Docker Hub registry 좌표 (image push/pull SSOT)
+  docker_hub:
+    org: <string>                      # Docker Hub org / username, e.g. "acme"
+    image_prefix: <string>             # image name prefix, e.g. "acme-app-"
+    auth_secret_env: <string>          # GitHub Secrets key for Docker Hub auth (e.g. "DOCKER_HUB_TOKEN")
+
+  # traefik — Traffic 분배 reverse proxy 설정 (atomic swap label flip target)
+  traefik:
+    enabled: <bool>                    # true = Traefik label-based swap / false = manual (custom orchestration)
+    network: <string>                  # Traefik docker network name (e.g. "acme-public")
+    domain_pattern: <string>           # public-facing domain template, e.g. "{service}.acme.io"
+
+  # 1password — Secret provider (1Password Connect SDK lookup, primary)
+  1password:
+    enabled: <bool>                    # true = 1Password Connect primary / false = .env fallback
+    connect_host_env: <string>         # 1Password Connect server URL env key (e.g. "OP_CONNECT_HOST")
+    connect_token_env: <string>        # 1Password Connect token env key (e.g. "OP_CONNECT_TOKEN")
+    vault: <string>                    # vault name, e.g. "Production"
+    # Fallback semantic: 1password.enabled=false 시 deploy lane = .env file SSH 전송 fallback (less secure)
+
+  # ssh_targets — SSH pull deployment 대상 host list (host_mapping host 와 중복 가능)
+  ssh_targets:
+    - host: <string>                   # SSH hostname (host_mapping 의 host 와 일치 권장)
+      user: <string>                   # SSH login user (e.g. "deploy")
+      key_secret_env: <string>         # GitHub Secrets key for SSH private key (e.g. "SSH_DEPLOY_KEY")
+      port: <int>                      # default: 22
+```
+
+- **본 block 부재 시 동작**: deploy lane (CFP-1059) 가 Epic close 후 자동 trigger 되지 않음 (opt-in). 8 lane workflow 완결 시 wrapper Orchestrator = `phase:보안-테스트` 후 terminal (CFP-1059 이전 default 동작 유지). consumer 가 deploy block 등록 후 codeforge-deploy plugin install 시 deploy lane 활성.
+- **fallback semantic**:
+  - `deploy.host_mapping` 부재 = deploy lane 활성화 prerequisite 불충족 → warning + skip (Epic close 진행, manual deploy operator 영역).
+  - `deploy.1password.enabled=false` = `.env` fallback (CI Secrets → SSH 전송, less secure). production 환경 = `true` 권장.
+  - `deploy.traefik.enabled=false` = manual orchestration override (consumer 자체 reverse proxy). codeforge wrapper = blue-green atomic swap automation skip.
+- **schema 7 원칙 binding** (CFP-1059 / [ADR-089](adr/ADR-089-schema-change-7-principles.md)): consumer 의 schema 변경 (DB / inter-plugin contract / API contract / event schema / project.yaml 본 block 자체) 시 ChangePlan §11 self-check 표 의무 (S2 carrier wire). deploy block field 추가 시 본 schema 자체도 7 원칙 적용.
+- **cross-layer 영향** (CFP-1059 / [ADR-090](adr/ADR-090-cross-layer-reference-policy.md)): consumer 가 multi-layer architecture (RDB / 빅데이터 / API / service repo) 운영 시 deploy block 등록 = cross-layer 의존 매핑 source (자동 감지 + 사용자 declare hybrid).
+- **write boundary**: consumer-authored. 모든 codeforge agent 는 본 block write 금지 (§4b write 금지 invariant 절대 보존). DeployPLAgent / DeployReviewPLAgent = read-only (consumer overlay value 를 spawn-time Context Packet 으로 수신 후 배포 sequence 결정에 반영).
+
 ## 3. 예시 (webapp)
 
 ```yaml

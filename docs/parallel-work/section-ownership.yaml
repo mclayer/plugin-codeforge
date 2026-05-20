@@ -451,4 +451,48 @@ owned_sections:
     # ContinuityAgent: ADR-086 §결정 1 axis 분석 의무 + §결정 2 5-checklist self-app
     # 후속 Amendment 시 본 §단락 row append 시 self-app 결과 명시 의무.
 
+  - file: CLAUDE.md
+    section: "레인 8개 · 단계 정의"
+    owner_adr: ADR-087
+    parallel_edit: locked
+    # NOTE (CFP-1059): 본 Story-1 carrier 가 6 → 8 lane 으로 확장 (배포 + 배포 리뷰 신설).
+    # 본 §단락 = wrapper CLAUDE.md "레인 8개 · 단계 정의" 영역, lane spawn 시퀀스 +
+    # Cross-cutting trigger + 8 lane composition map 보유. locked — 후속 lane 추가 /
+    # rename 시 ADR-064 §결정 1 CFP scope unitary 정합 (별 CFP carrier 의무).
+    # ratchet 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합).
+
+  - file: docs/orchestrator-playbook.md
+    section: "§3.1 9 레인 + Cross-cutting 스폰 순서"
+    owner_adr: ADR-087
+    parallel_edit: locked
+    # NOTE (CFP-1059): CFP-1059 Story-1 carrier 가 7 → 9 lane spawn 순서 확장
+    # (배포 + 배포 리뷰 spawn 시퀀스 추가). locked — lane spawn 순서 변경 = ADR-064 §결정 1
+    # CFP scope unitary 정합 (별 CFP carrier 의무). Phase 1 declarative — 실 lane plugin
+    # seed 신설 = S2/S3 sub-Story carrier.
+
+  - file: docs/inter-plugin-contracts/MANIFEST.yaml
+    section: "contracts (kind:contract entry list)"
+    owner_adr: ADR-008
+    parallel_edit: append-only
+    # NOTE (CFP-1059): 7 → 9 entry 확장 (deploy_output + deploy_review_output entry append,
+    # Phase 1 placeholder declare). append-only — 신규 contract 추가만 허용.
+    # ADR-008 §결정 3 row append 정합.
+
+  - file: docs/inter-plugin-contracts/label-registry-v2.md
+    section: "§3. 항목"
+    owner_adr: ADR-008
+    parallel_edit: append-only
+    # NOTE (CFP-1059): v2.41 → v2.42 MINOR bump (14 신규 entry append: 2 phase:* + 5 gate:* +
+    # 2 plugin:* + 7 hotfix-bypass:* + 신규 category enum `deployment`). append-only —
+    # 신규 label entry 추가만 허용. v3.0 BREAKING 변경 시 별 CFP carrier 의무.
+
+  - file: docs/evidence-checks-registry.yaml
+    section: "entries (Deploy lane + Deploy Review lane evidence checks)"
+    owner_adr: ADR-060
+    parallel_edit: append-only
+    # NOTE (CFP-1059): 5 신규 entry append (deploy-lane-spawn-evidence + deploy-review-lane-
+    # spawn-evidence + schema-change-7-principles-self-check + cross-layer-impact-detection +
+    # dependency-order-enforce). 모두 declaration-only Wave 1 (deferred-followup status).
+    # ADR-076 / ADR-082 / ADR-086 precedent 답습. ADR-060 §결정 6 row append 정합.
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)

@@ -1,0 +1,54 @@
+name: Auto-deploy trigger (Phase 1 declarative seed)
+# CFP-1059 Story-1 / ADR-087 §결정 1 + ADR-026 Amendment 6 — Epic close → Deploy lane trigger
+# Tier: warning (continue-on-error, declaration-only Wave 1)
+# Bypass channel: hotfix-bypass:deploy-trigger label (label-registry-v2.42)
+#
+# Phase 1 declarative seed (S2/S3 wire pending):
+#   - 실제 trigger 로직 (Epic close detection + DeployAgent spawn + project.yaml deploy.* config 적용)
+#     = codeforge-deploy plugin seed (sibling carrier Story-N) 후 wire.
+#   - 본 file = ADR-087 mechanical_enforcement_actions: [deploy-lane-spawn-evidence] declaration anchor.
+#     실 jobs body = S2/S3 carrier 영역 (cross-ref ADR-026 Amendment 6 cascade chain).
+#
+# Cascade chain (ADR-088 §결정 1):
+#   Epic close → auto-deploy.yml (본 file) → DeployAgent spawn → 배포 lane → 배포 리뷰 lane → ProductionEvidenceDeputy
+#
+# 승격 path:
+#   warning → blocking-on-pr 승격 시 CFP-NNN carrier PR 가 다음 변경 동반 의무:
+#     1. 본 workflow 의 `continue-on-error: true` 제거
+#     2. branch protection required_status_checks 에 본 workflow job name 추가
+#     3. evidence 3 산출물 제출 (ADR-060 §결정 6 (d) + evidence-checks-registry.yaml row append)
+#     4. codeforge-deploy plugin seed merge 선행 (Phase 1 declarative → Phase 2 mechanical wire)
+
+on:
+  # Epic close trigger = workflow_run (post-merge-followup.yml chain) — S2 wire 영역
+  workflow_dispatch:
+    inputs:
+      epic_key:
+        description: 'Epic Issue KEY (e.g. CFP-1059) — Phase 1 declarative placeholder'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  auto-deploy-declarative-seed:
+    runs-on: ubuntu-latest
+    # warning mode (ADR-060 §결정 5) — Phase 1 declarative seed.
+    # Wave 1 = declaration-only (ADR-040 Amendment 3 §결정 7.C precedent — ADR-082 / ADR-086 답습).
+    continue-on-error: true
+    steps:
+      - name: Phase 1 declarative seed placeholder
+        run: |
+          set -euo pipefail
+          echo "=== Auto-deploy trigger (Phase 1 declarative seed) ==="
+          echo "ADR-087 §결정 1 + ADR-026 Amendment 6 mechanical_enforcement_actions anchor"
+          echo "mechanical action: deploy-lane-spawn-evidence (declaration-only Wave 1)"
+          echo ""
+          echo "Actual job body (Epic close detection + DeployAgent spawn + project.yaml deploy.* apply)"
+          echo "  = codeforge-deploy plugin seed (sibling carrier Story-N) 후 wire."
+          echo ""
+          echo "Phase 1 declarative seed — S2/S3 wire pending"
+          exit 0

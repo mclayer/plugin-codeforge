@@ -21,6 +21,7 @@ related_stories:
   - CFP-107
   - CFP-108
   - CFP-127
+  - CFP-1059  # Amendment 7 — consumer adoption 시 project.yaml `deploy.*` schema 확장 (5 sub-field: host_mapping / docker_hub / traefik / 1password / ssh_targets) — codeforge-deploy lane 신설 정합 (ADR-023 Amendment 1 + ADR-087 sibling carrier). §결정 11 신설
 amendments:
   - ADR-032
   - ADR-027-Amendment-2-CFP-658  # CFP-658 Wave 1 of Epic CFP-431 — Action-blocked manual fallback path normative SSOT
@@ -28,6 +29,7 @@ amendments:
   - ADR-027-Amendment-4-CFP-820  # CFP-699 Wave 3 Story-6 — consumer adoption 시 codeforge.version_pin schema detection 의무 (3-way version atomic invariant consumer layer, ADR-063 Amendment 5 §결정 15 동반). §결정 8 신설
   - ADR-027-Amendment-5-CFP-821  # CFP-699 Wave 3 Story-7 — consumer adoption 시 Issue Forms enumeration 정정 (3종 → audit+bug+story+discussion+codeforge-improvement 5 forms + config.yml) + D4 marker form-level wrap cross-ref (D1 coverage fan-out, ADR-076 §결정 2 표 PR template row 동반). §결정 9 신설
   - ADR-027-Amendment-6-CFP-899  # CFP-858 Wave 4 sub-Epic S2 — consumer adoption detection signals 4-way truth-table SSOT (.claude-plugin/plugin.json + .claude/_overlay/project.yaml 2-signal cross-product → consumer/plugin/mixed/unknown 4-way enum, ADR-083 §결정 1 sibling carrier). §결정 10 신설
+  - ADR-027-Amendment-7-CFP-1059  # CFP-1059 Story-1 — consumer adoption 시 project.yaml `deploy.*` schema 확장 (5 sub-field: host_mapping / docker_hub / traefik / 1password / ssh_targets) — codeforge-deploy lane 신설 정합. §결정 11 신설
 mechanical_enforcement_actions:
   - action_name: section-1-verbatim-postmerge
     decision_binding: "Amendment 2 §결정 6.A — manual fallback path 의 §1 verbatim invariant post-merge lint (warning tier)"
@@ -648,3 +650,96 @@ Cross-ref:
 - [ADR-064](ADR-064-decision-principle-mandate.md) §self-application — Amendment 6 = consumer adoption signal scope 확장 강화 방향 only (신규 ADR-083 = filter mechanism 신설, weakening 0)
 - [ADR-082](ADR-082-write-time-self-write-verification-mandate.md) §결정 6 — `mechanical_enforcement_actions: []` declaration-only Wave 1 retain pattern (본 Amendment 6 의 `consumer-applicability-filter-detection` entry status: declaration-only-Wave-1)
 - `docs/consumer-guide.md` §N consumer adoption signal detection runbook — consumer-side documentation (Phase 2 carrier)
+
+## Amendment 7 — consumer adoption 시 project.yaml `deploy.*` schema 확장 (CFP-1059)
+
+**Effective**: 2026-05-20 (CFP-1059 Story-1 Phase 1 PR merge 시점).
+
+**Carrier**: CFP-1059 Story-1 (ADR-023 Amendment 1 + ADR-087 + ADR-088 sibling carrier). 본 Amendment 7 = consumer adoption signal SSOT 영역 확장 — codeforge-deploy lane 신설 정합 (production cutover-touching consumer Story 진입 시 deploy 설정 SSOT 의무).
+
+### 결정 11 — consumer overlay `.claude/_overlay/project.yaml` `deploy.*` schema 확장 (5 sub-field)
+
+기존 §결정 1 (bootstrap 검증 책임) + Amendment 4 §결정 8 (`codeforge.version_pin` schema detection) + Amendment 6 §결정 10 (4-way detection signals) 정합. 본 Amendment 7 = `deploy.*` schema 영역 신설.
+
+#### §결정 11.A — `deploy.*` 5 sub-field 정의
+
+```yaml
+# .claude/_overlay/project.yaml
+deploy:
+  host_mapping:                   # blue / green stack host mapping (ADR-087 §결정 5 step 1 bound)
+    blue:  <host_alias>           # blue stack host (예: `production-blue`)
+    green: <host_alias>           # green stack host (예: `production-green`)
+  docker_hub:                     # Docker registry SSOT (ADR-087 §결정 5 step 2 bound)
+    registry: <registry_url>      # 예: `docker.io` / `ghcr.io` / `<private-registry>`
+    namespace: <namespace>        # 예: `mclayer`
+    image_repo: <image_repo>      # 예: `mctrader-engine`
+  traefik:                        # Traefik routing SSOT (ADR-087 §결정 5 step 4 traffic switch bound)
+    network:           <docker_network_name>  # 예: `traefik-public`
+    entrypoint:        <entrypoint>           # 예: `websecure`
+    cert_resolver:     <resolver>             # 예: `letsencrypt`
+    blue_label_prefix:  "traefik.http.routers.<service>-blue"
+    green_label_prefix: "traefik.http.routers.<service>-green"
+  1password:                      # 1Password secret SSOT (ADR-087 §결정 5 env injection bound, ADR-014 결정 2 env isolation 정합)
+    vault: <vault_name>           # 예: `production`
+    item:  <item_name>            # 예: `mctrader-engine-env`
+    op_cli_path: <op_cli_path>    # 예: `/usr/local/bin/op` — `op` CLI binary path
+  ssh_targets:                    # SSH target SSOT (ADR-087 §결정 5 step 1/2/3/4/5/6 모두 SSH execution path)
+    - host:      <ssh_host>       # 예: `production-blue.example.com`
+      user:      <ssh_user>       # 예: `deploy`
+      port:      <ssh_port>       # default 22
+      key_path:  <ssh_key_path>   # 예: `~/.ssh/production_ed25519`
+      stack:     <blue|green>     # host_mapping cross-ref
+```
+
+#### §결정 11.B — 5 sub-field semantic invariant
+
+| Sub-field | Mandatory | Schema invariant | ADR cross-ref |
+|---|---|---|---|
+| `host_mapping` | YES (production cutover-touching Story 진입 시) | `{blue, green}` 2-key dict (single-host blue-green deployment) | ADR-087 §결정 5 step 1+5+7 (blue provision / green decommission / blue retention) |
+| `docker_hub` | YES | `{registry, namespace, image_repo}` 3-key dict | ADR-087 §결정 5 step 2 (image pull / tag) |
+| `traefik` | YES | `{network, entrypoint, cert_resolver, blue_label_prefix, green_label_prefix}` 5-key dict | ADR-087 §결정 5 step 4 (traffic switch) |
+| `1password` | YES | `{vault, item, op_cli_path}` 3-key dict | ADR-087 §결정 5 env injection (ADR-014 결정 2 env isolation 정합) |
+| `ssh_targets` | YES | array of `{host, user, port, key_path, stack}` — minimum 2 entries (blue + green) | ADR-087 §결정 5 step 1-6 all SSH execution path |
+
+#### §결정 11.C — Schema detection mechanism (filesystem-only, Amendment 6 §결정 10.B 정합)
+
+- **Detection signal**: `[[ -f .claude/_overlay/project.yaml ]] && yq '.deploy' .claude/_overlay/project.yaml | grep -q "host_mapping"` (existence + sub-field non-null check)
+- **Existence check only invariant** (Amendment 6 §결정 10.C 정합) — content semantic verify (예: `host_mapping.blue` 가 reachable 한 host 인지) 는 본 schema scope 외 (runtime DeployPL 검증 책임 영역)
+- **Network call 0** — filesystem-only (Amendment 6 §결정 10.B offline-first invariant 정합)
+
+#### §결정 11.D — fallback semantic (warning-first)
+
+- `deploy.*` 미등록 + Story `production_cutover_touching: false` → silent skip (production cutover-touching 영역 아닌 Story 는 deploy.* schema 무관)
+- `deploy.*` 미등록 + Story `production_cutover_touching: true` → **warning emit** (DeployPL spawn 전 consumer 에 schema 작성 안내)
+- `deploy.*` 등록 + sub-field 누락 (`host_mapping.blue` 미존재 등) → **blocking-on-pr enforce** (DeployPL 진입 차단, Story §12 Deploy section 작성 불가)
+- Amendment 4 §결정 8 `codeforge.version_pin` fallback semantic 답습 (warning-first → 등록 후 blocking, ADR-027 fallback path 패턴)
+
+#### §결정 11.E — wrapper self-app exemption (Amendment 6 §결정 10.D 정합)
+
+wrapper repo (`mclayer/plugin-codeforge`) = mixed repo 분류 → `deploy.*` schema 검증 skip (self-loop 차단 — wrapper repo 가 자기 production cutover 영역 아님, ADR-088 §결정 5 wrapper-self-app N/A 정합).
+
+#### §결정 11.F — orthogonality invariant (Amendment 4 §결정 8 patterns 답습)
+
+- `deploy.*` 가용성 ≠ `codeforge.version_pin` 가용성 (independent signals, conflate 금지)
+- `deploy.*` 가용성 ≠ `bootstrap.fallback_mode` 가용성 (Amendment 2 §결정 6 fallback path 패턴 — independent signals)
+- 모든 sub-field 가 independent (예: `1password` 만 등록 + `traefik` 미등록 = 가능 — Story §12 Deploy section author 시 `deploy.traefik` 영역 만 blocking)
+
+### 해소 기준 (Amendment 7)
+
+ADR-027 frontmatter `is_transitional: false` (permanent policy). Amendment 7 = consumer adoption signal scope 확장 (`deploy.*` schema 영역 추가) = governance 강화 방향 ratchet — ADR-058 §결정 5 sunset_justification 불요 (강화 방향, ADR-064 top-down self-application 정합 — consumer adoption scope 확장 only, weakening 0).
+
+상세 Change Plan: `codeforge-internal-docs/wrapper/change-plans/cfp-1059-deploy-lane-and-lifecycle-extension.md` §3.4 (consumer overlay schema).
+
+### Cross-references
+
+- ADR-023 Amendment 1 (CFP-1059 / Story-1 sibling carrier — lane plugin 6 → 8 확장)
+- ADR-087 (CFP-1059 / Story-1 신설 — Deploy lane as 7th lane plugin, §결정 5 6-step Deploy procedure SSOT — 본 Amendment 7 의 5 sub-field 가 6-step 의 input)
+- ADR-088 (CFP-1059 / Story-1 신설 — Deploy Review lane + ProductionEvidence transfer)
+- ADR-014 결정 2 (env isolation — `1password` sub-field 정합)
+- ADR-72 §결정 5 (epic-cutover-gate-evidence-quad-check — production cutover-touching Epic scope 정합)
+- ADR-027 §결정 1 (bootstrap 검증 책임 — 본 Amendment 7 = 검증 항목 `deploy.*` 차원 추가)
+- ADR-027 Amendment 4 §결정 8 (`codeforge.version_pin` schema detection — 본 Amendment 7 의 fallback semantic 패턴 답습)
+- ADR-027 Amendment 6 §결정 10 (4-way detection signals — 본 Amendment 7 = `deploy.*` signal SSOT 확장)
+- ADR-083 §결정 1 (consumer-applicability filter 4-way enum — consumer repo 만 schema 검증 fire)
+- ADR-064 §self-application top-down ratchet (강화 방향 only, 약화 0)
+- ADR-058 §결정 5 sunset_justification (ratchet 강화 방향 = sunset 면제, is_transitional: false 보존)
