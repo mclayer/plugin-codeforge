@@ -2,7 +2,7 @@
 
 [`codeforge`](https://github.com/mclayer/plugin-codeforge) CFP-1059 — Deploy Review (배포 리뷰) lane plugin.
 
-DeployReviewPLAgent (Opus) + DeployReviewWorkerAgent (Sonnet) + ProductionEvidenceDeputy (CONDITIONAL deputy, ADR-072 이관). **production 환경 성능 측정을 1st-class 검증 phase 로 격상** ([ADR-088](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md)). 성능 기준 미충족 시 요구사항 / 설계 lane 으로 back.
+DeployReviewPLAgent (Opus) + DeployReviewWorkerAgent (Sonnet) + ProductionEvidenceDeputy (CONDITIONAL deputy, ADR-72 이관). **production 환경 성능 측정을 1st-class 검증 phase 로 격상** ([ADR-088](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md)). 성능 기준 미충족 시 요구사항 / 설계 lane 으로 back.
 
 ## Dependencies
 
@@ -42,7 +42,7 @@ DeployReviewPLAgent (Opus) + DeployReviewWorkerAgent (Sonnet) + ProductionEviden
 
 - **DeployReviewPLAgent** (Opus) — 성능 측정 1st-class lead. smoke / 성능 비교 / cutover 사후 검증 verdict 종합. 성능 미충족 시 root cause 진단 + debate-protocol-v1 trigger + lane FIX dispatch.
 - **DeployReviewWorkerAgent** (Sonnet) — smoke test (HTTP shadow / WebSocket·daemon 대기) + 성능 baseline 수집 + cutover 사후 측정.
-- **ProductionEvidenceDeputyAgent** (CONDITIONAL) — production cutover evidence quad (functional / security / monitoring / testing). ADR-072 이관.
+- **ProductionEvidenceDeputyAgent** (CONDITIONAL) — production cutover evidence quad (functional / security / monitoring / testing). ADR-72 이관.
 
 ### 검증 3종 (한 번 끝나는)
 
@@ -66,6 +66,6 @@ DeployReviewPLAgent (Opus) + DeployReviewWorkerAgent (Sonnet) + ProductionEviden
 - [ADR-088](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — Deploy Review lane 신설 + ProductionEvidenceDeputy 이관 (본 plugin SSOT carrier)
 - [ADR-087](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) — Deploy lane (직전)
 - [ADR-042](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-042-agent-model-selection-policy.md) — Amendment 9 (DeployReviewPL Opus / Worker Sonnet)
-- [ADR-072](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md) — ProductionEvidenceDeputy
+- [ADR-72](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md) — ProductionEvidenceDeputy
 - [ADR-068](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-068-boundary-completeness-invariants.md) — I-5 성능 측정 dimensional empirical grounding
 - [ADR-059](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-059-debate-protocol-v1.md) — debate-protocol-v1

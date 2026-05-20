@@ -32,7 +32,7 @@ consumer `project.yaml deploy.services[].verification_mode` 명시 (ADR-027 Amen
 ArchitectPL 최종 판정 (DeveloperPL 1차 진단 후 — ADR-035)
 ```
 
-## cutover evidence 4-quad (ProductionEvidenceDeputy — ADR-072 이관, production cutover-touching 시)
+## cutover evidence 4-quad (ProductionEvidenceDeputy — ADR-72 이관, production cutover-touching 시)
 
 | Quad | 내용 |
 |---|---|

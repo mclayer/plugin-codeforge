@@ -19,7 +19,7 @@ codeforge family 6 → 8 lane 확장의 #7 배포 리뷰 lane plugin 신설 ([AD
   - Opus tier = adversarial debate 자동 발동 영역 mandatory (ADR-042 §결정 1)
 - `agents/DeployReviewWorkerAgent.md` — 배포 리뷰 worker (Sonnet tier):
   - smoke test (HTTP shadow / WebSocket·daemon 대기 mode) + 성능 baseline 수집 (latency p50/p95/p99 / throughput / error rate / CPU·memory) + cutover 사후 검증
-- `agents/ProductionEvidenceDeputyAgent.md` — **ProductionEvidenceDeputy ownership 이관** (ADR-088 §결정 4 + ADR-072 Amendment N):
+- `agents/ProductionEvidenceDeputyAgent.md` — **ProductionEvidenceDeputy ownership 이관** (ADR-088 §결정 4 + ADR-72 Amendment 4):
   - codeforge-design CONDITIONAL deputy → codeforge-deploy-review 정식 deputy
   - parent_pl: ArchitectPLAgent → DeployReviewPLAgent / ssot_position: codeforge-design → codeforge-deploy-review
   - mandate body = ADR-72 §결정 1-7 verbatim 유지 (production evidence quad 4 source / EPIC CLOSED gate / Family atomic canary pin)
