@@ -16,7 +16,7 @@ related_adrs:
   - ADR-044  # §결정 5 — IntegrationTestAgent single-shot pattern
   - ADR-048  # CI-native test execution + Amendment 1 DeveloperPL diagnosis
   - ADR-041  # doc location registry (integration_test_baseline 15th entry)
-  - ADR-073  # verify-before-assert (frozen-SHA pin discipline)
+  - ADR-073  # verify-before-assert (`frozen-SHA pin` discipline)
   - ADR-082  # write-time self-write verification mandate
 related_stories:
   - CFP-882  # parent Epic (Wave 4 sub-Epic)
@@ -56,13 +56,13 @@ declarative-only baseline = single-shot read-only verify (실 spawn 0건, Story-
 CFP-954 carrier — Wave 4 sub-Epic #882 첫 사례:
 - **Story-3 merge = baseline v1** (declarative-only, story_keys [CFP-906, CFP-932, CFP-954] + frozen_shas + CSC 3 entry)
 - **Story-4 merge = baseline v2** (promotion criteria 4-tuple executable baseline)
-- **Story-5 merge = baseline v3 final pin** (downgrade asymmetry invariant + Wave 4 sub-Epic close gate)
+- **Story-5 merge = baseline v3 최종 고정** (downgrade asymmetry invariant + Wave 4 sub-Epic close gate)
 
 Naming convention (DataMigrationArch §G.5): `baseline-v<N>-<carrier-key>.yaml` immutable append-only (기존 v1 file 보존, history immutable, Story-4 promotion script self-hash verify 의무).
 
 ## 4. Pact contract testing precedent (Researcher §A.3 정합)
 
-Epic-level integration test = **contract testing** (Pact precedent) framing 가능. baseline 자동 승격 = contract version pin discipline.
+Epic-level integration test = **contract testing** (Pact precedent) framing 가능. baseline 자동 승격 = contract version 고정 discipline.
 
 - Provider ↔ consumer contract verification — codeforge family plugin 의 inter-plugin-contracts versioning (`MANIFEST.yaml`) 답습
 - Pact `pact_broker` = baseline yaml repository (codeforge family = git-tracked `tests/integration/stories/<EPIC_KEY>/`)

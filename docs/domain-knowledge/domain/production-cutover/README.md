@@ -19,7 +19,7 @@ related_adrs:
   - ADR-016  # Amendment 3 family scope production publish (cross-ref)
   - ADR-063  # Amendment 6 §결정 17 marketplace channels[] matrix (cross-ref)
   - ADR-040  # worktree-first convention
-  - ADR-073  # verify-before-assert (frozen-SHA pin)
+  - ADR-073  # verify-before-assert (`frozen-SHA pin`)
   - ADR-082  # write-time self-write verification mandate
 related_stories:
   - CFP-699  # grandparent Epic
@@ -45,7 +45,7 @@ updated: 2026-05-18
 | 2. runtime activation | CFP-932 (MERGED) | CLI/script/migration tool/drift detection workflow active |
 | **3. production cutover** | **CFP-954 (본 Story)** | ProductionEvidenceDeputy mandate first activation + IntegrationTestAgent Epic-level reactivation + production-touching label registry append |
 | 4. promotion criteria | Story-4 (TBD) | promotion criteria 4-tuple + marketplace.json channels[] populate |
-| **5. downgrade asymmetry** | **CFP-1014 (MERGED)** | canary→beta→stable downgrade semantic invariant (reconcile-protocol-v1 v1.12 §4.14 `downgrade_asymmetry_marker.status: wired` declarative SSOT, §4.8 단독 promotion 선례 verbatim 답습, partial-active state 도입 0 / field shape 변경 0 / closed_enum length=2 invariant + open_extension:false) + **Wave 4 sub-Epic #882 close final pin (5/5 Story complete)** |
+| **5. downgrade asymmetry** | **CFP-1014 (MERGED)** | canary→beta→stable downgrade semantic invariant (reconcile-protocol-v1 v1.12 §4.14 `downgrade_asymmetry_marker.status: wired` declarative SSOT, §4.8 단독 promotion 선례 verbatim 답습, partial-active state 도입 0 / field shape 변경 0 / closed_enum length=2 invariant + open_extension:false) + **Wave 4 sub-Epic #882 close 최종 고정 (5/5 Story complete)** |
 
 ## 2. 4 industry exemplars (empirical anchor)
 
