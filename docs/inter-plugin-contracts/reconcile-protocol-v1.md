@@ -371,6 +371,22 @@ consumer 가 D4 marker block 도입 전 customization 영역 보유 시:
 
 - (j) Wave 4 sub-Epic CFP-858 S2 (CFP-899) merge — consumer-applicability filter (repo-kind detection truth-table + positive whitelist horizontal filter layer). **v1.9 발동 완료 (본 contract)** — §4.12 `consumer_applicability_filter_binding` block 신설 (4-way enum closed-set `plugin`/`consumer`/`mixed`/`unknown` + positive whitelist `consumer_applicable_workflows.txt` + mixed repo full workflow set exemption + fail-closed unknown semantic + hook insertion point CFP-898 §4.11 hook pattern 답습 sequential composition). ADR-083 신규 §결정 1-6 (wrapper-side filter mechanism SSOT — 4-way enum + positive whitelist + mixed exemption + fail-closed unknown + hook insertion point + wrapper self-app verify) + ADR-027 Amendment 6 §결정 10 (consumer-side signal SSOT — filesystem-only 2-signal cross-product `.claude-plugin/plugin.json` + `.claude/_overlay/project.yaml` 4-way truth-table + signal semantic invariant + wrapper self-app exemption + fail-closed unknown + boundary disjoint invariant) sibling carrier. CFP-898 §4.11 vertical closure resolver 와 sequential composition (filter 먼저 → closure 다음 = hook order: CFP-898 closure resolver → CFP-899 consumer-applicability filter → cp). exit_code_contract: 0 = filter OK + proceed to cp / 1 = filter abort (unknown repo_kind / detect-repo-kind.py error) → return 1 ABORT (CFP-898 return 2 와 분리 — filter 는 return 1) / 2 = filter warning (degraded — Phase 2 reserve). filesystem-only invariant (network call 0 / gh api 0 / marketplace.json membership check 0 — offline-first + trust boundary 명확 + primary signal 단일 read 비용 < 1ms, SecurityArch + OpRiskArch deputy primary recommendation). mctrader-data#81 14 failing checks horizontal filter layer evidence (Epic CFP-858 결함 2 root cause — wrapper-only workflow 무차별 유입 silent harm super-class — CFP-898 closure missing 차단의 dual axis). MINOR bump (kind:registry sibling sync 면제, ADR-010 §결정 2 + ADR-008 §결정 2, plugin.json bump 0 = marketplace_sync_declared:false). 의미 invariant family_7_plugin_atomic 변경 0 (ADR-016 §결정 1 SSOT 무변경 — consumer-applicability filter = wholesale_mirror branch horizontal gating layer 1 추가만). §4.3 (c) v1.2 / (d) v1.3 / (g) v1.4 / (e) v1.5 / (h) v1.6 / (i) v1.7 trigger + binding block 패턴 verbatim 답습 (§2.5 FORM 옵션 (i)).
 
+### §4.3 (k) sunset boundary (CFP-1111 carrier)
+
+본 binding (dependency_bundle_integrity_binding, v1.10 CFP-900 carrier) 는 CFP-1111 walker paradigm 으로 carry.
+
+- **metric**: walker 의 walk entry 가 dependency bundle integrity check 동일 enforce + bundle 부분 적용 0건 / N walk
+- **who**: imperative-walker-protocol-v1 walker schema field `dependency_bundle_check` + UpgradeAgent
+- **how**: walker integration test 안 dependency bundle integrity semantic equivalent + ADR-076 sunset 후 carrier 이전 (Wave 1 Story-3)
+
+### §4.3 (l) sunset boundary
+
+본 binding (consumer-applicability binding, v1.11) 는 ADR-083 sunset 정합 — walker `applicable_to` field 로 carry. ADR-083 sunset_justification 참조 (Task 2 commit `1da0b2e`).
+
+### §4.3 (m) sunset boundary
+
+본 binding (result_fidelity_binding, v1.10 §4.13 사전 carrier) 는 ADR-026 Amendment 5 sibling carrier role sunset 정합 — walker `walk_result` 4-value enum carry. Task 3 commit `f1c4c97` 참조.
+
 ### 4.4 Ratchet 보존 의무 (downgrade 차단)
 
 본 contract 의 모든 Amendment 는 강화 방향만 허용 (ADR-064 top-down self-application). 약화 방향 차단:
