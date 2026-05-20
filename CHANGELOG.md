@@ -7,6 +7,47 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.97.0] - 2026-05-20
+
+### Changed (CFP-1086 Story-3 (Wave 2) — deputy-mandate skill RACI 표준 body 4-way overlap zone codify)
+
+본 release = CFP-1086 Wave 2 Story-3 carrier (W1 Story-1+S2 merged baseline 위 body 채움). doc-only fast-path (ADR-054 Category 2 — skill body 확장, ADR / src / tests 변경 0). Story-1 = skeleton + cross-ref. Story-3 (본 release) = 12-cell matrix R/A/C/I 4-column body 채움.
+
+#### Changed
+
+- **`skills/deputy-mandate/SKILL.md`** — `## RACI 표준 row 형식 (Story-3 — 4-way overlap zone body)` 단락 (skeleton → body 전환):
+  - **4-column 열 정의** — R (primary 결정권자) / A (모든 row = ArchitectAgent chief tie-break ladder 3단계, ADR-068 Amd 2) / C (co-author + 양방향 dialog) / I (일방향 통지).
+  - **4-way 12-cell matrix** — 3 sub-axis (Security / InfraOp / TestContract) × 4 cross-axis (Aggregate / Data OLAP / Module / APIContract) = 12 Cell × R/A/C/I 4-column row. CFP-1086 §7+3+1 primary axis matrix 의 cross-axis 영역 보강.
+  - **Cell 1.1 ~ 3.4 each row body** — 12 Cell 각 R deputy primary author + C deputy co-author + I deputy 통지 영역 + 책임 1-line description:
+    - Cell 1.1 Security × Aggregate (PII column type / encryption-at-rest / RDB audit log schema)
+    - Cell 1.2 Security × Data (OLAP PII 익명화 / Parquet column 마스킹)
+    - Cell 1.3 Security × Module (trust boundary module 배치 / dependency direction)
+    - Cell 1.4 Security × APIContract (auth / authz / rate limit / input validation)
+    - Cell 2.1 InfraOp × Aggregate (connection pool / replica / advisory lock)
+    - Cell 2.2 InfraOp × Data (OLAP scan / streaming throttle / batch window)
+    - Cell 2.3 InfraOp × Module (runtime module 분리 / hot reload)
+    - Cell 2.4 InfraOp × APIContract (transport-level retry / circuit breaker / timeout / cancel-on-disconnect)
+    - Cell 3.1 TestContract × Aggregate (migration forward/backward + idempotency test)
+    - Cell 3.2 TestContract × Data (OLAP fixture / streaming replay / lineage test)
+    - Cell 3.3 TestContract × Module (module boundary test / dependency test)
+    - Cell 3.4 TestContract × APIContract (contract testing — Pact / OpenAPI / GraphQL schema validate) — **예외 R=APIContractArch** primary (§8.6 contract testing primary axis 정합, CFP-1086 primary axis matrix row 정합) + C=TestContractArch (CI placement + orchestration disjoint axis).
+  - **Cell selection heuristic 4-step** — (1) single-axis 결정 → primary axis matrix 직접 lookup, RACI 미적용 / (2) 2-axis 이상 overlap → 본 RACI 12-cell row 활성 (R+C dialog, A sign-off, I 통지) / (3) R+C 합의 부재 → ladder 2단계 (ADR-068 invariant) / (4) invariant 적용 후 미해소 → ladder 3단계 (chief judgement + ADR Amendment 발의).
+  - **Cross-ref 강화** — ADR-068 Amendment 2 ladder 3단계 wording SSOT + ADR-086 axis 분석 + 5-checklist + review-verdict-v4 v4.6 `boundary_completeness_self_check_passed` scope expansion + CFP-1086 Story-2 (Cell 1.4 / 2.4 / 3.4 의 C/R 영역 detail SSOT) + codeforge-design CLAUDE.md RACI section mirror (wrapper SSOT 참조).
+- **`.claude-plugin/plugin.json`**: 5.96.0 → **5.97.0** MINOR (ADR-037 — skill body 확장 + cross-repo sibling carrier governance behavior change). description 갱신 (CFP-1086 Story-3 RACI body 12-cell codify entry 추가).
+
+#### Related ADRs
+
+- ADR-042 Amendment 8 (CFP-1086 Story-1 carrier — 7+3+1 deputy roster, 본 RACI matrix 의 axis 정의 입력)
+- ADR-068 Amendment 2 (CFP-1086 Story-1 sibling carrier — chief tie-break ladder 3 단계 1단계 RACI lookup SSOT)
+- ADR-086 (CFP-1086 Story-1 sibling 신설 carrier — Deputy 신설 결정 framework, RACI codify = mechanism gap 해소 ratchet)
+- ADR-058 §결정 5 (ADR sunset criteria mandate — top-down ratchet 정합, additive only)
+- ADR-064 §결정 7 (decision principle mandate — top-down ratchet, 강화 방향만 허용)
+- ADR-054 (doc-only fast-path Category 2 — skill body 확장)
+
+#### Marketplace sibling sync (Orchestrator 영역, 별도 cross-repo PR)
+
+- `mclayer/marketplace` `marketplace.json` `plugins[name=codeforge]` mirrored field 4종 (name / version / description / author) sync. ADR-063 atomic invariant. Sibling repos cross-repo sync (wrapper + codeforge-design = 2 plugin repos this Story; internal-docs Story file + marketplace sync = Orchestrator scope).
+
 ## [5.96.0] - 2026-05-20
 
 ### Added (CFP-1086 Story-1 — BackendArchEpic Phase 2 design lane 7+3+1 roster 재편)

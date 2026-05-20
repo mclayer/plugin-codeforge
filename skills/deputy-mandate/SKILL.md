@@ -122,41 +122,158 @@ CFP-1086 Amendment 8 이전 baseline (5+3 roster):
 
 > **CFP-1086 Story-1 보강 완료 (BackendArchEpic Phase 2 — 7+3+1 roster 재편)**: CFP-1086 / ADR-042 Amendment 8 + ADR-068 Amendment 2 + ADR-086 신설 atomic carrier 가 5+3 → 7+3+1 (AggregateArch + APIContractArch 신설 + ModuleArch rename + DataArch 축소 + AggregateArch CONDITIONAL applicability P2) 재편. 본 SKILL.md 보강: (a) frontmatter description 갱신 (5+3 → 7+3+1) (b) "Deputy mandate 매트릭스" 단락 header CFP-1086 layer 추가 (c) "CFP-1086 7+3+1 primary axis matrix" 신규 단락 (canonical SSOT — owner deputy per Change Plan sub-section + axis disjoint 검증 4 영역) (d) CFP-676 historical 5+3 matrix retain (superseded marker 추가) (e) "RACI 표준 row 형식 (Story-3 carrier skeleton)" 신규 단락 (4-column R/A/C/I body 채움 = Story-3 별 PR). agent file 실 신설/rename = 본 Story-1 codeforge-design plugin sibling PR (doc-only fast-path ADR-054 5-repo atomic).
 
-## RACI 표준 row 형식 (Story-3 carrier — skeleton)
+## RACI 표준 row 형식 (Story-3 — 4-way overlap zone body)
 
-> 본 단락 = **skeleton only** — RACI body 채움 = **Story-3** (CFP-1086 Wave 2 carrier) 별 PR. 본 Story-1 (skeleton 신설) → Story-3 (body 4-way overlap zone codify) sequential prerequisite.
+CFP-1086 / ADR-068 Amendment 2 chief tie-break ladder 3 단계 의 **1단계 (RACI matrix lookup)** 입력 SSOT — 4-way overlap zone 의 명시적 R/A/C/I 4-column row 형식. 본 단락 body = **CFP-1086 Wave 2 Story-3 carrier** (skeleton → body 전환 완료).
 
-CFP-1086 / ADR-068 Amendment 2 chief tie-break ladder 3 단계 의 **1단계 (RACI matrix lookup)** 입력 SSOT — 4-way overlap zone 의 명시적 R/A/C/I 4-column row 형식.
+### 4-column 열 정의
 
-### 4-column row 형식 정의
+- **Responsible (R)** — primary 결정권자 (single role per row, 결정 권한 owner). 실 author / 산출물 1차 작성 책임.
+- **Accountable (A)** — approver / final sign-off (chief tie-break ladder 3단계 trigger 영역 — **ArchitectAgent chief author**). 모든 row 의 A = ArchitectAgent (chief tie-break ladder ADR-068 Amendment 2 §결정 1).
+- **Consulted (C)** — co-author / 협업 (mandate scope 가 partial overlap, input 제공). 결정권 없으나 행위 결정 전 양방향 dialog 의무.
+- **Informed (I)** — notified only (mandate scope 외, 변경 영향 인지 의무). 일방향 통지 — dialog 없음.
 
-| 영역 (Change Plan sub-section) | Responsible (R) | Accountable (A) | Consulted (C) | Informed (I) |
+### 4-way overlap zone (3 sub-axis × 4 cross-axis = 12 cells)
+
+본 12-cell matrix = CFP-1086 §7+3+1 primary axis matrix 의 cross-axis 영역 보강. primary single-axis 결정은 §primary axis matrix lookup, **다축 overlap 영역**만 본 RACI lookup 으로 처리.
+
+| Sub-axis ↓ \\ Cross-axis → | Aggregate (RDB OLTP) | Data (빅데이터 OLAP) | Module (boundary + dependency) | APIContract (transport + DTO) |
 |---|---|---|---|---|
-| (Story-3 에서 4-way overlap zone 채움) | (primary 결정권자) | (approver, chief tie-break ladder ADR-068 Amd 2 §3단계) | (co-author / 협업) | (notified only) |
+| **Security** (PII / 권한 / audit log / threat) | Cell 1.1 | Cell 1.2 | Cell 1.3 | Cell 1.4 |
+| **InfraOp** (DR / clock / rate / env / container) | Cell 2.1 | Cell 2.2 | Cell 2.3 | Cell 2.4 |
+| **TestContract** (커버리지 / 경계 / invariant / §8.5/§8.6) | Cell 3.1 | Cell 3.2 | Cell 3.3 | Cell 3.4 |
 
-**열 정의**:
+### Row 1 — Security cross-axis (Cell 1.1 ~ Cell 1.4)
 
-- **Responsible (R)** — primary 결정권자 (single role per row, 결정 권한 owner)
-- **Accountable (A)** — approver / final sign-off (chief tie-break ladder 3단계 trigger 영역 — ArchitectAgent chief author)
-- **Consulted (C)** — co-author / 협업 (mandate scope 가 partial overlap, input 제공)
-- **Informed (I)** — notified only (mandate scope 외, 변경 영향 인지 의무)
+#### Cell 1.1 — Security × Aggregate (PII column type / encryption-at-rest / RDB audit log schema)
 
-### Story-3 carrier scope (4-way overlap zone enumeration)
+| Role | Deputy | 책임 |
+|---|---|---|
+| **R** | SecurityArchitectAgent | PII 분류 정책 + 권한 모델 + audit log invariant 정의 (what / who / why) |
+| **A** | ArchitectAgent | chief tie-break ladder 3단계 — RACI lookup PASS 영역 |
+| **C** | AggregateArchitectAgent | RDB OLTP column type / encryption-at-rest schema co-author + Alembic migration 정합 (how stored) |
+| **I** | TestContractArchitectAgent | §8 PII redaction test + audit log 커버리지 인지 |
 
-Story-3 (CFP-1086 Wave 2 — 4-way overlap zone RACI codify) 가 다음 영역 row 채움:
+#### Cell 1.2 — Security × Data (OLAP PII 익명화 / 보존 정책 / Parquet column 마스킹)
 
-1. **§3 aggregate ↔ §3 module placement** — AggregateArch + ModuleArch co-author (R/A/C/I)
-2. **§3 API surface ↔ §3 module public API** — APIContractArch + ModuleArch co-author (R/A/C/I)
-3. **§3 빅데이터 OLAP ↔ §3 RDB OLTP cross-layer (ELT/ETL/CDC)** — DataArch + AggregateArch co-author (R/A/C/I) — deferred carrier (sibling Epic 산출 후 결정 가능성)
-4. **§7.5 PII 정책 ↔ §11 PII persistence schema** — SecurityArch + AggregateArch (RDB OLTP) / DataArch (OLAP) co-author (R/A/C/I)
-5. **§7.4 운영 파라미터 ↔ §3 트랜잭션 의미** — InfraOperationalArch + AggregateArch co-author (R/A/C/I)
-6. **§8.6 통합 테스트 contract ↔ contract testing** — TestContractArch + APIContractArch co-author (R/A/C/I)
-7. **§11.6 idempotency** — AggregateArch primary (RDB OLTP) + InfraOperationalArch consult + LiveOrdering consult (order side, CONDITIONAL Live) (R/A/C/I)
+| Role | Deputy | 책임 |
+|---|---|---|
+| **R** | SecurityArchitectAgent | OLAP PII 정책 (익명화 알고리즘 + 보존 기간 + GDPR/CCPA 정합 + downstream re-identification 차단) |
+| **A** | ArchitectAgent | chief tie-break ladder 3단계 |
+| **C** | DataArchitectAgent | Parquet column 마스킹 / partition pruning / OLAP query plan PII 영역 격리 (how realized in OLAP) |
+| **I** | TestContractArchitectAgent | §8 OLAP PII 통합 테스트 fixture redaction 인지 |
+
+#### Cell 1.3 — Security × Module (trust boundary module 배치 / dependency direction)
+
+| Role | Deputy | 책임 |
+|---|---|---|
+| **R** | SecurityArchitectAgent | trust boundary 정의 + threat model — 어디서 외부 입력이 들어오는가, 누가 무엇을 신뢰하는가 |
+| **A** | ArchitectAgent | chief tie-break ladder 3단계 |
+| **C** | ModuleArchitectAgent | trust boundary 가 module / package 경계와 정합인지 + dependency direction (untrusted → trusted 일방향) 보장 |
+| **I** | InfraOperationalArchitectAgent | §7.4.1 trust boundary 의 runtime container / network mode 영역 인지 |
+
+#### Cell 1.4 — Security × APIContract (auth / authz / rate limit / input validation)
+
+| Role | Deputy | 책임 |
+|---|---|---|
+| **R** | SecurityArchitectAgent | §7.3 auth/authz 정책 + §7.6 위협↔완화 매핑 (OWASP API Security Top 10) + token / session / scope 정의 |
+| **A** | ArchitectAgent | chief tie-break ladder 3단계 |
+| **C** | APIContractArchitectAgent | API endpoint 별 auth scheme (OAuth2 / JWT / mTLS) + rate limit header 표준 (RFC 6585 + X-RateLimit-*) + input validation schema (OpenAPI / JSON Schema) co-author |
+| **I** | InfraOperationalArchitectAgent | §7.4.4 rate limit runtime enforcement (transport-level retry / circuit breaker) 인지 |
+
+### Row 2 — InfraOp cross-axis (Cell 2.1 ~ Cell 2.4)
+
+#### Cell 2.1 — InfraOp × Aggregate (connection pool / replica / advisory lock)
+
+| Role | Deputy | 책임 |
+|---|---|---|
+| **R** | InfraOperationalArchitectAgent | §7.4 운영 파라미터 — connection pool size / replica failover / DB advisory lock timeout / restart policy (DR 영역) |
+| **A** | ArchitectAgent | chief tie-break ladder 3단계 |
+| **C** | AggregateArchitectAgent | 트랜잭션 경계 / isolation level / aggregate boundary 가 pool / replica / lock 정책과 정합인지 (semantics 영역) |
+| **I** | TestContractArchitectAgent | §8.5 stateful test (restart invariant + replica failover scenario) 인지 |
+
+#### Cell 2.2 — InfraOp × Data (OLAP scan / streaming throttle / batch window)
+
+| Role | Deputy | 책임 |
+|---|---|---|
+| **R** | InfraOperationalArchitectAgent | OLAP 운영 파라미터 — scan timeout / streaming backpressure / batch window 정책 / 백필 rate (DR + 7.4.4 rate 영역) |
+| **A** | ArchitectAgent | chief tie-break ladder 3단계 |
+| **C** | DataArchitectAgent | OLAP query plan / partition strategy / streaming pipeline lineage 가 운영 파라미터와 정합인지 |
+| **I** | TestContractArchitectAgent | §8.5 streaming replay / backfill idempotency test 인지 |
+
+#### Cell 2.3 — InfraOp × Module (runtime module 분리 / hot reload)
+
+| Role | Deputy | 책임 |
+|---|---|---|
+| **R** | InfraOperationalArchitectAgent | runtime container 분리 (§7.4.6 container) + hot reload 정책 + module 단위 process boundary |
+| **A** | ArchitectAgent | chief tie-break ladder 3단계 |
+| **C** | ModuleArchitectAgent | module / package boundary 가 runtime process boundary 와 정합인지 + dependency direction 이 deploy 단위 정합인지 |
+| **I** | SecurityArchitectAgent | runtime container secret mount / image layer 누설 영역 (§7.5) 인지 |
+
+#### Cell 2.4 — InfraOp × APIContract (transport-level retry / circuit breaker / timeout / cancel-on-disconnect)
+
+| Role | Deputy | 책임 |
+|---|---|---|
+| **R** | InfraOperationalArchitectAgent | §7.4.2 disconnect / §7.4.4 rate limit — transport retry policy (exponential backoff + jitter) + circuit breaker 임계 + connection timeout + cancel-on-disconnect 정합 |
+| **A** | ArchitectAgent | chief tie-break ladder 3단계 |
+| **C** | APIContractArchitectAgent | API contract level retry-safety (idempotent verb 정합 + retry header + 5xx vs 4xx mapping + GraphQL persisted query retry semantics) co-author |
+| **I** | TestContractArchitectAgent | §8.5 stateful test (cancel-on-disconnect + circuit breaker open/close transition) 인지 |
+
+### Row 3 — TestContract cross-axis (Cell 3.1 ~ Cell 3.4)
+
+#### Cell 3.1 — TestContract × Aggregate (migration forward/backward + idempotency test)
+
+| Role | Deputy | 책임 |
+|---|---|---|
+| **R** | TestContractArchitectAgent | §8 test contract — migration forward + reverse + idempotency 커버리지 / invariant assertion / §11.6 idempotency test scope |
+| **A** | ArchitectAgent | chief tie-break ladder 3단계 |
+| **C** | AggregateArchitectAgent | Alembic 정책 7 원칙 정합 test seed (양방향 호환 / 확장-정리 분리 / reverse / smoke / cross-repo / 백업 / hard limit) + test fixture 의 aggregate boundary 정합 |
+| **I** | InfraOperationalArchitectAgent | §8.5 stateful migration restart scenario 인지 |
+
+#### Cell 3.2 — TestContract × Data (OLAP fixture / streaming replay / lineage test)
+
+| Role | Deputy | 책임 |
+|---|---|---|
+| **R** | TestContractArchitectAgent | §8 OLAP test contract — Parquet fixture seed + streaming replay scenario + lineage test invariant + 백필 idempotency 커버리지 |
+| **A** | ArchitectAgent | chief tie-break ladder 3단계 |
+| **C** | DataArchitectAgent | OLAP schema 진화 test (Parquet schema evolution + partition pruning + column rename) + streaming pipeline replay seed |
+| **I** | SecurityArchitectAgent | OLAP fixture PII redaction (Cell 1.2 cross-ref) 인지 |
+
+#### Cell 3.3 — TestContract × Module (module boundary test / dependency test)
+
+| Role | Deputy | 책임 |
+|---|---|---|
+| **R** | TestContractArchitectAgent | §8 module boundary test — dependency direction assertion (ArchUnit / depcheck / dependency-cruiser) + module public API surface 커버리지 |
+| **A** | ArchitectAgent | chief tie-break ladder 3단계 |
+| **C** | ModuleArchitectAgent | module / package boundary 정의 + dependency direction 정합 (layered/hexagonal/clean module-level) test seed 제공 |
+| **I** | APIContractArchitectAgent | module public API ↔ transport contract 정합 (Cell 3.4 cross-ref) 인지 |
+
+#### Cell 3.4 — TestContract × APIContract (contract testing — Pact / OpenAPI / GraphQL schema validate)
+
+| Role | Deputy | 책임 |
+|---|---|---|
+| **R** | APIContractArchitectAgent | §8.6 contract testing **primary** (CFP-1086 §7+3+1 primary axis matrix row 정합) — Pact consumer-driven / Spring Cloud Contract provider-driven / Schemathesis schema-based 3 paradigm |
+| **A** | ArchitectAgent | chief tie-break ladder 3단계 |
+| **C** | TestContractArchitectAgent | §8.6 통합 테스트 CI placement + orchestration + test orchestration 책임 (contract format ≠ CI placement disjoint axis) |
+| **I** | InfraOperationalArchitectAgent | Pact broker 운영 + contract testing CI 인프라 인지 |
+
+### Cell selection heuristic (chief author 적용 ladder 1단계)
+
+1. **single-axis 결정** (단축 영역 only) → §primary axis matrix 직접 lookup. RACI 미적용.
+2. **2-axis 이상 overlap** detected → 본 4-way matrix 의 해당 Cell row 활성:
+   - R deputy 가 산출물 1차 author
+   - C deputy 가 양방향 dialog (input 제공 / 영역별 정합 검토)
+   - A = chief author (ArchitectAgent) 가 R+C 합의 사후 sign-off
+   - I deputy 는 일방향 통지 (PR description / Story §3/§7/§11 mirror)
+3. **R+C 합의 부재** → chief tie-break ladder 2단계 (ADR-068 invariant 적용) 진입
+4. **invariant 적용 후에도 미해소** → chief tie-break ladder 3단계 (chief judgement + ADR Amendment carrier 발의)
 
 ### Cross-ref
 
-- **ADR-068 Amendment 2** (CFP-1086 / Story-1) — chief tie-break ladder 3 단계: (1) RACI matrix lookup (본 단락 body Story-3 carrier) → (2) ADR-068 invariant 적용 → (3) chief judgement + ADR Amendment 발의
+- **ADR-068 Amendment 2** (CFP-1086 / Story-1) — chief tie-break ladder 3 단계: (1) RACI matrix lookup (본 단락 body 4-way 12-cell SSOT) → (2) ADR-068 invariant 적용 → (3) chief judgement + ADR Amendment 발의
 - **ADR-086** (CFP-1086 / Story-1 신설) — Deputy 신설 결정 framework §결정 1 axis 분석 + §결정 2 5-checklist self-app. RACI codify = mechanism gap 해소 ratchet (chief tie-break 3단계 → 1단계로 Move-left)
 - **review-verdict-v4 v4.6** (CFP-1086 carrier) — `boundary_completeness_self_check_passed` scope expansion (Amendment 2 ladder 3단계 mechanism 통과 의무)
+- **CFP-1086 Story-2** — APIContractArch mandate body 심화 (Cell 1.4 / 2.4 / 3.4 의 C/R 영역 detail SSOT)
+- **codeforge-design `CLAUDE.md`** — RACI section mirror (wrapper skill SSOT 참조)
 
-본 RACI codify = ratchet 강화 방향 (1단계 RACI matrix lookup 영역 확장 → 3단계 chief judgement 영역 축소). ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합.
+본 RACI 4-way 12-cell codify = ratchet 강화 방향 (1단계 RACI matrix lookup 영역 확장 → 3단계 chief judgement 영역 축소). ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합. additive only — Story-1 skeleton 영역 보존 + Story-3 body 12-cell 채움.
