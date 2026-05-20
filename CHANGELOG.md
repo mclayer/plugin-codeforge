@@ -2,6 +2,40 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.15.0] - 2026-05-20
+
+### Changed (CFP-1086 Story-2 — APIContractArchitectAgent mandate body 심화 codify, S1 skeleton 위 body 작성)
+
+본 release = wrapper SSOT (CFP-1086 Story-2 — APIContractArch mandate body 심화 carrier) 의 codeforge-design plugin repo cross-repo sibling 반영. doc-only fast-path (ADR-054 Category 2 — agent file body 확장, ADR / src / tests 변경 0). Story-1 (carrier) = 신설 declaration + frontmatter + skeleton. Story-2 (본 release) = 5 mandate 영역 full body + Out of scope 강화 + 적극적 이의 제기 12 사유 + cross-ref 강화.
+
+#### Changed
+
+- **`agents/APIContractArchitectAgent.md`** (body 심화 — frontmatter 무변경 invariant) — 5 mandate 영역 full body codify:
+  - **§1 Transport semantics** — REST (9 사항: HTTP verb idempotency / status code / Richardson Maturity Model 4-level / HATEOAS / content negotiation / cache / pagination / HTTP/2+3) / GraphQL (7 사항: Query/Mutation/Subscription axis / N+1 mitigation DataLoader / persisted queries / federation vs schema stitching / error handling / schema evolution / introspection control) / gRPC (6 사항: ProtoBuf schema / 4 RPC types / deadline propagation / interceptors / status codes / service mesh) / WebSocket (6 사항: connection lifecycle / heartbeat / reconnect strategy / subprotocol negotiation / message framing / authentication) + 5 axis × 4 transport decision matrix (latency / payload / streaming / client diversity / caching) + polyglot avoidance rationale.
+  - **§2 API versioning** — 3-axis (URI / Header negotiation / Query parameter) pros·cons table + semver alignment (MAJOR / MINOR / PATCH) ADR-008 정합 + deprecation policy (N-1 parallel support window + Sunset header RFC 8594 + Link header RFC 8288 + migration guide) + GraphQL versioning special (additive only + `@deprecated` directive + persisted query 의 version 관리) + breaking change communication (changelog + migration script + soft launch 4-phase).
+  - **§3 DTO contract** — Shape definition 4 format (JSON Schema / OpenAPI Schema Object / Protobuf / GraphQL type) + nullable vs optional vs required 4 상태 distinction (required+non-null / required+nullable / optional+non-null / optional+nullable) + validation rule 9 primitive (type / format / min·max / pattern / enum / const / multipleOf / required[] / dependentRequired) + validation library matrix (Zod / Joi / Pydantic v2 / jakarta-validation / go-playground/validator / FluentValidation) + RFC 7807 error contract (`application/problem+json` 5 표준 field type/title/status/detail/instance + extension members) + DTO mapping policy (domain entity ↔ DTO assembler = AggregateArch ↔ APIContractArch co-author boundary `R(AggregateArch primary persistence schema) + R(APIContractArch primary DTO shape)`).
+  - **§4 OpenAPI / GraphQL schema** — OpenAPI (3.0 vs 3.1 nullable 표현 차이 / code-first vs spec-first decision table + recommended default / spec-first workflow 4-step / tooling: openapi-generator / swagger-codegen / Speakeasy / Fern / orval / validation: Spectral / dredd / Schemathesis) + GraphQL (SDL 표준 sample / schema-first vs code-first decision table + recommended default = code-first / introspection control / tooling: graphql-codegen / Apollo Server / Yoga / Pothos / Nexus / TypeGraphQL / strawberry-graphql) + schema versioning + evolution (oasdiff / openapi-diff / graphql-inspector CI gate) + schema repository 정책 (spec file 위치 / codegen output / versioned artifact publish).
+  - **§5 Contract testing** — 3 paradigm × tool ecosystem × CI integration: consumer-driven contract (Pact 구조 5-step + strengths + limitations + `can-i-deploy` gate) + provider-driven contract (Spring Cloud Contract 구조 4-step + Spring ecosystem use case) + schema-based contract (dredd / Schemathesis / chakram / k6 / Prism + graphql-inspector / graphql-codegen+zod) + contract testing vs integration testing axis disjoint (APIContractArch primary contract format / TestContractArch primary §8.6 통합 테스트 CI placement + orchestration / InfraOperationalArch consult broker 운영) + CI integration (pre-merge gate + post-merge canary + sunset coordination).
+  - **Out of scope 강화** — 6 boundary explicit codify (aggregate / TestContract / Module / Security / InfraOperational / Data) + co-author 영역 명시 (DTO ↔ entity mapper / hexagonal port / OLAP query API exposure).
+  - **적극적 이의 제기 의무 12 사유** — transport 선택 근거 / polyglot transport / versioning 정책 / anti-pattern versioning / DTO validation / error contract / OpenAPI/GraphQL schema / code-first·spec-first / contract testing / backward compatibility / deprecation graceful migration / GraphQL N+1 problem.
+  - **Cross-ref 강화** — Story-1 carrier (ADR-042 Amd 8) + Story-3 carrier (4-way RACI overlap zone) + ADR-068 Amendment 2 chief tie-break ladder wording SSOT 명시 + ADR-008 (semver alignment 답습) + ADR-072 (production-cutover dual-spawn) + ADR-054 (doc-only fast-path Category 2).
+- **`.claude-plugin/plugin.json`**: 0.14.0 → **0.15.0** MINOR (ADR-037 — agent mandate body 심화 = MINOR). description 갱신 (Story-2 body 심화 5 영역 enumeration 반영).
+
+#### Related ADRs
+
+- ADR-042 Amendment 8 (CFP-1086 Story-1 carrier — APIContractArch 신설 + Sonnet (a) single-mandate advocacy 정합)
+- ADR-068 Amendment 2 (Story-1 sibling carrier — chief tie-break ladder 3 단계, 본 mandate body 가 chief author tie-break wording SSOT 역할)
+- ADR-086 (Story-1 sibling 신설 carrier — Deputy 신설 결정 framework P7)
+- ADR-008 (Inter-plugin Contract Versioning — semver alignment 답습)
+- ADR-014 Amendment 4 (design lane SubAgent mandate SSOT)
+- ADR-076 (declarative reconciliation upgrade — API schema declarative pattern 동형 답습)
+- ADR-072 (ProductionEvidenceDeputy + Epic cutover gate — production-cutover 영역 cross-ref)
+- ADR-054 (doc-only fast-path Category 2 — agent file body 확장)
+
+#### Marketplace sibling sync (Orchestrator 영역, 별도 cross-repo PR)
+
+- `mclayer/marketplace` `marketplace.json` `plugins[name=codeforge-design]` mirrored field 4종 (name / version / description / author) sync. ADR-063 atomic invariant.
+
 ## [0.14.0] - 2026-05-20
 
 ### Added (CFP-1086 Story-1 — BackendArchEpic Phase 2 design lane 7+3+1 roster 재편)
