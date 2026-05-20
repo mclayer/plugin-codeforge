@@ -7,6 +7,23 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.95.0] - 2026-05-20
+
+### Added (CFP-1057 — ADR-085 Wave 2 mechanical wire, CFP-1041 follow-up (b))
+
+- **`scripts/check-active-sessions-presence.sh`** + **`scripts/lib/check_active_sessions_presence.py`** — Story Issue body `<!-- active_sessions -->` HTML comment block OR Story file frontmatter `active_sessions:` array presence-grep + 5-tuple schema validation (git_identity / worktree_path / entry_phase / entered_at_kst / last_heartbeat_kst, ADR-079 KST `+09:00` strict)
+- **`scripts/check-lane-entry-ownership.sh`** + **`scripts/lib/check_lane_entry_ownership.py`** — `gh pr list --search "head:<branch>" --state open` ownership verify primitive (ADR-073 Amendment 2 polling enum 4번째 source `active_sessions_check`)
+- **`templates/github-workflows/active-sessions-presence.yml`** + **`templates/github-workflows/lane-entry-ownership-verify.yml`** (continue-on-error: true, warning tier ADR-060 §결정 5)
+- **`.github/workflows/active-sessions-presence.yml`** + **`.github/workflows/lane-entry-ownership-verify.yml`** byte-identical self-app
+- **`tests/scripts/check-active-sessions-presence/test_active_sessions_presence.bats`** (9 TC) + **`tests/scripts/check-lane-entry-ownership/test_lane_entry_ownership.bats`** (4 TC)
+- `docs/evidence-checks-registry.yaml` 2 entry `status: deferred-followup → warning` 전환 (ADR-085 mechanical_enforcement_actions Wave 1 → Wave 2 promotion)
+
+### Marketplace sync
+
+plugin.json 5.94.0 → 5.95.0 MINOR + marketplace.json sibling sync PR after wrapper merge (ADR-063 atomic invariant, mirrored field 4종).
+
+CFP-967 parallel-work-sentinel-pickup chain precedent verbatim 답습 (Wave 1 declarative anchor CFP-966 → Wave 2 mechanical wire CFP-967 → Wave 1 declarative anchor CFP-1041 → Wave 2 mechanical wire CFP-1057).
+
 ## [5.94.0] - 2026-05-20
 
 ### Added (CFP-1041 — ADR-085 Multi-session collaboration protocol SSOT, declarative anchor Wave 1)
