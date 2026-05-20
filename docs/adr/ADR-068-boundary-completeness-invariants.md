@@ -17,10 +17,12 @@ related_stories:
   - CFP-526
   - CFP-527
   - CFP-528
+  - CFP-1086
 absorbed_issues:
   - 438
 related_adrs:
   - ADR-008
+  - ADR-042  # Amendment 8 cross-ref (CFP-1086 / Story-1 sibling carrier — 7+3+1 roster 재편, axis 분석 + 5-checklist self-application 첫 사례)
   - ADR-058
   - ADR-059
   - ADR-060
@@ -29,6 +31,7 @@ related_adrs:
   - ADR-065
   - ADR-067
   - ADR-082  # I-5 directly-analogous pattern 재사용 backref (ADR-082 Amendment 1 scope (a) corpus-claim-verify lint, cross-ref only — I-5 본문 0건 변경, CFP-841)
+  - ADR-086  # 신설 cross-ref (CFP-1086 / Story-1 — Deputy 신설 결정 framework P7, 본 Amendment 2 = tie-break ladder 3단계 §3 (chief judgement + ADR Amendment 발의) trigger 가 ADR-086 §결정 1 axis 분석 + §결정 2 5-checklist 의무 발동)
 amendments:
   - amendment_id: 1
     cfp: CFP-528
@@ -37,6 +40,13 @@ amendments:
     status: applied
     ref: "본문 I-5 declaration L88-L98"
     sunset_justification: "ratchet 강화 방향 (4 → 5 invariants, scope 축소 0건). I-1/I-2/I-3/I-4 본문 의미 변경 0건 — I-5 disjoint append only. is_transitional false 유지 (permanent governance). ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
+  - amendment_id: 2
+    cfp: CFP-1086
+    date: 2026-05-20
+    scope: "wording SSOT 충돌 시 chief tie-break ladder 신설 (3 단계 순차: (1) RACI 매트릭스 lookup — deputy-mandate skill row → 명시된 R/A 가 있으면 그대로 / (2) ADR-068 invariant 적용 — I-1 API contract / I-2 cross-module / I-3 conditional guard / I-4 wording SSOT / I-5 dimensional empirical / (3) chief judgement + ADR Amendment carrier 발의 — RACI 미codify 영역만, ADR-086 §결정 1 axis 분석 + §결정 2 5-checklist self-app + 사용자 escalation 의무). I-4 wording SSOT invariant 강화 — 기존 I-4 = wording-impl identifier desync 검출 / 본 Amendment 2 = chief tie-break ladder mechanism codify (충돌 해소 절차). boundary_completeness_self_check_passed scope expansion — 본 ladder 3단계 모두 통과 시 true. BackendArchEpic CFP-1086 Story-1 sibling carrier (ADR-042 Amendment 8 + ADR-086 신설 atomic). ratchet 강화 방향 (4 → 5 invariants 후 5번째 I-4 mechanism codify 추가, scope 축소 0건). I-1/I-2/I-3/I-5 본문 의미 변경 0건 — Amendment 2 = I-4 mechanism 보강만."
+    status: applied
+    ref: "본문 Amendment 2 section"
+    sunset_justification: "ratchet 강화 방향 (I-4 mechanism codify 추가, 약화 0건). I-1/I-2/I-3/I-5 본문 의미 변경 0건. is_transitional false 유지 (permanent governance). ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment). Amendment 1 (CFP-528 / I-5) 의 ratchet 패턴 (5 → 5 invariants + mechanism boost) 답습."
 mechanical_enforcement_actions:
   - action: boundary-completeness-self-check
     status: deferred-followup
@@ -249,6 +259,85 @@ Amendment 시 ratchet 강화 방향만 허용 (ADR-058 §결정 5 sunset_justifi
 - **2026-05-13 Amendment 1 (CFP-528)**: I-5 dimensional empirical grounding invariant 신설 (10 dimension enum 의 quantitative parameter `[empirical-source]` annotation 의무). review-verdict-v4 v4.3 → v4.4 MINOR bump (`dimensional_empirical_self_check_passed: bool` optional field + `findings[].type: "dimensional-empirical-gap"` literal). ratchet 강화 방향 (4 → 5 invariants, ADR-058 §결정 5 정합). #319 (RETRO-MCT-104 stream latency 150x oversight) keep-linked + close as absorbed (distinct failure-class but systemic super-class — empirical-grounded design discipline).
 - **2026-05-17 cross-ref backref (CFP-841 — ADR-068 본문 정책 0건 변경)**: ADR-082 Amendment 1 (§결정 6 behavioral→mechanical 전환) 의 scope (a) `corpus-claim-verify` lint 가 I-5 `[empirical-source: <ref>]` annotation 패턴을 directly-analogous 하게 재사용 (`[verified: git show <ref>:<path>]` annotation 동형 mechanical 패턴). **본 변경이력 entry = backref 등록만 — I-5 invariant 본문 / verdict field / 10 dimension enum / mitigation 4종 0건 변경 invariant** (Amendment 아님, `## 관련 ADR` 표 ADR-082 row + `related_adrs` frontmatter backref 동반). 양방향 backref 정합 (ADR-082 frontmatter `related_adrs: ADR-068` + 본 entry).
 - **2026-05-19 cross-ref backref (CFP-676 — ADR-068 본문 정책 0건 변경)**: CFP-1026 S1 (ADR-042 Amendment 7 + ADR-014 Amendment 4 atomic carrier) 의 design lane agent 구조 재편이 spawn token cost 2.6배 (현재 13 Hub-spoke spawn → full activation 34) 의 `count` dimension quantitative parameter 를 I-5 적용 대상으로 declare. **본 변경이력 entry = I-5 적용 declare backref 등록만 — I-5 invariant 본문 / verdict field / 10 dimension enum / mitigation 4종 0건 변경 invariant** (Amendment 아님). CFP-676 Change Plan §13 C 항목 + Story §7 이 `[empirical-source: TBD]` annotation 보유 (Mitigation 2 explicit TBD — local source 부재 `[verified]` 금지, `[fact-check-pending]` retain, Codex F-CFP676-TOKEN-EMPIRICAL-SOURCE P1). `## 관련 ADR` 표 ADR-042 Amendment 7 + ADR-014 Amendment 4 row 동반 (양방향 backref).
+- **2026-05-20 Amendment 2 (CFP-1086 / Story-1 — I-4 wording SSOT invariant 강화)**: chief tie-break ladder 3 단계 신설 (RACI lookup → ADR-068 invariant → chief judgement + ADR Amendment 발의). 본문 `## Amendment 2` section 추가. `boundary_completeness_self_check_passed` scope expansion — 본 ladder 3단계 모두 통과 시 true. BackendArchEpic CFP-1086 Story-1 sibling carrier (ADR-042 Amendment 8 7+3+1 roster 재편 + ADR-086 신설 Deputy 신설 결정 framework P7 atomic). ratchet 강화 방향 (I-4 mechanism codify 추가, 약화 0건). I-1/I-2/I-3/I-5 본문 의미 변경 0건. 자세한 결정 matrix 는 본 ADR `## Amendment 2` body section 참조.
+
+---
+
+## Amendment 2 — CFP-1086 Story-1 chief tie-break ladder (P1, BackendArchEpic carrier)
+
+**날짜**: 2026-05-20
+
+### 동기
+
+CFP-1086 BackendArchEpic Phase 2 의 Phase 1 dialog 에서 사용자 ACK 받은 (b)+(c) WHY — 깊은 동기 (c) "deputy 간 RACI 충돌" (§3/§7/§11 작성 시 DataArch + SecurityArch + InfraOpArch 가 RDB 영역에서 ownership 부딪힘). 본 Amendment 2 = (c) WHY 의 mechanism gap 해소 carrier — wording SSOT 충돌 시 chief tie-break 절차 codify.
+
+기존 I-4 (wording SSOT invariant) = Story §3 결정 wording ↔ ADR §결정 wording ↔ impl enum identifier 양방향 wording desync 검출만 cover. **충돌 해소 절차 부재** — chief author 가 wording 충돌 발견 시 어느 SSOT 가 우선인지 / 누가 정정 권한 보유인지 / 정정 후 어떤 ADR carrier 가 발의되는지 mechanism 명시 부재 → 양 SSOT 모두 stale 유지 또는 chief 임의 결정 (RACI 충돌 재발).
+
+본 Amendment 2 = chief tie-break ladder 3 단계 mechanism codify — RACI 매트릭스 lookup (deputy-mandate skill R/A row) → ADR-068 invariant 적용 (I-1~I-5) → chief judgement + ADR Amendment carrier 발의 (사용자 escalation 의무).
+
+### Tie-break ladder 3 단계 (순차 적용 의무)
+
+#### 1단계 — RACI 매트릭스 lookup (deputy-mandate skill row)
+
+`codeforge:deputy-mandate` skill 의 7+3+1 mandate 매트릭스 (CFP-1086 Story-1 Amendment 8 정합) + **Story-3 carrier** RACI 표준 row 형식 (4-column R/A/C/I) 에서 충돌 영역 row 검색:
+
+- **명시된 R/A 가 존재** → 그 deputy / chief author 의 결정 채택. 다른 deputy 는 C/I 역할만 (consult / informed).
+- **명시된 R/A 부재 OR 영역 row 자체 부재** → 2단계 진입.
+
+근거: RACI 매트릭스는 ADR-042 Amendment 8 + Story-3 carrier 로 codify 된 explicit ownership SSOT — explicit > implicit invariant.
+
+#### 2단계 — ADR-068 invariant 적용 (I-1 ~ I-5)
+
+5 invariants 의 **boundary completeness verification format** 적용:
+
+- **I-1 API contract semantic completeness** — public method 의 return enum / state 의미 docstring 명시 의무. 충돌 시 API contract 우선 SSOT.
+- **I-2 cross-module status enum propagation** — module 간 enum propagation 의 caller 분기 처리 의무. 충돌 시 producer 측 SSOT 우선.
+- **I-3 unconditional vs conditional guard placement intent** — invariant guard 가 "함수 진입 시점 무조건" 인지 "특정 path 한정" 인지 ADR 본문 명시 의무. 충돌 시 unconditional 우선 (broad coverage, ADR-064 정합).
+- **I-4 wording SSOT** — Story §3 결정 wording ↔ ADR §결정 wording ↔ impl enum identifier 양방향 일치 의무. 충돌 시 **ADR §결정 wording 우선 SSOT** (governance permanent layer 가 Story / impl 보다 우선 — Story key 종속 vs Story key 독립 invariant 정합).
+- **I-5 dimensional empirical grounding** — 10 dimension enum 의 quantitative parameter empirical-source annotation 의무. 충돌 시 `[verified: <ref>]` annotation 보유 측 우선, 양 측 모두 `[TBD]` 시 `[fact-check-pending]` retain (3단계 진입).
+
+5 invariants 모두 통과 안 됨 → 3단계 진입.
+
+#### 3단계 — chief judgement + ADR Amendment carrier 발의
+
+RACI 미codify + ADR-068 invariant 적용 후도 wording 충돌 미해소 영역 (mechanism gap):
+
+- **chief author (ArchitectAgent Opus)** judgement — multi-source synthesis 책임자 단독 결정.
+- **ADR Amendment carrier 발의 의무** — RACI 미codify 영역을 codify 하는 별 follow-up CFP (또는 본 Story 내 ADR Amendment) 발의. ADR-086 §결정 1 axis 분석 + §결정 2 5-checklist self-app 의무 (Deputy 신설 결정 framework cross-ref).
+- **사용자 escalation 의무** — chief judgement 단독 결정 = `AskUserQuestion` 발화 의무 (ADR-064 §결정 3 룰 5 가치 판단 영역 한정 정합). 사용자 ACK 후 ADR Amendment carrier 발의.
+
+근거: 3단계 = RACI 미codify 영역 = mechanism gap → ADR Amendment carrier 가 다음 Story 의 1단계 (RACI lookup) 입력으로 채워짐. Iterative ratchet 강화 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합).
+
+### Verdict packet boundary expansion (review-verdict-v4)
+
+본 Amendment 2 carrier = `boundary_completeness_self_check_passed` field scope expansion:
+
+- **기존 (v4.3, CFP-527)**: 4 invariants (I-1 ~ I-4) 검증 통과 시 true
+- **Amendment 1 (v4.4, CFP-528)**: I-5 별 boolean field `dimensional_empirical_self_check_passed` 신설 (별 disjoint check)
+- **본 Amendment 2 (CFP-1086)**: `boundary_completeness_self_check_passed` scope expansion — 5 invariants (I-1 ~ I-4 + Amendment 2 chief tie-break ladder 3 단계 mechanism) 모두 통과 시 true. I-5 별 field 무변경 (Amendment 1 disjoint invariant 보존).
+
+contract version bump = `review-verdict-v4 v4.5 → v4.6 MINOR` — sibling ADR-042 Amendment 8 의 `deputy_axis_restructure_self_check_passed` field 신설 + 본 Amendment 2 의 boundary scope expansion (changelog row 안 명시 — schema field 자체는 변경 0). ADR-008 §결정 2 "새 선택 필드 추가" MINOR bump 정합 (ADR-042 Amendment 8 의 신규 field 신설로 v4.6 carrier 가 본 boundary expansion 도 동반 codify).
+
+### 4-way 이념 대립 axis 보존
+
+본 Amendment 2 = **chief tie-break mechanism** codify — 4-way 이념 대립 axis (CodebaseMapper ↔ Refactor ↔ SecurityArch ↔ DataArch — single-mandate advocacy 패턴 정합) 본문 변경 0건. tie-break = 4-way 대립 후 chief 가 종합 판정 시점 절차 — 대립 자체 (advocate phase) 영역 외.
+
+ArchitectPLAgent 가 `review_verdict_v4` packet 작성 시 본 ladder 3단계 모두 적용 evidence 보유 (synth log 안 명시 의무) — false 시 ArchitectAgent re-spawn (FIX 의무, ADR-067 max FIX 3/3 cap 정합).
+
+### 기존 정책 변경 0건 (ADR-068 본문 I-1 ~ I-5)
+
+본 Amendment 2 = ADR-068 의 결정 1~6 본문 변경 0건. I-1 ~ I-5 invariants 본문 의미 변경 0건. 변경 = (a) 본 `## Amendment 2` body section (b) frontmatter amendments[] row 2 + related_stories CFP-1086 append + related_adrs ADR-042 / ADR-086 append + amendment_log row 2. `boundary_completeness_self_check_passed` scope expansion = I-4 mechanism boost (verification format 강화 — chief tie-break ladder 3단계 mechanism 통과 의무 명시) — scope 축소 0건. ratchet 강화 방향 (4 → 5 invariants 후 5번째 I-4 mechanism codify 추가, ADR-058 §결정 5 정합) → sunset_justification 불필요 (frontmatter amendment_id:2 `sunset_justification: ratchet 강화 방향 명시`).
+
+### Cross-ref
+
+- ADR-042 Amendment 8 (CFP-1086 Story-1 sibling carrier — 7+3+1 roster 재편 atomic, axis 분석 + 5-checklist self-app 첫 사례). 본 Amendment 2 의 1단계 (RACI lookup) 가 ADR-042 Amendment 8 의 mandate 매트릭스를 입력으로 받음.
+- ADR-086 (CFP-1086 Story-1 신설 carrier — Deputy 신설 결정 framework P7). 본 Amendment 2 의 3단계 (chief judgement + ADR Amendment 발의) 가 ADR-086 §결정 1 axis 분석 + §결정 2 5-checklist self-app 의무 발동.
+- ADR-064 §결정 3 룰 5 (가치 판단 영역 한정 `AskUserQuestion`) — 본 Amendment 2 의 3단계 사용자 escalation 의무 정합.
+- ADR-067 max FIX 3/3 cap — `boundary_completeness_self_check_passed: false` 시 ArchitectAgent re-spawn 의무, 3회 후 implementability reassessment trigger 정합.
+- review-verdict-v4 v4.6 MINOR (CFP-1086 carrier) — 본 Amendment 2 scope expansion + ADR-042 Amendment 8 의 `deputy_axis_restructure_self_check_passed` field 동반 atomic.
+- ADR-068 Amendment 1 (CFP-528) — I-5 disjoint field invariant 보존 (본 Amendment 2 = I-1~I-4 영역만 scope expansion).
+
+---
 
 ## 관련 파일
 
