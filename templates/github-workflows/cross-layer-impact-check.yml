@@ -1,0 +1,57 @@
+name: Cross-layer impact check (Phase 1 declarative seed)
+# CFP-1059 Story-1 / ADR-090 §결정 1 — cross-layer 의존 영향 자동 감지
+# Tier: warning (continue-on-error, declaration-only Wave 1)
+# Bypass channel: hotfix-bypass:cross-layer-impact label (label-registry-v2.42)
+#
+# Phase 1 declarative seed (S2/S3 wire pending):
+#   - 실제 impact detection 로직 (touched layer enumeration + cross-layer dependency graph traversal
+#     + sibling layer 미반영 영역 flag) = scripts/check-cross-layer-impact.sh (sibling carrier
+#     Story-7 mechanical wire 영역) 후 wire.
+#   - 본 file = ADR-090 mechanical_enforcement_actions: [cross-layer-impact-detection]
+#     declaration anchor.
+#
+# ADR-090 §결정 1 binding:
+#   - cross-layer 참조 정책 = code layer ↔ schema layer + (frontend/backend) ↔ (api/db) 등
+#     의 양방향 참조 영역의 의존 graph 자동 감지
+#   - 한 layer 변경 시 sibling layer 누락 감지 = warning-tier flag
+#   - 양 layer 동시 변경 영역은 dependency-order-check.yml (별 workflow) 분담
+#
+# 승격 path:
+#   warning → blocking-on-pr 승격 시 CFP-NNN carrier PR 가 다음 변경 동반 의무:
+#     1. 본 workflow 의 `continue-on-error: true` 제거
+#     2. branch protection required_status_checks 에 본 workflow job name 추가
+#     3. evidence 3 산출물 제출 (ADR-060 §결정 6 (d))
+#     4. dependency graph 정의 (project.yaml cross_layer_dependency_graph: 영역) 필요
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  cross-layer-impact-declarative-seed:
+    runs-on: ubuntu-latest
+    # warning mode (ADR-060 §결정 5) — Phase 1 declarative seed.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Phase 1 declarative seed placeholder
+        run: |
+          set -euo pipefail
+          echo "=== Cross-layer impact check (Phase 1 declarative seed) ==="
+          echo "ADR-090 §결정 1 mechanical_enforcement_actions anchor"
+          echo "mechanical action: cross-layer-impact-detection (declaration-only Wave 1)"
+          echo ""
+          echo "Actual impact detection (touched layer enum + dependency graph traversal"
+          echo "  + sibling layer 미반영 flag) = scripts/check-cross-layer-impact.sh"
+          echo "  (sibling carrier Story-7 mechanical wire 영역) 후 wire."
+          echo ""
+          echo "Phase 1 declarative seed — S2/S3 wire pending"
+          exit 0
