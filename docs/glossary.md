@@ -1,6 +1,6 @@
 # codeforge governance BC — Ubiquitous Language SSOT (DDD glossary)
 
-> **본 file = codeforge governance Bounded Context (BC) 의 Published Language SSOT** — DDD term 의 한국어/영어 병기 + definition + plugin-codeforge 적용 사례 박제. ADR-091 carrier story = CFP-1117-S1.
+> **본 file = codeforge governance Bounded Context (BC) 의 Published Language SSOT** — DDD term 의 한국어/영어 병기 + definition + plugin-codeforge 적용 사례 명시. ADR-091 carrier story = CFP-1117-S1.
 >
 > **Published Language 분리** (ADR-091 §결정 4): codeforge governance BC ↔ mctrader application BC 의 동음이의 (Aggregate / Module / Repository 등) 충돌 차단. mctrader 측 SSOT = `mctrader-hub/docs/glossary.md` (downstream Epic, 별 CFP).
 >
@@ -299,8 +299,8 @@
 ### 4-Layer Architecture (mctrader 적용)
 
 **영어**: 4-Layer Architecture  
-**정의 (mctrader application BC 특수 사례)**: Foundation (Layer 0) / Adapter (Layer 1) / Data Storage (Layer 2) / Pure Consumer (Layer 2') — mctrader ADR-031 박제. data-free + exchange-agnostic pure consumer 구조.  
-**plugin-codeforge 적용 사례**: golden-path worked example 대상 (S6, `examples/ddd-golden-path-mct031.md`). mctrader ADR-031 line 499-524 verbatim 박제:
+**정의 (mctrader application BC 특수 사례)**: Foundation (Layer 0) / Adapter (Layer 1) / Data Storage (Layer 2) / Pure Consumer (Layer 2') — mctrader ADR-031 의 verbatim 인용. data-free + exchange-agnostic pure consumer 구조.  
+**plugin-codeforge 적용 사례**: golden-path worked example 대상 (S6, `examples/ddd-golden-path-mct031.md`). mctrader ADR-031 line 499-524 verbatim 인용:
 
 ```
 Layer 0 ─ mctrader-market (FOUNDATION, 의존 0, 순수 pydantic/sqlalchemy, data 비의존)
@@ -383,7 +383,7 @@ Layer 2'─ mctrader-engine (PURE CONSUMER, mctrader_data=0, mctrader_market_*=0
 
 **영어**: Vocabulary Theater  
 **정의 (codeforge governance BC 자체 anti-pattern, ADR-091 §결정 7)**: 어휘 emit 만, decision flow 변경 0. agent 가 DDD 단어 emit 하면서 기존 implicit decision flow 유지 → restructure = document 만 향상 / runtime lesson 해소 = 0.  
-**plugin-codeforge 적용 사례**: **ADR-091 §결정 7 forcing function 차단 대상**. INV-5 가 5 영역 박제 (Story field / deputy spawn rationale / Change Plan DDD field / review-verdict finding / ADR acceptance criteria) evidence enumeration 의무. Codex BIG CONCERN 정합.
+**plugin-codeforge 적용 사례**: **ADR-091 §결정 7 forcing function 차단 대상**. INV-5 가 5 영역 명시 (Story field / deputy spawn rationale / Change Plan DDD field / review-verdict finding / ADR acceptance criteria) evidence enumeration 의무. Codex BIG CONCERN 정합.
 
 ---
 

@@ -33,7 +33,33 @@ tags:
 - 외부에서 Aggregate 내부 entity 직접 접근 금지 — Aggregate Root 경유 의무
 - Aggregate 안 invariant (예: 잔액 ≥ 0) 는 Aggregate Root 가 enforcement
 
-## 2-layer separate (ADR-091 §결정 3 verbatim)
+## 컨텍스트
+
+### codeforge 도입 동인
+
+codeforge governance BC ↔ mctrader application BC 의 **동음이의 (homonym) 충돌** 누적 (MCT-170 / MCT-177 / MCT-179 / MCT-180 / MCT-184 / MCT-185 Phase 0 verify pattern 6회 재현). 동일 어휘 "Aggregate" 가 양 BC 에서 의미 분기:
+
+- codeforge governance BC: supervised authority cluster (ArchitectPLAgent metaphor only)
+- mctrader application BC: DDD Aggregate root in domain model (transactionally consistent)
+
+cross-repo Story 진행 시 양 의미 혼동 → ADR 의 결정 영역이 model object 인지 process actor 인지 분기 차이 surface. ADR-091 §결정 3 이 2-layer explicit separate forcing function 부착.
+
+### 적용 trigger
+
+- ArchitectPLAgent 가 Story 단위 supervisor 역할 명시 시 (Layer A metaphor 적용)
+- ArchitectAgent 의 산출물 (Change Plan + ADR draft + §8 + §11) author 시 (Layer B real Aggregate)
+- AggregateArchitectAgent (deputy) 의 consumer aggregate boundary advocacy 시 (application BC reference)
+- cross-repo Story (codeforge ↔ mctrader) 진행 시 동음이의 충돌 차단
+
+### 관련 사건 (Codex Q5 합의)
+
+Codex Q5 verbatim (ADR-091 발의 시점):
+
+> PL = Aggregate Root 는 supervised authority 의 metaphor only. Change Plan + ADR draft 산출물 자체는 real consistency boundary. 핵심 invariant: §1-§11 + BC classification + aggregate impacts + language choices + risks + ADR rationale 가 handoff 전 cohere. CFP 가 "agent control metaphor" vs "artifact consistency boundary" 를 explicit separate 의무.
+
+## 핵심 규칙
+
+### R-1: 2-layer separate (ADR-091 §결정 3 verbatim)
 
 ADR-091 §결정 3 의 핵심 forcing function — "Aggregate" 어휘 2 layer 로 explicit separate. **동음이의 (homonym) 충돌 차단 의무**.
 
@@ -47,11 +73,7 @@ mctrader application BC 의 Aggregate (DDD Aggregate root in domain model) 은 *
 - [`Aggregate (mctrader application BC)`](../../glossary.md#aggregate-mctrader-application-bc) — application DDD Aggregate root
 - [`Aggregate Root`](../../glossary.md#aggregate-root) — Layer A authority pair supervisor side
 
-**Codex Q5 합의 (verbatim)**: PL = Aggregate Root 는 **supervised authority 의 metaphor only**. Change Plan + ADR draft 산출물 자체는 real consistency boundary. 핵심 invariant: §1-§11 + BC classification + aggregate impacts + language choices + risks + ADR rationale 가 handoff 전 cohere. CFP 가 "agent control metaphor" vs "artifact consistency boundary" 를 explicit separate 의무.
-
-## codeforge governance BC 의 Aggregate (Layer A + Layer B)
-
-### Layer A — ArchitectPLAgent = Aggregate Root metaphor
+### R-2: Layer A 적용 — ArchitectPLAgent = Aggregate Root metaphor
 
 ArchitectPLAgent 의 role = **supervisor of supervised authority cluster**. 6 SubAgent deputy + chief author (ArchitectAgent) 산출물 통합 책임.
 
@@ -65,7 +87,7 @@ ArchitectPLAgent 의 role = **supervisor of supervised authority cluster**. 6 Su
 - ArchitectPLAgent = supervisor side (Aggregate Root metaphor)
 - ArchitectAgent = chief author side (산출물 = real Aggregate 의 author)
 
-### Layer B — ArchitectLane 산출물 = real Aggregate
+### R-3: Layer B 적용 — ArchitectLane 산출물 = real Aggregate
 
 **진짜 consistency boundary**:
 - Change Plan (§1-§11) + ADR draft + §8 Test Contract + §11 데이터 마이그레이션
@@ -81,20 +103,7 @@ ArchitectPLAgent 의 role = **supervisor of supervised authority cluster**. 6 Su
 - DesignReviewPL 의 review-verdict-v4 finding type `aggregate_violation` (S4 신설, v4.7 → v4.8 MINOR bump)
 - `aggregate_violation` = Change Plan §affected_aggregates 안 명시된 aggregate boundary 와 Story §1 실 영향 boundary 사이 inconsistency
 
-## mctrader application BC 의 Aggregate (downstream Epic 영역)
-
-**별 BC** — 본 entry = pointer + verbatim cite only (ADR-091 §결정 4 Published Language 분리).
-
-application BC 안 Aggregate 의 특성 (참조용):
-- DDD Aggregate root in domain model (Order / Position / MarketSnapshot 등 — 본 codeforge SSOT 영역 외)
-- transactionally consistent — RDB OLTP transaction atomic boundary
-- AggregateArchitectAgent (codeforge governance BC 안 agent) 의 mandate = **consumer aggregate boundary 설계 advocacy**
-
-**중요 boundary**: AggregateArchitectAgent 가 codeforge governance BC 안 agent 이지만, 그 mandate (RDB OLTP aggregate invariant / 트랜잭션 경계) 는 **application BC reference**. codeforge governance BC 의 agent 가 application BC 의 design decision 영역에서 specialized judgment contributor 로 작동. (bounded-context.md 의 "적용 사례" 단락 동일 패턴.)
-
-mctrader application BC 의 실 Aggregate 분류 + Aggregate Root 명세 + invariant 정의 = downstream Epic (별 CFP) — 본 codeforge SSOT 영역 외.
-
-## Aggregate Root 의 의무
+### R-4: Aggregate Root 의 의무 (DDD literal, application BC 에서만 strict)
 
 DDD literal definition (application BC 에서만 strict 적용):
 
@@ -109,7 +118,7 @@ DDD literal definition (application BC 에서만 strict 적용):
 - "boundary 안 entity 만 access" = ArchitectPL 가 deputy 직접 통신 차단 (chief author 경유 의무, ADR-039 default subagent context 정합)
 - "Repository per Aggregate" = N/A (codeforge governance BC = Repository 패턴 부재, 직접 file Read/Write)
 
-## Aggregate vs Entity vs Value Object (tactical pattern table)
+### R-5: Aggregate vs Entity vs Value Object (tactical pattern 표)
 
 DDD Tactical Design 의 3 building block 분류:
 
@@ -124,7 +133,29 @@ DDD Tactical Design 의 3 building block 분류:
 - Aggregate = consistency boundary, Entity / Value Object = building block of Aggregate
 - 1 Aggregate Root = 1 Entity (but 1 Entity ≠ 1 Aggregate Root — non-root entity 는 Aggregate 내부 element)
 
-## 적용 사례: ADR-086 framework = codeforge governance Aggregate decision boundary
+## 경계
+
+### 영역 안 (codeforge governance BC Aggregate scope)
+
+- Layer A metaphor — ArchitectPLAgent role description + frontmatter `ddd_pattern` field
+- Layer B real Aggregate — ArchitectLane 산출물 (Change Plan + ADR draft + §8 Test Contract + §11)
+- ADR-086 5-checklist self-application = codeforge governance Aggregate decision boundary 사례
+- AggregateArchitectAgent 의 process-participant role (codeforge governance BC 안 agent)
+
+### 영역 외 (mctrader application BC Aggregate)
+
+- mctrader 의 실 Aggregate 분류 (Order / Position / MarketSnapshot 등 domain model definition)
+- mctrader 의 Aggregate Root invariant + Repository per Aggregate 구현 detail
+- mctrader application BC 안 transactionally consistent boundary 의 RDB OLTP 구현
+- consumer project 자체 도메인 BC 의 Aggregate (overlay 영역만 codeforge SSOT 와 contact)
+
+### AggregateArchitectAgent 의 영역 boundary (process-participant vs mandate)
+
+**중요 boundary**: AggregateArchitectAgent 가 codeforge governance BC 안 agent (process-participant 영역) 이지만, 그 mandate (RDB OLTP aggregate invariant / 트랜잭션 경계) 는 **application BC reference** (mandate 영역). codeforge governance BC 의 agent 가 application BC 의 design decision 영역에서 specialized judgment contributor 로 작동.
+
+mctrader application BC 의 실 Aggregate 분류 + Aggregate Root 명세 + invariant 정의 = downstream Epic (별 CFP) — 본 codeforge SSOT 영역 외.
+
+### 적용 사례: ADR-086 framework = codeforge governance Aggregate decision boundary
 
 ADR-086 = **Deputy 신설 결정 framework** (5-checklist self-application).
 
@@ -143,7 +174,7 @@ ADR-086 = **Deputy 신설 결정 framework** (5-checklist self-application).
 - axis 4 (sibling cross-ref) + axis 5 (deferred carrier path) 만 적용
 - 5-checklist 통과 = 본 CFP-1117 진행 가능 (ADR-091 amendment_log + amendments 참조)
 
-## Cross-reference
+## 관련 ADR
 
 - [ADR-091 §결정 1](../../adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — agent ↔ DDD pattern Hybrid mapping (Authority Pair / Domain Service / Subdomain Specialist enum)
 - [ADR-091 §결정 3](../../adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Aggregate metaphor 2-layer explicit separate (Layer A / Layer B)
@@ -152,3 +183,7 @@ ADR-086 = **Deputy 신설 결정 framework** (5-checklist self-application).
 - [`docs/glossary.md` Aggregate (mctrader application BC)](../../glossary.md#aggregate-mctrader-application-bc) — application BC SSOT (별 BC)
 - [`docs/glossary.md` Aggregate Root](../../glossary.md#aggregate-root) — Authority Pair supervisor metaphor
 - [`docs/domain-knowledge/concept/bounded-context.md`](bounded-context.md) — BC sibling (동음이의 차단 동인)
+
+## 변경 이력
+
+- 2026-05-20 KST — CFP-1117 Story-1 carrier 신규 작성 (ArchitectAgent direct write per ADR-070)
