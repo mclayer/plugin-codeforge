@@ -1,6 +1,7 @@
 ---
 title: codeforge-design lane 구조 (설계 레인 — Change Plan + ADR 확정)
 last_captured: 2026-05-20
+last_update_cfp: CFP-1086-S1  # 7+3+1 roster 재편 (ADR-042 Amendment 8 + ADR-068 Amendment 2 + ADR-086 신설)
 kind: architecture_doc
 family_ref: ../../../plugin-codeforge/docs/architecture/codeforge-family.md#모듈
 ---
@@ -10,23 +11,26 @@ family_ref: ../../../plugin-codeforge/docs/architecture/codeforge-family.md#모�
 <!-- 본 file = lane plugin self-owned seed (CFP-969 / Sub-Epic CFP-949 Wave 1, parent Epic CFP-756 / ADR-078).
      누적 현재 상태 SSOT — Story key 독립, 고정 경로. 델타는 Change Plan SSOT (disjoint, ADR-078 §결정 3).
      family-level structure = family_ref (wrapper repo seed) 참조. 본 doc 은 lane internal 구조만 채운다.
-     CFP-1026 S3 update: deputy 5+3 + 4-tuple sub-tuple 반영 (ADR-042 Amendment 7 / ADR-014 Amendment 4 / ADR-72). -->
+     CFP-1026 S3 update: deputy 5+3 + 4-tuple sub-tuple 반영 (ADR-042 Amendment 7 / ADR-014 Amendment 4 / ADR-72).
+     CFP-1086 S1 update: 5+3 → 7+3+1 roster 재편 반영 (ADR-042 Amendment 8 + ADR-068 Amendment 2 + ADR-086 신설 atomic). AggregateArch + APIContractArch 신설 / CodeArch → ModuleArch rename / DataArch mandate 축소. -->
 
 ## 모듈
 
-codeforge-design = 설계 레인 plugin. **Change Plan + ADR 확정** 책임. `[verified: CLAUDE.md @ cfp-1026-s3 Sub-agent fan-out table + agents/ tree direct enumeration]` — agent 구성:
+codeforge-design = 설계 레인 plugin. **Change Plan + ADR 확정** 책임. `[verified: CLAUDE.md @ cfp-1086-s1 Sub-agent fan-out table + agents/ tree direct enumeration]` — agent 구성:
 
-**Permanent agent (7 file)** — 모든 설계 lane 진입 시 spawn (PL + chief + 5 deputy):
+**Permanent agent (9 file)** — 모든 설계 lane 진입 시 spawn (PL + chief + 7 deputy, CFP-1086 / ADR-042 Amendment 8):
 
 | 모듈 (agent) | 역할 | 입장 / 책임 | model |
 |---|---|---|---|
-| **ArchitectPLAgent** | 설계 lane PL (supervisor + FIX 판정자) | ArchitectAgent chief + SubAgent 산출물 검수 + final pl_recommendation | Opus |
+| **ArchitectPLAgent** | 설계 lane PL (supervisor + FIX 판정자) | ArchitectAgent chief + SubAgent 산출물 검수 + final pl_recommendation. **chief tie-break ladder 3 단계** (ADR-068 Amd 2) + **Deputy 신설 결정 framework** (ADR-086 §결정 1/2) 적용 | Opus |
 | **ArchitectAgent** (chief author) | 통합 author / synthesizer | SubAgent 산출물 통합 + Change Plan §1-§13 author + ADR draft + Story §3/§7/§11 mirror write | Opus |
 | **SecurityArchitectAgent** (deputy) | 위협 — 공격자 관점 | 외부 입력 / 신뢰 경계 / 권한 위임 (Change Plan §7.1-§7.3, §7.5-§7.6 input) | Opus |
-| **InfraOperationalArchitectAgent** (deputy, CFP-1026 S1 rename — OperationalRiskArch → Infra...) | 운영 리스크 + infra — production-readiness 변호자 | 끊김 / 실패 / 과부하 / 스테이징-프로덕션 누설 / Docker (Change Plan §7.4 + §11.6 idempotency consult input) | Opus inherit |
+| **InfraOperationalArchitectAgent** (deputy, CFP-1026 S1 rename — OperationalRiskArch → Infra...) | 운영 리스크 + infra — production-readiness 변호자 | 끊김 / 실패 / 과부하 / 스테이징-프로덕션 누설 / Docker (Change Plan §7.4 + §11.6 idempotency consult input — AggregateArch primary) | Opus inherit |
 | **TestContractArchitectAgent** (deputy) | QA perspective contributor | §8 Test Contract 커버리지 / 경계 / invariant (Epic 소속 Story 시 §8.6 `story_key` + `suite: "story"` 필수) | Opus |
-| **DataArchitectAgent** (deputy, CFP-1026 S1 rename — DataMigrationArch → Data... + mandate 확장) | 데이터 무결성 + 전체 데이터 구조 — 변호자 | schema 변경 / 기존 데이터 처리 / 실패 복구 + entity / aggregate / VO / persistence model / 데이터 흐름 (Change Plan §3 data + §11.1-§11.6 input) | Opus |
-| **CodeArchitectAgent** (deputy, CFP-1026 S1 신설) | §3 code 구조 advocate — single-mandate | layered / hexagonal / clean / DDD bounded context / module boundary / dependency direction (Change Plan §3 code input) | Sonnet |
+| **DataArchitectAgent** (deputy, CFP-1086 Amendment 8 mandate 축소 — 빅데이터 OLAP only) | 빅데이터 OLAP 영역 변호자 | Parquet / 객체저장소 / DuckDB / streaming / 백필 / 시계열 집계 (Change Plan §3 OLAP + §11 OLAP input). RDB OLTP 영역은 AggregateArch primary 로 분리 | Opus |
+| **AggregateArchitectAgent** (deputy, CFP-1086 Amendment 8 신설) | RDB OLTP aggregate invariant 변호자 — single-mandate | aggregate boundary + 트랜잭션 경계 + persistence-bound + Alembic 정책 7 원칙 (Change Plan §3 aggregate + §11.1-§11.6 RDB OLTP input). **CONDITIONAL applicability** (`project.yaml aggregate_arch.applicable: bool`) | Sonnet |
+| **APIContractArchitectAgent** (deputy, CFP-1086 Amendment 8 신설 — skeleton at S1 / body 심화 = S2) | API transport contract 변호자 — single-mandate | REST/GraphQL/gRPC/WebSocket + API versioning + DTO + OpenAPI/GraphQL schema + contract testing (Change Plan §3 API + §8 contract testing input) | Sonnet |
+| **ModuleArchitectAgent** (deputy, CFP-1086 Amendment 8 — CodeArch rename + mandate 정정) | §3 code module-level 구조 advocate — single-mandate | module boundary + dependency direction + layered/hexagonal/clean module-level + DDD bounded context module placement (Change Plan §3 code input). 도메인 모델 invariant 영역 = AggregateArch 분리 | Sonnet |
 
 **4-tuple sub-tuple component (3 file, deputy 아님 — ADR-044 CFP-676 reaffirm)** — Orchestrator 가 flat spawn (chief author 포함 4 component 평행):
 
@@ -36,17 +40,20 @@ codeforge-design = 설계 레인 plugin. **Change Plan + ADR 확정** 책임. `[
 | **RefactorAgent** | 혁신 — to-be 옹호자 | 결합도 감소, 인터페이스 분리, 패턴화 (Change Plan §3 + §6 input) | Sonnet |
 | **ArchitectAnalystAgent** (CFP-1026 S1 신설 — PriorArtAgent conceptual rename) | 변경 전 기존 설계 분석 단일 축 — fact 변호자 | 변경 전 ADR / Change Plan / Story §3/§7/§11 분석 (Change Plan §2 컨텍스트 input) | Sonnet |
 
-**CONDITIONAL deputy (3 file)** — Story trigger 충족 시 ArchitectPLAgent 가 추가 spawn:
+**CONDITIONAL deputy (3+1 file)** — Story trigger 충족 시 ArchitectPLAgent 가 추가 spawn (CFP-1086 Amendment 8 정합 — 3 → 3+1):
 
 | 모듈 (agent) | trigger 조건 | 책임 | model |
 |---|---|---|---|
 | **LiveOpsDeputy** | Live touching Story (real funds / live exchange API / production credential / live order placement 1+ touching, CFP-77) | operator approval / kill switch / incident response / OperationEvent audit (Change Plan §13 + §7.5 consult input) | Opus |
 | **LiveOrderingDeputy** | Live touching Story (위 동일 CFP-77 trigger) | order submit / partial fill / cancel race / rejection mapping / ledger reconcile invariant (Change Plan §11 ledger + §8.5 order replay + §11.6 idempotency consult input) | Opus |
 | **ProductionEvidenceDeputy** (CFP-1026 S1 신설 — ADR-72) | production cutover Story (Change Plan §13 `production_cutover_touching: true` 선언 OR §13 Live Operational Discipline 본문 보유). wrapper-self-app N/A | 실측 production 통과 evidence quad (functional / security / monitoring / testing) + EPIC CLOSED gate + post-cutover wiring + Family 7 atomic canary pin | Opus inherit |
+| **AggregateArch CONDITIONAL applicability** (CFP-1086 Amendment 8 P2 신설 — 3+1) | `project.yaml aggregate_arch.applicable: bool` (default `true`). non-applicable consumer = frontend-only / API-only / external-managed RDB | AggregateArchitect deputy 활성 여부 결정. `false` 시 7 → 6 permanent deputy + 3 sub-tuple = 9 SubAgent parallel spawn | (CONDITIONAL flag, agent file 없음) |
 
-> **4-way 이념 대립 축** (CodebaseMapper ↔ Refactor ↔ SecurityArch ↔ DataArch) = chief author 가 충돌 해소 + Change Plan 명시. TestContractArch / InfraOperationalArch / CodeArch / ArchitectAnalyst / LiveOps / LiveOrdering / ProductionEvidence = contributor / single-mandate advocacy 단일 축 (대립 비참여).
+> **4-way 이념 대립 축** (CFP-1086 정합): RDB OLTP 영역 = CodebaseMapper ↔ Refactor ↔ SecurityArch ↔ AggregateArch / 빅데이터 OLAP 영역 = CodebaseMapper ↔ Refactor ↔ SecurityArch ↔ DataArch / Cross-layer (ELT/ETL/CDC) = AggregateArch + DataArch co-author deferred. chief author 가 충돌 해소 + Change Plan 명시. TestContractArch / InfraOperationalArch / ModuleArch / APIContractArch / ArchitectAnalyst / LiveOps / LiveOrdering / ProductionEvidence = contributor / single-mandate advocacy 단일 축 (대립 비참여).
 
 **InfraArchitect 신설 철회** (CFP-1026 S1 — ADR-042 Amendment 7 SSOT): Docker-first + AWS 없음 환경 — InfraArchitect 미도입 결정. InfraOperationalArchitect 가 §7.4.6 Container considerations 영역 cover.
+
+**DDDArchitect 신설 reject** (CFP-1086 / ADR-042 Amendment 8 §DDDArchitectAgent reject 명문화): Phase 1 Q4-prime 사용자 발의 — axis 미정합 (method / 학파 layer + ModuleArch wording overlap + consumer applicability 축소). 미도입 결정, ratchet 위반 아님 (ADR-058 §결정 5 sunset_justification 불필요).
 
 ## 경계
 
@@ -88,8 +95,9 @@ codeforge-design = 설계 레인 plugin. **Change Plan + ADR 확정** 책임. `[
 **Cross-cutting gate boundary**:
 - **Codex Proactive Check Touchpoint #2** = ArchitectAgent §3 완료 직후 mandatory dispatch (CFP-532 / ADR-052 Amendment 4) — P0 + P1 finding 모두 inline FIX 의무 (skip 영역 차단)
 - **ADR-065 mechanical self-check** = Phase 1 산출물 commit 직전 7-item mechanical sync (label-registry / doc-locations / workflow self-app / link target / MANIFEST.yaml / section-ownership / doc-locations row) self-verify 의무
-- **ADR-068 boundary completeness** = ArchitectAgent §3 / §7 작성 시 4+1 semantic invariants (I-1 API contract semantic / I-2 cross-module propagation / I-3 guard placement intent / I-4 wording SSOT / I-5 dimensional empirical grounding) self-verify 의무
+- **ADR-068 boundary completeness** = ArchitectAgent §3 / §7 작성 시 4+1 semantic invariants (I-1 API contract semantic / I-2 cross-module propagation / I-3 guard placement intent / I-4 wording SSOT / I-5 dimensional empirical grounding) self-verify 의무. **Amendment 2 (CFP-1086) chief tie-break ladder 3 단계**: (1) RACI matrix lookup → (2) ADR-068 invariant 적용 → (3) chief judgement + ADR Amendment carrier 발의
 - **ADR-082 write-time self-write verification** = §9 evidence / corpus enumeration / cross-plugin ownership write-time source direct verify 의무 (assertion 금지)
+- **ADR-086 Deputy 신설 결정 framework (CFP-1086 신설)** = deputy roster 변경 carrier Story 시 axis 분석 의무 (§결정 1) + 5-checklist self-application (§결정 2: axis disjoint / cost-token budget / consumer carrier / sibling Epic align / deferred trigger) + deferred carrier path (§결정 3). review-verdict-v4 v4.6 `deputy_axis_restructure_self_check_passed` field carrier
 
 **Disjoint scope** (ADR-078 §결정 3):
 - 본 doc (architecture_doc) = lane internal 누적 현재 상태, Story key 독립
@@ -136,15 +144,17 @@ Orchestrator parallel spawn (ADR-039 flat spawn, ArchitectPL re귀 spawn 0):
   ├─ CodebaseMapperAgent       → §2 input (4-tuple sub-tuple)
   ├─ RefactorAgent             → §3 + §6 input (4-tuple sub-tuple)
   ├─ ArchitectAnalystAgent     → §2 컨텍스트 input (4-tuple sub-tuple, CFP-1026 S1 신설)
-  ├─ SecurityArchitectAgent    → §7.1-§7.3 / §7.5-§7.6 input (5 permanent deputy)
-  ├─ InfraOperationalArchAgent → §7.4 + §11.6 idempotency consult input (5 permanent deputy, CFP-1026 S1 rename)
-  ├─ TestContractArchAgent     → §8 Test Contract input (5 permanent deputy)
-  ├─ DataArchitectAgent        → §3 data + §11.1-§11.6 input (5 permanent deputy, CFP-1026 S1 rename + 확장)
-  ├─ CodeArchitectAgent        → §3 code input (5 permanent deputy, CFP-1026 S1 신설)
+  ├─ SecurityArchitectAgent    → §7.1-§7.3 / §7.5-§7.6 input (7 permanent deputy)
+  ├─ InfraOperationalArchAgent → §7.4 + §11.6 idempotency consult input (7 permanent, CFP-1026 S1 rename — §11.6 AggregateArch primary 영역 협업)
+  ├─ TestContractArchAgent     → §8 Test Contract input (7 permanent deputy)
+  ├─ DataArchitectAgent        → §3 OLAP + §11 OLAP input (7 permanent, CFP-1086 mandate 축소 — RDB OLTP 영역 제거, 빅데이터 OLAP only)
+  ├─ ModuleArchitectAgent      → §3 code module-level input (7 permanent, CFP-1086 CodeArch rename + mandate 정정)
+  ├─ AggregateArchitectAgent   → §3 aggregate + §11.1-§11.6 RDB OLTP input (7 permanent, CFP-1086 신설 — CONDITIONAL applicability `project.yaml aggregate_arch.applicable` 확인 후 spawn)
+  ├─ APIContractArchitectAgent → §3 API + §8 contract testing input (7 permanent, CFP-1086 신설 — skeleton at S1 / body 심화 = S2)
   ├─ [CONDITIONAL] LiveOpsDeputy           → §13 + §7.5 consult
   ├─ [CONDITIONAL] LiveOrderingDeputy      → §11 ledger + §8.5 + §11.6 consult
   └─ [CONDITIONAL] ProductionEvidenceDeputy → §13 production evidence quad + EPIC CLOSED gate (CFP-1026 S1 신설)
-  ↓ (8-11 산출물 병렬 수신)
+  ↓ (10-13 산출물 병렬 수신 — CFP-1086 7 permanent + 3 sub-tuple = 10 default, AggregateArch non-applicable 시 9 / CONDITIONAL 모두 활성 시 최대 13)
 ArchitectAgent (chief author) — 산출물 통합 (Opus multi-source synthesis)
   ├─ Change Plan §1-§13 author (docs/change-plans/<slug>.md direct write)
   ├─ 신규 ADR draft (docs/adr/ADR-NNN-<slug>.md direct write + ADR-RESERVATION row append)

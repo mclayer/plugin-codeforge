@@ -2,6 +2,40 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.14.0] - 2026-05-20
+
+### Added (CFP-1086 Story-1 — BackendArchEpic Phase 2 design lane 7+3+1 roster 재편)
+
+본 release = wrapper SSOT (CFP-1086 Story-1 — ADR-042 Amendment 8 + ADR-068 Amendment 2 + ADR-086 신설 atomic carrier) 의 codeforge-design plugin repo cross-repo sibling 반영. doc-only fast-path (ADR-054 5-repo atomic).
+
+#### agent file 4종 (rename 1 + 신설 2 + mandate 축소 1)
+
+- **`agents/AggregateArchitectAgent.md`** (신설) — 6번째 permanent deputy. RDB OLTP aggregate invariant + 트랜잭션 경계 + persistence-bound aggregate boundary + Alembic 정책 (tool-agnostic policy 7 원칙: 양방향 호환 / 확장-정리 분리 / reverse / smoke / cross-repo / 백업 / hard limit). Sonnet (single-mandate advocacy — ADR-042 Amd8 §결정 1 (a)). CONDITIONAL applicability — `project.yaml aggregate_arch.applicable: bool` (frontend-only / API-only / external-managed consumer non-applicable, P2). consumer overlay `project.yaml aggregate_arch.migration_tool` 9-enum override (default alembic).
+- **`agents/APIContractArchitectAgent.md`** (신설, skeleton at S1 / body 심화 = S2) — 7번째 permanent deputy. API transport contract advocate — REST/GraphQL/gRPC/WebSocket + API versioning + DTO contract + OpenAPI/GraphQL schema + contract testing. Sonnet (single-mandate advocacy). 본 release = skeleton + Out of scope + Story-2 cross-ref. body 심화 = CFP-1086 Wave 1 sequential Story-2 별 PR.
+- **`agents/ModuleArchitectAgent.md`** (CodeArchitectAgent rename + mandate 정정) — 4번째 permanent deputy. axis 명확화 — module / package boundary + dependency direction + layered/hexagonal/clean module-level + DDD bounded context **module placement** 만 (aggregate invariant 영역 = AggregateArch 분리). Sonnet 유지. mandate 축소 (이전 mandate 7 항목 중 5번째 "DDD aggregate boundary" 영역 = AggregateArch primary 로 이동).
+- **`agents/DataArchitectAgent.md`** (mandate 축소) — 빅데이터 OLAP 영역 변호자 only. Parquet / 객체저장소 / DuckDB / streaming pipeline / 백필 / 시계열 집계. RDB OLTP 영역 (PostgreSQL / SQLAlchemy / Alembic / 트랜잭션 경계 / 도메인 모델) 모두 AggregateArch 분리. Opus 유지 (§결정 1 (d) — analytical schema rollback / data integrity invariant 영역). Cross-layer ELT/ETL/CDC boundary (DataArch + AggregateArch co-author) deferred carrier.
+
+#### agent file deletion (rename source)
+
+- `agents/CodeArchitectAgent.md` (→ ModuleArchitectAgent.md rename, axis 명확화)
+
+#### Changed
+
+- **`CLAUDE.md`**: "5 permanent + 3 CONDITIONAL" → **"7 permanent + 3+1 CONDITIONAL + 4-tuple sub-tuple"** wrapper SSOT 와 byte-consistent 재작성 (deputy 매트릭스 7 row + 4-way 영역 분리 + Sub-agent fan-out 갱신 + ArchitectPLAgent prompt 4-mode + DDDArchitect 신설 reject 명문화 + chief tie-break ladder 3 단계 cross-ref).
+- **`docs/architecture/codeforge-design.md`**: CFP-1086 living arch doc 갱신 — 7+3+1 roster 반영 (ADR-078 §결정 1 4 영역 갱신: 모듈 / 경계 / 인터페이스 계약 / 데이터 흐름). 4-way 이념 대립 axis 영역 분리 (RDB OLTP / 빅데이터 OLAP / Cross-layer). Cross-cutting gate boundary 에 ADR-068 Amd 2 + ADR-086 추가.
+- **`.claude-plugin/plugin.json`**: 0.13.0 → **0.14.0** MINOR (ADR-037 — agent 신설 + rename + mandate 축소 = MINOR). description 갱신 (7+3+1 roster + CONDITIONAL applicability P2 + chief tie-break ladder + Deputy 신설 결정 framework P7 반영).
+
+#### Related ADRs
+
+- ADR-042 Amendment 8 (CFP-1086 Story-1 carrier — design lane 7+3+1 roster 재편)
+- ADR-068 Amendment 2 (sibling carrier — chief tie-break ladder 3 단계)
+- ADR-086 (sibling 신설 carrier — Deputy 신설 결정 framework P7, axis 분석 + 5-checklist + deferred carrier path)
+- ADR-014 Amendment 4 (cross-ref — InfraOperationalArch §7.4 primary 4-sub)
+- ADR-076 (declarative reconciliation upgrade — 3-layer 패턴 동형 답습)
+- ADR-072 (ProductionEvidenceDeputy + Epic cutover gate)
+- ADR-078 (living architecture doc SSOT)
+- ADR-054 (doc-only fast-path — 5-repo atomic 단일 PR family)
+
 ## [0.13.0] - 2026-05-20
 
 ### Added (CFP-684 / Epic CFP-1026 S3 — design lane agent 구조 재편 atomic activation)
