@@ -384,7 +384,7 @@ CFP-1059 Story-1 sibling carrier (ADR-087 Deploy lane + ADR-088 Deploy Review la
 
 본 boundary axis = ADR-088 §결정 3 ProductionEvidence ownership transfer (wrapper → codeforge-deploy-review) 와 sibling carrier 보존 (3-deputy disjoint axis 정합 — InfraOpArch §7.4 운영 risk SSOT / DeployPL §12 배포 행위 / ProductionEvidence (codeforge-deploy-review) §13 review evidence quad — ADR-088 §결정 3 sibling).
 
-### 결정 8 — ADR-072 (ProductionEvidence) → ADR-088 (codeforge-deploy-review) ownership 이관 cross-ref
+### 결정 8 — ADR-72 (ProductionEvidence) → ADR-088 (codeforge-deploy-review) ownership 이관 cross-ref
 
 ADR-72 §결정 1 (ProductionEvidence Deputy 신설) 의 ownership 위치 = wrapper-side deputy (Amendment 4 §결정 1) → ADR-088 §결정 3 (CFP-1059 Story-1 carrier) 으로 정식 이관. 본 ADR-014 Amendment 5 = ownership transfer declarative cross-ref only — ADR-014 §결정 1~5 본문 변경 0건, ADR-72 §결정 1 본문 변경 = ADR-72 자체 Amendment 4 carrier scope.
 
@@ -398,7 +398,7 @@ ADR-72 §결정 1 (ProductionEvidence Deputy 신설) 의 ownership 위치 = wrap
 - ADR-087 (CFP-1059 / Story-1 신설 — Deploy lane as 7th lane plugin, §결정 5 6-step Deploy procedure SSOT)
 - ADR-088 (CFP-1059 / Story-1 신설 — Deploy Review lane as 8th lane plugin + ProductionEvidence transfer §결정 3 carrier)
 - ADR-042 Amendment 9 (CFP-1059 / Story-1 sibling — 4 신설 agent tier DeployPL / DeployWorker / DeployReviewPL / DeployReviewWorker)
-- ADR-072 §결정 1 (ProductionEvidence Deputy 신설) — ownership 이관 cross-ref (wrapper → codeforge-deploy-review)
+- ADR-72 §결정 1 (ProductionEvidence Deputy 신설) — ownership 이관 cross-ref (wrapper → codeforge-deploy-review)
 - ADR-068 I-4 wording SSOT (혼재 금지 boundary disjoint invariant 정합)
 - ADR-058 §결정 5 sunset_justification (ratchet 강화 방향 only — 약화 0)
 

@@ -736,7 +736,7 @@ ADR-027 frontmatter `is_transitional: false` (permanent policy). Amendment 7 = c
 - ADR-087 (CFP-1059 / Story-1 신설 — Deploy lane as 7th lane plugin, §결정 5 6-step Deploy procedure SSOT — 본 Amendment 7 의 5 sub-field 가 6-step 의 input)
 - ADR-088 (CFP-1059 / Story-1 신설 — Deploy Review lane + ProductionEvidence transfer)
 - ADR-014 결정 2 (env isolation — `1password` sub-field 정합)
-- ADR-072 §결정 5 (epic-cutover-gate-evidence-quad-check — production cutover-touching Epic scope 정합)
+- ADR-72 §결정 5 (epic-cutover-gate-evidence-quad-check — production cutover-touching Epic scope 정합)
 - ADR-027 §결정 1 (bootstrap 검증 책임 — 본 Amendment 7 = 검증 항목 `deploy.*` 차원 추가)
 - ADR-027 Amendment 4 §결정 8 (`codeforge.version_pin` schema detection — 본 Amendment 7 의 fallback semantic 패턴 답습)
 - ADR-027 Amendment 6 §결정 10 (4-way detection signals — 본 Amendment 7 = `deploy.*` signal SSOT 확장)

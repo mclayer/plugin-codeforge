@@ -116,9 +116,9 @@ amendments_reserved:
 
 | 88 | CFP-1059 | active | 2026-05-20 KST (GitOpsAgent sequential append per ADR-RESERVATION write boundary — Deploy Review lane 신설 + ProductionEvidenceDeputy 이관 SSOT carrier. deploy review lane 의 agent roster / ProductionEvidenceDeputy 이관 경계 / review verdict contract / preflight 체크 normative SSOT. ADR-072 Amendment carrier sibling within CFP-1059. status `reserved` 미경유 직접 `active` (row 87 동일 precedent 정합). ADR file = `ADR-088-deploy-review-lane-and-production-evidence-transfer.md`. parent_epic CFP-1059.) |
 
-| 89 | CFP-1059 | active | 2026-05-20 KST (GitOpsAgent sequential append per ADR-RESERVATION write boundary — Schema 변경 7 원칙 SSOT carrier. 양방향 호환 / expand-contract / reverse / smoke / cross-repo / backup / hard limit 7 원칙 normative SSOT. ADR-087 Schema 7 principles anchor. status `reserved` 미경유 직접 `active` (row 87/88 동일 precedent 정합). ADR file = `ADR-089-schema-change-7-principles.md`. parent_epic CFP-1059.) |
+| 89 | CFP-1059 | active | 2026-05-20 KST (GitOpsAgent sequential append per ADR-RESERVATION write boundary — Schema 변경 7 원칙 SSOT carrier. 양방향 호환 / expand-contract / reverse / smoke / cross-repo / backup / hard limit 7 원칙 normative SSOT. ADR-089 Schema 7 principles anchor. status `reserved` 미경유 직접 `active` (row 87/88 동일 precedent 정합). ADR file = `ADR-089-schema-change-7-principles.md`. parent_epic CFP-1059.) |
 
-| 90 | CFP-1059 | active | 2026-05-20 KST (GitOpsAgent sequential append per ADR-RESERVATION write boundary — Cross-layer 참조 정책 + 양 layer 동시 변경 순서 SSOT carrier. source-first expand / leaf-first contract ordering invariant normative SSOT. ADR-088 cross-layer reference policy anchor. status `reserved` 미경유 직접 `active` (row 87/88/89 동일 precedent 정합). ADR file = `ADR-090-cross-layer-reference-policy.md`. parent_epic CFP-1059.) |
+| 90 | CFP-1059 | active | 2026-05-20 KST (GitOpsAgent sequential append per ADR-RESERVATION write boundary — Cross-layer 참조 정책 + 양 layer 동시 변경 순서 SSOT carrier. source-first expand / leaf-first contract ordering invariant normative SSOT. ADR-090 cross-layer reference policy anchor. status `reserved` 미경유 직접 `active` (row 87/88/89 동일 precedent 정합). ADR file = `ADR-090-cross-layer-reference-policy.md`. parent_epic CFP-1059.) |
 
 ### 번호 해제 (archived)
 

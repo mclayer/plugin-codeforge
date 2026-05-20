@@ -8,7 +8,24 @@ carrier_story: CFP-363
 parent_epic: null
 supersedes: null
 amends: ADR-013
-amendments: []
+amendments:
+  - amendment_id: 1
+    date: 2026-05-20
+    carrier_story: CFP-1059
+    title: "fast-path 영역 확장 — declarative seed (신규 ADR + Wave 1 declarative-only workflow / script) boundary 명확화"
+    description: |
+      §결정 1 3-way 분류 표의 "full-lane" 행 조건을 boundary refinement.
+      신규 ADR 도입 / `templates/github-workflows/**` 변경 / `scripts/**` 변경 영역이
+      Wave 1 declarative-only 상태 (실 wire = 후속 Story carrier) 인 경우 fast-path 가능
+      영역으로 명확화. 실 wire 시점 = full-lane 재거침 의무 invariant 보존 (ratchet 강화).
+    sunset_justification: |
+      metric — declarative-only → full-lane wire promotion 시점 1:1 matching
+        (Wave 1 declare 1 → 후속 Story wire 1 = full-lane 재거침 의무).
+      who — ArchitectPLAgent + DesignReviewPL (각 carrier Story FIX iter 시점 verify).
+      how — spec/plan 안 "Wave 1 declarative-only" 명시 + 후속 carrier Story file 안
+        `wave_2_wire_carrier: <S2 또는 S3>` 명시. ADR frontmatter
+        `mechanical_enforcement_actions[]` entry status `declaration-only-Wave-1 → warning`
+        promotion = full-lane 거침 의무 anchor.
 related_stories:
   - CFP-357
   - CFP-358
@@ -71,6 +88,44 @@ ADR 자체가 설계 결정 SSOT이므로, 설계리뷰 lane 생략 시 self-rev
 
 - `templates/github-workflows/**` 변경 = full-lane (workflow 변경 = 구조 영향)
 - 그 외 `templates/**` = ArchitectAgent 판단 (영향 범위·consumer migration 여부 기준)
+
+### §결정 6 — Amendment 1 boundary refinement (declarative seed = Wave 1 정합 영역)
+
+**Amendment 1 (2026-05-20 KST, carrier_story: CFP-1059)**: §결정 4 / §결정 5 boundary
+refinement — fast-path 영역 확장 (declarative seed 영역 포함). **ratchet 강화 방향** —
+약화 NOT (boundary 명확화 + 실 wire 시점 full-lane 강제 retain).
+
+**fast-path 적격 declarative seed 3 영역**:
+
+1. **신규 ADR 도입 + Wave 1 declarative-only 결합 영역 = fast-path 가능** — 단 본 ADR 의
+   `mechanical_enforcement_actions[]` 모두 `declaration-only-Wave-1` 상태 (실 wire =
+   후속 carrier Story 영역 full-lane 의무). 이 조건 미충족 시 full-lane 강제 retain
+   (§결정 4 default 우선).
+
+2. **`templates/github-workflows/**` 변경 = declarative seed (Phase 1 declarative
+   workflow file + actual job body placeholder echo + `continue-on-error: true`) 영역 =
+   fast-path 가능** — 단 actual workflow runs jobs body + lint script + bats fixture
+   pair 신설 영역 = full-lane 강제 retain (declarative-only → wire promotion = full-lane
+   재거침 의무, §결정 5 default 우선).
+
+3. **`scripts/**` 변경 = label-registry sync / atomic-upgrade sync 영역
+   (declaration-only-Wave-1 정합) = fast-path 가능** — 본 영역 = mechanical sync
+   (ADR-065 7-item) 의무 정합. 신규 lint script body / 실 enforcement script 신설 영역
+   = full-lane 강제 retain.
+
+**Boundary invariant** (ratchet 강화):
+
+- declarative seed 1 → 후속 carrier Story wire 1 = full-lane 재거침 의무 (1:1 matching).
+- `declaration-only-Wave-1 → warning` tier promotion 시점 = full-lane 강제 발효 anchor.
+- spec/plan 안 "Wave 1 declarative-only" 명시 + 후속 carrier Story file 안
+  `wave_2_wire_carrier: <S2 또는 S3>` 명시 의무.
+
+**자기적용 사례** (carrier CFP-1059 Story-1 자체):
+- ADR-087/088/089/090 신설 + Wave 1 declarative-only `mechanical_enforcement_actions[]`
+  = §결정 6.1 fast-path 적격
+- `templates/github-workflows/` 7 seed + `continue-on-error: true` placeholder
+  = §결정 6.2 fast-path 적격
+- `scripts/bootstrap-labels.sh` + `atomic-upgrade-7-plugins.sh` sync = §결정 6.3 fast-path 적격
 
 ## 결과
 

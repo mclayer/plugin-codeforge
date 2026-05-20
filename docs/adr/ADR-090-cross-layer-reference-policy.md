@@ -12,7 +12,7 @@ related_adrs:
   - ADR-089  # Schema 변경 7 원칙 (sibling carrier — 본 ADR 이 §결정 1 원칙 5 cross-repo 영향 layer 구체화)
   - ADR-087  # Deploy lane (sibling carrier — 본 정책이 deploy lane mandatory invariant)
   - ADR-088  # Deploy Review lane (sibling carrier)
-  - ADR-072  # ProductionEvidenceDeputy mandate
+  - ADR-72  # ProductionEvidenceDeputy mandate
   - ADR-068  # boundary completeness invariants (I-2 cross-module propagation completeness cross-ref)
   - ADR-076  # declarative reconciliation (expand-contract pattern 동형)
   - ADR-083  # consumer-applicability filter (layer 별 적용 여부)
