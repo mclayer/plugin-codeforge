@@ -1,7 +1,7 @@
 ---
 adr_number: 91
 title: ArchitectLane DDD vocabulary governance — Hybrid agent↔DDD mapping + Subdomain Specialist + Aggregate metaphor 2-layer + Published Language 분리 + Bounded Context governance + enforcement layer + vocabulary theater 차단 forcing function
-status: Reserved
+status: Accepted
 category: governance
 date: 2026-05-20
 carrier_story: CFP-1117-S1
