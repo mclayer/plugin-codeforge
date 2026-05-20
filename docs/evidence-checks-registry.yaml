@@ -2941,7 +2941,7 @@ entries:
       count: 0                 # Wave 1 declaration baseline (sentinel-driven 아닌 ratchet-driven, ADR-085 carrier introduce)
       threshold: 3             # 3-occurrence reached 시 자동 승격 trigger (Wave 2 mechanical wire 후 carrier)
       promotion_trigger: none  # Wave 1 = declaration only, Wave 2 별 sub-CFP merge 후 active
-    status: deferred-followup  # Wave 1 declaration only — actual script + workflow + hook + bats + label-registry-v2 entry = Wave 2 별 sub-CFP carrier 후 warning 전환 (CFP-689 worktree-self-ownership-verify deferred-followup precedent 답습)
+    status: warning  # CFP-1057 Wave 2 mechanical wire merged — scripts + workflow + bats fixture + label-registry-v2 entry promotion 완료 (Wave 1 declarative → Wave 2 warning)
     detect_command: bash scripts/check-active-sessions-presence.sh  # Wave 2 별 sub-CFP carrier — Story file frontmatter `active_sessions:` block OR Issue body HTML comment block presence-grep
     workflow: templates/github-workflows/active-sessions-presence.yml  # Wave 2 별 sub-CFP carrier
     current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
@@ -2979,9 +2979,9 @@ entries:
       count: 0
       threshold: 3
       promotion_trigger: none
-    status: deferred-followup
-    detect_command: bash scripts/check-lane-entry-ownership.sh  # Wave 2 별 sub-CFP carrier
-    workflow: templates/github-workflows/lane-entry-ownership-verify.yml  # Wave 2 별 sub-CFP carrier
+    status: warning  # CFP-1057 Wave 2 mechanical wire merged — scripts + workflow + bats fixture promotion 완료
+    detect_command: bash scripts/check-lane-entry-ownership.sh
+    workflow: templates/github-workflows/lane-entry-ownership-verify.yml
     current_tier: warning
     bypass_label: hotfix-bypass:lane-entry-ownership-verify  # label-registry-v2 v2.40 신규 entry
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
