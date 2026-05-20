@@ -2085,7 +2085,7 @@ lane 진입 직전 Orchestrator (또는 lane PL agent spawn 전) 가 다음 4-st
 
 #### ADR-073 Amendment 2 polling enum cross-ref
 
-본 §3.18 의 4-step polling 은 ADR-073 Amendment 2 §결정 1 transition trigger polling enum 3종 (`lane_spawn` / `pr_open` / `merge_transition`) 의 **4번째 source** (`active_sessions_check`) cross-ref append — ADR-073 Amendment 4 (CFP-1041) cross-ref-only Amendment 정합 (ADR-073 본문 0건 변경 invariant, Amendment 3 = #1038 reservation 보존).
+본 §3.18 의 4-step polling 은 ADR-073 Amendment 2 §결정 1 transition trigger polling enum 3종 (`lane_spawn` / `pr_open` / `merge_transition`) 의 **4번째 source** (`active_sessions_check`) cross-ref append — ADR-073 Amendment 4 (CFP-1041) cross-ref-only Amendment 정합 (ADR-073 본문 0건 변경 invariant, Amendment 3 = CFP-689 PR #1043 worktree-first self-ownership 3-tuple, #1038 escalation carrier — post-rebase sequence [1,2,3,4] consecutive).
 
 #### Rebase merge 우선 (ADR-085 §결정 4)
 

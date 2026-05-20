@@ -289,7 +289,7 @@ self-referential 주의: 본 ADR 의 해소 기준 부재 선언 자체가 §결
 - [ADR-073](ADR-073-orchestrator-verify-before-assert.md) — verify axis disjoint complement (Amendment 4 cross-ref-only append, 본문 0건 변경)
 - [ADR-070](ADR-070-codex-verify-before-trust.md) — verify axis disjoint complement (D5 declaration-only retain precedent)
 - [ADR-040](ADR-040-worktree-convention.md) — worktree namespace axis disjoint complement (single-session)
-- [ADR-050](ADR-050-parallel-epic-coordination.md) — PR-level post-hoc detection disjoint complement (본 ADR = session-level pre-hoc)
+- [ADR-050](ADR-050-parallel-epic-conflict-coordination.md) — PR-level post-hoc detection disjoint complement (본 ADR = session-level pre-hoc)
 - [ADR-045](ADR-045-story-retro-mandatory-trigger.md) — §D-9 cross_story_pattern_adr_trigger forcing function source (pattern_count ≥ 8 reach escalation_action adr_draft_emitted)
 - [ADR-064](ADR-064-decision-principle-mandate.md) — §결정 5 CFP scope unitary + §self-application top-down ratchet
 - [ADR-058](ADR-058-adr-sunset-criteria-mandate.md) — is_transitional + 해소 기준 의무 (false 정합 + 약화 차단)
