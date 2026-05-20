@@ -759,7 +759,7 @@ N/A — permanent policy.
 - [ADR-040](ADR-040-worktree-convention.md) — `mechanical_enforcement_actions[]` frontmatter 의무
 - [ADR-039](ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — inline whitelist 1번 entry cognitive 강화 (§결정 11)
 - [ADR-076](ADR-076-declarative-reconciliation-upgrade.md) — declarative reconciliation upgrade (Amendment 5 — invariant `user_decision_branches: 0` dialog 단계 enforcement carrier)
-- [ADR-045](ADR-054-doc-only-story-fast-path.md) — doc-only fast-path (Amendment 5 — Story 분류 정합)
+- [ADR-054](ADR-054-doc-only-story-fast-path.md) — doc-only fast-path (Amendment 5 — Story 분류 정합)
 - [CLAUDE.md](../../CLAUDE.md) — cross-ref 1-2 줄 (320 cap compression 정합)
 - [docs/orchestrator-playbook.md](../orchestrator-playbook.md) — §3.14 frame + 4 layer + sub-mechanism 본문 SSOT
 - [docs/orchestrator-communication-incidents.md](../orchestrator-communication-incidents.md) — Layer 4 영속 file
