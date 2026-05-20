@@ -613,6 +613,16 @@ version_handshake_3way_binding:   # v1.5 신설, CFP-820 §4.3 (e) 발동
 
 Phase 1 (CFP-820) merge 시 본 §4.8 binding block 활성 (schema declare — version_handshake placeholder_reserve → active). Phase 2 (별 PR) merge 시 `scripts/check-3way-version-parity.sh` 실 구현 + `templates/github-workflows/version-3way-atomic.yml` + `.github/workflows/version-3way-atomic.yml` byte-identical self-app + `docs/evidence-checks-registry.yaml` `version-3way-atomic` entry (blocking-on-pr) + consumer `.claude/_overlay/project.yaml codeforge.version_pin` 실 등록 시 3-way version parity mechanical 활성.
 
+### §4.8 sunset boundary (CFP-1111 carrier)
+
+본 binding (version_handshake_3way_binding, v1.5 CFP-820 carrier — ADR-063 Amendment 5 §결정 15 정합) 는 CFP-1111 walker paradigm 으로 carry.
+
+- **metric**: walker step 의 version bump trigger 시 3-way (publisher `plugin.json` ↔ registry `marketplace.json` ↔ consumer `project.yaml codeforge.version_pin`) byte-identical invariant 정확 enforce + 3-way mismatch 0 silent pass / N walk + sanity guard 6-tuple 재현
+- **who**: walker schema field `version_consistency_check: {publisher, registry, consumer}` + `gate_failure_mode: warning_first / blocking_on_pr` enum
+- **how**: walker integration test 안 3-way mismatch detection 검증 + warning-first → blocking fallback orthogonal verify
+
+**single promote pattern carry**: 본 §4.8 의 `version_handshake.status: placeholder_reserve → active` 단독 promotion 선례 (§4.14 답습) = walker schema ADR (Wave 1 Story-3) 안 structural precedent 재사용. β2 audit Anchor 9 LOSSLESS 판정.
+
 ### 4.9 Wave 3 Story-7 coverage fan-out D1/D2/D3 binding (v1.6 — CFP-821 §4.3 (h) trigger 신설 발동, ADR-027 Amendment 5 §결정 9 + ADR-076 §결정 2 표 PR template row carrier)
 
 본 §4.5 (per-plugin) / §4.6 (per-family) / §4.7 (overlay) / §4.8 (version 3-way) binding 위에 **coverage fan-out D1/D2/D3 binding layer** 1단을 추가한다. ADR-076 §결정 2 9 영역 enumeration 표 중 3 영역 (Issue templates / PR template / Branch protection) 의 reconcile responsibility fan-out 영역 — D1 Issue/PR template fan-out + D2 branch protection setup helper (FORM (b)) + D3 script boundary taxonomy. D1 reconcile semantic = §4.7 `overlay_reconcile_implementation_binding` (marker-aware 2-way / wholesale_mirror_with_user_visible_loss_report) SSOT 재사용 (변경 0, `.github/` 영역 area handler path 매핑만 신설). D2 = read-only manifest 합성 + dry-run preview (API write 0 — FORM (b) 핵심). D3 = declarative taxonomy doc (mechanical lint = §3.3 OOS 별도 follow-up Issue).
