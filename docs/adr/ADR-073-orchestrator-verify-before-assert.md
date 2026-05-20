@@ -30,6 +30,13 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 3 + CFP-689 carrier"
     sunset_justification: null
+  - amendment_id: 4
+    cfp: CFP-1041
+    date: 2026-05-20
+    scope: "ADR-085 cross-ref 보완 관계 명시 (disjoint complement — verify axis ↔ coordination axis). ADR-073 = Orchestrator 행위(cross-repo state + assumption) verify 한정 (verify axis) ↔ ADR-085 = 복수 Claude Code session ownership / 분담 / handoff coordination (coordination axis, pre-hoc cross-session). 두 layer axis disjoint — verify 가 충족되어도 ownership 미결정 시 parallel race 발생, ownership 결정 후에도 verify 미수행 시 false claim. ADR-085 §결정 1 5-layer disjoint 표가 공통 anchor (ADR-082 §결정 1 4-layer 표 verbatim 답습 + 5번째 row Multi-session coordination 신설). 본 Amendment 는 §결정 1 lane-entry sentinel 4-step polling 의 4번째 source (active_sessions_check) cross-ref-only append — 본문 §결정 1-8 + Amendment 1-3 mechanism 의미 변경 0 (ADR-085 §결정 3 cross-ref-only Amendment, ADR-082 Amendment 1 ADR-073 cross-ref pattern verbatim 답습). post-rebase sequence [1, 2, 3 (CFP-689 worktree-first self-ownership), 4 (본 CFP-1041 ADR-085 coordination)] consecutive — sibling escalation #1038 의 actual carrier = CFP-689 (PR #1043 merged 18236621 2026-05-20, 본 CFP-1041 Phase 1 PR open 도중 origin/main 으로 advance), dogfooding ADR-085 본 carrier 가 codify 하는 `parallel_session_shared_workdir_collision` pattern (9th+ parallel race lineage single session evidence)."
+    status: applied
+    ref: "## Amendments / Amendment 4 + ADR-085 §결정 3"
+    sunset_justification: null
 related_stories:
   - CFP-622  # carrier
   - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
@@ -40,6 +47,7 @@ related_stories:
   - CFP-689  # Amendment 3 — worktree-first self-ownership verify 3-tuple (declarative anchor, plugin-codeforge#1038 carrier)
   - CFP-1038 # Amendment 3 carrier ESC — PMO P1 escalation (worktree_first_self_confusion_within_single_session pattern_count 3 reach, plugin-codeforge#1038)
   - CFP-983  # Amendment 3 candidate (c) 정식 carrier — #983 P1 ESC body shared workdir collision worktree-first invariant 강화 영역
+  - CFP-1041 # Amendment 4 — ADR-085 disjoint complement (verify axis ↔ coordination axis), §결정 1 lane-entry sentinel 4-step polling 의 4번째 source `active_sessions_check` cross-ref-only append
   - CFP-597  # sentinel #4 strike #1 origin (CLAUDE.md cap + playbook §3.6 false alarm)
   - CFP-578  # ADR-070 verify-before-trust 자매 (external worker output)
   - CFP-612  # ADR-071 dialog convergence 자매 governance
@@ -53,6 +61,7 @@ related_adrs:
   - ADR-064  # decision principle mandate (self-application top-down ratchet)
   - ADR-012  # CLAUDE.md cap (cross-ref 추가 시 압축 plan 동반)
   - ADR-040  # mechanical_enforcement_actions[] frontmatter 의무 (governance category)
+  - ADR-085  # Amendment 4 — disjoint complement (verify axis ↔ coordination axis, ADR-085 §결정 1 5-layer 표 anchor)
 related_files:
   - CLAUDE.md  # 결정 원칙 section + ADR list 영역 cross-ref
   - skills/codeforge-brainstorm/SKILL.md  # verify 의무 amend
@@ -490,6 +499,23 @@ Orchestrator 가 subagent verdict 안 `parallel_session_conflict` (또는 동형
 #### Amendment 3 — sunset_justification N/A 정당
 
 `is_transitional: false` (영구 governance policy) 보존 — Amendment 3 scope = §결정 1 본문 + Amendment 1+2 강화 방향 only (transition trigger enum 4번째 entry append + self-ownership verify 3-tuple 신설 + subagent verdict re-verify mandate). 약화 / scope 축소 / 면제 영역 0건. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과 (Amendment 1+2 동형 precedent). ADR-064 §self-application top-down ratchet 정합 (강화 방향 only — verify scope 확장).
+
+### Amendment 4 — ADR-085 cross-ref disjoint complement (verify axis ↔ coordination axis, CFP-1041)
+
+**문제**: ADR-073 (base + Amendment 1+2+3) 은 Orchestrator 행위 영역에서 cross-repo state / assumption verify (verify axis) 의무를 codify. 그러나 복수 Claude Code session 이 동일 repository / Story / branch 에서 동시 작업할 때 ownership 결정 / 분담 / handoff coordination (coordination axis) 영역은 ADR-073 scope 외 — verify 가 모두 충족되어도 ownership 미결정 시 parallel race 발생, ownership 결정 후에도 verify 미수행 시 false claim 가능 (둘 다 필요한 orthogonal layer).
+
+**결정**: ADR-085 (Multi-session collaboration protocol — `active_sessions[]` + lane-entry sentinel + rebase merge 우선 + handoff baton transfer) 신설로 coordination axis layer 추가. ADR-073 ↔ ADR-085 = **disjoint complement** 관계:
+
+- **ADR-073** = Orchestrator cross-repo state / assumption verify 한정 (verify axis, post-hoc verify)
+- **ADR-085** = 복수 session ownership / 분담 / handoff coordination 한정 (coordination axis, pre-hoc cross-session)
+
+ADR-085 §결정 1 5-layer disjoint 표가 공통 anchor (ADR-082 §결정 1 4-layer 표 verbatim 답습 + 5번째 row Multi-session coordination 신설). 본 Amendment 4 는 §결정 1 lane-entry sentinel 4-step polling 의 **4번째 source** (`active_sessions_check`) cross-ref-only append — 본문 §결정 1-8 + Amendment 1-3 mechanism 의미 변경 0 (ADR-085 §결정 3 cross-ref-only Amendment, ADR-082 Amendment 1 ADR-073 cross-ref pattern verbatim 답습).
+
+post-rebase amendments[] sequence = [1, 2, 3 (CFP-689 worktree-first self-ownership), 4 (본 CFP-1041 ADR-085 coordination)] consecutive. 본 carrier 진행 중 origin/main 으로 CFP-689 (PR #1043, sibling escalation #1038 actual carrier) advance — dogfooding ADR-085 본 carrier 가 codify 하는 `parallel_session_shared_workdir_collision` pattern (9th+ parallel race lineage single session evidence: CFP-953/946/949/932/954/991/967/1014 + 본 CFP-1041 진행 중 CFP-689 race) verbatim 시연.
+
+#### Amendment 4 — sunset_justification N/A 정당
+
+`is_transitional: false` (영구 governance policy) 보존 — Amendment 4 scope = cross-ref-only append (mechanism 의미 변경 0, scope 확장 / 강화 0). 약화 / scope 축소 / 면제 영역 0건. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과 (Amendment 1+2+3 동형 precedent). ADR-064 §self-application top-down ratchet 정합.
 
 ## 관련 파일
 

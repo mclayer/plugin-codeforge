@@ -7,6 +7,38 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.94.0] - 2026-05-20
+
+### Added (CFP-1041 — ADR-085 Multi-session collaboration protocol SSOT, declarative anchor Wave 1)
+
+- **`docs/adr/ADR-085-multi-session-collaboration-protocol.md`** NEW — 본질 선언 + 8 §결정 + 5-layer disjoint 표 (ADR-082 §결정 1 4-layer 표 verbatim 답습 + 5번째 row Multi-session coordination 신설) + `mechanical_enforcement_actions: [active-sessions-presence, lane-entry-ownership-verify]` declaration-only-Wave-1 (ADR-082 §결정 6 + ADR-070 §D5 retain pattern 답습)
+- `docs/adr/ADR-RESERVATION.md` row 85 = CFP-1041 active
+- `docs/adr/ADR-073-orchestrator-verify-before-assert.md` **Amendment 4** cross-ref (post-rebase amendments[] sequence [1, 2, 3 (CFP-689 worktree-first self-ownership), 4 (본 CFP-1041 ADR-085 coordination)] consecutive)
+- `docs/adr/ADR-082-write-time-self-write-verification-mandate.md` **Amendment 3** cross-ref (dual amendments[]+amendment_log[] block 정합)
+- `docs/inter-plugin-contracts/label-registry-v2.md` v2.39 → v2.40 (+ 2 hotfix-bypass family member: `active-sessions-presence` + `lane-entry-ownership-verify`)
+- `docs/inter-plugin-contracts/MANIFEST.yaml` label-registry-v2 version sync
+- `docs/evidence-checks-registry.yaml` + 2 entry warning tier deferred-followup (active-sessions-presence + lane-entry-ownership-verify, recurrence {count: 0, threshold: 3, promotion_trigger: none})
+- `templates/story-page-structure.md` frontmatter `active_sessions[]` field 5-tuple schema (git_identity / worktree_path / entry_phase / entered_at_kst / last_heartbeat_kst, ADR-079 KST `+09:00` strict, optional backward-compat default `[]`)
+- `CLAUDE.md` 신규 "Multi-session collaboration protocol" 단락 + verify-before-trust 4-layer 단락 Amendment 4 cross-ref
+- `docs/orchestrator-playbook.md` §3.18 신설 (lane-entry sentinel 4-step polling + rebase merge 우선 + handoff baton transfer)
+
+### Cross-Issue absorption
+
+- `#983` super-class SSOT (`parallel_session_shared_workdir_collision` 8+ occurrence) — close declare (absorbed into ADR-085)
+- `#870` multi-session FIX-handoff contract (P:medium, from-cfp-699-retro) — inline absorb §결정 5 (handoff baton transfer)
+- `#1038` ADR-073 Amendment 3 escalation carrier — resolved by sibling CFP-689 PR #1043 merged `18236621` 2026-05-20 (parallel session race during 본 carrier Phase 1, dogfooding ADR-085 코드ify pattern)
+
+### Carrier evidence
+
+- ADR-045 §D-9 cross_story_pattern_adr_trigger pattern_count ≥ 8 reach (CFP-953/946/949/932/954/991/967/1014 + CFP-689 9th in-flight race)
+- ADR-082 precedent 동형 (pattern_count → 신규 ADR carrier, NOT Amendment overload)
+- Branch A user-confirmed (Codex high-confidence + Orchestrator 종합 over ArchitectAgent Branch C)
+- CFP-681 retroactive evidence (collaboration success variant 첫 case — rebase merge 우선, force-push 회피)
+
+### Marketplace sync mandate (ADR-063 §결정 5)
+
+plugin.json 5.93.0 → 5.94.0 MINOR bump → marketplace.json sibling sync PR after wrapper merge (mirrored field 4종 atomic). `marketplace_sync_declared: true`.
+
 ## [5.93.0] - 2026-05-20
 
 ### Added (CFP-689 — ADR-073 Amendment 3 worktree-first self-ownership verify 3-tuple, declarative anchor Wave 1)

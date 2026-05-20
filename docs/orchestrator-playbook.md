@@ -2067,6 +2067,52 @@ Orchestrator 가 Issue body 안 fact claim 마다 source direct verify 후 autho
 
 **Wave 3 progression** (cross-repo, 후순위 ratchet, CFP-1002 precedent 정합): RequirementsPL spawn prompt template (`mclayer/plugin-codeforge-requirements` canonical) explicit verify-before-trust mandate — cross-repo sibling sync 동반 가치 판단 영역, 별 canonical CFP carrier 분리.
 
+### §3.18 Multi-session collaboration protocol — lane-entry sentinel ownership verify (CFP-1041 / [ADR-085](../docs/adr/ADR-085-multi-session-collaboration-protocol.md))
+
+#### Trigger
+
+복수 Claude Code session 이 동일 repository / Story / Epic / branch 동시 작업 시 — **모든 lane entry 직전 의무**.
+
+#### 4-step polling subprocess (ADR-085 §결정 3)
+
+lane 진입 직전 Orchestrator (또는 lane PL agent spawn 전) 가 다음 4-step polling 의무 실행:
+
+1. **memory rule 6** (title-based search) — `gh issue list --search "<EPIC>-* in:title parent:CFP-<N>"` (label-based 부재 시 title fallback). 신규 sub-issue 가 다른 session 에 의해 발의되었는가 확인.
+2. **memory rule 7** (Epic state poll) — `gh issue view <EPIC> --json state,labels`. Epic 이 다른 session 에 의해 CLOSED 되었는가 확인.
+3. **active_sessions[] field check** — Story Issue body `<!-- active_sessions -->` HTML comment block + Story file frontmatter `active_sessions:` array 모두 verify (ADR-085 §결정 2 dual carrier). 본 session 의 entry 가 등록되어 있는가 확인.
+4. **lane-entry sentinel** — `gh pr list --search "head:<branch>"` PR existence check. 다른 session 이 이미 PR open 했는가 확인.
+
+위 4-step 모두 통과 시에만 lane entry. 1+ failure → 사용자 dialog 발화 (Inline whitelist 1번 entry, `codeforge:user-dialog-mode` skill 경유) — "parallel session detected, defer / takeover / abandon" 결정.
+
+#### ADR-073 Amendment 2 polling enum cross-ref
+
+본 §3.18 의 4-step polling 은 ADR-073 Amendment 2 §결정 1 transition trigger polling enum 3종 (`lane_spawn` / `pr_open` / `merge_transition`) 의 **4번째 source** (`active_sessions_check`) cross-ref append — ADR-073 Amendment 4 (CFP-1041) cross-ref-only Amendment 정합 (ADR-073 본문 0건 변경 invariant, Amendment 3 = #1038 reservation 보존).
+
+#### Rebase merge 우선 (ADR-085 §결정 4)
+
+lane re-spawn / FIX iter / handoff 시 `git pull --rebase origin main` 우선 (force-push 회피). force-push 필수 영역 = `--force-with-lease=branch:sha` + HEAD-pin pre-flight gate 의무 (`gh api repos/<owner>/<repo>/commits/<branch> --jq .sha` fresh re-pin 후 push). memory `feedback_verify_pin_head_sha` carrier 정합.
+
+#### Handoff baton transfer (ADR-085 §결정 5)
+
+In-flight FIX baton transfer (Session A → Session B handoff) 시 의무:
+
+1. **Session A** — §10 FIX Ledger row append (Orchestrator monopoly, fix-event-v1 contract) + active_sessions[] entry update `last_heartbeat_kst` + Story §9 evidence write + `git push origin <branch>`.
+2. **Session A** — handoff comment to Story Issue `[handoff:CFP-NNNN]` (comment-prefix-registry-v1 14번째 entry — 별 sub-CFP carrier).
+3. **Session B** — lane entry 4-step polling 통과 후 `git pull --rebase origin <branch>` + active_sessions[] entry append + fix_iter_ownership populate (handoff_from / handoff_to / fix_iter_number / handoff_at_kst / handoff_reason).
+
+handoff_reason enum: `context-budget-exhausted` / `user-redirect` / `structural-restart-ADR-053` / `other`.
+
+#### Wave 1 vs Wave 2 progression
+
+- **Wave 1 (현재)**: declarative-only (ADR-082 §결정 6 + ADR-070 §D5 retain pattern 답습). Orchestrator self-discipline + lane PL spawn 직전 manual 4-step polling.
+- **Wave 2 (별 sub-CFP carrier)**: mechanical wire — `templates/scripts/check-active-sessions-presence.{sh,py}` + `templates/scripts/check-lane-entry-ownership.{sh,py}` + `templates/github-workflows/active-sessions-presence.yml` + `templates/github-workflows/lane-entry-ownership-verify.yml` + bats test suite (evidence-checks-registry `active-sessions-presence` + `lane-entry-ownership-verify` 2 entry warning tier deferred-followup, ADR-060 §결정 5 정합).
+
+#### Cross-ref
+
+- ADR-085 §결정 1 5-layer disjoint 표 (ADR-082 §결정 1 4-layer 표 verbatim 답습 + 5번째 row Multi-session coordination 신설) — coordination axis disjoint complement.
+- ADR-073 Amendment 4 + ADR-082 Amendment 3 cross-ref-only Amendment (본문 0건 변경 invariant).
+- 8 parallel race incidents single session lineage evidence (CFP-953/946/949/932/954/991/967/1014, 2026-05-18 ~ 2026-05-19 KST) — ADR-045 §D-9 cross_story_pattern_adr_trigger pattern_count ≥ 8 reach escalation_action `adr_draft_emitted` 산물.
+
 ---
 
 ## 4. 병렬 스폰 판단
