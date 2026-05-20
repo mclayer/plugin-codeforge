@@ -7,6 +7,24 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.101.0] - 2026-05-20
+
+### Added (CFP-1102 — ADR-073 Amendment 5 carrier)
+
+본 release = ADR-073 Amendment 5 (§결정 1 transition trigger enum 5번째 entry `fix_iter_start` 추가) doc-only fast-path ADR-054 Category 2 carrier.
+
+#### ADR Amendment 1종
+
+- **`docs/adr/ADR-073-orchestrator-verify-before-assert.md`** — Amendment 5 append (CFP-1102). §결정 1 transition trigger enum 4 → 5 entry ratchet (`fix_iter_start` 5번째). §결정 1-E main HEAD pin verify primitive 3-step (fetch + remote HEAD pin gh api + local cache cross-check). §결정 1-F Amendment 2 §결정 1-A 3-step 재실행 정합. CFP-1087 cascade race evidence + pattern_count 2 reach HIGH escalation.
+
+#### Cross-ref
+
+- **`CLAUDE.md`** — Verify-before-trust 4-layer governance ADR-073 단락 Amendment 5 mention 추가 (별 PR 또는 본 PR 동반)
+
+### Marketplace sync
+
+- **`mclayer/marketplace`** sync PR — plugins[name=codeforge] version 5.100.0 → 5.101.0 + description verbatim mirror (ADR-063 §결정 5 atomic invariant, separate sibling PR 선행 merge)
+
 ## [5.100.0] - 2026-05-20
 
 ### Added (CFP-1087 — Wave 2-1 of CFP-698 retro carrier)

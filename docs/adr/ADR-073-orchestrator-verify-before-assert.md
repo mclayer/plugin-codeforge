@@ -37,6 +37,13 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 4 + ADR-085 §결정 3"
     sunset_justification: null
+  - amendment_id: 5
+    cfp: CFP-1102
+    date: 2026-05-20
+    scope: "§결정 1 expansion — transition trigger enum 5번째 entry `fix_iter_start` 추가 (closed-set ratchet 강화, Amendment 2/3 §결정 1-A precedent 답습). FIX iter trigger 시점 main HEAD pin verify mandate — §10 FIX Ledger row append 시점 + FIX iter N > 0 영역에서 `git fetch origin main` + `gh api repos/<owner>/<repo>/git/refs/heads/main --jq '.object.sha'` direct pin + cached SHA cross-check 의무 + `verified-via` annotation. CFP-1087 cascade race evidence (CFP-1086 main S1/S3/S4/S5 1시간 안 5 commits advance during FIX iter 1, force-push 후 또 CONFLICTING) — pattern_count 2 reach (CFP-953 pre-flight verify stale + CFP-1087 cascade race) HIGH escalation per ADR-045 §D-9 Mandatory framing. 본 Amendment 는 §결정 1-8 본문 + Amendment 1+2+3+4 scope 강화 only (ADR-058 §결정 5 ratchet 정합) — 약화 / scope 축소 0건. evidence-checks-registry warning-tier entry `parallel-work-sentinel-pickup` (Amendment 2 carrier) 의 fix_iter_start trigger 영역 확장 = mechanical wire Wave 2 별 carrier (sibling: force-push pre-flight gate CFP-1103). memory rule 7 (pin HEAD SHA first, feedback-verify-pin-head-sha) declarative cross-ref normative anchor."
+    status: applied
+    ref: "## Amendments / Amendment 5 + §결정 1-A transition trigger 표 5번째 row"
+    sunset_justification: null
 related_stories:
   - CFP-622  # carrier
   - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
@@ -48,6 +55,7 @@ related_stories:
   - CFP-1038 # Amendment 3 carrier ESC — PMO P1 escalation (worktree_first_self_confusion_within_single_session pattern_count 3 reach, plugin-codeforge#1038)
   - CFP-983  # Amendment 3 candidate (c) 정식 carrier — #983 P1 ESC body shared workdir collision worktree-first invariant 강화 영역
   - CFP-1041 # Amendment 4 — ADR-085 disjoint complement (verify axis ↔ coordination axis), §결정 1 lane-entry sentinel 4-step polling 의 4번째 source `active_sessions_check` cross-ref-only append
+  - CFP-1102 # Amendment 5 — transition trigger enum 5번째 entry `fix_iter_start` 추가 (FIX iter 시점 main HEAD pin verify mandate), CFP-1087 cascade race evidence
   - CFP-597  # sentinel #4 strike #1 origin (CLAUDE.md cap + playbook §3.6 false alarm)
   - CFP-578  # ADR-070 verify-before-trust 자매 (external worker output)
   - CFP-612  # ADR-071 dialog convergence 자매 governance
@@ -435,8 +443,9 @@ Amendment 2 §결정 1-A 의 transition trigger enum 3종 (`lane_spawn` / `pr_op
 | `pr_open` (Amendment 2) | PR open 직전 (Phase 1 / Phase 2 / retro PR) | `gh pr create` 직전 | 동일 3-step + sibling Story PR list cross-ref |
 | `merge_transition` (Amendment 2) | PR merge 직전 + merge 직후 gate label / phase label transition | merge command 직전 + 직후 transition action 직전 | 동일 3-step + Epic state final poll |
 | **`worktree_lane_spawn` (Amendment 3, 신규)** | **worktree-first lane spawn 직전 (`Agent` tool 호출 prompt 안 worktree path 주입 직전)** | **lane spawn 직전 + subagent verdict `parallel_session_conflict` 발화 직후** | **§결정 1-D self-ownership verify 3-tuple (path-based, 아래)** |
+| **`fix_iter_start` (Amendment 5, 신규)** | **§10 FIX Ledger row append 직전 (FIX iter N > 0, 즉 N=1 첫 FIX iter 부터)** | **§10 row write + lane re-spawn 직전** | **§결정 1-E main HEAD pin verify (아래) + Amendment 2 §결정 1-A 3-step 재실행** |
 
-closed enum — 5번째 trigger 추가 시 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
+closed enum — 6번째 trigger 추가 시 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
 
 #### Amendment 3 §결정 1-D — Self-ownership verify 3-tuple (path-based, 사용자 prompt identity-based 대안 채택)
 
@@ -516,6 +525,57 @@ post-rebase amendments[] sequence = [1, 2, 3 (CFP-689 worktree-first self-owners
 #### Amendment 4 — sunset_justification N/A 정당
 
 `is_transitional: false` (영구 governance policy) 보존 — Amendment 4 scope = cross-ref-only append (mechanism 의미 변경 0, scope 확장 / 강화 0). 약화 / scope 축소 / 면제 영역 0건. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과 (Amendment 1+2+3 동형 precedent). ADR-064 §self-application top-down ratchet 정합.
+
+### Amendment 5 — `fix_iter_start` transition trigger 5번째 entry (FIX iter 시점 main HEAD pin verify, CFP-1102)
+
+**날짜**: 2026-05-20
+
+#### 동기
+
+CFP-1087 FIX iter 1 진행 중 CFP-1086 main이 1시간 안 5번 cascade advance (S1 06:46Z → S3 07:37Z → S4 07:41Z → S5 07:49Z, plugin.json 5.96 → 5.97 → 5.98 → 5.99 점진 ratchet). 본 carrier force-push (`60cdaa5`, 5.99.0) 직후 main S5 cascade → 5.99.0 main 점유 → 본 carrier CONFLICTING. FIX iter 2 cherry-pick + 5.99 → 5.100 ratchet 의무.
+
+**Pattern_count 2 reach** (PMOAgent retro corpus enumeration):
+- Pre-flight verify working tree stale — CFP-953 + CFP-1087 (working tree cache 영역 origin/main HEAD vs gh api ?ref=main divergence)
+- main cascade race during FIX iter — CFP-1087 sentinel (1 sample 신규, 영역 super-class shared with working tree stale)
+
+ADR-045 §D-9 Mandatory framing 정합 — HIGH escalation `adr_draft_emitted` (본 Amendment 5 carrier).
+
+#### §결정 1 expansion — `fix_iter_start` transition trigger 5번째 entry (closed-set ratchet)
+
+Amendment 2/3 §결정 1-A precedent 답습 (transition trigger enum closed-set ratchet 강화). 본 Amendment 5 = 5번째 entry append.
+
+**5번째 trigger 정의**:
+
+| Field | Value |
+|---|---|
+| ID | `fix_iter_start` |
+| Transition trigger | §10 FIX Ledger row append 시점 + FIX iter N > 0 (즉 N=1 첫 FIX iter 부터 적용) |
+| 발화 시점 | §10 row write 직전 + 후속 lane re-spawn 직전 (양 시점 모두 verify 의무) |
+| Verify 의무 | §결정 1-E main HEAD pin verify (아래) + Amendment 2 §결정 1-A 3-step (title-based search + Epic poll + HEAD compare) 재실행 |
+
+closed enum — 6번째 trigger 추가 시 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
+
+#### §결정 1-E — Main HEAD pin verify (FIX iter trigger 영역)
+
+`fix_iter_start` transition 시점에 다음 verify 의무 (memory rule 7 `feedback-verify-pin-head-sha` declarative cross-ref normative anchor):
+
+**Pin verify primitive** (3-step atomic group):
+
+| Step | Verify command | PASS 조건 | Fallback rule |
+|---|---|---|---|
+| 1. fetch | `git -C <worktree> fetch origin <base-branch> --quiet` | exit 0 | fetch 실패 시 advisory warning + cached HEAD 사용 (graceful degradation) |
+| 2. remote HEAD pin | `gh api repos/<owner>/<repo>/git/refs/heads/<base> --jq '.object.sha'` | SHA returned, 7+ chars | API 실패 시 `git rev-parse origin/<base>` fallback |
+| 3. local cache cross-check | `git -C <worktree> rev-parse origin/<base>` vs step 2 output | byte-identical | divergence detect 시 fetch 재실행 + step 2/3 재verify |
+
+3-step PASS 조건 모두 충족 시 — pinned HEAD SHA 영역 §10 FIX Ledger row `verified-via` annotation 의무. 미충족 시 — FIX iter 진행 중단 + advisory escalate (사용자 / Orchestrator 결정 영역).
+
+#### §결정 1-F — FIX iter trigger 영역 § Amendment 2 §결정 1-A 3-step 재실행 정합
+
+Amendment 2 §결정 1-A 3-step (title-based search + Epic state poll + HEAD compare-sibling-commits) 영역 = `lane_spawn` / `pr_open` / `merge_transition` trigger 동일. `fix_iter_start` trigger 영역 동일 3-step 재실행 의무 — sustained in-session polling discipline (Amendment 2 §결정 1-B normative anchor) 정합. 본 §결정 1-F = 5번째 trigger 영역 본 3-step coverage 명시 only (3-step mechanism 의미 변경 0).
+
+#### Amendment 5 — sunset_justification N/A 정당
+
+`is_transitional: false` (영구 governance policy) 보존 — Amendment 5 scope = §결정 1 본문 + Amendment 1+2+3+4 강화 방향 only (transition trigger enum 5번째 entry append + main HEAD pin verify primitive 신설). 약화 / scope 축소 / 면제 영역 0건. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과 (Amendment 1+2+3+4 동형 precedent). ADR-064 §self-application top-down ratchet 정합 (강화 방향 only — verify scope FIX iter trigger 영역 확장).
 
 ## 관련 파일
 
