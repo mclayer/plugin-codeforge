@@ -19,8 +19,8 @@ inputs:
   - RefactorAgent
   - SecurityArchitectAgent
   - TestContractArchitectAgent
-  - DataMigrationArchitectAgent
-  - OperationalRiskArchitectAgent  # CFP-46 PR-D
+  - DataArchitectAgent  # CFP-1092 rename — DataMigrationArchitectAgent → DataArchitectAgent (ADR-014 Amd 4 + ADR-042 Amd 7 wrapper SSOT cross-repo sibling propagation)
+  - InfraOperationalArchitectAgent  # CFP-1092 rename — OperationalRiskArchitectAgent → InfraOperationalArchitectAgent (CFP-46 PR-D origin, ADR-014 Amd 4 wrapper SSOT)
 reviewers: [DesignReviewPLAgent]
 related_adrs: [ADR-NNN, ADR-MMM]
 created: <ISO 8601>
