@@ -7,6 +7,48 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.96.0] - 2026-05-20
+
+### Added (CFP-1086 Story-1 — BackendArchEpic Phase 2 design lane 7+3+1 roster 재편)
+
+본 release = ADR-042 Amendment 8 + ADR-068 Amendment 2 + ADR-086 신설 atomic carrier (doc-only fast-path ADR-054 5-repo atomic).
+
+#### ADR 3종 (Amendment 2 + 신설 1)
+
+- **`docs/adr/ADR-042-agent-model-selection-policy.md`** — Amendment 8 append (5+3 → 7+3+1 permanent+CONDITIONAL roster 재편). AggregateArchitectAgent + APIContractArchitectAgent 신설 (Sonnet single-mandate advocacy). CodeArchitectAgent → ModuleArchitectAgent rename + mandate 정정 (도메인 모델 invariant 영역 = AggregateArch 분리). DataArchitectAgent mandate 축소 (RDB OLTP 영역 제거 → 빅데이터 OLAP only). AggregateArch CONDITIONAL applicability (`project.yaml aggregate_arch.applicable: bool` — P2). DDDArchitectAgent 신설 reject 명문화 (axis 미정합).
+- **`docs/adr/ADR-068-boundary-completeness-invariants.md`** — Amendment 2 append (wording SSOT 충돌 시 chief tie-break ladder 3 단계: RACI lookup → ADR-068 invariant → chief judgement + ADR Amendment 발의). `boundary_completeness_self_check_passed` scope expansion (I-4 mechanism boost).
+- **`docs/adr/ADR-086-deputy-creation-decision-framework.md`** (신설) — Deputy 신설 결정 framework P7. axis 분석 의무 + 5-checklist self-application (axis disjoint / cost-token budget / consumer carrier / sibling Epic align / deferred trigger) + deferred carrier path codify. 본 Amendment 8 = self-application 첫 사례. `mechanical_enforcement_actions: []` declaration-only Wave 1 retain (ADR-076 / ADR-070 / ADR-082 precedent 답습, 5 instance 누적).
+
+#### Inter-plugin contract bumps
+
+- **`docs/inter-plugin-contracts/review-verdict-v4.md`** — v4.5 → v4.6 MINOR (`deputy_axis_restructure_self_check_passed` optional bool field 신설 + `boundary_completeness_self_check_passed` scope expansion). 적용 lane = design lane only.
+- **`docs/inter-plugin-contracts/label-registry-v2.md`** — v2.40 → v2.41 MINOR (5 신규 entry: 4 axis:* + hotfix-bypass:deputy-axis-restructure 53번째 family member + 신규 category enum `axis`).
+- **`docs/inter-plugin-contracts/MANIFEST.yaml`** — review-verdict-v4 + label-registry-v2 version row 갱신.
+
+### Changed
+
+- **`CLAUDE.md`** — L131 Development Agent Team 표 row + Deputy mandate 매트릭스 단락 (5+3 → 7+3+1).
+- **`docs/orchestrator-playbook.md`** — Lane spawn 표 + token budget (평균 22 → 28 / full 34 → 40, 1.27배) + 설계 lane packet recipient 7 permanent + 3 sub-tuple.
+- **`docs/project-config-schema.md`** + **`docs/consumer-guide.md`** — `aggregate_arch.{applicable, migration_tool}` schema 신설 (Tool scope B — 9-enum override default alembic). §1l consumer-guide 신설.
+- **`skills/deputy-mandate/SKILL.md`** — 7+3+1 roster + CFP-1086 primary axis matrix canonical SSOT + RACI 표준 row 형식 skeleton (Story-3 carrier).
+- **`docs/parallel-work/section-ownership.yaml`** — Deputy mandate 매트릭스 section append-only ownership (ADR-042 Amd 8 carrier).
+- **`docs/evidence-checks-registry.yaml`** — `deputy-spawn-count-empirical-grounding` deferred-followup entry append (ADR-068 I-5 backref).
+- **`docs/adr/ADR-RESERVATION.md`** — Row 86 `reserved` → `active` 전환 (ADR-086 신설 점유 확정).
+- **`.claude-plugin/plugin.json`** — 5.95.0 → **5.96.0** MINOR (ADR-037 — ADR Amendment carrier 묶음 + label-registry-v2 MINOR + review-verdict-v4 MINOR governance behavior change).
+
+### Marketplace sync
+
+plugin.json 5.95.0 → 5.96.0 MINOR + marketplace.json sibling sync PR after wrapper merge (ADR-063 atomic invariant, mirrored field 4종). Sibling Stories 5-repo atomic (wrapper + codeforge-design + internal-docs + marketplace, codeforge-pmo 변경 0건).
+
+### Related ADRs
+
+- ADR-042 Amendment 8 (본 carrier — design lane 7+3+1 roster 재편)
+- ADR-068 Amendment 2 (sibling carrier — chief tie-break ladder)
+- ADR-086 (sibling 신설 carrier — Deputy 신설 결정 framework P7)
+- ADR-054 (doc-only fast-path — 5-repo atomic 단일 PR family)
+- ADR-063 (marketplace atomic invariant — Phase 6 sync)
+- ADR-016 (marketplace registration policy — sibling sync 의무)
+
 ## [5.95.0] - 2026-05-20
 
 ### Added (CFP-1057 — ADR-085 Wave 2 mechanical wire, CFP-1041 follow-up (b))
