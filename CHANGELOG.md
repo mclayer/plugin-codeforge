@@ -7,6 +7,30 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.102.0] - 2026-05-20
+
+### Added (CFP-1089 — Wave 2-3 of CFP-698 retro carrier)
+
+본 release = DesignReviewPL §8.6 pointer-presence-check mechanical workflow Phase 2 (ADR-068 Amendment 3 + review-verdict-v4 v4.7 declaration prerequisite 영역 CFP-1087 이미 merged 영역 정합).
+
+#### Lint script + workflow
+
+- **`scripts/check-design-review-pl-8-6-pointer.sh`** + **`scripts/lib/check_design_review_pl_8_6_pointer.py`** (ADR-061 thin bash wrapper + Python SSOT) — 3-check warning tier lint:
+  - Check 1: findings[].type "audit-gate-pointer-missing" literal review-verdict-v4 v4.7+ enum 정합
+  - Check 2: audit_gate_pointer_self_check_passed verdict-level boolean field schema 정합
+  - Check 3: ADR-068 frontmatter amendments[3] + I-6 invariant declaration cross-ref 정합
+- **`templates/github-workflows/design-review-pl-8-6-pointer.yml`** + **`.github/workflows/design-review-pl-8-6-pointer.yml`** (byte-identical self-app, ADR-005)
+- **`tests/scripts/check-design-review-pl-8-6-pointer.bats`** — 5 TC PASS
+
+#### Registry entries
+
+- **`docs/evidence-checks-registry.yaml`** — design-review-pl-8-6-pointer entry append (warning tier, owner_adr ADR-068, carrier_adr ADR-060, sibling_dependencies CFP-1087)
+- **`docs/inter-plugin-contracts/label-registry-v2.md`** — hotfix-bypass:design-review-pl-8-6-pointer entry append
+
+### Marketplace sync
+
+- **`mclayer/marketplace`** sync PR — plugins[name=codeforge] version 5.101.0 → 5.102.0 + description verbatim mirror (ADR-063 §결정 5)
+
 ## [5.101.0] - 2026-05-20
 
 ### Added (CFP-1102 — ADR-073 Amendment 5 carrier)
