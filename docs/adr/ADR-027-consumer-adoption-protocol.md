@@ -447,18 +447,18 @@ Consumer adoption 시 (bootstrap / reconcile) wrapper plugin overlay/hooks/ (`va
 
 | State | Detection 결과 | 동작 |
 |---|---|---|
-| `codeforge.version_pin` block 부재 | pin 미등록 (신규 consumer / 미설정) | **warning-first** — 3-way version parity lint skip + warn message "consumer pin SSOT 미등록 — codeforge.version_pin 등록 후 3-way enforce 활성" (exit 0). onboarding 마찰 0 |
-| `codeforge.version_pin.version` 등록 (semver string) | pin 등록 | 3-way version parity enforce 활성 (publisher↔registry↔consumer pin byte-identical, mismatch = blocking-on-pr exit 1) |
-| `codeforge.version_pin` 존재하나 `version` field 부재 / 비-semver | pin malformed | `validate_config.py` exit 4 (required field 누락/타입 위반 정합 — project-config-schema §6 verbatim) + actionable message. silent skip 금지 |
+| `codeforge.version_pin` block 부재 | `codeforge.version_pin` 미등록 (신규 consumer / 미설정) | **warning-first** — 3-way version parity lint skip + warn message "consumer `codeforge.version_pin` SSOT 미등록 — `codeforge.version_pin` 등록 후 3-way enforce 활성" (exit 0). onboarding 마찰 0 |
+| `codeforge.version_pin.version` 등록 (semver string) | `codeforge.version_pin` 등록 | 3-way version parity enforce 활성 (publisher↔registry↔consumer `codeforge.version_pin` byte-identical, mismatch = blocking-on-pr exit 1) |
+| `codeforge.version_pin` 존재하나 `version` field 부재 / 비-semver | `codeforge.version_pin` malformed | `validate_config.py` exit 4 (required field 누락/타입 위반 정합 — project-config-schema §6 verbatim) + actionable message. silent skip 금지 |
 
-**결정 근거 (Axis — orthogonality invariant)**: `pin 가용성` (block 등록 여부 = enforce 가능 여부) 과 `version 정합성` (값 일치 여부 = drift 존재 여부) 은 ORTHOGONAL 2 조건 — 동일 fallback 에 conflate 금지 (CFP-745 FIX Iter 2 base-absent≠marker-absent verified-true precedent 답습. conflate 시 결함: pin 미등록 신규 consumer 즉시 blocking = onboarding 마찰 false-positive / pin 등록 consumer 실 drift 가 warning 약화 false-negative). 외부 prior art = ADR-027 Amendment 2 `bootstrap.fallback_mode: auto | action_blocked` 의 동형 패턴 (consumer onboarding 마찰 회피 → 등록 후 enforce).
+**결정 근거 (Axis — orthogonality invariant)**: `codeforge.version_pin 가용성` (block 등록 여부 = enforce 가능 여부) 과 `version 정합성` (값 일치 여부 = drift 존재 여부) 은 ORTHOGONAL 2 조건 — 동일 fallback 에 conflate 금지 (CFP-745 FIX Iter 2 base-absent≠marker-absent verified-true precedent 답습. conflate 시 결함: `codeforge.version_pin` 미등록 신규 consumer 즉시 blocking = onboarding 마찰 false-positive / `codeforge.version_pin` 등록 consumer 실 drift 가 warning 약화 false-negative). 외부 prior art = ADR-027 Amendment 2 `bootstrap.fallback_mode: auto | action_blocked` 의 동형 패턴 (consumer onboarding 마찰 회피 → 등록 후 enforce).
 
 #### §결정 8.B — warning-first → 등록 후 blocking fallback semantic (사용자 confirm 2026-05-17 KST)
 
-- **pin 미등록** = warning-only (lint skip + warn, exit 0). pin 부재 = mismatch 판정 불성립 (비교 대상 없음 — false-positive 차단). onboarding 마찰 0 (ADR-027 Amendment 2 `bootstrap.fallback_mode` 패턴 답습)
-- **pin 등록 후 mismatch** = blocking-on-pr (exit 1, PR 차단). drift 0 strict enforce (등록 영역)
+- **`codeforge.version_pin` 미등록** = warning-only (lint skip + warn, exit 0). `codeforge.version_pin` 부재 = mismatch 판정 불성립 (비교 대상 없음 — false-positive 차단). onboarding 마찰 0 (ADR-027 Amendment 2 `bootstrap.fallback_mode` 패턴 답습)
+- **`codeforge.version_pin` 등록 후 mismatch** = blocking-on-pr (exit 1, PR 차단). drift 0 strict enforce (등록 영역)
 
-이는 ADR-063 Amendment 5 §결정 15 `version_handshake_3way_binding.fallback_semantic` (reconcile-protocol-v1 v1.5 §4.8) 의 verbatim cross-ref. codeforge 모델 = "pin 미등록 = graceful skip (additive governance — backward-compat), pin 등록 = strict enforce". consumer-authored invariant 보존 — 모든 codeforge agent 는 `codeforge.version_pin` field write 금지 (project-config-schema §4b verbatim). 3-way lint = read-only compare-only (write surface 0).
+이는 ADR-063 Amendment 5 §결정 15 `version_handshake_3way_binding.fallback_semantic` (reconcile-protocol-v1 v1.5 §4.8) 의 verbatim cross-ref. codeforge 모델 = "`codeforge.version_pin` 미등록 = graceful skip (additive governance — backward-compat), `codeforge.version_pin` 등록 = strict enforce". consumer-authored invariant 보존 — 모든 codeforge agent 는 `codeforge.version_pin` field write 금지 (project-config-schema §4b verbatim). 3-way lint = read-only compare-only (write surface 0).
 
 #### §결정 8.C — schema location SSOT = project.yaml codeforge.version_pin (FORM (b))
 
