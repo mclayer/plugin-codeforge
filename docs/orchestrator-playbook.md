@@ -2020,6 +2020,53 @@ codeforge family upgrade 의 선언적 reconciliation 실행 주체. **3 책임 
 
 > **CLAUDE.md cross-ref 부재 사유 (ArchitectPL 설계 결정)**: CLAUDE.md 가 line cap (≤320, ADR-012 Amendment 1 §결정 6) 을 이미 초과 (334 lines, pre-existing warning) — UpgradeAgent dispatch 는 operational reference-tier (anchor-tier 아님 — Orchestrator 가 매 turn 자기검열 대상 아님, ADR-051 Amendment 1 판정자 기준) 이므로 본 playbook §3.16 + consumer-guide 가 SSOT. CLAUDE.md line-delta 0 (over-cap 악화 회피).
 
+### §3.16.1 Consumer natural-language upgrade trigger (CFP-1104 carrier / [ADR-071 Amendment 5](../docs/adr/ADR-071-orchestrator-user-dialog-convergence.md) §결정 16 + [ADR-076](../docs/adr/ADR-076-declarative-reconciliation-upgrade.md) invariant carrier)
+
+consumer 가 자연어 token `codeforge upgrade` (또는 한글 변형) 발화 시 Orchestrator 가 dialog reflex 없이 즉시 §3.16 UpgradeAgent dispatch 호출. ADR-076 invariant `user_decision_branches: 0` 의 **dialog 진입 단계 enforcement** carrier — base ADR-071 §결정 5 사실/가치 분리 원칙의 dialog reflex 차단 first applied case.
+
+**closed enumeration 보존 invariant**: 본 trigger lookup table = ADR-071 §16.2 closed enumeration 1 entry. 2번째 trigger token 확장 시 별도 CFP 의무 (ADR-064 §결정 7 top-down ratchet + ADR-058 §결정 5 sunset_justification null 보존 + Story §1 사용자 explicit 승인 + SecurityArch consult — trust boundary 영역).
+
+#### Trigger token (closed enumeration, 1 entry)
+
+| Trigger phrase regex (case-insensitive) | Mapped action |
+|---|---|
+| `\b(codeforge\s+upgrade\|codeforge\s+업그레이드)\b` | `scripts/codeforge-upgrade.sh` invocation per §3.16 (7 차원 derived default 자동 적용) |
+
+#### 5 의무 step
+
+1. **token detect** — Orchestrator 가 사용자 발화 turn 에서 위 regex match 확인 → 매치 시 `codeforge:user-dialog-mode` skill frame mode 진입 4 step 적용 (anchor / drift / declare / verify) per ADR-071 §결정 1
+2. **derived default declare (Layer 1 preamble)** — 1 turn 사용자에게 declare 1 문장: "발화하신 `codeforge upgrade` → 다음 default 로 즉시 수행: repo=$(pwd) / mode=dry-run→apply 자동 / channel=overlay resolve→stable / scope=single plugin / dirty tree=abort / 실패 시 자동 rollback. 정정 필요 시 발화 의무." (사용자 정정 의무, AskUserQuestion 0)
+3. **derived default 추론** — cwd + consumer overlay `.claude/_overlay/project.yaml::codeforge.channel.tier` resolve + ADR-076 default → CLI arg 합성. consumer overlay 부재 시 fallback `--channel stable`. cwd ≠ consumer repo (overlay 부재) 시 abort + 사실 보고 (AC-7)
+4. **immediate invocation** — `bash scripts/codeforge-upgrade.sh --dry-run --repo $(pwd) --channel <resolved>` 즉시 실행 (E10 tool-call-only edge — AskUserQuestion 0, ADR-039 inline whitelist 1번 entry scope 안)
+5. **evidence verify + apply 자동 + 1 turn 보고** — dry-run exit code + ImpactReport diff verify → apply 자동 (`--apply --repo $(pwd) --channel <resolved>`) → result enum 4-value 1 turn 보고 (SUCCESS / SUCCESS_WITH_DEGRADATION / PARTIAL_FAILURE / FAILED). ADR-071 §결정 15 frequency suppression touchpoint (c) "최종 완료 보고 1회" 정합.
+
+#### Result enum 4-value (1 turn 보고 정합)
+
+| result enum | 발생 조건 | 보고 형식 |
+|---|---|---|
+| `SUCCESS` | dry-run + apply 모두 PASS, drift 0 또는 reconcile 완료 | 1 turn 보고 + event log artifact `docs/upgrade-events/<date>-<version>.md` 경로 명시 |
+| `SUCCESS_WITH_DEGRADATION` | apply PASS 단 sanity check warning (PR open 등 후속 action 필요) | 1 turn 보고 + sanity check warning 항목 명시 + follow-up action 1 줄 |
+| `PARTIAL_FAILURE` | apply 일부 영역 실패 + 자동 rollback 부분 적용 | 1 turn 보고 + 실패 영역 명시 + rollback 상태 명시 + 사용자 정정 의무 declare |
+| `FAILED` | dry-run 실패 또는 apply 전체 실패 + 자동 rollback | 1 turn 보고 + 실패 사유 + rollback 완료 명시 + 사용자 정정 의무 declare |
+
+#### Edge cases (CFP-1104 §8 verbatim 발췌)
+
+1. **dirty working tree** (AC-3): abort + 사실 보고 ("dirty working tree — `--force-dirty` 미지원, commit/stash 후 재시도"). [InfraOperationalArch §7.4.5 env containment consult]
+2. **cwd ≠ consumer repo** (AC-7): abort + 사실 보고 ("현재 cwd 가 consumer repo 아님, `.claude/_overlay/project.yaml` 부재")
+3. **사용자가 `codeforge upgrade beta` 처럼 channel 명시 발화**: regex 확장 fallback — `\bcodeforge\s+upgrade(\s+(stable\|beta\|canary))?\b`. channel 명시 = override → overlay resolve 무시. **본 §3.16.1 scope 안 (closed enum 확장 아님 — 동일 entry 의 optional argument)**
+4. **사용자가 `codeforge family upgrade` 명시 발화** (AC-6): closed enum 동일 entry scope 안 single plugin → family 분기. `atomic-upgrade-7-plugins.sh` entrypoint 대체 — single plugin 아님
+5. **이미 최신 버전 (no-op)** (AC-4): dry-run 결과 drift=0 → apply 단계 skip + result enum `SUCCESS` + 1 turn 보고 (no-op 명시)
+6. **사용자가 `codeforge rollback` 발화**: 본 §3.16.1 closed enum 외 (2번째 trigger token 확장 영역) — 별 CFP 의무. 본 §3.16.1 미cover, AskUserQuestion 발화 OK
+7. **사용자가 `업그레이드해줘` 자연어 (codeforge token 부재)**: trigger 0 — ambiguous, AskUserQuestion 발화 OK (closed enum 외 영역)
+
+#### invariant 요약
+
+- **inv-1** (`user_decision_branches: 0` dialog 단계 확장): step 2 declare 발화 외 AskUserQuestion 0. derived default 자명 영역 (cwd + overlay resolve + ADR-076 default).
+- **inv-2** (closed enumeration 1 entry): 2번째 trigger token 신설 = 별도 CFP 의무 + ADR-071 Amendment + SecurityArch consult.
+- **inv-3** (ADR-039 inline whitelist 1번 entry scope 안): 5번째 entry 신설 0, 기존 1번 entry "사용자 dialog 허용 영역" 의 derived default 자명성 명문화.
+- **inv-4** (ADR-071 §결정 15 frequency suppression 정합): step 5 result enum 보고 = touchpoint (c) "최종 완료 보고 1회".
+- **inv-5** (ADR-076 §결정 5 SSOT carrier): CLI 진입점 `scripts/codeforge-upgrade.{sh,ps1}` 변경 0. 본 §3.16.1 = orchestrator 발화 → CLI invocation 단계 mapping carrier.
+
 ### §3.17 Orchestrator-authored Issue body pre-publish verify mandate (CFP-1016 / [ADR-082 Amendment 2](../docs/adr/ADR-082-write-time-self-write-verification-mandate.md))
 
 **적용 trigger**: Orchestrator 가 Issue body 를 author 할 때 — 즉 사용자 GitHub Issue Form submit 이 아닌 **Orchestrator-initiated** body authorship:

@@ -1258,6 +1258,8 @@ GitHub Actions is not permitted to create or approve pull requests (createPullRe
 
 > **§1 invariant 자동 강제**: CFP-67 (F2 Phase 2 split 1/2) 후 `story-section-1-immutable.yml` 자동 강제. §1 변경 PR 시 자동 reject — 정당한 정정은 PR 제목 `[bypass-section-1]` + CODEOWNERS architect team approval 절차 (§7 Q7 참조).
 
+> **자연어 upgrade 발화 진입점 (CFP-1104 / [ADR-071 Amendment 5](../docs/adr/ADR-071-orchestrator-user-dialog-convergence.md) §결정 16)**: consumer 가 자연어로 `codeforge upgrade` (또는 한글 `codeforge 업그레이드`) 발화 시 Orchestrator 가 [orchestrator-playbook §3.16.1](orchestrator-playbook.md) per 자동 실행 — cwd 자동 주입 + overlay channel resolve + dry-run → apply 자동 reflex, 사용자 확인 분기 0 (ADR-076 invariant `user_decision_branches: 0` dialog 단계 enforcement).
+
 ### 2h. `.gitignore`에 추가
 
 ```gitignore

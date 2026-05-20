@@ -33,6 +33,12 @@ amendments:
     issue: https://github.com/mclayer/plugin-codeforge/issues/851
     summary: Conversational reporting frequency suppression contract — Orchestrator ↔ user dialog 의 발화 허용 touchpoint 3종 closed enumeration codify (§결정 15 신설). (a) 결과-명세 확인 (사용자 선언 결과 자체 모호 + rollback 비싼 경우, verifiable outcome surface 안전판) / (b) 사용자만 풀 수 있는 차단 (인증·권한 등 codeforge 자체 해소 불가) / (c) 최종 완료 보고 1회 (요청 작업 단위 전체 완료). 그 외 진행·중간 결정·근거·중간 결과 = 산출물 (Story / change-plan / ADR / PR / TodoWrite panel) 전용 기록. 무약화 invariant — frequency 축소 ≠ richness 축소, §결정 2(c) "3 줄 제약 거부 · 길이 자유 · 배경 포함" 보존 + Layer 1/2 preamble·declare 의무 turn 발생 시 그대로 적용. ADR-039 inline whitelist 1번·4번 entry scope 안 작동 (closed 4-entry 보존, 신규 entry 신설 0). 4번째 touchpoint 확장 시 별도 CFP 의무 (§결정 13.6 closed-enum 확장 패턴 정합). mechanical lint = behavioral directive only, 별도 follow-up CFP (§결정 10 패턴 정합). additive — Layer 1-4 / DialogFidelityAgent auxiliary / §결정 2(c) 무약화, is_transitional=false 보존, ADR-058 §결정 5 약화 차단 영역 미적용
     sunset_justification: null
+  - amendment_id: 5
+    date: "2026-05-20"
+    carrier_story: CFP-1104
+    issue: https://github.com/mclayer/plugin-codeforge/issues/1104
+    summary: Natural-language action trigger lookup table codify (§결정 16 신설) — consumer 가 자연어 token "codeforge upgrade" (또는 한글 변형) 발화 시 orchestrator 가 dialog reflex (AskUserQuestion "어떤 upgrade?" "어느 채널?") 차단 + 7 차원 derived default (trigger phrase regex / repo cwd 자동 주입 / mode dry-run → apply 자동 / channel overlay resolve fallback stable / scope 단일 plugin default / dirty tree abort / 실패 시 자동 rollback) 결정론적 mapping closed enumeration 1 entry. ADR-076 invariant `user_decision_branches: 0` 를 dialog 진입 단계로 확장 carrier — 본 ADR-071 §결정 5 사실/가치 분리의 dialog reflex 차단 first applied case. closed enumeration 보존 invariant — 본 lookup table 이 ADR-071 내 4번째 closed enumeration 인스턴스 (3-anchor enum §13.6 / 4 차원 enum §4 / 3 touchpoint enum §15.5 / **trigger table §16**) 신설, 2번째 trigger token 확장 시 별도 CFP 의무 (§결정 13.6 closed-enum 확장 패턴 정합 — ADR-064 §결정 7 top-down ratchet 강화 방향 + ADR-058 §결정 5 sunset_justification null 보존). ADR-039 inline whitelist 1번 entry scope 안 작동 (사용자 dialog 허용 영역, 5번째 entry 신설 0). doc-only fast-path Story (src/tests touch 0). additive — Layer 1-4 / DialogFidelityAgent auxiliary / §결정 2(c) richness / 3 touchpoint enum (§15) 모두 보존, dialog reflex 차단 layer 추가만. is_transitional=false 보존, ADR-058 §결정 5 약화 차단 영역 미적용
+    sunset_justification: null
 related_stories:
   - CFP-612  # carrier
   - CFP-525  # ancestor Epic (closed 2026-05-13)
@@ -48,6 +54,7 @@ related_stories:
   - CFP-818  # Amendment 2 carrier (spawn trigger 운영 정의)
   - CFP-833  # Amendment 3 carrier (effectiveness measurement wiring — closing-the-loop)
   - CFP-851  # Amendment 4 carrier (conversational reporting frequency suppression contract)
+  - CFP-1104  # Amendment 5 carrier (natural-language action trigger lookup table — "codeforge upgrade" mapping)
 related_adrs:
   - ADR-064  # 결정 원칙 mandate — proposing-time 5 룰 mother policy (mechanical version 승격 source)
   - ADR-058  # sunset criteria mandate (is_transitional: false 정합)
@@ -59,6 +66,8 @@ related_adrs:
   - ADR-040  # mechanical_enforcement_actions[] frontmatter 의무 (governance category)
   - ADR-039  # inline whitelist 1번 entry (사용자 dialog) cognitive layer 강화
   - ADR-060  # evidence-enforceable framework (Amendment 3 dialog-fidelity-effect entry carrier — CFP-833)
+  - ADR-076  # declarative-reconciliation-upgrade (Amendment 5 — invariant `user_decision_branches: 0` dialog 단계 enforcement carrier)
+  - ADR-045  # doc-only fast-path (Amendment 5 — Story 분류 정합)
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md
@@ -643,9 +652,94 @@ Orchestrator 의 사용자 발화 허용 시점 = closed enumeration 3 종. 그 
 
 `sunset_justification: null` 적격 (§12.7 / §13.7 / §14.4 family pattern 정합 — Amendment 1/2/3/4 모두 동일).
 
+## §결정 16. Natural-language action trigger lookup table (Amendment 5, CFP-1104)
+
+> CFP-1104 carrier 사용자 directive verbatim: Turn 1 "codeforge upgrade" / Turn 2 "항상 모호하다고 그러는데 codeforge를 통해 upgrade 절차에 대해 정립해둔게 있을거다. codeforge plugin에 반영해라" / Turn 3 "mctrader-hub와 mctrader-data에서 codeforge upgrade를 요구하면 애매하네요? 이런 소리 말고 바로 수행할 수 있도록". 본 §결정 16 = ADR-076 invariant `user_decision_branches: 0` 을 dialog 진입 단계로 확장 carrier — base ADR-071 §결정 5 사실/가치 분리 원칙의 dialog reflex (AskUserQuestion "어떤 upgrade?" "어느 채널?") 차단 first applied case.
+
+### 16.1 본질 anchor
+
+사용자가 IDE 에서 wrapper-managed-manifest.json 을 열어 둔 상태에서 단어 `codeforge upgrade` 하나만 발화 시 orchestrator 는 즉시 cwd + consumer overlay project.yaml + ADR-076 derived default 로 추론·실행한다. derived default 자명 (ADR-076 invariant + cwd 자동 / overlay channel resolve / dry-run → apply 자동 reflex) 이므로 발화 금지 — ADR-064 §결정 7 + ADR-071 §결정 5 가치/사실 분리 + ADR-039 inline whitelist 1번 entry "사용자 dialog 허용 영역이지만 derived default 자명 시 발화 금지" cognitive 강화 carrier.
+
+### 16.2 Closed enumeration — 1 entry
+
+| Trigger token (regex, case-insensitive) | Action |
+|---|---|
+| `\b(codeforge\s+upgrade\|codeforge\s+업그레이드)\b` | `scripts/codeforge-upgrade.sh` invocation per ADR-076 §결정 5 (§16.3 7 차원 derived default 자동 적용) |
+
+본 lookup table = **closed enumeration**. 2번째 trigger token 확장 후보 (예: `codeforge rollback` / `codeforge family upgrade` / `codeforge plan` 등) 발생 시:
+
+| 룰 | 적용 |
+|---|---|
+| ADR-064 §결정 7 top-down ratchet | 강화 방향 only (trigger token 추가 = 자율 reflex 영역 확장 강화 ratchet) |
+| ADR-058 §결정 5 sunset_justification | trigger token 회수 시 의무 (사용자 burden 영역 — automatic reflex 가 dialog reflex 로 후퇴) |
+| Story §1 사용자 explicit 승인 | 별도 CFP 의 Story §1 verbatim 명시 의무 (CFP-1104 §1 declared outcome verbatim pattern 정합) |
+| SecurityArch consult | trust boundary 영역 — closed enum 확장 시 security review 의무 (ADR-039 entry 1 derived default 자명성 검토 의무, 의도 외 명령 실행 위험 평가) |
+
+본 §16.2 codification = ADR 안 4번째 closed enumeration 인스턴스: 3-anchor enum (§13.6) / 4 차원 enum (§4) / 3 touchpoint enum (§15.5) / **trigger table (§16.2)**. §15.5 codify pattern verbatim 적용 — scope creep 차단 forcing function.
+
+### 16.3 Derived default 7 차원 (CFP-1104 §5 verbatim)
+
+orchestrator 가 사용자 발화 token detect 시 다음 7 차원 default 자동 적용. 사용자 정정 의무 (dialog reflex 차단 — Layer 1 preamble "발화하신 'codeforge upgrade' → 다음 default 로 즉시 수행" 1 문장 자기 발화만 의무, AskUserQuestion 0):
+
+| 차원 | derived default | 근거 |
+|---|---|---|
+| trigger phrase | regex `\b(codeforge\s+upgrade\|codeforge\s+업그레이드)\b` (case-insensitive, 한글 변형 포함) | RequirementsAnalyst Edge Case + lint pattern 정합 (CFP-1104 §5) |
+| repo | cwd 자동 주입 (`--repo $(pwd)`) | Researcher Unknown #3 해소 (CFP-1104 §5) |
+| mode | dry-run 자동 → evidence 자동 verify → apply 자동 (사용자 확인 분기 0) | ADR-076 invariant + MCT-202 자율 full-run |
+| channel | consumer overlay `.claude/_overlay/project.yaml::codeforge.channel.tier` resolve → fallback `"stable"` | ADR-076 v1.7 (CFP-906) |
+| scope | 단일 codeforge plugin (default). 사용자가 "family" / "7-plugin" / "전체" 명시 시만 `atomic-upgrade-7-plugins.sh` | Researcher Unknown #2 — 단어 그대로 해석 |
+| dirty tree | abort + 사용자 보고 (safe direction). `--force-dirty` opt-in flag 별 follow-up | Researcher Unknown #3 + InfraOperationalArch §7.4.5 env containment consult |
+| 실패 처리 | dry-run 실패 → abort + 사실 보고 / apply 실패 → 자동 rollback + 사실 보고 + 사용자 정정 의무 | ADR-076 §결정 3 snapshot/rollback |
+
+### 16.4 ADR-076 invariant carrier 명문화
+
+ADR-076 invariant `user_decision_branches: 0` (Epic CFP-699 §1 WHY "0 자리" verbatim, ADR-076 line 177/200 명시) = **CLI argument fix 단계** scope 명시. 본 §결정 16 = 동일 invariant 를 **dialog 진입 단계** 로 확장 carrier — 사용자 발화 → orchestrator 추론 → CLI invocation 사이 dialog reflex (AskUserQuestion / "어떤 ~?" / "어느 ~?") 차단.
+
+- 두 단계 disjoint scope: ADR-076 = CLI argument 결정 분기 / 본 §결정 16 = 자연어 발화 → CLI mapping 결정 분기
+- 동일 invariant 표현 ("결정 분기 0") 이지만 layer 다름 (CLI vs dialog) — 두 ADR carrier 의 합집합 = end-to-end "결정 분기 0"
+
+### 16.5 ADR-039 inline whitelist 1번 entry 정합 명문화
+
+[ADR-039 §결정 2](ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) Inline whitelist 4-entry **closed enumeration** 보존 invariant. 본 §결정 16 의 dialog reflex 차단은 기존 1번 entry "사용자 dialog 허용 영역" scope 안에서 작동 — 신규 entry 신설 0.
+
+**구체 적용**: 사용자 token detect 시 Orchestrator inline 발화 = 1번 entry scope 안. 단 발화 내용 = derived default declare 1 문장 (Layer 1 preamble) + `scripts/codeforge-upgrade.sh` 즉시 실행 (E10 tool-call-only edge, AskUserQuestion 0). 발화 자체 차단 아님 — **dialog reflex (AskUserQuestion / 모호함 호소 / 옵션 dump) 차단** 만.
+
+**5번째 entry 신설 X** — 새 카테고리 enumeration 추가 아님, 기존 1번 entry 의 "derived default 자명 시 발화 금지" 1 문장 명문화 (§결정 11 family pattern 정합).
+
+### 16.6 closed-enum 확장 패턴 (§결정 13.6 + §15.5 정합)
+
+본 §16.2 trigger table = **closed enumeration** (1 entry). 확장 후보 발생 시:
+
+| 룰 | 적용 |
+|---|---|
+| ADR-064 §결정 7 top-down ratchet | 강화 방향 only (trigger token 추가 = 자율 reflex 영역 확장) |
+| ADR-058 §결정 5 sunset_justification | trigger token 회수 시 의무 (사용자 burden 영역) |
+| Story §1 사용자 explicit 승인 | 별도 CFP 의 Story §1 verbatim 명시 의무 |
+| SecurityArch consult | trust boundary 영역 — 의도 외 명령 실행 위험 평가 의무 |
+
+본 §16.6 codification = §결정 13.6 + §15.5 closed-enum 확장 패턴 family pattern 정합 — 본 ADR 안 4번째 closed enumeration 인스턴스 (3-anchor enum (§13.6) / 4 차원 enum (§4) / 3 touchpoint enum (§15.5) / **trigger table (§16.2)**).
+
+### 16.7 measurement gap declare — behavioral directive only
+
+본 §결정 16 = **behavioral directive only** (mechanical lint 부재). orchestrator 자연어 token detect 자체의 false negative (token detect 실패 → AskUserQuestion 발화) / false positive (의도 외 token match → 잘못된 upgrade 실행) 자동 감지 채널 = 별도 follow-up CFP scope (ADR-071 §결정 10 "Layer 1 preamble mechanical lint = 별도 follow-up CFP" + §결정 14 measurement wiring precedent + §결정 15.6 measurement gap declare 패턴 정합 — advisory operational signal, blocking 승격 의미 부적용).
+
+| 측정 axis | 본 Amendment 5 scope | 별도 follow-up CFP scope |
+|---|---|---|
+| token detect false negative (AskUserQuestion 발화 회귀) | — | runtime cron metric (precedent `dialog-fidelity-effect` 동형) |
+| token detect false positive (의도 외 명령 실행) | — | SecurityArch consult mandate + audit log (precedent `rate-limit-fallback-rate` 동형) |
+| dirty tree abort 정확성 | — | regression test (별 CFP scope) |
+
+**ADR-058 §결정 3 측정성 self-application 정합**: 본 Amendment 5 가 measurement wiring 없이 영구화되면 안 됨을 인지. 단 measurement 자체 = behavioral baseline 누적 후 별도 CFP carrier 영역 — Amendment 5 effective 후 PMOAgent retro user feedback (token detect 회귀 incident) 누적 가 baseline. §결정 14 measurement (CFP-833) precedent 동형 — measurement entry 가 ADR 본문 외부 (registry yaml) 에서 wiring.
+
+### 16.8 sunset_justification: null (ADR-058 §결정 5 정합)
+
+본 Amendment 5 = **additive 강화** (Layer 1-4 + DialogFidelityAgent auxiliary + §결정 2(c) richness + Inline whitelist 4-entry + 3-anchor enum + 4 차원 enum + 3 touchpoint enum 모두 보존, dialog reflex 차단 layer 추가만). 강화 방향 only — `is_transitional: false` 보존, ADR-058 §결정 5 약화 차단 영역 미적용.
+
+`sunset_justification: null` 적격 (§12.7 / §13.7 / §14.4 / §15.7 family pattern 정합 — Amendment 1/2/3/4/5 모두 동일).
+
 ## self-application top-down ratchet
 
-본 ADR amendment 는 [ADR-064 §결정 7](ADR-064-decision-principle-mandate.md) top-down ratchet 정합 — 강화 방향만 허용 (scope 확장 / 강도 강화). 약화 방향 (`is_transitional: false → true` 다운그레이드 / 4 layer 축소 / 3 memory entry mapping 회수 / Sub-mechanism 2 차원 enum 축소 / **3 touchpoint enum 축소 — §결정 15 Amendment 4** / **§결정 2(c) richness 약화 — frequency 축소 ≠ richness 축소 invariant 위반**) 은 [ADR-058 §결정 5](ADR-058-adr-sunset-criteria-mandate.md) `sunset_justification` 의무로 차단. 본 ADR-071 = ADR-064 ratchet 의 직접 carrier (mechanical version 승격 + scope 확장 = strict superset). Amendment 1/2/3/4 = `sunset_justification: null` family pattern.
+본 ADR amendment 는 [ADR-064 §결정 7](ADR-064-decision-principle-mandate.md) top-down ratchet 정합 — 강화 방향만 허용 (scope 확장 / 강도 강화). 약화 방향 (`is_transitional: false → true` 다운그레이드 / 4 layer 축소 / 3 memory entry mapping 회수 / Sub-mechanism 2 차원 enum 축소 / **3 touchpoint enum 축소 — §결정 15 Amendment 4** / **trigger table 회수 — §결정 16 Amendment 5** / **§결정 2(c) richness 약화 — frequency 축소 ≠ richness 축소 invariant 위반**) 은 [ADR-058 §결정 5](ADR-058-adr-sunset-criteria-mandate.md) `sunset_justification` 의무로 차단. 본 ADR-071 = ADR-064 ratchet 의 직접 carrier (mechanical version 승격 + scope 확장 = strict superset). Amendment 1/2/3/4/5 = `sunset_justification: null` family pattern.
 
 ## 해소 기준
 
@@ -664,10 +758,13 @@ N/A — permanent policy.
 - [ADR-070](ADR-070-codex-verify-before-trust.md) — fact-check marker source
 - [ADR-040](ADR-040-worktree-convention.md) — `mechanical_enforcement_actions[]` frontmatter 의무
 - [ADR-039](ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — inline whitelist 1번 entry cognitive 강화 (§결정 11)
+- [ADR-076](ADR-076-declarative-reconciliation-upgrade.md) — declarative reconciliation upgrade (Amendment 5 — invariant `user_decision_branches: 0` dialog 단계 enforcement carrier)
+- [ADR-045](ADR-045-doc-only-story-fast-path.md) — doc-only fast-path (Amendment 5 — Story 분류 정합)
 - [CLAUDE.md](../../CLAUDE.md) — cross-ref 1-2 줄 (320 cap compression 정합)
 - [docs/orchestrator-playbook.md](../orchestrator-playbook.md) — §3.14 frame + 4 layer + sub-mechanism 본문 SSOT
 - [docs/orchestrator-communication-incidents.md](../orchestrator-communication-incidents.md) — Layer 4 영속 file
 - [skills/user-dialog-mode/SKILL.md](../../skills/user-dialog-mode/SKILL.md) — frame mode + 4 layer lookup table skill
 - [CFP-612](https://github.com/mclayer/plugin-codeforge/issues/612) — carrier Issue
 - [CFP-525](https://github.com/mclayer/plugin-codeforge/issues/525) — ancestor Epic (closed)
+- [CFP-1104](https://github.com/mclayer/plugin-codeforge/issues/1104) — Amendment 5 carrier Issue (natural-language action trigger lookup table)
 - [CFP-582](https://github.com/mclayer/plugin-codeforge/issues/589) — sibling (agent ↔ agent domain, conceptual cross-ref)
