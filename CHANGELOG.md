@@ -20,6 +20,23 @@
 - sibling agent cross-ref 13 occurrence (APIContractArch 5 / DataArch 6 / ArchitectAgent 2) 정정
 - RACI matrix 4-column → 3-column 정식 재편 (design lane governance 변경)
 
+### Changed (CFP-1059 Story-3 — ProductionEvidenceDeputy ownership 이관 deprecate marker)
+
+본 release = ProductionEvidenceDeputy ownership 이관 (codeforge-design CONDITIONAL deputy → codeforge-deploy-review 정식 deputy) 의 codeforge-design 측 deprecate marker 부착 (ADR-088 §결정 4 / ADR-72 Amendment N). doc-only fast-path (ADR-054 Category 2 — agent file deprecate annotation, ADR / src / tests 변경 0).
+
+#### Changed
+
+- **`agents/ProductionEvidenceDeputyAgent.md`** — deprecate marker 부착:
+  - frontmatter `status: deprecated` + `deprecated_by: CFP-1059 Story-3` + `superseded_by: mclayer/plugin-codeforge-deploy-review:agents/ProductionEvidenceDeputyAgent.md` + `ssot_position` 갱신
+  - body 상단 ⚠️ DEPRECATED marker (ownership 이관 동인 + 정식 SSOT URL + 1 release grace 후 삭제 명시)
+  - mandate body (ADR-72 §결정 1-7) 는 변경 없이 유지 — 이관은 ownership / parent_pl / ssot_position 만
+- codeforge-design lane 은 본 deputy 를 더 이상 spawn 하지 않음 (production cutover evidence = DeployReviewPLAgent spawn). 1 release grace 후 file 삭제 (ADR-023 lane plugin lifecycle deprecate 절차)
+
+#### Cross-ref
+
+- Epic: #1059 / Story-3 (codeforge-deploy-review plugin seed + ProductionEvidenceDeputy 이관)
+- 정식 SSOT: [`mclayer/plugin-codeforge-deploy-review`](https://github.com/mclayer/plugin-codeforge-deploy-review)
+
 ## [0.17.0] - 2026-05-20
 
 ### Changed (CFP-1086 Story-4 — chief 통합 mechanism + tie-break ladder body + mctrader 5 repo cross-layer evidence)
