@@ -3040,3 +3040,21 @@ entries:
         - pr_cumulative_count_proof
         - adr_086_self_application_first_case_evidence  # 본 framework self-application 첫 사례 = CFP-1086 Story-1 Amendment 8 (spec §8 6 Story self-app 표 verbatim)
     modal_anti_pattern_dictionary: {}  # ADR-068 I-5 patterns (anti-pattern 4종 + Mitigation 4종) 재사용, modal 어휘 무관
+
+  - name: design-review-pl-8-6-pointer
+    owner_adr: ADR-068
+    carrier_adr: ADR-060
+    current_tier: warning
+    status: Active
+    introduced_in: CFP-1089
+    sibling_dependencies: [CFP-1087]
+    hotfix_bypass_label: hotfix-bypass:design-review-pl-8-6-pointer
+    detect_command: bash scripts/check-design-review-pl-8-6-pointer.sh
+    description: |
+      DesignReviewPL §8.6 audit gate pointer-presence-check 3-check (ADR-068 Amendment 3 §결정 1 I-6 audit-gate-pointer-existence invariant carrier).
+      Check 1: findings[].type "audit-gate-pointer-missing" literal review-verdict-v4 v4.7+ enum 정합.
+      Check 2: audit_gate_pointer_self_check_passed verdict-level boolean field schema 정합.
+      Check 3: ADR-068 frontmatter amendments[3] + I-6 invariant declaration cross-ref 정합.
+    promotion_gate: PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling Story merged (ADR-060 §결정 7 AND)
+    recurrence: 0
+
