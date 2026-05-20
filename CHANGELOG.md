@@ -2,6 +2,36 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.16.0] - 2026-05-20
+
+### Changed (CFP-1086 Story-3 (Wave 2) — CLAUDE.md RACI 4-way overlap zone section mirror codify)
+
+본 release = wrapper SSOT (CFP-1086 Story-3 — deputy-mandate skill RACI body 4-way overlap zone codify carrier) 의 codeforge-design plugin repo cross-repo sibling 반영. doc-only fast-path (ADR-054 Category 2 — CLAUDE.md section mirror, agent file / ADR / src / tests 변경 0). Story-1 = 7+3+1 roster 신설 + 4-way 이념 대립 영역 분리. Story-2 = APIContractArch mandate body 심화. Story-3 (본 release) = RACI 4-way 12-cell matrix mirror.
+
+#### Changed
+
+- **`CLAUDE.md`** — `## RACI 4-way overlap zone (CFP-1086 Story-3 — wrapper SSOT mirror)` 신규 단락:
+  - wrapper canonical SSOT cross-ref ([`skills/deputy-mandate/SKILL.md`](https://github.com/mclayer/plugin-codeforge/blob/main/skills/deputy-mandate/SKILL.md) `## RACI 표준 row 형식 (Story-3 — 4-way overlap zone body)`)
+  - 12-cell summary table (3 sub-axis Security / InfraOp / TestContract × 4 cross-axis Aggregate / Data OLAP / Module / APIContract) 의 R/C/I 1-row summary (각 Cell detail = wrapper skill 참조)
+  - Cell 3.4 예외 명시 (R=APIContractArch primary §8.6 contract testing primary axis 정합, C=TestContractArch CI placement + orchestration disjoint axis — CFP-1086 §7+3+1 primary axis matrix row 정합)
+  - 4-column 열 정의 (R primary 결정권자 / A=ArchitectAgent chief tie-break ladder 3단계 / C co-author 양방향 dialog / I 일방향 통지)
+  - Cell selection heuristic 4-step (single-axis primary lookup / 2-axis overlap RACI 활성 / R+C 합의 부재 → ladder 2단계 / 미해소 → ladder 3단계)
+  - Related ADRs (ADR-068 Amendment 2 + ADR-086 + review-verdict-v4 v4.6)
+- **`.claude-plugin/plugin.json`**: 0.15.0 → **0.16.0** MINOR (ADR-037 — CLAUDE.md section 신규 추가 + cross-repo sibling carrier governance behavior change). description 갱신 (Story-3 RACI 4-way overlap zone mirror entry 추가).
+
+#### Related ADRs
+
+- ADR-042 Amendment 8 (CFP-1086 Story-1 carrier — 7+3+1 roster, RACI matrix axis 입력)
+- ADR-068 Amendment 2 (CFP-1086 Story-1 sibling carrier — chief tie-break ladder 3 단계 1단계 RACI lookup SSOT, 본 mirror = ladder 1단계 entry point)
+- ADR-086 (CFP-1086 Story-1 sibling 신설 carrier — Deputy 신설 결정 framework P7)
+- ADR-058 §결정 5 (top-down ratchet 정합, additive only)
+- ADR-064 §결정 7 (decision principle mandate top-down ratchet)
+- ADR-054 (doc-only fast-path Category 2 — CLAUDE.md section mirror)
+
+#### Marketplace sibling sync (Orchestrator 영역, 별도 cross-repo PR)
+
+- `mclayer/marketplace` `marketplace.json` `plugins[name=codeforge-design]` mirrored field 4종 (name / version / description / author) sync. ADR-063 atomic invariant.
+
 ## [0.15.0] - 2026-05-20
 
 ### Changed (CFP-1086 Story-2 — APIContractArchitectAgent mandate body 심화 codify, S1 skeleton 위 body 작성)
