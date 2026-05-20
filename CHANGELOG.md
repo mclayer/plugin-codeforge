@@ -7,6 +7,31 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.103.0] - 2026-05-20
+
+### Added (CFP-1088 — Wave 2-2 of CFP-698 retro carrier)
+
+본 release = IntegrationTest §7.4 측정 evidence path codify Wave 2 mechanical wire (codeforge-test plugin sibling sync, 1.2.0 → 1.3.0).
+
+#### codeforge-test plugin changes
+
+- **`mclayer/plugin-codeforge-test/agents/IntegrationTestAgent.md`** — §7.4 row append: per-Story `tests/integration/baseline/<STORY-KEY>/§7.4-measurement-evidence.md` self-write path codify + 7-column Axis 2 schema (measurement_id | pointer | measured_value | unit | method | timestamp | empirical_source) + 6-column Axis 3 schema (policy_id | pointer | measured_value M-row ref | proposed_policy_value | rationale_ref | follow_up_carrier)
+- **`mclayer/plugin-codeforge-test/tests/integration/baseline/example-story/§7.4-measurement-evidence.md`** — template file (CFP-1088 codify)
+- **`mclayer/plugin-codeforge-test/tests/integration/baseline/example-story/test_§7.4-axis-2-measurement.bats`** — 5 TC PASS (schema invariant)
+- **`mclayer/plugin-codeforge-test/tests/integration/baseline/example-story/test_§7.4-axis-3-policy.bats`** — 5 TC PASS (Axis 3 pointer schema)
+- **`mclayer/plugin-codeforge-test/.claude-plugin/plugin.json`** — 1.2.0 → 1.3.0 MINOR
+
+#### Cross-ref
+
+- ADR-014 Amendment 4 §결정 2 evidence-driven 3-axis (Axis 1 측정 대상 정의 DesignLane / Axis 2 실측 IntegrationTestLane / Axis 3 policy 결정 ArchitectLane post-measurement)
+- ADR-068 Amendment 3 §결정 1 I-6 audit-gate-pointer-existence (CFP-1087, 4-form pointer scope)
+- review-verdict-v4 v4.7 `audit_gate_pointer_self_check_passed` + `findings[].type: "audit-gate-pointer-missing"` (CFP-1087)
+- CFP-1089 DesignReviewPL §8.6 pointer-presence-check mechanical workflow (sibling carrier merged)
+
+### Marketplace dual sync
+
+- **`mclayer/marketplace`** sync PR — codeforge 5.102.0 → 5.103.0 + codeforge-test 1.2.0 → 1.3.0 dual sibling sync (ADR-063 §결정 5)
+
 ## [5.102.0] - 2026-05-20
 
 ### Added (CFP-1089 — Wave 2-3 of CFP-698 retro carrier)
