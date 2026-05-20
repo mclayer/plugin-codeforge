@@ -7,6 +7,34 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.98.0] - 2026-05-20
+
+### Changed (CFP-1086 Story-4 — ADR-068 Amendment 2 implementation note + chief author body cross-ref binding)
+
+본 release = CFP-1086 BackendArchEpic Phase 2 Story-4 carrier. Story-1 (Amendment 2 declare 본문) 의 **chief author implementation cross-ref** + **mctrader 5 repo cross-layer evidence (P4)** + ADR-068 implementation note subsection. doc-only fast-path (ADR-054 Category 2 — ADR cross-ref subsection 추가, src/tests 변경 0). **5.97.0 skip** — S3 (parallel sibling Story-3 RACI matrix codify) 점유. S4 preemptive bump to 5.98.0 (S3 merge 후 본 PR rebase 시 conflict-free).
+
+#### Changed
+
+- **`docs/adr/ADR-068-boundary-completeness-invariants.md`** — Amendment 2 body section 끝 §"Implementation note (CFP-1086 Story-4 — chief author body cross-ref)" subsection 추가. 4-layer 분리 명시 (declaration layer = 본 ADR / implementation layer = chief author prompt body / architecture doc layer = lane internal SSOT / skill layer = RACI matrix host). Carrier 분리 표 (Story-1 declaration / Story-3 RACI matrix / Story-4 implementation body). Body 정합성 invariant (I-4 wording SSOT 자기 적용). Mechanical enforcement 영역 unchanged (verdict field-only enforcement 유지 — 신규 lint script / workflow yml / registry entry 0건). frontmatter `amendments[]` Amendment 2 row `ref` field 갱신 (implementation note 동반 명시). 변경이력 row 추가 (`2026-05-20 Implementation note (CFP-1086 / Story-4 — ADR-068 본문 정책 0건 변경)`).
+
+#### Invariant declare
+
+- **본문 정책 / I-1~I-5 invariant body / verdict field / 10 dimension enum / mitigation 0건 변경 invariant** — Amendment 아님, implementation surface 분포 declaration only
+- ratchet 강화 방향 (약화 0건) — Amendment 2 declare layer 와 implementation layer 분리 명시 = sunset_justification 불필요 (declaration-only cross-ref)
+
+#### Related ADRs
+
+- ADR-068 (본 ADR — Amendment 2 implementation note subsection 추가)
+- ADR-068 Amendment 2 (CFP-1086 Story-1 carrier — declaration layer SSOT)
+- ADR-086 (CFP-1086 Story-1 신설 — Deputy 신설 결정 framework P7, ladder 3단계 호출 영역)
+- ADR-042 Amendment 8 (CFP-1086 Story-1 carrier — 7+3+1 roster, ladder 1단계 RACI lookup 입력)
+- ADR-054 (doc-only fast-path Category 2 — ADR cross-ref subsection 추가)
+
+#### Sibling sync (Orchestrator 영역, 별도 cross-repo PR)
+
+- `mclayer/plugin-codeforge-design` plugin.json 0.15.0 → 0.17.0 + ArchitectAgent.md §"Chief 통합 mechanism" + §"Chief tie-break ladder" + §"Wording SSOT advocate" body + docs/architecture/codeforge-design.md §"mctrader 5 repo cross-layer evidence" section
+- `mclayer/marketplace` `marketplace.json` `plugins[name=codeforge]` mirrored field 4종 sync (ADR-063 atomic invariant)
+
 ## [5.97.0] - 2026-05-20
 
 ### Changed (CFP-1086 Story-3 (Wave 2) — deputy-mandate skill RACI 표준 body 4-way overlap zone codify)
