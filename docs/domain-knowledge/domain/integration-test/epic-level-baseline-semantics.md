@@ -9,7 +9,7 @@ tags:
   - integration-test
   - epic-level-baseline
   - incremental-promotion
-  - frozen-sha-pin
+  - frozen-sha-anchor
   - cross-story-consistency
   - cfp-954
 related_adrs:
