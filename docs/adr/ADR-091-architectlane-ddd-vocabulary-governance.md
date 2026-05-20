@@ -36,12 +36,55 @@ mechanical_enforcement_actions:
   - bounded-context-presence-check        # Story-3 신설 lint script + warning tier (Wave 1 wire)
   - ddd-pattern-frontmatter-check         # Story-3 신설 lint script + warning tier (Wave 1 wire)
 amendment_log: []
-amendments: []
+amendments:
+  - amendment_id: 1
+    date: 2026-05-21 KST
+    carrier_story: CFP-1117
+    sibling_carrier: CFP-1126  # ADR-042 Amendment 10 정합 carrier
+    summary: "ADR-042 Amendment 10 정합 — AggregateArchitectAgent deprecated + ModuleArchitectAgent mandate 확장 (module-level + aggregate-level boundary 통합). 본 ADR §결정 1 Hybrid mapping 표 + §결정 5 Bounded Context governance scope + §결정 7 INV-5 forcing function S5 4-way RACI scope 정정 — AggregateArch Domain Service entry 제거 + ModuleArch unified entry (aggregate axis 흡수). 14 agent baseline (eventual) / 15 agent transitional (Wave 2 AggregateArch file deprecation 전). CONDITIONAL applicability `project.yaml aggregate_arch.applicable: bool` 보존 (ModuleArch carry-over)."
+    sunset_justification: "본 ADR `is_transitional: false` (permanent governance) — Amendment 1 = 강화 방향 (Amendment 10 정합 + ratchet 보존 + axis dedup carrier 변경 only) of ratchet 축소. ADR-058 §결정 5 cross-ref (ADR-042 Amendment 10 first applied carrier 답습) — 본 Amendment 1 = 2번째 적용 사례 (super-class ADR-091 의 sub-ratchet 축소 carrier 변경)."
+    scope:
+      - "§결정 1 Hybrid mapping 표 row 정정 (AggregateArch + ModuleArch → ModuleArch unified)"
+      - "§결정 5 Bounded Context governance scope 정정 (15 → 14 agent eventual)"
+      - "§결정 7 INV-5 forcing function — S5 deputy-mandate matrix 4-way RACI → 3-way (또는 ModuleArch unified column)"
+      - "다이어그램 + 관련 파일 stale entry footnote"
 is_transitional: false  # permanent governance — DDD vocabulary 영구 적용, 약화 방향 차단 ratchet (ADR-058 §결정 5 정합)
 sunset_justification: null  # is_transitional false — sunset 기준 부재 + amendment 시 ratchet 강화 방향만 허용
 ---
 
 # ADR-091 — ArchitectLane DDD vocabulary governance
+
+## Amendment 1 (2026-05-21 KST, carrier CFP-1117 sibling CFP-1126)
+
+> ADR-042 Amendment 10 정합 — AggregateArch + ModuleArch 통합 (Amendment 8 partial retroactive rollback) 반영.
+
+### 변경 영역
+
+1. **§결정 1 Hybrid mapping 표 정정** — AggregateArchitect Domain Service entry 제거. ModuleArchitect entry 확장:
+   - Before: `Domain Service (7 SubAgent + 3 sub-tuple)` = SecurityArch / InfraOpArch / TestContractArch / **AggregateArch** / APIContractArch / **ModuleArch** / DataArch + CodebaseMapper / Refactor / ArchitectAnalyst
+   - After: `Domain Service (6 SubAgent + 3 sub-tuple)` = SecurityArch / InfraOpArch / TestContractArch / APIContractArch / **ModuleArch (unified mandate — module-level boundary + aggregate-level boundary)** / DataArch + CodebaseMapper / Refactor / ArchitectAnalyst
+
+2. **§결정 5 Bounded Context governance scope 정정** — agent frontmatter `bounded_context` + `ddd_pattern` field 의무 대상:
+   - Transitional (현재) = 15 agent (AggregateArch file 존재, Wave 2 deprecation 대기)
+   - Eventual = 14 agent (Wave 2 deprecation 후, AggregateArch file 삭제 + ModuleArch unified)
+   - Story-2 (#1119) scope = 14 agent 전수 (AggregateArch 미포함 — file deprecation 동반 처리 또는 Wave 2 sibling carrier)
+
+3. **§결정 7 INV-5 forcing function scope** — S5 (#1122) deputy-mandate matrix 4-way RACI 정정:
+   - Before: 4-way (Security/InfraOp/TestContract × **Aggregate**/Data/Module/APIContract) = 12 cells
+   - After: 3-way (Security/InfraOp/TestContract × Data/**Module (unified)**/APIContract) = 9 cells. 또는 ModuleArch column 안 aggregate-axis row 흡수 명시
+
+### Cross-ref
+
+- ADR-042 Amendment 10 (carrier CFP-1126, 2026-05-20 KST) — primary sibling
+- ADR-058 §결정 5 — sunset_justification 의무 (강화 방향 ratchet, axis dedup carrier 변경)
+- ADR-082 Amendment 5 §결정 1 sub-scope (1-C) — 구조적 원인 #2 (chief + 12+ agent advocacy vs 1 user weight 비대칭) 흡수
+
+### 정정 invariant 보존
+
+- agent 신설 0 / rename 0 (CFP-1117 본 invariant 보존)
+- 본 Amendment 1 = ADR-091 declaration scope 정정 only (ratchet 강화 — Amendment 10 정합 + axis dedup)
+- mechanical_enforcement_actions 3 entry 보존 (`ubiquitous-language-drift-check`, `bounded-context-presence-check`, `ddd-pattern-frontmatter-check`)
+- vocabulary theater 차단 forcing function (INV-5) 정합 보존 — S5 RACI matrix scope 만 정정
 
 ## 상태
 
@@ -89,9 +132,9 @@ ArchitectLane 15 agent 를 3 DDD role 로 매핑한다.
 | SecurityArchitectAgent | Domain Service | 보안 설계 specialized judgment contributor (§7.1-§7.3 / §7.5-§7.6) |
 | InfraOperationalArchitectAgent | Domain Service | 운영 리스크 specialized judgment contributor (§7.4) |
 | TestContractArchitectAgent | Domain Service | §8 Test Contract specialized judgment contributor |
-| AggregateArchitectAgent | Domain Service | RDB OLTP aggregate invariant / 트랜잭션 경계 specialized judgment contributor |
+| AggregateArchitectAgent ⚠ | Domain Service | RDB OLTP aggregate invariant / 트랜잭션 경계 specialized judgment contributor |
 | APIContractArchitectAgent | Domain Service | transport (REST/GraphQL/gRPC/WebSocket) + API versioning specialized judgment contributor |
-| ModuleArchitectAgent | Domain Service | module boundary / layered / hexagonal / clean / DDD bounded context (module-level) specialized judgment contributor |
+| ModuleArchitectAgent ⚠ | Domain Service | module boundary / layered / hexagonal / clean / DDD bounded context (module-level) specialized judgment contributor |
 | DataArchitectAgent | Domain Service | 빅데이터 OLAP specialized judgment contributor |
 | CodebaseMapperAgent | Domain Service (sub-tuple) | fact source 변호자 — file structure / API surface / dependency graph 만 인용 |
 | RefactorAgent | Domain Service (sub-tuple) | refactoring 옹호자 — decoupling / pattern / interface 분리 3 카테고리 |
@@ -99,6 +142,8 @@ ArchitectLane 15 agent 를 3 DDD role 로 매핑한다.
 | LiveOpsDeputyAgent | Subdomain Specialist | live ops subdomain 활성 시만 spawn — "which subdomain under threat = live ops" |
 | LiveOrderingDeputyAgent | Subdomain Specialist | live ordering subdomain 활성 시만 spawn — "which subdomain under threat = live ordering" |
 | ProductionEvidenceDeputyAgent | Subdomain Specialist | production cutover subdomain 활성 시만 spawn — "which subdomain under threat = production evidence" |
+
+> ⚠ **Amendment 1 정합** (2026-05-21 KST): ADR-042 Amendment 10 carrier CFP-1126 정합 — AggregateArchitectAgent **deprecated** (mandate carry-over to ModuleArchitectAgent), ModuleArchitectAgent **unified mandate** (module-level boundary + aggregate-level boundary 통합 advocate). 본 표 transitional 보존 (15 agent), eventual 14 agent = AggregateArch row 제거 + ModuleArch row 의 "DDD bounded context (module-level)" → "module-level + aggregate-level boundary" 확장. CONDITIONAL applicability `project.yaml aggregate_arch.applicable: bool` 보존 (ModuleArch carry-over). 자세한 변경 영역 = 본 ADR 상단 `## Amendment 1` section 참조.
 
 **Rationale (Q2 Codex verbatim)**: 단일 DDD 패턴을 모든 agent 에 강제 = 너무 rigid + false precision. PL/Architect = authority pair (plan consistency), 대부분 deputy = Domain Service (specialized judgment contributor), conditional deputy = Subdomain Specialist (live operational subdomain 활성 시만 spawn). "Plugin = BC, PL = Aggregate Root, SubAgent = Entity" 강한 매핑은 거부 (Agent = process participant ≠ domain object).
 
@@ -109,7 +154,9 @@ ArchitectPLAgent 의 deputy spawn 결정 시 rationale 어휘를 다음과 같�
 - **Before**: "perspective-contributor" (보수 / 혁신 / 위협 등 perspective)
 - **After**: "which subdomain under threat" (subdomain decision is at risk → Subdomain Specialist spawn)
 
-CFP-1086 4-way RACI matrix (Security/InfraOp/TestContract × Aggregate/Data/Module/APIContract) 위에 **layer 만 추가** — 4-way matrix 본문 변경 0건 (RACI 자체 = R/A/C/I 4-column). 단, **Story 단위 deputy spawn rationale 출력 형식**이 "which subdomain under threat" enum 어휘 명시 의무.
+CFP-1086 4-way RACI matrix ⚠ (Security/InfraOp/TestContract × Aggregate/Data/Module/APIContract) 위에 **layer 만 추가** — 4-way matrix 본문 변경 0건 (RACI 자체 = R/A/C/I 4-column). 단, **Story 단위 deputy spawn rationale 출력 형식**이 "which subdomain under threat" enum 어휘 명시 의무.
+
+> ⚠ **Amendment 1 정합** (2026-05-21 KST): ADR-042 Amendment 10 정합 — 4-way RACI matrix → 3-way (Security/InfraOp/TestContract × Data/**Module (unified)**/APIContract) = 9 cells. AggregateArch column 흡수 (mandate carry-over to ModuleArch unified mandate). S5 (#1122) deputy-mandate matrix update scope. 자세한 = 본 ADR 상단 `## Amendment 1` section 참조.
 
 **Rationale (Q4 Codex verbatim)**: "perspective under threat" 를 DDD 어휘로 sharpen. Deputy = contributor 유지, BC Owner 아님 (Story 가 multiple BC 가로지를 수 있음 → advisory expertise ≠ contextual authority). option (C) deputy = BC Owner = overreach 로 거부.
 
@@ -137,7 +184,9 @@ mctrader application BC 의 Aggregate (DDD Aggregate root in domain model) 은 *
 
 **Rationale (Researcher Phase 0 합의 + Codex Q5 정합)**: governance BC ↔ application BC 어휘 충돌 (codeforge "Aggregate" = supervised authority cluster ↔ mctrader "Aggregate" = DDD Aggregate root) 동음이의 → Published Language 분리 의무. ADR-013 codeforge-family-dogfood-out-policy 정합 (codeforge 가 자신 사용 ≠ 외부 discipline 채택 = self-application 위반 0).
 
-### §결정 5 — Bounded Context governance + 15 agent frontmatter field 의무
+### §결정 5 — Bounded Context governance + 15 agent frontmatter field 의무 ⚠
+
+> ⚠ **Amendment 1 정합** (2026-05-21 KST): ADR-042 Amendment 10 정합 — 15 agent (transitional, 현재) / 14 agent (eventual, Wave 2 AggregateArch file deprecation 후). Story-2 (#1119) scope = 14 agent 전수 (AggregateArch 미포함). 자세한 = 본 ADR 상단 `## Amendment 1` section 참조.
 
 15 agent 전수 frontmatter 에 다음 2 field 의무:
 
@@ -162,7 +211,9 @@ DDD vocabulary enforcement = 3-tier:
 
 **Rationale (Q6 Codex verbatim)**: prompt 만으로는 drift + agent compliance inconsistent. Template lint = mechanical structure / reviewer finding type = semantic accountability. Consumer CI gate (option D) = premature — vocabulary 가 적어도 1 CFP cycle stabilize 후 진입.
 
-### §결정 7 — Vocabulary theater 차단 forcing function (INV-5)
+### §결정 7 — Vocabulary theater 차단 forcing function (INV-5) ⚠
+
+> ⚠ **Amendment 1 정합** (2026-05-21 KST): 본 §결정 7 의 forcing function 검증 대상 중 S5 deputy-mandate matrix scope = ADR-042 Amendment 10 정합 — 4-way RACI matrix → 3-way (AggregateArch column 흡수, ModuleArch unified column). cross-validate mechanism (review-verdict-v4 `bc_violation` / `aggregate_violation` / `ubiquitous_language_drift` finding type) 본문 변경 0건 (forcing function 자체 보존). 자세한 = 본 ADR 상단 `## Amendment 1` section 참조.
 
 본 ADR 의 핵심 forcing function. 6 Story acceptance criteria 각각 "어휘 emit ↔ spawn/review/ADR criteria 변경" 검증항목 1건 이상 의무. **본 ADR Phase 2 PR5 LAND gate** = mctrader ADR-031 golden-path worked example (S6) 의 FINAL VERDICT 섹션이 다음 5 영역에 대해 evidence enumeration 명시:
 
@@ -246,7 +297,9 @@ ADR-086 framework 의무 적용. 본 CFP 가 agent 신설 0건이지만 framewor
 
 **5-checklist 통과** — agent 신설 0건이므로 framework axis 1 영역 외, axis 4 sibling cross-ref + axis 5 deferred carrier path 만 적용. 본 CFP 진행 가능.
 
-## 다이어그램 (선택)
+## 다이어그램 (선택) ⚠
+
+> ⚠ **Amendment 1 정합** (2026-05-21 KST): 본 다이어그램 transitional 보존 (15 agent). Eventual = AggregateArch 노드 제거 + ModuleArch 노드 label 확장 ("module boundary + aggregate-level boundary unified"). 자세한 = 본 ADR 상단 `## Amendment 1` section 참조.
 
 ```mermaid
 graph TB
