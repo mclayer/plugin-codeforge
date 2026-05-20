@@ -28,10 +28,10 @@ Lane internal · per-lane spawn detail · severity rule · GitHub workflow subse
 
 **세션 개시 prerequisite 3종**: (1) Orchestrator 모델 = `claude-opus-4-7` (Opus) 필수 — Sonnet/Haiku 세션에서 즉시 중단 → Opus 재시작 요청 ([ADR-057](docs/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md)). (2) MCP 서버 `github` — Issue/PR/sub-issue/comment·label·milestone 각 lane plugin self-write; `docs/{change-plans,adr,domain-knowledge,retros}/**` 직접 write 는 owner agent (CFP-26 Phase 0a). (3) GitHub 도구 = `mcp__github__*` 우선 — `gh` CLI는 MCP 미커버 영역(`milestone CRUD` / `Discussions` / `GraphQL` / `label 부트스트랩 스크립트`)에서만 fallback. MCP 미노출 시 `/mcp` 재인증 요청 후 대기.
 
-**필수 플러그인 (8종 active + 2 신설 예정)**:
+**필수 플러그인 (10종)**:
 - `codeforge-{review,pmo,requirements,develop,design,test}@mclayer` — 6 lane plugin active (codeforge-test 통합테스트 전용 부활 — CFP-367 / ADR-055 / ADR-048 Amendment 1)
-- **`codeforge-deploy@mclayer` (신설 예정 — CFP-1059 / [ADR-087](docs/adr/ADR-087-deploy-lane-and-lifecycle-extension.md))**: Deploy lane plugin (DeployPLAgent + DeployWorkerAgent 2종, Sonnet tier). Phase 1 = declarative only (본 ADR). 실 plugin seed 생성 = 별 sub-Story carrier.
-- **`codeforge-deploy-review@mclayer` (신설 예정 — CFP-1059 / [ADR-088](docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md))**: Deploy Review lane plugin (DeployReviewPLAgent Opus + DeployReviewWorkerAgent Sonnet, debate-protocol-v1 trigger 의무, ProductionEvidenceDeputy ownership 이관). Phase 1 = declarative only. 실 plugin seed 생성 = 별 sub-Story carrier.
+- **`codeforge-deploy@mclayer`** (CFP-1059 Story-2 / [ADR-087](docs/adr/ADR-087-deploy-lane-and-lifecycle-extension.md)): Deploy lane plugin (DeployPLAgent + DeployWorkerAgent 2종, Sonnet tier). consumer application repo 의 Epic 묶음 종료 후 변경 repo blue-green + atomic swap + 3-시간 보존 + 자동 rollback 배포. plugin seed = `mclayer/plugin-codeforge-deploy` (1.0.0 baseline).
+- **`codeforge-deploy-review@mclayer`** (CFP-1059 Story-3 / [ADR-088](docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md)): Deploy Review lane plugin (DeployReviewPLAgent Opus + DeployReviewWorkerAgent Sonnet, debate-protocol-v1 trigger 의무, ProductionEvidenceDeputy ownership 이관). production-grade 성능 측정 1st-class + cutover 사후 검증. plugin seed = `mclayer/plugin-codeforge-deploy-review` (1.0.0 baseline).
 - `codex@openai-codex` — CodexReviewAgent + codex CLI dependency
 - `superpowers@claude-plugins-official` — 17 lane agent × 8 skill 호출 (SSOT: [`docs/superpowers-integration.md`](docs/superpowers-integration.md))
 - `github@claude-plugins-official` — GitHub MCP 도구 노출
@@ -52,7 +52,7 @@ Lane internal · per-lane spawn detail · severity rule · GitHub workflow subse
 
 ## Development Agent Team
 
-Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-decomposition.md)). Orchestrator (top-level Claude 세션) 가 8 lane plugin 의 agent 를 spawn (CFP-1059 / [ADR-087](docs/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — 6 → 8 lane 확장. 배포 / 배포 리뷰 신설 = Phase 1 declarative, 실 lane plugin seed 신설 = 별 sub-Story carrier).
+Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-decomposition.md)). Orchestrator (top-level Claude 세션) 가 8 lane plugin 의 agent 를 spawn (CFP-1059 / [ADR-087](docs/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — 6 → 8 lane 확장. 배포 / 배포 리뷰 lane plugin seed 신설 완료 = CFP-1059 Story-2/S3).
 
 | Lane | Plugin | Agent count | SSOT |
 |---|---|---|---|
@@ -61,8 +61,8 @@ Wrapper agent **0개** (ζ arc 완료, [ADR-009](docs/adr/ADR-009-wrapper-only-d
 | 설계리뷰 / 구현리뷰 / 보안테스트 | codeforge-review | 5 (3 PL + 2 worker) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-review/blob/main/CLAUDE.md) |
 | 구현 | codeforge-develop | 5 (PL + QADev + 3 role:dev core) + preset/overlay 동적 | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-develop/blob/main/CLAUDE.md) |
 | 통합테스트 | codeforge-test | 1 (IntegrationTestAgent) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-test/blob/main/CLAUDE.md) |
-| **배포** (신설 예정 — CFP-1059 / ADR-087) | **codeforge-deploy** | **2 (DeployPLAgent + DeployWorkerAgent — Sonnet)** | TBD (S2/S3 sub-Story carrier) |
-| **배포 리뷰** (신설 예정 — CFP-1059 / ADR-088) | **codeforge-deploy-review** | **2 (DeployReviewPLAgent Opus + DeployReviewWorkerAgent Sonnet) + ProductionEvidenceDeputy 이관** | TBD (S2/S3 sub-Story carrier) |
+| 배포 | codeforge-deploy | 2 (DeployPLAgent + DeployWorkerAgent — Sonnet) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-deploy/blob/main/CLAUDE.md) |
+| 배포 리뷰 | codeforge-deploy-review | 3 (DeployReviewPLAgent Opus + DeployReviewWorkerAgent Sonnet + ProductionEvidenceDeputy 이관) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-deploy-review/blob/main/CLAUDE.md) |
 | Cross-cutting | codeforge-pmo | 3 (PMOAgent + GitOpsAgent + DialogFidelityAgent) | [CLAUDE.md](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/CLAUDE.md) |
 
 각 lane plugin 의 agent 역할·동작은 해당 plugin CLAUDE.md SSOT. 본 표는 composition map 만.
