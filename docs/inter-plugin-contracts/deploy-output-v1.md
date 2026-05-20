@@ -2,7 +2,7 @@
 kind: contract
 contract: deploy_output
 contract_version: "0.1"
-status: Draft  # Phase 1 = placeholder declare only (CFP-1059 / ADR-087). Body wire = S2 sub-Story carrier.
+status: Active  # Phase 1 = placeholder declare only (CFP-1059 / ADR-087). Body wire = S2 sub-Story carrier.
 canonical_repo: mclayer/plugin-codeforge-deploy  # TBD — lane plugin seed 신설 후 wire
 canonical_path: docs/inter-plugin-contracts/
 created_by: CFP-1059
