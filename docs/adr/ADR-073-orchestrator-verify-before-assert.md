@@ -23,6 +23,13 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 2 + CFP-966 carrier"
     sunset_justification: null
+  - amendment_id: 3
+    cfp: CFP-689
+    date: 2026-05-20
+    scope: "§결정 1 expansion — transition trigger enum 4번째 entry `worktree_lane_spawn` 추가 (closed-set ratchet 강화, Amendment 2 §결정 1-A precedent 답습) + worktree-first 환경 self-ownership verify 3-tuple path-based normative (a) cwd ↔ worktree path 일치 (`git rev-parse --show-toplevel` vs `git worktree list --porcelain`, path normalize forward-slash + lowercase drive-letter) (b) HEAD lineage ↔ session reflog membership (long-Phase-gap reflog 90d GC 시 (a)+(c) 2-source AND fallback) (c) `git worktree list --porcelain | grep <branch>` + reflog 2-source AND ownership verify + subagent verdict `parallel_session_conflict` 발화 시 Orchestrator re-verify mandate (ADR-082 verify-before-trust 자기 산출물 영역 확장 cross-ref — agent 도 multi-worktree self-confusion 보임). 본 Amendment 는 §결정 1-8 본문 + Amendment 1+2 scope 강화 only (ADR-058 §결정 5 ratchet 정합) — 약화 / scope 축소 0건. evidence-checks-registry warning-tier entry `worktree-self-ownership-verify` (recurrence count 3 / threshold 3 / promotion_trigger auto_blocking, declaration-only-Wave-1) 가 measurement carrier. memory `feedback_worktree_first_not_parallel_session` = normative 승격 carrier. Sentinel: 2026-05-19~20 KST single session 3 occurrences (CFP-1026 STAND-DOWN false-positive + CFP-681 cfp-1014 dup worktree RequirementsPL `f39b221` self-misflag + CFP-681 ArchitectPL Phase 3 자기 ArchitectAgent commit `00b7d8a` parallel_session_conflict mis-flag)."
+    status: applied
+    ref: "## Amendments / Amendment 3 + CFP-689 carrier"
+    sunset_justification: null
 related_stories:
   - CFP-622  # carrier
   - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
@@ -30,6 +37,9 @@ related_stories:
   - CFP-967  # Amendment 2 sibling — mechanical wire (script + hook + workflow + bats)
   - CFP-953  # Amendment 2 sentinel evidence (first parallel race — label-based search miss)
   - CFP-946  # Amendment 2 sentinel evidence (second parallel race — 11분 gap Epic close miss)
+  - CFP-689  # Amendment 3 — worktree-first self-ownership verify 3-tuple (declarative anchor, plugin-codeforge#1038 carrier)
+  - CFP-1038 # Amendment 3 carrier ESC — PMO P1 escalation (worktree_first_self_confusion_within_single_session pattern_count 3 reach, plugin-codeforge#1038)
+  - CFP-983  # Amendment 3 candidate (c) 정식 carrier — #983 P1 ESC body shared workdir collision worktree-first invariant 강화 영역
   - CFP-597  # sentinel #4 strike #1 origin (CLAUDE.md cap + playbook §3.6 false alarm)
   - CFP-578  # ADR-070 verify-before-trust 자매 (external worker output)
   - CFP-612  # ADR-071 dialog convergence 자매 governance
@@ -50,7 +60,8 @@ related_files:
   - <internal-docs>/wrapper/templates/plan.md  # pre_lookup_evidence[] field 신설
 is_transitional: false
 mechanical_enforcement_actions:
-  - parallel-work-sentinel-pickup  # CFP-966 Amendment 2 — declarative anchor (warning tier, declaration-only-Wave-1, actual lint script + workflow wire = sibling Story-2 CFP-967 carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합)
+  - parallel-work-sentinel-pickup     # CFP-966 Amendment 2 — declarative anchor (warning tier, sibling Story-2 CFP-967 mechanical wire merged 2026-05-19, status: warning per ADR-040 Amendment 3 §결정 7.D self-application 정합)
+  - worktree-self-ownership-verify    # CFP-689 Amendment 3 — declarative anchor (warning tier, declaration-only-Wave-1, recurrence count 3 / threshold 3 / promotion_trigger auto_blocking, actual lint script + workflow + hook = sibling Story-2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — parallel-work-sentinel-pickup precedent 답습)
 # Wave 1 = behavioral directive only (Orchestrator self-discipline forcing function) — Amendment 2 (CFP-966)
 # 가 첫 mechanical_enforcement_actions[] row entry append (declarative anchor only — script + workflow
 # 실 binding 은 sibling Story-2 CFP-967 carrier).
@@ -393,6 +404,93 @@ ADR-082 §결정 1 layer disjoint 4-layer 표 anchor 정합 — 두 Amendment �
 
 `is_transitional: false` (영구 governance policy) 보존 — Amendment 2 scope = §결정 1-A/1-B/1-C 강화 방향 only (transition trigger enum 추가 + cold start 보강 + sustained polling mandate). 약화 / scope 축소 / 면제 영역 0건. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과 (Amendment 1 동형 precedent).
 
+### Amendment 3 — worktree-first self-ownership verify 3-tuple (CFP-689)
+
+**문제**: ADR-040 worktree-first normative (Amendment 3·5·6 §결정 7.D 4 evidence-check entry blocking-on-pr) 가 만든 토폴로지 = **multi-worktree distributed local state** (동일 lane branch 가 N 개 isolated worktree `${HOME}/.claude/worktrees/<repo>/cfp-NNN[-suffix]` 에 분산). 산업 표준 4-layer staleness hierarchy (Bazel hermeticity: source tree / network / clock / process) 와 동형이되 **5th layer "spatial dimension (multi-worktree distributed local state)"** 로 확장된 codeforge-specific 도메인. 단일-worktree 멘탈모델 (`C:/workspace/mclayer/<repo>/`) 로는 자기 세션이 dedicated worktree 에서 만든 commit 도 외부 commit 처럼 보인다 — **자기 세션 자체 산출물을 외부 parallel session 으로 오인하는 self-confusion**.
+
+memory rule 6 (title-based search) + rule 7 (Epic state poll) + Amendment 2 transition trigger enum 3종 + cold start session_start 은 **detection layer** only — worktree-first 환경 안 detection 양성 직전 self-ownership verify 선행 layer 가 governance 안 부재. 이 verification layer 부재가 false-positive 의 force-push war / 잘못된 stand-down / 중복 spawn 을 만드는 systemic root.
+
+**Sentinel evidence** (2026-05-19~20 KST single session 3 occurrences, pattern_count 3 reach):
+
+- **Occurrence #1 — CFP-1026 brainstorm STAND-DOWN false-positive** (2026-05-19): Phase 0 4-agent parallel context fetch 직후 본 session 자기 산출물을 외부 work 으로 오인 → STAND-DOWN 발화 → 검증 후 false-positive 확인 → resume.
+- **Occurrence #2 — CFP-681 cfp-1014 dup worktree** (2026-05-19~20): RequirementsPL 중복 spawn — authoritative `cfp-681-s2` worktree 의 자기 work commit `f39b221` 을 parallel session 산출물로 mis-flag → dup worktree setup → 검증 후 self-confusion 확인 → dup prune.
+- **Occurrence #3 — CFP-681 ArchitectPL Phase 3 자기 commit mis-flag** (2026-05-20): ArchitectPL verdict packet 안 자기 ArchitectAgent commit `00b7d8a` 를 `parallel_session_conflict` 로 mis-flag — **subagent 도 multi-worktree self-confusion 영역에서 보이는 패턴 입증**. Orchestrator 가 subagent verdict 를 final source of truth 로 취급 시 self-confusion contagion (Orchestrator → subagent → Orchestrator 재반영 cycle).
+
+#### Amendment 3 §결정 1-A 추가 — Transition trigger enum 4번째 entry (closed-set ratchet)
+
+Amendment 2 §결정 1-A 의 transition trigger enum 3종 (`lane_spawn` / `pr_open` / `merge_transition`) + cold start `session_start` (Amendment 2 §결정 1-B) 에 **4번째 entry `worktree_lane_spawn`** 추가 (closed-set ratchet 강화, Amendment 2 §결정 1-A precedent 답습):
+
+| ID | Transition trigger | 발화 시점 | Verify 의무 |
+|----|---|---|---|
+| `lane_spawn` (Amendment 2) | lane 진입 직전 (Requirements / Design / DesignReview / Develop / CodeReview / SecurityTest / IntegrationTest / PMO retro lane spawn) | Agent tool spawn 직전 | Amendment 2 §결정 1-A 3-step (title-based search + Epic poll + HEAD compare) |
+| `pr_open` (Amendment 2) | PR open 직전 (Phase 1 / Phase 2 / retro PR) | `gh pr create` 직전 | 동일 3-step + sibling Story PR list cross-ref |
+| `merge_transition` (Amendment 2) | PR merge 직전 + merge 직후 gate label / phase label transition | merge command 직전 + 직후 transition action 직전 | 동일 3-step + Epic state final poll |
+| **`worktree_lane_spawn` (Amendment 3, 신규)** | **worktree-first lane spawn 직전 (`Agent` tool 호출 prompt 안 worktree path 주입 직전)** | **lane spawn 직전 + subagent verdict `parallel_session_conflict` 발화 직후** | **§결정 1-D self-ownership verify 3-tuple (path-based, 아래)** |
+
+closed enum — 5번째 trigger 추가 시 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
+
+#### Amendment 3 §결정 1-D — Self-ownership verify 3-tuple (path-based, 사용자 prompt identity-based 대안 채택)
+
+`worktree_lane_spawn` transition 직전 + subagent verdict `parallel_session_conflict` 발화 시점에 다음 3-tuple verify 의무 (path-based, ResearcherAgent + FeasibilityAgent 통합 권장 채택 — Solo-dev 환경 identity-based 식별력 0 회피):
+
+**3-tuple verify primitive** (atomic group — 3-step 동시 수행, 부분 PASS 허용 fallback rule 동반):
+
+| ID | Verify check | 실행 cmd | PASS 조건 | Fallback rule |
+|----|---|---|---|---|
+| **(a) cwd ↔ worktree path 일치** | 현재 작업 worktree path 가 git worktree list 안 등록 entry 와 정확 일치 | `git rev-parse --show-toplevel` vs `git worktree list --porcelain` | string equality (path normalize: forward-slash `/` + lowercase drive-letter `c:` `c:/users/...`) | normalize 후 mismatch 시 (a) FAIL → (c) backstop |
+| **(b) HEAD lineage ↔ session reflog membership** | HEAD commit lineage 가 본 session reflog 안 단일 선형 (자기 산출물 입증) | `git reflog show <branch> --all` + `git log <commit> --oneline` cross-check | reflog membership = true (본 session 안 commit chain 추적 가능) | long-Phase-gap reflog 90d GC (git default `gc.reflogExpire=90 days`) 시 (b) FAIL → **(a)+(c) 2-source AND fallback** |
+| **(c) worktree list + reflog 2-source AND** | `git worktree list --porcelain | grep <branch>` 출력 + reflog 양 source AND 정합 | `git worktree list --porcelain` parse `branch` field + reflog entry exists | 양 source PASS = self-ownership verify TRUE | (a) FAIL OR (b) FAIL OR (c) FAIL 시 → parallel session verdict (memory rule 6/7 detection layer 인계) |
+
+**Edge case handling**:
+- **detached HEAD** (branch reflog 없음): `branch` field 부재 → (b) 자동 skip → **(a)+(c) 2-source AND fallback** (PASS 조건 = (a) PASS AND (c) PASS — branch field 없을 시 detached HEAD log line `(detached HEAD ...)` 검증).
+- **anonymous worktree** (`branch` field 부재 — `git worktree add --detach` path): self-ownership verify 불가능 영역 → **forcing function**: "anonymous worktree 안 lane spawn 금지" (codeforge worktree convention violation — ADR-040 §결정 1 named worktree mandate 정합). detection 시 즉시 ABORT + named branch worktree 재생성 의무.
+- **path normalization**: Windows drive-letter case 변동 (`C:/` vs `c:/`) + slash direction (`/` vs `\`) → canonical form = **lowercase drive + forward-slash** (`c:/users/...`). MSYS2 / Git Bash / WSL / native cmd.exe 전 환경 동형 보장.
+- **signed commit GPG** + **CODEFORGE_SESSION_ID env 부재**: 사용자 prompt identity-based 3-tuple (cwd ↔ git config user.email / HEAD author ↔ session identity / `gh pr list head:<branch>`) 영역의 edge — 본 Amendment 3 path-based 채택으로 회피 (identity-based scope OUT, ResearcherAgent + FeasibilityAgent 통합 권장).
+
+#### Amendment 3 §결정 1-E — Subagent verdict re-verify mandate (ADR-082 cross-ref)
+
+Orchestrator 가 subagent verdict 안 `parallel_session_conflict` (또는 동형 발화 — `external_work_detected` / `cross_session_collision` / `stand_down_recommended` 등) 수신 시:
+
+1. **즉시 ground-truth re-verify 의무** — `git worktree list --porcelain` + `git reflog show <branch>` direct execution (subagent 가 이미 수행했더라도 Orchestrator 자기 검증).
+2. **subagent verdict ≠ final source of truth** — multi-worktree self-confusion 영역에서는 agent 도 mis-flag 패턴 입증 (Occurrence #3 sentinel evidence — ArchitectPL Phase 3 ArchitectAgent commit `00b7d8a` mis-flag). Subagent verdict 는 advisory annotation 만 — Orchestrator 가 self-ownership verify 3-tuple 결과를 ground truth 채택.
+3. **3-tuple PASS (self-ownership TRUE) 시**: subagent verdict 의 `parallel_session_conflict` REJECT + continue (자기 산출물 정상 진행). FIX Ledger row append (`subagent_misflag_self_confusion` reason code) — Orchestrator 단독 §10 append 독점 (fix-event-v1 contract).
+4. **3-tuple FAIL (self-ownership FALSE) 시**: subagent verdict 의 `parallel_session_conflict` 채택 + memory rule 6/7 detection layer 절차 진행 (title-based search + Epic state poll + HEAD compare).
+
+**ADR-082 §결정 1 layer disjoint 4-layer 표 cross-ref 의무**:
+
+- **ADR-082** = internal lane agent self-write **write-time** semantic truth verify (corpus annotation + cross-plugin ownership) — 작성 값 자체의 사실성 source verify
+- **ADR-073 Amendment 3** (본) = Orchestrator **worktree-first self-confusion** verify (worktree_lane_spawn transition 직전 + subagent verdict re-verify) — 자기 산출물 영역의 verify 확장 (lane agent self-write 가 만든 commit 의 self-ownership verify 영역)
+
+두 layer 는 verify 대상이 disjoint — ADR-082 = 작성 값의 source verify / 본 Amendment 3 = commit ownership 의 worktree topology verify. scope 침범 0. agent verdict packet `parallel_session_conflict` mis-flag 영역은 본 Amendment 3 의 §결정 1-E re-verify mandate 가 직접 cover (ADR-082 §결정 1 layer disjoint anchor 와 양립).
+
+#### Amendment 3 §결정 1-F — Disjoint axis with #983 (reflog membership 1 bit)
+
+본 Amendment 3 의 self-confusion sub-domain 은 #983 후보 (a)/(b) 의 real parallel cross-session collision sub-domain 과 **disjoint axis** (reflog membership 1 bit signal):
+
+| 차원 | 진짜 parallel (cross-session conflict, #983 후보 (a)/(b) 영역) | self-confusion (within single session, **본 Amendment 3 영역**) |
+|---|---|---|
+| reflog membership | **본 세션 reflog 에 없는 commit** + 다른 worktree lineage 가 origin 에 독립 존재 | **본 세션 skeleton → lane commit 단일 선형** 이 multi-worktree 로 흩어진 산출물 |
+| 1-bit signal | reflog membership = **false** | reflog membership = **true** |
+| 적용 governance | memory rule 6/7 + ADR-073 Amendment 2 (detection layer) | **본 Amendment 3 (verification layer — detection 직전 self-ownership verify 선행)** |
+| 처리 액션 | stand-down / re-spawn / merge-order 의뢰 | continue (자기 산출물 정상 진행) + subagent verdict reject |
+| Carrier ESC | #983 (별 Story carrier, real parallel cross-session collision 영역) | CFP-689 (본 Story, plugin-codeforge#1038 carrier) |
+
+본 Amendment 3 = #983 P1 ESC body 안 후보 (c) "ADR-073 Amendment 3 — shared workdir collision worktree-first invariant 강화" 의 정식 carrier. #983 후보 (a)/(b) (real parallel cross-session collision sub-domain) 는 별 Story carrier 영역 — 본 Amendment 3 scope 외, disjoint axis 명시 invariant.
+
+#### Amendment 3 — Wave 1 declaration / Wave 2 mechanical wire 분리 (CFP-966/967 precedent 답습)
+
+본 Amendment 3 = **declarative anchor only** (Wave 1, declaration-only, ADR-064 §결정 1 CFP scope unitary 정합). CFP-966 (declarative anchor) → CFP-967 (mechanical wire merged 2026-05-19) chain 완결 precedent 답습:
+
+| Wave | Status | Carrier |
+|---|---|---|
+| Wave 1 Amendment 3 (declarative anchor) | `mechanical_enforcement_actions: [parallel-work-sentinel-pickup, worktree-self-ownership-verify]` (2 entry, warning tier, status: deferred-followup) | **CFP-689 (본 Amendment 3, 2026-05-20) — declarative anchor only** |
+| Wave 2 sibling Story-2 mechanical wire | (entry status: deferred-followup → warning 전환) | **TBD 별 sub-CFP carrier** (`scripts/check-worktree-self-ownership.sh` + `scripts/lib/check_worktree_self_ownership.py` Python SSOT + `templates/github-workflows/worktree-self-ownership-verify.yml` + `.github/workflows/` byte-identical self-app + `templates/.claude/hooks/PreToolUse-worktree-self-ownership.json.sample` + `tests/scripts/check-worktree-self-ownership/test_worktree_self_ownership.bats` + label-registry-v2 신규 entry `hotfix-bypass:worktree-self-ownership-verify`) |
+| Wave 3 (recurrence count ≥ 3 자동 승격) | (entry current_tier: warning → blocking-on-pr 전환) | post-Wave-2 follow-up CFP (recurrence.threshold=3 auto-firing — pattern_count 3 already reached 2026-05-19~20 sentinel evidence) |
+
+#### Amendment 3 — sunset_justification N/A 정당
+
+`is_transitional: false` (영구 governance policy) 보존 — Amendment 3 scope = §결정 1 본문 + Amendment 1+2 강화 방향 only (transition trigger enum 4번째 entry append + self-ownership verify 3-tuple 신설 + subagent verdict re-verify mandate). 약화 / scope 축소 / 면제 영역 0건. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과 (Amendment 1+2 동형 precedent). ADR-064 §self-application top-down ratchet 정합 (강화 방향 only — verify scope 확장).
+
 ## 관련 파일
 
 - `docs/adr/ADR-RESERVATION.md` — row 73 (CFP-622)
@@ -412,6 +510,15 @@ ADR-082 §결정 1 layer disjoint 4-layer 표 anchor 정합 — 두 Amendment �
   - `mclayer/codeforge-internal-docs/wrapper/stories/CFP-966.md` — Story-1 declarative anchor (본 Amendment 2 carrier)
   - `mclayer/codeforge-internal-docs/wrapper/change-plans/CFP-966.md` — Change Plan (declarative)
   - **sibling Story-2**: CFP-967 mechanical wire (`scripts/check-parallel-work-sentinel.{sh,py}` + `templates/.claude/hooks/SessionStart-parallel-work-poll.json.sample` + `templates/github-workflows/parallel-work-sentinel-check.yml` + `tests/bats/test_parallel_work_sentinel.bats`)
+- **Amendment 3 (CFP-689, 2026-05-20) 관련**:
+  - `docs/evidence-checks-registry.yaml` — `worktree-self-ownership-verify` 신규 entry (warning tier, declaration-only-Wave-1, recurrence count 3 / threshold 3 / promotion_trigger auto_blocking, sibling_dependencies: [CFP-689, TBD-Wave-2-sub-CFP])
+  - `docs/domain-knowledge/domain/orchestrator-discipline/worktree-self-ownership-verify.md` — narrative SSOT 신설 (DomainAgent 지식 공백 해소 — Multi-worktree distributed local state 5th layer staleness + disjoint axis + 3 occurrences sentinel evidence + path-based 3-tuple verify primitive + edge case + subagent verdict re-verify mandate)
+  - `docs/parallel-work/section-ownership.yaml` — ADR-073 file lock row append (Amendment 3 신설 carrier, Amendment 2 row CFP-966 와 section disjoint)
+  - `CLAUDE.md` "Verify-before-trust 4-layer governance" 단락 — Amendment 3 (CFP-689) 1문장 inline append + `mechanical_enforcement_actions[]` 2 entry mention (ADR-012 cap 320 line budget verified — 315 → ~318 lines 예상)
+  - `mclayer/codeforge-internal-docs/wrapper/stories/CFP-689.md` — Story-1 declarative anchor (본 Amendment 3 carrier — RequirementsPL 7-agent synthesis §2-6 + ArchitectAgent §3/§7/§11 final write)
+  - `mclayer/codeforge-internal-docs/wrapper/change-plans/CFP-689.md` — Change Plan (declarative)
+  - **sibling Story-2 (TBD 별 sub-CFP)**: mechanical wire (`scripts/check-worktree-self-ownership.{sh,py}` + `templates/.claude/hooks/PreToolUse-worktree-self-ownership.json.sample` + `templates/github-workflows/worktree-self-ownership-verify.yml` + `tests/scripts/check-worktree-self-ownership/test_worktree_self_ownership.bats` + label-registry-v2 신규 entry `hotfix-bypass:worktree-self-ownership-verify`)
+  - **#729 future Amendment 4 disjoint 영역**: plugin-codeforge#729 (ADR-073 "Amendment 1" title 표기 — 슬롯 충돌, Amendment 4 로 재배정 의무, ContinuityAgent CRITICAL 발견). Glob false negative P1 영역 — 본 Amendment 3 self-ownership verify 3-tuple 영역과 section disjoint 보장 (Amendment 4 = `Glob false negative` 별 §결정 영역).
 
 ## 해소 기준
 
