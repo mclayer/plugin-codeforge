@@ -109,13 +109,13 @@ Accepted (2026-05-20 KST) — CFP-1041 carrier. PMOAgent ADR-045 §D-9 cross_sto
 
 ADR-082 §결정 1 4-layer 표 verbatim 답습 + 5번째 row "Multi-session collaboration" 신설. anchor-first 패턴 (본 ADR 의 backbone).
 
-| layer | ADR | scope (verify 대상 / 행위 주체) | axis |
-|---|---|---|---|
-| 1 | ADR-073 | Orchestrator cross-repo state / assumption verify (Orchestrator 행위 한정) | verify (post-hoc cross-repo) |
-| 2 | ADR-070 | Codex external worker output verify (외부 worker output 한정) | verify (post-hoc external) |
-| 3 | ADR-082 | Internal lane agent §9 evidence / Phase 0 mapping / corpus enumeration write-time verify (internal lane agent 한정) | verify (write-time internal) |
-| 4 | ADR-045 §D | PMOAgent retro corpus enumeration cross-Story pattern_count escalation (cross-Story aggregator) | verify (cross-Story pattern aggregator) |
-| 5 | **ADR-085 (본 ADR)** | **Multi-session ownership / 분담 / handoff coordination (cross-session pre-hoc)** | **coordination (pre-hoc cross-session)** |
+| Layer | ADR | verify 대상 / scope |
+|---|---|---|
+| Orchestrator cross-repo state / assumption verify | ADR-073 | Orchestrator 행위 한정 — cross-repo state + assumption 기술 시 `git fetch` + `git show origin/main:<path>` direct verify + `verified-via` annotation |
+| external worker (Codex) output verify | ADR-070 | 외부 worker output 한정 — Codex finding evidence ground truth 를 Orchestrator direct file Read 로 verify, mismatch 시 verdict reject |
+| **internal lane agent self-write verify (본 ADR)** | **ADR-082** | **lane agent §9 evidence / Phase 0 mapping / corpus enumeration write-time** — 작성 값 자체가 사실과 일치하는가 source direct verify 후 write |
+| retro corpus enumeration (PMOAgent §5 pattern_count) | ADR-045 §D | retro pattern aggregation — cross-Story pattern_count ≥ threshold 검출 시 ADR escalation forcing function |
+| **Multi-session coordination (본 ADR)** | **ADR-085** | **복수 Claude Code session ownership / 분담 / handoff coordination — cross-session pre-hoc coordination axis** |
 
 5번째 row = **axis 자체가 다름** (verify axis ≠ coordination axis). layer 1-4 가 모두 충족되어도 coordination axis 부재 시 parallel race 발생. 둘 다 필요한 orthogonal layer (조합).
 

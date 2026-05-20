@@ -435,7 +435,7 @@ ADR-085 (Multi-session collaboration protocol) 신설로 해당 gap 을 disjoint
 - ADR-058 §결정 5 sunset_justification — Amendment 3 = cross-ref-only (disjoint complement 명시) = ratchet-up 강화 방향, `sunset_justification: null` (forbid scope 축소 아님). `is_transitional: false` 유지.
 - ADR-064 §self-application top-down ratchet 정합 (강화 방향만 — 약화 방향 0건).
 - ADR-040 Amendment 3 §결정 7.A schema 정합 — `mechanical_enforcement_actions[]` 2-entry 유지 (Amendment 1 의 corpus-claim-verify + cross-plugin-ownership-verify, Amendment 3 frontmatter 갱신 0).
-- ADR-073 (Orchestrator cross-repo state / assumption verify) = Wave 1 base + Amendment 1-2 + Amendment 3 (ADR-085 cross-ref) 동형 precedent — Amendment 3 cross-ref-only pattern 동일.
+- ADR-073 (Orchestrator cross-repo state / assumption verify) = Wave 1 base + Amendment 1-2 + Amendment 4 (ADR-085 cross-ref) 동형 precedent — Amendment 4 cross-ref-only pattern 동일.
 
 ### Related (Amendment 3 동반)
 
