@@ -48,6 +48,24 @@ reservations: []
 #   reserved_at: ISO8601
 ```
 
+### Amendment id slot reservation (CFP-1058 신설)
+
+ADR 본문 안 `amendments[]` array 의 `amendment_id` slot 도 multi-session race 영역 — 본 레지스트리 안 `amendments_reserved[]` sub-tree 신설:
+
+```yaml
+amendments_reserved:
+# 형식:
+# - adr_number: NNN              # 기존 ADR number (active)
+#   amendment_id: M              # 예약 Amendment id slot (sequential within ADR)
+#   reserved_by_cfp: CFP-XXX     # carrier Story
+#   reservation_date: YYYY-MM-DD KST
+#   status: reserved | active | superseded
+```
+
+사용 사례 evidence (CFP-1041 vs CFP-689 race precedent): CFP-689 PR #1043 (ADR-073 Amendment 3 worktree-first self-ownership) 와 CFP-1041 (ADR-073 Amendment cross-ref) 가 동시 in-flight 시 — body intent `#1038 = Amendment 3 carrier` 가 ADR-RESERVATION 미codify 영역 → race-winner-takes-it convention (informal). 본 schema 도입으로 reservation intent 형식 codify 가능.
+
+**Optional field — backward-compat**: `amendments_reserved[]` 신설 0 entry baseline (기존 ADR Amendment id slot retrospective reservation 면제). 신규 reservation 만 사용. CFP-1041 race precedent retrospective entry 1건 sample 가능 (CFP-1038 → ADR-073 Amendment 3 reserved 의도 evidence).
+
 ## 결과
 
 ### 현재 예약 목록
