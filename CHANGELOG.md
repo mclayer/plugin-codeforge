@@ -2,6 +2,24 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.19.0] - 2026-05-21
+
+### Changed (CFP-1126 — ADR-042 Amendment 10 cross-repo sibling: AggregateArch + ModuleArch 통합, ratchet 축소)
+
+본 release = wrapper SSOT (CFP-1126 / ADR-042 Amendment 10 — AggregateArchitectAgent deprecate + ModuleArchitectAgent mandate 흡수, boundary axis 단일 advocate, 7→6 permanent, ratchet 축소 first applied carrier ADR-058 §결정 5 sunset_justification) 의 codeforge-design plugin repo implementation. 사용자 직권 minimal path (Story file 0 / lane spawn 0 / Phase 분리 0 / Retro 0). **0.18.0 = CFP-1092 sibling (CHANGELOG entry 누락 — 별 영역).**
+
+#### Removed
+- `agents/AggregateArchitectAgent.md` delete — mandate carry-over to ModuleArchitectAgent (boundary axis 통합)
+
+#### Changed
+- `agents/ModuleArchitectAgent.md` mandate 확장 — frontmatter 7 → 13 primary (module-level 1-7 + aggregate-level 8-13 RDB OLTP) + CONDITIONAL applicability (aggregate_arch.applicable carry-over) + body Mandate/산출물 (§3 aggregate + §11)/이의제기 14항/제약 정정
+- `CLAUDE.md` roster 7→6 permanent + 4-way 대립 + RACI 4-column transitional pointer note (full 4→3 재편 별 carrier) + fan-out + CONDITIONAL trigger 정정
+- `.claude-plugin/plugin.json` 0.18.0 → 0.19.0 MINOR + description CFP-1126 entry prepend (marketplace mirrored field verbatim sync)
+
+#### Deferred (별 follow-up CFP carrier — CFP scope unitary)
+- sibling agent cross-ref 13 occurrence (APIContractArch 5 / DataArch 6 / ArchitectAgent 2) 정정
+- RACI matrix 4-column → 3-column 정식 재편 (design lane governance 변경)
+
 ## [0.17.0] - 2026-05-20
 
 ### Changed (CFP-1086 Story-4 — chief 통합 mechanism + tie-break ladder body + mctrader 5 repo cross-layer evidence)
