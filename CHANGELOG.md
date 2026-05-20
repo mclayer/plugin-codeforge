@@ -7,7 +7,56 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.0.0] - 2026-05-20
+
+### BREAKING CHANGES (CFP-1059 Story-1 — Deploy + DeployReview lane 신설 카리어 Phase 1 SSOT)
+
+본 release = **MAJOR bump** — codeforge family lane 구조 정식 확장 (6 → 8 lane). Phase 1 = ADR / spec / governance SSOT layer (Phase 2 PR 직후 mechanical enforcement은 별 sub-Story carrier 분할).
+
+- **Lane 구조 6 → 8 단계 확장** — 배포 (Deploy) + 배포 검토 (Deploy Review) 정식 lane 신설 (요구사항 / 설계 / 설계리뷰 / 구현 / 구현리뷰 / 통합테스트 / 보안테스트 / **배포** / **배포-리뷰** 9 단계 lifecycle)
+- **Plugin family 확장** — codeforge-deploy + codeforge-deploy-review plugin family member 신설 (Story-2 + Story-3 carrier — 본 Story-1 = wrapper SSOT 만)
+- **Consumer overlay schema 확장** — `project.yaml` `deploy.*` 5 sub-field 신설 (host_mapping / docker_hub / traefik / 1password / ssh_targets)
+- **Label taxonomy 확장** — phase:배포 / phase:배포-리뷰 + 5 gate:* + 7 hotfix-bypass:* + category:deployment 신설 (label-registry v2.42 MINOR)
+
+### Migration guide
+
+자세한 마이그레이션 단계 = `docs/consumer-guide.md` §1m 참조 (Story-2 carrier 신설 예정).
+
+### Added
+
+- **ADR-087** (Deploy lane 신설 — single deploy_strategy enum + rollback policy + 배포 후 health check)
+- **ADR-088** (Deploy Review lane 신설 + ProductionEvidenceDeputy ownership 이관 wrapper → codeforge-deploy-review)
+- **ADR-089** (Schema 변경 7 원칙 — additive only / closed enum / default value / deprecation marker / migration guide / version bump / sibling sync)
+- **ADR-090** (Cross-layer 참조 정책 — 8 lane 간 cross-ref 의무 + circular dependency 차단)
+- 7 신규 workflow template (`templates/github-workflows/deploy-*.yml` — Story-2 carrier)
+- 2 신규 inter-plugin contract placeholder (`deploy-output-v1` / `deploy-review-output-v1`, Story-2/Story-3 wire)
+
+### Changed
+
+- **ADR-023 Amendment 1** (lane plugin lifecycle 8 lane 확장 — 6 → 8 enum)
+- **ADR-042 Amendment 9** (DeployPL Sonnet + DeployReviewPL Opus 4 신설 agent tier)
+- **ADR-014 Amendment 5** (InfraOperationalArch ↔ DeployPL boundary 정합)
+- **ADR-026 Amendment 6** (post-merge automation — Epic close → Deploy trigger)
+- **ADR-027 Amendment 7** (consumer adoption protocol — `deploy.*` schema 5 sub-field)
+- **ADR-063 Amendment 7** (marketplace atomic invariant — family scope 7 → 9 plugin 확장)
+- **ADR-072 Amendment 4** (ProductionEvidenceDeputy ownership wrapper → codeforge-deploy-review 이관)
+- 8 lane CLAUDE.md / playbook / skill 6종 갱신 (Story-2 carrier 분할)
+
+### Sibling plugin atomic (옵션 A — wrapper-only MAJOR, 사용자 결정 2026-05-20 KST)
+
+본 release 의 6 lane plugin (codeforge-{requirements,design,develop,test,review,pmo}) = **자체 변경 0** → version retain (**ADR-063/016 strict 해석** — per-plugin SSOT, 자체 코드 변경 0 = version 불변, history 보존). codeforge-deploy + codeforge-deploy-review = 1.0.0 baseline (Story-2 + Story-3 carrier 영역, 본 Story-1 = wrapper SSOT 만).
+
+### Baseline 정정
+
+본 Story-1 진입 시 spec/plan 안 stale 영역 검출:
+
+- baseline version: 5.92.0 (stale) → **5.99.0 (실제)** — parallel session 7 MINOR 누적 (CFP-689 / 967 / 900 / 967 Phase 2 / 1086 Stories 등)
+- marketplace.json path: top-level (stale) → **`.claude-plugin/marketplace.json` (실제)**
+- atomic file 수: 7 plugin atomic (stale) → **wrapper-only MAJOR + 6 sibling retain (옵션 A 정합)**
+
 ## [5.103.0] - 2026-05-20
+
+## [5.99.0] - 2026-05-20
 
 ### Added (CFP-1088 — Wave 2-2 of CFP-698 retro carrier)
 
