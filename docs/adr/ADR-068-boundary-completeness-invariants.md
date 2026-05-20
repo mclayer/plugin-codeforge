@@ -18,6 +18,7 @@ related_stories:
   - CFP-527
   - CFP-528
   - CFP-1086
+  - CFP-1087
 absorbed_issues:
   - 438
 related_adrs:
@@ -32,6 +33,7 @@ related_adrs:
   - ADR-067
   - ADR-082  # I-5 directly-analogous pattern 재사용 backref (ADR-082 Amendment 1 scope (a) corpus-claim-verify lint, cross-ref only — I-5 본문 0건 변경, CFP-841)
   - ADR-086  # 신설 cross-ref (CFP-1086 / Story-1 — Deputy 신설 결정 framework P7, 본 Amendment 2 = tie-break ladder 3단계 §3 (chief judgement + ADR Amendment 발의) trigger 가 ADR-086 §결정 1 axis 분석 + §결정 2 5-checklist 의무 발동)
+  - ADR-073  # I-6 verification primitive ↔ §결정 1 verify-before-assert primitive directly-analogous (CFP-1087 Amendment 3 cross-ref backref — ADR-073 본문 0건 변경)
 amendments:
   - amendment_id: 1
     cfp: CFP-528
@@ -47,6 +49,13 @@ amendments:
     status: applied
     ref: "본문 Amendment 2 section + Implementation note (CFP-1086 Story-4 carrier — chief author body cross-ref binding)"
     sunset_justification: "ratchet 강화 방향 (I-4 mechanism codify 추가, 약화 0건). I-1/I-2/I-3/I-5 본문 의미 변경 0건. is_transitional false 유지 (permanent governance). ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment). Amendment 1 (CFP-528 / I-5) 의 ratchet 패턴 (5 → 5 invariants + mechanism boost) 답습."
+  - amendment_id: 3
+    cfp: CFP-1087
+    date: 2026-05-20
+    scope: "신규 I-6 audit-gate-pointer-existence invariant 추가 — codeforge-review canonical templates/review-pl-base.md §8.6 audit gate finding 영역 pointer 부재 detection 영역 mechanical existence verify 의무. Verification format = existence-verify-annotation 4-key (link target 실재 / section anchor resolvable / file path reference 실재 / ADR §결정 N reference 정확) — semantic content verify 영역 제외 (boundary-completeness I-1/I-2 영역과 disjoint axis). Trigger = §8.6 audit gate finding 발화 시 pointer 부재 detect → audit_gate_pointer_self_check_passed false + findings[].type 'audit-gate-pointer-missing' literal emit. Mitigation = pointer 명시적 declare (4-form 중 1+). review-verdict-v4 v4.6 → v4.7 MINOR — `audit_gate_pointer_self_check_passed: bool` field + `findings[].type: 'audit-gate-pointer-missing'` literal. boundary completeness 5 invariants (I-1~I-5) → 6 invariants ratchet 강화 (Amendment 2 mechanism codify 영역 invariants count 5 retain 후 본 Amendment 3 I-6 신설). CFP-528 Amendment 1 (I-5 declaration) precedent verbatim 답습 — pattern cost 최소. CFP-698 retro Wave 2-1 HIGH carrier (sibling: CFP-1088 IntegrationTest §7.4 disjoint, CFP-1089 mechanical workflow Wave-2 enforcement). collision resolution — main #1095 merged CFP-1086 Amendment 2 sequential precedence acquire 후 본 carrier renumber Amendment 3 + v4.7 + 5.99.0."
+    status: applied
+    ref: "본문 §결정 1 I-6 declaration + §결정 3 표 4번째 row + §결정 6 표 4번째 row + Amendment 3 section"
+    sunset_justification: "ratchet 강화 방향 (5 → 6 invariants, scope 축소 0건). I-1/I-2/I-3/I-4/I-5 본문 의미 변경 0건 — I-6 disjoint append only (audit gate pointer existence axis 분리). is_transitional false 유지 (permanent governance). ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment). Amendment 1 (CFP-528 / I-5) pattern verbatim 답습. retroactive 면제 (Amendment 3 발효 후 신규 finding 한정)."
 mechanical_enforcement_actions:
   - action: boundary-completeness-self-check
     status: deferred-followup
@@ -59,6 +68,10 @@ mechanical_enforcement_actions:
   - action: dimensional-empirical-grounding
     status: deferred-followup
     progress_note: "ADR-068 Amendment 1 (CFP-528) 신설 시점 — verdict field-only enforcement (`dimensional_empirical_self_check_passed: bool`). registry entry 부재. blocking-on-pr 승격 후보 — 별도 CFP 가 evidence-checks-registry append + verdict field-time lint 신설 후 status 갱신 (deferred-followup → warning → blocking-on-pr)."
+    target_section: §결정 1
+  - action: audit-gate-pointer-existence-check
+    status: deferred-followup
+    progress_note: "ADR-068 Amendment 3 (CFP-1087) 신설 시점 — verdict field-only enforcement (`audit_gate_pointer_self_check_passed: bool` + `findings[].type: 'audit-gate-pointer-missing'`). registry entry 부재. blocking-on-pr 승격 후보 — 별도 CFP CFP-1089 (Wave-2 mechanical wire enforcement) carrier 가 evidence-checks-registry append + scripts/check-audit-gate-pointer.sh + workflow yml 신설 후 status 갱신."
     target_section: §결정 1
 ---
 
@@ -114,6 +127,15 @@ ArchitectAgent §3 (관련 ADR / 결정) / §7 (Change Plan / 설계 서사) 작
 - Justification 조건 (annotation 면제): well-defined SLA / standardized protocol RFC / vendor doc explicit guarantee — 3종 부재 시 annotation 의무
 - Exemption (trivial decision): SLA/quantitative metric 무관 (logging / naming / refactoring) — Story §1 명시 선언 의무
 - Verification format: **empirical-source-annotation** — quantitative parameter 별도 (a) value (b) unit (c) empirical_source (file path / wiretap script / ADR ref / TBD) 3-key 정합
+
+**I-6: Audit-gate-pointer-existence (Amendment 3 — CFP-1087, 2026-05-20)**
+- 정의: codeforge-review canonical `templates/review-pl-base.md` §8.6 audit gate finding 영역의 pointer 부재 detection 영역. ArchitectAgent §3 / §7 / §11 작성 시 audit gate finding 발화 시점에 pointer scope 4-form 중 1+ existence verify 의무. pointer 부재 = mechanical detect 가능 영역 (semantic content verify 영역과 disjoint axis).
+- 4-form pointer scope: (a) **link target** — markdown `[text](url)` 형식의 url 부분 file path / cross-repo URL 실재 verify / (b) **section anchor** — `#section-id` 영역 target file 안 heading 존재 verify / (c) **file path reference** — bare file path string (예: `docs/adr/ADR-068.md`) 실재 verify / (d) **ADR §결정 N reference** — `ADR-NNN §결정 M` 영역 target ADR 본문 §결정 M 실재 verify
+- Trigger: §8.6 audit gate finding 발화 시 pointer scope 4-form 중 1+ existence verify FAIL detect → audit_gate_pointer_self_check_passed false emit + findings[].type "audit-gate-pointer-missing" literal 동반 emit
+- Mitigation: pointer 명시적 declare (4-form 중 1+ scope choose) + existence pre-verify (commit 직전 `Read` / `Glob` / `gh api` direct verify, ADR-073 §결정 1 verify-before-assert primitive directly-analogous)
+- Justification 조건: §8.6 audit gate finding 외 영역 = scope 외 (본 invariant 적용 0)
+- Exemption: pointer placeholder 의도적 미decode 영역 (예: `<TBD>` / `<future-carrier>`) — Story §1 명시 선언 + `[verification-out-of-scope: <사유>]` annotation
+- Verification format: **existence-verify-annotation** — pointer 별 (a) form (link target / section anchor / file path reference / ADR §결정 N reference 4-enum 중 1) (b) target (resolved value 또는 placeholder) (c) verify_status (verified / pending / out-of-scope) 3-key 정합. boundary-completeness I-1/I-2 semantic content verify 영역과 disjoint axis — dedup 비교차 (same anchor_id 양 literal 후보 충돌 회피, debate-protocol-v1 auto_on_divergence 오발동 차단)
 
 ### 결정 2 — Dual-binding (design lane authoring + code-review cross-validate)
 
@@ -261,6 +283,7 @@ Amendment 시 ratchet 강화 방향만 허용 (ADR-058 §결정 5 sunset_justifi
 - **2026-05-19 cross-ref backref (CFP-676 — ADR-068 본문 정책 0건 변경)**: CFP-1026 S1 (ADR-042 Amendment 7 + ADR-014 Amendment 4 atomic carrier) 의 design lane agent 구조 재편이 spawn token cost 2.6배 (현재 13 Hub-spoke spawn → full activation 34) 의 `count` dimension quantitative parameter 를 I-5 적용 대상으로 declare. **본 변경이력 entry = I-5 적용 declare backref 등록만 — I-5 invariant 본문 / verdict field / 10 dimension enum / mitigation 4종 0건 변경 invariant** (Amendment 아님). CFP-676 Change Plan §13 C 항목 + Story §7 이 `[empirical-source: TBD]` annotation 보유 (Mitigation 2 explicit TBD — local source 부재 `[verified]` 금지, `[fact-check-pending]` retain, Codex F-CFP676-TOKEN-EMPIRICAL-SOURCE P1). `## 관련 ADR` 표 ADR-042 Amendment 7 + ADR-014 Amendment 4 row 동반 (양방향 backref).
 - **2026-05-20 Amendment 2 (CFP-1086 / Story-1 — I-4 wording SSOT invariant 강화)**: chief tie-break ladder 3 단계 신설 (RACI lookup → ADR-068 invariant → chief judgement + ADR Amendment 발의). 본문 `## Amendment 2` section 추가. `boundary_completeness_self_check_passed` scope expansion — 본 ladder 3단계 모두 통과 시 true. BackendArchEpic CFP-1086 Story-1 sibling carrier (ADR-042 Amendment 8 7+3+1 roster 재편 + ADR-086 신설 Deputy 신설 결정 framework P7 atomic). ratchet 강화 방향 (I-4 mechanism codify 추가, 약화 0건). I-1/I-2/I-3/I-5 본문 의미 변경 0건. 자세한 결정 matrix 는 본 ADR `## Amendment 2` body section 참조.
 - **2026-05-20 Implementation note (CFP-1086 / Story-4 — ADR-068 본문 정책 0건 변경)**: Amendment 2 의 chief author body implementation cross-ref 명시 — `plugin-codeforge-design:agents/ArchitectAgent.md` §"Chief 통합 mechanism" + §"Chief tie-break ladder" + §"Wording SSOT advocate" sections 가 Amendment 2 §"Tie-break ladder 3 단계" 의 chief author 행동 implement. `plugin-codeforge-design:docs/architecture/codeforge-design.md` §"mctrader 5 repo cross-layer evidence" 가 P4 first-applied evidence case. **본 변경이력 entry = implementation surface 분포 declaration only — Amendment 2 본문 정책 / I-1~I-5 invariant body / verdict field / 10 dimension enum / mitigation 0건 변경 invariant** (Amendment 아님). frontmatter amendment_id:2 row `ref` field 갱신 (implementation note 동반 명시) + 본 ADR body §"Amendment 2 — CFP-1086 Story-1 chief tie-break ladder" 끝 § "Implementation note" subsection 추가. declaration layer (governance permanent) vs implementation layer (chief author prompt) vs architecture doc layer (lane internal SSOT) vs skill layer (RACI matrix host) 4-layer 분리 명시.
+- **2026-05-20 Amendment 3 (CFP-1087 — I-6 audit-gate-pointer-existence invariant 신설)**: codeforge-review canonical `templates/review-pl-base.md` §8.6 audit gate finding 영역 pointer 부재 detection 영역 mechanical existence verify invariant (4-form pointer scope: link target / section anchor / file path reference / ADR §결정 N reference) 신설. review-verdict-v4 v4.6 → v4.7 MINOR bump (`audit_gate_pointer_self_check_passed: bool` 5번째 verdict-level optional field + `findings[].type: "audit-gate-pointer-missing"` 5번째 enum literal). ratchet 강화 방향 (5 → 6 invariants, ADR-058 §결정 5 정합). I-1/I-2/I-3/I-4/I-5 본문 의미 변경 0건 — I-6 disjoint append only (audit gate pointer existence axis 분리). CFP-528 Amendment 1 (I-5 declaration) precedent verbatim 답습. CFP-698 retro Wave 2-1 HIGH carrier (sibling: CFP-1088 IntegrationTest §7.4 disjoint, CFP-1089 mechanical workflow Wave-2 enforcement). collision resolution — main #1095 merged CFP-1086 Amendment 2 sequential precedence acquire 후 본 carrier renumber Amendment 3 (memory rule 6 title-search 영역 ADR-068 동일 slot detect 결함 evidence — `project_cfp_1087_phase1_pause_p0_collision.md` Lesson 2). ADR-073 cross-ref backref 동반 (I-6 verification primitive ↔ §결정 1 verify-before-assert primitive directly-analogous, ADR-073 본문 0건 변경).
 
 ---
 
