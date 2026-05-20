@@ -513,6 +513,63 @@ aggregate_arch:
 
 참조: [ADR-042 Amendment 8](adr/ADR-042-agent-model-selection-policy.md) (7+3+1 roster + AggregateArch 신설) · [ADR-086](adr/ADR-086-deputy-creation-decision-framework.md) (Deputy 신설 결정 framework P7) · `agents/AggregateArchitectAgent.md` (codeforge-design plugin) · [project-config-schema §aggregate_arch 섹션 설명](project-config-schema.md)
 
+### 1m. Deploy lane + Deploy Review lane (CFP-1059 / [ADR-087](adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md))
+
+codeforge 가 6 → 8 lane 으로 확장 (CFP-1059) — Epic 묶음 종료 후 자동 배포 + production cutover 사후 검증 lane 추가. **Phase 1 declarative** — 본 단락 영역 안 declarative anchor. 실 DeployPLAgent / DeployReviewPLAgent spawn = lane plugin seed (codeforge-deploy / codeforge-deploy-review) 신설 후 활성 (별 sub-Story carrier).
+
+#### 활성 조건 (opt-in)
+
+`.claude/_overlay/project.yaml` 안 `deploy:` block 등록 + codeforge-deploy + codeforge-deploy-review plugin install. 양자 부재 시 = Epic 종료 후 `phase:보안-테스트` terminal (CFP-1059 이전 default 동작 유지, breaking 0).
+
+#### 배포 매커니즘 (ADR-087 §결정 5 고정)
+
+- **blue-green deployment**: 신버전 (green) container 가 production network 진입 → healthcheck poll → atomic swap (Traefik label flip) → 구버전 (blue) graceful shutdown.
+- **atomic swap**: Traefik routing label 단일 transaction flip (혹은 manual reverse proxy if `traefik.enabled=false`). 0-downtime 보장.
+- **3-시간 보존**: atomic swap 후 구버전 container 3 시간 유지 (rollback window). 3 시간 경과 시 cleanup.
+- **자동 rollback**: healthcheck 실패 / 성능 미달 / smoke 실패 시 atomic swap revert + Story §10 FIX Ledger append.
+
+#### 인프라 stack (mctrader debut)
+
+- **Docker** (multi-host container orchestration, no Kubernetes)
+- **GitHub Actions** (build + push to Docker Hub)
+- **Docker Hub** (image registry — `acme/<image>:<tag>` SSOT)
+- **SSH pull** (배포 host 가 Docker Hub 로부터 image pull)
+- **1Password Connect** (secret provider primary — `OP_CONNECT_HOST` + `OP_CONNECT_TOKEN`)
+- **Traefik** (reverse proxy traffic 분배 — label-based atomic swap)
+
+#### Deploy Review lane 검증 3종 (ADR-088 §결정 2)
+
+- **smoke 검증** (양방향 호환 — ADR-089 §결정 4 + `bidirectional-smoke.yml` workflow): blue ↔ green 양 버전 traffic mix window 안 schema 호환 검증.
+- **성능 비교** (production runtime measure ↔ pre-deploy baseline): latency / throughput / error rate 3-tuple measure. ADR-068 I-5 dimensional empirical grounding 정합 (`[empirical-source: ...]` annotation 의무).
+- **cutover 사후 검증** (ProductionEvidenceDeputy ownership 이관 — codeforge-design CONDITIONAL → codeforge-deploy-review 정식 — ADR-088 §결정 3).
+
+#### Schema 변경 7 원칙 (CFP-1059 / [ADR-089](adr/ADR-089-schema-change-7-principles.md))
+
+배포 lane mandatory invariant — DB schema / inter-plugin contract / API contract / event schema / config schema 변경 시 ChangePlan §11 self-check 표 의무 (S2 carrier mechanical wire):
+
+1. **양방향 호환** — backward + forward 양방향 호환 (blue ↔ green traffic mix window 보장)
+2. **expand-contract 분리** — expand (column add / enum extend / 새 entity) ≠ contract (column drop / enum reduce / 기존 entity 제거) PR 분리 의무
+3. **reverse** — 모든 schema 변경 = 역방향 migration script 의무
+4. **양방향 smoke** — `bidirectional-smoke.yml` workflow (PR-time + scheduled cron)
+5. **cross-repo** — multi-layer 변경 시 cross-layer 의존 매핑 (ADR-090 §결정 1 영역)
+6. **backup** — production data 변경 시 pre-migration snapshot 의무
+7. **hard limit** — column 100+ / row 1억+ / lock 5분+ / depth 3+ 영역 `[empirical-source: TBD]` annotation 의무 (ADR-068 I-5 정합)
+
+#### Cross-layer 참조 정책 (CFP-1059 / [ADR-090](adr/ADR-090-cross-layer-reference-policy.md))
+
+multi-layer architecture (RDB / 빅데이터 / API / service repo) 운영 consumer 영역:
+
+- **의존 매핑** = 자동 감지 (deps / volume / ORM / contract MANIFEST) + 사용자 declare hybrid
+- **layer 별 분리 정책** = RDB strict / 빅데이터 lenient / API strict / event strict / config lenient
+- **변경 순서 invariant**: expand = source-first (upstream layer 먼저 변경) / contract = leaf-first (downstream layer 먼저 변경)
+- **한쪽 실패** = 묶음 전체 rollback (atomic invariant)
+
+#### Write boundary (§4b 정합)
+
+`deploy.*` field = **consumer-authored only**. 모든 codeforge agent (DeployPLAgent / DeployWorkerAgent / DeployReviewPLAgent / DeployReviewWorkerAgent + ProductionEvidenceDeputy 포함) 는 본 field write 금지. agent = consumer overlay value 를 spawn-time Context Packet 으로 수신 후 배포 sequence 결정에 반영 (read-only).
+
+참조: [ADR-087](adr/ADR-087-deploy-lane-and-lifecycle-extension.md) · [ADR-088](adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) · [ADR-089](adr/ADR-089-schema-change-7-principles.md) · [ADR-090](adr/ADR-090-cross-layer-reference-policy.md) · [project-config-schema §deploy 섹션 설명](project-config-schema.md)
+
 ## 2. Consumer 프로젝트 구조 초기화
 
 ```

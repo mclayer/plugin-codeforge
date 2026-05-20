@@ -228,8 +228,10 @@ mctrader debut audit Issue [#181](https://github.com/mclayer/plugin-codeforge/is
 | `phase:구현` | → `phase:구현-리뷰` | DeveloperPL (codeforge-develop) |
 | `phase:구현-리뷰` | → `phase:구현-테스트` | **Orchestrator** (CFP-61 / ADR-022 5-step) |
 | `phase:구현-테스트` | → `phase:통합-테스트` | **Orchestrator** (ADR-048 CI gate inline → IntegrationTestAgent spawn) |
-| `phase:통합-테스트` | → `phase:보안-테스트` (lanes.security_ai: true 시만) 또는 terminal | **Orchestrator** (ADR-055 IntegrationTestAgent PASS 후) |
-| `phase:보안-테스트` | terminal (Issue close 시점) | **Orchestrator** + `gate:security-test-pass` 부착 |
+| `phase:통합-테스트` | → `phase:보안-테스트` (lanes.security_ai: true 시만) 또는 → `phase:배포` (CFP-1059 후 — 배포 lane 가용 시) | **Orchestrator** (ADR-055 IntegrationTestAgent PASS 후) |
+| `phase:보안-테스트` | → `phase:배포` (CFP-1059 후) 또는 terminal (배포 lane 미가용 시) | **Orchestrator** + `gate:security-test-pass` 부착 |
+| **`phase:배포`** (신설 — CFP-1059 / ADR-087) | → `phase:배포-리뷰` (DeployPLAgent PASS 후) | **Orchestrator** + `gate:deploy-pass` 부착 (DeployPLAgent 자기 진단 PASS 후, Phase 1 declarative — 실 lane plugin seed 후 활성) |
+| **`phase:배포-리뷰`** (신설 — CFP-1059 / ADR-088) | terminal (Epic 묶음 close 시점) | **Orchestrator** + `gate:deploy-review-pass` 부착 (DeployReviewPLAgent smoke/성능/cutover 3종 PASS 후, Phase 1 declarative) |
 
 **Issue close 의무**:
 - Issue close 시 phase label = `phase:보안-테스트` (terminal) 가 default
@@ -636,14 +638,17 @@ echo "PINNED_MAIN_HEAD=$MAIN_HEAD"
 
 **Cross-ref**: ADR-039 §결정 14 / §결정 9 (Amendment 1 enforcement Phase 2 hook 격상 경로) / [[feedback_verify_pin_head_sha]] / [[feedback_no_permission_prompts]] / codeforge-develop:`agents/DeveloperPLAgent.md` "PR 생성 Pre-flight Guard" Step 0 확장 (CFP-895 paired PR).
 
-### 3.1 7 레인 + Cross-cutting 스폰 순서 (요약)
+### 3.1 9 레인 + Cross-cutting 스폰 순서 (요약, CFP-1059 / [ADR-087](../docs/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](../docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — 7 → 9 lane 확장)
+
+> **Phase 1 declarative**: 본 §3.1 의 배포 / 배포 리뷰 lane spawn 시퀀스 = declarative anchor (CFP-1059 Story-1). 실 DeployPLAgent / DeployReviewPLAgent spawn = lane plugin seed (codeforge-deploy / codeforge-deploy-review) 신설 후 활성 — 별 sub-Story carrier 영역.
 
 ```
 [Cross-cutting 트리거]
 Epic 창설:  Orchestrator → PMOAgent (Scope 분해 자문)
 Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
+Epic 묶음 완료 (모든 Story merged): Orchestrator → DeployPLAgent 자동 trigger (Epic close → Deploy cascade, ADR-026 Amendment N 동반)
 
-[Story 내부 7 레인]
+[Story 내부 9 레인 — CFP-1059 ADR-087/088 — 6 → 8 단계 확장 + Cross-cutting PMOAgent]
 요구사항:    Orchestrator → RequirementsPLAgent(DomainAgent ∥ Analyst ∥ Researcher 병렬, 셋 다 non-skippable) → PL dedup·상충 조정 → Story file §3-6 갱신
 설계:        Orchestrator → ArchitectPLAgent → (CodebaseMapper ∥ Refactor ∥ SecurityArchitect ∥ TestContractArch ∥ DataMigrationArchitect 병렬) → ArchitectAgent (chief author) 통합 → ArchitectPLAgent 검수 → Change Plan 확정
                          → ArchitectAgent direct write (docs/change-plans/<slug>.md + docs/adr/ADR-NNN-<slug>.md) + ArchitectAgent 가 Story file §3/§7/§11 직접 self-write (codeforge-design self-write 표)
@@ -698,6 +703,19 @@ Story 완료: Orchestrator → PMOAgent (회고 감사 + ADR 후보 검토)
                          → PASS 시 Orchestrator post-Sonnet self-write (gate:security-test-pass 라벨 부착) → Phase 2 PR mergeable
 완료:        Phase 2 PR merge (`Closes #<Story Issue>`) → Issue 자동 close → PMOAgent 가 Story §11 직접 self-write (codeforge-pmo)
              → PMOAgent (회고)
+
+[Epic 묶음 완료 후 — CFP-1059 / ADR-087+088, Phase 1 declarative]
+배포:        Orchestrator → DeployPLAgent (codeforge-deploy plugin Phase 1 declare — 실 spawn = lane plugin seed 후) → 변경 repo enumeration + DeployWorkerAgent N 병렬 dispatch (repo 단위)
+             각 repo 배포 sequence: blue-green 신호 → green deploy → healthcheck poll → atomic swap (Traefik label flip) → 3-시간 보존 timer → 자동 rollback 결정
+             → §12 배포 manifest (codeforge-deploy self-write)
+             FAIL (healthcheck / atomic swap / secret lookup): 자동 rollback + Story §10 FIX Ledger append (Orchestrator) + DeveloperPL 또는 ArchitectPL 1차 진단 routing
+배포 리뷰:   Orchestrator → DeployReviewPLAgent (codeforge-deploy-review plugin Phase 1 declare, debate-protocol-v1 trigger 의무) → 검증 3종 병렬:
+             - smoke 검증 (양방향 호환 — ADR-089 §결정 4 + bidirectional-smoke.yml workflow)
+             - 성능 비교 (production runtime measure ↔ pre-deploy baseline — ADR-068 I-5 dimensional empirical grounding 정합)
+             - cutover 사후 검증 (ProductionEvidenceDeputy ownership 이관 — codeforge-design CONDITIONAL → codeforge-deploy-review 정식)
+             → §13 배포 검증 evidence (codeforge-deploy-review self-write)
+             FAIL: 성능 미충족 / smoke 실패 시 FIX dispatch (DeveloperPL / ArchitectPL / RequirementsPL — debate-protocol-v1 multi-round adversarial debate 가능)
+             PASS: Orchestrator self-write (gate:deploy-review-pass label + phase:완료 전환) → Epic 묶음 close
 ```
 
 **Lane-specific write targets (Step 4 GitHub comment / label / phase 매핑)**:
@@ -2807,7 +2825,9 @@ GitHub Issue/PR 갱신·코멘트 기록·sub-issue 생성 불가 시:
 | `phase:구현` | **`gate:design-review-pass`** | CFP-342 | Phase 2 PR — code-review-pass 아님 (intuitive naming 어긋남) |
 | `phase:구현-리뷰` | **`gate:design-review-pass`** | CFP-342 | Phase 2 PR — code-review-pass 아님 (동일) |
 | `phase:구현-테스트` | (gate 무) | CFP-317 / ADR-048 | CI gate inline polling, gate label 미부착 |
-| `phase:보안-테스트` | `gate:security-test-pass` | (consumer `lanes.security_ai: true` opt-in 시에만) | terminal gate |
+| `phase:보안-테스트` | `gate:security-test-pass` | (consumer `lanes.security_ai: true` opt-in 시에만) | (Epic 묶음 종료 직전) — 배포 lane prerequisite (CFP-1059 후) |
+| **`phase:배포`** (신설 — CFP-1059) | **`gate:deploy-pass`** | CFP-1059 / ADR-087 | Epic 묶음 완료 후 DeployPLAgent spawn 진행 중 (Phase 1 declarative) |
+| **`phase:배포-리뷰`** (신설 — CFP-1059) | **`gate:deploy-review-pass`** | CFP-1059 / ADR-088 | terminal gate — production smoke / 성능 비교 / cutover 사후 검증 PASS 후 Epic close (Phase 1 declarative) |
 | (Story binding 부재 / 그 외) | `gate:design-review-pass` (legacy heuristic) | workflow line 207 | No Story binding fallback |
 
 **핵심 anomaly (CFP-342 fix)**:
