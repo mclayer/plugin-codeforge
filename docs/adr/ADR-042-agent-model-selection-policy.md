@@ -93,11 +93,28 @@ amendment_log:
       - ADR-087 (CFP-1059 / Story-1 신설 carrier — Deploy lane as 7th lane plugin)
       - ADR-088 (CFP-1059 / Story-1 신설 carrier — Deploy Review lane + ProductionEvidence transfer)
       - ADR-068 §결정 1 I-5 dimensional empirical grounding (spawn count empirical-source TBD annotation)
+  - amendment_id: 10
+    date: "2026-05-21"
+    status: applied
+    summary: "CFP-1126 — AggregateArchitectAgent deprecate + ModuleArchitectAgent mandate 확장 (boundary axis advocate 통합, Amendment 8 partial retroactive rollback). 7 permanent → 6 permanent + 3+1 CONDITIONAL (AggregateArch applicability → ModuleArchitect CONDITIONAL carry-over 보존, frontend-only / API-only / external-managed RDB consumer non-applicable). ModuleArchitect mandate 확장 — module-level boundary (CodeArchitect rename from Amendment 7 본 mandate) + aggregate-level boundary (AggregateArch from Amendment 8 흡수). 사용자 직권 minimal path 2번째 적용 — CFP-1110 paired Amendment paradox-break 후속 carrier. ADR-058 §결정 5 sunset_justification first applied carrier (ratchet 축소 첫 시도, 약화 방향 evidence-grounded justification). Researcher 평가 net 35% 정당화 (verify-before-trust + Epic gate 영역만 net positive) + Codex ROI indeterminate-부정쪽 confidence medium 수렴 + synthesizer-stale-reference pattern_count 6 (CFP-722/801/792/810/819/825) + ADR-082 Amendment 5 §결정 1 sub-scope (1-C) 구조적 원인 #2 직접 인용 (codeforge-design lane fan-out 불균형 chief + 7 deputy + 4-tuple = 12+ agent advocacy vs 1 user 요구 weight 비대칭). minimal path 정합 — Story file 0 / Lane spawn 0 / FIX iter 0 / Phase 분리 0 / Retro 0 / ADR-013 명시 위배 (사용자 승인 2026-05-21 KST) — closed-loop break 외부 결정 채널 2번째. Wave 1 = declarative anchor only (ADR-042 정책 SSOT). Wave 2 mechanical (codeforge-design plugin AggregateArchitectAgent agent file 실 deprecate + cross-repo sibling sync ADR-010 정합) = 별 CFP carrier (deferred-followup)."
+    ref: CFP-1126
+    carrier_story: CFP-1126
+    sunset_justification: "ADR-058 §결정 5 first applied carrier (약화 방향 의무 — ratchet 축소 첫 시도). Amendment 8 (2026-05-20) 가 boundary axis 를 AggregateArch (RDB OLTP aggregate-level) + ModuleArch (CodeArchitect rename, module-level) 2 agent 로 axis disjoint codify했으나 본 Amendment 10 = partial rollback (AggregateArch → ModuleArch 통합 흡수, boundary axis 단일 advocate). evidence-grounded justification 3 axis — (a) **empirical evidence**: Researcher (general-purpose) + Codex (codex:rescue, GPT-5) 병렬 critical evaluation 수렴 결과 = codeforge dogfooding net 35% 정당화 (verify-before-trust + Epic gate 영역만 net positive), Codex ROI indeterminate-부정쪽 confidence medium. denominator (consumer-protective fraction) 측정 부재 + sunset asymmetry (실 retire 0건 since codeforge 정상 운영 진입) + self-referential dogfood paradox 만성화. (b) **pattern_count evidence**: synthesizer-stale-reference pattern_count 6 reach (CFP-722/801/792/810/819/825) + unverified-self-write-claim super-class 5 + scope drift 만성 6+ (CFP-758) + DesignReviewPL cross-PL false-negative (CFP-906) — ADR-082 Amendment 5 §결정 1 sub-scope (1-C) 구조적 원인 #2 직접 인용 (chief + 7 deputy + 4-tuple = 12+ agent advocacy vs 1 user 요구 weight 비대칭). (c) **single-axis sufficiency**: ModuleArchitect (boundary axis advocate) 가 module-level + aggregate-level boundary 통합 mandate cover 충분 — Amendment 8 brainstorm 4-turn 에서 사용자 정합 carrier 시점 RACI 충돌 (chief synthesis 가 두 axis dedup 비용) 가 정합 근거였으나, Researcher 평가 evidence 누적 후 chief synthesis 1 axis 압축 = fidelity loss source 직접 감소 evidence-grounded. ratchet top-down 강화 invariant (ADR-064 §self-application) 의 evidence-gated exception 첫 carrier — ADR-058 §결정 5 의 mechanical 약화 차단 logic 통과 (forbid-scope 축소 아닌 mechanism 단일화 — invariant carrier 보존, axis dedup carrier 변경 only). is_transitional: false 유지 (영구 정책, Amendment 10 = 영구 ratchet 축소)."
+    affected_agents:
+      - AggregateArchitectAgent (deprecated — codeforge-design, mandate carry-over to ModuleArchitectAgent. agent file 실 deprecate = Wave 2 별 CFP carrier)
+      - ModuleArchitectAgent (mandate 확장 — module-level boundary + aggregate-level boundary 통합 advocate. CONDITIONAL applicability carry-over from AggregateArch — `project.yaml aggregate_arch.applicable: bool` 보존)
+    cross_ref:
+      - ADR-058 §결정 5 (sunset_justification first applied carrier — 약화 방향 evidence-grounded justification carrier)
+      - ADR-082 Amendment 5 §결정 1 sub-scope (1-C) (구조적 원인 #2 직접 인용 — 본 Amendment 10 = 평가 결과 직접 follow-through)
+      - ADR-064 §self-application top-down ratchet (evidence-gated exception 첫 carrier)
+      - CFP-1110 (paired Amendment paradox-break first application — 본 CFP-1126 = 2번째 적용)
+      - Amendment 8 (CFP-1086, 2026-05-20) (partial retroactive rollback — boundary axis 영역만, DataArch / APIContract 영역 보존)
 related_stories:
   - CFP-448
   - CFP-676
   - CFP-1086
   - CFP-1059  # Amendment 9 carrier — 4 신설 agent tier (DeployPL/DeployWorker/DeployReviewPL/DeployReviewWorker)
+  - CFP-1126  # Amendment 10 carrier — AggregateArch + ModuleArch 통합 (Amendment 8 partial retroactive rollback, ratchet 축소 첫 carrier, ADR-058 §결정 5 first applied)
 related_adrs:
   - ADR-009
   - ADR-013
@@ -580,3 +597,110 @@ Phase 1 Q4-prime 에서 사용자 발의 — DDDArchitectAgent (Domain-Driven De
 - CFP-1079 (OpsExecutionArchitect 신설 + InfraOperationalArch §7.4 mandate 보강 sibling Epic) — 본 Phase 1 PR open 시점 OPEN, PR 0건 — 본 Amendment 8 = 선점, CFP-1079 후속 = Amendment 9 별 session
 - CLAUDE.md "Deputy mandate 매트릭스 (codeforge-design lane)" — 5 → 7 permanent + 3 → 3+1 CONDITIONAL + 4-tuple sub-tuple (변경 0)
 - [ADR-046](ADR-046-researcher-role-redefinition.md) — ResearcherAgent (Opus, reshape mandate) ≠ AggregateArch (Sonnet, single-axis RDB OLTP) — 두 역할 disjoint (reshape vs single-mandate advocacy)
+
+---
+
+## Amendment 10 — AggregateArch + ModuleArch 통합 (Amendment 8 partial retroactive rollback, ADR-058 §결정 5 first applied carrier, CFP-1126, 2026-05-21 KST)
+
+**날짜**: 2026-05-21
+
+### 동기
+
+CFP-1110 paired Amendment (ADR-082 Amendment 5 + ADR-071 Amendment 6 §결정 17, lane traversal fidelity mandate, 2026-05-20 merge) 의 카운터파트 carrier — 사용자 평가 결과 직접 follow-through. Researcher (general-purpose) + Codex (codex:rescue, GPT-5) 병렬 critical evaluation 수렴 결과:
+
+- **Researcher net 35% 정당화** (verify-before-trust + Epic gate 영역만 net positive), 나머지 80% = self-burdening sunk cost cycle
+- **Codex ROI indeterminate, 부정 쪽 기울기, confidence medium** — denominator (consumer-protective fraction) 측정 부재
+- 구조적 결함 = sunset asymmetry (실 retire 0건 since codeforge 정상 운영 진입, `is_transitional: false` ADR 85개 / `decommission` 0 match) + self-referential dogfood paradox 만성화
+
+ADR-082 Amendment 5 §결정 1 sub-scope (1-C) 의 lane traversal fidelity loss 구조적 원인 #2 직접 인용:
+
+> codeforge-design lane fan-out 불균형 — chief + 5 deputy + 4-tuple sub-tuple = 10+ agent advocacy. 1 user 요구 vs 10+ deputy mandate 의 weight 비대칭, deputy 가 자기 mandate 영역 expansion 만 강화 (cross-lane requirement traceability 약화).
+
+Amendment 8 (CFP-1086, 2026-05-20) 가 5 → 7 permanent + 3 → 3+1 CONDITIONAL 로 **fan-out 확대** → chief + 7 deputy + 4-tuple = 12+ agent advocacy. 평가 결과의 정면 위배 영역. 본 Amendment 10 = boundary axis 영역만 partial retroactive rollback (AggregateArch → ModuleArch 통합 흡수, DataArch / APIContract 영역 보존).
+
+### 변경 사항
+
+| Agent | 변경 | model tier |
+|---|---|---|
+| **AggregateArchitectAgent** | **deprecated** — mandate (RDB OLTP aggregate invariant + 트랜잭션 경계 + persistence-bound aggregate boundary + Alembic 정책 tool-agnostic policy layer) carry-over to **ModuleArchitectAgent** (boundary axis 통합 advocate). agent file 실 deprecate = Wave 2 별 CFP carrier (codeforge-design plugin cross-repo sibling sync, ADR-010 정합). | Sonnet (Amendment 8) → deprecated |
+| **ModuleArchitectAgent** | **mandate 확장** — module-level boundary (Amendment 7 CodeArchitect rename 본 mandate: module boundary + dependency direction + layered/hexagonal/clean module-level) + **aggregate-level boundary 흡수** (Amendment 8 AggregateArch carry-over: RDB OLTP aggregate invariant + 트랜잭션 경계 + persistence-bound aggregate boundary + Alembic 정책). boundary axis 단일 advocate. CONDITIONAL applicability carry-over from AggregateArch — `project.yaml aggregate_arch.applicable: bool` 보존 (frontend-only / API-only / external-managed RDB consumer non-applicable, default `true`). | Sonnet 유지 (mandate 확장 only, tier 무변경) |
+
+7 permanent → 6 permanent. 3+1 CONDITIONAL = applicability carry-over로 갯수 무변경 (AggregateArch applicability → ModuleArch applicability). 4-tuple sub-tuple = 무변경 (E scope out-of-scope, 별 carrier).
+
+### ADR-058 §결정 5 first applied carrier (약화 방향 evidence-grounded justification)
+
+본 Amendment 10 = ADR-058 §결정 5 sunset_justification 의무 **first applied carrier** — codeforge 정상 운영 진입 이후 **ratchet 축소 첫 시도** (메타 평가에서 sunset asymmetry confirmed 후 첫 break-through).
+
+#### evidence-grounded justification 3 axis
+
+**(a) empirical evidence (Researcher + Codex 병렬 critical evaluation 수렴)**:
+
+Researcher 평가 = codeforge dogfooding net 35% 정당화 (verify-before-trust + Epic gate 영역만 net positive). Codex 평가 = ROI indeterminate, 부정 쪽 기울기, confidence medium. denominator (consumer-protective fraction) 측정 부재 + sunset asymmetry (실 retire 0건 since codeforge 정상 운영 진입) + self-referential dogfood paradox 만성화. 두 독립 평가 수렴 = evidence-grounded.
+
+verify-before-trust direct grep:
+- `is_transitional: false` ADR 85개 / `true` 4개
+- `decommission` 0 match in docs/adr/
+- `status: Deprecated|Superseded` 4건 전부 historical (ADR-022/019/018/002) — codeforge 정상 운영 진입 (~2026-05 wave) 이후 **실 retire 0건 거의 확정**
+
+**(b) pattern_count evidence (≥ 6 ≫ threshold 2)**:
+
+- synthesizer-stale-reference pattern_count 6 (CFP-722/801/792/810/819/825) — synthesis layer 원본 drift
+- unverified-self-write-claim super-class 5 (CFP-746/770/1000/1001/1002) — write-time semantic truth verify 부재
+- scope 재확대 금지 invariant 6+ 위치 (CFP-758) — scope drift 만성
+- DesignReviewPL cross-PL false-negative (CFP-906) — review 가 사실과 다른 결론
+
+ADR-082 Amendment 5 §결정 1 sub-scope (1-C) 의 구조적 원인 #2 직접 인용 — chief + 7 deputy + 4-tuple = 12+ agent advocacy vs 1 user 요구 weight 비대칭 명시 evidence.
+
+**(c) single-axis sufficiency (boundary axis 1 advocate 충분)**:
+
+ModuleArchitect (boundary axis advocate) 가 module-level + aggregate-level boundary 통합 mandate cover 충분. Amendment 8 brainstorm 4-turn 사용자 정합 carrier 시점 (2026-05-20) RACI 충돌 (chief synthesis 가 두 axis dedup 비용) 가 정합 근거였으나, Researcher 평가 evidence 누적 후 chief synthesis 1 axis 압축 = fidelity loss source 직접 감소 evidence-grounded. boundary axis disjoint codify (Amendment 8) ↔ boundary axis 1 advocate (Amendment 10) trade-off 에서 Amendment 10 이 fidelity 영역 net positive.
+
+#### ADR-064 §self-application top-down ratchet 의 evidence-gated exception 첫 carrier
+
+ADR-064 §self-application = "amendment 는 강화 방향만 허용 (scope 확장 / 강도 강화). 약화 방향은 sunset_justification 의무로 차단". 본 Amendment 10 = 약화 방향 (scope 축소 — 2 agent → 1 agent, axis disjoint codify 축소) 의 evidence-gated exception 첫 carrier. mechanism = forbid-scope 축소 아닌 invariant carrier (boundary axis advocacy mandate) 보존 + axis dedup carrier 변경 only.
+
+ADR-058 §결정 5 의 mechanical 약화 차단 logic 통과 — Amendment 10 의 sunset_justification 본문 (위 (a)/(b)/(c) 3 axis) 가 evidence-grounded justification 충족. ratchet top-down 강화 invariant 의 **evidence-gated exception 첫 historical event** — 본 Amendment 10 = 메타 평가 결과 적용의 self-application 첫 carrier (`is_transitional: false` 유지, 영구 정책 정합).
+
+### paradox-break minimal path 2번째 application
+
+본 Amendment 10 carrier (CFP-1126) = **사용자 직권 minimal path 2번째 application** (CFP-1110 paired Amendment 첫 적용 후 follow-through):
+
+- Story file 0 / Lane spawn 0 / FIX iter 0 / Phase 1+2 분리 0 / Retro PR 0
+- ADR-013 명시 위배 (사용자 승인 2026-05-21 KST)
+- ADR-024 정합 의무 보존 (branch + PR + main 직접 push 금지)
+- ADR-054 doc-only fast-path 적합 (ADR-042 본문 + CLAUDE.md only, src/tests 무변경)
+- closed-loop break 외부 결정 채널 두 번째 적용
+
+### Wave 1 (declarative anchor) + Wave 2 (mechanical sibling sync) progression chain
+
+| Wave | scope | enforcement | carrier |
+|---|---|---|---|
+| **Wave 1 (Amendment 10)** | declarative anchor — ADR-042 정책 SSOT + CLAUDE.md Deputy mandate 단락 cross-ref | doc-only (ADR-058 §결정 5 sunset_justification 의무 충족 — first applied carrier) | CFP-1126 (본 carrier) |
+| Wave 2 (deferred-followup, 별 CFP carrier) | mechanical — codeforge-design plugin 안 `AggregateArchitectAgent.md` agent file 실 deprecate (delete or status:deprecated 표시) + ModuleArchitectAgent.md mandate 본문 확장 | cross-repo sibling sync (codeforge-design plugin, ADR-010 정합) | 별 CFP carrier (brainstorm 단계 결정) |
+
+Wave 2 = deferred-followup, 본 Amendment 10 frontmatter `mechanical_enforcement_actions[]` 갱신 없음 (Wave 1 = ADR 본문 + CLAUDE.md cross-ref only).
+
+### Out-of-scope (별 carrier 또는 reject)
+
+본 Amendment 10 **포함**: AggregateArch + ModuleArch 통합 (boundary axis 영역만).
+
+본 Amendment 10 **out-of-scope** (유지 / 별 carrier):
+
+- **APIContract 흡수** (B scope) — Amendment 8 brainstorm 4-turn 사용자 정합 carrier, retroactive overturn 부담. transport axis disjoint 유지.
+- **DataArch + AggregateArch 통합** (C scope) — Amendment 8 동인의 정면 부정 (OLAP/OLTP context switch). DataArch (OLAP only) 유지.
+- **SecurityArch + InfraOpArch 통합** (D scope) — CFP-1086 reject 영역, security advocacy 약화 위험.
+- **4-tuple sub-tuple 축소** (E scope) — helper 영역, fidelity loss source 아님. 별 CFP carrier.
+- **LiveOps + LiveOrdering CONDITIONAL 통합** (F scope) — 축소 효과 작음, 별 CFP carrier.
+- **codeforge-design plugin AggregateArchitectAgent agent file 실 deprecate** = Wave 2 별 CFP carrier (cross-repo sibling sync, ADR-010 정합).
+- **DDDArchitectAgent 신설 reject** (Amendment 8 §) — 본 Amendment 10 영역 외 유지.
+
+### Cross-ref
+
+- [ADR-058 §결정 5](ADR-058-adr-sunset-criteria-mandate.md) — sunset_justification first applied carrier (약화 방향 의무 evidence-grounded justification 첫 발화)
+- [ADR-082 Amendment 5 §결정 1 sub-scope (1-C)](ADR-082-write-time-self-write-verification-mandate.md) — 구조적 원인 #2 (codeforge-design lane fan-out 불균형) 직접 인용 source
+- [ADR-064 §self-application top-down ratchet](ADR-064-decision-principle-mandate.md) — evidence-gated exception 첫 carrier (약화 방향 mechanical 차단 logic 통과)
+- [ADR-071 Amendment 6 §결정 17](ADR-071-orchestrator-user-dialog-convergence.md) — paired sister carrier (lane return back-translation gate binding, 동일 사용자 directive lineage)
+- [Amendment 8 (CFP-1086, 2026-05-20)](#amendment-8) — partial retroactive rollback (boundary axis 영역만, DataArch / APIContract / DDDArch reject 영역 보존)
+- CFP-1110 — paired Amendment paradox-break first application (본 CFP-1126 = 2번째 적용)
+- ADR-068 I-5 dimensional empirical grounding — spawn count Amendment 8 평균 28 → 본 Amendment 10 평균 26 (chief + 6 deputy + 3+1 CONDITIONAL + 4-tuple = 9 base + 17 CONDITIONAL/contributor activation, 7% 감소). full activation 40 → 38 (5% 감소). `[empirical-source: TBD]` (local probe / wiretap script 부재 정합)
+- CLAUDE.md "Deputy mandate 매트릭스 (codeforge-design lane)" — 7 → 6 permanent + 3+1 CONDITIONAL + 4-tuple sub-tuple (carry-over applicability 보존)
