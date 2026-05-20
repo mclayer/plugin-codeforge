@@ -1904,12 +1904,12 @@ entries:
   # Codex TP#2 FIX Iter 2 F-P1 — ADR-040 Amendment 3 §결정 7 mechanical action binding 의무.
   # 旧 mismapping (marketplace-parity = wrapper-side publishing-time mirrored-field parity) 정정 → 신규 전용 entry.
   # marketplace-parity 와 의미 분리: marketplace-parity = plugin.json ↔ marketplace.json mirrored field (publishing-time, wrapper-side) /
-  # 본 entry = consumer-side installed 7-plugin version pin ↔ marketplace SSOT drift after atomic upgrade (runtime, consumer-side).
+  # 본 entry = consumer-side installed 7-plugin version 고정 ↔ marketplace SSOT drift after atomic upgrade (runtime, consumer-side).
   - name: atomic-upgrade-zero-drift
     description: |
       ADR-037 Amendment 1 mechanical verification — codeforge family 7 plugin
       (codeforge + codeforge-{requirements,design,review,develop,test,pmo})
-      atomic upgrade `--apply` 완료 후 consumer-side installed version pin ↔
+      atomic upgrade `--apply` 완료 후 consumer-side installed version 고정 ↔
       marketplace SSOT drift 0 (none) invariant. detect mechanism = 기존
       scripts/check-codeforge-version-drift.sh 를 `--plugin <codeforge-N>` 7회
       invocation (F-002 옵션 A 정합 — codex/superpowers 외부 marketplace 제외,
@@ -2356,9 +2356,9 @@ entries:
       ADR-063 Amendment 5 §결정 15 — 3-way version atomic invariant check.
       publisher (wrapper plugin.json .version) ↔ registry (marketplace.json .plugins[codeforge].version)
       ↔ consumer (.claude/_overlay/project.yaml .codeforge.version_pin.version)
-      byte-identical version field compare. consumer pin 미등록 = warning-first exit 0
-      (orthogonality invariant — pin 미지정 ≠ version mismatch, ADR-027 Amendment 4 fallback) [verified: git show origin/main:scripts/check-3way-version-parity.sh].
-      pin 등록 + 3-way mismatch = blocking-on-pr exit 1.
+      byte-identical version field compare. consumer 고정 미등록 = warning-first exit 0
+      (orthogonality invariant — 고정 미지정 ≠ version mismatch, ADR-027 Amendment 4 fallback) [verified: git show origin/main:scripts/check-3way-version-parity.sh].
+      고정 등록 + 3-way mismatch = blocking-on-pr exit 1.
       sanity guard 6-tuple (Story §5.2 AC-13) + ADR-070 verify-before-trust 통합.
     detect_command: bash scripts/check-3way-version-parity.sh
     workflow: templates/github-workflows/version-3way-atomic.yml
@@ -2800,7 +2800,7 @@ entries:
       canary_compatibility_check_binding mechanical verification — consumer
       canary→beta promotion gate evaluation 시점 promotion criteria 4-tuple
       (functional + security + monitoring + testing measurement source) + family_7
-      atomic canary pin (publisher↔registry↔consumer 3-way match length_invariant=7)
+      atomic canary 고정 (publisher↔registry↔consumer 3-way match length_invariant=7)
       + canary_consumer_evidence_origin enum closed-set (wrapper_self / consumer_self
       / mixed open_extension:false) + inter_plugin_contract_backward_compat_verify
       (ADR-008 MINOR-only rule invariant guard) + promotion_gate_failure_mode (enum

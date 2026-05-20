@@ -6,7 +6,7 @@
 #   ↔ consumer (.claude/_overlay/project.yaml .codeforge.version_pin.version)
 #   3-way byte-identical version field compare
 #
-# fallback: consumer pin 미등록 = warning-first exit 0 (orthogonality invariant §7.4 / AC-2)
+# fallback: consumer 고정 미등록 = warning-first exit 0 (orthogonality invariant §7.4 / AC-2)
 # blocking-on-pr tier — ADR-060 evidence-enforceable framework
 #
 # Hotfix bypass: hotfix-bypass:version-3way-atomic label 부착 시 skip

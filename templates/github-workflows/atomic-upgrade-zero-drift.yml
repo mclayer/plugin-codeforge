@@ -6,7 +6,7 @@ name: Atomic upgrade zero-drift (warning mode)
 #
 # 의미: codeforge family 7 plugin (codeforge + codeforge-{requirements,design,
 #   review,develop,test,pmo}) atomic upgrade `--apply` 완료 후 consumer-side
-#   installed version pin ↔ marketplace SSOT drift 0 (none) invariant.
+#   installed version 고정 ↔ marketplace SSOT drift 0 (none) invariant.
 #   detect = scripts/check-codeforge-version-drift.sh --plugin <codeforge-N> 7회
 #   (F-002 옵션 A — codex/superpowers 외부 marketplace 제외, 7-name 구조적 배제).
 #   실 enforcement carrier = scripts/atomic-upgrade-7-plugins.sh post-atomic gate.

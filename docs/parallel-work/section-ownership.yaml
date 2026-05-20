@@ -364,7 +364,7 @@ owned_sections:
   - file: docs/inter-plugin-contracts/reconcile-protocol-v1.md
     section: "§4.14 downgrade_asymmetry_marker (status: placeholder_reserve → wired 단독 promotion field, carrier_story carrier→realized 정정, closed_enum open_extension:false 명시, activation_protocol tense 갱신, sunset_justification 본문 무변경, out_of_scope.downgrade_path_runtime comment 갱신, §4.4 row 7 역방향 약화 차단 row append)"
     owner_adr: ADR-72  # Amendment 3 carrier (sibling ADR-076 §결정 9.6 declarative SSOT cross-ref)
-    carrier_story: CFP-1014  # Wave 4 sub-Epic #1 Story-5 마지막 (5/5 Story complete final pin) downgrade asymmetry invariant 활성
+    carrier_story: CFP-1014  # Wave 4 sub-Epic #1 Story-5 마지막 (5/5 Story complete final 고정) downgrade asymmetry invariant 활성
     parallel_edit: serialized
     arbitrator: codeforge-design:ArchitectAgent
     # NOTE (CFP-1014): downgrade_asymmetry_marker section = §4.14 binding block 안
@@ -379,7 +379,7 @@ owned_sections:
     # sunset_justification 3-tuple 의무). 5 production-cutover cross-ref atomic
     # sync sibling carrier (promotion-criteria-4tuple L86-L88 + rollback-protocol
     # L75 + L91 + README L48 + 본 entry). Wave 4 sub-Epic #882 close marker — Story-5
-    # 5/5 Story complete final pin (CFP-906 v1.7 declare → CFP-932 v1.8 runtime →
+    # 5/5 Story complete final 고정 (CFP-906 v1.7 declare → CFP-932 v1.8 runtime →
     # CFP-954 v2.34 production cutover → CFP-991 v1.11 promotion criteria →
     # CFP-1014 v1.12 downgrade asymmetry final). serialized parallel_edit — §4.14
     # 안 sub-field 동시 수정 시 merge-order 의무. production_cutover_touching:
