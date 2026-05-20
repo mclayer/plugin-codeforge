@@ -8,9 +8,15 @@ carrier_story: CFP-357
 parent_epic: null
 supersedes: null
 amends: null
-amendments: []
+amendments:
+  - amendment_id: 1
+    date: 2026-05-21
+    cfp: CFP-1125
+    amendment_summary: "D2 영역 sunset_justification (D1 영구 invariant 유지) — D2 (consumer 배포 완료 3-AND 의 transaction completion prerequisite) 를 CFP-1111 walker paradigm 으로 carry. D1 (구조적 변경 후 세션 재구동 의무) = walker paradigm 외 세션 lifecycle 영역, 영구 invariant 유지 (sunset 대상 아님). β2 audit (#1113) Anchor 6 LOSSLESS 판정."
+    sunset_justification: "D2 영역만 — metric (walker walk completion 시 completion_criteria 3-AND (marketplace_sync + consumer_install + drift_check) 의 정확 enforce + false complete 0건 / N walk) / who (walker schema field completion_criteria 배열 [marketplace_sync, consumer_install, drift_check] + walker integration test) / how (walker integration test 안 3-AND condition 검증 + 부분 충족 시 walk_result = PARTIAL_FAILURE / FAILED 정확 분류)."
 related_stories:
   - CFP-357
+  - CFP-1125
 related_adrs:
   - ADR-016
   - ADR-039
@@ -18,6 +24,9 @@ related_files:
   - docs/orchestrator-playbook.md
   - CLAUDE.md
 is_transitional: false
+sunset_scope_partial: D2 영역만
+sunset_carrier_cfp: CFP-1111-Wave-4-Story-11
+d1_perpetual: true
 ---
 
 # ADR-053: 구조적 변경 재구동 선행 의무 및 codeforge 변경 시 consumer 배포 포함
@@ -80,7 +89,19 @@ Orchestrator가 구조적 변경(CLAUDE.md 의미 변경, plugin 버전 업, set
 
 ## 해소 기준
 
-N/A — permanent policy
+N/A — permanent policy (D1 영역 한정 — 구조적 변경 후 세션 재구동 의무는 walker paradigm 외 세션 lifecycle 영역, 영구 invariant).
+
+### D2 영역 partial sunset (sunset_justification, CFP-1111 carrier)
+
+D2 (consumer 배포 완료 3-AND 의 transaction completion prerequisite) 는 CFP-1111 walker paradigm 으로 carry:
+
+- **metric (D2 영역만)**: walker walk completion 시 `completion_criteria` 3-AND (marketplace_sync + consumer_install + drift_check) 의 정확 enforce + false complete 0건 / N walk
+- **who**: walker schema field `completion_criteria` 배열 (marketplace_sync, consumer_install, drift_check) + walker integration test
+- **how**: walker integration test 안 3-AND condition 검증 + 부분 충족 시 walk_result = PARTIAL_FAILURE / FAILED 정확 분류
+
+**D2 영역만 sunset 전환** (Wave 4 Story-11). D1 영역 = `is_transitional: false` 유지 (영구).
+
+**cross-ref**: [β2 audit (#1113)](https://github.com/mclayer/plugin-codeforge/issues/1113) Anchor 6 LOSSLESS 판정. D2 = walker terminal condition carry / D1 = walker scope 외 독립 정책.
 
 ## 관련 파일
 
