@@ -1049,6 +1049,16 @@ result_fidelity_binding:   # v1.10 신설, CFP-900 §4.3 (k) 발동, ADR-076 Ame
 
 Phase 1 (CFP-900) merge 시 본 §4.13 binding block 활성 (schema declare — result fidelity 영역 declaration). Phase 2 (별 PR, Develop lane) merge 시 `scripts/reconcile-overlay.sh` wholesale_mirror cp 후 post-mirror sanity check stage 추가 (S1/S2 exit code → result enum deterministic mapping 집계) + `docs/upgrade-events/` 디렉토리 + result enum 4-value event log artifact schema 실 생성 + `templates/github-workflows/phase-gate-mergeable.yml` (+ `.github/workflows/` byte-identical mirror, ADR-005) 의 `.github/workflows/*.yml` 의존 script reference content sanity 1차 신호 (warning tier, fast-pass OR-gate 무변경 orthogonal layer) + `tests/test_reconcile_sanity_check.py` (또는 reconcile-overlay.sh inline — Architect minimal-change 결정 영역) post-mirror sanity check + result enum mapping unit TC + `tests/integration/test_reconcile_overlay_result_fidelity.bats` 통합 테스트 (wholesale_mirror + S1 fail-closed/S2 abort → result enum 정직 반영 + EC-1~7) + `tests/workflows/test_phase-gate-mergeable-yml.sh` content sanity 1차 신호 assertion 추가 + `.claude-plugin/plugin.json` + `CHANGELOG.md` + `marketplace.json` v5.91.0 3-file atomic (ADR-063 mirrored field 4종 atomic invariant + ADR-016 marketplace parity) + `CHANGELOG.md` row append.
 
+### §4.13 sunset boundary (CFP-1111 carrier)
+
+본 binding (result_fidelity_binding, v1.10 CFP-900 carrier) 는 CFP-1111 walker paradigm 으로 carry.
+
+- **metric**: walker walk_result 4-value enum (SUCCESS / SUCCESS_WITH_DEGRADATION / PARTIAL_FAILURE / FAILED) 정확 enforce + silent false SUCCESS 0건 / N walk + post-mirror diff sanity check 동등 semantic
+- **who**: imperative-walker-protocol-v1 walker schema field `walk_result` + `exit_code_to_walk_result_mapping` rule
+- **how**: walker integration test 안 4-value enum honest record verify + exit code → result enum deterministic mapping verify
+
+closed_enum invariant: walker schema 안 `walk_result` field 의 `open_extension: false` 명시 의무 (Wave 1 Story-2 ADR-α2 carry). β2 audit (#1113) 3 carry-over 설계 주의 사항 #1 정합.
+
 ### 4.14 Wave 4 sub-Epic #1 Story-4 / Story-5 canary compatibility check binding (v1.11 — CFP-991 §4.3 (l) trigger 신설 발동, ADR-72 amendment_log Amendment 3 + ADR-076 §결정 9.2 / §결정 9.6 + ADR-070 §결정 D6 (CFP-988 Amendment 4) + label-registry-v2 v2.34 → v2.35 carrier · v1.12 — CFP-1014 §4.3 (m) trigger 신설 발동, downgrade_asymmetry_marker.status: placeholder_reserve → wired 단독 promotion 활성 완료, §4.8 단독 promotion 선례 verbatim 답습, Wave 4 sub-Epic #882 close marker 5/5 Story complete final state)
 
 본 §4.10 (`multi-version channel pin declare layer` + runtime active) + §4.11 (dependency bundle integrity vertical mirror-전) + §4.12 (consumer-applicability filter horizontal mirror-전) + §4.13 (result fidelity temporal-post mirror-후) binding 위에 **canary promotion criteria enforcement layer** 1단을 추가한다. §4.10 = channel state binding (현재 어떤 channel) ↔ §4.14 = canary promotion gate (어떻게 promote) **axis disjoint** invariant 보존 — embedding_forbidden: true (RefactorAgent C-4 cross-block 명시). Story-4 = §4.10 `registry_channel_matrix.story_4_scope_write_carrier` A3 정정 entry forward-effective realize point (v1.8 A2 = predict / v1.11 A3 = enact transition, DataMigrationArch §11.7 load-bearing dissent verbatim 채택). 5 threat × mitigation matrix carrier (SecurityArch §7.2 5 threat T-1.1/T-2.1 답습/T-3.1/T-4.1/T-5.1 schema field layer carrier). ADR-070 §결정 D6 (CFP-988 Amendment 4) mandatory-real-execution-evidence STANDING cross-ref T-4.1 4-tuple measurement spoofing mitigation. Live touching: TRUE / production_cutover_touching: TRUE / marketplace_publish_touching: best_effort_declare. wrapper-self-app Tier-1 exemption invariant 보존 (ADR-72 §결정 6) — wrapper PR 자체 = declare-time 영역, consumer canary→beta promotion = Tier-2 admin-tier 권장.
@@ -1195,5 +1205,15 @@ canary_compatibility_check_binding:   # v1.11 신설, CFP-991 §4.3 (l) 발동, 
 ```
 
 Phase 1 (CFP-991) merge 시 본 §4.14 binding block 활성 (schema declare + workflow + scripts/lib warning tier 활성) — declaration + mechanical lint enforcement carrier. **v1.12 (CFP-1014 Story-5)** merge 시 `downgrade_asymmetry_marker.status: placeholder_reserve → wired` 단독 promotion 완료 (§4.8 단독 promotion 선례 verbatim 답습, partial-active state 도입 0 / field shape 변경 0 / closed_enum length=2 invariant 보존). Phase 2 (별 PR, Develop lane) merge 시 promotion_gate_failure_mode `warning_first → blocking_on_pr` 승격 + consumer canary→beta promotion runtime 4-tuple evaluation 실 carrier 영역 + downgrade execution runtime path (별 future carrier — Story-5 = declare-only disjoint declarative SSOT only, runtime demotion execution path = sequential carrier). Sibling carrier: ADR-72 amendment_log Amendment 3 + label-registry-v2 v2.34 → v2.35 MINOR (4 신규 entry) + `docs/evidence-checks-registry.yaml` `canary-compatibility-check` entry (warning tier) + `docs/domain-knowledge/domain/production-cutover/promotion-criteria-4tuple.md` 신설 (CFP-28 6-section schema, 4 industry exemplar verbatim cite) + `docs/parallel-work/section-ownership.yaml` `canary_compatibility_check` row append + `docs/doc-locations.yaml` 16번째 entry `promotion_criteria_4tuple_artifact` 신설.
+
+### §4.14 sunset boundary (CFP-1111 carrier)
+
+본 binding (canary_compatibility_check_binding + downgrade_asymmetry_marker, v1.11→v1.12 chain) 는 CFP-1111 walker paradigm 으로 carry.
+
+- **metric**: walker step 의 `directionality: forward_only` + `downgrade_path_forbidden: true` field 정확 enforce + downgrade 방향 시도 0건 (silently 통과) / N walk + canary→beta→stable 7-tuple consistency 동등 enforce
+- **who**: walker schema field `directionality` + `downgrade_path_forbidden` + `gate_failure_mode`
+- **how**: walker integration test 안 forward-only directionality verify + reverse path 시도 시 walk_result = FAILED 정확 분류
+
+closed_enum invariant: walker schema 안 `directionality` enum 의 `open_extension: false` 명시 의무. β2 audit 3 carry-over 설계 주의 사항 #1 정합.
 
 
