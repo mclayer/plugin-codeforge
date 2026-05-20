@@ -7,6 +7,23 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.0.2] - 2026-05-21
+
+### Changed
+
+- [CFP-1059 Story-2/S3] codeforge family 7 → 9 plugin 실재화 — 신규 2 lane plugin seed 노출 (PATCH)
+  - "필수 플러그인 (8종 active + 2 신설 예정)" → "(10종)" + codeforge-deploy + codeforge-deploy-review 실 plugin URL 정정 (Story-1 declarative 의 후속 wire)
+  - "Development Agent Team" 표 배포 / 배포 리뷰 row SSOT = `TBD (S2/S3 sub-Story carrier)` → 실 plugin CLAUDE.md URL (배포 2 agent / 배포 리뷰 3 agent — ProductionEvidenceDeputy 이관 포함)
+  - 신규 plugin seed = `mclayer/plugin-codeforge-deploy` (1.0.0) + `mclayer/plugin-codeforge-deploy-review` (1.0.0)
+  - marketplace.json 2 신규 entry sibling sync (ADR-016 / ADR-063) — wrapper entry version 6.0.2 mirror 동반
+- doc-only fast-path (ADR-054 Category 2) — src/tests 무변경. CFP-1059 / ADR-087 / ADR-088 정합
+
+### Cross-ref
+
+- Epic: #1059
+- Story-2: codeforge-deploy plugin seed (ADR-087)
+- Story-3: codeforge-deploy-review plugin seed + ProductionEvidenceDeputy 이관 (ADR-088)
+
 ## [6.0.1] - 2026-05-21
 
 ### Changed
