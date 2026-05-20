@@ -128,6 +128,7 @@ lane 외부 surface — kind:contract producer / consumer overlay slice / govern
 - **ADR-067** — Max FIX 3/3 + cross-lane RESET. 본 lane 의 FIX verdict 가 4 lane (CodeReview / SecurityTest / 본 lane) 누적 FIX 카운터에 합산.
 - **ADR-72** — Production cutover gate + ProductionEvidenceDeputy. Epic-level 통합테스트 PASS → 보안 lane → production cutover Story 시 ProductionEvidenceDeputy 동반.
 - **ADR-057** — Sonnet → Opus rate-limit fallback (IntegrationTestAgent Sonnet tier 적용 대상).
+- **IntegrationTest §7.4 측정 contract** (ADR-014 Amendment 4 §결정 2): evidence-driven 3-axis split (측정 대상 정의 DesignLane / 실측 본 lane / policy 결정 ArchitectLane post-measurement). FIX 루프 disjoint axis. 상세는 `agents/IntegrationTestAgent.md` §7.4. carrier = CFP-698 (Epic CFP-1026 W2 S4).
 
 **Skill anchor** (Orchestrator lane 진입 시 호출):
 

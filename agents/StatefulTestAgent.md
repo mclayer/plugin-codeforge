@@ -9,8 +9,8 @@ mandate:
     - "§8.5.2 Process restart recovery tests (SIGTERM/SIGKILL/deploy · in-flight state · idempotency / reconciliation / graceful shutdown / WebSocket re-attach)"
     - "§8.5.3 Idempotency replay tests (CONDITIONAL — §11.6 active + §8.5.0 4번 Y 교집합)"
   consult:
-    - "§7.4 운영 리스크 (OperationalRiskArchitectAgent primary, §8.5.1-§8.5.2 시나리오 짝)"
-    - "§11.6 Idempotency invariant (DataMigrationArchitectAgent primary, §8.5.3 replay test 짝)"
+    - "§7.4 운영 리스크 (InfraOperationalArchitectAgent primary, §8.5.1-§8.5.2 시나리오 짝)"
+    - "§11.6 Idempotency invariant (DataArchitectAgent primary, §8.5.3 replay test 짝)"
 spawn_lifecycle: stateless
 spawn_trigger: "Story §8.5.0 applicability 표 의 Y/N 결과 기준 — 1+ Y 일 때 Orchestrator 가 본 agent spawn"
 ssot_position: codeforge-test

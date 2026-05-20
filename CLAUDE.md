@@ -40,6 +40,7 @@ IntegrationTestAgent의 상세 동작 명세는 [`agents/IntegrationTestAgent.md
 - **FAIL 시**:
   - `regression`/`new_test` → DeveloperPL 1차 진단 → ArchitectPLAgent 최종 판정
   - `infra_setup`/`env_missing` → InfraEngineerAgent 직접 수정 (ArchitectPL 불필요)
+- **§7.4 운영 리스크 측정 contract**: [ADR-014 Amendment 4 §결정 2](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-014-operational-risk-ssot-distribution.md) evidence-driven 3-axis split — 측정 대상 정의는 ArchitectAgent §8.6 IntegrationTest contract pointer (DesignLane), 실측은 본 lane scope, FIX 루프 disjoint axis. 상세는 [`agents/IntegrationTestAgent.md`](agents/IntegrationTestAgent.md) §7.4 위임. carrier = CFP-698 (Epic CFP-1026 W2 S4).
 
 ## 구현 테스트 lane (TestAgent / StatefulTestAgent) — DEPRECATED 유지
 
