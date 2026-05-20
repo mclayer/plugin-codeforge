@@ -7,6 +7,28 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [5.93.0] - 2026-05-20
+
+### Added (CFP-689 — ADR-073 Amendment 3 worktree-first self-ownership verify 3-tuple, declarative anchor Wave 1)
+
+- **`docs/adr/ADR-073-orchestrator-verify-before-assert.md`** — Amendment 3 sub-section append (107 lines: §결정 1-A 추가 transition trigger enum 4번째 entry `worktree_lane_spawn` + §결정 1-D path-based self-ownership verify 3-tuple primitive (a) cwd↔worktree path / (b) HEAD↔reflog membership / (c) `git worktree list --porcelain`+reflog 2-source AND + §결정 1-E subagent verdict re-verify mandate (ADR-082 cross-ref, multi-worktree self-confusion 영역 agent 도 보임 입증) + §결정 1-F disjoint axis with #983 reflog membership 1 bit signal + Wave 1 declaration / Wave 2 mechanical wire 분리 — CFP-966/967 chain precedent 답습). frontmatter `amendments[]` row 신설 (`amendment_id: 3`, `cfp: CFP-689`, `date: 2026-05-20`, `status: applied`, `sunset_justification: null` ratchet 강화 only) + `mechanical_enforcement_actions[]` 1 → 2 entry (`parallel-work-sentinel-pickup` 보존 + `worktree-self-ownership-verify` 신규) + `related_stories[]` CFP-689 + CFP-1038 + CFP-983 append. ADR-058 §결정 5 / ADR-064 §self-application top-down ratchet 강화 방향 only.
+- **`docs/evidence-checks-registry.yaml`** — `worktree-self-ownership-verify` 신규 entry append (warning tier, `status: deferred-followup` declaration-only-Wave-1, recurrence count 3 / threshold 3 / promotion_trigger auto_blocking — pattern_count 3 already reached 2026-05-19~20 sentinel evidence, owner_adr ADR-073-Amendment-3 / carrier_adr ADR-060 dual-binding codex-network-scope-presence precedent 답습, sibling_dependencies: [CFP-689, TBD-Wave-2-sub-CFP]).
+- **`docs/parallel-work/section-ownership.yaml`** — ADR-073 file lock row append (`carrier_story: CFP-689`, `amendment_id: 3`, Amendment 2 CFP-966 row 와 section disjoint 보장).
+- **`docs/domain-knowledge/domain/orchestrator-discipline/worktree-self-ownership-verify.md`** — 신규 narrative SSOT (164 lines, DomainAgent 지식 공백 해소): 1. 5th layer staleness (spatial dimension, Bazel hermeticity 동형 + codeforge 5th layer 확장) + 2. 3 occurrences sentinel evidence (CFP-1026 STAND-DOWN + CFP-681 cfp-1014 dup worktree `f39b221` + CFP-681 ArchitectPL `00b7d8a` mis-flag) + 3. Path-based 3-tuple verify primitive (사용자 prompt identity-based → path-based 대안 채택 — Solo-dev 환경 식별력 0 회피) + 4. Edge case (detached HEAD / anonymous worktree / signed commit GPG / reflog GC 90d / Windows path normalize) + 5. Subagent verdict re-verify mandate (multi-worktree self-confusion 영역 agent 도 보임, ADR-082 §결정 1 4-layer disjoint 표 cross-ref) + 6. Disjoint scope with #983 (reflog membership 1 bit) + 7. mechanical_enforcement chain (Wave 1/2/3 progression) + 8. 외부 fact 인용 (`git worktree list --porcelain` 산업 표준 — Linux kernel / Chromium primary cite).
+
+### Changed
+
+- **`CLAUDE.md`** — "Verify-before-trust 4-layer governance" 단락 안 ADR-073 Amendment 3 (CFP-689, 2026-05-20) 1-문장 inline append (worktree-first 환경 self-confusion sub-domain 5th layer staleness + 4번째 transition trigger enum + path-based 3-tuple verify + subagent verdict re-verify mandate + `mechanical_enforcement_actions: [parallel-work-sentinel-pickup, worktree-self-ownership-verify]` 2 entry + disjoint axis with #983 = reflog membership 1 bit + Wave 2 별 sub-CFP carrier + `feedback_worktree_first_not_parallel_session` memory 승격 carrier). line count 315 lines invariant 유지 (cap ≤ 320, ADR-012 Amendment 1, +5 budget 안 wrapped inside existing paragraph).
+- **`.claude-plugin/plugin.json`** — version `5.92.0` → `5.93.0` MINOR (ADR-037 — ADR-073 Amendment 3 신설 발의 = governance behavior change MINOR).
+- **marketplace atomic sync (ADR-063 §결정 5, separate sibling PR — 본 wrapper PR 선행/직후 marketplace sync PR open + merge 의무)**: `mclayer/marketplace/marketplace.json` plugins[name=codeforge] mirrored field `version` `5.92.0` → `5.93.0` + `description` 동기화 (별 PR scope, 본 ArchitectAgent spawn scope 외 — Orchestrator inline scope).
+
+### Cross-references
+
+- **Carrier ESC**: plugin-codeforge#1038 PMO escalation P1 (worktree_first_self_confusion_within_single_session pattern_count 3 reach) — 본 PR merge 시 close 의무.
+- **#983 후보 (c) 정식 carrier**: plugin-codeforge#983 P1 ESC body 안 후보 (c) "ADR-073 Amendment 3 — shared workdir collision worktree-first invariant 강화" 의 정식 carrier (disjoint axis = reflog membership 1 bit).
+- **Wave 2 별 sub-CFP reservation** (sequential next, 본 Wave 1 merge 후): mechanical wire — `scripts/check-worktree-self-ownership.sh` (thin bash wrapper, ADR-061) + `scripts/lib/check_worktree_self_ownership.py` (Python SSOT, 3-tuple verify primitive 구현) + `templates/github-workflows/worktree-self-ownership-verify.yml` + `.github/workflows/` byte-identical self-app (ADR-005) + `templates/.claude/hooks/PreToolUse-worktree-self-ownership.json.sample` (consumer opt-in cold start sample) + `tests/scripts/check-worktree-self-ownership/test_worktree_self_ownership.bats` + label-registry-v2 신규 entry `hotfix-bypass:worktree-self-ownership-verify`.
+- **ContinuityAgent CRITICAL** (post-merge follow-up): plugin-codeforge#729 (title "ADR-073 Amendment 1" 슬롯 충돌 — Amendment 1 = CFP-776 / Amendment 2 = CFP-966 / Amendment 3 = CFP-689 점유 verified) → Amendment 4 로 재배정 의무. 본 Amendment 3 = self-ownership verify 3-tuple + transition trigger enum 4번째 entry 영역 / Amendment 4 (#729 재배정) = Glob false negative 별 §결정 영역 — section disjoint 보장.
+
 ## [5.92.0] - 2026-05-19
 
 ### Added (CFP-967 — parallel work sentinel mechanical wire, ADR-073 Amendment 2 §결정 1-A/1-B/1-C)

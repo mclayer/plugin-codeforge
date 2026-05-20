@@ -406,4 +406,33 @@ owned_sections:
     # N/A 정당 (is_transitional: false 영구 정책). sibling Story-2 CFP-967 mechanical wire 가
     # script + workflow + hook json sample carrier (declaration-only-Wave-1 status).
 
+  # CFP-689 (ArchitectAgent Phase 1 — ADR-073 Amendment 3 lock)
+  - file: docs/adr/ADR-073-orchestrator-verify-before-assert.md
+    section: "frontmatter amendments[] (amendment_id: 3 row) + frontmatter mechanical_enforcement_actions[] (worktree-self-ownership-verify entry append, 1 → 2 entry) + ## Amendments / ### Amendment 3 sub-section"
+    owner_adr: ADR-073
+    carrier_story: CFP-689  # Story-1 declarative anchor (sibling Story-2 = TBD 별 sub-CFP — Wave 2 mechanical wire)
+    amendment_id: 3
+    parallel_edit: append-only
+    arbitrator: codeforge-design:ArchitectAgent
+    conflict_resolution: section-disjoint
+    # NOTE (CFP-689): ADR-073 Amendment 3 lock — Amendment 2 row (CFP-966) 와 section
+    # field disjoint 보장 — Amendment 3 sub-section 영역 단독 점유 + frontmatter
+    # amendments[] amendment_id: 3 row append (amendment_id: 1 CFP-776 / amendment_id:
+    # 2 CFP-966 보존) + mechanical_enforcement_actions[] 1 → 2 entry append
+    # (parallel-work-sentinel-pickup 보존 + worktree-self-ownership-verify 신규 entry,
+    # ADR-040 Amendment 3 §결정 7.D self-application 정합) + 본문 ## Amendments 안
+    # ### Amendment 3 sub-section append (§결정 1-A 추가 transition trigger enum 4번째
+    # entry `worktree_lane_spawn` + §결정 1-D path-based 3-tuple verify primitive +
+    # §결정 1-E subagent verdict re-verify mandate + §결정 1-F disjoint axis with #983 +
+    # Wave 1 declaration / Wave 2 mechanical wire 분리). ADR-058 §결정 5 / ADR-064
+    # §self-application ratchet 강화 only — base §결정 1-8 + Amendment 1 (CFP-776) +
+    # Amendment 2 (CFP-966) 의미 invariant 무변경, sub-section append only.
+    # sunset_justification N/A 정당 (is_transitional: false 영구 정책). sibling
+    # Story-2 = TBD 별 sub-CFP carrier (Wave 2 mechanical wire — script + workflow +
+    # hook + bats + label-registry-v2 신규 entry, declaration-only-Wave-1 status).
+    # ContinuityAgent CRITICAL: plugin-codeforge#729 (title "Amendment 1" 슬롯 충돌 —
+    # Amendment 4 재배정 의무, post-merge follow-up) 영역과 section disjoint 보장 —
+    # 본 Amendment 3 = self-ownership verify 3-tuple + transition trigger enum 4번째
+    # entry / #729 (Amendment 4 재배정) = Glob false negative 별 §결정 영역.
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)
