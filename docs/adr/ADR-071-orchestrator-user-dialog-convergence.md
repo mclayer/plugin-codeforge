@@ -39,6 +39,12 @@ amendments:
     issue: https://github.com/mclayer/plugin-codeforge/issues/1106
     summary: Natural-language action trigger lookup table codify (§결정 16 신설) — consumer 가 자연어 token "codeforge upgrade" (또는 한글 변형) 발화 시 orchestrator 가 dialog reflex (AskUserQuestion 모드/채널 재질의) 차단 + 7 차원 derived default (trigger phrase regex / repo cwd 자동 주입 / mode dry-run → apply 자동 / channel overlay resolve fallback stable / scope 단일 plugin default / dirty tree abort / 실패 시 자동 rollback) 결정론적 mapping closed enumeration 1 entry. ADR-076 invariant `user_decision_branches=0` 를 dialog 진입 단계로 확장 carrier — 본 ADR-071 §결정 5 사실/가치 분리의 dialog reflex 차단 first applied case. closed enumeration 보존 invariant — 본 lookup table 이 ADR-071 내 4번째 closed enumeration 인스턴스 (3-anchor enum §13.6 / 4 차원 enum §4 / 3 touchpoint enum §15.5 / **trigger table §16**) 신설, 2번째 trigger token 확장 시 별도 CFP 의무 (§결정 13.6 closed-enum 확장 패턴 정합 — ADR-064 §결정 7 top-down ratchet 강화 방향 + ADR-058 §결정 5 sunset_justification null 보존). ADR-039 inline whitelist 1번 entry scope 안 작동 (사용자 dialog 허용 영역, 5번째 entry 신설 0). doc-only fast-path Story (src/tests touch 0). additive — Layer 1-4 / DialogFidelityAgent auxiliary / §결정 2(c) richness / 3 touchpoint enum (§15) 모두 보존, dialog reflex 차단 layer 추가만. is_transitional=false 보존, ADR-058 §결정 5 약화 차단 영역 미적용
     sunset_justification: null
+  - amendment_id: 6
+    date: "2026-05-20"
+    carrier_story: CFP-1110
+    issue: https://github.com/mclayer/plugin-codeforge/issues/1110
+    summary: Lane back-translation gate binding — DialogFidelityAgent read-only verifier (Amendment 1/2/3 3-anchor) → lane return 직후 binding 강화 (§결정 17 신설). lane traversal fidelity loss 차단 — 각 lane PL deliverable return 직후 사용자 원문 언어로 산출물 reverse summary 의무 부착. DialogFidelityAgent 가 user-utterance anchor (paired ADR-082 Amendment 5 §결정 1 sub-scope (1-C) verbatim block) vs lane PL reverse summary 간 divergence 검출 시 lane 재실행 trigger (read-only verifier → binding mechanism 확장). 사용자 직권 minimal path 첫 적용 (codeforge process 가 lane traversal fidelity loss source 라는 평가 결과 정합 — Researcher 35% 정당화 / Codex ROI indeterminate-부정쪽 confidence medium 수렴, 2026-05-20 KST). pattern corpus 누적 evidence — synthesizer-stale-reference 6 (CFP-722/801/792/810/819/825) + Researcher 12 occurrence 정정 (CFP-698) + scope drift 만성 (CFP-758) + unverified-self-write-claim super-class 5 + DesignReviewPL cross-PL false-negative (CFP-906) — ADR-045 §D-9 pattern_count ≥ 6 ≫ threshold 2 escalation 정합. minimal path 정합 — Story file 0 / Lane spawn 0 / FIX iter 0 / Phase 분리 0 / Retro 0 / ADR-013 명시 위배 (사용자 승인 2026-05-20 KST) — closed-loop break 외부 결정 채널. Wave 1 = behavioral mandate (PL return 직후 reverse summary + Orchestrator divergence detection trigger) — Wave 2 mechanical lint + DialogFidelityAgent runtime hook 확장 = 별 CFP carrier (deferred-followup). additive — Layer 1-4 / DialogFidelityAgent auxiliary / §결정 12-15 + §결정 16 (CFP-1104 Amendment 5) 모두 보존, is_transitional=false 유지, ADR-058 §결정 5 약화 차단 영역 미적용. paired sibling Amendment = ADR-082 Amendment 5 (lane PL spawn prompt user-utterance verbatim anchor, 동일 CFP-1110 carrier — disjoint axis 정합, 본 ADR = return-time output gate / ADR-082 = write-time input anchor). collision rebase 정합 — CFP-1104 Amendment 5 mid-flight merge 후 본 CFP-1110 amendment_id 5 → 6 정정 + §결정 16 → 17 rename.
+    sunset_justification: null
 related_stories:
   - CFP-612  # carrier
   - CFP-525  # ancestor Epic (closed 2026-05-13)
@@ -54,7 +60,8 @@ related_stories:
   - CFP-818  # Amendment 2 carrier (spawn trigger 운영 정의)
   - CFP-833  # Amendment 3 carrier (effectiveness measurement wiring — closing-the-loop)
   - CFP-851  # Amendment 4 carrier (conversational reporting frequency suppression contract)
-  - CFP-1104  # Amendment 5 carrier (natural-language action trigger lookup table — "codeforge upgrade" mapping)
+  - CFP-1104 # Amendment 5 carrier (natural-language action trigger lookup table — "codeforge upgrade" mapping)
+  - CFP-1110 # Amendment 6 carrier (lane back-translation gate binding — paired ADR-082 Amendment 5, 사용자 직권 minimal path first application, paradox-break)
 related_adrs:
   - ADR-064  # 결정 원칙 mandate — proposing-time 5 룰 mother policy (mechanical version 승격 source)
   - ADR-058  # sunset criteria mandate (is_transitional: false 정합)
@@ -68,6 +75,7 @@ related_adrs:
   - ADR-060  # evidence-enforceable framework (Amendment 3 dialog-fidelity-effect entry carrier — CFP-833)
   - ADR-076  # declarative-reconciliation-upgrade (Amendment 5 — invariant `user_decision_branches: 0` dialog 단계 enforcement carrier)
   - ADR-054  # doc-only fast-path (Amendment 5 — Story 분류 정합)
+  - ADR-082  # Amendment 6 — paired sibling carrier (lane PL spawn prompt user-utterance verbatim anchor / write-time input anchor ↔ 본 ADR Amendment 6 §결정 17 = lane return back-translation gate / return-time output gate, disjoint axis)
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md
@@ -737,9 +745,123 @@ ADR-076 invariant `user_decision_branches: 0` (Epic CFP-699 §1 WHY "0 자리" v
 
 `sunset_justification: null` 적격 (§12.7 / §13.7 / §14.4 / §15.7 family pattern 정합 — Amendment 1/2/3/4/5 모두 동일).
 
+## §결정 17. Lane back-translation gate binding (Amendment 6, CFP-1110)
+
+### 17.1 컨텍스트 + 사용자 directive verbatim
+
+본 §결정 17 = **사용자 직권 minimal path 첫 적용** (paradox-break first application). 사용자 directive 2026-05-20 KST verbatim:
+
+> "어쨌든 시간이 오래걸리든 비용이 많이 나오든 무관하게 성능이 제일 중요하다. 근데 시간도 오래걸리는데 레인이 지날수록 내가 요구했던 요건이 흩어지고 이상한 작업만 수행하는 것 같아서 그렇다."
+
+본질 = **lane traversal fidelity loss** — 사용자 발화 원문이 lane 통과마다 재합성되며 weight 가 희석, lane 내부 invariant 가 그 자리를 차지하는 현상. Researcher (general-purpose) + Codex 병렬 critical evaluation 수렴 결과:
+
+- Researcher net 35% 정당화 (verify-before-trust + Epic gate 영역만)
+- Codex ROI indeterminate, 부정 쪽 기울기, confidence medium — denominator (consumer-protective fraction) 측정 부재
+- 구조적 결함: sunset asymmetry (실 retire 0건 since codeforge 정상 운영 진입) / self-referential dogfood paradox 만성화 / mechanical layer 가 race 차단 불가 입증
+
+### 17.2 pattern corpus 누적 evidence
+
+| # | 출처 | 패턴 | count |
+|---|---|---|---|
+| 17-A | CFP-722/801/792/810/819/825 | synthesizer-stale-reference (synthesis layer 원본 drift) | 6 |
+| 17-B | CFP-698 | Researcher agent fact drift (12 occurrence 정정) | 12 |
+| 17-C | CFP-758 | scope 재확대 금지 invariant 6+ 위치 (scope drift 만성 evidence) | 6+ |
+| 17-D | unverified-self-write-claim super-class (CFP-746/770/1000/1001/1002) | write-time semantic truth verify 부재 | 5 |
+| 17-E | CFP-906 | DesignReviewPL cross-PL false-negative (review 가 사실과 다른 결론) | 1 |
+
+PMOAgent ADR-045 §D-9 정량 임계값: pattern_count **≥ 6** ≫ threshold 2 → Mandatory framing + escalation_action `escalate_user` → 사용자 단일 super-class 통합 결정 (본 §결정 17 + paired ADR-082 Amendment 5 §결정 1 sub-scope (1-C)).
+
+### 17.3 구조적 원인 (3)
+
+본 ADR-071 §결정 13 (DialogFidelityAgent codify) + §결정 14 (effectiveness measurement wiring) 의 read-only verifier 패턴이 lane traversal fidelity loss 차단에 부족한 구조적 원인:
+
+1. **Story §1 원문 → §2 Why / §3 Design 재합성 손실** — 매 lane PL spawn prompt 안 anchor 가 재합성된 weight 만 흘러간다. paired ADR-082 Amendment 5 §결정 1 sub-scope (1-C) Lane PL spawn prompt user-utterance verbatim anchor 가 write-time input anchor 차원 해소 (본 §결정 17 의 sister carrier).
+2. **codeforge-design lane fan-out 불균형** — chief + 5 deputy + 4-tuple sub-tuple = 10+ agent advocacy. 1 user 요구 vs 10+ deputy mandate 의 weight 비대칭, deputy 가 자기 mandate 영역 expansion 만 강화 (cross-lane requirement traceability 약화). scope_boundary 영역 (17.6 참조 — 별 CFP carrier).
+3. **DialogFidelityAgent read-only binding 약함** — `post_user_turn` / `pre_architectpl_synthesis` / `pre_fix_rootcause` 3-anchor (§결정 13.6) 에서 divergence 검출은 가능하나, lane 재실행 강제 못함. 본 §결정 17 = read-only verifier → binding mechanism 확장 carrier (return-time output gate 차원).
+
+### 17.4 결정 — Lane return back-translation gate (binding 강화)
+
+각 lane PL agent (RequirementsPLAgent / ArchitectPLAgent / DesignReviewPLAgent / DeveloperPLAgent / CodeReviewPLAgent / SecurityTestPLAgent) 가 spawn 결과를 Orchestrator 로 return 할 때:
+
+#### 17.4.1 PL self-write deliverable verify (lane PL 의무)
+
+lane PL deliverable (Story §-N section / Change Plan section / verdict packet / FIX root cause 등) return 시 PL 자체가 다음 reverse summary block 부착 의무:
+
+```
+[LANE-RETURN-BACK-TRANSLATION]
+사용자 원문 (verbatim, paired ADR-082 Amendment 5 §결정 1 sub-scope (1-C) anchor block 의 USER-UTTERANCE-VERBATIM 와 동일):
+> <사용자 원문 verbatim>
+
+본 lane 산출물 reverse summary (사용자 원문 언어로):
+- <산출물 요약 1, 사용자 발화 언어 어휘로 재구성, lane 내부 vocabulary / invariant / mandate ratchet 어휘 사용 회피>
+- <산출물 요약 2>
+- ...
+
+산출물 ↔ 사용자 원문 alignment self-attestation:
+- aligned: <list of aligned points>
+- divergence (의도된 scope 확장 OR fidelity loss 가능): <list of divergence points + 분류 (intended_expansion | fidelity_loss_candidate)>
+[/LANE-RETURN-BACK-TRANSLATION]
+```
+
+PL self-attestation 의도된 scope 확장 vs fidelity loss 분류 명시 의무. self-attestation 자체가 ADR-082 §결정 2 write-time verify 영역 (PL self-write deliverable — 본 자기 attestation 도 verify-before-trust 대상).
+
+#### 17.4.2 Orchestrator divergence detection trigger (binding mechanism)
+
+Orchestrator lane return 수신 직후 `[LANE-RETURN-BACK-TRANSLATION]` block 안 `divergence` list 항목 검토:
+
+- `intended_expansion` 분류 = Orchestrator approve (사용자 directive 외 scope 확장 의도 명시, fidelity 차원 무관 정합)
+- `fidelity_loss_candidate` 분류 = Orchestrator 가 **lane 재실행 trigger** (PL re-spawn with refined spawn prompt — 사용자 원문 verbatim anchor weight 강화 + 발산 영역 explicit guardrail). 재실행 후 lane PL return 시 17.4.1 self-attestation 재수행 의무.
+
+lane 재실행 횟수 cap = ADR-067 §결정 1 (max FIX 3/3 reassessment trigger) + §결정 3 (RESET vs escalation 권한) 복합 재사용 (ADR-082 §결정 3 정정 재귀 무한루프 cap 패턴 verbatim 답습). 3회 reach 시 사용자 escalation (ADR-067 §결정 2 escalation 의무 trigger 3종 평가).
+
+#### 17.4.3 DialogFidelityAgent 3-anchor scope 확장
+
+§결정 13.6 DialogFidelityAgent 3-anchor (`post_user_turn` / `pre_architectpl_synthesis` / `pre_fix_rootcause`) 에 4번째 anchor 신설:
+
+| anchor | trigger | scope | binding |
+|---|---|---|---|
+| `post_user_turn` (§결정 13.6) | Orchestrator user-facing turn 직후 | dialog turn 자체 fidelity check | read-only verifier (Amendment 1-3 유지) |
+| `pre_architectpl_synthesis` (§결정 13.6) | ArchitectPLAgent synthesis 직전 | synthesis layer drift check | read-only verifier (Amendment 1-3 유지) |
+| `pre_fix_rootcause` (§결정 13.6) | FIX root cause 판정 직전 | root cause drift check | read-only verifier (Amendment 1-3 유지) |
+| **`post_lane_return` (Amendment 6 신설)** | **lane PL return 직후 (17.4.1 self-attestation 후)** | **사용자 원문 anchor vs PL reverse summary divergence detection — `fidelity_loss_candidate` 항목 cross-validate** | **binding (17.4.2 Orchestrator lane 재실행 trigger 보조 — DialogFidelityAgent verdict 가 Orchestrator decision 의 input)** |
+
+4번째 anchor = read-only verifier 패턴 (Amendment 1) 외 첫 binding-capable anchor. 단 DialogFidelityAgent 자체는 read-only 유지 — binding mechanism = Orchestrator 가 DialogFidelityAgent verdict + PL self-attestation 양 input 으로 lane 재실행 결정 (DialogFidelityAgent 가 lane 재실행 강제 권한 직접 보유하지 않음 — Orchestrator monopoly 보존, ADR-039 inline whitelist 4-entry scope 안).
+
+### 17.5 Wave 1 (behavioral) + Wave 2 (mechanical) progression chain
+
+ADR-040 Amendment 3 self-application Wave 1→Wave 2 progression chain (ADR-082 §결정 6 / §A2-2 / §A5-3 정합):
+
+| Wave | scope | enforcement | carrier |
+|---|---|---|---|
+| Wave 1 (Amendment 6) | §결정 17.4.1 PL self-attestation behavioral mandate + 17.4.2 Orchestrator divergence detection behavioral mandate + 17.4.3 DialogFidelityAgent 4번째 anchor codification | playbook §3.19 신설 (Orchestrator self-discipline — lane return back-translation gate handling) + DialogFidelityAgent SKILL.md §X (post_lane_return anchor codification) | CFP-1110 (본 carrier) |
+| Wave 2 (후속 CFP) | mechanical lint — `[LANE-RETURN-BACK-TRANSLATION]` block presence + `divergence` field schema valid + `fidelity_loss_candidate` count tracking | `scripts/check-lane-return-back-translation.sh` (deferred-followup, ADR-060 §결정 5 모든 신규 entry warning 시작 강제 정합) + evidence-checks-registry `lane-return-back-translation-gate` entry warning tier | 후속 CFP (별 carrier, brainstorm 단계 결정) |
+| Wave 3 (DialogFidelityAgent runtime hook 확장) | post_lane_return anchor 실 runtime invocation (현 SessionStart hook + 3-anchor 외 4번째 anchor 자동 spawn) | DialogFidelityAgent SKILL.md runtime wire + codeforge-pmo lane plugin (DialogFidelityAgent owner) sibling sync (ADR-010 정합) | 별 cross-repo CFP carrier (codeforge-pmo plugin) |
+
+Wave 2/3 = deferred-followup. 본 Amendment 6 frontmatter `mechanical_enforcement_actions[]` 갱신 0건 (Wave 1 = behavioral mandate + playbook codification + SKILL.md 4번째 anchor 정의, mechanical lint + runtime hook 자체는 Wave 2/3 carrier). §결정 14 의 `dialog-fidelity-effect` 1 entry 유지 — 본 Amendment 6 scope 4번째 anchor 와 disjoint sub-decision (`dialog-fidelity-effect` = incident append-rate delta proxy signal, post_lane_return anchor = lane-level divergence detection, 측정 axis 다름).
+
+### 17.6 scope_boundary (out-of-scope)
+
+본 Amendment 6 **포함**: §결정 17 (back-translation gate binding) + 4번째 anchor `post_lane_return` codification + Wave 1 behavioral mandate + playbook §3.19 + SKILL.md §X 추가.
+
+본 Amendment 6 **out-of-scope** (유지 / 별 carrier):
+
+- **codeforge-design lane fan-out 축소** (chief + 5 deputy + 4-tuple = 10+ agent → 핵심 4-5 축소) — fidelity vs coverage trade, 별 가치 판단 영역 → 별 CFP carrier (brainstorm 단계 결정).
+- **Wave 2 mechanical lint** (`scripts/check-lane-return-back-translation.sh`) + evidence-checks-registry entry = 후속 CFP carrier (deferred-followup).
+- **Wave 3 DialogFidelityAgent runtime hook 확장** (codeforge-pmo plugin sibling sync) = 별 cross-repo CFP carrier (ADR-010 정합).
+- **paired sibling Amendment scope** (lane PL spawn prompt user-utterance verbatim anchor — write-time input anchor 차원) = ADR-082 Amendment 5 SSOT (본 CFP-1110 동일 carrier, ADR 분리 — disjoint axis: 본 ADR = return-time output gate / ADR-082 = write-time input anchor).
+- 신규 ADR 창설 = Amendment only.
+
+### 17.7 sunset_justification: null (ADR-058 §결정 5 정합)
+
+본 Amendment 6 = **additive 강화** (Layer 1-4 + DialogFidelityAgent auxiliary + §결정 12-16 모두 보존, 4번째 anchor `post_lane_return` 추가 + binding mechanism Orchestrator-mediated 추가 only). 강화 방향 only — `is_transitional: false` 보존, ADR-058 §결정 5 약화 차단 영역 미적용.
+
+`sunset_justification: null` 적격 (§12.7 / §13.7 / §14.4 / §15.7 / §16.8 family pattern 정합 — Amendment 1/2/3/4/5/6 모두 동일).
+
+**사용자 직권 minimal path = closed-loop break 외부 결정 채널, ratchet 강화 self-application 정직 명시** — 본 Amendment 자체가 monotonic-increasing governance 의 부분 (verify-before-trust + DialogFidelityAgent binding 영역 안 — Researcher critical evaluation net positive 35% 영역 직접 확장). codeforge full flow 적용 paradox 회피 정합.
+
 ## self-application top-down ratchet
 
-본 ADR amendment 는 [ADR-064 §결정 7](ADR-064-decision-principle-mandate.md) top-down ratchet 정합 — 강화 방향만 허용 (scope 확장 / 강도 강화). 약화 방향 (`is_transitional: false → true` 다운그레이드 / 4 layer 축소 / 3 memory entry mapping 회수 / Sub-mechanism 2 차원 enum 축소 / **3 touchpoint enum 축소 — §결정 15 Amendment 4** / **trigger table 회수 — §결정 16 Amendment 5** / **§결정 2(c) richness 약화 — frequency 축소 ≠ richness 축소 invariant 위반**) 은 [ADR-058 §결정 5](ADR-058-adr-sunset-criteria-mandate.md) `sunset_justification` 의무로 차단. 본 ADR-071 = ADR-064 ratchet 의 직접 carrier (mechanical version 승격 + scope 확장 = strict superset). Amendment 1/2/3/4/5 = `sunset_justification: null` family pattern.
+본 ADR amendment 는 [ADR-064 §결정 7](ADR-064-decision-principle-mandate.md) top-down ratchet 정합 — 강화 방향만 허용 (scope 확장 / 강도 강화). 약화 방향 (`is_transitional: false → true` 다운그레이드 / 4 layer 축소 / 3 memory entry mapping 회수 / Sub-mechanism 2 차원 enum 축소 / **3 touchpoint enum 축소 — §결정 15 Amendment 4** / **trigger table 회수 — §결정 16 Amendment 5** / **§결정 17 back-translation gate 회수 — Amendment 6** / **§결정 2(c) richness 약화 — frequency 축소 ≠ richness 축소 invariant 위반**) 은 [ADR-058 §결정 5](ADR-058-adr-sunset-criteria-mandate.md) `sunset_justification` 의무로 차단. 본 ADR-071 = ADR-064 ratchet 의 직접 carrier (mechanical version 승격 + scope 확장 = strict superset). Amendment 1/2/3/4/5/6 = `sunset_justification: null` family pattern.
 
 ## 해소 기준
 
