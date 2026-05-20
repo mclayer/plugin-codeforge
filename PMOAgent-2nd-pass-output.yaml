@@ -1,0 +1,604 @@
+# PMOAgent 2nd pass output — CFP-1104 ArchitectLane DDD 재편 Story 분해 + scope_manifest
+# 작성: PMOAgent (Cross-cutting)
+# 날짜: 2026-05-20 KST
+# 입력: Phase 0 brainstorm (Domain/Research/Analyst/PMO 4-tuple) + Phase 1 Codex 일괄 dispatch + 사용자 confirm (CFP 분해 / golden-path / downstream gate)
+# 산출: Mega-CFP-1104 single Epic + 6 Story 내부 분해 + Phase 1 docs PR + Phase 2 PR1~PR5 sequential
+
+# ====================================================================
+# Section A: Epic 메타데이터
+# ====================================================================
+epic:
+  cfp_id: "CFP-1104"
+  title: "ArchitectLane DDD 재편 — vocabulary theater 차단 + bounded context / aggregate / ubiquitous language 도입"
+  type: "Mega-CFP (single Epic, 6-Story internal decomposition)"
+  parent: null  # top-level Epic
+  governance_layer: "ArchitectLane (codeforge-design lane)"
+
+  decomposition_model:
+    # 사용자 confirm 2026-05-20 KST — option (1) Mega-CFP single + 6 Story 내부 분해
+    rationale: |
+      6 Story 가 동일 DDD governance scope 안에서 strongly cohesive (vocabulary SSOT
+      → frontmatter → template → contract → skill → worked example 의 vertical slice).
+      별 CFP 분해 시 cross-CFP coordination overhead + ADR proliferation. 단일 Epic +
+      sequential PR ordering 으로 atomic governance change 보존.
+    alternative_rejected: "6 independent CFP" (rationale: cohesive scope 분리 시 governance drift)
+
+  phase_distribution:
+    phase_1_docs_pr:
+      # 사용자 confirm — Story 1 단독 Phase 1 PR (ADR + glossary + concept seed)
+      scope: ["Story-1"]
+      rationale: "ADR-NNN + 50+ term glossary + 4 concept entry = downstream Story 의 어휘 prerequisite. doc-only fast-path (ADR-054) 적용 가능."
+    phase_2_pr_sequential:
+      # 사용자 confirm — Story-2~6 sequential PR ordering (병렬 회피)
+      ordering: ["PR1=Story-2", "PR2=Story-3", "PR3=Story-4", "PR4=Story-5", "PR5=Story-6"]
+      rationale: |
+        Story-2 (agent frontmatter) → Story-3 (template+lint) → Story-4 (contract v5) →
+        Story-5 (deputy matrix) → Story-6 (golden-path) 의 dependency chain.
+        Story-6 golden-path 는 모든 selior 산출물의 worked example 박제이므로 마지막.
+
+  integration_invariants:
+    # Epic-level cross-Story invariants (DesignReviewPL Epic-close 시 verify)
+    - id: "INV-1"
+      desc: "Story-1 glossary 50+ term 이 Story-2/3/4/5/6 산출물 안 vocabulary 와 100% match (drift 0)"
+      verify: "scripts/check-ubiquitous-language.sh (Story-3 산출물) 전체 lane corpus run"
+    - id: "INV-2"
+      desc: "Story-2 agent frontmatter `bounded_context` 값 enum 이 Story-1 ADR §결정 N 의 bounded context enum 과 disjoint 0"
+      verify: "PMOAgent retro 시 manual cross-ref + lint warning-tier"
+    - id: "INV-3"
+      desc: "Story-4 review-verdict-v5 의 3 finding enum (bc_violation / aggregate_violation / ubiquitous_language_drift) 이 Story-6 worked example 에서 5건 이상 실제 emit 됨"
+      verify: "Story-6 golden-path examples/ddd-golden-path-mct031.md 안 finding 박제 grep count >= 5"
+    - id: "INV-4"
+      desc: "Story-5 deputy matrix 의 Subdomain Specialist 재배치가 Story-2 agent frontmatter `bounded_context` 와 1:1 mapping"
+      verify: "manual cross-ref + ArchitectAgent §3 self-check (ADR-065 mechanical sync 7-item 확장)"
+    - id: "INV-5 (vocabulary theater 차단 — Codex BIG CONCERN)"
+      desc: "각 Story acceptance criteria 의 '어휘 emit 이 spawn / review / ADR acceptance 를 실제로 변경하는가' 검증항목이 PASS 한 case 가 Story-6 worked example 5 영역 박제로 입증됨"
+      verify: "Epic-close 시 ArchitectPLAgent + DesignReviewPL dual verdict + PMOAgent retro cross-Story pattern check"
+
+  max_parallelism:
+    # 사용자 confirm — sequential ordering (병렬 회피)
+    level: 1
+    rationale: "Story 간 dependency chain (frontmatter → template → contract → skill → golden-path). 병렬 시 INV-1~4 cross-Story invariant 검증 cycle 폭증."
+
+# ====================================================================
+# Section B: Story 분해 (6 Story)
+# ====================================================================
+stories:
+
+  # --------------------------------------------------------------
+  - story_id: "CFP-1104-S1"
+    title: "ADR-NNN architectlane-ddd-governance + glossary 50+ term SSOT + concept 4 entry seed"
+    land_order: 1
+    phase: "Phase 1 docs PR"
+    blocking_dependencies: []  # Epic 진입점
+    blocks: ["CFP-1104-S2", "CFP-1104-S3", "CFP-1104-S4", "CFP-1104-S5", "CFP-1104-S6"]
+    complexity: "M"  # ADR draft + 50+ term curation + 4 concept doc, but doc-only
+
+    labels:
+      - "parent:CFP-1104"
+      - "plugin:codeforge-design"
+      - "plugin:codeforge"  # wrapper docs/glossary.md 동반
+      - "type:adr"
+      - "type:doc-only-fast-path"  # ADR-054 적용 candidate
+      - "phase:설계"
+
+    deliverables:
+      - "docs/adr/ADR-NNN-architectlane-ddd-governance.md (신규, slug TBD, ADR-RESERVATION.md row append 의무)"
+      - "docs/glossary.md (신규, 50+ DDD term SSOT — bounded context, aggregate, ubiquitous language, value object, entity, domain event, anti-corruption layer, open host service, published language, shared kernel, customer/supplier, conformist, subdomain (core/supporting/generic), strategic design, tactical design, repository, domain service, application service, infrastructure service, 4-layer architecture (presentation/application/domain/infrastructure), hexagonal architecture, port/adapter, etc.)"
+      - "docs/domain-knowledge/concept/ddd/bounded-context.md (신규)"
+      - "docs/domain-knowledge/concept/ddd/ubiquitous-language.md (신규)"
+      - "docs/domain-knowledge/concept/ddd/aggregate.md (신규)"
+      - "docs/domain-knowledge/concept/ddd/4-layer-architecture.md (신규)"
+
+    acceptance_criteria:
+      - id: "AC-S1-1"
+        desc: "ADR-NNN frontmatter `is_transitional: false` + `mechanical_enforcement_actions: [ubiquitous-language-drift-check, bc-violation-grep, aggregate-violation-grep]` 의무 (ADR-040 Amendment 3 + ADR-058 정합)"
+      - id: "AC-S1-2"
+        desc: "glossary.md 안 50+ DDD term 존재 (grep count >= 50, 각 term 1-3 문장 정의 + cross-ref) — Codex 외부 검증 dispatch 1회"
+      - id: "AC-S1-3"
+        desc: "concept/ddd/ 4 entry 각각 (a) 정의 (b) codeforge 적용 사례 (c) ADR-NNN cross-ref 3 영역 포함 — DesignReviewPL §3 verify"
+      - id: "AC-S1-4 (vocabulary theater 차단 검증항목 — Codex BIG CONCERN)"
+        desc: "ADR-NNN §결정 N 안 'DDD 어휘 emit 이 spawn / review / ADR acceptance 를 실제로 변경하는가' 의 forcing function 명시 (3 영역 각각 1 sentence + 후속 Story-2/4/6 carrier reference)"
+      - id: "AC-S1-5"
+        desc: "ADR-NNN 안 6 ADR amendment 대상 (ADR-004 / ADR-006 / ADR-007 / ADR-014 / ADR-064 / ADR-068 / ADR-080) cross-ref + amendment scope 1 sentence 각 명시 (downstream Story-2~6 carrier 박제)"
+
+    test_contract:
+      - "ADR-NNN 본문 grep `mechanical_enforcement_actions:` presence (1 line minimum, list 3 items)"
+      - "glossary.md grep DDD term presence count >= 50 (case-insensitive)"
+      - "concept/ddd/*.md 4 file presence + 각 file `## 정의` / `## codeforge 적용` / `## ADR cross-ref` 3 section presence"
+      - "ADR-NNN §결정 N forcing function 박제 — manual DesignReviewPL §3 verify (vocabulary theater 차단 invariant)"
+
+    risk_carry:
+      - "vocabulary theater (Codex BIG CONCERN) — AC-S1-4 의 forcing function 명시 + Story-6 worked example carrier 로 mitigate"
+
+  # --------------------------------------------------------------
+  - story_id: "CFP-1104-S2"
+    title: "10 agent frontmatter `bounded_context` + `ddd_pattern` field 추가 + role-by-role description DDD term injection"
+    land_order: 2
+    phase: "Phase 2 PR1"
+    blocking_dependencies: ["CFP-1104-S1"]  # glossary + ADR-NNN 어휘 SSOT 선행 의무
+    blocks: ["CFP-1104-S3", "CFP-1104-S5", "CFP-1104-S6"]
+    complexity: "L"  # 10 agent file edit + frontmatter schema 확장 + ADR-042 amendment
+
+    labels:
+      - "parent:CFP-1104"
+      - "plugin:codeforge-design"
+      - "plugin:codeforge-requirements"
+      - "plugin:codeforge-develop"
+      - "plugin:codeforge-review"
+      - "plugin:codeforge-test"
+      - "plugin:codeforge-pmo"  # 10 agent = cross-plugin
+      - "type:agent-edit"
+      - "phase:구현"
+
+    deliverables:
+      - "10 agent file frontmatter `bounded_context: <enum>` + `ddd_pattern: <enum>` field 추가"
+      - "10 agent file description body 안 DDD term injection (1 paragraph 이상, glossary cross-ref)"
+      - "ADR-042 (agent model selection policy) Amendment N — agent frontmatter schema 확장 (model field + bounded_context + ddd_pattern 3-field invariant)"
+
+    acceptance_criteria:
+      - id: "AC-S2-1"
+        desc: "10 agent file 전부 frontmatter `bounded_context:` + `ddd_pattern:` 양 field presence (grep count = 10 each)"
+      - id: "AC-S2-2"
+        desc: "각 agent 의 `bounded_context` 값이 Story-1 ADR-NNN §결정 N 의 bounded context enum 과 100% match (drift 0)"
+      - id: "AC-S2-3"
+        desc: "각 agent description body 안 DDD term >= 3개 injection (grep glossary 50+ term cross-ref count >= 3 per agent)"
+      - id: "AC-S2-4 (vocabulary theater 차단 검증항목)"
+        desc: "agent frontmatter `bounded_context` 값이 실제 ArchitectPLAgent SubAgent spawn decision 의 input 으로 사용되는 path 가 ADR-NNN §결정 N 또는 deputy-mandate skill 안 1 sentence 박제 (Story-5 carrier reference)"
+      - id: "AC-S2-5"
+        desc: "ADR-042 Amendment N frontmatter schema 확장 명시 + sibling sync (codeforge-design canonical, 5 lane plugin mirror — ADR-010 정합)"
+
+    test_contract:
+      - "10 agent file frontmatter `bounded_context:` grep count = 10"
+      - "10 agent file frontmatter `ddd_pattern:` grep count = 10"
+      - "각 agent `bounded_context` 값 vs Story-1 ADR-NNN enum cross-ref manual + DesignReviewPL verify"
+      - "각 agent description body glossary term cross-ref count >= 3"
+
+    risk_carry:
+      - "Subdomain 분류 정치적 합의 (Story-5 deputy matrix 와 1:1 mapping 의무 — INV-4)"
+      - "vocabulary theater 차단 — AC-S2-4 의 spawn decision input path 박제로 mitigate"
+
+  # --------------------------------------------------------------
+  - story_id: "CFP-1104-S3"
+    title: "Story template `§ubiquitous_language` + Change Plan template `§bounded_context_boundary` + `§affected_aggregates` block + lint script"
+    land_order: 3
+    phase: "Phase 2 PR2"
+    blocking_dependencies: ["CFP-1104-S1", "CFP-1104-S2"]  # glossary + agent frontmatter 어휘 prerequisite
+    blocks: ["CFP-1104-S4", "CFP-1104-S6"]
+    complexity: "M"  # template 3 edit + lint script + evidence-checks-registry row
+
+    labels:
+      - "parent:CFP-1104"
+      - "plugin:codeforge"  # wrapper templates/ self-app
+      - "type:template-edit"
+      - "type:lint-script"
+      - "phase:구현"
+
+    deliverables:
+      - "templates/story.md `§ubiquitous_language` block 추가 (DDD term enumeration optional + drift detection target)"
+      - "templates/change-plan.md `§bounded_context_boundary` block 추가 (boundary 명시 + cross-BC dependency 표)"
+      - "templates/change-plan.md `§affected_aggregates` block 추가 (aggregate enum + invariant 명시)"
+      - "scripts/check-ubiquitous-language.sh (신규 lint script — Story/Change Plan corpus 에서 glossary term drift detection, warning tier)"
+      - "docs/evidence-checks-registry.yaml row append `ubiquitous-language-drift-check` (warning tier, ADR-060 framework + hotfix-bypass:ubiquitous-language-drift label)"
+      - "templates/github-workflows/ubiquitous-language-drift.yml (lint workflow, warning tier)"
+
+    acceptance_criteria:
+      - id: "AC-S3-1"
+        desc: "templates/story.md `§ubiquitous_language` block presence + DDD term enumeration 형식 example 포함"
+      - id: "AC-S3-2"
+        desc: "templates/change-plan.md `§bounded_context_boundary` + `§affected_aggregates` 양 block presence + example 포함"
+      - id: "AC-S3-3"
+        desc: "scripts/check-ubiquitous-language.sh executable + Story-1 glossary 50+ term SSOT 와 corpus drift detection 동작 verify (sample corpus 1 file run)"
+      - id: "AC-S3-4 (vocabulary theater 차단 검증항목)"
+        desc: "lint script 가 실제 review-verdict-v5 의 `ubiquitous_language_drift` finding enum 을 emit 하는 path 가 evidence-checks-registry row 의 `severity: warning` + `owner_adr: ADR-NNN` 으로 박제 (Story-4 carrier reference)"
+      - id: "AC-S3-5"
+        desc: "evidence-checks-registry v1.x MINOR bump 동반 (entry append) + label-registry-v2 MINOR bump 동반 (hotfix-bypass:ubiquitous-language-drift label 신설)"
+
+    test_contract:
+      - "templates/story.md grep `§ubiquitous_language` presence"
+      - "templates/change-plan.md grep `§bounded_context_boundary` + `§affected_aggregates` presence"
+      - "scripts/check-ubiquitous-language.sh executable + dry-run PASS (sample corpus)"
+      - "docs/evidence-checks-registry.yaml grep `ubiquitous-language-drift-check` row presence + `current_tier: warning`"
+
+    risk_carry:
+      - "vocabulary theater 차단 — AC-S3-4 의 lint emit path 박제로 mitigate"
+
+  # --------------------------------------------------------------
+  - story_id: "CFP-1104-S4"
+    title: "review-verdict-v4 → v5 MINOR bump — `bc_violation` / `aggregate_violation` / `ubiquitous_language_drift` enum 3 추가"
+    land_order: 4
+    phase: "Phase 2 PR3"
+    blocking_dependencies: ["CFP-1104-S1", "CFP-1104-S2", "CFP-1104-S3"]
+    blocks: ["CFP-1104-S6"]
+    complexity: "M"  # contract MINOR bump + sibling sync 5 plugin + ADR-008 정합
+
+    labels:
+      - "parent:CFP-1104"
+      - "plugin:codeforge-review"  # canonical contract owner
+      - "plugin:codeforge-design"
+      - "plugin:codeforge-requirements"
+      - "plugin:codeforge-develop"
+      - "plugin:codeforge-test"
+      - "plugin:codeforge-pmo"  # sibling sync 5 plugin
+      - "type:inter-plugin-contract"
+      - "phase:구현"
+
+    deliverables:
+      - "docs/inter-plugin-contracts/review-verdict-v4.md → review-verdict-v5.md MINOR bump (v4 archived path 유지, ADR-008 §결정 2 정합)"
+      - "v5 schema: `findings[].type` enum 3 신설 (`bc_violation` / `aggregate_violation` / `ubiquitous_language_drift`)"
+      - "각 enum 의 severity / finding template / DesignReviewPL emit 조건 명시"
+      - "docs/inter-plugin-contracts/MANIFEST.yaml row update (v4 → v5)"
+      - "ADR-008 amendment_log row append (v5 MINOR bump justification)"
+      - "5 sibling plugin (design/requirements/develop/test/pmo) mirror sync PR 동반 (ADR-010 §결정 1)"
+
+    acceptance_criteria:
+      - id: "AC-S4-1"
+        desc: "review-verdict-v5.md presence + 3 enum (`bc_violation` / `aggregate_violation` / `ubiquitous_language_drift`) schema 명시"
+      - id: "AC-S4-2"
+        desc: "MANIFEST.yaml row review-verdict v4 → v5 update + ADR-008 amendment_log row append"
+      - id: "AC-S4-3"
+        desc: "5 sibling plugin mirror sync PR 5 atomic merge (ADR-010 정합) — codeforge-review canonical 선행 + 5 mirror sync 후행"
+      - id: "AC-S4-4 (vocabulary theater 차단 검증항목)"
+        desc: "각 enum 의 emit 조건이 ArchitectAgent §3 / §7 self-check 또는 DesignReviewPL §3 verify 의 1 sentence 박제 + 실제 emit 발생 path (Story-1 ADR-NNN forcing function → Story-3 lint → 본 contract enum → Story-6 worked example) 전수 박제"
+      - id: "AC-S4-5"
+        desc: "label-registry-v2 MINOR bump 동반 — `ddd:bc-violation` / `ddd:aggregate-violation` / `ddd:ubiquitous-language-drift` 3 family member 신설"
+
+    test_contract:
+      - "review-verdict-v5.md grep 3 enum presence"
+      - "MANIFEST.yaml grep `review-verdict` version `v5`"
+      - "5 sibling plugin mirror file byte-identical verify (ADR-010 정합)"
+      - "label-registry-v2.md grep 3 family member presence + version MINOR bump"
+
+    risk_carry:
+      - "cross-repo coupling (5 sibling sync — ADR-010 §결정 1)"
+      - "vocabulary theater 차단 — AC-S4-4 의 emit path 전수 박제"
+
+  # --------------------------------------------------------------
+  - story_id: "CFP-1104-S5"
+    title: "skills/deputy-mandate matrix (6+2) Subdomain Specialist 재배치 + 2 conditional deputy spawn trigger 명시"
+    land_order: 5
+    phase: "Phase 2 PR4"
+    blocking_dependencies: ["CFP-1104-S1", "CFP-1104-S2"]  # glossary + agent frontmatter prerequisite
+    blocks: ["CFP-1104-S6"]
+    complexity: "M"  # skill body edit + deputy matrix 재배치 + ADR-042 cross-ref
+
+    labels:
+      - "parent:CFP-1104"
+      - "plugin:codeforge"  # wrapper skills/
+      - "plugin:codeforge-design"  # ArchitectPLAgent deputy spawn 영역
+      - "type:skill-edit"
+      - "phase:구현"
+
+    deliverables:
+      - "skills/deputy-mandate/SKILL.md 본문 deputy matrix 재배치 — 6 permanent + 2 conditional = Subdomain Specialist (Core / Supporting / Generic 분류 기반)"
+      - "2 conditional deputy spawn trigger 어휘 명시 — `live operational subdomain 활성` (LiveOps / LiveOrdering / ProductionEvidence 3 conditional 의 trigger SSOT)"
+      - "ADR-042 Amendment N cross-ref (deputy matrix 재배치 carrier)"
+      - "ADR-014 (operational risk SSOT distribution) cross-ref (conditional deputy 영역)"
+
+    acceptance_criteria:
+      - id: "AC-S5-1"
+        desc: "skills/deputy-mandate/SKILL.md body 안 6 permanent deputy enumeration + 2 conditional deputy enumeration (clear separator)"
+      - id: "AC-S5-2"
+        desc: "각 deputy 의 `bounded_context` 값이 Story-2 agent frontmatter 의 `bounded_context` 와 1:1 mapping (INV-4 verify)"
+      - id: "AC-S5-3"
+        desc: "2 conditional deputy spawn trigger 어휘 `live operational subdomain 활성` 박제 + 3 conditional deputy (LiveOps / LiveOrdering / ProductionEvidence) 각각 어떤 subdomain marker 가 trigger 인가 1 sentence 명시"
+      - id: "AC-S5-4 (vocabulary theater 차단 검증항목)"
+        desc: "deputy spawn decision tree 가 Story-2 agent frontmatter `bounded_context` 값을 input 으로 받아 분기하는 1 sentence path 박제 — 실제 ArchitectPLAgent spawn behavior 변경 입증"
+      - id: "AC-S5-5"
+        desc: "ADR-042 Amendment N + ADR-014 cross-ref + sibling-sync 면제 verify (skill = wrapper-canonical, project_stale_skill_ownership_lore 정합)"
+
+    test_contract:
+      - "skills/deputy-mandate/SKILL.md grep `Core` / `Supporting` / `Generic` subdomain enum presence"
+      - "6 permanent deputy + 2 conditional deputy 총 8 enumeration grep count = 8"
+      - "각 deputy `bounded_context` 값 cross-ref Story-2 agent frontmatter (manual + DesignReviewPL §3)"
+      - "spawn trigger 어휘 `live operational subdomain 활성` grep presence"
+
+    risk_carry:
+      - "Subdomain 분류 정치적 합의 — Story-1 ADR-NNN 가 기준만 정의 / downstream repo-by-repo 분류 (사용자 confirm 영역)"
+      - "vocabulary theater 차단 — AC-S5-4 의 spawn decision input path 박제"
+
+  # --------------------------------------------------------------
+  - story_id: "CFP-1104-S6"
+    title: "mctrader ADR-031 data-domain-decoupling worked example — 5 영역 전수 박제 (golden-path 시연)"
+    land_order: 6
+    phase: "Phase 2 PR5"
+    blocking_dependencies: ["CFP-1104-S1", "CFP-1104-S2", "CFP-1104-S3", "CFP-1104-S4", "CFP-1104-S5"]  # 모든 upstream Story 완료 후
+    blocks: []  # Epic terminal Story
+    complexity: "L"  # worked example 5 영역 전수 박제 + before/after diff + mctrader cross-repo context
+
+    labels:
+      - "parent:CFP-1104"
+      - "plugin:codeforge-design"
+      - "type:worked-example"
+      - "type:golden-path"
+      - "phase:구현"
+
+    deliverables:
+      - "examples/ddd-golden-path-mct031.md (신규 worked example, mctrader ADR-031 data-domain-decoupling 4-Layer + Open Host Service + ACL 동시 보유 사례)"
+      - "5 영역 전수 박제:"
+      - "  (1) Story field example — `§ubiquitous_language` + `§bounded_context_boundary` + `§affected_aggregates` block 완성 example"
+      - "  (2) deputy spawn rationale — Story-5 deputy matrix 의 어느 deputy 가 mctrader ADR-031 에 spawn 되는가 rationale verbatim"
+      - "  (3) Change Plan DDD field — `§bounded_context_boundary` 안 mctrader Market BC / Engine BC / Data BC 분리 + cross-BC dependency 표"
+      - "  (4) review-verdict finding 박제 — Story-4 v5 contract 의 3 enum (`bc_violation` / `aggregate_violation` / `ubiquitous_language_drift`) 가 mctrader ADR-031 review 시 실제로 emit 된 case 5건 이상 verbatim (INV-3 verify)"
+      - "  (5) ADR acceptance — Story-1 ADR-NNN forcing function 이 mctrader ADR-031 acceptance criteria 를 실제로 변경한 1 영역 verbatim (vocabulary theater 차단 입증)"
+
+    acceptance_criteria:
+      - id: "AC-S6-1"
+        desc: "examples/ddd-golden-path-mct031.md presence + 5 영역 (Story / deputy / Change Plan / review-verdict / ADR acceptance) 전수 박제 verify"
+      - id: "AC-S6-2"
+        desc: "review-verdict finding emit case >= 5건 (INV-3 verify — Story-4 v5 contract 3 enum 의 실제 emit 입증)"
+      - id: "AC-S6-3"
+        desc: "before/after diff verbatim — mctrader ADR-031 pre-DDD-governance 상태 vs post-DDD-governance 상태 5 영역 각 1 file diff (line-by-line cite)"
+      - id: "AC-S6-4 (vocabulary theater 차단 — FINAL VERDICT 검증항목 — Codex BIG CONCERN 박제 입증)"
+        desc: |
+          5 영역 박제 결과가 다음 3 forcing function path 를 verbatim 입증:
+          (a) Story-1 ADR-NNN forcing function → mctrader ADR-031 acceptance criteria 변경
+          (b) Story-2 agent frontmatter `bounded_context` → Story-5 deputy spawn decision 변경
+          (c) Story-3 lint → Story-4 review-verdict-v5 enum emit → mctrader ADR-031 review finding 변경
+          3 path 가 모두 verbatim cite 되지 않으면 INV-5 (vocabulary theater 차단) FAIL.
+      - id: "AC-S6-5"
+        desc: "downstream Epic 진입 시점 gate — 본 Story merged + worked example 시연 PASS 후에만 별 CFP 로 분리 (사용자 confirm 영역)"
+
+    test_contract:
+      - "examples/ddd-golden-path-mct031.md presence + 5 영역 H2 section presence (`## Story field example` / `## Deputy spawn rationale` / `## Change Plan DDD field` / `## Review-verdict finding 박제` / `## ADR acceptance forcing function`)"
+      - "review-verdict finding emit case grep count >= 5 (INV-3 verify)"
+      - "before/after diff 5 영역 각 line-by-line cite presence"
+      - "3 forcing function path verbatim cite (AC-S6-4 INV-5 verify) — manual DesignReviewPL + ArchitectPLAgent dual verdict"
+
+    risk_carry:
+      - "vocabulary theater 차단 FINAL VERDICT — AC-S6-4 가 Codex BIG CONCERN 최종 mitigate forcing function"
+      - "downstream Epic gate — AC-S6-5 의 별 CFP 분리 trigger (사용자 confirm)"
+      - "cross-repo coupling (mctrader 5 repo Tier B-extended) — 본 Story 는 worked example only / downstream Epic 진입 시 별 CFP"
+
+# ====================================================================
+# Section C: scope_manifest (Epic Issue body 용)
+# ====================================================================
+scope_manifest:
+
+  planned_adrs:
+    - kind: "new"
+      id: "ADR-NNN-architectlane-ddd-governance"
+      reservation_required: true  # docs/adr/ADR-RESERVATION.md row append 의무
+      carrier_story: "CFP-1104-S1"
+    - kind: "amendment"
+      target: "ADR-004"  # (specific slug TBD, ArchitectLane 관련)
+      scope: "ArchitectLane DDD 어휘 도입 cross-ref"
+      carrier_story: "CFP-1104-S1"
+    - kind: "amendment"
+      target: "ADR-006"
+      scope: "design lane DDD pattern 정합"
+      carrier_story: "CFP-1104-S1"
+    - kind: "amendment"
+      target: "ADR-007"
+      scope: "ArchitectAgent §3 / §7 DDD self-check 확장"
+      carrier_story: "CFP-1104-S1"
+    - kind: "amendment"
+      target: "ADR-014"  # operational risk SSOT distribution
+      scope: "2 conditional deputy spawn trigger `live operational subdomain 활성` 정합"
+      carrier_story: "CFP-1104-S5"
+    - kind: "amendment"
+      target: "ADR-064"  # decision principle mandate
+      scope: "DDD vocabulary forbid-list / decision-principle-vocab 정합"
+      carrier_story: "CFP-1104-S1"
+    - kind: "amendment"
+      target: "ADR-068"  # boundary completeness invariants
+      scope: "bounded context boundary completeness self-check invariant 추가 (I-6 candidate)"
+      carrier_story: "CFP-1104-S1"
+    - kind: "amendment"
+      target: "ADR-080"  # (specific slug TBD)
+      scope: "DDD governance cross-ref"
+      carrier_story: "CFP-1104-S1"
+    - kind: "amendment"
+      target: "ADR-042"  # agent model selection policy
+      scope: "agent frontmatter schema 확장 (model + bounded_context + ddd_pattern 3-field invariant)"
+      carrier_story: "CFP-1104-S2"
+    - kind: "amendment"
+      target: "ADR-008"  # inter-plugin contract versioning
+      scope: "review-verdict-v4 → v5 MINOR bump amendment_log row"
+      carrier_story: "CFP-1104-S4"
+    - kind: "amendment"
+      target: "ADR-010"  # inter-plugin contract sibling sync
+      scope: "review-verdict-v5 sibling sync 5 plugin PR"
+      carrier_story: "CFP-1104-S4"
+
+  planned_files:
+    new:
+      - "docs/adr/ADR-NNN-architectlane-ddd-governance.md"
+      - "docs/glossary.md"
+      - "docs/domain-knowledge/concept/ddd/bounded-context.md"
+      - "docs/domain-knowledge/concept/ddd/ubiquitous-language.md"
+      - "docs/domain-knowledge/concept/ddd/aggregate.md"
+      - "docs/domain-knowledge/concept/ddd/4-layer-architecture.md"
+      - "scripts/check-ubiquitous-language.sh"
+      - "templates/github-workflows/ubiquitous-language-drift.yml"
+      - "docs/inter-plugin-contracts/review-verdict-v5.md"
+      - "examples/ddd-golden-path-mct031.md"
+    edit_rewrite:
+      - "10 agent file (cross-plugin: codeforge-requirements/design/develop/review/test/pmo)"
+      - "  - codeforge-requirements: RequirementsPLAgent, DomainAgent, RequirementsAnalystAgent, ResearcherAgent (4 file)"
+      - "  - codeforge-design: ArchitectPLAgent, ArchitectAgent (2 file)"
+      - "  - codeforge-develop: DeveloperPLAgent (1 file)"
+      - "  - codeforge-review: DesignReviewPL, CodeReviewPL (2 file)"
+      - "  - codeforge-pmo: PMOAgent (1 file)"
+      - "  - TBD: 10 agent 정확 enumeration — Story-2 brainstorm 시 final list"
+      - "templates/story.md (`§ubiquitous_language` block 추가)"
+      - "templates/change-plan.md (`§bounded_context_boundary` + `§affected_aggregates` block 추가)"
+      - "templates/inter-plugin-contracts/review-verdict-v4.md → v5 path archive + v5 신규"
+      - "skills/deputy-mandate/SKILL.md (matrix 6+2 재배치)"
+    edit_append:
+      - "docs/inter-plugin-contracts/MANIFEST.yaml (review-verdict v4 → v5)"
+      - "docs/evidence-checks-registry.yaml (ubiquitous-language-drift-check row append)"
+      - "docs/inter-plugin-contracts/label-registry-v2.md (3 ddd:* family member + hotfix-bypass:ubiquitous-language-drift)"
+      - "docs/adr/ADR-RESERVATION.md (ADR-NNN row append)"
+      - "CLAUDE.md (ArchitectLane DDD 단락 + deputy mandate skill 단락 update)"
+      - "docs/orchestrator-playbook.md (DDD vocabulary 적용 시점 단락 — 후속 정합)"
+      - "docs/doc-locations.yaml (glossary.md / concept/ddd/ / examples/ddd-golden-path-mct031.md row append)"
+
+  planned_claude_md_sections:
+    - section: "ArchitectLane DDD governance"
+      scope: "Story-1 ADR-NNN cross-ref + glossary cross-ref + 4 bounded context enum SSOT"
+      carrier_story: "CFP-1104-S1"
+      target_line_range: "TBD (CLAUDE.md L?-L? — Story-1 brainstorm 시 final pin)"
+    - section: "Deputy mandate matrix (codeforge-design lane) — 6 permanent + 2 conditional Subdomain Specialist"
+      scope: "Story-5 skill body 재배치 cross-ref + 2 conditional spawn trigger 어휘 명시"
+      carrier_story: "CFP-1104-S5"
+      target_line_range: "TBD (현재 deputy mandate 단락 update — L?-L?)"
+    - section: "Inter-plugin Contract (review-verdict-v5)"
+      scope: "Story-4 contract bump cross-ref"
+      carrier_story: "CFP-1104-S4"
+      target_line_range: "TBD"
+
+  planned_inter_plugin_contracts:
+    - name: "review-verdict-v4"
+      bump_type: "MINOR"
+      new_version: "v5"
+      rationale: "3 enum 신설 (`bc_violation` / `aggregate_violation` / `ubiquitous_language_drift`) — backward-compat (기존 enum 보존, 추가만, ADR-008 §결정 2 정합)"
+      carrier_story: "CFP-1104-S4"
+      sibling_sync_required: true  # ADR-010 §결정 1 — 5 sibling plugin mirror sync PR
+
+  planned_label_registry_bumps:
+    - registry: "label-registry-v2"
+      bump_type: "MINOR"
+      version_target: "TBD (next MINOR — Story-4 진입 시 latest active version pin)"
+      new_entries:
+        - "ddd:bc-violation (severity:* family 정합)"
+        - "ddd:aggregate-violation"
+        - "ddd:ubiquitous-language-drift"
+        - "hotfix-bypass:ubiquitous-language-drift (per-entry namespace, ADR-024 Amendment 3 정합)"
+      carrier_story: "CFP-1104-S3,CFP-1104-S4"  # Story-3 lint bypass + Story-4 contract enum
+
+  planned_evidence_checks:
+    - name: "ubiquitous-language-drift-check"
+      tier: "warning"
+      owner_adr: "ADR-NNN-architectlane-ddd-governance"
+      bypass_label: "hotfix-bypass:ubiquitous-language-drift"
+      carrier_story: "CFP-1104-S3"
+      registry_bump_type: "MINOR"  # evidence-check-registry-v1 v1.x → MINOR bump
+
+  cross_section_conflict_detection: true
+  cross_section_conflict_notes:
+    - "10 agent file = cross-plugin (5 sibling plugin). Phase 2 PR1 시 atomic sequential merge 의무 (ADR-010 §결정 1)"
+    - "review-verdict-v4 → v5 = 5 sibling plugin mirror sync PR 동반. Phase 2 PR3 시 atomic merge ordering 의무"
+    - "ADR-042 + ADR-014 + ADR-068 + ADR-080 등 6 ADR amendment = Story-1 Phase 1 docs PR 안 동시 amendment 의무 (atomic)"
+
+# ====================================================================
+# Section D: Risk 우선순위 (Top 5)
+# ====================================================================
+risks_top_5:
+
+  - priority: 1
+    risk_id: "R-1 (HIGHEST — Codex BIG CONCERN)"
+    name: "Vocabulary theater"
+    desc: |
+      DDD 어휘 (bounded context / aggregate / ubiquitous language) 가 frontmatter / template / contract /
+      skill 본문에 emit 되지만 spawn decision / review findings / ADR acceptance criteria 를
+      실제로 변경하지 않으면 "어휘만 도입 + behavior 변경 0" 인 vocabulary theater 함정.
+    mitigation:
+      - "각 Story acceptance criteria 의 '어휘 emit 이 spawn / review / ADR acceptance 를 실제로 변경하는가' 검증항목 1건 이상 의무 (AC-S1-4 / AC-S2-4 / AC-S3-4 / AC-S4-4 / AC-S5-4 / AC-S6-4)"
+      - "INV-5 Epic-level invariant — vocabulary theater 차단 FINAL VERDICT (Story-6 worked example 5 영역 박제로 입증)"
+      - "Story-1 ADR-NNN forcing function § 의무 명시 (AC-S1-4)"
+      - "Story-6 worked example AC-S6-4 = 3 forcing function path verbatim cite — vocabulary theater 차단 FINAL gate"
+    residual_risk: "LOW (Story-6 worked example 시연 PASS 시 vocabulary theater 차단 입증 완료)"
+
+  - priority: 2
+    risk_id: "R-2"
+    name: "Subdomain 분류 정치적 합의"
+    desc: |
+      DDD subdomain 분류 (Core / Supporting / Generic) 가 codeforge 적용 시
+      "어느 agent 가 Core / Supporting / Generic 인가" 의 정치적 합의 영역.
+      upstream Story 1 = 분류 기준만 정의, downstream repo-by-repo = 실 분류 (사용자 confirm).
+    mitigation:
+      - "upstream Story-1 = subdomain 분류 기준 + 분류 example only (실 분류 strict 0)"
+      - "downstream Epic (별 CFP, mctrader 등 consumer repo) = repo-by-repo 분류"
+      - "Story-2 agent frontmatter `bounded_context` 는 codeforge plugin 한정 (consumer 분류 영역 아님)"
+      - "Story-5 deputy matrix 6+2 = codeforge-design lane 한정 deputy spawn matrix (consumer subdomain 영역 disjoint)"
+    residual_risk: "MEDIUM (downstream Epic 진입 시점 별 CFP 영역 — AC-S6-5 gate)"
+
+  - priority: 3
+    risk_id: "R-3"
+    name: "Self-reference paradox"
+    desc: |
+      codeforge 자체가 DDD governance 를 도입하면서 codeforge 자체의 bounded context /
+      ubiquitous language 를 정의하는 self-reference. 이미 사용자 confirm 영역 (non-blocker).
+    mitigation:
+      - "Story-1 ADR-NNN 안 self-reference paradox 1 sentence acknowledge + codeforge bounded context enum 명시 (codeforge plugin governance domain 한정)"
+      - "Story-2 agent frontmatter `bounded_context` 값 = codeforge governance domain 한정 enum (consumer domain disjoint)"
+    residual_risk: "LOW (사용자 confirm 영역 — non-blocker)"
+
+  - priority: 4
+    risk_id: "R-4"
+    name: "Cross-repo coupling (downstream Epic 진입 시점 gate)"
+    desc: |
+      mctrader (5 repo Tier B-extended) 등 downstream consumer 가 codeforge DDD governance
+      를 채택할 시점이 본 Epic 종료 후. Story-6 worked example 시연 PASS = downstream gate.
+    mitigation:
+      - "AC-S6-5 — downstream Epic 진입 시점 gate = Story-6 merged + worked example 시연 PASS 후"
+      - "downstream Epic = 별 CFP (mctrader-specific) — 본 Epic scope 외"
+      - "Story-6 worked example 안 mctrader ADR-031 = before/after diff only (mctrader repo 직접 수정 0 — example 박제만)"
+    residual_risk: "LOW (downstream gate 분리 — 본 Epic scope 외)"
+
+  - priority: 5
+    risk_id: "R-5"
+    name: "Existing ADR amendment ripple (6 ADR amendment 대상)"
+    desc: |
+      6 ADR amendment (ADR-004 / ADR-006 / ADR-007 / ADR-014 / ADR-064 / ADR-068 / ADR-080) +
+      추가 3 ADR amendment (ADR-042 / ADR-008 / ADR-010) = 총 9 ADR amendment.
+      atomic Phase 1 docs PR 안 동시 amendment 의무 → ripple 영역.
+    mitigation:
+      - "Story-1 Phase 1 docs PR 안 9 ADR amendment 동시 처리 (atomic merge)"
+      - "각 ADR amendment scope = 1 sentence cross-ref (deep rewrite 0)"
+      - "ADR-058 §결정 5 sunset_justification 의무 (ratchet 강화 방향만)"
+      - "DesignReviewPL §3 verify — 9 ADR amendment 정합성 100% match (drift 0)"
+    residual_risk: "MEDIUM (9 ADR atomic amendment cycle — Phase 1 PR 크기 크다, DesignReviewPL workload)"
+
+# ====================================================================
+# Section E: Phase 1 docs PR scope (Story-1 단독)
+# ====================================================================
+phase_1_docs_pr_scope:
+  pr_kind: "doc-only fast-path (ADR-054 적용 candidate)"
+  story_ids: ["CFP-1104-S1"]
+  files_changed_estimate: "~12 file (ADR-NNN 신규 + glossary 신규 + concept 4 entry + 6 ADR amendment + CLAUDE.md ArchitectLane 단락 + ADR-RESERVATION row)"
+  loc_estimate: "+1500 / -50"
+  review_lane: ["DesignReviewPL"]  # CodeReviewPL skip (doc-only)
+  required_checks:
+    - "doc-frontmatter (ADR-058 frontmatter `is_transitional: false` + `mechanical_enforcement_actions[]`)"
+    - "doc-section-schema (concept/ddd/ 4 entry 3 section presence)"
+    - "phase-gate-mergeable (doc-only fast-path 3-source AND, ADR-026)"
+    - "adr-sunset-criteria (ADR-NNN 의무 — ADR-058)"
+  rationale: |
+    Story-1 = ADR + glossary + concept seed (doc-only). src/tests 무변경.
+    ADR-054 doc-only fast-path 적용 가능 (ArchitectPLAgent + DesignReviewPL 만, CodeReviewPL skip).
+
+# ====================================================================
+# Section F: 사용자 confirm 영역 (재확인 의무)
+# ====================================================================
+user_confirmations_referenced:
+  - confirm_id: "C-1 (2026-05-20 KST)"
+    desc: "CFP 분해 = Mega-CFP-1104 single + 6 Story 내부 분해 + Phase 1 docs PR + Phase 2 PR1~PR5 sequential"
+    applied_in: "Section A.decomposition_model + A.phase_distribution"
+  - confirm_id: "C-2 (2026-05-20 KST)"
+    desc: "Golden-path 시연 대상 = mctrader ADR-031 data-domain-decoupling (4-Layer + Open Host Service + ACL 동시 보유)"
+    applied_in: "Section B.CFP-1104-S6"
+  - confirm_id: "C-3 (2026-05-20 KST)"
+    desc: "downstream 진입 시점 = upstream Phase 2 PR5 (golden-path) LAND + worked example 시연 PASS 후 → 별 CFP 로 분리"
+    applied_in: "Section B.CFP-1104-S6.AC-S6-5 + Section D.R-4"
+
+# ====================================================================
+# Section G: PMOAgent 2nd pass 종료 marker
+# ====================================================================
+pmo_2nd_pass_meta:
+  agent: "PMOAgent (Cross-cutting)"
+  pass_number: 2
+  date_kst: "2026-05-20"
+  input_sources:
+    - "Phase 0 brainstorm (Domain/Research/Analyst/PMO 4-tuple)"
+    - "Phase 1 Codex 일괄 dispatch verdict (vocabulary theater BIG CONCERN)"
+    - "사용자 confirm 3 entry (C-1 / C-2 / C-3)"
+  output_file: "PMOAgent-2nd-pass-output.yaml (본 file)"
+  next_step: |
+    Orchestrator 가 본 yaml 을 input 으로 Epic Issue (CFP-1104) body 의 scope_manifest 블록 작성 +
+    6 Story Issue (CFP-1104-S1 ~ CFP-1104-S6) 신규 생성 (sub-issue link) + Story-1 진입.
+  vocabulary_theater_mitigation_summary: |
+    각 Story acceptance criteria 의 'vocabulary theater 차단 검증항목' 1건 이상 의무 명시
+    (AC-S1-4 / AC-S2-4 / AC-S3-4 / AC-S4-4 / AC-S5-4 / AC-S6-4) +
+    Epic-level INV-5 = Story-6 worked example 5 영역 박제로 FINAL VERDICT 입증.
+    Codex BIG CONCERN 박제 → mitigation forcing function chain 6-Story carrier 완성.
