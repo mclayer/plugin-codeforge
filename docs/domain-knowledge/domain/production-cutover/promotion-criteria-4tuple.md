@@ -13,7 +13,7 @@ created_by: CFP-991  # Wave 4 sub-Epic #1 Story-4 carrier
 carrier_adrs:
   - ADR-72 Amendment 3  # ProductionEvidenceDeputy mandate + EPIC cutover gate evidence quad — §결정 3 trigger axis 표 wrapper governance row + §결정 5 evidence quad 표 row (Amendment 3)
   - ADR-076 §결정 9.6   # 3-tier channel taxonomy declaration — promotion criteria 4-tuple SSOT empirical anchor (4 industry exemplar)
-  - ADR-016 Amendment 3 # codeforge family scope 7 plugin × channel pin invariant
+  - ADR-016 Amendment 3 # codeforge family scope 7 plugin × channel 고정 invariant
   - ADR-063 Amendment 5 # marketplace atomic invariant — publisher↔registry↔consumer 3-way version atomic
   - ADR-063 Amendment 6 # mirrored field × channel matrix
   - ADR-070 §결정 D6    # Codex verify-before-trust — mandatory-real-execution-evidence STANDING (CFP-988 Amendment 4)
@@ -39,11 +39,11 @@ related_contracts:
 
 ## 컨텍스트
 
-본 4-tuple SSOT 는 Wave 4 sub-Epic #1 (Epic CFP-882, multi-version channel pin) 의 **2nd production cutover surface** 영역. Wave 4 sub-Epic #882 Story-3 (CFP-954 production cutover layer mandate first activation) 이후 Story-4 (CFP-991) 가 promotion criteria enforcement layer carrier.
+본 4-tuple SSOT 는 Wave 4 sub-Epic #1 (Epic CFP-882, multi-version channel 고정) 의 **2nd production cutover surface** 영역. Wave 4 sub-Epic #882 Story-3 (CFP-954 production cutover layer mandate first activation) 이후 Story-4 (CFP-991) 가 promotion criteria enforcement layer carrier.
 
 **3 carrier layer 분리** (CFP-906 + CFP-932 + CFP-991 lineage):
 - Story-1 (CFP-906) = declare layer SSOT only (channel taxonomy 3-tier stable/beta/canary 선언)
-- Story-2 (CFP-932) = runtime active layer (channel drift detection + channel-aware version pin runtime)
+- Story-2 (CFP-932) = runtime active layer (channel drift detection + channel-aware version 고정 runtime)
 - **Story-4 (CFP-991) = enforcement layer carrier (promotion criteria 4-tuple gate evaluation + canary cross-repo coordination)**
 - Story-5 (별 CFP) = downgrade asymmetry invariant declarative carrier
 

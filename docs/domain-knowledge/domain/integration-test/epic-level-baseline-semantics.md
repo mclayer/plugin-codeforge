@@ -15,7 +15,7 @@ tags:
 related_adrs:
   - ADR-055  # Amendment 3 carrier (Epic-level baseline first activation)
   - ADR-044  # §결정 5 IntegrationTestAgent single-shot
-  - ADR-073  # verify-before-assert (frozen-SHA pin discipline)
+  - ADR-073  # verify-before-assert (`frozen-SHA pin` discipline)
   - ADR-082  # write-time self-write verification
 related_stories:
   - CFP-882  # parent Epic (Wave 4 sub-Epic)
@@ -30,7 +30,7 @@ updated: 2026-05-18
 
 ## 정의
 
-Epic-level integration test baseline 의 **incremental promotion semantic** = Wave 4 sub-Epic #882 첫 사례 (CFP-954 carrier). 1 Epic 안 N Story 의 cross-Story consistency check 를 baseline yaml 로 stratified pin 하고, Story 진행에 따라 v1 → v2 → v3 으로 append-only 승격하는 패턴.
+Epic-level integration test baseline 의 **incremental promotion semantic** = Wave 4 sub-Epic #882 첫 사례 (CFP-954 carrier). 1 Epic 안 N Story 의 cross-Story consistency check 를 baseline yaml 로 stratified 고정 하고, Story 진행에 따라 v1 → v2 → v3 으로 append-only 승격하는 패턴.
 
 본 entry = ADR-055 Amendment 3 의 narrative SSOT — IntegrationTestAgent / ArchitectAgent / QADeveloperAgent / 후속 Wave carrier 가 참조하는 단일 정의.
 
@@ -44,11 +44,11 @@ Epic-level integration test baseline 의 **incremental promotion semantic** = Wa
 |---|---|---|---|
 | **declare** | Story-3 (CFP-954, 본 Story) | v1 | declarative-only (story_keys 3 + frozen_shas + CSC 3 entry, executable bats/pytest 0) |
 | **runtime** | Story-4 (TBD) | v2 | promotion criteria 4-tuple executable baseline (canary→beta promotion gate) |
-| **final pin** | Story-5 (TBD) | v3 | downgrade asymmetry invariant executable + Wave 4 sub-Epic close gate |
+| **최종 고정** | Story-5 (TBD) | v3 | downgrade asymmetry invariant executable + Wave 4 sub-Epic close gate |
 
 ## 핵심 규칙
 
-### 1. Frozen-SHA pin discipline (ADR-073 verify-before-assert)
+### 1. Frozen-SHA 고정 discipline (ADR-073 verify-before-assert)
 
 baseline yaml 안 `frozen_shas` 4-tuple (wrapper main + wrapper cfp-<key> merge + internal-docs main + internal-docs cfp-<key> merge) — direct `gh api repos/.../commits/<sha> --jq .sha` verify 의무 (self-claim SHA 금지).
 
@@ -60,9 +60,9 @@ Wave 4 sub-Epic #882 baseline v1 (CFP-954):
 - CFP-954 wrapper merge: `TBD` (populate at Phase 2 PR merge time, OpRiskArch §D.1 race window catch)
 - CFP-954 internal-docs merge: `TBD`
 
-### 2. Append-only stratified pin pattern (DataMigrationArch §G.5)
+### 2. Append-only stratified 고정 pattern (DataMigrationArch §G.5)
 
-baseline v1 / v2 / v3 schema = **append-only stratified pin**:
+baseline v1 / v2 / v3 schema = **append-only stratified 고정**:
 - v2 = v1.frozen_shas verbatim copy + Story-4 own frozen_shas append
 - v3 = v2.frozen_shas verbatim copy + Story-5 own frozen_shas append + Wave 4 sub-Epic close gate evidence
 
@@ -85,7 +85,7 @@ Story-4 / Story-5 carrier 시점 baseline v2 / v3 promotion script 가 v1 frozen
 2. **Internal-docs main HEAD advance race**: 동일 패턴 internal-docs
 3. **Cross-repo atomicity gap**: wrapper PR merge ↔ internal-docs PR merge 시간차 (sequential ADR-008 §결정 2 정합) → 두 main SHA pair 가 다른 timestamp
 
-Mitigation: baseline yaml schema `pin_timestamp_kst` + `pin_verified_via` field (declarative SSOT) + Story-4 promotion script SHA pin verify (`baseline_yaml_sha` self-hash invariant 영역).
+Mitigation: baseline yaml schema `pin_timestamp_kst` + `pin_verified_via` field (declarative SSOT) + Story-4 promotion script SHA 고정 verify (`baseline_yaml_sha` self-hash invariant 영역).
 
 ### Story-level vs Epic-level disjoint
 
@@ -95,11 +95,11 @@ Story-level integration test (`tests/integration/<story-key>/`, QADeveloperAgent
 
 - **ADR-055 Amendment 3** — Epic-level baseline first activation SSOT (CFP-954 carrier)
 - **ADR-044 §결정 5** — IntegrationTestAgent single-shot pattern (test lane = single subagent)
-- **ADR-073** — verify-before-assert (frozen-SHA pin discipline, self-claim SHA 금지)
+- **ADR-073** — verify-before-assert (`frozen-SHA pin` discipline, self-claim SHA 금지)
 - **ADR-082** — write-time self-write verification mandate (frozen_shas value 사실성 source direct verify)
 
 ## 변경 이력
 
 | 날짜 (KST) | Story | 변경 |
 |---|---|---|
-| 2026-05-18 | CFP-954 | 최초 작성 — Wave 4 sub-Epic #882 Story-3 Epic-level baseline 자동 승격 semantic 정의 (3-step incremental promotion + frozen-SHA pin + append-only stratified pin + CSC 3 entry + race window catch) |
+| 2026-05-18 | CFP-954 | 최초 작성 — Wave 4 sub-Epic #882 Story-3 Epic-level baseline 자동 승격 semantic 정의 (3-step incremental promotion + frozen-SHA 고정 + append-only stratified 고정 + CSC 3 entry + race window catch) |

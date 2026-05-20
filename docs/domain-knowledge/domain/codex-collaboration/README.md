@@ -86,7 +86,7 @@ substitution path enum 3 중 어느 case 채택해도 Orchestrator verify-before
 
 1. **file scope** — grep + verbatim quote (file content full or partial)
 2. **dir scope** — recursive grep + count (file path enumeration)
-3. **cross-repo** — gh api + commit SHA pin (`mcp__github__get_file_contents` 또는 `gh api repos/.../contents/<path>?ref=<sha>`)
+3. **cross-repo** — gh api + commit SHA 고정 (`mcp__github__get_file_contents` 또는 `gh api repos/.../contents/<path>?ref=<sha>`)
 4. **grep count claim active vs historical** — active grep count (현재 main HEAD) vs historical grep count (이전 commit) 차원 분리 명시
 5. **ADR §결정 번호 정확성** — ADR 인용 시 §결정 번호 + Amendment number 정확성 (ADR-052 Amendment 8 ≠ Amendment 5)
 

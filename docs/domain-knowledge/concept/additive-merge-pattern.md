@@ -8,9 +8,9 @@ updated: 2026-05-17
 carrier_story: CFP-896
 related_adrs:
   - ADR-076  # 선언적 reconciliation upgrade flow SSOT — §4.7 overlay_reconcile_implementation_binding marker-aware 2-way 패턴 anchor
-  - ADR-039  # Orchestrator subagent default + §결정 14 pre-spawn-pin mandate (CFP-895) — 본 pattern 의 forcing function 짝
+  - ADR-039  # Orchestrator subagent default + §결정 14 `pre-spawn-pin` mandate (CFP-895) — 본 pattern 의 forcing function 짝
   - ADR-064  # decision principle mandate — §결정 4 parallel default (mid-flight churn 가능 원인)
-  - ADR-073  # verify-before-assert — 모든 rebase 결정 전 pin HEAD invariant
+  - ADR-073  # verify-before-assert — 모든 rebase 결정 전 HEAD 고정 invariant
   - ADR-077  # clarification 강제 재조사 전파 — 4-layer disjoint 패턴 N-layer 확장 anchor
 related_stories:
   - CFP-785  # Story-3 Epic A — 3× 추월 rebase 첫 누적 (CFP-722/751/777/795/810/745/819 추월)
@@ -99,28 +99,28 @@ ADR-076 §결정 4 의 4-layer disjoint 패턴 N-layer 확장과 동형 (ADR-077
 
 본 pattern 채택 = mid-flight rebase 일관 자동화. Story 분할 path 는 **orthogonal future concern** — 본 pattern 이 작동하지 않는 case (예: 동일 SSOT 의 의미적 conflict, 단순 line append 아님) 가 발생하면 Story 자체를 작게 분할 검토. 즉 본 pattern = 1차 선택, 분할 = 2차 선택.
 
-### vs ADR-039 §결정 14 (CFP-895 pre-spawn-pin)
+### vs ADR-039 §결정 14 (CFP-895 `pre-spawn-pin`)
 
-ADR-039 §결정 14 = branch creation 시점 의무 (pre-action). 본 pattern = rebase 시점 의무 (mid-action). 양 패턴 짝 — pre-spawn-pin 으로 stale-base 발생 자체를 차단하고, 발생 시 (parallel session main churn 자연 발생) additive-merge 로 손실 0 정합.
+ADR-039 §결정 14 = branch creation 시점 의무 (pre-action). 본 pattern = rebase 시점 의무 (mid-action). 양 패턴 짝 — `pre-spawn-pin` 으로 stale-base 발생 자체를 차단하고, 발생 시 (parallel session main churn 자연 발생) additive-merge 로 손실 0 정합.
 
 ## 메커니즘 cross-ref
 
 | 메커니즘 | normative anchor |
 |---|---|
-| pre-spawn-pin (branch creation 시점) | ADR-039 §결정 14 + playbook §3.0.16 |
+| `pre-spawn-pin` (branch creation 시점) | ADR-039 §결정 14 + playbook §3.0.16 |
 | parallel-epic-conflict-check (cross-section detection) | `templates/github-workflows/parallel-epic-conflict-check.yml` (ADR-050) |
 | label-registry PATCH bump (additive) | 본 개념 I-1 |
 | evidence-registry tail append (additive) | 본 개념 I-2 |
 | cross-section additive resolution | 본 개념 I-3 |
-| verify-before-assert (rebase 결정 전 pin HEAD) | ADR-073 §결정 1 |
+| verify-before-assert (rebase 결정 전 HEAD 고정) | ADR-073 §결정 1 |
 | 4-layer counter disjoint (cross-pollinate 금지) | ADR-077 §결정 5 |
 
 ## 관련 ADR
 
 - [ADR-076](../../adr/ADR-076-declarative-reconciliation-upgrade.md) — §4.7 marker-aware 2-way / wholesale_mirror 패턴의 long-running rebase 영역 확장 anchor (인접 도메인)
-- [ADR-039](../../adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — §결정 14 pre-spawn-pin mandate (CFP-895) — 본 pattern 의 짝
+- [ADR-039](../../adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — §결정 14 `pre-spawn-pin` mandate (CFP-895) — 본 pattern 의 짝
 - [ADR-064](../../adr/ADR-064-decision-principle-mandate.md) — §결정 4 parallel default (mid-flight churn 의 원인)
-- [ADR-073](../../adr/ADR-073-orchestrator-verify-before-assert.md) — pin HEAD before rebase decision
+- [ADR-073](../../adr/ADR-073-orchestrator-verify-before-assert.md) — HEAD 고정 before rebase decision
 - [ADR-077](../../adr/ADR-077-clarification-forced-reinvestigation-propagation.md) — §결정 5 4-layer disjoint N-layer 확장 anchor
 
 ## 변경 이력
