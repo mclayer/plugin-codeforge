@@ -17,9 +17,17 @@ amendment_log:
     scope_change: "ratchet 강화 only — 기존 §결정 4 Pause-and-resume 의미 invariant 변경 0. scope-aware mechanical input 추가로 RESET decision evidence trail 보존."
     breaking: false
     backward_compat: true
+  - date: 2026-05-21
+    amendment: 2
+    cfp: CFP-1125
+    summary: "disjoint invariant 보존 declare amendment (ADR-076 sunset 후 carrier 이전) — 본 ADR-067 RESET semantics (§결정 4) = Story progression layer (Story §10 FIX Ledger RESET? column) 의 영구 architectural invariant 명시. ADR-076 sunset (walker paradigm 전환) 후 disjoint invariant (ADR-067 RESET = Story progression layer / ADR-076 snapshot = Upgrade transaction layer, cross-pollinate 금지) 의 carrier 가 본 ADR-067 amendment + Wave 1 Story-3 imperative-walker-protocol-v1 codify 로 이전. walker step pause/resume ≠ Story §10 FIX Ledger RESET column 마커 명시."
+    scope_change: "declarative invariant preservation only — 기존 §결정 1-7 의미 invariant 변경 0. is_transitional: false 유지 (영구 architectural invariant, 본체 sunset 아님). β2 audit (#1113) Anchor 5 LOSSLESS 판정 carrier."
+    breaking: false
+    backward_compat: true
 related_stories:
   - CFP-526
   - CFP-842   # Amendment 1 — fix-event-v1 v1.3 depth-aware scope MINOR bump carrier
+  - CFP-1125  # Amendment 2 — disjoint invariant 보존 declare (ADR-076 sunset 후 carrier 이전)
 related_adrs:
   - ADR-008
   - ADR-024
@@ -279,6 +287,17 @@ N/A — permanent policy (`is_transitional: false`).
 - 본 ADR 은 governance carrier 영구 정책 — fix-event-v1 schema 의 reasoning carryover invariant 는 codeforge 의 FIX 루프 reasoning preservation contract 의 SSOT.
 - 향후 amendment 시 ADR-058 §결정 5 (amendment justification 의무) 정합 — `sunset_justification` 미적용 (transitional 아님), 대신 amendment scope 명시 의무.
 - recursive sunset 회피 패턴 정합 사례: ADR-064 (결정 원칙 mandate), ADR-058 (sunset criteria mandate), ADR-013 (codeforge family dogfood-out), ADR-016 (marketplace registration), ADR-042 (agent model selection).
+
+## Amendment 2 (CFP-1125 carrier) — walker paradigm 전환 후 disjoint invariant 보존 declare
+
+본 ADR-067 RESET semantics (§결정 4) = Story progression layer (Story §10 FIX Ledger 의 `RESET?` column). CFP-1125 walker paradigm 전환 후에도 본 disjoint invariant (ADR-076 §결정 4 verbatim, "ADR-067 RESET = Story progression layer / ADR-076 snapshot = Upgrade transaction layer, cross-pollinate 금지") 는 본 ADR-067 본체에 영구 보존.
+
+ADR-076 sunset 후 disjoint invariant 의 carrier = 본 ADR-067 amendment + Wave 1 Story-3 imperative-walker-protocol-v1 codify 안 명시 (walker step pause/resume ≠ Story §10 FIX Ledger RESET column 마커).
+
+- **본 disjoint invariant 는 sunset 대상 아님** — `is_transitional: false` 유지 (영구 architectural invariant)
+- ADR-076 sunset 후 declarative anchor 이전 = 본 ADR-067 amendment + walker schema ADR
+
+**cross-ref**: [CFP-1125](https://github.com/mclayer/plugin-codeforge/issues/1125) + [β2 audit (#1113)](https://github.com/mclayer/plugin-codeforge/issues/1113) Anchor 5 LOSSLESS 판정.
 
 ## 관련 파일
 
