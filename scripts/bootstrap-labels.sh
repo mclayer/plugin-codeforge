@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# bootstrap-labels.sh — Plugin이 사용하는 GitHub label 42종 일괄 생성 (1회).
+# bootstrap-labels.sh — Plugin이 사용하는 GitHub label 55종 + 7 hotfix-bypass:* yaml dynamic 일괄 생성 (1회).
+# CFP-1059: Deploy lane + Deploy Review lane + Schema 7 원칙 + Cross-layer 정책 신설 (46 → 55 hardcoded base + 7 hotfix-bypass:* dynamic, label-registry-v2 v2.41 → v2.42 / ADR-087 + ADR-088 + ADR-089 + ADR-090 carrier).
 # CFP-954: production-touching label 정식 추가 (41 → 42종, label-registry-v2 v2.33 → v2.34 정합 — CFP-949 v2.33 collision rebase ratchet, dual-carrier: CFP-949 5 entry 보존 + CFP-954 production-touching append).
 #
 # CFP-11 end-to-end 실증에서 발견된 bootstrap drift — 신규 repo에 plugin 적용 시
@@ -78,8 +79,9 @@ create_label() {
 # impl-manifest = separate axis (retained — sub-issue visual marker)
 create_label "impl-manifest"    "fbca04" "Sub-issue (Impl Manifest 파일 단위)"
 
-# phase:* (7종, single-active)
-for p in 요구사항 설계 설계-리뷰 구현 구현-리뷰 구현-테스트 보안-테스트; do
+# phase:* (9종, single-active) — CFP-1059 / ADR-087 + ADR-088: 배포 + 배포-리뷰 추가 (7 → 9 phase lane).
+# 기존 7 phase loop pattern 답습 (single description prefix), description 본문은 yaml 정식 entry 가 SSOT.
+for p in 요구사항 설계 설계-리뷰 구현 구현-리뷰 구현-테스트 보안-테스트 배포 배포-리뷰; do
     create_label "phase:$p" "1d76db" "Phase: $p"
 done
 
@@ -96,6 +98,15 @@ create_label "gate:retro-complete"       "0e8a16" "Story 완료 회고 작성됨
 create_label "gate:channel-canary-promotion"  "0e8a16" "Canary tier 활성 PR 4-tuple evidence quad 충족 marker (CFP-991, consumer Tier-2 advisory)"
 create_label "gate:channel-beta-promotion"    "0e8a16" "Beta tier promotion gate marker (canary→beta transition, CFP-991)"
 create_label "gate:channel-stable-promotion"  "0e8a16" "Stable tier promotion gate marker (beta→stable transition, CFP-991)"
+
+# gate:deploy-* / gate:cross-layer-impact-pass / gate:dependency-order-pass / gate:bidirectional-smoke-pass (5종 — CFP-1059 / ADR-087 + ADR-088 + ADR-089 + ADR-090)
+# Deploy lane + Deploy Review lane 신설 (8 lane 확장) + cross-layer / dependency-order / bidirectional-smoke gate 신설.
+# yaml SSOT (label-registry-v2 v2.42) 본문 description 은 verbose — 본 hardcode 는 short label form (기존 gate:* pattern 답습).
+create_label "gate:deploy-pass"              "0e8a16" "Deploy lane PASS (CFP-1059 / ADR-087 — blue-green + atomic swap + healthcheck + 3-시간 보존 timer + 자동 rollback 미발동 영역)"
+create_label "gate:deploy-review-pass"       "0e8a16" "Deploy Review lane PASS (CFP-1059 / ADR-088 — smoke / 성능 비교 / cutover 사후 검증 3종 PASS, terminal gate)"
+create_label "gate:cross-layer-impact-pass"  "0e8a16" "Cross-layer impact 분석 통과 (CFP-1059 / ADR-090 §결정 1 — multi-layer 의존 매핑 + 변경 순서 invariant 검증 PASS)"
+create_label "gate:dependency-order-pass"    "0e8a16" "Dependency order invariant 통과 (CFP-1059 / ADR-090 §결정 2 — expand=source-first / contract=leaf-first)"
+create_label "gate:bidirectional-smoke-pass" "0e8a16" "Bidirectional smoke (양방향 호환) 통과 (CFP-1059 / ADR-089 §결정 4 — blue ↔ green traffic mix window 안 schema 양방향 호환 verify PASS)"
 
 # fix:* (4종)
 for r in 설계-리뷰 구현-리뷰 구현-테스트 보안-테스트; do
@@ -137,6 +148,11 @@ create_label "plugin:codeforge-requirements" "ededed" "Plugin namespace: codefor
 create_label "plugin:codeforge-design"       "ededed" "Plugin namespace: codeforge-design (설계 lane)"
 create_label "plugin:codeforge-develop"      "ededed" "Plugin namespace: codeforge-develop (구현 lane)"
 create_label "plugin:codeforge-test"         "ededed" "Plugin namespace: codeforge-test (통합테스트 lane)"
+
+# plugin:codeforge-{deploy,deploy-review} — 2 lane plugin namespace marker (CFP-1059 / ADR-087 + ADR-088, label-registry-v2 v2.42).
+# yaml SSOT color = "5319e7" (axis:* family precedent). Phase 1 declarative — plugin seed 신설 = S2/S3 sub-Story carrier.
+create_label "plugin:codeforge-deploy"        "5319e7" "Plugin namespace: codeforge-deploy (배포 lane, CFP-1059 / ADR-087 신설 carrier)"
+create_label "plugin:codeforge-deploy-review" "5319e7" "Plugin namespace: codeforge-deploy-review (배포-리뷰 lane, CFP-1059 / ADR-088 신설 carrier)"
 
 # conflict:* + merge-order:* (5종 — 병렬 에픽 충돌 조율, ADR-050 / CFP-344)
 create_label "conflict:file-overlap"   "e4e669" "다른 open PR과 변경 파일 중복 (parallel-epic-conflict-check.yml 자동 감지)"
@@ -253,7 +269,7 @@ fi
 
 if [ $DRY_RUN -eq 0 ]; then
     echo ""
-    echo "✓ 46 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."  # CFP-1086: 42 → 46 base label (4 axis:* labels — AggregateArch / APIContractArch / ModuleArch / DataArch, label-registry-v2 v2.40 → v2.41 ADR-042 Amendment 8 carrier)
+    echo "✓ 55 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."  # CFP-1059: 46 → 55 base label (+9 hardcoded — 2 phase:* loop + 5 gate:* + 2 plugin:*; 7 hotfix-bypass:* 는 yaml dynamic read 영역 — label-registry-v2 v2.41 → v2.42 / ADR-087 + ADR-088 + ADR-089 + ADR-090 Deploy lane + Deploy Review lane + Schema 7 + Cross-layer 정책 carrier). CFP-1086: 42 → 46 base label (4 axis:* labels — AggregateArch / APIContractArch / ModuleArch / DataArch, label-registry-v2 v2.40 → v2.41 ADR-042 Amendment 8 carrier).
 fi
 
 # CFP-492 2-way self-check (DRY_RUN 모드에서만):

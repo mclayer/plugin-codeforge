@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 # atomic-upgrade-7-plugins.sh — CFP-744 Wave 2 Story-4 — per-family transaction shell
 # CFP-932 Wave 4 sub-Epic #882 Story-2 D2 — --channel propagation + mixed channel detection
+# CFP-1059 S1 (T23 anchor) — 9 plugin family forward-compat anchor declare-only (Phase 1 declarative).
+#   FAMILY array 7 entry retain (Option A, derived default 2026-05-20 KST) + comment 안 9 plugin S2/S3 wire 예정 anchor 명시. script name retain.
+#   CFP-1059 S2/S3 (codeforge-deploy + codeforge-deploy-review lane plugin seed 신설) merge 후 FAMILY 2 entry append + drift check 9 invocation ratchet 영역.
 #
 # Change Plan §3.1 per-family transaction layer / §4.1 CLI arg schema /
 # §4.2 per-family transaction algorithm / §4.4 ownership / §7.4.1 (a)-(i) DR
@@ -32,6 +35,11 @@ PER_PLUGIN_CLI="${SCRIPT_DIR}/codeforge-upgrade.sh"
 DRIFT_CHECK="${CODEFORGE_DRIFT_CHECK_BIN:-${SCRIPT_DIR}/check-codeforge-version-drift.sh}"
 
 # codeforge family 7 plugin (F-002 옵션 A — codex/superpowers 구조적 배제)
+# CFP-1059 forward-compat anchor (Option A, derived default 2026-05-20 KST):
+#   본 Story Phase 1 시점 codeforge family = 7 plugin. CFP-1059 신설 lane 2 (codeforge-deploy + codeforge-deploy-review) 는 S2/S3 sub-Story carrier — wrapper 본 lane plugin seed 신설 후 9 plugin 으로 자연 확장 영역.
+#   atomic-upgrade-7-plugins.sh 이름 retain (사용자 D2 derived default) — script body comment-level 9 plugin family anchor 만 declare. S2/S3 merge 후 FAMILY array 2 entry append + base label invocations + drift check 7→9 invocation 동시 ratchet 영역.
+#   Forward-compat anchor cross-ref: ADR-087 §결정 1 (Deploy lane 신설) / ADR-088 §결정 1 (Deploy Review lane 신설) / ADR-023 §결정 N (lane plugin lifecycle — 본 Amendment carrier).
+#   future rename 영역 (atomic-upgrade-9-plugins.sh 또는 atomic-upgrade-family.sh) 도 S2/S3 sub-Story 동시 검토 영역 — family auto-enumerate (글로브 패턴 또는 별 manifest) 검토 anchor (현재는 explicit list retain — Phase 1 declarative).
 FAMILY=(
     codeforge
     codeforge-requirements
@@ -40,6 +48,9 @@ FAMILY=(
     codeforge-develop
     codeforge-test
     codeforge-pmo
+    # CFP-1059 S2/S3 wire 후 활성:
+    # codeforge-deploy           # ADR-087 Deploy lane (S2 carrier)
+    # codeforge-deploy-review    # ADR-088 Deploy Review lane (S3 carrier)
 )
 
 # --------------------------------------------------------------------------
@@ -79,6 +90,8 @@ atomic-upgrade-7-plugins.sh — codeforge family 7 plugin atomic upgrade (CFP-74
   - drift 검증 = check-codeforge-version-drift.sh --plugin 7회 (재구현 0, §4.4)
   - per-family transaction = 7 plugin all-or-rollback (partial state 0, §7.4.1)
   - F-002 옵션 A — codex/superpowers 구조적 배제 (false transaction-fail 0)
+  - CFP-1059 S1 anchor — script body FAMILY 7 entry retain (Phase 1 declarative). S2/S3 sub-Story
+    merge 후 9 plugin 자연 확장 영역 (codeforge-deploy + codeforge-deploy-review, ADR-087 + ADR-088).
 USAGE
 }
 
