@@ -110,8 +110,8 @@ review_verdict:
       category: <packet category_enum 중 하나>
       type: <finding_type_enum>      # NEW v4.3 (optional) — finding 유형 literal
                                      # enum: "general" | "mechanical_sync_required" | "boundary-completeness" | "dimensional-empirical-gap" | "audit-gate-pointer-missing"
-                                     # "audit-gate-pointer-missing": ADR-068 Amendment 3 §결정 1 I-6 위반 — §8.6 audit gate finding 4-form pointer scope (link target / section anchor / file path reference / ADR §결정 N reference) existence verify 실패 (v4.7). boundary-completeness 와 disjoint axis (별 verdict field boolean audit_gate_pointer_self_check_passed)
                                      # "boundary-completeness": ADR-068 §결정 2 dual-binding — I-1~I-4 위반
+                                     # "audit-gate-pointer-missing": ADR-068 Amendment 3 §결정 1 I-6 위반 — §8.6 audit gate finding 4-form pointer scope (link target / section anchor / file path reference / ADR §결정 N reference) existence verify 실패 (v4.7). boundary-completeness 와 disjoint axis (별 verdict field boolean audit_gate_pointer_self_check_passed)
                                      # "mechanical_sync_required": ADR-065 mechanical 7-item 위반 (v4.2)
                                      # "dimensional-empirical-gap": ADR-068 Amendment 1 §결정 1 I-5 위반 — quantitative parameter empirical-source annotation 누락 (v4.4)
                                      # "general": 일반 finding (default, 미제공 시 동일 의미)

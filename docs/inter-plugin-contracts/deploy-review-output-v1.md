@@ -15,9 +15,17 @@ related_adrs:
   - ADR-072  # ProductionEvidenceDeputy mandate (ownership 이관 mirror)
   - ADR-008  # inter-plugin contract versioning
   - ADR-010  # sibling sync policy
+authors:
+  - CFP-1059 — Phase 1 placeholder declare only (2026-05-20)
+related_plugins:
+  - codeforge (wrapper, consumer)
+  - codeforge-deploy (upstream producer of deploy-output)
+  - codeforge-deploy-review (lane plugin, producer — TBD S3 carrier)
 ---
 
 # deploy-review-output-v1
+
+**상위 SSOT 위치**: `mclayer/plugin-codeforge-deploy-review/docs/inter-plugin-contracts/deploy-review-output-v1.md` (TBD — S3 sub-Story 신설 후 wire)
 
 ## 상태
 
