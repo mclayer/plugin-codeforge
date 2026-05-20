@@ -36,8 +36,8 @@ amendments:
   - amendment_id: 5
     date: "2026-05-20"
     carrier_story: CFP-1104
-    issue: https://github.com/mclayer/plugin-codeforge/issues/1104
-    summary: Natural-language action trigger lookup table codify (§결정 16 신설) — consumer 가 자연어 token "codeforge upgrade" (또는 한글 변형) 발화 시 orchestrator 가 dialog reflex (AskUserQuestion "어떤 upgrade?" "어느 채널?") 차단 + 7 차원 derived default (trigger phrase regex / repo cwd 자동 주입 / mode dry-run → apply 자동 / channel overlay resolve fallback stable / scope 단일 plugin default / dirty tree abort / 실패 시 자동 rollback) 결정론적 mapping closed enumeration 1 entry. ADR-076 invariant `user_decision_branches: 0` 를 dialog 진입 단계로 확장 carrier — 본 ADR-071 §결정 5 사실/가치 분리의 dialog reflex 차단 first applied case. closed enumeration 보존 invariant — 본 lookup table 이 ADR-071 내 4번째 closed enumeration 인스턴스 (3-anchor enum §13.6 / 4 차원 enum §4 / 3 touchpoint enum §15.5 / **trigger table §16**) 신설, 2번째 trigger token 확장 시 별도 CFP 의무 (§결정 13.6 closed-enum 확장 패턴 정합 — ADR-064 §결정 7 top-down ratchet 강화 방향 + ADR-058 §결정 5 sunset_justification null 보존). ADR-039 inline whitelist 1번 entry scope 안 작동 (사용자 dialog 허용 영역, 5번째 entry 신설 0). doc-only fast-path Story (src/tests touch 0). additive — Layer 1-4 / DialogFidelityAgent auxiliary / §결정 2(c) richness / 3 touchpoint enum (§15) 모두 보존, dialog reflex 차단 layer 추가만. is_transitional=false 보존, ADR-058 §결정 5 약화 차단 영역 미적용
+    issue: https://github.com/mclayer/plugin-codeforge/issues/1106
+    summary: Natural-language action trigger lookup table codify (§결정 16 신설) — consumer 가 자연어 token "codeforge upgrade" (또는 한글 변형) 발화 시 orchestrator 가 dialog reflex (AskUserQuestion 모드/채널 재질의) 차단 + 7 차원 derived default (trigger phrase regex / repo cwd 자동 주입 / mode dry-run → apply 자동 / channel overlay resolve fallback stable / scope 단일 plugin default / dirty tree abort / 실패 시 자동 rollback) 결정론적 mapping closed enumeration 1 entry. ADR-076 invariant `user_decision_branches=0` 를 dialog 진입 단계로 확장 carrier — 본 ADR-071 §결정 5 사실/가치 분리의 dialog reflex 차단 first applied case. closed enumeration 보존 invariant — 본 lookup table 이 ADR-071 내 4번째 closed enumeration 인스턴스 (3-anchor enum §13.6 / 4 차원 enum §4 / 3 touchpoint enum §15.5 / **trigger table §16**) 신설, 2번째 trigger token 확장 시 별도 CFP 의무 (§결정 13.6 closed-enum 확장 패턴 정합 — ADR-064 §결정 7 top-down ratchet 강화 방향 + ADR-058 §결정 5 sunset_justification null 보존). ADR-039 inline whitelist 1번 entry scope 안 작동 (사용자 dialog 허용 영역, 5번째 entry 신설 0). doc-only fast-path Story (src/tests touch 0). additive — Layer 1-4 / DialogFidelityAgent auxiliary / §결정 2(c) richness / 3 touchpoint enum (§15) 모두 보존, dialog reflex 차단 layer 추가만. is_transitional=false 보존, ADR-058 §결정 5 약화 차단 영역 미적용
     sunset_justification: null
 related_stories:
   - CFP-612  # carrier
@@ -67,7 +67,7 @@ related_adrs:
   - ADR-039  # inline whitelist 1번 entry (사용자 dialog) cognitive layer 강화
   - ADR-060  # evidence-enforceable framework (Amendment 3 dialog-fidelity-effect entry carrier — CFP-833)
   - ADR-076  # declarative-reconciliation-upgrade (Amendment 5 — invariant `user_decision_branches: 0` dialog 단계 enforcement carrier)
-  - ADR-045  # doc-only fast-path (Amendment 5 — Story 분류 정합)
+  - ADR-054  # doc-only fast-path (Amendment 5 — Story 분류 정합)
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md
@@ -759,7 +759,7 @@ N/A — permanent policy.
 - [ADR-040](ADR-040-worktree-convention.md) — `mechanical_enforcement_actions[]` frontmatter 의무
 - [ADR-039](ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — inline whitelist 1번 entry cognitive 강화 (§결정 11)
 - [ADR-076](ADR-076-declarative-reconciliation-upgrade.md) — declarative reconciliation upgrade (Amendment 5 — invariant `user_decision_branches: 0` dialog 단계 enforcement carrier)
-- [ADR-045](ADR-045-doc-only-story-fast-path.md) — doc-only fast-path (Amendment 5 — Story 분류 정합)
+- [ADR-045](ADR-054-doc-only-story-fast-path.md) — doc-only fast-path (Amendment 5 — Story 분류 정합)
 - [CLAUDE.md](../../CLAUDE.md) — cross-ref 1-2 줄 (320 cap compression 정합)
 - [docs/orchestrator-playbook.md](../orchestrator-playbook.md) — §3.14 frame + 4 layer + sub-mechanism 본문 SSOT
 - [docs/orchestrator-communication-incidents.md](../orchestrator-communication-incidents.md) — Layer 4 영속 file
