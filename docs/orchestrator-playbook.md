@@ -614,7 +614,7 @@ ADR-039 §결정 14 (Amendment 1) 의 Orchestrator-side codification. DeveloperP
 
 1. **post-spawn verify** — `mcp__github__pull_request_read get` 의 `head.sha` parent commit 을 `mcp__github__list_commits sha=main perPage=1` (또는 `gh api repos/<owner>/<repo>/commits/main --jq .sha`) 와 비교.
 2. **mismatch detection** — branch HEAD parent ≠ current origin/main 이면 stale-base → 즉시 **FIX trigger** (구현-side, RESET=NO).
-3. **re-dispatch 의무** — 동일 subagent 재spawn 시 prompt 에 (a) explicit current-main-HEAD SHA (Orchestrator pinned just now) + (b) "self-reset 금지 / 기존 작업 content 보존, only rebase the base" + (c) 추가 mid-flight churn 대비 "rebase 시 main HEAD 재pin (parallel session advance 가능)" 명시.
+3. **re-dispatch 의무** — 동일 subagent 재spawn 시 prompt 에 (a) explicit current-main-HEAD SHA (Orchestrator 가 방금 고정한 값) + (b) "self-reset 금지 / 기존 작업 content 보존, only rebase the base" + (c) 추가 mid-flight churn 대비 "rebase 시 main HEAD 재고정 (parallel session advance 가능)" 명시.
 4. **§10 FIX Ledger row append** — stale-base rebase iteration = Orchestrator monopoly write (fix-event-v1 contract, CFP-32). 형식 = `구현 (Orchestrator verify-before-trust, 구현리뷰 이전 적발)` lane.
 
 **근거 evidence**: CFP-699/CFP-702/CFP-848 3차 누적 (ADR-039 Amendment 1 §결정 14 표).
@@ -631,7 +631,7 @@ MAIN_HEAD=$(git rev-parse origin/main)
 echo "PINNED_MAIN_HEAD=$MAIN_HEAD"
 ```
 
-모든 후속 branch 생성 + rebase + PR open 시 본 SHA 사용. self-claim / packet reference / local HEAD / memory SHA 무조건 신뢰 금지. mid-flight main churn 가능 — rebase 시점에 재pin 의무.
+모든 후속 branch 생성 + rebase + PR open 시 본 SHA 사용. self-claim / packet reference / local HEAD / memory SHA 무조건 신뢰 금지. mid-flight main churn 가능 — rebase 시점에 재고정 의무.
 ```
 
 **Cross-ref**: ADR-039 §결정 14 / §결정 9 (Amendment 1 enforcement Phase 2 hook 격상 경로) / [[feedback_verify_pin_head_sha]] / [[feedback_no_permission_prompts]] / codeforge-develop:`agents/DeveloperPLAgent.md` "PR 생성 Pre-flight Guard" Step 0 확장 (CFP-895 paired PR).
@@ -1182,13 +1182,13 @@ gh issue view <epic_number> --json state,closedAt,closedBy,labels
 
 # Step 3 — HEAD compare sibling commits (mid-flight race 차단)
 PRIOR_HEAD=<session state cache 의 pinned HEAD — stale 가능>
-CURRENT_HEAD=$(git ls-remote origin <branch> | cut -f1)   # direct verify (re-pin)
+CURRENT_HEAD=$(git ls-remote origin <branch> | cut -f1)   # direct verify (재고정)
 gh api repos/{owner}/{repo}/compare/${PRIOR_HEAD}...${CURRENT_HEAD} --jq '.commits[].sha'
 ```
 
 **Cold start `session_start` 보강**: session 첫 turn additionalContext 안 active CFP context list + open Epic state list + current branch HEAD vs origin/main delta 3-item preload (SessionStart hook tier 위임 — Story-2 CFP-967 `templates/.claude/hooks/SessionStart-parallel-work-poll.json.sample` mechanical wire). additionalContext = layer 1 fallback 만 — actual sustained polling = 매 transition trigger 직전 §3.5.1 3-step.
 
-**Sustained in-session polling 의무**: turn-0-only SessionStart hook 한계 해소 — long-running session 안 매 transition trigger 직전 HEAD SHA re-pin 의무 (session state cache stale 무조건 가정).
+**Sustained in-session polling 의무**: turn-0-only SessionStart hook 한계 해소 — long-running session 안 매 transition trigger 직전 HEAD SHA 재고정 의무 (session state cache stale 무조건 가정).
 
 **Cross-ref**:
 - [ADR-073 Amendment 2](../docs/adr/ADR-073-orchestrator-verify-before-assert.md) §결정 1-A/1-B/1-C — declarative anchor SSOT
@@ -2089,7 +2089,7 @@ lane 진입 직전 Orchestrator (또는 lane PL agent spawn 전) 가 다음 4-st
 
 #### Rebase merge 우선 (ADR-085 §결정 4)
 
-lane re-spawn / FIX iter / handoff 시 `git pull --rebase origin main` 우선 (force-push 회피). force-push 필수 영역 = `--force-with-lease=branch:sha` + HEAD-pin pre-flight gate 의무 (`gh api repos/<owner>/<repo>/commits/<branch> --jq .sha` fresh re-pin 후 push). memory `feedback_verify_pin_head_sha` carrier 정합.
+lane re-spawn / FIX iter / handoff 시 `git pull --rebase origin main` 우선 (force-push 회피). force-push 필수 영역 = `--force-with-lease=branch:sha` + HEAD-pin pre-flight gate 의무 (`gh api repos/<owner>/<repo>/commits/<branch> --jq .sha` fresh 재고정 후 push). memory `feedback_verify_pin_head_sha` carrier 정합.
 
 #### Handoff baton transfer (ADR-085 §결정 5)
 
