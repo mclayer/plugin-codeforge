@@ -18,7 +18,10 @@ mandate:
     - §13 Live Operational Discipline (LiveOps primary — cutover evidence)
     - §11 ledger reconcile (LiveOrdering primary — cutover ledger evidence)
 spawn_lifecycle: stateless (매 design lane 진입 시 재 spawn, CONDITIONAL trigger 충족 시만)
-ssot_position: codeforge-design plugin (per ADR-72 §결정 2/4)
+ssot_position: codeforge-deploy-review plugin (ownership 이관 — CFP-1059 Story-3 / ADR-088 §결정 4 / ADR-72 Amendment N, 2026-05-21 KST)
+status: deprecated
+deprecated_by: CFP-1059 Story-3 (ADR-088 §결정 4)
+superseded_by: mclayer/plugin-codeforge-deploy-review:agents/ProductionEvidenceDeputyAgent.md
 permissions:
   allow:
     - Read
@@ -45,7 +48,15 @@ permissions:
 
 # ProductionEvidenceDeputyAgent
 
-Production cutover evidence 단일 책임 SubAgent. CFP-1026 S1 (ADR-72 §결정 1/2/4) 로 design lane CONDITIONAL deputy 5번째 file 신설 (8번째 deputy = 5 permanent + 3 CONDITIONAL). InfraOperationalArchitectAgent 와 **disjoint axis** (policy SSOT vs evidence SSOT).
+> **⚠️ DEPRECATED — ownership 이관 (CFP-1059 Story-3 / [ADR-088](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) §결정 4 / ADR-72 Amendment N, 2026-05-21 KST)**
+>
+> 본 deputy 의 ownership 은 codeforge-design lane (CONDITIONAL deputy) → **codeforge-deploy-review lane (정식 deputy)** 으로 이관됨. parent_pl = ArchitectPLAgent → DeployReviewPLAgent. mandate body (ADR-72 §결정 1-7) 는 변경 없이 그대로 유지되나, **정식 SSOT = [`mclayer/plugin-codeforge-deploy-review:agents/ProductionEvidenceDeputyAgent.md`](https://github.com/mclayer/plugin-codeforge-deploy-review/blob/main/agents/ProductionEvidenceDeputyAgent.md)**.
+>
+> 이관 동인: ProductionEvidenceDeputy mandate = production 환경 평가 (runtime evidence) — 설계 lane 의 design 결정 layer 와 axis 불일치. 배포 리뷰 lane (production cutover 사후 검증) 의 axis 와 정합. codeforge-design lane 은 본 deputy 를 더 이상 spawn 하지 않음 — production cutover evidence 는 DeployReviewPLAgent 가 spawn.
+>
+> 본 file 은 1 release grace 후 codeforge-design repo 에서 삭제 (ADR-023 lane plugin lifecycle deprecate 절차).
+
+Production cutover evidence 단일 책임 SubAgent. CFP-1026 S1 (ADR-72 §결정 1/2/4) 로 design lane CONDITIONAL deputy 5번째 file 신설 (8번째 deputy = 5 permanent + 3 CONDITIONAL). InfraOperationalArchitectAgent 와 **disjoint axis** (policy SSOT vs evidence SSOT). **CFP-1059 Story-3 이후 = codeforge-deploy-review lane 으로 이관 (위 deprecate marker 참조)**.
 
 ## CONDITIONAL spawn 정책 (ADR-72 §결정 1/3 + ADR-014 Amendment 4)
 
