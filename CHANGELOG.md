@@ -7,6 +7,30 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.0.1] - 2026-05-21
+
+### Changed
+
+- [CFP-1125 (Wave 1 Story-1)] 9 ADR/contract sunset_justification declarative 박제 (Imperative changelog walk paradigm 도입 carrier — CFP-1111 Epic)
+  - 6 ADR sunset declarative: ADR-076 / ADR-083 / ADR-026 Amendment 5 (sibling carrier role 만) / ADR-027 Amendment 6 / ADR-067 (disjoint invariant declare, 본체 sunset 아님) / ADR-053 D2 영역 (D1 영구)
+  - reconcile-protocol-v1 §4.3 (k)/(l)/(m) + §4.13 + §4.14 + §4.8 sunset declarative
+  - reconcile-protocol-v1 v1.13 status `Active → Deprecated`
+  - ADR-RESERVATION 7 slot append ADR-92 ~ ADR-98 (Wave 1 Story-2 carry)
+- doc-only fast-path (ADR-054 Category 2) — src/tests 무변경
+- β2 audit (CFP-1113) input — 9/9 anchor LOSSLESS 판정 + 3 carry-over 설계 주의 사항
+
+### Cross-ref
+
+- Epic: #1111
+- Story-1 sub-issue: #1125
+- Sister CFP: #1112 (β1 P0) / #1113 (β2 closed) / #1114 (β3 P1) / #1115 (β5 P1)
+- spec: codeforge-internal-docs/wrapper/specs/CFP-1111.md (PR #732 merged 4cdd3019)
+- plan: codeforge-internal-docs/wrapper/plans/CFP-1111-W1-S1.md (PR #733 merged)
+
+### marketplace sibling sync (declared, 실 PR 발의 = Task 14 후)
+
+- ADR-063 atomic invariant 정합 의무 — wrapper PR open 후 marketplace.json mirror sibling sync PR 발의
+
 ## [6.0.0] - 2026-05-20
 
 ### BREAKING CHANGES (CFP-1059 Story-1 — Deploy + DeployReview lane 신설 카리어 Phase 1 SSOT)
