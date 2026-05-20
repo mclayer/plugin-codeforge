@@ -1277,6 +1277,12 @@ labels:
   - name: hotfix-bypass:deputy-axis-restructure
     category: hotfix-bypass
     color: "fef2c0"
+  - name: hotfix-bypass:design-review-pl-8-6-pointer
+    description: "CFP-1089 — DesignReviewPL §8.6 pointer-presence-check warning-tier bypass"
+    category: hotfix-bypass
+    attach_owner_plugin: codeforge
+    introduced_in: CFP-1089
+    color: "fbca04"
     description: "hotfix-bypass: deputy-axis-restructure warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1086 / ADR-042 Amendment 8 + ADR-068 Amendment 2 + ADR-086 carrier — BackendArchEpic Phase 2 design lane 7+3+1 roster 재편 영역. 후속 mechanical lint (예: `deputy-spawn-count-empirical-grounding` evidence-checks-registry entry, ADR-068 I-5 backref) Wave 2 promotion 시 본 bypass channel 활성. ADR-024 Amendment N §결정 6.A per-entry namespace 정합). 53번째 hotfix-bypass:* family member."
     single_active: false
     attach_owner_plugin: "ArchitectAgent (chief author, codeforge-design lane — deputy roster 변경 carrier Story PR bypass)"

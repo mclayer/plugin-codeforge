@@ -1,0 +1,42 @@
+# CFP-1089 — DesignReviewPL §8.6 pointer-presence-check (warning tier per ADR-060)
+# Bypass: hotfix-bypass:design-review-pl-8-6-pointer label (audit-trailed)
+name: design-review-pl-8-6-pointer
+
+on:
+  pull_request:
+    paths:
+      - 'docs/inter-plugin-contracts/review-verdict-v4.md'
+      - 'docs/adr/ADR-068-boundary-completeness-invariants.md'
+      - 'scripts/check-design-review-pl-8-6-pointer.sh'
+      - 'scripts/lib/check_design_review_pl_8_6_pointer.py'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Bypass label check
+        id: bypass
+        run: |
+          if echo "${{ join(github.event.pull_request.labels.*.name, ',') }}" | grep -q "hotfix-bypass:design-review-pl-8-6-pointer"; then
+            echo "bypass=true" >> "$GITHUB_OUTPUT"
+            echo "ℹ️  hotfix-bypass:design-review-pl-8-6-pointer label detected — skip"
+          else
+            echo "bypass=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run lint (warning tier — continue-on-error)
+        if: steps.bypass.outputs.bypass == 'false'
+        continue-on-error: true
+        run: bash scripts/check-design-review-pl-8-6-pointer.sh
