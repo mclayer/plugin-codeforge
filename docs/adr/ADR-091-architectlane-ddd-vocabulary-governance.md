@@ -1,0 +1,283 @@
+---
+adr_number: 91
+title: ArchitectLane DDD vocabulary governance — Hybrid agent↔DDD mapping + Subdomain Specialist + Aggregate metaphor 2-layer + Published Language 분리 + Bounded Context governance + enforcement layer + vocabulary theater 차단 forcing function
+status: Reserved
+category: governance
+date: 2026-05-20
+carrier_story: CFP-1117-S1
+parent_epic: CFP-1117
+related_stories:
+  - CFP-1117
+  - CFP-1086  # baseline (4-way RACI matrix + 15 agent + ADR-086 framework)
+  - CFP-676   # InfraOperationalArchitect rename precedent
+related_adrs:
+  - ADR-080  # agent-role-terminology-deputy-subagent — DDD pattern 매핑 amendment 대상
+  - ADR-086  # Deputy 신설 결정 framework — 5-checklist self-application (본 CFP agent 신설 0건 confirmation)
+  - ADR-064  # decision principle mandate — Trace 1 forbid-list dictionary 확장 후보 (OQ-1)
+  - ADR-068  # boundary completeness invariants — I-6 신설 후보 (OQ-2)
+  - ADR-042  # agent model selection policy — 신설 0건이므로 amendment 면제
+  - ADR-013  # codeforge-family-dogfood-out-policy — Published Language 분리 정합
+  - ADR-058  # ADR sunset criteria mandate — ratchet 강화 방향 of amendment
+  - ADR-060  # evidence-enforceable promotion framework — declaration-only Wave 1
+  - ADR-070  # Codex verify-before-trust — chief author direct write precedent (본 ADR self-write)
+  - ADR-079  # KST display layer — governance display layer 정합
+  - ADR-082  # write-time self-write verification — S3 lint enforcement 첫 사례
+related_files:
+  - docs/glossary.md  # Story-1 신규 (50+ DDD term SSOT)
+  - docs/domain-knowledge/concept/bounded-context.md  # Story-1 신규
+  - docs/domain-knowledge/concept/ubiquitous-language.md  # Story-1 신규
+  - docs/domain-knowledge/concept/aggregate.md  # Story-1 신규
+  - docs/domain-knowledge/concept/4-layer-architecture.md  # Story-1 신규
+  - skills/deputy-mandate/SKILL.md  # Story-5 Subdomain Specialist layer
+  - templates/story-page-structure.md  # Story-3 §ubiquitous_language
+  - examples/ddd-golden-path-mct031.md  # Story-6 golden-path worked example
+mechanical_enforcement_actions:
+  - ubiquitous-language-drift-check       # Story-3 신설 lint script + warning tier (Wave 1 wire)
+  - bounded-context-presence-check        # Story-3 신설 lint script + warning tier (Wave 1 wire)
+  - ddd-pattern-frontmatter-check         # Story-3 신설 lint script + warning tier (Wave 1 wire)
+amendment_log: []
+amendments: []
+is_transitional: false  # permanent governance — DDD vocabulary 영구 적용, 약화 방향 차단 ratchet (ADR-058 §결정 5 정합)
+sunset_justification: null  # is_transitional false — sunset 기준 부재 + amendment 시 ratchet 강화 방향만 허용
+---
+
+# ADR-091 — ArchitectLane DDD vocabulary governance
+
+## 상태
+
+`Reserved (2026-05-20 KST)` — CFP-1117 Story-1 carrier (charter ADR). Phase 1 docs PR LAND 시 `Accepted` 전이. ArchitectAgent direct write per ADR-070 / CFP-578 chief author precedent (ADR-086 sibling 답습). ADR-079 KST `+09:00` ISO 8601 zoned governance display layer 정합.
+
+## 컨텍스트
+
+### 동인 (3 layer)
+
+**Layer 1 — empirical 동인**: mctrader/codeforge 의 cross-repo Story 진행 중 차등 해석 + FIX 루프 lesson 6회 누적 (MCT-170 / MCT-177 / MCT-179 / MCT-180 / MCT-184 / MCT-185 Phase 0 verify pattern 재현). 암묵적 BC/Aggregate 결정이 ADR 에 명시 안 됨 → 신규 agent / member 합류 시 interpretation drift surface.
+
+**Layer 2 — CFP-1086 baseline 위 systematic layer 부착**: CFP-1086 가 4-way RACI matrix (Security/InfraOp/TestContract × Aggregate/Data/Module/APIContract) 완료. AggregateArch / ModuleArch / TestContractArch 가 이미 DDD-adjacent vocab 사용 (aggregate invariant / bounded context / layered/hexagonal/clean). 본 ADR = 그 위에 **explicit DDD layer 부착** (어휘 격상 + governance SSOT codify). agent 신설 0건 / rename 0건 / model 변경 0건.
+
+**Layer 3 — Codex BIG CONCERN (vocabulary theater 차단)**: 단순 "agent description 에 DDD 단어 박는" 작업은 실패. 어휘 emit 이 (a) spawn decision (b) review findings (c) ADR acceptance criteria 를 실제로 변경하지 않으면 = document 만 향상 / runtime lesson 해소 = 0. **본 ADR §결정 7 가 forcing function 정의**.
+
+### CFP-1086 LAND 정합 (verify-via)
+
+- `gh issue view 1086 --json state,labels` = CLOSED + phase:완료
+- `ls plugin-codeforge-design/agents/` = 15 file (7 permanent SubAgent + ArchitectPL + ArchitectAgent + 3+1 CONDITIONAL deputy + 3 sub-tuple)
+- `Read(docs/adr/ADR-086-*.md)` = Accepted
+- skills/deputy-mandate/SKILL.md = 4-way RACI matrix 활성
+
+### Codex Q2-Q6 합성 결과 (verbatim 인용)
+
+- **Q2 Hybrid**: PL/Architect = Authority Pair / 6 SubAgent + 3 sub-tuple = Domain Service / 3+1 CONDITIONAL deputy = Subdomain Specialist
+- **Q3 Top 10**: mctrader retroactive ADR annotation = ADR-029~033 + 영향도 기준 5 추가 (downstream Epic, 본 ADR 영역 외)
+- **Q4 Subdomain Specialist + "which subdomain under threat"**: deputy spawn rationale 어휘 transition
+- **Q5 양쪽 다**: PL = metaphor only / ArchitectLane 산출물 = real Aggregate (consistency boundary)
+- **Q6 Prompt + Template lint + review-verdict enum**: consumer CI gate 별 CFP
+
+### Codex BIG CONCERN
+
+> Vocabulary theater 위험 — agent 가 DDD 단어 emit 하면서 기존 implicit decision flow 유지. **forcing function 의무**: 어휘 emit 이 spawn decision · review findings · ADR acceptance criteria 를 실제로 변경해야 함.
+
+## 결정
+
+### §결정 1 — agent ↔ DDD pattern Hybrid mapping (Q2 합의)
+
+ArchitectLane 15 agent 를 3 DDD role 로 매핑한다.
+
+| Agent | DDD role | 어휘 |
+|---|---|---|
+| ArchitectPLAgent | Authority Pair (Aggregate Root metaphor) | supervised authority cluster — Story 단위 plan consistency boundary 의 supervisor |
+| ArchitectAgent | Authority Pair (Chief Author) | multi-source synthesizer — Story 단위 산출물 (Change Plan + ADR draft) = real Aggregate (consistency boundary) author |
+| SecurityArchitectAgent | Domain Service | 보안 설계 specialized judgment contributor (§7.1-§7.3 / §7.5-§7.6) |
+| InfraOperationalArchitectAgent | Domain Service | 운영 리스크 specialized judgment contributor (§7.4) |
+| TestContractArchitectAgent | Domain Service | §8 Test Contract specialized judgment contributor |
+| AggregateArchitectAgent | Domain Service | RDB OLTP aggregate invariant / 트랜잭션 경계 specialized judgment contributor |
+| APIContractArchitectAgent | Domain Service | transport (REST/GraphQL/gRPC/WebSocket) + API versioning specialized judgment contributor |
+| ModuleArchitectAgent | Domain Service | module boundary / layered / hexagonal / clean / DDD bounded context (module-level) specialized judgment contributor |
+| DataArchitectAgent | Domain Service | 빅데이터 OLAP specialized judgment contributor |
+| CodebaseMapperAgent | Domain Service (sub-tuple) | fact source 변호자 — file structure / API surface / dependency graph 만 인용 |
+| RefactorAgent | Domain Service (sub-tuple) | refactoring 옹호자 — decoupling / pattern / interface 분리 3 카테고리 |
+| ArchitectAnalystAgent | Domain Service (sub-tuple) | prior art / industry pattern analyst |
+| LiveOpsDeputyAgent | Subdomain Specialist | live ops subdomain 활성 시만 spawn — "which subdomain under threat = live ops" |
+| LiveOrderingDeputyAgent | Subdomain Specialist | live ordering subdomain 활성 시만 spawn — "which subdomain under threat = live ordering" |
+| ProductionEvidenceDeputyAgent | Subdomain Specialist | production cutover subdomain 활성 시만 spawn — "which subdomain under threat = production evidence" |
+
+**Rationale (Q2 Codex verbatim)**: 단일 DDD 패턴을 모든 agent 에 강제 = 너무 rigid + false precision. PL/Architect = authority pair (plan consistency), 대부분 deputy = Domain Service (specialized judgment contributor), conditional deputy = Subdomain Specialist (live operational subdomain 활성 시만 spawn). "Plugin = BC, PL = Aggregate Root, SubAgent = Entity" 강한 매핑은 거부 (Agent = process participant ≠ domain object).
+
+### §결정 2 — deputy spawn rationale 어휘 transition (Q4 합의)
+
+ArchitectPLAgent 의 deputy spawn 결정 시 rationale 어휘를 다음과 같이 transition:
+
+- **Before**: "perspective-contributor" (보수 / 혁신 / 위협 등 perspective)
+- **After**: "which subdomain under threat" (subdomain decision is at risk → Subdomain Specialist spawn)
+
+CFP-1086 4-way RACI matrix (Security/InfraOp/TestContract × Aggregate/Data/Module/APIContract) 위에 **layer 만 추가** — 4-way matrix 본문 변경 0건 (RACI 자체 = R/A/C/I 4-column). 단, **Story 단위 deputy spawn rationale 출력 형식**이 "which subdomain under threat" enum 어휘 명시 의무.
+
+**Rationale (Q4 Codex verbatim)**: "perspective under threat" 를 DDD 어휘로 sharpen. Deputy = contributor 유지, BC Owner 아님 (Story 가 multiple BC 가로지를 수 있음 → advisory expertise ≠ contextual authority). option (C) deputy = BC Owner = overreach 로 거부.
+
+### §결정 3 — Aggregate metaphor 2-layer explicit separate (Q5 합의)
+
+"Aggregate" 어휘를 2 layer 로 explicit separate. 이는 동음이의 (governance BC ↔ application BC) 충돌 차단 의무.
+
+| Layer | Aggregate 의미 | 적용 |
+|---|---|---|
+| **Layer A (governance BC, PL metaphor)** | supervised authority cluster — ArchitectPLAgent 가 6 deputy + chief author 산출물 통합하는 supervisor 의 metaphor only | ArchitectPLAgent role description 에 명시 (S2 agent frontmatter `ddd_pattern: Authority Pair (Aggregate Root metaphor)`) |
+| **Layer B (governance BC, ArchitectLane 산출물 = real Aggregate)** | Change Plan + ADR draft + §8 Test Contract + §11 데이터 마이그레이션 = real consistency boundary. **§1-§11 + BC classification + aggregate impacts + language choices + risks + ADR rationale 가 handoff 전 cohere 해야 함** | ArchitectAgent 산출물 검증 의무 — DesignReviewPL 의 review-verdict-v4 finding type `aggregate_violation` (S4 신설) 가 cross-validate |
+
+mctrader application BC 의 Aggregate (DDD Aggregate root in domain model) 은 **별 BC**. `docs/glossary.md` (S1) 에서 명시 분리 (3 distinct semantics entry).
+
+**Rationale (Q5 Codex verbatim)**: PL = Aggregate Root 는 supervised authority 의 metaphor only. Change Plan + ADR draft 산출물 자체는 real consistency boundary. 핵심 invariant: §1-§11 + BC classification + aggregate impacts + language choices + risks + ADR rationale 가 handoff 전 cohere 해야 함. CFP 가 "agent control metaphor" vs "artifact consistency boundary" 를 explicit separate 해야 함.
+
+### §결정 4 — Published Language 분리 (codeforge + mctrader 2 SSOT)
+
+| BC | Published Language SSOT |
+|---|---|
+| codeforge governance BC | `plugin-codeforge/docs/glossary.md` (본 ADR Story-1 신규) |
+| mctrader application BC | `mctrader-hub/docs/glossary.md` (downstream Epic, 별 CFP) |
+
+동음이의 (Aggregate / Module / Repository 등) 의 의미 충돌 차단. 양 glossary 가 cross-reference (link only, content duplication 금지).
+
+**Rationale (Researcher Phase 0 합의 + Codex Q5 정합)**: governance BC ↔ application BC 어휘 충돌 (codeforge "Aggregate" = supervised authority cluster ↔ mctrader "Aggregate" = DDD Aggregate root) 동음이의 → Published Language 분리 의무. ADR-013 codeforge-family-dogfood-out-policy 정합 (codeforge 가 자신 사용 ≠ 외부 discipline 채택 = self-application 위반 0).
+
+### §결정 5 — Bounded Context governance + 15 agent frontmatter field 의무
+
+15 agent 전수 frontmatter 에 다음 2 field 의무:
+
+```yaml
+bounded_context: codeforge-governance  # governance BC | application BC (downstream) | shared-kernel | ...
+ddd_pattern: Authority Pair | Domain Service | Subdomain Specialist  # §결정 1 enum (16 agent role 정합)
+```
+
+S2 LAND 시 15 agent 전수 field 채워짐 (null 금지). lint script `scripts/check-ddd-pattern-frontmatter.sh` 가 warning tier 로 검증 (S3 신설).
+
+**Rationale**: agent 가 어느 BC 안에서 작동하는지 + 어느 DDD pattern role 인지 explicit declare = vocabulary theater 차단 forcing function (§결정 7 정합). field 누락 = "어휘 emit 만, decision flow 변경 0" anti-pattern surface.
+
+### §결정 6 — enforcement layer 3-tier (Q6 합의)
+
+DDD vocabulary enforcement = 3-tier:
+
+1. **Agent prompt (S2)** — 15 agent 본문에 DDD 어휘 injection (frontmatter field + role description 안)
+2. **Template lint (S3)** — `scripts/check-ddd-vocabulary.sh` + `scripts/check-bounded-context-presence.sh` + `scripts/check-ddd-pattern-frontmatter.sh` 3 entry warning tier
+3. **review-verdict-v4 enum (S4)** — finding type 3 신설: `bc_violation` / `aggregate_violation` / `ubiquitous_language_drift` (v4.7 → v4.8 MINOR bump)
+
+**Consumer CI gate 제외** — vocabulary 가 1 CFP cycle stabilize 후 별 CFP 진입 (Codex Q6 "premature" 정합).
+
+**Rationale (Q6 Codex verbatim)**: prompt 만으로는 drift + agent compliance inconsistent. Template lint = mechanical structure / reviewer finding type = semantic accountability. Consumer CI gate (option D) = premature — vocabulary 가 적어도 1 CFP cycle stabilize 후 진입.
+
+### §결정 7 — Vocabulary theater 차단 forcing function (INV-5)
+
+본 ADR 의 핵심 forcing function. 6 Story acceptance criteria 각각 "어휘 emit ↔ spawn/review/ADR criteria 변경" 검증항목 1건 이상 의무. **본 ADR Phase 2 PR5 LAND gate** = mctrader ADR-031 golden-path worked example (S6) 의 FINAL VERDICT 섹션이 다음 5 영역에 대해 evidence enumeration 명시:
+
+1. **Story field 변경 evidence** — Story §ubiquitous_language 안 BC + Aggregate 명시 변경
+2. **deputy spawn rationale 변경 evidence** — "which subdomain under threat" 어휘 transition 적용
+3. **Change Plan DDD field 변경 evidence** — §bounded_context_boundary + §affected_aggregates 안 explicit BC + Aggregate 명시
+4. **review-verdict finding 변경 evidence** — `bc_violation` / `aggregate_violation` / `ubiquitous_language_drift` finding type 신설 + 실 emit 사례 1건 이상
+5. **ADR acceptance criteria 변경 evidence** — 본 ADR-091 § 결정 N + golden-path before/after diff 가 mctrader ADR-031 의 4-Layer 모델 (line 499-524) 위에 OHS (Layer 2 data /v1 REST API endpoint) + ACL (Layer 1 거래소 어댑터 → market Protocol 구현) 시연
+
+**OQ-1 / OQ-2 미결**: 본 ADR 발의 시점에 ADR-064 forbid-list dictionary 확장 (anti-pattern only — 예: "Big Ball of Mud" design intent 표현 금지) + ADR-068 boundary completeness invariants I-6 신설 후보 (`bounded_context_explicit`) 는 **Phase 1 packet 안 결정**. S1 LAND 직전 Codex feedback 수렴 후 본 §결정 7 amendment 추가 의무.
+
+## 결과
+
+### 긍정
+
+- ArchitectLane 산출물 의 DDD discipline consistent — 신규 agent / member 합류 시 interpretation drift 차단
+- 어휘 격상 (perspective-contributor → Subdomain Specialist) = deputy spawn rationale 정확도 향상
+- Published Language 분리 = governance BC ↔ application BC 동음이의 충돌 차단
+- review-verdict-v4 v4.8 finding type 3 enum = semantic accountability mechanism 첫 도입
+- lint 3 entry Wave 1 wire = vocabulary theater 차단 mechanical forcing function
+
+### 부정 / trade-off
+
+- 9 ADR amendment ripple (ADR-080 + ADR-064 + ADR-068 후보) → ratchet 강화 방향만 허용 (ADR-058 §결정 5)
+- agent frontmatter field 추가 = lint warning 누적 시 alert fatigue 우려 — warning tier 1차 + Wave 2 promotion gate (ADR-060 framework)
+- Subdomain 분류 정치적 합의 어려움 = upstream = 분류 기준만 / downstream = repo-by-repo 실 분류 (R2 mitigation)
+- agent 신설 0건이므로 ADR-086 5-checklist self-application 의무 verification (Story-1 packet 안) — framework 통과 confirm 의무 (5-checklist 모든 axis 통과 시 본 CFP 진행)
+
+### trade-off (vocabulary theater 차단 trade-off)
+
+본 ADR = "어휘 emit + forcing function" 동시 시공. 어휘만 emit (forcing function 부재) = vocabulary theater 실패 / forcing function 만 (어휘 부재) = decision flow 변경 가능하나 신규 member 합류 시 onboarding 비용 누적. **양쪽 다 시공 = ADR-068 boundary completeness invariants precedent 답습 (5 invariants 모두 적용해야 효과)**.
+
+## 해소 기준
+
+N/A — permanent policy (is_transitional: false). DDD vocabulary = 영구 governance 정책. 약화 방향 차단 ratchet (ADR-058 §결정 5 정합).
+
+amendment 시 sunset_justification 의무 — ratchet 강화 방향만 허용 (예: lint warning → blocking promotion / finding type 추가 / glossary entry 추가 / 새 agent role enum 추가).
+
+## 관련 파일
+
+- `docs/glossary.md` (S1 신규)
+- `docs/domain-knowledge/concept/bounded-context.md` (S1 신규)
+- `docs/domain-knowledge/concept/ubiquitous-language.md` (S1 신규)
+- `docs/domain-knowledge/concept/aggregate.md` (S1 신규)
+- `docs/domain-knowledge/concept/4-layer-architecture.md` (S1 신규)
+- `plugin-codeforge-design/agents/*.md` × 15 (S2 갱신)
+- `templates/story-page-structure.md` (S3 §ubiquitous_language)
+- `plugin-codeforge-design/templates/change-plan.md` (S3 §bounded_context_boundary + §affected_aggregates)
+- `scripts/check-ddd-vocabulary.sh` + `scripts/check-bounded-context-presence.sh` + `scripts/check-ddd-pattern-frontmatter.sh` (S3 신설)
+- `templates/github-workflows/{ubiquitous-language-drift,bounded-context-presence,ddd-pattern-frontmatter}.yml` (S3 신설)
+- `docs/inter-plugin-contracts/review-verdict-v4.md` (S4 v4.7 → v4.8 MINOR bump)
+- `docs/inter-plugin-contracts/MANIFEST.yaml` (S4 row update)
+- `skills/deputy-mandate/SKILL.md` (S5 Subdomain Specialist layer)
+- `examples/ddd-golden-path-mct031.md` (S6 신규)
+- `docs/evidence-checks-registry.yaml` (S3 3 row append, warning tier)
+- `docs/inter-plugin-contracts/label-registry-v2.md` (S3 v2.37 → v2.38 MINOR bump + 3 hotfix-bypass label entry)
+- `CLAUDE.md` (S5 ArchitectLane 단락 DDD 어휘 정렬 amendment)
+- `docs/adr/ADR-080-agent-role-terminology-deputy-subagent.md` (S1 amendment 후보, DDD pattern 매핑 명문화)
+- `docs/adr/ADR-064-decision-principle-mandate.md` (S1 amendment 후보, OQ-1 결정 후)
+- `docs/adr/ADR-068-boundary-completeness-invariants.md` (S1 amendment 후보, OQ-2 결정 후)
+
+## Amendment 후보 (Phase 1 packet 안 결정)
+
+본 ADR 발의 직후 S1 Phase 1 PR LAND 직전 다음 amendment 결정 (Codex feedback 수렴 후):
+
+1. **ADR-080 DDD pattern 매핑 amendment** — deputy / SubAgent terminology 의 DDD pattern (Authority Pair / Domain Service / Subdomain Specialist) 매핑 명문화. ratchet 강화 방향 (terminology 정확도 향상).
+2. **ADR-064 Trace 1 forbid-list 확장 (OQ-1)** — anti-pattern only (예: "Big Ball of Mud" 가 design intent 로 채택 표현 금지). 어휘 자체 forbid 아님 (vocabulary 의도 보존).
+3. **ADR-068 I-6 신설 (OQ-2)** — boundary completeness 5 invariants 위에 6번째 invariant `bounded_context_explicit` 신설 (Story 가 multi-BC 가로지를 시 explicit declare 의무). ratchet 강화 방향 (5 → 6 invariants).
+
+## ADR-086 5-checklist self-application (의무, agent 신설 0건 confirmation)
+
+ADR-086 framework 의무 적용. 본 CFP 가 agent 신설 0건이지만 framework 통과 confirm 의무.
+
+| Axis | Check | 결과 |
+|---|---|---|
+| 1. 결정 영역 axis | 본 CFP 가 어느 axis 결정인지? | **agent vocabulary layer** (신설/rename/축소 아님) — 5-checklist 적용 영역 외 |
+| 2. cost analysis | 신규 agent 신설 시 cost? | N/A — 신설 0건 |
+| 3. consumer impact | consumer overlay 변경 영향? | N/A — wrapper 단독 SSOT, consumer CI gate 제외 (Q6 합의) |
+| 4. sibling cross-ref | sibling ADR conflict? | ADR-080 / ADR-064 / ADR-068 amendment 후보 = ratchet 강화 방향만 (충돌 0) |
+| 5. deferred carrier path | 본 CFP 후속 carrier? | mctrader downstream Epic (별 CFP, BC charter + Top 10 ADR annotation + mctrader glossary SSOT) |
+
+**5-checklist 통과** — agent 신설 0건이므로 framework axis 1 영역 외, axis 4 sibling cross-ref + axis 5 deferred carrier path 만 적용. 본 CFP 진행 가능.
+
+## 다이어그램 (선택)
+
+```mermaid
+graph TB
+    subgraph "codeforge governance BC"
+        PL[ArchitectPLAgent<br/>Authority Pair / Aggregate Root metaphor]
+        Architect[ArchitectAgent<br/>Authority Pair / Chief Author]
+        PL --> Architect
+        Architect --> Sec[SecurityArchitectAgent<br/>Domain Service]
+        Architect --> InfraOp[InfraOperationalArchitectAgent<br/>Domain Service]
+        Architect --> TC[TestContractArchitectAgent<br/>Domain Service]
+        Architect --> Agg[AggregateArchitectAgent<br/>Domain Service]
+        Architect --> API[APIContractArchitectAgent<br/>Domain Service]
+        Architect --> Mod[ModuleArchitectAgent<br/>Domain Service]
+        Architect --> Data[DataArchitectAgent<br/>Domain Service]
+        Architect -.spawn on demand.-> LiveOps[LiveOpsDeputyAgent<br/>Subdomain Specialist]
+        Architect -.spawn on demand.-> LiveOrd[LiveOrderingDeputyAgent<br/>Subdomain Specialist]
+        Architect -.spawn on demand.-> ProdEvid[ProductionEvidenceDeputyAgent<br/>Subdomain Specialist]
+        Architect --> Mapper[CodebaseMapperAgent<br/>Domain Service / sub-tuple]
+        Architect --> Refactor[RefactorAgent<br/>Domain Service / sub-tuple]
+        Architect --> Analyst[ArchitectAnalystAgent<br/>Domain Service / sub-tuple]
+    end
+
+    subgraph "mctrader application BC (별 SSOT, downstream Epic)"
+        AppBC[Aggregate = DDD Aggregate root in domain model]
+    end
+
+    PL -.Published Language separate.-> AppBC
+
+    style PL fill:#ffd
+    style Architect fill:#ffd
+    style LiveOps fill:#fee
+    style LiveOrd fill:#fee
+    style ProdEvid fill:#fee
+```
