@@ -2,6 +2,44 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.17.0] - 2026-05-20
+
+### Changed (CFP-1086 Story-4 — chief 통합 mechanism + tie-break ladder body + mctrader 5 repo cross-layer evidence)
+
+본 release = wrapper SSOT (CFP-1086 Story-4 — ADR-068 Amendment 2 implementation body carrier) 의 codeforge-design plugin repo implementation. doc-only fast-path (ADR-054 Category 2 — agent file body 확장 + architecture_doc lane internal SSOT section 신설, ADR / src / tests 변경 0). **0.16.0 skip** — S3 (parallel sibling Story-3 RACI matrix codify) 점유. S4 preemptive bump to 0.17.0.
+
+#### Changed
+
+- **`agents/ArchitectAgent.md`** (body 확장 — frontmatter 무변경 invariant) — 3 신규 sections 추가:
+  - **§"Chief 통합 mechanism (CFP-1086 Story-4 carrier — ADR-068 Amendment 2 implementer)"** — Multi-source synthesizer 역할 정의 (7 permanent deputy + 3+1 CONDITIONAL + 4-tuple sub-tuple component). Multi-source synthesis pattern 4 단계 (Deputy advocacy 수렴 / Sub-tuple fact synthesis / Wording SSOT 결정 / Change Plan + ADR draft author). Multi-source synthesis 산출물 구조 표 (Change Plan section 별 input deputy + chief role). Wording SSOT advocate 역할 (deputy 간 wording 충돌 시 final author).
+  - **§"Chief tie-break ladder (ADR-068 Amendment 2 implementation — CFP-1086 Story-4)"** — ADR-068 Amendment 2 §"Tie-break ladder 3 단계" body 의 chief author implementation. 단계 1 RACI 매트릭스 lookup (deputy-mandate skill row + 4-way overlap zone matrix) → 단계 2 ADR-068 invariant 적용 (I-1 ~ I-5 verbatim implement) → 단계 3 chief judgement + ADR Amendment carrier 발의 + 사용자 escalation 의무 + ADR-058/ADR-064 ratchet 강화 정합. Verdict packet binding (review-verdict-v4 v4.6 `boundary_completeness_self_check_passed: true` emit 의무). 4-way 이념 대립 axis 보존 (advocate phase 영역 외).
+- **`docs/architecture/codeforge-design.md`** (lane internal 누적 SSOT 확장) — §"mctrader 5 repo cross-layer evidence (CFP-1086 P4 carrier)" section 신설:
+  - mctrader 5 repo 의존 그래프 (mctrader-market[-bithumb] → mctrader-engine/web → mctrader-data) — dependency direction + 역방향 의존성 0건 declare
+  - Axis mapping 표 — 5 repo 각각의 1차 layer + Primary deputy + Consult deputy (APIContractArch primary market/market-bithumb / AggregateArch primary engine/web RDB OLTP / DataArch primary data 빅데이터 OLAP / ModuleArch primary 5 repo cross-module / SecurityArch + InfraOperationalArch cross-cutting)
+  - Cross-layer ELT/ETL/CDC boundary (AggregateArch ↔ DataArch co-author 영역) — CFP-1086 Story-1 "deferred carrier" first applied case + chief tie-break trigger 시점 명시
+  - 4-way RACI matrix 실 적용 evidence 5 scenario × R/A/C/I 4-column (Story-3 carrier cross-ref)
+  - chief tie-break ladder application — mctrader scenario sample (OLTP enum ↔ OLAP column wording 충돌) 3 단계 적용 declaration only
+  - Anti-scope guard 준수 declare 4종 (모듈/경계/인터페이스/RACI mapping 수준만, 코드 line 0건)
+  - last_update_cfp frontmatter 갱신 (CFP-1086-S1 → CFP-1086-S4)
+- **`.claude-plugin/plugin.json`**: 0.15.0 → **0.17.0** MINOR (0.16.0 skip — S3 sibling 점유). description 갱신 (Story-4 chief 통합 mechanism + mctrader evidence section P4 carrier 명시).
+
+#### Invariant declare
+
+- frontmatter / permissions 무변경 (agent prompt body 확장만)
+- 4-way 이념 대립 axis 본문 변경 0건 (tie-break = mechanism, axis 자체는 보존)
+- anti-scope guard 준수 (mctrader evidence section = layer / module / boundary / RACI mapping 수준만, src/ 코드 line 0건)
+
+#### Related ADRs
+
+- ADR-068 Amendment 2 (CFP-1086 Story-1 carrier — declaration layer SSOT, 본 release = implementation layer)
+- ADR-068 Amendment 2 §"Implementation note" subsection (wrapper repo Story-4 carrier — chief author body cross-ref binding)
+- ADR-086 (CFP-1086 Story-1 신설 — Deputy 신설 결정 framework, ladder 단계 3 호출 영역)
+- ADR-042 Amendment 8 (CFP-1086 Story-1 carrier — 7+3+1 roster, ladder 단계 1 RACI lookup 입력)
+- ADR-064 §결정 3 룰 5 (ladder 단계 3 사용자 escalation 정합)
+- ADR-067 (max FIX 3/3 — verdict packet false 시 ArchitectAgent re-spawn 정합)
+- ADR-078 (living architecture doc — mctrader evidence section anti-scope guard 4종 준수 정합)
+- ADR-054 (doc-only fast-path Category 2 — agent file body 확장 + architecture_doc section 신설)
+
 ## [0.16.0] - 2026-05-20
 
 ### Changed (CFP-1086 Story-3 (Wave 2) — CLAUDE.md RACI 4-way overlap zone section mirror codify)

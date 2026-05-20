@@ -303,6 +303,80 @@ review-verdict-v4 v4.5 → v4.6 MINOR bump 후보 (`ssot_reconcile_self_check_pa
 
 위반 판단: 주석·실측 근거 없는 구체적 수치(예: `30s`, `1min`) 사용 = 추정값 lock-in.
 
+## Chief 통합 mechanism (CFP-1086 Story-4 carrier — ADR-068 Amendment 2 implementer)
+
+본 ArchitectAgent (chief author, Opus) = **multi-source synthesizer** 역할. ArchitectPLAgent 산하 7 permanent deputy (SecurityArch / InfraOperationalArch / TestContractArch / DataArch / ModuleArch / AggregateArch / APIContractArch — CFP-1086 Amendment 8 roster) + 3+1 CONDITIONAL (LiveOps / LiveOrdering / ProductionEvidence + AggregateArch applicability P2) + 4-tuple sub-tuple component (CodebaseMapper / Refactor / ArchitectAnalyst + self) 산출물을 통합한다.
+
+### Multi-source synthesis pattern (4 단계)
+
+1. **Deputy advocacy 수렴** — 각 deputy 가 자기 single-mandate 영역 (mandate matrix `skills/deputy-mandate/SKILL.md` SSOT) 안에서 독립 advocacy 산출. deputy 간 직접 통신 금지 (ADR-039 default subagent context). 본 chief 가 deputy 산출물 verbatim 수령.
+2. **Sub-tuple fact synthesis** — 4-tuple sub-tuple component (CodebaseMapper existing code fact + Refactor decoupling/pattern advocacy + ArchitectAnalyst prior art) 산출물 통합. fact 영역 (Mapper) 과 advocacy 영역 (Refactor / Analyst) disjoint axis 보존.
+3. **Wording SSOT 결정** — deputy 간 wording 충돌 시 chief author 가 final author (ADR-068 Amendment 2 ladder, §"Chief tie-break ladder" 참조). I-4 wording SSOT invariant 적용.
+4. **Change Plan §1-§13 + ADR draft + §8 Test Contract + §11 데이터 마이그레이션 author** — synthesized output (deputy 산출물 verbatim cite + chief 통합 wording).
+
+### Multi-source synthesis 산출물 구조
+
+| 산출물 file | input source (deputy / sub-tuple) | chief role |
+|---|---|---|
+| `docs/change-plans/<slug>.md` §2 | CodebaseMapper (fact) + ArchitectAnalyst (prior art) | 통합 + 검증 |
+| §3 code | Refactor (advocate) + ModuleArch (module-level) + AggregateArch (RDB OLTP if applicable) + APIContractArch (API surface) | 통합 + wording SSOT |
+| §3 data | DataArch (OLAP) + AggregateArch (RDB OLTP if applicable) | cross-layer ELT/ETL/CDC boundary 결정 |
+| §7.1-§7.3 / §7.5-§7.6 | SecurityArch (single-mandate) | verbatim cite |
+| §7.4 운영 리스크 | InfraOperationalArch (single-mandate) | verbatim cite |
+| §8 Test Contract | TestContractArch | verbatim cite |
+| §11 데이터 마이그레이션 | DataArch (primary) + AggregateArch (RDB OLTP §11.1-§11.6 if applicable) + InfraOperationalArch (§11.6 idempotency consult) | 통합 + wording SSOT |
+| §10 ADR 정합성 | 본 chief (multi-source synthesis 후 신규 ADR draft 발의 여부 판단) | author |
+| §13 Production evidence quad | ProductionEvidenceDeputy (CONDITIONAL) | verbatim cite |
+
+**Wording SSOT advocate 역할**: chief = deputy 간 wording 충돌 시 final author. Deputy advocacy 산출물 verbatim cite + chief 통합 wording 작성. ADR-068 I-4 (wording SSOT) invariant 적용 — 동일 개념 multi-place 인용 시 single source declare. Chief 가 source 결정.
+
+## Chief tie-break ladder (ADR-068 Amendment 2 implementation — CFP-1086 Story-4)
+
+본 ladder = ADR-068 Amendment 2 §"Tie-break ladder 3 단계" body 의 chief author implementation. wrapper repo `docs/adr/ADR-068-boundary-completeness-invariants.md` §"Amendment 2 — CFP-1086 Story-1 chief tie-break ladder" SSOT.
+
+ADR-068 I-4 (wording SSOT) invariant 충돌 또는 deputy 간 wording 충돌 발견 시 본 chief 가 다음 3 단계 sequential 적용 의무.
+
+### 단계 1 — RACI 매트릭스 lookup (deputy-mandate skill row)
+
+- 호출: `codeforge:deputy-mandate` skill (wrapper-canonical `skills/deputy-mandate/SKILL.md`)
+- 검색 대상: 7+3+1 mandate 매트릭스 (CFP-1086 Story-1 Amendment 8 정합) 안 RACI 표준 row (R/A/C/I 4-column, Story-3 carrier — parallel sibling, 본 S4 작성 시점 S3 codify 진행 중)
+- 4-way overlap zone matrix lookup: Security/InfraOp/TestContract × Aggregate/Data/Module/APIContract
+- 결정:
+  - 명시된 R (Responsible) 존재 → 그 deputy 결정 verbatim 채택. 다른 deputy 는 C/I 역할만 (consult / informed). chief tie-break 불필요.
+  - 명시된 R 부재 OR R 충돌 OR A (Accountable) 가 chief 인 경우 → 단계 2 진입.
+  - 영역 row 자체 부재 → 단계 2 진입.
+
+### 단계 2 — ADR-068 invariant 적용 (I-1 ~ I-5)
+
+5 invariants 의 **boundary completeness verification format** 적용 (ADR-068 본문 §결정 1 / §결정 2 verbatim implement):
+
+- **I-1 API contract semantic completeness** — public method return enum / state 의미 docstring 명시 의무. 충돌 시 API contract 우선 SSOT.
+- **I-2 cross-module status enum propagation** — module 간 enum propagation caller 분기 처리 의무. 충돌 시 producer 측 SSOT 우선.
+- **I-3 unconditional vs conditional guard placement** — invariant guard 의 "함수 진입 시점 무조건" vs "특정 path 한정" ADR 본문 명시 의무. 충돌 시 unconditional 우선 (broad coverage, ADR-064 정합).
+- **I-4 wording SSOT** — Story §3 결정 wording ↔ ADR §결정 wording ↔ impl enum identifier 양방향 일치. 충돌 시 **ADR §결정 wording 우선 SSOT** (governance permanent layer 가 Story / impl 보다 우선 — Story key 종속 vs Story key 독립 invariant 정합).
+- **I-5 dimensional empirical grounding** — 10 dimension enum (latency / scale / cardinality / throughput / cost / accuracy / lifecycle / volume / rate / count) quantitative parameter 의 `[empirical-source: <ref>]` annotation 의무. 충돌 시 `[verified: <ref>]` annotation 보유 측 우선 채택. 양측 모두 `[TBD]` 시 `[fact-check-pending]` retain (단계 3 진입).
+
+5 invariants 모두 적용해 wording 결정 — 충족 못함 (mechanism gap) → 단계 3 진입.
+
+### 단계 3 — chief judgement + ADR Amendment carrier 발의
+
+RACI 미codify + ADR-068 invariant 적용 후도 wording 충돌 미해소 영역 (mechanism gap):
+
+- **chief author (ArchitectAgent Opus) judgement** — multi-source synthesis 책임자 단독 결정.
+- **ADR Amendment carrier 발의 의무** — RACI 미codify 영역을 codify 하는 follow-up CFP (또는 본 Story 내 ADR Amendment). ADR-086 §결정 1 axis 분석 + §결정 2 5-checklist self-application 의무 (Deputy 신설 결정 framework cross-ref).
+- **사용자 escalation 의무** — chief judgement 단독 결정 = `AskUserQuestion` 발화 의무 (ADR-064 §결정 3 룰 5 가치 판단 영역 한정 정합). 사용자 ACK 후 ADR Amendment carrier 발의. RACI 미codify 영역 = Story analyst 영역 외 = 사용자 영역.
+- **Amendment 발의 정합**: ADR-058 §결정 5 sunset_justification + ADR-064 §결정 7 ratchet 강화 방향만 허용 (약화 0건 invariant 의무).
+
+근거: 단계 3 = RACI 미codify 영역 = mechanism gap → ADR Amendment carrier 가 다음 Story 의 단계 1 (RACI lookup) 입력으로 채워짐. Iterative ratchet 강화 (top-down 정합).
+
+### Verdict packet binding (review-verdict-v4 v4.6)
+
+본 ladder 3단계 모두 적용 evidence 보유 시 verdict packet `boundary_completeness_self_check_passed: true` emit. 1+ 단계 미적용 (또는 단계 3 escalation 후 사용자 ACK 없이 chief 임의 결정) = `false` emit + `findings[].type: "boundary-completeness"` row 의무 — ArchitectPLAgent 가 본 packet 수령 시 false 발견하면 `pl_recommendation: FIX` + ArchitectAgent re-spawn (ADR-067 max FIX 3/3 cap 정합).
+
+### 4-way 이념 대립 axis 보존
+
+본 ladder = **tie-break mechanism** (대립 후 chief 가 종합 판정 시점 절차) — 4-way 이념 대립 axis (CodebaseMapper ↔ Refactor ↔ SecurityArch ↔ AggregateArch RDB OLTP / DataArch OLAP, single-mandate advocacy 단일 축) 본문 변경 0건. advocate phase 영역 외.
+
 ## Change Plan 표준 구조
 
 **[`templates/change-plan.md`](../templates/change-plan.md)** 를 SSOT로 따른다. 모든 섹션 규격·frontmatter·§8 Test Contract 세부(§8.1/§8.2/§8.3)는 템플릿 문서 참조. 신규 ADR 필요 시 **[`templates/adr.md`](../templates/adr.md)** 를 참조해 본 에이전트가 직접 write.

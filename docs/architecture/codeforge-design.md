@@ -1,7 +1,7 @@
 ---
 title: codeforge-design lane 구조 (설계 레인 — Change Plan + ADR 확정)
 last_captured: 2026-05-20
-last_update_cfp: CFP-1086-S1  # 7+3+1 roster 재편 (ADR-042 Amendment 8 + ADR-068 Amendment 2 + ADR-086 신설)
+last_update_cfp: CFP-1086-S4  # chief 통합 mechanism + tie-break ladder body + mctrader 5 repo cross-layer evidence (P4)
 kind: architecture_doc
 family_ref: ../../../plugin-codeforge/docs/architecture/codeforge-family.md#모듈
 ---
@@ -200,6 +200,91 @@ ArchitectPLAgent 검수 → review-verdict packet 작성
 - **desired state** = 본 doc 의 4 H2 closed-enum (모듈 + 경계 + 인터페이스 계약 + 데이터 흐름) 누적 현재 상태 SSOT
 - **current state** = lane plugin agent file (`agents/*.md`) + `CLAUDE.md` 의 실제 정의 상태
 - **converge** = ArchitectAgent self-write (매 Change Plan merge 시 4 H2 갱신, CLAUDE.md `Self-write 책임` 표 last row) + design lane verdict gate (DesignReviewPL 가 본 doc drift 검증 — CFP-923 detection class d, architecture-drift lint 후속 carrier)
+
+---
+
+### mctrader 5 repo cross-layer evidence (CFP-1086 P4 carrier)
+
+본 section = CFP-1086 Story-4 의 P4 evidence — 7+3+1 deputy roster + chief tie-break ladder + ADR-086 Deputy 신설 결정 framework 의 **first real-world application case** (mctrader 5 repo consumer project). consumer 측 cross-layer mandate matrix 의 explicit declare. anti-scope guard 준수 (모듈 / 경계 / 인터페이스 / 흐름 수준 only — 코드 line 수준 0건).
+
+#### mctrader 5 repo 의존 그래프 (consumer project)
+
+```
+mclayer/mctrader-market          (외부 API client — 일반 거래소)
+mclayer/mctrader-market-bithumb  (Bithumb KRW 거래소 client)
+                  ↓ DTO + API contract
+mclayer/mctrader-engine          (RDB OLTP — backtest engine, 트랜잭션 경계)
+mclayer/mctrader-web             (RDB OLTP — FastAPI web UI, 사용자 dialog)
+                  ↓ ELT/ETL/CDC pipeline (cross-layer boundary)
+mclayer/mctrader-data            (빅데이터 OLAP — Parquet + DuckDB + 시계열 집계)
+```
+
+5 repo cross-module dependency direction = market[-bithumb] → engine + web (DTO + API contract) → data (ELT/ETL/CDC). 역방향 의존성 0건 (clean architecture invariant).
+
+#### Axis mapping — deputy primary 영역 (7+3+1 roster 적용)
+
+| mctrader repo | 1차 layer | Primary deputy | Consult deputy | 비고 |
+|---|---|---|---|---|
+| `mclayer/mctrader-market` | API transport | **APIContractArch** (REST/WebSocket transport + DTO shape + rate limit contract) | SecurityArch (auth) + InfraOperationalArch (재연결 / clock drift) | 외부 거래소 API contract — APIContractArch single-mandate advocacy 첫 적용 영역 |
+| `mclayer/mctrader-market-bithumb` | API transport | **APIContractArch** (Bithumb REST/WebSocket + KRW 통화 quirks + Korean exchange specific) | SecurityArch (API key) + InfraOperationalArch (Bithumb specific rate limit) | KRW 통화 domain — DataArch consult (가격 schema OLAP 영역) |
+| `mclayer/mctrader-engine` | RDB OLTP | **AggregateArch** (backtest run aggregate invariant + 트랜잭션 경계 + Alembic 정책 7 원칙) | SecurityArch (PII) + InfraOperationalArch (connection pool / DR) + DataArch (engine 산출물 → OLAP backfill pipeline) | RDB OLTP aggregate invariant — AggregateArch single-mandate first applied |
+| `mclayer/mctrader-web` | RDB OLTP | **AggregateArch** (user aggregate + 트랜잭션 경계 + FastAPI session 정책) | SecurityArch (CSRF / OWASP) + APIContractArch (FastAPI REST contract surface — DTO shape co-author) + InfraOperationalArch (gunicorn worker / DR) | UI 영역 ↔ DTO boundary = AggregateArch + APIContractArch co-author |
+| `mclayer/mctrader-data` | 빅데이터 OLAP | **DataArch** (Parquet schema + 객체저장소 layout + DuckDB query plan + streaming + 백필 + 시계열 집계) | InfraOperationalArch (OLAP scan compute budget) + AggregateArch (engine OLTP → OLAP 변환 schema mapping consult) | 빅데이터 OLAP only — DataArch mandate 축소 후 first applied case |
+| 5 repo cross-module | dependency direction | **ModuleArch** (boundary + dependency direction + DDD bounded context module placement) | ArchitectAgent chief tie-break (cross-layer 충돌 시 — Amendment 2 ladder 3 단계 적용) | 5 repo 간 boundary + 역방향 의존성 차단 invariant |
+| 모든 repo cross-cutting | — | **SecurityArch** + **InfraOperationalArch** (consult) | TestContractArch §8.6 (5 repo integration test contract) | cross-cutting = single advocate 가 5 repo 모두 cover |
+
+#### Cross-layer ELT/ETL/CDC boundary (AggregateArch ↔ DataArch co-author)
+
+RDB OLTP (engine / web) → 빅데이터 OLAP (data) 의 **ELT / ETL / CDC pipeline** = AggregateArch + DataArch **co-author 영역**:
+
+- **scope boundary** — RDB schema (AggregateArch primary, Alembic SSOT) ↔ Parquet schema (DataArch primary, schema evolution rule) 의 변환 mapping
+- **CFP-1086 Story-1 declare** "deferred carrier (별 sibling 배포 lane Epic 산출 후 결정)" — 본 S4 mctrader evidence 가 first applied case
+- **chief tie-break trigger** — 변환 mapping wording 충돌 시 (예: enum name AggregateArch UPPER_SNAKE_CASE vs DataArch lowercase snake_case) Amendment 2 ladder 2 단계 (I-4 wording SSOT) 적용
+- **consumer carrier path** — mctrader 측 ELT/ETL pipeline 구현 시 codeforge sibling Epic 발의 → ADR-086 §결정 3 deferred carrier path 호출
+
+#### 4-way RACI matrix 실 적용 evidence (Story-3 carrier cross-ref)
+
+본 mctrader case 가 Story-3 의 4-way overlap zone RACI 표준 row 의무 첫 적용 (Story-3 = parallel sibling, 본 S4 작성 시점 codify 진행 중). 4 영역 RACI mapping enumerate:
+
+| RACI scenario | Responsible | Accountable | Consulted | Informed |
+|---|---|---|---|---|
+| `mctrader-web` RDB schema 결정 | AggregateArch | ArchitectAgent (chief) | SecurityArch (PII) + InfraOperationalArch (connection pool) | DataArch (OLAP backfill 영향) + APIContractArch (DTO shape 영향) |
+| `mctrader-market[-bithumb]` API contract 결정 | APIContractArch | ArchitectAgent (chief) | SecurityArch (auth) + InfraOperationalArch (rate limit) | AggregateArch (DTO ↔ entity mapper 영향) |
+| `mctrader-data` Parquet schema 결정 | DataArch | ArchitectAgent (chief) | InfraOperationalArch (OLAP scan budget) + AggregateArch (RDB ↔ OLAP 변환 영향) | ModuleArch (boundary invariant 영향) |
+| `mctrader-engine` ↔ `mctrader-data` ELT/ETL pipeline | AggregateArch + DataArch co-author | ArchitectAgent (chief tie-break — Amendment 2 ladder) | SecurityArch (data 마스킹) + InfraOperationalArch (pipeline 실패 시 DR) | ModuleArch (5 repo boundary) + APIContractArch (만약 API exposure 동반 시) |
+| 5 repo cross-module dependency direction | ModuleArch | ArchitectAgent (chief tie-break — cross-layer 충돌 시) | 모든 deputy (cross-cutting) | — |
+
+> **Important** — 본 RACI matrix = Story-3 RACI 표준 row 형식 의 4-column 답습 (R/A/C/I). Story-3 codify 후 본 mctrader case 가 cross-ref 입력 (mandate matrix lookup 시 1단계 RACI lookup 첫 적용 사례).
+
+#### chief tie-break ladder application (mctrader scenario sample)
+
+mctrader-engine OLTP enum name (예: `BacktestStatus.RUNNING`) ↔ mctrader-data OLAP column name (예: `backtest_status_running`) wording 충돌 발생 가정. chief tie-break ladder 3 단계 적용:
+
+1. **단계 1 RACI lookup** — `mctrader-engine` enum = AggregateArch primary (RACI 명시). `mctrader-data` column = DataArch primary (RACI 명시). 양 deputy 동등 R → tie-break 불가 → 단계 2 진입.
+2. **단계 2 ADR-068 invariant** — I-4 wording SSOT 적용. ADR §결정 wording 우선 SSOT — codeforge mctrader-hub repo ADR (consumer ADR) 안 `BacktestStatus.RUNNING` UPPER_SNAKE_CASE 으로 codify 되어 있으면 RDB 측 우선. OLAP column = `backtest_status_running` 은 변환 mapping 영역 (`enum→snake_case` deterministic transform).
+3. **단계 3 chief judgement (만약 ADR 영역도 wording 부재 시)** — chief 가 `BacktestStatus.RUNNING` UPPER_SNAKE_CASE base SSOT 채택 + ADR Amendment 발의 (mctrader-hub ADR codify carrier) + 사용자 escalation (consumer 영역).
+
+→ 본 sample = ADR-068 Amendment 2 ladder 의 mctrader 실 적용 시 expected flow declaration (cross-ref evidence only — 실 적용 carrier 는 mctrader Epic 발의 시점).
+
+#### Anti-scope guard 준수 declare
+
+본 section = mctrader 5 repo 의 **layer / module / boundary / interface / RACI mapping 수준만**. 다음 4종 금지 (ADR-078 §결정 1 anti-scope guard):
+
+1. mctrader 5 repo 의 클래스 / 함수 / 변수 라인 단위 enumeration **0건**
+2. import graph 라인-level **0건**
+3. 함수 signature / parameter list / return type **0건**
+4. mctrader 5 repo 의 `src/` 디렉터리 1:1 mirror **0건**
+
+→ "deputy roster + chief tie-break + RACI matrix 가 consumer 영역에서 어떻게 매핑되는지" 수준만. 그 외 (mctrader 실 schema / 실 API contract / 실 코드 line) 영역 = consumer Story / Change Plan / ADR 영역.
+
+#### Cross-reference (CFP-1086 carrier 박제)
+
+- wrapper `docs/adr/ADR-068-boundary-completeness-invariants.md` Amendment 2 §"Tie-break ladder 3 단계" SSOT
+- wrapper `docs/adr/ADR-086-deputy-creation-decision-framework.md` §결정 1/2/3 (axis 분석 + 5-checklist + deferred carrier path)
+- wrapper `docs/adr/ADR-042-agent-model-selection-policy.md` Amendment 8 (7+3+1 roster + AggregateArch CONDITIONAL applicability)
+- `agents/ArchitectAgent.md` §"Chief 통합 mechanism" + §"Chief tie-break ladder" body (본 S4 carrier)
+- `skills/deputy-mandate/SKILL.md` 4-way overlap zone RACI section (Story-3 carrier — parallel sibling)
+- consumer mctrader 5 repo (Story analyst 영역 외 — 본 evidence section = declaration only)
 
 ---
 
