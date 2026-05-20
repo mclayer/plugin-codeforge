@@ -60,9 +60,26 @@ amendment_log:
       - ArchitectAnalystAgent (new entry, codeforge-design — Sonnet, PriorArtAgent rename)
       - DataArchitectAgent (DataMigrationArchitectAgent rename + mandate 확장, codeforge-design — Opus 유지)
       - InfraOperationalArchitectAgent (OperationalRiskArchitectAgent rename, codeforge-design — Opus inheritance 유지)
+  - amendment_id: 8
+    date: "2026-05-20"
+    status: applied
+    summary: "CFP-1086 Story-1 — design lane 5+3 → 7+3+1 permanent+CONDITIONAL roster 재편. AggregateArchitectAgent 신설 (Sonnet, §결정 1 Sonnet (a) single-mandate advocacy — RDB OLTP aggregate invariant + 트랜잭션 경계 + persistence-bound aggregate boundary + Alembic 정책 tool-agnostic policy layer) + APIContractArchitectAgent 신설 (Sonnet, §결정 1 Sonnet (a) single-mandate advocacy — transport REST/GraphQL/gRPC/WebSocket + API versioning + DTO + OpenAPI/GraphQL schema + contract testing). CodeArchitectAgent → ModuleArchitectAgent rename + mandate 정정 (도메인 모델 invariant 영역 제거 — module boundary + dependency direction + layered/hexagonal/clean module-level only, aggregate invariant 영역은 AggregateArch). DataArchitectAgent mandate 축소 (RDB 영역 제거 — 빅데이터 OLAP only: Parquet / 객체저장소 / DuckDB / streaming / 백필 / 시계열 집계. RDB OLTP 영역은 AggregateArch). AggregateArch CONDITIONAL applicability (`project.yaml aggregate_arch.applicable: bool` — frontend-only / API-only / external-managed consumer non-applicable, LiveOps/LiveOrdering/ProductionEvidence CONDITIONAL 패턴 재사용 P2). 5 permanent → 7 permanent (2 신설). 3 CONDITIONAL → 3+1 CONDITIONAL (AggregateArch applicability 추가). 4종 모두 §결정 3 (신규 agent / model 변경 시 ADR 의무) 정합. model tier (Sonnet) = brainstorm Phase 0+1 ArchitectAgent + Codex 최종 확정 carry-over (재론 금지). DDDArchitectAgent 신설 reject 명문화 (axis 미정합 — method/학파 layer + ModuleArch wording overlap + consumer applicability 축소). axis 분석 disjoint 원칙 (Amendment 7 CodeArch/ArchitectAnalyst single-mandate advocacy 패턴 답습) — AggregateArch/APIContract 모두 처음부터 single-mandate advocacy 로 정의, multi-source synthesis 책임은 ArchitectAgent chief Opus 단독 보유."
+    ref: CFP-1086
+    carrier_story: CFP-1086-S1
+    sunset_justification: null
+    affected_agents:
+      - AggregateArchitectAgent (new entry, codeforge-design — Sonnet)
+      - APIContractArchitectAgent (new entry, codeforge-design — Sonnet, skeleton at S1 / body 심화 = S2)
+      - ModuleArchitectAgent (CodeArchitectAgent rename + mandate 정정 — 도메인 모델 invariant 영역 제거, codeforge-design — Sonnet 유지)
+      - DataArchitectAgent (mandate 축소 — RDB OLTP 영역 제거, OLAP only 유지, codeforge-design — Opus 유지)
+    cross_ref:
+      - ADR-068 Amendment 2 (CFP-1086 / Story-1 carrier — wording SSOT chief tie-break ladder P1 sibling)
+      - ADR-086 (CFP-1086 / Story-1 신설 carrier — Deputy 신설 결정 framework P7, 본 Amendment 8 = self-application 첫 사례)
+      - CFP-1079 (OpsExecutionArchitect 신설 + InfraOperationalArch §7.4 mandate 보강 sibling Epic — Phase 1 PR open 시점 OPEN PR 0건, 본 Amendment 8 = 선점, CFP-1079 후속 = Amendment 9 별 session)
 related_stories:
   - CFP-448
   - CFP-676
+  - CFP-1086
 related_adrs:
   - ADR-009
   - ADR-013
@@ -72,6 +89,8 @@ related_adrs:
   - ADR-039
   - ADR-046
   - ADR-057
+  - ADR-068  # Amendment 2 cross-ref (CFP-1086 / Story-1 carrier — wording SSOT chief tie-break ladder P1 sibling)
+  - ADR-086  # 신설 cross-ref (CFP-1086 / Story-1 — Deputy 신설 결정 framework P7, 본 Amendment 8 = self-application 첫 사례)
 related_files:
   - .claude-plugin/plugin.json
   - CLAUDE.md
@@ -457,3 +476,86 @@ CodeArchitect / ArchitectAnalyst = §결정 2 invariant ("Sonnet 으로 대체 �
 - ADR-068 I-5 적용 declare (CFP-676) — spawn token cost dimensional empirical grounding
 - CLAUDE.md "Deputy mandate 매트릭스 (codeforge-design lane)" — 6 → 5 permanent + 3 CONDITIONAL (+ ArchitectAnalyst sub-tuple)
 - [ADR-046](ADR-046-researcher-role-redefinition.md) — ResearcherAgent (Opus, reshape mandate) ≠ ArchitectAnalyst (Sonnet, single-axis 기존 설계 분석) — 두 analyst 역할 disjoint (reshape vs read-only prior-art)
+
+---
+
+## Amendment 8 — CFP-1086 Story-1 design lane 7+3+1 roster 재편 (BackendArchEpic Phase 2)
+
+**날짜**: 2026-05-20
+
+### 동기
+
+CFP-1026 W1 (Amendment 7 / `abcd92bf`) 가 5 permanent + 3 CONDITIONAL + 4-tuple sub-tuple 으로 atomic carrier 확정 후, DataArchitect deputy 가 빅데이터 OLAP (Parquet / 객체저장소 / DuckDB) + 서비스 RDB OLTP (PostgreSQL / SQLAlchemy / Alembic) 두 영역 모두 책임. 산업 표준 (데이터 엔지니어 vs 백엔드 엔지니어 직무 분리) 위배 + OLAP/OLTP mental context switch cost. 깊은 동기 — (b) 별 session 진행 중 sibling 배포 lane Epic 에서 RDB schema 정책 결정자 부재로 cross-repo 결정 막힘 (mechanism gap) + (c) §3/§7/§11 작성 시 DataArch + SecurityArch + InfraOpArch 가 RDB 영역에서 ownership 부딪힘 RACI 충돌 (mechanism gap).
+
+본 Amendment 8 = CFP-1086 BackendArchEpic Story-1 = 7 deputy axis 확정 ADR carrier 묶음. sibling ADR carriers (ADR-068 Amendment 2 wording SSOT chief tie-break ladder P1 + ADR-086 신설 Deputy 신설 결정 framework P7) atomic 동반.
+
+### 변경 사항
+
+| Agent | 변경 | model tier | §결정 1 매트릭스 row |
+|---|---|---|---|
+| **AggregateArchitectAgent** | **신설** — RDB OLTP aggregate invariant + 트랜잭션 경계 + persistence-bound aggregate boundary + Alembic 정책 (tool-agnostic policy layer) | **Sonnet** (claude-sonnet-4-6) | **Sonnet (a)** "Single-mandate advocacy within multi-deputy debate — RDB OLTP 영역 단일 축 주장" |
+| **APIContractArchitectAgent** | **신설** (skeleton at S1 / body 심화 = S2) — transport (REST/GraphQL/gRPC/WebSocket) + API versioning + DTO contract + OpenAPI/GraphQL schema + contract testing (Pact 등) | **Sonnet** (claude-sonnet-4-6) | **Sonnet (a)** 동일 |
+| CodeArchitectAgent | **rename → ModuleArchitectAgent** + mandate 정정 (도메인 모델 invariant 영역 제거 — module boundary + dependency direction + layered/hexagonal/clean module-level only). 도메인 모델 invariant 영역 = AggregateArch primary | **Sonnet 유지** | (a) 무변경 — 명칭 정확화 + mandate scope 정정 (axis 명확화) |
+| DataArchitectAgent | **mandate 축소** — RDB OLTP 영역 제거 (PostgreSQL / SQLAlchemy / Alembic / 트랜잭션 경계 / 도메인 모델 모두 AggregateArch 분리). 빅데이터 OLAP only (Parquet / 객체저장소 / DuckDB / streaming / 백필 / 시계열 집계) | **Opus 유지** (§결정 1 (d) Security / safety boundary owner — OLAP 영역에서도 schema rollback / 데이터 무결성 invariant 유지) | (d) 무변경 — mandate scope 축소만 |
+
+### CONDITIONAL applicability 신설 (P2)
+
+기존 3 CONDITIONAL (LiveOps / LiveOrdering / ProductionEvidence — Live touching Story 또는 production cutover Story trigger) 에 **AggregateArch applicability** 추가 (3+1 CONDITIONAL):
+
+- **trigger**: `project.yaml aggregate_arch.applicable: bool` (default `true`)
+- **non-applicable consumer 영역**: frontend-only project / API-only project (외부 RDB consume only) / external-managed RDB (consumer 가 schema 제어권 없음)
+- **mechanism**: LiveOps / LiveOrdering / ProductionEvidence CONDITIONAL 패턴 재사용 (consumer overlay flag 기반 conditional spawn)
+- **consumer carrier**: P7 framework §결정 2 5-checklist (3) consumer carrier 충족 — `project.yaml aggregate_arch.{applicable, migration_tool}` schema declare (Tool scope B — tool-agnostic policy layer + 9-enum migration_tool override default alembic)
+
+### model tier 결정 근거 (Sonnet — 재론 금지 carry-over)
+
+AggregateArch / APIContract = §결정 2 invariant ("Sonnet 으로 대체 가능한 수준의 얕은 역할만 맡고 있다면 역할이 제대로 잡히지 않은 것이다") 의 **역방향 적용** — 본 2 agent 는 처음부터 single-mandate advocacy 로 정의 (AggregateArch = RDB OLTP 영역 단일 축 주장 / APIContract = transport contract 영역 단일 축 주장). multi-source synthesis (deputy 산출물 dedup + 종합 판정) 책임은 ArchitectAgent chief (Opus) 단독 보유 — 본 2 agent 는 자기 축 사실 / 주장만 정확히 전달하면 충분. CodebaseMapper / Refactor / ArchitectAnalyst (4-tuple sub-tuple Sonnet) + CodeArchitect Amendment 7 동질 패턴. Sonnet 4.6 reasoning depth 가 본 mandate 를 fully cover.
+
+**model tier (Sonnet) 의사결정 재수행 금지** — brainstorm Phase 0+1 (사용자 4-turn dialog: Q1 WHY → Q2 명칭 → Q2-prime ModuleArch → Q3 Tool=B → Q4 AggregateArch → Q4-prime DDDArch reject → Q5 ACK all) 에서 ArchitectAgent + Codex 최종 확정 carry-over. 본 Amendment 8 = codify 만.
+
+ModuleArch (CodeArch rename) / DataArch (mandate 축소) = rename / scope change only — model tier 무변경 (Sonnet / Opus 각 유지).
+
+### DDDArchitectAgent 신설 reject 명문화 (axis 미정합)
+
+Phase 1 Q4-prime 에서 사용자 발의 — DDDArchitectAgent (Domain-Driven Design 학파 advocate). reject 사유:
+
+- **axis 미정합** — method / 학파 layer (vs. mandate / mandate scope layer). 다른 deputy 는 mandate scope axis (RDB OLTP / OLAP / transport / module boundary / security policy / 운영 리스크 / test contract) 로 disjoint, DDD = 방법론 layer 로 axis 충돌 (orthogonal 하지 않음 — ADR-086 §결정 1 axis 분석 의무 위배)
+- **ModuleArch wording overlap** — DDD bounded context + aggregate boundary 영역 이미 ModuleArch (module-level) + AggregateArch (aggregate invariant) 가 cover. DDDArch = wording-only superset, mandate scope 추가 없음
+- **consumer applicability 축소** — DDD 학파 채택 consumer 만 활성 — codeforge 전체 consumer 영역 축소
+
+본 reject 는 **약화 (scope 축소) 아닌 미도입 결정** — ratchet top-down 강화 방향 무관 (ADR-058 §결정 5 sunset_justification 불필요).
+
+**미래 재발의 trigger** (ratchet 위반 아님): 별 consumer 가 DDD 학파 전용 mandate scope 신설 evidence 누적 시 (mandate scope disjoint 신규 영역) DDDArch 재발의 carrier 가능. 본 reject = axis 미정합 결정 — 미도입 결정 영역.
+
+### 기존 정책 변경 0건 (ADR-042 본문)
+
+본 Amendment 8 은 ADR-042 의 결정 1~6 본문 변경 0건. 변경 = (a) 본 `## Amendment 8` body section (b) frontmatter amendment_log row 8 + related_stories CFP-1086 append + related_adrs ADR-068 / ADR-086 append. tier criteria (결정 1) + invariant (결정 2) + 신규 agent ADR 의무 (결정 3) + inheritance (결정 4) + Haiku rollback (결정 5) + 재-audit (결정 6) 모두 정책 변경 0건. ratchet 강화 방향 (신규 agent 2종 도입 — scope 확장, ADR-058 §결정 5 정합) → sunset_justification 불필요 (frontmatter amendment_id:8 `sunset_justification: null`).
+
+### Mechanical enforcement — review-verdict-v4 v4.5 → v4.6 MINOR (deputy_axis_restructure_self_check_passed field)
+
+본 Amendment 8 carrier = `review-verdict-v4 v4.6` MINOR bump. 신규 optional bool field `deputy_axis_restructure_self_check_passed` 추가 — ArchitectAgent (또는 후속 Amendment carrier) 가 ADR-086 §결정 2 5-checklist (axis disjoint / cost-token budget / consumer carrier / sibling Epic align / deferred trigger 명시) 통과 시 true. false 시 ArchitectAgent re-spawn (FIX 의무). 적용 lane = design lane (deputy roster 변경 carrier Story 만 적용 — Amendment 8 = 본 framework self-application 첫 사례).
+
+### ADR-068 I-5 dimensional empirical grounding 적용 (spawn count)
+
+본 Amendment 8 의 spawn count 변경 — CFP-1026 W1 후 평균 22 (5 permanent + 3 sub-tuple + chief author + PL = 8 평균 + 14 CONDITIONAL/contributor activation ratio) → 본 Amendment 8 후 평균 28 (7 permanent + 3 sub-tuple + chief + PL = 10 평균 + 18 CONDITIONAL ratio, 1.27배 추가). full activation 34 → 40 (1.18배). 본 spawn count 증가 = ADR-068 I-5 `count` dimension quantitative parameter — empirical-source annotation 의무.
+
+- value: 평균 22 → 28, full 34 → 40
+- unit: spawn count (deputy + sub-tuple + chief + PL 합계, lane spawn 1회당)
+- empirical_source: TBD (local probe / wiretap script 부재 — ADR-068 I-5 Mitigation 2 `[empirical-source: TBD]` explicit TBD 기재). Story-1 packet sample annotation 의무 (P7 framework §결정 2 5-checklist (2) cost-token budget 충족).
+
+본 backref = ADR-068 I-5 본문 / verdict field / 10 dimension enum / mitigation 4종 **0건 변경 invariant** (CFP-676 W1 backref 답습 패턴).
+
+### Scope 경계 (S1 = 정책 SSOT 만)
+
+본 Amendment 8 = **정책 SSOT codify 만**. agent file (`.md`) 실 신설 / rename / 내용 작성 = 본 Story-1 codeforge-design plugin sibling PR scope (CFP-676 W1 → W2 분리 패턴과 달리 — 본 Epic 의 S1 = ADR carrier + agent file atomic 묶음, doc-only fast-path ADR-054 정합 5-repo atomic). ADR-042 §결정 3 의 "해당 lane plugin agent file 의 `model:` field 와 동기" 의무 = 본 Story-1 atomic 5-PR (wrapper + codeforge-design + codeforge-pmo + internal-docs + marketplace) 으로 충족.
+
+### Cross-ref
+
+- ADR-068 Amendment 2 (CFP-1086 Story-1 sibling carrier — wording SSOT 충돌 시 chief tie-break ladder P1: RACI lookup → ADR-068 invariant → chief judgement + ADR Amendment 발의)
+- ADR-086 (CFP-1086 Story-1 신설 carrier — Deputy 신설 결정 framework P7, 본 Amendment 8 = self-application 첫 사례). axis 분석 의무 + 5-checklist self-app + deferred carrier path
+- ADR-014 Amendment 4 (Amendment 7 cross-ref 답습) — InfraOperationalArchitect §7.4 primary 4-sub + ProductionEvidence dual-spawn disjoint axis (본 Amendment 8 영역 외 invariant 보존)
+- ADR-064 §결정 1 CFP scope unitary — 본 Amendment 8 = CFP-1086 단일 Story-1 carrier (Amendment 9 = CFP-1079 별 session)
+- ADR-076 (declarative reconciliation upgrade) — 본 Amendment 8 의 P7 framework axis 분석 + 5-checklist = ADR-076 desired / current / converge 3-layer 패턴의 governance domain 동형 답습
+- CFP-1079 (OpsExecutionArchitect 신설 + InfraOperationalArch §7.4 mandate 보강 sibling Epic) — 본 Phase 1 PR open 시점 OPEN, PR 0건 — 본 Amendment 8 = 선점, CFP-1079 후속 = Amendment 9 별 session
+- CLAUDE.md "Deputy mandate 매트릭스 (codeforge-design lane)" — 5 → 7 permanent + 3 → 3+1 CONDITIONAL + 4-tuple sub-tuple (변경 0)
+- [ADR-046](ADR-046-researcher-role-redefinition.md) — ResearcherAgent (Opus, reshape mandate) ≠ AggregateArch (Sonnet, single-axis RDB OLTP) — 두 역할 disjoint (reshape vs single-mandate advocacy)

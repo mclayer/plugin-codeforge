@@ -1,6 +1,6 @@
 ---
 kind: contract
-contract_version: "4.5"
+contract_version: "4.6"
 status: Active
 related_plugins:
   - codeforge (wrapper, consumer of FIX routing data + Orchestrator self-write)
@@ -11,11 +11,13 @@ related_adrs:
   - ADR-010  # Inter-plugin Contract Sibling Sync (canonical/sibling 관계)
   - ADR-022  # Deprecated by ADR-035 — Sonnet decider 영역 본 v4 에서 정식 제거
   - ADR-035  # codeforge agent teams Epic architecture (D2 implementation level)
+  - ADR-042  # Amendment 8 — design lane 7+3+1 roster 재편 carrier (CFP-1086 — deputy_axis_restructure_self_check_passed field 신설)
   - ADR-044  # Phase-scoped sequential team SSOT (본 v4 carrier)
   - ADR-059  # debate-protocol-v1 — anchor_id field 가 stable identifier 로 의존 (CFP-391)
   - ADR-065  # ArchitectAgent Phase 1 mechanical self-check — mechanical_self_check_passed field (CFP-438)
-  - ADR-068  # Boundary completeness invariants — boundary_completeness_self_check_passed field (CFP-527) + Amendment 1 (CFP-528) — I-5 dimensional_empirical_self_check_passed
+  - ADR-068  # Boundary completeness invariants — boundary_completeness_self_check_passed field (CFP-527) + Amendment 1 (CFP-528) — I-5 dimensional_empirical_self_check_passed + Amendment 2 (CFP-1086) — wording SSOT chief tie-break ladder scope expansion
   - ADR-063  # Marketplace atomic invariant — marketplace_sync_declared field (CFP-597 Amendment 1)
+  - ADR-086  # Deputy 신설 결정 framework (CFP-1086 신설) — deputy_axis_restructure_self_check_passed field carrier
 authors:
   - CFP-137 (2026-05-09) — review-verdict v3 → v4 MAJOR bump (Sonnet decider 영역 정식 제거 + worker_dialog_rounds 추가)
   - CFP-391 (2026-05-11) — findings[].anchor_id optional field 추가 (debate-protocol-v1 stable identifier SSOT 정합, FIX-1)
@@ -24,7 +26,13 @@ authors:
   - CFP-527 (2026-05-13) — v4.2 → v4.3 MINOR bump (boundary_completeness_self_check_passed optional bool field + findings[].type "boundary-completeness" literal 추가, ADR-068)
   - CFP-528 (2026-05-13) — v4.3 → v4.4 MINOR bump (dimensional_empirical_self_check_passed optional bool field + findings[].type "dimensional-empirical-gap" literal, ADR-068 Amendment 1)
   - CFP-597 (2026-05-13) — v4.4 → v4.5 MINOR bump (marketplace_sync_declared optional bool field, ADR-063 Amendment 1)
+  - CFP-1086 (2026-05-20) — v4.5 → v4.6 MINOR bump (deputy_axis_restructure_self_check_passed optional bool field 신설 — ADR-042 Amendment 8 + ADR-086 P7 framework self-application 첫 사례 carrier + boundary_completeness_self_check_passed scope expansion — ADR-068 Amendment 2 wording SSOT chief tie-break ladder cross-ref)
 amendment_log:
+  - version: "4.6"
+    date: 2026-05-20
+    cfp: CFP-1086
+    type: MINOR
+    summary: "deputy_axis_restructure_self_check_passed optional bool field 신설 — ADR-042 Amendment 8 (BackendArchEpic CFP-1086 Story-1 — design lane 5+3 → 7+3+1 roster 재편: AggregateArchitect 신설 + APIContractArchitect 신설 + ModuleArchitect rename + DataArchitect mandate 축소 + AggregateArch CONDITIONAL applicability P2) + ADR-086 (신설 Deputy 신설 결정 framework P7 — axis 분석 + 5-checklist self-application + deferred carrier path) carrier. ArchitectAgent (또는 후속 Amendment carrier) 가 ADR-086 §결정 2 5-checklist (axis disjoint / cost-token budget / consumer carrier / sibling Epic align / deferred trigger 명시) 통과 시 true. false 시 ArchitectAgent re-spawn (FIX 의무). 적용 lane: design lane only (deputy roster 변경 carrier Story 만 적용, code/security/test lane omit 가능). + boundary_completeness_self_check_passed scope expansion — ADR-068 Amendment 2 (CFP-1086 Story-1 sibling carrier — wording SSOT 충돌 시 chief tie-break ladder 3 단계: RACI lookup → ADR-068 invariant → chief judgement + ADR Amendment 발의). 본 ladder 3단계 모두 통과 시 true (기존 4 invariants I-1~I-4 + Amendment 2 mechanism boost). ADR-008 §결정 2 '새 선택 필드 추가' MINOR bump 정합 + scope expansion (boundary field semantic 확장 — 4 invariants 자체 의미 변경 0건). Runtime impact 없음 (기존 v4.5 consumer 가 본 신규 field 무시 가능 + boundary_completeness_self_check_passed 기존 field semantic backward-compat)."
   - version: "4.5"
     date: 2026-05-13
     cfp: CFP-597
@@ -395,3 +403,31 @@ ADR-022 Deprecated 후 (CFP-134 / ADR-035) Sonnet decider 자동 발동 무효 �
 **Changelog**:
 
 - v4.4 (2026-05-13, CFP-528): `dimensional_empirical_self_check_passed` optional bool field 추가 + `findings[].type: "dimensional-empirical-gap"` literal 신설. ADR-068 Amendment 1 §결정 1 I-5 carrier. ADR-065 (mechanical syntactic) + ADR-068 I-1~I-4 (boundary completeness) 와 disjoint — verdict packet 셋 별도 boolean field.
+
+## 14. Deputy axis restructure self-check (v4.6 — ADR-042 Amendment 8 + ADR-086 / CFP-1086)
+
+`deputy_axis_restructure_self_check_passed` optional bool field 가 deputy roster 변경 carrier Story (예: CFP-1086 Story-1 Amendment 8 = 7+3+1 roster 재편) 에서 ADR-086 §결정 2 5-checklist self-application 결과 explicit marker:
+
+| Checklist | 통과 기준 |
+|---|---|
+| **axis disjoint** | 신설 deputy 가 기존 deputy 와 axis 중복 0 (orthogonal mandate scope dimension 의무 — ADR-086 §결정 1 axis 분석) |
+| **cost-token budget** | spawn count 증가 시 ADR-068 I-5 dimensional empirical grounding 의무 (10 dimension `count` 의 quantitative parameter `[empirical-source: <ref> \| TBD]` annotation) |
+| **consumer carrier** | consumer overlay 필드 명시 (CONDITIONAL applicability / tool override). `project.yaml` schema 신설 또는 갱신 의무 |
+| **sibling Epic align** | 진행 중 sibling Epic 과 RACI 충돌 0 또는 cross-ref 명시 |
+| **deferred trigger 명시** | 후속 carrier 별 CFP 명시 (sub-tuple expansion / CONDITIONAL P3 / consumer schema lint / RACI codify 등 follow-up 영역 enumeration) |
+
+**적용 lane** = **design lane only** (deputy roster 변경 carrier Story 만 적용). code / security / test lane 모두 omit 가능.
+
+**Producer 책무 (ArchitectPLAgent — design lane)**:
+- ArchitectAgent (또는 후속 Amendment carrier) self-check 결과 수령 — 5-checklist + axis 분석 통과 시 true
+- packet `deputy_axis_restructure_self_check_passed` 채움
+- false 시 `pl_recommendation: FIX` + ArchitectAgent re-spawn 의뢰 (deferred carrier path 진입 — §결정 3 정합)
+
+**Consumer 책무 (Orchestrator)**:
+- false 수신 시: Story §10 FIX Ledger row append → ArchitectPLAgent re-spawn 의뢰
+- true 수신 시: 정상 lane 진행 (deputy roster 변경 framework self-app PASS 신호로 채택)
+- 미제공 (v4.5 이전 producer 또는 deputy roster 변경 0건 Story) 수신 시: 무시 — backward-compat
+
+**Changelog**:
+
+- v4.6 (2026-05-20, CFP-1086): `deputy_axis_restructure_self_check_passed` optional bool field 추가. ADR-086 P7 framework (Deputy 신설 결정 framework) self-application 첫 사례 carrier (CFP-1086 Story-1 ADR-042 Amendment 8 — 7+3+1 roster 재편). `boundary_completeness_self_check_passed` scope expansion (ADR-068 Amendment 2 wording SSOT chief tie-break ladder 3단계 mechanism — field semantic 확장, 4 invariants 자체 의미 변경 0건). ADR-065 (mechanical syntactic) + ADR-068 I-1~I-4 (boundary completeness) + ADR-068 I-5 (dimensional empirical) 와 disjoint — verdict packet 4 별도 boolean field.

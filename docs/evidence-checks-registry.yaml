@@ -2837,9 +2837,6 @@ entries:
       threshold: 3                  # ADR-060 §결정 19 Amendment 6 / schema v1.2 standard default
       promotion_trigger: none       # count=0 < threshold=3 → 발화 없음 (Option A — parallel-work-sentinel-pickup count=2 sentinel 영역과 분리)
     status: warning  # CFP-963 Phase 2 ACTIVE — mechanical wire complete: detect_command + workflow + bats fixture pair (CX-963-3 P2 boundary mandate per Codex TP#4) ALL populated (2026-05-19 KST). deferred-followup → warning transition (ADR-060 §결정 6 — Phase 2 carrier merge 의무 충족). blocking-on-pr 승격 = pr_cumulative_min 20 + failure_threshold 0 + sibling_dependency merge (별 follow-up CFP)
-        - canary_compatibility_check_binding_7_field_verify_proof
-        - family_7_atomic_canary_pin_three_way_match_proof
-        - canary_consumer_evidence_origin_enum_closed_set_proof
     mechanical_enforcement_actions:
       - canary-compatibility-check   # ADR-040 Amendment 3 §결정 7.D cross-ref
     modal_anti_pattern_dictionary: {}
@@ -2999,3 +2996,47 @@ entries:
         - cfp_870_inline_absorb_evidence
         - adr_073_amendment_2_polling_enum_4th_source_evidence  # cross-ref `active_sessions_check`
     modal_anti_pattern_dictionary: {}
+
+  - name: deputy-spawn-count-empirical-grounding
+    description: |
+      ADR-068 I-5 dimensional empirical grounding `count` dimension backref entry.
+      Deputy roster 변경 carrier Story (예: CFP-1086 Story-1 Amendment 8 = 7+3+1
+      roster 재편) 시 spawn count quantitative parameter 의 empirical-source
+      annotation 의무 — `[empirical-source: <ref> | TBD]` (Mitigation 2 explicit
+      TBD 기재, local probe / wiretap source 부재 시).
+
+      본 entry = ADR-068 I-5 본문 0건 변경 backref-only entry (Wave 1
+      declarative — Wave 2 mechanical lint = `dimensional-empirical-grounding`
+      entry promotion 시 본 entry 도 active 전환). ADR-086 §결정 2 5-checklist
+      (2) cost-token budget 통과 의무 mechanism.
+
+      검증 패턴: Story §1 (또는 spec §2 axis 최종안 표) 안 spawn count 평균 / full
+      activation 명시 + `[empirical-source: TBD]` 또는 `[empirical-source:
+      <local probe ref>]` annotation presence-grep. ADR-082 §결정 2(a)
+      corpus-claim-verify lint 의 backref pattern verbatim 재사용
+      (`[verified: git show <ref>:<path>]` annotation 동형 mechanical 패턴 정합).
+    introduced_by: CFP-1086
+    introduced_date: 2026-05-20
+    owner_adr: ADR-068-Amendment-1  # declaration source — I-5 dimensional empirical grounding (CFP-528) `count` dimension
+    carrier_adr: ADR-086            # 본 framework P7 §결정 2 5-checklist (2) cost-token budget binding source
+    recurrence:
+      count: 1                      # CFP-1086 Story-1 첫 적용 사례 (Amendment 8 spawn count 평균 22 → 28 / full 34 → 40 annotation)
+      threshold: 3                  # 3-occurrence reach 시 mechanical wire warning-tier promotion (Wave 2 별 sub-CFP carrier)
+      last_occurrence: "2026-05-20T00:00:00Z"  # CFP-1086 Story-1 Phase 1 PR commit time (KST 09:00 = UTC 00:00)
+      promotion_trigger: none       # Wave 1 = declaration only (ADR-068 I-5 본문 backref-only). Wave 2 별 sub-CFP merge 후 active 전환 (`dimensional-empirical-grounding` entry promotion 시 본 entry 도 active)
+    status: deferred-followup       # Wave 1 declaration only — actual mechanical lint = ADR-068 I-5 Amendment 1 `dimensional-empirical-grounding` entry 의 후속 mechanical wire 별 sub-CFP carrier 후 warning 전환
+    current_tier: warning           # ADR-060 schema v1.1 required field (deferred-followup status 이지만 tier 분류 = warning 의도)
+    bypass_label: hotfix-bypass:deputy-axis-restructure  # label-registry-v2 v2.41 신규 entry (CFP-1086)
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-1086                              # 본 Story-1 (첫 적용 declarative anchor)
+        - CFP-528                               # ADR-068 Amendment 1 I-5 신설 (`dimensional-empirical-grounding` entry parent)
+        - TBD-Wave-2-sub-CFP                    # Wave 2 mechanical wire (script + workflow + hook + bats + label-registry-v2 신규 entry 별 sub-CFP, sequential next)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+        - adr_086_self_application_first_case_evidence  # 본 framework self-application 첫 사례 = CFP-1086 Story-1 Amendment 8 (spec §8 6 Story self-app 표 verbatim)
+    modal_anti_pattern_dictionary: {}  # ADR-068 I-5 patterns (anti-pattern 4종 + Mitigation 4종) 재사용, modal 어휘 무관

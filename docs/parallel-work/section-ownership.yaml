@@ -435,4 +435,20 @@ owned_sections:
     # 본 Amendment 3 = self-ownership verify 3-tuple + transition trigger enum 4번째
     # entry / #729 (Amendment 4 재배정) = Glob false negative 별 §결정 영역.
 
+  - file: CLAUDE.md
+    section: "Deputy mandate 매트릭스 (codeforge-design lane)"
+    owner_adr: ADR-042-Amendment-8
+    parallel_edit: append-only
+    # NOTE (CFP-1086): 본 Story-1 carrier 가 5+3 → 7+3+1 roster 재편 (AggregateArch +
+    # APIContractArch 신설 + ModuleArch rename + DataArch mandate 축소 + AggregateArch
+    # CONDITIONAL applicability P2). 본 §단락 = wrapper CLAUDE.md "Deputy mandate
+    # 매트릭스 (codeforge-design lane) — 7 permanent + 3+1 CONDITIONAL" 영역, 7+3+1
+    # roster 표 + CONDITIONAL trigger 매핑 + chief tie-break ladder cross-ref 보유.
+    # append-only — 후속 carrier (CFP-1079 Amendment 9 OpsExecutionArch 신설 등) 가
+    # 본 §단락에 row append 만 허용. 기존 7+3+1 roster row 삭제 / rename = ADR-064
+    # §결정 1 CFP scope unitary 정합 (별 CFP carrier 의무). ratchet 강화 방향만
+    # (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합).
+    # ContinuityAgent: ADR-086 §결정 1 axis 분석 의무 + §결정 2 5-checklist self-app
+    # 후속 Amendment 시 본 §단락 row append 시 self-app 결과 명시 의무.
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)

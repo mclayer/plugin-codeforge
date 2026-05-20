@@ -452,6 +452,67 @@ bash scripts/reconcile-overlay.sh
 
 참조: [reconcile-protocol-v1 §4.7](inter-plugin-contracts/reconcile-protocol-v1.md) · [ADR-076](adr/ADR-076-declarative-reconciliation-upgrade.md) · [ADR-027 §결정 7.A.1](adr/ADR-027-consumer-adoption-protocol.md)
 
+### 1l. AggregateArchitect deputy applicability + migration tool (CFP-1086 / [ADR-042 Amendment 8](adr/ADR-042-agent-model-selection-policy.md) / [ADR-086](adr/ADR-086-deputy-creation-decision-framework.md))
+
+codeforge-design lane 의 **AggregateArchitectAgent** (CFP-1086 Story-1 신설 — RDB OLTP aggregate invariant 변호자) 가 본 consumer 영역에 적용되는지 결정. 2 field 자율 override (default 적용 — 의도적으로 강제 안 함).
+
+#### `aggregate_arch.applicable` (CONDITIONAL spawn)
+
+```yaml
+# .claude/_overlay/project.yaml
+aggregate_arch:
+  applicable: true    # bool, default true
+  migration_tool: alembic    # 9-enum, default alembic
+```
+
+**`applicable: true` (default)** — 대부분 consumer 가 RDB OLTP schema 제어권 보유. 설계 lane 진입 시 AggregateArch deputy parallel spawn 활성. 7 permanent deputy (SecurityArch / InfraOperationalArch / TestContractArch / DataArch / ModuleArch / **AggregateArch** / APIContractArch) 모두 활성. mctrader 예시 — RDB OLTP (PostgreSQL + SQLAlchemy + Alembic) + 빅데이터 OLAP (Parquet + DuckDB) 양 영역 보유 → applicable=true.
+
+**`applicable: false`** — AggregateArch deputy 미spawn. 다음 consumer 영역에서 선택:
+
+- **frontend-only project** — RDB schema 부재 (예: pure SPA / static site)
+- **API-only project** — 외부 RDB consume only, schema 제어권 없음 (예: third-party API client)
+- **external-managed RDB** — consumer 가 schema 제어권 없음 (예: SaaS managed DB, customer-managed DB)
+
+`false` 시 6 permanent deputy + 3 sub-tuple = 9 SubAgent (vs default 10) parallel spawn. ArchitectAgent chief 가 RDB OLTP 영역 결정 안내 skip + 사유 명시.
+
+#### `aggregate_arch.migration_tool` (9-enum override)
+
+**Tool layer (consumer override)** — RDB 마이그레이션 도구 선택:
+
+| enum | 적용 stack |
+|---|---|
+| `alembic` (default) | Python + SQLAlchemy (mctrader reference) |
+| `prisma-migrate` | Node.js + Prisma |
+| `typeorm` | Node.js + TypeORM |
+| `goose` | Go + database/sql |
+| `golang-migrate` | Go + golang-migrate/migrate |
+| `flyway` | Java + Flyway |
+| `liquibase` | Java + Liquibase |
+| `sqlx-migrate` | Rust + sqlx |
+| `custom` | 9 enum 외 도구 (consumer-defined) |
+
+**정책 layer (stack-agnostic, wrapper 강제)** — Alembic 정책 7 원칙은 모든 tool 에 적용:
+
+1. 양방향 호환 (backward + forward compat)
+2. 확장-정리 분리 (expand-then-contract)
+3. reverse (rollback path)
+4. smoke (smoke test 의무)
+5. cross-repo (multi-repo coordination)
+6. 백업 (data backup before destructive change)
+7. hard limit (max migration size / lock duration)
+
+본 7 원칙 = AggregateArchitect agent 의 mandate (consumer overlay 가 약화 불가). Tool 만 override 자유.
+
+#### 미정의 시 동작
+
+`aggregate_arch` 섹션 자체가 없으면 default 적용 (`applicable: true`, `migration_tool: alembic`). codeforge wrapper 강제 안 함 (consumer 자율). `applicable: true` default 가 안전한 fallback — 대부분 backend project 가 RDB OLTP schema 보유.
+
+#### Write boundary (§4b 정합)
+
+`aggregate_arch.*` field = **consumer-authored only**. 모든 codeforge agent (AggregateArchitect 포함) 는 본 field write 금지. AggregateArchitect deputy = consumer overlay value 를 spawn-time Context Packet 으로 수신 후 mandate 결정에 반영 (read-only).
+
+참조: [ADR-042 Amendment 8](adr/ADR-042-agent-model-selection-policy.md) (7+3+1 roster + AggregateArch 신설) · [ADR-086](adr/ADR-086-deputy-creation-decision-framework.md) (Deputy 신설 결정 framework P7) · `agents/AggregateArchitectAgent.md` (codeforge-design plugin) · [project-config-schema §aggregate_arch 섹션 설명](project-config-schema.md)
+
 ## 2. Consumer 프로젝트 구조 초기화
 
 ```
