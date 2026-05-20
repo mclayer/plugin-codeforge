@@ -2921,3 +2921,81 @@ entries:
       last_occurrence: "2026-05-20T00:00:00Z"  # CFP-681 ArchitectPL Phase 3 mis-flag KST 09:00 = UTC 00:00 (registry schema v1.2 정합 — KST `09:00:00+09:00` = UTC Z notation, 2026-05-20)
       promotion_trigger: auto_blocking  # recurrence.count = 3 = threshold = 3 도달 → Wave 2 별 sub-CFP carrier (Wave 2 mechanical wire) merge 시 즉시 warning → blocking-on-pr 자동 승격 trigger 활성 (ADR-060 §결정 19 enum)
     status: deferred-followup  # Wave 1 declaration only — actual script + workflow + hook + bats + label-registry-v2 신규 entry = Wave 2 별 sub-CFP carrier 후 warning 전환 (parallel-work-sentinel-pickup CFP-966 deferred-followup → CFP-967 warning 전환 precedent 답습). scope_boundary: 본 entry = worktree-first self-confusion sub-domain (자기 영역, reflog membership 안 lineage) / #983 후보 (a)/(b) = real parallel cross-session collision sub-domain (외부 영역, reflog membership 외 lineage) — disjoint axis 명시 invariant
+
+  - name: active-sessions-presence
+    description: |
+      ADR-085 §결정 2 active_sessions[] field presence-grep — Story Issue body
+      `<!-- active_sessions -->` HTML comment block 또는 Story file frontmatter
+      `active_sessions:` array 둘 중 하나 이상 존재 verify (dual carrier
+      mandate). 5-tuple schema: git_identity / worktree_path / entry_phase /
+      entered_at_kst (ADR-079 KST `+09:00` ISO 8601 zoned strict) /
+      last_heartbeat_kst. Wave 1 declaration-only (mechanical lint = Wave 2 별
+      sub-CFP carrier). multi-session collaboration protocol carrier 의무 —
+      복수 Claude Code session 동시 작업 시 ownership 결정 / 분담 / handoff
+      normative SSOT. ADR-082 §결정 6 + ADR-070 §D5 retain pattern 답습.
+    introduced_by: CFP-1041
+    introduced_date: 2026-05-20
+    owner_adr: ADR-085-§결정-2  # declaration source — Multi-session collaboration protocol active_sessions[] field schema
+    carrier_adr: ADR-060       # enforcement source — evidence-enforceable warning-tier framework
+    recurrence:
+      count: 0                 # Wave 1 declaration baseline (sentinel-driven 아닌 ratchet-driven, ADR-085 carrier introduce)
+      threshold: 3             # 3-occurrence reached 시 자동 승격 trigger (Wave 2 mechanical wire 후 carrier)
+      promotion_trigger: none  # Wave 1 = declaration only, Wave 2 별 sub-CFP merge 후 active
+    status: deferred-followup  # Wave 1 declaration only — actual script + workflow + hook + bats + label-registry-v2 entry = Wave 2 별 sub-CFP carrier 후 warning 전환 (CFP-689 worktree-self-ownership-verify deferred-followup precedent 답습)
+    detect_command: bash scripts/check-active-sessions-presence.sh  # Wave 2 별 sub-CFP carrier — Story file frontmatter `active_sessions:` block OR Issue body HTML comment block presence-grep
+    workflow: templates/github-workflows/active-sessions-presence.yml  # Wave 2 별 sub-CFP carrier
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:active-sessions-presence  # label-registry-v2 v2.40 신규 entry (active-sessions-presence + lane-entry-ownership-verify 2 entry 동반 append)
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-1041               # 본 Story (declarative anchor Wave 1 carrier)
+        - TBD-Wave-2-sub-CFP     # Wave 2 mechanical wire (script + workflow + hook + bats + label-registry-v2 신규 entry 별 sub-CFP, sequential next, Wave 1 merge 후)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+        - cfp_983_super_class_ssot_absorption_evidence  # absorbed pattern_count ≥ 8 lineage CFP-953/946/949/932/954/991/967/1014
+        - cfp_870_inline_absorb_evidence                # handoff baton transfer §결정 5
+        - cfp_681_retroactive_success_variant_evidence  # rebase merge 우선 first success
+    modal_anti_pattern_dictionary: {}  # field presence check, modal 어휘 무관
+
+  - name: lane-entry-ownership-verify
+    description: |
+      ADR-085 §결정 3 lane-entry sentinel ownership verify — `gh pr list
+      --search "head:<branch>" --json number,headRepository,author,createdAt
+      --state open` ownership verify mandate. ADR-073 Amendment 2 polling enum
+      3종 (`lane_spawn` / `pr_open` / `merge_transition`) 의 4번째 source
+      `active_sessions_check` cross-ref-only append (ADR-073 본문 0건 변경
+      invariant). Wave 1 declaration-only (mechanical lint = Wave 2 별 sub-CFP
+      carrier). multi-session collaboration protocol carrier 의무.
+    introduced_by: CFP-1041
+    introduced_date: 2026-05-20
+    owner_adr: ADR-085-§결정-3  # declaration source — lane-entry sentinel ownership verify normative
+    carrier_adr: ADR-060        # enforcement source
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: deferred-followup
+    detect_command: bash scripts/check-lane-entry-ownership.sh  # Wave 2 별 sub-CFP carrier
+    workflow: templates/github-workflows/lane-entry-ownership-verify.yml  # Wave 2 별 sub-CFP carrier
+    current_tier: warning
+    bypass_label: hotfix-bypass:lane-entry-ownership-verify  # label-registry-v2 v2.40 신규 entry
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-1041
+        - TBD-Wave-2-sub-CFP
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+        - cfp_983_super_class_ssot_absorption_evidence
+        - cfp_870_inline_absorb_evidence
+        - adr_073_amendment_2_polling_enum_4th_source_evidence  # cross-ref `active_sessions_check`
+    modal_anti_pattern_dictionary: {}
