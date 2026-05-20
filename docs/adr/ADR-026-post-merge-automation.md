@@ -27,6 +27,7 @@ related_stories:
   - CFP-688   # Amendment 3 §결정 5.G carrier — workflow file integrity safeguards (actionlint pre-commit hook + CI step + canary deploy mandate + KPI registry warning-tier sentinel)
   - CFP-795   # Amendment 4 §결정 6 carrier — post-merge-fix phase-gate fast-pass exemption (3-조건 AND: post-merge-fix label + hub Story §10 binding + 원 MERGED PR §7 보안 non-touch 역참조)
   - CFP-900   # Amendment 5 §결정 7 carrier — `.github/` fast-pass content sanity 1차 신호 orthogonal warning layer (Wave 4 sub-Epic CFP-858 S3, Epic 마지막 Story. fast-pass OR-gate 무변경 + content mismatch warning emit 1단 추가. ADR-076 Amendment 3 §결정 3 sub-clause sibling)
+  - CFP-1059  # Amendment 6 §결정 8 carrier — Epic close → Deploy trigger hook (codeforge-deploy lane 신설 정합, ADR-087 §결정 6 sibling carrier). post-merge automation 영역 확장 (PR merge / Issue close transition 외 Epic close transition trigger 추가, declaration-only Wave 1)
 amendment_log:
   - date: 2026-05-12
     carrier: CFP-476
@@ -44,6 +45,10 @@ amendment_log:
     carrier: CFP-795
     section: "Amendment 4 — §결정 6 (신설) + §결정 2 (cross-repo PAT scope read 정합 cross-ref)"
     summary: "Amendment 4 = post-merge-fix phase-gate fast-pass exemption SSOT — CFP-795 carrier (mctrader consumer MCT-183 Phase 2 PR1 post-merge hotfix mctrader-data#71 trigger, cross-repo Story land_order 후 발견된 safe defect 의 정정 PR 이 phase-gate-mergeable.yml 의 PR-label-only fallback 추론으로 구조적 무한 BLOCK = consumer admin override / 불필요한 보안테스트 lane 재실행 강요 = escalate-and-fix 철학 / enforce_admins:true invariant 위배). §결정 6 (신설) = phase-gate-mergeable.yml 의 기존 3-source fast-pass OR-gate (isEpicLabel || isSiblingPr || isDocOnly) 에 4번째 source isPostMergeFix 추가 — 단순 라벨 단독 통과 금지, 3-조건 AND gate: (조건 1) post-merge-fix label 존재 (조건 2) hub Story §10 FIX Ledger 에 해당 hotfix PR 을 가리키는 row binding 존재 (cross-repo audit trail, Orchestrator monopoly fix-event-v1 contract CFP-32) (조건 3) 정정 대상 원(MERGED) PR 이 §7 보안 영역 non-touch (3a 원 PR 변경 파일 보안경로 non-match ∧ 3b hotfix PR 자체 변경 파일 보안경로 non-match — SecurityArch 양면 강화, revert 가 보안 패치 무력화 차단 = 역참조). 옵션 1 단독 (단순 라벨 exemption) 거부 = self-declare 위조 → 보안테스트 우회 attack surface (4 에이전트 독립 수렴). 옵션 3 단독 (admin-override 정책화) 거부 = enforce_admins:true invariant 정면 충돌 + escalate-and-fix 위배 — 단 consumer 즉시 unblock 의 interim-only 경로 (hotfix-playbook §3 사후 감사 trail + admin-override-with-justification) 는 정책 아닌 운영 fallback 으로 유효. 조건 2 cross-repo read 는 phase-gate-mergeable.yml 의 기존 story_uri PR-body marker + CODEFORGE_CROSS_REPO_PAT contents fetch 메커니즘 (L31-90) 재사용 — internal-docs hub Story §10 read 는 기존 PAT contents:write scope 가 read 포함하므로 충족 (§결정 2 cross-ref, scope 확장 불요). fail-closed default (판정 불가 = BLOCK 유지, false-negative 보안우회 < false-positive 불필요BLOCK). label-registry-v2 post-merge-fix entry MINOR + plugin.json MINOR (ADR-063 atomic 3-file + marketplace.json sync). is_transitional: false 유지 — sunset_justification 면제 = ratchet 강화 방향 (fast-pass 3-source → 4-source 는 gate 강화이며 약화 아님; 조건 2/3 AND 가 옵션 1 단순 라벨보다 엄격, ADR-058 §결정 5 정합). 본 Amendment 4 = ADR-024 enforce_admins:true invariant 보호 (admin override 정상화 거부) + escalate-and-fix 철학 실행 (consumer workaround 금지, 정책 기반 자동 gate pass). **Codex TP#2 inline FIX (2026-05-17, verified-true P1)**: §3.2 (hub Story §10 read) 에 hub repo 화이트리스트 (`ALLOWED_HUB_REPOS` workflow env / plugin config 주입, PR body derive 금지) 의무 추가 — story_uri spoofing forged §10 row attack 차단. zero-trust anchor. consumer overlay `phase_gate.allowed_hub_repos[]` 확장 가능 (ADR-057 정합 축소 불가). ADR-052 Amendment 4 P1 mandatory inline FIX 이행."
+  - date: 2026-05-20
+    carrier: CFP-1059
+    section: "Amendment 6 — §결정 8 (신설)"
+    summary: "Amendment 6 = Epic close → Deploy trigger hook 신설 (codeforge-deploy lane 신설 정합 carrier — ADR-023 Amendment 1 + ADR-087 신설 sibling). post-merge automation 영역 확장 — 기존 post-merge follow-up trigger (PR merge transition + Issue close keyword transition Amendment 1 dual-source AND + post-merge-fix phase-gate fast-pass Amendment 4 §결정 6 + `.github/` fast-pass content sanity Amendment 5 §결정 7) 위에 Epic close transition trigger 1단 추가 — Epic Issue closed + `gate:retro-complete` label 동시 활성 시 DeployPL spawn hook fire (production cutover-touching Epic 한정, wrapper-self-app N/A). declaration-only Wave 1 — Phase 2 PR scope (`templates/github-workflows/epic-close-deploy-trigger.yml` + `scripts/check-epic-close-deploy-trigger.sh` + evidence-checks-registry row append). consumer-side gating layer = ADR-083 §결정 1 4-way enum closed-set (consumer 영역만 hook fire, wrapper-self-app `mixed`/`plugin` repo skip). ratchet 강화 방향 — post-merge automation trigger 4-source → 5-source 확장 + Epic close transition trigger 신규 channel 추가 (약화 0건). is_transitional: false 보존."
   - date: 2026-05-18
     carrier: CFP-900
     section: "Amendment 5 — §결정 7 (신설)"
@@ -700,3 +705,68 @@ N/A — `is_transitional: false` (permanent governance mandate). 본 Amendment 5
 - **ADR-083 / CFP-898 / CFP-899** (Amendment 5): Wave 4 sub-Epic CFP-858 3-layer composite — S1 (CFP-898 ADR-076 Amendment 2 vertical dependency closure) + S2 (CFP-899 ADR-083 horizontal consumer-applicability filter) 위 S3 (CFP-900 본 Amendment 5 + ADR-076 Amendment 3 honest reporting layer, mirror-후 temporal-post). content sanity signal = S1 closure resolver (CFP-898 §4.11) 의 phase-gate-mergeable layer mirror (algorithm 재사용, gate-time signal).
 - **ADR-013 / ADR-017** (Amendment 5): codeforge family dogfood-out — 본 Amendment 5 의 Change Plan / Story file = internal-docs `wrapper/`, ADR home = 본 plugin-codeforge `docs/adr/`.
 - **ADR-058** (Amendment 4): §결정 5 sunset_justification — Amendment 4 = ratchet 강화 방향 (fast-pass 3→4 source 는 gate 강화), `is_transitional: false` 유지, sunset_justification 면제.
+
+## Amendment 6 (CFP-1059, 2026-05-20) — Epic close → Deploy trigger hook (codeforge-deploy lane 신설 정합)
+
+### 결정 8 (신설) — Epic close transition trigger 추가
+
+CFP-1059 Story-1 sibling carrier (ADR-023 Amendment 1 + ADR-087 Deploy lane + ADR-088 Deploy Review lane 신설 atomic). 본 Amendment 6 = post-merge automation 영역 확장 — Epic close transition trigger 신규 채널 추가.
+
+#### 기존 post-merge automation trigger (Amendment 1-5 누적)
+
+| Source | Trigger | Owner |
+|---|---|---|
+| 1 | PR merge transition (`pull_request: closed + merged`) | Action 1 (Phase label transition) — Amendment 1 §결정 5 |
+| 2 | Issue close keyword regex transition (PR body `Closes #` + Issue closedByPullRequestsReferences dual-source AND) | Action 1 §결정 5 |
+| 3 | post-merge-fix phase-gate fast-pass (3-조건 AND: post-merge-fix label + hub Story §10 binding + 원 MERGED PR §7 보안 non-touch) | Amendment 4 §결정 6 |
+| 4 | `.github/` fast-pass content sanity 1차 신호 (orthogonal warning layer) | Amendment 5 §결정 7 |
+
+#### 5번째 source (신설) — Epic close transition trigger
+
+```yaml
+trigger:
+  issues:
+    types: [closed]
+
+source_5_epic_close:
+  condition:
+    - issue.labels contains "type:epic"
+    - issue.labels contains "gate:retro-complete"
+    - issue.closedAt - issue.openedAt >= 1h  # 즉시 close 차단 (parent Epic 정합 invariant)
+  action: spawn DeployPL (codeforge-deploy lane)
+  scope: production cutover-touching Epic 한정 (consumer-side, wrapper-self-app N/A)
+  consumer_applicability_filter: ADR-083 §결정 1 4-way enum (`consumer` only, `mixed`/`plugin`/`unknown` repo skip)
+```
+
+#### Consumer-side gating layer (ADR-083 정합)
+
+- **wrapper-self-app exemption** — wrapper repo (`mclayer/plugin-codeforge`) = mixed repo 분류 → DeployPL spawn skip (self-loop bug 차단, ADR-083 §결정 4 정합)
+- **consumer repo only** — `.claude-plugin/plugin.json` 부재 + `.claude/_overlay/project.yaml` 존재 시 (consumer repo) DeployPL spawn fire
+- **production cutover-touching Epic 한정** — Epic Issue body 안 `<!-- scope_manifest -->` block `production_cutover_touching: true` 명시 시만 trigger (ADR-072 §결정 5 epic-cutover-gate-evidence-quad-check 정합)
+
+### 결정 9 (신설) — declaration-only Wave 1 mechanical_enforcement_actions[] entry
+
+```yaml
+mechanical_enforcement_actions:
+  - action: epic-close-deploy-trigger
+    status: declaration-only-Wave-1
+    progress_note: "CFP-1059 Story-1 Amendment 6 §결정 8 carrier (codeforge-deploy lane 신설 정합). mechanical enforce = `templates/github-workflows/epic-close-deploy-trigger.yml` + `.github/workflows/epic-close-deploy-trigger.yml` (byte-identical, ADR-005) + `scripts/check-epic-close-deploy-trigger.sh` + evidence-checks-registry row append. Phase 2 PR (구현 lane) scope. declaration-only Wave 1 retain (ADR-082 §결정 6 + ADR-070 §D5 precedent 답습, CFP-898 / CFP-899 / CFP-900 precedent 정합)."
+    target_section: §결정 8
+```
+
+### 기존 정책 변경 0건 (ADR-026 본문)
+
+본 Amendment 6 = ADR-026 결정 1~7 본문 변경 0건. 변경 = (a) 본 `## Amendment 6` body section (b) frontmatter `amendment_log` entry append (Amendment 6 row) + `related_stories` CFP-1059 row append. ratchet 강화 방향 (post-merge automation trigger 4-source → 5-source 확장 — scope 확장, ADR-058 §결정 5 정합) → sunset_justification 불필요 (강화 방향 only).
+
+### Cross-references
+
+- ADR-023 Amendment 1 (CFP-1059 / Story-1 sibling carrier — lane plugin 6 → 8 확장)
+- ADR-087 (CFP-1059 / Story-1 신설 — Deploy lane as 7th lane plugin, §결정 6 sibling cross-ref — Epic close trigger 정합)
+- ADR-088 (CFP-1059 / Story-1 신설 — Deploy Review lane + ProductionEvidence transfer)
+- ADR-042 Amendment 9 (CFP-1059 / Story-1 sibling — 4 신설 agent tier DeployPL / DeployWorker / DeployReviewPL / DeployReviewWorker)
+- ADR-083 §결정 1 (consumer-applicability filter 4-way enum, consumer-self-app gating layer)
+- ADR-072 §결정 5 (epic-cutover-gate-evidence-quad-check — production cutover-touching Epic 한정 trigger scope 정합)
+- ADR-082 §결정 6 + ADR-070 §D5 (declaration-only Wave 1 retain pattern)
+- ADR-005 (self-application byte-identical mirror — `templates/github-workflows/epic-close-deploy-trigger.yml` ↔ `.github/workflows/` Phase 2 PR 의무)
+- ADR-064 §self-application top-down ratchet (강화 방향 only, 약화 0)
+- ADR-058 §결정 5 sunset_justification (ratchet 강화 방향 = sunset 면제, is_transitional: false 보존)
