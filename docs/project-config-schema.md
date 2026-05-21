@@ -415,15 +415,16 @@ deploy:
     metric_name: <str>                 # health-status.json / current-metric.json 안 key name (예: "latency_p99_ms")
     regression_threshold: <float>      # regression 판정 임계 (%, 예: 10.0 = 10% 악화)
                                        # 미정의(빈 문자열/부재) = 신호 미감지 (보수적 unconditional guard EC-4)
-    recovery_margin: <float>           # hysteresis recovery margin (%, default: 5.0)
+    recovery_margin: <float>           # hysteresis recovery margin (%, default: 0.5)
                                        # regression 해소 판정 = pct_change < (threshold - margin)
-    flap_n: <int>                      # N-tick for-clause tick 수 (default: 3)
+                                       # 외부 HTTP health endpoint 금지 (D3 0 API call — filesystem .codeforge/health-status.json primary)
+    flap_n: <int>                      # N-tick for-clause tick 수 (default: 2)
                                        # 연속 N tick 유지 후 Issue 발의 (단발 FAIL 억제)
-    window: <int>                      # 측정 window (초, default: 3600 = 1시간)
+    window: <int>                      # 측정 window (초, default: 86400 = 24시간 — daily cron 주기 정합)
 ```
 
 - **본 block 부재 시 동작**: deploy lane (CFP-1059) 가 Epic close 후 자동 trigger 되지 않음 (opt-in). 8 lane workflow 완결 시 wrapper Orchestrator = `phase:보안-테스트` 후 terminal (CFP-1059 이전 default 동작 유지). consumer 가 deploy block 등록 후 codeforge-deploy plugin install 시 deploy lane 활성.
-- **operational_monitor 동작 원칙** (CFP-1194 / ADR-106 Amendment 2 §결정 1 단계 2-a): S4 `auto_rollback` 과 완전 disjoint — S5 는 ops-signal Issue 발의만 (auto-rollback trigger 없음, ADR-104 §결정 4 wrapper fast-pass). `regression_threshold` 미정의 = 보수적 EC-4 (신호 미감지). `flap_n` 연속 N tick 초과 후 Issue 발의 (flap 3-layer 내 최초 layer). hysteresis recovery margin = pct_change < (threshold - margin) 조건 충족 시 신호 해소. 0 API call invariant (filesystem primary: `.codeforge/{operational-baseline,health-status,operational-flap-state}.json`).
+- **operational_monitor 동작 원칙** (CFP-1194 / ADR-106 Amendment 2 §결정 1 단계 2-a): S4 `auto_rollback` 과 완전 disjoint — S5 는 ops-signal Issue 발의만 (auto-rollback trigger 없음, ADR-104 §결정 4 wrapper fast-pass). `regression_threshold` 미정의 = 보수적 EC-4 (신호 미감지). `flap_n` 연속 N tick 도달(default 2) 후 Issue 발의 (flap 3-layer 내 layer-a). hysteresis recovery margin = pct_change < (threshold - margin, default 0.5%) 조건 충족 시 신호 해소. window default 86400초(24h, daily cron 주기 정합). 0 API call invariant (filesystem primary: `.codeforge/{operational-baseline,health-status,operational-flap-state}.json` — 외부 HTTP health endpoint 금지).
 - **auto_rollback 안전장치 4 AND** (CFP-1193 / ADR-105 §결정 3): `auto_rollback.enabled: false` = safety_4 false → trigger 전체 무력화 (신호 감지·기록 계속 — 무음 차단 금지 EC-2). `error_rate_threshold` / `latency_burn_rate_threshold` 미정의 = safety_1 false → trigger 0 (보수적 fallback EC-1). `window` 가 3시간 보존 window(10800초) 초과 = safety_2 false (ADR-087 §결정 5). filesystem kill-switch (`.codeforge/auto-rollback.disabled`) = safety_4 override (config enabled 여부 무관 — OR disable §3.4 정합). kill-switch 활성 시에도 신호 감지·ops-signal Issue 발의 계속 (EC-2).
 - **fallback semantic**:
   - `deploy.host_mapping` 부재 = deploy lane 활성화 prerequisite 불충족 → warning + skip (Epic close 진행, manual deploy operator 영역).
