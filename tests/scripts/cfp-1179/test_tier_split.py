@@ -19,6 +19,8 @@
 #   tc2_lane_review            — classify_tier("codeforge-review") == TIER_2_LANE
 #   tc2_lane_test              — classify_tier("codeforge-test") == TIER_2_LANE
 #   tc2_lane_pmo               — classify_tier("codeforge-pmo") == TIER_2_LANE
+#   tc2_lane_deploy            — classify_tier("codeforge-deploy") == TIER_2_LANE (CFP-1199 F1, ADR-087)
+#   tc2_lane_deploy_review     — classify_tier("codeforge-deploy-review") == TIER_2_LANE (CFP-1199 F1, ADR-088)
 #   tc3_unknown_raises         — classify_tier("unknown-plugin") raises ValueError (fail-closed)
 #   tc4_atomic_scope_tier1     — atomic_scope_for_tier(TIER_1) → 3 파일 + family_atomic=True
 #   tc5_atomic_scope_tier2     — atomic_scope_for_tier(TIER_2) → 2 파일 + family_atomic=False
@@ -69,7 +71,7 @@ def _run_tc(mod, tc_name: str) -> None:
             "codeforge 가 TIER_2_LANE 으로 잘못 분류됨"
         print(f"PASS TC-1: classify_tier('codeforge') == TIER_1_WRAPPER({mod.TIER_1_WRAPPER!r})")
 
-    # ── TC-2: 6 lane 각각 TIER_2_LANE ──────────────────────────────────────────
+    # ── TC-2: 8 lane 각각 TIER_2_LANE (CFP-1199 F1: 6 → 8 lane, deploy 2 lane 추가) ──
     elif tc_name == "tc2_lane_requirements":
         result = mod.classify_tier("codeforge-requirements")
         assert result == mod.TIER_2_LANE, \
@@ -111,6 +113,28 @@ def _run_tc(mod, tc_name: str) -> None:
             f"codeforge-pmo tier 기대 TIER_2_LANE, 실제 {result!r}"
         assert result != mod.TIER_1_WRAPPER
         print(f"PASS TC-2: classify_tier('codeforge-pmo') == TIER_2_LANE")
+
+    elif tc_name == "tc2_lane_deploy":
+        # CFP-1199 F1: ADR-087 신설 deploy lane — TOPOLOGICAL_ORDER 확장으로 자동 정합
+        result = mod.classify_tier("codeforge-deploy")
+        assert result == mod.TIER_2_LANE, (
+            f"codeforge-deploy tier 기대 TIER_2_LANE, 실제 {result!r}\n"
+            "TOPOLOGICAL_ORDER 9-plugin 확장 미적용 (CFP-1199 D1 필요)"
+        )
+        assert result != mod.TIER_1_WRAPPER, \
+            "codeforge-deploy 가 TIER_1_WRAPPER 로 잘못 분류됨"
+        print(f"PASS TC-2: classify_tier('codeforge-deploy') == TIER_2_LANE (CFP-1199 F1)")
+
+    elif tc_name == "tc2_lane_deploy_review":
+        # CFP-1199 F1: ADR-088 신설 deploy-review lane — TOPOLOGICAL_ORDER 확장으로 자동 정합
+        result = mod.classify_tier("codeforge-deploy-review")
+        assert result == mod.TIER_2_LANE, (
+            f"codeforge-deploy-review tier 기대 TIER_2_LANE, 실제 {result!r}\n"
+            "TOPOLOGICAL_ORDER 9-plugin 확장 미적용 (CFP-1199 D1 필요)"
+        )
+        assert result != mod.TIER_1_WRAPPER, \
+            "codeforge-deploy-review 가 TIER_1_WRAPPER 로 잘못 분류됨"
+        print(f"PASS TC-2: classify_tier('codeforge-deploy-review') == TIER_2_LANE (CFP-1199 F1)")
 
     # ── TC-3: 알 수 없는 plugin → ValueError (fail-closed) ────────────────────
     elif tc_name == "tc3_unknown_raises":
