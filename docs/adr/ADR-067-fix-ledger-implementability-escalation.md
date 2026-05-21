@@ -299,6 +299,20 @@ ADR-076 sunset 후 disjoint invariant 의 carrier = 본 ADR-067 amendment + Wave
 
 **cross-ref**: [CFP-1125](https://github.com/mclayer/plugin-codeforge/issues/1125) + [β2 audit (#1113)](https://github.com/mclayer/plugin-codeforge/issues/1113) Anchor 5 LOSSLESS 판정.
 
+### sunset_executed (CFP-1186, 2026-05-22) — disjoint invariant carry 영역 한정
+
+**상태**: disjoint invariant carry 영역 Sunsetted — ADR-076 §결정 4 verbatim "ADR-067 RESET = Story progression layer / ADR-076 snapshot = Upgrade transaction layer, cross-pollinate 금지" 의 ADR-076 참조 sibling carrier 역할 이 imperative-walker-protocol-v1 으로 lossless carry 완료됨.
+
+carry 증거 (β2 audit Anchor 5 LOSSLESS 확인):
+- imperative-walker-protocol-v1 안 walker step pause/resume ≠ Story §10 FIX Ledger RESET column 마커 명시 — disjoint invariant 동일 의미로 carry
+- ADR-076 sunset 후 disjoint invariant declarative anchor = 본 ADR-067 amendment (Amendment 2) + walker schema ADR 양 쪽 보존
+
+**is_transitional 무변경**: `false` 유지 (ADR-067 본체 §결정 1-7 RESET semantics = Story progression layer 의 영구 architectural invariant. 본체 sunset 아님).
+
+**본 sunset 영역 한정**: ADR-076 §결정 4 sibling carrier role 만 (= disjoint invariant 의 "ADR-076 쪽 선언 역할" carry). ADR-067 본체 §결정 1-7 FIX-loop RESET semantics 영역은 sunset 대상 아님 — 계속 유효.
+
+**본 ADR 본문 삭제 금지**: Sunsetted = 해당 영역의 carry 완료 선언. 본문은 historical record 로 영구 보존.
+
 ## 관련 파일
 
 - [`skills/fix-ledger-schema/SKILL.md`](../../skills/fix-ledger-schema/SKILL.md) — 본 ADR §결정 1 / §결정 4 / §결정 5 narrative SSOT 본문 (호출 시점 + 핵심 룰).

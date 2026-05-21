@@ -678,6 +678,19 @@ Cross-ref:
 
 **영역 분리 명시**: 본 sunset boundary 는 Amendment 6 영역 한정 — ADR-027 본체 frontmatter `is_transitional: false` (permanent policy) 무변경 + 다른 amendment (2/3/4/5/7) 영역 영향 0. ratchet 강화 only (Wave-1 detection signals SSOT → Wave-4 walker integration test 안 4-way enum 정확 분류 + D4 marker pair preserve verify), 약화 0건 — ADR-058 §결정 5 ratchet 강화 only 정합.
 
+#### sunset_executed (CFP-1186, 2026-05-22) — Amendment 6 detection-signals 영역 한정
+
+**상태**: Amendment 6 detection-signals 영역 Sunsetted — 4-way repo-kind detection signals (`.claude-plugin/plugin.json` + `.claude/_overlay/project.yaml` 2-signal cross-product truth-table) 효용이 imperative walker 로 lossless carry 완료됨.
+
+carry 증거 (β2 audit Anchor 4 LOSSLESS 확인):
+- walker repo-kind detection hook (`detect-repo-kind.py` 재사용) = Amendment 6 detection signals 동일 truth-table 재사용
+- D4 customization marker block (Amendment 3) preserve invariant 0 silent overwrite / N walk 보존 (CFP-1111 §3 결정 3 C 명시 + walker `customization_marker_preserve: true` flag)
+- walker integration test 안 4-way enum 정확 분류 + D4 marker pair preserve verify 완료 (walker per-step `applicable_to: {consumer/wrapper/both}` filter)
+
+**is_transitional 무변경**: `false` 유지 (ADR-027 본체 + Amendment 3/4/5/7/9 영구 불변). 본 sunset = Amendment 6 § 결정 10 detection-signals 영역 만 (carry 완료 선언).
+
+**본 ADR 본문 삭제 금지**: Sunsetted = 해당 영역의 carry 완료 선언. 본문은 historical record 로 영구 보존. Amendment 9 (CFP-1177) 및 기타 amendment 영향 0.
+
 ## Amendment 7 — consumer adoption 시 project.yaml `deploy.*` schema 확장 (CFP-1059)
 
 **Effective**: 2026-05-20 (CFP-1059 Story-1 Phase 1 PR merge 시점).

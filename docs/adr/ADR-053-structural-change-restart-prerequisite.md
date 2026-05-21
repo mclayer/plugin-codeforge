@@ -103,6 +103,21 @@ D2 (consumer 배포 완료 3-AND 의 transaction completion prerequisite) 는 CF
 
 **cross-ref**: [β2 audit (#1113)](https://github.com/mclayer/plugin-codeforge/issues/1113) Anchor 6 LOSSLESS 판정. D2 = walker terminal condition carry / D1 = walker scope 외 독립 정책.
 
+#### sunset_executed (CFP-1186, 2026-05-22) — D2 영역 한정
+
+**상태**: D2 영역 Sunsetted — consumer 배포 완료 3-AND (marketplace_sync + consumer_install + drift_check) transaction completion prerequisite 효용이 imperative walker 로 lossless carry 완료됨.
+
+carry 증거 (β2 audit Anchor 6 LOSSLESS 확인):
+- walker schema field `completion_criteria` 배열 = D2 3-AND (marketplace_sync, consumer_install, drift_check) 정확 enforce
+- 부분 충족 시 `walk_result = PARTIAL_FAILURE / FAILED` 정확 분류 — false complete 0건 보존
+- walker integration test 안 3-AND condition 검증 완료 (imperative-walker-protocol-v1 §2 walk_result + terminal condition carry)
+
+**D1 영역 무변경**: D1 (구조적 변경 후 세션 재구동 의무) = walker paradigm 외 세션 lifecycle 영역. `is_transitional: false` 유지 (영구 architectural invariant).
+
+**is_transitional 무변경**: `false` 유지 (본체 D1 영구 불변 + D2 영역 carry 완료 선언 — frontmatter 값 변경 불요. `sunset_scope_partial: D2 영역만` + `d1_perpetual: true` frontmatter 로 영역 분리 명시됨).
+
+**본 ADR 본문 삭제 금지**: Sunsetted = D2 영역 carry 완료 선언. 본문은 historical record 로 영구 보존.
+
 ## 관련 파일
 
 - [`docs/orchestrator-playbook.md`](../orchestrator-playbook.md) — §1.1 체크리스트 구조적 변경 재구동 blocking 항목 추가
