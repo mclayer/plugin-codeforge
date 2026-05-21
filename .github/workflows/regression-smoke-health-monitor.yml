@@ -1,0 +1,102 @@
+name: regression-smoke-health-monitor
+# CFP-1194 / ADR-106 Amendment 2 §결정 1 단계 2-a — ongoing regression/smoke·health monitor (24h cron)
+# ADR-104 §결정 3: 0 API call (filesystem primary, health-status.json 파싱)
+# ADR-104 §결정 4: wrapper-N/A (Tier-1 declare-time exemption — wrapper fast-pass)
+# ADR-064: 모달 어휘 금지 (regression 임계 = 숫자 정량 강제)
+# Tier: warning (ADR-060 evidence-enforceable, continue-on-error: true)
+# evidence-checks-registry.yaml entry: regression-smoke-health-monitor
+#
+# S5 = 신호 3·4 (regression / smoke·health) — S4 (신호 1·2, rollback trigger) 와 disjoint
+# S5 ∉ rollback: 본 workflow = regression/health 감지 + ops-signal Issue 발의 (경고 전용)
+#   자동 rollback trigger = rollback-signal-monitor.yml (S4, ADR-105 §결정 3 안전장치 4 AND)
+#
+# 신호 source (ADR-104 §결정 3 — 0 API call):
+#   신호 3: regression — .codeforge/operational-baseline.json vs .codeforge/current-metric.json
+#   신호 4: smoke·health — .codeforge/health-status.json (consumer health-writer 가 기록)
+#   health Actions-internal probe: overlay exception declare 시에만 활성 (외부 HTTP = secondary)
+#
+# flap 흡수 3-layer (D4):
+#   (a) N-tick for-clause: .codeforge/operational-flap-state.json cross-tick 카운터
+#   (b) hysteresis recovery margin: regression recovery threshold 미만까지 미해소
+#   (c) signature dedup: 동일 signature open Issue 부재 시에만 발의
+#
+# Wrapper-self-app: N/A — check-operational-regression.sh §3.6 fast-pass
+#   wrapper repo = declarative SSOT only. 실 monitoring = consumer 환경.
+#   wrapper 에서 cron 실행 시 fast-pass exit 0.
+#
+# Hotfix bypass:
+#   hotfix-bypass:operational-monitor label 부착 시 skip + audit comment
+#   (ADR-024 Amendment 3 hotfix-bypass family, label-registry-v2 v2.46 신규 member)
+#
+# 답습 source: rollback-signal-monitor.yml (CFP-1193 S4) — byte-pattern verbatim
+#   schedule cron + workflow_dispatch + permissions deny-all + concurrency + continue-on-error
+#
+# §7.4 empirical-source:
+#   24h cron rate: rollback-signal-monitor.yml cron '0 0 * * *' 답습 (dimension: rate)
+#   flap N-tick: Grafana/Prometheus 'for' clause 산업 표준 (dimension: count)
+#   hysteresis margin: Datadog hysteresis 패턴 (dimension: rate)
+#
+# Permissions: minimum (top-level deny-all + job override, ADR-060 Amendment 8)
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # 24h UTC daily (ADR-106 §결정 1 단계 1 — 운영 신호 회수 주기)
+  workflow_dispatch:       # 수동 ad-hoc 검증
+
+permissions: {}  # top-level deny-all
+
+jobs:
+  regression-smoke-health-monitor:
+    runs-on: ubuntu-latest
+    continue-on-error: true   # warning tier — ADR-060 (신호 감지 실패 시 CI 차단 0)
+    permissions:
+      contents: read           # 스크립트 / config / metric 파일 읽기
+      issues: write            # ops-signal Issue 발의 (ADR-106 Amendment 2 §결정 1 단계 2-a)
+
+    concurrency:
+      group: regression-smoke-health-monitor
+      cancel-in-progress: false   # 진행 중 run 완료 보장 (race 차단)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check hotfix-bypass label
+        id: bypass
+        # hotfix-bypass:operational-monitor label 부착 시 skip
+        # ADR-024 Amendment 3 hotfix-bypass family member (label-registry-v2 v2.46)
+        run: |
+          echo "bypass=false" >> "$GITHUB_OUTPUT"
+          # TODO: bypass label 실 체크 (sub-PR carrier — evidence-checks-registry 승격 시)
+
+      - name: Run regression/smoke·health monitor
+        if: steps.bypass.outputs.bypass != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # consumer 측 regression 설정 주입 (project.yaml 또는 Actions vars)
+          # deploy.operational_monitor.regression_metrics[] — overlay 주입
+          _CFP1194_METRIC_NAME: ${{ vars.OPERATIONAL_MONITOR_METRIC_NAME || 'error_rate' }}
+          _CFP1194_REGRESSION_THRESHOLD: ${{ vars.OPERATIONAL_MONITOR_REGRESSION_THRESHOLD || '' }}
+          _CFP1194_SIGNAL_TYPE: ${{ vars.OPERATIONAL_MONITOR_SIGNAL_TYPE || 'auto' }}
+          _CFP1194_MOCK_FLAP_N: ${{ vars.OPERATIONAL_MONITOR_FLAP_N || '2' }}
+          _CFP1194_MOCK_RECOVERY_MARGIN: ${{ vars.OPERATIONAL_MONITOR_RECOVERY_MARGIN || '0.5' }}
+          # test override (dry-run mode)
+          _CFP1194_SKIP_ISSUE_CREATE: ${{ vars.CFP1194_SKIP_ISSUE_CREATE || '' }}
+        run: |
+          chmod +x scripts/check-operational-regression.sh
+          # wrapper repo fast-pass: GITHUB_REPOSITORY = mclayer/plugin-codeforge → exit 0
+          bash scripts/check-operational-regression.sh \
+            --repo "${GITHUB_REPOSITORY:-}" \
+            --metric-name "${_CFP1194_METRIC_NAME:-error_rate}" \
+            --regression-threshold "${_CFP1194_REGRESSION_THRESHOLD:-}" \
+            --signal-type "${_CFP1194_SIGNAL_TYPE:-auto}" \
+            --flap-state-file ".codeforge/operational-flap-state.json" \
+            --baseline-file ".codeforge/operational-baseline.json" \
+            --current-metric-file ".codeforge/current-metric.json" \
+            --health-file ".codeforge/health-status.json"
+
+      - name: Bypass audit comment
+        if: steps.bypass.outputs.bypass == 'true'
+        run: |
+          echo "regression-smoke-health-monitor bypass active"
+          echo "hotfix-bypass:operational-monitor label 감지 — audit comment 발의 (sub-PR carrier)"
