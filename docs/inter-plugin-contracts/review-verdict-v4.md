@@ -1,6 +1,6 @@
 ---
 kind: contract
-contract_version: "4.3"
+contract_version: "4.8"
 status: Active
 related_plugins:
   - codeforge (wrapper, consumer of FIX routing data + Orchestrator self-write)
@@ -11,17 +11,52 @@ related_adrs:
   - ADR-010  # Inter-plugin Contract Sibling Sync (canonical/sibling 관계)
   - ADR-022  # Deprecated by ADR-035 — Sonnet decider 영역 본 v4 에서 정식 제거
   - ADR-035  # codeforge agent teams Epic architecture (D2 implementation level)
+  - ADR-042  # Amendment 8 — design lane 7+3+1 roster 재편 carrier (CFP-1086 — deputy_axis_restructure_self_check_passed field 신설)
   - ADR-044  # Phase-scoped sequential team SSOT (본 v4 carrier)
   - ADR-059  # debate-protocol-v1 — anchor_id field 가 stable identifier 로 의존 (CFP-391)
   - ADR-065  # ArchitectAgent Phase 1 mechanical self-check — mechanical_self_check_passed field (CFP-438)
-  - ADR-068  # Boundary completeness invariants — boundary_completeness_self_check_passed field (CFP-527)
+  - ADR-068  # Boundary completeness invariants — boundary_completeness_self_check_passed field (CFP-527) + Amendment 1 (CFP-528) — I-5 dimensional_empirical_self_check_passed + Amendment 2 (CFP-1086) — wording SSOT chief tie-break ladder scope expansion + Amendment 3 (CFP-1087) — I-6 audit-gate-pointer-existence invariant 신설 (audit_gate_pointer_self_check_passed field)
+  - ADR-073  # Orchestrator verify-before-assert (cross-ref backref — I-6 verification primitive ↔ §결정 1 verify-before-assert primitive directly-analogous, ADR-073 본문 0건 변경)
+  - ADR-063  # Marketplace atomic invariant — marketplace_sync_declared field (CFP-597 Amendment 1)
+  - ADR-086  # Deputy 신설 결정 framework (CFP-1086 신설) — deputy_axis_restructure_self_check_passed field carrier
+  - ADR-091  # ArchitectLane DDD vocabulary governance (CFP-1117 신설) — §결정 6 enforcement layer 3-tier 의 3번째 tier (review-verdict-v4 enum) + §결정 7 INV-5 forcing function review-verdict finding 연결 (findings[].type 3 DDD literal bc_violation / aggregate_violation / ubiquitous_language_drift carrier)
 authors:
   - CFP-137 (2026-05-09) — review-verdict v3 → v4 MAJOR bump (Sonnet decider 영역 정식 제거 + worker_dialog_rounds 추가)
   - CFP-391 (2026-05-11) — findings[].anchor_id optional field 추가 (debate-protocol-v1 stable identifier SSOT 정합, FIX-1)
   - CFP-391 (2026-05-11) — v4.0 → v4.1 MINOR bump (anchor_id field 추가 = ADR-008 §결정 2 "새 선택 필드 추가" MINOR bump 정합, F-003 follow-up)
   - CFP-438 (2026-05-13) — v4.1 → v4.2 MINOR bump (mechanical_self_check_passed optional bool field 추가, ADR-065)
   - CFP-527 (2026-05-13) — v4.2 → v4.3 MINOR bump (boundary_completeness_self_check_passed optional bool field + findings[].type "boundary-completeness" literal 추가, ADR-068)
+  - CFP-528 (2026-05-13) — v4.3 → v4.4 MINOR bump (dimensional_empirical_self_check_passed optional bool field + findings[].type "dimensional-empirical-gap" literal, ADR-068 Amendment 1)
+  - CFP-597 (2026-05-13) — v4.4 → v4.5 MINOR bump (marketplace_sync_declared optional bool field, ADR-063 Amendment 1)
+  - CFP-1086 (2026-05-20) — v4.5 → v4.6 MINOR bump (deputy_axis_restructure_self_check_passed optional bool field 신설 — ADR-042 Amendment 8 + ADR-086 P7 framework self-application 첫 사례 carrier + boundary_completeness_self_check_passed scope expansion — ADR-068 Amendment 2 wording SSOT chief tie-break ladder cross-ref)
+  - CFP-1087 (2026-05-20) — v4.6 → v4.7 MINOR bump (audit_gate_pointer_self_check_passed 5번째 verdict-level optional bool field 신설 + findings[].type enum 5번째 literal "audit-gate-pointer-missing" — ADR-068 Amendment 3 §결정 1 I-6 audit-gate-pointer-existence invariant carrier, CFP-528 Amendment 1 패턴 verbatim 답습, additive only backward-compat invariant. CFP-1086 Amendment 2 sequential precedence 후 collision resolution renumber)
+  - CFP-1117 (2026-05-21) — v4.7 → v4.8 MINOR bump (findings[].type enum 에 3 DDD finding type literal 추가 — bc_violation / aggregate_violation / ubiquitous_language_drift. ADR-091 §결정 6 enforcement layer 3-tier 의 3번째 tier (review-verdict-v4 enum) realize + §결정 7 INV-5 vocabulary theater 차단 forcing function 의 review-verdict finding 연결 (evidence #4). CFP-1117 Story-4 carrier (Epic CFP-1117 ArchitectLane DDD vocabulary governance). CFP-528 Amendment 1 (enum literal + 의미 1줄) 패턴 verbatim 답습. additive only backward-compat invariant (기존 v4.7 consumer 가 3 신규 enum literal 무시 가능). ADR-008 §결정 2 "enum literal 추가" MINOR bump 정합 (closed-enum 6 → 9 ratchet, additive only). 5 sibling (requirements/design/develop/test/pmo v4.3) pre-existing drift = 본 S4 scope 외 (별 sweep CFP carrier))
 amendment_log:
+  - version: "4.8"
+    date: 2026-05-21
+    cfp: CFP-1117
+    type: MINOR
+    summary: "findings[].type enum 에 3 DDD finding type literal 추가 — bc_violation / aggregate_violation / ubiquitous_language_drift. ADR-091 §결정 6 enforcement layer 3-tier 의 3번째 tier (review-verdict-v4 enum S4) realize + §결정 7 INV-5 vocabulary theater 차단 forcing function 의 review-verdict finding 연결 (evidence #4: 'bc_violation / aggregate_violation / ubiquitous_language_drift finding type 신설 + 실 emit 사례'). bc_violation = Bounded Context 위반 (cross-BC 참조 ACL/OHS 패턴 부재 / BC boundary 침범 / 동음이의 미qualifier) — Change Plan §3.D bounded_context_boundary forcing function 연결, DesignReviewPL + CodeReviewPL emit. aggregate_violation = Aggregate 위반 (consistency boundary 침범 / transaction boundary 부정합 / invariant 미보존 / aggregate root 외부 직접 access) — Change Plan §3.A affected_aggregates forcing function 연결, ADR-091 §결정 3 Layer B real Aggregate cross-validate, ModuleArchitectAgent (boundary axis unified, ADR-042 Amendment 10) 영역. ubiquitous_language_drift = Ubiquitous Language drift (glossary SSOT 외 미정의 DDD term 사용 / 동음이의 미구분 / anti-pattern 어휘) — check-ubiquitous-language lint 연결 (ADR-091 Amendment 2 §결정 6 2번째 tier), 14 agent ddd_pattern + glossary SSOT 기준. mechanical_self_check_passed (ADR-065 syntactic 7-item) + boundary_completeness_self_check_passed (ADR-068 I-1~I-4) + dimensional_empirical_self_check_passed (Amendment 1 I-5) + audit_gate_pointer_self_check_passed (Amendment 3 I-6) + deputy_axis_restructure_self_check_passed (Amendment 2 sibling CFP-1086) verdict-level boolean field 와 disjoint axis — DDD finding type 은 findings[].type enum literal 확장 (verdict-level boolean field 신설 0건). ADR-008 §결정 2 'enum literal 추가' MINOR bump 정합 (findings[].type closed-enum additive — 기존 boundary-completeness / mechanical_sync_required / dimensional-empirical-gap / audit-gate-pointer-missing / general 위에 3 literal 추가). Runtime impact 없음 (기존 v4.7 consumer 가 본 3 신규 enum literal 무시 가능 = backward-compat invariant). CFP-528 Amendment 1 (I-5 dimensional-empirical-gap literal + 의미 1줄) pattern verbatim 답습. 5 sibling (requirements/design/develop/test/pmo v4.3) pre-existing drift = 본 S4 scope 외 (별 sweep CFP carrier note)."
+  - version: "4.7"
+    date: 2026-05-20
+    cfp: CFP-1087
+    type: MINOR
+    summary: "audit_gate_pointer_self_check_passed 5번째 verdict-level optional bool field 신설 + findings[].type enum 5번째 literal \"audit-gate-pointer-missing\" — ADR-068 Amendment 3 §결정 1 I-6 audit-gate-pointer-existence invariant carrier. ArchitectAgent §3 작성 시 §8.6 audit gate finding 영역 4-form pointer scope (link target / section anchor / file path reference / ADR §결정 N reference) existence verify 통과 시 true. false 시 ArchitectAgent re-spawn (FIX 의무) + findings[].type \"audit-gate-pointer-missing\" 동반 emit. mechanical_self_check_passed (ADR-065 syntactic 7-item) + boundary_completeness_self_check_passed (ADR-068 I-1~I-4) + dimensional_empirical_self_check_passed (Amendment 1 I-5) + deputy_axis_restructure_self_check_passed (Amendment 2 sibling carrier CFP-1086, conditional scope) 와 disjoint — 동일 verdict packet 다섯 별도 boolean field. ADR-008 §결정 2 '새 선택 필드 추가' MINOR bump 정합 + 'enum literal 추가' MINOR bump 정합 (closed-enum 5 → 6 ratchet, additive only). Runtime impact 없음 (기존 v4.6 consumer 가 본 신규 field + 신규 enum literal 무시 가능 = backward-compat invariant). CFP-528 Amendment 1 (I-5 dimensional-empirical-gap literal + dimensional_empirical_self_check_passed field atomic carrier) pattern verbatim 답습. CFP-1086 Amendment 2 sequential precedence 후 collision resolution renumber (main #1095 merged Amendment 2 점유 → 본 carrier Amendment 3 renumber + v4.7)."
+  - version: "4.6"
+    date: 2026-05-20
+    cfp: CFP-1086
+    type: MINOR
+    summary: "deputy_axis_restructure_self_check_passed optional bool field 신설 — ADR-042 Amendment 8 (BackendArchEpic CFP-1086 Story-1 — design lane 5+3 → 7+3+1 roster 재편: AggregateArchitect 신설 + APIContractArchitect 신설 + ModuleArchitect rename + DataArchitect mandate 축소 + AggregateArch CONDITIONAL applicability P2) + ADR-086 (신설 Deputy 신설 결정 framework P7 — axis 분석 + 5-checklist self-application + deferred carrier path) carrier. ArchitectAgent (또는 후속 Amendment carrier) 가 ADR-086 §결정 2 5-checklist (axis disjoint / cost-token budget / consumer carrier / sibling Epic align / deferred trigger 명시) 통과 시 true. false 시 ArchitectAgent re-spawn (FIX 의무). 적용 lane: design lane only (deputy roster 변경 carrier Story 만 적용, code/security/test lane omit 가능). + boundary_completeness_self_check_passed scope expansion — ADR-068 Amendment 2 (CFP-1086 Story-1 sibling carrier — wording SSOT 충돌 시 chief tie-break ladder 3 단계: RACI lookup → ADR-068 invariant → chief judgement + ADR Amendment 발의). 본 ladder 3단계 모두 통과 시 true (기존 4 invariants I-1~I-4 + Amendment 2 mechanism boost). ADR-008 §결정 2 '새 선택 필드 추가' MINOR bump 정합 + scope expansion (boundary field semantic 확장 — 4 invariants 자체 의미 변경 0건). Runtime impact 없음 (기존 v4.5 consumer 가 본 신규 field 무시 가능 + boundary_completeness_self_check_passed 기존 field semantic backward-compat)."
+  - version: "4.5"
+    date: 2026-05-13
+    cfp: CFP-597
+    type: MINOR
+    summary: "marketplace_sync_declared optional bool field 추가 — ADR-063 Amendment 1 §결정 9 ArchitectAgent Phase 1 marketplace sync proactive self-check 결과 explicit marker. true = Change Plan §13 안 marketplace_sync_required: true declare 완료 / false = declare 누락 또는 NA (marketplace 영역 변경 0건) / null/omit = v4.4 이전 consumer backward-compat. 적용 lane: design lane only (code/security lane omit 가능). ADR-008 §결정 2 '새 선택 필드 추가' = MINOR bump 정합. Runtime impact 없음 (기존 v4.4 consumer 가 본 필드 무시 가능)."
+  - version: "4.4"
+    date: 2026-05-13
+    cfp: CFP-528
+    type: MINOR
+    summary: "dimensional_empirical_self_check_passed optional bool field 추가 + findings[].type enum 에 \"dimensional-empirical-gap\" literal 신설 — ADR-068 Amendment 1 §결정 1 I-5 dimensional empirical grounding invariant carrier. ArchitectAgent 가 §3/§7 작성 시 10 dimension enum (latency/scale/cardinality/throughput/cost/accuracy/lifecycle/volume/rate/count) 의 모든 quantitative parameter 가 `[empirical-source: <ref> | TBD]` annotation 보유 시 true. mechanical_self_check_passed (ADR-065 syntactic) + boundary_completeness_self_check_passed (ADR-068 I-1~I-4) 와 disjoint — 동일 verdict packet 셋 별도 boolean field. ADR-008 §결정 2 정합. Runtime impact 없음 (기존 v4.3 consumer 가 본 필드 무시 가능)."
   - version: "4.3"
     date: 2026-05-13
     cfp: CFP-527
@@ -72,7 +107,7 @@ amendment_log:
 
 ```yaml
 review_verdict:
-  contract_version: "4.0"            # BREAKING marker
+  contract_version: "4.8"            # current version (MINOR bump series from 4.0 BREAKING)
   lane: design | code | security
   story_key: <STORY_KEY>
   iteration: <int>
@@ -81,9 +116,14 @@ review_verdict:
     - severity: P0 | P1 | P2
       category: <packet category_enum 중 하나>
       type: <finding_type_enum>      # NEW v4.3 (optional) — finding 유형 literal
-                                     # enum: "general" | "mechanical_sync_required" | "boundary-completeness"
+                                     # enum: "general" | "mechanical_sync_required" | "boundary-completeness" | "dimensional-empirical-gap" | "audit-gate-pointer-missing" | "bc_violation" | "aggregate_violation" | "ubiquitous_language_drift"
                                      # "boundary-completeness": ADR-068 §결정 2 dual-binding — I-1~I-4 위반
                                      # "mechanical_sync_required": ADR-065 mechanical 7-item 위반 (v4.2)
+                                     # "dimensional-empirical-gap": ADR-068 Amendment 1 §결정 1 I-5 위반 — quantitative parameter empirical-source annotation 누락 (v4.4)
+                                     # "audit-gate-pointer-missing": ADR-068 Amendment 3 §결정 1 I-6 위반 — §8.6 audit gate finding 4-form pointer scope (link target / section anchor / file path reference / ADR §결정 N reference) existence verify 실패 (v4.7). boundary-completeness 와 disjoint axis (별 verdict field boolean audit_gate_pointer_self_check_passed)
+                                     # "bc_violation": ADR-091 §결정 6 3번째 tier — Bounded Context 위반 (cross-BC 참조 ACL/OHS 패턴 부재 / BC boundary 침범 / 동음이의 미qualifier). Change Plan §3.D bounded_context_boundary forcing function 연결. DesignReviewPL + CodeReviewPL emit (v4.8)
+                                     # "aggregate_violation": ADR-091 §결정 6 3번째 tier — Aggregate 위반 (consistency boundary 침범 / transaction boundary 부정합 / invariant 미보존 / aggregate root 외부 직접 access). Change Plan §3.A affected_aggregates forcing function 연결 + ADR-091 §결정 3 Layer B real Aggregate cross-validate. ModuleArchitectAgent (boundary axis unified, ADR-042 Amendment 10) 영역 (v4.8)
+                                     # "ubiquitous_language_drift": ADR-091 §결정 6 3번째 tier — Ubiquitous Language drift (glossary SSOT 외 미정의 DDD term 사용 / 동음이의 미구분 / anti-pattern 어휘). check-ubiquitous-language lint (ADR-091 Amendment 2 §결정 6 2번째 tier) 연결. 14 agent ddd_pattern + glossary SSOT 기준 (v4.8)
                                      # "general": 일반 finding (default, 미제공 시 동일 의미)
       file: <path>
       line: <int>
@@ -121,7 +161,43 @@ review_verdict:
                                          #   동일 verdict packet 양 별도 boolean field
                                          # 적용 lane: design lane only (DesignReview + CodeReview 는 findings[] 로 cross-validate)
                                          # 미제공 시 (v4.2 producer) → Orchestrator 는 무시 (backward-compat)
-  
+
+  dimensional_empirical_self_check_passed: <bool>  # NEW v4.4 (optional) — ADR-068 Amendment 1 / CFP-528
+                                         # ArchitectAgent §3/§7 작성 시 I-5 dimensional empirical grounding self-check 결과
+                                         # true = 10 dimension enum (latency/scale/cardinality/throughput/cost/
+                                         #        accuracy/lifecycle/volume/rate/count) 의 모든 quantitative parameter 가
+                                         #        `[empirical-source: <ref>]` 또는 `[empirical-source: TBD]` annotation 보유
+                                         # false = 1+ 누락 — FIX 의무 (ArchitectAgent re-spawn)
+                                         # mechanical_self_check_passed (ADR-065 syntactic 7-item) +
+                                         #   boundary_completeness_self_check_passed (ADR-068 I-1~I-4) 와 disjoint —
+                                         #   동일 verdict packet 셋 별도 boolean field
+                                         # 적용 lane: design lane only (DesignReview + CodeReview 는 findings[] 로 cross-validate)
+                                         # 미제공 시 (v4.3 producer) → Orchestrator 는 무시 (backward-compat)
+
+  marketplace_sync_declared: <bool>     # NEW v4.5 (optional) — ADR-063 Amendment 1 / CFP-597
+                                         # ArchitectAgent Phase 1 marketplace sync proactive self-check 결과
+                                         # true = Change Plan §13 안 marketplace_sync_required: true declare 완료
+                                         #        (mirrored field 변경 감지 + GitOpsAgent §3.6 spawn 예약)
+                                         # false = declare 누락 또는 NA (marketplace 영역 변경 0건,
+                                         #         Change Plan §13 marketplace_sync_required: false 명시)
+                                         # null/omit = v4.4 이전 consumer backward-compat (Orchestrator 무시)
+                                         # 적용 lane: design lane only (chief author = ArchitectAgent)
+                                         #            code/security lane omit 가능
+                                         # 미제공 시 (v4.4 producer) → Orchestrator 는 무시 (backward-compat)
+                                         # ADR-063 §결정 9 SSOT (2026-05-13 CFP-597 Amendment 1)
+
+  audit_gate_pointer_self_check_passed: <bool>  # NEW v4.7 (optional) — ADR-068 Amendment 3 / CFP-1087
+                                         # ArchitectAgent §3 작성 시 §8.6 audit gate finding 영역 I-6 self-check 결과
+                                         # true = 4-form pointer scope (link target / section anchor / file path reference / ADR §결정 N reference) 모두 existence verify PASS
+                                         # false = 1+ pointer 부재 — FIX 의무 (ArchitectAgent re-spawn) + findings[].type "audit-gate-pointer-missing" 동반
+                                         # mechanical_self_check_passed (ADR-065 syntactic 7-item) +
+                                         #   boundary_completeness_self_check_passed (ADR-068 I-1~I-4) +
+                                         #   dimensional_empirical_self_check_passed (Amendment 1 I-5) +
+                                         #   deputy_axis_restructure_self_check_passed (Amendment 2 sibling CFP-1086, conditional) 와 disjoint —
+                                         #   동일 verdict packet 다섯 별도 boolean field
+                                         # 적용 lane: design lane only (DesignReview + CodeReview 는 findings[] 로 cross-validate)
+                                         # 미제공 시 (v4.6 producer) → Orchestrator 는 무시 (backward-compat)
+
   worker_dialog_rounds: <int>        # NEW — Adversarial debate SendMessage round count
                                      # 0 = no Codex worker (default subagent context 또는 user_request_only 미요청)
                                      # >= 1 = SendMessage round 발화 횟수
@@ -318,3 +394,96 @@ ADR-022 Deprecated 후 (CFP-134 / ADR-035) Sonnet decider 자동 발동 무효 �
 **Changelog**:
 
 - v4.3 (2026-05-13, CFP-527): `boundary_completeness_self_check_passed` optional bool field 추가 + `findings[].type: "boundary-completeness"` literal 신설. ADR-068 §결정 2 dual-binding carrier. ADR-065 (mechanical syntactic) 와 disjoint — verdict packet 양 별도 boolean field.
+
+## 13. Dimensional empirical grounding self-check (v4.4 — ADR-068 Amendment 1 / CFP-528)
+
+`dimensional_empirical_self_check_passed` optional bool field 가 ArchitectAgent §3/§7 작성 시 I-5 dimensional empirical grounding self-check 결과 explicit marker:
+
+| Dimension | Examples | Empirical source 후보 |
+|---|---|---|
+| latency | timeout / TTL / response_time / push_interval | wiretap script / probe artifact / RFC standard / vendor SLA |
+| scale | batch_size / payload_size_bytes | sample run output / API spec |
+| cardinality | max_connections / concurrent_users | load test result / capacity plan |
+| throughput | rps / msgs_per_sec | benchmark / observation log |
+| cost | token_budget / monthly_cost_usd | pricing doc / billing dashboard |
+| accuracy | precision / sample_rate | statistical analysis |
+| lifecycle | retention_days / expiry_seconds | compliance policy / RFC |
+| volume | storage_gb / log_retention | capacity plan |
+| rate | sample_rate / hit_rate | observation log |
+| count | max_retries / queue_size | empirical tuning / RFC |
+
+**Trigger 4종** (anti-pattern entry condition): empirical-absent default / synthetic guess / industry-assumption transplant / legacy inertia
+
+**Mitigation 4종**: empirical-first (wiretap step 의무화) / explicit TBD 명시 / range-bound default / dimensional checklist
+
+**Justification 조건** (annotation 면제): well-defined SLA / standardized protocol RFC / vendor doc explicit guarantee — 3종 부재 시 annotation 의무
+
+**Exemption** (trivial decision): SLA/quantitative metric 무관 (logging / naming / refactoring) — Story §1 명시 선언 의무
+
+**Producer 책무 (ArchitectPLAgent)**:
+- ArchitectAgent I-5 self-check 통과 후 결과 수령
+- packet `dimensional_empirical_self_check_passed` 채움 (true = 모든 quantitative parameter annotation 보유, false = 1+ 누락)
+- false 시 `pl_recommendation: FIX` + `findings[]` 에 dimensional-empirical-gap 누락 항목 each row append (severity P1, category `dimensional_empirical_gap`, type `"dimensional-empirical-gap"`)
+
+**Consumer 책무 (Orchestrator)**:
+- false 수신 시: Story §10 FIX Ledger row append → ArchitectPLAgent re-spawn 의뢰
+- true 수신 시: 정상 lane 진행
+- 미제공 (v4.3 producer) 수신 시: 무시 — backward-compat
+
+**Changelog**:
+
+- v4.4 (2026-05-13, CFP-528): `dimensional_empirical_self_check_passed` optional bool field 추가 + `findings[].type: "dimensional-empirical-gap"` literal 신설. ADR-068 Amendment 1 §결정 1 I-5 carrier. ADR-065 (mechanical syntactic) + ADR-068 I-1~I-4 (boundary completeness) 와 disjoint — verdict packet 셋 별도 boolean field.
+
+## 14. Deputy axis restructure self-check (v4.6 — ADR-042 Amendment 8 + ADR-086 / CFP-1086)
+
+`deputy_axis_restructure_self_check_passed` optional bool field 가 deputy roster 변경 carrier Story (예: CFP-1086 Story-1 Amendment 8 = 7+3+1 roster 재편) 에서 ADR-086 §결정 2 5-checklist self-application 결과 explicit marker:
+
+| Checklist | 통과 기준 |
+|---|---|
+| **axis disjoint** | 신설 deputy 가 기존 deputy 와 axis 중복 0 (orthogonal mandate scope dimension 의무 — ADR-086 §결정 1 axis 분석) |
+| **cost-token budget** | spawn count 증가 시 ADR-068 I-5 dimensional empirical grounding 의무 (10 dimension `count` 의 quantitative parameter `[empirical-source: <ref> \| TBD]` annotation) |
+| **consumer carrier** | consumer overlay 필드 명시 (CONDITIONAL applicability / tool override). `project.yaml` schema 신설 또는 갱신 의무 |
+| **sibling Epic align** | 진행 중 sibling Epic 과 RACI 충돌 0 또는 cross-ref 명시 |
+| **deferred trigger 명시** | 후속 carrier 별 CFP 명시 (sub-tuple expansion / CONDITIONAL P3 / consumer schema lint / RACI codify 등 follow-up 영역 enumeration) |
+
+**적용 lane** = **design lane only** (deputy roster 변경 carrier Story 만 적용). code / security / test lane 모두 omit 가능.
+
+**Producer 책무 (ArchitectPLAgent — design lane)**:
+- ArchitectAgent (또는 후속 Amendment carrier) self-check 결과 수령 — 5-checklist + axis 분석 통과 시 true
+- packet `deputy_axis_restructure_self_check_passed` 채움
+- false 시 `pl_recommendation: FIX` + ArchitectAgent re-spawn 의뢰 (deferred carrier path 진입 — §결정 3 정합)
+
+**Consumer 책무 (Orchestrator)**:
+- false 수신 시: Story §10 FIX Ledger row append → ArchitectPLAgent re-spawn 의뢰
+- true 수신 시: 정상 lane 진행 (deputy roster 변경 framework self-app PASS 신호로 채택)
+- 미제공 (v4.5 이전 producer 또는 deputy roster 변경 0건 Story) 수신 시: 무시 — backward-compat
+
+**Changelog**:
+
+- v4.6 (2026-05-20, CFP-1086): `deputy_axis_restructure_self_check_passed` optional bool field 추가. ADR-086 P7 framework (Deputy 신설 결정 framework) self-application 첫 사례 carrier (CFP-1086 Story-1 ADR-042 Amendment 8 — 7+3+1 roster 재편). `boundary_completeness_self_check_passed` scope expansion (ADR-068 Amendment 2 wording SSOT chief tie-break ladder 3단계 mechanism — field semantic 확장, 4 invariants 자체 의미 변경 0건). ADR-065 (mechanical syntactic) + ADR-068 I-1~I-4 (boundary completeness) + ADR-068 I-5 (dimensional empirical) 와 disjoint — verdict packet 4 별도 boolean field.
+
+## 15. DDD finding type 3 literal (v4.8 — ADR-091 / CFP-1117)
+
+`findings[].type` enum 에 3 DDD finding type literal 신설 — ADR-091 §결정 6 enforcement layer 3-tier 의 **3번째 tier (review-verdict-v4 enum)** realize + §결정 7 INV-5 vocabulary theater 차단 forcing function 의 review-verdict finding 연결 (evidence #4):
+
+| literal | DDD 영역 | 위반 정의 | forcing function 연결 | emit lane |
+|---|---|---|---|---|
+| `bc_violation` | Bounded Context | cross-BC 참조 ACL/OHS 패턴 부재 / BC boundary 침범 / 동음이의 미qualifier | Change Plan §3.D bounded_context_boundary | DesignReviewPL + CodeReviewPL |
+| `aggregate_violation` | Aggregate | consistency boundary 침범 / transaction boundary 부정합 / invariant 미보존 / aggregate root 외부 직접 access | Change Plan §3.A affected_aggregates + ADR-091 §결정 3 Layer B real Aggregate | DesignReviewPL + CodeReviewPL (ModuleArchitectAgent boundary axis unified 영역, ADR-042 Amendment 10) |
+| `ubiquitous_language_drift` | Ubiquitous Language | glossary SSOT 외 미정의 DDD term 사용 / 동음이의 미구분 / anti-pattern 어휘 | check-ubiquitous-language lint (ADR-091 Amendment 2 §결정 6 2번째 tier) | DesignReviewPL + CodeReviewPL |
+
+**적용 원칙**:
+
+- DesignReview = 설계 문서 감사 관점 (Change Plan §3.D bounded_context_boundary + §3.A affected_aggregates + Story §ubiquitous_language 완결성 검증)
+- CodeReview = 구현 cross-validate 관점 (impl ↔ 설계 BC / Aggregate boundary 정합성 + glossary term drift 검증)
+- Severity default = P1 (DDD boundary 위반이 구현 오류 / interpretation drift 로 전파 시 P0 가능)
+- ADR-091 §결정 7 INV-5: 어휘 emit 이 review findings 를 실제로 변경 — 본 3 finding type 의 실 emit 사례 1건 이상이 vocabulary theater 차단 forcing function evidence (golden-path worked example S6 FINAL VERDICT evidence #4)
+
+**verdict-level boolean field 와의 disjoint axis**:
+
+- `mechanical_self_check_passed` (ADR-065 I-syntactic) / `boundary_completeness_self_check_passed` (ADR-068 I-1~I-4) / `dimensional_empirical_self_check_passed` (Amendment 1 I-5) / `audit_gate_pointer_self_check_passed` (Amendment 3 I-6) / `deputy_axis_restructure_self_check_passed` (Amendment 2 sibling CFP-1086) = ArchitectAgent self-check verdict-level boolean field
+- DDD finding type 3종 = `findings[].type` enum literal 확장 (verdict-level boolean field 신설 0건). ADR-091 = DDD vocabulary governance 가 dedicated self-check boolean 을 신설하지 않고 findings[].type semantic accountability mechanism 으로 cross-validate (§결정 6 3번째 tier "reviewer finding type = semantic accountability" rationale 정합)
+
+**Changelog**:
+
+- v4.8 (2026-05-21, CFP-1117): `findings[].type` enum 에 `bc_violation` / `aggregate_violation` / `ubiquitous_language_drift` 3 DDD literal 신설. ADR-091 §결정 6 enforcement layer 3-tier 3번째 tier carrier + §결정 7 INV-5 forcing function review-verdict finding 연결. CFP-528 Amendment 1 (enum literal + 의미 1줄) pattern verbatim 답습. additive only backward-compat invariant (기존 v4.7 consumer 가 3 신규 enum literal 무시 가능). ADR-008 §결정 2 "enum literal 추가" MINOR bump 정합 (closed-enum additive). 5 sibling (requirements/design/develop/test/pmo v4.3) pre-existing drift = 본 S4 scope 외 (별 sweep CFP carrier).
