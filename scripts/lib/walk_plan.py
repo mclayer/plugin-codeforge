@@ -585,6 +585,91 @@ def calc_entry_importance_score(
     return touched_lanes_count * _FALLBACK_WEIGHT
 
 
+# ──────────────────────────── (f) walk_report hook (CFP-1175) ────────────────
+# walk_report.py 연동 (4-field 완료 보고 + TodoWrite 4-marker visualization)
+# graceful degradation: walk_report 미설치 시 ImportError 무시 (no-op hook)
+# SSOT: docs/change-plans/cfp-1175-walk-visualization.md §3
+# ADR-093 completion report 4-field / ADR-038 TodoWrite 4-marker
+
+def _import_walk_report_module() -> Optional[object]:
+    """walk_report 모듈 lazy import (circular import 방지).
+
+    Returns:
+        walk_report 모듈 (성공) / None (미설치 — graceful degradation)
+    """
+    import importlib
+    import os as _os
+
+    _lib_dir = _os.path.dirname(_os.path.abspath(__file__))
+    import sys as _sys
+    if _lib_dir not in _sys.path:
+        _sys.path.insert(0, _lib_dir)
+
+    try:
+        return importlib.import_module("walk_report")
+    except ImportError:
+        return None
+
+
+def build_walk_completion_report(
+    walk_result: WalkResult,
+    from_version: str,
+    to_version: str,
+    target_version_release_date: str,
+    changelog_entries: list,
+) -> Optional[object]:
+    """walk 완료 보고 CompletionReport 생성 hook (walk_report.py 위임).
+
+    walk_plan.py 에서 호출 가능한 completion report 생성 facade.
+    walk_report.py 가 설치되지 않은 경우 None 반환 (graceful degradation).
+
+    Args:
+        walk_result: WalkResult enum (4-value closed-set)
+        from_version: consumer installed 버전 (업그레이드 전)
+        to_version: 업그레이드 후 버전 (changelog latest)
+        target_version_release_date: target 버전 release 일자 (ISO 8601 date)
+        changelog_entries: ChangelogEntry list (walk_changelog() 결과)
+
+    Returns:
+        CompletionReport (walk_report.build_completion_report()) / None (미설치)
+
+    ADR-093 §결정 1 4-field:
+      from_version / to_version / target_version_release_date / key_changes_summary
+    """
+    mod = _import_walk_report_module()
+    if mod is None:
+        return None
+    return mod.build_completion_report(
+        walk_result=walk_result,
+        from_version=from_version,
+        to_version=to_version,
+        target_version_release_date=target_version_release_date,
+        changelog_entries=changelog_entries,
+    )
+
+
+def render_walk_progress_items(steps: list) -> list[str]:
+    """walk step 리스트 → TodoWrite 4-marker render 문자열 리스트 hook.
+
+    walk_report.py render_walk_todo_items() 위임.
+    walk_report 미설치 시 빈 리스트 반환 (graceful degradation).
+
+    Args:
+        steps: WalkStep list (walk_report.WalkStep 객체 — walk_report 모듈 import 필요)
+
+    Returns:
+        list[str] — 각 원소 = "{marker} {name}" (TodoWrite content 형태)
+        walk_report 미설치 = [] (graceful degradation)
+
+    ADR-038 §결정 2 4-marker (Amendment 4 vocab):
+      ⬜ PENDING / ⏳ IN_PROGRESS / ✅ COMPLETED / 🔄 FIX_DETECTED
+    """
+    mod = _import_walk_report_module()
+    if mod is None:
+        return []
+    return mod.render_walk_todo_items(steps)
+
+
 # ──────────────────────────── CLI entry point ─────────────────────────────────
 # (참조용 — 실제 CLI 진입점은 walk-single-plugin.sh / walk-bundle-7-plugins.sh)
 
@@ -616,5 +701,19 @@ if __name__ == "__main__":
     score_break = calc_entry_importance_score(2, True, 0)
     assert score_break > score_basic, f"sanity FAIL breaking > basic: {score_break} <= {score_basic}"
     print(f"  calc_entry_importance_score(2, True, 0) = {score_break} > {score_basic} ✓")
+
+    # walk_report hook sanity (CFP-1175)
+    report = build_walk_completion_report(
+        walk_result=WalkResult.SUCCESS,
+        from_version="5.0.0",
+        to_version="5.3.0",
+        target_version_release_date="2026-05-21",
+        changelog_entries=[],
+    )
+    if report is not None:
+        assert report.walk_result == WalkResult.SUCCESS, f"sanity FAIL walk_report hook: {report}"
+        print("  build_walk_completion_report() hook = SUCCESS ✓")
+    else:
+        print("  build_walk_completion_report() hook = None (walk_report 미설치, graceful degradation) ✓")
 
     print("sanity check PASS")
