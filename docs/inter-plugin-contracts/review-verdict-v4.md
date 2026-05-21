@@ -118,9 +118,9 @@ review_verdict:
       type: <finding_type_enum>      # NEW v4.3 (optional) — finding 유형 literal
                                      # enum: "general" | "mechanical_sync_required" | "boundary-completeness" | "dimensional-empirical-gap" | "audit-gate-pointer-missing" | "bc_violation" | "aggregate_violation" | "ubiquitous_language_drift"
                                      # "boundary-completeness": ADR-068 §결정 2 dual-binding — I-1~I-4 위반
-                                     # "audit-gate-pointer-missing": ADR-068 Amendment 3 §결정 1 I-6 위반 — §8.6 audit gate finding 4-form pointer scope (link target / section anchor / file path reference / ADR §결정 N reference) existence verify 실패 (v4.7). boundary-completeness 와 disjoint axis (별 verdict field boolean audit_gate_pointer_self_check_passed)
                                      # "mechanical_sync_required": ADR-065 mechanical 7-item 위반 (v4.2)
                                      # "dimensional-empirical-gap": ADR-068 Amendment 1 §결정 1 I-5 위반 — quantitative parameter empirical-source annotation 누락 (v4.4)
+                                     # "audit-gate-pointer-missing": ADR-068 Amendment 3 §결정 1 I-6 위반 — §8.6 audit gate finding 4-form pointer scope (link target / section anchor / file path reference / ADR §결정 N reference) existence verify 실패 (v4.7). boundary-completeness 와 disjoint axis (별 verdict field boolean audit_gate_pointer_self_check_passed)
                                      # "bc_violation": ADR-091 §결정 6 3번째 tier — Bounded Context 위반 (cross-BC 참조 ACL/OHS 패턴 부재 / BC boundary 침범 / 동음이의 미qualifier). Change Plan §3.D bounded_context_boundary forcing function 연결. DesignReviewPL + CodeReviewPL emit (v4.8)
                                      # "aggregate_violation": ADR-091 §결정 6 3번째 tier — Aggregate 위반 (consistency boundary 침범 / transaction boundary 부정합 / invariant 미보존 / aggregate root 외부 직접 access). Change Plan §3.A affected_aggregates forcing function 연결 + ADR-091 §결정 3 Layer B real Aggregate cross-validate. ModuleArchitectAgent (boundary axis unified, ADR-042 Amendment 10) 영역 (v4.8)
                                      # "ubiquitous_language_drift": ADR-091 §결정 6 3번째 tier — Ubiquitous Language drift (glossary SSOT 외 미정의 DDD term 사용 / 동음이의 미구분 / anti-pattern 어휘). check-ubiquitous-language lint (ADR-091 Amendment 2 §결정 6 2번째 tier) 연결. 14 agent ddd_pattern + glossary SSOT 기준 (v4.8)
@@ -193,7 +193,7 @@ review_verdict:
                                          # mechanical_self_check_passed (ADR-065 syntactic 7-item) +
                                          #   boundary_completeness_self_check_passed (ADR-068 I-1~I-4) +
                                          #   dimensional_empirical_self_check_passed (Amendment 1 I-5) +
-                                         #   deputy_axis_restructure_self_check_passed (Amendment 2 sibling CFP-1086) 와 disjoint —
+                                         #   deputy_axis_restructure_self_check_passed (Amendment 2 sibling CFP-1086, conditional) 와 disjoint —
                                          #   동일 verdict packet 다섯 별도 boolean field
                                          # 적용 lane: design lane only (DesignReview + CodeReview 는 findings[] 로 cross-validate)
                                          # 미제공 시 (v4.6 producer) → Orchestrator 는 무시 (backward-compat)
