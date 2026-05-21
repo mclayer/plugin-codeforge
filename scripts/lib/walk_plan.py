@@ -648,6 +648,119 @@ def apply_overlay_file(
     )
 
 
+# ──────────────────────────── (g) tier classification (CFP-1179) ─────────────
+# ADR-063 Amendment 8 §결정 19 — Tier 분리 (marketplace atomic invariant Tier scope 명확화)
+# Tier 1 (wrapper bundle): codeforge wrapper — 3-file atomic (plugin.json + CHANGELOG.md + marketplace.json)
+#   + family atomic 의무 (bundle walk = walk-bundle-7-plugins.sh)
+# Tier 2 (lane per-walk): lane plugin — 2-file atomic (plugin.json + marketplace.json)
+#   + family atomic 없음 (per-plugin 독립 walk = walk-single-plugin.sh)
+# fail-closed-unknown: 알 수 없는 plugin → ValueError (ADR-083 fail-closed-unknown 선례 정합)
+#
+# family roster SSOT = TOPOLOGICAL_ORDER (위 §b — 현 walk-infra family roster, ADR-096 §결정 2).
+#   LANE_PLUGINS 는 TOPOLOGICAL_ORDER 에서 derive (dual-roster drift 차단 — single SSOT).
+# CFP-1059 9-plugin 정합 (deferred follow-up): ADR-063 Amendment 7 §결정 18 이 family scope 를
+#   7 → 9 plugin (codeforge-deploy + codeforge-deploy-review, ADR-087/088 Accepted) 확장.
+#   현 walk-infra (TOPOLOGICAL_ORDER) 는 7-plugin 가정 — 9-plugin DAG 위치 (deploy lane 의존성)
+#   결정 + TOPOLOGICAL_ORDER/min_prereq 확장 = 별 follow-up CFP (§결정 19 참조). LANE_PLUGINS 가
+#   TOPOLOGICAL_ORDER 에서 derive 하므로 그 확장 시 본 roster 자동 정합 (수동 동기화 0).
+# MAJOR-atomic 비약화: Amendment 7 §결정 18 의 "MAJOR bump 시 family 전체 동시 atomic" invariant 는
+#   Tier 분리로 약화되지 않음 — MAJOR bump 은 Tier 1 bundle (family_atomic) 강제,
+#   Tier 2 per-walk 독립성은 MINOR / PATCH bump 영역에만 적용 (§결정 19 참조).
+
+# Tier 상수 (str 값 — WalkResult Enum 스타일과 달리 str 직접 사용, 호출자 비교 단순화)
+TIER_1_WRAPPER = "tier_1_wrapper"
+TIER_2_LANE = "tier_2_lane"
+
+# codeforge family plugin 이름 상수 — TOPOLOGICAL_ORDER 에서 derive (single roster SSOT)
+WRAPPER_PLUGIN = "codeforge"
+# LANE_PLUGINS = TOPOLOGICAL_ORDER 의 wrapper 외 전체 (drift 차단 — 확장 시 자동 정합)
+LANE_PLUGINS: frozenset = frozenset(TOPOLOGICAL_ORDER) - {WRAPPER_PLUGIN}
+
+
+@dataclass(frozen=True)
+class AtomicScope:
+    """Tier 별 atomic coordination scope.
+
+    ADR-063 §결정 19 — Tier 분리 규칙:
+      Tier 1 (wrapper): files = 3-tuple (plugin.json + CHANGELOG.md + marketplace.json)
+                        family_atomic = True  (family bundle walk 의무)
+      Tier 2 (lane):    files = 2-tuple (plugin.json + marketplace.json)
+                        family_atomic = False (per-plugin 독립 walk 허용 — MINOR/PATCH only)
+
+    MAJOR-atomic 비약화 (Amendment 7 §결정 18): MAJOR bump 은 Tier 무관 family 전체 atomic 강제 —
+      MAJOR bump 시 Tier 2 도 Tier 1 bundle (family_atomic) 경로로 강제 routing (§결정 19).
+      본 helper 의 per-tier base scope = MINOR/PATCH bump 영역 (per-plugin sibling sync 보존).
+
+    참조: TOPOLOGICAL_ORDER / walk-bundle-7-plugins.sh / walk-single-plugin.sh
+    """
+    files: tuple  # atomic coordination 대상 파일명 tuple
+    family_atomic: bool  # True = family bundle 동시 bump 의무 / False = per-plugin 독립 허용
+
+
+def classify_tier(plugin_name: str) -> str:
+    """plugin 이름 → Tier 분류 (ADR-063 §결정 19).
+
+    Args:
+        plugin_name: plugin 이름 (예: "codeforge", "codeforge-design")
+
+    Returns:
+        TIER_1_WRAPPER ("tier_1_wrapper") — wrapper plugin
+        TIER_2_LANE    ("tier_2_lane")    — lane plugin (TOPOLOGICAL_ORDER 의 wrapper 외 전체)
+
+    Raises:
+        ValueError: 알 수 없는 plugin (fail-closed — ADR-083 fail-closed-unknown 선례 정합)
+                    silent default 금지 (unknown = 분류 불가, 호출자 오류 즉시 표면화)
+    """
+    if plugin_name == WRAPPER_PLUGIN:
+        return TIER_1_WRAPPER
+    if plugin_name in LANE_PLUGINS:
+        return TIER_2_LANE
+    raise ValueError(
+        f"알 수 없는 plugin: '{plugin_name}' — "
+        f"codeforge family {1 + len(LANE_PLUGINS)}종 ({WRAPPER_PLUGIN} + {sorted(LANE_PLUGINS)}) 에 없음. "
+        "fail-closed (ADR-083 §결정 3 fail-closed-unknown 정합, silent default 금지)."
+    )
+
+
+def atomic_scope_for_tier(tier: str) -> AtomicScope:
+    """Tier → atomic coordination scope 반환 (ADR-063 §결정 19).
+
+    Tier 1 (wrapper bundle):
+      - files = ("plugin.json", "CHANGELOG.md", "marketplace.json")
+      - family_atomic = True
+      - 근거: §결정 1 3-file atomic invariant + ADR-016 family-scope atomic bundle (현 TOPOLOGICAL_ORDER roster)
+
+    Tier 2 (lane per-walk):
+      - files = ("plugin.json", "marketplace.json")
+      - family_atomic = False
+      - 근거: per-plugin 독립 walk 허용 — 단, 자기 plugin.json + marketplace.json 2-file atomic 유지
+      - cross-Tier 의존 = resolve_min_prereq_topological() 재사용 (재구현 금지)
+
+    Args:
+        tier: TIER_1_WRAPPER 또는 TIER_2_LANE
+
+    Returns:
+        AtomicScope(files=..., family_atomic=...)
+
+    Raises:
+        ValueError: 알 수 없는 tier 값 (fail-closed)
+    """
+    if tier == TIER_1_WRAPPER:
+        return AtomicScope(
+            files=("plugin.json", "CHANGELOG.md", "marketplace.json"),
+            family_atomic=True,
+        )
+    if tier == TIER_2_LANE:
+        return AtomicScope(
+            files=("plugin.json", "marketplace.json"),
+            family_atomic=False,
+        )
+    raise ValueError(
+        f"알 수 없는 tier: '{tier}' — TIER_1_WRAPPER({TIER_1_WRAPPER!r}) 또는 "
+        f"TIER_2_LANE({TIER_2_LANE!r}) 만 허용. fail-closed."
+    )
+
+
 # ──────────────────────────── (e) importance_score hook (CFP-1173) ────────────
 # Story-5 placeholder → importance_score.py 실 wire (brainstorming 결정 4)
 # plan stage 각 entry blast-radius importance_score 계산
