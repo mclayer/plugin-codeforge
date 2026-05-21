@@ -4,7 +4,9 @@ title: 선언적 reconciliation upgrade flow SSOT
 status: Active
 category: governance
 date: 2026-05-15
-is_transitional: true
+is_transitional: false
+sunset_status: Sunsetted
+superseded_by: imperative-walker-protocol-v1
 sunset_carrier_cfp: CFP-1111-Wave-4-Story-11
 sunset_justification_metric_source: walker integration test (`tests/walker/test-desired-state-coverage.bats`)
 carrier_story: CFP-701
@@ -44,6 +46,10 @@ amendment_log:
     amendment_summary: sunset_justification 3-tuple declarative + is_transitional false → true. carrier = CFP-1111 Wave 4 Story-11. β2 audit (#1113) Anchor 1 LOSSLESS 판정.
     sunset_justification: null
     is_transitional: true
+  - amendment_id: 5
+    amendment_date: 2026-05-22
+    amendment_cfp: CFP-1186 (CFP-1111-Wave-4-Story-11)
+    amendment_summary: "sunset 실행 — is_transitional true → false (Sunsetted). sunset_status: Sunsetted 설정. 효용 = imperative-walker-protocol-v1 §2 (walk_result 4-value enum 이 declarative reconcile result semantics carry) + UpgradeAgent walker (Wave 2 CFP-1155) + walk-entries (Story-10 CFP-906/954/991/1014) 로 lossless carry 완료. β2 audit (#1113) Anchor 1 LOSSLESS 확인. ratchet 강화 보존 (carrier-preserved sunset, ADR-097 §결정 3 정합)."
 related_stories:
   - CFP-701  # 본 Story carrier — Wave 1 Story-1 (A1+B1 scope)
   - CFP-702  # Wave 1 Story-2 (D4 customization marker — sequential prerequisite for Wave 2)
@@ -460,6 +466,19 @@ ADR-067 §결정 4 sequential ordering 정합 (Story 간 cross-pollinate 차단)
 - **how**: walker integration test (`tests/walker/test-desired-state-coverage.bats`) 가 11-영역 walk entry 발생 + dry-run mode + transaction mode + snapshot mode 의 3-mode semantic equivalence 검증 + ADR-076 §결정 4 disjoint invariant (ADR-067 RESET vs walker step pause 보존) cross-ref
 
 **cross-ref**: [β2 audit (CFP-1113)](https://github.com/mclayer/plugin-codeforge/issues/1113) — Anchor 1 LOSSLESS 판정. carrier mechanism = walker entry `applicable_to` + `entry_type` + `customization_marker_preserve` 3 field 조합 + 3-mode = dry-run flag + step status + 4-field 완료 보고.
+
+### sunset_executed (CFP-1186, 2026-05-22)
+
+**상태**: Sunsetted — 본 ADR 효용이 imperative walker paradigm 으로 lossless carry 완료됨.
+
+효용 carry 증거 (β2 audit Anchor 1 LOSSLESS 확인):
+- **11-영역 desired state enumeration** → walker entry `entry_type` + `applicable_to` 3 field 조합으로 cover
+- **dry-run / snapshot / transaction 3-mode semantic** → walker `walk_result` 4-value enum (SUCCESS / SUCCESS_WITH_DEGRADATION / PARTIAL_FAILURE / FAILED) + dry-run flag + step status carry
+- **선언적 reconcile SSOT** → imperative-walker-protocol-v1 §2 (walk_result enum 이 declarative reconcile result semantics carry) + UpgradeAgent walker (Wave 2 CFP-1155) + walk-entries (Story-10 CFP-906/954/991/1014)
+
+**ratchet 강화 보존**: 본 sunset = carrier-preserved sunset (ADR-097 §결정 3 정합). 효용 제거 아님 — 동일 효용이 imperative-walker-protocol-v1 으로 lossless 이전됨. 약화 0건.
+
+**본 ADR 본문 삭제 금지**: Sunsetted = retired/superseded 상태. 본문은 historical record 로 영구 보존 (imperative walker carrier 참조 포인터 역할).
 
 ### 강화 방향 (sunset 전까지 Amendment 정합)
 

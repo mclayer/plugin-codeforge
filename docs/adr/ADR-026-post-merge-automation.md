@@ -698,6 +698,19 @@ N/A — `is_transitional: false` (permanent governance mandate). 본 Amendment 5
 
 **cross-ref**: [β2 audit (#1113)](https://github.com/mclayer/plugin-codeforge/issues/1113) Anchor 3 LOSSLESS 판정. PR-gate layer 독립 보존 — ADR-026 본체 (§결정 1-6 post-merge automation SSOT) 는 sunset 대상 아님.
 
+#### sunset_executed (CFP-1186, 2026-05-22) — Amendment 5 sibling carrier role 영역 한정
+
+**상태**: Amendment 5 sibling carrier role 영역 Sunsetted — reconcile-protocol-v1 §4.13 result_fidelity_binding 의 sibling carrier 역할 효용이 imperative walker 로 lossless carry 완료됨.
+
+carry 증거 (β2 audit Anchor 3 LOSSLESS 확인):
+- walker `walk_result` 4-value enum (SUCCESS / SUCCESS_WITH_DEGRADATION / PARTIAL_FAILURE / FAILED) = reconcile-protocol §4.13 result enum 4-value closed-set semantic equivalent
+- silent false SUCCESS 차단 0건 / N walk 보존 (imperative-walker-protocol-v1 §2 walk_result honest record 의무)
+- PR-gate layer (`phase-gate-mergeable.yml` `.github/` content sanity warning) = walker paradigm 과 **disjoint** 별 lifecycle — 본체 §결정 1-6 sunset 아님, 계속 유효
+
+**is_transitional 무변경**: `false` 유지 (본체 §결정 1-6 + Amendment 5 §결정 7 PR-gate layer 영구 불변). 본 sunset = Amendment 5 sibling carrier role 만 (reconcile-protocol §4.13 result_fidelity_binding 의 ADR-026 선언 역할 해소).
+
+**본 ADR 본문 삭제 금지**: Sunsetted = 해당 영역의 carry 완료 선언. 본문은 historical record 로 영구 보존.
+
 ## 관련 ADR
 
 - **ADR-022** §결정 1 User Override hierarchy: workflow 가 merge 결정 안 함, follow-up 만 (사용자 admin merge 결정 보존)

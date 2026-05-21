@@ -14,6 +14,10 @@ amendment_log:
     date: 2026-05-21
     cfp: CFP-1125
     summary: "is_transitional false → true toggle + sunset_justification declarative (CFP-1111 Wave-4 Story-11 walker paradigm carry). 4-way repo-kind detection truth-table + positive whitelist + fail-closed unknown + mixed repo self-app exemption 의 효용은 walker integration test (consumer/plugin/mixed mock 3 사례 cover) + walker per-step applicable_to filter 로 carry. cross-ref CFP-1113 β2 audit Anchor 2 LOSSLESS 판정. ratchet 강화 (declaration-only Wave-1 → walker Wave-4 carry), 약화 0건."
+  - amendment_id: 2
+    date: 2026-05-22
+    cfp: CFP-1186 (CFP-1111-Wave-4-Story-11)
+    summary: "sunset 실행 — is_transitional true → false (Sunsetted). sunset_status: Sunsetted 설정. 효용 = detect-repo-kind.py 4-way detection + positive whitelist + fail-closed-unknown + mixed self-app exemption 이 walker repo-kind detection hook (per-step applicable_to filter) 로 lossless carry 완료. β2 audit (#1113) Anchor 2 LOSSLESS 확인. ratchet 강화 보존 (carrier-preserved sunset, ADR-097 §결정 3 정합)."
 sunset_carrier_cfp: CFP-1111-Wave-4-Story-11
 related_stories:
   - CFP-899  # carrier (Wave 4 sub-Epic CFP-858 S2 base layer — S3 CFP-900 prerequisite)
@@ -42,7 +46,9 @@ related_files:
   - templates/scripts/detect-repo-kind.py  # Phase 2 carrier (ADR-061 외부 .py file 의무 — repo-kind detection truth-table 실 구현)
   - templates/scripts/mirror-dependency-closure.py  # CFP-898 §4.11 closure resolver — 본 ADR §결정 5 filter hook 과 sequential composition (filter 먼저 → closure 다음)
   - scripts/reconcile-overlay.sh  # MARKER_NONE branch line 437 직전 filter hook insertion (CFP-898 closure resolver hook pattern 답습, layer 1 추가 algorithm 재구현 0)
-is_transitional: true   # CFP-1125 Amendment 1 — false → true toggle. CFP-1111 Wave-4 Story-11 walker paradigm 으로 4-way detection + positive whitelist + fail-closed unknown + mixed self-app exemption 효용 carry. 약화 방향 (filter 약화 / fail-open default / whitelist 축소) 발의 차단 invariant 보존 (ADR-058 §결정 5 sunset_justification ratchet 강화 only — ADR-064 §self-application 정합).
+is_transitional: false   # CFP-1186 Amendment 2 — true → false (Sunsetted). 효용 lossless carry 완료 — walker repo-kind detection hook (detect-repo-kind.py 재사용 + per-step applicable_to filter). β2 audit (#1113) Anchor 2 LOSSLESS 확인. 약화 방향 (filter 약화 / fail-open default / whitelist 축소) 발의 차단 invariant 보존 (ADR-097 §결정 3 carrier-preserved sunset 정합).
+sunset_status: Sunsetted
+superseded_by: imperative-walker-protocol-v1
 mechanical_enforcement_actions:
   - action: consumer-applicability-filter-detection
     decision_binding: "§결정 5 — reconcile-overlay.sh MARKER_NONE branch filter hook (consumer signal detect → whitelist filter → fail-closed unknown). evidence-checks-registry warning tier entry (Phase 2 carrier — `templates/scripts/detect-repo-kind.py` 실 구현 + tests/test_detect_repo_kind.py 18 TC + tests/integration/test_reconcile_overlay_consumer_filter.bats integration after Phase 2 PR)"
@@ -66,6 +72,19 @@ Accepted (2026-05-18 KST) — CFP-899 Phase 1 carrier. Wave 4 sub-Epic CFP-858 S
 - **how**: walker integration test (`tests/walker/test-applicable-to-filter.bats`) 가 4-way enum 정확 분류 + positive whitelist semantic equivalent + fail-closed unknown 행위 검증. cross-ref ADR-027 Amd 6 (consumer-side signal SSOT, disjoint scope 유지).
 
 **cross-ref**: [β2 audit (CFP-1113)](https://github.com/mclayer/plugin-codeforge/issues/1113) Anchor 2 LOSSLESS 판정. carrier = detect-repo-kind.py 재사용 + walker `applicable_to` per-entry.
+
+### sunset_executed (CFP-1186, 2026-05-22)
+
+**상태**: Sunsetted — 본 ADR 효용이 imperative walker paradigm 으로 lossless carry 완료됨.
+
+효용 carry 증거 (β2 audit Anchor 2 LOSSLESS 확인):
+- **4-way repo-kind detection truth-table** → walker repo-kind detection hook (`detect-repo-kind.py` 재사용) — 동일 truth-table + 2-signal cross-product (`.claude-plugin/plugin.json` + `.claude/_overlay/project.yaml`) 재사용
+- **positive whitelist + fail-closed unknown** → walker per-step `applicable_to: {consumer/wrapper/both}` filter 가 positive whitelist semantic equivalent carry + fail-closed unknown 0건 silent default 보존
+- **mixed repo self-app exemption** → walker integration test 안 mock consumer + mock plugin + mock mixed 3 사례 cover + D4 customization marker block preserve invariant 동반 (CFP-1111 §3 결정 3 C)
+
+**ratchet 강화 보존**: 본 sunset = carrier-preserved sunset (ADR-097 §결정 3 정합). 효용 제거 아님 — 동일 효용이 imperative-walker-protocol-v1 (walker repo-kind hook + per-step applicable_to filter) 으로 lossless 이전됨. 약화 0건.
+
+**본 ADR 본문 삭제 금지**: Sunsetted = retired/superseded 상태. 본문은 historical record 로 영구 보존.
 
 ## 컨텍스트 — wholesale_mirror 무차별 유입 의 silent harm
 
