@@ -80,6 +80,8 @@ CFP-1086 Amendment 8 이전 baseline (5+3 roster):
 - APIContractArch (transport surface) ↔ ModuleArch (module placement) — module public API ↔ transport contract = co-author 영역
 - SecurityArch (PII 정책) ↔ AggregateArch (PII persistence schema) — column type / encryption-at-rest schema = co-author 영역
 
+> ⚠ **AggregateArch deprecated 정합 footnote** (CFP-1126 / [ADR-042 Amendment 10](../../docs/adr/ADR-042-agent-model-selection-policy.md) + [ADR-091 Amendment 1](../../docs/adr/ADR-091-architectlane-ddd-vocabulary-governance.md), 2026-05-21 KST): **AggregateArchitectAgent ⚠ deprecated** — mandate carry-over to **ModuleArchitectAgent** (boundary axis 단일 advocate 통합: module-level boundary + aggregate-level boundary). 본 CFP-1086 primary axis matrix 의 AggregateArch row (§3 aggregate / §11.1-§11.6 RDB OLTP / Alembic 7 원칙) + axis disjoint 검증 4 영역의 AggregateArch 인용 = transitional 보존 (RACI matrix 자체 변경 0). **CONDITIONAL applicability** `project.yaml aggregate_arch.applicable: bool` = ModuleArch carry-over (key 이름 보존, consumer overlay backward-compat). baseline = 7 → **6 permanent** (3+1 CONDITIONAL, AggregateArch applicability P2 → ModuleArch carry-over). **RACI matrix 전면 재편 (4-way → 3-way, AggregateArch row 제거 + cross-axis 9-cell)** = **별 carrier CFP** (CFP-1126 follow-up — ADR-091 Amendment 1 §결정 7 INV-5 forcing function scope). 본 S5 = DDD vocabulary layer 부착 + deprecation footnote 명시만 (scope unitary — ADR-064 §결정 1 / RACI matrix body 변경 0, transitional 보존). agent file 실 deprecate = Wave 2 별 CFP carrier.
+
 ### CFP-676 historical 5+3 matrix (CFP-1086 Amendment 8 이전 baseline — historical layer 보존)
 
 > 본 matrix = CFP-676 / ADR-042 Amendment 7 시점 baseline. CFP-1086 Amendment 8 에서 superseded — 본 matrix 의 CodeArch / DataArch 영역은 CFP-1086 정합으로 ModuleArch / DataArch (축소) 로 변경됨. AggregateArch / APIContractArch column 미존재 (CFP-1086 신설).
@@ -117,6 +119,52 @@ CFP-1086 Amendment 8 이전 baseline (5+3 roster):
 **InfraOperationalArch ↔ ProductionEvidence disjoint axis (ADR-72 §결정 4 / ADR-014 Amendment 4 §결정 3)**: policy SSOT (InfraOperationalArch §7.4 invariant 정의 — design-time) vs evidence SSOT (ProductionEvidence production grounding 실측 명시 — runtime). consumer production cutover Story 에서 dual-spawn 가능 (영역 disjoint). wrapper-self-app 시 ProductionEvidence N/A.
 
 §7.4 schema 자체는 codeforge-design plugin SSOT. wrapper는 본 매트릭스만 SSOT 보유 ([ADR-014](../../docs/adr/ADR-014-operational-risk-ssot-distribution.md) + Amendment 4, [ADR-72](../../docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md), [ADR-042 Amendment 7](../../docs/adr/ADR-042-agent-model-selection-policy.md)).
+
+## DDD pattern mapping (ADR-091 §결정 1/2 — CFP-1117 S5)
+
+> **ArchitectLane 14 agent ↔ DDD role Hybrid mapping**. ADR-091 (ArchitectLane DDD vocabulary governance) §결정 1 Hybrid mapping + §결정 2 deputy spawn rationale 어휘 transition 의 deputy-mandate skill realize layer. Published Language SSOT = [`docs/glossary.md`](../../docs/glossary.md) (codeforge governance BC). 본 section = ADR-091 §결정 1/2 + Amendment 1 (CFP-1126 / ADR-042 Amendment 10 정합 — AggregateArch deprecated, ModuleArch unified) 정합. 단일 DDD 패턴 전 agent 강제 = false precision → 거부 (3 role 만 — ADR-091 §결정 1 rationale).
+
+### 1. Authority Pair (ArchitectPLAgent + ArchitectAgent)
+
+ArchitectPL + Architect 2 agent = **Authority Pair** (ADR-091 §결정 3 Aggregate metaphor 2-layer 정합):
+
+- **ArchitectPLAgent** = Authority Pair (Aggregate Root metaphor) — **Layer A** (governance BC, PL metaphor): supervised authority cluster. Story 단위 plan consistency boundary 의 supervisor. **deputy spawn 결정 주체** (Aggregate Root metaphor — supervised authority). 6 permanent deputy + 3+1 CONDITIONAL spawn 여부 + 4-tuple sub-tuple flat spawn 을 결정.
+- **ArchitectAgent** (chief author) = Authority Pair (Chief Author) — **Layer B** (governance BC, ArchitectLane 산출물 = real Aggregate): multi-source synthesizer. Change Plan + ADR draft + §8 Test Contract + §11 데이터 마이그레이션 = **real consistency boundary**. §1-§11 + BC classification + aggregate impacts + language choices + risks + ADR rationale 가 handoff 전 cohere 해야 함 (산출물 real 일관성 경계).
+
+> Layer A (PL metaphor only) ↔ Layer B (Architect 산출물 real consistency boundary) explicit separate = 동음이의 (governance BC ↔ application BC) 충돌 차단 의무 (ADR-091 §결정 3). mctrader application BC 의 Aggregate (DDD Aggregate root in domain model) 은 **별 BC** — `docs/glossary.md` 3 distinct semantics entry 분리.
+
+### 2. Domain Service (6 permanent SubAgent + 3 sub-tuple)
+
+다음 6 permanent SubAgent + 3 sub-tuple = **Domain Service** — "specialized judgment contributor — BC Owner 아님 (Story 가 multiple BC 가로지를 수 있음 → advisory expertise ≠ contextual authority)":
+
+| Agent | Domain Service 영역 |
+|---|---|
+| SecurityArchitectAgent | 보안 설계 (§7.1-§7.3 / §7.5-§7.6) |
+| InfraOperationalArchitectAgent | 운영 리스크 (§7.4 DR / disconnect / clock / rate / env / container) |
+| TestContractArchitectAgent | §8 Test Contract |
+| APIContractArchitectAgent | transport (REST/GraphQL/gRPC/WebSocket) + API versioning + §8.6 contract testing |
+| ModuleArchitectAgent (boundary axis unified) | module-level boundary + aggregate-level boundary 통합 (layered / hexagonal / clean / DDD bounded context module placement + module boundary + dependency direction + RDB OLTP aggregate invariant + 트랜잭션 경계 + persistence-bound + Alembic 정책 7 원칙 — AggregateArch carry-over per CFP-1126) |
+| DataArchitectAgent | 빅데이터 OLAP (Parquet / 객체저장소 / DuckDB / streaming / 백필 / 시계열 집계) |
+| CodebaseMapperAgent (sub-tuple) | fact source 변호자 — file structure / API surface / dependency graph 만 인용 |
+| RefactorAgent (sub-tuple) | refactoring 옹호자 — decoupling / pattern / interface 분리 |
+| ArchitectAnalystAgent (sub-tuple) | prior art / industry pattern analyst |
+
+> sub-tuple 3 (CodebaseMapper / Refactor / ArchitectAnalyst) = Domain Service role 이지만 deputy column 아님 (4-tuple flat spawn 논리적 그룹핑 — "4-tuple sub-tuple spawn 가이드" section 정합). `bounded_context: codeforge-governance`, `ddd_pattern: Domain Service` (ADR-091 §결정 5 frontmatter field — agent file 은 codeforge-design plugin sibling).
+
+### 3. Subdomain Specialist (3+1 CONDITIONAL) — "which subdomain under threat" 어휘 transition
+
+3+1 CONDITIONAL deputy (LiveOps / LiveOrdering / ProductionEvidence) = **Subdomain Specialist**. ADR-091 §결정 2 deputy spawn rationale 어휘 transition:
+
+- **Before**: "perspective-contributor" (보수 / 혁신 / 위협 등 perspective) / "CONDITIONAL 활성"
+- **After**: **"which subdomain under threat"** (subdomain decision is at risk → Subdomain Specialist spawn)
+
+| Deputy | spawn rationale 어휘 (ArchitectPL spawn 결정 input) | spawn trigger (실 영향) |
+|---|---|---|
+| LiveOpsDeputy | "which subdomain under threat = **live ops**" | Live touching Story (real funds / live exchange API / production credential / live order placement 중 1+) — live ops subdomain decision at risk 시 spawn |
+| LiveOrderingDeputy | "which subdomain under threat = **live ordering**" | Live touching Story 의 order side (ledger reconcile / partial fill / fee invariant / order idempotency) — live ordering subdomain decision at risk 시 spawn |
+| ProductionEvidenceDeputy | "which subdomain under threat = **production evidence**" | production cutover 영향 Story (Change Plan §13 `production_cutover_touching: true` 또는 §13 Live Operational Discipline 본문 보유) — production evidence subdomain decision at risk 시 spawn. ownership = codeforge-deploy-review (ADR-088 §결정 3 이관 declarative) |
+
+> **vocabulary theater 차단 (INV-5 — ADR-091 §결정 7)**: 본 "which subdomain under threat" 어휘는 **단순 nominal 명칭이 아니라 ArchitectPL 의 CONDITIONAL spawn 결정 input 에 실제 반영**된다. ArchitectPL 이 "CONDITIONAL deputy 활성 정책" section 의 spawn 결정 (Backtest/Paper-only: 미spawn / Live touching: LiveOps + LiveOrdering / Production cutover: + ProductionEvidence) 을 할 때, **어느 subdomain decision 이 risk 에 처했는가** (live ops / live ordering / production evidence) 를 판정해 그 enum 어휘를 spawn rationale 로 명시 출력해야 한다. 어휘 emit ↔ spawn decision 결합 = forcing function. Deputy = contributor 유지 (BC Owner 아님 — option C deputy = BC Owner = overreach 거부, ADR-091 §결정 2 rationale).
 
 > **W1 S2 보강 완료 (CFP-681 — state dependency on CFP-676 S1 해소)**: S1 (CFP-676, wrapper main `abcd92bf`) 이 5+3 mandate matrix 본문 + frontmatter + §13 Live Discipline 행을 full 재작성 완료. 본 S2 = **매트릭스 본문 재작성 0 (S1 산출물 보존)** + additive 보강만: (a) "호출 시점" 4-tuple spawn trigger 추가 (b) 신규 "4-tuple sub-tuple spawn 가이드" 섹션 (CodebaseMapper/Refactor/ArchitectAnalyst + chief author — flat spawn 논리적 그룹핑, nested 금지 reaffirm) (c) playbook §12.8 (deputy 영역별 specialized Context Packet 4종 spec) + ADR-039 §결정 1 cross-ref (d) CLAUDE.md "Deputy mandate 매트릭스" 단락 (`abcd92bf` L229-233) 과 deputy 명칭 5종 + 3 CONDITIONAL + ArchitectAnalyst sub-tuple 표현 byte-consistent 재확인. "full 재작성" 의 §1 의도 = S1+S2 누적으로 5+3 매트릭스 + 4-tuple/Context Packet spec 최종 형태 SSOT 존재 — 충족 (CFP-681 §2.5 상충 조정 / AC-1). agent file 실 신설/rename = W2 S3 (codeforge-design sibling).
 
