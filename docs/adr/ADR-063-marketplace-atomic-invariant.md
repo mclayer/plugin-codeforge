@@ -25,6 +25,7 @@ related_stories:
   - CFP-477  # §결정 5 본문 표 sublayer 확장 (local pre-push auto-rebase guidance row, Amendment 발의 0건)
   - CFP-906  # Amendment 6 §결정 17 carrier — Wave 4 sub-Epic #1 Story-1 (mirrored field × channel matrix + 3-way channel invariant)
   - CFP-1059 # Amendment 7 §결정 18 carrier — family scope 7 plugin → 9 plugin 확장 + MAJOR atomic bump invariant codify (codeforge-deploy + codeforge-deploy-review 신설 정합)
+  - CFP-1179 # Amendment 8 §결정 19 carrier — Tier 분리 (Tier 1 wrapper bundle vs Tier 2 lane per-walk atomic scope 명확화)
 amendments:
   - amendment: 1
     date: 2026-05-13
@@ -64,6 +65,12 @@ amendments:
     summary: "§결정 18 신설 — family scope 7 plugin → 9 plugin 확장 + MAJOR atomic bump invariant codify (CFP-1059 Story-1 sibling carrier — ADR-023 Amendment 1 + ADR-087 + ADR-088 lane plugin 6 → 8 확장 atomic). 기존 §결정 1 family scope (wrapper + 6 lane = 7 plugin) → wrapper + 8 lane = 9 plugin 확장 (codeforge-deploy + codeforge-deploy-review 신설). MAJOR version bump 시 9 plugin atomic invariant codify — 단일 plugin 만 MAJOR bump 후 sibling 8 plugin 미bump 시 lane plugin family compatibility break (예: codeforge-deploy v2.0 + codeforge-design v1.x mixed install → Story §3 ↔ Story §12 contract mismatch). MAJOR atomic bump 시 9 plugin 모두 동시 MAJOR bump 의무 (CHANGELOG.md `BREAKING:` section 양 9 file + marketplace.json 9 entry 동시 sync — `hotfix-bypass:marketplace-atomic-major` 신규 label family member, 기존 `hotfix-bypass:marketplace-atomic` 와 분리). MINOR / PATCH bump 는 본 invariant 영역 외 (per-plugin sibling sync 보존, §결정 1 invariant 정합). 3-way version invariant (§결정 15 Amendment 5) × MAJOR atomic invariant cross-axis — publisher (per-plugin MAJOR bump) × registry (marketplace.json 9 entry MAJOR sync) × consumer (codeforge.version_pin.version 9 plugin pin 동시 갱신) 3-way × 9-plugin matrix. ratchet 강화 방향 (7 plugin → 9 plugin scope 확장 + MAJOR atomic invariant codify, ADR-058 §결정 5 정합) — Strengthening direction only."
     is_transitional: false
     sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 7 = family scope 7 → 9 plugin 확장 + MAJOR atomic invariant codify 강화 방향 only — scope 확장 + invariant 강도 상승). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과 (family scope 축소 / MAJOR atomic bump invariant 약화 = sunset_justification 3-tuple 의무)."
+  - amendment: 8
+    date: 2026-05-21
+    cfp: CFP-1179
+    summary: "§결정 19 신설 — Tier 분리 (marketplace atomic invariant Tier scope 명확화). 기존 §결정 1 3-file atomic invariant 가 wrapper 와 lane plugin 구분 없이 단일 scope 기재 — imperative changelog walk 패러다임 도입 (CFP-1111) 후 Tier 1 (wrapper bundle walk) vs Tier 2 (lane per-walk) 구분 필요. Tier 1 = codeforge wrapper: §결정 1 3-file atomic (plugin.json + CHANGELOG.md + marketplace.json) 보존 + ADR-016 family-scope 7-plugin bundle walk 보존. §결정 13 Amendment 3 4-layer defense scope = Tier 1 만. Tier 2 = 6 lane plugin: per-plugin 독립 walk 허용 — 자기 plugin.json + marketplace.json 2-file atomic 유지 (자기 publishing 정합). cross-Tier 의존 = min_prerequisite_version topological gate (walk_plan.py resolve_min_prereq_topological 재사용 — 재구현 금지). 구현 상수/함수 = scripts/lib/walk_plan.py (g) tier classification 절 (classify_tier / atomic_scope_for_tier / TIER_1_WRAPPER / TIER_2_LANE / WRAPPER_PLUGIN / LANE_PLUGINS). ADR-016 family-scope 7-plugin 재정의 = β4 별도 carrier (cross-ref only). §결정 20 self-application — Amendment 8 = scope 명확화 강화 방향. ratchet 강화 방향 only — ADR-058 §결정 5 약화 방향 발의 차단 logic 통과."
+    is_transitional: false
+    sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 8 = atomic scope Tier 분리 명확화 강화 방향 only — 모호한 단일 scope → Tier 1/2 명시, 약화 요소 0건). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과 (Tier 2 family atomic 면제 = §결정 1 lane 적용 범위 명시 + min_prerequisite_version gate 보완으로 실질 보호 수준 유지)."
 mechanical_enforcement_actions:
   - action: version-3way-atomic
     binding_decision: 15
@@ -555,6 +562,70 @@ plugins:
 본 Amendment 6 = 강화 방향 only (mirrored field 4종 scope 의 channel 차원 자동 확장 = scope 확장 + invariant 강도 상승 — 3-way version invariant 위에 channel 차원 추가). ADR-064 self-application top-down ratchet 정합 — 약화 방향 (예: channel matrix 축소 / per-channel mirrored field merge / channels[] supply-chain trust 약화 / single channel 으로 회귀) 미해당. ADR-058 §결정 5 sunset_justification = frontmatter 명시 (`N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 6 = mirrored field × channel matrix 확장 강화 방향 only). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과.`).
 
 **Story-1 declare layer scope invariant**: Amendment 6 본문 = declarative SSOT mandate only. mechanical enforcement (channels[] schema lint + per-channel description verbatim re-check + 3-way channel invariant lint) = Wave 4 sub-Epic #1 Story-2 carrier (runtime UpgradeAgent multi-channel dispatch 영역, 별 CFP). frontmatter `mechanical_enforcement_actions[]` Amendment 6 row append = Story-2 carrier 시점 (Phase 1 = declare-only invariant, ADR-076 §결정 9 + ADR-067 §결정 4 sequential ordering 정합).
+
+본 ADR-063 amendment 발의 시 매번 ratchet 방향 검증 의무 — 강화 방향만 허용.
+
+### 결정 19: Tier 분리 — marketplace atomic invariant Tier scope 명확화 (Amendment 8 / CFP-1179)
+
+**Context**: §결정 1 (3-file atomic invariant — plugin.json + CHANGELOG.md + marketplace.json) 는 wrapper 와 lane plugin 의 구분 없이 단일 scope 로 기재. imperative changelog walk 패러다임 (CFP-1111 / ADR-097) 도입 후 walk 단위가 **Tier 1 (wrapper bundle walk = `walk-bundle-7-plugins.sh`)** vs **Tier 2 (lane per-walk = `walk-single-plugin.sh`)** 로 분리됨 — atomic invariant scope 도 Tier 별 명확화 필요.
+
+**Tier 1 (wrapper bundle)**:
+- plugin = `codeforge` (wrapper) — 상수 `WRAPPER_PLUGIN`
+- atomic scope = §결정 1 3-file 보존: `plugin.json` + `CHANGELOG.md` + `marketplace.json`
+- family_atomic = True — ADR-016 family-scope bundle walk 의무 (`walk-bundle-7-plugins.sh`) 보존
+- §결정 13 (Amendment 3) 4-layer defense scope = **Tier 1 만** (Tier 2 per-walk detection = deferred follow-up)
+
+**Tier 2 (lane per-walk)**:
+- plugin = lane plugin (현 walk-infra roster = `TOPOLOGICAL_ORDER` 의 wrapper 외 전체: `codeforge-requirements` / `codeforge-design` / `codeforge-review` / `codeforge-develop` / `codeforge-test` / `codeforge-pmo`) — 상수 `LANE_PLUGINS` = `frozenset(TOPOLOGICAL_ORDER) - {WRAPPER_PLUGIN}` (single roster SSOT, dual-roster drift 차단)
+- atomic scope = 2-file: `plugin.json` + `marketplace.json` (자기 publishing 정합)
+- family_atomic = False — per-plugin 독립 walk 허용 (`walk-single-plugin.sh`)
+- **단**, 자기 `plugin.json` ↔ `marketplace.json` 2-file atomic 은 유지 (자기 publishing 정합 invariant)
+- `CHANGELOG.md` = Tier 2 atomic 미포함 (per-plugin CHANGELOG.md 는 walk source SSOT 로 ADR-092 영역 — marketplace atomic coordination 밖)
+
+**cross-Tier 의존 (topological gate)**:
+- Tier 2 lane plugin 이 Tier 1 wrapper 의 특정 min version 을 요구하는 경우 `min_prerequisite_version` manifest (ADR-096) 경유
+- `walk_plan.py` `resolve_min_prereq_topological()` 함수 재사용 (재구현 금지 — DRY invariant)
+- cross-Tier 의존이 없는 lane bump 는 topological gate 비발동 (즉시 per-plugin walk 가능)
+
+**MAJOR-atomic 비약화 (Amendment 7 §결정 18 보존)**:
+- Amendment 7 §결정 18 의 "MAJOR bump 시 family 전체 동시 MAJOR atomic" invariant 는 본 Tier 분리로 **약화되지 않음**.
+- MAJOR bump 은 Tier 무관 family bundle (family_atomic) 경로 강제 — 즉 MAJOR bump 시 Tier 2 lane 도 Tier 1 bundle walk 로 강제 routing (per-walk 독립 금지).
+- Tier 2 per-walk 독립성 (`family_atomic = False`) 은 **MINOR / PATCH bump 영역에만** 적용 (§결정 1 "MINOR/PATCH = per-plugin sibling sync" invariant 정합). `atomic_scope_for_tier` 의 per-tier base scope = MINOR/PATCH 영역.
+- 따라서 Tier 분리 = scope 명확화 (강화 방향), MAJOR-atomic invariant 약화 0 (ADR-058 §결정 5 정합).
+
+**CFP-1059 9-plugin family 정합 (deferred follow-up)**:
+- Amendment 7 §결정 18 이 family scope 를 7 → **9 plugin** (codeforge-deploy + codeforge-deploy-review, ADR-087/088 Accepted) 확장.
+- 현 walk-infra (`TOPOLOGICAL_ORDER`, ADR-096 §결정 2) 는 7-plugin DAG 가정 — deploy lane 의 DAG 위치 (의존성 방향) 결정 + `TOPOLOGICAL_ORDER` / `min_prerequisite_version` manifest 9-plugin 확장 = **별 follow-up CFP** (deploy lane lifecycle 의존성 분석 필요, 본 Story scope 외).
+- `LANE_PLUGINS` 가 `TOPOLOGICAL_ORDER` 에서 derive 하므로, 그 follow-up 에서 `TOPOLOGICAL_ORDER` 9-plugin 확장 시 본 Tier classification roster 자동 정합 (수동 동기화 0 — drift 차단).
+
+**구현 상수/함수 (ADR-061 Python SSOT)**:
+- `scripts/lib/walk_plan.py` section `(g) tier classification (CFP-1179)` 절:
+  - `TIER_1_WRAPPER = "tier_1_wrapper"`, `TIER_2_LANE = "tier_2_lane"` 상수
+  - `WRAPPER_PLUGIN = "codeforge"`, `LANE_PLUGINS = frozenset(TOPOLOGICAL_ORDER) - {WRAPPER_PLUGIN}` (derive — single roster SSOT)
+  - `classify_tier(plugin_name: str) -> str`: TIER_1_WRAPPER / TIER_2_LANE 반환, 알 수 없는 plugin → `ValueError` (fail-closed — ADR-083 fail-closed-unknown 선례 정합, silent default 금지)
+  - `atomic_scope_for_tier(tier: str) -> AtomicScope`: `AtomicScope(files=..., family_atomic=...)` 반환
+  - `AtomicScope` frozen dataclass: `files: tuple` + `family_atomic: bool`
+
+**ADR-016 boundary**:
+- ADR-016 family-scope 재정의 (7 → 9 plugin, CFP-1059 Amendment 7 정합) = β4 별도 carrier (out of scope here)
+- 본 §결정 19 = ADR-063 atomic scope 의 **Tier 분리 명확화** only (cross-ref)
+
+**Tier 2 per-walk detection**:
+- §결정 13 Amendment 3 4-layer defense (marketplace-drift-detection workflow) = Tier 1 만 적용 (현행)
+- Tier 2 per-plugin walk 에 대한 detection layer = deferred follow-up (별 CFP) — `mechanical_enforcement_actions[]` 에 신규 entry 추가 0 (Phase 1 declare-only, ADR-076 §결정 9 + ADR-067 §결정 4 sequential ordering 정합)
+
+### 결정 20: Self-application — Amendment 8 ratchet 검증
+
+본 Amendment 8 = **scope 명확화 / 강화 방향** — atomic scope 모호 (단일 scope) → Tier 1 / Tier 2 명시 (scope 명확화 + invariant 강도 강화). 약화 요소 0건:
+
+- Tier 1 atomic scope = §결정 1 3-file invariant **보존** (약화 0)
+- Tier 2 family_atomic = False = 기존에 명시되지 않았던 lane plugin 의 per-plugin 허용 명시 (scope 명확화 — Tier 2 가 family atomic 의무 없음을 명시 + 2-file atomic 보존으로 보호 수준 유지)
+- min_prerequisite_version topological gate = cross-Tier 의존 보호 추가 (강화 방향)
+- fail-closed classify_tier = 알 수 없는 plugin 명시적 에러 (ADR-083 정합 강화)
+
+ADR-064 self-application top-down ratchet 정합 — 약화 방향 (예: Tier 1 atomic scope 축소 / family_atomic 강제 해제 / classify_tier silent-default 도입) 미해당. ADR-058 §결정 5 `sunset_justification` = frontmatter 명시 (`N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 8 = atomic scope Tier 분리 명확화 강화 방향 only). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과.`).
+
+**Mechanical enforcement**: Tier 2 per-walk detection layer = Phase 1 declare-only (deferred follow-up). `mechanical_enforcement_actions[]` Amendment 8 row append = 별 CFP (Phase 2 carrier 시점). ADR-040 Amendment 3 §결정 7.C retroactive 면제 정합 (본 Amendment 8 이후 신설 entry 의무).
 
 본 ADR-063 amendment 발의 시 매번 ratchet 방향 검증 의무 — 강화 방향만 허용.
 
