@@ -8,9 +8,20 @@ is_transitional: false
 carrier_story: CFP-387
 supersedes: []
 amends: []
-amendment_log: []
+amendment_log:
+  - amendment: 1
+    carrier_story: CFP-1149
+    date: 2026-05-21
+    summary: |
+      §결정 5 재정의 — sunset_justification 의미를 "약화 차단 logic (ratchet 차단)" → "약화 방향 evidence requirement (강화 방향 evidence 와 동등 1급 절차)" 로. 차단(block) 아니라 evidence-gate (evidence 있으면 약화 1급 허용). ADR-064 §결정 7 evidence-gated symmetric ratchet 재정의 (top-down ratchet 비대칭 제거) sibling carrier.
+      메타 평가 root cause 직접 대응 — sunset asymmetry (실 retire 0건 / is_transitional:false ADR 85건 / decommission 0 match). Researcher net 35% + Codex ROI indeterminate 병렬 critical evaluation + ratchet stacking loop demonstration evidence. 사용자 directive "약화도 해야지" (2026-05-21 KST).
+      CFP-1111 Epic (#1112 §결정 5 mechanical 강화) 영역 overlap — 사용자 선수행 directive (#1112 input 전달 완료). minimal path (Story 0 / lane 0 / Phase 0 / Retro 0).
+    direction: weaken  # sunset_justification 차단 logic → 약화 evidence-gate (symmetric, 비대칭 제거)
+    sunset_justification: |
+      본 amendment = 약화 방향 (§결정 5 의 "차단" 강도를 "evidence-gate" 로 완화 — 약화를 더 쉽게) → 재정의 전 §결정 5 규칙상 self-referential sunset_justification 의무. evidence: (1) Researcher net 35% 정당화 + Codex ROI indeterminate 수렴 (2) sunset asymmetry metric — 실 retire 0건 / is_transitional:false 85건 (3) ratchet stacking loop demonstration. ADR-064 §결정 7 (symmetric 재정의) 정합. is_transitional: false 유지 (§결정 6 본 ADR self false — recursive sunset 회피).
 related_stories:
   - CFP-387
+  - CFP-1149  # Amendment 1 carrier — §결정 5 차단 → 약화 evidence-gate 재정의 (ADR-064 §결정 7 symmetric sibling)
 related_adrs:
   - ADR-010
   - ADR-013
@@ -18,6 +29,7 @@ related_adrs:
   - ADR-037
   - ADR-054
   - ADR-057
+  - ADR-064  # §결정 7 evidence-gated symmetric ratchet sibling carrier (CFP-1149 Amendment 8 ↔ 본 ADR-058 Amendment 1)
 related_files:
   - templates/adr.md
   - docs/adr/ADR-058-adr-sunset-criteria-mandate.md
@@ -75,9 +87,11 @@ CFP-B CI lint enforce 모드에서 missing field → warning. 작성자에게 ex
 
 본 결정은 §5.5 CL-1 옵션 A 채택. 옵션 B (default = 정책 추정) 거부 사유: 작성자 부담 최소화는 안전망 ADR 의 우발적 영구화 위험을 감수하는 trade-off — codeforge governance 의 정책 일관성 (안전 방향) 과 충돌.
 
-### 결정 5 — Amendment 시 justification 의무 (ratchet 차단)
+### 결정 5 — Amendment 시 justification 의무 (CFP-1149 재정의 — 차단 logic → 약화 evidence requirement)
 
-`is_transitional: true` ADR amendment 시 amendment_log entry 에 "왜 기존 sunset 미충족인지" 본문 명시 의무. count cap 미적용.
+> **CFP-1149 (2026-05-21 KST)**: ADR-064 §결정 7 evidence-gated symmetric ratchet 재정의 (top-down ratchet 비대칭 제거) 에 따라, 본 §결정 5 의 sunset_justification 은 **"약화 차단 logic" 이 아니라 "약화 방향 evidence requirement"** 로 재정의됐다 — 강화 방향이 pattern_count / incident evidence 를 요구하듯, 약화 방향은 metric / 평가 / 환경 변화 / pattern obsolescence evidence 를 요구한다 (강화와 동등 1급 절차). **차단(block)이 아니라 evidence-gate**: evidence 있으면 약화 1급 허용. sibling carrier = ADR-064 Amendment 8.
+
+`is_transitional: true` ADR amendment 시 amendment_log entry 에 sunset_justification (약화 evidence) 본문 명시 의무. count cap 미적용. (ADR-064 §결정 7 가 `is_transitional: false` governance ADR 의 약화 방향에도 동일 evidence-gate 적용 — symmetric scope.)
 
 amendment_log entry schema:
 ```yaml
