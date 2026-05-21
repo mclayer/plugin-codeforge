@@ -45,6 +45,7 @@ exit codes (ADR-060 §결정 15 3-tier):
 
 import argparse
 import hashlib
+import os
 import sys
 
 
@@ -65,8 +66,58 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--kill-switch-flag", type=str, default="",
                    help="filesystem kill-switch flag 경로 (존재 시 kill-switch 활성)")
     p.add_argument("--config-disabled", type=str, default="false",
-                   help="config 설정 (deploy.auto_rollback.enabled=false 시 'true')")
+                   help="config 설정 override (deploy.auto_rollback.enabled=false 시 'true', "
+                        "test mock 또는 bash pre-computed 값 전달용)")
+    p.add_argument("--config-yaml-path", type=str, default="",
+                   help="project.yaml 경로 (.claude/_overlay/project.yaml). "
+                        "부재 시 config-disabled=false (default enabled — ADR-104 §결정 4)")
     return p.parse_args()
+
+
+def read_config_disabled(config_yaml_path: str) -> bool:
+    """
+    project.yaml (.claude/_overlay/project.yaml) 의 deploy.auto_rollback.enabled 읽기.
+    yaml.safe_load 사용 (ADR-070 — grep 금지).
+
+    반환: True = config kill-switch 활성 (disabled), False = enabled (default)
+    - 파일 부재 시 False (default enabled, 보수적 — consumer 미설정 = 활성 의도)
+    - key 부재 시 False (default enabled)
+    - enabled=false 명시 시 True (kill-switch)
+    - yaml.safe_load 실패 시 exit 2 (SETUP error, fail-loud)
+    """
+    if not config_yaml_path or not os.path.exists(config_yaml_path):
+        return False
+
+    try:
+        import yaml  # PyYAML (pyyaml) — CI 환경 표준 의존성
+        with open(config_yaml_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+    except ImportError:
+        # PyYAML 미설치 = SETUP error (fail-loud, ADR-105 §결정 4)
+        print("[ERROR] PyYAML 미설치 — config yaml 읽기 불가 (pip install pyyaml)", file=sys.stderr)
+        sys.exit(2)
+    except yaml.YAMLError as e:
+        # yaml parse 실패 = SETUP error (fail-loud, CFP-932 bats mock seam 패턴)
+        print(f"[ERROR] project.yaml yaml.safe_load 실패: {e}", file=sys.stderr)
+        sys.exit(2)
+
+    if not isinstance(data, dict):
+        return False
+
+    deploy_block = data.get("deploy", {})
+    if not isinstance(deploy_block, dict):
+        return False
+
+    auto_rollback = deploy_block.get("auto_rollback", {})
+    if not isinstance(auto_rollback, dict):
+        return False
+
+    # enabled=false 명시 시만 disabled=True
+    enabled = auto_rollback.get("enabled", True)
+    if isinstance(enabled, bool):
+        return not enabled
+    # 비-bool (문자열 "false" 등) = 보수적으로 disabled 아님
+    return False
 
 
 def check_safety_1(
@@ -102,7 +153,6 @@ def check_safety_4(kill_switch_flag: str, config_disabled: bool) -> tuple[bool, 
     OR disable 보수적 (둘 중 하나라도 disable = kill-switch 활성)
     반환: (safety_4, kill_switch_active)
     """
-    import os
     # filesystem flag 체크 (primary, 0 API call — ADR-104 §결정 3)
     flag_active = False
     if kill_switch_flag:
@@ -154,7 +204,15 @@ def main() -> int:
     burn_rate = safe_float(args.burn_rate)
     burn_rate_threshold = safe_float(args.burn_rate_threshold)
     window = safe_int(args.window)
-    config_disabled = args.config_disabled.lower() in ("true", "1", "yes")
+
+    # config kill-switch: --config-yaml-path (real) OR --config-disabled (mock/override)
+    # 우선순위: --config-disabled 명시적 "true" = 항상 override (test mock 경로)
+    #           그 외: yaml.safe_load 실 읽기 (--config-yaml-path 제공 시)
+    config_disabled_override = args.config_disabled.lower() in ("true", "1", "yes")
+    if config_disabled_override:
+        config_disabled = True
+    else:
+        config_disabled = read_config_disabled(args.config_yaml_path)
 
     # 안전장치 4 (kill-switch) — 가장 먼저 평가 (§3.3 kill-switch 우선)
     safety_4, kill_switch_active = check_safety_4(

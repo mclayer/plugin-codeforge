@@ -78,6 +78,7 @@ teardown() {
   unset _CFP1193_MOCK_KILL_SWITCH _CFP1193_MOCK_CONFIG_DISABLED
   unset _CFP1193_SKIP_ISSUE_CREATE CBL_SKIP_ISSUE_CREATE
   unset _CFP1193_MOCK_DEDUP _CFP1193_MOCK_REPO_NAME
+  unset _CFP1193_MOCK_CONFIG_YAML_PATH
   unset DEPLOY_REPO DEPLOY_HOST
 }
 
@@ -223,6 +224,38 @@ teardown() {
     --repo "${DEPLOY_REPO}" --host "${DEPLOY_HOST}"
 
   [[ "${output}" != *"[ROLLBACK] green"* ]]
+}
+
+# ---
+# TC-6c: config yaml real path — yaml.safe_load 경로 검증 (F-CR-1193-2)
+# project.yaml 임시 파일 주입 (_CFP1193_MOCK_CONFIG_YAML_PATH) →
+#   deploy.auto_rollback.enabled: false → trigger 무력화
+# ---
+@test "TC-6c: real config yaml path — yaml.safe_load enabled=false → trigger 무력화" {
+  # 임시 project.yaml 생성 (deploy.auto_rollback.enabled: false)
+  local config_yaml="${TEST_TMP}/project.yaml"
+  cat > "${config_yaml}" <<'YAML'
+deploy:
+  auto_rollback:
+    enabled: false
+YAML
+
+  # mock config yaml path 주입 (real yaml.safe_load 경로)
+  export _CFP1193_MOCK_CONFIG_YAML_PATH="${config_yaml}"
+  # config_disabled mock 은 OFF (real yaml.safe_load 경로를 검증)
+  export _CFP1193_MOCK_CONFIG_DISABLED=0
+  export _CFP1193_MOCK_ERROR_RATE="0.05"   # 임계 초과 (안전장치 1 충족)
+
+  run bash "${SIGNAL_SH}" \
+    --repo "${DEPLOY_REPO}" --host "${DEPLOY_HOST}"
+
+  # kill-switch 활성 (yaml.safe_load 로 detected) → rollback trigger 0
+  [[ "${output}" != *"[ROLLBACK] green"* ]]
+  # kill-switch 표시 있어야 함 (EC-2 신호 감지·기록 계속)
+  [[ "${output}" == *"kill-switch"* ]] || \
+    [[ "${output}" == *"kill_switch"* ]] || \
+    [[ "${output}" == *"disabled"* ]]
+  [ "${status}" -eq 0 ]
 }
 
 # ---

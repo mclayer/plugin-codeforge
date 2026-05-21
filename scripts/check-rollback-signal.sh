@@ -86,10 +86,18 @@ WINDOW="${_CFP1193_MOCK_WINDOW:-3600}"
 
 # --- kill-switch 경로 결정 ---
 KILL_SWITCH_FLAG="${_CFP1193_MOCK_KILL_SWITCH_FLAG:-${WORKTREE_ROOT}/.codeforge/auto-rollback.disabled}"
+
+# config kill-switch: test mock override OR real yaml path
+# F-CR-1193-2: real consumer 환경 = project.yaml yaml.safe_load (ADR-070 grep 금지)
 CONFIG_DISABLED="false"
 if [[ "${_CFP1193_MOCK_CONFIG_DISABLED:-0}" == "1" ]]; then
+  # test mock: --config-disabled=true 직접 전달
   CONFIG_DISABLED="true"
 fi
+
+# real config yaml path (consumer 환경 기본 위치)
+# test mock 미활성 시 yaml.safe_load 경로 주입 (Python 에서 처리)
+CONFIG_YAML_PATH="${_CFP1193_MOCK_CONFIG_YAML_PATH:-${WORKTREE_ROOT}/.claude/_overlay/project.yaml}"
 
 # --- Step 1: wrapper-self-app fast-pass (ADR-104 §결정 4 / §3.6 Tier-1) ---
 # wrapper repo = declare SSOT only, 실 monitoring 무의미
@@ -143,6 +151,7 @@ if ! PYTHON_OUT=$(PYTHONUTF8=1 python3 "${SIGNAL_PY}" \
     --window "${WINDOW}" \
     --kill-switch-flag "${KILL_SWITCH_FLAG}" \
     --config-disabled "${CONFIG_DISABLED}" \
+    --config-yaml-path "${CONFIG_YAML_PATH}" \
     2>&1); then
   echo "[ERROR] check_rollback_signal.py 실행 실패" >&2
   echo "${PYTHON_OUT}" >&2
@@ -158,6 +167,13 @@ WINDOW_OUT=$(echo "${PYTHON_OUT}" | grep "^window=" | cut -d= -f2)
 SAFETY_1=$(echo "${PYTHON_OUT}" | grep "^safety_1=" | cut -d= -f2)
 SAFETY_4=$(echo "${PYTHON_OUT}" | grep "^safety_4=" | cut -d= -f2)
 SIGNATURE=$(echo "${PYTHON_OUT}" | grep "^signature=" | cut -d= -f2)
+PY_KILL_SWITCH=$(echo "${PYTHON_OUT}" | grep "^kill_switch_active=" | cut -d= -f2)
+
+# Python 이 yaml.safe_load 로 config kill-switch 감지한 결과 반영 (F-CR-1193-2)
+# Python 이 kill_switch_active=true 출력 시 bash KILL_SWITCH_ACTIVE 동기화
+if [[ "${PY_KILL_SWITCH}" == "true" ]]; then
+  KILL_SWITCH_ACTIVE=1
+fi
 
 echo "[INFO] 임계 감지: signal_detected=${SIGNAL_DETECTED} signal_type=${SIGNAL_TYPE}"
 echo "[INFO] 측정값: measured=${MEASURED} threshold=${THRESHOLD} window=${WINDOW_OUT}s"
