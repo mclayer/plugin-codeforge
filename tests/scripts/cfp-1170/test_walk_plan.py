@@ -43,12 +43,15 @@ sys.path.insert(0, os.path.abspath(WALK_PLAN_PATH))
 # RED phase: ImportError 예상 (walk_plan.py 미구현) → 구현 후 GREEN
 try:
     from walk_plan import (
+        MARKER_BEGIN,
+        MARKER_END,
         ChangelogEntry,
         ChangelogParseError,
         PrereqMismatch,
         VersionRangeError,
         WalkResult,
         aggregate_walk_result,
+        merge_with_marker,
         resolve_min_prereq_topological,
         walk_changelog,
     )
@@ -556,3 +559,112 @@ def test_tc30b_walk_result_closed_enum():
 
     # positive: 5번째 값 없음 (UNKNOWN 등 ad-hoc 확장 금지)
     assert len(values) == 4
+
+
+# ─── TC-31~TC-33: merge_with_marker 실호출 (F-CR-1170-4, #960 회피) ─────────
+# 3 TC 모두 merge_with_marker() 실호출 (mocking 0) — discriminating fixture
+# change-plan §11.2 R-2 흡수 설계 / ADR-027 §결정 7.C·7.D.3
+
+
+def _make_marked_content(inner: str) -> str:
+    """marker 블록 포함 consumer overlay 내용 생성 헬퍼."""
+    return f"consumer-before\n{MARKER_BEGIN}\n{inner}\n{MARKER_END}\nconsumer-after"
+
+
+@pytest.mark.skipif(not _MODULE_AVAILABLE, reason="walk_plan 모듈 미구현 (TDD RED)")
+def test_tc31_merge_with_marker_valid_3way():
+    """TC-31: MARKER_VALID — 3-way merge byte-identical preserve (marker 안 wrapper wins, 밖 consumer preserve).
+
+    discriminating fixture (#960 회피):
+    - merged_content 안 consumer-before / consumer-after 보존 (marker 밖 byte-identical)
+    - merged_content 안 wrapper_inner 포함 (marker 안 wrapper wins)
+    - loss_occurred=False (consumer customization 손실 없음)
+    """
+    base_content = _make_marked_content("old-wrapper-inner")
+    wrapper_content = _make_marked_content("new-wrapper-inner")
+    consumer_content = _make_marked_content("consumer-custom-inner")
+
+    merged, loss_occurred, loss_report = merge_with_marker(
+        base_content=base_content,
+        wrapper_content=wrapper_content,
+        consumer_content=consumer_content,
+    )
+
+    # positive: loss_occurred=False (MARKER_VALID 경로 — consumer 손실 없음)
+    assert loss_occurred is False
+
+    # positive: loss_report 빈 문자열 (손실 없음)
+    assert loss_report == ""
+
+    # positive: marker 안 = wrapper_content wins (new-wrapper-inner 포함)
+    assert "new-wrapper-inner" in merged
+
+    # positive: marker 밖 consumer preserve (byte-identical)
+    assert "consumer-before" in merged
+    assert "consumer-after" in merged
+
+    # negative: consumer-custom-inner 제거됨 (marker 안 = wrapper wins)
+    assert "consumer-custom-inner" not in merged
+
+    # negative: old-wrapper-inner 제거됨 (base는 참조용, merged에 불포함)
+    assert "old-wrapper-inner" not in merged
+
+
+@pytest.mark.skipif(not _MODULE_AVAILABLE, reason="walk_plan 모듈 미구현 (TDD RED)")
+def test_tc32_merge_with_marker_none_wholesale():
+    """TC-32: MARKER_NONE — wholesale wrapper_content + loss_occurred=True + loss_report non-empty.
+
+    discriminating fixture (#960 회피):
+    - consumer_content 에 marker 없음 → wholesale 경로
+    - merged_content = wrapper_content (byte-identical)
+    - loss_occurred=True (consumer 손실 가능 — silent overwrite 0 보장)
+    - loss_report 비어있지 않음 (user-visible 보고 채널)
+    """
+    base_content = ""
+    wrapper_content = _make_marked_content("wrapper-ssot-content")
+    consumer_content = "consumer content without any markers at all"  # MARKER_NONE
+
+    merged, loss_occurred, loss_report = merge_with_marker(
+        base_content=base_content,
+        wrapper_content=wrapper_content,
+        consumer_content=consumer_content,
+    )
+
+    # positive: loss_occurred=True (MARKER_NONE → wholesale, consumer 손실 가능)
+    assert loss_occurred is True
+
+    # positive: loss_report 비어있지 않음 (user-visible 보고 채널)
+    assert loss_report != ""
+    assert len(loss_report) > 0
+
+    # positive: merged = wrapper_content (wholesale mirror)
+    assert merged == wrapper_content
+
+    # positive: MARKER_BEGIN / MARKER_END 상수 포함 (merge_with_marker가 import 정상)
+    assert MARKER_BEGIN in wrapper_content
+    assert MARKER_END in wrapper_content
+
+    # negative: consumer original content 없음 (wholesale 대체됨)
+    assert "consumer content without any markers" not in merged
+
+
+@pytest.mark.skipif(not _MODULE_AVAILABLE, reason="walk_plan 모듈 미구현 (TDD RED)")
+def test_tc33_merge_with_marker_loss_report_nonempty_on_marker_none():
+    """TC-33: MARKER_NONE loss_report 비어있지 않음 assertion (단독 — #960 always-pass masking 방지).
+
+    TC-32 와 별도 TC — loss_report non-empty 를 독립 검증
+    (loss_occurred=True + loss_report="" 동시에 통과 케이스 차단).
+    """
+    _, loss_occurred, loss_report = merge_with_marker(
+        base_content="",
+        wrapper_content=_make_marked_content("w"),
+        consumer_content="no-marker-content",  # MARKER_NONE
+    )
+
+    # positive: loss_occurred=True AND loss_report non-empty (두 조건 동시 만족 강제)
+    assert loss_occurred is True, "MARKER_NONE → loss_occurred 반드시 True"
+    assert loss_report, "MARKER_NONE → loss_report 반드시 non-empty (user-visible 보고 채널)"
+    assert len(loss_report) >= 20, (
+        f"loss_report 너무 짧음 (len={len(loss_report)}) — "
+        "user-visible 보고에 충분한 내용 필요 (ADR-027 §결정 7.C)"
+    )

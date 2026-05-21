@@ -713,12 +713,13 @@ bash scripts/walk-single-plugin.sh --walk --plugin codeforge --channel beta
 
 **(a) 배포 경로 (bootstrap-consumer.sh Stage 7 mirror)**
 
-CFP-744 Phase 2 이후 `templates/consumer-scripts.manifest` 에 다음 5 script 가 등록된다:
+CFP-744 Phase 2 이후 `templates/consumer-scripts.manifest` 에 다음 6 script 가 등록된다:
 
 ```
 scripts/codeforge-upgrade.sh        # per-plugin upgrade CLI (deprecation shim → walk-single-plugin.sh)
 scripts/codeforge-upgrade.ps1       # per-plugin upgrade CLI (PowerShell, parity)
 scripts/lib/path_normalize.py       # §4.5 path 정규화 헬퍼 (sh↔ps1 공유)
+scripts/lib/walk_plan.py            # walk + plan Python SSOT (ADR-061 외부 .py — changelog walk / prereq resolve / marker merge)
 scripts/walk-single-plugin.sh       # per-plugin walk CLI (CFP-1170 신규 진입점)
 scripts/walk-bundle-7-plugins.sh    # per-family 7-plugin topological walk + atomic transaction (CFP-1170 신규 진입점)
 ```

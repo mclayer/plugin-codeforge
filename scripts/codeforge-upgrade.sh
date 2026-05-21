@@ -7,9 +7,9 @@
 #   - argument enum whitelist parse (--dry-run / --apply / --rollback <version>)
 #   - --channel <stable|beta|canary> = 8번째 orthogonal arg (CFP-932 D1, §3.2-parser 8-invariant)
 #   - unknown arg = reject (no free-text injection surface, §7.1 trust boundary)
-#   - Orchestrator / UpgradeAgent 위임만 (reconcile semantic 로직 0건)
+#   - Orchestrator / UpgradeAgent 위임만 (walk semantic 로직 0건)
 #   - check-codeforge-version-drift.sh 호출 금지 (UpgradeAgent Plan stage 귀속, §4.4)
-#   - user_decision_branches: 0 (no prompt invariant, reconcile-protocol-v1)
+#   - user_decision_branches: 0 (no prompt invariant, imperative-walker-protocol-v1)
 #   - OQ-3 visible override (SecurityArch M-1a + M-1b): CLI --channel ≠ overlay 시 stdout 출력
 #     + canary tier + CLI≠overlay 시 stderr [PRODUCTION-IMPACT WARNING] (no-prompt invariant 보존)
 #
@@ -65,8 +65,8 @@ codeforge-upgrade.sh — codeforge plugin 업그레이드 CLI (CFP-743 / CFP-744
                           canary 지정 시 admin 권장 (ADR-076 §결정 9.4, HIGH risk class)
 
 원칙:
-  - 사용자 결정 분기 0 (no prompt — reconcile-protocol-v1 user_decision_branches: 0)
-  - 실 reconcile semantic = UpgradeAgent 담당 (thin dispatcher)
+  - 사용자 결정 분기 0 (no prompt — imperative-walker-protocol-v1 user_decision_branches: 0)
+  - 실 walk semantic = UpgradeAgent 담당 (thin dispatcher)
   - check-codeforge-version-drift.sh 는 UpgradeAgent Plan stage 호출 (CLI 금지, §4.4)
   - --channel = enum parse + 위임 출력 확장만 (overlay resolve semantic = UpgradeAgent 위임)
 USAGE
