@@ -109,12 +109,28 @@ amendment_log:
       - ADR-064 §self-application top-down ratchet (evidence-gated exception 첫 carrier)
       - CFP-1110 (paired Amendment paradox-break first application — 본 CFP-1126 = 2번째 적용)
       - Amendment 8 (CFP-1086, 2026-05-20) (partial retroactive rollback — boundary axis 영역만, DataArch / APIContract 영역 보존)
+  - amendment_id: 11
+    date: "2026-05-21"
+    status: applied
+    summary: "CFP-1155 (CFP-1111 Wave 2 Story-4) — UpgradeAgent walker model tier 확정 (declarative Sonnet → imperative walk Opus 상향). ADR-098 §결정 2 model tier 재평가 의무 carry — Wave 1 declare only 였던 tier 가 Wave 2 Story-4 runtime mandate body (walk + plan + apply 3-stage) 확정 후 실 결정. tier = Opus (§결정 1 Opus (a) Multi-source synthesis). 근거: plan stage = 7-plugin self-owned CHANGELOG.md 다중 source dedup + min_prerequisite_version topological resolve (DAG) + importance_score 종합 판정 = multi-source synthesis 깊이 (§결정 1 Opus (a) '3+ ... input dedup + 종합 판정' 정합). apply stage 의 per-family atomic transaction (structured mechanical, CI/rollback 즉시 감지 — Haiku/Sonnet 신호) 단독이면 얕으나, walk+plan 의 multi-source changelog synthesis 가 §결정 2 invariant ('Sonnet 으로 fully cover 가능 = role 재정의 시그널') 의 Sonnet fully-cover 불가 영역 — Sonnet 으로 내리면 7-source dedup + topological resolve depth shallow. 기존 declarative UpgradeAgent (CFP-743) 의 model:sonnet = declarative 9-domain diff (단일 wrapper SSOT source reconcile, multi-source synthesis 없음) 정합이었으나, imperative walk paradigm 전환 후 mandate depth 상향 (paradigm shift = role 재정의 = §결정 2 invariant 적용 후 tier 재판정). ratchet 강화 방향 (Sonnet → Opus 상향 = scope 강화, ADR-058 §결정 5 정합 — 약화 0건). UpgradeAgent ownership = codeforge-pmo (ADR-098 §결정 1) — model field 동기 = codeforge-pmo sibling Story (실 agent file edit). 본 Amendment = 정책 SSOT (tier 확정) only, agent file model field edit = codeforge-pmo sibling carrier."
+    ref: CFP-1155
+    carrier_story: CFP-1155
+    sunset_justification: null
+    affected_agents:
+      - UpgradeAgent (declarative Sonnet → imperative walk Opus, codeforge-pmo — ADR-098 ownership 흡수. agent file model field edit = codeforge-pmo sibling Story)
+    cross_ref:
+      - ADR-098 §결정 2 (model tier 재평가 의무 declare — 본 Amendment 11 이 Wave 2 Story-4 실 tier 확정 carry)
+      - ADR-097 (paradigm replacement governance anchor — declarative → imperative paradigm shift = role 재정의 trigger)
+      - ADR-076 (declarative UpgradeAgent runtime SSOT — paradigm replace 진행 중, model:sonnet → Opus 상향 source)
+      - imperative-walker-protocol-v1 §2.F.2 (UpgradeAgent runtime ownership + model_tier_reassessment: required cross-ref)
+      - ADR-068 §결정 1 I-5 (walker walk source count 7 / grace window 12mo·9mo K8s empirical grounding cross-ref)
 related_stories:
   - CFP-448
   - CFP-676
   - CFP-1086
   - CFP-1059  # Amendment 9 carrier — 4 신설 agent tier (DeployPL/DeployWorker/DeployReviewPL/DeployReviewWorker)
   - CFP-1126  # Amendment 10 carrier — AggregateArch + ModuleArch 통합 (Amendment 8 partial retroactive rollback, ratchet 축소 첫 carrier, ADR-058 §결정 5 first applied)
+  - CFP-1155  # Amendment 11 carrier — UpgradeAgent walker model tier (declarative Sonnet → imperative walk Opus, ADR-098 §결정 2 carry, CFP-1111 Wave 2 Story-4)
 related_adrs:
   - ADR-009
   - ADR-013
@@ -129,6 +145,9 @@ related_adrs:
   - ADR-023  # Amendment 1 sibling cross-ref (CFP-1059 / Story-1 — lane plugin 6 → 8 확장)
   - ADR-087  # 신설 cross-ref (CFP-1059 / Story-1 — Deploy lane as 7th lane plugin, Amendment 9 carrier)
   - ADR-088  # 신설 cross-ref (CFP-1059 / Story-1 — Deploy Review lane + ProductionEvidence transfer, Amendment 9 carrier)
+  - ADR-098  # Amendment 11 cross-ref (CFP-1155 / Wave 2 Story-4 — UpgradeAgent runtime ownership + model tier 재평가 의무 declare, 본 Amendment 11 이 실 tier 확정 carry)
+  - ADR-097  # Amendment 11 cross-ref (CFP-1155 — paradigm replacement governance anchor, declarative → imperative role 재정의 trigger)
+  - ADR-076  # Amendment 11 cross-ref (CFP-1155 — declarative UpgradeAgent runtime SSOT, model:sonnet → Opus 상향 source paradigm)
 related_files:
   - .claude-plugin/plugin.json
   - CLAUDE.md
@@ -198,6 +217,8 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 > **Amendment 7 (2026-05-19, CFP-676)**: Sonnet (a) "Single-mandate advocacy within multi-deputy debate" 에 **CodeArchitectAgent** (§3 code 설계 단일 축 advocacy — layered/hexagonal/clean/DDD bounded context/module boundary/dependency direction) + **ArchitectAnalystAgent** (변경 전 기존 설계 분석 단일 축 — PriorArtAgent rename, 4-tuple sub-tuple component) 2종 추가. CodebaseMapper/Refactor 동질 패턴 (single-mandate advocate, multi-source synthesis = ArchitectAgent chief Opus). §결정 2 invariant ("Sonnet 으로 fully cover 가능 = role 재정의 시그널") 충족 — 처음부터 single-mandate 정의이므로 Sonnet 적정. DataMigrationArchitectAgent → **DataArchitectAgent** rename + mandate 확장 / OperationalRiskArchitectAgent → **InfraOperationalArchitectAgent** rename — 본 § 의 Sonnet criteria 무관 (Opus tier 유지, §결정 1 (d) Security/safety boundary owner / 결정 4 inheritance). 상세 = 본 ADR `## Amendment 7` 본문 section. **CodebaseMapper / Refactor 의 mandate text 재정의 동시 산출물 의무 발화로 §결정 2 invariant 정합 — 단순 model field downgrade 금지. DeveloperPLAgent 는 사용자 framing (CFP-448) verbatim ('아키텍트가 짜준 디자인 명세에서 제한되게 움직여 고도의 추론이 필요하지 않기 때문이다') 직접 적용 + ADR-042 §결정 1 (b) "Implementation work — code write / refactor / test 구현" verbatim 정의 정합 회귀 → mandate text 재정의 면제 + Codex re-review 면제**. 자세한 결정 matrix 는 본 ADR Amendment 5 본문 + ADR-057 Amendment 3 §결정 3 표 참조.
 | **Haiku** | claude-haiku-4-5 | (a) Test runner / 결과 수집 — minimal reasoning (TestAgent). (b) External tool wrapper — 본체 reasoning 은 external (Codex GPT-5 / GPT-5.4) 가 수행, Claude 는 prompt 조립 / output relay 만 (CodexReviewAgent · RequirementsAnalystAgent). (c) Mechanical pattern execution — 입력 명세(Change Plan §3 + Story §8)가 충분히 structured되어 creative/diagnostic reasoning 없이 패턴 기반 생성이 가능하고, 오류 발생 시 FIX 루프가 CI/테스트로 즉시 감지 가능한 경우 (InfraEngineerAgent · QADeveloperAgent · DataEngineerAgent — Amendment 2). |
 
+> **Amendment 11 (2026-05-21, CFP-1155)**: Opus (a) "Multi-source synthesis" 에 **UpgradeAgent** (codeforge-pmo, imperative walk runtime) 추가 — declarative `model: sonnet` (CFP-743, 9-domain single-source diff) → imperative walk **Opus** 상향. plan stage = 7-plugin CHANGELOG.md 다중 source dedup + min_prerequisite_version topological resolve (DAG) + importance_score 종합 = multi-source synthesis 깊이 (§결정 2 invariant Sonnet fully-cover 불가). ADR-098 §결정 2 model tier 재평가 의무 carry. 상세 = 본 ADR `## Amendment 11` body section.
+>
 > **Amendment 6 (2026-05-16, CFP-777)**: DialogFidelityAgent 신규 entry 추가 (codeforge-pmo / Opus pilot tier). verifier mandate = 누적 대화 fidelity 검증, 의미적 모순 판정 영역. mandate depth = 다축 (semantic match + ledger consistency + 4 차원 enum closed + Story §1 immutable cross-ref + Layer 4 incidents row inspection). single-axis 외형은 single-axis 검수이나 contradiction detection 은 deep reasoning 영역 — **Opus pilot 시작 → N=20 baseline 후 §결정 2 invariant 적용 재판정** (별도 carrier). **Codex 평행 평가 의무** (CFP-379 / CFP-448 pattern) — TP#4 dispatch 시 본 Amendment 입력 verbatim 전달, Opus vs Sonnet baseline divergence detect. ADR-071 Amendment 1 (DialogFidelityAgent external verifier auxiliary layer) cross-ref.
 
 | **Opus pilot** | claude-opus-4-7 | DialogFidelityAgent (codeforge-pmo) — verifier-narrower-than-generator 패턴: 누적 대화 fidelity 검증 (Story §1 immutable + Layer 4 incidents + 현 turn output), 의미적 모순 판정 (deep reasoning 영역). §결정 2 invariant 재판정 trigger = N=20 spawn baseline 후 (별도 carrier). |
@@ -704,3 +725,49 @@ Wave 2 = deferred-followup, 본 Amendment 10 frontmatter `mechanical_enforcement
 - CFP-1110 — paired Amendment paradox-break first application (본 CFP-1126 = 2번째 적용)
 - ADR-068 I-5 dimensional empirical grounding — spawn count Amendment 8 평균 28 → 본 Amendment 10 평균 26 (chief + 6 deputy + 3+1 CONDITIONAL + 4-tuple = 9 base + 17 CONDITIONAL/contributor activation, 7% 감소). full activation 40 → 38 (5% 감소). `[empirical-source: TBD]` (local probe / wiretap script 부재 정합)
 - CLAUDE.md "Deputy mandate 매트릭스 (codeforge-design lane)" — 7 → 6 permanent + 3+1 CONDITIONAL + 4-tuple sub-tuple (carry-over applicability 보존)
+
+---
+
+## Amendment 11 — CFP-1155 UpgradeAgent walker model tier (declarative Sonnet → imperative walk Opus, CFP-1111 Wave 2 Story-4)
+
+**날짜**: 2026-05-21
+
+### 동기
+
+ADR-098 §결정 2 (UpgradeAgent runtime ownership, CFP-1140 / Wave 1 Story-2) 가 UpgradeAgent **model tier 재평가 의무를 declare** 했다 — "본 ADR 은 model tier 재평가 의무를 declare 하며, 실 tier 확정은 Wave 2 Story-3 (CFP-703) 영역이다 (UpgradeAgent runtime mandate body 가 확정돼야 mandate depth 근거 tier 결정 가능)". 그러나 CFP-1111 Wave 1 의 paradigm replacement (ADR-097) 확정 후, UpgradeAgent runtime mandate body 의 실 재정의 (declarative 9-domain reconcile → imperative changelog walk) carrier 는 **Wave 2 Story-4 (CFP-1155)** 다 (CFP-703 = Wave 2 Story-3 declarative carrier — 기존 UpgradeAgent.md 신설). 본 Amendment 11 = CFP-1155 가 runtime mandate body (walk + plan + apply 3-stage) 확정 후 model tier 실 결정.
+
+> verified-via: Read docs/adr/ADR-098-upgrade-agent-runtime-ownership.md §결정 2 (L77-87 — "UpgradeAgent tier 결정 시 ... multi-source synthesis (다중 ADR/contract changelog dedup + reconcile plan 종합 판정) 깊이면 Opus, structured 명세 기반 mechanical apply ... 면 Haiku, single-mandate 실행이면 Sonnet" + "본 ADR = model tier 재평가 의무 declare only — tier 값 ... 자체는 본 ADR 에서 결정하지 않는다" verbatim)
+> verified-via: Read docs/inter-plugin-contracts/imperative-walker-protocol-v1.md §2.F.2 (L249 "model_tier_reassessment: required # ADR-042 §결정 2/§결정 3 — 실 tier 확정 = Wave 2 Story-3 CFP-703 (declare only)") — R-1 stale forward-ref 정정 대상 (CFP-1155 change-plan §R-1, follow-up carrier)
+
+### 변경 사항
+
+| Agent | 변경 | model tier | §결정 1 매트릭스 row |
+|---|---|---|---|
+| **UpgradeAgent** | **model tier 상향** — declarative `model: sonnet` (CFP-743) → imperative walk **Opus**. paradigm shift (declarative 9-domain reconcile → walk + plan + apply 3-stage) = role 재정의 = §결정 2 invariant 적용 후 tier 재판정 | **Opus** (claude-opus-4-7) | **Opus (a)** "Multi-source synthesis (3+ ... input dedup + 종합 판정)" |
+
+### model tier 결정 근거 (Opus — multi-source synthesis 깊이)
+
+UpgradeAgent imperative walk mandate = **walk + plan + apply** 3-stage (CFP-1155 change-plan §3.1):
+
+- **plan stage = multi-source synthesis (Opus 신호)**: 7-plugin self-owned `CHANGELOG.md` (ADR-092) 다중 source 의 changelog entry dedup + min_prerequisite_version topological resolve (7-plugin DAG, ADR-096) + importance_score 종합 판정 (Story-6 hook). 이는 §결정 1 Opus (a) "Multi-source synthesis (3+ SubAgent / lane / contract input dedup + 종합 판정)" 정합 — 7 changelog source 의 cross-source 종합.
+- **apply stage = structured mechanical (Haiku/Sonnet 신호) 단독이면 얕음**: per-family atomic transaction (CI / transaction rollback 즉시 감지). 그러나 mandate 전체 tier 는 가장 깊은 stage 기준 — walk+plan 의 multi-source changelog synthesis 가 §결정 2 invariant ("Sonnet 으로 fully cover 가능 = role 재정의 시그널") 의 **Sonnet fully-cover 불가 영역**. Sonnet 으로 내리면 7-source dedup + topological resolve depth 가 shallow 해져 min_prereq mismatch 오판 / changelog entry 종합 누락 위험.
+- **기존 declarative `model: sonnet` 정합 (CFP-743)**: declarative UpgradeAgent 의 Plan = 9-domain diff (단일 wrapper SSOT source ↔ consumer reconcile, multi-source synthesis 없음) → Sonnet 정합이었음. imperative walk paradigm 전환 = mandate depth 상향 (9-domain single-source diff → 7-source multi-changelog synthesis) = role 재정의 → §결정 2 invariant 에 따라 tier 재판정 = Opus.
+
+**ratchet 강화 방향 (ADR-058 §결정 5 정합)**: Sonnet → Opus 상향 = mandate depth scope 강화 (약화 0건). `sunset_justification: null` 정당 (강화 방향 — frontmatter amendment_id:11). is_transitional: false 유지 (영구 정책).
+
+### ownership 동기 (ADR-098 §결정 1 정합)
+
+UpgradeAgent ownership = **codeforge-pmo 흡수** (ADR-098 §결정 1, cross-cutting agent PMOAgent sibling). 본 Amendment 11 = 정책 SSOT (tier 확정) only. agent file `model:` field 실 edit (`model: sonnet` → `model: opus`) + mandate body 재정의 (declarative → walk+plan+apply) = **codeforge-pmo sibling Story** 영역 (ADR-098 ownership — UpgradeAgent.md 가 codeforge-pmo 귀속, 단 현 file 위치 `templates/agents/UpgradeAgent.md` wrapper). ADR-042 §결정 3 "해당 lane plugin agent file 의 `model:` field 와 동기" 의무 = codeforge-pmo sibling PR 충족 (lane plugin MINOR bump trigger — ADR-023 / ADR-037).
+
+### 기존 정책 변경 0건 (ADR-042 본문)
+
+본 Amendment 11 = ADR-042 결정 1~6 본문 변경 0건. 변경 = (a) frontmatter amendment_log row 11 신설 + related_stories CFP-1155 + related_adrs ADR-098/097/076 append (b) 본 `## Amendment 11` body section. tier criteria (결정 1) + invariant (결정 2) + 신규 agent ADR 의무 (결정 3) + inheritance (결정 4) + Haiku rollback (결정 5) + 재-audit (결정 6) 모두 정책 변경 0건. ratchet 강화 방향 (Sonnet → Opus 상향 = scope 강화) → sunset_justification 불요.
+
+### Cross-ref
+
+- [ADR-098 §결정 2](ADR-098-upgrade-agent-runtime-ownership.md) — model tier 재평가 의무 declare (본 Amendment 11 이 Wave 2 Story-4 실 tier 확정 carry)
+- [ADR-097](ADR-097-paradigm-replacement-governance-anchor.md) — paradigm replacement governance anchor (declarative → imperative = role 재정의 trigger)
+- [ADR-076](ADR-076-declarative-reconciliation-upgrade.md) — declarative UpgradeAgent runtime SSOT (paradigm replace 진행 중, model:sonnet → Opus 상향 source)
+- `docs/inter-plugin-contracts/imperative-walker-protocol-v1.md` §2.F.2 — UpgradeAgent runtime ownership + `model_tier_reassessment: required` cross-ref (R-1 stale forward-ref 정정 = CFP-1155 change-plan §R-1 follow-up carrier)
+- [ADR-068 §결정 1 I-5](ADR-068-boundary-completeness-invariants.md) — walker walk source count 7 / grace window 12mo·9mo K8s dimensional empirical grounding (CFP-1155 change-plan §13.C)
+- CFP-1155 change-plan (`docs/change-plans/cfp-1155-upgrade-walker-runtime.md`) — UpgradeAgent walker runtime 재정의 설계 SSOT (§3 walk+plan+apply / §R model tier 근거)
