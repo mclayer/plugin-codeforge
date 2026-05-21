@@ -1,0 +1,103 @@
+# templates/walk-completion-report.yaml
+# CFP-1175 — walk completion report 4-field schema template
+#
+# ADR-093 §결정 1 외부 보고 layer (사용자 4-field, human-facing) SSOT
+# imperative-walker-protocol-v1 §2.A.2 walk completion report (외부 보고 layer)
+#
+# 사용자 발화 verbatim (CFP-1175 §1):
+#   "업그레이드 완료/종결 시에는 업그레이드 전 버전 / 업그레이드 후 버전 /
+#    최신 버전 업데이트 일자 / 주요 변경 내용을 반드시 알려라"
+#
+# closed_enum open_extension: false (ADR-093 §결정 2):
+#   - walk_result: 4-value closed-set (5번째 값 = ADR-093 amendment 로만)
+#   - 4-field: closed-set (consumer overlay 추가 불가)
+#
+# walk_result 4-value enum (ADR-093 §결정 1 / imperative-walker-protocol-v1 §2.A.1):
+#   SUCCESS                  → exit 0  (완전 성공)
+#   SUCCESS_WITH_DEGRADATION → exit 1  (일부 degraded — grace window 안)
+#   PARTIAL_FAILURE          → exit 2  (일부 실패)
+#   FAILED                   → exit 3  (전체 실패)
+#
+# SSOT: docs/adr/ADR-093-completion-report-4field-schema.md §결정 1
+#       docs/inter-plugin-contracts/imperative-walker-protocol-v1.md §2.A
+# 관련: scripts/lib/walk_report.py (Python SSOT, build_completion_report())
+#       scripts/lib/walk_plan.py (WalkResult enum 공유)
+
+---
+
+# ── walk_result enum ─────────────────────────────────────────────────────────
+# closed-set 4-value (ADR-093 §결정 2 open_extension: false)
+# exit code deterministic mapping 의무 (silent false SUCCESS 차단)
+
+walk_result:
+  enum:
+    - SUCCESS                   # exit 0 — walk 정상 완료, degradation 0
+    - SUCCESS_WITH_DEGRADATION  # exit 1 — walk 완료, 일부 degraded (grace window)
+    - PARTIAL_FAILURE           # exit 2 — 일부 영역 실패
+    - FAILED                    # exit 3 — walk 전체 실패
+  open_extension: false         # closed-set — 5번째 값 신설 = ADR-093 amendment 로만
+  exit_code_mapping:
+    SUCCESS: 0
+    SUCCESS_WITH_DEGRADATION: 1
+    PARTIAL_FAILURE: 2
+    FAILED: 3
+  silent_false_success: forbidden  # result field 미기록 / SUCCESS hardcode = forbidden
+
+# ── 외부 보고 4-field (사용자 4-field = walk completion report) ───────────────
+# ADR-093 §결정 1 human-facing layer
+# 사용자 발화 verbatim 4-field (CFP-1175 §1 요구사항)
+
+completion_report_fields:
+  from_version:
+    type: string
+    description: "업그레이드 전 버전 (consumer installed semver, 예: 5.0.0)"
+    required: true
+    example: "5.0.0"
+
+  to_version:
+    type: string
+    description: "업그레이드 후 버전 (target / changelog latest semver, 예: 5.3.0)"
+    required: true
+    example: "5.3.0"
+
+  target_version_release_date:
+    type: string
+    description: "최신 버전 업데이트 일자 (ISO 8601 date, KST 일자 의미 — ADR-079 정합)"
+    required: true
+    format: "YYYY-MM-DD"
+    example: "2026-05-21"
+
+  key_changes_summary:
+    type: string
+    description: "주요 변경 내용 요약 (changelog entry 압축, from==to 이면 빈 문자열)"
+    required: true
+    empty_when: "from_version == to_version (이미 최신 버전 idempotent)"
+    example: "[5.1.0] ### Added / - feature A\n[5.3.0] ### Fixed / - bug B"
+
+# ── closed_enum invariant ────────────────────────────────────────────────────
+# ADR-093 §결정 2 / ADR-068 I-3 unconditional guard placement intent 정합
+
+closed_enum_invariant:
+  open_extension: false         # 양 layer 전 보고 경로에 무조건 적용 (unconditional)
+  walk_result_enum: closed      # 5번째 값 신설 = ADR-093 amendment 로만
+  completion_report_fields: closed  # consumer overlay field 추가 불가
+  enforcement: "scripts/lib/walk_report.py CompletionReport(frozen=True)"
+
+# ── TodoWrite 4-marker (ADR-038 §결정 2 Amendment 4) ────────────────────────
+# walk step 단위 progress visualization (업그레이드 단계별 진행 상황)
+
+walk_step_markers:
+  PENDING: "⬜"       # 대기 (pending empty checkbox)
+  IN_PROGRESS: "⏳"   # 진행 중 (모래시계 — Amendment 4 vocab)
+  COMPLETED: "✅"     # 완료 (PASS)
+  FIX_DETECTED: "🔄"  # FIX 검출 lane (retry trigger — ADR-038 §결정 3)
+  enforcement: "scripts/lib/walk_report.py render_walk_todo_items()"
+  reference: "docs/adr/ADR-038-progress-visualization-todowrite.md §결정 2/3"
+
+# ── 관련 파일 ───────────────────────────────────────────────────────────────
+related:
+  python_ssot: "scripts/lib/walk_report.py"        # CompletionReport + render_walk_todo_items
+  walk_enum_ssot: "scripts/lib/walk_plan.py"        # WalkResult enum 공유
+  adr_ssot: "docs/adr/ADR-093-completion-report-4field-schema.md"
+  contract_ssot: "docs/inter-plugin-contracts/imperative-walker-protocol-v1.md"
+  todowrite_adr: "docs/adr/ADR-038-progress-visualization-todowrite.md"
