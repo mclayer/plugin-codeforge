@@ -272,125 +272,43 @@ _drift_status() {
     echo "${json}" | grep -oE "\"status\":\"[a-z-]+\"" | head -1 | sed 's/.*:"//;s/"//'
 }
 
-echo "=== atomic-upgrade-7-plugins.sh: per-family transaction (mode=${MODE}) ==="
-echo "family: ${FAMILY[*]}"
-echo "user_decision_branches: 0"
-if [[ -n "${INPUT_REPO}" ]]; then
-    echo "consumer_repo_root: ${INPUT_REPO} (AC-11 --repo propagation)"
-else
-    echo "consumer_repo_root: (fallback — codeforge-upgrade.sh SCRIPT_DIR 부모 / CODEFORGE_REPO_ROOT env)"
-fi
-if [[ -n "${INPUT_CHANNEL}" ]]; then
-    echo "channel_input: ${INPUT_CHANNEL} (CFP-932 D2 -- CHANNEL_ARGS propagation)"
-else
-    echo "channel_input: (미지정 — UpgradeAgent overlay resolve or stable fallback)"
-fi
-echo ""
+# --------------------------------------------------------------------------
+# [CFP-1170] DEPRECATION SHIM — 1 release grace (R-4 consumer breakage 차단)
+#
+# atomic-upgrade-7-plugins.sh 는 deprecation shim 으로 재정의됨 (change-plan §3.5 / §7.4.2).
+# 실 semantic = walk-bundle-7-plugins.sh 로 이전 (imperative walk paradigm).
+# 1 release grace 후 본 shim 삭제 예정 (ADR-038 Amendment 3 §결정 10 "1 release grace" 선례).
+# --------------------------------------------------------------------------
+echo "[DEPRECATED] atomic-upgrade-7-plugins.sh 는 CFP-1170 에서 deprecation shim 으로 재정의됩니다." >&2
+echo "[DEPRECATED] 1 release grace 후 삭제 예정 (change-plan §7.4.2)." >&2
+echo "[DEPRECATED] 신규 CLI: bash scripts/walk-bundle-7-plugins.sh --<mode>" >&2
+echo "[DEPRECATED] 대응 redirect: atomic-upgrade-7-plugins.sh → walk-bundle-7-plugins.sh (자동 redirect 중)" >&2
 
-# --------------------------------------------------------------------------
-# DC-1 mixed channel detection — snapshot 생성 이전 (abort-before-touch invariant)
-# _drift_status 분리 패턴 동형 헬퍼
-# --------------------------------------------------------------------------
-_check_channel_consistency
+# arg → walk mode 매핑
+WALK_BUNDLE_CLI="${SCRIPT_DIR}/walk-bundle-7-plugins.sh"
+WALK_BUNDLE_MODE=""
+case "${MODE}" in
+    dry_run)
+        WALK_BUNDLE_MODE="--plan"
+        ;;
+    apply)
+        WALK_BUNDLE_MODE="--apply"
+        ;;
+    rollback)
+        WALK_BUNDLE_MODE="--rollback"
+        ;;
+esac
 
-# --------------------------------------------------------------------------
-# --dry-run — 7 plugin desired vs current drift preview (filesystem touch 0)
-# --------------------------------------------------------------------------
-if [[ "${MODE}" == "dry_run" ]]; then
-    echo "--- dry-run: 7-plugin family drift preview (filesystem touch 0) ---"
-    if [[ -n "${INPUT_CHANNEL}" ]]; then
-        echo "--- channel: ${INPUT_CHANNEL} (CHANNEL_ARGS propagation, dry-run preview only) ---"
-    fi
-    ANY_DRIFT=0
-    for plugin in "${FAMILY[@]}"; do
-        status="$(_drift_status "${plugin}" || echo "unknown")"
-        if [[ -z "${status}" ]]; then status="unknown"; fi
-        if [[ -n "${INPUT_CHANNEL}" ]]; then
-            echo "  ${plugin}: drift=${status} channel=${INPUT_CHANNEL}"
-        else
-            echo "  ${plugin}: drift=${status}"
-        fi
-        if [[ "${status}" != "none" && "${status}" != "unknown" ]]; then
-            ANY_DRIFT=1
-        fi
-    done
-    echo ""
-    if [[ "${ANY_DRIFT}" -eq 0 ]]; then
-        echo "preview: 7 plugin 전부 최신 (atomic upgrade 시 no-op — §7.4.1 (e) idempotent)"
-    else
-        echo "preview: drift 검출 — --apply 시 per-family atomic transaction 진행"
-    fi
-    echo "dry-run 완료 (filesystem touch 0, snapshot 무생성, prompt 0)"
-    exit 0
+echo "=== atomic-upgrade-7-plugins.sh → walk-bundle-7-plugins.sh redirect (shim) ==="
+echo "walk: deprecated redirect"
+
+REDIRECT_BUNDLE_ARGS=("${WALK_BUNDLE_MODE}")
+if [[ ${#REPO_ARGS[@]} -gt 0 ]]; then
+    REDIRECT_BUNDLE_ARGS+=("${REPO_ARGS[@]}")
+fi
+if [[ ${#CHANNEL_ARGS[@]} -gt 0 ]]; then
+    REDIRECT_BUNDLE_ARGS+=("${CHANNEL_ARGS[@]}")
 fi
 
-# --------------------------------------------------------------------------
-# --rollback — 직전 per-family pre-atomic snapshot 복원 (7 plugin 일괄)
-#   per-plugin snapshot restore = Story-3 codeforge-upgrade.sh --rollback 위임
-# --------------------------------------------------------------------------
-if [[ "${MODE}" == "rollback" ]]; then
-    echo "--- rollback: per-family pre-atomic snapshot 복원 (7 plugin 일괄, partial 0) ---"
-    echo "per-family rollback = 직전 per-family snapshot 복원 → 7 plugin per-plugin"
-    echo "snapshot restore (Story-3 codeforge-upgrade.sh --rollback 위임, §4.4 ownership)"
-    echo ""
-    echo "--- Orchestrator: 아래 per-family rollback 을 처리하십시오 ---"
-    echo "per_family_rollback: true"
-    echo "family: ${FAMILY[*]}"
-    echo "rollback_source: 직전 per-family pre-atomic snapshot (N=5 retention, §11.2)"
-    echo "per_plugin_delegate: ${PER_PLUGIN_CLI} --rollback <pinned-version> ${REPO_ARGS[*]:-} ${CHANNEL_ARGS[*]:-}"
-    echo "corrupt-snapshot escalation: §7.4.1 (f) — silent partial-state 0 (명시적 escalation)"
-    echo "rollback 완료 후 stale per-family snapshot GC (orphan tar 잔존 0, §7.4.1 (g))"
-    echo "user_decision_branches: 0 (prompt 0 — abort 도 prompt 0)"
-    exit 0
-fi
-
-# --------------------------------------------------------------------------
-# --apply — per-family transaction (§4.2 algorithm)
-# --------------------------------------------------------------------------
-if [[ "${MODE}" == "apply" ]]; then
-    # §4.2 step 1 — idempotency pre-check (ALL none → no-op, AC-9 (a))
-    echo "--- step 1: idempotency pre-check (7 plugin drift 검사) ---"
-    ALL_NONE=1
-    for plugin in "${FAMILY[@]}"; do
-        status="$(_drift_status "${plugin}" || echo "unknown")"
-        if [[ -z "${status}" ]]; then status="unknown"; fi
-        echo "  ${plugin}: drift=${status}"
-        if [[ "${status}" != "none" ]]; then
-            ALL_NONE=0
-        fi
-    done
-    echo ""
-    if [[ "${ALL_NONE}" -eq 1 ]]; then
-        echo "7 plugin 이미 전부 최신 (desired == current) — no-op 정상 종료"
-        echo "(불필요 snapshot/transaction 회피 — §7.4.1 (e) / AC-9 (a), prompt 0)"
-        exit 0
-    fi
-
-    # §4.2 step 2-6 — per-family transaction (snapshot → 7×reconcile → 7×drift → commit/rollback)
-    # 실 reconcile = Story-3 codeforge-upgrade.sh 위임 (Orchestrator one-shot, ADR-039 §4.4)
-    echo "--- step 2-6: per-family transaction (Orchestrator 처리 위임) ---"
-    echo "--- Orchestrator: 아래 per-family transaction 을 처리하십시오 ---"
-    echo "per_family_transaction: apply"
-    echo "family: ${FAMILY[*]}"
-    if [[ -n "${INPUT_CHANNEL}" ]]; then
-        echo "channel_args: ${CHANNEL_ARGS[*]}"
-    fi
-    echo "step_2_disk_preflight: per-family snapshot 예상 크기 vs 가용 공간 (부족 = abort-before-touch §7.4.1 (b))"
-    echo "step_3_pre_atomic_snapshot: 7 plugin pin state union 단일 tar + checksum (생성 실패 = abort §7.4.1 (a))"
-    echo "step_4_per_plugin_reconcile: ${PER_PLUGIN_CLI} --apply ${REPO_ARGS[*]:-} ${CHANNEL_ARGS[*]:-}  # 7 plugin loop, Story-3 위임 §4.4"
-    echo "step_4_failure: per-plugin SIGKILL/power-loss/marketplace-API 장애 = abort + GOTO rollback (§7.4.1 (c)(d))"
-    echo "step_5_post_drift_verify: ${DRIFT_CHECK} --plugin <codeforge-N> --json  # 7회 invocation 종합 (AC-3, F-002 옵션 A)"
-    echo "step_5_invariant: ANY drift != none → transaction 실패 분류 → 전체 7 plugin atomic rollback (ADR-037 Amendment 1)"
-    echo "step_6_commit: transaction 완결 (per-family snapshot = audit trail, N=5 retention §11.2)"
-    echo "rollback: per-family pre-atomic snapshot 복원 (7 plugin 일괄, partial state 0, §7.4.1)"
-    echo "rollback_corrupt: snapshot tar corrupt/checksum 실패 = 명시적 escalation (silent partial-state 0, §7.4.1 (f))"
-    echo "rollback_gc: 완료 후 stale per-family snapshot GC (orphan tar 잔존 0, §7.4.1 (g))"
-    echo "reentry: incomplete per-family snapshot 감지 → rollback 우선 (idempotent, §8.5.2)"
-    echo "user_decision_branches: 0 (no prompt — abort 도 prompt 0, Epic §1 WHY 불변)"
-    echo "drift_scope: codeforge family 7 only (codex/superpowers 제외 — F-002 옵션 A 7-name loop 구조적 배제)"
-    exit 0
-fi
-
-# 도달 불가 (mode 1개 강제 후 enum 전부 처리됨)
-echo "오류: 내부 상태 이상 (mode='${MODE}')" >&2
+exec bash "${WALK_BUNDLE_CLI}" "${REDIRECT_BUNDLE_ARGS[@]}"
 exit 1
