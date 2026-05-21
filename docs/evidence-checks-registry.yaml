@@ -3228,3 +3228,114 @@ entries:
         - pr_cumulative_count_proof
         - adr_090_dependency_order_first_enforce_evidence  # 본 ADR 첫 enforce = S2 carrier merge 후 첫 cross-layer 변경 Story PR (expand source-first / contract leaf-first)
     modal_anti_pattern_dictionary: {}
+
+  # ─── CFP-1117-S3 / ADR-091 §결정 6 enforcement layer Wave 2 mechanical wire (2026-05-21 KST) ───
+  # ADR-091 mechanical_enforcement_actions 3 entry (Wave 1 declaration-only, S1 LAND)
+  #   → S3 (#1120) Phase 2 mechanical wire: actual lint script + workflow + label-registry
+  #     family member 신설 완료 → status: Active (deferred-followup 아님).
+  # vocabulary theater 차단 forcing function (ADR-091 §결정 7 INV-5) mechanical anchor.
+  # ddd_pattern enum = sub-classification 허용 (S2 비자명 #3 carrier — base role 3종 +
+  # sub-classification 6종). lint scope rationale = check_ddd_pattern_frontmatter.py header.
+
+  # CFP-1117-S3 / ADR-091 §결정 4 — Ubiquitous Language drift (warning tier, Active)
+  - name: ubiquitous-language-drift-check
+    description: |
+      ADR-091 §결정 4 (Published Language 분리) + §결정 6 (Template lint tier) mechanical
+      verification — docs/glossary.md (codeforge governance BC Ubiquitous Language SSOT)
+      term presence verify (anchor count >= 50) + Story §ubiquitous_language ddd_terms
+      enumeration ↔ glossary anchor drift detection (glossary 외 미정의 DDD term 사용 = drift).
+      vocabulary theater 차단 forcing function (ADR-091 §결정 7 INV-5). wrapper-local 자족.
+    detect_command: bash scripts/check-ubiquitous-language.sh
+    workflow: templates/github-workflows/ubiquitous-language-drift.yml
+    current_tier: warning  # ADR-091 §결정 6 Template lint tier / ADR-058 warning (첫 도입)
+    bypass_label: hotfix-bypass:ubiquitous-language-drift  # label-registry-v2 v2.38 신규 family member
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a)
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1117                     # 본 Epic (S1 charter ADR-091 + S2 14 agent frontmatter)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = glossary drift 검증, modal phrase 검사 미포함
+    introduced_by: CFP-1117
+    introduced_date: 2026-05-21        # KST
+    owner_adr: ADR-091                 # declaration source — §결정 4/§결정 6 normative
+    carrier_adr: ADR-060               # enforcement source (evidence-enforceable framework)
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none          # ADR-060 §결정 19 (Amendment 6) — schema v1.3 default
+    status: Active                     # S3 Phase 2 mechanical wire 완료 (script + workflow 신설)
+
+  # CFP-1117-S3 / ADR-091 §결정 5 — Bounded Context presence (warning tier, Active)
+  - name: bounded-context-presence-check
+    description: |
+      ADR-091 §결정 5 (Bounded Context governance) + §결정 6 (Template lint tier) mechanical
+      verification — document-level bounded_context declaration presence. DDD term touching
+      (glossary anchor 사용) governance document (Story §ubiquitous_language / DDD-touching
+      ADR / Change Plan) 가 어느 BC 안에서 작동하는지 explicit declare 의무 + enum membership
+      (codeforge-governance / application-bc / shared-kernel). ddd-pattern-frontmatter-check 와
+      disjoint axis (본 lint = wrapper-local document / frontmatter lint = design plugin agent
+      file frontmatter). vocabulary theater 차단 forcing function (ADR-091 §결정 7 INV-5).
+    detect_command: bash scripts/check-bounded-context-presence.sh
+    workflow: templates/github-workflows/bounded-context-presence.yml
+    current_tier: warning  # ADR-091 §결정 6 Template lint tier / ADR-058 warning (첫 도입)
+    bypass_label: hotfix-bypass:bounded-context-presence  # label-registry-v2 v2.38 신규 family member
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-1117
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-1117
+    introduced_date: 2026-05-21        # KST
+    owner_adr: ADR-091                 # declaration source — §결정 5/§결정 6 normative
+    carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: Active
+
+  # CFP-1117-S3 / ADR-091 §결정 5 — DDD pattern frontmatter (warning tier, Active, cross-plugin)
+  - name: ddd-pattern-frontmatter-check
+    description: |
+      ADR-091 §결정 5 (15→14 agent frontmatter field 의무) + §결정 6 (Template lint tier)
+      mechanical verification — ArchitectLane agent file frontmatter `bounded_context` +
+      `ddd_pattern` field presence + enum membership. ddd_pattern enum = §결정 1 base role
+      3종 (Authority Pair / Domain Service / Subdomain Specialist) + S2 sub-classification 6종
+      (authority-pair-aggregate-root / authority-pair-chief-author / domain-service /
+      domain-service-boundary-axis-unified / domain-service-sub-tuple / subdomain-specialist —
+      S2 비자명 #3 carrier). vocabulary theater 차단 forcing function (ADR-091 §결정 7 INV-5).
+      scope: codeforge-design plugin agents/*.md (별 repo — cross-plugin lint, path-parameterized:
+      design plugin CI 호출 또는 wrapper-가-design-clone 시 clone 경로 인자 전달). top-level
+      line-based field 추출 (전체 YAML 파싱 회피 — agent description 멀티라인 콜론 robust).
+    detect_command: bash scripts/check-ddd-pattern-frontmatter.sh
+    workflow: templates/github-workflows/ddd-pattern-frontmatter.yml
+    current_tier: warning  # ADR-091 §결정 6 Template lint tier / ADR-058 warning (첫 도입)
+    bypass_label: hotfix-bypass:ddd-pattern-frontmatter  # label-registry-v2 v2.38 신규 family member
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-1117                     # S2 (#1119) = 14 agent frontmatter field land (본 lint 0 violation 전제)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-1117
+    introduced_date: 2026-05-21        # KST
+    owner_adr: ADR-091                 # declaration source — §결정 5/§결정 6 normative
+    carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: Active

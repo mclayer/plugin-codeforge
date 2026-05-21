@@ -93,12 +93,12 @@ codeforge governance BC 의 Ubiquitous Language SSOT = [`plugin-codeforge/docs/g
 
 ADR-091 §결정 6 의 lint mechanism. ADR-091 frontmatter `mechanical_enforcement_actions[]` 안 1번 entry.
 
-**Mechanism (S3 신설)**:
-- script: `scripts/check-ddd-vocabulary.sh` (Wave 1 wire)
-- workflow: `templates/github-workflows/ubiquitous-language-drift.yml`
+**Mechanism (S3 #1120 Wave 2 mechanical wire)**:
+- script: `scripts/check-ubiquitous-language.sh` + `scripts/lib/check_ubiquitous_language.py` (ADR-061 외부 .py — 구 명칭 check-ddd-vocabulary.sh 가 evidence-checks-registry entry name 정합 위해 check-ubiquitous-language.sh 로 확정)
+- workflow: `templates/github-workflows/ubiquitous-language-drift.yml` + `.github/workflows/` self-app byte-identical
 - tier: **warning** (ADR-060 framework 1차 도입, blocking-on-pr 미승격)
-- evidence-checks-registry entry: `ubiquitous-language-drift-check` (warning tier 첫 row append)
-- bypass label: `hotfix-bypass:ubiquitous-language-drift` (S3 신설, label-registry-v2 v2.37 → v2.38 MINOR bump)
+- evidence-checks-registry entry: `ubiquitous-language-drift-check` (warning tier, status Active)
+- bypass label: `hotfix-bypass:ubiquitous-language-drift` (S3 신설, label-registry-v2 v2.42 → v2.43 MINOR bump, 61번째 family member)
 
 **검사 logic**:
 1. `Glob(docs/adr/**, docs/change-plans/**, docs/stories/**, plugin-codeforge-design/agents/**, skills/**)` 으로 모든 governance file 후보 수집

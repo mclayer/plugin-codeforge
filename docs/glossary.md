@@ -110,7 +110,7 @@
 **영어**: Ubiquitous Language  
 **한국어**: 보편 언어 / 공용 언어 (영어 표기 권장)  
 **정의**: 도메인 전문가 + 개발자가 공유하는 정밀 어휘. 코드 + 문서 + 회의에서 동일 용어 사용. BC 내부 limited (BC 사이는 Published Language).  
-**plugin-codeforge 적용 사례**: 본 glossary.md = codeforge governance BC 의 Ubiquitous Language SSOT. agent file 본문 + ADR + Change Plan + Story file 안 모든 DDD 어휘는 본 glossary 정의 verbatim 인용 의무. drift 차단 = `scripts/check-ddd-vocabulary.sh` (ADR-091 §결정 6 lint, S3 신설).
+**plugin-codeforge 적용 사례**: 본 glossary.md = codeforge governance BC 의 Ubiquitous Language SSOT. agent file 본문 + ADR + Change Plan + Story file 안 모든 DDD 어휘는 본 glossary 정의 verbatim 인용 의무. drift 차단 = `scripts/check-ubiquitous-language.sh` (ADR-091 §결정 6 lint, S3 #1120 Wave 2 mechanical wire — 구 명칭 check-ddd-vocabulary.sh 가 evidence-checks-registry entry name `ubiquitous-language-drift-check` 정합 위해 check-ubiquitous-language.sh 로 확정).
 
 ### Published Language
 
