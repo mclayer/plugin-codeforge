@@ -136,6 +136,16 @@ amendments_reserved:
 
 | 98 | CFP-1140 | active | 2026-05-21 KST status reserved→active 전환 (ArchitectAgent commit time, ADR-083 row 83 chief author precedent 정합 — UpgradeAgent runtime ownership SSOT (PMO 흡수 vs 신규 codeforge-upgrade lane plugin). CFP-1111 Wave 1 Story-2 carrier (7-slot bundle 7/7). CFP-703 Wave 2 Story-3 의 UpgradeAgent runtime — codeforge-pmo lane 흡수 vs 신규 codeforge-upgrade lane plugin 신설 의 decision framework + lane lifecycle invariant (ADR-023) + ownership boundary normative SSOT codify. ADR-076 (declarative reconciliation upgrade flow) cross-ref (UpgradeAgent runtime SSOT carrier). parent_epic CFP-1111. carrier_story CFP-1111-W1-S2 → CFP-1140 sub-Story 정정. ADR file = `ADR-098-upgrade-agent-runtime-ownership.md`.) |
 
+| 99 | CFP-1146 | active | 2026-05-21 KST status reserved→active 전환 (ArchitectAgent commit time, ADR-083 row 83 chief author precedent 정합 — check-no-atlassian.sh 역전 + Atlassian-allow 재정의 SSOT carrier. CFP-1146 Epic-A 5-slot bundle 1/5 = W1 S1 hard prerequisite. §결정 1 (b) 역전 권장 = 2-layer 분리 (Layer 1 mcp__atlassian permission deny SSOT — settings.json + agent preset narrow allow / Layer 2 lint grep 평문 allowlist — substring false-negative 회피, SecurityArch P0) + §결정 4-A ratchet 약화 정당화 S4 ADR-102 = extend (ADR-097 면제 channel 비대상, 조건 a 9+ ADR sunset 미충족 — predecessor formal ADR 0건; ADR-058 §결정 5 일반 sunset_justification 경로 + ADR-095 metric reuse + spec-level reversal mechanism 신설). check-no-atlassian CI 미wire verified (standalone manual script) — ADR-060 L860 owner_adr 부재 등록 보류 해소 (본 ADR = Layer 2 owner_adr). §결정 5 trust boundary (token secret / Confluence outbound-only / MCP SSRF — ADR-101 ground-truth verify). ADR file = `ADR-099-atlassian-allow-redefinition.md`. parent_epic CFP-1146.) |
+
+| 100 | CFP-1146 | reserved | 2026-05-21T00:00:00+09:00 (GitOpsAgent sequential append per ADR-RESERVATION write boundary — Confluence doc SSOT 인정 (ADR-013/041 supersede) SSOT carrier. CFP-1146 Epic-A 5-slot bundle 2/5. ADR file = `ADR-100-confluence-doc-ssot-recognition.md`. parent_epic CFP-1146.) |
+
+| 101 | CFP-1146 | reserved | 2026-05-21T00:00:00+09:00 (GitOpsAgent sequential append per ADR-RESERVATION write boundary — verify-before-trust Confluence REST ground-truth SSOT carrier. CFP-1146 Epic-A 5-slot bundle 3/5. ADR file = `ADR-101-verify-before-trust-confluence-rest.md`. parent_epic CFP-1146.) |
+
+| 102 | CFP-1146 | reserved | 2026-05-21T00:00:00+09:00 (GitOpsAgent sequential append per ADR-RESERVATION write boundary — sunset_justification + ratchet 약화 극복 governance anchor SSOT carrier. CFP-1146 Epic-A 5-slot bundle 4/5. ADR file = `ADR-102-ratchet-weakening-governance-anchor.md`. parent_epic CFP-1146.) |
+
+| 103 | CFP-1146 | reserved | 2026-05-21T00:00:00+09:00 (GitOpsAgent sequential append per ADR-RESERVATION write boundary — git↔Confluence sync mechanism 결정 SSOT carrier. CFP-1146 Epic-A 5-slot bundle 5/5. ADR file = `ADR-103-git-confluence-sync-mechanism.md`. parent_epic CFP-1146.) |
+
 ### 번호 해제 (archived)
 
 ADR deprecated/superseded 시 해당 row `status: archived`. 번호 재사용 금지.

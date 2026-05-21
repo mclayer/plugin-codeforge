@@ -38,7 +38,7 @@ codeforge family 는 wrapper + 6 lane plugin (codeforge-{requirements,design,dev
 
 changelog location 이 명시 SSOT 로 codify 되지 않으면 다음 drift 가 발생한다:
 
-- changelog 가 wrapper 한곳에 집중되면 lane plugin self-write boundary ([lane-self-write-boundary](../../skills/codeforge-lane-self-write-boundary/SKILL.md) 정책) 와 충돌 — lane plugin 변경 내역을 wrapper Orchestrator 가 대신 기록해야 하는 cross-plugin write 발생.
+- changelog 가 wrapper 한곳에 집중되면 lane plugin self-write boundary ([lane-self-write-boundary](../../skills/lane-self-write-boundary/SKILL.md) 정책) 와 충돌 — lane plugin 변경 내역을 wrapper Orchestrator 가 대신 기록해야 하는 cross-plugin write 발생.
 - changelog 가 산재하면 consumer 가 "내가 설치한 7 plugin 의 통합 변경 내역"을 한눈에 볼 단일 진입점 부재.
 - changelog ↔ `plugin.json` `version` field 가 독립 갱신되면 version drift (changelog 마지막 entry version ≠ plugin.json version) — stale changelog install.
 
