@@ -34,6 +34,11 @@ amendments:
     date: 2026-05-20
     summary: "§결정 1 layer 1 (Orchestrator scope) sub-scope (1-C) 신설 — Orchestrator-authored lane PL spawn prompt user-utterance verbatim anchor. lane traversal fidelity loss 차단 — Orchestrator 가 lane PL agent 를 spawn 할 때 spawn prompt 첫 줄에 사용자 발화 원문 verbatim block 의무 부착 (재합성 / 요약 / paraphrase 금지). 사용자 직권 minimal path 첫 적용 (codeforge process 가 fidelity loss source 라는 평가 결과 정합 — Researcher 35% 정당화 / Codex ROI indeterminate-부정쪽 confidence medium 수렴, 2026-05-20 KST). pattern corpus 누적: synthesizer-stale-reference 6 (CFP-722/801/792/810/819/825) + Researcher 12 occurrence 정정 (CFP-698) + scope 재확대 금지 invariant 6+ 위치 (CFP-758) + unverified-self-write-claim super-class 5 — ADR-045 §D-9 pattern_count ≥ threshold 2 escalation 정합. Wave 1 = behavioral mandate (lane PL spawn prompt 첫 줄 anchor block 의무) — Wave 2 mechanical lint = 별 CFP carrier (deferred-followup). minimal path 정합: Story file 0 / Lane spawn 0 / FIX iter 0 / Phase 분리 0 / Retro 0 / ADR-013 명시 위배 (사용자 승인 2026-05-20 KST) — closed-loop break 외부 결정 채널."
     sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §결정 1 layer 1 sub-scope (1-A lane spawn cross-repo state / 1-B Issue body authorship) → (1-C) lane PL spawn prompt user-utterance verbatim 확장, forbid scope 축소 아님). ADR-064 §self-application top-down ratchet 정합. is_transitional: false 유지 (permanent governance policy). 사용자 직권 minimal path = closed-loop break 외부 결정 채널, ratchet 강화 self-application 정직 명시 — 본 Amendment 자체가 monotonic-increasing governance 의 부분 (verify-before-trust 영역 안 — Researcher 평가 net positive 35% 영역 직접 확장)."
+  - amendment_id: 6
+    carrier_story: CFP-1198
+    date: 2026-05-22
+    summary: "§결정 2 scope (b) 확장 — ADR/contract amendment 번호 인용 시 대상 파일 frontmatter amendments: 목록 Read-verify 후 max+1 사용 의무 (amendment-number-frontmatter-verify). plan-time citation staleness 차단 forcing function. scope: 거버넌스 artifact (β-issue body / spec / change-plan / PR body / ADR amendment) 안 amendment 번호 인용 전 target ADR frontmatter Read 의무. 2 occurrence pattern_count (CFP-1177 ADR-027 Amendment 7 → 실제 Amendment 9 / CFP-1179 ADR-063 Amendment 6/7 → 실제 Amendment 8) ≥ ADR-045 §D-9 threshold 2 Mandatory escalation 산물. ADR-073 cross-ref (β-issue = Orchestrator-authored scope — Orchestrator 행위 한정 verify-before-assert layer 동반 적용). mechanical_enforcement_actions[] 신규 entry amendment-number-frontmatter-verify deferred-followup declare (Wave 2 lint script + workflow + bats = 별 CFP-1198 Phase 2 sub-carrier)."
+    sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §결정 2 scope (b) 의 verify 대상 확장 — ADR frontmatter value 인용 시 write-time verify 범위에 amendment 번호 citation 추가, forbid scope 축소 아님). ADR-064 §self-application top-down ratchet 정합. is_transitional: false 유지 (permanent governance policy)."
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-841
@@ -59,12 +64,19 @@ amendment_log:
     decisions_touched: ["§결정 1"]
     nature: ratchet-up  # §결정 1 layer 1 (Orchestrator scope) sub-scope (1-C) Lane PL spawn prompt user-utterance verbatim anchor 확장 (ADR-058 §결정 5 강화 방향)
     note: "사용자 직권 minimal path 첫 적용 (codeforge process 가 lane traversal fidelity loss source 라는 평가 결과 채택 정합 — Researcher net 35% 정당화 / Codex ROI indeterminate-부정쪽 confidence medium 수렴, 2026-05-20 KST). pattern corpus 누적 evidence: synthesizer-stale-reference 6 (CFP-722/801/792/810/819/825) + Researcher 12 occurrence 정정 (CFP-698) + scope 재확대 금지 invariant 6+ 위치 (CFP-758) + unverified-self-write-claim super-class 5. minimal path 정합: Story file 0 / Lane spawn 0 / FIX iter 0 / Phase 분리 0 / Retro 0 / ADR-013 명시 위배 (사용자 승인 2026-05-20 KST) — closed-loop break 외부 결정 채널. Wave 1 = behavioral mandate (lane PL spawn prompt 첫 줄 anchor block 의무) — Wave 2 mechanical lint = 별 CFP carrier (deferred-followup). sister Amendment = ADR-071 Amendment 6 (back-translation gate binding, lane return 직후 verify, CFP-1110 paired Amendment carrier)."
+  - amendment_id: 6
+    carrier_story: CFP-1198
+    date: 2026-05-22  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 2", "§결정 9 (신설)"]
+    nature: ratchet-up  # §결정 2 scope (b) verify 대상 확장 + §결정 9 신설 (amendment-number citation verify forcing function, ADR-058 §결정 5 강화 방향)
+    note: "ADR-045 §D-9 pattern_count 2 ≥ threshold 2 Mandatory escalation 산물 (CFP-1177: ADR-027 Amendment 7 계획 → 실제 Amendment 9 stale / CFP-1179: ADR-063 Amendment 6/7 계획 → 실제 Amendment 8 stale). plan-time citation staleness 근본 원인 = target ADR frontmatter amendments: 목록 미검증 상태에서 번호 인용. §결정 2 scope (b) 의 'ADR frontmatter value 인용 시 verify' 범위가 amendment 번호 인용을 명시적으로 포함하도록 확장 — §결정 9 별도 결정으로 codify (scope (b) 의 sub-specialization). ADR-073 cross-ref: β-issue = Orchestrator-authored artifact (ADR-073 layer 1 scope) — 두 layer (ADR-073 Orchestrator-authored / ADR-082 internal lane agent self-write) 동시 적용 구조. mechanical_enforcement_actions[] 신규 entry amendment-number-frontmatter-verify deferred-followup 추가 (Phase 2 lint = 별 CFP-1198 Phase 2 sub-carrier). 본 Amendment 6 자체가 META-self-applied: 본 Amendment 번호(6) 가 target ADR-082 frontmatter amendments: 목록 Read verify 후 max(5)+1=6 으로 결정 (verified-via: Read ADR-082 frontmatter amendments[] 2026-05-22 KST)."
 related_stories:
   - CFP-776  # carrier (super-class 통합 결정 — escalation_action escalate_user)
   - CFP-841  # Amendment 1 carrier (§결정 6 behavioral→mechanical 전환 후속 carrier)
   - CFP-1016 # Amendment 2 carrier (§결정 1 layer 1 Orchestrator scope Issue-body verify 확장)
   - CFP-1041 # Amendment 3 carrier (ADR-085 disjoint complement — verify axis ↔ coordination axis cross-ref)
   - CFP-1110 # Amendment 5 carrier (§결정 1 layer 1 sub-scope (1-C) Lane PL spawn prompt user-utterance verbatim anchor — 사용자 직권 minimal path first application, paradox-break)
+  - CFP-1198 # Amendment 6 carrier (§결정 2 scope (b) 확장 + §결정 9 신설 — amendment 번호 citation plan-time staleness 차단 forcing function, ADR-045 §D-9 Mandatory escalation 산물)
   - CFP-746  # pattern corpus #1a/#1b (corpus slip + 정정-2nd-slip)
   - CFP-770  # pattern corpus #2/#3 (§9 evidence stale + Phase 0 cross-plugin 추정)
   - CFP-1000 # Amendment 2 corpus #4 (Issue body 3 inversions: prod-cutover-deputy-evidence INVERTED + baseline stale + path incorrect)
@@ -120,6 +132,9 @@ mechanical_enforcement_actions:
   - action: cross-plugin-ownership-verify
     status: deferred-followup     # Phase 1 declare / Phase 2 actual wire (CFP-841 §3.2 carrier)
     target_section: §결정 2(d)    # lane-self-write-ownership-matrix.yaml cross_plugin_doc_ownership sub-tree query 1-step lint + §13.B 4-way drift-sync invariant
+  - action: amendment-number-frontmatter-verify
+    status: deferred-followup     # Phase 1 declare (본 Amendment 6) / Phase 2 actual wire = 별 CFP-1198 Phase 2 sub-carrier (lint script + workflow + bats fixture)
+    target_section: §결정 9       # governance artifact 안 ADR/contract amendment 번호 인용 시 target frontmatter amendments: 목록 Read-verify → max+1 사용 + verified-via annotation 의무 lint
 sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (ratchet 강화 방향 only — verify scope 확장). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과. is_transitional: false (영구 정책). self-referential 주의: 본 ADR 의 해소기준 부재 선언 자체가 §결정 2 verify 대상 아님 (§결정 6 EC-3 self-protection)."
 pre_lookup_evidence:
   verified_files:
@@ -228,6 +243,42 @@ scope (e) FIX 명세 depth-aware scope 필드 (CFP-770 §8 제안 — broken-lin
 ### §결정 8 — per-area 분할 (scope a/b/c/d 각 별 ADR) 거부 (scope 외)
 
 4 scope = 단일 super-class 결함의 4 layer 표현. §결정 1 layer disjoint 표가 공통 anchor. ADR-064 §결정 1 정합 — 단일 super-class = unitary scope (영역별 분할 아님). per-area 분할 시 super-class anchor 가 4 ADR 로 분절되어 cross-Story pattern aggregation (ADR-045 §D-9) 의 forcing function 약화.
+
+### §결정 9 — Amendment 번호 citation plan-time staleness 차단 (Amendment 6 신설, CFP-1198)
+
+**forcing function**: 거버넌스 artifact (β-issue body / spec / change-plan / PR body / ADR amendment 본문) 안에서 특정 ADR 또는 inter-plugin contract 의 amendment 번호를 인용할 때, 인용 직전 target artifact 의 frontmatter `amendments:` 목록 (또는 `amendment_log`) 을 `Read` 도구로 직접 확인한 후 `max(amendment_id) + 1` 을 사용한다.
+
+**verify-before-cite 의무**:
+
+1. target ADR / contract 파일의 frontmatter `amendments:` 또는 `amendment_log` 항목을 직접 Read 한다.
+2. 현재 최대 `amendment_id` 값을 확인한다.
+3. 새 amendment 번호 = `max(amendment_id) + 1` 로 결정한다.
+4. 인용 위치에 `verified-via: <frontmatter Read 경로 및 시각>` annotation 을 부착한다 (§결정 2(b) `[verified: git show origin/main:<path>]` annotation 형식 준용).
+
+**scope**: 본 §결정 9 는 §결정 2(b) ("ArchitectAgent §3 / §7 corpus enumeration + ADR frontmatter value 인용 시 verify") 의 sub-specialization 이다. §결정 2(b) 가 이미 "ADR frontmatter value 인용 시 verify" 를 포괄하나, amendment 번호 citation 이 plan-time (β-issue / spec / change-plan 작성 시점) 에 발생하는 점 — 즉 §결정 2(b) 의 lane agent write-time 보다 이른 시점 — 을 명시적으로 언급하기 위해 별 결정으로 codify.
+
+**적용 대상 layer**:
+
+| artifact 종류 | 주체 | 적용 layer |
+|---|---|---|
+| β-issue body, ADR brainstorm Phase 0 spec, change-plan | Orchestrator-authored | ADR-073 (Orchestrator verify-before-assert) ∩ 본 §결정 9 동시 적용 |
+| ADR amendment 본문, design lane Change Plan | ArchitectAgent (internal lane agent) authored | 본 ADR §결정 2(b) + §결정 9 동시 적용 |
+| spec / plan 기타 planning artifact | 해당 lane PL authored | 본 §결정 9 적용 |
+
+**disjoint layer 관계**: β-issue = Orchestrator-authored artifact 이므로 ADR-073 §결정 1 (Orchestrator cross-repo state / assumption verify) 가 동시 적용된다. 단, ADR-073 와 본 ADR 의 axis disjoint (verify subject: Orchestrator cross-repo state assertion ↔ internal lane agent self-write value assertion) 가 본 §결정 9 의 plan-time 영역에서 overlap 하는 구조임을 명시 — 각 ADR scope 침범 아님 (동일 artifact 에 두 layer 가 독립적으로 적용). ADR-073 cross-ref: `docs/adr/ADR-073-orchestrator-verify-before-assert.md` §결정 1 (Orchestrator verify-before-assert — β-issue 작성 시 amendment 번호 cite 가 cross-repo state assertion 에 해당).
+
+**known-limitation**: 본 §결정 9 = behavioral directive (Wave 1). Wave 2 mechanical lint (`amendment-number-frontmatter-verify` script + workflow + bats fixture) = 별 CFP-1198 Phase 2 sub-carrier (deferred-followup). frontmatter `mechanical_enforcement_actions:` 에 `amendment-number-frontmatter-verify` entry 신설 (status: deferred-followup).
+
+**pattern evidence (ADR-045 §D-9 Mandatory, pattern_count = 2)**:
+
+| # | 출처 | stale citation | actual (verified) |
+|---|---|---|---|
+| 1 | CFP-1177 β-issue (#1115) | "ADR-027 Amendment 7" | ADR-027 실제 max = Amendment 8 (CFP-1059 점유) → 실제 slot = Amendment 9 |
+| 2 | CFP-1179 β-issue (#1114) | "ADR-063 Amendment 6/7" | ADR-063 실제 max = Amendment 7 (CFP-906/CFP-1059 점유) → 실제 slot = Amendment 8 |
+
+두 케이스 모두 write-time 에 caught (plan land 후 escaped 0) 이나, root cause = plan-time read verify 부재 → forcing function 필요.
+
+**ADR-068 I-4 (wording SSOT) 연계**: amendment 번호는 governance artifact 전체에서 동일 식별자로 참조되는 wording SSOT 대상이다. stale 번호가 planning artifact 에 기록되면 후속 ADR 본문 / CLAUDE.md / retro 와 wording drift 가 발생 — I-4 위반 원인이 된다.
 
 ## 결과
 
@@ -563,3 +614,78 @@ Wave 2 = deferred-followup, 본 Amendment 5 frontmatter `mechanical_enforcement_
 - `mclayer/plugin-codeforge/issues/1110` — Amendment 5 carrier Issue (Story file 0 — 사용자 직권 minimal path)
 - 후속 carrier (Wave 2 mechanical lint — `scripts/check-spawn-prompt-user-utterance-anchor.sh` + workflow + evidence-checks-registry warning tier entry) = 별 sub-CFP, brainstorm 단계 결정
 - 후속 carrier (codeforge-design lane fan-out 축소 — 가치 판단 영역) = 별 CFP, brainstorm 단계 결정
+
+---
+
+## Amendment 6 — Amendment 번호 citation plan-time staleness 차단 forcing function (CFP-1198, 2026-05-22 KST)
+
+### 컨텍스트
+
+ADR-045 §D-9 Mandatory escalation 산물 (pattern_count 2 ≥ threshold 2). 동일 세션 안에서 두 건의 plan-time amendment 번호 stale citation 이 발생 (write-time caught, land escaped 0):
+
+- **CFP-1177 β-issue #1115**: 계획 "ADR-027 Amendment 7" → target ADR-027 frontmatter 미검증 → 실제 slot = Amendment 9 (Amendment 7·8 이미 CFP-1059 등 점유). stale citation 이 β-issue body 에 기재됨.
+- **CFP-1179 β-issue #1114**: 계획 "ADR-063 Amendment 6/7" → target ADR-063 frontmatter 미검증 → 실제 slot = Amendment 8 (Amendment 6·7 이미 CFP-906/CFP-1059 점유). stale citation 이 β-issue body 에 기재됨.
+
+두 케이스 모두 공통 root cause = **plan-time citation staleness** — governance artifact 작성 전 target ADR frontmatter `amendments:` 목록을 Read verify 하지 않은 채 amendment 번호를 기재. 기존 §결정 2(b) ("ADR frontmatter value 인용 시 verify") 가 이 영역을 포괄하나, plan-time artifact 에 대한 명시적 언급이 없어 forcing function 으로서 약했음 — 별 §결정 9 로 명시적 codify.
+
+root cause 분류: **write-time self-write verify 부재 (본 ADR scope)** ∩ **Orchestrator-authored artifact verify 부재 (ADR-073 scope)** — 두 layer 동시 적용 구조. 본 Amendment = ADR-082 layer (internal scope 포함 planning artifact 전반) 에서 forcing function codify, ADR-073 cross-ref 로 Orchestrator-authored β-issue 적용 명시.
+
+### Amendment
+
+#### A6-1 — §결정 9 신설 (Amendment 번호 citation verify 의무)
+
+§결정 9 를 본 ADR 결정 섹션에 신설 (본 Amendment 6 본문 직전 `## 결과` 앞에 추가). 상세 내용 = §결정 9 본문 참조.
+
+요약:
+- governance artifact 안 ADR/contract amendment 번호 인용 전 target frontmatter `amendments:` 직접 Read → `max + 1` 사용 의무
+- `verified-via: <Read 경로 및 시각>` annotation 부착 의무
+- Orchestrator-authored artifact (β-issue body 등) = ADR-073 동시 적용 (disjoint layer 독립 적용)
+- plan-time (β-issue / spec / change-plan 작성 시점) 을 명시적으로 포함
+
+#### A6-2 — `mechanical_enforcement_actions[]` 신규 entry 추가
+
+frontmatter `mechanical_enforcement_actions:` 에 아래 entry 추가:
+
+| action | target_section | status | Phase 2 carrier |
+|---|---|---|---|
+| `amendment-number-frontmatter-verify` | §결정 9 | deferred-followup | CFP-1198 Phase 2 sub-carrier — governance artifact 안 amendment 번호 인용 위치 grep + target ADR frontmatter amendments: max 대비 stale 탐지 lint script + workflow + bats fixture |
+
+status `deferred-followup` = Phase 1 declare (본 Amendment 6) / Phase 2 actual wire = 별 CFP-1198 Phase 2 sub-carrier (ADR-060 §결정 5 모든 신규 entry warning 시작 강제 + ADR-040 Amendment 3 self-application Wave 1→Wave 2 progression chain 정합).
+
+#### A6-3 — ADR-073 cross-ref (Orchestrator-authored β-issue 적용 명시)
+
+§결정 9 본문 내 disjoint layer 관계 표에 ADR-073 cross-ref 명시:
+- β-issue body = Orchestrator-authored → ADR-073 §결정 1 (Orchestrator verify-before-assert) 동시 적용
+- 본 ADR scope = internal lane agent self-write + planning artifact 포함 (§결정 9 신설)
+- 두 ADR axis disjoint (verify subject overlap 아님) — 동일 artifact 에 독립 적용
+
+본 Amendment 6 는 ADR-073 frontmatter 를 수정하지 않는다 (prose cross-ref only, ADR-073 frontmatter amendment 신설 0 — ADR-073 axis 침범 회피).
+
+#### A6-4 — scope_boundary (out-of-scope)
+
+본 Amendment 6 **포함**: §결정 9 신설 + `mechanical_enforcement_actions[]` 신규 entry + ADR-073 cross-ref prose.
+
+본 Amendment 6 **out-of-scope** (유지 / 별 carrier):
+
+- **Wave 2 mechanical lint** (`amendment-number-frontmatter-verify` script + workflow + bats fixture) = 별 CFP-1198 Phase 2 sub-carrier (deferred-followup).
+- **evidence-checks-registry row** = Phase 2 sub-carrier (deferred-followup — entry 신설 0, action name 선언만).
+- **ADR-073 frontmatter amendment** = 0 (cross-ref only, ADR-073 §결정 1 확장 0).
+- **label-registry Amendment** = 0 (hotfix-bypass family member 신설 불요 — behavioral mandate only Wave 1).
+- 신규 ADR 창설 = 0.
+
+### Compatibility
+
+- §결정 1~8 + §본질 선언 + §컨텍스트 + Amendment 1~5 전부 유지 — 본 Amendment 6 는 §결정 9 신설 + `mechanical_enforcement_actions[]` entry 추가 + ADR-073 cross-ref 추가 only.
+- ADR-058 §결정 5 sunset_justification — Amendment 6 = forbid scope 확장 (§결정 2(b) verify 대상이 plan-time amendment 번호 citation 으로 명시 확장) = ratchet-up 강화 방향. `sunset_justification: "N/A — ratchet 강화 방향"` (frontmatter amendments[].sunset_justification 명문). `is_transitional: false` 유지.
+- ADR-064 §self-application top-down ratchet 정합 (강화 방향만 — 약화 방향 0건).
+- ADR-040 Amendment 3 §결정 7.A schema 정합 — `mechanical_enforcement_actions[]` 3-entry 보유 (Amendment 1 의 2 entry + Amendment 6 신설 1 entry).
+- ADR-068 I-4 (wording SSOT) 연계: amendment 번호 = governance artifact 전체 참조 식별자 → stale 번호 기재 시 I-4 위반 원인 → §결정 9 가 I-4 위반 upstream 차단.
+- ADR-045 §D-9: 본 Amendment 6 가 pattern_count 2 Mandatory escalation 의 직접 산물 (escalation_action `adr_draft_emitted`).
+- 본 Amendment 6 자체가 META-self-applied: Amendment 번호(6) 가 target ADR-082 frontmatter `amendments:` Read verify (max=5, next=6) 후 결정 — §결정 9 를 도입하는 이 Amendment 6 자체가 §결정 9 를 준수하는 첫 사례 (verified-via: Read `docs/adr/ADR-082-write-time-self-write-verification-mandate.md` frontmatter amendments[] 2026-05-22 KST).
+
+### Related (Amendment 6 동반)
+
+- `docs/adr/ADR-073-orchestrator-verify-before-assert.md` — cross-ref: β-issue = Orchestrator-authored artifact 이므로 ADR-073 §결정 1 동시 적용 (frontmatter 수정 0, prose cross-ref only)
+- `docs/adr/ADR-045-story-retro-mandatory-trigger.md` — §D-9 Mandatory escalation 산물 (pattern_count 2, CFP-1177+CFP-1179 lineage)
+- `docs/adr/ADR-068-boundary-completeness-invariants.md` — I-4 wording SSOT upstream 차단 연계 (amendment 번호 stale → I-4 wording drift 원인)
+- 후속 carrier (Wave 2 mechanical lint — `amendment-number-frontmatter-verify` script + workflow + bats fixture + evidence-checks-registry warning tier entry) = CFP-1198 Phase 2 sub-carrier (deferred-followup)
