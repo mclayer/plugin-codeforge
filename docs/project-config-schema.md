@@ -391,9 +391,22 @@ deploy:
       user: <string>                   # SSH login user (e.g. "deploy")
       key_secret_env: <string>         # GitHub Secrets key for SSH private key (e.g. "SSH_DEPLOY_KEY")
       port: <int>                      # default: 22
+
+  # [선택] auto_rollback — 자동 rollback 신호 monitor 설정 (CFP-1193 / ADR-105 §결정 3 / ADR-106 Amendment 1 §결정 1 단계 2-a)
+  # 부재 시 rollback-signal-monitor cron = wrapper fast-pass exit 0 (ADR-104 §결정 4 정합, 신호 감지 비활성)
+  auto_rollback:
+    enabled: <bool>                    # false = kill-switch config flag (§3.4 secondary disable — filesystem flag primary)
+                                       # true = 신호 감지 활성 (안전장치 4 AND 충족 시만 trigger, ADR-105 §결정 3)
+    error_rate_threshold: <float>      # 에러율 임계 — 에러/전체 요청 비율 (예: 0.02 = 2%)
+                                       # 미정의(빈 문자열/부재) = 안전장치 1 false → trigger 0 (보수적 EC-1)
+    latency_burn_rate_threshold: <float>  # latency error budget 소진율 임계 (예: 1.0 = burn_rate ≥ 1.0)
+                                          # 미정의 = 안전장치 1 false (error_rate_threshold OR burn_rate_threshold 중 1개 이상 정의 의무)
+    window: <int>                      # 측정 window (초, default: 3600 = 1시간, ADR-087 §결정 5 3시간 보존 window 내 의무)
+                                       # 보존 window(3시간=10800초) 초과 설정 금지 — 안전장치 2 false 처리 (EC-3)
 ```
 
 - **본 block 부재 시 동작**: deploy lane (CFP-1059) 가 Epic close 후 자동 trigger 되지 않음 (opt-in). 8 lane workflow 완결 시 wrapper Orchestrator = `phase:보안-테스트` 후 terminal (CFP-1059 이전 default 동작 유지). consumer 가 deploy block 등록 후 codeforge-deploy plugin install 시 deploy lane 활성.
+- **auto_rollback 안전장치 4 AND** (CFP-1193 / ADR-105 §결정 3): `auto_rollback.enabled: false` = safety_4 false → trigger 전체 무력화 (신호 감지·기록 계속 — 무음 차단 금지 EC-2). `error_rate_threshold` / `latency_burn_rate_threshold` 미정의 = safety_1 false → trigger 0 (보수적 fallback EC-1). `window` 가 3시간 보존 window(10800초) 초과 = safety_2 false (ADR-087 §결정 5). filesystem kill-switch (`.codeforge/auto-rollback.disabled`) = safety_4 override (config enabled 여부 무관 — OR disable §3.4 정합). kill-switch 활성 시에도 신호 감지·ops-signal Issue 발의 계속 (EC-2).
 - **fallback semantic**:
   - `deploy.host_mapping` 부재 = deploy lane 활성화 prerequisite 불충족 → warning + skip (Epic close 진행, manual deploy operator 영역).
   - `deploy.1password.enabled=false` = `.env` fallback (CI Secrets → SSH 전송, less secure). production 환경 = `true` 권장.
