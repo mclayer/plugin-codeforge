@@ -3364,3 +3364,44 @@ entries:
     status: Active
         - deployment_schema_first_consumer_validation_evidence  # 첫 consumer deploy block PR (overlay project.yaml 포함) validate 결과
     modal_anti_pattern_dictionary: {}
+
+  # CFP-1193 / ADR-105 §결정 3 — rollback signal monitor (warning tier)
+  - name: rollback-signal-monitor
+    description: |
+      ADR-105 §결정 3 안전장치 4 AND 실 mechanism 구현 layer (declaration-only Wave 1 → wire).
+      ADR-106 Amendment 1 단계 2-a: 자동 rollback 직후 사후 알림 Issue (ops-signal label, 안전장치 3 동반).
+      24h cron + check-rollback-signal.sh (thin bash) + check_rollback_signal.py (Python ADR-061):
+        (1) 에러율 / latency burn rate 숫자 임계 감지 (정량 — 모달 어휘 금지 ADR-064)
+        (2) 안전장치 4 AND 평가: safety_1(임계초과) AND safety_2(보존기간 hook위임) AND safety_3(알림존재) AND safety_4(kill-switch off)
+        (3) kill-switch 우선 (filesystem flag OR config flag — EC-2)
+        (4) 기존 CFP-1059 hook trigger (auto-rollback-hook.sh — 재구현 0)
+        (5) Issue-level signature dedup (동일 신호 24h 1 Issue — ADR-106 §결정 4 (a) 부분)
+        (6) ops-signal Issue 발의 (사후 알림, 무음 rollback 금지)
+      wrapper-self-app N/A (ADR-104 §결정 4 / ADR-072 Tier-1 declare-time exemption — fast-pass).
+      ADR-106 §결정 1 단계 3 (PMOAgent escalation) + 단계 4 (다음 Epic) = S6 carrier (미wire).
+      §7.4 empirical-source:
+        24h cron rate → channel-drift-detection.yml cron '0 0 * * *' 답습 (dimension: rate)
+        3시간 보존 window → ADR-087 §결정 5 / Issue #1059 카테고리 3/9 (dimension: lifecycle)
+    detect_command: bash scripts/check-rollback-signal.sh
+    workflow: templates/github-workflows/rollback-signal-monitor.yml
+    current_tier: warning   # ADR-060 §결정 15 3-tier / warning-first (신규 도입, evidence-gate 이후 승격)
+    bypass_label: hotfix-bypass:rollback-signal-monitor   # label-registry-v2 v2.45 신규 family member (64번째)
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-1193   # S4 완료 (본 entry 도입 carrier)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - bats_15tc_green_proof
+        - kill_switch_or_disable_false_negative_zero_proof
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-1193
+    introduced_date: 2026-05-22    # KST (ADR-079 §결정 6 — 신규 작성분)
+    owner_adr: ADR-105             # declaration source — §결정 3 안전장치 4 / ADR-106 Amendment 1 §결정 1 단계 2-a
+    carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: Active
