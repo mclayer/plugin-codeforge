@@ -3405,3 +3405,39 @@ entries:
       threshold: 3
       promotion_trigger: none
     status: Active
+
+  - name: check-atlassian-allow
+    description: |
+      ADR-099 §결정 1/2/3 mechanical verification — check-no-atlassian.sh 역전 후
+      allowlist 외 평문 Atlassian/Confluence/Jira 참조 감지 (warning tier).
+      Layer 2 (lint grep 평문 참조 governance) 전용 — Layer 1 (mcp__atlassian
+      permission deny = settings.json SSOT, S2/S3 carrier) 와 disjoint.
+      ADR-060 §결정 5 warning tier: CI 미wire baseline 위 신규 등록.
+      owner_adr ADR-099 부여로 ADR-060 L860 등록 보류 (owner_adr 부재) 해소.
+      allowlist 범위: 기존 11 file + Epic-A 5-slot governance ADR prefix
+      (docs/adr/ADR-099~103) — ADR-100 (docs/** Confluence authoritative) 는
+      ADR-100 carrier (S2) 위임.
+    detect_command: bash scripts/check-no-atlassian.sh
+    workflow: null   # CI 미wire — standalone manual / 세션-개시 호출 (ADR-099 §결정 3 verified)
+    current_tier: warning   # ADR-099 §결정 3 + ADR-060 §결정 5 — 신규 등록 warning, blocking 승격은 ADR-060 §승격 gate 조건 충족 후
+    bypass_label: hotfix-bypass:atlassian-allow
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a)
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1147   # S1 Phase 2 본 entry 도입 carrier
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 평문 참조 감지 lint — modal 어휘 검사 미포함
+    introduced_by: CFP-1147
+    introduced_date: 2026-05-22    # KST (ADR-079 §결정 6 — 신규 작성분)
+    owner_adr: ADR-099             # ADR-060 L860 등록 보류 해소 — 본 ADR 이 owner_adr
+    carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: Active
