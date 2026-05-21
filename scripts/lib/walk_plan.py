@@ -4,8 +4,8 @@
 #
 # 책임 (change-plan §3.4 / §4.3):
 #   (a) changelog walk — per-plugin CHANGELOG.md (from_version → to_version) 구간 entry enumerate
-#   (b) min_prerequisite_version topological resolve — 7-plugin DAG topological sort + mismatch detection
-#   (c) walk_result aggregate — bundle tier 7 plugin walk_result 종합 (deterministic exit code mapping)
+#   (b) min_prerequisite_version topological resolve — 9-plugin DAG topological sort + mismatch detection
+#   (c) walk_result aggregate — bundle tier 9 plugin walk_result 종합 (deterministic exit code mapping)
 #   (d) marker_merge — walk apply stage R-2 customization marker 보존 흡수 (reconcile-overlay.sh 흡수)
 #   (e) importance_score hook — plan stage 각 entry blast-radius importance_score 계산 (CFP-1173)
 #       Story-5 placeholder → importance_score.py 실 wire
@@ -43,10 +43,11 @@ from typing import Optional
 # closed_set open_extension: false (ADR-093 §결정 2 — 5번째 enum 값 ad-hoc 확장 금지)
 
 class WalkResult(Enum):
-    """7-plugin family walk 결과 enum (4-value closed_set).
+    """9-plugin family walk 결과 enum (4-value closed_set).
 
     ADR-093 §결정 2 — closed_set open_extension: false.
     5번째 값 ad-hoc 확장 금지 (별도 ADR 없이 확장 불가).
+    CFP-1199 F1: 9-plugin family 확장 (ADR-087/088) — enum 값 자체는 변경 없음.
     """
     SUCCESS = "SUCCESS"
     SUCCESS_WITH_DEGRADATION = "SUCCESS_WITH_DEGRADATION"
@@ -82,23 +83,27 @@ EXIT_CODE_MAP = {
     WalkResult.FAILED: 3,
 }
 
-# topological order (ADR-096 §결정 2 DAG invariant: wrapper 먼저, 6 lane 후행)
+# topological order (ADR-096 §결정 2 DAG invariant: wrapper 먼저, 8 lane 후행)
 # lane → wrapper 단방향 의존 (cycle 부재 — wrapper 최상위)
+# CFP-1199 F1: 7 → 9 plugin 확장 (ADR-087 codeforge-deploy + ADR-088 codeforge-deploy-review)
 TOPOLOGICAL_ORDER = [
-    "codeforge",           # wrapper (최상위, 6 lane 모두 의존)
+    "codeforge",           # wrapper (최상위, 8 lane 모두 의존)
     "codeforge-requirements",
     "codeforge-design",
     "codeforge-review",
     "codeforge-develop",
     "codeforge-test",
     "codeforge-pmo",
+    "codeforge-deploy",          # ADR-087 신설 — deploy lane (wrapper 의존, pmo 이후 보수 lifecycle 순서)
+    "codeforge-deploy-review",   # ADR-088 신설 — deploy-review lane (wrapper 의존, deploy 이후)
 ]
 
 
 def get_topological_order() -> list[str]:
-    """7-plugin family topological order 반환 (ADR-096 §결정 2 DAG invariant).
+    """9-plugin family topological order 반환 (ADR-096 §결정 2 DAG invariant).
 
-    [wrapper(codeforge), ...6 lane] — wrapper 먼저 resolve, cycle 부재.
+    [wrapper(codeforge), ...8 lane] — wrapper 먼저 resolve, cycle 부재.
+    CFP-1199 F1: codeforge-deploy (ADR-087) + codeforge-deploy-review (ADR-088) 추가.
     """
     return list(TOPOLOGICAL_ORDER)
 
@@ -375,9 +380,10 @@ def resolve_min_prereq_topological(
 # ──────────────────────────── (c) walk_result aggregate ──────────────────────
 
 def aggregate_walk_result(per_plugin_results: list[WalkResult]) -> WalkResult:
-    """bundle tier 7 plugin walk_result 종합 → family walk_result.
+    """bundle tier 9 plugin walk_result 종합 → family walk_result.
 
     deterministic exit code mapping (change-plan §4.3 / §4.4).
+    CFP-1199 F1: 9-plugin family 확장 (codeforge-deploy + codeforge-deploy-review, ADR-087/088).
 
     severity ordering (고 → 저):
       FAILED > PARTIAL_FAILURE > SUCCESS_WITH_DEGRADATION > SUCCESS
@@ -391,11 +397,11 @@ def aggregate_walk_result(per_plugin_results: list[WalkResult]) -> WalkResult:
     closed_enum open_extension: false (ADR-093 §결정 2).
 
     Raises:
-        ValueError: per_plugin_results 가 빈 list (bundle tier = 7 plugin 전체 필수)
+        ValueError: per_plugin_results 가 빈 list (bundle tier = 9 plugin 전체 필수)
     """
     if not per_plugin_results:
         raise ValueError(
-            "per_plugin_results 가 빈 list — bundle tier = 7 plugin 전체 walk_result 필요"
+            "per_plugin_results 가 빈 list — bundle tier = 9 plugin 전체 walk_result 필요"
         )
 
     # ANY FAILED → FAILED (최상위 severity, per-family rollback 완료 후 FAILED 보고)
@@ -658,11 +664,11 @@ def apply_overlay_file(
 #
 # family roster SSOT = TOPOLOGICAL_ORDER (위 §b — 현 walk-infra family roster, ADR-096 §결정 2).
 #   LANE_PLUGINS 는 TOPOLOGICAL_ORDER 에서 derive (dual-roster drift 차단 — single SSOT).
-# CFP-1059 9-plugin 정합 (deferred follow-up): ADR-063 Amendment 7 §결정 18 이 family scope 를
+# CFP-1059 9-plugin 정합 (realized in CFP-1199): ADR-063 Amendment 7 §결정 18 이 family scope 를
 #   7 → 9 plugin (codeforge-deploy + codeforge-deploy-review, ADR-087/088 Accepted) 확장.
-#   현 walk-infra (TOPOLOGICAL_ORDER) 는 7-plugin 가정 — 9-plugin DAG 위치 (deploy lane 의존성)
-#   결정 + TOPOLOGICAL_ORDER/min_prereq 확장 = 별 follow-up CFP (§결정 19 참조). LANE_PLUGINS 가
-#   TOPOLOGICAL_ORDER 에서 derive 하므로 그 확장 시 본 roster 자동 정합 (수동 동기화 0).
+#   CFP-1199 F1 — TOPOLOGICAL_ORDER 9-plugin 확장 완료: deploy lane 의존성 결정 (wrapper 단방향,
+#   pmo 이후 보수 lifecycle 순서) + TOPOLOGICAL_ORDER 2 entry 추가. LANE_PLUGINS 가
+#   TOPOLOGICAL_ORDER 에서 derive 하므로 roster 자동 정합 (수동 동기화 0, §결정 19 참조).
 # MAJOR-atomic 비약화: Amendment 7 §결정 18 의 "MAJOR bump 시 family 전체 동시 atomic" invariant 는
 #   Tier 분리로 약화되지 않음 — MAJOR bump 은 Tier 1 bundle (family_atomic) 강제,
 #   Tier 2 per-walk 독립성은 MINOR / PATCH bump 영역에만 적용 (§결정 19 참조).
