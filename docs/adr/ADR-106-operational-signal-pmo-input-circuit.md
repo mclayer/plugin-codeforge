@@ -32,7 +32,13 @@ related_files:
 mechanical_enforcement_actions: []  # declaration-only Wave 1 — ADR-082 §결정 6 / ADR-070 §D5 / ADR-076 / ADR-086 / ADR-097 / ADR-104 / ADR-105 retain pattern 답습 (behavioral directive only, self-improving loop = 회로 정책 정의 layer / 실 mechanism (PMOAgent 회로 wire + KPI append-only write + loop closure gate dedup·max-depth·escalate_user) = S6 carrier 가 신설 시 evidence-checks-registry row append; pattern_count >= 2 recurrence 시 follow-up CFP MUST promote to mechanical lint — ADR-084 precedent)
 is_transitional: false  # permanent governance anchor — ADR-104/105 (운영 phase / 자동 rollback, is_transitional: false) 정합. self-improving loop 회로 정의 (회로 4단계 / ADR-045 §D-9 disjoint 답습 / KPI append-only 구조 / loop closure 3원칙 / contract 관계) 는 future 재사용 permanent. 약화 방향 차단 ratchet (ADR-058 §결정 5 정합 — loop closure 원칙 축소 / OR→AND 완화 / 사용자 게이트 제거 시 약화 evidence-gate 의무)
 sunset_justification: null  # is_transitional false — sunset 기준 부재 + amendment 시 ratchet 강화 방향만 허용 (closure 원칙 추가 / 게이트 강도 강화 / disjoint 강도 강화). loop closure 원칙 축소 / 사용자 게이트 완화 = 약화 방향 → ADR-058 §결정 5 약화 evidence requirement 의무
-amendment_log: []
+amendment_log:
+  - amendment: 1
+    date: 2026-05-22
+    carrier_story: CFP-1193   # Epic CFP-1187 Story-4 (rollback signal monitor mechanism)
+    summary: "§결정 1 단계 2 two-part split — 단계 2-a (자동 rollback 직후 사후 알림 Issue 발의, 안전장치 3 동반분) = S4 早期 wire / 단계 2-b (일반 ops-signal Issue 자동 발의 + loop signature dedup gate 실 mechanism) = S6. cross-ADR reconcile: ADR-105 §결정 3 안전장치 3 (auto-rollback trigger 시 notification mechanism 必 동반 — 미충족 시 auto 진입 자격 없음) 이 단계 2 의 notification 부분을 S4 에 강제하는데, 원 §결정 1 표 + §경계 가 단계 2 전체를 S6 에 배정해 상호 모순 → split 으로 해소. §경계 line 162 S4/S5 row refine (S4 = 단계 1 + 단계 2-a notification only)."
+    direction: strengthening   # ratchet 강화 (단계 2 boundary 정밀화 — S4 가 안전장치 3 의무 동반분을 早期 wire, S6 영역 축소 0 — 일반 ops-signal + dedup mechanism 은 S6 유지). cross-ADR 정합 강화.
+    sunset_justification: null  # strengthening — 약화 0 (S6 일반 ops-signal Issue + dedup gate mechanism 무변경, S4 가 안전장치 3 notification 동반 의무분만 早期 wire). ADR-058 §결정 5 약화 evidence-gate 불요.
 ---
 
 # ADR-106 — 운영 metric → PMOAgent input 회로 (self-improving loop)
@@ -74,7 +80,8 @@ ADR-104 §결정 5 narrative 의 normative codify (trigger / 책임 주체 / 산
 | 단계 | trigger | 책임 주체 | 산출 | 정량 / 정합 기준 |
 |---|---|---|---|---|
 | **단계 1 — 운영 신호 회수** | measurement-channel.md 4종 신호 (에러율 / latency burn rate / regression / smoke·health) 중 임계 초과 또는 FAIL | consumer 측 cron workflow (S4~S5 실 구현) | 신호 event (signature + 측정값 + 임계값) | 정량 우선 (ADR-064 모달 어휘 금지) — signature = 신호유형 + 측정값 + window 수치 |
-| **단계 2 — 자동 Issue 생성** | 단계 1 신호 임계 초과 | mechanism (cron workflow → Issue 자동 발의, S6 실 wire) | GitHub Issue (`ops-signal` label, 본문에 측정값 / 임계값 수치 기록) | dedup gate 적용 영역 (동일 signature open Issue 존재 시 억제 — §결정 4 원칙 (a), 실 mechanism = S6) |
+| **단계 2-a — 자동 rollback 직후 사후 알림 Issue** (Amendment 1 split, **S4** 早期 wire) | 자동 rollback **trigger 발동** (안전장치 4 AND 충족 후 hook trigger) | mechanism (S4 monitor → Issue 자동 발의, **S4 실 wire** — CFP-1193) | GitHub Issue (`ops-signal` label, 본문에 측정값 / 임계값 수치 기록) | **ADR-105 §결정 3 안전장치 3 의무 동반분** — auto-rollback trigger 시 notification mechanism 必 동반 (미충족 시 auto 진입 자격 없음, 무음 rollback 금지). Issue-level dedup (단일 신호 24h 1 Issue) 적용 |
+| **단계 2-b — 일반 ops-signal Issue 자동 발의** (Amendment 1 split, **S6**) | 단계 1 신호 임계 초과 (auto-rollback trigger 와 disjoint — 일반 운영 신호 회로) | mechanism (cron workflow → Issue 자동 발의, **S6 실 wire**) | GitHub Issue (`ops-signal` label) | loop signature dedup gate 실 mechanism (Epic-level closure — 동일 signature open Issue / 진행 Epic 존재 시 억제, §결정 4 원칙 (a), **실 mechanism = S6**) |
 | **단계 3 — PMOAgent escalation** | `ops-signal` label Issue 감지 | PMOAgent (cross-cutting) | pattern_count 집계 → ≥ 2 시 ADR escalation forcing function (§결정 2 ADR-045 §D-9 답습) + retro 병합 기록 | pattern_count ≥ 2 (ADR-045 §D-9 threshold 답습) + escalation_action 2-value enum (adr_draft_emitted \| escalate_user) |
 | **단계 4 — 다음 Epic 후보** | PMOAgent escalation 발의 | Orchestrator → 사용자 | `codeforge:story-epic-flow-preflight` 로 Story / Epic flow 결정 (사용자 확인 게이트) | **사용자 확인 게이트 의무** (완전 자동 Epic 개시 금지 — §결정 2 ADR-045 §D-9 인간 게이트 답습) |
 
@@ -158,8 +165,9 @@ self-improving-loop.md (S1) 가 무한 발산 위험(동일 신호 반복 / Issu
 - **본 ADR scope** = self-improving loop **회로 정책 정의** (회로 4단계 trigger / 책임주체 / 산출 + ADR-045 §D-9 disjoint 답습 + KPI append-only 구조 declare + loop closure 3원칙 + operational-signal contract 관계 defer). declarative SSOT.
 - **S1 (ADR-104 §결정 5 / self-improving-loop.md)** = self-improving loop **narrative** (회로 4단계 서술 + closure gate 위험 식별 + S6 forward-ref). 본 ADR 이 narrative 를 normative codify (두 source 본문 **무변경** — forward-ref referent 충족만).
 - **S2 (ADR-105 §결정 3 안전장치 3)** = 자동 rollback 후 "사후 알림 → Issue 자동 발의 + PMOAgent escalation 의무" **declare**. 본 ADR 이 그 escalation 회로 실 정의.
-- **S6 (#1195)** = self-improving loop **실 mechanism** (PMOAgent 회로 실 wire / KPI append-only state 실 write / loop closure gate 실 구현 dedup·max-depth·escalate_user / operational-signal contract 실 신설·wiring). 본 ADR 은 회로 4단계·closure 3원칙·KPI 구조·contract 관계의 **정의만** — 실 mechanism / workflow yml / script / contract body 신설 0.
-- **S4 / S5** = ongoing monitor mechanism (단계 1 신호 회수 실 구현 — 자동 rollback signal monitor / regression monitor). 본 ADR 은 단계 1 input 4종 신호 (measurement-channel.md) cross-ref only.
+- **S6 (#1195)** = self-improving loop **실 mechanism** (PMOAgent 회로 실 wire / KPI append-only state 실 write / loop closure gate 실 구현 dedup·max-depth·escalate_user / **단계 2-b 일반 ops-signal Issue 자동 발의 + Epic-level signature dedup gate** (Amendment 1) / operational-signal contract 실 신설·wiring). 본 ADR 은 회로 4단계·closure 3원칙·KPI 구조·contract 관계의 **정의만** — 실 mechanism / workflow yml / script / contract body 신설 0.
+- **S4 / S5** = ongoing monitor mechanism (단계 1 신호 회수 실 구현 — 자동 rollback signal monitor / regression monitor). 본 ADR 은 단계 1 input 4종 신호 (measurement-channel.md) cross-ref only. **Amendment 1 (CFP-1193) 후 S4 = 단계 1 + 단계 2-a (자동 rollback 직후 사후 알림 Issue, ADR-105 §결정 3 안전장치 3 의무 동반분) 까지 실 wire** — auto-rollback trigger 시 notification mechanism 必 동반 강제 (cross-ADR reconcile). 단계 2-b (일반 ops-signal Issue + signature dedup mechanism) + 단계 3 + 단계 4 = S6 유지.
+- **단계 2-a ↔ 단계 2-b disjoint (Amendment 1)** — 단계 2-a = **auto-rollback trigger event** 동반 notification (S4, ADR-105 안전장치 3 강제, Issue-level dedup) / 단계 2-b = **일반 운영 신호** (auto-rollback 비동반) 의 ops-signal Issue + Epic-level signature dedup gate (S6). 두 path 는 trigger origin disjoint (rollback trigger vs 일반 신호) — S4 는 안전장치 3 의무 동반분만 早期 wire, S6 일반 회로는 무변경.
 
 ### ADR-045 §D-9 ↔ 본 ADR disjoint 표 (§결정 2 — "동일" 단일 진술 금지)
 
@@ -223,3 +231,4 @@ N/A — permanent policy
 | 날짜 (KST) | CFP | 변경 |
 |---|---|---|
 | 2026-05-22 | CFP-1192 | 최초 작성 — 운영 metric → PMOAgent input 회로 (self-improving loop normative codify: 회로 4단계 trigger/책임주체/산출 표 + ADR-045 §D-9 disjoint 답습 표 + KPI append-only state 구조 declare + loop closure 3원칙 OR 발동 + operational-signal contract defer (CFP-1059 placeholder precedent) + self-improving ≠ self-executing 단계 4 사용자 게이트 + 보안 trust boundary §7.1/§7.5). ArchitectAgent chief author direct write. Epic CFP-1187 Story-3. ADR-104 / ADR-105 / ADR-045 / self-improving-loop.md 본문 무변경 invariant. |
+| 2026-05-22 | CFP-1193 | **Amendment 1** — §결정 1 표 단계 2 two-part split (단계 2-a 자동 rollback 직후 사후 알림 Issue = **S4** 早期 wire / 단계 2-b 일반 ops-signal Issue + signature dedup gate = S6) + §경계 S4/S5 row refine + 단계 2-a↔2-b disjoint 진술 추가. **cross-ADR reconcile** — ADR-105 §결정 3 안전장치 3 (auto-rollback trigger 시 notification mechanism 必 동반, 미충족 시 auto 진입 자격 없음) 이 단계 2 의 notification 부분을 S4 에 강제하나 원 §결정 1 표 + §경계 가 단계 2 전체를 S6 배정 → 모순 해소. strengthening (S6 일반 회로 + dedup mechanism 무변경, S4 가 안전장치 3 의무 동반분만 早期 wire). ADR-104/105 본문 무변경. ArchitectAgent chief author (CFP-1193 설계리뷰 FIX iter1). |
