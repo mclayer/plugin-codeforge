@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# scripts/lib/walk_plan.py — CFP-1170 Phase 2
+# scripts/lib/walk_plan.py — CFP-1170 Phase 2 + CFP-1173 Phase 2
 # walk + plan Python SSOT (ADR-061 외부 .py 의무)
 #
 # 책임 (change-plan §3.4 / §4.3):
@@ -7,6 +7,9 @@
 #   (b) min_prerequisite_version topological resolve — 7-plugin DAG topological sort + mismatch detection
 #   (c) walk_result aggregate — bundle tier 7 plugin walk_result 종합 (deterministic exit code mapping)
 #   (d) marker_merge — walk apply stage R-2 customization marker 보존 흡수 (reconcile-overlay.sh 흡수)
+#   (e) importance_score hook — plan stage 각 entry blast-radius importance_score 계산 (CFP-1173)
+#       Story-5 placeholder → importance_score.py 실 wire
+#       brainstorming 결정 4: 3-tuple (touched_lanes + breaking + contract_major) weighted_sum
 #
 # ADR refs:
 #   ADR-061 python script-writing convention (외부 .py 의무)
@@ -16,7 +19,8 @@
 #   ADR-027 §결정 7.D.3 customization marker whole-line anchored
 #
 # SSOT: docs/change-plans/cfp-1170-cli-walk-tier.md §3.4 / §4.3 / §11.2
-# Contract: docs/inter-plugin-contracts/imperative-walker-protocol-v1.md §2.A/§2.E
+#       docs/change-plans/cfp-1173-blast-radius-parallel.md §3 importance_score hook
+# Contract: docs/inter-plugin-contracts/imperative-walker-protocol-v1.md §2.A/§2.E/§중요도
 #
 # sanity check 3종 (ADR-061 의무):
 #   1. diff inspection — 구현 직후 reviewer가 수행
@@ -518,6 +522,69 @@ def _split_consumer_outer(content: str) -> tuple[str, str]:
     return before, after
 
 
+# ──────────────────────────── (e) importance_score hook (CFP-1173) ────────────
+# Story-5 placeholder → importance_score.py 실 wire (brainstorming 결정 4)
+# plan stage 각 entry blast-radius importance_score 계산
+# SSOT: docs/change-plans/cfp-1173-blast-radius-parallel.md §3
+
+def _import_importance_score_module() -> Optional[object]:
+    """importance_score 모듈 lazy import (circular import 방지).
+
+    Returns:
+        importance_score 모듈 (성공) / None (미설치 — graceful degradation)
+    """
+    import importlib
+    import os as _os
+
+    # 같은 lib/ 디렉토리 우선
+    _lib_dir = _os.path.dirname(_os.path.abspath(__file__))
+    import sys as _sys
+    if _lib_dir not in _sys.path:
+        _sys.path.insert(0, _lib_dir)
+
+    try:
+        return importlib.import_module("importance_score")
+    except ImportError:
+        return None
+
+
+def calc_entry_importance_score(
+    touched_lanes_count: int,
+    breaking_change_marker: bool = False,
+    contract_major_bump: int = 0,
+) -> int:
+    """plan stage entry blast-radius importance_score 계산 hook.
+
+    importance_score.py SSOT 위임 (CFP-1173 실 wire).
+    Story-5 walk plan stage 에서 호출 — 각 changelog entry 에 score 부여.
+
+    Args:
+        touched_lanes_count: 영향받는 lane 수 (0~7)
+        breaking_change_marker: BREAKING CHANGE 마커 여부 (기본 False)
+        contract_major_bump: inter-plugin contract MAJOR bump 수 (기본 0)
+
+    Returns:
+        importance_score (int, 0 이상) — 높을수록 blast radius 높음.
+        importance_score.py 미설치 시 fallback = touched_lanes_count × 3 (graceful degradation).
+
+    Contract: imperative-walker-protocol-v1 §중요도 순서 (blast-radius 3-tuple)
+    SSOT: scripts/lib/importance_score.py (ADR-061 Python SSOT)
+    """
+    mod = _import_importance_score_module()
+    if mod is not None:
+        # importance_score.py 실 wire (CFP-1173 Story-5 placeholder 해소)
+        entry = mod.BlastRadiusTuple(
+            touched_lanes_count=touched_lanes_count,
+            breaking_change_marker=breaking_change_marker,
+            contract_major_bump=contract_major_bump,
+        )
+        return mod.calc_importance_score(entry)
+
+    # graceful degradation (importance_score.py 미설치 — touched_lanes × WEIGHT_LANES=3)
+    _FALLBACK_WEIGHT = 3
+    return touched_lanes_count * _FALLBACK_WEIGHT
+
+
 # ──────────────────────────── CLI entry point ─────────────────────────────────
 # (참조용 — 실제 CLI 진입점은 walk-single-plugin.sh / walk-bundle-7-plugins.sh)
 
@@ -536,5 +603,18 @@ if __name__ == "__main__":
     result = aggregate_walk_result([WalkResult.SUCCESS, WalkResult.FAILED])
     assert result == WalkResult.FAILED, f"sanity FAIL: {result}"
     print("  aggregate_walk_result([SUCCESS, FAILED]) = FAILED ✓")
+
+    # importance_score hook sanity (CFP-1173)
+    score_zero = calc_entry_importance_score(0, False, 0)
+    assert score_zero == 0, f"sanity FAIL importance_score(0,False,0): {score_zero}"
+    print(f"  calc_entry_importance_score(0, False, 0) = 0 ✓")
+
+    score_basic = calc_entry_importance_score(2, False, 0)
+    assert score_basic > 0, f"sanity FAIL importance_score(2,False,0): {score_basic}"
+    print(f"  calc_entry_importance_score(2, False, 0) = {score_basic} ✓")
+
+    score_break = calc_entry_importance_score(2, True, 0)
+    assert score_break > score_basic, f"sanity FAIL breaking > basic: {score_break} <= {score_basic}"
+    print(f"  calc_entry_importance_score(2, True, 0) = {score_break} > {score_basic} ✓")
 
     print("sanity check PASS")
