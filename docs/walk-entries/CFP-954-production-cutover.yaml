@@ -1,0 +1,112 @@
+# walk-entry: CFP-954 production cutover evidence layer 명령형 재표현
+# 출처: ADR-72 §결정 1 + §결정 5 ProductionEvidenceDeputy mandate
+#       reconcile-protocol-v1 §4.14 canary_compatibility_check_binding 의
+#       canary tier activation 연동 (Story-3 ProductionEvidenceDeputy spawn trigger)
+#       production-cutover-evidence.yml workflow (CFP-954, ADR-60 Amendment 10)
+# 참고: CFP-954 는 reconcile-protocol-v1 의 직접 §4.x 블록을 신설하지 않음.
+#       §4.10 canary tier 활성 consumer Story 의 ProductionEvidenceDeputy spawn 연동으로
+#       §4.14 (canary_compatibility_check_binding) 의 consumer Tier-2 evidence layer 역할.
+# Deprecated carrier: reconcile-protocol-v1 v1.13 (CFP-1125)
+# 재표현 패러다임: imperative-walker-protocol-v1 v1.0
+
+walk_entry_id: "WE-CFP-954-production-cutover"
+paradigm: "imperative-walk"
+carrier_cfp: "CFP-954"
+carrier_prs:
+  - "Wave 4 sub-Epic #882 Story-3 production cutover evidence layer"
+  - "production-cutover-evidence.yml workflow 병합 (CFP-954 carrier)"
+  - "Wave 4 sub-Epic #882 FULLY CLOSED 2026-05-19 KST (5/5 Story complete)"
+source_binding: >
+  ProductionEvidenceDeputy mandate (ADR-72 §결정 1 + §결정 5) —
+  reconcile-protocol-v1 §4.10 canary tier activation 연동 evidence layer.
+  주의: CFP-954 는 reconcile-protocol-v1 에 독립 §4.x 블록을 갖지 않음.
+  §4.14 canary_compatibility_check_binding 의 consumer Tier-2
+  measurement source "monitoring" 항목 (production-side metric) 의
+  evidence origin 이 CFP-954 ProductionEvidenceDeputy spawn 경로임.
+source_section: "ADR-72 §결정 1 + §결정 5 (production-cutover-evidence.yml, CFP-954)"
+carry_fidelity: "lossless"
+history_immutable: true
+
+# ── 선언적 바인딩 핵심 의미 요약 (ADR-72 §결정 5 원문 참조) ──
+# production cutover touching Story 에서 ProductionEvidenceDeputy spawn 의무.
+# 4-tuple evidence quad (MS-1 live_touching / MS-2 production_cutover_touching /
+#   MS-3 marketplace_publish_touching / MS-4 consumer_impact_blast_radius).
+# canary tier consumer Story 에서 §4.14 monitoring measurement_source 로 연결.
+
+walk_result_mapping:
+  SUCCESS: >
+    ProductionEvidenceDeputy spawn 완료 + 4-tuple evidence quad 모두 PASS +
+    production-cutover-evidence.yml workflow PASS.
+  SUCCESS_WITH_DEGRADATION: >
+    wrapper-self-app Tier-1 fast-PASS (production_cutover_touching=true AND
+    repo=wrapper AND code_change=0 triple-AND) — declare-time 면제, 실 측정 불필요.
+  PARTIAL_FAILURE: >
+    4-tuple 중 일부 evidence 미수집 (일부 measurement source n_a).
+  FAILED: >
+    ProductionEvidenceDeputy spawn 누락 (production_cutover_touching=true 인데
+    spawn 0건) 또는 4-tuple 중 1+ "fail" 판정.
+
+walk_steps:
+  - step_id: "WS-954-1"
+    description: >
+      Story 가 production cutover touching 여부 판별:
+      MS-2 production_cutover_touching dual-source AND
+      (live_touching AND production_cutover_touching).
+      wrapper-self-app = Tier-1 fast-PASS (ADR-72 §결정 6 정합).
+    check_command: >
+      production-cutover-evidence.yml workflow
+      (PR-open + workflow_dispatch 2-trigger, CFP-954 D2 consensus)
+    failure_mode: "판별 실패 → walk_result FAILED"
+
+  - step_id: "WS-954-2"
+    description: >
+      production_cutover_touching=true 시 ProductionEvidenceDeputy spawn.
+      4-tuple evidence quad 수집:
+        MS-1 live_touching 확인
+        MS-2 production_cutover_touching 확인
+        MS-3 marketplace_publish_touching 확인
+        MS-4 consumer_impact_blast_radius 평가
+    failure_mode: "spawn 누락 → walk_result FAILED"
+
+  - step_id: "WS-954-3"
+    description: >
+      §4.14 canary tier consumer 연동:
+      canary tier 활성 Story 에서 §4.14 promotion_criteria_4tuple.monitoring
+      measurement_source 의 evidence (production-side metric — Prometheus rate /
+      drainage rate / WAL sample) 로 ProductionEvidenceDeputy 수집 결과 제공.
+      canary tier 비활성 consumer = 본 step skip (n_a).
+    failure_mode: "monitoring evidence 부재 → promotion_criteria_4tuple.monitoring gate_state = fail"
+
+  - step_id: "WS-954-4"
+    description: >
+      evidence-checks-registry.yaml 에
+      production-cutover-deputy-spawn-evidence +
+      epic-cutover-gate-evidence-quad-check 두 entry (warning tier) 정합 확인.
+      hotfix-bypass:prod-cutover-deputy-evidence bypass 경로 감사.
+    check_command: >
+      docs/evidence-checks-registry.yaml 두 entry 상태 확인
+    failure_mode: "entry 미존재 → walk_result SUCCESS_WITH_DEGRADATION (경고 발화)"
+
+invariants_preserved:
+  - id: "INV-954-1"
+    name: "ProductionEvidenceDeputy spawn 의무"
+    detail: >
+      production_cutover_touching=true Story 에서 spawn 필수.
+      wrapper-self-app Tier-1 면제 = ADR-72 §결정 6 (production_cutover_touching=true
+      AND repo=wrapper AND code_change=0 triple-AND fast-PASS) 한정.
+  - id: "INV-954-2"
+    name: "4-tuple measurement source SSOT"
+    detail: >
+      MS-1/MS-2/MS-3/MS-4 dual-source AND 조합.
+      ADR-72 §결정 5 amendment_log Amendment 2 SSOT 보존.
+  - id: "INV-954-3"
+    name: "canary tier § 4.14 monitoring evidence 연동"
+    detail: >
+      §4.14 promotion_criteria_4tuple.monitoring.measurement_source =
+      "consumer production-side monitoring metric (ADR-72 §결정 5 evidence quad 정합)".
+      canary tier 비활성 = n_a (aggregate_rule: pass+n_a 조합 허용).
+
+open_extension: false
+
+walker_schema_ref: "imperative-walker-protocol-v1 §2.A (walk_result 4-value closed_enum)"
+source_contract_status: "ADR-72 (Active) — reconcile-protocol-v1 v1.13 Deprecated (CFP-1125, sunset_target CFP-1111-Wave-4-Story-11)"

@@ -1,0 +1,128 @@
+# walk-entry: CFP-1014 downgrade_asymmetry_marker 명령형 재표현
+# 출처: reconcile-protocol-v1 §4.14 canary_compatibility_check_binding
+#        > downgrade_asymmetry_marker (v1.12 CFP-1014 Story-5 wired 활성 완료)
+# (v1.11 placeholder_reserve 신설 CFP-991 / v1.12 wired 단독 promotion CFP-1014,
+#  Wave 4 sub-Epic #882 close marker 5/5 Story complete final state)
+# Deprecated carrier: reconcile-protocol-v1 v1.13 (CFP-1125)
+# 재표현 패러다임: imperative-walker-protocol-v1 v1.0
+
+walk_entry_id: "WE-CFP-1014-downgrade-asymmetry"
+paradigm: "imperative-walk"
+carrier_cfp: "CFP-1014"
+carrier_prs:
+  - "wrapper PR #1022 (2ff49abe) — CFP-1014 Phase 1 병합"
+  - "wrapper PR #1023 (af6a82c6) — CFP-1014 Phase 1 추가 병합"
+  - "internal-docs PR #670 (5fb52707) — CFP-1014 Phase 1 병합"
+  - "internal-docs PR #672 (f820ac2e) — CFP-1014 Phase 1 병합"
+  - "Wave 4 sub-Epic #882 FULLY CLOSED 2026-05-19 KST (5/5 Story complete)"
+source_binding: "canary_compatibility_check_binding > downgrade_asymmetry_marker"
+source_section: "reconcile-protocol-v1 §4.14 (downgrade_asymmetry_marker sub-field)"
+carry_fidelity: "lossless"
+history_immutable: true
+
+# ── 선언적 바인딩 핵심 의미 요약 (참조 전용 — reconcile-protocol-v1 §4.14 원문 변조 0) ──
+# downgrade_asymmetry_marker.status: "wired" (v1.12 CFP-1014 Story-5 wired 활성 완료).
+# closed_enum: ["placeholder_reserve","wired"] length=2 invariant, open_extension:false.
+# stable→beta demotion 또는 beta→canary demotion 이 promotion 역방향 path 임을
+# wired 형태로 명시 → downgrade path 가 promotion symmetry assumption 으로
+# 우회될 가능성 차단 (SecurityArch T-5.1 mitigation core field).
+# §4.8 version_handshake placeholder_reserve→active 단독 promotion 선례 verbatim 답습.
+
+walk_result_mapping:
+  SUCCESS: >
+    directionality: forward_only 검증 PASS +
+    downgrade_path_forbidden: true 검증 PASS +
+    demotion 시도 0건 (silently 통과 없음) +
+    canary→beta→stable 7-tuple consistency 검증 통과.
+  SUCCESS_WITH_DEGRADATION: >
+    walker 가 downgrade_asymmetry_marker field 를 소스 계약에서 읽을 수 없는 경우
+    (reconcile-protocol-v1 Deprecated 이후 참조 경로 없음 — §2.A walk_result semantic carry).
+    경고 발화 의무 (silent 금지).
+  PARTIAL_FAILURE: >
+    directionality field 존재하나 forward_only 외 값 (open_extension:false 위반).
+    downgrade 시도가 탐지되었으나 부분 차단 (하위 호환 이슈).
+  FAILED: >
+    downgrade_path 실행 시도 감지 (reverse walk direction) 또는
+    closed_enum ["placeholder_reserve","wired"] 외 값 감지 (length=2 invariant 위반) 또는
+    downgrade_asymmetry_marker.status 가 "wired" 가 아닌 역방향 변경 감지
+    (CFP-1014 v1.12 이후 "placeholder_reserve" 로의 회귀 = 차단).
+
+walk_steps:
+  - step_id: "WS-1014-1"
+    description: >
+      walker walk_steps 의 실행 방향성 선언 확인:
+      directionality: forward_only 필드 존재 + 값 검증.
+      reverse walk direction (canary←beta 또는 beta←stable demotion 방향)
+      시도 시 즉시 차단.
+    failure_mode: "reverse direction 감지 → walk_result FAILED"
+
+  - step_id: "WS-1014-2"
+    description: >
+      downgrade_path_forbidden: true 검증.
+      stable→beta, beta→canary, stable→canary 방향 전환 (demotion path)
+      이 promotion_criteria_4tuple evaluation 없이 진행되는지 확인.
+      demotion = promotion 의 역방향 — asymmetry invariant 보존.
+    failure_mode: "downgrade_path 실행 감지 → walk_result FAILED"
+
+  - step_id: "WS-1014-3"
+    description: >
+      canary→beta→stable 7-tuple (family 7 plugin × channel tier) consistency 검증.
+      demotion 발생 시 family 7 plugin 전체 동시 반영 의무
+      (family_7_plugin_atomic invariant — partial demotion 차단).
+      이 step 은 WE-CFP-906 INV-906-2 (family_7_plugin_atomic × channel pin) 와
+      연동된 검증이다.
+    failure_mode: "partial demotion (일부 plugin만 channel demotion) → walk_result FAILED"
+
+  - step_id: "WS-1014-4"
+    description: >
+      downgrade_asymmetry_marker.closed_enum 불변 확인:
+      enum ["placeholder_reserve","wired"] length=2 invariant.
+      v1.12 CFP-1014 이후 status="wired" 가 최종 상태.
+      "wired → placeholder_reserve" 역방향 약화 차단
+      (ADR-058 §결정 5 sunset_justification 의무 구역 — 역방향 변경 = ratchet 위반).
+    failure_mode: >
+      closed_enum 외 값 또는 length≠2 → walk_result FAILED.
+      "wired → placeholder_reserve" 역방향 변경 시도 → walk_result FAILED.
+
+  - step_id: "WS-1014-5"
+    description: >
+      walker integration test 내 forward-only directionality 검증 확인:
+      reverse path 시도 시 walk_result = FAILED 정확 분류.
+      closed_enum open_extension:false 명시 의무
+      (imperative-walker-protocol-v1 §2.A.3 unconditional closed_enum invariant 정합).
+    check_command: >
+      walker integration test: reverse path 시도 → walk_result FAILED 정확 분류 verify
+    failure_mode: "integration test 미존재 → walk_result SUCCESS_WITH_DEGRADATION (경고)"
+
+invariants_preserved:
+  - id: "INV-1014-1"
+    name: "downgrade_asymmetry_marker closed_enum length=2"
+    detail: >
+      enum: ["placeholder_reserve","wired"] length=2 invariant.
+      open_extension: false (CFP-1014 v1.12 명시화).
+      3번째 enum 값 신설 = ADR-064 §self-application 강화 방향 amendment 로만 가능.
+  - id: "INV-1014-2"
+    name: "wired status 단방향 ratchet"
+    detail: >
+      status: "placeholder_reserve → wired" 단독 promotion = 완료 (CFP-1014 v1.12 final state).
+      역방향 "wired → placeholder_reserve" = 차단
+      (ADR-064 §self-application + ADR-058 §결정 5 sunset_justification 의무).
+      §4.4 row 7 역방향 약화 차단 row append (reconcile-protocol-v1 v1.12) 으로 명문화됨.
+  - id: "INV-1014-3"
+    name: "directionality forward_only"
+    detail: >
+      walker schema 안 directionality enum 의 open_extension: false 명시 의무.
+      §4.14 sunset boundary 지시:
+      "walker schema 안 directionality enum 의 open_extension: false 명시 의무.
+      β2 audit 3 carry-over 설계 주의 사항 #1 정합."
+  - id: "INV-1014-4"
+    name: "§4.8 단독 promotion 선례 verbatim 답습"
+    detail: >
+      placeholder_reserve→wired 단독 promotion = §4.8 version_handshake
+      placeholder_reserve→active 단독 promotion 선례 verbatim 답습.
+      partial-active state 도입 0 / field shape 변경 0 / closed_enum length=2 보존.
+
+open_extension: false
+
+walker_schema_ref: "imperative-walker-protocol-v1 §2.A (walk_result 4-value closed_enum) + §4.14 sunset boundary directionality field"
+source_contract_status: "reconcile-protocol-v1 v1.13 Deprecated (CFP-1125, sunset_target CFP-1111-Wave-4-Story-11)"

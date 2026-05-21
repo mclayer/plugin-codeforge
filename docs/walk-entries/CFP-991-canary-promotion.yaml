@@ -1,0 +1,145 @@
+# walk-entry: CFP-991 canary promotion criteria enforcement layer 명령형 재표현
+# 출처: reconcile-protocol-v1 §4.14 canary_compatibility_check_binding
+# (v1.11 신설 CFP-991, Wave 4 sub-Epic #1 Story-4, Epic CFP-882)
+# Deprecated carrier: reconcile-protocol-v1 v1.13 (CFP-1125)
+# 재표현 패러다임: imperative-walker-protocol-v1 v1.0
+
+walk_entry_id: "WE-CFP-991-canary-promotion"
+paradigm: "imperative-walk"
+carrier_cfp: "CFP-991"
+carrier_prs:
+  - "Wave 4 sub-Epic #882 Story-4 canary promotion criteria enforcement layer 병합"
+  - "Wave 4 sub-Epic #882 FULLY CLOSED 2026-05-19 KST (5/5 Story complete)"
+source_binding: "canary_compatibility_check_binding"
+source_section: "reconcile-protocol-v1 §4.14"
+carry_fidelity: "lossless"
+history_immutable: true
+
+# ── 선언적 바인딩 핵심 의미 요약 (참조 전용 — reconcile-protocol-v1 §4.14 원문 변조 0) ──
+# §4.10 (channel state axis) ↔ §4.14 (promotion gate axis) axis disjoint invariant 보존.
+# canary → beta promotion gate evaluation: 4-tuple measurement source
+# (functional + security + monitoring + testing).
+# family_7_atomic_canary_pin: publisher_versions[] length_invariant=7.
+# canary_consumer_evidence_origin enum: ["wrapper_self","consumer_self","mixed"] open_extension:false.
+# promotion_gate_failure_mode enum: ["warning_first","blocking_on_pr"] open_extension:false, default warning_first.
+
+walk_result_mapping:
+  SUCCESS: >
+    4-tuple measurement source 모두 "pass" 또는 "pass"+"n_a" 조합 +
+    family_7_atomic_canary_pin 3-way match 검증 PASS +
+    inter_plugin_contract backward_compat verify PASS (MINOR-only, ADR-008 §결정 2).
+  SUCCESS_WITH_DEGRADATION: >
+    wrapper-self-app Tier-1 fast-PASS
+    (production_cutover_touching=true AND repo=wrapper AND code_change=0 triple-AND).
+    선언 시간 면제 = 실 측정 불필요.
+    또는: 네트워크 일시 실패 / sandbox fetch fail (warning exit 1).
+  PARTIAL_FAILURE: >
+    4-tuple 중 일부 "n_a" 이지만 "fail" 0건 — promotion 진행 가능
+    (aggregation_rule: all "pass" OR "pass"+"n_a" 조합 = proceed).
+  FAILED: >
+    4-tuple 1+ "fail" (promotion abort) 또는
+    family_7_atomic_canary_pin length_invariant=7 위반 (validator FAIL exit 2) 또는
+    3-way version mismatch (fail-loud exit 2) 또는
+    MAJOR inter-plugin contract bump 감지 (ADR-008 §결정 2 위배).
+
+walk_steps:
+  - step_id: "WS-991-1"
+    description: >
+      wrapper-self-app Tier-1 exemption fast-PASS 검사:
+      triple-AND (production_cutover_touching=true AND repo=wrapper AND code_change=0)
+      → exit 0 즉시 반환 (ADR-72 §결정 6 wrapper-self-app N/A invariant).
+    failure_mode: "triple-AND 불충족 → 다음 step 진행 (Tier-2 runtime 측정)"
+
+  - step_id: "WS-991-2"
+    description: >
+      canary_consumer_evidence_origin enum closed-set 검증:
+      ["wrapper_self","consumer_self","mixed"] open_extension:false.
+      promotion_gate_failure_mode enum closed-set 검증:
+      ["warning_first","blocking_on_pr"] open_extension:false.
+      _validate_enum_closed_set() helper 호출.
+    check_command: >
+      scripts/lib/canary-compatibility-helpers.sh::_validate_enum_closed_set()
+    failure_mode: "enum 외 값 감지 → walk_result FAILED (exit 2)"
+
+  - step_id: "WS-991-3"
+    description: >
+      family_7_atomic_canary_pin 검증:
+      publisher_versions[] array length_invariant=7 확인.
+      member_enum: ["codeforge","codeforge-requirements","codeforge-design",
+                    "codeforge-develop","codeforge-test","codeforge-review","codeforge-pmo"].
+      _enumerate_family_7_canary_versions() helper 호출.
+    check_command: >
+      scripts/lib/canary-compatibility-helpers.sh::_enumerate_family_7_canary_versions()
+    failure_mode: "length≠7 또는 member_enum 위반 → walk_result FAILED (exit 2)"
+
+  - step_id: "WS-991-4"
+    description: >
+      promotion_criteria_4tuple 각 sub measurement_source 수집 + evidence_origin annotation 검증:
+        functional: consumer Story functional test pass-rate (bats GREEN + integration test PASS)
+        security:   consumer Story SecurityTestPLAgent verdict + ProductionEvidenceDeputy evidence
+        monitoring: consumer production-side monitoring metric (Prometheus / drainage / WAL)
+        testing:    consumer Story IntegrationTestAgent verdict
+      evidence_origin_annotation_required: true (T-1.1 elevation 차단).
+      _extract_4tuple_measurement_source() helper 호출.
+    check_command: >
+      scripts/lib/canary-compatibility-helpers.sh::_extract_4tuple_measurement_source()
+    failure_mode: "1+ sub fail → promotion abort (exit 1 warning_first / exit 2 blocking_on_pr 승격 후)"
+
+  - step_id: "WS-991-5"
+    description: >
+      publisher ↔ registry ↔ consumer 3-way version diff (canary tier):
+      publisher plugin.json .version (7 plugin × 1 each)
+      ↔ registry marketplace.json channels[tier=canary].version
+      ↔ consumer .codeforge.channel.tier=canary declared.
+      ADR-063 Amendment 5 §결정 15 3-way atomic invariant 준수.
+      _three_way_version_diff() helper 호출.
+    check_command: >
+      scripts/check-canary-compatibility.sh
+      (3-tier exit code: 0=PASS / 1=warning missing / 2=mechanical anchor invalid)
+    failure_mode: "3-way mismatch → walk_result FAILED (fail-loud exit 2)"
+
+  - step_id: "WS-991-6"
+    description: >
+      inter_plugin_contract backward_compat verify:
+      promotion gate evaluation 시점 inter-plugin contract
+      (review-verdict-v4 / label-registry-v2 / reconcile-protocol-v1 등) MAJOR bump 없는지 확인.
+      minor_only_rule_passed: bool (ADR-008 §결정 2 MINOR-only invariant guard).
+      _verify_inter_plugin_contract_minor_only() 호출.
+    check_command: >
+      scripts/check-canary-compatibility.sh::verify_inter_plugin_contract_minor_only
+      (MANIFEST.yaml + frontmatter version diff 확인)
+    failure_mode: "MAJOR bump 감지 → walk_result FAILED (exit 2)"
+
+invariants_preserved:
+  - id: "INV-991-1"
+    name: "axis_disjoint (§4.10 channel state ↔ §4.14 promotion gate)"
+    detail: >
+      channel_state_axis (§4.10): channel tier resolve + family atomic pin + 3-way drift.
+      promotion_gate_axis (§4.14): promotion criteria evaluation + transition gate.
+      embedding_forbidden: true — §4.10 블록 내 §4.14 로직 inline embed 금지 (SRP).
+  - id: "INV-991-2"
+    name: "canary_consumer_evidence_origin closed-enum"
+    detail: >
+      enum: ["wrapper_self","consumer_self","mixed"] open_extension:false.
+      enum 확장 = reconcile-protocol-v1 MINOR bump + helper 갱신 + label-registry-v2 sibling carrier 의무.
+  - id: "INV-991-3"
+    name: "promotion_gate_failure_mode closed-enum"
+    detail: >
+      enum: ["warning_first","blocking_on_pr"] open_extension:false, default warning_first.
+      역방향 약화 (warning_first → blocking 후 revert) = ADR-058 §결정 5 sunset_justification 의무.
+  - id: "INV-991-4"
+    name: "family_7_atomic_canary_pin length_invariant=7"
+    detail: >
+      publisher_versions[] length 고정 = 7 (wrapper + 6 lane).
+      length_violation_behavior: validator FAIL exit 2.
+      ADR-016 §결정 1 family atomic unit 의 canary 차원 확장.
+  - id: "INV-991-5"
+    name: "wrapper-self-app Tier-1 영구 fast-PASS"
+    detail: >
+      out_of_scope: wrapper_self_app_runtime_4tuple_measurement.
+      ADR-72 §결정 6 wrapper-self-app N/A invariant — 영구 fast-PASS scope.
+
+open_extension: false
+
+walker_schema_ref: "imperative-walker-protocol-v1 §2.A (walk_result 4-value closed_enum)"
+source_contract_status: "reconcile-protocol-v1 v1.13 Deprecated (CFP-1125, sunset_target CFP-1111-Wave-4-Story-11)"
