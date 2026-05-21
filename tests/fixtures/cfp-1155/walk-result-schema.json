@@ -1,0 +1,85 @@
+{
+  "schema_version": "1.0",
+  "carrier": "CFP-1155",
+  "contract_ref": "docs/inter-plugin-contracts/imperative-walker-protocol-v1.md",
+  "contract_section": "§2.A",
+  "walk_result": {
+    "enum": ["SUCCESS", "SUCCESS_WITH_DEGRADATION", "PARTIAL_FAILURE", "FAILED"],
+    "open_extension": false,
+    "exit_code_mapping": "deterministic"
+  },
+  "layers": {
+    "external_report": {
+      "name": "walk completion report",
+      "facing": "human-facing",
+      "fields": ["from_version", "to_version", "target_version_release_date", "key_changes_summary"],
+      "open_extension": false
+    },
+    "internal_schema": {
+      "name": "walk_result detail",
+      "facing": "machine/audit-facing",
+      "fields": ["touched_files", "atomic_invariants", "verify_via", "lane_outcomes"],
+      "open_extension": false
+    }
+  },
+  "invariants": {
+    "enum_closed": true,
+    "layer_disjoint": true,
+    "exit_code_deterministic": true,
+    "silent_success_forbidden": true
+  },
+  "test_cases": {
+    "TC-1": {
+      "name": "walk_result enum closed_set",
+      "valid_values": ["SUCCESS", "SUCCESS_WITH_DEGRADATION", "PARTIAL_FAILURE", "FAILED"],
+      "invalid_values": ["UNKNOWN", "PARTIAL_SUCCESS", "ERROR", ""]
+    },
+    "TC-2": {
+      "name": "2-layer 4-field presence",
+      "required_external_fields": ["from_version", "to_version", "target_version_release_date", "key_changes_summary"],
+      "required_internal_fields": ["touched_files", "atomic_invariants", "verify_via", "lane_outcomes"],
+      "cross_contamination_forbidden": true
+    },
+    "TC-3": {
+      "name": "exit code deterministic mapping",
+      "exit_0_allowed_values": ["SUCCESS", "SUCCESS_WITH_DEGRADATION"],
+      "exit_nonzero_allowed_values": ["PARTIAL_FAILURE", "FAILED"],
+      "forbidden_combination": [
+        {"exit_code": 1, "walk_result": "SUCCESS"},
+        {"exit_code": 2, "walk_result": "SUCCESS"},
+        {"exit_code": 1, "walk_result": "SUCCESS_WITH_DEGRADATION"}
+      ]
+    },
+    "TC-4": {
+      "name": "dry-run filesystem touch 0",
+      "filesystem_touch": 0,
+      "network_calls": 0,
+      "apply_stage_active": false
+    },
+    "TC-5": {
+      "name": "min_prereq mismatch fallback",
+      "fixture": {"consumer_pin": "5.0.0", "plugin_min": "6.0.0", "grace_window_active": true},
+      "expected_walk_result": "SUCCESS_WITH_DEGRADATION",
+      "fallback_trigger_fired": true
+    },
+    "TC-6": {
+      "name": "per-family atomic rollback",
+      "fixture": {"inject_failure_plugin": "codeforge-design", "family_scope": "all_7_plugins"},
+      "expected_walk_result": "PARTIAL_FAILURE",
+      "family_rollback": true,
+      "partial_artifact_forbidden": true
+    },
+    "TC-7": {
+      "name": "customization marker 보존",
+      "fixture": {"marker_block_inside": "wrapper_ssot_content", "marker_block_outside": "consumer_preserved_content"},
+      "expected": {"inside_result": "wrapper_ssot_content", "outside_result": "consumer_preserved_content"},
+      "rollback_restores_marker": true
+    },
+    "TC-8": {
+      "name": "idempotency",
+      "fixture": {"target_version": "6.0.0", "applied_changelog_entry_hash": "abc123"},
+      "second_apply_result": "no-op",
+      "diff_empty": true
+    }
+  }
+}
