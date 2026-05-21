@@ -522,6 +522,132 @@ def _split_consumer_outer(content: str) -> tuple[str, str]:
     return before, after
 
 
+# ──────────────────────────── (f) apply_overlay_file (CFP-1177) ───────────────
+# consumer overlay 파일에 customization marker 보존 3-way merge 를 안전하게 적용하는
+# orchestration 함수 (D1 — ADR-027 Amendment 9 패러다임 무관 preserved layer).
+#
+# SSOT: docs/adr/ADR-027-consumer-adoption-protocol.md Amendment 9
+# 관련: merge_with_marker (위 §d — 이 함수가 호출하는 primitive)
+#       reconcile-overlay.sh §7.4.1(g) abort-before-touch analog (filesystem 0)
+#
+# 책임 분리:
+#   - 본 함수 = 순수 함수 (문자열 입력 → OverlayApplyResult 출력, filesystem 접촉 0)
+#   - filesystem write + loss-report 표면화 = 호출자 책임 (.sh dispatcher)
+#   이는 reconcile-overlay.sh 의 분리 패턴 (shell 오케스트레이션 / python 계산) 답습.
+
+
+@dataclass(frozen=True)
+class OverlayApplyResult:
+    """apply_overlay_file 결과 frozen dataclass (5 필드 — ADR-027 Amendment 9).
+
+    Fields:
+        merged_content:             3-way merge 결과 문자열 (integrity 위반 시 consumer_content 원본)
+        loss_occurred:              True = consumer customization 손실 (MARKER_NONE 경로)
+        loss_report:                손실 발생 시 user-visible 보고 문자열 (silent overwrite 0 — EPIC-AC-4)
+        integrity_ok:               True = marker 밖 영역 byte-identical 보존 검증 통과 / MARKER_NONE N/A
+        integrity_violation_reason: integrity 위반 시 사유 문자열 (정상 경로 = "")
+    """
+    merged_content: str
+    loss_occurred: bool
+    loss_report: str
+    integrity_ok: bool
+    integrity_violation_reason: str
+
+
+def apply_overlay_file(
+    wrapper_content: str,
+    consumer_content: str,
+    base_content: str = "",
+) -> OverlayApplyResult:
+    """consumer overlay 파일에 customization marker 보존 3-way merge 적용 (순수 함수).
+
+    ADR-027 Amendment 9 — paradigm-agnostic preserved layer invariant:
+      - MARKER_VALID 경로: marker 안 = wrapper SSOT wins (무조건), 밖 = consumer byte-identical 보존
+      - MARKER_NONE 경로: wholesale wrapper mirror + loss_report (silent overwrite 0 — EPIC-AC-4)
+      - integrity fingerprint check 의무 (merge_with_marker docstring 의 "호출자 책임" 이행)
+
+    Args:
+        wrapper_content:  신규 wrapper SSOT 내용 (apply 대상)
+        consumer_content: 현재 consumer overlay 내용
+        base_content:     이전 wrapper SSOT (비교 기준 — 기본값 "" = BASE_ABSENT).
+                          NOTE: marker 안 = wrapper_content unconditionally wins.
+                          base_content 는 marker 안 merge 에 사용되지 않는다 (by-design).
+                          reconcile-protocol-v1 시그니처 호환성 유지 목적으로만 보존.
+
+    Returns:
+        OverlayApplyResult:
+          - MARKER_VALID 정상: merged_content=merge 결과, loss_occurred=False,
+                               loss_report="", integrity_ok=True, integrity_violation_reason=""
+          - MARKER_NONE:       merged_content=wrapper_content, loss_occurred=True,
+                               loss_report=<보고>, integrity_ok=True, integrity_violation_reason=""
+          - INTEGRITY 위반:    merged_content=consumer_content (fallback),
+                               integrity_ok=False, integrity_violation_reason=<사유>
+
+    DRY 준수: merge_with_marker primitive 재사용 (marker logic 재구현 금지 — ADR-027 §결정 7.B).
+    filesystem 접촉 0 — 순수 함수 invariant.
+    """
+    # Step 1: merge_with_marker primitive 호출
+    merged, loss_occurred, loss_report = merge_with_marker(
+        base_content, wrapper_content, consumer_content
+    )
+
+    # Step 2: MARKER_NONE 경로 — integrity check N/A (wholesale overwrite 이미 완료)
+    if not _has_marker(consumer_content):
+        return OverlayApplyResult(
+            merged_content=merged,
+            loss_occurred=loss_occurred,
+            loss_report=loss_report,
+            integrity_ok=True,
+            integrity_violation_reason="",
+        )
+
+    # Step 3: MARKER_VALID 경로 — integrity fingerprint check
+    # consumer marker-outside 원본과 merge 결과의 marker-outside 를 byte-identical 비교.
+    # merge_with_marker docstring 이 위임한 "호출자 책임" 영역 이행.
+    consumer_before, consumer_after = _split_consumer_outer(consumer_content)
+    merged_before, merged_after = _split_consumer_outer(merged)
+
+    outside_preserved = (
+        merged_before == consumer_before and merged_after == consumer_after
+    )
+
+    if not outside_preserved:
+        # abort-before-touch analog (reconcile-overlay.sh §7.4.1(g)):
+        # corrupted merge 는 절대 내보내지 않는다 → consumer_content 원본 fallback.
+        reason_parts = []
+        if merged_before != consumer_before:
+            reason_parts.append(
+                f"marker 앞 영역 불일치 (before: 기대 {len(consumer_before)}자, "
+                f"실제 {len(merged_before)}자)"
+            )
+        if merged_after != consumer_after:
+            reason_parts.append(
+                f"marker 뒤 영역 불일치 (after: 기대 {len(consumer_after)}자, "
+                f"실제 {len(merged_after)}자)"
+            )
+        violation_reason = (
+            "[integrity-check-FAIL] marker 밖 영역 byte-identical 보존 실패. "
+            + " / ".join(reason_parts)
+            + " — abort-before-touch: consumer_content 원본 유지 (ADR-027 Amendment 9)."
+        )
+        return OverlayApplyResult(
+            merged_content=consumer_content,  # fallback to original
+            loss_occurred=False,
+            loss_report="",
+            integrity_ok=False,
+            integrity_violation_reason=violation_reason,
+        )
+
+    # integrity OK — 정상 반환
+    return OverlayApplyResult(
+        merged_content=merged,
+        loss_occurred=loss_occurred,
+        loss_report=loss_report,
+        integrity_ok=True,
+        integrity_violation_reason="",
+    )
+
+
 # ──────────────────────────── (e) importance_score hook (CFP-1173) ────────────
 # Story-5 placeholder → importance_score.py 실 wire (brainstorming 결정 4)
 # plan stage 각 entry blast-radius importance_score 계산

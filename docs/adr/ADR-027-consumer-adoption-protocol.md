@@ -31,6 +31,7 @@ amendments:
   - ADR-027-Amendment-6-CFP-899  # CFP-858 Wave 4 sub-Epic S2 — consumer adoption detection signals 4-way truth-table SSOT (.claude-plugin/plugin.json + .claude/_overlay/project.yaml 2-signal cross-product → consumer/plugin/mixed/unknown 4-way enum, ADR-083 §결정 1 sibling carrier). §결정 10 신설
   - ADR-027-Amendment-7-CFP-1059  # CFP-1059 Story-1 — consumer adoption 시 project.yaml `deploy.*` schema 확장 (5 sub-field: host_mapping / docker_hub / traefik / 1password / ssh_targets) — codeforge-deploy lane 신설 정합. §결정 11 신설
   - ADR-027-Amendment-8-CFP-1125  # CFP-1125 (CFP-1111 Wave-4 Story-11) — Amendment 6 sunset_boundary declarative (β2 audit #1113 Anchor 4 LOSSLESS 판정 carry). Amendment 6 §결정 10 4-way detection signals + D4 customization marker preserve invariant 의 효용을 CFP-1111 walker paradigm 으로 carry — walker repo-kind detection hook (detect-repo-kind.py 재사용) 동일 truth-table + walker per-step customization_marker_preserve flag 0 silent overwrite. is_transitional 본체 false 무변경 (영역 분리 — Amendment 6 영역만 sunset boundary 명시, 본체 다른 amendment 영향 0). ratchet 강화 only (declaration-only Wave-1 → walker Wave-4 carry), 약화 0건
+  - ADR-027-Amendment-9-CFP-1177  # CFP-1177 Story-8 — customization marker block 을 paradigm-agnostic preserved layer 로 codify. 동일 invariant (marker 안 = wrapper SSOT wins, 밖 = consumer byte-identical 보존, integrity fingerprint check 의무, MARKER_NONE = wholesale + user-visible loss report) 가 declarative reconcile (ADR-076 / reconcile-overlay.sh) AND imperative walk apply (walk_plan.py apply_overlay_file) 양 경로에 동일 적용. Walk apply 는 merge_with_marker primitive 재사용 의무 (DRY — 재구현 금지). §결정 12 신설
 amendment_log:
   - amendment_id: 8
     date: 2026-05-21
@@ -38,6 +39,12 @@ amendment_log:
     summary: "Amendment 6 sunset boundary declarative (CFP-1111 Wave-4 Story-11 walker paradigm carry). Amendment 6 §결정 10 4-way detection signals (`.claude-plugin/plugin.json` + `.claude/_overlay/project.yaml` 2-signal cross-product → consumer/plugin/mixed/unknown) + D4 customization marker preserve invariant (Amendment 3 §결정 7) 의 효용을 walker per-step customization_marker_preserve flag + walker repo-kind detection hook (detect-repo-kind.py 재사용) 으로 carry. β2 audit (#1113) Anchor 4 LOSSLESS 판정. is_transitional 본체 false 무변경 (영역 분리 — Amendment 6 영역만 sunset boundary 명시, 다른 amendment 영역 영향 0). sister CFP-1115 (β5 ADR-027 Amendment 7) 가 D4 marker block imperative walk 정합 별 carrier. ratchet 강화 only (Wave-1 detection signals SSOT → Wave-4 walker integration test 안 4-way enum 정확 분류 + D4 marker pair preserve verify), 약화 0건 — ADR-058 §결정 5 ratchet 강화 only 정합."
     is_transitional: false
     sunset_justification: "Amendment 6 영역 한정 sunset boundary — 본체 `is_transitional: false` permanent governance invariant 무변경 (영역 분리 명시). Amendment 6 효용 (4-way detection signals + D4 marker preserve invariant) 은 CFP-1111 Wave-4 Story-11 walker paradigm 으로 carry. metric = walker integration test (4-way enum 정확 분류 + D4 marker pair preserve verify, N walk 실행 0 silent overwrite). who = walker repo-kind detection hook (detect-repo-kind.py 재사용) + walker per-step customization_marker_preserve flag. how = walker integration test 안 mock consumer + mock plugin + mock mixed 3 사례 cover + D4 marker pair preserve verify. cross-ref CFP-1113 β2 audit Anchor 4 LOSSLESS 판정 + sister CFP-1115 (β5 Amendment 7 별 carrier — D4 marker block imperative walk 정합)."
+  - amendment_id: 9
+    date: 2026-05-21
+    cfp: CFP-1177
+    summary: "customization marker block paradigm-agnostic preserved layer codify (CFP-1177 Story-8). Amendment 3 §결정 7 의 invariant (marker 안 = wrapper SSOT wins / 밖 = consumer byte-identical 보존 / integrity fingerprint check 의무 / MARKER_NONE = wholesale + user-visible loss report) 가 declarative reconcile (ADR-076 / reconcile-overlay.sh) AND imperative walk apply (walk_plan.py apply_overlay_file) 양 경로 모두에 동일 적용됨을 normative codify. apply_overlay_file = merge_with_marker primitive 재사용 (DRY 원칙 — marker logic 재구현 금지). §결정 12 신설. ratchet 강화: scope 확장 (declarative-only → declarative+imperative), weakening 0건 — ADR-058 §결정 5 정합."
+    is_transitional: false
+    sunset_justification: "ratchet 강화 방향 전용 (scope 확장: declarative-only invariant → declarative+imperative 양 경로 동일 invariant). is_transitional: false permanent governance invariant 무변경. metric = bats TC suite (tests/scripts/cfp-1177/cfp-1177-overlay-apply.bats 19 TC — MARKER_VALID 3-way / MARKER_NONE wholesale / integrity fallback / base_content 시그니처 호환 / frozen dataclass). who = apply_overlay_file 함수 (walk_plan.py §f). how = bats TC 19/19 GREEN + walk_plan.py _split_consumer_outer round-trip byte-identical verify. scope 확장 = weakening 0 (기존 declarative path 무변경, imperative path 신규 적용 추가). ADR-058 §결정 5 sunset_justification = ratchet 강화 방향 전용 exemption 정합."
 mechanical_enforcement_actions:
   - action_name: section-1-verbatim-postmerge
     decision_binding: "Amendment 2 §결정 6.A — manual fallback path 의 §1 verbatim invariant post-merge lint (warning tier)"
@@ -763,3 +770,64 @@ ADR-027 frontmatter `is_transitional: false` (permanent policy). Amendment 7 = c
 - ADR-083 §결정 1 (consumer-applicability filter 4-way enum — consumer repo 만 schema 검증 fire)
 - ADR-064 §self-application top-down ratchet (강화 방향 only, 약화 0)
 - ADR-058 §결정 5 sunset_justification (ratchet 강화 방향 = sunset 면제, is_transitional: false 보존)
+
+## Amendment 9 — customization marker block paradigm-agnostic preserved layer codify (CFP-1177)
+
+**Effective**: 2026-05-21 (CFP-1177 Story-8 Phase 2 PR merge 시점).
+
+**Carrier**: CFP-1177 Story-8 (CFP-1111 Wave 3 consumer overlay apply orchestration). 본 Amendment 9 = Amendment 3 §결정 7 의 D4 customization marker invariant 를 imperative walk apply 경로로 scope 확장 codify. additive only (기존 declarative 경로 무변경, supersede 0). §결정 12 신설.
+
+**Amendment 8 (CFP-1125) 와의 관계 (declaration → realization, drift 0)**: Amendment 8 = D4 marker preserve invariant 의 효용이 walker paradigm 으로 carry 됨을 **declaration-only** 로 명시 (Amendment 6 영역 sunset boundary declarative — `walker per-step customization_marker_preserve flag` 영역). Amendment 8 본문이 forecast 한 "sister CFP-1115 (β5) D4 marker block imperative walk 정합 별 carrier" 의 **실 realization** = 본 Amendment 9 (CFP-1177 이 #1115 흡수 — apply_overlay_file 구현 + DRY 의무 + integrity check). Amendment 8 본문의 "ADR-027 Amendment 7" label = stale forecast (해당 amendment slot 은 CFP-1059 deploy.* schema 가 점유) — 실 realization slot = 본 Amendment 9. 양 amendment boundary disjoint: Amendment 8 = declaration (효용 carry 선언) ↔ Amendment 9 = realization (imperative apply 구현 codify). 동일 invariant 의 declaration↔implementation 관계 — SSOT drift 0 (ADR-068 I-2 cross-module propagation completeness 정합).
+
+**ADR collision 회피 (Amendment vs 신규 ADR 판정)**: ADR-027 = consumer adoption protocol SSOT — D4 customization marker (Amendment 3 §결정 7) 의 scope 확장. 동일 invariant 를 imperative 경로에도 적용하는 것은 Amendment 3 §결정 7.B/7.C 의 "declarative-specific" 제약을 "paradigm-agnostic" 으로 넓히는 ratchet 강화 방향. 신규 ADR 신설 시 D4 marker 의 2-경로 SSOT 분산 (ADR-068 I-4 wording SSOT 위배). Amendment = ADR-064 top-down ratchet 강화 방향 only (scope 확장, weakening 0).
+
+### 결정 12 — customization marker block paradigm-agnostic preserved layer (normative SSOT)
+
+#### §결정 12.A — Paradigm-agnostic invariant 확장
+
+Amendment 3 §결정 7.B (marker 안 = wrapper SSOT wins, 밖 = consumer preserve) + §결정 7.C (MARKER_NONE = wholesale + user-visible loss report, silent overwrite 0 — EPIC-AC-4) 가 다음 양 경로 모두에 동일 적용됨을 normative codify:
+
+| 경로 | 구현 | 상태 |
+|---|---|---|
+| 선언적 reconcile | `scripts/reconcile-overlay.sh` | 기존 (Amendment 3 carrier) |
+| 명령적 walk apply | `scripts/lib/walk_plan.py` `apply_overlay_file` | 신설 (CFP-1177 Story-8 carrier) |
+
+**Invariant 3종 (양 경로 동일)**:
+
+1. **marker 안 = wrapper SSOT unconditionally wins** — consumer 변경 무시. `base_content` 는 marker 안 merge 에 사용되지 않는다 (by-design — reconcile-protocol-v1 시그니처 호환성 목적 보존).
+2. **marker 밖 = consumer byte-identical 보존** — integrity fingerprint check 의무 (위반 시 abort-before-touch: consumer_content 원본 fallback, filesystem write 0).
+3. **MARKER_NONE = wholesale wrapper mirror + user-visible loss report** — silent overwrite 0 (EPIC-AC-4). `loss_occurred: True` + `loss_report` non-empty 의무.
+
+#### §결정 12.B — Walk apply DRY 의무 (merge_with_marker primitive 재사용)
+
+`apply_overlay_file` (walk_plan.py) = `merge_with_marker` primitive 재사용 의무. marker logic 독립 재구현 금지 — 2-경로 분기 시 invariant drift 위험 (DRY 원칙 + ADR-068 I-4 wording SSOT 정합). `merge_with_marker` 가 "integrity fingerprint check 의무 (호출자 책임)" 을 docstring 에 위임 → `apply_overlay_file` 이 그 책임 이행 (Step 2 integrity check).
+
+#### §결정 12.C — 순수 함수 invariant (filesystem 접촉 0)
+
+`apply_overlay_file` = 순수 함수 (문자열 입력 → `OverlayApplyResult` 출력). filesystem write 0 — filesystem write + loss-report 표면화 = .sh dispatcher 책임. `reconcile-overlay.sh` 의 shell 오케스트레이션 / Python 계산 분리 패턴 답습.
+
+#### §결정 12.D — integrity abort-before-touch analog
+
+integrity 위반 (merged 결과의 marker-outside 가 consumer_content marker-outside 와 byte-identical 불일치) 시:
+- `merged_content = consumer_content` (원본 fallback, corrupted merge 미발행)
+- `integrity_ok = False`
+- `integrity_violation_reason` non-empty (위반 사유 명시)
+- filesystem write 0 (abort-before-touch analog — `reconcile-overlay.sh §7.4.1(g)` verbatim 정합)
+
+#### §결정 12.E — mechanical enforcement (중복 codification 회피)
+
+`wrapper-managed-block` evidence-check entry (Amendment 3 §결정 7.D frontmatter `mechanical_enforcement_actions[]` 이미 등재, blocking-on-pr tier) 가 consumer overlay 파일의 marker block 정합성 lint 를 cover. 본 Amendment 9 측 별도 mechanical action 신설 = 중복 codification 회피 (ADR-065 §결정 5 cross-ref only 정합). walk_plan.py 는 `.py` (lint file-type filter `.yml|.yaml|.sh|.md` 미해당) → `scripts/check-wrapper-managed-block.sh` SKIP_LIST 추가 불요.
+
+### 해소 기준 정합
+
+ADR-027 frontmatter `is_transitional: false` (permanent policy). Amendment 9 = D4 marker invariant scope 확장 (declarative-only → declarative+imperative) = governance 강화 방향 ratchet — ADR-058 §결정 5 sunset_justification: ratchet 강화 방향 전용 exemption 정합. bats TC 19/19 GREEN = metric. apply_overlay_file 함수 walk_plan.py §f = who. _split_consumer_outer round-trip byte-identical verify = how.
+
+Cross-ref:
+- ADR-027 Amendment 3 §결정 7.B/7.C/7.D — D4 marker syntax + invariant SSOT (본 Amendment 9 = scope 확장 carrier, 기존 §결정 7 무변경)
+- ADR-027 Amendment 8 (CFP-1125, amendment_log id 8) — D4 marker preserve walker carry **declaration-only** (본 Amendment 9 = 그 declaration 의 실 realization, declaration↔implementation disjoint, drift 0)
+- `scripts/lib/walk_plan.py` `apply_overlay_file` + `OverlayApplyResult` + `merge_with_marker` — 구현 SSOT (CFP-1177 Story-8)
+- `tests/scripts/cfp-1177/cfp-1177-overlay-apply.bats` — 19 TC TDD suite (MARKER_VALID / MARKER_NONE / integrity fallback / signature / frozen)
+- [ADR-076](ADR-076-declarative-reconciliation-upgrade.md) — declarative reconcile SSOT (기존 경로 무변경, 본 Amendment 9 = disjoint scope 확장)
+- `docs/inter-plugin-contracts/imperative-walker-protocol-v1.md` — walk apply 계약 SSOT (paradigm carrier)
+- [ADR-058](ADR-058-adr-sunset-criteria-mandate.md) §결정 5 — sunset_justification ratchet 강화 방향 exemption
+- [ADR-064](ADR-064-decision-principle-mandate.md) §self-application — ratchet 강화 방향 only (scope 확장, weakening 0)
