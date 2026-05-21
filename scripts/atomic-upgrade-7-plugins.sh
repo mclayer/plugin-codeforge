@@ -272,6 +272,46 @@ _drift_status() {
     echo "${json}" | grep -oE "\"status\":\"[a-z-]+\"" | head -1 | sed 's/.*:"//;s/"//'
 }
 
+# --------------------------------------------------------------------------
+# [CFP-1170] DEPRECATION SHIM — 1 release grace (R-4 consumer breakage 차단)
+#
+# atomic-upgrade-7-plugins.sh 는 deprecation shim 으로 재정의됨 (change-plan §3.5 / §7.4.2).
+# 실 semantic = walk-bundle-7-plugins.sh 로 이전 (imperative walk paradigm).
+# 1 release grace 후 본 shim 삭제 예정 (ADR-038 Amendment 3 §결정 10 "1 release grace" 선례).
+# --------------------------------------------------------------------------
+echo "[DEPRECATED] atomic-upgrade-7-plugins.sh 는 CFP-1170 에서 deprecation shim 으로 재정의됩니다." >&2
+echo "[DEPRECATED] 1 release grace 후 삭제 예정 (change-plan §7.4.2)." >&2
+echo "[DEPRECATED] 신규 CLI: bash scripts/walk-bundle-7-plugins.sh --<mode>" >&2
+echo "[DEPRECATED] 대응 redirect: atomic-upgrade-7-plugins.sh → walk-bundle-7-plugins.sh (자동 redirect 중)" >&2
+
+# arg → walk mode 매핑
+WALK_BUNDLE_CLI="${SCRIPT_DIR}/walk-bundle-7-plugins.sh"
+WALK_BUNDLE_MODE=""
+case "${MODE}" in
+    dry_run)
+        WALK_BUNDLE_MODE="--plan"
+        ;;
+    apply)
+        WALK_BUNDLE_MODE="--apply"
+        ;;
+    rollback)
+        WALK_BUNDLE_MODE="--rollback"
+        ;;
+esac
+
+echo "=== atomic-upgrade-7-plugins.sh → walk-bundle-7-plugins.sh redirect (shim) ==="
+echo "walk: deprecated redirect"
+
+REDIRECT_BUNDLE_ARGS=("${WALK_BUNDLE_MODE}")
+if [[ ${#REPO_ARGS[@]} -gt 0 ]]; then
+    REDIRECT_BUNDLE_ARGS+=("${REPO_ARGS[@]}")
+fi
+if [[ ${#CHANNEL_ARGS[@]} -gt 0 ]]; then
+    REDIRECT_BUNDLE_ARGS+=("${CHANNEL_ARGS[@]}")
+fi
+
+exec bash "${WALK_BUNDLE_CLI}" "${REDIRECT_BUNDLE_ARGS[@]}"
+
 echo "=== atomic-upgrade-7-plugins.sh: per-family transaction (mode=${MODE}) ==="
 echo "family: ${FAMILY[*]}"
 echo "user_decision_branches: 0"

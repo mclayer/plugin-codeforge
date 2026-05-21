@@ -241,30 +241,54 @@ if [[ -n "${INPUT_CHANNEL}" ]] && [[ -n "${OVERLAY_CHANNEL}" ]] && [[ "${INPUT_C
 fi
 
 # --------------------------------------------------------------------------
-# UpgradeAgent spawn 위임 출력 (Orchestrator 가 이 출력을 읽어 subagent spawn)
-# reconcile semantic 로직 0건 — thin dispatcher
+# [CFP-1170] DEPRECATION SHIM — 1 release grace (R-4 consumer breakage 차단)
+#
+# codeforge-upgrade.sh 는 deprecation shim 으로 재정의됨 (change-plan §3.5 / §7.4.2).
+# 실 semantic = walk-single-plugin.sh 로 이전 (imperative walk paradigm).
+# 1 release grace 후 본 shim 삭제 예정 (ADR-038 Amendment 3 §결정 10 "1 release grace" 선례).
+#
+# redirect 전략:
+#   --dry-run  → walk-single-plugin.sh --plan  (plan = dry 의미 명확화)
+#   --apply    → walk-single-plugin.sh --apply
+#   --rollback → walk-single-plugin.sh --rollback
 # --------------------------------------------------------------------------
-echo "=== codeforge-upgrade.sh: UpgradeAgent spawn 위임 ==="
-echo "mode: ${MODE}"
+echo "[DEPRECATED] codeforge-upgrade.sh 는 CFP-1170 에서 deprecation shim 으로 재정의됩니다." >&2
+echo "[DEPRECATED] 1 release grace 후 삭제 예정 (change-plan §7.4.2 / ADR-038 Amendment 3 §결정 10)." >&2
+echo "[DEPRECATED] 신규 CLI: bash scripts/walk-single-plugin.sh --<mode> --plugin <plugin-name>" >&2
+echo "[DEPRECATED] 대응 redirect: codeforge-upgrade.sh → walk-single-plugin.sh (자동 redirect 중)" >&2
+
+# arg → walk mode 매핑 (기존 consumer invocation 동작 보존 — consumer breakage 0)
+WALK_SINGLE_CLI="${SCRIPT_DIR}/walk-single-plugin.sh"
+WALK_MODE=""
+case "${MODE}" in
+    dry_run)
+        WALK_MODE="--plan"
+        ;;
+    transaction)
+        WALK_MODE="--apply"
+        ;;
+    snapshot_restore)
+        WALK_MODE="--rollback"
+        ;;
+esac
+
+# walk-single-plugin.sh 는 --plugin 필수 — shim 에서는 기본 "codeforge" (per-plugin upgrade)
+# consumer 가 특정 plugin 을 대상으로 하려면 walk-single-plugin.sh 직접 사용 권장
+SHIM_PLUGIN="${CODEFORGE_UPGRADE_PLUGIN:-codeforge}"
+
+# redirect 실행 (1 release grace 동안 기존 invocation 정상 동작)
+echo "=== codeforge-upgrade.sh → walk-single-plugin.sh redirect (shim) ==="
+echo "walk: deprecated redirect"
+
+REDIRECT_ARGS=("${WALK_MODE}" "--plugin" "${SHIM_PLUGIN}")
 if [[ "${MODE}" == "snapshot_restore" ]]; then
-    echo "rollback_version: ${ROLLBACK_VERSION}"
+    REDIRECT_ARGS=("${WALK_MODE}" "${ROLLBACK_VERSION}" "--plugin" "${SHIM_PLUGIN}")
 fi
-echo "canonical_repo_root: ${CANONICAL_REPO_ROOT}"
-echo "channel_input: ${INPUT_CHANNEL:-(미지정 — overlay resolve or stable fallback)}"
-echo "reconcile_protocol_version: 1.8"
-echo "user_decision_branches: 0"
-echo ""
-echo "--- Orchestrator: 아래 UpgradeAgent 를 spawn 하여 처리하십시오 ---"
-echo "agent_file: templates/agents/UpgradeAgent.md"
-echo "input_mode: ${MODE}"
-if [[ "${MODE}" == "snapshot_restore" ]]; then
-    echo "input_rollback_version: ${ROLLBACK_VERSION}"
+if [[ -n "${INPUT_REPO}" ]]; then
+    REDIRECT_ARGS+=("--repo" "${INPUT_REPO}")
 fi
-echo "input_repo_root: ${CANONICAL_REPO_ROOT}"
 if [[ -n "${INPUT_CHANNEL}" ]]; then
-    echo "input_channel: ${INPUT_CHANNEL}"
+    REDIRECT_ARGS+=("--channel" "${INPUT_CHANNEL}")
 fi
-echo ""
-echo "주의: check-codeforge-version-drift.sh 는 UpgradeAgent Plan stage 에서 호출 (CLI 금지 — §4.4)"
-echo "주의: 사용자 결정 분기 0 유지 (no prompt — reconcile-protocol-v1 user_decision_branches: 0)"
-echo "주의: --channel resolve semantic = UpgradeAgent 위임 (overlay codeforge.channel.tier resolve, 미선언=stable)"
+
+exec bash "${WALK_SINGLE_CLI}" "${REDIRECT_ARGS[@]}"
