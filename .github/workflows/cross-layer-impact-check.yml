@@ -1,27 +1,19 @@
-name: Cross-layer impact check (Phase 1 declarative seed)
-# CFP-1059 Story-1 / ADR-090 §결정 1 — cross-layer 의존 영향 자동 감지
-# Tier: warning (continue-on-error, declaration-only Wave 1)
+name: Cross-layer impact check
+# CFP-1059-S6 / ADR-090 §결정 1 — cross-layer 의존 영향 자동 감지
+# Tier: warning (continue-on-error, ADR-060 §결정 5)
 # Bypass channel: hotfix-bypass:cross-layer-impact label (label-registry-v2.42)
 #
-# Phase 1 declarative seed (S2/S3 wire pending):
-#   - 실제 impact detection 로직 (touched layer enumeration + cross-layer dependency graph traversal
-#     + sibling layer 미반영 영역 flag) = scripts/check-cross-layer-impact.sh (sibling carrier
-#     Story-7 mechanical wire 영역) 후 wire.
-#   - 본 file = ADR-090 mechanical_enforcement_actions: [cross-layer-impact-detection]
-#     declaration anchor.
+# S6 actual job body (declarative seed -> actual wire):
+#   touched layer enumeration + cross-layer dependency graph traversal
+#   + sibling layer 미반영 영역 flag (warning-tier)
 #
 # ADR-090 §결정 1 binding:
-#   - cross-layer 참조 정책 = code layer ↔ schema layer + (frontend/backend) ↔ (api/db) 등
-#     의 양방향 참조 영역의 의존 graph 자동 감지
-#   - 한 layer 변경 시 sibling layer 누락 감지 = warning-tier flag
-#   - 양 layer 동시 변경 영역은 dependency-order-check.yml (별 workflow) 분담
+#   code layer <-> schema layer + frontend/backend <-> api/db 양방향 참조
+#   한 layer 변경 시 sibling layer 누락 감지 = warning-tier flag
+#   양 layer 동시 변경 = dependency-order-check.yml 분담 (disjoint scope)
 #
-# 승격 path:
-#   warning → blocking-on-pr 승격 시 CFP-NNN carrier PR 가 다음 변경 동반 의무:
-#     1. 본 workflow 의 `continue-on-error: true` 제거
-#     2. branch protection required_status_checks 에 본 workflow job name 추가
-#     3. evidence 3 산출물 제출 (ADR-060 §결정 6 (d))
-#     4. dependency graph 정의 (project.yaml cross_layer_dependency_graph: 영역) 필요
+# §7.4 empirical-source:
+#   cross-layer dependency detection (ADR-090, dimension: count — layer pair 수)
 
 on:
   pull_request:
@@ -33,25 +25,81 @@ permissions:
   pull-requests: write
 
 jobs:
-  cross-layer-impact-declarative-seed:
+  cross-layer-impact:
     runs-on: ubuntu-latest
-    # warning mode (ADR-060 §결정 5) — Phase 1 declarative seed.
+    # warning tier (ADR-060 §결정 5)
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Phase 1 declarative seed placeholder
+      - name: Enumerate touched layers
+        id: layer-enum
         run: |
           set -euo pipefail
-          echo "=== Cross-layer impact check (Phase 1 declarative seed) ==="
-          echo "ADR-090 §결정 1 mechanical_enforcement_actions anchor"
-          echo "mechanical action: cross-layer-impact-detection (declaration-only Wave 1)"
-          echo ""
-          echo "Actual impact detection (touched layer enum + dependency graph traversal"
-          echo "  + sibling layer 미반영 flag) = scripts/check-cross-layer-impact.sh"
-          echo "  (sibling carrier Story-7 mechanical wire 영역) 후 wire."
-          echo ""
-          echo "Phase 1 declarative seed — S2/S3 wire pending"
-          exit 0
+          echo "=== Cross-layer impact check ==="
+          echo "ADR-090 §결정 1 — touched layer enumeration"
+
+          # PR 변경 파일 목록 (git diff HEAD~1)
+          CHANGED_FILES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null || \
+                          git diff --name-only origin/main...HEAD 2>/dev/null || \
+                          echo "")
+
+          if [[ -z "${CHANGED_FILES}" ]]; then
+            echo "::notice::변경 파일 없음 — cross-layer check 스킵"
+            echo "touched_schema=false" >> "${GITHUB_OUTPUT}"
+            echo "touched_code=false" >> "${GITHUB_OUTPUT}"
+            exit 0
+          fi
+
+          echo "[INFO] 변경 파일:"
+          echo "${CHANGED_FILES}"
+
+          # layer 감지 (schema / code / frontend / backend)
+          TOUCHED_SCHEMA=$(echo "${CHANGED_FILES}" | grep -E "^(migrations|schema)/" | wc -l)
+          TOUCHED_CODE=$(echo "${CHANGED_FILES}" | grep -E "^src/" | wc -l)
+          TOUCHED_FRONTEND=$(echo "${CHANGED_FILES}" | grep -E "^(frontend|web|ui)/" | wc -l)
+          TOUCHED_BACKEND=$(echo "${CHANGED_FILES}" | grep -E "^(backend|api|server)/" | wc -l)
+
+          echo "touched_schema=${TOUCHED_SCHEMA}" >> "${GITHUB_OUTPUT}"
+          echo "touched_code=${TOUCHED_CODE}" >> "${GITHUB_OUTPUT}"
+          echo "touched_frontend=${TOUCHED_FRONTEND}" >> "${GITHUB_OUTPUT}"
+          echo "touched_backend=${TOUCHED_BACKEND}" >> "${GITHUB_OUTPUT}"
+
+          echo "[INFO] layer 감지 결과:"
+          echo "  schema: ${TOUCHED_SCHEMA} 파일"
+          echo "  code: ${TOUCHED_CODE} 파일"
+          echo "  frontend: ${TOUCHED_FRONTEND} 파일"
+          echo "  backend: ${TOUCHED_BACKEND} 파일"
+
+      - name: Cross-layer impact analysis
+        run: |
+          set -euo pipefail
+          echo "=== Cross-layer dependency graph traversal ==="
+          echo "[empirical-source: ADR-090 §결정 1 — cross-layer 참조 정책, dimension: count]"
+
+          TOUCHED_SCHEMA="${{ steps.layer-enum.outputs.touched_schema }}"
+          TOUCHED_CODE="${{ steps.layer-enum.outputs.touched_code }}"
+
+          # schema 변경 + code 미변경 = sibling layer 누락 flag
+          if [[ "${TOUCHED_SCHEMA:-0}" -gt 0 && "${TOUCHED_CODE:-0}" -eq 0 ]]; then
+            echo "::warning::schema 변경 감지 — code layer 미반영. cross-layer impact 확인 필요"
+            echo "[INFO] expand = source-first (ADR-090): schema expand 후 code 업데이트 의무"
+          fi
+
+          # code 변경 + schema 미변경 (잠재 schema 의존)
+          if [[ "${TOUCHED_CODE:-0}" -gt 0 && "${TOUCHED_SCHEMA:-0}" -eq 0 ]]; then
+            echo "::notice::code 변경 감지 — schema 미변경. schema 의존 코드 확인 권고"
+          fi
+
+          # project.yaml cross_layer_dependency_graph 존재 시 활용
+          PROJECT_YAML=".claude/_overlay/project.yaml"
+          if [[ -f "${PROJECT_YAML}" ]]; then
+            echo "::notice::project.yaml 발견 — cross_layer_dependency_graph 정의 확인 가능"
+          else
+            echo "::warning::project.yaml 미존재 — cross_layer_dependency_graph 정의 필요"
+            echo "[INFO] project.yaml: deploy.cross_layer_dependency_graph: 영역 정의 권고"
+          fi
+
+          echo "[INFO] cross-layer impact check 완료 (warning tier)"

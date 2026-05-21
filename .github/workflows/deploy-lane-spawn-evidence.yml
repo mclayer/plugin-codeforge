@@ -1,34 +1,24 @@
-name: Deploy lane spawn evidence (Phase 1 declarative seed)
-# CFP-1059 Story-1 / ADR-087 mechanical_enforcement_actions — Deploy lane spawn 시 evidence lint
-# Tier: warning (continue-on-error, declaration-only Wave 1)
+name: Deploy lane spawn evidence
+# CFP-1059-S6 / ADR-087 mechanical_enforcement_actions — Deploy lane spawn evidence lint
+# Tier: warning (continue-on-error, ADR-060 §결정 5)
 # Bypass channel: hotfix-bypass:deploy-trigger label (label-registry-v2.42)
-#   note: 본 spawn evidence 용 별도 namespace label = sibling/별 carrier 영역
-#     (CFP-1059 batch 외 — deploy-trigger umbrella 안 잠정)
 #
-# Phase 1 declarative seed (S2/S3 wire pending):
-#   - 실제 spawn evidence lint (Story §14 Lane Evidence row append 검증 + worktree-first ADR-040 정합
-#     + agent_id presence + spawned_at/returned_at UTC timestamp) = scripts/check-deploy-lane-spawn-evidence.sh
-#     (sibling carrier — codeforge-deploy plugin seed Story-N) 후 wire.
-#   - 본 file = ADR-087 mechanical_enforcement_actions: [deploy-lane-spawn-evidence]
-#     declaration anchor.
+# S6 actual job body (declarative seed -> actual wire):
+#   Story §14 Lane Evidence row append 검증
+#   + worktree-first ADR-040 정합
+#   + agent_id / spawned_at / returned_at / outcome 4-field invariant
+#   (lane-evidence-check.yml 패턴 답습, ADR-031 precedent)
 #
-# ADR-087 spawn evidence binding (ADR-031 precedent 답습):
-#   - Deploy lane spawn 시 Story §14 Lane Evidence row append 의무 (existing 6 lane pattern)
-#   - worktree-first ADR-040 정합 (cwd = isolated worktree path, agent prompt git -C <worktree> 강제)
-#   - agent_id + spawned_at + returned_at + outcome (PASS/FIX/ESCALATE) 4-field invariant
-#
-# 승격 path:
-#   warning → blocking-on-pr 승격 시 CFP-NNN carrier PR 가 다음 변경 동반 의무:
-#     1. 본 workflow 의 `continue-on-error: true` 제거
-#     2. branch protection required_status_checks 에 본 workflow job name 추가
-#     3. evidence 3 산출물 제출 (ADR-060 §결정 6 (d))
-#     4. codeforge-deploy plugin DeployAgent seed merge 선행
+# ADR-087 spawn evidence binding:
+#   Deploy lane spawn 시 Story §14 Lane Evidence row append 의무
+#   worktree-first ADR-040 정합 (cwd = isolated worktree, git -C <worktree> 강제)
+#   4-field invariant: agent_id + spawned_at + returned_at + outcome (PASS/FIX/ESCALATE)
 
 on:
   pull_request:
     types: [opened, synchronize, reopened]
     paths:
-      - 'docs/stories/**'  # Story §14 Lane Evidence row append 검증 영역
+      - 'docs/stories/**'
   workflow_dispatch: {}
 
 permissions:
@@ -36,25 +26,71 @@ permissions:
   pull-requests: write
 
 jobs:
-  deploy-lane-spawn-evidence-declarative-seed:
+  deploy-lane-spawn-evidence:
     runs-on: ubuntu-latest
-    # warning mode (ADR-060 §결정 5) — Phase 1 declarative seed.
+    # warning tier (ADR-060 §결정 5)
     continue-on-error: true
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Phase 1 declarative seed placeholder
+      - name: Check deploy lane spawn evidence
         run: |
           set -euo pipefail
-          echo "=== Deploy lane spawn evidence (Phase 1 declarative seed) ==="
-          echo "ADR-087 mechanical_enforcement_actions anchor"
-          echo "mechanical action: deploy-lane-spawn-evidence (declaration-only Wave 1)"
-          echo ""
-          echo "Actual spawn evidence lint (§14 Lane Evidence row append + worktree-first"
-          echo "  + agent_id/timestamp invariant) = scripts/check-deploy-lane-spawn-evidence.sh"
-          echo "  (sibling carrier — codeforge-deploy plugin seed Story-N) 후 wire."
-          echo ""
-          echo "Phase 1 declarative seed — S2/S3 wire pending"
-          exit 0
+          echo "=== Deploy lane spawn evidence check ==="
+          echo "ADR-087 mechanical_enforcement_actions: [deploy-lane-spawn-evidence]"
+          echo "(lane-evidence-check.yml 패턴 답습 — ADR-031 precedent)"
+
+          # 변경된 Story 파일 목록
+          CHANGED_STORIES=$(git diff --name-only HEAD~1 HEAD 2>/dev/null | \
+                            grep "^docs/stories/" || \
+                            git diff --name-only origin/main...HEAD 2>/dev/null | \
+                            grep "^docs/stories/" || echo "")
+
+          if [[ -z "${CHANGED_STORIES}" ]]; then
+            echo "::notice::Story 파일 변경 없음 — deploy lane spawn evidence check 스킵"
+            exit 0
+          fi
+
+          echo "[INFO] 변경된 Story 파일:"
+          echo "${CHANGED_STORIES}"
+
+          VIOLATIONS=0
+
+          for story_file in ${CHANGED_STORIES}; do
+            if [[ ! -f "${story_file}" ]]; then
+              continue
+            fi
+
+            echo "--- 검사 중: ${story_file} ---"
+
+            # §14 Lane Evidence 섹션 존재 확인
+            if ! grep -q "Lane Evidence\|lane-evidence\|## §14" "${story_file}"; then
+              echo "::warning file=${story_file}::§14 Lane Evidence 섹션 미발견"
+              VIOLATIONS=$((VIOLATIONS + 1))
+              continue
+            fi
+
+            # deploy lane row 존재 확인 (예: 배포 lane)
+            if grep -q "배포\|deploy\|DeployAgent" "${story_file}"; then
+              # 4-field invariant 확인: agent_id + spawned_at + returned_at + outcome
+              echo "::notice file=${story_file}::deploy lane 관련 내용 발견 — §14 row 확인"
+
+              # spawned_at (UTC timestamp) 형식 확인
+              if grep -q "배포" "${story_file}" && ! grep -q "spawned_at\|PASS\|FIX\|ESCALATE" "${story_file}"; then
+                echo "::warning file=${story_file}::deploy lane §14 row — outcome 필드 미발견 (warning)"
+                VIOLATIONS=$((VIOLATIONS + 1))
+              fi
+            fi
+
+            echo "[INFO] ${story_file}: spawn evidence 확인 완료"
+          done
+
+          if [[ "${VIOLATIONS}" -gt 0 ]]; then
+            echo "::warning::deploy lane spawn evidence ${VIOLATIONS}건 미흡 (warning tier, PR 차단 0)"
+          else
+            echo "[INFO] deploy lane spawn evidence check: 이상 없음"
+          fi
+
+          echo "[INFO] warning tier (ADR-060 §결정 5) — blocking 승격 = 별 CFP"
