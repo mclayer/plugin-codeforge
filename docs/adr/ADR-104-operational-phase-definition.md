@@ -162,6 +162,10 @@ wrapper (codeforge 자체) 는 production 배포 환경이 없다 (plugin = code
 
 `mechanical_enforcement_actions: []` (declaration-only Wave 1 — ADR-082 §결정 6 / ADR-070 §D5 / ADR-076 / ADR-086 / ADR-097 retain pattern 답습). 운영 phase = 신규 정의 layer 이고 실 mechanism 은 S4~S7 carrier 가 신설 시 evidence-checks-registry row 를 append 한다. **pattern_count ≥ 2 recurrence 시 follow-up CFP MUST promote to mechanical lint** (ADR-084 precedent — 운영 phase 정의 위반이 2회 이상 재발하면 mechanical lint 로 격상 의무).
 
+## 해소 기준
+
+N/A — permanent policy
+
 ## 관련 파일
 
 - [ADR-087](ADR-087-deploy-lane-and-lifecycle-extension.md) — Deploy lane (운영 phase 의 release lifecycle 선행 단계)
