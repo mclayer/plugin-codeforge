@@ -48,7 +48,7 @@ updated: 2026-05-22
 본 디렉토리 전체의 normative SSOT = [`docs/adr/ADR-104-operational-phase-definition.md`](../../../adr/ADR-104-operational-phase-definition.md).
 
 - §결정 1 — release lifecycle 위치 (배포 → 배포검토 → 운영 phase) → `operational-phase-definition.md §1`
-- §결정 2 — lane 아님 (mechanism layer) → `operational-phase-definition.md §2`
+- §결정 2 — lane 아님 (mechanism layer) → `operational-phase-definition.md §3`
 - §결정 3 — 0 API call constraint → `measurement-channel.md §1`
 - §결정 4 — wrapper-self-app N/A invariant → `measurement-channel.md §3`
 - §결정 5 — self-improving loop + loop closure gate 위험 → `self-improving-loop.md §1·§4`

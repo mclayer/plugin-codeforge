@@ -13,9 +13,8 @@ tags:
   - auto-issue
   - cfp-1190
 related_adrs:
-  - ADR-104  # normative SSOT — §결정 5 (self-improving loop narrative + loop closure gate 위험 식별)
+  - ADR-104  # normative SSOT — §결정 5 (self-improving loop narrative + loop closure gate 위험 식별 + S6 carrier forward-ref)
   - ADR-045  # §D-9 cross-Story pattern_count ≥ 2 → ADR escalation forcing function — loop 답습 source
-  - ADR-104  # §결정 5 "loop closure gate = S6 carrier" forward-ref
 related_stories:
   - CFP-1190  # 본 carrier (loop 개념 정의 + 위험 식별 — closure mechanism 은 S6)
   - CFP-1187  # umbrella Epic

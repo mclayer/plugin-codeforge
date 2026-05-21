@@ -164,7 +164,7 @@ wrapper-N/A invariant = consumer overlay 로 축소 불가 (ADR-057 정합). con
 
 ### 검증 비대칭성
 
-wrapper 는 선언(declarative SSOT)만 검증하고, consumer 는 실측을 검증한다. 이 비대칭성은 ADR-072 Tier-1 / Tier-2 split 패턴을 운영 phase 도메인에 그대로 답습한다:
+wrapper 는 선언(declarative SSOT)만 검증하고, consumer 는 실측을 검증한다. 이 비대칭성은 ADR-72 Tier-1 / Tier-2 split 패턴을 운영 phase 도메인에 그대로 답습한다:
 
 | 검증 주체 | 검증 내용 | Tier |
 |---|---|---|
