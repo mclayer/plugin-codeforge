@@ -2,6 +2,16 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.21.0] - 2026-05-21
+
+### Added (CFP-1117 Story-3 (#1120) — ADR-091 §결정 5/7: Change Plan DDD block)
+
+`templates/change-plan.md` §3 인근에 DDD block 2종 추가 (CONDITIONAL):
+- `§3.D bounded_context_boundary` (ADR-091 §결정 5) — BC 명시 + module placement + cross-BC 통신 ACL/OHS 패턴. ModuleArchitectAgent (boundary axis unified) 입력. forcing function INV-5 — `bc_violation` review-verdict finding 연결.
+- `§3.A affected_aggregates` (ADR-091 §결정 3) — aggregate root + consistency/transaction boundary + invariant 보존. RDB OLTP touching 의무 (`project.yaml aggregate_arch.applicable`). forcing function INV-5 — `aggregate_violation` finding 연결.
+
+wrapper sibling PR #1151 (Story template §ubiquitous_language + 3 lint + evidence-registry + label-registry v2.43 + ADR-091 Amendment 2 Wave 2 wire). doc-only fast-path ADR-054 Cat 2.
+
 ## [0.20.0] - 2026-05-21
 
 ### Added (CFP-1117 Story-2 (#1119) — ADR-091 §결정 5: 14 agent DDD frontmatter field)

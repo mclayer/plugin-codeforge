@@ -48,6 +48,23 @@ story: <KEY>   # GitHub Story Issue key, e.g. PLG-7
 - Mapper / Refactor / SecurityArch 3-way 대립 결론 (어느 쪽 채택했고 왜)
 - 관련 ADR 정합성 (신규 ADR 필요 여부)
 
+#### §3.D bounded_context_boundary (ADR-091 §결정 5 — DDD vocabulary governance, CONDITIONAL)
+
+> DDD 영역 touching Story 의무 / 비-touching 면제. ModuleArchitectAgent (boundary axis unified — module-level + aggregate-level, CFP-1126 흡수) 입력 기반. SSOT = [`docs/glossary.md`](../../docs/glossary.md) (wrapper repo, codeforge governance BC).
+
+- **bounded_context**: 본 변경이 속한 BC 명시 (codeforge governance BC vs consumer application BC — 동음이의 시 qualifier 병기, ADR-091 §결정 4 Published Language 분리)
+- **module placement**: 신규/변경 module 의 BC 안 배치 (layered / hexagonal / clean architecture — module-level dependency direction)
+- **BC 간 통신**: cross-BC 참조 시 Anti-Corruption Layer (ACL) / Open Host Service (OHS) 패턴 명시 (glossary anchor)
+- **forcing function (INV-5, ADR-091 §결정 7)**: 본 block 의 BC declaration 이 review-verdict-v4 `bc_violation` finding 과 연결 — 단순 nominal 아닌 spawn/review 실제 영향
+
+#### §3.A affected_aggregates (ADR-091 §결정 3 — Aggregate 2-layer separate, CONDITIONAL)
+
+> RDB OLTP aggregate touching Story 의무 (`project.yaml aggregate_arch.applicable: true`) / frontend-only·API-only·external-managed RDB consumer 면제. ModuleArchitectAgent (aggregate-level boundary advocate, AggregateArch mandate 흡수) 입력 기반.
+
+- **affected aggregates[]**: 변경 영향 aggregate root + consistency boundary + transaction boundary 명시 (DDD application BC aggregate — ADR-091 §결정 3 Layer B real consistency boundary)
+- **invariant 보존**: 각 aggregate 의 business invariant + referential / uniqueness / non-null constraint
+- **forcing function (INV-5)**: 본 block 이 review-verdict-v4 `aggregate_violation` finding 과 연결
+
 ### §4. API 계약
 - 라우트·요청/응답 스키마
 - 컨텍스트·이벤트 스키마
