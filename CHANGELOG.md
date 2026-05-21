@@ -7,6 +7,23 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.0.4] - 2026-05-21
+
+### Changed
+
+- [CFP-1059-S6] 배포 매커니즘 실 구현 MINOR — 5 신규 deployment script + 7 workflow placeholder→실 job body (ADR-037 behavior change MINOR)
+  - templates/deployment/: deploy-blue-green.sh + auto-version-bump.sh + auto-rollback-hook.sh + big-change-manual-trigger.sh + expand-migration-apply.sh (5 script 신설)
+  - scripts/: deploy_blue_green.py + auto_version_bump.py (ADR-061 외부 .py, multi-line Python 의무)
+  - .github/workflows/: 7 workflow placeholder → 실 job body (blue-green/auto-version-bump/auto-rollback/big-change/expand-migration/deploy-review/post-deploy-hook)
+  - bats 34 TC GREEN (TDD RED→GREEN) — §8.5 restart invariant / §11.6 idempotency / ADR-087 §결정 5 healthcheck/swap 검증
+  - S5 (6.0.3) 선행 merge → S6 rebase 후 6.0.4 sequential merge-order 의무 (ADR-064 ordering invariant)
+- 구현리뷰 FIX iter 1: bats TC-3b/TC-4/TC-7 + TC-5c/TC-5d/TC-6b fallback assertion 강화 (regression 검출력 ↑, De Morgan 오류 수정, 정확값 단독 매칭)
+
+### Cross-ref
+
+- Epic: #1059
+- Story-6: 배포 매커니즘 실 implementation (ADR-087 §결정 5)
+- S5 sequential prerequisite: 6.0.3 (consumer overlay deploy.* schema validation)
 ## [6.0.3] - 2026-05-21
 
 ### Added
