@@ -146,6 +146,8 @@ amendments_reserved:
 
 | 103 | CFP-1146 | reserved | 2026-05-21T00:00:00+09:00 (GitOpsAgent sequential append per ADR-RESERVATION write boundary — git↔Confluence sync mechanism 결정 SSOT carrier. CFP-1146 Epic-A 5-slot bundle 5/5. ADR file = `ADR-103-git-confluence-sync-mechanism.md`. parent_epic CFP-1146.) |
 
+| 104 | CFP-1190 | active | 2026-05-22 KST status reserved→active 전환 (ArchitectAgent direct write per ADR-070 / CFP-578 chief author precedent — 운영 phase 1st-class 정의 SSOT carrier. Epic CFP-1187 Story-1. 운영 phase = 배포검토(deploy-review) 이후 ongoing 신호 회수 mechanism layer (9번째 lane 아님 — ADR-023 lane count invariant 정합) + 0 API call constraint (ADR-083 filesystem-only 동형) + wrapper-self-app N/A invariant (ADR-72 Tier-1 declare-time exemption 동형) + self-improving loop narrative (ADR-045 §D-9 답습) normative SSOT. 5 substantive invariant + 두 release lifecycle taxonomy disambiguation 표 (channel distribution 5-stage vs 시간축 lifecycle). is_transitional: false permanent governance anchor (ADR-087/088 정합) / mechanical_enforcement_actions: [] declaration-only Wave 1 (pattern_count >= 2 재발 시 follow-up CFP MUST promote, ADR-084 precedent). status `reserved → active` 전환 = ArchitectAgent commit time (ADR-083 row 83 / ADR-097 row 97 chief author precedent 정합). collision-rebase ratchet: append 직전 origin max 재확인 = 103 (CFP-1146 Epic-A 99-103 점유) → 104 (task spawn prompt 명시 max 98 = stale, verify-before-trust catch). ADR file = `ADR-104-operational-phase-definition.md`. parent_epic CFP-1187.) |
+
 ### 번호 해제 (archived)
 
 ADR deprecated/superseded 시 해당 row `status: archived`. 번호 재사용 금지.
