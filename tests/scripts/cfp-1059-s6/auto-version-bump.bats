@@ -59,7 +59,7 @@ teardown() {
     --current-version "${CURRENT_VERSION}" \
     --bump-type minor
   [ "${status}" -eq 0 ]
-  [[ "${output}" == *"1.3.0"* ]] || [[ "${output}" == *"bump"* ]]
+  [[ "${output}" == *"1.3.0"* ]]
 }
 
 # TC-5d: git tag = Docker tag 1:1 (ADR-063)
@@ -69,8 +69,8 @@ teardown() {
     --current-version "${CURRENT_VERSION}" \
     --bump-type minor
   [ "${status}" -eq 0 ]
-  # tag 생성 메시지
-  [[ "${output}" == *"tag"* ]] || [[ "${output}" == *"TAG"* ]]
+  # git tag 생성 메시지 정확값 (auto_version_bump.py create_tag 출력 verbatim 정합)
+  [[ "${output}" == *"git tag 생성"* ]]
 }
 
 # TC-6: 재실행 idempotent (tag 존재 -> skip)
@@ -94,6 +94,5 @@ teardown() {
     --current-version "${CURRENT_VERSION}" \
     --bump-type patch
   [ "${status}" -eq 0 ]
-  [[ "${output}" == *"1.2.4"* ]] || [[ "${output}" == *"patch"* ]] || \
-    [[ "${output}" == *"bump"* ]]
+  [[ "${output}" == *"1.2.4"* ]]
 }

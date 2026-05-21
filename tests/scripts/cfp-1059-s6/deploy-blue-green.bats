@@ -91,9 +91,8 @@ teardown() {
 @test "TC-3b: health FAIL 시 swap 미실행 (blue 유지)" {
   export _CFP1059_MOCK_HEALTH=fail
   run bash "${DEPLOY_BG_SH}" --repo "${DEPLOY_REPO}" --image "${DEPLOY_IMAGE}" --host "${DEPLOY_HOST}"
-  # swap 성공 메시지 미포함 (unconditional guard)
-  [[ "${output}" != *"swap complete"* ]] || \
-    [[ "${output}" != *"SWAP_COMPLETE"* ]]
+  # swap 성공 메시지 미포함 (unconditional guard — De Morgan 수정: 단독 negation)
+  [[ "${output}" != *"swap complete"* ]]
 }
 
 # TC-4: 3시간 보존 timer mock (즉시 삭제 금지)
@@ -101,9 +100,8 @@ teardown() {
   export _CFP1059_MOCK_HEALTH=pass
   run bash "${DEPLOY_BG_SH}" --repo "${DEPLOY_REPO}" --image "${DEPLOY_IMAGE}" --host "${DEPLOY_HOST}"
   [ "${status}" -eq 0 ]
-  # 3시간 보존 명시 (empirical-source: Issue #1059 카테고리 3/9, dimension: lifecycle)
-  [[ "${output}" == *"3"* ]] || [[ "${output}" == *"retention"* ]] || \
-    [[ "${output}" == *"보존"* ]]
+  # 3시간 보존 명시 정확값 (empirical-source: Issue #1059 카테고리 3/9, dimension: lifecycle)
+  [[ "${output}" == *"3시간 보존"* ]]
 }
 
 # TC-5: green 이미 실행 중 -> idempotent skip
@@ -131,10 +129,7 @@ teardown() {
   export _CFP1059_MOCK_HEALTH=pass
   export _CFP1059_MOCK_RESTART_BEFORE_SWAP=1
   run bash "${DEPLOY_BG_SH}" --repo "${DEPLOY_REPO}" --image "${DEPLOY_IMAGE}" --host "${DEPLOY_HOST}"
-  # 재시작 후 blue 유지 (no partial swap) — idempotent re-entry
-  # §8.5: "no partial swap" 메시지 포함 = restart invariant 동작 확인
-  [[ "${output}" == *"no partial swap"* ]] || \
-    [[ "${output}" == *"restart"* ]] || \
-    [[ "${output}" == *"blue"* ]]
+  # §8.5 재시작 감지 메시지 정확값 (unconditional guard — 출력 verbatim 정합)
+  [[ "${output}" == *"no partial swap"* ]]
   unset _CFP1059_MOCK_RESTART_BEFORE_SWAP
 }
