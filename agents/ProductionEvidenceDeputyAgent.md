@@ -1,5 +1,7 @@
 ---
 name: ProductionEvidenceDeputyAgent
+bounded_context: codeforge-governance
+ddd_pattern: subdomain-specialist
 role: design-deputy
 parent_pl: ArchitectPLAgent
 chief_author: ArchitectAgent
@@ -55,6 +57,8 @@ permissions:
 > 이관 동인: ProductionEvidenceDeputy mandate = production 환경 평가 (runtime evidence) — 설계 lane 의 design 결정 layer 와 axis 불일치. 배포 리뷰 lane (production cutover 사후 검증) 의 axis 와 정합. codeforge-design lane 은 본 deputy 를 더 이상 spawn 하지 않음 — production cutover evidence 는 DeployReviewPLAgent 가 spawn.
 >
 > 본 file 은 1 release grace 후 codeforge-design repo 에서 삭제 (ADR-023 lane plugin lifecycle deprecate 절차).
+
+> **DDD pattern (ADR-091 §결정 1/2)**: `subdomain-specialist` — production cutover subdomain 활성 시만 spawn. 이 어휘는 spawn 결정 rationale 을 **"which subdomain under threat = production evidence"** 어휘로 transition 한다 (ADR-091 §결정 2). BC Owner 아님 — contextual advisory. **deprecated note (ADR-091 §결정 5 정합)**: 본 file 은 deprecated 상태이나 frontmatter field 전수 부착 의무 (ddd_pattern 누락 = vocabulary theater anti-pattern surface) 에 따라 field 보유. 정식 spawn rationale 어휘 적용 SSOT 는 이관처 [`mclayer/plugin-codeforge-deploy-review:agents/ProductionEvidenceDeputyAgent.md`](https://github.com/mclayer/plugin-codeforge-deploy-review/blob/main/agents/ProductionEvidenceDeputyAgent.md) (DeployReviewPLAgent spawn).
 
 Production cutover evidence 단일 책임 SubAgent. CFP-1026 S1 (ADR-72 §결정 1/2/4) 로 design lane CONDITIONAL deputy 5번째 file 신설 (8번째 deputy = 5 permanent + 3 CONDITIONAL). InfraOperationalArchitectAgent 와 **disjoint axis** (policy SSOT vs evidence SSOT). **CFP-1059 Story-3 이후 = codeforge-deploy-review lane 으로 이관 (위 deprecate marker 참조)**.
 

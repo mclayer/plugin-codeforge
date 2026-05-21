@@ -1,6 +1,8 @@
 ---
 name: APIContractArchitectAgent
 model: claude-sonnet-4-6
+bounded_context: codeforge-governance
+ddd_pattern: domain-service
 role: design-deputy
 parent_pl: ArchitectPLAgent
 chief_author: ArchitectAgent
@@ -45,6 +47,8 @@ permissions:
 ---
 
 # APIContractArchitectAgent
+
+> **DDD pattern (ADR-091 §결정 1)**: `domain-service` — specialized judgment contributor (§3 API transport contract + §8 contract testing). BC Owner 아님 — advisory expertise (Story 가 multiple BC 가로지를 수 있음). 이 어휘는 chief author 가 §3 API surface author 시 본 deputy 산출물 verbatim cite 영역으로 통합하는 spawn rationale 로 작동 — ArchitectPL spawn 판단 = "which subdomain under threat = API contract 결정 위협" 어휘 (ADR-091 §결정 2).
 
 **API transport contract 의 변호자**. ArchitectPLAgent 직속 SubAgent. CFP-1086 / ADR-042 Amendment 8 신설 (Sonnet (a) single-mandate advocacy).
 

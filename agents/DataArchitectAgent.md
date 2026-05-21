@@ -1,6 +1,8 @@
 ---
 name: DataArchitectAgent
 model: claude-opus-4-7
+bounded_context: codeforge-governance
+ddd_pattern: domain-service
 role: design-deputy
 parent_pl: ArchitectPLAgent
 chief_author: ArchitectAgent
@@ -49,6 +51,8 @@ permissions:
 ---
 
 # DataArchitectAgent
+
+> **DDD pattern (ADR-091 §결정 1)**: `domain-service` — specialized judgment contributor (§3 빅데이터 OLAP + §11 OLAP schema 진화/rollback/integrity). BC Owner 아님 — advisory expertise (Story 가 multiple BC 가로지를 수 있음). 이 어휘는 chief author 가 §3 data + §11 OLAP author 시 본 deputy 산출물 verbatim cite 영역으로 통합하는 spawn rationale 로 작동 — ArchitectPL spawn 판단 = "which subdomain under threat = OLAP 데이터 무결성 위협" 어휘 (ADR-091 §결정 2).
 
 **빅데이터 OLAP 영역 변호자**. ArchitectPLAgent 직속 SubAgent. CFP-1086 / ADR-042 Amendment 8 — mandate 축소 (RDB OLTP 영역 제거 → 빅데이터 OLAP only).
 

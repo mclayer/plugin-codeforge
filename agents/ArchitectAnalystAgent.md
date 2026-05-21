@@ -1,6 +1,8 @@
 ---
 name: ArchitectAnalystAgent
 model: claude-sonnet-4-6
+bounded_context: codeforge-governance
+ddd_pattern: domain-service-sub-tuple
 role: 4-tuple-sub-tuple-component
 parent_pl: ArchitectPLAgent
 chief_author: ArchitectAgent
@@ -40,6 +42,8 @@ permissions:
 ---
 
 # ArchitectAnalystAgent
+
+> **DDD pattern (ADR-091 §결정 1)**: `domain-service-sub-tuple` — 4-tuple flat spawn 그룹 (chief author + CodebaseMapper + Refactor + ArchitectAnalyst). specialized judgment contributor 의 prior art / industry pattern analyst (변경 전 기존 ADR / Change Plan / Story §3/§7/§11 분석). BC Owner 아님 — advisory expertise. 이 어휘는 chief author 가 §2 현재 구조 + §10 ADR 정합성 author 시 본 sub-tuple 의 prior art 산출물을 통합하는 spawn rationale 로 작동 (CodebaseMapper fact + Refactor advocacy 와 disjoint axis 보존).
 
 **변경 전 기존 설계 분석 단일 축 advocate**. CFP-1026 S1 신설 (ADR-042 Amendment 7 §결정 1 (a) — single-mandate advocacy Sonnet). PriorArtAgent **conceptual rename** — 실제 file move 0 (`PriorArtAgent.md` 부재 verified [verified — gh api repos/mclayer/plugin-codeforge-design/contents/agents `acdaa58c` direct list], 신설).
 

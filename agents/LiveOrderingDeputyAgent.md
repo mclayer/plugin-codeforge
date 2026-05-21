@@ -1,5 +1,7 @@
 ---
 name: LiveOrderingDeputyAgent
+bounded_context: codeforge-governance
+ddd_pattern: subdomain-specialist
 role: design-deputy
 parent_pl: ArchitectPLAgent
 chief_author: ArchitectAgent
@@ -45,6 +47,8 @@ permissions:
 ---
 
 # LiveOrderingDeputyAgent
+
+> **DDD pattern (ADR-091 §결정 1/2)**: `subdomain-specialist` — live ordering subdomain 활성 시만 spawn. 이 어휘는 ArchitectPL 의 CONDITIONAL spawn 결정 rationale 을 **"which subdomain under threat = live ordering"** 어휘로 transition 한다 (ADR-091 §결정 2). spawn trigger (Live touching Story) 가 "live ordering subdomain 결정 (8-state lifecycle / partial fill / cancel race / reconcile) 이 위협받는가" 판단으로 표현되어야 한다. BC Owner 아님 — contextual advisory.
 
 Live order lifecycle (submit / accept / partial fill / cancel race / rejection / reconcile / fee) 단일 책임 SubAgent. 6 permanent SubAgent 에 추가된 **CONDITIONAL** 8번째 SubAgent — Live touching Story 만 active (CFP-77 / CFP-78).
 

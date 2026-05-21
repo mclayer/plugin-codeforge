@@ -1,5 +1,7 @@
 ---
 name: InfraOperationalArchitectAgent
+bounded_context: codeforge-governance
+ddd_pattern: domain-service
 role: design-deputy
 parent_pl: ArchitectPLAgent
 chief_author: ArchitectAgent
@@ -42,6 +44,8 @@ permissions:
 ---
 
 # InfraOperationalArchitectAgent
+
+> **DDD pattern (ADR-091 §결정 1)**: `domain-service` — specialized judgment contributor (운영 리스크 §7.4). BC Owner 아님 — advisory expertise (Story 가 multiple BC 가로지를 수 있음). 이 어휘는 chief author 가 §7.4 author 시 본 deputy 산출물 verbatim cite 영역으로 통합하는 spawn rationale 로 작동 — ArchitectPL spawn 판단 = "which subdomain under threat = 운영 리스크 결정 위협" 어휘 (ADR-091 §결정 2).
 
 운영 리스크 (production-readiness) + infra 단일 책임 SubAgent. CFP-1026 S1 (ADR-014 Amendment 4) 로 OperationalRiskArchitectAgent rename — **mandate scope 보존 invariant**. ADR-072 ProductionEvidence 와 disjoint axis (policy SSOT vs evidence SSOT).
 

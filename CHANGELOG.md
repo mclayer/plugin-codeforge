@@ -2,6 +2,32 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.20.0] - 2026-05-21
+
+### Added (CFP-1117 Story-2 (#1119) — ADR-091 §결정 5: 14 agent DDD frontmatter field)
+
+본 release = ADR-091 (ArchitectLane DDD vocabulary governance) §결정 5 의 codeforge-design plugin repo implementation. 14 agent 전수 frontmatter 에 `bounded_context` + `ddd_pattern` 2 field 부착 + vocabulary theater 차단 (INV-5, ADR-091 §결정 7 forcing function) 1줄 명시. ADR-091 Amendment 1 + CFP-1126 정합 (14 agent, AggregateArch 0, ModuleArch boundary axis unified).
+
+#### Added (14 agent frontmatter 2 field)
+- 전수 `bounded_context: codeforge-governance` — governance BC declare (ADR-091 §결정 4 Published Language 분리, mctrader application BC 와 동음이의 충돌 차단)
+- agent별 `ddd_pattern` (ADR-091 §결정 1 Hybrid mapping):
+  - Authority Pair 2 — `authority-pair-aggregate-root` (ArchitectPL, Layer A metaphor) / `authority-pair-chief-author` (ArchitectAgent, Layer B real consistency boundary)
+  - Domain Service 6 — `domain-service` (SecurityArch / InfraOperationalArch / TestContractArch / APIContractArch / DataArch 5) + `domain-service-boundary-axis-unified` (ModuleArch — module-level + aggregate-level 통합, CFP-1126 흡수)
+  - Domain Service sub-tuple 3 — `domain-service-sub-tuple` (CodebaseMapper / Refactor / ArchitectAnalyst, 4-tuple flat spawn)
+  - Subdomain Specialist 3 — `subdomain-specialist` (LiveOps / LiveOrdering / ProductionEvidence, CONDITIONAL)
+
+#### Added (vocabulary theater 차단 — INV-5 forcing function)
+- 14 agent 본문에 `> **DDD pattern (ADR-091 §결정 N)**: ...` blockquote 1줄 — 각 ddd_pattern 어휘가 spawn decision / review rationale 에 실제 영향함을 명시 (Authority Pair = Aggregate consistency boundary 책임 / Domain Service = BC Owner 아님 advisory expertise / Subdomain Specialist = "which subdomain under threat" spawn rationale 어휘 transition). ModuleArch = boundary axis unified 가 module-level + aggregate-level 양 영역 동시 advocate 명시 (CFP-1126 흡수 사실 spawn decision 반영)
+
+#### Note
+- `ProductionEvidenceDeputyAgent.md` = deprecated (CFP-1059 Story-3 / ADR-088 §결정 4, ownership codeforge-deploy-review 이관) 상태이나 ADR-091 §결정 5 "전수 frontmatter field 의무" 정합 — field 누락 = vocabulary theater anti-pattern surface 차단 위해 부착 (정식 spawn SSOT 는 이관처)
+- agent frontmatter contract — design plugin / wrapper merge.py 는 allowed-keys whitelist 부재 (임의 scalar/array/map deep-merge), 신규 2 field 별도 contract 갱신 불요. CI `agent frontmatter contract` check design plugin 미존재
+- `.claude-plugin/plugin.json` 0.19.0 → 0.20.0 MINOR + description CFP-1117-S2 entry prepend (marketplace mirrored field verbatim sync)
+
+#### Deferred (별 Story carrier — ADR-091 Wave 후속)
+- S3 lint 3 entry (`check-ddd-pattern-frontmatter.sh` 등 warning tier) + template §ubiquitous_language / §bounded_context_boundary
+- S4 review-verdict-v4 v4.7 → v4.8 finding type 3 (`bc_violation` / `aggregate_violation` / `ubiquitous_language_drift`)
+
 ## [0.19.0] - 2026-05-21
 
 ### Changed (CFP-1126 — ADR-042 Amendment 10 cross-repo sibling: AggregateArch + ModuleArch 통합, ratchet 축소)
