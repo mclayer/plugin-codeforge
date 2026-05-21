@@ -136,6 +136,16 @@ amendments_reserved:
 
 | 98 | CFP-1140 | active | 2026-05-21 KST status reserved→active 전환 (ArchitectAgent commit time, ADR-083 row 83 chief author precedent 정합 — UpgradeAgent runtime ownership SSOT (PMO 흡수 vs 신규 codeforge-upgrade lane plugin). CFP-1111 Wave 1 Story-2 carrier (7-slot bundle 7/7). CFP-703 Wave 2 Story-3 의 UpgradeAgent runtime — codeforge-pmo lane 흡수 vs 신규 codeforge-upgrade lane plugin 신설 의 decision framework + lane lifecycle invariant (ADR-023) + ownership boundary normative SSOT codify. ADR-076 (declarative reconciliation upgrade flow) cross-ref (UpgradeAgent runtime SSOT carrier). parent_epic CFP-1111. carrier_story CFP-1111-W1-S2 → CFP-1140 sub-Story 정정. ADR file = `ADR-098-upgrade-agent-runtime-ownership.md`.) |
 
+| 99 | CFP-1146 | reserved | 2026-05-21T00:00:00+09:00 (GitOpsAgent sequential append per ADR-RESERVATION write boundary — check-no-atlassian.sh 역전 + Atlassian-allow 재정의 SSOT carrier. CFP-1146 Epic-A 5-slot bundle 1/5. ADR file = `ADR-099-atlassian-allow-redefinition.md`. parent_epic CFP-1146.) |
+
+| 100 | CFP-1146 | reserved | 2026-05-21T00:00:00+09:00 (GitOpsAgent sequential append per ADR-RESERVATION write boundary — Confluence doc SSOT 인정 (ADR-013/041 supersede) SSOT carrier. CFP-1146 Epic-A 5-slot bundle 2/5. ADR file = `ADR-100-confluence-doc-ssot-recognition.md`. parent_epic CFP-1146.) |
+
+| 101 | CFP-1146 | reserved | 2026-05-21T00:00:00+09:00 (GitOpsAgent sequential append per ADR-RESERVATION write boundary — verify-before-trust Confluence REST ground-truth SSOT carrier. CFP-1146 Epic-A 5-slot bundle 3/5. ADR file = `ADR-101-verify-before-trust-confluence-rest.md`. parent_epic CFP-1146.) |
+
+| 102 | CFP-1146 | reserved | 2026-05-21T00:00:00+09:00 (GitOpsAgent sequential append per ADR-RESERVATION write boundary — sunset_justification + ratchet 약화 극복 governance anchor SSOT carrier. CFP-1146 Epic-A 5-slot bundle 4/5. ADR file = `ADR-102-ratchet-weakening-governance-anchor.md`. parent_epic CFP-1146.) |
+
+| 103 | CFP-1146 | reserved | 2026-05-21T00:00:00+09:00 (GitOpsAgent sequential append per ADR-RESERVATION write boundary — git↔Confluence sync mechanism 결정 SSOT carrier. CFP-1146 Epic-A 5-slot bundle 5/5. ADR file = `ADR-103-git-confluence-sync-mechanism.md`. parent_epic CFP-1146.) |
+
 ### 번호 해제 (archived)
 
 ADR deprecated/superseded 시 해당 row `status: archived`. 번호 재사용 금지.
