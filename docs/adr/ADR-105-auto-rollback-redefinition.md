@@ -166,6 +166,17 @@ N/A — permanent policy
 - **ADR-058 §결정 5** — §해소 기준 정량 명시 (안전장치 1) + 약화 evidence-gate (sunset_justification)
 - **ADR-72** — ProductionEvidenceDeputy + production cutover (rollback-protocol owner SubAgent, file명 2-digit form)
 
+## 관련 파일
+
+- `docs/adr/ADR-105-auto-rollback-redefinition.md` — 본 ADR (auto-rollback redefinition normative SSOT)
+- `docs/domain-knowledge/domain/production-cutover/rollback-protocol.md` — 2-layer amend 대상 (Step 4 + L36/L67/L70/L108, user-decision layer 보존 + auto-rollback layer disjoint)
+- `docs/adr/ADR-RESERVATION.md` — row 105 reserved → active 전환
+- [ADR-104](ADR-104-operational-phase-definition.md) — 운영 phase 1st-class 정의 (S1, 숫자 임계 layer anchor / wrapper-N/A / 0 API call 계승 source)
+- [ADR-087](ADR-087-deploy-lane-and-lifecycle-extension.md) — blue-green + 3-시간 보존 (안전장치 2 default anchor)
+- [ADR-064](ADR-064-decision-principle-mandate.md) — 모달 어휘 forbid-list (안전장치 1) + §self-application 2-layer (§결정 2)
+- [ADR-045](ADR-045-story-retro-mandatory-trigger.md) — §D-9 escalation forcing function (안전장치 3 사후 알림)
+- `docs/domain-knowledge/domain/operational-phase/` — 운영 phase narrative SSOT (ADR-104 carrier, S1)
+
 ## 변경 이력
 
 | 날짜 (KST) | Story | 변경 |
