@@ -3405,3 +3405,40 @@ entries:
       threshold: 3
       promotion_trigger: none
     status: Active
+
+  - name: regression-smoke-health-monitor
+    description: |
+      ADR-106 Amendment 2 §결정 1 단계 2-a generalize (monitor-originated regression/health notification).
+      ongoing regression/smoke health monitor: baseline 대비 metric pct 비교 + health 이진 FAIL + flap 흡수 3-layer.
+      24h cron + check-operational-regression.sh (thin bash) + check_operational_regression.py (Python ADR-061):
+        (1) regression 신호 (신호 3): .codeforge/operational-baseline.json vs current-metric.json pct 비교
+        (2) smoke health 신호 (신호 4): .codeforge/health-status.json 이진 FAIL 감지
+        (3) flap 흡수 3-layer: N-tick for-clause + hysteresis recovery margin + signature dedup
+        (4) S5 not-rollback -- ops-signal Issue 발의 (경고 전용, 자동 rollback 비동반)
+        (5) wrapper-self-app fast-pass (Tier-1 declare-time exemption, ADR-104 결정 4)
+        (6) baseline 부재 시 bootstrap (EC-1), metric 불가 시 fail-loud (EC-2)
+    detect_command: bash scripts/check-operational-regression.sh
+    workflow: templates/github-workflows/regression-smoke-health-monitor.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:operational-monitor
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-1194
+        - CFP-1193
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - bats_16tc_green_proof
+        - flap_suppression_false_negative_zero_proof
+        - s4_disjoint_rollback_to_blue_grep_zero_proof
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-1194
+    introduced_date: 2026-05-22
+    owner_adr: ADR-106
+    carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: Active
