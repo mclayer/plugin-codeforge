@@ -2,6 +2,21 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.21.1] - 2026-05-21
+
+### Changed (CFP-1168 — RACI 4-way → 3-way overlap zone mirror 전면 재편)
+
+wrapper `skills/deputy-mandate/SKILL.md` canonical SSOT sibling sync (CFP-1126 follow-up deferred carrier realized — ADR-042 Amendment 10 + ADR-091 Amendment 1 §결정 7 INV-5 정합):
+- `CLAUDE.md` RACI section header `4-way overlap zone` → `3-way overlap zone`
+- 12-cell summary (3 sub-axis × 4 cross-axis) → 9-cell summary (3 sub-axis × 3 cross-axis)
+- Aggregate cross-axis column 제거 (AggregateArch deprecated). ModuleArch (boundary axis unified) cross-axis 가 module-level + aggregate-level RDB OLTP 흡수
+- Security/InfraOp/TestContract × Aggregate cell 의 C=AggregateArch → Module cross-axis cell 안 aggregate-level 정합 검토 통합
+- Cell 3.4 예외 → Cell 3.3 재번호 (APIContractArch primary §8.6 contract testing 보존)
+- CONDITIONAL applicability key `aggregate_arch.applicable` 보존 (ModuleArch carry-over)
+- 4-way 이념 대립 / roster 6+3+1 / applicability row = CFP-1126 (0.19.0) 에서 이미 정합 (변경 0)
+
+PATCH bump (ADR-037 (g) CLAUDE.md SSOT clarity — CFP-1126 transitional pointer → realized catch-up, 기존 artifact invalidate 0). doc-only fast-path ADR-054. wrapper skill = canonical / 본 CLAUDE.md = mirror. marketplace atomic sync 별도 sibling PR 의무 (ADR-063 §결정 5).
+
 ## [0.21.0] - 2026-05-21
 
 ### Added (CFP-1117 Story-3 (#1120) — ADR-091 §결정 5/7: Change Plan DDD block)

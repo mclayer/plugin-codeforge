@@ -83,23 +83,23 @@ ArchitectPLAgent 가 6 (또는 8/9/10) SubAgent 를 **병렬 spawn**. 대립 참
 
 **DesignReviewPL 교차 체크**: ArchitectAgent 통합 판정 + ArchitectPLAgent 검수가 각 변호 근거를 근거 있게 일축·수용했는가 / 요건 범위를 넘지 않았는가 / §7 보안 설계와 §7.4 운영 리스크와 §11 데이터 마이그레이션이 충실히 반영되었는가 / ModuleArch (aggregate-level) ↔ DataArch cross-layer boundary 명시했는가.
 
-## RACI 4-way overlap zone (CFP-1086 Story-3 — wrapper SSOT mirror)
+## RACI 3-way overlap zone (CFP-1086 Story-3 / CFP-1168 재편 — wrapper SSOT mirror)
 
-> **wrapper canonical SSOT** = [`skills/deputy-mandate/SKILL.md`](https://github.com/mclayer/plugin-codeforge/blob/main/skills/deputy-mandate/SKILL.md) `## RACI 표준 row 형식 (Story-3 — 4-way overlap zone body)` 단락. 본 단락 = 1-row summary mirror (각 Cell detail = wrapper skill 참조).
+> **wrapper canonical SSOT** = [`skills/deputy-mandate/SKILL.md`](https://github.com/mclayer/plugin-codeforge/blob/main/skills/deputy-mandate/SKILL.md) `## RACI 표준 row 형식 (Story-3 — 3-way overlap zone body, CFP-1168 재편)` 단락. 본 단락 = 1-row summary mirror (각 Cell detail = wrapper skill 참조).
 
-chief tie-break ladder 3 단계 (ADR-068 Amendment 2) 의 **1단계 (RACI matrix lookup)** 입력 SSOT. 다축 overlap 영역만 본 matrix 활성 — single-axis 결정은 wrapper SKILL.md `CFP-1086 7+3+1 primary axis matrix` 직접 lookup.
+chief tie-break ladder 3 단계 (ADR-068 Amendment 2) 의 **1단계 (RACI matrix lookup)** 입력 SSOT. 다축 overlap 영역만 본 matrix 활성 — single-axis 결정은 wrapper SKILL.md `CFP-1126 6+3+1 primary axis matrix` 직접 lookup.
 
-### 12-cell summary (3 sub-axis × 4 cross-axis)
+### 9-cell summary (3 sub-axis × 3 cross-axis, CFP-1168 재편)
 
-> **CFP-1126 통합 note**: Aggregate column 의 C=AggregateArch → **C=ModuleArch (aggregate-level)** carry-over (AggregateArch deprecate, ModuleArch boundary axis 통합). 4-column → 3-column 정식 재편 (Aggregate + Module 통합) = **별 CFP carrier** (CFP scope unitary — 본 CFP-1126 = agent 통합 + roster count 정정, RACI full 재편은 design lane governance 변경 별 영역). 아래 표는 transitional state (Aggregate column 의 C=ModuleArch pointer 정정만, column 구조 보존).
+> **CFP-1168 재편 note** (CFP-1126 follow-up — ADR-042 Amendment 10 + ADR-091 Amendment 1 정합): CFP-1126 (AggregateArch deprecated → ModuleArch boundary axis unified, 7→6 permanent) 가 RACI matrix body 를 transitional 보존 (Aggregate column 의 C=ModuleArch pointer 정정만). 본 CFP-1168 = 그 deferred carrier 의 실 재편 — **4-way → 3-way 전면 재편** (Aggregate cross-axis column 제거, ModuleArch (boundary axis unified) cross-axis 가 module-level + aggregate-level RDB OLTP 흡수). 기존 Security/InfraOp/TestContract × Aggregate cell 의 C=AggregateArch → Module cross-axis cell 안 aggregate-level 정합 검토로 통합. CONDITIONAL applicability `aggregate_arch.applicable` key 보존 (ModuleArch carry-over).
 
-| Sub-axis ↓ \\ Cross-axis → | Aggregate (R/C/I, CFP-1126 → ModuleArch aggregate-level) | Data OLAP (R/C/I) | Module (R/C/I) | APIContract (R/C/I) |
-|---|---|---|---|---|
-| **Security** | R=SecurityArch / C=ModuleArch / I=TestContract | R=SecurityArch / C=DataArch / I=TestContract | R=SecurityArch / C=ModuleArch / I=InfraOp | R=SecurityArch / C=APIContract / I=InfraOp |
-| **InfraOp** | R=InfraOp / C=ModuleArch / I=TestContract | R=InfraOp / C=DataArch / I=TestContract | R=InfraOp / C=ModuleArch / I=SecurityArch | R=InfraOp / C=APIContract / I=TestContract |
-| **TestContract** | R=TestContract / C=ModuleArch / I=InfraOp | R=TestContract / C=DataArch / I=SecurityArch | R=TestContract / C=ModuleArch / I=APIContract | **R=APIContract** / C=TestContract / I=InfraOp |
+| Sub-axis ↓ \\ Cross-axis → | Data OLAP (R/C/I) | Module (R/C/I, boundary axis unified — module-level + aggregate-level RDB OLTP, CFP-1126 AggregateArch 흡수) | APIContract (R/C/I) |
+|---|---|---|---|
+| **Security** | R=SecurityArch / C=DataArch / I=TestContract | R=SecurityArch / C=ModuleArch (module-level trust boundary + aggregate-level PII column/encryption-at-rest) / I=InfraOp | R=SecurityArch / C=APIContract / I=InfraOp |
+| **InfraOp** | R=InfraOp / C=DataArch / I=TestContract | R=InfraOp / C=ModuleArch (module-level process boundary + aggregate-level pool/replica/lock semantics) / I=SecurityArch | R=InfraOp / C=APIContract / I=TestContract |
+| **TestContract** | R=TestContract / C=DataArch / I=SecurityArch | R=TestContract / C=ModuleArch (module-level dependency test + aggregate-level migration/Alembic test seed) / I=APIContract | **R=APIContract** / C=TestContract / I=InfraOp |
 
-**Cell 3.4 예외**: `R = APIContractArch` (primary, §8.6 contract testing primary axis 정합) / `C = TestContractArch` (CI placement + orchestration). contract format ≠ CI placement disjoint axis (CFP-1086 §7+3+1 primary axis matrix row 정합).
+**Cell 3.3 예외** (CFP-1168 재번호, 구 Cell 3.4): `R = APIContractArch` (primary, §8.6 contract testing primary axis 정합) / `C = TestContractArch` (CI placement + orchestration). contract format ≠ CI placement disjoint axis (CFP-1126 §6+3+1 primary axis matrix row 정합).
 
 ### 4-column 열 정의 (전 row 공통)
 
@@ -111,7 +111,7 @@ chief tie-break ladder 3 단계 (ADR-068 Amendment 2) 의 **1단계 (RACI matrix
 ### Cell selection heuristic
 
 1. single-axis 결정 → wrapper skill `primary axis matrix` 직접 lookup (RACI 미적용)
-2. 2-axis 이상 overlap → 본 12-cell row 활성 (R+C dialog, A sign-off, I 통지)
+2. 2-axis 이상 overlap → 본 9-cell row 활성 (R+C dialog, A sign-off, I 통지)
 3. R+C 합의 부재 → chief tie-break ladder 2단계 (ADR-068 invariant)
 4. invariant 적용 후 미해소 → ladder 3단계 (chief judgement + ADR Amendment 발의)
 
