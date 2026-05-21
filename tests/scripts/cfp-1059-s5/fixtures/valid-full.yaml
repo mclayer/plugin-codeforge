@@ -1,0 +1,42 @@
+---
+# TC-1 fixture — valid full deploy block (mctrader-like)
+# All 5 sub-fields present and correctly typed
+project:
+  name: mctrader
+  key_prefix: MCT
+
+deploy:
+  host_mapping:
+    - host: prod-server-01
+      containers:
+        - market
+        - engine
+    - host: prod-server-02
+      containers:
+        - web
+        - data
+
+  docker_hub:
+    org: mclayer
+    image_prefix: mctrader
+    auth_secret_env: DOCKERHUB_TOKEN
+
+  traefik:
+    enabled: true
+    network: traefik-public
+    domain_pattern: "*.mclayer.io"
+
+  1password:
+    enabled: true
+    connect_host_env: OP_CONNECT_HOST
+    connect_token_env: OP_CONNECT_TOKEN
+    vault: mctrader-prod
+
+  ssh_targets:
+    - host: prod-server-01
+      user: deploy
+      key_secret_env: SSH_DEPLOY_KEY
+      port: 22
+    - host: prod-server-02
+      user: deploy
+      key_secret_env: SSH_DEPLOY_KEY

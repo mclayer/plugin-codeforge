@@ -7,6 +7,19 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.0.3] - 2026-05-21
+
+### Added
+
+- [CFP-1059-S5] consumer overlay deploy.* schema 실 validation wire (declarative seed -> mechanical lint, ADR-054 Amendment 1 full-lane)
+  - `scripts/check_deployment_schema.py` (yaml.safe_load 기반, exit 3-tier, 5 sub-field validation, ADR-061 외부 .py)
+  - `scripts/check-deployment-schema.sh` (ADR-061 thin bash wrapper)
+  - `templates/github-workflows/deployment-schema-check.yml` + `.github/workflows/` byte-identical self-app (warning tier)
+  - `tests/scripts/cfp-1059-s5/check-deployment-schema.bats` (8 TC TDD) + 5 fixture YAML
+  - `docs/evidence-checks-registry.yaml` deployment-schema-check 91번째 entry (warning tier)
+  - label-registry-v2 v2.42 -> v2.43 (hotfix-bypass:deployment-schema 61번째 family member)
+  - §7 SecurityArch: secret env-name only, value dereference 0
+
 ## [6.0.2] - 2026-05-21
 
 ### Changed
