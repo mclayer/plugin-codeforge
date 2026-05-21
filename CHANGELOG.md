@@ -1,5 +1,18 @@
 # Changelog
 
+## 1.9.0 — 2026-05-21
+
+### Changed
+- review-verdict-v4 v4.7 → v4.8 MINOR (ADR-091 §결정 6 enforcement layer 3-tier 의 3번째 tier — review-verdict-v4 enum S4 carrier, CFP-1117 Story-4)
+  - `findings[].type` enum 에 3 DDD finding type literal 추가: `bc_violation` (Bounded Context 위반 — Change Plan §3.D bounded_context_boundary 연결) / `aggregate_violation` (Aggregate 위반 — Change Plan §3.A affected_aggregates + ADR-091 §결정 3 Layer B real Aggregate 연결, ModuleArchitectAgent boundary axis unified 영역) / `ubiquitous_language_drift` (Ubiquitous Language drift — check-ubiquitous-language lint 연결)
+  - ADR-091 §결정 7 INV-5 vocabulary theater 차단 forcing function 의 review-verdict finding 연결 (evidence #4)
+  - additive only backward-compat invariant (기존 v4.7 consumer 가 3 신규 enum literal 무시 가능). ADR-008 §결정 2 "enum literal 추가" MINOR bump 정합. CFP-528 Amendment 1 (enum literal + 의미 1줄) pattern verbatim 답습.
+  - DesignReviewPL + CodeReviewPL 양 lane emit. verdict-level boolean field 신설 0건 (findings[].type literal 확장만 — semantic accountability mechanism, §결정 6 3번째 tier rationale 정합).
+- `templates/review-pl-base.md` §3 — DDD finding type 3 literal 종합 check table 추가 (DesignReview / CodeReview cross-validate, boundary-completeness / dimensional-empirical-gap dual-binding 패턴 답습)
+
+### Note
+- 5 sibling contract (requirements/design/develop/test/pmo v4.3) pre-existing drift = 본 S4 scope 외 (별 sweep CFP carrier)
+
 ## 1.8.0 — 2026-05-20
 
 ### Changed

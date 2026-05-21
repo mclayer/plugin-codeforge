@@ -323,6 +323,23 @@ Violation finding type: `boundary-completeness` (review-verdict-v4 v4.3 `finding
 - Severity default = P1 (empirical-source 누락이 SLA 위반 / accuracy regression 으로 전파 시 P0 가능)
 - ADR-068 §결정 2 Amendment 1: ArchitectAgent 는 `dimensional_empirical_self_check_passed: bool` emit (verdict packet, review-verdict-v4 v4.4), DesignReview / CodeReview PL 은 `findings[].type: "dimensional-empirical-gap"` 로 cross-validate — boundary-completeness dual-binding 과 동일 패턴
 
+### DDD finding type 3 literal (v4.8 — ADR-091 / CFP-1117)
+
+DesignReview 와 CodeReview PL 이 `findings[].type` 3 DDD literal (review-verdict-v4 v4.8) 로 DDD vocabulary governance 위반을 flag 하는 공통 check table. ADR-091 §결정 6 enforcement layer 3-tier 의 3번째 tier (review-verdict-v4 enum) + §결정 7 INV-5 vocabulary theater 차단 forcing function 연결.
+
+| Finding type | DesignReview check | CodeReview check |
+|---|---|---|
+| `bc_violation` (Bounded Context) | Change Plan §3.D bounded_context_boundary 안 cross-BC 참조 ACL/OHS 패턴 부재 / BC boundary 침범 / 동음이의 미qualifier 시 finding | impl 의 cross-BC 직접 참조 (ACL adapter 우회) / BC boundary 침범 시 finding |
+| `aggregate_violation` (Aggregate) | Change Plan §3.A affected_aggregates 안 consistency boundary 침범 / transaction boundary 부정합 / invariant 미보존 / aggregate root 외부 직접 access 시 finding (ADR-091 §결정 3 Layer B real Aggregate) | impl 의 aggregate root 외부 직접 access / transaction boundary mismatch / invariant 미보존 시 finding |
+| `ubiquitous_language_drift` (Ubiquitous Language) | glossary SSOT 외 미정의 DDD term 사용 / 동음이의 미구분 / anti-pattern 어휘 시 finding (check-ubiquitous-language lint 정합) | impl identifier ↔ glossary term drift / 미정의 DDD term hardcode 시 finding |
+
+**적용 원칙**:
+- DesignReview = 설계 문서 감사 관점 (Change Plan §3.D / §3.A + Story §ubiquitous_language 완결성 검증)
+- CodeReview = 구현 cross-validate 관점 (impl ↔ 설계 BC / Aggregate boundary 정합 + glossary term drift 검증)
+- Severity default = P1 (DDD boundary 위반이 구현 오류 / interpretation drift 로 전파 시 P0 가능)
+- ADR-091 §결정 6: review-verdict-v4 enum (3번째 tier) = semantic accountability mechanism. dedicated verdict-level boolean field 신설 0건 — DDD vocabulary governance 는 `findings[].type` literal 확장으로만 cross-validate (Template lint = mechanical structure / reviewer finding type = semantic accountability, Codex Q6 rationale 정합)
+- ADR-091 §결정 7 INV-5: 본 3 finding type 의 실 emit 사례 1건 이상이 vocabulary theater 차단 forcing function evidence (golden-path worked example S6 FINAL VERDICT evidence #4)
+
 ---
 
 ## 4. FIX 카운터 SSOT
