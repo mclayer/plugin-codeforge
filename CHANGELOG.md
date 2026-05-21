@@ -7,6 +7,20 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.0.5] - 2026-05-21
+
+### Changed
+
+- [CFP-1168] deputy-mandate SKILL.md RACI matrix 전면 재편 (CFP-1126 follow-up deferred carrier realized — ADR-042 Amendment 10 + ADR-091 Amendment 1 정합): AggregateArch deprecated + ModuleArch boundary axis unified (7+3+1 → 6+3+1). PATCH bump (ADR-037 (b) Skill file minor edit — CFP-1126 governance 의미 확정 후 matrix body catch-up, agent 신설/제거 0건 = T2 미발동)
+  - frontmatter description 7+3+1 → 6+3+1 + 호출 시점 5→6 deputy 표기 + 매트릭스 header + BackendArchEpic roster section CFP-1126 layer
+  - CFP-1086 7+3+1 primary axis matrix → 6+3+1 (§3 aggregate / §11.1-§11.6 RDB OLTP / Alembic 7 원칙 owner = AggregateArch → ModuleArch boundary axis unified)
+  - axis disjoint 검증 4 영역 정정 (ModuleArch↔AggregateArch 자기 통합 제거 + AggregateArch↔DataArch → ModuleArch↔DataArch + SecurityArch↔AggregateArch → SecurityArch↔ModuleArch)
+  - footnote deferred → realized (CFP-1168 명시)
+  - RACI 4-way 12-cell → 3-way 9-cell body 전면 재편 (AggregateArch cross-axis column 제거, Cell 1.1/2.1/3.1 의 C=AggregateArch → ModuleArch aggregate-level 흡수, Cell 1.2/1.3 + 2.2/2.3 + 3.2/3.3 재번호)
+  - CONDITIONAL applicability key `aggregate_arch.applicable` 보존 (ModuleArch carry-over, consumer overlay backward-compat)
+  - codeforge-design CLAUDE.md RACI 4-column → 3-column (9 cells) cross-repo sibling sync (design 0.19.0 → 0.19.1 PATCH)
+  - doc-only fast-path ADR-054. marketplace atomic sync 별도 sibling PR 의무 (ADR-063 §결정 5, mirrored field version 변경)
+
 ## [6.0.4] - 2026-05-21
 
 ### Changed
