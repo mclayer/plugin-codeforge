@@ -7,7 +7,7 @@
 #
 # PREREQ:  tier 상수 / classify_tier / atomic_scope_for_tier 존재 (RED 시 FAIL)
 # TC-1:    classify_tier("codeforge") == TIER_1_WRAPPER
-# TC-2:    classify_tier(6 lane 각각) == TIER_2_LANE (6 TC)
+# TC-2:    classify_tier(8 lane 각각) == TIER_2_LANE (8 TC — CFP-1199 F1: 6 → 8)
 # TC-3:    classify_tier("unknown-plugin") raises ValueError (fail-closed)
 # TC-4:    atomic_scope_for_tier(TIER_1) → 3 파일 + family_atomic=True
 # TC-5:    atomic_scope_for_tier(TIER_2) → 2 파일 + family_atomic=False
@@ -80,7 +80,7 @@ teardown() {
   [ "$status" -eq 0 ]
 }
 
-# ───────────────── TC-2: 6 lane 각각 TIER_2_LANE ─────────────────────────────
+# ───────────────── TC-2: 8 lane 각각 TIER_2_LANE (CFP-1199 F1: 6 → 8) ────────
 
 @test "TC-2a (P0): classify_tier('codeforge-requirements') == TIER_2_LANE" {
   run python3 "$TEST_HELPER" "$WALK_PLAN_DIR" "tc2_lane_requirements"
@@ -109,6 +109,16 @@ teardown() {
 
 @test "TC-2f (P0): classify_tier('codeforge-pmo') == TIER_2_LANE" {
   run python3 "$TEST_HELPER" "$WALK_PLAN_DIR" "tc2_lane_pmo"
+  [ "$status" -eq 0 ]
+}
+
+@test "TC-2g (P0): classify_tier('codeforge-deploy') == TIER_2_LANE (CFP-1199 F1, ADR-087)" {
+  run python3 "$TEST_HELPER" "$WALK_PLAN_DIR" "tc2_lane_deploy"
+  [ "$status" -eq 0 ]
+}
+
+@test "TC-2h (P0): classify_tier('codeforge-deploy-review') == TIER_2_LANE (CFP-1199 F1, ADR-088)" {
+  run python3 "$TEST_HELPER" "$WALK_PLAN_DIR" "tc2_lane_deploy_review"
   [ "$status" -eq 0 ]
 }
 

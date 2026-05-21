@@ -9,7 +9,7 @@
 # TC-22: walk_changelog(from > to) → VersionRangeError raise
 # TC-23: resolve_min_prereq_topological (consumer_pin >= all min) → empty PrereqMismatch (PASS)
 # TC-24: resolve_min_prereq_topological (consumer wrapper_pin < lane min) → non-empty PrereqMismatch
-# TC-25: topological order = [wrapper, ...6 lane] DAG (wrapper 먼저, cycle 부재)
+# TC-25: topological order = [wrapper, ...8 lane] DAG (wrapper 먼저, cycle 부재, 9-plugin)
 # TC-26: aggregate_walk_result (ALL SUCCESS) → family SUCCESS
 # TC-27: aggregate_walk_result (ANY PARTIAL_FAILURE) → family PARTIAL_FAILURE
 # TC-28: aggregate_walk_result (ANY FAILED) → family FAILED
@@ -343,7 +343,10 @@ def test_tc24b_prereq_mismatch_fields():
 
 @pytest.mark.skipif(not _MODULE_AVAILABLE, reason="walk_plan 모듈 미구현 (TDD RED)")
 def test_tc25_topological_order_wrapper_first():
-    """TC-25: topological order = [wrapper, ...6 lane] — wrapper 먼저 resolve, cycle 부재."""
+    """TC-25: topological order = [wrapper, ...8 lane] — wrapper 먼저 resolve, cycle 부재 (9-plugin).
+
+    CFP-1199 F1: 9-plugin family (codeforge-deploy + codeforge-deploy-review 추가).
+    """
     # wrapper = codeforge (lane들이 codeforge에 의존 — 단방향 DAG)
     family_min_prereq = {
         "codeforge-requirements": {"codeforge": ">=5.0.0"},
@@ -352,6 +355,8 @@ def test_tc25_topological_order_wrapper_first():
         "codeforge-develop": {"codeforge": ">=5.0.0"},
         "codeforge-test": {"codeforge": ">=5.0.0"},
         "codeforge-pmo": {"codeforge": ">=5.0.0"},
+        "codeforge-deploy": {"codeforge": ">=5.0.0"},         # CFP-1199 F1
+        "codeforge-deploy-review": {"codeforge": ">=5.0.0"},  # CFP-1199 F1
     }
     consumer_pin = {
         "codeforge": "5.0.0",
@@ -361,6 +366,8 @@ def test_tc25_topological_order_wrapper_first():
         "codeforge-develop": "5.0.0",
         "codeforge-test": "5.0.0",
         "codeforge-pmo": "5.0.0",
+        "codeforge-deploy": "5.0.0",         # CFP-1199 F1
+        "codeforge-deploy-review": "5.0.0",  # CFP-1199 F1
     }
 
     # topological resolve는 cycle 없이 완료되어야 함 (RuntimeError 없음)
@@ -372,8 +379,11 @@ def test_tc25_topological_order_wrapper_first():
 
 @pytest.mark.skipif(not _MODULE_AVAILABLE, reason="walk_plan 모듈 미구현 (TDD RED)")
 def test_tc25b_topological_order_exported():
-    """TC-25b: walk_plan.py 가 TOPOLOGICAL_ORDER 상수 또는 함수를 export."""
-    # ADR-096 §결정 2 DAG invariant: [wrapper, ...6 lane]
+    """TC-25b: walk_plan.py 가 TOPOLOGICAL_ORDER 상수 또는 함수를 export.
+
+    CFP-1199 F1: 9-plugin family 확인 (7 → 9, ADR-087/088).
+    ADR-096 §결정 2 DAG invariant: [wrapper, ...8 lane]
+    """
     import walk_plan as wp  # type: ignore[import]
 
     # positive: TOPOLOGICAL_ORDER 또는 get_topological_order 존재
@@ -391,10 +401,12 @@ def test_tc25b_topological_order_exported():
     # positive: wrapper(codeforge) 가 첫 번째
     assert order[0] == "codeforge", f"topological order 첫 번째 = {order[0]}, expected codeforge"
 
-    # positive: 7개 family member 모두 포함
+    # positive: 9개 family member 모두 포함 (CFP-1199 F1: 7 → 9)
     expected_members = {
         "codeforge", "codeforge-requirements", "codeforge-design",
-        "codeforge-review", "codeforge-develop", "codeforge-test", "codeforge-pmo"
+        "codeforge-review", "codeforge-develop", "codeforge-test", "codeforge-pmo",
+        "codeforge-deploy",         # ADR-087 신설
+        "codeforge-deploy-review",  # ADR-088 신설
     }
     assert set(order) == expected_members
 
@@ -403,8 +415,11 @@ def test_tc25b_topological_order_exported():
 
 @pytest.mark.skipif(not _MODULE_AVAILABLE, reason="walk_plan 모듈 미구현 (TDD RED)")
 def test_tc26_aggregate_all_success():
-    """TC-26: aggregate_walk_result (ALL SUCCESS) → family SUCCESS."""
-    results = [WalkResult.SUCCESS] * 7
+    """TC-26: aggregate_walk_result (ALL SUCCESS) → family SUCCESS.
+
+    CFP-1199 F1: 9-plugin family 반영 (7 → 9).
+    """
+    results = [WalkResult.SUCCESS] * 9  # 9-plugin family (CFP-1199 F1)
 
     family_result = aggregate_walk_result(results)
 
@@ -421,7 +436,10 @@ def test_tc26_aggregate_all_success():
 
 @pytest.mark.skipif(not _MODULE_AVAILABLE, reason="walk_plan 모듈 미구현 (TDD RED)")
 def test_tc27_aggregate_any_partial_failure():
-    """TC-27: aggregate_walk_result (ANY PARTIAL_FAILURE) → family PARTIAL_FAILURE."""
+    """TC-27: aggregate_walk_result (ANY PARTIAL_FAILURE) → family PARTIAL_FAILURE.
+
+    CFP-1199 F1: 9-plugin family 반영 (7 → 9).
+    """
     results = [
         WalkResult.SUCCESS,
         WalkResult.SUCCESS,
@@ -430,6 +448,8 @@ def test_tc27_aggregate_any_partial_failure():
         WalkResult.SUCCESS,
         WalkResult.SUCCESS,
         WalkResult.SUCCESS,
+        WalkResult.SUCCESS,          # CFP-1199 F1: deploy
+        WalkResult.SUCCESS,          # CFP-1199 F1: deploy-review
     ]
 
     family_result = aggregate_walk_result(results)
