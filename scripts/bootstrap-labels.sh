@@ -205,6 +205,11 @@ create_label "codeforge-kpi-alert"        "f29513" "codeforge KPI threshold viol
 create_label "codeforge-kpi-infra-error"  "d73a4a" "KPI workflow infrastructure failure — oncall investigation required. rate-limit-fallback-kpi.yml workflow 가 clone fail / aggregator script error / auto-PR fail detect 시 Issue auto-open. measurement alert (codeforge-kpi-alert) 와 분리된 channel — audience routing (oncall vs 정책 의사결정자). CFP-451 v2.3 sub-axis 다축 완결."
 create_label "codeforge-kpi-update"       "0e8a16" "KPI workflow data refresh PR — auto-merge eligible. rate-limit-fallback-kpi.yml workflow 가 monthly cron 으로 발의하는 docs/kpi/rate-limit-fallback.json 데이터 갱신 PR marker. CFP-451 v2.3 sub-axis 다축 완결 (pre-existing CFP-393 leak 정정 — Codex F-451-001 (a))."
 
+# operational-signal:* (1종 — CFP-1193 v2.45, ADR-106 Amendment 1 §결정 1 단계 2-a carrier)
+# ops-signal category: rollback signal monitor / regression-health monitor / self-improving loop closure 가 감지한 운영 신호 회로 Issue label.
+# ADR-105 §결정 3 + ADR-106 §결정 4 loop closure 3-principle OR-fire 채널 (단계 2-a + 단계 2-b 공용 label).
+create_label "ops-signal"  "e4e669" "ops-signal: 운영 신호 회로 Issue label (CFP-1193 / ADR-106 Amendment 1 §결정 1 단계 2-a carrier). rollback signal monitor 가 감지한 신호(에러율/burn rate 임계 초과 / 보존 window 만료 / kill-switch 활성 감사)에 대해 발의하는 Issue 의 분류 label. ADR-106 self-improving loop 회로 단계 2-a (auto-rollback trigger 동반 사후 알림) 채널. 단계 2-b (일반 ops-signal Issue) / 단계 3 (PMOAgent escalation) = S6 carrier."
+
 # hotfix-bypass:* (CFP-598) — label-registry-v2.md §3 yaml dynamic read.
 # canonical-only category (component:* 와 달리 consumer overlay 아님) — DRY_RUN + actual 양 모드 모두 처리.
 _BOOTSTRAP_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -269,7 +274,7 @@ fi
 
 if [ $DRY_RUN -eq 0 ]; then
     echo ""
-    echo "✓ 55 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."  # CFP-1059: 46 → 55 base label (+9 hardcoded — 2 phase:* loop + 5 gate:* + 2 plugin:*; 7 hotfix-bypass:* 는 yaml dynamic read 영역 — label-registry-v2 v2.41 → v2.42 / ADR-087 + ADR-088 + ADR-089 + ADR-090 Deploy lane + Deploy Review lane + Schema 7 + Cross-layer 정책 carrier). CFP-1086: 42 → 46 base label (4 axis:* labels — AggregateArch / APIContractArch / ModuleArch / DataArch, label-registry-v2 v2.40 → v2.41 ADR-042 Amendment 8 carrier).
+    echo "✓ 56 base label + component:* (project.yaml.labels.components[] 동적) 처리 완료. 'gh label list' 로 확인."  # CFP-1193: 55 → 56 base label (+1 ops-signal operational-signal category, label-registry-v2 v2.45 정합). CFP-1059: 46 → 55 base label (+9 hardcoded — 2 phase:* loop + 5 gate:* + 2 plugin:*; 7 hotfix-bypass:* 는 yaml dynamic read 영역 — label-registry-v2 v2.41 → v2.42 / ADR-087 + ADR-088 + ADR-089 + ADR-090 Deploy lane + Deploy Review lane + Schema 7 + Cross-layer 정책 carrier). CFP-1086: 42 → 46 base label (4 axis:* labels — AggregateArch / APIContractArch / ModuleArch / DataArch, label-registry-v2 v2.40 → v2.41 ADR-042 Amendment 8 carrier).
 fi
 
 # CFP-492 2-way self-check (DRY_RUN 모드에서만):

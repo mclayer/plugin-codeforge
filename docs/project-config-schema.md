@@ -421,10 +421,27 @@ deploy:
     flap_n: <int>                      # N-tick for-clause tick 수 (default: 2)
                                        # 연속 N tick 유지 후 Issue 발의 (단발 FAIL 억제)
     window: <int>                      # 측정 window (초, default: 86400 = 24시간 — daily cron 주기 정합)
+
+  # [선택] self_improving_loop — loop closure gate 설정 (CFP-1195 / ADR-106 §결정 4)
+  # 부재 시 self-improving-loop-closure cron = wrapper fast-pass exit 0 (ADR-104 §결정 4 정합)
+  # loop closure 3-principle OR-fire: (a) dedup + (b) max-depth + (c) escalate_user — OR 발동 시 자동 Issue 생성 억제
+  self_improving_loop:
+    enabled: <bool>                    # false = loop closure gate 비활성 (cron 실행되나 gate 통과 0)
+                                       # true = ops-signal pattern 누적 + Epic-level dedup + PMO escalation 활성
+    loop_max_depth: <int>              # 동일 signature 반복 loop 최대 허용 깊이 (default: 3)
+                                       # loop_depth >= loop_max_depth → max-depth gate trip → escalate_user
+                                       # Google SRE/ITIL/NASA 보수적 lower bound 3 (ADR-068 I-5 §7.4 empirical-source)
+    dedup_window_hours: <int>          # 동일 signature dedup window (시간, default: 24)
+                                       # window 내 open Issue/Epic 존재 → dedup gate trip → 신규 발의 억제
+                                       # S4/S5 Issue-level 24h 정합 (ADR-068 I-5 §7.4 dimension: lifecycle)
+    pattern_count_threshold: <int>     # PMO escalation 발화 임계 (default: 2)
+                                       # signal_type 별 ops-signal Issue 누적 count >= threshold → stage 3 발화
+                                       # Google SRE/ITIL/NASA industry lower bound 2 (ADR-068 I-5 §7.4 dimension: count)
 ```
 
 - **본 block 부재 시 동작**: deploy lane (CFP-1059) 가 Epic close 후 자동 trigger 되지 않음 (opt-in). 8 lane workflow 완결 시 wrapper Orchestrator = `phase:보안-테스트` 후 terminal (CFP-1059 이전 default 동작 유지). consumer 가 deploy block 등록 후 codeforge-deploy plugin install 시 deploy lane 활성.
 - **operational_monitor 동작 원칙** (CFP-1194 / ADR-106 Amendment 2 §결정 1 단계 2-a): S4 `auto_rollback` 과 완전 disjoint — S5 는 ops-signal Issue 발의만 (auto-rollback trigger 없음, ADR-104 §결정 4 wrapper fast-pass). `regression_threshold` 미정의 = 보수적 EC-4 (신호 미감지). `flap_n` 연속 N tick 도달(default 2) 후 Issue 발의 (flap 3-layer 내 layer-a). hysteresis recovery margin = pct_change < (threshold - margin, default 0.5%) 조건 충족 시 신호 해소. window default 86400초(24h, daily cron 주기 정합). 0 API call invariant (filesystem primary: `.codeforge/{operational-baseline,health-status,operational-flap-state}.json` — 외부 HTTP health endpoint 금지).
+- **self_improving_loop 동작 원칙** (CFP-1195 / ADR-106 §결정 4): loop closure 3-principle OR-fire — (a) dedup gate (open Issue/Epic 존재), (b) max-depth gate (loop_depth >= loop_max_depth), (c) escalate_user gate (pattern_count >= threshold) — 3 원칙 중 1개라도 trip 시 자동 Issue 생성 억제 + stage 4 user gate 발화 (자동 Epic 개시 금지 invariant). `enabled: false` = cron 실행되나 gate 통과 불가 (0 Issue 발의). `loop_max_depth` 미정의 = default 3 (보수적 runaway 차단 lower bound). `pattern_count_threshold` 미정의 = default 2 (industry lower bound, Google SRE/ITIL/NASA 정합). S4/S5 monitor 와 disjoint source — S4/S5-originated Issue 는 Epic-level dedup gate (b)만 적용 (re-creation 없음). 0 API call invariant (filesystem primary: `docs/kpi/operational-signal-history.jsonl` append-only — ADR-104 §결정 3).
 - **auto_rollback 안전장치 4 AND** (CFP-1193 / ADR-105 §결정 3): `auto_rollback.enabled: false` = safety_4 false → trigger 전체 무력화 (신호 감지·기록 계속 — 무음 차단 금지 EC-2). `error_rate_threshold` / `latency_burn_rate_threshold` 미정의 = safety_1 false → trigger 0 (보수적 fallback EC-1). `window` 가 3시간 보존 window(10800초) 초과 = safety_2 false (ADR-087 §결정 5). filesystem kill-switch (`.codeforge/auto-rollback.disabled`) = safety_4 override (config enabled 여부 무관 — OR disable §3.4 정합). kill-switch 활성 시에도 신호 감지·ops-signal Issue 발의 계속 (EC-2).
 - **fallback semantic**:
   - `deploy.host_mapping` 부재 = deploy lane 활성화 prerequisite 불충족 → warning + skip (Epic close 진행, manual deploy operator 영역).

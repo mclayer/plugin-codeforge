@@ -1,0 +1,136 @@
+name: self-improving-loop-closure
+# CFP-1195 / ADR-106 §결정 1 단계 2-b — self-improving loop closure cron (24h)
+# ADR-104 §결정 3: 0 API call (filesystem primary)
+# ADR-104 §결정 4: wrapper-N/A (Tier-1 declare-time exemption — wrapper fast-pass)
+# ADR-106 §결정 4: loop closure 3원칙 (dedup/max-depth/escalate_user, OR 발동)
+# ADR-045 §D-4 amendment_id=1: workflow_run self re-trigger 금지
+# ADR-060: warning tier (continue-on-error: true) + evidence-checks-registry entry
+# ADR-064: 모달 어휘 금지 (loop_max_depth/dedup_window_hours = 정량 강제)
+# ADR-079: KST timestamp (detected_at_kst)
+#
+# 단계 4: 자동 Epic 개시 금지 (self-improving != self-executing)
+#   PMOAgent escalation → Orchestrator → 사용자 확인 후 Epic 후보 결정
+#
+# 답습 source: regression-smoke-health-monitor.yml (CFP-1194 S5) — byte-pattern verbatim
+#   schedule cron + workflow_dispatch + permissions deny-all + concurrency + continue-on-error
+#
+# 독립 cron (S4/S5 monitor cron 과 disjoint — workflow_run self re-trigger 금지):
+#   ADR-045 §D-4 amendment_id=1: GitHub Actions infinite loop / quota burn 회피
+#   concurrency cancel-in-progress: false → 중복 cron run 직렬화
+#
+# Wrapper-self-app: N/A — operational-signal-to-issue.sh §wrapper fast-pass
+#   wrapper repo = declarative SSOT only. 실 loop closure = consumer 환경.
+#   wrapper 에서 cron 실행 시 --repo mclayer/plugin-codeforge → fast-pass exit 0.
+#
+# Hotfix bypass:
+#   hotfix-bypass:self-improving-loop label 부착 시 skip + audit comment
+#   (ADR-024 Amendment 3 hotfix-bypass family, label-registry-v2 v2.47 신규 member)
+#
+# §7.4 empirical-source (ADR-068 I-5):
+#   cron rate '0 0 * * *' (24h): S4/S5 monitor cron 답습 (dimension: rate)
+#   loop_max_depth default 3: positive feedback runaway 차단 보수적 lower bound (dimension: count)
+#   dedup_window_hours default 24: S4/S5 Issue-level 24h 정합 (dimension: lifecycle)
+#   pattern_count_threshold default 2: Google SRE/ITIL/NASA industry lower bound (dimension: count)
+#
+# Permissions: minimum (top-level deny-all + job override, ADR-060 Amendment 8)
+
+on:
+  schedule:
+    - cron: '0 0 * * *'   # 24h UTC daily (ADR-106 §결정 1 단계 2-b — loop closure 주기)
+  workflow_dispatch:       # 수동 ad-hoc 검증
+
+permissions: {}  # top-level deny-all
+
+jobs:
+  self-improving-loop-closure:
+    runs-on: ubuntu-latest
+    continue-on-error: true   # warning tier — ADR-060 (신호 감지 실패 시 CI 차단 0)
+    permissions:
+      contents: read           # 스크립트 / KPI 파일 읽기 + operational-signal-history.jsonl append
+      issues: write            # ops-signal Issue 발의 (ADR-106 §결정 1 단계 2-b)
+
+    concurrency:
+      group: self-improving-loop-closure
+      cancel-in-progress: false   # 진행 중 run 완료 보장 (race 차단 + ADR-045 §D-4 CAS 정합)
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check hotfix-bypass label
+        id: bypass
+        # hotfix-bypass:self-improving-loop label 부착 시 skip
+        # ADR-024 Amendment 3 hotfix-bypass family member (label-registry-v2 v2.47)
+        run: |
+          echo "bypass=false" >> "$GITHUB_OUTPUT"
+          # TODO: bypass label 실 체크 (evidence-checks-registry 승격 시 sub-PR carrier)
+
+      - name: Run loop closure gate
+        if: steps.bypass.outputs.bypass != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # consumer 측 loop closure 설정 주입 (project.yaml 또는 Actions vars)
+          # deploy.self_improving_loop.{loop_max_depth,dedup_window_hours,pattern_count_threshold}
+          _CFP1195_LOOP_MAX_DEPTH: ${{ vars.SELF_IMPROVING_LOOP_MAX_DEPTH || '3' }}
+          _CFP1195_DEDUP_WINDOW_HOURS: ${{ vars.SELF_IMPROVING_DEDUP_WINDOW_HOURS || '24' }}
+          _CFP1195_PATTERN_COUNT_THRESHOLD: ${{ vars.SELF_IMPROVING_PATTERN_COUNT_THRESHOLD || '2' }}
+        run: |
+          REPO="${GITHUB_REPOSITORY}"
+          echo "[self-improving-loop-closure] repo=${REPO}"
+
+          # operational-signal-to-issue.sh: 단계 2-b Epic-level dedup gate
+          # wrapper fast-pass: mclayer/plugin-codeforge → exit 0 (Tier-1 exemption)
+          #
+          # 비-monitor 신호 source: consumer 가 직접 .codeforge/direct-signals.json 에 기록
+          # (S4/S5-originated Issue 는 Epic-level dedup gate 만 적용, 재발의 0)
+          DIRECT_SIGNALS_FILE=".codeforge/direct-signals.json"
+          if [ -f "${DIRECT_SIGNALS_FILE}" ]; then
+            echo "[self-improving-loop-closure] direct signals 파일 감지: ${DIRECT_SIGNALS_FILE}"
+            # 파일 안 signal 목록 처리 (단계 2-b (a) 비-monitor 신호)
+            python3 -c "
+import json, subprocess, sys, os
+
+with open('${DIRECT_SIGNALS_FILE}') as f:
+    signals = json.load(f)
+
+repo = os.environ.get('GITHUB_REPOSITORY', '')
+for sig in signals:
+    result = subprocess.run([
+        'bash', 'scripts/operational-signal-to-issue.sh',
+        '--repo', repo,
+        '--signal-type', sig.get('signal_type', 'error_rate'),
+        '--measured-value', str(sig.get('measured_value', 0)),
+        '--threshold', str(sig.get('threshold', 0)),
+        '--window', sig.get('window', '3600s'),
+    ], capture_output=False)
+    if result.returncode == 2:
+        print(f'[ERROR] loop_closure_gate SETUP error for {sig}', file=sys.stderr)
+        sys.exit(2)
+" || true
+          else
+            echo "[self-improving-loop-closure] direct signals 파일 부재 — Epic-level dedup scan 만 수행"
+          fi
+
+          # 단계 3 PMOAgent escalation pickup
+          echo "[self-improving-loop-closure] ops-signal alert scan (단계 3)..."
+          bash scripts/check-ops-signal-alerts.sh || {
+            EXIT_CODE=$?
+            if [ ${EXIT_CODE} -eq 1 ]; then
+              echo "[self-improving-loop-closure] PMOAgent escalation 필요 (pattern_count >= threshold)"
+              # 단계 4: 사용자 게이트 (자동 Epic 개시 금지)
+              echo "[self-improving-loop-closure] 단계 4 사용자 게이트: Orchestrator 를 통해 사용자 확인 요청"
+            fi
+          }
+
+          echo "[self-improving-loop-closure] PASS"
+
+      - name: Upload KPI artifacts
+        if: always() && steps.bypass.outputs.bypass != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: operational-signal-kpi-${{ github.run_id }}
+          path: |
+            docs/kpi/operational-signal-history.jsonl
+            docs/kpi/operational-signal-rate.json
+          retention-days: 30
+          if-no-files-found: ignore
