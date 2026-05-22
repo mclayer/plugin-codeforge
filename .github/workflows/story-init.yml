@@ -58,38 +58,8 @@ jobs:
             story_key_prefix="$(yq -r '.github.story_key_prefix // ""' "$cfg")"
             project_name="$(yq -r '.project.name // ""' "$cfg")"
           else
-            story_key_prefix="$(python3 - "$cfg" <<'PY'
-          import re, sys
-          path = sys.argv[1]
-          in_github = False
-          for raw in open(path, encoding="utf-8"):
-              line = raw.rstrip("\n")
-              if re.match(r"^[A-Za-z_][\w-]*:\s*$", line):
-                  in_github = line.split(":", 1)[0] == "github"
-                  continue
-              if in_github:
-                  m = re.match(r"^\s{2}story_key_prefix:\s*(.*?)\s*$", line)
-                  if m:
-                      print(m.group(1).strip().strip('"').strip("'"))
-                      break
-          PY
-          )"
-            project_name="$(python3 - "$cfg" <<'PY'
-          import re, sys
-          path = sys.argv[1]
-          in_project = False
-          for raw in open(path, encoding="utf-8"):
-              line = raw.rstrip("\n")
-              if re.match(r"^[A-Za-z_][\w-]*:\s*$", line):
-                  in_project = line.split(":", 1)[0] == "project"
-                  continue
-              if in_project:
-                  m = re.match(r"^\s{2}name:\s*(.*?)\s*$", line)
-                  if m:
-                      print(m.group(1).strip().strip('"').strip("'"))
-                      break
-          PY
-          )"
+            story_key_prefix="$(CFG_PATH="$cfg" python3 "${GITHUB_WORKSPACE}/scripts/lib/workflow_story_init_project_config_key_prefix.py")"
+            project_name="$(CFG_PATH="$cfg" python3 "${GITHUB_WORKSPACE}/scripts/lib/workflow_story_init_project_config_name.py")"
           fi
 
           if [[ -z "$story_key_prefix" ]]; then
@@ -128,35 +98,7 @@ jobs:
           #   - Title pattern matched + prefix matched → title KEY 우선
           #   - Title pattern absent OR prefix MISMATCH → Issue # fallback (race-free guarantee 보존 + cross-project KEY injection 차단)
 
-          PYOUT=$(python3 - <<'PYEOF'
-          import os, re
-          title = os.environ.get("ISSUE_TITLE", "")
-          prefix = os.environ.get("PREFIX", "")
-          issue_number = os.environ.get("ISSUE_NUMBER", "")
-
-          # [STORY] prefix 제거 후 title clean
-          title_clean = re.sub(r"^\[STORY\]\s*", "", title).strip()
-
-          # Title pattern `[<PREFIX>-<N>]` or `<PREFIX>-<N>` 우선 추출
-          m = re.search(r'\[?([A-Z]+-\d+)\]?', title_clean)
-          key_from_title = m.group(1) if m else ""
-
-          # Prefix guard — cross-project KEY injection 차단
-          if key_from_title and key_from_title.startswith(prefix + "-"):
-              key = key_from_title
-          else:
-              # Fallback to Issue # — ADR-036 결정 1 race-free guarantee 보존
-              key = f"{prefix}-{issue_number}"
-
-          # slug computation (CFP-596 base 동일)
-          slug = re.sub(r"[^A-Za-z0-9가-힣]+", "-", title_clean, flags=re.UNICODE)
-          slug = slug.strip("-")[:40].rstrip("-")
-
-          print(key)
-          print(slug)
-          print(title_clean)
-          PYEOF
-          )
+          PYOUT=$(python3 "${GITHUB_WORKSPACE}/scripts/lib/workflow_story_init_compute_key.py")
           KEY=$(printf '%s' "$PYOUT" | sed -n '1p')
           SLUG=$(printf '%s' "$PYOUT" | sed -n '2p')
           TITLE_CLEAN=$(printf '%s' "$PYOUT" | sed -n '3p')
@@ -271,87 +213,7 @@ jobs:
         run: |
           # Story file content rendering — shared between codeforge family and consumer branches.
           # base64 encode 는 codeforge family branch (REST API PUT contents 요구).
-          STORY_CONTENT=$(printf '%s' "" && python3 - <<'PYEOF'
-          import os, sys, base64
-
-          key = os.environ.get("KEY", "")
-          title_clean = os.environ.get("TITLE_CLEAN", "")
-          requirement = os.environ.get("REQUIREMENT", "")
-          issue_number = os.environ.get("ISSUE_NUMBER", "")
-          github_repository = os.environ.get("GITHUB_REPOSITORY", "")
-
-          content = f"""---
-          story_key: {key}
-          story_issues:
-            - repo: {github_repository}
-              number: {issue_number}
-          status: phase:요구사항
-          ---
-
-          # {key}: {title_clean}
-
-          - **Issue**: #{issue_number}
-          - **Status**: phase:요구사항
-
-          ## 1. 사용자 요구사항 (verbatim — Phase 2 후속 CFP 까지 CODEOWNERS manual review 로 변경 차단)
-
-          {requirement}
-
-          ## 2. 도메인 해석
-
-          *(DomainAgent 작성 예정 — placeholder)*
-
-          ## 3. 관련 ADR
-
-          *(RequirementsPL 작성 예정 — placeholder)*
-
-          ## 4. 관련 코드 경로
-
-          *(RequirementsPL 작성 예정 — placeholder)*
-
-          ## 5. 요구사항 확장 해석
-
-          *(RequirementsAnalyst 작성 예정 — placeholder)*
-
-          ## 6. 외부 지식 배경
-
-          *(Researcher 작성 예정 — placeholder)*
-
-          ## 7. 설계 서사
-
-          *(Architect 작성 예정 — placeholder)*
-
-          ## 8. 개발 서사
-
-          *(DeveloperPL 작성 예정 — Phase 2 PR에서)*
-
-          ## 9. 품질 게이트 이력
-
-          *(Review/Test PL 작성 예정 — Phase 2 PR에서)*
-
-          ## 10. FIX Ledger
-
-          | Iter | 시각 | 레인 | 트리거 | 원인 판정 | 재실행 범위 | RESET? |
-          |------|------|------|--------|-----------|-------------|--------|
-
-          *(FIX 발생 시 append)*
-
-          ## 11. 회고
-
-          *(PMOAgent 작성 예정 — Story 완료 시)*
-          """
-          # dedent 처리
-          lines = content.split("\n")
-          dedented = []
-          for line in lines:
-              if line.startswith("          "):
-                  dedented.append(line[10:])
-              else:
-                  dedented.append(line)
-          final = "\n".join(dedented)
-          sys.stdout.write(final)
-          PYEOF
-          )
+          STORY_CONTENT=$(python3 "${GITHUB_WORKSPACE}/scripts/lib/workflow_story_init_render_story.py")
           # base64 encode (REST API PUT contents 용 — codeforge family branch)
           CONTENT_B64=$(printf '%s' "$STORY_CONTENT" | base64 -w 0)
           echo "content_b64=$CONTENT_B64" >> "$GITHUB_OUTPUT"
