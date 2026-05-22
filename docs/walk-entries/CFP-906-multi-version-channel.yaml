@@ -1,4 +1,4 @@
-# walk-entry: CFP-906 multi-version channel pin 명령형 재표현
+# walk-entry: CFP-906 multi-version channel 버전 고정 명령형 재표현
 # 출처: reconcile-protocol-v1 §4.10 multi_version_channel_pin_binding
 # (v1.7 신설 CFP-906 / v1.8 runtime active CFP-932, Epic CFP-882 — Wave 4 sub-Epic #1 Story-1+2)
 # Deprecated carrier: reconcile-protocol-v1 v1.13 (CFP-1125)
@@ -22,7 +22,7 @@ history_immutable: true
 # consumer .claude/_overlay/project.yaml codeforge.channel 필드로
 # family 7 plugin 동시 channel resolve 트리거.
 # 3-tier enum (stable/beta/canary) closed-enum +
-# family_7_plugin_atomic × channel pin invariant (per-plugin override 금지) +
+# family_7_plugin_atomic × channel 버전 고정 invariant (per-plugin override 금지) +
 # publisher ↔ registry ↔ consumer 3-way channel version byte-identical 3 불변 조건.
 
 walk_result_mapping:
@@ -57,7 +57,7 @@ walk_steps:
                     "codeforge-develop","codeforge-test","codeforge-review","codeforge-pmo"]
     check_command: >
       scripts/atomic-upgrade-7-plugins.sh --channel <tier>
-      (mixed channel detection → abort, family_7_plugin_atomic × channel pin)
+      (mixed channel detection → abort, family_7_plugin_atomic × channel 버전 고정)
     failure_mode: "mixed channel 감지 → walk_result FAILED"
 
   - step_id: "WS-906-3"
@@ -89,7 +89,7 @@ invariants_preserved:
       4번째 tier 신설 = reconcile-protocol-v1 §4.10 Amendment 필요
       (ADR-064 §self-application 강화 방향만).
   - id: "INV-906-2"
-    name: "family_7_plugin_atomic × channel pin"
+    name: "family_7_plugin_atomic × channel 버전 고정"
     detail: >
       per_plugin_override_forbidden: true.
       consumer codeforge.channel: <C> 선언 시 7 plugin 전체 동일 channel <C>.
@@ -98,8 +98,8 @@ invariants_preserved:
     name: "3-way channel version byte-identical"
     detail: >
       publisher ↔ registry ↔ consumer 3-way byte-identical.
-      orthogonality_invariant: channel pin 가용성 ≠ version 정합성
-      (pin 미선언=stable fallback ≠ version mismatch=blocking-on-pr).
+      orthogonality_invariant: channel 버전 고정 가용성 ≠ version 정합성
+      (버전 고정 미선언=stable fallback ≠ version mismatch=blocking-on-pr).
   - id: "INV-906-4"
     name: "canary tier authority advisory"
     detail: >

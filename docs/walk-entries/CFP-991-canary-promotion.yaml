@@ -114,7 +114,7 @@ invariants_preserved:
   - id: "INV-991-1"
     name: "axis_disjoint (§4.10 channel state ↔ §4.14 promotion gate)"
     detail: >
-      channel_state_axis (§4.10): channel tier resolve + family atomic pin + 3-way drift.
+      channel_state_axis (§4.10): channel tier resolve + family atomic 버전 고정 + 3-way drift.
       promotion_gate_axis (§4.14): promotion criteria evaluation + transition gate.
       embedding_forbidden: true — §4.10 블록 내 §4.14 로직 inline embed 금지 (SRP).
   - id: "INV-991-2"
