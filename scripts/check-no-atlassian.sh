@@ -36,14 +36,26 @@ ALLOWLIST_ADR_PREFIXES=(
   "docs/adr/ADR-103"
 )
 
+# ── ADR-100 §결정 1 Confluence-authoritative wrapper governance docs prefix ────
+# docs/inter-plugin-contracts/ + docs/domain-knowledge/ = Epic-A Confluence SoR-docs 영역
+# (docs/adr/ADR-099~103 = ADR_PREFIXES / playbook = FILES 기존 cover)
+ALLOWLIST_GOVERNANCE_PREFIXES=(
+  "docs/inter-plugin-contracts/"
+  "docs/domain-knowledge/"
+)
+
 # ── 추가 허용 파일 (Epic-A governance 참조 포함) ──────────────────────────────
 # ADR-RESERVATION.md: ADR-099~103 row 기록 (atlassian reversal row 포함)
 # ADR-060: check-no-atlassian ADR-060 L860 등록 보류 해소 언급 포함
 # docs/evidence-checks-registry.yaml: check-atlassian-allow entry 포함 (본 registry 자체)
+# .claude/settings.json: Layer 1 mcp__atlassian deny baseline 선언 파일 (ADR-100 §결정 4)
+# docs/project-config-schema.md: atlassian.* schema 선언 파일 (ADR-100 §결정 3)
 ALLOWLIST_EXTRA_FILES=(
   "docs/adr/ADR-RESERVATION.md"
   "docs/adr/ADR-060-evidence-enforceable-promotion-framework.md"
   "docs/evidence-checks-registry.yaml"
+  ".claude/settings.json"
+  "docs/project-config-schema.md"
 )
 
 # ── 평문 atlassian|Confluence|Jira grep (mcp__atlassian 토큰 제거 — Layer 2 only) ─
@@ -75,6 +87,17 @@ FILTERED=$(echo "$HITS" | while IFS= read -r line; do
   # prefix/glob 패턴 allowlist 검사 (Epic-A governance ADR — ADR-099~103)
   if ! $ALLOWED; then
     for prefix in "${ALLOWLIST_ADR_PREFIXES[@]}"; do
+      if [[ "$file" == "${prefix}"* ]]; then
+        ALLOWED=true
+        break
+      fi
+    done
+  fi
+
+  # ADR-100 §결정 1 governance docs prefix allowlist 검사
+  # docs/inter-plugin-contracts/ + docs/domain-knowledge/ = Confluence authoritative SoR-docs 영역
+  if ! $ALLOWED; then
+    for prefix in "${ALLOWLIST_GOVERNANCE_PREFIXES[@]}"; do
       if [[ "$file" == "${prefix}"* ]]; then
         ALLOWED=true
         break
