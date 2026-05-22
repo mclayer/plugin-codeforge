@@ -7,6 +7,14 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.1.1] - 2026-05-22
+
+### Fixed
+
+- [CFP-1241] `cross-layer-impact-check.yml` (CFP-1059 배포 lane Epic 산출) — "Enumerate touched layers" step 의 `grep | wc -l` pipefail 버그 fix. `set -euo pipefail` 하에서 grep 0-match → exit 1 → command-substitution abort → migrations/schema/src/frontend/backend 을 안 건드리는 모든 PR (대부분 docs/governance) 마다 advisory step FAILURE (warning tier, CI noise). 4 `grep | wc -l` 파이프에 `|| true` 추가 (template + `.github/workflows/` self-app byte-identical, ADR-005). 자매 워크플로 `dependency-order-check.yml` 는 이미 `|| echo ""` safe 패턴 사용 — disjoint, 무변경.
+  - TDD: `tests/workflows/test_cross-layer-impact-check-yml.sh` 신설 (TC-1 regression guard — workflow 에서 4 grep line 런타임 추출 후 non-matching 입력으로 exit 0 검증 / TC-2 positive case / TC-3 ADR-005 parity / 4 structural `|| true` presence). `|| true` strip 시 TC-1·TC-2 genuine FAIL 확인 (RED 진정성).
+  - plugin.json 6.1.0 → 6.1.1 PATCH (ADR-037 §결정 1(d) — 기존 optional workflow 버그 fix, `fix:` commit signal). marketplace atomic sync 별도 sibling PR (ADR-063 §결정 5).
+
 ## [6.1.0] - 2026-05-22
 
 ### Added
