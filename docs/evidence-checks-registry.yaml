@@ -3478,3 +3478,45 @@ entries:
       threshold: 3
       promotion_trigger: none
     status: Active
+
+  - name: self-improving-loop-closure
+    description: |
+      ADR-106 §결정 4 loop closure 3원칙 (dedup/max-depth/escalate_user, OR 발동) + §결정 1 단계 2-b → 3 → 4 회로 실 wire.
+      24h cron + operational-signal-to-issue.sh (thin bash) + loop_closure_gate.py (Python ADR-061):
+        (a) dedup gate: open Issue OR 진행 Epic 존재 시 발의 차단
+        (b) max-depth gate: loop_depth >= loop_max_depth (default 3) → escalate_user
+        (c) escalate_user: max-depth/dedup OR trip → 자동 발의 0 + 사용자 통지
+        OR 발동 (하나라도 trip → 억제, fail-safe conservative)
+      check-ops-signal-alerts.sh (단계 3): open ops-signal Issue scan → pattern_count >= 2 → PMOAgent escalation.
+      KPI append-only write: operational-signal-history.jsonl (SHA optimistic CAS, ADR-045 §D-4).
+      단계 4 사용자 게이트: 자동 Epic 개시 금지 (self-improving != self-executing, ADR-106 §결정 4).
+      wrapper-self-app fast-pass (Tier-1 declare-time exemption, ADR-104 §결정 4 / ADR-072).
+      S4/S5 0 line touch (Epic-level closure layer 추가 — Issue-level dedup 무변경).
+    detect_command: bash scripts/check-ops-signal-alerts.sh
+    workflow: templates/github-workflows/self-improving-loop-closure.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:self-improving-loop
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-1195
+        - CFP-1194
+        - CFP-1193
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - bats_19tc_green_proof
+        - loop_closure_or_fire_gate_trip_verified
+        - kpi_append_only_no_overwrite_proof
+        - s4_s5_zero_line_touch_grep_proof
+        - user_gate_no_auto_epic_proof
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-1195
+    introduced_date: 2026-05-22
+    owner_adr: ADR-106
+    carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: Active
