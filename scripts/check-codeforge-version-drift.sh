@@ -41,7 +41,8 @@ if ! gh auth status >/dev/null 2>&1; then
   exit 2
 fi
 
-# Plugin → marketplace 매핑 (9 plugin)
+# Plugin → marketplace 매핑 (11 entry — codeforge 9 plugin + codex + superpowers)
+# CFP-1219: codeforge-deploy + codeforge-deploy-review 추가 (ADR-087/088, CFP-1059 S2/S3 resolved)
 declare -A PLUGIN_MARKETPLACE=(
   [codeforge]="mclayer/marketplace"
   [codeforge-requirements]="mclayer/marketplace"
@@ -50,6 +51,8 @@ declare -A PLUGIN_MARKETPLACE=(
   [codeforge-develop]="mclayer/marketplace"
   [codeforge-test]="mclayer/marketplace"
   [codeforge-pmo]="mclayer/marketplace"
+  [codeforge-deploy]="mclayer/marketplace"          # ADR-087 Deploy lane (CFP-1219 활성)
+  [codeforge-deploy-review]="mclayer/marketplace"   # ADR-088 Deploy Review lane (CFP-1219 활성)
   [codex]="openai-codex/marketplace"
   [superpowers]="claude-plugins-official/marketplace"
 )

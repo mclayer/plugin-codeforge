@@ -465,6 +465,45 @@ deploy:
 - **cross-layer 영향** (CFP-1059 / [ADR-090](adr/ADR-090-cross-layer-reference-policy.md)): consumer 가 multi-layer architecture (RDB / 빅데이터 / API / service repo) 운영 시 deploy block 등록 = cross-layer 의존 매핑 source (자동 감지 + 사용자 declare hybrid).
 - **write boundary**: consumer-authored. 모든 codeforge agent 는 본 block write 금지 (§4b write 금지 invariant 절대 보존). DeployPLAgent / DeployReviewPLAgent = read-only (consumer overlay value 를 spawn-time Context Packet 으로 수신 후 배포 sequence 결정에 반영).
 
+### `atlassian` 섹션 설명 (CFP-1215 / [ADR-100](adr/ADR-100-confluence-doc-ssot-recognition.md))
+
+Atlassian suite 재결합 (Epic-A CFP-1146) 의 consumer overlay 영역. ADR-100 §결정 3 — project.yaml `atlassian.*` schema (token = `*_env` reference only, SecurityArch 권고, deploy 1password env-key precedent 정합).
+
+```yaml
+# .claude/_overlay/project.yaml
+
+# [선택] Atlassian suite 재결합 (CFP-1215 / ADR-100)
+# 부재 시 동작: Confluence 비활성, 기존 git-only governance 유지 (opt-in)
+atlassian:
+  enabled: <bool>                    # true = Confluence doc SSOT 활성 (ADR-100, ADR-013/041 partial extend)
+                                     # false 또는 section 부재 = git-native only governance (default)
+  confluence:
+    base_url: <string>               # Confluence instance URL — NOT secret (Internal 분류)
+                                     # 예: "https://myorg.atlassian.net/wiki"
+    space_key: <string>              # target space key — NOT secret (Internal 분류)
+                                     # 예: "CGOV" (codeforge governance space)
+    api_token_env: <string>          # .env / secret store key name — 평문 token 금지, env-key reference only
+                                     # 예: "ATLASSIAN_API_TOKEN" (Atlassian REST basic-auth token env key)
+    user_email_env: <string>         # Atlassian REST basic-auth email key name — token 과 동일 Secret 취급
+                                     # 예: "ATLASSIAN_USER_EMAIL"
+  jira:                              # W4+ (ADR-103 sync mechanism) — S2 declare-only, schema placeholder
+    project_key: <string>            # NOT secret (Internal 분류)
+                                     # 예: "PROJ"
+```
+
+- **secret 분류** (SecurityArch §7.1 정합):
+  - **Secret = `api_token` + `user_email`** (Atlassian REST basic-auth pair) — schema field 는 `*_env` reference (env key name) 만 허용, 평문 token / email 직접 기재 금지. 값은 env / secret store 경유 주입.
+  - **Internal (NOT secret) = `base_url` / `space_key` / `project_key`** — 평문 기재 허용.
+  - precedent: project-config-schema.md `deploy.docker_hub.auth_secret_env` / `deploy.1password.connect_token_env` / `deploy.ssh_targets[].key_secret_env` = 모두 `_env` suffix reference 패턴 (ADR-100 §결정 3 §secret boundary 정합).
+
+- **부재 시 동작**: `atlassian` section 자체가 없으면 Confluence 비활성 — 기존 git-only governance 동작 유지. codeforge agent = git SSOT 우선 (ADR-013 §결정 1 KEEP 영역 보존).
+
+- **ADR-027 natural extend**: atlassian.* schema 신설은 ADR-027 amendment 불요 — project-config-schema.md 갱신으로 bootstrap validation 이 자동 cover (ADR-027 §결정 1 정합). consumer 측 schema validator 추가는 Phase 2 carrier.
+
+- **narrow allow defer**: `atlassian.enabled: true` 설정 시에도 Layer 1 (`mcp__atlassian__*` deny baseline) 은 W4/ADR-103 narrow allow wire 전까지 유지 (ADR-100 §결정 4 — deny precedence 경고, narrow allow 사용처 미존재 시 선제 부여 = 최소권한 위반).
+
+- **write boundary**: consumer-authored. 모든 codeforge agent 는 본 block write 금지 (§4b write 금지 invariant 절대 보존). sync agent (ADR-103 carrier) = read-only (consumer overlay value 수신 후 sync 대상 결정).
+
 ## 3. 예시 (webapp)
 
 ```yaml

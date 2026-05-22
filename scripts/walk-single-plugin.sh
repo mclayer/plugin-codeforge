@@ -26,9 +26,9 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NORMALIZE_PY="${SCRIPT_DIR}/lib/path_normalize.py"
 
-# codeforge family 7 plugin (F-002 옵션 A — codex/superpowers 구조적 배제)
+# codeforge family 9 plugin (F-002 옵션 A — codex/superpowers 구조적 배제)
 # change-plan §3.2 / §4.1 §7.1 — FAMILY membership check
-# CFP-1059 forward-compat anchor: S2/S3 merge 후 codeforge-deploy + codeforge-deploy-review 추가 영역
+# CFP-1219: deploy lane 활성화 (CFP-1059 S2/S3 resolved) — 6 lane → 8 lane
 FAMILY_PLUGINS=(
     codeforge
     codeforge-requirements
@@ -37,6 +37,8 @@ FAMILY_PLUGINS=(
     codeforge-develop
     codeforge-test
     codeforge-pmo
+    codeforge-deploy          # ADR-087 Deploy lane (CFP-1219 활성)
+    codeforge-deploy-review   # ADR-088 Deploy Review lane (CFP-1219 활성)
 )
 
 # --------------------------------------------------------------------------
@@ -87,7 +89,7 @@ mode enum (정확히 1개 강제):
   --rollback <version>  snapshot_restore mode (지정 version snapshot restore)
 
 orthogonal arg (value-taking, mode 와 순서 무관):
-  --plugin <name>       walk 대상 plugin (enum whitelist: codeforge + 6 lane — exact-match)
+  --plugin <name>       walk 대상 plugin (enum whitelist: codeforge + 8 lane — exact-match)
   --repo <path>         consumer repo root (미지정 = CODEFORGE_REPO_ROOT env → SCRIPT_DIR 부모)
   --channel <tier>      channel tier enum: stable / beta / canary (exact-match, 소문자만)
                         미지정 = UpgradeAgent overlay resolve or stable fallback
