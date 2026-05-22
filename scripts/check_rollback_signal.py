@@ -27,7 +27,7 @@ signature: sha256("<signal_type>|<measured>|<window>") | head -c 16
 
 출력 포맷 (stdout — bash orchestration 이 파싱):
   signal_detected=<true|false>
-  signal_type=<error_rate|burn_rate|none>
+  signal_type=<error_rate|latency_burn_rate|none>
   measured=<float>
   threshold=<float>
   window=<int>
@@ -139,7 +139,9 @@ def check_safety_1(
     # burn rate 임계 체크 (error budget 소진율/window 산술)
     if burn_rate_threshold is not None and burn_rate is not None:
         if burn_rate >= burn_rate_threshold:
-            return True, "burn_rate", burn_rate, burn_rate_threshold
+            # CFP-1243: emit canonical operational-signal-v1 closed-enum value
+            # (`latency_burn_rate`), not the non-conformant alias `burn_rate`.
+            return True, "latency_burn_rate", burn_rate, burn_rate_threshold
 
     # 임계 미초과 또는 미정의
     measured_val = error_rate if error_rate is not None else 0.0
