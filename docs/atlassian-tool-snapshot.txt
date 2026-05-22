@@ -1,12 +1,36 @@
-# PLACEHOLDER — Atlassian 인스턴스 /mcp enumeration 후 채움 (ADR-103 §결정 3)
-# CFP-1256 W4-S13: declaration-only Wave 1 — 실 Atlassian 인스턴스 연결 후 `mcp list-tools` 결과로 대체
+# Atlassian MCP tool snapshot — CFP-1146 W5-S14 (Story #1269)
+# ADR-103 §결정 3 Option B per-tool deny decomposition — verified snapshot
 #
-# 채우는 방법:
-#   1. Atlassian MCP 서버를 실 인스턴스에 연결
-#   2. MCP tool 목록 enumeration (예: /mcp list-tools 또는 Claude Code 세션에서 실 mcp__atlassian__* 확인)
-#   3. 본 파일에 한 줄 1 tool 형식으로 기록 (예: mcp__atlassian__get_page)
-#   4. scripts/check-atlassian-tool-drift.sh 재실행 후 drift = 0 확인
+# prefix = mcp__plugin_atlassian_atlassian__ (본 설치 실 callable tool 의 effective prefix)
+# 본 파일 = atlassian-tool-drift check 의 deny-target SSOT (24 tool).
+# un-denied 7 tool (read 5 + write 2) 은 의도적으로 본 snapshot 에서 제외 — settings.json allow 에 개별 열거.
 #
-# 형식 (실 채움 시):
-#   mcp__atlassian__<tool_name>
-#   (한 줄 1 entry, 빈 줄 / # 주석 무시)
+# drift check: 본 snapshot 24 tool ⊆ .claude/settings.json permissions.deny → PASS
+# 형식: 한 줄 1 tool, 빈 줄 / # 주석 무시
+#
+# ── Confluence-side deny (9) ──
+mcp__plugin_atlassian_atlassian__getAccessibleAtlassianResources
+mcp__plugin_atlassian_atlassian__fetch
+mcp__plugin_atlassian_atlassian__search
+mcp__plugin_atlassian_atlassian__atlassianUserInfo
+mcp__plugin_atlassian_atlassian__createConfluenceFooterComment
+mcp__plugin_atlassian_atlassian__createConfluenceInlineComment
+mcp__plugin_atlassian_atlassian__getConfluenceCommentChildren
+mcp__plugin_atlassian_atlassian__getConfluencePageFooterComments
+mcp__plugin_atlassian_atlassian__getConfluencePageInlineComments
+# ── Jira-side deny (15) ──
+mcp__plugin_atlassian_atlassian__addCommentToJiraIssue
+mcp__plugin_atlassian_atlassian__addWorklogToJiraIssue
+mcp__plugin_atlassian_atlassian__createIssueLink
+mcp__plugin_atlassian_atlassian__createJiraIssue
+mcp__plugin_atlassian_atlassian__editJiraIssue
+mcp__plugin_atlassian_atlassian__getIssueLinkTypes
+mcp__plugin_atlassian_atlassian__getJiraIssue
+mcp__plugin_atlassian_atlassian__getJiraIssueRemoteIssueLinks
+mcp__plugin_atlassian_atlassian__getJiraIssueTypeMetaWithFields
+mcp__plugin_atlassian_atlassian__getJiraProjectIssueTypesMetadata
+mcp__plugin_atlassian_atlassian__getTransitionsForJiraIssue
+mcp__plugin_atlassian_atlassian__getVisibleJiraProjects
+mcp__plugin_atlassian_atlassian__lookupJiraAccountId
+mcp__plugin_atlassian_atlassian__searchJiraIssuesUsingJql
+mcp__plugin_atlassian_atlassian__transitionJiraIssue
