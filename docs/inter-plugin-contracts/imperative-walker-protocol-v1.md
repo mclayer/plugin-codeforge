@@ -284,9 +284,9 @@ git_to_confluence_sync:
 
 ```yaml
 walk_result_enum_invariant:
-  §2G_impact: "0건 변경"   # §2.G 는 별 extension section
+  §2G_impact: "0건 변경"   # §2.G 는 별도 extension section
   open_extension: false    # §2.A.3 unconditional 보존 — 본 §2.G 가 closed_enum 침범 불가
-  sync_scope: post_walk_hook_only   # walk_result 발화 완료 후 side-effect (별 channel)
+  sync_scope: post_walk_hook_only   # walk_result 발화 완료 후 side-effect (별도 channel)
 ```
 
 ## 3. 항목
