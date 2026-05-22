@@ -2,26 +2,28 @@
 # tests/scripts/cfp-1196/canary-auto-promote.bats
 # CFP-1196 TDD — canary-auto-promote.sh + canary_auto_promote.py
 #
-# Change Plan §8.1 Test Contract (20 TC):
+# Change Plan §8.1 Test Contract (24 TC — FIX iter1 수정):
 #   TC-1:  UC-1 정상 promote — 4-tuple 전부 pass + 안전장치 4 AND 충족 → 전체 promote + Issue (완료)
-#   TC-2:  pass + n_a 조합 → promote proceed (AC-3)
+#   TC-2:  pass + n_a 조합 → promote proceed + positive assertion (AC-3)
 #   TC-3:  UC-2 criteria 미충족 — 1+ fail → abort + rollback + Issue (정지)
 #   TC-4:  안전장치 2 미충족 — 보존 window 초과 → promote 금지 + hotfix 안내 (EC-7)
 #   TC-5:  안전장치 4 — kill-switch filesystem flag 활성 → fast-skip (EC-4)
-#   TC-5b: kill-switch config flag → fast-skip (OR disable §3.7)
+#   TC-5b: kill-switch config flag mock → fast-skip (OR disable §3.7)
 #   TC-6:  UC-4 wrapper fast-pass — repo=wrapper → exit 0 PASS (AC-8)
 #   TC-7:  중복 0 — atomic_swap / Traefik label flip grep 0 match (L1/L2 재구현 0, CX-1196-3)
 #   TC-7b: 재사용 증명 — deploy_blue_green.py + auto-rollback-hook.sh 호출 흔적 ≥1 (positive)
 #   TC-8:  dedup — 동일 signature open Issue 존재 → 새 Issue 억제 (EC-8)
 #   TC-9:  D3 promote partial 실패 — 2번째 host swap fail → keep-forward + rollback + 정지 (EC-3)
-#   TC-10: 안전장치 4 AND 진리표 — criteria 충족 BUT kill-switch → promote 0
-#   TC-11: EC-2 canary 배포 실패 — health fail → L2 rollback + 성공 canary 도 rollback + 정지
+#   TC-10: 안전장치 4 AND 진리표 — criteria 충족 BUT filesystem kill-switch → promote 0
+#   TC-11: EC-2 canary 배포 실패 (전체 fail) — health fail → L2 rollback + 정지
 #   TC-12: exit 3-tier — 정상=0 / SETUP error=2
-#   TC-13: EC hook 부재 — deploy_blue_green.py 부재 → exit 2 + escalation
-#   TC-14: 안전장치 일부 — criteria 충족 BUT kill-switch 활성 → AND false → promote 0
+#   TC-13: EC hook 부재 — deploy_blue_green.py 부재 → exit 2 + 자동 재시도 0 확인 (fixed: || true 제거)
+#   TC-14: criteria 충족 BUT Python-derived config kill-switch (safety_4=false) → promote 0
+#          (F-CR-1196-1 P1 수정 검증 — 실 project.yaml auto_promote_enabled:false 경로)
 #   TC-15: 0 API call — criteria measurement path 안 network egress grep 0 match (filesystem-only)
 #   TC-16: signature 형식 — sha256 기반 16-char hex
-#   TC-17: canary-phase partial 실패 (F-1196-4) — subset=2, host[1] fail → host[0] 도 rollback
+#   TC-17: canary-phase partial 실패 (F-1196-4) — subset=2, host[0] 성공 후 host[1] fail
+#          → host[0] 도 rollback + 전체 정지 (host-indexed mock: _CFP1196_MOCK_CANARY_FAIL_IDX)
 #   TC-18: backstop post-expiry (F-1196-2) — retention 만료 후 → promote 금지 + hotfix 안내
 #   TC-19: safety_3 알림 unavailable — criteria pass + 보존 ok + kill-switch off BUT notification unavailable → promote 0
 
@@ -83,6 +85,7 @@ teardown() {
   unset _CFP1196_MOCK_HOOK_MISSING
   unset _CFP1059_MOCK_SWAP_FAIL
   unset _CFP1196_MOCK_KILL_SWITCH_FLAG _CFP1196_MOCK_CONFIG_YAML_PATH
+  unset _CFP1196_MOCK_CANARY_FAIL_IDX
 }
 
 # --- 파일 존재 확인 ---
@@ -134,7 +137,10 @@ teardown() {
     --canary-subset "host1"
 
   [ "$status" -eq 0 ]
+  # positive assertion: promote 시작 출력 확인 (criteria 미충족 아님)
   [[ "$output" != *"criteria 미충족"* ]]
+  [[ "$output" == *"전체 promote 시작"* ]] || [[ "$output" == *"promote 성공"* ]] || \
+    [[ "$output" == *"canary auto-promote 완료"* ]]
 }
 
 # ---
@@ -368,16 +374,30 @@ teardown() {
   [ "$status" -eq 2 ]
   [[ "$output" == *"부재"* ]] || [[ "$output" == *"SETUP error"* ]]
   # 자동 재시도 흔적 없음 (ADR-057)
-  [[ "$output" != *"retry"* ]] && [[ "$output" != *"재시도"* ]] || true
+  [[ "$output" != *"retry"* ]]
+  [[ "$output" != *"재시도"* ]]
 }
 
 # ---
-# TC-14: 안전장치 일부 — criteria 충족 BUT kill-switch → AND false (TC-10 과 동일 패턴)
+# TC-14: criteria 충족 BUT Python-derived config kill-switch (safety_4=false) → promote 0
+#        (F-CR-1196-1 P1 수정 검증 — 실 project.yaml auto_promote_enabled:false 경로)
 # ---
-@test "TC-14: safety_1~3 충족 BUT kill-switch 활성 → AND false → promote 0 (EC-1 유사)" {
+@test "TC-14: criteria 충족 BUT config kill-switch(Python-derived safety_4=false) → promote 0" {
+  # 실 disabled yaml 파일 생성 (--config-yaml-path 경유 Python 평가)
+  DISABLED_YAML="${TEST_TMP}/project_disabled.yaml"
+  cat > "${DISABLED_YAML}" <<'YAML'
+deploy:
+  canary:
+    auto_promote_enabled: false
+YAML
+
   export _CFP1196_MOCK_FUNCTIONAL="pass"
-  export _CFP1196_MOCK_SECURITY="fail"   # safety_1=false
-  export _CFP1196_MOCK_KILL_SWITCH=0
+  export _CFP1196_MOCK_SECURITY="pass"
+  export _CFP1196_MOCK_MONITORING="pass"
+  export _CFP1196_MOCK_TESTING="pass"
+  export _CFP1196_MOCK_KILL_SWITCH=0      # filesystem flag OFF
+  export _CFP1196_MOCK_CONFIG_DISABLED=0  # bash mock OFF — Python 실 평가 경로
+  export _CFP1196_MOCK_CONFIG_YAML_PATH="${DISABLED_YAML}"
 
   run bash "${PROMOTE_SH}" \
     --repo "test-consumer-repo" \
@@ -386,7 +406,12 @@ teardown() {
     --canary-subset "host1"
 
   [ "$status" -eq 0 ]
-  [[ "$output" == *"criteria 미충족"* ]] || [[ "$output" == *"criteria_met=false"* ]]
+  # Python-derived safety_4=false → Step 9b 게이트 발동
+  [[ "$output" == *"config kill-switch"* ]] || \
+    [[ "$output" == *"safety_4"* ]] || \
+    [[ "$output" == *"auto_promote_enabled"* ]]
+  # promote 미진입 확인
+  [[ "$output" != *"전체 promote 시작"* ]]
 }
 
 # ---
@@ -429,11 +454,12 @@ teardown() {
 }
 
 # ---
-# TC-17: canary-phase partial 실패 (F-1196-4) — subset=2, host[1] fail → host[0] 도 rollback
+# TC-17: canary-phase partial 실패 (F-1196-4) — subset=2, host[0]=pass, host[1]=fail → host[0] 도 rollback
 # ---
-@test "TC-17: canary subset=2, host[1] health fail → host[0] 도 rollback + 전체 정지" {
-  # host[0] = host1 (성공), host[1] = host2 (health fail)
-  export _CFP1059_MOCK_HEALTH="fail"  # 모든 host health fail (host2가 먼저 실패 시뮬레이션)
+@test "TC-17: canary subset=2, host[0] 성공 후 host[1] health fail → host[0] 도 rollback + 전체 정지" {
+  # host-indexed: index 0(host1) = 전역 pass, index 1(host2) = force fail (_CFP1196_MOCK_CANARY_FAIL_IDX)
+  export _CFP1059_MOCK_HEALTH="pass"          # 전역 기본 = pass
+  export _CFP1196_MOCK_CANARY_FAIL_IDX="1"    # canary index 1 = host2 force fail (host[0] 먼저 성공)
 
   run bash "${PROMOTE_SH}" \
     --repo "test-consumer-repo" \
@@ -442,8 +468,11 @@ teardown() {
     --canary-subset "host1,host2"
 
   [ "$status" -eq 0 ]
-  # canary-phase partial 실패 출력 확인
+  # host1 배포 성공 후 host2 실패 → F-1196-4 전체 rollback (host1 포함)
   [[ "$output" == *"canary 배포 실패"* ]] || [[ "$output" == *"canary-phase"* ]]
+  # host1 도 rollback (측정 기준선 일관성)
+  [[ "$output" == *"canary 성공 host rollback"* ]] || [[ "$output" == *"rolled_back_canary"* ]] || \
+    [[ "$output" == *"canary-phase 실패 처리 완료"* ]]
   # promote 미진입
   [[ "$output" != *"전체 promote 시작"* ]]
 }

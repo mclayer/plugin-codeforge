@@ -110,6 +110,9 @@ def read_config_disabled(config_yaml_path: str) -> bool:
     except yaml.YAMLError as e:
         print(f"[ERROR] project.yaml yaml.safe_load 실패: {e}", file=sys.stderr)
         sys.exit(2)
+    except (OSError, UnicodeError) as e:
+        print(f"[ERROR] project.yaml 읽기 실패 (OSError/UnicodeError): {e}", file=sys.stderr)
+        sys.exit(2)
 
     if not isinstance(data, dict):
         return False

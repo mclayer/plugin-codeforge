@@ -45,6 +45,10 @@
 #   _CFP1196_MOCK_TESTING=<pass|fail|n_a>      — testing gate_state override
 #   _CFP1196_MOCK_NOTIFICATION_AVAILABLE=<true|false> — safety_3 pre-promote check mock
 #   _CFP1196_SKIP_ISSUE_CREATE=<1>             — Issue 발의 차단 (dry-run)
+#   _CFP1196_MOCK_CANARY_FAIL_IDX=<n>         — canary 배포 실패 host 인덱스 (0-based, -1=없음)
+#                                                해당 인덱스 host = --mock-health fail 주입
+#                                                (전역 _CFP1059_MOCK_HEALTH 와 disjoint — 이 env 가 우선)
+#   _CFP1196_MOCK_CONFIG_YAML_PATH=<path>      — config yaml 경로 override (TC-14 실 disabled yaml 경로)
 #   _CFP1059_MOCK_WITHIN_RETENTION=<0|1>       — 보존 기간 mock (1=window 내, 안전장치 2)
 #   _CFP1059_MOCK_HEALTH=<pass|fail|real>      — L2 deploy health mock
 #   _CFP1059_MOCK_DOCKER=<0|1>                 — L2 docker mock
@@ -63,7 +67,7 @@ WORKTREE_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 PROMOTE_PY="${WORKTREE_ROOT}/scripts/canary_auto_promote.py"
 DEPLOY_PY="${WORKTREE_ROOT}/scripts/deploy_blue_green.py"
 ROLLBACK_SH="${WORKTREE_ROOT}/templates/deployment/auto-rollback-hook.sh"
-HELPER_LIB="${WORKTREE_ROOT}/scripts/lib/canary-compatibility-helpers.sh"
+# HELPER_LIB (canary-compatibility-helpers.sh) = consumer Actions 환경 변수 주입으로 제공 (working-as-designed, dead-code 제거)
 
 # --- 인수 파싱 ---
 REPO=""
@@ -254,9 +258,19 @@ if [[ -n "${_CFP1059_MOCK_HEALTH:-}" ]]; then
   DEPLOY_BASE_ARGS+=("--mock-health" "${_CFP1059_MOCK_HEALTH}")
 fi
 
+CANARY_HOST_IDX=0
 for host in "${CANARY_HOSTS[@]}"; do
   echo "[INFO] canary 배포: host=${host}"
-  if PYTHONUTF8=1 python3 "${DEPLOY_PY}" "${DEPLOY_BASE_ARGS[@]}" "--host" "${host}" 2>&1; then
+
+  # host-indexed health fail mock (_CFP1196_MOCK_CANARY_FAIL_IDX 우선, 전역 HEALTH 보다 세밀 제어)
+  THIS_HOST_DEPLOY_ARGS=("${DEPLOY_BASE_ARGS[@]}")
+  CANARY_FAIL_IDX="${_CFP1196_MOCK_CANARY_FAIL_IDX:--1}"
+  if [[ "${CANARY_FAIL_IDX}" != "-1" ]] && [[ "${CANARY_FAIL_IDX}" == "${CANARY_HOST_IDX}" ]]; then
+    # 이 인덱스 host = force fail (전역 mock-health 덮어쓰기)
+    THIS_HOST_DEPLOY_ARGS+=("--mock-health" "fail")
+  fi
+
+  if PYTHONUTF8=1 python3 "${DEPLOY_PY}" "${THIS_HOST_DEPLOY_ARGS[@]}" "--host" "${host}" 2>&1; then
     CANARY_DEPLOYED+=("${host}")
     echo "[INFO] canary 배포 성공: host=${host}"
   else
@@ -301,6 +315,7 @@ signature: ${CANARY_FAIL_SIG}
     echo "[INFO] canary-phase 실패 처리 완료 — promote 미진입"
     exit 0
   fi
+  CANARY_HOST_IDX=$((CANARY_HOST_IDX + 1))
 done
 
 echo "[INFO] canary subset 배포 완료: ${CANARY_DEPLOYED[*]}"
@@ -442,6 +457,45 @@ signature: ${ABORT_SIG}
   fi
 
   echo "[INFO] promote 정지 처리 완료"
+  exit 0
+fi
+
+# ---
+# Step 9b: SAFETY_4 게이트 (Python-derived config kill-switch — §3.7 OR disable, ADR-105 §결정 3)
+# Step 1/4 에서는 mock-env 기반 조기 차단. 실 project.yaml config flag = Python 이 평가하여
+# safety_4=false 로 반환 → 여기서 promote 차단 (F-CR-1196-1 — bash 누락 게이트 복구).
+# ---
+if [[ "${SAFETY_4}" != "true" ]]; then
+  echo "[WARN] 안전장치 4 미충족 — config kill-switch 활성 (safety_4=false)"
+  echo "[WARN] deploy.canary.auto_promote_enabled=false 설정됨 → promote 금지 (§3.7 OR disable)"
+  echo "[INFO] canary subset rollback 시작 (배포된 host 되돌리기)"
+  for h in "${CANARY_DEPLOYED[@]}"; do
+    if [[ -f "${ROLLBACK_SH}" ]]; then
+      bash "${ROLLBACK_SH}" --repo "${REPO}" --host "${h}" 2>&1 || true
+    fi
+  done
+  # 사후 알림 Issue (config kill-switch 감사 추적)
+  CFGSW_SIG=$(printf "config_kill_switch_active|1|%s" "${WINDOW_SECONDS}" | sha256sum | cut -c1-16 2>/dev/null || echo "cfgkillsw000000")
+  if [[ "${_CFP1196_MOCK_DEDUP:-0}" != "1" ]] && [[ "${_CFP1196_SKIP_ISSUE_CREATE:-0}" != "1" ]] && command -v gh >/dev/null 2>&1; then
+    EXISTING=$(gh issue list --repo "${REPO}" --search "\"signature: ${CFGSW_SIG}\"" --state open --json number --limit 5 2>/dev/null || echo "[]")
+    if [[ "${EXISTING}" == "[]" || "${EXISTING}" == "" ]]; then
+      gh issue create \
+        --repo "${REPO}" \
+        --label "ops-signal" \
+        --title "[OPS-SIGNAL] canary auto-promote config kill-switch 활성 — 수동 promote 통제" \
+        --body "canary-auto-promote.sh: project.yaml deploy.canary.auto_promote_enabled=false — promote 차단.
+
+safety_4=false (Python-derived, deploy.canary.auto_promote_enabled=false)
+repo: ${REPO}
+image: ${IMAGE}
+signature: ${CFGSW_SIG}
+
+deploy.canary.auto_promote_enabled=true 로 변경 후 재실행 필요.
+[CFP-1196] ops-signal label" \
+        2>/dev/null || true
+    fi
+  fi
+  echo "[INFO] config kill-switch 처리 완료 — promote 미진입"
   exit 0
 fi
 
