@@ -7,6 +7,28 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.1.0] - 2026-05-22
+
+### Added
+
+- [CFP-1187] 운영 phase Epic close — 배포 후 ongoing 신호 회수 + 자동 rollback 의 운영 phase mechanism layer 신설 (CFP-1059 6→8 lane 위, lane 아님 / lane count 변경 0). 운영 phase 8 Story 누적 1회 MINOR bump (multi-Story Epic, S8 close 결정).
+  - S1 운영 phase 1st-class 정의 (ADR-104: lifecycle 배포→배포검토→운영 / mechanism layer / 0 API call constraint / wrapper-self-app N/A / self-improving loop) + domain-knowledge 4 파일
+  - S2 자동 rollback 재정의 (ADR-105: 안전장치 4 AND [숫자 임계 / 보존 3h / 사후 알림 / kill-switch] + user-decision↔auto-rollback 2-layer disjoint + §self-application 2-layer) + rollback-protocol.md 2-layer amend
+  - S3 운영 metric→PMOAgent input 회로 (ADR-106: 회로 4단계 + ADR-045 §D-9 disjoint 답습 + closure 3원칙 + KPI append-only + self-improving≠self-executing)
+  - S4 rollback signal monitor (check_rollback_signal.py + workflow, CFP-1059 auto-rollback-hook 연계 중복0, 단계 2-a) + ADR-106 Amendment 1 (단계 2 two-part split)
+  - S5 regression/smoke·health monitor (check_operational_regression.py, flap 3-layer for-clause+hysteresis+dedup, 0 API call filesystem) + ADR-106 Amendment 2 (단계 2-a monitor-originated notification generalize)
+  - S6 self-improving loop closure (loop_closure_gate.py + operational-signal-to-issue.sh + check-ops-signal-alerts.sh, 단계 2-b/3/4 + KPI SHA-CAS append-only + 사용자 게이트) + operational-signal-v1 contract (kind:registry)
+  - S7 canary auto-promote (canary_auto_promote.py, 3-layer L1 CFP-991 criteria 재사용 / L2 CFP-1059 deploy 호출 / L3 신규 오케스트레이션, S4 mirror 안전장치 4)
+  - S8 통합 검증 (bats 83/83 GREEN + ADR-106 회로 coherence + 흡수 2 channel-drift/production-cutover cross-ref + CFP-1079 axis disjoint)
+  - label-registry-v2 v2.45/v2.46/v2.47/v2.49 (ops-signal + hotfix-bypass:rollback-signal-monitor/operational-monitor/self-improving-loop/canary-auto-promote)
+  - plugin.json 6.0.5 → 6.1.0 MINOR (운영 phase 신규 capability set). marketplace atomic sync 별도 sibling PR 의무 (ADR-063 §결정 5, 선행 merge 의무)
+
+### Cross-ref
+
+- Epic: #1187
+- Stories: CFP-1190~1196 (S1~S8)
+- ADR: ADR-104 / ADR-105 / ADR-106 (+ Amendment 1·2)
+
 ## [6.0.5] - 2026-05-21
 
 ### Changed
