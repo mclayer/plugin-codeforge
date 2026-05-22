@@ -3562,3 +3562,36 @@ entries:
       threshold: 3
       promotion_trigger: auto_blocking
     status: Active
+
+  # CFP-1196 신설 — 1 entry (canary-auto-promote)
+  - name: canary-auto-promote
+    description: |
+      CFP-1196 / ADR-105 §결정 3 — canary auto-promote mechanism.
+      canary subset 배포 → criteria 4-tuple 실측 (CFP-991 verbatim 재사용) →
+      안전장치 4 AND (criteria/보존기간/알림가용/kill-switch) → 충족 시 전체 promote /
+      미충족 정지+rollback + 사후 알림 Issue + kill-switch.
+      S7 = S4 (rollback-signal-monitor) mirror — trigger 방향만 반대.
+      3-layer disjoint: L1 criteria 정의 재사용 / L2 deploy/rollback 호출 / L3 오케스트레이션 신규.
+      D3 promote partial 실패: keep-forward + 실패 host rollback + 전체 정지.
+      F-1196-4 canary-phase partial 실패: 성공 canary 도 rollback (측정 기준선 일관성).
+    detect_command: bash scripts/canary-auto-promote.sh --repo "${GITHUB_REPOSITORY:-}" --image placeholder --host-list "${DEPLOY_HOST_LIST:-localhost}"
+    workflow: templates/github-workflows/canary-auto-promote.yml
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:canary-auto-promote
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized
+      failure_threshold: 0          # ADR-060 §결정 6 (b)
+      sibling_dependencies: []      # Phase 2 carrier = 별 follow-up CFP (blocking-on-pr 승격)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - bats_20_tc_green_proof
+        - lint_failure_count_zero_proof
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-1196
+    introduced_date: 2026-05-22
+    owner_adr: ADR-105             # 안전장치 4 AND 정책 SSOT
+    carrier_adr: ADR-060
+    mechanical_enforcement_actions:
+      - canary-auto-promote        # ADR-040 Amendment 3 §결정 7.D cross-ref (deploy lane)
+    status: Active

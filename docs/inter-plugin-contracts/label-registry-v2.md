@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: label
-version: "2.48"
+version: "2.49"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
@@ -1470,6 +1470,14 @@ labels:
     description: "hotfix-bypass: amendment-number-frontmatter-verify warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1216 / ADR-082 Amendment 6 §결정 9 carrier — ADR frontmatter amendment id self-consistency + cross-doc forward citation staleness lint workflow bypass channel, evidence-checks-registry amendment-number-frontmatter-verify entry 의 bypass channel). 67번째 hotfix-bypass:* family member."
     single_active: false
     attach_owner_plugin: "Orchestrator (CFP-1216 amendment number frontmatter verify warning-tier bypass — consumer 환경 임시 skip 시 부착) / DeveloperPLAgent"
+
+  # CFP-1196 신설 — 1 entry (hotfix-bypass:canary-auto-promote)
+  - name: hotfix-bypass:canary-auto-promote
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: canary-auto-promote warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1196 / ADR-105 §결정 3 + ADR-106 Amendment 1 §결정 1 단계 2 carrier — 안전장치 4 AND / 3h retention window / ops-signal Issue 사후 알림 / kill-switch / criteria 4-tuple 집계 canary auto-promote workflow bypass channel, evidence-checks-registry canary-auto-promote entry 의 bypass channel). 68번째 hotfix-bypass:* family member."
+    single_active: false
+    attach_owner_plugin: "Orchestrator (CFP-1196 canary auto-promote warning-tier bypass — consumer 환경 임시 skip 시 부착) / DeveloperPLAgent"
 
   # plugin:* CFP-1059 신설 — 2 entry (codeforge-deploy / codeforge-deploy-review)
   - name: plugin:codeforge-deploy
