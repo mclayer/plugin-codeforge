@@ -2,12 +2,12 @@
 # walk-bundle-7-plugins.sh — CFP-1170 Phase 2 — per-family atomic imperative walk CLI
 #
 # Change Plan §3.3 / §4.2 CLI arg enum / §7.4 DR
-# CFP-1059 S1 (T23 anchor) — 9 plugin family forward-compat anchor (script body FAMILY 7 retain)
+# CFP-1219: FAMILY 9 (CFP-1199 follow-up: deploy lane 활성화 — codeforge-deploy + codeforge-deploy-review)
 #
 # 역할: per-family atomic walk orchestration shell ONLY
 #   - per-plugin walk semantic = walk-single-plugin.sh 위임 (semantic 분산 0)
-#   - topological order walk = walk_plan.py 위임 ([wrapper, ...6 lane] DAG invariant)
-#   - per-family atomic transaction boundary (7 plugin all-or-rollback) = 본 shell 단독
+#   - topological order walk = walk_plan.py 위임 ([wrapper, ...8 lane] DAG invariant)
+#   - per-family atomic transaction boundary (9 plugin all-or-rollback) = 본 shell 단독
 #   - per-entry walk transcript: 각 plugin walk step + apply step emit (step-visible)
 #   - --plugin arg 미지원 (bundle = 항상 family 전체 — per-plugin override CLI surface 0)
 #   - user_decision_branches: 0 (no prompt invariant)
@@ -26,10 +26,9 @@ WALK_SINGLE_CLI="${SCRIPT_DIR}/walk-single-plugin.sh"
 # §4.4 ownership — drift 검증 = check-codeforge-version-drift.sh (CFP-262 SSOT) 위임
 DRIFT_CHECK="${CODEFORGE_DRIFT_CHECK_BIN:-${SCRIPT_DIR}/check-codeforge-version-drift.sh}"
 
-# codeforge family 7 plugin (F-002 옵션 A — codex/superpowers 구조적 배제)
-# CFP-1059 forward-compat anchor (Option A, FAMILY 7 retain):
-#   CFP-1059 S2/S3 신설 lane 2 (codeforge-deploy + codeforge-deploy-review) S2/S3 carrier
-#   S2/S3 merge 후 FAMILY array 2 entry append + drift check 7→9 invocation ratchet 영역
+# codeforge family 9 plugin (F-002 옵션 A — codex/superpowers 구조적 배제)
+# CFP-1219 follow-up: deploy lane 활성화 (CFP-1059 S2/S3 carrier resolved)
+#   ADR-087 deploy lane + ADR-088 deploy-review lane CHANGELOG.md 보유 확인 완료 → 활성
 FAMILY=(
     codeforge
     codeforge-requirements
@@ -38,9 +37,8 @@ FAMILY=(
     codeforge-develop
     codeforge-test
     codeforge-pmo
-    # CFP-1059 S2/S3 wire 후 활성:
-    # codeforge-deploy           # ADR-087 Deploy lane (S2 carrier)
-    # codeforge-deploy-review    # ADR-088 Deploy Review lane (S3 carrier)
+    codeforge-deploy          # ADR-087 Deploy lane (CFP-1219 활성)
+    codeforge-deploy-review   # ADR-088 Deploy Review lane (CFP-1219 활성)
 )
 
 # --------------------------------------------------------------------------
@@ -48,7 +46,7 @@ FAMILY=(
 # --------------------------------------------------------------------------
 _usage() {
     cat <<'USAGE'
-walk-bundle-7-plugins.sh — codeforge family 7 plugin per-family atomic walk CLI (CFP-1170)
+walk-bundle-7-plugins.sh — codeforge family 9 plugin per-family atomic walk CLI (CFP-1170, CFP-1219)
 
 사용법:
   bash scripts/walk-bundle-7-plugins.sh --walk
@@ -59,23 +57,23 @@ walk-bundle-7-plugins.sh — codeforge family 7 plugin per-family atomic walk CL
   bash scripts/walk-bundle-7-plugins.sh --apply --channel <stable|beta|canary>
 
 mode enum (정확히 1개 강제):
-  --walk      7-plugin family topological walk only (read-only, per-entry transcript step-visible)
-  --plan      7-plugin walk + plan (min_prereq topological resolve, dry)
-  --apply     per-family atomic transaction (snapshot → 7×walk-single apply → walk_result aggregate
+  --walk      9-plugin family topological walk only (read-only, per-entry transcript step-visible)
+  --plan      9-plugin walk + plan (min_prereq topological resolve, dry)
+  --apply     per-family atomic transaction (snapshot → 9×walk-single apply → walk_result aggregate
               verify → commit/rollback)
-  --rollback  직전 per-family pre-atomic snapshot 복원 (7 plugin 일괄)
+  --rollback  직전 per-family pre-atomic snapshot 복원 (9 plugin 일괄)
 
 orthogonal arg:
-  --repo <path>     7 plugin per-plugin walk 전체 동일 propagation (partial target mismatch 0)
-  --channel <tier>  family 7 plugin 전체 동일 channel atomic walk (mixed channel detection → abort,
+  --repo <path>     9 plugin per-plugin walk 전체 동일 propagation (partial target mismatch 0)
+  --channel <tier>  family 9 plugin 전체 동일 channel atomic walk (mixed channel detection → abort,
                     DC-1). enum: stable / beta / canary (소문자만)
 
 원칙:
   - 사용자 결정 분기 0 (no prompt — user_decision_branches: 0)
   - --plugin arg 미지원 (bundle = 항상 family 전체 — 단일 plugin 은 walk-single-plugin.sh)
-  - per-family transaction = 7 plugin all-or-rollback (partial state 0, ADR-068 I-3 unconditional)
-  - F-002 옵션 A — codex/superpowers 구조적 배제 (7-name FAMILY loop)
-  - CFP-1059 S1 anchor — FAMILY 7 retain. S2/S3 merge 후 9 plugin 자연 확장 영역
+  - per-family transaction = 9 plugin all-or-rollback (partial state 0, ADR-068 I-3 unconditional)
+  - F-002 옵션 A — codex/superpowers 구조적 배제 (9-name FAMILY loop)
+  - CFP-1219: FAMILY 9 (CFP-1199 follow-up: deploy lane 활성화)
 USAGE
 }
 
@@ -144,9 +142,9 @@ while [[ $# -gt 0 ]]; do
             ;;
         --plugin)
             # --plugin arg = bundle tier 미지원 (§4.2 / change-plan §3.3)
-            echo "오류: --plugin 은 walk-bundle 미지원 — bundle tier = 항상 family 전체 7 plugin walk." >&2
+            echo "오류: --plugin 은 walk-bundle 미지원 — bundle tier = 항상 family 전체 9 plugin walk." >&2
             echo "단일 plugin walk: bash scripts/walk-single-plugin.sh --walk --plugin <name>" >&2
-            echo "bundle tier 는 7-name FAMILY loop 구조적 배제 (per-plugin override 불가)" >&2
+            echo "bundle tier 는 9-name FAMILY loop 구조적 배제 (per-plugin override 불가)" >&2
             exit 1
             ;;
         --help|-h)
@@ -211,7 +209,7 @@ _check_channel_consistency() {
         echo "[mixed_channel_detection] MIXED CHANNEL DETECTED (test mock — DC-1)" >&2
         echo "abort-before-touch: per-family snapshot 무생성 (DC-1 / §7.4.1 / §3.3)" >&2
         echo "family channel resolve:" >&2
-        local mock_channels=("${INPUT_CHANNEL}" "beta" "${INPUT_CHANNEL}" "canary" "${INPUT_CHANNEL}" "${INPUT_CHANNEL}" "beta")
+        local mock_channels=("${INPUT_CHANNEL}" "beta" "${INPUT_CHANNEL}" "canary" "${INPUT_CHANNEL}" "${INPUT_CHANNEL}" "beta" "${INPUT_CHANNEL}" "beta")
         for i in "${!FAMILY[@]}"; do
             echo "  ${FAMILY[$i]}: resolved_channel=${mock_channels[$i]:-${INPUT_CHANNEL}}" >&2
         done
@@ -219,7 +217,7 @@ _check_channel_consistency() {
         exit 2
     fi
 
-    # 정상 경로: 단일 --channel flag → 7 plugin 전부 동일 channel
+    # 정상 경로: 단일 --channel flag → 9 plugin 전부 동일 channel
     return 0
 }
 
@@ -236,7 +234,7 @@ _drift_status() {
 # --------------------------------------------------------------------------
 # 헤더 출력
 # --------------------------------------------------------------------------
-echo "=== walk-bundle-7-plugins.sh: per-family atomic walk (mode=${MODE}) ==="
+echo "=== walk-bundle-7-plugins.sh: per-family atomic walk 9-plugin (mode=${MODE}) ==="
 echo "family: ${FAMILY[*]}"
 echo "user_decision_branches: 0"
 if [[ -n "${INPUT_REPO}" ]]; then
@@ -260,7 +258,7 @@ _check_channel_consistency
 # --walk — 7-plugin topological walk, per-entry transcript step-visible
 # --------------------------------------------------------------------------
 if [[ "${MODE}" == "walk" ]]; then
-    echo "--- 7-plugin family topological walk (read-only, per-entry transcript step-visible) ---"
+    echo "--- 9-plugin family topological walk (read-only, per-entry transcript step-visible) ---"
     echo "topological_order: ${FAMILY[*]}"
     echo "walk_stage: read-only (filesystem touch 0, network: offline)"
     echo ""
@@ -272,7 +270,7 @@ if [[ "${MODE}" == "walk" ]]; then
             sed "s/^/    [transcript] /" || true
         echo ""
     done
-    echo "walk 완료 (7-plugin family, filesystem touch 0, per-entry transcript 출력)"
+    echo "walk 완료 (9-plugin family, filesystem touch 0, per-entry transcript 출력)"
     exit 0
 fi
 
@@ -280,7 +278,7 @@ fi
 # --plan — 7-plugin min_prereq topological resolve dry
 # --------------------------------------------------------------------------
 if [[ "${MODE}" == "plan" ]]; then
-    echo "--- 7-plugin family walk + plan (min_prereq topological resolve, dry) ---"
+    echo "--- 9-plugin family walk + plan (min_prereq topological resolve, dry) ---"
     echo "topological_order: ${FAMILY[*]}"
     echo "plan_stage: min_prereq topological resolve (ADR-096 §결정 1/2, dry — filesystem touch 0)"
     echo ""
@@ -291,7 +289,7 @@ if [[ "${MODE}" == "plan" ]]; then
             sed "s/^/    [plan] /" || true
         echo ""
     done
-    echo "plan 완료 (7-plugin family, dry — filesystem touch 0)"
+    echo "plan 완료 (9-plugin family, dry — filesystem touch 0)"
     exit 0
 fi
 
@@ -299,14 +297,14 @@ fi
 # --rollback — 직전 per-family pre-atomic snapshot 복원 (7 plugin 일괄)
 # --------------------------------------------------------------------------
 if [[ "${MODE}" == "rollback" ]]; then
-    echo "--- rollback: per-family pre-atomic snapshot 복원 (7 plugin 일괄, partial 0) ---"
-    echo "per-family rollback = 직전 per-family snapshot 복원 → 7 plugin 전체"
+    echo "--- rollback: per-family pre-atomic snapshot 복원 (9 plugin 일괄, partial 0) ---"
+    echo "per-family rollback = 직전 per-family snapshot 복원 → 9 plugin 전체"
     echo ""
     echo "--- Orchestrator: 아래 per-family rollback 을 처리하십시오 ---"
     echo "per_family_rollback: true"
     echo "family: ${FAMILY[*]}"
     echo "rollback_source: 직전 per-family pre-atomic snapshot (N=5 retention)"
-    echo "per_plugin_delegate: ${WALK_SINGLE_CLI} --rollback <pinned-version> ${REPO_ARGS[*]:-} ${CHANNEL_ARGS[*]:-}"
+    echo "per_plugin_delegate: ${WALK_SINGLE_CLI} --rollback <pinned-version> ${REPO_ARGS[*]:-} ${CHANNEL_ARGS[*]:-} # 9 plugin loop"
     echo "corrupt-snapshot escalation: §7.4.1 (f) — silent partial-state 0"
     echo "rollback 완료 후 stale snapshot GC (orphan 잔존 0)"
     echo "user_decision_branches: 0"
@@ -319,7 +317,7 @@ fi
 # --------------------------------------------------------------------------
 if [[ "${MODE}" == "apply" ]]; then
     # step 1 — idempotency pre-check (ALL none → no-op, ADR-037 Amendment 1 §7.4.1(e))
-    echo "--- step 1: idempotency pre-check (7 plugin drift 검사) ---"
+    echo "--- step 1: idempotency pre-check (9 plugin drift 검사) ---"
     ALL_NONE=1
     for plugin in "${FAMILY[@]}"; do
         status="$(_drift_status "${plugin}" || echo "unknown")"
@@ -331,7 +329,7 @@ if [[ "${MODE}" == "apply" ]]; then
     done
     echo ""
     if [[ "${ALL_NONE}" -eq 1 ]]; then
-        echo "7 plugin 이미 전부 최신 (desired == current) — no-op 정상 종료"
+        echo "9 plugin 이미 전부 최신 (desired == current) — no-op 정상 종료"
         echo "(idempotency: snapshot/transaction 무생성 — §7.4.1 (e), prompt 0)"
         exit 0
     fi
@@ -354,13 +352,13 @@ if [[ "${MODE}" == "apply" ]]; then
         echo "channel_args: ${CHANNEL_ARGS[*]}"
     fi
     echo "step_2_disk_preflight: per-family snapshot 예상 크기 vs 가용 공간 (부족 = abort-before-touch)"
-    echo "step_3_pre_atomic_snapshot: 7 plugin pin state union 단일 tar + checksum"
-    echo "step_4_per_plugin_walk_apply: ${WALK_SINGLE_CLI} --apply ${REPO_ARGS[*]:-} ${CHANNEL_ARGS[*]:-}  # 7 plugin loop"
+    echo "step_3_pre_atomic_snapshot: 9 plugin pin state union 단일 tar + checksum"
+    echo "step_4_per_plugin_walk_apply: ${WALK_SINGLE_CLI} --apply ${REPO_ARGS[*]:-} ${CHANNEL_ARGS[*]:-}  # 9 plugin loop"
     echo "step_4_failure: per-plugin 실패 = abort + per-family atomic rollback (ADR-068 I-3 unconditional)"
     echo "step_5_walk_result_aggregate: aggregate_walk_result() (walk_plan.py SSOT)"
-    echo "step_5_invariant: ANY FAILED/PARTIAL_FAILURE → transaction 실패 → 전체 7 plugin rollback"
+    echo "step_5_invariant: ANY FAILED/PARTIAL_FAILURE → transaction 실패 → 전체 9 plugin rollback"
     echo "step_6_commit: transaction 완결 (snapshot = audit trail, N=5 retention)"
-    echo "rollback: per-family pre-atomic snapshot 복원 (7 plugin 일괄, partial state 0)"
+    echo "rollback: per-family pre-atomic snapshot 복원 (9 plugin 일괄, partial state 0)"
     echo "user_decision_branches: 0"
     exit 0
 fi
