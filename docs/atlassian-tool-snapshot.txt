@@ -1,0 +1,12 @@
+# PLACEHOLDER — Atlassian 인스턴스 /mcp enumeration 후 채움 (ADR-103 §결정 3)
+# CFP-1256 W4-S13: declaration-only Wave 1 — 실 Atlassian 인스턴스 연결 후 `mcp list-tools` 결과로 대체
+#
+# 채우는 방법:
+#   1. Atlassian MCP 서버를 실 인스턴스에 연결
+#   2. MCP tool 목록 enumeration (예: /mcp list-tools 또는 Claude Code 세션에서 실 mcp__atlassian__* 확인)
+#   3. 본 파일에 한 줄 1 tool 형식으로 기록 (예: mcp__atlassian__get_page)
+#   4. scripts/check-atlassian-tool-drift.sh 재실행 후 drift = 0 확인
+#
+# 형식 (실 채움 시):
+#   mcp__atlassian__<tool_name>
+#   (한 줄 1 entry, 빈 줄 / # 주석 무시)

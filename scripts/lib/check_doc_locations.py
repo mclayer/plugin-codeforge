@@ -126,13 +126,15 @@ if errors:
 print("OK [4/7] placeholder allowlist", file=sys.stderr)
 
 # [5/7] no absolute paths
+# 예외: placeholder (<...>) 를 포함한 URL template 은 실 절대 URL 이 아님 (confluence variant 등)
 for i, dt in enumerate(data.get("doc_types", [])):
     name = dt.get("name", "?")
     for vk, vpath in (dt.get("variants") or {}).items():
         if vpath is None:
             continue
         s = str(vpath)
-        if s.startswith("/") or s.startswith("https://") or s.startswith("http://"):
+        has_placeholder = bool(PLACEHOLDER_RE.search(s))
+        if (s.startswith("/") or s.startswith("https://") or s.startswith("http://")) and not has_placeholder:
             errors.append(f"[5/7] doc_types[{i}] '{name}'.{vk}: absolute path forbidden ('{s[:60]}...')")
 
 if errors:
