@@ -50,12 +50,26 @@ ALLOWLIST_GOVERNANCE_PREFIXES=(
 # docs/evidence-checks-registry.yaml: check-atlassian-allow entry 포함 (본 registry 자체)
 # .claude/settings.json: Layer 1 mcp__atlassian deny baseline 선언 파일 (ADR-100 §결정 4)
 # docs/project-config-schema.md: atlassian.* schema 선언 파일 (ADR-100 §결정 3)
+# CFP-1256 W4-S13 추가:
+# docs/doc-locations.yaml: confluence variant 신규 추가 (ADR-103 §결정 5 R2 fold)
+# docs/doc-location-registry.md: doc-locations.yaml 의 auto-generated mirror (regen 산출물)
+# docs/atlassian-tool-snapshot.txt: atlassian tool snapshot placeholder (ADR-103 §결정 3)
+# scripts/check-atlassian-tool-drift.sh: atlassian tool drift check 스크립트 (ADR-103 §결정 3)
+# templates/github-workflows/atlassian-tool-drift.yml: atlassian-tool-drift workflow template
+# .github/workflows/atlassian-tool-drift.yml: self-app byte-identical copy
 ALLOWLIST_EXTRA_FILES=(
   "docs/adr/ADR-RESERVATION.md"
   "docs/adr/ADR-060-evidence-enforceable-promotion-framework.md"
   "docs/evidence-checks-registry.yaml"
   ".claude/settings.json"
   "docs/project-config-schema.md"
+  "docs/doc-locations.yaml"
+  "docs/doc-location-registry.md"
+  "docs/atlassian-tool-snapshot.txt"
+  "scripts/check-atlassian-tool-drift.sh"
+  "templates/github-workflows/atlassian-tool-drift.yml"
+  ".github/workflows/atlassian-tool-drift.yml"
+  "CLAUDE.md"
 )
 
 # ── 평문 atlassian|Confluence|Jira grep (mcp__atlassian 토큰 제거 — Layer 2 only) ─

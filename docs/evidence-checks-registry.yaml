@@ -3644,3 +3644,41 @@ entries:
       threshold: 3
       promotion_trigger: auto_blocking
     status: Active
+
+  # CFP-1256 W4-S13 신설 — 1 entry (atlassian-tool-drift)
+  - name: atlassian-tool-drift
+    description: |
+      CFP-1256 / ADR-103 §결정 3 Option B per-tool deny decomposition 의
+      allow-by-omission weakening surface 감지.
+      docs/atlassian-tool-snapshot.txt (verified snapshot) ↔
+      .claude/settings.json permissions.deny 비교 — snapshot tool 중
+      deny 누락 = allow-by-omission drift warning.
+      snapshot 이 placeholder 면 advisory exit 0 (instance 무관 declaration-only Wave 1).
+      ADR-103 §결정 3: "deny 열거를 verified snapshot 에 고정 + atlassian-tool-drift check"
+      — Option B allow-by-omission 유일 weakening surface mitigation.
+      Warning-tier — pattern_count >= 2 재발 시 blocking-on-pr 승격 의무
+      (ADR-103 frontmatter mechanical_enforcement_actions 첫 promotion candidate).
+    detect_command: bash scripts/check-atlassian-tool-drift.sh
+    workflow: templates/github-workflows/atlassian-tool-drift.yml
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode (declaration-only Wave 1)
+    bypass_label: hotfix-bypass:atlassian-tool-drift
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1256                     # self-carrier (Phase 2 = actual instance enumerate + wire)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = snapshot↔deny 비교, modal phrase 검사 미포함
+    introduced_by: CFP-1256
+    introduced_date: 2026-05-22
+    owner_adr: ADR-103
+    carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      threshold: 2   # ADR-103 §결정 3: "pattern_count >= 2 재발 시 promote"
+      promotion_trigger: auto_blocking
+    status: declaration-only-Wave-1    # Phase 2 실 instance enumerate + deny wire 후 Active 전환

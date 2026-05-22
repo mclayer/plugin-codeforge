@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: imperative-walker-protocol
-version: "1.0.1"
+version: "1.1.0"
 status: Active
 sibling_sync: exempt (ADR-010 §결정 2 kind:registry)
 supersedes_carrier: reconcile-protocol-v1 (v1.13 Deprecated, CFP-1125)
@@ -46,6 +46,7 @@ related_plugins:
 version_history:
   - { version: "1.0", date: 2026-05-21, carrier: CFP-1145, change: "initial — imperative changelog walk paradigm 의 walker protocol schema SSOT 신설. reconcile-protocol-v1 (v1.13 Deprecated, CFP-1125) 후속 carrier. 7 ADR (ADR-092~098) 결정 codify: §2 walk_result 4-value closed_enum + 2-layer 4-field 보고 schema (ADR-093) / §3 per-plugin self-owned CHANGELOG.md SSOT + aggregate view derived + drift detection warning tier (ADR-092) / §4 hybrid grace period fallback GA 12mo · Beta 9mo (ADR-094) / §5 sunset metric source changelog mining + cron (ADR-095) / §6 min_prerequisite_version dual carrier + topological resolve (ADR-096) / §7 paradigm replacement scope boundary 3 조건 AND (ADR-097) + UpgradeAgent runtime ownership PMO 흡수 (ADR-098). kind:registry (sibling sync 면제, ADR-008 §결정 2 + ADR-010 §결정 2 정합). closed_enum open_extension:false invariant 보존 (ADR-064 §self-application ratchet 강화 방향만)." }
   - { version: "1.0.1", date: 2026-05-22, carrier: CFP-1169, change: "CFP-703 stale ref → CFP-1155 (UpgradeAgent 실 carrier = CFP-1111 Wave 2 Story-4) traceability 정정. §2.F.2 ownership boundary codify only 설명 + §4.3(c) amendment trigger 의 CFP-703 → CFP-1155 + Wave 2 Story-3 → Wave 2 Story-4 정정. 오타 수준 추적성 정정 — semantic 변경 0건. PATCH bump (ADR-008 §결정 2 cross-reference 정정 category)." }
+  - { version: "1.1.0", date: 2026-05-22, carrier: CFP-1256, change: "§2.G git→Confluence docs sync extension 신규 codify source ADR-103 — §4.2 'MINOR = 신규 codify source ADR 영역 § append' 정합. walk_result closed_enum 무침범. §4.3 Amendment trigger (e) ADR-103 merge 추가. MINOR bump (ADR-008 §결정 2 신규 codify source ADR 영역 § append category)." }
 ---
 
 # imperative-walker-protocol-v1 — Inter-plugin Contract Registry
@@ -256,6 +257,38 @@ upgrade_agent_ownership:
 - **ownership boundary codify only** — UpgradeAgent 실 runtime mandate body (changelog walk 절차 / plan / apply transaction / 3 mode) = Wave 2 Story-4 (CFP-1155) 영역 (ADR-098 scope 외). model tier 재평가 의무 = declare only (실 tier 확정 = CFP-1155, ADR-042 amendment carry).
 - **runtime SSOT = ADR-076** (paradigm replace 진행 중) — reconcile-protocol-v1 (v1.13 Deprecated) 1st-class SSOT citation 금지. walker 가 어느 paradigm (declarative 잔존 vs imperative 전환) 이든 UpgradeAgent = codeforge-pmo 귀속 (paradigm-agnostic ownership anchor).
 
+### §2.G git→Confluence docs sync extension (ADR-103 codify)
+
+git→Confluence one-way docs sync 는 walker walk transaction 완료 후 **post-walk hook side-effect** 로 codify 한다 (walk step 자체 아님).
+
+> verified-via: Read docs/adr/ADR-103-git-confluence-sync-mechanism.md §결정 5 R5 — "git→Confluence sync 는 walk_result enum 으로 fold 불가 (§2.A.3 `open_extension: false` unconditional)" + "§2.G 신규 codify source 로 MINOR bump" + "sync = post-walk hook (walk step 아님): walk 가 changelog 처리를 끝낸 후 sync 가 트리거되는 side-effect" verbatim.
+
+#### §2.G.1 post-walk hook scope
+
+```yaml
+git_to_confluence_sync:
+  hook_type: post_walk          # walk transaction 완료 후 side-effect (walk step 아님)
+  direction: one_way            # git → Confluence 단방향. Confluence → git 역방향 0건 (ADR-103 §결정 1 one-way invariant)
+  trigger: walk_transaction_complete   # walk_result 발화 후 hook 실행
+  sync_mechanism: custom_github_action # OSS markdown→Confluence engine thin verify wrapper (ADR-103 §결정 1 채택)
+  codify_source_adr: ADR-103    # §결정 1~5 mechanism SSOT
+```
+
+- **post-walk hook (walk step 아님)** — git→Confluence sync 는 walker 의 walk step 이 아니라 walk transaction 완료 후 발동하는 side-effect 다. walk_result enum (§2.A.1) 에 sync 관련 값 추가 0건 (closed_enum `open_extension: false` unconditional — §2.A.3 ADR-068 I-3 unconditional guard 보존).
+- **one-way invariant** — git = SoR-work (ADR-100 §결정 1), Confluence = readable mirror. 역방향 push 0건 (ADR-103 §결정 1 + ADR-101 §결정 2 outbound-only instantiate).
+- **sync = readable mirror (git = SoR-work invariant)** — Confluence authoritative readable 로 격상 (ADR-100 §결정 1 disjoint axis) 되나 git source 우선권 불변. walk 가 changelog source 를 소비한 후 Confluence mirror 를 최신화하는 부가 산출물.
+
+#### §2.G.2 walk_result closed_enum 무침범 확인
+
+본 §2.G 는 `## 2. Schema` 안 sub-section 으로 append 된다 (CFP-28 doc-section-schema 정합). **walk_result enum / 4-field 변경 0건** — §2.A.1 walk_result closed_enum (SUCCESS / SUCCESS_WITH_DEGRADATION / PARTIAL_FAILURE / FAILED) 및 §2.A.2 양 4-field schema 는 본 §2.G 추가로 인해 일체 변경되지 않는다.
+
+```yaml
+walk_result_enum_invariant:
+  §2G_impact: "0건 변경"   # §2.G 는 별도 extension section
+  open_extension: false    # §2.A.3 unconditional 보존 — 본 §2.G 가 closed_enum 침범 불가
+  sync_scope: post_walk_hook_only   # walk_result 발화 완료 후 side-effect (별도 channel)
+```
+
 ## 3. 항목
 
 본 § 는 §2 (Schema) 각 영역의 항목별 cross-reference 와 영역 간 binding 을 정의한다. closed_enum open_extension invariant 의 unconditional 적용 (§2.A.3) + 영역 간 disjoint binding (detection ↔ 처리) 정합.
@@ -307,9 +340,12 @@ upgrade_agent_ownership:
 - (b) ADR-076 Amendment 시 (walker runtime SSOT 변경 동반 — §2.F.2 runtime_ssot binding)
 - (c) Wave 2 Story-4 (CFP-1155) merge — UpgradeAgent 실 runtime mandate body 확정 시 (§2.F.2 ownership boundary → runtime hook). Wave 1 작성 시점 declare-only, 실 implementation = CFP-1155.
 - (d) reconcile-protocol-v1 v1.13 sunset 완료 (CFP-1111-Wave-4-Story-11) 시 — paradigm replacement carrier-preserved sunset 완결 신호 (§2.F.1 carrier_preserved_sunset binding)
+- (e) ADR-103 merge — git→Confluence sync mechanism 결정 (§2.G post-walk hook codify source ADR. CFP-1256 Wave 4 Story-13 carrier — §2.G 신규 codify source ADR 영역 § append, §4.2 MINOR 정합)
 
 ### 4.4 version_history
 
 | version | date | cfp | change |
 |---|---|---|---|
 | 1.0 | 2026-05-21 | CFP-1145 | initial — imperative changelog walk paradigm 의 walker protocol schema SSOT 신설. reconcile-protocol-v1 (v1.13 Deprecated, CFP-1125) 후속 carrier. 7 ADR (ADR-092~098) 결정 codify (§2.A walk_result + 4-field 보고 schema / §2.B changelog SSOT + aggregate view + drift detection / §2.C hybrid grace fallback / §2.D sunset metric source / §2.E min_prerequisite_version manifest + topological resolve / §2.F paradigm scope boundary + UpgradeAgent ownership). kind:registry (sibling sync 면제, ADR-008 §결정 2 + ADR-010 §결정 2 정합). closed_enum open_extension:false invariant 보존 (ADR-064 §self-application ratchet 강화 방향만). |
+| 1.0.1 | 2026-05-22 | CFP-1169 | CFP-703 stale ref → CFP-1155 traceability 정정. §2.F.2 + §4.3(c) 정정. PATCH bump. |
+| 1.1.0 | 2026-05-22 | CFP-1256 | §2.G git→Confluence docs sync extension 신규 codify source ADR-103 추가. post-walk hook side-effect codify (walk_result closed_enum 무침범). §4.3 Amendment trigger (e) ADR-103 추가. MINOR bump. |

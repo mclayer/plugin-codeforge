@@ -4,8 +4,8 @@
 # Doc Location Registry (auto-generated)
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
-**schema_version**: 1.0  
-**Last regen**: 2026-05-19T01:08:53Z  
+**schema_version**: 1.1  
+**Last regen**: 2026-05-22T07:38:11Z  
 **Registered doc types**: 16
 
 ## Summary table
@@ -14,14 +14,14 @@
 |---|---|---|---|---|
 | 1 | `epic_results` | dogfood / mode_a / mode_b / mode_c | `codeforge-pmo:PMOAgent` | CFP-83 |
 | 2 | `story_file` | dogfood / mode_b / multi_repo_hub / multi_repo_impl / single_repo | `codeforge-requirements:RequirementsPLAgent` | CFP-1 |
-| 3 | `adr` | single_repo | `codeforge-design:ArchitectAgent` | CFP-26 |
-| 4 | `change_plan` | dogfood / single_repo | `codeforge-design:ArchitectAgent` | CFP-7 |
-| 5 | `retro` | dogfood / single_repo | `codeforge-pmo:PMOAgent` | CFP-36 |
+| 3 | `adr` | confluence / single_repo | `codeforge-design:ArchitectAgent` | CFP-26 |
+| 4 | `change_plan` | confluence / dogfood / single_repo | `codeforge-design:ArchitectAgent` | CFP-7 |
+| 5 | `retro` | confluence / dogfood / single_repo | `codeforge-pmo:PMOAgent` | CFP-36 |
 | 6 | `domain_knowledge` | single_repo | `codeforge-requirements:DomainAgent` | CFP-37 |
 | 7 | `spec` | dogfood | `orchestrator` | ADR-017 |
 | 8 | `plan` | dogfood | `orchestrator` | ADR-017 |
 | 9 | `decision_packet` | dogfood | `orchestrator` | CFP-61 |
-| 10 | `inter_plugin_contract` | single_repo | `each_lane_plugin` | CFP-29 |
+| 10 | `inter_plugin_contract` | confluence / single_repo | `each_lane_plugin` | CFP-29 |
 | 11 | `evidence_check_registry` | single_repo | `orchestrator` | CFP-389 |
 | 12 | `upgrade_events` | single_repo | `orchestrator` | CFP-743 |
 | 13 | `kpi_artifact` | single_repo | `orchestrator` | CFP-393 |
@@ -82,6 +82,7 @@
 ### `adr`
 
 - **single_repo**: `<owner-repo>/docs/adr/ADR-NNN-<slug>.md`
+- **confluence**: `https://<confluence-instance>/wiki/spaces/<space-key>/pages/<page-id>`
 - **owner_agent**: `codeforge-design:ArchitectAgent`
 - **introduced_by**: CFP-26
 - **naming_pattern**: `ADR-[0-9]{3}-[a-z0-9-]+\.md`
@@ -92,11 +93,15 @@
   **notes**:
   > Mode-agnostic. ADR 는 항상 plugin repo / consumer repo 의 docs/adr/.
   > CODEOWNERS = architect team review 의무.
+  > confluence variant (CFP-1256 / ADR-103 §결정 5 R2): git→Confluence one-way sync readable mirror.
+  > 실 Confluence URL = consumer overlay project.yaml atlassian.confluence.base_url + space_key + page_id 주입.
+  > git = SoR-work invariant (ADR-100 §결정 1) — Confluence 는 readable mirror 이지 SoR 아님.
 
 ### `change_plan`
 
 - **single_repo**: `<owner-repo>/docs/change-plans/<slug>.md`
 - **dogfood**: `mclayer/codeforge-internal-docs/<plugin-folder>/change-plans/<slug>.md`
+- **confluence**: `https://<confluence-instance>/wiki/spaces/<space-key>/pages/<page-id>`
 - **owner_agent**: `codeforge-design:ArchitectAgent`
 - **introduced_by**: CFP-7
 - **naming_pattern**: `[a-z0-9-]+\.md`
@@ -107,11 +112,13 @@
 
   **notes**:
   > ADR-013: codeforge family = internal-docs <plugin>/change-plans/.
+  > confluence variant (CFP-1256 / ADR-103 §결정 5 R2): dogfood-out docs (MOVE path, ADR-013) 의 Confluence readable mirror. git = SoR-work invariant.
 
 ### `retro`
 
 - **single_repo**: `<owner-repo>/docs/retros/<sprint>.md`
 - **dogfood**: `mclayer/codeforge-internal-docs/<plugin-folder>/retros/<sprint>.md`
+- **confluence**: `https://<confluence-instance>/wiki/spaces/<space-key>/pages/<page-id>`
 - **owner_agent**: `codeforge-pmo:PMOAgent`
 - **introduced_by**: CFP-36
 - **naming_pattern**: `[a-z0-9-]+\.md`
@@ -123,6 +130,7 @@
   **notes**:
   > ADR-013: codeforge family dogfood. EPIC-RESULTS 도 본 디렉터리 사용 (mode_a/b/c + dogfood 통일, ADR-041 Amendment 1).
   > Sprint retro (`<sprint>.md`) 와 EPIC-RESULTS (`EPIC-RESULTS-<KEY>.md`) 는 prefix 로 명확히 구분.
+  > confluence variant (CFP-1256 / ADR-103 §결정 5 R2): dogfood-out docs (MOVE path, ADR-013) 의 Confluence readable mirror. git = SoR-work invariant.
 
 ### `domain_knowledge`
 
@@ -184,6 +192,7 @@
 ### `inter_plugin_contract`
 
 - **single_repo**: `<owner-repo>/docs/inter-plugin-contracts/<slug>-v<version>.md`
+- **confluence**: `https://<confluence-instance>/wiki/spaces/<space-key>/pages/<page-id>`
 - **owner_agent**: `each_lane_plugin`
 - **introduced_by**: CFP-29
 - **naming_pattern**: `[a-z0-9-]+-v[0-9]+\.md`
@@ -194,6 +203,7 @@
   **notes**:
   > Canonical 은 producer plugin repo. wrapper 는 sibling sync mirror (ADR-010).
   > MANIFEST.yaml 가 별도 SSOT — 본 entry 는 위치 룰만.
+  > confluence variant (CFP-1256 / ADR-103 §결정 5 R2): wrapper governance docs (KEEP path, ADR-013) 의 Confluence readable mirror. git = SoR-work invariant.
 
 ### `evidence_check_registry`
 
