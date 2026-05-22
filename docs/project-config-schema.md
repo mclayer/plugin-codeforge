@@ -437,11 +437,25 @@ deploy:
     pattern_count_threshold: <int>     # PMO escalation 발화 임계 (default: 2)
                                        # signal_type 별 ops-signal Issue 누적 count >= threshold → stage 3 발화
                                        # Google SRE/ITIL/NASA industry lower bound 2 (ADR-068 I-5 §7.4 dimension: count)
+
+  # [선택] canary — canary auto-promote 설정 (CFP-1196 / ADR-105 §결정 3)
+  # 부재 시 canary-auto-promote = wrapper fast-pass exit 0 (ADR-104 §결정 4 정합, canary 비활성)
+  # 안전장치 4 AND: (1) criteria 4-tuple (2) 3h retention window (3) notification 가용성 (4) kill-switch off
+  # kill-switch OR disable (보수적): filesystem flag .codeforge/auto-promote.disabled OR config auto_promote_enabled=false
+  canary:
+    subset: <string>                   # 배포 대상 canary host list (공백 구분, 예: "host1 host2")
+                                       # 미정의(빈 문자열/부재) = deploy.host_mapping 첫 번째 host (D2 default — 보수적)
+                                       # 전체 host = promote 단계와 canary 단계 경계 소멸 → subset 지정 권장
+    auto_promote_enabled: <bool>       # false = kill-switch config flag (안전장치 4 secondary disable)
+                                       # true = 안전장치 4 AND 충족 시 자동 promote 활성 (default: true 이나 생략 = enabled 로 간주)
+                                       # filesystem kill-switch (.codeforge/auto-promote.disabled) 가 OR 보수적 disable
+                                       # → config true 여도 filesystem flag 부재 시만 promote 실행
 ```
 
 - **본 block 부재 시 동작**: deploy lane (CFP-1059) 가 Epic close 후 자동 trigger 되지 않음 (opt-in). 8 lane workflow 완결 시 wrapper Orchestrator = `phase:보안-테스트` 후 terminal (CFP-1059 이전 default 동작 유지). consumer 가 deploy block 등록 후 codeforge-deploy plugin install 시 deploy lane 활성.
 - **operational_monitor 동작 원칙** (CFP-1194 / ADR-106 Amendment 2 §결정 1 단계 2-a): S4 `auto_rollback` 과 완전 disjoint — S5 는 ops-signal Issue 발의만 (auto-rollback trigger 없음, ADR-104 §결정 4 wrapper fast-pass). `regression_threshold` 미정의 = 보수적 EC-4 (신호 미감지). `flap_n` 연속 N tick 도달(default 2) 후 Issue 발의 (flap 3-layer 내 layer-a). hysteresis recovery margin = pct_change < (threshold - margin, default 0.5%) 조건 충족 시 신호 해소. window default 86400초(24h, daily cron 주기 정합). 0 API call invariant (filesystem primary: `.codeforge/{operational-baseline,health-status,operational-flap-state}.json` — 외부 HTTP health endpoint 금지).
 - **self_improving_loop 동작 원칙** (CFP-1195 / ADR-106 §결정 4): loop closure 3-principle OR-fire — (a) dedup gate (open Issue/Epic 존재), (b) max-depth gate (loop_depth >= loop_max_depth), (c) escalate_user gate (pattern_count >= threshold) — 3 원칙 중 1개라도 trip 시 자동 Issue 생성 억제 + stage 4 user gate 발화 (자동 Epic 개시 금지 invariant). `enabled: false` = cron 실행되나 gate 통과 불가 (0 Issue 발의). `loop_max_depth` 미정의 = default 3 (보수적 runaway 차단 lower bound). `pattern_count_threshold` 미정의 = default 2 (industry lower bound, Google SRE/ITIL/NASA 정합). S4/S5 monitor 와 disjoint source — S4/S5-originated Issue 는 Epic-level dedup gate (b)만 적용 (re-creation 없음). 0 API call invariant (filesystem primary: `docs/kpi/operational-signal-history.jsonl` append-only — ADR-104 §결정 3).
+- **canary 동작 원칙** (CFP-1196 / ADR-105 §결정 3): `canary.auto_promote_enabled: false` = safety_4 config kill-switch → promote 전체 무력화 (filesystem kill-switch `.codeforge/auto-promote.disabled` OR config false = 보수적 OR disable). `subset` 미정의 = host_mapping 첫 번째 host (D2 default, 보수적 최소 배포). 안전장치 3 (notification_available) = promote 전 GH_TOKEN + gh CLI presence pre-check (0 API call) — unavailable 시 무음 promote 차단. 안전장치 1 aggregation (CFP-991 verbatim 재사용): ALL(gate_state IN {pass, n_a}) AND ANY(gate_state == pass) → criteria_met. 1+ fail = abort (EC-1 보수적). all n_a = abort (pass 최소 1 필수). wrapper self-app Tier-1 fast-pass (GITHUB_REPOSITORY=mclayer/plugin-codeforge → exit 0, ADR-104 §결정 4). consumer 환경: Actions vars `CANARY_*_GATE_STATE` + `CANARY_WITHIN_RETENTION` + `DEPLOY_CANARY_SUBSET` 로 gate 상태 주입 의무.
 - **auto_rollback 안전장치 4 AND** (CFP-1193 / ADR-105 §결정 3): `auto_rollback.enabled: false` = safety_4 false → trigger 전체 무력화 (신호 감지·기록 계속 — 무음 차단 금지 EC-2). `error_rate_threshold` / `latency_burn_rate_threshold` 미정의 = safety_1 false → trigger 0 (보수적 fallback EC-1). `window` 가 3시간 보존 window(10800초) 초과 = safety_2 false (ADR-087 §결정 5). filesystem kill-switch (`.codeforge/auto-rollback.disabled`) = safety_4 override (config enabled 여부 무관 — OR disable §3.4 정합). kill-switch 활성 시에도 신호 감지·ops-signal Issue 발의 계속 (EC-2).
 - **fallback semantic**:
   - `deploy.host_mapping` 부재 = deploy lane 활성화 prerequisite 불충족 → warning + skip (Epic close 진행, manual deploy operator 영역).
