@@ -3597,19 +3597,25 @@ entries:
     status: Active
 
   # CFP-1239 신설 — 1 entry (sunset-weakening-evidence)
+  # CFP-1249 description 갱신 — 2nd weakening pattern (forbid-list 축소) 추가 커버
   - name: sunset-weakening-evidence
     description: |
-      ADR-058 Amendment 1 §결정 5 (CFP-1149) evidence-gate mechanical verification —
-      ADR frontmatter diff 기반 is_transitional false→true (약화) 감지 시
-      amendment_log 최신 entry 의 sunset_justification 이 evidence-bearing 인지 검사.
-      evidence-bearing 기준: non-null AND not bare "N/A" AND
-        키워드 (metric / 평가 / 환경 / obsolescence / pattern_count / incident / measure / 측정)
-        중 1개 이상 포함.
-      강화 방향 (true→false) / 변경 없음 = 면제 (PASS). 신규 ADR (base 없음) = 면제.
+      ADR-058 Amendment 1 §결정 5 (CFP-1149) evidence-gate mechanical verification.
+      2가지 weakening pattern 감지 (CFP-1239 + CFP-1249 확장):
+      (A) ADR frontmatter diff 기반 is_transitional false→true (약화) 감지 시
+          amendment_log 최신 entry 의 sunset_justification 이 evidence-bearing 인지 검사.
+          evidence-bearing 기준: non-null AND not bare "N/A" AND
+            키워드 (metric / 평가 / 환경 / obsolescence / pattern_count / incident / measure / 측정)
+            중 1개 이상 포함.
+          강화 방향 (true→false) / 변경 없음 = 면제 (PASS). 신규 ADR (base 없음) = 면제.
+      (B) docs/wording-dictionary.md 카테고리 (a) forbid-list row 제거 (축소 = 약화) 감지
+          (CFP-1249 / ADR-064 §self-application ratchet 정합).
+          advisory WARN — reviewer 에게 ADR-064 amendment sunset_justification evidence 동반 필요 경고.
+          row 추가 (강화) / 신규 파일 = 면제.
       Warning-tier — exit 0 항상 (PR merge 미차단).
       기존 check-adr-sunset-criteria.sh 와 DISJOINT:
         adr-sunset-criteria = 정적 is_transitional + 해소 기준 섹션 검사.
-        sunset-weakening-evidence = DIFF 기반 약화 방향 + evidence 검사.
+        sunset-weakening-evidence = DIFF 기반 약화 방향 + evidence 검사 (ADR + forbid-list 양 패턴).
     detect_command: bash scripts/check-sunset-weakening-evidence.sh
     workflow: templates/github-workflows/sunset-weakening-evidence.yml
     current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode

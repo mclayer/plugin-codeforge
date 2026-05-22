@@ -45,17 +45,19 @@ collect_files() {
     fi
     local base_ref="${GITHUB_BASE_REF:-}"
     local git_files
+    # CFP-1249: docs/wording-dictionary.md 포함 (forbid-list 축소 감지 2nd pattern)
+    # 기존 ADR 패턴 + wording-dictionary.md 를 OR 로 수집
     if [[ -n "$base_ref" ]]; then
       mapfile -t git_files < <(
         git -C "$REPO_ROOT" diff --name-only "origin/${base_ref}...HEAD" 2>/dev/null \
-          | grep -E '^docs/adr/ADR-[0-9].*\.md$' || true
+          | grep -E '^docs/adr/ADR-[0-9].*\.md$|^docs/wording-dictionary\.md$' || true
       )
     else
       # 로컬: staged + unstaged
       mapfile -t git_files < <(
         { git -C "$REPO_ROOT" diff --name-only HEAD 2>/dev/null
           git -C "$REPO_ROOT" diff --cached --name-only 2>/dev/null; } \
-          | grep -E '^docs/adr/ADR-[0-9].*\.md$' | sort -u || true
+          | grep -E '^docs/adr/ADR-[0-9].*\.md$|^docs/wording-dictionary\.md$' | sort -u || true
       )
     fi
     raw_files=("${git_files[@]+"${git_files[@]}"}")
@@ -80,7 +82,7 @@ main() {
   mapfile -t files < <(collect_files "$@")
 
   if [[ "${#files[@]}" -eq 0 ]]; then
-    echo "$SCRIPT_NAME INFO: 검증 대상 ADR 파일 없음 (변경 없음 또는 ADR 외 파일만 변경)" >&2
+    echo "$SCRIPT_NAME INFO: 검증 대상 파일 없음 (변경 없음 또는 ADR/wording-dictionary 외 파일만 변경)" >&2
     exit 0
   fi
 

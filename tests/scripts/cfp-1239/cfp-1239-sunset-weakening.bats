@@ -1,13 +1,17 @@
 #!/usr/bin/env bats
 # tests/scripts/cfp-1239/cfp-1239-sunset-weakening.bats
 # CFP-1239 Phase 2 — ADR-058 Amendment 1 evidence-gate weakening lint TDD
+# CFP-1249 — forbid-list 축소 감지 (2nd weakening pattern) 확장
 # QADeveloperAgent TDD (RED written first, GREEN after implementation)
 #
 # 검사 대상: scripts/lib/check_sunset_weakening_evidence.py
-#   is_transitional false→true (약화) + sunset_justification evidence 부재 → [WARN]
-#   is_transitional false→true (약화) + sunset_justification evidence 보유 → PASS
-#   is_transitional true→false (강화) → 항상 PASS (면제)
-#   is_transitional 변경 없음 → PASS
+#   [CFP-1239] is_transitional false→true (약화) + sunset_justification evidence 부재 → [WARN]
+#   [CFP-1239] is_transitional false→true (약화) + sunset_justification evidence 보유 → PASS
+#   [CFP-1239] is_transitional true→false (강화) → 항상 PASS (면제)
+#   [CFP-1239] is_transitional 변경 없음 → PASS
+#   [CFP-1249] 카테고리 (a) forbid-list row 제거 → [WARN]
+#   [CFP-1249] 카테고리 (a) forbid-list row 추가 (강화) → PASS (WARN 없음)
+#   [CFP-1249] 카테고리 (a) 표 무변경 / 비-표 변경 → PASS (WARN 없음)
 #
 # 3-layer defense (#960 always-pass pattern_count 차단):
 #   Layer 1 — TC assertion 의무 (|| true masking 절대 금지)
@@ -455,5 +459,267 @@ is_transitional: true
   # 실제 repo 대상: base 미지정 (로컬 diff 없음 = 변경 없음 모드 → 전 파일 PASS)
   run python3 "$LINT_SCRIPT" --repo "$WORKTREE_ROOT" --base HEAD
   # crash 없이 exit 0
+  [ "$status" -eq 0 ]
+}
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CFP-1249 — forbid-list 축소 감지 (2nd weakening pattern) 테스트 케이스
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# 테스트 대상 파일: docs/wording-dictionary.md 기반 git fixture
+# 감지 패턴: 카테고리 (a) 표 데이터 row 제거 → [WARN]
+# 면제: row 추가 / 표 무변경 / 비-표 변경 / 카테고리 (b) 변경 → PASS
+
+# ─── forbid-list fixture 내용 ─────────────────────────────────────────────────
+
+# OLD wording-dictionary.md — 카테고리 (a) 에 2개 row
+wording_dict_old_two_rows() {
+  cat << 'CONTENT'
+---
+schema_version: "1.0"
+title: "테스트 wording dictionary"
+---
+
+# codeforge wording dictionary
+
+## 카테고리 (a) — 사용 금지 어휘 (forbid)
+
+| 어휘 | lint scope |
+|---|---|
+| 박제 / 못 박기 / pin / freezing | docs/** |
+| 별 (standalone) | docs/adr/** |
+
+## 카테고리 (b) — 사용 허용 + 평문 정의 동반 의무
+
+| 어휘 | 평문 정의 |
+|---|---|
+| normative | "강제 규칙" |
+CONTENT
+}
+
+# NEW wording-dictionary.md — 카테고리 (a) row 1개 제거 (약화 = WARN 대상)
+wording_dict_new_one_row_removed() {
+  cat << 'CONTENT'
+---
+schema_version: "1.0"
+title: "테스트 wording dictionary"
+---
+
+# codeforge wording dictionary
+
+## 카테고리 (a) — 사용 금지 어휘 (forbid)
+
+| 어휘 | lint scope |
+|---|---|
+| 박제 / 못 박기 / pin / freezing | docs/** |
+
+## 카테고리 (b) — 사용 허용 + 평문 정의 동반 의무
+
+| 어휘 | 평문 정의 |
+|---|---|
+| normative | "강제 규칙" |
+CONTENT
+}
+
+# NEW wording-dictionary.md — 카테고리 (a) row 추가 (강화 = PASS)
+wording_dict_new_one_row_added() {
+  cat << 'CONTENT'
+---
+schema_version: "1.0"
+title: "테스트 wording dictionary"
+---
+
+# codeforge wording dictionary
+
+## 카테고리 (a) — 사용 금지 어휘 (forbid)
+
+| 어휘 | lint scope |
+|---|---|
+| 박제 / 못 박기 / pin / freezing | docs/** |
+| 별 (standalone) | docs/adr/** |
+| 신규어휘 | docs/** |
+
+## 카테고리 (b) — 사용 허용 + 평문 정의 동반 의무
+
+| 어휘 | 평문 정의 |
+|---|---|
+| normative | "강제 규칙" |
+CONTENT
+}
+
+# NEW wording-dictionary.md — 카테고리 (a) 표 무변경, 카테고리 (b) 만 변경 (PASS)
+wording_dict_new_only_cat_b_changed() {
+  cat << 'CONTENT'
+---
+schema_version: "1.0"
+title: "테스트 wording dictionary"
+---
+
+# codeforge wording dictionary
+
+## 카테고리 (a) — 사용 금지 어휘 (forbid)
+
+| 어휘 | lint scope |
+|---|---|
+| 박제 / 못 박기 / pin / freezing | docs/** |
+| 별 (standalone) | docs/adr/** |
+
+## 카테고리 (b) — 사용 허용 + 평문 정의 동반 의무
+
+| 어휘 | 평문 정의 |
+|---|---|
+| normative | "강제 규칙" |
+| ratchet | "강화 방향만 허용" |
+CONTENT
+}
+
+# NEW wording-dictionary.md — 카테고리 (a) 표 완전 동일 + 비-표 산문 변경 (PASS)
+# 주의: OLD==NEW 이면 git commit 이 "nothing to commit" 실패 → 비-표 산문 변경으로 구분
+wording_dict_new_unchanged() {
+  cat << 'CONTENT'
+---
+schema_version: "1.0"
+title: "테스트 wording dictionary"
+---
+
+# codeforge wording dictionary
+
+본문 설명 추가 (표는 동일 — PASS 검증용).
+
+## 카테고리 (a) — 사용 금지 어휘 (forbid)
+
+| 어휘 | lint scope |
+|---|---|
+| 박제 / 못 박기 / pin / freezing | docs/** |
+| 별 (standalone) | docs/adr/** |
+
+## 카테고리 (b) — 사용 허용 + 평문 정의 동반 의무
+
+| 어휘 | 평문 정의 |
+|---|---|
+| normative | "강제 규칙" |
+CONTENT
+}
+
+# ─────────────────────────── TC 그룹 F: forbid-list 축소 감지 ─────────────────
+
+@test "TC-F1: 카테고리 (a) row 제거 (약화) → [WARN] 발생 (exit 0 유지)" {
+  local dict_file="docs/wording-dictionary.md"
+  mkdir -p "${GIT_REPO}/docs"
+  setup_git_diff "$GIT_REPO" "$dict_file" \
+    "$(wording_dict_old_two_rows)" "$(wording_dict_new_one_row_removed)"
+
+  run python3 "$LINT_SCRIPT" \
+    --repo "$GIT_REPO" \
+    --base HEAD~1 \
+    "${GIT_REPO}/${dict_file}"
+
+  # warning-tier — exit 0 항상
+  [ "$status" -eq 0 ]
+  # row 제거 감지 → WARN 출력 의무
+  [[ "$output" == *"[WARN]"* ]]
+}
+
+@test "TC-F1-negative: 카테고리 (a) row 제거 시 exit 1 미발생" {
+  local dict_file="docs/wording-dictionary.md"
+  mkdir -p "${GIT_REPO}/docs"
+  setup_git_diff "$GIT_REPO" "$dict_file" \
+    "$(wording_dict_old_two_rows)" "$(wording_dict_new_one_row_removed)"
+
+  run python3 "$LINT_SCRIPT" \
+    --repo "$GIT_REPO" \
+    --base HEAD~1 \
+    "${GIT_REPO}/${dict_file}"
+
+  [ "$status" -ne 1 ]
+}
+
+@test "TC-F2: 카테고리 (a) row 추가 (강화) → PASS (WARN 없음)" {
+  local dict_file="docs/wording-dictionary.md"
+  mkdir -p "${GIT_REPO}/docs"
+  setup_git_diff "$GIT_REPO" "$dict_file" \
+    "$(wording_dict_old_two_rows)" "$(wording_dict_new_one_row_added)"
+
+  run python3 "$LINT_SCRIPT" \
+    --repo "$GIT_REPO" \
+    --base HEAD~1 \
+    "${GIT_REPO}/${dict_file}"
+
+  [ "$status" -eq 0 ]
+  # 강화 방향 → WARN 없음
+  [[ "$output" != *"[WARN]"* ]]
+}
+
+@test "TC-F3: 카테고리 (a) 표 무변경 + 카테고리 (b) 만 변경 → PASS (WARN 없음)" {
+  local dict_file="docs/wording-dictionary.md"
+  mkdir -p "${GIT_REPO}/docs"
+  setup_git_diff "$GIT_REPO" "$dict_file" \
+    "$(wording_dict_old_two_rows)" "$(wording_dict_new_only_cat_b_changed)"
+
+  run python3 "$LINT_SCRIPT" \
+    --repo "$GIT_REPO" \
+    --base HEAD~1 \
+    "${GIT_REPO}/${dict_file}"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"[WARN]"* ]]
+}
+
+@test "TC-F4: 카테고리 (a) 표 완전 동일 (변경 없음) → PASS" {
+  local dict_file="docs/wording-dictionary.md"
+  mkdir -p "${GIT_REPO}/docs"
+  setup_git_diff "$GIT_REPO" "$dict_file" \
+    "$(wording_dict_old_two_rows)" "$(wording_dict_new_unchanged)"
+
+  run python3 "$LINT_SCRIPT" \
+    --repo "$GIT_REPO" \
+    --base HEAD~1 \
+    "${GIT_REPO}/${dict_file}"
+
+  [ "$status" -eq 0 ]
+  [[ "$output" != *"[WARN]"* ]]
+}
+
+@test "TC-F5: wording-dictionary.md 신규 파일 (base 에 없음) → PASS (면제)" {
+  local dict_file="docs/wording-dictionary.md"
+  mkdir -p "${GIT_REPO}/docs"
+  # 신규 파일만 추가 (OLD 없음)
+  printf '%s' "$(wording_dict_new_one_row_removed)" > "${GIT_REPO}/${dict_file}"
+  git -C "$GIT_REPO" add "${dict_file}"
+  git -C "$GIT_REPO" commit -q -m "initial commit (no prior state)"
+
+  run python3 "$LINT_SCRIPT" \
+    --repo "$GIT_REPO" \
+    --base HEAD~1 \
+    "${GIT_REPO}/${dict_file}"
+
+  # base 에 없음 → 약화 비교 불가 → PASS
+  [ "$status" -eq 0 ]
+}
+
+@test "TC-F6: TC-F1 WARN 메시지에 제거된 row 내용 포함 확인" {
+  local dict_file="docs/wording-dictionary.md"
+  mkdir -p "${GIT_REPO}/docs"
+  setup_git_diff "$GIT_REPO" "$dict_file" \
+    "$(wording_dict_old_two_rows)" "$(wording_dict_new_one_row_removed)"
+
+  run python3 "$LINT_SCRIPT" \
+    --repo "$GIT_REPO" \
+    --base HEAD~1 \
+    "${GIT_REPO}/${dict_file}"
+
+  [ "$status" -eq 0 ]
+  # WARN 메시지에 제거된 row 의 어휘 내용이 포함되어야 함
+  [[ "$output" == *"별 (standalone)"* ]]
+}
+
+# ─── SELF-TEST: 실제 wording-dictionary.md (변경 없음 = PASS) ────────────────
+
+@test "SELF-TEST-F: 실제 repo docs/wording-dictionary.md — crash 없이 exit 0" {
+  local dict_file="${WORKTREE_ROOT}/docs/wording-dictionary.md"
+  [ -f "$dict_file" ] || skip "docs/wording-dictionary.md 없음"
+
+  # 실제 repo 대상: base=HEAD (변경 없음 모드 → PASS)
+  run python3 "$LINT_SCRIPT" --repo "$WORKTREE_ROOT" --base HEAD "$dict_file"
   [ "$status" -eq 0 ]
 }
