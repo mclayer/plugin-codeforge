@@ -7,6 +7,26 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.3.0] - 2026-05-22
+
+### Added
+
+- [CFP-1244] Codex worker dispatch file-redirect mandate — ADR-081 Amendment 6 (신규 §결정 D8) + ADR-070 Amendment 7 + ADR-052 Amendment 12. Codex CLI (v0.125.0) `codex exec` stdin-pipe invocation 이 TTY 부재 sandbox 안 0-byte stall (>5min) systemic 원인 — file-redirect invocation `codex exec --sandbox read-only < <promptfile>` 가 stall 회피 + genuine dual-perspective review 산출 (CFP-1187 운영 phase Epic S4/S5 early stall → substitution / S5/S6/S7 file-redirect 성공 / S7 ArchitectPL stream idle-timeout after 40 tool_uses → redo evidence).
+  - `docs/adr/ADR-081-codex-worker-prompt-boilerplate.md`: Amendment 6 (6번째 amendments[] entry) — 신규 §결정 D8 Codex worker dispatch file-redirect mandate. file-redirect invocation 의무 (composed worker prompt file write 후 stdin redirect, direct stdin-pipe / inline-arg 금지) + result-via-file 수신 + Orchestrator synchronous block-wait 금지 (bounded window 초과 시 다음 step 진행 후 result file pickup). D1.A-D 4 mandatory boilerplate field 무변경 (dispatch invocation 영역, prompt field 신설 0). is_transitional false 유지, sunset_justification = additive ratchet 강화 (dispatch reliability hardening).
+  - `docs/adr/ADR-070-codex-verify-before-trust.md`: Amendment 7 (7번째 amendments[] entry) — §결정 D1 fail-mode enum SSOT 7-set → 8-set 확장 (`dispatch_stall_or_stream_timeout` 8번째 value, Codex `codex exec` invocation stall OR Orchestrator stream idle-timeout → `fallback_skip_with_marker` path). closed-enum expansion = ratchet 강화 (additive, 정보 손실 0). is_transitional false 유지.
+  - `docs/adr/ADR-052-codex-proactive-check-touchpoints.md`: Amendment 12 (12번째 amendments[] entry) — ADR-081 Amendment 6 file-redirect dispatch mandate cross-ref (본문 SSOT 위임) + ADR-070 Amendment 7 fail-mode enum 7 → 8 확장 cross-ref. §A3 cross-ref 표 가 Amendment 10 (`subagent_recursion_blocked` 추가) 시점 갱신 누락으로 6-stale 였던 mechanical self-check escape 도 본 carrier 에서 full 8-enum 으로 정정 (ADR-065 Amendment 4 / CFP-1242 와 동일 class). is_transitional false 유지.
+
+### Changed
+
+- [CFP-1244] `docs/orchestrator-playbook.md` §3.10 — Codex CLI worker check file-redirect dispatch mandate 본문 추가 (`codex exec --sandbox read-only < <promptfile>` invocation + result-via-file + synchronous block-wait 금지 + stall/stream idle-timeout 시 `fallback_skip_with_marker` substitution). Substitution scope 3-path enum 표 의 `[codex-sandbox-fallback]` fail-mode enum 7 → 8 갱신 + §3.10 step marker 영역 6-stale enum → 8 정정.
+- [CFP-1244] `CLAUDE.md` — Codex Proactive Check 블록쿼트 fail-mode enum `6 종` → `8 종` (pre-existing 6-stale count 정정 — Amendment 10 `subagent_recursion_blocked` 미반영분 포함) + ADR-081 Amendment 6 file-redirect dispatch mandate cross-ref (기존 line 확장, 신규 line 0건 — line cap 정합).
+- plugin.json 6.2.1 → 6.3.0 MINOR (ADR-037 §결정 1(h) — three additive ADR amendment = governance behavior change). marketplace atomic sync 별도 sibling PR 의무 (ADR-063 §결정 5, mirrored field version 변경).
+
+### Cross-ref
+
+- Issue: #1244
+- ADR: ADR-081 (Amendment 6), ADR-052 (Amendment 12)
+
 ## [6.2.1] - 2026-05-22
 
 ### Fixed

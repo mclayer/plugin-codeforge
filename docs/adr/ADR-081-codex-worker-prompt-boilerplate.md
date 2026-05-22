@@ -44,6 +44,13 @@ amendments:
     status: applied
     ref: "## Amendment 5 / 본문 ### D1 적용 scope (proactive/reactive 표)"
     sunset_justification: "ratchet 강화 방향 (D1.A-D 4 mandatory boilerplate field 적용 scope codify — proactive 6 touchpoint scope 한정 explicit anchor + reactive 영역 best-effort 가이드 anchor 확장 적용). 약화 영역 0건 (D1.A-D / D2-D7 본문 의미 변경 0, codeforge 강제 영역 축소 0, mechanical_enforcement_actions[] Amendment 4 entry retain). reactive 영역 codeforge 강제 = 사용자 책임 영역 invariant 위배 → best-effort 가이드 anchor 채택 = ADR-070 D1 L110 정합 + ratchet 강화 양립. ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
+  - amendment_id: 6
+    cfp: CFP-1244
+    date: 2026-05-22
+    scope: "신규 §결정 D8 (Codex worker dispatch file-redirect mandate) append — codeforge Orchestrator/lane 이 Codex CLI worker check 호출 시 file-redirect 형식 `codex exec --sandbox read-only < <promptfile>` 의무 codify (composed worker prompt 를 file 로 write 후 stdin redirect). direct stdin-pipe / inline-arg invocation = TTY 부재 시 sandbox 안 0-byte stall (>5min) → 금지. 결과 = output file 경유 수신, Orchestrator 는 bounded window 초과 synchronous block-wait 금지 — 다음 step 진행 후 result file pickup (CFP-1187 S7 ArchitectPL stream idle-timeout after 40 tool_uses → redo evidence). Codex CLI v0.125.0 확인. evidence = Issue #1244 + CFP-1187 운영 phase Epic S4/S5 early stall → substitution / S5/S6/S7 file-redirect 성공 / S7 stream timeout redo. D1.A-D 4 mandatory boilerplate field 무변경 — dispatch invocation 영역이지 prompt field 신설 아님. D1-D7 본문 의미 변경 0건 — §결정 D8 sub-section append only. is_transitional false 유지 (permanent governance). mechanical_enforcement_actions[]=[] retain (§D5 declaration-only precedent chain — ADR-070 §D5 + ADR-082 §결정 6 + ADR-081 §D5/§D6.e + ADR-070 Amd 5 + ADR-081 Amd 5 정합)."
+    status: applied
+    ref: "## Amendment 6 / 본문 ### D8 + 거절된 대안 D8"
+    sunset_justification: "ratchet 강화 방향 (Codex worker dispatch reliability hardening — file-redirect invocation 형식 의무 + result-via-file + synchronous block-wait 금지 codify, dispatch invocation 영역 신규 normative anchor). 약화 영역 0건 (D1.A-D 4 mandatory boilerplate field 무변경, D1-D7 본문 의미 변경 0, scope 축소 0, prompt field 신설 0 — dispatch invocation 영역 additive). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
 related_stories:
   - CFP-819  # carrier
   - CFP-770  # baseline fp 8
@@ -55,6 +62,7 @@ related_stories:
   - CFP-810  # carry-over fp 0 #5 (sentinel reach)
   - CFP-844  # Amendment 1 — 신규 §결정 D6 severity calibration rubric (CFP-825 retro §6 후보 2)
   - CFP-1003 # Amendment 5 — D1.A-D 4 mandatory field 적용 scope codify (proactive 강제 + reactive best-effort 가이드, ADR-052 Amd 9 + ADR-070 Amd 5 chain — Codex TP#4 CX-963 deferred scope closure)
+  - CFP-1244 # Amendment 6 — 신규 §결정 D8 Codex worker dispatch file-redirect mandate (codex exec --sandbox read-only < promptfile + result-via-file + synchronous block-wait 금지, CFP-1187 S4/S5/S6/S7 evidence)
 related_adrs:
   - ADR-052  # Codex Proactive Check 6 touchpoints (parent — Amendment 6 + Amendment 7 (CFP-844) cross-ref)
   - ADR-070  # verify-before-trust pattern (sibling — D1/D2/D5 cross-ref + Amendment 2 (CFP-844) D6 보완)
@@ -514,14 +522,14 @@ network_scope: <4-tier enum value>
 | `offline` | codex CLI sandbox 안 own working directory file Read 만으로 verify 완결. network egress 0. | Codex worker 가 single file 영역 grep / quote / line-anchor verify task — sandbox-내부 file scope 만 | `inline_orchestrator_verify` (default) — codex worker output 정상 수신 + finding evidence 영역 = own working directory 안 |
 | `repo-fetch-only` | codex CLI sandbox 안 own-repo file Read + own-repo `git fetch` 허용. cross-repo egress 0. | Codex worker 가 own-repo 안 dir scope recursive grep / commit-anchor verify task — own-repo file history 영역 | `inline_orchestrator_verify` (default — own-repo 영역 = Orchestrator working directory 인접) |
 | `web-fetch` | codex CLI sandbox 가 cross-repo `gh api` / cross-repo `git fetch` / 외부 HTTP egress 허용. external egress 활성. | Codex worker 가 cross-repo state (sibling plugin / marketplace.json / internal-docs) verify task — cross-repo state 5-tuple verify scope (ADR-081 §결정 D2.C 정합) | `manual_substitution_declare` (sandbox 영역 외 file verify task 필요 시) |
-| `offline_substitution_declared` | codex CLI 자체 미가용 / sandbox network-block 확정 / 8+ occurrence sentinel reentrant 위험 영역 → Orchestrator substitution path activate. spawn 자체 skip. | Codex CLI 미가용 (api_missing / version_skew / enterprise_blocked, playbook L1349 fail-mode 6-enum 정합) | `fallback_skip_with_marker` (codex worker spawn 자체 skip + Orchestrator verify-before-trust 5 sub-scope 全 적용) |
+| `offline_substitution_declared` | codex CLI 자체 미가용 / sandbox network-block 확정 / 8+ occurrence sentinel reentrant 위험 영역 → Orchestrator substitution path activate. spawn 자체 skip. | Codex CLI 미가용 (api_missing / version_skew / enterprise_blocked, fail-mode 8-enum 정합) | `fallback_skip_with_marker` (codex worker spawn 자체 skip + Orchestrator verify-before-trust 5 sub-scope 全 적용) |
 
 #### D1.D 운영적 정합
 
 - `offline` / `repo-fetch-only` / `web-fetch` = codex worker **spawn 활성** 영역 (codex CLI 가용). codex spawn-prompt 본문에 `network_scope` declare → codex CLI 자체 sandbox toggle (codex@openai-codex plugin runtime) 의 입력 신호.
-- `offline_substitution_declared` = codex worker **spawn 자체 skip** 영역 (codex CLI 미가용). Orchestrator inline substitution path (verify-before-trust 5 sub-scope D2.A-E 단독 수행). Story §10 marker `[codex-sandbox-fallback: <fail-mode>]` 동반 의무 (playbook L1349 6-enum 정합).
+- `offline_substitution_declared` = codex worker **spawn 자체 skip** 영역 (codex CLI 미가용). Orchestrator inline substitution path (verify-before-trust 5 sub-scope D2.A-E 단독 수행). Story §10 marker `[codex-sandbox-fallback: <fail-mode>]` 동반 의무 (fail-mode 8-enum 정합).
 - 4 enum value 모두 codeforge 측 spawn-prompt declaration only — **declaration-only retain 유지 (§D5 precedent)**, codex CLI sandbox 자체 행위 변경 = codex@openai-codex plugin runtime 영역 (codeforge 비소유).
-- `network_scope` value semantic ↔ ADR-070 substitution scope 3-enum / playbook L1349 fail-mode 6-enum 사이 orthogonal:
+- `network_scope` value semantic ↔ ADR-070 substitution scope 3-enum / fail-mode 8-enum 사이 orthogonal:
   - `network_scope` = **WHAT scope** (4-tier: offline / repo-fetch-only / web-fetch / offline_substitution_declared)
   - substitution path = **HOW substitute** (3-enum: inline_orchestrator_verify / manual_substitution_declare / fallback_skip_with_marker)
   - fail-mode = **WHY failed** (6-enum: api_missing / version_skew / enterprise_blocked / gh_api_network_blocked / manual_substitution_declared / inline_orchestrator_verify_only)
@@ -666,6 +674,81 @@ Wave 2 follow-up CFP scope (별 carrier 분리):
 - (Amendment 5-C) **reactive 영역 normative anchor 자체 부재 invariant 보존** (D1.A-D 적용 scope = proactive 한정, reactive 영역 anchor 도입 0) — Codex TP#4 CX-963 deferred scope closure 책무 부재 → CFP-963 retro deferred scope 영구 미해소 risk. best-effort 가이드 anchor (사용자 자율 선택, codeforge 강제 0) 채택 = ADR-064 ratchet 강화 방향 + 사용자 책임 영역 invariant 보존 양립.
 - (Amendment 5-D) **D1.A-D 신규 5번째 field (예: D1.E reactive_authorization_token) 추가** — D1.A-D 4 field 의미 변경 0건 invariant 위배. reactive 영역 normative anchor 강화 = D1.A-D 4 field 의 적용 scope codify (proactive 강제 + reactive best-effort) only, 신규 field 도입 0 (CFP-966 lesson "신규 unique drift value 회피" 정합). 4-field exhaustive retain.
 - (Amendment 5-E) **ADR-052 본문 또는 ADR-070 본문 inline reactive boilerplate scope** (ADR-081 Amendment 5 회피) — 영역 type mismatch. ADR-081 = boilerplate composition SSOT (D1.A-D 4 mandatory field), ADR-052 = touchpoint behavior SSOT (proactive 채널 한정), ADR-070 = verify-before-trust pattern SSOT (substitution scope + sandbox boundary). 3 ADR normative anchor 분리 정합 — ADR-081 Amendment 5 본문 SSOT (reactive 영역 boilerplate field 채택) + ADR-052 Amendment 9 + ADR-070 Amendment 5 = cross-ref-only 채택.
+
+## Amendment 6 (CFP-1244, 2026-05-22 KST)
+
+### Context (Amendment 6)
+
+본 ADR-081 의 §결정 D1.A-D 4 mandatory boilerplate field 는 Codex worker spawn prompt 본문 **안** 의무 선언 영역 (어떤 정보가 prompt 에 첨부되어야 하는가) 을 codify 한다. 그러나 그 composed prompt 를 **어떤 invocation 형식으로 Codex CLI 에 전달하는가** (dispatch invocation 영역) 의 normative anchor 는 부재했다 — playbook §3.10 dispatch 패턴이 도덕적 강제로 SSOT 역할을 수행 중.
+
+[verified] CFP-1187 운영 phase Epic single autonomous session evidence — Codex CLI v0.125.0 가 `codex exec` 로 invoke 될 때 prompt 를 stdin 으로 직접 pipe 하면 sandbox 안 TTY 부재 → 0-byte stall (>5min). S4/S5 early stall → substitution path activate. **file-redirect** invocation `codex exec --sandbox read-only < <promptfile>` (composed worker prompt 를 file 로 write 후 stdin redirect) 는 stall 을 회피하고 genuine dual-perspective review 산출 — S5/S6/S7 file-redirect 성공. 추가로 long synchronous Codex wait 가 Orchestrator/agent stream idle-timeout risk 보유 — CFP-1187 S7 ArchitectPL stream timeout after 40 tool_uses → redo evidence.
+
+본 Amendment 6 = **Codex worker dispatch file-redirect mandate** (§결정 D8 신설). D1.A-D 4 mandatory boilerplate field 의미 변경 0건 — dispatch invocation 영역이지 prompt field 신설 아님 (D1.A-D 4-field exhaustive retain, Amendment 5-D 거절 대안 정합). D1-D7 본문 의미 변경 0건 — §결정 D8 sub-section append only.
+
+### 결정 (Amendment 6)
+
+**A1. §결정 D8 — Codex worker dispatch file-redirect mandate 신설**
+
+codeforge Orchestrator/lane 이 Codex CLI worker check 를 invoke 할 때 (proactive 6 touchpoint dispatch — ADR-052 D2 + reactive `codex:rescue` best-effort 가이드 anchor — Amendment 5 A2):
+
+1. **file-redirect invocation 의무** — composed worker prompt (D1.A-D 4 mandatory boilerplate field 포함) 를 file 로 write 후 file-redirect 형식 `codex exec --sandbox read-only < <promptfile>` 로 invoke. direct stdin-pipe (prompt 를 stdin 으로 직접 pipe) / inline-arg invocation 금지 — TTY 부재 sandbox 안 0-byte stall (>5min) systemic 원인 (CFP-1187 S4/S5 early stall evidence).
+2. **result-via-file 수신** — Codex worker 결과는 output file 경유 수신. Orchestrator 는 Codex stream 을 bounded window 초과 synchronous block-wait 금지 — bounded window 초과 시 다음 step 진행 후 result file pickup. long synchronous Codex wait 가 Orchestrator/agent stream idle-timeout 유발 risk (CFP-1187 S7 ArchitectPL stream timeout after 40 tool_uses → redo evidence) 차단.
+3. **substitution path 정합** — file-redirect invocation 후에도 stall / stream idle-timeout 발생 시 ADR-052 Amendment 8 substitution path 3-enum (`fallback_skip_with_marker`) + Story §10 marker `[codex-sandbox-fallback: <fail-mode>]` 진입 (ADR-052 Amendment 12 가 fail-mode enum 7번째 value `dispatch_stall_or_stream_timeout` 신설 — cross-ref).
+
+본 §결정 D8 = dispatch invocation 영역 normative anchor. D1.A-D 4 mandatory boilerplate field (prompt 본문 안 의무 선언 영역) 와 disjoint axis — D1 = prompt content 영역, D8 = prompt 전달 invocation 영역.
+
+**A2. D1.A-D 4 mandatory boilerplate field 무변경 (신규 field 도입 0)**
+
+§결정 D8 = dispatch invocation 형식 (file-redirect + result-via-file + synchronous block-wait 금지) — Codex worker spawn prompt 안 mandatory field 가 아니다. D1.A (dogfood-out Story path) / D1.B (current_lane / phase) / D1.C (sandbox_outside_paths) / D1.D (`network_scope: <4-tier enum>`) 4-field exhaustive retain (Amendment 5-D 거절 대안 "신규 5번째 field 추가" 정합 — 4-field 의미 변경 0).
+
+**A3. ADR-052 Amendment 12 cross-ref binding (fail-mode enum 7-set)**
+
+본 Amendment 6 carrier Story (CFP-1244) = ADR-081 Amendment 6 (dispatch SSOT) + ADR-052 Amendment 12 (fail-mode enum 6 → 7 확장 — dispatch-stall / stream-idle-timeout fail-mode + ADR-081 Amendment 6 cross-ref) paired. dispatch invocation mandate SSOT = 본 ADR-081 §결정 D8 (ADR-052 Amendment 12 는 cross-ref-only, 본문 중복 codify 0).
+
+**A4. ADR-081 §D5 declaration-only retain precedent chain 7번째 instance**
+
+`mechanical_enforcement_actions[]` = Amendment 4 의 `codex-network-scope-presence` entry retain (변경 0건). dispatch file-redirect invocation 의 mechanical lint (예: dispatch 발화 안 `< <promptfile>` 형식 presence-grep) = 별 follow-up CFP carrier (Wave 2, ADR-064 §결정 1 unitary). 본 Amendment 6 = declaration-only normative anchor only — ADR-070 §D5 → ADR-082 §결정 6 → ADR-081 §D5/§D6.e → ADR-070 Amd 5 → ADR-081 Amd 5 declaration-only retain precedent chain 7번째 instance.
+
+**A5. ADR-058 §결정 5 ratchet 정합 (강화 방향 명시)**
+
+본 Amendment = 강화 방향 (ratchet 강화):
+
+- `is_transitional: false` 본 ADR 유지 (permanent governance — Codex worker dispatch file-redirect mandate = Codex CLI invocation 영구 invariant, dispatch reliability hardening)
+- `sunset_justification: "ratchet 강화 방향 (Codex worker dispatch reliability hardening — file-redirect invocation 형식 의무 + result-via-file + synchronous block-wait 금지 codify, dispatch invocation 영역 신규 normative anchor §결정 D8). 약화 영역 0건 (D1.A-D 4 mandatory boilerplate field 무변경, D1-D7 본문 의미 변경 0, scope 축소 0, prompt field 신설 0 — dispatch invocation 영역 additive). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."`
+- ADR-058 §결정 5 sunset_justification 의무는 약화 방향 (dispatch file-redirect mandate 축소 또는 invocation 의무 약화) 에만 발효 → 본 Amendment 는 면제
+
+**A6. ADR-064 §결정 (Trace 1) active amendment + full-scope 정합**
+
+- Amendment 발의 시점 = CFP-1187 운영 phase Epic S4/S5/S6/S7 dispatch stall + stream timeout evidence 누적 후 즉시 (active amendment ratchet 강화 방향)
+- 적용 영역 = proactive 6 touchpoint dispatch + reactive `codex:rescue` 채널 모두 (full-scope — Codex CLI worker check invocation 전 영역)
+- forbid-list 13 어휘 (ADR-064 §결정 1 + Amendment 2/4/5) 사용 0 건 self-attest
+
+**A7. doc-only fast-path 적용 (ADR-054 §결정 1)**
+
+본 Amendment 6 자체 = ADR-081 본문 patch (Amendment row append + sub-section append) — doc-only fast-path 적격. carrier Story (CFP-1244) = ADR-081 Amendment 6 + ADR-052 Amendment 12 + playbook §3.10 patch + CLAUDE.md cross-ref = ADR-054 §결정 1 (신규 ADR 도입 아님, 기존 ADR Amendment + src/tests/workflow 무변경) doc-only fast-path 단일 PR 적격.
+
+**A8. D1-D7 본문 의미 변경 없음 + Amendment 1-5 본문 의미 변경 없음**
+
+기존 §결정 D1 (3 mandatory boilerplate 영역) / D2 (verify-before-trust scope 5 sub-scope) / D3 (3-lane partition) / D4 (ADR-052/070 본문 SSOT 보존) / D5 (declaration-only retain) / D6 (severity calibration rubric) / D7 (digest-parse self-verification + grading rubric) + Amendment 1-5 본문 의미 변경 없음. 본 Amendment 6 = §결정 D8 (dispatch invocation 영역) sub-section append only — sub-section append 패턴 (Amendment 1-5 패턴 정합).
+
+### 결과 (Amendment 6)
+
+- §결정 D8 신설 — Codex worker dispatch file-redirect mandate (`codex exec --sandbox read-only < <promptfile>` invocation 의무 + result-via-file 수신 + synchronous block-wait 금지) — A1 SSOT
+- D1.A-D 4 mandatory boilerplate field 무변경 (dispatch invocation 영역, 신규 field 도입 0) — A2 SSOT
+- ADR-070 Amendment 7 + ADR-052 Amendment 12 cross-ref binding (fail-mode enum 7 → 8 확장, dispatch SSOT = 본 ADR-081 §결정 D8) — A3 SSOT
+- ADR-081 §D5 declaration-only retain precedent chain 7번째 instance — A4 SSOT
+- ADR-058 §결정 5 ratchet 정합 (강화 방향, sunset_justification additive ratchet 강화 — dispatch reliability hardening) — A5 SSOT
+- ADR-064 §결정 active amendment + full-scope 정합 (forbid-list 13 어휘 사용 0 건) — A6 SSOT
+- doc-only fast-path 영역 정합 (본 Amendment 6 자체) — A7 SSOT
+- D1-D7 + Amendment 1-5 본문 의미 변경 0건 (sub-section append 패턴) — A8 SSOT
+
+### 거절된 대안 (Amendment 6)
+
+- (Amendment 6-A) **direct stdin-pipe invocation retain (file-redirect 의무 미codify)** — CFP-1187 S4/S5 early stall evidence (TTY 부재 sandbox 안 0-byte stall >5min) — direct stdin-pipe = systemic stall 원인. file-redirect invocation `< <promptfile>` 의무 codify 채택 (S5/S6/S7 성공 evidence).
+- (Amendment 6-B) **D1.A-D 5번째 mandatory field (예: D1.E `dispatch_form`) 로 dispatch 형식 codify** — D1.A-D 4-field 의미 변경 0건 invariant 위배 (Amendment 5-D 거절 대안 "신규 5번째 field 추가" 정합). dispatch invocation 형식 = prompt 본문 안 field 가 아니라 invocation 영역 — §결정 D8 disjoint sub-section append 채택 (D1 = prompt content axis, D8 = invocation axis).
+- (Amendment 6-C) **synchronous block-wait retain (Codex stream 완료까지 대기)** — CFP-1187 S7 ArchitectPL stream idle-timeout after 40 tool_uses → redo evidence. long synchronous Codex wait = Orchestrator/agent stream idle-timeout risk. result-via-file + bounded window 초과 시 다음 step 진행 후 result file pickup 채택.
+- (Amendment 6-D) **dispatch file-redirect mandate 를 ADR-052 본문 inline** (ADR-081 §결정 D8 회피) — 영역 type mismatch. ADR-052 = touchpoint behavior SSOT (dispatch 발동 시점 / 결과 처리), ADR-081 = Codex worker prompt boilerplate + invocation SSOT. dispatch invocation 형식 = prompt composition 영역 자매 (ADR-081 §결정 D1 prompt content 의 invocation 짝). ADR-081 §결정 D8 SSOT + ADR-052 Amendment 12 cross-ref-only 채택 (Amendment 6/7/8 cross-ref-only 패턴 정합).
+- (Amendment 6-E) **dispatch file-redirect invocation mechanical lint inline 본 Amendment 6** (Wave 1 + Wave 2 단일 CFP 통합) — ADR-064 §결정 1 (CFP scope unitary) 위배. Wave 1 declarative (본 §결정 D8) + Wave 2 mechanical (dispatch 발화 안 `< <promptfile>` presence-grep lint) 별 CFP 분리 채택 — ADR-081 §D5 declaration-only retain precedent 정합.
 
 ## 결과
 
