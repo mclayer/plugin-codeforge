@@ -26,20 +26,49 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NORMALIZE_PY="${SCRIPT_DIR}/lib/path_normalize.py"
 
-# codeforge family 9 plugin (F-002 옵션 A — codex/superpowers 구조적 배제)
-# change-plan §3.2 / §4.1 §7.1 — FAMILY membership check
-# CFP-1219: deploy lane 활성화 (CFP-1059 S2/S3 resolved) — 6 lane → 8 lane
-FAMILY_PLUGINS=(
-    codeforge
-    codeforge-requirements
-    codeforge-design
-    codeforge-review
-    codeforge-develop
-    codeforge-test
-    codeforge-pmo
-    codeforge-deploy          # ADR-087 Deploy lane (CFP-1219 활성)
-    codeforge-deploy-review   # ADR-088 Deploy Review lane (CFP-1219 활성)
-)
+# --------------------------------------------------------------------------
+# FAMILY_PLUGINS derive — walk_plan.py TOPOLOGICAL_ORDER 단일 SSOT (CFP-1225)
+#
+# 설계 결정 (D3): 하드코딩 배열 제거 → walk_plan.py get_topological_order() 에서 derive.
+#   walk-single 의 FAMILY_PLUGINS = wrapper + 8 lane = 9 entries (멤버십 검사 전체 대상).
+#   _CFP1225_MOCK_DERIVE_FAIL=1 = test seam (derive 실패 시뮬레이션용).
+# --------------------------------------------------------------------------
+FAMILY_PLUGINS_DERIVE() {
+    local _lib_dir
+    # cygpath -m: Git Bash POSIX 경로 → forward-slash Windows 경로 변환 (Python 호환)
+    # fallback: cygpath 미설치(Linux/macOS) 시 POSIX 경로 그대로 사용
+    if command -v cygpath >/dev/null 2>&1; then
+        _lib_dir="$(cygpath -m "${SCRIPT_DIR}/lib")"
+    else
+        _lib_dir="${SCRIPT_DIR}/lib"
+    fi
+    python3 -c "import sys; sys.stdout.reconfigure(newline='\n'); sys.path.insert(0, '${_lib_dir}'); import walk_plan; [print(p) for p in walk_plan.get_topological_order()]"
+}
+
+# test seam: _CFP1225_MOCK_DERIVE_FAIL=1 → derive 실패 시뮬레이션
+if [[ "${_CFP1225_MOCK_DERIVE_FAIL:-}" == "1" ]]; then
+    echo "[setup-error] FAMILY_PLUGINS derive 실패 시뮬레이션 (_CFP1225_MOCK_DERIVE_FAIL=1 test seam)" >&2
+    echo "[setup-error] walk_plan.py TOPOLOGICAL_ORDER derive 불가 — walk-single 실행 중단" >&2
+    echo "원인: _CFP1225_MOCK_DERIVE_FAIL test seam 활성 (walk_plan import 실패 동형)" >&2
+    exit 2
+fi
+
+# FAMILY_PLUGINS 배열 derive (walk_plan.py TOPOLOGICAL_ORDER single SSOT — CFP-1225)
+# fail-loud exit 2: python3 실패 또는 walk_plan import 실패 → 명확한 오류 메시지 + exit 2
+if ! mapfile -t FAMILY_PLUGINS < <(FAMILY_PLUGINS_DERIVE 2>/dev/null); then
+    echo "[setup-error] FAMILY_PLUGINS derive 실패: walk_plan.py get_topological_order() 호출 불가" >&2
+    echo "원인: python3 미설치 또는 ${SCRIPT_DIR}/lib/walk_plan.py import 오류" >&2
+    echo "walk-single 은 walk_plan.py 필수 의존성 — hardcoded fallback 없음 (CFP-1225 설계 결정)" >&2
+    exit 2
+fi
+
+# derive 결과 검증 — 비어 있으면 fail-loud (walk_plan 손상 감지)
+if [[ "${#FAMILY_PLUGINS[@]}" -eq 0 ]]; then
+    echo "[setup-error] FAMILY_PLUGINS derive 결과 비어 있음: walk_plan.get_topological_order() 반환 empty list" >&2
+    echo "원인: walk_plan.py TOPOLOGICAL_ORDER 손상 가능성 — 확인 필요" >&2
+    echo "walk-single 실행 중단 (empty FAMILY_PLUGINS → 멤버십 검사 불가)" >&2
+    exit 2
+fi
 
 # --------------------------------------------------------------------------
 # 내부 헬퍼: path 정규화 (§4.5 abort-before-touch)
