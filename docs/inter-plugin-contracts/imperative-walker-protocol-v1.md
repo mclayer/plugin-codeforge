@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: imperative-walker-protocol
-version: "1.0"
+version: "1.0.1"
 status: Active
 sibling_sync: exempt (ADR-010 §결정 2 kind:registry)
 supersedes_carrier: reconcile-protocol-v1 (v1.13 Deprecated, CFP-1125)
@@ -45,6 +45,7 @@ related_plugins:
   - codeforge-pmo
 version_history:
   - { version: "1.0", date: 2026-05-21, carrier: CFP-1145, change: "initial — imperative changelog walk paradigm 의 walker protocol schema SSOT 신설. reconcile-protocol-v1 (v1.13 Deprecated, CFP-1125) 후속 carrier. 7 ADR (ADR-092~098) 결정 codify: §2 walk_result 4-value closed_enum + 2-layer 4-field 보고 schema (ADR-093) / §3 per-plugin self-owned CHANGELOG.md SSOT + aggregate view derived + drift detection warning tier (ADR-092) / §4 hybrid grace period fallback GA 12mo · Beta 9mo (ADR-094) / §5 sunset metric source changelog mining + cron (ADR-095) / §6 min_prerequisite_version dual carrier + topological resolve (ADR-096) / §7 paradigm replacement scope boundary 3 조건 AND (ADR-097) + UpgradeAgent runtime ownership PMO 흡수 (ADR-098). kind:registry (sibling sync 면제, ADR-008 §결정 2 + ADR-010 §결정 2 정합). closed_enum open_extension:false invariant 보존 (ADR-064 §self-application ratchet 강화 방향만)." }
+  - { version: "1.0.1", date: 2026-05-22, carrier: CFP-1169, change: "CFP-703 stale ref → CFP-1155 (UpgradeAgent 실 carrier = CFP-1111 Wave 2 Story-4) traceability 정정. §2.F.2 ownership boundary codify only 설명 + §4.3(c) amendment trigger 의 CFP-703 → CFP-1155 + Wave 2 Story-3 → Wave 2 Story-4 정정. 오타 수준 추적성 정정 — semantic 변경 0건. PATCH bump (ADR-008 §결정 2 cross-reference 정정 category)." }
 ---
 
 # imperative-walker-protocol-v1 — Inter-plugin Contract Registry
@@ -74,7 +75,7 @@ codeforge family upgrade 의 imperative changelog walk paradigm 의 walker proto
 
 **범위 (in scope)**: walker walk_result + 4-field 보고 schema / changelog SSOT location + aggregate view / consumer fallback grace period 정책 / sunset metric source 표준 / min_prerequisite_version manifest schema + topological resolve / paradigm scope boundary + UpgradeAgent ownership cross-ref.
 
-**범위 외 (out of scope)**: UpgradeAgent runtime mandate body 실 구현 (changelog walk 알고리즘 / plan 생성 / apply transaction — Wave 2 Story-4 CFP-703 영역 + ADR-098 §결정 1 ownership boundary codify only) / consumer fallback degraded mode per-behavior enumeration (ADR-094 §결과 후속 carrier) / sunset metric 실 cron dashboard json + 집계 script (ADR-095 §결정 2 후속 carrier) / min_prerequisite_version mismatch lint mechanical wire (ADR-096 §결정 3 후속 sub-CFP Phase 2 carrier).
+**범위 외 (out of scope)**: UpgradeAgent runtime mandate body 실 구현 (changelog walk 알고리즘 / plan 생성 / apply transaction — Wave 2 Story-4 CFP-1155 영역 + ADR-098 §결정 1 ownership boundary codify only) / consumer fallback degraded mode per-behavior enumeration (ADR-094 §결과 후속 carrier) / sunset metric 실 cron dashboard json + 집계 script (ADR-095 §결정 2 후속 carrier) / min_prerequisite_version mismatch lint mechanical wire (ADR-096 §결정 3 후속 sub-CFP Phase 2 carrier).
 
 ## 2. Schema
 
@@ -246,13 +247,13 @@ upgrade_agent_ownership:
   open_extension: false   # ownership 후보 확장 = ADR-098 amendment (강화 방향) 로만
   adopted: codeforge_pmo_absorb   # (a) 채택 — cross-cutting agent (PMOAgent sibling), single-repo scope 유지 (신규 plugin 도입 0)
   rejected: new_codeforge_upgrade_lane_plugin   # (b) 거부 — 8-plugin family blast radius (ADR-023 lifecycle)
-  model_tier_reassessment: required   # ADR-042 §결정 2/§결정 3 — 실 tier 확정 = Wave 2 Story-3 CFP-703 (declare only)
+  model_tier_reassessment: required   # ADR-042 §결정 2/§결정 3 — 실 tier 확정 = Wave 2 Story-4 CFP-1155 (declare only)
   runtime_ssot: ADR-076   # declarative reconciliation upgrade flow (paradigm replace 진행 중)
   reconcile_protocol_v1_citation: forbidden_1st_class   # v1.13 Deprecated — 1st-class SSOT citation 금지
 ```
 
 - **ownership = codeforge-pmo 흡수 (a 채택)** — upgrade transaction = lane-agnostic family-wide 작업 → cross-cutting lane (codeforge-pmo) 자연스러운 귀속 (PMOAgent + GitOpsAgent + DialogFidelityAgent sibling). single-repo scope 유지 (신규 plugin 도입 0, 8-plugin family blast radius 0). (b) 신규 codeforge-upgrade lane plugin = 거부 (ADR-023 lifecycle blast radius 과잉).
-- **ownership boundary codify only** — UpgradeAgent 실 runtime mandate body (changelog walk 절차 / plan / apply transaction / 3 mode) = Wave 2 Story-3 (CFP-703) 영역 (ADR-098 scope 외). model tier 재평가 의무 = declare only (실 tier 확정 = CFP-703, ADR-042 amendment carry).
+- **ownership boundary codify only** — UpgradeAgent 실 runtime mandate body (changelog walk 절차 / plan / apply transaction / 3 mode) = Wave 2 Story-4 (CFP-1155) 영역 (ADR-098 scope 외). model tier 재평가 의무 = declare only (실 tier 확정 = CFP-1155, ADR-042 amendment carry).
 - **runtime SSOT = ADR-076** (paradigm replace 진행 중) — reconcile-protocol-v1 (v1.13 Deprecated) 1st-class SSOT citation 금지. walker 가 어느 paradigm (declarative 잔존 vs imperative 전환) 이든 UpgradeAgent = codeforge-pmo 귀속 (paradigm-agnostic ownership anchor).
 
 ## 3. 항목
@@ -304,7 +305,7 @@ upgrade_agent_ownership:
 
 - (a) ADR-092~098 중 하나의 Amendment 시 (carrier ADR 변경 동반 의무)
 - (b) ADR-076 Amendment 시 (walker runtime SSOT 변경 동반 — §2.F.2 runtime_ssot binding)
-- (c) Wave 2 Story-3 (CFP-703) merge — UpgradeAgent 실 runtime mandate body 확정 시 (§2.F.2 ownership boundary → runtime hook). Wave 1 작성 시점 declare-only, 실 implementation = CFP-703.
+- (c) Wave 2 Story-4 (CFP-1155) merge — UpgradeAgent 실 runtime mandate body 확정 시 (§2.F.2 ownership boundary → runtime hook). Wave 1 작성 시점 declare-only, 실 implementation = CFP-1155.
 - (d) reconcile-protocol-v1 v1.13 sunset 완료 (CFP-1111-Wave-4-Story-11) 시 — paradigm replacement carrier-preserved sunset 완결 신호 (§2.F.1 carrier_preserved_sunset binding)
 
 ### 4.4 version_history
