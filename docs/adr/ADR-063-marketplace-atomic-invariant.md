@@ -71,12 +71,28 @@ amendments:
     summary: "§결정 19 신설 — Tier 분리 (marketplace atomic invariant Tier scope 명확화). 기존 §결정 1 3-file atomic invariant 가 wrapper 와 lane plugin 구분 없이 단일 scope 기재 — imperative changelog walk 패러다임 도입 (CFP-1111) 후 Tier 1 (wrapper bundle walk) vs Tier 2 (lane per-walk) 구분 필요. Tier 1 = codeforge wrapper: §결정 1 3-file atomic (plugin.json + CHANGELOG.md + marketplace.json) 보존 + ADR-016 family-scope 7-plugin bundle walk 보존. §결정 13 Amendment 3 4-layer defense scope = Tier 1 만. Tier 2 = 6 lane plugin: per-plugin 독립 walk 허용 — 자기 plugin.json + marketplace.json 2-file atomic 유지 (자기 publishing 정합). cross-Tier 의존 = min_prerequisite_version topological gate (walk_plan.py resolve_min_prereq_topological 재사용 — 재구현 금지). 구현 상수/함수 = scripts/lib/walk_plan.py (g) tier classification 절 (classify_tier / atomic_scope_for_tier / TIER_1_WRAPPER / TIER_2_LANE / WRAPPER_PLUGIN / LANE_PLUGINS). ADR-016 family-scope 7-plugin 재정의 = β4 별도 carrier (cross-ref only). §결정 20 self-application — Amendment 8 = scope 명확화 강화 방향. ratchet 강화 방향 only — ADR-058 §결정 5 약화 방향 발의 차단 logic 통과."
     is_transitional: false
     sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 8 = atomic scope Tier 분리 명확화 강화 방향 only — 모호한 단일 scope → Tier 1/2 명시, 약화 요소 0건). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과 (Tier 2 family atomic 면제 = §결정 1 lane 적용 범위 명시 + min_prerequisite_version gate 보완으로 실질 보호 수준 유지)."
+  - amendment: 9
+    date: 2026-05-23
+    cfp: CFP-604
+    summary: "§결정 21/22/23 신설 — atomic-sync 의 declarative mandate 를 mechanical enforcement 로 강화 (origin audit #1270 — marketplace.json codeforge version 5-release lag carrier). §결정 21 (Gap A — §13 선언 검증 lint mandate): §결정 9 Amendment 1 Layer 2 의 Change Plan §13 marketplace_sync_required declarative declare 의무에 대응하는 검증 script 부재 (presence gap) 해소 — `scripts/check-architect-marketplace-self-check.sh` PR-open warning-tier lint 신설 (plugin.json mirrored field diff 감지 시 §13 field presence + completeness 검증, doc-only fast-path / Change Plan 부재 Story false-positive 차단). §결정 22 (Gap B — marketplace 정합 mechanical 강제 명문화): #1270 naive predicate 'open sibling PR 부재 차단' 가 §결정 2 marketplace 先 merge ordering 과 모순임을 명문화 + Gap B SSOT predicate 확정 = marketplace.json 실값 parity (option a) — 신규 script 0, 기존 `check-version-bump-atomic.sh` (CFP-441 blocking-on-pr) 의 (i) gh-skip silent hole 3종 차단 (gh 미설치/미인증/fetch 실패 시 exit 0 → CI 환경에서 fail-loud exit 2) + (ii) name/author mirrored field parity 축 확장 (기존 version+description 만 → 4종 전부). §결정 23 (Self-application ratchet 검증): Amendment 9 = declarative → mechanical 강화 방향 only. ratchet 강화 방향 only — ADR-064 §self-application top-down ratchet + ADR-058 §결정 5 약화 방향 발의 차단 logic 통과."
+    is_transitional: false
+    sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 9 = 4-layer declarative defense 위에 mechanical enforcement 강화 방향 only — §13 선언 presence-검증 lint 신설 + 기존 atomic check 의 silent skip hole 차단 + mirrored field parity 축 4종 확장, 약화 요소 0건). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과 (Gap A lint warning 다운그레이드 / silent skip hole 복원 / mirrored field parity 축 축소 = sunset_justification 3-tuple 의무)."
 mechanical_enforcement_actions:
   - action: version-3way-atomic
     binding_decision: 15
     tier: blocking-on-pr
     bypass_label: "hotfix-bypass:version-3way-atomic"
     carrier_phase: 2  # Phase 2 carrier — Phase 1 declarative SSOT mandate only (ADR-054 doc-only fast-path 정합). artifact (scripts/check-3way-version-parity.sh + templates/github-workflows/version-3way-atomic.yml + .github/workflows/... + docs/evidence-checks-registry.yaml entry) = Phase 2 PR scope (follow-up carrier PR). Phase 2 carrier PR open 시 본 entry actual wire + evidence-checks-registry row append.
+  - action: architect-marketplace-self-check
+    binding_decision: 21
+    tier: warning
+    bypass_label: "hotfix-bypass:architect-marketplace-self-check"
+    carrier_phase: 2  # Amendment 9 §결정 21 (Gap A) — Phase 1 declarative SSOT mandate only. artifact (scripts/check-architect-marketplace-self-check.sh + templates/github-workflows/architect-marketplace-self-check.yml + .github/workflows/... self-app + docs/evidence-checks-registry.yaml entry) = Phase 2 PR scope (CFP-604 단일 Story 내 Phase 2 PR — Amendment 3 의 별도 Story 분리와 다름, spec §7 scope_manifest). Phase 2 PR open 시 evidence-checks-registry row append.
+  - action: marketplace-sync-blocking
+    binding_decision: 22
+    tier: blocking-on-pr
+    bypass_label: "hotfix-bypass:marketplace-atomic"  # §결정 4 기존 family member reuse — Gap B 는 신규 script 0 (기존 check-version-bump-atomic.sh 승격), 신규 bypass label 신설 0. minimal-change (ADR-064).
+    carrier_phase: 2  # Amendment 9 §결정 22 (Gap B) — Phase 1 declarative SSOT mandate only. artifact = 기존 scripts/check-version-bump-atomic.sh 의 Step 3 gh-skip hole 차단 + Step 4 name/author 축 확장 (신규 script 0). Phase 2 PR scope. version-bump-atomic-check.yml workflow 자체는 기존 blocking-on-pr — 신규 evidence-checks-registry entry 0 (기존 marketplace-description-verbatim entry description 의 'Gap B SSOT' 명문화로 갈음).
 # Amendment 3 §결정 13 = declarative SSOT mandate only (Phase 1 doc-only fast-path scope, ADR-054).
 # artifact (scripts/check-marketplace-drift.sh + workflow + registry entry) = Phase 2 carrier PR scope (별도 Story).
 # ADR-067 §결정 3 cross-lane RESET 차원 전환 정합 — Phase 1 / Phase 2 boundary completeness (ADR-068 I-1) 회복.
@@ -629,6 +645,104 @@ ADR-064 self-application top-down ratchet 정합 — 약화 방향 (예: Tier 1 
 
 본 ADR-063 amendment 발의 시 매번 ratchet 방향 검증 의무 — 강화 방향만 허용.
 
+### 결정 21: Change Plan §13 marketplace sync 선언 검증 lint mandate (Gap A — Amendment 9 / CFP-604)
+
+**Context (presence gap — 선언 mandate 와 검증 부재의 비대칭)**: §결정 9 (Amendment 1) Layer 2 = ArchitectAgent 가 Change Plan §13 에 `marketplace_sync_required: <bool>` + `mirrored_fields_changed[]` + `triggering_plugins[]` sub-row 를 **declarative declare** 할 의무를 codify 했다 (silent skip 금지 — `false` 도 명시). 그러나 그 선언의 **presence/completeness 를 검증하는 mechanical channel 이 부재**하다 — author 가 §13 sub-row 자체를 누락하거나 `marketplace_sync_required: true` 만 적고 `mirrored_fields_changed[]` 를 비워둬도 감지 0. 이것이 **presence gap** — 선언 의무는 mandate 됐으나 선언의 존재 자체가 검증되지 않는 결함 클래스 (origin audit #1270 의 latency gap 과 disjoint — §6.1 Researcher 개념 명명 정합).
+
+본 §결정 21 = **§13 marketplace sync 선언 검증 lint mandate normative**.
+
+**Phase 1 / Phase 2 boundary 명시 (§결정 13 Amendment 3 선례 답습, ADR-068 I-1 boundary completeness)**:
+
+본 §결정 21 = **declarative SSOT mandate** — Phase 1 PR scope. **artifact 도입 (`scripts/check-architect-marketplace-self-check.sh` + `templates/github-workflows/architect-marketplace-self-check.yml` + `.github/workflows/architect-marketplace-self-check.yml` byte-identical self-app + `docs/evidence-checks-registry.yaml` entry) = Phase 2 PR scope**. 단 CFP-604 는 spec §7 scope_manifest 대로 Phase 1 + Phase 2 를 단일 Story (1 Story = 2 PR) 가 수행 — §결정 13 Amendment 3 의 "별도 Story 분리" 와 다르다. Phase 2 PR open 시 frontmatter `mechanical_enforcement_actions[]` 의 `architect-marketplace-self-check` entry actual wire + evidence-checks-registry row append 의무.
+
+**Mandate**:
+
+- **lint 대상**: PR 이 `.claude-plugin/plugin.json` mirrored field 4종 (`name` / `version` / `description` / `author`) 중 1+ 변경 시 — `git diff "${BASE_REF}..HEAD" -- .claude-plugin/plugin.json` (`check-version-bump-atomic.sh` line 51-66 diff 감지 패턴 재사용).
+- **검증 항목**:
+  1. **presence** — Change Plan §13 에 `marketplace_sync_required:` field 가 explicit 하게 (`true` 또는 `false`) 선언되어 있는가.
+  2. **completeness** — `marketplace_sync_required: true` 인 경우 `mirrored_fields_changed[]` non-empty AND `triggering_plugins[]` non-empty.
+- **tier**: warning (ADR-060 §결정 5 framework default — Gap A 는 presence 검증으로 author 인식 forcing function 성격, blocking 직접 시작 근거인 누적 6-sample drift evidence (§결정 11) 는 Gap B 영역 — Gap A 는 신규 lint 로 warning baseline 진입).
+- **bypass channel**: `hotfix-bypass:architect-marketplace-self-check` label (ADR-024 Amendment 3 §결정 6.A per-entry namespace family member, Phase 2 label-registry-v2 MINOR carrier).
+
+**False-positive 차단 (doc-only fast-path / Change Plan 부재 Story)**:
+
+ADR-054 doc-only fast-path Story 는 Change Plan 을 산출하지 않는다. 또한 dogfood variant 에서 Change Plan 은 `mclayer/codeforge-internal-docs/<plugin-folder>/change-plans/<slug>.md` 에 위치 (`docs/doc-locations.yaml` `change_plan` entry) — wrapper repo PR-time lint 가 cross-repo Change Plan 을 참조할 수 없다. 이 2 상황에서 lint 가 fail 하면 false-positive. 차단 메커니즘:
+
+1. PR 에 `phase:문서` 또는 doc-only fast-path label (ADR-054 carrier) 부착 → lint skip (PASS, exit 0).
+2. plugin.json mirrored field diff 0건 → lint skip (PASS, exit 0 — `check-version-bump-atomic.sh` line 68-71 패턴).
+3. Change Plan file 자체가 PR diff 에 없고 (cross-repo dogfood scenario) plugin.json mirrored field diff 도 0건 → lint 영역 외 (skip). plugin.json mirrored field diff 가 있는데 같은 PR 에 Change Plan 변경이 없으면 — wrapper-self 작업은 동일 PR 에 Change Plan 동반 (CFP-604 자체가 그 사례), cross-repo dogfood 는 Phase 2 lint 가 `phase:*` label 기반으로 판정. Phase 2 implement 가 fast-path label 감지 + plugin.json diff 0건 + 두 신호의 AND 분기를 구체 구현 (silent skip 금지 — skip 시에도 reason 명시 message emit, §2.2 "silent 0, user-visible" 도메인 불변식 정합).
+
+**Algorithm overview** (`check-architect-marketplace-self-check.sh`, Phase 2 carrier):
+1. `git diff "${BASE_REF}..HEAD" -- .claude-plugin/plugin.json` — mirrored field 4종 변경 감지. 변경 0건 → exit 0 ("plugin.json mirrored field 무변경 — §13 선언 검증 영역 외").
+2. doc-only fast-path label / `phase:문서` 감지 → exit 0 ("doc-only fast-path — Change Plan 부재 정상").
+3. Change Plan file locate (PR diff 안 `change-plans/*.md` 또는 doc-locations.yaml 경로) → 부재 시 warning ("mirrored field 변경 PR 인데 Change Plan §13 선언 부재").
+4. §13 block parse — `marketplace_sync_required:` field presence 검증 → 부재 시 warning.
+5. `marketplace_sync_required: true` → `mirrored_fields_changed[]` + `triggering_plugins[]` non-empty 검증 → 미충족 시 warning.
+6. 전부 충족 → exit 0 (PASS).
+
+**Error handling** (exit code 2 = environment error): jq / yq missing — actionable install instruction (§결정 11 `check-marketplace-description-verbatim.sh` error handling 패턴 답습).
+
+### 결정 22: Release merge 시 marketplace 정합 mechanical 강제 — Gap B SSOT 명문화 (Amendment 9 / CFP-604)
+
+**Context (latency gap — 선언은 됐으나 sync 실행 지연)**: origin audit #1270 = marketplace.json codeforge entry 가 plugin.json 의 5-release (6.0.5 → 6.3.0) 동안 lag. 핵심: **선언은 됐다** (CHANGELOG 가 sync 의무 명시) — 누락된 것은 sync PR 의 **실행/타이밍**. 이것이 **latency gap** — §결정 21 의 presence gap 과 disjoint 결함 클래스 (§6.1 Researcher 개념 명명 SSOT). latency gap 의 enforce 메커니즘은 presence gap 과 다르다 — PR-time blocking + reactive scheduled detection 의 합집합으로만 완전 cover 된다.
+
+본 §결정 22 = **release merge 시 marketplace 정합 mechanical 강제의 SSOT 명문화 normative**.
+
+**naive predicate 의 §결정 2 모순 명문화**:
+
+#1270 의 naive framing — "open sibling marketplace sync PR 부재 시 plugin PR merge 차단" — 은 **§결정 2 (marketplace sync 先 merge 권장) 와 직접 모순**한다:
+- §결정 2 ordering 준수 시 marketplace sync PR 은 plugin PR merge **이전에 이미 merged** 상태 (open 아님).
+- 따라서 "open sibling PR 존재" 를 predicate 로 하면 정상 ordering 하에서 **항상 fail** 한다.
+
+이 모순은 본 ADR-063 의 ordering 정책 (§결정 2) 자체와 충돌하므로, Gap B 의 mechanical 강제 predicate 는 "open sibling PR existence" 가 아닌 **marketplace.json 실값 parity** 로 확정한다.
+
+**Gap B SSOT predicate 확정 — marketplace.json 실값 parity (blocking-on-pr)**:
+
+plugin PR 의 mirrored field 값이 `mclayer/marketplace` origin/main 의 marketplace.json 에 **이미 byte-identical 반영**됨을 plugin PR merge 전 검증한다. ordering 정책 (§결정 2) 준수 시 marketplace sync PR 선행 merge 로 이 조건이 자연 충족 — paradox 없음. PR 수 비의존 (실값 비교) 이므로 bulk catch-up sync (EC-2) 도 자동 cover.
+
+**verify-before-trust 정정 — Gap B 의 절반은 이미 mechanical**:
+
+`check-version-bump-atomic.sh` (CFP-441, **blocking-on-pr**, `version-bump-atomic-check.yml` 경유) Step 3/4 가 이미 plugin.json ↔ marketplace.json 의 **version + description** parity 를 검증하며 mismatch 시 `exit 1` 로 PR 을 차단하고 §결정 2 ordering recovery guidance 를 출력한다 [verified: `scripts/check-version-bump-atomic.sh` line 124-160]. 즉 Gap B 의 "version mirrored field 미정합 시 merge 전 blocking" 은 **이미 존재**한다. Gap B 의 진짜 잔여 = 다음 3종 결함:
+
+| 잔여 결함 | 현재 상태 | §결정 22 mandate |
+|---|---|---|
+| **(a) gh-skip silent hole** | `check-version-bump-atomic.sh` Step 3 도입부 — `gh` CLI 미설치 / `gh auth status` 실패 / `gh api` marketplace fetch 실패 시 **`exit 0` silent skip** (line 106-122, 3종) | **CI 환경에서 fail-loud** — `version-bump-atomic-check.yml` 은 GitHub Actions runner 에서 실행, `gh` 는 항상 가용. 3 silent skip path 를 CI 환경 (`$GITHUB_ACTIONS == true` 또는 `$CI == true`) 에서 `exit 2` (environment error, workflow FAIL) 로 전환. local 실행 (CI 외) 에서는 기존 `exit 0` skip 보존 (pre-commit advisory 성격 — §결정 3 정합). silent → user-visible (§2.2 도메인 불변식). |
+| **(b) name/author 축 미검증** | Step 4 는 `description` 만 parity 검증 — `name`/`author` 는 `check-version-bump-atomic.sh` 에서 미검증. `name`/`author` 는 `check-marketplace-parity.sh` (warning tier, post-PR) 만 cover | **`check-version-bump-atomic.sh` Step 4 를 mirrored field 4종 전부로 확장** — `name`/`author` parity 도 mismatch 시 `exit 1`. mirrored field 4종 (§결정 1 verbatim) 의 blocking-on-pr coverage 완결. |
+| **(c) Gap B SSOT 부재** | Gap B 가 `check-version-bump-atomic.sh` 에 의해 cover 됨이 어떤 SSOT 에도 "Gap B 해소" 로 명시되어 있지 않음 — 미래 동일 audit (#1270 류) 재발 시 참조점 부재 | **본 §결정 22 가 Gap B SSOT** — "release merge 시 marketplace 정합 = `check-version-bump-atomic.sh` (blocking-on-pr, mirrored field 4종 parity) PR-time blocking + `check-marketplace-drift.sh` (§결정 13 reactive cron) 의 합집합" 으로 명문화. |
+
+**신규 script 0 — 기존 check 승격이 올바른 설계 (review-responsibility dedup)**:
+
+Gap B 에 신규 `check-marketplace-sync-blocking.sh` 를 만들면 `check-version-bump-atomic.sh` / `check-3way-version-parity.sh` / `check-marketplace-parity.sh` 와 검증 대상이 중복된다 (`codeforge:review-responsibility` dedup 위반 + ADR-064 minimal-change 위배). 따라서 Gap B = **신규 script 0** — 기존 `check-version-bump-atomic.sh` 의 (a) silent hole 차단 + (b) name/author 축 확장만 수행한다. 신규 workflow 0 (기존 `version-bump-atomic-check.yml` 재사용), 신규 evidence-checks-registry entry 0, 신규 bypass label 0 (§결정 4 `hotfix-bypass:marketplace-atomic` 기존 family member reuse).
+
+**latency 잔여 영역 — PR-time gate 의 원리적 한계**:
+
+§결정 22 의 PR-time blocking 은 "marketplace 가 미정합인데 plugin PR 이 먼저 merge 되려는" 시나리오를 차단한다. 그러나 "marketplace sync PR 이 영영 안 올라옴" (#1270 의 latency 그 자체) 은 plugin PR merge **후** 발생하므로 PR-time gate 로는 원리적으로 못 막는다. 그 잔여 영역은 **§결정 13 (Amendment 3) reactive scheduled detection** (`check-marketplace-drift.sh`, 24h cron) 이 ≤ 25h 안에 detection 한다. 즉 **Gap B 의 완전 해소 = §결정 22 PR-time blocking + §결정 13 reactive cron 의 합집합** — 본 §결정 22 가 이 합집합을 Gap B SSOT 로 명문화한다.
+
+**dedup 표 (Gap B ↔ 기존 marketplace lint 6종)**:
+
+| 기존 lint | tier | Gap B 와의 관계 |
+|---|---|---|
+| `check-version-bump-atomic.sh` | blocking-on-pr | **Gap B 의 PR-time carrier** — 본 §결정 22 가 (a) silent hole 차단 + (b) name/author 확장으로 강화 |
+| `check-marketplace-parity.sh` | warning | post-PR 사후 감지 (defense-in-depth 보존) — Gap B 의 blocking 영역은 `check-version-bump-atomic.sh` 가 흡수 |
+| `check-marketplace-description-verbatim.sh` | blocking-on-pr | description 단독 PR-time enforce — `check-version-bump-atomic.sh` Step 4 description 검증과 layered (description 은 byte-identical strict, 양쪽 보존 = defense-in-depth) |
+| `check-3way-version-parity.sh` | blocking-on-pr | publisher↔registry↔consumer **version** 3-way — disjoint (consumer pin layer 포함, Gap B 는 publisher↔registry 2-way mirrored field 4종) |
+| `check-marketplace-drift.sh` | warning, cron | **Gap B 의 reactive carrier** — PR-time gate 가 못 막는 latency 잔여 영역 |
+| `check-channel-drift.sh` | warning, cron | channel 3-tuple drift — disjoint (channel 차원, Gap B 는 channel 무관 mirrored field) |
+
+### 결정 23: Self-application — Amendment 9 ratchet 검증
+
+본 Amendment 9 = **강화 방향 only**. 약화 요소 0건:
+
+- §결정 21 (Gap A) = §결정 9 Amendment 1 의 declarative declare 의무에 검증 lint 추가 (presence gap 해소 — mechanical channel 신설, scope 확장).
+- §결정 22 (Gap B) = 기존 `check-version-bump-atomic.sh` 의 silent skip hole 차단 (silent → user-visible, invariant 강도 상승) + mirrored field parity 축 4종 확장 (description 만 → 4종 전부, scope 확장).
+- §결정 23 = Amendment 9 ratchet 검증 절 (Amendment 1/2/3/5/6/8 의 §결정 10/12/14/16/18/20 self-application 절 동형).
+
+ADR-064 self-application top-down ratchet 정합 — 약화 방향 (예: Gap A lint warning 다운그레이드 / silent skip hole 복원 / mirrored field parity 축 축소 / §결정 22 PR-time blocking 해제) 미해당. ADR-058 §결정 5 sunset_justification = frontmatter 명시 (`N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 9 = declarative → mechanical 강화 방향 only). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과.`).
+
+**Self-application 첫 사례 (본 carrier)**: 본 CFP-604 Story 의 Phase 2 PR 자체가 wrapper plugin.json mirrored field 2종 (`version` MINOR bump + `description` tail append Amendment 9 carrier note) bump 동반 — Amendment 9 가 enforce 하는 §결정 22 marketplace 정합 강제를 자기 자신에 적용 (dogfood). marketplace sibling sync PR 선행 merge → wrapper Phase 2 PR merge ordering 강제 (§결정 2). Change Plan §13 declare (`marketplace_sync_required: true`) → 본 §결정 21 Gap A lint 의 첫 검증 대상.
+
+본 ADR-063 amendment 발의 시 매번 ratchet 방향 검증 의무 — 강화 방향만 허용.
+
 ## 결과
 
 ### 긍정
@@ -703,6 +817,11 @@ flowchart TD
 - `docs/adr/ADR-027-consumer-adoption-protocol.md` — Amendment 5 §결정 15 동반 (ADR-027 Amendment 4 — consumer adoption protocol version pin schema detection)
 - `docs/adr/ADR-066-pat-rotation-policy.md` — Amendment 5 §결정 15 cross-ref (§결정 2 marketplace contents:read reuse, Amendment 3 write scope 미사용 — 추가 grant 0)
 - `docs/adr/ADR-070-codex-verify-before-trust.md` — Amendment 5 §결정 15 sanity guard 6-tuple + gh api blob sha empty-detection (CFP-745 carry (i)/(j) lineage)
+- `scripts/check-architect-marketplace-self-check.sh` — Amendment 9 §결정 21 carrier (CFP-604 — Gap A §13 선언 검증 lint, Phase 2 PR scope)
+- `templates/github-workflows/architect-marketplace-self-check.yml` — Amendment 9 §결정 21 canonical workflow SSOT (Phase 2, ADR-005 byte-identical mirror invariant)
+- `.github/workflows/architect-marketplace-self-check.yml` — Amendment 9 §결정 21 self-app mirror (Phase 2)
+- `scripts/check-version-bump-atomic.sh` — Amendment 9 §결정 22 carrier (CFP-604 — Gap B: gh-skip silent hole 차단 + name/author 축 확장, Phase 2 PR scope, 신규 script 0)
+- `docs/inter-plugin-contracts/label-registry-v2.md` — Amendment 9 carrier `hotfix-bypass:architect-marketplace-self-check` 70번째 family member (v2.50 → v2.51 MINOR)
 - `scripts/check-3way-version-parity.sh` — Amendment 5 carrier (CFP-820 / §결정 15 — 3-way version parity PR-time read-only lint, Phase 2 carrier)
 - `templates/github-workflows/version-3way-atomic.yml` + `.github/workflows/version-3way-atomic.yml` — Amendment 5 canonical workflow SSOT + self-app mirror (ADR-005 byte-identical, Phase 2 carrier)
 - `docs/evidence-checks-registry.yaml` — Amendment 5 entry `version-3way-atomic` (blocking-on-pr tier, Phase 2 carrier)
