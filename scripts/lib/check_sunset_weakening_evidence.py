@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # CFP-1239 / ADR-058 Amendment 1 §결정 5 — sunset-weakening-evidence mechanical lint
+# CFP-1249 — forbid-list 축소 감지 (2nd weakening pattern) 확장
 # ADR-061 §결정 1 — Python SSOT (heredoc 금지), ADR-060 §결정 5 warning-tier
 #
 # 검사 목적:
@@ -8,24 +9,33 @@
 #   "evidence-gate" 로 재정의. 약화 방향 Amendment 는 허용하되
 #   evidence (metric / 평가 / 환경 / pattern_count 등) 를 반드시 제시해야 함.
 #
-#   본 lint 는 git diff (old frontmatter vs new frontmatter) 를 비교하여
-#   is_transitional false → true (약화) 를 감지하고,
-#   해당 Amendment 에 evidence-bearing sunset_justification 이 있는지 검사.
+#   ADR-064 §self-application 은 forbid-list dictionary 축소를 "약화 방향" 으로 명시.
+#
+#   본 lint 는 git diff 기반 2가지 약화 패턴을 감지:
+#     (A) ADR 파일: is_transitional false → true (약화) → evidence 검사
+#     (B) docs/wording-dictionary.md: 카테고리 (a) forbid-list row 제거 → advisory WARN
 #
 # 검사 규칙:
-#   (1) 약화 감지 (PRIMARY):
-#       OLD is_transitional: false → NEW is_transitional: true
-#       → amendment_log 의 신규/최신 entry 에 sunset_justification 이
-#         evidence-bearing 이어야 함.
-#       evidence-bearing 판정 기준: non-null AND not bare "N/A" AND
-#         아래 키워드 중 1개 이상 포함 (case-insensitive):
-#           metric / 평가 / 환경 / obsolescence / pattern_count /
-#           incident / measure / 측정
-#   (2) 강화 면제:
-#       is_transitional true → false (ratchet 강화) = 면제 (WARN 없음)
-#       "N/A — ratchet 강화" sunset_justification 정상.
-#   (3) 변경 없음 = 면제 (WARN 없음)
-#   (4) NEW ADR (base 에 없음) = 면제 (약화 비교 기준 없음)
+#   (A) ADR is_transitional 약화:
+#     (1) 약화 감지 (PRIMARY):
+#         OLD is_transitional: false → NEW is_transitional: true
+#         → amendment_log 의 신규/최신 entry 에 sunset_justification 이
+#           evidence-bearing 이어야 함.
+#         evidence-bearing 판정 기준: non-null AND not bare "N/A" AND
+#           아래 키워드 중 1개 이상 포함 (case-insensitive):
+#             metric / 평가 / 환경 / obsolescence / pattern_count /
+#             incident / measure / 측정
+#     (2) 강화 면제:
+#         is_transitional true → false (ratchet 강화) = 면제 (WARN 없음)
+#         "N/A — ratchet 강화" sunset_justification 정상.
+#     (3) 변경 없음 = 면제 (WARN 없음)
+#     (4) NEW ADR (base 에 없음) = 면제 (약화 비교 기준 없음)
+#   (B) forbid-list 축소 (docs/wording-dictionary.md):
+#     (5) 카테고리 (a) 표 데이터 row 가 OLD 에 존재 → NEW 에 부재 = 제거 (약화) → WARN
+#         advisory only — cross-file evidence 검증 (wording-dictionary ↔ ADR-064 amendment
+#         binding) 은 본 lint 범위 외 (heuristic advisory reminder).
+#     (6) row 추가 (강화) = 면제 (WARN 없음)
+#     (7) 신규 파일 (base 에 없음) = 면제
 #
 # Exit code (ADR-060 §결정 15 3-tier):
 #   0 — PASS 또는 WARN (warning-tier = 항상 exit 0, PR merge 미차단)
@@ -80,6 +90,22 @@ EVIDENCE_KEYWORDS = [
     "measure",
     "측정",
 ]
+
+# forbid-list 파일 경로 (repo-relative, 정규화 비교용)
+WORDING_DICT_REL = "docs/wording-dictionary.md"
+
+# 카테고리 (a) 섹션 헤더 패턴 — docs/wording-dictionary.md 의 정식 헤더 verbatim 기준
+# 변경 시 wording-dictionary.md 헤더와 lockstep 갱신 의무
+FORBID_CAT_A_HEADER_RE = re.compile(
+    r"^##\s+카테고리\s+\(a\)\s+[—\-–].*forbid",
+    re.IGNORECASE,
+)
+# 다음 ## 헤더 (카테고리 (b) 또는 이후 섹션) — 섹션 종료 기준
+NEXT_H2_RE = re.compile(r"^##\s+")
+# 표 헤더 행: "| 어휘 | lint scope |" 패턴
+FORBID_TABLE_HEADER_RE = re.compile(r"^\|\s*어휘\s*\|", re.IGNORECASE)
+# 표 구분선 행: "|---|---| ..." 패턴
+FORBID_TABLE_SEP_RE = re.compile(r"^\|\s*[-:]+\s*\|")
 
 # ── 인수 파싱 ─────────────────────────────────────────────────────────────────
 def parse_args(argv):
@@ -294,6 +320,129 @@ def check_adr_file(filepath, repo_dir, base_ref):
     print(f"{SCRIPT_NAME} OK: {filepath}", file=sys.stderr)
     return 0
 
+# ── 카테고리 (a) forbid-list row 파싱 ────────────────────────────────────────
+def parse_forbid_list_rows(text):
+    """
+    docs/wording-dictionary.md 본문에서 카테고리 (a) 섹션의
+    표 데이터 row 목록 반환 (헤더 행 + 구분선 행 제외).
+
+    반환: set of str (각 row 를 strip 한 문자열)
+
+    섹션 경계:
+      - 시작: FORBID_CAT_A_HEADER_RE 매칭 줄 다음부터
+      - 종료: 다음 ## 헤더 줄 (NEXT_H2_RE) 또는 EOF
+    """
+    rows = set()
+    in_cat_a = False
+
+    for line in text.splitlines():
+        stripped = line.strip()
+
+        # 카테고리 (a) 섹션 시작 감지
+        if not in_cat_a:
+            if FORBID_CAT_A_HEADER_RE.match(stripped):
+                in_cat_a = True
+            continue
+
+        # 카테고리 (a) 섹션 안 — 다음 ## 헤더가 나오면 종료
+        if NEXT_H2_RE.match(stripped):
+            break
+
+        # 표 행 필터링: | 로 시작하는 행
+        if not stripped.startswith("|"):
+            continue
+
+        # 헤더 행 (| 어휘 | ...) 제외
+        if FORBID_TABLE_HEADER_RE.match(stripped):
+            continue
+
+        # 구분선 행 (|---|---| ...) 제외
+        if FORBID_TABLE_SEP_RE.match(stripped):
+            continue
+
+        # 데이터 row 수집
+        rows.add(stripped)
+
+    return rows
+
+
+# ── 단일 wording-dictionary.md 파일 검사 ─────────────────────────────────────
+def check_wording_dict_file(filepath, repo_dir, base_ref):
+    """
+    docs/wording-dictionary.md 에 대해 카테고리 (a) forbid-list row 제거 (약화) 감지.
+
+    반환: warn_count (int)
+
+    주의: 이 검사는 heuristic advisory — row 제거가 곧 "ADR-064 amendment evidence 없음"
+    을 증명하지는 않는다. cross-file evidence 검증 (wording-dictionary ↔ ADR-064 amendment
+    binding) 은 본 lint 범위 외. reviewer 에게 확인을 요청하는 advisory WARN 만 발화.
+    """
+    path = Path(filepath)
+    if not path.exists():
+        print(
+            f"{SCRIPT_NAME} [WARN] {filepath}: 파일 없음 — skip",
+            file=sys.stderr,
+        )
+        return 0
+
+    # NEW (현재) 본문 파싱
+    new_text = path.read_text(encoding="utf-8", errors="replace")
+    new_rows = parse_forbid_list_rows(new_text)
+
+    # OLD (base) 본문 조회
+    old_text = get_old_text(repo_dir, base_ref, filepath)
+    if old_text is None:
+        # 신규 파일 — OLD 없음 → 비교 불가 → PASS
+        print(
+            f"{SCRIPT_NAME} OK (신규 파일): {filepath}",
+            file=sys.stderr,
+        )
+        return 0
+
+    old_rows = parse_forbid_list_rows(old_text)
+
+    # 제거된 row = OLD 에 있고 NEW 에 없는 것
+    removed_rows = old_rows - new_rows
+
+    if not removed_rows:
+        print(
+            f"{SCRIPT_NAME} OK (forbid-list 축소 없음): {filepath}",
+            file=sys.stderr,
+        )
+        return 0
+
+    # 제거 감지 → WARN
+    warn_count = 0
+    for row in sorted(removed_rows):
+        print(
+            f"{SCRIPT_NAME} [WARN] {filepath}: "
+            f"카테고리 (a) forbid-list row 제거 (weakening) 감지 — "
+            f"ADR-058 §결정 5 evidence-gate: "
+            f"ADR-064 amendment sunset_justification evidence 동반 필요. "
+            f"제거된 row: {row}",
+            file=sys.stderr,
+        )
+        warn_count += 1
+
+    return warn_count
+
+
+# ── repo-relative 경로 정규화 (wording-dictionary.md 판별) ────────────────────
+def is_wording_dict_file(filepath, repo_dir):
+    """
+    filepath 가 docs/wording-dictionary.md (repo-relative) 인지 판별.
+    절대 경로 / 상대 경로 모두 지원.
+    """
+    try:
+        rel = Path(filepath).resolve().relative_to(Path(repo_dir).resolve())
+        rel_str = str(rel).replace("\\", "/")
+        return rel_str == WORDING_DICT_REL
+    except ValueError:
+        # resolve 실패 — 이름 기반 fallback
+        name = Path(filepath).name
+        return name == "wording-dictionary.md"
+
+
 # ── 메인 ──────────────────────────────────────────────────────────────────────
 def main():
     repo_arg, base_arg, adr_dir_arg, files = parse_args(sys.argv[1:])
@@ -326,27 +475,44 @@ def main():
             adr_dir = repo_dir / "docs" / "adr"
 
     # 검사 대상 파일 수집
-    target_files = []
+    # ADR 파일 목록 (is_transitional 약화 검사 대상)
+    adr_files = []
+    # wording-dictionary.md 경로 (forbid-list 축소 검사 대상)
+    wording_dict_files = []
+
     if files:
-        # 명시된 파일 중 ADR 패턴만 필터
+        # 명시된 파일: ADR 패턴 vs wording-dictionary.md 분류
         for f in files:
             name = Path(f).name
             if re.match(r"ADR-\d+", name) and name.endswith(".md"):
-                target_files.append(f)
+                adr_files.append(f)
+            elif is_wording_dict_file(f, str(repo_dir)):
+                wording_dict_files.append(f)
+            # 그 외 파일 (ADR 아닌 일반 docs 등) = skip
     else:
-        # 파일 미지정 → adr_dir 전체 scan
+        # 파일 미지정 → adr_dir 전체 scan + wording-dictionary.md 자동 포함
         if adr_dir.is_dir():
             for adr_file in sorted(adr_dir.glob("ADR-*.md")):
-                target_files.append(str(adr_file))
+                adr_files.append(str(adr_file))
         else:
             print(
                 f"{SCRIPT_NAME} INFO: ADR dir 없음 ({adr_dir}) — skip",
                 file=sys.stderr,
             )
+        # wording-dictionary.md 자동 추가 (repo-relative 경로)
+        wd_path = repo_dir / "docs" / "wording-dictionary.md"
+        if wd_path.exists():
+            wording_dict_files.append(str(wd_path))
 
     total_warns = 0
-    for f in target_files:
+
+    # (A) ADR is_transitional 약화 검사
+    for f in adr_files:
         total_warns += check_adr_file(f, str(repo_dir), base_ref)
+
+    # (B) forbid-list 축소 검사
+    for f in wording_dict_files:
+        total_warns += check_wording_dict_file(f, str(repo_dir), base_ref)
 
     # warning-tier — 경고 수에 무관하게 exit 0 (PR merge 미차단)
     if total_warns > 0:
