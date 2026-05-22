@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 # CFP-1239 / ADR-058 Amendment 1 §결정 5 — sunset-weakening-evidence mechanical lint
 # CFP-1249 — forbid-list 축소 감지 (2nd weakening pattern) 확장
+# CFP-1255 — cross-file ADR-064 evidence 검증 (forbid-list 제거 + ADR-064 lockstep)
 # ADR-061 §결정 1 — Python SSOT (heredoc 금지), ADR-060 §결정 5 warning-tier
 #
 # 검사 목적:
@@ -13,7 +14,7 @@
 #
 #   본 lint 는 git diff 기반 2가지 약화 패턴을 감지:
 #     (A) ADR 파일: is_transitional false → true (약화) → evidence 검사
-#     (B) docs/wording-dictionary.md: 카테고리 (a) forbid-list row 제거 → advisory WARN
+#     (B) docs/wording-dictionary.md: 카테고리 (a) forbid-list row 제거 → cross-file ADR-064 검증
 #
 # 검사 규칙:
 #   (A) ADR is_transitional 약화:
@@ -31,9 +32,15 @@
 #     (3) 변경 없음 = 면제 (WARN 없음)
 #     (4) NEW ADR (base 에 없음) = 면제 (약화 비교 기준 없음)
 #   (B) forbid-list 축소 (docs/wording-dictionary.md):
-#     (5) 카테고리 (a) 표 데이터 row 가 OLD 에 존재 → NEW 에 부재 = 제거 (약화) → WARN
-#         advisory only — cross-file evidence 검증 (wording-dictionary ↔ ADR-064 amendment
-#         binding) 은 본 lint 범위 외 (heuristic advisory reminder).
+#     (5) 카테고리 (a) 표 데이터 row 가 OLD 에 존재 → NEW 에 부재 = 제거 (약화)
+#         → cross-file ADR-064 evidence 검증 (CFP-1255):
+#           (5a) ADR-064 가 변경 파일 목록 안에 있고 신규 entry 에 evidence-bearing
+#                sunset_justification 보유 → PASS (약화가 lockstep evidence 로 정당화됨)
+#           (5b) ADR-064 미변경 → WARN ("forbid-list 축소 — ADR-064 lockstep amendment 부재")
+#           (5c) ADR-064 변경됐으나 신규 entry 에 evidence-bearing sunset_justification 없음
+#                → WARN ("ADR-064 변경됐으나 evidence-bearing sunset_justification 부재")
+#         주의: ADR-064↔어휘 1:1 semantic 매칭은 heuristic.
+#               신규 evidence-bearing amendment 존재 = PASS (exact carrier matching 범위 외).
 #     (6) row 추가 (강화) = 면제 (WARN 없음)
 #     (7) 신규 파일 (base 에 없음) = 면제
 #
@@ -93,6 +100,9 @@ EVIDENCE_KEYWORDS = [
 
 # forbid-list 파일 경로 (repo-relative, 정규화 비교용)
 WORDING_DICT_REL = "docs/wording-dictionary.md"
+
+# ADR-064 파일 경로 패턴 — forbid-list cross-file evidence 검증 대상
+ADR064_NAME_RE = re.compile(r"^ADR-064-.*\.md$", re.IGNORECASE)
 
 # 카테고리 (a) 섹션 헤더 패턴 — docs/wording-dictionary.md 의 정식 헤더 verbatim 기준
 # 변경 시 wording-dictionary.md 헤더와 lockstep 갱신 의무
@@ -366,17 +376,165 @@ def parse_forbid_list_rows(text):
     return rows
 
 
+# ── ADR-064 파일 경로 판별 ────────────────────────────────────────────────────
+def is_adr064_file(filepath):
+    """
+    filepath 가 ADR-064-*.md 인지 판별 (이름 기반).
+    절대 경로 / 상대 경로 모두 지원.
+    """
+    name = Path(filepath).name
+    return bool(ADR064_NAME_RE.match(name))
+
+
+# ── amendment_log 의 신규 추가된 entry 목록 추출 ──────────────────────────────
+def get_amendment_log_entries(fm):
+    """
+    frontmatter dict 에서 amendment_log 목록 반환.
+    amendment_log 미존재 또는 비-list → 빈 list 반환.
+    각 entry 는 dict 라고 가정.
+    """
+    al = fm.get("amendment_log")
+    if not isinstance(al, list):
+        return []
+    return [e for e in al if isinstance(e, dict)]
+
+
+def get_amendment_id(entry):
+    """
+    amendment_log entry 의 고유 식별자 반환.
+    ADR-064 는 'version: "Amendment 1"' 또는 'amendment: 2' 2가지 형식 혼재.
+    두 형식 모두 지원 — str 로 정규화하여 반환.
+    식별자 없으면 None 반환.
+    """
+    # 'amendment' 필드 (int 또는 str)
+    val = entry.get("amendment")
+    if val is not None:
+        return str(val).strip()
+    # 'version' 필드 (str, 예: "Amendment 1")
+    val = entry.get("version")
+    if val is not None:
+        return str(val).strip()
+    # 'amendment_id' 필드 (int 또는 str — fixture 에서 사용)
+    val = entry.get("amendment_id")
+    if val is not None:
+        return str(val).strip()
+    return None
+
+
+def find_new_amendment_entries(old_fm, new_fm):
+    """
+    OLD 에 없고 NEW 에 있는 amendment_log entry 목록 반환.
+
+    식별자(amendment / version / amendment_id) 기반 비교.
+    식별자 없는 entry 는 내용 기반 fallback 비교 (old list 에 없으면 신규로 처리).
+
+    반환: list of dict (신규 entry 목록)
+    """
+    old_entries = get_amendment_log_entries(old_fm)
+    new_entries = get_amendment_log_entries(new_fm)
+
+    # OLD id set 수집
+    old_ids = set()
+    for e in old_entries:
+        eid = get_amendment_id(e)
+        if eid is not None:
+            old_ids.add(eid)
+
+    new_items = []
+    for e in new_entries:
+        eid = get_amendment_id(e)
+        if eid is not None:
+            if eid not in old_ids:
+                # 식별자 기반 신규 entry
+                new_items.append(e)
+        else:
+            # 식별자 없음 — 내용 기반 fallback: OLD 에 동일 dict 없으면 신규
+            if e not in old_entries:
+                new_items.append(e)
+
+    return new_items
+
+
+def check_adr064_crossfile_evidence(adr064_filepath, repo_dir, base_ref):
+    """
+    ADR-064 파일에서 신규 추가된 amendment_log entry 에
+    evidence-bearing sunset_justification 이 있는지 검사.
+
+    반환:
+      "evidence_found"   — 신규 entry 중 1개 이상 evidence-bearing
+      "no_new_entries"   — 신규 entry 없음 (OLD == NEW 또는 파싱 실패)
+      "no_evidence"      — 신규 entry 존재하나 evidence-bearing 없음
+      "parse_error"      — 파싱 실패 (fail-soft — WARN 후 계속)
+
+    주의: ADR-064↔어휘 1:1 semantic 매칭은 heuristic.
+    신규 evidence-bearing amendment 존재 = PASS (exact carrier matching 범위 외).
+    """
+    path = Path(adr064_filepath)
+    if not path.exists():
+        print(
+            f"{SCRIPT_NAME} [WARN] ADR-064 파일 없음 ({adr064_filepath}) — "
+            f"cross-file 검사 skip (fail-soft)",
+            file=sys.stderr,
+        )
+        return "parse_error"
+
+    new_text = path.read_text(encoding="utf-8", errors="replace")
+    new_fm, _ = parse_frontmatter(new_text, adr064_filepath)
+    if new_fm is None:
+        print(
+            f"{SCRIPT_NAME} [WARN] ADR-064 frontmatter 파싱 실패 — "
+            f"cross-file 검사 skip (fail-soft)",
+            file=sys.stderr,
+        )
+        return "parse_error"
+
+    old_text = get_old_text(repo_dir, base_ref, adr064_filepath)
+    if old_text is None:
+        # ADR-064 가 신규 파일인 경우 — OLD 없음 → 신규 entry 가 모두 신규
+        old_fm = {"amendment_log": []}
+    else:
+        old_fm, _ = parse_frontmatter(old_text, adr064_filepath)
+        if old_fm is None:
+            print(
+                f"{SCRIPT_NAME} [WARN] ADR-064 OLD frontmatter 파싱 실패 — "
+                f"cross-file 검사 skip (fail-soft)",
+                file=sys.stderr,
+            )
+            return "parse_error"
+
+    new_entries = find_new_amendment_entries(old_fm, new_fm)
+
+    if not new_entries:
+        return "no_new_entries"
+
+    # 신규 entry 중 evidence-bearing 이 하나라도 있으면 PASS
+    for entry in new_entries:
+        sj = entry.get("sunset_justification")
+        if is_evidence_bearing(sj):
+            return "evidence_found"
+
+    return "no_evidence"
+
+
 # ── 단일 wording-dictionary.md 파일 검사 ─────────────────────────────────────
-def check_wording_dict_file(filepath, repo_dir, base_ref):
+def check_wording_dict_file(filepath, repo_dir, base_ref, adr064_files=None):
     """
     docs/wording-dictionary.md 에 대해 카테고리 (a) forbid-list row 제거 (약화) 감지.
+    row 제거 감지 시 cross-file ADR-064 evidence 검증 수행 (CFP-1255).
 
     반환: warn_count (int)
 
-    주의: 이 검사는 heuristic advisory — row 제거가 곧 "ADR-064 amendment evidence 없음"
-    을 증명하지는 않는다. cross-file evidence 검증 (wording-dictionary ↔ ADR-064 amendment
-    binding) 은 본 lint 범위 외. reviewer 에게 확인을 요청하는 advisory WARN 만 발화.
+    cross-file evidence 검증 3-verdict (CFP-1255 D1):
+      (5a) ADR-064 변경 + 신규 entry evidence-bearing → PASS (WARN 없음)
+      (5b) ADR-064 미변경 (adr064_files 에 없음) → WARN
+      (5c) ADR-064 변경됐으나 신규 entry evidence-bearing 없음 → WARN
+
+    주의: ADR-064↔어휘 1:1 semantic 매칭은 heuristic.
+    신규 evidence-bearing amendment 존재 = PASS (exact carrier matching 범위 외).
     """
+    if adr064_files is None:
+        adr064_files = []
+
     path = Path(filepath)
     if not path.exists():
         print(
@@ -411,18 +569,69 @@ def check_wording_dict_file(filepath, repo_dir, base_ref):
         )
         return 0
 
-    # 제거 감지 → WARN
+    # ── forbid-list row 제거 감지 → cross-file ADR-064 evidence 검증 ────────
+    # CFP-1255: adr064_files 목록에서 ADR-064-*.md 파일 탐색
+    adr064_path = None
+    for f in adr064_files:
+        if is_adr064_file(f):
+            adr064_path = f
+            break
+
     warn_count = 0
-    for row in sorted(removed_rows):
-        print(
-            f"{SCRIPT_NAME} [WARN] {filepath}: "
-            f"카테고리 (a) forbid-list row 제거 (weakening) 감지 — "
-            f"ADR-058 §결정 5 evidence-gate: "
-            f"ADR-064 amendment sunset_justification evidence 동반 필요. "
-            f"제거된 row: {row}",
-            file=sys.stderr,
+
+    if adr064_path is not None:
+        # ADR-064 가 변경 파일 목록 안에 있음 → cross-file evidence 검증 수행
+        crossfile_result = check_adr064_crossfile_evidence(
+            adr064_path, repo_dir, base_ref
         )
-        warn_count += 1
+        if crossfile_result == "evidence_found":
+            # 신규 evidence-bearing amendment 존재 → PASS (weakening justified)
+            print(
+                f"{SCRIPT_NAME} OK (forbid-list 축소 + ADR-064 lockstep evidence 확인됨): "
+                f"{filepath}",
+                file=sys.stderr,
+            )
+            return 0
+        elif crossfile_result == "no_evidence":
+            # ADR-064 변경됐으나 evidence-bearing 신규 entry 없음 → WARN (5c)
+            for row in sorted(removed_rows):
+                print(
+                    f"{SCRIPT_NAME} [WARN] {filepath}: "
+                    f"카테고리 (a) forbid-list row 제거 (weakening) 감지 — "
+                    f"ADR-064 변경됐으나 evidence-bearing sunset_justification 부재. "
+                    f"ADR-058 §결정 5 evidence-gate 미충족. "
+                    f"제거된 row: {row}",
+                    file=sys.stderr,
+                )
+                warn_count += 1
+            return warn_count
+        else:
+            # parse_error 또는 no_new_entries — fall through to (5b) WARN
+            for row in sorted(removed_rows):
+                print(
+                    f"{SCRIPT_NAME} [WARN] {filepath}: "
+                    f"카테고리 (a) forbid-list row 제거 (weakening) 감지 — "
+                    f"ADR-064 변경됐으나 신규 amendment_log entry 없음 또는 파싱 실패. "
+                    f"ADR-058 §결정 5 evidence-gate: "
+                    f"ADR-064 lockstep amendment sunset_justification evidence 동반 필요. "
+                    f"제거된 row: {row}",
+                    file=sys.stderr,
+                )
+                warn_count += 1
+            return warn_count
+    else:
+        # ADR-064 미변경 (5b) → WARN
+        for row in sorted(removed_rows):
+            print(
+                f"{SCRIPT_NAME} [WARN] {filepath}: "
+                f"카테고리 (a) forbid-list row 제거 (weakening) 감지 — "
+                f"ADR-064 lockstep amendment evidence 부재. "
+                f"ADR-058 §결정 5 evidence-gate: "
+                f"ADR-064 amendment sunset_justification evidence 동반 필요. "
+                f"제거된 row: {row}",
+                file=sys.stderr,
+            )
+            warn_count += 1
 
     return warn_count
 
@@ -479,6 +688,8 @@ def main():
     adr_files = []
     # wording-dictionary.md 경로 (forbid-list 축소 검사 대상)
     wording_dict_files = []
+    # ADR-064-*.md 경로 목록 (forbid-list cross-file evidence 검증용)
+    adr064_files = []
 
     if files:
         # 명시된 파일: ADR 패턴 vs wording-dictionary.md 분류
@@ -486,6 +697,9 @@ def main():
             name = Path(f).name
             if re.match(r"ADR-\d+", name) and name.endswith(".md"):
                 adr_files.append(f)
+                # ADR-064 는 별도 cross-file 검증 목록에도 수집
+                if is_adr064_file(f):
+                    adr064_files.append(f)
             elif is_wording_dict_file(f, str(repo_dir)):
                 wording_dict_files.append(f)
             # 그 외 파일 (ADR 아닌 일반 docs 등) = skip
@@ -494,6 +708,8 @@ def main():
         if adr_dir.is_dir():
             for adr_file in sorted(adr_dir.glob("ADR-*.md")):
                 adr_files.append(str(adr_file))
+                if is_adr064_file(str(adr_file)):
+                    adr064_files.append(str(adr_file))
         else:
             print(
                 f"{SCRIPT_NAME} INFO: ADR dir 없음 ({adr_dir}) — skip",
@@ -510,9 +726,9 @@ def main():
     for f in adr_files:
         total_warns += check_adr_file(f, str(repo_dir), base_ref)
 
-    # (B) forbid-list 축소 검사
+    # (B) forbid-list 축소 검사 (CFP-1255: adr064_files 로 cross-file evidence 검증)
     for f in wording_dict_files:
-        total_warns += check_wording_dict_file(f, str(repo_dir), base_ref)
+        total_warns += check_wording_dict_file(f, str(repo_dir), base_ref, adr064_files)
 
     # warning-tier — 경고 수에 무관하게 exit 0 (PR merge 미차단)
     if total_warns > 0:

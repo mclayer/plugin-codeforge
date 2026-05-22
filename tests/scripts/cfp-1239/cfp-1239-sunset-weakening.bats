@@ -723,3 +723,295 @@ CONTENT
   run python3 "$LINT_SCRIPT" --repo "$WORKTREE_ROOT" --base HEAD "$dict_file"
   [ "$status" -eq 0 ]
 }
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# CFP-1255 — cross-file evidence 검증 (forbid-list 제거 + ADR-064 lockstep)
+# ═══════════════════════════════════════════════════════════════════════════════
+#
+# 테스트 대상: check_wording_dict_file 의 cross-file ADR-064 evidence 검증 로직
+#
+# 4 시나리오:
+#   TC-G1: forbid-list row 제거 + ADR-064 신규 amendment (evidence-bearing) → PASS (WARN 없음)
+#   TC-G2: forbid-list row 제거 + ADR-064 미변경 → WARN
+#   TC-G3: forbid-list row 제거 + ADR-064 변경됐으나 신규 amendment sunset_justification bare "N/A" → WARN
+#   TC-G4: forbid-list row 제거 + ADR-064 변경됐으나 신규 amendment sunset_justification 완전 누락 → WARN
+#
+# cross-file 픽스처: git 레포에 wording-dictionary.md + docs/adr/ADR-064-*.md 양 파일 세팅
+
+# ─── ADR-064 fixture helper ───────────────────────────────────────────────────
+
+# OLD ADR-064: amendment_log 1 entry (신규 추가 기준선용)
+adr064_old_base() {
+  cat << 'YAML'
+---
+adr_number: 64
+title: 테스트 ADR-064
+status: Accepted
+category: governance
+is_transitional: false
+amendment_log:
+  - amendment: 1
+    carrier_story: CFP-100
+    date: 2026-01-01
+    summary: "기존 amendment"
+    sunset_justification: null
+---
+
+## 결정 내용
+
+본문.
+YAML
+}
+
+# NEW ADR-064: amendment_log 에 신규 entry 추가 (evidence-bearing sunset_justification)
+adr064_new_with_evidence_amendment() {
+  cat << 'YAML'
+---
+adr_number: 64
+title: 테스트 ADR-064
+status: Accepted
+category: governance
+is_transitional: false
+amendment_log:
+  - amendment: 1
+    carrier_story: CFP-100
+    date: 2026-01-01
+    summary: "기존 amendment"
+    sunset_justification: null
+  - amendment: 2
+    carrier_story: CFP-1255
+    date: 2026-05-22
+    summary: "forbid-list 축소 lockstep amendment"
+    direction: weaken
+    sunset_justification: "pattern_count 0건 (측정 기간 12개월). metric: 위반 incident 0건 검증. 환경 변화로 원래 위험 소멸."
+---
+
+## 결정 내용
+
+본문.
+YAML
+}
+
+# NEW ADR-064: amendment_log 에 신규 entry 추가 (bare "N/A" — evidence 미보유)
+adr064_new_with_bare_na_amendment() {
+  cat << 'YAML'
+---
+adr_number: 64
+title: 테스트 ADR-064
+status: Accepted
+category: governance
+is_transitional: false
+amendment_log:
+  - amendment: 1
+    carrier_story: CFP-100
+    date: 2026-01-01
+    summary: "기존 amendment"
+    sunset_justification: null
+  - amendment: 2
+    carrier_story: CFP-1255
+    date: 2026-05-22
+    summary: "forbid-list 축소 lockstep amendment"
+    direction: weaken
+    sunset_justification: "N/A"
+---
+
+## 결정 내용
+
+본문.
+YAML
+}
+
+# NEW ADR-064: amendment_log 에 신규 entry 추가 (sunset_justification 키 자체 누락)
+adr064_new_with_missing_sj_amendment() {
+  cat << 'YAML'
+---
+adr_number: 64
+title: 테스트 ADR-064
+status: Accepted
+category: governance
+is_transitional: false
+amendment_log:
+  - amendment: 1
+    carrier_story: CFP-100
+    date: 2026-01-01
+    summary: "기존 amendment"
+    sunset_justification: null
+  - amendment: 2
+    carrier_story: CFP-1255
+    date: 2026-05-22
+    summary: "forbid-list 축소 lockstep amendment — sunset_justification 키 없음"
+    direction: weaken
+---
+
+## 결정 내용
+
+본문.
+YAML
+}
+
+# ─── cross-file fixture setup helper ─────────────────────────────────────────
+
+# 양 파일(wording-dictionary.md + ADR-064)을 git diff 픽스처로 세팅
+# 사용법: setup_crossfile_diff <repo_dir> <old_dict> <new_dict> <old_adr> <new_adr>
+setup_crossfile_diff() {
+  local repo="$1"
+  local old_dict="$2"
+  local new_dict="$3"
+  local old_adr="$4"
+  local new_adr="$5"
+
+  local dict_file="docs/wording-dictionary.md"
+  local adr_file="docs/adr/ADR-064-decision-principle-mandate.md"
+
+  mkdir -p "${repo}/docs/adr"
+
+  # OLD 상태 commit
+  printf '%s' "$old_dict" > "${repo}/${dict_file}"
+  printf '%s' "$old_adr" > "${repo}/${adr_file}"
+  git -C "$repo" add "${dict_file}" "${adr_file}"
+  git -C "$repo" commit -q -m "old state"
+
+  # NEW 상태 commit
+  printf '%s' "$new_dict" > "${repo}/${dict_file}"
+  printf '%s' "$new_adr" > "${repo}/${adr_file}"
+  git -C "$repo" add "${dict_file}" "${adr_file}"
+  git -C "$repo" commit -q -m "new state"
+}
+
+# ─────────────────────────── TC 그룹 G: cross-file ADR-064 evidence 검증 ──────
+
+@test "TC-G1: forbid-list row 제거 + ADR-064 evidence-bearing amendment → PASS (WARN 없음)" {
+  setup_crossfile_diff "$GIT_REPO" \
+    "$(wording_dict_old_two_rows)" "$(wording_dict_new_one_row_removed)" \
+    "$(adr064_old_base)" "$(adr064_new_with_evidence_amendment)"
+
+  local dict_path="${GIT_REPO}/docs/wording-dictionary.md"
+  local adr_path="${GIT_REPO}/docs/adr/ADR-064-decision-principle-mandate.md"
+
+  run python3 "$LINT_SCRIPT" \
+    --repo "$GIT_REPO" \
+    --base HEAD~1 \
+    "$dict_path" "$adr_path"
+
+  # warning-tier — exit 0 항상
+  [ "$status" -eq 0 ]
+  # ADR-064 evidence-bearing amendment 존재 → WARN 없음 (cross-file PASS)
+  [[ "$output" != *"[WARN]"* ]]
+}
+
+@test "TC-G1-negative: TC-G1 에서 exit 1 미발생" {
+  setup_crossfile_diff "$GIT_REPO" \
+    "$(wording_dict_old_two_rows)" "$(wording_dict_new_one_row_removed)" \
+    "$(adr064_old_base)" "$(adr064_new_with_evidence_amendment)"
+
+  local dict_path="${GIT_REPO}/docs/wording-dictionary.md"
+  local adr_path="${GIT_REPO}/docs/adr/ADR-064-decision-principle-mandate.md"
+
+  run python3 "$LINT_SCRIPT" \
+    --repo "$GIT_REPO" \
+    --base HEAD~1 \
+    "$dict_path" "$adr_path"
+
+  [ "$status" -ne 1 ]
+}
+
+@test "TC-G2: forbid-list row 제거 + ADR-064 미변경 (단독 dict 파일만 전달) → WARN 발생" {
+  # ADR-064 는 변경하지 않고 wording-dictionary.md 만 변경하는 시나리오
+  # setup_git_diff 로 dict 만 변경 (ADR-064 미전달 = 미변경으로 인식)
+  local dict_file="docs/wording-dictionary.md"
+  mkdir -p "${GIT_REPO}/docs"
+  setup_git_diff "$GIT_REPO" "$dict_file" \
+    "$(wording_dict_old_two_rows)" "$(wording_dict_new_one_row_removed)"
+
+  # ADR-064 파일은 존재하지 않음 (레포에 없음) → 미변경으로 처리
+  run python3 "$LINT_SCRIPT" \
+    --repo "$GIT_REPO" \
+    --base HEAD~1 \
+    "${GIT_REPO}/${dict_file}"
+
+  [ "$status" -eq 0 ]
+  # ADR-064 미변경 → WARN 발생 (cross-file evidence 부재)
+  [[ "$output" == *"[WARN]"* ]]
+}
+
+@test "TC-G2-negative: TC-G2 에서 exit 0 보장 (warning-tier)" {
+  local dict_file="docs/wording-dictionary.md"
+  mkdir -p "${GIT_REPO}/docs"
+  setup_git_diff "$GIT_REPO" "$dict_file" \
+    "$(wording_dict_old_two_rows)" "$(wording_dict_new_one_row_removed)"
+
+  run python3 "$LINT_SCRIPT" \
+    --repo "$GIT_REPO" \
+    --base HEAD~1 \
+    "${GIT_REPO}/${dict_file}"
+
+  [ "$status" -eq 0 ]
+}
+
+@test "TC-G3: forbid-list row 제거 + ADR-064 변경됐으나 신규 amendment bare N/A → WARN 발생" {
+  setup_crossfile_diff "$GIT_REPO" \
+    "$(wording_dict_old_two_rows)" "$(wording_dict_new_one_row_removed)" \
+    "$(adr064_old_base)" "$(adr064_new_with_bare_na_amendment)"
+
+  local dict_path="${GIT_REPO}/docs/wording-dictionary.md"
+  local adr_path="${GIT_REPO}/docs/adr/ADR-064-decision-principle-mandate.md"
+
+  run python3 "$LINT_SCRIPT" \
+    --repo "$GIT_REPO" \
+    --base HEAD~1 \
+    "$dict_path" "$adr_path"
+
+  [ "$status" -eq 0 ]
+  # 신규 amendment 존재하나 bare "N/A" → evidence-bearing 아님 → WARN
+  [[ "$output" == *"[WARN]"* ]]
+}
+
+@test "TC-G3-negative: TC-G3 에서 exit 0 보장" {
+  setup_crossfile_diff "$GIT_REPO" \
+    "$(wording_dict_old_two_rows)" "$(wording_dict_new_one_row_removed)" \
+    "$(adr064_old_base)" "$(adr064_new_with_bare_na_amendment)"
+
+  local dict_path="${GIT_REPO}/docs/wording-dictionary.md"
+  local adr_path="${GIT_REPO}/docs/adr/ADR-064-decision-principle-mandate.md"
+
+  run python3 "$LINT_SCRIPT" \
+    --repo "$GIT_REPO" \
+    --base HEAD~1 \
+    "$dict_path" "$adr_path"
+
+  [ "$status" -eq 0 ]
+}
+
+@test "TC-G4: forbid-list row 제거 + ADR-064 변경됐으나 신규 amendment sunset_justification 키 누락 → WARN 발생" {
+  setup_crossfile_diff "$GIT_REPO" \
+    "$(wording_dict_old_two_rows)" "$(wording_dict_new_one_row_removed)" \
+    "$(adr064_old_base)" "$(adr064_new_with_missing_sj_amendment)"
+
+  local dict_path="${GIT_REPO}/docs/wording-dictionary.md"
+  local adr_path="${GIT_REPO}/docs/adr/ADR-064-decision-principle-mandate.md"
+
+  run python3 "$LINT_SCRIPT" \
+    --repo "$GIT_REPO" \
+    --base HEAD~1 \
+    "$dict_path" "$adr_path"
+
+  [ "$status" -eq 0 ]
+  # sunset_justification 키 누락 → evidence-bearing 아님 → WARN
+  [[ "$output" == *"[WARN]"* ]]
+}
+
+@test "TC-G4-negative: TC-G4 에서 exit 0 보장" {
+  setup_crossfile_diff "$GIT_REPO" \
+    "$(wording_dict_old_two_rows)" "$(wording_dict_new_one_row_removed)" \
+    "$(adr064_old_base)" "$(adr064_new_with_missing_sj_amendment)"
+
+  local dict_path="${GIT_REPO}/docs/wording-dictionary.md"
+  local adr_path="${GIT_REPO}/docs/adr/ADR-064-decision-principle-mandate.md"
+
+  run python3 "$LINT_SCRIPT" \
+    --repo "$GIT_REPO" \
+    --base HEAD~1 \
+    "$dict_path" "$adr_path"
+
+  [ "$status" -eq 0 ]
+}
