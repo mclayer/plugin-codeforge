@@ -33,13 +33,13 @@ if [[ ! -f "${SNAPSHOT_FILE}" ]]; then
 fi
 
 # ── snapshot placeholder 여부 확인 ─────────────────────────────────────────
-# 실 tool entry (mcp__atlassian__로 시작하는 줄) 가 없으면 placeholder
-REAL_TOOLS=$(grep -v '^\s*#' "${SNAPSHOT_FILE}" | grep -v '^\s*$' | grep '^mcp__atlassian__' || true)
+# 실 tool entry (mcp__plugin_atlassian_atlassian__로 시작하는 줄) 가 없으면 placeholder
+REAL_TOOLS=$(grep -v '^\s*#' "${SNAPSHOT_FILE}" | grep -v '^\s*$' | grep '^mcp__plugin_atlassian_atlassian__' || true)
 
 if [[ -z "${REAL_TOOLS}" ]]; then
   echo "[ADVISORY] atlassian-tool-drift: snapshot placeholder — 실 tool 목록 미등록" >&2
   echo "  → Atlassian 인스턴스 연결 후 docs/atlassian-tool-snapshot.txt 채울 것 (ADR-103 §결정 3)" >&2
-  echo "  → instance setup 후 enumerate: /mcp list-tools 또는 Claude Code mcp__atlassian__* 확인" >&2
+  echo "  → instance setup 후 enumerate: /mcp list-tools 또는 Claude Code mcp__plugin_atlassian_atlassian__* 확인" >&2
   exit 0  # placeholder = advisory exit 0 (Warning 발화 + 계속)
 fi
 
@@ -51,7 +51,7 @@ if [[ ! -f "${SETTINGS_FILE}" ]]; then
 fi
 
 # permissions.deny 블록에서 atlassian tool 항목 추출 (grep 기반 간이 파서)
-DENY_TOOLS=$(grep -o '"mcp__atlassian__[^"]*"' "${SETTINGS_FILE}" | tr -d '"' || true)
+DENY_TOOLS=$(grep -o '"mcp__plugin_atlassian_atlassian__[^"]*"' "${SETTINGS_FILE}" | tr -d '"' || true)
 
 # ── drift 확인: snapshot tool 중 deny 에 없는 항목 ──────────────────────────
 DRIFT_FOUND=false

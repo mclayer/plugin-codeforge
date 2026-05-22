@@ -101,15 +101,15 @@ EOF
   local snapshot_content
   snapshot_content="$(cat <<'EOF'
 # Atlassian MCP tool snapshot
-mcp__atlassian__get_page
-mcp__atlassian__update_page
-mcp__atlassian__create_page
+mcp__plugin_atlassian_atlassian__get_page
+mcp__plugin_atlassian_atlassian__update_page
+mcp__plugin_atlassian_atlassian__create_page
 EOF
 )"
 
-  # settings.json 에 mcp__atlassian__get_page 만 deny, update_page + create_page 누락
+  # settings.json 에 mcp__plugin_atlassian_atlassian__get_page 만 deny, update_page + create_page 누락
   local settings_content
-  settings_content='{"permissions": {"deny": ["mcp__atlassian__get_page"]}}'
+  settings_content='{"permissions": {"deny": ["mcp__plugin_atlassian_atlassian__get_page"]}}'
 
   _run_drift_check_with_fixtures "${snapshot_content}" "${settings_content}"
 
@@ -129,14 +129,14 @@ EOF
   local snapshot_content
   snapshot_content="$(cat <<'EOF'
 # Atlassian MCP tool snapshot
-mcp__atlassian__get_page
-mcp__atlassian__update_page
+mcp__plugin_atlassian_atlassian__get_page
+mcp__plugin_atlassian_atlassian__update_page
 EOF
 )"
 
   # settings.json 에 snapshot 전부 deny
   local settings_content
-  settings_content='{"permissions": {"deny": ["mcp__atlassian__get_page", "mcp__atlassian__update_page"]}}'
+  settings_content='{"permissions": {"deny": ["mcp__plugin_atlassian_atlassian__get_page", "mcp__plugin_atlassian_atlassian__update_page"]}}'
 
   _run_drift_check_with_fixtures "${snapshot_content}" "${settings_content}"
 

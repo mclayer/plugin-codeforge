@@ -3668,6 +3668,7 @@ entries:
       failure_threshold: 0             # ADR-060 §결정 6 (b)
       sibling_dependencies:
         - CFP-1256                     # self-carrier (Phase 2 = actual instance enumerate + wire)
+        - CFP-1146                     # W5-S14 — Option B per-tool deny decomposition Wave 2 wire
       evidence_artifacts:
         - github_actions_run_history_url
         - lint_failure_count_zero_proof
@@ -3681,4 +3682,4 @@ entries:
       count: 0
       threshold: 2   # ADR-103 §결정 3: "pattern_count >= 2 재발 시 promote"
       promotion_trigger: auto_blocking
-    status: declaration-only-Wave-1    # Phase 2 실 instance enumerate + deny wire 후 Active 전환
+    status: Active    # CFP-1146 W5-S14 Option B deny wire 완료 — Active 전환
