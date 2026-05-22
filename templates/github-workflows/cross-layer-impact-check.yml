@@ -57,10 +57,10 @@ jobs:
           echo "${CHANGED_FILES}"
 
           # layer 감지 (schema / code / frontend / backend)
-          TOUCHED_SCHEMA=$(echo "${CHANGED_FILES}" | grep -E "^(migrations|schema)/" | wc -l)
-          TOUCHED_CODE=$(echo "${CHANGED_FILES}" | grep -E "^src/" | wc -l)
-          TOUCHED_FRONTEND=$(echo "${CHANGED_FILES}" | grep -E "^(frontend|web|ui)/" | wc -l)
-          TOUCHED_BACKEND=$(echo "${CHANGED_FILES}" | grep -E "^(backend|api|server)/" | wc -l)
+          TOUCHED_SCHEMA=$(echo "${CHANGED_FILES}" | grep -E "^(migrations|schema)/" | wc -l || true)
+          TOUCHED_CODE=$(echo "${CHANGED_FILES}" | grep -E "^src/" | wc -l || true)
+          TOUCHED_FRONTEND=$(echo "${CHANGED_FILES}" | grep -E "^(frontend|web|ui)/" | wc -l || true)
+          TOUCHED_BACKEND=$(echo "${CHANGED_FILES}" | grep -E "^(backend|api|server)/" | wc -l || true)
 
           echo "touched_schema=${TOUCHED_SCHEMA}" >> "${GITHUB_OUTPUT}"
           echo "touched_code=${TOUCHED_CODE}" >> "${GITHUB_OUTPUT}"
