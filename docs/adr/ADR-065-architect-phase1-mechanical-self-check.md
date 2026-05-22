@@ -14,6 +14,8 @@ related_stories:
   - CFP-438
   - CFP-685   # Amendment 1 carrier — family scope 확장 (wrapper-only → 7-repo)
   - CFP-911   # Amendment 2 carrier — 8th item frontmatter YAML parse self-validate (CFP-851 incident gap 보완)
+  - CFP-930   # Amendment 3 carrier — 9th item Story self-declared correction commit application verify
+  - CFP-1242  # Amendment 4 carrier — 10th item 선제-lint mandate + INV-1 parity kind:registry scope 확장 (ADR-045 §D-9 escalate_user)
 related_adrs:
   - ADR-005   # CFP-685 정정 audit trail — ADR-005 (lane N/A 표준화) ≠ self-app convention SSOT
   - ADR-010   # CFP-685 cross-ref — kind:workflow sibling sync 면제 vs family scope self-app 분리
@@ -28,6 +30,10 @@ related_adrs:
   - ADR-063
   - ADR-066   # CFP-685 cross-ref — Phase 2 sibling sync PR open 시 CODEFORGE_CROSS_REPO_PAT 의무 영역
   - ADR-073   # CFP-685 cross-ref — Orchestrator verify-before-assert (cross-repo state 단정 의무)
+  - ADR-008   # CFP-1242 cross-ref — inter-plugin contract/registry versioning (INV-1 parity field semantic)
+  - ADR-045   # CFP-1242 cross-ref — §D-9 cross-Story pattern_count 3 escalate_user (Amendment 4 동기)
+  - ADR-064   # CFP-1242 cross-ref — §self-application top-down ratchet (Amendment 4 강화 방향만)
+  - ADR-082   # CFP-1242 cross-ref — write-time self-write verification (선제-lint mandate 인접 layer)
 amendments:
   - amendment: 1
     date: 2026-05-15
@@ -47,6 +53,12 @@ amendments:
     summary: "§결정 1 표(8-row) 에 row 9 append — Story 본문 self-declared correction(strike-through `~~old~~ → new` / `<del>` HTML / 'previously: X' 류 패턴) 의 chief author commit 실제 적용 verify. 검증 방법: Story §2/§6 등 declared correction enumerate → `git diff` / repo-wide grep 로 실제 적용 cross-check, 누락 검출 시 RETURN to ArchitectPLAgent (chief author 재호출, ADR-004 author ≠ judge 보존). §결정 1 row 1-8 본문 변경 0 (row 9 append 만), §결정 2-7 변경 0. mechanical_enforcement_actions[] append `story-self-declared-correction-verify` entry status: deferred-followup (mechanical lint 자동 검출 별 carrier). cross-Story pattern threshold reach (≥ 2, ADR-045 §D-9): CFP-795 first occurrence (Architect §3 mandatory P1 finding inline FIX 시 8 anchor 동시 갱신 누락, F-1 lesson) + CFP-906 second occurrence (Story §2.2 `~~ADR-072~~ → ADR-72` 18 occurrence 미적용, F-DR-906-1 P0 broken-link + F-DR-906-2 P1 wording-SSOT). chief author mechanical self-check 신뢰도 저하 + DesignReviewPL 사후 catch FIX iter 추가 evidence. ADR-082 Amendment 1 scope b (design-lane self-check + 정정 재귀) 직접 인접 — sister carrier. review-verdict-v4 schema 영향 별 carrier (cross-plugin sibling sync 필요, 본 Amendment scope 외). ratchet 강화 방향만 (8→9 ratchet 확장 only)."
     is_transitional: false
     sunset_justification: "N/A — permanent policy 의 ratchet 강화 (Amendment 1/2 family pattern 정합). ADR-064 §self-application top-down ratchet 정합. 약화 방향(9th item 제거 / verify 의무 해제) 발의 차단."
+  - amendment: 4
+    date: 2026-05-22
+    cfp: CFP-1242
+    summary: "(a) §결정 1 표(9-row) 에 row 10 append — Phase 1 산출물 commit 직전 touched ADR/doc 에 대해 `bash scripts/check-doc-section-schema.sh <path>` + `bash scripts/check-adr-sunset-criteria.sh <path>` 로컬 선제 실행 (PASS 확인) behavioral mandate (운영 phase S3+ FIX 0 효과 입증). (b) INV-1 parity lint (scripts/lib/check_inter_plugin_contracts_parity.py) scope 의 kind:registry 확장 (mechanical) — MANIFEST `registries` 섹션 (`version` field) 이 그동안 lint iteration gap 으로 무방비였음 (정정된 진단: 'MANIFEST 가 kind:registry 를 제외' 라는 정책 exclusion 이 아니라, lint 가 manifest['contracts'] 만 iterate 하던 iteration gap — sibling-sync 면제 ADR-010 §결정 2 와 MANIFEST↔frontmatter parity 가 conflate 됨). 본 Amendment 가 두 영역 (contracts: contract_version / registries: version) 모두 parity-check 하도록 확장 — S4 drift class 차단. live label_registry drift (frontmatter v2.50 ∉ MANIFEST 7 mis-ordered Active rows 2.43-2.49) 를 lint 가 실제 적발 + 동반 MANIFEST collapse fix. §결정 1 row 1-9 본문 변경 0 (row 10 append 만), §결정 2-8 변경 0. mechanical_enforcement_actions[] = 기존 `inter-plugin-contracts-parity` entry (CFP-894 / ADR-060 §결정 6) 의 scope 확장 cross-ref only — 신규 evidence-checks-registry entry 0건 (기존 parity check 가 cover). cross-Story pattern threshold reach (pattern_count 3, ADR-045 §D-9 escalate_user): S1/S2/S4 evidence (kind:registry version parity unguarded → S4 drift human review 도달). ratchet 강화 방향만 (9→10 ratchet 확장 + parity scope 확장 only — ADR-064 §self-application top-down ratchet 정합)."
+    is_transitional: false
+    sunset_justification: "N/A — permanent policy 의 ratchet 강화 (Amendment 1/2/3 family pattern 정합). ADR-064 §self-application top-down ratchet 정합. 약화 방향(10th item 제거 / 선제 lint mandate 해제 / INV-1 parity kind:registry 재제외) 발의 차단."
 mechanical_enforcement_actions:
   - action: sibling-workflow-parity
     status: deferred-followup
@@ -60,6 +72,10 @@ mechanical_enforcement_actions:
     status: deferred-followup
     progress_note: "ADR-065 Amendment 3 (CFP-930) 신설 시점 — chief author 의 commit-time manual self-check (Story declared correction enumerate + `git diff` cross-check). mechanical lint 자동 검출 = 별도 follow-up CFP scope (Story body 의 strike-through 패턴 자동 enumerate + commit diff 비교). evidence-checks-registry 신규 entry 0건 (manual self-check tier). 본 status 승격 trigger = mechanical lint 신설 별 CFP merge 시점. ADR-082 Amendment 1 scope b (design-lane self-check + 정정 재귀) sister carrier — review-verdict-v4 schema 영향 (cross-plugin sibling sync 필요) 별 carrier 분리."
     target_section: §결정 1 row 9 (Amendment 3 CFP-930) / §결정 8 (신설)
+  - action: inter-plugin-contracts-parity
+    status: existing-warning-cross-ref
+    progress_note: "ADR-065 Amendment 4 (CFP-1242) 신설 시점 — 신규 evidence-checks-registry entry 0건. 기존 `inter-plugin-contracts-parity` check (CFP-894 / ADR-060 §결정 6, `scripts/lib/check_inter_plugin_contracts_parity.py` SSOT + thin wrapper `scripts/check-inter-plugin-contracts-parity.sh`, warning tier) 의 SCOPE 확장 cross-ref only. 본 Amendment 4 (b) 가 lint 의 iteration scope 를 manifest['contracts'] 단독 → contracts + registries 양 섹션으로 확장 (contracts field=contract_version / registries field=version). 신규 lint script / 신규 workflow yml / 신규 evidence-checks-registry entry / 신규 mechanical_enforcement_actions[] action name 0건 — 기존 parity check 가 kind:registry 영역까지 cover 하도록 확장만. status 승격 trigger 없음 — `existing-warning-cross-ref` (별도 CFP 가 parity check tier 승격 발의 시에만 status 갱신). row 10 (a) 선제-lint behavioral mandate 는 mechanical action 아님 (chief author commit-time manual 선제 실행) — evidence-checks-registry entry 0건."
+    target_section: §결정 1 row 10 (Amendment 4 CFP-1242) / §결정 9 (신설)
 ---
 
 # ADR-065: ArchitectAgent Phase 1 산출물 mechanical sync self-check 의무 (non-marketplace 영역)
@@ -117,6 +133,7 @@ ArchitectAgent chief author 는 Phase 1 산출물 commit 직전 다음 7 항목 
 | 7 | `docs/doc-locations.yaml` 신규 doc type row 필요성 확인 | 신규 doc type 도입 시 row append, `check-doc-locations.sh` PASS |
 | 8 | Phase 1 산출물 commit 직전 chief author 가 변경한 frontmatter 보유 `.md` file 의 YAML parse self-validate (Amendment 2 CFP-911) | `bash scripts/check-doc-frontmatter.sh <path>` PASS 확인 (CFP-28 strict mode cross-ref) |
 | 9 | Story 본문 self-declared correction (`~~old~~ → new` strike-through / `<del>` HTML / "previously: X" 류 패턴) 의 chief author commit 실제 적용 verify (Amendment 3 CFP-930) | Story §2/§6 등 declared correction 패턴 enumerate → 각 패턴이 본 PR commit 안 actual diff 로 적용되었는지 `git diff` / repo-wide grep cross-check. 누락 검출 시 RETURN to ArchitectPLAgent (chief author 재호출) |
+| 10 | Phase 1 산출물 commit 직전 touched ADR/doc 에 대해 `bash scripts/check-doc-section-schema.sh <path>` + `bash scripts/check-adr-sunset-criteria.sh <path>` 로컬 선제 실행 (PASS 확인) — (a) behavioral mandate, 운영 phase S3+ FIX 0 효과 입증 (Amendment 4 CFP-1242) | touched ADR / doc 각 path 에 두 lint 로컬 선제 실행 → PASS 확인 후 commit. 사후 CI 도달 전 chief author 가 self-detect (운영 phase Epic S3+ Story 가 본 선제-lint 프로세스로 FIX iter 0 달성 — pre-lint 효과 입증) |
 
 **Row 8 cascade obligation (Amendment 2 / CFP-911)**: 본 row 8 의 검증 방법 wording 은 `scripts/check-doc-frontmatter.sh` (thin wrapper) / `scripts/lib/check_doc_frontmatter.py` (Python SSOT, ADR-061 §결정 1 정합) 의 strict mode contract 의존. 두 file 의 contract (exit code semantic / strict-mode 분기 / target path coverage) 가 변경되는 PR (예: CFP-NNN script behavior change) 는 ADR-065 §결정 1 row 8 wording 갱신 cascade 의무 — 갱신 누락 시 row 8 forcing function silently drift. cascade 검출은 manual review 의존 (별도 follow-up CFP carrier — cascade 자동 검출 lint 신설 검토, Story §5.4 row 7 정합).
 
@@ -300,6 +317,51 @@ review-verdict-v4 schema `mechanical_self_check_passed: bool` field semantic 무
 
 `is_transitional: false` 보존 + `sunset_justification: "N/A — permanent policy 의 ratchet 강화..."` quoted-string-form 의무 (Amendment 2 §7.2 cross-pollination 차단 invariant 정합).
 
+### 결정 9 — 10th item 선제-lint behavioral mandate + INV-1 parity kind:registry scope 확장 (Amendment 4, CFP-1242)
+
+§결정 1 표(9-row, post-Amendment-3) 에 row 10 append 로 chief author self-check 항목을 10개로 확장 (behavioral mandate, (a)). 동반하여 기존 INV-1 parity lint 의 mechanical scope 를 kind:registry 영역으로 확장 ((b)). 두 영역은 동일 결함 class (kind:registry version parity unguarded) 의 behavioral + mechanical 양면 closure.
+
+#### 9.1 (a) 선제-lint behavioral mandate (row 10)
+
+신규 10번째 항목 = **"Phase 1 산출물 commit 직전 touched ADR/doc 에 대해 `bash scripts/check-doc-section-schema.sh <path>` + `bash scripts/check-adr-sunset-criteria.sh <path>` 로컬 선제 실행 (PASS 확인)"**.
+
+- chief author 가 touched ADR / doc path 각각에 두 lint 를 commit 직전 로컬 선제 실행 → PASS 확인 후 commit.
+- 사후 CI 도달 전 self-detect — 운영 phase Epic (project_cfp_1187_operational_phase_epic) 의 S3+ Story 가 본 선제-lint 프로세스로 FIX iter 0 을 달성한 효과 입증 (선제-lint 프로세스 효과: S3+ FIX 0).
+- behavioral mandate only — mechanical action 아님 (chief author commit-time manual 선제 실행). `mechanical_enforcement_actions[]` 신규 entry 0건.
+
+#### 9.2 (b) INV-1 parity mechanical scope 확장 — kind:registry (corrected diagnosis)
+
+**정정된 진단 (CFP-1242 verify-before-trust catch)**: Issue 의 framing ("label-registry-v2 ↔ MANIFEST.yaml kind:registry parity") 은 imprecise 했음. 검증된 reality:
+
+- `docs/inter-plugin-contracts/MANIFEST.yaml` 은 두 top-level 키 — `contracts` (9 kind:contract entry) + `registries` (9 kind:registry entry) — 를 가진다.
+- INV-1 parity lint (`scripts/lib/check_inter_plugin_contracts_parity.py`, CFP-894 / ADR-060 §결정 6) 은 그동안 `manifest["contracts"]` 만 iterate — `manifest["registries"]` 를 **결코 검사하지 않았다**. 즉 kind:registry version parity 가 무방비였다 (S4 가 human review 까지 도달하게 한 정확한 gap).
+- 이는 **"MANIFEST 가 kind:registry 를 제외한다"는 정책 exclusion 이 아니라 lint iteration gap** 이다. 기존 docstring 의 "kind:registry entries = ADR-010 §결정 2 sibling sync 면제 → parity 대상 외" 표현이 두 개념을 conflate 했다: sibling-sync 면제 (cross-repo, ADR-010 §결정 2) 는 MANIFEST↔frontmatter parity (wrapper-local invariant) 와 **orthogonal**. registry 는 cross-repo sibling sync 만 면제될 뿐, MANIFEST row ↔ wrapper-local frontmatter parity 는 여전히 invariant.
+
+**Live drift 적발 (lint genuinely catches the live defect)**: `registries.label_registry` 가 `label-registry-v2.md` 에 대해 7개의 mis-ordered "Active" row (2.43, 2.44, 2.45, 2.49, 2.48, 2.47, 2.46 — out of order = parallel-session append drift) 를 나열한 반면, file frontmatter 는 `version: "2.50"`. 즉 2.50 이 MANIFEST 에 부재 → drift. 확장된 lint 가 이 live label_registry drift 를 실제 적발 (RED proof) → 동반 MANIFEST collapse (7 Active rows → single Active 2.50 row, v1 Archived row 보존) 후 PASS (GREEN proof). 나머지 8 registry 는 clean (frontmatter == single MANIFEST Active row), Archived (label-registry-v1) / Sunsetted (reconcile-protocol-v1) row 는 올바르게 non-Active 로 skip.
+
+**확장 내용**: lint 가 두 섹션 모두 iterate — contracts (field=`contract_version`) + registries (field=`version`). Membership semantic: 한 file 의 frontmatter version 이 그 file 의 Active MANIFEST row version(s) 중 하나로 **나타나야** 함 (parallel-append 다중 Active row tolerant). 비-Active row (Archived / Sunsetted / Deprecated) 는 contracts 와 동일하게 skip. self-ref graceful (MANIFEST 부재 → exit 0) + exit code (0 PASS / 1 drift / 2 config error) 보존. 기존 7 contract check 100% 무회귀.
+
+#### 9.3 동기 (cross-Story pattern threshold reach, ADR-045 §D-9 escalate_user)
+
+`chief_author_mechanical_sync_gap` super-class 의 kind:registry parity unguarded 변종 — pattern_count 3 reach (ADR-045 §D-9 escalate_user):
+
+- **S1 / S2 evidence**: kind:registry version parity 가 INV-1 lint scope 밖이라 MANIFEST row ↔ frontmatter drift 가 detect 되지 않음 (registry append-heavy 영역의 silent drift).
+- **S4 evidence**: label_registry 7-row 누적 parallel-session append drift 가 human review 까지 도달 (mechanical (b) closure 부재의 직접 증상).
+
+본 Amendment 가 behavioral (a) + mechanical (b) 양면으로 이 drift class 차단.
+
+#### 9.4 mechanical_enforcement_actions[] = 기존 parity check scope 확장 cross-ref
+
+신규 evidence-checks-registry entry 0건. 기존 `inter-plugin-contracts-parity` check (CFP-894 / ADR-060 §결정 6, warning tier) 의 scope 확장 cross-ref only (Amendment 2 의 `existing-warning-cross-ref` 패턴 정합). 신규 lint script / 신규 workflow yml / 신규 mechanical action name 0건 — 기존 parity check 가 kind:registry 영역까지 cover 하도록 확장만.
+
+#### 9.5 row 1-9 본문 변경 0 invariant
+
+§결정 1 row 1-9 본문 변경 0 (row 10 append 만). §결정 2-8 변경 0. Amendment 1/2/3 family pattern 정합 — additive ratchet only.
+
+#### 9.6 sunset_justification (Amendment 1/2/3 family 정합)
+
+`is_transitional: false` 보존 + `sunset_justification: "N/A — permanent policy 의 ratchet 강화..."` quoted-string-form 의무. 약화 방향(10th item 제거 / 선제-lint mandate 해제 / INV-1 parity kind:registry 재제외) 발의 차단 (ADR-058 §결정 5 / ADR-064 §self-application top-down ratchet).
+
 ## 해소 기준
 
 N/A — permanent policy
@@ -332,3 +394,18 @@ N/A — permanent policy
 - `mclayer/marketplace:marketplace.json` `plugins[name=codeforge]` mirrored field (`name`/`version`/`description`/`author`) — Phase 2 atomic sibling sync (ADR-063 §결정 5, 별도 sibling PR, codeforge PR merge 직후 즉시 open·merge)
 
 **신규 lint script / 신규 workflow yml / 신규 ADR / 신규 evidence-checks-registry entry / 신규 mechanical_enforcement_actions[] action name / 6 lane sibling PR / review-verdict-v4 schema bump / cascade 자동 검출 lint = 0건** (Story §5.4 Out-of-Scope 7 항목 정합).
+
+### Amendment 4 (CFP-1242) 신설/변경 파일
+
+- **이 ADR 본문** (`docs/adr/ADR-065-architect-phase1-mechanical-self-check.md`) — frontmatter `amendments[]` amendment 4 entry + `mechanical_enforcement_actions[]` `inter-plugin-contracts-parity` entry (scope 확장 cross-ref) + `related_stories` CFP-930·CFP-1242 + `related_adrs` ADR-008·ADR-045·ADR-064·ADR-082 + 본문 §결정 1 표 row 10 + §결정 9 narrative section + 본 sub-section
+- [`scripts/lib/check_inter_plugin_contracts_parity.py`](../../scripts/lib/check_inter_plugin_contracts_parity.py) — INV-1 parity lint **scope 확장** (manifest['contracts'] 단독 → contracts + registries 양 섹션, field 분기 contract_version / version) + docstring 정정 (kind:registry 무방비 iteration gap, sibling-sync 면제 orthogonal)
+- [`scripts/lib/test_check_inter_plugin_contracts_parity.py`](../../scripts/lib/test_check_inter_plugin_contracts_parity.py) — TC-8..TC-13 registries parity 테스트 추가 (TDD RED: TC-9 live label_registry drift 재현 + TC-12 missing version field)
+- [`docs/inter-plugin-contracts/MANIFEST.yaml`](../inter-plugin-contracts/MANIFEST.yaml) — `registries.label_registry` 7 mis-ordered Active rows (2.43-2.49) → single Active 2.50 row collapse (label-registry-v1 Archived row 보존)
+- [`scripts/check-doc-section-schema.sh`](../../scripts/check-doc-section-schema.sh) — **무수정** (row 10 (a) 선제-lint cross-ref target)
+- [`scripts/check-adr-sunset-criteria.sh`](../../scripts/check-adr-sunset-criteria.sh) — **무수정** (row 10 (a) 선제-lint cross-ref target)
+- [`CLAUDE.md`](../../CLAUDE.md) — ADR-065 inline description 에 Amendment 4 clause 추가
+- [`.claude-plugin/plugin.json`](../../.claude-plugin/plugin.json) — version 6.1.1 → 6.2.0 MINOR (ADR-037 §결정 1(h) — additive amendment + lint behavior change = governance behavior change)
+- [`CHANGELOG.md`](../../CHANGELOG.md) — `[6.2.0] - 2026-05-22` entry append (ADR-063 atomic)
+- `mclayer/marketplace:marketplace.json` `plugins[name=codeforge]` mirrored field (`name`/`version`/`description`/`author`) — Phase 2 atomic sibling sync (ADR-063 §결정 5, 별도 sibling PR, codeforge PR merge 직후 즉시 open·merge)
+
+**신규 lint script / 신규 workflow yml / 신규 ADR / 신규 evidence-checks-registry entry / 신규 mechanical_enforcement_actions[] action name = 0건** (기존 `inter-plugin-contracts-parity` parity check scope 확장 cross-ref only — 기존 안전망이 kind:registry 영역까지 cover).

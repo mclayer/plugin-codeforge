@@ -7,6 +7,28 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.2.0] - 2026-05-22
+
+### Added
+
+- [CFP-1242] INV-1 parity lint scope 의 kind:registry 확장 + ADR-065 Amendment 4 (chief author mechanical self-check 10th item 선제-lint mandate). ADR-045 §D-9 escalate_user (pattern_count 3 — kind:registry version parity unguarded → S4 drift human review 도달).
+  - `scripts/lib/check_inter_plugin_contracts_parity.py`: INV-1 parity lint 이 그동안 `manifest["contracts"]` 만 iterate (kind:registry version parity 무방비 iteration gap). 정정된 진단 — "MANIFEST 가 kind:registry 제외" 정책 exclusion 이 아니라 lint iteration gap (sibling-sync 면제 ADR-010 §결정 2 와 MANIFEST↔frontmatter parity 가 conflate). 두 섹션 (contracts: `contract_version` / registries: `version`) 모두 parity-check 하도록 확장 — Active row membership semantic (parallel-append 다중 Active row tolerant), 비-Active(Archived/Sunsetted) skip, self-ref graceful + exit code (0/1/2) 보존, 기존 7 contract check 무회귀. docstring 정정.
+  - `scripts/lib/test_check_inter_plugin_contracts_parity.py`: TC-8..TC-13 registries parity 테스트 추가 (TDD RED: TC-9 live label_registry drift 재현 + TC-12 missing version field — lint 확장 전 FAIL / 후 PASS 확인, 기존 9 test 무회귀, total 15 GREEN).
+
+### Fixed
+
+- [CFP-1242] `docs/inter-plugin-contracts/MANIFEST.yaml` `registries.label_registry` live drift fix — frontmatter `version: "2.50"` 인데 MANIFEST 가 7개 mis-ordered "Active" row (2.43, 2.44, 2.45, 2.49, 2.48, 2.47, 2.46 = parallel-session append drift) 를 나열 (2.50 부재). 7 Active rows → single Active 2.50 row collapse (label-registry-v1 Archived row 보존, 다른 8 registry 무변경). 확장된 lint 가 BEFORE 적발 (RED) / AFTER PASS (GREEN) — 7 contracts + 8 registries 15 Active file 검증.
+
+### Changed
+
+- [CFP-1242] ADR-065 Amendment 4 — §결정 1 표 row 10 append (Phase 1 산출물 commit 직전 touched ADR/doc 에 `check-doc-section-schema.sh` + `check-adr-sunset-criteria.sh` 로컬 선제 실행 PASS, behavioral mandate, 운영 phase S3+ FIX 0 효과 입증) + §결정 9 narrative (corrected diagnosis + INV-1 parity kind:registry scope 확장). `mechanical_enforcement_actions[]` = 기존 `inter-plugin-contracts-parity` entry scope 확장 cross-ref only (신규 evidence-checks-registry entry 0건). is_transitional false 유지 (additive ratchet, ADR-058 §결정 5 sunset_justification quoted-string). CLAUDE.md ADR-065 inline description Amendment 4 clause 동반.
+  - plugin.json 6.1.1 → 6.2.0 MINOR (ADR-037 §결정 1(h) — additive amendment + lint behavior change = governance behavior change). marketplace atomic sync 별도 sibling PR 의무 (ADR-063 §결정 5, mirrored field version 변경).
+
+### Cross-ref
+
+- Issue: #1242
+- ADR: ADR-065 (Amendment 4)
+
 ## [6.1.1] - 2026-05-22
 
 ### Fixed
