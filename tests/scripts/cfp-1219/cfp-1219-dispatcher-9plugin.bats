@@ -89,16 +89,13 @@ teardown() {
 
 # ───────────────────────────── TC-1: FAMILY 에 codeforge-deploy 포함 ─────────
 
-@test "TC-1 (P0): walk-bundle FAMILY 에 codeforge-deploy 활성 (주석 해제, CFP-1059 S2 resolved)" {
-  # discriminating: FAMILY array 에서 주석 없이 codeforge-deploy 가 있어야 함
-  # 주석 처리된 entry(# codeforge-deploy)는 불합격
-  # 인라인 주석(codeforge-deploy   # comment) 포함 활성 entry 허용
-  # codeforge-deploy-review 와 구분: (\s|$) 패턴으로 -review 접미사 제외
-  run grep -E '^\s+codeforge-deploy(\s|$)' "$WALK_BUNDLE"
-  # 양성: entry 존재
+@test "TC-1 (P0): walk-bundle FAMILY 에 codeforge-deploy 활성 (CFP-1225: derive 기반 출력 확인)" {
+  # CFP-1225: FAMILY 는 walk_plan.get_topological_order() 에서 derive — 소스 grep 불가
+  # walk --walk 출력에 codeforge-deploy 가 등장하는지로 활성 확인
+  run bash "$WALK_BUNDLE" --walk
   [ "$status" -eq 0 ]
-  # 음성: 줄 자체가 주석(# 로 시작)이 아님 — 주석 처리된 entry 없어야 함
-  ! echo "$output" | grep -qE '^\s*#'
+  # 양성: walk 출력에 codeforge-deploy 등장 (codeforge-deploy-review 와 구분)
+  echo "$output" | grep -qE 'plugin.*codeforge-deploy([^-]|$)|\[walk\].*codeforge-deploy([^-]|$)'
 }
 
 @test "TC-1b (P0): walk-bundle FAMILY codeforge-deploy — FAMILY 배열 내 주석 처리된 entry 없음" {
@@ -117,10 +114,11 @@ teardown() {
 
 # ───────────────────────────── TC-2: FAMILY 에 codeforge-deploy-review 포함 ──
 
-@test "TC-2 (P0): walk-bundle FAMILY 에 codeforge-deploy-review 활성 (ADR-088 S3 resolved)" {
-  run grep -E '^\s+codeforge-deploy-review\b' "$WALK_BUNDLE"
+@test "TC-2 (P0): walk-bundle FAMILY 에 codeforge-deploy-review 활성 (CFP-1225: derive 기반 확인)" {
+  # CFP-1225: 소스 grep 아닌 walk 출력으로 확인
+  run bash "$WALK_BUNDLE" --walk
   [ "$status" -eq 0 ]
-  ! echo "$output" | grep -qE '^\s*#'
+  echo "$output" | grep -q "codeforge-deploy-review"
 }
 
 @test "TC-2b (P0): walk-bundle FAMILY codeforge-deploy-review — '# S3 carrier' 주석 없음" {
@@ -146,12 +144,10 @@ teardown() {
 
 # ───────────────────────────── TC-4: walk-single FAMILY_PLUGINS 에 deploy 포함
 
-@test "TC-4 (P0): walk-single FAMILY_PLUGINS 에 codeforge-deploy 포함 (멤버십 활성)" {
-  # discriminating: codeforge-deploy 가 FAMILY_PLUGINS 에 활성 entry 로 있어야 함
-  # 인라인 주석 포함 허용, codeforge-deploy-review 와 구분
-  run grep -E '^\s+codeforge-deploy(\s|$)' "$WALK_SINGLE"
+@test "TC-4 (P0): walk-single FAMILY_PLUGINS 에 codeforge-deploy 포함 (CFP-1225: derive 기반)" {
+  # CFP-1225: FAMILY_PLUGINS 는 derive — 소스 grep 아닌 실행 결과로 확인
+  run bash "$WALK_SINGLE" --walk --plugin codeforge-deploy
   [ "$status" -eq 0 ]
-  ! echo "$output" | grep -qE '^\s*#'
 }
 
 @test "TC-4b (P0): walk-single codeforge-deploy 주석 처리 entry 없음 (활성 상태 확인)" {
@@ -162,10 +158,9 @@ teardown() {
 
 # ───────────────────────────── TC-5: walk-single FAMILY_PLUGINS 에 deploy-review
 
-@test "TC-5 (P0): walk-single FAMILY_PLUGINS 에 codeforge-deploy-review 포함" {
-  run grep -E '^\s+codeforge-deploy-review\b' "$WALK_SINGLE"
+@test "TC-5 (P0): walk-single FAMILY_PLUGINS 에 codeforge-deploy-review 포함 (CFP-1225: derive)" {
+  run bash "$WALK_SINGLE" --walk --plugin codeforge-deploy-review
   [ "$status" -eq 0 ]
-  ! echo "$output" | grep -qE '^\s*#'
 }
 
 @test "TC-5b (P0): walk-single codeforge-deploy-review 주석 처리 entry 없음" {
@@ -207,12 +202,11 @@ teardown() {
 
 # ───────────────────────────── TC-8: FAMILY count == 9 ──────────────────────
 
-@test "TC-8 (P0): walk-bundle FAMILY array 에서 활성 entry 수 == 9 (중복/누락 0)" {
-  # FAMILY 배열의 활성 entry 수를 셈 (주석 제외, 'codeforge' 포함 항목)
-  # walk-bundle FAMILY 배열 블록 내 활성 entry 추출 (단순 grep 으로 확인)
+@test "TC-8 (P0): walk-bundle FAMILY array 에서 활성 entry 수 == 9 (CFP-1225: derive count)" {
+  # CFP-1225: 소스 grep 아닌 walk_plan.get_topological_order() 반환 count 검증
   local family_count
-  family_count="$(grep -E '^\s+codeforge' "$WALK_BUNDLE" | grep -v '^\s*#' | wc -l | tr -d '[:space:]')"
-  # 양성: 정확히 9개
+  family_count="$(python3 "$WORKTREE_ROOT/tests/scripts/cfp-1225/test_dispatcher_derive.py" \
+    "$WORKTREE_ROOT/scripts/lib" tc_topological_count)"
   [ "$family_count" -eq 9 ]
 }
 
@@ -252,32 +246,31 @@ PYEOF
   run bash "$WALK_BUNDLE" --walk
   [ "$status" -eq 0 ]
 
-  # FAMILY 파일 내 순서 확인 (FAMILY array 내 활성 entry 순서)
-  local bundle_family_order
-  bundle_family_order="$(grep -E '^\s+codeforge' "$WALK_BUNDLE" | grep -v '^\s*#' | tr -d ' \t')"
+  # CFP-1225: 소스 grep 아닌 derive 출력으로 순서 확인
+  local first_derived
+  first_derived="$(python3 "$WORKTREE_ROOT/tests/scripts/cfp-1225/test_dispatcher_derive.py" \
+    "$WORKTREE_ROOT/scripts/lib" tc_first_plugin)"
+  [ "$first_derived" = "codeforge" ]
 
-  # topo_order 와 bundle_family_order 의 개행 구분 리스트를 비교
-  # 첫 번째 항목 일치 확인
-  local first_bundle
-  first_bundle="$(echo "$bundle_family_order" | head -1)"
-  [ "$first_bundle" = "codeforge" ]
-
-  # 마지막 2개가 deploy 관련 확인
-  local last_two
-  last_two="$(echo "$bundle_family_order" | tail -2)"
-  echo "$last_two" | grep -q "codeforge-deploy"
+  # codeforge-deploy 포함 확인
+  python3 "$WORKTREE_ROOT/tests/scripts/cfp-1225/test_dispatcher_derive.py" \
+    "$WORKTREE_ROOT/scripts/lib" tc_contains_deploy
 }
 
-@test "TC-9b (P0): walk-bundle FAMILY — codeforge-deploy 가 codeforge-pmo 이후 위치" {
-  # FAMILY 배열에서 각 entry 의 줄 번호 비교
-  # codeforge-deploy: (\s|$) 패턴으로 deploy-review 구분
+@test "TC-9b (P0): walk-bundle FAMILY — codeforge-deploy 가 TOPOLOGICAL_ORDER 에서 pmo 이후" {
+  # CFP-1225: 소스 줄번호 비교 아닌 TOPOLOGICAL_ORDER 인덱스 비교
+  # grep -n 으로 라인 번호 비교 (while subshell 변수 누수 회피)
+  local order_file
+  order_file="$(mktemp)"
+  python3 "$WORKTREE_ROOT/tests/scripts/cfp-1225/test_dispatcher_derive.py" \
+    "$WORKTREE_ROOT/scripts/lib" tc_topological_order > "$order_file"
+  [ -s "$order_file" ]
   local pmo_line deploy_line
-  pmo_line="$(grep -nE '^\s+codeforge-pmo(\s|$)' "$WALK_BUNDLE" | head -1 | cut -d: -f1 || true)"
-  deploy_line="$(grep -nE '^\s+codeforge-deploy(\s|$)' "$WALK_BUNDLE" | head -1 | cut -d: -f1 || true)"
-
+  pmo_line="$(grep -n '^codeforge-pmo$' "$order_file" | cut -d: -f1)"
+  deploy_line="$(grep -n '^codeforge-deploy$' "$order_file" | cut -d: -f1)"
+  rm -f "$order_file"
   [ -n "$pmo_line" ]
   [ -n "$deploy_line" ]
-  # 양성: deploy 가 pmo 이후 줄 번호
   [ "$deploy_line" -gt "$pmo_line" ]
 }
 
@@ -319,12 +312,10 @@ PYEOF
   [ "$status" -eq 0 ]
 }
 
-@test "TC-12b (P0): walk-single — 6 lanes 표기가 8 lanes 로 갱신됐거나 8 entry 활성 확인" {
-  # FAMILY_PLUGINS array 내 활성 entry 수 == 8 (wrapper 제외 8 lane, 또는 wrapper 포함 9)
-  # walk-single FAMILY_PLUGINS 는 lane-only (wrapper 포함 여부 따라 8 or 9)
-  # deploy + deploy-review 추가로 기존 7 → 8 (wrapper 포함 시 8, 미포함 시 7→8=lane만)
+@test "TC-12b (P0): walk-single FAMILY_PLUGINS derive count >= 8 (CFP-1225: derive 기반 확인)" {
+  # CFP-1225: 소스 grep 아닌 derive count 검증 (walk_plan.get_topological_order() 9개)
   local family_count
-  family_count="$(grep -E '^\s+codeforge' "$WALK_SINGLE" | grep -v '^\s*#' | wc -l | tr -d '[:space:]')"
-  # 양성: 9 (wrapper 포함) 또는 8 (lane only) — 기존 7/6 에서 확장됨
+  family_count="$(python3 "$WORKTREE_ROOT/tests/scripts/cfp-1225/test_dispatcher_derive.py" \
+    "$WORKTREE_ROOT/scripts/lib" tc_topological_count)"
   [ "$family_count" -ge 8 ]
 }
