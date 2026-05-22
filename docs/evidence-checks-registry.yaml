@@ -3539,7 +3539,7 @@ entries:
         ≥ ADR-045 §D-9 threshold 2 Mandatory escalation 산물.
       Warning-tier — exit 0 항상 (PR merge 미차단). exit 1 = genuine malformed (파싱 hard error).
     detect_command: bash scripts/check-amendment-number-stale.sh
-    workflow: templates/github-workflows/amendment-number-stale.yml
+    workflow: templates/github-workflows/amendment-number-frontmatter-verify.yml
     current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
     bypass_label: hotfix-bypass:amendment-number-stale
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
