@@ -7,6 +7,22 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.2.1] - 2026-05-22
+
+### Fixed
+
+- [CFP-1243] S4 producer (`scripts/check_rollback_signal.py`) enum literal conformance — `operational-signal-v1` closed `signal_type` enum drift 해소 (Option B: contract = SSOT, producer 가 conform).
+  - `scripts/check_rollback_signal.py`: burn-rate 임계 초과 시 emit 하던 비정규 literal `burn_rate` → §결정 3 / `operational-signal-v1` 정규 enum value `latency_burn_rate` 로 conform (`check_safety_1` L142 string literal 1건 + docstring 출력 포맷 L30 1건, surgical). burn-rate 입력 metric 명칭 (변수 `burn_rate` / `--burn-rate` CLI flag / prose) 은 무변경 — 비정규였던 것은 emit signal_type literal 뿐.
+  - `tests/scripts/cfp-1193/check-rollback-signal.bats`: TC-2 assertion 을 `signal_type=latency_burn_rate` 정확 비교 + 비정규 `signal_type=burn_rate` 출현 금지 guard 로 강화 + TC-15 contract-binding guard 신설 (producer emit non-none signal_type ∈ closed enum {error_rate, latency_burn_rate, regression, smoke_health} membership 보증 — future drift 차단). TDD RED (line 142 비정규 상태에서 TC-2/TC-15 FAIL) → GREEN (conform 후 20/20 PASS).
+  - `docs/inter-plugin-contracts/operational-signal-v1.md`: `signal_type` row note 를 deferred follow-up CFP 기록 → RESOLUTION 으로 갱신 (producer 가 정규 `latency_burn_rate` emit, alias 없음). enum value / `version` frontmatter 무변경 (editorial note correction — schema/enum 변경 0, MANIFEST registries sync 불요).
+  - `docs/adr/ADR-106-operational-signal-pmo-input-circuit.md`: Amendment 3 추가 (S4 producer emit literal `burn_rate` → `latency_burn_rate` conformance 기록). §결정 3 closed enum 4-value 자체는 무변경 (이미 정규). is_transitional false 유지 (corrective conformance — additive trail, strengthening, sunset_justification null).
+  - plugin.json 6.2.0 → 6.2.1 PATCH (ADR-037 — enum drift 버그 fix, `fix:` commit signal; ADR-106 Amendment 3 = corrective trail, 신규 capability 0). marketplace atomic sync 별도 sibling PR 의무 (ADR-063 §결정 5, mirrored field version 변경).
+
+### Cross-ref
+
+- Issue: #1243
+- ADR: ADR-106 (Amendment 3)
+
 ## [6.2.0] - 2026-05-22
 
 ### Added

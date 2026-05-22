@@ -62,7 +62,7 @@ ADR-106 §결정 3 KPI append-only state 구조 (10-field) 와 동일. `operatio
 | field | type | required | 의미 | invariant |
 |---|---|:-:|---|---|
 | `signal_signature` | string | Y | `<signal_type>:<measured_value>:<window>` (S4/S5 sha256 signature 의 human-readable form) | dedup key canonical = S4/S5 16-char sha256 hex (`sha256(signal_type\|measured\|window) \| head -c 16`, `check_rollback_signal.py` L20). colon-form 은 KPI jsonl human-readable view (dedup 비사용). Issue-level [S4/S5] + Epic-level [S6] dedup 모두 hex signature 기준 |
-| `signal_type` | enum | Y | `error_rate` \| `latency_burn_rate` \| `regression` \| `smoke_health` (measurement-channel.md 4종 신호) | closed enum (open_extension: false — 신규 신호 유형 추가 시 MINOR bump). **note**: `latency_burn_rate` = S4 producer (`check_rollback_signal.py`) emit literal `burn_rate` 의 contract 정규명 — enum value ↔ producer literal alias. 근원 drift (ADR-106 §결정 3 `latency_burn_rate` ↔ S4 producer `burn_rate`) reconcile = follow-up CFP (본 S6 scope 외 — dedup 은 hex signature 라 런타임 무영향) |
+| `signal_type` | enum | Y | `error_rate` \| `latency_burn_rate` \| `regression` \| `smoke_health` (measurement-channel.md 4종 신호) | closed enum (open_extension: false — 신규 신호 유형 추가 시 MINOR bump). **note**: S4 producer (`check_rollback_signal.py`) 가 burn-rate 임계 초과 시 정규 enum value `latency_burn_rate` 를 emit 한다 (CFP-1243 / ADR-106 Amendment 3 — producer 가 비정규 alias `burn_rate` → 정규명 `latency_burn_rate` 로 conform, 근원 drift 해소 완료). enum value ↔ producer literal 일치 — alias 없음 |
 | `measured_value` | number | Y | 측정값 (정량 — ADR-064 모달 어휘 금지) | append-only (덮어쓰기 0) |
 | `threshold` | number | Y | 임계값 (consumer SLO) | — |
 | `window` | string | Y | 측정 window (숫자+단위, 예 `3600s`) | spike vs sustained 구분 (EC-4) |

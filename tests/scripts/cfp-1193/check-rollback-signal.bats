@@ -18,6 +18,7 @@
 #   TC-12: exit 3-tier — 정상=0 / SETUP error=2
 #   TC-13: EC-4 — 기존 hook 부재 → exit 2 + escalation Issue + 자동 재시도 0
 #   TC-14: 안전장치 일부 충족 AND false → trigger 0 (EC-7)
+#   TC-15: CFP-1243 contract-binding guard — emit signal_type ∈ operational-signal-v1 closed enum
 #
 # Mock seam:
 #   _CFP1193_MOCK_* — 본 S4 signal/config 주입
@@ -115,23 +116,24 @@ teardown() {
 
 # ---
 # TC-2: burn_rate 임계 초과 → trigger + Issue
+#   CFP-1243: 산출 signal_type = 정규명 latency_burn_rate (contract enum value)
 # ---
-@test "TC-2: latency burn_rate 임계 초과 + 4 AND 충족 → trigger + Issue" {
+@test "TC-2: latency burn_rate 임계 초과 + 4 AND 충족 → trigger + Issue (signal_type=latency_burn_rate)" {
   # burn rate 정량 초과 (window 산술)
   export _CFP1193_MOCK_BURN_RATE="1.5"
   export _CFP1193_MOCK_BURN_RATE_THRESHOLD="1.0"
   export _CFP1193_MOCK_ERROR_RATE="0.0"          # error_rate 는 정상
   export _CFP1193_MOCK_ERROR_RATE_THRESHOLD="0.02"
-  export _CFP1193_MOCK_SIGNAL_TYPE="burn_rate"
+  export _CFP1193_MOCK_SIGNAL_TYPE="latency_burn_rate"
   export _CFP1059_MOCK_WITHIN_RETENTION=1
 
   run bash "${SIGNAL_SH}" \
     --repo "${DEPLOY_REPO}" --host "${DEPLOY_HOST}"
 
-  [[ "${output}" == *"burn_rate"* ]] || \
-    [[ "${output}" == *"[SIGNAL]"* ]] || \
-    [[ "${output}" == *"trigger"* ]] || \
-    [[ "${output}" == *"ROLLBACK"* ]]
+  # CFP-1243: producer 가 정규 enum value latency_burn_rate emit (비정규 burn_rate 아님)
+  [[ "${output}" == *"signal_type=latency_burn_rate"* ]]
+  # 비정규 literal "signal_type=burn_rate" 절대 출현 금지 (drift guard)
+  [[ "${output}" != *"signal_type=burn_rate"* ]]
   [ "${status}" -eq 0 ]
 }
 
@@ -410,4 +412,49 @@ YAML
 
   [ "${status}" -eq 0 ]
   [[ "${output}" != *"[ROLLBACK]"* ]]
+}
+
+# ---
+# TC-15: CFP-1243 contract-binding guard —
+#   producer 가 emit 하는 non-none signal_type 값이 operational-signal-v1 의
+#   closed enum {error_rate, latency_burn_rate, regression, smoke_health} 의
+#   MEMBER 임을 보증. 비정규 alias (burn_rate 등) 출현 시 FAIL.
+#   ADR-106 §결정 3 / operational-signal-v1 §3.1 signal_type enum 정합.
+#   check_rollback_signal.py 의 reachable non-none 값 = {error_rate, latency_burn_rate}.
+# ---
+@test "TC-15: contract-binding — emit signal_type ∈ operational-signal-v1 closed enum (CFP-1243)" {
+  # operational-signal-v1 §3.1 closed enum (open_extension: false)
+  local CONTRACT_ENUM="error_rate latency_burn_rate regression smoke_health"
+
+  # --- case A: burn-rate 임계 초과 → 정확히 latency_burn_rate emit ---
+  run python3 "${SIGNAL_PY}" \
+    --error-rate "0.0" \
+    --error-rate-threshold "0.02" \
+    --burn-rate "1.5" \
+    --burn-rate-threshold "1.0" \
+    --window "3600" \
+    --kill-switch-flag "" \
+    --config-disabled "false"
+  [ "${status}" -eq 0 ]
+  local SIG_TYPE_A
+  SIG_TYPE_A=$(echo "${output}" | grep "^signal_type=" | cut -d= -f2)
+  # 정확히 latency_burn_rate (비정규 burn_rate 절대 아님)
+  [ "${SIG_TYPE_A}" = "latency_burn_rate" ]
+  # closed enum membership 확인
+  [[ " ${CONTRACT_ENUM} " == *" ${SIG_TYPE_A} "* ]]
+
+  # --- case B: error-rate 임계 초과 → error_rate emit (enum member) ---
+  run python3 "${SIGNAL_PY}" \
+    --error-rate "0.05" \
+    --error-rate-threshold "0.02" \
+    --burn-rate "0.0" \
+    --burn-rate-threshold "1.0" \
+    --window "3600" \
+    --kill-switch-flag "" \
+    --config-disabled "false"
+  [ "${status}" -eq 0 ]
+  local SIG_TYPE_B
+  SIG_TYPE_B=$(echo "${output}" | grep "^signal_type=" | cut -d= -f2)
+  [ "${SIG_TYPE_B}" = "error_rate" ]
+  [[ " ${CONTRACT_ENUM} " == *" ${SIG_TYPE_B} "* ]]
 }
