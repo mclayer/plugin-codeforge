@@ -26,6 +26,28 @@ amendments:
         `wave_2_wire_carrier: <S2 또는 S3>` 명시. ADR frontmatter
         `mechanical_enforcement_actions[]` entry status `declaration-only-Wave-1 → warning`
         promotion = full-lane 거침 의무 anchor.
+  - amendment_id: 2
+    date: 2026-05-22
+    carrier_story: CFP-1247
+    title: "doc-only fast-path Category 2 → ADR-052 Codex 6-touchpoint dispatch 면제 explicit declare"
+    description: |
+      §결정 7 신설 — doc-only fast-path (Category 2) Story 는 lane spawn 0 (단일 PR,
+      6-lane gate 면제) 이므로 ADR-052 Codex 6 touchpoint (lane stage 발동 — TP#1
+      AskUserQuestion 직전 / TP#2 ArchitectAgent §3 직후 mandatory CFP-532 / TP#3
+      DeveloperPL FIX 2+ / TP#4 RequirementsPL §1-§6 / TP#5 ArchitectPL root cause /
+      TP#6 ArchitectAgent ADR 초안) 가 자연히 0회 발동한다. 본 면제가 implicit (lane
+      부재의 귀결) 이고 정책 SSOT 에 explicit 미명시 — CFP-1125 (9-ADR sunset doc-only)
+      retro 가 TP#0~#6 0회 발동을 의도된 design 으로 확인 (§6 escalation 후보 (a)).
+      §결정 7 = 이 면제를 explicit codify (ambiguity 차단). ADR-052 cross-ref.
+    sunset_justification: |
+      metric — doc-only fast-path Category 2 Story 의 Codex touchpoint dispatch 0회
+        (lane spawn 0 = touchpoint 발동 지점 0, CFP-1125 retro TP#0~#6 0회 sentinel).
+      who — Orchestrator (Story 분류 시 doc-only fast-path 판정 = touchpoint 면제 동반).
+      how — Story 분류 시 doc-only fast-path (Category 2) 판정 시 ADR-052 6-touchpoint
+        dispatch skip (lane spawn 부재 = 자연 귀결). full-lane / Phase 2 src 변경 Story =
+        touchpoint mandatory 영역 retain (§결정 7 면제 = doc-only Category 2 한정).
+      NOTE — 본 Amendment = explicit codify (기존 implicit 동작 명시화, 약화 0 — 면제
+        영역이 lane spawn 0 의 자연 귀결이므로 ratchet 중립, ADR-058 §결정 5 정합).
 related_stories:
   - CFP-357
   - CFP-358
@@ -34,6 +56,7 @@ related_stories:
 related_adrs:
   - ADR-013
   - ADR-024
+  - ADR-052
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md
@@ -126,6 +149,35 @@ refinement — fast-path 영역 확장 (declarative seed 영역 포함). **ratch
 - `templates/github-workflows/` 7 seed + `continue-on-error: true` placeholder
   = §결정 6.2 fast-path 적격
 - `scripts/bootstrap-labels.sh` + `atomic-upgrade-7-plugins.sh` sync = §결정 6.3 fast-path 적격
+
+### §결정 7 — Amendment 2: doc-only fast-path Category 2 → ADR-052 Codex 6-touchpoint dispatch 면제 (explicit declare)
+
+**Amendment 2 (2026-05-22 KST, carrier_story: CFP-1247)**: doc-only fast-path (§결정 1 "doc-only fast-path" 분류 = Category 2) Story 는 lane spawn 0 (§결정 3 — 단일 PR, 구현 lane spawn 금지, 6-lane gate 면제) 이므로, **ADR-052 Codex 6 touchpoint 의 mandatory dispatch 가 자연히 0회 발동**한다. 본 면제를 explicit codify — ratchet 중립 (기존 implicit 동작 명시화, 약화 0).
+
+**면제 근거 (lane gate 면제의 자연 귀결)**:
+
+ADR-052 6 touchpoint 는 모두 **lane stage 에서 발동**한다:
+
+| touchpoint | 발동 지점 (lane stage) | doc-only fast-path 발동 여부 |
+|---|---|---|
+| TP#1 | `AskUserQuestion` 직전 | 면제 (해당 시 dialog turn — lane 무관, optional 영역) |
+| TP#2 | ArchitectAgent §3 완료 직후 (**mandatory** CFP-532) | **면제** (doc-only = §3 N/A, ArchitectAgent §3 산출물 부재) |
+| TP#3 | DeveloperPLAgent FIX 2+ 감지 | 면제 (구현 lane spawn 0 = FIX loop 부재) |
+| TP#4 | RequirementsPLAgent §1-§6 완료 직후 (multi-round debate) | 면제 (경량 요구사항 — debate 발동 영역 외) |
+| TP#5 | ArchitectPLAgent root cause 판정 직후 | 면제 (FIX 부재 = root cause 판정 부재) |
+| TP#6 | ArchitectAgent ADR 초안 완료 직후 | **면제 단 조건부** — 신규 ADR 도입 = §결정 4 full-lane 강제 (doc-only fast-path 제외) → TP#6 가 doc-only 영역에서 발동할 ADR 초안 = 기존 ADR Amendment only (신규 ADR 아님) |
+
+→ doc-only fast-path Category 2 = lane spawn 0 = 6 touchpoint 발동 지점 0. 특히 **TP#2 mandatory (CFP-532)** 도 doc-only 에서는 §3 (도입할 설계) 산출물 자체가 `N/A — doc-only fast-path` (§결정 3) 이므로 dispatch 대상 부재.
+
+**면제 boundary (Category 2 한정)**:
+
+- 면제 = **doc-only fast-path (Category 2) 한정**. full-lane Story (신규 ADR / src·tests 변경 / `templates/github-workflows/**`) = ADR-052 6 touchpoint mandatory 영역 **retain** (특히 TP#2 mandatory CFP-532).
+- §결정 6 (Amendment 1) declarative seed fast-path 영역도 본 면제 적용 (doc-only fast-path 의 sub-영역 — lane spawn 0 동일).
+- **신규 ADR 도입 시 TP#6 영역**: §결정 4 가 신규 ADR = full-lane 강제 이므로, doc-only fast-path 안에서 ADR 초안 = 기존 ADR Amendment only → 신규 ADR 의 TP#6 mandatory 는 full-lane 경로에서 retain (모순 없음).
+
+**SSOT 위임**: ADR-052 본문은 본 §결정 7 을 doc-only fast-path 면제 SSOT 로 cross-ref only (중복 codification 회피, ADR-065 §결정 5 정합). 본 ADR-054 §결정 7 = 면제 영역 anchor.
+
+**mechanical enforcement N/A**: 면제는 lane spawn 0 의 자연 귀결 (touchpoint 발동 지점 부재) 이므로 별도 enforce 불요. declaration-only (CFP-1125 retro TP#0~#6 0회 sentinel 이 이미 의도된 design 확인).
 
 ## 결과
 
