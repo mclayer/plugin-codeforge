@@ -642,4 +642,31 @@ owned_sections:
     # 디렉터리 자체가 신설 (Glob('docs/domain-knowledge/domain/test-discipline/') = 0
     # result, CodebaseMapper verified). append-only — 동일 디렉터리 안 추가 entry 신설 자유.
 
+  # ─── CFP-1336 Wave 1 (cross-repo bidirectional label sync, 2026-05-24 KST) — 3 ADR Amendment paired triple-sibling carrier ───
+  - file: docs/change-plans/cfp-1336-cross-repo-label-sync.md
+    section: "CFP-1336 Phase 1 Change Plan (§1-§13 — Wave 1 declarative scope: ADR-073 Amendment 9 + ADR-082 Amendment 14 + ADR-066 Amendment 4 + workflow skeleton + label-registry v2.54 + comment-prefix v1.4 + evidence-checks-registry entry, CFP-1302 D-4 chief tie-break dissent carry-over F2 carrier. FIX iter 3 FINAL per ADR-067 max 3/3 cap reach + user explicit continuation override)"
+    owner_adr: ADR-064  # CFP scope unitary
+    parallel_edit: locked
+
+  - file: docs/adr/ADR-082-write-time-self-write-verification-mandate.md
+    section: "Amendment 14 — §결정 1 layer 1 sub-scope (1-D) cross-repo label-write authority 4-tuple verify primitive (CFP-1336)"
+    owner_adr: ADR-082
+    parallel_edit: append-only
+    # NOTE (CFP-1336): Amendment slot history (FIX iter chain — Amd 8 → 10 → 12 → 13 → 14 history, 5 collisions, CFP-1390 mid-DesignReview spawn collision 추가): spawn Amd 8 → iter 1 Amd 10 → iter 2 Amd 12 → iter 3 Amd 13 → iter 4 Amd 14 FINAL (ADR-067 max 3/3 cap EXCEED + user explicit continuation override). amendment_number_stale_at_planning pattern_count 8+ reach single Story 4-reach lineage (5th collision) ADR-045 §D-9 Mandatory escalation 정합.
+
+  - file: docs/adr/ADR-073-orchestrator-verify-before-assert.md
+    section: "Amendment 9 — §결정 1 transition trigger enum 9번째 entry `label_change` (CFP-1336)"
+    owner_adr: ADR-073
+    parallel_edit: append-only
+
+  - file: docs/adr/ADR-066-pat-rotation-policy.md
+    section: "Amendment 4 — §결정 2 PAT scope `issues:write` cross-repo label sync 인가 (CFP-1336)"
+    owner_adr: ADR-066
+    parallel_edit: append-only
+
+  - file: templates/github-workflows/cross-repo-label-sync.yml
+    section: "Wave 1 skeleton (declaration-only) — cross-repo bidirectional label sync workflow (CFP-1336)"
+    owner_adr: ADR-073
+    parallel_edit: locked
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)

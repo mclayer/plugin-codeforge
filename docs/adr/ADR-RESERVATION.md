@@ -213,6 +213,21 @@ amendments_reserved:
     reserved_by_cfp: CFP-1339
     reservation_date: 2026-05-24 KST
     status: active   # Orchestrator inline write — §결정 14 신설 PMOAgent retro batch closure pattern workflow codify (carrier: memory feedback_cfp_retro_batch_closure_pattern, pattern_count 2 reach CFP-963 retro 4-batch + CFP-1340/1329/1330/1332/1338/1339 본 6-CFP batch 2nd applied case). PMOAgent retro 시 multi follow-up CFP candidates batch-create simultaneously + sequential doc-only fast-path execution single session pattern + same lane execution + FLUID bypass label set. 1 memory entry normative 승격 carrier, ADR-082 super-class scope expansion to retro-emission batch closure workflow axis (write-time + retro-time + GitOps coordination + retro batch closure 4-axis 통합). wrapper-only ADR-010 sibling sync 면제 (PMOAgent.md lane plugin cross-ref = follow-up defer). verified-via Read worktree docs/adr/ADR-082-...md frontmatter amendments[] L11-70 max=11 → next=12 2026-05-24 KST 기준 origin/main c36ee92 (CFP-1338 Amendment 11 merge 후 base). META-self-applied (§결정 10.D 7th applied case + 본 batch 마지막 closure proof — pattern WORKING evidence).
+  - adr_number: 73
+    amendment_id: 9
+    reserved_by_cfp: CFP-1336
+    reservation_date: 2026-05-24 KST
+    status: active   # ArchitectAgent commit time 점유 (Story Phase 1 PR carrier — Amendment 9 §결정 1 transition trigger enum 9번째 entry `label_change` 신설, lane-entry sentinel polling 시점 label transition 발견 시 sentinel pickup 의무 codify, ADR-082 Amendment 14 sub-scope 1-D paired carrier 같은 CFP-1336 Story 안 dual-binding verify 의무 ↔ write authority 의무 disjoint axis pair). FIX iter 4 FINAL per ADR-067 max 3/3 cap EXCEED + user explicit "다음 작업 끝까지 수행해" continuation override. verified-via Read worktree docs/adr/ADR-073-...md frontmatter amendments[] max=8 → next=9 2026-05-24 KST 기준 origin/main 4e341e5 (CFP-1390 Amendment 13 merge 후 base, ADR-082 Amd 13 → Amd 14 renumber). ADR-082 Amendment 14 row 직전 paired carrier 정합. status `reserved` 미경유 직접 `active` 전환 (ArchitectAgent chief author precedent).
+  - adr_number: 82
+    amendment_id: 14
+    reserved_by_cfp: CFP-1336
+    reservation_date: 2026-05-24 KST
+    status: active   # ArchitectAgent commit time 점유 (Story Phase 1 PR carrier — Amendment 14 §결정 1 layer 1 sub-scope 1-D 신설 cross-repo label-write authority verify mandate, ADR-073 Amendment 9 paired carrier dual-binding, ADR-066 Amendment 4 동반 3 ADR paired Amendment carrier). FIX iter 4 FINAL per ADR-067 max 3/3 cap EXCEED + user explicit continuation override. Amendment slot history (FIX iter chain — Amd 8 → 10 → 12 → 13 → 14 history, 5 collisions, CFP-1390 mid-DesignReview spawn collision 추가): spawn Amd 8 → iter 1 Amd 10 → iter 2 Amd 12 → iter 3 Amd 13 → iter 4 Amd 14 FINAL. amendment_number_stale_at_planning pattern_count 8+ reach (CFP-1293/1303/1318/1336-iter1/1336-iter2/1336-iter3/1336-iter4 single Story 4 reach, 5th collision) ADR-045 §D-9 Mandatory escalation 정합 — Orchestrator retro 의무 (follow-up CFP for amendment-slot-reservation forcing function mechanism 평가). verified-via git show origin/main:docs/adr/ADR-082-...md frontmatter amendments[] max=13 → next=14 2026-05-24 KST 기준 origin/main 4e341e5 (CFP-1390 Amendment 13 merge 후 base). META-self-applied (§결정 10.D 9th applied case). status `reserved` 미경유 직접 `active` 전환 (ArchitectAgent chief author precedent — ADR-082 row 82.13 (CFP-1390) 직전 패턴 정합).
+  - adr_number: 66
+    amendment_id: 4
+    reserved_by_cfp: CFP-1336
+    reservation_date: 2026-05-24 KST
+    status: active   # ArchitectAgent commit time 점유 (Story Phase 1 PR carrier — Amendment 4 §결정 2 PAT scope `issues:write` cross-repo label sync 인가 — ADR-073 Amendment 9 + ADR-082 Amendment 14 paired carrier 같은 CFP-1336 Story 안 3 ADR paired Amendment). FIX iter 4 FINAL per ADR-067 max 3/3 cap EXCEED + user explicit continuation override. verified-via Read worktree docs/adr/ADR-066-...md frontmatter amendments[] max=3 → next=4 2026-05-24 KST 기준 origin/main 4e341e5 (CFP-1390 Amendment 13 merge 후 base, ADR-082 Amd 13 → Amd 14 renumber). status `reserved` 미경유 직접 `active` 전환 (ArchitectAgent chief author precedent — ADR-082 Amendment 14 row 직전 paired carrier 정합).
 ```
 
 ## 해소 기준
