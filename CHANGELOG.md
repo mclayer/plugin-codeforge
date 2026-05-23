@@ -7,6 +7,26 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.6.1] - 2026-05-24
+
+### Added
+
+- [CFP-1334-Phase2] **bats fixture RED→GREEN proof presence lint mechanical wire** (Phase 1 #1374 declaration-only Wave 1 → Phase 2 active warning-tier 전환)
+  - `scripts/lib/check_bats_red_green_proof.py` — Python lint SSOT, 5-marker grep-presence heuristic (pre_impl_sha / git_stash_sequence / role_vocabulary / red_green_anchor / platform_verified) ≥3/5 PASS threshold (ADR-061 §결정 1 + Amendment 1 §결정 6.A external .py split)
+  - `scripts/check-bats-red-green-proof.sh` — 8-line bash thin wrapper
+  - `templates/github-workflows/bats-red-green-proof.yml` + `.github/workflows/bats-red-green-proof.yml` — sibling parity byte-identical (ADR-005), PR trigger on tests/**/*.bats + lint script + registry paths, hotfix-bypass:bats-red-green-proof label early exit
+  - `tests/scripts/check-bats-red-green-proof/test_check_bats_red_green_proof.bats` — **META self-app dogfood closing-the-loop** (memory `feedback_meta_self_application_pattern` 정합). 5 TC: TC-1 discriminating (high-marker fixture PASS) + TC-2 regression_guard (zero-marker fixture WARN) + TC-3 bootstrap (empty argv no-files exit 0) + TC-4 META self-app (lint applied to THIS fixture = PASS 5/5 markers) + TC-5 bypass-env (skip placeholder). pre_impl_sha = 7afcebb (Phase 1 merge commit, pre-Phase-2 HEAD). RED→GREEN stash proof manual reproduction sequence 명시 (git stash push --include-untracked → bats run → expect TC-1+TC-4 FAIL → git stash pop → 5/5 PASS).
+  - `docs/evidence-checks-registry.yaml` — entry `bats-red-green-proof-presence` status `deferred-followup` → `warning` direct 전환 + detect_command + workflow populated (Phase 1 squash merge entry append loss 흡수, Phase 2 active state 직접 declare)
+  - `CHANGELOG.md` — 본 entry [6.6.1]
+  - `.claude-plugin/plugin.json` — version 6.6.0 → 6.6.1 PATCH (ADR-037 (a) — mechanical lint coverage 확장 = plugin behavior 변경)
+
+### Out of scope (별 follow-up CFP carrier)
+
+- **CFP-FU-1**: CFP-1302 retroactive 33 TC RED→GREEN proof 부착 (test_phase_gate_mergeable_yml.bats 13 + test_phase_gate_auto_cleanup_yml.bats 20)
+- **CFP-FU-2**: ADR-061 Amendment 3 bats 영역 확장 검토 (axis 정합, pattern_count ≥ 2 reach 시)
+- **CFP-FU-3**: ADR-068 Amendment 4 (I-7) 또는 ADR-082 Amendment N (Phase 2 evidence 누적 후)
+- **CFP-FU-4**: marketplace_sync strict invariant (ADR-063 §결정 21 Amendment carrier, version-only bump 시 마켓플레이스 동시 sync 결정 룰 명문화)
+
 ## [6.6.0] - 2026-05-24
 
 ### Added
