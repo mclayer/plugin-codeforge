@@ -3814,3 +3814,70 @@ entries:
       last_occurrence: "2026-05-23T00:00:00Z"  # Epic-A CFP-1146 close retro internal-docs#797 corpus enumeration final sentinel KST 09:00 = UTC 00:00 (registry schema v1.2 정합)
       promotion_trigger: auto_blocking  # recurrence.count = 3 = threshold = 3 도달 → Wave 2 별 sub-CFP carrier merge 시 즉시 warning → blocking-on-pr 자동 승격 trigger 활성 (ADR-060 §결정 19 enum)
     status: deferred-followup  # Wave 1 declarative anchor only — actual script + workflow + hook + bats + label = Wave 2 별 sub-CFP carrier (worktree-self-ownership-verify Wave 2 deferred-followup precedent 답습)
+
+  # ─── CFP-1348 Wave 1 (MCP server auth token TTL freshness pre-flight verify — declarative anchor only, 2026-05-24 KST) ───
+  # ADR-073 Amendment 8 §결정 1-A (transition trigger enum 8번째 entry `mcp_token_expired_mid_flight` 추가) + §결정 1-K (MCP token freshness verify primitive) + §결정 1-L (agent spawn prompt `mcp_token_freshness_verified` field) carrier
+  # declaration source ADR-073-Amendment-8 / enforcement source ADR-060 dual-binding (codex-network-scope-presence + worktree-self-ownership-verify + subagent-sibling-story-polling-evidence precedent 답습)
+  # deferred-followup status — actual SessionStart hook (templates/.claude/hooks/SessionStart-mcp-token-freshness.json.sample) + script (scripts/check-mcp-token-freshness.{sh,py}) + workflow (templates/github-workflows/mcp-token-freshness-precheck.yml + .github/workflows/ self-app byte-identical) + bats fixture pair = Wave 2 별 sub-CFP carrier 후 Active 전환
+  # parallel-work-sentinel-pickup (CFP-966 → CFP-967 chain) + worktree-self-ownership-verify + subagent-sibling-story-polling-evidence precedent 답습 — Wave 1 declaration / Wave 2 mechanical wire 분리 (ADR-064 §결정 1 CFP scope unitary 정합)
+  - name: mcp-token-freshness-precheck
+    description: |
+      ADR-073 Amendment 8 §결정 1-A (transition trigger enum 8번째 entry
+      `mcp_token_expired_mid_flight` 추가, closed-set ratchet 9번째 trigger 추가 시
+      Amendment 강화 방향만) + §결정 1-K (MCP token freshness verify primitive 3-step:
+      (1) session age estimate vs threshold default 45분 / (2) last MCP call success
+      timestamp 5분 이내 / (3) 사용자 `/mcp` 재인증 요청 + verify) + §결정 1-L (agent
+      spawn prompt 안 `mcp_token_freshness_verified: bool` field + 누적 session age
+      + last MCP call elapsed time 의무) mechanical verification — MCP server
+      (`mcp__plugin_*`, `mcp__github__*`) 인증 token TTL (OAuth ~1hr) expiry
+      mid-flight 영역 pre-flight check.
+
+      lane-spawn / MCP-direct work 시작 직전 + 다회 parallel dispatch 직전 + long-
+      running session 안 매 lane re-spawn 직전 token freshness verify 의무. 5+ agent
+      batch spawn = high-risk mid-flight expiry 영역 → threshold 강화 (15분 → 30분
+      잔여 default).
+
+      Wave 1 declaration anchor only (ADR-064 §결정 1 CFP scope unitary 정합) —
+      actual SessionStart hook + script + workflow + bats fixture pair + label
+      = Wave 2 별 sub-CFP carrier 후 Active 전환 (worktree-self-ownership-verify
+      + subagent-sibling-story-polling-evidence Wave 2 deferred-followup precedent
+      답습).
+
+      sentinel pattern_count 2 reach (conservative — 본 session evidence base):
+      CFP-1146 W5-S15/S16/S17 6 parallel dispatch token expiry (전부 ~3-5분 안 fail,
+      사용자 /mcp 재인증 후 follow-up ~53min 추가 비용). 외부 session reproduction
+      = TBD pattern_count 3 reach 시 ratchet 강화.
+
+      super-class = `mcp_session_auth_layer_staleness` — Amendment 7 git layer
+      staleness 와 axis disjoint (auth ↔ git layer disjoint, 양 staleness sub-domain).
+
+      ADR-082 §결정 6 + ADR-060 Amendment 10 §결정 24 deferred-followup precedent
+      (L1417/L1452/L1574 4-instance + parallel-work-sentinel-pickup L2729 +
+      worktree-self-ownership-verify L2898 + subagent-sibling-story-polling-evidence
+      L3725 5-instance established pattern) 답습 — 신규 unique drift value 회피.
+    detect_command: bash scripts/check-mcp-token-freshness.sh  # Wave 2 별 sub-CFP carrier — scripts/check-mcp-token-freshness.sh (thin wrapper, ADR-061) + scripts/lib/check_mcp_token_freshness.py (Python SSOT — token TTL heuristic estimate + session age 누적 + last MCP call timestamp 추적) 실 file 신설
+    workflow: templates/github-workflows/mcp-token-freshness-precheck.yml  # Wave 2 별 sub-CFP carrier — byte-identical self-app .github/workflows/mcp-token-freshness-precheck.yml (ADR-005 parity)
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:mcp-token-freshness  # Wave 2 별 sub-CFP carrier — label-registry-v2 신규 entry append (현재 family member count + 1)
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized
+      failure_threshold: 0          # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1348                  # 본 entry self-carrier (Wave 1 declarative anchor — evidence-checks-registry entry + ADR-073 Amendment 8 frontmatter + §결정 1-A 8번째 entry + §결정 1-K primitive + §결정 1-L spawn prompt field)
+        # Wave 2 별 sub-CFP — SessionStart hook + script + workflow + bats + label-registry MINOR bump (TBD)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = MCP token TTL heuristic + session age estimate + last MCP call timestamp, modal phrase 검사 미포함
+    introduced_by: CFP-1348
+    introduced_date: 2026-05-24
+    owner_adr: ADR-073-Amendment-8  # declaration source ADR — §결정 1-A 8번째 entry mcp_token_expired_mid_flight + §결정 1-K primitive + §결정 1-L spawn prompt field carrier
+    carrier_adr: ADR-060            # enforcement source ADR — evidence-enforceable warning-tier framework carrier
+    recurrence:
+      count: 2                      # CFP-1146 W5-S15+S16+S17 6 parallel dispatch token expiry 다회 발생, 본 session evidence base — conservative count 2 (외부 session reproduction TBD)
+      threshold: 3                  # ADR-060 §결정 19 Amendment 6 / schema v1.2 standard default
+      last_occurrence: "2026-05-23T00:00:00Z"  # CFP-1146 Epic-A W5 다회 발생 final sentinel KST 09:00 = UTC 00:00 (registry schema v1.2 정합)
+      promotion_trigger: auto_blocking  # recurrence.count = 2 < threshold = 3 → 발화 미발효, 3 reach 시 auto-firing
+    status: deferred-followup  # Wave 1 declarative anchor only — actual SessionStart hook + script + workflow + bats + label = Wave 2 별 sub-CFP carrier (worktree-self-ownership-verify + subagent-sibling-story-polling-evidence Wave 2 deferred-followup precedent 답습)
