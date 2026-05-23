@@ -3722,3 +3722,83 @@ entries:
       threshold: 2   # ADR-103 §결정 3: "pattern_count >= 2 재발 시 promote"
       promotion_trigger: auto_blocking
     status: Active    # CFP-1146 W5-S14 Option B deny wire 완료 — Active 전환
+
+  # ─── CFP-1318 Wave 2 sibling — sub-Story carrier (subagent sibling Story polling mechanical wire — declarative anchor only, 2026-05-24 KST) ───
+  # ADR-073 Amendment 6 §결정 1-A (transition trigger enum 6번째 entry `sibling_story_handoff` 추가) + §결정 1-G (sibling Story state polling primitive) + §결정 1-H (agent vs subagent actor scope) carrier
+  # declaration source ADR-073-Amendment-6 / enforcement source ADR-060 dual-binding (codex-network-scope-presence + worktree-self-ownership-verify precedent 답습)
+  # deferred-followup status — actual script (scripts/check-subagent-sibling-story-polling.{sh,py}) + workflow (templates/github-workflows/subagent-sibling-story-polling.yml + .github/workflows/ self-app byte-identical) + bats fixture pair = Wave 2 별 sub-CFP carrier 후 Active 전환
+  # parallel-work-sentinel-pickup (CFP-966 → CFP-967 chain) + worktree-self-ownership-verify (CFP-689 → Wave 2 별 sub-CFP) precedent 답습 — Wave 1 declaration / Wave 2 mechanical wire 분리 (ADR-064 §결정 1 CFP scope unitary 정합)
+  - name: subagent-sibling-story-polling-evidence
+    description: |
+      ADR-073 Amendment 6 §결정 1-A (transition trigger enum 6번째 entry
+      `sibling_story_handoff` 추가, closed-set ratchet 7번째 trigger 추가 시 Amendment
+      강화 방향만 — Amendment 7 도 동일 invariant 보존) + §결정 1-G (sibling Story
+      state polling primitive 3-step: (1) `gh issue view <sibling> --json
+      state,labels,closedAt,updatedAt` + (2) `gh pr list --search "head:cfp-<sibling>"
+      --state all --json number,state,mergedAt,headRefOid` + (3) Epic parent
+      `gh issue view <epic> --json subIssues` cross-check) + §결정 1-H (agent vs
+      subagent actor scope 확장 — base Orchestrator 단독 영역에서 agent / subagent
+      polling 영역으로 verify subject scope 확장, bidirectional catch protocol)
+      mechanical verification — agent / subagent (chief author / Analyst / Researcher
+      / PL deputy) spawn prompt 안 sibling Story 인용 직전 + verdict packet sibling
+      Story state claim 직전 polling evidence presence-grep heuristic.
+
+      Spawn prompt 안 sibling CFP reference 패턴 (`CFP-NNN` cited in prompt + 동일
+      Epic 안 reference) 검출 시 `verified-via:` annotation (cited sibling polling
+      evidence enumerate) 부재 = warning. PR body / §14 Lane Evidence row 안
+      `sibling_story_polling_evidence` field 부재 동형 검출.
+
+      Wave 1 declaration anchor only (ADR-064 §결정 1 CFP scope unitary 정합) —
+      actual script + workflow + hook json sample + bats fixture pair + label
+      = Wave 2 별 sub-CFP carrier 후 Active 전환 (worktree-self-ownership-verify
+      Wave 2 deferred-followup precedent 답습).
+
+      sentinel pattern_count 3 reach Mandatory (ADR-045 §D-9 forcing function):
+      CFP-1226 (chief author sibling Story ADR §결정 wording stale cite, DesignReviewPL
+      미catch contagion) + CFP-1269 (Analyst subagent prior art 인용 시 sibling
+      Story 결정 사항 amend 직전 snapshot stale cite, chief synthesis stale) +
+      CFP-1273 (Researcher subagent brainstorm Phase 0 context fetch sibling Story
+      scope partial close / sub-Story 분기 단정, spec/plan stale assumption 박제 +
+      Phase 1 ArchitectAgent 재cite contagion). super-class =
+      `sibling_story_stale_claim_at_handoff`.
+
+      memory rule 6 (title-based search 의무) + rule 7 (Epic state poll 의무)
+      declarative cross-ref normative anchor — 본 entry 가 detection layer
+      (Orchestrator-side, ADR-073 Amendment 2 `parallel-work-sentinel-pickup`)
+      의 sibling-edge complement (agent/subagent-side) 확장.
+
+      bidirectional catch protocol — Orchestrator → chief handoff direction
+      (sentinel #1 차단) + chief → Orchestrator verdict direction (sentinel
+      #2/#3 차단) 양방향 mandate (단방향 catch 시 contagion 재발 risk).
+
+      ADR-082 §결정 6 + ADR-060 Amendment 10 §결정 24 deferred-followup precedent
+      (L1417/L1452/L1574 4-instance established pattern + parallel-work-sentinel-pickup
+      L2729 5-instance established pattern + worktree-self-ownership-verify L2898
+      6-instance established pattern) 답습 — 신규 unique drift value 회피.
+    detect_command: bash scripts/check-subagent-sibling-story-polling.sh  # Wave 2 별 sub-CFP carrier — scripts/check-subagent-sibling-story-polling.sh (thin wrapper, ADR-061) + scripts/lib/check_subagent_sibling_story_polling.py (Python SSOT — sibling CFP reference + polling evidence presence-grep heuristic 구현) 실 file 신설
+    workflow: templates/github-workflows/subagent-sibling-story-polling.yml  # Wave 2 별 sub-CFP carrier — byte-identical self-app .github/workflows/subagent-sibling-story-polling.yml (ADR-005 parity)
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:subagent-sibling-story-polling  # Wave 2 별 sub-CFP carrier — label-registry-v2 신규 entry append (현재 family member count + 1)
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized
+      failure_threshold: 0          # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1318                  # ADR-073 Amendment 6 carrier (declarative anchor, MERGED 2026-05-23 commit 645706da)
+        - CFP-1347                  # 본 entry self-carrier (Wave 1 declarative anchor — evidence-checks-registry entry + ADR-073 Amendment 6 frontmatter mechanical_enforcement_actions[] 3rd entry append)
+        # Wave 2 별 sub-CFP — script + workflow + hook + bats + label-registry MINOR bump (TBD)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = sibling CFP reference + polling evidence presence-grep, modal phrase 검사 미포함
+    introduced_by: CFP-1347
+    introduced_date: 2026-05-24
+    owner_adr: ADR-073-Amendment-6  # declaration source ADR — §결정 1-A 6번째 entry sibling_story_handoff + §결정 1-G primitive + §결정 1-H subject scope 확장 (Orchestrator → Orchestrator ∪ agent ∪ subagent) carrier
+    carrier_adr: ADR-060            # enforcement source ADR — evidence-enforceable warning-tier framework carrier
+    recurrence:
+      count: 3                      # PMOAgent W5 retros 누적 corpus enumeration sentinels CFP-1226 + CFP-1269 + CFP-1273 (3 occurrences of sibling_story_stale_claim_at_handoff super-class)
+      threshold: 3                  # ADR-060 §결정 19 Amendment 6 / schema v1.2 standard default
+      last_occurrence: "2026-05-23T00:00:00Z"  # Epic-A CFP-1146 close retro internal-docs#797 corpus enumeration final sentinel KST 09:00 = UTC 00:00 (registry schema v1.2 정합)
+      promotion_trigger: auto_blocking  # recurrence.count = 3 = threshold = 3 도달 → Wave 2 별 sub-CFP carrier merge 시 즉시 warning → blocking-on-pr 자동 승격 trigger 활성 (ADR-060 §결정 19 enum)
+    status: deferred-followup  # Wave 1 declarative anchor only — actual script + workflow + hook + bats + label = Wave 2 별 sub-CFP carrier (worktree-self-ownership-verify Wave 2 deferred-followup precedent 답습)
