@@ -7,6 +7,16 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.4.4] - 2026-05-23
+
+### Changed
+
+- [CFP-1288] **wording-dictionary 카테고리 (b) baseline backfill — templates 2 file 인라인 평문 정의** (CFP-604 retro F4 follow-up realized, partial). doc-only fast-path (ADR-054 Cat 1).
+  - templates/story-page-structure.md line 54 — `ratchet` 인라인 평문 정의 추가
+  - templates/architecture-doc.md line 34 — `kind:contract` 인라인 평문 정의 추가
+  - CHANGELOG.md historical entries: **history preservation invariant** (frozen records 수정 금지, ADR-079 forward-only 정합)
+  - mirrored field: prev → 6.4.4 PATCH. Marketplace sibling sync.
+
 ## [6.4.3] - 2026-05-23
 
 ### Changed
