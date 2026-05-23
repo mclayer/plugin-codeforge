@@ -1,17 +1,34 @@
 ---
-domain: deployment-mechanism
+kind: domain_fact
+type: domain-knowledge
+area: deployment-mechanism
+topic_slug: single-writer-fencing-pattern
 title: Single-writer fencing pattern (writer-lease 매커니즘)
-date: 2026-05-23
-carrier_story: CFP-1317-S1
+status: Active
+tags:
+  - deployment
+  - fencing-token
+  - writer-lease
+  - single-writer
+  - distributed-systems
 related_adrs:
-  - ADR-087  # §결정 9.3 writer-lease primary binding
+  - ADR-087
+related_stories:
+  - CFP-1317
+  - CFP-1059
 related_files:
   - docs/adr/ADR-087-deploy-lane-and-lifecycle-extension.md
   - docs/domain-knowledge/domain/deployment-mechanism/stateful-daemon-bg-eligibility.md
-  - docs/domain-knowledge/domain/jsonl-write/race-condition-handling-pattern.md  # See also — 인접 single-writer 도메인
+  - docs/domain-knowledge/domain/jsonl-write/race-condition-handling-pattern.md
+carrier_story: CFP-1317-S1
+created: 2026-05-23
+updated: 2026-05-23
+amended: 2026-05-23
 ---
 
 # Single-writer fencing pattern (writer-lease 매커니즘)
+
+## Summary
 
 ADR-087 §결정 9.3 writer-lease 매커니즘의 narrative SSOT. distributed systems literature 핵심 개념 — fencing token + TTL + 자동 만료. BG-1 (단일-writer 영속 상태) + BG-4 (non-idempotent 작업 경쟁) 영역 cover.
 

@@ -1,18 +1,34 @@
 ---
-domain: deployment-mechanism
+kind: domain_fact
+type: domain-knowledge
+area: deployment-mechanism
+topic_slug: stateful-daemon-bg-eligibility
 title: Stateful daemon blue-green 비적격 기준 (BG-1~4)
-date: 2026-05-23
-carrier_story: CFP-1317-S1
+status: Active
+tags:
+  - deployment
+  - blue-green
+  - stateful-daemon
+  - bg-eligibility
 related_adrs:
-  - ADR-087  # §결정 5 §5.2 + §결정 9 binding (본 entry = ADR-087 narrative SSOT)
-  - ADR-089  # Schema 변경 7 원칙 cross-ref (양방향 호환 / reverse 영역)
+  - ADR-087
+  - ADR-089
+related_stories:
+  - CFP-1317
+  - CFP-1059
 related_files:
   - docs/adr/ADR-087-deploy-lane-and-lifecycle-extension.md
   - docs/domain-knowledge/domain/deployment-mechanism/single-writer-fencing-pattern.md
-  - docs/domain-knowledge/domain/jsonl-write/race-condition-handling-pattern.md  # See also — single-writer 인접 도메인
+  - docs/domain-knowledge/domain/jsonl-write/race-condition-handling-pattern.md
+carrier_story: CFP-1317-S1
+created: 2026-05-23
+updated: 2026-05-23
+amended: 2026-05-23
 ---
 
 # Stateful daemon blue-green 비적격 기준 (BG-1~4)
+
+## Summary
 
 ADR-087 §결정 5 "primary blue-green + BG-1~4 비적격 시 보조 매커니즘 (§결정 9)" 의 narrative SSOT. blue-green 단일 매커니즘 가정이 stateful daemon 영역에서 깨지는 4 sub-pattern + mctrader 사례 + 보조 매커니즘 mapping codify.
 
