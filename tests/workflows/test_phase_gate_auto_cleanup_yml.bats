@@ -130,7 +130,6 @@ print('OK')
 
 # ──────────────────────────────────────────────────────────
 # T-6: GITHUB_TOKEN only — PAT secret 참조 부재 (D-4 결정)
-# ──────────────────────────────────────="I-4 self-trigger 차단"
 # ──────────────────────────────────────────────────────────
 @test "T-6: GITHUB_TOKEN only — secrets.CODEFORGE_CROSS_REPO_PAT 0 occurrence (D-4 결정)" {
   run grep -c "secrets\.CODEFORGE_CROSS_REPO_PAT" "$WORKFLOW_FILE"
