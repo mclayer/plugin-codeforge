@@ -2854,6 +2854,8 @@ GitHub Issue/PR 갱신·코멘트 기록·sub-issue 생성 불가 시:
 
 **Cross-ref 동기화 의무**: 본 표는 3 doc 동시 갱신 의무 — `docs/orchestrator-playbook.md` (정식 SSOT) · `CLAUDE.md` "Branch protection" 단락 (link only) · `docs/consumer-guide.md` §2e Branch protection (consumer mirror). 향후 phase / gate label taxonomy 변경 시 workflow yml line 195-208 + 본 표 + 3 doc 동시 갱신.
 
+**CFP-1302 추가 (phase-gate-auto-cleanup.yml + multi-gate explicit shape)**: phase 전환 시 prior gate label 자동 cleanup 은 신규 workflow `templates/github-workflows/phase-gate-auto-cleanup.yml` (CFP-1302 / CFP-604 retro F6 Wave 2) 가 담당 (SRP 분리, `phase-gate-mergeable.yml` 와 concurrency.group namespace 분리). multi-gate `required` shape = `{phase, gates: string[]}` array (semantic 변경 0, syntactic 강화 — `every()` AND invariant + B-1 empty-array fail-loud guard). `liveEntryOk` 별 변수 보존 (ADR-030 conditional gate semantics — `required.gates[]` unconditional array semantics 와 axis disjoint, CFP-1302 D-1 결정).
+
 ---
 
 ## 10. Hotfix 경로 (운영 장애 대응)

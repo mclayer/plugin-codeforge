@@ -1301,6 +1301,8 @@ gh api -X PUT repos/$ORG_REPO/branches/main/protection \
 
 Live touching Story 의 보안-테스트 phase 는 추가로 `gate:live-entry-pass` 요구 (ADR-030). Consumer 가 phase / gate label taxonomy 를 변경하지 않는 한 본 매핑은 그대로 적용.
 
+**CFP-1302 추가**: phase 전환 시 prior gate label 자동 cleanup 은 별 workflow `phase-gate-auto-cleanup.yml` (SRP 분리) 가 담당. multi-gate `required` shape = `{phase, gates: string[]}` array (semantic 변경 0, syntactic 강화). `hotfix-bypass:auto-cleanup-stale-gate` label 부착 시 auto-cleanup skip (consumer 영역에서 manual decision 의무 시 사용). 정식 SSOT = playbook §9.7.
+
 ### 2f. 보안 보강 활성화 (consumer settings)
 
 GitHub repo settings 또는 gh api로:
