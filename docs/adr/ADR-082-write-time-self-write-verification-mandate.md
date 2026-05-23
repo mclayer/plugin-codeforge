@@ -73,6 +73,12 @@ amendments:
     summary: "§결정 14 신설 — PMOAgent retro batch closure pattern (carrier: memory `feedback_cfp_retro_batch_closure_pattern` pattern_count 2 reach with CFP-963 retro 4-batch + CFP-1340/1329/1330/1332/1338 본 5-batch 2nd applied case). Multi-CFP retro emission → batch-create simultaneously + sequential doc-only fast-path execution single session pattern codify. 1 memory entry normative 승격 carrier — workflow pattern reusability evidence ~6h cumulative for 4 consecutive Stories (CFP-963 precedent) → ~10h for 5 consecutive Stories (본 batch CFP-1340/1329/1330/1332/1338 + 본 CFP-1339)."
     direction: strengthening
     sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: ADR-082 super-class scope expansion to retro-emission batch closure workflow layer, forbid scope 축소 아님). pattern_count evidence: §결정 14=2 reach (CFP-963 retro 4-batch + CFP-1340/1329/1330/1332/1338 본 5-batch 2nd applied case). ADR-064 §결정 7 (CFP-1149 Amendment 8) symmetric evidence-gated 정합."
+  - amendment_id: 13
+    carrier_story: CFP-1390
+    date: 2026-05-24
+    summary: "§결정 10.D META self-application pattern Wave 2 mechanical wire declarative anchor (CFP-1346 retro F2-FU Optional follow-up carrier). pattern_count cumulative 5 reach: CFP-1016 1st applied / CFP-1340 §결정 15 2nd applied / CFP-1329 Amendment 8 3rd applied (META self-applied by codifying itself) / CFP-1346 ADR-108 §결정 6 4th applied (description '74번째' claim = raw post-append count 74 PARITY) / 본 Amendment 13 5th applied (META self-applied — 본 Amendment 가 §결정 10.D pattern 의 declarative ratchet 강화 carrier). Wave 2 actual mechanical wire (detection logic for Story-self codification 1st applied case) = 별 sub-CFP carrier deferred-followup. `mechanical_enforcement_actions: [meta-self-application-wire]` 신설 placeholder declarative-only (실 wire = Wave 2). 본 Issue = declaration-only anchor + amendment_log entry 갱신 only — actual lint script + workflow + bats fixture wire = 별 sub-CFP."
+    direction: strengthening
+    sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: ADR-082 §결정 10.D META self-application pattern normative codify의 mechanical wire declarative placeholder Wave 1, forbid scope 축소 아님). pattern_count evidence: 5 reach (CFP-1016+1340+1329+1346+1390 sequential applied). ADR-064 §결정 7 (CFP-1149 Amendment 8) symmetric evidence-gated 정합. is_transitional: false 유지 (permanent governance policy)."
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-841
