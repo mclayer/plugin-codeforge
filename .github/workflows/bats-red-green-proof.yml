@@ -1,0 +1,40 @@
+# CFP-1334 Phase 2 carrier — Wave 1 declaration-only placeholder.
+#
+# 본 workflow = evidence-checks-registry entry `bats-red-green-proof-presence`
+# 의 carrier reference (workflow file 부재 차단 — `scripts/check-evidence-registry-naming.sh`
+# Conservative no-rename policy 정합).
+#
+# Phase 2 별 carrier PR 에서 actual lint script invocation 채움 의무:
+#   - scripts/check-bats-red-green-proof.sh (Phase 2 신설)
+#   - scripts/lib/check_bats_red_green_proof.py (ADR-061 Amendment 1 §결정 6 thin wrapper)
+#   - tests/scripts/check-bats-red-green-proof/test_check_bats_red_green_proof.bats
+#     (META self-app — closing-the-loop dogfood)
+#
+# Phase 1 (CFP-1334) = declaration-only (ADR-076/082/086 Wave 1 precedent 답습):
+#   - Change Plan §8 schema field `red_green_proof_evidence_artifact`
+#   - skills/deputy-mandate/SKILL.md TestContractArch mandate body
+#   - docs/domain-knowledge/domain/test-discipline/red-green-stash-proof-pattern.md
+#   - docs/evidence-checks-registry.yaml warning-tier deferred-followup entry
+#
+# 발효 시점: Phase 2 PR merge 후 — current_tier deferred-followup → warning 전환.
+
+name: bats RED→GREEN proof presence (CFP-1334 — Phase 2 placeholder)
+
+on:
+  # workflow_dispatch only (Phase 1 = declaration-only, no PR trigger 활성)
+  workflow_dispatch:
+
+permissions:
+  pull-requests: read
+  contents: read
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Phase 1 declaration-only — Phase 2 carrier 후 활성
+        run: |
+          echo "[CFP-1334 Phase 1] declaration-only Wave 1 — actual lint script + workflow"
+          echo "  = Phase 2 별 carrier PR. 본 workflow 파일은 evidence-registry-naming-check"
+          echo "  Conservative no-rename policy (ADR-060 Amendment 7 §결정 20) 정합 reference."
+          exit 0

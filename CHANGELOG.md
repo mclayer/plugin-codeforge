@@ -7,6 +7,30 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.6.0] - 2026-05-24
+
+### Added
+
+- [CFP-1334] **bats fixture RED→GREEN stash proof pattern + TestContract deputy mandate codification** (CFP-1302 retro F4 deferred carrier, CodeReviewPL F-CR-1302-2 P2 follow-up)
+  - chief tie-break ladder 3 단계 적용 (Step 1 RACI lookup `skills/deputy-mandate/SKILL.md` L80 TestContractArchitectAgent §8 → Step 2 ADR-068 6/6 invariant axis mismatch (design-level vs test-authoring scope) → Step 3 chief judgement + ADR-086 5-checklist self-app 5/5 PASS) → **Option C convergence** (declaration-only Wave 1, ADR 신설 0건)
+  - 3-packet deputy advocacy convergent: TestContractArch (Option D primary = Option C 의미적 alias) + ArchitectAnalyst (Option C primary + F-AA-1334-01 ADR-082 §결정 7 per-area 분할 거부 invariant Option B 직접 차단) + CodebaseMapper (0 finding, fact enumeration — 67 bats files / 103 evidence-checks-registry entries / ADR-068 amendment_max 3 / ADR-082 amendment_max 7 / ADR-061 amendment_log max 2)
+  - `templates/impl-manifest.md` — `bats_fixtures[]` field + `red_green_proof_evidence_artifact` nested object schema (method 3-enum + pre_impl_sha + assertion_classification[] role 3-enum + platform_verified 5-enum + null_reason 4-enum, ADR-068 I-2 cross-module propagation completeness directly-analogous + I-3 unconditional vs conditional guard placement intent pattern verbatim 답습)
+  - `skills/deputy-mandate/SKILL.md` — TestContractArchitectAgent mandate body 갱신 (L80 row + RACI matrix L115 §8.5 discriminating fixture mandate row append, append-only — ModuleArch/DataArch/APIContractArch/SecurityArch/InfraOperationalArch row 변경 0)
+  - `docs/domain-knowledge/domain/test-discipline/red-green-stash-proof-pattern.md` — narrative SSOT first entry (codeforge governance 어휘 promotion 첫 사례, memory `feedback_tdd_red_proof_via_stash` 일반화)
+  - `docs/evidence-checks-registry.yaml` — `bats-red-green-proof-presence` warning-tier deferred-followup entry append (owner_adr=ADR-060 / carrier_adr=ADR-060, declaration-only Wave 1 → Phase 2 mechanical wire 후 warning 전환)
+  - `docs/parallel-work/section-ownership.yaml` — 4 row append-only (templates/impl-manifest.md + skills/deputy-mandate/SKILL.md + docs/evidence-checks-registry.yaml + docs/domain-knowledge/domain/test-discipline/), CFP-1085 sibling collision 회피 (ADR-068 amendments[] touch 0건 — Option C convergence 정합)
+  - `.claude-plugin/plugin.json` — version 6.5.2 → 6.6.0 MINOR + description CFP-1334 entry prepend (ADR-037 (b) governance behavior 확장 — TestContract deputy mandate scope expansion)
+  - `CHANGELOG.md` — 본 entry
+
+### Out of scope (별 follow-up CFP carrier)
+
+- **Phase 2 mechanical wire** (CFP-1334 self-carrier 별 PR): `scripts/check-bats-red-green-proof.sh` + `scripts/lib/check_bats_red_green_proof.py` (ADR-061 Amendment 1 §결정 6 thin wrapper) + `templates/github-workflows/bats-red-green-proof.yml` + `.github/workflows/bats-red-green-proof.yml` (sibling-parity byte-identical) + `tests/scripts/check-bats-red-green-proof/test_check_bats_red_green_proof.bats` (META self-app closing-the-loop)
+- **CFP-FU-1**: CFP-1302 retroactive 33 TC RED→GREEN proof 부착 (test_phase_gate_mergeable_yml.bats 13 TC + test_phase_gate_auto_cleanup_yml.bats 20 TC, Priority HIGH/MID)
+- **CFP-FU-2**: ADR-061 Amendment 3 bats 영역 확장 검토 (axis 정합 영역 재검토, pattern_count ≥ 2 reach 시)
+- **CFP-FU-3**: ADR-068 Amendment 4 (I-7 discriminating-fixture invariant 신설) 또는 ADR-082 Amendment N (sub-scope-e), Phase 2 evidence 누적 + pattern_count ≥ 2 reach 후
+- **CFP-FU-4**: marketplace_sync strict invariant — version-only bump 시 marketplace_sync_required 결정 룰 명문화 (ADR-063 §결정 21 Amendment carrier, F-PL-1334-02 P2 + F-DR-1334-03 P2 advisory source)
+- Python pytest / Node jest 영역 RED→GREEN proof (language-agnostic pattern, cross-platform stash 검증 별 axis)
+
 ## [6.5.2] - 2026-05-23
 
 ### Changed

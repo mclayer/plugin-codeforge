@@ -36,6 +36,49 @@
 
 ---
 
+## bats fixture 영역 — `bats_fixtures[]` field (CFP-1334 / chief tie-break ladder Option C convergence)
+
+bats fixture 신설 시 (`tests/**/*.bats`), `bats_fixtures[]` field 안 **`red_green_proof_evidence_artifact`** nested object declare 의무 (discriminating fixture mandate, declaration-only Wave 1 — `bats-red-green-proof-presence` warning-tier advisory).
+
+```yaml
+# Change Plan §8 (Test Contract) 안 bats fixture row 형식
+bats_fixtures:
+  - file: tests/scripts/<dir>/<name>.bats
+    tc_count: <int>                                # @test 개수
+    red_green_proof_evidence_artifact:             # 신설 field (CFP-1334)
+      method: stash | pre_impl_checkout | branch_revert   # 3-value closed enum
+      pre_impl_sha: <git rev-parse HEAD@{N} or commit SHA>
+      assertion_classification:                    # multi-@test fixture per-@test 분류
+        - tc_name: <@test name>
+          role: discriminating | regression_guard | bootstrap   # 3-value closed enum
+          pre_impl_outcome: FAIL | PASS | SKIP     # pre-impl HEAD 상태 결과
+          post_impl_outcome: PASS                  # 본 Story impl 적용 후 결과
+      platform_verified:                           # cross-platform 검증 환경 — 1+ 필수
+        - linux | macos | windows_git_bash | wsl | msys2   # 5-value closed enum
+      null_reason: ~                               # field 부재 사유 (4-enum)
+                                                   # bootstrap-only / external-state-dependent /
+                                                   # cross-platform-skip / multi-assertion-partial
+```
+
+### field 부재 시 `null_reason` 4-enum 명시 의무 (silent skip 차단)
+
+- `bootstrap-only` — fixture infrastructure setup만, assertion 0
+- `external-state-dependent` — external service / DB / network 의존, self-contained 불가
+- `cross-platform-skip` — 본 fixture 가 platform-specific (예: Windows-only) 환경, RED→GREEN proof 무관
+- `multi-assertion-partial` — multi-@test 중 일부만 discriminating (per-@test classification 으로 처리 권장, null_reason 은 fallback)
+
+### 적용 시점
+
+- **Phase 1 본 Change Plan merge 후 신규 bats fixture 작성** 시 적용 (forward-only normative ratchet, ADR-068 Amendment 3 retroactive 면제 패턴 답습)
+- **retroactive 적용**: CFP-1302 33 TC = CFP-FU-1 별 carrier 영역 (Phase 2 mechanical wire 활성 후 별 PR)
+- **Phase 2 mechanical wire**: `scripts/check-bats-red-green-proof.sh` + `templates/github-workflows/bats-red-green-proof.yml` (warning tier, `hotfix-bypass:bats-red-green-proof` label)
+
+### Narrative SSOT
+
+상세 패턴 (Method 3-enum / assertion classification / cross-platform 비대칭 mitigation) = [`docs/domain-knowledge/domain/test-discipline/red-green-stash-proof-pattern.md`](../docs/domain-knowledge/domain/test-discipline/red-green-stash-proof-pattern.md) (CFP-1334 신설 narrative SSOT).
+
+---
+
 ## Sub-issue 자동 생성 (subissue-from-impl-manifest.yml Action)
 
 §8.5 매핑표가 Phase 2 PR에 commit되면 Action이 자동 트리거:

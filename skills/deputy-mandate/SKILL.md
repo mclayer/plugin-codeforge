@@ -77,7 +77,7 @@ CFP-1086 Amendment 8 이전 baseline (5+3 roster):
 | §3 도입할 설계 (refactor 시각) + §6 리팩토링 선행 | RefactorAgent (4-tuple sub-tuple) | Sonnet |
 | §7.1-§7.3 / §7.5-§7.6 보안 | SecurityArchitectAgent | Opus |
 | §7.4 운영 리스크 (DR / disconnect / clock / rate / env / container) + §11.6 idempotency consult (ModuleArch aggregate-level primary) | InfraOperationalArchitectAgent (CFP-1026 rename) | Opus |
-| §8 Test Contract (커버리지 + 경계 + invariant + §8.5/§8.6) | TestContractArchitectAgent | Opus |
+| §8 Test Contract (커버리지 + 경계 + invariant + §8.5/§8.6 + **discriminating fixture mandate / RED→GREEN proof — CFP-1334**) | TestContractArchitectAgent | Opus |
 | §8.6 contract testing (Pact / Spring Cloud Contract — API consumer-provider) | **APIContractArchitectAgent** primary + TestContractArchitectAgent consult | Sonnet (APIContract) |
 | §11.1-§11.6 RDB OLTP (schema 변경 / migration / rollback / integrity / backfill / idempotency primary) + Alembic 정책 7 원칙 | **ModuleArchitectAgent** (CFP-1126 — boundary axis unified primary, AggregateArch carry-over) | Sonnet |
 | §11 OLAP schema 진화 (Parquet schema / partition / column evolution) | **DataArchitectAgent** (CFP-1086 OLAP only) | Opus |
@@ -113,6 +113,7 @@ CFP-1086 Amendment 8 이전 baseline (5+3 roster):
 | §11 Schema/Migration/Rollback + 전체 데이터 구조 | — | — | — | ✅ **(+DB container volume / data persistence / event schema / DTO / API contract data)** | (consult module boundary) | — | — | — |
 | **§11 Ledger reconcile / partial fill / fee invariant (CONDITIONAL Live)** | — | (consult) | — | (consult §11) | — | — | **✅** | — |
 | **§8.5 Stateful / restart invariant** | — | (consult §7.4 짝) | **✅** | (consult §11.6 짝) | — | — | (consult order replay) | — |
+| **§8.5 discriminating fixture mandate (RED→GREEN proof, CFP-1334)** | — | — | **✅** | — | — | — | — | — |
 | **§13 Live Operational Discipline (CONDITIONAL Live touching)** | (consult §7.5) | (consult kill switch) | — | (consult §11) | — | **✅** | (consult §11 ledger) | (consult cutover evidence) |
 | **Production evidence quad / EPIC CLOSED gate / post-cutover wiring (CONDITIONAL production cutover)** | (consult §7.5) | **(consult — policy SSOT axis)** | — | — | — | (consult) | (consult) | **✅ (evidence SSOT axis — ADR-72 §결정 2/4)** |
 
