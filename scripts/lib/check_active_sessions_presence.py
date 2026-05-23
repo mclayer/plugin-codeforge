@@ -20,6 +20,12 @@ import re
 import sys
 from pathlib import Path
 
+# Windows cp949 stdout encoding 차단 (CFP-1393 F8-FU / ADR-061 standardize)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 ACTIVE_SESSIONS_BLOCK_RE = re.compile(
     r"<!--\s*active_sessions\s*-->\s*(.+?)\s*<!--\s*/\s*active_sessions\s*-->",
     re.DOTALL,

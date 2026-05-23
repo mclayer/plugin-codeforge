@@ -12,6 +12,12 @@ No env injection needed — reads manifest file from GITHUB_WORKSPACE directly.
 import sys
 import os
 
+# Windows cp949 stdout encoding 차단 (CFP-1393 F8-FU / ADR-061 standardize)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 
 def main() -> None:
     try:

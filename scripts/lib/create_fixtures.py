@@ -1,6 +1,13 @@
 #!/usr/bin/env python3
 """Helper script to create remaining CFP-722 fixture files."""
 import pathlib, json
+import sys
+
+# Windows cp949 stdout encoding 차단 (CFP-1393 F8-FU / ADR-061 standardize)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
 
 ROOT = pathlib.Path(__file__).parent.parent.parent
 FIXTURE_ROOT = ROOT / "tests/fixtures/cfp-722/check-story-section-ownership"

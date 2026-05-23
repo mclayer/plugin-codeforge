@@ -7,6 +7,13 @@
 # Usage / exit code / semantics 상세: scripts/check-inter-plugin-contracts.sh header.
 import sys, re
 from pathlib import Path
+import sys
+
+# Windows cp949 stdout encoding 차단 (CFP-1393 F8-FU / ADR-061 standardize)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
 
 try:
     import yaml

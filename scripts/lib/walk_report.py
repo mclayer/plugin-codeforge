@@ -43,6 +43,12 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional, Any
 
+# Windows cp949 stdout encoding 차단 (CFP-1393 F8-FU / ADR-061 standardize)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 # walk_plan.WalkResult 공유 import (연동 의무 — CFP-1175 §3)
 # walk_plan.py 가 같은 lib/ 디렉토리에 있으므로 직접 import
 _LIB_DIR = os.path.dirname(os.path.abspath(__file__))

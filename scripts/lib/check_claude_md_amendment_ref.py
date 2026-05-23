@@ -25,6 +25,12 @@ import re
 import sys
 from pathlib import Path
 
+# Windows cp949 stdout encoding 차단 (CFP-1393 F8-FU / ADR-061 standardize)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 
 # YAML frontmatter 파싱 (pyyaml 없어도 동작하는 간단한 파서)
 def _parse_frontmatter(content: str) -> dict:

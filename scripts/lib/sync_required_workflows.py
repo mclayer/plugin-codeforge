@@ -10,6 +10,12 @@
 # Exit:    0=ok, 1=error (file not found, parse error), 2=no pyyaml.
 import sys
 
+# Windows cp949 stdout encoding 차단 (CFP-1393 F8-FU / ADR-061 standardize)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 try:
     import yaml
 except ImportError:

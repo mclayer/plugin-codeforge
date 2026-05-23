@@ -6,6 +6,13 @@ Usage: python3 scripts/lib/test_story_section_ownership_fixtures.py [--verbose]
 Exit:  0=all pass, 1=any fail
 """
 import sys, json, pathlib
+import sys
+
+# Windows cp949 stdout encoding 차단 (CFP-1393 F8-FU / ADR-061 standardize)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
 
 # Allow import from same directory
 sys.path.insert(0, str(pathlib.Path(__file__).parent))

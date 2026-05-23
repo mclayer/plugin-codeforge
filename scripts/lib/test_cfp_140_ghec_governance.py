@@ -11,6 +11,12 @@
 import hashlib
 import sys
 
+# Windows cp949 stdout encoding 차단 (CFP-1393 F8-FU / ADR-061 standardize)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 
 def hash_val(v: str) -> str:
     return "sha256:" + hashlib.sha256(v.encode()).hexdigest()[:12] if v else v
