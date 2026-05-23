@@ -31,6 +31,12 @@ import subprocess
 from pathlib import Path
 from typing import Optional
 
+# Windows cp949 stdout encoding 차단 (CFP-1393 F8-FU / ADR-061 standardize)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
+
 # ─── Ownership Matrix (machine-readable SSOT cross-ref: docs/domain-knowledge/domain/governance-principle/lane-self-write-ownership-matrix.yaml) ─
 # §1 = verbatim-invariant (story-section-1-immutable.yml — EXCLUDED from this lint, cross-ref only)
 # §2, §4, §5, §6 = RequirementsPL owner

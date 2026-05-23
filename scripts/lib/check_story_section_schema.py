@@ -12,6 +12,13 @@
 # Usage / exit code / semantics 상세: scripts/check-story-section-schema.sh header.
 import sys, re
 from pathlib import Path
+import sys
+
+# Windows cp949 stdout encoding 차단 (CFP-1393 F8-FU / ADR-061 standardize)
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8")
 
 # 강제 섹션 (Implementation Story strict, §12+§13 optional)
 STRICT_REQUIRED = [
