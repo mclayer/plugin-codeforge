@@ -7,6 +7,12 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.4.4] - 2026-05-23
+
+### Changed
+
+- [CFP-1288] wording-dictionary 카테고리 (b) backfill — templates 2 file 인라인 평문 정의 (ratchet + kind:contract). CHANGELOG history preservation invariant.
+
 ## [6.4.2] - 2026-05-23
 
 ### Added
