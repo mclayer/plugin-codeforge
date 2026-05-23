@@ -51,6 +51,8 @@ blue-green + atomic swap + 3-시간 보존 + 자동 rollback. 9-step sequence (�
 
 본 plugin agent 는 read-only 분석 + 배포 매커니즘 실행 (docker / ssh / migration script) 만. `src/**` / `tests/**` / `docs/**` 직접 write 권한 없음. Story / Epic §14 Lane Evidence `deploy` row 갱신은 Orchestrator 가 처리 (ADR-087 §결정 8). GitHub Issue 코멘트는 wrapper Orchestrator 경유.
 
+**consumer overlay schema authoring scope = wrapper SSOT 영역** (CFP-1317-S2 / ADR-068 I-4): `project.yaml deploy.*` schema 정의 = wrapper [`docs/project-config-schema.md` deploy 섹션](https://github.com/mclayer/plugin-codeforge/blob/main/docs/project-config-schema.md#deploy-섹션-설명-cfp-1059--adr-087--adr-088) 단일 SSOT. 본 plugin `templates/deploy-mechanism.md` = 9-step sequence + Edge Cases reference doc layer 만 (schema mirror 0건, drift 0 invariant). 6회 누적 G-1/G-3/G-6 동형 drift evidence (mctrader#1272 (d) carrier) 기반 산업 prior art 5/5 (Kubernetes / Helm / Terraform / OpenAPI / JSON Schema) single-SSOT pattern 답습.
+
 ## §14 Lane Evidence 의무
 
 매 배포 lane spawn 시 Story / Epic §14 Lane Evidence 표에 `deploy` row append (ADR-031 lane-evidence-check.yml extension). `mechanical_enforcement_actions: [deploy-lane-spawn-evidence]` declaration-only Wave 1 (ADR-087 §결정 8). Bypass = `hotfix-bypass:deploy-lane-spawn` label.
@@ -77,4 +79,6 @@ governance display layer 의 모든 시각 표기 = KST `+09:00` ISO 8601 zoned 
 - [ADR-026](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-026-post-merge-automation.md) — Epic close → Deploy trigger
 - [ADR-027](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-027-consumer-adoption-protocol.md) — project.yaml deploy.* schema
 - [ADR-089](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-089-schema-change-7-principles.md) — expand-contract 마이그레이션 분리
-- [ADR-068](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-068-boundary-completeness-invariants.md) — I-5 dimensional empirical grounding (healthcheck window / graceful drain / retention period TBD)
+- [ADR-068](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-068-boundary-completeness-invariants.md) — I-4 wording SSOT (CFP-1317-S2 plugin file d-B redirect 결정 근거) + I-5 dimensional empirical grounding (healthcheck window / graceful drain / retention period — wrapper ADR-087 §결정 5 본문 단일 anchor)
+- [ADR-045](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-045-story-retro-mandatory-trigger.md) — §D-9 pattern_count 누적 escalation (mctrader#1272 (d) 6회째 declarative seed drift super-class evidence → S3 ADR-107 carrier)
+- [ADR-013](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md) — dogfood-out family (Story file 위치 = `mclayer/codeforge-internal-docs/wrapper/stories/CFP-1317-S2.md`)
