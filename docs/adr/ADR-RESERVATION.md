@@ -189,6 +189,11 @@ amendments_reserved:
     reserved_by_cfp: CFP-1329
     reservation_date: 2026-05-24 KST
     status: active   # ArchitectAgent commit time 점유 (Story Phase 1 PR carrier — §결정 10 신설 ArchitectAgent write-time discipline 4 sub-scope A/B/C/D: Codex TP#2 8-anchor mirror / mid-author revert propagation / script-behavior claim verify / META self-application, 4 memory entry normative 승격 carrier, pattern_count evidence 혼합 ratchet ADR-064 §결정 7 symmetric. verified-via Read worktree docs/adr/ADR-082-...md frontmatter amendments[] max=7 → next=8 2026-05-24 KST 기준 origin/main d24ab28. status reserved 미경유 직접 active 전환 — ArchitectPL chief author precedent ADR-082 Amendment 7 (CFP-1312) row 직전 패턴 정합)
+  - adr_number: 82
+    amendment_id: 9
+    reserved_by_cfp: CFP-1330
+    reservation_date: 2026-05-24 KST
+    status: active   # ArchitectAgent commit time 점유 — §결정 11 신설 Code-level write-time semantic truth verify expansion (§결정 11.A test code production binding verify CFP-1025 F-CR-1025-2 sentinel + §결정 11.B script error visibility audit CFP-1025 bootstrap-labels.sh:53-55 META-ROOT sentinel), 2 memory entry normative 승격 carrier sentinel forward-prevention rationale, ADR-082 super-class scope expansion ratchet (Amendment 8 ArchitectAgent governance write-time + 본 Amendment 9 Code-level write-time disjoint axis), wrapper-only ADR-010 sibling sync 면제 (CodeReviewAgent.md / QADeveloperAgent.md lane plugin cross-ref = follow-up defer). verified-via Read worktree docs/adr/ADR-082-...md frontmatter amendments[] L11-51 max=8 → next=9 2026-05-24 KST 기준 origin/main a0eb545 (CFP-1329 Amendment 8 merge 후 base). status reserved 미경유 직접 active 전환 — ArchitectPL chief author precedent ADR-082 row 82.8 (CFP-1329) 직전 패턴 정합. META-self-applied (§결정 10.D 4th applied case).
 ```
 
 ## 해소 기준

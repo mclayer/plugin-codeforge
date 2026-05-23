@@ -49,6 +49,12 @@ amendments:
     date: 2026-05-24
     summary: "§결정 10 신설 (ArchitectAgent write-time discipline 4 sub-scope) — Codex TP#2 inline FIX 8-anchor mirror coverage checklist (§결정 10.A) + mid-author partial revert propagation gap (§결정 10.B sentinel codify rationale) + ArchitectAgent self-introduced script-behavior claim verify (§결정 10.C pattern_count 2 reach) + META self-application pattern (§결정 10.D pattern_count 2 reach). 4 memory entry normative 승격 carrier (memory `feedback_codex_tp2_verify_before_trust_pattern` / `feedback_mid_author_partial_revert_propagation_gap` / `feedback_architect_script_behavior_claim_verify` / `feedback_meta_self_application_pattern`). ADR-082 §결정 1 layer 1 + §결정 2 scope (a-d) write-time verify mandate sub-domain expansion — verify-before-trust super-class 안 ArchitectAgent chief author write-time discipline 영역 codify. ADR-039 lane self-write boundary 정합 (lane plugin agent md cross-ref = follow-up defer, wrapper-only ADR-010 sibling sync 면제). doc-only fast-path (ADR-054)."
     sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: ADR-082 §결정 1 layer 1 + §결정 2 scope (a-d) write-time verify mandate 가 ArchitectAgent chief author write-time discipline 4 sub-scope 영역으로 확장, forbid scope 축소 아님). ADR-064 §self-application top-down ratchet 정합. is_transitional: false 유지 (permanent governance policy). pattern_count evidence: §결정 10.A=1 (CFP-795 sentinel codify rationale, dogfood inversion P1 prevention 도구적 가치) / §결정 10.B=1 (CFP-1009 sentinel) / §결정 10.C=2 (CFP-1006 F-DR-1006-1 + CFP-1025 hypothesis refuted) / §결정 10.D=2 (CFP-1016 1st applied + CFP-1340 Amendment 2 §결정 15 Story file initial scaffold = 2nd applied case). ≥ 2 reach (10.C+10.D) + sentinel forward-prevention (10.A+10.B) 혼합 ratchet — ADR-064 §결정 7 (CFP-1149 Amendment 8) symmetric evidence-gated 정합."
+  - amendment_id: 9
+    carrier_story: CFP-1330
+    date: 2026-05-24
+    summary: "§결정 11 신설 — Code-level write-time semantic truth verify expansion: §결정 11.A (test code production binding verify, sed-extract real fn, sentinel forward-prevention CFP-1025 F-CR-1025-2) + §결정 11.B (script error visibility audit, 2>/dev/null mis-diagnosis amplifier META-ROOT, sentinel forward-prevention CFP-1025 bootstrap-labels.sh:53-55). 2 memory entry normative 승격 carrier (memory `feedback_test_must_bind_to_production` / `feedback_error_mask_metaroot`). ADR-082 super-class write-time semantic truth verify scope expansion — Amendment 8 ArchitectAgent write-time discipline + 본 Amendment 9 Code-level (test + script) write-time discipline. ADR-039 lane self-write boundary 정합 (CodeReviewAgent.md / QADeveloperAgent.md lane plugin cross-ref = follow-up defer)."
+    direction: strengthening
+    sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: ADR-082 write-time verify scope 가 Architect write-time (Amendment 8 §결정 10) + Code-level write-time (본 Amendment 9 §결정 11) layer 양 layer expansion, forbid scope 축소 아님). ADR-064 §결정 7 (CFP-1149 Amendment 8) symmetric evidence-gated 정합. pattern_count evidence: §결정 11.A=1 (CFP-1025 F-CR-1025-2 sentinel forward-prevention) / §결정 11.B=1 (CFP-1025 META-ROOT sentinel forward-prevention, CFP-1006 mis-diagnosis lineage verified)."
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-841
@@ -98,6 +104,12 @@ amendment_log:
     decisions_touched: ["§결정 10 (신설)"]
     nature: ratchet-up  # §결정 10 신설 (ArchitectAgent write-time discipline 4 sub-scope A/B/C/D) — §결정 1 layer 1 + §결정 2 scope (a-d) write-time verify mandate sub-domain expansion (ADR-058 §결정 5 강화 방향)
     note: "ADR-082 super-class (write-time semantic truth verify) 안 ArchitectAgent chief author write-time discipline 4 sub-scope codify. 4 memory entry normative 승격 carrier: (1) `feedback_codex_tp2_verify_before_trust_pattern` (CFP-795 F-1 sentinel) — Codex TP#2 inline FIX 8-anchor mirror coverage checklist / (2) `feedback_mid_author_partial_revert_propagation_gap` (CFP-1009 dogfood inversion P1 sentinel) — body normative correction ↔ frontmatter inline comment / appendix / table cell propagation 의무 / (3) `feedback_architect_script_behavior_claim_verify` (CFP-1006 F-DR-1006-1 + CFP-1025 hypothesis refuted, pattern_count 2 reach) — script behavior assertion write-time empirical verify + DesignReviewPL audit point / (4) `feedback_meta_self_application_pattern` (CFP-1016 1st applied + CFP-1340 Amendment 2 §결정 15 2nd applied, pattern_count 2 reach) — Story introduces codification → carrier Story 자체에 1st applied. pattern_count evidence 혼합: §결정 10.A=1 (sentinel forward-prevention) / §결정 10.B=1 (sentinel forward-prevention) / §결정 10.C=2 reach / §결정 10.D=2 reach. ADR-064 §결정 7 CFP-1149 Amendment 8 symmetric evidence-gated ratchet 정합 — sentinel forward-prevention (10.A+10.B) = 도구적 가치 evidence base, recurrence threshold 2 reach (10.C+10.D) = standard pattern_count base. 혼합 ratchet 정직 명시. 본 Amendment 8 자체가 META-self-applied (§결정 10.D 3rd applied case): 본 Amendment 번호(8) 가 target ADR-082 frontmatter amendments: 목록 Read verify 후 max(7)+1=8 으로 결정 (verified-via: Read worktree docs/adr/ADR-082-...md frontmatter amendments[] 2026-05-24 KST 기준 origin/main d24ab28). Wave 1 = declaration-only (4 sub-decisions 모두 behavioral directive). Wave 2 mechanical wire (DesignReviewPL audit dedicated points + ArchitectAgent self-discipline grep self-check) = 별 sub-carrier 분리 (deferred-followup, ADR-082 Wave 1 declaration-only precedent 답습)."
+  - amendment_id: 9
+    carrier_story: CFP-1330
+    date: 2026-05-24  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 11 (신설)"]
+    nature: ratchet-up  # §결정 11 신설 (Code-level write-time discipline 2 sub-scope A/B) — ADR-082 super-class write-time semantic truth verify scope expansion to test code + script error handling layer (ADR-058 §결정 5 강화 방향)
+    note: "ADR-082 super-class (write-time semantic truth verify) 안 Code-level write-time discipline 2 sub-scope codify. 2 memory entry normative 승격 carrier: (1) `feedback_test_must_bind_to_production` (CFP-1025 F-CR-1025-2 sentinel) — regression bats/unit test = real production code source/exec 의무 (sed-extract real fn) / (2) `feedback_error_mask_metaroot` (CFP-1025 bootstrap-labels.sh:53-55 META-ROOT sentinel, CFP-1006 mis-diagnosis lineage verified) — script `2>/dev/null` 가 success/failure 보고 시 real error 마스킹 = mis-diagnosis amplifier META-ROOT. ADR-082 scope expansion = Amendment 8 (ArchitectAgent write-time discipline §결정 10) + 본 Amendment 9 (Code-level write-time discipline §결정 11) layer 양 layer 분할. pattern_count evidence: §결정 11.A=1 (CFP-1025 F-CR-1025-2 sentinel forward-prevention — test-quality regression coverage gap silent risk) / §결정 11.B=1 (CFP-1025 META-ROOT sentinel forward-prevention — META-ROOT severity = mis-diagnosis 전파 chain risk, CFP-1006 mis-diagnosis lineage downstream propagation verified). ADR-064 §결정 7 CFP-1149 Amendment 8 symmetric evidence-gated 정합 — sentinel forward-prevention (11.A+11.B) = 도구적 가치 evidence base (recurrence ≥ 2 wait 시 silent regression / mis-diagnosis 전파 risk). 본 Amendment 9 자체가 META-self-applied (§결정 10.D 4th applied case): 본 Amendment 번호(9) 가 target ADR-082 frontmatter amendments: 목록 Read verify 후 max(8)+1=9 으로 결정 (verified-via: Read worktree docs/adr/ADR-082-...md frontmatter amendments[] L11-51 max=8 2026-05-24 KST 기준 origin/main a0eb545 — CFP-1329 Amendment 8 merge 후 base). Wave 1 = declaration-only (2 sub-decisions 모두 behavioral directive). Wave 2 mechanical wire (CodeReviewPL audit dedicated points: tautology smell grep + `Grep '2>/dev/null' scripts/**` resource-creating/state-changing audit + codeforge-wide grep audit sweep) = 별 sub-carrier 분리 (deferred-followup, ADR-082 Wave 1 declaration-only precedent 답습). lane plugin agent md cross-ref (codeforge-review CodeReviewAgent.md / codeforge-develop QADeveloperAgent.md) = follow-up defer (wrapper-only ADR-010 sibling sync 면제)."
 related_stories:
   - CFP-776  # carrier (super-class 통합 결정 — escalation_action escalate_user)
   - CFP-841  # Amendment 1 carrier (§결정 6 behavioral→mechanical 전환 후속 carrier)
@@ -115,6 +127,8 @@ related_stories:
   - CFP-1025 # §결정 10.C evidence #2 (Orchestrator hypothesis REFUTED by ArchitectPL empirical verify, pattern WORKING dogfood win)
   - CFP-1016 # §결정 10.D evidence #1 (ADR-082 Amendment 2 META-self-applied 1st occurrence — issue_origin frontmatter + §2.1 verified state table)
   - CFP-1340 # §결정 10.D evidence #2 (Amendment 2 §결정 15 Orchestrator-monopoly Story-file inline whitelist 5번째 entry META-self-applied 2nd occurrence — Story file initial scaffold + §9.1 verdict inline write)
+  - CFP-1330 # Amendment 9 carrier (§결정 11 신설 — Code-level write-time discipline 2 sub-scope A/B: test code production binding verify + script error visibility audit, 2 memory entry normative 승격 carrier sentinel forward-prevention rationale)
+  - CFP-1025 # §결정 11.A evidence #1 sentinel + §결정 11.B evidence (F-CR-1025-2 test tautology + 2-layer error-mask root cause META-ROOT, bootstrap-labels.sh:53-55)
   - CFP-746  # pattern corpus #1a/#1b (corpus slip + 정정-2nd-slip)
   - CFP-770  # pattern corpus #2/#3 (§9 evidence stale + Phase 0 cross-plugin 추정)
   - CFP-1000 # Amendment 2 corpus #4 (Issue body 3 inversions: prod-cutover-deputy-evidence INVERTED + baseline stale + path incorrect)
@@ -394,6 +408,55 @@ Story introduces template / codification change → apply it to carrier Story it
 | 1 | CFP-1016 | ADR-082 Amendment 2 (`issue_origin: orchestrator_authored_followup` frontmatter + §2.1 verified state table) | Story file 자체가 META-self-applied | 1st occurrence |
 | 2 | CFP-1340 Amendment 2 §결정 15 | Orchestrator-monopoly Story-file `§9/§10/§14/phase` inline whitelist 5번째 entry | Story file initial scaffold + §9.1 verdict inline write (CFP-1340 Story §14 row 6 + row 9 verified) | 2nd occurrence |
 | 3 | **CFP-1329 (본 Story)** | **Amendment 8 §결정 10.D 신설** + Story file Amendment 2 §결정 15 inline write 적용 (Story §14 row 1) | META-self-applied **3rd applied case** | 3rd occurrence |
+
+### §결정 11 — Code-level write-time semantic truth verify expansion (Amendment 9 신설, CFP-1330)
+
+ADR-082 super-class (write-time semantic truth verify) scope 가 Code-level write-time discipline 2 sub-scope (test code production binding + script error visibility) 영역까지 확장 적용된다. Amendment 8 §결정 10 (ArchitectAgent write-time discipline) 과 disjoint axis — Amendment 8 = 거버넌스 artifact write-time / 본 §결정 11 = 코드 artifact (test/script) write-time. 같은 super-class (write-time semantic truth) 아래 단일 carrier 통합 (ADR-064 §결정 5 unitary 정합).
+
+#### §결정 11.A — Test code production binding verify
+
+**carrier**: memory `feedback_test_must_bind_to_production` (CFP-1025 F-CR-1025-2 sentinel)
+
+bug-fix bats/unit test = real production code source/exec 의무 (sed-extract real fn, NOT inline hand-copy). Inline-copy = tautology, zero regression binding (test 가 자기 자신을 검증하는 형태로 production code 변경 시 silent regression coverage gap).
+
+**의무 절차**:
+
+1. **DeveloperPL / QADev**: regression test 가 real artifact source/exec:
+   - bash function: `sed -n '/^funcname() {/,/^}/p' "${SCRIPT}" > _fn.sh; source _fn.sh` (sed-extract real fn)
+   - whole script: DRY_RUN / early-return hook 으로 target function 만 stub 대상 실행
+   - **NEVER re-type / inline fixed logic** (hand-copy = tautology smell)
+2. **Discriminating-fixture (RED proof)**: sed-substitute bug INTO extracted real function (e.g., `2>&1` → `2>/dev/null`), source THAT, assert test FAILS. hand-written buggy variant = tautology.
+3. **CodeReviewPL audit point**: `[ -f $SCRIPT ]` existence-only guard + inline function body + hand-written `*_masked` / `*_mock` reimplementation tautology smell grep. P1 severity (test-quality regression).
+4. **Acceptance**: production fix manual revert → test RED. 잔존 GREEN → tautology, unresolved.
+
+**sentinel codify rationale** (pattern_count 1): CFP-1025 F-CR-1025-2 dogfood inversion. forward-prevention 가치 우선 (test-quality defect = silent regression coverage gap, recurrence ≥ 2 wait 시 silent regression risk). ADR-058 §결정 5 forward-prevention 영역 적격 (도구적 가치 evidence base, ADR-064 §결정 7 CFP-1149 Amendment 8 symmetric evidence-gated 면제).
+
+#### §결정 11.B — Script error visibility audit
+
+**carrier**: memory `feedback_error_mask_metaroot` (CFP-1025 bootstrap-labels.sh:53-55 META-ROOT sentinel)
+
+Script `2>/dev/null` 가 success/failure 보고하면서 real error 마스킹 = **mis-diagnosis amplifier META-ROOT**. False-success 가 downstream Story mis-diagnose 유발 + Wave-defer rationale falsify (CFP-1006 mis-diagnosis lineage downstream propagation verified).
+
+**의무 절차**:
+
+1. **Design lane / ArchitectAgent**: 리소스 create / state change 보고 script 작성 시 `2>/dev/null` 금지 (error path). `err=$(cmd 2>&1)` 형태로 stderr capture + failure 시 verbatim surface. `2>/dev/null` 영역 = 진정 benign expected-noise (예: `command -v` probes) only — success/failure consumed downstream operations 영역 금지.
+2. **Root-cause 진단 discipline**: predecessor Story assumption falsified 시 masked-error META-ROOT 의심. RAW signal (workflow run log, NOT script summary; admin probe, NOT CI token masked result) prior hypothesis 형성 전.
+3. **CodeReview / SecurityTest audit**: `Grep '2>/dev/null' scripts/**` resource-creating/state-changing commands. mis-diagnosis-amplifier risk 표시 (severity scales by downstream consumer 수).
+
+**META-ROOT pattern_count 1** (CFP-1025 bootstrap-labels.sh:53-55): codify rationale forward-prevention (META-ROOT severity = mis-diagnosis 전파 chain risk, recurrence ≥ 2 wait 시 P1 propagation 영역 — CFP-1006 mis-diagnosis lineage verified). codeforge-wide grep audit = follow-up CFP carrier (별 sweep). ADR-058 §결정 5 forward-prevention 영역 적격, ADR-064 §결정 7 CFP-1149 Amendment 8 symmetric evidence-gated 면제.
+
+#### §결정 11 — disjoint axis with Amendment 8 §결정 10
+
+| Amendment | scope | write-time artifact axis | layer |
+|---|---|---|---|
+| Amendment 8 §결정 10 | ArchitectAgent write-time discipline 4 sub-scope (A/B/C/D) | 거버넌스 artifact (Story / Change Plan / ADR / memory) | governance write-time |
+| **Amendment 9 §결정 11** | **Code-level write-time discipline 2 sub-scope (A/B)** | **코드 artifact (test code / script error path)** | **code write-time** |
+
+두 Amendment 가 ADR-082 super-class (write-time semantic truth verify) 의 disjoint layer expansion. Amendment 8 = chief author scope / Amendment 9 = Code-level scope. CFP scope unitary (ADR-064 §결정 5) 정합 — 단일 super-class 안 disjoint axis 분리.
+
+**Wave 1 = declaration-only**: 2 sub-decisions 모두 behavioral directive. Wave 2 mechanical wire (CodeReviewPL audit dedicated points: tautology smell grep + `Grep '2>/dev/null' scripts/**` resource-creating/state-changing audit + codeforge-wide grep audit sweep) = 별 sub-carrier 분리 (deferred-followup, ADR-082 Wave 1 declaration-only precedent 답습).
+
+**META-self-application (§결정 10.D 4th applied case)**: 본 Amendment 9 자체가 §결정 10.D pattern self-applied — 본 Amendment 번호 9 가 target ADR-082 frontmatter `amendments:` 목록 Read verify 후 max(8)+1=9 으로 결정 (verified-via: Read worktree `docs/adr/ADR-082-...md` frontmatter `amendments[]` L11-51 max=8, 2026-05-24 KST 기준 origin/main a0eb545 — CFP-1329 Amendment 8 merge 후 base). Amendment 7 §결정 9 verify-before-cite mandate self-application 사례.
 
 ## 결과
 
