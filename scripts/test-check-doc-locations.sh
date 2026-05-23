@@ -18,10 +18,13 @@ run_test() {
   local tmp
   tmp=$(mktemp -d)
 
-  mkdir -p "$tmp/docs" "$tmp/scripts"
+  mkdir -p "$tmp/docs" "$tmp/scripts/lib"
   cp "$REPO_ROOT/docs/doc-locations.yaml" "$tmp/docs/"
   cp "$REPO_ROOT/docs/doc-location-registry.md" "$tmp/docs/"
   cp "$REPO_ROOT/scripts/check-doc-locations.sh" "$tmp/scripts/"
+  # CFP-1373 — check-doc-locations.sh is a thin wrapper (CFP-478 / ADR-061 §결정 6.A)
+  # delegating to scripts/lib/check_doc_locations.py SSOT. Fixture must include the Python module.
+  cp "$REPO_ROOT/scripts/lib/check_doc_locations.py" "$tmp/scripts/lib/"
 
   ( cd "$tmp" && eval "$mutation_fn" )
 
