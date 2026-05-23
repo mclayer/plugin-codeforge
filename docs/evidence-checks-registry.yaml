@@ -3881,3 +3881,71 @@ entries:
       last_occurrence: "2026-05-23T00:00:00Z"  # CFP-1146 Epic-A W5 다회 발생 final sentinel KST 09:00 = UTC 00:00 (registry schema v1.2 정합)
       promotion_trigger: auto_blocking  # recurrence.count = 2 < threshold = 3 → 발화 미발효, 3 reach 시 auto-firing
     status: deferred-followup  # Wave 1 declarative anchor only — actual SessionStart hook + script + workflow + bats + label = Wave 2 별 sub-CFP carrier (worktree-self-ownership-verify + subagent-sibling-story-polling-evidence Wave 2 deferred-followup precedent 답습)
+
+  - name: label-registry-frozen-baseline-count-parity
+    description: |
+      label-registry-v2.md §3 yaml entry description text 안 'N번째 hotfix-bypass:*
+      family member' raw active grep count post-append parity lint warning-tier.
+      ADR-108 §결정 3 carrier — dual-frame Event Sourcing/CQRS normative codify
+      (frozen historical narrative 유지 + dynamic forcing function 신규
+      append-time 만).
+
+      scope (detect): label-registry-v2.md §3 yaml block 안 NEW append entry
+      description text 의 'N번째 hotfix-bypass:* family member' citation =
+      raw active `grep -c '^  - name: hotfix-bypass:'` count post-append 정합
+      (write-time invariant).
+
+      false_positive boundary: prior frozen entry description text (45번째 /
+      47번째 / 70번째 / 73번째 등 frozen-at-append 시점 박제 historical
+      narrative) = false_positive 영역, 신규 append-time entry 만 catch
+      (hybrid Option C historical cleanup 정합, ADR-108 §결정 4).
+
+      lint regex precision (false positive 차단 — Researcher §6.3 knowledge gap 2
+      정합): catch pattern (exact form) = `\d+번째 hotfix-bypass:\* family member`
+      / boundary = non-`hotfix-bypass:*` count semantic ("4번째 tier" /
+      "5번째 verdict-level field" 등) 미catch.
+
+      historical evidence (pattern_count=2 reach Mandatory ADR escalation):
+      CFP-604 retro F6 sentinel #1 (description "70번째" frozen at v2.51) +
+      CFP-1302 retro §5.1 sentinel #2 ("73번째" frozen at v2.52, raw active 73
+      post-append baseline). pattern_count=2 ADR-045 §D-9
+      cross_story_pattern_adr_trigger Mandatory reach → ADR-108 신설 산물.
+
+      META self-application 1st applied case = CFP-1346 본 Story Phase 1 PR
+      자체 = label-registry-v2.md 74번째 entry append (description text
+      "74번째 hotfix-bypass:* family member" 정합, post-CFP-1302 v2.52 baseline
+      raw active 73 + new 1 = 74). ArchitectAgent commit 직전
+      `grep -c '^  - name: hotfix-bypass:'` 재verify 의무 (verify-before-trust,
+      ADR-073 verify-before-assert primitive directly-analogous + ADR-082
+      Amendment 7 CFP-1312 verify-before-cite 양방향 확장 sibling axis).
+
+      Wave 1 declaration anchor only (ADR-064 §결정 1 CFP scope unitary 정합) —
+      actual lint script + workflow + bats fixture pair + label = Phase 2
+      별 sub-CFP carrier (mcp-token-freshness Wave 2 deferred-followup
+      precedent 답습).
+    detect_command: bash scripts/check-label-registry-frozen-baseline-count-parity.sh  # Phase 2 별 sub-CFP carrier — scripts/check-label-registry-frozen-baseline-count-parity.sh (bash thin wrapper, ADR-061) + scripts/lib/check_label_registry_frozen_baseline_count_parity.py (Python SSOT — regex precision `\d+번째 hotfix-bypass:\* family member` exact form + post-append raw grep count parity verify) 실 file 신설
+    workflow: templates/github-workflows/label-registry-frozen-baseline-count-parity.yml  # Phase 2 별 sub-CFP carrier — byte-identical self-app .github/workflows/label-registry-frozen-baseline-count-parity.yml (ADR-005 parity)
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode default 새 entry pattern
+    bypass_label: hotfix-bypass:label-registry-frozen-baseline-count-parity  # 74번째 hotfix-bypass:* family member — label-registry-v2 v2.53 entry append (META self-application 1st applied case, ADR-108 §결정 6 dogfood loop close)
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized
+      failure_threshold: 0          # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1346                  # 본 entry self-carrier (Wave 1 declarative anchor — evidence-checks-registry entry + ADR-108 frontmatter + ADR-RESERVATION row 108 + label-registry-v2 v2.53 entry + MANIFEST.yaml row + CLAUDE.md cross-ref + Change Plan)
+        # Phase 2 별 sub-CFP — scripts/check-label-registry-frozen-baseline-count-parity.sh + workflow + bats fixture wire (TBD)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = grep count parity verify + regex precision exact form, modal phrase 검사 미포함
+    introduced_by: CFP-1346
+    introduced_date: 2026-05-24
+    owner_adr: ADR-108              # declaration source ADR — §결정 3 mechanical_enforcement_actions[] carrier + §결정 2 forcing function rule + §결정 4 hybrid Option C historical cleanup + §결정 6 META self-application 1st applied case
+    carrier_adr: ADR-060            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (4-tier framework, default 새 entry pattern)
+    recurrence:
+      count: 2                      # CFP-604 retro F6 sentinel #1 ("70번째" frozen at v2.51) + CFP-1302 retro §5.1 sentinel #2 ("73번째" frozen at v2.52) pattern_count=2 reach Mandatory ADR escalation 산물 (ADR-045 §D-9 cross_story_pattern_adr_trigger)
+      threshold: 3                  # ADR-060 §결정 19 Amendment 6 / schema v1.2 standard default — 2 reach Mandatory escalation 의무 충족 후 3 reach 시 auto-firing 강화
+      last_occurrence: "2026-05-23T00:00:00Z"  # CFP-1302 v2.52 baseline frozen final sentinel KST 09:00 = UTC 00:00 (registry schema v1.2 정합)
+      promotion_trigger: auto_blocking  # recurrence.count = 2 < threshold = 3 → 발화 미발효 (Mandatory escalation 이미 충족), 3 reach 시 auto-firing
+    status: deferred-followup  # Wave 1 declarative anchor only — actual lint script + workflow + bats + label = Phase 2 별 sub-CFP carrier (mcp-token-freshness Wave 2 + worktree-self-ownership-verify + subagent-sibling-story-polling-evidence deferred-followup precedent 답습)
