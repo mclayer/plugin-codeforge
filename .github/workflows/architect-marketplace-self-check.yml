@@ -1,0 +1,119 @@
+name: architect-marketplace-self-check
+# CFP-604 / ADR-063 Amendment 9 §결정 21 — Gap A: Change Plan §13 marketplace sync 선언 검증 lint
+# Tier: warning (ADR-060 §결정 5 framework default — 신규 lint baseline, continue-on-error: true)
+# evidence-checks-registry.yaml entry: architect-marketplace-self-check
+#
+# 검증:
+#   PR 이 .claude-plugin/plugin.json mirrored field 4종 (name/version/description/author) 를 변경할 때
+#   Change Plan §13 `marketplace_sync_required` 선언의 presence/completeness 를 검증한다.
+#   §결정 9 (Amendment 1) Layer 2 의 declarative declare 의무에 대응하는 mechanical 검증 채널.
+#
+# 트리거:
+#   pull_request to main — plugin.json 또는 CHANGELOG.md 변경 시
+#   workflow_dispatch — 수동 실행
+#
+# False-positive 차단:
+#   - hotfix-bypass:architect-marketplace-self-check label 부착 시 skip + audit 메시지
+#   - phase:문서 / fast-path:doc-only label 부착 시 skip (ADR-054 doc-only fast-path)
+#
+# Permissions: minimum (top-level deny-all + job override, ADR-060 §결정 5 framework 정합)
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - '.claude-plugin/plugin.json'
+      - 'CHANGELOG.md'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  architect-marketplace-self-check:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # warning tier (ADR-060 §결정 5 default)
+    permissions:
+      contents: read
+      pull-requests: write   # bypass audit comment 작성용
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # git diff BASE_REF 용
+
+      - name: Collect PR labels and body
+        id: pr-info
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          PR_NUM="${{ github.event.pull_request.number }}"
+          LABELS=$(gh pr view "$PR_NUM" --json labels --jq '.labels[].name' 2>/dev/null || echo "")
+          BODY=$(gh pr view "$PR_NUM" --json body --jq '.body' 2>/dev/null || echo "")
+          # multiline 출력 안전 처리
+          {
+            echo "labels<<LABELS_EOF"
+            echo "$LABELS"
+            echo "LABELS_EOF"
+            echo "body<<BODY_EOF"
+            echo "$BODY"
+            echo "BODY_EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Check hotfix-bypass / doc-only fast-path labels
+        id: bypass
+        if: github.event_name == 'pull_request'
+        run: |
+          LABELS='${{ steps.pr-info.outputs.labels }}'
+          if echo "$LABELS" | grep -q "^hotfix-bypass:architect-marketplace-self-check$"; then
+            echo "bypass=true" >> "$GITHUB_OUTPUT"
+            echo "bypass_type=hotfix" >> "$GITHUB_OUTPUT"
+          elif echo "$LABELS" | grep -qE "^(phase:문서|fast-path:doc-only)$"; then
+            echo "bypass=true" >> "$GITHUB_OUTPUT"
+            echo "bypass_type=doc-only" >> "$GITHUB_OUTPUT"
+          else
+            echo "bypass=false" >> "$GITHUB_OUTPUT"
+            echo "bypass_type=none" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run architect-marketplace-self-check lint
+        if: steps.bypass.outputs.bypass != 'true'
+        env:
+          BASE_REF: origin/${{ github.base_ref || 'main' }}
+          PR_BODY: ${{ steps.pr-info.outputs.body }}
+          PR_LABELS: ${{ steps.pr-info.outputs.labels }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          chmod +x scripts/check-architect-marketplace-self-check.sh
+          bash scripts/check-architect-marketplace-self-check.sh || {
+            EXIT=$?
+            if [[ "$EXIT" -eq 1 ]]; then
+              echo "::warning::architect-marketplace-self-check: Change Plan §13 marketplace_sync_required 선언 부재 또는 불완전 (ADR-063 §결정 21 Amendment 9 / CFP-604)"
+              exit 1  # warning tier — continue-on-error: true 로 workflow 는 overall PASS
+            elif [[ "$EXIT" -eq 2 ]]; then
+              echo "::error::architect-marketplace-self-check: 환경 오류 (jq 미설치 등) — 스크립트 설정 확인"
+              exit 2
+            fi
+          }
+
+      - name: Bypass audit message (hotfix)
+        if: steps.bypass.outputs.bypass_type == 'hotfix'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr comment "${{ github.event.pull_request.number }}" --body "[audit] **architect-marketplace-self-check bypass 감지**
+
+          \`hotfix-bypass:architect-marketplace-self-check\` label 부착 — Change Plan §13 marketplace sync 선언 검증 skip 됨.
+
+          **의무** (ADR-024 Amendment 3 hotfix-bypass family 정합):
+          - Change Plan §13 \`marketplace_sync_required:\` 선언 추가 후 label 제거
+          - 또는 sync PR open 후 정상 플로우 재실행
+
+          Source: \`templates/github-workflows/architect-marketplace-self-check.yml\` (CFP-604 / ADR-063 §결정 21)"
+
+      - name: Skip message (doc-only fast-path)
+        if: steps.bypass.outputs.bypass_type == 'doc-only'
+        run: |
+          echo "::notice::architect-marketplace-self-check: doc-only fast-path label 감지 — Change Plan 부재 정상 (ADR-054)"

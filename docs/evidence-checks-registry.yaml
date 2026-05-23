@@ -1304,8 +1304,13 @@ entries:
     description: |-
       CFP-631 / ADR-063 Amendment 2 §결정 11 — wrapper plugin.json description ↔
       marketplace.json plugins[codeforge].description byte-identical verify (PR-time enforce).
-      mirrored field 4종 중 description 단독 PR-time enforce 추가 — name/author = check-marketplace-parity
-      warning sufficient, version = version-bump-atomic-check blocking-on-pr 기존 cover.
+      mirrored field 4종 중 description 단독 PR-time enforce 추가 (byte-identical strict).
+      **Gap B SSOT (ADR-063 §결정 22 Amendment 9 / CFP-604)**: release merge 시 marketplace 정합 mechanical 강제
+      = check-version-bump-atomic.sh (blocking-on-pr, mirrored field 4종 name/version/description/author parity) PR-time blocking
+      + check-marketplace-drift.sh (§결정 13 reactive cron) 의 합집합.
+      check-version-bump-atomic.sh Step 3 = version parity (기존 cover) + Step 4 = description/name/author parity
+      (CFP-604 Amendment 9 §결정 22 (b) 확장 — 4종 전부 blocking-on-pr coverage 완결).
+      version = version-bump-atomic-check blocking-on-pr 기존 cover.
       6 sample 누적 drift evidence (CFP-387/393/423/597/612/619, CFP-619 retro §5.2 SSOT).
       blocking-on-pr tier 직접 시작 근거 = ADR-060 §결정 5 default warning explicit exception
       + §결정 19 (Amendment 6, CFP-509) auto_blocking manual gate path (recurrence.count=6 +
@@ -1334,6 +1339,40 @@ entries:
       threshold: 6                   # ADR-060 §결정 19 (Amendment 6) — recurrence threshold (count >= threshold = signal 발화)
       promotion_trigger: auto_blocking  # ADR-060 §결정 19 enum — actual transition 본 carrier Story 자체가 별도 carrier 의무 합병 (사용자 explicit directive Story §1)
       last_occurrence: 2026-05-14   # CFP-619 byte-identical fix commit c199dee [empirical-source: marketplace git log]
+    status: Active
+
+  - name: architect-marketplace-self-check
+    description: |-
+      CFP-604 / ADR-063 Amendment 9 §결정 21 — Gap A: Change Plan §13 marketplace sync 선언 검증 lint.
+      PR 이 .claude-plugin/plugin.json mirrored field 4종 (name/version/description/author) 를 변경할 때
+      Change Plan §13 `marketplace_sync_required:` 선언의 presence/completeness 를 검증한다.
+      §결정 9 (Amendment 1) Layer 2 의 declarative declare 의무에 대응하는 mechanical 검증 채널.
+      presence gap (선언 자체 누락) 감지 — latency gap (§결정 22, check-version-bump-atomic.sh) 과 disjoint 결함 클래스.
+      doc-only fast-path (ADR-054) / cross-repo dogfood-out case false-positive 차단.
+      warning tier (ADR-060 §결정 5 default — 신규 lint baseline 진입, author 인식 forcing function 성격).
+      bypass: hotfix-bypass:architect-marketplace-self-check (ADR-024 Amendment 3 family member, 70번째).
+    detect_command: bash scripts/check-architect-marketplace-self-check.sh
+    workflow: templates/github-workflows/architect-marketplace-self-check.yml
+    current_tier: warning   # ADR-060 §결정 5 default — Gap A 신규 lint, blocking-on-pr 승격은 recurrence evidence 누적 후
+    bypass_label: hotfix-bypass:architect-marketplace-self-check
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20       # ADR-060 §결정 6 (a) velocity-normalized
+      failure_threshold: 0        # ADR-060 §결정 6 (b)
+      sibling_dependencies: []    # 독립 entry
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    introduced_by: CFP-604
+    introduced_date: 2026-05-23
+    owner_adr: ADR-063
+    carrier_adr: ADR-060
+    recurrence:
+      count: 0      # 신규 entry — 초기값
+      threshold: 6  # ADR-060 §결정 19 패턴 참조 (누적 6-sample 이후 auto_blocking 후보)
+      promotion_trigger: manual   # 초기 warning tier — 누적 evidence 후 별 CFP 로 blocking-on-pr 승격
+      last_occurrence: null
     status: Active
 
   - name: stop-time-continuous-confirm-detect
