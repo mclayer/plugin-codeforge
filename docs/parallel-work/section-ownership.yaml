@@ -598,4 +598,48 @@ owned_sections:
     # NOTE (CFP-1312): SemVer ADR-037 (a) PATCH — 신규 [6.5.2] entry insert (Unreleased 다음 라인).
     # 기존 [6.5.1] entry 보존, [Unreleased] 헤더 유지. append-only — 다른 entry 영향 0.
 
+
+  # ─── CFP-1334 신설 (bats fixture RED→GREEN stash proof pattern — TestContract deputy mandate, 2026-05-24 KST) ───
+
+  - file: templates/impl-manifest.md
+    section: "bats fixture 영역 — bats_fixtures[] field + red_green_proof_evidence_artifact nested object schema (CFP-1334 / chief tie-break ladder Option C)"
+    owner_adr: ADR-060
+    parallel_edit: append-only
+    # NOTE (CFP-1334): TestContract deputy mandate Phase 1 carrier — Change Plan §8 schema
+    # field `red_green_proof_evidence_artifact` (nested object: method 3-enum +
+    # pre_impl_sha + assertion_classification[] role 3-enum + platform_verified 5-enum +
+    # null_reason 4-enum) declare 의무 codify. chief tie-break ladder 3 단계 적용 후
+    # Option C convergence (ADR 신설 0건, declaration-only Wave 1). append-only —
+    # bats_fixtures[] field 자체 추가만 허용, 기존 §8.5 sub-issue 자동 생성 / 컬럼 규격 /
+    # DeveloperPL 초안 구성 절차 변경 0. CFP-1085 sibling collision 회피 —
+    # ADR-068 amendments[] touch 0건 (Option A reject).
+
+  - file: skills/deputy-mandate/SKILL.md
+    section: "TestContractArchitectAgent mandate row L80 + RACI matrix §8.5 discriminating fixture mandate row (CFP-1334)"
+    owner_adr: ADR-060
+    parallel_edit: append-only
+    # NOTE (CFP-1334): TestContractArch deputy mandate Phase 1 carrier — L80 row 안
+    # "+ discriminating fixture mandate / RED→GREEN proof" 추가 + RACI matrix L115 영역
+    # §8.5 Stateful row 직후 신규 row (§8.5 discriminating fixture mandate) append.
+    # chief tie-break ladder Step 1 RACI lookup 결과 — TestContractArch primary advocate
+    # 영역 confirm. append-only — ModuleArch / DataArch / APIContractArch / SecurityArch /
+    # InfraOperationalArch row 변경 0 (deputy axis 침범 0).
+
+  - file: docs/evidence-checks-registry.yaml
+    section: "bats-red-green-proof-presence entry (CFP-1334 신설)"
+    owner_adr: ADR-060
+    parallel_edit: append-only
+    # NOTE (CFP-1334): warning-tier deferred-followup entry append (declaration-only
+    # Wave 1). Phase 2 mechanical wire (lint script + workflow + self-app bats fixture)
+    # 후 warning 전환. append-only — entries[] 말미 append, 기존 entry 변경 0.
+
+  - file: docs/domain-knowledge/domain/test-discipline/
+    section: "test-discipline 디렉터리 + red-green-stash-proof-pattern.md (CFP-1334 신설 first entry)"
+    owner_adr: ADR-060
+    parallel_edit: append-only
+    # NOTE (CFP-1334): codeforge governance 어휘 promotion 첫 entry — memory
+    # feedback_tdd_red_proof_via_stash → discriminating fixture mandate vocabulary.
+    # 디렉터리 자체가 신설 (Glob('docs/domain-knowledge/domain/test-discipline/') = 0
+    # result, CodebaseMapper verified). append-only — 동일 디렉터리 안 추가 entry 신설 자유.
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)
