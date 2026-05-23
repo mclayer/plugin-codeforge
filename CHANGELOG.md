@@ -7,6 +7,18 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.4.6] - 2026-05-23
+
+### Changed
+
+- [CFP-1289] **MANIFEST.yaml deploy_output / deploy_review_output entries status Draft → Active** (CFP-604 retro F5 follow-up realized, minimum-viable scope).
+  - declarative-only Phase 1 placeholder alignment: MANIFEST.yaml entry status (Draft) ↔ contract file frontmatter status (Active) 간 drift 해소
+  - `deploy-output-v1.md` (CFP-1059 / ADR-087) line 5 `status: Active` 와 MANIFEST entry status 정합
+  - `deploy-review-output-v1.md` (CFP-1059 / ADR-088) 동일
+  - `inter-plugin-drift` lint (CFP-E) Active|Archived membership 충족 → CFP-1059 family scope future PR 의 baseline drift 부담 해소
+  - actual schema body wire = **multi-session Epic deferred** — CFP-1059 S2 (codeforge-deploy plugin seed) + S3 (codeforge-deploy-review plugin seed) sub-Story carrier 영역
+  - mirrored field: 6.4.5 → 6.4.6 PATCH. Marketplace sibling sync.
+
 ## [6.4.5] - 2026-05-23
 
 ### Changed

@@ -57,13 +57,13 @@ contracts:
     canonical_repo: mclayer/plugin-codeforge-deploy  # TBD — lane plugin seed 신설 후 confirm
     canonical_path: docs/inter-plugin-contracts/
     files:
-      - { file: deploy-output-v1.md, contract_version: "0.1", status: Draft }  # CFP-1059 / ADR-087 — Phase 1 placeholder declare. Body wire = S2 sub-Story carrier (codeforge-deploy plugin seed 신설 후 actual schema codify, 0.1 Draft → 1.0 Active MAJOR bump ADR-008 §결정 1 정합).
+      - { file: deploy-output-v1.md, contract_version: "0.1", status: Active }  # CFP-1289 (CFP-604 retro F5): status Draft → Active — MANIFEST↔body frontmatter alignment (deploy-output-v1.md line 5 status: Active 정합, declarative-only Phase 1 placeholder 영역에서 inter-plugin-drift lint Active|Archived membership 충족). actual schema body wire = S2 sub-Story carrier (codeforge-deploy plugin seed 신설 후, 0.1 placeholder → 1.0 wired MAJOR bump ADR-008 §결정 1 정합). CFP-1059 / ADR-087.
 
   - name: deploy_review_output
     canonical_repo: mclayer/plugin-codeforge-deploy-review  # TBD — lane plugin seed 신설 후 confirm
     canonical_path: docs/inter-plugin-contracts/
     files:
-      - { file: deploy-review-output-v1.md, contract_version: "0.1", status: Draft }  # CFP-1059 / ADR-088 — Phase 1 placeholder declare. Body wire = S3 sub-Story carrier (codeforge-deploy-review plugin seed 신설 후 actual schema codify, ProductionEvidenceDeputy ownership 이관 mirror, debate-protocol-v1 trigger 의무 carrier).
+      - { file: deploy-review-output-v1.md, contract_version: "0.1", status: Active }  # CFP-1289 (CFP-604 retro F5): status Draft → Active — MANIFEST↔body frontmatter alignment (declarative-only Phase 1 placeholder). actual schema body wire = S3 sub-Story carrier (codeforge-deploy-review plugin seed 신설 후, ProductionEvidenceDeputy ownership 이관 mirror + debate-protocol-v1 trigger 의무). CFP-1059 / ADR-088.
 
 # kind:registry entries (managed by check-doc-frontmatter.sh chain)
 # label-registry versioned here for CFP-140 MAJOR bump tracking (ADR-008 §결정)
