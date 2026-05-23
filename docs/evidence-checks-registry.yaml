@@ -3996,3 +3996,46 @@ entries:
       promotion_trigger: auto_blocking
     status: warning   # Phase 2 mechanical wire 완료 — script + workflow + bats fixture 신설 (ADR-060 §결정 5 default 새 entry pattern, 2026-05-24T00:00:00+09:00 KST 전환)
 
+  - name: workflow-changed-files-pattern
+    description: |
+      Workflow yaml file 안 invalid GitHub Actions context expression detection.
+      CFP-1346 Phase 2 F-CR-1346-1 P1 finding sentinel —
+      `github.event.pull_request.changed_files.*.filename` 무효 expression
+      (changed_files = integer NOT array of file objects). Empty string evaluate
+      → script fallback silent degradation (ADR-082 Amendment 9 §결정 11.B
+      silent error mask 금지 directly-analogous sub-domain).
+
+      Sibling convention SSOT = `git diff --name-only origin/${{ github.base_ref }}...HEAD`
+      (49 sibling workflows 안 0건 invalid expression — CFP-1346 CodeReviewPL
+      4-source verify-before-trust 산물).
+
+      pattern_count=1 monitor (CFP-1346 Phase 2 F-CR-1346-1 sentinel #1 only).
+      Wave 1 declarative anchor only (CFP-1346 retro F4-FU Optional carrier) —
+      Wave 2 mechanical wire (lint script + workflow + bats + 49 sibling sweep)
+      = 별 sub-CFP carrier trigger condition: pattern_count 2+ 재발 OR manual.
+    detect_command: bash scripts/check-workflow-changed-files-pattern.sh  # Wave 2 별 sub-CFP carrier
+    workflow: templates/github-workflows/workflow-changed-files-pattern-check.yml  # Wave 2 별 sub-CFP carrier
+    current_tier: warning
+    bypass_label: hotfix-bypass:workflow-changed-files-pattern  # Wave 2 별 sub-CFP carrier (label-registry-v2 신규 entry)
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-1391                  # 본 entry self-carrier (Wave 1 declarative anchor only)
+        - CFP-1391-phase2-deferred  # Wave 2 wire = 별 sub-CFP carrier
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-1391
+    introduced_date: 2026-05-24
+    owner_adr: ADR-082              # Amendment 9 §결정 11.B silent error mask directly-analogous (silent degradation sub-domain)
+    carrier_adr: ADR-060            # evidence-enforceable warning-tier framework
+    recurrence:
+      count: 1                      # CFP-1346 Phase 2 F-CR-1346-1 sentinel #1 only
+      threshold: 2                  # ADR-045 §D-9 Mandatory escalation threshold
+      last_occurrence: "2026-05-24T00:00:00Z"
+      promotion_trigger: auto_blocking
+    status: deferred-followup  # Wave 1 declarative anchor only (CFP-1391 본 PR) — Wave 2 mechanical wire = 별 sub-CFP carrier
