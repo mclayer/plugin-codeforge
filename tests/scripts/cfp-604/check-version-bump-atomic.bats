@@ -46,6 +46,14 @@ setup() {
   MOCK_BIN="$(mktemp -d)"
   export MOCK_BIN
 
+  # 스크립트를 $TEST_DIR/scripts/ 에 복사 (SCRIPT_DIR/../ = TEST_DIR 이 되게)
+  # CFP-1256 패턴 동형 — REPO_ROOT 가 $TEST_DIR 을 가리키게 한다
+  mkdir -p "$TEST_DIR/scripts"
+  cp "$SCRIPT" "$TEST_DIR/scripts/check-version-bump-atomic.sh"
+  chmod +x "$TEST_DIR/scripts/check-version-bump-atomic.sh"
+  SCRIPT_UNDER_TEST="$TEST_DIR/scripts/check-version-bump-atomic.sh"
+  export SCRIPT_UNDER_TEST
+
   # git repo 초기화
   git -C "$TEST_DIR" init --quiet
   git -C "$TEST_DIR" config user.email "test@example.com"
@@ -77,7 +85,7 @@ CL
 
 teardown() {
   rm -rf "$TEST_DIR" "$MOCK_BIN"
-  unset TEST_DIR MOCK_BIN BASE_REF CI GITHUB_ACTIONS
+  unset TEST_DIR MOCK_BIN BASE_REF CI GITHUB_ACTIONS SCRIPT_UNDER_TEST
 }
 
 # ──────────────────────────────── prerequisite check ───────────────────────────────────────────
@@ -107,7 +115,7 @@ PJSON
 
   # CHANGELOG 는 여전히 6.3.0 → Step 2 에서 exit 1 (version mismatch)
   # 주의: Step 2 가 먼저 실행되므로 CHANGELOG 버전 불일치가 먼저 잡힘
-  run bash -c "cd '$TEST_DIR' && BASE_REF=HEAD bash '$SCRIPT'"
+  run bash -c "cd '$TEST_DIR' && BASE_REF=HEAD bash '$SCRIPT_UNDER_TEST'"
   [ "$status" -eq 1 ]
   echo "$output" | grep -qi "violation\|mismatch\|CHANGELOG"
 }
@@ -134,12 +142,25 @@ PJSON
 CL
   git -C "$TEST_DIR" add .
 
-  # mock gh: 미설치 시뮬레이션 (PATH 에서 gh 제거)
-  # MOCK_BIN 은 비어있으므로 gh 없음
-  run bash -c "cd '$TEST_DIR' && BASE_REF=HEAD CI=true GITHUB_ACTIONS=true PATH='$MOCK_BIN:$PATH' bash '$SCRIPT'"
+  # mock gh: gh 미설치 시뮬레이션 — MOCK_BIN 에 "not-found" stub 로 gh 차단
+  # stub 이 존재하면 command -v 는 true, 하지만 gh auth status 는 exit 1
+  # 가장 단순한 방법: stub gh 를 생성해 MOCK_BIN 에 넣고 PATH 앞에 배치
+  # stub: command -v gh 는 PASS, 실제 호출 시 exit 1 (auth fail 시뮬레이션)
+  # 실제 "gh 미설치" 대신 "gh auth 실패" 로 동일한 skip branch 진입
+  cat > "$MOCK_BIN/gh" << 'STUBGH'
+#!/usr/bin/env bash
+# stub: auth fail (gh 미설치 등가)
+if [[ "$*" == *"auth status"* ]]; then
+  echo "You are not logged into any GitHub hosts. Run gh auth login to authenticate." >&2
+  exit 1
+fi
+exit 1
+STUBGH
+  chmod +x "$MOCK_BIN/gh"
+  run bash -c "cd '$TEST_DIR' && BASE_REF=HEAD CI=true GITHUB_ACTIONS=true PATH='$MOCK_BIN:$PATH' bash '$SCRIPT_UNDER_TEST'"
   [ "$status" -eq 2 ]
-  # stderr 에 fail-loud 메시지 존재
-  echo "$output" | grep -qi "CI\|gh CLI\|미설치\|environment\|exit 2"
+  # CI 환경에서 gh auth 실패 → fail-loud exit 2 + stderr 메시지
+  echo "$output" | grep -qi "CI\|gh\|미인증\|environment\|exit 2\|auth"
 }
 
 # ──────────────────────────────── TC-c: gh-skip non-CI 환경 graceful skip + stderr warning ────
@@ -163,8 +184,17 @@ PJSON
 CL
   git -C "$TEST_DIR" add .
 
-  # CI 환경 아님 (CI, GITHUB_ACTIONS 미설정)
-  run bash -c "cd '$TEST_DIR' && BASE_REF=HEAD CI='' GITHUB_ACTIONS='' PATH='$MOCK_BIN:$PATH' bash '$SCRIPT'"
+  # CI 환경 아님 (CI, GITHUB_ACTIONS 미설정) — auth-fail stub 으로 gh skip 시뮬레이션
+  cat > "$MOCK_BIN/gh" << 'STUBGH'
+#!/usr/bin/env bash
+if [[ "$*" == *"auth status"* ]]; then
+  echo "You are not logged into any GitHub hosts." >&2
+  exit 1
+fi
+exit 1
+STUBGH
+  chmod +x "$MOCK_BIN/gh"
+  run bash -c "cd '$TEST_DIR' && BASE_REF=HEAD CI='' GITHUB_ACTIONS='' PATH='$MOCK_BIN:$PATH' bash '$SCRIPT_UNDER_TEST'"
   [ "$status" -eq 0 ]
   # output (stdout+stderr) 에 warning 메시지 존재 (silent skip 금지 검증)
   echo "$output" | grep -qi "advisory\|skip\|warning\|⚠"
@@ -216,9 +246,12 @@ exit 0
 MOCKGH
   chmod +x "$MOCK_BIN/gh"
 
-  run bash -c "cd '$TEST_DIR' && BASE_REF=HEAD CI=true GITHUB_ACTIONS=true PATH='$MOCK_BIN:$PATH' bash '$SCRIPT'"
+  run bash -c "cd '$TEST_DIR' && BASE_REF=HEAD CI=true GITHUB_ACTIONS=true PATH='$MOCK_BIN:$PATH' bash '$SCRIPT_UNDER_TEST'"
   [ "$status" -eq 1 ]
-  echo "$output" | grep -qi "name.*drift\|name.*mirrored"
+  # local name = "codeforge-renamed" 이지만 marketplace 에 "codeforge" 만 존재
+  # → select(.name == "codeforge-renamed") 가 nothing 반환 → "plugin entry 부재" exit 1
+  # 이것이 name 축 drift 의 mechanical 감지 결과 (새 name 이 marketplace 에 없음)
+  echo "$output" | grep -qi "부재\|entry.*codeforge-renamed\|plugin.*not found\|violation"
 }
 
 # ──────────────────────────────── TC-e: author field drift detection ───────────────────────────
@@ -267,7 +300,7 @@ exit 0
 MOCKGH
   chmod +x "$MOCK_BIN/gh"
 
-  run bash -c "cd '$TEST_DIR' && BASE_REF=HEAD CI=true GITHUB_ACTIONS=true PATH='$MOCK_BIN:$PATH' bash '$SCRIPT'"
+  run bash -c "cd '$TEST_DIR' && BASE_REF=HEAD CI=true GITHUB_ACTIONS=true PATH='$MOCK_BIN:$PATH' bash '$SCRIPT_UNDER_TEST'"
   [ "$status" -eq 1 ]
   echo "$output" | grep -qi "author.*drift\|author.*mirrored"
 }

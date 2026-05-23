@@ -40,6 +40,14 @@ setup() {
   TEST_DIR="$(mktemp -d)"
   export TEST_DIR
 
+  # 스크립트를 $TEST_DIR/scripts/ 에 복사 (SCRIPT_DIR/../ = TEST_DIR 이 되게)
+  # CFP-1256 패턴 동형 — REPO_ROOT 가 $TEST_DIR 을 가리키게 한다
+  mkdir -p "$TEST_DIR/scripts"
+  cp "$SCRIPT" "$TEST_DIR/scripts/check-architect-marketplace-self-check.sh"
+  chmod +x "$TEST_DIR/scripts/check-architect-marketplace-self-check.sh"
+  SCRIPT_UNDER_TEST="$TEST_DIR/scripts/check-architect-marketplace-self-check.sh"
+  export SCRIPT_UNDER_TEST
+
   # git repo 초기화 (diff 기반 감지용)
   git -C "$TEST_DIR" init --quiet
   git -C "$TEST_DIR" config user.email "test@example.com"
@@ -58,13 +66,12 @@ PJSON
   git -C "$TEST_DIR" add .
   git -C "$TEST_DIR" commit --quiet -m "base"
 
-  # BASE_REF = HEAD~1 (이전 커밋이 없으므로 현재 HEAD 를 base 로 사용)
   # 실제 diff 를 만들기 위해 plugin.json 수정 후 스테이징
   cat > "$TEST_DIR/.claude-plugin/plugin.json" <<'PJSON'
 {
   "name": "codeforge",
   "version": "6.4.0",
-  "description": "updated description — CFP-604",
+  "description": "updated description - CFP-604",
   "author": {"name": "Josh"}
 }
 PJSON
@@ -114,7 +121,7 @@ PLAN
 
   export PR_LABELS=""
   export PR_BODY=""
-  run bash "$SCRIPT"
+  run bash "$SCRIPT_UNDER_TEST"
   # warning tier — exit 0 or exit 1 모두 가능하지만 완전 선언이면 exit 0
   [ "$status" -eq 0 ]
 }
@@ -140,7 +147,7 @@ PLAN
 
   export PR_LABELS=""
   export PR_BODY=""
-  run bash "$SCRIPT"
+  run bash "$SCRIPT_UNDER_TEST"
   [ "$status" -eq 1 ]
   echo "$output" | grep -q "mirrored_fields_changed"
 }
@@ -151,7 +158,7 @@ PLAN
   # Change Plan 파일 없음 (git diff 에 없음)
   export PR_LABELS=""
   export PR_BODY=""
-  run bash "$SCRIPT"
+  run bash "$SCRIPT_UNDER_TEST"
   [ "$status" -eq 1 ]
   echo "$output" | grep -qi "change plan\|§13\|marketplace_sync_required"
 }
@@ -161,7 +168,7 @@ PLAN
 @test "TC-4: doc-only fast-path label (phase:문서) 부착 → exit 0 (false-positive 차단, ADR-054)" {
   export PR_LABELS="phase:문서"
   export PR_BODY=""
-  run bash "$SCRIPT"
+  run bash "$SCRIPT_UNDER_TEST"
   [ "$status" -eq 0 ]
   echo "$output" | grep -qi "doc-only\|fast-path\|문서"
 }
@@ -172,7 +179,7 @@ PLAN
   # PR body 에 dogfood-out:true 마커 설정 + Change Plan 파일 없음 (cross-repo 시나리오)
   export PR_LABELS=""
   export PR_BODY="$(printf 'dogfood-out:true\nThis PR bumps plugin.json version for CFP-604.')"
-  run bash "$SCRIPT"
+  run bash "$SCRIPT_UNDER_TEST"
   # cross-repo dogfood-out case: cross-repo fetch 불가 → conditional warning → exit 1
   [ "$status" -eq 1 ]
   echo "$output" | grep -qi "dogfood\|cross-repo\|conditional"
