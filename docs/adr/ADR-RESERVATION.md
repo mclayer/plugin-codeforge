@@ -194,6 +194,11 @@ amendments_reserved:
     reserved_by_cfp: CFP-1330
     reservation_date: 2026-05-24 KST
     status: active   # ArchitectAgent commit time 점유 — §결정 11 신설 Code-level write-time semantic truth verify expansion (§결정 11.A test code production binding verify CFP-1025 F-CR-1025-2 sentinel + §결정 11.B script error visibility audit CFP-1025 bootstrap-labels.sh:53-55 META-ROOT sentinel), 2 memory entry normative 승격 carrier sentinel forward-prevention rationale, ADR-082 super-class scope expansion ratchet (Amendment 8 ArchitectAgent governance write-time + 본 Amendment 9 Code-level write-time disjoint axis), wrapper-only ADR-010 sibling sync 면제 (CodeReviewAgent.md / QADeveloperAgent.md lane plugin cross-ref = follow-up defer). verified-via Read worktree docs/adr/ADR-082-...md frontmatter amendments[] L11-51 max=8 → next=9 2026-05-24 KST 기준 origin/main a0eb545 (CFP-1329 Amendment 8 merge 후 base). status reserved 미경유 직접 active 전환 — ArchitectPL chief author precedent ADR-082 row 82.8 (CFP-1329) 직전 패턴 정합. META-self-applied (§결정 10.D 4th applied case).
+  - adr_number: 82
+    amendment_id: 10
+    reserved_by_cfp: CFP-1332
+    reservation_date: 2026-05-24 KST
+    status: active   # Orchestrator inline write — §결정 12 신설 RequirementsPL + retro-time verify-before-trust 2 sub-scope (§결정 12.A Issue body §2.1 verified state table mandate strengthening pattern_count 2 reach CFP-1000 INVERSE drift + CFP-1001 lint output FP / §결정 12.B Retro-time wave_defer empirical verify pattern_count 2 reach CFP-1006 Wave-defer falsified + CFP-1025 corrective closure pattern WORKING), 2 memory entry normative 승격 carrier (memory feedback_issue_body_verify_before_trust / feedback_wave_defer_empirical_verify), ADR-082 super-class lifecycle expansion axis (write-time + retro-time disjoint layer), wrapper-only ADR-010 sibling sync 면제 (RequirementsPLAgent.md / PMOAgent.md lane plugin cross-ref = follow-up defer). verified-via Read worktree docs/adr/ADR-082-...md frontmatter amendments[] L11-57 max=9 → next=10 2026-05-24 KST 기준 origin/main 38fc8ff (CFP-1330 Amendment 9 merge 후 base). META-self-applied (§결정 10.D 5th applied case).
 ```
 
 ## 해소 기준

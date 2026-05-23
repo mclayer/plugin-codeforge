@@ -55,6 +55,12 @@ amendments:
     summary: "§결정 11 신설 — Code-level write-time semantic truth verify expansion: §결정 11.A (test code production binding verify, sed-extract real fn, sentinel forward-prevention CFP-1025 F-CR-1025-2) + §결정 11.B (script error visibility audit, 2>/dev/null mis-diagnosis amplifier META-ROOT, sentinel forward-prevention CFP-1025 bootstrap-labels.sh:53-55). 2 memory entry normative 승격 carrier (memory `feedback_test_must_bind_to_production` / `feedback_error_mask_metaroot`). ADR-082 super-class write-time semantic truth verify scope expansion — Amendment 8 ArchitectAgent write-time discipline + 본 Amendment 9 Code-level (test + script) write-time discipline. ADR-039 lane self-write boundary 정합 (CodeReviewAgent.md / QADeveloperAgent.md lane plugin cross-ref = follow-up defer)."
     direction: strengthening
     sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: ADR-082 write-time verify scope 가 Architect write-time (Amendment 8 §결정 10) + Code-level write-time (본 Amendment 9 §결정 11) layer 양 layer expansion, forbid scope 축소 아님). ADR-064 §결정 7 (CFP-1149 Amendment 8) symmetric evidence-gated 정합. pattern_count evidence: §결정 11.A=1 (CFP-1025 F-CR-1025-2 sentinel forward-prevention) / §결정 11.B=1 (CFP-1025 META-ROOT sentinel forward-prevention, CFP-1006 mis-diagnosis lineage verified)."
+  - amendment_id: 10
+    carrier_story: CFP-1332
+    date: 2026-05-24
+    summary: "§결정 12 신설 — RequirementsPL + retro-time verify-before-trust expansion: §결정 12.A (Orchestrator-authored Issue body §2.1 verified state table mandate strengthening — pattern_count 2 reach CFP-1000 INVERSE drift + CFP-1001 lint output FP) + §결정 12.B (Retro-time wave_defer empirical verify — pattern_count 2 reach CFP-1006 Wave-defer rationale falsified post-merge + CFP-1025 corrective closure pattern WORKING). 2 memory entry normative 승격 carrier (memory `feedback_issue_body_verify_before_trust` / `feedback_wave_defer_empirical_verify`). ADR-082 super-class scope expansion = Amendment 2 (Issue-body authorship verify §결정 1 layer 1) RequirementsPL §2.1 codify strengthening + retro-time verify-before-trust axis 추가 (write-time + retro-time disjoint verify layer)."
+    direction: strengthening
+    sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: ADR-082 write-time verify scope 가 write-time (Amendment 1-9) + retro-time empirical verify (본 Amendment 10 §결정 12.B) 양 lifecycle expansion, forbid scope 축소 아님). ADR-064 §결정 7 (CFP-1149 Amendment 8) symmetric evidence-gated 정합. pattern_count evidence: §결정 12.A=2 (CFP-1000 INVERSE drift + CFP-1001 lint output FP) / §결정 12.B=2 (CFP-1006 Wave-defer rationale falsified + CFP-1025 corrective closure pattern WORKING evidence)."
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-841
@@ -104,6 +110,12 @@ amendment_log:
     decisions_touched: ["§결정 10 (신설)"]
     nature: ratchet-up  # §결정 10 신설 (ArchitectAgent write-time discipline 4 sub-scope A/B/C/D) — §결정 1 layer 1 + §결정 2 scope (a-d) write-time verify mandate sub-domain expansion (ADR-058 §결정 5 강화 방향)
     note: "ADR-082 super-class (write-time semantic truth verify) 안 ArchitectAgent chief author write-time discipline 4 sub-scope codify. 4 memory entry normative 승격 carrier: (1) `feedback_codex_tp2_verify_before_trust_pattern` (CFP-795 F-1 sentinel) — Codex TP#2 inline FIX 8-anchor mirror coverage checklist / (2) `feedback_mid_author_partial_revert_propagation_gap` (CFP-1009 dogfood inversion P1 sentinel) — body normative correction ↔ frontmatter inline comment / appendix / table cell propagation 의무 / (3) `feedback_architect_script_behavior_claim_verify` (CFP-1006 F-DR-1006-1 + CFP-1025 hypothesis refuted, pattern_count 2 reach) — script behavior assertion write-time empirical verify + DesignReviewPL audit point / (4) `feedback_meta_self_application_pattern` (CFP-1016 1st applied + CFP-1340 Amendment 2 §결정 15 2nd applied, pattern_count 2 reach) — Story introduces codification → carrier Story 자체에 1st applied. pattern_count evidence 혼합: §결정 10.A=1 (sentinel forward-prevention) / §결정 10.B=1 (sentinel forward-prevention) / §결정 10.C=2 reach / §결정 10.D=2 reach. ADR-064 §결정 7 CFP-1149 Amendment 8 symmetric evidence-gated ratchet 정합 — sentinel forward-prevention (10.A+10.B) = 도구적 가치 evidence base, recurrence threshold 2 reach (10.C+10.D) = standard pattern_count base. 혼합 ratchet 정직 명시. 본 Amendment 8 자체가 META-self-applied (§결정 10.D 3rd applied case): 본 Amendment 번호(8) 가 target ADR-082 frontmatter amendments: 목록 Read verify 후 max(7)+1=8 으로 결정 (verified-via: Read worktree docs/adr/ADR-082-...md frontmatter amendments[] 2026-05-24 KST 기준 origin/main d24ab28). Wave 1 = declaration-only (4 sub-decisions 모두 behavioral directive). Wave 2 mechanical wire (DesignReviewPL audit dedicated points + ArchitectAgent self-discipline grep self-check) = 별 sub-carrier 분리 (deferred-followup, ADR-082 Wave 1 declaration-only precedent 답습)."
+  - amendment_id: 10
+    carrier_story: CFP-1332
+    date: 2026-05-24  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 12 (신설)"]
+    nature: ratchet-up  # §결정 12 신설 (RequirementsPL + retro-time verify-before-trust 2 sub-scope A/B) — ADR-082 super-class write-time verify scope expansion to retro-time empirical verify lifecycle (ADR-058 §결정 5 강화 방향)
+    note: "ADR-082 super-class scope expansion = Amendment 2 (Issue-body authorship verify §결정 1 layer 1) RequirementsPL §2.1 codify strengthening + retro-time verify-before-trust axis 추가. 2 memory entry normative 승격 carrier: (1) `feedback_issue_body_verify_before_trust` (CFP-1000 INVERSE drift + CFP-1001 lint output FP, pattern_count 2 reach) — RequirementsPL spawn prompt MUST include explicit verify-before-trust mandate + §2.1 verified state table 의무 + Issue-body claim direct verify (reproduce lint / file Read line numbers / gh CLI probe gh-side state / file existence check) / (2) `feedback_wave_defer_empirical_verify` (CFP-1006 Wave-defer falsified + CFP-1025 corrective closure, pattern_count 2 reach) — retro time PMOAgent/Orchestrator 가 deferral rationale empirical verify (workflow X actual produced state post-merge / lint Y actually catches deferred concern / backward-compat scenario actual run). pattern_count 2 reach 양 sub-decision evidence-gate 통과. ADR-082 super-class disjoint axis expansion (write-time + retro-time, 단일 super-class 안 disjoint lifecycle layer). 본 Amendment 10 자체가 META-self-applied (§결정 10.D 5th applied case): 본 Amendment 번호(10) 가 target ADR-082 frontmatter amendments: 목록 Read verify 후 max(9)+1=10 으로 결정 (verified-via: Read worktree docs/adr/ADR-082-...md frontmatter amendments[] L11-57 max=9 2026-05-24 KST 기준 origin/main 38fc8ff — CFP-1330 Amendment 9 merge 후 base). Wave 1 = declaration-only behavioral mandate. Wave 2 mechanical wire (RequirementsPL §2.1 lint + retro empirical-verify-required marker) = 별 sub-carrier 분리 (deferred-followup, ADR-082 Wave 1 declaration-only precedent 답습). lane plugin agent md cross-ref (codeforge-requirements RequirementsPLAgent.md / codeforge-pmo PMOAgent.md) = follow-up defer (wrapper-only ADR-010 sibling sync 면제)."
   - amendment_id: 9
     carrier_story: CFP-1330
     date: 2026-05-24  # KST per ADR-079 §결정 2
@@ -119,6 +131,11 @@ related_stories:
   - CFP-1198 # Amendment 6 carrier (§결정 2 scope (b) 확장 + §결정 9 신설 — amendment 번호 citation plan-time staleness 차단 forcing function, ADR-045 §D-9 Mandatory escalation 산물)
   - CFP-1312 # Amendment 7 carrier (§결정 9 scope 양방향 확장 forward → forward+backward + CFP-1216 lint Check (b) backward-staleness wire — Wave 1 mechanical lint Check (b) coverage gap 보강 dual-carrier, ADR-045 §D-9 pattern_count 3 reach Mandatory escalation 산물)
   - CFP-1293 # Amendment 7 evidence #3 occurrence (ADR-083 Amendment 2 backward-staleness — Wave 1 behavioral mandate land 후 발생 mechanical lint coverage gap escape)
+  - CFP-1332 # Amendment 10 carrier (§결정 12 신설 — RequirementsPL §2.1 verified state table mandate strengthening + retro-time wave_defer empirical verify, lifecycle expansion axis)
+  - CFP-1000 # Amendment 10 §결정 12.A evidence (Issue body INVERSE drift, pattern_count 2 reach)
+  - CFP-1001 # Amendment 10 §결정 12.A evidence (Issue body lint output FP, pattern_count 2 reach)
+  - CFP-1006 # Amendment 10 §결정 12.B evidence (Wave-defer rationale falsified post-merge)
+  - CFP-1025 # Amendment 10 §결정 12.B evidence (corrective closure pattern WORKING)
   - CFP-1216 # Amendment 7 dual-carrier sibling (CFP-1198 Phase 2 sub-carrier 점유 land — naming SSOT amendment-number-frontmatter-verify, Amendment 7 = Check (b) extend)
   - CFP-1329 # Amendment 8 carrier (§결정 10 신설 — ArchitectAgent write-time discipline 4 sub-scope A/B/C/D: Codex TP#2 8-anchor mirror / mid-author revert propagation / script-behavior claim verify / META self-application, 4 memory entry normative 승격 carrier, pattern_count evidence 혼합 ratchet ADR-064 §결정 7 symmetric)
   - CFP-795  # §결정 10.A evidence #1 sentinel (Codex TP#2 inline FIX 8-anchor mirror coverage checklist forward-prevention, dogfood inversion P1 prevention 도구적 가치)
@@ -457,6 +474,60 @@ Script `2>/dev/null` 가 success/failure 보고하면서 real error 마스킹 = 
 **Wave 1 = declaration-only**: 2 sub-decisions 모두 behavioral directive. Wave 2 mechanical wire (CodeReviewPL audit dedicated points: tautology smell grep + `Grep '2>/dev/null' scripts/**` resource-creating/state-changing audit + codeforge-wide grep audit sweep) = 별 sub-carrier 분리 (deferred-followup, ADR-082 Wave 1 declaration-only precedent 답습).
 
 **META-self-application (§결정 10.D 4th applied case)**: 본 Amendment 9 자체가 §결정 10.D pattern self-applied — 본 Amendment 번호 9 가 target ADR-082 frontmatter `amendments:` 목록 Read verify 후 max(8)+1=9 으로 결정 (verified-via: Read worktree `docs/adr/ADR-082-...md` frontmatter `amendments[]` L11-51 max=8, 2026-05-24 KST 기준 origin/main a0eb545 — CFP-1329 Amendment 8 merge 후 base). Amendment 7 §결정 9 verify-before-cite mandate self-application 사례.
+
+### §결정 12 — RequirementsPL + retro-time verify-before-trust 2 sub-scope expansion (Amendment 10 신설, CFP-1332)
+
+ADR-082 super-class write-time semantic truth verify scope 가 (a) RequirementsPL §2.1 verified state table mandate strengthening + (b) retro-time empirical verify (Wave-defer rationale falsification 차단) 양 axis 동시 expansion. write-time-only → write-time + retro-time lifecycle.
+
+#### §결정 12.A — Orchestrator-authored Issue body §2.1 verified state table mandate strengthening
+
+**carrier**: memory `feedback_issue_body_verify_before_trust` (pattern_count 2 reach — CFP-1000 INVERSE drift + CFP-1001 lint output FP)
+
+Orchestrator 가 follow-up CFP batch Issue body author 시 (e.g., post-retro batch creation) Issue body claim 이 parallel-session merge 사이 stale / factually inverted 가능. RequirementsPL spawn prompt **MUST include explicit verify-before-trust mandate** on each Issue body claim:
+
+1. Reproduce any cited lint output via direct script invocation in worktree
+2. Direct file Read for cited line numbers (line numbers may have shifted post-parallel-merge)
+3. Direct gh CLI/API probe for cited gh-side state (label existence, baseline count, registry value)
+4. Direct file existence check for cited paths (e.g., `.claude-work/` directory)
+
+**§2.1 verified state table mandatory** (ADR-082 Amendment 2 §결정 1 layer 1 strengthening, frontmatter `issue_origin: orchestrator_authored_followup` 의무 codify). Both layers preserved: §1 verbatim Issue (immutable, story-section-1-immutable.yml) + §2 verified state (drives downstream lanes).
+
+**pattern_count 2 evidence**:
+- CFP-1000 — Issue body claim "prod-cutover-deputy-evidence not registered in gh" verified state INVERSE = REGISTERED in gh, MISSING in registry (Pivot detected, fix direction 정정)
+- CFP-1001 — Issue body cite "L189 ADR-038 Amendment 6 lint output as drift" verified state = lint regex cross-context window ±5-line false-pair (paired with L185 ADR-040 Amendment 6, NOT a real drift)
+
+#### §결정 12.B — Retro-time wave_defer empirical verify
+
+**carrier**: memory `feedback_wave_defer_empirical_verify` (pattern_count 2 reach — CFP-1006 Wave-defer rationale falsified + CFP-1025 corrective closure pattern WORKING)
+
+Story 가 sub-scope Wave 2/3 follow-up CFP 로 defer 시 rationale "will auto-resolve via mechanism X" = **retro time 에 empirical verify 의무** (Story-write time 가정 금지). Wave-defer = ADR-064 §결정 1 scope-unitary 정합 practice, 단 deferral *reason* 이 hypothesis ("mechanism X handles it automatically") 인 경우 FALSE 가능성 검증 의무.
+
+**의무 절차** (retro time PMOAgent / Orchestrator):
+1. Wave-deferred sub-scope 마다 deferral rationale 이 predict 하는 empirical check 실행:
+   - "auto-resolves via workflow X" → workflow X 가 post-merge actual produced state predicted state 일치 verify
+   - "covered by existing lint Y" → lint Y 실행, deferred concern catch 확인
+   - "backward-compat preserved" → backward-compat scenario actual run
+2. Retro 안 empirical result 기록:
+   - 확인 → Wave N follow-up 가 precautionary/optional (deprioritize 가능)
+   - 반증 → Wave N follow-up 가 genuinely required (priority 격상 + 정확 root cause re-diagnose)
+
+**pattern_count 2 evidence**:
+- CFP-1006 Wave 1 — "36 registry→gh missing entries auto-resolve via bootstrap-labels.yml CFP-598 dynamic registry-driven pattern on PR open" rationale post-merge verify: gh hotfix-bypass label count 15 unchanged from pre-CFP-1006 → rationale FALSIFIED. Wave 2 = Issue #1025 genuinely required (not precautionary)
+- CFP-1025 — empirical diagnosis via raw `gh run view 26080174058 --log` REFUTED Orchestrator's pre-spawn PyYAML hypothesis (115 blanket failures = 2-layer token-gap + error-mask META-ROOT). empirical-verify discipline prevented second mis-diagnosis (pattern WORKING AS DESIGNED)
+
+#### §결정 12 — disjoint axis with Amendment 8 §결정 10 + Amendment 9 §결정 11
+
+| Amendment | scope | verify lifecycle axis | layer |
+|---|---|---|---|
+| Amendment 8 §결정 10 | ArchitectAgent write-time discipline 4 sub-scope | governance artifact write-time | governance write-time |
+| Amendment 9 §결정 11 | Code-level write-time discipline 2 sub-scope | code artifact write-time | code write-time |
+| **Amendment 10 §결정 12** | **RequirementsPL + retro-time verify expansion 2 sub-scope** | **Issue-body write-time + retro-time empirical verify** | **lifecycle expansion** |
+
+3 Amendment 모두 ADR-082 super-class (write-time semantic truth verify) 의 disjoint axis expansion. Amendment 10 = lifecycle axis 추가 (write-time-only → write-time + retro-time). CFP scope unitary (ADR-064 §결정 5) 정합 — 단일 super-class 안 disjoint axis 분리.
+
+**Wave 1 = declaration-only**: 2 sub-decisions 모두 behavioral directive. Wave 2 mechanical wire (RequirementsPL §2.1 verified state table lint + retro empirical-verify-required marker) = 별 sub-carrier 분리 (deferred-followup, ADR-082 Wave 1 declaration-only precedent 답습).
+
+**META-self-application (§결정 10.D 5th applied case)**: 본 Amendment 10 자체가 §결정 10.D pattern self-applied — 본 Amendment 번호 10 가 target ADR-082 frontmatter `amendments:` 목록 Read verify 후 max(9)+1=10 으로 결정 (verified-via: Read worktree `docs/adr/ADR-082-...md` frontmatter `amendments[]` L11-57 max=9, 2026-05-24 KST 기준 origin/main 38fc8ff — CFP-1330 Amendment 9 merge 후 base). Amendment 7 §결정 9 verify-before-cite mandate self-application 사례.
 
 ## 결과
 
