@@ -184,6 +184,11 @@ amendments_reserved:
     reserved_by_cfp: CFP-1340
     reservation_date: 2026-05-24 KST
     status: active   # ArchitectAgent commit time 점유 (Story Phase 1 PR carrier — Unjustified session swap reflex 차단 + /compact normative §결정 18 신설, ADR-053/057 trigger closed 2-set + anti-pattern 7종, 재발 incident 2건 evidence pattern_count 2 reach, memory feedback_unjustified_session_swap_reflex normative 승격 carrier, §결정 4 sub-mechanism 2 차원 enum 4종 closed invariant 보존 axis disjoint)
+  - adr_number: 82
+    amendment_id: 8
+    reserved_by_cfp: CFP-1329
+    reservation_date: 2026-05-24 KST
+    status: active   # ArchitectAgent commit time 점유 (Story Phase 1 PR carrier — §결정 10 신설 ArchitectAgent write-time discipline 4 sub-scope A/B/C/D: Codex TP#2 8-anchor mirror / mid-author revert propagation / script-behavior claim verify / META self-application, 4 memory entry normative 승격 carrier, pattern_count evidence 혼합 ratchet ADR-064 §결정 7 symmetric. verified-via Read worktree docs/adr/ADR-082-...md frontmatter amendments[] max=7 → next=8 2026-05-24 KST 기준 origin/main d24ab28. status reserved 미경유 직접 active 전환 — ArchitectPL chief author precedent ADR-082 Amendment 7 (CFP-1312) row 직전 패턴 정합)
 ```
 
 ## 해소 기준
