@@ -1,0 +1,49 @@
+# label-registry-frozen-baseline-count-parity (CFP-1346 / ADR-108 §결정 3 warning mode)
+#
+# label-registry-v2.md §3 yaml entry description text 안 'N번째 hotfix-bypass:*
+# family member' raw active grep count post-append parity lint.
+# warning tier — continue-on-error: true (ADR-060 §결정 5 default 새 entry pattern).
+#
+# bypass label: hotfix-bypass:label-registry-frozen-baseline-count-parity
+# 74번째 hotfix-bypass:* family member (label-registry-v2 v2.53, META self-application
+# 1st applied case, ADR-108 §결정 6 dogfood loop close)
+#
+# 2026-05-24T00:00:00+09:00 KST (ADR-079 display layer KST 강제)
+
+name: "label-registry-frozen-baseline-count-parity (CFP-1346 / ADR-108 §결정 3 warning mode)"
+
+on:
+  pull_request:
+    paths:
+      - "docs/inter-plugin-contracts/label-registry-v2.md"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check-parity:
+    name: "label-registry-frozen-baseline count parity"
+    runs-on: ubuntu-latest
+    # bypass label honored (ADR-060 §결정 16 warning-tier bypass_label optional)
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:label-registry-frozen-baseline-count-parity') }}
+    # warning tier — continue-on-error: true (ADR-060 §결정 5)
+    continue-on-error: true
+
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2  # HEAD~1 diff 접근을 위해
+
+      - name: "Set up Python"
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: "Run label-registry-frozen-baseline-count-parity lint"
+        env:
+          CHANGED_FILES: ${{ join(github.event.pull_request.changed_files.*.filename, '\n') }}
+        run: |
+          bash scripts/check-label-registry-frozen-baseline-count-parity.sh
