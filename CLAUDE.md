@@ -135,19 +135,11 @@ external timestamp (GitHub API / git commit) = 변조 금지 — UTC verbatim + 
 
 ## 오케스트레이션 규칙
 
-> **Action-blocked fallback path** (CFP-658 / [ADR-027 Amendment 2](docs/adr/ADR-027-consumer-adoption-protocol.md)): enterprise org `default_workflow_permissions: read` 차단 시 manual agent direct write path — Trigger (A) `bootstrap.fallback_mode: action_blocked` + (C) `fallback:manual` label (우선순위 C > A), SSOT [playbook §3.15](docs/orchestrator-playbook.md).
+Enterprise `default_workflow_permissions: read` 차단 시 manual agent direct write fallback path = [playbook §3.15](docs/orchestrator-playbook.md) (CFP-658 / ADR-027 Amendment 2 — Trigger A `bootstrap.fallback_mode: action_blocked` + C `fallback:manual` label, 우선순위 C>A).
+
 ### Sonnet subagent rate-limit → Opus fallback (ADR-057)
 
-Orchestrator가 `model: sonnet` subagent spawn 결과로 rate-limit 에러를 수신하면:
-1. 동일 입력 패킷으로 `model: opus` 재spawn (1회 한정)
-2. 재spawn 성공 시 정상 진행 (§14 Lane Evidence에 `[rate-limit-fallback:sonnet→opus]` 태그 추가)
-3. Opus도 rate-limit 실패 시 사용자에게 상황 통지 후 대기 (자동 재시도 금지)
-
-적용 대상 Sonnet agent: DeveloperAgent · BackendDeveloperAgent · FrontendDeveloperAgent · IntegrationTestAgent · StatefulTestAgent · CodebaseMapperAgent · RefactorAgent · DeveloperPLAgent (현재 Sonnet 유지 agent 전체).
-
-> **SSOT 명시 (CFP-448 / ADR-057 Amendment 3, CL-6 사용자 확정)**: 본 명단은 [ADR-057 §결정 3 표](docs/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) 의 mirror reference 임. **SSOT = ADR-057 §결정 3 표**. drift 시 ADR 본문 우선 — 본 CLAUDE.md L127 갱신은 ADR Amendment definition of done 의 part.
-
-> **KPI dashboard (CFP-393, ADR-057 Amendment 2)**: 본 fallback 정책의 sunset gate 2 측정 = [`docs/kpi/rate-limit-fallback.json`](docs/kpi/rate-limit-fallback.json) (monthly cron) + [`rate-limit-fallback-rate` registry entry](docs/evidence-checks-registry.yaml) — ADR-060 evidence-enforceable framework 첫 non-sunset application. 분모 / 분자 / sample sentinel / window 정량 정의는 [ADR-057 § "Sunset gate 2"](docs/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) 표 참조.
+Orchestrator가 `model: sonnet` subagent spawn 결과로 rate-limit 에러 수신 시: (1) 동일 패킷 `model: opus` 재spawn 1회 한정 (2) 재spawn 성공 시 §14 Lane Evidence `[rate-limit-fallback:sonnet→opus]` 태그 (3) Opus도 실패 시 사용자 통지 후 대기 (자동 재시도 금지). 적용 대상 Sonnet agent 명단 SSOT = [ADR-057 §결정 3 표](docs/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) (DeveloperAgent · BackendDeveloperAgent · FrontendDeveloperAgent · IntegrationTestAgent · StatefulTestAgent · CodebaseMapperAgent · RefactorAgent · DeveloperPLAgent — drift 시 ADR 본문 우선, CFP-448 / Amendment 3). sunset gate 2 measurable = [`docs/kpi/rate-limit-fallback.json`](docs/kpi/rate-limit-fallback.json) (monthly cron) + `rate-limit-fallback-rate` registry entry — ADR-060 evidence-enforceable framework 첫 non-sunset application (CFP-393 / Amendment 2).
 
 ### Lane 진입 시 skill 호출 의무
 
@@ -302,15 +294,7 @@ codeforge plugin 의 doc taxonomy (epic_results / story_file / adr / change_plan
 
 **Paradigm replacement governance anchor (CFP-1134 / CFP-1111 Wave 1 Story-2)** = [ADR-097](docs/adr/ADR-097-paradigm-replacement-governance-anchor.md) — codeforge 의 paradigm-level replacement (기존 normative paradigm 의 wholesale 대체, 예: declarative reconciliation ADR-076 → imperative changelog walk full-shift) governance anchor. ADR-064 §결정 5 CFP scope unitary 면제 channel SSOT. §결정 0 (3 carry-over 보존 declare — closed_enum open_extension:false / ADR-026 Amendment 5 PR-gate layer 독립 / ADR-067 disjoint invariant + 본 7-bundle 첫 적용 audit trail) / §결정 1 (paradigm replacement 정의 + scope boundary closed-set 3 조건 AND — (a) 9+ ADR/contract 동시 sunset (b) 단일 atomic Epic (c) ratchet 강화 carve-out) / §결정 2 (CFP scope unitary 면제 channel — K-1 exception clause 형식, §결정 5 본문 carve-out 추가, 약화 아님) / §결정 3 (9-ADR 동시 sunset = carrier-preserved sunset — 효용 lossless carry 시 ratchet 강화, ADR-058 §결정 5 paradox 해소, β2 audit LOSSLESS 9/9 evidence). is_transitional: false permanent governance anchor + `mechanical_enforcement_actions: []` declaration-only Wave 1 (ADR-082 §결정 6 retain pattern, pattern_count ≥ 2 재발 시 follow-up CFP MUST promote). sibling carrier = [ADR-064 §결정 5 exception clause Amendment](docs/adr/ADR-064-decision-principle-mandate.md) (CFP-1134, ADR-064 amendment_log 7번째 entry). CFP-1111 Wave 1 Story-2 7-bundle (ADR-092~098) 안 sub-Story #1 sequential first.
 
-**CFP-1111 Wave 1 Story-2 paradigm reframe 6 ADR bundle (ADR-097 sibling 2/7~7/7)** = ADR-097 paradigm replacement governance anchor 의 면제 channel 정합 6 ADR sibling carrier (ADR-097 = sub-Story #1 sequential first, 본 6 ADR = sub-Story #2~#7). 각 ADR 은 changelog walk paradigm (declarative reconciliation ADR-076 → imperative changelog walk full-shift) 의 sub-domain SSOT codify —
-> - [ADR-092](docs/adr/ADR-092-changelog-ssot-location.md) (CFP-1135, tooling-infrastructure) — changelog SSOT location: codeforge family 7 plugin per-plugin self-owned CHANGELOG.md + walker aggregate view + drift detection lint. ADR-095 metric mining source sister.
-> - [ADR-093](docs/adr/ADR-093-completion-report-4field-schema.md) (CFP-1136, tooling-infrastructure) — 완료 보고 4-field schema: walker walk_result + 4-field (touched_files / atomic_invariants / verify_via / lane_outcomes) closed_enum, 외부 보고 ↔ 내부 schema 2-layer 분리. ADR-094 구형 consumer 보고 호환 sister.
-> - [ADR-094](docs/adr/ADR-094-consumer-legacy-version-fallback-policy.md) (CFP-1137, tooling-infrastructure) — consumer 구형 버전 Fallback 정책: min_prerequisite_version 미만 consumer 의 hybrid grace period degraded mode. ADR-096 manifest schema mismatch trigger sister.
-> - [ADR-095](docs/adr/ADR-095-sunset-metric-standardization.md) (CFP-1138, governance) — 9 ADR sunset metric 표준화: ADR-058 §결정 5 sunset_justification 3-tuple metric 영역 형식 통일 + 집계 dashboard + cron 자동 측정. ADR-092 changelog mining source cross-ref.
-> - [ADR-096](docs/adr/ADR-096-min-prerequisite-version-manifest-schema.md) (CFP-1139, tooling-infrastructure) — min_prerequisite_version manifest schema: cross-tier (lane plugin → wrapper) 의존 표현 + topological resolve + mismatch lint. ADR-094 Fallback trigger sister.
-> - [ADR-098](docs/adr/ADR-098-upgrade-agent-runtime-ownership.md) (CFP-1140, governance) — UpgradeAgent runtime ownership: codeforge-pmo 흡수 (신규 lane plugin 거부) + model tier 재평가 의무. ADR-076 UpgradeAgent runtime SSOT cross-ref.
-
-6 ADR 모두 `status: Accepted` + ADR-RESERVATION row 92~96/98 active 전환 (carrier_story 92→CFP-1135 / 93→CFP-1136 / 94→CFP-1137 / 95→CFP-1138 / 96→CFP-1139 / 98→CFP-1140 정정). ADR-097 와 동일 면제 channel (CFP scope unitary 면제 — 단일 atomic Epic 안 paradigm reframe 7-bundle, ADR-064 §결정 5 carve-out 정합).
+**CFP-1111 Wave 1 Story-2 paradigm reframe 6 ADR bundle (ADR-097 sibling 2/7~7/7)** = ADR-097 paradigm replacement anchor 의 면제 channel 정합 6 ADR sibling carrier (changelog walk paradigm sub-domain SSOT codify): [ADR-092](docs/adr/ADR-092-changelog-ssot-location.md) (CFP-1135, changelog SSOT location — per-plugin CHANGELOG.md + walker aggregate + drift lint) · [ADR-093](docs/adr/ADR-093-completion-report-4field-schema.md) (CFP-1136, 완료 보고 4-field schema) · [ADR-094](docs/adr/ADR-094-consumer-legacy-version-fallback-policy.md) (CFP-1137, consumer 구형 버전 Fallback 정책) · [ADR-095](docs/adr/ADR-095-sunset-metric-standardization.md) (CFP-1138, sunset metric 표준화) · [ADR-096](docs/adr/ADR-096-min-prerequisite-version-manifest-schema.md) (CFP-1139, min_prerequisite_version manifest schema) · [ADR-098](docs/adr/ADR-098-upgrade-agent-runtime-ownership.md) (CFP-1140, UpgradeAgent runtime ownership). 6 ADR 모두 `Accepted` + ADR-RESERVATION row 92~96/98 active + ADR-097 와 동일 면제 channel (단일 atomic Epic 안 paradigm reframe 7-bundle, ADR-064 §결정 5 carve-out).
 
 ## GitHub Workflow
 
@@ -318,20 +302,9 @@ codeforge plugin 의 doc taxonomy (epic_results / story_file / adr / change_plan
 
 **Branch protection**: main 브랜치 = 5 required status check (CFP-1059 — 4 → 5: phase-gate-mergeable + doc frontmatter + doc section + invariant-check + **deploy-lane-presence** Phase 2 carrier) + `restrictions:{users:[],teams:[],apps:[]}` (direct push 차단) + **`enforce_admins: true` (admin 도 required check 통과 의무, CFP-70)**. CODEOWNERS 자동 review request 는 **도덕적 governance** — solo-dev 환경 강제 off (`require_code_owner_reviews:false` + `required_approving_review_count:0`, CFP-72). contributor 추가 시 `require_code_owner_reviews:true` + `count:1` 복원 의무 (별도 CFP). CODEOWNERS template: [`templates/CODEOWNERS.template`](templates/CODEOWNERS.template). 정책 SSOT: [ADR-024](docs/adr/ADR-024-story-scoped-branch-policy.md). Rulesets / branch naming auto enforcement 는 solo-dev 가정 하 defer — contributor 추가 시 별도 CFP.
 
-**Deploy lane workflow 7종 (CFP-1059 / ADR-087+088+089+090, Phase 1 declarative — actual workflow yml seed = S2/S3 sub-Story carrier)**: `templates/github-workflows/` 신규 7 workflow declare —
-1. `auto-deploy.yml` — Epic close → Deploy lane trigger (ADR-087 §결정 1 carrier)
-2. `bidirectional-smoke.yml` — schema 변경 양방향 smoke 검증 (ADR-089 §결정 4 carrier)
-3. `cross-layer-impact-check.yml` — cross-layer 의존 영향 분석 (ADR-090 §결정 1 carrier, mechanical action `cross-layer-impact-detection`)
-4. `dependency-order-check.yml` — 변경 순서 invariant 검증 (ADR-090 §결정 2 carrier, mechanical action `dependency-order-enforce`)
-5. `schema-7-principles-check.yml` — Schema 변경 7 원칙 self-check (ADR-089 §결정 1 carrier, mechanical action `schema-change-7-principles-self-check`)
-6. `deploy-lane-spawn-evidence.yml` — Deploy lane spawn 의무 lint (ADR-087 carrier, mechanical action `deploy-lane-spawn-evidence`)
-7. `deploy-review-lane-spawn-evidence.yml` — Deploy Review lane spawn 의무 lint (ADR-088 carrier, mechanical action `deploy-review-lane-spawn-evidence`).
+**Deploy lane workflow 7종 (CFP-1059 / ADR-087+088+089+090, Phase 1 declarative — actual seed = S2/S3 sub-Story carrier)**: `templates/github-workflows/` 신규 7 workflow declare — `auto-deploy.yml` (Epic close→Deploy trigger, ADR-087 §결정 1) · `bidirectional-smoke.yml` (양방향 smoke, ADR-089 §결정 4) · `cross-layer-impact-check.yml` (cross-layer 영향 분석, ADR-090 §결정 1, action `cross-layer-impact-detection`) · `dependency-order-check.yml` (변경 순서 invariant, ADR-090 §결정 2, action `dependency-order-enforce`) · `schema-7-principles-check.yml` (Schema 7 원칙 self-check, ADR-089 §결정 1, action `schema-change-7-principles-self-check`) · `deploy-lane-spawn-evidence.yml` (Deploy spawn lint, ADR-087, action `deploy-lane-spawn-evidence`) · `deploy-review-lane-spawn-evidence.yml` (Deploy Review spawn lint, ADR-088, action `deploy-review-lane-spawn-evidence`). 모두 declaration-only Wave 1 (ADR-076/082/086 precedent). 5 workflow = warning tier deferred-followup, 2 workflow (auto-deploy + deploy-lane-spawn-evidence) = Phase 2 carrier `deploy-lane-presence` blocking-on-pr 5번째 required check.
 
-모두 declaration-only Wave 1 (ADR-076 / ADR-082 / ADR-086 precedent 답습). 5 workflow = warning tier (deferred-followup status) — S2/S3 sub-Story 가 actual workflow yml seed + script + bats fixture wire 후 active 전환. 2 workflow (1 + 6) = Phase 2 carrier `deploy-lane-presence` blocking-on-pr 5번째 required check.
-
-> **phase-gate-mergeable label mapping** (CFP-479): `phase:*` ↔ `gate:*` 정식 매핑 표 SSOT = [`docs/orchestrator-playbook.md` §9.7](docs/orchestrator-playbook.md#97-phase-gate-mergeable-label-mapping-cfp-479). CFP-342 anomaly = `phase:구현` / `phase:구현-리뷰` 도 **`gate:design-review-pass`** 요구 (직관적 `gate:code-review-pass` 아님 — codeforge 는 별도 code-review gate label 미도입). 라벨 변경 시 workflow yml line 195-208 + playbook §9.7 + 본 단락 + consumer-guide §2e 동시 갱신 의무.
-
-> **CODEFORGE_CROSS_REPO_PAT rotation policy** (CFP-521 / [ADR-066](docs/adr/ADR-066-pat-rotation-policy.md)): `phase-gate-mergeable.yml` + `rate-limit-fallback-kpi.yml` 가 사용하는 단일 PAT (CFP-450 / ADR-013 Amendment 4 consolidation) 의 lifetime / scope / compromise response / audit log SSOT. 권장 rotation 90 days / 최대 lifetime 180 days. Audit log = [`docs/security/pat-rotation-log.md`](docs/security/pat-rotation-log.md) (사용자 manual entry). Consumer-facing 정책 mirror = [`consumer-guide.md §1g`](docs/consumer-guide.md). 자동 만료 reminder workflow = Phase 2 carrier.
+**phase-gate-mergeable label mapping** (CFP-479) SSOT = [playbook §9.7](docs/orchestrator-playbook.md#97-phase-gate-mergeable-label-mapping-cfp-479) — anomaly `phase:구현`/`phase:구현-리뷰`도 `gate:design-review-pass` 요구 (CFP-342, codeforge 별도 code-review gate label 미도입). **CODEFORGE_CROSS_REPO_PAT rotation policy** (CFP-521 / [ADR-066](docs/adr/ADR-066-pat-rotation-policy.md)) = `phase-gate-mergeable.yml` + `rate-limit-fallback-kpi.yml` 단일 PAT (lifetime 90d 권장 / max 180d, audit log [`docs/security/pat-rotation-log.md`](docs/security/pat-rotation-log.md), consumer mirror [`consumer-guide.md §1g`](docs/consumer-guide.md)).
 
 ## Story 작성 의무 (CFP-45)
 
@@ -339,9 +312,7 @@ codeforge plugin 의 doc taxonomy (epic_results / story_file / adr / change_plan
 
 요약: 강제 = ADR 변경·에이전트 변경·workflow 변경·SSOT 의미 변경·Breaking change. doc-only fast-path = SSOT 문서 변경 + 기존 ADR Amendment + src/tests 무변경 (ADR-054). 면제 = Typo·링크수정·lint fix·README 단순 수정. **모호 시 강제 측 분류**. Story file = `mclayer/codeforge-internal-docs/<plugin-folder>/stories/<KEY>.md`. 정책 SSOT: [ADR-013](docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md).
 
-**Branch governance** (CFP-66 / ADR-024): 모든 wrapper 변경 = Story-scoped feature branch (`cfp-NNN[-<slug>]`) + PR 경유 의무. main 직접 push 금지. 정책 SSOT: [ADR-024](docs/adr/ADR-024-story-scoped-branch-policy.md).
-
-Brainstorming/writing-plans skill: Plugin repo 작업 시 spec = `<internal-docs-clone>/<plugin-folder>/specs/`, plan = `<internal-docs-clone>/<plugin-folder>/plans/`. `codeforge:brainstorm` = Phase 0 자동 실행 (CFP-386). Consumer overlay: `story_cutoff.additional_exempt_categories[]` 확장 가능 (강제 항목 축소 불허). 본 plugin repo KEY prefix `CFP`.
+**Branch governance** (CFP-66 / ADR-024): 모든 wrapper 변경 = Story-scoped feature branch (`cfp-NNN[-<slug>]`) + PR 경유 의무. main 직접 push 금지 ([ADR-024](docs/adr/ADR-024-story-scoped-branch-policy.md)). Brainstorming/writing-plans skill: Plugin repo 작업 시 spec/plan = `<internal-docs-clone>/<plugin-folder>/{specs,plans}/`. `codeforge:brainstorm` Phase 0 자동 실행 (CFP-386). Consumer overlay: `story_cutoff.additional_exempt_categories[]` 확장 가능 (강제 항목 축소 불허). 본 plugin repo KEY prefix `CFP`.
 
 ## docs/stories + docs/retros 규약
 
