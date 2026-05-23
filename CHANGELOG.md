@@ -38,7 +38,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
   - verdict-level boolean field 신설 0건 — `mechanical_self_check_passed` / `boundary_completeness_self_check_passed` / `dimensional_empirical_self_check_passed` / `audit_gate_pointer_self_check_passed` / `deputy_axis_restructure_self_check_passed` 5 verdict-level boolean 과 disjoint axis (anchor_id pattern 답습 finding-level array)
   - ADR-008 §결정 2 "새 선택 필드 추가" MINOR bump 정합. Runtime impact 없음 (기존 v4.8 consumer 가 본 신규 field 무시 가능 = backward-compat invariant)
   - CFP-1117-S4 wrapper sibling sync precedent 답습 (canonical + wrapper atomic, 5 other lane plugin sweep [requirements / design / develop / test / pmo] = 별 follow-up CFP — CFP-1167 precedent)
-  - mirrored field: 6.4.6 → 6.5.0 MINOR (additive contract field per ADR-037 — governance behavior 확장). Marketplace sibling sync.
+  - `mirrored field`: 6.4.6 → 6.5.0 MINOR (additive contract field per ADR-037 — governance behavior 확장). Marketplace sibling sync.
 
 ### Files touched
 - `docs/inter-plugin-contracts/review-verdict-v4.md` (wrapper sibling) — v4.8 → v4.9 MINOR (frontmatter version + related_adrs ADR-068 cross-ref append + authors CFP-1303 entry + amendment_log v4.9 entry + findings[] schema block parallel_anchors_checked field + §16 신설 cross-anchor parity check enumeration section)
@@ -60,7 +60,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
   - `deploy-review-output-v1.md` (CFP-1059 / ADR-088) 동일
   - `inter-plugin-drift` lint (CFP-E) Active|Archived membership 충족 → CFP-1059 family scope future PR 의 baseline drift 부담 해소
   - actual schema body wire = **multi-session Epic deferred** — CFP-1059 S2 (codeforge-deploy plugin seed) + S3 (codeforge-deploy-review plugin seed) sub-Story carrier 영역
-  - mirrored field: 6.4.5 → 6.4.6 PATCH. Marketplace sibling sync.
+  - `mirrored field`: 6.4.5 → 6.4.6 PATCH. Marketplace sibling sync.
 
 ## [6.4.5] - 2026-05-23
 
@@ -71,7 +71,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
   - self-app mirror: templates/ + .github/ byte-identical
   - **deferred-followup**: 본 변경은 display 개선 only — workflow 의 auto-cleanup-stale-gate-label-on-phase-transition (Issue label 자동 cleanup) 또는 phase-gate-mergeable.yml 의 multi-gate matching logic strengthening 은 별 Story carrier (Wave 2 mechanical lint pattern)
   - bats fixture: deferred-followup (workflow runtime test gap, ADR-076/082/086 precedent 답습 — Wave 2 별 carrier)
-  - mirrored field: 6.4.4 → 6.4.5 PATCH. Marketplace sibling sync (ADR-063 §결정 2).
+  - `mirrored field`: 6.4.4 → 6.4.5 PATCH. Marketplace sibling sync (ADR-063 §결정 2).
 
 ## [6.4.4] - 2026-05-23
 
@@ -81,7 +81,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
   - templates/story-page-structure.md line 54 — `ratchet` 인라인 평문 정의 추가
   - templates/architecture-doc.md line 34 — `kind:contract` 인라인 평문 정의 추가
   - CHANGELOG.md historical entries: **history preservation invariant** (frozen records 수정 금지, ADR-079 forward-only 정합)
-  - mirrored field: prev → 6.4.4 PATCH. Marketplace sibling sync.
+  - `mirrored field`: prev → 6.4.4 PATCH. Marketplace sibling sync.
 
 ## [6.4.3] - 2026-05-23
 
@@ -94,7 +94,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
   - (d) phase-gate-mergeable label + CODEFORGE_CROSS_REPO_PAT 4-line dual blockquote → 1-line combined
   - (e) Branch governance + Brainstorming skill 4-line dual paragraph → 1-line combined
   - line-cap baseline drift resolution (`hotfix-bypass:claude-md-line-cap` 부담 해소). 매 PR 의 line-cap bypass 부담 제거.
-  - mirrored field: 6.4.2 → 6.4.3 PATCH + description CFP-1287 entry append. Marketplace sibling sync (ADR-063 §결정 2).
+  - `mirrored field`: 6.4.2 → 6.4.3 PATCH + description CFP-1287 entry append. Marketplace sibling sync (ADR-063 §결정 2).
 
 ## [6.4.2] - 2026-05-23
 
@@ -106,7 +106,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
   - **ADR-081 Amendment 7** (cross-ref): fail-mode reference 표기 9-enum 전수 정정. file-redirect ↔ stream-stall ↔ reasoning-exhausted 3 disjoint failure mode.
   - 적용 영역 = file-redirect dispatch (ADR-081 §결정 D8) 정상 invocation 후 sandbox + Windows encoding + 대용량 artifact reasoning budget 소진 → verdict 미생산.
   - ratchet ↑ direction (closed-enum expansion additive). `mechanical_enforcement_actions[]=[]` retain. pattern_count=1 (single sample), Wave 2 mechanical detection lint = 별 carrier.
-  - mirrored field: 6.4.1 → 6.4.2 + description CFP-1286 entry. Marketplace sibling sync (ADR-063 §결정 2).
+  - `mirrored field`: 6.4.1 → 6.4.2 + description CFP-1286 entry. Marketplace sibling sync (ADR-063 §결정 2).
 
 ## [6.4.1] - 2026-05-23
 
@@ -117,15 +117,15 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
   - **§결정 10 self-app**: ratchet ↑ direction 검증 — strengthen direction, `is_transitional: false` 보존, CFP scope unitary 정합. mechanical_enforcement_actions: [] declarative-only (Wave 1, Wave 2 mechanical lint 별 sub-Story carrier — ADR-076/082/086 precedent).
   - 적용 영역: `scripts/*.sh` + `templates/github-workflows/*.yml` step `run:` block. ADR-061 외부 `.py` split mandate (§결정 1 / Amendment 1 §결정 6.A) 와 disjoint axis (Python sys.stdin SIGPIPE 무위험).
   - 위반 처리: Phase 2 PR open 시 CodeReviewPL audit anchor (3-조건 AND grep + fixture TC enumeration verify, 미충족 시 severity P1 권장 finding).
-  - mirrored field: version 6.4.0 → 6.4.1 + description CFP-1292 entry append. Marketplace sibling sync 의무 (ADR-063 §결정 2).
+  - `mirrored field`: version 6.4.0 → 6.4.1 + description CFP-1292 entry append. Marketplace sibling sync 의무 (ADR-063 §결정 2).
 
 ## [6.4.0] - 2026-05-23
 
 ### Added
 
 - [CFP-604] ADR-063 Amendment 9 marketplace atomic-sync mechanical enforcement (Gap A + Gap B).
-  - **Gap A lint** (`scripts/check-architect-marketplace-self-check.sh` + workflow 신설): plugin.json mirrored field 변경 PR 의 Change Plan §13 `marketplace_sync_required:` presence/completeness 검증 (ADR-063 §결정 21 / warning tier). doc-only fast-path / cross-repo dogfood-out false-positive 차단. bypass: `hotfix-bypass:architect-marketplace-self-check`.
-  - **Gap B `check-version-bump-atomic.sh` 강화** (ADR-063 §결정 22): (a) gh-skip silent hole 제거 — CI 환경(`$CI=true AND $GITHUB_ACTIONS=true`) `exit 2` fail-loud 전환, non-CI `exit 0` graceful skip + stderr warning emit (조용 skip 금지). (b) Step 4 mirrored field 4종 확장 — name/author parity mismatch 시 `exit 1` blocking-on-pr (기존 description only → 4종 전스 coverage 완결).
+  - **Gap A lint** (`scripts/check-architect-marketplace-self-check.sh` + workflow 신설): plugin.json `mirrored field` 변경 PR 의 Change Plan §13 `marketplace_sync_required:` presence/completeness 검증 (ADR-063 §결정 21 / warning tier). doc-only fast-path / cross-repo dogfood-out false-positive 차단. bypass: `hotfix-bypass:architect-marketplace-self-check`.
+  - **Gap B `check-version-bump-atomic.sh` 강화** (ADR-063 §결정 22): (a) gh-skip silent hole 제거 — CI 환경(`$CI=true AND $GITHUB_ACTIONS=true`) `exit 2` fail-loud 전환, non-CI `exit 0` graceful skip + stderr warning emit (조용 skip 금지). (b) Step 4 `mirrored field` 4종 확장 — name/author parity mismatch 시 `exit 1` blocking-on-pr (기존 description only → 4종 전스 coverage 완결).
   - `docs/evidence-checks-registry.yaml` `architect-marketplace-self-check` entry 신규 (warning tier, ADR-060 §결정 5). `marketplace-description-verbatim` entry description Gap B SSOT 명문화.
   - `tests/scripts/cfp-604/` bats fixture 2종 신규: `check-architect-marketplace-self-check.bats` (Gap A 5 TC) + `check-version-bump-atomic.bats` (Gap B regression 5 TC).
 
@@ -142,7 +142,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 - [CFP-1244] `docs/orchestrator-playbook.md` §3.10 — Codex CLI worker check file-redirect dispatch mandate 본문 추가 (`codex exec --sandbox read-only < <promptfile>` invocation + result-via-file + synchronous block-wait 금지 + stall/stream idle-timeout 시 `fallback_skip_with_marker` substitution). Substitution scope 3-path enum 표 의 `[codex-sandbox-fallback]` fail-mode enum 7 → 8 갱신 + §3.10 step marker 영역 6-stale enum → 8 정정.
 - [CFP-1244] `CLAUDE.md` — Codex Proactive Check 블록쿼트 fail-mode enum `6 종` → `8 종` (pre-existing 6-stale count 정정 — Amendment 10 `subagent_recursion_blocked` 미반영분 포함) + ADR-081 Amendment 6 file-redirect dispatch mandate cross-ref (기존 line 확장, 신규 line 0건 — line cap 정합).
-- plugin.json 6.2.1 → 6.3.0 MINOR (ADR-037 §결정 1(h) — three additive ADR amendment = governance behavior change). marketplace atomic sync 별도 sibling PR 의무 (ADR-063 §결정 5, mirrored field version 변경).
+- plugin.json 6.2.1 → 6.3.0 MINOR (ADR-037 §결정 1(h) — three additive ADR amendment = governance behavior change). marketplace atomic sync 별도 sibling PR 의무 (ADR-063 §결정 5, `mirrored field` version 변경).
 
 ### Cross-ref
 
@@ -158,7 +158,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
   - `tests/scripts/cfp-1193/check-rollback-signal.bats`: TC-2 assertion 을 `signal_type=latency_burn_rate` 정확 비교 + 비정규 `signal_type=burn_rate` 출현 금지 guard 로 강화 + TC-15 contract-binding guard 신설 (producer emit non-none signal_type ∈ closed enum {error_rate, latency_burn_rate, regression, smoke_health} membership 보증 — future drift 차단). TDD RED (line 142 비정규 상태에서 TC-2/TC-15 FAIL) → GREEN (conform 후 20/20 PASS).
   - `docs/inter-plugin-contracts/operational-signal-v1.md`: `signal_type` row note 를 deferred follow-up CFP 기록 → RESOLUTION 으로 갱신 (producer 가 정규 `latency_burn_rate` emit, alias 없음). enum value / `version` frontmatter 무변경 (editorial note correction — schema/enum 변경 0, MANIFEST registries sync 불요).
   - `docs/adr/ADR-106-operational-signal-pmo-input-circuit.md`: Amendment 3 추가 (S4 producer emit literal `burn_rate` → `latency_burn_rate` conformance 기록). §결정 3 closed enum 4-value 자체는 무변경 (이미 정규). is_transitional false 유지 (corrective conformance — additive trail, strengthening, sunset_justification null).
-  - plugin.json 6.2.0 → 6.2.1 PATCH (ADR-037 — enum drift 버그 fix, `fix:` commit signal; ADR-106 Amendment 3 = corrective trail, 신규 capability 0). marketplace atomic sync 별도 sibling PR 의무 (ADR-063 §결정 5, mirrored field version 변경).
+  - plugin.json 6.2.0 → 6.2.1 PATCH (ADR-037 — enum drift 버그 fix, `fix:` commit signal; ADR-106 Amendment 3 = corrective trail, 신규 capability 0). marketplace atomic sync 별도 sibling PR 의무 (ADR-063 §결정 5, `mirrored field` version 변경).
 
 ### Cross-ref
 
@@ -180,7 +180,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 ### Changed
 
 - [CFP-1242] ADR-065 Amendment 4 — §결정 1 표 row 10 append (Phase 1 산출물 commit 직전 touched ADR/doc 에 `check-doc-section-schema.sh` + `check-adr-sunset-criteria.sh` 로컬 선제 실행 PASS, behavioral mandate, 운영 phase S3+ FIX 0 효과 입증) + §결정 9 narrative (corrected diagnosis + INV-1 parity kind:registry scope 확장). `mechanical_enforcement_actions[]` = 기존 `inter-plugin-contracts-parity` entry scope 확장 cross-ref only (신규 evidence-checks-registry entry 0건). is_transitional false 유지 (additive ratchet, ADR-058 §결정 5 sunset_justification quoted-string). CLAUDE.md ADR-065 inline description Amendment 4 clause 동반.
-  - plugin.json 6.1.1 → 6.2.0 MINOR (ADR-037 §결정 1(h) — additive amendment + lint behavior change = governance behavior change). marketplace atomic sync 별도 sibling PR 의무 (ADR-063 §결정 5, mirrored field version 변경).
+  - plugin.json 6.1.1 → 6.2.0 MINOR (ADR-037 §결정 1(h) — additive amendment + lint behavior change = governance behavior change). marketplace atomic sync 별도 sibling PR 의무 (ADR-063 §결정 5, `mirrored field` version 변경).
 
 ### Cross-ref
 
@@ -229,7 +229,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
   - RACI 4-way 12-cell → 3-way 9-cell body 전면 재편 (AggregateArch cross-axis column 제거, Cell 1.1/2.1/3.1 의 C=AggregateArch → ModuleArch aggregate-level 흡수, Cell 1.2/1.3 + 2.2/2.3 + 3.2/3.3 재번호)
   - CONDITIONAL applicability key `aggregate_arch.applicable` 보존 (ModuleArch carry-over, consumer overlay backward-compat)
   - codeforge-design CLAUDE.md RACI 4-column → 3-column (9 cells) cross-repo sibling sync (design 0.19.0 → 0.19.1 PATCH)
-  - doc-only fast-path ADR-054. marketplace atomic sync 별도 sibling PR 의무 (ADR-063 §결정 5, mirrored field version 변경)
+  - doc-only fast-path ADR-054. marketplace atomic sync 별도 sibling PR 의무 (ADR-063 §결정 5, `mirrored field` version 변경)
 
 ## [6.0.4] - 2026-05-21
 
@@ -472,7 +472,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 #### Sibling sync (Orchestrator 영역, 별도 cross-repo PR)
 
 - `mclayer/plugin-codeforge-design` plugin.json 0.15.0 → 0.17.0 + ArchitectAgent.md §"Chief 통합 mechanism" + §"Chief tie-break ladder" + §"Wording SSOT advocate" body + docs/architecture/codeforge-design.md §"mctrader 5 repo cross-layer evidence" section
-- `mclayer/marketplace` `marketplace.json` `plugins[name=codeforge]` mirrored field 4종 sync (ADR-063 atomic invariant)
+- `mclayer/marketplace` `marketplace.json` `plugins[name=codeforge]` `mirrored field` 4종 sync (ADR-063 atomic invariant)
 
 ## [5.97.0] - 2026-05-20
 
@@ -513,7 +513,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 #### Marketplace sibling sync (Orchestrator 영역, 별도 cross-repo PR)
 
-- `mclayer/marketplace` `marketplace.json` `plugins[name=codeforge]` mirrored field 4종 (name / version / description / author) sync. ADR-063 atomic invariant. Sibling repos cross-repo sync (wrapper + codeforge-design = 2 plugin repos this Story; internal-docs Story file + marketplace sync = Orchestrator scope).
+- `mclayer/marketplace` `marketplace.json` `plugins[name=codeforge]` `mirrored field` 4종 (name / version / description / author) sync. ADR-063 atomic invariant. Sibling repos cross-repo sync (wrapper + codeforge-design = 2 plugin repos this Story; internal-docs Story file + marketplace sync = Orchestrator scope).
 
 ## [5.96.0] - 2026-05-20
 
@@ -546,7 +546,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ### Marketplace sync
 
-plugin.json 5.95.0 → 5.96.0 MINOR + marketplace.json sibling sync PR after wrapper merge (ADR-063 atomic invariant, mirrored field 4종). Sibling Stories 5-repo atomic (wrapper + codeforge-design + internal-docs + marketplace, codeforge-pmo 변경 0건).
+plugin.json 5.95.0 → 5.96.0 MINOR + marketplace.json sibling sync PR after wrapper merge (ADR-063 atomic invariant, `mirrored field` 4종). Sibling Stories 5-repo atomic (wrapper + codeforge-design + internal-docs + marketplace, codeforge-pmo 변경 0건).
 
 ### Related ADRs
 
@@ -570,7 +570,7 @@ plugin.json 5.95.0 → 5.96.0 MINOR + marketplace.json sibling sync PR after wra
 
 ### Marketplace sync
 
-plugin.json 5.94.0 → 5.95.0 MINOR + marketplace.json sibling sync PR after wrapper merge (ADR-063 atomic invariant, mirrored field 4종).
+plugin.json 5.94.0 → 5.95.0 MINOR + marketplace.json sibling sync PR after wrapper merge (ADR-063 atomic invariant, `mirrored field` 4종).
 
 CFP-967 parallel-work-sentinel-pickup chain precedent verbatim 답습 (Wave 1 declarative anchor CFP-966 → Wave 2 mechanical wire CFP-967 → Wave 1 declarative anchor CFP-1041 → Wave 2 mechanical wire CFP-1057).
 
@@ -604,7 +604,7 @@ CFP-967 parallel-work-sentinel-pickup chain precedent verbatim 답습 (Wave 1 de
 
 ### Marketplace sync mandate (ADR-063 §결정 5)
 
-plugin.json 5.93.0 → 5.94.0 MINOR bump → marketplace.json sibling sync PR after wrapper merge (mirrored field 4종 atomic). `marketplace_sync_declared: true`.
+plugin.json 5.93.0 → 5.94.0 MINOR bump → marketplace.json sibling sync PR after wrapper merge (`mirrored field` 4종 atomic). `marketplace_sync_declared: true`.
 
 ## [5.93.0] - 2026-05-20
 
@@ -619,7 +619,7 @@ plugin.json 5.93.0 → 5.94.0 MINOR bump → marketplace.json sibling sync PR af
 
 - **`CLAUDE.md`** — "Verify-before-trust 4-layer governance" 단락 안 ADR-073 Amendment 3 (CFP-689, 2026-05-20) 1-문장 inline append (worktree-first 환경 self-confusion sub-domain 5th layer staleness + 4번째 transition trigger enum + path-based 3-tuple verify + subagent verdict re-verify mandate + `mechanical_enforcement_actions: [parallel-work-sentinel-pickup, worktree-self-ownership-verify]` 2 entry + disjoint axis with #983 = reflog membership 1 bit + Wave 2 별 sub-CFP carrier + `feedback_worktree_first_not_parallel_session` memory 승격 carrier). line count 315 lines invariant 유지 (cap ≤ 320, ADR-012 Amendment 1, +5 budget 안 wrapped inside existing paragraph).
 - **`.claude-plugin/plugin.json`** — version `5.92.0` → `5.93.0` MINOR (ADR-037 — ADR-073 Amendment 3 신설 발의 = governance behavior change MINOR).
-- **marketplace atomic sync (ADR-063 §결정 5, separate sibling PR — 본 wrapper PR 선행/직후 marketplace sync PR open + merge 의무)**: `mclayer/marketplace/marketplace.json` plugins[name=codeforge] mirrored field `version` `5.92.0` → `5.93.0` + `description` 동기화 (별 PR scope, 본 ArchitectAgent spawn scope 외 — Orchestrator inline scope).
+- **marketplace atomic sync (ADR-063 §결정 5, separate sibling PR — 본 wrapper PR 선행/직후 marketplace sync PR open + merge 의무)**: `mclayer/marketplace/marketplace.json` plugins[name=codeforge] `mirrored field` `version` `5.92.0` → `5.93.0` + `description` 동기화 (별 PR scope, 본 ArchitectAgent spawn scope 외 — Orchestrator inline scope).
 
 ### Cross-references
 
@@ -735,7 +735,7 @@ ADR-073 Amendment 2 carrier: §결정 1-A (script wire) / §결정 1-B (hooks/se
 - **doc-only fast-path (ADR-054)** — src/tests 무변경, ADR-065 Amendment 3 (본 ADR 본문) + plugin.json + CHANGELOG + marketplace sibling = 4 file 만 (marketplace 는 별도 sibling PR). 신규 ADR / 신규 lint script / 신규 workflow yml / 신규 evidence-checks-registry entry / `story-self-declared-correction-verify` action `deferred-followup` (mechanical lint 신설 별 carrier scope) / 6 lane sibling PR 0 / review-verdict-v4 schema bump 0 (cross-plugin sibling sync 필요 영역 = 별 carrier).
 - **additive ratchet only** (ADR-058 §결정 5 / ADR-064 §self-application top-down ratchet 정합) — §결정 1 row 1-8 본문 변경 0, §결정 2-7 변경 0, Amendment 1/2 family pattern 보존, `is_transitional: false` 보존, `sunset_justification` quoted string form 의무. 약화 방향 enum 차단: 9th item 제거 / verify 의무 해제 / sunset_justification 다운그레이드 / row 1-8 본문 약화 / Amendment 1/2 family pattern revoke.
 - **Cross-Story pattern threshold reach evidence** — CFP-795 (first occurrence, `feedback_codex_tp2_verify_before_trust` 8-mirror checklist) + CFP-906 (second occurrence, `~~ADR-072~~ → ADR-72` 18 occurrence 미적용 → DesignReviewPL Iter 1 P0+P1 적발). ADR-045 §D-9 정량 threshold (≥ 2) 도달.
-- **marketplace atomic sync (ADR-063 §결정 5)** — 별도 sibling PR 의무 (Orchestrator 책임 영역, codeforge PR merge 직후 즉시 open · merge). mirrored field 4종 (`name`/`version`/`description`/`author`) verbatim parity.
+- **marketplace atomic sync (ADR-063 §결정 5)** — 별도 sibling PR 의무 (Orchestrator 책임 영역, codeforge PR merge 직후 즉시 open · merge). `mirrored field` 4종 (`name`/`version`/`description`/`author`) verbatim parity.
 
 
 
@@ -762,7 +762,7 @@ ADR-073 Amendment 2 carrier: §결정 1-A (script wire) / §결정 1-B (hooks/se
 - **`scripts/reconcile-overlay.sh`** — MARKER_NONE 분기에 §4.11 dependency closure hook 추가
   (기존 로직 무변경, hook 삽입만). `MIRROR_DEP_PY` env var injectable (test seam 보존).
 - **`.claude-plugin/plugin.json`** — version `5.86.0` → `5.87.0` MINOR
-  (ADR-037 §결정 1 (c) — runtime behavior 추가 = MINOR). marketplace mirrored field 4종 sync 의무
+  (ADR-037 §결정 1 (c) — runtime behavior 추가 = MINOR). marketplace `mirrored field` 4종 sync 의무
   (ADR-063 atomic invariant — marketplace sibling PR 별도 open, CFP-898 Epic close 전 완료).
 
 ### Scope
@@ -785,7 +785,7 @@ ADR-073 Amendment 2 carrier: §결정 1-A (script wire) / §결정 1-B (hooks/se
 
 ### Changed
 
-- **`.claude-plugin/plugin.json`** — version `5.85.0` → `5.86.0` MINOR (ADR-037 §결정 1 (c) — 선택 hook 추가 = governance behavior change MINOR). `description` 안 INCIDENT-2026-05-17 carrier entry append. marketplace mirrored field 4종 (`name`/`version`/`description`/`author`) verbatim parity (별도 sibling PR, ADR-063 §결정 5).
+- **`.claude-plugin/plugin.json`** — version `5.85.0` → `5.86.0` MINOR (ADR-037 §결정 1 (c) — 선택 hook 추가 = governance behavior change MINOR). `description` 안 INCIDENT-2026-05-17 carrier entry append. marketplace `mirrored field` 4종 (`name`/`version`/`description`/`author`) verbatim parity (별도 sibling PR, ADR-063 §결정 5).
 
 ### Scope
 
@@ -795,8 +795,8 @@ ADR-073 Amendment 2 carrier: §결정 1-A (script wire) / §결정 1-B (hooks/se
 
 ### Changed (CFP-911 ADR-065 Amendment 2 — 8th item frontmatter YAML parse self-validate)
 
-- **`docs/adr/ADR-065-architect-phase1-mechanical-self-check.md`** — Amendment 2 신설. frontmatter `amendments[]` `amendment: 2` entry append (`date: 2026-05-17` + `cfp: CFP-911` + `summary` 안 §결정 1 표 row 8 ratchet 확장 + §결정 7 narrative + cascade obligation invariant + CFP-851 incident commit SHA `79a4fdda0c9b4ee249edfcdb3769ef95b8113628` reference + family pattern 정합 + `mechanical_enforcement_actions[]` cross-ref 명시 + `is_transitional: false` + `sunset_justification: "N/A — permanent policy 의 ratchet 강화 (Amendment 1 family pattern 정합). ADR-064 §self-application top-down ratchet 정합. 약화 방향(8th item 제거 / check-doc-frontmatter.sh cross-ref 해제) 발의 차단."` quoted string form). `mechanical_enforcement_actions[]` `doc-frontmatter-yaml-parse` entry append (`status: existing-warning-cross-ref` + `target_section: §결정 1 row 8 (Amendment 2 CFP-911) / §결정 7 (신설)` + `progress_note` 안 신규 lint script 0건 + 기존 CFP-28 `check-doc-frontmatter.sh` PR-time strict check 의 commit-time forcing function cross-ref only 명시). `related_stories[]` `CFP-911` append. 본문 §결정 1 표 row 8 append (`Phase 1 산출물 commit 직전 chief author 가 변경한 frontmatter 보유 .md file 의 YAML parse self-validate` 항목 + `bash scripts/check-doc-frontmatter.sh <path>` PASS 검증 방법, CFP-28 strict mode cross-ref). 본문 row 8 직후 **Row 8 cascade obligation (Amendment 2 / CFP-911)** 1줄 신설 — `check-doc-frontmatter.sh` thin wrapper + `scripts/lib/check_doc_frontmatter.py` Python SSOT 두 file 의 strict mode contract (exit code semantic / strict-mode 분기 / target path coverage) 변경 시 row 8 wording 갱신 cascade 의무, manual review 의존, cascade 자동 검출 lint = 별도 follow-up CFP carrier. §결정 7 narrative section 신설 — 6 sub-section: §7.1 Incident reference (CFP-851 PR #885 amendment_log `is_transitional: false` colon-space plain scalar nested mapping ScannerError + FIX iter 1 equals form 정정 commit SHA + 현재 file state HEAD 재현 불가 + git history SSOT) / §7.2 Family pattern 정합 (Amendment 1 verbatim mirror — additive·strengthen, `sunset_justification: null` 금지 quoted string form 의무, ADR-071 family cross-pollination 차단, row 1-7 본문 변경 0, §결정 2-6 변경 0, mechanical_enforcement_actions[] 기존 cross-ref) / §7.3 Cascade obligation invariant (thin wrapper + Python SSOT 두 file dependency + cascade 의무 + manual review 의존 + 별도 follow-up CFP carrier) / §7.4 Doc-only fast-path 정합 (ADR-054 — 단일 PR, src/tests 무변경, 신규 ADR / lint / workflow yml / actions entry name = 0건) / §7.5 무약화 invariant (Self-application top-down ratchet, ADR-064 — 강화 방향만 허용 / 약화 방향 차단 enum: 8th item 제거 / cross-ref 해제 / `sunset_justification` 다운그레이드 / row 1-7 본문 약화 / Amendment 1 family pattern revoke / ADR-058 §결정 5 sunset_justification 의무) / §7.6 Schema invariant (review-verdict-v4 v4.2 `mechanical_self_check_passed: bool` semantic 무변경, 검증 항목 양적 7→8 확장만, schema MINOR bump 0건, 6 lane sibling PR 동반 의무 0건). `## 관련 파일` Amendment 2 sub-section 신설 — 본 ADR 본문 + `scripts/check-doc-frontmatter.sh` 무수정 cross-ref target + `scripts/lib/check_doc_frontmatter.py` 무수정 cross-ref target + plugin.json 5.84.0 → 5.85.0 MINOR + CHANGELOG.md [5.85.0] entry + `mclayer/marketplace:marketplace.json` mirrored field Phase 2 atomic sibling sync. **신규 lint script / workflow yml / 신규 ADR / evidence-checks-registry entry / mechanical_enforcement_actions[] action name (`doc-frontmatter-yaml-parse` = existing `check-doc-frontmatter.sh` cross-ref only, 신규 registry row 0건) / 6 lane sibling PR / review-verdict-v4 schema bump / cascade 자동 검출 lint = 0건** (Story §5.4 Out-of-Scope 7 항목 정합).
-- **`.claude-plugin/plugin.json`** — version `5.84.0` → `5.85.0` MINOR (ADR-037 정합 — ADR Amendment 발의 = governance behavior change MINOR, chief author 검증 의무 ratchet 7→8 item). `description` 안 CFP-911 entry append — Amendment 2 narrative 압축 (8th item ratchet + §결정 7 신설 + cascade obligation + family pattern + Out-of-Scope 7 항목 + doc-only fast-path + marketplace atomic sync). marketplace mirrored field 4종 (`name`/`version`/`description`/`author`) verbatim parity.
+- **`docs/adr/ADR-065-architect-phase1-mechanical-self-check.md`** — Amendment 2 신설. frontmatter `amendments[]` `amendment: 2` entry append (`date: 2026-05-17` + `cfp: CFP-911` + `summary` 안 §결정 1 표 row 8 ratchet 확장 + §결정 7 narrative + cascade obligation invariant + CFP-851 incident commit SHA `79a4fdda0c9b4ee249edfcdb3769ef95b8113628` reference + family pattern 정합 + `mechanical_enforcement_actions[]` cross-ref 명시 + `is_transitional: false` + `sunset_justification: "N/A — permanent policy 의 ratchet 강화 (Amendment 1 family pattern 정합). ADR-064 §self-application top-down ratchet 정합. 약화 방향(8th item 제거 / check-doc-frontmatter.sh cross-ref 해제) 발의 차단."` quoted string form). `mechanical_enforcement_actions[]` `doc-frontmatter-yaml-parse` entry append (`status: existing-warning-cross-ref` + `target_section: §결정 1 row 8 (Amendment 2 CFP-911) / §결정 7 (신설)` + `progress_note` 안 신규 lint script 0건 + 기존 CFP-28 `check-doc-frontmatter.sh` PR-time strict check 의 commit-time forcing function cross-ref only 명시). `related_stories[]` `CFP-911` append. 본문 §결정 1 표 row 8 append (`Phase 1 산출물 commit 직전 chief author 가 변경한 frontmatter 보유 .md file 의 YAML parse self-validate` 항목 + `bash scripts/check-doc-frontmatter.sh <path>` PASS 검증 방법, CFP-28 strict mode cross-ref). 본문 row 8 직후 **Row 8 cascade obligation (Amendment 2 / CFP-911)** 1줄 신설 — `check-doc-frontmatter.sh` thin wrapper + `scripts/lib/check_doc_frontmatter.py` Python SSOT 두 file 의 strict mode contract (exit code semantic / strict-mode 분기 / target path coverage) 변경 시 row 8 wording 갱신 cascade 의무, manual review 의존, cascade 자동 검출 lint = 별도 follow-up CFP carrier. §결정 7 narrative section 신설 — 6 sub-section: §7.1 Incident reference (CFP-851 PR #885 amendment_log `is_transitional: false` colon-space plain scalar nested mapping ScannerError + FIX iter 1 equals form 정정 commit SHA + 현재 file state HEAD 재현 불가 + git history SSOT) / §7.2 Family pattern 정합 (Amendment 1 verbatim mirror — additive·strengthen, `sunset_justification: null` 금지 quoted string form 의무, ADR-071 family cross-pollination 차단, row 1-7 본문 변경 0, §결정 2-6 변경 0, mechanical_enforcement_actions[] 기존 cross-ref) / §7.3 Cascade obligation invariant (thin wrapper + Python SSOT 두 file dependency + cascade 의무 + manual review 의존 + 별도 follow-up CFP carrier) / §7.4 Doc-only fast-path 정합 (ADR-054 — 단일 PR, src/tests 무변경, 신규 ADR / lint / workflow yml / actions entry name = 0건) / §7.5 무약화 invariant (Self-application top-down ratchet, ADR-064 — 강화 방향만 허용 / 약화 방향 차단 enum: 8th item 제거 / cross-ref 해제 / `sunset_justification` 다운그레이드 / row 1-7 본문 약화 / Amendment 1 family pattern revoke / ADR-058 §결정 5 sunset_justification 의무) / §7.6 Schema invariant (review-verdict-v4 v4.2 `mechanical_self_check_passed: bool` semantic 무변경, 검증 항목 양적 7→8 확장만, schema MINOR bump 0건, 6 lane sibling PR 동반 의무 0건). `## 관련 파일` Amendment 2 sub-section 신설 — 본 ADR 본문 + `scripts/check-doc-frontmatter.sh` 무수정 cross-ref target + `scripts/lib/check_doc_frontmatter.py` 무수정 cross-ref target + plugin.json 5.84.0 → 5.85.0 MINOR + CHANGELOG.md [5.85.0] entry + `mclayer/marketplace:marketplace.json` `mirrored field` Phase 2 atomic sibling sync. **신규 lint script / workflow yml / 신규 ADR / evidence-checks-registry entry / mechanical_enforcement_actions[] action name (`doc-frontmatter-yaml-parse` = existing `check-doc-frontmatter.sh` cross-ref only, 신규 registry row 0건) / 6 lane sibling PR / review-verdict-v4 schema bump / cascade 자동 검출 lint = 0건** (Story §5.4 Out-of-Scope 7 항목 정합).
+- **`.claude-plugin/plugin.json`** — version `5.84.0` → `5.85.0` MINOR (ADR-037 정합 — ADR Amendment 발의 = governance behavior change MINOR, chief author 검증 의무 ratchet 7→8 item). `description` 안 CFP-911 entry append — Amendment 2 narrative 압축 (8th item ratchet + §결정 7 신설 + cascade obligation + family pattern + Out-of-Scope 7 항목 + doc-only fast-path + marketplace atomic sync). marketplace `mirrored field` 4종 (`name`/`version`/`description`/`author`) verbatim parity.
 
 ### Scope (CFP-911 invariants)
 
@@ -806,7 +806,7 @@ ADR-073 Amendment 2 carrier: §결정 1-A (script wire) / §결정 1-B (hooks/se
 - **Cascade obligation invariant** — row 8 검증 방법 `bash scripts/check-doc-frontmatter.sh <path>` 가 thin wrapper + Python SSOT 두 file 의 strict mode contract 의존. 두 file 의 contract 변경 PR 시 row 8 wording 갱신 cascade 의무 (manual review 의존). cascade 자동 검출 lint 신설은 별도 follow-up CFP carrier (Story §5.4 row 7 정합 — scope expansion 시 brainstorm + 별도 Story).
 - **Schema invariant** — review-verdict-v4 `mechanical_self_check_passed: bool` field semantic 무변경. 검증 항목 7→8 양적 확장만. schema MINOR bump 0건, 6 lane plugin sibling PR 동반 의무 0건 (sibling sync 면제, Story §5.3 Non-Goals 정합).
 - **plugin.json 5.84.0 → 5.85.0 MINOR** (ADR-037 정합 — ADR Amendment 발의 = governance behavior change MINOR, chief author 검증 의무 ratchet 7→8).
-- **marketplace atomic sync** (ADR-063 §결정 5) — 별도 sibling PR 의무 (Orchestrator 책임 영역, codeforge PR merge 직후 즉시 open·merge). mirrored field 4종 (`name`/`version`/`description`/`author`) 의 verbatim parity.
+- **marketplace atomic sync** (ADR-063 §결정 5) — 별도 sibling PR 의무 (Orchestrator 책임 영역, codeforge PR merge 직후 즉시 open·merge). `mirrored field` 4종 (`name`/`version`/`description`/`author`) 의 verbatim parity.
 
 ## [5.84.0] - 2026-05-17
 
@@ -824,7 +824,7 @@ ADR-073 Amendment 2 carrier: §결정 1-A (script wire) / §결정 1-B (hooks/se
 - **frequency vs richness 분리 invariant** — 본 Amendment 가 좁히는 것은 발화 횟수·시점 만, 발화 시 풍부함 (3 줄 제약 거부 / 배경 포함 / Layer 1·2 preamble·declare) 모두 보존. 약화 방향 다운그레이드 (3 touchpoint enum 축소 / §결정 2(c) richness 약화) = ADR-058 §결정 5 `sunset_justification` 의무로 차단.
 - **behavioral directive only** — mechanical lint (3 touchpoint 외 발화 자동 감지 / 억제-induced rework 측정) = 별도 follow-up CFP scope (§결정 10 패턴 정합, dialog-fidelity-effect precedent runtime cron measurement 동형 advisory warning tier).
 - **plugin.json 5.83.0 → 5.84.0 MINOR** (ADR-037 정합 — ADR Amendment 발의 = governance behavior change MINOR).
-- **marketplace atomic sync** (ADR-063 §결정 5) — 별도 sibling PR 의무 (Orchestrator 책임 영역, codeforge PR merge 직후 즉시 open·merge). mirrored field 4종 (`name`/`version`/`description`/`author`) 의 verbatim parity.
+- **marketplace atomic sync** (ADR-063 §결정 5) — 별도 sibling PR 의무 (Orchestrator 책임 영역, codeforge PR merge 직후 즉시 open·merge). `mirrored field` 4종 (`name`/`version`/`description`/`author`) 의 verbatim parity.
 
 ## [5.83.0] - 2026-05-17
 
@@ -931,7 +931,7 @@ ADR-073 Amendment 2 carrier: §결정 1-A (script wire) / §결정 1-B (hooks/se
 - **Class-B 보존 verified** — 15 `*DeputyAgent` (agent identifiers) / 41 `Deputy` (capitalized concept) / 11 `codeforge:deputy-mandate` (skill name) / 3 `skills/deputy-mandate/` (path). Phase 1 ADR-080 §결정 1-2 정합.
 - **Sweep script** `.tmp/sweep_deputy_subagent.py` (ADR-061 외부 `.py`, heredoc 금지) — regex `(?<![/"'\w-])deputy(?!-)(?![A-Za-z0-9_])` (hyphen+quote lookbehind + ASCII lookahead Korean rescue), fenced code block toggle preservation. 3-iter regex refinement (Korean follow / SKILL.md basename collision / path-slug+quoted-verbatim breakage). 21 residual lowercase `deputy` 잔존 — 모두 Class-B 정당 보존 (fenced yaml schema / inline-code field names / `.yaml` files out of script scope).
 - **ADR-RESERVATION row 80 verbatim user directive 보존** — `"deputy라는 표현을 쓰는데"` + `"deputy" 일반 명사` quoted text intact (Iter 3 regex fix evidence).
-- **`.claude-plugin/plugin.json`** — 5.77.0 → 5.78.0 MINOR (ADR-080 normative 적용 carrier — Phase 2 deploying canonical SubAgent terminology). version + description mirrored field bump → marketplace atomic sync (ADR-063 §결정 2 선행 ordering).
+- **`.claude-plugin/plugin.json`** — 5.77.0 → 5.78.0 MINOR (ADR-080 normative 적용 carrier — Phase 2 deploying canonical SubAgent terminology). version + description `mirrored field` bump → marketplace atomic sync (ADR-063 §결정 2 선행 ordering).
 - **ADR-010 §결정 2 cross-plugin sibling sync** — `mclayer/plugin-codeforge-design` 동형 paired PR (13 file / 142 replacement, 0.12.0 → 0.12.1 PATCH).
 
 ## [5.77.0] - 2026-05-16
@@ -950,7 +950,7 @@ ADR-073 Amendment 2 carrier: §결정 1-A (script wire) / §결정 1-B (hooks/se
 - **`tests/scripts/test_check_wording_dictionary.bats`** (+241) — INV-T1~T5 bats fixture (TDD): IT-4/IT-4a~d/IT-5/IT-self-app/IT-treaty-invariance + edge case (adjacent/unbalanced/double backtick/multiline) + 기존 박제 fixture 4건 (TC-1~4 + IT-1/2 + F-3) 보존. 합성 repo tree + no-arg per-word lookup mode 정합. **40/40 GREEN PASS**.
 - **`tests/contracts/test_cfp750_treaty_invariance.sh`** (+103, NEW) — INV-T2 treaty invariance helper (TestContractArchitect §8.1 #6). first-cell-identifier semantic — 표 row 변경은 field/enum/invariant 명 집합 변경 시만 flag, description cell 내부 prose 어휘 치환 허용. Change Plan §6.4 정합 (§8.0 literal vs §6.4 semantic 모순 후속 carrier).
 - **박제 전수 sweep (12 file)** — Class-Q (blockquote `>` 사용자 verbatim) 절대 보존 + Class-B (non-quote body) `명시`/`확정`/`기재`/`포함` 문맥별도 치환 + 메타-언급 inline code-span 화. parallel-dispatch-protocol-v1.md 10회 / CLAUDE.md / CHANGELOG.md / ADR-027/037/076 / domain-knowledge×2 / contracts×4 sweep. 의미 보존 (schema 층 무변경, contract version bump 0, sibling sync 면제 ADR-008/010). pre-existing baseline debt (ADR-027/076/CLAUDE.md L290 + **ADR-037 pin baseline option A catch-up**, §6.2 item6 list 확장) 동반 정리.
-- **`.claude-plugin/plugin.json`** — 5.76.0 → 5.77.0 MINOR (lint script behavior change + CLAUDE.md 의미 변경 — ADR-037 base 결정 1). version + description mirrored field bump → marketplace atomic sync MERGED `mclayer/marketplace#150` (ADR-063 §결정 2 선행 ordering).
+- **`.claude-plugin/plugin.json`** — 5.76.0 → 5.77.0 MINOR (lint script behavior change + CLAUDE.md 의미 변경 — ADR-037 base 결정 1). version + description `mirrored field` bump → marketplace atomic sync MERGED `mclayer/marketplace#150` (ADR-063 §결정 2 선행 ordering).
 - **Phase 1 wording-dictionary.md scope gap catch-up (§10 Iter 3)** — Phase 1 lane 실행 gap (Change Plan §6.1 정확 명시, Phase 1 PR 작성 시 wording-dictionary.md 미포함) Phase 2 흡수. retroactive 불가, 추가 PR 0. ADR-068 I-4 wording SSOT lockstep + INV-1 (CFP-610 mirror) = Phase 2 종료 시점 충족.
 
 ## [5.76.0] - 2026-05-16
@@ -966,7 +966,7 @@ ADR-073 Amendment 2 carrier: §결정 1-A (script wire) / §결정 1-B (hooks/se
 - **`docs/consumer-guide.md`** — AC-12: §2g.2 신설 (consumer 자기 repo 7-plugin atomic upgrade end-to-end flow — 배포 경로 + `--repo` + dry-run/apply/rollback + 사후 0-drift, #752 consumer-distribution 완전 해소).
 - **`docs/evidence-checks-registry.yaml`** — `atomic-upgrade-zero-drift` entry status `deferred-followup` → `Active` (Phase 2 workflow self-app land 완료).
 - **`templates/github-workflows/atomic-upgrade-zero-drift.yml`** + **`.github/workflows/atomic-upgrade-zero-drift.yml`** (NEW) — byte-identical self-app (ADR-005). warning tier (ADR-060 §결정 5), `hotfix-bypass:atomic-upgrade-zero-drift` bypass channel. evidence-registry-naming-check PASS (ad-hoc `hotfix-bypass:evidence-naming` 무효화).
-- **`.claude-plugin/plugin.json`** — 5.75.0 → 5.76.0 MINOR (선택 setup script 추가 — ADR-037 base 결정 1 (i)). version + description mirrored field bump → marketplace atomic sync 별도 sibling PR 의무 (ADR-063 §결정 5).
+- **`.claude-plugin/plugin.json`** — 5.75.0 → 5.76.0 MINOR (선택 setup script 추가 — ADR-037 base 결정 1 (i)). version + description `mirrored field` bump → marketplace atomic sync 별도 sibling PR 의무 (ADR-063 §결정 5).
 
 ## [5.75.0] - 2026-05-16
 
@@ -1181,7 +1181,7 @@ Cross-ref: ADR-065 / ADR-060 / ADR-005 / ADR-066 / label-registry-v2 v2.16.
   - CFP-596 본문 b8dfddb verbatim port via `git show b8dfddb:templates/github-workflows/story-init.yml`
   - 52 + 5 = 57 TC PASS evidence (RED→GREEN cycle 진행)
 - **doc-only fast-path 영역 외 (ADR-054)**: src 변경 (workflow yml 364 → 624 lines) + tests 신설 (52 + 5 TC) → regular Story scope. Combined single PR scope (Phase 1 + Phase 2) 정합 (작은 영역 — 1 workflow + 2 tests + 2 ADR Amendment + 1 plugin.json + 1 CHANGELOG entry).
-- **ADR-063 §결정 5 marketplace atomic sync 의무**: plugin.json 5.63.0 → 5.64.0 MINOR + marketplace.json mirrored field 4종 (`name`/`version`/`description`/`author`) sync. marketplace sibling PR 선행 merge 의무 (ordering invariant).
+- **ADR-063 §결정 5 marketplace atomic sync 의무**: plugin.json 5.63.0 → 5.64.0 MINOR + marketplace.json `mirrored field` 4종 (`name`/`version`/`description`/`author`) sync. marketplace sibling PR 선행 merge 의무 (ordering invariant).
 - **ADR-061 정합**: `tests/workflows/test_story-init-key-logic.py` 외부 .py file 작성 (workflow yml 안 heredoc 와 verbatim 동일 logic mirror — testable). multi-line Python heredoc escape 영역 회피.
 - **Internal-docs cross-repo write**: `mclayer/codeforge-internal-docs/wrapper/stories/CFP-671.md` + `mclayer/codeforge-internal-docs/wrapper/change-plans/cfp-671-story-init-regression-fix.md` 작성 (ADR-013 dogfood-out 정합, manual fallback path — 본 carrier 가 story-init.yml 영역 정정 자체이므로 dogfood-out workflow 자동 미동작).
 ## [5.63.0] - 2026-05-14 — CFP-662 Phase 2 — bootstrap-labels.yml workflow body + self-app + Test Contract (8 test)
@@ -1557,7 +1557,7 @@ CLAUDE.md = 327 lines (ADR-012 Amendment 1 ≤320 cap 7 초과). `hotfix-bypass:
 
 ## [5.50.0] - 2026-05-14 — CFP-631 (ADR-063 Amendment 2 — marketplace description verbatim PR-time proactive lint mandate)
 
-CFP-619 retro §5.2 carry-over — 6 sample 누적 description drift evidence (CFP-387 / CFP-393 / CFP-423 / CFP-597 / CFP-612 / CFP-619). ADR-063 §결정 1 mirrored field invariant 안 `description` field 만 PR-time enforce 부재 (version = `version-bump-atomic-check.yml` blocking-on-pr cover, name/author = `check-marketplace-parity.sh` warning sufficient) → mechanical proactive lint mandate (Amendment 2 §결정 11). Amendment 1 (design-time self-check, CFP-597) 와 layered 2-layer proactive forcing function.
+CFP-619 retro §5.2 carry-over — 6 sample 누적 description drift evidence (CFP-387 / CFP-393 / CFP-423 / CFP-597 / CFP-612 / CFP-619). ADR-063 §결정 1 `mirrored field` invariant 안 `description` field 만 PR-time enforce 부재 (version = `version-bump-atomic-check.yml` blocking-on-pr cover, name/author = `check-marketplace-parity.sh` warning sufficient) → mechanical proactive lint mandate (Amendment 2 §결정 11). Amendment 1 (design-time self-check, CFP-597) 와 layered 2-layer proactive forcing function.
 
 ADR-037 MINOR bump: governance behavior change (Amendment 2 mandate 신설 — blocking-on-pr tier 직접 시작, Phase 2 PR 부터 active enforce). rebase race 4th sample (CFP-619+CFP-628+CFP-631 FIX-1+CFP-631 PR sequence) — base 5.49.0 (CFP-628 Story 2 merge 후 재산정).
 
@@ -1634,7 +1634,7 @@ ADR-037 MINOR bump: script behavior change (신규 workflow runtime 활성화 �
 
 ### Added (CFP-610 Story 2 — wording-dictionary lint)
 
-- **`scripts/check-wording-dictionary.sh`** (NEW) — ADR-064 Amendment 2 wording-dictionary lint script. 카테고리 (a) forbid 어휘 발견 시 exit 1 warning (`박제` / `못 박기` / `pin` / `freezing`). 카테고리 (b) 어휘 평문 정의 누락 시 exit 0 advisory (normative / sibling sync / kind:contract / ratchet / mirrored field). SSOT: docs/wording-dictionary.md. 5 scope: docs/adr/** / docs/change-plans/** / CLAUDE.md / docs/orchestrator-playbook.md / templates/**. blockquote + fenced code block exempt. docs/wording-dictionary.md 자체 EXEMPT.
+- **`scripts/check-wording-dictionary.sh`** (NEW) — ADR-064 Amendment 2 wording-dictionary lint script. 카테고리 (a) forbid 어휘 발견 시 exit 1 warning (`박제` / `못 박기` / `pin` / `freezing`). 카테고리 (b) 어휘 평문 정의 누락 시 exit 0 advisory (normative / sibling sync / kind:contract / ratchet / `mirrored field`). SSOT: docs/wording-dictionary.md. 5 scope: docs/adr/** / docs/change-plans/** / CLAUDE.md / docs/orchestrator-playbook.md / templates/**. blockquote + fenced code block exempt. docs/wording-dictionary.md 자체 EXEMPT.
 - **`tests/scripts/test_check_wording_dictionary.bats`** (NEW) — TDD unit test (17 TC PASS: TC-1~4 + IT-1~3 + CI-1). bats framework. 카테고리 (a) forbid 4 TC + 카테고리 (b) advisory 2 TC + 정의 동반 5 TC + 일반 어휘 2 TC + blockquote/fenced exempt 2 TC + self-app baseline 1 TC.
 - **`templates/github-workflows/wording-dictionary.yml`** + **`.github/workflows/wording-dictionary.yml`** (NEW, byte-identical) — ADR-060 warning-tier workflow. continue-on-error: true. hotfix-bypass:wording-dictionary label bypass + audit comment.
 - **`docs/evidence-checks-registry.yaml`** — 39번째 entry `wording-dictionary` append. owner_adr: ADR-064, introduced_by: CFP-610, current_tier: warning.
@@ -1976,7 +1976,7 @@ CFP-451 (#451) + CFP-490 (#490) 0-FIX chain 7-8번째 retro PMOAgent FU-4 (low s
 - `CLAUDE.md` (UPDATE L188) — Codex Proactive Check blockquote 갱신: divergence 영역 = 3 semantic + 1 factual = 4 영역 명시 + marker 5종 의무 inline.
 - `.claude-plugin/plugin.json` — version 5.24.0 → 5.25.0 MINOR (rebased onto main HEAD post-CFP-453 merge). description CFP-510 entry append.
 - Sibling sync: `mclayer/plugin-codeforge-requirements` 0.5.1 → 0.6.0 MINOR (RequirementsPLAgent.md "Divergence detection 4 영역" + "PL self-evaluation 의무" 단락 + codex-proactive-check.md "Fact-check 영역" 단락).
-- Marketplace sync (`mclayer/marketplace` `marketplace.json` `plugins[name=codeforge]` + `plugins[name=codeforge-requirements]` mirrored field — name/version/description/author atomic, ADR-063 §결정 5).
+- Marketplace sync (`mclayer/marketplace` `marketplace.json` `plugins[name=codeforge]` + `plugins[name=codeforge-requirements]` `mirrored field` — name/version/description/author atomic, ADR-063 §결정 5).
 
 #### Why
 
@@ -2014,7 +2014,7 @@ CFP-393 (ADR-057 Amendment 2 / fallback rate KPI dashboard, merged #398) 의 bes
 
 ### Sibling sync (ADR-016 + ADR-063 atomic invariant)
 
-- `marketplace.json` 4 mirrored field sync — **본 PR scope 외**, Epic CFP-462 close 시 single marketplace sync PR 일괄 처리 전략. `hotfix-bypass:marketplace-atomic` label 부착 (24h drift window 발생 → audit comment 자동 발의 인지, ADR-063 §결정 5 정합).
+- `marketplace.json` 4 `mirrored field` sync — **본 PR scope 외**, Epic CFP-462 close 시 single marketplace sync PR 일괄 처리 전략. `hotfix-bypass:marketplace-atomic` label 부착 (24h drift window 발생 → audit comment 자동 발의 인지, ADR-063 §결정 5 정합).
 - 6 lane plugin sibling — 영향 0건 (contract schema 변경 0, agent file 변경 0).
 
 ### Why
@@ -2043,7 +2043,7 @@ ADR-031 §결정 3 (lint cross-validate) 의 enforcement layer logic refinement.
 
 ### Sibling sync (ADR-016 + ADR-063 atomic invariant)
 
-- `marketplace.json` 4 mirrored field sync 의무 — name/version/description/author. **본 PR scope 외, Orchestrator escalation 영역** (DeveloperPL 책임 외). marketplace sync PR open 후 atomic check PASS 의무.
+- `marketplace.json` 4 `mirrored field` sync 의무 — name/version/description/author. **본 PR scope 외, Orchestrator escalation 영역** (DeveloperPL 책임 외). marketplace sync PR open 후 atomic check PASS 의무.
 
 ### Why
 
@@ -2109,8 +2109,8 @@ CFP-500 (#417 CLOSED) Phase 2 in-vivo verify (#471) FAIL implementation bug fix.
 - `docs/evidence-checks-registry.yaml` (UPDATE) — `duplicate-session-start-hook-check` entry append (warning tier, schema v1.1, ADR-038 owner).
 - `templates/.claude/hooks/SessionStart-codeforge-prereq-check.json.sample` (DEPRECATION HEADER) — `_deprecated_since: 5.22.0` + `_migration` + `_scheduled_removal: 5.23.0` 3 field prepend.
 - `scripts/check-codeforge-prereq.sh` + `tests/scripts/test_check_codeforge_prereq.sh` (REMOVED) — logic inline 통합 (hooks/session-start), test 동반 폐기.
-- **plugin.json description retain** (CFP-451/448/481 entries 잔존) — ADR-063 atomic invariant 면제 (mirrored field 변경 0). version 5.22.0 (CFP-451/448/481 concurrent merge window 정합).
-- **marketplace.json sibling sync 면제** — mirrored field 변경 0 (description retain), 별도 sync PR 불요.
+- **plugin.json description retain** (CFP-451/448/481 entries 잔존) — ADR-063 atomic invariant 면제 (`mirrored field` 변경 0). version 5.22.0 (CFP-451/448/481 concurrent merge window 정합).
+- **marketplace.json sibling sync 면제** — `mirrored field` 변경 0 (description retain), 별도 sync PR 불요.
 
 ### Why (CFP-475)
 
@@ -2166,7 +2166,7 @@ CFP-445 ADR-064 §결정 2 forbid-list 8 어휘 dictionary 의 mechanical enforc
 - `docs/evidence-checks-registry.yaml` row append (`decision-principle-vocab` entry, 23rd entry). 본 framework 2nd warning-tier entry — `owner_adr: ADR-064` + `carrier_adr: ADR-060` + `sibling_dependencies: []` (독립 entry).
 - `tests/scripts/test-check-decision-principle-vocabulary.bats` (NEW, 15 test case) — Happy path 1 + Forbid detection 3 + Scope filtering 3 + Exempt 영역 5 + Edge case 3. `tests/scripts/` 디렉터리 신설 (bats 첫 진입 사례).
 - `CLAUDE.md` "GitHub Workflow" 단락 — 19종 → 20종 fixture, 1 evidence-enforceable warning → 2 evidence-enforceable warning 갱신.
-- `.claude-plugin/plugin.json` description append CFP-449 entry (mirrored field — marketplace sibling sync 의무).
+- `.claude-plugin/plugin.json` description append CFP-449 entry (`mirrored field` — marketplace sibling sync 의무).
 
 ### Why
 
@@ -2179,7 +2179,7 @@ ADR-064 §결정 8 declaration only — mechanical enforcement 는 CFP-449 별�
 - bypass channel = `hotfix-bypass:decision-principle-vocab` label + PR description `### Bypass reason` (ADR-024 Amendment 3 §결정 6.A). audit comment 자동 발의 — 정책 회피 등록 차단 (ADR-064 §결정 5 정합).
 - 6 lane plugin 영향 = 0 (wrapper level lint, lane plugin self-write boundary 무변경).
 - ADR-060 Amendment 3 (Phase 1 PR #470 merged 2026-05-12) — `hotfix-bypass` 채널 의미 sharpening 1줄 + amendment_log row 3 추가. 강화 방향 amendment (ratchet 위반 0건).
-- Marketplace sibling sync 의무 = `version` 5.20.0 → 5.21.0 + `description` mirrored field. ADR-063 §결정 2 atomic invariant — marketplace sync PR 선행 merge → plugin PR merge.
+- Marketplace sibling sync 의무 = `version` 5.20.0 → 5.21.0 + `description` `mirrored field`. ADR-063 §결정 2 atomic invariant — marketplace sync PR 선행 merge → plugin PR merge.
 
 ### Related
 
@@ -2223,7 +2223,7 @@ ADR-064 §결정 8 declaration only — mechanical enforcement 는 CFP-449 별�
 - mechanical lint (CFP-449) = warning tier 진입 (ADR-060 §결정 5), advisory only. blocking 승격은 evidence-enforceable framework gate (PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling Story merged) 통과 후 별도 CFP carrier.
 - iterative reformulation (CFP-446) = ADR-052 Amendment 2 별도 carrier (touchpoint #1 single-shot → max 3 rounds).
 - 6 lane plugin 영향 = 0 (wrapper level normative SSOT, lane plugin self-write boundary 무변경).
-- Marketplace sibling sync 의무 = `name` / `description` mirrored field 갱신 (description 변경 — `+ CFP-445 ...` append). 본 PR merge 직후 `mclayer/marketplace` sync PR 즉시 open · merge (ADR-016 + ADR-063 atomic invariant 정합).
+- Marketplace sibling sync 의무 = `name` / `description` `mirrored field` 갱신 (description 변경 — `+ CFP-445 ...` append). 본 PR merge 직후 `mclayer/marketplace` sync PR 즉시 open · merge (ADR-016 + ADR-063 atomic invariant 정합).
 
 ### Related
 
@@ -2263,7 +2263,7 @@ ADR-060 §결정 12 후속 carrier 의무가 2 carrier (CFP-391 / CFP-412) 모�
 
 ### Marketplace sync (의무, ADR-063 §결정 2 — 별도 PR)
 
-본 PR merge 직후 즉시 marketplace sync PR open·merge (codeforge plugin family 의 wrapper plugin version mirrored field — `mclayer/marketplace` `marketplace.json` `plugins[name=codeforge]` version `5.18.0` → `5.19.0`).
+본 PR merge 직후 즉시 marketplace sync PR open·merge (codeforge plugin family 의 wrapper plugin version `mirrored field` — `mclayer/marketplace` `marketplace.json` `plugins[name=codeforge]` version `5.18.0` → `5.19.0`).
 
 ## [5.18.0] - 2026-05-12
 
@@ -2293,7 +2293,7 @@ Non-breaking. Hook 등록은 consumer opt-in (CONDITIONAL). 기존 ADR-038 §결
 
 ### Added (CFP-436 — Marketplace ↔ plugin.json atomic invariant)
 
-CFP-387 / CFP-393 / CFP-423 retro 의 3-Wave marketplace drift 누적 → ADR carrier 격상 timing 도달. mirrored field bump 시 3 file atomic coordination 의무 명시화.
+CFP-387 / CFP-393 / CFP-423 retro 의 3-Wave marketplace drift 누적 → ADR carrier 격상 timing 도달. `mirrored field` bump 시 3 file atomic coordination 의무 명시화.
 
 - `docs/adr/ADR-063-marketplace-atomic-invariant.md` (NEW, 200L) — 8 결정 정책 본문
   1. 3-file atomic invariant 명시 (plugin.json + CHANGELOG.md + marketplace.json 동시 처리)
@@ -2309,7 +2309,7 @@ CFP-387 / CFP-393 / CFP-423 retro 의 3-Wave marketplace drift 누적 → ADR ca
 
 ### Why
 
-3-Wave drift evidence (CFP-387 chicken-and-egg + CFP-393 catch-up + CFP-423 합쳐 처리) — mirrored field bump 시 atomic coordination invariant 부재. 기존 `check-marketplace-parity.sh` / `check-marketplace-sync.sh` 는 사후 감지만 가능, 작성 시점 강제 mechanism 없음.
+3-Wave drift evidence (CFP-387 chicken-and-egg + CFP-393 catch-up + CFP-423 합쳐 처리) — `mirrored field` bump 시 atomic coordination invariant 부재. 기존 `check-marketplace-parity.sh` / `check-marketplace-sync.sh` 는 사후 감지만 가능, 작성 시점 강제 mechanism 없음.
 
 ### Compatibility
 
@@ -2507,7 +2507,7 @@ ADR-057 (Orchestrator Opus 필수화 + Sonnet→Opus fallback) 가 측정 기준
 - ADR-037 §3.1 (h) 신규 ADR + (g) additive CLAUDE.md guidance → MINOR. 5.10.0 → 5.11.0.
 - backward compatible — 기존 ADR 39종 frontmatter 미선언 = default `is_transitional: true` 안전망 추정 (declaration only, mechanical enforcement = CFP-B 잠정 carrier)
 - **Sibling sync**: codeforge-design 0.6.0 → 0.7.0 (`templates/adr.md` canonical SSOT 갱신) — Phase 2 PR pair 동시 merge 의무
-- **Marketplace sync**: wrapper + codeforge-design 양쪽 mirrored field 변경 (`version` + `description`) → marketplace sync PR 의무 (Phase 2 PR merge 직후, ADR-016)
+- **Marketplace sync**: wrapper + codeforge-design 양쪽 `mirrored field` 변경 (`version` + `description`) → marketplace sync PR 의무 (Phase 2 PR merge 직후, ADR-016)
 - Mode B hub-centralized (ADR-020 Amendment 1) — wrapper hub, codeforge-design worker plugin
 
 ## [5.10.0] - 2026-05-11
@@ -2636,7 +2636,7 @@ Marketplace mirror sync: mclayer/marketplace#21 (선행 merge for drift CI pass)
 | (h) ADR new | ADR-036 / ADR-037 신설 | MINOR |
 | (d) Template workflow 추가 | cfp-reserve.yml / reservation-cleanup.yml / check-plugin-version-bump.yml | MINOR |
 | (i) Bootstrap script | phase:reservation entry / check-codeforge-version-drift.sh | MINOR |
-| (l) Marketplace mirrored field | description 갱신 | MINOR |
+| (l) Marketplace `mirrored field` | description 갱신 | MINOR |
 
 Wrapper-coupling trigger T1/T2/T3: 모두 미발동 (contract 변경 없음 / agent 0 invariant 유지 / ADR new 는 supersede 아님).
 
