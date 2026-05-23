@@ -33,7 +33,7 @@ kind: architecture_doc
 
 ## 인터페이스 계약
 
-<!-- inter-plugin contract surface (kind:contract + kind:registry SSOT cross-ref). -->
+<!-- inter-plugin contract surface (kind:contract = contract schema 영역 / kind:registry = lookup/표 영역, MANIFEST.yaml SSOT cross-ref). -->
 <!-- placeholder 가이드: 모듈 간 계약 surface 를 SSOT cross-ref 로 채운다 (MANIFEST.yaml 등 참조).
      계약 schema 의 field-level / type-level 상세 금지 — contract 이름 + SSOT pointer 만. -->
 
