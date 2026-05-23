@@ -65,6 +65,13 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 8 + §결정 1-A transition trigger 표 8번째 row"
     sunset_justification: null
+  - amendment_id: 9
+    cfp: CFP-1384
+    date: 2026-05-24
+    scope: "Wave 2 mechanical wire activation — Amendment 7 (CFP-1319) `stale_local_main_checkout` transition trigger declaration-only-Wave-1 retain 상태에서 declaration → mechanical wire active 전환. 본 Amendment 9 = frontmatter `mechanical_enforcement_actions[]` 4 entry → 5 entry append (`stale-local-main-checkout-divergence-check` 5번째 entry, closed-set ratchet 강화) + evidence-checks-registry warning-tier entry 신설 (mcp-token-freshness-precheck schema 17 field 답습, status: Active — Wave 2 mechanical wire 자체이므로 deferred-followup 단계 도입 0 per CFP scope unitary ADR-064 §결정 1) + SessionStart hook (hooks/stale-local-main-checkout polyglot extensionless + hooks.json SessionStart matcher 2nd command append, async: false sequential 정합) + script chain (scripts/check-stale-local-main-checkout.sh thin wrapper + scripts/lib/check_stale_local_main_checkout.py Python SSOT per ADR-061 + scripts/check-baseline-pin-verify.sh lane spawn lint warning tier) + PR-time workflow (templates/github-workflows/stale-local-main-checkout-divergence-check.yml dual trigger pull_request + workflow_dispatch per production-cutover-evidence.yml D2 consensus 답습 + .github/workflows self-app byte-identical per ADR-005) + bats fixture pair (tests/scripts/test_check-stale-local-main-checkout.sh ≥ 6 assertion block T-1~T-6 + tests/scripts/test_check-baseline-pin-verify.sh ≥ 4 assertion block T-7~T-8, RED→GREEN stash proof pattern per CFP-1334 §8.4) + label-registry-v2 v2.53 → v2.54 MINOR bump (hotfix-bypass:stale-local-main-checkout-divergence-check 75번째 family member per ADR-108 §결정 3 description text count parity META self-application 2nd applied case, CFP-1346 1st applied 후) + evidence-check-registry-v1.md 변경 0 (이미 v1.3, CFP-963 / ADR-060 Amendment 14 merged 2026-05-19 — 본 carrier schema field 추가 0 → version bump 불필요, iter 2 F-003 DesignReview absorb: iter 1 Phase 0 baseline 6eb8112 8 commits behind 영역 stale design assumption 정정). 본 Amendment 는 §결정 1-8 본문 + Amendment 1+2+3+4+5+6+7+8 scope 강화 only (ADR-058 §결정 5 ratchet 정합) — 약화 / scope 축소 / 면제 영역 0건. Pattern_count 10+ reach Mandatory (ADR-045 §D-9 정합): Epic-A CFP-1146 W5-S14 init + W5-S16 init + CFP-1318 본 session 다회 reproduction + CFP-1333 single Story session 3-occurrence (F-001 Phase 0 cold start + F-002 3-step same-session drift + §9.1 Codex 5/5 FP external verifier own stale local checkout) + CFP-1384 iter 1 RequirementsPL 7번째 reproduction (packet baseline 6eb8112 8 commits behind actual origin/main bfa62f8) + 본 ArchitectPL iter 1 spawn 8번째 reproduction (worktree HEAD aacce0f 4 commits behind actual bb6f7d0) + ArchitectPL iter 2 spawn 10번째 sentinel reproduction META in-flight (worktree HEAD 7ed108a vs origin/main 0d056bb divergence — recursive dogfooding META depth ratchet). ADR-073 Amendment 7 line 781 `TBD-Wave-2` placeholder = CFP-1384 채우기 (sibling_dependencies field 갱신: [CFP-1319, CFP-1384]). recursive dogfooding loop self-evidence — retain pattern (behavioral directive 만으로 unconditional forcing function 달성) 가정 systemic falsified."
+    status: applied
+    ref: "## Amendments / Amendment 9 + §결정 1-I main checkout divergence detection primitive mechanical activation"
+    sunset_justification: null
 related_stories:
   - CFP-622  # carrier
   - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
@@ -81,6 +88,7 @@ related_stories:
   - CFP-1319 # Amendment 7 — transition trigger enum 7번째 entry `stale_local_main_checkout` (Orchestrator pre-Read divergence detection mandate, working tree HEAD vs origin/main staleness), Epic-A W5-S14/S16 + CFP-1318 다회 reproduction sentinel pattern_count 3+ Mandatory
   - CFP-1347 # Amendment 6 Wave 1 sibling carrier — evidence-checks-registry `subagent-sibling-story-polling-evidence` entry append (deferred-followup status, ADR-073 frontmatter mechanical_enforcement_actions[] 3rd entry activation)
   - CFP-1348 # Amendment 8 — transition trigger enum 8번째 entry `mcp_token_expired_mid_flight` (MCP server auth token TTL freshness pre-flight verify mandate), CFP-1146 Epic-A W5 6 parallel dispatch token expiry sentinel pattern_count 2 reach
+  - CFP-1384 # Amendment 9 — Wave 2 mechanical wire activation (declaration → mechanical wire active 전환, Amendment 7 TBD-Wave-2 placeholder 채우기). 5번째 mechanical_enforcement_actions[] entry stale-local-main-checkout-divergence-check + evidence-checks-registry warning-tier entry (status: Active) + SessionStart hook + script chain + PR-time workflow + bats fixture pair + label-registry-v2 v2.54 MINOR. pattern_count 8+ reach Mandatory (CFP-1333 3-occurrence + CFP-1384 iter 1 7번째 + ArchitectPL spawn 8번째 recursive dogfooding self-evidence)
   - CFP-597  # sentinel #4 strike #1 origin (CLAUDE.md cap + playbook §3.6 false alarm)
   - CFP-578  # ADR-070 verify-before-trust 자매 (external worker output)
   - CFP-612  # ADR-071 dialog convergence 자매 governance
@@ -108,6 +116,7 @@ mechanical_enforcement_actions:
   - worktree-self-ownership-verify    # CFP-689 Amendment 3 — declarative anchor (warning tier, declaration-only-Wave-1, recurrence count 3 / threshold 3 / promotion_trigger auto_blocking, actual lint script + workflow + hook = sibling Story-2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — parallel-work-sentinel-pickup precedent 답습)
   - subagent-sibling-story-polling-evidence  # CFP-1347 Wave 1 (sibling carrier of Amendment 6 CFP-1318) — declarative anchor (warning tier, deferred-followup status, recurrence count 3 / threshold 3 / promotion_trigger auto_blocking, actual lint script + workflow + bats + label-registry MINOR bump = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — parallel-work-sentinel-pickup + worktree-self-ownership-verify precedent 답습. Amendment 6 §결정 1-A 6번째 entry sibling_story_handoff + §결정 1-G primitive + §결정 1-H subject scope 확장 carrier)
   - mcp-token-freshness-precheck  # CFP-1348 Wave 1 (sibling carrier of Amendment 8) — declarative anchor (warning tier, deferred-followup status, recurrence count 2 / threshold 3 / promotion_trigger auto_blocking pending 3 reach, actual SessionStart hook + script + workflow + bats + label-registry MINOR bump = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — parallel-work-sentinel-pickup + worktree-self-ownership-verify + subagent-sibling-story-polling-evidence precedent 답습. Amendment 8 §결정 1-A 8번째 entry mcp_token_expired_mid_flight + §결정 1-K primitive + §결정 1-L spawn prompt field carrier)
+  - stale-local-main-checkout-divergence-check  # CFP-1384 Amendment 9 — Wave 2 mechanical wire activation (Wave 1 declaration anchor = CFP-1319 Amendment 7, TBD-Wave-2 placeholder 채우기). actual SessionStart hook (hooks/stale-local-main-checkout polyglot extensionless + hooks.json matcher 2nd command append, async: false sequential) + script chain (scripts/check-stale-local-main-checkout.sh thin wrapper + scripts/lib/check_stale_local_main_checkout.py Python SSOT per ADR-061 + scripts/check-baseline-pin-verify.sh lane spawn lint) + PR-time workflow (templates/github-workflows/stale-local-main-checkout-divergence-check.yml dual trigger pull_request + workflow_dispatch + .github/workflows self-app per ADR-005) + bats fixture pair (tests/scripts/test_check-stale-local-main-checkout.sh ≥ 6 assertion T-1~T-6 + tests/scripts/test_check-baseline-pin-verify.sh ≥ 4 assertion T-7~T-8, RED→GREEN stash proof pattern per CFP-1334 §8.4) + label-registry-v2 v2.54 MINOR (hotfix-bypass:stale-local-main-checkout-divergence-check 75번째 family member per ADR-108 §결정 3 META self-application 2nd applied case) = Wave 2 mechanical wire active (declaration-only-Wave-1 단계 도입 0 per CFP scope unitary ADR-064 §결정 1 — Phase 1 declarative + Phase 2 file impl atomic carrier). recurrence count 8 / threshold 3 / promotion_trigger auto_blocking (count > threshold 발화 active, promotion criteria pr_cumulative_min 20 + failure_threshold 0 충족 시 즉시 blocking-on-pr 승격). Amendment 7 §결정 1-I 3-step primitive mechanical 실 enforcement carrier (Step 1 git fetch + Step 2 rev-list count + Step 3 plain stdout warning + EnterWorktree guidance + ground truth direct fetch `git show origin/main:<path>`).
 # Wave 1 = behavioral directive only (Orchestrator self-discipline forcing function) — Amendment 2 (CFP-966)
 # 가 첫 mechanical_enforcement_actions[] row entry append (declarative anchor only — script + workflow
 # 실 binding 은 sibling Story-2 CFP-967 carrier).
@@ -769,7 +778,7 @@ ADR-039 Inline whitelist 4-entry (사용자 dialog / TodoWrite scratchpad / Read
 
 #### Amendment 7 — Wave 1 declaration / Wave 2 mechanical wire 분리
 
-`mechanical_enforcement_actions: [parallel-work-sentinel-pickup, worktree-self-ownership-verify]` (2 entry unchanged — Wave 1 retain, 3rd / 4th entry append 보류). Wave 2 별 sub-CFP carrier = `stale-local-main-checkout-divergence-check` warning-tier entry 신설 (recurrence count 3+ already reached / auto_blocking, sibling_dependencies: [CFP-1319, TBD-Wave-2]).
+`mechanical_enforcement_actions: [parallel-work-sentinel-pickup, worktree-self-ownership-verify]` (2 entry unchanged — Wave 1 retain, 3rd / 4th entry append 보류). Wave 2 별 sub-CFP carrier = `stale-local-main-checkout-divergence-check` warning-tier entry 신설 (recurrence count 3+ already reached / auto_blocking, sibling_dependencies: [CFP-1319, CFP-1384]).
 
 Wave 1 retain rationale: Amendment 5/6 (CFP-1102 fix_iter_start + CFP-1318 sibling_story_handoff) 동일 Wave 1 declarative anchor only 답습 (precedent consistency). spawn prompt grep heuristic / hook PreToolUse Read intercept 영역 false-negative risk (CFP-963 codex-network-scope-presence precedent 답습).
 
@@ -864,3 +873,68 @@ Wave 1 retain rationale: Amendment 5/6/7 (CFP-1102 fix_iter_start + CFP-1318 sib
 #### Amendment 8 — sunset_justification N/A 정당
 
 `is_transitional: false` (영구 governance policy) 보존 — Amendment 8 scope = 본문 + Amendment 1+2+3+4+5+6+7 강화 방향 only (enum 8번째 entry append + MCP token freshness verify primitive 신설 + agent spawn prompt `mcp_token_freshness_verified` field 신설). 약화 / scope 축소 / 면제 영역 0건. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과 (Amendment 1+2+3+4+5+6+7 동형 precedent). ADR-064 §self-application top-down ratchet 정합.
+
+### Amendment 9 — `stale-local-main-checkout-divergence-check` Wave 2 mechanical wire activation (5번째 mechanical_enforcement_actions[] entry, CFP-1384)
+
+**날짜**: 2026-05-24
+
+#### 동기
+
+Amendment 7 (CFP-1319, 2026-05-23 merged) 가 `stale_local_main_checkout` transition trigger 7번째 entry 를 declaration-only-Wave-1 retain 상태로 도입. retain pattern 가정 (behavioral directive ADR-073 §결정 6 만으로 unconditional forcing function 달성) 이 **recursive dogfooding loop 안 systemic 으로 falsified**:
+
+- **CFP-1333 single Story session 3-occurrence sentinel** (Amendment 7 sentinel 본문 cited): F-001 Phase 0 cold start (Orchestrator session-start cold start 시 fetch + divergence detection 누락, 6 commits behind 영역 안 RequirementsPL spawn → §2.1 verified_state_table GAP claim 잘못된 결론) + F-002 3-step same-session drift (`a1fb06b → c951199 → d24ab28` baseline pin 직후에도 stale, evidence_pre-trust 가 spawn 외 turn 사이에서 stale) + §9.1 DesignReview Codex 5/5 FP (external verifier own stale local checkout `bfc4806` 5 commits behind, 3rd-order reproduction)
+- **CFP-1384 iter 1 RequirementsPL 7번째 reproduction**: packet baseline `6eb8112` 8 commits behind actual origin/main `bfa62f8` (CFP-1346 retro merge advance), RequirementsPL §2.1 verified_state_table 본인 검증 단계에서 catch
+- **CFP-1384 ArchitectPL spawn 8번째 reproduction in-flight**: wrapper worktree HEAD `aacce0f` 4 commits behind actual origin/main `bb6f7d0` (CFP-1392 + CFP-1334 + CFP-1346 Phase 2 + CFP-1333 Phase 2 merged in-flight), ArchitectPL Phase 0 re-verify catch
+
+**Pattern_count 8+ reach Mandatory** (ADR-045 §D-9 정합) — Issue body claim 5+ reach 이미 Mandatory framing, 본 ArchitectPL spawn 시점 8+ accumulate. retain pattern 의 "behavioral directive 만으로 충분" 가정 systemic 으로 wrong 입증 — mechanical wire (SessionStart hook + script chain + PR-time workflow + bats fixture + label-registry bypass channel) 활성 evidence-grounded essential.
+
+#### §결정 — Wave 2 mechanical wire activation
+
+본 Amendment 9 = Amendment 7 line 770 `TBD-Wave-2` placeholder 채우기 — declaration → mechanical wire active 전환의 atomic component file 집합. ADR-064 §결정 1 CFP scope unitary 정합 — Phase 1 declarative anchor + Phase 2 file impl 모두 단일 wire 의 구성 요소 (split 0). mcp-token-freshness-precheck Wave 1 declarative-only retain (CFP-1348) precedent 와 차이점: 본 carrier = Wave 2 자체이므로 declaration-only-Wave-1 stage 추가 도입 0, evidence-checks-registry entry `status: Active` 직접 도입 (deferred-followup 단계 미경유).
+
+| 영역 | 활성 carrier | Phase |
+|---|---|---|
+| frontmatter `mechanical_enforcement_actions[]` 5번째 entry append (`stale-local-main-checkout-divergence-check`, closed-set ratchet 강화 4→5) | 본 Amendment 9 | Phase 1 |
+| evidence-checks-registry warning-tier entry 신설 (17 field schema verbatim 답습, status: Active, recurrence count 8 / threshold 3 / promotion_trigger auto_blocking) | 본 Amendment 9 | Phase 1 |
+| label-registry-v2 v2.53 → v2.54 MINOR bump (`hotfix-bypass:stale-local-main-checkout-divergence-check` 75번째 family member, ADR-108 §결정 3 description text count parity META self-application 2nd applied case) | 본 Amendment 9 | Phase 1 |
+| evidence-check-registry-v1.md 변경 0 (이미 v1.3 CFP-963 / ADR-060 Amendment 14 merged 2026-05-19, 본 carrier schema field 추가 0 → version bump 불필요 — iter 2 F-003 absorb stale design assumption 정정) | N/A | N/A |
+| SessionStart hook (`hooks/stale-local-main-checkout` polyglot extensionless + `hooks/hooks.json` matcher 2nd command append, async: false sequential 정합) | CFP-1384 Phase 2 | Phase 2 |
+| script chain (`scripts/check-stale-local-main-checkout.sh` thin wrapper + `scripts/lib/check_stale_local_main_checkout.py` Python SSOT per ADR-061 + `scripts/check-baseline-pin-verify.sh` lane spawn lint) | CFP-1384 Phase 2 | Phase 2 |
+| PR-time workflow (`templates/github-workflows/stale-local-main-checkout-divergence-check.yml` dual trigger pull_request + workflow_dispatch per production-cutover-evidence.yml D2 consensus 답습 + `.github/workflows/...yml` self-app byte-identical per ADR-005) | CFP-1384 Phase 2 | Phase 2 |
+| bats fixture pair (`tests/scripts/test_check-stale-local-main-checkout.sh` ≥ 6 assertion T-1~T-6 + `tests/scripts/test_check-baseline-pin-verify.sh` ≥ 4 assertion T-7~T-8, RED→GREEN stash proof pattern per CFP-1334 §8.4) | CFP-1384 Phase 2 | Phase 2 |
+
+#### Amendment 9 — Amendment 7 §결정 1-I primitive mechanical 실 enforcement
+
+본 Amendment 9 = Amendment 7 §결정 1-I main checkout divergence detection primitive (3-step) 의 **mechanical 실 enforcement carrier**:
+
+| Step | Verify command | mechanical wire 영역 |
+|---|---|---|
+| 1. origin fetch | `git fetch origin --quiet` | `scripts/lib/check_stale_local_main_checkout.py` subprocess.run (timeout 10s per EC-3, env override `CODEFORGE_STALE_FETCH_TIMEOUT_SEC`) |
+| 2. HEAD vs origin/main divergence | `git rev-list --count HEAD..origin/main` | `scripts/lib/check_stale_local_main_checkout.py` divergence count integer parse (threshold default 1, env override `CODEFORGE_STALE_THRESHOLD`) |
+| 3. fresh worktree mandate | plain stdout warning + EnterWorktree guidance + `git show origin/main:<path>` direct fetch fallback | `scripts/lib/check_stale_local_main_checkout.py` stdout emit (ADR-038 Amendment 3 §결정 11 plain stdout SSOT) + SessionStart hook (`hooks/stale-local-main-checkout`) 매 session start + /clear + /compact 직후 자동 발화 |
+
+#### Amendment 9 — Disjoint axis cross-ref
+
+- **ADR-082**: write-time semantic truth verify (corpus / cross-plugin). 본 Amd 9 = Read-time working tree file ground truth mechanical verify. write-time input value ≠ Read-time working tree snapshot, axis disjoint.
+- **ADR-085**: multi-session collaboration coordination (pre-hoc cross-session). 본 Amd 9 = single session 안 working tree divergence mechanical detection (verify axis). ownership coordination ≠ working tree divergence, axis disjoint.
+- **Amendment 3** (`worktree_lane_spawn`): worktree-first self-ownership verify 3-tuple (path-based). 본 Amd 9 = working tree HEAD vs origin/main divergence (temporal axis). path-based topology ≠ temporal divergence, axis disjoint.
+- **Amendment 6** (`sibling_story_handoff`): bidirectional sibling Story state polling. 본 Amd 9 = single session self-Read working tree file. sibling state polling ≠ self-Read divergence, axis disjoint.
+- **Amendment 7** (`stale_local_main_checkout` Wave 1 declarative): 본 Amd 9 = Wave 2 mechanical wire active 직접 후속 carrier (declaration → activation 정상 lifecycle).
+- **Amendment 8** (`mcp_token_expired_mid_flight`): auth layer staleness. 본 Amd 9 = git layer staleness. git ↔ auth layer disjoint, 양 staleness sub-domain.
+- **ADR-045 §D-9**: PMOAgent retro corpus pattern_count threshold escalation. 본 Amd 9 = pattern_count 8+ reach Mandatory carrier, 4번째 적용 사례 of family (Amendment 6 첫 + Amendment 7 둘째 + Amendment 8 셋째 + 본 Amendment 9 넷째).
+
+#### Amendment 9 — META self-application 2nd applied case
+
+ADR-108 §결정 3 `label-registry-frozen-baseline-count-parity` lint = description text count = raw active grep count post-append parity forcing function (CFP-1346 1st applied case). 본 carrier label-registry-v2 v2.54 신규 entry description text 안 "75번째 hotfix-bypass:* family member" wording 의무 — **META self-application 2nd applied case** (post-CFP-1346 v2.53 baseline raw active 74 + new = 75 정합, ADR-108 §결정 6 dogfood loop close).
+
+#### Amendment 9 — Wave 2 mechanical wire status decision (Active vs deferred-followup)
+
+본 carrier evidence-checks-registry entry `status: Active` 직접 도입 (deferred-followup 단계 미경유). **rationale**:
+- mcp-token-freshness-precheck precedent (CFP-1348 Wave 1) = declaration-only-Wave-1 retain, Wave 2 별 carrier 미존재 시점 → `status: deferred-followup` 정합
+- 본 carrier (CFP-1384) = Wave 2 mechanical wire 자체 (Amendment 9 + frontmatter + registry entry + label-registry + Phase 2 file impl atomic) → CFP scope unitary (ADR-064 §결정 1) 정합 — Wave 1 추가 stage 도입 0, Phase 2 = file impl 만 (declarative layer 무변경) → `Active` 직접 도입 정합
+
+Active 진입 후 PR 누적 ≥ 20 + bypass 외 failure = 0 reach 시 (ADR-060 §결정 6 promotion criteria) 별 carrier 가 warning → blocking-on-pr tier 승격 평가 (본 carrier scope 외).
+
+#### Amendment 9 — sunset_justification N/A 정당
+
+`is_transitional: false` (영구 governance policy) 보존 — Amendment 9 scope = 본문 + Amendment 1+2+3+4+5+6+7+8 강화 방향 only (5번째 mechanical_enforcement_actions[] entry append + evidence-checks-registry warning-tier entry 신설 status: Active + label-registry-v2 v2.54 MINOR + SessionStart hook + script chain + PR-time workflow + bats fixture pair 전체 atomic mechanical wire activation). 약화 / scope 축소 / 면제 영역 0건. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과 (Amendment 1+2+3+4+5+6+7+8 동형 precedent). ADR-064 §self-application top-down ratchet 정합.

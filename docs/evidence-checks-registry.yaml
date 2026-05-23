@@ -4039,3 +4039,74 @@ entries:
       last_occurrence: "2026-05-24T00:00:00Z"
       promotion_trigger: auto_blocking
     status: deferred-followup  # Wave 1 declarative anchor only (CFP-1391 본 PR) — Wave 2 mechanical wire = 별 sub-CFP carrier
+
+  # ─── CFP-1384 Wave 2 (Phase 1 ratchet activation — `stale_local_main_checkout` mechanical wire 신설, 2026-05-24 KST) ───
+  # ADR-073 Amendment 7 (CFP-1319) `stale_local_main_checkout` transition trigger 7번째 entry declaration-only-Wave-1 retain 상태에서 Phase 1 declarative ratchet entry 신설.
+  # declaration source ADR-073 Amendment 7+9 / enforcement source ADR-060 dual-binding (parallel-work-sentinel-pickup + worktree-self-ownership-verify + subagent-sibling-story-polling-evidence + mcp-token-freshness-precheck precedent 답습).
+  # mechanical_enforcement_actions[] 4 entry → 5 entry append (closed-set ratchet 강화). pattern_count 8+ reach Mandatory (CFP-1146 W5-S14/S16 + CFP-1318 + CFP-1333 3-occurrence + CFP-1384 iter 1 7번째 + ArchitectPL spawn 8번째 in-flight + iter 2 본 spawn 10번째 sentinel reproduction META).
+  - name: stale-local-main-checkout-divergence-check
+    description: |
+      ADR-073 Amendment 7 (`stale_local_main_checkout` transition trigger 7번째
+      entry, CFP-1319) + Amendment 9 (Wave 2 mechanical wire activation, CFP-1384)
+      mechanical verification — local checkout HEAD vs origin/main divergence
+      pre-flight detection 매 session 시작 + lane spawn 직전 + working tree
+      편집 직전.
+
+      verify primitive: `git fetch origin && git rev-parse origin/main` vs
+      local working tree HEAD `git rev-parse HEAD`. divergence (commits behind
+      ≥ threshold default 1) 감지 시 warning notify + 권장 fresh worktree
+      (EnterWorktree) 재진입 guidance.
+
+      Wave 1 declaration anchor only (ADR-064 §결정 1 CFP scope unitary 정합 —
+      본 entry status: Active Wave 2 mechanical wire 자체이므로 deferred-followup
+      단계 도입 0) — actual SessionStart hook + script chain + PR-time workflow
+      + bats fixture pair + label = Phase 2 별 sub-CFP carrier 후 정식 enforce.
+
+      sentinel pattern_count 8+ reach Mandatory (ADR-045 §D-9 정합):
+      - CFP-1146 W5-S14 init
+      - CFP-1146 W5-S16 init
+      - CFP-1318 본 session 다회 reproduction
+      - CFP-1333 single Story session 3-occurrence (F-001 cold start + F-002
+        3-step same-session drift + §9.1 Codex 5/5 FP external verifier own
+        stale local checkout)
+      - CFP-1384 iter 1 RequirementsPL 7번째 reproduction (packet baseline
+        6eb8112 8 commits behind origin/main bfa62f8)
+      - 본 ArchitectPL iter 2 spawn 10번째 reproduction in-flight (worktree
+        HEAD 7ed108a vs origin/main 0d056bb divergence)
+
+      super-class = `git_layer_local_state_staleness` — Amendment 8 MCP token
+      freshness (auth layer) 와 axis disjoint (auth ↔ git layer disjoint,
+      양 staleness sub-domain).
+
+      ADR-082 §결정 6 + ADR-060 Amendment 10 §결정 24 deferred-followup +
+      Wave 1 declaration anchor only precedent established (L1417/L1452/L1574
+      4-instance + parallel-work-sentinel-pickup L2731 +
+      worktree-self-ownership-verify + subagent-sibling-story-polling-evidence
+      + mcp-token-freshness-precheck L3823 6-instance established pattern)
+      답습 — 신규 unique drift value 회피.
+    detect_command: bash scripts/check-stale-local-main-checkout.sh  # Phase 2 별 sub-CFP carrier — scripts/check-stale-local-main-checkout.sh (bash thin wrapper, ADR-061) + scripts/lib/check_stale_local_main_checkout.py (Python SSOT — git fetch origin + rev-parse divergence detect + threshold compare) 실 file 신설
+    workflow: templates/github-workflows/stale-local-main-checkout-divergence-check.yml  # Phase 2 별 sub-CFP carrier — byte-identical self-app .github/workflows/stale-local-main-checkout-divergence-check.yml (ADR-005 parity)
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode default 새 entry pattern
+    bypass_label: hotfix-bypass:stale-local-main-checkout-divergence-check  # 77번째 hotfix-bypass:* family member (post-CFP-1334+CFP-1391 = +2 ahead) — label-registry-v2 v2.53 → v2.54 MINOR bump (CFP-1384 Phase 1)
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized
+      failure_threshold: 0          # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1319                  # ADR-073 Amendment 7 declaration source carrier
+        - CFP-1384                  # 본 entry self-carrier (Wave 2 mechanical wire activation — Amendment 9 frontmatter + evidence-checks-registry entry + label-registry-v2 v2.53 → v2.54 entry + MANIFEST.yaml row)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = git fetch + rev-parse divergence detect, modal phrase 검사 미포함
+    introduced_by: CFP-1384
+    introduced_date: 2026-05-24
+    owner_adr: ADR-073-Amendment-7  # declaration source ADR — §결정 1 transition trigger 7번째 entry stale_local_main_checkout + Amendment 9 mechanical wire activation carrier
+    carrier_adr: ADR-060            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (4-tier framework, default 새 entry pattern)
+    recurrence:
+      count: 8                      # CFP-1146 W5-S14/S16 (2) + CFP-1318 (1) + CFP-1333 (3) + CFP-1384 iter 1 (1) + ArchitectPL iter 2 본 spawn (1) = 8 sentinel reach
+      threshold: 3                  # ADR-060 §결정 19 Amendment 6 / schema v1.2 standard default — 8 >> 3 reach 충족, auto_blocking firing 정합
+      last_occurrence: "2026-05-23T00:00:00Z"  # CFP-1384 iter 1 RequirementsPL spawn baseline 6eb8112 stale → ArchitectPL iter 2 in-flight 본 spawn KST 09:00 = UTC 00:00 (registry schema v1.2 정합)
+      promotion_trigger: auto_blocking  # recurrence.count = 8 >> threshold = 3 → auto-firing 영역 (Mandatory escalation 완료, Phase 2 mechanical wire 후 정식 enforce)
+    status: Active  # Wave 2 mechanical wire activation 자체이므로 deferred-followup 단계 도입 0 (ADR-064 §결정 1 CFP scope unitary 정합, Phase 2 별 sub-CFP carrier 후 정식 enforce 까지 declarative anchor)
