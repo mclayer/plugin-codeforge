@@ -1,5 +1,46 @@
 # Changelog
 
+## 1.10.0 — 2026-05-23
+
+### Changed
+
+- **review-verdict-v4 v4.8 → v4.9 MINOR (canonical)** — CFP-604 retro F7 Wave 2 carrier ([CFP-1303](https://github.com/mclayer/plugin-codeforge/issues/1303)). Wave 1 [CFP-1291](https://github.com/mclayer/plugin-codeforge/issues/1291) (codeforge-review #42, MERGED 2026-05-23 09:23 KST) prose-only anchor 위 schema layer codify.
+  - `findings[].parallel_anchors_checked` optional array field 신설 (additive backward-compat — `findings[].anchor_id` v4.1 pattern 답습)
+  - 각 entry = `{file_line: string, pattern_type: enum 5종 closed-set, matched: bool}`
+  - `pattern_type` 5종 enum closed-set: `local_remote` / `client_server` / `read_write` / `forward_reverse` / `enum_closure`
+  - `matched: bool` 의미: true = parallel anchor 발견 + 동일 root cause class 확인 / false = 검색 evidence clean enumeration / field absent = 검색 미수행 (Wave 3 lint heuristic 영역)
+  - **ADR-068 I-2 cross-module propagation completeness 의 review-verdict layer realization** (micro-scale parallel form — propagation matrix module-level vs `parallel_anchors_checked` finding-level disjoint axis)
+  - `templates/review-pl-base.md` 영향 0 (이번 Wave 는 CodeReviewPLAgent.md 만 갱신)
+  - **Wave 1 → Wave 2 → Wave 3 layered architecture**: Wave 1 prose anchor (CFP-1291) / Wave 2 schema codify (본 CFP-1303) / Wave 3 mechanical lint presence-grep heuristic (deferred-followup)
+  - ADR-008 §결정 2 "새 선택 필드 추가" MINOR bump 정합. Runtime impact 없음 (기존 v4.8 consumer 가 본 신규 field 무시 가능)
+  - 적용 lane: CodeReviewPL (primary) — Wave 1 CFP-1291 본문 정합 / DesignReviewPL + SecurityTestPL (optional)
+
+### Updated
+
+- **`agents/CodeReviewPLAgent.md`** — Wave 1 prose ("parallel anchors checked: [...]" inline marker) → Wave 2 schema YAML block format 갱신.
+  - 5 pattern_type enum closed-set 표 (canonical schema 정합 — local_remote / client_server / read_write / forward_reverse / enum_closure)
+  - finding output schema example v4.9 (anchor_id + parallel_anchors_checked array block)
+  - field semantic 명시 (matched true/false/absent 3-state 구분)
+  - Wave 1/2/3 layered architecture 표
+  - ADR-068 I-2 cross-module propagation completeness 연결 단락
+  - CFP-604 trigger evidence (LOCAL_AUTHOR ↔ REMOTE_AUTHOR pattern_count 2) 보존
+
+### Out of scope (별 follow-up CFP)
+
+- **Wave 3 mechanical lint** (`parallel_anchors_checked` field presence-grep heuristic on finding emit) — deferred-followup
+- **5 other lane plugin sibling sweep** (requirements / design / develop / test / pmo v4.8 → v4.9 mirror) — CFP-1167 precedent 답습
+
+### Sibling sync (ADR-010)
+
+- canonical: 본 PR (codeforge-review `docs/inter-plugin-contracts/review-verdict-v4.md`)
+- wrapper sibling: plugin-codeforge PR (별 atomic — `docs/inter-plugin-contracts/review-verdict-v4.md` + `MANIFEST.yaml` row)
+- 5 other lane plugin 5개 (requirements/design/develop/test/pmo): 본 scope 외, 별 follow-up CFP (CFP-1117-S4 precedent 답습)
+
+### Marketplace atomic invariant (ADR-063)
+
+- mirrored field 4종 (name / version / description / author) atomic sync 의무 — plugin.json 1.9.1 → 1.10.0 MINOR + marketplace.json 동반 PR
+- `marketplace_sync_declared: true` (verdict packet 의 explicit marker)
+
 ## 1.9.1 — 2026-05-23
 
 ### Added

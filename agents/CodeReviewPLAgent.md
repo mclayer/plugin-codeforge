@@ -145,37 +145,66 @@ FIX → Orchestrator → DeveloperPL 1차 원인 진단 → ArchitectPLAgent 최
 - 스타일·주관적 제안(suggestion/nit/consider)은 severity 무관 non-blocking
 - ESCALATE 기준: FIX 3회 초과 시에만. 설계/스타일 이슈는 Architect 수용·기각 판단
 
-## Cross-anchor parity check (CFP-1291 / CFP-604 retro F7)
+## Cross-anchor parity check (CFP-1291 Wave 1 / CFP-1303 Wave 2 / CFP-604 retro F7)
 
-finding 작성 시 **parallel anchor enumeration 의무** — 동일 root cause class 의 짝(pair) 사이트 grep 검색 후 finding 출력에 `parallel anchors checked: [...]` 명시. 본 단계는 single-anchor catch + parallel-site 누락 (CFP-604 evidence: F-CR-604-2 LOCAL_AUTHOR line 76 만 catch + REMOTE_AUTHOR line 213 누락 → CI 재발견 + FIX iter 2 continuation 발생) 차단.
+finding 작성 시 **parallel anchor enumeration 의무** — 동일 root cause class 의 짝(pair) 사이트 grep 검색 후 finding 출력 `findings[].parallel_anchors_checked[]` array 에 검색 결과 채움. 본 단계는 single-anchor catch + parallel-site 누락 (CFP-604 evidence: F-CR-604-2 LOCAL_AUTHOR line 76 만 catch + REMOTE_AUTHOR line 213 누락 → CI 재발견 + FIX iter 2 continuation 발생) 차단.
 
-**Parallel anchor patterns 5종 (priority enumeration)**:
+**Parallel anchor patterns 5종 (closed-set enum, review-verdict-v4 `pattern_type` field 정합)**:
 
-1. **LOCAL ↔ REMOTE 짝** — `LOCAL_X` 발견 시 `REMOTE_X` grep. 예: `LOCAL_AUTHOR` ↔ `REMOTE_AUTHOR` (CFP-604 evidence). gh API / cross-repo fetch 패턴.
-2. **client ↔ server 짝** — `client.X()` 발견 시 `server.X` 또는 `handle_X` grep. RPC/API 양방향.
-3. **read ↔ write 짝** — `read_X()` 발견 시 `write_X()` grep. file I/O / serialization 대칭.
-4. **forward ↔ reverse 짝** — `encode(X)` 발견 시 `decode(X)` grep. migration / transform 양방향.
-5. **enum closure check** — enum value 추가/제거 시 switch / lookup table / type guard 전체 site grep (단일 anchor add 후 다른 site 미반영 차단).
+| pattern_type | 짝 (pair) | 예시 |
+|---|---|---|
+| `local_remote` | `LOCAL_X` ↔ `REMOTE_X` | `LOCAL_AUTHOR` ↔ `REMOTE_AUTHOR` (CFP-604 trigger), `LOCAL_SHA` ↔ `REMOTE_SHA`, gh API / cross-repo fetch 패턴 |
+| `client_server` | `client.X()` ↔ `server.X` / `handle_X` | RPC / API 양방향 symmetric — client validation ↔ server validation, client encode ↔ server decode |
+| `read_write` | `read_X()` ↔ `write_X()` | file I/O / serialization 대칭 — get_X ↔ set_X, read cache ↔ write cache invalidation |
+| `forward_reverse` | `encode(X)` ↔ `decode(X)` | migration / transform 양방향 — serialize ↔ deserialize, expand ↔ contract |
+| `enum_closure` | enum value 추가/제거 시 전수 coverage | switch / lookup table / type guard / match expression 전체 site (단일 anchor add 후 다른 site 미반영 차단) |
 
-**Finding output schema** (review-verdict-v4 deferred-followup field — Wave 2 별 carrier):
+**Finding output schema (review-verdict-v4 v4.9 — CFP-1303 Wave 2 schema codify)**:
 
 ```yaml
 findings:
   - id: F-CR-NNN-N
-    severity: P0|P1|P2|INFO
+    severity: P0 | P1 | P2 | INFO
     category: <existing enum>
-    anchor: file:line
-    parallel_anchors_checked:    # CFP-1291 신설 advisory field (Wave 1 prose, Wave 2 schema)
-      - file:line (matched pattern type)
-      - file:line (not applicable / N/A)
-    # ...
+    type: <finding_type_enum>          # boundary-completeness / mechanical_sync_required / ...
+    file: <path>
+    line: <int>
+    evidence: <markdown>
+    suggestion: <markdown>
+    anchor_id: <string>                # v4.1 — finding stable identifier
+    parallel_anchors_checked:          # v4.9 — CFP-1303 cross-anchor parity check enumeration
+      - file_line: "src/foo.sh:213"
+        pattern_type: "local_remote"   # 5종 enum closed-set
+        matched: true                  # 동일 root cause class 발견 — 신규 finding 또는 동일 finding row 안 list
+      - file_line: "src/foo.sh:78"
+        pattern_type: "local_remote"
+        matched: false                 # 검색 evidence — clean enumeration (field absent vs false 구분)
 ```
 
-**Wave 1 declarative (본 CFP-1291)**: agent behavior body 안 prose 명시 + finding output에 inline 마커 `parallel anchors checked: [...]` 형식 사용. review-verdict-v4 schema field 신설 = Wave 2 별 sub-Story carrier (ADR-076/082/086 precedent — declarative-only first / mechanical schema field second).
+**field semantic**:
+
+- `matched: true` = parallel anchor 발견 + 동일 root cause class 확인됨 (신규 finding row append + 양 row 가 서로 `parallel_anchors_checked` cross-ref 가능)
+- `matched: false` = parallel anchor candidate 검색했으나 부재 확인 (clean enumeration)
+- `field absent / null` = 검색 자체 미수행 (Wave 3 lint heuristic 이 향후 flag 예정)
+- 의도: PL 이 "검색했다" vs "단순히 누락" 을 명시 구분 — Wave 3 mechanical lint 가 presence-grep heuristic 으로 미수집 finding flagging
+
+**Wave 1 → Wave 2 → Wave 3 layered architecture (ADR-076/082/086 precedent — declarative-only first / mechanical schema field second / mechanical lint third)**:
+
+| Wave | Layer | Carrier | Status |
+|---|---|---|---|
+| 1 | prose anchor (본 agent body) | CFP-1291 | MERGED 2026-05-23 09:23 KST (#42) |
+| 2 | review-verdict-v4 v4.8 → v4.9 schema field | CFP-1303 | 본 update — `findings[].parallel_anchors_checked[]` optional array |
+| 3 | mechanical lint (presence-grep heuristic on finding emit) | TBD | deferred-followup (ADR-064 §결정 1 scope unitary) |
+
+**ADR-068 I-2 cross-module propagation completeness 연결**:
+
+- ADR-068 I-2 = status enum 반환 method 의 모든 호출 site (caller) 에 enum 별 분기 처리 매핑 표 작성 = propagation-matrix verification format (module-level)
+- `parallel_anchors_checked` = micro-scale parallel form — 동일 root cause class 의 parallel site 검사 (finding-level)
+- 두 mechanism 모두 cross-anchor / cross-module 의미 완결성 영역 (axis disjoint: I-2 module / `parallel_anchors_checked` finding)
 
 **적용 anti-pattern (CFP-604 evidence)**:
 
-CFP-604 Phase 2 CodeReview Iter 1 = LOCAL_AUTHOR `check-version-bump-atomic.sh:76` jq fallback unreachable catch. FIX iter 2 적용 후 CI 에서 REMOTE_AUTHOR `check-version-bump-atomic.sh:213` 동일 root cause (jq object/scalar handling) site 미catch 발견 → continuation commit `85b6042` 추가 필요. Pattern 1 (LOCAL ↔ REMOTE) parallel-site grep 미적용 결함.
+CFP-604 Phase 2 CodeReview Iter 1 = LOCAL_AUTHOR `check-version-bump-atomic.sh:76` jq fallback unreachable catch. FIX iter 2 적용 후 CI 에서 REMOTE_AUTHOR `check-version-bump-atomic.sh:213` 동일 root cause (jq object/scalar handling) site 미catch 발견 → continuation commit `85b6042` 추가 필요. `local_remote` pattern_type parallel-site grep 미적용 결함.
 
 ## 보고 형식 추가 (base §5 외 lane-specific)
 
