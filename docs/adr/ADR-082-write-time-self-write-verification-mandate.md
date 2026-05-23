@@ -122,6 +122,12 @@ amendment_log:
     decisions_touched: ["§결정 11 (신설)"]
     nature: ratchet-up  # §결정 11 신설 (Code-level write-time discipline 2 sub-scope A/B) — ADR-082 super-class write-time semantic truth verify scope expansion to test code + script error handling layer (ADR-058 §결정 5 강화 방향)
     note: "ADR-082 super-class (write-time semantic truth verify) 안 Code-level write-time discipline 2 sub-scope codify. 2 memory entry normative 승격 carrier: (1) `feedback_test_must_bind_to_production` (CFP-1025 F-CR-1025-2 sentinel) — regression bats/unit test = real production code source/exec 의무 (sed-extract real fn) / (2) `feedback_error_mask_metaroot` (CFP-1025 bootstrap-labels.sh:53-55 META-ROOT sentinel, CFP-1006 mis-diagnosis lineage verified) — script `2>/dev/null` 가 success/failure 보고 시 real error 마스킹 = mis-diagnosis amplifier META-ROOT. ADR-082 scope expansion = Amendment 8 (ArchitectAgent write-time discipline §결정 10) + 본 Amendment 9 (Code-level write-time discipline §결정 11) layer 양 layer 분할. pattern_count evidence: §결정 11.A=1 (CFP-1025 F-CR-1025-2 sentinel forward-prevention — test-quality regression coverage gap silent risk) / §결정 11.B=1 (CFP-1025 META-ROOT sentinel forward-prevention — META-ROOT severity = mis-diagnosis 전파 chain risk, CFP-1006 mis-diagnosis lineage downstream propagation verified). ADR-064 §결정 7 CFP-1149 Amendment 8 symmetric evidence-gated 정합 — sentinel forward-prevention (11.A+11.B) = 도구적 가치 evidence base (recurrence ≥ 2 wait 시 silent regression / mis-diagnosis 전파 risk). 본 Amendment 9 자체가 META-self-applied (§결정 10.D 4th applied case): 본 Amendment 번호(9) 가 target ADR-082 frontmatter amendments: 목록 Read verify 후 max(8)+1=9 으로 결정 (verified-via: Read worktree docs/adr/ADR-082-...md frontmatter amendments[] L11-51 max=8 2026-05-24 KST 기준 origin/main a0eb545 — CFP-1329 Amendment 8 merge 후 base). Wave 1 = declaration-only (2 sub-decisions 모두 behavioral directive). Wave 2 mechanical wire (CodeReviewPL audit dedicated points: tautology smell grep + `Grep '2>/dev/null' scripts/**` resource-creating/state-changing audit + codeforge-wide grep audit sweep) = 별 sub-carrier 분리 (deferred-followup, ADR-082 Wave 1 declaration-only precedent 답습). lane plugin agent md cross-ref (codeforge-review CodeReviewAgent.md / codeforge-develop QADeveloperAgent.md) = follow-up defer (wrapper-only ADR-010 sibling sync 면제)."
+  - amendment_id: 11
+    carrier_story: CFP-1338
+    date: 2026-05-24  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 13 (신설)"]
+    nature: ratchet-up  # §결정 13 신설 (GitOps verify-before-trust discipline 3 sub-scope A/B/C) — ADR-082 super-class scope expansion to GitOps coordination layer (ADR-058 §결정 5 강화 방향)
+    note: "GitOps verify-before-trust discipline 3 sub-scope codify. 3 memory entry normative 승격 carrier: (1) `feedback_main_drift_bypass_audit_pattern` (pattern_count 5 reach HIGH — CFP-963 P1+P2 + CFP-1000 + CFP-1001 + CFP-1340/1329/1330/1332 batch 4-bypass label lineage) — 4 standard hotfix-bypass labels + [bypass-justification] audit comment template + ADR-024 Amendment 3 §결정 6.C audit trail mandate cross-ref / (2) `feedback_verify_pin_head_sha` (CFP-722 stale HEAD verification churn sentinel) — HEAD SHA pin step 0 (`gh api repos/<owner>/<repo>/commits/<branch> --jq '.sha'`) before any commit/branch verify-before-trust, ADR-073 sub-discipline cross-ref / (3) `feedback_branch_protection_worktree_cleanup` (branch protection 환경 workflow discipline) — push → PR open → merge 확인 → worktree 정리 순서 의무, ADR-024 + ADR-040 cross-ref. pattern_count 5 reach 13.A + sentinel forward-prevention 13.B/13.C. 본 Amendment 11 자체가 META-self-applied (§결정 10.D 6th applied case): 본 Amendment 번호(11) 가 target ADR-082 frontmatter amendments: 목록 Read verify 후 max(10)+1=11 으로 결정 (verified-via: Read worktree docs/adr/ADR-082-...md frontmatter amendments[] L11-65 max=10 2026-05-24 KST 기준 origin/main e7b7791 — CFP-1332 Amendment 10 merge 후 base). Wave 1 = declaration-only behavioral mandate. Wave 2 mechanical wire = 별 sub-carrier (deferred-followup). lane plugin agent md cross-ref (codeforge-pmo GitOpsAgent.md) = follow-up defer (wrapper-only ADR-010 sibling sync 면제)."
 related_stories:
   - CFP-776  # carrier (super-class 통합 결정 — escalation_action escalate_user)
   - CFP-841  # Amendment 1 carrier (§결정 6 behavioral→mechanical 전환 후속 carrier)
@@ -528,6 +534,65 @@ Story 가 sub-scope Wave 2/3 follow-up CFP 로 defer 시 rationale "will auto-re
 **Wave 1 = declaration-only**: 2 sub-decisions 모두 behavioral directive. Wave 2 mechanical wire (RequirementsPL §2.1 verified state table lint + retro empirical-verify-required marker) = 별 sub-carrier 분리 (deferred-followup, ADR-082 Wave 1 declaration-only precedent 답습).
 
 **META-self-application (§결정 10.D 5th applied case)**: 본 Amendment 10 자체가 §결정 10.D pattern self-applied — 본 Amendment 번호 10 가 target ADR-082 frontmatter `amendments:` 목록 Read verify 후 max(9)+1=10 으로 결정 (verified-via: Read worktree `docs/adr/ADR-082-...md` frontmatter `amendments[]` L11-57 max=9, 2026-05-24 KST 기준 origin/main 38fc8ff — CFP-1330 Amendment 9 merge 후 base). Amendment 7 §결정 9 verify-before-cite mandate self-application 사례.
+
+### §결정 13 — GitOps verify-before-trust discipline 3 sub-scope expansion (Amendment 11 신설, CFP-1338)
+
+ADR-082 super-class verify-before-trust scope 가 GitOps coordination layer 영역 expansion — main drift bypass audit + HEAD SHA pin + branch protection worktree cleanup 3 sub-scope.
+
+#### §결정 13.A — Main drift bypass audit pattern (pattern_count 5 reach HIGH)
+
+**carrier**: memory `feedback_main_drift_bypass_audit_pattern` — codeforge wrapper PR 가 pre-existing main drift 를 inherit 시 표준 4 hotfix-bypass labels + [bypass-justification] audit comment template 적용 (per ADR-064 §결정 1 scope unitary 정합).
+
+**의무 절차**:
+1. Pre-merge verify-before-trust: 각 failing non-required check 를 CFP-N-introduced vs pre-existing main drift 분류 — direct git diff inspection
+2. 4 표준 hotfix-bypass labels gh CLI 적용 (failure 영역 별):
+   - `hotfix-bypass:marketplace-description-verbatim` (CFP-1286~ description sync gap)
+   - `hotfix-bypass:wording-dictionary` (CHANGELOG.md pre-existing 'ratchet' / 'pin' / '별' standalone advisory)
+   - `hotfix-bypass:inter-plugin-contracts-parity` (CFP-1059 deploy_output / deploy_review_output canonical 부재)
+   - `hotfix-bypass:marketplace-atomic` (description-verbatim sister)
+3. `[bypass-justification]` marker comment (comment-prefix-registry-v1 v1.3 14th prefix, CFP-845 carrier): per-finding root cause + verify-before-trust evidence + ADR-024 Amendment 3 §결정 6.C audit trail mandate cross-ref
+4. pattern_count tracking in PMO retro section (≥ 2 same drift class = ADR escalation candidate)
+
+**pattern_count 5 reach evidence**: CFP-963 P1+P2 + CFP-1000 + CFP-1001 + CFP-1340/1329/1330/1332 batch (4 bypass label 동시 적용 lineage). HIGH evidence — sentinel 영역 아님 (standard pattern_count reach).
+
+#### §결정 13.B — HEAD SHA pin step 0 (verify-before-trust precondition)
+
+**carrier**: memory `feedback_verify_pin_head_sha` (CFP-722 stale HEAD verification churn sentinel)
+
+Async multi-agent coordination 안 branch artifact verify-before-trust 시 의무:
+
+1. **Step 0**: `gh api repos/<owner>/<repo>/commits/<branch> --jq '.sha'` 으로 current HEAD 해결, 그 SHA pin
+2. **Content verify**: `?ref=<pinned-sha>` 형식으로 pinned SHA 안 content verify (mid-chain SHA / agent self-claim SHA blind verify 금지 — branch 가 advanced 가능)
+3. **Incremental commit signal 시**: explicit HEAD re-resolve (incremental commit = stale-HEAD trigger)
+4. **Stale REJECT correction**: stale SHA against correct REJECT 도 process error → 신속 withdraw (spurious re-FIX churn 회피)
+
+**sentinel codify rationale**: CFP-722 evidence single occurrence. ADR-073 verify-before-assert sub-discipline cross-ref-sufficient. Codify rationale = forward-prevention (verifier 의 stale-ref churn risk 차단).
+
+#### §결정 13.C — Branch protection 환경 worktree cleanup 순서
+
+**carrier**: memory `feedback_branch_protection_worktree_cleanup` (workflow discipline)
+
+Main branch protection active repo 영역 finishing-a-development-branch skill 실행 시:
+
+1. Option 1 (Merge Locally) 제시 금지 (main protect 시 `git merge` + `git push` 직접 반영 불가)
+2. Option 2 (Push + PR) 선택 후 worktree = **PR merge 확인 후** 별도 정리
+3. PR merge 확인 = `gh pr view <number> --json mergedAt` 또는 사용자 확인
+4. codeforge plugin-codeforge repo 항상 적용 (ADR-024 branch protection 강제) + consumer repo 권장 (consumer-guide §2e)
+
+**workflow discipline codify rationale**: branch protection 환경 timing convention 정의 — premature worktree removal 시 PR 피드백 대응 불가 + late removal 시 추적 불가. ADR-024 + ADR-040 cross-ref.
+
+#### §결정 13 — disjoint axis with Amendment 8/9/10
+
+| Amendment | scope | verify lifecycle axis | layer |
+|---|---|---|---|
+| Amendment 8 §결정 10 | ArchitectAgent write-time discipline 4 sub-scope | governance artifact write-time | governance write-time |
+| Amendment 9 §결정 11 | Code-level write-time discipline 2 sub-scope | code artifact write-time | code write-time |
+| Amendment 10 §결정 12 | RequirementsPL + retro-time verify expansion | Issue-body + retro-time | lifecycle expansion |
+| **Amendment 11 §결정 13** | **GitOps verify-before-trust discipline 3 sub-scope** | **bypass audit + HEAD SHA pin + worktree cleanup** | **GitOps coordination** |
+
+4 Amendment 모두 ADR-082 super-class (verify-before-trust mandate) 의 disjoint axis expansion. CFP scope unitary (ADR-064 §결정 5) 정합.
+
+**META-self-application (§결정 10.D 6th applied case)**: 본 Amendment 11 자체가 §결정 10.D pattern self-applied — 본 Amendment 번호 11 = max(10)+1 (verified-via Read frontmatter L11-65 max=10 origin/main e7b7791).
 
 ## 결과
 
