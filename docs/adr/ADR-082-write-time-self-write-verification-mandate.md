@@ -39,6 +39,11 @@ amendments:
     date: 2026-05-22
     summary: "§결정 2 scope (b) 확장 — ADR/contract amendment 번호 인용 시 대상 파일 frontmatter amendments: 목록 Read-verify 후 max+1 사용 의무 (amendment-number-frontmatter-verify). plan-time citation staleness 차단 forcing function. scope: 거버넌스 artifact (β-issue body / spec / change-plan / PR body / ADR amendment) 안 amendment 번호 인용 전 target ADR frontmatter Read 의무. 2 occurrence pattern_count (CFP-1177 ADR-027 Amendment 7 → 실제 Amendment 9 / CFP-1179 ADR-063 Amendment 6/7 → 실제 Amendment 8) ≥ ADR-045 §D-9 threshold 2 Mandatory escalation 산물. ADR-073 cross-ref (β-issue = Orchestrator-authored scope — Orchestrator 행위 한정 verify-before-assert layer 동반 적용). mechanical_enforcement_actions[] 신규 entry amendment-number-frontmatter-verify deferred-followup declare (Wave 2 lint script + workflow + bats = 별 CFP-1198 Phase 2 sub-carrier)."
     sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §결정 2 scope (b) 의 verify 대상 확장 — ADR frontmatter value 인용 시 write-time verify 범위에 amendment 번호 citation 추가, forbid scope 축소 아님). ADR-064 §self-application top-down ratchet 정합. is_transitional: false 유지 (permanent governance policy)."
+  - amendment_id: 7
+    carrier_story: CFP-1312
+    date: 2026-05-23
+    summary: "§결정 9 verify-before-cite 의무 scope 양방향 확장 — Wave 1 (Amendment 6) `M = max+1` (forward 정합) only → Wave 2 (본 Amendment 7) `M = max+1` ∧ `M > max` 미만 stale 인용 차단 (backward + forward 양방향). recurrence evidence: CFP-1293 stale citation `ADR-083 Amendment 2` (실제 max=2 인 시점 — 정확 next slot = 3, 즉 `M ≤ max` backward-staleness) 가 ADR-082 Amendment 6 Wave 1 behavioral mandate land 후 발생 → Wave 1 behavioral 단독 차단 불충분 evidence 아닌 CFP-1216 Phase 2 mechanical lint Check (b) `M > max+1` forward-only coverage gap 으로 escape. CFP-1216 lint Check (b) 본 Amendment 7 = backward-staleness 추가 catch wire (CFP-1216 SSOT extend, naming dedup ADR-068 I-4). pattern_count 3 reach (CFP-1177 + CFP-1179 + CFP-1293) ADR-045 §D-9 Mandatory escalation 산물 — forcing function 강화 carrier (axis 중복 신설 영역 아님: §결정 9 wording scope 확장 + Wave 2 lint coverage gap 보강 dual-carrier). mechanical_enforcement_actions[] `amendment-number-frontmatter-verify` entry summary 갱신 (status warning retain, scope expand)."
+    sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §결정 9 verify-before-cite scope (forward only) → (forward + backward) 양방향 확장. forbid scope 확장 (M = max+1 정확 next-slot 외 모두 stale). lint coverage gap 보강 = mechanical enforcement scope 확장, 약화 0건. ADR-064 §self-application top-down ratchet 정합. is_transitional: false 유지 (permanent governance policy)."
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-841
@@ -70,6 +75,12 @@ amendment_log:
     decisions_touched: ["§결정 2", "§결정 9 (신설)"]
     nature: ratchet-up  # §결정 2 scope (b) verify 대상 확장 + §결정 9 신설 (amendment-number citation verify forcing function, ADR-058 §결정 5 강화 방향)
     note: "ADR-045 §D-9 pattern_count 2 ≥ threshold 2 Mandatory escalation 산물 (CFP-1177: ADR-027 Amendment 7 계획 → 실제 Amendment 9 stale / CFP-1179: ADR-063 Amendment 6/7 계획 → 실제 Amendment 8 stale). plan-time citation staleness 근본 원인 = target ADR frontmatter amendments: 목록 미검증 상태에서 번호 인용. §결정 2 scope (b) 의 'ADR frontmatter value 인용 시 verify' 범위가 amendment 번호 인용을 명시적으로 포함하도록 확장 — §결정 9 별도 결정으로 codify (scope (b) 의 sub-specialization). ADR-073 cross-ref: β-issue = Orchestrator-authored artifact (ADR-073 layer 1 scope) — 두 layer (ADR-073 Orchestrator-authored / ADR-082 internal lane agent self-write) 동시 적용 구조. mechanical_enforcement_actions[] 신규 entry amendment-number-frontmatter-verify deferred-followup 추가 (Phase 2 lint = 별 CFP-1198 Phase 2 sub-carrier). 본 Amendment 6 자체가 META-self-applied: 본 Amendment 번호(6) 가 target ADR-082 frontmatter amendments: 목록 Read verify 후 max(5)+1=6 으로 결정 (verified-via: Read ADR-082 frontmatter amendments[] 2026-05-22 KST)."
+  - amendment_id: 7
+    carrier_story: CFP-1312
+    date: 2026-05-23  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 9"]
+    nature: ratchet-up  # §결정 9 verify-before-cite scope (forward only → forward + backward 양방향) 확장 + CFP-1216 lint Check (b) backward-staleness 추가 wire (ADR-058 §결정 5 강화 방향)
+    note: "ADR-045 §D-9 pattern_count 3 ≥ threshold 2 Mandatory escalation 산물 — CFP-1293 (#3 occurrence) 가 ADR-082 Amendment 6 Wave 1 behavioral mandate land 후 발생 (CFP-1198 2026-05-22 → CFP-1293 2026-05-23). stale citation = `ADR-083 Amendment 2` (실제 max=2 시점, 정확 next-slot = 3) — `M ≤ max` backward-staleness 패턴. CFP-1216 Phase 2 mechanical lint Check (b) 현 implementation `cited_m > max_id + 1` (forward only) 으로 backward-staleness escape. root cause = Wave 1 behavioral 단독 불충분 아닌 mechanical lint Check (b) coverage gap. dual-carrier (axis 동일, ADR-064 §결정 1 CFP scope unitary 정합): (1) §결정 9 wording 본문에 `M = max+1` 정확 next-slot 외 모두 stale ([WARN]) 명시 + (2) CFP-1216 lint script `scripts/lib/check_amendment_number_stale.py` Check (b) `cited_m != max_id + 1` 양방향 비교로 확장 + `[FORWARD-STALE]` / `[BACKWARD-STALE]` 출력 format 분리 + bats fixture `tests/scripts/cfp-1216/cfp-1216-amendment-stale.bats` backward-staleness TC 3+ 추가 (TC-A-BWD-EXACT / TC-B-BWD-DEEP / TC-C-FWD-EXACT-NEXT pass guard) + self-reference exemption (ADR file 자체 §Amendment N 본문 안 자기 인용 = lint scope 제외, EC-3 self-protection 정합) + templates/** path filter (FP-완화 canonical example). evidence-checks-registry `amendment-number-frontmatter-verify` entry summary 갱신 (Check (b) 양방향 codify, status warning retain). 본 Amendment 7 자체가 META-self-applied: 본 Amendment 번호(7) 가 target ADR-082 frontmatter amendments: 목록 Read verify 후 max(6)+1=7 으로 결정 (verified-via: Read worktree ADR-082 frontmatter amendments[] 2026-05-23 KST 기준 origin/main bfc4806)."
 related_stories:
   - CFP-776  # carrier (super-class 통합 결정 — escalation_action escalate_user)
   - CFP-841  # Amendment 1 carrier (§결정 6 behavioral→mechanical 전환 후속 carrier)
@@ -77,6 +88,9 @@ related_stories:
   - CFP-1041 # Amendment 3 carrier (ADR-085 disjoint complement — verify axis ↔ coordination axis cross-ref)
   - CFP-1110 # Amendment 5 carrier (§결정 1 layer 1 sub-scope (1-C) Lane PL spawn prompt user-utterance verbatim anchor — 사용자 직권 minimal path first application, paradox-break)
   - CFP-1198 # Amendment 6 carrier (§결정 2 scope (b) 확장 + §결정 9 신설 — amendment 번호 citation plan-time staleness 차단 forcing function, ADR-045 §D-9 Mandatory escalation 산물)
+  - CFP-1312 # Amendment 7 carrier (§결정 9 scope 양방향 확장 forward → forward+backward + CFP-1216 lint Check (b) backward-staleness wire — Wave 1 mechanical lint Check (b) coverage gap 보강 dual-carrier, ADR-045 §D-9 pattern_count 3 reach Mandatory escalation 산물)
+  - CFP-1293 # Amendment 7 evidence #3 occurrence (ADR-083 Amendment 2 backward-staleness — Wave 1 behavioral mandate land 후 발생 mechanical lint coverage gap escape)
+  - CFP-1216 # Amendment 7 dual-carrier sibling (CFP-1198 Phase 2 sub-carrier 점유 land — naming SSOT amendment-number-frontmatter-verify, Amendment 7 = Check (b) extend)
   - CFP-746  # pattern corpus #1a/#1b (corpus slip + 정정-2nd-slip)
   - CFP-770  # pattern corpus #2/#3 (§9 evidence stale + Phase 0 cross-plugin 추정)
   - CFP-1000 # Amendment 2 corpus #4 (Issue body 3 inversions: prod-cutover-deputy-evidence INVERTED + baseline stale + path incorrect)
@@ -244,15 +258,15 @@ scope (e) FIX 명세 depth-aware scope 필드 (CFP-770 §8 제안 — broken-lin
 
 4 scope = 단일 super-class 결함의 4 layer 표현. §결정 1 layer disjoint 표가 공통 anchor. ADR-064 §결정 1 정합 — 단일 super-class = unitary scope (영역별 분할 아님). per-area 분할 시 super-class anchor 가 4 ADR 로 분절되어 cross-Story pattern aggregation (ADR-045 §D-9) 의 forcing function 약화.
 
-### §결정 9 — Amendment 번호 citation plan-time staleness 차단 (Amendment 6 신설, CFP-1198)
+### §결정 9 — Amendment 번호 citation plan-time staleness 차단 (Amendment 6 신설, CFP-1198 — Amendment 7 양방향 확장, CFP-1312)
 
-**forcing function**: 거버넌스 artifact (β-issue body / spec / change-plan / PR body / ADR amendment 본문) 안에서 특정 ADR 또는 inter-plugin contract 의 amendment 번호를 인용할 때, 인용 직전 target artifact 의 frontmatter `amendments:` 목록 (또는 `amendment_log`) 을 `Read` 도구로 직접 확인한 후 `max(amendment_id) + 1` 을 사용한다.
+**forcing function**: 거버넌스 artifact (β-issue body / spec / change-plan / PR body / ADR amendment 본문) 안에서 특정 ADR 또는 inter-plugin contract 의 amendment 번호를 인용할 때, 인용 직전 target artifact 의 frontmatter `amendments:` 목록 (또는 `amendment_log`) 을 `Read` 도구로 직접 확인한 후 **정확 next-slot `M = max(amendment_id) + 1` 만 사용한다**. `M > max + 1` (forward-staleness — off-by-one / 계산 오류) 또는 `M ≤ max` (backward-staleness — 이미 land 된 slot 인용) 모두 stale citation (Amendment 7 확장, CFP-1312).
 
 **verify-before-cite 의무**:
 
 1. target ADR / contract 파일의 frontmatter `amendments:` 또는 `amendment_log` 항목을 직접 Read 한다.
-2. 현재 최대 `amendment_id` 값을 확인한다.
-3. 새 amendment 번호 = `max(amendment_id) + 1` 로 결정한다.
+2. 현재 최대 `amendment_id` 값 (`max`) 을 확인한다.
+3. 새 amendment 번호 = **정확히 `max + 1`** 로 결정한다 (Amendment 7 명시 — `M = max+1` 외 모두 stale). forward (M > max+1) / backward (M ≤ max) 양방향 staleness 차단.
 4. 인용 위치에 `verified-via: <frontmatter Read 경로 및 시각>` annotation 을 부착한다 (§결정 2(b) `[verified: git show origin/main:<path>]` annotation 형식 준용).
 
 **scope**: 본 §결정 9 는 §결정 2(b) ("ArchitectAgent §3 / §7 corpus enumeration + ADR frontmatter value 인용 시 verify") 의 sub-specialization 이다. §결정 2(b) 가 이미 "ADR frontmatter value 인용 시 verify" 를 포괄하나, amendment 번호 citation 이 plan-time (β-issue / spec / change-plan 작성 시점) 에 발생하는 점 — 즉 §결정 2(b) 의 lane agent write-time 보다 이른 시점 — 을 명시적으로 언급하기 위해 별 결정으로 codify.
@@ -267,16 +281,17 @@ scope (e) FIX 명세 depth-aware scope 필드 (CFP-770 §8 제안 — broken-lin
 
 **disjoint layer 관계**: β-issue = Orchestrator-authored artifact 이므로 ADR-073 §결정 1 (Orchestrator cross-repo state / assumption verify) 가 동시 적용된다. 단, ADR-073 와 본 ADR 의 axis disjoint (verify subject: Orchestrator cross-repo state assertion ↔ internal lane agent self-write value assertion) 가 본 §결정 9 의 plan-time 영역에서 overlap 하는 구조임을 명시 — 각 ADR scope 침범 아님 (동일 artifact 에 두 layer 가 독립적으로 적용). ADR-073 cross-ref: `docs/adr/ADR-073-orchestrator-verify-before-assert.md` §결정 1 (Orchestrator verify-before-assert — β-issue 작성 시 amendment 번호 cite 가 cross-repo state assertion 에 해당).
 
-**known-limitation**: 본 §결정 9 = behavioral directive (Wave 1). Wave 2 mechanical lint (`amendment-number-frontmatter-verify` script + workflow + bats fixture) = 별 CFP-1198 Phase 2 sub-carrier (deferred-followup). frontmatter `mechanical_enforcement_actions:` 에 `amendment-number-frontmatter-verify` entry 신설 (status: deferred-followup).
+**known-limitation**: 본 §결정 9 = behavioral directive (Wave 1). Wave 2 mechanical lint (`amendment-number-frontmatter-verify` script + workflow + bats fixture) = CFP-1216 Phase 2 (별 sub-carrier 로 land 완료, 2026-05-22 KST). **Amendment 7 (CFP-1312)** 가 Wave 2 lint Check (b) coverage gap (forward only → 양방향) 보강 — `cited_m != max_id + 1` 양방향 비교 + `[FORWARD-STALE]` / `[BACKWARD-STALE]` 출력 format 분리 + self-reference exemption (ADR file 자체) + templates/** path filter. frontmatter `mechanical_enforcement_actions:` 의 `amendment-number-frontmatter-verify` entry status warning retain (scope expand only, tier 변경 0).
 
-**pattern evidence (ADR-045 §D-9 Mandatory, pattern_count = 2)**:
+**pattern evidence (ADR-045 §D-9 Mandatory, pattern_count = 3 — Amendment 7 확장)**:
 
-| # | 출처 | stale citation | actual (verified) |
-|---|---|---|---|
-| 1 | CFP-1177 β-issue (#1115) | "ADR-027 Amendment 7" | ADR-027 실제 max = Amendment 8 (CFP-1059 점유) → 실제 slot = Amendment 9 |
-| 2 | CFP-1179 β-issue (#1114) | "ADR-063 Amendment 6/7" | ADR-063 실제 max = Amendment 7 (CFP-906/CFP-1059 점유) → 실제 slot = Amendment 8 |
+| # | 출처 | stale citation | actual (verified) | staleness 방향 | catch layer |
+|---|---|---|---|---|---|
+| 1 | CFP-1177 β-issue (#1115) | "ADR-027 Amendment 7" | ADR-027 실제 max = Amendment 8 (CFP-1059 점유) → 실제 slot = Amendment 9 | forward (M > max+1) | Amendment 6 Wave 1 behavioral catch |
+| 2 | CFP-1179 β-issue (#1114) | "ADR-063 Amendment 6/7" | ADR-063 실제 max = Amendment 7 (CFP-906/CFP-1059 점유) → 실제 slot = Amendment 8 | forward (M > max+1) | Amendment 6 Wave 1 behavioral catch |
+| 3 | CFP-1293 retro (#1293) | "ADR-083 Amendment 2" | ADR-083 실제 max = Amendment 2 시점, 정확 next-slot = 3 → cited_m=2 ≤ max=2 | backward (M ≤ max) | Amendment 6 Wave 1 catch + CFP-1216 lint Check (b) forward-only coverage gap escape — **Amendment 7 motivation** |
 
-두 케이스 모두 write-time 에 caught (plan land 후 escaped 0) 이나, root cause = plan-time read verify 부재 → forcing function 필요.
+세 케이스 모두 write-time 에 caught (plan land 후 escaped 0) 이나, root cause = (1)/(2) plan-time read verify 부재 + (3) lint coverage gap (`M > max+1` forward-only 비교). Amendment 7 = 양방향 mechanical wire 보강 (Wave 2 escape catch).
 
 **ADR-068 I-4 (wording SSOT) 연계**: amendment 번호는 governance artifact 전체에서 동일 식별자로 참조되는 wording SSOT 대상이다. stale 번호가 planning artifact 에 기록되면 후속 ADR 본문 / CLAUDE.md / retro 와 wording drift 가 발생 — I-4 위반 원인이 된다.
 
@@ -326,6 +341,8 @@ scope (e) FIX 명세 depth-aware scope 필드 (CFP-770 §8 제안 — broken-lin
 - **ADR-054** doc-only fast-path: 본 Story flow 근거 (단일 PR — CFP-776). **Amendment 1 carrier CFP-841 = 강제 Story 2-PR** (ADR 변경 — ADR-082 Amendment 1 + ADR-024 Amendment 7 + ADR-068 cross-ref, doc-only fast-path 비대상). 정합.
 - **ADR-024 Amendment 7** (Amendment 1 동반): `hotfix-bypass:corpus-claim-verify` 34번째 + `hotfix-bypass:cross-plugin-ownership-verify` 35번째 family member (§결정 6.A per-entry namespace 정합). 충돌 0.
 - **ADR-060** (Amendment 1 동반): evidence-checks-registry 2 entry (`corpus-claim-verify` / `cross-plugin-ownership-verify`, warning tier, deferred-followup → Phase 2 actual wire — §결정 5 모든 신규 entry warning 시작 강제 정합). 충돌 0.
+- **ADR-063** §결정 1 (Amendment 7 동반): mirrored field atomic invariant — `plugin.json` PATCH bump 6.5.1 → 6.5.2 (mechanical lint coverage expand = plugin behavior 변경) → marketplace sibling sync PR (`marketplace.json` plugins[name=codeforge] `version` field). 충돌 0.
+- **ADR-061 §결정 1 + §결정 6.A** (Amendment 7 동반): Python SSOT (>5줄 multi-line, heredoc 금지) + thin wrapper convention 정합 — `scripts/lib/check_amendment_number_stale.py` Check (b) 양방향 확장 retain Python SSOT pattern. 충돌 0.
 
 ## 해소 기준
 
@@ -689,3 +706,155 @@ status `deferred-followup` = Phase 1 declare (본 Amendment 6) / Phase 2 actual 
 - `docs/adr/ADR-045-story-retro-mandatory-trigger.md` — §D-9 Mandatory escalation 산물 (pattern_count 2, CFP-1177+CFP-1179 lineage)
 - `docs/adr/ADR-068-boundary-completeness-invariants.md` — I-4 wording SSOT upstream 차단 연계 (amendment 번호 stale → I-4 wording drift 원인)
 - 후속 carrier (Wave 2 mechanical lint — `amendment-number-frontmatter-verify` script + workflow + bats fixture + evidence-checks-registry warning tier entry) = CFP-1198 Phase 2 sub-carrier (deferred-followup)
+
+---
+
+## Amendment 7 — §결정 9 verify-before-cite scope 양방향 확장 + CFP-1216 lint Check (b) backward-staleness wire (CFP-1312, 2026-05-23 KST)
+
+### 컨텍스트
+
+ADR-082 Amendment 6 (CFP-1198, 2026-05-22 KST) 가 §결정 9 신설 + `amendment-number-frontmatter-verify` deferred-followup entry declare. CFP-1216 Phase 2 (2026-05-22 KST) 가 별 sub-carrier 로 Wave 2 mechanical lint 를 land 완료 — `scripts/lib/check_amendment_number_stale.py` (Python SSOT) + `scripts/check-amendment-number-stale.sh` (thin wrapper, ADR-061 §결정 6.A) + `templates/github-workflows/amendment-number-frontmatter-verify.yml` + `.github/workflows/amendment-number-frontmatter-verify.yml` (self-app) + `tests/scripts/cfp-1216/cfp-1216-amendment-stale.bats` + `docs/evidence-checks-registry.yaml` entry (warning tier).
+
+**recurrence evidence (#3 occurrence)**: CFP-1293 (#1293, 2026-05-23 KST close) 가 Amendment 6 Wave 1 behavioral mandate land + CFP-1216 Phase 2 mechanical lint active **이후** 동일 패턴 재발:
+
+- stale citation = `ADR-083 Amendment 2`
+- target ADR-083 frontmatter 실제 max = Amendment 2 시점 (이미 land)
+- 정확 next-slot = `max+1 = 3` → cited_m=2 이므로 **`M ≤ max`** = **backward-staleness** 패턴 (이미 land 된 slot 인용)
+
+CFP-1216 lint Check (b) 본문 verify (`git show origin/main:scripts/lib/check_amendment_number_stale.py` 2026-05-23 KST 기준 origin/main bfc4806):
+
+```python
+# Check (b): cross-doc citation forward-staleness
+def check_doc_citations(filepath, adr_max_cache):
+    ...
+    if cited_m > max_id + 1:
+        print(f"... possible stale-forward citation", file=sys.stderr)
+        warn_count += 1
+```
+
+`cited_m > max_id + 1` 비교 = **forward-only** (M > max+1). `M ≤ max` (backward-staleness) 영역 미coverage = lint **escape evidence**. Wave 1 behavioral mandate 단독 불충분 결론 아님 — Wave 2 mechanical lint coverage gap (forward only) 으로 backward escape.
+
+**root cause 분류**:
+- **(a) Wave 1 behavioral 단독 불충분 가설** = REJECTED (CFP-1216 Phase 2 mechanical lint active 영역 verified, lint 실 wire 후 발생).
+- **(b) lint coverage gap (Check (b) forward-only 비교)** = CONFIRMED (`cited_m > max_id + 1` line verified, `cited_m != max_id + 1` 양방향 비교 부재).
+
+ADR-045 §D-9 pattern_count 3 reach (CFP-1177 + CFP-1179 + CFP-1293 #3) ≥ threshold 2 — Mandatory escalation 산물 `adr_draft_emitted`.
+
+### Amendment
+
+#### A7-1 — §결정 9 wording 양방향 확장 (Wave 1 behavioral mandate scope expand)
+
+§결정 9 본문 `verify-before-cite 의무` 3번 항목 wording 양방향 확장:
+
+**기존 (Amendment 6, CFP-1198)**:
+> 3. 새 amendment 번호 = `max(amendment_id) + 1` 로 결정한다.
+
+**Amendment 7 (CFP-1312)**:
+> 3. 새 amendment 번호 = **정확히 `max + 1`** 로 결정한다 (Amendment 7 명시 — `M = max+1` 외 모두 stale). forward (M > max+1) / backward (M ≤ max) 양방향 staleness 차단.
+
+§결정 9 본문 forcing function 첫 문장도 양방향 명시 확장 — `정확 next-slot M = max(amendment_id) + 1 만 사용한다` + `M > max + 1` (forward) / `M ≤ max` (backward) 모두 stale citation. wording 의미 변경 = forbid scope 확장 (정확 next-slot 외 모두 stale, ratchet 강화 방향).
+
+#### A7-2 — CFP-1216 lint Check (b) 양방향 비교 확장 (Wave 2 mechanical wire — coverage gap 보강)
+
+`scripts/lib/check_amendment_number_stale.py` `check_doc_citations()` 함수 안 `cited_m > max_id + 1` 비교를 **양방향 next-slot mismatch** 로 확장:
+
+**기존 (CFP-1216, line 357 region)**:
+```python
+if cited_m > max_id + 1:
+    print(f"... possible stale-forward citation", file=sys.stderr)
+    warn_count += 1
+```
+
+**Amendment 7 (CFP-1312)**:
+```python
+if cited_m != max_id + 1:
+    if cited_m > max_id + 1:
+        label = "[FORWARD-STALE]"
+        detail = f"M={cited_m} > max+1={max_id + 1} — forward staleness (off-by-one / 계산 오류)"
+    else:  # cited_m <= max_id
+        label = "[BACKWARD-STALE]"
+        detail = f"M={cited_m} ≤ max={max_id} — backward staleness (이미 land 된 slot 인용)"
+    print(
+        f"{SCRIPT_NAME} [WARN] {filepath}: ADR-{adr_num} Amendment {cited_m} 인용 "
+        f"but ADR-{adr_num} max = {max_id} (next = {max_id + 1}) — {label} {detail}",
+        file=sys.stderr,
+    )
+    warn_count += 1
+```
+
+self-reference exemption (FP-완화 guard 1): ADR file 자체 (`docs/adr/ADR-*.md`) 의 `## Amendment N` 본문 안 자기 인용 = lint scope 제외 (Check (b) 의 non-ADR docs/** filter 가 이미 보장 — file path 기반 ADR file 식별 confirm).
+
+templates/** path filter (FP-완화 guard 2): `templates/story-page-structure.md` / `templates/adr.md` 등 canonical example 안 amendment 인용 = lint scope 제외 (`templates/` prefix 기반 path exclusion).
+
+#### A7-3 — bats fixture 양방향 TC 추가 (`tests/scripts/cfp-1216/cfp-1216-amendment-stale.bats`)
+
+기존 fixture (CFP-1216 Phase 2 land) 확장 — backward-staleness 3+ TC 추가:
+
+| TC name | fixture | 기대 출력 | rationale |
+|---|---|---|---|
+| TC-B-BWD-EXACT | target ADR-999 max=3, doc cites "ADR-999 Amendment 3" | `[BACKWARD-STALE]` [WARN] exit 0 | M=max (이미 land 된 latest slot 자기 인용 backward) |
+| TC-B-BWD-DEEP | target ADR-999 max=3, doc cites "ADR-999 Amendment 1" | `[BACKWARD-STALE]` [WARN] exit 0 | M < max (deep backward — historical slot 인용) |
+| TC-B-FWD-EXACT-NEXT | target ADR-999 max=3, doc cites "ADR-999 Amendment 4" | PASS no [WARN] | M = max+1 (정확 next-slot — false-positive 0 verify) |
+| TC-B-SELF-REF-EXEMPT | docs/adr/ADR-999.md 안 자기 `Amendment 2` 인용 | PASS no [WARN] | ADR file 자체 → Check (b) non-ADR filter 가 skip |
+| TC-B-TEMPLATE-EXEMPT | templates/test-fixture.md 안 `ADR-999 Amendment 99` 인용 | PASS no [WARN] (또는 별 path exclusion) | templates/** canonical example 면제 (path filter guard 2) |
+
+기존 TC-B1 (Amendment 99 way-forward) / TC-B2 (Amendment 2 with max=3 정상 — Amendment 6 기존 정의에서 PASS) 는 Amendment 7 wording 정확화 후 영향:
+- TC-B1 (Amendment 99 > max+1=4) → `[FORWARD-STALE]` retain (regression 0 — AC-2)
+- TC-B2 (Amendment 2 with max=3) → 기존 Amendment 6 = "M ≤ max + 1 정상" 가정 → Amendment 7 = "M = max+1 만 정상, M=2 ≤ max=3 = backward stale" 으로 의미 변경. **CFP-1216 fixture rename + behavior 변경 의무 (FIX iter — TC-B2 expected output `PASS` → `[BACKWARD-STALE]` [WARN]`)**.
+
+#### A7-4 — evidence-checks-registry entry summary 갱신 (`docs/evidence-checks-registry.yaml`)
+
+`amendment-number-frontmatter-verify` entry `description` field summary 양방향 명시:
+
+**기존 (CFP-1216)**:
+> Check (b) cross-doc citation forward-staleness (SECONDARY): ... M > max+1 이면 [WARN] (clearly-forward only, M <= max 는 정상 인용 — skip).
+
+**Amendment 7 (CFP-1312)**:
+> Check (b) cross-doc citation 양방향 staleness (SECONDARY, Amendment 7 확장): ... M != max+1 이면 [WARN] — `M > max+1` = `[FORWARD-STALE]` / `M ≤ max` = `[BACKWARD-STALE]`. 정확 next-slot M=max+1 외 모두 stale.
+
+`current_tier` warning retain (scope expand only, blocking-on-pr 승격 영역 외). `bypass_label` `hotfix-bypass:amendment-number-stale` retain.
+
+#### A7-5 — scope_boundary (out-of-scope)
+
+본 Amendment 7 **포함**:
+- §결정 9 wording 양방향 확장 (Wave 1 behavioral)
+- `scripts/lib/check_amendment_number_stale.py` Check (b) 양방향 비교 확장 (Wave 2 mechanical)
+- `tests/scripts/cfp-1216/cfp-1216-amendment-stale.bats` backward-staleness TC 3+ 추가 + 기존 TC-B2 expected output 정정
+- `docs/evidence-checks-registry.yaml` entry summary 갱신 (양방향 codify)
+- `plugin.json` PATCH bump 6.5.1 → 6.5.2 + marketplace sibling sync (ADR-063 §결정 1)
+- `CHANGELOG.md` PATCH entry append
+
+본 Amendment 7 **out-of-scope** (유지 / 별 carrier):
+- `evidence-checks-registry.yaml` `current_tier` 승격 (warning → blocking-on-pr) = ADR-060 §결정 6 (d) gate 미충족 영역 (별 carrier).
+- `templates/github-workflows/amendment-number-frontmatter-verify.yml` paths trigger 확대 = 0 (현재 docs/adr/ADR-*.md + docs/change-plans/** + docs/inter-plugin-contracts/** retain).
+- `.github/workflows/amendment-number-frontmatter-verify.yml` self-app = byte-identical mirror retain (변경 0).
+- PMOAgent false-positive tally 별 axis carrier = OOS (Story §6.2 OOS-1, 별 ADR escalation candidate).
+- 신규 ADR 창설 = 0 (Amendment 만).
+- `label-registry-v2` Amendment = 0 (`hotfix-bypass:amendment-number-stale` 67번째 family member retain).
+
+### Compatibility
+
+- §결정 1~8 + §결정 9 (Amendment 6 신설) + 본질 선언 + 컨텍스트 + Amendment 1~6 전부 유지 — 본 Amendment 7 는 §결정 9 wording 양방향 확장 + CFP-1216 lint Check (b) 양방향 비교 wire + bats fixture TC 추가 + registry entry summary 갱신 + plugin.json PATCH + CHANGELOG append only.
+- ADR-058 §결정 5 sunset_justification — Amendment 7 = forbid scope 확장 (`M = max+1` 정확 next-slot 외 모두 stale, forward only → 양방향) = ratchet-up 강화 방향. `sunset_justification: "N/A — ratchet 강화 방향"` (frontmatter amendments[].sunset_justification 명문). `is_transitional: false` 유지.
+- ADR-064 §self-application top-down ratchet 정합 (강화 방향만 — 약화 방향 0건). §결정 5 CFP scope unitary 정합 — dual-carrier (wording + lint wire) = 동일 axis 단일 Story.
+- ADR-040 Amendment 3 §결정 7.A schema 정합 — `mechanical_enforcement_actions[]` 3-entry retain (Amendment 1 의 2 entry + Amendment 6 의 `amendment-number-frontmatter-verify` entry, Amendment 7 = 기존 entry summary 갱신 only — 신규 entry 신설 0).
+- ADR-068 I-4 (wording SSOT) 연계 강화 — `M = max+1` 만 정확 next-slot 으로 wording unify (backward / forward 모호성 제거).
+- ADR-045 §D-9: 본 Amendment 7 가 pattern_count 3 Mandatory escalation 의 직접 산물 (escalation_action `adr_draft_emitted`).
+- ADR-061 §결정 1 + 6.A 정합 — Python SSOT 본문 수정 (>5줄 multi-line) + thin wrapper 변경 0 retain.
+- ADR-063 §결정 1 atomic invariant — `plugin.json` PATCH bump → marketplace sibling sync PR 의무 (mirrored field 4종 중 `version` 변경).
+- ADR-068 I-4 wording SSOT 정합 — `[FORWARD-STALE]` / `[BACKWARD-STALE]` 출력 prefix 분리 = wording dedup (FP / BWD 의미 구별 codify).
+- 본 Amendment 7 자체가 META-self-applied: Amendment 번호(7) = target ADR-082 frontmatter `amendments:` Read verify (origin/main bfc4806 max=6, next=7) 후 결정 — §결정 9 Amendment 7 양방향 확장 wording 을 도입하는 본 Amendment 7 자체가 동 §결정 9 (Amendment 6 + Amendment 7) 를 준수하는 두 번째 META-self-applied 사례 (verified-via: Read `docs/adr/ADR-082-write-time-self-write-verification-mandate.md` frontmatter amendments[] 2026-05-23 KST origin/main bfc4806).
+
+### Related (Amendment 7 동반)
+
+- `scripts/lib/check_amendment_number_stale.py` — Check (b) 양방향 비교 + `[FORWARD-STALE]` / `[BACKWARD-STALE]` 출력 format 분리
+- `tests/scripts/cfp-1216/cfp-1216-amendment-stale.bats` — backward-staleness TC 3+ 추가 + TC-B2 expected output 정정 (TC-B2 = M=2 ≤ max=3 backward) + self-ref exempt + template exempt TC
+- `docs/evidence-checks-registry.yaml` — `amendment-number-frontmatter-verify` entry description 양방향 codify
+- `.claude-plugin/plugin.json` — PATCH bump 6.5.1 → 6.5.2
+- `CHANGELOG.md` — PATCH entry append
+- `mclayer/marketplace` repo — `marketplace.json` plugins[name=codeforge] mirrored field 4종 (`version`) atomic sibling PR (ADR-063 §결정 1)
+- `docs/adr/ADR-RESERVATION.md` — `amendments_reserved[]` row append (ADR-082 Amendment 7 reservation → active 전환 commit time, sibling pattern ADR-083 Amendment 3 CFP-1293)
+- `docs/adr/ADR-045-story-retro-mandatory-trigger.md` — §D-9 pattern_count 3 evidence #3 (CFP-1293)
+- `docs/adr/ADR-061-python-script-writing-convention.md` — §결정 1 (Python SSOT) + §결정 6.A (thin wrapper convention) 정합
+- `docs/adr/ADR-063-marketplace-atomic-invariant.md` — §결정 1 (mirrored field atomic) 정합
+- `docs/adr/ADR-068-boundary-completeness-invariants.md` — I-4 wording SSOT 연계 강화 (정확 next-slot wording unify)

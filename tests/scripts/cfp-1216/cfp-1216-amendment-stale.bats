@@ -366,45 +366,163 @@ CROSSDOC
   [ "$status" -eq 0 ]
 }
 
-@test "TC-B2: 정상 기존 amendment 인용 (Amendment 2) → WARN 없음" {
-  # 대상 ADR fixture (max amendment_id = 3)
+@test "TC-B2 [Amendment 7 양방향]: 이미 land 된 amendment 인용 (Amendment 2 with max=3) → [BACKWARD-STALE] WARN" {
+  # CFP-1312 / ADR-082 Amendment 7 — `M = max+1` 정확 next-slot 외 모두 stale.
+  # M=2, max=3 → cited_m <= max → BACKWARD-STALE 인용 패턴 (CFP-1293 #3 occurrence 재현).
+  # 본 TC 는 CFP-1216 기존 `M ≤ max → 정상` 가정을 정정 (Amendment 7 양방향 wording 정합).
   local target_adr="${TEST_TMP}/ADR-999-clean.md"
   make_fixture_clean "$target_adr"
 
-  # cross-doc 파일 (ADR-999 Amendment 2 인용 — 실재)
-  local doc_file="${TEST_TMP}/test-normal-citation.md"
+  # cross-doc 파일 (ADR-999 Amendment 2 인용 — backward stale, max=3 시점)
+  local doc_file="${TEST_TMP}/test-backward-citation.md"
   cat > "$doc_file" << 'CROSSDOC'
 ---
-title: normal citation test
+title: backward citation test (Amendment 7 양방향 expanded)
 ---
 
-ADR-999 Amendment 2 는 실재 amendment 입니다.
+이 문서는 ADR-999 Amendment 2 를 인용합니다 (max=3 시점, backward-staleness 패턴).
 CROSSDOC
 
   run python3 "$LINT_SCRIPT" --adr-dir "$TEST_TMP" "$doc_file"
+  # warning-tier — exit 0 유지
   [ "$status" -eq 0 ]
-  # 정상 인용 → WARN 없음
-  [[ "$output" != *"[WARN]"* ]] || [[ "$output" != *"Amendment 2"* ]]
+  # Amendment 7 — backward-staleness WARN 출력 확인
+  [[ "$output" == *"[WARN]"* ]]
+  [[ "$output" == *"[BACKWARD-STALE]"* ]]
+  [[ "$output" == *"Amendment 2"* ]]
 }
 
-@test "TC-B2-negative: 정상 인용에서 false positive WARN 없음 확인" {
+@test "TC-B2-negative [Amendment 7]: backward fixture 에서 exit 0 보장 (warning-tier)" {
   local target_adr="${TEST_TMP}/ADR-999-clean.md"
   make_fixture_clean "$target_adr"
 
-  local doc_file="${TEST_TMP}/test-normal-citation-2.md"
+  local doc_file="${TEST_TMP}/test-backward-citation-2.md"
   cat > "$doc_file" << 'CROSSDOC'
 ---
-title: normal citation test 2
+title: backward citation test 2
 ---
 
-ADR-999 Amendment 2 정상 인용.
+ADR-999 Amendment 2 backward staleness 패턴.
+CROSSDOC
+
+  run python3 "$LINT_SCRIPT" --adr-dir "$TEST_TMP" "$doc_file"
+  # warning-tier = exit 0 강제 (차단 금지)
+  [ "$status" -eq 0 ]
+}
+
+# ─────────────────── Check (b) Amendment 7 양방향 staleness TC ─────────────────
+
+@test "TC-B-BWD-EXACT [Amendment 7]: backward exact-match (M = max) → [BACKWARD-STALE] WARN" {
+  # max=3 fixture, doc 가 Amendment 3 (M=max) 인용 → backward exact-match
+  # 가장 자주 발생하는 패턴 — 이미 land 된 latest slot 을 next slot 으로 오해
+  local target_adr="${TEST_TMP}/ADR-999-clean.md"
+  make_fixture_clean "$target_adr"
+
+  local doc_file="${TEST_TMP}/test-bwd-exact.md"
+  cat > "$doc_file" << 'CROSSDOC'
+---
+title: backward exact-match (M = max)
+---
+
+ADR-999 Amendment 3 인용 (M=max=3, exact backward stale).
 CROSSDOC
 
   run python3 "$LINT_SCRIPT" --adr-dir "$TEST_TMP" "$doc_file"
   [ "$status" -eq 0 ]
-  # WARN 이 있더라도 Amendment 2 관련 false positive 는 아님 (max+1 = 4 > 2 이므로 skip)
-  # 가장 중요한 것: exit 0 유지
+  [[ "$output" == *"[WARN]"* ]]
+  [[ "$output" == *"[BACKWARD-STALE]"* ]]
+  [[ "$output" == *"Amendment 3"* ]] || [[ "$output" == *"M=3"* ]]
+}
+
+@test "TC-B-BWD-DEEP [Amendment 7]: deep backward (M < max-1) → [BACKWARD-STALE] WARN" {
+  # max=3 fixture, doc 가 Amendment 1 (M = max-2) 인용 → deep backward (historical slot)
+  local target_adr="${TEST_TMP}/ADR-999-clean.md"
+  make_fixture_clean "$target_adr"
+
+  local doc_file="${TEST_TMP}/test-bwd-deep.md"
+  cat > "$doc_file" << 'CROSSDOC'
+---
+title: deep backward citation
+---
+
+ADR-999 Amendment 1 인용 (M=1 < max=3, deep backward historical reference).
+CROSSDOC
+
+  run python3 "$LINT_SCRIPT" --adr-dir "$TEST_TMP" "$doc_file"
   [ "$status" -eq 0 ]
+  [[ "$output" == *"[WARN]"* ]]
+  [[ "$output" == *"[BACKWARD-STALE]"* ]]
+}
+
+@test "TC-B-FWD-EXACT-NEXT [Amendment 7]: 정확 next-slot (M = max+1) → PASS no [WARN]" {
+  # max=3 fixture, doc 가 Amendment 4 (M = max+1) 인용 → 정확 next-slot pass
+  # AC-3 정확 next-slot pass false-positive 0 verify
+  local target_adr="${TEST_TMP}/ADR-999-clean.md"
+  make_fixture_clean "$target_adr"
+
+  local doc_file="${TEST_TMP}/test-fwd-exact-next.md"
+  cat > "$doc_file" << 'CROSSDOC'
+---
+title: 정확 next-slot citation
+---
+
+ADR-999 Amendment 4 신설 예정 (M=max+1=4, 정확 next-slot 사용).
+CROSSDOC
+
+  run python3 "$LINT_SCRIPT" --adr-dir "$TEST_TMP" "$doc_file"
+  [ "$status" -eq 0 ]
+  # Amendment 7 양방향 — M=max+1 = PASS, [WARN] 출력 0
+  [[ "$output" != *"[WARN]"* ]] || [[ "$output" != *"Amendment 4"* ]]
+  [[ "$output" != *"[BACKWARD-STALE]"* ]]
+  [[ "$output" != *"[FORWARD-STALE]"* ]]
+}
+
+@test "TC-B-FWD-LABEL [Amendment 7]: forward staleness label 정확 codify ([FORWARD-STALE])" {
+  # max=3 fixture, doc 가 Amendment 99 (M >> max+1) 인용 → forward staleness label
+  # AC-2 forward retain regression 0 + Amendment 7 label format 확인
+  local target_adr="${TEST_TMP}/ADR-999-clean.md"
+  make_fixture_clean "$target_adr"
+
+  local doc_file="${TEST_TMP}/test-fwd-label.md"
+  cat > "$doc_file" << 'CROSSDOC'
+---
+title: forward staleness label test
+---
+
+ADR-999 Amendment 99 way-forward (M=99 >> max+1=4).
+CROSSDOC
+
+  run python3 "$LINT_SCRIPT" --adr-dir "$TEST_TMP" "$doc_file"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"[WARN]"* ]]
+  # Amendment 7 — [FORWARD-STALE] label 명시 codify
+  [[ "$output" == *"[FORWARD-STALE]"* ]]
+  [[ "$output" != *"[BACKWARD-STALE]"* ]]
+}
+
+@test "TC-B-TEMPLATE-EXEMPT [Amendment 7]: templates/** path filter — canonical example 면제" {
+  # templates/ 디렉토리 안 fixture 가 stale citation 보유해도 lint scope 제외 (FP-완화 guard 2)
+  local target_adr="${TEST_TMP}/ADR-999-clean.md"
+  make_fixture_clean "$target_adr"
+
+  # templates/ subdirectory 안 doc 생성
+  local templates_dir="${TEST_TMP}/templates"
+  mkdir -p "$templates_dir"
+  local doc_file="${templates_dir}/test-canonical-example.md"
+  cat > "$doc_file" << 'CROSSDOC'
+---
+title: canonical template example (templates/** exempt)
+---
+
+이 template fixture 안에 ADR-999 Amendment 99 와 ADR-999 Amendment 1 가 의도된 canonical example 으로 들어 있다 (lint 면제 대상).
+CROSSDOC
+
+  run python3 "$LINT_SCRIPT" --adr-dir "$TEST_TMP" "$doc_file"
+  [ "$status" -eq 0 ]
+  # templates/** exempt — WARN 출력 0 (path filter guard 2 정합)
+  [[ "$output" != *"[WARN]"* ]]
+  [[ "$output" != *"[FORWARD-STALE]"* ]]
+  [[ "$output" != *"[BACKWARD-STALE]"* ]]
 }
 
 # ────────────────────────────── bypass env TC ────────────────────────────────
@@ -447,4 +565,54 @@ CROSSDOC
   run python3 "$LINT_SCRIPT" "$adr_027"
   # crash 없이 exit 0 (string list shape — amendment_id 미추출)
   [ "$status" -eq 0 ]
+}
+
+# ────── Amendment 7 — self-reference exemption (FP-완화 guard 1) ──────
+
+@test "TC-B-SELF-REF-EXEMPT [Amendment 7]: ADR file 자체 안 자기 인용 → Check (b) skip (non-ADR filter)" {
+  # ADR file (filename ADR-NNN*) 자체는 Check (a) 영역 / Check (b) 비대상.
+  # caller (main()) 가 file name regex 로 ADR vs non-ADR 분류 → ADR file 은 check_doc_citations 호출 영역 외.
+  # 본 TC = ADR file 자체에서 자기 amendment 인용 시 [WARN] 출력 0 verify.
+  local adr_file="${TEST_TMP}/ADR-999-self-ref.md"
+  cat > "$adr_file" << 'FIXTURE'
+---
+adr_number: 999
+title: 테스트 ADR — self-reference exempt
+status: Accepted
+category: governance
+date: 2026-05-23
+amendments:
+  - amendment_id: 1
+    carrier_story: CFP-100
+    date: 2026-05-01
+    summary: "Amendment 1"
+  - amendment_id: 2
+    carrier_story: CFP-200
+    date: 2026-05-10
+    summary: "Amendment 2"
+  - amendment_id: 3
+    carrier_story: CFP-300
+    date: 2026-05-20
+    summary: "Amendment 3"
+---
+
+## Amendment 1
+
+본 ADR-999 Amendment 1 의 본문 — 자기 인용 (self-reference, Check (b) 비대상).
+
+## Amendment 2
+
+ADR-999 Amendment 2 또한 본 ADR 자체 안 정상 historical reference.
+
+## Amendment 3
+
+ADR-999 Amendment 3 본문 — current latest slot.
+FIXTURE
+
+  # ADR file 명시 (basename ADR-*) → main() ADR 분류 → Check (a) only, Check (b) 비대상
+  run python3 "$LINT_SCRIPT" "$adr_file"
+  [ "$status" -eq 0 ]
+  # self-reference [BACKWARD-STALE] [WARN] 출력 0 (Check (b) 미적용 — ADR-file = Check (a) 영역)
+  [[ "$output" != *"[BACKWARD-STALE]"* ]]
+  [[ "$output" != *"[FORWARD-STALE]"* ]]
 }

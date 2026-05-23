@@ -163,6 +163,11 @@ amendments_reserved:
     reserved_by_cfp: CFP-1293
     reservation_date: 2026-05-23 KST
     status: active   # ArchitectAgent commit time 점유 (Story Phase 1 PR carrier — Amendment 3 §결정 5 wire location expand: reconcile-overlay.sh + walk_plan.py + UpgradeAgent.md 3 영역 atomic codify, sunset_justification 실현 carrier, ADR-097 §결정 3 carrier-preserved sunset 정합)
+  - adr_number: 82
+    amendment_id: 7
+    reserved_by_cfp: CFP-1312
+    reservation_date: 2026-05-23 KST
+    status: active   # ArchitectPLAgent commit time 점유 (Story Phase 1 PR carrier — Amendment 7 §결정 9 verify-before-cite scope 양방향 확장 + CFP-1216 lint Check (b) backward-staleness wire dual-carrier, ADR-045 §D-9 pattern_count 3 reach Mandatory escalation 산물 CFP-1293 #3 occurrence backward-staleness coverage gap evidence). verified-via Read worktree docs/adr/ADR-082-...md frontmatter amendments[] max=6 → next=7 (2026-05-23 KST 기준 origin/main bfc4806). sibling pattern = ADR-083 Amendment 3 (CFP-1293) row 직전. status `reserved` 미경유 직접 `active` 전환 (ArchitectPL chief author precedent — ADR-082 row 82 active 패턴 + ADR-083 row 83 active 패턴 정합).
 ```
 
 ## 해소 기준

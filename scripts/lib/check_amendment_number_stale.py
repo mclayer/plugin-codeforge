@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # CFP-1216 / ADR-082 Amendment 6 §결정 9 — amendment-number-frontmatter-verify mechanical lint
+# CFP-1312 / ADR-082 Amendment 7 — Check (b) 양방향 staleness 확장 (forward + backward)
 # ADR-061 §결정 1 — Python SSOT (heredoc 금지), ADR-060 §결정 5 warning-tier
 #
 # 두 가지 검사 (warning-tier — exit 0 항상 for warnings):
@@ -14,9 +15,14 @@
 #     3. gap → [WARN] advisory (exit 0, 의도적 gap 허용)
 #     4. frontmatter max id ≠ body `## Amendment N` 헤더 max → [WARN]
 #
-#   Check (b) — cross-doc citation forward-staleness (SECONDARY):
+#   Check (b) — cross-doc citation 양방향 staleness (SECONDARY, Amendment 7 확장):
 #     변경된 non-ADR docs/** 파일에서 "ADR-NNN Amendment M" 패턴 grep.
-#     대상 ADR frontmatter max id 조회 → M > max+1 이면 [WARN] (clearly-forward citation만)
+#     대상 ADR frontmatter max id 조회 → M != max+1 이면 [WARN]:
+#       - M > max+1 → [FORWARD-STALE] (off-by-one / 계산 오류)
+#       - M ≤ max  → [BACKWARD-STALE] (이미 land 된 slot 인용)
+#     정확 next-slot M=max+1 외 모두 stale (ADR-082 Amendment 7 §결정 9 양방향 wording 정합).
+#     self-reference exemption (FP-완화 guard 1): ADR file 자체 (docs/adr/ADR-*.md) 자기 인용 = non-ADR filter 가 자동 skip.
+#     templates/** path filter (FP-완화 guard 2): canonical example 면제.
 #
 # Exit code (ADR-060 §결정 15 3-tier):
 #   0 — PASS 또는 WARN (warning-tier = 항상 exit 0, PR merge 미차단)
@@ -286,15 +292,31 @@ def build_adr_max_cache(adr_dir):
 
     return cache
 
-# ── Check (b): cross-doc citation forward-staleness ───────────────────────────
+# ── Check (b): cross-doc citation 양방향 staleness (Amendment 7 확장) ─────────
+def _is_template_path(filepath):
+    """templates/** 경로 식별 — FP-완화 guard 2 (canonical example 면제)."""
+    # OS-agnostic — both POSIX and Windows separators
+    parts = Path(filepath).parts
+    return "templates" in parts
+
+
 def check_doc_citations(filepath, adr_max_cache):
     """
     non-ADR docs/** 파일에서 "ADR-NNN Amendment M" 패턴 검색.
-    M > max+1 이면 forward citation [WARN].
+    Amendment 7 (CFP-1312) — 양방향 staleness 비교:
+      - M = max+1  → PASS (정확 next-slot)
+      - M > max+1  → [FORWARD-STALE] [WARN] (off-by-one / 계산 오류)
+      - M ≤ max    → [BACKWARD-STALE] [WARN] (이미 land 된 slot 인용)
+    self-reference exemption (FP-완화 guard 1): ADR file 자체는 non-ADR filter 가 자동 skip (caller 단계).
+    templates/** path filter (FP-완화 guard 2): canonical example 면제 — 본 함수 진입 직후 skip.
     반환: warn_count (int)
     """
     path = Path(filepath)
     if not path.exists():
+        return 0
+
+    # FP-완화 guard 2 (Amendment 7): templates/** path filter
+    if _is_template_path(filepath):
         return 0
 
     text = path.read_text(encoding="utf-8", errors="replace")
@@ -307,14 +329,29 @@ def check_doc_citations(filepath, adr_max_cache):
         if max_id is None:
             # 대상 ADR 파일 없음 — skip
             continue
+        # Amendment 7 — 양방향 staleness 비교
+        if cited_m == max_id + 1:
+            # 정확 next-slot → PASS
+            continue
         if cited_m > max_id + 1:
-            print(
-                f"{SCRIPT_NAME} [WARN] {filepath}: ADR-{adr_num} Amendment {cited_m} 인용 "
-                f"but ADR-{adr_num} max = {max_id} (next = {max_id + 1}) — "
-                f"possible stale-forward citation",
-                file=sys.stderr,
+            label = "[FORWARD-STALE]"
+            detail = (
+                f"M={cited_m} > max+1={max_id + 1} — forward staleness "
+                f"(off-by-one / 계산 오류)"
             )
-            warn_count += 1
+        else:  # cited_m <= max_id
+            label = "[BACKWARD-STALE]"
+            detail = (
+                f"M={cited_m} ≤ max={max_id} — backward staleness "
+                f"(이미 land 된 slot 인용)"
+            )
+        print(
+            f"{SCRIPT_NAME} [WARN] {filepath}: ADR-{adr_num} Amendment {cited_m} 인용 "
+            f"but ADR-{adr_num} max = {max_id} (next = {max_id + 1}) — "
+            f"{label} {detail}",
+            file=sys.stderr,
+        )
+        warn_count += 1
 
     return warn_count
 
