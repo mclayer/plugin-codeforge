@@ -1,4 +1,4 @@
-﻿# Changelog
+# Changelog
 
 `codeforge` 플러그인 릴리스 이력. 각 엔트리는 버전 bump 단위.
 Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guide.md) 해당 섹션 변경.
@@ -6,6 +6,16 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능. plugin SemVer rule SSOT: [ADR-037](docs/adr/ADR-037-plugin-version-bump-rule.md).
 
 ## [Unreleased]
+
+## [6.4.0] - 2026-05-23
+
+### Added
+
+- [CFP-604] ADR-063 Amendment 9 marketplace atomic-sync mechanical enforcement (Gap A + Gap B).
+  - **Gap A lint** (`scripts/check-architect-marketplace-self-check.sh` + workflow 신설): plugin.json mirrored field 변경 PR 의 Change Plan §13 `marketplace_sync_required:` presence/completeness 검증 (ADR-063 §결정 21 / warning tier). doc-only fast-path / cross-repo dogfood-out false-positive 차단. bypass: `hotfix-bypass:architect-marketplace-self-check`.
+  - **Gap B `check-version-bump-atomic.sh` 강화** (ADR-063 §결정 22): (a) gh-skip silent hole 제거 — CI 환경(`$CI=true AND $GITHUB_ACTIONS=true`) `exit 2` fail-loud 전환, non-CI `exit 0` graceful skip + stderr warning emit (조용 skip 금지). (b) Step 4 mirrored field 4종 확장 — name/author parity mismatch 시 `exit 1` blocking-on-pr (기존 description only → 4종 전스 coverage 완결).
+  - `docs/evidence-checks-registry.yaml` `architect-marketplace-self-check` entry 신규 (warning tier, ADR-060 §결정 5). `marketplace-description-verbatim` entry description Gap B SSOT 명문화.
+  - `tests/scripts/cfp-604/` bats fixture 2종 신규: `check-architect-marketplace-self-check.bats` (Gap A 5 TC) + `check-version-bump-atomic.bats` (Gap B regression 5 TC).
 
 ## [6.3.0] - 2026-05-22
 

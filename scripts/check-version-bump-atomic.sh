@@ -102,23 +102,56 @@ fi
 echo "  CHANGELOG entry: ✓ $CL_VERSION"
 
 # --- Step 3: marketplace.json parity 확인 ---
+# ADR-063 §결정 22 Amendment 9 / CFP-604 — gh-skip silent hole 차단
+# 3-way 분기 (CI fail-loud + consumer self-hosted runner / non-CI graceful skip with warning):
+#   (i)  CI 환경 ($CI == true AND $GITHUB_ACTIONS == true) = exit 2 fail-loud (environment error, workflow FAIL)
+#   (ii) consumer self-hosted runner / non-CI 환경 ($CI 또는 $GITHUB_ACTIONS 미설정) = exit 0 graceful skip + stderr warning emit
+# silent skip 금지 (ADR-063 §결정 22 (a) mandate + §2.2 "silent 0, user-visible" 도메인 불변식 정합)
+_is_ci_env() {
+  [[ "${CI:-}" == "true" && "${GITHUB_ACTIONS:-}" == "true" ]]
+}
+
 # gh 가용성 체크
 if ! command -v gh >/dev/null 2>&1; then
-  echo "⚠ check-version-bump-atomic: gh CLI 미설치 — marketplace parity skip (기존 check-marketplace-parity workflow 가 검증)"
-  exit 0
+  if _is_ci_env; then
+    echo "❌ check-version-bump-atomic: CI 환경에서 gh CLI 미설치 — marketplace parity check 불가" >&2
+    echo "   해결: GitHub Actions runner 에 gh CLI 설치 의무 (ADR-063 §결정 22)" >&2
+    echo "   Bypass: hotfix-bypass:marketplace-atomic label (긴급 hotfix only)" >&2
+    exit 2
+  else
+    echo "⚠ check-version-bump-atomic: gh CLI 미설치 — marketplace parity skip (local advisory 모드)" >&2
+    echo "  CI 환경에서는 gh CLI 가 필수입니다 (ADR-063 §결정 22 (a))" >&2
+    exit 0
+  fi
 fi
 
 if ! gh auth status >/dev/null 2>&1; then
-  echo "⚠ check-version-bump-atomic: gh 미인증 — marketplace parity skip"
-  exit 0
+  if _is_ci_env; then
+    echo "❌ check-version-bump-atomic: CI 환경에서 gh 미인증 — marketplace parity check 불가" >&2
+    echo "   해결: GH_TOKEN 또는 GITHUB_TOKEN env 설정 의무 (ADR-063 §결정 22)" >&2
+    echo "   Bypass: hotfix-bypass:marketplace-atomic label (긴급 hotfix only)" >&2
+    exit 2
+  else
+    echo "⚠ check-version-bump-atomic: gh 미인증 — marketplace parity skip (local advisory 모드)" >&2
+    echo "  CI 환경에서는 gh auth 가 필수입니다 (ADR-063 §결정 22 (a))" >&2
+    exit 0
+  fi
 fi
 
 # marketplace.json fetch via gh api
 MARKETPLACE_RAW=$(gh api -H "Accept: application/vnd.github.raw" repos/mclayer/marketplace/contents/.claude-plugin/marketplace.json 2>/dev/null || echo "")
 
 if [[ -z "$MARKETPLACE_RAW" ]]; then
-  echo "⚠ check-version-bump-atomic: marketplace.json fetch 실패 — parity check skip"
-  exit 0
+  if _is_ci_env; then
+    echo "❌ check-version-bump-atomic: CI 환경에서 marketplace.json fetch 실패 — parity check 불가" >&2
+    echo "   repos/mclayer/marketplace 접근 권한 또는 GH_TOKEN scope 확인 (ADR-066 §결정 2)" >&2
+    echo "   Bypass: hotfix-bypass:marketplace-atomic label (긴급 hotfix only)" >&2
+    exit 2
+  else
+    echo "⚠ check-version-bump-atomic: marketplace.json fetch 실패 — parity check skip (local advisory 모드)" >&2
+    echo "  CI 환경에서는 marketplace.json fetch 가 필수입니다 (ADR-063 §결정 22 (a))" >&2
+    exit 0
+  fi
 fi
 
 REMOTE_VERSION=$(echo "$MARKETPLACE_RAW" | jq -r ".plugins[] | select(.name == \"$PLUGIN_NAME\") | .version" 2>/dev/null || echo "")
@@ -146,7 +179,11 @@ if [[ "$LOCAL_VERSION" != "$REMOTE_VERSION" ]]; then
   exit 1
 fi
 
-# --- Step 4: description / author parity (optional, ADR-016 mirrored field 4종 정합) ---
+# --- Step 4: mirrored field 4종 parity (ADR-063 §결정 22 Amendment 9 / CFP-604 — name/author 축 확장) ---
+# ADR-016 mirrored field 4종 (name/version/description/author) 전체 blocking-on-pr coverage 완결
+# version 은 Step 3 에서 이미 검증 완료 — Step 4 는 description/name/author 검증
+FIELD_FAIL=0
+
 REMOTE_DESC=$(echo "$MARKETPLACE_RAW" | jq -r ".plugins[] | select(.name == \"$PLUGIN_NAME\") | .description" 2>/dev/null || echo "")
 
 if [[ "$LOCAL_DESC" != "$REMOTE_DESC" ]]; then
@@ -154,13 +191,55 @@ if [[ "$LOCAL_DESC" != "$REMOTE_DESC" ]]; then
   echo "❌ ADR-063 §결정 1 violation: description mirrored field drift"
   echo "   local desc:  $(echo "$LOCAL_DESC" | cut -c1-100)..."
   echo "   remote desc: $(echo "$REMOTE_DESC" | cut -c1-100)..."
-  echo ""
   echo "   marketplace sync PR 에 description 동일 변경 의무 (ADR-016 + ADR-063 §결정 1)"
+  FIELD_FAIL=1
+fi
+
+# name 축 검증 (ADR-063 §결정 22 (b) — name/author 축 신규 blocking)
+REMOTE_NAME=$(echo "$MARKETPLACE_RAW" | jq -r ".plugins[] | select(.name == \"$PLUGIN_NAME\") | .name" 2>/dev/null || echo "")
+LOCAL_NAME=$(jq -r '.name' "$PLUGIN_JSON")
+
+if [[ "$LOCAL_NAME" != "$REMOTE_NAME" ]]; then
+  echo ""
+  echo "❌ ADR-063 §결정 1 violation: name mirrored field drift"
+  echo "   local name:  $LOCAL_NAME"
+  echo "   remote name: $REMOTE_NAME"
+  echo "   marketplace sync PR 에 name 동일 변경 의무 (ADR-016 + ADR-063 §결정 1 + §결정 22)"
+  FIELD_FAIL=1
+fi
+
+# author 축 검증 (ADR-063 §결정 22 (b) — author 축 신규 blocking)
+REMOTE_AUTHOR=$(echo "$MARKETPLACE_RAW" | jq -r ".plugins[] | select(.name == \"$PLUGIN_NAME\") | .author // .author.name // \"\"" 2>/dev/null || echo "")
+
+# LOCAL_AUTHOR 는 line 76 에서 추출됨 (object 의 경우 .name 필드 fallback)
+# normalize: author 가 object 형태일 수 있음
+LOCAL_AUTHOR_NORM="$LOCAL_AUTHOR"
+
+if [[ "$LOCAL_AUTHOR_NORM" != "$REMOTE_AUTHOR" && "$LOCAL_AUTHOR_NORM" != "null" && "$REMOTE_AUTHOR" != "null" ]]; then
+  echo ""
+  echo "❌ ADR-063 §결정 1 violation: author mirrored field drift"
+  echo "   local author:  $LOCAL_AUTHOR_NORM"
+  echo "   remote author: $REMOTE_AUTHOR"
+  echo "   marketplace sync PR 에 author 동일 변경 의무 (ADR-016 + ADR-063 §결정 1 + §결정 22)"
+  FIELD_FAIL=1
+fi
+
+if [[ "$FIELD_FAIL" -eq 1 ]]; then
+  echo ""
+  echo "   ADR-063 §결정 2 PR ordering:"
+  echo "     1. mclayer/marketplace 에 sync PR open (mirrored field 4종 동기화)"
+  echo "     2. marketplace sync PR 선행 merge"
+  echo "     3. 본 plugin PR re-run → marketplace-parity PASS"
+  echo "   Anti-pattern: plugin PR 선행 merge 금지 (drift 발생)"
+  echo "   Bypass: hotfix-bypass:marketplace-atomic label (긴급 hotfix only, 24시간 이내 sync 의무)"
   exit 1
 fi
 
 echo "  description: ✓ parity"
+echo "  name:        ✓ parity"
+echo "  author:      ✓ parity"
 echo ""
-echo "✓ check-version-bump-atomic: 3-file atomic invariant 충족 (ADR-063 §결정 1)"
+echo "✓ check-version-bump-atomic: 3-file atomic invariant 충족 (ADR-063 §결정 1 + §결정 22)"
 echo "  plugin.json $LOCAL_VERSION ↔ CHANGELOG.md $CL_VERSION ↔ marketplace.json $REMOTE_VERSION"
+echo "  mirrored field 4종 (name/version/description/author) 전부 parity 확인 (ADR-063 §결정 22 Amendment 9)"
 exit 0
