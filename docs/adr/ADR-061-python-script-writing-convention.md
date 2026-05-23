@@ -23,6 +23,12 @@ amendment_log:
     summary: "Q2 §결정 6 ratchet (권장 (장기) → 표준 (즉시)) + Q3 workflow YAML scope inclusion (§결정 1 body 명시). 28-file scripts/lib/ post-CFP-478 SSOT 확립 evidence. ratchet ↑ direction — ADR-058 §결정 5 sunset_justification 면제 (strengthen direction)."
     ratchet_direction: strengthen
     sunset_justification_required: false
+  - amendment: 2
+    date: 2026-05-23
+    carrier_story: CFP-1292
+    summary: "§결정 9 신설 (production-scale invariant verify — bash script `set -uo pipefail` + pipe operator + 가변 size input source 3-조건 AND 충족 시 discriminating fixture ≥10× production-scale 의무 또는 here-string/process-substitution 대안 패턴 채택) + §결정 10 self-app. CFP-604 retro Mandatory framing (ADR-045 §D-9 / pattern_count 2: SIGPIPE bug + production-scale fixture gap, sibling = CFP-583). ratchet ↑ direction — ADR-058 §결정 5 면제."
+    ratchet_direction: strengthen
+    sunset_justification_required: false
 mechanical_enforcement_actions: []
 ---
 
@@ -252,3 +258,74 @@ Anti-pattern (금지): 동일 workflow file 안 N heredoc block 을 N 독립 Git
 - trap-evidence verified candidates (P0): `check-decision-principle-vocabulary.sh:90` + `check-story-section-schema.sh:79` + `check-story-section-9-typed.sh:58` — 모두 `replace("\\", "/")` (Windows path normalization, byte-level escape § 결정 3 영역)
 - state-coupling verified workflow: `templates/github-workflows/story-init.yml` 4 heredoc block (line 131-158 / 274-353 + 2 sub-blocks) — `$STORY_CONTENT` → `$CONTENT_B64` → `$GITHUB_OUTPUT` capture chain
 - pyyaml import 9 candidates 중 8 graceful (try/except ImportError → sys.exit(0)) — 1 outlier `test-cfp-140-ghec-governance.sh` migration 시 표준 패턴 통일 의무 (CFP-478 AC-11)
+
+---
+
+## Amendment 2 (CFP-1292 — 2026-05-23 KST)
+
+### Context
+
+CFP-604 (ADR-063 marketplace atomic-sync mechanical enforcement) Phase 2 CodeReview Iter 1 에서 **P0 SIGPIPE bug** 발견 — `set -uo pipefail` 활성 + `echo "$DIFF" | grep -q ...` 조합이 grep early-exit 으로 인한 SIGPIPE → exit 141 → pipefail 로 pipeline 전체 실패. production-scale `$DIFF` (~100KB) 에서 발생, isolated test env (~30 byte) 에서 미발생 → bats fixture **false-positive GREEN**.
+
+CFP-583 sibling sample (handoff-wording-check workflow FIX-1) 가 동일 패턴 + production-scale fixture 박제 누락 evidence 보유. PMOAgent retro corpus enumeration 결과 **pattern_count = 2 reach** — ADR-045 §D-9 mandatory framing `escalation_action: adr_draft_emitted` 발동.
+
+두 패턴 = **directly-analogous root cause** (bash script 의 production-scale 환경 invariant 가 test contract 에서 미covered). 단일 §결정 9 신설로 양 패턴 cover 가능.
+
+본 Amendment 는 **ratchet ↑ direction** (강화 방향 — 정책 scope 신규 추가 + 의무 강도 격상, 약화 방향 변경 0건). ADR-058 §결정 5 `sunset_justification` 의무 면제 (strengthen direction).
+
+### 결정 (Amendment delta)
+
+#### Amendment §결정 9: production-scale invariant verify (mandate)
+
+bash script 가 다음 **3-조건 AND** 충족 시 production-scale discriminating fixture mandatory (또는 대안 패턴 채택):
+
+1. `set -uo pipefail` 활성 (또는 `set -e` + `set -o pipefail` 동등)
+2. pipe operator (`|`) 사용 — `echo ... | grep`, `cat ... | jq` 등
+3. input source size 가변 (git diff / gh API response / file content / 외부 input)
+
+**production-scale fixture 의무** (3-조건 AND 충족 시):
+- bats / test fixture 에 ≥ **10× isolated env size** discriminating TC 1 건 이상
+- 예: isolated test 가 ~30 byte input 사용 시 production-scale TC = ≥ 300 byte (실질 ≥ 1KB-10KB 권장 — pipe buffer / SIGPIPE 발생 임계 정합)
+- TC 명명 권장: `TC-large-diff` / `TC-prod-scale` / `TC-pipe-buffer-overflow`
+
+**대안 패턴** (production-scale fixture 의무 면제, ratchet equivalent — 양 영역 어느 쪽이든 invariant 충족):
+- `<<<` here-string: `grep -qE 'pattern' <<< "$DIFF"` — pipe 자체 제거, SIGPIPE 발생 path 차단
+- `< <(...)`: process substitution — pipe 부수 효과 분리
+- 명시적 pipefail 해제 구간: `set +o pipefail; ... | grep ...; set -o pipefail` (단, 해제 구간 명시 의무 + 명확한 rationale 주석)
+
+**유효 영역**: §결정 1 + Amendment 1 §결정 1.A 정합 — `scripts/*.sh` + `templates/github-workflows/*.yml` step `run:` block. ADR-061 의 외부 `.py` split mandate (§결정 1 / Amendment 1 §결정 6.A) 와 disjoint axis — Python split 영역은 본 §결정 9 mandate 대상 외 (Python = `sys.stdin` reading 자체에 SIGPIPE 무위험, GIL + signal handling 영역).
+
+위반 처리:
+- Phase 2 PR open 시 CodeReviewPL audit anchor — `set -uo pipefail` + pipe + 가변 input source 동시 사용 file 식별 → fixture TC enumeration verify → 미충족 시 finding 발화 (severity 권장: P1 — production-scale latency exposure)
+- mechanical lint (Wave 2 sub-Story carrier) — `check-bash-pipefail-pipe-production-scale.sh` (3-조건 AND grep + fixture TC presence verify) — 본 Amendment 2 declarative phase, Wave 2 별 carrier 발의 시 mechanical_enforcement_actions[] field append
+
+#### Amendment §결정 10: Self-application — Amendment 2 ratchet 검증
+
+본 Amendment 2 자체 self-application:
+
+- **ratchet 방향**: 강화 (신규 §결정 9 추가 + 의무 강도 mandatory + scope `scripts/*.sh` + `templates/github-workflows/*.yml`). 약화 방향 변경 0건. ADR-058 §결정 5 정합.
+- **`is_transitional: false` 보존**: ADR-061 = permanent policy (Amendment 1 동일 permanent — `sunset_justification_required: false`). Amendment 2 도 동일 permanent (production-scale invariant = bash 도메인 영구 사실).
+- **CFP scope unitary 정합** (ADR-064 §결정 1): 본 Amendment 2 = 단일 §결정 9 mandate + §결정 10 self-app 의 2-§결정 묶음 — "production-scale invariant verify" 단일 axis 안 강화, "경량 → full" 분할 아님.
+- **declarative-only phase** (Wave 1, mechanical_enforcement_actions: []): ADR-076 / ADR-082 / ADR-086 precedent 답습 (Wave 1 declarative + Wave 2 mechanical lint 별 carrier 발의). mechanical lint = production-scale fixture presence-check workflow — pattern_count 추가 사례 누적 또는 사용자 직접 ratchet 의도 표명 시 별 sub-Story carrier.
+
+### 영향 영역 변경
+
+- **Before Amendment 2**: ADR-061 §결정 5 sanity check 3종 (diff inspection / lint re-run / sample file Read) 의 적용 — bash script 작성자 self-discipline anchor. production-scale verify 영역 부재.
+- **After Amendment 2**: §결정 9 + §결정 10 신설 → bash script with `set -uo pipefail` + pipe + 가변 input 3-조건 AND 충족 file 의 **test contract production-scale fixture mandatory** (또는 here-string/process-substitution 대안 채택). CodeReviewPL anchor verify 영역 확장.
+
+향후 신규 bash script (scripts/*.sh + templates/github-workflows/*.yml step run: block) 작성자 = §결정 9 의무 적용. **기존 28-file `scripts/lib/` (Amendment 1 carrier) 도 retroactive 의무 안** — pattern_count 추가 사례 발견 시 corpus retro 진행 의무 (PMOAgent §D-9 framework).
+
+### Sunset justification
+
+`sunset_justification_required: false` — Amendment 2 = ratchet ↑ direction (강화 방향, ADR-058 §결정 5 정합). ADR-061 `is_transitional: false` 보존 — Amendment 2 도 동일 permanent policy.
+
+### Carrier evidence (CFP-1292)
+
+- **Pattern 1**: CFP-604 F-CR-604-1 P0 SIGPIPE — `scripts/check-version-bump-atomic.sh` line 60-66 + `scripts/check-architect-marketplace-self-check.sh` line 74-80. production-scale `$DIFF` ~100KB 에서 `exit 141` (SIGPIPE propagation), `MIRRORED_CHANGED=0` early `exit 0` 회피 path 도달 불가. FIX iter 2 = here-string `<<<` 전환으로 pipe 제거 (대안 패턴 채택).
+- **Pattern 2**: CFP-604 F-CR-604-3 P2 bats fixture isolated env short DIFF (~30 byte) → SIGPIPE 미발생 → 14/14 GREEN false-positive. FIX iter 2 = `TC-large-diff` 추가 (~100KB synthetic description) → 16/16 GREEN regression discriminating fixture (production-scale 의무 충족).
+- **Sibling sample**: CFP-583 handoff-wording-check workflow FIX-1 — 동일 SIGPIPE 패턴 + production-scale fixture 박제 누락 evidence (PMOAgent retro corpus enumeration source).
+- **PMOAgent framing source**: CFP-604 retro `internal-docs/wrapper/retros/2026-05-23-cfp-604-marketplace-atomic-mechanical-enforcement.md` §5 cross_story_pattern_adr_trigger field — `pattern_count=2` reach `adr_draft_emitted` Mandatory.
+
+### 적용 사례 (Amendment 2 첫 self-applied carrier)
+
+본 Amendment 2 자체 적용 — CFP-1292 = ADR-061 Amendment 2 carrier + production-scale invariant 의 first-class codification carrier. Amendment 2 발효 후 신규 bash script 작성자 가 §결정 9 의무 인지 + CodeReviewPL anchor verify 영역 의무 확장.

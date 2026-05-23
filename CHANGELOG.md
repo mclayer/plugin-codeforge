@@ -7,6 +7,17 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.4.1] - 2026-05-23
+
+### Added
+
+- [CFP-1292] **ADR-061 Amendment 2 — production-scale invariant verify for bash scripts** (CFP-604 retro Mandatory F1 carrier — ADR-045 §D-9 / pattern_count 2: SIGPIPE bug + production-scale fixture gap, sibling CFP-583). doc-only fast-path (ADR-054 Cat 2 — 기존 ADR Amendment, src/tests 무변경).
+  - **§결정 9 신설**: bash script 가 3-조건 AND (`set -uo pipefail` + pipe operator + 가변 size input source) 충족 시 production-scale discriminating fixture mandatory (≥ 10× isolated env size) **또는** 대안 패턴 채택 (here-string `<<<`, process substitution `< <(...)`, 명시적 pipefail 해제 구간) — ratchet equivalent.
+  - **§결정 10 self-app**: ratchet ↑ direction 검증 — strengthen direction, `is_transitional: false` 보존, CFP scope unitary 정합. mechanical_enforcement_actions: [] declarative-only (Wave 1, Wave 2 mechanical lint 별 sub-Story carrier — ADR-076/082/086 precedent).
+  - 적용 영역: `scripts/*.sh` + `templates/github-workflows/*.yml` step `run:` block. ADR-061 외부 `.py` split mandate (§결정 1 / Amendment 1 §결정 6.A) 와 disjoint axis (Python sys.stdin SIGPIPE 무위험).
+  - 위반 처리: Phase 2 PR open 시 CodeReviewPL audit anchor (3-조건 AND grep + fixture TC enumeration verify, 미충족 시 severity P1 권장 finding).
+  - mirrored field: version 6.4.0 → 6.4.1 + description CFP-1292 entry append. Marketplace sibling sync 의무 (ADR-063 §결정 2).
+
 ## [6.4.0] - 2026-05-23
 
 ### Added
