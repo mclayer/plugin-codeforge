@@ -159,9 +159,9 @@ assert_contains_ere \
 # self-application 회귀: Phase 2 PR (phase:구현) 경로가 기존 3-source 그대로 평가됨 (4번째 미발동)
 # = post-merge-fix 라벨 없는 PR 은 기존 gate 경로 진입 (L183 OR-gate 통과 못하면 하위 평가)
 assert_contains \
-    "self-app 회귀: phase:구현 gate:design-review-pass 경로 유지" \
+    "self-app 회귀: phase:구현 gates:[design-review-pass] 경로 유지 (CFP-1302 gates[] 전환)" \
     "$TEMPLATES_WORKFLOW" \
-    "gate: 'gate:design-review-pass'"
+    "gates: ['gate:design-review-pass']"
 
 assert_contains \
     "self-app 회귀: phase:구현 구분 블록 유지" \

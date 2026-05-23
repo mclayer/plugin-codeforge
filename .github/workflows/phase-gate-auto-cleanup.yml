@@ -1,0 +1,171 @@
+name: Phase Gate Auto Cleanup (stale gate label removal)
+# CFP-1302: phase:N+1 label 부착 시 prior phase 의 stale gate:N-1-pass label 자동 제거.
+# - GITHUB_TOKEN only (D-4 결정 — PAT 미사용, self-trigger 차단 GitHub native invariant).
+# - warning tier (ADR-060 §결정 5 — continue-on-error: true).
+# - prior art: auto-phase-label.yml concurrency group + phase-label-invariant.yml removeLabel API pattern.
+# Security: third-party actions are SHA-pinned per CFP-300 policy.
+
+on:
+  pull_request:
+    types: [labeled, synchronize]  # EC-1: synchronize 포함 (merge-order rebase 후 재검증)
+  issues:
+    types: [labeled]               # Story Issue ↔ PR bidirectional sync (within-repo scope)
+
+permissions:
+  pull-requests: write
+  issues: write
+  contents: read
+
+concurrency:
+  # auto-phase-label.yml line 36-38 mirror (namespace 분리 — phase-gate-mergeable 와 disjoint).
+  group: phase-gate-auto-cleanup-${{ github.event.pull_request.number || github.event.issue.number }}
+  cancel-in-progress: false  # label change 는 직렬 처리 (race 방지)
+
+env:
+  # CFP-795 / phase-gate-mergeable.yml §ALLOWED_HUB_REPOS 정합.
+  # consumer overlay: .claude/_overlay/project.yaml phase_gate.allowed_hub_repos[] 로 확장 가능 (ADR-057 정합 — 축소 불가).
+  ALLOWED_HUB_REPOS: "github.com/mclayer/codeforge-internal-docs"
+
+jobs:
+  cleanup-stale-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5  # InfraOp §7.4.6 권장
+    continue-on-error: true  # warning tier (ADR-060 §결정 5)
+    # Step-level guard: phase:* label 이벤트 + hotfix-bypass 양 label 부재 시만 실행.
+    # T-1 (hotfix-bypass:auto-cleanup-stale-gate): 자기 자신 bypass.
+    # T-1 (hotfix-bypass:phase-gate-mergeable): phase-gate 전반 bypass 시 cleanup 도 skip.
+    if: |
+      github.event.action == 'labeled' &&
+      startsWith(github.event.label.name, 'phase:') &&
+      !contains(toJSON(github.event.pull_request.labels.*.name), '"hotfix-bypass:auto-cleanup-stale-gate"') &&
+      !contains(toJSON(github.event.issue.labels.*.name), '"hotfix-bypass:auto-cleanup-stale-gate"') &&
+      !contains(toJSON(github.event.pull_request.labels.*.name), '"hotfix-bypass:phase-gate-mergeable"') &&
+      !contains(toJSON(github.event.issue.labels.*.name), '"hotfix-bypass:phase-gate-mergeable"')
+    steps:
+      - name: Remove stale gate label on phase transition
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}   # D-4 결정: PAT 미사용 (self-trigger 차단 invariant)
+          script: |
+            // CFP-1302 §3.2 Option A — phase transition 시 stale gate label 자동 제거.
+            // GITHUB_TOKEN 으로 label 변경 → 후속 workflow trigger 자동 차단 (GitHub native invariant).
+
+            const newPhaseLabel = context.payload.label?.name || '';
+            const isPr = !!context.payload.pull_request;
+            const isIssue = !!context.payload.issue;
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+
+            // EC-2 cross-repo orphan guard: PR body 또는 Issue body 안 Related: #N marker 부재 시 skip.
+            // ALLOWED_HUB_REPOS env guard (within-repo wrapper Issue ↔ wrapper PR scope 만).
+            const body = (context.payload.pull_request?.body || context.payload.issue?.body || '');
+            const hasRelatedMarker = /(?:Related|Closes|Fixes|Resolves):?\s+#\d+/i.test(body);
+            const allowedHubRepos = (process.env.ALLOWED_HUB_REPOS || '').split(/[\s,]+/).filter(Boolean);
+            const storyUriMatch = body.match(/story_uri:\s*(\S+)/);
+            const hasAllowedStoryUri = storyUriMatch
+              ? allowedHubRepos.some(h => storyUriMatch[1].includes(h))
+              : false;
+
+            if (!hasRelatedMarker && !hasAllowedStoryUri) {
+              core.notice('No Related: #N marker or allowed story_uri — skipping cleanup (EC-2 cross-repo orphan guard)');
+              return;
+            }
+
+            const issueOrPrNumber = context.payload.pull_request?.number || context.payload.issue?.number;
+            if (!issueOrPrNumber) {
+              core.warning('No PR or Issue number — skipping');
+              return;
+            }
+
+            // Phase transition → prior phase gate mapping (Change Plan §3.2.A).
+            // phase:설계 / phase:설계-리뷰 → no prior gate (Phase 1 시작)
+            // phase:구현 / phase:구현-리뷰 → gate:design-review-pass retain (CFP-342 fix — 구현 단계도 여전히 요구)
+            // phase:구현-테스트 → gate:design-review-pass retain
+            // phase:보안-테스트 → gate:design-review-pass 제거 대상 (보안테스트 phase 진입 = design-review 완료)
+            //
+            // AC-4 safety-first: gate absent 시 removeLabel 호출 안 함 + alert comment.
+            const GATE_TO_REMOVE_ON_TRANSITION = {
+              'phase:보안-테스트': 'gate:design-review-pass'
+              // 미래 배포 phase: CFP-1059 S2/S3 sub-Story carrier 후 추가
+            };
+
+            const gateToRemove = GATE_TO_REMOVE_ON_TRANSITION[newPhaseLabel];
+
+            if (!gateToRemove) {
+              core.notice(`Phase transition to '${newPhaseLabel}' — no prior gate to remove (retain semantics)`);
+              return;
+            }
+
+            // 현재 부착된 label 목록 조회
+            let currentLabels = [];
+            try {
+              const { data: labelsData } = await github.rest.issues.listLabelsOnIssue({
+                owner,
+                repo,
+                issue_number: issueOrPrNumber
+              });
+              currentLabels = labelsData.map(l => l.name);
+            } catch (e) {
+              core.warning(`listLabelsOnIssue failed: ${e.message} — skipping`);
+              return;
+            }
+
+            const hasGateToRemove = currentLabels.includes(gateToRemove);
+
+            if (!hasGateToRemove) {
+              // AC-4 safety-first: gate absent 시 action_required alert (NOT auto-fix).
+              // silent non-apply 대신 comment alert — manual decision 의무 (ADR-035 정합).
+              const alertBody = `[auto-cleanup: gate absent] \`${gateToRemove}\` not present on this PR/Issue when transitioning to \`${newPhaseLabel}\`. Manual decision required — verify gate evidence before proceeding.`;
+              try {
+                await github.rest.issues.createComment({
+                  owner,
+                  repo,
+                  issue_number: issueOrPrNumber,
+                  body: alertBody
+                });
+              } catch (e) {
+                core.warning(`createComment (alert) failed: ${e.message}`);
+              }
+              core.notice(`AC-4 safety-first: '${gateToRemove}' absent — alert comment created, no auto-remove`);
+              return;
+            }
+
+            // §7.4.3 clock (ADR-079): audit comment 안 KST display layer 강제 (+09:00 offset).
+            const nowUtc = new Date();
+            const kstOffset = 9 * 60;  // +09:00
+            const kstDate = new Date(nowUtc.getTime() + kstOffset * 60 * 1000);
+            const kstIso = kstDate.toISOString().replace('Z', '+09:00');
+
+            // stage 3: removeLabel (try/catch 404 silent ok — §7.4.2 idempotency)
+            try {
+              await github.rest.issues.removeLabel({
+                owner,
+                repo,
+                issue_number: issueOrPrNumber,
+                name: gateToRemove
+              });
+              core.notice(`Removed stale gate label '${gateToRemove}' (phase transition to '${newPhaseLabel}')`);
+            } catch (e) {
+              if (e.status === 404) {
+                // 이미 absent — idempotent retry safe (§7.4.2)
+                core.notice(`Label '${gateToRemove}' already absent (idempotent retry safe)`);
+              } else {
+                core.warning(`removeLabel failed: ${e.message}`);
+                return;
+              }
+            }
+
+            // stage 4: audit comment — PR/Issue 에 제거 이력 기록.
+            // Story §14 audit row append 는 Orchestrator monopoly (ADR-031 §결정 1) — workflow 자체는 PR comment 만.
+            const auditBody = `[auto-cleanup: \`${gateToRemove}\` removed at ${kstIso}, phase-to: ${newPhaseLabel}]`;
+            try {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: issueOrPrNumber,
+                body: auditBody
+              });
+            } catch (e) {
+              core.warning(`createComment (audit) failed: ${e.message}`);
+            }
