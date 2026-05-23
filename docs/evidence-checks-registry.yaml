@@ -3933,7 +3933,7 @@ entries:
       failure_threshold: 0          # ADR-060 §결정 6 (b)
       sibling_dependencies:
         - CFP-1346                  # 본 entry self-carrier (Wave 1 declarative anchor — evidence-checks-registry entry + ADR-108 frontmatter + ADR-RESERVATION row 108 + label-registry-v2 v2.53 entry + MANIFEST.yaml row + CLAUDE.md cross-ref + Change Plan)
-        # Phase 2 별 sub-CFP — scripts/check-label-registry-frozen-baseline-count-parity.sh + workflow + bats fixture wire (TBD)
+        - CFP-1346-phase2       # Phase 2 wire 완료 — scripts/check-label-registry-frozen-baseline-count-parity.sh (bash thin wrapper, ADR-061) + scripts/lib/check_label_registry_frozen_baseline_count_parity.py (Python SSOT) + templates/github-workflows/ + .github/workflows/ + tests/scripts/cfp-1346/ (bats 6 TC) 신설
       evidence_artifacts:
         - github_actions_run_history_url
         - lint_failure_count_zero_proof
@@ -3948,4 +3948,4 @@ entries:
       threshold: 3                  # ADR-060 §결정 19 Amendment 6 / schema v1.2 standard default — 2 reach Mandatory escalation 의무 충족 후 3 reach 시 auto-firing 강화
       last_occurrence: "2026-05-23T00:00:00Z"  # CFP-1302 v2.52 baseline frozen final sentinel KST 09:00 = UTC 00:00 (registry schema v1.2 정합)
       promotion_trigger: auto_blocking  # recurrence.count = 2 < threshold = 3 → 발화 미발효 (Mandatory escalation 이미 충족), 3 reach 시 auto-firing
-    status: deferred-followup  # Wave 1 declarative anchor only — actual lint script + workflow + bats + label = Phase 2 별 sub-CFP carrier (mcp-token-freshness Wave 2 + worktree-self-ownership-verify + subagent-sibling-story-polling-evidence deferred-followup precedent 답습)
+    status: warning  # Phase 2 wire 완료 (CFP-1346 Phase 2) — script + workflow + bats fixture 신설. deferred-followup → warning 전환 (ADR-060 §결정 5 default 새 entry pattern, 2026-05-24T00:00:00+09:00 KST)
