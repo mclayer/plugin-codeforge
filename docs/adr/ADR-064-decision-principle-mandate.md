@@ -93,6 +93,15 @@ amendment_log:
     direction: weaken  # 약화 차단(top-down ratchet) 제거 = 약화 방향. evidence-gated symmetric 첫 self-application.
     sunset_justification: |
       본 amendment = 약화 방향 (이전 §결정 7 "약화 차단" 규칙을 약화) → 재정의 전 규칙상 sunset_justification 의무 (self-referential — evidence-gated symmetric 의 첫 자기 적용). evidence: (1) Researcher net 35% 정당화 + Codex ROI indeterminate 병렬 critical evaluation 수렴 (2) sunset asymmetry metric — 실 retire 0건 / is_transitional:false 85건 / decommission 0 match (3) ratchet stacking loop 실시간 demonstration. ADR-058 §결정 5 (재정의 후 — 약화 evidence requirement) 정합. is_transitional: false 유지 (governance permanent — symmetric 자체는 영구 정책).
+  - amendment: 9
+    carrier_story: CFP-1354
+    date: 2026-05-24
+    summary: |
+      §결정 4 Trace 4 (multi-task spawn default = parallel) 의 surgical exception channel codify. 429 burst 영역 lane-specific cap exception 분리 (ADR-109 §결정 4 circuit breaker 3-window AND cross-ref + ADR-044 Amendment 2 `parallel_spawn_cap` + `spawn_stagger_ms` + `cascade_circuit_breaker` 3 field cross-ref). paradigm replacement 비대상 명시 (ADR-097 §결정 1 closed-set 3 조건 AND 미충족 — 본 Story = 4 ADR amendment + 1 신설 sunset 0).
+      Story A (CFP-1354) Phase 1 PR scope. 사용자 발화 verbatim "Server is temporarily limiting requests (not your usage limit)" (Story §1, story-section-1-immutable 강제) 의 in-process axis — Anthropic infra 429 surgical mitigation framework (ADR-109 신규 SSOT 신설) carrier. Trace 4 본문 무변경, surgical exception clause append (lane-specific cap exception channel codify) only. ADR-064 §결정 5 CFP scope unitary 정합 (단일 Story carrier — paradigm replacement 면제 carve-out 비대상). forbid-list 미적용 영역 retain (parallel default 본문 무변경).
+    direction: strengthening  # surgical exception channel codify = 강화 방향 (Trace 4 본문 무변경, exception clause append only)
+    sunset_justification: |
+      Story A = surgical 강화 영역 (paradigm replacement 아닌 lane-specific cap channel codify). ADR-097 §결정 1 carve-out 비대상 명시 의무 정합 (closed-set 3 조건 AND 미충족 — 4 ADR amendment + 1 신설 sunset 0). ADR-064 §결정 5 CFP scope unitary 정합 (단일 Story carrier). ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (surgical exception channel codify), 약화 0건. forbid-list 미적용 영역 retain (Trace 4 multi-task spawn parallel default 본문 무변경, surgical exception clause append only).
 mechanical_enforcement_actions:
   - action: parallel-dispatch-prompt-check
     binding: 본 Amendment 1 §결정 4 Trace 4 implementation contract (`docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md` §3 의 4 의무 항목) — Orchestrator → PL spawn prompt 검증 lint (warning tier, ADR-060 framework 정합)
