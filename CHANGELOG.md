@@ -7,6 +7,34 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.5.0] - 2026-05-23
+
+### Changed
+
+- [CFP-1303] **review-verdict-v4 sibling sync v4.8 → v4.9 MINOR** — CFP-604 retro F7 Wave 2 carrier (Wave 1 [CFP-1291](https://github.com/mclayer/plugin-codeforge/issues/1291) prose-only anchor 위 schema layer codify).
+  - `findings[].parallel_anchors_checked` optional array field 신설 (additive backward-compat — `findings[].anchor_id` v4.1 pattern 답습)
+  - 각 entry = `{file_line: string, pattern_type: enum 5종 closed-set, matched: bool}`
+  - `pattern_type` 5종 enum closed-set: `local_remote` (LOCAL_X ↔ REMOTE_X — CFP-604 evidence) / `client_server` (RPC 양방향) / `read_write` (file I/O 대칭) / `forward_reverse` (encode↔decode) / `enum_closure` (enum value 전수 coverage)
+  - `matched: bool` = 검색 evidence 명시 (true = parallel anchor 발견, false = clean enumeration, field absent = 검색 미수행 — Wave 3 lint heuristic 영역)
+  - **ADR-068 I-2 cross-module propagation completeness 의 review-verdict layer realization** (micro-scale parallel form, semantic anchor — propagation matrix module-level vs `parallel_anchors_checked` finding-level disjoint axis)
+  - **Trigger evidence**: CFP-604 F-CR-604-2 (LOCAL_AUTHOR `check-version-bump-atomic.sh:76` jq fallback unreachable) catch 후 후속 CI 에서 REMOTE_AUTHOR `check-version-bump-atomic.sh:213` (동일 root cause jq object/scalar handling) 미catch 발견 → continuation commit `85b6042` 필요. pattern_count 2 evidence.
+  - **Wave 1 → Wave 2 → Wave 3 layered architecture**: Wave 1 prose anchor (CFP-1291 MERGED 2026-05-23 09:23 KST codeforge-review #42) / Wave 2 schema codify (본 CFP-1303) / Wave 3 mechanical lint presence-grep heuristic (deferred-followup, 별 carrier)
+  - 적용 lane: **CodeReviewPL** (primary) — Wave 1 CFP-1291 본문 정합 / **DesignReviewPL** + **SecurityTestPL** (optional)
+  - verdict-level boolean field 신설 0건 — `mechanical_self_check_passed` / `boundary_completeness_self_check_passed` / `dimensional_empirical_self_check_passed` / `audit_gate_pointer_self_check_passed` / `deputy_axis_restructure_self_check_passed` 5 verdict-level boolean 과 disjoint axis (anchor_id pattern 답습 finding-level array)
+  - ADR-008 §결정 2 "새 선택 필드 추가" MINOR bump 정합. Runtime impact 없음 (기존 v4.8 consumer 가 본 신규 field 무시 가능 = backward-compat invariant)
+  - CFP-1117-S4 wrapper sibling sync precedent 답습 (canonical + wrapper atomic, 5 other lane plugin sweep [requirements / design / develop / test / pmo] = 별 follow-up CFP — CFP-1167 precedent)
+  - mirrored field: 6.4.6 → 6.5.0 MINOR (additive contract field per ADR-037 — governance behavior 확장). Marketplace sibling sync.
+
+### Files touched
+- `docs/inter-plugin-contracts/review-verdict-v4.md` (wrapper sibling) — v4.8 → v4.9 MINOR (frontmatter version + related_adrs ADR-068 cross-ref append + authors CFP-1303 entry + amendment_log v4.9 entry + findings[] schema block parallel_anchors_checked field + §16 신설 cross-anchor parity check enumeration section)
+- `docs/inter-plugin-contracts/MANIFEST.yaml` — review-verdict-v4.md contract_version 4.8 → 4.9 + CFP-1303 row comment append
+- `.claude-plugin/plugin.json` — version 6.4.6 → 6.5.0 + description CFP-1303 entry prepend
+- `CHANGELOG.md` — 본 entry
+
+### Out of scope (별 follow-up CFP carrier)
+- **Wave 3 mechanical lint**: `parallel_anchors_checked` field presence-grep heuristic on finding emit (deferred-followup, ADR-064 §결정 1 scope unitary)
+- **5 other lane plugin sibling sweep** (requirements / design / develop / test / pmo v4.8 → v4.9 mirror): CFP-1167 precedent 답습 — 별 follow-up CFP
+
 ## [6.4.6] - 2026-05-23
 
 ### Changed
