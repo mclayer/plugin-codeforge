@@ -168,6 +168,28 @@ assert_contains \
     "$TEMPLATES_WORKFLOW" \
     "phase:구현"
 
+# CFP-1333: phase:배포 branch presence + gates: ['gate:deploy-pass'] mapping (CFP-1059 / ADR-087)
+assert_contains \
+    "CFP-1333: phase:배포 branch presence" \
+    "$TEMPLATES_WORKFLOW" \
+    "phaseLabel === 'phase:배포'"
+
+assert_contains \
+    "CFP-1333: phase:배포 → gates: ['gate:deploy-pass'] mapping" \
+    "$TEMPLATES_WORKFLOW" \
+    "gates: ['gate:deploy-pass']"
+
+# CFP-1333: phase:배포-리뷰 branch presence + gates: ['gate:deploy-review-pass'] mapping (CFP-1059 / ADR-088)
+assert_contains \
+    "CFP-1333: phase:배포-리뷰 branch presence" \
+    "$TEMPLATES_WORKFLOW" \
+    "phaseLabel === 'phase:배포-리뷰'"
+
+assert_contains \
+    "CFP-1333: phase:배포-리뷰 → gates: ['gate:deploy-review-pass'] mapping" \
+    "$TEMPLATES_WORKFLOW" \
+    "gates: ['gate:deploy-review-pass']"
+
 # ============================================================================
 # 3. T2-T7 BLOCK 보장: 3-조건 AND partial 충족 시 fast-pass 미발동 검증
 #    (structural: 3-조건 모두 AND 결합이어야 fast-pass)

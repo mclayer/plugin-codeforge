@@ -398,6 +398,12 @@ jobs:
               // CFP-342 fix: Phase 2 PR (구현 phase) — gate:design-review-pass 만 요구
               // (CFP-317 / ADR-048: security-test gate 기본 불필요, lanes.security_ai:true opt-in만)
               required = { phase: phaseLabel, gates: ['gate:design-review-pass'] };
+            } else if (phaseLabel === 'phase:배포' || phaseLabel === '배포') {
+              // CFP-1333 / ADR-087: Deploy lane PR — gate:deploy-pass single AND-매핑
+              required = { phase: phaseLabel, gates: ['gate:deploy-pass'] };
+            } else if (phaseLabel === 'phase:배포-리뷰' || phaseLabel === '배포-리뷰') {
+              // CFP-1333 / ADR-088: Deploy Review lane PR — gate:deploy-review-pass single AND-매핑
+              required = { phase: phaseLabel, gates: ['gate:deploy-review-pass'] };
             } else {
               // No Story binding — file-based heuristic (legacy).
               // CFP-317 / ADR-048: code PRs no longer require gate:security-test-pass by default.
