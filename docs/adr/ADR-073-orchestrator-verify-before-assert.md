@@ -44,6 +44,13 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 5 + §결정 1-A transition trigger 표 5번째 row"
     sunset_justification: null
+  - amendment_id: 6
+    cfp: CFP-1318
+    date: 2026-05-23
+    scope: "§결정 1 expansion — transition trigger enum 6번째 entry `sibling_story_handoff` 추가 (closed-set ratchet 강화, Amendment 2/3/5 §결정 1-A precedent 답습). Epic 안 복수 Story 가 sequential 또는 parallel 진행 시, agent / subagent (chief author / Analyst / Researcher / PL deputy) 가 sibling Story 의 진행 상태 / scope / artifact ownership 을 단정 발화하는 시점 의무. Orchestrator 단독 행위 영역 (base + Amendment 1-5) 을 agent / subagent 행위 영역 (sibling Story state polling) 으로 확장한다 — verify subject = agent / subagent, verify object = sibling Story state, verify direction = bidirectional (chief↔Orchestrator 양방향 catch). 본 Amendment 는 §결정 1-8 본문 + Amendment 1+2+3+4+5 scope 강화 only (ADR-058 §결정 5 ratchet 정합) — 약화 / scope 축소 / 면제 영역 0건. Pattern_count 3 reach Mandatory escalation (PMOAgent W5 retros 누적 corpus enumeration sentinels CFP-1226 + CFP-1269 + CFP-1273, Epic-A #1146 close retro internal-docs#797 carrier — 3 occurrences of `sibling_story_stale_claim_at_handoff` super-class), ADR-045 §D-9 Mandatory framing 정합. evidence-checks-registry warning-tier entry `subagent-sibling-story-polling-evidence` 신설 = mechanical wire Wave 2 별 sub-CFP (declaration-only-Wave-1 retain, parallel-work-sentinel-pickup precedent 답습). memory rule 6 (title-based search) + rule 7 (Epic state poll) declarative cross-ref normative anchor — 본 Amendment 6 가 detection layer (Orchestrator-side) 의 sibling-edge complement (agent/subagent-side) 확장한다."
+    status: applied
+    ref: "## Amendments / Amendment 6 + §결정 1-A transition trigger 표 6번째 row"
+    sunset_justification: null
 related_stories:
   - CFP-622  # carrier
   - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
@@ -56,6 +63,7 @@ related_stories:
   - CFP-983  # Amendment 3 candidate (c) 정식 carrier — #983 P1 ESC body shared workdir collision worktree-first invariant 강화 영역
   - CFP-1041 # Amendment 4 — ADR-085 disjoint complement (verify axis ↔ coordination axis), §결정 1 lane-entry sentinel 4-step polling 의 4번째 source `active_sessions_check` cross-ref-only append
   - CFP-1102 # Amendment 5 — transition trigger enum 5번째 entry `fix_iter_start` 추가 (FIX iter 시점 main HEAD pin verify mandate), CFP-1087 cascade race evidence
+  - CFP-1318 # Amendment 6 — transition trigger enum 6번째 entry `sibling_story_handoff` (bidirectional verify-before-trust, agent/subagent sibling Story state polling 영역 확장), CFP-1226+CFP-1269+CFP-1273 sentinel pattern_count 3 Mandatory
   - CFP-597  # sentinel #4 strike #1 origin (CLAUDE.md cap + playbook §3.6 false alarm)
   - CFP-578  # ADR-070 verify-before-trust 자매 (external worker output)
   - CFP-612  # ADR-071 dialog convergence 자매 governance
@@ -70,6 +78,7 @@ related_adrs:
   - ADR-012  # CLAUDE.md cap (cross-ref 추가 시 압축 plan 동반)
   - ADR-040  # mechanical_enforcement_actions[] frontmatter 의무 (governance category)
   - ADR-085  # Amendment 4 — disjoint complement (verify axis ↔ coordination axis, ADR-085 §결정 1 5-layer 표 anchor)
+  - ADR-045  # §D-9 Mandatory framing — pattern_count ≥ threshold 2 escalation forcing function (본 Amendment 6 = pattern_count 3 reach Mandatory)
 related_files:
   - CLAUDE.md  # 결정 원칙 section + ADR list 영역 cross-ref
   - skills/codeforge-brainstorm/SKILL.md  # verify 의무 amend
@@ -444,8 +453,9 @@ Amendment 2 §결정 1-A 의 transition trigger enum 3종 (`lane_spawn` / `pr_op
 | `merge_transition` (Amendment 2) | PR merge 직전 + merge 직후 gate label / phase label transition | merge command 직전 + 직후 transition action 직전 | 동일 3-step + Epic state final poll |
 | **`worktree_lane_spawn` (Amendment 3, 신규)** | **worktree-first lane spawn 직전 (`Agent` tool 호출 prompt 안 worktree path 주입 직전)** | **lane spawn 직전 + subagent verdict `parallel_session_conflict` 발화 직후** | **§결정 1-D self-ownership verify 3-tuple (path-based, 아래)** |
 | **`fix_iter_start` (Amendment 5, 신규)** | **§10 FIX Ledger row append 직전 (FIX iter N > 0, 즉 N=1 첫 FIX iter 부터)** | **§10 row write + lane re-spawn 직전** | **§결정 1-E main HEAD pin verify (아래) + Amendment 2 §결정 1-A 3-step 재실행** |
+| **`sibling_story_handoff` (Amendment 6, 신규)** | **agent / subagent 가 sibling Story (동일 Epic 안 sequential / parallel Story) 의 진행 상태 / scope / artifact ownership 을 단정 발화 직전** | **chief author / Analyst / Researcher / PL deputy spawn prompt 안 sibling Story 인용 직전 + verdict packet sibling Story state claim 직전** | **§결정 1-G sibling Story state polling primitive (아래) — 3-step `gh issue view <sibling> --json state,labels,closedAt` + `gh pr list --search "head:cfp-<sibling>"` + Epic parent `gh issue view <epic> --json subIssues` cross-check** |
 
-closed enum — 6번째 trigger 추가 시 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
+closed enum — 7번째 trigger 추가 시 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
 
 #### Amendment 3 §결정 1-D — Self-ownership verify 3-tuple (path-based, 사용자 prompt identity-based 대안 채택)
 
@@ -553,7 +563,7 @@ Amendment 2/3 §결정 1-A precedent 답습 (transition trigger enum closed-set 
 | 발화 시점 | §10 row write 직전 + 후속 lane re-spawn 직전 (양 시점 모두 verify 의무) |
 | Verify 의무 | §결정 1-E main HEAD pin verify (아래) + Amendment 2 §결정 1-A 3-step (title-based search + Epic poll + HEAD compare) 재실행 |
 
-closed enum — 6번째 trigger 추가 시 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
+closed enum — 7번째 trigger 추가 시 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
 
 #### §결정 1-E — Main HEAD pin verify (FIX iter trigger 영역)
 
@@ -609,3 +619,75 @@ Amendment 2 §결정 1-A 3-step (title-based search + Epic state poll + HEAD com
 ## 해소 기준
 
 N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (ratchet 강화 방향 only — verify scope 확장). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과. is_transitional: false (영구 정책).
+
+### Amendment 6 — `sibling_story_handoff` transition trigger 6번째 entry (bidirectional verify-before-trust, CFP-1318)
+
+**날짜**: 2026-05-23
+
+#### 동기
+
+Epic 안 복수 Story 가 sequential 또는 parallel 진행 시, agent / subagent (chief author / Analyst / Researcher / PL deputy) 가 sibling Story 상태 / scope / artifact ownership 단정 발화 영역이 base §결정 1 + Amendment 2/3/5 scope 외 — agent / subagent 가 spawn 직전 stale sibling state 를 ground truth 로 단정하는 anti-pattern.
+
+**Sentinel evidence** (pattern_count 3 reach Mandatory per ADR-045 §D-9):
+- **CFP-1226**: chief author (ArchitectAgent) 가 sibling Story ADR 결정 wording 을 stale 채로 carrier 본문 cite → DesignReviewPL 미catch (sibling = 다른 lane review scope) → merged 후 wording drift.
+- **CFP-1269**: Analyst subagent prior art 인용 시 sibling Story 결정 사항 (이미 amended) 을 amend 직전 snapshot 으로 cite → chief synthesis stale.
+- **CFP-1273**: Researcher subagent brainstorm Phase 0 context fetch 시 sibling Story scope (partial close / sub-Story 분기) 단정 → spec/plan stale assumption 박제 → Phase 1 ArchitectAgent 재cite contagion.
+
+super-class = `sibling_story_stale_claim_at_handoff`. **bidirectional verify-before-trust** — Orchestrator 만 verify 시 chief stale 차단 불가, chief 만 verify 시 Orchestrator handoff stale 차단 불가.
+
+#### §결정 1 expansion — `sibling_story_handoff` transition trigger 6번째 entry
+
+Amendment 2/3/5 precedent 답습 (closed-set ratchet 강화). 본 Amendment 6 = 6번째 entry append.
+
+| Field | Value |
+|---|---|
+| ID | `sibling_story_handoff` |
+| Transition trigger | agent / subagent (chief / Analyst / Researcher / PL deputy) 가 sibling Story 진행 상태 / scope / artifact ownership 단정 발화 직전 |
+| 발화 시점 | (a) chief / Analyst / Researcher spawn prompt 안 sibling Story 인용 직전 (b) PL verdict packet sibling Story state claim 직전 (c) brainstorm Phase 0 context fetch 시 sibling Story scope 단정 직전 |
+| Verify 의무 | §결정 1-G primitive 3-step + Amendment 2 §결정 1-A 3-step 재실행 |
+| Verify subject | **agent / subagent (확장 영역)** — Orchestrator 단독 영역 (base + Amd 1-5) 에서 확장. subject 확장 시 동등 mandate |
+| Verify direction | **bidirectional** — Orchestrator → chief handoff direction + chief → Orchestrator verdict direction 양방향 |
+
+closed enum — **7번째 trigger 추가 시** Amendment 강화 방향만. open_extension: false.
+
+#### §결정 1-G — Sibling Story state polling primitive
+
+`sibling_story_handoff` transition 시점 verify 의무 (memory rule 6 + rule 7 declarative cross-ref):
+
+| Step | Verify command | PASS 조건 | Fallback |
+|---|---|---|---|
+| 1. sibling state pin | `gh issue view <sibling> --json state,labels,closedAt,updatedAt` | state field returned, updatedAt within session window (5+ min old → re-poll) | API 실패 시 advisory + cached state (graceful degradation) |
+| 2. sibling PR head compare | `gh pr list --search "head:cfp-<sibling>" --state all --json number,state,mergedAt,headRefOid` | PR list returned (empty OK — sibling 미진입), merged 시 mergedAt vs session start 비교 | `gh pr list --label parent:CFP-<epic>` (memory rule 6) |
+| 3. Epic parent sub-issue | `gh issue view <epic> --json subIssues` parse | sibling Story membership + state 일치 | `gh issue list --search "parent-issue:<epic>"` (memory rule 7) |
+
+3-step PASS 시 — `verified-via: gh issue view <sibling> + gh pr list head + gh issue view <epic> subIssues` annotation 의무. 미충족 시 spawn 중단 + advisory escalate.
+
+**Bidirectional catch protocol**:
+- **Orchestrator → chief** (handoff): Orchestrator 가 chief spawn prompt 작성 직전 verify (sentinel #1 차단).
+- **chief → Orchestrator** (verdict): chief / Analyst / Researcher / PL deputy 가 verdict packet sibling state claim 작성 직전 verify (sentinel #2/#3 차단).
+
+양방향 모두 mandate — 단방향 catch 시 contagion 재발 risk.
+
+#### §결정 1-H — agent vs subagent actor scope (ADR-039 inline whitelist boundary cross-ref)
+
+base §결정 1 (Orchestrator subject 한정) → Amendment 6 (Orchestrator ∪ agent ∪ subagent). subject 확장 = verify mandate 동등 적용 (약화 0건, ADR-058 §결정 5 ratchet 정합).
+
+신규 의무 영역:
+- agent / subagent → Orchestrator verdict 안 sibling Story state claim = 의무 (본 Amendment 6 §결정 1-G, chief→Orchestrator direction).
+- Orchestrator → chief spawn prompt 안 sibling Story 인용 = 의무 (본 Amendment 6 §결정 1-G, Orchestrator→chief direction).
+
+#### Amendment 6 — Wave 1 declaration / Wave 2 mechanical wire 분리
+
+`mechanical_enforcement_actions: [parallel-work-sentinel-pickup, worktree-self-ownership-verify]` (2 entry unchanged — Wave 1 retain, 3rd entry append 보류). Wave 2 별 sub-CFP carrier = `subagent-sibling-story-polling-evidence` warning-tier entry 신설 (recurrence count 3 / threshold 3 already reached / auto_blocking, sibling_dependencies: [CFP-1318, TBD-Wave-2]).
+
+Wave 1 retain rationale: Researcher 권고 (spawn prompt grep heuristic false-negative risk, CFP-963 codex-network-scope-presence precedent). Amendment 5 (CFP-1102 fix_iter_start) 동일 Wave 1 declarative anchor only 답습 (precedent consistency).
+
+#### Amendment 6 — Disjoint axis cross-ref
+
+- **ADR-082**: write-time semantic truth verify (corpus / cross-plugin). 본 Amd 6 = sibling Story state verify. write-time input value ≠ sibling state handoff, axis disjoint.
+- **ADR-085**: multi-session collaboration coordination (pre-hoc cross-session). 본 Amd 6 = single session 안 agent/subagent sibling Story polling (verify axis, post-hoc cross-Story). ownership coordination ≠ sibling state polling, axis disjoint.
+- **ADR-045 §D-9**: PMOAgent retro corpus pattern_count threshold escalation. 본 Amd 6 = pattern_count 3 reach Mandatory carrier (CFP-1226+1269+1273), 첫 적용 사례 of family.
+
+#### Amendment 6 — sunset_justification N/A 정당
+
+`is_transitional: false` (영구 governance policy) 보존 — Amendment 6 scope = 본문 + Amendment 1+2+3+4+5 강화 방향 only (enum 6번째 entry append + sibling state polling primitive 신설 + subject scope 확장 Orchestrator → Orchestrator ∪ agent ∪ subagent + bidirectional catch protocol 신설). 약화 / scope 축소 / 면제 영역 0건. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과 (Amendment 1+2+3+4+5 동형 precedent). ADR-064 §self-application top-down ratchet 정합.
