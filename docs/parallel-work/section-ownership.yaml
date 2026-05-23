@@ -539,4 +539,63 @@ owned_sections:
     # applicability filter (R-2 marker_merge 와 disjoint axis 명시). append-only —
     # R-3 신설 영역 외 영역 변경 0 (R-2 보존).
 
+  - file: docs/adr/ADR-082-write-time-self-write-verification-mandate.md
+    section: "Amendment 7 — §결정 9 verify-before-cite scope 양방향 확장 + CFP-1216 lint Check (b) backward-staleness wire (CFP-1312, 2026-05-23 KST)"
+    owner_adr: ADR-082
+    parallel_edit: append-only
+    # NOTE (CFP-1312): ADR-082 Amendment 7 신설 — §결정 9 wording 양방향 확장 (forward only → forward + backward)
+    # + frontmatter amendments[] / amendment_log[] entry 7 append + Amendment 7 본문 section append +
+    # related_stories CFP-1312/CFP-1293/CFP-1216 append + 관련 ADR ADR-063/ADR-061 append.
+    # 본 ADR §결정 1~8 + §결정 9 (Amendment 6) + Amendment 1~6 본문 의미 변경 0 (append-only invariant).
+    # ratchet 강화 방향 (forbid scope 확장 — `M = max+1` 정확 next-slot 외 모두 stale), is_transitional: false 유지.
+
+  - file: scripts/lib/check_amendment_number_stale.py
+    section: "check_doc_citations() Check (b) 양방향 staleness 비교 + [FORWARD-STALE] / [BACKWARD-STALE] label 분리 + _is_template_path() FP-완화 guard 2 (CFP-1312 / ADR-082 Amendment 7)"
+    owner_adr: ADR-082
+    parallel_edit: append-only
+    # NOTE (CFP-1312): CFP-1216 Python SSOT Check (b) 양방향 확장. Check (a) / parse_args / resolve_adr_dir /
+    # parse_frontmatter / extract_amendment_ids / check_adr_file / build_adr_max_cache / main 보존
+    # (변경 0). 신설 = _is_template_path() helper + check_doc_citations() body 양방향 비교 로직.
+    # ADR-061 §결정 1 Python SSOT 유지. exit code semantics retain (warning-tier exit 0 always).
+
+  - file: tests/scripts/cfp-1216/cfp-1216-amendment-stale.bats
+    section: "Check (b) Amendment 7 양방향 staleness TC 6 신설 (TC-B-BWD-EXACT / TC-B-BWD-DEEP / TC-B-FWD-EXACT-NEXT / TC-B-FWD-LABEL / TC-B-TEMPLATE-EXEMPT / TC-B-SELF-REF-EXEMPT) + 기존 TC-B2 expected output 정정 (CFP-1312)"
+    owner_adr: ADR-082
+    parallel_edit: append-only
+    # NOTE (CFP-1312): Check (a) TC + bypass + SELF-TEST 보존. TC-B2 / TC-B2-negative 기존 expected
+    # output 정정 (Amendment 7 wording 정합 — M=2, max=3 → BACKWARD-STALE). Amendment 7 양방향 TC 6
+    # 신설. forward retain regression 0 (TC-B1 + TC-B-FWD-LABEL).
+
+  - file: docs/evidence-checks-registry.yaml
+    section: "entries[] `amendment-number-frontmatter-verify` description Check (b) 양방향 staleness codify + sibling_dependencies[] CFP-1312 append + extended_by CFP-1312 + last_extended_date 2026-05-23 + last_updated header CFP-1312 prepend (CFP-1312 / ADR-082 Amendment 7)"
+    owner_adr: ADR-060
+    parallel_edit: append-only
+    # NOTE (CFP-1312): registry entry extend pattern (status warning retain, scope expand only).
+    # CFP-1216 baseline 영역 description Check (b) wording 양방향 codify + sibling_dependencies
+    # extend (CFP-1216 self-carrier + CFP-1312 Amendment 7 carrier). entries 신설 0건, 다른 entry 영향 0.
+
+  - file: docs/adr/ADR-RESERVATION.md
+    section: "amendments_reserved[] row append (ADR-082 Amendment 7 = CFP-1312, sibling pattern ADR-083 Amendment 3 = CFP-1293, 2026-05-23 KST status active 직접 전환 — ArchitectPL chief author precedent)"
+    owner_adr: ADR-050
+    parallel_edit: append-only
+    # NOTE (CFP-1312): amendments_reserved[] sub-tree (CFP-1058 schema) 안 row append.
+    # ADR number reservation 표 (row 1-104) 영역 변경 0 (별 영역). status `reserved` 미경유 직접
+    # `active` (ArchitectPL commit time 점유, ADR-082 row 82 active 패턴 정합).
+
+  - file: .claude-plugin/plugin.json
+    section: "version PATCH bump 6.5.1 → 6.5.2 (CFP-1312 — lint coverage 양방향 확장 = plugin behavior 변경, ADR-037 (a) Phase 2 code-only 정합)"
+    owner_adr: ADR-063
+    parallel_edit: locked
+    # NOTE (CFP-1312): mirrored field `version` 변경 = ADR-063 §결정 1 atomic invariant 발효 —
+    # marketplace sibling sync PR (marketplace.json plugins[name=codeforge].version 6.5.1 → 6.5.2)
+    # 의무. mirrored field 4종 (name / version / description / author) 중 version only 변경,
+    # non-mirrored field (keywords 등) 변경 0. locked — 본 Story 안 atomic, 동시 수정 시 merge-order 의무.
+
+  - file: CHANGELOG.md
+    section: "[Unreleased] / [6.5.2] entry append — CFP-1312 / ADR-082 Amendment 7 Check (b) 양방향 staleness 확장"
+    owner_adr: ADR-037
+    parallel_edit: append-only
+    # NOTE (CFP-1312): SemVer ADR-037 (a) PATCH — 신규 [6.5.2] entry insert (Unreleased 다음 라인).
+    # 기존 [6.5.1] entry 보존, [Unreleased] 헤더 유지. append-only — 다른 entry 영향 0.
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)

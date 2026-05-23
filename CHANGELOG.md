@@ -7,6 +7,23 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.5.2] - 2026-05-23
+
+### Changed
+
+- [CFP-1312] **ADR-082 Amendment 7 — §결정 9 verify-before-cite scope 양방향 확장 + CFP-1216 lint Check (b) backward-staleness wire** (dual-carrier, ADR-045 §D-9 pattern_count 3 reach Mandatory escalation 산물)
+  - `docs/adr/ADR-082-write-time-self-write-verification-mandate.md` Amendment 7 신설: frontmatter amendments[] / amendment_log[] entry 7 append + §결정 9 wording 양방향 확장 (forward only → forward + backward, `M = max+1` 정확 next-slot 외 모두 stale) + Amendment 7 본문 section append + related_stories CFP-1312/CFP-1293/CFP-1216 append
+  - `scripts/lib/check_amendment_number_stale.py` Check (b) `cited_m != max_id + 1` 양방향 비교 확장 + `[FORWARD-STALE]` / `[BACKWARD-STALE]` label format 분리 + `_is_template_path()` FP-완화 guard 2 (templates/** path filter — canonical example 면제)
+  - `tests/scripts/cfp-1216/cfp-1216-amendment-stale.bats` 양방향 staleness TC 6 신설 (TC-B-BWD-EXACT / TC-B-BWD-DEEP / TC-B-FWD-EXACT-NEXT / TC-B-FWD-LABEL / TC-B-TEMPLATE-EXEMPT / TC-B-SELF-REF-EXEMPT) + 기존 TC-B2 expected output 정정 (Amendment 7 wording 정합 — M=2, max=3 → BACKWARD-STALE)
+  - `docs/evidence-checks-registry.yaml` `amendment-number-frontmatter-verify` entry description Check (b) 양방향 staleness codify + sibling_dependencies CFP-1312 append + extended_by CFP-1312 + last_extended_date 2026-05-23 + last_updated header CFP-1312 prepend (status warning retain, scope expand only)
+  - `docs/adr/ADR-RESERVATION.md` amendments_reserved[] row append (ADR-082 Amendment 7 reserved → active 직접 전환, ArchitectPL chief author precedent — sibling pattern ADR-083 Amendment 3 CFP-1293)
+  - `docs/parallel-work/section-ownership.yaml` 7 entry append (ADR-082 Amendment 7 + scripts/lib/check_amendment_number_stale.py + bats fixture + evidence-checks-registry + ADR-RESERVATION + plugin.json + CHANGELOG)
+  - pattern_count 3 reach (CFP-1177 forward + CFP-1179 forward + **CFP-1293 backward** ADR-083 Amendment 2 with max=2) ≥ ADR-045 §D-9 threshold 2 Mandatory escalation
+  - root cause = Wave 1 behavioral 단독 불충분 아닌 Wave 2 mechanical lint Check (b) `M > max+1` forward-only coverage gap 으로 backward-staleness escape — Amendment 7 = 양방향 wire 보강
+  - is_transitional: false retain (permanent governance policy, ratchet 강화 방향: forbid scope 확장 `M = max+1` 외 모두 stale, ADR-058 §결정 5 sunset_justification "N/A — ratchet 강화 방향")
+  - dual-carrier (axis 동일, ADR-064 §결정 1 CFP scope unitary 정합): wording 보강 + lint coverage gap 보강
+  - PATCH bump 6.5.1 → 6.5.2 (ADR-037 (a) — mechanical lint coverage 확장 = plugin behavior 변경, ADR-063 §결정 1 marketplace sibling sync 의무 동반)
+
 ## [6.5.1] - 2026-05-23
 
 ### Changed
