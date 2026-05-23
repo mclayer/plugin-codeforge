@@ -51,6 +51,13 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 6 + §결정 1-A transition trigger 표 6번째 row"
     sunset_justification: null
+  - amendment_id: 7
+    cfp: CFP-1319
+    date: 2026-05-24
+    scope: "§결정 1 expansion — transition trigger enum 7번째 entry `stale_local_main_checkout` 추가 (closed-set ratchet 강화, Amendment 2/3/5/6 §결정 1-A precedent 답습). Orchestrator 가 main worktree (또는 본 session 시작 시점 checkout) 에서 src/* / docs/* / inter-plugin-contracts/* / ADR / Change Plan / Story 본문 file Read 시 working tree HEAD 가 origin/main 보다 stale (≥ N commits behind 또는 sibling session merge 후 미반영) 인 영역에서 chief / Analyst / Researcher 의 claim 을 ground truth 와 대조해 hallucination 으로 오분류 anti-pattern. 본 Amendment 7 = Orchestrator session-start cold start + pre-Read pre-flight `git fetch origin && git rev-parse origin/main vs HEAD` divergence detection mandate + divergence ≥ threshold 시 fresh worktree (EnterWorktree) 재진입 의무 + Read 의 ground truth = `git show origin/main:<path>` direct fetch (working tree file 우회). 본 Amendment 는 §결정 1-8 본문 + Amendment 1+2+3+4+5+6 scope 강화 only (ADR-058 §결정 5 ratchet 정합) — 약화 / scope 축소 / 면제 영역 0건. Pattern_count 3+ reach (Epic-A W5-S14 init + W5-S16 init + CFP-1318 본 session 다회 reproduction — Orchestrator 자가 catch 사례 포함 super-class `stale_local_main_checkout`), ADR-045 §D-9 Mandatory framing 정합. evidence-checks-registry warning-tier entry `stale-local-main-checkout-divergence-check` 신설 = mechanical wire Wave 2 별 sub-CFP (declaration-only-Wave-1 retain, parallel-work-sentinel-pickup + subagent-sibling-story-polling-evidence precedent 답습). memory `feedback_worktree_first_not_parallel_session` declarative cross-ref normative anchor — 본 Amendment 7 = Orchestrator self-Read 영역 (worktree-first 환경 안 stale local checkout 사용 anti-pattern) 차단 mandate."
+    status: applied
+    ref: "## Amendments / Amendment 7 + §결정 1-A transition trigger 표 7번째 row"
+    sunset_justification: null
 related_stories:
   - CFP-622  # carrier
   - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
@@ -64,6 +71,7 @@ related_stories:
   - CFP-1041 # Amendment 4 — ADR-085 disjoint complement (verify axis ↔ coordination axis), §결정 1 lane-entry sentinel 4-step polling 의 4번째 source `active_sessions_check` cross-ref-only append
   - CFP-1102 # Amendment 5 — transition trigger enum 5번째 entry `fix_iter_start` 추가 (FIX iter 시점 main HEAD pin verify mandate), CFP-1087 cascade race evidence
   - CFP-1318 # Amendment 6 — transition trigger enum 6번째 entry `sibling_story_handoff` (bidirectional verify-before-trust, agent/subagent sibling Story state polling 영역 확장), CFP-1226+CFP-1269+CFP-1273 sentinel pattern_count 3 Mandatory
+  - CFP-1319 # Amendment 7 — transition trigger enum 7번째 entry `stale_local_main_checkout` (Orchestrator pre-Read divergence detection mandate, working tree HEAD vs origin/main staleness), Epic-A W5-S14/S16 + CFP-1318 다회 reproduction sentinel pattern_count 3+ Mandatory
   - CFP-597  # sentinel #4 strike #1 origin (CLAUDE.md cap + playbook §3.6 false alarm)
   - CFP-578  # ADR-070 verify-before-trust 자매 (external worker output)
   - CFP-612  # ADR-071 dialog convergence 자매 governance
@@ -78,7 +86,8 @@ related_adrs:
   - ADR-012  # CLAUDE.md cap (cross-ref 추가 시 압축 plan 동반)
   - ADR-040  # mechanical_enforcement_actions[] frontmatter 의무 (governance category)
   - ADR-085  # Amendment 4 — disjoint complement (verify axis ↔ coordination axis, ADR-085 §결정 1 5-layer 표 anchor)
-  - ADR-045  # §D-9 Mandatory framing — pattern_count ≥ threshold 2 escalation forcing function (본 Amendment 6 = pattern_count 3 reach Mandatory)
+  - ADR-045  # §D-9 Mandatory framing — pattern_count ≥ threshold 2 escalation forcing function (본 Amendment 6 = pattern_count 3 reach Mandatory, 본 Amendment 7 = pattern_count 3+ reach Mandatory)
+  - ADR-040  # Amendment 3 §결정 7.D self-application precedent (Wave 1 declaration-only / Wave 2 mechanical wire 분리)
 related_files:
   - CLAUDE.md  # 결정 원칙 section + ADR list 영역 cross-ref
   - skills/codeforge-brainstorm/SKILL.md  # verify 의무 amend
@@ -454,8 +463,9 @@ Amendment 2 §결정 1-A 의 transition trigger enum 3종 (`lane_spawn` / `pr_op
 | **`worktree_lane_spawn` (Amendment 3, 신규)** | **worktree-first lane spawn 직전 (`Agent` tool 호출 prompt 안 worktree path 주입 직전)** | **lane spawn 직전 + subagent verdict `parallel_session_conflict` 발화 직후** | **§결정 1-D self-ownership verify 3-tuple (path-based, 아래)** |
 | **`fix_iter_start` (Amendment 5, 신규)** | **§10 FIX Ledger row append 직전 (FIX iter N > 0, 즉 N=1 첫 FIX iter 부터)** | **§10 row write + lane re-spawn 직전** | **§결정 1-E main HEAD pin verify (아래) + Amendment 2 §결정 1-A 3-step 재실행** |
 | **`sibling_story_handoff` (Amendment 6, 신규)** | **agent / subagent 가 sibling Story (동일 Epic 안 sequential / parallel Story) 의 진행 상태 / scope / artifact ownership 을 단정 발화 직전** | **chief author / Analyst / Researcher / PL deputy spawn prompt 안 sibling Story 인용 직전 + verdict packet sibling Story state claim 직전** | **§결정 1-G sibling Story state polling primitive (아래) — 3-step `gh issue view <sibling> --json state,labels,closedAt` + `gh pr list --search "head:cfp-<sibling>"` + Epic parent `gh issue view <epic> --json subIssues` cross-check** |
+| **`stale_local_main_checkout` (Amendment 7, 신규)** | **Orchestrator 가 main worktree (또는 본 session 시작 시점 checkout) 에서 src/* / docs/* / inter-plugin-contracts/* / ADR / Change Plan / Story 본문 file Read 시 working tree HEAD 가 origin/main 보다 stale (≥ N commits behind 또는 sibling session merge 후 미반영) 영역** | **session-start cold start + 매 lane spawn 직전 pre-Read pre-flight + chief / Analyst / Researcher claim 을 working tree file 과 대조 직전** | **§결정 1-I main checkout divergence detection primitive (아래) — `git fetch origin && git rev-parse origin/main vs HEAD` divergence ≥ threshold (default 1) 시 fresh worktree (EnterWorktree) 재진입 의무 + Read ground truth = `git show origin/main:<path>` direct fetch (working tree file 우회)** |
 
-closed enum — 7번째 trigger 추가 시 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
+closed enum — 8번째 trigger 추가 시 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
 
 #### Amendment 3 §결정 1-D — Self-ownership verify 3-tuple (path-based, 사용자 prompt identity-based 대안 채택)
 
@@ -563,7 +573,7 @@ Amendment 2/3 §결정 1-A precedent 답습 (transition trigger enum closed-set 
 | 발화 시점 | §10 row write 직전 + 후속 lane re-spawn 직전 (양 시점 모두 verify 의무) |
 | Verify 의무 | §결정 1-E main HEAD pin verify (아래) + Amendment 2 §결정 1-A 3-step (title-based search + Epic poll + HEAD compare) 재실행 |
 
-closed enum — 7번째 trigger 추가 시 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
+closed enum — 8번째 trigger 추가 시 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
 
 #### §결정 1-E — Main HEAD pin verify (FIX iter trigger 영역)
 
@@ -648,7 +658,7 @@ Amendment 2/3/5 precedent 답습 (closed-set ratchet 강화). 본 Amendment 6 = 
 | Verify subject | **agent / subagent (확장 영역)** — Orchestrator 단독 영역 (base + Amd 1-5) 에서 확장. subject 확장 시 동등 mandate |
 | Verify direction | **bidirectional** — Orchestrator → chief handoff direction + chief → Orchestrator verdict direction 양방향 |
 
-closed enum — **7번째 trigger 추가 시** Amendment 강화 방향만. open_extension: false.
+closed enum — **8번째 trigger 추가 시** Amendment 강화 방향만. open_extension: false.
 
 #### §결정 1-G — Sibling Story state polling primitive
 
@@ -691,3 +701,74 @@ Wave 1 retain rationale: Researcher 권고 (spawn prompt grep heuristic false-ne
 #### Amendment 6 — sunset_justification N/A 정당
 
 `is_transitional: false` (영구 governance policy) 보존 — Amendment 6 scope = 본문 + Amendment 1+2+3+4+5 강화 방향 only (enum 6번째 entry append + sibling state polling primitive 신설 + subject scope 확장 Orchestrator → Orchestrator ∪ agent ∪ subagent + bidirectional catch protocol 신설). 약화 / scope 축소 / 면제 영역 0건. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과 (Amendment 1+2+3+4+5 동형 precedent). ADR-064 §self-application top-down ratchet 정합.
+
+### Amendment 7 — `stale_local_main_checkout` transition trigger 7번째 entry (Orchestrator pre-Read divergence detection mandate, CFP-1319)
+
+**날짜**: 2026-05-24
+
+#### 동기
+
+Orchestrator 가 main worktree (또는 본 session 시작 시점 checkout) 에서 src/* / docs/* / inter-plugin-contracts/* / ADR / Change Plan / Story 본문 file Read 시 working tree HEAD 가 origin/main 보다 stale 인 영역 — sibling session merge 후 미반영 또는 cold session 진입 시점 cached snapshot — 안에서 chief / Analyst / Researcher claim 을 working tree file 과 대조 시, 정합 claim 을 hallucination 으로 오분류하는 anti-pattern. Orchestrator 자가 catch 시 false-positive `chief_hallucination` 진단 발화 + 정정 비용.
+
+**Sentinel evidence** (pattern_count 3+ reach Mandatory per ADR-045 §D-9, super-class `stale_local_main_checkout`):
+- **Epic-A CFP-1146 W5-S14 init**: Orchestrator main checkout stale HEAD (session-start snapshot, sibling session merge 후 미반영) → chief ADR §결정 wording claim 을 working tree file 과 대조 → 정합인데 hallucination 으로 오분류 → fresh worktree EnterWorktree 재verify 후 catch.
+- **Epic-A CFP-1146 W5-S16 init**: 동일 패턴 (W5-S15 sibling merge 후 main HEAD 미반영 영역 안 Analyst claim hallucination 오분류) → fresh worktree 재verify 후 catch.
+- **CFP-1318 본 session 다회**: brainstorm Phase 0 / Phase 2 packet 작성 시 main HEAD stale (Orchestrator 자가 catch — fresh worktree 재verify 메커니즘 작동 결과, 사용자 catch 0회).
+
+super-class = `stale_local_main_checkout`. **Orchestrator self-Read direction** — base + Amendment 1-6 의 verify subject scope (Orchestrator + agent + subagent) 안 누락된 channel = Orchestrator self-Read (working tree file 직접 Read 시 stale snapshot anti-pattern).
+
+#### §결정 1 expansion — `stale_local_main_checkout` transition trigger 7번째 entry
+
+Amendment 2/3/5/6 precedent 답습 (closed-set ratchet 강화). 본 Amendment 7 = 7번째 entry append.
+
+| Field | Value |
+|---|---|
+| ID | `stale_local_main_checkout` |
+| Transition trigger | Orchestrator 가 main worktree (또는 본 session 시작 시점 checkout) 안 working tree file 을 ground truth 로 Read 직전 (chief / Analyst / Researcher claim 대조 + ADR / Change Plan / Story / contract file Read 영역 포함) |
+| 발화 시점 | (a) session-start cold start 직후 첫 Read 직전 (b) 매 lane spawn 직전 working tree file Read pre-flight (c) chief / Analyst / Researcher verdict 안 claim 을 working tree file 과 대조 직전 (d) sibling session merge 가능성 영역 (Epic in-flight + 동시 session activity 감지) Read 직전 |
+| Verify 의무 | §결정 1-I main checkout divergence detection primitive (아래) + Amendment 2 §결정 1-A 3-step 재실행 (sibling session activity 감지 시) |
+| Verify subject | **Orchestrator** (base + Amendment 1-5 + 본 Amendment 7) + agent / subagent (Amendment 6 + 본 Amendment 7 — working tree file Read 시 동등 mandate) |
+| Verify direction | **self-Read direction** (Orchestrator/agent/subagent → working tree file Read) — base direction (Orchestrator → cross-repo state) + Amendment 6 bidirectional (chief↔Orchestrator) 보완 |
+
+closed enum — **8번째 trigger 추가 시** Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
+
+#### §결정 1-I — Main checkout divergence detection primitive
+
+`stale_local_main_checkout` transition 시점 verify 의무 (memory `feedback_worktree_first_not_parallel_session` declarative cross-ref):
+
+| Step | Verify command | PASS 조건 | Fallback |
+|---|---|---|---|
+| 1. origin fetch | `git fetch origin --quiet` | exit 0 | network 실패 시 advisory + cached state (graceful degradation) |
+| 2. HEAD vs origin/main divergence | `git rev-list --count HEAD..origin/main` | count `≤` divergence_threshold (default 1) | count `>` threshold 시 (3) escalate |
+| 3. fresh worktree mandate | EnterWorktree (fresh-from-origin) 재진입 의무 OR Read ground truth = `git show origin/main:<path>` direct fetch (working tree file 우회) | 새 worktree HEAD `==` origin/main 또는 direct fetch ground truth 채택 | 양 path 모두 실패 시 ABORT + 사용자 escalate |
+
+3-step PASS 시 — `verified-via: git fetch + git rev-list HEAD..origin/main count=N + EnterWorktree / git show origin/main:<path>` annotation 의무. 미충족 시 Read 단정 발화 차단 + advisory escalate.
+
+**Divergence threshold rationale**: default `1` commit behind (보수적) — sibling session merge 직후 catch. consumer overlay 안 `project.yaml verify.local_main_divergence_threshold: <int>` 확장 허용 (축소 불가, ADR-027 Amendment 5 consumer overlay scope 정합).
+
+**Working tree file Read 우회 path (ground truth direct fetch)**:
+- `git show origin/main:<path>` = origin/main snapshot 의 file content stdout fetch. cached working tree 와 disjoint, network round-trip 없음 (object pool 안 fetch 완료 후 local).
+- 우회 path 선호 = fresh worktree EnterWorktree 비용 회피 시 1 회 Read 영역 단발성 verify.
+- 다회 Read / 편집 / Phase 1 PR 작업 영역 = EnterWorktree fresh-from-origin 정합 (worktree-first invariant ADR-040 §결정 1).
+
+#### §결정 1-J — Inline whitelist boundary cross-ref (ADR-039)
+
+ADR-039 Inline whitelist 4-entry (사용자 dialog / TodoWrite scratchpad / Read-only Q&A 답변 / Status report) 안 **Read-only Q&A 답변** entry 의 Read 영역이 본 Amendment 7 의무 영역과 교집합 — Orchestrator 가 사용자 질문 답변 시 working tree file inline Read = self-Read direction 정합. 본 Amendment 7 의무 적용 = ADR-039 inline whitelist scope 안 Read action 도 §결정 1-I primitive 의무 (whitelist = "agent spawn 회피" 만, "verify 회피" 아님 — disjoint axis).
+
+#### Amendment 7 — Wave 1 declaration / Wave 2 mechanical wire 분리
+
+`mechanical_enforcement_actions: [parallel-work-sentinel-pickup, worktree-self-ownership-verify]` (2 entry unchanged — Wave 1 retain, 3rd / 4th entry append 보류). Wave 2 별 sub-CFP carrier = `stale-local-main-checkout-divergence-check` warning-tier entry 신설 (recurrence count 3+ already reached / auto_blocking, sibling_dependencies: [CFP-1319, TBD-Wave-2]).
+
+Wave 1 retain rationale: Amendment 5/6 (CFP-1102 fix_iter_start + CFP-1318 sibling_story_handoff) 동일 Wave 1 declarative anchor only 답습 (precedent consistency). spawn prompt grep heuristic / hook PreToolUse Read intercept 영역 false-negative risk (CFP-963 codex-network-scope-presence precedent 답습).
+
+#### Amendment 7 — Disjoint axis cross-ref
+
+- **ADR-082**: write-time semantic truth verify (corpus / cross-plugin). 본 Amd 7 = Read-time working tree file ground truth verify. write-time input value ≠ Read-time working tree snapshot, axis disjoint.
+- **ADR-085**: multi-session collaboration coordination (pre-hoc cross-session ownership). 본 Amd 7 = single session 안 working tree divergence detection (verify axis, post-hoc local state). ownership coordination ≠ working tree divergence, axis disjoint.
+- **Amendment 3** (`worktree_lane_spawn`): worktree-first self-ownership verify 3-tuple (path-based, cwd ↔ worktree path). 본 Amd 7 = working tree HEAD vs origin/main divergence (temporal axis). path-based topology ≠ temporal divergence, axis disjoint.
+- **Amendment 6** (`sibling_story_handoff`): bidirectional sibling Story state polling (chief↔Orchestrator). 본 Amd 7 = Orchestrator self-Read working tree file (single direction). sibling state polling ≠ self-Read divergence, axis disjoint.
+- **ADR-045 §D-9**: PMOAgent retro corpus pattern_count threshold escalation. 본 Amd 7 = pattern_count 3+ reach Mandatory carrier (Epic-A W5-S14 + W5-S16 + CFP-1318 다회), 2번째 적용 사례 of family (Amendment 6 첫 사례 후).
+
+#### Amendment 7 — sunset_justification N/A 정당
+
+`is_transitional: false` (영구 governance policy) 보존 — Amendment 7 scope = 본문 + Amendment 1+2+3+4+5+6 강화 방향 only (enum 7번째 entry append + main checkout divergence detection primitive 신설 + ADR-039 inline whitelist boundary cross-ref). 약화 / scope 축소 / 면제 영역 0건. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과 (Amendment 1+2+3+4+5+6 동형 precedent). ADR-064 §self-application top-down ratchet 정합.
