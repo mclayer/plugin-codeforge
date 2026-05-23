@@ -58,6 +58,13 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 7 + §결정 1-A transition trigger 표 7번째 row"
     sunset_justification: null
+  - amendment_id: 8
+    cfp: CFP-1348
+    date: 2026-05-24
+    scope: "§결정 1 expansion — transition trigger enum 8번째 entry `mcp_token_expired_mid_flight` 추가 (closed-set ratchet 강화, Amendment 2/3/5/6/7 §결정 1-A precedent 답습). MCP server (`mcp__plugin_atlassian_atlassian__*` / `mcp__github__*` / 등) 인증 token TTL (OAuth ~1hr 기준) expiry mid-flight 영역 — Orchestrator 가 6 parallel agent dispatch 후 ~3-5분 안 token 전부 expired sentinel reproduction (CFP-1146 Epic-A W5 다회 발생). 본 Amendment 8 = lane-spawn / MCP-direct work 시작 직전 token freshness pre-flight verify mandate + token TTL threshold (default 15분 잔여) 미만 시 사용자 /mcp 재인증 요청 의무 + agent spawn prompt 안 `mcp_token_freshness_verified: bool` field (verdict packet 자체 검증). 본 Amendment 는 §결정 1-8 본문 + Amendment 1+2+3+4+5+6+7 scope 강화 only (ADR-058 §결정 5 ratchet 정합) — 약화 / scope 축소 / 면제 영역 0건. Pattern_count 2 reach (CFP-1146 W5-S15+S16+S17 6 parallel dispatch token expiry, 본 session evidence base, 외부 session evidence 부재 → pattern_count 2 conservative). evidence-checks-registry warning-tier entry `mcp-token-freshness-precheck` 신설 = mechanical wire Wave 2 별 sub-CFP (declaration-only-Wave-1 retain, parallel-work-sentinel-pickup + subagent-sibling-story-polling-evidence + stale-local-main-checkout-divergence-check precedent 답습). 본 Amendment 8 = MCP-direct work 영역 (auth layer staleness) — Amendment 7 의 git layer staleness 와 axis disjoint (auth ↔ git layer disjoint, 양 staleness sub-domain)."
+    status: applied
+    ref: "## Amendments / Amendment 8 + §결정 1-A transition trigger 표 8번째 row"
+    sunset_justification: null
 related_stories:
   - CFP-622  # carrier
   - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
@@ -73,6 +80,7 @@ related_stories:
   - CFP-1318 # Amendment 6 — transition trigger enum 6번째 entry `sibling_story_handoff` (bidirectional verify-before-trust, agent/subagent sibling Story state polling 영역 확장), CFP-1226+CFP-1269+CFP-1273 sentinel pattern_count 3 Mandatory
   - CFP-1319 # Amendment 7 — transition trigger enum 7번째 entry `stale_local_main_checkout` (Orchestrator pre-Read divergence detection mandate, working tree HEAD vs origin/main staleness), Epic-A W5-S14/S16 + CFP-1318 다회 reproduction sentinel pattern_count 3+ Mandatory
   - CFP-1347 # Amendment 6 Wave 1 sibling carrier — evidence-checks-registry `subagent-sibling-story-polling-evidence` entry append (deferred-followup status, ADR-073 frontmatter mechanical_enforcement_actions[] 3rd entry activation)
+  - CFP-1348 # Amendment 8 — transition trigger enum 8번째 entry `mcp_token_expired_mid_flight` (MCP server auth token TTL freshness pre-flight verify mandate), CFP-1146 Epic-A W5 6 parallel dispatch token expiry sentinel pattern_count 2 reach
   - CFP-597  # sentinel #4 strike #1 origin (CLAUDE.md cap + playbook §3.6 false alarm)
   - CFP-578  # ADR-070 verify-before-trust 자매 (external worker output)
   - CFP-612  # ADR-071 dialog convergence 자매 governance
@@ -99,6 +107,7 @@ mechanical_enforcement_actions:
   - parallel-work-sentinel-pickup     # CFP-966 Amendment 2 — declarative anchor (warning tier, sibling Story-2 CFP-967 mechanical wire merged 2026-05-19, status: warning per ADR-040 Amendment 3 §결정 7.D self-application 정합)
   - worktree-self-ownership-verify    # CFP-689 Amendment 3 — declarative anchor (warning tier, declaration-only-Wave-1, recurrence count 3 / threshold 3 / promotion_trigger auto_blocking, actual lint script + workflow + hook = sibling Story-2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — parallel-work-sentinel-pickup precedent 답습)
   - subagent-sibling-story-polling-evidence  # CFP-1347 Wave 1 (sibling carrier of Amendment 6 CFP-1318) — declarative anchor (warning tier, deferred-followup status, recurrence count 3 / threshold 3 / promotion_trigger auto_blocking, actual lint script + workflow + bats + label-registry MINOR bump = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — parallel-work-sentinel-pickup + worktree-self-ownership-verify precedent 답습. Amendment 6 §결정 1-A 6번째 entry sibling_story_handoff + §결정 1-G primitive + §결정 1-H subject scope 확장 carrier)
+  - mcp-token-freshness-precheck  # CFP-1348 Wave 1 (sibling carrier of Amendment 8) — declarative anchor (warning tier, deferred-followup status, recurrence count 2 / threshold 3 / promotion_trigger auto_blocking pending 3 reach, actual SessionStart hook + script + workflow + bats + label-registry MINOR bump = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — parallel-work-sentinel-pickup + worktree-self-ownership-verify + subagent-sibling-story-polling-evidence precedent 답습. Amendment 8 §결정 1-A 8번째 entry mcp_token_expired_mid_flight + §결정 1-K primitive + §결정 1-L spawn prompt field carrier)
 # Wave 1 = behavioral directive only (Orchestrator self-discipline forcing function) — Amendment 2 (CFP-966)
 # 가 첫 mechanical_enforcement_actions[] row entry append (declarative anchor only — script + workflow
 # 실 binding 은 sibling Story-2 CFP-967 carrier).
@@ -466,8 +475,9 @@ Amendment 2 §결정 1-A 의 transition trigger enum 3종 (`lane_spawn` / `pr_op
 | **`fix_iter_start` (Amendment 5, 신규)** | **§10 FIX Ledger row append 직전 (FIX iter N > 0, 즉 N=1 첫 FIX iter 부터)** | **§10 row write + lane re-spawn 직전** | **§결정 1-E main HEAD pin verify (아래) + Amendment 2 §결정 1-A 3-step 재실행** |
 | **`sibling_story_handoff` (Amendment 6, 신규)** | **agent / subagent 가 sibling Story (동일 Epic 안 sequential / parallel Story) 의 진행 상태 / scope / artifact ownership 을 단정 발화 직전** | **chief author / Analyst / Researcher / PL deputy spawn prompt 안 sibling Story 인용 직전 + verdict packet sibling Story state claim 직전** | **§결정 1-G sibling Story state polling primitive (아래) — 3-step `gh issue view <sibling> --json state,labels,closedAt` + `gh pr list --search "head:cfp-<sibling>"` + Epic parent `gh issue view <epic> --json subIssues` cross-check** |
 | **`stale_local_main_checkout` (Amendment 7, 신규)** | **Orchestrator 가 main worktree (또는 본 session 시작 시점 checkout) 에서 src/* / docs/* / inter-plugin-contracts/* / ADR / Change Plan / Story 본문 file Read 시 working tree HEAD 가 origin/main 보다 stale (≥ N commits behind 또는 sibling session merge 후 미반영) 영역** | **session-start cold start + 매 lane spawn 직전 pre-Read pre-flight + chief / Analyst / Researcher claim 을 working tree file 과 대조 직전** | **§결정 1-I main checkout divergence detection primitive (아래) — `git fetch origin && git rev-parse origin/main vs HEAD` divergence ≥ threshold (default 1) 시 fresh worktree (EnterWorktree) 재진입 의무 + Read ground truth = `git show origin/main:<path>` direct fetch (working tree file 우회)** |
+| **`mcp_token_expired_mid_flight` (Amendment 8, 신규)** | **MCP server (`mcp__plugin_*`, `mcp__github__*`) 인증 token TTL (OAuth ~1hr) expiry mid-flight 영역 — 6 parallel agent dispatch 후 token 전부 expired sentinel reproduction (CFP-1146 Epic-A W5)** | **lane-spawn / MCP-direct work 시작 직전 token freshness pre-flight + 다회 parallel dispatch 직전 + long-running session 안 매 lane re-spawn 직전** | **§결정 1-K MCP token freshness verify primitive (아래) — token TTL threshold (default 15분 잔여) 미만 시 사용자 `/mcp` 재인증 요청 의무 + agent spawn prompt 안 `mcp_token_freshness_verified: bool` field 검증** |
 
-closed enum — 8번째 trigger 추가 시 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
+closed enum — 9번째 trigger 추가 시 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
 
 #### Amendment 3 §결정 1-D — Self-ownership verify 3-tuple (path-based, 사용자 prompt identity-based 대안 채택)
 
@@ -575,7 +585,7 @@ Amendment 2/3 §결정 1-A precedent 답습 (transition trigger enum closed-set 
 | 발화 시점 | §10 row write 직전 + 후속 lane re-spawn 직전 (양 시점 모두 verify 의무) |
 | Verify 의무 | §결정 1-E main HEAD pin verify (아래) + Amendment 2 §결정 1-A 3-step (title-based search + Epic poll + HEAD compare) 재실행 |
 
-closed enum — 8번째 trigger 추가 시 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
+closed enum — 9번째 trigger 추가 시 Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
 
 #### §결정 1-E — Main HEAD pin verify (FIX iter trigger 영역)
 
@@ -660,7 +670,7 @@ Amendment 2/3/5 precedent 답습 (closed-set ratchet 강화). 본 Amendment 6 = 
 | Verify subject | **agent / subagent (확장 영역)** — Orchestrator 단독 영역 (base + Amd 1-5) 에서 확장. subject 확장 시 동등 mandate |
 | Verify direction | **bidirectional** — Orchestrator → chief handoff direction + chief → Orchestrator verdict direction 양방향 |
 
-closed enum — **8번째 trigger 추가 시** Amendment 강화 방향만. open_extension: false.
+closed enum — **9번째 trigger 추가 시** Amendment 강화 방향만. open_extension: false.
 
 #### §결정 1-G — Sibling Story state polling primitive
 
@@ -732,7 +742,7 @@ Amendment 2/3/5/6 precedent 답습 (closed-set ratchet 강화). 본 Amendment 7 
 | Verify subject | **Orchestrator** (base + Amendment 1-5 + 본 Amendment 7) + agent / subagent (Amendment 6 + 본 Amendment 7 — working tree file Read 시 동등 mandate) |
 | Verify direction | **self-Read direction** (Orchestrator/agent/subagent → working tree file Read) — base direction (Orchestrator → cross-repo state) + Amendment 6 bidirectional (chief↔Orchestrator) 보완 |
 
-closed enum — **8번째 trigger 추가 시** Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
+closed enum — **9번째 trigger 추가 시** Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
 
 #### §결정 1-I — Main checkout divergence detection primitive
 
@@ -774,3 +784,83 @@ Wave 1 retain rationale: Amendment 5/6 (CFP-1102 fix_iter_start + CFP-1318 sibli
 #### Amendment 7 — sunset_justification N/A 정당
 
 `is_transitional: false` (영구 governance policy) 보존 — Amendment 7 scope = 본문 + Amendment 1+2+3+4+5+6 강화 방향 only (enum 7번째 entry append + main checkout divergence detection primitive 신설 + ADR-039 inline whitelist boundary cross-ref). 약화 / scope 축소 / 면제 영역 0건. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과 (Amendment 1+2+3+4+5+6 동형 precedent). ADR-064 §self-application top-down ratchet 정합.
+
+### Amendment 8 — `mcp_token_expired_mid_flight` transition trigger 8번째 entry (MCP server auth token TTL freshness pre-flight verify, CFP-1348)
+
+**날짜**: 2026-05-24
+
+#### 동기
+
+MCP server (`mcp__plugin_atlassian_atlassian__*` / `mcp__github__*` / 등) 인증 token TTL (OAuth ~1hr 기준) expiry mid-flight 영역 — Orchestrator 가 다회 parallel agent dispatch 후 ~3-5분 안 token 전부 expired sentinel reproduction (CFP-1146 Epic-A W5 다회 발생). 본 anti-pattern 차단:
+- 6 parallel `Agent` tool dispatch (MCP server 활용) → ~3-5분 후 전부 fail (token expired)
+- 사용자 catch + `/mcp` 재인증 의무 → 다회 round-trip 비용
+- agent spawn 시 token freshness assumption 단정 발화 (verify 부재)
+
+**Sentinel evidence** (pattern_count 2 reach, conservative — 본 session evidence base, 외부 session evidence 부재):
+- **CFP-1146 W5-S15/S16/S17** 6 parallel dispatch token expiry — 전부 ~3-5분 안 fail, 사용자 /mcp 재인증 후 follow-up dispatch 정상 (~53min 추가 비용).
+- (외부 session reproduction = TBD, pattern_count 3 reach 시 본 Amendment ratchet 추가 강화 평가).
+
+super-class = `mcp_session_auth_layer_staleness`. **auth layer staleness** — Amendment 7 의 git layer staleness (working tree HEAD vs origin/main divergence) 와 axis disjoint (auth ↔ git layer disjoint, 양 staleness sub-domain).
+
+#### §결정 1 expansion — `mcp_token_expired_mid_flight` transition trigger 8번째 entry
+
+Amendment 2/3/5/6/7 precedent 답습 (closed-set ratchet 강화). 본 Amendment 8 = 8번째 entry append.
+
+| Field | Value |
+|---|---|
+| ID | `mcp_token_expired_mid_flight` |
+| Transition trigger | MCP server (`mcp__plugin_*`, `mcp__github__*`) 인증 token TTL expiry mid-flight 영역 — 6 parallel agent dispatch 후 token 전부 expired sentinel |
+| 발화 시점 | (a) lane-spawn 직전 (MCP-direct work 활용 agent) (b) MCP-direct work 시작 직전 (`mcp__plugin_*` tool 호출 직전) (c) 다회 parallel dispatch 직전 (5+ agent batch spawn) (d) long-running session 안 매 lane re-spawn 직전 (cumulative session age threshold > 45분) |
+| Verify 의무 | §결정 1-K MCP token freshness verify primitive (아래) |
+| Verify subject | **Orchestrator** (base + Amendment 1-5 + Amendment 7 + 본 Amendment 8) + agent / subagent (Amendment 6 + 본 Amendment 8 — MCP-direct work 활용 영역 동등 mandate) |
+| Verify direction | **pre-flight direction** (Orchestrator/agent/subagent → MCP server auth state verify) — base direction + Amendment 6 bidirectional + Amendment 7 self-Read 보완 |
+
+closed enum — **9번째 trigger 추가 시** Amendment 강화 방향만 (ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합). open_extension: false.
+
+#### §결정 1-K — MCP token freshness verify primitive
+
+`mcp_token_expired_mid_flight` transition 시점 verify 의무:
+
+| Step | Verify primitive | PASS 조건 | Fallback |
+|---|---|---|---|
+| 1. session age estimate | session 시작 시점 + 누적 elapsed time (rough estimate, OAuth TTL ~1hr 기준) | elapsed < 45분 (token TTL 15분 잔여 default threshold) | elapsed ≥ 45분 시 (3) 강제 진입 |
+| 2. last MCP call success | 직전 MCP tool 호출 timestamp (5분 이내 success) | 5분 이내 success = freshness 유효 | 5분 초과 OR last call fail 시 (3) |
+| 3. user re-auth request | 사용자 `/mcp` 재인증 요청 + verify | 사용자 confirm 후 follow-up MCP call success | 재인증 미실행 시 ABORT + advisory |
+
+3-step PASS 시 — `verified-via: session age <X분 + last_mcp_call_success <Y분 ago` annotation 의무. 미충족 시 MCP-direct work 차단 + 사용자 escalate.
+
+**Token TTL threshold rationale**: OAuth standard ~1hr TTL — 15분 잔여 default threshold (보수적, 다회 parallel dispatch 영역 safety margin). consumer overlay 안 `project.yaml verify.mcp_token_freshness_threshold_min: <int>` 확장 허용 (축소 불가, ADR-027 Amendment 5 consumer overlay scope 정합).
+
+**6 parallel dispatch heuristic** (CFP-1146 Epic-A W5 sentinel reproduction 정합):
+- 5+ agent batch spawn = high-risk mid-flight token expiry 영역 → 사전 token freshness verify 의무 강화 (default 15분 → 30분 잔여 threshold).
+- 1-2 agent spawn = standard threshold 적용.
+
+#### §결정 1-L — Agent spawn prompt `mcp_token_freshness_verified` field
+
+agent / subagent spawn prompt 안 verify directive insertion:
+
+```
+[MCP TOKEN FRESHNESS]
+mcp_token_freshness_verified: <bool>  # Orchestrator 가 §결정 1-K 3-step verify 수행 결과
+mcp_session_age_estimate_min: <int>   # session 시작 후 누적 분
+last_mcp_call_success_ago_min: <int>  # 직전 MCP tool 호출 success 후 경과 분
+```
+
+verdict packet 자체 검증 — false 시 spawn 중단 + 사용자 /mcp 재인증 요청 의무.
+
+#### Amendment 8 — Wave 1 declaration / Wave 2 mechanical wire 분리
+
+`mechanical_enforcement_actions: [parallel-work-sentinel-pickup, worktree-self-ownership-verify, subagent-sibling-story-polling-evidence]` (3 entry unchanged — Wave 1 retain, 4th entry append 보류). Wave 2 별 sub-CFP carrier = `mcp-token-freshness-precheck` warning-tier entry 신설 (recurrence count 2 / threshold 3 / promotion_trigger auto_blocking pending more sentinel evidence, sibling_dependencies: [CFP-1348, TBD-Wave-2]).
+
+Wave 1 retain rationale: Amendment 5/6/7 (CFP-1102 fix_iter_start + CFP-1318 sibling_story_handoff + CFP-1319 stale_local_main_checkout) 동일 Wave 1 declarative anchor only 답습 (precedent consistency). SessionStart hook + script + bats fixture 영역 false-negative risk (token TTL heuristic estimate inherent, MCP server side TTL extension 외부 영역).
+
+#### Amendment 8 — Disjoint axis cross-ref
+
+- **ADR-082**: write-time semantic truth verify (corpus / cross-plugin). 본 Amd 8 = pre-flight MCP auth state verify. write-time input value ≠ MCP token TTL, axis disjoint.
+- **ADR-085**: multi-session collaboration coordination (pre-hoc cross-session ownership). 본 Amd 8 = single session 안 MCP token TTL pre-flight (verify axis, pre-hoc auth state). ownership coordination ≠ MCP auth, axis disjoint.
+- **Amendment 7** (`stale_local_main_checkout`): git layer staleness (working tree HEAD vs origin/main divergence). 본 Amd 8 = auth layer staleness (MCP token TTL). git ↔ auth layer disjoint, 양 staleness sub-domain (both addressed by separate triggers).
+- **ADR-045 §D-9**: PMOAgent retro corpus pattern_count threshold escalation. 본 Amd 8 = pattern_count 2 reach (conservative, sentinel reproduction 본 session base), 3번째 적용 사례 of family (Amendment 6 첫 + Amendment 7 둘째 + 본 Amendment 8 셋째).
+
+#### Amendment 8 — sunset_justification N/A 정당
+
+`is_transitional: false` (영구 governance policy) 보존 — Amendment 8 scope = 본문 + Amendment 1+2+3+4+5+6+7 강화 방향 only (enum 8번째 entry append + MCP token freshness verify primitive 신설 + agent spawn prompt `mcp_token_freshness_verified` field 신설). 약화 / scope 축소 / 면제 영역 0건. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과 (Amendment 1+2+3+4+5+6+7 동형 precedent). ADR-064 §self-application top-down ratchet 정합.
