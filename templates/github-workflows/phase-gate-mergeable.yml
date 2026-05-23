@@ -387,34 +387,43 @@ jobs:
             // Phase=설계 (Phase 1 PR) → gate:design-review-pass regardless of hasCode.
             // Phase=구현/구현-리뷰/구현-테스트/보안-테스트 → match per-phase gate.
             // Fallback to hasCode heuristic only when no Story binding.
+            // CFP-1302: required.gate (singular) → required.gates (string[]) — semantic 변경 0, syntactic 명시화.
+            //   NEVER empty — B-1 fail-loud guard: empty array vacuous truth ([].every() === true) 차단.
             let required;
             if (phaseLabel === 'phase:설계' || phaseLabel === '설계' || phaseLabel === 'phase:설계-리뷰' || phaseLabel === '설계-리뷰') {
-              required = { phase: phaseLabel, gate: 'gate:design-review-pass' };
+              required = { phase: phaseLabel, gates: ['gate:design-review-pass'] };
             } else if (phaseLabel === 'phase:보안-테스트' || phaseLabel === '보안-테스트') {
-              required = { phase: phaseLabel, gate: 'gate:security-test-pass' };
+              required = { phase: phaseLabel, gates: ['gate:security-test-pass'] };
             } else if (phaseLabel === 'phase:구현' || phaseLabel === '구현' || phaseLabel === 'phase:구현-리뷰' || phaseLabel === '구현-리뷰') {
               // CFP-342 fix: Phase 2 PR (구현 phase) — gate:design-review-pass 만 요구
               // (CFP-317 / ADR-048: security-test gate 기본 불필요, lanes.security_ai:true opt-in만)
-              required = { phase: phaseLabel, gate: 'gate:design-review-pass' };
+              required = { phase: phaseLabel, gates: ['gate:design-review-pass'] };
             } else {
               // No Story binding — file-based heuristic (legacy).
               // CFP-317 / ADR-048: code PRs no longer require gate:security-test-pass by default.
               // GitHub CI handles code quality gate. Design review gate applies universally.
-              required = { phase: 'phase:설계-리뷰', gate: 'gate:design-review-pass' };
+              required = { phase: 'phase:설계-리뷰', gates: ['gate:design-review-pass'] };
             }
 
             const phaseOk = phaseLabel === required.phase;
-            // CFP-123 fix: gate membership check (PR may carry multiple gates simultaneously)
-            //   Required gate must be PRESENT among PR gate labels — first-label strict equality
-            //   would false-fail when PR carries both gate:security-test-pass + gate:live-entry-pass.
-            let gateOk = prGateLabels.includes(required.gate)
-              || gateLabel === required.gate;  // fallback when prGateLabels not populated (cross-repo Story binding path)
+            // CFP-1302: multi-gate AND invariant — required.gates[] 안 모든 gate 가 PR label 또는 gateLabel 에 존재.
+            //   every() 사용: 단일 gate 부재 시 gateOk = false (AND semantics).
+            //   B-1 fail-loud guard: empty array → vacuous truth ([].every() === true) 차단.
+            if (required.gates.length === 0) {
+              core.warning('required.gates is empty — fail-loud (B-1 invariant, CFP-1302)');
+            }
+            let gateOk = required.gates.length > 0 && required.gates.every(g =>
+              prGateLabels.includes(g) || gateLabel === g
+            );
 
             // CFP-133 fix (#239): if gate label not attached, fall back to PR comment
             //   recognition. autonomous mode (사용자 directive Sonnet decider 제외) 에서 label
             //   부착이 누락 — review chain PASS comment 가 PR 에 이미 박제되어 있으면 그것을
             //   evidence 로 인정. CFP-61/ADR-022 §결정 4 invariant 보존 (PL synthesis only,
             //   label attachment by Orchestrator) — 단순히 evidence source 확장.
+            //
+            //   CFP-1302: multi-gate AND 보존 — required.gates[] 안 각 gate 별 comment 검색.
+            //   모든 gate 가 comment evidence 보유 시에만 gateOk = true (AND invariant 보존).
             //
             //   Comment prefix mapping (comment-prefix-registry-v1):
             //     [설계-리뷰] ... PASS  → gate:design-review-pass evidence
@@ -430,25 +439,34 @@ jobs:
                   issue_number: pr.number,
                   per_page: 100
                 });
-                // Lane → gate prefix mapping
+                // Lane → gate prefix mapping (CFP-1302: 배열 순회 대응)
                 const lanePrefixForGate = {
                   'gate:design-review-pass': '[설계-리뷰]',
                   'gate:security-test-pass': '[보안-테스트]'
                 };
-                const targetPrefix = lanePrefixForGate[required.gate];
-                if (targetPrefix) {
+                // CFP-1302: required.gates[] 각 gate 별 comment evidence 수집 (AND invariant)
+                const evidenceForGate = {};
+                for (const g of required.gates) {
+                  const prefix = lanePrefixForGate[g];
+                  if (!prefix) continue;
                   const passRegex = new RegExp(
-                    `^\\s*##?\\s*\\${targetPrefix}\\s.*\\b(PASS|N/A)\\b`,
+                    `^\\s*##?\\s*\\${prefix}\\s.*\\b(PASS|N/A)\\b`,
                     'm'
                   );
                   for (const c of comments) {
                     const body = c.body || '';
                     if (passRegex.test(body)) {
-                      gateOk = true;
-                      gateCommentEvidence = `${targetPrefix} comment #${c.id}`;
+                      evidenceForGate[g] = `${prefix} comment #${c.id}`;
                       break;
                     }
                   }
+                }
+                // 모든 required gate 에 comment evidence 가 있을 때만 gateOk = true
+                const allGatesHaveEvidence = required.gates.length > 0 &&
+                  required.gates.every(g => evidenceForGate[g] != null);
+                if (allGatesHaveEvidence) {
+                  gateOk = true;
+                  gateCommentEvidence = Object.values(evidenceForGate).join(', ');
                 }
               } catch (e) {
                 // listComments 실패 = silent fallback (label-only 동작 유지)
@@ -488,12 +506,16 @@ jobs:
             //   new gate label (예: gate:security-test-pass) 미부착 시, gateLabel singular 가 prior 를 표시 →
             //   "current=gate:design-review-pass" 라는 misleading 메시지. multi-gate display 가 실제 PR/Issue
             //   label 상태 + 누락 gate 명확. Orchestrator/사용자 가 즉시 add 가능.
+            // CFP-1302: required.gate → required.gates.join(', ') + missing gate list 명시.
             const allGateLabels = prGateLabels && prGateLabels.length > 0
               ? prGateLabels.join(', ')
               : (gateLabel || 'none');
+            const missingGates = required.gates.filter(g =>
+              !prGateLabels.includes(g) && !(gateCommentEvidence && gateCommentEvidence.includes(g))
+            );
             const summary = allOk
-              ? `phase + gate satisfied: ${required.phase} + ${required.gate}${evidenceNote}${liveNote} (source: ${sourceNote})`
-              : `Awaiting: phase=${required.phase} (current=${phaseLabel || 'none'}), required gate=${required.gate} MISSING (current gate labels: ${allGateLabels})${liveNote} (source: ${sourceNote})`;
+              ? `phase + gate satisfied: ${required.phase} + ${required.gates.join(', ')}${evidenceNote}${liveNote} (source: ${sourceNote})`
+              : `Awaiting: phase=${required.phase} (current=${phaseLabel || 'none'}), required gates=[${required.gates.join(', ')}] MISSING [${missingGates.join(', ')}] (current gate labels: ${allGateLabels})${liveNote} (source: ${sourceNote})`;
 
             await github.rest.checks.create({
               owner: context.repo.owner,
