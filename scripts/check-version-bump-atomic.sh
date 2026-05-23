@@ -210,7 +210,7 @@ if [[ "$LOCAL_NAME" != "$REMOTE_NAME" ]]; then
 fi
 
 # author 축 검증 (ADR-063 §결정 22 (b) — author 축 신규 blocking)
-REMOTE_AUTHOR=$(echo "$MARKETPLACE_RAW" | jq -r ".plugins[] | select(.name == \"$PLUGIN_NAME\") | .author // .author.name // \"\"" 2>/dev/null || echo "")
+REMOTE_AUTHOR=$(echo "$MARKETPLACE_RAW" | jq -r ".plugins[] | select(.name == \"$PLUGIN_NAME\") | if (.author | type) == \"object\" then .author.name else .author end" 2>/dev/null || echo "")
 
 # FIX-CR-4: LOCAL_AUTHOR_NORM 은 FIX-CR-2 로 LOCAL_AUTHOR 자체가 정규화됨 — alias 제거
 if [[ "$LOCAL_AUTHOR" != "$REMOTE_AUTHOR" && "$LOCAL_AUTHOR" != "null" && "$REMOTE_AUTHOR" != "null" ]]; then
