@@ -32,7 +32,7 @@ amended: 2026-05-23
 
 ADR-087 §결정 5 "primary blue-green + BG-1~4 비적격 시 보조 매커니즘 (§결정 9)" 의 narrative SSOT. blue-green 단일 매커니즘 가정이 stateful daemon 영역에서 깨지는 4 sub-pattern + mctrader 사례 + 보조 매커니즘 mapping codify.
 
-## 동인
+## 컨텍스트
 
 blue-green deployment 의 핵심 전제 = **양쪽 (blue + green) 일시 동시 active** 후 atomic swap. 이 전제가 다음 4 영역에서 깨진다 (mctrader#1272 escalation (a) 발견):
 
@@ -41,7 +41,11 @@ blue-green deployment 의 핵심 전제 = **양쪽 (blue + green) 일시 동시 
 - 시스템 자체가 lease / token 으로 single-active session 강제
 - non-idempotent 작업의 동시 실행 중복 결과
 
-## BG-1~4 정의 (ADR-087 §결정 5 §5.2 binding)
+## 정의
+
+BG-1~4 = stateful daemon blue-green 비적격 4-tuple (OR semantic). ADR-087 §결정 5 §5.2 binding — 1+ 만족 시 blue-green 차단 + §결정 9 보조 매커니즘 진입.
+
+### BG-1~4 sub-pattern (ADR-087 §결정 5 §5.2 binding)
 
 OR semantic — 1+ 만족 시 blue-green 차단 + §결정 9 보조 매커니즘 진입.
 
@@ -75,13 +79,17 @@ OR semantic — 1+ 만족 시 blue-green 차단 + §결정 9 보조 매커니즘
 - **보조 매커니즘**: §결정 9.3 writer-lease — lease holder = 단일 실행자 보장 + lease 만료 시 다음 holder pickup
 - **rationale**: idempotent 작업 (예: HTTP GET / pure function call) 은 blue+green 동시 실행 안전 — BG-4 = idempotent 가정 깨지는 영역만 codify
 
-## 2+ row 동시 만족 시 (EC-C)
+## 핵심 규칙
+
+### 2+ row 동시 만족 시 (EC-C)
 
 mechanism 선택 = **최강한 invariant 우선**. 예시:
 - `mctrader-data` WAL = BG-1 (단일-writer) + BG-4 (non-idempotent) 동시 → writer-lease 가 양 invariant 모두 cover, 우선 채택
 - `mctrader-market-bithumb` collector = BG-2 (외부 단일연결) 단독 → §결정 9.4 self-judge (rolling 권장)
 
-## Forward extensibility (EC-B)
+## 경계
+
+### Forward extensibility (EC-B)
 
 BG-1~4 = consumer 가 식별 가능한 stateful pattern 의 초기 닫힌-set. 향후 BG-N+1 추가 (예: eventual-consistency multi-writer with conflict-resolution 영역) = 별 ADR-087 Amendment carrier.
 
@@ -98,9 +106,16 @@ deploy:
 - `strategy: writer-lease` + `eligibility_reason: BG-1` = single-writer 영속 상태 영역
 - 2+ BG 동시 만족 시 = `eligibility_reason` 첫 만족 BG 기재 + strategy = 최강 invariant cover 매커니즘 (예: BG-1+BG-4 → `eligibility_reason: BG-1` + `strategy: writer-lease`)
 
-## See also
+## 관련 ADR
+
+- [ADR-087](../../../adr/ADR-087-deploy-lane-and-lifecycle-extension.md) §결정 5 + §결정 9 (본 entry 의 binding ADR)
+- [ADR-089](../../../adr/ADR-089-schema-change-7-principles.md) (Schema 변경 7 원칙 — 양방향 호환 / reverse / smoke 영역)
+
+### See also
 
 - [single-writer-fencing-pattern.md](single-writer-fencing-pattern.md) — writer-lease / fencing token narrative + prior art (Kleppmann DDIA Ch.8 + etcd lease + Kafka leader epoch + ZK ephemeral)
 - [../jsonl-write/race-condition-handling-pattern.md](../jsonl-write/race-condition-handling-pattern.md) — single-writer 인접 도메인 (cross-repo jsonl write layer Pattern A SHA-based optimistic concurrency). 두 entry 가 동일 domain motivation (단일-writer 보장) 의 disjoint layer — process-level (본 entry) vs file-level (jsonl-write).
-- [ADR-087](../../../adr/ADR-087-deploy-lane-and-lifecycle-extension.md) §결정 5 + §결정 9 (본 entry 의 binding ADR)
-- [ADR-089](../../../adr/ADR-089-schema-change-7-principles.md) (Schema 변경 7 원칙 — 양방향 호환 / reverse / smoke 영역)
+
+## 변경 이력
+
+- 2026-05-23 (CFP-1317-S1, Wave A): 신설 entry. ADR-087 §결정 5 Amendment + §결정 9 신설 동반 (Amendment 1 carrier). mctrader#1272 escalation (a) 흡수 wrapper-side narrative SSOT.
