@@ -72,6 +72,7 @@ related_stories:
   - CFP-1102 # Amendment 5 — transition trigger enum 5번째 entry `fix_iter_start` 추가 (FIX iter 시점 main HEAD pin verify mandate), CFP-1087 cascade race evidence
   - CFP-1318 # Amendment 6 — transition trigger enum 6번째 entry `sibling_story_handoff` (bidirectional verify-before-trust, agent/subagent sibling Story state polling 영역 확장), CFP-1226+CFP-1269+CFP-1273 sentinel pattern_count 3 Mandatory
   - CFP-1319 # Amendment 7 — transition trigger enum 7번째 entry `stale_local_main_checkout` (Orchestrator pre-Read divergence detection mandate, working tree HEAD vs origin/main staleness), Epic-A W5-S14/S16 + CFP-1318 다회 reproduction sentinel pattern_count 3+ Mandatory
+  - CFP-1347 # Amendment 6 Wave 1 sibling carrier — evidence-checks-registry `subagent-sibling-story-polling-evidence` entry append (deferred-followup status, ADR-073 frontmatter mechanical_enforcement_actions[] 3rd entry activation)
   - CFP-597  # sentinel #4 strike #1 origin (CLAUDE.md cap + playbook §3.6 false alarm)
   - CFP-578  # ADR-070 verify-before-trust 자매 (external worker output)
   - CFP-612  # ADR-071 dialog convergence 자매 governance
@@ -97,6 +98,7 @@ is_transitional: false
 mechanical_enforcement_actions:
   - parallel-work-sentinel-pickup     # CFP-966 Amendment 2 — declarative anchor (warning tier, sibling Story-2 CFP-967 mechanical wire merged 2026-05-19, status: warning per ADR-040 Amendment 3 §결정 7.D self-application 정합)
   - worktree-self-ownership-verify    # CFP-689 Amendment 3 — declarative anchor (warning tier, declaration-only-Wave-1, recurrence count 3 / threshold 3 / promotion_trigger auto_blocking, actual lint script + workflow + hook = sibling Story-2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — parallel-work-sentinel-pickup precedent 답습)
+  - subagent-sibling-story-polling-evidence  # CFP-1347 Wave 1 (sibling carrier of Amendment 6 CFP-1318) — declarative anchor (warning tier, deferred-followup status, recurrence count 3 / threshold 3 / promotion_trigger auto_blocking, actual lint script + workflow + bats + label-registry MINOR bump = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — parallel-work-sentinel-pickup + worktree-self-ownership-verify precedent 답습. Amendment 6 §결정 1-A 6번째 entry sibling_story_handoff + §결정 1-G primitive + §결정 1-H subject scope 확장 carrier)
 # Wave 1 = behavioral directive only (Orchestrator self-discipline forcing function) — Amendment 2 (CFP-966)
 # 가 첫 mechanical_enforcement_actions[] row entry append (declarative anchor only — script + workflow
 # 실 binding 은 sibling Story-2 CFP-967 carrier).
