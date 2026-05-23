@@ -43,6 +43,7 @@ DRIFT_ALLOWLIST = {
     ("production-cutover-deputy-spawn-evidence", "production-cutover-evidence.yml"): "CFP-954 / ADR-72 §결정 3 — entry name semantic 'deputy-spawn-evidence' 보존 (ProductionEvidenceDeputy spawn trigger gate), workflow 는 broader 'production-cutover-evidence' cover (Conservative no-rename §결정 20)",
     ("epic-cutover-gate-evidence-quad-check", "production-cutover-evidence.yml"): "CFP-954 / ADR-72 §결정 5 — entry name semantic 'epic-cutover-gate-evidence-quad' 보존 (EPIC CLOSED gate 4-evidence-quad verify), workflow 는 broader 'production-cutover-evidence' cover (Conservative no-rename §결정 20)",
     ("canary-compatibility-check",      "canary-promotion-criteria.yml"):    "CFP-991 / ADR-72 Amd 3 + ADR-076 §결정 9.6 — entry name semantic 'canary-compatibility-check' 보존 (canary 호환성 4-tuple evidence verify, reconcile-protocol-v1 §4.14 canary_compatibility_check_binding), workflow 는 broader 'canary-promotion-criteria' cover (Conservative no-rename §결정 20)",
+    ("dependency-order-enforce",        "dependency-order-check.yml"):       "CFP-1059 / ADR-090 §결정 2 — entry name semantic cross-layer 'enforce' verb 보존 (expand source-first / contract leaf-first 변경 순서 invariant enforcement), workflow basename 'dependency-order-check' substring miss (enforce vs check) (Conservative no-rename §결정 20)",
 }
 
 REGISTRY_PATH = Path("docs/evidence-checks-registry.yaml")
