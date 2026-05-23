@@ -169,6 +169,21 @@ amendments_reserved:
     reserved_by_cfp: CFP-1312
     reservation_date: 2026-05-23 KST
     status: active   # ArchitectPLAgent commit time 점유 (Story Phase 1 PR carrier — Amendment 7 §결정 9 verify-before-cite scope 양방향 확장 + CFP-1216 lint Check (b) backward-staleness wire dual-carrier, ADR-045 §D-9 pattern_count 3 reach Mandatory escalation 산물 CFP-1293 #3 occurrence backward-staleness coverage gap evidence). verified-via Read worktree docs/adr/ADR-082-...md frontmatter amendments[] max=6 → next=7 (2026-05-23 KST 기준 origin/main bfc4806). sibling pattern = ADR-083 Amendment 3 (CFP-1293) row 직전. status `reserved` 미경유 직접 `active` 전환 (ArchitectPL chief author precedent — ADR-082 row 82 active 패턴 + ADR-083 row 83 active 패턴 정합).
+  - adr_number: 39
+    amendment_id: 2
+    reserved_by_cfp: CFP-1340
+    reservation_date: 2026-05-24 KST
+    status: active   # ArchitectAgent commit time 점유 (Story Phase 1 PR carrier — Orchestrator-monopoly Story-file handoff inline write §결정 15 신설, partial rollback evidence-gated약화, ADR-058 §결정 5 sunset_justification 충족, 사용자 2026-05-17 KST CFP-848 directive verbatim citation, memory feedback_orchestrator_monopoly_inline_write normative 승격 carrier, ADR-042 Amendment 10 deputy 7→6 precedent 답습)
+  - adr_number: 39
+    amendment_id: 3
+    reserved_by_cfp: CFP-1340
+    reservation_date: 2026-05-24 KST
+    status: active   # ArchitectAgent commit time 점유 (Story Phase 1 PR carrier — Autonomous permission UI behavior §결정 16 신설, destructive closed enum ≥8 + reversible auto-proceed closed enum ≥6, 강화 ratchet, 사용자 2026-05-17 KST CFP-848 directive verbatim citation, memory feedback_no_permission_prompts normative 승격 carrier, ADR-039 §결정 1 binary always-spawn 무관 disjoint axis)
+  - adr_number: 71
+    amendment_id: 7
+    reserved_by_cfp: CFP-1340
+    reservation_date: 2026-05-24 KST
+    status: active   # ArchitectAgent commit time 점유 (Story Phase 1 PR carrier — Unjustified session swap reflex 차단 + /compact normative §결정 18 신설, ADR-053/057 trigger closed 2-set + anti-pattern 7종, 재발 incident 2건 evidence pattern_count 2 reach, memory feedback_unjustified_session_swap_reflex normative 승격 carrier, §결정 4 sub-mechanism 2 차원 enum 4종 closed invariant 보존 axis disjoint)
 ```
 
 ## 해소 기준

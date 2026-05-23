@@ -45,6 +45,16 @@ amendments:
     issue: https://github.com/mclayer/plugin-codeforge/issues/1110
     summary: Lane back-translation gate binding — DialogFidelityAgent read-only verifier (Amendment 1/2/3 3-anchor) → lane return 직후 binding 강화 (§결정 17 신설). lane traversal fidelity loss 차단 — 각 lane PL deliverable return 직후 사용자 원문 언어로 산출물 reverse summary 의무 부착. DialogFidelityAgent 가 user-utterance anchor (paired ADR-082 Amendment 5 §결정 1 sub-scope (1-C) verbatim block) vs lane PL reverse summary 간 divergence 검출 시 lane 재실행 trigger (read-only verifier → binding mechanism 확장). 사용자 직권 minimal path 첫 적용 (codeforge process 가 lane traversal fidelity loss source 라는 평가 결과 정합 — Researcher 35% 정당화 / Codex ROI indeterminate-부정쪽 confidence medium 수렴, 2026-05-20 KST). pattern corpus 누적 evidence — synthesizer-stale-reference 6 (CFP-722/801/792/810/819/825) + Researcher 12 occurrence 정정 (CFP-698) + scope drift 만성 (CFP-758) + unverified-self-write-claim super-class 5 + DesignReviewPL cross-PL false-negative (CFP-906) — ADR-045 §D-9 pattern_count ≥ 6 ≫ threshold 2 escalation 정합. minimal path 정합 — Story file 0 / Lane spawn 0 / FIX iter 0 / Phase 분리 0 / Retro 0 / ADR-013 명시 위배 (사용자 승인 2026-05-20 KST) — closed-loop break 외부 결정 채널. Wave 1 = behavioral mandate (PL return 직후 reverse summary + Orchestrator divergence detection trigger) — Wave 2 mechanical lint + DialogFidelityAgent runtime hook 확장 = 별 CFP carrier (deferred-followup). additive — Layer 1-4 / DialogFidelityAgent auxiliary / §결정 12-15 + §결정 16 (CFP-1104 Amendment 5) 모두 보존, is_transitional=false 유지, ADR-058 §결정 5 약화 차단 영역 미적용. paired sibling Amendment = ADR-082 Amendment 5 (lane PL spawn prompt user-utterance verbatim anchor, 동일 CFP-1110 carrier — disjoint axis 정합, 본 ADR = return-time output gate / ADR-082 = write-time input anchor). collision rebase 정합 — CFP-1104 Amendment 5 mid-flight merge 후 본 CFP-1110 amendment_id 5 → 6 정정 + §결정 16 → 17 rename.
     sunset_justification: null
+  - amendment_id: 7
+    date: "2026-05-24"
+    carrier_story: CFP-1340
+    issue: https://github.com/mclayer/plugin-codeforge/issues/1340
+    summary: |
+      Unjustified session swap reflex 차단 + /compact normative (§결정 18 신설). Orchestrator 가 사용자에게 "새 세션 만들어 주세요" / "세션 교체해 주세요" / "처음부터 다시 시작해 주세요" / "다음 작업은 새 세션에서" 발화는 closed 2-trigger 만 정당: (1) ADR-053 (구조 변경 재구동) / (2) ADR-057 (Sonnet/Haiku 세션). 그 외 trigger ("context 가득" / "메모리 차서" / "큰 Story" / "token budget" / "MEMORY.md 한도 초과" / "자기 보존" / "토큰 절약") = anti-pattern, 발화 차단. `/compact` slash command 활용 normative + MEMORY.md 한도 초과 = 인덱스 entry 슬림화 trigger (세션 분리 아님) + harness auto-compress 신뢰. 재발 incident 2건 verbatim citation:
+      (a) 2026-05-21 KST Epic CFP-1059 Story transition 4회 ("S4 / S5/S6 / S7 진입 시점 매번 본 세션 context 극한 → 별 세션 권장" reflex)
+      (b) 2026-05-23 KST 세션 시작 시 시스템 reminder "MEMORY.md is 53.2KB (limit: 24.4KB)" 발화 trigger
+      memory `feedback_unjustified_session_swap_reflex` normative 승격 carrier. pattern_count 2 reach (ADR-045 §D-9 threshold). §결정 4 sub-mechanism 2 "차원 enum 4종 closed" 와 axis disjoint — §결정 18 = "결정 구조" 차원 sub-pattern routing (5번째 차원 신설 회피). Amendment 6 §결정 17 (lane back-translation gate) 와 disjoint axis (return-time output gate ↔ session lifecycle reflex). additive — Layer 1-4 / DialogFidelityAgent auxiliary / §결정 12-17 모두 보존, is_transitional=false 유지, ADR-058 §결정 5 약화 차단 영역 미적용.
+    sunset_justification: null
 related_stories:
   - CFP-612  # carrier
   - CFP-525  # ancestor Epic (closed 2026-05-13)
@@ -62,6 +72,7 @@ related_stories:
   - CFP-851  # Amendment 4 carrier (conversational reporting frequency suppression contract)
   - CFP-1104 # Amendment 5 carrier (natural-language action trigger lookup table — "codeforge upgrade" mapping)
   - CFP-1110 # Amendment 6 carrier (lane back-translation gate binding — paired ADR-082 Amendment 5, 사용자 직권 minimal path first application, paradox-break)
+  - CFP-1340 # Amendment 7 carrier (unjustified session swap reflex 차단 + /compact normative — §결정 18 신설, ADR-053/057 trigger closed 2-set + anti-pattern 7종, 재발 incident 2건 evidence pattern_count 2 reach)
 related_adrs:
   - ADR-064  # 결정 원칙 mandate — proposing-time 5 룰 mother policy (mechanical version 승격 source)
   - ADR-058  # sunset criteria mandate (is_transitional: false 정합)
@@ -76,6 +87,8 @@ related_adrs:
   - ADR-076  # declarative-reconciliation-upgrade (Amendment 5 — invariant `user_decision_branches: 0` dialog 단계 enforcement carrier)
   - ADR-054  # doc-only fast-path (Amendment 5 — Story 분류 정합)
   - ADR-082  # Amendment 6 — paired sibling carrier (lane PL spawn prompt user-utterance verbatim anchor / write-time input anchor ↔ 본 ADR Amendment 6 §결정 17 = lane return back-translation gate / return-time output gate, disjoint axis)
+  - ADR-053  # Amendment 7 — session swap reflex trigger #1 (구조 변경 재구동) closed 2-set first entry
+  - ADR-057  # Amendment 7 — session swap reflex trigger #2 (Sonnet/Haiku → Opus fallback) closed 2-set second entry
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md
@@ -859,9 +872,96 @@ Wave 2/3 = deferred-followup. 본 Amendment 6 frontmatter `mechanical_enforcemen
 
 **사용자 직권 minimal path = closed-loop break 외부 결정 채널, ratchet 강화 self-application 정직 명시** — 본 Amendment 자체가 monotonic-increasing governance 의 부분 (verify-before-trust + DialogFidelityAgent binding 영역 안 — Researcher critical evaluation net positive 35% 영역 직접 확장). codeforge full flow 적용 paradox 회피 정합.
 
+## §결정 18. Unjustified session swap reflex 차단 + /compact normative (Amendment 7, CFP-1340)
+
+### 18.1 결정 요약
+
+Orchestrator 가 사용자에게 **session swap 권유 발화** ("새 세션 만들어 주세요" / "세션 교체해 주세요" / "처음부터 다시 시작해 주세요" / "다음 작업은 새 세션에서") 는 **closed 2-trigger** 만 정당:
+
+| trigger | 정의 | 정당 사유 |
+|---|---|---|
+| (1) ADR-053 (구조 변경 재구동) | 직전 세션의 구조 변경 (hook / settings / plugin install / agent file 도입) 후 재구동 필요 | session 안 cached state 가 새 구조 미반영 — 새 세션이 fresh load 필요 |
+| (2) ADR-057 (Sonnet/Haiku → Opus fallback) | Orchestrator model = `claude-opus-4-7` 의무, Sonnet/Haiku 세션 detect 시 즉시 중단 | model tier mismatch — Opus 재시작이 유일 path |
+
+그 외 모든 trigger = **anti-pattern, Orchestrator 발화 차단**.
+
+### 18.2 Anti-pattern 7종 (closed enum)
+
+발화 차단 대상 trigger phrase + 처리 path:
+
+| # | anti-pattern trigger | 처리 path |
+|---|---|---|
+| 1 | "context 가득" / "context window 한계" | `/compact` slash command 활용 normative (harness auto-compress 신뢰) |
+| 2 | "메모리 차서" / "메모리 한도 초과" | MEMORY.md 한도 초과 = 인덱스 entry 슬림화 trigger (세션 분리 아님) |
+| 3 | "큰 Story" / "스코프 크다" | Story scope 자체는 single session 안 진행 가능 (Phase 분리 + ADR-067 RESET cap 활용) |
+| 4 | "token budget" / "토큰 절약" | token budget = Sonnet/Opus tier 선택 영역 (ADR-042) 또는 `/compact` — session swap 영역 아님 |
+| 5 | "MEMORY.md 한도 초과" | 24.4KB cap 초과 = 인덱스 entry 슬림화 (consolidate / archive) 의무, session 재시작 아님 |
+| 6 | "자기 보존" / "session lifecycle" | session = ephemeral resource, lifecycle 결정은 사용자 영역 — Orchestrator self-recommendation 차단 |
+| 7 | "토큰 절약" / "비용 최적화" | cost optimization = model tier 영역 (ADR-042) — session swap 영역 아님 |
+
+7종 anti-pattern enum **closed**. 8번째 anti-pattern 추가 = 별도 ADR Amendment 의무 (강화 방향 ratchet 정합).
+
+### 18.3 `/compact` slash command + MEMORY.md 슬림화 normative
+
+session 안 context 압박 시 정당 path:
+
+1. **`/compact` slash command 활용** — Claude Code harness 의 in-session compression mechanism. session 유지 + token usage 압축.
+2. **MEMORY.md 인덱스 entry 슬림화** — auto-memory file 한도 초과 시 entry consolidate / archive (oldest-first + completed-Story entry consolidate). session 재시작 trigger 아님.
+3. **harness auto-compress 신뢰** — Claude Code harness 가 자동 context window 관리 — Orchestrator 가 manual session swap reflex 발화 금지.
+
+**Forbidden**: Orchestrator 가 "context 압박" 감지 시 "별 세션에서 진행" / "새 세션 만들어" reflex 발화. 본 reflex 발화는 ADR-039 inline whitelist 1번 entry (사용자 dialog) scope 외 발화 — Anti-pattern 7종 detect 시 발화 차단.
+
+### 18.4 재발 incident 2건 evidence (verbatim citation)
+
+**Incident (a)** — 2026-05-21 KST Epic CFP-1059 Story transition 4회:
+
+> "Epic CFP-1059 Story-2/3/4/5/6/7 전환 시점 매번 본 세션 context 극한 도달 — 별 세션 권장. Story 단위 session 분리 정책 수립 권유."
+
+→ Orchestrator self-recommendation reflex 발화 — anti-pattern 1 "context 가득" + anti-pattern 3 "큰 Story" 동시 trigger. 4회 누적 reflex.
+
+**Incident (b)** — 2026-05-23 KST 세션 시작 시 시스템 reminder:
+
+> "MEMORY.md is 53.2KB (limit: 24.4KB). Consider archiving old entries or starting a new session."
+
+→ Orchestrator 가 시스템 reminder 자체 wording ("new session") 을 그대로 수용 발화 — anti-pattern 5 "MEMORY.md 한도 초과" trigger. system reminder = 정보 surface 만, action prescription 아님 → Orchestrator 해석 단계에서 차단 의무 위반.
+
+**pattern_count 2 reach** (ADR-045 §D-9 threshold). normative codify 정당 evidence base.
+
+### 18.5 axis disjoint declare
+
+본 §결정 18 = **session lifecycle reflex** sub-pattern (Orchestrator 의 session lifecycle 결정 영역 self-restriction). axis disjoint with:
+
+- **§결정 4 sub-mechanism 2 "차원 enum 4종 closed"** (표현 / 결정 구조 / 보고 형식 / 질문 자체) — 본 §결정 18 = "결정 구조" 차원 sub-pattern routing (5번째 차원 신설 회피, closed enumeration 보존 invariant). session lifecycle reflex 는 "결정 구조" 차원 의 sub-routing — 사용자 결정 영역 (가치 판단) 으로 분류 강제.
+- **§결정 17 (Amendment 6) lane back-translation gate** — return-time output gate 차원. 본 §결정 18 = session lifecycle reflex 차원. 두 axis 완전 disjoint (lane traversal fidelity ↔ session lifecycle reflex).
+- **§결정 5 사실/가치 판단 분류 결정 트리** — session swap 결정 = 가치 판단 영역 (사용자 cognitive bandwidth / session continuity 선호) — Orchestrator self-recommendation 차단 정합 (`AskUserQuestion` 발화 의무 영역).
+
+### 18.6 ADR-039 inline whitelist 1번 entry 정합
+
+본 §결정 18 = ADR-039 inline whitelist 1번 entry (사용자 dialog) scope 안 **사용자 dialog 본 발화 제약**. dialog turn 자체는 inline 유지 — anti-pattern 7종 detect 시 발화 self-restriction.
+
+DialogFidelityAgent (Amendment 1-3 3-anchor / Amendment 6 4-anchor) 가 `post_user_turn` anchor 에서 anti-pattern 7종 detect 가능 (5번째 anchor 신설 아님 — 기존 `post_user_turn` anchor scope 확장 only). pattern_dimension 분류 = "결정 구조" (§결정 4 4 차원 enum).
+
+### 18.7 scope_boundary (out-of-scope)
+
+본 Amendment 7 **포함**: §결정 18 신설 + closed 2-trigger 정당 / 7종 anti-pattern 차단 / `/compact` + MEMORY.md 슬림화 normative + 재발 incident 2건 evidence codify + axis disjoint declare + ADR-039 정합 명문화.
+
+본 Amendment 7 **out-of-scope** (별 carrier):
+
+- **`/compact` slash command 자체 정의 / 실 mechanism** — Claude Code harness 영역 (외부), codeforge governance scope 외.
+- **MEMORY.md 인덱스 entry 슬림화 mechanism** — auto-memory file 영역 (Claude Code harness), codeforge governance scope 외. 별 carrier (사용자 memory management protocol) defer.
+- **Mechanical lint** — anti-pattern 7종 detect mechanical check = behavioral directive only, 별 follow-up CFP carrier (deferred-followup, ADR-060 §결정 5 모든 신규 entry warning 시작 정합).
+- **DialogFidelityAgent runtime hook 확장** (`post_user_turn` anchor 안 anti-pattern 7종 detect) — Wave 2 별 cross-repo CFP carrier (codeforge-pmo plugin).
+- **session lifecycle 결정 mechanism 자체** (어떤 session 을 어떻게 끝낼지) — 사용자 영역, Orchestrator self-determination scope 외.
+
+### 18.8 sunset_justification: null (ADR-058 §결정 5 정합)
+
+본 Amendment 7 = **additive 강화** (Layer 1-4 / DialogFidelityAgent auxiliary / §결정 12-17 모두 보존, session lifecycle reflex sub-pattern 차단 layer 추가 only). 강화 방향 only — `is_transitional: false` 보존, ADR-058 §결정 5 약화 차단 영역 미적용.
+
+`sunset_justification: null` 적격 (§12.7 / §13.7 / §14.4 / §15.7 / §16.8 / §17.7 family pattern 정합 — Amendment 1/2/3/4/5/6/7 모두 동일).
+
 ## self-application top-down ratchet
 
-본 ADR amendment 는 [ADR-064 §결정 7](ADR-064-decision-principle-mandate.md) top-down ratchet 정합 — 강화 방향만 허용 (scope 확장 / 강도 강화). 약화 방향 (`is_transitional: false → true` 다운그레이드 / 4 layer 축소 / 3 memory entry mapping 회수 / Sub-mechanism 2 차원 enum 축소 / **3 touchpoint enum 축소 — §결정 15 Amendment 4** / **trigger table 회수 — §결정 16 Amendment 5** / **§결정 17 back-translation gate 회수 — Amendment 6** / **§결정 2(c) richness 약화 — frequency 축소 ≠ richness 축소 invariant 위반**) 은 [ADR-058 §결정 5](ADR-058-adr-sunset-criteria-mandate.md) `sunset_justification` 의무로 차단. 본 ADR-071 = ADR-064 ratchet 의 직접 carrier (mechanical version 승격 + scope 확장 = strict superset). Amendment 1/2/3/4/5/6 = `sunset_justification: null` family pattern.
+본 ADR amendment 는 [ADR-064 §결정 7](ADR-064-decision-principle-mandate.md) top-down ratchet 정합 — 강화 방향만 허용 (scope 확장 / 강도 강화). 약화 방향 (`is_transitional: false → true` 다운그레이드 / 4 layer 축소 / 3 memory entry mapping 회수 / Sub-mechanism 2 차원 enum 축소 / **3 touchpoint enum 축소 — §결정 15 Amendment 4** / **trigger table 회수 — §결정 16 Amendment 5** / **§결정 17 back-translation gate 회수 — Amendment 6** / **§결정 18 session swap reflex anti-pattern 7종 enum 축소 — Amendment 7** / **§결정 2(c) richness 약화 — frequency 축소 ≠ richness 축소 invariant 위반**) 은 [ADR-058 §결정 5](ADR-058-adr-sunset-criteria-mandate.md) `sunset_justification` 의무로 차단. 본 ADR-071 = ADR-064 ratchet 의 직접 carrier (mechanical version 승격 + scope 확장 = strict superset). Amendment 1/2/3/4/5/6/7 = `sunset_justification: null` family pattern.
 
 ## 해소 기준
 
@@ -889,4 +989,8 @@ N/A — permanent policy.
 - [CFP-612](https://github.com/mclayer/plugin-codeforge/issues/612) — carrier Issue
 - [CFP-525](https://github.com/mclayer/plugin-codeforge/issues/525) — ancestor Epic (closed)
 - [CFP-1104](https://github.com/mclayer/plugin-codeforge/issues/1104) — Amendment 5 carrier Issue (natural-language action trigger lookup table)
+- [CFP-1110](https://github.com/mclayer/plugin-codeforge/issues/1110) — Amendment 6 carrier Issue (lane back-translation gate binding — paired ADR-082 Amendment 5)
+- [CFP-1340](https://github.com/mclayer/plugin-codeforge/issues/1340) — Amendment 7 carrier Issue (unjustified session swap reflex 차단 + /compact normative)
 - [CFP-582](https://github.com/mclayer/plugin-codeforge/issues/589) — sibling (agent ↔ agent domain, conceptual cross-ref)
+- [ADR-053](ADR-053-structural-change-restart-prerequisite.md) — session swap reflex trigger #1 (구조 변경 재구동) closed 2-set first entry
+- [ADR-057](ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) — session swap reflex trigger #2 (Sonnet/Haiku → Opus fallback) closed 2-set second entry
