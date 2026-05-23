@@ -164,6 +164,8 @@ cross_story_pattern_adr_trigger:
 
 ## 해소 기준
 
+
+N/A — permanent policy
 N/A — permanent governance ratchet (`is_transitional: false`). ADR-058 §결정 5 ratchet 강화 방향 sunset_justification 면제 영역.
 
 ## 관련 파일

@@ -145,6 +145,11 @@ ADR-72 Amendment N sibling carrier (mirror 갱신).
 - `mechanical_enforcement_actions: [deploy-review-lane-spawn-evidence]` declaration-only Wave 1.
 - Bypass = `hotfix-bypass:deploy-review-lane-spawn` label.
 
+
+## 해소 기준
+
+N/A — permanent policy
+
 ## 결과
 
 ### Cascade trigger chain

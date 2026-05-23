@@ -191,7 +191,7 @@ ADR-064 self-application top-down ratchet 정합.
 
 ## 해소 기준
 
-N/A — permanent governance policy.
+N/A — permanent policy.
 
 본 registry 의 sunset 조건 미해당 — sublayer enumeration 영역 의 SSOT 분리 자체가 permanent 결정. registry schema field 변경 시 version bump (MINOR / MAJOR) 로 처리.
 

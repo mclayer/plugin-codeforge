@@ -190,6 +190,8 @@ ADR-073 §결정 1 self-application = 본 ADR Amendment 2 §결정 2 scope minim
 
 ## 해소 기준
 
+
+N/A — permanent policy
 N/A — `is_transitional: false` (permanent policy, ADR-058 보안 default presumption 정합).
 
 본 정책은 codeforge family 가 `CODEFORGE_CROSS_REPO_PAT` 를 사용하는 한 영구 유지. 단 다음 2 사유 발생 시 amendment 의무:

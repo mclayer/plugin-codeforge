@@ -457,6 +457,8 @@ ADR-067 §결정 4 sequential ordering 정합 (Story 간 cross-pollinate 차단)
 
 ## 해소 기준
 
+
+N/A — permanent policy
 ### sunset_justification (CFP-1111 carrier)
 
 본 ADR 의 효용은 [CFP-1111 (Imperative changelog walk paradigm 도입)](https://github.com/mclayer/plugin-codeforge/issues/1111) 으로 paradigm replace 진행. 다음 3-tuple 충족 시 `is_transitional: true → false (Sunsetted)` 전환 (Wave 4 Story-11 carrier).
