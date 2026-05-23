@@ -915,6 +915,193 @@ def render_walk_progress_items(steps: list) -> list[str]:
     return mod.render_walk_todo_items(steps)
 
 
+# ──────────────────────────── (h) consumer-applicability filter (CFP-1293) ────
+# ADR-083 Amendment 3 §결정 5 — walker apply Stage D consumer-applicability filter
+#
+# 책임:
+#   - FilterDecision frozen dataclass: 4-way enum filter 결과 (immutable)
+#   - apply_consumer_applicability_filter(): 순수 함수 (whitelist read only, filesystem-only)
+#   - invoke_detect_repo_kind(): detect-repo-kind.py subprocess wrapper
+#
+# 설계 결정 (Change Plan §3.4 / §3.5 / §3.6):
+#   - apply_overlay_file() 순수 함수 invariant 보존 (signature 변경 0건)
+#   - caller 영역 (apply_changelog_entry 함수) 에 hook insertion
+#   - subprocess call = ADR-005 self-app exemption + ADR-009 wrapper-only boundary 보존
+#
+# CFP-899 reconcile-overlay.sh §4.12 hook pattern 답습 (DRY 준수)
+# SSOT: docs/change-plans/cfp-1293-walker-filter-wire.md §3.4/§3.5/§3.6
+
+
+import subprocess as _subprocess
+
+
+@dataclass(frozen=True)
+class FilterDecision:
+    """ADR-083 consumer-applicability filter 결정 결과 (immutable frozen dataclass).
+
+    CFP-1293 Phase 2 — walker apply Stage D per-entry filter hook 결과 캡슐화.
+
+    Fields:
+        decision:      enum "proceed" | "skip" | "abort"
+                       - proceed: 해당 workflow 파일 cp 진행
+                       - skip:    consumer 분류 + whitelist miss → cp bypass
+                       - abort:   unknown / whitelist 읽기 실패 → fail-closed abort
+        repo_kind:     detect-repo-kind.py 반환 enum
+                       "plugin" | "consumer" | "mixed" | "unknown"
+        reason:        결정 사유 (skip / abort 시 의무, proceed 시 "" 가능)
+        skip_filename: skip 결정 시 대상 basename (proceed / abort 시 "")
+
+    ADR-083 §결정 5 4-way truth-table:
+        plugin / mixed → proceed (full workflow set, 0 file skip)
+        consumer + whitelist match → proceed
+        consumer + whitelist miss  → skip + skip_filename + reason
+        unknown (or whitelist fail) → abort (fail-closed, ADR-068 I-3)
+
+    DRY 준수: reconcile-overlay.sh §4.12 hook bash case statement 의 Python translate.
+    """
+    decision: str       # enum: "proceed" | "skip" | "abort"
+    repo_kind: str      # enum: "plugin" | "consumer" | "mixed" | "unknown"
+    reason: str         # 결정 사유 (skip/abort 의무, proceed="" 가능)
+    skip_filename: str  # skip 시 file basename (proceed/abort = "")
+
+
+def apply_consumer_applicability_filter(
+    filename: str,
+    repo_kind: str,
+    whitelist_path,
+) -> FilterDecision:
+    """ADR-083 §결정 5 4-way enum filter (순수 함수, whitelist filesystem read only).
+
+    Args:
+        filename:       workflow yml basename (예: "story-init.yml")
+        repo_kind:      detect-repo-kind.py 반환 enum
+                        "plugin" | "consumer" | "mixed" | "unknown"
+        whitelist_path: consumer_applicable_workflows.txt absolute path (Path-like)
+
+    Returns:
+        FilterDecision — decision + repo_kind + reason + skip_filename
+
+    Decision rules (ADR-083 §결정 5 4-way truth-table):
+        plugin / mixed → FilterDecision(decision="proceed", ...)
+        consumer:
+            whitelist match → FilterDecision(decision="proceed", ...)
+            whitelist miss  → FilterDecision(decision="skip", skip_filename=filename, ...)
+            whitelist read fail → FilterDecision(decision="abort", ...)
+        unknown → FilterDecision(decision="abort", ...)
+        비-enum value → FilterDecision(decision="abort", ...) [defensive]
+
+    DRY 준수: apply_overlay_file() signature 변경 0건 (순수 함수 invariant 보존 — CFP-1177 D1).
+    filesystem read: whitelist 파일 1건만 (network 0 invariant — ADR-083 §결정 2).
+    """
+    from pathlib import Path as _Path
+
+    # plugin / mixed: full workflow set (filter skip 0, wrapper self-app exemption)
+    if repo_kind in ("plugin", "mixed"):
+        return FilterDecision(
+            decision="proceed",
+            repo_kind=repo_kind,
+            reason=f"full workflow set (repo_kind={repo_kind})",
+            skip_filename="",
+        )
+
+    # consumer: positive whitelist grep
+    if repo_kind == "consumer":
+        try:
+            wl_path = _Path(whitelist_path)
+            content = wl_path.read_text(encoding="utf-8")
+            entries = {
+                line.strip()
+                for line in content.splitlines()
+                if line.strip() and not line.strip().startswith("#")
+            }
+        except (FileNotFoundError, OSError) as exc:
+            # whitelist 부재 / read fail → fail-closed (abort, unknown 동형 처리)
+            return FilterDecision(
+                decision="abort",
+                repo_kind="unknown",
+                reason=f"whitelist read fail: {exc}",
+                skip_filename="",
+            )
+        if filename in entries:
+            return FilterDecision(
+                decision="proceed",
+                repo_kind="consumer",
+                reason="whitelist match",
+                skip_filename="",
+            )
+        return FilterDecision(
+            decision="skip",
+            repo_kind="consumer",
+            reason=f"whitelist miss (consumer-non-applicable)",
+            skip_filename=filename,
+        )
+
+    # unknown → fail-closed unconditional (ADR-083 §결정 4, ADR-068 I-3)
+    if repo_kind == "unknown":
+        return FilterDecision(
+            decision="abort",
+            repo_kind="unknown",
+            reason="repo_kind=unknown — fail-closed (ADR-083 §결정 4)",
+            skip_filename="",
+        )
+
+    # 비-enum value (defensive fail-closed)
+    return FilterDecision(
+        decision="abort",
+        repo_kind="unknown",
+        reason=f"unknown repo_kind enum value '{repo_kind}' — fail-closed",
+        skip_filename="",
+    )
+
+
+def invoke_detect_repo_kind(
+    consumer_root,
+    detect_repo_kind_py,
+) -> str:
+    """detect-repo-kind.py subprocess call (ADR-061 외부 .py + ADR-005 self-app exemption).
+
+    Args:
+        consumer_root:       target repo root (Path-like 또는 str)
+        detect_repo_kind_py: templates/scripts/detect-repo-kind.py absolute path (Path-like)
+
+    Returns:
+        enum str: "plugin" | "consumer" | "mixed" | "unknown"
+
+    Decision:
+        - subprocess stdout = enum literal → 반환
+        - subprocess crash / timeout / 비-enum exit → "unknown" (fail-closed fallback)
+        - timeout default = 5s (DoS 보호 — §9 보안 평가 정합)
+
+    Invariants (ADR-083 §결정 2 filesystem-only):
+        - subprocess.run capture_output=True (network 0 invariant — detect-repo-kind.py 자체)
+        - timeout=5 (DoS 보호)
+        - check=False (exit code 자체가 enum 정보 — subprocess.CalledProcessError 불필요)
+
+    CFP-899 reconcile-overlay.sh §4.12 hook pattern 답습 (subprocess call paradigm).
+    ADR-005 §결정 1 self-app exemption: templates/scripts/ 는 consumer-distributable →
+      wrapper scripts/lib/ 안 직접 import 금지 → subprocess call boundary 보존.
+    """
+    from pathlib import Path as _Path
+
+    _VALID_KINDS = ("plugin", "consumer", "mixed", "unknown")
+
+    try:
+        result = _subprocess.run(
+            ["python3", str(_Path(detect_repo_kind_py)), "--repo-root", str(_Path(consumer_root))],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (_subprocess.TimeoutExpired, OSError, FileNotFoundError):
+        return "unknown"
+
+    output = result.stdout.strip()
+    if output in _VALID_KINDS:
+        return output
+    return "unknown"
+
+
 # ──────────────────────────── CLI entry point ─────────────────────────────────
 # (참조용 — 실제 CLI 진입점은 walk-single-plugin.sh / walk-bundle-7-plugins.sh)
 
