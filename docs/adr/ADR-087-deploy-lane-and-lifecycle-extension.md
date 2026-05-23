@@ -37,8 +37,22 @@ related_files:
   - CLAUDE.md  # Development Agent Team / 필수 플러그인 / 레인 단계 정의 / Lane 진입 skill 표 갱신
   - docs/orchestrator-playbook.md  # 8 lane spawn order
   - templates/github-workflows/auto-deploy.yml  # Epic close → Deploy trigger workflow (Phase 1 skeleton)
-amendment_log: []
-amendments: []
+amendment_log:
+  - amendment_number: 1
+    date: "2026-05-23"
+    carrier_story: CFP-1317-S1
+    description: "stateful daemon BG-1~4 비적격 기준 형식화 (§결정 5 §5.2 표 4 row append, OR semantic) + 보조 배포 매커니즘 rolling/writer-lease sub-domain 정식화 (신규 §결정 9 신설, chief tie-break ladder result 타협안 채택 — single enum primary `deploy_strategy: blue-green|rolling|writer-lease` + secondary annotation `eligibility_reason: BG-N enum`) + §결정 5 wording 정정 (\"blue-green 단일 매커니즘 고정\" → \"primary blue-green + BG-1~4 비적격 시 보조 매커니즘 (§결정 9)\") + EC-G concurrent deploy + rollback race serialization (§9.5) + EC-H 기존 consumer migration path default blue-green (§9.6). mctrader#1272 escalation (a)+(b) 흡수."
+    sunset_justification: null  # strengthening direction (scope 확장 — 보조 매커니즘 sub-domain 추가, 약화 0건). ADR-058 §결정 5 정합.
+    related_files:
+      - docs/adr/ADR-087-deploy-lane-and-lifecycle-extension.md
+      - docs/domain-knowledge/domain/deployment-mechanism/stateful-daemon-bg-eligibility.md
+      - docs/domain-knowledge/domain/deployment-mechanism/single-writer-fencing-pattern.md
+amendments:
+  - number: 1
+    date: "2026-05-23"
+    carrier_story: CFP-1317-S1
+    description: "§결정 5 stateful daemon BG-1~4 비적격 기준 형식화 + 신규 §결정 9 (rolling/writer-lease 보조 매커니즘) + §결정 5 wording 정정 + EC-G/H 흡수"
+    sunset_justification: null
 is_transitional: false  # permanent lane structure — 약화 차단 ratchet (ADR-058 §결정 5 정합)
 sunset_justification: null
 mechanical_enforcement_actions:
@@ -128,7 +142,11 @@ ADR-042 Amendment 9 sibling carrier (DeployPL + DeployWorker + DeployReviewPL + 
 - default 1 (`production`). consumer 가 `project.yaml deploy.environments: [<list>]` 으로 staging / canary 등 추가 가능 (ADR-027 Amendment N schema).
 - 본 ADR scope = production 단일 default 정의. multi-env promotion 흐름 = Wave 5+ (별 carrier — 운영 phase 8 후보 중 canary promote).
 
-### §결정 5 — 배포 매커니즘 = blue-green + atomic swap + 3-시간 보존 (단일 매커니즘)
+### §결정 5 — 배포 매커니즘 = primary blue-green + BG-1~4 비적격 시 보조 매커니즘 (§결정 9)
+
+**Amendment 1 (2026-05-23 KST, CFP-1317-S1)**: 본래 "blue-green 단일 매커니즘 고정" wording → "primary blue-green + BG-1~4 비적격 시 보조 매커니즘 (§결정 9)" 으로 정정. stateful daemon 영역에서 blue-green 가정이 깨지는 4 sub-pattern (BG-1~4) codify + 보조 매커니즘 sub-domain mapping = §결정 9 carrier.
+
+#### §5.1 — primary blue-green 9-step (default mechanism)
 
 | 단계 | 내용 | Empirical reference |
 |---|---|---|
@@ -142,7 +160,22 @@ ADR-042 Amendment 9 sibling carrier (DeployPL + DeployWorker + DeployReviewPL + 
 | 8 | blue 3-시간 보존 | `retention-window-timer.yml` workflow 가 3h 후 cleanup trigger. **[empirical-source: TBD]** — 3-시간 = brainstorm Phase 1 합의 default, consumer override 가능 (`project.yaml deploy.retention_hours`) |
 | 9 | 3-시간 후 정리 | docker container stop + image 보존 (image registry retention 별 정책). 정리 (contract) 마이그레이션 = 다음 Epic step 2 통합 (별 흐름 — ADR-089 §결정 2 정합) |
 
-ADR-068 I-5 dimensional empirical grounding cross-ref — 본 §결정 5 안 `[empirical-source: TBD]` annotation 3개소 (healthcheck window / graceful drain / retention period). Wave 2+ (consumer mctrader 실측 후 carrier 별 CFP 가 lock-in).
+ADR-068 I-5 dimensional empirical grounding cross-ref — 본 §5.1 안 `[empirical-source: TBD]` annotation 3개소 (healthcheck window / graceful drain / retention period). Wave 2+ (consumer mctrader 실측 후 carrier 별 CFP 가 lock-in).
+
+#### §5.2 — BG-1~4 stateful daemon 비적격 기준 (Amendment 1 신설, CFP-1317-S1)
+
+**OR semantic**: 다음 4 row 중 **1+ 만족 시** blue-green 차단 + §결정 9 보조 매커니즘 진입. 2+ row 동시 만족 시 최강한 invariant 우선 (예: BG-1 + BG-4 동시 → writer-lease 가 양 invariant 모두 cover, 우선 채택 — §결정 9.3 mapping).
+
+| 기준 (BG-N) | 정의 | mctrader 사례 | 비적격 trigger (OR semantic) |
+|---|---|---|---|
+| **BG-1 단일-writer 영속 상태** | ACID-D (durability) + WAL (Write-Ahead Log) pattern. 동시 writer 2 instance = consistency invariant violation (data corruption / split-brain) | `mctrader-data` WAL = single-writer DB 패턴 (시세 수집 raw write) | (BG-1) 만족 시 blue-green green container 가 동일 WAL 영역 동시 write = consistency violation → §결정 9.3 writer-lease 의무 |
+| **BG-2 외부 단일연결 자원** | 외부 시스템이 client-side 단일 연결 강제 (예: 거래소 WebSocket = 동일 ApiKey 로 2 socket 시 server reject 또는 race condition) | `mctrader-market-bithumb` collector = Bithumb WebSocket (동일 ApiKey 2 socket 시 server-side race) | (BG-2) 만족 시 blue+green 양쪽 active = 외부 시스템 reject → §결정 9.2 또는 §결정 9.3 (consumer 의 외부 자원 protocol semantic 에 따라 양 매커니즘 모두 적격 — §결정 9.4 self-judge) |
+| **BG-3 single-active 세션 enforcement** | 시스템 자체가 토큰 / lease 로 단일 active session 강제 (예: trading engine paper_runner — 동시 2 instance = 주문 중복 위험 / position 누적 inconsistency) | `mctrader-engine` paper_runner (동시 2 instance = position 누적 risk) | (BG-3) 만족 시 blue+green 양쪽 active = session token 충돌 → §결정 9.2 rolling per-host 의무 (한 시점 active host = 1) |
+| **BG-4 non-idempotent 작업 경쟁** | 같은 입력에서 같은 결과 보장 안 됨 (예: compactor = 같은 raw 파일 2 process compact 시 중복 compact 결과물 / 부작용 누적 / 출력물 corruption) | `mctrader-data` compactor (동시 2 process = 중복 compact 결과물 누적) | (BG-4) 만족 시 blue+green 양쪽 active = 같은 작업 중복 실행 → §결정 9.3 writer-lease 의무 (lease holder = 단일 실행자) |
+
+**비적격 평가 의무**: consumer 가 `project.yaml deploy.eligibility_reason: <BG-N enum 또는 null>` 명시 의무. null = blue-green primary (BG-1~4 미해당 자가 진단). BG-N enum = §결정 9 보조 매커니즘 진입.
+
+**Forward extensibility (EC-B)**: BG-1~4 = consumer 가 식별 가능한 stateful pattern 의 초기 닫힌-set. 향후 BG-N+1 추가 = 별 ADR-087 Amendment carrier (본 Amendment 1 = BG-4 까지).
 
 ### §결정 6 — wrapper / lane plugin 자체 self-application = N/A (doc-only fast-path)
 
@@ -161,6 +194,62 @@ ADR-068 I-5 dimensional empirical grounding cross-ref — 본 §결정 5 안 `[e
 - Story §14 Lane Evidence 표에 `deploy` row append 의무 (ADR-031 lane-evidence-check.yml extension).
 - `mechanical_enforcement_actions: [deploy-lane-spawn-evidence]` declaration-only Wave 1 (ADR-076 / ADR-070 / ADR-082 / ADR-086 precedent 답습 — `evidence-checks-registry.yaml` 신규 entry 발의 시 row append 후 mechanical lint 활성).
 - Bypass = `hotfix-bypass:deploy-lane-spawn` label (ADR-024 Amendment N family member 확장 — CFP-1059 sibling carrier).
+
+### §결정 9 — 보조 배포 매커니즘 (rolling / writer-lease) 적격 사유 형식화 (Amendment 1 신설, CFP-1317-S1)
+
+§결정 5 §5.2 BG-1~4 비적격 trigger 만족 시 진입하는 2 보조 매커니즘 sub-domain 정식화. mctrader#1272 escalation (b) carrier — "현 EC-5 = 자원 사유만 정의, stateful 사유 미정의" 해소.
+
+#### §9.1 — chief tie-break ladder 결과 (ADR-068 Amendment 2 §결정 1 정합)
+
+| 단계 | 결과 |
+|---|---|
+| (1) RACI matrix lookup (skill body 3-way 9-cell) | Cross-axis 9-cell 안 직접 match cell 0 (deploy strategy axis = primary axis matrix 안 row 부재). Step 2 진입. |
+| (2) ADR-068 invariant 적용 | I-1 (semantic completeness): BG-1~4 + rolling/writer-lease 정의 완전 / I-3 (unconditional guard): BG-1~4 OR semantic / I-4 (wording SSOT): K8s single enum 산업 표준 ↔ 도메인 진실 2-axis matrix trade-off |
+| (3) chief judgement | **타협안 채택** — `deploy_strategy: blue-green \| rolling \| writer-lease` (single enum primary, K8s `strategy.type: Recreate \| RollingUpdate` 답습) + secondary annotation `eligibility_reason: BG-N enum` (consumer 명시, 2-axis matrix info 보존). Rationale: (a) 산업 prior art alignment (K8s + Argo Rollouts hybrid) (b) consumer 학습 비용 minimize (1 primary key) (c) 도메인 진실 보존 (BG-N annotation = many-to-many mapping evidence) (d) Forward extensibility (BG-N+1 추가 시 annotation enum 만 확장) (e) backward-compat (default `blue-green` + annotation 부재 시 자동 blue-green) |
+| (4) ADR-091 Amendment 발의 | 0건 — vocabulary governance scope (Authority Pair / Domain Service / Subdomain Specialist) 외 application BC 영역, vocabulary theater 차단 (INV-5 정합) |
+
+#### §9.2 — rolling per-host 매커니즘 (BG-3 적격)
+
+- **정의**: host 마다 차례로 swap (한 시점 active host = 1). K8s `Deployment` `RollingUpdate` `maxSurge=1 maxUnavailable=0` 답습. 1-host-at-a-time 변종 (Argo Rollouts canary `setWeight: 100/n_hosts` step 정합).
+- **적격 BG**: BG-3 (single-active session enforcement) primary / BG-2 (외부 단일연결 자원) consumer-side self-judge 양가성 영역
+- **layer 분리 (EC-D)**: rolling = **host-level 단일성** (한 시점 active host = 1). **session-level 단일성** (한 시점 active session = 1) 은 별 layer = application code 책무 (lease + heartbeat). rolling 도 swap window 안 2 host 일시 active 가능 영역 — session-level enforcement 가 별도 application layer 책무.
+- **rationale (BG-3)**: paper_runner 동시 2 instance = position 누적 risk → rolling 으로 host-level 1 active 보장 + session token check 가 application layer 안 redundant safety net.
+
+#### §9.3 — writer-lease 매커니즘 (BG-1 + BG-4 적격)
+
+- **정의**: fencing token + TTL + 자동 만료 매커니즘. distributed systems literature 핵심 개념 — Kleppmann "Designing Data-Intensive Applications" Ch.8 "fencing tokens" 절 [verified]. 산업 prior art 3종: etcd lease (HashiCorp Raft-based KV, Kubernetes leader election primary) / Kafka leader epoch (partition leader epoch increment + follower stale detect) / ZooKeeper ephemeral node + Curator LeaderLatch (session TTL 기반).
+- **적격 BG**: BG-1 (단일-writer 영속 상태) + BG-4 (non-idempotent 작업 경쟁) primary / BG-2 (외부 단일연결 자원) consumer-side self-judge 양가성 영역
+- **EC-E 영역 declare**: writer-lease 의 fencing token 발급 / TTL / revoke 매커니즘 실 구현 = consumer-side implementation 책무 영역. 본 §결정 9 = "writer-lease = fencing token + TTL + 자동 만료 매커니즘 의무" semantic codify 만. 실 구현 선택 (etcd lease / Kafka leader epoch / ZK ephemeral / 자체 구현) = consumer choice.
+- **rationale (BG-1)**: WAL single-writer = 동시 writer 2 instance 시 data corruption / split-brain → lease holder = 단일 writer 보장 + lease 만료 시 안전 handoff.
+- **rationale (BG-4)**: compactor non-idempotent = 동일 입력 동시 2 process 시 중복 결과물 누적 → lease holder = 단일 실행자 보장 + lease 만료 시 다음 holder pickup.
+
+#### §9.4 — BG-2 (외부 단일연결 자원) consumer-side self-judge
+
+BG-2 = §9.2 rolling 과 §9.3 writer-lease 양 매커니즘 모두 적격 영역. consumer 의 외부 자원 protocol semantic 에 따라 self-judge 의무:
+
+- **rolling 적격 case**: 외부 시스템이 host-level disconnect → reconnect 안전 (예: WebSocket reconnect-on-disconnect 정합 거래소 + 서버 race 없음)
+- **writer-lease 적격 case**: 외부 시스템이 lease-based identifier 요구 (예: ApiKey + session ID 짝 = 외부 server 단일 active session 강제)
+- mctrader-market-bithumb 사례: WebSocket reconnect 안전 → `eligibility_reason: BG-2` + `deploy_strategy: rolling` 권장 (consumer self-decide)
+
+#### §9.5 — Concurrent deploy + rollback race serialization 의무 (EC-G — CFP-1317-S1 [codex-TP4-P1])
+
+§9.2 rolling / §9.3 writer-lease 매커니즘 영역 안에서도 **deploy event-level race** = 별 layer. green container health check 직후 + atomic swap 직전 window 에 다른 deploy event 발생 시 race condition (예: hot-patch + 동시 main branch merge).
+
+- **의무**: deploy event-level serialization (FIFO queue) — 1 active deploy event = 1 lease holder. concurrent deploy reject + rollback 진행 중 신규 deploy block.
+- **실 enforcement 매커니즘**: consumer-side deploy orchestrator (별 carrier 영역). 본 §결정 9.5 = semantic invariant codify 만.
+- **rationale**: §9.3 writer-lease 가 data-plane single-writer 영역 cover, §9.5 = control-plane (deploy event itself) single-writer 영역. 두 layer disjoint (data layer ↔ control layer) — §9.3 만으로 control plane race 미cover.
+- **ArchitectAgent self-judge**: §결정 9.5 = §결정 9 body sub-clause 통합 (별 §결정 10 분리 X). Rationale = data-plane single-writer (§9.3) + control-plane single-writer (§9.5) 둘 다 "단일성 invariant" 의 disjoint layer 표현, single coherent ADR §결정 영역 통합. 별 §결정 10 분리 시 §결정 9 ↔ §결정 10 coupling 인공 증가.
+
+#### §9.6 — 기존 consumer migration path (EC-H — CFP-1317-S1 [codex-TP4-P1])
+
+본 Amendment 1 발효 시 기존 consumer (ADR-087 §결정 5 "blue-green 단일 매커니즘 고정" 전제로 `project.yaml` 작성된 consumer) backward-compat 보장.
+
+- **default behavior = `deploy_strategy: blue-green`** (기존 consumer 영향 0, opt-in 으로 §결정 9 보조 매커니즘 활성).
+- **migration path 2단계**:
+  1. **신규 consumer**: `deploy_strategy: blue-green | rolling | writer-lease` 선택 자유 + `eligibility_reason: BG-N enum` 또는 null 명시
+  2. **기존 consumer**: blue-green default 유지 (project.yaml 변경 0) + 사용자 가 BG-1~4 자가 진단 후 opt-in 시 §결정 9 보조 매커니즘 활성
+- **consumer overlay `project.yaml deploy.strategy_override` 신설 가능성**: 본 Amendment scope 외 (consumer adoption side, mctrader#1265 영역). 본 §결정 9.6 = declare-only.
+- **ADR-089 Schema 변경 7 원칙 cross-ref**: 양방향 호환 강제 (default blue-green = 기존 schema 영향 0) + reverse 가능성 (consumer 가 보조 매커니즘 → blue-green 복귀 시 `deploy_strategy: blue-green` + `eligibility_reason: null` 명시).
 
 ## 결과
 
