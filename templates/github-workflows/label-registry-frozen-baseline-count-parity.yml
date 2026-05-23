@@ -35,15 +35,22 @@ jobs:
       - name: "Checkout"
         uses: actions/checkout@v4
         with:
-          fetch-depth: 2  # HEAD~1 diff 접근을 위해
+          fetch-depth: 0  # full base..HEAD diff support (sibling convention)
 
       - name: "Set up Python"
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
+      - name: "Detect changed files"
+        id: changed
+        run: |
+          set -euo pipefail
+          CHANGED_FILES="$(git diff --name-only origin/${{ github.base_ref }}...HEAD)"
+          echo "CHANGED_FILES<<EOF" >> "$GITHUB_ENV"
+          echo "$CHANGED_FILES" >> "$GITHUB_ENV"
+          echo "EOF" >> "$GITHUB_ENV"
+
       - name: "Run label-registry-frozen-baseline-count-parity lint"
-        env:
-          CHANGED_FILES: ${{ join(github.event.pull_request.changed_files.*.filename, '\n') }}
         run: |
           bash scripts/check-label-registry-frozen-baseline-count-parity.sh
