@@ -135,7 +135,7 @@ external timestamp (GitHub API / git commit) = 변조 금지 — UTC verbatim + 
 
 ## 오케스트레이션 규칙
 
-Enterprise `default_workflow_permissions: read` 차단 시 manual agent direct write fallback path = [playbook §3.15](docs/orchestrator-playbook.md) (CFP-658 / ADR-027 Amendment 2 — Trigger A `bootstrap.fallback_mode: action_blocked` + C `fallback:manual` label, 우선순위 C>A).
+Enterprise `default_workflow_permissions: read` 차단 시 manual agent direct write fallback path = [playbook §3.15](docs/orchestrator-playbook.md) (CFP-658 / ADR-027 Amendment 2 — Trigger A `bootstrap.fallback_mode: action_blocked` + C `fallback:manual` label, 우선순위 C>A). **Orchestrator behavior (CFP-1340)**: ADR-039 Amd 2 §결정 15 (inline whitelist 5번째 entry §9/§10/§14/phase, partial rollback) / ADR-039 Amd 3 §결정 16 (destructive-only permission UI ask) / ADR-071 Amd 7 §결정 18 (session swap reflex 차단 + `/compact` normative).
 
 ### Sonnet subagent rate-limit → Opus fallback (ADR-057)
 

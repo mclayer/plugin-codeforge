@@ -33,6 +33,22 @@ amendment_log:
     summary: §결정 14 신설 (Pre-spawn-pin mandate) — DeveloperPL + 모든 branch-creating subagent 가 새 branch 생성 시 current origin/main HEAD pin 의무 (CFP-699/702/848 3차 누적 stale-base recurrence 차단)
     direction: strengthening
     sunset_justification: N/A (ratchet — closed enumeration 확장만, 약화 0)
+  - amendment: 2
+    date: 2026-05-24
+    carrier_story: CFP-1340
+    summary: |
+      §결정 15 신설 (Orchestrator-monopoly Story-file handoff inline write — partial rollback). §결정 2 inline whitelist 4-entry 표에 5번째 entry append "Orchestrator-monopoly Story-file handoff inline write" + 4-sub-scope (§9 verdict / §10 FIX Ledger / §14 Lane Evidence / phase transition) + lane agent self-write exclusion 명시. §결정 1 closed enumeration 안 "Story file write §1-§14 어느 섹션이든" → "Story file write §1-§14 (§9/§10/§14/phase 제외 — §결정 15 inline whitelist 5번째 entry scope) 어느 섹션이든" partial rollback delta. §결정 3 mechanism rationale clarification — Orchestrator-owned delegate subagent (기존) + Orchestrator inline (Amendment 2 추가) 양 mechanism 모두 valid. ADR-031 / fix-event-v1 invariant 무변. 사용자 2026-05-17 KST CFP-848 directive verbatim citation ("Orchestrator-monopoly Story-file section (§9/§10/§14/phase) handoff 시 general-purpose editor subagent 위임 reject").
+      memory `feedback_orchestrator_monopoly_inline_write` normative 승격 carrier. evidence-grounded — Orchestrator-monopoly Story-file section monopoly 명목 보존 + inline cost (~60-70KB 큰 파일 inline reconstruction) = 올바른 trade-off + ADR-031 §14 Orchestrator self-write monopoly invariant + fix-event-v1 §10 row append Orchestrator monopoly invariant 정합.
+    direction: weakening_partial
+    sunset_justification: |
+      사용자 explicit directive 2026-05-17 KST CFP-848 구현리뷰 handoff 시 general-purpose editor subagent 위임 reject — Orchestrator-monopoly Story-file section (§9/§10/§14/phase) 의 monopoly 명목 보존 + inline cost (~60-70KB 큰 파일 inline reconstruction) = 올바른 trade-off. ADR-058 §결정 5 약화 evidence-gate 통과 (CFP-1149 symmetric ratchet 정합) — partial rollback scope = §결정 1 closed enumeration 'Story file write §1-§14 = subagent spawn 의무' 의 §9/§10/§14/phase 4-sub-scope 만. 나머지 §1/§2/§3/§4/§5/§6/§7/§8/§11/§12/§13 lane agent self-write 영역 = §결정 1 유지 (binary always-spawn 보존). ADR-042 Amendment 10 deputy 7→6 precedent 답습 (evidence-gated 약화 carve-out). carrier-preserved scope split: subagent spawn mechanism 자체는 다른 영역 유지 (4-entry inline whitelist 의 5번째 entry append, closed enumeration 확장 패턴 정합).
+  - amendment: 3
+    date: 2026-05-24
+    carrier_story: CFP-1340
+    summary: |
+      §결정 16 신설 (Autonomous permission UI behavior — destructive-only ask, reversible auto-proceed). destructive closed enum (≥8 항목: git reset --hard / git push --force / file delete rm-rf / branch delete / Issue mutation close-state / label create / workflow yaml 변경 / ADR row append) + 외부 visible (PR create/merge/close/comment to shared main + external notifications) = ask permission preserve. reversible closed enum (≥6 항목: local file Edit / local script run / temp-file mechanics / .claude/settings.local.json edit / git add / branch create / commit / Edit on /docs/**) = auto-proceed (no permission UI reflex prompt). reversibility test 근거 명시 (git reflog / Issue history / branch 복구 가능성). ADR-039 §결정 1 binary always-spawn 무관 (permission UI 차원, mechanism 차원 disjoint axis). 사용자 directive verbatim 2026-05-17 KST CFP-848 ("아 묻지말고 그냥 하라고" / "쓰잘데기 없는 권한 묻지말고 전부 수정하라"). memory `feedback_no_permission_prompts` normative 승격 carrier.
+    direction: strengthening
+    sunset_justification: null
 is_transitional: false
 ---
 
@@ -85,9 +101,9 @@ codeforge 를 이용한 **수정 작업** 진행 중, Orchestrator (top-level Cl
 
 - file edit / write (`docs/**`, `src/**`, `templates/**` 포함)
 - GitHub state change (Issue / PR / comment / label / milestone / sub-issue / branch / merge)
-- Story file write (§1-§14 어느 섹션이든)
-- FIX Ledger §10 row append (fix-event-v1 contract — ownership 무변, mechanism 만 spawn)
-- Lane-spawn evidence §14 row append (ADR-031 — ownership 무변, mechanism 만 spawn)
+- Story file write (§1-§14 어느 섹션이든 — **단 §9 verdict / §10 FIX Ledger / §14 Lane Evidence / phase transition 4-sub-scope 제외, §결정 15 inline whitelist 5번째 entry scope — Amendment 2, CFP-1340 partial rollback**)
+- FIX Ledger §10 row append (fix-event-v1 contract — ownership 무변, mechanism 만 spawn 또는 Orchestrator inline — Amendment 2 §결정 15)
+- Lane-spawn evidence §14 row append (ADR-031 — ownership 무변, mechanism 만 spawn 또는 Orchestrator inline — Amendment 2 §결정 15)
 - gate label transition (`gate:design-review-pass` 등)
 - phase label transition (`phase:요구사항` → `phase:설계` 등)
 - workflow yaml 수정·추가
@@ -118,9 +134,9 @@ codeforge 를 이용한 **수정 작업** 진행 중, Orchestrator (top-level Cl
   - Story §14 Lane Evidence row append (ADR-031 / CFP-126)
   - review-verdict v3 final write (Story §9 / GitHub comment / gate label / phase transition — ADR-022 deprecate 후에도 Orchestrator domain 유지)
   - branch protection / CI workflow / cross-plugin schema templates
-- Mechanism (변경): 위 ownership 영역의 file write / GitHub state change 도 **subagent spawn 으로 수행**. Orchestrator 가 "§10 row append 전용 subagent" / "§14 row append 전용 subagent" / "label transition 전용 subagent" 를 spawn 해 Edit / mcp__github__\* tool 호출.
+- Mechanism (변경): 위 ownership 영역의 file write / GitHub state change 도 **subagent spawn 으로 수행** (default mechanism) **또는 Orchestrator inline write** (Amendment 2 §결정 15 inline whitelist 5번째 entry scope = §9/§10/§14/phase 4-sub-scope 한정). Orchestrator 가 "§10 row append 전용 subagent" / "§14 row append 전용 subagent" / "label transition 전용 subagent" 를 spawn 해 Edit / mcp__github__\* tool 호출 (default) — 또는 Orchestrator-monopoly Story-file 4-sub-scope 영역은 inline write 직접 수행 가능 (Amendment 2, CFP-1340).
 
-본 분리는 ADR-031 §결과 invariant 무손상 입증 + lane plugin agent 변경 부재 입증의 핵심 근거.
+본 분리는 ADR-031 §결과 invariant 무손상 입증 + lane plugin agent 변경 부재 입증의 핵심 근거. **Amendment 2 (CFP-1340) 후**: Orchestrator-owned delegate subagent (기존 mechanism) + Orchestrator inline (Amendment 2 추가 mechanism) 양 mechanism 모두 valid — ownership identity (Orchestrator monopoly) 보존, mechanism level 양 path 허용.
 
 ### 결정 4 — Scope = codeforge orchestration 한정
 
@@ -245,6 +261,108 @@ re-dispatch 시 subagent prompt 안 **"self-reset 금지 / 기존 작업 content
 - 본 ADR Amendment 1 evidence 표 (위 3 row)
 - CFP-895 Issue body §verified-via (memory + Story-5 PR #849 commit lineage 53c2851 parent stale-base)
 - CFP-895 Issue 본문 §제안 deliverable (a/b/c 3-touchpoint codify)
+
+### 결정 15 — Orchestrator-monopoly Story-file handoff inline write (Amendment 2, CFP-1340 partial rollback)
+
+§결정 2 의 Inline whitelist 4-entry 표에 **5번째 entry** 추가. **partial rollback** — §결정 1 closed enumeration 안 "Story file write §1-§14 = subagent spawn 의무" 의 §9/§10/§14/phase 4-sub-scope 만 inline 허용으로 약화 (4-sub-scope 외 §1/§2/§3/§4/§5/§6/§7/§8/§11/§12/§13 = §결정 1 binary always-spawn 유지).
+
+**Inline whitelist 4-entry → 5-entry 확장 표** (§결정 2 의 4-entry 위 추가):
+
+| # | Category | 설명 | Mechanism rationale |
+|---|---|---|---|
+| 5 | **Orchestrator-monopoly Story-file handoff inline write** (Amendment 2, CFP-1340) | Story file 의 Orchestrator-monopoly 4-sub-scope inline write — §9 verdict / §10 FIX Ledger row append / §14 Lane Evidence row append / phase transition (`phase:요구사항` → `phase:설계` 등) | Orchestrator-monopoly Story-file section 의 monopoly 명목 보존 (ADR-031 §14 + fix-event-v1 §10 contract invariant). general-purpose editor subagent 위임 시 inline cost (~60-70KB 큰 파일 inline reconstruction) + Orchestrator-monopoly intent 희석 우려 — 사용자 explicit reject (2026-05-17 KST CFP-848 directive verbatim "Orchestrator-monopoly Story-file section handoff 시 general-purpose editor subagent 위임 reject"). lane agent self-write 영역 (§1/§2/§3/§4/§5/§6/§7/§8/§11/§12/§13) = 본 entry scope 외 — §결정 1 binary always-spawn 유지. |
+
+**4-sub-scope 명세** (closed enumeration):
+
+1. **§9 verdict inline write** — lane verdict write / GitHub gate label transition. final pl_recommendation (PASS / FIX / FIX_DISCRETIONARY / ESCALATE_PACKET_INCOMPLETE) write 시.
+2. **§10 FIX Ledger row append** — fix-event-v1 contract row append. Orchestrator 단독 monopoly (CFP-32 invariant 보존).
+3. **§14 Lane Evidence row append** — ADR-031 lane-spawn evidence trail. Orchestrator self-write monopoly invariant 보존.
+4. **Phase transition** — `phase:요구사항` → `phase:설계` → `phase:설계리뷰` → ... label transition (단일 label flip + Story file frontmatter `phase` field 갱신).
+
+**Lane agent self-write exclusion 명시** — codeforge-{requirements,design,develop,review,test,pmo,deploy,deploy-review} lane plugin agent 가 owned section (§1/§2/§3/§4/§5/§6/§7/§8/§11/§12/§13) write 시 = 본 entry scope 외. §결정 1 binary always-spawn 정책 유지.
+
+**Edge case 처리**:
+
+- **Edge-1 — Lane agent self-write 영역 inline write claim**: lane agent owned section (§1/§2/§3/§4/§5/§6/§7/§8/§11/§12/§13) 을 Orchestrator inline 으로 write 하는 행위 = 본 entry scope 외 + §결정 1 binary always-spawn violation. ownership 정합 우선 — lane agent self-write 영역은 subagent spawn 의무 유지.
+- **Edge-2 — Session 재개 시 stale state 처리**: session 재개 후 Orchestrator-monopoly 4-sub-scope state (예: 이전 §10 row append 진행 중 중단) 가 stale 한 경우 — Orchestrator 가 inline read-verify (§10 row count / 최신 timestamp) 후 inline write 재개. subagent spawn 우회 정당 (state 복원 동안 mechanism level 1-shot subagent overhead 회피).
+
+**Ownership ≠ Mechanism 분리 (Amendment 2 confirm)** — Orchestrator monopoly ownership 보존 + mechanism level inline write 추가 (subagent spawn 과 disjoint, 양 mechanism 모두 valid).
+
+- ADR-031 §14 row append "Orchestrator self-write monopoly" invariant 보존 — Orchestrator-owned delegate subagent (§결정 12 Amendment 의무) + Orchestrator inline (Amendment 2 추가) 양 mechanism 모두 invariant 정합.
+- fix-event-v1 §append_rules.writer "Orchestrator 단독" 정의 보존 — top-level Claude 세션 (Orchestrator) + Orchestrator-owned delegate subagent + Orchestrator inline 3 mechanism 모두 cover.
+
+**Closed enumeration (§결정 1 binary always-spawn 무손상 invariant)** — Amendment 2 partial rollback 은 §결정 2 Inline whitelist 4-entry 의 5번째 entry append 패턴 (closed enumeration 확장, ADR-058 §결정 5 evidence-gate 통과 — sunset_justification 충족). §결정 1 closed enumeration 안 "Story file write §1-§14" 항목 의 §9/§10/§14/phase 4-sub-scope 만 exception clause 형식 으로 entry 5 routing.
+
+**5번째 entry exhaustiveness declare**: 5번째 entry 의 4-sub-scope (§9 verdict / §10 FIX Ledger / §14 Lane Evidence / phase transition) 는 **closed enum**. 5번째 sub-scope 추가 = 별도 ADR Amendment 의무 (강화 방향 ratchet 정합 단 사용자 burden 변화 영역 — sub-scope 확장 = inline write 영역 확장 = Orchestrator monopoly mechanism 영역 확장). 6번째 inline whitelist entry 추가 = 별도 ADR Amendment 의무 (ADR-058 §결정 5 evidence-gate). closed enumeration 안정성 보장.
+
+**Verification evidence**:
+- 사용자 directive 2026-05-17 KST CFP-848 verbatim (memory `feedback_orchestrator_monopoly_inline_write` carrier)
+- ADR-031 §14 lane-spawn evidence "Orchestrator self-write monopoly" invariant 정합 verify
+- fix-event-v1 §append_rules.writer "Orchestrator 단독" invariant 정합 verify
+
+### 결정 16 — Autonomous permission UI behavior (Amendment 3, CFP-1340 strengthening)
+
+Orchestrator 의 permission UI behavior normative SSOT. **destructive-only ask, reversible auto-proceed** binary 분류. §결정 1 binary always-spawn 과 disjoint axis (permission UI 차원 vs mechanism 차원).
+
+**Destructive closed enum (≥8 항목)** — ask permission 의무 (사용자 explicit approval 후 진행):
+
+1. `git reset --hard` (working tree / branch state 복구 불능)
+2. `git push --force` / `git push --force-with-lease` (remote ref 비대화식 overwrite)
+3. file delete (`rm -rf` / file system level delete — git untracked file 포함)
+4. branch delete (`git branch -D` / remote branch delete `gh api -X DELETE`)
+5. Issue mutation (close / state change / lock — `gh issue close` / `mcp__github__issue_write` close action)
+6. label create (registry mutation — `gh label create` / `mcp__github__create_label`)
+7. workflow yaml 변경 (`.github/workflows/**` add / edit / delete — CI/CD policy mutation)
+8. ADR row append (`docs/adr/ADR-RESERVATION.md` yaml mutation — sequential append registry — collision rebase 영역)
+
+**외부 visible (destructive enum 동격)** — ask permission 의무:
+
+- PR create / merge / close / comment to shared main branch (`gh pr create / merge / close / comment` / `mcp__github__*`)
+- external notification (`mcp__github__add_issue_comment` to public Issue / Discussion post / external webhook trigger)
+
+**Reversible closed enum (≥6 항목)** — auto-proceed (no permission UI reflex prompt):
+
+1. local file Edit (`Edit` tool — git reflog 복구 가능)
+2. local script run (`python file.py` / `bash script.sh` — destructive side effect 부재 시)
+3. temp-file mechanics (`.tmp-*.md` / scratchpad write — manual delete 가능)
+4. `.claude/settings.local.json` edit (per-project local config, git untracked default)
+5. `git add` (staging area — `git restore --staged` 복구 가능)
+6. branch create (`git branch <name>` / `git checkout -b <name>` — `git branch -D` 회수 가능)
+7. commit (`git commit` — `git reset --soft HEAD~1` 회수 가능)
+8. Edit on `docs/**` (governance docs — git reflog + PR review process 복구 가능)
+
+**Reversibility test 근거 명시** — 각 reversible 항목의 회복 가능 mechanism:
+
+- git reflog (90-day default retention) — local edit / commit / branch create / git add 모두 recovery point 보유
+- Issue history (GitHub immutable audit log) — comment / Issue state change 모두 history 보유 (단 destructive Issue close / lock = side effect 비례 ask)
+- branch 복구 가능성 — local branch delete 시 reflog SHA 로 `git branch <name> <sha>` recovery
+
+**ADR-039 §결정 1 binary always-spawn 무관 (disjoint axis)** — §결정 1 = mechanism 차원 (Orchestrator inline vs subagent spawn). §결정 16 = permission UI 차원 (ask vs auto-proceed). 두 axis 완전 disjoint:
+
+| | §결정 1 binary always-spawn (mechanism) | §결정 16 autonomous permission (UI) |
+|---|---|---|
+| destructive + inline whitelist 4-entry | inline 허용 + ask permission | (whitelist scope 안 mechanism, destructive 여부 별도 평가) |
+| destructive + 외 영역 | subagent spawn 의무 + ask permission | (subagent prompt 안 destructive action 도 ask) |
+| reversible + inline whitelist 4-entry | inline 허용 + auto-proceed | (whitelist scope 안 mechanism, reversible action auto-proceed) |
+| reversible + 외 영역 | subagent spawn 의무 + auto-proceed | (subagent prompt 안 reversible action 도 auto-proceed) |
+
+**사용자 directive verbatim citation**:
+
+- 2026-05-17 KST CFP-848: "아 묻지말고 그냥 하라고"
+- 2026-05-17 KST CFP-848: "쓰잘데기 없는 권한 묻지말고 전부 수정하라"
+
+memory `feedback_no_permission_prompts` normative 승격 carrier. 강화 ratchet — closed enumeration (destructive ≥8 / reversible ≥6 / 외부 visible 1 super-class) 확장 만, 약화 0. ADR-064 §결정 7 top-down ratchet 정합 (CFP-1149 symmetric ratchet — 강화 방향 normative anchor).
+
+**Closed enumeration exhaustiveness declare**:
+
+- destructive enum 8 항목 → 9번째 추가 = 별도 ADR Amendment 의무 (강화 방향, ratchet 정합).
+- reversible enum 8 항목 → 9번째 추가 = 별도 ADR Amendment 의무 (사용자 burden 영향 — auto-proceed 영역 확장 = permission UI 차단 영역 확장).
+- 외부 visible super-class 확장 = 별도 ADR Amendment 의무.
+
+**Verification evidence**:
+- 사용자 directive 2026-05-17 KST CFP-848 verbatim (memory `feedback_no_permission_prompts` carrier)
+- destructive enum 8 항목 각각의 reversibility test 근거 (git reflog / Issue history / branch 복구 mechanism 각 verify)
+- ADR-039 §결정 1 binary always-spawn 정책 무영향 verify (disjoint axis 표 4-cell 정합)
 
 
 ## 회피된 대안
