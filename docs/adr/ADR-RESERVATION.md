@@ -199,6 +199,11 @@ amendments_reserved:
     reserved_by_cfp: CFP-1332
     reservation_date: 2026-05-24 KST
     status: active   # Orchestrator inline write — §결정 12 신설 RequirementsPL + retro-time verify-before-trust 2 sub-scope (§결정 12.A Issue body §2.1 verified state table mandate strengthening pattern_count 2 reach CFP-1000 INVERSE drift + CFP-1001 lint output FP / §결정 12.B Retro-time wave_defer empirical verify pattern_count 2 reach CFP-1006 Wave-defer falsified + CFP-1025 corrective closure pattern WORKING), 2 memory entry normative 승격 carrier (memory feedback_issue_body_verify_before_trust / feedback_wave_defer_empirical_verify), ADR-082 super-class lifecycle expansion axis (write-time + retro-time disjoint layer), wrapper-only ADR-010 sibling sync 면제 (RequirementsPLAgent.md / PMOAgent.md lane plugin cross-ref = follow-up defer). verified-via Read worktree docs/adr/ADR-082-...md frontmatter amendments[] L11-57 max=9 → next=10 2026-05-24 KST 기준 origin/main 38fc8ff (CFP-1330 Amendment 9 merge 후 base). META-self-applied (§결정 10.D 5th applied case).
+  - adr_number: 82
+    amendment_id: 11
+    reserved_by_cfp: CFP-1338
+    reservation_date: 2026-05-24 KST
+    status: active   # Orchestrator inline write — §결정 13 신설 GitOps verify-before-trust discipline 3 sub-scope (§결정 13.A main_drift_bypass_audit_pattern pattern_count 5 reach HIGH CFP-963 P1+P2 + CFP-1000 + CFP-1001 + CFP-1340/1329/1330/1332 batch 4-bypass label lineage / §결정 13.B HEAD SHA pin step 0 verify-before-trust precondition CFP-722 stale HEAD churn sentinel ADR-073 sub-discipline cross-ref / §결정 13.C branch protection 환경 worktree cleanup 순서 ADR-024 + ADR-040 cross-ref), 3 memory entry normative 승격 carrier (memory feedback_main_drift_bypass_audit_pattern / feedback_verify_pin_head_sha / feedback_branch_protection_worktree_cleanup), ADR-082 super-class GitOps coordination layer expansion axis, wrapper-only ADR-010 sibling sync 면제 (GitOpsAgent.md lane plugin cross-ref = follow-up defer). verified-via Read worktree docs/adr/ADR-082-...md frontmatter amendments[] L11-65 max=10 → next=11 2026-05-24 KST 기준 origin/main e7b7791 (CFP-1332 Amendment 10 merge 후 base). META-self-applied (§결정 10.D 6th applied case).
 ```
 
 ## 해소 기준
