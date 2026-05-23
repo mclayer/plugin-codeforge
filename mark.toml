@@ -1,0 +1,31 @@
+# mark (kovetskiy/mark) 설정 파일
+# 형식: TOML
+# 위치: repo root mark.toml (mark --config mark.toml 로 참조)
+#
+# [H4 resolve 결과 — WebFetch source: github.com/kovetskiy/mark README]
+# - config file 형식 = TOML
+# - CLI flag 와 config key 는 동일한 hyphen 형태 (e.g., base-url, changes-only)
+# - username / password / base-url 은 config 또는 CLI flag 양쪽 지원
+# - title-from-h1 / title-from-filename / changes-only / minor-edit 등도 config key 지원
+# - resolve 성공: hypothesis H4 해소.
+#
+# [보안 정책]
+# - token literal 0 — username / password 는 본 파일에 기재하지 않음
+# - CI 는 전부 CLI flag / env 주입: --username / --password / --base-url
+# - 본 파일은 behavior 설정만 담당
+
+# Confluence Cloud 설정
+# base-url = "https://mclayer.atlassian.net/wiki"  # CI 에서 --base-url flag 로 주입
+# username = ""  # CI 에서 --username flag 로 주입 (ATLASSIAN_USER_EMAIL)
+# password = ""  # CI 에서 --password flag 로 주입 (ATLASSIAN_API_TOKEN)
+
+# 페이지 제목 처리
+title-from-h1 = true
+drop-h1 = true
+
+# 동작 최적화
+changes-only = true
+minor-edit = true
+
+# 레이아웃
+content-appearance = "full-width"

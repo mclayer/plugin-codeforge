@@ -36,3 +36,16 @@ labels:
     - presets      # presets/** (consumer 시작점)
     - core         # CLAUDE.md, .claude/_overlay 등 plugin 핵심 정책
     - infra        # .github/ISSUE_TEMPLATE, CODEOWNERS, PR template
+
+
+# CFP-1146 W5-S16 — Atlassian suite 재결합 (Epic-A, ADR-100 §결정 3 + ADR-103 sync mechanism)
+# wrapper dogfood — A-2 SoR-docs Confluence authoritative (space CFP / cloudId 0729a627-…)
+# secret: api_token / user_email 은 env-indirect (literal 0, GitHub Actions secret 또는 .env)
+atlassian:
+  enabled: true
+  confluence:
+    base_url: "https://mclayer.atlassian.net/wiki"
+    space_key: "CFP"
+    api_token_env: "ATLASSIAN_API_TOKEN"
+    user_email_env: "ATLASSIAN_USER_EMAIL"
+  # jira: W4+ defer (wrapper dogfood = Confluence docs only, ADR-100 §결정 3 jira block schema placeholder 만)

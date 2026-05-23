@@ -1,5 +1,8 @@
 # dev-orchestrator plugin — generated files (if this repo is also used as a consumer test workspace)
-.claude/agents/
+.claude/agents/*
+# CFP-1273 W5-S15 — Confluence sync agents (ADR-103 §결정 3 — project-scope, non-plugin, tracked)
+!.claude/agents/confluence-sync-read-verify.md
+!.claude/agents/confluence-sync-write-commit.md
 .claude-work/
 
 # macOS
