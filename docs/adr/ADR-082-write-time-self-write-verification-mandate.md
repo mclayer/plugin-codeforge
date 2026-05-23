@@ -44,6 +44,11 @@ amendments:
     date: 2026-05-23
     summary: "§결정 9 verify-before-cite 의무 scope 양방향 확장 — Wave 1 (Amendment 6) `M = max+1` (forward 정합) only → Wave 2 (본 Amendment 7) `M = max+1` ∧ `M > max` 미만 stale 인용 차단 (backward + forward 양방향). recurrence evidence: CFP-1293 stale citation `ADR-083 Amendment 2` (실제 max=2 인 시점 — 정확 next slot = 3, 즉 `M ≤ max` backward-staleness) 가 ADR-082 Amendment 6 Wave 1 behavioral mandate land 후 발생 → Wave 1 behavioral 단독 차단 불충분 evidence 아닌 CFP-1216 Phase 2 mechanical lint Check (b) `M > max+1` forward-only coverage gap 으로 escape. CFP-1216 lint Check (b) 본 Amendment 7 = backward-staleness 추가 catch wire (CFP-1216 SSOT extend, naming dedup ADR-068 I-4). pattern_count 3 reach (CFP-1177 + CFP-1179 + CFP-1293) ADR-045 §D-9 Mandatory escalation 산물 — forcing function 강화 carrier (axis 중복 신설 영역 아님: §결정 9 wording scope 확장 + Wave 2 lint coverage gap 보강 dual-carrier). mechanical_enforcement_actions[] `amendment-number-frontmatter-verify` entry summary 갱신 (status warning retain, scope expand)."
     sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §결정 9 verify-before-cite scope (forward only) → (forward + backward) 양방향 확장. forbid scope 확장 (M = max+1 정확 next-slot 외 모두 stale). lint coverage gap 보강 = mechanical enforcement scope 확장, 약화 0건. ADR-064 §self-application top-down ratchet 정합. is_transitional: false 유지 (permanent governance policy)."
+  - amendment_id: 8
+    carrier_story: CFP-1329
+    date: 2026-05-24
+    summary: "§결정 10 신설 (ArchitectAgent write-time discipline 4 sub-scope) — Codex TP#2 inline FIX 8-anchor mirror coverage checklist (§결정 10.A) + mid-author partial revert propagation gap (§결정 10.B sentinel codify rationale) + ArchitectAgent self-introduced script-behavior claim verify (§결정 10.C pattern_count 2 reach) + META self-application pattern (§결정 10.D pattern_count 2 reach). 4 memory entry normative 승격 carrier (memory `feedback_codex_tp2_verify_before_trust_pattern` / `feedback_mid_author_partial_revert_propagation_gap` / `feedback_architect_script_behavior_claim_verify` / `feedback_meta_self_application_pattern`). ADR-082 §결정 1 layer 1 + §결정 2 scope (a-d) write-time verify mandate sub-domain expansion — verify-before-trust super-class 안 ArchitectAgent chief author write-time discipline 영역 codify. ADR-039 lane self-write boundary 정합 (lane plugin agent md cross-ref = follow-up defer, wrapper-only ADR-010 sibling sync 면제). doc-only fast-path (ADR-054)."
+    sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: ADR-082 §결정 1 layer 1 + §결정 2 scope (a-d) write-time verify mandate 가 ArchitectAgent chief author write-time discipline 4 sub-scope 영역으로 확장, forbid scope 축소 아님). ADR-064 §self-application top-down ratchet 정합. is_transitional: false 유지 (permanent governance policy). pattern_count evidence: §결정 10.A=1 (CFP-795 sentinel codify rationale, dogfood inversion P1 prevention 도구적 가치) / §결정 10.B=1 (CFP-1009 sentinel) / §결정 10.C=2 (CFP-1006 F-DR-1006-1 + CFP-1025 hypothesis refuted) / §결정 10.D=2 (CFP-1016 1st applied + CFP-1340 Amendment 2 §결정 15 Story file initial scaffold = 2nd applied case). ≥ 2 reach (10.C+10.D) + sentinel forward-prevention (10.A+10.B) 혼합 ratchet — ADR-064 §결정 7 (CFP-1149 Amendment 8) symmetric evidence-gated 정합."
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-841
@@ -87,6 +92,12 @@ amendment_log:
     decisions_touched: ["§결정 9"]
     nature: ratchet-up  # §결정 9 verify-before-cite scope (forward only → forward + backward 양방향) 확장 + CFP-1216 lint Check (b) backward-staleness 추가 wire (ADR-058 §결정 5 강화 방향)
     note: "ADR-045 §D-9 pattern_count 3 ≥ threshold 2 Mandatory escalation 산물 — CFP-1293 (#3 occurrence) 가 ADR-082 Amendment 6 Wave 1 behavioral mandate land 후 발생 (CFP-1198 2026-05-22 → CFP-1293 2026-05-23). stale citation = `ADR-083 Amendment 2` (실제 max=2 시점, 정확 next-slot = 3) — `M ≤ max` backward-staleness 패턴. CFP-1216 Phase 2 mechanical lint Check (b) 현 implementation `cited_m > max_id + 1` (forward only) 으로 backward-staleness escape. root cause = Wave 1 behavioral 단독 불충분 아닌 mechanical lint Check (b) coverage gap. dual-carrier (axis 동일, ADR-064 §결정 1 CFP scope unitary 정합): (1) §결정 9 wording 본문에 `M = max+1` 정확 next-slot 외 모두 stale ([WARN]) 명시 + (2) CFP-1216 lint script `scripts/lib/check_amendment_number_stale.py` Check (b) `cited_m != max_id + 1` 양방향 비교로 확장 + `[FORWARD-STALE]` / `[BACKWARD-STALE]` 출력 format 분리 + bats fixture `tests/scripts/cfp-1216/cfp-1216-amendment-stale.bats` backward-staleness TC 3+ 추가 (TC-A-BWD-EXACT / TC-B-BWD-DEEP / TC-C-FWD-EXACT-NEXT pass guard) + self-reference exemption (ADR file 자체 §Amendment N 본문 안 자기 인용 = lint scope 제외, EC-3 self-protection 정합) + templates/** path filter (FP-완화 canonical example). evidence-checks-registry `amendment-number-frontmatter-verify` entry summary 갱신 (Check (b) 양방향 codify, status warning retain). 본 Amendment 7 자체가 META-self-applied: 본 Amendment 번호(7) 가 target ADR-082 frontmatter amendments: 목록 Read verify 후 max(6)+1=7 으로 결정 (verified-via: Read worktree ADR-082 frontmatter amendments[] 2026-05-23 KST 기준 origin/main bfc4806)."
+  - amendment_id: 8
+    carrier_story: CFP-1329
+    date: 2026-05-24  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 10 (신설)"]
+    nature: ratchet-up  # §결정 10 신설 (ArchitectAgent write-time discipline 4 sub-scope A/B/C/D) — §결정 1 layer 1 + §결정 2 scope (a-d) write-time verify mandate sub-domain expansion (ADR-058 §결정 5 강화 방향)
+    note: "ADR-082 super-class (write-time semantic truth verify) 안 ArchitectAgent chief author write-time discipline 4 sub-scope codify. 4 memory entry normative 승격 carrier: (1) `feedback_codex_tp2_verify_before_trust_pattern` (CFP-795 F-1 sentinel) — Codex TP#2 inline FIX 8-anchor mirror coverage checklist / (2) `feedback_mid_author_partial_revert_propagation_gap` (CFP-1009 dogfood inversion P1 sentinel) — body normative correction ↔ frontmatter inline comment / appendix / table cell propagation 의무 / (3) `feedback_architect_script_behavior_claim_verify` (CFP-1006 F-DR-1006-1 + CFP-1025 hypothesis refuted, pattern_count 2 reach) — script behavior assertion write-time empirical verify + DesignReviewPL audit point / (4) `feedback_meta_self_application_pattern` (CFP-1016 1st applied + CFP-1340 Amendment 2 §결정 15 2nd applied, pattern_count 2 reach) — Story introduces codification → carrier Story 자체에 1st applied. pattern_count evidence 혼합: §결정 10.A=1 (sentinel forward-prevention) / §결정 10.B=1 (sentinel forward-prevention) / §결정 10.C=2 reach / §결정 10.D=2 reach. ADR-064 §결정 7 CFP-1149 Amendment 8 symmetric evidence-gated ratchet 정합 — sentinel forward-prevention (10.A+10.B) = 도구적 가치 evidence base, recurrence threshold 2 reach (10.C+10.D) = standard pattern_count base. 혼합 ratchet 정직 명시. 본 Amendment 8 자체가 META-self-applied (§결정 10.D 3rd applied case): 본 Amendment 번호(8) 가 target ADR-082 frontmatter amendments: 목록 Read verify 후 max(7)+1=8 으로 결정 (verified-via: Read worktree docs/adr/ADR-082-...md frontmatter amendments[] 2026-05-24 KST 기준 origin/main d24ab28). Wave 1 = declaration-only (4 sub-decisions 모두 behavioral directive). Wave 2 mechanical wire (DesignReviewPL audit dedicated points + ArchitectAgent self-discipline grep self-check) = 별 sub-carrier 분리 (deferred-followup, ADR-082 Wave 1 declaration-only precedent 답습)."
 related_stories:
   - CFP-776  # carrier (super-class 통합 결정 — escalation_action escalate_user)
   - CFP-841  # Amendment 1 carrier (§결정 6 behavioral→mechanical 전환 후속 carrier)
@@ -97,6 +108,13 @@ related_stories:
   - CFP-1312 # Amendment 7 carrier (§결정 9 scope 양방향 확장 forward → forward+backward + CFP-1216 lint Check (b) backward-staleness wire — Wave 1 mechanical lint Check (b) coverage gap 보강 dual-carrier, ADR-045 §D-9 pattern_count 3 reach Mandatory escalation 산물)
   - CFP-1293 # Amendment 7 evidence #3 occurrence (ADR-083 Amendment 2 backward-staleness — Wave 1 behavioral mandate land 후 발생 mechanical lint coverage gap escape)
   - CFP-1216 # Amendment 7 dual-carrier sibling (CFP-1198 Phase 2 sub-carrier 점유 land — naming SSOT amendment-number-frontmatter-verify, Amendment 7 = Check (b) extend)
+  - CFP-1329 # Amendment 8 carrier (§결정 10 신설 — ArchitectAgent write-time discipline 4 sub-scope A/B/C/D: Codex TP#2 8-anchor mirror / mid-author revert propagation / script-behavior claim verify / META self-application, 4 memory entry normative 승격 carrier, pattern_count evidence 혼합 ratchet ADR-064 §결정 7 symmetric)
+  - CFP-795  # §결정 10.A evidence #1 sentinel (Codex TP#2 inline FIX 8-anchor mirror coverage checklist forward-prevention, dogfood inversion P1 prevention 도구적 가치)
+  - CFP-1009 # §결정 10.B evidence #1 sentinel (mid-author partial revert propagation gap dogfood inversion P1, ADR-074 carrier ADR 자체 같은 defect 보유)
+  - CFP-1006 # §결정 10.C evidence #1 (F-DR-1006-1 parse-hotfix-bypass-labels.py script behavior claim P2 dogfood gap)
+  - CFP-1025 # §결정 10.C evidence #2 (Orchestrator hypothesis REFUTED by ArchitectPL empirical verify, pattern WORKING dogfood win)
+  - CFP-1016 # §결정 10.D evidence #1 (ADR-082 Amendment 2 META-self-applied 1st occurrence — issue_origin frontmatter + §2.1 verified state table)
+  - CFP-1340 # §결정 10.D evidence #2 (Amendment 2 §결정 15 Orchestrator-monopoly Story-file inline whitelist 5번째 entry META-self-applied 2nd occurrence — Story file initial scaffold + §9.1 verdict inline write)
   - CFP-746  # pattern corpus #1a/#1b (corpus slip + 정정-2nd-slip)
   - CFP-770  # pattern corpus #2/#3 (§9 evidence stale + Phase 0 cross-plugin 추정)
   - CFP-1000 # Amendment 2 corpus #4 (Issue body 3 inversions: prod-cutover-deputy-evidence INVERTED + baseline stale + path incorrect)
@@ -300,6 +318,82 @@ scope (e) FIX 명세 depth-aware scope 필드 (CFP-770 §8 제안 — broken-lin
 세 케이스 모두 write-time 에 caught (plan land 후 escaped 0) 이나, root cause = (1)/(2) plan-time read verify 부재 + (3) lint coverage gap (`M > max+1` forward-only 비교). Amendment 7 = 양방향 mechanical wire 보강 (Wave 2 escape catch).
 
 **ADR-068 I-4 (wording SSOT) 연계**: amendment 번호는 governance artifact 전체에서 동일 식별자로 참조되는 wording SSOT 대상이다. stale 번호가 planning artifact 에 기록되면 후속 ADR 본문 / CLAUDE.md / retro 와 wording drift 가 발생 — I-4 위반 원인이 된다.
+
+### §결정 10 — ArchitectAgent write-time discipline 4 sub-scope expansion (Amendment 8 신설, CFP-1329)
+
+ADR-082 §결정 1 layer 1 (Orchestrator scope) + §결정 2 scope (a-d) (internal lane agent self-write scope) 의 write-time verify mandate 가 ArchitectAgent (codeforge-design chief author) 의 4 write-time discipline 영역까지 확장 적용된다. 4 sub-decisions 모두 별 axis disjoint 이며, 같은 super-class (verify-before-trust write-time semantic truth) 아래 단일 carrier 통합 (ADR-064 §결정 5 unitary 정합).
+
+#### §결정 10.A — Codex TP#2 inline FIX 8-anchor mirror coverage checklist
+
+**carrier**: memory `feedback_codex_tp2_verify_before_trust_pattern` (CFP-795 F-1 lesson)
+
+ArchitectAgent §3 직후 mandatory Codex proactive check touchpoint #2 (ADR-052 Amendment 4) verified-true P1 finding inline FIX 시 다음 8 anchor 동시 갱신 의무:
+
+1. Change Plan §3 (mechanical 구현 설계 SSOT — primary anchor)
+2. Change Plan §4 Risk (R-N row append)
+3. Change Plan §7 Threat model (T-N row + §7.6 매핑)
+4. Change Plan §10 (미해소 deputy 이견 — finding 이행 추적)
+5. Story §7 mirror (Change Plan §7 mirror 영역)
+6. ADR amendment_log entry 끝 (carrier reference 1-line)
+7. **ADR 본문 §결정 N 표·단락 — F-1 lesson, 누락 자주 발생 anchor**
+8. ADR 신규 §결정 N 본문 (조건 / 알고리즘 / fail-closed)
+
+verbatim wording 일관 — ADR-068 I-4 wording SSOT 강제. CFP-795 lesson: 8-mirror coverage 가 default 였다면 iter 1 회피.
+
+**sentinel codify rationale** (pattern_count 1): CFP-795 F-1 dogfood inversion P1 prevention. forward-prevention 도구적 가치 > recurrence ≥ 2 wait — ADR-058 §결정 5 정합 (sentinel forward-prevention 영역 적격, ADR-064 §결정 7 CFP-1149 Amendment 8 symmetric evidence-gated 면제 — 도구적 가치 evidence base).
+
+#### §결정 10.B — Mid-author partial revert propagation gap
+
+**carrier**: memory `feedback_mid_author_partial_revert_propagation_gap` (CFP-1009 F-DR-001 P1 dogfood inversion sentinel)
+
+mid-author Codex TP catch + inline FIX body normative correction 직후 frontmatter inline comment / appendix narrative / table cell sync 영역까지 propagation 의무:
+
+1. ArchitectPL mid-author FIX 직후 self-discipline: `grep -rn "<stale-label>" <touched-files>` cross-check (wider scope frontmatter comment + appendix + table cell)
+2. DesignReviewPL mandatory audit point — body normative correction ↔ frontmatter inline comment + appendix + table cell 일관성 verify
+3. post-FIX reverse-mutual grep cross-check 의무 (to-remove pattern grep = 0 in target + to-add pattern grep ≥ N)
+
+**sentinel codify rationale**: pattern_count 1 (CFP-1009 dogfood inversion P1). evidence-gate wait 대신 forward prevention 가치 우선 — ADR-074 carrier ADR 자체 같은 defect 보유 = dogfood inversion P1 severity, recurrence ≥ 2 wait 시 P1 재발 risk. ADR-058 §결정 5 forward-prevention 영역 적격 (도구적 가치 > wait, ADR-064 §결정 7 CFP-1149 Amendment 8 symmetric evidence-gated 면제).
+
+#### §결정 10.C — ArchitectAgent self-introduced script-behavior claim verify
+
+**carrier**: memory `feedback_architect_script_behavior_claim_verify` (pattern_count 2 reach)
+
+ArchitectAgent (or Combined Req+Design lane) authors a claim about codeforge-internal script behavior (e.g., "parse-X.py skips template entries", "bootstrap-labels.sh creates all labels") = write-time self-introduced assertion. 의무 empirical verify:
+
+1. ArchitectAgent self-discipline (best-effort): codeforge script behavior claim 작성 시 `[verified-via: <command>]` annotation + empirical command run + result 명시. 미verify 시 `[unverified — DesignReview to confirm]` 명시.
+2. DesignReviewPL mandatory audit point: Story / Change Plan / ADR text 안 script behavior assertion 시 dedicated audit point 추가 — script 실행 + source grep verify.
+3. mutual cross-check before declaring iter complete (F-DR-1006-3 lesson): systematic wording correction 적용 시 to-remove pattern + to-add pattern 양 axis grep cross-check 의무.
+
+**pattern_count 2 evidence**:
+
+| # | Story | claim | actual (verified) | severity |
+|---|---|---|---|---|
+| 1 | CFP-1006 F-DR-1006-1 (P2) | parse-hotfix-bypass-labels.py "skips template entry" | actual gh-side rejection (mechanism mismatch) | P2 dogfood gap |
+| 2 | CFP-1025 (Orchestrator hypothesis REFUTED by ArchitectPL empirical verify) | hypothesis 발화 | pattern WORKING dogfood win | P3 hypothesis refuted |
+
+**scope**: §결정 1 layer 1 (Orchestrator scope) + 본 §결정 10.C (ArchitectAgent scope) 양 layer 동시 적용 — RequirementsPL §2.1 verified state table 이 cover 안 하는 "script behavior assertion at write-time" disjoint gap. ADR-082 §결정 1 layer 1 sub-scope (1-A Amendment 1 base / 1-B Amendment 2 CFP-1016 Issue-body authorship / 1-C Amendment 5 CFP-1110 lane PL spawn prompt user-utterance verbatim) → 본 §결정 10.C = ArchitectAgent chief author scope 추가 layer. **FIX iter 1 정정 (DesignReview F-2 P0)**: stale "Amendment 3" citation 정정 — verify-before-cite mandate (Amendment 7 §결정 9) self-application 사례.
+
+#### §결정 10.D — META self-application pattern
+
+**carrier**: memory `feedback_meta_self_application_pattern` (pattern_count 2 reach)
+
+Story introduces template / codification change → apply it to carrier Story itself as 1st applied case (eat your own dog food):
+
+1. ArchitectPL Amendment / template / mandate change 시 자문: "Does this codification apply to a Story that I am writing right now?"
+2. yes 시: Story file 자체에 적용 (frontmatter field + 신규 section + 신규 procedure verbatim)
+3. META self-application 명시:
+   - ADR amendment body: `## Amendment N` 안 "Meta-self-application" sub-section
+   - Change Plan §11 결론: "carrier Story applies the codification as 1st case"
+   - Story §2.1 / §3 / §9: META context cross-ref
+4. DesignReviewPL audit: META self-application validation dedicated audit point
+
+**pattern_count 2 evidence** (+ 본 Story 3rd applied):
+
+| # | Story | applied codification | applied site | severity |
+|---|---|---|---|---|
+| 1 | CFP-1016 | ADR-082 Amendment 2 (`issue_origin: orchestrator_authored_followup` frontmatter + §2.1 verified state table) | Story file 자체가 META-self-applied | 1st occurrence |
+| 2 | CFP-1340 Amendment 2 §결정 15 | Orchestrator-monopoly Story-file `§9/§10/§14/phase` inline whitelist 5번째 entry | Story file initial scaffold + §9.1 verdict inline write (CFP-1340 Story §14 row 6 + row 9 verified) | 2nd occurrence |
+| 3 | **CFP-1329 (본 Story)** | **Amendment 8 §결정 10.D 신설** + Story file Amendment 2 §결정 15 inline write 적용 (Story §14 row 1) | META-self-applied **3rd applied case** | 3rd occurrence |
 
 ## 결과
 
