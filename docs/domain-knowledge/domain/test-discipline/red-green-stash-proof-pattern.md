@@ -1,184 +1,171 @@
 ---
-key: RGS-001
-title: "RED→GREEN stash proof pattern — Discriminating fixture mandate"
+kind: domain_fact
 type: domain-knowledge
-domain: test-discipline
+area: test-discipline
+topic_slug: red-green-stash-proof-pattern
+title: "RED→GREEN stash proof pattern — Discriminating fixture mandate"
 status: Active
-date: 2026-05-24
+created: 2026-05-24
+updated: 2026-05-24
 carrier_story: CFP-1334
-authors:
-  - ArchitectAgent (chief author)
-related_stories:
-  - CFP-1334
-  - CFP-750   # memory feedback origin
-  - CFP-1302  # F-CR-1302-2 P2 finding (origin)
+tags:
+  - test-discipline
+  - tdd
+  - red-green
+  - discriminating-fixture
+  - bats
+  - vacuous-green
+  - mutation-testing
 related_adrs:
   - ADR-060   # framework primary anchor (warning-tier entry)
-  - ADR-061   # production-scale invariant sibling axis
-  - ADR-068   # boundary completeness invariants cross-ref
-  - ADR-082   # write-time self-write verification mandate cross-ref
-  - ADR-086   # deputy creation decision framework
+  - ADR-061   # production-scale invariant sibling axis (Amendment 2 §결정 9)
+  - ADR-068   # boundary completeness invariants cross-ref (6-invariant axis 분석)
+  - ADR-082   # write-time self-write verification mandate cross-ref (§결정 7 per-area 분할 거부)
+  - ADR-086   # deputy creation decision framework (chief tie-break ladder Step 3 5-checklist)
+related_stories:
+  - CFP-1334  # 본 entry carrier
+  - CFP-750   # memory feedback origin (2026-05-16 first applied instance)
+  - CFP-1302  # F-CR-1302-2 P2 finding (vacuous green 차단 motivation)
+related_files:
+  - templates/impl-manifest.md  # Change Plan §8 schema field `red_green_proof_evidence_artifact`
+  - skills/deputy-mandate/SKILL.md  # TestContractArch mandate body (RACI matrix §8.5 row)
+  - docs/evidence-checks-registry.yaml  # bats-red-green-proof-presence warning-tier entry
 ---
 
 # RED→GREEN stash proof pattern — Discriminating fixture mandate
 
-본 entry = codeforge governance 어휘 "discriminating fixture mandate" 의 첫 narrative SSOT. memory `feedback_tdd_red_proof_via_stash` (사용자 사전 승인 패턴, CFP-750 2026-05-16 applied evidence) 의 codeforge 정식 governance 어휘 promotion.
+본 entry = codeforge governance 어휘 **"discriminating fixture mandate"** 의 첫 narrative SSOT. memory `feedback_tdd_red_proof_via_stash` (사용자 사전 승인 패턴, CFP-750 2026-05-16 applied evidence) 의 codeforge 정식 governance 어휘 promotion.
 
-## 1. 핵심 개념
+## 정의
 
-### 1.1 Discriminating fixture
+**Discriminating fixture mandate**: bats fixture (또는 일반 test) 가 production code 의 신규 동작을 실제로 검출(discriminate)하는지 사후 입증하는 mechanism — production code 부재 시 절대 PASS 되지 않아야 한다 (anti-vacuous-green invariant). RED→GREEN stash proof 는 본 mandate 의 단일 mutant manual subset — `git stash` 로 GREEN 구현을 일시 격리한 후 fixture 가 genuine FAIL (RED) 함을 입증하는 패턴.
 
-**정의**: 테스트가 production code 의 신규 동작을 실제로 구별(discriminate)하는지 입증하는 fixture. 즉 "production code 가 부재했다면 본 fixture 가 정말 RED 였는가" 를 사후 입증.
+**Evidence artifact** = stash sequence + pre-impl SHA pin + per-assertion classification + cross-platform marker 의 declarative record.
 
-**대조 anti-pattern — Vacuous green / always-green test**:
-- fixture 가 production code 부재여도 PASS — 영구 regression silent 통과 위험
-- 산업 vocabulary: Google Testing Blog "How to Write a Test (and What Not to Do)", SE@Google book ch.11 Test Doubles
-- 산업 mitigation: Mutation testing (mutmut Python / PIT Java / Stryker JavaScript) — 본 패턴 = mutation testing 의 simplified instance (mutant = pre-impl HEAD state)
+## 컨텍스트
 
-### 1.2 RED→GREEN proof
+codeforge 의 test discipline 은 ADR-068 boundary completeness invariants + ADR-061 production-scale invariant 영역 정합. 본 patterm motivation:
 
-**정의**: TDD canonical 순서 (RED 우선 → GREEN → REFACTOR) 의 사후 입증 기법. cross-layer working-tree drift (DeveloperAgent GREEN 선착, QADeveloperAgent RED 후착) 시점에 적용.
+1. **CFP-750 (2026-05-16)** — cross-layer TDD (QADeveloperAgent RED ∥ DeveloperAgent GREEN, 별도 session working-tree drift) 에서 GREEN 구현이 RED fixture commit 보다 먼저 working tree 에 도착하는 사례 발견. RED-then-GREEN 순서 가 깨져 fixture authenticity 사후 입증 메커니즘 필요. `git stash push -- <impl>` 으로 pre-GREEN HEAD 노출 → fixture 실행 → genuine FAIL 확인 → `git stash pop` 으로 GREEN 복원 → full suite GREEN 확증 패턴 발견.
+2. **CFP-1302 retro F4 (2026-05-23)** — CodeReviewPL F-CR-1302-2 P2 finding: 신규 33 bats TC (test_phase_gate_mergeable_yml.bats 13 + test_phase_gate_auto_cleanup_yml.bats 20) 모두 grep-presence heuristic 만 사용 — discriminating proof 부재. vacuous green 위험 (production code 부재여도 PASS 가능).
+3. **CFP-1334 (2026-05-24)** — 본 entry carrier. TestContract deputy mandate 영역에서 discriminating fixture mandate codification. chief tie-break ladder 3 단계 적용 후 Option C convergence (declaration-only Wave 1, ADR 신설 0건, evidence-checks-registry warning-tier entry).
 
-**적용 시점**: bats fixture (또는 일반 test fixture) 작성 시. 신규 fixture 가 production code 의 신규 동작을 어떻게 구별하는지 evidence artifact 동반.
+산업 표준 인접 영역: mutation testing (PIT/Stryker/mutmut) 의 simplified manual subset — 단일 mutant ("production code 이전 버전") + manual kill verification ("fixture FAIL 확인"). Kent Beck *Test-Driven Development by Example* (2002) 의 RED→GREEN→REFACTOR canonical cycle 의 post-hoc recovery variant.
 
-## 2. Method 3-enum (closed set)
+## 핵심 규칙
 
-### 2.1 `stash` (PRIMARY method, memory feedback 패턴 verbatim)
+### 1. Stash sequence (memory verbatim)
 
 ```bash
-# Step 1: production impl stash
-git stash push --include-untracked -- <impl_paths>
-# pre-impl HEAD 상태 노출
+# pre-GREEN HEAD 확보
+PRE_IMPL_SHA="$(git rev-parse HEAD)"
 
-# Step 2: pre-GREEN HEAD 에서 fixture 실행
-bats tests/<path>/<name>.bats
-# 기대: 신규 case 가 RED (FAIL) — discriminating 입증
-# regression-guard case 는 양 regime 모두 GREEN — 구분 보고
+# GREEN 구현 일시 격리 (--include-untracked 필수 — 신규 파일 기반 fixture 영역)
+git stash push --include-untracked -- <impl-file>
 
-# Step 3: stash pop
+# pre-impl state 에서 fixture 실행 → genuine FAIL 확인
+bats <fixture-file>   # 또는 cd worktree && bash <test-runner>
+# Expected: discriminating @test FAIL + regression_guard @test PASS
+
+# GREEN 구현 복원
 git stash pop
-# production impl 복원
 
-# Step 4: full GREEN 재확인
-bats tests/<path>/<name>.bats
-# 기대: 전체 PASS
+# full suite 재실행 → GREEN 확증
+bats <fixture-file>
+# Expected: 전 @test PASS
 ```
 
-**evidence artifact**: stash output stdout/stderr + `git stash list` + per-@test result mapping.
+### 2. Per-assertion classification (multi-@test fixture)
 
-### 2.2 `pre_impl_checkout`
+bats fixture 안 multiple `@test` 영역 — role 3-enum closed-set:
 
-```bash
-# Step 1: pre-impl SHA pin
-PRE_IMPL_SHA=$(git rev-parse HEAD@{N})   # 또는 명시적 commit SHA
+- **discriminating**: pre-impl 에서 FAIL + post-impl 에서 PASS (구현 가능성을 실제로 입증)
+- **regression_guard**: pre-impl 에서 PASS + post-impl 에서 PASS (의도된 보존 영역 — vacuous 아님)
+- **bootstrap**: pre-impl 에서 SKIP + post-impl 에서 PASS (초기 환경 의존 영역, advisory)
 
-# Step 2: pre-impl HEAD checkout (detached)
-git checkout "$PRE_IMPL_SHA"
-bats tests/<path>/<name>.bats
-# 기대: 신규 case RED
+`assertion_classification[]` field 안 per-@test role + pre/post outcome 명시 의무. discriminating role 이 1+ 존재 시 mandate 충족.
 
-# Step 3: 복원
-git checkout -
-bats tests/<path>/<name>.bats
-# 기대: full GREEN
+### 3. Change Plan §8 schema field
+
+신규 bats fixture 작성 시 Change Plan §8.5 `bats_fixtures[]` array 안 row 별 `red_green_proof_evidence_artifact` nested object declare 의무:
+
+```yaml
+red_green_proof_evidence_artifact:
+  method: stash | pre_impl_checkout | branch_revert   # 3-value closed-set
+  pre_impl_sha: <git SHA pinned via git rev-parse HEAD before stash>
+  fixture_file: <path>
+  assertion_classification:
+    - test_name: <@test name verbatim>
+      role: discriminating | regression_guard | bootstrap   # 3-value closed-set
+      pre_impl_outcome: PASS | FAIL | SKIP
+      post_impl_outcome: PASS | FAIL | SKIP
+  platform_verified: [linux, macos, windows-git-bash, msys2, wsl]   # 5-value closed-set, ≥1 required
+  stash_evidence_excerpt: <stdout/stderr verbatim 또는 path-line ref>
 ```
 
-**evidence artifact**: pre_impl_sha + 양 시점 result.
+null 명시 시 `red_green_proof_evidence_artifact_null_reason` 4-enum closed-set 의무: `regression_guard_only | cross_platform_constraint | pre_impl_unavailable | na_doc_only` (ADR-068 I-3 unconditional vs conditional guard placement intent 패턴 답습).
 
-**적용 제한**: branch state preserve 필요 시 detached HEAD 위험 (uncommitted change loss). stash 가 안전.
+### 4. TestContract deputy mandate 영역
 
-### 2.3 `branch_revert`
+본 mandate 의 owner = TestContractArchitectAgent (codeforge-design deputy primary). `skills/deputy-mandate/SKILL.md` L80 + RACI matrix L115 §8.5 sub-section "discriminating fixture mandate (RED→GREEN proof)" row 정합. chief tie-break ladder Step 1 RACI lookup 결과.
 
-```bash
-# Step 1: impl commit revert (no-commit)
-git revert --no-commit <impl_commit_sha>
-bats tests/<path>/<name>.bats
-# 기대: 신규 case RED
+### 5. evidence-checks-registry warning-tier entry
 
-# Step 2: revert abort
-git revert --abort
-bats tests/<path>/<name>.bats
-# 기대: full GREEN
-```
+`bats-red-green-proof-presence` warning-tier deferred-followup entry (owner_adr ADR-060 / carrier_adr ADR-060, recurrence count 1 / threshold 3). 5-marker grep-presence heuristic (`pre_impl_sha` / `git stash push` OR `git stash pop` / `discriminating` OR `regression_guard` / `RED.{1,5}GREEN` OR `pre-impl HEAD` / `platform_verified`) ≥3/5 → PASS. <3/5 → warning. Phase 2 mechanical wire (lint script + workflow + META self-app bats fixture) 후 warning 전환.
 
-**적용 제한**: merge commit revert 시 mainline branch 명시 (`-m 1`) 필요. multi-commit impl 시 sequential revert 의무.
+## 경계
 
-## 3. assertion classification 3-enum (multi-@test fixture per-@test 분류)
+### 1. Scope 포함 영역
 
-한 fixture 안 multiple `@test` 시 각각 분류 의무:
+- bats fixture (shell test runner, codeforge dogfood + 일반 codeforge consumer)
+- declaration-only Wave 1 (Change Plan §8 schema field + TestContractArch mandate + evidence-registry warning entry + 본 narrative SSOT) — Phase 2 mechanical wire 별 sub-carrier
 
-| role | pre_impl_outcome | post_impl_outcome | 의미 |
+### 2. Scope 외 영역
+
+- **Python pytest / Node jest 영역** — language-agnostic pattern 으로 generalize 가능하나 cross-platform stash 검증 별 axis. 별 carrier CFP-FU-N.
+- **CFP-1302 retroactive 33 TC 영역** — forward-only normative ratchet (ADR-068 Amendment 3 retroactive 면제 precedent 답습). 33 TC retroactive 부착은 별 carrier **CFP-FU-1** (sibling Story).
+- **mutation testing 자동화 도구 도입** — PIT / Stryker / mutmut 등 자동 mutant 주입 도구. bats stash proof 는 단일 mutant manual subset. 자동화 도구 도입은 별 영역.
+
+### 3. Cross-platform 제한
+
+`git stash` cross-platform 비대칭:
+- Linux / macOS: 안정
+- Windows Git Bash + MSYS2: bats-core (`#!/usr/bin/env bats`) shebang + CRLF/LF 변환 위험 + `--include-untracked` flag 필수
+- WSL: 안정 (Linux 동등)
+- Windows native cmd / PowerShell: bats-core 비호환
+
+self-contained fixture (외부 state — tmp dir / env var / DB connection 의존 0) 영역 한정. 외부 state 의존 시 false-RED (구현 부재 ≠ 환경 부재) 위험.
+
+### 4. CFP scope unitary 정합 (ADR-064 §결정 5)
+
+- "mandate 도입" + "33 TC backfill" 양 결정 1 CFP 통합 불가 (CFP-1334 + CFP-FU-1 분리 carrier)
+- "ADR layer 결정" (Option A/B/C/D) chief tie-break ladder 3 단계 적용 영역 — RACI lookup → ADR-068 invariant lookup → chief judgement + ADR-086 5-checklist self-app
+
+## 관련 ADR
+
+- **ADR-060** — Evidence-enforceable promotion framework (warning-tier entry primary anchor)
+- **ADR-061** Amendment 2 §결정 9 — Production-scale invariant (sibling axis, bash script `set -uo pipefail` + pipe + 가변 input 3-조건 AND)
+- **ADR-068** — Boundary completeness invariants (6 invariant cross-ref, chief tie-break ladder Step 2 axis 분석)
+- **ADR-068 Amendment 2** — Chief tie-break ladder 3 단계 (Step 1 RACI → Step 2 ADR-068 invariant → Step 3 chief judgement)
+- **ADR-068 Amendment 3** — I-6 audit-gate-pointer-existence (retroactive 면제 precedent verbatim)
+- **ADR-082 §결정 7** — Per-area 분할 거부 invariant (Option B reject 근거)
+- **ADR-086** — Deputy creation decision framework (5-checklist self-app, chief tie-break ladder Step 3)
+
+## 변경 이력
+
+| 일자 (KST) | CFP | 변경 사항 | 작성자 |
 |---|---|---|---|
-| `discriminating` | FAIL | PASS | **Genuine RED→GREEN** — 신규 동작 구별 입증 |
-| `regression_guard` | PASS | PASS | 양 regime green — 기존 behavior 보호 |
-| `bootstrap` | (assertion 0 — N/A) | PASS | Fixture infrastructure setup 만 (`setup_file` / `teardown_file` / helper) |
-
-**의무**: multi-@test fixture 에 각 `@test` 분류 표 명시 (Change Plan §8 안 `red_green_proof_evidence_artifact.assertion_classification[]` field).
-
-**memory 패턴 verbatim**: "regression-guard case(양 regime green) 와 discriminating case(pre-GREEN fail) 구분 보고"
-
-## 4. Cross-platform 비대칭 (Researcher Unknown 1)
-
-`git stash` 동작은 환경 마다 비대칭:
-
-| 환경 | 알려진 문제 |
-|---|---|
-| Windows Git Bash | `--include-untracked` 필수 (untracked 변경 누락 차단). CRLF/LF 행 종료자 `.gitattributes` `text=auto` 충돌 시 stash 가 LF 변환 후 pop 시 CRLF 복원 — byte-identical assertion 깨짐 |
-| MSYS2 | Windows Git Bash 동형 |
-| WSL | Linux 동형 but path separator 충돌 가능 |
-| Linux | baseline |
-| macOS | BSD `sed` / `grep` 동작 차이 — fixture 안 GNU 의존 시 false-RED |
-
-**mitigation**:
-- Change Plan §8 schema 안 `platform_verified[]` 5-enum field (linux / macos / windows_git_bash / wsl / msys2) — 작성자가 검증 환경 명시 의무
-- self-contained fixture scope 제한 (외부 state 차단 — `tempfile -d` / `mktemp -d` patterns)
-- cross-platform marker check (`uname -s` enum) advisory
-
-## 5. memory ↔ codeforge governance 어휘 매핑
-
-| memory `feedback_tdd_red_proof_via_stash` 어휘 | codeforge governance 어휘 (본 entry) | Change Plan §8 field |
-|---|---|---|
-| "pre-GREEN HEAD" | pre-impl HEAD | `pre_impl_sha` |
-| "genuine fail" | discriminating RED | `assertion_classification.role: discriminating` |
-| "stash push → bats → stash pop" | stash method | `method: stash` |
-| "regression-guard case" | regression_guard role | `assertion_classification.role: regression_guard` |
-| "fixture infrastructure setup" | bootstrap role | `assertion_classification.role: bootstrap` |
-
-## 6. ADR layer governance (chief tie-break ladder Option C convergence)
-
-**현 상태**: ADR 신설 0건. declaration-only Wave 1:
-- Change Plan §8 schema field (`templates/impl-manifest.md` SSOT)
-- TestContractArch deputy mandate body (`skills/deputy-mandate/SKILL.md` L80 + RACI matrix L115)
-- evidence-checks-registry warning-tier entry `bats-red-green-proof-presence`
-- 본 narrative SSOT (codeforge governance 어휘 promotion)
-
-**ADR 승격 carrier (deferred)**: pattern_count ≥ 2 reach 시 (Phase 2 mechanical wire 후 evidence 누적) — CFP-FU-3 (ADR-068 Amendment 4 또는 ADR-082 Amendment N 별 carrier).
-
-**axis 분석** (chief tie-break ladder Step 3 — ADR-086 §결정 1):
-- ADR-068 (boundary completeness invariants) = design-level scope → axis mismatch (bats fixture = test-authoring scope)
-- ADR-082 (write-time self-write verification mandate) = §결정 7 explicit reject of per-area split → infeasible
-- ADR-061 (Python script-writing convention) = bash + workflow yml only scope → bats 미포함
-- → **Option C convergence** (declaration-only Wave 1, ADR 신설 0건)
-
-## 7. CFP-1302 retroactive 적용 (CFP-FU-1 별 carrier)
-
-CFP-1302 의 33 TC (test_phase_gate_mergeable_yml 13 + test_phase_gate_auto_cleanup_yml 20) retroactive RED→GREEN proof 부착 = **별 CFP carrier 분리** (CFP-FU-1).
-
-**분리 사유**:
-- ADR-068 Amendment retroactive 면제 패턴 답습 (Amendment 3 발효 후 신규 finding 한정)
-- 본 mandate forcing function 활성 시점부터 영구 적용 — retroactive backfill 은 audit Story 영역
-- CFP scope unitary (ADR-064 §결정 5) — "mandate 도입" + "33 TC backfill" 양 결정 1 CFP 통합 불가
+| 2026-05-24 | CFP-1334 | 본 entry 신설 — codeforge governance 어휘 "discriminating fixture mandate" 첫 narrative SSOT (memory `feedback_tdd_red_proof_via_stash` 일반화) | ArchitectAgent (chief author) |
 
 ## 참조
 
-- Carrier Story: [CFP-1334](../../../stories/CFP-1334.md)
-- Change Plan: [cfp-1334-bats-red-green-proof.md](../../../change-plans/cfp-1334-bats-red-green-proof.md)
-- memory source: `feedback_tdd_red_proof_via_stash` (CFP-750 2026-05-16 applied evidence)
-- 선행 retro: [`2026-05-23-cfp-1302.md §5 F4`](../../../retros/2026-05-23-cfp-1302.md)
-- ADR cross-ref: ADR-060 / ADR-061 / ADR-068 / ADR-082 / ADR-086
-- 외부 vocabulary:
-  - Kent Beck, *Test-Driven Development by Example* (2002) — RED → GREEN → REFACTOR canonical
-  - Google Testing Blog "How to Write a Test (and What Not to Do)" — Vacuous green anti-pattern
-  - SE@Google book ch.11 Test Doubles — Test discipline
-  - Pro Git book §7.3 — `git stash` mechanism cross-platform
-  - Mutation testing tools: mutmut (Python) / PIT (Java) / Stryker (JavaScript)
+- **Carrier Story**: [mclayer/codeforge-internal-docs/blob/main/plugin-codeforge/stories/CFP-1334.md](https://github.com/mclayer/codeforge-internal-docs/blob/main/plugin-codeforge/stories/CFP-1334.md) (post-merge)
+- **Change Plan**: [mclayer/codeforge-internal-docs/blob/main/plugin-codeforge/change-plans/cfp-1334-bats-red-green-proof.md](https://github.com/mclayer/codeforge-internal-docs/blob/main/plugin-codeforge/change-plans/cfp-1334-bats-red-green-proof.md) (post-merge)
+- **Memory source**: `feedback_tdd_red_proof_via_stash` (CFP-750 2026-05-16 applied evidence, single instance pattern_count = 1)
+- **Sibling retro source**: [mclayer/codeforge-internal-docs/blob/main/plugin-codeforge/retros/2026-05-23-cfp-1302.md §5 F4](https://github.com/mclayer/codeforge-internal-docs/blob/main/plugin-codeforge/retros/2026-05-23-cfp-1302.md)
+- **외부 vocabulary**:
+  - Kent Beck, *Test-Driven Development by Example* (2002) — RED → GREEN → REFACTOR canonical cycle
+  - Google Testing Blog "How to Write a Test (and What Not to Do)" — Vacuous green anti-pattern reference
+  - SE@Google book ch.11 Test Doubles — Test discipline foundation
+  - Pro Git book §7.3 — `git stash` mechanism cross-platform semantics
+  - Mutation testing tools: mutmut (Python) / PIT (Java) / Stryker (JavaScript) — discriminating fixture industry parallel
