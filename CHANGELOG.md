@@ -7,6 +7,19 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.4.3] - 2026-05-23
+
+### Changed
+
+- [CFP-1287] **CLAUDE.md diet 348 → 319 lines** (cap 320 회복, CFP-604 retro F3 follow-up realized). doc-only fast-path (ADR-054 Cat 1). 압축 5건 (semantic 손실 0 — 모든 cross-ref / ADR / CFP / SSOT reference 보존):
+  - (a) CFP-1111 Wave 1 Story-2 6 ADR bundle 9-line block → 2-line inline list
+  - (b) Deploy lane workflow 7 numbered list 10-line block → 1-line inline
+  - (c) Sonnet rate-limit fallback 9-line section → 4-line consolidated
+  - (d) phase-gate-mergeable label + CODEFORGE_CROSS_REPO_PAT 4-line dual blockquote → 1-line combined
+  - (e) Branch governance + Brainstorming skill 4-line dual paragraph → 1-line combined
+  - line-cap baseline drift resolution (`hotfix-bypass:claude-md-line-cap` 부담 해소). 매 PR 의 line-cap bypass 부담 제거.
+  - mirrored field: 6.4.2 → 6.4.3 PATCH + description CFP-1287 entry append. Marketplace sibling sync (ADR-063 §결정 2).
+
 ## [6.4.2] - 2026-05-23
 
 ### Added
