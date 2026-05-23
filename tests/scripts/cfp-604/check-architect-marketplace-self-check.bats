@@ -184,3 +184,31 @@ PLAN
   [ "$status" -eq 1 ]
   echo "$output" | grep -qi "dogfood\|cross-repo\|conditional"
 }
+
+# ──────────────────────────────── TC-large-diff: production-scale DIFF SIGPIPE regression ────────
+# FIX-CR-1 discriminating fixture (Gap A 스크립트용):
+#   BEFORE FIX: echo "$DIFF" | grep -qE ... → SIGPIPE 시 pipefail 로 MIRRORED_CHANGED=0 → Change Plan 검증 미진입
+#   AFTER  FIX: grep -qE ... <<< "$DIFF"    → pipe 없음 → SIGPIPE 발생 불가 → MIRRORED_CHANGED=1 → §13 검증 진행 → exit 1
+
+@test "TC-large-diff: ~100KB description 변경 시 mirrored field 감지 + §13 검증 진입 (SIGPIPE regression)" {
+  # ~100KB synthetic description 생성 (production-scale DIFF 시뮬레이션)
+  LARGE_DESC=$(python3 -c "print('x' * 102400)" 2>/dev/null || printf '%102400s' '' | tr ' ' 'x')
+
+  cat > "$TEST_DIR/.claude-plugin/plugin.json" <<PJSON
+{
+  "name": "codeforge",
+  "version": "6.4.0",
+  "description": "$LARGE_DESC",
+  "author": {"name": "Josh"}
+}
+PJSON
+  git -C "$TEST_DIR" add .
+
+  # Change Plan 없음 + doc-only label 없음 → §13 검증 진입 → warning exit 1 (§13 선언 부재)
+  export PR_LABELS=""
+  export PR_BODY=""
+  run bash "$SCRIPT_UNDER_TEST"
+  # production-scale DIFF 에서 mirrored field (description) 감지 → §13 검증 진입 → 선언 부재 → exit 1
+  [ "$status" -eq 1 ]
+  echo "$output" | grep -qi "change plan\|§13\|marketplace_sync_required\|mirrored"
+}

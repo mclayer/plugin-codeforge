@@ -71,9 +71,10 @@ if [[ -z "$DIFF" ]]; then
 fi
 
 # mirrored field 4종 변경 여부 확인 (ADR-016 §결정 1 verbatim)
+# FIX-CR-1: here-string (<<<) 로 SIGPIPE 발생 path 제거 (production-scale DIFF ~100KB 시 pipefail 차단)
 MIRRORED_CHANGED=0
 for field in name version description author; do
-  if echo "$DIFF" | grep -qE "^[-+]\s*\"${field}\":"; then
+  if grep -qE "^[-+]\s*\"${field}\":" <<< "$DIFF"; then
     MIRRORED_CHANGED=1
     break
   fi

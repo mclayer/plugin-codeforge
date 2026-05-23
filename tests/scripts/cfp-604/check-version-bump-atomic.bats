@@ -304,3 +304,62 @@ MOCKGH
   [ "$status" -eq 1 ]
   echo "$output" | grep -qi "author.*drift\|author.*mirrored"
 }
+
+# ──────────────────────────────── TC-large-diff: production-scale DIFF SIGPIPE regression ────────
+# FIX-CR-1 discriminating fixture:
+#   BEFORE FIX: echo "$DIFF" | grep -qE ... → SIGPIPE 시 pipefail 로 exit 141 → MIRRORED_CHANGED=0
+#   AFTER  FIX: grep -qE ... <<< "$DIFF"    → pipe 없음 → SIGPIPE 발생 불가 → MIRRORED_CHANGED=1 정상 감지
+
+@test "TC-large-diff: ~100KB description 변경 시 mirrored field 감지 정상 동작 (SIGPIPE regression)" {
+  # ~100KB synthetic description 생성 (production-scale DIFF 시뮬레이션)
+  LARGE_DESC=$(python3 -c "print('x' * 102400)" 2>/dev/null || printf '%102400s' '' | tr ' ' 'x')
+
+  cat > "$TEST_DIR/.claude-plugin/plugin.json" <<PJSON
+{
+  "name": "codeforge",
+  "version": "6.4.0",
+  "description": "$LARGE_DESC",
+  "author": {"name": "Josh"}
+}
+PJSON
+  cat > "$TEST_DIR/CHANGELOG.md" <<'CL'
+# Changelog
+
+## [6.4.0] - 2026-05-23
+
+### Added
+- production-scale test
+CL
+  git -C "$TEST_DIR" add .
+
+  # mock gh: 설치됨 + 인증됨 + marketplace.json 반환 (version 일치, description 다름 → drift 감지)
+  cat > "$MOCK_BIN/gh" <<'MOCKGH'
+#!/usr/bin/env bash
+if [[ "$*" == *"marketplace.json"* ]]; then
+  cat <<'JSON'
+{
+  "plugins": [
+    {
+      "name": "codeforge",
+      "version": "6.4.0",
+      "description": "base description",
+      "author": "Josh"
+    }
+  ]
+}
+JSON
+  exit 0
+fi
+if [[ "$*" == *"auth status"* ]]; then
+  exit 0
+fi
+exit 0
+MOCKGH
+  chmod +x "$MOCK_BIN/gh"
+
+  # production-scale DIFF → mirrored field (description) 감지 → Step 4 description drift 감지 → exit 1
+  run bash -c "cd '$TEST_DIR' && BASE_REF=HEAD CI=true GITHUB_ACTIONS=true PATH='$MOCK_BIN:$PATH' bash '$SCRIPT_UNDER_TEST'"
+  [ "$status" -eq 1 ]
+  # "description drift" 메시지 또는 "violation" 메시지 확인
+  echo "$output" | grep -qi "description\|violation\|drift"
+}

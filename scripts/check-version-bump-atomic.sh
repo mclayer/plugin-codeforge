@@ -56,10 +56,10 @@ if [[ -z "$DIFF" ]]; then
 fi
 
 # Check mirrored fields specifically (name/version/description/author)
+# FIX-CR-1: here-string (<<<) 로 SIGPIPE 발생 path 제거 (production-scale DIFF ~100KB 시 pipefail 차단)
 MIRRORED_CHANGED=0
 for field in name version description author; do
-  # Check for diff lines touching this field
-  if echo "$DIFF" | grep -qE "^[-+]\s*\"${field}\":"; then
+  if grep -qE "^[-+]\s*\"${field}\":" <<< "$DIFF"; then
     MIRRORED_CHANGED=1
     break
   fi
@@ -73,7 +73,8 @@ fi
 PLUGIN_NAME=$(jq -r '.name' "$PLUGIN_JSON")
 LOCAL_VERSION=$(jq -r '.version' "$PLUGIN_JSON")
 LOCAL_DESC=$(jq -r '.description' "$PLUGIN_JSON")
-LOCAL_AUTHOR=$(jq -r '.author' "$PLUGIN_JSON" 2>/dev/null || jq -r '.author.name' "$PLUGIN_JSON" 2>/dev/null || echo "null")
+# FIX-CR-2: author 가 object {"name":"X"} 또는 plain string 양쪽 처리 (jq fallback 오류 패턴 제거)
+LOCAL_AUTHOR=$(jq -r 'if (.author | type) == "object" then .author.name else .author end' "$PLUGIN_JSON")
 
 echo "ℹ check-version-bump-atomic: plugin.json mirrored field 변경 감지"
 echo "  plugin: $PLUGIN_NAME"
@@ -211,14 +212,11 @@ fi
 # author 축 검증 (ADR-063 §결정 22 (b) — author 축 신규 blocking)
 REMOTE_AUTHOR=$(echo "$MARKETPLACE_RAW" | jq -r ".plugins[] | select(.name == \"$PLUGIN_NAME\") | .author // .author.name // \"\"" 2>/dev/null || echo "")
 
-# LOCAL_AUTHOR 는 line 76 에서 추출됨 (object 의 경우 .name 필드 fallback)
-# normalize: author 가 object 형태일 수 있음
-LOCAL_AUTHOR_NORM="$LOCAL_AUTHOR"
-
-if [[ "$LOCAL_AUTHOR_NORM" != "$REMOTE_AUTHOR" && "$LOCAL_AUTHOR_NORM" != "null" && "$REMOTE_AUTHOR" != "null" ]]; then
+# FIX-CR-4: LOCAL_AUTHOR_NORM 은 FIX-CR-2 로 LOCAL_AUTHOR 자체가 정규화됨 — alias 제거
+if [[ "$LOCAL_AUTHOR" != "$REMOTE_AUTHOR" && "$LOCAL_AUTHOR" != "null" && "$REMOTE_AUTHOR" != "null" ]]; then
   echo ""
   echo "❌ ADR-063 §결정 1 violation: author mirrored field drift"
-  echo "   local author:  $LOCAL_AUTHOR_NORM"
+  echo "   local author:  $LOCAL_AUTHOR"
   echo "   remote author: $REMOTE_AUTHOR"
   echo "   marketplace sync PR 에 author 동일 변경 의무 (ADR-016 + ADR-063 §결정 1 + §결정 22)"
   FIELD_FAIL=1
