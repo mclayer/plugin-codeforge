@@ -18,11 +18,18 @@ amendment_log:
     date: 2026-05-22
     cfp: CFP-1186 (CFP-1111-Wave-4-Story-11)
     summary: "sunset 실행 — is_transitional true → false (Sunsetted). sunset_status: Sunsetted 설정. 효용 = detect-repo-kind.py 4-way detection + positive whitelist + fail-closed-unknown + mixed self-app exemption 이 walker repo-kind detection hook (per-step applicable_to filter) 로 lossless carry 완료. β2 audit (#1113) Anchor 2 LOSSLESS 확인. ratchet 강화 보존 (carrier-preserved sunset, ADR-097 §결정 3 정합)."
+  - amendment_id: 3
+    date: 2026-05-23
+    cfp: CFP-1293
+    summary: "§결정 5 wire location expand — walker apply Stage D 영역 wire active (walk_plan.py apply_overlay_file caller + UpgradeAgent.md Stage 3 apply Step A/D R-3 sub-section + imperative-walker-protocol-v1 §2.E.4 sub-§ append v1.1.0 → v1.2.0 MINOR). sunset_justification 실현 carrier (β2 audit #1113 Anchor 2 LOSSLESS declared ↔ origin/main walk_plan.py 안 `FILTER_REPO_KIND|detect-repo-kind|consumer_applicable|applicable_to|repo_kind` grep 0 match drift evidence-based — verify-before-trust catch, ADR-073 §결정 1 정합). ratchet 강화 (`declaration-only-Wave-1` → walker apply Stage D wire active), 약화 0건. ADR-097 §결정 3 carrier-preserved sunset 정합 — sunset 영역 wire 가 self-defeating 아니라 sunset_justification 약속 실현 (long-term metric `walker per-step applicable_to filter logic` instantiation). Issue #1268 결함 2 paradigm-aware 정정 carrier."
 sunset_carrier_cfp: CFP-1111-Wave-4-Story-11
 related_stories:
   - CFP-899  # carrier (Wave 4 sub-Epic CFP-858 S2 base layer — S3 CFP-900 prerequisite)
   - CFP-898  # sibling S1 (dependency bundle integrity binding — closure resolver hook pattern 답습)
   - CFP-900  # sibling S3 (upgrade-event result enum — repo-kind detection 결과의 upgrade event log carrier)
+  - CFP-1186 # Amendment 2 sunset 실행 carrier (CFP-1111 Wave-4 Story-11)
+  - CFP-1293 # Amendment 3 wire location expand carrier — walker apply Stage D wire active (#1268 결함 2 paradigm-aware 정정)
+  - CFP-1268 # Issue origin (defect 2 — self-application exclusion filter 부재)
 related_adrs:
   - ADR-076  # declarative reconciliation upgrade flow (본 ADR = §결정 2 11 영역 wholesale_mirror semantic 의 consumer-applicability gating layer)
   - ADR-027  # consumer adoption protocol (boundary disjoint — ADR-027 = consumer-side template adoption SSOT, ADR-083 = wrapper-side filter SSOT, sibling Amendment 6 §결정 10 carrier)
@@ -35,17 +42,20 @@ related_adrs:
   - ADR-005  # dual-channel template ↔ live byte-identical mirror (consumer-applicability filter = `templates/` 영역 ↔ `.github/` self-app dual-channel 의 filtering layer)
   - ADR-016  # marketplace family scope (consumer-applicability filter scope 가 family 7 plugin atomic 범위 정합)
 related_files:
-  - docs/adr/ADR-RESERVATION.md  # row 83 reserved → active (CFP-899)
+  - docs/adr/ADR-RESERVATION.md  # row 83 reserved → active (CFP-899). amendments_reserved[] row append: amendment_id 3 reserved_by_cfp CFP-1293 (Amendment 3 carrier)
   - docs/adr/ADR-027-consumer-adoption-protocol.md  # Amendment 6 §결정 10 sibling carrier (consumer adoption signal SSOT cross-ref)
   - docs/adr/ADR-076-declarative-reconciliation-upgrade.md  # §결정 2 11 영역 enumeration 의 wholesale_mirror branch gating layer
-  - docs/inter-plugin-contracts/reconcile-protocol-v1.md  # v1.9 §4.12 consumer_applicability_filter_binding block carrier
-  - docs/inter-plugin-contracts/MANIFEST.yaml  # reconcile-protocol-v1 v1.8 → v1.9 row update
-  - docs/parallel-work/section-ownership.yaml  # ADR-083 + reconcile-protocol-v1 §4.12 lock row append
+  - docs/inter-plugin-contracts/reconcile-protocol-v1.md  # v1.9 §4.12 consumer_applicability_filter_binding block carrier (v1.13 Deprecated — paradigm replace 후 imperative-walker-protocol-v1 §2.E.4 가 carrier 이전)
+  - docs/inter-plugin-contracts/imperative-walker-protocol-v1.md  # v1.1.0 → v1.2.0 MINOR bump (Amendment 3 carrier — §2.E.4 consumer_applicability_filter_binding sub-§ append)
+  - docs/inter-plugin-contracts/MANIFEST.yaml  # reconcile-protocol-v1 v1.8 → v1.9 row update + imperative-walker-protocol-v1 v1.1.0 → v1.2.0 row update (Amendment 3 carrier)
+  - docs/parallel-work/section-ownership.yaml  # ADR-083 + reconcile-protocol-v1 §4.12 lock row append + ADR-083 Amendment 3 (CFP-1293) row append
   - CLAUDE.md  # ADR-083 cross-ref + reconcile-protocol-v1 v1.8 → v1.9 stale text 정정
-  - templates/consumer_applicable_workflows.txt  # Phase 2 carrier (positive whitelist SSOT, append-only — DataMigrationArch §11 schema)
-  - templates/scripts/detect-repo-kind.py  # Phase 2 carrier (ADR-061 외부 .py file 의무 — repo-kind detection truth-table 실 구현)
+  - templates/scripts/consumer_applicable_workflows.txt  # positive whitelist SSOT (Phase 2 CFP-899 산물, 117 lines body)
+  - templates/scripts/detect-repo-kind.py  # 4-way enum 실 구현 (Phase 2 CFP-899 산물, ADR-061 외부 .py file)
   - templates/scripts/mirror-dependency-closure.py  # CFP-898 §4.11 closure resolver — 본 ADR §결정 5 filter hook 과 sequential composition (filter 먼저 → closure 다음)
-  - scripts/reconcile-overlay.sh  # MARKER_NONE branch line 437 직전 filter hook insertion (CFP-898 closure resolver hook pattern 답습, layer 1 추가 algorithm 재구현 0)
+  - scripts/reconcile-overlay.sh  # MARKER_NONE branch §4.12 filter hook (line 469-484, CFP-899 Phase 2 산물 — Amendment 3 wire location 1/3)
+  - scripts/lib/walk_plan.py  # Amendment 3 wire location 2/3 — walker code SSOT, apply_overlay_file caller 영역 filter hook insertion (Phase 2 carrier)
+  - templates/agents/UpgradeAgent.md  # Amendment 3 wire location 3/3 — walker contract, Stage 3 apply Step A/D R-3 sub-section (Phase 1 carrier)
 is_transitional: false   # CFP-1186 Amendment 2 — true → false (Sunsetted). 효용 lossless carry 완료 — walker repo-kind detection hook (detect-repo-kind.py 재사용 + per-step applicable_to filter). β2 audit (#1113) Anchor 2 LOSSLESS 확인. 약화 방향 (filter 약화 / fail-open default / whitelist 축소) 발의 차단 invariant 보존 (ADR-097 §결정 3 carrier-preserved sunset 정합).
 sunset_status: Sunsetted
 superseded_by: imperative-walker-protocol-v1
@@ -85,6 +95,63 @@ Accepted (2026-05-18 KST) — CFP-899 Phase 1 carrier. Wave 4 sub-Epic CFP-858 S
 **ratchet 강화 보존**: 본 sunset = carrier-preserved sunset (ADR-097 §결정 3 정합). 효용 제거 아님 — 동일 효용이 imperative-walker-protocol-v1 (walker repo-kind hook + per-step applicable_to filter) 으로 lossless 이전됨. 약화 0건.
 
 **본 ADR 본문 삭제 금지**: Sunsetted = retired/superseded 상태. 본문은 historical record 로 영구 보존.
+
+### sunset_executed → wire_active_in_walker (CFP-1293, 2026-05-23)
+
+**상태**: Amendment 3 — sunset_justification 실현 carrier. carrier-preserved sunset (ADR-097 §결정 3) 의 lossless carry 약속이 walker apply Stage D 영역 wire active 격상으로 실현됨.
+
+#### 결함 발견 (verify-before-trust catch, ADR-073 §결정 1)
+
+본 ADR-083 Amendment 2 (CFP-1186, 2026-05-22) 가 sunset_status: Sunsetted 설정 시점에 sunset_justification 명시:
+
+> "walker repo-kind detection hook (detect-repo-kind.py 재사용 + per-step `applicable_to` filter)" 가 lossless carry metric. cross-ref CFP-1113 β2 audit Anchor 2 LOSSLESS 확인.
+
+그러나 verify-before-trust direct read 결과:
+
+- `git show origin/main:scripts/lib/walk_plan.py | grep -nE "FILTER_REPO_KIND|detect-repo-kind|consumer_applicable|applicable_to|repo_kind"` = **0 match** (964 LOC body 안 walker code 영역 ADR-083 filter mention 0)
+- `git show origin/main:docs/inter-plugin-contracts/imperative-walker-protocol-v1.md | grep -c "applicable_to|repo_kind|filter|FILTER_REPO_KIND"` = **0 match** (walker contract 영역 ADR-083 filter mention 0)
+- `git show origin/main:templates/agents/UpgradeAgent.md | grep -nE "applicable_to|consumer_applicable|repo_kind|filter|plugin|mixed"` = consumer/plugin/mixed 단어 spawn payload 영역만 출현, ADR-083 filter logic 본문 0 mention
+
+→ **β2 audit Anchor 2 LOSSLESS declared ↔ actual walk_plan.py 안 wire 0 match drift catch** (Issue #1268 결함 2 paradigm-aware 정정 carrier evidence).
+
+#### wire location codify (Amendment 3 본 결정)
+
+§결정 5 wire location expand — 3 영역 atomic codify:
+
+| # | 영역 | 영역 분류 | Phase carrier | Status |
+|---|---|---|---|---|
+| 1 | `scripts/reconcile-overlay.sh` MARKER_NONE branch §4.12 hook (line 469-484) | wrapper bash (기존, declarative reconciliation paradigm 잔재 — Sunsetted source) | Phase 2 CFP-899 (산물) | **기존 보존** |
+| 2 | `scripts/lib/walk_plan.py` `apply_overlay_file` caller 영역 (Stage D apply_changelog_entry hook) | wrapper Python (imperative walker paradigm — paradigm replacement target) | **Phase 2 CFP-1293 carrier** | **신규 wire active** |
+| 3 | `templates/agents/UpgradeAgent.md` Stage 3 apply Step A/D 본문 R-3 sub-section | wrapper agent contract (walker runtime) | **Phase 1 CFP-1293 carrier** | **신규 wire active** |
+
+#### Decision binding 변경
+
+`mechanical_enforcement_actions[0].decision_binding` 영역의 codify scope 확장 (자체 yaml field 본문은 Phase 2 PR 카리어에서 갱신):
+
+- Amendment 2 시점 (전): "§결정 5 — reconcile-overlay.sh MARKER_NONE branch filter hook (consumer signal detect → whitelist filter → fail-closed unknown). evidence-checks-registry warning tier entry (Phase 2 carrier — `templates/scripts/detect-repo-kind.py` 실 구현 + tests/test_detect_repo_kind.py 18 TC + tests/integration/test_reconcile_overlay_consumer_filter.bats integration after Phase 2 PR)" (declaration-only-Wave-1 status)
+- Amendment 3 시점 (후): "§결정 5 — 3 영역 atomic wire active: (a) reconcile-overlay.sh MARKER_NONE branch §4.12 hook (CFP-899 산물, 보존) + (b) walk_plan.py apply_overlay_file caller 영역 filter hook (CFP-1293 Phase 2 carrier) + (c) UpgradeAgent.md Stage 3 apply Step A preflight 2-layer detection + Step D per-entry whitelist (CFP-1293 Phase 1 carrier). walker contract codify = imperative-walker-protocol-v1 v1.2.0 §2.E.4 consumer_applicability_filter_binding declarative declare." (walker apply Stage D wire active status)
+
+#### Self-defeating risk false alarm 정정
+
+본 Amendment 3 진행 영역 spawn prompt framing (Story §2.1 row 9 Pivot evidence):
+
+> "ADR-083 is_transitional:true → UpgradeAgent.md wire = sunset 영역 wire = self-defeating risk"
+
+= **false alarm**. ADR-083 sunset 영역 wire 가 self-defeating 아님 — sunset_justification 자체가 "walker per-step `applicable_to` filter" 를 long-term metric 으로 박제. 본 Amendment 3 = 그 약속 실현 carrier. ADR-097 §결정 3 carrier-preserved sunset 정합 (sunset = "효용 소멸" 아니라 "효용 이전 (carrier shift)" = 강화 방향).
+
+#### ratchet 강화 보존
+
+- **약화 방향 (차단)**: filter 약화 / fail-open default / whitelist 축소 발의 = 본 Amendment 3 ratchet 강화 ratchet 위배 invariant 보존.
+- **강화 방향 evidence (ADR-058 §결정 5 CFP-1149 재정의 symmetric evidence-gate 정합)**: declaration-only-Wave-1 → walker apply Stage D wire active 격상 = 본 Amendment 3 = β2 audit LOSSLESS declared ↔ actual walk_plan.py 안 wire 0 match drift catch evidence-based 강화 방향 evidence. ADR-058 §결정 5 (CFP-1149 재정의 후) = "약화 차단 logic" 아니라 "약화 방향 evidence requirement" — symmetric evidence-gate. 약화 0건 (약화 발의 시 별 evidence requirement 동등 적용, 본 Amendment = 강화 방향 1급).
+- **약화 0건** declare (Amendment 3 본문 + amendment_log entry 모두 명시).
+
+#### Cross-ref
+
+- **Issue #1268 결함 2**: defect 2 paradigm-aware 정정 carrier — origin Issue body verbatim Story §1 보존.
+- **CFP-1293**: 본 Story carrier (Story file `wrapper/stories/CFP-1293.md` SSOT, internal-docs repo).
+- **imperative-walker-protocol-v1 §2.E.4 (v1.2.0)**: walker contract codify (Phase 1 carrier — declarative declare, kind:registry sibling sync 면제).
+- **ADR-097 §결정 3**: carrier-preserved sunset normative anchor.
+- **ADR-073 §결정 1**: verify-before-assert primitive — 본 Amendment 3 발의 evidence (β2 audit LOSSLESS declared ↔ actual wire 0 match drift catch).
 
 ## 컨텍스트 — wholesale_mirror 무차별 유입 의 silent harm
 

@@ -1,15 +1,16 @@
 ---
 kind: registry
 registry: imperative-walker-protocol
-version: "1.1.0"
+version: "1.2.0"
 status: Active
 sibling_sync: exempt (ADR-010 §결정 2 kind:registry)
 supersedes_carrier: reconcile-protocol-v1 (v1.13 Deprecated, CFP-1125)
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/imperative-walker-protocol-v1.md
-date: 2026-05-21
+date: 2026-05-23
 authors:
   - ArchitectAgent (CFP-1145 / CFP-1111 Wave 1 Story-3 — imperative-walker-protocol-v1 신설 codify, 7 ADR (ADR-092~098) 결정 SSOT carrier. reconcile-protocol-v1 v1.13 Deprecated 후속 carrier)
+  - ArchitectPLAgent (CFP-1293 / 2026-05-23 — v1.1.0 → v1.2.0 MINOR bump. §2.E.4 consumer_applicability_filter_binding sub-§ append. ADR-083 Amendment 3 carrier — walker apply Stage D wire active, sunset_justification 실현)
 carrier_story: CFP-1145 (CFP-1111-W1-S3)
 parent_epic: CFP-1111
 related_adrs:
@@ -25,6 +26,7 @@ related_adrs:
   - ADR-010  # sibling sync (kind:registry exempt — §결정 2)
   - ADR-058  # ADR sunset criteria mandate (ratchet 강화 방향 invariant)
   - ADR-064  # decision principle mandate (CFP scope unitary + self-application ratchet)
+  - ADR-083  # consumer-applicability filter (Amendment 3 carrier — §2.E.4 codify source, CFP-1293)
 related_files:
   - docs/inter-plugin-contracts/reconcile-protocol-v1.md  # v1.13 Deprecated, paradigm replacement source (semantic 답습 source)
   - docs/adr/ADR-092-changelog-ssot-location.md
@@ -47,6 +49,7 @@ version_history:
   - { version: "1.0", date: 2026-05-21, carrier: CFP-1145, change: "initial — imperative changelog walk paradigm 의 walker protocol schema SSOT 신설. reconcile-protocol-v1 (v1.13 Deprecated, CFP-1125) 후속 carrier. 7 ADR (ADR-092~098) 결정 codify: §2 walk_result 4-value closed_enum + 2-layer 4-field 보고 schema (ADR-093) / §3 per-plugin self-owned CHANGELOG.md SSOT + aggregate view derived + drift detection warning tier (ADR-092) / §4 hybrid grace period fallback GA 12mo · Beta 9mo (ADR-094) / §5 sunset metric source changelog mining + cron (ADR-095) / §6 min_prerequisite_version dual carrier + topological resolve (ADR-096) / §7 paradigm replacement scope boundary 3 조건 AND (ADR-097) + UpgradeAgent runtime ownership PMO 흡수 (ADR-098). kind:registry (sibling sync 면제, ADR-008 §결정 2 + ADR-010 §결정 2 정합). closed_enum open_extension:false invariant 보존 (ADR-064 §self-application ratchet 강화 방향만)." }
   - { version: "1.0.1", date: 2026-05-22, carrier: CFP-1169, change: "CFP-703 stale ref → CFP-1155 (UpgradeAgent 실 carrier = CFP-1111 Wave 2 Story-4) traceability 정정. §2.F.2 ownership boundary codify only 설명 + §4.3(c) amendment trigger 의 CFP-703 → CFP-1155 + Wave 2 Story-3 → Wave 2 Story-4 정정. 오타 수준 추적성 정정 — semantic 변경 0건. PATCH bump (ADR-008 §결정 2 cross-reference 정정 category)." }
   - { version: "1.1.0", date: 2026-05-22, carrier: CFP-1256, change: "§2.G git→Confluence docs sync extension 신규 codify source ADR-103 — §4.2 'MINOR = 신규 codify source ADR 영역 § append' 정합. walk_result closed_enum 무침범. §4.3 Amendment trigger (e) ADR-103 merge 추가. MINOR bump (ADR-008 §결정 2 신규 codify source ADR 영역 § append category)." }
+  - { version: "1.2.0", date: 2026-05-23, carrier: CFP-1293, change: "§2.E.4 consumer_applicability_filter_binding sub-§ append — ADR-083 Amendment 3 carrier (walker apply Stage D wire active, sunset_justification 실현). §결정 5 wire location 3 영역 atomic codify 의 walker contract layer: (a) reconcile-overlay.sh §4.12 hook (보존) + (b) walk_plan.py apply_overlay_file caller 영역 filter hook (Phase 2 carrier) + (c) UpgradeAgent.md Stage 3 apply Step A/D R-3 sub-section (Phase 1 carrier). filter_hook_invocation_layer + repo_kind_detection_signals + 4_way_truth_table + positive_whitelist_source + fail_closed_unknown_semantic + wrapper_self_app_exemption + detection_layer + filter_layer 8 field declarative declare. walk_result closed_enum 무침범 (4-value invariant 보존). §4.3 Amendment trigger (f) ADR-083 Amendment 3 merge 추가. MINOR bump (ADR-008 §결정 2 신규 codify source ADR 영역 § append category). β2 audit (CFP-1113) Anchor 2 LOSSLESS declared ↔ origin/main walk_plan.py 안 wire 0 match drift evidence-based — verify-before-trust catch (ADR-073 §결정 1 정합). ratchet 강화 only (declaration-only-Wave-1 → walker apply Stage D wire active), 약화 0건." }
 ---
 
 # imperative-walker-protocol-v1 — Inter-plugin Contract Registry
@@ -214,6 +217,67 @@ min_prerequisite_version:
 - **mismatch = §2.C Fallback trigger** — topological walk 중 어느 lane plugin 의 range 를 consumer wrapper version_pin 실값이 미만으로 충족 못하면 (`consumer_pin < plugin_min_prerequisite`) → §2.C ADR-094 Fallback (hybrid grace) trigger. resolve 는 detection 만, 처리 (degraded mode / grace / 호환 범위) 는 §2.C / ADR-094 SSOT 위임 (detection 본 §2.E ↔ 처리 §2.C disjoint binding).
 - **mismatch lint = warning tier** — ADR-060 `warning` tier. Wave 1 declaration-only (mechanical wire = 후속 sub-CFP Phase 2 carrier). false-block risk (구형 consumer 정상 운영 차단) 회피 — warning 으로 가시화 + §2.C Fallback 경로 안내가 1차 적정 강도. pattern_count >= 2 mismatch 재발 시 follow-up CFP MUST promote.
 
+#### §2.E.4 consumer_applicability_filter_binding (ADR-083 Amendment 3 codify, CFP-1293)
+
+walker apply Stage D 영역 ADR-083 consumer-applicability filter wire active. ADR-083 sunset_justification (CFP-1186 Amendment 2) 가 "walker per-step `applicable_to` filter 로 carry" 를 metric 으로 박제한 약속의 실현 carrier — carrier-preserved sunset (ADR-097 §결정 3) 정합.
+
+> verified-via: Read docs/adr/ADR-083-consumer-applicability-filter.md Amendment 3 (line 17-23 amendment_log entry 3 + line 88-145 sunset_executed → wire_active_in_walker sub-section verbatim). 본 §2.E.4 = ADR-083 §결정 5 wire location 3 영역 atomic codify 의 walker contract layer.
+
+```yaml
+§2.E.4 consumer_applicability_filter_binding:
+  status: walker_apply_stage_d_wire_active   # CFP-1186 declaration-only-Wave-1 → wire active (Amendment 3 ratchet 강화)
+  filter_hook_invocation_layer: apply_overlay_file_caller   # walk_plan.py caller 영역 (Stage D apply_changelog_entry caller, 순수 함수 apply_overlay_file invariant 보존)
+  repo_kind_detection_signals:
+    primary_1: .claude-plugin/plugin.json   # plugin signal (ADR-083 §결정 1 truth-table)
+    primary_2: .claude/_overlay/project.yaml   # consumer overlay signal
+    invariant: filesystem_only_invariant   # network call 0, cross-repo marketplace check 0 (ADR-083 §결정 2)
+    detection_subprocess: templates/scripts/detect-repo-kind.py   # ADR-061 외부 .py, ADR-005 self-app exemption + ADR-009 wrapper-only decomposition 정합
+    timeout_sec: 5   # DoS 보호, timeout → unknown 동형 fail-closed
+  4_way_truth_table:
+    plugin: plugin_json_present AND overlay_absent
+    consumer: plugin_json_absent AND overlay_present
+    mixed: plugin_json_present AND overlay_present
+    unknown: plugin_json_absent AND overlay_absent
+    open_extension: false   # 4-value closed_enum (ADR-068 I-1 API contract semantic completeness + I-4 wording SSOT)
+    enum_priority: mixed_wins_self_loop_block   # ADR-083 §결정 3 — mixed 우선 분류 (wrapper repo self-app self-loop bug 차단)
+  positive_whitelist_source: templates/scripts/consumer_applicable_workflows.txt   # 117 lines body (consumer-applicable workflow yml positive list)
+  fail_closed_unknown_semantic:
+    walker_action: rollback_to_family_snapshot   # walker Stage E rollback path (UpgradeAgent.md Stage 3 apply Step E)
+    walk_result: FAILED   # walk_result 4-value closed_enum (§2.A.1)
+    error_log: "[ERR] Consumer-applicability filter: repo_kind=unknown — fail-closed (ADR-083 §결정 4)"
+    silent_skip_invariant: 0   # silent harm 0 (ADR-076 §결정 6 fail-loud 패턴 답습)
+    force_flag_forbidden: --force-unknown-as-consumer   # ADR-083 §결정 4 정합 (`--force-unknown-as-consumer` flag 신설 금지)
+  wrapper_self_app_exemption:
+    classification: mixed_repo_full_workflow_set
+    skip_count_invariant: 0   # 본 wrapper repo (mclayer/plugin-codeforge) mixed 분류 → 0 file skip
+    branch_protection_required_check_preservation: invariant-check.yml   # ADR-024 required check 영역 invariant
+    verify_tc: TC-CAF-MIXED-1   # Phase 2 bats integration test 의무 (ADR-083 §결정 6 verbatim 답습)
+  detection_layer:
+    layer: step_a_preflight   # 2-layer Decision 5 — Step A 1회 invoke_detect_repo_kind + repo_kind cache
+    invariant: abort_before_touch   # unknown 시 fail-closed abort, filesystem touch 0
+    upgrade_agent_step: stage_3_apply.step_a_preflight
+  filter_layer:
+    layer: step_d_per_entry
+    granularity: per_workflow_yml_basename
+    decision_enum: [proceed, skip, abort]   # closed_set 3-value
+    upgrade_agent_step: stage_3_apply.step_d_per_entry_apply
+  cross_ref:
+    - ADR-083 §결정 5 (wire location SSOT, Amendment 3 carrier)
+    - ADR-083 sunset_justification (sunset_status: Sunsetted 후 walker per-step applicable_to filter carry 약속 실현)
+    - ADR-097 §결정 3 (carrier-preserved sunset normative anchor — 효용 lossless carry)
+    - reconcile-protocol-v1 §4.12 (v1.13 Deprecated — declarative reconciliation paradigm carrier, paradigm replace 후 본 §2.E.4 가 imperative walker paradigm carrier)
+    - ADR-073 §결정 1 (verify-before-assert — Amendment 3 발의 evidence base, β2 audit LOSSLESS declared ↔ actual wire 0 match drift catch)
+    - Issue #1268 결함 2 (defect 2 paradigm-aware 정정 carrier — CFP-1293 origin)
+```
+
+**Composition order** (sequential, CFP-898 closure resolver pattern 답습):
+
+1. **CFP-898 closure resolver hook** (mirror-dependency-closure.py) — workflow yml + scripts/ dependency closure missing 시 fail-closed (vertical layer)
+2. **CFP-1293 consumer-applicability filter hook** (detect-repo-kind.py subprocess + apply_consumer_applicability_filter) — closure full but consumer-non-applicable 시 skip (horizontal layer, wholesale_mirror 영역 한정)
+3. **apply_overlay_file** call (merge_with_marker + integrity check) — 순수 함수 invariant 보존
+
+filter hook 발동 영역 = `wholesale_mirror` branch 한정 (R-2 marker_merge 영역과 disjoint axis — marker block 보유 file 은 filter 적용 영역 외).
+
 ### §2.F paradigm + ownership cross-ref (ADR-097 / ADR-098 codify)
 
 #### §2.F.1 paradigm replacement scope boundary (ADR-097 codify)
@@ -341,6 +405,7 @@ walk_result_enum_invariant:
 - (c) Wave 2 Story-4 (CFP-1155) merge — UpgradeAgent 실 runtime mandate body 확정 시 (§2.F.2 ownership boundary → runtime hook). Wave 1 작성 시점 declare-only, 실 implementation = CFP-1155.
 - (d) reconcile-protocol-v1 v1.13 sunset 완료 (CFP-1111-Wave-4-Story-11) 시 — paradigm replacement carrier-preserved sunset 완결 신호 (§2.F.1 carrier_preserved_sunset binding)
 - (e) ADR-103 merge — git→Confluence sync mechanism 결정 (§2.G post-walk hook codify source ADR. CFP-1256 Wave 4 Story-13 carrier — §2.G 신규 codify source ADR 영역 § append, §4.2 MINOR 정합)
+- (f) ADR-083 Amendment 3 merge (CFP-1293) — §2.E.4 consumer_applicability_filter_binding sub-§ append codify source ADR Amendment. walker apply Stage D wire active (declaration-only-Wave-1 ratchet 강화). §결정 5 wire location 3 영역 atomic codify 의 walker contract layer carrier. §4.2 MINOR 정합 (신규 codify source ADR 영역 § append category). closed_enum 무침범 (walk_result 4-value invariant + 4-way truth-table open_extension:false 보존).
 
 ### 4.4 version_history
 
@@ -349,3 +414,4 @@ walk_result_enum_invariant:
 | 1.0 | 2026-05-21 | CFP-1145 | initial — imperative changelog walk paradigm 의 walker protocol schema SSOT 신설. reconcile-protocol-v1 (v1.13 Deprecated, CFP-1125) 후속 carrier. 7 ADR (ADR-092~098) 결정 codify (§2.A walk_result + 4-field 보고 schema / §2.B changelog SSOT + aggregate view + drift detection / §2.C hybrid grace fallback / §2.D sunset metric source / §2.E min_prerequisite_version manifest + topological resolve / §2.F paradigm scope boundary + UpgradeAgent ownership). kind:registry (sibling sync 면제, ADR-008 §결정 2 + ADR-010 §결정 2 정합). closed_enum open_extension:false invariant 보존 (ADR-064 §self-application ratchet 강화 방향만). |
 | 1.0.1 | 2026-05-22 | CFP-1169 | CFP-703 stale ref → CFP-1155 traceability 정정. §2.F.2 + §4.3(c) 정정. PATCH bump. |
 | 1.1.0 | 2026-05-22 | CFP-1256 | §2.G git→Confluence docs sync extension 신규 codify source ADR-103 추가. post-walk hook side-effect codify (walk_result closed_enum 무침범). §4.3 Amendment trigger (e) ADR-103 추가. MINOR bump. |
+| 1.2.0 | 2026-05-23 | CFP-1293 | §2.E.4 consumer_applicability_filter_binding sub-§ append — ADR-083 Amendment 3 carrier (walker apply Stage D wire active, sunset_justification 실현). §결정 5 wire location 3 영역 atomic codify (reconcile-overlay.sh + walk_plan.py + UpgradeAgent.md) 의 walker contract layer. 8 field declarative declare (filter_hook_invocation_layer / repo_kind_detection_signals / 4_way_truth_table / positive_whitelist_source / fail_closed_unknown_semantic / wrapper_self_app_exemption / detection_layer / filter_layer). walk_result closed_enum 무침범. §4.3 Amendment trigger (f) ADR-083 Amendment 3 merge 추가. MINOR bump. verify-before-trust catch (β2 audit LOSSLESS declared ↔ origin/main walk_plan.py 안 wire 0 match drift evidence-based, ADR-073 §결정 1 정합). |

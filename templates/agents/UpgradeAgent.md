@@ -100,23 +100,63 @@ plan(walk_result):
 apply(upgrade_plan):
   # Step A — disk-space preflight + path normalization (abort-before-touch)
   preflight(upgrade_plan) or abort_before_touch()
+  # Step A.1 — repo_kind detection (R-3 consumer-applicability filter, CFP-1293 / ADR-083 Amd 3)
+  repo_kind = invoke_detect_repo_kind(consumer_root, detect_repo_kind_py)  # subprocess call
+  if repo_kind == "unknown":
+    abort_before_touch()  # fail-closed (ADR-083 §결정 4), filesystem touch 0
+  # repo_kind = {plugin, consumer, mixed} cache for Step D
   # Step B — per-family snapshot (7-plugin family 단위, SHA-256 checksum)
   snapshot = create_family_snapshot(family_scope)  # incomplete = 즉시 제거
   # Step C — fresh re-walk (walk↔apply state drift 방어 TOCTOU)
   if re_walk() != upgrade_plan.walk_result: rollback_to_snapshot(snapshot)
   # Step D — per-entry apply (walk transcript step-visible)
   for entry in upgrade_plan.applicable_entries:
+    # Step D.1 — consumer-applicability filter (R-3 hook, CFP-1293 / ADR-083 Amd 3)
+    filter_decision = apply_consumer_applicability_filter(entry.filename, repo_kind, whitelist_path)
+    if filter_decision.decision == "skip":
+      emit walk_transcript_step(entry, status="filter_skipped", reason=filter_decision.reason)
+      filter_skip_report.append(entry.filename)
+      continue  # skip apply_changelog_entry, R-2 marker_merge 영역 외 (disjoint axis)
+    if filter_decision.decision == "abort":
+      rollback_to_snapshot(snapshot)  # fail-closed (ADR-083 §결정 4 정합)
+      emit walk_result(FAILED, reason=filter_decision.reason)
+      return
+    # filter_decision.decision == "proceed" → 정상 apply
     apply_changelog_entry(entry)                  # customization marker 보존 (R-2 흡수)
     emit walk_transcript_step(entry, status)       # §11 per-entry transcript
   # Step E — 사후 sanity check 3종
   sanity_check() or rollback_to_snapshot(snapshot)
   # Step F — walk_result + 2-layer 4-field 완료 보고 emit
   emit walk_result(...) + walk_completion_report(...) + walk_result_detail(...)
+  # Step F.1 — filter_skip_report emit (Step D.1 skip 누적, ADR-083 §결정 5 audit trail)
+  if filter_skip_report: emit filter_skip_report(...)  # user-visible (silent harm 0, ADR-076 §결정 6 fail-loud)
 ```
 
 - **per-family atomic (unconditional — ADR-068 I-3)**: rollback 단위 = 7-plugin family (전체 family all-or-rollback). apply 진입 전 family snapshot 필수 선행 — snapshot 없으면 apply 진입 금지. partial snapshot (incomplete tar) = rollback source 금지 + 즉시 제거.
 - **per-entry walk transcript**: 각 changelog entry apply 시 step emit (어느 entry 까지 적용됐는지 가시화). rollback boundary (family 단위) 와 disjoint axis.
 - **customization marker 보존 (R-2 — walk apply stage 흡수)**: apply Stage D entry 적용 시 3-way merge — marker block 안 wrapper SSOT wins / 밖 consumer 보존 / marker 부재 시 wholesale mirror + `## Wholesale mirror losses` 기록. `reconcile-overlay.sh` 의 3-way merge semantic 을 walk apply stage 흡수 (R-2 결정).
+- **consumer-applicability filter (R-3 — CFP-1293 / ADR-083 Amendment 3)**: apply Stage D entry 적용 직전 4-way enum filter hook (plugin/consumer/mixed/unknown). repo_kind = {plugin, mixed} → filter skip (full workflow set 적용). repo_kind = consumer → positive whitelist (`templates/scripts/consumer_applicable_workflows.txt`) grep — match = proceed / miss = silent skip + filter_skip_report append. repo_kind = unknown 도달 0건 (Step A.1 abort-before-touch 사전 차단). R-2 (marker_merge) 와 **disjoint axis** — marker block 보유 file 은 R-3 적용 영역 외 (filter hook 발동 영역 = wholesale_mirror branch 한정). detection signal = filesystem-only invariant (`.claude-plugin/plugin.json` + `.claude/_overlay/project.yaml` 2-signal AND, ADR-083 §결정 2). subprocess call to `templates/scripts/detect-repo-kind.py` (ADR-005 self-app exemption + ADR-061 외부 .py + ADR-009 wrapper-only decomposition 정합).
+
+### R-3 4-way enum truth-table (ADR-083 §결정 1 verbatim)
+
+| repo_kind | plugin.json | overlay.yaml | filter decision | rationale |
+|---|---|---|---|---|
+| plugin | present | absent | proceed (full workflow set) | wrapper-internal repo, consumer-facing template 부재 |
+| consumer | absent | present | whitelist grep → proceed or skip | external consumer repo, positive whitelist 적용 |
+| mixed | present | present | proceed (full workflow set, 0 file skip) | wrapper-internal CI + consumer-facing template 양 영역 보유 (wrapper self-app, ADR-083 §결정 6) |
+| unknown | absent | absent | abort (fail-closed) | bootstrap 부재 — silent harm 0 invariant (ADR-076 §결정 6 fail-loud) |
+
+### R-3 sequential composition (CFP-898 closure resolver pattern 답습)
+
+1. **CFP-898 closure resolver hook** (mirror-dependency-closure.py) — workflow yml + scripts/ dependency closure missing 시 fail-closed (vertical layer)
+2. **CFP-1293 consumer-applicability filter hook** (detect-repo-kind.py + apply_consumer_applicability_filter) — closure full but consumer-non-applicable 시 skip (horizontal layer)
+3. **apply_overlay_file** (merge_with_marker + integrity check, 순수 함수)
+
+filter hook 발동 영역 = `wholesale_mirror` branch 한정 (R-2 marker_merge 영역과 disjoint axis).
+
+### R-3 wrapper self-app exemption (TC-CAF-MIXED-1)
+
+본 wrapper repo (`mclayer/plugin-codeforge`) = `mixed` 분류 (plugin.json + overlay.yaml 양 보유) → filter skip (full workflow set 적용) → 0 file skip. branch-protection required check (`invariant-check.yml`) 소실 0건 (Phase 2 bats integration TC-CAF-MIXED-1 evidence 의무).
 
 ## consumer fallback 연동 (§2.C hybrid grace, ADR-094)
 

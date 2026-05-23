@@ -495,4 +495,48 @@ owned_sections:
     # dependency-order-enforce). 모두 declaration-only Wave 1 (deferred-followup status).
     # ADR-076 / ADR-082 / ADR-086 precedent 답습. ADR-060 §결정 6 row append 정합.
 
+  - file: docs/adr/ADR-083-consumer-applicability-filter.md
+    section: "Amendment 3 (CFP-1293) — §결정 5 wire location expand"
+    owner_adr: ADR-083
+    parallel_edit: locked
+    # NOTE (CFP-1293): Amendment 3 carrier — sunset_justification 실현 carrier (walker apply
+    # Stage D wire active). 3 영역 atomic codify: (a) reconcile-overlay.sh MARKER_NONE branch
+    # §4.12 hook (CFP-899 산물, 보존) + (b) walk_plan.py apply_overlay_file caller 영역
+    # filter hook insertion (Phase 2 carrier) + (c) UpgradeAgent.md Stage 3 apply Step A/D
+    # R-3 sub-section (Phase 1 carrier). locked — 후속 Amendment 시 ADR-064 §결정 1 CFP scope
+    # unitary 정합 (별 CFP carrier 의무). ratchet 강화 방향만 (ADR-058 §결정 5 정합).
+    # ADR-097 §결정 3 carrier-preserved sunset 정합 — sunset 약속 실현 carrier (강화 방향).
+
+  - file: docs/inter-plugin-contracts/imperative-walker-protocol-v1.md
+    section: "§2.E.4 consumer_applicability_filter_binding (CFP-1293, v1.1.0 → v1.2.0 MINOR)"
+    owner_adr: ADR-083
+    parallel_edit: append-only
+    # NOTE (CFP-1293): v1.1.0 → v1.2.0 MINOR bump (ADR-008 §결정 2 신규 codify source ADR
+    # 영역 § append category). §2.E (min_prerequisite_version manifest) 영역 직후 §2.E.4
+    # sub-§ append — consumer_applicability_filter_binding declarative declare. kind:registry
+    # (sibling sync 면제, ADR-010 §결정 2 정합) — wrapper repo 단독 PR. append-only —
+    # 본 §2.E.4 안 field 변경 = ADR-083 amendment (강화 방향) 정합.
+
+  - file: scripts/lib/walk_plan.py
+    section: "apply_consumer_applicability_filter + invoke_detect_repo_kind helper 2 함수 + FilterDecision dataclass + Stage D caller hook"
+    owner_adr: ADR-083
+    parallel_edit: locked
+    # NOTE (CFP-1293): walker code 영역 ADR-083 filter wire (Phase 2 carrier). helper 2 함수
+    # (apply_consumer_applicability_filter 순수 함수 + invoke_detect_repo_kind subprocess
+    # wrapper) + FilterDecision frozen dataclass + Stage D apply_changelog_entry caller
+    # 영역 hook insertion. ADR-061 정합 (외부 .py file, 함수 추가만, 신규 file 0).
+    # ADR-027 §결정 7.B DRY 보존 (merge_with_marker / apply_overlay_file signature 변경 0).
+    # locked — 본 영역 안 logic 변경 = 별 CFP carrier (ratchet 강화 방향만, ADR-064 §결정 1).
+
+  - file: templates/agents/UpgradeAgent.md
+    section: "Stage 3 apply Step A preflight + Step D per-entry filter hook (R-3 sub-section, CFP-1293)"
+    owner_adr: ADR-083
+    parallel_edit: append-only
+    # NOTE (CFP-1293): walker contract 영역 ADR-083 filter wire (Phase 1 carrier).
+    # Step A preflight 안 invoke_detect_repo_kind 1회 호출 + repo_kind cache + unknown 시
+    # fail-closed abort (abort-before-touch invariant 보존). Step D per-entry filter hook
+    # call + decision branch (proceed / skip / abort). 신설 sub-section R-3 — consumer-
+    # applicability filter (R-2 marker_merge 와 disjoint axis 명시). append-only —
+    # R-3 신설 영역 외 영역 변경 0 (R-2 보존).
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)

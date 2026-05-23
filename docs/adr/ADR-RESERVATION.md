@@ -154,6 +154,17 @@ amendments_reserved:
 
 ADR deprecated/superseded 시 해당 row `status: archived`. 번호 재사용 금지.
 
+### Amendment id slot 예약 (active, CFP-1058 sub-tree)
+
+```yaml
+amendments_reserved:
+  - adr_number: 83
+    amendment_id: 3
+    reserved_by_cfp: CFP-1293
+    reservation_date: 2026-05-23 KST
+    status: active   # ArchitectAgent commit time 점유 (Story Phase 1 PR carrier — Amendment 3 §결정 5 wire location expand: reconcile-overlay.sh + walk_plan.py + UpgradeAgent.md 3 영역 atomic codify, sunset_justification 실현 carrier, ADR-097 §결정 3 carrier-preserved sunset 정합)
+```
+
 ## 해소 기준
 
 N/A — permanent policy
