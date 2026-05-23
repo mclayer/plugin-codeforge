@@ -57,6 +57,10 @@ amendments:
     date: 2026-05-22
     carrier_story: CFP-1244
     summary: "(a) ADR-081 Amendment 6 (신규 §결정 D8 Codex worker dispatch file-redirect mandate) cross-ref — codeforge Orchestrator/lane 이 Codex CLI worker check 호출 시 file-redirect 형식 `codex exec --sandbox read-only < <promptfile>` 의무 + result-via-file 수신 + synchronous block-wait 금지. dispatch invocation mandate 본문 SSOT = ADR-081 §결정 D8 (본 ADR-052 는 cross-ref-only, 본문 중복 codify 0 — Amendment 6/7/8/9 cross-ref-only 패턴 정합). (b) `[codex-sandbox-fallback: <fail-mode>]` Story §10 marker fail-mode enum 7 → 8 확장 (ADR-070 Amendment 7 SSOT cross-ref) — 8번째 value `dispatch_stall_or_stream_timeout` 신설 (기존 7 = api_missing / version_skew / enterprise_blocked / gh_api_network_blocked / manual_substitution_declared / inline_orchestrator_verify_only / subagent_recursion_blocked, 모두 snake_case noun phrase — 신규 value 동일 naming convention) + §A3 cross-ref 표 6-stale → 8 정정 (Amendment 10 이 subagent_recursion_blocked 추가 시 §A3 표 누락한 mechanical self-check escape 반영). 신규 fail-mode 영역 = Codex `codex exec` invocation stall (TTY 부재 0-byte stall >5min) OR Orchestrator stream idle-timeout during long Codex wait → `fallback_skip_with_marker` path. evidence = Issue #1244 + CFP-1187 운영 phase Epic S4/S5 early stall + S7 ArchitectPL stream timeout after 40 tool_uses → redo + Codex CLI v0.125.0. D1/D2/D3/D4 + Amendment 1-11 본문 의미 변경 0건 — sub-section append 패턴 (Amendment 1-11 정합) + closed-enum 7 → 8 확장 (additive, 정보 손실 0). is_transitional=false, sunset_justification=ratchet 강화 방향 (closed-enum expansion = strengthening — ADR-058 §결정 5 + ADR-064 §self-application ratchet 정합, 약화 영역 0). doc-only fast-path 자체 적격 (ADR-054 §결정 1, 기존 ADR Amendment + ADR-081 Amendment 6 cross-ref + src/tests/workflow 무변경)."
+  - id: 13
+    date: 2026-05-23
+    carrier_story: CFP-1286
+    summary: "ADR-070 Amendment 8 (§결정 D1 expansion fail-mode enum 8 → 9 확장, 9번째 value `codex_truncated_no_verdict` 신설) cross-ref. CFP-604 retro F2 follow-up realized — single sample escalate_user 사용자 직접 채택. fail-mode 영역 = file-redirect dispatch (ADR-081 Amendment 6 §결정 D8) 정상 invocation 후 sandbox + Windows PowerShell encoding policy reject + 대용량 artifact processing 누적 → reasoning budget 소진 → output 안 verdict analysis block 부재. post-invocation reasoning-exhausted path = 기존 8 fail-mode value 어디에도 mapping 불가 (axis disjoint — file-redirect ↔ stream-stall ↔ reasoning-exhausted 3 disjoint failure mode). §A3 cross-ref 표 8 → 9 enum 동기 정정. ADR-070 Amendment 8 SSOT (본 ADR-052 cross-ref-only) + ADR-081 Amendment 7 cross-ref 동반 (file-redirect dispatch 후속 영역 disjoint sub-domain). closed-enum expansion (8 → 9, additive, 정보 손실 0, 기존 8 value 의미 변경 0) = strengthening (ADR-058 §결정 5 + ADR-064 §self-application top-down ratchet). D1/D2/D3/D4 + Amendment 1-12 본문 의미 변경 0건. is_transitional=false, sunset_justification=N/A (강화 방향, scope 축소 0). doc-only fast-path 자체 적격 (ADR-054 §결정 1, 기존 ADR Amendment + ADR-070 Amendment 8 cross-ref + src/tests/workflow 무변경). pattern_count=1 (single sample), 후속 sibling evidence 누적 시 mechanical detection lint 별 CFP carrier (ADR-076/082/086 precedent 답습)."
 related_stories:
   - CFP-354
   - CFP-411
@@ -71,6 +75,7 @@ related_stories:
   - CFP-1056   # Amendment 10 — ADR-070 Amendment 6 cross-ref (fail-mode 7-set 확장, subagent_recursion_blocked enum value, CFP-1041 DesignReviewPL subagent context evidence)
   - CFP-1131   # Amendment 11 — Codex touchpoint wrapper-self trim (6 → 4, touchpoint 2 + 5 conditional skip, ratchet 축소 2번째 carrier, ADR-058 §결정 5 second applied, 사용자 직권 minimal path 3번째)
   - CFP-1244   # Amendment 12 — ADR-081 Amendment 6 file-redirect dispatch mandate cross-ref + ADR-070 Amendment 7 fail-mode enum 7 → 8 확장 cross-ref (dispatch_stall_or_stream_timeout 신설) + §A3 cross-ref 표 6-stale 정정 (CFP-1187 S4/S5/S7 evidence)
+  - CFP-1286   # Amendment 13 — ADR-070 Amendment 8 cross-ref (fail-mode enum 8 → 9 확장, codex_truncated_no_verdict 9번째 value) + ADR-081 Amendment 7 cross-ref. CFP-604 retro F2 realized (single sample escalate_user).
 related_adrs:
   - ADR-039
   - ADR-034
@@ -804,7 +809,7 @@ Codex worker (codex:codex-rescue subagent) 의 sandbox-level file system access 
 |---|---|---|
 | `inline_orchestrator_verify` (default) | (면제 — marker 부재 = 암묵 default) | N/A |
 | `manual_substitution_declare` | `[codex-substitution-scope-declared: <scope-enum>]` (1 회/spawn) | sandbox 영역 외 file 인용 evidence + Orchestrator override rationale |
-| `fallback_skip_with_marker` | `[codex-sandbox-fallback: <fail-mode>]` (1 회/spawn) | fail-mode enum (8-set, SSOT = ADR-070 §결정 D1) = `api_missing` / `version_skew` / `enterprise_blocked` / `gh_api_network_blocked` / `manual_substitution_declared` / `inline_orchestrator_verify_only` / `subagent_recursion_blocked` (ADR-070 Amendment 6 / ADR-052 Amendment 10) / `dispatch_stall_or_stream_timeout` (ADR-070 Amendment 7 / ADR-052 Amendment 12) |
+| `fallback_skip_with_marker` | `[codex-sandbox-fallback: <fail-mode>]` (1 회/spawn) | fail-mode enum (9-set, SSOT = ADR-070 §결정 D1) = `api_missing` / `version_skew` / `enterprise_blocked` / `gh_api_network_blocked` / `manual_substitution_declared` / `inline_orchestrator_verify_only` / `subagent_recursion_blocked` (ADR-070 Amendment 6 / ADR-052 Amendment 10) / `dispatch_stall_or_stream_timeout` (ADR-070 Amendment 7 / ADR-052 Amendment 12) / `codex_truncated_no_verdict` (ADR-070 Amendment 8 / ADR-052 Amendment 13) |
 
 본 표 = ADR-070 §결정 1 expansion 의 Story §10 marker SSOT 의 cross-ref. KPI 영역 (`substitution_count` + `verify_failure_rate` 정량 측정 threshold=5 / 15%) 는 post-merge follow-up CFP carrier 영역 — 본 Amendment 8 의무 = prose tally only (Story §10 marker grep count, lint 없음).
 
@@ -1133,4 +1138,24 @@ ADR-070 §결정 D1 fail-mode enum SSOT 는 현재 7-set (Amendment 10 / ADR-070
 - (Amendment-AP) **fail-mode enum 에 2개 value 분리 신설** (`dispatch_stall` + `stream_idle_timeout` 별개 value) — 두 fail-mode 의 후속 동작 동일 (`fallback_skip_with_marker` path) + 운영적 구분 실익 부재 (양쪽 모두 Codex worker output 미수신). 단일 value `dispatch_stall_or_stream_timeout` 으로 통합 채택 — §A3 표 enum 최소 확장 (7 → 8) 정합.
 - (Amendment-AQ) **fail-mode enum 확장 없이 기존 `gh_api_network_blocked` 또는 `api_missing` 에 흡수** — 의미 mismatch. `gh_api_network_blocked` = network-block 영역 (Codex 정상 invoke 후 cross-repo fetch 차단), `api_missing` = Codex CLI 미설치 영역. dispatch stall / stream idle-timeout = Codex CLI 설치 + network 정상이나 invocation 형식 (stdin-pipe) 또는 long wait 으로 인한 stall — disjoint 영역. 신규 8번째 value 채택.
 - (Amendment-AR) **fail-mode enum 확장 + mechanical lint 동시 도입** (dispatch 발화 안 file-redirect 형식 presence-grep) — ADR-064 §결정 1 (CFP scope unitary) 위배. Wave 1 declarative (본 Amendment 12 fail-mode enum 확장 + ADR-081 §결정 D8 cross-ref) + Wave 2 mechanical (dispatch invocation presence-grep lint) 별 CFP 분리 채택 — ADR-052 `mechanical_enforcement_actions: []` declaration-only retain precedent 정합.
+
+## Amendment 13 (2026-05-23 KST, CFP-1286)
+
+**ADR-070 Amendment 8 (§결정 D1 expansion fail-mode enum 8 → 9 확장, 9번째 value `codex_truncated_no_verdict`) cross-ref + §A3 cross-ref 표 8 → 9 enum 동기 정정.**
+
+### Context (Amendment 13)
+
+CFP-604 Phase 2 CodeReview Iter 1 evidence — Codex worker file-redirect dispatch (ADR-081 Amendment 6 §결정 D8 정합) 정상 invocation 후에도 sandbox + Windows PowerShell `[Console]::OutputEncoding` policy reject + 대용량 artifact (~46KB) processing 누적 → reasoning budget 소진 → output 안 verdict analysis 부재 (file content dump + git diff help dump 만 남음). `network_scope_actual: offline` (file-redirect 정상). 기존 8 fail-mode value 어디에도 mapping 불가 — post-invocation reasoning-exhausted path 의 disjoint sub-domain. CFP-604 retro F2 follow-up = single sample escalate_user → 사용자 직접 채택 → CFP-1286 carrier 발의 → 본 Amendment 13 realized.
+
+### 결정 (Amendment 13)
+
+**B1. ADR-070 Amendment 8 cross-ref** — fail-mode 본문 SSOT = ADR-070 §결정 D1 expansion (Amendment 8, 9번째 value `codex_truncated_no_verdict` 신설). 본 ADR-052 = cross-ref-only (Amendment 10/12/13 cross-ref-only 패턴 정합).
+
+**B2. §A3 cross-ref 표 9-enum 동기 정정** — line 807 `fallback_skip_with_marker` row 의 fail-mode enum list 8 → 9 expansion (`codex_truncated_no_verdict` 9번째 append, ADR-070 Amendment 8 / ADR-052 Amendment 13 cross-ref 표기 정합). naming convention = 기존 8 value (snake_case noun phrase) 정합.
+
+**B3. ratchet 정합** — closed-enum expansion (8 → 9, additive, 정보 손실 0, 기존 8 value 의미 변경 0) = strengthening (ADR-058 §결정 5 + ADR-064 §self-application top-down ratchet). D1/D2/D3/D4 + Amendment 1-12 본문 의미 변경 0건. `mechanical_enforcement_actions: []` declaration-only retain (Amendment 1-12 precedent).
+
+**B4. mechanical detection deferred-followup** — Wave 1 declarative (본 Amendment 13 enum 확장 + cross-ref), Wave 2 mechanical detection lint (Codex output verdict-block presence grep + sandbox artifact size threshold heuristic) = pattern_count 2 reach 시 별 CFP carrier (ADR-076/082/086 precedent). 현 pattern_count = 1 (CFP-604 single sample).
+
+**B5. doc-only fast-path 적용 (ADR-054 §결정 1)** — 본 Amendment 13 = ADR-052 본문 patch (Amendment row append + sub-section append) — doc-only fast-path 적격. carrier Story (CFP-1286) = ADR-052 Amendment 13 + ADR-070 Amendment 8 + ADR-081 Amendment 7 = 단일 PR 적격.
 
