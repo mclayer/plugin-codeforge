@@ -63,6 +63,12 @@ amendment_log:
     decisions_touched: ["§결정 1"]
     nature: cross-ref-only  # ADR-085 disjoint complement (verify axis ↔ coordination axis) cross-ref 보완 관계 명시 — 본 ADR §결정 / mechanism 의미 변경 0 (ADR-073 Amendment 4 동형 precedent)
     note: "ADR-085 (Multi-session collaboration protocol) 신설로 verify axis (ADR-073/070/082/045 §D 4-layer) ↔ coordination axis (ADR-085 신설 5번째 layer) disjoint complement 관계 codify. 본 ADR §결정 1 layer disjoint 4-layer 표가 ADR-085 §결정 1 5-layer 표의 verbatim 답습 base — 5번째 row Multi-session coordination 신설 (ADR-082 본문 0건 변경 invariant 보존). 8 parallel race incidents single session lineage (CFP-953/946/949/932/954/991/967/1014, 2026-05-18 ~ 2026-05-19 KST) 가 ADR-045 §D-9 cross_story_pattern_adr_trigger pattern_count ≥ 8 reach escalation_action adr_draft_emitted 산물 — verify axis 가 모두 충족되어도 coordination axis 부재 시 parallel race 차단 불가 evidence anchor. ADR-073 Amendment 4 동형 precedent (cross-ref-only Amendment, mechanism scope 침범 0, ADR-082 Amendment 1 ADR-073 cross-ref pattern verbatim 답습)."
+  - amendment_id: 4
+    carrier_story: CFP-1058
+    date: 2026-05-20  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 1 (cross-ref only)"]
+    nature: cross-ref-only  # ADR-RESERVATION schema amendments_reserved[] sub-tree 신설 cross-ref (Amendment id race convention 형식화) — ADR-082 본문 §결정 1-8 + Amendment 1-3 본문 의미 변경 0건
+    note: "ADR-RESERVATION schema `amendments_reserved[]` sub-tree 신설 cross-ref — Amendment id slot reservation 형식화 (CFP-1041 vs CFP-689 Amendment id race precedent evidence, race-winner-takes-it informal convention → schema codify). ADR-082 본문 §결정 1-8 + Amendment 1-3 의미 변경 0 (ADR-054 §결정 1 doc-only fast-path 적격, ADR-073 Amendment 4 동형 cross-ref-only pattern). pre-existing baseline gap retroactive backfill (CFP-1312 retro F-004 finding, DesignReviewPL identified) — 본 backfill 자체 = ADR-082 §결정 9 forcing function (Amendment 6+7) retroactive correction (frontmatter `amendments[]` ↔ `amendment_log[]` consistency, ADR-068 I-4 wording SSOT 정합 — frontmatter SSOT drift 누적 시 Wave 2 mechanical lint `amendment-number-frontmatter-verify` Check (a) gap advisory False Negative 위험 차단)."
   - amendment_id: 5
     carrier_story: CFP-1110
     date: 2026-05-20  # KST per ADR-079 §결정 2
@@ -528,6 +534,53 @@ ADR-085 (Multi-session collaboration protocol) 신설로 해당 gap 을 disjoint
 - `mclayer/codeforge-internal-docs/wrapper/stories/CFP-1041.md` — Amendment 3 carrier Story
 - `mclayer/codeforge-internal-docs/wrapper/change-plans/CFP-1041-multi-session-collaboration-protocol.md` — Change Plan (Phase 1 carrier)
 - 후속 carrier (Wave 2 mechanical wire — active_sessions[] presence lint + lane-entry sentinel subprocess invoke) = 별 sub-CFP, ADR-085 §결정 8 deferred-followup carrier
+
+---
+
+## Amendment 4 — ADR-RESERVATION `amendments_reserved[]` sub-tree cross-ref (Amendment id race convention 형식화, CFP-1058, 2026-05-20 KST)
+
+### 컨텍스트
+
+CFP-1041 (Multi-session collaboration protocol Story-1) 진행 중 CFP-689 (ADR-073 Amendment 3 worktree-first self-ownership verify) 와 Amendment id race 발생. CFP-1041 carrier 가 ADR-082 Amendment 3 default 인용 → CFP-689 가 동일 Amendment 3 slot 점유 → CFP-1041 inline renumber 후 Amendment 4 로 진입. **race-winner-takes-it informal convention** 적용 (Amendment 번호 reservation field 부재) — formalize 의무.
+
+ADR-RESERVATION 가 **ADR number** reservation field 보유하나 **Amendment id** reservation field 부재 → informal convention 만 적용. Amendment id race recurrence 차단 위해 schema codify 의무.
+
+### Amendment
+
+ADR-RESERVATION schema `amendments_reserved[]` sub-tree 신설 (CFP-1058 carrier) cross-ref. 본 Amendment 4 = ADR-082 본문 영역 변경 0 (cross-ref-only Amendment).
+
+#### Amendment 4 — `amendments_reserved[]` sub-tree schema codify cross-ref
+
+```yaml
+amendments_reserved:
+  - adr_number: <N>
+    amendment_id: <M>
+    reserved_by_cfp: <CFP-NNN>
+    reservation_date: <YYYY-MM-DD KST>
+    status: reserved | active | superseded
+```
+
+각 ADR Amendment 신설 의도 시 ArchitectAgent (chief author) 가 commit time 점유 직전 `amendments_reserved[]` row append → race-winner-takes-it 영역 reservation-then-commit 영역으로 전환. 본 schema = ADR-RESERVATION 의 기존 ADR number reservation field 옆 sibling sub-tree (file 신설 0, 단일 SSOT 정합).
+
+#### Amendment 4 — Cross-ref-only (본문 0건 변경 invariant)
+
+본 Amendment 4 는 **cross-ref-only** — ADR-082 §결정 1-8 + Amendment 1-3 본문 의미 변경 0. ADR-RESERVATION schema 확장 (`amendments_reserved[]` sub-tree 신설) 만 cross-ref. ADR-082 Amendment 3 ADR-085 cross-ref-only pattern + ADR-073 Amendment 4 cross-ref-only pattern verbatim 답습 (disjoint 보완 관계 cross-ref-only Amendment, mechanism scope 침범 0).
+
+### Compatibility
+
+- §결정 1~8 + §본질 선언 + §컨텍스트 (corpus 4건) + Amendment 1 + Amendment 2 + Amendment 3 전부 유지 — 본 Amendment 4 는 ADR-RESERVATION `amendments_reserved[]` sub-tree cross-ref only.
+- ADR-058 §결정 5 sunset_justification — Amendment 4 = cross-ref-only (schema codify 강화 방향) = ratchet-up, `sunset_justification: null` (forbid scope 축소 아님). `is_transitional: false` 유지.
+- ADR-064 §self-application top-down ratchet 정합 (강화 방향만 — 약화 방향 0건).
+- ADR-040 Amendment 3 §결정 7.A schema 정합 — `mechanical_enforcement_actions[]` 2-entry 유지 (Amendment 1 의 corpus-claim-verify + cross-plugin-ownership-verify, Amendment 4 frontmatter 갱신 0).
+- ADR-082 Amendment 6+7 §결정 9 forcing function 정합 — `amendments_reserved[]` schema codify = Amendment id pre-reservation enables Wave 2 mechanical lint `amendment-number-frontmatter-verify` 의 reservation-aware 후속 확장 가능 (Wave N future carrier).
+
+### Related (Amendment 4 동반)
+
+- `docs/adr/ADR-RESERVATION.md` — `amendments_reserved[]` sub-tree schema 신설 (Amendment id race convention 형식화)
+- `mclayer/codeforge-internal-docs/wrapper/stories/CFP-1058.md` — Amendment 4 carrier Story
+- `mclayer/codeforge-internal-docs/wrapper/change-plans/CFP-1058-adr-reservation-amendment-id.md` — Change Plan
+- CFP-689 PR — Amendment id race winner evidence (race-winner-takes-it convention precedent)
+- 후속 carrier (Wave 2 mechanical lint — `amendments_reserved[]` presence + reservation-aware Check (a) 확장) = 별 sub-CFP, deferred-followup
 
 ---
 
