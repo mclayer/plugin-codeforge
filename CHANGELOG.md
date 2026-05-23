@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.1 — 2026-05-23
+
+### Added
+
+- [CFP-1291] **CodeReviewPLAgent.md cross-anchor parity check step 추가** (CFP-604 retro F7 follow-up realized, minimum-viable Wave 1 declarative). finding 작성 시 parallel anchor enumeration 의무 + 5 patterns priority enumeration (LOCAL↔REMOTE / client↔server / read↔write / forward↔reverse / enum closure check) + finding output 안 `parallel anchors checked: [...]` inline marker prose 명시.
+  - **Evidence (CFP-604)**: Phase 2 CodeReview Iter 1 = LOCAL_AUTHOR `check-version-bump-atomic.sh:76` catch 후 REMOTE_AUTHOR `check-version-bump-atomic.sh:213` (동일 root cause class) 미catch → CI 재발견 + FIX iter 2 continuation commit `85b6042` 필요. Pattern 1 (LOCAL↔REMOTE) parallel-site grep 미적용 결함.
+  - **Wave 1 scope**: agent body prose + inline marker. **Wave 2 (deferred)**: review-verdict-v4 schema field `parallel_anchors_checked[]` 신설 = 별 sub-Story carrier (ADR-076/082/086 precedent 답습 — declarative first, mechanical schema second).
+
 ## 1.9.0 — 2026-05-21
 
 ### Changed
