@@ -165,12 +165,31 @@ def check(claude_md_path: str, adr_dir_path: str) -> int:
     content = claude_md.read_text(encoding="utf-8")
     lines = content.splitlines()
 
-    # CLAUDE.md 전체에서 두 패턴을 same-line strict pure 로 결합 detect (ADR-074 Amendment 1 §결정 9):
-    #   "[ADR-NNN](...)" 링크 AND "Amendment M (CFP-K)" 인용이 동일 line 에 있어야 pair 성립.
-    #   cross-context window (±5) 완전 제거 — phantom-ahead/stale-behind false-pair class 차단.
+    # CLAUDE.md 전체에서 두 패턴을 same-line section-split attribution 으로 결합 detect:
+    #   "[ADR-NNN](...)" 링크 AND "Amendment M (CFP-K)" 인용이 동일 line 에 있어야 pair 성립
+    #   + line 안 multiple link-form ADR mention 시 each link 의 attribution scope =
+    #     그 link 직후 ~ next link 직전 (또는 line 끝) 까지의 chunk.
+    #
+    # 근거: ADR-074 Amendment 1 §결정 9 (same-line strict, CFP-1009) +
+    #       CFP-1372 (section-split precision — line-wide nested loop 으로 인한
+    #       cross-section mis-attribution 차단. CLAUDE.md L282 super-long
+    #       "Verify-before-trust 4-layer governance" 본문에서 ADR-101 link 의
+    #       trailing 부분 ADR-082 Amendment claim 이 ADR-101 으로 mis-classify
+    #       되던 false-positive 회귀 차단).
+    #
+    # 설계 결정: section-split anchor = link 의 URL target 이 ADR file 인 markdown
+    # link 전체. link text 가 "ADR-NNN" 인 경우 (예: "[ADR-101](...)") 뿐 아니라
+    # 설명적 link text (예: "[Write-time self-write verification mandate]
+    # (docs/adr/ADR-082-...md)") 도 anchor 로 인식. CLAUDE.md L282 처럼 한 line 에
+    # 여러 ADR 가 mixed link-text 형태로 등장할 때 cross-section attribution 보장.
+    #
+    # bare-form ADR mention (cross-ref, "ADR-068 정합" 등) 은 anchor 로 쓰지 않는다.
+    # 같은 paragraph 안 cross-ref 가 trailing Amendment claim 의 attribution scope
+    # 를 끊지 않도록 보존 (L275 ADR-065 Amendment 4 + ADR-068 cross-ref pattern).
 
-    # ADR 링크 regex
-    adr_link_re = re.compile(r"\[ADR-(\d+)\]\([^)]+\)")
+    # ADR 링크 regex — link text 무관, URL 이 docs/adr/ADR-NNN-*.md 인 모든 link.
+    # 그룹: (1) link text, (2) URL 전체, (3) ADR 번호.
+    adr_link_re = re.compile(r"\[([^\]]+)\]\((?:[^)]*?/)?ADR-(\d+)[^)]*\.md\)")
     # Amendment 참조 regex (캡처: amendment number)
     amend_re = re.compile(r"Amendment\s+(\d+)\s*\(CFP-\d+\)")
 
@@ -178,23 +197,28 @@ def check(claude_md_path: str, adr_dir_path: str) -> int:
     refs: list[tuple[int, int, int]] = []
 
     for line_idx, line in enumerate(lines):
-        adr_matches = list(adr_link_re.finditer(line))
-        if not adr_matches:
+        link_matches = list(adr_link_re.finditer(line))
+        if not link_matches:
             continue
 
-        # 이 라인에 ADR 링크가 있음 — 동일 라인에서만 Amendment 참조 탐색 (same-line strict pure)
-        # option (b) Same-line strict pure: ADR-N 링크와 Amendment M (CFP-K) 인용이
-        # 반드시 같은 line 에 존재해야 pairing 성립. ±5 cross-context window 제거.
-        # 근거: ADR-074 Amendment 1 §결정 9 (CFP-1009 carrier).
-        amend_matches = list(amend_re.finditer(line))
-        if not amend_matches:
+        # 동일 라인 short-circuit — Amendment claim 부재 시 skip.
+        if not amend_re.search(line):
             continue
 
-        for adr_match in adr_matches:
-            adr_num = int(adr_match.group(1))
-            for amend_match in amend_matches:
-                claimed = int(amend_match.group(1))
-                # 중복 방지 (같은 adr_num + claimed 조합)
+        # 각 link-form ADR 의 attribution scope = link.end() ~ next link.start()
+        # (또는 line 끝). link 안 URL path 의 inner ADR-NNN 토큰은 무시 (link.end()
+        # 직후부터 chunk 시작) → URL path false section 분리 회피.
+        for i, lm in enumerate(link_matches):
+            adr_num = int(lm.group(2))  # group 2 = ADR 번호 (group 1 = link text)
+            chunk_start = lm.end()
+            chunk_end = (
+                link_matches[i + 1].start()
+                if i + 1 < len(link_matches)
+                else len(line)
+            )
+            section = line[chunk_start:chunk_end]
+            for am in amend_re.finditer(section):
+                claimed = int(am.group(1))
                 if (adr_num, claimed, line_idx + 1) not in refs:
                     refs.append((adr_num, claimed, line_idx + 1))
 
