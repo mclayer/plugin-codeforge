@@ -205,6 +205,11 @@ amendments_reserved:
     reserved_by_cfp: CFP-1338
     reservation_date: 2026-05-24 KST
     status: active   # Orchestrator inline write — §결정 13 신설 GitOps verify-before-trust discipline 3 sub-scope (§결정 13.A main_drift_bypass_audit_pattern pattern_count 5 reach HIGH CFP-963 P1+P2 + CFP-1000 + CFP-1001 + CFP-1340/1329/1330/1332 batch 4-bypass label lineage / §결정 13.B HEAD SHA pin step 0 verify-before-trust precondition CFP-722 stale HEAD churn sentinel ADR-073 sub-discipline cross-ref / §결정 13.C branch protection 환경 worktree cleanup 순서 ADR-024 + ADR-040 cross-ref), 3 memory entry normative 승격 carrier (memory feedback_main_drift_bypass_audit_pattern / feedback_verify_pin_head_sha / feedback_branch_protection_worktree_cleanup), ADR-082 super-class GitOps coordination layer expansion axis, wrapper-only ADR-010 sibling sync 면제 (GitOpsAgent.md lane plugin cross-ref = follow-up defer). verified-via Read worktree docs/adr/ADR-082-...md frontmatter amendments[] L11-65 max=10 → next=11 2026-05-24 KST 기준 origin/main e7b7791 (CFP-1332 Amendment 10 merge 후 base). META-self-applied (§결정 10.D 6th applied case).
+  - adr_number: 82
+    amendment_id: 12
+    reserved_by_cfp: CFP-1339
+    reservation_date: 2026-05-24 KST
+    status: active   # Orchestrator inline write — §결정 14 신설 PMOAgent retro batch closure pattern workflow codify (carrier: memory feedback_cfp_retro_batch_closure_pattern, pattern_count 2 reach CFP-963 retro 4-batch + CFP-1340/1329/1330/1332/1338/1339 본 6-CFP batch 2nd applied case). PMOAgent retro 시 multi follow-up CFP candidates batch-create simultaneously + sequential doc-only fast-path execution single session pattern + same lane execution + FLUID bypass label set. 1 memory entry normative 승격 carrier, ADR-082 super-class scope expansion to retro-emission batch closure workflow axis (write-time + retro-time + GitOps coordination + retro batch closure 4-axis 통합). wrapper-only ADR-010 sibling sync 면제 (PMOAgent.md lane plugin cross-ref = follow-up defer). verified-via Read worktree docs/adr/ADR-082-...md frontmatter amendments[] L11-70 max=11 → next=12 2026-05-24 KST 기준 origin/main c36ee92 (CFP-1338 Amendment 11 merge 후 base). META-self-applied (§결정 10.D 7th applied case + 본 batch 마지막 closure proof — pattern WORKING evidence).
 ```
 
 ## 해소 기준
