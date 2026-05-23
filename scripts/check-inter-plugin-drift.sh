@@ -169,7 +169,7 @@ for contract in (manifest or {}).get("contracts", []):
         canonical_norm = normalize(canonical_text)
 
         if sibling_norm == canonical_norm:
-            print(f"  ✓ {name} {fname}")
+            print(f"  [OK] {name} {fname}")
             checked += 1
         else:
             diff = list(difflib.unified_diff(
@@ -190,7 +190,7 @@ if errors:
         print(f"  - {e}")
     sys.exit(1)
 
-print(f"✓ CFP-E drift: {checked} contract(s) verbatim 일치, {skipped} skipped (Archived)")
+print(f"[OK] CFP-E drift: {checked} contract(s) verbatim 일치, {skipped} skipped (Archived)")
 PY
 
 echo ""
