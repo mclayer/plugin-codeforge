@@ -1,0 +1,120 @@
+name: confluence-doc-sync
+
+# git→Confluence 문서 자동 동기화 (ADR-103 §결정 1)
+# premature 발동 방지: ATLASSIAN_API_TOKEN secret 부재 시 graceful skip.
+# A.4 cutover 에서 secret 주입 + workflow_dispatch full_sync 로 첫 실 sync.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/adr/**'
+      - 'docs/inter-plugin-contracts/**'
+      - 'docs/domain-knowledge/**'
+      - 'docs/orchestrator-playbook.md'
+  workflow_dispatch:
+    inputs:
+      full_sync:
+        description: '전체 sync 여부 (true = 변경 여부 무관 전 파일, false = changes-only)'
+        required: false
+        default: 'false'
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  confluence-sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: secret presence guard (premature 발동 방지)
+        id: secret-guard
+        run: |
+          if [ -z "${{ secrets.ATLASSIAN_API_TOKEN }}" ]; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "secret 미주입 — A.4 cutover 대기. sync skip."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: checkout
+        if: steps.secret-guard.outputs.skip == 'false'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: setup python
+        if: steps.secret-guard.outputs.skip == 'false'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: install mark
+        if: steps.secret-guard.outputs.skip == 'false'
+        run: |
+          # mark (kovetskiy/mark) 최신 릴리스 설치
+          MARK_VERSION=$(curl -s https://api.github.com/repos/kovetskiy/mark/releases/latest \
+            | python3 -c "import sys,json; print(json.load(sys.stdin)['tag_name'])")
+          curl -sSfL \
+            "https://github.com/kovetskiy/mark/releases/download/${MARK_VERSION}/mark_Linux_x86_64.tar.gz" \
+            | tar xz -C /usr/local/bin mark
+          chmod +x /usr/local/bin/mark
+          mark --version
+
+      - name: determine sync scope
+        if: steps.secret-guard.outputs.skip == 'false'
+        id: sync-scope
+        run: |
+          FULL="${{ github.event.inputs.full_sync }}"
+          if [ "$FULL" = "true" ]; then
+            echo "changes_only=false" >> "$GITHUB_OUTPUT"
+            echo "sync_files=all" >> "$GITHUB_OUTPUT"
+          else
+            echo "changes_only=true" >> "$GITHUB_OUTPUT"
+            # push event 기준 변경 파일 목록 수집
+            CHANGED=$(git diff --name-only HEAD~1 HEAD -- \
+              'docs/adr/**' 'docs/inter-plugin-contracts/**' \
+              'docs/domain-knowledge/**' 'docs/orchestrator-playbook.md' \
+              2>/dev/null || true)
+            echo "sync_files=${CHANGED}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: mark sync (git→Confluence push)
+        if: steps.secret-guard.outputs.skip == 'false'
+        env:
+          ATLASSIAN_API_TOKEN: ${{ secrets.ATLASSIAN_API_TOKEN }}
+          ATLASSIAN_USER_EMAIL: ${{ secrets.ATLASSIAN_USER_EMAIL }}
+          CONFLUENCE_BASE_URL: ${{ secrets.CONFLUENCE_BASE_URL }}
+          CONFLUENCE_SPACE_KEY: ${{ secrets.CONFLUENCE_SPACE_KEY }}
+        run: |
+          CHANGES_ONLY_FLAG=""
+          if [ "${{ steps.sync-scope.outputs.changes_only }}" = "true" ]; then
+            CHANGES_ONLY_FLAG="--changes-only"
+          fi
+
+          # mark config 파일 활용 (mark.toml — behavior 설정, credentials 는 CLI flag)
+          find docs -name "*.md" | while read -r f; do
+            mark \
+              --config mark.toml \
+              --username "$ATLASSIAN_USER_EMAIL" \
+              --password "$ATLASSIAN_API_TOKEN" \
+              --base-url "$CONFLUENCE_BASE_URL" \
+              --space "$CONFLUENCE_SPACE_KEY" \
+              $CHANGES_ONLY_FLAG \
+              --minor-edit \
+              -f "$f" || true
+          done
+
+      - name: 3-anchor stamp (write 완료 후)
+        if: steps.secret-guard.outputs.skip == 'false'
+        env:
+          ATLASSIAN_API_TOKEN: ${{ secrets.ATLASSIAN_API_TOKEN }}
+          ATLASSIAN_USER_EMAIL: ${{ secrets.ATLASSIAN_USER_EMAIL }}
+          CONFLUENCE_BASE_URL: ${{ secrets.CONFLUENCE_BASE_URL }}
+        run: |
+          # [hypothesis] H3: page-id 매핑은 mark 출력 또는 별도 mapping 파일로 추후 구현.
+          # A.4 cutover 에서 실 page-id 목록 확보 후 stamp loop 추가.
+          # 현재는 stamp 준비 단계 (스크립트 syntax 검증).
+          python -m py_compile scripts/confluence-sync-3anchor.py
+          echo "3-anchor stamp script syntax OK — page-id 매핑은 A.4 cutover 에서 완성."
