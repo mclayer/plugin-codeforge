@@ -85,4 +85,4 @@ if errors:
         print(f"  - {e}")
     sys.exit(1)
 
-print(f"✓ CFP-33 comment-prefix-registry: {len(prefixes)} prefix entry 전부 schema 충족")
+print(f"[OK] CFP-33 comment-prefix-registry: {len(prefixes)} prefix entry 전부 schema 충족")
