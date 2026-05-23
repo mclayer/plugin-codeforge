@@ -471,8 +471,8 @@ CROSSDOC
 
   run python3 "$LINT_SCRIPT" --adr-dir "$TEST_TMP" "$doc_file"
   [ "$status" -eq 0 ]
-  # Amendment 7 양방향 — M=max+1 = PASS, [WARN] 출력 0
-  [[ "$output" != *"[WARN]"* ]] || [[ "$output" != *"Amendment 4"* ]]
+  # Amendment 7 양방향 — M=max+1 = PASS, [WARN] 출력 0 (strict assertion, CFP-1361 retro F3 OR-logic 단일화)
+  [[ "$output" != *"[WARN]"* ]]
   [[ "$output" != *"[BACKWARD-STALE]"* ]]
   [[ "$output" != *"[FORWARD-STALE]"* ]]
 }
