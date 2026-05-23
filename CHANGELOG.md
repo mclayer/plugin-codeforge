@@ -7,6 +7,21 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.5.1] - 2026-05-23
+
+### Changed
+
+- [CFP-1293] **walker apply Stage D ADR-083 consumer-applicability filter wire 실 구현** (Phase 2, FIX iter 1+2 통합)
+  - `scripts/lib/walk_plan.py` section (h) +121 LOC: `FilterDecision` frozen dataclass + `apply_consumer_applicability_filter()` + `invoke_detect_repo_kind()` 3 신설
+  - `scripts/lib/walk_plan.py` section (i) +149 LOC (FIX iter 2 — CodeReviewPL F-CR-001 P1 해소): `WalkStageAbortError` + `ApplyChangelogEntryResult` + `apply_changelog_entry()` caller (Step D.1 filter → Step D.2 apply_overlay_file 실 wire)
+  - ADR-083 §결정 5 4-way truth-table 실 wire: plugin/mixed → proceed (wrapper self-app exemption), consumer → positive whitelist filter, unknown → fail-closed abort
+  - `tests/scripts/cfp-1293/test_walker_filter.py` 신설 (TDD Python, 15 TC GREEN)
+  - `tests/scripts/cfp-1293/walker-filter.bats` 신설 (bats integration, 23 TC GREEN — TC-INT-WIRE-CONSUMER + TC-INT-WIRE-WRAPPER 2 신규)
+  - ADR-083 Amendment 3 §결정 5 wire location expand 3 영역 atomic codify (reconcile-overlay.sh 기존 + walk_plan.py 신규 + UpgradeAgent.md R-3) realization
+  - β2 audit (#1113 Anchor 2) declared LOSSLESS ↔ walk_plan.py 안 wire 0 match drift catch evidence-based — sunset_justification 강화 (carrier-preserved sunset ADR-097 §결정 3 정합, ratchet 강화 방향 evidence ADR-058 §결정 5 CFP-1149 symmetric evidence-gate 정합)
+  - #1268 결함 2 paradigm-aware 정정 carrier (defect 1 = #1294 reservation, paradigm migration super-class)
+  - PATCH bump 6.5.0 → 6.5.1 (CFP-1303 6.5.0 위 catch-up rebase, ADR-037 (a) Phase 2 code-only)
+
 ## [6.5.0] - 2026-05-23
 
 ### Changed

@@ -915,6 +915,344 @@ def render_walk_progress_items(steps: list) -> list[str]:
     return mod.render_walk_todo_items(steps)
 
 
+# ──────────────────────────── (h) consumer-applicability filter (CFP-1293) ────
+# ADR-083 Amendment 3 §결정 5 — walker apply Stage D consumer-applicability filter
+#
+# 책임:
+#   - FilterDecision frozen dataclass: 4-way enum filter 결과 (immutable)
+#   - apply_consumer_applicability_filter(): 순수 함수 (whitelist read only, filesystem-only)
+#   - invoke_detect_repo_kind(): detect-repo-kind.py subprocess wrapper
+#
+# 설계 결정 (Change Plan §3.4 / §3.5 / §3.6):
+#   - apply_overlay_file() 순수 함수 invariant 보존 (signature 변경 0건)
+#   - caller 영역 (apply_changelog_entry 함수) 에 hook insertion
+#   - subprocess call = ADR-005 self-app exemption + ADR-009 wrapper-only boundary 보존
+#
+# CFP-899 reconcile-overlay.sh §4.12 hook pattern 답습 (DRY 준수)
+# SSOT: docs/change-plans/cfp-1293-walker-filter-wire.md §3.4/§3.5/§3.6
+
+
+import subprocess as _subprocess
+
+
+@dataclass(frozen=True)
+class FilterDecision:
+    """ADR-083 consumer-applicability filter 결정 결과 (immutable frozen dataclass).
+
+    CFP-1293 Phase 2 — walker apply Stage D per-entry filter hook 결과 캡슐화.
+
+    Fields:
+        decision:      enum "proceed" | "skip" | "abort"
+                       - proceed: 해당 workflow 파일 cp 진행
+                       - skip:    consumer 분류 + whitelist miss → cp bypass
+                       - abort:   unknown / whitelist 읽기 실패 → fail-closed abort
+        repo_kind:     detect-repo-kind.py 반환 enum
+                       "plugin" | "consumer" | "mixed" | "unknown"
+        reason:        결정 사유 (skip / abort 시 의무, proceed 시 "" 가능)
+        skip_filename: skip 결정 시 대상 basename (proceed / abort 시 "")
+
+    ADR-083 §결정 5 4-way truth-table:
+        plugin / mixed → proceed (full workflow set, 0 file skip)
+        consumer + whitelist match → proceed
+        consumer + whitelist miss  → skip + skip_filename + reason
+        unknown (or whitelist fail) → abort (fail-closed, ADR-068 I-3)
+
+    DRY 준수: reconcile-overlay.sh §4.12 hook bash case statement 의 Python translate.
+    """
+    decision: str       # enum: "proceed" | "skip" | "abort"
+    repo_kind: str      # enum: "plugin" | "consumer" | "mixed" | "unknown"
+    reason: str         # 결정 사유 (skip/abort 의무, proceed="" 가능)
+    skip_filename: str  # skip 시 file basename (proceed/abort = "")
+
+
+def apply_consumer_applicability_filter(
+    filename: str,
+    repo_kind: str,
+    whitelist_path: "Path",
+) -> FilterDecision:
+    """ADR-083 §결정 5 4-way enum filter (순수 함수, whitelist filesystem read only).
+
+    Args:
+        filename:       workflow yml basename (예: "story-init.yml")
+        repo_kind:      detect-repo-kind.py 반환 enum
+                        "plugin" | "consumer" | "mixed" | "unknown"
+        whitelist_path: consumer_applicable_workflows.txt absolute path (Path-like)
+
+    Returns:
+        FilterDecision — decision + repo_kind + reason + skip_filename
+
+    Decision rules (ADR-083 §결정 5 4-way truth-table):
+        plugin / mixed → FilterDecision(decision="proceed", ...)
+        consumer:
+            whitelist match → FilterDecision(decision="proceed", ...)
+            whitelist miss  → FilterDecision(decision="skip", skip_filename=filename, ...)
+            whitelist read fail → FilterDecision(decision="abort", ...)
+        unknown → FilterDecision(decision="abort", ...)
+        비-enum value → FilterDecision(decision="abort", ...) [defensive]
+
+    DRY 준수: apply_overlay_file() signature 변경 0건 (순수 함수 invariant 보존 — CFP-1177 D1).
+    filesystem read: whitelist 파일 1건만 (network 0 invariant — ADR-083 §결정 2).
+    """
+    from pathlib import Path as _Path
+
+    # plugin / mixed: full workflow set (filter skip 0, wrapper self-app exemption)
+    if repo_kind in ("plugin", "mixed"):
+        return FilterDecision(
+            decision="proceed",
+            repo_kind=repo_kind,
+            reason=f"full workflow set (repo_kind={repo_kind})",
+            skip_filename="",
+        )
+
+    # consumer: positive whitelist grep
+    if repo_kind == "consumer":
+        try:
+            wl_path = _Path(whitelist_path)
+            content = wl_path.read_text(encoding="utf-8")
+            entries = {
+                line.strip()
+                for line in content.splitlines()
+                if line.strip() and not line.strip().startswith("#")
+            }
+        except (FileNotFoundError, OSError) as exc:
+            # whitelist 부재 / read fail → fail-closed (abort, unknown 동형 처리)
+            return FilterDecision(
+                decision="abort",
+                repo_kind="unknown",
+                reason=f"whitelist read fail: {exc}",
+                skip_filename="",
+            )
+        if filename in entries:
+            return FilterDecision(
+                decision="proceed",
+                repo_kind="consumer",
+                reason="whitelist match",
+                skip_filename="",
+            )
+        return FilterDecision(
+            decision="skip",
+            repo_kind="consumer",
+            reason=f"whitelist miss (consumer-non-applicable)",
+            skip_filename=filename,
+        )
+
+    # unknown → fail-closed unconditional (ADR-083 §결정 4, ADR-068 I-3)
+    if repo_kind == "unknown":
+        return FilterDecision(
+            decision="abort",
+            repo_kind="unknown",
+            reason="repo_kind=unknown — fail-closed (ADR-083 §결정 4)",
+            skip_filename="",
+        )
+
+    # 비-enum value (defensive fail-closed)
+    return FilterDecision(
+        decision="abort",
+        repo_kind="unknown",
+        reason=f"unknown repo_kind enum value '{repo_kind}' — fail-closed",
+        skip_filename="",
+    )
+
+
+def invoke_detect_repo_kind(
+    consumer_root: "Path",
+    detect_repo_kind_py: "Path | None" = None,
+) -> str:
+    """detect-repo-kind.py subprocess call (ADR-061 외부 .py + ADR-005 self-app exemption).
+
+    Args:
+        consumer_root:       target repo root (Path-like 또는 str)
+        detect_repo_kind_py: templates/scripts/detect-repo-kind.py absolute path (Path-like)
+
+    Returns:
+        enum str: "plugin" | "consumer" | "mixed" | "unknown"
+
+    Decision:
+        - subprocess stdout = enum literal → 반환
+        - subprocess crash / timeout / 비-enum exit → "unknown" (fail-closed fallback)
+        - timeout default = 5s (DoS 보호 — §9 보안 평가 정합)
+
+    Invariants (ADR-083 §결정 2 filesystem-only):
+        - subprocess.run capture_output=True (network 0 invariant — detect-repo-kind.py 자체)
+        - timeout=5 (DoS 보호)
+        - check=False (exit code 자체가 enum 정보 — subprocess.CalledProcessError 불필요)
+
+    CFP-899 reconcile-overlay.sh §4.12 hook pattern 답습 (subprocess call paradigm).
+    ADR-005 §결정 1 self-app exemption: templates/scripts/ 는 consumer-distributable →
+      wrapper scripts/lib/ 안 직접 import 금지 → subprocess call boundary 보존.
+    """
+    from pathlib import Path as _Path
+
+    _VALID_KINDS = ("plugin", "consumer", "mixed", "unknown")
+
+    try:
+        result = _subprocess.run(
+            ["python3", str(_Path(detect_repo_kind_py)), "--repo-root", str(_Path(consumer_root))],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+    except (_subprocess.TimeoutExpired, OSError):
+        return "unknown"
+
+    output = result.stdout.strip()
+    if output in _VALID_KINDS:
+        return output
+    return "unknown"
+
+
+# ──────────────────────────── (i) apply_changelog_entry — Stage D caller (CFP-1293) ─────────
+# walker apply Stage D 진입점: consumer-applicability filter (R-3) + overlay apply (R-2) 통합.
+# Change Plan §3.4 / §3.5 / §3.6 — 2-layer (Step A preflight 1회 + Step D per-entry hook).
+#
+# 설계 결정:
+#   - apply_overlay_file() 순수 함수 invariant 보존 (signature 변경 0건 — CFP-1177 D1)
+#   - Step A preflight: invoke_detect_repo_kind() 1회 호출 → repo_kind cache
+#     unknown → WalkStageAbortError raise (abort-before-touch, filesystem touch 0)
+#   - Step D per-entry: apply_consumer_applicability_filter() per-entry whitelist check
+#     skip → filter_skip_report append + skip log (apply_overlay_file 미호출)
+#     abort → WalkStageAbortError raise
+#     proceed → apply_overlay_file() call (기존 R-2 marker_merge 경로)
+#
+# ADR refs:
+#   ADR-083 §결정 5 — 4-way truth-table (wire location SSOT)
+#   ADR-027 Amendment 9 — apply_overlay_file 순수 함수 invariant (no signature change)
+#   ADR-061 — Python script-writing convention
+#   Change Plan §3.4 Decision 4 / §3.5 Decision 5
+#
+# F-CR-001 (CodeReview iter 1) — caller 영역 hook insertion: walker apply Stage D 영역에서
+#   apply_consumer_applicability_filter + invoke_detect_repo_kind 실 호출 0 grep match drift 해소.
+#   walker contract §2.E.4 status=walker_apply_stage_d_wire_active 선언 ↔ 실 wire 정합.
+
+
+class WalkStageAbortError(Exception):
+    """walker apply Stage D abort 예외 (fail-closed — filesystem touch 0 상태 abort).
+
+    UpgradeAgent.md Stage A.1 abort-before-touch 영역 + Stage D abort decision 공용.
+    reason 필드: FilterDecision.reason verbatim carry-over (audit trail 의무).
+    """
+
+    def __init__(self, reason: str, repo_kind: str = "unknown"):
+        super().__init__(reason)
+        self.reason = reason
+        self.repo_kind = repo_kind
+
+
+@dataclass
+class ApplyChangelogEntryResult:
+    """apply_changelog_entry 단일 entry 적용 결과.
+
+    walker apply Stage D per-entry 적용 결과 캡슐화.
+
+    Fields:
+        applied:            True = overlay apply 완료 (R-2 3-way merge 포함)
+        skipped:            True = consumer-non-applicable filter skip (R-3)
+        loss_occurred:      True = MARKER_NONE 경로 (wholesale mirror + loss_report 발화)
+        loss_report:        MARKER_NONE 시 user-visible 보고 문자열
+        integrity_ok:       True = marker 밖 영역 byte-identical 보존 검증 통과
+        integrity_violation_reason: integrity 위반 사유 (정상 "" — abort-before-touch signal)
+        filter_reason:      skip 시 FilterDecision.reason verbatim (proceed 시 "")
+    """
+    applied: bool
+    skipped: bool
+    loss_occurred: bool
+    loss_report: str
+    integrity_ok: bool
+    integrity_violation_reason: str
+    filter_reason: str
+
+
+def apply_changelog_entry(
+    filename: str,
+    wrapper_content: str,
+    consumer_content: str,
+    repo_kind: str,
+    whitelist_path: "Path",
+    base_content: str = "",
+) -> ApplyChangelogEntryResult:
+    """walker apply Stage D per-entry 적용 — consumer-applicability filter (R-3) + overlay apply (R-2).
+
+    Change Plan §3.4 Decision 4 / §3.5 Decision 5 — 2-layer hook:
+      Step D.1: apply_consumer_applicability_filter (per-entry whitelist check)
+      Step D.2: apply_overlay_file (R-2 customization marker 3-way merge — filter proceed 시만)
+
+    Args:
+        filename:         workflow yml basename (예: "story-init.yml")
+        wrapper_content:  신규 wrapper SSOT 내용 (apply 대상)
+        consumer_content: 현재 consumer overlay 내용
+        repo_kind:        Step A preflight detect 결과 cache (invoke_detect_repo_kind() 반환값)
+                          "plugin" | "consumer" | "mixed" — "unknown" = WalkStageAbortError 발생 (Step A abort-before-touch 후 도달 불가 원칙, 방어적 abort 보장)
+        whitelist_path:   consumer_applicable_workflows.txt absolute path (Path-like)
+        base_content:     이전 wrapper SSOT (비교 기준 — 기본값 "" = BASE_ABSENT)
+
+    Returns:
+        ApplyChangelogEntryResult:
+          - applied=True:  proceed 경로 (overlay apply 완료, R-2 3-way merge 포함)
+          - skipped=True:  consumer-non-applicable skip (R-3 — apply_overlay_file 미호출)
+          - applied=False + skipped=False: abort 경로 없음 (WalkStageAbortError raise)
+
+    Raises:
+        WalkStageAbortError: filter decision = "abort" (fail-closed — filesystem touch 0 보장 상태 abort)
+                             repo_kind = "unknown" 도달 시 동일 (Step A 에서 이미 차단 원칙이나 방어적 보장)
+
+    Invariants:
+        - apply_overlay_file() 순수 함수 invariant 보존 (signature 변경 0건 — CFP-1177 D1)
+        - filter_skip_report 누적은 호출자 책임 (본 함수 = 단일 entry 한정 순수 함수 인터페이스)
+        - abort-before-touch: abort 결정 시 consumer filesystem 미변경 보장
+        - DRY 준수: apply_overlay_file / apply_consumer_applicability_filter 재사용 (재구현 0건)
+
+    ADR refs:
+        ADR-083 §결정 5 — 4-way truth-table (filter decision logic SSOT)
+        ADR-027 Amendment 9 — apply_overlay_file signature 0건 변경 보장
+        Change Plan §3.4 Decision 4 — filter hook insertion point
+        Change Plan §3.5 Decision 5 — 2-layer (Step A preflight + Step D per-entry)
+    """
+    # Step D.1 — consumer-applicability filter (R-3 hook, CFP-1293 / ADR-083 Amd 3)
+    filter_decision = apply_consumer_applicability_filter(
+        filename=filename,
+        repo_kind=repo_kind,
+        whitelist_path=whitelist_path,
+    )
+
+    if filter_decision.decision == "abort":
+        # fail-closed abort (unknown repo_kind / whitelist read fail → abort-before-touch)
+        raise WalkStageAbortError(
+            reason=filter_decision.reason,
+            repo_kind=filter_decision.repo_kind,
+        )
+
+    if filter_decision.decision == "skip":
+        # consumer-non-applicable: apply_overlay_file 미호출 (filesystem touch 0)
+        return ApplyChangelogEntryResult(
+            applied=False,
+            skipped=True,
+            loss_occurred=False,
+            loss_report="",
+            integrity_ok=True,
+            integrity_violation_reason="",
+            filter_reason=filter_decision.reason,
+        )
+
+    # filter_decision.decision == "proceed" → 정상 apply (R-2 customization marker 3-way merge)
+    # Step D.2 — apply_overlay_file (순수 함수, signature 변경 0건 — CFP-1177 D1)
+    overlay_result = apply_overlay_file(
+        wrapper_content=wrapper_content,
+        consumer_content=consumer_content,
+        base_content=base_content,
+    )
+
+    return ApplyChangelogEntryResult(
+        applied=True,
+        skipped=False,
+        loss_occurred=overlay_result.loss_occurred,
+        loss_report=overlay_result.loss_report,
+        integrity_ok=overlay_result.integrity_ok,
+        integrity_violation_reason=overlay_result.integrity_violation_reason,
+        filter_reason="",
+    )
+
+
 # ──────────────────────────── CLI entry point ─────────────────────────────────
 # (참조용 — 실제 CLI 진입점은 walk-single-plugin.sh / walk-bundle-7-plugins.sh)
 
