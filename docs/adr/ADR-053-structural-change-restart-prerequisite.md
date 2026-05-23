@@ -14,6 +14,11 @@ amendments:
     cfp: CFP-1125
     amendment_summary: "D2 영역 sunset_justification (D1 영구 invariant 유지) — D2 (consumer 배포 완료 3-AND 의 transaction completion prerequisite) 를 CFP-1111 walker paradigm 으로 carry. D1 (구조적 변경 후 세션 재구동 의무) = walker paradigm 외 세션 lifecycle 영역, 영구 invariant 유지 (sunset 대상 아님). β2 audit (#1113) Anchor 6 LOSSLESS 판정."
     sunset_justification: "D2 영역만 — metric (walker walk completion 시 completion_criteria 3-AND (marketplace_sync + consumer_install + drift_check) 의 정확 enforce + false complete 0건 / N walk) / who (walker schema field completion_criteria 배열 [marketplace_sync, consumer_install, drift_check] + walker integration test) / how (walker integration test 안 3-AND condition 검증 + 부분 충족 시 walk_result = PARTIAL_FAILURE / FAILED 정확 분류)."
+  - amendment_id: 2
+    date: 2026-05-24
+    cfp: CFP-1355
+    amendment_summary: "§D1 trigger TYPE 5종 (CLAUDE.md / plugin / settings / agent / skill) → 6종 확장 — 6번째 entry `external-wrapper-invoked session resume` (Windows Task Scheduler + PowerShell wrapper 가 `claude --resume <uuid>` 호출로 신규 session spawn 시 구조적 재구동 의무 영역). wrapper 가 새 session 을 spawn 하면 codeforge plugin SSOT (CLAUDE.md / settings / agent / skill) 가 새 session 안 재로딩 되므로, D1 5 기존 trigger 와 axis 동형 (모두 'session 상태 변화 시 재구동 필요' 의미). ADR-110 §결정 1 external-runtime-wrapper-ssot-boundary cross-ref. Story B (CFP-1355) sibling carrier — sibling Story A (CFP-1354) in-process axis disjoint. ratchet 강화 방향 (5 → 6 trigger types, scope 축소 0건). ADR-082 ratchet 강화 pattern 답습 (ADR-073 closed-set enum 패턴과 axis disjoint — ADR-053 D1 = bulleted trigger types list 확장)."
+    sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §D1 trigger TYPE 5 → 6 확장, scope 축소 0건). ADR-064 §결정 7 evidence-gated symmetric ratchet 정합. is_transitional: false 유지 (permanent governance — D1 영구 invariant, D2 영역 = CFP-1186 sunset_executed 무관)."
 related_stories:
   - CFP-357
   - CFP-1125
@@ -58,6 +63,7 @@ Orchestrator가 구조적 변경(CLAUDE.md 의미 변경, plugin 버전 업, set
 - settings.json 구조 변경 (hooks 추가/변경 포함)
 - agent definition 변경 (신규 추가, 역할 재정의, 삭제)
 - skill 파일 의미 변경
+- **external-wrapper-invoked session resume** (Amendment 2 / CFP-1355) — Windows Task Scheduler + PowerShell wrapper (`scripts/codeforge-session-resume.ps1`) 가 `claude --resume <uuid>` 호출로 신규 session spawn 시 구조적 재구동 의무 영역. wrapper 가 새 session 을 spawn 하면 codeforge plugin SSOT (CLAUDE.md / settings / agent / skill) 가 새 session 안 재로딩 되므로, D1 5 기존 trigger 와 axis 동형 (모두 "session 상태 변화 시 재구동 필요" 의미). ADR-110 §결정 1 external-runtime-wrapper-ssot-boundary cross-ref.
 
 **판단 기준:**
 - 변경이 현재 세션의 동작·정책·역할에 영향을 주는가 → 구조적 변경으로 분류
