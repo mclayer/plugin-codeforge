@@ -483,9 +483,17 @@ jobs:
                   : `, gate:live-entry-pass MISSING (Live touching Story — ADR-030)`)
               : '';
             const evidenceNote = gateCommentEvidence ? ` (evidence: ${gateCommentEvidence})` : '';
+            // CFP-1290 (F6): summary "current=gate:X" singular → multi-gate label 전체 표시로 개선.
+            // CFP-604 incident: PR/Issue 가 phase 전환 후 prior gate label (예: gate:design-review-pass) 잔존 +
+            //   new gate label (예: gate:security-test-pass) 미부착 시, gateLabel singular 가 prior 를 표시 →
+            //   "current=gate:design-review-pass" 라는 misleading 메시지. multi-gate display 가 실제 PR/Issue
+            //   label 상태 + 누락 gate 명확. Orchestrator/사용자 가 즉시 add 가능.
+            const allGateLabels = prGateLabels && prGateLabels.length > 0
+              ? prGateLabels.join(', ')
+              : (gateLabel || 'none');
             const summary = allOk
               ? `phase + gate satisfied: ${required.phase} + ${required.gate}${evidenceNote}${liveNote} (source: ${sourceNote})`
-              : `Awaiting: phase=${required.phase} (current=${phaseLabel || 'none'}), gate=${required.gate} (current=${gateLabel || 'none'})${liveNote} (source: ${sourceNote})`;
+              : `Awaiting: phase=${required.phase} (current=${phaseLabel || 'none'}), required gate=${required.gate} MISSING (current gate labels: ${allGateLabels})${liveNote} (source: ${sourceNote})`;
 
             await github.rest.checks.create({
               owner: context.repo.owner,

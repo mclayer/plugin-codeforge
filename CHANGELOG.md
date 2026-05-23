@@ -7,6 +7,17 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.4.5] - 2026-05-23
+
+### Changed
+
+- [CFP-1290] **phase-gate-mergeable workflow summary multi-gate display 개선** (CFP-604 retro F6 follow-up realized, minimum-viable). CFP-604 incident: PR phase 전환 후 prior gate label (예: `gate:design-review-pass`) 잔존 + new gate (예: `gate:security-test-pass`) 미부착 시, singular `gateLabel` 가 prior 표시 → "current=gate:design-review-pass" misleading 메시지.
+  - fix: `prGateLabels.join(", ")` 으로 전체 gate label 표시 + "required gate=X MISSING" 명시 형식 변경
+  - self-app mirror: templates/ + .github/ byte-identical
+  - **deferred-followup**: 본 변경은 display 개선 only — workflow 의 auto-cleanup-stale-gate-label-on-phase-transition (Issue label 자동 cleanup) 또는 phase-gate-mergeable.yml 의 multi-gate matching logic strengthening 은 별 Story carrier (Wave 2 mechanical lint pattern)
+  - bats fixture: deferred-followup (workflow runtime test gap, ADR-076/082/086 precedent 답습 — Wave 2 별 carrier)
+  - mirrored field: 6.4.4 → 6.4.5 PATCH. Marketplace sibling sync (ADR-063 §결정 2).
+
 ## [6.4.4] - 2026-05-23
 
 ### Changed
