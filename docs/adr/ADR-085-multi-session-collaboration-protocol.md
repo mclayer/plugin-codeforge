@@ -279,7 +279,7 @@ frontmatter `mechanical_enforcement_actions: [active-sessions-presence, lane-ent
 
 ## 해소 기준
 
-N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (ratchet 강화 방향 only — coordination scope 확장). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과. is_transitional: false (영구 정책).
+N/A — permanent policy. ADR-064 §self-application top-down ratchet 정합 (ratchet 강화 방향 only — coordination scope 확장). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과. is_transitional: false (영구 정책).
 
 self-referential 주의: 본 ADR 의 해소 기준 부재 선언 자체가 §결정 3 lane-entry sentinel 대상 아님 (verify axis 아닌 coordination axis self-protection).
 

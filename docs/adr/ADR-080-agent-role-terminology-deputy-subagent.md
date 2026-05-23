@@ -96,6 +96,11 @@ CFP-751 적용 영역:
 - **Forward (신규 작성)**: 본 ADR Accepted 후 새 doc / agent prompt / skill / PR 작성 시 "SubAgent" 사용 의무. 기존 "deputy" 사용 시 reviewer flag 권장 (mechanical lint 미강제).
 - **Retroactive (sweep)**: Phase 2 sweep 으로 기존 Class-A occurrence 일괄 치환. Class-B 보존. 의미 보존 (역할 / 위계 / 책임 매트릭스 의미 0 변경).
 
+
+## 해소 기준
+
+N/A — permanent policy
+
 ## 결과
 
 ### 긍정 효과

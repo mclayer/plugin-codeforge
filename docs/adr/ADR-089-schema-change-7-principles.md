@@ -165,6 +165,11 @@ ADR-068 I-5 dimensional empirical grounding cross-ref — Wave 2+ consumer mctra
 - 본 ADR-089 자체 carrier Story = doc-only fast-path (ADR-054 Category 2). schema 변경 0 — 본 원칙 self-check 영역 외.
 - inter-plugin contract version bump (ADR-008 정합) = 본 7 원칙 동형 적용 가능 — Wave 2+ 영역.
 
+
+## 해소 기준
+
+N/A — permanent policy
+
 ## 결과
 
 ### 적용 영역

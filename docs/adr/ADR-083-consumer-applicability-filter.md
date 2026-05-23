@@ -73,6 +73,8 @@ Accepted (2026-05-18 KST) — CFP-899 Phase 1 carrier. Wave 4 sub-Epic CFP-858 S
 
 ## 해소 기준
 
+
+N/A — permanent policy
 (sunset_justification, CFP-1111 carrier)
 
 본 ADR 의 효용 (4-way repo-kind detection truth-table + positive whitelist + fail-closed unknown + mixed repo self-app exemption) 은 [CFP-1111](https://github.com/mclayer/plugin-codeforge/issues/1111) walker paradigm 으로 carry 진행.

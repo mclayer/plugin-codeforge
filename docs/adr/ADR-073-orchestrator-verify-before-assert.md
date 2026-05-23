@@ -640,7 +640,7 @@ Amendment 2 §결정 1-A 3-step (title-based search + Epic state poll + HEAD com
 
 ## 해소 기준
 
-N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (ratchet 강화 방향 only — verify scope 확장). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과. is_transitional: false (영구 정책).
+N/A — permanent policy. ADR-064 §self-application top-down ratchet 정합 (ratchet 강화 방향 only — verify scope 확장). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과. is_transitional: false (영구 정책).
 
 ### Amendment 6 — `sibling_story_handoff` transition trigger 6번째 entry (bidirectional verify-before-trust, CFP-1318)
 

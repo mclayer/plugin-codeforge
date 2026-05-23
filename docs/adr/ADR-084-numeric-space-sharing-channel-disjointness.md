@@ -213,7 +213,7 @@ DesignReview lane 의 DesignReviewPL / DesignReviewAgent 는 **inter-plugin cont
 
 ## 해소 기준
 
-N/A — permanent governance policy. ADR-058 §결정 5 sunset_justification: null retain (frontmatter 명시). 약화 방향 amendment 발의 차단 — D5 약화 차단 ratchet 정합. 강화 방향 amendment (D6.3 sentinel clause activation → mechanical lint promotion / D2 4-곳 declare scope 확장 등) = 정합 ratchet-up direction (ADR-064 §self-application top-down ratchet).
+N/A — permanent policy. ADR-058 §결정 5 sunset_justification: null retain (frontmatter 명시). 약화 방향 amendment 발의 차단 — D5 약화 차단 ratchet 정합. 강화 방향 amendment (D6.3 sentinel clause activation → mechanical lint promotion / D2 4-곳 declare scope 확장 등) = 정합 ratchet-up direction (ADR-064 §self-application top-down ratchet).
 
 self-referential 주의: 본 ADR 의 해소기준 부재 선언 자체가 D1 조건 A+B+C 발효 대상 아님 (numeric-space-sharing channel 영역 미해당). ADR-082 §결정 6 EC-3 self-protection 동형.
 
