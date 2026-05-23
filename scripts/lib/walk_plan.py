@@ -968,7 +968,7 @@ class FilterDecision:
 def apply_consumer_applicability_filter(
     filename: str,
     repo_kind: str,
-    whitelist_path,
+    whitelist_path: "Path",
 ) -> FilterDecision:
     """ADR-083 §결정 5 4-way enum filter (순수 함수, whitelist filesystem read only).
 
@@ -1055,8 +1055,8 @@ def apply_consumer_applicability_filter(
 
 
 def invoke_detect_repo_kind(
-    consumer_root,
-    detect_repo_kind_py,
+    consumer_root: "Path",
+    detect_repo_kind_py: "Path | None" = None,
 ) -> str:
     """detect-repo-kind.py subprocess call (ADR-061 외부 .py + ADR-005 self-app exemption).
 
@@ -1093,13 +1093,164 @@ def invoke_detect_repo_kind(
             timeout=5,
             check=False,
         )
-    except (_subprocess.TimeoutExpired, OSError, FileNotFoundError):
+    except (_subprocess.TimeoutExpired, OSError):
         return "unknown"
 
     output = result.stdout.strip()
     if output in _VALID_KINDS:
         return output
     return "unknown"
+
+
+# ──────────────────────────── (i) apply_changelog_entry — Stage D caller (CFP-1293) ─────────
+# walker apply Stage D 진입점: consumer-applicability filter (R-3) + overlay apply (R-2) 통합.
+# Change Plan §3.4 / §3.5 / §3.6 — 2-layer (Step A preflight 1회 + Step D per-entry hook).
+#
+# 설계 결정:
+#   - apply_overlay_file() 순수 함수 invariant 보존 (signature 변경 0건 — CFP-1177 D1)
+#   - Step A preflight: invoke_detect_repo_kind() 1회 호출 → repo_kind cache
+#     unknown → WalkStageAbortError raise (abort-before-touch, filesystem touch 0)
+#   - Step D per-entry: apply_consumer_applicability_filter() per-entry whitelist check
+#     skip → filter_skip_report append + skip log (apply_overlay_file 미호출)
+#     abort → WalkStageAbortError raise
+#     proceed → apply_overlay_file() call (기존 R-2 marker_merge 경로)
+#
+# ADR refs:
+#   ADR-083 §결정 5 — 4-way truth-table (wire location SSOT)
+#   ADR-027 Amendment 9 — apply_overlay_file 순수 함수 invariant (no signature change)
+#   ADR-061 — Python script-writing convention
+#   Change Plan §3.4 Decision 4 / §3.5 Decision 5
+#
+# F-CR-001 (CodeReview iter 1) — caller 영역 hook insertion: walker apply Stage D 영역에서
+#   apply_consumer_applicability_filter + invoke_detect_repo_kind 실 호출 0 grep match drift 해소.
+#   walker contract §2.E.4 status=walker_apply_stage_d_wire_active 선언 ↔ 실 wire 정합.
+
+
+class WalkStageAbortError(Exception):
+    """walker apply Stage D abort 예외 (fail-closed — filesystem touch 0 상태 abort).
+
+    UpgradeAgent.md Stage A.1 abort-before-touch 영역 + Stage D abort decision 공용.
+    reason 필드: FilterDecision.reason verbatim carry-over (audit trail 의무).
+    """
+
+    def __init__(self, reason: str, repo_kind: str = "unknown"):
+        super().__init__(reason)
+        self.reason = reason
+        self.repo_kind = repo_kind
+
+
+@dataclass
+class ApplyChangelogEntryResult:
+    """apply_changelog_entry 단일 entry 적용 결과.
+
+    walker apply Stage D per-entry 적용 결과 캡슐화.
+
+    Fields:
+        applied:            True = overlay apply 완료 (R-2 3-way merge 포함)
+        skipped:            True = consumer-non-applicable filter skip (R-3)
+        loss_occurred:      True = MARKER_NONE 경로 (wholesale mirror + loss_report 발화)
+        loss_report:        MARKER_NONE 시 user-visible 보고 문자열
+        integrity_ok:       True = marker 밖 영역 byte-identical 보존 검증 통과
+        integrity_violation_reason: integrity 위반 사유 (정상 "" — abort-before-touch signal)
+        filter_reason:      skip 시 FilterDecision.reason verbatim (proceed 시 "")
+    """
+    applied: bool
+    skipped: bool
+    loss_occurred: bool
+    loss_report: str
+    integrity_ok: bool
+    integrity_violation_reason: str
+    filter_reason: str
+
+
+def apply_changelog_entry(
+    filename: str,
+    wrapper_content: str,
+    consumer_content: str,
+    repo_kind: str,
+    whitelist_path: "Path",
+    base_content: str = "",
+) -> ApplyChangelogEntryResult:
+    """walker apply Stage D per-entry 적용 — consumer-applicability filter (R-3) + overlay apply (R-2).
+
+    Change Plan §3.4 Decision 4 / §3.5 Decision 5 — 2-layer hook:
+      Step D.1: apply_consumer_applicability_filter (per-entry whitelist check)
+      Step D.2: apply_overlay_file (R-2 customization marker 3-way merge — filter proceed 시만)
+
+    Args:
+        filename:         workflow yml basename (예: "story-init.yml")
+        wrapper_content:  신규 wrapper SSOT 내용 (apply 대상)
+        consumer_content: 현재 consumer overlay 내용
+        repo_kind:        Step A preflight detect 결과 cache (invoke_detect_repo_kind() 반환값)
+                          "plugin" | "consumer" | "mixed" — "unknown" = WalkStageAbortError 발생 (Step A abort-before-touch 후 도달 불가 원칙, 방어적 abort 보장)
+        whitelist_path:   consumer_applicable_workflows.txt absolute path (Path-like)
+        base_content:     이전 wrapper SSOT (비교 기준 — 기본값 "" = BASE_ABSENT)
+
+    Returns:
+        ApplyChangelogEntryResult:
+          - applied=True:  proceed 경로 (overlay apply 완료, R-2 3-way merge 포함)
+          - skipped=True:  consumer-non-applicable skip (R-3 — apply_overlay_file 미호출)
+          - applied=False + skipped=False: abort 경로 없음 (WalkStageAbortError raise)
+
+    Raises:
+        WalkStageAbortError: filter decision = "abort" (fail-closed — filesystem touch 0 보장 상태 abort)
+                             repo_kind = "unknown" 도달 시 동일 (Step A 에서 이미 차단 원칙이나 방어적 보장)
+
+    Invariants:
+        - apply_overlay_file() 순수 함수 invariant 보존 (signature 변경 0건 — CFP-1177 D1)
+        - filter_skip_report 누적은 호출자 책임 (본 함수 = 단일 entry 한정 순수 함수 인터페이스)
+        - abort-before-touch: abort 결정 시 consumer filesystem 미변경 보장
+        - DRY 준수: apply_overlay_file / apply_consumer_applicability_filter 재사용 (재구현 0건)
+
+    ADR refs:
+        ADR-083 §결정 5 — 4-way truth-table (filter decision logic SSOT)
+        ADR-027 Amendment 9 — apply_overlay_file signature 0건 변경 보장
+        Change Plan §3.4 Decision 4 — filter hook insertion point
+        Change Plan §3.5 Decision 5 — 2-layer (Step A preflight + Step D per-entry)
+    """
+    # Step D.1 — consumer-applicability filter (R-3 hook, CFP-1293 / ADR-083 Amd 3)
+    filter_decision = apply_consumer_applicability_filter(
+        filename=filename,
+        repo_kind=repo_kind,
+        whitelist_path=whitelist_path,
+    )
+
+    if filter_decision.decision == "abort":
+        # fail-closed abort (unknown repo_kind / whitelist read fail → abort-before-touch)
+        raise WalkStageAbortError(
+            reason=filter_decision.reason,
+            repo_kind=filter_decision.repo_kind,
+        )
+
+    if filter_decision.decision == "skip":
+        # consumer-non-applicable: apply_overlay_file 미호출 (filesystem touch 0)
+        return ApplyChangelogEntryResult(
+            applied=False,
+            skipped=True,
+            loss_occurred=False,
+            loss_report="",
+            integrity_ok=True,
+            integrity_violation_reason="",
+            filter_reason=filter_decision.reason,
+        )
+
+    # filter_decision.decision == "proceed" → 정상 apply (R-2 customization marker 3-way merge)
+    # Step D.2 — apply_overlay_file (순수 함수, signature 변경 0건 — CFP-1177 D1)
+    overlay_result = apply_overlay_file(
+        wrapper_content=wrapper_content,
+        consumer_content=consumer_content,
+        base_content=base_content,
+    )
+
+    return ApplyChangelogEntryResult(
+        applied=True,
+        skipped=False,
+        loss_occurred=overlay_result.loss_occurred,
+        loss_report=overlay_result.loss_report,
+        integrity_ok=overlay_result.integrity_ok,
+        integrity_violation_reason=overlay_result.integrity_violation_reason,
+        filter_reason="",
+    )
 
 
 # ──────────────────────────── CLI entry point ─────────────────────────────────

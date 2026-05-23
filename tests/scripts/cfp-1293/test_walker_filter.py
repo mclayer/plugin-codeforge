@@ -23,6 +23,8 @@
 #   tc8_filter_decision_immutable — FilterDecision frozen 검증
 #   tc9_detect_subprocess_success — invoke_detect_repo_kind subprocess 성공 경로
 #   tc10_detect_subprocess_fail   — invoke_detect_repo_kind subprocess 실패 → unknown fallback
+#   tc_int_wire_consumer          — F-CR-001 caller wire: mock consumer repo + wrapper-only workflow → skip + report
+#   tc_int_wire_wrapper           — F-CR-001 caller wire: mock wrapper(mixed) repo → all proceed (filter skip 0)
 
 import os
 import sys
@@ -254,6 +256,94 @@ def _run_tc(mod, tc_name: str) -> None:
         assert kind == "unknown", \
             f"subprocess 실패 시 기대 'unknown', 실제 {kind!r}"
         print("PASS TC-10: subprocess 실패 → unknown (fail-closed fallback)")
+
+    # ── TC-INT-WIRE-CONSUMER: F-CR-001 caller wire end-to-end (consumer repo, wrapper-only workflow) ──
+    elif tc_name == "tc_int_wire_consumer":
+        # consumer repo: .claude/_overlay/project.yaml 존재 (consumer signal)
+        # wrapper-only workflow (version-bump-atomic-check.yml) = whitelist miss → skip
+        # apply_changelog_entry caller wire 검증 (F-CR-001 integration end-to-end)
+        with tempfile.TemporaryDirectory() as tmp:
+            # consumer repo signal: .claude/_overlay/project.yaml
+            overlay_dir = Path(tmp) / ".claude" / "_overlay"
+            overlay_dir.mkdir(parents=True)
+            (overlay_dir / "project.yaml").write_text("project_name: test-consumer\n")
+
+            # whitelist: story-init.yml 만 포함 (consumer-applicable)
+            wl = _make_whitelist(tmp, ["story-init.yml", "phase-label-invariant.yml"])
+
+            # repo_kind: consumer (mock — skip subprocess, use direct enum)
+            # 검증 대상 함수: apply_changelog_entry
+            if not hasattr(mod, "apply_changelog_entry"):
+                raise AssertionError("apply_changelog_entry 함수 없음 — F-CR-001 caller hook insertion 미완료")
+
+            # wrapper-only workflow (whitelist miss) → skip
+            result = mod.apply_changelog_entry(
+                filename="version-bump-atomic-check.yml",  # whitelist miss
+                wrapper_content="# wrapper content\n",
+                consumer_content="# consumer content\n",
+                repo_kind="consumer",  # mock consumer
+                whitelist_path=wl,
+            )
+            assert result.skipped is True, \
+                f"consumer + whitelist miss 기대 skipped=True, 실제 skipped={result.skipped!r}"
+            assert result.applied is False, \
+                f"skip 경로 applied 기대 False, 실제 applied={result.applied!r}"
+            assert "consumer-non-applicable" in result.filter_reason or "whitelist miss" in result.filter_reason, \
+                f"filter_reason 에 consumer-non-applicable / whitelist miss 없음: {result.filter_reason!r}"
+
+            # consumer-applicable workflow (whitelist match) → applied
+            result2 = mod.apply_changelog_entry(
+                filename="story-init.yml",  # whitelist match
+                wrapper_content="# wrapper content\n",
+                consumer_content="# consumer content\n",
+                repo_kind="consumer",
+                whitelist_path=wl,
+            )
+            assert result2.applied is True, \
+                f"consumer + whitelist match 기대 applied=True, 실제 applied={result2.applied!r}"
+            assert result2.skipped is False, \
+                f"proceed 경로 skipped 기대 False, 실제 skipped={result2.skipped!r}"
+
+        print("PASS TC-INT-WIRE-CONSUMER: consumer repo → wrapper-only skip + consumer-applicable proceed")
+
+    # ── TC-INT-WIRE-WRAPPER: F-CR-001 caller wire end-to-end (mixed/wrapper repo, all proceed) ──
+    elif tc_name == "tc_int_wire_wrapper":
+        # wrapper repo = mixed (plugin.json + overlay 양쪽 존재 가능) → full workflow set (0 file skip)
+        # ADR-083 §결정 5 wrapper self-app exemption: mixed → proceed (filter skip 0)
+        with tempfile.TemporaryDirectory() as tmp:
+            # whitelist: consumer-only workflows (mixed 는 whitelist miss 여도 proceed 보장)
+            wl = _make_whitelist(tmp, ["story-init.yml"])  # version-bump-atomic-check.yml 없음
+
+            if not hasattr(mod, "apply_changelog_entry"):
+                raise AssertionError("apply_changelog_entry 함수 없음 — F-CR-001 caller hook insertion 미완료")
+
+            # wrapper-only workflow + mixed repo → proceed (0 file skip, wrapper self-app exemption)
+            result = mod.apply_changelog_entry(
+                filename="version-bump-atomic-check.yml",  # whitelist miss
+                wrapper_content="# wrapper content\n",
+                consumer_content="# consumer content\n",
+                repo_kind="mixed",  # wrapper repo = mixed classification
+                whitelist_path=wl,
+            )
+            assert result.applied is True, \
+                f"mixed repo + any workflow 기대 applied=True (0 file skip), 실제 applied={result.applied!r}"
+            assert result.skipped is False, \
+                f"mixed repo skip 기대 False (wrapper self-app exemption), 실제 skipped={result.skipped!r}"
+            assert result.filter_reason == "", \
+                f"mixed proceed 시 filter_reason 기대 '', 실제 {result.filter_reason!r}"
+
+            # plugin repo 도 동일 (plugin → proceed 보장)
+            result2 = mod.apply_changelog_entry(
+                filename="version-bump-atomic-check.yml",
+                wrapper_content="# plugin wrapper\n",
+                consumer_content="# plugin consumer\n",
+                repo_kind="plugin",
+                whitelist_path=wl,
+            )
+            assert result2.applied is True, \
+                f"plugin repo 기대 applied=True, 실제 applied={result2.applied!r}"
+
+        print("PASS TC-INT-WIRE-WRAPPER: mixed/plugin repo → all workflow proceed (filter skip 0, wrapper self-app exemption)")
 
     else:
         print(f"UNKNOWN TC: {tc_name}", file=sys.stderr)

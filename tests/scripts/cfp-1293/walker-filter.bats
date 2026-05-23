@@ -229,6 +229,20 @@ teardown() {
   [ "$output" = "unknown" ]
 }
 
+# ────────────── TC-INT-WIRE: F-CR-001 caller hook insertion end-to-end ──────────
+
+@test "TC-INT-WIRE-CONSUMER: consumer repo + wrapper-only workflow → caller skip + filter_report append" {
+  run python3 "$TEST_HELPER" "$WALK_PLAN_DIR" "tc_int_wire_consumer"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"PASS TC-INT-WIRE-CONSUMER"* ]]
+}
+
+@test "TC-INT-WIRE-WRAPPER: mixed/plugin repo → all workflow proceed (filter skip 0, wrapper self-app exemption)" {
+  run python3 "$TEST_HELPER" "$WALK_PLAN_DIR" "tc_int_wire_wrapper"
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"PASS TC-INT-WIRE-WRAPPER"* ]]
+}
+
 # ────────────────────── SELF-APP: wrapper repo self-application ───────────────
 
 @test "SELF-APP: 본 wrapper repo invoke_detect_repo_kind → plugin 또는 mixed (0 file skip 보장)" {
