@@ -49,6 +49,15 @@ amendment_log:
       §결정 16 신설 (Autonomous permission UI behavior — destructive-only ask, reversible auto-proceed). destructive closed enum (≥8 항목: git reset --hard / git push --force / file delete rm-rf / branch delete / Issue mutation close-state / label create / workflow yaml 변경 / ADR row append) + 외부 visible (PR create/merge/close/comment to shared main + external notifications) = ask permission preserve. reversible closed enum (≥6 항목: local file Edit / local script run / temp-file mechanics / .claude/settings.local.json edit / git add / branch create / commit / Edit on /docs/**) = auto-proceed (no permission UI reflex prompt). reversibility test 근거 명시 (git reflog / Issue history / branch 복구 가능성). ADR-039 §결정 1 binary always-spawn 무관 (permission UI 차원, mechanism 차원 disjoint axis). 사용자 directive verbatim 2026-05-17 KST CFP-848 ("아 묻지말고 그냥 하라고" / "쓰잘데기 없는 권한 묻지말고 전부 수정하라"). memory `feedback_no_permission_prompts` normative 승격 carrier.
     direction: strengthening
     sunset_justification: null
+  - amendment: 4
+    date: 2026-05-24
+    carrier_story: CFP-1354
+    summary: |
+      §결정 9 신설 (rate-limit second-order risk 측정 carryover — ADR-109 §결정 8 cross-ref). §결정 2 inline whitelist closed 4-entry enumeration 무변경 (5번째 entry 신설 0 — chief 결정, RefactorAgent pattern 2 권고 정합 retry primitive 위치 = `codeforge:rate-limit-429-mitigation` skill body). 본 carryover entry = ADR-109 in-process 429 mitigation framework SSOT 안 §결정 7 (retry primitive 위치 = skill body) + §결정 8 (telemetry SSOT §14 Lane Evidence marker + KPI dual-tier JSON+JSONL) 으로 측정 영역 흡수.
+      Story A (CFP-1354) Phase 1 PR scope. 사용자 발화 verbatim "Server is temporarily limiting requests (not your usage limit)" (Story §1, story-section-1-immutable 강제) 의 in-process axis surgical mitigation framework — Anthropic infra-level temporary throttling 영역 (org tier / service-wide). retry primitive 위치 = skill body 결정 (Orchestrator inline whitelist closed 4-entry invariant 보호 우선, ADR-039 §결정 2 L110 verbatim 정합 — "5번째 카테고리 추가 = ADR-039 amendment 의무. 본 closed enumeration 가 future '429 retry inline allowed' 압박을 차단"). InfraOp D-13 advocacy "ADR-039 5번째 entry 신설" REJECTED (chief 결정).
+    direction: strengthening  # rate-limit second-order risk codify (carryover marker + ADR-109 SSOT 신설), §결정 2 4-entry 무변경 (약화 0).
+    sunset_justification: |
+      §결정 2 inline whitelist closed 4-entry 보존 invariant 정합. ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (rate-limit second-order risk codify + ADR-109 신규 SSOT 신설), 약화 0건. carrier_story CFP-1354 = ADR-109 신규 ADR (in-process 429 mitigation framework SSOT, 10 §결정 통합) + ADR-044 Amendment N (parallel_spawn_cap + spawn_stagger_ms + cascade_circuit_breaker 3 field) + ADR-064 §결정 4 Amendment N (surgical exception channel codify) 3 sibling amendment.
 is_transitional: false
 ---
 

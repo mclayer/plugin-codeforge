@@ -21,6 +21,17 @@ amendment_log:
     summary: "§결정 2 dispatch_mode enum 에 auto_on_divergence 추가. ADR-059 carrier debate-protocol-v1 자동 발동 mode."
     affected_sections: ["§결정 2"]
     breaking: false
+  - date: 2026-05-24
+    cfp: CFP-1354
+    summary: |
+      team-spec yaml 7 file schema 확장 — `parallel_spawn_cap: int` (default 7, derived from parallel-dispatch-protocol-v1 §6.2 worker_count_max single SSOT cross-ref bind) + `spawn_stagger_ms: int` (optional, default 0 — no stagger, opt-in tunable) + `cascade_circuit_breaker: bool` (optional, default false) 3 field 신설. 7 team-spec yaml atomic sibling sync (ADR-010 §결정 2 kind:contract sibling sync 정합).
+      Story A (CFP-1354) Phase 1 PR scope. 사용자 발화 verbatim "Server is temporarily limiting requests" (Story §1, story-section-1-immutable 강제) 의 in-process axis — Anthropic infra 429 burst 영역 surgical cap codify. ADR-109 (in-process 429 mitigation framework SSOT) §결정 4 circuit breaker 3-window AND + §결정 8 telemetry §14 Lane Evidence marker / KPI dual-tier cross-ref carrier. RefactorAgent interface 분리 권고 정합 — parallel-dispatch-protocol-v1 §6.2 worker_count_max single SSOT 와 cross-ref bind (중복 신설 0 anti-pattern guard).
+      Phase 2 PR scope = 7 team-spec yaml actual schema write (`templates/team-spec-decompose.yaml` + `templates/team-spec-requirements.yaml` + `templates/team-spec-design.yaml` + `templates/team-spec-design-review.yaml` + `templates/team-spec-develop.yaml` + `templates/team-spec-code-review.yaml` + `templates/team-spec-security-test.yaml`). 본 Amendment = Phase 1 declarative declare only.
+    affected_sections: ["§결정 7 team-spec yaml SSOT (schema 확장)"]
+    breaking: false  # additive only (3 optional field with default), backward-compat invariant 보존
+    direction: strengthening  # cap field 추가 = 강화 방향
+    sunset_justification: |
+      Story A 가 429 burst 영역 surgical cap 의무 codify. parallel-dispatch-protocol-v1 §6.2 worker_count_max single SSOT 와 cross-ref bind (중복 신설 0, RefactorAgent interface 분리 권고 정합). ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (cap field 추가, 본문 §결정 7 sequential team SSOT 무변경 schema additive), 약화 0건.
 related_adrs:
   - ADR-009  # wrapper-only decomposition (Orchestrator 단일 lead 정합)
   - ADR-022  # Deprecated by ADR-035 — review-verdict v4 cutover 동기
