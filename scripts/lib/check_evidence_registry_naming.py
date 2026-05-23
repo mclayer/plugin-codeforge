@@ -90,7 +90,11 @@ for entry in entries:
     if not workflow_path_str:
         continue
 
-    detect_command = entry.get("detect_command", "")
+    # CFP-827 — `.get(k, default)` 는 key 부재 시만 default 반환. ADR-060 schema 가
+    # `detect_command: null` 허용 (e.g. behavioral directive only entry — adr-077-* 등) →
+    # `.get("detect_command", "")` 가 None 반환 → None.strip() AttributeError.
+    # `or ""` 로 null + missing + empty 3-case 통일.
+    detect_command = entry.get("detect_command") or ""
     is_github_actions_runtime = (detect_command.strip() == "github-actions-runtime")
 
     workflow_path = Path(workflow_path_str)
