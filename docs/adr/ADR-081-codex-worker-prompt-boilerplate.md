@@ -51,6 +51,13 @@ amendments:
     status: applied
     ref: "## Amendment 6 / 본문 ### D8 + 거절된 대안 D8"
     sunset_justification: "ratchet 강화 방향 (Codex worker dispatch reliability hardening — file-redirect invocation 형식 의무 + result-via-file + synchronous block-wait 금지 codify, dispatch invocation 영역 신규 normative anchor). 약화 영역 0건 (D1.A-D 4 mandatory boilerplate field 무변경, D1-D7 본문 의미 변경 0, scope 축소 0, prompt field 신설 0 — dispatch invocation 영역 additive). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
+  - amendment_id: 7
+    cfp: CFP-1286
+    date: 2026-05-23
+    scope: "ADR-070 Amendment 8 (§결정 D1 expansion fail-mode enum 8 → 9 확장, 9번째 value `codex_truncated_no_verdict`) cross-ref. fail-mode 영역 = §결정 D8 file-redirect dispatch 정상 invocation 후 sandbox + Windows PowerShell encoding policy reject + 대용량 artifact processing 누적 → reasoning budget 소진 → output 안 verdict analysis 부재. post-invocation reasoning-exhausted path = §D8 file-redirect (stall 1차 회피층) 의 disjoint sub-domain (file-redirect ↔ stream-stall ↔ reasoning-exhausted 3 disjoint failure mode). CFP-604 retro F2 follow-up realized (single sample escalate_user). 본 ADR-081 line 525 (D8 표) + 530 (D7-D8 본문) + 532 (orthogonal 정의) 의 fail-mode 9-enum reference → 9-enum 동기 정정. D1.A-D 4 mandatory boilerplate field 무변경, D1-D8 본문 의미 변경 0건 — fail-mode reference 표기 갱신 only (additive enum expansion 정합). mechanical_enforcement_actions[]=[] retain (§D5 declaration-only precedent chain). is_transitional: false (permanent), sunset_justification N/A (강화 방향, scope 축소 0). ADR-054 §결정 1 doc-only fast-path 적격 (carrier CFP-1286)."
+    status: applied
+    ref: "## Amendment 7 / 본문 fail-mode enum 9-enum 동기 정정"
+    sunset_justification: "ratchet 강화 방향 (closed-enum expansion 8 → 9, additive, 정보 손실 0, 기존 8 value 의미 변경 0). 약화 영역 0건 (D1.A-D 무변경, D1-D8 본문 의미 변경 0, scope 축소 0). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합."
 related_stories:
   - CFP-819  # carrier
   - CFP-770  # baseline fp 8
@@ -522,14 +529,14 @@ network_scope: <4-tier enum value>
 | `offline` | codex CLI sandbox 안 own working directory file Read 만으로 verify 완결. network egress 0. | Codex worker 가 single file 영역 grep / quote / line-anchor verify task — sandbox-내부 file scope 만 | `inline_orchestrator_verify` (default) — codex worker output 정상 수신 + finding evidence 영역 = own working directory 안 |
 | `repo-fetch-only` | codex CLI sandbox 안 own-repo file Read + own-repo `git fetch` 허용. cross-repo egress 0. | Codex worker 가 own-repo 안 dir scope recursive grep / commit-anchor verify task — own-repo file history 영역 | `inline_orchestrator_verify` (default — own-repo 영역 = Orchestrator working directory 인접) |
 | `web-fetch` | codex CLI sandbox 가 cross-repo `gh api` / cross-repo `git fetch` / 외부 HTTP egress 허용. external egress 활성. | Codex worker 가 cross-repo state (sibling plugin / marketplace.json / internal-docs) verify task — cross-repo state 5-tuple verify scope (ADR-081 §결정 D2.C 정합) | `manual_substitution_declare` (sandbox 영역 외 file verify task 필요 시) |
-| `offline_substitution_declared` | codex CLI 자체 미가용 / sandbox network-block 확정 / 8+ occurrence sentinel reentrant 위험 영역 → Orchestrator substitution path activate. spawn 자체 skip. | Codex CLI 미가용 (api_missing / version_skew / enterprise_blocked, fail-mode 8-enum 정합) | `fallback_skip_with_marker` (codex worker spawn 자체 skip + Orchestrator verify-before-trust 5 sub-scope 全 적용) |
+| `offline_substitution_declared` | codex CLI 자체 미가용 / sandbox network-block 확정 / 8+ occurrence sentinel reentrant 위험 영역 → Orchestrator substitution path activate. spawn 자체 skip. | Codex CLI 미가용 (api_missing / version_skew / enterprise_blocked, fail-mode 9-enum 정합) | `fallback_skip_with_marker` (codex worker spawn 자체 skip + Orchestrator verify-before-trust 5 sub-scope 全 적용) |
 
 #### D1.D 운영적 정합
 
 - `offline` / `repo-fetch-only` / `web-fetch` = codex worker **spawn 활성** 영역 (codex CLI 가용). codex spawn-prompt 본문에 `network_scope` declare → codex CLI 자체 sandbox toggle (codex@openai-codex plugin runtime) 의 입력 신호.
-- `offline_substitution_declared` = codex worker **spawn 자체 skip** 영역 (codex CLI 미가용). Orchestrator inline substitution path (verify-before-trust 5 sub-scope D2.A-E 단독 수행). Story §10 marker `[codex-sandbox-fallback: <fail-mode>]` 동반 의무 (fail-mode 8-enum 정합).
+- `offline_substitution_declared` = codex worker **spawn 자체 skip** 영역 (codex CLI 미가용). Orchestrator inline substitution path (verify-before-trust 5 sub-scope D2.A-E 단독 수행). Story §10 marker `[codex-sandbox-fallback: <fail-mode>]` 동반 의무 (fail-mode 9-enum 정합).
 - 4 enum value 모두 codeforge 측 spawn-prompt declaration only — **declaration-only retain 유지 (§D5 precedent)**, codex CLI sandbox 자체 행위 변경 = codex@openai-codex plugin runtime 영역 (codeforge 비소유).
-- `network_scope` value semantic ↔ ADR-070 substitution scope 3-enum / fail-mode 8-enum 사이 orthogonal:
+- `network_scope` value semantic ↔ ADR-070 substitution scope 3-enum / fail-mode 9-enum 사이 orthogonal:
   - `network_scope` = **WHAT scope** (4-tier: offline / repo-fetch-only / web-fetch / offline_substitution_declared)
   - substitution path = **HOW substitute** (3-enum: inline_orchestrator_verify / manual_substitution_declare / fallback_skip_with_marker)
   - fail-mode = **WHY failed** (6-enum: api_missing / version_skew / enterprise_blocked / gh_api_network_blocked / manual_substitution_declared / inline_orchestrator_verify_only)
@@ -761,6 +768,38 @@ codeforge Orchestrator/lane 이 Codex CLI worker check 를 invoke 할 때 (proac
 - CLAUDE.md L170 blockquote cross-ref 1 줄 추가 (line-cap 320 invariant 정합)
 - playbook §3.10 anchor 본문 cross-ref 1 줄 추가 (boilerplate SSOT anchor)
 - ADR-RESERVATION row 81 append (active 직접, ADR-079/080 precedent 정합)
+
+## Amendment 7 (CFP-1286, 2026-05-23 KST)
+
+**ADR-070 Amendment 8 cross-ref — fail-mode enum 8 → 9 확장, 9번째 value `codex_truncated_no_verdict` 신설. 본 ADR-081 fail-mode reference 표기 9-enum 동기 정정.**
+
+### Context (Amendment 7)
+
+CFP-604 Phase 2 CodeReview Iter 1 evidence — Codex worker 가 §결정 D8 file-redirect dispatch (`codex exec --sandbox read-only < <promptfile>`) 정상 invocation 후 sandbox + Windows PowerShell `[Console]::OutputEncoding` policy reject + 대용량 artifact (~46KB) processing 누적 → reasoning budget 소진 → output 안 verdict analysis 부재 (file content dump + git diff help dump 만 stdout). `network_scope_actual: offline` (file-redirect 정상). 기존 8 fail-mode value 어디에도 mapping 불가 — post-invocation reasoning-exhausted path 의 disjoint sub-domain (§D8 file-redirect ↔ stream-stall ↔ reasoning-exhausted 3 disjoint failure mode).
+
+### 결정 (Amendment 7)
+
+**A1. ADR-070 Amendment 8 cross-ref** — fail-mode 본문 SSOT = ADR-070 §결정 D1 expansion (Amendment 8, 9번째 value `codex_truncated_no_verdict`). 본 ADR-081 = cross-ref-only (Amendment 1-6 cross-ref / single-mandate body patch pattern 정합).
+
+**A2. fail-mode 9-enum 표기 동기 정정** — 본 ADR-081 안 fail-mode reference 표기 `fail-mode 8-enum` → `fail-mode 9-enum` 전수 replace (line 525 §D8 표 + line 530/532 본문). 동시에 ADR-052 Amendment 13 §A3 cross-ref 표 9-enum 동기 정정.
+
+**A3. §결정 D8 file-redirect dispatch 후속 영역 disjoint sub-domain 표기** — file-redirect (Amendment 6 §D8) = stall 1차 회피층. file-redirect 적용 후에도 reasoning budget 소진 path 잔존 가능 → 신규 fail-mode `codex_truncated_no_verdict` value 가 그 sub-domain cover. disjoint 3 단계: (i) file-redirect / (ii) stream-stall (Amendment 6 cross-ref CFP-1244, `dispatch_stall_or_stream_timeout`) / (iii) reasoning-exhausted (본 Amendment 7 cross-ref CFP-1286, `codex_truncated_no_verdict`).
+
+**A4. ratchet 정합 + declaration-only retain**
+
+closed-enum expansion (8 → 9, additive, 정보 손실 0, 기존 8 value 의미 변경 0) = strengthening. D1.A-D 4 mandatory boilerplate field 무변경, D1-D8 본문 의미 변경 0건. `mechanical_enforcement_actions[]=[]` retain (§D5 declaration-only precedent chain). is_transitional: false (permanent), sunset_justification N/A (강화 방향, scope 축소 0).
+
+**A5. doc-only fast-path (ADR-054 §결정 1)**
+
+본 Amendment 7 = ADR-081 본문 patch (frontmatter amendments[] row append + sub-section append + line 525/530/532 fail-mode reference 표기 정정) — doc-only fast-path 적격. carrier Story CFP-1286 = ADR-070 Amendment 8 + ADR-052 Amendment 13 + 본 ADR-081 Amendment 7 = 단일 PR (ADR-070/052/081 trio Amendment + plugin.json + CHANGELOG + marketplace sync).
+
+### 결과 (Amendment 7)
+
+- ADR-070 Amendment 8 cross-ref (fail-mode 본문 SSOT 위임) — A1 SSOT
+- 본 ADR-081 fail-mode 8-enum → 9-enum 전수 표기 정정 — A2 SSOT
+- file-redirect ↔ stream-stall ↔ reasoning-exhausted 3 disjoint failure mode sub-domain 정합 — A3 SSOT
+- ratchet 강화 방향 + declaration-only retain precedent chain (§D5) — A4 SSOT
+- doc-only fast-path 영역 정합 — A5 SSOT
 
 ## 해소 기준
 

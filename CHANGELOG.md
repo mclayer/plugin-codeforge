@@ -7,6 +7,18 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.4.2] - 2026-05-23
+
+### Added
+
+- [CFP-1286] **Codex worker fail-mode enum 8 → 9 확장 — `codex_truncated_no_verdict` 9번째 value** (CFP-604 retro F2 follow-up realized, single sample escalate_user 사용자 직접 채택). doc-only fast-path (ADR-054 Cat 2). 3-ADR trio Amendment:
+  - **ADR-070 Amendment 8** (SSOT): §결정 D1 expansion fail-mode 8-set → 9-set 확장.
+  - **ADR-052 Amendment 13** (cross-ref): §A3 `fallback_skip_with_marker` 표 8 → 9 enum 동기 정정.
+  - **ADR-081 Amendment 7** (cross-ref): fail-mode reference 표기 9-enum 전수 정정. file-redirect ↔ stream-stall ↔ reasoning-exhausted 3 disjoint failure mode.
+  - 적용 영역 = file-redirect dispatch (ADR-081 §결정 D8) 정상 invocation 후 sandbox + Windows encoding + 대용량 artifact reasoning budget 소진 → verdict 미생산.
+  - ratchet ↑ direction (closed-enum expansion additive). `mechanical_enforcement_actions[]=[]` retain. pattern_count=1 (single sample), Wave 2 mechanical detection lint = 별 carrier.
+  - mirrored field: 6.4.1 → 6.4.2 + description CFP-1286 entry. Marketplace sibling sync (ADR-063 §결정 2).
+
 ## [6.4.1] - 2026-05-23
 
 ### Added
