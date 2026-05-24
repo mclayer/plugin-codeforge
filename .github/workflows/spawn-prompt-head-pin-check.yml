@@ -1,73 +1,144 @@
-# spawn-prompt-head-pin-check.yml
+name: spawn-prompt-head-pin-check (warning mode)
+# CFP-1489 / Wave 2-A of CFP-1389 (Sub-CFP A CFP-1437 mechanical wire)
+# ADR-073 Amendment 11 §결정 1-A `spawn_prompt_emit` transition trigger 10번째 entry
+# ADR-082 Amendment 15 §결정 1 layer 1 sub-scope (1-E) spawn prompt SHA-anchor write-time verify
+# Tier: warning (continue-on-error: true, non-required check)
+# Bypass channel: hotfix-bypass:spawn-prompt-head-pin label (ADR-024 Amendment N §결정 6.A — 85번째 family member)
 #
-# WAVE 1 = declarative-only STUB
-# ----------------------------------
-# Sub-CFP A (CFP-1437) of CFP-1389 — Pre-spawn HEAD-pin protocol mechanical lint Epic.
+# Pre-spawn HEAD-pin protocol mechanical lint.
+# Detection scope (Wave 2-A — codify):
+#   - 변경된 파일 중 spawn-prompt candidate (Story §14 Lane Evidence transcripts /
+#     Issue body active_sessions context / spawn dispatcher logs) 안에서
+#     `[PRE-SPAWN-ORIGIN-MAIN-SHA: <40-char-hex>]` block presence + format strict check.
+#   - templates/** + tests/** path = FP-완화 guard (canonical example / bats fixture 면제).
+#   - spawn evidence marker 부재 = silent skip (lint scope 외).
 #
-# This workflow is a Wave 1 declarative anchor only. The actual mechanical wire
-# (lint script + bats fixture + label-registry MINOR + evidence-checks-registry
-# Active entry) is deferred to Wave 2 sub-CFP carrier (별 sub-CFP).
+# Trigger split (CFP-954 D2 consensus 답습 — production-cutover-evidence.yml byte-pattern):
+#   - pull_request (PR-time enforcement)
+#   - workflow_dispatch (manual runs)
 #
-# Carrier ADRs:
-#   - ADR-073 Amendment 11 (§결정 1-A transition trigger 10번째 entry `spawn_prompt_emit` +
-#     §결정 1-N primitive Pre-spawn HEAD-pin protocol 4-step verify-before-assert mandate)
-#   - ADR-082 Amendment 15 (§결정 1 layer 1 sub-scope (1-E) spawn prompt SHA-anchor write-time
-#     verify 4-tuple primitive)
+# SecurityArch §7.2 TH-2 constraint: permissions: contents: read only (no PR write).
+# No CODEFORGE_CROSS_REPO_PAT in lint output (PAT guard).
 #
-# evidence-checks-registry entry name (Wave 2 carrier):
-#   - spawn-prompt-head-pin-presence (warning tier deferred-followup)
+# Carrier: CFP-1489 / Wave 2-A mechanical wire
+#   - declaration source: ADR-073 Amendment 11 + ADR-082 Amendment 15 (CFP-1437 Wave 1 anchor)
+#   - enforcement source: ADR-060 §결정 5 warning tier framework
 #
-# Hotfix bypass label (Wave 2 carrier):
-#   - hotfix-bypass:spawn-prompt-head-pin-presence
+# Promotion path (ADR-060 §결정 28.E):
+#   warning → blocking-on-pr: remove continue-on-error + branch protection update
+#   (requires pr_cumulative_min: 20 evidence gate, ADR-060 §결정 6(b))
 #
-# Wave 1 retain rationale: mechanical lint 의 grep heuristic false-positive disambiguate
-# 영역 (spawn prompt 안 anchor block 부재 vs 단순 형식 변경) = sentinel forward-prevention
-# 후 Wave 2 mechanical wire 결정 (CFP-963 codex-network-scope-presence + CFP-1336
-# cross-repo-label-sync precedent 답습).
-#
-# Wave 2 carrier responsibilities (sub-CFP TBD):
-#   - scripts/check-spawn-prompt-head-pin-presence.sh (thin wrapper)
-#   - scripts/lib/check_spawn_prompt_head_pin_presence.py (Python SSOT per ADR-061)
-#   - tests/scripts/test_check-spawn-prompt-head-pin-presence.sh (bats fixture pair)
-#   - label-registry-v2 v2.NN MINOR bump (hotfix-bypass:spawn-prompt-head-pin-presence
-#     family member append + ADR-108 §결정 3 description text count parity META self-app)
-#   - docs/evidence-checks-registry.yaml: new entry `spawn-prompt-head-pin-presence`
-#     status: Active, current_tier: warning, owner_adr: ADR-073 / ADR-082
-#   - this file: actual workflow logic hydrate
-#     (PR-time pull_request + workflow_dispatch dual trigger split per CFP-954 D2 consensus)
-#
-# Detection scope (Wave 2 design — declarative anchor only):
-#   - grep spawn prompt files for `\[PRE-SPAWN-ORIGIN-MAIN-SHA: [0-9a-f]{40}\]`
-#   - missing block → warning (advisory) — Wave 1 behavioral mandate
-#   - block present but SHA stale (HEAD vs origin/main divergence at spawn time) =
-#     escape — Wave 2 mechanical lint Check (b) carrier scope
-#
-# Source-of-truth (Wave 1 anchor):
-#   - docs/adr/ADR-073-orchestrator-verify-before-assert.md `## Amendment 11`
-#   - docs/adr/ADR-082-write-time-self-write-verification-mandate.md `## Amendment 15`
-#   - <internal-docs>/plugin-codeforge/change-plans/cfp-1437-pre-spawn-head-pin-protocol.md
-#   - <internal-docs>/plugin-codeforge/stories/CFP-1437.md
+# Precedent byte-pattern: templates/github-workflows/codex-network-scope-presence.yml (CFP-963)
 
-name: spawn-prompt-head-pin-check (Wave 1 declarative stub)
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  workflow_dispatch:
+
+concurrency:
+  group: spawn-prompt-head-pin-check-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
-on:
-  workflow_dispatch:
-    # Wave 1 = declarative-only. Manual trigger only — no PR / push activation.
-    # Wave 2 carrier will replace with `pull_request: ` + `workflow_dispatch: ` dual trigger
-    # split per CFP-954 D2 consensus (production-cutover-evidence.yml byte-pattern 답습).
-
 jobs:
-  declarative-anchor:
-    name: Wave 1 declarative anchor (no-op)
+  spawn-prompt-head-pin-check:
     runs-on: ubuntu-latest
+    # warning mode (ADR-060 §결정 5 / §결정 28) — lint fail does NOT block PR merge.
+    continue-on-error: true
     steps:
-      - name: Sub-CFP A Wave 1 declarative-only carrier
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check bypass label
+        id: bypass
+        env:
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: |
-          echo "[INFO] CFP-1437 Sub-CFP A Wave 1 declarative-only carrier"
-          echo "[INFO] Pre-spawn HEAD-pin protocol mechanical lint = Wave 2 별 sub-CFP carrier"
-          echo "[INFO] ADR-073 Amendment 11 + ADR-082 Amendment 15 paired carrier (declarative anchor only)"
-          echo "[INFO] No-op: actual mechanical wire deferred to Wave 2"
+          set +x  # SecurityArch TH-2: no debug trace
+          labels="${PR_LABELS:-}"
+          case ",$labels," in
+            *,hotfix-bypass:spawn-prompt-head-pin,*)
+              echo "bypass=true" >> "$GITHUB_OUTPUT"
+              echo "::notice::hotfix-bypass:spawn-prompt-head-pin detected — spawn-prompt-head-pin-check lint bypassed (ADR-024 Amendment N §결정 6.A — 85번째 hotfix-bypass:* family member)"
+              ;;
+            *)
+              echo "bypass=false" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      - name: Run spawn-prompt-head-pin lint
+        id: lint
+        if: steps.bypass.outputs.bypass == 'false'
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: |
+          set +x  # SecurityArch TH-2: no debug trace (PAT guard)
+          set +e
+
+          # Determine changed files scope
+          if [ -z "${GITHUB_BASE_REF:-}" ]; then
+            # workflow_dispatch path — no PR diff, scan latest commit only
+            CHANGED_FILES="$(git diff --name-only HEAD~1...HEAD 2>/dev/null | grep -E '\.(md|yaml|yml|txt|log)$' || true)"
+          else
+            CHANGED_FILES="$(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD" 2>/dev/null | grep -E '\.(md|yaml|yml|txt|log)$' || true)"
+          fi
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "::notice::spawn-prompt-head-pin-check: no changed files detected — PASS (advisory)"
+            echo "exit_status=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Content pre-screen: filter to spawn-prompt candidate files only
+          # Reduces blast surface — only files containing spawn evidence markers are linted.
+          # Markers (CFP-1437 Wave 1 declarative scope): ArchitectAgent/PL spawn / deputy spawn /
+          # Lane evidence / §14 Lane / USER-UTTERANCE-VERBATIM etc.
+          CANDIDATE_FILES=$(echo "$CHANGED_FILES" | while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            [ -f "$f" ] || continue
+            # path filter: skip templates/** + tests/** (FP-완화 guard)
+            case "$f" in
+              templates/*|tests/*|*/templates/*|*/tests/*) continue ;;
+            esac
+            grep -l -E -i "(ArchitectAgent spawn|ArchitectPLAgent spawn|RequirementsPLAgent spawn|deputy spawn|sub-?agent spawn|Lane evidence|§14 Lane|USER-UTTERANCE-VERBATIM|chief author spawn|You are codeforge)" "$f" 2>/dev/null || true
+          done)
+
+          if [ -z "$CANDIDATE_FILES" ]; then
+            echo "::notice::spawn-prompt-head-pin-check: no spawn-prompt candidate files in PR diff — lint scope empty, PASS (advisory)"
+            echo "exit_status=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Run lint only on candidate files (warning tier — non-blocking)
+          MAX_EXIT=0
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            python3 scripts/lib/check_spawn_prompt_head_pin.py "$f" 2>&1 || {
+              status=$?
+              if [ "$status" -gt "$MAX_EXIT" ]; then
+                MAX_EXIT="$status"
+              fi
+            }
+          done <<< "$CANDIDATE_FILES"
+
+          echo "exit_status=$MAX_EXIT" >> "$GITHUB_OUTPUT"
+          # warning tier: always exit 0 (continue-on-error + warning-tier semantic)
           exit 0
+
+      - name: Emit lint summary
+        if: steps.bypass.outputs.bypass == 'false' && always()
+        env:
+          LINT_STATUS: ${{ steps.lint.outputs.exit_status }}
+        run: |
+          set +x  # SecurityArch TH-2
+          status="${LINT_STATUS:-0}"
+          if [ "$status" = "0" ]; then
+            echo "::notice::spawn-prompt-head-pin-check: PASS — PRE-SPAWN-ORIGIN-MAIN-SHA block valid in all candidate spawn-prompt files (ADR-073 Amendment 11 §결정 1-A + ADR-082 Amendment 15 §결정 1 layer 1 sub-scope 1-E)"
+          elif [ "$status" = "1" ]; then
+            echo "::warning::spawn-prompt-head-pin-check: WARNING — PRE-SPAWN-ORIGIN-MAIN-SHA block absent or SHA format invalid in spawn-prompt body. Add: [PRE-SPAWN-ORIGIN-MAIN-SHA: <40-char-lowercase-hex>] block to spawn prompt first line (or after [USER-UTTERANCE-VERBATIM] block per ADR-082 sub-scope 1-C precedent). hotfix bypass: hotfix-bypass:spawn-prompt-head-pin label (ADR-024 Amendment N §결정 6.A — 85번째 family member)."
+          else
+            echo "::warning::spawn-prompt-head-pin-check: META-ERROR (exit $status) — lint infrastructure issue. Non-blocking (warning tier)."
+          fi
