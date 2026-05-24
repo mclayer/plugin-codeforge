@@ -4,8 +4,8 @@
 # Doc Location Registry (auto-generated)
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
-**schema_version**: 1.1  
-**Last regen**: 2026-05-22T07:38:11Z  
+**schema_version**: 1.2  
+**Last regen**: 2026-05-24T03:04:08Z  
 **Registered doc types**: 16
 
 ## Summary table
@@ -17,7 +17,7 @@
 | 3 | `adr` | confluence / single_repo | `codeforge-design:ArchitectAgent` | CFP-26 |
 | 4 | `change_plan` | confluence / dogfood / single_repo | `codeforge-design:ArchitectAgent` | CFP-7 |
 | 5 | `retro` | confluence / dogfood / single_repo | `codeforge-pmo:PMOAgent` | CFP-36 |
-| 6 | `domain_knowledge` | single_repo | `codeforge-requirements:DomainAgent` | CFP-37 |
+| 6 | `domain_knowledge` | confluence / single_repo | `codeforge-requirements:DomainAgent` | CFP-37 |
 | 7 | `spec` | dogfood | `orchestrator` | ADR-017 |
 | 8 | `plan` | dogfood | `orchestrator` | ADR-017 |
 | 9 | `decision_packet` | dogfood | `orchestrator` | CFP-61 |
@@ -26,7 +26,7 @@
 | 12 | `upgrade_events` | single_repo | `orchestrator` | CFP-743 |
 | 13 | `kpi_artifact` | single_repo | `orchestrator` | CFP-393 |
 | 14 | `integration_test_baseline` | single_repo | `codeforge-test:IntegrationTestAgent` | CFP-954 |
-| 15 | `architecture_doc` | dogfood / single_repo | `codeforge-design:ArchitectAgent` | CFP-919 |
+| 15 | `architecture_doc` | confluence / dogfood / single_repo | `codeforge-design:ArchitectAgent` | CFP-919 |
 | 16 | `promotion_criteria_4tuple_artifact` | single_repo | `codeforge-design:ArchitectAgent` | CFP-991 |
 
 ## Per-doc-type details
@@ -96,6 +96,7 @@
   > confluence variant (CFP-1256 / ADR-103 §결정 5 R2): git→Confluence one-way sync readable mirror.
   > 실 Confluence URL = consumer overlay project.yaml atlassian.confluence.base_url + space_key + page_id 주입.
   > git = SoR-work invariant (ADR-100 §결정 1) — Confluence 는 readable mirror 이지 SoR 아님.
+  > CFP-1420 / ADR-111 §결정 1 — confluence_variant sub-tree 활성 (mirror 대상 closed-enum 4 영역). page_id stamp = Sub-B 영역 sync engine.
 
 ### `change_plan`
 
@@ -113,6 +114,7 @@
   **notes**:
   > ADR-013: codeforge family = internal-docs <plugin>/change-plans/.
   > confluence variant (CFP-1256 / ADR-103 §결정 5 R2): dogfood-out docs (MOVE path, ADR-013) 의 Confluence readable mirror. git = SoR-work invariant.
+  > CFP-1420 / ADR-111 §결정 1 — confluence_variant sub-tree 활성 (mirror 대상 closed-enum 4 영역).
 
 ### `retro`
 
@@ -135,6 +137,7 @@
 ### `domain_knowledge`
 
 - **single_repo**: `<owner-repo>/docs/domain-knowledge/<area>/<topic>.md`
+- **confluence**: `https://<confluence-instance>/wiki/spaces/<space-key>/pages/<page-id>`
 - **owner_agent**: `codeforge-requirements:DomainAgent`
 - **introduced_by**: CFP-37
 - **naming_pattern**: `[a-z0-9-]+\.md`
@@ -148,6 +151,7 @@
   > Mode-agnostic. DomainAgent self-write owner path (CFP-26 Phase 0a).
   > CFP-946-A — `codex-collaboration/` sub-tree 신설 (ADR-052/070/081 narrative SSOT hub).
   > Write owner extension = ArchitectAgent (codex-collaboration sub-tree = governance narrative).
+  > CFP-1420 / ADR-111 §결정 1 — confluence variant + confluence_variant sub-tree 신설 (mirror 대상 closed-enum 4 영역 정합). git = SoR-work invariant (ADR-100 §결정 1).
 
 ### `spec`
 
@@ -288,6 +292,7 @@
 
 - **single_repo**: `<owner-repo>/docs/architecture/<topic>.md`
 - **dogfood**: `mclayer/codeforge-internal-docs/<plugin-folder>/architecture/<topic>.md`
+- **confluence**: `https://<confluence-instance>/wiki/spaces/<space-key>/pages/<page-id>`
 - **owner_agent**: `codeforge-design:ArchitectAgent`
 - **introduced_by**: CFP-919
 - **naming_pattern**: `[a-z0-9-]+\.md`
