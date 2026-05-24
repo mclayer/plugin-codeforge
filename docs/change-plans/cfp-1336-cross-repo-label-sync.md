@@ -660,16 +660,20 @@ impl repo: mclayer/<consumer-repo>
 
 **N/A** — Wave 1 declarative scope (governance SSOT codify only, runtime workflow 실 활성 = Wave 2 carrier). 성능 측정 대상 0건 — Wave 2 wire 시 telemetry 통한 실측 (ADR-068 Amendment 1 I-5 dimensional empirical grounding 정합 — Wave 1 = 측정 대상 정의만, Wave 2 = 실측).
 
-### §8.5 Stateful test applicability — Partial Y (Wave 2 carrier — stateful test)
+### §8.5 Stateful / restart invariant tests applicability
 
-**§8.5 applicability** (CFP-47 정합, 30자 minimum): 본 Story Phase 1 = declarative anchor scope (governance SSOT codify), §8.5 stateful test 영역은 Wave 2 mechanical wire 시점 active 전환 — Phase 1 Wave 1 = stateful test 작성 0건 (declaration-only retain), Phase 2/Wave 2 별 sub-CFP carrier 가 workflow live activation + repository_dispatch listener + cache TC 작성 carrier.
+#### §8.5.0 Applicability decision
 
-| 영역 | Wave 1 status | Wave 2 mechanical wire scope |
+| 적용 조건 | Y/N | 근거 |
 |---|---|---|
-| Long-running E2E | 0 (Wave 1 declarative) | Wave 2 — 5s target bidirectional sync E2E TC pair |
-| Stateful cache | 0 (Wave 1 declarative) | Wave 2 — label state cache + race scenario TC |
-| Background worker | 0 (Wave 1 declarative) | Wave 2 — repository_dispatch listener seed (impl repo) |
-| Process restart / PAT rotation | **Partial** (ADR-066 §결정 3 5-step rotation 절차 active — manual blocker) | Wave 2 — `scripts/check-pat-rotation-log.sh` schema lint + cron audit |
+| Long-running connection | N | Phase 1 Wave 1 declarative scope only — workflow live activation = Wave 2 별 sub-CFP carrier (governance SSOT codify scope only, runtime connection 0건) |
+| Stateful in-memory cache | N | Phase 1 declarative anchor only — label state cache 없음 (workflow yml = stateless skeleton, Wave 2 carrier 가 cache + race scenario TC 작성) |
+| Background worker | N | Phase 1 declarative scope only — repository_dispatch listener seed = Wave 2 별 sub-CFP carrier (impl repo workflow 작성 영역 외, Wave 1 = wrapper-side workflow skeleton only) |
+| Process restart-aware system | N | Phase 1 declarative anchor only — PAT rotation log placeholder만, ADR-066 §결정 3 5-step rotation manual 절차 active 영역, restart-aware system 작성 0 (Wave 2 mechanical wire 시점에 `scripts/check-pat-rotation-log.sh` schema lint + cron audit carrier) |
+
+#### §8.5.4 N/A 명시 (4 N 적용 조건 모두 부재)
+
+본 Phase 1 declarative anchor scope (governance SSOT codify only) — 4 stateful 적용 조건 모두 N. 4 영역 모두 Wave 2 mechanical wire carrier 별 sub-CFP defer. **현재 §8.5 stateful test 작성 0건 (CFP-47 §8.5 applicability 30자 minimum 정합, Wave 1 declaration-only scope 명시)**.
 
 ### §8.6 Audit gate 4-form pointer (ADR-068 Amendment 3 I-6 정합)
 
