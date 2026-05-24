@@ -1,6 +1,10 @@
 ---
 key: CFP-1336
-title: Cross-repo bidirectional label sync — wrapper Story Issue ↔ impl repo PR labels (ADR-073 Amd 9 + ADR-082 Amd 14 + ADR-066 Amd 4, FIX iter 4 FINAL)
+title: Cross-repo bidirectional label sync — wrapper Story Issue ↔ impl repo PR labels (ADR-073 Amd 10 + ADR-082 Amd 14 + ADR-066 Amd 4, FIX iter 5 FINAL)
+slug: cfp-1336-cross-repo-label-sync
+story: CFP-1336
+author: ArchitectAgent (chief author, codeforge-design)
+created: 2026-05-24
 type: change-plan
 date: 2026-05-24
 github_issue: mclayer/plugin-codeforge#1336
@@ -59,7 +63,7 @@ pre_lookup_evidence:
 
 # Change Plan — CFP-1336: Cross-repo bidirectional label sync
 
-## §1. 목적
+### §1. 목적
 
 본 Change Plan = **cross-repo wrapper Issue ↔ impl repo PR labels bidirectional sync** 영역의 governance SSOT codify. CFP-1302 D-4 chief tie-break dissent (within-repo GITHUB_TOKEN only 결정 시 cross-repo path 별 carrier 분리) 정합의 axis-disjoint follow-up F2 carrier.
 
@@ -79,7 +83,7 @@ Forcing function: cross-repo label drift (wrapper Story Issue 가 phase:구현 �
 
 ---
 
-## §2. 현재 구조 (CodebaseMapperAgent / ArchitectAnalyst integration)
+### §2. 현재 구조 (CodebaseMapperAgent / ArchitectAnalyst integration)
 
 **Mapper input 부재** (본 Story = ArchitectAgent direct chief author flow, deputy spawn 0). ArchitectAnalystAgent prior art + CodebaseMapper 영역의 chief 통합 검증:
 
@@ -117,7 +121,7 @@ Forcing function: cross-repo label drift (wrapper Story Issue 가 phase:구현 �
 
 ---
 
-## §3. 도입할 설계 (RefactorAgent / chief synthesis)
+### §3. 도입할 설계 (RefactorAgent / chief synthesis)
 
 ### §3.1 ADR-073 Amendment 9 신설
 
@@ -358,7 +362,7 @@ declaration source ADR-073 Amendment 9 / enforcement source ADR-060 dual-binding
 
 ---
 
-## §4. API 계약 (Wave 2 schema declare, Wave 1 = declarative SSOT only)
+### §4. API 계약 (Wave 2 schema declare, Wave 1 = declarative SSOT only)
 
 ### §4.1 repository_dispatch payload schema (Wave 2 mechanical wire 시점 활성)
 
@@ -404,7 +408,7 @@ declaration source ADR-073 Amendment 9 / enforcement source ADR-060 dual-binding
 
 ---
 
-## §5. 변경 영향 (8 file estimate — Story §4.1 from-spec 정합)
+### §5. 변경 영향 (8 file estimate — Story §4.1 from-spec 정합)
 
 | 경로 | 변경 종류 | 라인 수 추정 |
 |---|---|---|
@@ -433,7 +437,7 @@ declaration source ADR-073 Amendment 9 / enforcement source ADR-060 dual-binding
 
 ---
 
-## §6. 리팩토링 선행
+### §6. 리팩토링 선행
 
 **N/A** (Wave 1 declarative only — append-only changes, no behavior modification, ADR-076/082/086/097 Wave 1 declarative anchor only precedent verbatim 답습).
 
@@ -441,7 +445,7 @@ declaration source ADR-073 Amendment 9 / enforcement source ADR-060 dual-binding
 
 ---
 
-## §7. 보안 설계 (SecurityArchitectAgent §7.1-§7.3 / §7.5-§7.6 + InfraOperationalArchitectAgent §7.4 통합)
+### §7. 보안 설계 (SecurityArchitectAgent §7.1-§7.3 / §7.5-§7.6 + InfraOperationalArchitectAgent §7.4 통합)
 
 ### §7.1 Trust boundary 4-domain table (SecurityArch full content)
 
@@ -548,7 +552,7 @@ impl repo: mclayer/<consumer-repo>
 - **Display layer** (audit comment / Issue body / Story §14 Lane Evidence transcript): **KST `+09:00` ISO 8601 zoned** 강제 (ADR-079 §결정 1 governance display layer)
 - 양 layer disjoint — transport UTC ↔ display KST conversion 의무 (workflow 안 `date -d "$UTC_TIMESTAMP" "+%Y-%m-%dT%H:%M:%S+09:00"` 또는 native gh CLI conversion, Wave 2 wire)
 
-#### §7.4.4 Rate-limit budget
+#### §7.4.4 Rate limit
 
 **Wave 1 declarative estimate** (실측 = Wave 2 telemetry, ADR-068 Amendment 1 I-5 dimensional empirical grounding 정합):
 
@@ -562,7 +566,7 @@ impl repo: mclayer/<consumer-repo>
 
 **Wave 2 telemetry forward**: rate-limit budget exhausted threshold 도달 시 → exponential backoff (5s/15s/45s) → circuit breaker (5 fail → 1h pause) → audit comment + `fallback:manual` label.
 
-#### §7.4.5 Secrets / Runner / Actor introspection
+#### §7.4.5 Env isolation
 
 - **org-level secret** (`CODEFORGE_CROSS_REPO_PAT`) — repo-level override 금지 (ADR-066 §결정 3 step 2/3 정합).
 - **`runs-on: ubuntu-latest`** — GitHub-managed image (per-run isolated, no persistent state).
@@ -614,7 +618,7 @@ impl repo: mclayer/<consumer-repo>
 
 ---
 
-## §8. Test Contract (TestContractArchitectAgent full content)
+### §8. Test Contract (TestContractArchitectAgent full content)
 
 ### §8.1 AC-1~AC-5 coverage matrix (Story §5.2 정합)
 
@@ -680,7 +684,7 @@ impl repo: mclayer/<consumer-repo>
 
 ---
 
-## §9. 분기 선택 (Tier A/B/C 3-tier comparison)
+### §9. 분기 선택 (Tier A/B/C 3-tier comparison)
 
 | Tier | Channel | Pros | Cons | 채택 결과 |
 |---|---|---|---|---|
@@ -700,7 +704,7 @@ impl repo: mclayer/<consumer-repo>
 
 ---
 
-## §10. ADR 정합성 + 신규 ADR 필요 여부 판단
+### §10. ADR 정합성 + 신규 ADR 필요 여부 판단
 
 ### §10.A architecture_doc_impact (ADR-078 / §결정 1 anti-scope guard 정합)
 
@@ -738,7 +742,7 @@ architecture_doc_impact:
 
 ---
 
-## §11. 데이터 마이그레이션
+### §11. 데이터 마이그레이션
 
 **N/A** — 본 Change Plan = governance metadata only (ADR Amendment + registry entries + workflow skeleton). 데이터 schema 변경 0건 — RDB OLTP / OLAP / event schema / config schema / inter-plugin contract schema 영역 모두 변경 0.
 
@@ -748,13 +752,13 @@ idempotency consult = N/A (workflow self-trigger 4-pattern T-2 guard (d) idempot
 
 ---
 
-## §12. Sonnet Decision Log
+### §12. Sonnet Decision Log
 
 **N/A** — ADR-022 Deprecated by CFP-134 / ADR-035. Sonnet decider 자동 발동 무효, 사용자 explicit ad-hoc request 시에만 호출. 본 Change Plan = author task only (chief synthesis), Sonnet ad-hoc decision request 부재.
 
 ---
 
-## §13. Phase 1 산출물 self-check 결과 + Live Operational Discipline
+### §13. Phase 1 산출물 self-check 결과 + Live Operational Discipline
 
 ### §13.A ADR-065 §결정 1 mechanical sync 7-item self-check 결과
 
@@ -825,7 +829,7 @@ rationale: "본 Change Plan = governance metadata layer (ADR Amendment + registr
 
 ---
 
-## §14. Sibling carrier + Cross-ref
+### §14. Sibling carrier + Cross-ref
 
 - **Sibling carrier (same Epic / parent)**: CFP-1302 retro F2 (parent — within-repo D-4 chief dissent carry-over scope 분리 evidence). #1336 (본 carrier Issue).
 - **Disjoint axis cross-ref**: CFP-1059 / ADR-087 + ADR-088 (deploy lane / deploy-review lane — phase:배포 / phase:배포-리뷰 label seed 별 carrier, S2/S3 sub-Story carrier). 본 Story 와 forward-compat (workflow lookup table 통한 자동 활성 EC-7).
@@ -835,7 +839,7 @@ rationale: "본 Change Plan = governance metadata layer (ADR Amendment + registr
 
 ---
 
-## §15. Cache invalidation (Orchestrator hint)
+### §15. Cache invalidation (Orchestrator hint)
 
 본 Change Plan author 후 다음 file 변경:
 
