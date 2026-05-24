@@ -14,7 +14,8 @@
 
 set -euo pipefail
 
-TEAM_SPEC="${1:-}"
+# ===== Initialize =====
+TEAM_SPECS=()
 
 print_usage() {
   cat >&2 <<EOF
@@ -31,27 +32,34 @@ EOF
 }
 
 # ===== Parse arguments =====
-if [ "$TEAM_SPEC" = "--team-spec" ] && [ -n "${2:-}" ]; then
-  TEAM_SPEC="$2"
-elif [ -z "$TEAM_SPEC" ]; then
-  # Auto-detect from git modified files
-  TEAM_SPEC=$(git diff --name-only origin/main... 2>/dev/null | grep "templates/team-spec-.*\.yaml$" | head -1 || echo "")
-  if [ -z "$TEAM_SPEC" ]; then
-    # Fallback: check all 7 team-spec files
-    TEAM_SPECS=(templates/team-spec-{decompose,requirements,design,design-review,develop,code-review,security-test}.yaml)
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --team-spec)
+      if [ -z "${2:-}" ]; then
+        echo "[deputy-stagger-check] Error: --team-spec requires argument" >&2
+        exit 2
+      fi
+      TEAM_SPECS=("$2")
+      shift 2
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
+
+# ===== Auto-detect if not specified =====
+if [ "${#TEAM_SPECS[@]}" -eq 0 ]; then
+  # Try git diff first
+  git_modified=$(git diff --name-only origin/main... 2>/dev/null | grep "templates/team-spec-.*\.yaml$" || echo "")
+  if [ -n "$git_modified" ]; then
+    while IFS= read -r f; do
+      TEAM_SPECS+=("$f")
+    done <<< "$git_modified"
   else
-    TEAM_SPECS=("$TEAM_SPEC")
+    # Fallback: check all 7 templates
+    TEAM_SPECS=(templates/team-spec-{decompose,requirements,design,design-review,develop,code-review,security-test}.yaml)
   fi
-fi
-
-if [ -n "$TEAM_SPEC" ] && [ ! -f "$TEAM_SPEC" ]; then
-  echo "[deputy-stagger-check] Error: team-spec file not found: $TEAM_SPEC" >&2
-  exit 2
-fi
-
-# ===== Set default TEAM_SPECS if not set =====
-if [ "${#TEAM_SPECS[@]:-0}" -eq 0 ]; then
-  TEAM_SPECS=("$TEAM_SPEC")
 fi
 
 # ===== Check all team-spec files =====
@@ -59,18 +67,22 @@ failed=0
 
 for spec_file in "${TEAM_SPECS[@]}"; do
   if [ ! -f "$spec_file" ]; then
-    echo "[deputy-stagger-check] Warning: team-spec file not found: $spec_file (skipped)" >&2
+    echo "[deputy-stagger-check] Error: team-spec file not found: $spec_file" >&2
+    exit 2
+  fi
+
+  # Check presence first (any value type)
+  stagger_line=$(grep -E "^\s*spawn_stagger_ms:" "$spec_file" | head -1 || true)
+  if [ -z "$stagger_line" ]; then
+    echo "[deputy-stagger-check] FAIL: $spec_file missing spawn_stagger_ms field" >&2
+    failed=1
     continue
   fi
 
-  # Extract spawn_stagger_ms value using grep (pure bash/grep)
-  stagger_value=$(grep -E "^\s*spawn_stagger_ms:\s*[0-9]+" "$spec_file" | head -1 | sed -E 's/^[^:]*:\s*([0-9]+).*/\1/' | xargs || echo "")
-
-  if [ -z "$stagger_value" ]; then
-    echo "[deputy-stagger-check] FAIL: $spec_file missing spawn_stagger_ms field" >&2
-    failed=1
-  elif ! [[ "$stagger_value" =~ ^[0-9]+$ ]] || [ "$stagger_value" -lt 0 ] || [ "$stagger_value" -gt 60000 ]; then
-    echo "[deputy-stagger-check] FAIL: $spec_file invalid spawn_stagger_ms value=$stagger_value (must be 0-60000 ms)" >&2
+  # Extract and validate type (must be integer 0-60000)
+  stagger_value=$(echo "$stagger_line" | sed -E 's/^[^:]*:\s*([^ #]+).*/\1/')
+  if ! [[ "$stagger_value" =~ ^[0-9]+$ ]] || [ "$stagger_value" -lt 0 ] || [ "$stagger_value" -gt 60000 ]; then
+    echo "[deputy-stagger-check] FAIL: $spec_file invalid spawn_stagger_ms value=$stagger_value (must be 0-60000 ms integer)" >&2
     failed=1
   else
     echo "[deputy-stagger-check] PASS: $spec_file spawn_stagger_ms=$stagger_value ms"

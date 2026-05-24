@@ -11,8 +11,25 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="${2:-.}"
-WEEK="${1:-}"
+WEEK=""
+REPO_ROOT="."
+
+# Parse named arguments
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --week)
+      WEEK="$2"
+      shift 2
+      ;;
+    --repo-root)
+      REPO_ROOT="$2"
+      shift 2
+      ;;
+    *)
+      shift
+      ;;
+  esac
+done
 
 if [ -z "$WEEK" ]; then
   WEEK=$(date -u +%Y-W%V)
