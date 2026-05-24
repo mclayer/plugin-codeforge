@@ -140,6 +140,12 @@ for contract in (manifest or {}).get("contracts", []):
             skipped += 1
             continue
 
+        if status == "Draft":
+            # Draft status = pre-canonical placeholder (canonical sibling repo not yet seeded),
+            # skip drift check (CFP-1336 carrier — deploy_output/deploy_review_output Active 복귀
+            # = S2/S3 sub-Story canonical sibling seed 후, ADR-008/010 verbatim parity 정합)
+            skipped += 1
+            continue
         if status != "Active":
             errors.append(f"{name} {fname}: 알 수 없는 status '{status}' (Active|Archived 만 본 lint 처리)")
             continue
