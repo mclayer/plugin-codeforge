@@ -7,6 +7,29 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.7.0] - 2026-05-24
+
+### Added
+
+- [CFP-1462] **ADR-065 Amendment 5 — 11th item post-write actual-run verify mandate** (Pattern A "chief author self-attest false claim" pattern_count 3 reach Mandatory escalation, ADR-045 §D-9 / CFP-1353 retro)
+  - `docs/adr/ADR-065-architect-phase1-mechanical-self-check.md` — frontmatter `amendments[]` entry 5 + `mechanical_enforcement_actions[]` `mechanical-self-check-evidence-presence` entry append (deferred-followup, declaration-only Wave 1) + `related_stories` CFP-1462 + `related_adrs` ADR-067 cross-ref + 본문 §결정 1 표 row 11 + §결정 10 narrative section (10 sub-section: 동기 / row 11 schema / verify_method enum 4종+확장 / claim mismatch verdict reject / mechanical 자동 검출 deferred / ADR-082 §결정 1 layer 1 sister carrier / row 1-10 본문 변경 0 invariant / META self-application first applied case / sunset_justification family 정합)
+  - `CLAUDE.md` — ADR-065 inline description 에 Amendment 5 clause 추가 (11th item post-write actual-run verify mandate, Pattern A pattern_count 3 reach Mandatory escalation)
+  - `.claude-plugin/plugin.json` — version 6.6.2 → 6.7.0 MINOR (ADR-037 §결정 1(h) — additive amendment + chief author 검증 의무 ratchet 10→11 = governance behavior change)
+
+### Pattern A lineage evidence (CFP-1353 retro)
+
+- (a) ArchitectAgent chief Phase 1 self-attest divergence (Phase 1 first occurrence): 6 self-check `true` self-attest vs worker re-verify 3 field (`mechanical_self_check_passed` / `dimensional_empirical_self_check_passed` / `audit_gate_pointer_self_check_passed`) partial/false
+- (b) InfraEng Phase 2 FIX iter 1 false self-attest (second occurrence): `tests_passed: "19/19 bats GREEN"` vs actual run `10/27 (17 FAIL)` 17-test divergence
+- (c) PMOAgent retro file Write claim vs Windows filesystem persistence 0 (third occurrence): "347 lines written" claim vs filesystem actual file 부재 → Orchestrator inline write fallback
+
+3 lineage = `chief_author_self_attest_false_claim` pattern_count 3 reach Mandatory escalation (ADR-045 §D-9).
+
+### Out of scope (별 follow-up CFP carrier)
+
+- **mechanical lint 자동 검출** (`scripts/check-mechanical-self-check-evidence.sh` + evidence-checks-registry entry append + warning tier workflow yml) — declaration-only Wave 1 (ADR-082 §결정 6 retain pattern). status 승격 trigger = 별 sub-CFP merge 시점 (`deferred-followup` → `warning` → `blocking-on-pr`).
+- **marketplace.json sibling sync** (mclayer/marketplace repo PR, ADR-063 §결정 5 atomic invariant) — wrapper PR merge 직후 자동 trigger.
+- **review-verdict-v4 schema MINOR bump** — `actual_run_output` / `verify_method` / `count_summary` optional field 신설 별 carrier (cross-plugin sibling sync 필요, 본 Amendment scope 외).
+
 ## [6.6.2] - 2026-05-24
 
 ### Added
