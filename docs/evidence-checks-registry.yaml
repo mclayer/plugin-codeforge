@@ -4193,3 +4193,48 @@ entries:
       last_occurrence: null
       promotion_trigger: null
     status: warning  # Declaration-only Wave 1 (ADR-109 §결정 4 circuit breaker stagger 정책 carrier)
+
+  # ─── CFP-1421 Sub-A S1.3 — Issue body design content Confluence anchor link 의무 lint (warning tier) ───
+  # ADR-111 §결정 5 mechanical wire carrier — cross-link discipline (git anchor + Confluence anchor 양쪽 link 의무)
+  # ADR-082 §결정 6 retain pattern 답습 (Wave 1 declare = ADR-111 mechanical_enforcement_actions / Wave 2 wire = 본 entry)
+  # Mega-Epic CFP-1415 (Confluence-as-derived-mirror governance standardization) Sub-A S1.3
+  # Sibling: #1419 (ADR-111 신설 Sub-A S1.1) + #1420 (doc-locations.yaml schema 1.2 Sub-A S1.2) + #1425 (ADR-078 Amendment 2 Sub-C S3.1)
+  - name: issue-design-content-confluence-link
+    description: |
+      ADR-111 §결정 5 (cross-link discipline) mechanical verification — Issue / PR body 안
+      design doc 4 closed-enum 인용 (§결정 1: ADR / Living Architecture / Change Plan /
+      Domain Knowledge) detect 시 Confluence anchor (mclayer.atlassian.net/wiki/spaces/...)
+      + git anchor (docs/{adr,architecture,change-plans,domain-knowledge}/*.md) 양 channel
+      grep-presence 의무 (한 channel 만 노출 시 warning, 양 channel 동시 노출 시 PASS).
+      design content 인용 0건 = lint 영역 외 (PASS exit 0).
+      Warning-tier — exit 0 항상 (PR merge 미차단, ADR-060 §결정 5 첫 도입 mode).
+      ADR-082 §결정 1 layer 1-C 정합: Issue body fetch 만, write 0 (USER-UTTERANCE-VERBATIM leak surface 신설 0).
+      ADR-068 I-3 정합: bypass label 부재 시 unconditional warning (조건 분기 0).
+      pattern_count >= 2 재발 시 follow-up CFP MUST promote to blocking tier.
+    detect_command: bash scripts/check-issue-design-content-confluence-link.sh
+    workflow: templates/github-workflows/issue-design-content-confluence-link.yml
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:issue-design-content-confluence-link
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1419                     # ADR-111 신설 (Sub-A S1.1) — hard prerequisite
+        - CFP-1420                     # doc-locations.yaml schema 1.2 (Sub-A S1.2) — soft dependency
+        - CFP-1421                     # self-carrier (Phase 1+2 = mechanical wire)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = regex heuristic + grep-presence 검사, modal phrase 검사 미포함
+    introduced_by: CFP-1421
+    introduced_date: 2026-05-24
+    owner_adr: ADR-111                 # §결정 5 cross-link discipline carrier
+    carrier_adr: ADR-060               # evidence-enforceable promotion framework
+    recurrence:
+      count: 0
+      threshold: 3                     # pattern_count >= 3 재발 시 promote
+      last_occurrence: null
+      promotion_trigger: auto_blocking
+    status: Active                     # CFP-1421 mechanical wire 완료 (Phase 1+2 single PR)

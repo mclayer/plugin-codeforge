@@ -1,0 +1,71 @@
+# templates/github-workflows/issue-design-content-confluence-link.yml
+# CFP-1421 (Sub-A S1.3 of EPIC #1415) — Issue / PR body 안 design content 인용 시 Confluence anchor link 의무 lint
+# Owner ADR: ADR-111 §결정 5 (cross-link discipline — git anchor + Confluence anchor 양쪽 link 의무)
+# Wire layer: ADR-082 §결정 6 retain pattern 답습 (Wave 1 declare / Wave 2 wire)
+# Tier: warning (ADR-060 §결정 5 — 첫 도입 = warning mode, continue-on-error: true)
+# Bypass label: hotfix-bypass:issue-design-content-confluence-link
+
+name: issue-design-content-confluence-link
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+  issues:
+    types: [opened, edited, reopened]
+  workflow_dispatch:
+    inputs:
+      target_type:
+        description: 'Target type (issue|pr)'
+        required: true
+        default: 'pr'
+      target_number:
+        description: 'Issue/PR number'
+        required: true
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  check-cross-link-discipline:
+    runs-on: ubuntu-latest
+    # warning-tier: 항상 통과 (실패해도 PR merge 차단 안 함)
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve target (issue | PR | workflow_dispatch)
+        id: resolve
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -u
+          if [ "${{ github.event_name }}" = "issues" ]; then
+            echo "mode=issue" >> "$GITHUB_OUTPUT"
+            echo "target=${{ github.event.issue.number }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "mode=pr" >> "$GITHUB_OUTPUT"
+            echo "target=${{ github.event.pull_request.number }}" >> "$GITHUB_OUTPUT"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "mode=${{ github.event.inputs.target_type }}" >> "$GITHUB_OUTPUT"
+            echo "target=${{ github.event.inputs.target_number }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "ERROR: unsupported event '${{ github.event_name }}'"
+            exit 2
+          fi
+
+      - name: Run cross-link discipline lint (warning-tier)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -u
+          bash scripts/check-issue-design-content-confluence-link.sh \
+              --${{ steps.resolve.outputs.mode }} ${{ steps.resolve.outputs.target }} || rc=$?
+          rc=${rc:-0}
+          if [ "$rc" -ne 0 ]; then
+            echo "::warning::lint exit code = $rc (warning-tier — PR merge 영향 0)"
+          fi
+          # warning-tier: 항상 exit 0
+          exit 0
