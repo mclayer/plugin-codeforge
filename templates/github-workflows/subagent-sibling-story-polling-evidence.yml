@@ -1,0 +1,63 @@
+name: subagent-sibling-story-polling-evidence
+# CFP-1366 / ADR-073 Amd 6 §결정 1-G — sibling CFP cite without verified-via annotation Wave 2 mechanical check
+# Tier: warning (ADR-060 evidence-enforceable, continue-on-error: true)
+# evidence-checks-registry entry: subagent-sibling-story-polling-evidence
+#
+# Hotfix bypass:
+#   hotfix-bypass:subagent-sibling-story-polling label 부착 시 skip
+#
+# Permissions: deny-all top-level (CFP-530 / ADR-060 Amendment 8)
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  subagent-sibling-story-polling-evidence:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Check bypass label
+        id: bypass
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            labels=$(gh pr view ${{ github.event.pull_request.number }} --json labels --jq '.labels[].name' || echo "")
+            if echo "$labels" | grep -q "hotfix-bypass:subagent-sibling-story-polling"; then
+              echo "bypass=true" >> "$GITHUB_OUTPUT"
+              echo "::warning::Bypass label hotfix-bypass:subagent-sibling-story-polling detected — skip"
+            fi
+          fi
+
+      - name: Fetch PR body
+        if: steps.bypass.outputs.bypass != 'true' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh pr view ${{ github.event.pull_request.number }} --json body --jq '.body' > pr_body.txt || echo "" > pr_body.txt
+
+      - name: Run subagent-sibling-story-polling-evidence
+        if: steps.bypass.outputs.bypass != 'true' && github.event_name == 'pull_request'
+        run: |
+          bash scripts/check-subagent-sibling-story-polling.sh --input-file pr_body.txt || exit_code=$?
+          if [ "${exit_code:-0}" -eq 1 ]; then
+            echo "::warning::sibling CFP cite without verified-via annotation — see ADR-073 Amd 6 §결정 1-G"
+          elif [ "${exit_code:-0}" -ne 0 ]; then
+            echo "::error::setup error in check-subagent-sibling-story-polling.sh (exit ${exit_code})"
+            exit "${exit_code}"
+          fi

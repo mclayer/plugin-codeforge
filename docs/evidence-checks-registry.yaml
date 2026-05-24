@@ -2956,7 +2956,7 @@ entries:
       threshold: 3                  # 3-occurrence reached at introduction — auto-blocking 자동 승격 trigger 즉시 활성 (ADR-060 §결정 19 Amendment 6 / schema v1.2 auto-firing pattern_count threshold 도달)
       last_occurrence: "2026-05-20T00:00:00Z"  # CFP-681 ArchitectPL Phase 3 mis-flag KST 09:00 = UTC 00:00 (registry schema v1.2 정합 — KST `09:00:00+09:00` = UTC Z notation, 2026-05-20)
       promotion_trigger: auto_blocking  # recurrence.count = 3 = threshold = 3 도달 → Wave 2 별 sub-CFP carrier (Wave 2 mechanical wire) merge 시 즉시 warning → blocking-on-pr 자동 승격 trigger 활성 (ADR-060 §결정 19 enum)
-    status: deferred-followup  # Wave 1 declaration only — actual script + workflow + hook + bats + label-registry-v2 신규 entry = Wave 2 별 sub-CFP carrier 후 warning 전환 (parallel-work-sentinel-pickup CFP-966 deferred-followup → CFP-967 warning 전환 precedent 답습). scope_boundary: 본 entry = worktree-first self-confusion sub-domain (자기 영역, reflog membership 안 lineage) / #983 후보 (a)/(b) = real parallel cross-session collision sub-domain (외부 영역, reflog membership 외 lineage) — disjoint axis 명시 invariant
+    status: warning  # CFP-1366 Wave 2 mechanical wire complete: detect_command + workflow (templates/github-workflows/worktree-self-ownership-verify.yml + .github/workflows/ self-app byte-identical) + bats fixture (8 TC GREEN) ALL populated (2026-05-24 KST). deferred-followup → warning transition. scope_boundary: worktree-first self-confusion sub-domain disjoint with #983 real parallel sub-domain. Wave 2 carrier = CFP-1366.
 
   - name: active-sessions-presence
     description: |
@@ -3788,7 +3788,7 @@ entries:
       L2729 5-instance established pattern + worktree-self-ownership-verify L2898
       6-instance established pattern) 답습 — 신규 unique drift value 회피.
     detect_command: bash scripts/check-subagent-sibling-story-polling.sh  # Wave 2 별 sub-CFP carrier — scripts/check-subagent-sibling-story-polling.sh (thin wrapper, ADR-061) + scripts/lib/check_subagent_sibling_story_polling.py (Python SSOT — sibling CFP reference + polling evidence presence-grep heuristic 구현) 실 file 신설
-    workflow: templates/github-workflows/subagent-sibling-story-polling.yml  # Wave 2 별 sub-CFP carrier — byte-identical self-app .github/workflows/subagent-sibling-story-polling.yml (ADR-005 parity)
+    workflow: templates/github-workflows/subagent-sibling-story-polling-evidence.yml  # CFP-1366 Wave 2 — byte-identical self-app .github/workflows/subagent-sibling-story-polling-evidence.yml (entry name parity)
     current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
     bypass_label: hotfix-bypass:subagent-sibling-story-polling  # Wave 2 별 sub-CFP carrier — label-registry-v2 신규 entry append (현재 family member count + 1)
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
@@ -3813,7 +3813,7 @@ entries:
       threshold: 3                  # ADR-060 §결정 19 Amendment 6 / schema v1.2 standard default
       last_occurrence: "2026-05-23T00:00:00Z"  # Epic-A CFP-1146 close retro internal-docs#797 corpus enumeration final sentinel KST 09:00 = UTC 00:00 (registry schema v1.2 정합)
       promotion_trigger: auto_blocking  # recurrence.count = 3 = threshold = 3 도달 → Wave 2 별 sub-CFP carrier merge 시 즉시 warning → blocking-on-pr 자동 승격 trigger 활성 (ADR-060 §결정 19 enum)
-    status: deferred-followup  # Wave 1 declarative anchor only — actual script + workflow + hook + bats + label = Wave 2 별 sub-CFP carrier (worktree-self-ownership-verify Wave 2 deferred-followup precedent 답습)
+    status: warning  # CFP-1366 Wave 2 mechanical wire complete: detect_command + workflow + bats fixture (8 TC GREEN) populated (2026-05-24 KST). deferred-followup → warning transition. bidirectional verify-before-trust subagent-side complement.
 
   # ─── CFP-1348 Wave 1 (MCP server auth token TTL freshness pre-flight verify — declarative anchor only, 2026-05-24 KST) ───
   # ADR-073 Amendment 8 §결정 1-A (transition trigger enum 8번째 entry `mcp_token_expired_mid_flight` 추가) + §결정 1-K (MCP token freshness verify primitive) + §결정 1-L (agent spawn prompt `mcp_token_freshness_verified` field) carrier
@@ -3880,7 +3880,7 @@ entries:
       threshold: 3                  # ADR-060 §결정 19 Amendment 6 / schema v1.2 standard default
       last_occurrence: "2026-05-23T00:00:00Z"  # CFP-1146 Epic-A W5 다회 발생 final sentinel KST 09:00 = UTC 00:00 (registry schema v1.2 정합)
       promotion_trigger: auto_blocking  # recurrence.count = 2 < threshold = 3 → 발화 미발효, 3 reach 시 auto-firing
-    status: deferred-followup  # Wave 1 declarative anchor only — actual SessionStart hook + script + workflow + bats + label = Wave 2 별 sub-CFP carrier (worktree-self-ownership-verify + subagent-sibling-story-polling-evidence Wave 2 deferred-followup precedent 답습)
+    status: warning  # CFP-1366 Wave 2 mechanical wire complete: detect_command + workflow + bats fixture (8 TC GREEN) populated (2026-05-24 KST). deferred-followup → warning transition. MCP auth layer staleness sub-domain.
 
   - name: label-registry-frozen-baseline-count-parity
     description: |
