@@ -1,88 +1,130 @@
-# mid-spawn-drift-detection-check.yml
+name: mid-spawn-drift-detection-check (warning mode)
+# CFP-1500 / Wave 2-B of CFP-1389 (Sub-CFP B CFP-1436 mechanical wire)
+# ADR-082 Amendment 16 §결정 1 layer 1 sub-scope (1-F) spawn-internal periodic
+# origin re-pin protocol mandate + ADR-073 Amendment 12 `mid_spawn_origin_drift_detected`
+# transition trigger 11번째 entry paired sibling
+# Tier: warning (continue-on-error: true, non-required check)
+# Bypass channel: hotfix-bypass:mid-spawn-drift-detection label
+#   (ADR-024 Amendment N §결정 6.A — 87번째 family member)
 #
-# WAVE 1 = declarative-only STUB
-# ----------------------------------
-# Sub-CFP B (CFP-1436) of CFP-1389 — Mid-flight rebase auto-detection mechanical
-# lint Epic. paired sibling of Sub-CFP A (CFP-1437):
-#   - Sub-CFP A = preventive (pre-spawn time PRE-SPAWN-ORIGIN-MAIN-SHA pin)
-#   - Sub-CFP B = reactive (mid-spawn time periodic origin re-pin + drift detection)
-#   - 양 layer 합쳐 2-layer defense forcing function 완결
+# Mid-spawn drift detection mechanical lint.
+# Detection scope (Wave 2-B — codify):
+#   Check (a) — agent spawn entry in Story §14 Lane Evidence without
+#     `mid_spawn_drift_check_executed: <bool>` field OR `drift_check_directive_present: true`
+#     marker presence → [WARN-DIRECTIVE-ABSENT]
+#   Check (b) — long-duration spawn (≥ 5 min) without `drift_detected: <bool>`
+#     return packet flag → [WARN-RETURN-PAYLOAD-INCOMPLETE]
+#   - docs/stories/**/*.md path filter only (Story file scope)
+#   - templates/** + tests/** path = FP-완화 guard
 #
-# This workflow is a Wave 1 declarative anchor only. The actual mechanical wire
-# (subagent runtime hook + lint script + bats fixture + label-registry MINOR +
-# evidence-checks-registry Active entry) is deferred to Wave 2 sub-CFP carrier
-# (별 sub-CFP).
+# Trigger split (CFP-954 D2 consensus 답습 — production-cutover-evidence.yml byte-pattern):
+#   - pull_request (PR-time enforcement)
+#   - workflow_dispatch (manual runs)
 #
-# Carrier ADRs:
-#   - ADR-073 Amendment 12 (§결정 1-A transition trigger 11번째 entry
-#     `mid_spawn_origin_drift_detected` + §결정 1-O primitive Mid-spawn rebase
-#     auto-detection protocol 3-step reactive verify-before-assert mandate)
-#   - ADR-082 Amendment 16 (§결정 1 layer 1 sub-scope (1-F) spawn-internal
-#     periodic origin re-pin protocol 4-tuple primitive)
+# SecurityArch §7.2 TH-2 constraint: permissions: contents: read only (no PR write).
+# No CODEFORGE_CROSS_REPO_PAT in lint output (PAT guard).
 #
-# evidence-checks-registry entry name (Wave 2 carrier):
-#   - mid-spawn-drift-detection (warning tier deferred-followup)
+# Carrier: CFP-1500 / Wave 2-B mechanical wire
+#   - declaration source: ADR-082 Amendment 16 + ADR-073 Amendment 12 (CFP-1436 Wave 1 anchor)
+#   - enforcement source: ADR-060 §결정 5 warning tier framework
 #
-# Hotfix bypass label (Wave 2 carrier):
-#   - hotfix-bypass:mid-spawn-drift-detection
+# Promotion path (ADR-060 §결정 28.E):
+#   warning → blocking-on-pr: remove continue-on-error + branch protection update
+#   (requires pr_cumulative_min: 20 evidence gate, ADR-060 §결정 6(b))
 #
-# Wave 1 retain rationale: subagent runtime hook trigger heuristic 결정 (file
-# edit count vs time interval vs hybrid / cost overhead vs detection latency
-# tradeoff) = sentinel forward-prevention 후 Wave 2 mechanical wire 결정
-# (precedent CFP-963 codex-network-scope-presence + CFP-1336 cross-repo-label-sync +
-# CFP-1437 spawn-prompt-head-pin-presence 답습).
-#
-# Wave 2 carrier responsibilities (sub-CFP TBD):
-#   - subagent runtime hook (periodic check trigger heuristic — file edit count
-#     vs time interval vs hybrid, cost-aware design)
-#   - scripts/check-mid-spawn-drift-detection.sh (thin wrapper)
-#   - scripts/lib/check_mid_spawn_drift_detection.py (Python SSOT per ADR-061)
-#   - tests/scripts/test_check-mid-spawn-drift-detection.sh (bats fixture pair)
-#   - label-registry-v2 v2.NN MINOR bump (hotfix-bypass:mid-spawn-drift-detection
-#     family member append + ADR-108 §결정 3 description text count parity)
-#   - docs/evidence-checks-registry.yaml: new entry `mid-spawn-drift-detection`
-#     status: Active, current_tier: warning, owner_adr: ADR-073 / ADR-082
-#   - this file: actual workflow logic hydrate
-#     (PR-time pull_request + workflow_dispatch dual trigger split per CFP-954 D2 consensus)
-#
-# Detection scope (Wave 2 design — declarative anchor only):
-#   - subagent self-detect mid-spawn drift via periodic `git fetch origin main` +
-#     `git rev-parse origin/main` compare with PRE-SPAWN-ORIGIN-MAIN-SHA block value
-#   - drift threshold ≥ N commits behind (default N=1 any merge) → RETURN early
-#     with `drift_detected: true` flag + 4-key payload (pre_spawn_sha,
-#     current_origin_main_sha, commits_drift, drift_detected_at_step) +
-#     verified-via annotation (mid_spawn_drift_verified)
-#   - Orchestrator 가 RETURN 수신 시 3-way 결정: re-spawn / fast-fail / escalate
-#   - Wave 2 lint = subagent runtime hook installation verify + workflow trigger
-#     heuristic verify + RETURN payload schema enforcement
-#
-# Source-of-truth (Wave 1 anchor):
-#   - docs/adr/ADR-073-orchestrator-verify-before-assert.md `## Amendment 12`
-#   - docs/adr/ADR-082-write-time-self-write-verification-mandate.md `## Amendment 16`
-#   - <internal-docs>/plugin-codeforge/change-plans/cfp-1436-mid-flight-rebase-detection.md
-#   - <internal-docs>/plugin-codeforge/stories/CFP-1436.md
+# Precedent byte-pattern: templates/github-workflows/amendment-slot-reservation-check.yml (CFP-1497)
 
-name: mid-spawn-drift-detection-check (Wave 1 declarative stub)
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    paths:
+      - 'docs/stories/**/*.md'
+  workflow_dispatch:
+
+concurrency:
+  group: mid-spawn-drift-detection-check-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
-on:
-  workflow_dispatch:
-    # Wave 1 = declarative-only. Manual trigger only — no PR / push activation.
-    # Wave 2 carrier will replace with `pull_request: ` + `workflow_dispatch: ` dual trigger
-    # split per CFP-954 D2 consensus (production-cutover-evidence.yml byte-pattern 답습).
-
 jobs:
-  declarative-anchor:
-    name: Wave 1 declarative anchor (no-op)
+  mid-spawn-drift-detection-check:
     runs-on: ubuntu-latest
+    # warning mode (ADR-060 §결정 5 / §결정 28) — lint fail does NOT block PR merge.
+    continue-on-error: true
     steps:
-      - name: Sub-CFP B Wave 1 declarative-only carrier
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check bypass label
+        id: bypass
+        env:
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: |
-          echo "[INFO] CFP-1436 Sub-CFP B Wave 1 declarative-only carrier"
-          echo "[INFO] Mid-flight rebase auto-detection mechanical lint = Wave 2 별 sub-CFP carrier"
-          echo "[INFO] ADR-073 Amendment 12 + ADR-082 Amendment 16 paired carrier (declarative anchor only)"
-          echo "[INFO] paired sibling of Sub-CFP A (CFP-1437): preventive (pre-spawn pin) + reactive (mid-spawn drift detection) 2-layer defense complete"
-          echo "[INFO] No-op: actual mechanical wire deferred to Wave 2"
+          set +x  # SecurityArch TH-2: no debug trace
+          labels="${PR_LABELS:-}"
+          case ",$labels," in
+            *,hotfix-bypass:mid-spawn-drift-detection,*)
+              echo "bypass=true" >> "$GITHUB_OUTPUT"
+              echo "::notice::hotfix-bypass:mid-spawn-drift-detection detected — mid-spawn-drift-detection-check lint bypassed (ADR-024 Amendment N §결정 6.A — 87번째 hotfix-bypass:* family member)"
+              ;;
+            *)
+              echo "bypass=false" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      - name: Run mid-spawn-drift-detection lint
+        id: lint
+        if: steps.bypass.outputs.bypass == 'false'
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: |
+          set +x  # SecurityArch TH-2: no debug trace (PAT guard)
+          set +e
+
+          # Determine changed Story files scope
+          if [ -z "${GITHUB_BASE_REF:-}" ]; then
+            # workflow_dispatch path — no PR diff, scan latest commit only
+            CHANGED_FILES="$(git diff --name-only HEAD~1...HEAD 2>/dev/null | grep -E '^docs/stories/.*\.md$' || true)"
+          else
+            CHANGED_FILES="$(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD" 2>/dev/null | grep -E '^docs/stories/.*\.md$' || true)"
+          fi
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "::notice::mid-spawn-drift-detection-check: no changed Story files detected — PASS (advisory)"
+            echo "exit_status=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Run lint via bash thin wrapper (delegates to Python SSOT)
+          MAX_EXIT=0
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            bash scripts/check-mid-spawn-drift-detection.sh "$f" 2>&1 || {
+              status=$?
+              if [ "$status" -gt "$MAX_EXIT" ]; then
+                MAX_EXIT="$status"
+              fi
+            }
+          done <<< "$CHANGED_FILES"
+
+          echo "exit_status=$MAX_EXIT" >> "$GITHUB_OUTPUT"
+          # warning tier: always exit 0 (continue-on-error + warning-tier semantic)
           exit 0
+
+      - name: Emit lint summary
+        if: steps.bypass.outputs.bypass == 'false' && always()
+        env:
+          LINT_STATUS: ${{ steps.lint.outputs.exit_status }}
+        run: |
+          set +x  # SecurityArch TH-2
+          status="${LINT_STATUS:-0}"
+          if [ "$status" = "0" ]; then
+            echo "::notice::mid-spawn-drift-detection-check: PASS — all agent spawn entries have mid-spawn drift directive presence marker (ADR-082 Amendment 16 §결정 1 layer 1 sub-scope (1-F) + ADR-073 Amendment 12 cross-ref)"
+          elif [ "$status" = "1" ]; then
+            echo "::warning::mid-spawn-drift-detection-check: WARNING — Story §14 Lane Evidence agent spawn entry detected without `mid_spawn_drift_check_executed: <bool>` field OR `drift_check_directive_present: true` marker, OR long-duration spawn (≥ 5 min) without `drift_detected: <bool>` return packet flag. Add directive presence marker to Story §14 Lane Evidence agent spawn entry before merging. hotfix bypass: hotfix-bypass:mid-spawn-drift-detection label (ADR-024 Amendment N §결정 6.A — 87번째 family member)."
+          else
+            echo "::warning::mid-spawn-drift-detection-check: META-ERROR (exit $status) — lint infrastructure issue. Non-blocking (warning tier)."
+          fi

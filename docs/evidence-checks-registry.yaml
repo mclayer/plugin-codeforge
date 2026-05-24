@@ -4422,3 +4422,82 @@ entries:
       last_occurrence: "2026-05-23T00:00:00Z"    # CFP-1336 ADR-058 §결정 5 escalate Mandatory
       promotion_trigger: auto_blocking # CFP-1435 Wave 1 → 본 Wave 2-C → blocking promotion 후보 (pr_cumulative_min: 20 evidence gate after)
     status: Active                     # CFP-1497 mechanical wire 완료 (Wave 2-C single PR, dual carrier CFP-1435 declarative anchor 의 hydrate)
+
+  - name: mid-spawn-drift-detection
+    description: |
+      ADR-082 Amendment 16 §결정 1 layer 1 sub-scope (1-F) spawn-internal periodic
+      origin re-pin protocol + ADR-073 Amendment 12 `mid_spawn_origin_drift_detected`
+      transition trigger 11번째 entry paired sibling — Mid-spawn drift detection
+      mechanical verification.
+
+      Detection scope (Wave 2-B — codify):
+        Check (a) — agent spawn entry in Story §14 Lane Evidence without
+          `mid_spawn_drift_check_executed: <bool>` field OR `drift_check_directive_present: true`
+          marker presence → [WARN-DIRECTIVE-ABSENT] (PRIMARY)
+        Check (b) — long-duration spawn (≥ 5 min) without `drift_detected: <bool>`
+          return packet flag → [WARN-RETURN-PAYLOAD-INCOMPLETE] (SECONDARY)
+        Note: 실제 subagent runtime periodic check 실행 트리거 hook 은 Wave 3 carrier
+          (subagent runtime layer, Anthropic SDK / Claude Code Agent tool 내부 hook 영역).
+          본 Wave 2-B = behavioral directive evidence presence verification only.
+
+      FP-완화 guards:
+        - templates/** path = canonical example 면제 (FP guard 1)
+        - tests/** + fixtures/** path = bats fixture self-detection avoid (FP guard 2)
+        - Story file (`docs/stories/**/*.md`) 아닌 모든 file = silent skip (scope 외, FP guard 3)
+        - markdown table row (line starts with `|`) = silent skip (FP guard 4 — table
+          abstract row vs detail block 분리, detail block 만 의무)
+
+      Warning-tier — exit 0 항상 (PR merge 미차단, ADR-060 §결정 5 첫 도입 mode).
+      ADR-068 I-3 정합: bypass label 부재 시 unconditional warning (조건 분기 0).
+      pattern_count >= 3 재발 시 follow-up CFP MUST promote to blocking tier.
+
+      CodeQL ReDoS guard (CFP-1497 PR #1499 sentinel verbatim 답습):
+        - line-by-line parse 의무 (catastrophic backtracking 위험 nested quantifier regex
+          절대 금지)
+        - per-entry scan cap 50 line (pathological input 차단)
+        - 단순 single-line anchored regex 만 사용
+
+      META self-application 3rd applied case: 본 Wave 2-B wire 의 ArchitectAgent spawn 자체가
+      `[PRE-SPAWN-ORIGIN-MAIN-SHA: c4e306e319c14fde3d2a0302d6d3ec8424656527]` block 사용 =
+      CFP-1489 META precedent 답습 (Wave 2-A 1st applied case → CFP-1497 Wave 2-C 2nd
+      applied case → 본 CFP-1500 Wave 2-B 3rd applied case).
+
+      3-layer mechanical defense forcing function 완결 (CFP-1389 parent Epic):
+        - Sub-CFP A Wave 2-A (CFP-1489, preventive pre-spawn pin)
+        - Sub-CFP C Wave 2-C (CFP-1497, preventive slot reservation mechanical enforcement)
+        - Sub-CFP B Wave 2-B (본 CFP-1500, reactive mid-spawn drift mechanical enforcement)
+      = CFP-1389 parent Epic 3-layer defense forcing function 완성. 본 entry = 마지막 mechanical layer.
+      pattern_count 9+ CFP-1336 amendment_number_stale_at_planning evidence base 공유.
+    detect_command: bash scripts/check-mid-spawn-drift-detection.sh
+    workflow: templates/github-workflows/mid-spawn-drift-detection-check.yml
+    current_tier: warning              # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:mid-spawn-drift-detection
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1336                     # sentinel super-class `amendment_number_stale_at_planning` pattern_count 9+ reach (Epic CFP-1389 origin)
+        - CFP-1389                     # parent escalation Epic
+        - CFP-1436                     # Sub-CFP B Wave 1 declarative anchor (ADR-082 Amd 16 + ADR-073 Amd 12)
+        - CFP-1500                     # self-carrier (Wave 2-B mechanical wire)
+        - CFP-1489                     # sibling Wave 2-A (Sub-CFP A mechanical wire) precedent byte-pattern
+        - CFP-1497                     # sibling Wave 2-C (Sub-CFP C mechanical wire) immediate precedent byte-pattern (CodeQL ReDoS guard SSOT)
+        - CFP-954                      # precedent dual trigger split (production-cutover-evidence.yml D2 consensus)
+        - CFP-1346                     # ADR-108 §결정 3 raw active grep count post-append parity META SSOT
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = structured Story §14 field presence check, modal phrase 검사 미포함
+    introduced_by: CFP-1500
+    introduced_date: 2026-05-24
+    owner_adr: ADR-082                 # Amendment 16 §결정 1 layer 1 sub-scope (1-F) spawn-internal periodic origin re-pin protocol
+    paired_owner_adr: ADR-073          # Amendment 12 `mid_spawn_origin_drift_detected` transition trigger 11번째 entry
+    carrier_adr: ADR-060               # evidence-enforceable promotion framework
+    recurrence:
+      count: 9                         # CFP-1336 sentinel super-class pattern_count 9+ reach (Epic CFP-1389 origin, evidence shared with sibling CFP-1489 + CFP-1497)
+      threshold: 3                     # ADR-060 §결정 19 — pattern_count >= 3 재발 시 promote
+      last_occurrence: "2026-05-23T00:00:00Z"    # CFP-1336 ADR-058 §결정 5 escalate Mandatory
+      promotion_trigger: auto_blocking # CFP-1436 Wave 1 → 본 Wave 2-B → blocking promotion 후보 (pr_cumulative_min: 20 evidence gate after)
+    status: Active                     # CFP-1500 mechanical wire 완료 (Wave 2-B single PR, dual carrier CFP-1436 declarative anchor 의 hydrate)
