@@ -29,7 +29,12 @@ related_files:
 mechanical_enforcement_actions: []   # declaration-only Wave 1 — §결정 3 atlassian.* schema validator + §결정 4 settings.json deny baseline 실 wire = Phase 2 (S2/S3 carrier). ADR-082 §결정 6 retain pattern (Wave 1 declare / Wave 2 wire). pattern_count >= 2 재발 시 follow-up CFP MUST promote to blocking tier
 is_transitional: false   # permanent governance — Confluence doc SSOT 인정 (git SoR-work ↔ Confluence SoR-docs disjoint axis) 은 Atlassian 재결합 후 영구 정책 방향. §결정 4 Layer 1 settings.json deny baseline + §결정 3 token-env-reference schema = 순수 security 강화 방향 (약화 아님)
 sunset_justification: null   # is_transitional false — Confluence authoritative sync 추가 + Layer 1 deny baseline 은 영구 + security 강화. ADR-013 §결정 1 KEEP/MOVE 의미 약화 0건 (partial extend = KEEP 목록 보존, Confluence readable layer 추가). S4 ADR-102 약화 정당화는 Layer 2 lint 영역 한정 (ADR-099 §결정 4-A) — 본 ADR Layer 1 (security) + 데이터 흐름 (Confluence readable 추가) 영역은 약화 정당화 불요
-amendment_log: []
+amendment_log:
+  - amendment_id: 1
+    carrier_story: CFP-1419
+    date: 2026-05-24
+    summary: "design doc Confluence-mirror 인정 범위 확장 — §결정 1 의 단일 'wrapper git-commit governance docs' phrasing 위에 ADR-111 closed-enum 4 대상 (ADR / Living Architecture / Change Plan / Domain Knowledge) 정식 codify. write boundary = ADR-103 sync agent 보존 (단방향 git→Confluence)."
+    sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: 인정 범위 명시화 + closed-enum codify, forbid scope 축소 아님). ADR-064 §self-application top-down ratchet 정합. is_transitional: false 유지 (permanent governance policy)."
 ---
 
 # ADR-100 — Confluence doc SSOT 인정 (wrapper governance docs 의 Confluence authoritative readable source 추가)
