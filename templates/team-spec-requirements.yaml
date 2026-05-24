@@ -1,4 +1,9 @@
 # Team spec — 요구사항 lane
+
+  # ADR-109 §결정 4 + ADR-044 Amendment 2 신설 (429 incident throttle policy)
+  parallel_spawn_cap: 7       # Default: low intensity (0 incident/30min) — Phase 0 brainstorm 7-agent baseline
+  spawn_stagger_ms: 0         # Default: no stagger (low intensity)
+  cascade_circuit_breaker: false  # Default: disabled, opt-in (429 cascade depth ≥ 2 detection)
 # CFP-137 / ADR-044 §결정 2 SSOT (dispatch_mode SSOT)
 # CFP-411 / ADR-052 Amendment 1 — Codex worker entry 신설 + dispatch_mode [default, auto_on_divergence]
 #                                  + divergence_detection 블록 + adversarial-debate dispatch_pattern entry

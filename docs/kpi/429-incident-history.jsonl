@@ -1,0 +1,4 @@
+# 429 incident event log (ADR-109 §결정 8.2 + §결정 10 secret redaction matrix)
+# Append-only JSONL (one JSON object per line, no additional trailing comma)
+# Schema: {timestamp, lane, agent_role, retry_count, final_status, cascade_depth, error_pattern}
+# Secrets redacted at collection-time: org_id, account_id stripped; session_uuid hashed; api_endpoint masked; user_prompt stripped

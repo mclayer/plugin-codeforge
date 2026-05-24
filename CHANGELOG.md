@@ -10,6 +10,18 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 ## [6.6.1] - 2026-05-24
 
 ### Added
+  - [CFP-1354-Phase2] **in-process Anthropic infra 429 surgical mitigation framework Phase 2 implementation**
+    - `docs/kpi/429-incident.json` — 주간 집계 KPI artifact (schema_version 1.0, weekly_incident_count / cascade_incidents / gate_status)
+    - `docs/kpi/429-incident-history.jsonl` — append-only event log (ADR-109 §결정 10 secret redaction matrix)
+    - `templates/github-workflows/429-incident-telemetry.yml` — weekly cron telemetry (cascade alert + infra error Issue auto-open)
+    - `scripts/check-429-retry-evidence-presence.sh` — lint §14 Lane Evidence marker (warning-tier deferred-followup)
+    - `scripts/check-debate-parallel-cap-check.sh` — lint team-spec parallel_spawn_cap field
+    - `scripts/check-deputy-stagger-check.sh` — lint team-spec spawn_stagger_ms field
+    - `templates/team-spec-*.yaml` 7 files — 3 신규 필드 (parallel_spawn_cap / spawn_stagger_ms / cascade_circuit_breaker, default values)
+    - `docs/inter-plugin-contracts/label-registry-v2.md` — v2.54 → v2.55 MINOR (3 entries: severity:429-cascade + hotfix-bypass:429-retry-evidence-presence **76번째** + hotfix-bypass:debate-parallel-cap-check **77번째**)
+    - `docs/evidence-checks-registry.yaml` — 3 신규 entry (429-retry-evidence-presence / debate-parallel-cap-check / deputy-stagger-check)
+    - `docs/inter-plugin-contracts/MANIFEST.yaml` — label-registry-v2 version 2.54 → 2.55
+
 
 - [CFP-1334-Phase2] **bats fixture RED→GREEN proof presence lint mechanical wire** (Phase 1 #1374 declaration-only Wave 1 → Phase 2 active warning-tier 전환)
   - `scripts/lib/check_bats_red_green_proof.py` — Python lint SSOT, 5-marker grep-presence heuristic (pre_impl_sha / git_stash_sequence / role_vocabulary / red_green_anchor / platform_verified) ≥3/5 PASS threshold (ADR-061 §결정 1 + Amendment 1 §결정 6.A external .py split)
