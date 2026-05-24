@@ -46,21 +46,51 @@ if (-not (Test-Path $CodeforgeDir)) {
     New-Item -ItemType Directory -Path $CodeforgeDir -Force | Out-Null
 }
 
-# Set ACL: user-only (ADR-110 §결정 4)
-icacls "$CodeforgeDir" /inheritance:r /grant:r "$env:USERNAME`:F" | Out-Null 2>&1
+# B2 (#1464) File ACL inclusive — user + Administrators + SYSTEM (idempotency guard)
+# Rationale: user-only ACL breaks SCCM/AV scanning + Administrator recovery + service-account writes.
+# Inclusive set: $USERNAME:F + Administrators:F + SYSTEM:F (no "Authenticated Users", no "Everyone").
+$AclMarkerFile = Join-Path $CodeforgeDir ".acl-set"
+if (-not (Test-Path $AclMarkerFile)) {
+    icacls "$CodeforgeDir" /inheritance:r /grant:r "$env:USERNAME`:F" /grant:r "Administrators:F" /grant:r "SYSTEM:F" | Out-Null 2>&1
+    if ($LASTEXITCODE -eq 0) {
+        # Marker prevents re-ACL on every invocation (Task Scheduler runs every 10min)
+        Get-Date -Format "yyyy-MM-ddTHH:mm:ss+09:00" | Out-File -FilePath $AclMarkerFile -Encoding UTF8 -Force
+    }
+}
 
 # Ensure log file exists and can be written
 if (-not (Test-Path $LogFile)) {
     New-Item -ItemType File -Path $LogFile -Force | Out-Null
 }
 
-# Log function with secret redaction (ADR-110 §결정 4)
+# Log function with secret redaction + log injection control char strip (ADR-110 §결정 4)
+# B5 (#1468) API key redaction regex array — extended secret coverage
+# B4 (#1466) Log injection control char strip — CR/LF/TAB/C0/DEL replaced (prevent log forging)
 function Write-Log {
     param([string]$Message)
 
     $timestamp = Get-Date -Format "yyyy-MM-ddTHH:mm:ss+09:00"
-    # Redact sk-ant-* tokens (ADR-110 §결정 4)
-    $redacted = $Message -replace 'sk-ant-[a-zA-Z0-9_-]+', 'sk-ant-***'
+
+    # B5 (#1468) Secret redaction regex array — extended coverage beyond sk-ant-*
+    $secretPatterns = @(
+        @{ Pattern = 'sk-ant-[a-zA-Z0-9_-]+';                Replacement = 'sk-ant-***' },
+        @{ Pattern = 'ghp_[a-zA-Z0-9]{36,}';                  Replacement = 'ghp_***' },
+        @{ Pattern = 'github_pat_[a-zA-Z0-9_]{36,}';          Replacement = 'github_pat_***' },
+        @{ Pattern = 'Bearer\s+[a-zA-Z0-9._\-]+';             Replacement = 'Bearer ***' },
+        @{ Pattern = '(?i)Authorization:\s*\S+';              Replacement = 'Authorization: ***' },
+        @{ Pattern = '(?i)x-api-key:\s*\S+';                  Replacement = 'x-api-key: ***' },
+        @{ Pattern = 'AKIA[0-9A-Z]{16}';                       Replacement = 'AKIA***' }  # AWS access key ID prefix
+    )
+    $redacted = $Message
+    foreach ($entry in $secretPatterns) {
+        $redacted = $redacted -replace $entry.Pattern, $entry.Replacement
+    }
+
+    # B4 (#1466) Log injection control char strip — prevent log forging via CR/LF injection
+    # Replace CR (0x0D), LF (0x0A), TAB (0x09), and all C0 control chars + DEL (0x7F)
+    $redacted = $redacted -replace "[\r\n\t]", " "
+    $redacted = $redacted -replace "[\x00-\x1F\x7F]", "?"
+
     "$timestamp | $redacted" | Add-Content -Path $LogFile -Encoding UTF8
 
     # Rotate log: keep 90 days + 5MB size limit (ADR-110 §결정 9)
@@ -75,7 +105,16 @@ function Write-Log {
 }
 
 # Ghost session prevention mutex (ADR-110 §결정 6)
-$mutexName = "Local\CodeforgeResumeWrapper"
+# B6 (#1469) Mutex namespace Global opt-in — multi-user host (Citrix/RDS) protection
+# Default: Local\ (per-session, current behavior preserved).
+# Opt-in: env CODEFORGE_MULTI_USER=1 -> Global\ (system-wide cross-session lock).
+# Consumer config: project.yaml runtime.multi_user_host: true reads ENV via wrapper script.
+$multiUserOptIn = $env:CODEFORGE_MULTI_USER -eq "1"
+if ($multiUserOptIn) {
+    $mutexName = "Global\CodeforgeResumeWrapper"
+} else {
+    $mutexName = "Local\CodeforgeResumeWrapper"
+}
 $mutex = $null
 $mutexAcquired = $false
 
@@ -96,7 +135,21 @@ try {
         exit 0
     }
 
-    $sessionUuid = (Get-Content $SessionUuidFile -Raw).Trim()
+    # B3 (#1465) TOCTOU symlink swap window — reject symlink/reparse-point UUID file
+    # Attacker could swap a regular file for a symlink between Test-Path and Get-Content.
+    # Use Get-Item -LiteralPath + LinkType check (rejects SymbolicLink/Junction/HardLink targets).
+    try {
+        $uuidItem = Get-Item -LiteralPath $SessionUuidFile -ErrorAction Stop
+        if ($uuidItem.LinkType) {
+            Write-Log "Reject reparse-point UUID file (LinkType=$($uuidItem.LinkType)): $SessionUuidFile"
+            exit 1
+        }
+        # Use System.IO.File for atomic read (avoids Get-Content cmdlet pipeline race window)
+        $sessionUuid = [System.IO.File]::ReadAllText($SessionUuidFile).Trim()
+    } catch {
+        Write-Log "UUID file read failed: $($_.Exception.Message)"
+        exit 1
+    }
     if ([string]::IsNullOrEmpty($sessionUuid)) {
         Write-Log "Session UUID file is empty"
         exit 0
@@ -185,14 +238,22 @@ catch {
         Write-Log "Max retries exceeded. Sending Windows Toast notification..."
 
         # Show Windows Toast notification (ADR-110 §결정 9)
+        # B1 (#1463) XXE defense-in-depth — sweep audit conclusion:
+        #   - install-codeforge-resume.ps1: System.Xml.XmlDocument with XmlReaderSettings.DtdProcessing.Prohibit (CFP-1355 FIX iter 2 applied)
+        #   - codeforge-session-resume.ps1 (this site): Windows.Data.Xml.Dom.XmlDocument (WinRT type, NO DTD/entity resolution support by API design)
+        #     + $MaxRetryCount is [int]-bound (no string payload injectable)
+        #     + Template is static literal, no external input flows into LoadXml
+        #   Sweep result: 0 XmlReader-replaceable sites remain; WinRT XmlDocument is inherently XXE-safe.
         try {
             [Windows.UI.Notifications.ToastNotificationManager, Windows.UI.Notifications, ContentType = WindowsRuntime] | Out-Null
+            # Coerce $MaxRetryCount through [int] cast a 2nd time as defense-in-depth (idempotent on [int])
+            $safeRetryCount = [int]$MaxRetryCount
             $template = @"
 <toast>
   <visual>
     <binding template="ToastText02">
       <text id="1">Codeforge Session Resume</text>
-      <text id="2">Auto-resume failed after $MaxRetryCount attempts. Please manually resume your session.</text>
+      <text id="2">Auto-resume failed after $safeRetryCount attempts. Please manually resume your session.</text>
     </binding>
   </visual>
 </toast>
