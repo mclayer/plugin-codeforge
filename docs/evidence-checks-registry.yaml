@@ -4238,3 +4238,49 @@ entries:
       last_occurrence: null
       promotion_trigger: auto_blocking
     status: Active                     # CFP-1421 mechanical wire 완료 (Phase 1+2 single PR)
+
+  # ─── CFP-1429 Sub-C S3.5 — Living Architecture per-Epic mandatory update gate lint (warning tier) ───
+  # ADR-112 §결정 1 (per-Epic mandatory update gate) + §결정 2 (closed-binary: 5-anchor update OR no-op explicit declare) mechanical wire carrier
+  # ADR-082 §결정 6 retain pattern 답습 (Wave 1 declare = ADR-112 mechanical_enforcement_actions / Wave 2 wire = 본 entry)
+  # Mega-Epic CFP-1415 Sub-C S3.5 — Sub-C 마지막 mechanical activation Story
+  # Sibling merged: CFP-1425 (ADR-078 Amendment 2 Sub-C S3.1) + CFP-1426 (ADR-112 신설 + review-verdict-v4 v4.10→v4.11 Sub-C S3.2) + CFP-1427 + CFP-1428 (deputy-mandate skill ArchitectAnalyst dual-read Sub-C S3.4)
+  - name: living-architecture-update
+    description: |
+      ADR-112 §결정 1 (per-Epic mandatory update gate) + §결정 2 (closed-binary) mechanical verification —
+      PR open / Epic close trigger 시 ArchitectAgent Living Architecture update evidence verify:
+        (a) PR touched files 안 `docs/architecture/<plugin>.md` (Living Architecture page) presence, 또는
+        (b) PR body / commit message 안 `[living-arch-no-impact: <rationale>]` explicit declare presence.
+      양쪽 모두 부재 시 warning emit (ADR-112 §결정 4 — DesignReviewPL emit `living-architecture-not-updated`).
+      per-PR heuristic proxy — per-Epic granularity (ideal) 는 후속 evidence-gated promotion carrier.
+      Warning-tier — exit 0 항상 (PR merge 미차단, ADR-060 §결정 5 첫 도입 mode).
+      ADR-068 I-3 정합: bypass label 부재 시 unconditional warning (조건 분기 0).
+      pattern_count >= 3 재발 시 follow-up CFP MUST promote to blocking tier.
+    detect_command: bash scripts/check-living-architecture-update.sh
+    workflow: templates/github-workflows/living-architecture-update.yml
+    current_tier: warning              # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:living-architecture-update
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1425                     # ADR-078 Amendment 2 (Sub-C S3.1) — base for 5-anchor closed-set codify
+        - CFP-1426                     # ADR-112 신설 + review-verdict-v4 v4.11 (Sub-C S3.2) — hard prerequisite
+        - CFP-1427                     # Sub-C S3.3
+        - CFP-1428                     # Sub-C S3.4
+        - CFP-1429                     # self-carrier (Phase 1+2 = mechanical wire)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = grep-presence heuristic (touched files + body marker), modal phrase 검사 미포함
+    introduced_by: CFP-1429
+    introduced_date: 2026-05-24
+    owner_adr: ADR-112                 # §결정 1 + §결정 2 carrier
+    carrier_adr: ADR-060               # evidence-enforceable promotion framework
+    recurrence:
+      count: 0
+      threshold: 3                     # pattern_count >= 3 재발 시 promote
+      last_occurrence: null
+      promotion_trigger: auto_blocking
+    status: Active                     # CFP-1429 mechanical wire 완료 (Phase 1+2 single PR)

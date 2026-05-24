@@ -1,0 +1,56 @@
+# templates/github-workflows/living-architecture-update.yml
+# CFP-1429 (Sub-C S3.5 of EPIC #1415) — Living Architecture per-Epic mandatory update gate lint
+# Owner ADR: ADR-112 §결정 1 (per-Epic mandatory update gate) + §결정 2 (closed-binary)
+# Wire layer: ADR-082 §결정 6 retain pattern 답습 (Wave 1 declare = ADR-112 mechanical_enforcement_actions / Wave 2 wire)
+# Tier: warning (ADR-060 §결정 5 — 첫 도입 = warning mode, continue-on-error: true)
+# Bypass label: hotfix-bypass:living-architecture-update
+
+name: living-architecture-update
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to verify'
+        required: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: living-architecture-update-${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:living-architecture-update') }}
+    # warning-tier: 항상 통과 (실패해도 PR merge 차단 안 함)
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run Living Architecture update gate lint (warning-tier)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+        run: |
+          set -u
+          bash scripts/check-living-architecture-update.sh || rc=$?
+          rc=${rc:-0}
+          if [ "$rc" -ne 0 ]; then
+            echo "::warning::lint exit code = $rc (warning-tier — PR merge 영향 0)"
+          fi
+          # warning-tier: 항상 exit 0
+          exit 0
