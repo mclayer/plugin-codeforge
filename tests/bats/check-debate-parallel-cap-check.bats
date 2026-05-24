@@ -136,3 +136,13 @@ EOF
   [ "$status" -eq 2 ]
   [[ "$output" =~ "not found" ]]
 }
+
+# TC-9: Production team-spec auto-detect (all 7 templates)
+@test "TC-9: PASS — production team-spec auto-detect" {
+  # Verify all 7 production team-spec files pass (no args = auto-detect)
+  run bash "$SCRIPT_PATH"
+  [ "$status" -eq 0 ]
+  [[ "$output" =~ "PASS" ]]
+  # Should scan all 7 files: decompose, requirements, design, design-review, develop, code-review, security-test
+  [[ "$output" =~ "team-spec" ]]
+}

@@ -50,7 +50,7 @@ if [ -n "$TEAM_SPEC" ] && [ ! -f "$TEAM_SPEC" ]; then
 fi
 
 # ===== Set default TEAM_SPECS if not set =====
-if [ -z "${TEAM_SPECS[@]:-}" ]; then
+if [ "${#TEAM_SPECS[@]:-0}" -eq 0 ]; then
   TEAM_SPECS=("$TEAM_SPEC")
 fi
 
@@ -64,7 +64,7 @@ for spec_file in "${TEAM_SPECS[@]}"; do
   fi
 
   # Extract parallel_spawn_cap value using grep (no jq/yq dependency — pure bash/grep)
-  cap_value=$(grep -E "^\s*parallel_spawn_cap:\s*[0-9]+" "$spec_file" | head -1 | awk -F: '{print $2}' | xargs || echo "")
+  cap_value=$(grep -E "^\s*parallel_spawn_cap:\s*[0-9]+" "$spec_file" | head -1 | sed -E 's/^[^:]*:\s*([0-9]+).*/\1/' | xargs || echo "")
 
   if [ -z "$cap_value" ]; then
     echo "[debate-parallel-cap-check] FAIL: $spec_file missing parallel_spawn_cap field" >&2

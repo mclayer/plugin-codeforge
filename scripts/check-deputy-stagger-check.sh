@@ -50,7 +50,7 @@ if [ -n "$TEAM_SPEC" ] && [ ! -f "$TEAM_SPEC" ]; then
 fi
 
 # ===== Set default TEAM_SPECS if not set =====
-if [ -z "${TEAM_SPECS[@]:-}" ]; then
+if [ "${#TEAM_SPECS[@]:-0}" -eq 0 ]; then
   TEAM_SPECS=("$TEAM_SPEC")
 fi
 
@@ -64,7 +64,7 @@ for spec_file in "${TEAM_SPECS[@]}"; do
   fi
 
   # Extract spawn_stagger_ms value using grep (pure bash/grep)
-  stagger_value=$(grep -E "^\s*spawn_stagger_ms:\s*[0-9]+" "$spec_file" | head -1 | awk -F: '{print $2}' | xargs || echo "")
+  stagger_value=$(grep -E "^\s*spawn_stagger_ms:\s*[0-9]+" "$spec_file" | head -1 | sed -E 's/^[^:]*:\s*([0-9]+).*/\1/' | xargs || echo "")
 
   if [ -z "$stagger_value" ]; then
     echo "[deputy-stagger-check] FAIL: $spec_file missing spawn_stagger_ms field" >&2

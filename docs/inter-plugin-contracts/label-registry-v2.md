@@ -1590,11 +1590,18 @@ labels:
     single_active: false
     attach_owner_plugin: "Orchestrator (CFP-1354 429-retry-evidence-presence warning-tier bypass — consumer 환경 임시 skip 시 부착) / InfraEngineerAgent"
 
-  # CFP-1354 신설 — 1 entry (hotfix-bypass:debate-parallel-cap-check)
+  # CFP-1354 신설 — 2 entry (hotfix-bypass:debate-parallel-cap-check / hotfix-bypass:deputy-stagger-check)
   - name: hotfix-bypass:debate-parallel-cap-check
     category: hotfix-bypass
     color: "fef2c0"
     description: "hotfix-bypass: debate-parallel-cap-check warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1354 / ADR-109 §결정 4 + ADR-044 Amendment 2 team-spec yaml `parallel_spawn_cap` field verification 의 bypass channel). blanket_cross_module_designlane debate 진입 직전 parallel spawn intensity bucketing (low/medium/high) 에 따른 cap lookup — team-spec yaml parallel_spawn_cap 필드 grep + value validate lint warning-tier. Phase 1 declare (declaration-only Wave 1). **77번째 hotfix-bypass:* family member (ADR-108 forcing function parity mandate — description text N번째 명시 의무)**."
     single_active: false
     attach_owner_plugin: "Orchestrator (CFP-1354 debate-parallel-cap-check warning-tier bypass — consumer 환경 임시 skip 시 부착) / InfraEngineerAgent"
+
+  - name: hotfix-bypass:deputy-stagger-check
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: deputy-stagger-check warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1354 / ADR-109 §결정 4 + ADR-044 Amendment 2 team-spec yaml `spawn_stagger_ms` field verification 의 bypass channel). ArchitectAgent SubAgent (deputy) fan-out throttling — team-spec yaml spawn_stagger_ms 필드 grep + value validate lint warning-tier (0-60000 ms bound check). Phase 1 declare (declaration-only Wave 1). **78번째 hotfix-bypass:* family member (ADR-108 forcing function parity mandate — description text N번째 명시 의무)**."
+    single_active: false
+    attach_owner_plugin: "Orchestrator (CFP-1354 deputy-stagger-check warning-tier bypass — consumer 환경 임시 skip 시 부착) / InfraEngineerAgent"
 
