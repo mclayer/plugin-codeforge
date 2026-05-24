@@ -30,6 +30,13 @@ for md in md_files:
             # Skip placeholder targets (e.g., <REPLACE>, ${VAR}, {key})
             if "<" in target or "$" in target or target.startswith("{"):
                 continue
+            # Skip canonical sibling-repo paths (e.g., ../../../plugin-codeforge/) — paths
+            # assume local clone layout (sibling repos in /workspace/<org>/), valid only
+            # in canonical sibling repos (mclayer/plugin-codeforge-*/) — wrapper-local
+            # check would always FAIL. inter-plugin-drift lint covers canonical↔sibling
+            # verbatim parity. CFP-1336 carrier — pre-existing sibling-repo path convention.
+            if target.startswith("../../../plugin-codeforge"):
+                continue
             # Strip anchor fragment
             file_part = target.split("#", 1)[0]
             if not file_part:

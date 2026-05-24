@@ -22,7 +22,7 @@ except ImportError:
     sys.exit(0)
 
 REGISTRY = Path("docs/inter-plugin-contracts/comment-prefix-registry-v1.md")
-EXPECTED_COUNT = 14  # v1.3: 11 phase + Preflight + GitOps + SECURITY-FALLBACK + bypass-justification (CFP-845)
+EXPECTED_COUNT = 15  # v1.4 (CFP-1336): 11 phase + Preflight + GitOps + SECURITY-FALLBACK + bypass-justification + CROSS-REPO-SYNC
 REQUIRED_FIELDS = {"prefix", "phase", "current_owner", "target_owner_plugin", "posters", "auto_mirror"}
 
 if not REGISTRY.exists():

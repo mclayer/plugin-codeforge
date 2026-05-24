@@ -1,32 +1,37 @@
 ---
 kind: registry
 registry: comment-prefix
-version: "1.3"
+version: "1.4"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/comment-prefix-registry-v1.md
-date: 2026-05-17
+date: 2026-05-24
 authors:
   - Claude (CFP-32 codification — CFP-31 ζ arc parent design 기반)
   - CFP-139 (2026-05-09) — v1.0 → v1.1 MINOR bump (`[GitOps]` prefix 추가, ADR-047)
   - CFP-658 (2026-05-14) — v1.1 → v1.2 MINOR bump (`[SECURITY-FALLBACK]` prefix 추가, ADR-027 Amendment 2)
   - CFP-845 (2026-05-17) — v1.2 → v1.3 MINOR bump (`[bypass-justification]` prefix 추가, ADR-024 Amendment 8 §결정 6.A.4 carrier)
+  - CFP-1336 (2026-05-24) — v1.3 → v1.4 MINOR bump (`[CROSS-REPO-SYNC]` prefix 추가, ADR-073 Amendment 9 + ADR-082 Amendment 14 + ADR-066 Amendment 4 carrier — cross-repo bidirectional label sync workflow audit channel)
 related_adrs:
   - ADR-008 (Inter-plugin Contract Versioning)
   - ADR-009 (Wrapper-only core + writer-distributed lane plugins, CFP-31 신설 예정)
   - ADR-047 (GitOpsAgent — CFP-139, [GitOps] prefix carrier)
   - ADR-027 Amendment 2 (Action-blocked fallback — CFP-658, [SECURITY-FALLBACK] prefix carrier)
   - ADR-024 Amendment 8 (bypass-as-norm-mutation 후속 escalation — CFP-845 §결정 6.A.4, [bypass-justification] prefix carrier)
+  - ADR-073 Amendment 9 (cross-repo bidirectional label sync verify-before-assert mandate — CFP-1336, [CROSS-REPO-SYNC] prefix carrier)
+  - ADR-082 Amendment 14 (§결정 1 layer 1 sub-scope 1-D cross-repo label-write authority — CFP-1336, [CROSS-REPO-SYNC] prefix paired sibling)
+  - ADR-066 Amendment 4 (§결정 2 scope minimum 6번째 entry cross-repo-target-repos issues:write — CFP-1336, [CROSS-REPO-SYNC] prefix paired sibling PAT scope grant layer)
 related_files:
   - agents/DocsAgent.md (이전 narrative SSOT — 본 registry 신설 후 cross-ref로 변경)
   - docs/orchestrator-playbook.md
+  - templates/github-workflows/cross-repo-label-sync.yml (CFP-1336 Wave 2 carrier — [CROSS-REPO-SYNC] prefix 자동 게시 source)
 ---
 
-# comment-prefix-registry v1.3
+# comment-prefix-registry v1.4
 
 ## 1. 목적
 
-GitHub Issue 코멘트의 phase prefix (11종 + Orchestrator Preflight 1종 + GitOps 1종 + SECURITY-FALLBACK 1종 + bypass-justification 1종 = 총 14종, v1.3) machine-readable SSOT. ζ arc 진행에 따라 lane plugin이 자기 lane prefix로 직접 코멘트 게시 시점에 단일 형식·시맨틱·posters 보장.
+GitHub Issue 코멘트의 phase prefix (11종 + Orchestrator Preflight 1종 + GitOps 1종 + SECURITY-FALLBACK 1종 + bypass-justification 1종 + CROSS-REPO-SYNC 1종 = 총 15종, v1.4) machine-readable SSOT. ζ arc 진행에 따라 lane plugin이 자기 lane prefix로 직접 코멘트 게시 시점에 단일 형식·시맨틱·posters 보장.
 
 ## 2. Schema
 
@@ -180,6 +185,17 @@ prefixes:
       - "<PR author>"            # 자율 게시 (hotfix-bypass:* label 부착자 책임)
       - Orchestrator             # PR author 가 보충 필요 시 추가 게시 (자율 audit 보강)
     auto_mirror: false
+
+  - prefix: "[CROSS-REPO-SYNC]"                 # NEW in v1.4 (CFP-1336 / ADR-073 Amendment 9 + ADR-082 Amendment 14 + ADR-066 Amendment 4)
+    phase: cross-repo-sync
+    current_owner: "cross-repo-label-sync.yml workflow + Orchestrator (CFP-1336 Wave 2 wire 후 자동 게시)"
+    target_owner_plugin: "core wrapper (Orchestrator 직접 게시 또는 cross-repo-label-sync.yml workflow 자동 게시 — workflow grep-presence audit 대상)"
+    scope: "cross-repo bidirectional label sync workflow (wrapper Story Issue ↔ impl repo PR labels) 의 audit channel comment — (a) warning: PAT 부재 / linked PR 부재 / cross-org reject 시 graceful skip 안내 / (b) skip: 4-pattern T-2 self-trigger guard AND fail (sender.type / actor-allowlist / `[skip-cross-repo-sync]` marker / idempotent diff) 시 audit trail / (c) sync 완료: bidirectional sync success 시 verified-via annotation 포함 audit. ADR-073 Amendment 9 §결정 1-A 9번째 entry `label_change` verify-before-assert 4-step + ADR-082 Amendment 14 sub-scope 1-D 4-tuple write authority verify + ADR-066 Amendment 4 §결정 2 6번째 entry PAT scope grant 정합."
+    example: "[CROSS-REPO-SYNC] 본 PR 은 CODEFORGE_CROSS_REPO_PAT secret 미설정으로 degraded mode — manual label sync required (ADR-027 Amendment 2 fallback:manual 정합, ADR-073 Amendment 9 §결정 1-A 9번째 entry label_change trigger graceful skip + verify-before-assert 4-step 정합)."
+    posters:
+      - Orchestrator                                  # Wave 2 wire 후 직접 게시 (audit 보강 + manual sync 안내)
+      - "cross-repo-label-sync.yml (자동)"             # Wave 2 wire 시점부터 workflow 자동 audit comment
+    auto_mirror: false
 ```
 
 ## 4. 변경 규칙
@@ -200,3 +216,4 @@ prefixes:
 | **CFP-139** | **v1.1** | **MINOR bump** — `[GitOps]` prefix 추가 (GitOpsAgent self-write 영역, codeforge-pmo plugin sibling teammate). ADR-047 carrier. Append-only for v1.x rule 정합. 11 → 12 phase prefix taxonomy. |
 | **CFP-658** | **v1.2** | **MINOR bump** — `[SECURITY-FALLBACK]` prefix 추가 (manual fallback path audit-trailed channel, fallback:manual label 부착 PR scope). ADR-027 Amendment 2 carrier. Append-only for v1.x rule 정합. 12 → 13 phase prefix taxonomy. label-registry-v2 v2.12 changelog declaration ↔ comment-prefix-registry-v1 entry 양 channel 정합 (`F-CDX-004` 해소). [verified-via: git show origin/main:docs/inter-plugin-contracts/comment-prefix-registry-v1.md] |
 | **CFP-845** | **v1.3** | **MINOR bump** — `[bypass-justification]` prefix 추가 (hotfix-bypass:* label 부착 PR 의 narrative audit trail mechanical enforce carrier, ADR-024 Amendment 8 §결정 6.A.4). Append-only for v1.x rule 정합. 13 → 14 phase prefix taxonomy. `bypass-justification-marker.yml` workflow (CFP-845 Phase 2 carrier) 의 grep-presence lint 가 본 prefix 단일 source. semantic adequacy 불가 (grep-only) — false-positive risk 명시, reviewer responsibility. self-meta loop 회피 = `hotfix-bypass:bypass-justification-marker` 부착 PR (38번째 family member, ADR-024 Amendment 8) 은 marker presence check skip. [verified-via: git show origin/main:docs/inter-plugin-contracts/comment-prefix-registry-v1.md — v1.2 active 확인 후 v1.3 MINOR bump] |
+| **CFP-1336** | **v1.4** | **MINOR bump** — `[CROSS-REPO-SYNC]` prefix 추가 (cross-repo bidirectional label sync workflow audit channel, `templates/github-workflows/cross-repo-label-sync.yml` Wave 2 wire 의 audit comment 대상). ADR-073 Amendment 9 + ADR-082 Amendment 14 + ADR-066 Amendment 4 paired sibling carrier — 3 ADR Amendment 동시 발의 axis disjoint complement 3-set (verify subject layer ADR-073 Amd 9 ↔ write authority layer ADR-082 Amd 14 ↔ PAT scope grant layer ADR-066 Amd 4). Append-only for v1.x rule 정합. 14 → 15 phase prefix taxonomy. 3-purpose channel (warning / skip / sync 완료 audit) — Wave 2 wire 후 cross-repo-label-sync.yml workflow 자동 게시 + Orchestrator 직접 게시 양 channel. CFP-1302 D-4 chief tie-break dissent carry-over F2 carrier. [verified-via: git show origin/main:docs/inter-plugin-contracts/comment-prefix-registry-v1.md — v1.3 active 확인 + 14 prefix entry count 후 v1.4 MINOR bump, 2026-05-24 KST origin/main d24ab28] |

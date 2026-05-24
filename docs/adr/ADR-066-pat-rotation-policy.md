@@ -38,6 +38,12 @@ amendments:
     summary: "§결정 2 scope minimum 4종 → 5종 갱신 — `reconcile-target-repos contents:write + pull_requests:write` grant 추가. CFP-743 (Wave 2 Story-3) UpgradeAgent + `scripts/codeforge-upgrade.{sh,ps1}` CLI 의 reconcile 가 9 desired_state_domains 중 `github_workflow` / `issue_templates` / `codeowners` 영역 reconcile 시 consumer repo `.github/` 영역에 자동 생성 PR 을 open 해야 함 (reconcile-protocol-v1 §2 desired_state_domains `byte_identical_mirror` / `template_export_manual_instantiate` mode). 현재 4 scope 는 cross-repo Issue comment / sub-issue / marketplace contents:read 만 — consumer repo content write + PR open 권한 부재 (FeasibilityAgent §4.2 MEDIUM 장벽). least-privilege 정합 — scope target = consumer reconcile 대상 repo 한정 (org-wide write 금지), action = `contents:write` (file mirror) + `pull_requests:write` (PR open) 2종만. Strengthening direction only (scope 확장 = ADR-064 top-down ratchet 정합 — weakening 아님). ADR-013 Amendment 4 단일 PAT consolidation 정책 무변경 (별도 PAT 신설 X — 단일 PAT scope 확장). Audit log placeholder row append (`docs/security/pat-rotation-log.md` Phase 1 placeholder + Phase 2 actual grant date — Phase 2 PR description checklist forcing function 의무, Amendment 2 F-DR-004 option b precedent 답습)."
     is_transitional: false
     sunset_justification: "N/A — permanent security policy. ADR-058 §결정 7 security ADR default presumption 정합 (is_transitional: false). ADR-064 §self-application top-down ratchet 정합 (Amendment 3 = scope 확장 강화 방향 only — reconcile target 한정 least-privilege). 약화 방향 (scope 축소 / org-wide write 확대 / lifetime 연장 / rotation cadence 약화) 발의 차단."
+  - amendment: 4
+    date: 2026-05-24
+    cfp: CFP-1336
+    summary: "§결정 2 scope minimum 5종 → 6종 갱신 — `cross-repo-target-repos issues:write (label endpoint)` grant 추가. CFP-1336 (Cross-repo bidirectional label sync — wrapper Story Issue ↔ impl repo PR labels) 의 `templates/github-workflows/cross-repo-label-sync.yml` (Wave 2 carrier) workflow 가 cross-repo label state mutation (write) 권한을 요구 — wrapper repo Story Issue label change event 수신 → impl repo PR label sync write + impl repo PR label change event 수신 → wrapper Story Issue label sync write (bidirectional). 현재 5 scope (repo:read / repo:write / metadata:read / marketplace contents:read / reconcile-target-repos contents:write + pull_requests:write) 안 cross-repo label endpoint write 권한 부재 — least-privilege 정합 신규 scope 의무. scope target = `mclayer/plugin-codeforge` (wrapper) ↔ impl repo (consumer Phase 2 PR repo) 한정 (fine-grained PAT repository access list 강제, org-wide write 절대 금지). action = `issues:write` (label endpoint) 1종만 — `contents:write` / `workflows:write` / `admin:*` / `delete_repo` 등 escalation scope 미부여 (self-modification escalation 차단). Strengthening direction only (scope 확장 = ADR-064 top-down ratchet 정합 — weakening 아님). ADR-013 Amendment 4 단일 PAT consolidation 정책 무변경 (별도 PAT 신설 X — 단일 CODEFORGE_CROSS_REPO_PAT scope 확장, 6번째 consumer workflow phase-gate-mergeable.yml / rate-limit-fallback-kpi.yml / marketplace-drift-detection.yml / UpgradeAgent reconcile / 신규 cross-repo-label-sync.yml). paired sibling ADR-073 Amendment 9 §결정 1 (transition trigger `label_change` 9번째 entry, verify subject layer) + ADR-082 Amendment 14 §결정 1 layer 1 sub-scope (1-D) cross-repo label-write authority (write authority layer) — 3 ADR Amendment 동시 발의 (CFP-1336 carrier, axis disjoint complement 3-set: verify subject ↔ write authority ↔ PAT scope grant, ADR-064 §결정 1 CFP scope unitary 정합). Audit log placeholder row append (`docs/security/pat-rotation-log.md` 4번째 row Phase 1 placeholder + Phase 2 actual grant date — Amendment 2/3 precedent 답습, Phase 2 PR description checklist forcing function 의무). CFP-1302 D-4 chief tie-break dissent carry-over F2 carrier — sentinel-driven 아닌 ratchet 확장 carrier."
+    is_transitional: false
+    sunset_justification: "N/A — permanent security policy. ADR-058 §결정 7 security ADR default presumption 정합 (is_transitional: false). ADR-064 §self-application top-down ratchet 정합 (Amendment 4 = scope 확장 강화 방향 only — cross-repo-target-repos 한정 least-privilege + action 1종만 issues:write label endpoint). 약화 방향 (scope 축소 / org-wide write 확대 / action escalation contents:write 또는 admin / lifetime 연장 / rotation cadence 약화) 발의 차단."
 mechanical_enforcement_actions: []
 ---
 
@@ -72,9 +78,9 @@ CFP-450 이 도입한 consolidation 자체는 secret governance 의 첫 단계 (
 
 90 days 는 GitHub 권장 best practice + codeforge family 의 cross-repo 활성 활동 기간 (CFP cycle 평균 1-2 weeks × 8-10 Story = 분기 1회 회전이 정상 사용 cycle 과 align).
 
-### 결정 2 — Scope minimum (least privilege) (Amendment 3, CFP-743 — 4종 → 5종 갱신)
+### 결정 2 — Scope minimum (least privilege) (Amendment 4, CFP-1336 — 5종 → 6종 갱신)
 
-PAT 발급 시 다음 5 scope 만 부여:
+PAT 발급 시 다음 6 scope 만 부여:
 
 | Scope | 사용처 | 도입 carrier |
 |---|---|---|
@@ -83,6 +89,7 @@ PAT 발급 시 다음 5 scope 만 부여:
 | `metadata:read` | basic repo access | CFP-521 (initial) |
 | **`marketplace contents:read`** | **`marketplace-drift-detection.yml` (CFP-627) — `mclayer/marketplace/.claude-plugin/marketplace.json` fetch** | **CFP-627 ADR-066 Amendment 2 (binds ADR-063 Amendment 3 §결정 13 — post-rebase shift)** |
 | **`reconcile-target-repos contents:write + pull_requests:write`** | **`scripts/codeforge-upgrade.{sh,ps1}` + UpgradeAgent (CFP-743) — reconcile 가 9 desired_state_domains 중 `github_workflow` / `issue_templates` / `codeowners` 영역 reconcile 시 consumer reconcile 대상 repo `.github/` 영역에 자동 생성 PR open. scope target = consumer reconcile 대상 repo 한정 (org-wide write 금지), action = `contents:write` (file mirror) + `pull_requests:write` (PR open) 2종만** | **CFP-743 ADR-066 Amendment 3 (binds reconcile-protocol-v1 §2 desired_state_domains `byte_identical_mirror` / `template_export_manual_instantiate` mode)** |
+| **`cross-repo-target-repos issues:write (label endpoint)`** | **`cross-repo-label-sync.yml` (CFP-1336 / ADR-073 Amendment 9 + ADR-082 Amendment 14 sub-scope 1-D paired sibling Wave 2 carrier) — cross-repo bidirectional label sync workflow (wrapper repo Story Issue label change event 수신 → impl repo PR label sync write + impl repo PR label change event 수신 → wrapper Story Issue label sync write). scope target = `mclayer/plugin-codeforge` (wrapper) ↔ impl repo (consumer Phase 2 PR repo) 한정 (fine-grained PAT repository access list 강제, org-wide write 절대 금지). action = `issues:write` (label endpoint) 1종만 — `contents:write` / `workflows:write` / `admin:*` / `delete_repo` 등 escalation scope 미부여 (self-modification escalation 차단)** | **CFP-1336 ADR-066 Amendment 4 (binds ADR-073 Amendment 9 §결정 1-A 9번째 entry `label_change` + ADR-082 Amendment 14 §결정 1 layer 1 sub-scope 1-D cross-repo label-write authority — 3 ADR Amendment 동시 발의 axis disjoint complement 3-set)** |
 
 `admin:org` / `delete_repo` / `workflow` / `gist` / org-wide `contents:write` / 기타 광역 scope 부여 금지. `reconcile-target-repos contents:write + pull_requests:write` 는 **fine-grained PAT 의 repository access 를 reconcile 대상 consumer repo 로 명시 제한** (org-wide 금지 — least-privilege 핵심 invariant). 향후 신규 workflow 가 추가 scope 필요 시 별도 ADR 보완 의무.
 
@@ -108,6 +115,38 @@ reconcile 의 `--apply` 가 silent direct push 가 아닌 **PR open 경유** (AD
 ADR-013 Amendment 4 (PAT consolidation) 정책 무변경 — 단일 PAT scope 확장 (별도 PAT 신설 X — single-PAT consolidation invariant 보존).
 
 **Grant 절차**: 본 ADR-066 §결정 3 5-step rotation 절차 inline trigger (사용자 manual blocker, Phase 2 진입 전 pre-clear). Phase 1 PR audit log entry placeholder (`docs/security/pat-rotation-log.md`) + Phase 2 진입 전 actual grant date 갱신 의무.
+
+**Amendment 4 (CFP-1336) rationale (SecurityArchitectAgent + InfraOperationalArchitectAgent + ArchitectAnalyst integration)**:
+
+CFP-1336 (Cross-repo bidirectional label sync — wrapper Story Issue ↔ impl repo PR labels) 가 cross-repo write 영역의 **두 번째 PAT consumer workflow** 신설 (Amendment 3 의 `reconcile-target-repos contents:write + pull_requests:write` UpgradeAgent reconcile 직후 sequential). `cross-repo-label-sync.yml` (Wave 2 carrier) workflow 는 bidirectional label state mutation 권한 요구 — wrapper repo Story Issue label change event 수신 → impl repo PR label sync write + impl repo PR label change event 수신 → wrapper Story Issue label sync write.
+
+현재 5 scope (Amendment 3 까지) 는 다음 영역 cover:
+- `repo:read` (KPI workflow internal-docs scan)
+- `repo:write` (cross-repo Issue comment / sub-issue link)
+- `metadata:read` (basic repo access)
+- `marketplace contents:read` (marketplace.json fetch)
+- `reconcile-target-repos contents:write + pull_requests:write` (UpgradeAgent reconcile PR open)
+
+**Cross-repo label endpoint write 권한 부재** — `repo:write` scope 는 same-repo label write 만 (cross-repo Issue comment 영역). cross-repo label endpoint = 별 grant 영역 (GitHub fine-grained PAT scope schema 정합 — `issues:write` permission per-repo grant).
+
+**Least-privilege 핵심 결정 (보안 변호자 입장)**:
+
+1. **Scope target 한정** — `cross-repo-target-repos` = `mclayer/plugin-codeforge` (wrapper, source-of-truth Story Issue) + impl repo (consumer Phase 2 PR repo, bidirectional sync target) 2-repo 한정 (fine-grained PAT 의 repository access list 로 강제). org-wide `issues:write` 절대 금지 — sync 무관 repo 노출 차단.
+2. **Action 한정 1종** — `issues:write` (label endpoint) 만. `contents:write` / `workflows:write` / `admin` / `secrets` 등 escalation scope 미부여 — workflow self-modification escalation 차단 (cross-repo-label-sync.yml workflow 가 자기 자신을 수정 / 다른 workflow file 을 수정 / repo 설정 변경하는 escalation 차단). label endpoint = GitHub REST API `POST/DELETE /repos/{owner}/{repo}/issues/{issue_number}/labels` 의 minimum-required scope subset.
+3. **4-pattern T-2 self-trigger guard AND invariant 정합** — Amendment 4 scope grant 자체가 T-2 self-trigger loop risk 영역 진입 (cross-repo PAT write = trigger 발화). ADR-073 Amendment 9 §결정 1-N (paired sibling) 의 4-pattern AND guard invariant (sender.type / actor-allowlist / `[skip-cross-repo-sync]` marker / idempotent diff) 가 본 scope grant 의 trigger loop 차단 invariant 보장 — scope grant 자체는 least-privilege 영역, T-2 차단은 별 layer (ADR-082 Amendment 14 sub-scope 1-D + ADR-073 Amendment 9 §결정 1-N 정합).
+4. **ADR-064 top-down ratchet 정합** — scope 확장은 강화 방향. 단 target/action 한정으로 blast radius 최소화 (scope 확장 ≠ 무제한 권한, action 1종만 가장 narrow). Amendment 2/3 precedent 답습 (4종 → 5종 → 6종, 각 Amendment 마다 target/action 한정 verify-via design lane review).
+
+**Paired sibling 3 ADR Amendment 동시 발의** (CFP-1336 carrier, axis disjoint complement 3-set):
+
+- 본 Amendment 4 (ADR-066) = **PAT scope grant layer** (least-privilege scope minimum 6번째 entry, fine-grained PAT repository access list 강제)
+- ADR-073 Amendment 9 = **verify subject layer** (Orchestrator self-assertion verify, transition trigger `label_change` 9번째 entry)
+- ADR-082 Amendment 14 = **write authority layer** (internal lane agent self-write authority 4-tuple verify, sub-scope 1-D)
+
+3 layer disjoint codify — 단일 super-class "cross-repo bidirectional label sync" 의 3 layer 분리 (ADR-064 §결정 1 CFP scope unitary 정합).
+
+ADR-013 Amendment 4 (PAT consolidation) 정책 무변경 — 단일 PAT scope 확장 (별도 PAT 신설 X — single-PAT consolidation invariant 보존, 6번째 consumer workflow `cross-repo-label-sync.yml` 추가).
+
+**Grant 절차 (Amendment 4)**: 본 ADR-066 §결정 3 5-step rotation 절차 inline trigger (사용자 manual blocker, Phase 2 (CFP-1336 Wave 2 carrier) 진입 전 pre-clear). Phase 1 PR audit log entry placeholder (`docs/security/pat-rotation-log.md` 4번째 row) + Phase 2 진입 전 actual grant date 갱신 의무 (Amendment 2/3 placeholder pattern verbatim 답습).
 
 ### 결정 3 — Rotation 절차 (5-step)
 

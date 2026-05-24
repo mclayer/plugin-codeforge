@@ -240,7 +240,7 @@ N/A — permanent policy
 - [ADR-044](ADR-044-phase-scoped-sequential-team.md) — Amendment N team-spec yaml schema 확장
 - [ADR-057](ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) — §결정 3 sequential composition cross-ref (cross-model substitution axis disjoint)
 - [ADR-064](ADR-064-decision-principle-mandate.md) — §결정 4 Trace 4 Amendment N surgical exception channel
-- [ADR-067](ADR-067-max-fix-3-3-cap-and-implementability-reassessment.md) — §결정 9 RESET contamination 차단 cross-ref
+- [ADR-067](ADR-067-fix-ledger-implementability-escalation.md) — §결정 9 RESET contamination 차단 cross-ref
 - [ADR-068](ADR-068-boundary-completeness-invariants.md) — I-3 defense-in-depth (§결정 10) + I-5 dimensional empirical grounding (§결정 2)
 - [ADR-082](ADR-082-write-time-self-write-verification-mandate.md) — §결정 6 retain pattern 답습 (declaration-only Wave 1)
 - [ADR-097](ADR-097-paradigm-replacement-governance-anchor.md) — closed-set 3 조건 AND 미충족 (paradigm replacement 비대상)
