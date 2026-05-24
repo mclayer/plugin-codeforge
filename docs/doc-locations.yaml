@@ -3,9 +3,9 @@
 # Source-of-truth: ADR-041
 # Lint: scripts/check-doc-locations.sh
 # Regen markdown: scripts/check-doc-locations.sh --regen
-schema_version: "1.1"
+schema_version: "1.2"
 introduced_by: CFP-276 (issue #276)
-last_updated: 2026-05-22  # CFP-1256 W4-S13 — schema_version 1.0→1.1 (confluence variant 신규 추가: allowed_variants + allowed_placeholders + adr/change_plan/retro/inter_plugin_contract 4 entry confluence variant, ADR-103 §결정 5 R2 fold). | CFP-1059 — Deploy lane + Deploy Review lane 신설 (Phase 1 declarative): 신규 doc type 추가 0 (Story §12 배포 manifest / §13 배포 검증 evidence = Story file 안 sub-section 영역, lane plugin self-write 영역). actual deploy-manifest / deploy-review-evidence file path location 결정 = S2/S3 sub-Story carrier (lane plugin seed 신설 후 doc taxonomy 변경 검토). 본 registry 변경 0 (CFP-1059 Phase 1). | CFP-991 — promotion_criteria_4tuple_artifact 신설 (Wave 4 sub-Epic #1 Story-4 carrier — canary promotion criteria 4-tuple SSOT artifact location: docs/domain-knowledge/domain/production-cutover/promotion-criteria-4tuple.md, ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14 carrier, 16번째 entry). | CFP-949 — Sub-Epic 6 lane plugin self-owned architecture_doc seed completion (architecture_doc entry 의 examples row expand; 신규 doc type 추가 없음). CFP-954 — integration_test_baseline 신설 (Wave 4 sub-Epic #882 Story-3 carrier — IntegrationTestAgent Epic-level reactivation first activation, ADR-055 Amendment 3 + ADR-72 §결정 1 mandate first activation 동반). CFP-946-A — codex-collaboration narrative SSOT 신설 (domain_knowledge entry 의 examples row append; 신규 doc type 추가 없음)
+last_updated: 2026-05-24  # CFP-1256 W4-S13 — schema_version 1.0→1.1 (confluence variant 신규 추가: allowed_variants + allowed_placeholders + adr/change_plan/retro/inter_plugin_contract 4 entry confluence variant, ADR-103 §결정 5 R2 fold). | CFP-1059 — Deploy lane + Deploy Review lane 신설 (Phase 1 declarative): 신규 doc type 추가 0 (Story §12 배포 manifest / §13 배포 검증 evidence = Story file 안 sub-section 영역, lane plugin self-write 영역). actual deploy-manifest / deploy-review-evidence file path location 결정 = S2/S3 sub-Story carrier (lane plugin seed 신설 후 doc taxonomy 변경 검토). 본 registry 변경 0 (CFP-1059 Phase 1). | CFP-991 — promotion_criteria_4tuple_artifact 신설 (Wave 4 sub-Epic #1 Story-4 carrier — canary promotion criteria 4-tuple SSOT artifact location: docs/domain-knowledge/domain/production-cutover/promotion-criteria-4tuple.md, ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14 carrier, 16번째 entry). | CFP-949 — Sub-Epic 6 lane plugin self-owned architecture_doc seed completion (architecture_doc entry 의 examples row expand; 신규 doc type 추가 없음). CFP-954 — integration_test_baseline 신설 (Wave 4 sub-Epic #882 Story-3 carrier — IntegrationTestAgent Epic-level reactivation first activation, ADR-055 Amendment 3 + ADR-72 §결정 1 mandate first activation 동반). CFP-946-A — codex-collaboration narrative SSOT 신설 (domain_knowledge entry 의 examples row append; 신규 doc type 추가 없음). | CFP-1420 — schema_version 1.1→1.2 MINOR bump: confluence_variant sub-tree 신규 활성 (ADR-111 §결정 1 closed-enum 4 mirror 대상 영역 — adr/architecture_doc/change_plan/domain_knowledge), 4 fields (page_id_pattern / authoritative_source: git immutable / mirror_direction: git_to_confluence immutable / last_synced_at). + ADR-111 §결정 2 closed-enum 5 Issue-only retain 면제 영역 (story_file + decision_packet yaml-matching entry) confluence_variant: null explicit declare. backward-compat retain: 기존 variants.confluence URL pattern (adr/change_plan/retro/inter_plugin_contract 4 entry) 보존 (ADR-111 partial activation 영역, 별 carrier). Note: #1420 body 의 "ADR-107" cite = sibling Story #1419 race resolution 후 ADR-111 으로 변경 (ADR-107~110 모두 다른 CFP 점유, CFP-1419 가 ADR-111 신설).
 
 allowed_variants:
   - single_repo
@@ -74,6 +74,7 @@ doc_types:
       multi_repo_hub: "<hub-repo>/docs/stories/<KEY>.md"
       multi_repo_impl: "<impl-repo>/docs/stories/<KEY>.md"
       dogfood: "mclayer/codeforge-internal-docs/<plugin-folder>/stories/<KEY>.md"
+    confluence_variant: null   # CFP-1420 / ADR-111 §결정 2 — Issue-only retain 면제 영역 (Story file + 안 sub-section FIX Ledger §10 + Lane Evidence §14 모두 Issue-only retain, Confluence mirror 0)
     owner_agent: codeforge-requirements:RequirementsPLAgent
     introduced_by: CFP-1
     naming_pattern: "[A-Z]+-[0-9]+\\.md"
@@ -98,6 +99,11 @@ doc_types:
     variants:
       single_repo: "<owner-repo>/docs/adr/ADR-NNN-<slug>.md"
       confluence: "https://<confluence-instance>/wiki/spaces/<space-key>/pages/<page-id>"  # CFP-1256 / ADR-103 §결정 5 R2 — readable mirror (git = SoR-work, Confluence = authoritative readable mirror, 실 값 = consumer overlay atlassian.* 주입)
+    confluence_variant:
+      page_id_pattern: "<placeholder>"   # CFP-1420 / ADR-111 §결정 1 — Sub-B 영역 실 page_id stamp (per-doc page id)
+      authoritative_source: git          # immutable (ADR-111 §결정 1, single-direction git→Confluence)
+      mirror_direction: git_to_confluence   # immutable (ADR-111 §결정 1)
+      last_synced_at: null               # Sub-B sync engine write (ADR-103 mechanism)
     owner_agent: codeforge-design:ArchitectAgent
     introduced_by: CFP-26
     naming_pattern: "ADR-[0-9]{3}-[a-z0-9-]+\\.md"
@@ -110,12 +116,18 @@ doc_types:
       confluence variant (CFP-1256 / ADR-103 §결정 5 R2): git→Confluence one-way sync readable mirror.
       실 Confluence URL = consumer overlay project.yaml atlassian.confluence.base_url + space_key + page_id 주입.
       git = SoR-work invariant (ADR-100 §결정 1) — Confluence 는 readable mirror 이지 SoR 아님.
+      CFP-1420 / ADR-111 §결정 1 — confluence_variant sub-tree 활성 (mirror 대상 closed-enum 4 영역). page_id stamp = Sub-B 영역 sync engine.
 
   - name: change_plan
     variants:
       single_repo: "<owner-repo>/docs/change-plans/<slug>.md"
       dogfood: "mclayer/codeforge-internal-docs/<plugin-folder>/change-plans/<slug>.md"
       confluence: "https://<confluence-instance>/wiki/spaces/<space-key>/pages/<page-id>"  # CFP-1256 / ADR-103 §결정 5 R2 — readable mirror
+    confluence_variant:
+      page_id_pattern: "<placeholder>"   # CFP-1420 / ADR-111 §결정 1 — Sub-B 영역 실 page_id stamp
+      authoritative_source: git          # immutable (ADR-111 §결정 1)
+      mirror_direction: git_to_confluence   # immutable (ADR-111 §결정 1)
+      last_synced_at: null               # Sub-B sync engine write (ADR-103 mechanism)
     owner_agent: codeforge-design:ArchitectAgent
     introduced_by: CFP-7
     naming_pattern: "[a-z0-9-]+\\.md"
@@ -126,6 +138,7 @@ doc_types:
     notes: |
       ADR-013: codeforge family = internal-docs <plugin>/change-plans/.
       confluence variant (CFP-1256 / ADR-103 §결정 5 R2): dogfood-out docs (MOVE path, ADR-013) 의 Confluence readable mirror. git = SoR-work invariant.
+      CFP-1420 / ADR-111 §결정 1 — confluence_variant sub-tree 활성 (mirror 대상 closed-enum 4 영역).
 
   - name: retro
     variants:
@@ -147,6 +160,12 @@ doc_types:
   - name: domain_knowledge
     variants:
       single_repo: "<owner-repo>/docs/domain-knowledge/<area>/<topic>.md"
+      confluence: "https://<confluence-instance>/wiki/spaces/<space-key>/pages/<page-id>"  # CFP-1420 / ADR-111 §결정 1 — readable mirror (closed-enum 4 mirror 대상 영역, git = SoR-work invariant)
+    confluence_variant:
+      page_id_pattern: "<placeholder>"   # CFP-1420 / ADR-111 §결정 1 — Sub-B 영역 실 page_id stamp
+      authoritative_source: git          # immutable (ADR-111 §결정 1)
+      mirror_direction: git_to_confluence   # immutable (ADR-111 §결정 1)
+      last_synced_at: null               # Sub-B sync engine write (ADR-103 mechanism)
     owner_agent: codeforge-requirements:DomainAgent
     introduced_by: CFP-37
     naming_pattern: "[a-z0-9-]+\\.md"
@@ -159,6 +178,7 @@ doc_types:
       Mode-agnostic. DomainAgent self-write owner path (CFP-26 Phase 0a).
       CFP-946-A — `codex-collaboration/` sub-tree 신설 (ADR-052/070/081 narrative SSOT hub).
       Write owner extension = ArchitectAgent (codex-collaboration sub-tree = governance narrative).
+      CFP-1420 / ADR-111 §결정 1 — confluence variant + confluence_variant sub-tree 신설 (mirror 대상 closed-enum 4 영역 정합). git = SoR-work invariant (ADR-100 §결정 1).
 
   - name: spec
     variants:
@@ -188,6 +208,7 @@ doc_types:
   - name: decision_packet
     variants:
       dogfood: "mclayer/codeforge-internal-docs/<plugin-folder>/decisions/<packet_id>.yaml"
+    confluence_variant: null   # CFP-1420 / ADR-111 §결정 2 — Issue-only retain 면제 영역 (Decision Packet = Issue-only retain, Confluence mirror 0)
     owner_agent: orchestrator
     introduced_by: CFP-61
     naming_pattern: "[a-z0-9-]+\\.yaml"
@@ -291,6 +312,12 @@ doc_types:
     variants:
       single_repo: "<owner-repo>/docs/architecture/<topic>.md"
       dogfood: "mclayer/codeforge-internal-docs/<plugin-folder>/architecture/<topic>.md"
+      confluence: "https://<confluence-instance>/wiki/spaces/<space-key>/pages/<page-id>"  # CFP-1420 / ADR-111 §결정 1 — readable mirror (closed-enum 4 mirror 대상 영역, git = SoR-work invariant)
+    confluence_variant:
+      page_id_pattern: "<placeholder>"   # CFP-1420 / ADR-111 §결정 1 — Sub-B 영역 실 page_id stamp
+      authoritative_source: git          # immutable (ADR-111 §결정 1)
+      mirror_direction: git_to_confluence   # immutable (ADR-111 §결정 1)
+      last_synced_at: null               # Sub-B sync engine write (ADR-103 mechanism)
     owner_agent: codeforge-design:ArchitectAgent
     introduced_by: CFP-919
     naming_pattern: "[a-z0-9-]+\\.md"
