@@ -1,0 +1,56 @@
+: << 'CMDBLOCK'
+@REM Polyglot hook: stale-local-main-checkout (CFP-1410 / ADR-073 Amendment 9)
+@REM Adapted from superpowers 5.1.0 (MIT License) — codeforge polyglot pattern (CFP-475)
+@echo off
+REM SessionStart hook — stale-local-main-checkout divergence check
+REM Invokes scripts/check-stale-local-main-checkout.sh via Python SSOT
+REM Advisory only (warning tier, non-blocking — continue-on-error)
+
+set "REPO_ROOT=%~dp0.."
+if exist "C:\Program Files\Git\bin\bash.exe" (
+    "C:\Program Files\Git\bin\bash.exe" "%REPO_ROOT%\scripts\check-stale-local-main-checkout.sh"
+    exit /b 0
+)
+if exist "C:\Program Files (x86)\Git\bin\bash.exe" (
+    "C:\Program Files (x86)\Git\bin\bash.exe" "%REPO_ROOT%\scripts\check-stale-local-main-checkout.sh"
+    exit /b 0
+)
+where bash >nul 2>nul
+if %ERRORLEVEL% equ 0 (
+    bash "%REPO_ROOT%\scripts\check-stale-local-main-checkout.sh"
+    exit /b 0
+)
+exit /b 0
+CMDBLOCK
+
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT (file structure adapted from superpowers v5.1.0)
+# hooks/stale-local-main-checkout — SessionStart hook for stale divergence check
+#
+# CFP-1410 Phase 2 / ADR-073 Amendment 9
+# Carrier: stale-local-main-checkout-divergence-check evidence-checks-registry entry
+#
+# 책임 경계:
+#   - SessionStart 시점에 로컬 main 브랜치 vs origin/main divergence 를 advisory 출력.
+#   - advisory only — 실패해도 세션 차단 없음 (warning tier, non-blocking).
+#   - plain stdout SSOT (ADR-038 §결정 9 / CFP-475 polyglot convention 정합).
+#
+# Bypass:
+#   BYPASS_STALE_LOCAL_MAIN_CHECKOUT=1 — stderr audit echo + exit 0
+
+set -euo pipefail
+
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${HOOK_DIR}/.." && pwd)"
+
+SCRIPT="${REPO_ROOT}/scripts/check-stale-local-main-checkout.sh"
+
+if [ ! -f "${SCRIPT}" ]; then
+  # Script 없으면 silent skip (non-blocking 원칙)
+  exit 0
+fi
+
+# Run check — exit code 무시 (advisory, warning tier)
+bash "${SCRIPT}" 2>&1 || true
+
+exit 0

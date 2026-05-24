@@ -1,0 +1,43 @@
+# tests/scripts/MANIFEST.yaml
+# CFP-1410 Phase 2 / ADR-073 Amendment 9 — bats fixture manifest
+#
+# 목적: Phase 2 구현 bats 테스트 목록 + RED→GREEN stash proof evidence 등록
+# Schema: ArchitectPL Change Plan §3.11 (CFP-1410 design spec)
+# Owner: DeveloperPLAgent (self-write — codeforge-develop CLAUDE.md self-write 책임 표)
+#
+# RED→GREEN stash proof evidence (CFP-1334 §8.4 mandate):
+#   방법: git stash push -- <impl-file> → bats RED 확인 → git stash pop → bats GREEN 확인
+#   대상 impl 파일: scripts/lib/check_stale_local_main_checkout.py
+#                  scripts/lib/check_baseline_pin_verify.py
+
+version: "1.0"
+story_key: CFP-1410
+phase: 2
+generated_at: "2026-05-24"  # KST (ADR-079 §결정 6 forward-only)
+
+fixtures:
+  - file: tests/scripts/test_check-stale-local-main-checkout-sh.sh
+    description: "stale-local-main-checkout divergence check — bats 7 TC (T-1~T-7)"
+    impl_file: scripts/lib/check_stale_local_main_checkout.py
+    tc_count: 7
+    discriminating_count: 2  # T-1 (divergence detection) + T-5 (offline graceful)
+    regression_guard_count: 2  # T-6 (bypass) + T-7 (EC-5 feature branch)
+    red_green_proof:
+      pre_impl_sha: "761d877"
+      method: "git stash push -- scripts/lib/check_stale_local_main_checkout.py"
+      red_tcs: [1, 5]
+      green_all: true
+      platform_verified: ["linux"]
+
+  - file: tests/scripts/test_check-baseline-pin-verify-sh.sh
+    description: "baseline_pin field presence + freshness check — bats 4 TC (T-7~T-10)"
+    impl_file: scripts/lib/check_baseline_pin_verify.py
+    tc_count: 4
+    discriminating_count: 2  # T-7 (field absence) + T-8 (stale detection)
+    regression_guard_count: 2  # T-9 (valid pass) + T-10 (bypass)
+    red_green_proof:
+      pre_impl_sha: "761d877"
+      method: "git stash push -- scripts/lib/check_baseline_pin_verify.py"
+      red_tcs: [7, 8]
+      green_all: true
+      platform_verified: ["linux"]
