@@ -1,0 +1,88 @@
+# mid-spawn-drift-detection-check.yml
+#
+# WAVE 1 = declarative-only STUB
+# ----------------------------------
+# Sub-CFP B (CFP-1436) of CFP-1389 — Mid-flight rebase auto-detection mechanical
+# lint Epic. paired sibling of Sub-CFP A (CFP-1437):
+#   - Sub-CFP A = preventive (pre-spawn time PRE-SPAWN-ORIGIN-MAIN-SHA pin)
+#   - Sub-CFP B = reactive (mid-spawn time periodic origin re-pin + drift detection)
+#   - 양 layer 합쳐 2-layer defense forcing function 완결
+#
+# This workflow is a Wave 1 declarative anchor only. The actual mechanical wire
+# (subagent runtime hook + lint script + bats fixture + label-registry MINOR +
+# evidence-checks-registry Active entry) is deferred to Wave 2 sub-CFP carrier
+# (별 sub-CFP).
+#
+# Carrier ADRs:
+#   - ADR-073 Amendment 12 (§결정 1-A transition trigger 11번째 entry
+#     `mid_spawn_origin_drift_detected` + §결정 1-O primitive Mid-spawn rebase
+#     auto-detection protocol 3-step reactive verify-before-assert mandate)
+#   - ADR-082 Amendment 16 (§결정 1 layer 1 sub-scope (1-F) spawn-internal
+#     periodic origin re-pin protocol 4-tuple primitive)
+#
+# evidence-checks-registry entry name (Wave 2 carrier):
+#   - mid-spawn-drift-detection (warning tier deferred-followup)
+#
+# Hotfix bypass label (Wave 2 carrier):
+#   - hotfix-bypass:mid-spawn-drift-detection
+#
+# Wave 1 retain rationale: subagent runtime hook trigger heuristic 결정 (file
+# edit count vs time interval vs hybrid / cost overhead vs detection latency
+# tradeoff) = sentinel forward-prevention 후 Wave 2 mechanical wire 결정
+# (precedent CFP-963 codex-network-scope-presence + CFP-1336 cross-repo-label-sync +
+# CFP-1437 spawn-prompt-head-pin-presence 답습).
+#
+# Wave 2 carrier responsibilities (sub-CFP TBD):
+#   - subagent runtime hook (periodic check trigger heuristic — file edit count
+#     vs time interval vs hybrid, cost-aware design)
+#   - scripts/check-mid-spawn-drift-detection.sh (thin wrapper)
+#   - scripts/lib/check_mid_spawn_drift_detection.py (Python SSOT per ADR-061)
+#   - tests/scripts/test_check-mid-spawn-drift-detection.sh (bats fixture pair)
+#   - label-registry-v2 v2.NN MINOR bump (hotfix-bypass:mid-spawn-drift-detection
+#     family member append + ADR-108 §결정 3 description text count parity)
+#   - docs/evidence-checks-registry.yaml: new entry `mid-spawn-drift-detection`
+#     status: Active, current_tier: warning, owner_adr: ADR-073 / ADR-082
+#   - this file: actual workflow logic hydrate
+#     (PR-time pull_request + workflow_dispatch dual trigger split per CFP-954 D2 consensus)
+#
+# Detection scope (Wave 2 design — declarative anchor only):
+#   - subagent self-detect mid-spawn drift via periodic `git fetch origin main` +
+#     `git rev-parse origin/main` compare with PRE-SPAWN-ORIGIN-MAIN-SHA block value
+#   - drift threshold ≥ N commits behind (default N=1 any merge) → RETURN early
+#     with `drift_detected: true` flag + 4-key payload (pre_spawn_sha,
+#     current_origin_main_sha, commits_drift, drift_detected_at_step) +
+#     verified-via annotation (mid_spawn_drift_verified)
+#   - Orchestrator 가 RETURN 수신 시 3-way 결정: re-spawn / fast-fail / escalate
+#   - Wave 2 lint = subagent runtime hook installation verify + workflow trigger
+#     heuristic verify + RETURN payload schema enforcement
+#
+# Source-of-truth (Wave 1 anchor):
+#   - docs/adr/ADR-073-orchestrator-verify-before-assert.md `## Amendment 12`
+#   - docs/adr/ADR-082-write-time-self-write-verification-mandate.md `## Amendment 16`
+#   - <internal-docs>/plugin-codeforge/change-plans/cfp-1436-mid-flight-rebase-detection.md
+#   - <internal-docs>/plugin-codeforge/stories/CFP-1436.md
+
+name: mid-spawn-drift-detection-check (Wave 1 declarative stub)
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    # Wave 1 = declarative-only. Manual trigger only — no PR / push activation.
+    # Wave 2 carrier will replace with `pull_request: ` + `workflow_dispatch: ` dual trigger
+    # split per CFP-954 D2 consensus (production-cutover-evidence.yml byte-pattern 답습).
+
+jobs:
+  declarative-anchor:
+    name: Wave 1 declarative anchor (no-op)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sub-CFP B Wave 1 declarative-only carrier
+        run: |
+          echo "[INFO] CFP-1436 Sub-CFP B Wave 1 declarative-only carrier"
+          echo "[INFO] Mid-flight rebase auto-detection mechanical lint = Wave 2 별 sub-CFP carrier"
+          echo "[INFO] ADR-073 Amendment 12 + ADR-082 Amendment 16 paired carrier (declarative anchor only)"
+          echo "[INFO] paired sibling of Sub-CFP A (CFP-1437): preventive (pre-spawn pin) + reactive (mid-spawn drift detection) 2-layer defense complete"
+          echo "[INFO] No-op: actual mechanical wire deferred to Wave 2"
+          exit 0
