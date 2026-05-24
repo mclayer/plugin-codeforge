@@ -5,7 +5,7 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.2  
-**Last regen**: 2026-05-24T03:04:08Z  
+**Last regen**: 2026-05-24T03:37:57Z  
 **Registered doc types**: 16
 
 ## Summary table
@@ -298,13 +298,15 @@
 - **naming_pattern**: `[a-z0-9-]+\.md`
 - **frontmatter_required**: True
 - **examples**:
-  - mclayer/plugin-codeforge/docs/architecture/codeforge-family.md
+  - mclayer/plugin-codeforge/docs/architecture/codeforge-family.md (wrapper family overview seed — CFP-919 baseline + CFP-1427 Sub-C S3.3 5-anchor expand + 7→8 plugin family update)
   - mclayer/plugin-codeforge-requirements/docs/architecture/codeforge-requirements.md (CFP-968)
-  - mclayer/plugin-codeforge-design/docs/architecture/codeforge-design.md (CFP-969)
+  - mclayer/plugin-codeforge-design/docs/architecture/codeforge-design.md (CFP-969 + CFP-1086-S4 mctrader 5 repo cross-layer evidence)
   - mclayer/plugin-codeforge-develop/docs/architecture/codeforge-develop.md (CFP-970)
   - mclayer/plugin-codeforge-review/docs/architecture/codeforge-review.md (CFP-971)
   - mclayer/plugin-codeforge-test/docs/architecture/codeforge-test.md (CFP-972)
   - mclayer/plugin-codeforge-pmo/docs/architecture/codeforge-pmo.md (CFP-973)
+  - mclayer/plugin-codeforge-deploy/docs/architecture/codeforge-deploy.md (CFP-1059 declarative Phase 1 — plugin repo 신설 = S2 sub-Story carrier, body wire deferred)
+  - mclayer/plugin-codeforge-deploy-review/docs/architecture/codeforge-deploy-review.md (CFP-1059 declarative Phase 1 — plugin repo 신설 = S3 sub-Story carrier, body wire deferred)
   - mclayer/codeforge-internal-docs/wrapper/architecture/wrapper-overview.md (dogfood)
 
   **notes**:
@@ -320,6 +322,14 @@
   > lane 게이트 = S3 (#921) carrier. drift lint = S4 (#923) carrier.
   > parallel-edit policy = locked (architecture_doc = ArchitectAgent monopoly + design lane verdict gate).
   > Sub-Epic CFP-949 (2026-05-18) — 6 lane plugin self-owned seed (codeforge-{requirements,design,develop,review,test,pmo}) 추가, closing-the-loop 7 seed completion (wrapper 1 + lane 6).
+  > CFP-1059 / ADR-087+088 (2026-05-23) — Deploy lane + Deploy Review lane 신설 declarative Phase 1.
+  > 8 lane plugin family 확장 (6 → 8). 신규 2 plugin (codeforge-deploy + codeforge-deploy-review) self-owned arch doc
+  > examples row 신설 (declarative placeholder — plugin repo 신설 자체 = S2/S3 sub-Story carrier).
+  > CFP-1427 (Sub-C S3.3 / Mega-Epic CFP-1415 Sub-C bundle CFP-1418) — wrapper family.md 5-anchor section schema expand
+  > (ADR-078 Amendment 2 §결정 3 closed-enum: arc42 §3 Context+Scope / arc42 §5 Building Block / C4 Container /
+  > C4 Component / Open Decisions Pending). 6 lane plugin self-owned arch doc 5-anchor expand = follow-up sub-CFP 6
+  > carrier (cross-repo per-plugin write 영역, ADR-040 worktree-first invariant 정합 sequential carrier 분리).
+  > Mermaid/PlantUML diagram-as-code 의무 (ADR-111 §결정 4 + ADR-078 Amd 2 §결정 4) — Confluence native macro 회피.
 
 ### `promotion_criteria_4tuple_artifact`
 
