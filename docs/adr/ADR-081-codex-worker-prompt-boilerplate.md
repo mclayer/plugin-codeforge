@@ -106,6 +106,27 @@ mechanical_enforcement_actions:
   - action: codex-network-scope-presence
     status: deferred-followup     # registry yaml row append = Phase 1 PR; actual lint script + workflow wire = Phase 2 PR scope
     target_section: §결정 D1.D    # spawn prompt 안 network_scope field presence-grep heuristic (4-tier enum value OR boolean legacy advisory grace)
+  # Amendment 8 (CFP-1383, 2026-05-24) — D9 Codex worker dispatch prompt body
+  # origin/main fetch directive 신설 시 ADR-040 Amendment 3 §결정 7.A 의무 발효
+  # (D1-D8 본문 의미 변경 0, declaration-only retain 유지하면서 presence-grep
+  # mechanical lint layer 추가 = Amendment 4 precedent verbatim 답습).
+  # CFP-1412 Phase 2 mechanical wire carrier — lint script (scripts/check-codex-
+  # origin-main-directive-presence.sh + scripts/lib/check_codex_origin_main_
+  # directive_presence.py Python SSOT) + bats fixture pair (≥6 assertion +
+  # RED→GREEN stash proof per CFP-1334 §8.4) + 3 bats fixture text files +
+  # workflow byte-identical mirror (templates/ + .github/workflows/ ADR-005) +
+  # evidence-checks-registry codex-origin-main-directive-check entry (17 field
+  # schema, status: Active, tier: warning) + label-registry-v2 v2.54 → v2.55
+  # MINOR + hotfix-bypass:codex-origin-main-directive-check 76번째 family
+  # member append (META self-application 3rd applied case, raw active 75 +
+  # new 1 = 76 정합) + 본 frontmatter list append 2번째 entry.
+  # ADR-082 §결정 1 Layer 1 chief-author write-time verify 적용 — ArchitectAgent
+  # 가 origin/main 67a541a 안 mechanical_enforcement_actions[] state direct
+  # verify 후 list append (Story §2.1 row 4 stale framing 정정, intent invariant
+  # 보존 — `codex-origin-main-directive-check` 신규 entry 진입은 정합 그대로).
+  - action: codex-origin-main-directive-check
+    status: deferred-followup     # CFP-1412 Phase 2 wire activation 시 evidence-checks-registry status: Active (workflow PR-time fire) — 본 ADR frontmatter status 는 Amendment 4 precedent 답습 (deferred-followup retain, registry yaml = Active)
+    target_section: §결정 D9      # spawn prompt body 안 [ORIGIN-MAIN-DIRECTIVE] block presence-grep heuristic + closed-set 3 enum fallback marker (network_scope_offline / legacy_prompt_format / intentional_working_tree_verify)
 ---
 
 # ADR-081: Codex worker prompt boilerplate composition SSOT (3 mandatory section + verify-before-trust scope + 3-lane partition)
