@@ -29,6 +29,12 @@ amendment_log:
     summary: "§결정 9 신설 (production-scale invariant verify — bash script `set -uo pipefail` + pipe operator + 가변 size input source 3-조건 AND 충족 시 discriminating fixture ≥10× production-scale 의무 또는 here-string/process-substitution 대안 패턴 채택) + §결정 10 self-app. CFP-604 retro Mandatory framing (ADR-045 §D-9 / pattern_count 2: SIGPIPE bug + production-scale fixture gap, sibling = CFP-583). ratchet ↑ direction — ADR-058 §결정 5 면제."
     ratchet_direction: strengthen
     sunset_justification_required: false
+  - amendment: 3
+    date: 2026-05-24
+    carrier_story: CFP-1507
+    summary: "§결정 11 신설 (CodeQL ReDoS line-by-line parse mandate — Python `re` multi-line text parsing 시 catastrophic backtracking 가능 패턴 `(?:...)*?` / `(?:...)+?` / nested `[^x]*y...[^x]*y` 금지 + line-by-line scan 의무 + per-entry scan cap N=50 line + simple single-line anchored regex `^\\s*field:\\s*value\\s*$` 대안 패턴) + §결정 12 self-app. CFP-1497 PR #1499 sentinel evidence (RESERVATION_ENTRY_RE backtracking → GitHub CodeQL Advanced Security caught → e5b8631 fix line-by-line scan + 20-line per-entry cap) + CFP-1500/CFP-1502 verbatim 답습 — ADR-045 §D-9 pattern_count 3 reach Mandatory framing. Wave 1 declarative-only (ADR-061 = convention 자체 SSOT, mechanical enforcement = GitHub Advanced Security CodeQL default ReDoS detection covers). ratchet ↑ direction — ADR-058 §결정 5 면제."
+    ratchet_direction: strengthen
+    sunset_justification_required: false
 mechanical_enforcement_actions: []
 ---
 
@@ -329,3 +335,127 @@ bash script 가 다음 **3-조건 AND** 충족 시 production-scale discriminati
 ### 적용 사례 (Amendment 2 첫 self-applied carrier)
 
 본 Amendment 2 자체 적용 — CFP-1292 = ADR-061 Amendment 2 carrier + production-scale invariant 의 first-class codification carrier. Amendment 2 발효 후 신규 bash script 작성자 가 §결정 9 의무 인지 + CodeReviewPL anchor verify 영역 의무 확장.
+
+---
+
+## Amendment 3 (CFP-1507 — 2026-05-24 KST)
+
+### Context
+
+CFP-1497 PR #1499 (Wave 2-C of CFP-1389 — Amendment-slot reservation mechanical wire) merge 직후 **github-advanced-security[bot] CodeQL** 가 `scripts/lib/check_amendment_slot_reservation.py` 안 `RESERVATION_ENTRY_RE` regex 의 **catastrophic backtracking ReDoS** 패턴을 detect — `(?:\s+\w+:\s*[^\n]*\n)*?` lazy-quantifier nested 영역에서 adversarial input 에 대해 exponential time complexity 가능.
+
+fix commit `e5b8631` (CFP-1497 inline FIX iter 1):
+- Old: `(?:\s+\w+:\s*[^\n]*\n)*?` multi-line entry regex (lazy + character class + nested newline)
+- New: 2 simple line-anchored regexes (`^\s*-\s*adr_number:\s*(\d+)\s*$` + `^\s+amendment_id:\s*(\d+)\s*$`) + Python `splitlines()` line-by-line scan + per-entry scan cap 20 line
+
+CFP-1500 (Wave 2-B) + CFP-1502 (Wave 2-D) = CFP-1497 답습 wires — 같은 chief author pattern 으로 모든 신규 lint Python SSOT file 의 multi-line text parsing 영역에 line-by-line scan + per-entry cap pattern 채택 의무. 3 occurrence reach = pattern_count 3.
+
+PMOAgent retro corpus enumeration 결과 **pattern_count = 3 reach** — ADR-045 §D-9 mandatory framing `escalation_action: adr_draft_emitted` 발동.
+
+본 Amendment 는 **ratchet ↑ direction** (강화 방향 — 정책 scope 신규 추가 + 의무 강도 격상, 약화 방향 변경 0건). ADR-058 §결정 5 `sunset_justification` 의무 면제 (strengthen direction).
+
+### 결정 (Amendment delta)
+
+#### Amendment §결정 11: CodeQL ReDoS line-by-line parse mandate
+
+Python `re` module multi-line text parsing 시 다음 **catastrophic backtracking 가능 패턴 절대 금지**:
+
+1. **Lazy nested quantifier**: `(?:...)*?` / `(?:...)+?` / `(?:...){m,n}?` 형식 안 character class + newline 포함
+   - 예: `(?:\s+\w+:\s*[^\n]*\n)*?` (CFP-1497 sentinel)
+2. **Nested quantifier with negated class + sentinel**: `[^x]*y...[^x]*y` 형식 (NFA backtracking exponential)
+3. **Alternation with overlap**: `(a|ab)*` 형식 (양 branch prefix overlap)
+
+**의무 대체 패턴** (line-by-line scan):
+
+```python
+# Anti-pattern (금지)
+RESERVATION_ENTRY_RE = re.compile(
+    r"^\s*-\s*adr_number:\s*(\d+)\s*\n"
+    r"(?:\s+\w+:\s*[^\n]*\n)*?"  # ReDoS catastrophic backtracking
+    r"\s+amendment_id:\s*(\d+)\s*\n",
+    re.MULTILINE,
+)
+
+# Required pattern (line-by-line scan + per-entry cap)
+RESERVATION_ADR_NUMBER_RE = re.compile(r"^\s*-\s*adr_number:\s*(\d+)\s*$")
+RESERVATION_AMENDMENT_ID_RE = re.compile(r"^\s+amendment_id:\s*(\d+)\s*$")
+
+def _extract_entries(text, scan_cap=50):
+    entries = []
+    lines = text.splitlines()
+    n = len(lines)
+    for i, line in enumerate(lines):
+        adr_match = RESERVATION_ADR_NUMBER_RE.match(line)
+        if not adr_match:
+            continue
+        # Scan up to `scan_cap` subsequent lines for paired field
+        for j in range(i + 1, min(i + 1 + scan_cap, n)):
+            sub = lines[j]
+            # Stop at next entry boundary
+            if sub and not sub[0].isspace():
+                break
+            if RESERVATION_ADR_NUMBER_RE.match(sub):
+                break
+            am_match = RESERVATION_AMENDMENT_ID_RE.match(sub)
+            if am_match:
+                entries.append((adr_match.group(1), am_match.group(1)))
+                break
+    return entries
+```
+
+**Mandate primitives**:
+
+1. **Anchored simple regex**: 각 field 마다 단일 line anchored regex (`^\s*key:\s*value\s*$`)
+2. **Line-by-line scan**: `for line in text.splitlines()` 또는 `for i, line in enumerate(lines)` 형식
+3. **Per-entry scan cap**: default `scan_cap=50` line (entry block 최대 크기 가정). 입력별 적정 cap 조정 가능 (CFP-1497 = 20, CFP-1500/1502 동일).
+4. **Boundary detection**: 다음 entry start (non-indented line 또는 동일 key match) 도달 시 inner loop break
+
+**유효 영역**: §결정 1 + Amendment 1 §결정 1.A 정합 — `scripts/lib/*.py` Python SSOT files 의 multi-line text parsing 영역. Workflow YAML `run:` block 안 inline Python = §결정 1 / Amendment 1 §결정 6.A 에 의해 이미 외부 `.py` split 의무, 본 Amendment 11 자동 적용.
+
+**적용 제외 영역**:
+- single-line text parsing (`re.match(r"^pattern$", single_line)`)
+- file-level whole-text replacement (`re.sub(r"static_pattern", repl, text)` — no nested quantifier)
+- 표준 anchored regex (lazy + character class + newline 조합 부재)
+- Python 외부 도구 (`grep`, `awk`, `sed` — 본 ADR Python SSOT scope 외)
+
+**enforcement source**:
+
+- **Primary**: GitHub Advanced Security CodeQL default ReDoS detection (`py/redos`, `py/polynomial-redos` queries). CFP-1497 PR #1499 sentinel evidence — github-advanced-security[bot] auto-catch verified. consumer repo 의 `.github/workflows/codeql.yml` default config (CodeQL Action v3 default queries 활성) 부재 시 별도 wire 의무 없음 (GitHub 기본 Code scanning default config 권장).
+- **Secondary**: CodeReviewPL anchor verify — `scripts/lib/*.py` 안 multi-line text parsing 영역 의 catastrophic backtracking 가능 패턴 1+ 식별 시 finding 발화 (severity 권장: P1 — production-scale latency exposure).
+- **declarative-only Wave 1**: 본 ADR-061 자체 = convention SSOT. mechanical lint = GitHub Advanced Security default ReDoS detection 가 cover. 신규 codeforge-specific lint workflow 신설 0 (ADR-076 / ADR-082 / ADR-086 declarative-only Wave 1 precedent 답습, ADR-082 §결정 6 known-limitation rationale 정합). `if pattern_count ≥ 2 recurrence (CodeQL miss + manual review miss), follow-up CFP MUST promote to mechanical lint` clause 명시.
+
+위반 처리:
+- PR open 시 GitHub Advanced Security CodeQL = warning-tier auto-detection. blocking-on-pr 승격 = ADR-060 evidence-enforceable promotion framework gate 통과 후 (recurrence 추가 시).
+- ADR-061 §결정 5 sanity check 3종 (diff inspection / lint re-run / sample file Read) 의 Python SSOT 신규 / 수정 시 의무 적용.
+
+#### Amendment §결정 12: Self-application — Amendment 3 ratchet 검증
+
+본 Amendment 3 자체 self-application:
+
+- **ratchet 방향**: 강화 (신규 §결정 11 추가 + 의무 강도 mandatory + scope `scripts/lib/*.py` multi-line text parsing). 약화 방향 변경 0건. ADR-058 §결정 5 정합.
+- **`is_transitional: false` 보존**: ADR-061 = permanent policy (Amendment 1/2 동일 permanent). Amendment 3 도 동일 permanent (ReDoS catastrophic backtracking = Python `re` 영역 영구 사실).
+- **CFP scope unitary 정합** (ADR-064 §결정 1): 본 Amendment 3 = 단일 §결정 11 mandate + §결정 12 self-app 의 2-§결정 묶음 — "ReDoS line-by-line parse mandate" 단일 axis 안 강화, "경량 → full" 분할 아님.
+- **declarative-only phase** (Wave 1, mechanical_enforcement_actions: []): ADR-076 / ADR-082 / ADR-086 precedent 답습 (Wave 1 declarative + Wave 2 mechanical lint 별 carrier 발의). 본 ADR scope 의 mechanical layer = GitHub Advanced Security CodeQL default ReDoS detection 가 cover (외부 cover layer 활용 — 신규 codeforge-specific lint 신설 비용 회피). recurrence (CodeQL miss + manual review miss) 누적 사례 또는 사용자 직접 ratchet 의도 표명 시 별 sub-Story carrier.
+
+### 영향 영역 변경
+
+- **Before Amendment 3**: ADR-061 §결정 5 sanity check 3종 (diff inspection / lint re-run / sample file Read) 의 적용 — bash script + Python SSOT 작성자 self-discipline anchor. ReDoS catastrophic backtracking 영역 부재.
+- **After Amendment 3**: §결정 11 + §결정 12 신설 → `scripts/lib/*.py` multi-line text parsing 영역 의 **line-by-line scan + per-entry cap pattern mandatory** (catastrophic backtracking lazy nested quantifier + nested negated class + alternation overlap 3 anti-pattern 금지). GitHub Advanced Security CodeQL default ReDoS detection = primary enforcement source (declarative-only Wave 1). CodeReviewPL anchor verify = secondary.
+
+향후 신규 lint / audit / validation Python SSOT (`scripts/lib/*.py`) 작성자 = §결정 11 의무 적용. **기존 28-file `scripts/lib/` (Amendment 1 carrier) 도 retroactive 의무 안** — recurrence 추가 사례 발견 시 corpus retro 진행 의무 (PMOAgent §D-9 framework).
+
+### Sunset justification
+
+`sunset_justification_required: false` — Amendment 3 = ratchet ↑ direction (강화 방향, ADR-058 §결정 5 정합). ADR-061 `is_transitional: false` 보존 — Amendment 3 도 동일 permanent policy.
+
+### Carrier evidence (CFP-1507)
+
+- **Pattern 1**: CFP-1497 PR #1499 commit `e5b8631` — `scripts/lib/check_amendment_slot_reservation.py` 의 `RESERVATION_ENTRY_RE` regex `(?:\s+\w+:\s*[^\n]*\n)*?` catastrophic backtracking caught by **github-advanced-security[bot] CodeQL** post-merge ReDoS alert. fix = 2 simple line-anchored regexes (`RESERVATION_ADR_NUMBER_RE` + `RESERVATION_AMENDMENT_ID_RE`) + `text.splitlines()` line-by-line scan + 20-line per-entry cap (`min(i + 21, n)` slice).
+- **Pattern 2**: CFP-1500 (Wave 2-B of CFP-1389) PR #1501 — Sub-CFP B mid-spawn drift detection mechanical wire 의 lint script `scripts/lib/check_mid_spawn_drift_detection.py` (assumed) — Story §2 §3.1 본문 명시 "Python SSOT, line-by-line parsing — CodeQL ReDoS guard 정합". CFP-1497 byte-pattern 답습.
+- **Pattern 3**: CFP-1502 (Wave 2-D of CFP-1389) PR #1503 — Sub-CFP D chief author span telemetry mechanical wire 의 lint script `scripts/lib/check_chief_author_span_telemetry.py` (assumed) — Story §2 §3.1 본문 명시 "Python SSOT, line-by-line parsing — CodeQL ReDoS guard 정합". CFP-1497 byte-pattern 답습.
+- **PMOAgent framing source**: CFP-1389 parent Epic 의 Wave 2 mechanical wire 3 sibling Story (CFP-1497/1500/1502) corpus retro — `pattern_count=3` reach `adr_draft_emitted` Mandatory.
+- **Cross-Epic upstream**: `<scripts/lib/check_evidence_registry.py>` (CFP-455 prior art) + 28-file `scripts/lib/` (CFP-478) corpus = retroactive audit 영역. recurrence 추가 사례 발견 시 별 carrier.
+
+### 적용 사례 (Amendment 3 첫 self-applied carrier)
+
+본 Amendment 3 자체 적용 — CFP-1507 = ADR-061 Amendment 3 carrier + CodeQL ReDoS line-by-line parse mandate 의 first-class codification carrier. Amendment 3 발효 후 신규 Python SSOT 작성자 가 §결정 11 의무 인지 + GitHub Advanced Security CodeQL default ReDoS detection primary enforcement source 활용 + CodeReviewPL anchor verify 영역 의무 확장.
