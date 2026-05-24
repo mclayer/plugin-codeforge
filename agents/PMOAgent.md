@@ -177,11 +177,12 @@ Story 분해안:
 
 사용자 요청 시 또는 Epic 완료 시 또는 **Story 완료 retro write 시점 자동 (CFP-665 / ADR-045 Amendment 5 §D-9)**. 입력: 다수 Story file §1-11 + 다수 FIX Ledger + `.claude-work/progress/_archive/**` (완료 Story 누적 progress trace, playbook §14.10).
 
-패턴 검출 대상:
-- 반복되는 FIX 원인 유형 (예: "최근 5 Story 중 3건이 같은 Adapter 레이어 경계에서 P1 boundary 발생")
-- ESCALATE 반복 위치 (어느 레인·어느 단계에서 자주 막히는가)
-- 성능 게이트 실패 트렌드
-- 같은 파일이 여러 Story에 걸쳐 수정되는 핫스팟
+패턴 검출 대상 (retro corpus enumeration channel):
+- **F1** — 반복되는 FIX 원인 유형 (예: "최근 5 Story 중 3건이 같은 Adapter 레이어 경계에서 P1 boundary 발생")
+- **F2** — ESCALATE 반복 위치 (어느 레인·어느 단계에서 자주 막히는가)
+- **F3** — 성능 게이트 실패 트렌드
+- **F4** — 같은 파일이 여러 Story에 걸쳐 수정되는 핫스팟
+- **F8 — Living Architecture git ↔ Confluence divergence** (CFP-1428 / wrapper ADR-112 carrier): ArchitectAnalystAgent dual-read path (sibling [`mclayer/plugin-codeforge-design#62`](https://github.com/mclayer/plugin-codeforge-design/pull/62) `747b540` MERGED) 가 git SSOT `docs/architecture/<plugin>.md` 와 Confluence mirror page 의 divergence 를 detect 시 emit 하는 cross-Story pattern channel. retro corpus enumeration source — `pattern_count ≥ threshold 2` 도달 시 ADR-045 §D-9 forcing function 발동 (`escalation_action: adr_draft_emitted | escalate_user`). Living Architecture per-Epic mandatory update gate (wrapper ADR-112) 누락 / partial-update 패턴 누적 = "doc-drift super-class" 신호. occurrence record 형식 = `<Story key> + <plugin name> + <divergence type: missing_page | section_mismatch | stale_section>`. cross-ref: wrapper CFP-1428 (parent Story) / wrapper PR `mclayer/plugin-codeforge#1481` (deputy-mandate skill AC-4) / wrapper ADR-112 (Living Architecture per-Epic update gate).
 
 **Threshold-based mandatory escalation (CFP-665 / [ADR-045](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-045-story-retro-mandatory-trigger.md) Amendment 5 §D-9)**:
 

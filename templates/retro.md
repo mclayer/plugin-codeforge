@@ -77,6 +77,9 @@ sentinel_refs:
 | 패턴 식별 | pattern_count | threshold reach | anchor_id (primary) | root_cause_class (fallback) | occurrences |
 |---|---|---|---|---|---|
 | <패턴 요약> | <int ≥ 1> | YES (≥ 2) / NO (< 2) | <review-verdict-v4 anchor_id> | <root_cause_taxonomy class> | <Story 키 N개 + finding ref> |
+| **F8 — Living Architecture git ↔ Confluence divergence** (CFP-1428 / wrapper ADR-112 carrier) | <int ≥ 0> | YES (≥ 2) / NO (< 2) | `living-arch-divergence-<plugin>` | `doc-drift-super-class` | <Story key + plugin + divergence type: `missing_page | section_mismatch | stale_section`> |
+
+**F8 channel 정의**: ArchitectAnalystAgent dual-read path (sibling [`mclayer/plugin-codeforge-design#62`](https://github.com/mclayer/plugin-codeforge-design/pull/62) `747b540` MERGED) 가 git SSOT `docs/architecture/<plugin>.md` 와 Confluence mirror page 의 divergence detect 결과를 emit 하는 retro corpus enumeration channel. Living Architecture per-Epic mandatory update gate (wrapper ADR-112) 누락 / partial-update 누적 = "doc-drift super-class" 신호. cross-ref: wrapper CFP-1428 (parent Story) / wrapper PR `mclayer/plugin-codeforge#1481` (deputy-mandate skill AC-4) / wrapper ADR-112 (Living Architecture per-Epic update gate).
 
 ## §6 ADR 후보 발의 (해당 시)
 
