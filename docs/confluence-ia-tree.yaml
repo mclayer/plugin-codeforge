@@ -1,0 +1,173 @@
+# Confluence space CFP IA tree map — Sub-B S2.1 (CFP-1491) of Mega-Epic CFP-1415
+# Confluence-as-derived-mirror governance standardization
+
+schema_version: "1.0"
+
+space:
+  key: CFP
+  id: "1867780"
+  name: CodeForge
+  cloud_id: "0729a627-5f0e-4e17-b8d1-0365ba887d41"
+  instance: mclayer.atlassian.net
+  root_homepage_id: "1867943"
+
+ia_axis: per-plugin-top-level-plus-cross-cutting-sibling
+
+deviation_path:
+  active: mcp-direct
+  precedent: CFP-1146 W5-S17 #1310
+  rationale: |
+    Atlassian MCP authenticated session 으로 ADR-103 §결정 1 정식 mark engine path
+    (GitHub Actions workflow + ATLASSIAN_API_TOKEN secret) 우회. CFP-1146 W5-S17
+    cutover 시 사용자 directive "그 인증으로 수행하라" 답습 + 사용자 2026-05-24 KST
+    directive "atlassian mcp로 하면되잖아".
+  trade_offs:
+    - mark_engine_path_inactive: retain for future (#1320 secret 주입 후 ongoing sync)
+    - three_anchor_stamp_count: 0  # MCP property tool 부재
+    - lossy_risk: markdown escape (CFP-1146 W5-S17 evidence 1건)
+    - drift_detection_required: Sub-B S2.5 cron (CFP-1495)
+
+mark_engine_path:
+  status: retain_for_future
+  adr: ADR-103 §결정 1
+  dependency: "#1320 ATLASSIAN_API_TOKEN secret 주입 (사용자 영역)"
+
+top_level_pages:
+  lane_plugins:
+    - name: codeforge-requirements
+      page_id: "2098238"
+      git_source: "https://github.com/mclayer/plugin-codeforge-requirements"
+      children:
+        - { name: "Living Architecture", page_id: "2163504", source: "docs/architecture/codeforge-requirements.md" }
+        - { name: "ADR", page_id: "2065671", source: "docs/adr/ (lane:requirements)" }
+        - { name: "Domain Knowledge", page_id: "2163526", source: "docs/domain-knowledge/ (lane:requirements)" }
+        - { name: "Open Decisions Pending", page_id: "2163550", source: "Living Architecture §Open Decisions Pending" }
+        - { name: "Change Plan archive", page_id: "2065695", source: "internal-docs/codeforge-requirements/change-plans/" }
+
+    - name: codeforge-design
+      page_id: "2163460"
+      git_source: "https://github.com/mclayer/plugin-codeforge-design"
+      children:
+        - { name: "Living Architecture", page_id: "2065717", source: "docs/architecture/codeforge-design.md" }
+        - { name: "ADR", page_id: "2163571", source: "docs/adr/ (lane:design)" }
+        - { name: "Domain Knowledge", page_id: "2130813", source: "docs/domain-knowledge/ (lane:design)" }
+        - { name: "Open Decisions Pending", page_id: "2130835", source: "Living Architecture §Open Decisions Pending" }
+        - { name: "Change Plan archive", page_id: "2163593", source: "internal-docs/codeforge-design/change-plans/" }
+
+    - name: codeforge-develop
+      page_id: "2065627"
+      git_source: "https://github.com/mclayer/plugin-codeforge-develop"
+      children:
+        - { name: "Living Architecture", page_id: "2065739", source: "docs/architecture/codeforge-develop.md" }
+        - { name: "ADR", page_id: "2098305", source: "docs/adr/ (lane:develop)" }
+        - { name: "Domain Knowledge", page_id: "2163615", source: "docs/domain-knowledge/ (lane:develop)" }
+        - { name: "Open Decisions Pending", page_id: "2163637", source: "Living Architecture §Open Decisions Pending" }
+        - { name: "Change Plan archive", page_id: "2098327", source: "internal-docs/codeforge-develop/change-plans/" }
+
+    - name: codeforge-review
+      page_id: "2130769"
+      git_source: "https://github.com/mclayer/plugin-codeforge-review"
+      children:
+        - { name: "Living Architecture", page_id: "2130855", source: "docs/architecture/codeforge-review.md" }
+        - { name: "ADR", page_id: "2065761", source: "docs/adr/ (lane:design-review + code-review + security-test)" }
+        - { name: "Domain Knowledge", page_id: "2163657", source: "docs/domain-knowledge/ (lane:review)" }
+        - { name: "Open Decisions Pending", page_id: "2163679", source: "Living Architecture §Open Decisions Pending" }
+        - { name: "Change Plan archive", page_id: "2098349", source: "internal-docs/codeforge-review/change-plans/" }
+
+    - name: codeforge-test
+      page_id: "2098261"
+      git_source: "https://github.com/mclayer/plugin-codeforge-test"
+      children:
+        - { name: "Living Architecture", page_id: "2163699", source: "docs/architecture/codeforge-test.md" }
+        - { name: "ADR", page_id: "2065783", source: "docs/adr/ (lane:test)" }
+        - { name: "Domain Knowledge", page_id: "2163721", source: "docs/domain-knowledge/ (lane:test)" }
+        - { name: "Open Decisions Pending", page_id: "2130877", source: "Living Architecture §Open Decisions Pending" }
+        - { name: "Change Plan archive", page_id: "2065805", source: "internal-docs/codeforge-test/change-plans/" }
+
+    - name: codeforge-pmo
+      page_id: "2065649"
+      git_source: "https://github.com/mclayer/plugin-codeforge-pmo"
+      children:
+        - { name: "Living Architecture", page_id: "2065827", source: "docs/architecture/codeforge-pmo.md" }
+        - { name: "ADR", page_id: "2130897", source: "docs/adr/ (lane:pmo)" }
+        - { name: "Domain Knowledge", page_id: "2163743", source: "docs/domain-knowledge/ (lane:pmo)" }
+        - { name: "Open Decisions Pending", page_id: "2098371", source: "Living Architecture §Open Decisions Pending" }
+        - { name: "Change Plan archive", page_id: "2065850", source: "internal-docs/codeforge-pmo/change-plans/" }
+
+    - name: codeforge-deploy
+      page_id: "2130791"
+      git_source: "https://github.com/mclayer/plugin-codeforge-deploy"
+      declarative_phase: true  # CFP-1059 / ADR-087
+      children:
+        - { name: "Living Architecture", page_id: "2098391", source: "docs/architecture/codeforge-deploy.md (declarative)" }
+        - { name: "ADR", page_id: "2098413", source: "docs/adr/ (lane:deploy, declarative)" }
+        - { name: "Domain Knowledge", page_id: "2065872", source: "docs/domain-knowledge/ (lane:deploy)" }
+        - { name: "Open Decisions Pending", page_id: "2065894", source: "Plugin seed body 실 wire 미완성" }
+        - { name: "Change Plan archive", page_id: "2163765", source: "internal-docs/codeforge-deploy/change-plans/" }
+
+    - name: codeforge-deploy-review
+      page_id: "2163482"
+      git_source: "https://github.com/mclayer/plugin-codeforge-deploy-review"
+      declarative_phase: true  # CFP-1059 / ADR-088
+      children:
+        - { name: "Living Architecture", page_id: "2130919", source: "docs/architecture/codeforge-deploy-review.md (declarative)" }
+        - { name: "ADR", page_id: "2065914", source: "docs/adr/ (lane:deploy-review, declarative)" }
+        - { name: "Domain Knowledge", page_id: "2065936", source: "docs/domain-knowledge/ (lane:deploy-review)" }
+        - { name: "Open Decisions Pending", page_id: "2163787", source: "Plugin seed body 실 wire 미완성 (DeployReviewPL + DeployReviewWorker + ProductionEvidenceDeputy)" }
+        - { name: "Change Plan archive", page_id: "2065958", source: "internal-docs/codeforge-deploy-review/change-plans/" }
+
+  cross_cutting:
+    - name: cross-cutting
+      page_id: "2098283"
+      git_source: "https://github.com/mclayer/plugin-codeforge"
+      children_planned:
+        # 본 S2.1 = 9 top-level + 40 lane plugin child only.
+        # cross-cutting child 영역 = Sub-B S2.3/S2.4 backfill carrier (legacy 5 child page reorg target)
+        - { name: "wrapper-governance", source: "CLAUDE.md / project-config-schema.md / consumer-guide.md / overlay 정책", carrier: "Sub-B S2.3" }
+        - { name: "inter-plugin-contracts", source: "docs/inter-plugin-contracts/ (9 contract + 7 registry)", carrier: "Sub-B S2.3, legacy parent page 2129949 reorg" }
+        - { name: "orchestrator-playbook", source: "docs/orchestrator-playbook.md (256KB+)", carrier: "Sub-B S2.4, legacy 1-page split" }
+
+legacy_pages:
+  # CFP-1146 W5-S17 #1310 cutover 산출 — Sub-B S2.3/S2.4 migration source
+  - parent: { name: "adr", page_id: "2097153", child_count: 111 }
+    migration_target: "8 lane plugin × ADR child (8 × 1 page) — lane filter"
+    carrier: "Sub-B S2.3 (CFP-1493)"
+  - parent: { name: "inter-plugin-contracts", page_id: "2129949", child_count: 30 }
+    migration_target: "cross-cutting / inter-plugin-contracts (1 top-level + 30 child)"
+    carrier: "Sub-B S2.3 (CFP-1493)"
+  - parent: { name: "domain-knowledge", page_id: "2129969", child_count: 36 }
+    migration_target: "8 lane plugin × Domain Knowledge child (8 × 1 page) + cross-cutting concept — lane filter"
+    carrier: "Sub-B S2.4 (CFP-1494)"
+  - parent: { name: "Orchestrator Playbook", page_id: null, child_count: 1 }
+    migration_target: "cross-cutting / orchestrator-playbook (1-page or §section split)"
+    carrier: "Sub-B S2.4 (CFP-1494)"
+  - parent: { name: "Consumer Guide — 플러그인 적용 가이드", page_id: null, child_count: 1 }
+    migration_target: "cross-cutting / wrapper-governance (1 page or §section)"
+    carrier: "Sub-B S2.3 (CFP-1493)"
+
+total_pages_created_in_s2_1: 49  # 9 top-level + 40 lane plugin child
+total_pages_pre_existing: 183     # CFP-1146 W5-S17 cutover (5 child + 178 sub)
+total_pages_post_s2_1: 232
+
+sub_b_carrier_followup:
+  s2_2:
+    cfp: CFP-1492
+    title: "ADR-103 Amendment N — MCP-direct routing rule (deviation declare, mark engine path retain for future)"
+    scope: "Document MCP-direct invocation pattern as alternative path to ADR-103 §결정 1 정식 mark engine, with deviation declare and 3-anchor stamp 0건 acceptance criteria."
+  s2_3:
+    cfp: CFP-1493
+    title: "Legacy ADR 111 backfill + IA tree migration — 9 top-level tree 재배치 (MCP-direct)"
+    scope: "Migrate 111 legacy ADR pages from flat parent 2097153 to per-lane-plugin ADR child (lane filter via ADR frontmatter `category` field). Also migrate 30 inter-plugin-contracts pages + Consumer Guide page."
+  s2_4:
+    cfp: CFP-1494
+    title: "Legacy change-plans + domain-knowledge backfill — MCP-direct ad-hoc + wrapper-governance child page"
+    scope: "Migrate 36 domain-knowledge pages from flat parent 2129969 to per-lane Domain Knowledge child (lane filter). Migrate Orchestrator Playbook page to cross-cutting child. Backfill 5-anchor section into 8 lane plugin Living Architecture child (real body, not seed)."
+  s2_5:
+    cfp: CFP-1495
+    title: "Confluence drift detection cron — MCP-direct staleness check (warning tier + label-registry)"
+    scope: "scripts/check-confluence-drift.sh + templates/github-workflows/confluence-drift-detection.yml 신설. MCP-direct path 의 3-anchor stamp 0건 deviation 보완 — content modified time vs git source modified time delta check, drift > 7 day 시 Issue auto-create."
+
+# CFP-1146 W5-S17 #1310 cross-ref: 182 pages first MCP-direct cutover, deviation precedent.
+# Sub-B S2.1 산출: 49 page added on top of 183 legacy = 232 total post-S2.1.
+# Lane plugin self-owned: 8 plugins × 5 child = 40 pages.
+# Cross-cutting placeholder: 1 top-level (children = S2.3/S2.4 backfill carrier).
