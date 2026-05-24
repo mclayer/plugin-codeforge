@@ -139,13 +139,21 @@ jobs:
           CASCADE_COUNT: ${{ steps.aggregate.outputs.cascade_incidents }}
         run: |
           set -euo pipefail
-          KPI_JSON=$(jq -c . docs/kpi/429-incident.json)
-          TITLE="[codeforge-ops] ADR-109 429 incident cascade gate violated (week ${WINDOW_KEY})"
+          # A4 (#1461) heredoc interpolation defensive guards:
+          # Strip backticks (`) and $ from all interpolated values before unquoted heredoc.
+          # Cannot use <<'EOF' (single-quoted) because body needs ${WINDOW_KEY}/${CASCADE_COUNT}/${KPI_JSON} expansion.
+          # Defense: sanitize-then-interpolate (whitelist via tr -d).
+          KPI_JSON_RAW=$(jq -c . docs/kpi/429-incident.json)
+          KPI_JSON="${KPI_JSON_RAW//\`/}"     # strip backticks
+          KPI_JSON="${KPI_JSON//\$/}"          # strip dollar (no command substitution)
+          WINDOW_KEY_SAFE="${WINDOW_KEY//[\`\$]/}"
+          CASCADE_COUNT_SAFE="${CASCADE_COUNT//[\`\$]/}"
+          TITLE="[codeforge-ops] ADR-109 429 incident cascade gate violated (week ${WINDOW_KEY_SAFE})"
           BODY=$(cat <<EOF
           ## ADR-109 429 incident cascade detection — gate violated
 
-          Week: ${WINDOW_KEY}
-          Cascade incidents (depth ≥ 2): ${CASCADE_COUNT}
+          Week: ${WINDOW_KEY_SAFE}
+          Cascade incidents (depth ≥ 2): ${CASCADE_COUNT_SAFE}
           Threshold: depth ≥ 2 circuit breaker trigger (§결정 4)
 
           ### Context
@@ -185,7 +193,15 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          BRANCH="kpi/429-incident/$(date -u +%Y%m%d-%H%M%S)"
+          # A2 (#1459) auto-PR branch uniqueness — collision-resistant suffix +
+          # remote-existence pre-check to prevent silent overwrite on parallel runs
+          BRANCH_BASE="kpi/429-incident/$(date -u +%Y%m%d-%H%M%S)"
+          BRANCH="${BRANCH_BASE}-$$"
+          # Verify branch not already on remote (concurrency: race window with sibling cron)
+          if git ls-remote --exit-code --heads origin "$BRANCH" >/dev/null 2>&1; then
+            echo "[A2-guard] branch $BRANCH already on remote — appending random suffix"
+            BRANCH="${BRANCH}-$(date +%N | head -c 6)"
+          fi
           git config user.name "codeforge-bot[bot]"
           git config user.email "codeforge-bot@users.noreply.github.com"
 
@@ -195,7 +211,13 @@ jobs:
           git commit -m "chore(kpi): 429 incident telemetry weekly refresh ($(date -u +%Y-W%V))" \
                      -m "Automated by templates/github-workflows/429-incident-telemetry.yml" \
                      -m "ADR-109 §결정 8.2 KPI dual-tier (weekly aggregate + event log)"
-          git push origin "$BRANCH"
+          # A2 (#1459) auto-PR uniqueness — --force-with-lease prevents clobber of newer remote
+          git push --force-with-lease origin "$BRANCH"
+
+          # A4 (#1461) heredoc interpolation defensive guards (auto-PR body)
+          KPI_SUMMARY_RAW=$(jq '{schema_version, measured_at, weekly_incident_count, cascade_incidents, gate_status}' docs/kpi/429-incident.json)
+          KPI_SUMMARY="${KPI_SUMMARY_RAW//\`/}"
+          KPI_SUMMARY="${KPI_SUMMARY//\$/}"
 
           PR_BODY=$(cat <<EOF
           ## CFP-1354 — ADR-109 429 incident telemetry weekly refresh
@@ -205,7 +227,7 @@ jobs:
           ### KPI summary
 
           \`\`\`json
-          $(jq '{schema_version, measured_at, weekly_incident_count, cascade_incidents, gate_status}' docs/kpi/429-incident.json)
+          ${KPI_SUMMARY}
           \`\`\`
 
           ### 정책 cross-ref
@@ -277,13 +299,17 @@ jobs:
             exit 0
           fi
 
-          TITLE="[codeforge-kpi-infra-error] 429-incident-telemetry workflow infra error (week ${WINDOW_KEY})"
+          # A4 (#1461) heredoc interpolation defensive guards (infra error body)
+          WINDOW_KEY_SAFE="${WINDOW_KEY//[\`\$]/}"
+          REASONS_SAFE="${REASONS//[\`\$]/}"
+          RUN_URL_SAFE="${RUN_URL//[\`\$]/}"
+          TITLE="[codeforge-kpi-infra-error] 429-incident-telemetry workflow infra error (week ${WINDOW_KEY_SAFE})"
           BODY=$(cat <<EOF
           ## 429-incident-telemetry workflow infra error
 
-          **Window**: ${WINDOW_KEY}
-          **Run URL**: ${RUN_URL}
-          **Detected reasons**: ${REASONS}
+          **Window**: ${WINDOW_KEY_SAFE}
+          **Run URL**: ${RUN_URL_SAFE}
+          **Detected reasons**: ${REASONS_SAFE}
 
           ### Context
 
@@ -302,7 +328,7 @@ jobs:
 
           ---
 
-          본 Issue 는 429-incident-telemetry.yml workflow 자동 발의. 동일 week (${WINDOW_KEY}) 기존 open Issue 있으면 dedup.
+          본 Issue 는 429-incident-telemetry.yml workflow 자동 발의. 동일 week (${WINDOW_KEY_SAFE}) 기존 open Issue 있으면 dedup.
           EOF
           )
           gh issue create --title "$TITLE" --body "$BODY" --label codeforge-kpi-infra-error

@@ -7,6 +7,40 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.7.1] - 2026-05-24
+
+### Added
+
+- [CFP-1353-FU] **mega-sweep — 11 FU-CFP batch** (Epic CFP-1353 follow-up backlog closure, security hardening + collector cleanup + agent guardrail codify)
+  - **Story A — collector/script cleanup (4 items)**
+    - [#1458] A1 — `scripts/lib/measure_429_incident.py` `_coerce_int` / `_coerce_str_safe` defense-in-depth guards on regex-captured scalars (numeric range + whitelist string), `[A1-guard]` stderr message on malformed marker rejection. Current `\d+` regex pre-filters, but guards future-proof marker schema widening.
+    - [#1459] A2 — `scripts/lib/measure_429_incident.py` cross-platform exclusive file lock (`fcntl.flock`/`msvcrt.locking` via `_ExclusiveFileLock` ctx mgr) + `_atomic_write_text` (tmp + `os.replace`) for JSONL append race / TOCTOU; `templates/github-workflows/429-incident-telemetry.yml` auto-PR branch uniqueness (PID suffix + remote pre-check + `--force-with-lease` push)
+    - [#1460] A3 — `datetime.utcnow()` deprecation sweep verify: 0 occurrence across entire worktree (`scripts/`, `templates/`); collector already uses `datetime.now(timezone.utc)`
+    - [#1461] A4 — `templates/github-workflows/429-incident-telemetry.yml` heredoc interpolation defensive guards: sanitize-then-interpolate pattern (3 heredocs at L144/L200/L281), strip backticks (`) and `$` from all interpolated variables (`WINDOW_KEY_SAFE`/`CASCADE_COUNT_SAFE`/`KPI_JSON`/`KPI_SUMMARY`/`REASONS_SAFE`/`RUN_URL_SAFE`) before unquoted `<<EOF` blocks. Cannot use `<<'EOF'` because body needs variable expansion.
+  - **Story B — Windows wrapper hardening (6 items)**
+    - [#1463] B1 — XML XmlReaderSettings DtdProcessing.Prohibit sweep verify: `scripts/install-codeforge-resume.ps1` already applied (CFP-1355 FIX iter 2); `scripts/codeforge-session-resume.ps1` Toast XML uses `Windows.Data.Xml.Dom.XmlDocument` (WinRT type, inherently XXE-safe by API design, no DTD/entity resolution) + `[int]` coerce defense-in-depth on `$MaxRetryCount`. Sweep audit conclusive: 0 XmlReader-replaceable sites remain.
+    - [#1464] B2 — `scripts/codeforge-session-resume.ps1` File ACL inclusive: user + Administrators + SYSTEM `:F` grant (preserves SCCM/AV scanning + Admin recovery + service-account writes) with `.acl-set` marker idempotency guard (avoids re-ACL on every 10-min Task Scheduler poll)
+    - [#1465] B3 — `scripts/codeforge-session-resume.ps1` TOCTOU symlink reject: `Get-Item -LiteralPath` + `LinkType` check rejects SymbolicLink/Junction/HardLink reparse points before UUID file read; `System.IO.File::ReadAllText` for atomic read (avoids `Get-Content` cmdlet pipeline race window between Test-Path and Get-Content)
+    - [#1466] B4 — `scripts/codeforge-session-resume.ps1` `Write-Log` control char strip: CR/LF/TAB replaced with space, all C0 (0x00-0x1F) + DEL (0x7F) replaced with `?` (prevents log forging via embedded newlines)
+    - [#1468] B5 — `scripts/codeforge-session-resume.ps1` `Write-Log` secret redaction regex array: extends sk-ant-* coverage to ghp_*, github_pat_*, `Bearer <token>`, `Authorization:` / `x-api-key:` headers, AWS access key ID prefix (AKIA...). Array-driven (`$secretPatterns`) for future extensibility.
+    - [#1469] B6 — `scripts/codeforge-session-resume.ps1` Mutex namespace `Global\` opt-in via `$env:CODEFORGE_MULTI_USER=1` (multi-user host / Citrix / RDS protection). Default `Local\` (current per-session behavior preserved).
+  - **Cross-Story B7**
+    - [#1470] B7 — `docs/agent-prompt-guardrails.md` (new SSOT) — agent spawn prompt FIX-only directive codify: `[USER-UTTERANCE-VERBATIM]` block 4-invariant (opening/closing marker pair + trailing `DO NOT re-interpret` directive + `EXECUTE ONLY` token) + agent self-guard 4-step (carrier source recognition, scope confinement, no self-escalation, conflict escalate) + FIX-only directive 3 token vocabulary. Declaration-only Wave 1 (mechanical lint =별 sub-CFP carrier). cross-ref ADR-082 §결정 1 layer 1 sub-scope (1-C) + ADR-071 §결정 17 + ADR-039 + ADR-064 §결정 9/10.
+
+### Out of scope (별 follow-up CFP carrier)
+
+- **mechanical lint for USER-UTTERANCE-VERBATIM block** (`scripts/check-user-utterance-verbatim-block.sh` opening/closing marker pair + scope-redirect 어휘 ban heuristic) = 별 sub-CFP carrier, declaration-only Wave 1.
+- **agent file template 갱신** (각 lane plugin PL agent file self-guard 본문 추가) = cross-plugin sibling sync carrier (ADR-010 §결정 1 정합).
+- **review-verdict-v4 schema field** (`user_utterance_verbatim_block_present: bool`) = CFP scope 외 (Wave 1 declaration-only).
+- **ADR-065 mechanical lint** (`scripts/check-mechanical-self-check-evidence.sh` + evidence-checks-registry entry + workflow yml) = 별 sub-CFP carrier (ADR-082 §결정 6 retain pattern, declaration-only Wave 1 from CFP-1462 Amendment 5).
+- **marketplace.json sibling sync** (mclayer/marketplace repo PR, ADR-063 §결정 5 atomic invariant) = wrapper PR merge 직후 자동 trigger.
+
+### Bump rationale
+
+- 11 FU-CFP atomic batch: security hardening (B1-B6 6 items) + collector defense-in-depth (A1-A4 4 items) + agent guardrail codify (B7 doc-only)
+- ADR-037 §결정 1(g) — additive behavior + Added section only, no Breaking change
+- PATCH bump 6.7.0 → 6.7.1 (security fixes typically MINOR but no API/contract surface change, declaration-only doc + script internal hardening)
+
 ## [6.7.0] - 2026-05-24
 
 ### Added
