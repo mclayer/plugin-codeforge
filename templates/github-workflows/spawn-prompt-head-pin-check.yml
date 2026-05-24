@@ -1,0 +1,70 @@
+# spawn-prompt-head-pin-check.yml
+#
+# WAVE 1 = declarative-only STUB
+# ----------------------------------
+# Sub-CFP A (CFP-1437) of CFP-1389 — Pre-spawn HEAD-pin protocol mechanical lint Epic.
+#
+# This workflow is a Wave 1 declarative anchor only. The actual mechanical wire
+# (lint script + bats fixture + label-registry MINOR + evidence-checks-registry
+# Active entry) is deferred to Wave 2 sub-CFP carrier (별 sub-CFP).
+#
+# Carrier ADRs:
+#   - ADR-073 Amendment 11 (§결정 1-A transition trigger 10번째 entry `spawn_prompt_emit` +
+#     §결정 1-N primitive Pre-spawn HEAD-pin protocol 4-step verify-before-assert mandate)
+#   - ADR-082 Amendment 15 (§결정 1 layer 1 sub-scope (1-E) spawn prompt SHA-anchor write-time
+#     verify 4-tuple primitive)
+#
+# evidence-checks-registry entry name (Wave 2 carrier):
+#   - spawn-prompt-head-pin-presence (warning tier deferred-followup)
+#
+# Hotfix bypass label (Wave 2 carrier):
+#   - hotfix-bypass:spawn-prompt-head-pin-presence
+#
+# Wave 1 retain rationale: mechanical lint 의 grep heuristic false-positive disambiguate
+# 영역 (spawn prompt 안 anchor block 부재 vs 단순 형식 변경) = sentinel forward-prevention
+# 후 Wave 2 mechanical wire 결정 (CFP-963 codex-network-scope-presence + CFP-1336
+# cross-repo-label-sync precedent 답습).
+#
+# Wave 2 carrier responsibilities (sub-CFP TBD):
+#   - scripts/check-spawn-prompt-head-pin-presence.sh (thin wrapper)
+#   - scripts/lib/check_spawn_prompt_head_pin_presence.py (Python SSOT per ADR-061)
+#   - tests/scripts/test_check-spawn-prompt-head-pin-presence.sh (bats fixture pair)
+#   - label-registry-v2 v2.NN MINOR bump (hotfix-bypass:spawn-prompt-head-pin-presence
+#     family member append + ADR-108 §결정 3 description text count parity META self-app)
+#   - docs/evidence-checks-registry.yaml: new entry `spawn-prompt-head-pin-presence`
+#     status: Active, current_tier: warning, owner_adr: ADR-073 / ADR-082
+#   - this file: actual workflow logic hydrate
+#     (PR-time pull_request + workflow_dispatch dual trigger split per CFP-954 D2 consensus)
+#
+# Detection scope (Wave 2 design — declarative anchor only):
+#   - grep spawn prompt files for `\[PRE-SPAWN-ORIGIN-MAIN-SHA: [0-9a-f]{40}\]`
+#   - missing block → warning (advisory) — Wave 1 behavioral mandate
+#   - block present but SHA stale (HEAD vs origin/main divergence at spawn time) =
+#     escape — Wave 2 mechanical lint Check (b) carrier scope
+#
+# Source-of-truth (Wave 1 anchor):
+#   - docs/adr/ADR-073-orchestrator-verify-before-assert.md `## Amendment 11`
+#   - docs/adr/ADR-082-write-time-self-write-verification-mandate.md `## Amendment 15`
+#   - <internal-docs>/plugin-codeforge/change-plans/cfp-1437-pre-spawn-head-pin-protocol.md
+#   - <internal-docs>/plugin-codeforge/stories/CFP-1437.md
+
+name: spawn-prompt-head-pin-check (Wave 1 declarative stub)
+
+on:
+  workflow_dispatch:
+    # Wave 1 = declarative-only. Manual trigger only — no PR / push activation.
+    # Wave 2 carrier will replace with `pull_request: ` + `workflow_dispatch: ` dual trigger
+    # split per CFP-954 D2 consensus (production-cutover-evidence.yml byte-pattern 답습).
+
+jobs:
+  declarative-anchor:
+    name: Wave 1 declarative anchor (no-op)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sub-CFP A Wave 1 declarative-only carrier
+        run: |
+          echo "[INFO] CFP-1437 Sub-CFP A Wave 1 declarative-only carrier"
+          echo "[INFO] Pre-spawn HEAD-pin protocol mechanical lint = Wave 2 별 sub-CFP carrier"
+          echo "[INFO] ADR-073 Amendment 11 + ADR-082 Amendment 15 paired carrier (declarative anchor only)"
+          echo "[INFO] No-op: actual mechanical wire deferred to Wave 2"
+          exit 0
