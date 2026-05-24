@@ -18,7 +18,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
   - `docs/consumer-guide.md §1j` (신설) — Windows-specific auto-resume install + activation + fidelity test 4-source measurement (ADR-110 §결정 7 empirical gate)
   - `CLAUDE.md` — OS-level external session auto-resume cross-ref (1 줄) + line-cap ≤ 320 유지
   - `docs/orchestrator-playbook.md §1.1 0ii` — Windows auto-resume wrapper SessionStart hook context append (1 줄)
-  - `.claude-plugin/plugin.json` — version 6.6.1 → 6.6.2 PATCH + description CFP-1355 Phase 2 entry prepend (ADR-110 external wrapper governance layer codify + consumer adoption protocol ADR-027 extension)
+  - `.claude-plugin/plugin.json` — version 6.6.1 → 6.6.2 PATCH (ADR-110 external wrapper governance layer codify + consumer adoption protocol ADR-027 extension)
 
 ### Out of scope (별 follow-up CFP carrier)
 
@@ -26,7 +26,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 - **Linux/macOS bash equivalent** (ADR-110 §결정 5 Phase 2 sub-CFP carrier): systemd timer (Linux) / launchd (macOS) wrapper
 - **Multi-user developer machine** (ADR-110 §결정 6 Phase 2 carrier): `project.yaml runtime.multi_user: bool` opt-in 활성, Global namespace mutex 수정
 - **CFP-FU-1**: external-wrapper-ssot-boundary mechanical lint (`scripts/check-external-wrapper-ssot-boundary.sh` + evidence-checks-registry entry) — declaration-only Wave 1 (ADR-082 §결정 6 retain pattern)
-- **CFP-FU-2**: resume-fidelity-test-evidence artifact (`docs/kpi/resume-fidelity-history.jsonl` append-only event log) — declaration-only Wave 1, mechanical wire Phase 2 sub-CFP carrier
+- **resume-fidelity-test-evidence artifact** (`docs/kpi/resume-fidelity-history.jsonl` append-only event log) — declaration-only Wave 1, mechanical wire Phase 2 sub-CFP carrier (CFP-FU-2)
 - **CFP-FU-3**: marketplace.json sibling sync (mclayer/marketplace repo PR, ADR-063 §결정 5 atomic invariant) — Orchestrator decision lane (Marketplace sync lane) 영역, wrapper PR merge 직후 자동 trigger
 
 ## [6.6.1] - 2026-05-24

@@ -74,8 +74,18 @@ Write-Host "  ACL set for user and Administrators" -ForegroundColor Green
 # Read and update XML template path
 Write-Host "Preparing Task Scheduler definition..." -ForegroundColor Yellow
 [xml]$xmlDoc = Get-Content $xmlTemplate
-$execNode = $xmlDoc.SelectSingleNode("//ns:Exec", @{ns="http://schemas.microsoft.com/windows/2004/02/mit/task"})
 
+# ADR-110 §결정 2: Set Principal/UserId to current user SID (dynamic, no hardcoded placeholder)
+$nsmgr = New-Object System.Xml.XmlNamespaceManager($xmlDoc.NameTable)
+$nsmgr.AddNamespace("ns", "http://schemas.microsoft.com/windows/2004/02/mit/task")
+$principalNode = $xmlDoc.SelectSingleNode("//ns:Principal/ns:UserId", $nsmgr)
+if ($principalNode -ne $null) {
+    $currentUserSID = ([System.Security.Principal.WindowsIdentity]::GetCurrent()).User.Value
+    $principalNode.InnerText = $currentUserSID
+    Write-Host "  Principal SID updated: $currentUserSID" -ForegroundColor Gray
+}
+
+$execNode = $xmlDoc.SelectSingleNode("//ns:Exec", $nsmgr)
 if ($execNode -ne $null) {
     $execNode.Command = "powershell.exe"
     $execNode.Arguments = "-ExecutionPolicy RemoteSigned -NonInteractive -File `"$installScript`""

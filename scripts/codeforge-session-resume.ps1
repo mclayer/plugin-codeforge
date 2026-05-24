@@ -63,12 +63,15 @@ function Write-Log {
     $redacted = $Message -replace 'sk-ant-[a-zA-Z0-9_-]+', 'sk-ant-***'
     "$timestamp | $redacted" | Add-Content -Path $LogFile -Encoding UTF8
 
-    # Rotate log: keep 90 days
+    # Rotate log: keep 90 days + 5MB size limit (ADR-110 §결정 9)
     if ((Get-Item $LogFile).Length -gt 5MB) {
         $archivePath = "$LogFile.$(Get-Date -Format 'yyyy-MM-dd')"
         Copy-Item $LogFile $archivePath -Force
         Clear-Content $LogFile
     }
+
+    # Purge archived logs older than 90 days (ADR-110 §결정 9)
+    Get-ChildItem "$LogFile.*" -ErrorAction SilentlyContinue | Where-Object { $_.LastWriteTime -lt (Get-Date).AddDays(-90) } | Remove-Item -Force -ErrorAction SilentlyContinue
 }
 
 # Ghost session prevention mutex (ADR-110 §결정 6)
@@ -143,8 +146,7 @@ try {
     $newTriggerTime = $resetTime.ToString("HH:mm")
 
     Write-Log "Updating Task Scheduler trigger time to $newTriggerTime"
-    $schtasksCmd = "schtasks /Change /TN `"$taskName`" /ST $newTriggerTime"
-    $schtasksOutput = Invoke-Expression $schtasksCmd 2>&1
+    $schtasksOutput = & schtasks /Change /TN $taskName /ST $newTriggerTime 2>&1
 
     if ($LASTEXITCODE -eq 0) {
         Write-Log "Task Scheduler trigger updated successfully"
