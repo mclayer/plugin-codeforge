@@ -4713,39 +4713,39 @@ entries:
     activated_date: 2026-05-25
     status: warning                    # CFP-1367 Phase 2: deferred-followup → warning 승격 (script + workflow + bats fixture 신설 동반)
 
-- name: parallel-anchors-checked-presence
-  description: |
-    review-verdict-v4 findings[].parallel_anchors_checked[] optional array field presence-grep
-    heuristic lint. Wave 3 mechanical enforcement (Wave 1=CFP-1291 prose, Wave 2=CFP-1303 schema v4.9).
-    ADR-068 I-2 cross-module propagation completeness review-verdict layer realization.
-    ADR-060 Amendment 15 §결정 29 carrier. ADR-061 Amendment 3 (CFP-1497 CodeQL ReDoS guard) 정합.
-    3-state semantic: absent→WARNING / present+clean→PASS / present+matched→PASS.
-    5 pattern_type enum closed-set: local_remote/client_server/read_write/forward_reverse/enum_closure.
-    AC-13: Markdown fenced yaml block extraction. AC-14: non-array type advisory. AC-15: pattern_type schema location.
-  detect_command: bash scripts/check-parallel-anchors-checked-presence.sh
-  workflow: templates/github-workflows/parallel-anchors-checked-presence.yml
-  current_tier: warning              # ADR-060 §결정 5 — 첫 도입 = warning mode (continue-on-error)
-  bypass_label: hotfix-bypass:parallel-anchors-checked-presence
-  bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
-  promotion_criteria:
-    pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
-    failure_threshold: 0             # ADR-060 §결정 6 (b)
-    sibling_dependencies:
-      - CFP-1291                     # Wave 1 prose anchor (CodeReviewPLAgent.md cross-anchor parity check step)
-      - CFP-1303                     # Wave 2 schema carrier (review-verdict-v4 v4.9 findings[].parallel_anchors_checked[] field)
-      - CFP-1306                     # self-carrier Wave 3 mechanical enforcement
-    evidence_artifacts:
-      - github_actions_run_history_url
-      - lint_failure_count_zero_proof
-      - pr_cumulative_count_proof
-  modal_anti_pattern_dictionary: {}
-  introduced_by: CFP-1306
-  introduced_date: 2026-05-25
-  owner_adr: ADR-068                 # I-2 cross-module propagation completeness (declaration source)
-  carrier_adr: ADR-060               # Amendment 15 §결정 29 (enforcement source)
-  recurrence:
-    count: 2                         # CFP-604 F-CR-604-2 LOCAL_AUTHOR + parallel REMOTE_AUTHOR site (pattern_count 2 evidence)
-    threshold: 3                     # ADR-060 §결정 19
-    last_occurrence: 2026-05-23T00:00:00Z  # CFP-1303 Wave 2 carrier date (KST 2026-05-23)
-    promotion_trigger: none
-  status: Active                     # CFP-1306 Phase 1+2 동시 wire (deferred-followup → warning 직접 전환, CFP-1334 precedent)
+  - name: parallel-anchors-checked-presence
+    description: |
+      review-verdict-v4 findings[].parallel_anchors_checked[] optional array field presence-grep
+      heuristic lint. Wave 3 mechanical enforcement (Wave 1=CFP-1291 prose, Wave 2=CFP-1303 schema v4.9).
+      ADR-068 I-2 cross-module propagation completeness review-verdict layer realization.
+      ADR-060 Amendment 15 §결정 29 carrier. ADR-061 Amendment 3 (CFP-1497 CodeQL ReDoS guard) 정합.
+      3-state semantic: absent→WARNING / present+clean→PASS / present+matched→PASS.
+      5 pattern_type enum closed-set: local_remote/client_server/read_write/forward_reverse/enum_closure.
+      AC-13: Markdown fenced yaml block extraction. AC-14: non-array type advisory. AC-15: pattern_type schema location.
+    detect_command: bash scripts/check-parallel-anchors-checked-presence.sh
+    workflow: templates/github-workflows/parallel-anchors-checked-presence.yml
+    current_tier: warning              # ADR-060 §결정 5 — 첫 도입 = warning mode (continue-on-error)
+    bypass_label: hotfix-bypass:parallel-anchors-checked-presence
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1291                     # Wave 1 prose anchor (CodeReviewPLAgent.md cross-anchor parity check step)
+        - CFP-1303                     # Wave 2 schema carrier (review-verdict-v4 v4.9 findings[].parallel_anchors_checked[] field)
+        - CFP-1306                     # self-carrier Wave 3 mechanical enforcement
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-1306
+    introduced_date: 2026-05-25
+    owner_adr: ADR-068                 # I-2 cross-module propagation completeness (declaration source)
+    carrier_adr: ADR-060               # Amendment 15 §결정 29 (enforcement source)
+    recurrence:
+      count: 2                         # CFP-604 F-CR-604-2 LOCAL_AUTHOR + parallel REMOTE_AUTHOR site (pattern_count 2 evidence)
+      threshold: 3                     # ADR-060 §결정 19
+      last_occurrence: 2026-05-23T00:00:00Z  # CFP-1303 Wave 2 carrier date (KST 2026-05-23)
+      promotion_trigger: none
+    status: Active                     # CFP-1306 Phase 1+2 동시 wire (deferred-followup → warning 직접 전환, CFP-1334 precedent)
