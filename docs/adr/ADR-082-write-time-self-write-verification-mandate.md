@@ -97,6 +97,12 @@ amendments:
     summary: "§결정 1 layer 1 sub-scope (1-F) 신설 — spawn-internal periodic origin re-pin protocol. Sub-CFP B of CFP-1389 (paired sibling of Sub-CFP A CFP-1437) — preventive (Sub-CFP A pre-spawn pin) + reactive (Sub-CFP B mid-spawn drift detection) 2-layer defense forcing function 완결. chief author / deputy / 4-tuple sub-tuple subagent 가 작업 중간 (spawn-internal time, 예: 매 N file edit 또는 매 Edit/Write tool 호출 후) 4 의무: (a) periodic check trigger 의무 (매 N file edit 또는 매 Edit/Write tool 호출 후 / timer-based 일정 interval, Wave 1 = subagent 자체 판단 / Wave 2 mechanical hook) — `git fetch origin main --quiet` + `git rev-parse origin/main` 실행 (b) PRE-SPAWN-ORIGIN-MAIN-SHA block 값과 current origin/main SHA 비교 (drift comparison) (c) drift threshold (≥ N commits behind, default N=1 즉 any merge) 초과 시 subagent RETURN early with `drift_detected: true` flag + payload (`pre_spawn_sha`, `current_origin_main_sha`, `commits_drift`, `drift_detected_at_step`) (d) verified-via annotation — RETURN payload 안 `mid_spawn_drift_verified: <bool>` field 의무 (write-time semantic truth verify, RETURN flag 정합성). 본 sub-scope 1-F = sub-scope 1-A (cross-repo state verify) / 1-B (Issue body authorship) / 1-C (user-utterance verbatim) / 1-D (cross-repo label-write authority) / 1-E (spawn prompt SHA-anchor pre-spawn pin) 와 disjoint axis (mid-spawn time periodic drift detection + return early authority axis). 본 Amendment 16 = mid-spawn-time layer (reactive complement to Sub-CFP A pre-spawn-time layer) — Amendment 15 (1-E pre-spawn pin) + Amendment 16 (1-F mid-spawn re-pin) = paired complementary defense. ADR-073 Amendment 12 §결정 1 transition trigger `mid_spawn_origin_drift_detected` 와 dual-binding (verify 의무 ↔ write authority 의무 disjoint axis pair, 같은 CFP-1436 carrier). Wave 1 = declaration-only behavioral mandate (`mechanical_enforcement_actions[]` 신규 entry `mid-spawn-drift-detection` warning-tier deferred-followup). Wave 2 mechanical wire (subagent runtime hook + lint script + workflow yml hydrate + bats fixture + label-registry MINOR bump + evidence-checks-registry entry) = 별 sub-CFP carrier. 동인 = Sub-CFP A 단독으로 catch 못 하는 mid-flight drift 영역 reactive layer 신설 — CFP-1336 9+ collisions evidence 공유 (preventive + reactive 2-layer defense 결정). paired sibling ADR-073 Amendment 12 = 2 ADR Amendment 동시 발의 (axis disjoint complement 2-set, ADR-064 §결정 1 CFP scope unitary 정합). 본 Amendment 16 자체가 META-self-applied (§결정 10.D 11th applied case): 본 Amendment 번호(16) 가 target ADR-082 frontmatter `amendments:` Read verify (origin/main a1316f67d920dcc28fe40dec7cb69547ab60e025 max=15 — CFP-1437 Amd 15 merge 후 base, 정확 next-slot = 16) 후 결정 (verified-via: `git show origin/main:docs/adr/ADR-082-...md` frontmatter amendments[] 2026-05-24 KST 기준 origin/main a1316f67 pinned_at: a1316f67)."
     direction: strengthening
     sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §결정 1 layer 1 sub-scope (1-A/1-B/1-C/1-D/1-E) → (1-F spawn-internal periodic origin re-pin protocol) 확장). ADR-064 §결정 7 symmetric evidence-gated 정합. META-self-applied (§결정 10.D 11th applied case)."
+  - amendment_id: 17
+    carrier_story: CFP-1435
+    date: 2026-05-24
+    summary: "§결정 1 layer 1 sub-scope (1-G) 신설 — amendment-slot pre-reservation strict claim mandate. Sub-CFP C of CFP-1389 (paired sibling of Sub-CFP A CFP-1437 preventive + Sub-CFP B CFP-1436 reactive, 3-layer defense forcing function 완결). ADR-RESERVATION `amendments_reserved[]` sub-tree (CFP-1058 Amendment 4 codify) 가 reactive — agent commit time 점유 후 row append (race-winner-takes-it convention). Sub-CFP C = strict claim BEFORE chief author write — chief author / deputy spawn 시점에 amendments_reserved[] row 의무 pre-append + spawn prompt 안 `pre_reserved_amendment_slots: [{adr: ADR-NNN, amendment_id: M}]` field 의무. 4-tuple primitive: (a) pre-reservation row pre-append 의무 (chief author / deputy spawn 전 ADR-RESERVATION amendments_reserved[] row append + commit) (b) spawn prompt block 안 pre_reserved_amendment_slots field 의무 (planned amendment_id list 전달 — chief author 가 spawn 시점에 reservation row 와 cross-verify) (c) reservation row ↔ actual write cross-verify (chief author 가 ADR Amendment write 직전 ADR-RESERVATION row 존재 + own carrier_story 매핑 확인) (d) verified-via annotation (`pre_reservation_verified: <bool>` field spawn prompt 안 명시). 본 sub-scope 1-G = sub-scope 1-A / 1-B / 1-C / 1-D / 1-E / 1-F 와 disjoint axis (amendment slot reservation lifecycle pre-claim axis — slot reservation lifecycle 의 pre-write phase vs runtime verify phase). Sub-CFP A (1-E pre-spawn SHA pin) + Sub-CFP B (1-F mid-spawn drift detection) + Sub-CFP C (1-G amendment slot pre-reservation) = 3-layer defense forcing function 완결 (preventive SHA + reactive drift + preventive slot). ADR-050 (parallel epic conflict coordination) §결정 1 ADR-RESERVATION carrier 의 fine-grained amendment slot extension — ADR number reservation (ADR-050 §결정 1) 와 amendment slot reservation (CFP-1058 Amendment 4 + 본 Amendment 17) 가 동일 race coordination 패턴. Wave 1 = declaration-only behavioral mandate (`mechanical_enforcement_actions[]` 신규 entry `amendment-slot-reservation-check` warning-tier deferred-followup). Wave 2 mechanical wire (lint script + workflow yml hydrate + ADR-RESERVATION schema strict validation + concurrent reservation conflict detection + bats fixture + label-registry MINOR bump + evidence-checks-registry entry) = 별 sub-CFP carrier. 동인 = CFP-1336 9+ collisions evidence 의 preventive complement — Sub-CFP A SHA pin 단독으로는 amendment_id race 직접 차단 불가 (spawn-time SHA fresh fetch 후에도 multi-session concurrent spawn 시 race 가능), slot reservation lifecycle pre-claim 으로 race 직접 차단. ADR-RESERVATION schema enhancement = frontmatter `schema_version` field 신설 (1.0 → 1.1) + `amendments_reserved[]` row required fields documentation (adr_number / amendment_id / reserved_by_cfp / reservation_date / status: reserved|active|abandoned). 본 Amendment 17 자체가 META-self-applied (§결정 10.D 12th applied case): 본 Amendment 번호(17) 가 target ADR-082 frontmatter `amendments:` Read verify (origin/main b32a731a5e858224afce72b0e6fc86ce86ee1483 max=16 — CFP-1436 Amd 16 merge 후 base, 정확 next-slot = 17) 후 결정 (verified-via: `git show origin/main:docs/adr/ADR-082-...md` frontmatter amendments[] 2026-05-24 KST 기준 origin/main b32a731a pinned_at: b32a731a)."
+    direction: strengthening
+    sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §결정 1 layer 1 sub-scope (1-A/1-B/1-C/1-D/1-E/1-F) → (1-G amendment-slot pre-reservation strict claim) 확장). ADR-064 §결정 7 symmetric evidence-gated 정합. META-self-applied (§결정 10.D 12th applied case)."
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-841
@@ -188,6 +194,12 @@ amendment_log:
     decisions_touched: ["§결정 1 layer 1 sub-scope 1-F (신설)"]
     nature: ratchet-up  # §결정 1 layer 1 sub-scope 1-A/1-B/1-C/1-D/1-E → 1-F spawn-internal periodic origin re-pin protocol 확장 (ADR-058 §결정 5 강화 방향)
     note: "CFP-1389 Sub-CFP B carrier (CFP-1336 retro follow-up paired sibling of Sub-CFP A CFP-1437) — Mid-flight rebase auto-detection mechanical lint Epic Wave 1 declarative-only carrier. Sub-CFP A = preventive (pre-spawn time SHA-anchor pin) + Sub-CFP B = reactive (mid-spawn time periodic drift detection) = 2-layer defense forcing function 완결. chief author / deputy / 4-tuple sub-tuple subagent 가 작업 중간 spawn-internal time 4-tuple primitive (a-periodic check trigger 의무 매 N file edit 또는 매 Edit/Write tool 호출 후 또는 timer-based 일정 interval Wave 1 subagent 자체 판단 Wave 2 mechanical hook + `git fetch origin main --quiet` + `git rev-parse origin/main` 실행 / b-PRE-SPAWN-ORIGIN-MAIN-SHA block 값과 current origin/main SHA 비교 drift comparison / c-drift threshold ≥ N commits behind default N=1 any merge 초과 시 subagent RETURN early with `drift_detected: true` flag + payload pre_spawn_sha + current_origin_main_sha + commits_drift + drift_detected_at_step / d-verified-via annotation RETURN payload 안 `mid_spawn_drift_verified: <bool>` field 의무). ADR-082 sub-scope 1-E spawn-time anchor block pattern precedent (Amendment 15) 답습 + Amendment 15 (1-E pre-spawn pin) + Amendment 16 (1-F mid-spawn re-pin) = paired complementary defense. ADR-073 Amendment 12 §결정 1 transition trigger `mid_spawn_origin_drift_detected` 와 dual-binding (verify 의무 ↔ write authority 의무 disjoint axis pair, 같은 CFP-1436 carrier 안 paired Amendment). Wave 1 declaration-only behavioral + evidence-checks-registry `mid-spawn-drift-detection` warning-tier entry (deferred-followup). Wave 2 mechanical wire = 별 sub-CFP carrier (subagent runtime hook + lint script + workflow yml hydrate + bats fixture + label-registry MINOR bump + evidence-checks-registry entry). 동인: Sub-CFP A 단독으로 catch 못 하는 mid-flight drift 영역 reactive layer 신설 — CFP-1336 9+ collisions evidence 공유 (preventive + reactive 2-layer defense 결정, sentinel evidence 별도 누적 0). paired sibling ADR-073 Amendment 12 = 2 ADR Amendment 동시 발의 (axis disjoint complement 2-set, ADR-064 §결정 1 CFP scope unitary 정합). 본 Amendment 16 자체가 META-self-applied (§결정 10.D 11th applied case): 본 Amendment 번호(16) 가 target ADR-082 frontmatter amendments: 목록 Read verify (origin/main a1316f67 max=15 — CFP-1437 Amd 15 merge 후 base — 정확 next-slot = 16) 후 결정 (verified-via: `git show origin/main:docs/adr/ADR-082-...md` frontmatter amendments[] 2026-05-24 KST 기준 origin/main a1316f67d920dcc28fe40dec7cb69547ab60e025 pinned_at: a1316f67). Lane plugin agent md cross-ref (codeforge-design chief author prompt + 모든 subagent runtime spawn) = follow-up defer (wrapper-only ADR-010 sibling sync 면제)."
+  - amendment_id: 17
+    carrier_story: CFP-1435
+    date: 2026-05-24  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 1"]
+    nature: ratchet-up  # §결정 1 layer 1 sub-scope (1-G amendment-slot pre-reservation strict claim) 확장 (ADR-058 §결정 5 강화 방향)
+    note: "Sub-CFP C of CFP-1389 (CFP-1336 retro follow-up Sub-C) — Amendment-slot pre-reservation contract field codify carrier. ADR-RESERVATION `amendments_reserved[]` sub-tree (CFP-1058 Amendment 4 신설) 가 reactive — agent commit time 점유 후 row append (race-winner-takes-it convention). Sub-CFP C = strict claim BEFORE chief author write 의무 codify — chief author / deputy spawn 시점에 ADR-RESERVATION amendments_reserved[] row 의무 pre-append + spawn prompt 안 `pre_reserved_amendment_slots: [{adr: ADR-NNN, amendment_id: M}]` field 의무. 3-layer defense forcing function 완결 = Sub-CFP A (1-E preventive SHA pin) + Sub-CFP B (1-F reactive mid-spawn drift) + Sub-CFP C (1-G preventive slot pre-reservation). ADR-RESERVATION schema enhancement = frontmatter `schema_version` field 신설 (1.0 → 1.1) + amendments_reserved[] required fields documentation. paired sibling cross-ref = ADR-050 §결정 1 ADR-RESERVATION fine-grained amendment slot extension. Wave 1 = declaration-only behavioral mandate (`mechanical_enforcement_actions[]` 신규 entry `amendment-slot-reservation-check` warning-tier deferred-followup). Wave 2 mechanical wire (lint script + workflow yml hydrate + ADR-RESERVATION schema strict validation + concurrent reservation conflict detection + bats fixture + label-registry MINOR bump + evidence-checks-registry Active entry) = 별 sub-CFP carrier. 본 Amendment 17 자체가 META-self-applied (§결정 10.D 12th applied case): 본 Amendment 번호(17) 가 target ADR-082 frontmatter `amendments:` Read verify (origin/main b32a731a5e858224afce72b0e6fc86ce86ee1483 max=16 — CFP-1436 Amd 16 merge 후 base, 정확 next-slot = 17) 후 결정 (verified-via: `git show origin/main:docs/adr/ADR-082-...md` frontmatter amendments[] 2026-05-24 KST 기준 origin/main b32a731a pinned_at: b32a731a). ADR-073 touch 0건 (Sub-CFP C 영역 외, paired sibling 부재 — ADR-082 + ADR-050 cross-ref + ADR-RESERVATION schema bump dual-binding). pattern_count evidence: CFP-1336 9+ collisions super-class evidence 공유 (Sub-CFP A/B 와 동일 base — 3-layer defense 결정 carrier)."
 related_stories:
   - CFP-776  # carrier (super-class 통합 결정 — escalation_action escalate_user)
   - CFP-841  # Amendment 1 carrier (§결정 6 behavioral→mechanical 전환 후속 carrier)
@@ -223,6 +235,7 @@ related_stories:
   - CFP-1437 # Amendment 15 carrier (§결정 1 layer 1 sub-scope 1-E 신설 — spawn prompt SHA-anchor write-time verify mandate, CFP-1389 Sub-CFP A Wave 1 declarative-only Pre-spawn HEAD-pin protocol mechanical lint Epic carrier, paired sibling ADR-073 Amendment 11 §결정 1 transition trigger `spawn_prompt_emit`, CFP-1336 amendment_number_stale_at_planning pattern_count 9+ reach system-level evidence preventive solution carrier — chief author / deputy stale-at-planning 차단 forcing function)
   - CFP-1389 # Amendment 15 origin (CFP-1336 retro follow-up Pre-spawn HEAD-pin protocol mechanical lint Epic — Wave 1 = CFP-1437 declarative-only Sub-CFP A carrier, Wave 2 mechanical wire = 별 sub-CFP carrier)
   - CFP-1436 # Amendment 16 carrier (§결정 1 layer 1 sub-scope 1-F 신설 — spawn-internal periodic origin re-pin protocol, CFP-1389 Sub-CFP B Wave 1 declarative-only Mid-flight rebase auto-detection mechanical lint Epic carrier, paired sibling ADR-073 Amendment 12 §결정 1 transition trigger `mid_spawn_origin_drift_detected`, reactive complement to Sub-CFP A CFP-1437 preventive — 2-layer defense forcing function 완결 (pre-spawn pin + mid-spawn drift detection))
+  - CFP-1435 # Amendment 17 carrier (§결정 1 layer 1 sub-scope (1-G) — amendment-slot pre-reservation strict claim, Sub-CFP C of CFP-1389 paired sibling Sub-CFP A CFP-1437 + Sub-CFP B CFP-1436, 3-layer defense forcing function 완결)
 related_adrs:
   - ADR-073  # Orchestrator cross-repo state / assumption verify (disjoint 보완 — Orchestrator 행위 한정)
   - ADR-070  # Codex external worker output verify (disjoint 보완 — 외부 worker output 한정)
@@ -237,6 +250,7 @@ related_adrs:
   - ADR-024  # Amendment 1 동반 — Amendment 7 (hotfix-bypass:corpus-claim-verify 34번째 / cross-plugin-ownership-verify 35번째 family member)
   - ADR-060  # Amendment 1 동반 — evidence-checks-registry 2 entry warning tier (corpus-claim-verify / cross-plugin-ownership-verify, deferred-followup)
   - ADR-066  # Amendment 14 paired — PAT scope `issues:write` Amendment 4 cross-repo label sync 인가 (CFP-1336 carrier 안 3 ADR paired Amendment)
+  - ADR-050  # Amendment 17 cross-ref — Parallel epic conflict coordination (ADR-RESERVATION carrier ADR, amendment slot reservation = fine-grained ADR number reservation extension)
 related_files:
   - docs/adr/ADR-073-orchestrator-verify-before-assert.md  # cross-ref Amendment 1 (disjoint 보완)
   - docs/adr/ADR-070-codex-verify-before-trust.md  # cross-ref Amendment 1 (disjoint 보완)
@@ -261,6 +275,8 @@ related_files:
   - docs/adr/ADR-073-orchestrator-verify-before-assert.md  # Amendment 16 paired — Amendment 12 transition trigger `mid_spawn_origin_drift_detected` dual-binding (verify 의무 ↔ write authority 의무 disjoint axis pair, 같은 CFP-1436 carrier)
   - templates/github-workflows/mid-spawn-drift-detection-check.yml  # Amendment 16 동반 — spawn-internal periodic origin re-pin protocol workflow skeleton (Wave 1 declaration-only / Wave 2 mechanical wire 별 sub-carrier)
   - <internal-docs>/plugin-codeforge/change-plans/cfp-1436-mid-flight-rebase-detection.md  # Amendment 16 carrier Change Plan (CFP-1436 Phase 1 Story, internal-docs SSOT per ADR-013 dogfood-out policy)
+  - docs/adr/ADR-050-parallel-epic-conflict-coordination.md  # Amendment 17 cross-ref — Parallel epic conflict coordination ADR-RESERVATION carrier (amendment slot reservation = fine-grained ADR number reservation extension, CFP-1058 Amendment 4 codify + 본 Amendment 17 forcing function)
+  - templates/github-workflows/amendment-slot-reservation-check.yml  # Amendment 17 동반 — Wave 1 declaration-only workflow stub (실 logic = Wave 2 별 sub-CFP carrier)
 is_transitional: false
 # Wave 1 = behavioral directive only (lane agent write-time self-discipline forcing function).
 # Wave 2 (Amendment 1, CFP-841) = §결정 6 behavioral→mechanical 전환:
@@ -296,6 +312,9 @@ mechanical_enforcement_actions:
   - action: mid-spawn-drift-detection
     status: deferred-followup     # Phase 1 declare (본 Amendment 16, CFP-1436) / Phase 2 actual wire = 별 sub-CFP carrier (subagent runtime hook + lint script + workflow yml hydrate + bats fixture + label-registry MINOR + evidence-checks-registry entry)
     target_section: §결정 1 layer 1 sub-scope 1-F  # spawn-internal periodic origin re-pin protocol (4-tuple primitive a-periodic check trigger 매 N file edit/매 Edit/Write tool 호출 후 + git fetch + git rev-parse origin/main 실행 / b-PRE-SPAWN-ORIGIN-MAIN-SHA block 값과 current origin/main SHA 비교 drift comparison / c-drift threshold ≥ N commits behind 초과 시 RETURN early with drift_detected:true flag + payload / d-`mid_spawn_drift_verified` annotation). ADR-073 Amendment 12 §결정 1 transition trigger `mid_spawn_origin_drift_detected` dual-binding. ADR-082 sub-scope 1-E (Amendment 15) anchor block pattern precedent 답습 (pre-spawn pin + mid-spawn re-pin = paired complementary defense).
+  - action: amendment-slot-reservation-check
+    status: deferred-followup     # Phase 1 declare (본 Amendment 17 CFP-1435) / Phase 2 actual wire = 별 sub-CFP carrier (lint script + workflow yml hydrate + ADR-RESERVATION schema strict validation + concurrent reservation conflict detection + bats fixture + label-registry MINOR + evidence-checks-registry Active entry)
+    target_section: §결정 1 layer 1 sub-scope (1-G)       # amendment-slot pre-reservation strict claim mandate — chief author / deputy spawn 전 ADR-RESERVATION amendments_reserved[] row 의무 pre-append + spawn prompt 안 pre_reserved_amendment_slots field 의무 (Sub-CFP C 3-layer defense closure)
 sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (ratchet 강화 방향 only — verify scope 확장). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과. is_transitional: false (영구 정책). self-referential 주의: 본 ADR 의 해소기준 부재 선언 자체가 §결정 2 verify 대상 아님 (§결정 6 EC-3 self-protection)."
 pre_lookup_evidence:
   verified_files:
@@ -1484,3 +1503,91 @@ ADR-073 Amendment 12 §결정 1 transition trigger enum 안 `mid_spawn_origin_dr
 - `<internal-docs>/plugin-codeforge/change-plans/cfp-1436-mid-flight-rebase-detection.md` — Change Plan SSOT (Phase 1 carrier, internal-docs SSOT per ADR-013 dogfood-out policy + `docs/change-plans/` gitignored)
 - `CLAUDE.md` — verify-before-trust 4-layer 단락 ADR-082 Amendment 16 sub-scope 1-F + ADR-073 Amendment 12 cross-ref 1 line append (CFP-506 line cap 정합)
 - `<internal-docs>/plugin-codeforge/stories/CFP-1436.md` — Story file (Sub-CFP B carrier, Phase 1 declarative)
+
+## Amendment 17 — §결정 1 layer 1 sub-scope (1-G) 신설 (amendment-slot pre-reservation strict claim mandate, CFP-1435, 2026-05-24 KST)
+
+### 동기
+
+CFP-1389 Sub-CFP C carrier (CFP-1336 retro follow-up, paired sibling of Sub-CFP A CFP-1437 + Sub-CFP B CFP-1436) — Amendment-slot pre-reservation contract field codify Epic Wave 1 declarative-only carrier. CFP-1336 single Story 안 amendment_number_stale_at_planning collision 4 reach (Amd 8 → 10 → 12 → 13 → 14 history, 5 collisions) + cross-Story pattern_count 누적 9+ reach (CFP-1293 / CFP-1303 / CFP-1318 / CFP-1336-iter1~iter4 / CFP-1390 mid-DesignReview) → system-level pattern continued evidence. ADR-045 §D-9 Mandatory escalation 정합 — preventive solution carrier 의무.
+
+Sub-CFP A (CFP-1437 / ADR-073 Amendment 11 + ADR-082 Amendment 15) = pre-spawn time SHA pin (preventive layer — spawn 직전 baseline lock).
+Sub-CFP B (CFP-1436 / ADR-073 Amendment 12 + ADR-082 Amendment 16) = spawn-internal time periodic origin re-pin (reactive complement — mid-flight drift 감지).
+**Sub-CFP C (본 carrier / ADR-082 Amendment 17 + ADR-050 cross-ref + ADR-RESERVATION schema bump)** = amendment slot reservation lifecycle pre-claim (preventive complement — race-winner-takes-it convention 의 strict claim 전환).
+
+Sub-CFP A 단독 미흡: spawn 시점 SHA fresh fetch 후에도 multi-session concurrent spawn 시 같은 ADR 같은 amendment_id slot race 가능 (SHA pin 은 mid-flight drift 감지 layer, slot ownership 직접 차단 layer 아님). Sub-CFP B 단독 미흡: drift detection 은 collision 발생 후 reactive 회수, pre-claim layer 부재.
+
+**Sub-CFP C 의 forcing function** = chief author / deputy spawn 시점에 **ADR-RESERVATION `amendments_reserved[]` row 의무 pre-append** (commit time 점유 후 retroactive append → spawn 시점 strict claim). + spawn prompt 안 `pre_reserved_amendment_slots: [{adr: ADR-NNN, amendment_id: M}]` field 의무 (planned amendment_id list 전달 — chief author 가 spawn 시점에 reservation row 와 cross-verify).
+
+기존 6-layer verify-before-trust 안 layer 3 (ADR-082 §결정 1) 의 sub-scope 1-A (cross-repo state verify) / 1-B (Issue body authorship) / 1-C (user-utterance verbatim) / 1-D (cross-repo label-write authority) / 1-E (spawn prompt SHA-anchor pre-spawn pin) / 1-F (spawn-internal periodic origin re-pin) 가 모두 read-time / write 직전 / spawn-time / spawn-internal time fidelity check 영역. **amendment slot reservation lifecycle pre-claim** axis 는 disjoint sub-scope — 본 Amendment 가 sub-scope 1-G 신설로 anchor.
+
+ADR-050 (parallel epic conflict coordination) §결정 1 ADR-RESERVATION carrier 의 fine-grained extension — ADR number reservation (ADR-050 §결정 1, GitOpsAgent monopoly sequential append) 와 amendment slot reservation (CFP-1058 Amendment 4 sub-tree codify + 본 Amendment 17 strict claim forcing function) 가 동일 race coordination 패턴. **본 Sub-CFP C 는 ADR-073 touch 0건** (Sub-CFP A/B paired Amendment pattern 와 disjoint — ADR-082 super-class + ADR-050 cross-ref + ADR-RESERVATION schema enhancement 의 triple-binding carrier).
+
+### Amendment
+
+#### §결정 1 layer 1 sub-scope (1-G) 신설 — amendment-slot pre-reservation strict claim 4-tuple primitive
+
+ADR-082 §결정 1 의 6-layer 표 안 layer 1 (Orchestrator scope) sub-scope 확장:
+
+- **sub-scope (1-A)** = cross-repo state verify (read-time, ADR-073 base)
+- **sub-scope (1-B)** = Orchestrator-authored Issue body authorship pre-publish verify (write-time, Amendment 2 신설)
+- **sub-scope (1-C)** = Orchestrator-authored lane PL spawn prompt user-utterance verbatim anchor (write-time, Amendment 5 신설)
+- **sub-scope (1-D)** = cross-repo label-write authority verify-before-write (write-time, Amendment 14 신설)
+- **sub-scope (1-E)** = spawn prompt SHA-anchor pre-spawn pin (write-time, Amendment 15 신설 — preventive SHA layer)
+- **sub-scope (1-F)** = spawn-internal periodic origin re-pin protocol (spawn-internal time, Amendment 16 신설 — reactive drift layer)
+- **sub-scope (1-G) — 신설 (Amendment 17)** = amendment-slot pre-reservation strict claim (spawn-time pre-claim + spawn prompt cross-verify, 4-tuple primitive — preventive slot layer):
+  - **(a) pre-reservation row pre-append 의무**: chief author / deputy spawn 전 ADR-RESERVATION `amendments_reserved[]` row append + commit 의무 (commit time 점유 후 retroactive append 금지 — strict pre-claim). schema = `{adr_number, amendment_id, reserved_by_cfp, reservation_date, status: reserved}`. spawn 후 chief author 가 actual ADR Amendment write 시 status `reserved → active` 전환.
+  - **(b) spawn prompt block 안 `pre_reserved_amendment_slots` field 의무**: spawn prompt body 안 `pre_reserved_amendment_slots: [{adr: ADR-NNN, amendment_id: M}, ...]` field 의무 (planned amendment_id list 전달). chief author 가 spawn 시점에 ADR-RESERVATION row 와 cross-verify (own carrier_story 매핑 확인).
+  - **(c) reservation row ↔ actual write cross-verify**: chief author 가 ADR Amendment write 직전 ADR-RESERVATION `amendments_reserved[]` row 존재 verify (own `reserved_by_cfp` 일치 + own `adr_number` + own `amendment_id` 정합). mismatch 시 write abort + Orchestrator escalate.
+  - **(d) verified-via annotation**: spawn prompt 안 `pre_reservation_verified: <bool>` field 의무. write-time semantic truth verify (작성 amendment_id = pre-reserved slot 일치 단언).
+
+#### Wave 1 = declaration-only behavioral mandate
+
+`mechanical_enforcement_actions[]` 신규 entry `amendment-slot-reservation-check` warning-tier deferred-followup append. Wave 2 mechanical wire (lint script + workflow yml hydrate + ADR-RESERVATION schema strict validation + concurrent reservation conflict detection + bats fixture + label-registry MINOR bump + evidence-checks-registry Active entry) = 별 sub-CFP carrier 분리 (ADR-082 Wave 1 declaration-only precedent 답습 — Amendment 6/8/10/14/15/16 패턴 verbatim 답습 / ADR-070 D5 retain 패턴 / ADR-076 / ADR-086).
+
+#### ADR-RESERVATION schema bump (1.0 → 1.1)
+
+ADR-RESERVATION.md frontmatter `schema_version: 1.1` field 신설 (이전 = implicit 1.0). `amendments_reserved[]` row required fields 명문화:
+
+```yaml
+schema_version: 1.1  # CFP-1435 / ADR-082 Amendment 17
+amendments_reserved:
+  - adr_number: NNN              # 기존 ADR number (active, integer)
+    amendment_id: M              # 예약 Amendment id slot (integer, sequential within ADR)
+    reserved_by_cfp: CFP-XXX     # carrier Story (string)
+    reservation_date: YYYY-MM-DD KST  # ADR-079 KST format
+    status: reserved | active | abandoned | superseded  # closed enum 4-value (이전 = reserved | active | superseded — abandoned 추가, superseded retain)
+```
+
+**status enum closed-set 4-value (1.1)**: `reserved` (pre-claim 직후 chief author actual write 전) / `active` (chief author actual write 후 commit time) / `abandoned` (spawn aborted or carrier_story canceled before write) / `superseded` (이전 ADR amendment 가 신규 amendment 로 덮어쓰임 — backward-compat 1.0 retain).
+
+**1.0 → 1.1 backward-compat invariant**: 기존 1.0 amendments_reserved[] rows 무효화 0건. 신규 row 만 `status: reserved` 의무 (이전 `active` 직접 진입 row precedent 유지 = chief author commit time pre-existing pattern, 본 Amendment 17 이후 신규 carrier 만 strict claim 적용).
+
+#### ADR-050 cross-ref (paired sibling)
+
+ADR-050 §결정 1 (ADR-RESERVATION ADR number 원자적 예약) = ADR number reservation race coordination carrier. 본 Amendment 17 = amendment slot reservation race coordination — ADR-050 §결정 1 의 fine-grained extension. 동일 race coordination 패턴 (GitOpsAgent monopoly sequential append → conflict 시 re-sort 자동 해소). ADR-050 본문 변경 0건 (cross-ref-only). ADR-082 Amendment 17 본문 안 ADR-050 §결정 1 동일 패턴 명문화.
+
+**3-layer defense forcing function 완결**: Sub-CFP A (Amendment 15 1-E pre-spawn SHA pin) + Sub-CFP B (Amendment 16 1-F mid-spawn drift detection) + Sub-CFP C (본 Amendment 17 1-G amendment slot pre-reservation) = `preventive SHA + reactive drift + preventive slot` 3-layer.
+
+### 근거
+
+- §결정 1 layer 1 6-layer 표 안 layer 1 (Orchestrator scope) sub-scope (1-A/1-B/1-C/1-D/1-E/1-F) 모두 read-time / write 직전 / spawn-time / spawn-internal time verify axis. sub-scope (1-G) = amendment slot reservation lifecycle pre-claim axis 신설 — disjoint axis 확장 (forbid scope 축소 아님, ratchet 강화 방향).
+- ADR-050 §결정 1 = ADR number reservation race coordination carrier (GitOpsAgent sequential append). 본 Amendment 17 = amendment slot reservation race coordination = ADR-050 §결정 1 의 fine-grained extension (axis disjoint complement, cross-ref-only Amendment).
+- ADR-RESERVATION schema 1.0 → 1.1 MINOR bump = `schema_version` field 신설 + `amendments_reserved[]` row required fields documentation + status enum 4-value 명문화. backward-compat 1.0 row 무효화 0건 (ratchet 강화 방향 only).
+- CFP-1058 Amendment 4 (ADR-082 Amendment 4 cross-ref) = `amendments_reserved[]` sub-tree 초기 codify (reactive — `0 entry baseline` + 신규 reservation 만 사용 + race-winner-takes-it convention). 본 Amendment 17 = reactive → strict pre-claim 전환 forcing function (CFP-1058 Amendment 4 패턴 답습 + scope 확장).
+- ADR-058 §결정 5 sunset_justification N/A (ratchet 강화 방향 only). `is_transitional: false` 유지.
+- ADR-064 §self-application top-down ratchet 정합 (강화 방향만, 약화 0건).
+- ADR-040 Amendment 3 §결정 7.A schema 정합 — `mechanical_enforcement_actions[]` 7-entry (Amendment 1 의 2 + Amendment 6 의 1 + Amendment 14 의 1 + Amendment 15 의 1 + Amendment 16 의 1 + 본 Amendment 17 의 1 entry).
+- ADR-039 lane self-write boundary 정합 (lane plugin agent md cross-ref = follow-up defer, wrapper-only ADR-010 sibling sync 면제).
+- pattern_count evidence: CFP-1336 amendment_number_stale_at_planning pattern_count 9+ reach system-level evidence 공유 (Sub-CFP A/B 와 동일 base, sentinel evidence 별도 누적 0 — preventive + reactive + preventive 3-layer defense 결정 carrier closure).
+- 본 Amendment 17 자체가 META-self-applied (§결정 10.D 12th applied case): Amendment 번호(17) = target ADR-082 frontmatter `amendments:` Read verify (origin/main b32a731a5e858224afce72b0e6fc86ce86ee1483 max=16 — CFP-1436 Amd 16 merge 후 base, 정확 next-slot = 17) 후 결정 — §결정 9 Amendment 7 양방향 wording 준수.
+
+### Related (Amendment 17 동반)
+
+- `docs/adr/ADR-050-parallel-epic-conflict-coordination.md` — §결정 1 ADR-RESERVATION carrier cross-ref (amendment slot reservation = fine-grained ADR number reservation extension, 동일 race coordination 패턴 — ADR-050 본문 0건 변경, cross-ref-only)
+- `docs/adr/ADR-RESERVATION.md` — schema 1.0 → 1.1 MINOR bump (frontmatter `schema_version` field 신설 + `amendments_reserved[]` row required fields documentation + status enum 4-value `reserved|active|abandoned|superseded`) + `amendments_reserved[]` 1-row append (ADR-082 Amendment 17, CFP-1435 carrier active 점유)
+- `templates/github-workflows/amendment-slot-reservation-check.yml` — amendment-slot pre-reservation strict claim workflow skeleton (Wave 1 declaration-only / Wave 2 mechanical wire 별 sub-carrier)
+- `docs/inter-plugin-contracts/label-registry-v2.md` — `hotfix-bypass:amendment-slot-reservation-check` family member append (Wave 2 carrier — declaration-only Wave 1)
+- `docs/evidence-checks-registry.yaml` — `amendment-slot-reservation-check` entry warning-tier deferred-followup (Phase 1 declare / Phase 2 actual wire 별 sub-carrier)
+- `<internal-docs>/plugin-codeforge/change-plans/cfp-1435-amendment-slot-prereservation.md` — Change Plan SSOT (Phase 1 carrier, internal-docs SSOT per ADR-013 dogfood-out policy + `docs/change-plans/` gitignored)
+- `CLAUDE.md` — verify-before-trust 4-layer 단락 ADR-082 Amendment 17 sub-scope 1-G + ADR-050 cross-ref 1 line append (CFP-506 line cap 정합)
+- `<internal-docs>/plugin-codeforge/stories/CFP-1435.md` — Story file (Sub-CFP C carrier, Phase 1 declarative)

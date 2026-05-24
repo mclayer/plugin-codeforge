@@ -5,11 +5,14 @@ status: Active
 category: governance
 date: 2026-05-09
 carrier_story: CFP-344
+schema_version: 1.1  # CFP-1435 / ADR-082 Amendment 17 — amendments_reserved[] row required fields documentation + status enum 4-value (reserved|active|abandoned|superseded). 이전 = implicit 1.0 (CFP-1058 Amendment 4 codify, 0 entry baseline).
 related_adrs:
   - ADR-050
+  - ADR-082  # Amendment 17 cross-ref — amendment-slot pre-reservation strict claim mandate sub-scope (1-G), CFP-1435 carrier (schema 1.0 → 1.1 MINOR bump)
 related_files:
   - docs/parallel-work/section-ownership.yaml
   - templates/github-workflows/parallel-epic-conflict-check.yml
+  - docs/adr/ADR-082-write-time-self-write-verification-mandate.md  # Amendment 17 carrier — amendment-slot pre-reservation strict claim sub-scope (1-G), 본 registry schema bump 1.0 → 1.1 동반
 is_transitional: false
 ---
 
@@ -165,6 +168,11 @@ ADR deprecated/superseded 시 해당 row `status: archived`. 번호 재사용 �
 
 ### Amendment id slot 예약 (active, CFP-1058 sub-tree)
 
+  - adr_number: 82
+    amendment_id: 17
+    reserved_by_cfp: CFP-1435
+    reservation_date: 2026-05-24 KST
+    status: active   # ArchitectAgent commit time 점유 (Story Phase 1 PR carrier — Amendment 17 §결정 1 layer 1 sub-scope (1-G) 신설 amendment-slot pre-reservation strict claim mandate 4-tuple primitive (a-pre-reservation row pre-append 의무 chief author / deputy spawn 전 ADR-RESERVATION amendments_reserved[] row append + commit / b-spawn prompt block 안 pre_reserved_amendment_slots field 의무 / c-reservation row ↔ actual write cross-verify own carrier_story 매핑 / d-verified-via annotation `pre_reservation_verified: <bool>` field). Sub-CFP C of CFP-1389 Wave 1 declarative-only carrier — paired sibling of Sub-CFP A CFP-1437 (preventive SHA pin) + Sub-CFP B CFP-1436 (reactive mid-spawn drift detection) = 3-layer defense forcing function 완결 (preventive SHA + reactive drift + preventive slot). ADR-050 (parallel epic conflict coordination) §결정 1 ADR-RESERVATION carrier fine-grained amendment slot extension cross-ref — 동일 race coordination 패턴 (GitOpsAgent monopoly sequential append → conflict 시 re-sort 자동 해소). ADR-RESERVATION schema enhancement = frontmatter `schema_version` field 신설 (1.0 → 1.1) + amendments_reserved[] row required fields documentation + status enum 4-value (reserved|active|abandoned|superseded). CFP-1336 amendment_number_stale_at_planning pattern_count 9+ reach system-level evidence preventive complement carrier — Sub-CFP A SHA pin 단독으로는 amendment_id race 직접 차단 불가 (spawn-time SHA fresh fetch 후에도 multi-session concurrent spawn 시 race 가능), slot reservation lifecycle pre-claim 으로 race 직접 차단. verified-via git show origin/main:docs/adr/ADR-082-...md frontmatter amendments[] max=16 → next=17 2026-05-24 KST 기준 origin/main b32a731a (CFP-1436 Amendment 16 merge 후 base). META-self-applied (§결정 10.D 12th applied case). status `reserved` 미경유 직접 `active` 전환 (ArchitectAgent chief author precedent — ADR-082 Amendment 16 row (CFP-1436) 직전 패턴 정합 — 본 row 자체가 strict pre-claim 의무 codify Amendment carrier 이므로 self-application = META 가 강화 방향 invariant 보존).
 ```yaml
 amendments_reserved:
   - adr_number: 83

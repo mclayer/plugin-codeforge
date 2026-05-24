@@ -1,0 +1,96 @@
+# amendment-slot-reservation-check.yml
+#
+# WAVE 1 = declarative-only STUB
+# ----------------------------------
+# Sub-CFP C (CFP-1435) of CFP-1389 — Amendment-slot pre-reservation contract field
+# Epic. paired sibling of Sub-CFP A (CFP-1437) preventive + Sub-CFP B (CFP-1436)
+# reactive — 3-layer defense forcing function closure:
+#   - Sub-CFP A = preventive SHA (pre-spawn time PRE-SPAWN-ORIGIN-MAIN-SHA pin)
+#   - Sub-CFP B = reactive drift (mid-spawn time periodic origin re-pin)
+#   - Sub-CFP C = preventive slot (amendment slot reservation lifecycle pre-claim)
+#
+# This workflow is a Wave 1 declarative anchor only. The actual mechanical wire
+# (lint script + bats fixture + ADR-RESERVATION schema strict validation +
+# concurrent reservation conflict detection + label-registry MINOR +
+# evidence-checks-registry Active entry) is deferred to Wave 2 sub-CFP carrier
+# (별 sub-CFP).
+#
+# Carrier ADRs:
+#   - ADR-082 Amendment 17 (§결정 1 layer 1 sub-scope (1-G) amendment-slot
+#     pre-reservation strict claim mandate 4-tuple primitive)
+#   - ADR-050 §결정 1 cross-ref (ADR-RESERVATION carrier — amendment slot
+#     reservation = fine-grained ADR number reservation extension, 동일 race
+#     coordination 패턴 — ADR-050 본문 0건 변경, cross-ref-only)
+#   - ADR-RESERVATION schema 1.0 → 1.1 MINOR bump (frontmatter
+#     `schema_version` field 신설 + amendments_reserved[] row required fields
+#     documentation + status enum 4-value reserved|active|abandoned|superseded)
+#
+# evidence-checks-registry entry name (Wave 2 carrier):
+#   - amendment-slot-reservation-check (warning tier deferred-followup)
+#
+# Hotfix bypass label (Wave 2 carrier):
+#   - hotfix-bypass:amendment-slot-reservation-check
+#
+# Wave 1 retain rationale: ADR-RESERVATION schema strict validation 의 lint
+# heuristic 결정 (pre-reservation row presence check vs spawn prompt
+# pre_reserved_amendment_slots field cross-verify vs concurrent reservation
+# conflict detection 의 trade-off) = sentinel forward-prevention 후 Wave 2
+# mechanical wire 결정 (precedent CFP-963 codex-network-scope-presence +
+# CFP-1336 cross-repo-label-sync + CFP-1437 spawn-prompt-head-pin-presence +
+# CFP-1436 mid-spawn-drift-detection 답습).
+#
+# Wave 2 carrier responsibilities (sub-CFP TBD):
+#   - scripts/check-amendment-slot-reservation.sh (thin wrapper)
+#   - scripts/lib/check_amendment_slot_reservation.py (Python SSOT per ADR-061)
+#   - tests/scripts/test_check-amendment-slot-reservation.sh (bats fixture pair)
+#   - label-registry-v2 v2.NN MINOR bump (hotfix-bypass:amendment-slot-reservation-check
+#     family member append + ADR-108 §결정 3 description text count parity)
+#   - docs/evidence-checks-registry.yaml: new entry `amendment-slot-reservation-check`
+#     status: Active, current_tier: warning, owner_adr: ADR-082 / ADR-050
+#   - this file: actual workflow logic hydrate
+#     (PR-time pull_request + workflow_dispatch dual trigger split per CFP-954 D2 consensus)
+#
+# Detection scope (Wave 2 design — declarative anchor only):
+#   - PR-time: validate that any newly-added ADR Amendment in this PR has a
+#     pre-existing `amendments_reserved[]` row in ADR-RESERVATION.md with
+#     matching {adr_number, amendment_id, reserved_by_cfp}
+#   - PR-time: validate spawn prompt artifact (if present in PR diff) has
+#     `pre_reserved_amendment_slots` field with matching planned slots
+#   - PR-time: detect concurrent reservation conflict — two open PRs claiming
+#     same (adr_number, amendment_id) slot → fail-fast with merge-order guidance
+#   - schema strict validation — frontmatter `schema_version: 1.1` field +
+#     amendments_reserved[] row required fields + status enum 4-value
+#   - missing row / mismatch / conflict → warning (advisory) — Wave 1
+#     behavioral mandate
+#
+# Source-of-truth (Wave 1 anchor):
+#   - docs/adr/ADR-082-write-time-self-write-verification-mandate.md `## Amendment 17`
+#   - docs/adr/ADR-050-parallel-epic-coordination.md `### 결정 1` (cross-ref carrier)
+#   - docs/adr/ADR-RESERVATION.md (schema 1.0 → 1.1 + amendments_reserved[] row)
+#   - <internal-docs>/plugin-codeforge/change-plans/cfp-1435-amendment-slot-prereservation.md
+#   - <internal-docs>/plugin-codeforge/stories/CFP-1435.md
+
+name: amendment-slot-reservation-check (Wave 1 declarative stub)
+
+permissions:
+  contents: read
+
+on:
+  workflow_dispatch:
+    # Wave 1 = declarative-only. Manual trigger only — no PR / push activation.
+    # Wave 2 carrier will replace with `pull_request: ` + `workflow_dispatch: ` dual trigger
+    # split per CFP-954 D2 consensus (production-cutover-evidence.yml byte-pattern 답습).
+
+jobs:
+  declarative-anchor:
+    name: Wave 1 declarative anchor (no-op)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Sub-CFP C Wave 1 declarative-only carrier
+        run: |
+          echo "[INFO] CFP-1435 Sub-CFP C Wave 1 declarative-only carrier"
+          echo "[INFO] Amendment-slot pre-reservation strict claim mandate = Wave 2 별 sub-CFP carrier"
+          echo "[INFO] ADR-082 Amendment 17 + ADR-050 cross-ref + ADR-RESERVATION schema 1.0 → 1.1 MINOR bump (triple-binding, declarative anchor only)"
+          echo "[INFO] 3-layer defense closure: Sub-CFP A (preventive SHA) + Sub-CFP B (reactive drift) + Sub-CFP C (preventive slot)"
+          echo "[INFO] No-op: actual mechanical wire deferred to Wave 2"
+          exit 0
