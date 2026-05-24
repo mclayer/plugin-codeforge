@@ -102,7 +102,14 @@ try {
         exit 0
     }
 
-    Write-Log "Read session UUID: $(($sessionUuid -replace '.$', '***'))"
+    # SecurityTest P1 #2 FIX (ADR-068 I-3 unconditional guard) — UUID format validation
+    # Reject non-UUID content: argument injection prevention (CWE-88) + log redaction precision
+    if ($sessionUuid -notmatch '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') {
+        Write-Log "Invalid UUID format in session file (CWE-88 argument injection guard)"
+        exit 1
+    }
+
+    Write-Log "Read session UUID: $($sessionUuid.Substring(0,8))***"
 
     # ADR-110 §결정 8: Detect rate-limit reset time
     Write-Log "Checking rate-limit status via 'claude --print noop'..."

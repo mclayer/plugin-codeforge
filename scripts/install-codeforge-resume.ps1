@@ -72,8 +72,18 @@ icacls $installDir /inheritance:r /grant:r "$env:USERNAME`:F" /grant:r "Administ
 Write-Host "  ACL set for user and Administrators" -ForegroundColor Green
 
 # Read and update XML template path
+# SecurityTest P1 #1 FIX (CWE-611 XXE prevention) — XmlReaderSettings explicit DTD/Entity prohibit
 Write-Host "Preparing Task Scheduler definition..." -ForegroundColor Yellow
-[xml]$xmlDoc = Get-Content $xmlTemplate
+$xmlReaderSettings = New-Object System.Xml.XmlReaderSettings
+$xmlReaderSettings.DtdProcessing = [System.Xml.DtdProcessing]::Prohibit
+$xmlReaderSettings.XmlResolver = $null
+$xmlReader = [System.Xml.XmlReader]::Create($xmlTemplate, $xmlReaderSettings)
+try {
+    $xmlDoc = New-Object System.Xml.XmlDocument
+    $xmlDoc.Load($xmlReader)
+} finally {
+    $xmlReader.Dispose()
+}
 
 # ADR-110 §결정 2: Set Principal/UserId to current user SID (dynamic, no hardcoded placeholder)
 $nsmgr = New-Object System.Xml.XmlNamespaceManager($xmlDoc.NameTable)
