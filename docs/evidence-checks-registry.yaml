@@ -4087,7 +4087,7 @@ entries:
     detect_command: bash scripts/check-stale-local-main-checkout.sh  # Phase 2 별 sub-CFP carrier — scripts/check-stale-local-main-checkout.sh (bash thin wrapper, ADR-061) + scripts/lib/check_stale_local_main_checkout.py (Python SSOT — git fetch origin + rev-parse divergence detect + threshold compare) 실 file 신설
     workflow: templates/github-workflows/stale-local-main-checkout-divergence-check.yml  # Phase 2 별 sub-CFP carrier — byte-identical self-app .github/workflows/stale-local-main-checkout-divergence-check.yml (ADR-005 parity)
     current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode default 새 entry pattern
-    bypass_label: hotfix-bypass:stale-local-main-checkout-divergence-check  # 77번째 hotfix-bypass:* family member (post-CFP-1334+CFP-1391 = +2 ahead) — label-registry-v2 v2.53 → v2.54 MINOR bump (CFP-1384 Phase 1)
+    bypass_label: hotfix-bypass:stale-local-main-checkout-divergence-check  # hotfix-bypass:* family member (CFP-1384 Phase 1 — label-registry-v2 v2.53 → v2.54 MINOR bump). 절대값 count 명시 제거 (drift 재발 차단 invariant, CFP-1434 doc-only fast-path cleanup) — actual count = label-registry-v2 frozen-baseline parity lint 영역.
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     promotion_criteria:
       pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized
