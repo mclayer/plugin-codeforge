@@ -23,7 +23,14 @@ related_adrs:
 mechanical_enforcement_actions: []   # declaration-only Wave 1 — §결정 1 custom GitHub Action / §결정 2 3-anchor 실 hash 알고리즘 + Confluence property schema / §결정 3 Option B per-tool deny decomposition + atlassian-tool-drift check + sync agent home / §결정 4 SSRF dual-channel + token sanitization / §결정 5 walker §2.G MINOR bump + doc-locations confluence variant 실 변경 = 모두 후속 Phase (Epic body S13 + W5 carrier). ADR-082 §결정 6 / ADR-070 §D5 / ADR-100 / ADR-101 retain pattern (Wave 1 declare / Wave 2 wire). atlassian-tool-drift = 첫 promotion candidate (Option B allow-by-omission 유일 weakening surface), pattern_count >= 2 재발 시 follow-up CFP MUST promote to warning-tier evidence-checks-registry entry
 is_transitional: false   # permanent tooling-infrastructure — git→Confluence one-way sync mechanism (custom GitHub Action + 3-anchor hash-git-source + Option B narrow allow + SSRF dual-channel) 은 Atlassian 재결합 후 영구 sync 정책 방향. sync 구현체 결정 + narrow allow scope 분리 + SSRF 3-layer chain Layer 3 = 강화 방향 (security boundary 신설 + 최소권한). 유일 약화 surface (Option B allow-by-omission) 은 atlassian-tool-drift check 로 mitigate (§결과 명시)
 sunset_justification: null   # is_transitional false — sync mechanism 결정 자체는 영구 + 강화 방향 (sync 구현체 + narrow allow 최소권한 + SSRF Layer 3 + 3-anchor verify wire-point). ADR-101 policy 의미 약화 0건 (mechanism instantiate only, "무엇을 verify" 재정의 금지 invariant 보존). Option B allow-by-omission (신규 upstream atlassian tool 이 deny 열거 누락 시 자동 통과) = 유일 weakening surface → atlassian-tool-drift check 로 mitigate (verified snapshot 고정 + drift warning) — 약화 차단 mechanism 동반이므로 본 ADR 자체는 강화. amendment 시 sunset_justification 의무 (ADR-058 §결정 5) — 약화 방향 (one-way → bidirectional sync / 3-anchor → single-anchor / Option B narrow allow → 서버전체 allow) 차단
-amendment_log: []
+amendment_log:
+  - amendment: 1
+    date: 2026-05-24 KST
+    carrier_story: CFP-1492
+    parent_epic: CFP-1415   # Mega-Epic Confluence-as-derived-mirror governance standardization (CLOSED early, anomaly noted) / Sub-B parent: #1490 Confluence space IA migration + legacy backfill (MCP-direct deviation)
+    direction: strengthening   # alternative routing path 추가 = ratchet 강화 (PRIMARY mark engine path 보존, carrier-preserved per ADR-097 §결정 3 정합)
+    sunset_justification: null   # paradigm replacement 아님 (ADR-097 closed-set 3 조건 AND 미충족: 9+ ADR/contract 동시 sunset 0, 단일 atomic Epic carrier 0 — surgical deviation only). ADR-058 §결정 5 sunset_justification 의무 = ratchet 강화 방향이므로 N/A
+    summary: "MCP-direct path codify as alternative routing rule + deviation declare schema 4-tuple + mark engine path #1320 retain for future PRIMARY (CFP-1146 W5-S17 #1310 + Sub-B S2.1 #1498 2 prior MCP-direct application 의 retroactive codify — precedent first, codify second). subagent OAuth limitation 명시 (Orchestrator inline path 의무 영역)."
 ---
 
 # ADR-103 — git→Confluence sync mechanism (custom GitHub Action + 3-anchor hash-git-source + Option B narrow allow)
@@ -296,4 +303,102 @@ amendment 시 sunset_justification 의무 (ADR-058 §결정 5) — ratchet 강�
 - `docs/adr/ADR-066-pat-rotation-policy.md` — §결정 5 source-repo-resolver internal-docs repo CODEFORGE_CROSS_REPO_PAT scope cross-ref
 - `.claude/settings.json` — §결정 3 Option B per-tool deny decomposition + §결정 4 SSRF Layer 3 sandbox.network.allowedDomains (실 wire = 후속 Phase)
 - `docs/project-config-schema.md` — §결정 4 base_url single source (`atlassian.confluence.base_url`, ADR-100 §결정 3 schema)
-- `docs/adr/ADR-RESERVATION.md` — row 103 reserved → active 전환
+- `docs/adr/ADR-RESERVATION.md` — row 103 reserved → active 전환 + amendments_reserved row (adr_number: 103, amendment_id: 1, CFP-1492)
+
+## Amendment 1 (2026-05-24 KST) — MCP-direct routing rule (deviation declare, mark engine path retain for future)
+
+### 동인
+
+CFP-1146 W5-S17 #1310 (182 page Confluence cutover, MERGED 2026-05-23 KST) 가 ATLASSIAN_API_TOKEN GitHub secret 미주입 + ADR-103 §결정 1 custom GitHub Action mark engine path (#1320) deferred 상태에서 **MCP-direct ad-hoc invocation** (Orchestrator main session OAuth + Atlassian MCP `mcp__plugin_atlassian_atlassian__createConfluencePage` + `updateConfluencePage` 직접 호출) 으로 cutover 를 완수했다 (first MCP-direct precedent). Sub-B S2.1 #1498 (49 page IA tree bootstrap + `docs/confluence-ia-tree.yaml` schema SSOT, MERGED 2026-05-24 KST) 가 동일 deviation path 를 답습하며 second application 으로 안착했다.
+
+사용자 directive 2026-05-24 KST `"atlassian mcp로 하면되잖아"` 가 본 deviation path 의 정식 codify 를 발화 — 2 prior MCP-direct application 을 retroactive 정식 declare 하고 mark engine path 를 **retain for future PRIMARY** 로 보존한다 (precedent first, codify second).
+
+본 Amendment 는 ADR-103 §결정 1 의 sync 구현체 결정 (custom GitHub Action mark engine path) 를 **약화시키지 않는다** — alternative routing rule 추가만, primary path 보존 (carrier-preserved per ADR-097 §결정 3 정합 ratchet 강화 방향).
+
+### verified-via (Amendment 1 사실 인용 검증, ADR-082 §결정 2 write-time self-write verification 정합)
+
+> verified-via: `gh issue view 1310 --repo mclayer/plugin-codeforge --json title,state,closedAt` (2026-05-24 KST) → title = `[CFP-1146 W5-S17] A.4 cutover — MCP-direct full sync (182 page, deviation declare)`, state = `CLOSED`, closedAt = `2026-05-23T10:24:53Z` (first MCP-direct precedent verified).
+> verified-via: `gh pr view 1498 --repo mclayer/plugin-codeforge --json title,state,mergedAt,headRefName` (2026-05-24 KST) → title = `[CFP-1491] Confluence space CFP IA tree bootstrap — 49 page (MCP-direct) + docs/confluence-ia-tree.yaml (Sub-B S2.1 of EPIC #1415)`, state = `MERGED`, mergedAt = `2026-05-24T06:31:42Z`, headRefName = `cfp-1491-confluence-space-tree-bootstrap` (second MCP-direct application verified).
+> verified-via: Read docs/adr/ADR-103-git-confluence-sync-mechanism.md (worktree HEAD `14999bd`, base commit) frontmatter L26 `amendment_log: []` → length 0, Amendment 1 = first amendment (verified amendment_id slot).
+> verified-via: Read docs/adr/ADR-RESERVATION.md (worktree) L268-272 last amendments_reserved row = adr_number 44 / amendment_id 3 / CFP-1438. ADR-082 Amendment 17 §결정 1 sub-scope (1-G) strict claim mandate 충족 — 본 Amendment 1 commit 전 ADR-RESERVATION amendments_reserved[] row (adr_number 103 / amendment_id 1 / CFP-1492) pre-append + verified-via annotation `pre_reservation_verified: true`.
+> verified-via: Issue #1492 body `gh issue view 1492 --repo mclayer/plugin-codeforge --json body` (2026-05-24 KST) AC-1/AC-2/AC-3 blocking + AC-4/AC-5 advisory. **Filename drift detected**: Issue body references `ADR-103-confluence-mirror-sync-engine.md`, ground truth file = `ADR-103-git-confluence-sync-mechanism.md` (per ADR-RESERVATION row 103 L147 + worktree ls). Amendment 1 = actual file ground truth verbatim (verify-before-trust ADR-073 §결정 1 정합).
+
+### 결정 — MCP-direct path codify as alternative routing rule
+
+#### 결정 1-A — Routing rule decision tree (PRIMARY vs ALTERNATIVE)
+
+ADR-103 §결정 1 custom GitHub Action mark engine path (#1320 deferred) 와 본 Amendment 의 MCP-direct path 를 다음 routing rule 로 분리한다:
+
+| Routing | Path | 활성 조건 | Scope |
+|---|---|---|---|
+| **PRIMARY** (retain for future) | mark engine path — custom GitHub Action + OSS markdown→Confluence engine (`mark` v16.4.0 / `markdown-confluence/publish`) + 3-anchor stamp content property + SSRF Layer 3 dual-channel + token env-indirect (ADR-103 §결정 1-4) | `ATLASSIAN_API_TOKEN` GitHub secret 주입 활성 + Issue #1320 (Epic-A F3 sync engine carrier) merged + ongoing sync 영역 (git push 자동 trigger) | wrapper governance docs 영속 sync, dogfood-out docs 영속 sync, full 3-anchor verify wire-point (write/read path) |
+| **ALTERNATIVE** (deviation channel) | MCP-direct path — Atlassian MCP `mcp__plugin_atlassian_atlassian__createConfluencePage` + `updateConfluencePage` + `getConfluencePage` 직접 호출 (Orchestrator main session OAuth scope, mark engine 미경유) | `ATLASSIAN_API_TOKEN` secret 미활성 + Issue #1320 deferred 상태 + ad-hoc cutover / legacy backfill / IA tree bootstrap / drift detection 영역만 | one-shot batch sync (legacy backfill / IA tree bootstrap / 사후 정정), 일상 sync 비대상 (mark engine 활성 후 defer) |
+
+**우선순위 invariant**: `PRIMARY > ALTERNATIVE` — mark engine path 활성 상태에서는 MCP-direct path 사용 금지 (정상 영속 sync = PRIMARY 단독). ALTERNATIVE 는 mark engine 비활성 영역만 cover (`null|deferred` channel).
+
+#### 결정 1-B — Deviation declare schema 4-tuple
+
+MCP-direct path 사용 시 다음 4 항목 의무 declare (Story / Change Plan / PR description 어느 한 곳 이상):
+
+1. **deviation trigger** — 사용 사유 명시 (예: `mark engine #1320 deferred + secret 미주입` / `ad-hoc cutover, one-shot batch` / `legacy backfill, ATLASSIAN_API_TOKEN 부재`). 사용자 directive verbatim citation 권장 (CFP-1492 = `"atlassian mcp로 하면되잖아"` precedent 답습).
+2. **deviation mechanism** — 사용 MCP tool 명세 (예: `mcp__plugin_atlassian_atlassian__createConfluencePage` + `updateConfluencePage` + `getConfluencePage` 3 tool, 31 tool family 중 사용 subset). mark engine path 미경유 사실 명시.
+3. **deviation scope** — 영향 page count + 영역 enumeration (예: `49 page + IA tree bootstrap` / `182 page + legacy cutover`). 일상 sync 비포함 명시 (mark engine 활성 후 defer 영역).
+4. **3-anchor stamp accept-as-zero** — content property `version_id` / `git_sha` / `last_synced_at` 3-anchor (§결정 2) **부착 불가** (MCP-direct = content property tool 부재) → **0건 acceptance**. mark engine 활성 후 backfill 가능 영역으로 declare (deferred verify wire-point).
+
+본 4-tuple 부재 시 PR open 차단 (DesignReviewPL check item AC-4, advisory tier — 실 mechanical lint 는 deferred follow-up).
+
+#### 결정 1-C — subagent OAuth limitation 명시
+
+Atlassian MCP 의 OAuth scope 는 **Orchestrator main session 한정**이다 (subagent spawn 영역 = unauthenticated). 본 deviation channel 사용 시:
+
+- **Orchestrator inline path 의무** — MCP-direct invocation 은 Orchestrator main session 안에서 inline 실행 (ADR-039 inline whitelist 영역 확장 = false, subagent OAuth unauthenticated 우회 mechanism 아님). subagent spawn 으로 MCP-direct 호출 위임 시 401 unauthenticated 차단.
+- **ArchitectPL design lane 영역** — Phase 1 산출물 작성 시 subagent spawn 이 표준 (ADR-082 §결정 1 sub-scope 1-C 정합). MCP-direct deviation 영역 = doc-only 1-file edit scope 안에서 Orchestrator inline path 우회 acceptable (low complexity + ADR-039 inline whitelist 1번 entry 사용자 dialog payload 정합, deviation 자체가 사용자 directive verbatim citation 영역).
+- **future mark engine path (#1320)** = sync agent project-scope `.claude/agents/` (plugin-shipped 아님) 안에서 `mcpServers` 지정 가능 (ADR-103 §결정 3 plugin-agent 제약 해소 정합) — mark engine 활성 후 subagent OAuth 영역 회피 + 정식 OAuth scope 보유.
+
+#### 결정 1-D — LOSSY risk acknowledgment + drift detection 의무
+
+MCP-direct path 의 trade-off (carrier-preserved invariant 보존 영역 외, 약화 surface):
+
+- **LOSSY risk** — Atlassian MCP `createConfluencePage` / `updateConfluencePage` 의 markdown → Confluence storage format 변환은 OSS mark engine 보다 **추가 escape 처리 누락 가능** (CFP-1146 W5-S17 evidence: 특정 markdown escape pattern silent loss 사례). hash 대상 anchor A (git source) 는 deterministic 유지 (ADR-103 §결정 2 정합), readable Confluence body 만 degrade 가능. **mark engine 활성 후 OSS engine 으로 backfill 권장**.
+- **3-anchor stamp 부재** = read path 3-anchor verify (§결정 2 dual-layer verify) **wire 불가** — sync agent 1차 verify + Orchestrator 2차 verify 모두 mark engine 활성 전까지 manual / cron lint 영역으로 대체. drift detection cron workflow (Sub-B S2.5 carrier) 가 compensate 의무 (page age + content hash sample check).
+- **약화 surface mitigate** = drift detection cron (S2.5) + mark engine 활성 후 atomic backfill (legacy MCP-direct page 의 3-anchor stamp 일괄 부착) + ADR-082 §결정 6 retain pattern (pattern_count ≥ 2 재발 시 mechanical lint promote 의무).
+
+### 결정 1-E — mark engine path retain for future PRIMARY (Issue #1320)
+
+본 Amendment 는 ADR-103 §결정 1 custom GitHub Action mark engine path 결정을 **약화시키지 않는다** (carrier-preserved per ADR-097 §결정 3 정합):
+
+- **Issue #1320** (Epic-A F3 sync engine carrier) = deferred 상태 보존, 본 Amendment 으로 cancel / supersede 0건.
+- **`ATLASSIAN_API_TOKEN` GitHub secret 주입 후 mark engine path 활성 가능** — 활성 시점에 PRIMARY routing rule 발효 (decision tree 1-A 표 정합), MCP-direct path = 자동 deferred (영속 sync 영역 비대상).
+- **paradigm replacement 아님** (ADR-097 closed-set 3 조건 AND 미충족):
+  - (a) 9+ ADR/contract 동시 sunset = **미충족** (sunset 0건, alternative path 추가만)
+  - (b) 단일 atomic Epic carrier = **미충족** (CFP-1492 = single Story carrier, Epic carrier 아님)
+  - (c) ratchet 강화 carve-out = **충족** (alternative path 추가 = 강화 방향)
+  → 3 조건 AND 미충족 (1/3) → paradigm replacement carve-out 미적용, **surgical deviation only**.
+- **본 Amendment 는 ratchet 강화 방향 (alternative path 추가, carrier-preserved sunset 0건)** — ADR-058 §결정 5 sunset_justification 의무 N/A (약화 방향 아님).
+
+### 결과 (Amendment 1 영역만)
+
+#### 긍정
+
+- MCP-direct deviation channel 정식 codify — 2 prior application (CFP-1146 W5-S17 #1310 + Sub-B S2.1 #1498) 의 retroactive formalize. 향후 동일 deviation 영역 (drift detection ad-hoc invocation / legacy backfill / Sub-B S2.3-S2.5 carrier) 에서 deviation declare 4-tuple 답습 가능.
+- mark engine path PRIMARY 보존 — Issue #1320 deferred 상태 그대로, paradigm replacement 미적용 (carrier-preserved). 약화 surface 0건.
+- routing rule decision tree 명문화 — PRIMARY vs ALTERNATIVE 활성 조건 / scope disjoint codify, 영속 sync 영역 vs ad-hoc batch 영역 boundary 명확.
+- subagent OAuth limitation 명시 — Orchestrator inline path 의무 영역 codify, subagent MCP-direct invocation 시 401 차단 root cause 사전 안내.
+- sub-Epic #1490 5/5 child Story 완료 condition 충족 trigger 가능 (Sub-B S2.2 = 5/5).
+
+#### 부정 / trade-off
+
+- **3-anchor stamp accept-as-zero (MCP-direct 영역만)** — content property tool 부재로 dual-layer verify wire 불가. 완화 = mark engine 활성 후 backfill + drift detection cron (S2.5 carrier).
+- **LOSSY risk (markdown escape silent loss)** — MCP 변환 vs mark engine 변환 차이로 특정 escape pattern 누락 가능. 완화 = git source = SoR-work 무손상 (anchor A deterministic 유지, ADR-103 §결정 2 정합) + mark engine 활성 후 OSS engine 으로 backfill.
+- **deviation channel 남용 risk** — 본 Amendment 가 mark engine path 활성 전 모든 sync 를 MCP-direct 로 우회하는 anti-pattern 유발 가능. 완화 = routing rule decision tree (1-A) ALTERNATIVE scope 영역 제한 (one-shot batch + ad-hoc + legacy backfill 만) + 일상 sync 비대상 invariant 명시 + DesignReviewPL check item AC-4 advisory.
+- **mechanical lint deferred** — deviation declare 4-tuple presence lint = follow-up CFP carrier (본 Amendment = declarative). pattern_count ≥ 2 재발 시 promote 의무 (ADR-082 §결정 6 retain pattern). 현재 pattern_count = 3 (CFP-1146 W5-S17 + Sub-B S2.1 + 본 Amendment) → **promote candidate** (follow-up CFP carrier).
+
+### invariant 금지 (Amendment 1)
+
+본 Amendment 는 다음 invariant 를 위반하지 않는다:
+
+- **one-way git → Confluence push invariant** (ADR-103 §결정 1) — MCP-direct path 도 `createConfluencePage` / `updateConfluencePage` 만 사용 (write 방향), Confluence → git 역방향 push 0건. outbound-only invariant 보존 (ADR-101 §결정 2 정합).
+- **ADR-101 policy 의미 약화 0건** (ADR-101 §결정 4 boundary invariant) — 3-anchor AND 의미 / dual-layer verify 주체 재정의 0건. 단지 mark engine 비활성 영역만 3-anchor stamp accept-as-zero 영역으로 declare (deferred wire-point, policy 약화 아님).
+- **carrier-preserved sunset 0건** (ADR-097 §결정 3) — mark engine path 약화/sunset 0건, alternative path 추가만.
+- **subagent OAuth scope invariant 보존** — MCP-direct 가 subagent unauthenticated 영역 우회 mechanism 아님 명시 (Orchestrator inline path 의무).
+- **paradigm replacement carve-out 미적용** (ADR-097 §결정 1 closed-set 3 조건 AND 미충족) — surgical deviation only.
