@@ -43,7 +43,8 @@ while [ $# -gt 0 ]; do
       shift 2
       ;;
     *)
-      shift
+      echo "Unknown flag: $1" >&2
+      exit 2
       ;;
   esac
 done
