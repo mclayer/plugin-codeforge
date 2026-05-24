@@ -50,6 +50,8 @@ DRIFT_ALLOWLIST = {
     ("parallel-work-sentinel-pickup",   "parallel-work-sentinel-check.yml"):  "Conservative no-rename — entry name 'pickup' (ADR-073 Amendment 2 sentinel pickup discipline), workflow basename 'check'. Pre-existing main drift, CFP-1336 carrier cleanup",
     ("schema-change-7-principles-self-check", "schema-7-principles-check.yml"): "Conservative no-rename — entry name 'schema-change-7-principles-self-check' (CFP-1059 / ADR-089 7 principles self-check), workflow basename 'schema-7-principles-check'. Pre-existing main drift, CFP-1336 carrier cleanup",
     ("cross-layer-impact-detection",    "cross-layer-impact-check.yml"):      "Conservative no-rename — entry name 'detection' (CFP-1059 / ADR-090 §결정 1 cross-layer impact detection), workflow basename 'check'. Pre-existing main drift, CFP-1336 carrier cleanup",
+    # CFP-1489 — Wave 2-A spawn-prompt-head-pin Pre-spawn HEAD-pin protocol mechanical wire
+    ("spawn-prompt-head-pin-presence",  "spawn-prompt-head-pin-check.yml"):   "CFP-1489 / ADR-073 Amendment 11 + ADR-082 Amendment 15 paired carrier — entry name semantic 'presence' (Pre-spawn HEAD-pin protocol block presence check intent, CFP-1437 Wave 1 declarative stub SSOT naming verbatim 답습), workflow basename 'spawn-prompt-head-pin-check' (Conservative no-rename §결정 20)",
 }
 
 REGISTRY_PATH = Path("docs/evidence-checks-registry.yaml")
