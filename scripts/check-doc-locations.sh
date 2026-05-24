@@ -12,6 +12,6 @@
 # Usage / exit code / semantics 상세: scripts/lib/check_doc_locations.py header.
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-[ "$#" -eq 0 ] && cd "$SCRIPT_DIR/.."
+cd "$SCRIPT_DIR/.."   # CFP-1408 — always cd (msys2 absolute POSIX→Windows path conversion 회피, relative path 전달)
 export DOC_LOC_MODE="${1:-default}"
-exec python3 "$SCRIPT_DIR/lib/check_doc_locations.py" "$@"
+exec python3 "scripts/lib/check_doc_locations.py" "$@"
