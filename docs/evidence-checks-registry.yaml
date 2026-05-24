@@ -4616,8 +4616,8 @@ entries:
       false negative 한계 인정 — heuristic 기반 (frontmatter/heading regex extract + field enum diff).
 
       ADR-082 §결정 6 retain pattern 답습 (declaration-only Wave 1 + Wave 2 mechanical wire promote).
-    detect_command: bash scripts/check-plugin-declarative-seed-byte-parity.sh   # Phase 2 carrier
-    workflow: templates/github-workflows/plugin-declarative-seed-byte-parity-check.yml   # Phase 2 carrier
+    detect_command: bash scripts/check-plugin-declarative-seed-byte-parity.sh
+    workflow: templates/github-workflows/plugin-declarative-seed-byte-parity-check.yml
     current_tier: warning              # ADR-060 §결정 5 — 첫 도입 = warning mode
     bypass_label: hotfix-bypass:plugin-declarative-seed-byte-parity
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
@@ -4645,7 +4645,9 @@ entries:
       threshold: 2                     # ADR-082 §결정 6 precedent (pattern_count >= 2 재발 시 promote)
       last_occurrence: "2026-05-24T00:14:00+09:00"    # mctrader#1272 (d) carrier (Wave A S2 d-B precedent)
       promotion_trigger: auto_blocking # threshold 의 3배 초과 — Wave 2 mechanical wire 후 evidence accumulation → Wave 4 blocking promotion 후보 (별 follow-up CFP)
-    status: deferred-followup          # Phase 2 PR (lint script + workflow + bats fixture mechanical wire) 후 warning Active 전환
+    activated_by: CFP-1367             # Phase 2 mechanical wire 완료 (script + workflow + bats fixture 신설)
+    activated_date: 2026-05-25
+    status: warning                    # CFP-1367 Phase 2: deferred-followup → warning 승격 (script + workflow + bats fixture 신설 동반)
 
   # F2 axis (동적 feasibility check) — Design lane PR cross-repo plugin verify-before-trust annotation 동적 검사
   - name: design-lane-plugin-feasibility-check
@@ -4678,8 +4680,8 @@ entries:
 
       Wave 1 advisory tier — false negative 가능 (heuristic 한계 인정).
       Wave 2 blocking 승격 = 별 ratchet (ADR-060 §결정 6 AND condition 충족 후).
-    detect_command: bash scripts/check-design-lane-plugin-feasibility.sh   # Phase 2 carrier
-    workflow: templates/github-workflows/design-lane-plugin-feasibility-check.yml   # Phase 2 carrier
+    detect_command: bash scripts/check-design-lane-plugin-feasibility.sh
+    workflow: templates/github-workflows/design-lane-plugin-feasibility-check.yml
     current_tier: warning              # ADR-060 §결정 5 — 첫 도입 = warning mode
     bypass_label: hotfix-bypass:design-lane-plugin-feasibility
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
@@ -4707,4 +4709,6 @@ entries:
       threshold: 2                     # ADR-082 §결정 6 precedent (pattern_count >= 2 재발 시 promote)
       last_occurrence: "2026-05-24T00:00:00+09:00"    # Wave A S1 ArchitectAgent incident closure
       promotion_trigger: auto_blocking # threshold 의 1.5배 초과 — Wave 2 wire 후 evidence accumulation → Wave 4 blocking 후보
-    status: deferred-followup          # Phase 2 PR 후 warning Active 전환
+    activated_by: CFP-1367             # Phase 2 mechanical wire 완료 (script + workflow + bats fixture 신설)
+    activated_date: 2026-05-25
+    status: warning                    # CFP-1367 Phase 2: deferred-followup → warning 승격 (script + workflow + bats fixture 신설 동반)
