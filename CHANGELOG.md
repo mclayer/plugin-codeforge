@@ -7,6 +7,28 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.6.2] - 2026-05-24
+
+### Added
+
+- [CFP-1355-Phase2] **Windows external session auto-resume wrapper** (OS-level rate-limit recovery post-session-dead)
+  - `scripts/codeforge-session-resume.ps1` — PowerShell wrapper SSOT (ADR-110 §결정 1-10 normative codify): UUID abstraction (`%LOCALAPPDATA%/codeforge/last-session.txt` read), rate-limit detection (`claude --print "noop"` + `anthropic-ratelimit-unified-5h-reset` epoch parse), Task Scheduler trigger mutation (`schtasks /Change`), session resume invoke, ghost-session prevention (mutex Local\CodeforgeResumeWrapper), retry counter + Windows Toast fallback (ADR-110 §결정 9), log rotation (90-day retention + secret redaction `sk-ant-***`), platform explicit abort (Linux/macOS non-support + non-zero exit)
+  - `scripts/install-codeforge-resume.ps1` — consumer install script (idempotent): wrapper copy to `%ProgramFiles%/codeforge/`, ACL enforcement, Task Scheduler XML template import via `Register-ScheduledTask`
+  - `templates/scheduler/codeforge-auto-resume.xml` — Task Scheduler job XML template (schema 1.2, Windows 10 1809+ baseline): 10-minute polling interval, 30s execution timeout, 3-retry RestartOnFailure, InteractiveToken LogonType (no stored credential), task path `\codeforge\`
+  - `docs/consumer-guide.md §1j` (신설) — Windows-specific auto-resume install + activation + fidelity test 4-source measurement (ADR-110 §결정 7 empirical gate)
+  - `CLAUDE.md` — OS-level external session auto-resume cross-ref (1 줄) + line-cap ≤ 320 유지
+  - `docs/orchestrator-playbook.md §1.1 0ii` — Windows auto-resume wrapper SessionStart hook context append (1 줄)
+  - `.claude-plugin/plugin.json` — version 6.6.1 → 6.6.2 PATCH + description CFP-1355 Phase 2 entry prepend (ADR-110 external wrapper governance layer codify + consumer adoption protocol ADR-027 extension)
+
+### Out of scope (별 follow-up CFP carrier)
+
+- **Phase 2 empirical fidelity test** (CFP-1355 Change Plan §3 gate): M-1 conversation context fidelity % + M-2 in-process state /4 + M-3 VS Code ↔ CLI asymmetry + M-4 UUID file path verify. gate result = pass → sub-area b/c/d 병렬 진입 / partial → Partial wrapper scope / fail → sub-area b/c/d ABORT + sub-area e (ADR negative) carry-over
+- **Linux/macOS bash equivalent** (ADR-110 §결정 5 Phase 2 sub-CFP carrier): systemd timer (Linux) / launchd (macOS) wrapper
+- **Multi-user developer machine** (ADR-110 §결정 6 Phase 2 carrier): `project.yaml runtime.multi_user: bool` opt-in 활성, Global namespace mutex 수정
+- **CFP-FU-1**: external-wrapper-ssot-boundary mechanical lint (`scripts/check-external-wrapper-ssot-boundary.sh` + evidence-checks-registry entry) — declaration-only Wave 1 (ADR-082 §결정 6 retain pattern)
+- **CFP-FU-2**: resume-fidelity-test-evidence artifact (`docs/kpi/resume-fidelity-history.jsonl` append-only event log) — declaration-only Wave 1, mechanical wire Phase 2 sub-CFP carrier
+- **CFP-FU-3**: marketplace.json sibling sync (mclayer/marketplace repo PR, ADR-063 §결정 5 atomic invariant) — Orchestrator decision lane (Marketplace sync lane) 영역, wrapper PR merge 직후 자동 trigger
+
 ## [6.6.1] - 2026-05-24
 
 ### Added

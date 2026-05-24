@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-16"?>
+<Task version="1.2" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
+  <RegistrationInfo>
+    <Date>2026-05-24T00:00:00</Date>
+    <Author>codeforge</Author>
+    <URI>\codeforge\codeforge-auto-resume</URI>
+    <Description>Codeforge external session auto-resume wrapper. Monitors rate-limit reset time and automatically resumes the last Claude Code session once the rate limit window expires. (ADR-110)</Description>
+  </RegistrationInfo>
+  <Triggers>
+    <CalendarTrigger>
+      <StartBoundary>2026-05-24T08:00:00</StartBoundary>
+      <Enabled>true</Enabled>
+      <ScheduleByDay>
+        <DaysInterval>1</DaysInterval>
+      </ScheduleByDay>
+      <RepetitionPattern>
+        <Interval>PT10M</Interval>
+        <StopAtDurationEnd>false</StopAtDurationEnd>
+      </RepetitionPattern>
+    </CalendarTrigger>
+  </Triggers>
+  <Principals>
+    <Principal id="Author">
+      <UserId>S-1-5-21-0-0-0-1000</UserId>
+      <LogonType>InteractiveToken</LogonType>
+      <RunLevel>LeastPrivilege</RunLevel>
+    </Principal>
+  </Principals>
+  <Settings>
+    <MultipleInstancesPolicy>IgnoreNew</MultipleInstancesPolicy>
+    <DisallowStartIfOnBatteries>false</DisallowStartIfOnBatteries>
+    <StopIfGoingOnBatteries>false</StopIfGoingOnBatteries>
+    <AllowHardTerminate>true</AllowHardTerminate>
+    <StartWhenAvailable>false</StartWhenAvailable>
+    <RunOnlyIfNetworkAvailable>false</RunOnlyIfNetworkAvailable>
+    <IdleSettings>
+      <Duration>PT10M</Duration>
+      <WaitTimeout>PT1H</WaitTimeout>
+      <StopOnIdleEnd>true</StopOnIdleEnd>
+      <RestartOnIdle>false</RestartOnIdle>
+    </IdleSettings>
+    <AllowStartOnDemand>true</AllowStartOnDemand>
+    <Enabled>true</Enabled>
+    <Hidden>false</Hidden>
+    <RunOnlyIfIdle>false</RunOnlyIfIdle>
+    <DisallowStartOnRemoteAppSession>false</DisallowStartOnRemoteAppSession>
+    <UseUnifiedSchedulingEngine>false</UseUnifiedSchedulingEngine>
+    <WakeToRun>true</WakeToRun>
+    <ExecutionTimeLimit>PT30S</ExecutionTimeLimit>
+    <DeleteExpiredTaskAfter>PT0S</DeleteExpiredTaskAfter>
+    <RestartOnFailure>
+      <Interval>PT5M</Interval>
+      <Count>3</Count>
+    </RestartOnFailure>
+  </Settings>
+  <Actions Context="Author">
+    <Exec>
+      <Command>powershell.exe</Command>
+      <Arguments>-ExecutionPolicy RemoteSigned -NonInteractive -File "%ProgramFiles%\codeforge\codeforge-session-resume.ps1"</Arguments>
+      <WorkingDirectory>%USERPROFILE%</WorkingDirectory>
+    </Exec>
+  </Actions>
+</Task>

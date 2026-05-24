@@ -140,6 +140,10 @@ related:
 
    **초기 preload list = TodoWrite 단독** (보수적 minimum). `prereq_tools[]` 확장 surface 는 별도 CFP measurable 도입 의도 후 확장.
 
+   **0ii. Windows external session auto-resume (CFP-1355 / [ADR-110](adr/ADR-110-external-runtime-wrapper-ssot-boundary.md))**
+
+   **Consumer opt-in** — Windows Task Scheduler wrapper (PowerShell `codeforge-session-resume.ps1` + `codeforge-auto-resume.xml` template) 자동 session 재개. rate-limit 도달로 session 종료 후, reset window 만료 시 `claude --resume` 자동 invoke. `scripts/install-codeforge-resume.ps1` (admin) 로 설치, `.claude/_overlay/project.yaml` `runtime.auto_resume.enabled: true` toggle 로 활성. Linux/macOS = Phase 2 sub-CFP carrier. docs/consumer-guide.md §1j 참조.
+
    **Wrapper dogfooding** — wrapper repo 자체 `.claude/settings.json` 에 본 hook 등록 의무 (Story §5.2 AC-1a / AC-8 (4)). consumer 측 등록 절차는 `docs/consumer-guide.md` § "Session start hooks" 참조.
 
 1. **메모리 로드**: `~/.claude/projects/<workspace-hash>/memory/MEMORY.md` — 이전 세션 feedback·project·reference 기록 확인
