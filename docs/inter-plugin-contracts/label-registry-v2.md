@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: label
-version: "2.57"
+version: "2.58"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
@@ -1620,4 +1620,26 @@ labels:
     description: "hotfix-bypass: issue-design-content-confluence-link warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1421 / ADR-111 §결정 5 carrier — Mega-Epic CFP-1415 Sub-A S1.3, cross-link discipline (git anchor + Confluence anchor 양쪽 link 의무) mechanical wire의 bypass channel). Issue / PR body 안 design doc 4 closed-enum (ADR / Living Architecture / Change Plan / Domain Knowledge — ADR-111 §결정 1 정합) 인용 시 Confluence anchor (mclayer.atlassian.net/wiki/spaces/...) + git anchor (docs/{adr,architecture,change-plans,domain-knowledge}/*.md) 양 channel grep-presence 검증 lint warning-tier. design content 인용 0건 = lint 영역 외 (PASS exit 0). ADR-082 §결정 6 retain pattern 답습 (Wave 1 declare = ADR-111 mechanical_enforcement_actions / Wave 2 wire = 본 entry). pattern_count >= 2 재발 시 follow-up CFP MUST promote to blocking tier. **79번째 hotfix-bypass:* family member (ADR-108 forcing function parity mandate — description text N번째 명시 의무)**."
     single_active: false
     attach_owner_plugin: "Orchestrator (CFP-1421 issue-design-content-confluence-link warning-tier bypass — Issue / PR body design content cross-link 의무 임시 skip 시 부착) / ArchitectAgent"
+
+  # CFP-1366 신설 — 3 entry (ADR-073 Amd 3+6+8 Wave 2 mechanical wire C1/C2/C4 atomic bundle, C3 stale-local 제외 CFP-1410 superseded)
+  - name: hotfix-bypass:worktree-self-ownership-verify
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: worktree-self-ownership-verify warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1366 / ADR-073 Amendment 3 §결정 1-D carrier — PR body 안 parallel_session_conflict / cross_session_collision / stand_down_recommended 등 ownership claim 발화 시 paired verified-via: git worktree list / git reflog annotation presence-grep workflow bypass channel, evidence-checks-registry worktree-self-ownership-verify entry 의 bypass channel). **80번째 hotfix-bypass:* family member (ADR-108 forcing function parity mandate — description text N번째 명시 의무)**. parallel-work-sentinel-pickup CFP-967 mechanical wire precedent 답습."
+    single_active: false
+    attach_owner_plugin: "Orchestrator (CFP-1366 worktree-self-ownership-verify warning-tier bypass — consumer 환경 임시 skip 시 부착) / DeveloperPLAgent"
+
+  - name: hotfix-bypass:subagent-sibling-story-polling
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: subagent-sibling-story-polling warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1366 / ADR-073 Amendment 6 §결정 1-G carrier — PR body 안 sibling CFP-NNN reference 검출 시 paired verified-via: gh issue view <CFP-NNN> 또는 동형 polling evidence annotation presence-grep workflow bypass channel, evidence-checks-registry subagent-sibling-story-polling-evidence entry 의 bypass channel). **81번째 hotfix-bypass:* family member (ADR-108 forcing function parity mandate — description text N번째 명시 의무)**. bidirectional verify-before-trust subagent-side complement (Orchestrator-side parallel-work-sentinel-pickup 와 axis disjoint)."
+    single_active: false
+    attach_owner_plugin: "Orchestrator (CFP-1366 subagent-sibling-story-polling warning-tier bypass — consumer 환경 임시 skip 시 부착) / DeveloperPLAgent"
+
+  - name: hotfix-bypass:mcp-token-freshness
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: mcp-token-freshness warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1366 / ADR-073 Amendment 8 §결정 1-L carrier — PR body 안 active MCP tool usage (mcp__plugin_* / mcp__github__*) 발견 시 paired mcp_token_freshness_verified field 또는 verified-via: /mcp annotation presence-grep workflow bypass channel, evidence-checks-registry mcp-token-freshness-precheck entry 의 bypass channel). **82번째 hotfix-bypass:* family member (ADR-108 forcing function parity mandate — description text N번째 명시 의무)**. MCP auth layer staleness sub-domain (Amd 7 git layer staleness 와 axis disjoint, 양 staleness sub-domain). C3 (stale-local-main-checkout) = CFP-1410 ADR-073 Amd 9 superseded merge — 본 CFP-1366 scope 제외."
+    single_active: false
+    attach_owner_plugin: "Orchestrator (CFP-1366 mcp-token-freshness warning-tier bypass — consumer 환경 임시 skip 시 부착) / DeveloperPLAgent"
 
