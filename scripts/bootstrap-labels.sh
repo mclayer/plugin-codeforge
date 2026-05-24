@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# bootstrap-labels.sh — Plugin이 사용하는 GitHub label 55종 + 7 hotfix-bypass:* yaml dynamic 일괄 생성 (1회).
+# bootstrap-labels.sh — Plugin이 사용하는 GitHub label 55종 + hotfix-bypass:* yaml dynamic 일괄 생성 (1회).
+# CFP-1429 (Sub-C S3.5 of Mega-Epic CFP-1415): hotfix-bypass:living-architecture-update 84번째 family member dynamic pick-up (label-registry-v2 v2.58 → v2.59 / ADR-112 carrier — Living Architecture per-Epic mandatory update gate mechanical wire). bootstrap-labels.sh body 변경 0 (CFP-598 dynamic registry-driven pattern via parse-hotfix-bypass-labels.py — registry yaml entry append 시 자동 pick-up).
 # CFP-1059: Deploy lane + Deploy Review lane + Schema 7 원칙 + Cross-layer 정책 신설 (46 → 55 hardcoded base + 7 hotfix-bypass:* dynamic, label-registry-v2 v2.41 → v2.42 / ADR-087 + ADR-088 + ADR-089 + ADR-090 carrier).
 # CFP-954: production-touching label 정식 추가 (41 → 42종, label-registry-v2 v2.33 → v2.34 정합 — CFP-949 v2.33 collision rebase ratchet, dual-carrier: CFP-949 5 entry 보존 + CFP-954 production-touching append).
 #
