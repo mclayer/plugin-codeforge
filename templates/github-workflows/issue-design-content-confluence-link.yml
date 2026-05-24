@@ -1,0 +1,50 @@
+name: issue-design-content-confluence-link
+# CFP-1421 / ADR-111 §결정 5 — Issue body design content Confluence anchor link 의무 lint (warning mode)
+# ADR-060 §결정 5 — warning-tier (continue-on-error, non-required check, PR merge 미차단)
+# Bypass channel: hotfix-bypass:issue-design-content-confluence-link label (ADR-024 Amendment 3 §결정 6.A)
+#
+# Detection regex:
+#   - Design content inline indicator: (?:ADR-\d+|docs/architecture|docs/change-plans|docs/domain-knowledge)
+#   - Confluence link presence: mclayer\.atlassian\.net|atlassian\.net/wiki
+#
+# 승격 path (warning → blocking-on-pr):
+#   1. 본 workflow continue-on-error: true 제거
+#   2. branch protection required_status_checks.contexts 에 본 job 추가
+#   3. evidence 3 산출물 제출 (ADR-060 §결정 6 (d) + evidence-checks-registry.yaml)
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize]
+  issues:
+    types: [opened, edited, reopened]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+concurrency:
+  group: issue-design-content-confluence-link-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    # warning mode (ADR-060 §결정 5) — lint fail 이 PR merge 차단하지 않음.
+    # required_status_checks.contexts 부착 X.
+    # bypass label 부착 시 job 전체 skip (audit comment 별도 channel 영역).
+    if: ${{ !contains(github.event.issue.labels.*.name, 'hotfix-bypass:issue-design-content-confluence-link') && !contains(github.event.pull_request.labels.*.name, 'hotfix-bypass:issue-design-content-confluence-link') }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run issue-design-content-confluence-link lint
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number || github.event.pull_request.number }}
+          GH_REPO: ${{ github.repository }}
+        run: bash scripts/check-issue-design-content-confluence-link.sh

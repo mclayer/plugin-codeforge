@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# bootstrap-labels.sh — Plugin이 사용하는 GitHub label 55종 + 7 hotfix-bypass:* yaml dynamic 일괄 생성 (1회).
+# bootstrap-labels.sh — Plugin이 사용하는 GitHub label 55종 + hotfix-bypass:* yaml dynamic 일괄 생성 (1회).
+# CFP-1421: hotfix-bypass:issue-design-content-confluence-link 79번째 family member 추가 — ADR-111 §결정 5 cross-link discipline mechanical wire carrier (Sub-A S1.3 of Mega-Epic CFP-1415, Issue body / PR body design doc 4 mirror 대상 참조 시 Confluence anchor link 동반 grep-presence 검증 workflow bypass channel). label-registry-v2.md §3 yaml dynamic read 경로 (CFP-598) 가 자동 pickup — hardcoded create_label 추가 없음. label-registry-v2 v2.55 → v2.56 carrier.
 # CFP-1059: Deploy lane + Deploy Review lane + Schema 7 원칙 + Cross-layer 정책 신설 (46 → 55 hardcoded base + 7 hotfix-bypass:* dynamic, label-registry-v2 v2.41 → v2.42 / ADR-087 + ADR-088 + ADR-089 + ADR-090 carrier).
 # CFP-954: production-touching label 정식 추가 (41 → 42종, label-registry-v2 v2.33 → v2.34 정합 — CFP-949 v2.33 collision rebase ratchet, dual-carrier: CFP-949 5 entry 보존 + CFP-954 production-touching append).
 #
