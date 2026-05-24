@@ -25,9 +25,46 @@ amendment_log:
       N/A — ratchet 강화 only (declarative-only [] → 1 entry 추가, mechanical enforcement
       ratchet up). ADR-058 §결정 5 sunset_justification mandate 적용 영역 외 (약화 방향
       아님). 약화 시 sunset_justification 3-tuple 의무.
+  - amendment: 2
+    date: 2026-05-24
+    carrier: CFP-1425
+    summary: |
+      Living Architecture page Confluence mirror authoritative 격상 + per-Epic 현행화
+      mandate + 5-anchor "시스템 현황" section schema codify + diagram-as-code 의무 +
+      cross-link discipline + mechanical_enforcement_actions [architecture-drift] →
+      [architecture-drift, living-architecture-update] (append). Mega-Epic CFP-1415
+      Sub-C bundle (CFP-1418) S3.1 carrier. ADR-111 (Confluence-mirror classification
+      policy SSOT, §결정 1 closed-enum 2번째 대상 = Living Architecture page) + ADR-100
+      (Confluence doc SSOT 인정, §결정 1 partial extend) + ADR-103 (git→Confluence sync
+      mechanism owner) cross-ref. ADR-078 의 4 영역 closed-enum (모듈/경계/인터페이스
+      계약/데이터 흐름) 약화 0건 (additive extension only) — 5-anchor section schema 는
+      4 영역 위에 reading orientation layer 추가 (arc42 §3 Context & Scope / arc42 §5
+      Building Block View / C4 Container / C4 Component / Open Decisions Pending,
+      open_extension: false closed-enum). ArchitectAnalystAgent dual-read path 의무
+      (git read primary LLM-친화 + Confluence read fallback LOSSY/ADF divergence 대비,
+      Epic-A 발견 LOSSY 1건 evidence). per-Epic 현행화 mandate = 매 Epic merge 후 (또는
+      Phase 1 PR merge 시 — granularity Phase 2 lane gate wire 시 결정) ArchitectAgent
+      chief author 의 해당 plugin Living Architecture page 갱신 의무, 미반영 시 design
+      lane verdict FIX (mechanical wire = S3.5 / CFP-1429 carrier review-verdict-v4
+      v4.10). mechanical_enforcement_actions `living-architecture-update` =
+      declaration-only Wave 1 (ADR-082 §결정 6 + ADR-070 §D5 retain pattern 답습,
+      Phase 2 wire = S3.5 carrier).
+    direction: strengthening
+    sunset_justification: |
+      N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: Confluence mirror authoritative
+      격상 + per-Epic 현행화 mandate codify + 5-anchor section schema 신설 + diagram-as-
+      code 의무 + cross-link discipline + mechanical_enforcement_actions 1 entry append).
+      ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 (강화 = closed-enum 도입
+      + reading orientation layer 추가, 약화 0건 — 4 영역 closed-enum 의미 보존 + per-
+      Epic 현행화는 기존 "매 실행 갱신" 의무 강화 명시화). is_transitional: false 유지
+      (permanent governance ratchet). 약화 방향 (예: 5-anchor section schema 축소 /
+      per-Epic 현행화 의무 약화 / Confluence mirror authoritative 격상 reversal) 은 ADR-
+      058 §결정 5 sunset_justification 의무로 evidence-gate 통과 요구.
 related_stories:
   - CFP-919  # 본 Story carrier — Story-1 (anchor only, ADR + doc 타입 신설)
   - CFP-756  # Epic B parent — 설계 레인 영속 구조 설계 문서 유지 정책
+  - CFP-1425  # Amendment 2 carrier — Mega-Epic CFP-1415 Sub-C bundle (CFP-1418) S3.1 (Living Architecture Confluence mirror authoritative + per-Epic 현행화 mandate + 5-anchor section schema)
+  - CFP-1415  # Mega-Epic parent — Confluence-as-derived-mirror governance standardization (Amendment 2 carrier 의 umbrella)
 related_adrs:
   - ADR-041  # Doc Location Registry — architecture_doc 14번째 entry append-only mechanism
   - ADR-076  # 선언적 reconciliation upgrade flow SSOT — desired/current/converge 3-layer 패턴 재사용 (도메인 disjoint, 패턴 동형)
@@ -43,21 +80,34 @@ related_adrs:
   - ADR-070  # Codex verify-before-trust — Touchpoint #2 ArchitectAgent §3 완료 직후 mandatory dispatch
   - ADR-073  # Orchestrator verify-before-assert — fact claim marker 5종 의무 + cross-repo state 단정 verify
   - ADR-082  # Write-time self-write verification mandate — internal lane agent §3 / §7 / corpus enumeration verify
+  - ADR-100  # Confluence doc SSOT 인정 — §결정 1 partial extend (git SoR-work ↔ Confluence SoR-docs disjoint axis). Amendment 2 = Living Architecture page 영역에 Confluence mirror authoritative 격상 (ADR-100 §결정 1 enumeration carrier = ADR-111 closed-enum 4 대상 중 Living Architecture page = 2번째 대상)
+  - ADR-103  # git→Confluence sync mechanism — sync direction (단방향 git→Confluence) + write boundary (sync agent 단일 진입점). Amendment 2 의 mirror 대상 sync 책임 owner
+  - ADR-111  # Confluence-mirror classification policy SSOT — §결정 1 closed-enum 4 대상 (ADR / Living Architecture / Change Plan / Domain Knowledge) 중 2번째 대상 = 본 ADR-078 carrier. §결정 3 IA axis (per-plugin top-level) + §결정 4 diagram-as-code + §결정 5 cross-link discipline. Amendment 2 = ADR-111 §결정 1/3/4/5 의 Living Architecture page 영역 instantiate
 related_files:
   - docs/doc-locations.yaml                # architecture_doc 14번째 entry append
   - docs/doc-location-registry.md          # auto-regen (round-trip identical)
   - docs/adr/ADR-RESERVATION.md            # row 78 `reserved → active` 전환
   - CLAUDE.md                              # ADR 단락 + Doc Location Registry 단락 cross-ref
-  - docs/architecture/                     # 후속 Story-2 (#920) seed 영역 (본 Story 비-생성)
-  - templates/architecture-doc.md          # 후속 Story-2 (#920) template carrier (본 Story 비-생성)
+  - docs/architecture/                     # 후속 Story-2 (#920) seed 영역 + Amendment 2 Sub-C S3.3 / CFP-1427 8 lane plugin Living Arch seed 5-anchor expand 영역
+  - templates/architecture-doc.md          # 후속 Story-2 (#920) template carrier (본 Story 비-생성) + Amendment 2 5-anchor schema 적용 영역 (Sub-C S3.3 carrier)
   - scripts/check-architecture-drift.sh    # 후속 Story-4 (#923) lint carrier (본 Story 비-생성)
   - templates/github-workflows/architecture-drift.yml  # 후속 Story-4 (#923) workflow carrier (본 Story 비-생성)
+  - templates/github-workflows/living-architecture-update.yml  # Amendment 2 mechanical wire (Sub-C S3.5 / CFP-1429 carrier, 본 Amendment 2 scope 외)
+  - scripts/check-living-architecture-update.sh  # Amendment 2 lint carrier (Sub-C S3.5 / CFP-1429, 본 Amendment 2 scope 외)
 mechanical_enforcement_actions:
-  - architecture-drift   # Amendment 1 (CFP-923, 2026-05-18) — S4 carrier wire 완료 (ADR-060 framework warning-tier entry, hotfix-bypass:architecture-drift 43번째 family member)
+  - architecture-drift          # Amendment 1 (CFP-923, 2026-05-18) — S4 carrier wire 완료 (ADR-060 framework warning-tier entry, hotfix-bypass:architecture-drift 43번째 family member)
+  - living-architecture-update  # Amendment 2 (CFP-1425, 2026-05-24) — Sub-C S3.5 / CFP-1429 carrier deferred-followup (Phase 2 wire = review-verdict-v4 v4.10 MINOR `living_architecture_updated: bool` + lint workflow + bats fixture + evidence-checks-registry warning-tier row + hotfix-bypass:living-architecture-update family member). ADR-082 §결정 6 + ADR-070 §D5 + ADR-111 §결정 5 retain pattern 답습 (Wave 1 declare / Wave 2 wire). pattern_count >= 2 재발 시 follow-up CFP MUST promote to blocking tier.
 # Amendment 1 (CFP-923, 2026-05-18) — S4 carrier (architecture_doc drift mechanical lint) wire
 # 완료. ADR-040 Amendment 3 §결정 7.D self-application invariant 충족 (declared → active wire).
 # 후속 mechanism (S3 lane gate verdict carrier `architecture_doc_updated: bool` design-output-v2
 # v2.4 + S2 template schema lint) 은 별 carrier 발의 영역 — 본 entry 와 disjoint axis.
+# Amendment 2 (CFP-1425, 2026-05-24) — `living-architecture-update` declaration-only Wave 1 append.
+# §결정 4 "per-Epic 현행화 mandate" 의 mechanical actuator binding (review-verdict-v4 v4.10
+# MINOR `living_architecture_updated: bool` carrier). 실 wire = Sub-C S3.5 / CFP-1429 carrier
+# (templates/github-workflows/living-architecture-update.yml + scripts/check-living-architecture-
+# update.sh + bats fixture + evidence-checks-registry row + label-registry-v2 hotfix-bypass:
+# living-architecture-update family member). ADR-040 Amendment 3 §결정 7.D self-application
+# invariant 정합 — declare 시점 1 entry append + 후속 carrier (S3.5) 명시.
 ---
 
 # ADR-078: 살아있는 구조 설계 문서 (living architecture doc) 유지 정책 SSOT
@@ -197,6 +247,133 @@ ADR-076 가 codeforge upgrade 도메인에 채택한 `desired state / current st
 - Epic A (ADR-077) RequirementsPL design-reading fan-out 비용 reduction (코드/ADR/change-plan 직접 훑기 → architecture_doc 1개 read).
 - 신규 contributor onboarding 비용 reduction (codeforge 구조 1 file read).
 - codeforge upgrade flow (ADR-076) 의 desired state enumeration § 안 architecture_doc 영역 포함 (Wave 4 sub-Epic #882 multi-version channel scope).
+
+## Amendment 2 (2026-05-24 KST, CFP-1425) — Living Architecture Confluence mirror authoritative + per-Epic 현행화 mandate + 5-anchor "시스템 현황" section schema
+
+### 동인 (Mega-Epic CFP-1415 Sub-C bundle (CFP-1418) S3.1)
+
+사용자 직접 발화 (2026-05-24 KST, USER-UTTERANCE-VERBATIM): "내가 이전에 Github Issues에 남겨야 하는 설계문서 제외하고는 confluence에 옮기자고 했는데 지켜지고 있나? 또 이를 위한 표준이 수립되어 있나?" + (FOLLOW-UP) "응 그리고 기존 설계문서도 모두 옮기는 방향으로. confluence의 문서 저장 방식은 사용자 친화적으로. 그 구조 중에 매 에픽마다 수정하는 시스템 전체 설계 문서는 반드시 저장되어서 Architect 중 as-is 설계를 확인하는 agent가 한눈에 보기 좋게 정리하는 시스템 현황 section이 존재해야하고 architect는 매번의 시스템 작업 수정마다 이 architect를 현행화해야 한다."
+
+본 Amendment 2 = 사용자 발화 verbatim 3 요구사항의 normative codify:
+1. **"매 에픽마다 수정하는 시스템 전체 설계 문서"** → per-Epic 현행화 mandate (§Amendment 2 결정 2).
+2. **"한눈에 보기 좋게 정리하는 시스템 현황 section"** → 5-anchor "시스템 현황" section schema (§Amendment 2 결정 3).
+3. **"매번의 시스템 작업 수정마다 이 architect를 현행화"** → ArchitectAgent (chief author) 현행화 의무 (§Amendment 2 결정 2 + mechanical wire = S3.5 / CFP-1429 carrier).
+
+선행 Sub-A S1.1 (CFP-1419 / ADR-111) 가 Confluence-mirror classification policy SSOT 를 closed-enum 4 mirror 대상 + 5 Issue-only retain 면제 영역으로 codify 했고, 본 Amendment 2 = ADR-111 §결정 1 closed-enum 4 대상 중 **2번째 대상 = Living Architecture page** 의 instantiate.
+
+### Amendment 2 결정 1 — Living Architecture page Confluence mirror authoritative readable source 격상
+
+ADR-078 §결정 1 의 `docs/architecture/` 영속 markdown SSOT (git source) 위에 **Confluence mirror authoritative readable source 격상**:
+
+| layer | source-of-record | 의미 | 변경 source |
+|---|---|---|---|
+| **git = SoR-work** | per-plugin `docs/architecture/` (9 plugin family — wrapper + 8 lane plugin) | **변경의 source of record** — PR / commit / review gate / CODEOWNERS 결재가 거치는 정식 변경 채널 (ADR-013 §결정 1 KEEP invariant 보존) | 보존 (§결정 1 4 영역 closed-enum 약화 0건) |
+| **Confluence = SoR-docs** | Confluence per-plugin top-level page (ADR-111 §결정 3 IA axis) authoritative readable | **doc 의 authoritative readable source** — 읽는 사람이 정식으로 참조하는 권위 readable 사본 + ArchitectAnalystAgent as-is 설계 확인 1차 lookup target | 추가 (본 Amendment 2) |
+
+**ArchitectAnalystAgent dual-read path 의무**: as-is 설계 확인 시 (1) git read primary (LLM 친화 — 마크다운 plain text fenced code block diagram-as-code 정합) + (2) Confluence read fallback (LOSSY / ADF divergence 대비 — Epic-A 발견 LOSSY 1건 evidence). 양 channel divergence 감지 시 git source 가 authoritative (SoR-work invariant) — Confluence 측은 readable mirror 가 stale (sync agent re-trigger).
+
+**sync direction = 단방향 git → Confluence** (ADR-100 §결정 1 disjoint axis 정합 — git = SoR-work / Confluence = SoR-docs readable mirror). write boundary = ADR-103 sync agent 단일 진입점 (Confluence → git 역방향 inbound webhook 0).
+
+**sync source repo 다중성 (CFP-949 정합)**: per-plugin self-owned `docs/architecture/` 는 wrapper + 6 lane plugin repo 가 각각 SSOT (CFP-949 Sub-Epic 6 lane plugin self-owned architecture doc seed merged). sync source = wrapper repo + codeforge-{requirements, design, develop, review, test, pmo} repo. ADR-103 sync mechanism = 2-repo source resolver precedent 답습.
+
+### Amendment 2 결정 2 — per-Epic 현행화 mandate (ArchitectAgent chief author 의무)
+
+**의무**: 매 Epic merge 후 (또는 Phase 1 PR merge 시 — granularity 결정 = S3.5 / CFP-1429 lane gate wire 시점 결정) ArchitectAgent (chief author) 의 해당 plugin Living Architecture page 갱신 의무. 미반영 시 design lane verdict FIX.
+
+**granularity 결정 위임**: Epic merge granularity vs Phase 1 PR merge granularity 의 trade-off = **Phase 2 lane gate wire 시점 (S3.5 / CFP-1429) 결정 위임** (본 Amendment 2 = mandate anchor only — mechanism 구체화 책임 위임). 후보:
+- **Epic-level granularity**: 매 Epic close 후 (PMOAgent retro trigger 시점 정합 — ADR-045) — 갱신 비용 ↓ + per-Epic 시점 명확 / drift window ↑ (Epic 안 다중 Story 진행 중 stale)
+- **Phase 1 PR-level granularity**: 매 Phase 1 PR merge 후 — drift window ↓ / 갱신 비용 ↑ (Story 마다 갱신)
+
+**기존 §결정 4 "게이트 의무" 강화 명시화**: ADR-078 §결정 4 "설계 레인이 매 실행마다 Change Plan merge 를 `docs/architecture/` 4 영역에 반영. 미반영 시 design lane verdict FIX" 의무를 본 Amendment 2 = **per-Epic 시점 + ArchitectAgent chief author 책임 명시화** (의미 약화 0건 — invariant strengthen).
+
+**mechanical actuator** (Phase 2 wire = S3.5 / CFP-1429 carrier):
+- review-verdict-v4 v4.10 MINOR `living_architecture_updated: bool` field 신설
+- lint workflow `templates/github-workflows/living-architecture-update.yml` (Phase 2 wire)
+- bats fixture (Phase 2 wire)
+- evidence-checks-registry warning-tier row (Phase 2 wire)
+- label-registry-v2 `hotfix-bypass:living-architecture-update` family member (Phase 2 wire)
+
+### Amendment 2 결정 3 — 5-anchor "시스템 현황" section schema (closed-enum, open_extension: false)
+
+ADR-078 §결정 1 의 4 영역 closed-enum (모듈 / 경계 / 인터페이스 계약 / 데이터 흐름) 위에 **reading orientation layer 추가**. ArchitectAnalystAgent as-is 설계 확인 시 자연 lookup target 으로 작동하는 5-anchor mandatory section:
+
+| # | anchor | 의미 | 외부 prior art (ADR-078 §컨텍스트 cross-ref) |
+|---|---|---|---|
+| 1 | **arc42 §3 — Context & Scope** | 시스템 외부 경계 + 외부 시스템 / actor / interface — 현 시스템이 무엇과 상호작용하는가 | arc42 12 섹션 template §3 (Context and Scope) verbatim subset |
+| 2 | **arc42 §5 — Building Block View** | 모듈 / package / 내부 component decomposition — 현 시스템 구조 (ADR-078 §결정 1 4 영역 중 모듈 + 경계 instantiate) | arc42 12 섹션 template §5 (Building Block View) verbatim subset |
+| 3 | **C4 Container** | runtime container (process / service / app) topology — deployment unit + 통신 protocol | C4 model (Simon Brown) Container level verbatim |
+| 4 | **C4 Component** | container 내부 component (logical unit) — 책임 + 인접 component 관계 | C4 model (Simon Brown) Component level verbatim (Code level 제외 — ADR-078 §결정 1 anti-scope guard 정합) |
+| 5 | **Open Decisions Pending** | ADR 미합의 + Wave 미작성 + placeholder 상태 집중 표시 — design lane 진입 시 모호성 즉시 visible | codeforge native (ArchitectPL design lane 진입 시 자연 lookup target) |
+
+**4 영역 closed-enum 약화 0건 invariant**: 본 5-anchor schema = 4 영역 closed-enum (모듈 / 경계 / 인터페이스 계약 / 데이터 흐름) **위에 reading orientation layer 추가**. 4 영역 → 5-anchor 의 mapping:
+- 모듈 ↔ arc42 §5 Building Block View + C4 Component
+- 경계 ↔ arc42 §3 Context & Scope + C4 Container
+- 인터페이스 계약 ↔ C4 Container (통신 protocol) — inter-plugin contract surface
+- 데이터 흐름 ↔ C4 Container + C4 Component (runtime data flow)
+- (신규 5번째 = Open Decisions Pending — 4 영역 외 design lane state visibility)
+
+4 영역 closed-enum 의미 보존 + reading layer 추가 = additive extension (closed-enum 약화 0건).
+
+**open_extension: false closed-enum invariant**: 5-anchor 확장 (예: arc42 §6 Runtime View / arc42 §8 Crosscutting Concepts 추가) 시 별 CFP carrier 의무. 본 Amendment 2 = 5-anchor 박제 (사용자 발화 "한눈에 보기 좋게 정리하는 시스템 현황 section" 의 mechanism 정합 — 추가 anchor 시 "한눈" reading cost ↑).
+
+### Amendment 2 결정 4 — diagram-as-code 의무 (Mermaid / PlantUML 우선, Confluence native macro 회피)
+
+ADR-111 §결정 4 (diagram-as-code 의무) 의 Living Architecture page 영역 instantiate:
+
+- **diagram-as-code 의무**: 5-anchor section schema (특히 arc42 §3 Context / arc42 §5 Building Block / C4 Container / C4 Component) 의 모든 diagram = Mermaid / PlantUML fenced code block (markdown source 안 직접 embed). Confluence native macro (drawio / Gliffy / Lucidchart) 회피.
+- **근거**: (1) git SSOT 보존 — git diff / PR review 가능 (2) ADF round-trip lossy 회피 — Confluence storage format ↔ markdown round-trip safe (3) LLM 친화 — ArchitectAnalystAgent dual-read path git primary 정합 (text-based fenced code block 자연 parsing).
+
+### Amendment 2 결정 5 — cross-link discipline (git anchor + Confluence anchor 양쪽 link 의무)
+
+ADR-111 §결정 5 (cross-link discipline) 의 Living Architecture page 영역 instantiate:
+
+- Living Architecture page git source frontmatter `confluence_anchor: <full URL>` field optional (frontmatter 부재 시 body cross-link footer)
+- Living Architecture page 안 ADR / Story 인용 시 git anchor + Confluence anchor 양쪽 link 의무 (역방향 — Confluence Living Architecture page 안 ADR / Story 인용 시 동일)
+- ADR-068 I-4 wording SSOT 확장 — single SSOT principle (양 channel 동시 가시화 의무 — 한쪽 link 만 노출 시 다른 channel staleness window 인지 비용 폭발)
+
+### Amendment 2 결정 6 — mechanical_enforcement_actions append (declaration-only Wave 1)
+
+`mechanical_enforcement_actions[]` 에 `living-architecture-update` entry append (declaration-only Wave 1 — 실 wire = Sub-C S3.5 / CFP-1429 carrier):
+
+```yaml
+mechanical_enforcement_actions:
+  - architecture-drift          # Amendment 1 (CFP-923, 2026-05-18) — S4 carrier wire 완료
+  - living-architecture-update  # Amendment 2 (CFP-1425, 2026-05-24) — Sub-C S3.5 / CFP-1429 carrier deferred-followup
+```
+
+**Phase 2 wire 영역** (Sub-C S3.5 / CFP-1429 carrier — 본 Amendment 2 scope 외):
+- review-verdict-v4 v4.10 MINOR `living_architecture_updated: bool` field schema codify (ADR-008 §결정 2 MINOR 정합)
+- `templates/github-workflows/living-architecture-update.yml` workflow + `scripts/check-living-architecture-update.sh` lint
+- bats fixture
+- evidence-checks-registry warning-tier row append
+- `hotfix-bypass:living-architecture-update` label-registry-v2 family member
+
+**ADR-082 §결정 6 + ADR-070 §D5 + ADR-111 §결정 5 retain pattern 답습**: Wave 1 declare / Wave 2 wire. pattern_count >= 2 재발 시 follow-up CFP MUST promote to blocking tier.
+
+### Amendment 2 결정 7 — carrier-preserved 정정 (ADR-097 §결정 3 정합)
+
+본 Amendment 2 가 ADR-078 의 4 영역 closed-enum 약화 0건 (additive extension only — 5-anchor section schema 가 4 영역 위에 reading orientation layer 추가). is_transitional retain `false` (permanent governance ratchet). sunset_justification: null (ratchet 강화 방향 — ADR-058 §결정 5 면제).
+
+**약화 방향 evidence-gate** (ADR-058 §결정 5 + ADR-064 §결정 7 Amendment 8 evidence-gated symmetric ratchet 정합):
+- 약화 방향 예시 (sunset_justification 의무): 5-anchor section schema 축소 / per-Epic 현행화 의무 약화 / Confluence mirror authoritative 격상 reversal / diagram-as-code 의무 제거 / cross-link discipline 의무 약화
+- 강화 방향 예시 (sunset_justification 면제): 5-anchor 확장 (별 CFP carrier 의무) / per-Epic 현행화 granularity 강화 (Phase 1 PR-level) / Confluence mirror authoritative 격상 강화 / diagram-as-code 의무 강화
+
+### Amendment 2 즉시 효과 (Phase 1 PR merge 후)
+
+1. ADR-078 frontmatter `amendment_log[]` row append (amendment 2, CFP-1425, 2026-05-24 KST) — `is_transitional: false` retain + `sunset_justification: null` retain.
+2. ADR-078 frontmatter `mechanical_enforcement_actions[]` append `living-architecture-update` (declaration-only Wave 1).
+3. ADR-078 frontmatter `related_stories[]` append CFP-1425 + CFP-1415 (Mega-Epic parent).
+4. ADR-078 frontmatter `related_adrs[]` append ADR-100 (Confluence doc SSOT 인정) + ADR-103 (git→Confluence sync mechanism) + ADR-111 (Confluence-mirror classification policy SSOT).
+5. Mega-Epic CFP-1415 scope_manifest `planned_adrs` 안 "ADR-078 Amendment 2" carrier_story field update (`CFP-1425`).
+
+### Amendment 2 후속 Story 위임 (Sub-C bundle CFP-1418)
+
+| Sub-story | Issue | scope | sequential trigger |
+|---|---|---|---|
+| **S3.2** | (별 CFP carrier) | ADR-108 신설 — Confluence mirror sync mechanism 결정 영역 (ADR-103 위에서 Living Architecture page-specific sync 패턴) | S3.1 state dependency (본 Amendment 2 선행) |
+| **S3.3** | CFP-1427 | 8 lane plugin Living Arch seed (`docs/architecture/codeforge-{requirements,design,develop,review,test,pmo,deploy,deploy-review}.md` + wrapper `docs/architecture/codeforge-family.md` 5-anchor expand) | S3.1 state dependency (5-anchor schema 선행) |
+| **S3.4** | (별 CFP carrier) | ArchitectAnalystAgent dual-read path 실 wire (codeforge-design plugin ArchitectAnalystAgent.md self-write 확장 + git primary + Confluence fallback) | S3.1+S3.3 state dependency (schema + seed 선행) |
+| **S3.5** | CFP-1429 | mechanical wire — review-verdict-v4 v4.10 MINOR `living_architecture_updated: bool` + lint workflow + bats fixture + evidence-checks-registry row + hotfix-bypass label family member | S3.1+S3.3+S3.4 state dependency (mandate + seed + dual-read path 선행) |
 
 ## 거절된 대안
 
