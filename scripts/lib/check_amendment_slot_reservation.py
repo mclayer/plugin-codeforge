@@ -96,10 +96,15 @@ AMENDMENT_ID_RE = re.compile(
 # entry 단위 = `- adr_number: NNN` line + 후속 sub-key lines 까지 (parsing simplification)
 # regex: `- adr_number: NNN ... amendment_id: M ... reserved_by_cfp: CFP-XXX`
 # multi-line 매칭 — `re.DOTALL` 미사용, 대신 명시적 multi-key cluster regex
-RESERVATION_ENTRY_RE = re.compile(
-    r"^\s*-\s*adr_number:\s*(\d+)\s*\n"
-    r"(?:\s+\w+:\s*[^\n]*\n)*?"  # any sub-key lines (greedy non-capturing, multi-line)
-    r"\s+amendment_id:\s*(\d+)\s*\n",
+# CodeQL ReDoS fix (Wave 2-C PR #1499 sentinel): previous regex
+# `(?:\s+\w+:\s*[^\n]*\n)*?` had exponential backtracking on adversarial input.
+# Use 2 simple line-anchored regexes + parse-by-line in `_extract_reservations`.
+RESERVATION_ADR_NUMBER_RE = re.compile(
+    r"^\s*-\s*adr_number:\s*(\d+)\s*$",
+    re.MULTILINE,
+)
+RESERVATION_AMENDMENT_ID_RE = re.compile(
+    r"^\s+amendment_id:\s*(\d+)\s*$",
     re.MULTILINE,
 )
 
@@ -159,14 +164,37 @@ def _load_reservation_entries(reservation_file_path):
     except (OSError, IOError):
         return []
 
+    # Parse line-by-line (CodeQL ReDoS fix Wave 2-C PR #1499):
+    # Find each `- adr_number: N` line, then scan subsequent indented lines
+    # for matching `amendment_id: M`. Linear time, no backtracking.
     entries = []
-    for m in RESERVATION_ENTRY_RE.finditer(text):
+    lines = text.splitlines()
+    n = len(lines)
+    for i, line in enumerate(lines):
+        adr_match = RESERVATION_ADR_NUMBER_RE.match(line)
+        if not adr_match:
+            continue
         try:
-            adr_num = int(m.group(1))
-            amend_id = int(m.group(2))
-            entries.append((adr_num, amend_id))
+            adr_num = int(adr_match.group(1))
         except (ValueError, IndexError):
             continue
+        # Scan up to 20 subsequent indented sub-key lines for amendment_id
+        # (entry block size cap — prevents pathological inputs)
+        for j in range(i + 1, min(i + 21, n)):
+            sub = lines[j]
+            # Stop at next entry boundary (non-indented or new `- adr_number:`)
+            if sub and not sub[0].isspace():
+                break
+            if RESERVATION_ADR_NUMBER_RE.match(sub):
+                break
+            am_match = RESERVATION_AMENDMENT_ID_RE.match(sub)
+            if am_match:
+                try:
+                    amend_id = int(am_match.group(1))
+                    entries.append((adr_num, amend_id))
+                    break
+                except (ValueError, IndexError):
+                    break
     return entries
 
 
