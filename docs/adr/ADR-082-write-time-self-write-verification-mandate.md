@@ -85,6 +85,12 @@ amendments:
     summary: "§결정 1 layer 1 sub-scope (1-D) 신설 — cross-repo label-write authority verify mandate. Orchestrator (또는 GitOpsAgent) 가 cross-repo label state 변경 직전 authority 검증 의무: (a) wrapper Story Issue label 변경 → impl repo PR label sync write 권한 (CODEFORGE_CROSS_REPO_PAT scope `issues:write` 정합 ADR-066 §결정 2 Amendment 4 cross-ref) (b) impl repo PR label 변경 → wrapper Story Issue label sync write 권한 (sender.type ≠ Bot OR actor-allowlist 정합) (c) cross-org sync 차단 (mclayer org only) (d) verified-via annotation 의무 (모든 cross-repo label state 인용 옆 [verified-via: <gh api / direct read> pinned_at: <SHA/timestamp>] tag). 본 sub-scope 1-D = sub-scope 1-A (cross-repo state verify) / 1-B (Issue body authorship) / 1-C (user-utterance verbatim) 와 disjoint axis (label-write authority verify axis). ADR-073 Amendment 10 §결정 1 transition trigger `label_change` 와 dual-binding (verify 의무 ↔ write authority 의무 disjoint axis pair). Wave 1 = declaration-only behavioral mandate (`mechanical_enforcement_actions[]` 신규 entry `cross-repo-label-sync` warning-tier deferred-followup). Wave 2 mechanical wire = 별 sub-carrier. **Amendment slot history (verify-before-cite META-self-application)**: spawn prompt Amd 8 → 10 → 12 → 13 → 14 → 14 FINAL (5 collisions, pattern_count 11+ reach CFP-1336 lineage). ADR-073 paired Amendment 슬롯 도 9 → 10 renumber (CFP-1384 mid-session collision, 6th collision)."
     direction: strengthening
     sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §결정 1 layer 1 sub-scope (1-A/1-B/1-C) → (1-D cross-repo label-write authority) 확장). ADR-064 §결정 7 symmetric evidence-gated 정합. META-self-applied (§결정 10.D 9th applied case)."
+  - amendment_id: 15
+    carrier_story: CFP-1437
+    date: 2026-05-24
+    summary: "§결정 1 layer 1 sub-scope (1-E) 신설 — spawn prompt SHA-anchor write-time verify mandate. Orchestrator (또는 PL agent / chief author) 가 lane PL / chief author / deputy / 4-tuple sub-tuple subagent spawn prompt 작성 시 4 의무: (a) spawn prompt 첫 줄 `[PRE-SPAWN-ORIGIN-MAIN-SHA: <40-char-hex>]` block 형식 명시 (literal block, regex `^\\[PRE-SPAWN-ORIGIN-MAIN-SHA: [0-9a-f]{40}\\]$`) (b) SHA 값이 작성 시점 `git rev-parse origin/main` 결과와 일치 verify (cached SHA 사용 금지) (c) parent → child cascade spawn 시 SHA 재pin 의무 (parent SHA verbatim carry 금지, mid-flight merge 가능성으로 fresh re-fetch 의무) (d) verified-via annotation `pre_spawn_pin_verified: <bool>` field spawn prompt 안 명시 (write-time semantic truth verify). 본 sub-scope 1-E = sub-scope 1-A (cross-repo state verify) / 1-B (Issue body authorship) / 1-C (user-utterance verbatim) / 1-D (cross-repo label-write authority) 와 disjoint axis (spawn-time SHA-anchor write-time verify axis). ADR-082 sub-scope 1-C `[USER-UTTERANCE-VERBATIM]` block precedent 답습 (spawn-time anchor block pattern, block 형식 verbatim 답습). ADR-073 Amendment 11 §결정 1 transition trigger `spawn_prompt_emit` 와 dual-binding (verify 의무 ↔ write authority 의무 disjoint axis pair, 같은 CFP-1437 carrier). Wave 1 = declaration-only behavioral mandate (`mechanical_enforcement_actions[]` 신규 entry `spawn-prompt-head-pin-presence` warning-tier deferred-followup). Wave 2 mechanical wire (lint script + workflow yml hydrate + bats fixture + label-registry MINOR bump + evidence-checks-registry entry) = 별 sub-CFP carrier. 동인 = CFP-1336 amendment_number_stale_at_planning pattern_count 9+ reach system-level evidence preventive solution carrier — chief author / deputy stale-at-planning 차단 forcing function. CFP-1336 single Story 안 4 reach (Amd 8 → 10 → 12 → 13 → 14, 5 collisions) + cross-Story 누적 (CFP-1293 + CFP-1303 + CFP-1318 + CFP-1336-iter1~iter4 + CFP-1390) ≥ ADR-045 §D-9 Mandatory threshold. paired sibling ADR-073 Amendment 11 = 2 ADR Amendment 동시 발의 (axis disjoint complement 2-set, ADR-064 §결정 1 CFP scope unitary 정합). 본 Amendment 15 자체가 META-self-applied (§결정 10.D 10th applied case): 본 Amendment 번호(15) 가 target ADR-082 frontmatter `amendments:` Read verify (origin/main 67a541aa6999d91fed0314589c7cbd83bded7d37 max=14 — CFP-1336 Amd 14 merge 후 base, 정확 next-slot = 15) 후 결정 (verified-via: `git show origin/main:docs/adr/ADR-082-...md` frontmatter amendments[] 2026-05-24 KST 기준 origin/main 67a541aa pinned_at: 67a541aa)."
+    direction: strengthening
+    sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §결정 1 layer 1 sub-scope (1-A/1-B/1-C/1-D) → (1-E spawn prompt SHA-anchor write-time verify) 확장). ADR-064 §결정 7 symmetric evidence-gated 정합. META-self-applied (§결정 10.D 10th applied case)."
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-841
@@ -164,6 +170,12 @@ amendment_log:
     decisions_touched: ["§결정 1 layer 1 sub-scope 1-D (신설)"]
     nature: ratchet-up  # §결정 1 layer 1 sub-scope 1-A/1-B/1-C → 1-D cross-repo label-write authority verify mandate 확장 (ADR-058 §결정 5 강화 방향)
     note: "CFP-1302 follow-up F2 carrier — D-4 chief dissent carry (cross-repo wrapper Issue ↔ impl repo PR labels bidirectional sync 영역). cross-repo label state 변경 직전 authority verify-before-write mandate codify (4-tuple primitive: a-wrapper→impl write authority / b-impl→wrapper write authority / c-cross-org block / d-verified-via annotation). ADR-073 Amendment 9 §결정 1 transition trigger `label_change` 와 dual-binding (verify 의무 ↔ write authority 의무 disjoint axis pair, 같은 CFP-1336 carrier 안 paired Amendment). ADR-066 Amendment 4 (PAT scope `issues:write` cross-repo label sync 인가) 동반 — 3 ADR paired Amendment carrier (ADR-073/082/066). pattern_count evidence: cross-repo label state drift sentinel forward-prevention. Wave 1 declaration-only behavioral + evidence-checks-registry `cross-repo-label-sync` warning-tier entry (deferred-followup). Wave 2 mechanical wire = 별 sub-carrier (cross-repo-label-sync.yml workflow runtime activation + bats fixture + bidirectional sync state lint). **Amendment slot history (FIX iter chain — Amd 8 → 10 → 12 → 13 → 14 history, 5 collisions, CFP-1390 mid-DesignReview spawn collision 추가)**: spawn Amd 8 planned → iter 1 Amd 10 → iter 2 Amd 12 → iter 3 Amd 13 → **iter 4 Amd 14 FINAL (ADR-067 max 3/3 cap EXCEED + user explicit continuation override)**. amendment_number_stale_at_planning pattern_count 8+ reach (CFP-1293/1303/1318/1336-iter1/1336-iter2/1336-iter3/1336-iter4 single Story 4 reach, 5th collision) ADR-045 §D-9 Mandatory escalation 정합. 본 Amendment 14 자체가 META-self-applied (§결정 10.D 9th applied case): 본 Amendment 번호(14) 가 target ADR-082 frontmatter amendments[] Read verify (origin/main 8fd36711 max=13 — CFP-1390 Amd 13 merge 후 base — 정확 next-slot = 14) 후 결정 (verified-via: git show origin/main:docs/adr/ADR-082-...md frontmatter amendments[] 2026-05-24 KST 기준 origin/main 8fd36711f1d5ce7c124dfb37226be1d35e142ec8 pinned_at: 8fd36711). Lane plugin agent md cross-ref (codeforge-pmo GitOpsAgent.md) = follow-up defer (wrapper-only ADR-010 sibling sync 면제)."
+  - amendment_id: 15
+    carrier_story: CFP-1437
+    date: 2026-05-24  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 1 layer 1 sub-scope 1-E (신설)"]
+    nature: ratchet-up  # §결정 1 layer 1 sub-scope 1-A/1-B/1-C/1-D → 1-E spawn prompt SHA-anchor write-time verify mandate 확장 (ADR-058 §결정 5 강화 방향)
+    note: "CFP-1389 Sub-CFP A carrier (CFP-1336 retro follow-up) — Pre-spawn HEAD-pin protocol mechanical lint Epic Wave 1 declarative-only carrier. Orchestrator (또는 PL agent / chief author) 가 lane PL / chief author / deputy / 4-tuple sub-tuple subagent spawn prompt 작성 시 4-tuple primitive (a-spawn prompt 첫 줄 `[PRE-SPAWN-ORIGIN-MAIN-SHA: <40-char-hex>]` block 형식 / b-SHA 값 spawn 시점 `git rev-parse origin/main` direct fetch 일치 verify / c-parent → child cascade fresh re-fetch (parent SHA verbatim carry 금지) / d-verified-via annotation `pre_spawn_pin_verified: <bool>` field). ADR-082 sub-scope 1-C `[USER-UTTERANCE-VERBATIM]` block precedent 답습 (spawn-time anchor block pattern, block 형식 verbatim 답습). ADR-073 Amendment 11 §결정 1 transition trigger `spawn_prompt_emit` 와 dual-binding (verify 의무 ↔ write authority 의무 disjoint axis pair, 같은 CFP-1437 carrier 안 paired Amendment). Wave 1 declaration-only behavioral + evidence-checks-registry `spawn-prompt-head-pin-presence` warning-tier entry (deferred-followup). Wave 2 mechanical wire = 별 sub-CFP carrier (lint script + workflow yml hydrate + bats fixture + label-registry MINOR bump + evidence-checks-registry entry). 동인: CFP-1336 amendment_number_stale_at_planning pattern_count 9+ reach system-level evidence preventive solution carrier — chief author / deputy stale-at-planning 차단 forcing function. CFP-1336 single Story 안 4 reach (Amd 8 → 10 → 12 → 13 → 14, 5 collisions) + cross-Story 누적 (CFP-1293 + CFP-1303 + CFP-1318 + CFP-1336-iter1~iter4 + CFP-1390) ≥ ADR-045 §D-9 Mandatory threshold. paired sibling ADR-073 Amendment 11 = 2 ADR Amendment 동시 발의 (axis disjoint complement 2-set, ADR-064 §결정 1 CFP scope unitary 정합). 본 Amendment 15 자체가 META-self-applied (§결정 10.D 10th applied case): 본 Amendment 번호(15) 가 target ADR-082 frontmatter amendments: 목록 Read verify (origin/main 67a541aa max=14 — CFP-1336 Amd 14 merge 후 base — 정확 next-slot = 15) 후 결정 (verified-via: `git show origin/main:docs/adr/ADR-082-...md` frontmatter amendments[] 2026-05-24 KST 기준 origin/main 67a541aa6999d91fed0314589c7cbd83bded7d37 pinned_at: 67a541aa). Lane plugin agent md cross-ref (codeforge-pmo GitOpsAgent.md + codeforge-design chief author prompt) = follow-up defer (wrapper-only ADR-010 sibling sync 면제)."
 related_stories:
   - CFP-776  # carrier (super-class 통합 결정 — escalation_action escalate_user)
   - CFP-841  # Amendment 1 carrier (§결정 6 behavioral→mechanical 전환 후속 carrier)
@@ -196,6 +208,8 @@ related_stories:
   - CFP-1336 # Amendment 14 carrier (§결정 1 layer 1 sub-scope 1-D 신설 — cross-repo label-write authority verify mandate, CFP-1302 follow-up F2 carrier D-4 chief dissent carry, ADR-073 Amendment 9 + ADR-066 Amendment 4 paired carrier, FIX iter 4 FINAL per ADR-067 max 3/3 cap EXCEED + user explicit continuation override)
   - CFP-1302 # Amendment 14 origin (D-4 chief dissent — cross-repo wrapper Issue ↔ impl repo PR labels bidirectional sync 영역 별 carrier 분리 요청)
   - CFP-1339 # Amendment 12 sibling (PMOAgent retro batch closure pattern §결정 14, CFP-1336 spawn 도중 mid-flight land — amendment_number_stale_at_planning 7-reach evidence)
+  - CFP-1437 # Amendment 15 carrier (§결정 1 layer 1 sub-scope 1-E 신설 — spawn prompt SHA-anchor write-time verify mandate, CFP-1389 Sub-CFP A Wave 1 declarative-only Pre-spawn HEAD-pin protocol mechanical lint Epic carrier, paired sibling ADR-073 Amendment 11 §결정 1 transition trigger `spawn_prompt_emit`, CFP-1336 amendment_number_stale_at_planning pattern_count 9+ reach system-level evidence preventive solution carrier — chief author / deputy stale-at-planning 차단 forcing function)
+  - CFP-1389 # Amendment 15 origin (CFP-1336 retro follow-up Pre-spawn HEAD-pin protocol mechanical lint Epic — Wave 1 = CFP-1437 declarative-only Sub-CFP A carrier, Wave 2 mechanical wire = 별 sub-CFP carrier)
 related_adrs:
   - ADR-073  # Orchestrator cross-repo state / assumption verify (disjoint 보완 — Orchestrator 행위 한정)
   - ADR-070  # Codex external worker output verify (disjoint 보완 — 외부 worker output 한정)
@@ -228,6 +242,9 @@ related_files:
   - docs/adr/ADR-066-pat-rotation-policy.md  # Amendment 14 paired — Amendment 4 PAT scope `issues:write` cross-repo label sync 인가 (3 ADR paired Amendment)
   - templates/github-workflows/cross-repo-label-sync.yml  # Amendment 14 동반 — bidirectional sync workflow skeleton (Wave 1 declaration-only / Wave 2 mechanical wire 별 sub-carrier)
   - docs/change-plans/cfp-1336-cross-repo-label-sync.md  # Amendment 14 carrier Change Plan (CFP-1336 Phase 1 Story)
+  - docs/adr/ADR-073-orchestrator-verify-before-assert.md  # Amendment 15 paired — Amendment 11 transition trigger `spawn_prompt_emit` dual-binding (verify 의무 ↔ write authority 의무 disjoint axis pair, 같은 CFP-1437 carrier)
+  - templates/github-workflows/spawn-prompt-head-pin-check.yml  # Amendment 15 동반 — spawn prompt SHA-anchor write-time verify workflow skeleton (Wave 1 declaration-only / Wave 2 mechanical wire 별 sub-carrier)
+  - <internal-docs>/plugin-codeforge/change-plans/cfp-1437-pre-spawn-head-pin-protocol.md  # Amendment 15 carrier Change Plan (CFP-1437 Phase 1 Story, internal-docs SSOT per ADR-013 dogfood-out policy)
 is_transitional: false
 # Wave 1 = behavioral directive only (lane agent write-time self-discipline forcing function).
 # Wave 2 (Amendment 1, CFP-841) = §결정 6 behavioral→mechanical 전환:
@@ -257,6 +274,9 @@ mechanical_enforcement_actions:
   - action: cross-repo-label-sync
     status: deferred-followup     # Phase 1 declare (본 Amendment 14, CFP-1336) / Phase 2 actual wire = 별 sub-carrier (cross-repo-label-sync.yml workflow runtime activation + bats fixture + bidirectional sync state lint)
     target_section: §결정 1 layer 1 sub-scope 1-D  # cross-repo label state 변경 직전 authority verify-before-write mandate (4-tuple primitive a-wrapper→impl / b-impl→wrapper / c-cross-org block / d-verified-via annotation). ADR-073 Amendment 9 §결정 1 transition trigger `label_change` dual-binding.
+  - action: spawn-prompt-head-pin-presence
+    status: deferred-followup     # Phase 1 declare (본 Amendment 15, CFP-1437) / Phase 2 actual wire = 별 sub-CFP carrier (lint script + workflow yml hydrate + bats fixture + label-registry MINOR + evidence-checks-registry entry)
+    target_section: §결정 1 layer 1 sub-scope 1-E  # spawn prompt SHA-anchor write-time verify-before-write mandate (4-tuple primitive a-`[PRE-SPAWN-ORIGIN-MAIN-SHA: <hex>]` block format / b-SHA spawn-time fresh fetch verify / c-cascade parent→child fresh re-fetch / d-`pre_spawn_pin_verified` annotation). ADR-073 Amendment 11 §결정 1 transition trigger `spawn_prompt_emit` dual-binding. ADR-082 sub-scope 1-C `[USER-UTTERANCE-VERBATIM]` block precedent 답습.
 sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (ratchet 강화 방향 only — verify scope 확장). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과. is_transitional: false (영구 정책). self-referential 주의: 본 ADR 의 해소기준 부재 선언 자체가 §결정 2 verify 대상 아님 (§결정 6 EC-3 self-protection)."
 pre_lookup_evidence:
   verified_files:
@@ -1326,3 +1346,62 @@ ADR-073 Amendment 9 §결정 1 transition trigger enum 안 `label_change` 신규
 - `CHANGELOG.md` — PATCH entry append (plugin.json MINOR bump 동반 — 신규 `cross-repo-label-sync` action entry)
 - `.claude-plugin/plugin.json` — MINOR bump (신규 mechanical_enforcement_actions entry = MINOR per ADR-008 §결정 2)
 - `mclayer/marketplace` repo — `marketplace.json` plugins[name=codeforge] mirrored field 4종 (`version`) atomic sibling PR (ADR-063 §결정 1)
+
+## Amendment 15 — §결정 1 layer 1 sub-scope (1-E) 신설 (spawn prompt SHA-anchor write-time verify mandate, CFP-1437, 2026-05-24 KST)
+
+### 동기
+
+CFP-1389 Sub-CFP A carrier (CFP-1336 retro follow-up) — Pre-spawn HEAD-pin protocol mechanical lint Epic Wave 1 declarative-only carrier. CFP-1336 Phase 1 single Story 안 amendment_number_stale_at_planning collision 4 reach (Amd 8 → 10 → 12 → 13 → 14 history, 5 collisions) + cross-Story pattern_count 누적 9+ reach (CFP-1293 / CFP-1303 / CFP-1318 / CFP-1336-iter1~iter4 / CFP-1390 mid-DesignReview) → system-level pattern continued evidence. ADR-045 §D-9 Mandatory escalation 정합 — preventive solution carrier 의무.
+
+근본 원인 = Orchestrator (또는 PL agent / chief author) 가 lane PL / chief author / deputy / 4-tuple sub-tuple subagent 를 spawn 할 때 spawn prompt 안 baseline origin/main SHA reference 부재 (또는 stale SHA 추정 사용). spawn 직후 mid-flight 다른 Story / Amendment merge 발생 시 spawn 받은 agent / subagent 는 stale baseline 가정 위에 planning → write 시점 amendment_id collision FIX iter 진입.
+
+기존 4-layer verify-before-trust 안 layer 3 (ADR-082 §결정 1) 의 sub-scope 1-A (cross-repo state verify) / 1-B (Issue body authorship) / 1-C (user-utterance verbatim) / 1-D (cross-repo label-write authority) 가 모두 read-time verify 또는 write 직전 fidelity check 영역. spawn-time SHA-anchor **write-time verify** axis 는 disjoint sub-scope — 본 Amendment 가 sub-scope 1-E 신설로 anchor.
+
+ADR-073 Amendment 11 (`spawn_prompt_emit` transition trigger, lane-spawn sentinel polling 10번째 entry) 와 paired Amendment carrier (같은 CFP-1437 Story 안). ADR-073 = transition 시점 spawn prompt SHA pin verify (when + how — Orchestrator / PL emit-time discipline), ADR-082 sub-scope 1-E = spawn prompt SHA-anchor write-time verify (what + who-can-write — internal lane agent self-write semantic truth verify). dual-binding (verify 의무 ↔ write authority 의무 disjoint axis pair).
+
+### Amendment
+
+#### §결정 1 layer 1 sub-scope (1-E) 신설 — spawn prompt SHA-anchor write-time verify 4-tuple primitive
+
+ADR-082 §결정 1 의 4-layer 표 안 layer 1 (Orchestrator scope) sub-scope 확장:
+
+- **sub-scope (1-A)** = cross-repo state verify (read-time, ADR-073 base)
+- **sub-scope (1-B)** = Orchestrator-authored Issue body authorship pre-publish verify (write-time, Amendment 2 신설)
+- **sub-scope (1-C)** = Orchestrator-authored lane PL spawn prompt user-utterance verbatim anchor (write-time, Amendment 5 신설)
+- **sub-scope (1-D)** = cross-repo label-write authority verify-before-write (write-time, Amendment 14 신설)
+- **sub-scope (1-E) — 신설 (Amendment 15)** = spawn prompt SHA-anchor write-time verify (write-time, 4-tuple primitive):
+  - **(a) spawn prompt 첫 줄 `[PRE-SPAWN-ORIGIN-MAIN-SHA: <40-char-hex>]` block 형식 명시**: literal block, regex `^\[PRE-SPAWN-ORIGIN-MAIN-SHA: [0-9a-f]{40}\]$`. ADR-082 sub-scope 1-C `[USER-UTTERANCE-VERBATIM]` block precedent 답습 (spawn-time anchor block pattern, block 형식 verbatim 답습).
+  - **(b) SHA 값 spawn 시점 `git rev-parse origin/main` direct fetch 일치 verify**: spawn prompt 작성 직전 `git fetch origin main --quiet` + `git rev-parse origin/main` 으로 ground truth SHA 획득 (working tree HEAD 또는 cached SHA 사용 금지).
+  - **(c) parent → child cascade fresh re-fetch**: parent agent (Orchestrator / PL) 가 child agent (chief author / deputy / sub-tuple) spawn 시, 본 spawn 시점 `git rev-parse origin/main` 재실행 후 fresh SHA pin 의무. parent SHA verbatim carry 금지 (parent SHA → spawn 시점 사이 mid-flight merge 가능, fresh re-fetch 의무).
+  - **(d) verified-via annotation**: spawn prompt 안 `pre_spawn_pin_verified: <bool>` field 의무. write-time semantic truth verify (작성 SHA = spawn-time origin/main 일치 단언).
+
+#### Wave 1 = declaration-only behavioral mandate
+
+`mechanical_enforcement_actions[]` 신규 entry `spawn-prompt-head-pin-presence` warning-tier deferred-followup append. Wave 2 mechanical wire (lint script + workflow + bats fixture + label-registry MINOR bump + evidence-checks-registry entry) = 별 sub-CFP carrier 분리 (ADR-082 Wave 1 declaration-only precedent 답습 — Amendment 6/8/10/14 패턴 verbatim 답습 / ADR-070 D5 retain 패턴 / ADR-076 / ADR-086).
+
+#### ADR-073 Amendment 11 dual-binding (verify 의무 ↔ write authority 의무 disjoint axis pair)
+
+ADR-073 Amendment 11 §결정 1 transition trigger enum 안 `spawn_prompt_emit` 신규 entry — lane-spawn 시점 spawn prompt SHA pin verify 의무 (when + how axis). 본 ADR-082 sub-scope 1-E = spawn prompt body 작성 시점 **SHA-anchor block write-time verify** (what + who-can-write axis). 두 ADR 가 같은 CFP-1437 Story 안 paired carrier 로 CFP-1336 amendment_number_stale_at_planning pattern_count 9+ reach preventive solution carrier 영역 (chief author / deputy stale-at-planning 차단 forcing function) 의 두 disjoint axis 동시 codify.
+
+### 근거
+
+- §결정 1 layer 1 5-layer 표 안 layer 1 (Orchestrator scope) sub-scope (1-A/1-B/1-C/1-D) 모두 verify axis (read-time + write-time fidelity). sub-scope (1-E) = spawn-time write-time SHA-anchor verify axis 신설 — disjoint axis 확장 (forbid scope 축소 아님, ratchet 강화 방향).
+- ADR-073 Amendment 11 = transition trigger `spawn_prompt_emit` 10번째 entry codify 정합 (paired carrier, 2 ADR Amendment 동시 발의 — axis disjoint complement 2-set, ADR-064 §결정 1 CFP scope unitary 정합).
+- ADR-058 §결정 5 sunset_justification N/A (ratchet 강화 방향 only). `is_transitional: false` 유지.
+- ADR-064 §self-application top-down ratchet 정합 (강화 방향만, 약화 0건).
+- ADR-040 Amendment 3 §결정 7.A schema 정합 — `mechanical_enforcement_actions[]` 5-entry (Amendment 1 의 2 + Amendment 6 의 1 + Amendment 14 의 1 + 본 Amendment 15 의 1 entry).
+- ADR-039 lane self-write boundary 정합 (lane plugin agent md cross-ref = follow-up defer, wrapper-only ADR-010 sibling sync 면제).
+- ADR-082 sub-scope 1-C `[USER-UTTERANCE-VERBATIM]` block precedent 답습 (spawn-time anchor block pattern, block 형식 verbatim 답습 — anchor block normative pattern 동형).
+- pattern_count evidence: CFP-1336 amendment_number_stale_at_planning pattern_count 9+ reach system-level evidence (CFP-1293 + CFP-1303 + CFP-1318 + CFP-1336-iter1~iter4 + CFP-1390) + preventive solution carrier (sentinel-driven + ratchet 확장 hybrid). ADR-045 §D-9 Mandatory threshold reach.
+- 본 Amendment 15 자체가 META-self-applied (§결정 10.D 10th applied case): Amendment 번호(15) = target ADR-082 frontmatter `amendments:` Read verify (origin/main 67a541aa max=14 — CFP-1336 Amd 14 merge 후 base, 정확 next-slot = 15) 후 결정 — §결정 9 Amendment 7 양방향 wording 준수.
+
+### Related (Amendment 15 동반)
+
+- `docs/adr/ADR-073-orchestrator-verify-before-assert.md` — Amendment 11 paired (transition trigger `spawn_prompt_emit` dual-binding, verify 의무 ↔ write authority 의무 disjoint axis pair, 같은 CFP-1437 carrier)
+- `templates/github-workflows/spawn-prompt-head-pin-check.yml` — spawn prompt SHA-anchor write-time verify workflow skeleton (Wave 1 declaration-only / Wave 2 mechanical wire 별 sub-carrier)
+- `docs/inter-plugin-contracts/label-registry-v2.md` — `hotfix-bypass:spawn-prompt-head-pin-presence` family member append (Wave 2 carrier — declaration-only Wave 1)
+- `docs/evidence-checks-registry.yaml` — `spawn-prompt-head-pin-presence` entry warning-tier deferred-followup (Phase 1 declare / Phase 2 actual wire 별 sub-carrier)
+- `docs/adr/ADR-RESERVATION.md` — `amendments_reserved[]` 2-row append (ADR-073 Amendment 11 / ADR-082 Amendment 15, CFP-1437 paired carrier active 동시 점유)
+- `<internal-docs>/plugin-codeforge/change-plans/cfp-1437-pre-spawn-head-pin-protocol.md` — Change Plan SSOT (Phase 1 carrier, internal-docs SSOT per ADR-013 dogfood-out policy + `docs/change-plans/` gitignored)
+- `CLAUDE.md` — verify-before-trust 4-layer 단락 ADR-082 Amendment 15 sub-scope 1-E + ADR-073 Amendment 11 cross-ref 1 line append (CFP-506 line cap 정합)
+- `<internal-docs>/plugin-codeforge/stories/CFP-1437.md` — Story file (Sub-CFP A carrier, Phase 1 declarative)
