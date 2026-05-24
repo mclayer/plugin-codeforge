@@ -191,9 +191,9 @@ def main() -> None:
         )
         # advisory — non-blocking (warning tier)
         sys.exit(0)
-    else:
-        # silent PASS
-        sys.exit(0)
+
+    # silent PASS (divergence < threshold)
+    sys.exit(0)
 
 
 if __name__ == "__main__":
