@@ -660,7 +660,9 @@ impl repo: mclayer/<consumer-repo>
 
 **N/A** — Wave 1 declarative scope (governance SSOT codify only, runtime workflow 실 활성 = Wave 2 carrier). 성능 측정 대상 0건 — Wave 2 wire 시 telemetry 통한 실측 (ADR-068 Amendment 1 I-5 dimensional empirical grounding 정합 — Wave 1 = 측정 대상 정의만, Wave 2 = 실측).
 
-### §8.5 Partial Y (Wave 2 carrier — stateful test)
+### §8.5 Stateful test applicability — Partial Y (Wave 2 carrier — stateful test)
+
+**§8.5 applicability** (CFP-47 정합, 30자 minimum): 본 Story Phase 1 = declarative anchor scope (governance SSOT codify), §8.5 stateful test 영역은 Wave 2 mechanical wire 시점 active 전환 — Phase 1 Wave 1 = stateful test 작성 0건 (declaration-only retain), Phase 2/Wave 2 별 sub-CFP carrier 가 workflow live activation + repository_dispatch listener + cache TC 작성 carrier.
 
 | 영역 | Wave 1 status | Wave 2 mechanical wire scope |
 |---|---|---|
