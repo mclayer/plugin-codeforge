@@ -62,6 +62,7 @@ CFP-1086 Amendment 8 이전 baseline (5+3 roster):
 - **CodeArch** 신설 (§3 code: layered / hexagonal / clean / DDD bounded context / module boundary / dependency direction). Sonnet. **(CFP-1086 Amendment 8 에서 ModuleArch rename + mandate 정정)**
 - 6 permanent → **5 permanent** (DataMigration→Data 흡수 rename, 순삭제 0). **(CFP-1086 Amendment 8 에서 5 → 7 permanent — AggregateArch + APIContractArch 신설)**
 - **ArchitectAnalyst** (PriorArtAgent rename, Sonnet) = CodebaseMapper / Refactor 와 함께 **4-tuple sub-tuple** (chief author 포함 — flat spawn 논리적 그룹핑, deputy column 아님). CFP-1086 Amendment 8 변경 0건 (sub-tuple invariant 보존).
+- **ArchitectAnalyst dual-read path (CFP-1428 / Sub-C S3.4)** = primary git `docs/architecture/<plugin>.md` (per-plugin Living Architecture, ADR-078 + ADR-112) + fallback Confluence page (ADR-103 mirror). divergence detect 시 PMOAgent retro F8 escalation channel emit (별 sibling PR codeforge-pmo). sibling design PR mclayer/plugin-codeforge-design#62 (747b540) MERGED — ArchitectAnalystAgent.md 본문 dual-read path section 신설.
 
 ### CFP-1126 6+3+1 primary axis matrix (Amendment 10 정합 — 본 matrix 가 canonical SSOT)
 
