@@ -1,0 +1,28 @@
+# resume-fidelity-history.jsonl — 사용자 post-deploy hand-test 결과 append 대상
+# ADR-110 §결정 7 empirical fidelity gate 4-source measurement 결과 영구 보존
+# carrier: CFP-1355 Story B (External session auto-resume Windows wrapper)
+# related domain knowledge: docs/domain-knowledge/domain/runtime/external-session-auto-resume.md
+#
+# format (single-line JSON object per measurement event):
+#   {"date": "YYYY-MM-DD", "m1_fidelity_pct": int, "m2_state_count": int (0-4), "m3_asymmetry": "identical|convertible|asymmetric", "m4_path": "verified|partial|mismatched", "gate_result": "pass|partial|fail", "notes": "string"}
+#
+# field semantics (ADR-110 §결정 7 4-source measurement schema):
+#   - date         : 측정 날짜 (KST display layer, ADR-079 정합) — YYYY-MM-DD
+#   - m1_fidelity_pct : conversation context fidelity 0-100 (≥80 pass / 50-80 partial / <50 fail)
+#   - m2_state_count  : in-process state /4 (0-4, 4=pass / 2-3=partial / ≤1=fail)
+#                       4 axis: tool state / file open / git state / TodoWrite list
+#   - m3_asymmetry    : VS Code extension ↔ CLI asymmetry (identical=pass / convertible=partial / asymmetric=fail)
+#   - m4_path         : session UUID file path verify (verified=pass / partial=partial / mismatched=fail)
+#   - gate_result     : 3-way decision tree 결과 (pass / partial / fail)
+#                       pass     : sub-area b/c/d 병렬 진입 허용 + ADR-110 §결정 1-10 모두 적용
+#                       partial  : Partial wrapper scope (context-only resume + in-process state 재구성 의무)
+#                       fail     : sub-area b/c/d ABORT, sub-area e 만 carry-over (negative ADR codify)
+#   - notes           : 측정 환경 / 특이 사항 / Phase 2 carrier note
+#
+# append protocol:
+#   `jq -c '. + {"date":"<KST yyyy-mm-dd>","m1_fidelity_pct":N,"m2_state_count":N,"m3_asymmetry":"...","m4_path":"...","gate_result":"...","notes":"..."}' empty.json >> docs/kpi/resume-fidelity-history.jsonl`
+#   (atomic append, ADR-061 §결정 3 정합 — multi-line Python heredoc 금지)
+#
+# precedent: docs/kpi/rate-limit-fallback-history.jsonl (ADR-057 §결정 3 sunset gate 2 measurable pattern 답습)
+#
+# data rows: none yet — Phase 2 post-deploy 사용자 hand-test 결과 append 대상

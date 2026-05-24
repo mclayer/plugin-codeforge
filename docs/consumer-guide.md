@@ -344,7 +344,84 @@ GitHub Enterprise org 의 admin policy 가 `default_workflow_permissions: read` 
 
 상세 cross-ref: §1h Action 차단 환경 fallback + [ADR-027 Amendment 2 §결정 6](adr/ADR-027-consumer-adoption-protocol.md) + [`templates/github-workflows/story-init.yml`](../templates/github-workflows/story-init.yml) line 230-273 (graceful degradation step pair).
 
-### 1j. Pre-push auto-rebase hook (opt-in, CFP-477)
+### 1j. Windows external session auto-resume (opt-in, CFP-1355 / [ADR-110](adr/ADR-110-external-runtime-wrapper-ssot-boundary.md))
+
+Anthropic API rate-limit 도달로 Claude Code session 이 종료된 후, rate-limit 창이 만료되면 자동으로 session 을 재개합니다. **Windows Task Scheduler** 기반 OS-level wrapper 로 in-process Orchestrator 영역 외 복구를 제공.
+
+#### 사전 요구사항
+
+- **Windows 10 1809+** (Task Scheduler XML schema 1.2 support)
+- Administrator 권한 (Task Scheduler task registration)
+- Claude CLI 설치 + 인증 완료
+
+#### 설치 (opt-in)
+
+```powershell
+# PowerShell admin 권한으로 실행
+cd <codeforge-clone-path>
+powershell -ExecutionPolicy RemoteSigned -File scripts/install-codeforge-resume.ps1
+```
+
+설치 완료 후 결과 메시지:
+
+```
+=== Installation Complete ===
+Wrapper installed to: C:\Program Files\codeforge\codeforge-session-resume.ps1
+Task name: codeforge-auto-resume
+
+To enable auto-resume in your project:
+  1. Edit .claude/_overlay/project.yaml
+  2. Add: runtime:
+           auto_resume:
+             enabled: true
+```
+
+#### 활성화
+
+`.claude/_overlay/project.yaml` 에 다음 추가:
+
+```yaml
+runtime:
+  auto_resume:
+    enabled: true
+```
+
+#### 동작 원리
+
+1. **초기 상태**: session 종료 시 마지막 session UUID 를 `%LOCALAPPDATA%\codeforge\last-session.txt` 에 저장
+2. **주기적 확인** (10분 마다): `claude --print "noop"` 실행 → rate-limit reset 시간 헤더 파싱
+3. **reset 대기**: reset 시간까지 기다렸다가 자동 resume 시도 (`claude --resume <uuid>`)
+4. **재시도**: 실패 시 최대 3회 재시도 → 3회 초과 시 Windows Toast notification 으로 수동 재개 안내
+
+#### 비활성화 (kill-switch)
+
+```powershell
+# Task Scheduler 작업 삭제
+schtasks /Delete /TN "codeforge-auto-resume" /F
+
+# 또는 Task Scheduler GUI 에서 직접 삭제
+# → 작업 스케줄러 → codeforge → codeforge-auto-resume 우클릭 → 삭제
+```
+
+#### 로그 확인
+
+auto-resume 작업 로그 위치:
+
+```powershell
+# 최근 로그 조회
+Get-Content "$env:LOCALAPPDATA\codeforge\resume.log" -Tail 50
+```
+
+#### 제한사항 & 향후 roadmap
+
+- **현재**: Windows 전용 (PowerShell 5.1+ Task Scheduler)
+- **Linux/macOS**: bash equivalent (systemd timer / launchd) = Phase 2 sub-CFP carrier — 향후 지원 예정
+- **다중 사용자 머신**: 현재 단일 사용자 가정. 다중 사용자 환경 = Phase 2 carrier (`project.yaml runtime.multi_user: bool`)
+- **ghost session 방지**: local namespace mutex (Local\CodeforgeResumeWrapper) 로 중복 실행 차단
+
+상세: [ADR-110 External-runtime-wrapper SSOT boundary](adr/ADR-110-external-runtime-wrapper-ssot-boundary.md) (§결정 1-10 normative codify) · [`docs/domain-knowledge/domain/runtime/external-session-auto-resume.md`](domain-knowledge/domain/runtime/external-session-auto-resume.md)
+
+### 1k. Pre-push auto-rebase hook (opt-in, CFP-477)
 
 baseline drift cadence 가 work cadence 를 초과하는 작업 환경 (codeforge family active development 등) 에서 pre-push 시점 branch behind detection + 4-line guidance abort 으로 rebase friction 완화.
 
@@ -381,7 +458,7 @@ PRE_PUSH_AUTO_REBASE=0 git push origin <branch>
 
 Cross-ref: [ADR-063 §결정 5](adr/ADR-063-marketplace-atomic-invariant.md) sublayer (pre-push auto-rebase guidance) · CFP-447 `pre-push.sh.sample` (sibling atomic invariant hook).
 
-### 1k. Overlay 영역 reconcile (CFP-745 / [ADR-076](adr/ADR-076-declarative-reconciliation-upgrade.md))
+### 1l. Overlay 영역 reconcile (CFP-745 / [ADR-076](adr/ADR-076-declarative-reconciliation-upgrade.md))
 
 codeforge upgrade 후 `.claude/_overlay/` 영역의 wrapper-managed content 를 consumer customization 을 보존하면서 선언적 3-way merge 로 갱신. **`bash scripts/reconcile-overlay.sh`** 단일 명령으로 overlay 영역 reconcile 완료 (사용자 결정 분기 0 — reconcile-protocol-v1 §결정 `user_decision_branches: 0`).
 
@@ -452,7 +529,7 @@ bash scripts/reconcile-overlay.sh
 
 참조: [reconcile-protocol-v1 §4.7](inter-plugin-contracts/reconcile-protocol-v1.md) · [ADR-076](adr/ADR-076-declarative-reconciliation-upgrade.md) · [ADR-027 §결정 7.A.1](adr/ADR-027-consumer-adoption-protocol.md)
 
-### 1l. AggregateArchitect deputy applicability + migration tool (CFP-1086 / [ADR-042 Amendment 8](adr/ADR-042-agent-model-selection-policy.md) / [ADR-086](adr/ADR-086-deputy-creation-decision-framework.md))
+### 1m. AggregateArchitect deputy applicability + migration tool (CFP-1086 / [ADR-042 Amendment 8](adr/ADR-042-agent-model-selection-policy.md) / [ADR-086](adr/ADR-086-deputy-creation-decision-framework.md))
 
 codeforge-design lane 의 **AggregateArchitectAgent** (CFP-1086 Story-1 신설 — RDB OLTP aggregate invariant 변호자) 가 본 consumer 영역에 적용되는지 결정. 2 field 자율 override (default 적용 — 의도적으로 강제 안 함).
 
@@ -513,7 +590,7 @@ aggregate_arch:
 
 참조: [ADR-042 Amendment 8](adr/ADR-042-agent-model-selection-policy.md) (7+3+1 roster + AggregateArch 신설) · [ADR-086](adr/ADR-086-deputy-creation-decision-framework.md) (Deputy 신설 결정 framework P7) · `agents/AggregateArchitectAgent.md` (codeforge-design plugin) · [project-config-schema §aggregate_arch 섹션 설명](project-config-schema.md)
 
-### 1m. Deploy lane + Deploy Review lane (CFP-1059 / [ADR-087](adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md))
+### 1n. Deploy lane + Deploy Review lane (CFP-1059 / [ADR-087](adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md))
 
 codeforge 가 6 → 8 lane 으로 확장 (CFP-1059) — Epic 묶음 종료 후 자동 배포 + production cutover 사후 검증 lane 추가. **Phase 1 declarative** — 본 단락 영역 안 declarative anchor. 실 DeployPLAgent / DeployReviewPLAgent spawn = lane plugin seed (codeforge-deploy / codeforge-deploy-review) 신설 후 활성 (별 sub-Story carrier).
 
