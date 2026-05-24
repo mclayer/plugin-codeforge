@@ -1,0 +1,5 @@
+---
+# TC-11: no findings[] array — lint scope empty
+# Expected: exit 0 (PASS) — "no findings, lint scope empty"
+pl_recommendation: PASS
+findings: []
