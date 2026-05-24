@@ -32,6 +32,19 @@ amendment_log:
     direction: strengthening  # cap field 추가 = 강화 방향
     sunset_justification: |
       Story A 가 429 burst 영역 surgical cap 의무 codify. parallel-dispatch-protocol-v1 §6.2 worker_count_max single SSOT 와 cross-ref bind (중복 신설 0, RefactorAgent interface 분리 권고 정합). ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (cap field 추가, 본문 §결정 7 sequential team SSOT 무변경 schema additive), 약화 0건.
+  - amendment: 3
+    date: 2026-05-24
+    cfp: CFP-1438
+    summary: |
+      §결정 9 신설 (Multi-step chief author pattern recommendation) + team-spec yaml schema 확장 declarative (Wave 1 declare only — Phase 2 actual yaml write = 별 sub-CFP carrier).
+      Multi-step chief author pattern = chief author (특히 Opus tier) 의 단일 monolithic spawn (15-40min wide drift surface) → skeleton + body + integration 3-step sequential smaller spawn (~5-7min each) 권장. team-spec yaml `chief_author_span` field schema 확장 (optional, default null = unspecified / values: monolithic | multi_step_3 | multi_step_N) — declarative Wave 1 only, Phase 2 actual write = 별 sub-CFP carrier. ADR-039 Amendment 5 paired carrier dual-binding 같은 CFP-1438 Story 안 2 ADR paired Amendment axis disjoint complement 2-set ADR-064 §결정 1 CFP scope unitary 정합 (본 ADR-044 = team-spec yaml multi-step lifecycle pattern / ADR-039 = orchestrator-side spawn span guideline body).
+      Sub-CFP D of CFP-1389 Wave 1 declarative-only carrier — paired sibling of Sub-CFP A CFP-1437 (preventive SHA pin Amd 11/15) + Sub-CFP B CFP-1436 (reactive mid-spawn drift detection Amd 12/16) + Sub-CFP C CFP-1435 (preventive slot reservation strict claim Amd 17) = 4-layer defense forcing function 완결 (preventive SHA + reactive drift + preventive slot + span decomposition recommendation). CFP-1336 amendment_number_stale_at_planning pattern_count 9+ reach evidence root cause 한 측 = chief author monolithic span = wide drift window root cause.
+      §결정 1 phase-scoped sequential team lifecycle invariant 무변경 + §결정 7 team-spec yaml SSOT additive only (chief_author_span field optional, backward-compat 보존). amendment_log format = numbered `amendment: 3` form 첫 도입 (이전 CFP-391 + CFP-1354 = date-form, 본 Amendment 3 부터 numbered convention 채택 — ADR-039 numbered amendment_log convention 정합 alignment).
+    affected_sections: ["§결정 9 (신설 — multi-step chief author pattern)", "§결정 7 team-spec yaml SSOT (schema 확장 declarative)"]
+    breaking: false  # additive only (chief_author_span field optional with default null), backward-compat invariant 보존
+    direction: strengthening  # recommendation tier 추가 = 강화 방향
+    sunset_justification: |
+      CFP-1336 amendment_number_stale_at_planning pattern_count 9+ reach evidence root cause 한 측 (chief author monolithic span = wide drift window) 의 root cause 직접 축소 carrier. Sub-CFP A/B/C 가 race detection/claim mechanism complement, 본 Sub-CFP D = race window 자체 축소 (root cause 직접 축소). ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (multi-step pattern recommendation + team-spec yaml schema additive), 약화 0건. carrier_story CFP-1438 = ADR-039 Amendment 5 + ADR-044 Amendment 3 paired sibling amendment 2-set (axis disjoint).
 related_adrs:
   - ADR-009  # wrapper-only decomposition (Orchestrator 단일 lead 정합)
   - ADR-022  # Deprecated by ADR-035 — review-verdict v4 cutover 동기
@@ -98,7 +111,7 @@ is_transitional: false
 5. **5 권장 패턴 measurable verification 미정식화** — Anthropic 권장 패턴 (Specialization / Parallelization / Adversarial / Cross-layer / Escalation) 이 codeforge lane 매핑 명시되었으나 (Story §2.2), AC-level metric 미정의.
 6. **default subagent context vs agent teams enabled context 분기 fallback 미정의** — ADR-039 default invariant 와 본 ADR 의 enabled context 활용 사이 동작 fallback 부재.
 
-## 결정 (8)
+## 결정 (9)
 
 ### 결정 1 — Phase-scoped sequential team lifecycle (ADR-035 D2 implementation)
 
@@ -270,6 +283,79 @@ default  >  auto_on_divergence  >  user_request_only
 ### 결정 8 — 5 권장 패턴 적용 시 default subagent context invariant 무손상
 
 본 ADR 의 5 권장 패턴 적용 = agent teams enabled context (env=1) 한정. default subagent context (env=0 또는 미설정) = ADR-039 §결정 1 always-spawn invariant 무손상. 두 context 의 분기 SSOT = `docs/domain-knowledge/agent-teams/agent-teams-platform-capability.md` (CFP-137 신설 entry). hook 3종도 env=1 시에만 trigger 발화 — env=0 fallback = ADR-039 default 유지.
+
+### 결정 9 — Multi-step chief author pattern recommendation (Amendment 3, CFP-1438)
+
+chief author (특히 ArchitectAgent Opus tier) 의 lifecycle pattern 안 **multi-step sequential smaller spawn 패턴 codify** + team-spec yaml schema 확장 (declarative-only Wave 1, Phase 2 actual yaml write = 별 sub-CFP carrier). ADR-039 Amendment 5 §결정 17 paired carrier (axis disjoint — 본 ADR-044 = team-spec yaml multi-step lifecycle pattern / ADR-039 = orchestrator-side spawn span guideline body).
+
+**Multi-step lifecycle pattern (3-step sequential)**:
+
+기존 §결정 1 phase-scoped sequential team lifecycle 안 chief author (ArchitectAgent Opus) spawn 단계가 단일 monolithic span (15-40min wide drift surface) 으로 진행되는 anti-pattern 을 **recommendation tier 로 multi-step decomposition** 권장:
+
+```
+chief_author_span: monolithic       # default null = unspecified → fallback to monolithic
+chief_author_span: multi_step_3     # skeleton + body + integration 3-step sequential recommended
+chief_author_span: multi_step_N     # N-step sequential (N >= 2, custom split)
+```
+
+3-step sequential pattern (`multi_step_3` value):
+
+| Step | Span | Activity | Drift surface |
+|---|---|---|---|
+| 1. Skeleton | ~5-7min | frontmatter + section heading + placeholder + ADR-RESERVATION row append + amendments_reserved slot pre-claim | ≤ 7min single spawn |
+| 2. Body | ~5-7min | substantive content (Change Plan §1-§13 본문 + ADR §결정 본문 + Story §3/§7/§11 본문). previous skeleton state passed as input | ≤ 7min single spawn |
+| 3. Integration | ~5-7min | cross-refs verify + lint validation + workflow stub finalize + CLAUDE.md update + commit. previous body state passed as input | ≤ 7min single spawn |
+
+**team-spec yaml schema 확장 (declarative-only Wave 1)**:
+
+7 team-spec yaml file (`templates/team-spec-{decompose,requirements,design,design-review,develop,code-review,security-test}.yaml`) 안 `chief_author_span` field optional schema 확장. Phase 1 = declarative declare only. Phase 2 actual yaml write = 별 sub-CFP carrier.
+
+```yaml
+# templates/team-spec-design.yaml (예시 schema 확장 — Phase 2 sub-CFP carrier)
+teammates:
+  - role: ArchitectAgent
+    tier: opus
+    chief_author_span: multi_step_3   # NEW Wave 1 schema field, declarative-only
+    span_decomposition:
+      - step: skeleton
+        target_minutes: 5
+        scope: [frontmatter, section_heading, placeholder, slot_reservation]
+      - step: body
+        target_minutes: 7
+        scope: [substantive_content]
+      - step: integration
+        target_minutes: 5
+        scope: [cross_refs, lint, workflow_stub, claude_md, commit]
+```
+
+**Backward-compat invariant**:
+
+- `chief_author_span` field optional (default null = unspecified → fallback to monolithic, 기존 동작)
+- §결정 1 phase-scoped sequential team lifecycle 본문 무변경 (lifecycle sequence 정의 무손상)
+- §결정 7 team-spec yaml SSOT additive only (3 optional field with default — ADR-044 Amendment date-2026-05-24 CFP-1354 `parallel_spawn_cap` / `spawn_stagger_ms` / `cascade_circuit_breaker` 패턴 답습)
+- §결정 8 default subagent context (env=0) invariant 무손상 (multi-step pattern = env=1 agent teams + env=0 default 양 context 적용 가능, mechanism level — env=1 = SendMessage continuous dialog / env=0 = sequential Agent tool 3 calls)
+
+**Trade-off matrix** (Wave 1 declare, Wave 2 mechanical telemetry carrier deferred):
+
+- **Benefits**: drift surface per spawn ↓ (preventive complement to ADR-073 Amd 11 SHA pin + ADR-082 Amd 15 spawn prompt anchor + ADR-073 Amd 12 mid-spawn drift detection + ADR-082 Amd 17 amendment-slot pre-reservation). race amplification 차단.
+- **Costs**: number of spawns ↑ (1 → 3 typically) + coordination complexity ↑ (state passing between spawns via yaml input/output handoff) + spawn overhead ↑ (Agent tool invocation cost × 3) + risk of incomplete state transfer between spawns
+- **Measurement metric (Phase 2 telemetry carrier deferred — Wave 2 별 sub-CFP)**: spawn time histogram per chief author spawn + per-spawn collision count (mid-spawn drift detection hit rate) + chief author span KPI (median/p95/max minutes per spawn) — workflow stub `templates/github-workflows/chief-author-span-telemetry.yml` declarative Wave 1 carrier 본 CFP
+
+**ADR-039 Amendment 5 §결정 17 paired carrier dual-binding** (같은 CFP-1438 Story 안):
+
+- 본 ADR-044 Amd 3 §결정 9 = team-spec yaml multi-step lifecycle pattern + schema 확장 (declarative-only Wave 1)
+- ADR-039 Amd 5 §결정 17 = orchestrator-side spawn span guideline body (recommendation tier, declarative-only Wave 1)
+- axis disjoint: team-spec yaml (본 ADR) ↔ orchestrator-side (ADR-039) — ADR-064 §결정 1 CFP scope unitary 정합 (2-set paired Amendment)
+
+**Recommendation tier, NOT mandatory** — chief author 가 monolithic span 채택 시 결격 0 (warning tier 미부착). 단 본 amendment 의 schema 가 future Phase 2 mechanical wire 시 `chief_author_span_minutes` evidence-checks-registry warning-tier 등재 가능 (별 sub-CFP carrier, evidence-gated promote: PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling Story merged AND condition).
+
+**META-self-application**: 본 CFP-1438 chief author spawn 자체 = guideline 첫 적용 사례. 본 spawn = skeleton + body + integration 3-step sequentially demonstrate (본 Amendment 작성 자체 = META demonstration).
+
+**Verification evidence**:
+- CFP-1336 amendment_number_stale_at_planning pattern_count 9+ reach evidence (memory `project_cfp_1318_adr073_amendment_6` 박제 — amendment_number_stale_at_planning 3+ occurrence)
+- Sub-CFP A/B/C (CFP-1437/1436/1435) 3-layer race detection/claim complement evidence (각 amendment_log audit trail)
+- ADR-039 §결정 17 disjoint axis pair verify (orchestrator-side ↔ team-spec yaml)
+- §결정 1 / §결정 7 / §결정 8 invariant 무영향 verify
 
 ## 결과
 

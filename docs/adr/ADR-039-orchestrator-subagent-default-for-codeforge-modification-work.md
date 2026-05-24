@@ -58,6 +58,16 @@ amendment_log:
     direction: strengthening  # rate-limit second-order risk codify (carryover marker + ADR-109 SSOT 신설), §결정 2 4-entry 무변경 (약화 0).
     sunset_justification: |
       §결정 2 inline whitelist closed 4-entry 보존 invariant 정합. ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (rate-limit second-order risk codify + ADR-109 신규 SSOT 신설), 약화 0건. carrier_story CFP-1354 = ADR-109 신규 ADR (in-process 429 mitigation framework SSOT, 10 §결정 통합) + ADR-044 Amendment N (parallel_spawn_cap + spawn_stagger_ms + cascade_circuit_breaker 3 field) + ADR-064 §결정 4 Amendment N (surgical exception channel codify) 3 sibling amendment.
+  - amendment: 5
+    date: 2026-05-24
+    carrier_story: CFP-1438
+    summary: |
+      §결정 17 신설 (Chief author spawn span guideline). chief author monolithic 단일 spawn (15-40min wide drift surface) 패턴 anti-pattern declare + multi-step sequential smaller spawn 권장 (skeleton + body + integration ~5-7min each) — declarative-only Wave 1 (recommendation tier, mechanical enforcement = 별 sub-CFP carrier). 본 amendment = §결정 1 binary always-spawn invariant 무관 (mechanism 차원 disjoint axis) + §결정 2 inline whitelist 4-entry closed enumeration 무변경 invariant 보존. trade-off matrix: ↓ drift surface per spawn (preventive complement to ADR-073 Amd 11 SHA pin + ADR-082 Amd 15 spawn prompt anchor + ADR-073 Amd 12 mid-spawn drift detection + ADR-082 Amd 17 amendment-slot pre-reservation) / ↑ number of spawns / ↑ coordination complexity / ↑ state passing between spawns. 측정 가능 metric (Phase 2 telemetry carrier deferred): spawn time histogram + per-spawn collision count + chief author span KPI.
+      Sub-CFP D of CFP-1389 Wave 1 declarative-only carrier — paired sibling of Sub-CFP A CFP-1437 (preventive SHA pin Amd 11/15) + Sub-CFP B CFP-1436 (reactive mid-spawn drift detection Amd 12/16) + Sub-CFP C CFP-1435 (preventive slot reservation strict claim Amd 17) = 4-layer defense forcing function 완결 (preventive SHA + reactive drift + preventive slot + span decomposition recommendation). CFP-1336 amendment_number_stale_at_planning pattern_count 9+ reach evidence root cause 한 측 = chief author monolithic span = wide drift window root cause. Sub-CFP A/B/C 가 race detection / claim mechanism complement, 본 Sub-CFP D = root cause 직접 축소 (span 자체 작게).
+      ADR-044 Amendment 3 paired carrier dual-binding 같은 CFP-1438 Story 안 2 ADR paired Amendment axis disjoint complement 2-set ADR-064 §결정 1 CFP scope unitary 정합 (본 ADR-039 = orchestrator-side spawn span guideline body / ADR-044 = team-spec yaml multi-step lifecycle pattern). META-self-applied (본 CFP-1438 chief author spawn 자체 = guideline 첫 적용 사례 — skeleton + body + integration 3-step 권장 sequentially demonstrate).
+    direction: strengthening
+    sunset_justification: |
+      §결정 1 binary always-spawn invariant 무변경 + §결정 2 inline whitelist 4-entry closed enumeration 무변경 (둘 다 보존, recommendation tier 만 추가). ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — 강화 방향 (chief author span guideline 추가, recommendation tier), 약화 0건. carrier_story CFP-1438 = ADR-039 Amendment 5 + ADR-044 Amendment 3 paired sibling amendment 2-set (axis disjoint).
 is_transitional: false
 ---
 
@@ -100,7 +110,7 @@ is_transitional: false
 3. **Anthropic 공식 권장 (selective spawn) 와 codeforge 정책 (always-spawn) 사이 진영 위치 미정의** — Researcher §6.B 4 framework 비교 결과 wrapper-specific binary 정책의 학계/산업 case study 부재 (Researcher §6.A fact 5).
 4. **SSOT 분산점 6 곳** — CLAUDE.md L103 단락 / playbook §3 / playbook §14 / consumer-guide §"Stop discipline" / hotfix-playbook / Wrapper 위임 패턴 — collapse 필요 (RefactorAgent B1 HIGH).
 
-## 결정 (13)
+## 결정 (17)
 
 ### 결정 1 — codeforge 수정 작업 = Orchestrator default subagent spawn
 
@@ -372,6 +382,64 @@ memory `feedback_no_permission_prompts` normative 승격 carrier. 강화 ratchet
 - 사용자 directive 2026-05-17 KST CFP-848 verbatim (memory `feedback_no_permission_prompts` carrier)
 - destructive enum 8 항목 각각의 reversibility test 근거 (git reflog / Issue history / branch 복구 mechanism 각 verify)
 - ADR-039 §결정 1 binary always-spawn 정책 무영향 verify (disjoint axis 표 4-cell 정합)
+
+
+### 결정 17 — Chief author spawn span guideline (Amendment 5, CFP-1438)
+
+Chief author (특히 ArchitectAgent Opus) 의 single spawn 안 monolithic span (15-40min wide drift surface) 패턴을 **anti-pattern declare** + multi-step sequential smaller spawn 권장 (recommendation tier, Wave 1 declarative-only — mechanical enforcement 별 sub-CFP carrier).
+
+**Anti-pattern (declared, recommendation tier)**:
+
+- chief author 단일 spawn 안 (a) Read + analyze deputy outputs + (b) draft Change Plan §1-§13 + (c) write ADR draft + (d) write Story file §3/§7/§11 + (e) write workflow stub + (f) update CLAUDE.md + (g) verify-before-trust 5 sub-scope all at once
+- span ≈ 15-40min 단일 spawn → wide drift surface (mid-spawn origin/main 다른 sibling PR merge → stale base race amplification)
+- 단일 spawn anti-pattern = CFP-1336 amendment_number_stale_at_planning pattern_count 9+ reach root cause 의 한 측 (Sub-CFP A/B/C 가 detection/claim mechanism complement 했지만, root cause 직접 축소 = span 자체 작게)
+
+**Recommended pattern (multi-step sequential smaller spawn)**:
+
+3-step sequential pattern (ADR-044 Amendment 3 paired carrier — team-spec yaml multi-step lifecycle pattern):
+
+1. **Skeleton spawn** (~5-7min): frontmatter + section heading + placeholder + ADR-RESERVATION row append + amendments_reserved slot pre-claim. drift surface ≤ 7min single spawn.
+2. **Body spawn** (~5-7min): substantive content (Change Plan §1-§13 본문 + ADR §결정 본문 + Story §3/§7/§11 본문). previous skeleton state passed as input. drift surface ≤ 7min single spawn.
+3. **Integration spawn** (~5-7min): cross-refs verify + lint validation + workflow stub finalize + CLAUDE.md update + commit. previous body state passed as input. drift surface ≤ 7min single spawn.
+
+**Trade-off matrix** (Wave 1 declare, Wave 2 mechanical telemetry carrier deferred):
+
+- **Benefits**: drift surface per spawn ↓ (preventive complement to ADR-073 Amd 11 SHA pin + ADR-082 Amd 15 spawn prompt anchor + ADR-073 Amd 12 mid-spawn drift detection + ADR-082 Amd 17 amendment-slot pre-reservation). race amplification 차단.
+- **Costs**: number of spawns ↑ (1 → 3 typically) + coordination complexity ↑ (state passing between spawns) + spawn overhead ↑ (Agent tool invocation cost × 3) + risk of incomplete state transfer between spawns
+- **Measurement metric (Phase 2 telemetry carrier deferred — Wave 2 별 sub-CFP)**: spawn time histogram per chief author spawn + per-spawn collision count (mid-spawn drift detection hit rate) + chief author span KPI (median/p95/max minutes per spawn)
+
+**Recommendation tier, NOT mandatory** — chief author 가 monolithic span 채택 시 결격 0 (warning tier 미부착). 단 본 amendment 의 guideline 이 recommendation tier 의 normative anchor — Phase 2 mechanical wire 시 `chief_author_span_minutes` evidence-checks-registry warning-tier 등재 가능 (별 sub-CFP carrier, evidence-gated promote: PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling Story merged AND condition).
+
+**§결정 1 / §결정 2 무영향 invariant** (closed enumeration 보존):
+
+- §결정 1 binary always-spawn invariant 무변경 — multi-step spawn 여전히 subagent spawn 의무 (다만 1개 → 3개 sequential)
+- §결정 2 inline whitelist 4-entry closed enumeration 무변경 — recommendation tier 가 5번째 entry 신설 아님 (mechanism level recommendation, whitelist level 무관)
+- ADR-031 / fix-event-v1 invariant 무변경 — span split 가 ownership 영역 변경 아님
+
+**Disjoint axis with ADR-073 / ADR-082 4-layer defense**:
+
+| Layer | Mechanism | Carrier | 본 Amendment 5 관계 |
+|---|---|---|---|
+| ADR-073 Amd 11 / ADR-082 Amd 15 | preventive SHA pin (spawn-time 의무) | CFP-1437 (Sub-CFP A) | Sub-CFP D 와 complement — span split 후에도 매 sub-spawn 마다 SHA pin 의무 |
+| ADR-073 Amd 12 / ADR-082 Amd 16 | reactive mid-spawn drift detection | CFP-1436 (Sub-CFP B) | Sub-CFP D 와 complement — span split 후에도 매 sub-spawn 안 periodic drift check 의무 |
+| ADR-082 Amd 17 | preventive amendment-slot pre-reservation strict claim | CFP-1435 (Sub-CFP C) | Sub-CFP D 와 complement — span split 후에도 첫 skeleton sub-spawn 안 slot pre-reservation 의무 |
+| **본 ADR-039 Amd 5 / ADR-044 Amd 3** | **span 자체 축소 (root cause 직접 축소)** | **CFP-1438 (Sub-CFP D)** | **본 amendment — 4-layer defense 마지막 layer (preventive root cause 축소)** |
+
+4-layer defense 완결 (preventive SHA + reactive drift + preventive slot + span decomposition recommendation). Sub-CFP A/B/C = race detection/claim mechanism / Sub-CFP D = race window 자체 축소 (root cause 직접 축소).
+
+**ADR-044 Amendment 3 paired carrier dual-binding** (같은 CFP-1438 Story 안):
+
+- 본 ADR-039 Amd 5 = orchestrator-side spawn span guideline body (recommendation tier, declarative-only Wave 1)
+- ADR-044 Amd 3 = team-spec yaml multi-step lifecycle pattern + `chief_author_span` field schema 확장 declarative-only Wave 1 (Phase 2 actual team-spec yaml write = 별 sub-CFP carrier)
+- axis disjoint: orchestrator-side (본 ADR) ↔ team-spec yaml (ADR-044) — ADR-064 §결정 1 CFP scope unitary 정합 (2-set paired Amendment)
+
+**META-self-application**: 본 CFP-1438 chief author spawn 자체 = guideline 첫 적용 사례. 본 spawn = skeleton + body + integration 3-step sequentially demonstrate (본 Amendment 작성 자체 = META demonstration).
+
+**Verification evidence**:
+- CFP-1336 amendment_number_stale_at_planning pattern_count 9+ reach evidence (memory `project_cfp_1318_adr073_amendment_6` 박제 — amendment_number_stale_at_planning 3+ occurrence)
+- Sub-CFP A/B/C (CFP-1437/1436/1435) 3-layer race detection/claim complement evidence (각 amendment_log audit trail)
+- ADR-073 / ADR-082 disjoint axis 4-layer table 정합 verify
+- §결정 1 binary always-spawn / §결정 2 closed 4-entry whitelist 무영향 verify (invariant 보존)
 
 
 ## 회피된 대안
