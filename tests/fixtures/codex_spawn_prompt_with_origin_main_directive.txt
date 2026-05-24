@@ -1,0 +1,22 @@
+## Codex Worker Spawn Prompt — CFP-1412 fixture WITH [ORIGIN-MAIN-DIRECTIVE] block
+# lint PASS expected (directive block present, ADR-081 Amendment 8 §결정 D9)
+
+**Story path**: mclayer/codeforge-internal-docs/wrapper/stories/CFP-1412.md
+**Lane**: 구현 / phase: 구현
+
+**sandbox boundary**: local Phase 2 worktrees only
+network_scope: repo-fetch-only
+
+[ORIGIN-MAIN-DIRECTIVE]
+Run: git -C <worktree_path> fetch origin main
+Verify: git -C <worktree_path> rev-parse origin/main
+Use origin/main as baseline for all fact claims in this prompt.
+[/ORIGIN-MAIN-DIRECTIVE]
+
+## Task
+
+Perform analysis of the following files within the worktree:
+- scripts/check-codex-origin-main-directive-presence.sh
+- scripts/lib/check_codex_origin_main_directive_presence.py
+
+Return findings in the standard review-verdict-v4 format.

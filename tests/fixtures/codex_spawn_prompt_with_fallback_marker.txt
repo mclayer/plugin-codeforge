@@ -1,0 +1,25 @@
+## Codex Worker Spawn Prompt — CFP-1412 fixture WITH fallback marker
+# lint PASS expected (valid fallback marker present, ADR-081 Amendment 8 §결정 D9)
+
+**Story path**: mclayer/codeforge-internal-docs/wrapper/stories/CFP-1412.md
+**Lane**: 구현 / phase: 구현
+
+**sandbox boundary**: local Phase 2 worktrees only
+network_scope: offline
+
+[origin-main-directive-fallback: network_scope_offline]
+
+## Task
+
+Perform analysis within offline sandbox — origin/main fetch not available.
+network_scope: offline → [ORIGIN-MAIN-DIRECTIVE] block omitted per declared fallback.
+Fallback rationale: sandbox is network-isolated (network_scope_offline enum).
+
+Analyze the following files:
+- scripts/check-codex-origin-main-directive-presence.sh
+- scripts/lib/check_codex_origin_main_directive_presence.py
+
+Return findings in the standard review-verdict-v4 format.
+
+NOTE: This fixture uses network_scope_offline fallback marker to test
+lint PASS path when directive block is absent but valid fallback is declared (T-2 case).
