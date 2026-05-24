@@ -174,7 +174,7 @@ transcript: "<lane evidence narrative> [429-auto-retry: count=<N>, final_status=
 - [ADR-044](../../docs/adr/ADR-044-phase-scoped-sequential-team.md) — Amendment N team-spec yaml `parallel_spawn_cap` + `spawn_stagger_ms` + `cascade_circuit_breaker` 3 field 신설
 - [ADR-057](../../docs/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) — §결정 2 cross-model substitution axis (sequential composition cross-ref)
 - [ADR-064](../../docs/adr/ADR-064-decision-principle-mandate.md) — §결정 4 Trace 4 Amendment N (surgical exception channel)
-- [ADR-067](../../docs/adr/ADR-067-max-fix-3-3-cap-and-implementability-reassessment.md) — RESET contamination 차단 cross-ref
+- [ADR-067](../../docs/adr/ADR-067-fix-ledger-implementability-escalation.md) — RESET contamination 차단 cross-ref
 - [ADR-104](../../docs/adr/ADR-104-operational-phase-definition.md) — 운영 phase 1st-class 정의
 - [ADR-106](../../docs/adr/ADR-106-operational-signal-pmo-input-circuit.md) — 운영 metric → PMOAgent input 회로
 - `mclayer/codeforge-internal-docs/plugin-codeforge/change-plans/cfp-1354-in-process-429-mitigation.md` — Phase 1 Change Plan carrier (dogfood-out per ADR-013)
