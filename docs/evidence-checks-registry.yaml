@@ -4110,3 +4110,86 @@ entries:
       last_occurrence: "2026-05-23T00:00:00Z"  # CFP-1384 iter 1 RequirementsPL spawn baseline 6eb8112 stale → ArchitectPL iter 2 in-flight 본 spawn KST 09:00 = UTC 00:00 (registry schema v1.2 정합)
       promotion_trigger: auto_blocking  # recurrence.count = 8 >> threshold = 3 → auto-firing 영역 (Mandatory escalation 완료, Phase 2 mechanical wire 후 정식 enforce)
     status: Active  # Wave 2 mechanical wire activation 자체이므로 deferred-followup 단계 도입 0 (ADR-064 §결정 1 CFP scope unitary 정합, Phase 2 별 sub-CFP carrier 후 정식 enforce 까지 declarative anchor)
+
+  - name: 429-retry-evidence-presence
+    description: |
+      ADR-109 §결정 8.1 mechanical verification — §14 Lane Evidence transcript 필드 안 [429-auto-retry: count=N, final_status=success|failed] marker presence.
+      429 incident 수반 lane 진입 시 의무 marker 부착 (운영 phase 운영 metric).
+    detect_command: bash scripts/check-429-retry-evidence-presence.sh
+    workflow: null  # Declaration-only Wave 1 (ADR-109 §결정 8.2, ADR-082 §결정 6 retain pattern)
+    current_tier: warning
+    bypass_label: hotfix-bypass:429-retry-evidence-presence
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 0
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-1354  # 본 entry 신설 및 mechanical wire carrier
+      evidence_artifacts: []
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-1354
+    introduced_date: 2026-05-24
+    owner_adr: ADR-109
+    carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      threshold: 0
+      last_occurrence: null
+      promotion_trigger: null
+    status: warning  # Declaration-only Wave 1 (ADR-109 §결정 8.2 telemetry SSOT carrier)
+
+  - name: debate-parallel-cap-check
+    description: |
+      ADR-109 §결정 4 + ADR-044 Amendment 2 mechanical verification — blanket_cross_module_designlane debate 진입 직전 team-spec yaml parallel_spawn_cap field presence + value validation.
+      429 cascade 감지 시 parallel spawn intensity bucketing (low/medium/high) 에 따른 cap 정책 구현 가능성 검증.
+    detect_command: bash scripts/check-debate-parallel-cap-check.sh
+    workflow: null  # Declaration-only Wave 1 (ADR-109 §결정 4, ADR-082 §결정 6 retain pattern)
+    current_tier: warning
+    bypass_label: hotfix-bypass:debate-parallel-cap-check
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 0
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-1354  # 본 entry 신설 및 mechanical wire carrier
+        - ADR-044   # Amendment 2 team-spec yaml 3 field 신설 carrier
+      evidence_artifacts: []
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-1354
+    introduced_date: 2026-05-24
+    owner_adr: ADR-109
+    carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      threshold: 0
+      last_occurrence: null
+      promotion_trigger: null
+    status: warning  # Declaration-only Wave 1 (ADR-109 §결정 4 circuit breaker 정책 carrier)
+
+  - name: deputy-stagger-check
+    description: |
+      ADR-109 §결정 4 + ADR-044 Amendment 2 mechanical verification — deputy 6+3+1 fan-out spawn_stagger_ms field presence + value validation.
+      429 cascade 감지 시 deputy spawn throttle stagger policy 구현 가능성 검증 (sequential spawn spacing).
+    detect_command: bash scripts/check-deputy-stagger-check.sh
+    workflow: null  # Declaration-only Wave 1 (ADR-109 §결정 4, ADR-082 §결정 6 retain pattern)
+    current_tier: warning
+    bypass_label: hotfix-bypass:deputy-stagger-check
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 0
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-1354  # 본 entry 신설 및 mechanical wire carrier
+        - ADR-044   # Amendment 2 team-spec yaml 3 field 신설 carrier
+      evidence_artifacts: []
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-1354
+    introduced_date: 2026-05-24
+    owner_adr: ADR-109
+    carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      threshold: 0
+      last_occurrence: null
+      promotion_trigger: null
+    status: warning  # Declaration-only Wave 1 (ADR-109 §결정 4 circuit breaker stagger 정책 carrier)

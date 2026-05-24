@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: label
-version: "2.54"
+version: "2.55"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
@@ -1574,3 +1574,34 @@ labels:
 - introduced_by: CFP-848 (Epic A Story-5 Phase 2 carrier)
 - carrier_adr: ADR-060 (evidence-enforceable warning-tier framework)
 - date: 2026-05-17
+  # CFP-1354 신설 — 1 entry (severity:429-cascade)
+  - name: severity:429-cascade
+    category: severity
+    color: "d73a49"
+    description: "severity:429-cascade: 429 cascade depth ≥ 2 incident severity classification (CFP-1354 / ADR-109 §결정 4+5 carrier — in-process Anthropic infra 429 surgical mitigation framework 의 cascade depth ≥ 2 circuit breaker trigger 감지 severity 마킹, 운영 phase telemetry axis 정합, governance FIX Ledger axis 분리, ADR-067 RESET contamination 차단 invariant). 신규 severity enum 첫 적용 = same-model retry 1회 + Opus fallback → 6 attempts soak → circuit breaker 3-window AND → cascade escalation 조건부 trigger (ADR-109 §결정 3 sequential composition). evidence-checks-registry 신규 entry 공동 carrier (severity 자체 는 label registry entry 로만 표현, mechanism workflow 별 carrier = ADR-109 설계)."
+    single_active: false
+    attach_owner_plugin: "Orchestrator (CFP-1354 429 cascade detection — severity classification 부착) / InfraEngineerAgent"
+
+  # CFP-1354 신설 — 1 entry (hotfix-bypass:429-retry-evidence-presence)
+  - name: hotfix-bypass:429-retry-evidence-presence
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: 429-retry-evidence-presence warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1354 / ADR-109 §결정 8.1 + evidence-checks-registry 신규 entry 의 bypass channel). §14 Lane Evidence transcript 필드 안 [429-auto-retry: count=N, final_status=success|failed] marker regex 검사 — 429 incident 수반 lane 진입 시 의무 marker 부착 (운영 phase 운영 metric, 정책 governance FIX Ledger 분리). warning-tier deferred-followup Phase 1 declare (ADR-109 §결정 8.2 + ADR-082 §결정 6 retain pattern 답습). **76번째 hotfix-bypass:* family member (ADR-108 forcing function parity mandate — description text N번째 명시 의무, post-CFP-1384 v2.54 baseline 74 → CFP-1354 신규 2 = 76 + 77 정합)**."
+    single_active: false
+    attach_owner_plugin: "Orchestrator (CFP-1354 429-retry-evidence-presence warning-tier bypass — consumer 환경 임시 skip 시 부착) / InfraEngineerAgent"
+
+  # CFP-1354 신설 — 2 entry (hotfix-bypass:debate-parallel-cap-check / hotfix-bypass:deputy-stagger-check)
+  - name: hotfix-bypass:debate-parallel-cap-check
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: debate-parallel-cap-check warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1354 / ADR-109 §결정 4 + ADR-044 Amendment 2 team-spec yaml `parallel_spawn_cap` field verification 의 bypass channel). blanket_cross_module_designlane debate 진입 직전 parallel spawn intensity bucketing (low/medium/high) 에 따른 cap lookup — team-spec yaml parallel_spawn_cap 필드 grep + value validate lint warning-tier. Phase 1 declare (declaration-only Wave 1). **77번째 hotfix-bypass:* family member (ADR-108 forcing function parity mandate — description text N번째 명시 의무)**."
+    single_active: false
+    attach_owner_plugin: "Orchestrator (CFP-1354 debate-parallel-cap-check warning-tier bypass — consumer 환경 임시 skip 시 부착) / InfraEngineerAgent"
+
+  - name: hotfix-bypass:deputy-stagger-check
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: deputy-stagger-check warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1354 / ADR-109 §결정 4 + ADR-044 Amendment 2 team-spec yaml `spawn_stagger_ms` field verification 의 bypass channel). ArchitectAgent SubAgent (deputy) fan-out throttling — team-spec yaml spawn_stagger_ms 필드 grep + value validate lint warning-tier (0-60000 ms bound check). Phase 1 declare (declaration-only Wave 1). **78번째 hotfix-bypass:* family member (ADR-108 forcing function parity mandate — description text N번째 명시 의무)**."
+    single_active: false
+    attach_owner_plugin: "Orchestrator (CFP-1354 deputy-stagger-check warning-tier bypass — consumer 환경 임시 skip 시 부착) / InfraEngineerAgent"
+
