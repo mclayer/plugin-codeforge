@@ -1,96 +1,129 @@
-# amendment-slot-reservation-check.yml
+name: amendment-slot-reservation-check (warning mode)
+# CFP-1497 / Wave 2-C of CFP-1389 (Sub-CFP C CFP-1435 mechanical wire)
+# ADR-082 Amendment 17 §결정 1 layer 1 sub-scope (1-G) amendment-slot pre-reservation
+# strict claim mandate + ADR-050 §결정 1 ADR-RESERVATION carrier cross-ref
+# Tier: warning (continue-on-error: true, non-required check)
+# Bypass channel: hotfix-bypass:amendment-slot-reservation label
+#   (ADR-024 Amendment N §결정 6.A — 86번째 family member)
 #
-# WAVE 1 = declarative-only STUB
-# ----------------------------------
-# Sub-CFP C (CFP-1435) of CFP-1389 — Amendment-slot pre-reservation contract field
-# Epic. paired sibling of Sub-CFP A (CFP-1437) preventive + Sub-CFP B (CFP-1436)
-# reactive — 3-layer defense forcing function closure:
-#   - Sub-CFP A = preventive SHA (pre-spawn time PRE-SPAWN-ORIGIN-MAIN-SHA pin)
-#   - Sub-CFP B = reactive drift (mid-spawn time periodic origin re-pin)
-#   - Sub-CFP C = preventive slot (amendment slot reservation lifecycle pre-claim)
+# Amendment-slot reservation mechanical lint.
+# Detection scope (Wave 2-C — codify):
+#   Check (a) — Amendment append (frontmatter `amendment_id: N` entry) without matching
+#     `amendments_reserved[]` row in ADR-RESERVATION.md → [WARN-MISSING-RESERVATION]
+#   Check (b) — Concurrent reservation conflict (same (adr_number, amendment_id) slot
+#     reserved 2+ times in same PR) → [WARN-CONCURRENT-CONFLICT]
+#   - docs/adr/ADR-NNN-*.md path filter (ADR-RESERVATION.md = Check (b) source)
+#   - templates/** + tests/** path = FP-완화 guard
 #
-# This workflow is a Wave 1 declarative anchor only. The actual mechanical wire
-# (lint script + bats fixture + ADR-RESERVATION schema strict validation +
-# concurrent reservation conflict detection + label-registry MINOR +
-# evidence-checks-registry Active entry) is deferred to Wave 2 sub-CFP carrier
-# (별 sub-CFP).
+# Trigger split (CFP-954 D2 consensus 답습 — production-cutover-evidence.yml byte-pattern):
+#   - pull_request (PR-time enforcement)
+#   - workflow_dispatch (manual runs)
 #
-# Carrier ADRs:
-#   - ADR-082 Amendment 17 (§결정 1 layer 1 sub-scope (1-G) amendment-slot
-#     pre-reservation strict claim mandate 4-tuple primitive)
-#   - ADR-050 §결정 1 cross-ref (ADR-RESERVATION carrier — amendment slot
-#     reservation = fine-grained ADR number reservation extension, 동일 race
-#     coordination 패턴 — ADR-050 본문 0건 변경, cross-ref-only)
-#   - ADR-RESERVATION schema 1.0 → 1.1 MINOR bump (frontmatter
-#     `schema_version` field 신설 + amendments_reserved[] row required fields
-#     documentation + status enum 4-value reserved|active|abandoned|superseded)
+# SecurityArch §7.2 TH-2 constraint: permissions: contents: read only (no PR write).
+# No CODEFORGE_CROSS_REPO_PAT in lint output (PAT guard).
 #
-# evidence-checks-registry entry name (Wave 2 carrier):
-#   - amendment-slot-reservation-check (warning tier deferred-followup)
+# Carrier: CFP-1497 / Wave 2-C mechanical wire
+#   - declaration source: ADR-082 Amendment 17 (CFP-1435 Wave 1 anchor)
+#   - enforcement source: ADR-060 §결정 5 warning tier framework
 #
-# Hotfix bypass label (Wave 2 carrier):
-#   - hotfix-bypass:amendment-slot-reservation-check
+# Promotion path (ADR-060 §결정 28.E):
+#   warning → blocking-on-pr: remove continue-on-error + branch protection update
+#   (requires pr_cumulative_min: 20 evidence gate, ADR-060 §결정 6(b))
 #
-# Wave 1 retain rationale: ADR-RESERVATION schema strict validation 의 lint
-# heuristic 결정 (pre-reservation row presence check vs spawn prompt
-# pre_reserved_amendment_slots field cross-verify vs concurrent reservation
-# conflict detection 의 trade-off) = sentinel forward-prevention 후 Wave 2
-# mechanical wire 결정 (precedent CFP-963 codex-network-scope-presence +
-# CFP-1336 cross-repo-label-sync + CFP-1437 spawn-prompt-head-pin-presence +
-# CFP-1436 mid-spawn-drift-detection 답습).
-#
-# Wave 2 carrier responsibilities (sub-CFP TBD):
-#   - scripts/check-amendment-slot-reservation.sh (thin wrapper)
-#   - scripts/lib/check_amendment_slot_reservation.py (Python SSOT per ADR-061)
-#   - tests/scripts/test_check-amendment-slot-reservation.sh (bats fixture pair)
-#   - label-registry-v2 v2.NN MINOR bump (hotfix-bypass:amendment-slot-reservation-check
-#     family member append + ADR-108 §결정 3 description text count parity)
-#   - docs/evidence-checks-registry.yaml: new entry `amendment-slot-reservation-check`
-#     status: Active, current_tier: warning, owner_adr: ADR-082 / ADR-050
-#   - this file: actual workflow logic hydrate
-#     (PR-time pull_request + workflow_dispatch dual trigger split per CFP-954 D2 consensus)
-#
-# Detection scope (Wave 2 design — declarative anchor only):
-#   - PR-time: validate that any newly-added ADR Amendment in this PR has a
-#     pre-existing `amendments_reserved[]` row in ADR-RESERVATION.md with
-#     matching {adr_number, amendment_id, reserved_by_cfp}
-#   - PR-time: validate spawn prompt artifact (if present in PR diff) has
-#     `pre_reserved_amendment_slots` field with matching planned slots
-#   - PR-time: detect concurrent reservation conflict — two open PRs claiming
-#     same (adr_number, amendment_id) slot → fail-fast with merge-order guidance
-#   - schema strict validation — frontmatter `schema_version: 1.1` field +
-#     amendments_reserved[] row required fields + status enum 4-value
-#   - missing row / mismatch / conflict → warning (advisory) — Wave 1
-#     behavioral mandate
-#
-# Source-of-truth (Wave 1 anchor):
-#   - docs/adr/ADR-082-write-time-self-write-verification-mandate.md `## Amendment 17`
-#   - docs/adr/ADR-050-parallel-epic-coordination.md `### 결정 1` (cross-ref carrier)
-#   - docs/adr/ADR-RESERVATION.md (schema 1.0 → 1.1 + amendments_reserved[] row)
-#   - <internal-docs>/plugin-codeforge/change-plans/cfp-1435-amendment-slot-prereservation.md
-#   - <internal-docs>/plugin-codeforge/stories/CFP-1435.md
+# Precedent byte-pattern: templates/github-workflows/spawn-prompt-head-pin-check.yml (CFP-1489)
 
-name: amendment-slot-reservation-check (Wave 1 declarative stub)
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    paths:
+      - 'docs/adr/ADR-*.md'
+      - 'docs/adr/ADR-RESERVATION.md'
+  workflow_dispatch:
+
+concurrency:
+  group: amendment-slot-reservation-check-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
-on:
-  workflow_dispatch:
-    # Wave 1 = declarative-only. Manual trigger only — no PR / push activation.
-    # Wave 2 carrier will replace with `pull_request: ` + `workflow_dispatch: ` dual trigger
-    # split per CFP-954 D2 consensus (production-cutover-evidence.yml byte-pattern 답습).
-
 jobs:
-  declarative-anchor:
-    name: Wave 1 declarative anchor (no-op)
+  amendment-slot-reservation-check:
     runs-on: ubuntu-latest
+    # warning mode (ADR-060 §결정 5 / §결정 28) — lint fail does NOT block PR merge.
+    continue-on-error: true
     steps:
-      - name: Sub-CFP C Wave 1 declarative-only carrier
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check bypass label
+        id: bypass
+        env:
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
         run: |
-          echo "[INFO] CFP-1435 Sub-CFP C Wave 1 declarative-only carrier"
-          echo "[INFO] Amendment-slot pre-reservation strict claim mandate = Wave 2 별 sub-CFP carrier"
-          echo "[INFO] ADR-082 Amendment 17 + ADR-050 cross-ref + ADR-RESERVATION schema 1.0 → 1.1 MINOR bump (triple-binding, declarative anchor only)"
-          echo "[INFO] 3-layer defense closure: Sub-CFP A (preventive SHA) + Sub-CFP B (reactive drift) + Sub-CFP C (preventive slot)"
-          echo "[INFO] No-op: actual mechanical wire deferred to Wave 2"
+          set +x  # SecurityArch TH-2: no debug trace
+          labels="${PR_LABELS:-}"
+          case ",$labels," in
+            *,hotfix-bypass:amendment-slot-reservation,*)
+              echo "bypass=true" >> "$GITHUB_OUTPUT"
+              echo "::notice::hotfix-bypass:amendment-slot-reservation detected — amendment-slot-reservation-check lint bypassed (ADR-024 Amendment N §결정 6.A — 86번째 hotfix-bypass:* family member)"
+              ;;
+            *)
+              echo "bypass=false" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      - name: Run amendment-slot-reservation lint
+        id: lint
+        if: steps.bypass.outputs.bypass == 'false'
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: |
+          set +x  # SecurityArch TH-2: no debug trace (PAT guard)
+          set +e
+
+          # Determine changed ADR files scope
+          if [ -z "${GITHUB_BASE_REF:-}" ]; then
+            # workflow_dispatch path — no PR diff, scan latest commit only
+            CHANGED_FILES="$(git diff --name-only HEAD~1...HEAD 2>/dev/null | grep -E '^docs/adr/ADR-[0-9].*\.md$' || true)"
+          else
+            CHANGED_FILES="$(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD" 2>/dev/null | grep -E '^docs/adr/ADR-[0-9].*\.md$' || true)"
+          fi
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "::notice::amendment-slot-reservation-check: no changed ADR files detected — PASS (advisory)"
+            echo "exit_status=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Run lint via bash thin wrapper (delegates to Python SSOT)
+          MAX_EXIT=0
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            bash scripts/check-amendment-slot-reservation.sh "$f" 2>&1 || {
+              status=$?
+              if [ "$status" -gt "$MAX_EXIT" ]; then
+                MAX_EXIT="$status"
+              fi
+            }
+          done <<< "$CHANGED_FILES"
+
+          echo "exit_status=$MAX_EXIT" >> "$GITHUB_OUTPUT"
+          # warning tier: always exit 0 (continue-on-error + warning-tier semantic)
           exit 0
+
+      - name: Emit lint summary
+        if: steps.bypass.outputs.bypass == 'false' && always()
+        env:
+          LINT_STATUS: ${{ steps.lint.outputs.exit_status }}
+        run: |
+          set +x  # SecurityArch TH-2
+          status="${LINT_STATUS:-0}"
+          if [ "$status" = "0" ]; then
+            echo "::notice::amendment-slot-reservation-check: PASS — all ADR Amendment append entries have matching ADR-RESERVATION amendments_reserved[] row (ADR-082 Amendment 17 §결정 1 layer 1 sub-scope (1-G) + ADR-050 §결정 1 cross-ref)"
+          elif [ "$status" = "1" ]; then
+            echo "::warning::amendment-slot-reservation-check: WARNING — ADR Amendment append detected without matching amendments_reserved[] row, OR concurrent slot conflict (same adr_number + amendment_id reserved 2+ times). Add reservation row to docs/adr/ADR-RESERVATION.md amendments_reserved: before merging Amendment PR. hotfix bypass: hotfix-bypass:amendment-slot-reservation label (ADR-024 Amendment N §결정 6.A — 86번째 family member)."
+          else
+            echo "::warning::amendment-slot-reservation-check: META-ERROR (exit $status) — lint infrastructure issue. Non-blocking (warning tier)."
+          fi
