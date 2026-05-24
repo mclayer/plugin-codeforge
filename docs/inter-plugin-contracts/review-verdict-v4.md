@@ -1,6 +1,6 @@
 ---
 kind: contract
-contract_version: "4.10"
+contract_version: "4.11"
 status: Active
 related_plugins:
   - codeforge (wrapper, consumer of FIX routing data + Orchestrator self-write)
@@ -22,6 +22,7 @@ related_adrs:
   - ADR-091  # ArchitectLane DDD vocabulary governance (CFP-1117 신설) — §결정 6 enforcement layer 3-tier 의 3번째 tier (review-verdict-v4 enum) + §결정 7 INV-5 forcing function review-verdict finding 연결 (findings[].type 3 DDD literal bc_violation / aggregate_violation / ubiquitous_language_drift carrier)
   - ADR-068  # I-2 cross-module propagation completeness — CFP-1303 parallel_anchors_checked[] semantic anchor (cross-anchor parity check field 가 I-2 의 review-verdict layer realization, Amendment 1 I-5 dimensional empirical / Amendment 3 I-6 audit-gate-pointer 와 disjoint axis)
   - ADR-111  # Confluence-mirror classification policy SSOT (CFP-1424 carrier) — §결정 5 cross-link discipline 정합 (Confluence mirror 대상 doc Issue body inline 시 Confluence anchor link presence verify). findings[].type "confluence-mirror-link-missing" literal carrier (closed-enum 8 → 9 ratchet, additive only). DesignReviewPL check item 추가 동반 (sibling cross-repo PR codeforge-review/agents/DesignReviewPLAgent.md)
+  - ADR-112  # Living Architecture per-Epic mandatory update gate SSOT (CFP-1426 carrier, Mega-Epic CFP-1415 Sub-C S3.2). §결정 3 review-verdict-v4 v4.10 → v4.11 MINOR bump 6번째 verdict-level optional bool field living_architecture_updated_self_check_passed carrier + §결정 4 findings[].type enum 10번째 literal "living-architecture-not-updated" carrier (closed-enum 9 → 10 ratchet, additive only). ArchitectAgent Epic close 직전 5-anchor section (arc42 §3+§5 + C4 Container+Component + Open Decisions Pending) 최소 1개 update OR `[living-arch-no-impact: <rationale>]` explicit declare 통과 시 true. DesignReviewPL false + no-op declare 부재 detect 시 "living-architecture-not-updated" finding emit. sibling Story #1425 (S3.1) = ADR-078 Amendment 2 5-anchor codify base. DesignReviewPL check item 추가 동반 (sibling cross-repo PR codeforge-review/agents/DesignReviewPLAgent.md)
 authors:
   - CFP-137 (2026-05-09) — review-verdict v3 → v4 MAJOR bump (Sonnet decider 영역 정식 제거 + worker_dialog_rounds 추가)
   - CFP-391 (2026-05-11) — findings[].anchor_id optional field 추가 (debate-protocol-v1 stable identifier SSOT 정합, FIX-1)
@@ -35,7 +36,13 @@ authors:
   - CFP-1117 (2026-05-21) — v4.7 → v4.8 MINOR bump (findings[].type enum 에 3 DDD finding type literal 추가 — bc_violation / aggregate_violation / ubiquitous_language_drift. ADR-091 §결정 6 enforcement layer 3-tier 의 3번째 tier (review-verdict-v4 enum) realize + §결정 7 INV-5 vocabulary theater 차단 forcing function 의 review-verdict finding 연결 (evidence #4). CFP-1117 Story-4 carrier (Epic CFP-1117 ArchitectLane DDD vocabulary governance). CFP-528 Amendment 1 (enum literal + 의미 1줄) 패턴 verbatim 답습. additive only backward-compat invariant (기존 v4.7 consumer 가 3 신규 enum literal 무시 가능). ADR-008 §결정 2 "enum literal 추가" MINOR bump 정합 (closed-enum 6 → 9 ratchet, additive only). 5 sibling (requirements/design/develop/test/pmo v4.3) pre-existing drift = 본 S4 scope 외 (별 sweep CFP carrier))
   - CFP-1303 (2026-05-23) — v4.8 → v4.9 MINOR bump (findings[].parallel_anchors_checked optional array field 신설 — CFP-604 retro F7 Wave 2 carrier, Wave 1 CFP-1291 prose-only anchor (CodeReviewPLAgent.md cross-anchor parity check step) 위 schema layer codify. 각 entry = 3 field (file_line string / pattern_type enum 5종 closed-set local_remote · client_server · read_write · forward_reverse · enum_closure / matched bool). LOCAL_AUTHOR ↔ REMOTE_AUTHOR pattern (CFP-604 F-CR-604-2 + parallel REMOTE_AUTHOR site evidence) cross-anchor parity check 영역의 schema-level enforcement carrier. ADR-068 I-2 cross-module propagation completeness 의 review-verdict layer realization. mechanical lint (parallel_anchors_checked field presence-grep heuristic) = Wave 3 별 carrier (deferred-followup). CFP-391 (anchor_id) pattern 답습 — findings[] entry 안 optional field 추가. additive only backward-compat invariant (기존 v4.8 consumer 가 본 신규 field 무시 가능). ADR-008 §결정 2 "새 선택 필드 추가" MINOR bump 정합)
   - CFP-1424 (2026-05-24) — v4.9 → v4.10 MINOR bump (findings[].type enum 에 "confluence-mirror-link-missing" 9번째 literal 추가 — ADR-111 §결정 5 cross-link discipline 정합 (Confluence mirror 대상 doc Issue body inline 시 Confluence anchor link presence verify finding). DesignReviewPL check item 추가 동반 (sibling cross-repo PR codeforge-review/agents/DesignReviewPLAgent.md). ADR-008 §결정 2 'enum literal 추가' MINOR bump 정합 (closed-enum 8 → 9 ratchet, additive only). 5 sibling (requirements/design/develop/test/pmo v4.3) pre-existing drift = 본 Sub-A S1.4 scope 외. CFP-528 Amendment 1 pattern verbatim 답습. Mega-Epic CFP-1415 Sub-A S1.4 wrapper-side carrier — AC-1 (CLAUDE.md ADR-111 cross-ref) + AC-3 (본 MINOR bump) + AC-4 (claude-md-line-cap PASS) wrapper-side bundle)
+  - CFP-1426 (2026-05-24) — v4.10 → v4.11 MINOR bump (6번째 verdict-level optional bool field living_architecture_updated_self_check_passed 신설 + findings[].type enum 10번째 literal "living-architecture-not-updated" 추가 — ADR-112 Living Architecture per-Epic mandatory update gate carrier. ArchitectAgent Epic close 직전 5-anchor section (arc42 §3 Context & Scope + arc42 §5 Building Block View + C4 Container + C4 Component + Open Decisions Pending) 최소 1개 update OR `[living-arch-no-impact: <rationale>]` explicit declare 통과 시 true. DesignReviewPL false + no-op declare 부재 detect 시 "living-architecture-not-updated" finding emit (severity P1, design lane only — CodeReviewPL 영역 외 governance write-time anchor). mechanical_self_check_passed (ADR-065 syntactic 7-item) + boundary_completeness_self_check_passed (ADR-068 I-1~I-4) + dimensional_empirical_self_check_passed (Amendment 1 I-5) + marketplace_sync_declared (ADR-063 Amendment 1) + audit_gate_pointer_self_check_passed (Amendment 3 I-6) + deputy_axis_restructure_self_check_passed (Amendment 2 conditional CFP-1086) 와 disjoint — 동일 verdict packet 6번째 별도 boolean field (Living Architecture governance write-time invariant). ADR-008 §결정 2 '새 선택 필드 추가' MINOR bump 정합 + 'enum literal 추가' MINOR bump 정합 (closed-enum 9 → 10 ratchet, additive only). Runtime impact 없음 (기존 v4.10 consumer 가 본 6번째 field + 10번째 literal 무시 가능 = backward-compat invariant). CFP-1424 v4.9 → v4.10 (enum literal 추가) + CFP-1086/1087 cascade (verdict-level bool field 신설) pattern verbatim 답습. Mega-Epic CFP-1415 Sub-C S3.2 wrapper-side carrier — AC-3 (본 MINOR bump). sibling Story #1425 (S3.1) = ADR-078 Amendment 2 5-anchor section closed-set codify base. mechanical wire = Sub-C S3.5 / CFP-1429 carrier scripts/check-living-architecture-update.sh + templates/github-workflows/living-architecture-update.yml + label-registry-v2 family member `hotfix-bypass:living-architecture-update`. 5 sibling (requirements/design/develop/test/pmo v4.3) pre-existing drift = 본 S3.2 scope 외.)
 amendment_log:
+  - version: "4.11"
+    date: 2026-05-24
+    cfp: CFP-1426
+    type: MINOR
+    summary: "living_architecture_updated_self_check_passed 6번째 verdict-level optional bool field 신설 + findings[].type enum 10번째 literal \"living-architecture-not-updated\" — ADR-112 Living Architecture per-Epic mandatory update gate carrier. ArchitectAgent Epic close 직전 5-anchor section (arc42 §3+§5 + C4 Container+Component + Open Decisions Pending) 최소 1개 update 통과 시 true, 또는 `[living-arch-no-impact: <rationale>]` explicit declare 시 true. DesignReviewPL false + no-op declare 부재 detect 시 \"living-architecture-not-updated\" finding emit. mechanical_self_check_passed (ADR-065 syntactic) + boundary_completeness_self_check_passed (ADR-068 I-1~I-4) + dimensional_empirical_self_check_passed (Amendment 1 I-5) + audit_gate_pointer_self_check_passed (Amendment 3 I-6) + deputy_axis_restructure_self_check_passed (Amendment 2) 와 disjoint — 동일 verdict packet 6번째 별도 boolean field (Living Architecture governance write-time invariant). ADR-008 §결정 2 '새 선택 필드 추가' MINOR bump 정합 + 'enum literal 추가' MINOR bump 정합 (closed-enum 9 → 10 ratchet, additive only). Runtime impact 없음 (기존 v4.10 consumer 가 본 6번째 field + 10번째 literal 무시 가능 = backward-compat invariant). CFP-1424 Amendment v4.10 (confluence-mirror-link-missing 9번째 literal) pattern verbatim 답습. CFP-1086/1087 cascade (verdict-level bool field 신설 pattern) 답습. mechanical wire = Sub-C S3.5 / CFP-1429 carrier."
   - version: "4.10"
     date: 2026-05-24
     cfp: CFP-1424
@@ -121,7 +128,7 @@ amendment_log:
 
 ```yaml
 review_verdict:
-  contract_version: "4.10"           # current version (MINOR bump series from 4.0 BREAKING)
+  contract_version: "4.11"           # current version (MINOR bump series from 4.0 BREAKING)
   lane: design | code | security
   story_key: <STORY_KEY>
   iteration: <int>
@@ -130,7 +137,7 @@ review_verdict:
     - severity: P0 | P1 | P2
       category: <packet category_enum 중 하나>
       type: <finding_type_enum>      # NEW v4.3 (optional) — finding 유형 literal
-                                     # enum: "general" | "mechanical_sync_required" | "boundary-completeness" | "dimensional-empirical-gap" | "audit-gate-pointer-missing" | "bc_violation" | "aggregate_violation" | "ubiquitous_language_drift" | "confluence-mirror-link-missing"
+                                     # enum: "general" | "mechanical_sync_required" | "boundary-completeness" | "dimensional-empirical-gap" | "audit-gate-pointer-missing" | "bc_violation" | "aggregate_violation" | "ubiquitous_language_drift" | "confluence-mirror-link-missing" | "living-architecture-not-updated"
                                      # "boundary-completeness": ADR-068 §결정 2 dual-binding — I-1~I-4 위반
                                      # "mechanical_sync_required": ADR-065 mechanical 7-item 위반 (v4.2)
                                      # "dimensional-empirical-gap": ADR-068 Amendment 1 §결정 1 I-5 위반 — quantitative parameter empirical-source annotation 누락 (v4.4)
@@ -139,6 +146,7 @@ review_verdict:
                                      # "aggregate_violation": ADR-091 §결정 6 3번째 tier — Aggregate 위반 (consistency boundary 침범 / transaction boundary 부정합 / invariant 미보존 / aggregate root 외부 직접 access). Change Plan §3.A affected_aggregates forcing function 연결 + ADR-091 §결정 3 Layer B real Aggregate cross-validate. ModuleArchitectAgent (boundary axis unified, ADR-042 Amendment 10) 영역 (v4.8)
                                      # "ubiquitous_language_drift": ADR-091 §결정 6 3번째 tier — Ubiquitous Language drift (glossary SSOT 외 미정의 DDD term 사용 / 동음이의 미구분 / anti-pattern 어휘). check-ubiquitous-language lint (ADR-091 Amendment 2 §결정 6 2번째 tier) 연결. 14 agent ddd_pattern + glossary SSOT 기준 (v4.8)
                                      # "confluence-mirror-link-missing": ADR-111 §결정 5 cross-link discipline 위반 — Confluence mirror 대상 doc (closed-enum 4: adr / architecture_doc / change_plan / domain_knowledge) Issue body inline 시 Confluence anchor link presence verify 실패. DesignReviewPL + CodeReviewPL emit (v4.10)
+                                     # "living-architecture-not-updated": ADR-112 §결정 4 Living Architecture per-Epic mandatory update gate 위반 — ArchitectAgent self-check living_architecture_updated_self_check_passed=false + no-op explicit declare 부재 (PR description / Change Plan §13 안 `[living-arch-no-impact: <rationale>]` 부재) detect 시 emit. severity P1 (FIX 의무 — ArchitectAgent re-spawn 후 5-anchor 1+ section update 또는 explicit declare 추가). evidence = 5-anchor enumeration (arc42 §3 + arc42 §5 + C4 Container + C4 Component + Open Decisions Pending) + 각 anchor update 부재 ground truth + Change Plan §3 affected_aggregates / §5 affected_modules / §7 affected_interfaces / §8 affected_data_flows 4 영역 변경 sample. scope = design lane only (DesignReviewPL primary emit, CodeReviewPL 영역 외 governance write-time anchor not code-time invariant) (v4.11)
                                      # "general": 일반 finding (default, 미제공 시 동일 의미)
       file: <path>
       line: <int>
@@ -231,6 +239,26 @@ review_verdict:
                                          #   동일 verdict packet 다섯 별도 boolean field
                                          # 적용 lane: design lane only (DesignReview + CodeReview 는 findings[] 로 cross-validate)
                                          # 미제공 시 (v4.6 producer) → Orchestrator 는 무시 (backward-compat)
+
+  living_architecture_updated_self_check_passed: <bool>  # NEW v4.11 (optional) — ADR-112 / CFP-1426
+                                         # ArchitectAgent Epic close 직전 Living Architecture per-Epic mandatory update gate self-check 결과
+                                         # true = 5-anchor section (arc42 §3 Context & Scope + arc42 §5 Building Block View +
+                                         #        C4 Container + C4 Component + Open Decisions Pending) 중 최소 1개 update 통과
+                                         #        OR `[living-arch-no-impact: <rationale>]` explicit declare 1+ 형식 충족 (closed-binary)
+                                         # false = update 0건 AND no-op declare 부재 — FIX 의무 (ArchitectAgent re-spawn) +
+                                         #         findings[].type "living-architecture-not-updated" 동반 emit (severity P1)
+                                         # mechanical_self_check_passed (ADR-065 syntactic 7-item) +
+                                         #   boundary_completeness_self_check_passed (ADR-068 I-1~I-4) +
+                                         #   dimensional_empirical_self_check_passed (Amendment 1 I-5) +
+                                         #   marketplace_sync_declared (ADR-063 Amendment 1) +
+                                         #   audit_gate_pointer_self_check_passed (Amendment 3 I-6) +
+                                         #   deputy_axis_restructure_self_check_passed (Amendment 2 conditional CFP-1086) 와 disjoint —
+                                         #   동일 verdict packet 6번째 별도 boolean field (Living Architecture governance write-time invariant)
+                                         # 적용 lane: design lane only (DesignReview cross-validate, CodeReview 영역 외 — governance write-time anchor not code-time)
+                                         # 미제공 시 (v4.10 이전 producer) → Orchestrator 는 무시 (backward-compat)
+                                         # ADR-112 §결정 3 SSOT (2026-05-24 KST, Mega-Epic CFP-1415 Sub-C S3.2)
+                                         # sibling Story #1425 (S3.1) = ADR-078 Amendment 2 (5-anchor section closed-set codify)
+                                         # mechanical wire = Sub-C S3.5 / CFP-1429 carrier
 
   worker_dialog_rounds: <int>        # NEW — Adversarial debate SendMessage round count
                                      # 0 = no Codex worker (default subagent context 또는 user_request_only 미요청)
