@@ -4501,3 +4501,94 @@ entries:
       last_occurrence: "2026-05-23T00:00:00Z"    # CFP-1336 ADR-058 §결정 5 escalate Mandatory
       promotion_trigger: auto_blocking # CFP-1436 Wave 1 → 본 Wave 2-B → blocking promotion 후보 (pr_cumulative_min: 20 evidence gate after)
     status: Active                     # CFP-1500 mechanical wire 완료 (Wave 2-B single PR, dual carrier CFP-1436 declarative anchor 의 hydrate)
+
+  - name: chief-author-span-telemetry
+    description: |
+      ADR-039 Amendment 5 §결정 17 chief author spawn span guideline (recommendation tier)
+      + ADR-044 Amendment 3 §결정 9 multi-step chief author pattern paired sibling carrier
+      — Chief author span telemetry mechanical verification.
+
+      Detection scope (Wave 2-D — codify):
+        Check (a) — chief author spawn entry in Story §14 Lane Evidence without
+          `[chief-author-span: <minutes>, <class>]` inline marker OR
+          `chief_author_span_minutes:` YAML-like field presence → [WARN-TELEMETRY-MARKER-ABSENT] (PRIMARY)
+        Check (b) — long-span chief author spawn (≥ 10 min, env CFP_CHIEF_AUTHOR_SPAN_MAX_MIN
+          configurable) with class `monolithic` (not `multi_step_N`) →
+          [WARN-LONG-SPAN-MONOLITHIC] (SECONDARY, recommendation tier, mandate 아닌 awareness)
+        Note: 실제 chief author spawn span 자동 측정 (orchestrator 가 spawn duration
+          자동 instrumentation + KPI JSON+JSONL dual-tier write) 은 Wave 3 carrier
+          (orchestrator runtime layer, codeforge plugin-layer 책임 영역 외). 본 Wave 2-D
+          = chief author self-report marker 작성 의무 의 declarative evidence presence verification only.
+
+      FP-완화 guards (CFP-1500 답습 + 1 신규 FP guard 6):
+        - templates/** path = canonical example 면제 (FP guard 1)
+        - tests/** + fixtures/** path = bats fixture self-detection avoid (FP guard 2)
+        - Story file (`docs/stories/**/*.md`) 아닌 모든 file = silent skip (scope 외, FP guard 3)
+        - markdown table row (line starts with `|`) = silent skip (FP guard 4 — table
+          abstract row vs detail block 분리, detail block 만 의무)
+        - AND-condition: line must contain "chief author" AND "spawn" substrings (FP guard 5
+          — title/key/type frontmatter field 가 우측 value 로 "chief author" 만 포함 case 차단)
+        - YAML frontmatter scope skip (FP guard 6 신설 — `---` opening + closing fence
+          사이 영역 silent skip, Story metadata 영역 lint scope 외, CFP-1500 답습 + 추가
+          guard for chief-author keyword 가 title 안 흔히 나타나는 경우 차단)
+
+      Warning-tier — exit 0 항상 (PR merge 미차단, ADR-060 §결정 5 첫 도입 mode).
+      ADR-068 I-3 정합: bypass label 부재 시 unconditional warning (조건 분기 0).
+      pattern_count >= 3 재발 시 follow-up CFP MUST promote to blocking tier.
+
+      CodeQL ReDoS guard (CFP-1497 PR #1499 sentinel verbatim 답습):
+        - line-by-line parse 의무 (catastrophic backtracking 위험 nested quantifier regex
+          절대 금지)
+        - per-entry scan cap 50 line (pathological input 차단)
+        - 단순 single-line anchored regex 만 사용
+
+      META self-application 4th applied case: 본 Wave 2-D wire 의 ArchitectAgent spawn
+      자체가 `[PRE-SPAWN-ORIGIN-MAIN-SHA: 8648d449aea13e21971ac5055162f243e8becfb1]`
+      block 사용 = CFP-1489 META precedent 답습 (Wave 2-A 1st → CFP-1497 Wave 2-C 2nd →
+      CFP-1500 Wave 2-B 3rd → 본 CFP-1502 Wave 2-D 4th applied case).
+
+      4-layer mechanical defense forcing function 완결 (CFP-1389 parent Epic) — FINAL Wave 2:
+        - Sub-CFP A Wave 2-A (CFP-1489, preventive pre-spawn pin mechanical enforcement)
+        - Sub-CFP B Wave 2-B (CFP-1500, reactive mid-spawn drift mechanical enforcement)
+        - Sub-CFP C Wave 2-C (CFP-1497, preventive slot reservation mechanical enforcement)
+        - Sub-CFP D Wave 2-D (본 CFP-1502, measurement chief author span telemetry mechanical enforcement)
+      = CFP-1389 parent Epic 4-layer defense forcing function 완성. 본 entry = 마지막 mechanical layer.
+      CFP-1336 9+ collisions evidence base 의 전체 mitigation closure.
+
+      Disjoint axis: 3 sibling Wave 2 wires (A/B/C = race detection/claim mechanism) 와
+      본 Sub-CFP D = post-hoc measurement/telemetry layer (cross-spawn aggregate marker
+      presence verification, recommendation tier per ADR-039 Amendment 5).
+    detect_command: bash scripts/check-chief-author-span-telemetry.sh
+    workflow: templates/github-workflows/chief-author-span-telemetry.yml
+    current_tier: warning              # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:chief-author-span-telemetry
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1336                     # sentinel super-class `amendment_number_stale_at_planning` pattern_count 9+ reach (Epic CFP-1389 origin)
+        - CFP-1389                     # parent escalation Epic
+        - CFP-1438                     # Sub-CFP D Wave 1 declarative anchor (ADR-039 Amd 5 + ADR-044 Amd 3)
+        - CFP-1502                     # self-carrier (Wave 2-D mechanical wire, FINAL Wave 2)
+        - CFP-1489                     # sibling Wave 2-A (Sub-CFP A mechanical wire) precedent
+        - CFP-1497                     # sibling Wave 2-C (Sub-CFP C mechanical wire) CodeQL ReDoS guard SSOT
+        - CFP-1500                     # sibling Wave 2-B (Sub-CFP B mechanical wire) most recent precedent byte-pattern
+        - CFP-954                      # precedent dual trigger split (production-cutover-evidence.yml D2 consensus)
+        - CFP-1346                     # ADR-108 §결정 3 raw active grep count post-append parity META SSOT
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = structured Story §14 marker presence check, modal phrase 검사 미포함
+    introduced_by: CFP-1502
+    introduced_date: 2026-05-24
+    owner_adr: ADR-039                 # Amendment 5 §결정 17 chief author spawn span guideline (recommendation tier)
+    paired_owner_adr: ADR-044          # Amendment 3 §결정 9 multi-step chief author pattern
+    carrier_adr: ADR-060               # evidence-enforceable promotion framework
+    recurrence:
+      count: 9                         # CFP-1336 sentinel super-class pattern_count 9+ reach (Epic CFP-1389 origin, evidence shared with sibling CFP-1489 + CFP-1497 + CFP-1500)
+      threshold: 3                     # ADR-060 §결정 19 — pattern_count >= 3 재발 시 promote
+      last_occurrence: "2026-05-23T00:00:00Z"    # CFP-1336 ADR-058 §결정 5 escalate Mandatory
+      promotion_trigger: auto_blocking # CFP-1438 Wave 1 → 본 Wave 2-D → blocking promotion 후보 (pr_cumulative_min: 20 evidence gate after)
+    status: Active                     # CFP-1502 mechanical wire 완료 (Wave 2-D single PR, dual carrier CFP-1438 declarative anchor 의 hydrate) — FINAL Wave 2 of CFP-1389 parent Epic 4-layer defense forcing function
