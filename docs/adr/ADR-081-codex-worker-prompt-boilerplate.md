@@ -58,6 +58,13 @@ amendments:
     status: applied
     ref: "## Amendment 7 / 본문 fail-mode enum 9-enum 동기 정정"
     sunset_justification: "ratchet 강화 방향 (closed-enum expansion 8 → 9, additive, 정보 손실 0, 기존 8 value 의미 변경 0). 약화 영역 0건 (D1.A-D 무변경, D1-D8 본문 의미 변경 0, scope 축소 0). ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합."
+  - amendment_id: 8
+    cfp: CFP-1383
+    date: 2026-05-24
+    scope: "신규 §결정 D9 (Codex worker dispatch prompt body origin/main fetch directive mandate) append — Codex worker spawn prompt body 안 `[ORIGIN-MAIN-DIRECTIVE]` block 의무 codify (ground_truth_source: origin/main / verbatim_command_pattern: git show origin/main:<path> / working_tree_avoidance: true / sandbox_pre_fetch). working tree file path direct reference 금지 — stale local checkout state 회피 normative anchor. CFP-1333 §9.1 DesignReviewPL verdict 의 Codex worker 5/5 FALSE POSITIVE evidence (working tree HEAD bfc4806 5 commits behind state direct Read) + CFP-1384 sibling Story 의 5/5 TRUE POSITIVE empirical validation (prompt body 안 git show origin/main:<path> verbatim file content 첨부) disjoint outcome 결정 factor formalization (closing-the-loop empirical validation). own-repo origin/main fetch directive 한정 — cross-repo state = D1.C sandbox_outside_paths 영역 + D1.D network_scope: web-fetch 영역 분리. D1.A-D 4 mandatory boilerplate field 무변경 (Amendment 6-B 거절 대안 '신규 5번째 mandatory field 추가' 정합 — D9 = sub-section append, mandatory field 추가 0). D8 dispatch invocation 무변경. D1-D8 본문 의미 변경 0건 — §결정 D9 sub-section append only (3-axis disjoint: D1 prompt content / D8 invocation / D9 prompt body directive). is_transitional: false (permanent governance). mechanical_enforcement_actions[]=[] retain (§D5 declaration-only precedent chain 8번째 instance — ADR-070 §D5 → ADR-082 §결정 6 → ADR-081 §D5/§D6.e → ADR-070 Amd 5 → ADR-081 Amd 5 → ADR-081 Amd 6 → ADR-081 Amd 7 → 본 Amd 8). Phase 2 mechanical wire (dispatch prompt body 안 `[ORIGIN-MAIN-DIRECTIVE]` block presence-grep lint + `verbatim_command_pattern` value match + bats fixture + workflow + label entry + evidence-checks-registry entry) = 별 sub-CFP carrier 영역 (ADR-064 §결정 1 CFP scope unitary 정합, CFP-1384 sibling Wave 2 split pattern 답습). ADR-054 §결정 1 doc-only fast-path 적격 (carrier CFP-1383)."
+    status: applied
+    ref: "## Amendment 8 / 본문 ### D9 + 거절된 대안 D9"
+    sunset_justification: "ratchet 강화 방향 (Codex worker dispatch prompt body origin/main fetch directive normative anchor 신설 — working tree file 우회 + stale local checkout state 회피 invariant codify, prompt body directive 영역 신규 normative anchor §결정 D9). 약화 영역 0건 (D1.A-D 4 mandatory boilerplate field 무변경, D8 dispatch invocation 무변경, D1-D8 본문 의미 변경 0, scope 축소 0, mandatory field 추가 0 — sub-section append additive). CFP-1384 closing-the-loop empirical validation (5/5 TP outcome) evidence 가 ratchet 강화 정당성. ADR-058 §결정 5 + ADR-064 §결정 7 top-down ratchet 정합 (강화 방향만 amendment)."
 related_stories:
   - CFP-819  # carrier
   - CFP-770  # baseline fp 8
@@ -70,6 +77,8 @@ related_stories:
   - CFP-844  # Amendment 1 — 신규 §결정 D6 severity calibration rubric (CFP-825 retro §6 후보 2)
   - CFP-1003 # Amendment 5 — D1.A-D 4 mandatory field 적용 scope codify (proactive 강제 + reactive best-effort 가이드, ADR-052 Amd 9 + ADR-070 Amd 5 chain — Codex TP#4 CX-963 deferred scope closure)
   - CFP-1244 # Amendment 6 — 신규 §결정 D8 Codex worker dispatch file-redirect mandate (codex exec --sandbox read-only < promptfile + result-via-file + synchronous block-wait 금지, CFP-1187 S4/S5/S6/S7 evidence)
+  - CFP-1286 # Amendment 7 — ADR-070 Amendment 8 cross-ref (fail-mode enum 9-set sync, codex_truncated_no_verdict 9번째 value)
+  - CFP-1383 # Amendment 8 — 신규 §결정 D9 Codex worker dispatch prompt body origin/main fetch directive mandate (working tree file 우회 + stale local checkout state 회피, CFP-1333 5/5 FP + CFP-1384 5/5 TP closing-the-loop empirical validation)
 related_adrs:
   - ADR-052  # Codex Proactive Check 6 touchpoints (parent — Amendment 6 + Amendment 7 (CFP-844) cross-ref)
   - ADR-070  # verify-before-trust pattern (sibling — D1/D2/D5 cross-ref + Amendment 2 (CFP-844) D6 보완)
@@ -800,6 +809,128 @@ closed-enum expansion (8 → 9, additive, 정보 손실 0, 기존 8 value 의미
 - file-redirect ↔ stream-stall ↔ reasoning-exhausted 3 disjoint failure mode sub-domain 정합 — A3 SSOT
 - ratchet 강화 방향 + declaration-only retain precedent chain (§D5) — A4 SSOT
 - doc-only fast-path 영역 정합 — A5 SSOT
+
+## Amendment 8 (CFP-1383, 2026-05-24 KST)
+
+**신규 §결정 D9 (Codex worker dispatch prompt body origin/main fetch directive mandate) append — working tree file 우회 + stale local checkout state 회피 normative anchor. CFP-1333 5/5 FP + CFP-1384 5/5 TP closing-the-loop empirical validation evidence carrier.**
+
+### Context (Amendment 8)
+
+CFP-1333 §9.1 DesignReviewPL verdict block 의 Codex worker **5/5 FALSE POSITIVE** evidence — Codex worker 가 wrapper plugin-codeforge local working tree HEAD `bfc4806` (origin/main `d24ab28` 보다 **5 commits behind**) 에서 direct Read 수행, CFP-1302 array form migration (PR #1311 merged) + CFP-1319 ADR-073 Amendment 7 (merged) state 미인지. 5 finding 모두 actual ground truth (origin/main HEAD) 와 mismatch — `codex_severity_inflation=5`, `codex_false_positive_tally=5`.
+
+PL inline_orchestrator_verify dual-source 가 5 FP 모두 reject 했으나, Codex worker 자체의 **fetch directive precision** 가 stale local state 우회 logic 부재 — ADR-073 Amendment 7 `stale_local_main_checkout` 의 **3rd-order reproduction** (Orchestrator pre-Read 1st + wrapper main HEAD same-session drift 2nd + Codex external verifier own stale 3rd).
+
+**Disjoint outcome evidence (CFP-1333 5/5 FP vs CodeReview 0 FP vs CFP-1384 5/5 TP)**:
+
+| Story | Codex worker outcome | 결정 factor |
+|---|---|---|
+| CFP-1333 §9.1 (DesignReview lane) | **5/5 FALSE POSITIVE** | working tree HEAD `bfc4806` direct Read, 5 commits behind |
+| CFP-1333 Phase 2 (CodeReview lane) | **0 FP convergent** | Phase 2 PR head `ef45ef2` direct cover |
+| CFP-1384 (DesignReview lane iter 1) | **5/5 TRUE POSITIVE** | prompt body 안 `git show origin/main:docs/adr/ADR-073-...md` verbatim file content 첨부 |
+
+동일 `dispatch_mode: file-redirect` (Amendment 6 §D8) + 동일 `network_scope: repo-fetch-only` (Amendment 4 §D1.D) 임에도 outcome disjoint — 결정 factor = **prompt body fetch directive precision** (verbatim file content vs path reference). CFP-1384 = 본 Amendment 8 mitigation 가설 의 closing-the-loop empirical validation (5/5 TP outcome).
+
+### 결정 (Amendment 8)
+
+**A1. §결정 D9 — Codex worker dispatch prompt body origin/main fetch directive mandate 신설**
+
+Codex worker spawn 시 ProactiveCheckPacket `artifacts` 필드 + prompt body 안 `[ORIGIN-MAIN-DIRECTIVE]` block 의무:
+
+```
+[ORIGIN-MAIN-DIRECTIVE]
+ground_truth_source: origin/main
+verbatim_command_pattern: git show origin/main:<path>
+working_tree_avoidance: true
+sandbox_pre_fetch:
+  - cd <repo_root> && git fetch origin main
+```
+
+운영적 정의:
+
+- **ground_truth_source** = `origin/main` (own-repo origin/main HEAD) — fixed value 의무
+- **verbatim_command_pattern** = `git show origin/main:<path>` (working tree file 우회) — Codex worker 가 file content 첨부 시 사용 명시 의무
+- **working_tree_avoidance** = `true` (working tree file path direct reference 금지)
+- **sandbox_pre_fetch** = bash trampoline 안 `git fetch origin main` 선행 (network_scope `repo-fetch-only` 이상 영역 의무, `offline` 영역 N/A)
+
+own-repo origin/main fetch directive 한정 — cross-repo state 영역 분리:
+
+| 영역 | ground truth source | 첨부 방법 |
+|---|---|---|
+| own-repo file | `origin/main` (§결정 D9 신설) | `git show origin/main:<path>` direct fetch (working tree 우회) |
+| cross-repo file | D1.C `sandbox_outside_paths` 영역 | Orchestrator 가 verbatim 첨부 (`mcp__github__get_file_contents` 또는 `git fetch origin <repo>` + `git show`) |
+| external resource (HTTP) | D1.D `network_scope: web-fetch` 영역 | substitution path activate (ADR-052 Amendment 8 3-enum) |
+
+fallback path (directive 미적용 시) — audit trail marker 의무:
+
+```
+[origin-main-directive-fallback: <reason>]
+```
+
+reason enum (closed-set):
+- `network_scope_offline` — D1.D `network_scope: offline` declare (`git fetch` 영역 외)
+- `legacy_prompt_format` — Amendment 8 발효 이전 형식 (advisory grace window, 별 Wave 2 sub-CFP carrier)
+- `intentional_working_tree_verify` — working tree HEAD state 자체가 verify 대상 영역 (예: Phase 2 PR diff verify)
+
+reason 부재 + directive 부재 = ADR-070 D3 reject + Story §10 false positive count tally.
+
+**A2. D1.A-D 4 mandatory boilerplate field 무변경 (신규 field 도입 0)**
+
+§결정 D9 = prompt body directive 영역 (working tree avoidance + sandbox_pre_fetch + verbatim_command_pattern) — Codex worker spawn prompt 안 **mandatory field 가 아니다**. D1.A (dogfood-out Story path) / D1.B (current_lane / phase) / D1.C (sandbox_outside_paths) / D1.D (`network_scope: <4-tier enum>`) 4-field exhaustive retain (Amendment 6-B 거절 대안 "신규 5번째 mandatory field 추가" 정합 — D9 = sub-section append, mandatory field 추가 0).
+
+**A3. 3-axis disjoint preservation (D1 prompt content / D8 invocation / D9 prompt body directive)**
+
+| 축 | scope | normative anchor |
+|---|---|---|
+| **D1 prompt content axis** | Codex worker spawn prompt 본문 안 4 mandatory boilerplate field (D1.A-D) | §결정 D1 |
+| **D8 invocation axis** | Codex CLI worker check 호출 형식 (file-redirect `codex exec --sandbox read-only < <promptfile>` + result-via-file + synchronous block-wait 금지) | §결정 D8 (Amendment 6) |
+| **D9 prompt body directive axis (본 Amendment 8 신설)** | Codex worker prompt body 안 `git show origin/main:<path>` direct fetch instruction 영역 (working tree file 우회, stale local checkout state 회피 normative anchor) | §결정 D9 |
+
+D1.A-D 4 mandatory boilerplate field 무변경. D8 dispatch invocation 무변경. D1-D8 본문 의미 변경 0건.
+
+**A4. ADR-081 §D5 declaration-only retain precedent chain 8번째 instance**
+
+`mechanical_enforcement_actions[]` = Amendment 4 의 `codex-network-scope-presence` entry retain (변경 0건). §결정 D9 fetch directive presence-grep mechanical lint (예: dispatch 발화 안 `[ORIGIN-MAIN-DIRECTIVE]` block presence-grep + `verbatim_command_pattern` value match) = 별 follow-up CFP carrier (Wave 2, ADR-064 §결정 1 unitary). 본 Amendment 8 = declaration-only normative anchor only — ADR-070 §D5 → ADR-082 §결정 6 → ADR-081 §D5/§D6.e → ADR-070 Amd 5 → ADR-081 Amd 5 → ADR-081 Amd 6 → ADR-081 Amd 7 → 본 Amd 8 declaration-only retain precedent chain 8번째 instance.
+
+**A5. ADR-058 §결정 5 ratchet 정합 (강화 방향 명시)**
+
+본 Amendment = 강화 방향 (ratchet 강화):
+
+- `is_transitional: false` 본 ADR 유지 (permanent governance — Codex worker dispatch prompt body origin/main fetch directive mandate = Codex CLI invocation 영구 invariant, ground truth source precision hardening)
+- `sunset_justification` = "ratchet 강화 방향 (Codex worker dispatch prompt body origin/main fetch directive normative anchor 신설 — working tree file 우회 + stale local checkout state 회피 invariant codify, prompt body directive 영역 신규 normative anchor §결정 D9). 약화 영역 0건 (D1.A-D 4 mandatory boilerplate field 무변경, D8 dispatch invocation 무변경, D1-D8 본문 의미 변경 0, scope 축소 0, mandatory field 추가 0 — sub-section append additive). CFP-1384 closing-the-loop empirical validation (5/5 TP outcome) evidence 가 ratchet 강화 정당성."
+- ADR-058 §결정 5 sunset_justification 의무는 약화 방향 (fetch directive mandate 축소 또는 directive 의무 약화) 에만 발효 → 본 Amendment 는 면제
+
+**A6. ADR-064 §결정 (Trace 1) active amendment + full-scope 정합**
+
+- Amendment 발의 시점 = CFP-1333 §9.1 Codex 5/5 FP evidence + CFP-1384 5/5 TP closing-the-loop empirical validation 누적 후 즉시 (active amendment ratchet 강화 방향)
+- 적용 영역 = proactive 6 touchpoint dispatch + reactive `codex:rescue` 채널 모두 (full-scope — Codex CLI worker check invocation 전 영역, Amendment 5 §D1 적용 scope 정합)
+- forbid-list 13 어휘 (ADR-064 §결정 1 + Amendment 2/4/5) 사용 0 건 self-attest
+
+**A7. doc-only fast-path 적용 (ADR-054 §결정 1)**
+
+본 Amendment 8 자체 = ADR-081 본문 patch (Amendment row append + sub-section append) — doc-only fast-path 적격. carrier Story (CFP-1383) = ADR-081 Amendment 8 + Story + Change Plan + CLAUDE.md L195 1줄 cross-ref = ADR-054 §결정 1 (신규 ADR 도입 아님, 기존 ADR Amendment + src/tests/workflow 무변경) doc-only fast-path 단일 PR 적격.
+
+**A8. D1-D8 본문 의미 변경 없음 + Amendment 1-7 본문 의미 변경 없음**
+
+기존 §결정 D1 (3 mandatory boilerplate 영역) / D2 (verify-before-trust scope 5 sub-scope) / D3 (3-lane partition) / D4 (ADR-052/070 본문 SSOT 보존) / D5 (declaration-only retain) / D6 (severity calibration rubric) / D7 (digest-parse self-verification + grading rubric) / D8 (dispatch file-redirect mandate) + Amendment 1-7 본문 의미 변경 없음. 본 Amendment 8 = §결정 D9 (prompt body directive 영역) sub-section append only — sub-section append 패턴 (Amendment 1-7 패턴 정합).
+
+### 결과 (Amendment 8)
+
+- §결정 D9 신설 — Codex worker dispatch prompt body origin/main fetch directive mandate (`[ORIGIN-MAIN-DIRECTIVE]` block + ground_truth_source: origin/main + verbatim_command_pattern + working_tree_avoidance + sandbox_pre_fetch + fallback marker `[origin-main-directive-fallback]`) — A1 SSOT
+- D1.A-D 4 mandatory boilerplate field 무변경 (prompt body directive 영역, 신규 field 도입 0, Amendment 6-B 거절 대안 정합) — A2 SSOT
+- 3-axis disjoint preservation (D1 prompt content / D8 invocation / D9 prompt body directive) — A3 SSOT
+- ADR-081 §D5 declaration-only retain precedent chain 8번째 instance — A4 SSOT
+- ADR-058 §결정 5 ratchet 정합 (강화 방향, sunset_justification additive ratchet 강화 — ground truth source precision hardening) — A5 SSOT
+- ADR-064 §결정 active amendment + full-scope 정합 (forbid-list 13 어휘 사용 0 건) — A6 SSOT
+- doc-only fast-path 영역 정합 (본 Amendment 8 자체) — A7 SSOT
+- D1-D8 + Amendment 1-7 본문 의미 변경 0건 (sub-section append 패턴) — A8 SSOT
+
+### 거절된 대안 (Amendment 8)
+
+- (Amendment 8-A) **D1.A-D 5번째 mandatory field (예: D1.E `origin_main_fetch_required`) 로 fetch directive codify** — D1.A-D 4-field 의미 변경 0건 invariant 위배 (Amendment 6-B 거절 대안 "신규 5번째 field 추가" 정합). prompt body directive 영역 = prompt 본문 안 field 가 아니라 verbatim content composition 영역 — §결정 D9 disjoint sub-section append 채택 (D1 = prompt content axis, D9 = prompt body directive axis).
+- (Amendment 8-B) **origin/main fetch directive 를 ADR-070 §결정 D1 expansion sub-domain 으로 codify** (ADR-081 §결정 D9 회피) — 영역 type mismatch. ADR-070 = verify-before-trust pattern SSOT (외부 worker output ground truth verify, Codex worker output 영역). ADR-081 = Codex worker prompt boilerplate + invocation SSOT (Codex worker spawn-time input prompt 영역). 본 carrier = spawn-time prompt body directive 영역 (Codex worker input 영역) — ADR-081 axis 자연 정합. Amendment 6-D 거절 대안 "dispatch file-redirect mandate 를 ADR-052 본문 inline" 정합.
+- (Amendment 8-C) **working tree HEAD direct Read retain (origin/main fetch directive 미codify)** — CFP-1333 §9.1 Codex 5/5 FP evidence (working tree HEAD 5 commits behind state mis-bind) + CFP-1384 5/5 TP closing-the-loop empirical validation. working tree direct Read = systemic stale state risk. `git show origin/main:<path>` direct fetch + working_tree_avoidance: true 의무 채택.
+- (Amendment 8-D) **cross-repo file 영역 까지 §결정 D9 scope 확장** (own-repo + cross-repo 통합) — D1.C `sandbox_outside_paths` 영역 + D1.D `network_scope: web-fetch` 영역 두 axis 와 scope overlap. cross-repo file = D1.C verbatim 첨부 영역 (mcp__github__get_file_contents 또는 git fetch origin <repo> + git show), external resource = D1.D substitution path 영역. §결정 D9 scope = own-repo origin/main fetch directive 한정 채택 (3 axis disjoint 보존).
+- (Amendment 8-E) **fetch directive presence-grep mechanical lint inline 본 Amendment 8** (Wave 1 + Wave 2 단일 CFP 통합) — ADR-064 §결정 1 (CFP scope unitary) 위배. Wave 1 declarative (본 §결정 D9) + Wave 2 mechanical (dispatch 발화 안 `[ORIGIN-MAIN-DIRECTIVE]` block presence-grep lint + `verbatim_command_pattern` value match + bats fixture + workflow + label entry + evidence-checks-registry entry) 별 CFP 분리 채택 — ADR-081 §D5 declaration-only retain precedent 정합 + CFP-1384 sibling Wave 2 split pattern 답습.
 
 ## 해소 기준
 
