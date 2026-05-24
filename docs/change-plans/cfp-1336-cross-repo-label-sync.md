@@ -673,6 +673,8 @@ impl repo: mclayer/<consumer-repo>
 
 #### §8.5.4 N/A 명시 (4 N 적용 조건 모두 부재)
 
+N/A — Phase 1 Wave 1 declarative anchor scope only (governance SSOT codify, runtime test 0건, 4 stateful 적용 조건 모두 N), Wave 2 mechanical wire = 별 sub-CFP carrier defer.
+
 본 Phase 1 declarative anchor scope (governance SSOT codify only) — 4 stateful 적용 조건 모두 N. 4 영역 모두 Wave 2 mechanical wire carrier 별 sub-CFP defer. **현재 §8.5 stateful test 작성 0건 (CFP-47 §8.5 applicability 30자 minimum 정합, Wave 1 declaration-only scope 명시)**.
 
 ### §8.6 Audit gate 4-form pointer (ADR-068 Amendment 3 I-6 정합)
