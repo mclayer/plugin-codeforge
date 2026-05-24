@@ -1,11 +1,9 @@
-# .github/workflows/issue-design-content-confluence-link.yml
+# templates/github-workflows/issue-design-content-confluence-link.yml
 # CFP-1421 (Sub-A S1.3 of EPIC #1415) — Issue / PR body 안 design content 인용 시 Confluence anchor link 의무 lint
 # Owner ADR: ADR-111 §결정 5 (cross-link discipline — git anchor + Confluence anchor 양쪽 link 의무)
 # Wire layer: ADR-082 §결정 6 retain pattern 답습 (Wave 1 declare / Wave 2 wire)
 # Tier: warning (ADR-060 §결정 5 — 첫 도입 = warning mode, continue-on-error: true)
 # Bypass label: hotfix-bypass:issue-design-content-confluence-link
-#
-# Wrapper self-app — byte-identical to templates/github-workflows/issue-design-content-confluence-link.yml
 
 name: issue-design-content-confluence-link
 
