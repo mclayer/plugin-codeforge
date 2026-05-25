@@ -1884,30 +1884,310 @@ playbook_pages_adr_111_cross_link_discipline: "§결정 5 동일 적용 — git 
 # 본 placeholder = schema 신설 만, 실 36 entry binding = CFP-1523 결과 후 별 commit.
 
 legacy_domain_knowledge_migration_map:
-  # placeholder schema — 실 36 entry = CFP-1523 Phase 2 lane filter mechanism 결과 wait
+  # CFP-1585 Phase 2 real backfill — 36 entry populated (CFP-1523 option (b) category → lane mapping rule mechanism reuse)
   # source parent = 2129969 (CFP-1494 minimal flat 36 child)
-  # verify-via Confluence MCP getConfluencePageDescendants(2129969) Phase 2 작업 직전 의무
-  - source_page_id: null
-    source_title: null
-    source_category: null  # "concept" | "domain" | "governance-principle" | "agent-teams" | "upgrade-flow" | "codex-collaboration"
-    new_parent_id: null
-    plugin_scope: null     # "codeforge-requirements" | ... | "cross-cutting"
-    lane_assignment_rule: null
-    moved_at: null
+  # verify-via Confluence MCP getConfluencePageDescendants(2129969) 2026-05-26 KST (Phase 2 execution time)
+  # mapping rule (directory-prefix deterministic):
+  #   concept/* → cross-cutting (2098283)
+  #   domain/agent-teams/* → cross-cutting (2098283)
+  #   domain/codex-collaboration/* → cross-cutting (2098283)
+  #   domain/github-actions/* → cross-cutting (2098283)
+  #   domain/jsonl-write/* → cross-cutting (2098283)
+  #   domain/orchestrator-discipline/* → cross-cutting (2098283)
+  #   domain/runtime/* → cross-cutting (2098283)
+  #   domain/governance-principle/* → wrapper-governance (2163807)
+  #   domain/operational-phase/* → wrapper-governance (2163807)
+  #   domain/upgrade-flow/* → wrapper-governance (2163807)
+  #   domain/integration-test/* → codeforge-test top-level (2097239)
+  #   domain/production-cutover/* → codeforge-deploy-review top-level (2163482)
+  #   domain/inter-plugin-contracts/* → inter-plugin-contracts Registry (2130942)
+
+  - source_page_id: 2162795
+    source_title: "concept/4-Layer Architecture"
+    source_category: "concept"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:concept → cross-cutting (generic 도메인 개념)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2162860
+    source_title: "concept/Additive-merge pattern"
+    source_category: "concept"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:concept → cross-cutting (generic 도메인 개념)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2064870
+    source_title: "concept/Aggregate"
+    source_category: "concept"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:concept → cross-cutting (generic 도메인 개념)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2097509
+    source_title: "concept/Bounded Context (BC)"
+    source_category: "concept"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:concept → cross-cutting (generic 도메인 개념)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2162921
+    source_title: "concept/Clarification-driven reinvestigation"
+    source_category: "concept"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:concept → cross-cutting (generic 도메인 개념)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2064931
+    source_title: "concept/KST display invariant"
+    source_category: "concept"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:concept → cross-cutting (generic 도메인 개념)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2130313
+    source_title: "concept/Ubiquitous Language"
+    source_category: "concept"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:concept → cross-cutting (generic 도메인 개념)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2163177
+    source_title: "domain/agent-teams/Claude Code agent teams (experimental) — platform capability + codeforge re-entrancy 제약"
+    source_category: "agent-teams"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:agent-teams → cross-cutting (Orchestrator 영역)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2065223
+    source_title: "domain/agent-teams/debate-protocol-v1 convergence_quality_invariant — 3-tuple semantic 합의 품질 invariant"
+    source_category: "agent-teams"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:agent-teams → cross-cutting (Orchestrator 영역)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2130512
+    source_title: "domain/codex-collaboration/Codex Collaboration — narrative SSOT hub"
+    source_category: "codex-collaboration"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:codex-collaboration → cross-cutting (Codex Orchestrator)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2065263
+    source_title: "domain/codex-collaboration/Codex substitution path — decision tree narrative"
+    source_category: "codex-collaboration"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:codex-collaboration → cross-cutting (Codex Orchestrator)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2130552
+    source_title: "domain/github-actions/GitHub Actions issue event trigger semantics"
+    source_category: "github-actions"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:github-actions → cross-cutting (workflow tooling, lane-agnostic)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2130594
+    source_title: "domain/github-actions/Workflow Action 차단 환경 manual fallback path — recovery runbook"
+    source_category: "github-actions"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:github-actions → cross-cutting (workflow tooling, lane-agnostic)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2065285
+    source_title: "domain/github-actions/GitHub Actions workflow idempotency patterns"
+    source_category: "github-actions"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:github-actions → cross-cutting (workflow tooling, lane-agnostic)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2097908
+    source_title: "domain/governance-principle/codeforge 결정 원칙 — 행동 패턴 + 적용 사례 SSOT"
+    source_category: "governance-principle"
+    new_parent_id: 2163807
+    plugin_scope: "wrapper-governance"
+    lane_assignment_rule: "directory-prefix:governance-principle → wrapper-governance (codeforge governance corpus)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2097928
+    source_title: "domain/governance-principle/Lane Self-Write Ownership Matrix — Story file per-section 소유권 SSOT 해설"
+    source_category: "governance-principle"
+    new_parent_id: 2163807
+    plugin_scope: "wrapper-governance"
+    lane_assignment_rule: "directory-prefix:governance-principle → wrapper-governance (codeforge governance corpus)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2097951
+    source_title: "domain/governance-principle/KST timestamp display 정책"
+    source_category: "governance-principle"
+    new_parent_id: 2163807
+    plugin_scope: "wrapper-governance"
+    lane_assignment_rule: "directory-prefix:governance-principle → wrapper-governance (codeforge governance corpus)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2097994
+    source_title: "domain/governance-principle/codeforge wording-discipline — registration ↔ enforcement 2-layer 분리 SSOT"
+    source_category: "governance-principle"
+    new_parent_id: 2163807
+    plugin_scope: "wrapper-governance"
+    lane_assignment_rule: "directory-prefix:governance-principle → wrapper-governance (codeforge governance corpus)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2130660
+    source_title: "domain/integration-test/Integration Test — Epic-level reactivation narrative SSOT hub"
+    source_category: "integration-test"
+    new_parent_id: 2097239
+    plugin_scope: "codeforge-test"
+    lane_assignment_rule: "directory-prefix:integration-test → codeforge-test (per-plugin specific)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2163329
+    source_title: "domain/integration-test/Integration Test — Epic-level baseline 자동 승격 semantic"
+    source_category: "integration-test"
+    new_parent_id: 2097239
+    plugin_scope: "codeforge-test"
+    lane_assignment_rule: "directory-prefix:integration-test → codeforge-test (per-plugin specific)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2065434
+    source_title: "domain/inter-plugin-contracts/Numeric-space-sharing channel disjointness"
+    source_category: "inter-plugin-contracts"
+    new_parent_id: 2130942
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:inter-plugin-contracts → IPC Registry (CFP-1523 §3.1 IPC mapping table 정합)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2163349
+    source_title: "domain/jsonl-write/Cross-repo JSONL write race condition handling pattern"
+    source_category: "jsonl-write"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:jsonl-write → cross-cutting (runtime tooling pattern)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2065455
+    source_title: "domain/operational-phase/운영 phase — narrative SSOT hub"
+    source_category: "operational-phase"
+    new_parent_id: 2163807
+    plugin_scope: "wrapper-governance"
+    lane_assignment_rule: "directory-prefix:operational-phase → wrapper-governance (ADR-104/105/106 governance category)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2065475
+    source_title: "domain/operational-phase/운영 phase 측정 채널"
+    source_category: "operational-phase"
+    new_parent_id: 2163807
+    plugin_scope: "wrapper-governance"
+    lane_assignment_rule: "directory-prefix:operational-phase → wrapper-governance (ADR-104/105/106 governance category)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2098118
+    source_title: "domain/operational-phase/운영 phase 전체 정의 narrative"
+    source_category: "operational-phase"
+    new_parent_id: 2163807
+    plugin_scope: "wrapper-governance"
+    lane_assignment_rule: "directory-prefix:operational-phase → wrapper-governance (ADR-104/105/106 governance category)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2065495
+    source_title: "domain/operational-phase/운영 phase self-improving loop"
+    source_category: "operational-phase"
+    new_parent_id: 2163807
+    plugin_scope: "wrapper-governance"
+    lane_assignment_rule: "directory-prefix:operational-phase → wrapper-governance (ADR-104/105/106 governance category)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2098163
+    source_title: "domain/orchestrator-discipline/Codeforge measurement channel"
+    source_category: "orchestrator-discipline"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:orchestrator-discipline → cross-cutting (Orchestrator-level discipline, lane-agnostic)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2065537
+    source_title: "domain/orchestrator-discipline/Parallel work sentinel polling"
+    source_category: "orchestrator-discipline"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:orchestrator-discipline → cross-cutting (Orchestrator-level discipline, lane-agnostic)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2065558
+    source_title: "domain/orchestrator-discipline/Subagent-default Orchestrator execution discipline"
+    source_category: "orchestrator-discipline"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:orchestrator-discipline → cross-cutting (Orchestrator-level discipline, lane-agnostic)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2130724
+    source_title: "domain/orchestrator-discipline/Worktree-first self-ownership verify"
+    source_category: "orchestrator-discipline"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:orchestrator-discipline → cross-cutting (Orchestrator-level discipline, lane-agnostic)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2130744
+    source_title: "domain/production-cutover/Production Cutover — narrative SSOT hub"
+    source_category: "production-cutover"
+    new_parent_id: 2163482
+    plugin_scope: "codeforge-deploy-review"
+    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-deploy-review (per-plugin specific, ADR-72 ProductionEvidence ownership)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2163436
+    source_title: "domain/production-cutover/Production cutover — 4-evidence-quad 수집 절차"
+    source_category: "production-cutover"
+    new_parent_id: 2163482
+    plugin_scope: "codeforge-deploy-review"
+    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-deploy-review (per-plugin specific, ADR-72 ProductionEvidence ownership)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2098184
+    source_title: "domain/production-cutover/Promotion Criteria 4-tuple — codeforge canary → beta → stable transition gate SSOT"
+    source_category: "production-cutover"
+    new_parent_id: 2163482
+    plugin_scope: "codeforge-deploy-review"
+    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-deploy-review (per-plugin specific, ADR-72 ProductionEvidence ownership)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2065580
+    source_title: "domain/production-cutover/Production cutover — 7-step rollback protocol"
+    source_category: "production-cutover"
+    new_parent_id: 2163482
+    plugin_scope: "codeforge-deploy-review"
+    lane_assignment_rule: "directory-prefix:production-cutover → codeforge-deploy-review (per-plugin specific, ADR-72 ProductionEvidence ownership)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2065602
+    source_title: "domain/runtime/Claude Code deferred tool mechanism + SessionStart hook prompt-injection 모델 + codeforge 3-tier enforcement"
+    source_category: "runtime"
+    new_parent_id: 2098283
+    plugin_scope: "cross-cutting"
+    lane_assignment_rule: "directory-prefix:runtime → cross-cutting (Claude Code platform runtime)"
+    moved_at: "2026-05-26T08:53:19+09:00"
+  - source_page_id: 2098205
+    source_title: "domain/upgrade-flow/codeforge upgrade flow 의 선언적 reconciliation 개념 정의"
+    source_category: "upgrade-flow"
+    new_parent_id: 2163807
+    plugin_scope: "wrapper-governance"
+    lane_assignment_rule: "directory-prefix:upgrade-flow → wrapper-governance (codeforge family upgrade flow governance)"
+    moved_at: "2026-05-26T08:53:19+09:00"
 
 legacy_domain_knowledge_migration_map_total: 36
 legacy_domain_knowledge_source_parent: 2129969
 legacy_domain_knowledge_carrier: "CFP-1524 Sub-B (CFP-1585)"
-legacy_domain_knowledge_phase: "Phase 1 placeholder — BLOCKED CFP-1523 Phase 2 close 대기"
+legacy_domain_knowledge_phase: "Phase 2 — 36 page real binding populated (CFP-1523 mechanism reuse), updateConfluencePage execution 2026-05-26 KST"
 
-# domain category enum → plugin_scope 추론 placeholder (CFP-1523 결과 채택)
-legacy_domain_knowledge_category_inference_placeholder:
-  concept: "cross-cutting"
-  agent-teams: "cross-cutting"
-  codex-collaboration: "cross-cutting"
-  governance-principle: "wrapper-governance"
-  upgrade-flow: "wrapper-governance"
-  per-plugin-specific: "per-plugin top-level (CFP-1523 mechanism 결과 채택)"
+# domain category enum → plugin_scope 추론 SSOT (CFP-1523 option (b) category → lane mapping rule mechanism reuse, directory-prefix deterministic)
+legacy_domain_knowledge_category_inference:
+  # cross-cutting (2098283) — 20 pages
+  concept: "cross-cutting"                          # 7 page (generic 도메인 개념)
+  agent-teams: "cross-cutting"                      # 2 page (Orchestrator 영역)
+  codex-collaboration: "cross-cutting"              # 2 page (Codex Orchestrator)
+  github-actions: "cross-cutting"                   # 3 page (workflow tooling, lane-agnostic)
+  jsonl-write: "cross-cutting"                      # 1 page (runtime tooling pattern)
+  orchestrator-discipline: "cross-cutting"          # 4 page (Orchestrator-level discipline, lane-agnostic)
+  runtime: "cross-cutting"                          # 1 page (Claude Code platform runtime)
+  # wrapper-governance (2163807) — 9 pages
+  governance-principle: "wrapper-governance"        # 4 page (codeforge governance corpus)
+  operational-phase: "wrapper-governance"           # 4 page (ADR-104/105/106 governance category)
+  upgrade-flow: "wrapper-governance"                # 1 page (codeforge family upgrade flow governance)
+  # codeforge-test (2097239) — 2 pages
+  integration-test: "codeforge-test"                # 2 page (per-plugin specific)
+  # codeforge-deploy-review (2163482) — 4 pages
+  production-cutover: "codeforge-deploy-review"     # 4 page (per-plugin specific, ADR-72 ProductionEvidence ownership)
+  # inter-plugin-contracts Registry (2130942) — 1 page
+  inter-plugin-contracts: "cross-cutting (IPC Registry parent — CFP-1523 §3.1 IPC mapping table 정합)"  # 1 page
+
+# 4 target parent SSOT (CFP-1523 §3.1 mapping table 정합 + 9 top-level IA tree primary)
+legacy_domain_knowledge_target_parents:
+  cross_cutting: 2098283                            # cross-cutting parent (siblings: wrapper-governance / IPC Registry / orchestrator-playbook / ADR Registry / codeforge wrapper arch)
+  wrapper_governance: 2163807                       # wrapper-governance bucket (CFP-1493 partial 산출)
+  codeforge_test: 2097239                           # codeforge-test top-level (CFP-1494 minimal산출)
+  codeforge_deploy_review: 2163482                  # codeforge-deploy-review top-level
+  inter_plugin_contracts_registry: 2130942          # IPC Registry parent (CFP-1493 partial 산출)
 
 # ===========================================================================
 # CFP-1524 Sub-C (CFP-1586) — 9 plugin Living Architecture Confluence 5-anchor body push
