@@ -1223,6 +1223,58 @@ gh api repos/{owner}/{repo}/compare/${PRIOR_HEAD}...${CURRENT_HEAD} --jq '.commi
 - memory rule 6 (title-based search 의무, CFP-953 carrier) + rule 7 (Epic 진행 중 polling 의무, CFP-946 carrier) — declarative cross-ref normative anchor
 - sibling Story-2 [CFP-967](https://github.com/mclayer/plugin-codeforge/issues/967) — mechanical wire (script + hook + workflow + bats), sequential (Story-1 merge 후)
 
+#### §3.5.2 Cross-repo worktree target authority verify (CFP-1578 / [ADR-082 Amendment 21](../docs/adr/ADR-082-write-time-self-write-verification-mandate.md) §결정 1 sub-scope 1-J)
+
+> **NORMATIVE — ADR-082 Amendment 21 §결정 1 layer 1 sub-scope (1-J) declarative anchor**. chief author / lane agent / Orchestrator 가 spawn prompt 작성 또는 직접 file write 직전 cross-repo worktree target authority verify-before-write 의무. mechanical wire (lint script + workflow + hook json sample + bats fixture) = 별 sub-CFP Wave 2 carrier — 본 §3.5.2 = behavioral directive + declarative anchor (Wave 1 declaration-only).
+
+**동인 (sentinel evidence)**: CFP-1539+CFP-1540 batch retro §4.1 #2 — PMOAgent retro spawn 시 internal-docs PR target 작성 시 wrapper repo plugin-codeforge worktree 안에서 `git worktree add` 시도 후 정정 발생. wrapper repo worktree mis-target 첫 catch occurrence. ADR-013 dogfood-out internal-docs SSOT path (Story file + Change Plan + retro = internal-docs) + ADR-040 worktree convention (각 repo 별 worktree 분리) 정합 영역 codify 부재. paired sibling = CFP-1559 Amendment 20 (Issue body stale claim pre-screen super-class, axis disjoint — content verify vs target authority verify, 동시 발의 race).
+
+**4-tuple primitive (cross-repo write-target boundary mandate)** — spawn prompt 작성 또는 직접 file write 직전 4 의무:
+
+| ID | Primitive | 동작 |
+|----|---|---|
+| (a) | worktree target authority verify-before-write | `git -C <worktree_abs_path> remote -v` 실행 → expected repo (예: wrapper plugin-codeforge vs internal-docs) 와 actual remote URL 일치 확인. mismatch 시 write 차단 + sentinel 발화 |
+| (b) | spawn prompt 안 `worktree_target_repo: <expected-repo-name>` field | write-target authority anchor block 형식 명시 (sub-scope 1-C `[USER-UTTERANCE-VERBATIM]` + 1-E `[PRE-SPAWN-ORIGIN-MAIN-SHA]` block precedent 답습). enum = `wrapper` / `internal-docs` / `marketplace` / `consumer-<name>` |
+| (c) | cross-repo 작업 sequence 시 명시적 worktree switch | wrapper repo worktree 안에서 internal-docs PR 생성 시도 금지 (각 repo 별 worktree 분리, ADR-040 정합). cross-repo write 필요 시 별 worktree explicit create + cwd switch + write 의무 |
+| (d) | verified-via annotation `worktree_target_authority_verified: <bool>` | spawn prompt 안 명시 (write-time semantic truth verify, annotation 부재 시 sentinel 발화) |
+
+**Verify pattern (verify-before-trust 4-layer governance Layer 3 — ADR-082 sub-scope 1-J)**:
+
+```bash
+# Step 1 — worktree target repo authority verify (mandate (a))
+ACTUAL_REMOTE_URL=$(git -C <worktree_abs_path> remote get-url origin)
+# expected = wrapper plugin-codeforge → "mclayer/plugin-codeforge"
+# expected = internal-docs → "mclayer/codeforge-internal-docs"
+
+# Step 2 — expected target enum 일치 verify (mandate (a))
+EXPECTED_REPO="wrapper"   # spawn prompt field (b) 에서 declare
+case "$EXPECTED_REPO" in
+  wrapper) EXPECTED_URL_PATTERN="mclayer/plugin-codeforge" ;;
+  internal-docs) EXPECTED_URL_PATTERN="mclayer/codeforge-internal-docs" ;;
+  marketplace) EXPECTED_URL_PATTERN="mclayer/marketplace" ;;
+  consumer-*) EXPECTED_URL_PATTERN="mclayer/${EXPECTED_REPO#consumer-}" ;;
+esac
+if ! echo "$ACTUAL_REMOTE_URL" | grep -q "$EXPECTED_URL_PATTERN"; then
+  echo "ERROR: worktree target mismatch — expected $EXPECTED_REPO ($EXPECTED_URL_PATTERN), got $ACTUAL_REMOTE_URL"
+  exit 1
+fi
+
+# Step 3 — cross-repo write 시 별 worktree switch (mandate (c))
+# wrapper worktree 안에서 internal-docs PR 생성 시도 = mismatch → step 2 차단
+# 필요 시 internal-docs 별 worktree 생성:
+# git -C /path/to/internal-docs-repo worktree add <internal-docs-worktree> <branch>
+```
+
+**Cold start sentinel**: session 첫 turn 직후 active worktree list scan + worktree↔expected-repo 매핑 확인 (SessionStart hook tier 위임 — Wave 2 sub-CFP `templates/.claude/hooks/SessionStart-worktree-target-verify.json.sample` mechanical wire). actual sustained verify = 매 spawn prompt 작성 또는 file write 직전 §3.5.2 mandate.
+
+**Cross-ref**:
+- [ADR-082 Amendment 21](../docs/adr/ADR-082-write-time-self-write-verification-mandate.md) §결정 1 layer 1 sub-scope (1-J) — declarative anchor SSOT
+- [ADR-040 worktree convention](../docs/adr/ADR-040-worktree-convention.md) — namespace 표준 (`${HOME}/.claude/worktrees/<repo-name>/<branch-flat>`) + worktree-first normative 정합
+- [ADR-013 dogfood-out internal-docs SSOT](../docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md) — Story file + Change Plan + retro = internal-docs / src + tests + workflow + ADR + CLAUDE.md = wrapper plugin-codeforge
+- `docs/evidence-checks-registry.yaml` `worktree-target-authority-verify` entry — warning tier deferred-followup (Wave 2 sub-CFP wire)
+- paired sibling CFP-1559 Amendment 20 — Issue body stale claim pre-screen super-class, axis disjoint (content verify vs target authority verify, 동시 발의 race)
+- 동인: CFP-1539+CFP-1540 batch retro §4.1 #2 — worktree mis-target 첫 catch carrier
+
 ### §3.6 TeamCreate / TeamDelete protocol (CFP-137 / [ADR-044](../docs/adr/ADR-044-phase-scoped-sequential-team.md))
 
 > **Activation**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` env 활성 시에만 본 §3.6 적용. env=0 또는 미설정 시 = ADR-039 default subagent context fallback (§3.0 + 기존 §3.1 one-shot Agent tool 패턴).
