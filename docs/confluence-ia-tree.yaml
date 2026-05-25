@@ -1649,6 +1649,27 @@ playbook_source_total_line: 3643
 playbook_split_carrier: "CFP-1524 Sub-A (CFP-1584)"
 playbook_split_phase: "Phase 1 doc-only fast-path — schema 신설 + 19 entry skeleton (id null, Phase 2 createConfluencePage 결과 채움)"
 
+# ---------------------------------------------------------------------------
+# ADR-111 §결정 1 classification mapping (Amendment 1, CFP-1618)
+# ---------------------------------------------------------------------------
+# Origin: CFP-1584 Phase 1 audit (PR #1608 merged 2026-05-25 11:08:46Z) —
+# Sub-A Confluence push 진입 시 ADR-111 §결정 1 closed-enum 4 영역
+# (ADR / Living Architecture / Change Plan / Domain Knowledge) 외 Playbook
+# 영역 발견 → ADR-111 Amendment 1 (CFP-1618) closed-enum 4 → 5 영역 확장.
+# 5번째 영역 = orchestrator-runbook (docs/orchestrator-playbook.md SSOT,
+# Orchestrator 운영 절차 한정 — 일반 runbook 영역 비포함).
+# 본 block = playbook_split_pages[] 19 entry 의 ADR-111 classification
+# declarative mapping (mapping declaration, source-of-truth = ADR-111 §결정 1
+# Amendment 1 row 5).
+playbook_pages_adr_111_classification: "orchestrator-runbook (ADR-111 §결정 1 Amendment 1, CFP-1618 carrier)"
+playbook_pages_adr_111_amendment_id: 1
+playbook_pages_adr_111_amendment_carrier: "CFP-1618"
+playbook_pages_adr_111_amendment_date_kst: "2026-05-25"
+playbook_pages_adr_111_scope_boundary: "orchestrator-playbook 영역 한정 — 일반 runbook 영역 (deployment / oncall / production incident / disaster recovery) 비포함. 확장 시 별 CFP carrier 의무 (open_extension: false)"
+playbook_pages_adr_111_sync_direction: "단방향 git → Confluence (4 mirror 영역 정합, ADR-100 §결정 1 disjoint axis + ADR-103 sync agent 단일 진입점)"
+playbook_pages_adr_111_diagram_strategy: "diagram-as-code (Mermaid / PlantUML) — §결정 4 동일 적용, Confluence native macro 회피"
+playbook_pages_adr_111_cross_link_discipline: "§결정 5 동일 적용 — git anchor + Confluence anchor 양쪽 link 의무 (Issue body / PR body 안 design content 참조 시)"
+
 # ===========================================================================
 # CFP-1524 Sub-B (CFP-1585) — 36 domain-knowledge Confluence batch move
 # ===========================================================================
