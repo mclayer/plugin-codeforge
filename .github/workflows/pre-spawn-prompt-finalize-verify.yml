@@ -1,0 +1,148 @@
+name: pre-spawn-prompt-finalize-verify (warning mode)
+# CFP-1539 / CFP-FU-A Wave 2 mechanical wire
+# ADR-082 Amendment 19 §결정 1 layer 1 sub-scope (1-I) pre-spawn-prompt-finalize verify layer
+# ADR-073 Amendment 13/14 paired sibling — sub-decision 1+2 axis
+# Tier: warning (continue-on-error: true, non-required check)
+# Bypass channel: hotfix-bypass:pre-spawn-prompt-finalize-verify label (ADR-024 Amendment N §결정 6.A — 97번째 family member)
+#
+# Pre-spawn-prompt-finalize-verify mechanical lint.
+# Detection scope (Wave 2 — actual mechanical wire):
+#   - Story file (docs/stories/**/*.md) 안 [USER-UTTERANCE-VERBATIM] block 내
+#     `pre_spawn_prompt_finalize_verified: <true|false>` field presence 검증.
+#   - templates/** + tests/** path = FP-완화 guard (canonical example / bats fixture 면제).
+#   - [USER-UTTERANCE-VERBATIM] block 부재 file = silent skip (spawn evidence marker 부재 = lint scope 외).
+#
+# Trigger split (CFP-954 D2 consensus 답습 — production-cutover-evidence.yml byte-pattern):
+#   - pull_request (PR-time enforcement)
+#   - workflow_dispatch (manual runs)
+#
+# SecurityArch §7.2 TH-2 constraint: permissions: contents: read only (no PR write).
+# No CODEFORGE_CROSS_REPO_PAT in lint output (PAT guard).
+#
+# Carrier: CFP-1539 / CFP-FU-A Wave 2 mechanical wire
+#   - declaration source: ADR-082 Amendment 19 (CFP-FU-A Wave 1 anchor PR #1527)
+#   - enforcement source: ADR-060 §결정 5 warning tier framework
+#
+# Promotion path (ADR-060 §결정 28.E):
+#   warning → blocking-on-pr: remove continue-on-error + branch protection update
+#   (requires pr_cumulative_min: 20 evidence gate, ADR-060 §결정 6(b))
+#
+# Precedent byte-pattern: templates/github-workflows/spawn-prompt-head-pin-check.yml (CFP-1489)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  workflow_dispatch:
+
+concurrency:
+  group: pre-spawn-prompt-finalize-verify-check-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pre-spawn-prompt-finalize-verify-check:
+    runs-on: ubuntu-latest
+    # warning mode (ADR-060 §결정 5 / §결정 28) — lint fail does NOT block PR merge.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check bypass label
+        id: bypass
+        env:
+          PR_LABELS: ${{ join(github.event.pull_request.labels.*.name, ',') }}
+        run: |
+          set +x  # SecurityArch TH-2: no debug trace
+          labels="${PR_LABELS:-}"
+          case ",$labels," in
+            *,hotfix-bypass:pre-spawn-prompt-finalize-verify,*)
+              echo "bypass=true" >> "$GITHUB_OUTPUT"
+              echo "::notice::hotfix-bypass:pre-spawn-prompt-finalize-verify detected — pre-spawn-prompt-finalize-verify lint bypassed (ADR-024 Amendment N §결정 6.A — 97번째 hotfix-bypass:* family member)"
+              ;;
+            *)
+              echo "bypass=false" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      - name: Run pre-spawn-prompt-finalize-verify lint
+        id: lint
+        if: steps.bypass.outputs.bypass == 'false'
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+        run: |
+          set +x  # SecurityArch TH-2: no debug trace (PAT guard)
+          set +e
+
+          # Determine changed files scope — .md only (Story files)
+          if [ -z "${GITHUB_BASE_REF:-}" ]; then
+            # workflow_dispatch path — no PR diff, scan latest commit only
+            CHANGED_FILES="$(git diff --name-only HEAD~1...HEAD 2>/dev/null | grep -E '\.md$' || true)"
+          else
+            CHANGED_FILES="$(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD" 2>/dev/null | grep -E '\.md$' || true)"
+          fi
+
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "::notice::pre-spawn-prompt-finalize-verify: no changed .md files detected — PASS (advisory)"
+            echo "exit_status=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Content pre-screen: filter to Story files (docs/stories/**/*.md) only
+          # Reduces blast surface — only actual Story files contain [USER-UTTERANCE-VERBATIM] blocks.
+          # FP guard 3: docs/stories/**/*.md path 아닌 모든 .md file = silent skip in Python SSOT
+          # FP guard 1/2: templates/** + tests/** = silent skip in Python SSOT
+          CANDIDATE_FILES=$(echo "$CHANGED_FILES" | while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            [ -f "$f" ] || continue
+            # path filter: skip templates/** + tests/** (FP-완화 guard — Python SSOT 도 필터하지만 early skip)
+            case "$f" in
+              templates/*|tests/*|*/templates/*|*/tests/*) continue ;;
+            esac
+            # Story file path filter: docs/stories/**/*.md
+            case "$f" in
+              docs/stories/*.md|docs/stories/*/*.md)
+                echo "$f"
+                ;;
+            esac
+          done)
+
+          if [ -z "$CANDIDATE_FILES" ]; then
+            echo "::notice::pre-spawn-prompt-finalize-verify: no Story files (docs/stories/**/*.md) in PR diff — lint scope empty, PASS (advisory)"
+            echo "exit_status=0" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          # Run lint only on candidate Story files (warning tier — non-blocking)
+          MAX_EXIT=0
+          while IFS= read -r f; do
+            [ -z "$f" ] && continue
+            python3 scripts/lib/check_pre_spawn_prompt_finalize_verify.py "$f" 2>&1 || {
+              status=$?
+              if [ "$status" -gt "$MAX_EXIT" ]; then
+                MAX_EXIT="$status"
+              fi
+            }
+          done <<< "$CANDIDATE_FILES"
+
+          echo "exit_status=$MAX_EXIT" >> "$GITHUB_OUTPUT"
+          # warning tier: always exit 0 (continue-on-error + warning-tier semantic)
+          exit 0
+
+      - name: Emit lint summary
+        if: steps.bypass.outputs.bypass == 'false' && always()
+        env:
+          LINT_STATUS: ${{ steps.lint.outputs.exit_status }}
+        run: |
+          set +x  # SecurityArch TH-2
+          status="${LINT_STATUS:-0}"
+          if [ "$status" = "0" ]; then
+            echo "::notice::pre-spawn-prompt-finalize-verify: PASS — pre_spawn_prompt_finalize_verified field valid in all [USER-UTTERANCE-VERBATIM] blocks (ADR-082 Amendment 19 §결정 1 layer 1 sub-scope 1-I)"
+          elif [ "$status" = "1" ]; then
+            echo "::warning::pre-spawn-prompt-finalize-verify: WARNING — pre_spawn_prompt_finalize_verified field absent or invalid in [USER-UTTERANCE-VERBATIM] block. Add: pre_spawn_prompt_finalize_verified: true (or false) inside [USER-UTTERANCE-VERBATIM]...[/USER-UTTERANCE-VERBATIM] block per ADR-082 Amendment 19 §결정 1 sub-scope 1-I mandate. hotfix bypass: hotfix-bypass:pre-spawn-prompt-finalize-verify label (ADR-024 Amendment N §결정 6.A — 97번째 family member)."
+          else
+            echo "::warning::pre-spawn-prompt-finalize-verify: META-ERROR (exit $status) — lint infrastructure issue. Non-blocking (warning tier)."
+          fi
