@@ -1486,3 +1486,281 @@ sub_b_carrier_followup:
 # Sub-B S2.1 산출: 49 page added on top of 183 legacy = 232 total post-S2.1.
 # Lane plugin self-owned: 8 plugins × 5 child = 40 pages.
 # Cross-cutting placeholder: 1 top-level (children = S2.3/S2.4 backfill carrier).
+
+# ===========================================================================
+# CFP-1524 Sub-A (CFP-1584) — Orchestrator Playbook §-level Confluence split
+# ===========================================================================
+# Phase 1 doc-only fast-path (ADR-054) — schema 신설 + 19 entry skeleton
+# (id field = Phase 2 채움 createConfluencePage × 19 결과)
+# § structure audit 결과: CRITICAL Step 0 1317 line ~158KB → §.N-level
+# 추가 분할 carrier 의무 (별 follow-up CFP).
+# stepped probe 1KB→64KB→256KB→1MiB Phase 2 사전 실행 의무.
+
+playbook_split_pages:
+  # bucket ancestor = 2130966 (CFP-1494 S2.4 minimal carrier)
+  - id: null
+    parent: 2130966
+    title: "§1 — 세션 생명주기"
+    source_section: "## 1. 세션 생명주기"
+    source_line_range: [31, 249]
+    source_line_count: 219
+    estimated_byte_size: 16000
+  - id: null
+    parent: 2130966
+    title: "§2 — 사용자(Human) 상호작용 규약"
+    source_section: "## 2. 사용자(Human) 상호작용 규약"
+    source_line_range: [250, 316]
+    source_line_count: 66
+    estimated_byte_size: 5000
+  - id: null
+    parent: 2130966
+    title: "§3 — 스폰 시퀀스 + 프롬프트 템플릿"
+    source_section: "## 3. 스폰 시퀀스 + 프롬프트 템플릿"
+    source_line_range: [317, 626]
+    source_line_count: 309
+    estimated_byte_size: 23000
+  - id: null
+    parent: 2130966
+    title: "CRITICAL Step 0 — pre-spawn-pin"
+    source_section: "## CRITICAL Step 0 — pre-spawn-pin (mandatory, ADR-039 §결정 14)"
+    source_line_range: [627, 1944]
+    source_line_count: 1317
+    estimated_byte_size: 158000
+    split_warning: "Cloud 한계 64KB community noise 영역 초과 → §.N-level 추가 분할 carrier 의무 (별 follow-up CFP)"
+  - id: null
+    parent: 2130966
+    title: "§3B — Preflight 체크 (lane 진입 직전)"
+    source_section: "## 3B. Preflight 체크 (lane 진입 직전)"
+    source_line_range: [1945, 2195]
+    source_line_count: 250
+    estimated_byte_size: 18000
+  - id: null
+    parent: 2130966
+    title: "§4 — 병렬 스폰 판단"
+    source_section: "## 4. 병렬 스폰 판단"
+    source_line_range: [2196, 2285]
+    source_line_count: 89
+    estimated_byte_size: 6000
+  - id: null
+    parent: 2130966
+    title: "§5 — docs/stories file 동기화"
+    source_section: "## 5. docs/stories file 동기화"
+    source_line_range: [2286, 2336]
+    source_line_count: 50
+    estimated_byte_size: 3000
+  - id: null
+    parent: 2130966
+    title: "§6 — FIX 루프 상태 머신"
+    source_section: "## 6. FIX 루프 상태 머신"
+    source_line_range: [2337, 2592]
+    source_line_count: 255
+    estimated_byte_size: 19000
+  - id: null
+    parent: 2130966
+    title: "§7 — 세션 재개(resume) 복원 절차"
+    source_section: "## 7. 세션 재개(resume) 복원 절차"
+    source_line_range: [2593, 2666]
+    source_line_count: 73
+    estimated_byte_size: 5000
+  - id: null
+    parent: 2130966
+    title: "§8 — 토큰 예산 모니터링 + 세션 회고"
+    source_section: "## 8. 토큰 예산 모니터링 + 세션 회고"
+    source_line_range: [2667, 2760]
+    source_line_count: 93
+    estimated_byte_size: 7000
+  - id: null
+    parent: 2130966
+    title: "§9 — 트러블슈팅 플레이북"
+    source_section: "## 9. 트러블슈팅 플레이북"
+    source_line_range: [2761, 2858]
+    source_line_count: 97
+    estimated_byte_size: 7000
+  - id: null
+    parent: 2130966
+    title: "§10 — Hotfix 경로"
+    source_section: "## 10. Hotfix 경로 (운영 장애 대응)"
+    source_line_range: [2859, 2866]
+    source_line_count: 7
+    estimated_byte_size: 500
+    note: "§10 7 line only — 별 page 의미 미달 가능, §11 와 통합 검토 carrier"
+  - id: null
+    parent: 2130966
+    title: "§11 — Cross-agent write coordination"
+    source_section: "## 11. Cross-agent write coordination"
+    source_line_range: [2867, 2878]
+    source_line_count: 11
+    estimated_byte_size: 800
+  - id: null
+    parent: 2130966
+    title: "§12 — Orchestrator 컨텍스트 패킷"
+    source_section: "## 12. Orchestrator 컨텍스트 패킷 (Story file 섹션 캐시)"
+    source_line_range: [2879, 3089]
+    source_line_count: 210
+    estimated_byte_size: 15000
+  - id: null
+    parent: 2130966
+    title: "§13 — PMOAgent 프로젝트 관리 (Cross-cutting)"
+    source_section: "## 13. PMOAgent 프로젝트 관리 (Cross-cutting)"
+    source_line_range: [3090, 3183]
+    source_line_count: 93
+    estimated_byte_size: 7000
+  - id: null
+    parent: 2130966
+    title: "§14 — §0 Live Progress (CFP-20)"
+    source_section: "## 14. §0 Live Progress (CFP-20)"
+    source_line_range: [3184, 3478]
+    source_line_count: 295
+    estimated_byte_size: 22000
+    note: "Spawn ID 대장 + Spawn Token Telemetry sub-§ 포함"
+  - id: null
+    parent: 2130966
+    title: "§15 — 4-channel observability boundary"
+    source_section: "## 15. 4-channel observability boundary (ADR-042 §결정 1, CFP-283)"
+    source_line_range: [3479, 3529]
+    source_line_count: 50
+    estimated_byte_size: 3000
+  - id: null
+    parent: 2130966
+    title: "§16 — Post-merge automation flow"
+    source_section: "## 16. Post-merge automation flow (ADR-026 + CFP-74)"
+    source_line_range: [3530, 3578]
+    source_line_count: 48
+    estimated_byte_size: 3000
+  - id: null
+    parent: 2130966
+    title: "§17 — Inter-plugin contract sibling sync 절차"
+    source_section: "## 17. Inter-plugin contract sibling sync 절차 (CFP-408 / ADR-010 Amendment 3)"
+    source_line_range: [3579, 3616]
+    source_line_count: 37
+    estimated_byte_size: 3000
+  - id: null
+    parent: 2130966
+    title: "부록 A — 관련 문서 + 부록 B — 개정 이력"
+    source_section: "## 부록 A. 관련 문서 + ## 부록 B. 개정 이력"
+    source_line_range: [3617, 3643]
+    source_line_count: 26
+    estimated_byte_size: 1600
+    note: "부록 A + B 통합 page (각 13 line, 통합 가독성 우선)"
+
+playbook_split_pages_total: 20  # 17 § + 부록 A+B 통합 + (CRITICAL Step 0 §.N-level 추가 분할 carrier 별 follow-up CFP)
+playbook_source_total_byte: 290403
+playbook_source_total_line: 3643
+playbook_split_carrier: "CFP-1524 Sub-A (CFP-1584)"
+playbook_split_phase: "Phase 1 doc-only fast-path — schema 신설 + 19 entry skeleton (id null, Phase 2 createConfluencePage 결과 채움)"
+
+# ===========================================================================
+# CFP-1524 Sub-B (CFP-1585) — 36 domain-knowledge Confluence batch move
+# ===========================================================================
+# Phase 1 placeholder (BLOCKED — CFP-1523 Phase 2 close 대기)
+# CFP-1523 Phase 1 lane filter mechanism design merged 2026-05-25 PR #899
+# (codeforge-internal-docs). Phase 2 (실 142 page batch move execution) wait.
+# 본 placeholder = schema 신설 만, 실 36 entry binding = CFP-1523 결과 후 별 commit.
+
+legacy_domain_knowledge_migration_map:
+  # placeholder schema — 실 36 entry = CFP-1523 Phase 2 lane filter mechanism 결과 wait
+  # source parent = 2129969 (CFP-1494 minimal flat 36 child)
+  # verify-via Confluence MCP getConfluencePageDescendants(2129969) Phase 2 작업 직전 의무
+  - source_page_id: null
+    source_title: null
+    source_category: null  # "concept" | "domain" | "governance-principle" | "agent-teams" | "upgrade-flow" | "codex-collaboration"
+    new_parent_id: null
+    plugin_scope: null     # "codeforge-requirements" | ... | "cross-cutting"
+    lane_assignment_rule: null
+    moved_at: null
+
+legacy_domain_knowledge_migration_map_total: 36
+legacy_domain_knowledge_source_parent: 2129969
+legacy_domain_knowledge_carrier: "CFP-1524 Sub-B (CFP-1585)"
+legacy_domain_knowledge_phase: "Phase 1 placeholder — BLOCKED CFP-1523 Phase 2 close 대기"
+
+# domain category enum → plugin_scope 추론 placeholder (CFP-1523 결과 채택)
+legacy_domain_knowledge_category_inference_placeholder:
+  concept: "cross-cutting"
+  agent-teams: "cross-cutting"
+  codex-collaboration: "cross-cutting"
+  governance-principle: "wrapper-governance"
+  upgrade-flow: "wrapper-governance"
+  per-plugin-specific: "per-plugin top-level (CFP-1523 mechanism 결과 채택)"
+
+# ===========================================================================
+# CFP-1524 Sub-C (CFP-1586) — 9 plugin Living Architecture Confluence 5-anchor body push
+# ===========================================================================
+# Phase 1 doc-only fast-path (ADR-054) — schema 신설 + 9 entry skeleton
+# (wrapper + 8 lane plugin = 9 page, sufficient framing 정합).
+# git source baseline = CFP-1427 closed (8 plugin × docs/architecture/<plugin>.md +
+# wrapper docs/architecture/codeforge-family.md, 5-anchor body seed only).
+# 본 carrier = Confluence push (CFP-1427 AC-7 "Sub-B 영역 defer" 잔여).
+# ADR-078 Amendment 2 (CFP-1425 merged 2026-05-24) 5-anchor closed-enum 정합.
+
+living_architecture_pages:
+  - plugin_name: "codeforge"  # wrapper
+    page_id: null
+    ancestor_id: null  # cross-cutting / wrapper-governance
+    git_source_path: "docs/architecture/codeforge-family.md"
+    last_synced: null
+    five_anchor_codified: true
+    mermaid_diagram_count: null
+  - plugin_name: "codeforge-requirements"
+    page_id: null
+    ancestor_id: null
+    git_source_path: "docs/architecture/codeforge-requirements.md"
+    last_synced: null
+    five_anchor_codified: true
+    mermaid_diagram_count: null
+  - plugin_name: "codeforge-design"
+    page_id: null
+    ancestor_id: null
+    git_source_path: "docs/architecture/codeforge-design.md"
+    last_synced: null
+    five_anchor_codified: true
+    mermaid_diagram_count: null
+  - plugin_name: "codeforge-develop"
+    page_id: null
+    ancestor_id: null
+    git_source_path: "docs/architecture/codeforge-develop.md"
+    last_synced: null
+    five_anchor_codified: true
+    mermaid_diagram_count: null
+  - plugin_name: "codeforge-review"
+    page_id: null
+    ancestor_id: null
+    git_source_path: "docs/architecture/codeforge-review.md"
+    last_synced: null
+    five_anchor_codified: true
+    mermaid_diagram_count: null
+  - plugin_name: "codeforge-test"
+    page_id: null
+    ancestor_id: null
+    git_source_path: "docs/architecture/codeforge-test.md"
+    last_synced: null
+    five_anchor_codified: true
+    mermaid_diagram_count: null
+  - plugin_name: "codeforge-pmo"
+    page_id: null
+    ancestor_id: null
+    git_source_path: "docs/architecture/codeforge-pmo.md"
+    last_synced: null
+    five_anchor_codified: true
+    mermaid_diagram_count: null
+  - plugin_name: "codeforge-deploy"  # CFP-1059 신설 plugin
+    page_id: null
+    ancestor_id: null
+    git_source_path: "docs/architecture/codeforge-deploy.md"
+    last_synced: null
+    five_anchor_codified: true
+    mermaid_diagram_count: null
+  - plugin_name: "codeforge-deploy-review"  # CFP-1059 신설 plugin
+    page_id: null
+    ancestor_id: null
+    git_source_path: "docs/architecture/codeforge-deploy-review.md"
+    last_synced: null
+    five_anchor_codified: true
+    mermaid_diagram_count: null
+
+living_architecture_pages_total: 9
+living_architecture_carrier: "CFP-1524 Sub-C (CFP-1586)"
+living_architecture_phase: "Phase 1 doc-only fast-path — schema 신설 + 9 entry skeleton (page_id null, Phase 2 Confluence MCP verify 결과 채움)"
+living_architecture_git_baseline: "CFP-1427 (Sub-C S3.3 closed) — git source 5-anchor body seed"
+living_architecture_5anchor_ssot: "ADR-078 Amendment 2 (CFP-1425 closed 2026-05-24) — arc42 §3 (Context) + §5 (Building Block) + C4 Container + C4 Component + Open Decisions Pending"
+living_architecture_mechanical_wire_followup: "CFP-1429 (Sub-C S3.5) — living-architecture-update lint, 본 carrier scope 외"
