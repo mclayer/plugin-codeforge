@@ -200,6 +200,39 @@ Story 분해안:
 
 **False positive 안전망** (Story §5.4 EC-3 정합 — trivial 판정 영역): `escalation_action` enum 2-value 보유 — `adr_draft_emitted` (정식 ADR draft 작성, default) | `escalate_user` (PMOAgent 가 trivial 판정 시 사용자 manual decide 의뢰). 두 enum value 모두 `cross_story_pattern_adr_trigger` field mandatory 채움 의무 (forcing function 보존), 단 후속 처리 분기만 다름. ArchitectAgent 가 status: Proposed → Accepted | Rejected 최종 결정 (ADR-035 Sonnet decider Deprecated 정합 — PMOAgent = proposer only, verdict 권한 없음).
 
+#### 4.1 Pre-publish 8-tuple verify gate (CFP-1623 / CFP-1632, [ADR-045 Amendment 9 §D-10](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-045-story-retro-mandatory-trigger.md) — Wave 2 mechanical wire active)
+
+PMOAgent 가 retro file `§6 ADR 후보 발의` section 안 ADR draft candidate 작성 **직전** 8 independent source AND gate 통과 의무 (Mandatory framing, PMOAgent self-decide 영역 제거).
+
+**8-tuple verify sources** (AND gate, 1+ disagree → `downgrade_action` 적용):
+
+1. `git show origin/main:<ADR-path>` — frontmatter `amendment_log` direct read (target ADR 영역에 이미 amendment 추가됨 여부)
+2. `grep <feature-name> docs/evidence-checks-registry.yaml` — mechanical lint 이미 등록됨 여부
+3. `Glob scripts/check-<feature-pattern>*` — 실 script 이미 존재 여부
+4. `gh pr list --search "<feature-name> in:title" --state merged` — sibling carrier merge status
+5. `gh issue list --search "<feature-name> in:title" --state all` — existing CFP carrier 검색
+6. `git log --all --oneline -- <path>` — file-level historical change presence
+7. `Glob docs/adr/ADR-*.md` + frontmatter `amendment_log` cross-Story scan — recent amendment chain
+8. retro §5 cross-Story pattern table 안 `anchor_id` ↔ existing implementation 매핑 — pattern_count → existing carrier mapping verify
+
+**Platform 한계 영역 처리** (`[verification-out-of-scope: <사유>]` marker, ADR-052 Amendment 3 marker 5종 정합):
+- gh CLI search rate-limit 환경 = source 4 + 5 skip → 6-tuple AND
+- git shallow clone 환경 = source 6 skip → 7-tuple AND
+- 단일 source 미충족 ≠ gate fail — 사유 marker 의무 (reverse-explicit annotation)
+
+**`downgrade_action` enum 2-value** (1+ source disagree 시 PMOAgent self-decide 영역 제거 — 자동 downgrade 의무):
+- `downgrade_to_section_4_informational_only` — carrier 발의 회피, 기존 §4 informational 으로 강등
+- `pivot_mark` — carrier 발의 보존 but PIVOT preflight marker 부착, retro file 안 명시 mark
+
+**pmo-output-v1 v1.3 integration**: PMOAgent return packet 안 `retro_section_6_pre_publish_verify` optional field (3 sub-field) 채움 의무:
+- `verify_sources_attempted[]` — 8 source enum (실 시도한 source 열거)
+- `verify_sources_blocked[]` — platform exemption 사유 (skip된 source + 사유)
+- `downgrade_action` — `null` (pass) | `to_section_4_informational` | `pivot_mark`
+
+**Mechanical enforcement (Wave 2 wire, 132nd evidence-checks-registry entry — wrapper [`scripts/lib/check_retro_batch_adr_draft_pre_publish.py`](https://github.com/mclayer/plugin-codeforge/blob/main/scripts/lib/check_retro_batch_adr_draft_pre_publish.py))**: warning-tier `retro-batch-adr-draft-pre-publish` lint (3-trigger: PR open + workflow_dispatch + cron 24h, `continue-on-error: true`). Bypass label = `hotfix-bypass:retro-batch-adr-draft-pre-publish` (102nd hotfix-bypass:* family member, audit-trailed exception channel).
+
+**Self-application 자체 evidence** (META 6-tier recursive dogfooding first wild use case — CFP-1632 retro 2026-05-26 KST): 본 §D-10 mandate 자체가 CFP-1623 (Wave 1 declarative anchor) + CFP-1632 (Wave 2 mechanical wire activation) 의 retro 작성 시점 self-applied. 본 §4.1 sub-section 의 실 적용 evidence = retro [`plugin-codeforge/retros/2026-05-26-cfp-1632.md`](https://github.com/mclayer/codeforge-internal-docs/blob/main/plugin-codeforge/retros/2026-05-26-cfp-1632.md) §6 (`downgrade_action: null`, 8-tuple AND PASS).
+
 ADR draft 내용 예시 (Orchestrator 반환 payload `adr_proposal` 필드):
 
 ```markdown

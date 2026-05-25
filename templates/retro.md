@@ -85,7 +85,24 @@ sentinel_refs:
 
 **Mandatory framing (CFP-665 / ADR-045 Amendment 5 §D-9)**: §5 표 `threshold reach = YES` 인 모든 패턴에 대해 후보 1건 의무 작성. PMOAgent self-decide 영역 제거 (회피 불가, forcing function). False positive 안전망 = `escalation_action: escalate_user` 채택 시 사용자 manual decide 의뢰.
 
-- 후보 1: <제목> — 근거: §5 패턴 N건 (pattern_count: <int>, anchor_id: <id>, occurrences: <Story 키 N개>) — escalation_action: `adr_draft_emitted` | `escalate_user`
+**Pre-publish 8-tuple verify gate (CFP-1623 / CFP-1632, [ADR-045 Amendment 9 §D-10](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-045-story-retro-mandatory-trigger.md) — Wave 2 mechanical wire active)**: 각 후보 작성 **직전** 8 independent source AND gate 통과 의무. 1+ source disagree 시 `downgrade_action` 자동 적용 (carrier 발의 회피 또는 PIVOT marker 부착). pmo-output-v1 v1.3 `retro_section_6_pre_publish_verify` optional field 채움 의무. 상세 = [`agents/PMOAgent.md §4.1`](../agents/PMOAgent.md).
+
+```yaml
+pre_publish_verify_8tuple:
+  candidate_1:
+    source_1_adr_amendment_log: <verified|not_found|out_of_scope>
+    source_2_evidence_checks_registry: <verified|not_found|out_of_scope>
+    source_3_scripts_glob: <verified|not_found|out_of_scope>
+    source_4_pr_search_merged: <verified|not_found|out_of_scope>
+    source_5_issue_search_all: <verified|not_found|out_of_scope>
+    source_6_git_log_file_history: <verified|not_found|out_of_scope>
+    source_7_adr_amendment_chain_scan: <verified|not_found|out_of_scope>
+    source_8_pattern_table_mapping: <verified|not_found|out_of_scope>
+    and_gate_verdict: PASS | FAIL
+    downgrade_action: null | to_section_4_informational | pivot_mark
+```
+
+- 후보 1: <제목> — 근거: §5 패턴 N건 (pattern_count: <int>, anchor_id: <id>, occurrences: <Story 키 N개>) — escalation_action: `adr_draft_emitted` | `escalate_user` — pre_publish_verify_8tuple verdict: PASS | DOWNGRADED (`downgrade_action`)
 - 후보 2: ...
 
 ---

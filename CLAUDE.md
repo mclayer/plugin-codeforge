@@ -57,7 +57,11 @@ Phase 2 PR merge 후 자동 trigger 의무 — 사용자 요청 불필요. FIX i
    - Phase 2 PR scope retry state machine (jsonl-state-store + cron re-trigger) — Phase 1 PR scope = first attempt 만 implement
 5. Story Issue close 차단 (auto-reopen) — retro 작성 후에만 close 가능
 
-상세 정책 SSOT: [ADR-045](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-045-story-retro-mandatory-trigger.md) D-1 ~ D-8.
+**§6 ADR 후보 발의 pre-publish 8-tuple verify gate (CFP-1623 / CFP-1632, [ADR-045 Amendment 9 §D-10](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-045-story-retro-mandatory-trigger.md) — Wave 2 mechanical wire active)**:
+
+retro file `§6 ADR 후보 발의` 안 ADR draft candidate 작성 직전 — 8 independent source AND gate 통과 의무 (Mandatory framing, PMOAgent self-decide 영역 제거). 1+ source disagree 시 `downgrade_action` 2-value enum 자동 적용 (`to_section_4_informational` | `pivot_mark`). pmo-output-v1 v1.3 `retro_section_6_pre_publish_verify` optional field (3 sub-field: `verify_sources_attempted[]` / `verify_sources_blocked[]` / `downgrade_action`) 채움 의무. 상세는 [`agents/PMOAgent.md §4.1`](agents/PMOAgent.md) — 8-tuple source enum + platform exemption marker + mechanical enforcement (132nd evidence-checks-registry entry `retro-batch-adr-draft-pre-publish` warning tier + `hotfix-bypass:retro-batch-adr-draft-pre-publish` 102nd family member).
+
+상세 정책 SSOT: [ADR-045](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-045-story-retro-mandatory-trigger.md) D-1 ~ D-10.
 
 ## GitOpsAgent (CFP-139)
 
