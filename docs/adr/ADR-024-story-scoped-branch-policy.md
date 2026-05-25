@@ -5,8 +5,8 @@ status: Accepted
 category: governance
 date: 2026-05-03
 is_transitional: false
-amended_by: CFP-1607
-amended_date: 2026-05-25
+amended_by: CFP-1646
+amended_date: 2026-05-26
 amendments:
   - by: "CFP-134"
     date: "2026-05-08"
@@ -72,6 +72,10 @@ amendments:
     date: "2026-05-25"
     scope: "Amendment 15 — §결정 6.A.3 per-plugin-cumulative-counter tier ratchet warning → blocking-on-pr declarative anchor (Wave 1 declarative ratchet + Wave 2 mechanical wire 별 sub-CFP). 사용자 directive 2026-05-25 KST `사용자 confirmed blocking-on-pr 승격` (Issue #1607 body `escalate_user` enum resolved — Wave 3 retro §4.2 C carrier). ADR-024 amendment_id slot strict pre-claim 정합 (ADR-082 §결정 1 sub-scope (1-G) amendment-slot pre-reservation mandate 적용 4th applied case — Amendment 18 CFP-1342 1st + Amendment 21 CFP-1578 2nd + Amendment 22 CFP-1601 3rd precedent 답습) + sub-scope (1-K) numeric claim write-time strict claim mandate 적용 2nd applied case (Amendment 22 CFP-1601 1st applied META carrier 직후 답습). ADR-060 §결정 6 promotion gate AND 3/3 PASS evidence: (a) PR cumulative since 2026-05-17 (CFP-845 ship 시점) = 200 PRs ≥ 20 (`gh pr list --search 'merged:>=2026-05-17' --limit 200` returned full list, 10x threshold 충족) / (b) bypass label外 failure count = 0 (`recurrence.count: 0` registry yaml verified) + `gh pr list --label hotfix-bypass:per-plugin-cumulative-counter` returned 0 PRs (no actual bypass usage during warning mode) / (c) sibling Stories CFP-390 PR #415/#420 + CFP-455 PR #460/#461 (CFP-412 substitution per ADR-060 Amendment 1+2 sibling_dependencies chain [CFP-390, CFP-412, CFP-455]) ALL MERGED. 본 Amendment 15 = ADR-060 framework 첫 actual blocking-on-pr 승격 carrier — framework SSOT 검증 carrier (multi-entry registry 운영 검증 첫 사례). evidence-checks-registry entry `per-plugin-cumulative-counter` `current_tier: warning` → `blocking-on-pr` + `status: warning` → `blocking-on-pr` + `recurrence.last_occurrence` Phase 1 PR merge KST timestamp 갱신 + `recurrence.promotion_trigger: warning_to_blocking_on_pr` 갱신. workflow `templates/github-workflows/per-plugin-cumulative-counter.yml` + `.github/workflows/` self-app `continue-on-error: true` → `false` ratchet = Phase 2 carrier scope. evidence_artifact (v) + (vi) gap closure declarative anchor (Phase 2 별 sub-CFP carrier — `scripts/check-audit-comment-author.{sh,py}` + `templates/github-workflows/audit-comment-author.yml` + `.github/workflows/` self-app + `bypass-audit.yml` sticky comment pattern wire + `tests/bats/check-audit-comment-author.bats` RED→GREEN stash proof + `tests/fixtures/audit-comment-author/` boundary fixture pair). bypass channel preserve — `hotfix-bypass:per-plugin-cumulative-counter` label retain (45번째 family member raw count convention, label-registry MINOR bump 0). plugin.json bump 0 = `marketplace_sync_declared: false` (mirrored field 변경 0, kind:registry sibling sync 면제 영역, ADR-063 atomic invariant 발효 조건 미충족). CLAUDE.md L260 영역 'evidence-checks-registry warning tier 19종' 문장 갱신 (warning tier 18종 + blocking-on-pr 4종 — CFP-1607 carrier 반영). schema doc `docs/inter-plugin-contracts/evidence-check-registry-v1.md` value transition example 추가 (warning → blocking-on-pr 첫 사례 documenting, schema 변경 0). ADR-045 §D-9 cross-ref pattern_count 3 cumulative occurrence `escalate_user` enum resolved by 사용자 2026-05-25 KST — 본 Amendment 15 = §D-9 forcing function 작동 사례 첫 carrier. ADR-064 §결정 5 CFP scope unitary 정합 — 본 Amendment 15 = per-plugin-cumulative-counter 단일 entry 승격 (sibling sub-decisions 6.A.4 / 6.A.5 미승격, 별 CFP scope). Wave 4 batch sequential last entry (Story CFP-1604 / CFP-1605 / CFP-1606 4/4 PIVOT trend break — 본 Story PROCEED_WITH_SCOPE_EXPANSION). mid-spawn drift detection (ADR-073 Amendment 12) 적용 evidence — worktree base 0a19e6a → 4c66891 rebase clean (CFP-1601 + CFP-1586 + CFP-1585 + CFP-1584 cascade integrate, 4 commits behind origin/main detected + rebased atomic pre-commit). prior art Amendment 14 (CFP-1306) 직전 chronological carrier 정합 (file body Amendment 13 (CFP-1510) 직후 sequential, frontmatter `amendments[]` array sequential append)."
     sunset_justification: "N/A — is_transitional: false (permanent governance policy). 1 entry tier ratchet (warning → blocking-on-pr) = ADR-060 framework first-use precedent + bypass-as-norm-mutation 누적 monitoring 의 enforcement 강화 방향 (warning advisory → blocking-on-pr 차단). forbid scope 확장 0건 (label family member 신설 0, registry entry 신설 0, `recurrence.threshold: 5` value 변경 0 — per-plugin scope 보수적 retain). ratchet-UP 강화 방향 (advisory → enforce, 약화 영역 0건). ADR-058 §결정 5 + ADR-064 §self-application top-down ratchet 정합."
+  - by: "CFP-1646"
+    date: "2026-05-26"
+    scope: "Amendment 16 — §결정 6.A.8 신설 (Issue label timing discipline — backlog Issue `phase:*` label 부착 차단 invariant) + §결정 6.A per-entry namespace 의 103번째 (raw active concrete grep count post-append, 102 + 1 = 103) family member `hotfix-bypass:backlog-issue-label` 추가. backlog 상태 식별 mechanical proxy 3-AND predicate (state:open + assignee:none + linked_pr:none) — 3 AND 만족 = backlog (lane 진입 X, `phase:*` label 부적합), 한 조건이라도 false = 착수 가능성 신호 (lint 발화 부적합). Issue body USER-UTTERANCE-VERBATIM (CFP-1111 follow-up #1198/#1199 phase:설계 reflex incident — 사용자 지적 '두개의 이슈 현재 작업 중 아닌가?') = behavioral directive normative 승격 carrier (CLAUDE.md 'Orchestrator 정책 적용 범위 + behavioral directive (normative)' 단락 정합 — memory 만으로 갈음 금지, 즉시 CFP 제안 후 normative SSOT 반영 의무). Wave 1 산출: (a) ADR-024 §결정 6.A.8 신설 본문 (b) label-registry-v2 §3 `hotfix-bypass:backlog-issue-label` 103번째 family member append + v2.77 → v2.78 MINOR bump + amendment_log row append (c) MANIFEST.yaml row '2.77' → '2.78' sync (d) evidence-checks-registry `backlog-issue-phase-label-forbid` warning-tier entry append (ADR-060 §결정 5 default warning mode — first introduction warning tier) (e) `templates/github-workflows/backlog-issue-label-forbid.yml` Wave 1 stub (Issue `opened`+`labeled` trigger schema declare, actual lint = Wave 2 carrier) (f) `.github/workflows/backlog-issue-label-forbid.yml` self-app byte-identical (ADR-005 invariant). Wave 2 carrier (Phase 2 PR scope): workflow body actual lint wire + `scripts/check-backlog-issue-label.sh` thin-wrapper + `scripts/lib/check_backlog_issue_label.py` (ADR-061 multi-line Python external file) + `tests/bats/check-backlog-issue-label.bats` RED→GREEN stash proof (CFP-1334) + `tests/fixtures/backlog-issue-label/{pass,fail}/` boundary fixture pair (CFP-963 Codex TP#4). raw count convention 답습 (CFP-1000 Amendment 10 + CFP-1006 Amendment 11 + CFP-1306 Amendment 14 + CFP-1510 Amendment 13 — raw active concrete grep count post-append). ADR-108 §결정 3 META self-app 10th applied case (raw active concrete grep count post-append 102 + 1 = 103 정합). ADR-082 §결정 9 verify-at-write-time — worktree base e1e2b751 (CFP-1632 HEAD = origin/main identical) / 102 raw active concrete grep count verified via worktree-pinned `git show HEAD:docs/inter-plugin-contracts/label-registry-v2.md | grep -c '^  - name: hotfix-bypass:'` (main repo path 사용 stale state ignored — worktree-base SSOT, ADR-070 verify-before-trust 적용). label-registry-v2 v2.77 → v2.78 MINOR bump 동반 (kind:registry sibling sync 면제 ADR-010 §결정 2 + ADR-008 §결정 3 row append). MANIFEST.yaml row '2.77' → '2.78' ratchet 동반. plugin.json bump 0 = marketplace_sync_declared: false (workflow + lint + label entry 신설 = governance behavior 변경이나 plugin.json mirrored field 무변경, ADR-063 atomic invariant 발효 조건 미충족). 사용자 directive 2026-05-26 KST — memory `feedback_no_phase_label_on_backlog_issues.md` normative 승격 carrier (memory file 3건 retire — 본 Story Phase 2 PR merge 후 별 task). sibling carrier — memory `feedback_brainstorming_why_first.md` (skill `codeforge:codeforge-brainstorm` body L63/66/100/140-145 4 anchor + 9 grep hits HIT verified → retire only, skill body 보강 carrier 불필요) + `feedback_codex_collaboration_patterns.md` (ADR-052/070/081 codified → retire only). chief tie-break ladder 1단계 RACI lookup — ModuleArchitect primary axis (boundary axis unified — label timing discipline = module-level governance boundary, §결정 6.A.N per-entry namespace 패턴 답습 정합 = single axis advocate sufficient, deputy fan-out skip via mechanical_fast_path_inline precedent Amendment 15 답습). prior art Amendment 15 (CFP-1607) 직전 chronological carrier 정합 (file body Amendment 15 직후 sequential append, frontmatter `amendments[]` array sequential append)."
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). 1 신규 family member + §결정 6.A.8 신설 = §결정 6.A per-entry namespace 의무의 영구 확장 (Issue label timing discipline 영역 첫 family member — backlog `phase:*` reflex 차단 mechanical enforce). forbid scope 축소 0건 (`phase:*` 9 label entry 정의 무변경, attach timing discipline 만 신설). ratchet-UP 강화 방향 (active concrete grep count 102 → 103 정합 raw active concrete + label attach timing discipline 영역 신규 sub-decision 신설, 약화 영역 0건). ADR-058 §결정 5 + ADR-064 §self-application top-down ratchet 정합. behavioral directive normative 승격 carrier (memory 만으로 갈음 금지 invariant — CLAUDE.md normative SSOT 반영 의무)."
 related_files:
   - CLAUDE.md
   - docs/consumer-guide.md
@@ -166,6 +170,17 @@ mechanical_enforcement_actions:
   - action: per-plugin-cumulative-counter-blocking
     status: blocking-on-pr        # Wave 1 declarative tier ratchet (registry yaml current_tier value transition); Wave 2 = workflow enforce mode wire 별 sub-CFP
     target_section: §결정 6.A.3   # ADR-060 framework first-use precedent — warning → blocking-on-pr 첫 actual promotion carrier
+  # Amendment 16 (CFP-1646, 2026-05-26 KST) — 103번째 (raw active concrete grep count post-append, 102 + 1 = 103) family member
+  # `hotfix-bypass:backlog-issue-label` per-entry namespace + §결정 6.A.8 신설 (Issue label timing discipline)
+  # backlog 상태 식별 mechanical proxy 3-AND predicate: state:open + assignee:none + linked_pr:none
+  # 3 AND 만족 = backlog (lane 진입 X, `phase:*` label 부적합) / 한 조건이라도 false = 착수 가능성 신호 (lint 발화 부적합)
+  # behavioral directive normative 승격 carrier (CFP-1111 follow-up #1198/#1199 phase:설계 reflex incident — 사용자 지적)
+  # ADR-060 §결정 5 default warning mode (first introduction = warning tier)
+  # Wave 1 declarative: registry §3 entry append + workflow stub (Issue opened+labeled trigger schema declare)
+  # Wave 2 carrier (Phase 2 PR scope): workflow body actual lint wire + scripts/check-backlog-issue-label.sh thin-wrapper + scripts/lib/check_backlog_issue_label.py + bats RED→GREEN stash proof + boundary fixture pair
+  - action: backlog-issue-phase-label-forbid
+    status: deferred-followup     # Wave 1 = registry §3 append + workflow stub declarative; Wave 2 = workflow body actual lint + script + bats + boundary fixture pair = Phase 2 PR scope
+    target_section: §결정 6.A.8   # 103번째 family member append — Issue label timing discipline 영역 첫 family member (backlog `phase:*` reflex 차단 mechanical enforce)
 ---
 
 # ADR-024: Story-scoped branch policy — main 직접 수정 금지 + Phase 2 enforcement deferred
@@ -1459,4 +1474,158 @@ verify-before-trust 8-tuple 적용 evidence:
 - CFP-845 prior art `scripts/check-per-plugin-cumulative-counter.{sh,py}` (본 entry 의 본체 ship carrier)
 - CFP-390 + CFP-455 sibling Stories (ADR-060 §결정 6 gate (c) chain — CFP-412 substitution)
 - Wave 4 batch sequential precedents — CFP-1604 / CFP-1605 / CFP-1606 4/4 PIVOT trend break (본 Story PROCEED)
+
+## Amendment 16 — Issue label timing discipline: backlog `phase:*` reflex 차단 + `hotfix-bypass:backlog-issue-label` 103번째 family member + §결정 6.A.8 신설 (CFP-1646, 2026-05-26 KST)
+
+### Context
+
+CFP-1111 Wave 1 Story-2 종료 후 사용자가 follow-up Issue 2건 (#1198 / #1199) 에 `phase:설계` label 가 부착된 상태를 발견하고 지적: "두개의 이슈 현재 작업 중 아닌가?" 실제 두 Issue 모두 backlog (즉시 lane 진입 X, 차후 작업 예약) 상태였으나 Orchestrator 가 발의-time 에 `phase:*` label 을 부착해 false signal 송출 (Orchestrator + 사용자 양쪽 인지 오염). 본 incident 가 memory `feedback_no_phase_label_on_backlog_issues.md` 기록 carrier.
+
+`phase:*` label 의 semantic (label-registry-v2 §3 `phase:*` 9 entry family — `phase:요구사항` / `phase:설계` / `phase:설계-리뷰` / `phase:구현` / `phase:구현-리뷰` / `phase:통합테스트` / `phase:보안테스트` / `phase:배포` / `phase:배포-리뷰`) = "현재 lane 작업 중". backlog 상태 (담당자 미할당 + linked PR 부재 + 즉시 착수 X) 에서 `phase:*` 부착 = label semantic 위반 + Orchestrator dashboard pollution + 사용자 인지 오염 super-class.
+
+**Behavioral directive normative 승격 mandate** (CLAUDE.md "Orchestrator 정책 적용 범위 + behavioral directive (normative)" 단락 정합): 사용자가 Orchestrator 행동 directive 를 내릴 때 personal memory file 저장 만으로 갈음 금지 — 즉시 CFP 제안 후 playbook / CLAUDE.md / consumer-guide / ADR 등 normative SSOT 반영 의무. Memory = ephemeral + consumer 비전파 + single-session scope = structural enforcement 불가. 본 Amendment 16 = 해당 invariant 의 첫 carrier (memory `feedback_no_phase_label_on_backlog_issues.md` → ADR-024 normative SSOT 승격).
+
+### Amendment
+
+§결정 6.A.8 (신설) — Issue label timing discipline:
+
+> 즉시 lane 진입하지 않는 backlog / 예약 / follow-up CFP Issue 발의 시 `phase:*` label 부착 금지. 미착수 backlog 관례 = unlabeled (Issue #1112 / #1169 prior art pattern). 본 invariant = "발의-time 에 lane spawn 자동 follow 가정 차단" — backlog 와 active lane work 구분 mechanical 보장.
+
+**Backlog 상태 식별 mechanical proxy** (3-AND predicate):
+
+- (a) `state:open` (Issue 자체 열림 상태)
+- (b) `assignee:none` (담당자 미할당 → 즉시 착수 X)
+- (c) `linked_pr:none` (linked PR 부재 → 작업 시작 전)
+
+3 AND 만족 = backlog (lane 진입 X, `phase:*` label 부적합) → lint 발화 (warning tier). 한 조건이라도 false = 착수 가능성 신호 (lint 발화 부적합, false-positive 차단).
+
+**Bypass channel** = `hotfix-bypass:backlog-issue-label` 103번째 (raw active concrete grep count post-append, 102 + 1 = 103) family member — §결정 6.A per-entry namespace 의무 영구 확장. 기존 single audit lint `scripts/check-bypass-audit-comment.sh` reuse (CFP-389 prior art, 신규 audit lint 도입 0건).
+
+#### Wave 1 (declarative — 본 Phase 1 PR scope)
+
+- `docs/adr/ADR-024-story-scoped-branch-policy.md` — 본 Amendment 16 + frontmatter `amendments[]` row + `mechanical_enforcement_actions[]` row + `amended_by: CFP-1646` + `amended_date: 2026-05-26`
+- `docs/inter-plugin-contracts/label-registry-v2.md` — `hotfix-bypass:backlog-issue-label` 103번째 family member append (§3) + frontmatter `version: "2.77"` → `"2.78"` MINOR bump + amendment_log row append
+- `docs/inter-plugin-contracts/MANIFEST.yaml` — label_registry row `"2.77"` → `"2.78"` ratchet
+- `docs/evidence-checks-registry.yaml` — `backlog-issue-phase-label-forbid` warning-tier entry append (ADR-060 §결정 5 default warning mode — first introduction = warning tier)
+- `templates/github-workflows/backlog-issue-label-forbid.yml` — Wave 1 declarative stub (Issue `opened` + `labeled` trigger schema declare, actual lint = Wave 2 carrier)
+- `.github/workflows/backlog-issue-label-forbid.yml` — self-app byte-identical (ADR-005 invariant)
+- internal-docs Change Plan `plugin-codeforge/change-plans/cfp-1646-backlog-issue-label-invariant.md` (chief author cross-repo write)
+- `CHANGELOG.md` [Unreleased] entry append (wrapper repo + codeforge-internal-docs 양쪽 sibling — ADR-092/093 정합)
+
+#### Wave 2 (mechanical wire — Phase 2 PR scope)
+
+- `templates/github-workflows/backlog-issue-label-forbid.yml` body actual lint wire — 3-AND predicate (state:open + assignee:none + linked_pr:none) detection + `phase:*` label 부착 검출 시 warning emit + `hotfix-bypass:backlog-issue-label` conditional skip
+- `.github/workflows/backlog-issue-label-forbid.yml` self-app byte-identical wire (ADR-005)
+- `scripts/check-backlog-issue-label.sh` thin-wrapper (ADR-061 §결정 1 정합)
+- `scripts/lib/check_backlog_issue_label.py` (ADR-061 multi-line Python external file — > 5줄 / backslash escape 영역 의무)
+- `tests/bats/check-backlog-issue-label.bats` RED→GREEN stash proof (CFP-1334 mandate)
+- `tests/fixtures/backlog-issue-label/{pass,fail}/` boundary fixture pair (CFP-963 Codex TP#4 mandate)
+- evidence-checks-registry `backlog-issue-phase-label-forbid` entry `status: deferred-followup` → `warning` 전환 (Phase 2 carrier merge 후)
+
+### ADR-060 §결정 5 default warning mode 정합
+
+본 Amendment 16 = 첫 도입 entry (first introduction = warning tier default). 향후 enforce 승격 (blocking-on-pr / blocking-on-merge) path = ADR-060 §결정 6 promotion gate AND condition (a) PR cumulative ≥20 + (b) bypass label 외 failure = 0 + (c) sibling Stories merged 충족 시 별 CFP carrier (Amendment 15 CFP-1607 precedent 답습).
+
+### Behavioral directive normative 승격 carrier (CLAUDE.md 단락 첫 적용)
+
+CLAUDE.md "Orchestrator 정책 적용 범위 + behavioral directive (normative)" 단락 의 mandate ("사용자 directive 를 personal memory file 저장 만으로 갈음 금지 — 즉시 CFP 제안 후 normative SSOT 반영 의무") 의 **첫 carrier** 사례:
+
+- Source = memory `feedback_no_phase_label_on_backlog_issues.md` (single-session ephemeral, consumer 비전파)
+- Carrier = 본 Amendment 16 + label-registry-v2 v2.78 + workflow + script + bats (normative SSOT + mechanical enforcement)
+- 후속 = memory file 3건 retire (Phase 2 PR merge 후 별 task — `feedback_no_phase_label_on_backlog_issues.md` + `feedback_brainstorming_why_first.md` (skill body L63/66/100/140-145 9 grep hits HIT verified, retire-only) + `feedback_codex_collaboration_patterns.md` (ADR-052/070/081 codified, retire-only))
+
+### sibling carrier sub-task (Phase 2 PR merge 후 별 task)
+
+- memory `feedback_brainstorming_why_first.md` retire-only — skill `codeforge:codeforge-brainstorm` body L63 / L66 / L100 / L140-145 4 anchor + 9 grep hits HIT verified (`why-first` / `왜` 명문화 완료, skill body 보강 carrier 불필요)
+- memory `feedback_codex_collaboration_patterns.md` retire-only — ADR-052 (Codex Proactive Check 6 touchpoint) + ADR-070 (verify-before-trust) + ADR-081 (Codex worker boilerplate) 3 ADR 안 codified 확인, CFP-57/58/59/61 references = deprecated lineage
+- MEMORY.md index 3 line 제거
+
+### ADR-082 §결정 9 verify-at-write-time + ADR-070 verify-before-trust 적용 evidence
+
+본 Amendment write-time 에 worktree base e1e2b751 (CFP-1632 HEAD = origin/main identical) 안 직접 verify:
+
+- `git -C <worktree_abs_path> show HEAD:docs/inter-plugin-contracts/label-registry-v2.md | head -10 | grep "^version:"` → `version: "2.77"` (next bump = 2.78 정합)
+- `git -C <worktree_abs_path> show HEAD:docs/adr/ADR-024-story-scoped-branch-policy.md | grep -n "^## Amendment "` → max Amendment 15 (CFP-1607 at L1335; chronologically out-of-order body 11→12→14→13→15 due to mid-flight parallel race rebase). next-slot = Amendment 16 정합.
+- `git -C <worktree_abs_path> show HEAD:docs/inter-plugin-contracts/label-registry-v2.md | grep -c "^  - name: hotfix-bypass:"` → 102 raw active concrete (next ordinal = 103 정합)
+- `git -C <worktree_abs_path> rev-parse HEAD` → `e1e2b7514b9ce2f7afe884734b66152952ac2291` = `origin/main` identical (no rebase needed)
+
+**Self-fault record (ADR-082 §결정 9 verify-before-cite bidirectional)**: 본 Amendment write 직전 ArchitectPLAgent 가 Read / Grep tool 을 사용해 filesystem path (worktree path 아님 — main repo path 가능성) 안 verify 결과 falsified value (v2.51 / Amendment 12 / 72 entries) 도출 → FIX verdict 발화. Orchestrator 가 worktree absolute path 안 `git -C <worktree>` 직접 verify 로 ground truth (v2.77 / Amendment 15 / 102 entries) reproduce 후 premise resolution. Root cause = ADR-040 Amendment 6 §결정 7.J.3 worktree absolute path 강제 directive 위반 (filesystem Read tool 이 main repo path = stale local main 18 commit behind origin/main 영역 snapshot 반환). Mitigation = 본 Amendment 16 write 이후 모든 read 채널 = `git -C <worktree_abs_path> show HEAD:<path>` 전용 (filesystem Read tool 검증 후 사용). PMOAgent retro flag — `stale_fact_inheritance` + `worktree_path_mismatch` pattern_count 누적.
+
+### mid-spawn drift detection evidence (ADR-073 Amendment 12)
+
+worktree base = `e1e2b7514b9ce2f7afe884734b66152952ac2291` = `origin/main` identical (pre-spawn `git fetch origin main` + `worktree list` + HEAD-pin verify). rebase 불필요 (4 commit behind 0).
+
+### Count convention 답습
+
+본 Amendment 16 = `hotfix-bypass:backlog-issue-label` 1 신규 family member append — `^  - name: hotfix-bypass:` raw active concrete grep count `102` → `103` (pre-edit 102 + 1 new = 103 정합). label-registry-v2 v2.77 → v2.78 MINOR bump. ADR-1000 Amendment 10 + Amendment 11 (CFP-1006) + Amendment 13 (CFP-1510) + Amendment 14 (CFP-1306) raw count convention 답습 (historical-with-template-count convention CFP-963 disjoint axis).
+
+### 영향
+
+- ADR-024 §결정 1~6 + Phase 2 partial (CFP-70) + CFP-72 + Amendment 1~15 전부 유지 — 본 Amendment 16 = §결정 6.A.8 신설 + 103번째 family member append.
+- label-registry-v2 v2.77 → v2.78 MINOR bump (kind:registry sibling sync 면제 ADR-010 §결정 2 + ADR-008 §결정 3 row append).
+- MANIFEST.yaml row "2.77" → "2.78" ratchet.
+- evidence-checks-registry `backlog-issue-phase-label-forbid` warning-tier entry append (ADR-060 §결정 5 default warning mode).
+- workflow + self-app byte-identical (ADR-005 invariant).
+- plugin.json bump 0 = `marketplace_sync_declared: false` (workflow + lint + label entry 신설 = governance behavior 변경이나 plugin.json mirrored field 무변경, ADR-063 atomic invariant 발효 조건 미충족).
+- ADR-058 §결정 5 sunset_justification ratchet — 본 Amendment 16 = 1 신규 family member + §결정 6.A.8 신설 = ratchet-UP 강화 방향, `sunset_justification_required: false` ("N/A — is_transitional: false (permanent governance policy)").
+
+### 산출물 (Wave 1 declarative — 본 Phase 1 PR scope)
+
+- `docs/adr/ADR-RESERVATION.md` — Amendment id slot reservation row (ADR-024 amendment_id=16 for CFP-1646) — commit-time first strict pre-claim 완료 (ADR-082 §결정 1 sub-scope (1-G) amendment-slot pre-reservation mandate 5th applied case + sub-scope (1-K) numeric claim write-time strict claim mandate 3rd applied case)
+- `docs/adr/ADR-024-story-scoped-branch-policy.md` — 본 Amendment 16 + frontmatter `amendments[]` row + `mechanical_enforcement_actions[]` row + `amended_by: CFP-1646` + `amended_date: 2026-05-26`
+- `docs/inter-plugin-contracts/label-registry-v2.md` — v2.77 → v2.78 MINOR bump + `hotfix-bypass:backlog-issue-label` 103번째 family member append + amendment_log row append
+- `docs/inter-plugin-contracts/MANIFEST.yaml` — label_registry row "2.77" → "2.78"
+- `docs/evidence-checks-registry.yaml` — `backlog-issue-phase-label-forbid` warning-tier entry append
+- `templates/github-workflows/backlog-issue-label-forbid.yml` — Wave 1 declarative stub
+- `.github/workflows/backlog-issue-label-forbid.yml` — self-app byte-identical
+- internal-docs Change Plan `plugin-codeforge/change-plans/cfp-1646-backlog-issue-label-invariant.md` (chief author cross-repo write)
+- internal-docs Story `plugin-codeforge/stories/CFP-1646.md` — §3 / §7 / §11 append (chief author cross-repo write)
+- `CHANGELOG.md` [Unreleased] entry append (wrapper repo + codeforge-internal-docs 양쪽 sibling)
+
+### Wave 2 carrier 영역 (Phase 2 PR scope)
+
+- `templates/github-workflows/backlog-issue-label-forbid.yml` + `.github/workflows/` self-app body actual lint wire (3-AND predicate detection)
+- `scripts/check-backlog-issue-label.sh` thin-wrapper (ADR-061)
+- `scripts/lib/check_backlog_issue_label.py` (ADR-061 multi-line Python external file)
+- `tests/bats/check-backlog-issue-label.bats` RED→GREEN stash proof (CFP-1334)
+- `tests/fixtures/backlog-issue-label/{pass,fail}/` boundary fixture pair (CFP-963 Codex TP#4)
+- evidence-checks-registry `backlog-issue-phase-label-forbid` entry `status: deferred-followup` → `warning` 전환
+
+### Wave 3 (memory retire — Phase 2 PR merge 후 별 task)
+
+- Delete: `C:\Users\mccho\.claude\projects\c--workspace-mclayer-plugin-codeforge\memory\feedback_no_phase_label_on_backlog_issues.md` (normative 승격 완료 → ephemeral memory retire)
+- Delete: `C:\Users\mccho\.claude\projects\c--workspace-mclayer-plugin-codeforge\memory\feedback_brainstorming_why_first.md` (skill body HIT verified → retire only)
+- Delete: `C:\Users\mccho\.claude\projects\c--workspace-mclayer-plugin-codeforge\memory\feedback_codex_collaboration_patterns.md` (ADR-052/070/081 codified → retire only)
+- MEMORY.md index 3 line 제거
+
+### 관련 파일
+
+- CLAUDE.md "Orchestrator 정책 적용 범위 + behavioral directive (normative)" 단락 (memory → CFP 즉시 제안 mandate 첫 carrier)
+- ADR-024 Amendment 1 hierarchical convention (cfp-NNN[/<lane>[/<sub>]] → phase:* mapping 의 timing discipline 확장)
+- ADR-024 Amendment 3 §결정 6.A audit-trailed exception channel (hotfix-bypass:* label family 영구 channel)
+- ADR-024 Amendment 4 §결정 6.A.1 branch → phase mapping 표 (label semantic SSOT)
+- ADR-024 Amendment 6 §결정 6.A.2 bypass-label-counter (per-entry namespace 누적 카운터)
+- ADR-024 Amendment 8 §결정 6.A.3/4/5 (per-plugin scope / [bypass-justification] marker / cross-repo extension)
+- ADR-024 Amendment 13 §결정 6.A.6 macro label batch (CFP-1510 prior art)
+- ADR-024 Amendment 14 §결정 6.A.7 parallel_anchors_checked (CFP-1306 prior art)
+- ADR-024 Amendment 15 §결정 6.A.3 per-plugin-cumulative-counter ratchet (CFP-1607 prior art chronological direct precedent)
+- ADR-060 §결정 5 (default warning mode — first introduction)
+- ADR-060 §결정 6 (promotion gate AND condition — Wave 2 / Wave 3 carrier path)
+- ADR-060 §결정 7 (bypass channel preserve — hotfix-bypass:backlog-issue-label retain)
+- ADR-061 §결정 1 (Python script-writing convention — multi-line external .py file)
+- ADR-058 §결정 5 sunset_justification (ratchet-up 강화 방향)
+- ADR-064 §결정 5 CFP scope unitary (단일 Story carrier — alternative `attach_owner_phase` schema field reject)
+- ADR-070 §D1 verify-before-trust (worktree absolute path 안 ground truth reproduce)
+- ADR-073 Amendment 12 (mid-spawn drift detection — worktree base e1e2b751 = origin/main identical)
+- ADR-082 §결정 1 sub-scope (1-C) USER-UTTERANCE-VERBATIM anchor (Story §1 spawn prompt verbatim, 합성 0건)
+- ADR-082 §결정 1 sub-scope (1-G) amendment-slot pre-reservation mandate (5th applied case)
+- ADR-082 §결정 1 sub-scope (1-K) numeric claim write-time strict claim mandate (3rd applied case)
+- ADR-082 §결정 9 verify-at-write-time (worktree-pinned `git show HEAD:<path>` direct verify)
+- ADR-040 Amendment 6 §결정 7.J.3 (worktree absolute path 강제 directive — `git -C <worktree_abs_path>` 사용 의무, 본 Story FIX iter-1 self-fault carrier)
+- ADR-108 §결정 3 META self-app (raw active concrete grep count post-append 102 + 1 = 103 정합, 10th applied case)
+- CFP-1111 follow-up #1198/#1199 (phase:설계 reflex incident — memory `feedback_no_phase_label_on_backlog_issues.md` origin)
+- CFP-1306 + CFP-1510 (Amendment 13/14 prior art — §결정 6.A.6/7 신설 패턴 답습)
+- CFP-1607 (Amendment 15 prior art — chronological direct precedent, mechanical_fast_path_inline single-axis deputy fan-out skip 패턴 답습)
+- Issue #1112 / #1169 (backlog Issue unlabeled prior art pattern)
+- Issue #1198 / #1199 (phase:설계 reflex incident — 본 Story memory carrier origin)
 
