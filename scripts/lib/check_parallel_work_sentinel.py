@@ -96,6 +96,8 @@ def _run_gh(args: list[str], mock_env: str = GH_MOCK_ENV) -> tuple[int, str]:
         ["gh"] + args,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     return result.returncode, result.stdout if result.returncode == 0 else result.stderr
 
@@ -115,6 +117,8 @@ def _run_git_log(prior_sha: str, branch: str = "origin/main") -> tuple[int, str]
         ["git", "log", "--format=%H %ci %s", f"{prior_sha}..{branch}"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     return result.returncode, result.stdout
 
@@ -129,6 +133,8 @@ def _check_gh_auth() -> bool:
         ["gh", "auth", "status"],
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
     )
     return result.returncode == 0
 
@@ -328,6 +334,8 @@ def _check_stale_grace(prior_sha: str) -> None:
             ["git", "log", "--format=%ci", "-1", prior_sha],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
         )
         if result.returncode != 0 or not result.stdout.strip():
             return
@@ -345,6 +353,8 @@ def _check_stale_grace(prior_sha: str) -> None:
                 ["git", "log", "--format=%ct", "-1", prior_sha],
                 capture_output=True,
                 text=True,
+                encoding="utf-8",
+                errors="replace",
             )
             if result2.returncode == 0 and result2.stdout.strip():
                 commit_epoch = int(result2.stdout.strip())
@@ -381,6 +391,8 @@ def _handle_api_quota_exceeded(mode: str, context: str) -> None:
             ["git", "log", "-50", "--format=%s"],
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
         )
         if result.returncode == 0:
             cfp_refs = []
