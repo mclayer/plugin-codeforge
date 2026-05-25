@@ -3,8 +3,21 @@
 # Exit code: 0 = pass (또는 category-b advisory only), 1 = warning (PR 머지 차단 안 함, ADR-060 warning tier)
 # SSOT: docs/wording-dictionary.md (CFP-610 / ADR-064 Amendment 2 + Amendment 5 — CFP-750)
 #
-# 카테고리 (a): 사용 금지 어휘 발견 시 exit 1 (warning)
-# 카테고리 (b): 평문 정의 누락 시 exit 0 + advisory console warn (baseline 폭증 risk 완화)
+# ─── Mode invariant SSOT (CFP-1345 / CFP-1316 retro F5 codify, super-class #1047 Wave 2) ──
+# 본 lint 의 dual-mode invariant 는 ADR-064 §결정 1 wording-dictionary lint policy 가 SSOT 다.
+# 두 mode 는 disjoint exit code 영역 — script body cross-contamination 금지:
+#
+#   카테고리 (a) STRICT mode    — 사용 금지 어휘 발견 시 EXIT_CODE=1 (warning tier, PR 머지 차단 안 함)
+#                                  → emission point: scan_file_forbidden() L181 EXIT_CODE=1
+#                                  → enforcement: ADR-060 warning-tier evidence-checks-registry entry
+#                                                 `wording-dictionary` + bypass label `hotfix-bypass:wording-dictionary`
+#
+#   카테고리 (b) ADVISORY mode  — 평문 정의 누락 시 EXIT_CODE 무변경 (0 invariant) + console echo only
+#                                  → emission point: scan_file_definitions() L200-206 echo only (no exit mutation)
+#                                  → enforcement: 0 (advisory baseline 폭증 risk 완화 — CFP-1316 inline_orchestrator_verify 결과 검증)
+#
+# Mode 분리 강제: scan_file_definitions() 안 EXIT_CODE=1 mutation 금지 (cat-b advisory 영역 invariant).
+# CLI flag `--strict` / `--advisory-only` 미지원 — dual-mode invariant 가 mode flag 보다 결정 명확.
 #
 # Exempt:
 #   - blockquote 행 ("> " prefix)
@@ -178,6 +191,8 @@ scan_file_for_word() {
     echo "$hits" | while IFS= read -r hit; do
       echo "  $hit"
     done
+    # Mode invariant: STRICT mode (CFP-1345 header SSOT) — 카테고리 (a) emission point.
+    # ADR-064 §결정 1 wording-dictionary lint policy + ADR-060 warning-tier framework.
     EXIT_CODE=1
   fi
 }
@@ -202,6 +217,9 @@ scan_file_definitions() {
       if ! has_definition "$hit_line" "$word"; then
         echo "ADVISORY [wording-dictionary 카테고리 (b) 평문 정의 누락]: '$word' — $file"
         echo "  $hit_line"
+        # Mode invariant: ADVISORY mode (CFP-1345 header SSOT) — 카테고리 (b) emission point.
+        # EXIT_CODE 무변경 강제 (0 invariant) — strict cross-contamination 금지 (cat-a 영역과 disjoint).
+        # ADR-064 §결정 1 wording-dictionary lint policy + baseline 폭증 risk 완화 mitigation.
       fi
     done <<< "$hits"
   done
