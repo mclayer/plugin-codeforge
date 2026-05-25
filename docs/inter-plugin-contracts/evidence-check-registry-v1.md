@@ -163,6 +163,47 @@ warning → blocking-on-pr / blocking-on-merge 승격 = 3 condition AND:
 - **v1.2 (CFP-509, 2026-05-13 — Accepted)**: `recurrence:` field 정식 도입 (optional object). MINOR bump (신규 optional field). ADR-060 Amendment 6 carrier. CFP-490 description-only `recurrence_count` (lane-evidence-trail entry, CFP-500 FIX-5 + CFP-451 transient 2회) 의 schema 흡수.
 - **v1.3 (CFP-963, 2026-05-19 — Accepted)**: `lane_evidence[].network_scope_actual` optional field 정식 도입 (§14 Lane Evidence row 13번째 optional field — 4-tier enum value SSOT). MINOR bump (신규 optional field + omit-on-N/A pattern backward-compat). ADR-060 Amendment 14 + ADR-081 Amendment 4 carrier. Codex worker dispatch lane evidence 영역 — `codex-network-scope-presence` lint (12번째 warning-tier entry, ADR-060 Amendment 14 §결정 28) 가 §14 row 안 본 field membership check 검증. **MANIFEST drift catch-up 동반** (`docs/inter-plugin-contracts/MANIFEST.yaml` row "1.1" → "1.3" — CFP-509 v1.1→v1.2 sibling MANIFEST sync miss INV-1 parity 영역 + CFP-963 v1.2→v1.3 신규 MINOR 양 layer atomic).
 
+### Tier value transition 첫 사례 — `current_tier: warning → blocking-on-pr` (CFP-1607, 2026-05-25 KST — schema 변경 0, value transition only)
+
+본 entry = 4-tier enum value transition 의 **첫 documenting 사례** (ADR-060 framework first-use blocking-on-pr promotion, ADR-024 Amendment 15 carrier). schema doc body / field definition / enum 값 변경 0건 — 본 section 은 registry yaml 안 `current_tier` field 의 enum value 가 `warning` → `blocking-on-pr` 전환된 첫 사례를 documenting only (forward-reference 영역).
+
+**Transition pattern** (registry yaml entry-level field-level change):
+
+```yaml
+# Before (warning tier, advisory dashboard)
+- name: per-plugin-cumulative-counter
+  current_tier: warning
+  status: warning
+  recurrence:
+    last_occurrence: null
+    promotion_trigger: none
+
+# After (blocking-on-pr tier, PR check fail = merge block)
+- name: per-plugin-cumulative-counter
+  current_tier: blocking-on-pr        # warning → blocking-on-pr ratchet
+  status: blocking-on-pr              # status enum 동시 transition
+  promoted_by: CFP-1607               # 신규 optional field — promotion carrier Story key
+  promoted_date: 2026-05-25           # 신규 optional field — promotion 시점 KST
+  recurrence:
+    last_occurrence: 2026-05-25T18:00:00+09:00  # ratchet trigger time
+    promotion_trigger: warning_to_blocking_on_pr  # transition enum value
+```
+
+**Schema invariant 보존**:
+- `current_tier` enum 4-value SSOT (L57) 변경 0 — `warning` / `blocking-on-pr` / `blocking-on-merge` / `hotfix-bypass` 동일.
+- `status` enum value transition (warning → blocking-on-pr) — schema body 변경 0.
+- 신규 optional field 2종 (`promoted_by` + `promoted_date`) — entry-level documenting only (schema body 강제 추가 아님, ADR-060 framework first-use precedent emission).
+- `recurrence.promotion_trigger` enum value 신규 (`warning_to_blocking_on_pr`) — schema body 의 enum 값 추가가 아닌 entry-level prose only.
+
+**ADR-060 §결정 6 promotion gate AND 3/3 PASS evidence** (본 first-use precedent 가 충족):
+1. `pr_cumulative_min: 20` ≤ 200 (10x threshold, gh pr list verified)
+2. `failure_threshold: 0` = `recurrence.count: 0` (warning mode 8일간 발화 0건)
+3. `sibling_dependencies: [CFP-390, CFP-412, CFP-455]` = ALL MERGED (CFP-412 substitution via ADR-060 Amendment 1+2 chain)
+
+본 first-use precedent 가 향후 21+ warning-tier entry 의 blocking-on-pr 승격 path 의 template — `current_tier` + `status` + `recurrence.last_occurrence` + `recurrence.promotion_trigger` 4 field 동시 transition + optional `promoted_by` + `promoted_date` 부착 pattern.
+
+**MINOR bump 미동반** (schema 변경 0 — value transition only) — kind:registry sibling sync 면제 (ADR-010 §결정 2). `docs/inter-plugin-contracts/MANIFEST.yaml` `evidence-check-registry-v1` row version retain (v1.3, CFP-963 baseline).
+
 ### 예상 변경 (forward-looking)
 
 - **v1.x (CFP-D 잠정)**: `modal_anti_pattern_dictionary.version` 확장 어휘 도입 (예: `"1.1"` — "충분히" / "조만간" / "soon" / "TBD" 추가). MINOR bump.
