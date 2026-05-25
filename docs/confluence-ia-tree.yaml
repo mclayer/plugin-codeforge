@@ -1,7 +1,15 @@
 # Confluence space CFP IA tree map — Sub-B S2.1 (CFP-1491) of Mega-Epic CFP-1415
 # Confluence-as-derived-mirror governance standardization
+#
+# Schema history:
+#   1.0 — CFP-1491 (Sub-B S2.1) initial seed (9 top-level + 40 lane plugin children = 49 page)
+#   1.1 — CFP-1523 (Sub-B S2.3 잔여 real backfill) MINOR bump:
+#         + lane_mapping_rule: cross-ref pointer (SSOT primary = docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md)
+#         + cascade_execution_plan: Phase 2 PR 안 6 MCP call atomic execution plan + dry_run_gate mandate
+#         + legacy_adr_migration_map[]: 148 page (ADR 117 + IPC 30 + Consumer Guide 1) per-page binding skeleton (Phase 2 post-execute populate, F-DR-001 factual update — ADR corpus 117 ground truth verified-via `git ls-files docs/adr/ADR-*.md | wc -l` 2026-05-25 KST)
+#         backward-compat 보존 (field 추가만, 삭제/rename 0 — ADR-089 §결정 1 양방향 호환)
 
-schema_version: "1.0"
+schema_version: "1.1"
 
 space:
   key: CFP
@@ -31,6 +39,125 @@ mark_engine_path:
   status: retain_for_future
   adr: ADR-103 §결정 1
   dependency: "#1320 ATLASSIAN_API_TOKEN secret 주입 (사용자 영역)"
+
+# CFP-1523 Sub-B S2.3 잔여 real backfill carrier (DD-4 category → lane mapping rule SSOT)
+# SSOT primary location = governance-principle/adr-category-lane-mapping.md (narrative body).
+# 본 yaml field = cross-ref pointer + closed_enum field 만 (Published Language content duplication
+# 금지 invariant — ADR-091 §결정 4 정합).
+lane_mapping_rule:
+  ssot_ref: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md
+  is_transitional: false  # ADR-058 §결정 5 — permanent governance ratchet (lane mapping rule SSOT = closed-set invariant)
+  open_extension: false  # 신규 enum 출현 시 별 ADR Amendment 의무 (sunset_justification 3-tuple)
+  carrier_story: CFP-1523
+  case_normalization: lowercase_canonical  # ADR-068 I-4 wording SSOT — case-insensitive 16 normalized enum
+  case_fold_during_check: true  # F-DR-004 — FU-1523-1 lint algorithm: lowercase normalize input frontmatter value before closed_enum membership check (Architecture→architecture / Process→process collision merge)
+  closed_enum:
+    # 16 normalized enum (18 unique ADR corpus value, 2 쌍 case-collision normalized:
+    # Architecture/architecture + Process/process)
+    - governance
+    - security
+    - orchestration
+    - tooling-infrastructure
+    - lifecycle
+    - dogfood-out
+    - agent-tier
+    - process  # canonical lowercase, includes "Process" legacy retain
+    - architecture  # canonical lowercase, includes "Architecture" legacy retain
+    - agent-design
+    - orchestration-discipline
+    - workflow-policy
+    - orchestrator-policy
+    - audit
+    - team & process  # canonical lowercase, "Team & Process" legacy retain
+    - plugin architecture  # canonical lowercase, "Plugin Architecture" legacy retain
+    - plugin distribution & consumer onboarding  # canonical lowercase, legacy retain
+    - infrastructure  # canonical lowercase, "Infrastructure" legacy retain
+  deferred_followup_lint:
+    cfp: FU-1523-1
+    script: scripts/check-adr-category-lane-coverage.sh
+    workflow: templates/github-workflows/adr-category-lane-coverage.yml
+    tier: warning
+    hotfix_bypass_label: hotfix-bypass:adr-category-lane-coverage
+    rationale: |
+      declarative_layer 본 carrier (CFP-1523) — mechanical wire 별 sub-CFP (FU-1523-1).
+      ADR-060 framework Wave 1 → Wave 2 wire pattern 답습.
+
+# CFP-1523 Phase 2 PR 안 cascade execution plan (Story §3.0 D-5 dry-run gate mandate codify)
+cascade_execution_plan:
+  carrier_story: CFP-1523
+  phase: 2  # Phase 2 PR DeveloperPL §8 영역 (본 carrier Phase 1 = declarative_layer only)
+  mechanism: mcp_cascade_6_call_atomic
+  fallback_mechanism: rest_direct_per_page_batch  # 284 MCP call worst-case (Confluence native cascade preserve 실패 시)
+  fallback_rationale: |
+    REST direct `PUT /wiki/rest/api/content/{id}/move/{position}/{targetId}` body 미요구
+    path param only (position enum: before/after/append, targetId). Python loop script
+    (ADR-061 §결정 1 multi-line Python 외부 file 의무).
+
+  dry_run_gate:
+    mandate: true  # Story §3.0 D-5 mandate codify (ADR-070 §결정 D6 STANDING cross-ref)
+    scope: 1_page_pre_check  # test space 또는 throwaway page 1 page
+    pre_check_target: cascade_preserve_verify  # parent move → children parent_id 변경 0 + 새 위치 자동 따라감 verify
+    failure_action: escalate_to_fallback_mechanism  # cascade 실패 시 REST direct fallback chain trigger
+    success_action: proceed_with_3_root_parent_atomic
+
+  steps:
+    - step: 1
+      call: getConfluencePage
+      target_id: "2097153"  # Legacy `adr` bucket (root, 111 children)
+      purpose: fetch_body_verbatim
+    - step: 2
+      call: updateConfluencePage
+      target_id: "2097153"
+      parent_id: per_category_primary_lane_bucket  # §lane_mapping_rule per ADR frontmatter category
+      body: verbatim_from_step_1
+      purpose: move_adr_bucket_to_lane_bucket
+      cascade_children_count: 117  # F-DR-001 — ADR corpus ground truth (verified-via `git ls-files docs/adr/ADR-*.md | wc -l = 117` 2026-05-25T13:30:00+09:00 KST, was stale 111 from Phase 0 local cwd snapshot)
+      empirical_source: "git -C <wrapper-worktree> ls-files docs/adr/ADR-*.md | wc -l = 117 (verified 2026-05-25T13:30:00+09:00 KST) + Phase 2 execution time getPagesInConfluenceSpace verify mandate (ADR-101 §결정 D2 dual-layer ground truth)"
+    - step: 3
+      call: getConfluencePage
+      target_id: "2129949"  # Legacy `inter-plugin-contracts` bucket (root, 30 children)
+      purpose: fetch_body_verbatim
+    - step: 4
+      call: updateConfluencePage
+      target_id: "2129949"
+      parent_id: "2130942"  # cross-cutting `inter-plugin-contracts Registry` bucket
+      body: verbatim_from_step_3
+      purpose: move_ipc_bucket_to_cross_cutting
+      cascade_children_count: 30
+      empirical_source: "git -C <wrapper-worktree> ls-files docs/inter-plugin-contracts/*.md | wc -l = 30 (verified 2026-05-25T13:30:00+09:00 KST) + Phase 2 execution time getPagesInConfluenceSpace verify mandate (ADR-101 §결정 D2 dual-layer ground truth)"
+    - step: 5
+      call: getConfluencePage
+      target_id: discover_at_execution_time  # Phase 2 execution time mcp__plugin_atlassian_atlassian__getPagesInConfluenceSpace verify
+      target_name: Consumer Guide
+      purpose: fetch_body_verbatim
+    - step: 6
+      call: updateConfluencePage
+      target_id: discover_at_execution_time
+      parent_id: "2163807"  # wrapper-governance bucket (cross-cutting)
+      body: verbatim_from_step_5
+      purpose: move_consumer_guide_to_wrapper_governance
+      cascade_children_count: 1
+      empirical_source: "Consumer Guide single page (docs/consumer-guide.md) + Phase 2 execution time getPagesInConfluenceSpace verify mandate (ADR-101 §결정 D2 dual-layer ground truth)"
+
+  total_mcp_calls: 6  # 3 root parent × 2 calls (get + update)
+  total_pages_cascaded: 148  # F-DR-001 — 117 + 30 + 1 = 148 expected (Phase 2 audit verify, drift 시 별 follow-up CFP). Was stale 142 from Phase 0 local cwd ADR count 111 snapshot.
+  adr_101_dual_layer_verify_mandatory: true  # Story §4.3.1 row 7b governance baseline — Phase 2 execution time ground-truth dual-layer verify
+
+# CFP-1523 Phase 2 PR 안 post-execute populate (per-page binding 실 기록)
+# Phase 1 PR = skeleton 만 (empty array), Phase 2 PR = 148 row append (F-DR-001 — ADR 117 + IPC 30 + Consumer Guide 1)
+legacy_adr_migration_map:
+  schema_version_introduced: "1.1"
+  carrier_story: CFP-1523
+  populate_phase: 2  # Phase 2 PR cascade execution 후 post-execute populate
+  per_row_schema:
+    - field: page_id  # Confluence page id (string)
+    - field: title  # Page title (string)
+    - field: source_file  # git source path (예: "docs/adr/ADR-001-review-agent-unification.md")
+    - field: category  # ADR frontmatter category (lowercase canonical per lane_mapping_rule.case_normalization)
+    - field: previous_parent_id  # Legacy flat parent (예: "2097153" for adr bucket)
+    - field: new_parent_id  # Lane bucket page_id per lane_mapping_rule §4.1 primary
+    - field: cross_ref_lane_bucket_ids  # Array of cross-ref lane bucket page_ids
+  rows: []  # Phase 1 PR = empty skeleton, Phase 2 PR = 148 row append (F-DR-001 — ADR 117 + IPC 30 + Consumer Guide 1)
 
 top_level_pages:
   lane_plugins:
