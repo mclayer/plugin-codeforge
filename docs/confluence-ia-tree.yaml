@@ -1548,15 +1548,16 @@ playbook_split_pages:
     last_synced: "2026-05-25T21:55:04+09:00"
     push_attempt_status: "success"
     confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098490/3B+Preflight+lane"
-  - id: null
+  - id: "2131011"
     parent: 2130966
     title: "§4 — 병렬 스폰 판단"
     source_section: "## 4. 병렬 스폰 판단"
     source_line_range: [2196, 2285]
     source_line_count: 89
     estimated_byte_size: 6000
-    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
-    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
+    last_synced: "2026-05-25T22:46:33+09:00"
+    push_attempt_status: "success"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2131011/4"
   - id: "2163913"
     parent: 2130966
     title: "§5 — docs/stories file 동기화"
@@ -1576,33 +1577,36 @@ playbook_split_pages:
     estimated_byte_size: 19000
     push_attempt_status: "deferred_to_cfp_1617_session_capacity"
     push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
-  - id: null
+  - id: "2131032"
     parent: 2130966
     title: "§7 — 세션 재개(resume) 복원 절차"
     source_section: "## 7. 세션 재개(resume) 복원 절차"
     source_line_range: [2593, 2666]
     source_line_count: 73
     estimated_byte_size: 5000
-    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
-    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
-  - id: null
+    last_synced: "2026-05-25T22:47:11+09:00"
+    push_attempt_status: "success"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2131032/7+resume"
+  - id: "2131053"
     parent: 2130966
     title: "§8 — 토큰 예산 모니터링 + 세션 회고"
     source_section: "## 8. 토큰 예산 모니터링 + 세션 회고"
     source_line_range: [2667, 2760]
     source_line_count: 93
     estimated_byte_size: 7000
-    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
-    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
-  - id: null
+    last_synced: "2026-05-25T22:48:06+09:00"
+    push_attempt_status: "success"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2131053/8"
+  - id: "2098535"
     parent: 2130966
     title: "§9 — 트러블슈팅 플레이북"
     source_section: "## 9. 트러블슈팅 플레이북"
     source_line_range: [2761, 2858]
     source_line_count: 97
     estimated_byte_size: 7000
-    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
-    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
+    last_synced: "2026-05-25T22:49:34+09:00"
+    push_attempt_status: "success"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098535/9"
   - id: "2098515"
     parent: 2130966
     title: "§10 — Hotfix 경로"
