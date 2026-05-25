@@ -217,6 +217,27 @@ branch naming `cfp-1495-redo` 권장 (ADR-024 cfp-NNN 정합, 간결 — `cfp-14
 
 ADR-082 §결정 6 retain pattern (declaration-only-Wave-1) + ADR-086 self-application 정합.
 
+## 결과
+
+본 ADR 의 expected outcome / governance impact / measurable effect:
+
+- **`admin_merge_action_required_force_attempt` super-class mitigation**: 3-incident pattern_count 3 reach (CFP-1334 / CFP-1318 / CFP-1495) 의 procedural governance gap closure — admin-merge attempt 시점 5-step pre-flight gate 가 ACTION_REQUIRED silent override path 차단.
+- **Threat A counter reset abuse mitigation**: attempt cap=3 dual scope (per-PR AND per-Story) 가 close+reopen / PR 재생성 / attempt 분산 우회 경로 차단 — counter telemetry `admin_merge_attempts` optional field (Story §14 Lane Evidence) 가 PMOAgent retro corpus enumeration (ADR-045 §D-9) cross-Story pattern_count tally evidence base.
+- **Threat B branch protection toggle abuse mitigation**: `gh api -X PATCH .../branches/main/protection` explicit forbid 가 `enforce_admins.enabled: false` toggle 우회 attack surface 차단 (procedural directive, session admin auth 권한 보유 시에도 호출 금지).
+- **5 lint chain auto-inherit (별 mechanism 0)**: ADR-024 Amendment 6/8 §결정 6.A 의 bypass-as-norm-mutation 차단 5 lint chain (`bypass-label-counter` / `per-plugin-cumulative-counter` / `bypass-justification-marker` / `cross-repo-bypass-counter` / `check-bypass-audit-comment.sh`) 자동 covered — 별 lint 신설 0건.
+- **declaration-only Wave 1 mechanical wire deferred-followup**: `mechanical_enforcement_actions: [admin-merge-preflight-gate]` frontmatter (ADR-040 Amendment 3 §결정 7.D self-application 정합) → Wave 2 별 sub-CFP carrier 가 `scripts/check-admin-merge-preflight.sh` 3-layer wire (pre-commit hook + pre-push hook + Orchestrator self-instrumentation) 산출.
+
+## 관련 파일
+
+frontmatter `related_files` 의 narrative companion (markdown link 형식):
+
+- [CLAUDE.md](../../CLAUDE.md) — 본 ADR cross-ref + L304/L306 drift 정정 (4 required check 현 main state, deploy-lane-presence Phase 2 carrier 미배포 명문화)
+- [docs/orchestrator-playbook.md §3.19](../orchestrator-playbook.md) — Admin merge pre-flight gate procedure 신설 (5-step procedure + attempt cap + DR recovery)
+- [docs/evidence-checks-registry.yaml](../evidence-checks-registry.yaml) — `admin-merge-preflight-gate` entry append (warning-tier deferred-followup, ADR-060 framework 정합)
+- [docs/inter-plugin-contracts/label-registry-v2.md](../inter-plugin-contracts/label-registry-v2.md) — `hotfix-bypass:admin-merge-preflight-gate` 95번째 family member 신설 + v2.69 → v2.70 MINOR bump
+- [docs/inter-plugin-contracts/MANIFEST.yaml](../inter-plugin-contracts/MANIFEST.yaml) — label-registry-v2 row v2.69 → v2.70 ratchet (kind:registry, sibling sync 면제 ADR-010 §결정 2)
+- [docs/parallel-work/section-ownership.yaml](../parallel-work/section-ownership.yaml) — `admin-merge-preflight-gate` section ownership row append (parallel epic conflict 차단 ADR-050 정합)
+
 ## 해소 기준
 
 N/A — permanent governance ratchet (ADR-058 §결정 7 보안 ADR default presumption false 정합, 약화 0건 invariant — `is_transitional: false`).
