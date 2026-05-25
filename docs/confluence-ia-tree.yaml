@@ -1695,18 +1695,19 @@ legacy_domain_knowledge_category_inference_placeholder:
 
 living_architecture_pages:
   # CFP-1524 Sub-C Phase 2 (CFP-1586) Confluence push 결과 — 2026-05-25 KST
-  # 6 plugin push 완료 (version 2 갱신) / 3 plugin defer:
-  #   - wrapper (codeforge): cross_cutting child Living Arch page 부재, ancestor 결정 별 carrier defer
+  # 7 plugin push 완료 (6 lane plugin version 2 갱신 + wrapper fresh create version 1) / 2 plugin defer:
+  #   - wrapper (codeforge): CFP-1619 carrier 에서 push 완료 (ancestor = cross_cutting parent 2098283, derived default — 5번째 child 평면적 navigation 정합)
   #   - codeforge-deploy / codeforge-deploy-review: GitHub repo 404 부재 (CFP-1059 declarative phase only, 실 plugin repo 신설 = 별 carrier S2/S3)
   - plugin_name: "codeforge"  # wrapper
-    page_id: null  # defer — cross_cutting child Living Arch ancestor 결정 별 sub-CFP carrier
-    ancestor_id: null
+    page_id: "2163863"  # CFP-1619 carrier — cross_cutting parent (2098283) 안 5번째 child fresh create
+    ancestor_id: "2098283"  # cross_cutting parent (derived default — 평면적 navigation 정합, 기존 4 child = wrapper-governance/inter-plugin-contracts/orchestrator-playbook/ADR Registry 옆 5번째)
     git_source_path: "docs/architecture/codeforge-family.md"
-    last_synced: null
+    last_synced: "2026-05-25T21:41+09:00"
     five_anchor_codified: true
-    mermaid_diagram_count: null
-    phase_2_status: "defer"
-    phase_2_defer_reason: "cross_cutting child Living Arch ancestor 결정 별 carrier (cross_cutting parent 2098283 안 child 부재 — wrapper-governance 2163807 등 4 child 만 존재)"
+    mermaid_diagram_count: 4  # arc42 §3 (Context) + §5 (Building Block) + C4 Container + C4 Component (Open Decisions 표 영역 mermaid 0)
+    phase_2_status: "pushed"
+    confluence_version_after_push: 1  # fresh create (CFP-1619 carrier)
+    push_carrier: "CFP-1619"  # follow-up CFP-1586 Sub-C Phase 2 wrapper defer entry carrier
   - plugin_name: "codeforge-requirements"
     page_id: "2163504"
     ancestor_id: "2129922"  # codeforge-requirements top-level parent (CFP-1494 산출)
@@ -1780,14 +1781,13 @@ living_architecture_pages:
     phase_2_status: "defer"
     phase_2_defer_reason: "GitHub repo mclayer/plugin-codeforge-deploy-review 404 부재 — CFP-1059 declarative phase only, 실 plugin repo 신설 = 별 sub-Story S3 carrier"
 
-living_architecture_pages_total: 9  # 6 pushed + 3 defer (wrapper + 2 declarative-phase plugin)
-living_architecture_carrier: "CFP-1524 Sub-C (CFP-1586)"
-living_architecture_phase: "Phase 2 partial complete (2026-05-25 KST) — 6 plugin pushed (requirements/design/develop/review/test/pmo, all version 2), 3 plugin defer (wrapper ancestor 미정 + 2 CFP-1059 declarative plugin repo 부재)"
+living_architecture_pages_total: 9  # 7 pushed + 2 defer (CFP-1619 wrapper push 완료 후 — 2 defer = CFP-1059 declarative-phase plugin repo 부재 영역 잔존)
+living_architecture_carrier: "CFP-1524 Sub-C (CFP-1586) + CFP-1619 (wrapper carrier — follow-up to CFP-1586 defer)"
+living_architecture_phase: "Phase 2 wrapper carrier complete (2026-05-25 KST) — 7 plugin pushed (6 lane plugin version 2 + wrapper version 1 fresh create CFP-1619), 2 plugin defer (CFP-1059 declarative-phase plugin repo 부재 영역 잔존 = codeforge-deploy + codeforge-deploy-review)"
 living_architecture_git_baseline: "CFP-1427 (Sub-C S3.3 closed) — git source 5-anchor body seed"
 living_architecture_5anchor_ssot: "ADR-078 Amendment 2 (CFP-1425 closed 2026-05-24) — arc42 §3 (Context) + §5 (Building Block) + C4 Container + C4 Component + Open Decisions Pending"
 living_architecture_mechanical_wire_followup: "CFP-1429 (Sub-C S3.5) — living-architecture-update lint, 본 carrier scope 외"
 living_architecture_phase_2_followup_carriers:
-  - "wrapper (codeforge-family.md) Confluence push — cross_cutting child Living Arch ancestor 결정 별 sub-CFP"
   - "codeforge-deploy plugin repo 신설 + Living Arch Confluence push — CFP-1059 sub-Story S2 carrier"
   - "codeforge-deploy-review plugin repo 신설 + Living Arch Confluence push — CFP-1059 sub-Story S3 carrier"
   - "Mermaid/PlantUML diagram-as-code push (현재 text-only push) — ADR-111 §결정 4 정합 carrier 별 follow-up"
