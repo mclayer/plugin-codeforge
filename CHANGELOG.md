@@ -7,7 +7,19 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
-(none)
+### Added
+
+- [CFP-1577] **playbook §9.7.1 신설 — Phase label transition timing forcing function** (doc-only fast-path per ADR-054, CFP-1539+CFP-1540 batch retro §4.1 #1 mandatory follow-up carrier)
+  - **axis disjoint codify**: §9.7 = static snapshot mapping (PR open 시 mergeable 판정 기준) ↔ §9.7.1 = dynamic transition timing forcing function (Orchestrator 가 *언제 무엇을* attach/remove 의무 codify). workflow ↔ Orchestrator handshake codification gap 해소
+  - **11-row transition timing 표** (column schema: `Phase / Add label / Remove label / Add gate / Timing signal / Source`) — 8 lane phase taxonomy (CFP-1059 후) + Issue Forms entry + terminal `phase:완료` 전부 coverage
+  - **`phase:완료` precondition AND mandate** (CFP-1539+CFP-1540 incident 차단): (a) 활성 lane terminal gate (`gate:design-review-pass` default / `gate:deploy-review-pass` deploy lane 활성 시) + (b) `gate:retro-complete` (label-registry-v2 line 558, ADR-045 v1.5 실재 confirmed). 위반 정정 pattern (incident verbatim 답습) = `phase:구현-리뷰` + gate 재부착 → workflow PASS
+  - **`skills/story-epic-flow-preflight/SKILL.md` preflight check #1 cross-ref 1-row append** — skill body 의 phase 라벨 정합 check 가 §9.7.1 SSOT 참조 의무 (AC-3 carrier)
+  - **workflow yml 변경 0건** (Issue Out of scope §3 retain — `phase-gate-mergeable.yml` 본문 무수정, documentation layer only)
+  - **ADR Amendment 0건 / 신규 ADR 0건** — playbook documentation 강화 only, ADR governance 영역 무관 (RequirementsPL `scope_verdict: AGREED` + `0 ADR Amendment` 정합)
+  - **A3 pivot resolved**: `gate:retro-complete` label-registry-v2 line 558 실재 [verified] (ADR-045 v1.5 entry). A4 pivot retained — skill path `skills/story-epic-flow-preflight/SKILL.md` (Issue body stale path `codeforge-` prefix 제거)
+  - Change Plan SSOT: `<internal-docs>/plugin-codeforge/change-plans/cfp-1577-phase-label-transition-timing.md`
+  - Story SSOT: `<internal-docs>/plugin-codeforge/stories/cfp-1577.md` §3·§7·§11 append
+  - Cross-ref carrier: codeforge-internal-docs PR #904 (CFP-1539+CFP-1540 batch retro §4.1 #1), CFP-342 / CFP-479 (playbook §9.7 source), ADR-026 Amendment 4 (CFP-795 post-merge fix exemption axis disjoint)
 
 ## [6.8.1] - 2026-05-25
 
