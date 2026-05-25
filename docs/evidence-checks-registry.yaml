@@ -4917,3 +4917,69 @@ entries:
       last_occurrence: "2026-05-24T00:00:00Z"
       promotion_trigger: advisory       # warning mode 시작 → 20 PR + 0 failure 누적 시 blocking 후보 (mark engine #1320 활성 정합)
     status: Active                     # CFP-1495 Wave 1 mechanical wire 완료 (MCP-direct path Wave 1 declarative anchor 의 hydrate — Sub-B Sub-Epic CFP-1490 5/5 마지막 carrier)
+
+  - name: pre-spawn-prompt-finalize-verify
+    description: >
+      Story file (docs/stories/**/*.md) 안 [USER-UTTERANCE-VERBATIM] block 내
+      `pre_spawn_prompt_finalize_verified: <true|false>` field presence 검증.
+
+      Detection scope:
+        - [USER-UTTERANCE-VERBATIM]...[/USER-UTTERANCE-VERBATIM] block 을 보유한 Story file 만 대상.
+        - block 내 `pre_spawn_prompt_finalize_verified: true|false` field 부재 시 [WARN-FIELD-ABSENT] 경고.
+        - field 값이 true|false 외 값이면 [WARN-FIELD-INVALID] 경고.
+        - [USER-UTTERANCE-VERBATIM] block 부재 file = silent skip (spawn evidence marker 부재 = lint scope 외).
+
+      FP 완화 guard 4종:
+        (1) templates/** canonical example 면제 (FP guard 1)
+        (2) tests/** bats fixture 면제 (FP guard 2)
+        (3) non-docs/stories/ files 면제 (FP guard 3)
+        (4) no [USER-UTTERANCE-VERBATIM] block = silent skip (FP guard 4)
+
+      PER_BLOCK_SCAN_CAP=30 — CodeQL ReDoS guard (CFP-1497/1500 precedent).
+      Python SSOT per ADR-061 (scripts/lib/check_pre_spawn_prompt_finalize_verify.py).
+      Bypass env: HOTFIX_BYPASS_PRE_SPAWN_PROMPT_FINALIZE_VERIFY=1.
+
+      ADR-082 Amendment 19 §결정 1 layer 1 sub-scope (1-I) + ADR-073 Amendment 13/14 paired sibling.
+      4-layer temporal defense forcing function Layer 4 (CFP-1539 / CFP-FU-A Wave 2 mechanical wire):
+        Layer 1 (CFP-1489 spawn-prompt-head-pin-presence) +
+        Layer 2 (CFP-1500 mid-spawn-drift-detection) +
+        Layer 3 (CFP-1497 amendment-slot-reservation) +
+        Layer 4 (본 pre-spawn-prompt-finalize-verify = temporal defense 완결).
+
+      META self-application 5th applied case: 본 PR spawn prompt 자체가
+      [USER-UTTERANCE-VERBATIM] + pre_spawn_prompt_finalize_verified: true + [PRE-SPAWN-ORIGIN-MAIN-SHA:] 보유.
+
+      97번째 hotfix-bypass:* family member (label-registry-v2 v2.72, ADR-108 forcing function parity mandate 정합 — raw active concrete grep count post-append = 96 + 1 = 97).
+    detect_command: bash scripts/check-pre-spawn-prompt-finalize-verify.sh
+    workflow: templates/github-workflows/pre-spawn-prompt-finalize-verify.yml
+    current_tier: warning              # ADR-060 §결정 5 — 첫 도입 = warning mode (continue-on-error: true, non-required check)
+    bypass_label: hotfix-bypass:pre-spawn-prompt-finalize-verify
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1539                     # self-carrier (Wave 2 mechanical wire — ADR-082 Amendment 19 §결정 1 sub-scope 1-I)
+        - CFP-1540                     # sibling cp949 fix Story (paired UTF-8 encoding fix)
+        - CFP-1489                     # Layer 1 spawn-prompt-head-pin-presence (temporal defense prerequisite)
+        - CFP-1500                     # Layer 2 mid-spawn-drift-detection (temporal defense prerequisite)
+        - CFP-1497                     # Layer 3 amendment-slot-reservation (temporal defense prerequisite)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+        - red_green_stash_proof        # ADR-082 §결정 11.A — bats RED→GREEN stash proof verified (16/16 GREEN, 15/16 RED)
+      meta_self_application_evidence:
+        - spawn_prompt_contains_pre_spawn_prompt_finalize_verified_true  # 5th META applied case
+    modal_anti_pattern_dictionary: {}  # 본 lint = field presence heuristic, modal phrase 검사 미포함
+    introduced_by: CFP-1539
+    introduced_date: 2026-05-25
+    owner_adr: ADR-082                 # Amendment 19 §결정 1 layer 1 sub-scope (1-I)
+    paired_owner_adr: ADR-073          # Amendment 13/14 paired sibling (sub-decision 1+2 axis)
+    carrier_adr: ADR-082               # CFP-FU-A Wave 2 temporal defense Layer 4
+    recurrence:
+      count: 1                         # CFP-1539 Wave 2 첫 도입
+      threshold: 3                     # ADR-060 §결정 19 — pattern_count >= 3 재발 시 promote
+      last_occurrence: "2026-05-25T00:00:00Z"
+      promotion_trigger: advisory       # warning mode 시작 → 20 PR + 0 failure 누적 시 blocking 후보
+    status: Active                     # CFP-1539 Wave 2 mechanical wire 완료 (pre-spawn-prompt-finalize-verify Layer 4 of 4-layer temporal defense)
