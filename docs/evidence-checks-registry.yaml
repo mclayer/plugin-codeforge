@@ -4862,3 +4862,58 @@ entries:
       last_occurrence: "2026-05-25T00:00:00Z"    # CFP-1495 PR #1505 close evacuation
       promotion_trigger: auto_blocking # pattern_count >= 2 reach 시 blocking promotion 후보
     status: deferred-followup          # Wave 1 declaration-only — Wave 2 별 sub-Story carrier 에서 status: Active 전환
+
+  - name: confluence-drift-detection
+    description: |
+      Confluence-mirror drift scheduled detection (MCP-direct staleness check) — CFP-1495 / ADR-103 §결정 1 영역.
+
+      docs/confluence-ia-tree.yaml 안 49 page (CFP space) 의 staleness heuristic 2-axis 감지:
+        (a) timestamp delta — Confluence page last_modified ↔ git mirror file last commit (`git log -1 --format=%ct <source_path>`)
+            delta > CFP1495_DRIFT_THRESHOLD_DAYS (default 7) → drift candidate
+        (b) title mismatch — Confluence page title ↔ IA tree schema title 비교
+
+      Mark engine path exempt: 3-anchor stamp (codeforge_hash_git_source + native version + codeforge_sync_commit_sha)
+      부착 영역 = ongoing sync 정합 영역 → skip (ADR-103 §결정 2 안 mark engine path 활성 시점 이후 sync 영역).
+
+      MCP-direct deviation (ADR-103 §결정 1 / CFP-1146 W5-S17 precedent verbatim):
+        ATLASSIAN_API_TOKEN secret 부재 시 = silent skip per page (warning emit, exit 0)
+        mark engine path #1320 활성 후 REST API 자동 호출 영역으로 확장 (Wave 2 carrier)
+
+      Sub-B of Mega-Epic CFP-1415 — Confluence-as-derived-mirror governance standardization.
+      Sub-B Sub-Epic CFP-1490 마지막 carrier (5/5 child Story 완료 — sibling: #1491 IA tree + #1492 ADR-103 Amd N + #1493 ADR migration + #1494 change-plans migration).
+
+      96번째 hotfix-bypass:* family member (label-registry-v2 v2.71, ADR-108 forcing function parity mandate 정합 — raw active concrete grep count post-append = 95 + 1 = 96).
+    detect_command: bash scripts/check-confluence-drift.sh
+    workflow: templates/github-workflows/confluence-drift-detection.yml
+    current_tier: warning              # ADR-060 §결정 5 — 첫 도입 = warning mode (heuristic-based detection false positive 가능)
+    bypass_label: hotfix-bypass:confluence-drift-detection
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1491                     # Sub-B S2.1 — IA tree bootstrap (49 page, prerequisite — drift baseline)
+        - CFP-1492                     # Sub-B S2.2 — ADR-103 Amendment N (MCP-direct routing rule, prerequisite — drift detection 정합)
+        - CFP-1493                     # Sub-B S2.3 — Legacy ADR migration (soft prerequisite — drift baseline)
+        - CFP-1494                     # Sub-B S2.4 — Legacy change-plans + domain-knowledge backfill (soft prerequisite)
+        - CFP-1495                     # self-carrier (Wave 1 mechanical wire — MCP-direct path)
+        - CFP-1490                     # parent Sub-B Sub-Epic (5/5 child Story 완료 시 close)
+        - CFP-1415                     # Mega-Epic (Confluence-as-derived-mirror governance standardization)
+        - CFP-627                      # marketplace-drift-detection.yml byte-pattern precedent (ADR-063 Amendment 3 §결정 13)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+        - mark_engine_path_activation_proof  # #1320 close 후 wire-point
+    modal_anti_pattern_dictionary: {}  # 본 lint = heuristic-based staleness detection, modal phrase 검사 미포함
+    introduced_by: CFP-1495
+    introduced_date: 2026-05-24
+    owner_adr: ADR-103                 # §결정 1 영역 (git→Confluence sync mechanism + ADR-103 Amendment N S2.2 carrier)
+    paired_owner_adr: ADR-060          # evidence-enforceable promotion framework
+    carrier_adr: ADR-103               # Sub-B Sub-Epic CFP-1490 mechanical layer (Mega-Epic CFP-1415)
+    recurrence:
+      count: 1                         # CFP-1495 Wave 1 첫 도입 (MCP-direct path)
+      threshold: 3                     # ADR-060 §결정 19 — pattern_count >= 3 재발 시 promote
+      last_occurrence: "2026-05-24T00:00:00Z"
+      promotion_trigger: advisory       # warning mode 시작 → 20 PR + 0 failure 누적 시 blocking 후보 (mark engine #1320 활성 정합)
+    status: Active                     # CFP-1495 Wave 1 mechanical wire 완료 (MCP-direct path Wave 1 declarative anchor 의 hydrate — Sub-B Sub-Epic CFP-1490 5/5 마지막 carrier)

@@ -1,0 +1,89 @@
+name: confluence-drift-detection
+# CFP-1495 / ADR-103 §결정 1 영역 — Confluence-mirror drift scheduled detection (MCP-direct staleness check)
+# Tier: warning (ADR-060 evidence-enforceable, continue-on-error: true)
+# evidence-checks-registry.yaml entry: confluence-drift-detection
+#
+# 검증:
+#   docs/confluence-ia-tree.yaml 안 49 page × (timestamp delta + title mismatch) staleness heuristic
+#   Confluence page version + last_modified ↔ git mirror file last commit drift 감지 → Issue auto-create
+#
+# 트리거:
+#   schedule: 24h UTC daily (ADR-063 §결정 13 SLA window — marketplace-drift-detection.yml byte-pattern 답습)
+#   workflow_dispatch: manual override for ad-hoc verification + MCP-direct invocation
+#
+# Hotfix bypass:
+#   hotfix-bypass:confluence-drift-detection label 부착 시 skip + audit comment
+#   (ADR-024 Amendment 3 hotfix-bypass family 정합, 89번째 family member — label-registry-v2 v2.65)
+#   TODO: hotfix-bypass mechanism hydrate (Wave 2 carrier)
+#
+# E-4 3-branch:
+#   401 fail-closed (exit 2 + Issue)
+#   429 fail-open silent (warning log + exit 0)
+#   5xx in-run retry — Wave 2 carrier (MCP-direct path 영역 시점은 skip)
+#
+# MCP-direct deviation declare (ADR-103 §결정 1 / CFP-1146 W5-S17 precedent):
+#   ATLASSIAN_API_TOKEN secret 부재 시 = silent skip per page (warning emit, exit 0)
+#   mark engine path #1320 활성 후 REST API 자동 호출 영역으로 확장 (Wave 2 carrier)
+#
+# Permissions: minimum (top-level deny-all + job override, CFP-530 / ADR-060 Amendment 8)
+
+on:
+  schedule:
+    - cron: '0 0 * * *'  # 24h UTC daily — ADR-063 §결정 13 SLA window (marketplace-drift-detection.yml 답습)
+  workflow_dispatch:     # Manual override for ad-hoc verification + MCP-direct invocation
+
+permissions: {}  # top-level deny-all
+
+jobs:
+  drift-detection:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # warning tier — drift does not block CI
+    permissions:
+      contents: read   # docs/confluence-ia-tree.yaml + git log fetch
+      issues: write    # Issue auto-create
+
+    concurrency:
+      group: confluence-drift-detection
+      cancel-in-progress: false  # E-6 race 차단 — 진행 중 run 완료 보장
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # git log -1 --format=%ct <path> 정확도 보장
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install pyyaml
+        run: |
+          python -m pip install --upgrade pip
+          pip install pyyaml
+
+      - name: Check hotfix-bypass label
+        id: bypass
+        # TODO: hotfix-bypass mechanism hydrate (Wave 2 carrier)
+        # Placeholder: bypass disabled in Wave 1 (declarative anchor)
+        run: |
+          echo "bypass=false" >> "$GITHUB_OUTPUT"
+
+      - name: Run confluence-drift-detection
+        if: steps.bypass.outputs.bypass != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}  # ADR-066 PAT scope (issues:write + contents:read)
+          ATLASSIAN_API_TOKEN: ${{ secrets.ATLASSIAN_API_TOKEN }}  # MCP-direct mode = silent skip if absent
+          ATLASSIAN_API_EMAIL: ${{ secrets.ATLASSIAN_API_EMAIL }}
+          ATLASSIAN_INSTANCE: ${{ secrets.ATLASSIAN_INSTANCE }}
+        run: |
+          chmod +x scripts/check-confluence-drift.sh
+          bash scripts/check-confluence-drift.sh
+
+      - name: Bypass audit comment
+        if: steps.bypass.outputs.bypass == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+        run: |
+          # TODO: Wave 2 — bypass audit comment via Issue or PR comment
+          echo "confluence-drift-detection bypass active — audit comment pending Wave 2 hydrate"
