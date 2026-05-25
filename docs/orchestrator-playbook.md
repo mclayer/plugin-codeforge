@@ -1275,6 +1275,110 @@ fi
 - paired sibling CFP-1559 Amendment 20 — Issue body stale claim pre-screen super-class, axis disjoint (content verify vs target authority verify, 동시 발의 race)
 - 동인: CFP-1539+CFP-1540 batch retro §4.1 #2 — worktree mis-target 첫 catch carrier
 
+#### §3.5.3 Version race coordination sequential merge orchestration (CFP-1603 / [ADR-045 §D-9](../docs/adr/ADR-045-story-retro-mandatory-trigger.md) pattern_count 2 escalation_resolved_carrier)
+
+> **NORMATIVE — ADR-045 §D-9 forcing function 산출 declarative anchor** (escalation_action: `escalate_user`, escalation_resolved_carrier: CFP-1603). same-day multi-Story plugin.json version bump 영역 의 race resolution sequence orchestration codify. mechanical wire (workflow lint + bats fixture) = 별 sub-CFP Wave 2 carrier — 본 §3.5.3 = behavioral directive + declarative anchor (Wave 1 declaration-only).
+
+**동인 (sentinel evidence, pattern_count 2 reach)**:
+
+| # | Occurrence | Story batch | Race semantic |
+|---|---|---|---|
+| 1 | Wave 2 batch (2026-05-25 KST 전반) | CFP-1559 PATCH (6.7.3) + CFP-1540 (sentinel script cp949 fix) | sentinel script invocation reliability fix sibling (race coordination axis disjoint — first occurrence carrier) |
+| 2 | Wave 3 batch (2026-05-25 KST 후반) | CFP-1580 MINOR (6.8.0) + CFP-1559 rebase (6.7.3 → 6.8.1) | 양 PR same base SHA (6.7.2) target → race resolution sequence: #1580 선행 merge (MINOR > PATCH per ADR-037 §결정 1) → #1559 rebase 6.7.3 → 6.8.1 PATCH + marketplace sibling sync |
+
+ADR-045 §D-9 pattern_count ≥ threshold 2 reach = Mandatory framing 발동 영역 (PMOAgent retro 산출 evidence). 본 carrier = `escalation_action: escalate_user` resolution (declarative-only Wave 1 codify), Wave 2 mechanical wire = 별 sub-CFP.
+
+**Race detection criteria (same-base-SHA primitive)**:
+
+| ID | Criterion | Trigger |
+|----|---|---|
+| (a) | same-base-SHA + same-mirrored-field | 복수 Story (동일 또는 별 Orchestrator session) plugin.json `.version` field bump target 이 동일 base SHA (예: 6.7.2) 인 경우 — sentinel polling §3.5.1 `lane_spawn` / `pr_open` transition trigger 직전 HEAD compare step 에서 자연스럽게 detect |
+| (b) | same-day multi-Story batch | session boundary 와 무관 — 동일 base SHA target 시 race 활성 (ADR-040 worktree convention 정합, 각 Story 별 worktree 분리) |
+| (c) | marketplace sibling sync trigger 동반 여부 | mirrored field (`name` / `version` / `description` / `author`) 변경 시 marketplace sibling PR 동반 — ADR-063 §결정 2 ordering 활성. 변경 0 시 sequential ordering 4-step → 2-step 축소 (mandate 5 fallback) |
+
+**Sequential merge orchestration sequence — 4-step (full path, marketplace sibling sync 동반 시)**:
+
+```
+선행 PR (MINOR, 예 6.8.0) + 후행 PR (PATCH, 예 6.7.3) same base SHA 6.7.2 target
+
+Step 1 — 선행 marketplace sibling PR merge (선행 PR mirrored field MINOR mirror)
+  · marketplace.json `.plugins[name=codeforge].version` 6.7.2 → 6.8.0 sync
+  · ADR-063 §결정 2 ordering 정합 — marketplace PR 선행 merge
+
+Step 2 — 선행 plugin PR merge (MINOR 6.8.0)
+  · plugin.json `.version` 6.7.2 → 6.8.0 atomic (3-file invariant ADR-063 §결정 1)
+  · CHANGELOG.md `[Unreleased]` → `[6.8.0]` released entry transition
+
+Step 3 — 후행 plugin PR rebase + version bump 재계산 (6.7.3 → 6.8.1)
+  · git rebase origin/main (base SHA 6.7.2 → 6.8.0)
+  · plugin.json `.version` 6.7.3 → 6.8.1 재bump (SemVer monotonic invariant: PATCH 6.7.3 < MINOR 6.8.0 < PATCH rebased 6.8.1)
+  · CHANGELOG.md `[Unreleased]` merge conflict resolve — chronological append (선행 6.8.0 entry 위, 후행 entry 아래) OR 후행 별 sub-section
+  · 후행 marketplace sibling PR (PATCH rebased 6.8.1 mirror) rebase 동반
+
+Step 4 — 후행 marketplace sibling PR merge → 후행 plugin PR merge (PATCH 6.8.1)
+  · marketplace.json `.plugins[name=codeforge].version` 6.8.0 → 6.8.1 sync
+  · plugin.json `.version` 6.8.1 atomic
+```
+
+**Sequential merge orchestration sequence — 2-step (marketplace sibling sync 부재 축소 path)**:
+
+```
+선행 PR + 후행 PR mirrored field 변경 0건 (예: doc-only fast-path Story batch)
+
+Step 1 — 선행 plugin PR merge
+  · plugin.json 변경 0, CHANGELOG.md `[Unreleased]` entry 추가
+
+Step 2 — 후행 plugin PR rebase + merge
+  · git rebase origin/main (선행 PR merge commit 포함)
+  · CHANGELOG.md `[Unreleased]` merge conflict resolve — chronological append
+  · plugin.json bump 0건 (race coordination orchestration 자체는 mirrored field 변경 0 시에도 적용 — base SHA 변경 시 후행 PR rebase 의무)
+```
+
+**ordering invariant (MINOR > PATCH > PATCH per ADR-037 §결정 1 정합)**:
+
+```
+race resolution priority:
+  MAJOR > MINOR > PATCH
+
+동일 surface category (예: PATCH + PATCH) race 시:
+  lower CFP 번호 선행 merge (ADR-050 §3.4.2 patterns 답습)
+
+후행 PR rebase 후 bump 재계산:
+  base 변경분 + 후행 PR 변경분 합산 → SemVer monotonic 보장
+  · MINOR + PATCH = MINOR rebased to MINOR.MINOR+1.0 OR PATCH (semantic preserve)
+  · PATCH + PATCH = PATCH rebased to next PATCH
+  · MAJOR + MINOR = MAJOR rebased to MAJOR.MINOR+1.0 (ADR-063 Amendment 7 §결정 18 9-plugin atomic MAJOR scope 정합 시 atomic bundle 의무)
+```
+
+**Race resolution example (Wave 3 evidence verbatim, 2026-05-25 KST)**:
+
+| Step | Actor | Action | Resulting state |
+|------|---|---|---|
+| 1 | Orchestrator | sentinel polling §3.5.1 `pr_open` transition direct verify | #1580 (MINOR 6.8.0) + #1559 (PATCH 6.7.3) both target base 6.7.2 — race detected |
+| 2 | Orchestrator | ADR-037 §결정 1 ordering decide — MINOR 선행 | #1580 first merge order assigned |
+| 3 | GitOpsAgent (codeforge-pmo §3.6) | marketplace sibling PR #1580-marketplace open + merge | marketplace.json 6.8.0 sync |
+| 4 | Orchestrator | #1580 plugin PR merge | plugin.json 6.7.2 → 6.8.0, CHANGELOG `[Unreleased]` → `[6.8.0]` |
+| 5 | Orchestrator | #1559 rebase + version bump 재계산 | plugin.json 6.7.3 → 6.8.1, CHANGELOG `[Unreleased]` entry chronological append |
+| 6 | GitOpsAgent | marketplace sibling PR #1559-marketplace rebase + merge | marketplace.json 6.8.0 → 6.8.1 sync |
+| 7 | Orchestrator | #1559 plugin PR merge | plugin.json 6.8.0 → 6.8.1 atomic |
+
+**Wave 2 mechanical wire carrier (declaration-only Wave 1 retain — Wave 2 별 sub-CFP)**:
+
+- workflow lint — same-day multi-Story plugin.json version bump 영역 sequential merge ordering 자동 verify (별 sub-CFP, evidence-checks-registry `version-race-coordination-ordering` entry 후보)
+- bats fixture — race resolution scenario coverage (MINOR+PATCH / PATCH+PATCH / MAJOR+MINOR / marketplace 부재 축소 4 case)
+- `mechanical_enforcement_actions: []` declaration-only-Wave-1 (ADR-082 §결정 6 + ADR-070 §D5 retain pattern 답습)
+
+**Cross-ref**:
+
+- [ADR-037 §결정 1 plugin version bump rule](../docs/adr/ADR-037-plugin-version-bump-rule.md) — SemVer monotonic invariant + Option β core rule (Lenient base, 12 surface category) upstream policy SSOT
+- [ADR-063 §결정 1/§결정 2 marketplace atomic invariant](../docs/adr/ADR-063-marketplace-atomic-invariant.md) — 3-file atomic invariant + marketplace sibling sync ordering upstream policy SSOT
+- [ADR-045 §D-9 cross_story_pattern_adr_trigger](../docs/adr/ADR-045-story-retro-mandatory-trigger.md) — forcing function SSOT (pattern_count threshold 2 → escalate_user → 본 §3.5.3 codify carrier)
+- [ADR-050 §3.4.2 Parallel epic coordination](../docs/adr/ADR-050-parallel-epic-conflict-detection.md) — Epic-scope conflict detection (axis disjoint, PR-level post-hoc) cross-ref
+- §3.5.1 Parallel work sentinel polling — race detection mechanism (sentinel polling `pr_open` / `merge_transition` transition trigger 가 race detect)
+- [ADR-024 §3 sequence-of-singletons](../docs/adr/ADR-024-story-scoped-branch-policy.md) — trunk-based branching axis (release branch 부재, main-direct PR sequential)
+- §3.6 marketplace sync PR proactive dispatch (CFP-597 / ADR-063 Amendment 1) — GitOpsAgent §3.6 행위 (sibling axis disjoint, marketplace sibling sync proactive dispatch vs race resolution sequence orchestration)
+- 동인: ADR-045 §D-9 pattern_count 2 reach (Wave 2 + Wave 3 batch sentinel evidence) escalation_resolved_carrier
+
 ### §3.6 TeamCreate / TeamDelete protocol (CFP-137 / [ADR-044](../docs/adr/ADR-044-phase-scoped-sequential-team.md))
 
 > **Activation**: `CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` env 활성 시에만 본 §3.6 적용. env=0 또는 미설정 시 = ADR-039 default subagent context fallback (§3.0 + 기존 §3.1 one-shot Agent tool 패턴).
