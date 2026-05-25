@@ -5246,3 +5246,51 @@ entries:
       promotion_trigger: auto_blocking  # count=6 > threshold=3 → 발화 active (별 Wave 3 carrier, ADR-060 §결정 6 promotion gate AND 3 condition: pr_cumulative_min 20 + failure_threshold 0 + sibling Story merged 후 즉시 blocking-on-pr 승격 평가)
     status: warning  # CFP-1581 Phase 1+2 mechanical wire (Phase 1: ADR-073 Amendment 16 + ADR-RESERVATION row + label-registry-v2 MINOR + evidence-checks-registry entry + Change Plan + Story file / Phase 2: scripts/check-architect-chief-author-base-sha-freeze.{sh,py} + templates/github-workflows/architect-chief-author-base-sha-freeze.yml + .github/workflows/ self-app + tests/scripts/check-architect-chief-author-base-sha-freeze/test_*.bats) → Active (codex-network-scope-presence + codex-fallback-subclass-tally + pre-spawn-prompt-finalize-verify precedent 답습 — declaration-only Wave 1 → warning-tier mechanical enforcement layer Wave 2 ratchet-UP 완료)
 
+  # ─── CFP-1590 Phase 1 (ADR-082 Amendment 23 Wave 1 declarative anchor — spawn-prompt-fact-verify, 2026-05-25 KST) ───
+  # ADR-082 Amendment 23 §결정 1 layer 1 sub-scope (1-L) — spawn prompt fact verify-before-trust mandate (upstream-inherited stale fact carrier super-class)
+  # PMOAgent CFP-1523 retro §5 inline ADR draft Orchestrator → ArchitectAgent spawn carry-over — chief author 자율 결정 Option B 채택 (super-class scope expansion vs Option A new ADR fragmentation 회피)
+  # mid-flight CFP-1601 collision recovery (initial Amd 22+1-K → renumber Amd 23+1-L on rebase to origin/main `4c668913`, META 2nd applied case after CFP-FU-A Amd 19)
+  - name: spawn-prompt-fact-verify
+    description: |
+      ADR-082 Amendment 23 §결정 1 layer 1 sub-scope (1-L) 신설 (CFP-1590 carrier) — spawn prompt fact
+      verify-before-trust mandate (upstream-inherited stale fact carrier super-class). Orchestrator
+      또는 chief author 가 lane agent / deputy / 4-tuple sub-tuple subagent spawn prompt 작성 시
+      인용 fact (numeric / state / count / sister carrier claim) 가 4 sub-source 로부터 inherit 된
+      경우 직접 verify 의무. 4-tuple primitive:
+      (a) upstream-inherited fact 식별 의무 — 4 sub-source (사용자 발화 / sibling Issue body /
+          sister PR commit message / 별 carrier retro file)
+      (b) direct source verify 의무 — verify source 명시 + 직접 fetch 의무 (`verified-via:` annotation,
+          cached / synthesized 사용 금지)
+      (c) stale 검출 시 정정 declare — `[fact-correction: <claim> stale, verified <correct-value>,
+          source: <verify-source>]` marker 의무 명시
+      (d) verified-via annotation field 의무 — `spawn_prompt_fact_verified: <bool>` field 명시
+      4-layer temporal defense (Amd 15+19+16+18) 의 content fact axis 5th layer 신설 (when verify vs
+      what verify disjoint). axis 분리 vs Amd 5 1-C (content 전달 형식 axis) + Amd 20 §결정 15
+      (self-write content stale) + Amd 22 1-K (own author numeric strict CFP-1601). Wave 1
+      declaration-only Wave 2 mechanical wire 별 sub-CFP 분리 (precedent CFP-1437/1436/1435 →
+      CFP-1489/1500/1497/1502 Wave 1→Wave 2 split 답습). pattern_count 3 reach Mandatory ADR-045
+      §D-9 escalation 산물 (CFP-1493 commit message defer 사유 inheritance / CFP-1523 사용자 spawn
+      prompt 4 fact stale / CFP-1591 Issue body canonical/sibling 역할 반전 ADR-010 §결정 1 위배).
+      pattern_count >= 5 재발 시 follow-up CFP MUST promote to blocking tier.
+    detect_command: bash scripts/check-spawn-prompt-fact-verify.sh  # Wave 2 carrier 별 sub-CFP (현재 declaration-only Wave 1, script 부재 — TBD via Wave 2 mechanical wire)
+    workflow: .github/workflows/spawn-prompt-fact-verify.yml  # Wave 2 carrier 별 sub-CFP (현재 declaration-only Wave 1, workflow 부재 — TBD via Wave 2 mechanical wire)
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode (declaration → first wire)
+    bypass_label: hotfix-bypass:spawn-prompt-fact-verify
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized — STANDARD threshold (ADR-068 I-5 dimensional empirical grounding 정합)
+      failure_threshold: 0          # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-TBD                   # Wave 2 mechanical wire carrier (별 sub-CFP) — lint script + workflow + bats fixture + label-registry-v2 MINOR
+    modal_anti_pattern_dictionary: {}  # presence-grep heuristic, modal 어휘 무관
+    introduced_by: CFP-1590
+    introduced_date: 2026-05-25
+    owner_adr: ADR-082-Amendment-23  # declaration source ADR — Amendment 23 §결정 1 layer 1 sub-scope (1-L) 신설 spawn prompt fact verify-before-trust mandate
+    carrier_adr: ADR-060            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (CFP-963 codex-network-scope-presence + CFP-1559 issue-body-claim-pre-screen + CFP-1601 numeric-claim-write-time-verify dual-binding precedent 답습)
+    recurrence:
+      count: 3                      # 3 occurrences pattern reach (CFP-1493 + CFP-1523 + CFP-1591) ≥ ADR-045 §D-9 threshold 2 Mandatory escalation 산물
+      threshold: 3                  # ADR-060 §결정 19 / schema v1.2 standard default + ADR-045 §D-9 N=2 보다 strict (per-pattern systemic class 결정 sentinel)
+      last_occurrence: "2026-05-25T00:00:00+09:00"  # CFP-1591 Issue body canonical/sibling 역할 반전 detection + 본 carrier mid-flight CFP-1601 collision recovery 2026-05-25 KST, ADR-079 KST normative
+      promotion_trigger: auto_blocking  # count=3 ≥ threshold=3 → 즉시 발화 (Wave 2 mechanical wire 후 Active 전환 + promotion path blocking-on-pr 평가)
+    status: deferred-followup       # Phase 1 declare (본 CFP-1590) / Phase 2 actual wire = 별 sub-CFP carrier (script + workflow + bats fixture, ADR-082 §결정 6 retain pattern 답습 + CFP-1437/1436/1435 → CFP-1489/1500/1497/1502 Wave 1→Wave 2 split precedent 답습)
+
