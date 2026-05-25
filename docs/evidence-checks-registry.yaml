@@ -5348,4 +5348,76 @@ entries:
       promotion_trigger: declarative_only  # count=1 < threshold=3 → 즉시 발화 안함 (Wave 1 declaration anchor only, pattern_count 누적 시 promotion 평가)
     status: deferred-followup       # Phase 1 declare (본 CFP-1589) / Phase 2 actual wire = 별 sub-CFP carrier (script + workflow + bats fixture + review-verdict-v4 v4.10 MINOR, ADR-082 §결정 6 retain pattern 답습 + CFP-1437/1436/1435 → CFP-1489/1500/1497/1502 Wave 1→Wave 2 split precedent 답습)
 
+  # ─── CFP-1612 Phase 1 (ADR-082 Amendment 25 Wave 2 mechanical wire activation — numeric-claim-write-time-verify, 2026-05-25 KST) ───
+  # ADR-082 Amendment 25 §결정 1 layer 1 sub-scope (1-N) — numeric claim write-time verify Wave 2 mechanical enforcement wire
+  # Issue #1612 HIGH FU-A from CFP-1601 retro carrier — sub-scope 1-K Amd 22 CFP-1601 Wave 1 declaration-only behavioral mandate 의 Wave 2 mechanical lint enforcement wire (declaration → mechanical enforce promotion path)
+  - name: numeric-claim-write-time-verify
+    description: |
+      ADR-082 Amendment 22 §결정 1 layer 1 sub-scope (1-K) 신설 (CFP-1601 carrier) + Amendment 25 §결정 1 layer 1
+      sub-scope (1-N) Wave 2 mechanical enforcement wire activation (CFP-1612 carrier) — ArchitectAgent
+      (chief author) / Orchestrator (spawn packet) / lane PL write-time 영역 안 numeric claim
+      (line count / file count / API count / pattern_count / commit count / row count — 6 closed-set numeric
+      claim dimensions) 의 source command / actual value / claim↔actual cross-verify 4-step write-time
+      strict mandate. ADR-061 multi-line Python convention 준수 (lint script SSOT = Python).
+
+      4-step verify-before-write mandate:
+      (a) source command identify — claim 의 ground truth source command 명시 의무 (예: `grep -c '^  - amendment_id:' <file>` / `wc -l <file>` / `git diff --shortstat` / `find <dir> -name '*.md' | wc -l`)
+      (b) direct execute — 작성 직전 source command 실행 + actual value 획득 의무 (cached value / 추정 / planning-time stale value 사용 금지)
+      (c) claim↔actual cross-verify — claim value 와 actual value 1:1 일치 verify (semantic ambiguity (예: `grep -c` line-occurrence count vs YAML max amendment_id slot semantic) 발견 시 source command 정밀화 의무)
+      (d) write only on match — match 시에만 write, mismatch 시 abort + Orchestrator escalate
+
+      Numeric claim closed-set 6 dimensions:
+      (i) line count (file line count / patch line count)
+      (ii) file count (touched file count / dir file count)
+      (iii) API count (mcp__github__* call count / agent spawn count)
+      (iv) pattern_count (cross-Story pattern repetition count, ADR-045 §D-9 base)
+      (v) commit count (commits-behind / commits-ahead)
+      (vi) row count (yaml row / md table row / contract field)
+
+      Wave 1 (CFP-1601 Amendment 22 sub-scope 1-K) = declaration-only behavioral mandate.
+      Wave 2 (CFP-1612 Amendment 25 sub-scope 1-N) = mechanical enforcement wire — 본 entry 가 ADR-060
+      §결정 5 'first introduction = warning mode' default 정합 warning-tier initial registration.
+      Wave 1→Wave 2 split precedent CFP-1437/1436/1435/1559/1578/1601/1590/1589 11번째 instance.
+
+      Wave 2 actual lint script + workflow + bats fixture file write = Phase 2 sub-carrier (별 sub-CFP
+      carrier 분리 — DeveloperPL + QADev spawn). 본 entry = Phase 1 declarative SSOT (evidence-checks-registry
+      warning-tier initial registration + label-registry-v2 hotfix-bypass family member append +
+      workflow stub declarative anchor).
+
+      FP guard 4종 (Wave 2 lint design scope):
+      - code-span EXEMPT (backtick block `` ` ``)
+      - quoted-text EXEMPT (`>` blockquote / `'/'` quote)
+      - templates/** EXEMPT (canonical example pattern)
+      - docs/stories/§9 transcript EXEMPT (Round 0 verbatim cite)
+      - PER_BLOCK_SCAN_CAP=50 line CodeQL ReDoS guard (CFP-1497 PR #1499 sentinel verbatim 답습, nested
+        quantifier regex 절대 금지)
+
+      pattern_count ≥ N 추가 reach 시 warning → blocking-on-pr 승격 = Wave 3 별 carrier 분리
+      (ADR-060 §결정 6 promotion gate AND 3/3 — PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling Story merged).
+
+      META-self-applied (§결정 10.D 20th + Amendment 17 §결정 1-G 6th + Amendment 22 §결정 1-K 1st applied
+      for Wave 2 wire carrier + Amendment 23 §결정 1-L 1st applied recursive dogfooding mid-flight collision
+      recovery 3rd applied after CFP-FU-A Amd 19 + CFP-1590 Amd 23 — initial spawn pinned origin/main
+      f2e78b16 + amendments[] max=23 → CFP-1589 Amd 24+1-M merge 후 base shift to 5b5c9f7b + max=24 →
+      renumber Amd 24→25 + sub-scope 1-M→1-N on rebase).
+    detect_command: bash scripts/check-numeric-claim-write-time-verify.sh  # Wave 2 carrier 별 sub-CFP (Phase 2, script 부재 — TBD via Wave 2 mechanical wire DeveloperPL + QADev spawn)
+    workflow: .github/workflows/numeric-claim-write-time-verify.yml  # Wave 2 carrier 별 sub-CFP (Phase 2, workflow 부재 — TBD via Wave 2 mechanical wire)
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode (declaration → first wire)
+    bypass_label: hotfix-bypass:numeric-claim-write-time-verify
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative: 20             # ADR-060 §결정 6 default — PR 누적 ≥ 20 의무
+      bypass_external_failure: 0    # bypass label 외 failure count = 0 의무
+      sibling_story_merged: true    # sibling Story merged 의무 (Wave 3 carrier 별 사용 시 평가)
+    introduced_by: CFP-1612
+    introduced_date: 2026-05-25
+    owner_adr: ADR-082-Amendment-22  # declaration source ADR — Amendment 22 §결정 1 layer 1 sub-scope (1-K) 신설 numeric claim write-time strict claim mandate (Wave 1 declaration-only)
+    carrier_adr: ADR-082-Amendment-25  # enforcement source ADR — Amendment 25 §결정 1 layer 1 sub-scope (1-N) 신설 Wave 2 mechanical enforcement wire (declaration → mechanical enforce promotion path)
+    recurrence:
+      count: 2                      # 2 occurrences pattern reach (CFP-1571 §3.2 line count drift '+93→+101' 3 location 정정 + CFP-1581 §3.2 file count drift '10→14' actual) ≥ ADR-045 §D-9 threshold 2 Mandatory escalation 산물 forcing function 활성
+      threshold: 3                  # ADR-060 §결정 19 / schema v1.2 standard default + ADR-045 §D-9 N=2 보다 strict (per-pattern systemic class 결정 sentinel)
+      last_occurrence: "2026-05-25T00:00:00+09:00"  # CFP-1612 Wave 2 wire activation carrier, ADR-079 KST normative
+      promotion_trigger: warning_tier_initial  # count=2 < threshold=3 → warning-tier initial registration (Wave 2 mechanical wire activation, pattern_count 누적 시 Wave 3 별 carrier 발의)
+    status: warning                 # Phase 1 declare (본 CFP-1612 Wave 2 mechanical wire activation) / Phase 2 actual wire = 별 sub-CFP carrier (script + workflow + bats fixture, ADR-082 §결정 6 retain pattern 답습 + CFP-1437/1436/1435 → CFP-1489/1500/1497/1502 Wave 1→Wave 2 split precedent 답습)
+
 
