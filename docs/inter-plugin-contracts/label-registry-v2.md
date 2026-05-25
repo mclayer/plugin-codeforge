@@ -1780,11 +1780,8 @@ labels:
     single_active: false
     attach_owner_plugin: "Orchestrator (CFP-1306 parallel-anchors-checked-presence lint bypass — review-verdict-v4 v4.9 Wave 3 enforcement bypass, ADR-024 Amendment 14 §결정 6.A.7 per-entry namespace)"
   # hotfix-bypass:codex-fallback-tally (CFP-1368 v2.73 post-rebase — ADR-052 Amendment 14 + ADR-070 Amendment 8 + ADR-081 Amendment 7 + ADR-060 Amendment N carrier)
-  # 93번째 hotfix-bypass:* family member (post-rebase deterministic — origin/main CFP-1367 v2.66 took #90+#91, ADR-050 §결정 1 late-comer rebase resolved):
-  #   - sibling Bundle A.A1 (CFP-1306) parallel-anchors-lint = PR NOT open (verified 2026-05-25 KST)
-  #   - sibling Bundle B.B1 (CFP-1367 v2.66 MERGED 8b50316) ADR-107 Wave 2 lint 2종 = 2 신규 family member (#90 plugin-declarative-seed-byte-parity + #91 design-lane-plugin-feasibility)
-  #   - 본 Bundle B.B2 (CFP-1368 v2.73) codex-fallback-tally = 1 신규 family member (#98 deterministic)
-  #   raw active concrete `^  - name: hotfix-bypass:` grep count post-append: 90 baseline + 2 (CFP-1367) + 1 (CFP-1306) + 1 (CFP-1368) = 93 정합
+  # 98번째 hotfix-bypass:* family member (post-rebase deterministic — origin/main CFP-1539 v2.72 took baseline 97):
+  #   raw active concrete `^  - name: hotfix-bypass:` grep count post-append: 97 baseline + 1 (CFP-1368) = 98 정합
   # ADR-024 Amendment N §결정 6.A per-entry namespace 정합 (CFP-845/CFP-967/CFP-963 precedent 답습 — 88번째 chief-author-span-telemetry / 87번째 mid-spawn-drift-detection / 89번째 pre-existing-main-drift-bundle 직후 sequential ordering)
   # CFP-1286 Wave 1 declarative anchor → CFP-1368 Wave 2 mechanical wire 패턴 정합 (ADR-076 / ADR-082 / ADR-086 precedent chain)
   - name: hotfix-bypass:codex-fallback-tally
