@@ -1806,34 +1806,37 @@ playbook_split_pages:
     last_synced: "2026-05-25T23:16:41+09:00"
     push_attempt_status: "success"
     confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098588/14+0+Live+Progress+CFP-20"
-  - id: null
+  - id: "2131073"
     parent: 2130966
     title: "§15 — 4-channel observability boundary"
     source_section: "## 15. 4-channel observability boundary (ADR-042 §결정 1, CFP-283)"
     source_line_range: [3479, 3529]
     source_line_count: 50
     estimated_byte_size: 3000
-    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
-    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
-  - id: null
+    push_attempt_status: "success"
+    last_synced: "2026-05-25T23:41:17+09:00"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2131073/15+4-channel+observability+boundary"
+  - id: "2131093"
     parent: 2130966
     title: "§16 — Post-merge automation flow"
     source_section: "## 16. Post-merge automation flow (ADR-026 + CFP-74)"
     source_line_range: [3530, 3578]
     source_line_count: 48
     estimated_byte_size: 3000
-    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
-    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
-  - id: null
+    push_attempt_status: "success"
+    last_synced: "2026-05-25T23:41:49+09:00"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2131093/16+Post-merge+automation+flow"
+  - id: "2131113"
     parent: 2130966
     title: "§17 — Inter-plugin contract sibling sync 절차"
     source_section: "## 17. Inter-plugin contract sibling sync 절차 (CFP-408 / ADR-010 Amendment 3)"
     source_line_range: [3579, 3616]
     source_line_count: 37
     estimated_byte_size: 3000
-    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
-    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
-  - id: null
+    push_attempt_status: "success"
+    last_synced: "2026-05-25T23:42:17+09:00"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2131113/17+Inter-plugin+contract+sibling+sync"
+  - id: "2066075"
     parent: 2130966
     title: "부록 A — 관련 문서 + 부록 B — 개정 이력"
     source_section: "## 부록 A. 관련 문서 + ## 부록 B. 개정 이력"
@@ -1841,9 +1844,9 @@ playbook_split_pages:
     source_line_count: 26
     estimated_byte_size: 1600
     note: "부록 A + B 통합 page (각 13 line, 통합 가독성 우선)"
-
-    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
-    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
+    push_attempt_status: "success"
+    last_synced: "2026-05-25T23:43:13+09:00"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2066075/A+B"
 playbook_split_pages_total: 36  # CFP-1617: 20-1+17=36
 playbook_split_carrier_phase_3: "CFP-1617-FU (TBD) — 17 Confluence page actual push (MCP reconnect dependency)"
 playbook_source_total_byte: 290403
