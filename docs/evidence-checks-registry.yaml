@@ -4749,3 +4749,56 @@ entries:
       last_occurrence: 2026-05-23T00:00:00Z  # CFP-1303 Wave 2 carrier date (KST 2026-05-23)
       promotion_trigger: none
     status: Active                     # CFP-1306 Phase 1+2 동시 wire (deferred-followup → warning 직접 전환, CFP-1334 precedent)
+
+  - name: pl-inline-verify-cwd-mandate
+    description: |
+      ADR-040 Amendment 6 §결정 7.J PL inline scope mechanical enforcement gap closure +
+      ADR-073 §결정 1 verify-before-assert primitive 강화 — Lane PL spawn prompt 안 inline
+      명령 cwd directive enforcement mechanical verification (warning-tier).
+
+      Detection scope: 변경된 Story file (docs/stories/**/*.md) §14 Lane Evidence 안 Lane PL
+      spawn marker (8 PL agent) 발견 시 ±20 line window 안 cwd directive 3 forms presence
+      검사 (form 1: `git -C` / form 2: `cd <path>` / form 3: `[WORKTREE-CWD:]`). 3 form 모두
+      부재 → [WARN-CWD-DIRECTIVE-ABSENT] (warning-tier exit 0).
+
+      FP-완화 guards: templates/** + tests/** path 면제, markdown table row 면제,
+      spawn marker 부재 file silent skip.
+
+      Root cause sentinel: CFP-1316 iter 2 DesignReviewPL inline_orchestrator_verify
+      substitution path default cwd drift (main worktree CHANGELOG.md verify, cfp-1316
+      worktree wrap 미접근). ADR-040 Amd 6 §결정 7.J directive 무시.
+
+      verify-before-trust spawn-time anchor sub-domain 8th layer (worktree-self-ownership /
+      subagent-sibling-story / mcp-token-freshness / spawn-prompt-head-pin / amendment-slot /
+      mid-spawn-drift / chief-author-span + 본 pl-inline-verify-cwd = 8 layer axis disjoint).
+
+      pattern_count >= 2 재발 시 follow-up CFP MUST promote to blocking tier.
+    detect_command: bash scripts/check-pl-inline-verify-cwd.sh
+    workflow: templates/github-workflows/pl-inline-verify-cwd-mandate-check.yml
+    current_tier: warning              # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:pl-inline-verify-cwd-mandate
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1316                     # sentinel carrier (DesignReviewPL inline_orchestrator_verify cwd drift, pattern_count 1)
+        - CFP-1341                     # self-carrier (Wave 2 mechanical wire)
+        - CFP-1489                     # precedent byte-pattern (spawn-prompt-head-pin Wave 2-A wire shape)
+        - CFP-1497                     # precedent CodeQL ReDoS guard (line-by-line parse SSOT)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = grep-presence + heuristic window
+    introduced_by: CFP-1341
+    introduced_date: 2026-05-25
+    owner_adr: ADR-040                 # Amendment 6 §결정 7.J PL inline scope mechanical enforcement gap
+    paired_owner_adr: ADR-073          # §결정 1 verify-before-assert primitive 강화
+    carrier_adr: ADR-060               # evidence-enforceable promotion framework
+    recurrence:
+      count: 1                         # CFP-1316 iter 2 sentinel (pattern_count 1)
+      threshold: 2                     # pattern_count >= 2 재발 시 promote
+      last_occurrence: "2026-05-22T00:00:00Z"    # CFP-1316 retro F1 Mandatory codify
+      promotion_trigger: auto_blocking # pattern_count >= 2 reach 시 blocking promotion 후보
+    status: Active                     # CFP-1341 mechanical wire 완료 (single PR full implementation, post-rebase 94번째 / v2.69)
