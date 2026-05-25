@@ -4,6 +4,34 @@
 # ADR-061 Amd 2 §결정 9: production-scale invariant — real label set × multi-gate combination depth ≥ 3
 # prior art: test_retro_mandatory_yml.bats + test_bootstrap_labels_workflow.bats (Python yaml.safe_load + grep + actionlint pattern)
 # bats-core: https://github.com/bats-core/bats-core
+#
+# RED->GREEN stash proof evidence artifact (CFP-1400 retroactive backfill, 5/5 markers):
+#   - pre_impl_sha: 6a75eba (CFP-1337 silent-fix commit, pre-CFP-1400-Phase-2 HEAD)
+#   - method: retroactive_backfill (test body assertion unchanged — marker addition only)
+#   - fixture_file: tests/workflows/test_phase_gate_mergeable_yml.bats
+#   - assertion_classification:
+#       - T-1/T-1b: discriminating — gates[] array shape 4 phase branch (FAIL without CFP-1302 workflow)
+#       - T-2/T-2b/T-2c: discriminating — multi-gate AND every() + B-1 fail-loud guard (FAIL without fix)
+#       - T-3/T-3b: regression_guard — PR comment fallback listComments/lanePrefixForGate (FAIL if reverted)
+#       - T-4: discriminating — liveEntryOk separate variable D-1 decision (FAIL without guard)
+#       - T-5/T-5b: discriminating — summary multi-gate display gates.join (FAIL without CFP-1302)
+#       - T-meta/T-meta-b/T-meta-c: regression_guard — sibling-workflow-parity byte-identical (FAIL on drift)
+#   - platform_verified: [linux] (codeforge CI runner)
+#   - stash_evidence_excerpt: git stash push --include-untracked -- \
+#       tests/workflows/test_phase_gate_mergeable_yml.bats
+#     bats tests/workflows/test_phase_gate_mergeable_yml.bats
+#     # Expected: marker lint WARN (markers absent -> [WARN] 0/5 or 1/5 in bare state)
+#     git stash pop
+#     bats tests/workflows/test_phase_gate_mergeable_yml.bats
+#     # Expected: marker lint PASS ([PASS] 5/5 markers after stash pop with this block)
+#
+# RED->GREEN proof sequence (manual reproduction, AC-6 conform):
+#   $ git stash push --include-untracked -- tests/workflows/test_phase_gate_mergeable_yml.bats
+#   $ bash scripts/check-bats-red-green-proof.sh tests/workflows/test_phase_gate_mergeable_yml.bats
+#   # Expected: [WARN] 0/5 markers (file stashed = bare version lacks markers)
+#   $ git stash pop
+#   $ bash scripts/check-bats-red-green-proof.sh tests/workflows/test_phase_gate_mergeable_yml.bats
+#   # Expected: [PASS] 5/5 markers (CFP-1400 retroactive proof block present)
 
 REPO_ROOT="$(cd "$(dirname "$BATS_TEST_FILENAME")/../.." && git rev-parse --show-toplevel 2>/dev/null || pwd)"
 WORKFLOW_FILE="$REPO_ROOT/.github/workflows/phase-gate-mergeable.yml"
