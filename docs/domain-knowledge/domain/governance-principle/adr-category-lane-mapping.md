@@ -253,3 +253,4 @@ Phase 2 PR 안 6 MCP call atomic execution:
 - **CFP-1493 PR #1520 MERGED** — parent carrier (S2.3 partial complete, 3 cross-cutting bucket 신설 — wrapper-governance / ADR Registry / inter-plugin-contracts Registry page_id 활용)
 - **ADR-091 §결정 1/2/4** — DDD vocabulary governance + Published Language content duplication 금지 invariant
 - **CFP-1126 / ADR-042 Amendment 10** — ModuleArch unified mandate primary advocate (boundary axis 단일 advocate)
+
