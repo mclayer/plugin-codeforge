@@ -120,12 +120,28 @@ top_level_pages:
     - name: cross-cutting
       page_id: "2098283"
       git_source: "https://github.com/mclayer/plugin-codeforge"
+      children:
+        # Sub-B S2.3 (CFP-1493) — 3 cross-cutting bucket page created (Stage 1).
+        # Stage 2/3 (142 legacy page batch move + lane filter) = defer to 별 sub-CFP carrier.
+        - { name: "ADR Registry", page_id: "2065980", source: "Legacy parent 2097153 (adr) — 111 page, cross-link retain, batch move = 별 carrier" }
+        - { name: "inter-plugin-contracts Registry", page_id: "2130942", source: "Legacy parent 2129949 (inter-plugin-contracts) — 30 page, cross-link retain, batch move = 별 carrier" }
+        - { name: "wrapper-governance", page_id: "2163807", source: "CLAUDE.md / project-config-schema.md / consumer-guide.md / overlay 정책 (Consumer Guide page move = 별 carrier)" }
       children_planned:
-        # 본 S2.1 = 9 top-level + 40 lane plugin child only.
-        # cross-cutting child 영역 = Sub-B S2.3/S2.4 backfill carrier (legacy 5 child page reorg target)
-        - { name: "wrapper-governance", source: "CLAUDE.md / project-config-schema.md / consumer-guide.md / overlay 정책", carrier: "Sub-B S2.3" }
-        - { name: "inter-plugin-contracts", source: "docs/inter-plugin-contracts/ (9 contract + 7 registry)", carrier: "Sub-B S2.3, legacy parent page 2129949 reorg" }
+        # Sub-B S2.4 (CFP-1494) carrier — Orchestrator Playbook page split + actual backfill
         - { name: "orchestrator-playbook", source: "docs/orchestrator-playbook.md (256KB+)", carrier: "Sub-B S2.4, legacy 1-page split" }
+
+s2_3_partial_complete:
+  cfp: CFP-1493
+  stage_1_complete: true  # 3 cross-cutting bucket page created
+  stage_2_3_deferred: true  # 142 legacy page batch move
+  deferred_reason: |
+    Batch move via updateConfluencePage = body-required REST mechanic (매 page body fetch +
+    parent change = 2 MCP call per page × 142 page = 284 MCP call, token cost very high).
+    Lane filter decision (ADR-by-ADR) = ad-hoc per-ADR judgment (ADR frontmatter lane field
+    부재 verified — 1/117 ADR only). Defer to 별 brainstorm + sub-CFP carrier.
+    Stage 1 산출 = IA tree structural skeleton 완성 + legacy parent retain + cross-link
+    navigation 충분.
+  deferred_followup_cfp: TBD (lane filter brainstorm + 142 page actual batch move)
 
 legacy_pages:
   # CFP-1146 W5-S17 #1310 cutover 산출 — Sub-B S2.3/S2.4 migration source
