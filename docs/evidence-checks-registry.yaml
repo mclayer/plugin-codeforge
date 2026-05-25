@@ -5089,3 +5089,102 @@ entries:
       promotion_trigger: none       # count=1 < threshold=3 → 발화 없음 (Option A — codex-network-scope-presence count=0 sentinel-driven 아닌 framework entry count ratchet-UP 동형)
     status: warning  # CFP-1368 Phase 2 mechanical wire 완료 (script: scripts/check-codex-fallback-tally.{sh,py} + workflow: templates/github-workflows/codex-fallback-tally-check.yml + .github/workflows/ self-app byte-identical + bats: tests/bats/check-codex-fallback-tally.bats 9 TC RED→GREEN stash proof + jsonl seed: docs/kpi/codex-fallback-tally.jsonl + comment-prefix-registry-v1 v1.5 2-entry atomic) → Active (codex-network-scope-presence + worktree-self-ownership-verify deferred-followup precedent 답습 — declaration-only Wave 1 → warning-tier mechanical enforcement layer Wave 2 ratchet-UP 완료)
 
+  # ─── CFP-1581 Phase 1 (ADR-073 Amendment 16 Wave 2 mechanical wire — architect-chief-author-base-sha-freeze-verify, 2026-05-25 KST) ───
+  # ADR-073 Amendment 15 (CFP-1571) Wave 1 declarative anchor → ADR-073 Amendment 16 (CFP-1581) Wave 2 mechanical wire activation
+  # codeforge-design lane ArchitectAgent (chief author, Opus) spawn cadence 영역의 mechanical enforcement carrier
+  # warning tier initial registration (NOT promotion per ADR-060 §결정 5 'first introduction = warning mode' default — entry registration vs promotion 영역 분리 명시)
+  # ADR-082 §결정 6 + ADR-060 Amendment 10 §결정 24 deferred-followup precedent (L1417/L1452/L1574 + L2729 + L4290 + L4360 + L4426 + L4505 + L4921 + L4993 8-instance established pattern) 답습
+  # CFP-967 (parallel-work-sentinel-pickup L2731-2768) + CFP-963 (codex-network-scope-presence L2775+) + CFP-1437 (spawn-prompt-head-pin-presence L4288) + CFP-1436 (mid-spawn-drift-detection L4426) + CFP-1539 (pre-spawn-prompt-finalize-verify L4921) + CFP-1368 (codex-fallback-subclass-tally L4993) Wave 1→Wave 2 split precedent 답습 chain 6-instance established pattern
+  - name: architect-chief-author-base-sha-freeze-verify
+    description: |
+      ADR-073 Amendment 15 §결정 1-A 14번째 entry `architect_agent_chief_author_lane_spawn` +
+      §결정 1-Q primitive 4-step verify-before-assert mandate (ArchitectPL → ArchitectAgent
+      chief author handoff specific cadence base SHA freeze pattern) 의 mechanical enforcement
+      layer mechanical verification — codeforge-design lane 안 ArchitectAgent (chief author,
+      Opus) spawn 시점 base SHA freeze artifact verification 의무.
+
+      2-mode artifact verification (caller dispatcher OR composition):
+      (a) `--mode=lane-evidence-marker-grep` — Story file (`docs/stories/**/*.md`) 안 §14
+          Lane Evidence row 의 ArchitectAgent (chief author) spawn marker 검출 시 ±20 line
+          window 안 `base_sha_pinned` field (40-char hex value presence) 검증
+      (b) `--mode=spawn-prompt-grep` — ArchitectPL spawn prompt artifact (Story file 안 또는
+          spawn evidence log) 의 `[PRE-SPAWN-ORIGIN-MAIN-SHA: <40-char-hex>]` block
+          presence-grep heuristic (ADR-082 §결정 1 sub-scope 1-C `[USER-UTTERANCE-VERBATIM]`
+          + sub-scope 1-E `[PRE-SPAWN-ORIGIN-MAIN-SHA]` block precedent 답습)
+
+      Lane scope filter — ArchitectAgent chief author spawn 영역만 enforce (DeveloperAgent /
+      QADeveloperAgent / DataEngineerAgent 등 다른 lane chief author = silent skip exit 0,
+      axis disjoint complement per Story §2.3 in-scope/out-of-scope 명시).
+
+      FP guard 4종 (templates/** canonical example 면제 + tests/** bats fixture 면제 +
+      docs/stories/ path-only scope + marker 부재 silent skip).
+
+      PER_LANE_EVIDENCE_SCAN_CAP=30 line CodeQL ReDoS guard (CFP-1497 PR #1499 sentinel
+      verbatim 답습 — nested quantifier regex 절대 금지, anchored simple regex +
+      line-by-line scan + per-entry cap default N=30 line).
+
+      exit code 3-tier 0/1/2 (CFP-967 pattern 답습):
+      0 = PASS (base SHA pin marker present + lane scope match)
+      1 = WARNING (base SHA pin marker absent OR malformed hex value)
+      2 = SETUP env error (gh CLI 미설정, fail-closed)
+
+      ADR-068 I-3 unconditional guard placement 정합: hotfix bypass label
+      `hotfix-bypass:architect-chief-author-base-sha-freeze-verify` 부착 시 lint step skip +
+      audit comment 자동 발의 (`bypass-justification-marker.yml` CFP-845 v1.3 precedent —
+      `[bypass-justification]` prefix grep-presence check).
+
+      semantic adequacy 검증 불가 — false-positive risk 명시 (어휘 grep heuristic,
+      reviewer responsibility — codex-network-scope-presence D7.a digest-parse 동형).
+
+      self-meta loop 회피: 본 lint workflow / script 자체의 PR (Phase 1+2) 에
+      `hotfix-bypass:architect-chief-author-base-sha-freeze-verify` 부착 시 본 lint step
+      skip + carrier_story self-exempt (CFP-1581 carrier Phase 1+2 PR bootstrap-exempt,
+      ADR-062 §결정 8 precedent + CFP-963 codex-network-scope-presence + CFP-1368
+      codex-fallback-subclass-tally + CFP-722 story-section-ownership 정합).
+
+      single-binding pattern (ADR-073 single-binding precedent verbatim 답습 — Amendment 15
+      declaration source + Amendment 16 mechanical wire activation source 동일 ADR
+      frontmatter `mechanical_enforcement_actions[]` 안 동일 `action:
+      architect-chief-author-base-sha-freeze-verify` entry 보유, codex-fallback-subclass-tally
+      dual-binding 과 axis disjoint — single ADR carrier).
+
+      CFP-1571 retro §4 FU-A HIGH priority follow-up carrier (Wave 1 declarative anchor 의
+      Wave 2 mechanical wire activation) — pattern_count 6 reach Mandatory (CFP-1334 §3.1
+      4건 + CFP-1403 §3.1 1건 stale-base regression cascade sibling lineage + 본 CFP-1581
+      6번째 META self-evidence carrier).
+
+      META self-application 6th applied case (CFP-1489 1st spawn-prompt-head-pin-presence +
+      CFP-1497 2nd amendment-slot-reservation + CFP-1500 3rd mid-spawn-drift-detection +
+      CFP-1502 4th chief-author-span-telemetry + CFP-1539 5th pre-spawn-prompt-finalize-verify +
+      본 CFP-1581 6th architect-chief-author-base-sha-freeze-verify — 본 Story Phase 0
+      verify-before-cite + Phase 2 chief author spawn 자체가 §결정 1-Q primitive 4-step
+      self-execute = mechanism 6th applied case).
+    detect_command: bash scripts/check-architect-chief-author-base-sha-freeze.sh  # CFP-1581 Phase 2 wire — scripts/check-architect-chief-author-base-sha-freeze.sh (thin wrapper, ADR-061) + scripts/lib/check_architect_chief_author_base_sha_freeze.py (Python SSOT — artifact verification 2-mode lint logic) 실 file 신설
+    workflow: templates/github-workflows/architect-chief-author-base-sha-freeze.yml  # CFP-1581 Phase 2 wire — byte-identical self-app .github/workflows/architect-chief-author-base-sha-freeze.yml (ADR-005 parity), dual trigger pull_request + workflow_dispatch per production-cutover-evidence.yml D2 consensus 답습
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode default (NOT promotion — registry entry 신규 등록, promotion 영역 외 별 Wave 3 carrier per Story §4.3 Continuity (a))
+    bypass_label: hotfix-bypass:architect-chief-author-base-sha-freeze-verify  # 99번째 hotfix-bypass:* family member (label-registry-v2 v2.73 → v2.74 MINOR bump, ADR-024 Amendment N §결정 6.A per-entry namespace 정합)
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized
+      failure_threshold: 0          # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1571                  # Wave 1 declarative anchor — ADR-073 Amendment 15 carrier
+        - CFP-1581                  # 본 Story Wave 2 mechanical wire carrier — script + workflow + bats + label-registry MINOR + evidence-checks-registry entry
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+        - cfp_1334_section_3_1_4_stale_base_regression_cascade_memory_entry   # CFP-1334 §3.1 4건 stale-base regression cascade sentinel evidence
+        - cfp_1403_section_3_1_1_stale_base_regression_cascade_memory_entry   # CFP-1403 §3.1 1건 stale-base regression cascade sentinel evidence
+    modal_anti_pattern_dictionary: {}  # transition state verify, modal 어휘 무관
+    introduced_by: CFP-1581
+    introduced_date: 2026-05-25
+    owner_adr: ADR-073-Amendment-15  # declaration source ADR — Amendment 15 (CFP-1571 Wave 1 declarative anchor, §결정 1-A 14번째 entry `architect_agent_chief_author_lane_spawn` + §결정 1-Q primitive 4-step verify-before-assert mandate)
+    carrier_adr: ADR-073-Amendment-16  # Wave 2 mechanical wire activation source ADR — Amendment 16 (CFP-1581 본 Story carrier, mechanical_enforcement_actions[] 12번째 entry inline comment status 갱신: deferred-followup → warning-tier wire complete)
+    recurrence:
+      count: 6                      # pattern_count 6 reach Mandatory (CFP-1334 §3.1 4건 + CFP-1403 §3.1 1건 stale-base regression cascade sibling lineage + 본 CFP-1581 6번째 META self-evidence carrier)
+      threshold: 3                  # ADR-060 §결정 19 / schema v1.2 standard default + ADR-045 §D-9 N=2 baseline 초과
+      last_occurrence: "2026-05-25T00:00:00+09:00"  # CFP-1581 본 Story Phase 1 spawn time (ArchitectPL Phase 0 verify-before-cite worktree HEAD `4000440` = origin/main identical drift 0건 verified), ADR-079 KST normative
+      promotion_trigger: auto_blocking  # count=6 > threshold=3 → 발화 active (별 Wave 3 carrier, ADR-060 §결정 6 promotion gate AND 3 condition: pr_cumulative_min 20 + failure_threshold 0 + sibling Story merged 후 즉시 blocking-on-pr 승격 평가)
+    status: warning  # CFP-1581 Phase 1+2 mechanical wire (Phase 1: ADR-073 Amendment 16 + ADR-RESERVATION row + label-registry-v2 MINOR + evidence-checks-registry entry + Change Plan + Story file / Phase 2: scripts/check-architect-chief-author-base-sha-freeze.{sh,py} + templates/github-workflows/architect-chief-author-base-sha-freeze.yml + .github/workflows/ self-app + tests/scripts/check-architect-chief-author-base-sha-freeze/test_*.bats) → Active (codex-network-scope-presence + codex-fallback-subclass-tally + pre-spawn-prompt-finalize-verify precedent 답습 — declaration-only Wave 1 → warning-tier mechanical enforcement layer Wave 2 ratchet-UP 완료)
+
