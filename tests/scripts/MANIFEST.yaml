@@ -54,3 +54,18 @@ fixtures:
       red_tcs: [9]
       green_all: true
       platform_verified: ["windows", "linux"]
+
+  - file: tests/scripts/cfp-1539/cfp-1539-pre-spawn-prompt-finalize-verify.bats
+    description: "pre-spawn-prompt-finalize-verify — [USER-UTTERANCE-VERBATIM] block 내 pre_spawn_prompt_finalize_verified field presence lint"
+    cfp: CFP-1539
+    impl_file: scripts/lib/check_pre_spawn_prompt_finalize_verify.py
+    tc_count: 9
+    prereq_count: 2
+    total_count: 16
+    red_green_stash_proof: verified  # ADR-082 §결정 11.A — CFP-1334 §8.4 패턴 답습
+    green_status: "16/16 GREEN"
+    stash_method: "git stash push -- scripts/lib/check_pre_spawn_prompt_finalize_verify.py"
+    red_tcs: "15/16 FAIL (PREREQ-1 + TC-1~TC-9 all variants — PREREQ-2 python3 only PASS)"
+    green_all: true
+    platform_verified: ["windows"]
+    generated_at: "2026-05-25"  # KST (ADR-079 §결정 6 forward-only)

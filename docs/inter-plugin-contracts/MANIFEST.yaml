@@ -71,7 +71,7 @@ registries:
   - name: label_registry
     files:
       - { file: label-registry-v1.md, version: "1.5", status: Archived, superseded_by: label-registry-v2.md }  # CFP-140: type:* deprecated
-      - { file: label-registry-v2.md, version: "2.71", status: Active }  # CFP-1495-redo v2.71: label-registry-v2 rebase bump (CFP-1522 95th admin-merge-preflight-gate + CFP-1495 96th confluence-drift-detection)
+      - { file: label-registry-v2.md, version: "2.72", status: Active }  # CFP-1539 v2.72: pre-spawn-prompt-finalize-verify lint bypass channel 신설 (97번째 hotfix-bypass:* family member, ADR-082 Amendment 19 §결정 1 sub-scope 1-I + ADR-073 Amendment 13/14)
 
   - name: debate_protocol
     canonical_repo: mclayer/plugin-codeforge
