@@ -4,15 +4,19 @@
 # CFP-1368 / ADR-052 Amendment 14 — codex-fallback-subclass-tally mechanical wire
 # TDD RED→GREEN stash proof per ADR-082 §결정 11.A + CFP-1334 bats-red-green-proof-presence
 #
+# TDD RED→GREEN stash proof (CFP-1334 / ADR-082 §결정 11.A):
+#   RED: stash impl → 6/9 fail (TC-1~6) + 3/9 pass (TC-7~9 independent)
+#   GREEN: restore impl → 9/9 ok (verified 2026-05-25 KST)
+#
 # 9 Test cases (Change Plan §6.1 SSOT):
-#   TC-1: zero-row PASS — empty jsonl, no §10 markers → exit 0
-#   TC-2: single enum count=1 PASS → exit 0
-#   TC-3: single enum count=3 threshold breach → exit 1 + warning
-#   TC-4: 9-enum coverage (1 row per enum) → exit 0, all enum tally = 1
-#   TC-5: §10 marker not present → exit 0, no tally update
-#   TC-6: invalid enum value (unknown) → exit 1 + warning
-#   TC-7: [codex-sandbox-fallback] prefix presence in comment-prefix-registry-v1
-#   TC-8: [codex-substitution-scope-declared] prefix presence in comment-prefix-registry-v1
+#   TC-1: zero-row PASS — empty jsonl, no §10 markers → exit 0 (fixture: story-no-markers.md)
+#   TC-2: single enum count=1 PASS → exit 0 (fixture: story-single-fallback.md)
+#   TC-3: single enum count=3 threshold breach → exit 1 + warning (fixture: tally-threshold-breach.jsonl)
+#   TC-4: 9-enum coverage (1 row per enum) → exit 0, all enum tally = 1 (fixture: story-all-9-enums.md)
+#   TC-5: §10 marker not present → exit 0, no tally update (fixture: story-no-markers.md)
+#   TC-6: invalid enum value (unknown) → exit 1 + warning (fixture: story-invalid-enum.md)
+#   TC-7: [codex-sandbox-fallback] prefix presence in comment-prefix-registry-v1 (registry check)
+#   TC-8: [codex-substitution-scope-declared] prefix presence in comment-prefix-registry-v1 (registry check)
 #   TC-9: concurrent write race condition — atomic rename POSIX guarantee
 #
 
@@ -32,13 +36,10 @@ teardown_file() {
 # TC-1: zero-row PASS — empty jsonl, no §10 markers → exit 0
 @test "TC-1: PASS — empty jsonl + no §10 markers → exit 0" {
   local jsonl_file="$TEST_TMPDIR/tc1-tally.jsonl"
-  local story_file="$TEST_TMPDIR/tc1-story.md"
   touch "$jsonl_file"
-  cat > "$story_file" << 'ENDOFFILE'
-# §10 FIX Ledger
-
-No codex markers here.
-ENDOFFILE
+  # Use fixture: story-no-markers.md (CFP-1306/1367 fixture-file precedent)
+  local story_file
+  story_file="$(pwd)/${FIXTURE_DIR}/input/story-no-markers.md"
 
   run bash "$SCRIPT_PATH" \
     --jsonl-file "$jsonl_file" \
@@ -50,13 +51,10 @@ ENDOFFILE
 # TC-2: single enum count=1 PASS → exit 0
 @test "TC-2: PASS — single enum count=1 below threshold → exit 0" {
   local jsonl_file="$TEST_TMPDIR/tc2-tally.jsonl"
-  local story_file="$TEST_TMPDIR/tc2-story.md"
   echo '{"enum_value":"codex_truncated_no_verdict","occurred_at":"2026-05-25T09:00:00+09:00","story_key":"CFP-1368","dispatch_task_id":"tp2","substitution_path":"fallback_skip_with_marker","evidence":"[codex-sandbox-fallback: codex_truncated_no_verdict]"}' > "$jsonl_file"
-  cat > "$story_file" << 'ENDOFFILE'
-# §10 FIX Ledger
-
-[codex-sandbox-fallback: codex_truncated_no_verdict]
-ENDOFFILE
+  # Use fixture: story-single-fallback.md
+  local story_file
+  story_file="$(pwd)/${FIXTURE_DIR}/input/story-single-fallback.md"
 
   run bash "$SCRIPT_PATH" \
     --jsonl-file "$jsonl_file" \
@@ -67,10 +65,9 @@ ENDOFFILE
 # TC-3: single enum count=3 threshold breach → exit 1 + warning
 @test "TC-3: WARNING — enum count=3 threshold breach → exit 1" {
   local jsonl_file="$TEST_TMPDIR/tc3-tally.jsonl"
+  # Use fixture: tally-threshold-breach.jsonl (3 rows of codex_truncated_no_verdict)
+  cp "$(pwd)/${FIXTURE_DIR}/input/tally-threshold-breach.jsonl" "$jsonl_file"
   local story_file="$TEST_TMPDIR/tc3-story.md"
-  for i in 1 2 3; do
-    echo "{\"enum_value\":\"codex_truncated_no_verdict\",\"occurred_at\":\"2026-05-25T0${i}:00:00+09:00\",\"story_key\":\"CFP-TEST${i}\",\"dispatch_task_id\":\"tp${i}\",\"substitution_path\":\"fallback_skip_with_marker\",\"evidence\":\"[codex-sandbox-fallback: codex_truncated_no_verdict]\"}" >> "$jsonl_file"
-  done
   cat > "$story_file" << 'ENDOFFILE'
 # §10 FIX Ledger
 
@@ -87,22 +84,10 @@ ENDOFFILE
 # TC-4: 9-enum coverage row (1 row per enum) → exit 0, all enum tally = 1
 @test "TC-4: PASS — 9-enum coverage (1 row each) → exit 0" {
   local jsonl_file="$TEST_TMPDIR/tc4-tally.jsonl"
-  local story_file="$TEST_TMPDIR/tc4-story.md"
-  local enums=(
-    "api_missing"
-    "version_skew"
-    "enterprise_blocked"
-    "gh_api_network_blocked"
-    "manual_substitution_declared"
-    "inline_orchestrator_verify_only"
-    "subagent_recursion_blocked"
-    "dispatch_stall_or_stream_timeout"
-    "codex_truncated_no_verdict"
-  )
-  for enum in "${enums[@]}"; do
-    echo "{\"enum_value\":\"${enum}\",\"occurred_at\":\"2026-05-25T09:00:00+09:00\",\"story_key\":\"CFP-TC4\",\"dispatch_task_id\":\"tp1\",\"substitution_path\":\"fallback_skip_with_marker\",\"evidence\":\"[codex-sandbox-fallback: ${enum}]\"}" >> "$jsonl_file"
-  done
-  touch "$story_file"
+  # Use fixture: story-all-9-enums.md (all 9 enum values listed)
+  local story_file
+  story_file="$(pwd)/${FIXTURE_DIR}/input/story-all-9-enums.md"
+  touch "$jsonl_file"
 
   run bash "$SCRIPT_PATH" \
     --jsonl-file "$jsonl_file" \
@@ -113,14 +98,10 @@ ENDOFFILE
 # TC-5: §10 marker not-in-current-PR skip → exit 0, no new append
 @test "TC-5: PASS — no new marker in story file → exit 0, no append" {
   local jsonl_file="$TEST_TMPDIR/tc5-tally.jsonl"
-  local story_file="$TEST_TMPDIR/tc5-story.md"
   touch "$jsonl_file"
-  cat > "$story_file" << 'ENDOFFILE'
-# §10 FIX Ledger
-
-No codex-sandbox-fallback marker here.
-Some other content.
-ENDOFFILE
+  # Use fixture: story-no-markers.md
+  local story_file
+  story_file="$(pwd)/${FIXTURE_DIR}/input/story-no-markers.md"
 
   run bash "$SCRIPT_PATH" \
     --jsonl-file "$jsonl_file" \
@@ -136,13 +117,10 @@ ENDOFFILE
 # TC-6: invalid enum value → exit 1 + warning
 @test "TC-6: WARNING — invalid/unknown enum value → exit 1" {
   local jsonl_file="$TEST_TMPDIR/tc6-tally.jsonl"
-  local story_file="$TEST_TMPDIR/tc6-story.md"
   touch "$jsonl_file"
-  cat > "$story_file" << 'ENDOFFILE'
-# §10 FIX Ledger
-
-[codex-sandbox-fallback: codex_sandbox_path_blocked]
-ENDOFFILE
+  # Use fixture: story-invalid-enum.md (contains codex_sandbox_path_blocked = out-of-scope)
+  local story_file
+  story_file="$(pwd)/${FIXTURE_DIR}/input/story-invalid-enum.md"
 
   run bash "$SCRIPT_PATH" \
     --jsonl-file "$jsonl_file" \
@@ -169,9 +147,9 @@ ENDOFFILE
 # TC-9: concurrent write race condition — atomic rename guarantee
 @test "TC-9: PASS — concurrent writes produce correct row count (atomic rename)" {
   local jsonl_file="$TEST_TMPDIR/tc9-tally.jsonl"
+  touch "$jsonl_file"
   local story_a="$TEST_TMPDIR/tc9-story-a.md"
   local story_b="$TEST_TMPDIR/tc9-story-b.md"
-  touch "$jsonl_file"
 
   cat > "$story_a" << 'ENDOFFILE'
 # §10 FIX Ledger
