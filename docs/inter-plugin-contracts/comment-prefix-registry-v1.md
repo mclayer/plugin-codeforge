@@ -1,17 +1,18 @@
 ---
 kind: registry
 registry: comment-prefix
-version: "1.4"
+version: "1.5"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/comment-prefix-registry-v1.md
-date: 2026-05-24
+date: 2026-05-25
 authors:
   - Claude (CFP-32 codification — CFP-31 ζ arc parent design 기반)
   - CFP-139 (2026-05-09) — v1.0 → v1.1 MINOR bump (`[GitOps]` prefix 추가, ADR-047)
   - CFP-658 (2026-05-14) — v1.1 → v1.2 MINOR bump (`[SECURITY-FALLBACK]` prefix 추가, ADR-027 Amendment 2)
   - CFP-845 (2026-05-17) — v1.2 → v1.3 MINOR bump (`[bypass-justification]` prefix 추가, ADR-024 Amendment 8 §결정 6.A.4 carrier)
   - CFP-1336 (2026-05-24) — v1.3 → v1.4 MINOR bump (`[CROSS-REPO-SYNC]` prefix 추가, ADR-073 Amendment 9 + ADR-082 Amendment 14 + ADR-066 Amendment 4 carrier — cross-repo bidirectional label sync workflow audit channel)
+  - CFP-1368 (2026-05-25) — v1.4 → v1.5 MINOR bump (`[codex-sandbox-fallback]` + `[codex-substitution-scope-declared]` 2-entry atomic append, ADR-052 Amendment 14 + ADR-070 Amendment 8 + ADR-081 Amendment 7 carrier — codex worker substitution path audit channel, PIVOT-5 NEW Codex TP#4 F-5 self-stale catch by FIX iter 1 ground truth re-verify)
 related_adrs:
   - ADR-008 (Inter-plugin Contract Versioning)
   - ADR-009 (Wrapper-only core + writer-distributed lane plugins, CFP-31 신설 예정)
@@ -21,17 +22,22 @@ related_adrs:
   - ADR-073 Amendment 9 (cross-repo bidirectional label sync verify-before-assert mandate — CFP-1336, [CROSS-REPO-SYNC] prefix carrier)
   - ADR-082 Amendment 14 (§결정 1 layer 1 sub-scope 1-D cross-repo label-write authority — CFP-1336, [CROSS-REPO-SYNC] prefix paired sibling)
   - ADR-066 Amendment 4 (§결정 2 scope minimum 6번째 entry cross-repo-target-repos issues:write — CFP-1336, [CROSS-REPO-SYNC] prefix paired sibling PAT scope grant layer)
+  - ADR-052 Amendment 14 (CFP-1286 Wave 2 mechanical wire — codex-fallback-subclass-tally lint activation, CFP-1368 carrier, [codex-sandbox-fallback] + [codex-substitution-scope-declared] 2-prefix codify)
+  - ADR-070 Amendment 8 (fail-mode enum 8 → 9 확장 codex_truncated_no_verdict 9번째 value, CFP-1286 declaration-source carrier — CFP-1368 lint logic SSOT cross-validate target)
+  - ADR-081 Amendment 7 (Codex worker prompt boilerplate composition + verify-before-trust scope 5 sub-scope SSOT, CFP-1286 declaration-source carrier — CFP-1368 lint logic SSOT cross-validate target)
 related_files:
   - agents/DocsAgent.md (이전 narrative SSOT — 본 registry 신설 후 cross-ref로 변경)
   - docs/orchestrator-playbook.md
   - templates/github-workflows/cross-repo-label-sync.yml (CFP-1336 Wave 2 carrier — [CROSS-REPO-SYNC] prefix 자동 게시 source)
+  - templates/github-workflows/codex-fallback-tally-check.yml (CFP-1368 Wave 2 carrier — [codex-sandbox-fallback] + [codex-substitution-scope-declared] prefix 검출 source)
+  - scripts/lib/check_codex_fallback_tally.py (CFP-1368 Wave 2 carrier — lint logic SSOT cross-validate with comment-prefix-registry-v1 v1.5)
 ---
 
-# comment-prefix-registry v1.4
+# comment-prefix-registry v1.5
 
 ## 1. 목적
 
-GitHub Issue 코멘트의 phase prefix (11종 + Orchestrator Preflight 1종 + GitOps 1종 + SECURITY-FALLBACK 1종 + bypass-justification 1종 + CROSS-REPO-SYNC 1종 = 총 15종, v1.4) machine-readable SSOT. ζ arc 진행에 따라 lane plugin이 자기 lane prefix로 직접 코멘트 게시 시점에 단일 형식·시맨틱·posters 보장.
+GitHub Issue 코멘트의 phase prefix (11종 + Orchestrator Preflight 1종 + GitOps 1종 + SECURITY-FALLBACK 1종 + bypass-justification 1종 + CROSS-REPO-SYNC 1종 + codex-sandbox-fallback 1종 + codex-substitution-scope-declared 1종 = 총 17종, v1.5) machine-readable SSOT. ζ arc 진행에 따라 lane plugin이 자기 lane prefix로 직접 코멘트 게시 시점에 단일 형식·시맨틱·posters 보장.
 
 ## 2. Schema
 
@@ -40,7 +46,7 @@ GitHub Issue 코멘트의 phase prefix (11종 + Orchestrator Preflight 1종 + Gi
 | 필드 | 타입 | 설명 |
 |---|---|---|
 | prefix | string | Bracket 형식 (예: `[설계]`) |
-| phase | string | 레인 식별자 (requirements / design / design-review / implementation / code-review / test / security-test / pmo / fix / completed / preflight / **gitops** — v1.1 신규 / **security-fallback** — v1.2 신규 / **bypass-justification** — v1.3 신규) |
+| phase | string | 레인 식별자 (requirements / design / design-review / implementation / code-review / test / security-test / pmo / fix / completed / preflight / **gitops** — v1.1 신규 / **security-fallback** — v1.2 신규 / **bypass-justification** — v1.3 신규 / **cross-repo-sync** — v1.4 신규 / **codex-sandbox-fallback** — v1.5 신규 / **codex-substitution-scope-declared** — v1.5 신규) |
 | current_owner | string | CFP-32 시점 코멘트 게시 주체 |
 | target_owner_plugin | string | ζ arc 완료 후 owner plugin (또는 "core wrapper 잔류") |
 | posters | array&lt;string&gt; | 본 prefix 사용 권한이 있는 agent 또는 Action |
@@ -196,6 +202,26 @@ prefixes:
       - Orchestrator                                  # Wave 2 wire 후 직접 게시 (audit 보강 + manual sync 안내)
       - "cross-repo-label-sync.yml (자동)"             # Wave 2 wire 시점부터 workflow 자동 audit comment
     auto_mirror: false
+
+  - prefix: "[codex-sandbox-fallback]"          # NEW in v1.5 (CFP-1368 / ADR-052 Amendment 14 + ADR-070 Amendment 8 + ADR-081 Amendment 7)
+    phase: codex-sandbox-fallback
+    current_owner: "core wrapper (Orchestrator 직접 게시 — ADR-052 Amendment 8 fallback_skip_with_marker substitution path 활성 시 Story §10 안 audit trail marker, 1 회/spawn)"
+    target_owner_plugin: "core wrapper (Orchestrator monopoly — fix-event-v1 contract ADR-039 §결정 7 §10 invariant 정합)"
+    scope: "ADR-052 Amendment 8 fallback_skip_with_marker substitution path 활성 시 Story §10 안 audit trail marker. fail-mode enum 9-set (ADR-070 §결정 D1 SSOT cross-ref: api_missing / version_skew / enterprise_blocked / gh_api_network_blocked / manual_substitution_declared / inline_orchestrator_verify_only / subagent_recursion_blocked / dispatch_stall_or_stream_timeout / codex_truncated_no_verdict) 안 1 value 인용 의무. **lint logic source-of-truth** = `scripts/lib/check_codex_fallback_tally.py` (CFP-1368 Wave 2 carrier) — codex-fallback-subclass-tally check 의 mechanical SSOT cross-validate target. 10번째 enum candidate `codex_sandbox_path_blocked` = Out-of-scope (별 follow-up CFP, ADR-064 §결정 1 scope unitary). semantic adequacy 검증 불가 (grep-only) — reviewer responsibility, false-positive risk 명시."
+    example: "[codex-sandbox-fallback: codex_truncated_no_verdict] Codex worker `Touchpoint #2 ArchitectAgent §3 review` spawn 후 output 0 bytes / 1 tool_use / 173s / 57767 tokens → empty verdict. ADR-052 Amendment 8 `fallback_skip_with_marker` substitution path 활성 — verdict 없이 fail-mode 박제 + Orchestrator inline verify 진행."
+    posters:
+      - Orchestrator                                  # ADR-052 Amendment 8 fallback_skip_with_marker 활성 시 직접 게시 (substitution path 1 회/spawn)
+    auto_mirror: false
+
+  - prefix: "[codex-substitution-scope-declared]" # NEW in v1.5 (CFP-1368 / ADR-052 Amendment 14 + ADR-070 Amendment 8 + ADR-081 Amendment 7)
+    phase: codex-substitution-scope-declared
+    current_owner: "core wrapper (Orchestrator 직접 게시 — ADR-052 Amendment 8 manual_substitution_declare substitution path 활성 시 Story §10 안 audit trail marker, 1 회/spawn)"
+    target_owner_plugin: "core wrapper (Orchestrator monopoly — fix-event-v1 contract ADR-039 §결정 7 §10 invariant 정합)"
+    scope: "ADR-052 Amendment 8 manual_substitution_declare substitution path 활성 시 Story §10 안 audit trail marker. substitution scope enum 3-set (inline_orchestrator_verify default / manual_substitution_declare / fallback_skip_with_marker — ADR-052 Amendment 8 SSOT cross-ref) 안 1 value 인용 의무. **lint logic source-of-truth** = `scripts/lib/check_codex_fallback_tally.py` (CFP-1368 Wave 2 carrier) — codex-fallback-subclass-tally check 의 mechanical SSOT cross-validate target. inline_orchestrator_verify (default behavior) = marker 부재 case — declare 의무 없음 (Story §10 invariant 정합). semantic adequacy 검증 불가 (grep-only) — reviewer responsibility, false-positive risk 명시."
+    example: "[codex-substitution-scope-declared: manual_substitution_declare] Codex TP#4 spawn 후 Orchestrator 가 ADR-052 line 812 + ls docs/observability/+kpi/ + wc comment-prefix-registry-v1.md + grep codex markers + grep bypass-justification 5건 ground truth direct file Read verify 후 5 finding resolution status manual-decided. inline_orchestrator_verify default 영역 외 — Codex TP#4 finding semantic 가 Story file multiple sections cross-cutting 영역."
+    posters:
+      - Orchestrator                                  # ADR-052 Amendment 8 manual_substitution_declare 활성 시 직접 게시 (substitution path 1 회/spawn)
+    auto_mirror: false
 ```
 
 ## 4. 변경 규칙
@@ -217,3 +243,4 @@ prefixes:
 | **CFP-658** | **v1.2** | **MINOR bump** — `[SECURITY-FALLBACK]` prefix 추가 (manual fallback path audit-trailed channel, fallback:manual label 부착 PR scope). ADR-027 Amendment 2 carrier. Append-only for v1.x rule 정합. 12 → 13 phase prefix taxonomy. label-registry-v2 v2.12 changelog declaration ↔ comment-prefix-registry-v1 entry 양 channel 정합 (`F-CDX-004` 해소). [verified-via: git show origin/main:docs/inter-plugin-contracts/comment-prefix-registry-v1.md] |
 | **CFP-845** | **v1.3** | **MINOR bump** — `[bypass-justification]` prefix 추가 (hotfix-bypass:* label 부착 PR 의 narrative audit trail mechanical enforce carrier, ADR-024 Amendment 8 §결정 6.A.4). Append-only for v1.x rule 정합. 13 → 14 phase prefix taxonomy. `bypass-justification-marker.yml` workflow (CFP-845 Phase 2 carrier) 의 grep-presence lint 가 본 prefix 단일 source. semantic adequacy 불가 (grep-only) — false-positive risk 명시, reviewer responsibility. self-meta loop 회피 = `hotfix-bypass:bypass-justification-marker` 부착 PR (38번째 family member, ADR-024 Amendment 8) 은 marker presence check skip. [verified-via: git show origin/main:docs/inter-plugin-contracts/comment-prefix-registry-v1.md — v1.2 active 확인 후 v1.3 MINOR bump] |
 | **CFP-1336** | **v1.4** | **MINOR bump** — `[CROSS-REPO-SYNC]` prefix 추가 (cross-repo bidirectional label sync workflow audit channel, `templates/github-workflows/cross-repo-label-sync.yml` Wave 2 wire 의 audit comment 대상). ADR-073 Amendment 9 + ADR-082 Amendment 14 + ADR-066 Amendment 4 paired sibling carrier — 3 ADR Amendment 동시 발의 axis disjoint complement 3-set (verify subject layer ADR-073 Amd 9 ↔ write authority layer ADR-082 Amd 14 ↔ PAT scope grant layer ADR-066 Amd 4). Append-only for v1.x rule 정합. 14 → 15 phase prefix taxonomy. 3-purpose channel (warning / skip / sync 완료 audit) — Wave 2 wire 후 cross-repo-label-sync.yml workflow 자동 게시 + Orchestrator 직접 게시 양 channel. CFP-1302 D-4 chief tie-break dissent carry-over F2 carrier. [verified-via: git show origin/main:docs/inter-plugin-contracts/comment-prefix-registry-v1.md — v1.3 active 확인 + 14 prefix entry count 후 v1.4 MINOR bump, 2026-05-24 KST origin/main d24ab28] |
+| **CFP-1368** | **v1.5** | **MINOR bump (2-entry atomic append)** — `[codex-sandbox-fallback]` + `[codex-substitution-scope-declared]` 2 prefix 동시 추가 (ADR-052 Amendment 8 substitution path 3-enum cross-matrix audit channel — fallback_skip_with_marker activation + manual_substitution_declare activation 양 marker, 1 회/spawn invariant). ADR-052 Amendment 14 (CFP-1286 Wave 2 mechanical wire) + ADR-070 Amendment 8 (fail-mode enum 9-set declaration source) + ADR-081 Amendment 7 (Codex worker prompt boilerplate verify-before-trust scope) paired sibling carrier. Append-only for v1.x rule 정합. 15 → 17 phase prefix taxonomy (2-entry batch atomic, single MINOR bump 영역). **lint logic SSOT cross-validate** — `scripts/lib/check_codex_fallback_tally.py` (CFP-1368 Wave 2 carrier) 의 mechanical source-of-truth (codex-fallback-subclass-tally check). PIVOT-5 NEW Q5 (a) atomic 채택 — registry MISSING (Codex TP#4 F-5 self-stale 203 lines/v1.3 claim 정정 by Orchestrator FIX iter 1 ground truth re-verify, actual 219 lines/v1.4 active + grep codex markers 0 matches → register codify mandatory) 영역 closing-the-loop. self-meta loop 회피 = `hotfix-bypass:codex-fallback-tally` 부착 PR (90~92번째 family member depending on sibling Bundle B coordination — CFP-1306=v2.66 / CFP-1367=v2.67 / CFP-1368=v2.68 sequence) 안 lint step skip. [verified-via: git show origin/main:docs/inter-plugin-contracts/comment-prefix-registry-v1.md — v1.4 active 확인 + 15 prefix entry count + grep both codex markers = 0 matches MISSING 후 v1.5 MINOR bump 2-entry atomic, 2026-05-25 KST origin/main 249a30f] |
