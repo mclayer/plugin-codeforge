@@ -1946,6 +1946,123 @@ manual fallback path 활성 시에도 ArchitectAgent §3 직후 Codex proactive 
 
 ---
 
+### §3.19 Admin merge pre-flight gate (CFP-1522 / [ADR-113](../docs/adr/ADR-113-admin-merge-preflight-gate.md))
+
+Orchestrator 가 `gh pr merge --admin <PR-N>` attempt 시점 직전 5-step pre-flight gate 의무. ADR-073 §결정 1 verify-before-assert transition trigger `admin_merge_attempt` sub-domain instantiation. ADR-045 §D-9 pattern_count 3 reach Mandatory ADR escalation 산물 (CFP-1334 retro + CFP-1318 retro + CFP-1495 PR #1505 close evacuation 3-incident super-class `admin_merge_action_required_force_attempt`).
+
+#### §3.19.1 5-step procedure
+
+**Step 1 — required check state enum fetch**
+
+```bash
+gh pr checks <PR-N> --json name,state,conclusion --jq '.[] | select(.state != "completed" or .conclusion != "success") | "\(.name): \(.state)/\(.conclusion)"'
+```
+
+empty output (모든 required check `state=completed AND conclusion=success`) → admin merge 진행. non-empty → Step 2.
+
+**Step 2 — ACTION_REQUIRED detection + abort (10-value closed_enum)**
+
+```yaml
+abort_states_enum:  # closed-set, open_extension: false
+  - action_required        # primary block — manual approval needed
+  - failure                # explicit fail
+  - cancelled              # workflow cancelled
+  - timed_out              # CI timeout
+  - stale                  # stale check, fresh commit re-trigger needed
+  - pending                # in-progress
+  - in_progress            # in-progress alias
+  - skipped                # workflow conditional skip
+  - neutral                # neutral state, Orchestrator manual judgment
+  - unknown                # closed-set 외 value → fail-closed semantic (admin merge 차단)
+```
+
+1+ check 의 state 가 위 10-value enum 영역에 속하면 abort + Step 3 진입. `unknown` value (closed-set enum 외) = **fail-closed** (admin merge 차단 + 사용자 escalation).
+
+**Step 3 — fresh commit trigger recovery**
+
+ACTION_REQUIRED 잔존 시 fresh commit (empty 또는 trailing whitespace amendment commit) 으로 workflow re-trigger:
+
+```bash
+git -C "<worktree_abs_path>" commit --allow-empty -m "[CFP-NNN] re-trigger required checks (admin-merge preflight Step 3)"
+git -C "<worktree_abs_path>" push origin <branch>
+```
+
+`phase-gate-mergeable.yml` `on:` block = `pull_request: [opened, synchronize, labeled, unlabeled, edited]` only — `workflow_dispatch` entry 부재 (verified). manual re-trigger 경로 부재 영역에서 fresh commit = primary recovery. Wave 4 brainstorm carrier 영역 = `workflow_dispatch` entry 보완 검토 (별 follow-on CFP, ADR-113 §결정 8).
+
+**Step 4 — re-verify (≤ 60s wait + re-fetch)**
+
+```bash
+sleep 60   # workflow propagation grace (CI dispatch latency typical 30-60s, Anthropic infra-independent)
+gh pr checks <PR-N> --json name,state,conclusion --jq '.[] | select(.state != "completed" or .conclusion != "success")'
+```
+
+empty → admin merge 진행. non-empty → Step 5 (attempt cap check).
+
+**Step 5 — attempt cap = 3 STOP + escalate**
+
+Step 1-4 cycle 의 attempt count 가 **3 회** reach 시 STOP + 사용자 escalation 의무. Workflow log direct verify:
+
+```bash
+gh run list --workflow="phase-gate-mergeable.yml" --branch=<branch> --limit 10 --json databaseId,conclusion,createdAt
+gh run view <latest-id> --log
+```
+
+Workflow self-error (workflow code bug / dependency outage) 추정 시 사용자 escalation. **`auto-retry` 무한 loop 차단** (Threat A: counter reset abuse mitigation).
+
+#### §3.19.2 Attempt cap dual scope (per-PR + per-Story)
+
+attempt cap=3 = **dual scope AND** (Threat A counter reset abuse — close+reopen / PR 재생성 / attempt 분산 차단):
+
+- **per-PR scope**: 동일 PR-N 안 `gh pr merge --admin` 시도 누적 ≥ 3 → STOP
+- **per-Story scope**: 동일 carrier_story (CFP-NNN) 안 모든 PR 의 admin-merge 시도 누적 ≥ 3 → STOP (close+reopen / PR 재생성 우회 차단)
+
+**dual carrier 조건**: 둘 중 1+ trigger 시 STOP + 사용자 escalation 의무.
+
+#### §3.19.3 진단 flow (failure mode enum 4-fail)
+
+| Fail mode | 진단 | 대응 |
+|---|---|---|
+| **fail-1** API call failure (network / token expiry / Anthropic infra 429) | `gh` exit code ≠ 0 + stderr 분석 | retry exp-backoff 3회 + `codeforge:rate-limit-429-mitigation` skill + ADR-066 PAT 만료 check (90d rotation) |
+| **fail-2** state enum unknown | `gh pr checks` output 안 10-value enum 외 state value detect | **fail-closed semantic** (admin merge 차단 + 사용자 escalation, 10-value enum invariant 보존) |
+| **fail-3** re-trigger 후 ACTION_REQUIRED 잔존 | Step 3 fresh commit trigger 후 Step 4 re-verify 에서 동일 ACTION_REQUIRED | workflow self-error 추정 → attempt cap 카운트 + Step 5 STOP escalation |
+| **fail-4** silent bypass attempt | Orchestrator/subagent 가 5-step skip + `gh pr merge --admin` 직접 호출 | ADR-024 Amendment 6/8 §결정 6.A 5 lint chain 자동 covered (별 mechanism 0) |
+
+#### §3.19.4 우회 mechanism enum (a-d)
+
+**ADR-113 §결정 3/4 cross-ref** — 다음 4 우회 시도 mitigation:
+
+- (a) **Counter reset abuse** (Threat A) — close+reopen / PR 재생성 / attempt 분산 → **per-PR + per-Story dual scope** (§3.19.2 AND condition)
+- (b) **`enforce_admins` toggle abuse** (Threat B) — `gh api -X PATCH /repos/<org>/<repo>/branches/main/protection` 안 `enforce_admins.enabled: false` toggle → **explicit forbid** (audit-trailed exception channel 외 금지, ADR-113 §결정 3)
+- (c) **Pre-flight gate script bypass** — Orchestrator instrumentation 우회 + 직접 `gh pr merge --admin` → Wave 2 mechanical wire carrier (`scripts/check-admin-merge-preflight.sh` 3-layer self-block: pre-commit + pre-push + Orchestrator instrumentation, 별 sub-Story carrier)
+- (d) **Bypass-as-norm-mutation** — `hotfix-bypass:admin-merge-preflight-gate` norm mutation → ADR-024 Amendment 6/8 §결정 6.A 5 lint chain 자동 covered (`bypass-label-counter` + `per-plugin-cumulative-counter` + `bypass-justification-marker` + `cross-repo-bypass-counter` + `check-bypass-audit-comment.sh`) + `[bypass-justification]` PR comment marker 의무 (`comment-prefix-registry-v1` 14번째 prefix)
+
+#### §3.19.5 Fallback path (CFP-1495 carrier 재진입)
+
+CFP-1495 PR #1505 close evacuation (산출 8 file headRefOid `13b958eb` 보존) recovery procedure (ADR-113 §결정 7 §7.4.1 DR):
+
+```bash
+git -C "<new-worktree>" fetch origin 13b958eb
+git -C "<new-worktree>" checkout -b cfp-1495-redo origin/main
+git -C "<new-worktree>" cherry-pick 13b958eb
+git -C "<new-worktree>" push -u origin cfp-1495-redo
+gh pr create --title "[CFP-1495] Confluence drift detection cron — REDO" --body "Recovery from closed PR #1505 (headRefOid 13b958eb). post-CFP-1522 ADR-113 admin-merge pre-flight gate active 후 재진입."
+```
+
+branch naming `cfp-1495-redo` 권장 (ADR-024 cfp-NNN 정합, 간결 — `cfp-1495` 동일 branch 재사용 시 origin ref dangle 위험). post-CFP-1522 merge 후 활성.
+
+#### §3.19.6 evidence-checks-registry binding
+
+- entry name: `admin-merge-preflight-gate`
+- current_tier: `warning` (deferred-followup Wave 1 declaration-only)
+- bypass_label: `hotfix-bypass:admin-merge-preflight-gate` (label-registry-v2 v2.70 95번째 family member)
+- carrier_adr: ADR-060 (4-tier framework)
+- owner_adr: ADR-113 (5-step procedure SSOT)
+- paired_owner_adr: ADR-073 §결정 1 (verify-before-assert transition trigger `admin_merge_attempt` sub-domain)
+
+Wave 2 mechanical wire (`scripts/check-admin-merge-preflight.sh` + workflow + bats fixture) = 별 sub-Story carrier (`status: Active` 전환 시점).
+
+---
+
 ## 3B. Preflight 체크 (lane 진입 직전)
 
 **doc-only fast-path 분기 (ADR-054)**: Story 분류 판정 직후, Orchestrator가 §결정 1 분류 표 적용. `doc-only fast-path` 해당 시: 설계 lane → 경량 설계리뷰 → 단일 PR close (구현 lane spawn 금지). `full-lane` 해당 시: 기존 5-lane 전체. 모호 시 full-lane 강제. 판정 표 SSOT: [ADR-054](../docs/adr/ADR-054-doc-only-story-fast-path.md).
