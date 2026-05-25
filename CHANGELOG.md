@@ -9,11 +9,11 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ### Added
 
-- [CFP-FU-A] **Parallel session race 11th occurrence 3-Amendment paired carrier** (escalate_user pattern_count 11 reach Mandatory ADR-045 §D-9 — sub-decisions 1+2+3 통합)
+- [CFP-FU-A] **Parallel session race 11th occurrence 3-Amendment paired carrier + 12th meta-occurrence collision recovery** (escalate_user pattern_count 11 reach Mandatory ADR-045 §D-9 — sub-decisions 1+2+3 통합 + recursive dogfooding evidence for #1476)
   - `docs/adr/ADR-073-orchestrator-verify-before-assert.md` — Amendment 13 (transition trigger enum 12+13번째 entries `pre_git_operation` + `pre_push`, polling cadence 1 → 3) + Amendment 14 (§결정 1-P primitive AND aggregate composition layer, OR semantics → 3-mode AND aggregate `scripts/lib/check_parallel_work_sentinel.py:437` Wave 2 mechanical wire 별 sub-CFP carrier)
-  - `docs/adr/ADR-082-write-time-self-write-verification-mandate.md` — Amendment 18 (§결정 1 layer 1 sub-scope (1-H) 신설 pre-spawn-prompt-finalize verify layer, worktree create 후 ~30-60s window 안 1회 추가 polling 의무 + 3-source AND aggregate verify + verified-via `pre_spawn_prompt_finalize_verified` annotation, 3-layer temporal defense forcing function 완결 = Amd 15 pre-spawn pin + Amd 16 mid-spawn drift + Amd 18 pre-spawn-prompt-finalize)
-  - `docs/adr/ADR-RESERVATION.md` — `amendments_reserved[]` 3-row pre-claim append (ADR-073 Amd 13 + Amd 14 + ADR-082 Amd 18, CFP-FU-A carrier active status, ADR-082 Amd 17 §결정 1-G strict pre-claim mandate 정합)
-  - `CLAUDE.md` — verify-before-trust 4-layer 단락 (line 282) 1-line cross-ref append (CFP-FU-A 3-Amendment paired carrier + axis disjoint complement 3-set + 3-layer temporal defense forcing function 완결, CFP-506 line cap 정합)
+  - `docs/adr/ADR-082-write-time-self-write-verification-mandate.md` — Amendment 19 sub-scope (1-I) (§결정 1 layer 1 sub-scope (1-I) 신설 pre-spawn-prompt-finalize verify layer, worktree create 후 ~30-60s window 안 1회 추가 polling 의무 + 3-source AND aggregate verify + verified-via `pre_spawn_prompt_finalize_verified` annotation, **renumbered from Amd 18 sub-scope 1-H post CFP-1342 mid-flight collision recovery** — CFP-1342 ADR-082 Amd 18 + 1-H collision detected post-PR-#1527-open during pre-merge window, recovery via rebase on origin/main ca1c20e + renumber + 4-file cross-ref update. 4-layer temporal defense forcing function 완결 = Amd 15 pre-spawn pin + Amd 16 mid-spawn drift + Amd 18 Orchestrator §10 source-claim + Amd 19 pre-spawn-prompt-finalize)
+  - `docs/adr/ADR-RESERVATION.md` — `amendments_reserved[]` 3-row pre-claim append (ADR-073 Amd 13 + Amd 14 + ADR-082 Amd 19, CFP-FU-A carrier active status, ADR-082 Amd 17 §결정 1-G strict pre-claim mandate 정합; CFP-1342 Amd 18 row preserved upstream of our Amd 19 row post-collision-recovery)
+  - `CLAUDE.md` — verify-before-trust 4-layer 단락 (line 282) 1-line cross-ref append (CFP-FU-A 3-Amendment paired carrier + axis disjoint complement 3-set + 4-layer temporal defense forcing function 완결 + 12th meta-occurrence collision recovery, CFP-506 line cap 정합)
 
 ### Sentinel evidence (CFP-FU-A escalate_user 11 reach)
 
@@ -24,8 +24,9 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 | 3 | CFP-949 | sub-issue scope polling gap → rule 7 refinement | reactive |
 | 4-10 | (다수) | various race window incidents | partial preventive (Amd 2/3/4/5) |
 | 11 | CFP-1420 Sub-A S1.2 | PR #1442 STAND_DOWN_DUPLICATE per #1441 prior merge | escalate_user mandate (본 CFP-FU-A carrier) |
+| 12 META | CFP-FU-A self | CFP-1342 ADR-082 Amd 18+1-H collision detected post-PR-#1527-open during pre-merge window (recursive dogfooding evidence for #1476 sub-decisions 1+2+3 race window 영역 직접 reproduce: T0 worktree create → T1 spawn prompt finalize → T2 ArchitectAgent commit → ~30-60s gap → T3 CFP-1342 merge → T4 PR #1527 open → T5 collision → T6 recovery) | recovery via rebase on ca1c20e + renumber Amd 18→19 + 1-H→1-I + 4-file cross-ref update |
 
-11 occurrences ≫ threshold 2 = ADR-045 §D-9 Mandatory escalation. 본 carrier = preventive + reactive 3-layer 완결.
+11 occurrences + 12th meta-occurrence (in-flight collision recovery) ≫ threshold 2 = ADR-045 §D-9 Mandatory escalation. 본 carrier = preventive + reactive 4-layer 완결.
 
 ### Out of scope (별 follow-up CFP carrier)
 
@@ -33,7 +34,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
   - `pre-git-operation-sentinel-pickup` lint + workflow + bats
   - `pre-push-sentinel-pickup` lint + workflow + bats
   - `parallel-work-sentinel-and-aggregate` (`scripts/lib/check_parallel_work_sentinel.py` 신규 `--mode all-and` choice 추가 + 3-mode invoke + AND aggregate logic)
-  - `pre-spawn-prompt-finalize-verify` lint + workflow + bats
+  - `pre-spawn-prompt-finalize-verify` lint + workflow + bats (sub-scope 1-I, renumbered from 1-H post CFP-1342 mid-flight collision recovery)
 - **lane plugin agent md cross-ref** (codeforge-pmo GitOpsAgent.md / codeforge-design ArchitectAgent.md / 8 lane plugin PL agent file) — follow-up defer (wrapper-only ADR-010 sibling sync 면제)
 - **plugin.json version bump** — 본 PR = doc-only fast-path (ADR-054), additive governance behavior ratchet 강화. marketplace_sync_required: false (mirrored field 변경 0건)
 - **marketplace.json sibling sync** — N/A (plugin.json 변경 0건)
