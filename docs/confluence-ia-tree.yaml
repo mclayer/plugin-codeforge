@@ -1648,3 +1648,37 @@ playbook_source_total_byte: 290403
 playbook_source_total_line: 3643
 playbook_split_carrier: "CFP-1524 Sub-A (CFP-1584)"
 playbook_split_phase: "Phase 1 doc-only fast-path — schema 신설 + 19 entry skeleton (id null, Phase 2 createConfluencePage 결과 채움)"
+
+# ===========================================================================
+# CFP-1524 Sub-B (CFP-1585) — 36 domain-knowledge Confluence batch move
+# ===========================================================================
+# Phase 1 placeholder (BLOCKED — CFP-1523 Phase 2 close 대기)
+# CFP-1523 Phase 1 lane filter mechanism design merged 2026-05-25 PR #899
+# (codeforge-internal-docs). Phase 2 (실 142 page batch move execution) wait.
+# 본 placeholder = schema 신설 만, 실 36 entry binding = CFP-1523 결과 후 별 commit.
+
+legacy_domain_knowledge_migration_map:
+  # placeholder schema — 실 36 entry = CFP-1523 Phase 2 lane filter mechanism 결과 wait
+  # source parent = 2129969 (CFP-1494 minimal flat 36 child)
+  # verify-via Confluence MCP getConfluencePageDescendants(2129969) Phase 2 작업 직전 의무
+  - source_page_id: null
+    source_title: null
+    source_category: null  # "concept" | "domain" | "governance-principle" | "agent-teams" | "upgrade-flow" | "codex-collaboration"
+    new_parent_id: null
+    plugin_scope: null     # "codeforge-requirements" | ... | "cross-cutting"
+    lane_assignment_rule: null
+    moved_at: null
+
+legacy_domain_knowledge_migration_map_total: 36
+legacy_domain_knowledge_source_parent: 2129969
+legacy_domain_knowledge_carrier: "CFP-1524 Sub-B (CFP-1585)"
+legacy_domain_knowledge_phase: "Phase 1 placeholder — BLOCKED CFP-1523 Phase 2 close 대기"
+
+# domain category enum → plugin_scope 추론 placeholder (CFP-1523 결과 채택)
+legacy_domain_knowledge_category_inference_placeholder:
+  concept: "cross-cutting"
+  agent-teams: "cross-cutting"
+  codex-collaboration: "cross-cutting"
+  governance-principle: "wrapper-governance"
+  upgrade-flow: "wrapper-governance"
+  per-plugin-specific: "per-plugin top-level (CFP-1523 mechanism 결과 채택)"
