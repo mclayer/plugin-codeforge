@@ -1409,15 +1409,38 @@ s2_4_minimal_complete:
 s2_3_partial_complete:
   cfp: CFP-1493
   stage_1_complete: true  # 3 cross-cutting bucket page created
-  stage_2_3_deferred: true  # 142 legacy page batch move
+  stage_2_3_deferred: true  # 142 legacy page batch move (Confluence S2.3 시점 measurement)
+  # ─────────────────────────────────────────────────────────────────────────────
+  # METRIC DISAMBIGUATION (F-DR-008, CFP-1588 — historical vs ground-truth split)
+  #
+  # 본 block 안 두 metric 가 의도적 공존 (reader 인지 필수):
+  #
+  #   (A) 142 page  — Confluence S2.3 측정 시점 (CFP-1493 PR #1520 MERGED 시점) snapshot.
+  #                   historical context, 박제된 measurement.
+  #                   page count breakdown (당시): ADR 111 + IPC 30 + Consumer Guide 1 = 142.
+  #
+  #   (B) 117 ADR   — current git ground truth (2026-05-25T13:30:00+09:00 KST verified).
+  #                   verified-via `git -C <wrapper-worktree> ls-files docs/adr/ADR-*.md | wc -l`.
+  #                   F-DR-001 pivot (Story §2.1 row 4, CFP-1523) — Story §1
+  #                   USER-UTTERANCE-VERBATIM "142" 은 stale local main 시점 사실
+  #                   (Phase 0 시점 local cwd file count 111).
+  #                   현 ground truth = ADR 117 + IPC 30 + Consumer Guide 1 = 148 legacy page.
+  #
+  # 두 값 모두 정당: (A) = S2.3 측정 당시 historical, (B) = current 시점 ground truth.
+  # 차이값 (142 → 148 = +6 page) = S2.3 측정 시점 ↔ current 시점 사이 ADR 신설분
+  # (111 → 117 = +6 ADR, ADR-107 등 신설 carrier).
+  # ─────────────────────────────────────────────────────────────────────────────
   deferred_reason: |
     Batch move via updateConfluencePage = body-required REST mechanic (매 page body fetch +
-    parent change = 2 MCP call per page × 142 page = 284 MCP call, token cost very high).
-    Lane filter decision (ADR-by-ADR) = ad-hoc per-ADR judgment (ADR frontmatter lane field
-    부재 verified — 1/117 ADR only). Defer to 별 brainstorm + sub-CFP carrier.
-    Stage 1 산출 = IA tree structural skeleton 완성 + legacy parent retain + cross-link
-    navigation 충분.
-  deferred_followup_cfp: TBD (lane filter brainstorm + 142 page actual batch move)
+    parent change = 2 MCP call per page × 142 page (S2.3 시점 historical measurement) = 284
+    MCP call, token cost very high). Lane filter decision (ADR-by-ADR) = ad-hoc per-ADR
+    judgment (ADR frontmatter lane field 부재 verified — 1/117 ADR only, current ground truth).
+    Defer to 별 brainstorm + sub-CFP carrier. Stage 1 산출 = IA tree structural skeleton
+    완성 + legacy parent retain + cross-link navigation 충분.
+
+    Note: 142 (S2.3 historical) vs 117 (current ground truth ADR count) — 위 METRIC
+    DISAMBIGUATION block 참조. 두 값 모두 정당 (시점 차이, 한 쪽 stale 아님).
+  deferred_followup_cfp: TBD (lane filter brainstorm + 148 page actual batch move — current ground truth)
 
 legacy_pages:
   # CFP-1146 W5-S17 #1310 cutover 산출 — Sub-B S2.3/S2.4 migration source

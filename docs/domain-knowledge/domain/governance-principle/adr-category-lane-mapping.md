@@ -18,7 +18,7 @@ tags:
   - closed-set-invariant
 related_adrs:
   - ADR-054   # doc-only fast-path
-  - ADR-058   # ADR sunset criteria mandate (§결정 5 sunset_justification + is_transitional: false governance ratchet 강화)
+  - ADR-058   # ADR sunset criteria mandate (§결정 5 sunset_justification + is_transitional: false governance `ratchet` 강화)
   - ADR-060   # evidence-enforceable promotion framework (declarative_layer Wave 1 → 별 Wave 2 wire)
   - ADR-064   # decision principle mandate (§결정 5 CFP scope unitary)
   - ADR-068   # boundary completeness invariants (I-3 unconditional vs conditional + I-4 wording SSOT case-normalization)
@@ -45,7 +45,7 @@ ddd_layer:
     - "Open Host Service (OHS)"   # Confluence space CFP = OHS pattern (consumer single entry point governance corpus 접근)
   glossary_ref: docs/glossary.md
 is_transitional: false
-sunset_criteria: N/A — permanent governance ratchet (ADR-058 §결정 5 정합, lane mapping rule SSOT = closed-set invariant)
+sunset_criteria: N/A — permanent governance `ratchet` (ADR-058 §결정 5 정합, lane mapping rule SSOT = closed-set invariant)
 ---
 
 # ADR Category → Lane Bucket Mapping Rule — Diátaxis quadrant secondary axis (DD-4)
@@ -88,7 +88,7 @@ Axis disjoint 정합: 5 decision 모두 ModuleArch primary axis + 2 decision (D-
 
 | Location | Role | Content |
 |---|---|---|
-| `docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md` (본 file) | **SSOT primary (narrative body)** | mapping rule 전체 정의 + rationale + governance ratchet |
+| `docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md` (본 file) | **SSOT primary (narrative body)** | mapping rule 전체 정의 + rationale + governance `ratchet` ("강화 방향만 허용 + 약화 차단" — ADR amendment top-down rule) |
 | `docs/confluence-ia-tree.yaml` `lane_mapping_rule:` field | **cross-ref pointer (yaml field)** | `ssot_ref: docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md` + `closed_enum: [<16 normalized enum>]` field 만 (narrative body 영역 0) |
 
 Published Language content duplication 금지 (ADR-091 §결정 4) 정합 — 단일 owner location.
@@ -145,7 +145,7 @@ Published Language content duplication 금지 (ADR-091 §결정 4) 정합 — �
 
 본 mapping rule = **18 unique enum (case-normalized 16) closed-set** (`open_extension: false`). 신규 ADR frontmatter `category:` field = 본 16 enum 안 의무.
 
-**Rationale**: CFP-1525 schema drift 패턴 답습 차단 (closed-enum order drift = 14 occurrence sentinel evidence). 신규 enum 출현 시 별 ADR Amendment 의무 (ratchet 강화 evidence 동반).
+**Rationale**: CFP-1525 schema drift 패턴 답습 차단 (closed-enum order drift = 14 occurrence sentinel evidence). 신규 enum 출현 시 별 ADR Amendment 의무 (`ratchet` 강화 evidence 동반).
 
 **Future Amendment procedure (별 ADR Amendment)**: 신규 category enum 도입 결정 시 다음 절차 의무:
 
@@ -216,7 +216,7 @@ Phase 2 PR 안 6 MCP call atomic execution:
 
 ### Scope out (본 mapping rule 영역 외)
 
-- **ADR 신설 0** — 본 carrier (CFP-1523) = doc-only fast-path (ADR-054), 별 ADR Amendment 0건 (governance ratchet 강화 영역 외)
+- **ADR 신설 0** — 본 carrier (CFP-1523) = doc-only fast-path (ADR-054), 별 ADR Amendment 0건 (governance `ratchet` 강화 영역 외)
 - **RDB OLTP 영역 외** — Aggregate boundary / 트랜잭션 경계 / Alembic 정책 = ModuleArch unified mandate but RDB OLTP-specific 결정 영역 (CFP-1126 ModuleArch boundary axis 단일 advocate 흡수, 본 lane mapping 영역 외)
 - **Live touching N/A** — 본 carrier = governance corpus IA tree migration, live ordering / live deploy 영역 외 (LiveOps/LiveOrdering deputy CONDITIONAL spawn 0건)
 - **production cutover N/A** — 본 carrier = doc-only migration, ProductionEvidenceDeputy spawn 영역 외 (codeforge-deploy-review lane scope 외)
@@ -228,7 +228,7 @@ Phase 2 PR 안 6 MCP call atomic execution:
 ## 관련 ADR
 
 - **ADR-054** (doc-only fast-path) — 본 carrier (CFP-1523) classification 근거 (SSOT 문서 변경 + 기존 ADR Amendment 0 + src/tests 무변경)
-- **ADR-058** (ADR sunset criteria mandate) §결정 5 — sunset_justification 3-tuple 의무 (ratchet 약화 evidence-gated, 본 file `is_transitional: false` permanent governance ratchet)
+- **ADR-058** (ADR sunset criteria mandate) §결정 5 — sunset_justification 3-tuple 의무 (`ratchet` 약화 evidence-gated, 본 file `is_transitional: false` permanent governance `ratchet`)
 - **ADR-060** (evidence-enforceable promotion framework) — FU-1523-1 / FU-1523-2 declarative_layer → mechanical wire Wave 1 → Wave 2 pattern 답습
 - **ADR-064** (decision principle mandate) §결정 5 — CFP scope unitary (16-enum closed-set 안 신규 enum 도입 = 별 sub-CFP 의무)
 - **ADR-068** (boundary completeness invariants) I-3 unconditional vs conditional guard placement + I-4 wording SSOT case-normalization invariant
