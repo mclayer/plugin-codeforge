@@ -22,6 +22,12 @@ mechanical_enforcement_actions:
     status: deferred-followup     # registry yaml row append = Phase 1 PR; actual lint script + workflow + bats fixture pair wire = Phase 2 PR scope
     progress_note: "CFP-963 Amendment 14 carrier — Phase 1 = ADR-081/060/024 Amendments + 2 contract MINOR + SSOT doc + Story §3·§7·§11 + Change Plan, Phase 2 = scripts/check-codex-network-scope.{sh,py} + templates/github-workflows/codex-network-scope-presence.yml + .github/workflows/ self-app + tests/bats + tests/fixtures pair (CX-963-3 P2 boundary mandate per Codex TP#4). warning tier first per §결정 5"
     target_section: §결정 28      # 본 Amendment 14 의 mechanical action ↔ §결정 binding (신규 §결정 28 entry scope + false-positive risk + self-meta loop avoidance)
+  # Amendment 15 (CFP-1306, 2026-05-25) — 13번째 warning-tier entry 도입 (parallel-anchors-checked-presence,
+  # ADR-068 I-2 cross-module propagation completeness Wave 3 enforcement layer, review-verdict-v4 v4.9 carrier).
+  - action: parallel-anchors-checked-presence
+    status: warning               # Phase 1+2 동시 wire (CFP-1334 precedent — deferred-followup → warning 직접 전환)
+    progress_note: "CFP-1306 Amendment 15 carrier — review-verdict-v4 findings[].parallel_anchors_checked[] presence-grep heuristic lint. ADR-068 I-2 declaration source + ADR-060 Amendment 15 enforcement source dual-binding. 3-state semantic (absent→WARNING/clean→PASS/matched→PASS). 5 pattern_type enum closed-set. bats 12 TC RED→GREEN stash proof (CFP-1334 mandate). warning tier first per §결정 5"
+    target_section: §결정 29      # 본 Amendment 15 의 mechanical action ↔ §결정 binding
 amendment_log:
   - amendment: 1
     carrier_story: CFP-390
@@ -417,6 +423,37 @@ amendment_log:
       CFP-734]` (Amendment 2 §결정 6 (c) chain 정합, self-carrier
       CFP-963 제외 + CFP-722 chain 동일 — self promotion gate 평가
       trigger = 자기 PR merge tautology 회피).
+  - amendment: 15
+    carrier_story: CFP-1306
+    date: 2026-05-25
+    direction: strengthen
+    sunset_justification: null  # ADR-060 = is_transitional:false 영구 framework → ADR-058 §결정 5 trigger 미해당. 본 Amendment 15 = 강화 방향 (13번째 warning-tier entry parallel-anchors-checked-presence 등록 = framework entry count 12 → 13 ratchet-UP). 약화 영역 0건.
+    summary: |
+      신설 §결정 29 — 13번째 warning-tier evidence-checks-registry entry
+      `parallel-anchors-checked-presence` 등록 carrier amendment.
+      review-verdict-v4 v4.9 (CFP-1303) 에서 신설된
+      findings[].parallel_anchors_checked[] optional array field 의
+      presence-grep heuristic mechanical lint. ADR-068 I-2 cross-module
+      propagation completeness 의 review-verdict layer realization
+      (Wave 1=CFP-1291 prose → Wave 2=CFP-1303 schema → Wave 3=본 carrier
+      mechanical lint ADR-060 3-tier promotion canonical 사례).
+
+      3-state semantic: absent→WARNING / present+clean→PASS /
+      present+matched→PASS (clean enumeration evidence).
+      5 pattern_type enum closed-set: local_remote / client_server /
+      read_write / forward_reverse / enum_closure.
+
+      dual-binding: ADR-068 I-2 = declaration source /
+      ADR-060 Amendment 15 = enforcement source.
+      ADR-061 Amendment 3 (CFP-1497 CodeQL ReDoS guard) 정합 —
+      literal string containment only, no backtracking regex.
+      bats 12 TC RED→GREEN stash proof (CFP-1334 mandate ADR-082
+      §결정 11.A). Phase 1+2 동시 wire (CFP-1334 precedent —
+      deferred-followup → warning 직접 전환).
+
+      ADR-024 Amendment 14 동반 (§결정 6.A.7 per-entry namespace
+      90번째 family member `hotfix-bypass:parallel-anchors-checked-presence`
+      추가). label-registry-v2 v2.65 → v2.66 MINOR bump 동반.
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
@@ -1651,3 +1688,54 @@ ADR-058 §결정 5 의 trigger = **`is_transitional: true` ADR 의 amendment** �
 - **ADR-068 I-5** (dimensional empirical grounding, Amendment 1): D1.D.legacy_grace_window 의 `pr_cumulative_min: 20` ratchet trigger = ADR-060 §결정 6(b) default precedent-aligned (dimension category: count, units: merged-PR-count-with-enum-only-network-scope-usage, empirical-source: ADR-060 22 entry retroactive verified prior art, conservative ratchet).
 - **§결정 5 / §결정 6 / §결정 11** (본 ADR 본문): warning-first / standard promotion threshold / framework permanent SSOT host — 본 Amendment 정합.
 - **§결정 19** (Amendment 6 recurrence schema v1.2): 본 entry `recurrence{count:0, threshold:3, promotion_trigger:none}` default — sentinel-driven 도입 아닌 ratchet 확장 carrier (CFP-722 §결정 27 → CFP-966 parallel-work-sentinel-pickup recurrence count=2 sentinel 영역 vs 본 entry count=0 default 영역 분리, parallel-work-sentinel-pickup precedent verbatim 차용 = schema shape 정합).
+
+## Amendment 15 (CFP-1306, 2026-05-25 KST)
+
+### Amendment 15-결정 29 (신설) — 13번째 warning-tier entry `parallel-anchors-checked-presence` 등록 + ADR-068 I-2 review-verdict layer realization Wave 3 mechanical enforcement
+
+**Carrier**: CFP-1306 / Issue [mclayer/plugin-codeforge#1306](https://github.com/mclayer/plugin-codeforge/issues/1306) / Bundle A.A1.
+
+**Direct trigger**: ADR-068 I-2 cross-module propagation completeness 의 review-verdict layer realization — Wave 1 (CFP-1291, CodeReviewPLAgent.md prose anchor) → Wave 2 (CFP-1303, review-verdict-v4 v4.9 `findings[].parallel_anchors_checked[]` optional array field schema codify) → Wave 3 = 본 carrier mechanical lint enforcement. ADR-060 3-tier promotion canonical 사례 (declaration → warning → enforce).
+
+#### 29.A — 결정 (신규 entry `parallel-anchors-checked-presence` + warning-tier)
+
+`docs/evidence-checks-registry.yaml` 에 신규 entry `parallel-anchors-checked-presence` append.
+
+**3-state semantic** (ADR-068 I-2 review-verdict layer realization):
+- `absent` → exit 1 (WARNING) — candidate finding (category in 5 pattern_type closed-set) 에 `parallel_anchors_checked` field 누락
+- `present + clean` → exit 0 (PASS) — 모든 entry `matched: false` (clean enumeration evidence)
+- `present + matched` → exit 0 (PASS) — 1+ entry `matched: true` (parallel anchor found, advisory)
+
+**5 pattern_type enum closed-set** (review-verdict-v4 v4.9 SSOT L55):
+`local_remote` / `client_server` / `read_write` / `forward_reverse` / `enum_closure`
+
+**tier = warning (ADR-060 §결정 5 첫 도입)**: `continue-on-error: true` workflow. violations = stdout-report only, PR merge 영향 0.
+
+**AC-13** (DR iter 1): Markdown fenced ` ```yaml ` block extraction before `yaml.safe_load`.
+**AC-14** (DR iter 1): non-array `parallel_anchors_checked` (dict/string/null) → WARNING advisory + skip.
+**AC-15** (DR iter 1): `pattern_type` lives inside `parallel_anchors_checked[]` items, NOT `findings[].type`.
+
+#### 29.B — mechanical action ↔ §결정 binding
+
+**Mechanical enforcement**: `parallel-anchors-checked-presence` (status: warning, Phase 1+2 동시 wire per CFP-1334 precedent) — `docs/evidence-checks-registry.yaml` 동명 entry SSOT.
+
+**dual-binding**: ADR-068 I-2 = declaration source / ADR-060 Amendment 15 = enforcement source. CFP-963 Amendment 14 dual-binding pattern 답습.
+
+**ADR-061 Amendment 3 (CFP-1497 CodeQL ReDoS guard) 정합**: literal string containment only — no backtracking regex on multi-line content. Line-by-line parse (split on newline, ops on single line).
+
+#### 29.C — TDD stash proof (ADR-082 §결정 11.A, CFP-1334 mandate)
+
+12 TC bats RED→GREEN stash proof:
+- RED: `git stash push -- tests/fixtures/cfp-1306/` → bats = 12/12 FAIL (fixture absence)
+- GREEN: `git stash pop` → bats = 12/12 PASS
+
+#### 29.D — Cross-ref
+
+- **ADR-068 I-2** — cross-module propagation completeness declaration source. Wave 3 review-verdict layer realization.
+- **review-verdict-v4 v4.9** (CFP-1303) — `findings[].parallel_anchors_checked[]` schema carrier.
+- **ADR-024 Amendment 14** — §결정 6.A.7 per-entry namespace 90번째 family member `hotfix-bypass:parallel-anchors-checked-presence`.
+- **ADR-061 §결정 1** — thin bash wrapper + scripts/lib Python SSOT (NO heredoc). Amendment 3 (CFP-1497 ReDoS guard) 정합.
+- **ADR-040 Amendment 3 §결정 7.A/7.B** — frontmatter `mechanical_enforcement_actions[]` + 본문 §결정 29 reference.
+- **ADR-058 §결정 5** — `is_transitional: false` 영구 framework trigger 미해당 + 강화 방향.
+- **ADR-064 §결정 1** — CFP-scope-unitary (Wave 3 enforcement 단독 carrier).
+- **CFP-1291** (Wave 1 prose) + **CFP-1303** (Wave 2 schema) — Wave lineage.

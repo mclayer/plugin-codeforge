@@ -1,0 +1,14 @@
+---
+# TC-2: parallel_anchors_checked present, all matched: false (clean enumeration evidence)
+# Expected: exit 0 (PASS)
+pl_recommendation: FIX
+findings:
+  - id: F-001
+    severity: P1
+    category: local_remote
+    description: "LOCAL_AUTHOR fallback path unreachable"
+    file_line: "scripts/foo.py:76"
+    parallel_anchors_checked:
+      - file_line: "scripts/foo.py:213"
+        pattern_type: local_remote
+        matched: false
