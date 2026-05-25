@@ -7,6 +7,37 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.7.2] - 2026-05-25
+
+### Changed
+
+- [CFP-1477-FU-B] **wrapper plugin.json description — short-form re-write (60KB → 217 bytes, 99.6% reduction)** (pre-existing main drift 2-defect atomic cleanup: defect 2 description-verbatim + defect 3 marketplace-parity, scope narrowed from CFP-1477 5-defect to 2-defect per RequirementsPL synthesis + 사용자 Option A 채택)
+  - `.claude-plugin/plugin.json` — `description` 60KB changelog accumulation 폐기 → canonical short-form 217 bytes (UTF-8, 128 chars). wording SSOT = CLAUDE.md L9 본질 정의 (CFP/ADR cross-ref 제거 — description field 안 governance internal reference noise leak 회피, JSON string convention 정합). npm convention ≤200 char near-aligned. CHANGELOG.md SSOT 정합 (changelog history = CHANGELOG.md monopoly, description field duplication 제거)
+  - `.claude-plugin/plugin.json` — `version` 6.7.1 → 6.7.2 PATCH (ADR-037 §결정 1(a) additive only, no API/contract surface change, mirrored field cleanup governance 영역)
+  - `(cross-repo)` `mclayer/marketplace/.claude-plugin/marketplace.json` — `plugins[name=codeforge]` block `description` byte-identical mirror + `version` 6.7.1 → 6.7.2 sibling sync (ADR-063 §결정 1 3-file atomic invariant + §결정 2 ordering: marketplace 선행 merge → wrapper merge)
+  - `docs/cross-repo-patches/cfp-1477-fu-b-marketplace-sync.patch.txt` (신규) — marketplace.json patch content draft worktree-saved evidence (Orchestrator cross-repo PR open 시 verbatim 사용)
+
+### Scope narrowed (RequirementsPL synthesis + 사용자 Option A 채택)
+
+- Issue #1477 의 5 defect 중 2 defect (defect 2 description-verbatim + defect 3 marketplace-parity) 만 본 PATCH bump scope. 나머지 3 defect (sister carrier overlap or stale origin):
+  - defect 1 (wording-dictionary CLAUDE.md L276 `pin`) → #1061 ADR escalation (Mandatory, pattern_count 21+) + CFP-1510 macro label Wave 2 hydrate
+  - defect 4 (evidence-registry-naming) → CFP-1336 sister CLOSED + 별 carrier candidate (workflow file create scope, 1 VIOLATION + 25 advisory = ADR-060 §결정 20 explicit allowlist Conservative no-rename)
+  - defect 5 (inter-plugin-drift) → #815 LOW + 별 carrier for v4.10/v4.11 canonical sibling sync gap
+- pattern_count escalation marker (Story §10 + ADR-045 §D-9 cross-ref): partial 2/5 cleanup, 3/5 sister-deferred
+
+### Out of scope (별 follow-up CFP carrier)
+
+- 5 sibling plugin (codeforge-develop / -design / -test / -pmo / -requirements) review-verdict-v4 v4.9 → v4.11 sibling sync sweep (defect 5 sub-domain)
+- ADR-064 Amendment 6 wording-dictionary lint inline-detect refinement (defect 1 root cause potential, #1061 owner)
+- macro label CFP-1510 Wave 2 hydrate (`if: false` 제거 + event trigger wire)
+- description field 60KB accumulation pattern 자체 refactor (예: `description.short` + `description.long` split) — 별 governance Story
+
+### Bump rationale
+
+- description short-form cleanup (60KB → 217 bytes) + marketplace sibling sync (cross-repo PR pair) atomic
+- ADR-037 §결정 1(a) — additive only, no API/contract surface change, no agent behavior change, no script logic change
+- PATCH bump 6.7.1 → 6.7.2 (mirrored field cleanup governance 영역 = PATCH, MINOR/MAJOR 영역 외)
+
 ## [6.7.1] - 2026-05-24
 
 ### Added
