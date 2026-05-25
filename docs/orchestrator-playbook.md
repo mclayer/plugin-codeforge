@@ -3,7 +3,7 @@ title: Orchestrator Playbook
 status: active
 owner: Orchestrator (= 최상위 Claude 세션)
 created: 2026-04-23
-updated: 2026-05-10
+updated: 2026-05-25
 related:
   - CLAUDE.md
   - agents/RequirementsPLAgent.md
@@ -17,6 +17,30 @@ related:
   - codeforge-review:agents/CodeReviewPLAgent.md
   - codeforge-review:agents/SecurityTestPLAgent.md
 ---
+
+> **[PARTIAL ARCHIVED — Confluence-as-derived-mirror migration in progress (CFP-1584 Sub-A Phase 2, 2026-05-25 KST)]**
+>
+> This document is being split into §-level Confluence pages under bucket [CFP-1494 S2.4 carrier page (id=2130966)](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2130966). Git source remains the **SSOT** per [ADR-103 §결정 1](adr/ADR-103-git-confluence-sync-mechanism.md) (sync direction: git → Confluence). Confluence pages are **derived mirror**, NOT source of truth.
+>
+> **Sub-pages pushed (7 of 20)** — CFP-1584 Sub-A Phase 2 partial completion:
+>
+> | § | title | Confluence id | URL |
+> |---|---|---|---|
+> | §1 | 세션 생명주기 | 2066024 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2066024/1) |
+> | §2 | 사용자(Human) 상호작용 규약 | 2098442 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098442/2+Human) |
+> | §3 | 스폰 시퀀스 + 프롬프트 템플릿 | 2098466 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098466/3) |
+> | §3B | Preflight 체크 (lane 진입 직전) | 2098490 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098490/3B+Preflight+lane) |
+> | §5 | docs/stories file 동기화 | 2163913 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2163913/5+docs+stories+file) |
+> | §10 | Hotfix 경로 | 2098515 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098515/10+Hotfix) |
+> | §11 | Cross-agent write coordination | 2163935 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2163935/11+Cross-agent+write+coordination) |
+>
+> **Deferred to [CFP-1617](https://github.com/mclayer/plugin-codeforge/issues/1617) (follow-up carrier)**:
+> - **CRITICAL Step 0** — pre-spawn-pin (134KB, §.N-level split required per original CFP-1617 scope)
+> - **12 regular sections** (§4, §6, §7, §8, §9, §12, §13, §14, §15, §16, §17, 부록 A+B) — deferred due to single-session context capacity exhaustion at 7/20 pages
+>
+> Page id mapping SSOT: [`docs/confluence-ia-tree.yaml`](confluence-ia-tree.yaml) `playbook_split_pages[]` field. Each entry's `push_attempt_status` field reports per-entry state (`success` / `deferred_to_cfp_1617_size_split` / `deferred_to_cfp_1617_session_capacity`).
+>
+> **Probe artifact (cleanup follow-up)**: `_probe_1kb_CFP-1584` (id=2163892) — Confluence push capability sentinel, cleanup deferred to CFP-1617 maintenance.
 
 # Orchestrator Playbook
 
