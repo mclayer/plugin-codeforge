@@ -20,8 +20,8 @@ related_stories:
   - CFP-135
   - CFP-138
   - CFP-1580  # Amendment 7 carrier — pattern_count 5 escalation_resolved_carrier (Wave 2 mechanical wire DR-skip pattern, paired sibling ADR-068 Amendment 4)
-  - CFP-1592  # Amendment 8 carrier — §D-9 sub-decision (b) 신설 PMOAgent retro batch §6 ADR draft pre-publish verify-before-trust 3-source AND mandate (pattern_count 6 escalation_resolved_carrier, paired sibling CFP-1623 Wave 2 mechanical wire)
-  - CFP-1623  # Paired sibling carrier — Amendment 8 mechanical Wave 2 wire prerequisite (sequential after CFP-1592 merge)
+  - CFP-1592  # Amendment 8 carrier — §D-9 sub-decision (b) 3-source AND verify declarative anchor (sequential first, paired sibling)
+  - CFP-1623  # Amendment 9 carrier — §D-10 신설 8-tuple pre-publish preflight forcing function (paired sibling sequential second after #1592, retro-batch-origin discriminator confirmed 5/5 PIVOT rate)
 related_adrs:
   - ADR-009
   - ADR-013
@@ -84,12 +84,12 @@ amendment_log:
     status: applied
     ref: §D-9 + ADR-068 Amendment 4 (산물) + 5 precedent CFP linear chain (CFP-1489 / CFP-1497 / CFP-1500 / CFP-1502 / CFP-1539)
     sunset_justification: null
-  - amendment_id: 8
-    cfp: CFP-1592
+  - amendment_id: 9
+    cfp: CFP-1623
     date: 2026-05-25
-    scope: "§D-9 sub-decision (b) 신설 — PMOAgent retro batch §6 ADR draft 후보 작성 pre-publish verify-before-trust 3-source AND mandate. sub-decision (a) RETAIN (pattern_count ≥ 2 → escalation_action enum 2-value invariant 보존, 본문 변경 0건 additive ratchet 강화 방향). sub-decision (b) 본문: PMOAgent retro file write 시점 §6 ADR 후보 발의 sub-section 안 매 ADR draft 후보 (escalation_action: adr_draft_emitted 또는 escalate_user 모두) 작성 직전 3-source AND verify gate 통과 의무 — (1) `git show origin/main:<ADR-path>` direct frontmatter amendment count verify (target ADR 존재 + amendment_log max 확인) (2) `grep <feature-name> docs/evidence-checks-registry.yaml` (mechanical lint 이미 등록 여부 직접 grep) (3) `Glob scripts/check-<feature-pattern>*` (실 script 이미 존재 여부 직접 Glob). Gate fail behavior: 1+ source 부재 = `[fact-check-pending]` annotation 의무 + §6 후보 downgrade to §4 informational only OR PIVOT mark (`pmo_output v1.cross_story_pattern_adr_trigger.escalation_action: escalate_user` enum retain — false positive 안전망). 3 source AND PASS 시 §6 후보 정식 발의 (escalation_action: adr_draft_emitted). 동인 = pattern `retro_batch_adr_draft_stale_premise` pattern_count 6 reach Mandatory (CFP-1006 Tier-B Wave 1 stale auto-resolve 1st precedent + CFP-1542 retro batch bypass-cumulative-counter stale premise [CFP-845 ADR-024 Amd 8 already shipped 2026-05-17] + CFP-1558 retro batch amendment-number-frontmatter-verify stale premise [CFP-1198/1216/1312 Wave 1+2+backward-staleness already shipped 2026-05-21~23] + CFP-1604/1605/1606 Wave 4 batch 3 stale catches = 60% PIVOT rate 100% retro-batch-origin rate) ≫ threshold 2. §D-9 forcing function 이 'pattern 누적 → ADR escalation' 으로 실제 동작한 7번째 cross-Story 산물 evidence (Amendment 6 CFP-776 ADR-082 carrier = 5번째 / Amendment 7 CFP-1580 ADR-068 Amd 4 carrier = 6번째 / 본 Amendment 8 = 7번째). §D-9 forcing function 자체의 self-strengthening 산물 — sub-decision (b) 신설 = forcing function 의 pre-publish quality gate axis 강화 (기존 sub-decision (a) = post-detection escalation enforce, 본 sub-decision (b) = pre-publish stale-premise prevention). paired sibling CFP-1623 = Wave 2 mechanical wire prerequisite carrier (sequential after #1592 merge — declarative anchor 발효 후 mechanical wire activation, CFP-825 → CFP-845 → CFP-1198~1216~1312 → CFP-1580 → CFP-1592 5-Story Wave 1 → Wave 2 split precedent 답습). axis disjoint from ADR-082 sub-scope 1-A~1-M 13 chain (ADR-082 = artifact content write-time semantic truth verify axis / 본 Amendment 8 = retro corpus enumeration §6 ADR draft authoring path pre-publish gate axis, ADR-045 §D layer 정합). ADR-097 paradigm scope boundary 정합 (sub-decision 확장 = ratchet 강화 carve-out, NOT paradigm replacement). escalation_resolved_carrier: CFP-1592. doc-only fast-path Cat 1 단일 PR (ADR-054 정합, src/tests/script/workflow 0건)."
+    scope: "§D-10 신설 — PMOAgent retro batch §6 ADR draft pre-publish 8-tuple verify-before-trust forcing function (paired sibling axis with §D-9 + Amendment 8 §D-9 sub-decision (b) 3-source AND verify). axis 분리 codify: §D-9 (Amendment 5 CFP-665) = post-hoc cross-Story pattern threshold 도달 시 ADR escalation forcing function (retro write 시점 pattern_count ≥ 2 → escalation_action enum mandatory) ↔ §D-9 sub-decision (b) (Amendment 8 CFP-1592 paired sibling) = 동일 axis 안 3-source AND verify-before-trust (retro batch §6 ADR draft 후보 작성 pre-publish 검증) ↔ 본 §D-10 (Amendment 9 CFP-1623) = pre-publish preflight 8-tuple expansion forcing function (PMOAgent retro file authoring path 안 §6 ADR draft section authoring 직전 8 independent verify sources AND gate, 1+ disagree → downgrade enum 2-value `downgrade_to_section_4_informational_only` 또는 `pivot_mark`). 8-tuple verify sources AND gate: (1) `git show origin/main:<ADR-path>` frontmatter amendment_log direct read (target ADR 영역 이미 amendment 추가 여부) / (2) `grep <feature-name> docs/evidence-checks-registry.yaml` (mechanical lint 이미 등록 여부) / (3) `Glob scripts/check-<feature-pattern>*` (실 script 이미 존재 여부) / (4) `gh pr list --search '<feature-name> in:title' --state merged` (sibling carrier merge status) / (5) `gh issue list --search '<feature-name> in:title' --state all` (existing CFP carrier 검색) / (6) `git log --all --oneline -- <path>` (file-level historical change presence) / (7) `Glob docs/adr/ADR-*.md` + frontmatter `amendment_log` cross-Story scan (recent amendment chain) / (8) retro §5 cross-Story pattern table 안 anchor_id ↔ existing implementation 매핑. Platform 한계 영역 처리 = `[verification-out-of-scope: <사유>]` marker (ADR-052 Amendment 3 marker 5종 정합 — gh CLI rate-limit / shallow clone). pmo-output-v1 v1.3 optional field 신설 `retro_section_6_pre_publish_verify` (3 sub-field: `verify_sources_attempted[]` enum / `verify_sources_blocked[]` 사유 / `downgrade_action` enum 2-value `null|to_section_4_informational|pivot_mark`) — Wave 1 declarative anchor scope, Wave 2 mechanical wire (scripts/check-retro-batch-adr-draft-pre-publish.py + workflow + evidence-checks-registry + label-registry MINOR + codeforge-pmo sibling sync) = 별 sub-CFP carrier defer. 동인 = ADR-045 §D-9 Mandatory escalation pattern_count 6 cumulative reach (Wave 1 CFP-1006 1 + Wave 3 batches CFP-1542/CFP-1558 2 + Wave 4 batches CFP-1604/CFP-1605/CFP-1606 3 = 6 ≫ threshold 2 = 3.0x) 100% retro-batch-origin PIVOT rate (5/5 batches stale catch, Wave 1 1/1 + Wave 3 2/2 + Wave 4 3/3). retro-batch-origin discriminator confirmed evidence (Wave 4 5/5 PIVOT rate retro-batch-origin Stories vs non-retro-batch 0/2 rate CFP-1603 / CFP-1607). §D-9 결정 본문 / threshold N=2 / hybrid 검출 전략 / escalation_action enum 2-value 의미 변경 0 — additive ratchet (sub-decision §D-10 신설). paired sibling carrier Amendment 8 CFP-1592 (§D-9 sub-decision (b) 3-source AND declarative anchor) → 본 Amendment 9 CFP-1623 (§D-10 신설 8-tuple expansion, sub-domain prerequisite mechanical layer). sequential dispatch convention 정합 (#1592 먼저 land → #1623 §D-10 sibling 후속, Story §7 권장)."
     status: applied
-    ref: §D-9 sub-decision (b) + CFP-1592 산물 + pattern_count 6 cumulative (CFP-1006 + CFP-1542 + CFP-1558 + CFP-1604 + CFP-1605 + CFP-1606) + paired sibling CFP-1623 (Wave 2 mechanical wire)
+    ref: §D-10 + paired sibling Amendment 8 CFP-1592 (§D-9 sub-decision (b) 3-source AND) + Wave 4 pattern_count 6 cumulative evidence + retro-batch-origin discriminator
     sunset_justification: null
 is_transitional: false
 ---
@@ -526,6 +526,79 @@ paired sibling **CFP-1623** = Wave 2 mechanical wire prerequisite carrier (seque
 | 산물 | ADR-045 Amendment 8 (CFP-1592 carrier, doc-only fast-path Cat 1 단일 PR) + paired sibling #1623 Wave 2 mechanical wire carrier (sequential) |
 
 §D-9 forcing function 이 'pattern 누적 → ADR escalation' 으로 실제 동작한 7번째 cross-Story 산물 evidence (Amendment 6 CFP-776 ADR-082 carrier = 5번째 / Amendment 7 CFP-1580 ADR-068 Amd 4 carrier = 6번째 / 본 Amendment 8 = 7번째). 본 Amendment 8 는 **evidence + sub-decision (b) 신설** dual carrier — Amendment 6/7 (evidence-only) 대비 §D-9 본문 자체 (sub-decision layer) 강화 ratchet 동반.
+
+### Amendment 9 — §D-10 신설: Retro batch §6 ADR draft pre-publish 8-tuple verify-before-trust forcing function (CFP-1623)
+
+**문제**: PMOAgent retro batch §6 ADR draft authoring 시점 verify-before-trust 부재 → retro-batch-origin Stories 100% PIVOT rate (Wave 3+4 batches 5/5 stale catch). pattern_count 6 cumulative ≫ threshold 2 (3.0x), retro-batch-origin discriminator confirmed (5/5 vs non-retro-batch 0/2 rate).
+
+본 Amendment 는 §D-9 forcing function 의 axis 보완 — §D-9 (post-hoc threshold escalation) ↔ Amendment 8 §D-9 sub-decision (b) (3-source AND verify) ↔ 본 §D-10 (pre-publish preflight 8-tuple expansion). 세 forcing function 이 retro lifecycle 의 세 시점 cover:
+
+- §D-9 (Amendment 5) = retro write 완료 후 cross-Story pattern_count 누적 → ADR escalation (post-hoc aggregation)
+- §D-9 sub-decision (b) (Amendment 8 CFP-1592, paired sibling) = retro batch §6 ADR draft 후보 작성 직전 3-source AND verify (declarative anchor)
+- 본 §D-10 (Amendment 9) = §6 ADR draft section authoring 직전 8-tuple AND gate (preflight expansion forcing function)
+
+**결정**: §D-10 신설 — PMOAgent retro write 시점 §6 ADR draft section authoring 직전 8-tuple verify-before-trust gate 통과 의무.
+
+#### §D-10 — Retro batch §6 ADR draft pre-publish 8-tuple verify forcing function
+
+**Mandatory framing**: gate fail (8 source 중 1+ disagree) 시 PMOAgent self-decide 영역 제거 — §6 candidate 자동 downgrade 의무 (`downgrade_action` enum 2-value):
+
+- `downgrade_to_section_4_informational_only` — carrier 발의 회피, 기존 §4 informational 으로 강등
+- `pivot_mark` — carrier 발의 보존 but PIVOT preflight marker 부착, retro file 안 명시 mark
+
+두 enum value 모두 §6 candidate scope re-decide 의무 (forcing function 보존). 후속 처리 분기만 다름.
+
+**8-tuple verify sources** (AND gate, 1+ disagree → downgrade):
+
+1. `git show origin/main:<ADR-path>` — frontmatter `amendment_log` direct read (target ADR 영역에 이미 amendment 추가됨 여부)
+2. `grep <feature-name> docs/evidence-checks-registry.yaml` — mechanical lint 이미 등록됨 여부
+3. `Glob scripts/check-<feature-pattern>*` — 실 script 이미 존재 여부
+4. `gh pr list --search "<feature-name> in:title" --state merged` — sibling carrier merge status
+5. `gh issue list --search "<feature-name> in:title" --state all` — existing CFP carrier 검색
+6. `git log --all --oneline -- <path>` — file-level historical change presence
+7. `Glob docs/adr/ADR-*.md` + frontmatter `amendment_log` cross-Story scan — recent amendment chain
+8. retro §5 cross-Story pattern table 안 `anchor_id` ↔ existing implementation 매핑 — pattern_count → existing carrier mapping verify
+
+**Platform 한계 영역 처리** (`[verification-out-of-scope: <사유>]` marker, ADR-052 Amendment 3 marker 5종 정합):
+
+- gh CLI search rate-limit 환경 = source 4 + 5 skip → 6-tuple AND
+- git shallow clone 환경 = source 6 skip → 7-tuple AND
+- 단일 source 미충족 ≠ gate fail — 사유 marker 의무 (reverse-explicit annotation)
+
+**pmo-output-v1 v1.3 연동**: `retro_section_6_pre_publish_verify` optional field 신설 (additive, v1.0/v1.1/v1.2 consumer 호환). schema 3 sub-field:
+
+- `verify_sources_attempted[]` — 8 source enum
+- `verify_sources_blocked[]` — platform exemption 사유
+- `downgrade_action` — enum 2-value (`null` if pass / `to_section_4_informational` / `pivot_mark`)
+
+SSOT = [pmo-output-v1 §3](https://github.com/mclayer/plugin-codeforge/blob/main/docs/inter-plugin-contracts/pmo-output-v1.md). Wave 1 = schema declarative codify, Wave 2 mechanical wire = 별 sub-CFP carrier defer.
+
+**강제 강도**: PMOAgent agent file mandate (codeforge-pmo `templates/retro.md` §6 pre-publish gate cross-ref + PMOAgent.md self-write 표 — Wave 2 sibling sync 시점) + pmo-output-v1 v1.3 contract schema (`retro_section_6_pre_publish_verify` optional field, Wave 2 sibling sync 시점 mandatory transition).
+
+**Wave 1 declarative anchor scope** (본 Amendment 본문):
+
+- §D-10 forcing function 신설 (8-tuple AND gate + `downgrade_action` enum 2-value)
+- 8 verify sources schema codify
+- platform exemption `[verification-out-of-scope:]` marker channel codify
+- pmo-output-v1 v1.3 `retro_section_6_pre_publish_verify` optional field 신설 선언
+
+**Wave 2 mechanical wire** (별 sub-CFP carrier defer, declarative-only Wave 1 enforce):
+
+- `scripts/check-retro-batch-adr-draft-pre-publish.py` — PMOAgent retro file §6 ADR draft section auto-detect + 8-tuple verify automation
+- `templates/github-workflows/retro-batch-adr-draft-pre-publish.yml` — warning tier workflow (cron 또는 retro PR open trigger)
+- `docs/evidence-checks-registry.yaml` entry append — `retro-batch-adr-draft-pre-publish`, owner_adr ADR-045 / carrier_adr ADR-060, warning tier deferred-followup
+- `docs/inter-plugin-contracts/label-registry-v2.md` MINOR — `hotfix-bypass:retro-batch-adr-draft-pre-publish` family member
+- codeforge-pmo plugin sibling sync — PMOAgent.md self-write 표 + `templates/retro.md` §6 pre-publish gate cross-ref (별 PR carrier)
+
+**근거**: ADR-045 §D-9 post-hoc threshold escalation 의 pre-publish preflight 보완 axis. Wave 3+4 batches 100% retro-batch-origin PIVOT rate (5/5) evidence 정합. CFP-1623 carrier = META #1592 (Amendment 8 §D-9 sub-decision (b) 3-source AND) 의 sub-domain prerequisite (8-tuple expansion). retro-batch-origin discriminator 확정 = retro lifecycle 안 §6 ADR draft authoring path 영역 forcing function 강화 정합 (Industry pre-publish gate pattern — K8s admission webhook / GitHub branch protection required checks / Hashicorp Terraform plan/apply split analog).
+
+**paired sibling cross-ref**:
+
+- Amendment 8 (CFP-1592, paired sibling) = §D-9 sub-decision (b) 3-source AND verify declarative anchor — sequential dispatch convention (#1592 먼저 land → 본 §D-10 후속, Story §7 권장 정합)
+- Amendment 5 (CFP-665) §D-9 retain invariant 보존 — Amendment 9 = §D-10 sub-decision append only, §D-9 본문 의미 변경 0
+- Amendment 6 (CFP-776) §D-9 evidence Amendment precedent 답습 — forcing function 이 명목상 존재만 하는지 실제 동작하는지의 evidence Amendment pattern (본 §D-10 = preflight 측 forcing function expansion)
+- Amendment 7 (CFP-1580) §D-9 evidence Amendment 6번째 precedent — pattern_count 5 → §D-9 forcing function 실 작동 → ADR-068 Amendment 4 산물 (axis 분리: 본 §D-10 = pattern_count 6 reach 후 preflight 보완, ADR-068 Amendment 4 = mechanical wire DR-skip 영역 disjoint axis)
+- ADR-082 §결정 12 (RequirementsPL + retro-time verify-before-trust) = adjacent disjoint axis (write-time vs pre-publish discipline 명확 분리, RequirementsPL vs PMOAgent agent boundary 명확)
 
 ## 해소 기준
 

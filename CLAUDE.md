@@ -234,7 +234,7 @@ FIX 루프 시작 시 `codeforge:root-cause-decision` 호출 (DeveloperPL 진단
 
 ### SessionStart retro alert scan (ADR-045 §D-5, CFP-628)
 
-Orchestrator 가 새 session 개시 시 미해소 `[PMO] retro alert` comment 자동 scan + PMOAgent 자동 spawn 의무. SessionStart hook (`scripts/check-retro-alerts.sh`) 가 mechanical pre-screen. SSOT: [ADR-045 §D-5](docs/adr/ADR-045-story-retro-mandatory-trigger.md).
+Orchestrator 가 새 session 개시 시 미해소 `[PMO] retro alert` comment 자동 scan + PMOAgent 자동 spawn 의무. SessionStart hook (`scripts/check-retro-alerts.sh`) 가 mechanical pre-screen. SSOT: [ADR-045 §D-5](docs/adr/ADR-045-story-retro-mandatory-trigger.md). PMOAgent retro §6 ADR draft pre-publish verify (paired sibling — §D-9 sub-decision (b) 3-source AND CFP-1592 Amendment 8 sequential first + §D-10 신설 8-tuple expansion CFP-1623 Amendment 9 sequential second, retro-batch-origin discriminator 5/5 PIVOT rate evidence, Wave 1 declarative-only, Wave 2 mechanical wire 별 sub-CFP defer).
 
 ### Lane plugin self-write boundary
 
