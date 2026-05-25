@@ -20,6 +20,8 @@ related_stories:
   - CFP-135
   - CFP-138
   - CFP-1580  # Amendment 7 carrier — pattern_count 5 escalation_resolved_carrier (Wave 2 mechanical wire DR-skip pattern, paired sibling ADR-068 Amendment 4)
+  - CFP-1592  # Amendment 8 carrier — §D-9 sub-decision (b) 신설 PMOAgent retro batch §6 ADR draft pre-publish verify-before-trust 3-source AND mandate (pattern_count 6 escalation_resolved_carrier, paired sibling CFP-1623 Wave 2 mechanical wire)
+  - CFP-1623  # Paired sibling carrier — Amendment 8 mechanical Wave 2 wire prerequisite (sequential after CFP-1592 merge)
 related_adrs:
   - ADR-009
   - ADR-013
@@ -81,6 +83,13 @@ amendment_log:
     scope: "§D-9 cross_story_pattern_adr_trigger 적용 evidence (Amendment 5 forcing function 산물 기록 6번째) — pattern `wave2-mechanical-wire-design-review-skip` pattern_count 5 ≥ threshold 2 reach Mandatory (CFP-1489 / CFP-1497 / CFP-1500 / CFP-1502 / CFP-1539 5 precedent linear chain, all Wave 1 declarative anchor active 후 Wave 2 mechanical wire 영역에서 DesignReviewPL spawn 0 + 0 design FIX + 0 design review divergence detection + wrapper-self CodeReviewPL PASS + admin squash merge) → PMOAgent CFP-1539+1540 batch retro §6 escalation_action escalate_user → 사용자 결정 (2026-05-25 KST): Option A — Compress normative codify → ADR-068 Amendment 4 산물 (§결정 7 신설: Wave 2 mechanical wire 영역 design review skip 정합 invariant codify + Wave 1 declarative or 신규 ADR/governance 영역 mandatory retain). §D-9 forcing function 이 'pattern 누적 → ADR escalation' 으로 실제 동작한 6번째 cross-Story 산물 evidence (Amendment 6 CFP-776 ADR-082 carrier = 5번째 / 본 Amendment 7 = 6번째). §D-9 결정 본문 / threshold N=2 / hybrid 검출 전략 / escalation_action enum 2-value 의미 변경 없음 — evidence-only Amendment. paired sibling ADR-068 Amendment 4 (CFP-1580 §결정 7 신설 Wave 2 mechanical wire 영역 design review skip 정합 invariant declarative anchor)."
     status: applied
     ref: §D-9 + ADR-068 Amendment 4 (산물) + 5 precedent CFP linear chain (CFP-1489 / CFP-1497 / CFP-1500 / CFP-1502 / CFP-1539)
+    sunset_justification: null
+  - amendment_id: 8
+    cfp: CFP-1592
+    date: 2026-05-25
+    scope: "§D-9 sub-decision (b) 신설 — PMOAgent retro batch §6 ADR draft 후보 작성 pre-publish verify-before-trust 3-source AND mandate. sub-decision (a) RETAIN (pattern_count ≥ 2 → escalation_action enum 2-value invariant 보존, 본문 변경 0건 additive ratchet 강화 방향). sub-decision (b) 본문: PMOAgent retro file write 시점 §6 ADR 후보 발의 sub-section 안 매 ADR draft 후보 (escalation_action: adr_draft_emitted 또는 escalate_user 모두) 작성 직전 3-source AND verify gate 통과 의무 — (1) `git show origin/main:<ADR-path>` direct frontmatter amendment count verify (target ADR 존재 + amendment_log max 확인) (2) `grep <feature-name> docs/evidence-checks-registry.yaml` (mechanical lint 이미 등록 여부 직접 grep) (3) `Glob scripts/check-<feature-pattern>*` (실 script 이미 존재 여부 직접 Glob). Gate fail behavior: 1+ source 부재 = `[fact-check-pending]` annotation 의무 + §6 후보 downgrade to §4 informational only OR PIVOT mark (`pmo_output v1.cross_story_pattern_adr_trigger.escalation_action: escalate_user` enum retain — false positive 안전망). 3 source AND PASS 시 §6 후보 정식 발의 (escalation_action: adr_draft_emitted). 동인 = pattern `retro_batch_adr_draft_stale_premise` pattern_count 6 reach Mandatory (CFP-1006 Tier-B Wave 1 stale auto-resolve 1st precedent + CFP-1542 retro batch bypass-cumulative-counter stale premise [CFP-845 ADR-024 Amd 8 already shipped 2026-05-17] + CFP-1558 retro batch amendment-number-frontmatter-verify stale premise [CFP-1198/1216/1312 Wave 1+2+backward-staleness already shipped 2026-05-21~23] + CFP-1604/1605/1606 Wave 4 batch 3 stale catches = 60% PIVOT rate 100% retro-batch-origin rate) ≫ threshold 2. §D-9 forcing function 이 'pattern 누적 → ADR escalation' 으로 실제 동작한 7번째 cross-Story 산물 evidence (Amendment 6 CFP-776 ADR-082 carrier = 5번째 / Amendment 7 CFP-1580 ADR-068 Amd 4 carrier = 6번째 / 본 Amendment 8 = 7번째). §D-9 forcing function 자체의 self-strengthening 산물 — sub-decision (b) 신설 = forcing function 의 pre-publish quality gate axis 강화 (기존 sub-decision (a) = post-detection escalation enforce, 본 sub-decision (b) = pre-publish stale-premise prevention). paired sibling CFP-1623 = Wave 2 mechanical wire prerequisite carrier (sequential after #1592 merge — declarative anchor 발효 후 mechanical wire activation, CFP-825 → CFP-845 → CFP-1198~1216~1312 → CFP-1580 → CFP-1592 5-Story Wave 1 → Wave 2 split precedent 답습). axis disjoint from ADR-082 sub-scope 1-A~1-M 13 chain (ADR-082 = artifact content write-time semantic truth verify axis / 본 Amendment 8 = retro corpus enumeration §6 ADR draft authoring path pre-publish gate axis, ADR-045 §D layer 정합). ADR-097 paradigm scope boundary 정합 (sub-decision 확장 = ratchet 강화 carve-out, NOT paradigm replacement). escalation_resolved_carrier: CFP-1592. doc-only fast-path Cat 1 단일 PR (ADR-054 정합, src/tests/script/workflow 0건)."
+    status: applied
+    ref: §D-9 sub-decision (b) + CFP-1592 산물 + pattern_count 6 cumulative (CFP-1006 + CFP-1542 + CFP-1558 + CFP-1604 + CFP-1605 + CFP-1606) + paired sibling CFP-1623 (Wave 2 mechanical wire)
     sunset_justification: null
 is_transitional: false
 ---
@@ -451,6 +460,72 @@ git push origin --delete retro-attempts-state/<KEY>
 | 산물 | ADR-082 (Write-time self-write verification mandate) — CFP-776 carrier, doc-only fast-path |
 
 **결정**: §D-9 forcing function 이 "pattern 누적 → ADR escalation" 으로 실제 작동했음을 ADR-082 산출로 확인. §D-9 결정 본문 / threshold N=2 / hybrid 검출 전략 / Mandatory framing 의미 변경 없음 — evidence-only Amendment. ADR-082 §결정 1 layer disjoint 표가 ADR-045 §D 를 4-layer 중 "retro corpus enumeration (PMOAgent §5 pattern_count)" layer 로 명시 (verify-before-trust governance 의 retro pattern aggregation layer).
+
+### Amendment 8 — §D-9 sub-decision (b) 신설: PMOAgent retro batch §6 ADR draft pre-publish verify-before-trust 3-source AND mandate (CFP-1592)
+
+**문제**: ADR-045 Amendment 5 §D-9 forcing function (pattern_count ≥ 2 → escalation_action enum 2-value) 이 도입된 이후, PMOAgent retro batch (§5 cross-Story pattern aggregation 직후) §6 ADR draft 후보 발의 sub-section 안에서 **이미 shipped 영역과 collision** 하는 stale-premise ADR draft 후보가 반복 발의되었다. §D-9 의 기존 sub-decision (a) (pattern_count threshold 도달 시 escalation_action enum 채움 의무) 는 post-detection escalation enforce mechanism — 그러나 ADR draft 후보 작성 시점 자체에 stale-premise prevention 의 pre-publish quality gate 가 부재했다.
+
+**증거 (pattern_count 6 reach Mandatory)**:
+
+| # | CFP | 발의 origin | Stale premise | Already-shipped carrier |
+|---|---|---|---|---|
+| 1 | CFP-1006 | Tier-B Wave 1 (2026-05-19) | auto-resolve assumption | CFP-1025 root cause codify (post-merge) |
+| 2 | CFP-1542 | CFP-FU-A/B retro batch (2026-05-25) | bypass-cumulative-counter mechanical wire 신규 | CFP-845 (ADR-024 Amd 8) MERGED 2026-05-17 — full per-plugin-cumulative-counter shipped |
+| 3 | CFP-1558 | CFP-FU-A/B retro batch (2026-05-25) | amendment-number-frontmatter-verify lint 신규 | CFP-1198/1216/1312 MERGED 2026-05-21~23 — Wave 1+2+bidirectional extension shipped |
+| 4 | CFP-1604 | Wave 4 batch (2026-05-25) | (Wave 4 batch stale catch) | (별 carrier already shipped) |
+| 5 | CFP-1605 | Wave 4 batch (2026-05-25) | (Wave 4 batch stale catch) | (별 carrier already shipped) |
+| 6 | CFP-1606 | Wave 4 batch (2026-05-25) | (Wave 4 batch stale catch) | (별 carrier already shipped) |
+
+pattern_count 6 ≫ threshold 2 = **Mandatory** (Amendment 5 §D-9 forcing function 정합). 100% retro-batch-origin rate + 60% PIVOT rate (Wave 4 batch 3/5).
+
+**결정**: §D-9 본문 **sub-decision (b) 신설 (additive ratchet 강화 방향, 본문 변경 0건 — sub-decision (a) RETAIN)**. PMOAgent retro file write 시점 §6 ADR 후보 발의 sub-section 안 매 ADR draft 후보 (escalation_action: adr_draft_emitted 또는 escalate_user **모두**) 작성 직전 3-source AND verify gate 통과 의무.
+
+#### §D-9 sub-decision (b) — Retro batch §6 ADR draft pre-publish 3-source AND verify gate
+
+**Pre-publish gate trigger**: PMOAgent 가 retro file `<sprint>-cfp-NNN-<slug>.md` §6 sub-section 안 ADR draft 후보 (escalation_action enum value 무관 — adr_draft_emitted / escalate_user **모두**) 발의 시점.
+
+**3-source AND verify (모두 PASS 의무)**:
+
+1. **`git show origin/main:<ADR-path>` direct frontmatter amendment count verify** — target ADR 가 이미 존재한다면 amendment_log[] max 직접 read. 발의 premise 가 "기존 ADR 의 신규 Amendment 가 필요" 일 때 — 해당 영역이 이미 max-1 amendment 까지 codified 되어 있는지 확인.
+2. **`grep <feature-name> docs/evidence-checks-registry.yaml`** — 발의 premise feature 가 이미 evidence-checks-registry mechanical lint entry 로 wire 되어 있는지 직접 grep. 발의 premise 가 "mechanical lint 신규 wire" 일 때 — 동일 lint 가 이미 warning/blocking tier 로 wire 되어 있는지 확인.
+3. **`Glob scripts/check-<feature-pattern>*`** — 발의 premise script 가 이미 wrapper repo 안 wire 되어 있는지 직접 Glob. 발의 premise 가 "lint script 신규 작성" 일 때 — 동일 script 가 이미 존재하는지 확인.
+
+**Gate fail behavior** (1+ source 부재 = stale-premise 확률 높음):
+- `[fact-check-pending]` annotation 의무 (PMOAgent retro file §6 후보 row 안 marker append)
+- §6 후보 **downgrade to §4 informational only** (정식 ADR draft 발의 차단)
+- **OR PIVOT mark** (`pmo_output v1.cross_story_pattern_adr_trigger.escalation_action: escalate_user` enum retain — false positive 안전망)
+
+**Gate PASS (3 source AND 모두 PASS) behavior**:
+- §6 후보 정식 발의 (`escalation_action: adr_draft_emitted`)
+- ArchitectAgent spawn → 신규 ADR 또는 Amendment carrier 작성
+
+**False positive 안전망 (sub-decision (a) RETAIN)**: `escalation_action: escalate_user` enum value 보존 — gate fail 시 PMOAgent self-decide 영역 0, 사용자 manual decide 의뢰 path 보존. forcing function 약화 0건 — pre-publish gate 는 post-detection escalation 의 quality 강화 layer, original (a) mechanism 보존 (additive).
+
+**Strict mode invariant**: 3-source AND 가 OR 가 아닌 AND 임 — 1 source 라도 부재 시 gate fail. 이유: stale-premise 발생 root cause = "정보 일부 missing 으로 인한 incomplete check" — 1 source PASS 만으로 premise validity 결론 금지.
+
+**근거**: ADR-045 §D-9 Amendment 5 forcing function 의 **self-strengthening** — sub-decision (b) 신설 = forcing function 의 pre-publish quality gate axis 강화 (기존 sub-decision (a) = post-detection escalation enforce mechanism, 본 sub-decision (b) = pre-publish stale-premise prevention mechanism). 두 sub-decision = disjoint axis temporal split (pre vs post detection).
+
+paired sibling **CFP-1623** = Wave 2 mechanical wire prerequisite carrier (sequential after #1592 merge — declarative anchor 발효 후 mechanical wire activation, CFP-825 → CFP-845 → CFP-1198~1216~1312 → CFP-1580 → CFP-1592 5-Story Wave 1 → Wave 2 split precedent 답습). pmo-output-v1 schema 확장 (3-source verify field) 영역 = #1623 carrier.
+
+**axis disjoint preservation**: ADR-082 sub-scope 1-A~1-M 13 chain = artifact content write-time semantic truth verify axis. 본 Amendment 8 = retro corpus enumeration §6 ADR draft authoring path pre-publish gate axis (ADR-045 §D layer 정합). 두 ADR 가 retro-time verify 영역에서 axis 분리되어 disjoint complement 관계.
+
+**ADR-097 paradigm scope boundary 정합**: sub-decision 확장 = ratchet 강화 carve-out (≠ paradigm replacement). ADR-097 §결정 1 closed-set 3 조건 (9+ ADR 동시 sunset / 단일 atomic Epic / ratchet 강화 carve-out) 중 본 Amendment 8 은 단일 ADR 단일 sub-decision 확장 = paradigm replacement 영역 외.
+
+**escalation_resolved_carrier**: CFP-1592 (본 carrier).
+
+### Amendment 8 적용 evidence (§D-9 forcing function 산물 7번째)
+
+| 항목 | 값 |
+|---|---|
+| pattern_count | 6 (≫ threshold 2 = Mandatory framing 발동) |
+| occurrences | CFP-1006 (Tier-B Wave 1 stale auto-resolve) / CFP-1542 (CFP-FU-A/B retro batch bypass-cumulative-counter stale) / CFP-1558 (CFP-FU-A/B retro batch amendment-number-frontmatter-verify stale) / CFP-1604/1605/1606 (Wave 4 batch 3 stale catches) |
+| detected pattern | `retro_batch_adr_draft_stale_premise` — PMOAgent retro batch §6 ADR draft 후보 발의 시 이미 shipped 영역과 collision (super-class) |
+| trigger source | CFP-1592 Issue body §"Why" (orchestrator_authored_followup 2026-05-25 KST) |
+| escalation_action | `adr_draft_emitted` (CFP-1592 carrier 산물) |
+| 사용자 결정 | 2026-05-25 KST — ADR-045 §D-9 sub-decision (b) 신설 (additive ratchet 강화 방향, ADR-082 axis disjoint preservation) |
+| 산물 | ADR-045 Amendment 8 (CFP-1592 carrier, doc-only fast-path Cat 1 단일 PR) + paired sibling #1623 Wave 2 mechanical wire carrier (sequential) |
+
+§D-9 forcing function 이 'pattern 누적 → ADR escalation' 으로 실제 동작한 7번째 cross-Story 산물 evidence (Amendment 6 CFP-776 ADR-082 carrier = 5번째 / Amendment 7 CFP-1580 ADR-068 Amd 4 carrier = 6번째 / 본 Amendment 8 = 7번째). 본 Amendment 8 는 **evidence + sub-decision (b) 신설** dual carrier — Amendment 6/7 (evidence-only) 대비 §D-9 본문 자체 (sub-decision layer) 강화 ratchet 동반.
 
 ## 해소 기준
 
