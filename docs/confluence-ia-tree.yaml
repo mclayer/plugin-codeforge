@@ -126,9 +126,22 @@ top_level_pages:
         - { name: "ADR Registry", page_id: "2065980", source: "Legacy parent 2097153 (adr) — 111 page, cross-link retain, batch move = 별 carrier" }
         - { name: "inter-plugin-contracts Registry", page_id: "2130942", source: "Legacy parent 2129949 (inter-plugin-contracts) — 30 page, cross-link retain, batch move = 별 carrier" }
         - { name: "wrapper-governance", page_id: "2163807", source: "CLAUDE.md / project-config-schema.md / consumer-guide.md / overlay 정책 (Consumer Guide page move = 별 carrier)" }
-      children_planned:
-        # Sub-B S2.4 (CFP-1494) carrier — Orchestrator Playbook page split + actual backfill
-        - { name: "orchestrator-playbook", source: "docs/orchestrator-playbook.md (256KB+)", carrier: "Sub-B S2.4, legacy 1-page split" }
+      # Sub-B S2.4 minimal (CFP-1494) — orchestrator-playbook bucket added to children.
+      # Real backfill (256KB+ playbook split + 36 domain page move + 8 Living Arch real body) = 별 sub-CFP carrier.
+      # children 영역 확장:
+      children_extra_s2_4:
+        - { name: "orchestrator-playbook", page_id: "2130966", source: "docs/orchestrator-playbook.md (256KB+, split into sections = 별 carrier)" }
+
+s2_4_minimal_complete:
+  cfp: CFP-1494
+  bucket_only: true
+  real_backfill_deferred: true
+  deferred_reason: |
+    Orchestrator Playbook full body (256KB+) = MCP createConfluencePage body size limit
+    영역 + section split decision burden. 36 domain-knowledge page batch move + 8 lane
+    plugin Living Architecture real 5-anchor body = S2.3 동일 token cost realistic check.
+    별 sub-CFP carrier (real backfill).
+  deferred_followup_cfp: TBD (section split + 36 page move + 8 Living Arch real body)
 
 s2_3_partial_complete:
   cfp: CFP-1493
