@@ -1373,7 +1373,7 @@ race resolution priority:
 - [ADR-037 §결정 1 plugin version bump rule](../docs/adr/ADR-037-plugin-version-bump-rule.md) — SemVer monotonic invariant + Option β core rule (Lenient base, 12 surface category) upstream policy SSOT
 - [ADR-063 §결정 1/§결정 2 marketplace atomic invariant](../docs/adr/ADR-063-marketplace-atomic-invariant.md) — 3-file atomic invariant + marketplace sibling sync ordering upstream policy SSOT
 - [ADR-045 §D-9 cross_story_pattern_adr_trigger](../docs/adr/ADR-045-story-retro-mandatory-trigger.md) — forcing function SSOT (pattern_count threshold 2 → escalate_user → 본 §3.5.3 codify carrier)
-- [ADR-050 §3.4.2 Parallel epic coordination](../docs/adr/ADR-050-parallel-epic-conflict-detection.md) — Epic-scope conflict detection (axis disjoint, PR-level post-hoc) cross-ref
+- [ADR-050 §3.4.2 Parallel epic coordination](../docs/adr/ADR-050-parallel-epic-conflict-coordination.md) — Epic-scope conflict detection (axis disjoint, PR-level post-hoc) cross-ref
 - §3.5.1 Parallel work sentinel polling — race detection mechanism (sentinel polling `pr_open` / `merge_transition` transition trigger 가 race detect)
 - [ADR-024 §3 sequence-of-singletons](../docs/adr/ADR-024-story-scoped-branch-policy.md) — trunk-based branching axis (release branch 부재, main-direct PR sequential)
 - §3.6 marketplace sync PR proactive dispatch (CFP-597 / ADR-063 Amendment 1) — GitOpsAgent §3.6 행위 (sibling axis disjoint, marketplace sibling sync proactive dispatch vs race resolution sequence orchestration)
