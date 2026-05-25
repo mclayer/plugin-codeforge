@@ -1,0 +1,189 @@
+name: retro-batch-adr-draft-pre-publish
+# CFP-1632 / ADR-045 Amendment 10 — retro batch §6 ADR draft pre-publish 8-tuple verify
+# Tier: warning (ADR-060 evidence-enforceable, continue-on-error: true)
+# evidence-checks-registry.yaml entry: retro-batch-adr-draft-pre-publish
+#
+# 검증:
+#   PR open 시점 + workflow_dispatch + 24h cron — retro file §6 ADR draft section 안
+#   ADR-045 §D-10 8-tuple verify-before-trust AND gate 통과 여부:
+#     Step 1: §6 ADR draft section auto-detect (header pattern grep heuristic)
+#     Step 2: 8-tuple verify source presence-grep within §6 section
+#     Step 3: 8-tuple AND gate evaluation (1+ absent → downgrade recommendation)
+#     Step 4: [verification-out-of-scope:] exemption marker channel
+#     Step 5: verdict emit
+#
+# 8-tuple verify sources (presence-grep heuristic — AND gate):
+#   1. source_1_git_show_amendment_log    — [verified via git show origin/main:<ADR-path> ...]
+#   2. source_2_grep_evidence_registry    — [verified via grep <feature-name> docs/evidence-checks-registry.yaml ...]
+#   3. source_3_glob_scripts_check        — [verified via Glob scripts/check-<feature-pattern>* ...]
+#   4. source_4_gh_pr_list_search         — [verified via gh pr list --search '<feature-name> in:title' ...]
+#   5. source_5_gh_issue_list_search      — [verified via gh issue list --search '<feature-name> in:title' ...]
+#   6. source_6_git_log_path              — [verified via git log --all --oneline -- <path> ...]
+#   7. source_7_glob_adr_amendment_scan   — [verified via Glob docs/adr/ADR-*.md ...]
+#   8. source_8_retro_section_5_pattern   — [verified via §5 cross-Story pattern table ...]
+#
+# FP guard 4종:
+#   1. templates/** canonical example 면제
+#   2. tests/** bats fixture 면제
+#   3. docs/retros/ path-only scope
+#   4. §6 section 부재 silent skip (FP 차단)
+#
+# 트리거 (D2-extended 3-trigger split — spawn prompt AC #3 + marketplace-drift-detection.yml precedent CFP-627):
+#   pull_request: opened/synchronize/reopened  — PR open 시점 gate
+#   workflow_dispatch: 수동 ad-hoc 실행
+#   schedule: cron '0 0 * * *' — 24h periodic re-verify
+#
+# Hotfix bypass:
+#   hotfix-bypass:retro-batch-adr-draft-pre-publish label 부착 시 skip + audit comment
+#   (ADR-024 Amendment 9 §결정 6.A per-entry namespace, 102번째 hotfix-bypass:* family member)
+#
+# Graceful degradation 3 fail-mode:
+#   401_fail_closed:  retro file 미발견 → exit 2 (SETUP error, warning 발화)
+#   429_fail_open:    transient annotation 미충족 → exit 1 (continue-on-error + warning)
+#   5xx_noop:         I/O 오류 → exit 0 (advisory stderr marker)
+#
+# Permissions: deny-all top-level + per-job least-privilege (ADR-060 Amendment 8)
+#
+# Concurrency: PR-scoped + branch-scoped cancellation (T-OP-1 runaway mitigation)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'docs/retros/**'
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+
+permissions: {}  # top-level deny-all
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  retro-batch-adr-draft-pre-publish:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # warning tier — does not block CI (ADR-060 §결정 5)
+    permissions:
+      contents: read       # git checkout + file read
+      pull-requests: write # bypass audit comment
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # full history for git log
+
+      - name: Check hotfix-bypass label
+        id: bypass
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ -n "${{ github.event.pull_request.number }}" ]; then
+            LABELS=$(gh pr view ${{ github.event.pull_request.number }} \
+              --json labels --jq '[.labels[].name] | @json' 2>/dev/null || echo '[]')
+            if echo "$LABELS" | grep -q "hotfix-bypass:retro-batch-adr-draft-pre-publish"; then
+              echo "bypass=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "bypass=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "bypass=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Bypass audit comment
+        if: steps.bypass.outputs.bypass == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "[retro-batch-adr-draft-pre-publish] hotfix-bypass:retro-batch-adr-draft-pre-publish active — lint check skipped"
+          echo "[bypass-justification] hotfix-bypass:retro-batch-adr-draft-pre-publish applied on PR #${{ github.event.pull_request.number }}"
+          if [ -n "${{ github.event.pull_request.number }}" ]; then
+            gh pr comment ${{ github.event.pull_request.number }} \
+              --body "[retro-batch-adr-draft-pre-publish] bypass active — hotfix-bypass:retro-batch-adr-draft-pre-publish label detected. Audit trail: $(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              2>/dev/null || true
+          fi
+
+      - name: Setup Python
+        if: steps.bypass.outputs.bypass != 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run retro batch ADR draft pre-publish 8-tuple verify (PR trigger)
+        if: steps.bypass.outputs.bypass != 'true' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x scripts/check-retro-batch-adr-draft-pre-publish.sh
+
+          # Find retro files changed in this PR (docs/retros/**/*.md scope)
+          CHANGED_RETROS=$(git diff --name-only origin/${{ github.base_ref || 'main' }}...HEAD \
+            -- 'docs/retros/*.md' 'docs/retros/**/*.md' 2>/dev/null || echo "")
+
+          if [ -z "$CHANGED_RETROS" ]; then
+            echo "[retro-batch-adr-draft-pre-publish] No retro files changed — lint skipped"
+            exit 0
+          fi
+
+          WARN_COUNT=0
+          while IFS= read -r retro_path; do
+            [ -z "$retro_path" ] && continue
+            echo "[retro-batch-adr-draft-pre-publish] Linting retro file: $retro_path"
+            bash scripts/check-retro-batch-adr-draft-pre-publish.sh \
+              --mode=audit \
+              --retro-file="$retro_path" \
+              2>&1 || {
+              EXIT_CODE=$?
+              if [ $EXIT_CODE -eq 1 ]; then
+                echo "::warning::retro-batch-adr-draft-pre-publish WARNING: $retro_path — §6 ADR draft 8-tuple verify hint(s) absent"
+                WARN_COUNT=$((WARN_COUNT + 1))
+              elif [ $EXIT_CODE -eq 2 ]; then
+                echo "::warning::retro-batch-adr-draft-pre-publish ENVIRONMENT_ERROR: $retro_path"
+              fi
+            }
+          done <<< "$CHANGED_RETROS"
+
+          if [ "$WARN_COUNT" -gt 0 ]; then
+            echo "::warning::retro-batch-adr-draft-pre-publish: $WARN_COUNT retro file(s) have §6 ADR draft sections missing 8-tuple verify hints"
+          fi
+          exit 0  # warning tier: non-blocking
+
+      - name: Run retro batch ADR draft pre-publish 8-tuple verify (schedule/dispatch)
+        if: steps.bypass.outputs.bypass != 'true' && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x scripts/check-retro-batch-adr-draft-pre-publish.sh
+
+          # workflow_dispatch / cron: scan all retro files
+          RETRO_FILES=$(find docs/retros -name '*.md' 2>/dev/null || echo "")
+
+          if [ -z "$RETRO_FILES" ]; then
+            echo "[retro-batch-adr-draft-pre-publish] No retro files found — scan skipped"
+            exit 0
+          fi
+
+          WARN_COUNT=0
+          while IFS= read -r retro_path; do
+            [ -z "$retro_path" ] && continue
+            echo "[retro-batch-adr-draft-pre-publish] Linting retro file: $retro_path"
+            bash scripts/check-retro-batch-adr-draft-pre-publish.sh \
+              --mode=audit \
+              --retro-file="$retro_path" \
+              2>&1 || {
+              EXIT_CODE=$?
+              if [ $EXIT_CODE -eq 1 ]; then
+                echo "::warning::retro-batch-adr-draft-pre-publish WARNING: $retro_path — §6 ADR draft 8-tuple verify hint(s) absent"
+                WARN_COUNT=$((WARN_COUNT + 1))
+              elif [ $EXIT_CODE -eq 2 ]; then
+                echo "::warning::retro-batch-adr-draft-pre-publish ENVIRONMENT_ERROR: $retro_path"
+              fi
+            }
+          done <<< "$RETRO_FILES"
+
+          if [ "$WARN_COUNT" -gt 0 ]; then
+            echo "::warning::retro-batch-adr-draft-pre-publish: $WARN_COUNT retro file(s) have §6 ADR draft sections missing 8-tuple verify hints"
+          fi
+          exit 0  # warning tier: non-blocking

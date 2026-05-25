@@ -5420,4 +5420,69 @@ entries:
       promotion_trigger: warning_tier_initial  # count=2 < threshold=3 → warning-tier initial registration (Wave 2 mechanical wire activation, pattern_count 누적 시 Wave 3 별 carrier 발의)
     status: warning                 # Phase 1 declare (본 CFP-1612 Wave 2 mechanical wire activation) / Phase 2 actual wire = 별 sub-CFP carrier (script + workflow + bats fixture, ADR-082 §결정 6 retain pattern 답습 + CFP-1437/1436/1435 → CFP-1489/1500/1497/1502 Wave 1→Wave 2 split precedent 답습)
 
+  # CFP-1632 신설 — ADR-045 Amendment 10 Wave 2 mechanical wire activation
+  # ADR-045 Amendment 9 §D-10 declarative anchor → Wave 2 mechanical wire (CFP-1632)
+  # 132번째 sequential entry (post-CFP-1612 131-entry baseline + 1)
+  # [verified via grep -cE "^  - name: " docs/evidence-checks-registry.yaml → 131 + 1 = 132]
+  - name: retro-batch-adr-draft-pre-publish
+    description: |
+      PMOAgent retro file §6 ADR draft section authoring 직전 8-tuple verify-before-trust
+      gate 통과 여부 mechanical lint (ADR-045 Amendment 9 §D-10 declarative anchor Wave 2
+      mechanical wire activation, CFP-1632 carrier).
+
+      8-tuple verify sources (presence-grep heuristic — AND gate):
+        1. source_1_git_show_amendment_log    — [verified via git show origin/main:<ADR-path> ...]
+        2. source_2_grep_evidence_registry    — [verified via grep <feature-name> docs/evidence-checks-registry.yaml ...]
+        3. source_3_glob_scripts_check        — [verified via Glob scripts/check-<feature-pattern>* ...]
+        4. source_4_gh_pr_list_search         — [verified via gh pr list --search '<feature-name> in:title' ...]
+        5. source_5_gh_issue_list_search      — [verified via gh issue list --search '<feature-name> in:title' ...]
+        6. source_6_git_log_path              — [verified via git log --all --oneline -- <path> ...]
+        7. source_7_glob_adr_amendment_scan   — [verified via Glob docs/adr/ADR-*.md ...]
+        8. source_8_retro_section_5_pattern   — [verified via §5 cross-Story pattern table ...]
+
+      1+ source hint absent → WARNING exit 1 + downgrade_action recommendation
+      (downgrade_action enum 2-value: `to_section_4_informational` / `pivot_mark`).
+
+      Platform exemption channel: [verification-out-of-scope: <사유>] marker
+      (ADR-052 Amendment 3 marker 5종 정합 — gh CLI rate-limit / git shallow clone).
+
+      FP guard 4종:
+        1. templates/** canonical example 면제
+        2. tests/** bats fixture 면제
+        3. docs/retros/ path-only scope
+        4. §6 section 부재 silent skip
+
+      동인 = ADR-045 §D-9 Mandatory escalation pattern_count 6 cumulative reach
+      (Wave 1 1/1 + Wave 3 2/2 + Wave 4 3/3 = 6 ≫ threshold 2 = 3.0x) + 100% retro-batch-origin
+      PIVOT rate (5/5 batches stale catch). Wave 1 (Amendment 9 CFP-1623) declaration-only →
+      Wave 2 (본 Amendment 10 CFP-1632) mechanical wire activation 분리
+      (CFP-1612 ADR-082 Amendment 22→25 split precedent 답습 13-instance).
+
+      META self-application — ADR-082 §결정 1-K 21st applied case (본 entry 작성 직전
+      numeric claim verify-before-write mandate self-execute: 132nd sequential =
+      `grep -cE "^  - name: " docs/evidence-checks-registry.yaml` 131 + 1 = 132 정합).
+
+      pattern_count ≥ N 추가 reach 시 warning → blocking-on-pr 승격 = Wave 3 별 carrier 분리
+      (ADR-060 §결정 6 promotion gate AND 3/3 — PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling Story merged).
+    detect_command: bash scripts/check-retro-batch-adr-draft-pre-publish.sh
+    workflow: .github/workflows/retro-batch-adr-draft-pre-publish-check.yml
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode (warning tier initial registration)
+    bypass_label: hotfix-bypass:retro-batch-adr-draft-pre-publish
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative: 20             # ADR-060 §결정 6 default — PR 누적 ≥ 20 의무
+      bypass_external_failure: 0    # bypass label 외 failure count = 0 의무
+      sibling_story_merged: true    # sibling Story merged 의무 (Wave 3 carrier 별 사용 시 평가)
+    introduced_by: CFP-1632
+    introduced_date: 2026-05-25
+    owner_adr: ADR-045-Amendment-9   # declaration source ADR — Amendment 9 §D-10 신설 8-tuple pre-publish preflight forcing function (Wave 1 declaration-only)
+    carrier_adr: ADR-045-Amendment-10  # enforcement source ADR — Amendment 10 Wave 2 mechanical wire activation evidence (declaration → mechanical enforce promotion path)
+    sibling_dependencies: [CFP-1592, CFP-1623, CFP-1632]
+    recurrence:
+      count: 6                      # 6 occurrences pattern reach (Wave 1 CFP-1006 1 + Wave 3 CFP-1542/CFP-1558 2 + Wave 4 CFP-1604/CFP-1605/CFP-1606 3 = 6) ≥ ADR-045 §D-9 threshold 2 Mandatory escalation 산물 forcing function 활성 (3.0x threshold)
+      threshold: 2                  # ADR-045 §D-9 N=2 — retro-batch-origin pattern Mandatory escalation threshold
+      last_occurrence: "2026-05-25T00:00:00+09:00"  # CFP-1632 Wave 2 wire activation carrier, ADR-079 KST normative
+      promotion_trigger: warning_tier_initial  # 첫 도입 = warning tier initial registration (Wave 2 mechanical wire activation, Wave 3 별 carrier 평가 후 blocking-on-pr 승격 결정)
+    status: warning                 # Wave 2 mechanical wire activation (본 CFP-1632) — warning tier initial registration per ADR-060 §결정 5 "첫 도입 = warning mode" default
+
 
