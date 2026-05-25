@@ -1714,15 +1714,16 @@ playbook_split_pages:
     last_synced: "2026-05-25T21:56:37+09:00"
     push_attempt_status: "success"
     confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2163913/5+docs+stories+file"
-  - id: null
+  - id: "2098557"
     parent: 2130966
     title: "§6 — FIX 루프 상태 머신"
     source_section: "## 6. FIX 루프 상태 머신"
     source_line_range: [2337, 2592]
     source_line_count: 255
     estimated_byte_size: 19000
-    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
-    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
+    last_synced: "2026-05-25T23:04:59+09:00"
+    push_attempt_status: "success"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098557/6+FIX"
   - id: "2131032"
     parent: 2130966
     title: "§7 — 세션 재개(resume) 복원 절차"
@@ -1774,25 +1775,27 @@ playbook_split_pages:
     last_synced: "2026-05-25T21:57:05+09:00"
     push_attempt_status: "success"
     confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2163935/11+Cross-agent+write+coordination"
-  - id: null
+  - id: "2163955"
     parent: 2130966
     title: "§12 — Orchestrator 컨텍스트 패킷"
     source_section: "## 12. Orchestrator 컨텍스트 패킷 (Story file 섹션 캐시)"
     source_line_range: [2879, 3089]
     source_line_count: 210
     estimated_byte_size: 15000
-    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
-    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
-  - id: null
+    last_synced: "2026-05-25T23:06:33+09:00"
+    push_attempt_status: "success"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2163955/12+Orchestrator"
+  - id: "2066052"
     parent: 2130966
     title: "§13 — PMOAgent 프로젝트 관리 (Cross-cutting)"
     source_section: "## 13. PMOAgent 프로젝트 관리 (Cross-cutting)"
     source_line_range: [3090, 3183]
     source_line_count: 93
     estimated_byte_size: 7000
-    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
-    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
-  - id: null
+    last_synced: "2026-05-25T23:14:27+09:00"
+    push_attempt_status: "success"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2066052/13+PMOAgent+Cross-cutting"
+  - id: "2098588"
     parent: 2130966
     title: "§14 — §0 Live Progress (CFP-20)"
     source_section: "## 14. §0 Live Progress (CFP-20)"
@@ -1800,8 +1803,9 @@ playbook_split_pages:
     source_line_count: 295
     estimated_byte_size: 22000
     note: "Spawn ID 대장 + Spawn Token Telemetry sub-§ 포함"
-    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
-    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
+    last_synced: "2026-05-25T23:16:41+09:00"
+    push_attempt_status: "success"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098588/14+0+Live+Progress+CFP-20"
   - id: null
     parent: 2130966
     title: "§15 — 4-channel observability boundary"
