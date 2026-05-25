@@ -1,0 +1,50 @@
+# CFP-1580 marketplace.json sibling sync patch (draft, ADR-063 §결정 1 atomic invariant)
+
+Target repo: `mclayer/marketplace`
+Target file: `.claude-plugin/marketplace.json`
+Target block: `plugins[name=codeforge]`
+Mirrored field changes: `version` 6.7.2 → 6.8.0 (single field, atomic 3-file invariant)
+Other mirrored fields (name / description / author) = byte-identical 0 change.
+
+ADR-063 §결정 2 ordering: marketplace sync PR 선행 merge → wrapper PR (cfp-1580-wave3) merge.
+
+---
+
+```diff
+diff --git a/.claude-plugin/marketplace.json b/.claude-plugin/marketplace.json
+index <SHA-before>..<SHA-after> 100644
+--- a/.claude-plugin/marketplace.json
++++ b/.claude-plugin/marketplace.json
+@@ -12,7 +12,7 @@
+     {
+       "name": "codeforge",
+       "description": "Claude Code 범용 SW 개발 오케스트레이션 플러그인. 0 core 에이전트 (wrapper-only) · 8 레인 + CI gate + role:dev 동적 roster 로 요구사항 접수부터 배포 리뷰 통과까지 자율 실행",
+-      "version": "6.7.2",
++      "version": "6.8.0",
+       "author": {
+         "name": "Josh"
+       },
+```
+
+---
+
+## PR title (marketplace sibling)
+
+`[CFP-1580] marketplace.json sync — codeforge 6.7.2 → 6.8.0 (ADR-068 Amd 4 + ADR-045 §D-9 Amd 7 paired sibling carrier)`
+
+## PR body
+
+ADR-063 §결정 1 3-file atomic invariant 정합 sibling sync PR.
+
+Mirrored field 변경: `version` 6.7.2 → 6.8.0 (단일 field, MINOR bump).
+Description / name / author = byte-identical (변경 0).
+
+Wrapper carrier PR: mclayer/plugin-codeforge cfp-1580-wave3 (PR #TBD)
+Bump rationale: ADR-068 Amendment 4 (§결정 7 신설 Wave 2 mechanical wire 영역 design review skip 정합 invariant codify) + ADR-045 §D-9 Amendment 7 (evidence-only forcing function 산물 기록 6번째) paired sibling carrier. ADR-037 §결정 1(h) MINOR — governance behavior change.
+
+doc-only fast-path (ADR-054) — src/tests 변경 0.
+
+Cross-ref:
+- ADR-068 Amendment 4 (CFP-1580 carrier)
+- ADR-045 §D-9 Amendment 7 (CFP-1580 paired sibling)
+- 5 precedent CFP linear chain: CFP-1489 / CFP-1497 / CFP-1500 / CFP-1502 / CFP-1539

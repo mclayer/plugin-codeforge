@@ -7,7 +7,44 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
-### Fixed
+(none — 6.8.0 release captures CFP-1580 governance behavior change + carry-over CFP-1540/CFP-1539 from prior session)
+
+## [6.8.0] - 2026-05-25
+
+### Added
+
+- [CFP-1580] **ADR-068 Amendment 4 + ADR-045 §D-9 Amendment 7 paired sibling — Wave 2 mechanical wire 영역 design review skip 정합 invariant codify (pattern_count 5 evidence-base)** (PMOAgent CFP-1539+1540 batch retro §6 escalation_action escalate_user → 사용자 Option A confirmed compress normative codify 2026-05-25 KST)
+  - `docs/adr/ADR-068-boundary-completeness-invariants.md` — **Amendment 4 (§결정 7 신설)**: Wave 2 mechanical wire 영역 (Wave 1 declarative anchor active 후 scripts/workflow/bats implementation only) DesignReviewPL spawn = optional (skip default) + Wave 1 declarative or 신규 ADR/governance 영역 = mandatory retain. ArchitectAgent §13 4-tuple self-check (ADR-068 I-1~I-6 + ADR-065 10-item + ADR-082 §결정 11.A bats RED→GREEN stash proof + chief tie-break ladder Amd 2) + CodeReviewPL mechanical correctness review retain = DesignReviewPL semantic review 대체 sufficient. DeveloperPL spawn prompt 안 `wave2_mechanical_wire_dr_skip_applicable: bool` declarative anchor field codify (declarative anchor only, 실 wire = 별 sub-CFP carrier Wave 2 mechanical enforcement). orthogonal axis with §결정 1 invariants (spawn-time orchestration governance ↔ write-time verification semantic). I-1~I-6 본문 의미 변경 0건, invariants count 6 retain. review-verdict-v4 schema 변경 0건 (declarative anchor only, sibling sync 면제).
+  - `docs/adr/ADR-045-story-retro-mandatory-trigger.md` — **Amendment 7 (evidence-only)**: §D-9 forcing function 산물 기록 6번째 (Amendment 6 CFP-776 ADR-082 carrier 5번째 / 본 = 6번째). pattern `wave2-mechanical-wire-design-review-skip` pattern_count 5 ≥ threshold 2 reach Mandatory (CFP-1489 / CFP-1497 / CFP-1500 / CFP-1502 / CFP-1539 5 precedent linear chain, all Wave 1 anchor active 후 Wave 2 wire 영역 DesignReviewPL spawn 0 + 0 design FIX + admin squash merge) → escalate_user → 사용자 Option A → ADR-068 Amendment 4 산물. §D-9 결정 본문 / threshold N=2 / hybrid 검출 전략 / escalation_action enum 2-value 의미 변경 0건.
+  - `docs/adr/ADR-RESERVATION.md` — `amendments_reserved[]` 2-row pre-claim append (ADR-068 Amd 4 + ADR-045 Amd 7 paired sibling, ADR-082 Amendment 17 §결정 1-G strict pre-claim mandate 정합, status active)
+  - `CLAUDE.md` — ADR-068 Amendment 4 inline cross-ref 1-line append (verify-before-trust 4-layer 단락 영역 외, ADR-068 description line 영역 — boundary completeness invariants 단락 6 invariants 본문 정합)
+  - `(cross-repo)` `mclayer/marketplace/.claude-plugin/marketplace.json` — `plugins[name=codeforge]` block `version` 6.7.2 → 6.8.0 sibling sync (ADR-063 §결정 1 3-file atomic invariant + §결정 2 ordering: marketplace 선행 merge → wrapper merge). description / name / author 변경 0 (mirrored field 4종 중 version 1개만 변경).
+  - `docs/cross-repo-patches/cfp-1580-marketplace-sync.patch.txt` (신규) — marketplace.json patch content draft worktree-saved evidence (Orchestrator cross-repo PR open 시 verbatim 사용)
+
+### Scope (doc-only fast-path ADR-054)
+
+- src/tests 무변경 — ADR Amendment 2종 + CLAUDE.md + plugin.json MINOR bump + CHANGELOG + marketplace.json sibling sync atomic (ADR-063 §결정 1 5-file scope)
+- declarative anchor only — Wave 2 mechanical enforcement (DeveloperPL spawn prompt 실 wire / workflow lint `wave2-mechanical-wire` label PR 영역 DesignReviewPL spawn 0 warning tier 검출) = 별 sub-CFP carrier
+- ADR-082 §결정 6 + ADR-070 §D5 + CFP-898/899/900 + ADR-085/097 precedent declaration-only Wave 1 retain pattern 답습
+
+### Bump rationale
+
+- ADR-037 §결정 1(h) MINOR — governance behavior change (chief author Wave 2 mechanical wire 영역 DesignReviewPL skip 정합 mechanism codify + Wave 1 영역 mandatory retain invariant 명확화)
+- ADR-063 §결정 1 atomic invariant 정합 (plugin.json mirrored field `version` 변경 → marketplace.json sync 동반 의무)
+- review-verdict-v4 schema bump 0건 (declarative anchor only, sibling sync 면제)
+
+### Cross-ref
+
+- Sibling carriers: CFP-1539 (Wave 2 mechanical wire 5번째 + 본 carrier 발의 origin) / CFP-FU-C #1577 + CFP-FU-D #1578 (process learnings)
+- Retro carrier: codeforge-internal-docs PR #904 (CFP-1539 + CFP-1540 batch retro §6 escalation)
+- ADR-068 (boundary completeness 6 invariants — extending mechanism)
+- ADR-065 (mechanical self-check 10-item Amd 4 + Amd 5 — ArchitectAgent §13 4-tuple self-check 1/4 layer)
+- ADR-082 §결정 11.A (bats RED→GREEN stash proof — ArchitectAgent §13 4-tuple self-check 1/4 layer)
+- ADR-045 §D-9 (pattern escalation forcing function — paired sibling Amendment 7)
+- ADR-024 Amendment 8 (bypass-as-norm-mutation 위험 cross-ref)
+- 5 precedent CFP linear chain: CFP-1489 / CFP-1497 / CFP-1500 / CFP-1502 / CFP-1539
+
+### Fixed (CFP-1540/CFP-1539 carry-over from prior session — rolled into 6.8.0 release)
 
 - [CFP-1540] **Sentinel script `scripts/lib/check_parallel_work_sentinel.py` — 6 subprocess.run() call sites cp949 encoding fix** (CFP-967 mechanical wire invocation reliability layer 회복, CFP-FU-A retro mandatory follow-up #2 carrier)
   - 6 call sites (line 95/114/128/327/344/380) 의 `subprocess.run(..., text=True)` 에 `encoding="utf-8", errors="replace"` 명시 추가. line 113 `git fetch origin` = binary discard (skip, disjoint scope)
