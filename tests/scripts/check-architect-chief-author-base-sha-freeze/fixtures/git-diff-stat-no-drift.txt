@@ -1,0 +1,3 @@
+ docs/adr/ADR-073-orchestrator-verify-before-assert.md | 12 +++++++++---
+ docs/evidence-checks-registry.yaml                 | 95 +++++++++++++++++++++++
+ 2 files changed, 104 insertions(+), 3 deletions(-)
