@@ -174,11 +174,13 @@ doc_types:
       - "mctrader-hub/docs/domain-knowledge/exchange/bithumb-rest-api.md"
       - "mclayer/plugin-codeforge/docs/domain-knowledge/domain/codex-collaboration/README.md (CFP-946-A — ADR-052/070/081 narrative SSOT hub)"
       - "mclayer/plugin-codeforge/docs/domain-knowledge/domain/codex-collaboration/substitution-scope-decision-tree.md (CFP-946-A)"
+      - "mclayer/plugin-codeforge/docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md (CFP-1523 / CFP-1588 — DD-4 category → lane bucket mapping rule SSOT, lane filter curatorial enhancement, cross-ref Sub-Epic CFP-949 6 lane plugin self-owned architecture doc seed)"
     notes: |
       Mode-agnostic. DomainAgent self-write owner path (CFP-26 Phase 0a).
       CFP-946-A — `codex-collaboration/` sub-tree 신설 (ADR-052/070/081 narrative SSOT hub).
       Write owner extension = ArchitectAgent (codex-collaboration sub-tree = governance narrative).
       CFP-1420 / ADR-111 §결정 1 — confluence variant + confluence_variant sub-tree 신설 (mirror 대상 closed-enum 4 영역 정합). git = SoR-work invariant (ADR-100 §결정 1).
+      CFP-1588 (FU-1523-3 묶음 F-DR-010) — `governance-principle/adr-category-lane-mapping.md` example row append (curatorial enhancement, CFP-1523 카테고리 → lane bucket mapping rule SSOT). cross-ref Sub-Epic CFP-949 6 lane plugin self-owned architecture doc seed (CFP-968~973) — lane bucket allocation 의 architecture doc anchor 영역.
 
   - name: spec
     variants:
