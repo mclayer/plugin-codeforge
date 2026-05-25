@@ -60,6 +60,10 @@ amendments:
     date: "2026-05-19"
     scope: "Amendment 12 — Tier-B Wave 2 registry→gh backfill + CFP-1006 Wave-1 auto-resolve FALSIFICATION record + bootstrap-labels token-permission(CODEFORGE_CROSS_REPO_PAT label-write gap ROOT) / scripts/bootstrap-labels.sh:53 2>/dev/null error-mask(META-ROOT) 2-layer root cause codify + Wave 2 closure + Wave 3 sync-drift-lint OOS (별 CFP) + PAT user-domain residual flag (ADR-066). CFP-1006 Amendment 11 scope 의 '35 of 36 registry→gh missing 자동 해소 expected via bootstrap-labels.yml workflow PR open auto-fire' assumption 은 실측 거짓 입증 (run 26080174058 success but gh hotfix-bypass count 15 unchanged, NO PyYAML SKIP, 115 blanket label-write failure incl base labels — Orchestrator pre-spawn PyYAML hypothesis REFUTED, runner ubuntu-24.04 PyYAML present). 진짜 root cause = (ROOT) workflow token = secrets.CODEFORGE_CROSS_REPO_PAT || secrets.GITHUB_TOKEN → PAT in effect (secret set 2026-05-14) but ADR-066/CFP-450 provisioned scope (phase-gate-mergeable + rate-limit-fallback-kpi) 가 label-write (Issues:write on mclayer/plugin-codeforge) 미포함 / (META-ROOT) scripts/bootstrap-labels.sh:53-55 create_label() 의 2>/dev/null 가 실제 HTTP 403/404 삼킴 → generic 메시지 + 오인성 'Bootstrap completed successfully' (CFP-1006 mis-diagnosis 직접 원인). 본 Amendment 12 = root-cause/process codification only (신규 family member append 0, 신규 ordinal 0, registry §3 content 변경 0건 v2.39 retain). Phase 2 src: scripts/bootstrap-labels.sh:53-70 error-unmask (captured stderr verbatim echo, --dry-run path 무영향 LABEL_COUNT parity 108==108 보존) + .github/workflows/bootstrap-labels.yml + templates/ byte-identical false-success visibility step (fail_count >= 10 시 ::warning::, continue-on-error/warning tier 보존, ADR-005 diff empty). 35 registry→gh missing = owner-context one-time idempotent backfill (NOT CI re-trigger — token-blocked, 재-fire 는 동일 실패 = falsified Wave-defer 반복 차단). residual: CODEFORGE_CROSS_REPO_PAT Issues:write 미획득 시 CI self-heal 불가 = user secret-domain accepted (ADR-066, AC-5). issue_origin: orchestrator_authored_followup (ADR-082 Amendment 2 §2.1 — CFP-1006 retro PMOAgent-authored Tier-B carry-forward, §3.17 4-step procedure 적용). src 변경 동반으로 doc-only fast-path (ADR-054) 미적용 = full-lane. memory feedback_wave_defer_empirical_verify (deferred Wave auto-resolve assumption empirical-verify 의무) + feedback_architect_script_behavior_claim_verify (script-behavior claim 실측 의무) lineage 교훈. prior art Amendment 11 (CFP-1006) 직전 carrier 정합."
     sunset_justification: "N/A — is_transitional: false (permanent governance policy). ratchet 강화 방향 (Wave-defer empirical-verify discipline + error-mask remediation 추가, forbid scope 축소 0, 약화 영역 0건). ADR-058 §결정 5 + ADR-064 §self-application top-down ratchet 정합."
+  - by: "CFP-1306"
+    date: "2026-05-25"
+    scope: "Amendment 14 — §결정 6.A.7 신설 (92번째 hotfix-bypass:* family member append — raw active concrete grep count post-append 91 + 1 = 92) `hotfix-bypass:parallel-anchors-checked-presence` per-entry namespace. review-verdict-v4 findings[].parallel_anchors_checked[] field presence-grep heuristic mechanical lint (CFP-1306 / ADR-060 Amendment 15 §결정 29 / ADR-068 I-2 cross-module propagation completeness Wave 3 enforcement layer) 의 bypass channel codify. ADR-108 §결정 3 META self-app 9th applied case (raw active concrete grep count post-append 91 + 1 = 92 정합). ADR-082 §결정 9 verify-at-write-time — rebase 후 base v2.66 / 91 raw active concrete grep (CFP-1367 90+91번째 먼저 머지됨). label-registry-v2 v2.66 → v2.67 MINOR bump 동반 (kind:registry sibling sync 면제 ADR-010 §결정 2 + ADR-008 §결정 3 row append). MANIFEST.yaml row '2.66' → '2.67' ratchet 동반. plugin.json bump 0 = marketplace_sync_declared: false (lint+workflow 신설 = governance behavior 변경이나 plugin.json mirrored field 무변경, ADR-063 atomic invariant 발효 조건 미충족). **late-comer rebase invariant 완료 (ADR-050 §결정 1)**: CFP-1367 PR #1517 먼저 머지됨 (90번째+91번째) → CFP-1306 = 92번째 (v2.67) rebase 완료."
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). 1 신규 family member + §결정 6.A.7 신설 = §결정 6.A per-entry namespace 의무의 영구 확장 (parallel_anchors_checked field presence-grep enforcement layer bypass channel). forbid scope 축소 0건. ratchet-UP 강화 방향 (active concrete grep count 91 → 92, 약화 영역 0건). ADR-058 §결정 5 + ADR-064 §self-application top-down ratchet 정합."
   - by: "CFP-1510"
     date: "2026-05-25"
     scope: "Amendment 13 — §결정 6.A.6 신설 (macro label batch attachment audit-trailed exception channel) + §결정 6.A per-entry namespace 의 89번째 (raw active concrete grep count post-append) family member `hotfix-bypass:pre-existing-main-drift-bundle` macro label 추가. CFP-1389 lineage 마지막 follow-up (FU-Wave3-C). pre-existing-main-drift super-class 8 sentinel labels closed-set (bootstrap-labels / actionlint / claude-md-amendment-ref-drift / markdown-internal-links / inter-plugin-contracts-parity / fix-event-depth-scope / sibling-pr-author-check / wording-dictionary) 의 unified channel codify. Macro label semantics: single `hotfix-bypass:pre-existing-main-drift-bundle` attach → 8 underlying hotfix-bypass labels auto-fan-out attach via `macro-label-expander.yml` workflow (Wave 1 declarative stub `if: false` disabled, Wave 2 hydrate carrier 별 sub-CFP — pull_request.labeled / issues.labeled event triggers wire). Efficiency target: 64 manual attachments (8 PR × 8 label) → 8x reduction (1 macro attach = 8 label auto-fan-out + single audit comment 1개로 8 underlying labels rationale 통합 가능). §결정 6.A.6 audit pattern: single audit comment block (예: `[bypass-audit] pre-existing-main-drift-bundle: <rationale>`) 가 8 underlying labels 모두에 대해 audit-trail rationale 충족. 기존 single audit lint `scripts/check-bypass-audit-comment.sh` reuse (신규 lint 도입 0건, CFP-389 prior art). Audit invariant 보존: macro = batch-attach mechanism only / 8 underlying labels 의 individual lint enforce 영역 무변경. label-registry-v2 v2.64 → v2.65 MINOR bump 동반 (kind:registry sibling sync 면제 ADR-010 §결정 2 + ADR-008 §결정 3 row append). MANIFEST.yaml row '2.64' → '2.65' ratchet 동반. plugin.json bump 0 = marketplace_sync_declared: false (lint+workflow 신설 = governance behavior 변경이나 plugin.json mirrored field 무변경 — kind:registry sibling sync 면제 영역, ADR-063 atomic invariant 발효 조건 미충족). Wave 1 산출: (a) label-registry-v2 §3 macro label entry append (b) `templates/github-workflows/macro-label-expander.yml` Wave 1 declarative stub (`if: false` disabled, Wave 2 hydrate carrier 별 sub-CFP) (c) `.github/workflows/macro-label-expander.yml` self-app byte-identical (ADR-005 invariant). Wave 2 carrier 영역 (별 sub-CFP): workflow `if: false` 제거 + pull_request.labeled / issues.labeled event trigger wire + 8 underlying labels mechanical attach script + audit comment fan-out logic + bats fixture pair. raw count convention 답습 (CFP-1000 Amendment 10 + CFP-1346 ADR-108 forcing function parity mandate META self-application — raw active concrete grep count post-append 88 + 1 = 89). ADR-108 §결정 3 META self-app 7th applied case. ADR-082 §결정 9 verify-at-write-time (worktree base v2.64 / 88 raw active concrete grep) verified — main repo divergent state ignored (worktree-base SSOT, ADR-070 verify-before-trust). prior art Amendment 12 (CFP-1025) 직전 carrier 정합."
@@ -141,6 +145,14 @@ mechanical_enforcement_actions:
   - action: macro-label-expander
     status: deferred-followup     # registry §3 append + workflow stub = Phase 1 PR; actual workflow `if:false` 제거 + 8 underlying labels mechanical fan-out wire = Wave 2 별 sub-CFP scope
     target_section: §결정 6.A.6   # 89번째 family member append — macro label batch attachment audit-trailed exception channel 영역 첫 family member (single attach = 8 label auto-fan-out + single audit comment 1개 통합)
+  # Amendment 14 (CFP-1306, 2026-05-25) — 92번째 (raw active concrete grep count post-append, v2.67) family member
+  # `hotfix-bypass:parallel-anchors-checked-presence` per-entry namespace
+  # review-verdict-v4 findings[].parallel_anchors_checked[] field presence-grep heuristic mechanical lint bypass channel
+  # CFP-1306 / ADR-060 Amendment 15 §결정 29 / ADR-068 I-2 cross-module propagation completeness Wave 3 enforcement layer
+  # late-comer rebase invariant: CFP-1367 PR #1517 먼저 머지됨 (90+91번째) → CFP-1306 = 92번째 v2.67 rebase 완료
+  - action: parallel-anchors-checked-presence
+    status: warning               # Phase 1+2 동시 wire (CFP-1334 deferred-followup → warning 직접 전환 precedent)
+    target_section: §결정 6.A.7   # 92번째 family member append — review-verdict-v4 parallel anchor parity enforcement bypass channel
 ---
 
 # ADR-024: Story-scoped branch policy — main 직접 수정 금지 + Phase 2 enforcement deferred
@@ -1168,6 +1180,52 @@ CFP-1006 Wave 1 의 "bootstrap-labels.yml CFP-598 dynamic pattern 이 PR open �
 - memory `feedback_wave_defer_empirical_verify` (deferred Wave auto-resolve assumption empirical-verify 의무 — 본 Story 의 lineage 교훈) + `feedback_architect_script_behavior_claim_verify` (script-behavior claim 실측 의무 — root cause = script behavior)
 - `scripts/bootstrap-labels.sh` `create_label()` L53-55 (Phase 2 error-unmask target)
 - `templates/github-workflows/bootstrap-labels.yml` + `.github/workflows/bootstrap-labels.yml` (Phase 2 byte-identical visibility-step pair)
+
+## Amendment 14 — `hotfix-bypass:parallel-anchors-checked-presence` 92번째 (raw active concrete grep count post-append, v2.67 late-comer rebase) family member + §결정 6.A.7 신설 (CFP-1306, 2026-05-25)
+
+### Context
+
+CFP-1306 Wave 3 mechanical lint enforcement — review-verdict-v4 v4.9 (CFP-1303) 에서 신설된 `findings[].parallel_anchors_checked[]` optional array field 의 presence-grep heuristic lint (`scripts/check-parallel-anchors-checked-presence.sh` + Python SSOT). ADR-060 Amendment 15 §결정 29 13번째 warning-tier entry 의 bypass channel 신설 의무. late-comer rebase invariant (ADR-050 §결정 1): CFP-1367 PR #1517 먼저 머지됨 (90번째+91번째 family member) → CFP-1306 = 92번째 (v2.67) rebase 완료.
+
+### Amendment
+
+**92번째 (raw active concrete grep count post-append, rebase base v2.66 = 91 → 91 + 1 = 92) hotfix-bypass:* family member `hotfix-bypass:parallel-anchors-checked-presence` per-entry namespace 신설 + §결정 6.A.7 (신설)**.
+
+#### §결정 6.A.7 (신설) — `hotfix-bypass:parallel-anchors-checked-presence` per-entry namespace
+
+`hotfix-bypass:parallel-anchors-checked-presence` label 는 PR 에 attach 시 `parallel-anchors-checked-presence` warning-tier lint 를 bypass. audit comment `[bypass-audit] parallel-anchors-checked-presence: <rationale>` 의무 (§결정 6.A audit-trailed exception channel).
+
+- color `fef2c0` (warning tier, audit channel)
+- description = "hotfix-bypass: parallel-anchors-checked-presence — bypass review-verdict-v4 findings[].parallel_anchors_checked[] field presence-grep heuristic lint (CFP-1306 / ADR-060 Amendment 15 §결정 29 / ADR-068 I-2 Wave 3 enforcement). Attach [bypass-audit] comment with rationale. **92번째 hotfix-bypass:* family member (ADR-108 forcing function parity mandate — raw active concrete grep count post-append = 91 + 1 = 92 정합, late-comer rebase: CFP-1367 90+91번째 선점 → CFP-1306 = 92번째 v2.67). CFP-1306 Bundle A.A1 carrier.**"
+
+### Count convention 답습
+
+본 Amendment 14 = raw active concrete grep count convention 답습 (CFP-1000 Amendment 10 precedent + CFP-1346 ADR-108 §결정 3 forcing function parity mandate).
+
+- **Raw active concrete grep count**: `^  - name: hotfix-bypass:` direct grep pre-edit (v2.66 rebase base, CFP-1367 merged) = 91 → post-edit (v2.67) = 92 (post-append parity).
+- **ADR-108 §결정 3 META self-app 9th applied case** (이전: CFP-1346 1st + CFP-1384 2nd + CFP-1429 3rd + CFP-1489 4th + CFP-1497 5th + CFP-1500 6th + CFP-1502 7th + CFP-1510 8th + 본 CFP-1306 = 9th applied case).
+
+**late-comer rebase invariant 완료 (ADR-050 §결정 1)**: CFP-1367 PR #1517 먼저 머지됨 (90번째+91번째) → CFP-1306 = v2.67 (92번째 family member) rebase 완료.
+
+### ADR-082 §결정 9 verify-at-write-time 적용 evidence
+
+rebase 후 origin/main `HEAD 8b50316` 안 `docs/inter-plugin-contracts/label-registry-v2.md` frontmatter `version: "2.66"` + `^  - name: hotfix-bypass:` raw grep count `91` 직접 verify (ADR-070 verify-before-trust, CFP-1367 PR #1517 merge 반영).
+
+### 영향
+
+- ADR-024 §결정 1~6 + Amendment 1~13 전부 유지 — 본 Amendment 14 = Amendment 3 §결정 6.A 의 호환 확장 (per-entry namespace 92번째 family member append + §결정 6.A.7 신설).
+- label-registry-v2 v2.66 → v2.67 MINOR bump 동반 (1 신규 entry append + frontmatter `version: "2.67"` ratchet, kind:registry sibling sync 면제 ADR-010 §결정 2 + ADR-008 §결정 3 row append).
+- MANIFEST.yaml row `"2.66"` → `"2.67"` ratchet 동반 (INV-1 parity).
+- plugin.json bump 0 = `marketplace_sync_declared: false`.
+- ADR-058 §결정 5 sunset_justification ratchet — 본 Amendment 14 = forbid scope 확장 (92nd family member append) = ratchet-up 강화 방향.
+
+### 관련 파일
+
+- ADR-060 Amendment 15 §결정 29 — enforcement source (dual-binding)
+- ADR-068 I-2 — declaration source (cross-module propagation completeness)
+- review-verdict-v4 v4.9 — schema carrier (CFP-1303)
+- CFP-1306 Bundle A.A1 — carrier Story
+- ADR-108 §결정 3 forcing function parity mandate (raw active concrete grep count post-append parity)
 
 ## Amendment 13 — `hotfix-bypass:pre-existing-main-drift-bundle` macro label 89번째 (raw active concrete grep count post-append) family member + §결정 6.A.6 신설 (CFP-1510, 2026-05-25)
 

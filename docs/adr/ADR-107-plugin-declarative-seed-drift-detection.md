@@ -8,8 +8,23 @@ carrier_story: CFP-1317-S3
 parent_epic: CFP-1317
 supersedes: null
 amends: null
-amendments: []
-amendment_log: []
+amendments:
+  - amendment_id: 1
+    date: 2026-05-25
+    carrier_story: CFP-1367
+    summary: "Wave 2 mechanical wire — mechanical_enforcement_actions[] 0→2 (plugin-declarative-seed-byte-parity-check + design-lane-plugin-feasibility-check). declaration-only Wave 1 → enforcement layer ratchet 강화 (ADR-058 §결정 5 정합, sunset_justification 면제). F1+F2 통합 carrier — same parent_epic CFP-1317, same retro internal-docs#811 fe8524a §6 follow-up F1+F2 HIGH 통합 권고 정합. ADR-082 Amd 1 (CFP-841) + ADR-070→CFP-963 + ADR-086 declaration-only Wave 1 → Wave 2 mechanical wire precedent 답습."
+amendment_log:
+  - amendment_id: 1
+    date: 2026-05-25T17:00:00+09:00
+    summary: "mechanical_enforcement_actions[] 0→2 wire (plugin-declarative-seed-byte-parity-check + design-lane-plugin-feasibility-check)"
+    sunset_justification: "N/A — ratchet 강화 방향 (declaration-only Wave 1 → mechanical wire Wave 2 enforcement layer, invariant 강화 + scope 0건 축소, ADR-058 §결정 5 정합 약화 evidence-gate 면제)"
+    carrier_story: CFP-1367
+    parent_epic: CFP-1317
+    pattern_count_evidence: "§결정 1 byte-parity = 6 (G-1/G-3/G-6 super-class) / §결정 2 feasibility = 3 (ADR-082 verification gap Wave A S1 incidents) — 양 axis threshold N=2 의 1.5~3배 초과"
+    precedent_chain:
+      - "ADR-070 → CFP-963 codex-network-scope-presence (declaration-only Wave 1 → Wave 2 mechanical wire)"
+      - "ADR-082 → Amendment 1 (CFP-841) corpus-claim-verify + cross-plugin-ownership-verify (통합 2-entry Wave 2 wire 패턴)"
+      - "ADR-086 deferred-followup carrier (declaration-only Wave 1 정합)"
 related_adrs:
   - ADR-087   # 본 ADR 의 super-class carrier (Wave A S1 Amendment 1 + Wave A S2 plugin file d-B redirect — drift detection 적용 대상 영역)
   - ADR-088   # deploy review lane (drift detection sibling layer)
@@ -28,7 +43,9 @@ related_stories:
   - CFP-1317-S1  # Wave A — ADR-087 Amendment 1 carrier (BG-1~4 비적격 표 + §결정 9 신설 — 본 ADR 의 super-class 영역 wrapper SSOT codify)
   - CFP-1317-S2  # Wave A — plugin file d-B redirect carrier (single-SSOT precedent — 본 ADR §결정 1 path B 채택 evidence)
 is_transitional: false
-mechanical_enforcement_actions: []
+mechanical_enforcement_actions:
+  - plugin-declarative-seed-byte-parity-check  # F1 axis — Amendment 1 (CFP-1367) wire, evidence-checks-registry warning tier deferred-followup → Phase 2 mechanical wire Active
+  - design-lane-plugin-feasibility-check       # F2 axis — Amendment 1 (CFP-1367) wire, evidence-checks-registry warning tier deferred-followup → Phase 2 mechanical wire Active
 sunset_justification: null
 ---
 
@@ -180,3 +197,56 @@ N/A — permanent governance ratchet (`is_transitional: false`). ADR-058 §결�
 - `docs/adr/ADR-058-adr-sunset-criteria-mandate.md` — §결정 5 ratchet 강화 방향 sunset_justification 면제 정합
 - `CLAUDE.md` — cross-ref token append 영역 (line cap 319/320 margin 1 보존, 본문 변경 0 invariant)
 - `wrapper/stories/CFP-1317-S3.md` — carrier Story file (internal-docs repo, RequirementsPLAgent + ArchitectAgent self-write)
+- `wrapper/stories/CFP-1367.md` — Amendment 1 carrier Story file (mechanical_enforcement_actions[] 0→2 wire, Wave 2)
+- `scripts/check-plugin-declarative-seed-byte-parity.sh` + `scripts/lib/check_plugin_declarative_seed_byte_parity.py` — F1 axis Phase 2 lint script (Amendment 1 wire 영역)
+- `scripts/check-design-lane-plugin-feasibility.sh` + `scripts/lib/check_design_lane_plugin_feasibility.py` — F2 axis Phase 2 lint script (Amendment 1 wire 영역)
+- `templates/github-workflows/plugin-declarative-seed-byte-parity-check.yml` + `templates/github-workflows/design-lane-plugin-feasibility-check.yml` — F1+F2 warning-tier workflow (Amendment 1 wire 영역)
+- `docs/evidence-checks-registry.yaml` — 2 entry append (`plugin-declarative-seed-byte-parity-check` + `design-lane-plugin-feasibility-check`, warning tier deferred-followup → Active)
+- `docs/inter-plugin-contracts/label-registry-v2.md` — 2 new family member (`hotfix-bypass:plugin-declarative-seed-byte-parity` 90번째 + `hotfix-bypass:design-lane-plugin-feasibility` 91번째, v2.65 → v2.66 MINOR bump)
+
+## Amendment 1 — Wave 2 mechanical wire (CFP-1367, 2026-05-25 KST)
+
+### Trigger
+
+CFP-1317 Epic close 후 retro internal-docs#811 fe8524a §6 follow-up F1+F2 HIGH 통합 권고 정합. 본 ADR §결정 3 (declaration-only Wave 1) 본문 verbatim "pattern_count >= 2 재발 시 follow-up CFP MUST promote" rationale (ADR-082 §결정 6 답습) 충족 — 양 axis 모두 threshold 초과:
+
+| Axis | pattern_count | threshold | 초과 배수 |
+|---|---|---|---|
+| §결정 1 byte-parity | 6 (G-1/G-3/G-6 super-class, mctrader#1272 (d) carrier closure) | 2 | 3.0x |
+| §결정 2 feasibility | 3 (ADR-082 verification gap Wave A S1 ArchitectAgent 누적 3 sub-class) | 2 | 1.5x |
+
+### 변경
+
+`mechanical_enforcement_actions: []` → `['plugin-declarative-seed-byte-parity-check', 'design-lane-plugin-feasibility-check']` (frontmatter field 갱신 + `amendments[]` array row append + `amendment_log[]` row append).
+
+본 ADR 본문 §결정 1+2+3+4+5 = **0건 변경** (사용자 directive verbatim: "Bundle B = ADR-107 본 ADR 본문 0 변경 — Amendment 시에만 변경"). Amendment 헤더 + 관련 파일 row append 만.
+
+### Phase 1 + Phase 2 분리 (ADR-054 Category 2 부적격)
+
+본 carrier Story CFP-1367 = NOT doc-only fast-path (lint script src + workflow yml + bats fixture 변경 영역 포함). Phase 1 + Phase 2 분리 의무:
+
+- **Phase 1 PR (declarative seed)**: 본 ADR-107 Amendment 1 + `docs/evidence-checks-registry.yaml` 2 entry append + `docs/inter-plugin-contracts/label-registry-v2.md` 2 entry + MINOR bump + Story §1-§6 baseline
+- **Phase 2 PR (mechanical wire)**: 2 lint script + 2 workflow yml + 2 bats fixture + Story §7-§14 update + bats RED→GREEN stash proof (ADR-082 §결정 11.A 정합)
+
+### ratchet 방향 + sunset_justification 면제 (ADR-058 §결정 5 정합)
+
+본 Amendment = **governance ratchet 강화 방향** (declaration-only → mechanical enforcement layer wire, invariant 강화 + scope 0건 축소). ADR-058 §결정 5 rule = **약화 방향 evidence-gate**, 강화 = 면제. `is_transitional: false` retain (permanent governance ratchet).
+
+`sunset_justification: "N/A — ratchet 강화 방향"` (amendment_log row 안 명시, 강화 evidence-gate 면제).
+
+### precedent answer (declaration-only Wave 1 → Wave 2 mechanical wire 패턴 답습)
+
+| ADR | Wave 1 anchor | Wave 2 mechanical wire | wire 영역 |
+|---|---|---|---|
+| ADR-070 | declaration-only `mechanical_enforcement_actions: []` retain (§D5) | CFP-963 codex-network-scope-presence | 12번째 warning-tier entry (evidence-checks-registry) |
+| ADR-082 | Wave 1 known-limitation `mechanical_enforcement_actions: []` | Amendment 1 (CFP-841) corpus-claim-verify + cross-plugin-ownership-verify | 2-entry 통합 wire (본 ADR-107 Amendment 1 패턴 inspiration) |
+| ADR-086 | declaration-only Wave 1 | 별 CFP carrier (deferred-followup) | sibling deferred 패턴 정합 |
+| **ADR-107 (본 Amendment 1)** | declaration-only Wave 1 `mechanical_enforcement_actions: []` | **CFP-1367 — plugin-declarative-seed-byte-parity-check + design-lane-plugin-feasibility-check** | **2-entry 통합 wire (ADR-082 Amendment 1 정합)** |
+
+### Wave 3+ scope (별 follow-up CFP carrier)
+
+본 Amendment 1 scope 외 (Story §5.4 Out-of-Scope 정합):
+- F1 / F2 blocking-on-pr 승격 = 별 follow-up CFP (Wave 4 evidence accumulation 후 ADR-060 §결정 6 AND condition 충족)
+- F1 scope 확장 (다른 plugin templates/* file mapping) = 별 follow-up CFP (Wave 3 byte-parity scope 확장)
+- F2 heuristic 정교화 (regex 확장 + 추가 evidence channel) = 별 follow-up CFP (Wave 3 heuristic tuning)
+- threshold tuning = evidence-based Wave 3 별 carrier

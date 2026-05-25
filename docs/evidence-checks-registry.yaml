@@ -12,7 +12,7 @@
 # 추가 entry (rate-limit-fallback-rate, story-section-9-typed) 병합 = 22 entry.
 schema_version: "1.3"  # CFP-963 / ADR-060 Amendment 14 + ADR-081 Amendment 4 — lane_evidence[].network_scope_actual optional field 정식 도입 (MINOR bump v1.2 → v1.3, evidence-check-registry-v1 §3.1 codify, MANIFEST drift catch-up "1.1" → "1.3" 동반 — CFP-509 v1.1→v1.2 sibling MANIFEST sync miss 영역의 INV-1 parity ratchet) + CFP-509 / ADR-060 Amendment 6 — recurrence field 정식 도입 (MINOR bump v1.1 → v1.2)
 introduced_by: CFP-389
-last_updated: 2026-05-24  # CFP-1497 Wave 2-C — amendment-slot-reservation entry append (warning tier Active, ADR-082 Amendment 17 §결정 1 layer 1 sub-scope (1-G) + ADR-050 §결정 1 ADR-RESERVATION carrier cross-ref, Amendment-slot reservation mechanical wire. CFP-1435 Wave 1 declarative stub (PR #1482 merged 2026-05-24)의 Wave 2-C 실 mechanical lint script + workflow + bats + label-registry MINOR + evidence entry atomic wire. META self-application 2nd applied case: 본 PR ArchitectAgent spawn 자체가 [PRE-SPAWN-ORIGIN-MAIN-SHA: 160cbf472d0b447c709cd2e3dc50e1fbba930191] block 사용 = CFP-1489 META precedent 답습. ADR-082 §결정 11.A bats RED→GREEN stash proof verified 11/11 GREEN. 3-layer defense forcing function closure 의 3번째 mechanical layer (CFP-1389 parent Epic 완성). | CFP-1489 Wave 2-A — spawn-prompt-head-pin-presence entry append (warning tier Active, ADR-073 Amendment 11 §결정 1-A + ADR-082 Amendment 15 §결정 1 layer 1 sub-scope (1-E) paired carrier, Pre-spawn HEAD-pin protocol mechanical wire. CFP-1437 Wave 1 declarative anchor PR #1444 merged의 Wave 2-A 실 mechanical lint script + workflow + bats + label-registry MINOR + evidence entry atomic wire. META self-application: 본 PR ArchitectAgent spawn 자체가 [PRE-SPAWN-ORIGIN-MAIN-SHA: 03ca49c4978c0294e1a943bd4e855d8cea5754ee] block 사용 = 1st applied case. ADR-082 §결정 11.A bats RED→GREEN stash proof verified 14/14 GREEN). | 2026-05-24  # CFP-1334 Phase 2 — bats-red-green-proof-presence mechanical wire 완료 (scripts/check-bats-red-green-proof.sh + scripts/lib/ Python SSOT + workflow yml sibling parity + META self-app bats fixture closing-the-loop). status deferred-followup → warning 직접 전환 (Phase 1 squash entry append loss 흡수 + Phase 2 active 상태). | 2026-05-24  # CFP-1334 — bats fixture RED→GREEN stash proof pattern + TestContract deputy mandate codification entry append (bats-red-green-proof-presence warning-tier deferred-followup status, owner_adr ADR-060 / carrier_adr ADR-060, declaration-only Wave 1 → Phase 2 mechanical wire 후 warning 전환). chief tie-break ladder 3 단계 Option C convergence (ADR 신설 0건). | 2026-05-23  # CFP-1312 / ADR-082 Amendment 7 — amendment-number-frontmatter-verify Check (b) 양방향 staleness 확장 (forward + backward), `cited_m != max_id + 1` 양방향 비교 + [FORWARD-STALE] / [BACKWARD-STALE] label 분리 + self-reference exemption (FP-완화 guard 1) + templates/** path filter (FP-완화 guard 2). CFP-1293 #3 occurrence (ADR-083 Amd2 backward) Wave 2 mechanical lint Check (b) forward-only coverage gap escape evidence 산물 (ADR-045 §D-9 pattern_count 3 reach Mandatory escalation). entry extend (status warning retain, scope expand only). sibling_dependencies + extended_by CFP-1312 + last_extended_date 동반. bats fixture TC 6 신규 (TC-B-BWD-EXACT / TC-B-BWD-DEEP / TC-B-FWD-EXACT-NEXT / TC-B-FWD-LABEL / TC-B-TEMPLATE-EXEMPT / TC-B-SELF-REF-EXEMPT). | 2026-05-22  # CFP-1239 Phase 2 — sunset-weakening-evidence entry append (ADR-058 Amendment 1 §결정 5 evidence-gate mechanical lint: check_sunset_weakening_evidence.py + check-sunset-weakening-evidence.sh + sunset-weakening-evidence.yml warning-tier + bats 16 TC TDD, hotfix-bypass:sunset-weakening-evidence 69번째 hotfix-bypass:* family member, label-registry-v2 v2.50 carrier). | CFP-1216 Phase 2 — amendment-number-frontmatter-verify entry append (ADR-082 Amendment 6 §결정 9 mechanical_enforcement_actions[] deferred-followup wire: lint script check_amendment_number_stale.py + check-amendment-number-stale.sh + amendment-number-stale.yml warning-tier + bats fixture TDD, hotfix-bypass:amendment-number-stale 67번째 family member, label-registry-v2 v2.48 carrier). | 2026-05-21  # CFP-1059-S5 Phase 2 — deployment-schema-check entry append (91번째 entry, ADR-060 warning tier, hotfix-bypass:deployment-schema 61번째 family member, label-registry-v2 v2.43 carrier). actual lint wire: check_deployment_schema.py (yaml.safe_load, exit 3-tier) + check-deployment-schema.sh + deployment-schema-check.yml warning-tier. declarative seed (Story-1 T16) -> mechanical lint (ADR-054 Amendment 1 full-lane). | 2026-05-20 CFP-1059 Phase 1 — Deploy lane + Deploy Review lane + Schema 7 원칙 + Cross-layer 정책 5 신규 evidence-checks-registry entry append (declaration-only Wave 1, deferred-followup status — S2/S3 sub-Story mechanical wire 후 warning 전환): deploy-lane-spawn-evidence (ADR-087 carrier) + deploy-review-lane-spawn-evidence (ADR-088 carrier, ProductionEvidenceDeputy ownership 이관 mirror) + schema-change-7-principles-self-check (ADR-089 carrier, ArchitectAgent Phase 1 self-check) + cross-layer-impact-detection (ADR-090 §결정 1 carrier) + dependency-order-enforce (ADR-090 §결정 2 carrier). ADR-076 / ADR-082 / ADR-086 precedent 답습 (declaration-only Wave 1). 5 entry 모두 owner_adr ADR-087/088/089/090 / carrier_adr ADR-060, warning tier 분류, bypass_label = label-registry-v2 v2.42 신규 hotfix-bypass:* family member 정합 (cross-layer-impact 54th / dependency-order 55th / bidirectional-smoke 56th / retention-window 57th / auto-rollback 58th / deploy-trigger 59th / big-change-manual 60th). | CFP-967 Phase 2 — parallel-work-sentinel-pickup status deferred-followup → warning + detect_command + workflow populated (script + workflow 신설 mechanical wire 완료). | CFP-963 Phase 1 — codex-network-scope-presence entry append (ADR-060 Amendment 14 §결정 28 + ADR-081 Amendment 4 §결정 D1.D body 확장 carrier — declaration source ADR-081 / enforcement source ADR-060 dual-binding 첫 사례, owner_adr ADR-081-Amendment-4, warning tier, deferred-followup status — Phase 2 actual lint script + workflow + bats fixture pair (CX-963-3 P2 boundary mandate per Codex TP#4) wire 후 Active 전환, recurrence count 0 / threshold 3 / promotion_trigger none — sentinel-driven 아닌 ratchet 확장 carrier, schema_version 1.2→1.3 동반 — lane_evidence[].network_scope_actual optional field SSOT codify, sibling_dependencies CFP-963 Phase 2 actual wire, ADR-068 I-3 unconditional guard placement 정합 boolean grace `[legacy-boolean-detected]` unconditional advisory exit 0). | CFP-966 Phase 1 — parallel-work-sentinel-pickup entry append (ADR-073 Amendment 2 carrier — declarative anchor, owner_adr ADR-073-Amendment-2, warning tier, deferred-followup status (CFP-967 mechanical wire Phase 2 carrier 후 Active, L1417/L1452/L1574 precedent 답습), recurrence count 2 / threshold 3 / promotion_trigger auto_blocking, schema v1.2 정합, sibling_dependencies CFP-967 mechanical wire, sentinel evidence CFP-953+CFP-946 same-day 2-occurrence 2026-05-18 KST, entries[] 말미 relative append, post-CFP-899/923/898 collision-free rebase, Codex #2 FIX iter 2 owner_adr+status SSOT 통일) | CFP-841 Phase 1 — corpus-claim-verify + cross-plugin-ownership-verify 2 entry append (ADR-082 Amendment 1 §결정 6 behavioral→mechanical 전환 carrier — scope 2(a) corpus annotation lint + scope 2(d) cross-plugin ownership queryable lint, owner_adr ADR-082 / carrier_adr ADR-060, warning tier deferred-followup status — Phase 2 actual lint script + workflow wire 후 Active 전환, entries[] 말미 relative append, post-CFP-833/820 collision rebase) | CFP-833 Phase 1 — dialog-fidelity-effect entry append (Epic CFP-761 Story-3 closing-the-loop, ADR-071 Amendment 3 carrier, owner_adr ADR-071 / carrier_adr ADR-060, precedent rate-limit-fallback-rate 동형 runtime cron metric pattern, warning tier advisory, bypass_label omit OQ-3 사용자 확정, entries[] 말미 relative append) | CFP-745 Phase 2 — wrapper-template-managed-coverage 59번째 entry (CFP-722 57th + CFP-771 58th + CFP-745 59th, authoring-guard lint Phase 2 §8.2 declare, post-CFP-810/795/801/777/751 collision rebase) | CFP-722 Phase 2 — story-section-ownership 57번째 entry (ADR-060 Amendment 13 §결정 27 carrier — per-section ownership mechanical lint, warning tier, PR #441 incident prevention) | CFP-442 Phase 2 — evidence-registry-anomaly 51번째 entry (ADR-060 Amendment 11 §결정 25 carrier — framework self-application 5-piece chain 완성) | CFP-662 — bootstrap-labels-precondition 46번째 entry (ADR-060 Amendment 10 §결정 24 carrier — PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier, deferred-followup status — Phase 2 carrier 신설 후 Active 전환) | CFP-660 — workflow-version-drift 45번째 entry (ADR-032 Amendment 2 §결정 6 carrier — strict-eligible 5번째 drift consumer workflow version drift, check 10 NEW carrier) | CFP-658 — section-1-verbatim-postmerge 44번째 entry append (ADR-027 Amendment 2 §결정 6.C carrier — manual fallback path §1 verbatim invariant post-merge lint warning tier, deferred-followup status, Phase 2 carrier 신설 후 Active 전환) | CFP-627 FIX iter 3/3 — marketplace-drift-detection entry deferred to Phase 2 carrier (ADR-067 §결정 3 cross-lane RESET 차원 전환) | CFP-638 — stop-time-continuous-confirm-detect 43번째 entry (ADR-064 Amendment 3 Story D) | CFP-631 — marketplace-description-verbatim 42번째 entry (ADR-063 Amendment 2 §결정 11 blocking-on-pr)
+last_updated: 2026-05-25  # CFP-1367 Phase 1 — plugin-declarative-seed-byte-parity-check + design-lane-plugin-feasibility-check 2 entry append (declaration-only Wave 1, deferred-followup status — Phase 2 PR mechanical wire 후 warning Active 전환): F1 axis owner_adr ADR-107 Amendment 1 §결정 1 (wrapper SSOT ↔ plugin templates/* schema 정적 byte-parity, recurrence count 6 G-1/G-3/G-6 super-class) + F2 axis owner_adr ADR-107 Amendment 1 §결정 2 paired_owner_adr ADR-082 §결정 1 layer 1 plugin-side analog (Design lane PR cross-repo plugin verify-before-trust annotation 동적 검사, recurrence count 3 ADR-082 verification gap Wave A S1 incidents). 양 entry carrier_adr ADR-060 warning tier deferred-followup status. bypass_label = label-registry-v2 v2.66 신규 hotfix-bypass:* family member (hotfix-bypass:plugin-declarative-seed-byte-parity 90번째 + hotfix-bypass:design-lane-plugin-feasibility 91번째). ADR-076 / ADR-082 / ADR-086 / ADR-070 (CFP-963) precedent 답습 (declaration-only Wave 1 → Wave 2 mechanical wire promote). parent_epic CFP-1317 retro internal-docs#811 fe8524a §6 follow-up F1+F2 HIGH 통합 권고 carrier. | CFP-1497 Wave 2-C — amendment-slot-reservation entry append (warning tier Active, ADR-082 Amendment 17 §결정 1 layer 1 sub-scope (1-G) + ADR-050 §결정 1 ADR-RESERVATION carrier cross-ref, Amendment-slot reservation mechanical wire. CFP-1435 Wave 1 declarative stub (PR #1482 merged 2026-05-24)의 Wave 2-C 실 mechanical lint script + workflow + bats + label-registry MINOR + evidence entry atomic wire. META self-application 2nd applied case: 본 PR ArchitectAgent spawn 자체가 [PRE-SPAWN-ORIGIN-MAIN-SHA: 160cbf472d0b447c709cd2e3dc50e1fbba930191] block 사용 = CFP-1489 META precedent 답습. ADR-082 §결정 11.A bats RED→GREEN stash proof verified 11/11 GREEN. 3-layer defense forcing function closure 의 3번째 mechanical layer (CFP-1389 parent Epic 완성). | CFP-1489 Wave 2-A — spawn-prompt-head-pin-presence entry append (warning tier Active, ADR-073 Amendment 11 §결정 1-A + ADR-082 Amendment 15 §결정 1 layer 1 sub-scope (1-E) paired carrier, Pre-spawn HEAD-pin protocol mechanical wire. CFP-1437 Wave 1 declarative anchor PR #1444 merged의 Wave 2-A 실 mechanical lint script + workflow + bats + label-registry MINOR + evidence entry atomic wire. META self-application: 본 PR ArchitectAgent spawn 자체가 [PRE-SPAWN-ORIGIN-MAIN-SHA: 03ca49c4978c0294e1a943bd4e855d8cea5754ee] block 사용 = 1st applied case. ADR-082 §결정 11.A bats RED→GREEN stash proof verified 14/14 GREEN). | 2026-05-24  # CFP-1334 Phase 2 — bats-red-green-proof-presence mechanical wire 완료 (scripts/check-bats-red-green-proof.sh + scripts/lib/ Python SSOT + workflow yml sibling parity + META self-app bats fixture closing-the-loop). status deferred-followup → warning 직접 전환 (Phase 1 squash entry append loss 흡수 + Phase 2 active 상태). | 2026-05-24  # CFP-1334 — bats fixture RED→GREEN stash proof pattern + TestContract deputy mandate codification entry append (bats-red-green-proof-presence warning-tier deferred-followup status, owner_adr ADR-060 / carrier_adr ADR-060, declaration-only Wave 1 → Phase 2 mechanical wire 후 warning 전환). chief tie-break ladder 3 단계 Option C convergence (ADR 신설 0건). | 2026-05-23  # CFP-1312 / ADR-082 Amendment 7 — amendment-number-frontmatter-verify Check (b) 양방향 staleness 확장 (forward + backward), `cited_m != max_id + 1` 양방향 비교 + [FORWARD-STALE] / [BACKWARD-STALE] label 분리 + self-reference exemption (FP-완화 guard 1) + templates/** path filter (FP-완화 guard 2). CFP-1293 #3 occurrence (ADR-083 Amd2 backward) Wave 2 mechanical lint Check (b) forward-only coverage gap escape evidence 산물 (ADR-045 §D-9 pattern_count 3 reach Mandatory escalation). entry extend (status warning retain, scope expand only). sibling_dependencies + extended_by CFP-1312 + last_extended_date 동반. bats fixture TC 6 신규 (TC-B-BWD-EXACT / TC-B-BWD-DEEP / TC-B-FWD-EXACT-NEXT / TC-B-FWD-LABEL / TC-B-TEMPLATE-EXEMPT / TC-B-SELF-REF-EXEMPT). | 2026-05-22  # CFP-1239 Phase 2 — sunset-weakening-evidence entry append (ADR-058 Amendment 1 §결정 5 evidence-gate mechanical lint: check_sunset_weakening_evidence.py + check-sunset-weakening-evidence.sh + sunset-weakening-evidence.yml warning-tier + bats 16 TC TDD, hotfix-bypass:sunset-weakening-evidence 69번째 hotfix-bypass:* family member, label-registry-v2 v2.50 carrier). | CFP-1216 Phase 2 — amendment-number-frontmatter-verify entry append (ADR-082 Amendment 6 §결정 9 mechanical_enforcement_actions[] deferred-followup wire: lint script check_amendment_number_stale.py + check-amendment-number-stale.sh + amendment-number-stale.yml warning-tier + bats fixture TDD, hotfix-bypass:amendment-number-stale 67번째 family member, label-registry-v2 v2.48 carrier). | 2026-05-21  # CFP-1059-S5 Phase 2 — deployment-schema-check entry append (91번째 entry, ADR-060 warning tier, hotfix-bypass:deployment-schema 61번째 family member, label-registry-v2 v2.43 carrier). actual lint wire: check_deployment_schema.py (yaml.safe_load, exit 3-tier) + check-deployment-schema.sh + deployment-schema-check.yml warning-tier. declarative seed (Story-1 T16) -> mechanical lint (ADR-054 Amendment 1 full-lane). | 2026-05-20 CFP-1059 Phase 1 — Deploy lane + Deploy Review lane + Schema 7 원칙 + Cross-layer 정책 5 신규 evidence-checks-registry entry append (declaration-only Wave 1, deferred-followup status — S2/S3 sub-Story mechanical wire 후 warning 전환): deploy-lane-spawn-evidence (ADR-087 carrier) + deploy-review-lane-spawn-evidence (ADR-088 carrier, ProductionEvidenceDeputy ownership 이관 mirror) + schema-change-7-principles-self-check (ADR-089 carrier, ArchitectAgent Phase 1 self-check) + cross-layer-impact-detection (ADR-090 §결정 1 carrier) + dependency-order-enforce (ADR-090 §결정 2 carrier). ADR-076 / ADR-082 / ADR-086 precedent 답습 (declaration-only Wave 1). 5 entry 모두 owner_adr ADR-087/088/089/090 / carrier_adr ADR-060, warning tier 분류, bypass_label = label-registry-v2 v2.42 신규 hotfix-bypass:* family member 정합 (cross-layer-impact 54th / dependency-order 55th / bidirectional-smoke 56th / retention-window 57th / auto-rollback 58th / deploy-trigger 59th / big-change-manual 60th). | CFP-967 Phase 2 — parallel-work-sentinel-pickup status deferred-followup → warning + detect_command + workflow populated (script + workflow 신설 mechanical wire 완료). | CFP-963 Phase 1 — codex-network-scope-presence entry append (ADR-060 Amendment 14 §결정 28 + ADR-081 Amendment 4 §결정 D1.D body 확장 carrier — declaration source ADR-081 / enforcement source ADR-060 dual-binding 첫 사례, owner_adr ADR-081-Amendment-4, warning tier, deferred-followup status — Phase 2 actual lint script + workflow + bats fixture pair (CX-963-3 P2 boundary mandate per Codex TP#4) wire 후 Active 전환, recurrence count 0 / threshold 3 / promotion_trigger none — sentinel-driven 아닌 ratchet 확장 carrier, schema_version 1.2→1.3 동반 — lane_evidence[].network_scope_actual optional field SSOT codify, sibling_dependencies CFP-963 Phase 2 actual wire, ADR-068 I-3 unconditional guard placement 정합 boolean grace `[legacy-boolean-detected]` unconditional advisory exit 0). | CFP-966 Phase 1 — parallel-work-sentinel-pickup entry append (ADR-073 Amendment 2 carrier — declarative anchor, owner_adr ADR-073-Amendment-2, warning tier, deferred-followup status (CFP-967 mechanical wire Phase 2 carrier 후 Active, L1417/L1452/L1574 precedent 답습), recurrence count 2 / threshold 3 / promotion_trigger auto_blocking, schema v1.2 정합, sibling_dependencies CFP-967 mechanical wire, sentinel evidence CFP-953+CFP-946 same-day 2-occurrence 2026-05-18 KST, entries[] 말미 relative append, post-CFP-899/923/898 collision-free rebase, Codex #2 FIX iter 2 owner_adr+status SSOT 통일) | CFP-841 Phase 1 — corpus-claim-verify + cross-plugin-ownership-verify 2 entry append (ADR-082 Amendment 1 §결정 6 behavioral→mechanical 전환 carrier — scope 2(a) corpus annotation lint + scope 2(d) cross-plugin ownership queryable lint, owner_adr ADR-082 / carrier_adr ADR-060, warning tier deferred-followup status — Phase 2 actual lint script + workflow wire 후 Active 전환, entries[] 말미 relative append, post-CFP-833/820 collision rebase) | CFP-833 Phase 1 — dialog-fidelity-effect entry append (Epic CFP-761 Story-3 closing-the-loop, ADR-071 Amendment 3 carrier, owner_adr ADR-071 / carrier_adr ADR-060, precedent rate-limit-fallback-rate 동형 runtime cron metric pattern, warning tier advisory, bypass_label omit OQ-3 사용자 확정, entries[] 말미 relative append) | CFP-745 Phase 2 — wrapper-template-managed-coverage 59번째 entry (CFP-722 57th + CFP-771 58th + CFP-745 59th, authoring-guard lint Phase 2 §8.2 declare, post-CFP-810/795/801/777/751 collision rebase) | CFP-722 Phase 2 — story-section-ownership 57번째 entry (ADR-060 Amendment 13 §결정 27 carrier — per-section ownership mechanical lint, warning tier, PR #441 incident prevention) | CFP-442 Phase 2 — evidence-registry-anomaly 51번째 entry (ADR-060 Amendment 11 §결정 25 carrier — framework self-application 5-piece chain 완성) | CFP-662 — bootstrap-labels-precondition 46번째 entry (ADR-060 Amendment 10 §결정 24 carrier — PR-time precondition check pattern 의 첫 baseline, RETRO-MCT-104 carrier, deferred-followup status — Phase 2 carrier 신설 후 Active 전환) | CFP-660 — workflow-version-drift 45번째 entry (ADR-032 Amendment 2 §결정 6 carrier — strict-eligible 5번째 drift consumer workflow version drift, check 10 NEW carrier) | CFP-658 — section-1-verbatim-postmerge 44번째 entry append (ADR-027 Amendment 2 §결정 6.C carrier — manual fallback path §1 verbatim invariant post-merge lint warning tier, deferred-followup status, Phase 2 carrier 신설 후 Active 전환) | CFP-627 FIX iter 3/3 — marketplace-drift-detection entry deferred to Phase 2 carrier (ADR-067 §결정 3 cross-lane RESET 차원 전환) | CFP-638 — stop-time-continuous-confirm-detect 43번째 entry (ADR-064 Amendment 3 Story D) | CFP-631 — marketplace-description-verbatim 42번째 entry (ADR-063 Amendment 2 §결정 11 blocking-on-pr)
 
 entries:
   - name: adr-sunset-criteria
@@ -4592,3 +4592,160 @@ entries:
       last_occurrence: "2026-05-23T00:00:00Z"    # CFP-1336 ADR-058 §결정 5 escalate Mandatory
       promotion_trigger: auto_blocking # CFP-1438 Wave 1 → 본 Wave 2-D → blocking promotion 후보 (pr_cumulative_min: 20 evidence gate after)
     status: Active                     # CFP-1502 mechanical wire 완료 (Wave 2-D single PR, dual carrier CFP-1438 declarative anchor 의 hydrate) — FINAL Wave 2 of CFP-1389 parent Epic 4-layer defense forcing function
+
+  # CFP-1367 신설 — ADR-107 Amendment 1 Wave 2 mechanical wire carrier (F1+F2 통합)
+  # Wave 1 declarative (Phase 1 PR seed) — Phase 2 PR mechanical wire 후 status warning Active 전환
+  # F1 axis (정적 byte-parity) — wrapper SSOT ↔ plugin templates/* schema 구조 정적 검사
+  - name: plugin-declarative-seed-byte-parity-check
+    description: |
+      Wrapper SSOT (`docs/project-config-schema.md` 등 wrapper-canonical schema document) ↔
+      plugin templates/* declarative seed file (Wave 1 scope: codeforge-deploy
+      `templates/deploy-mechanism.md` 단일 mapping) schema 구조 byte-parity 정적 검사 — F1 axis.
+
+      검증 영역 enum:
+        - frontmatter field 구조 (key name / nesting structure / required vs optional)
+        - section heading 구조 (heading level / order / required sections)
+        - field enumeration (예: deploy mechanism nested key `deploy.mechanism` / `deploy.swap_window_seconds` 등)
+        - semantic 의미 (key 이름이 같으면 의미도 동일 — 동일 어휘 disjoint 의미 차단)
+
+      drift 발견 시 처리 path 2-enum (ADR-107 §결정 1):
+        - Path A — mirror update (drift source = wrapper-side)
+        - Path B — single-SSOT deprecate (drift source = mirror 실증 실패 신호, Wave A S2 d-B precedent 권고)
+
+      Wave 1 scope = single file mapping only. 추가 영역 확장 = 별 follow-up CFP (Wave 3 scope expansion).
+      false negative 한계 인정 — heuristic 기반 (frontmatter/heading regex extract + field enum diff).
+
+      ADR-082 §결정 6 retain pattern 답습 (declaration-only Wave 1 + Wave 2 mechanical wire promote).
+    detect_command: bash scripts/check-plugin-declarative-seed-byte-parity.sh
+    workflow: templates/github-workflows/plugin-declarative-seed-byte-parity-check.yml
+    current_tier: warning              # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:plugin-declarative-seed-byte-parity
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1317                     # parent Epic (ADR-107 신설 carrier)
+        - CFP-1317-S3                  # ADR-107 신설 Wave 1 declaration-only
+        - CFP-1367                     # 본 carrier (Wave 2 mechanical wire, Phase 1 declarative seed)
+        - CFP-1317-S2                  # plugin file d-B redirect precedent (Path B 권고 source)
+        - CFP-841                      # ADR-082 Amendment 1 corpus-claim-verify 통합 2-entry wire 패턴 inspiration
+        - CFP-963                      # ADR-070 Wave 2 mechanical wire precedent (codex-network-scope-presence)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = structured schema diff, modal phrase 검사 미포함
+    introduced_by: CFP-1367
+    introduced_date: 2026-05-25
+    owner_adr: ADR-107                 # Amendment 1 §결정 1 carrier
+    carrier_adr: ADR-060               # evidence-enforceable promotion framework
+    recurrence:
+      count: 6                         # G-1 / G-3 / G-6 동형 super-class (mctrader#1272 (d) carrier closure, Wave A S2 d-B redirect resolved)
+      threshold: 2                     # ADR-082 §결정 6 precedent (pattern_count >= 2 재발 시 promote)
+      last_occurrence: "2026-05-24T00:14:00+09:00"    # mctrader#1272 (d) carrier (Wave A S2 d-B precedent)
+      promotion_trigger: auto_blocking # threshold 의 3배 초과 — Wave 2 mechanical wire 후 evidence accumulation → Wave 4 blocking promotion 후보 (별 follow-up CFP)
+    activated_by: CFP-1367             # Phase 2 mechanical wire 완료 (script + workflow + bats fixture 신설)
+    activated_date: 2026-05-25
+    status: warning                    # CFP-1367 Phase 2: deferred-followup → warning 승격 (script + workflow + bats fixture 신설 동반)
+
+  # F2 axis (동적 feasibility check) — Design lane PR cross-repo plugin verify-before-trust annotation 동적 검사
+  - name: design-lane-plugin-feasibility-check
+    description: |
+      Design lane PR (`phase:설계` 또는 `phase:설계-리뷰` label 부착 PR) 안에서 ArchitectAgent §3
+      cross-repo plugin 영역 fact claim (file existence / mechanism 가정 / API 표면 / schema 구조)
+      의무 verify-before-trust direct query annotation presence 동적 검사 — F2 axis.
+
+      검증 영역 enum (5-enum closed-set, ADR-107 §결정 2):
+        - file existence — `gh api repos/<plugin>/contents/<path>` direct Read
+        - directory structure — `gh api repos/<plugin>/contents/<dir>` → tree traversal
+        - mechanism wire status — declare-only (mechanical_enforcement_actions[] = []) vs actual workflow yml seed
+        - schema structure — frontmatter / section heading / field enumeration direct Read + byte-parity 비교
+        - cross-repo state freshness — sibling plugin commit SHA / branch state direct query
+
+      Detection mechanism (Wave 1 heuristic):
+        - Story §3 / Change Plan §3 markdown 본문 안 cross-repo plugin path 인용 regex grep
+          (`mclayer/plugin-codeforge-\w+`)
+        - 각 path 발견 직후 `\[verified-via: [^\]]+\]` annotation grep-presence verify
+        - annotation present → PASS / missing → WARN (verify-before-trust gap)
+
+      verify 결과 ↔ ArchitectAgent §3 claim mismatch 시 의무 (ADR-107 §결정 2):
+        - Story §10 FIX Ledger row append (fix-event-v1 v1.3 `fix_event_type: design_finding`)
+        - 정정 재spawn 또는 inline edit
+        - `[verified-via: <verify mechanism>]` annotation 의무 부착 (ADR-082 §결정 2 scope (b) 정합)
+
+      plugin-side analog (ADR-073 Amendment 2 wrapper-side lane_spawn 4-source polling 의 plugin-side analog):
+      wrapper-side = worktree FF + origin/main SHA pin + Issue state poll
+      plugin-side = plugin 1.0.0 direct query (file / dir / mechanism / schema / state)
+
+      Wave 1 advisory tier — false negative 가능 (heuristic 한계 인정).
+      Wave 2 blocking 승격 = 별 ratchet (ADR-060 §결정 6 AND condition 충족 후).
+    detect_command: bash scripts/check-design-lane-plugin-feasibility.sh
+    workflow: templates/github-workflows/design-lane-plugin-feasibility-check.yml
+    current_tier: warning              # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:design-lane-plugin-feasibility
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1317                     # parent Epic (ADR-107 신설 carrier)
+        - CFP-1317-S3                  # ADR-107 신설 Wave 1 declaration-only
+        - CFP-1367                     # 본 carrier (Wave 2 mechanical wire, Phase 1 declarative seed)
+        - CFP-841                      # ADR-082 Amendment 1 통합 2-entry wire 패턴 inspiration
+        - CFP-963                      # ADR-070 Wave 2 mechanical wire precedent
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = annotation presence grep heuristic, modal phrase 검사 미포함
+    introduced_by: CFP-1367
+    introduced_date: 2026-05-25
+    owner_adr: ADR-107                 # Amendment 1 §결정 2 carrier
+    paired_owner_adr: ADR-082          # §결정 1 layer 1 enforcement plugin-side analog + §결정 2 scope (b) annotation 의무
+    carrier_adr: ADR-060               # evidence-enforceable promotion framework
+    recurrence:
+      count: 3                         # ADR-082 verification gap Wave A S1 ArchitectAgent 누적 3 sub-class (Edit/Write cwd default violation + self-report mismatch + 도메인 entry schema 미준수)
+      threshold: 2                     # ADR-082 §결정 6 precedent (pattern_count >= 2 재발 시 promote)
+      last_occurrence: "2026-05-24T00:00:00+09:00"    # Wave A S1 ArchitectAgent incident closure
+      promotion_trigger: auto_blocking # threshold 의 1.5배 초과 — Wave 2 wire 후 evidence accumulation → Wave 4 blocking 후보
+    activated_by: CFP-1367             # Phase 2 mechanical wire 완료 (script + workflow + bats fixture 신설)
+    activated_date: 2026-05-25
+    status: warning                    # CFP-1367 Phase 2: deferred-followup → warning 승격 (script + workflow + bats fixture 신설 동반)
+
+  - name: parallel-anchors-checked-presence
+    description: |
+      review-verdict-v4 findings[].parallel_anchors_checked[] optional array field presence-grep
+      heuristic lint. Wave 3 mechanical enforcement (Wave 1=CFP-1291 prose, Wave 2=CFP-1303 schema v4.9).
+      ADR-068 I-2 cross-module propagation completeness review-verdict layer realization.
+      ADR-060 Amendment 15 §결정 29 carrier. ADR-061 Amendment 3 (CFP-1497 CodeQL ReDoS guard) 정합.
+      3-state semantic: absent→WARNING / present+clean→PASS / present+matched→PASS.
+      5 pattern_type enum closed-set: local_remote/client_server/read_write/forward_reverse/enum_closure.
+      AC-13: Markdown fenced yaml block extraction. AC-14: non-array type advisory. AC-15: pattern_type schema location.
+    detect_command: bash scripts/check-parallel-anchors-checked-presence.sh
+    workflow: templates/github-workflows/parallel-anchors-checked-presence.yml
+    current_tier: warning              # ADR-060 §결정 5 — 첫 도입 = warning mode (continue-on-error)
+    bypass_label: hotfix-bypass:parallel-anchors-checked-presence
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1291                     # Wave 1 prose anchor (CodeReviewPLAgent.md cross-anchor parity check step)
+        - CFP-1303                     # Wave 2 schema carrier (review-verdict-v4 v4.9 findings[].parallel_anchors_checked[] field)
+        - CFP-1306                     # self-carrier Wave 3 mechanical enforcement
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-1306
+    introduced_date: 2026-05-25
+    owner_adr: ADR-068                 # I-2 cross-module propagation completeness (declaration source)
+    carrier_adr: ADR-060               # Amendment 15 §결정 29 (enforcement source)
+    recurrence:
+      count: 2                         # CFP-604 F-CR-604-2 LOCAL_AUTHOR + parallel REMOTE_AUTHOR site (pattern_count 2 evidence)
+      threshold: 3                     # ADR-060 §결정 19
+      last_occurrence: 2026-05-23T00:00:00Z  # CFP-1303 Wave 2 carrier date (KST 2026-05-23)
+      promotion_trigger: none
+    status: Active                     # CFP-1306 Phase 1+2 동시 wire (deferred-followup → warning 직접 전환, CFP-1334 precedent)
