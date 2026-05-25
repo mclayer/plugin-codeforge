@@ -50,6 +50,12 @@ amendment_log:
     amendment_date: 2026-05-22
     amendment_cfp: CFP-1186 (CFP-1111-Wave-4-Story-11)
     amendment_summary: "sunset 실행 — is_transitional true → false (Sunsetted). sunset_status: Sunsetted 설정. 효용 = imperative-walker-protocol-v1 §2 (walk_result 4-value enum 이 declarative reconcile result semantics carry) + UpgradeAgent walker (Wave 2 CFP-1155) + walk-entries (Story-10 CFP-906/954/991/1014) 로 lossless carry 완료. β2 audit (#1113) Anchor 1 LOSSLESS 확인. ratchet 강화 보존 (carrier-preserved sunset, ADR-097 §결정 3 정합)."
+  - amendment_id: 6
+    amendment_date: 2026-05-26
+    amendment_cfp: CFP-1657
+    amendment_summary: "§결정 10 신설 — partial-completion-cascade evidence-gated ratchet (pattern_count 3 reach, ADR-045 §D-9 threshold). cascade carrier (parent → child → grandchild 3-level) 영역에서 §결정 3 Amendment 3 result fidelity 의 3-source AND honest reporting (commit message + PR body + Issue close comment) 의무 확장. silent SUCCESS false claim 차단 scope = single transaction → cascade carrier propagation. evidence (pattern_count 3): CFP-1584 (Sub-A Phase 2, 7 of 20 partial) → CFP-1617 (Step 0 yaml schema only, Confluence push 0) → CFP-1641 (17 page MCP-disconnect deferred carrier). sub-pattern `mcp-server-disconnect-mid-session-partial-completion` (CFP-1617 신규 sub-class, pattern_count 1 — threshold 2 도달 시 별 §결정 활성). MCP server 영구 disconnect mid-session 영역 = token expiry 와 disjoint sub-class. mechanical_enforcement_actions [] declaration-only retain (ADR-082 §결정 6 + ADR-070 §D5 패턴 답습, Wave 1 declarative). 후속 pattern_count 추가 reach 시 별 sub-CFP carrier mechanical wire (`partial-completion-cascade-honest-reporting-lint` warning tier evidence-check-registry entry 후보). is_transitional Sunsetted 영역의 historical record Amendment (carrier-preserved sunset 무영향 — 강화 방향만, ADR-097 §결정 3 + ADR-058 §결정 5 정합). PMOAgent retro PMOAgent surface (CFP-1617 retro internal-docs PR #937)."
+    is_transitional: false
+    sunset_justification: "N/A — ratchet 강화 방향 (cascade carrier honest reporting scope 확장). is_transitional Sunsetted 본 ADR 의 historical record Amendment — 약화 0건. ADR-097 §결정 3 carrier-preserved sunset invariant 무영향 (효용 carry 영역 변경 0). ADR-064 §self-application evidence-gated symmetric ratchet 정합 (pattern_count 3 evidence 동반)."
 related_stories:
   - CFP-701  # 본 Story carrier — Wave 1 Story-1 (A1+B1 scope)
   - CFP-702  # Wave 1 Story-2 (D4 customization marker — sequential prerequisite for Wave 2)
@@ -423,6 +429,61 @@ ADR-067 §결정 4 sequential ordering 정합 (Story 간 cross-pollinate 차단)
 - `docs/inter-plugin-contracts/label-registry-v2.md` v2.30 (3 `channel:*` label + 신규 category enum `channel`)
 - `<internal-docs>/wrapper/stories/CFP-906.md` (본 ADR Amendment 1 carrier Story)
 - `<internal-docs>/wrapper/change-plans/cfp-906-channel-schema-ssot.md` (Phase 1 PR change plan)
+
+### 결정 10 — Partial-completion cascade honest reporting (Amendment 6, CFP-1657)
+
+partial-completion cascade pattern (parent CFP → child carrier CFP → grandchild carrier CFP, 3-level 이상) 발생 시 §결정 3 Amendment 3 result fidelity 의 3-source AND honest reporting 의무가 cascade 전 carrier 영역으로 확장. silent SUCCESS false claim 차단 scope 가 single transaction 에서 cascade carrier propagation 으로 ratchet 강화 (mirror-time honest reporting → cascade-time honest reporting 추가).
+
+#### 10.1 Cascade carrier 정의
+
+cascade carrier = 직전 carrier 의 partial-completion (full scope 미실현) 을 명시적으로 흡수하는 후속 carrier CFP. 다음 3 marker 가 cascade carrier 의 identity:
+
+| Marker | 의미 | mechanism |
+|---|---|---|
+| **parent CFP 명시** | Issue body `## Parent` 또는 `## Why` 안 parent CFP # 명시 | grep-able audit anchor |
+| **deferred scope verbatim enumerate** | parent CFP 의 deferred 영역 (sub-page list / sub-section list 등) verbatim 인용 | scope drift 차단 |
+| **result enum forward** | parent CFP close comment 의 result enum (SUCCESS_WITH_DEGRADATION / PARTIAL_FAILURE) 가 child carrier 발의의 직접 trigger | §결정 3 Amendment 3 result fidelity scope 확장 |
+
+#### 10.2 3-source AND honest reporting 의무 — cascade carrier 영역
+
+cascade carrier 의 partial-completion 발생 시 다음 3 source 모두 partial 상태 명시 의무 (silent SUCCESS 차단, AND verify):
+
+1. **commit message** — `[CFP-NNNN] Phase N — <action> (X of Y partial)` 패턴 또는 동등 partial 상태 declare
+2. **PR body Summary** — `partial-completion: X of Y <unit>` block + 잔여 영역 list + 후속 carrier CFP # forward
+3. **Issue close comment** — `Closes #NNNN — partial-completion: X of Y. 잔여 = CFP-MMMM carrier` 패턴
+
+위 3 source 중 1+ 부재 = silent SUCCESS false claim violation (PMOAgent retro pattern detect 영역).
+
+#### 10.3 sub-pattern — `mcp-server-disconnect-mid-session-partial-completion`
+
+CFP-1617 신규 sub-class (pattern_count 1, threshold 2 도달 시 별 §결정 활성). MCP server 영구 disconnect mid-session 영역 = token expiry sub-class 와 disjoint (token expiry = 일시적 / MCP disconnect = 세션 영구 영향). 본 sub-pattern 발생 시 §결정 10.2 3-source AND honest reporting 의무 즉시 발효 (별 §결정 활성 전 §결정 10 cover 영역).
+
+#### 10.4 Evidence (pattern_count 3, ADR-045 §D-9 threshold reach)
+
+| # | carrier CFP | partial scope | child carrier |
+|---|---|---|---|
+| 1 | **CFP-1584** (Sub-A Phase 2) | 7 of 20 § Confluence push | CFP-1617 expansion absorb |
+| 2 | **CFP-1617** (Step 0 yaml schema only) | Step 0 yaml 만 / Confluence push 0 | CFP-1641 (17 page MCP-deferred) + CFP-1630 (4 of 12 §) + CFP-1656 (8 remaining §) |
+| 3 | **CFP-1641** (Step 0 17 page MCP-disconnect deferred carrier) | MCP server disconnect mid-session → 17 page push 0 | (개방 — pending MCP reconnect) |
+
+3-level cascade chain (CFP-1584 → CFP-1617 → CFP-1641) = pattern_count 3 reach ADR-045 §D-9 forcing function threshold. PMOAgent retro PMOAgent surface (CFP-1617 retro internal-docs PR #937, 2026-05-26T08:03 KST merged) 가 본 §결정 10 신설 trigger.
+
+#### 10.5 Mechanical wire 후속 carrier
+
+본 §결정 10 = declarative anchor only (`mechanical_enforcement_actions: []` declaration-only Wave 1, ADR-082 §결정 6 + ADR-070 §D5 패턴 답습). 후속 pattern_count 추가 reach 시 별 sub-CFP carrier mechanical wire — 후보 lint:
+
+- `partial-completion-cascade-honest-reporting-lint` (warning tier evidence-check-registry entry 후보) — 3-source AND grep verify (commit msg / PR body / Issue close comment) + parent CFP marker presence verify
+- `cascade-carrier-parent-declare-presence-lint` (warning tier 후보) — Issue body `## Parent` 섹션 또는 본문 안 parent CFP # 명시 grep
+
+#### 10.6 Cross-references
+
+- ADR-045 §D-9 (pattern_count ≥ 3 threshold forcing function — 본 §결정 10 trigger)
+- §결정 3 Amendment 3 (result fidelity 3-source — 본 §결정 10 의 prerequisite layer)
+- ADR-076 sunset 영역 (carrier-preserved sunset invariant — 본 §결정 10 강화 방향 only, ADR-097 §결정 3 정합)
+- ADR-082 §결정 6 (`mechanical_enforcement_actions: []` declaration-only retain 패턴 답습)
+- ADR-070 §D5 (declaration-only Wave 1 precedent)
+- ADR-058 §결정 5 (sunset_justification — ratchet 강화 방향 N/A)
+- ADR-064 §self-application (evidence-gated symmetric ratchet — pattern_count 3 evidence)
 
 ## 결과
 

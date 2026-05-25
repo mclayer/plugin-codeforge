@@ -5,8 +5,8 @@ status: Accepted
 category: governance
 date: 2026-05-03
 is_transitional: false
-amended_by: CFP-1607
-amended_date: 2026-05-25
+amended_by: CFP-1657
+amended_date: 2026-05-26
 amendments:
   - by: "CFP-134"
     date: "2026-05-08"
@@ -68,6 +68,10 @@ amendments:
     date: "2026-05-25"
     scope: "Amendment 13 — §결정 6.A.6 신설 (macro label batch attachment audit-trailed exception channel) + §결정 6.A per-entry namespace 의 89번째 (raw active concrete grep count post-append) family member `hotfix-bypass:pre-existing-main-drift-bundle` macro label 추가. CFP-1389 lineage 마지막 follow-up (FU-Wave3-C). pre-existing-main-drift super-class 8 sentinel labels closed-set (bootstrap-labels / actionlint / claude-md-amendment-ref-drift / markdown-internal-links / inter-plugin-contracts-parity / fix-event-depth-scope / sibling-pr-author-check / wording-dictionary) 의 unified channel codify. Macro label semantics: single `hotfix-bypass:pre-existing-main-drift-bundle` attach → 8 underlying hotfix-bypass labels auto-fan-out attach via `macro-label-expander.yml` workflow (Wave 1 declarative stub `if: false` disabled, Wave 2 hydrate carrier 별 sub-CFP — pull_request.labeled / issues.labeled event triggers wire). Efficiency target: 64 manual attachments (8 PR × 8 label) → 8x reduction (1 macro attach = 8 label auto-fan-out + single audit comment 1개로 8 underlying labels rationale 통합 가능). §결정 6.A.6 audit pattern: single audit comment block (예: `[bypass-audit] pre-existing-main-drift-bundle: <rationale>`) 가 8 underlying labels 모두에 대해 audit-trail rationale 충족. 기존 single audit lint `scripts/check-bypass-audit-comment.sh` reuse (신규 lint 도입 0건, CFP-389 prior art). Audit invariant 보존: macro = batch-attach mechanism only / 8 underlying labels 의 individual lint enforce 영역 무변경. label-registry-v2 v2.64 → v2.65 MINOR bump 동반 (kind:registry sibling sync 면제 ADR-010 §결정 2 + ADR-008 §결정 3 row append). MANIFEST.yaml row '2.64' → '2.65' ratchet 동반. plugin.json bump 0 = marketplace_sync_declared: false (lint+workflow 신설 = governance behavior 변경이나 plugin.json mirrored field 무변경 — kind:registry sibling sync 면제 영역, ADR-063 atomic invariant 발효 조건 미충족). Wave 1 산출: (a) label-registry-v2 §3 macro label entry append (b) `templates/github-workflows/macro-label-expander.yml` Wave 1 declarative stub (`if: false` disabled, Wave 2 hydrate carrier 별 sub-CFP) (c) `.github/workflows/macro-label-expander.yml` self-app byte-identical (ADR-005 invariant). Wave 2 carrier 영역 (별 sub-CFP): workflow `if: false` 제거 + pull_request.labeled / issues.labeled event trigger wire + 8 underlying labels mechanical attach script + audit comment fan-out logic + bats fixture pair. raw count convention 답습 (CFP-1000 Amendment 10 + CFP-1346 ADR-108 forcing function parity mandate META self-application — raw active concrete grep count post-append 88 + 1 = 89). ADR-108 §결정 3 META self-app 7th applied case. ADR-082 §결정 9 verify-at-write-time (worktree base v2.64 / 88 raw active concrete grep) verified — main repo divergent state ignored (worktree-base SSOT, ADR-070 verify-before-trust). prior art Amendment 12 (CFP-1025) 직전 carrier 정합."
     sunset_justification: "N/A — is_transitional: false (permanent governance policy). 1 신규 family member + §결정 6.A.6 신설 = §결정 6.A per-entry namespace 의무의 영구 확장 (macro label batch attachment audit-trailed exception channel — bypass-as-norm-mutation 누적 monitoring 의 efficiency-preserving 강화 방향, 64 manual attach overhead → 1 macro attach reduction). forbid scope 축소 0건 (8 underlying labels 의 individual lint enforce 영역 무변경, macro = batch-attach mechanism only — audit trail invariant 보존). ratchet-UP 강화 방향 (active concrete grep count 88 → 89 정합 raw active concrete + audit pattern 확장, 약화 영역 0건). ADR-058 §결정 5 + ADR-064 §self-application top-down ratchet 정합."
+  - by: "CFP-1657"
+    date: "2026-05-26"
+    scope: "Amendment 16 — §결정 6.A.8 신설 (wording-dictionary pre-existing-drift bypass evidence codify, pattern_count 3 reach ADR-045 §D-9 threshold). hotfix-bypass:wording-dictionary label 부착 PR body `## Bypass justification (wording-dictionary)` 섹션 의무 codify (CFP-845 §결정 6.A.4 `[bypass-justification]` PR comment marker SSOT 정합, ADR-024 Amendment 8 sibling 확장). evidence (pattern_count 3+): CFP-1240 (pre-existing wording-dictionary drift bypass) / CFP-1267 (pre-existing wording-dictionary drift bypass) / CFP-1617 (pre-existing ADR-073 `pin` 어휘 drift bypass, scope 외 영역). 섹션 본문 의무 3-field: pre-existing scope (어느 ADR/doc/줄) / bypass 사유 (scope 외 / future cleanup carrier #) / expected_resolution_carrier (별 CFP #). 섹션 부재 시 lint warning — mechanical wire = 별 sub-CFP carrier (`wording-dictionary-bypass-justification-presence-lint` warning tier evidence-check-registry entry 후보). label family member 신설 0 (hotfix-bypass:wording-dictionary retain), 신규 entry append 0 (raw active grep count 변경 0), §결정 6.A.8 신설만 — wording-dictionary scope 확장 (ADR-064 Amendment 2/4/5) 시 pre-existing drift 발생률 ↑ 영역의 evidence-grounded bypass 정당화 pathway codify. label-registry-v2 bump 0 (kind:registry sibling sync 면제 영역, ADR-010 §결정 2 + ADR-008 §결정 3 — entry append 0). plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). carrier_strategy: wording-dictionary scope 확장 시 pre-existing drift 회피 path 명문화 (bypass 수단 ≠ scope 축소 — ratchet 강화 + bypass 정당화 절차 명확). mechanical_enforcement_actions [] declaration-only Wave 1 (ADR-082 §결정 6 + ADR-070 §D5 패턴 답습). PMOAgent retro PMOAgent surface (CFP-1617 retro internal-docs PR #937, 2026-05-26T08:03 KST merged) trigger. ADR-082 §결정 9 verify-at-write-time (worktree base post-rebase 7c6a5490 direct read, 본 amendment_id = 16 next-slot 정합)."
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). §결정 6.A.8 신설 = §결정 6.A.4 PR comment marker mechanical enforce SSOT 의 wording-dictionary entry 영역 확장 (per-entry-specific justification mandate, narrative audit trail 강화). label family member 신설 0 (raw active grep count 변경 0). forbid scope 확장 0건 (wording-dictionary scope 변경 0). ratchet-UP 강화 방향 (bypass-as-norm-mutation 누적 monitoring 의 narrative audit pathway 강화, 약화 영역 0건 — bypass 수단 ≠ scope 축소). ADR-058 §결정 5 + ADR-064 §self-application top-down ratchet 정합 + ADR-045 §D-9 forcing function 작동 사례 (pattern_count 3 evidence 동반)."
   - by: "CFP-1607"
     date: "2026-05-25"
     scope: "Amendment 15 — §결정 6.A.3 per-plugin-cumulative-counter tier ratchet warning → blocking-on-pr declarative anchor (Wave 1 declarative ratchet + Wave 2 mechanical wire 별 sub-CFP). 사용자 directive 2026-05-25 KST `사용자 confirmed blocking-on-pr 승격` (Issue #1607 body `escalate_user` enum resolved — Wave 3 retro §4.2 C carrier). ADR-024 amendment_id slot strict pre-claim 정합 (ADR-082 §결정 1 sub-scope (1-G) amendment-slot pre-reservation mandate 적용 4th applied case — Amendment 18 CFP-1342 1st + Amendment 21 CFP-1578 2nd + Amendment 22 CFP-1601 3rd precedent 답습) + sub-scope (1-K) numeric claim write-time strict claim mandate 적용 2nd applied case (Amendment 22 CFP-1601 1st applied META carrier 직후 답습). ADR-060 §결정 6 promotion gate AND 3/3 PASS evidence: (a) PR cumulative since 2026-05-17 (CFP-845 ship 시점) = 200 PRs ≥ 20 (`gh pr list --search 'merged:>=2026-05-17' --limit 200` returned full list, 10x threshold 충족) / (b) bypass label外 failure count = 0 (`recurrence.count: 0` registry yaml verified) + `gh pr list --label hotfix-bypass:per-plugin-cumulative-counter` returned 0 PRs (no actual bypass usage during warning mode) / (c) sibling Stories CFP-390 PR #415/#420 + CFP-455 PR #460/#461 (CFP-412 substitution per ADR-060 Amendment 1+2 sibling_dependencies chain [CFP-390, CFP-412, CFP-455]) ALL MERGED. 본 Amendment 15 = ADR-060 framework 첫 actual blocking-on-pr 승격 carrier — framework SSOT 검증 carrier (multi-entry registry 운영 검증 첫 사례). evidence-checks-registry entry `per-plugin-cumulative-counter` `current_tier: warning` → `blocking-on-pr` + `status: warning` → `blocking-on-pr` + `recurrence.last_occurrence` Phase 1 PR merge KST timestamp 갱신 + `recurrence.promotion_trigger: warning_to_blocking_on_pr` 갱신. workflow `templates/github-workflows/per-plugin-cumulative-counter.yml` + `.github/workflows/` self-app `continue-on-error: true` → `false` ratchet = Phase 2 carrier scope. evidence_artifact (v) + (vi) gap closure declarative anchor (Phase 2 별 sub-CFP carrier — `scripts/check-audit-comment-author.{sh,py}` + `templates/github-workflows/audit-comment-author.yml` + `.github/workflows/` self-app + `bypass-audit.yml` sticky comment pattern wire + `tests/bats/check-audit-comment-author.bats` RED→GREEN stash proof + `tests/fixtures/audit-comment-author/` boundary fixture pair). bypass channel preserve — `hotfix-bypass:per-plugin-cumulative-counter` label retain (45번째 family member raw count convention, label-registry MINOR bump 0). plugin.json bump 0 = `marketplace_sync_declared: false` (mirrored field 변경 0, kind:registry sibling sync 면제 영역, ADR-063 atomic invariant 발효 조건 미충족). CLAUDE.md L260 영역 'evidence-checks-registry warning tier 19종' 문장 갱신 (warning tier 18종 + blocking-on-pr 4종 — CFP-1607 carrier 반영). schema doc `docs/inter-plugin-contracts/evidence-check-registry-v1.md` value transition example 추가 (warning → blocking-on-pr 첫 사례 documenting, schema 변경 0). ADR-045 §D-9 cross-ref pattern_count 3 cumulative occurrence `escalate_user` enum resolved by 사용자 2026-05-25 KST — 본 Amendment 15 = §D-9 forcing function 작동 사례 첫 carrier. ADR-064 §결정 5 CFP scope unitary 정합 — 본 Amendment 15 = per-plugin-cumulative-counter 단일 entry 승격 (sibling sub-decisions 6.A.4 / 6.A.5 미승격, 별 CFP scope). Wave 4 batch sequential last entry (Story CFP-1604 / CFP-1605 / CFP-1606 4/4 PIVOT trend break — 본 Story PROCEED_WITH_SCOPE_EXPANSION). mid-spawn drift detection (ADR-073 Amendment 12) 적용 evidence — worktree base 0a19e6a → 4c66891 rebase clean (CFP-1601 + CFP-1586 + CFP-1585 + CFP-1584 cascade integrate, 4 commits behind origin/main detected + rebased atomic pre-commit). prior art Amendment 14 (CFP-1306) 직전 chronological carrier 정합 (file body Amendment 13 (CFP-1510) 직후 sequential, frontmatter `amendments[]` array sequential append)."
@@ -166,6 +170,13 @@ mechanical_enforcement_actions:
   - action: per-plugin-cumulative-counter-blocking
     status: blocking-on-pr        # Wave 1 declarative tier ratchet (registry yaml current_tier value transition); Wave 2 = workflow enforce mode wire 별 sub-CFP
     target_section: §결정 6.A.3   # ADR-060 framework first-use precedent — warning → blocking-on-pr 첫 actual promotion carrier
+  # Amendment 16 (CFP-1657, 2026-05-26) — §결정 6.A.8 신설 wording-dictionary pre-existing-drift bypass evidence codify
+  # CFP-845 §결정 6.A.4 `[bypass-justification]` PR comment marker SSOT sibling 확장 — wording-dictionary entry 영역 per-entry-specific justification mandate
+  # pattern_count 3 reach (CFP-1240 / CFP-1267 / CFP-1617) ADR-045 §D-9 forcing function 작동
+  # Wave 1 declarative — registry yaml entry append 0 (label family member 신설 0 / raw active grep count 변경 0); Wave 2 mechanical wire = 별 sub-CFP carrier
+  - action: wording-dictionary-bypass-justification
+    status: deferred-followup     # registry yaml row append + workflow + script wire = 별 sub-CFP scope (Wave 2 mechanical wire — `wording-dictionary-bypass-justification-presence-lint` warning tier evidence-check-registry entry 후보)
+    target_section: §결정 6.A.8   # wording-dictionary entry 영역 pre-existing-drift bypass narrative audit pathway codify
 ---
 
 # ADR-024: Story-scoped branch policy — main 직접 수정 금지 + Phase 2 enforcement deferred
@@ -1459,4 +1470,115 @@ verify-before-trust 8-tuple 적용 evidence:
 - CFP-845 prior art `scripts/check-per-plugin-cumulative-counter.{sh,py}` (본 entry 의 본체 ship carrier)
 - CFP-390 + CFP-455 sibling Stories (ADR-060 §결정 6 gate (c) chain — CFP-412 substitution)
 - Wave 4 batch sequential precedents — CFP-1604 / CFP-1605 / CFP-1606 4/4 PIVOT trend break (본 Story PROCEED)
+
+## Amendment 16 — §결정 6.A.8 신설 wording-dictionary pre-existing-drift bypass evidence codify (CFP-1657, 2026-05-26 KST)
+
+### Context
+
+CFP-1617 retro PMOAgent surface (internal-docs PR #937, 2026-05-26T08:03 KST merged) 가 wording-dictionary pre-existing-drift bypass pattern_count 3 reach 식별 → ADR-045 §D-9 forcing function threshold 도달. 사용자 directive 2026-05-26 KST = ADR-024 Amendment 흡수 (신규 ADR 신설 회피, ratchet 강화 방향).
+
+`hotfix-bypass:wording-dictionary` label (CFP-610 / ADR-064 Amendment 2 carrier) 가 pre-existing main drift 영역 (어휘 dictionary scope 안 ADR / doc 의 기존 위반 문장) 의 bypass channel 로 활용되는 빈도 ↑ — `## Bypass justification` 섹션 본문 의무 부재 시 audit trail 추적 어려움 (단순 label attach 만으로 어느 어휘 / 어느 ADR / 어느 줄 / 어느 후속 carrier 부재).
+
+CFP-845 §결정 6.A.4 `[bypass-justification]` PR comment marker mechanical enforce SSOT 가 generic 한 channel — 본 Amendment 16 = wording-dictionary entry 영역 per-entry-specific narrative audit pathway 확장 (sibling 확장, CFP-845 sibling 확장 0건 ratchet 강화).
+
+### Amendment
+
+**§결정 6.A.8 신설 — `hotfix-bypass:wording-dictionary` PR body section 의무 codify**.
+
+#### §결정 6.A.8 (신설) — `hotfix-bypass:wording-dictionary` PR body `## Bypass justification (wording-dictionary)` 섹션 의무
+
+`hotfix-bypass:wording-dictionary` label 부착 PR 의 description (body) 안 다음 섹션 의무:
+
+```markdown
+## Bypass justification (wording-dictionary)
+
+- **pre-existing scope**: <어느 ADR/doc/줄> (예: `docs/adr/ADR-073.md L42 pre-existing 'pin' 어휘 drift`)
+- **bypass 사유**: <scope 외 / future cleanup carrier #> (예: `scope 외 — 본 PR 영역 = ADR-076 Amendment 만, ADR-073 어휘 cleanup 별 영역`)
+- **expected_resolution_carrier**: <별 CFP #> (예: `CFP-TBD — wording-dictionary scope 확장 시 carrier Story 신설 예정`)
+```
+
+3-field 모두 채움 의무 (1+ 부재 시 audit gap). 섹션 부재 시 lint warning (Wave 2 mechanical wire 별 sub-CFP carrier — `wording-dictionary-bypass-justification-presence-lint` warning tier evidence-check-registry entry 후보).
+
+#### 본 §결정의 CFP-845 §결정 6.A.4 와의 관계
+
+CFP-845 §결정 6.A.4 `[bypass-justification]` PR comment marker = generic mechanism (모든 hotfix-bypass:* family entry 대상). 본 §결정 6.A.8 = wording-dictionary entry 영역 specific extension (per-entry-specific narrative structure SSOT — 3-field schema). 정합 channel:
+
+| Channel | Mechanism | Scope |
+|---|---|---|
+| **§결정 6.A.4** (CFP-845) | `[bypass-justification]` PR comment marker grep-presence lint | 모든 `hotfix-bypass:*` family entry (generic) |
+| **§결정 6.A.8** (CFP-1657, 본 신설) | PR body `## Bypass justification (wording-dictionary)` 섹션 3-field 의무 | `hotfix-bypass:wording-dictionary` entry only (per-entry-specific) |
+
+본 §결정 6.A.8 = §결정 6.A.4 의 narrative audit trail 강화 (wording-dictionary entry 영역 specific). 두 channel 동시 활성 — comment marker (lint detect) + PR body section (audit content).
+
+#### Evidence (pattern_count 3, ADR-045 §D-9 threshold reach)
+
+| # | carrier CFP | bypass 영역 |
+|---|---|---|
+| 1 | **CFP-1240** | pre-existing wording-dictionary drift bypass |
+| 2 | **CFP-1267** | pre-existing wording-dictionary drift bypass |
+| 3 | **CFP-1617** | pre-existing ADR-073 `pin` 어휘 drift bypass (scope 외 영역) |
+
+3 occurrence = pattern_count 3 reach ADR-045 §D-9 forcing function threshold. PMOAgent retro PMOAgent surface (CFP-1617 retro internal-docs PR #937) 가 본 §결정 6.A.8 신설 trigger.
+
+#### Carrier strategy
+
+wording-dictionary scope 확장 (ADR-064 Amendment 2 / 4 / 5 — 어휘 추가) 시 pre-existing drift 발생률 ↑ — 본 §결정 = scope 확장 evidence-grounded bypass 정당화 pathway 명문화 (bypass 수단 ≠ scope 축소, ratchet 강화 + bypass 정당화 절차 명확).
+
+#### Mechanical wire 후속 carrier
+
+본 §결정 6.A.8 = declarative anchor only (`mechanical_enforcement_actions[]` row `wording-dictionary-bypass-justification` deferred-followup status). 후속 carrier:
+
+- Wave 2 mechanical wire 별 sub-CFP — `wording-dictionary-bypass-justification-presence-lint` warning tier evidence-check-registry entry 신설 (`scripts/check-wording-dictionary-bypass-justification.{sh,py}` + workflow + bats fixture pair)
+
+#### Label family member 영역 invariant
+
+본 Amendment 16 = label family member 신설 **0건** (`hotfix-bypass:wording-dictionary` retain). raw active concrete grep count `^  - name: hotfix-bypass:` 변경 0 — label-registry-v2 MINOR bump 0 (kind:registry sibling sync 면제 영역, ADR-010 §결정 2 + ADR-008 §결정 3 — entry append 0). plugin.json bump 0 = `marketplace_sync_declared: false`.
+
+### Count convention 답습
+
+본 Amendment 16 = §결정 6.A.X 신설 only (sub-letter X = 8 next-slot). label family member 신설 0 — raw active concrete grep count convention (CFP-1000 Amendment 10 / CFP-1346 ADR-108 §결정 3 forcing function parity mandate) 영역 외 (entry append 0).
+
+- **§결정 6.A.X next-slot**: 기존 §결정 6.A.1~6.A.7 (Amendment 4 / 6 / 8 / 8 / 8 / 13 / 14 신설) → next = §결정 6.A.8 (본 Amendment 16 carrier). ADR-082 §결정 9 verify-at-write-time — worktree base post-rebase `7c6a5490` 안 `docs/adr/ADR-024-story-scoped-branch-policy.md` `grep -nE "^#### §결정 6\.A\.[0-9]"` actual max = 6.A.7 (CFP-1306 Amendment 14) direct read 정합. next-slot = 6.A.8 정합.
+- **Amendment chronological order**: file body Amendment 15 (CFP-1607) 직후 sequential append. frontmatter `amendments[]` array sequential append.
+
+### ADR-082 §결정 9 verify-at-write-time 적용 evidence
+
+worktree base post-rebase `7c6a5490` (HEAD pin verified at worktree creation) 안 다음 영역 direct read 로 verify (ADR-070 verify-before-trust):
+
+- (1) `docs/adr/ADR-024-story-scoped-branch-policy.md` frontmatter `amendments[]` last entry = Amendment 15 (CFP-1607) — next amendment_id slot = 16 정합
+- (2) `grep -nE "^#### §결정 6\.A\.[0-9]"` actual max = 6.A.7 (CFP-1306 Amendment 14) — next sub-letter = 6.A.8 정합
+- (3) ADR-024 latest amendment chain (Amendment 13/14/15) — Amendment 16 신설 collision risk 0 (worktree base 7c6a5490 post-rebase verify)
+
+### ADR-082 §결정 1 sub-scope (1-G) / (1-K) 적용 evidence (META carrier)
+
+ADR-082 §결정 1 sub-scope (1-G) amendment-slot pre-reservation mandate 적용 5th applied case (이전: Amendment 18 CFP-1342 1st + Amendment 21 CFP-1578 2nd + Amendment 22 CFP-1601 3rd + Amendment 15 CFP-1607 4th + 본 Amendment 16 CFP-1657 5th).
+
+ADR-082 §결정 1 sub-scope (1-K) numeric claim write-time strict claim mandate 적용 3rd applied case (이전: Amendment 22 CFP-1601 1st + Amendment 15 CFP-1607 2nd + 본 Amendment 16 CFP-1657 3rd) — `amendment_id: 16` / `§결정 6.A.8` numeric claim strict slot 직접 verify 후 write.
+
+### 영향
+
+- ADR-024 §결정 1~6 + Phase 2 partial (CFP-70) + CFP-72 + Amendment 1~15 전부 유지 — 본 Amendment 16 = Amendment 3 §결정 6.A per-entry namespace 의 §결정 6.A.8 신설 only (per-entry-specific narrative audit pathway 확장).
+- label family member 신설 0 (`hotfix-bypass:wording-dictionary` retain). label-registry-v2 bump 0.
+- evidence-checks-registry entry 신설 0 (Wave 2 mechanical wire 별 sub-CFP carrier — `wording-dictionary-bypass-justification-presence-lint` 후보).
+- plugin.json bump 0 = `marketplace_sync_declared: false` (mirrored field 변경 0).
+- ADR-058 §결정 5 sunset_justification ratchet — 본 Amendment 16 = §결정 6.A 영역 narrative audit pathway 강화 (forbid scope 확장 0건, ratchet-up 강화 방향).
+- ADR-064 §self-application evidence-gated symmetric ratchet 정합 (pattern_count 3 evidence 동반, ADR-045 §D-9 forcing function 작동 사례).
+
+### 관련 파일
+
+- ADR-024 §결정 6.A.4 (CFP-845 Amendment 8 — `[bypass-justification]` PR comment marker SSOT, 본 §결정 6.A.8 sibling 확장)
+- ADR-024 §결정 6.A (Amendment 3 — `hotfix-bypass:*` per-entry namespace SSOT, 본 §결정 6.A.8 host)
+- ADR-064 Amendment 2 / 4 / 5 (wording-dictionary scope 확장 carrier — 본 §결정 의 bypass 정당화 pathway 발효 trigger)
+- ADR-045 §D-9 (cross_story_pattern_adr_trigger forcing function — pattern_count 3 cumulative occurrence)
+- ADR-058 §결정 5 sunset_justification (ratchet-UP 강화 방향)
+- ADR-064 §self-application (evidence-gated symmetric ratchet — pattern_count 3 evidence)
+- ADR-082 §결정 1 sub-scope (1-G) amendment-slot pre-reservation mandate (5th applied case)
+- ADR-082 §결정 1 sub-scope (1-K) numeric claim write-time strict claim mandate (3rd applied case)
+- ADR-082 §결정 9 verify-at-write-time (worktree base 7c6a5490 post-rebase direct read evidence)
+- ADR-097 §결정 1 (CFP scope unitary 면제 channel cross-ref — 본 Amendment 16 = single ADR Amendment, scope unitary 정합)
+- ADR-076 §결정 10 (CFP-1657 sibling Amendment carrier — partial-completion-cascade honest reporting, 동일 PR 안 sibling)
+- CFP-845 prior art (§결정 6.A.4 `[bypass-justification]` PR comment marker generic SSOT)
+- CFP-610 prior art (`hotfix-bypass:wording-dictionary` 22번째 family member carrier)
+- CFP-1617 retro internal-docs PR #937 (PMOAgent surface trigger)
+- CFP-1240 / CFP-1267 / CFP-1617 (pattern_count 3 evidence)
 
