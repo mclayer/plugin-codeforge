@@ -77,6 +77,12 @@ amendments:
     summary: "§결정 21/22/23 신설 — atomic-sync 의 declarative mandate 를 mechanical enforcement 로 강화 (origin audit #1270 — marketplace.json codeforge version 5-release lag carrier). §결정 21 (Gap A — §13 선언 검증 lint mandate): §결정 9 Amendment 1 Layer 2 의 Change Plan §13 marketplace_sync_required declarative declare 의무에 대응하는 검증 script 부재 (presence gap) 해소 — `scripts/check-architect-marketplace-self-check.sh` PR-open warning-tier lint 신설 (plugin.json mirrored field diff 감지 시 §13 field presence + completeness 검증, doc-only fast-path / Change Plan 부재 Story false-positive 차단). §결정 22 (Gap B — marketplace 정합 mechanical 강제 명문화): #1270 naive predicate 'open sibling PR 부재 차단' 가 §결정 2 marketplace 先 merge ordering 과 모순임을 명문화 + Gap B SSOT predicate 확정 = marketplace.json 실값 parity (option a) — 신규 script 0, 기존 `check-version-bump-atomic.sh` (CFP-441 blocking-on-pr) 의 (i) gh-skip silent hole 3종 차단 (gh 미설치/미인증/fetch 실패 시 exit 0 → CI 환경에서 fail-loud exit 2) + (ii) name/author mirrored field parity 축 확장 (기존 version+description 만 → 4종 전부). §결정 23 (Self-application ratchet 검증): Amendment 9 = declarative → mechanical 강화 방향 only. ratchet 강화 방향 only — ADR-064 §self-application top-down ratchet + ADR-058 §결정 5 약화 방향 발의 차단 logic 통과."
     is_transitional: false
     sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 9 = 4-layer declarative defense 위에 mechanical enforcement 강화 방향 only — §13 선언 presence-검증 lint 신설 + 기존 atomic check 의 silent skip hole 차단 + mirrored field parity 축 4종 확장, 약화 요소 0건). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과 (Gap A lint warning 다운그레이드 / silent skip hole 복원 / mirrored field parity 축 축소 = sunset_justification 3-tuple 의무)."
+  - amendment: 10
+    date: 2026-05-25
+    cfp: CFP-1403
+    summary: "§결정 21 본문 안 sub-section 'Step 1.5: Decision rule for marketplace_sync_required' 신설 (Algorithm overview Step 1 ↔ Step 4 사이 자연 위치) — deterministic algorithm Rule (a)/(b)/(c)/(d) codify. Rule (a) mirrored field 4종 (name/version/description/author) 1+ 변경 감지 시 marketplace_sync_required: true 자동 추론 (모든 semver tier 포함, version-only bump 도 mirrored field version 변경 → true) + sub-clause declarative SSOT (mirrored field 1+ 변경 AND `false` 명시 = Rule (a) deterministic mandate 위반, mechanical wire = 별 CFP carrier 영역 / 현재 check-architect-marketplace-self-check.sh Step 5 가 true case completeness 만 검증, Mitigation = §결정 22 Gap B `check-version-bump-atomic.sh` blocking-on-pr 실값 parity 가 실효 차단 layer — F-SA-1403-01 source). Rule (b) `marketplace_sync_required` field 4 enum closed-set: `true` / `declaration_only_wave_1` / `sibling_story_scope` / `cross_repo_dogfood_out` / `doc_only_fast_path` (open_extension: false — 5번째 enum value 시도 시 별 ADR Amendment 신설 의무, CFP-1403 Story §5.3 EC-8 정합 — F-SA-1403-03 source). Rule (c) owner = ArchitectAgent (chief author) §3.6 mechanical sync self-check (ADR-065 7-item checklist row 8) — Issue body 'Orchestrator §3.6' stale wording 정정 (CFP-1403 retro Pivot 1 source), Orchestrator 작성 영역 아님, DesignReviewPL audit perspective cross-check. Rule (d) self-application — 본 Amendment 10 자체가 Rule (a)/(b)/(c) 의 첫 적용 carrier (META self-app dogfood). Phase 1 PR (doc-only ADR change) = `declaration_only_wave_1` 또는 `doc_only_fast_path` 영역, Phase 2 PR (만약 lint script / workflow 변경 시) = Rule (a) 충족 → `true` (Option B 선택 시 lint 변경 0 = `declaration_only_wave_1` 유지). cross-reference: cross-repo `mclayer/marketplace` PR injection scenario = §결정 2 (ordering policy) + §결정 22 (Gap B blocking-on-pr 실값 parity) 영역 — Amendment 10 scope 외 (F-SA-1403-02 source). CFP-1334 retro F-PL-1334-02 + F-DR-1334-03 P2 advisory borderline marketplace_sync_required determination evidence base. ArchitectAnalyst FACT FIX: Amendment 1~9 CONSECUTIVE (gap 0건) — Story CFP-1403 §5.6 RequirementsPL synthesis 'Amendment 4/7 missing 정합 보존' 가정 정정 (false). Amendment 10 = sequential next slot, no missing precedent. ratchet ↑ direction only (declaration presence check Amendment 9 → declaration value algorithm 강화 = scope 확장 + invariant 강도 상승) — ADR-064 §self-application top-down ratchet + ADR-058 §결정 5 약화 방향 발의 차단 logic 통과."
+    is_transitional: false
+    sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 10 = declaration value decision algorithm codify 강화 방향 only — Amendment 9 declaration presence check 위에 deterministic value algorithm 추가, scope 확장 + invariant 강도 상승, 약화 요소 0건). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과 (Rule (a) mirrored field detection 약화 / Rule (b) enum closed-set 확장 무허가 / Rule (c) ArchitectAgent owner 변경 / Rule (d) self-application skip = sunset_justification 3-tuple 의무)."
 mechanical_enforcement_actions:
   - action: version-3way-atomic
     binding_decision: 15
@@ -679,6 +685,54 @@ ADR-054 doc-only fast-path Story 는 Change Plan 을 산출하지 않는다. 또
 4. §13 block parse — `marketplace_sync_required:` field presence 검증 → 부재 시 warning.
 5. `marketplace_sync_required: true` → `mirrored_fields_changed[]` + `triggering_plugins[]` non-empty 검증 → 미충족 시 warning.
 6. 전부 충족 → exit 0 (PASS).
+
+#### Step 1.5: Decision rule for `marketplace_sync_required` (Amendment 10, CFP-1403)
+
+Step 1 의 mirrored field 변경 감지 결과로 Step 4 declaration 값을 결정하는 **deterministic algorithm**. Amendment 9 (§결정 21) 가 `marketplace_sync_required` field 의 **선언 presence + completeness 검증** mandate 를 codify 했다면, 본 Step 1.5 (Amendment 10) 는 그 **선언 값 자체의 결정 알고리즘** 을 codify 한다 (presence check → value algorithm 강화).
+
+본 sub-section 의 위치 = "Algorithm overview Step 1 ↔ Step 4 사이 자연 위치" — Step 1 (mirrored field detection 입력) ↔ Step 4 (`marketplace_sync_required:` field presence 출력) 사이의 결정 규칙 layer.
+
+**동기 (CFP-1334 retro evidence base)**:
+
+CFP-1334 retro F-PL-1334-02 + F-DR-1334-03 P2 advisory = `marketplace_sync_required` determination borderline (`true` vs `declaration_only_wave_1` 분기 불명확). Amendment 9 가 "선언이 있는가" 만 검증하므로, 잘못된 값 (예: mirrored field 1+ 변경 PR 에 `false` 선언) 은 silent pass — Amendment 10 = 값 자체의 정합성 codify.
+
+**Rule (a) — Mirrored field change → required mandate (deterministic)**:
+
+mirrored field 4종 (`name` / `version` / `description` / `author`) 중 **1+ 변경 감지 시 `marketplace_sync_required: true` 자동 추론**. 모든 semver tier 포함 — MAJOR / MINOR / PATCH / version-only bump 모두 `version` 변경 = mirrored field change → `true`.
+
+**Rule (a) sub-clause — Violation detection (declarative SSOT, F-SA-1403-01 source)**:
+
+mirrored field 4종 1+ 변경 감지 AND author 가 `marketplace_sync_required: false` 명시 = **Rule (a) deterministic mandate 위반**. 본 sub-clause = **declarative SSOT only** — mechanical wire (lint script `false` case detection) = Phase 2 / 별 CFP carrier 영역 (현재 `check-architect-marketplace-self-check.sh` Step 5 가 `true` case completeness 만 검증, `false` case violation detection 은 미wire). Mitigation = §결정 22 Gap B `check-version-bump-atomic.sh` (blocking-on-pr) 실값 parity 가 **실효 차단 layer** — Rule (a) 위반 author 의 mistaken `false` 선언이 실제로 marketplace.json drift 를 유발하려는 순간 §결정 22 가 plugin PR merge 를 차단. declarative SSOT (본 sub-clause) + blocking-on-pr layer (§결정 22) = layered defense.
+
+**Rule (b) — `marketplace_sync_required` field 4 enum closed-set (open_extension: false)**:
+
+- `true` — Rule (a) 충족 (mirrored field 1+ 변경 감지). marketplace sibling sync PR 선행 merge 의무 (§결정 2 ordering).
+- `declaration_only_wave_1` — wrapper plugin source code (`.claude-plugin/plugin.json` 등 mirrored field 영역) 미touch + Phase 1 PR declarative SSOT scope. 후속 carrier (Phase 2 PR 또는 별 CFP) 시 `true` promote 의무 (ADR-082/070/077/078/097 Wave 1 declaration-only precedent 정합).
+- `sibling_story_scope` — sibling Story 영역에서 plugin.json bump 진행, 본 Story scope 외 (별 PR 에서 mirrored field 변경 + marketplace sync 처리).
+- `cross_repo_dogfood_out` — cross-repo dogfood-out flow 진행 (예: `mclayer/marketplace` repo PR 이 별도 진행), 본 wrapper PR scope 외. PR description `dogfood-out:true` marker 동반 의무 (Step 3 (B) cross-repo case 정합).
+- `doc_only_fast_path` — ADR-054 doc-only fast-path 영역, `src/` + `tests/` + `.claude-plugin/` 변경 0건 (`phase:문서` label 동반).
+
+**`open_extension: false`** — 5번째 enum value 시도 시 Rule (b) closed-set 위반. 신규 enum value 도입 = 별 ADR Amendment 신설 의무 (예: Amendment 11 으로 enum 5번째 값 추가 필요 시 carrier Story 별도 발의). **CFP-1403 Story §5.3 EC-8 정합** (closed-set invariant 보존 — F-SA-1403-03 source).
+
+**Rule (c) — Owner clarification (SSOT)**:
+
+`marketplace_sync_required` field 작성 owner = **ArchitectAgent (chief author)** §3.6 mechanical sync self-check (ADR-065 7-item checklist row 8). Orchestrator 가 직접 작성하는 영역 아님 (Issue body "Orchestrator §3.6" stale wording 정정 — **CFP-1403 retro Pivot 1 source**). DesignReviewPL audit perspective 가 cross-check (review-responsibility skill matrix 정합). ArchitectAgent Phase 2 design lane = chief author 영역, Orchestrator = §13 declarative declare 의 read-only consumer (Phase 2 PR open 시 marketplace sibling sync PR open coordination).
+
+**Rule (d) — Dogfood self-application carrier (META)**:
+
+본 Amendment 10 자체가 Rule (a)/(b)/(c) 의 **첫 적용 carrier** (META self-app dogfood).
+
+- Phase 1 PR (본 ADR Amendment 10 + Change Plan + Story §3/§7/§11/§13 sub-section 작성, doc-only ADR change) — mirrored field 4종 (`.claude-plugin/plugin.json` `name`/`version`/`description`/`author`) **0건 변경** → Rule (a) 미충족 → `marketplace_sync_required: declaration_only_wave_1` 또는 `doc_only_fast_path` (ArchitectAgent §3.6 self-check 결정 — 본 Story 가 ADR-054 doc-only fast-path 영역인지 phase:문서 label 부착 여부 따라 분기).
+- Phase 2 PR (만약 lint script `check-architect-marketplace-self-check.sh` `false` case detection wire 또는 workflow 변경 시) — mirrored field 변경 0건 = `declaration_only_wave_1` 유지. Option B (declaration-only Wave 1) 선택 시 Phase 2 PR 자체 발생 0 → 본 Story 전체가 Phase 1 단일 PR 영역 (TestContractArch §8 verdict 정합).
+
+**Cross-reference (boundary clarity, F-SA-1403-02 source)**:
+
+- **cross-repo `mclayer/marketplace` PR injection scenario** = **§결정 2** (ordering policy: marketplace sibling sync PR 先 merge) + **§결정 22** (Gap B blocking-on-pr `check-version-bump-atomic.sh` 실값 parity, marketplace.json 의 byte-identical mirror parity 검증) 영역. **Amendment 10 scope 외** — Amendment 10 = wrapper PR 안 `marketplace_sync_required` field **선언 값 결정** layer, cross-repo marketplace PR 의 실제 sync 실행 / state verify 는 §결정 2 + §결정 22 영역.
+- mirrored field 4종 closed-set invariant (§결정 1) **보존** — 5종 확장 시 별 ADR Amendment 의무 (Rule (b) `open_extension: false` 와 isomorphic, CFP-1403 Story §5.3 EC-8 정합).
+
+**FACT FIX note (ArchitectAnalyst Phase 1 deputy verdict, SSOT)**:
+
+ADR-063 amendments[] 1~9 **CONSECUTIVE (gap 0건)** — frontmatter row 30~79 direct Read verification. Story CFP-1403 §5.6 RequirementsPL synthesis "Amendment 4/7 missing 정합 보존" 가정 = **false**. Amendment 10 = **sequential next slot** (Amd 9 → Amd 10), no missing precedent. RequirementsPL synthesis 의 가정은 frontmatter direct Read 없이 발화된 stale claim — Phase 2 design lane strict-verify-gate (ADR-082 §결정 9 verify-before-cite) 정정. Story §3 mirror 시 본 FACT FIX 명시 의무.
 
 **Error handling** (exit code 2 = environment error): jq / yq missing — actionable install instruction (§결정 11 `check-marketplace-description-verbatim.sh` error handling 패턴 답습).
 
