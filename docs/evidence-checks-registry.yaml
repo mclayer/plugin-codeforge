@@ -2269,29 +2269,33 @@ entries:
       workflow_dispatch + Issue auto-create + per-signature dedup).
     detect_command: bash scripts/check-per-plugin-cumulative-counter.sh
     workflow: templates/github-workflows/per-plugin-cumulative-counter.yml
-    current_tier: warning
+    current_tier: blocking-on-pr  # CFP-1607 Amendment 15 ratchet (2026-05-25 KST) — warning → blocking-on-pr (ADR-060 framework first-use promotion). Wave 1 declarative tier transition; Wave 2 workflow continue-on-error 변경 = 별 sub-CFP.
     bypass_label: hotfix-bypass:per-plugin-cumulative-counter
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     promotion_criteria:
       pr_cumulative_min: 20
       failure_threshold: 0
-      sibling_dependencies: []
+      sibling_dependencies: [CFP-390, CFP-412, CFP-455]  # CFP-1607 Amendment 15 — ADR-060 Amendment 1+2 chain (CFP-412 Issue #396 closed without delivery → CFP-455 substitution per ADR-060 Amendment 1+2)
       evidence_artifacts:
         - github_actions_run_history_url
         - lint_failure_count_zero_proof
         - pr_cumulative_count_proof
         - per_plugin_threshold_calibration_evidence  # Phase 2 actual wire 후 별 calibration carrier (현 5 = 보수적 시작)
+        - audit_comment_author_verification_lint     # CFP-1607 (v) — Wave 2 sub-CFP carrier (scripts/check-audit-comment-author.{sh,py})
+        - sticky_comment_pattern_implementation       # CFP-1607 (vi) — Wave 2 sub-CFP carrier (bypass-audit.yml sticky comment wire)
     modal_anti_pattern_dictionary: {}
     introduced_by: CFP-845
     introduced_date: 2026-05-17
-    owner_adr: ADR-024            # Amendment 8 §결정 6.A.3 (per-plugin scope 누적 카운터 ratchet 룰 SSOT)
-    carrier_adr: ADR-060          # evidence-enforceable framework carrier
+    promoted_by: CFP-1607         # CFP-1607 Amendment 15 — ADR-060 framework first-use blocking-on-pr promotion carrier
+    promoted_date: 2026-05-25     # warning → blocking-on-pr tier ratchet 시점 (Phase 1 PR merge KST)
+    owner_adr: ADR-024            # Amendment 8 §결정 6.A.3 (per-plugin scope 누적 카운터 ratchet 룰 SSOT) + Amendment 15 (CFP-1607 tier promotion carrier)
+    carrier_adr: ADR-060          # evidence-enforceable framework carrier — 본 entry = framework first-use blocking-on-pr promotion 첫 사례
     recurrence:
-      count: 0                    # Phase 1 entry append, Phase 2 actual wire 후 evidence 누적 시점 별 update
-      threshold: 5                # ADR-024 Amendment 8 §결정 6.A.3 — per-plugin scope 보수적 시작 (per-entry threshold 3 의 entry 다양성 cover noise floor)
-      last_occurrence: null       # Phase 2 actual wire 후 first reach 시점 update
-      promotion_trigger: none     # Phase 2 actual wire 완료, 첫 evidence 누적 후 advisory 격상 예정
-    status: warning              # Phase 2 wire 완료 (CFP-845 Phase 2, 2026-05-17) — lint script + workflow + bats 모두 Active
+      count: 0                    # CFP-1607 Amendment 15 verify-at-write-time (2026-05-25 KST) — warning mode 8일간 발화 0건 (gate (b) PASS evidence)
+      threshold: 5                # ADR-024 Amendment 8 §결정 6.A.3 — per-plugin scope 보수적 시작 (per-entry threshold 3 의 entry 다양성 cover noise floor). 본 Amendment 15 retain (calibration evidence 부재 영역 보수적 보존, value 변경 = 별 CFP scope)
+      last_occurrence: 2026-05-25T18:00:00+09:00  # CFP-1607 Amendment 15 ratchet trigger time (사용자 directive 수령 KST)
+      promotion_trigger: warning_to_blocking_on_pr  # CFP-1607 Amendment 15 — ADR-060 framework first-use blocking-on-pr promotion (gate (a)200/(b)0/(c)CFP-390+455 PASS)
+    status: blocking-on-pr        # CFP-1607 Amendment 15 (2026-05-25 KST) — warning → blocking-on-pr ratchet. Wave 1 = registry yaml field-level transition; Wave 2 = workflow continue-on-error 변경 별 sub-CFP carrier.
 
   # ─── CFP-845 Phase 1 (ADR-024 Amendment 8 §결정 6.A.4 — `[bypass-justification]` PR comment marker presence lint, 2026-05-17) ───
   # narrative audit 영역 첫 evidence-checks-registry entry.
