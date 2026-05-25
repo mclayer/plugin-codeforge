@@ -69,3 +69,18 @@ fixtures:
     green_all: true
     platform_verified: ["windows"]
     generated_at: "2026-05-25"  # KST (ADR-079 §결정 6 forward-only)
+
+  - file: tests/scripts/check-3way-version-parity/check-3way-version-parity.bats
+    description: "check-3way-version-parity.sh — Sanity guard (1) size threshold 40000 → 1024 lowering + cleanup carrier scenario TC-20 + 1024B floor empty-blob defense preserve TC-21"
+    cfp: CFP-1541
+    impl_file: scripts/check-3way-version-parity.sh
+    tc_count: 21  # 기존 19 TC (TC-1..TC-19) + 신규 TC-20 (cleanup_carrier) + TC-21 (cleanup_carrier_below_floor)
+    discriminating_count: 2  # TC-20 (cleanup paradox 차단 AC-1/AC-2) + TC-21 (1024B floor empty-blob defense preserve, derived AC-3)
+    regression_guard_count: 19  # TC-1..TC-19 retain (특히 TC-8 size=100 trip path 1024B floor 정합 invariant)
+    red_green_stash_proof: verified  # ADR-082 §결정 11.A / CFP-1334 §8.4 schema
+    stash_method: "git stash push -- scripts/check-3way-version-parity.sh"
+    red_tcs: [20]  # TC-20 FAIL with 40000 threshold (size=21696 ≤ 40000 → exit 2 false-positive); TC-21 ok with both (512 ≤ both thresholds)
+    green_all: true  # 21/21 GREEN after stash pop (1024 threshold)
+    platform_verified: ["windows"]
+    pre_impl_sha: "c76ec42"
+    generated_at: "2026-05-25"  # KST (ADR-079 §결정 6 forward-only)

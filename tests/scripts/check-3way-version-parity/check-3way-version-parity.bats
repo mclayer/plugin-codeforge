@@ -3,6 +3,7 @@
 # CFP-820 Phase 2 — check-3way-version-parity.sh bats tests
 # Story §5.2 AC-9 + Change Plan §8.1 TC-1..TC-14 (14 discriminating TC)
 #   FIX iter 1: TC-15..TC-19 신설 (guards 4/5/6 + 5xx/network scenarios)
+#   CFP-1541: TC-20..TC-21 신설 (cleanup carrier scenario + 1024B floor defense preserve)
 # TDD: RED written before script exists — each assertion is discriminating (tautology 0)
 #
 # TC 분류 (Change Plan §8.1 + Story §5.2 AC-9):
@@ -25,6 +26,8 @@
 #   TC-17: §7.4.1(6) version collision (2 entries same version) → exit 2 + guard(6) FAIL
 #   TC-18: §7.4(c)   5xx error then success on retry → exit 0 (recover)
 #   TC-19: §7.4(c)   5xx persistent 3 retries exhausted → exit 2 (fail-closed)
+#   TC-20: CFP-1541  cleanup_carrier mode (size=21696, ≥1024) → exit 0 PASS (cleanup not flagged)
+#   TC-21: CFP-1541  cleanup_carrier_below_floor mode (size=512, <1024) → exit 2 (real truncation flagged)
 
 SCRIPT="$(dirname "$BATS_TEST_FILENAME")/../../../scripts/check-3way-version-parity.sh"
 
@@ -220,6 +223,29 @@ case "$GH_STUB_MODE" in
     exit 1
     ;;
 
+  cleanup_carrier)
+    # TC-20: CFP-1541 cleanup carrier scenario
+    # marketplace.json shrunk legitimately to ~21KB (CFP-FU-B cleanup).
+    # size=21696 which is > 1024 → guard (1) PASS (cleanup not flagged)
+    if [[ "$IS_RAW" -eq 0 ]]; then
+      echo '{"sha":"abc123","size":21696,"name":"marketplace.json"}'
+    else
+      printf '{"schema_version":"1.0","plugins":[{"name":"codeforge","version":"5.81.0","description":"Test plugin","author":"mclayer"}]}'
+    fi
+    exit 0
+    ;;
+
+  cleanup_carrier_below_floor)
+    # TC-21: size < 1024 → guard (1) trip → exit 2 (real truncation flagged)
+    if [[ "$IS_RAW" -eq 0 ]]; then
+      echo '{"sha":"abc123","size":512,"name":"marketplace.json"}'
+    else
+      # Should not be reached — guard (1) trips before raw fetch
+      echo ""
+    fi
+    exit 0
+    ;;
+
   *)
     # normal — matching 5.81.0
     if [[ "$IS_RAW" -eq 0 ]]; then
@@ -389,7 +415,7 @@ EOF
 
 # ──────────────────────── TC-8: marketplace empty-blob → exit 2 ──
 
-@test "TC-8: marketplace fetch empty-blob (size≤40000) → exit 2 + truncated/empty msg" {
+@test "TC-8: marketplace fetch empty-blob (size=100, ≤1024) → exit 2 + truncated/empty msg" {
   export GH_STUB_MODE=empty_blob
 
   run bash "$SCRIPT"
@@ -595,4 +621,32 @@ PJSON
   run bash "$SCRIPT"
   [ "$status" -eq 2 ]
   [[ "$output" =~ "retry" || "$output" =~ "영속 실패" || "$output" =~ "fail-closed" ]] || false
+}
+
+# ── TC-20: cleanup_carrier mode (CFP-1541) — size=21696 ≥ 1024 → PASS ──
+
+@test "TC-20: cleanup_carrier mode (marketplace.json ~21KB, ≥1024) → exit 0 PASS (cleanup not flagged)" {
+  export GH_STUB_MODE=cleanup_carrier
+  # CFP-FU-B post-cleanup marketplace.json size = 21696 bytes
+  # With threshold 40000 (old): 21696 ≤ 40000 → false-positive exit 2
+  # With threshold 1024 (new): 21696 > 1024 → PASS (cleanup not flagged)
+  # Discriminating: verifies the paradox fix — cleanup legitimately shrunk file MUST not trip guard (1)
+
+  run bash "$SCRIPT"
+  [ "$status" -eq 0 ]
+  [[ ! "$output" =~ "truncated" ]] || false
+  [[ ! "$output" =~ "≤ 1024" ]] || false
+}
+
+# ── TC-21: cleanup_carrier_below_floor mode (size=512 < 1024) → exit 2 ──
+
+@test "TC-21: cleanup_carrier_below_floor mode (size=512 < 1024 floor) → exit 2 (real truncation flagged)" {
+  export GH_STUB_MODE=cleanup_carrier_below_floor
+  # size=512 < 1024 floor → guard (1) trip → exit 2
+  # Discriminating: verifies empty-blob defense is preserved at 1024B floor
+  # (genuine garbage-binary / zero-byte fetch scenario)
+
+  run bash "$SCRIPT"
+  [ "$status" -eq 2 ]
+  [[ "$output" =~ "truncated" || "$output" =~ "≤ 1024" || "$output" =~ "size" ]] || false
 }

@@ -21,6 +21,22 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
   - Story SSOT: `<internal-docs>/plugin-codeforge/stories/cfp-1577.md` §3·§7·§11 append
   - Cross-ref carrier: codeforge-internal-docs PR #904 (CFP-1539+CFP-1540 batch retro §4.1 #1), CFP-342 / CFP-479 (playbook §9.7 source), ADR-026 Amendment 4 (CFP-795 post-merge fix exemption axis disjoint)
 
+
+### Changed
+
+- [CFP-1541] **`scripts/check-3way-version-parity.sh` Sanity guard (1) size threshold lowering — 40000B → 1024B (Axis D minimum floor lowering, CFP-FU-B cleanup paradox 차단)** (CFP-FU-B retro mandatory follow-up #3 carrier — `lint_paradox_cleanup_trips_stale_heuristic` pattern 1st occurrence 차단)
+  - **4 places threshold value + wording 갱신** (L16/L135/L138/L139 — uniform unconditional, ADR-068 I-3 + I-4 정합): `if [[ "$MARKETPLACE_SIZE" -le 40000 ]]` → `if [[ "$MARKETPLACE_SIZE" -le 1024 ]]` + comment / echo wording 동시 sync
+  - **empty-blob / truncated fetch 방어 intent preserve**: 1024B floor = `{}` empty JSON (2B) 의 ~512x + `{"plugins":[]}` (15B) 의 ~68x + single minimal plugin entry (~200B) 의 ~5x safety margin. 기존 Sanity guard 2-6 multi-layer defense (JSON parse / 4-field parity / sister entry mutation / git diff single-line / version pattern unique) 가 truncated semantic 영역 already cover — guard 1 unique value = "fetch 0-byte 또는 garbage binary fail-fast" only → 1024B sufficient
+  - **CFP-820 시점 stale assumption 영역 갱신**: CFP-820 (2026-05-17) marketplace.json 실 size = ~64KB (description 60KB + 4KB skeleton) 기반 40000B threshold = "절반 이하 = 비정상" heuristic reasonable. CFP-FU-B (2026-05-25) cleanup 후 실 size = 21,696B → 40000B 가 normal state trip → `exit 2` false-positive. cleanup carrier 자체가 lint 의 stale assumption 영역을 trip 하는 paradox 영역 1회성 차단
+  - **bypass overhead 감소** (positive direction): 본 fix 후 cleanup carrier PR 영역 `hotfix-bypass:version-3way-atomic` label 사용 빈도 0 목표 → bypass-as-norm-mutation (ADR-024 Amendment 8 §결정 6.A.3) escalation 위험 영역 회피
+  - **bats fixture TC-20 / TC-21 추가** (Phase 2 carrier): TC-20 (cleanup_carrier scenario size 21696B → exit 0 + 3-way match) + TC-21 (cleanup_carrier_below_floor size 100B → exit 2 empty-blob defense preserve) — 기존 19 TC regression 0 (특히 TC-8 size=100 trip path 1024B floor 정합 invariant)
+  - **RED→GREEN stash proof** (CFP-1334 §8.4 mandate): `git stash push -- scripts/check-3way-version-parity.sh` → bats TC-20 RED (40000 threshold 영역 → cleanup_carrier mode size 21696 ≤ 40000 → exit 2 trip) → `git stash pop` → bats 21/21 GREEN. `tests/scripts/MANIFEST.yaml` `check-3way-version-parity` entry `red_green_proof:` block (Phase 2 DeveloperPL self-write)
+  - **ADR Amendment 신설 0건**: ADR-063 §결정 15 (3-way version atomic invariant policy) 변경 0 (Issue body Out of scope verbatim) / ADR-070 verify-before-trust 표준 변경 0 (empty-blob detection intent preserve) — 본 fix = lint script heuristic layer (policy layer 영역 외)
+  - **plugin.json bump 0건**: marketplace_sync_required: false (mirrored field 변경 0)
+  - **sister carrier 부재 verified** (Story §2.1 row 5): `Grep "size.*40000|truncated|content-checksum"` = `scripts/check-3way-version-parity.sh` 단독 hit, 다른 size-threshold lint 0건. `lint_paradox_cleanup_trips_stale_heuristic` pattern_count: 1 (threshold < 2, informational only)
+  - Change Plan SSOT: `<internal-docs>/plugin-codeforge/change-plans/cfp-1541-check-3way-version-parity-threshold.md`
+
+### Fixed
 ## [6.8.1] - 2026-05-25
 
 ### Added

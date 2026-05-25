@@ -13,7 +13,7 @@
 #   check-3way-version-parity.sh does NOT check channel tier — delegates to check-channel-drift.sh
 #
 # 3-way byte-identical version field compare + sanity guard 6-tuple (Story §5.2 AC-13):
-#   (1) size > 40000         (empty-blob / truncated fetch 방어)                     → exit 2
+#   (1) size > 1024          (empty-blob / truncated fetch 방어, CFP-1541 cleanup paradox 차단)       → exit 2
 #   (2) JSON parse           (malformed JSON 방어)                                   → exit 2
 #   (3) 4-field parity       (name/version/description/author 필수 — ADR-016)        → exit 2
 #   (4) 6 non-codeforge byte-identical (sister plugin entries untouched verify)       → exit 2
@@ -132,11 +132,11 @@ if [[ $MARKETPLACE_META_EXIT -ne 0 ]]; then
   fi
 fi
 
-# Sanity guard (1): size > 40000 (Story §5.2 AC-13 / Change Plan §7.4.1)
+# Sanity guard (1): size > 1024 (CFP-1541 cleanup paradox 차단 — empty-blob defense intent preserve, baseline `{}` 의 ~512x safety margin)
 MARKETPLACE_SIZE=$(echo "$MARKETPLACE_META_RAW" | jq -r '.size // 0' 2>/dev/null || echo "0")
 
-if [[ "$MARKETPLACE_SIZE" -le 40000 ]]; then
-  echo "❌ check-3way-version-parity: marketplace.json fetch truncated/empty (size=$MARKETPLACE_SIZE ≤ 40000 bytes)"
+if [[ "$MARKETPLACE_SIZE" -le 1024 ]]; then
+  echo "❌ check-3way-version-parity: marketplace.json fetch truncated/empty (size=$MARKETPLACE_SIZE ≤ 1024 bytes)"
   echo "  Recovery: ADR-070 empty-blob detection 표준 — 재시도 또는 marketplace repo 상태 확인"
   exit 2
 fi
