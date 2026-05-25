@@ -1694,73 +1694,100 @@ legacy_domain_knowledge_category_inference_placeholder:
 # ADR-078 Amendment 2 (CFP-1425 merged 2026-05-24) 5-anchor closed-enum 정합.
 
 living_architecture_pages:
+  # CFP-1524 Sub-C Phase 2 (CFP-1586) Confluence push 결과 — 2026-05-25 KST
+  # 6 plugin push 완료 (version 2 갱신) / 3 plugin defer:
+  #   - wrapper (codeforge): cross_cutting child Living Arch page 부재, ancestor 결정 별 carrier defer
+  #   - codeforge-deploy / codeforge-deploy-review: GitHub repo 404 부재 (CFP-1059 declarative phase only, 실 plugin repo 신설 = 별 carrier S2/S3)
   - plugin_name: "codeforge"  # wrapper
-    page_id: null
-    ancestor_id: null  # cross-cutting / wrapper-governance
+    page_id: null  # defer — cross_cutting child Living Arch ancestor 결정 별 sub-CFP carrier
+    ancestor_id: null
     git_source_path: "docs/architecture/codeforge-family.md"
     last_synced: null
     five_anchor_codified: true
     mermaid_diagram_count: null
+    phase_2_status: "defer"
+    phase_2_defer_reason: "cross_cutting child Living Arch ancestor 결정 별 carrier (cross_cutting parent 2098283 안 child 부재 — wrapper-governance 2163807 등 4 child 만 존재)"
   - plugin_name: "codeforge-requirements"
-    page_id: null
-    ancestor_id: null
+    page_id: "2163504"
+    ancestor_id: "2129922"  # codeforge-requirements top-level parent (CFP-1494 산출)
     git_source_path: "docs/architecture/codeforge-requirements.md"
-    last_synced: null
+    last_synced: "2026-05-25T20:29+09:00"
     five_anchor_codified: true
-    mermaid_diagram_count: null
+    mermaid_diagram_count: 0  # text-only push, Mermaid diagram 별 carrier 영역
+    phase_2_status: "pushed"
+    confluence_version_after_push: 2
   - plugin_name: "codeforge-design"
-    page_id: null
-    ancestor_id: null
+    page_id: "2065717"
+    ancestor_id: "2064386"  # codeforge-design top-level parent
     git_source_path: "docs/architecture/codeforge-design.md"
-    last_synced: null
+    last_synced: "2026-05-25T20:29+09:00"
     five_anchor_codified: true
-    mermaid_diagram_count: null
+    mermaid_diagram_count: 0
+    phase_2_status: "pushed"
+    confluence_version_after_push: 2
   - plugin_name: "codeforge-develop"
-    page_id: null
-    ancestor_id: null
+    page_id: "2065739"
+    ancestor_id: "2097197"  # codeforge-develop top-level parent
     git_source_path: "docs/architecture/codeforge-develop.md"
-    last_synced: null
+    last_synced: "2026-05-25T20:30+09:00"
     five_anchor_codified: true
-    mermaid_diagram_count: null
+    mermaid_diagram_count: 0
+    phase_2_status: "pushed"
+    confluence_version_after_push: 2
   - plugin_name: "codeforge-review"
-    page_id: null
-    ancestor_id: null
+    page_id: "2130855"
+    ancestor_id: "2097218"  # codeforge-review top-level parent
     git_source_path: "docs/architecture/codeforge-review.md"
-    last_synced: null
+    last_synced: "2026-05-25T20:30+09:00"
     five_anchor_codified: true
-    mermaid_diagram_count: null
+    mermaid_diagram_count: 0
+    phase_2_status: "pushed"
+    confluence_version_after_push: 2
   - plugin_name: "codeforge-test"
-    page_id: null
-    ancestor_id: null
+    page_id: "2163699"
+    ancestor_id: "2097239"  # codeforge-test top-level parent
     git_source_path: "docs/architecture/codeforge-test.md"
-    last_synced: null
+    last_synced: "2026-05-25T20:32+09:00"
     five_anchor_codified: true
-    mermaid_diagram_count: null
+    mermaid_diagram_count: 0
+    phase_2_status: "pushed"
+    confluence_version_after_push: 2
   - plugin_name: "codeforge-pmo"
-    page_id: null
-    ancestor_id: null
+    page_id: "2065827"
+    ancestor_id: "2162690"  # codeforge-pmo top-level parent
     git_source_path: "docs/architecture/codeforge-pmo.md"
-    last_synced: null
+    last_synced: "2026-05-25T20:32+09:00"
     five_anchor_codified: true
-    mermaid_diagram_count: null
-  - plugin_name: "codeforge-deploy"  # CFP-1059 신설 plugin
-    page_id: null
-    ancestor_id: null
+    mermaid_diagram_count: 0
+    phase_2_status: "pushed"
+    confluence_version_after_push: 2
+  - plugin_name: "codeforge-deploy"  # CFP-1059 신설 plugin — declarative phase
+    page_id: "2098391"
+    ancestor_id: "2130791"  # codeforge-deploy top-level parent (declarative_phase: true)
     git_source_path: "docs/architecture/codeforge-deploy.md"
     last_synced: null
-    five_anchor_codified: true
+    five_anchor_codified: true  # CFP-1427 AC-1 declarative
     mermaid_diagram_count: null
-  - plugin_name: "codeforge-deploy-review"  # CFP-1059 신설 plugin
-    page_id: null
-    ancestor_id: null
+    phase_2_status: "defer"
+    phase_2_defer_reason: "GitHub repo mclayer/plugin-codeforge-deploy 404 부재 — CFP-1059 declarative phase only, 실 plugin repo 신설 = 별 sub-Story S2 carrier"
+  - plugin_name: "codeforge-deploy-review"  # CFP-1059 신설 plugin — declarative phase
+    page_id: "2130919"
+    ancestor_id: "2163482"  # codeforge-deploy-review top-level parent (declarative_phase: true)
     git_source_path: "docs/architecture/codeforge-deploy-review.md"
     last_synced: null
-    five_anchor_codified: true
+    five_anchor_codified: true  # CFP-1427 AC-2 declarative
     mermaid_diagram_count: null
+    phase_2_status: "defer"
+    phase_2_defer_reason: "GitHub repo mclayer/plugin-codeforge-deploy-review 404 부재 — CFP-1059 declarative phase only, 실 plugin repo 신설 = 별 sub-Story S3 carrier"
 
-living_architecture_pages_total: 9
+living_architecture_pages_total: 9  # 6 pushed + 3 defer (wrapper + 2 declarative-phase plugin)
 living_architecture_carrier: "CFP-1524 Sub-C (CFP-1586)"
-living_architecture_phase: "Phase 1 doc-only fast-path — schema 신설 + 9 entry skeleton (page_id null, Phase 2 Confluence MCP verify 결과 채움)"
+living_architecture_phase: "Phase 2 partial complete (2026-05-25 KST) — 6 plugin pushed (requirements/design/develop/review/test/pmo, all version 2), 3 plugin defer (wrapper ancestor 미정 + 2 CFP-1059 declarative plugin repo 부재)"
 living_architecture_git_baseline: "CFP-1427 (Sub-C S3.3 closed) — git source 5-anchor body seed"
 living_architecture_5anchor_ssot: "ADR-078 Amendment 2 (CFP-1425 closed 2026-05-24) — arc42 §3 (Context) + §5 (Building Block) + C4 Container + C4 Component + Open Decisions Pending"
 living_architecture_mechanical_wire_followup: "CFP-1429 (Sub-C S3.5) — living-architecture-update lint, 본 carrier scope 외"
+living_architecture_phase_2_followup_carriers:
+  - "wrapper (codeforge-family.md) Confluence push — cross_cutting child Living Arch ancestor 결정 별 sub-CFP"
+  - "codeforge-deploy plugin repo 신설 + Living Arch Confluence push — CFP-1059 sub-Story S2 carrier"
+  - "codeforge-deploy-review plugin repo 신설 + Living Arch Confluence push — CFP-1059 sub-Story S3 carrier"
+  - "Mermaid/PlantUML diagram-as-code push (현재 text-only push) — ADR-111 §결정 4 정합 carrier 별 follow-up"
