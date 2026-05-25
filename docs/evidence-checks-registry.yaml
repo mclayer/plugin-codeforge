@@ -5298,3 +5298,54 @@ entries:
       promotion_trigger: auto_blocking  # count=3 ≥ threshold=3 → 즉시 발화 (Wave 2 mechanical wire 후 Active 전환 + promotion path blocking-on-pr 평가)
     status: deferred-followup       # Phase 1 declare (본 CFP-1590) / Phase 2 actual wire = 별 sub-CFP carrier (script + workflow + bats fixture, ADR-082 §결정 6 retain pattern 답습 + CFP-1437/1436/1435 → CFP-1489/1500/1497/1502 Wave 1→Wave 2 split precedent 답습)
 
+  # ─── CFP-1589 Phase 1 (ADR-082 Amendment 24 Wave 1 declarative anchor — synthesis-vs-commit-gap-check, 2026-05-25 KST) ───
+  # ADR-082 Amendment 24 §결정 1 layer 1 sub-scope (1-M) — own-author synthesis 보고 vs actual git commit gap verify mandate (F-DR-003 carrier)
+  # CFP-1523 retro carry-over — F-DR-002 P0 finding ArchitectPL verdict packet 'Artifacts written: ...' 보고 ≠ actual git commit, DesignReviewPL audit verify-before-trust direct git status verify 후 detect, FIX iter 1 dispatch
+  - name: synthesis-vs-commit-gap-check
+    description: |
+      ADR-082 Amendment 24 §결정 1 layer 1 sub-scope (1-M) 신설 (CFP-1589 carrier) — own-author
+      synthesis 보고 vs actual git commit gap verify mandate (F-DR-003 carrier, CFP-1523 retro
+      carry-over). ArchitectPL / Dev / lane PL 가 verdict / 산출 / 완료 보고 작성 시점 4 의무:
+      (a) synthesis 보고 시점 actual git commit verify 의무 — `git -C <worktree> log --oneline
+          origin/main..HEAD` direct execute + actual commit list 확인 (worktree modified/untracked
+          영역 commit 0건 미포함, claim 'Artifacts written: <file>' = actual commit hash 매핑 의무)
+      (b) review-verdict-v4 packet 안 optional `artifact_commits[]` field 영역 — commit hash array
+          (40-char hex), future MINOR bump v4.9 → v4.10 carrier 별 sub-CFP. packet 안
+          `artifacts_written[]` claim ↔ `artifact_commits[]` hash array 1:1 매핑 verify
+      (c) verify-before-trust 4-layer 정합 — Story §14 Lane Evidence row append 시 actual commit
+          verify (ADR-073 verify-before-assert + ADR-082 §결정 1 sub-scope 1-M dual binding)
+      (d) verified-via annotation field 의무 — synthesis packet / verdict packet / 완료 보고 안
+          `synthesis_vs_commit_gap_verified: <bool>` field 명시 (write-time semantic truth verify)
+      axis 분리 vs Amd 23 1-L (upstream-inherited input verify, synthesis input 측 4 sub-source) ↔
+      본 1-M (own-author synthesis 결과 vs actual artifact gap, synthesis output ↔ git commit
+      downstream own-author self-verify) = input-output paired complement axis. axis 분리 vs Amd 22
+      1-K (own author write-time numeric claim source/value strict 6-dimension) ↔ 본 1-M (own-author
+      synthesis output ↔ actual artifact gap, numeric 영역 외 artifact identity claim 영역). axis
+      분리 vs Amd 18 1-H (Orchestrator monopoly §10 FIX Ledger resolution field source/evidence,
+      fix-event-v1 contract level) ↔ 본 1-M (lane agent self-write own-author axis, lane plugin
+      영역). pattern_count 1 reach (CFP-1523 F-DR-002 P0 finding single occurrence) deferred-followup
+      carrier — Wave 1 declaration-only mandate (pattern_count 누적 시 Wave 2 mechanical wire 별
+      carrier 발의, ADR-082 §결정 6 retain pattern 답습).
+    detect_command: bash scripts/check-synthesis-vs-commit-gap.sh  # Wave 2 carrier 별 sub-CFP (현재 declaration-only Wave 1, script 부재 — TBD via Wave 2 mechanical wire)
+    workflow: .github/workflows/synthesis-vs-commit-gap-check.yml  # Wave 2 carrier 별 sub-CFP (현재 declaration-only Wave 1, workflow 부재 — TBD via Wave 2 mechanical wire)
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode (declaration → first wire)
+    bypass_label: hotfix-bypass:synthesis-vs-commit-gap-check
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) velocity-normalized — STANDARD threshold (ADR-068 I-5 dimensional empirical grounding 정합)
+      failure_threshold: 0          # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-TBD                   # Wave 2 mechanical wire carrier (별 sub-CFP) — lint script + workflow + bats fixture + label-registry-v2 MINOR + review-verdict-v4 v4.9→v4.10 MINOR `artifact_commits[]` field 동반
+    modal_anti_pattern_dictionary: {}  # presence-grep heuristic (artifacts_written ↔ git log cross-verify), modal 어휘 무관
+    introduced_by: CFP-1589
+    introduced_date: 2026-05-25
+    owner_adr: ADR-082-Amendment-24  # declaration source ADR — Amendment 24 §결정 1 layer 1 sub-scope (1-M) 신설 own-author synthesis 보고 vs actual git commit gap verify mandate
+    carrier_adr: ADR-060            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (CFP-1590 spawn-prompt-fact-verify + CFP-1601 numeric-claim-write-time-verify + CFP-1559 issue-body-claim-pre-screen precedent 답습)
+    recurrence:
+      count: 1                      # 1 occurrence pattern (CFP-1523 F-DR-002 P0 finding ArchitectPL verdict packet 'Artifacts written' ≠ actual git commit, DesignReviewPL audit detect FIX iter 1 dispatch)
+      threshold: 3                  # ADR-060 §결정 19 / schema v1.2 standard default + ADR-045 §D-9 N=2 보다 strict (per-pattern systemic class 결정 sentinel)
+      last_occurrence: "2026-05-25T00:00:00+09:00"  # CFP-1523 retro emission carry-over via PMOAgent, F-DR-002 detection 2026-05-25 KST, ADR-079 KST normative
+      promotion_trigger: declarative_only  # count=1 < threshold=3 → 즉시 발화 안함 (Wave 1 declaration anchor only, pattern_count 누적 시 promotion 평가)
+    status: deferred-followup       # Phase 1 declare (본 CFP-1589) / Phase 2 actual wire = 별 sub-CFP carrier (script + workflow + bats fixture + review-verdict-v4 v4.10 MINOR, ADR-082 §결정 6 retain pattern 답습 + CFP-1437/1436/1435 → CFP-1489/1500/1497/1502 Wave 1→Wave 2 split precedent 답습)
+
+
