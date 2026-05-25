@@ -107,6 +107,13 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 14 + §결정 1-P primitive AND composition layer"
     sunset_justification: null
+  - amendment_id: 15
+    cfp: CFP-1571
+    date: 2026-05-25
+    scope: "§결정 1 expansion — transition trigger enum 14번째 entry `architect_agent_chief_author_lane_spawn` 도입 (closed-set ratchet 강화, Amendment 2/3/5/6/7/8/10/11/12/13 §결정 1-A precedent 답습). codeforge-design lane 안 ArchitectAgent (chief author) spawn 시점 base SHA freeze pattern 영역 mechanical wire codify. ArchitectPL → ArchitectAgent chief author handoff specific cadence — Amd 11 `spawn_prompt_emit` (generic spawn) 의 chief-author-specific specialization (axis disjoint complement — Amd 11 = generic any-actor spawn / 본 Amd 15 = ArchitectPL → chief author specific handoff cadence). `parallel-session-merge-stream-main-advance-during-lane-flow` pattern_count 5 reach (CFP-1334 §3.1 4건 + CFP-1403 §3.1 1건 stale-base regression cascade) 산물 + PMO 권장 Option A 채택 (사용자 직권 derived default per Mandatory escalation #1571). Verify mandate 4-step: (a) `git -C <worktree_abs_path> fetch origin` cross-repo state freshness (b) `git -C <worktree_abs_path> diff origin/main..HEAD --stat` base drift detection (c) drift 감지 시 `git -C <worktree_abs_path> rebase origin/main` mechanical resolution (no semantic conflict 시 만) (d) rebase 후 expected diff narrowed verify. Root cause: CFP-1403 §3.1 stale-base regression cascade — ArchitectAgent commit on stale base (origin/main `ca1c20e`), 그 사이 `99fb31f` (CFP-FU-B plugin.json version bump + CHANGELOG entry + cross-repo-patch) merged → HEAD diff = REVERSE direction (downgrade). META self-application 첫 적용 사례 (recursive dogfooding self-evidence triggered AND RESOLVED in carrier PR itself): Phase 0 verify-before-cite snapshot 시 worktree HEAD = origin/main `4a1f0be` (drift 0건), Amendment 15 author 진행 중 CFP-1523 (#1560 merged) main advance → 5 commits drift detected (origin/main `49d6f6c`, `docs/confluence-ia-tree.yaml` + `docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md` 2 files touched, ADR-073.md 변경 영역과 disjoint). §결정 1-Q step 3 mechanical rebase (no semantic conflict) PASS + step 4 expected diff narrowed verify PASS (1 file +101 lines only). META anti-self-application invariant 통과 — 본 carrier 자체가 §결정 1-Q primitive 의무 영역 self-execute 입증 (Story CFP-1571 §3.3 + Change Plan §3.3 verbatim record). Mitigation effect: pre-spawn base SHA freeze pattern → mid-flight parallel session merge stream 영향 차단 + mechanical rebase only (semantic 변경 0건, ArchitectAgent re-spawn 불필요) FIX iter 1 immediate PASS pattern. 본 Amendment 는 §결정 1-11 본문 + Amendment 1-14 scope 강화 only (ADR-058 §결정 5 ratchet 정합) — 약화 / scope 축소 / 면제 영역 0건. closed_enum: open_extension:false — 15번째 trigger 추가 시 Amendment 강화 방향만. evidence-checks-registry warning-tier entry `architect-chief-author-base-sha-freeze-verify` 신설 = mechanical wire Wave 2 별 sub-CFP carrier (declaration-only-Wave-1 retain — pre-spawn hook + lint script + workflow + bats fixture + label-registry MINOR Wave 2 carrier, precedent ADR-082 §결정 6 + ADR-070 §D5 + ADR-077 + ADR-078 + ADR-097 + Amd 11/12/13/14 precedent 답습). doc-only fast-path (ADR-054) Wave 1 declaration-only — mechanical wire = 별 sub-CFP carrier 분리."
+    status: applied
+    ref: "## Amendments / Amendment 15 + §결정 1-A transition trigger 표 14번째 row"
+    sunset_justification: null
 related_stories:
   - CFP-622  # carrier
   - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
@@ -131,6 +138,9 @@ related_stories:
   - CFP-1436 # Amendment 12 — transition trigger enum 11번째 entry `mid_spawn_origin_drift_detected` (chief author / deputy / sub-tuple spawn-internal periodic origin/main fetch drift detection + return early protocol, paired ADR-082 Amendment 16 sub-scope 1-F spawn-internal periodic origin re-pin). Sub-CFP B Wave 1 declarative-only — reactive complement to Sub-CFP A CFP-1437 (preventive pre-spawn pin) / Sub-CFP B 가 mid-spawn drift detection 영역 codify. CFP-1336 9+ collisions evidence reactive carrier — 2-layer defense (preventive + reactive) forcing function 완결. mechanical lint wire = Wave 2 별 sub-CFP
   - CFP-FU-A # Amendment 13 + 14 paired carriers — transition trigger enum 12+13번째 entry `pre_git_operation` + `pre_push` (Amd 13 sub-decision 1 polling cadence 1→3) + §결정 1-P primitive AND aggregate composition layer (Amd 14 sub-decision 2 OR→AND triple-source). paired sibling ADR-082 Amendment 19 sub-scope (1-I) pre-spawn-prompt-finalize verify layer (sub-decision 3 race window 단축, renumbered from Amd 18 sub-scope 1-H post CFP-1342 mid-flight collision recovery + 12th meta-occurrence). 3 ADR Amendment 동시 발의 axis disjoint complement 3-set ADR-064 §결정 1 CFP scope unitary 정합. parallel session race 11th occurrence (CFP-1420 Sub-A S1.2 STAND_DOWN_DUPLICATE per PR #1441 prior merge) escalate_user pattern_count 11 ≫ ADR-045 §D-9 threshold 2 = Mandatory escalation 산물. doc-only fast-path (ADR-054) Wave 1 declaration-only — mechanical wire (lint script + workflow + bats fixture + label-registry MINOR + evidence-checks-registry entry) = 별 sub-CFP carrier 분리 (CFP-1437/1436/1435 Wave 1→Wave 2 split precedent 답습)
   - CFP-1420 # Amendment 13+14 sentinel — parallel session race 11th occurrence (Mega-Epic CFP-1415 Sub-A S1.2, branch `cfp-1420-doc-locations-schema-1-2-confluence-variant` PR #1441 prior merge 2026-05-24T03:07:53Z → 본 session PR #1442 STAND_DOWN_DUPLICATE per DesignReviewPL verdict ESCALATE_PACKET_INCOMPLETE parallel_session_conflict_post_merge_duplicate)
+  - CFP-1571 # Amendment 15 — transition trigger enum 14번째 entry `architect_agent_chief_author_lane_spawn` (ArchitectPL → ArchitectAgent chief author specific cadence base SHA freeze mandate, Amd 11 generic spawn 의 chief-author-specific specialization). Mandatory escalation #1571 (PMO 권장 Option A 채택) — `parallel-session-merge-stream-main-advance-during-lane-flow` pattern_count 5 reach (CFP-1334 §3.1 4건 + CFP-1403 §3.1 1건 stale-base regression cascade). escalate_user (PMO trivial 판정) per ADR-045 §D-9 Mandatory framing. Sibling CFP-1334 retro §5.2 escalate_user Optional 연속 lineage. doc-only fast-path (ADR-054) Wave 1 declaration-only — mechanical wire = 별 sub-CFP carrier.
+  - CFP-1334 # Amendment 15 sentinel sibling — retro §5.2 4건 stale-base regression cascade lineage (escalate_user Optional, 본 CFP-1571 Mandatory escalation source 1/2)
+  - CFP-1403 # Amendment 15 sentinel sibling — retro §3.1 1건 stale-base regression cascade lineage (escalate_user, 본 CFP-1571 Mandatory escalation source 2/2 + PMO 권장 Option A 채택 carrier)
   - CFP-597  # sentinel #4 strike #1 origin (CLAUDE.md cap + playbook §3.6 false alarm)
   - CFP-578  # ADR-070 verify-before-trust 자매 (external worker output)
   - CFP-612  # ADR-071 dialog convergence 자매 governance
@@ -165,6 +175,7 @@ mechanical_enforcement_actions:
   - pre-git-operation-sentinel-pickup  # CFP-FU-A Amendment 13 (1/2) — Wave 1 declarative anchor (warning tier, deferred-followup status, recurrence count 0 — sentinel-driven (CFP-1420 Sub-A S1.2 parallel session race 11th occurrence, escalate_user pattern_count 11 reach Mandatory ADR-045 §D-9), threshold 3 / promotion_trigger none, actual lint script + workflow yml hydrate + bats fixture pair + label-registry MINOR bump + evidence-checks-registry entry = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — parallel-work-sentinel-pickup + worktree-self-ownership-verify + subagent-sibling-story-polling-evidence + mcp-token-freshness-precheck + stale-local-main-checkout-divergence-check + cross-repo-label-sync + spawn-prompt-head-pin-presence + mid-spawn-drift-detection precedent 답습. Amendment 13 §결정 1-A 12번째 entry `pre_git_operation` carrier — git state mutation 직전 (예: `git add` / `git commit` / `git merge` / `git rebase` direct state mutation 직전) sentinel pickup 의무. paired sibling Amendment 14 (1-P AND composition layer) + ADR-082 Amendment 19 sub-scope (1-I) pre-spawn-prompt-finalize verify layer (renumbered from Amd 18 sub-scope 1-H post CFP-1342 collision recovery))
   - pre-push-sentinel-pickup  # CFP-FU-A Amendment 13 (2/2) — Wave 1 declarative anchor (warning tier, deferred-followup status, recurrence count 0 — sentinel-driven (CFP-1420 Sub-A S1.2), threshold 3 / promotion_trigger none, actual lint script + workflow yml hydrate + bats fixture pair + label-registry MINOR bump + evidence-checks-registry entry = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — pre-git-operation-sentinel-pickup precedent 답습. Amendment 13 §결정 1-A 13번째 entry `pre_push` carrier — `git push` direct cross-repo state propagation 직전 sentinel pickup 의무 (network publish 영역 — Amd 13 1/2 pre_git_operation 의 local-only mutation 영역과 axis disjoint complement). paired sibling Amendment 13 (1/2) + Amendment 14 + ADR-082 Amendment 19 sub-scope (1-I) (renumbered from Amd 18 sub-scope 1-H post CFP-1342 collision recovery))
   - parallel-work-sentinel-and-aggregate  # CFP-FU-A Amendment 14 — Wave 1 declarative anchor (warning tier, deferred-followup status, recurrence count 0 — sentinel-driven OR semantics structural weakness (CFP-1420 Sub-A S1.2 evidence root cause = `scripts/lib/check_parallel_work_sentinel.py:437` single-mode dispatcher, caller discretion only), threshold 3 / promotion_trigger none, actual `scripts/lib/check_parallel_work_sentinel.py` 신규 `--mode all-and` choice 추가 + 3 sub-mode invoke + 결과 AND aggregate logic + workflow yml hydrate + bats fixture pair + label-registry MINOR bump + evidence-checks-registry entry = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — pre-git-operation-sentinel-pickup + pre-push-sentinel-pickup precedent 답습. Amendment 14 §결정 1-P primitive AND aggregate composition layer carrier (3-mode 모두 invoke + 결과 AND aggregate verify, single-mode invocation 차단). paired sibling Amendment 13 (1/2 + 2/2) + ADR-082 Amendment 19 sub-scope (1-I) (renumbered from Amd 18 sub-scope 1-H post CFP-1342 collision recovery))
+  - architect-chief-author-base-sha-freeze-verify  # CFP-1571 Amendment 15 — Wave 1 declarative anchor (warning tier, deferred-followup status, recurrence count 5 / threshold 3 / promotion_trigger auto_blocking active — Mandatory escalation source `parallel-session-merge-stream-main-advance-during-lane-flow` pattern_count 5 reach: CFP-1334 §3.1 4건 + CFP-1403 §3.1 1건 stale-base regression cascade), actual pre-spawn hook + lint script (`scripts/lib/check_architect_chief_author_base_sha_freeze.py` Python SSOT per ADR-061) + workflow yml hydrate + bats fixture pair (RED→GREEN stash proof per CFP-1334 §8.4) + label-registry MINOR bump (`hotfix-bypass:architect-chief-author-base-sha-freeze-verify` 차후 family member append) + evidence-checks-registry entry = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — parallel-work-sentinel-pickup + worktree-self-ownership-verify + subagent-sibling-story-polling-evidence + mcp-token-freshness-precheck + stale-local-main-checkout-divergence-check + cross-repo-label-sync + spawn-prompt-head-pin-presence + mid-spawn-drift-detection + pre-git-operation-sentinel-pickup + pre-push-sentinel-pickup + parallel-work-sentinel-and-aggregate precedent 답습. Amendment 15 §결정 1-A 14번째 entry `architect_agent_chief_author_lane_spawn` + §결정 1-Q primitive (ArchitectPL → ArchitectAgent chief author handoff specific cadence 4-step verify-before-assert mandate — git fetch + git diff origin/main..HEAD --stat base drift detection + mechanical rebase if no semantic conflict + rebase 후 expected diff narrowed verify) carrier. axis disjoint complement with Amendment 11 (`spawn_prompt_emit` generic any-actor spawn) — 본 Amd 15 = ArchitectPL → chief author specific cadence (deputy 영역 외 ArchitectPL 단일 subordinate spawn 영역, chief author handoff specific specialization)
 # Wave 1 = behavioral directive only (Orchestrator self-discipline forcing function) — Amendment 2 (CFP-966)
 # 가 첫 mechanical_enforcement_actions[] row entry append (declarative anchor only — script + workflow
 # 실 binding 은 sibling Story-2 CFP-967 carrier).
@@ -1363,3 +1374,93 @@ lane-entry sentinel polling 시 다음 3 의무:
 - `scripts/lib/check_parallel_work_sentinel.py` — line 437 argparse `--mode` choices 영역 (Wave 2 mechanical wire 대상, `--mode all-and` choice 신규 추가)
 - `<internal-docs>/plugin-codeforge/change-plans/cfp-fu-a-parallel-race-3-decisions.md` — Change Plan SSOT
 - `<internal-docs>/plugin-codeforge/stories/CFP-FU-A.md` — Story file
+
+### Amendment 15 — `architect_agent_chief_author_lane_spawn` transition trigger 14번째 entry (ArchitectPL → ArchitectAgent chief author specific cadence base SHA freeze mandate, CFP-1571)
+
+**날짜**: 2026-05-25 KST
+
+**carrier**: CFP-1571 (Mandatory escalation #1571 — `parallel-session-merge-stream-main-advance-during-lane-flow` pattern_count 5 reach 산물, PMO 권장 Option A 채택 사용자 직권 derived default)
+
+**paired sibling**: 없음 (single-axis carrier — chief author handoff specific cadence specialization, Amd 11 `spawn_prompt_emit` generic spawn 의 chief-author-specific specialization axis disjoint complement)
+
+#### 동기
+
+CFP-1334 retro §5.2 + CFP-1403 retro §3.1 sentinel evidence — `parallel-session-merge-stream-main-advance-during-lane-flow` pattern_count 5 reach:
+- **CFP-1334 §3.1 4건 lineage** — ArchitectAgent spawn 후 mid-flight parallel session merge stream main advance 영역 안 chief author commit base stale 화 (sibling Story / Amendment merge 가 lane flow 진행 중 main 으로 advance). 4건 lineage = single Story 안 multi-occurrence (escalate_user Optional carrier 첫 reproduction).
+- **CFP-1403 §3.1 1건 추가** — base regression cascade (ArchitectAgent commit on stale base `ca1c20e`, 그 사이 `99fb31f` CFP-FU-B plugin.json version bump + CHANGELOG entry + cross-repo-patch merged → HEAD diff REVERSE direction downgrade). escalate_user mandate (PMO trivial 판정).
+
+본 pattern = Amd 11 (`spawn_prompt_emit` generic spawn) 의 chief-author-specific subset — **ArchitectPL → ArchitectAgent chief author handoff specific cadence**. Amd 11 = generic any-actor spawn (Orchestrator / PL / chief 모두 적용) / 본 Amd 15 = ArchitectPL → ArchitectAgent chief author specific handoff (deputy spawn 영역 외 단일 subordinate 영역). axis disjoint complement — Amd 11 generic cadence 가 chief-author-specific binding 영역 충분히 cover 못 함 (chief author spawn = lane flow 안 most token-intensive + most parallel-race-prone operation, specific cadence specialization 의무).
+
+#### Sentinel evidence (pattern_count 5 reach Mandatory ADR-045 §D-9)
+
+| # | Story | 발생 | Resolution |
+|---|---|---|---|
+| 1-4 | CFP-1334 §3.1 | 4건 stale-base regression cascade — single Story 안 multi-occurrence | escalate_user Optional (first lineage reproduction) |
+| 5 | CFP-1403 §3.1 | 1건 추가 — base regression cascade (ArchitectAgent commit on stale base, HEAD diff REVERSE direction downgrade) | escalate_user mandate per PMO (본 CFP-1571 Mandatory escalation source) |
+
+5 occurrences ≫ threshold 2 = ADR-045 §D-9 Mandatory escalation + Option A 채택 (사용자 직권 derived default per PMO 권장).
+
+#### §결정 1 expansion — `architect_agent_chief_author_lane_spawn` transition trigger 14번째 entry
+
+Amendment 2/3/5/6/7/8/10/11/12/13 precedent 답습 (closed-set ratchet 강화). 본 Amendment 15 = 14번째 entry append.
+
+> closed_enum: open_extension:false — 15번째 trigger 추가 시 Amendment 강화 방향만 허용 (ADR-058 §결정 5 정합).
+
+#### §결정 1-A transition trigger 표 14번째 row
+
+| # | Trigger | Verify subject | Verify object | Timing |
+|---|---|---|---|---|
+| 14 | `architect_agent_chief_author_lane_spawn` | Orchestrator + ArchitectPL (handoff sender) | origin/main SHA (chief author spawn 시점 fresh) + base drift (working tree HEAD vs origin/main) | ArchitectAgent chief author Agent tool dispatch 직전 (ArchitectPL deputy spawn request packet 수령 후) |
+
+#### §결정 1-Q primitive — ArchitectPL → ArchitectAgent chief author handoff specific cadence (4-step verify-before-assert mandate)
+
+ArchitectAgent chief author spawn 직전 다음 4 의무 (Orchestrator + ArchitectPL handoff sender 양 의무):
+
+1. **`git -C <worktree_abs_path> fetch origin`** — cross-repo state freshness 의무 (working tree HEAD 또는 cached SHA 사용 금지). worktree_abs_path = spawn prompt 안 `<worktree_path>` placeholder 의무 명시 (ADR-040 §결정 1 worktree convention 정합).
+2. **`git -C <worktree_abs_path> diff origin/main..HEAD --stat`** — base drift detection (HEAD vs origin/main delta 측정). expected diff = 본 Story scope 영역 (예: ADR Amendment 단독 +N lines for doc-only fast-path). drift 감지 = unexpected file additions / unrelated modifications / reverse-direction commits (downgrade 영역).
+3. **drift 감지 시 `git -C <worktree_abs_path> rebase origin/main`** — mechanical resolution (no semantic conflict 시 만). semantic conflict (자동 merge 불가 영역) 시 ABORT + chief author re-spawn 의무 (rebase 시도 후 conflict marker 잔존 시).
+4. **rebase 후 expected diff narrowed verify** — `git diff origin/main..HEAD --stat` 재실행 + expected scope (Story §3 도입할 설계 영역) 정합 확인. unexpected mid-flight merge 영역 cover 시 chief author re-spawn 의무.
+
+3-step PASS 조건: (a) `git fetch origin` exit 0 + (b) drift 0건 OR drift 감지 후 mechanical rebase PASS + (c) rebase 후 expected diff narrowed verified. 4-step PASS 시 chief author spawn proceed. 미충족 시 spawn 중단 + advisory escalate (사용자 / Orchestrator 결정 영역).
+
+> 본 4-step = Amd 11 §결정 1-N (Pre-spawn HEAD-pin protocol) 의 chief-author-specific specialization — Amd 11 generic spawn anchor block (PRE-SPAWN-ORIGIN-MAIN-SHA literal block) 위에 chief author handoff specific cadence (rebase 의무 + expected diff narrowed verify) 추가 mandate.
+
+#### Wave 1 = declaration-only behavioral mandate
+
+`mechanical_enforcement_actions[]` 신규 entry `architect-chief-author-base-sha-freeze-verify` warning-tier deferred-followup append. Wave 2 mechanical wire (pre-spawn hook + lint script `scripts/lib/check_architect_chief_author_base_sha_freeze.py` Python SSOT per ADR-061 + workflow yml hydrate + bats fixture pair RED→GREEN stash proof per CFP-1334 §8.4 + label-registry MINOR bump `hotfix-bypass:architect-chief-author-base-sha-freeze-verify` family member + evidence-checks-registry entry) = 별 sub-CFP carrier 분리 (precedent ADR-082 §결정 6 + ADR-070 §D5 + ADR-077 + ADR-078 + ADR-097 + Amd 11/12/13/14 Wave 1→Wave 2 split 답습).
+
+Wave 1 retain rationale: Amd 11/12/13/14 (CFP-1437 spawn_prompt_emit + CFP-1436 mid_spawn_origin_drift_detected + CFP-FU-A pre_git_operation/pre_push + parallel-work-sentinel-and-aggregate) 동일 Wave 1 declarative anchor only 답습 (precedent consistency). pre-spawn hook + mechanical rebase logic + expected diff narrowed verify primitive false-negative risk + chief author re-spawn ABORT path 영역 = sentinel forward-prevention 후 Wave 2 mechanical wire 결정.
+
+#### Disjoint axis cross-ref
+
+- **Amendment 5** (`fix_iter_start`): FIX iter N > 0 시점 main HEAD pin verify (FIX iter trigger). 본 Amd 15 = ArchitectPL → chief author handoff (FIX iter 진입 이전). FIX iter ↔ chief handoff disjoint.
+- **Amendment 7** (`stale_local_main_checkout`): Orchestrator self-Read working tree HEAD vs origin/main divergence (Orchestrator self-Read). 본 Amd 15 = ArchitectPL handoff sender → ArchitectAgent chief author (subagent spawn). self-Read ↔ subagent spawn disjoint.
+- **Amendment 8** (`mcp_token_expired_mid_flight`): MCP server auth token TTL (auth layer). 본 Amd 15 = origin/main SHA git layer (not auth). auth ↔ git disjoint.
+- **Amendment 10** (`label_change`): cross-repo label state mutation. 본 Amd 15 = intra-repo git ground truth (not cross-repo label state). label ↔ git disjoint.
+- **Amendment 11** (`spawn_prompt_emit` generic spawn): generic any-actor spawn-time SHA pin verify (Orchestrator / PL / chief 모두 적용). 본 Amd 15 = **ArchitectPL → ArchitectAgent chief author specific cadence** (chief-author-specific specialization, axis disjoint complement) — Amd 11 generic cadence 가 chief-author-specific binding 영역 충분히 cover 못 함 (chief author spawn = lane flow 안 most token-intensive + most parallel-race-prone operation, specific cadence specialization 의무).
+- **Amendment 12** (`mid_spawn_origin_drift_detected`): spawn-internal periodic drift detection (subagent self-detect mid-spawn time). 본 Amd 15 = pre-spawn handoff (ArchitectPL → chief author handoff sender side). pre-spawn ↔ mid-spawn disjoint.
+- **Amendment 13** (`pre_git_operation` + `pre_push`): specific git event trigger cadence (git operation 직전). 본 Amd 15 = ArchitectAgent chief author spawn 직전 (specific actor + specific lane). git event ↔ chief handoff disjoint.
+- **Amendment 14** (`parallel-work-sentinel-and-aggregate` 3-mode AND composition): polling source aggregation layer. 본 Amd 15 = chief author handoff base SHA freeze (specific verify primitive). composition layer ↔ specific primitive disjoint.
+- **ADR-045 §D-9**: PMOAgent retro corpus pattern_count threshold escalation. 본 Amd 15 = pattern_count 5 reach Mandatory carrier (CFP-1334 §3.1 4건 + CFP-1403 §3.1 1건 stale-base regression cascade), 5번째 적용 사례 of family (Amd 6/7/8/9 + 본 Amd 15).
+
+#### Amendment 15 — META anti-self-application 첫 적용 사례 (triggered + RESOLVED in carrier PR itself)
+
+본 Amendment 15 (Story CFP-1571) 의 deterministic mandate 가 carrier PR 자체에서 violation 잠재 (recursive dogfooding self-evidence) — 본 ArchitectAgent chief author spawn 자체가 §결정 1-Q primitive 의무 영역. 본 carrier 안 actual sequence:
+
+1. **Phase 0 verify-before-cite snapshot** (chief author spawn 시점): `git -C <worktree> rev-parse origin/main` = `4a1f0be` (CFP-1539, 2026-05-25 KST) + worktree HEAD = `4a1f0be` 동일 → drift 0건 (verify PASS).
+2. **Amendment 15 author 진행 중 mid-flight drift**: CFP-1523 cfp-1523-confluence-ia-real-backfill (#1560 + 4 follow-up commits) merged → origin/main `4a1f0be` → `49d6f6c` advance (5 commits drift, ~10-15분 author elapsed time 안 발생).
+3. **§결정 1-Q step 2 base drift detection**: `git -C <worktree> diff origin/main --stat` 실행 시 unexpected 3-file diff 감지 (`docs/adr/ADR-073-...md` +101 expected + `docs/confluence-ia-tree.yaml` -128 unexpected + `docs/domain-knowledge/domain/governance-principle/adr-category-lane-mapping.md` -256 unexpected = file delete).
+4. **§결정 1-Q step 3 mechanical rebase**: drift commits 5건 verify (CFP-1523 lineage, ADR-073.md 미touch — disjoint file set, no semantic conflict). `git stash push` → `git rebase origin/main` → `git stash pop` 실행 PASS.
+5. **§결정 1-Q step 4 expected diff narrowed verify**: 재실행 `git diff origin/main --stat` = 1 file +101 lines only (ADR-073 Amendment 15 본문 만, expected scope 정합). PASS.
+
+본 META self-application 첫 적용 사례 = recursive dogfooding self-evidence triggered AND RESOLVED in carrier PR itself. 본 Amendment 가 codify 하는 §결정 1-Q primitive 가 carrier PR 자체에서 실 발동 + 4-step protocol PASS — Wave 1 declaration-only behavioral mandate effectiveness self-empirical evidence (mechanical wire 도입 이전 단계 behavioral self-discipline 가 PASS path 달성 가능 입증, ratchet evidence base 강화). post-Amd 9 META self-application 2nd ADR-108 §결정 3 precedent (label-registry-frozen-baseline-count-parity) + 본 Amd 15 = ADR-073 META self-application family 첫 적용 사례 (chief author spawn discipline 자체가 본 Amendment codify 영역).
+
+#### Amendment 15 — sunset_justification N/A 정당
+
+`is_transitional: false` (영구 governance policy) 보존 — Amendment 15 scope = 본문 + Amendment 1-14 강화 방향 only (enum 14번째 entry append + ArchitectPL → ArchitectAgent chief author handoff specific cadence 4-step primitive 신설 + META anti-self-application invariant codify). 약화 / scope 축소 / 면제 영역 0건. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과 (Amendment 1-14 동형 precedent). ADR-064 §self-application top-down ratchet 정합. single-axis carrier (paired sibling 없음 — chief-author-specific specialization axis 자체가 단일 axis carrier).
+
+#### Related (Amendment 15 동반)
+
+- `docs/adr/ADR-RESERVATION.md` — `amendments_reserved[]` row append (ADR-073 Amd 15, CFP-1571 carrier active 점유 — retrospective baseline, CFP-1497 amendment-slot reservation optional 정합)
+- `<internal-docs>/plugin-codeforge/change-plans/cfp-1571-adr073-amd-15.md` — Change Plan SSOT (Phase 1 carrier, internal-docs SSOT per ADR-013 dogfood-out policy)
+- `<internal-docs>/plugin-codeforge/stories/CFP-1571.md` — Story file (CFP-1571 carrier, Phase 1 declarative)
