@@ -19,6 +19,7 @@ related_stories:
   - CFP-134
   - CFP-135
   - CFP-138
+  - CFP-1580  # Amendment 7 carrier — pattern_count 5 escalation_resolved_carrier (Wave 2 mechanical wire DR-skip pattern, paired sibling ADR-068 Amendment 4)
 related_adrs:
   - ADR-009
   - ADR-013
@@ -73,6 +74,13 @@ amendment_log:
     scope: "§D-9 cross_story_pattern_adr_trigger 적용 evidence (Amendment 5 forcing function 산물 기록) — CFP-746 retro §6 후보 1 (corpus-claim write-time verification) + CFP-770 retro §6 후보 1 (self-write artifact source/value/ownership claim write-time verification) = pattern_count 3 ≥ threshold 2 → Mandatory framing + escalation_action escalate_user → 사용자 단일 super-class ADR 통합 결정 (2026-05-16 KST) → ADR-082 (Write-time self-write verification mandate) 산출. §D-9 forcing function 이 'pattern 누적 → ADR escalation' 으로 실제 동작한 첫 cross-Story 산물 evidence. §D-9 결정 본문 / threshold / hybrid 검출 전략 의미 변경 없음 — evidence-only Amendment."
     status: applied
     ref: §D-9 + ADR-082 (산물) + Issue #776 pattern corpus 3건
+    sunset_justification: null
+  - amendment_id: 7
+    cfp: CFP-1580
+    date: 2026-05-25
+    scope: "§D-9 cross_story_pattern_adr_trigger 적용 evidence (Amendment 5 forcing function 산물 기록 6번째) — pattern `wave2-mechanical-wire-design-review-skip` pattern_count 5 ≥ threshold 2 reach Mandatory (CFP-1489 / CFP-1497 / CFP-1500 / CFP-1502 / CFP-1539 5 precedent linear chain, all Wave 1 declarative anchor active 후 Wave 2 mechanical wire 영역에서 DesignReviewPL spawn 0 + 0 design FIX + 0 design review divergence detection + wrapper-self CodeReviewPL PASS + admin squash merge) → PMOAgent CFP-1539+1540 batch retro §6 escalation_action escalate_user → 사용자 결정 (2026-05-25 KST): Option A — Compress normative codify → ADR-068 Amendment 4 산물 (§결정 7 신설: Wave 2 mechanical wire 영역 design review skip 정합 invariant codify + Wave 1 declarative or 신규 ADR/governance 영역 mandatory retain). §D-9 forcing function 이 'pattern 누적 → ADR escalation' 으로 실제 동작한 6번째 cross-Story 산물 evidence (Amendment 6 CFP-776 ADR-082 carrier = 5번째 / 본 Amendment 7 = 6번째). §D-9 결정 본문 / threshold N=2 / hybrid 검출 전략 / escalation_action enum 2-value 의미 변경 없음 — evidence-only Amendment. paired sibling ADR-068 Amendment 4 (CFP-1580 §결정 7 신설 Wave 2 mechanical wire 영역 design review skip 정합 invariant declarative anchor)."
+    status: applied
+    ref: §D-9 + ADR-068 Amendment 4 (산물) + 5 precedent CFP linear chain (CFP-1489 / CFP-1497 / CFP-1500 / CFP-1502 / CFP-1539)
     sunset_justification: null
 is_transitional: false
 ---
