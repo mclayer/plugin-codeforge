@@ -1,0 +1,99 @@
+# CFP-1477 FU-B — marketplace.json sibling sync patch draft
+
+**Carrier**: cross-repo PR `mclayer/marketplace` (Orchestrator scope — ADR-039 §결정 2 sibling sync 영역).
+**Source**: ArchitectAgent worktree-save (ADR-063 §결정 1 3-file atomic invariant + §결정 2 ordering compliance).
+**ADR anchors**: ADR-016 (sibling sync) / ADR-063 (atomic invariant + ordering) / ADR-066 (PAT scope `marketplace contents:read` reuse, no new grant) / ADR-037 (PATCH bump SemVer).
+**Generated**: 2026-05-25 KST.
+
+---
+
+## §1. Target file
+
+`mclayer/marketplace:.claude-plugin/marketplace.json` — `plugins[name=codeforge]` block.
+
+## §2. Mutation scope (closed-enum 2 fields)
+
+| Field | Current value (verified-via gh api 2026-05-25 KST) | New value (byte-identical wrapper mirror) |
+|---|---|---|
+| `version` | `"6.7.1"` | `"6.7.2"` |
+| `description` | `" + CFP-1353-FU (2026-05-24) — Epic CFP-1353 follow-up sweep — 11 FU-CFP batch (...)"` (59460 bytes accumulated changelog text) | `"Claude Code 범용 SW 개발 오케스트레이션 플러그인. 0 core 에이전트 (wrapper-only) · 8 레인 + CI gate + role:dev 동적 roster 로 요구사항 접수부터 배포 리뷰 통과까지 자율 실행"` (217 UTF-8 bytes, 128 chars) |
+
+## §3. Other mirrored fields (UNCHANGED — byte-identical preserve)
+
+- `name`: `"codeforge"` (unchanged)
+- `author`: `{"name": "Josh"}` (unchanged)
+
+## §4. PR ordering (ADR-063 §결정 2)
+
+1. **本 marketplace sync PR open + merge 선행** (mclayer/marketplace) — ChiefAuthor (ArchitectAgent) draft → Orchestrator open via mcp__github__create_pull_request OR gh CLI fallback
+2. wrapper Phase 1 PR open (mclayer/plugin-codeforge `cfp-1477-fu-b-main-drift-5-defects`) — plugin.json + CHANGELOG.md + Story §3/§7/§11 + Change Plan
+3. wrapper Phase 1 PR CI verify (`check-marketplace-parity.sh` PASS / `marketplace-description-verbatim.yml` PASS / `version-bump-atomic-check.yml` PASS) → merge
+
+**Anti-pattern 회피 (ADR-063 §결정 2 명시)**: wrapper PR merge 선행 → marketplace stale 노출 차단.
+
+## §5. Verbatim jq patch (single mutation expression)
+
+```bash
+# In mclayer/marketplace clone, after `git fetch origin main`:
+jq '
+  (.plugins[] | select(.name == "codeforge") | .description) =
+    "Claude Code 범용 SW 개발 오케스트레이션 플러그인. 0 core 에이전트 (wrapper-only) · 8 레인 + CI gate + role:dev 동적 roster 로 요구사항 접수부터 배포 리뷰 통과까지 자율 실행"
+  | (.plugins[] | select(.name == "codeforge") | .version) = "6.7.2"
+' .claude-plugin/marketplace.json > /tmp/marketplace.json.new && \
+mv /tmp/marketplace.json.new .claude-plugin/marketplace.json
+```
+
+## §6. Post-write sanity check (3-source byte-identical verify, ADR-082 §결정 1 layer 1)
+
+```bash
+# In mclayer/marketplace local clone:
+jq -r '.plugins[] | select(.name=="codeforge") | {version, description, description_byte_length: (.description | length)}' .claude-plugin/marketplace.json
+# Expected:
+# version: "6.7.2"
+# description: "Claude Code 범용 SW ..."  (128 chars)
+# description_byte_length: 128 (jq char count) — UTF-8 byte length = 217 (verify via: jq -r .description ... | tr -d '\n' | wc -c)
+```
+
+## §7. PR description template
+
+```markdown
+## Summary
+
+CFP-1477 FU-B (mclayer/plugin-codeforge#1477) — codeforge wrapper plugin.json description 60KB cleanup + version PATCH bump sibling sync.
+
+Mirrored field 2종 변경 (ADR-063 §결정 1 3-file atomic invariant):
+- `version`: 6.7.1 → 6.7.2 (PATCH, ADR-037 §결정 1(a) additive only)
+- `description`: 59460 bytes 누적 changelog accumulation → 217 bytes canonical short-form (CLAUDE.md L9 본질 정의 base, npm convention 정합)
+
+## ADR anchors
+
+- ADR-016 — marketplace sibling sync mandatory (mirrored field 4종)
+- ADR-063 §결정 1 — 3-file atomic invariant + §결정 2 — ordering (본 PR 선행 merge)
+- ADR-037 — PATCH bump SemVer (additive only)
+- ADR-066 — PAT scope `marketplace contents:read` reuse, no new grant
+
+## Cross-repo coordination
+
+- Sibling wrapper PR: mclayer/plugin-codeforge#TBD (cfp-1477-fu-b-main-drift-5-defects)
+- Wrapper PR depends on this PR merging first per ADR-063 §결정 2 ordering.
+
+## Change Plan
+
+mclayer/codeforge-internal-docs:plugin-codeforge/change-plans/cfp-1477-fu-b-marketplace-description-cleanup.md
+
+## Story file
+
+mclayer/codeforge-internal-docs:plugin-codeforge/stories/CFP-FU-B.md
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+```
+
+## §8. Bypass channel (NOT used — 정상 운영)
+
+본 PR = 정상 운영 영역. `hotfix-bypass:marketplace-atomic` label 불요 (ADR-024 Amendment 3 §결정 6.A family).
+
+## §9. Verify-before-trust evidence (ADR-082 / ADR-070)
+
+- marketplace.json current state fetch: `gh api repos/mclayer/marketplace/contents/.claude-plugin/marketplace.json --jq '.content' | base64 -d` (verified 2026-05-25 KST 12:00)
+- wrapper plugin.json current state: `jq -r .description /.claude-plugin/plugin.json | wc -c` 영역 verify (post-mutation 217 UTF-8 bytes)
+- 3-source byte-identical sanity check post-merge: wrapper plugin.json description == marketplace.json plugins[codeforge].description == Change Plan §3.1 canonical wording (3-place byte-identical, ADR-068 I-4 wording SSOT)
