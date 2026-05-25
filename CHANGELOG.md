@@ -465,7 +465,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ### Changed
 
-- [CFP-1125 (Wave 1 Story-1)] 9 ADR/contract sunset_justification declarative 박제 (Imperative changelog walk paradigm 도입 carrier — CFP-1111 Epic)
+- [CFP-1125 (Wave 1 Story-1)] 9 ADR/contract sunset_justification declarative `박제` (Imperative changelog walk paradigm 도입 carrier — CFP-1111 Epic)
   - 6 ADR sunset declarative: ADR-076 / ADR-083 / ADR-026 Amendment 5 (sibling carrier role 만) / ADR-027 Amendment 6 / ADR-067 (disjoint invariant declare, 본체 sunset 아님) / ADR-053 D2 영역 (D1 영구)
   - reconcile-protocol-v1 §4.3 (k)/(l)/(m) + §4.13 + §4.14 + §4.8 sunset declarative
   - reconcile-protocol-v1 v1.13 status `Active → Deprecated`
@@ -591,7 +591,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 #### ADR Amendment 1종
 
-- **`docs/adr/ADR-073-orchestrator-verify-before-assert.md`** — Amendment 5 append (CFP-1102). §결정 1 transition trigger enum 4 → 5 entry `ratchet` (`fix_iter_start` 5번째). §결정 1-E main HEAD pin verify primitive 3-step (fetch + remote HEAD pin gh api + local cache cross-check). §결정 1-F Amendment 2 §결정 1-A 3-step 재실행 정합. CFP-1087 cascade race evidence + pattern_count 2 reach HIGH escalation.
+- **`docs/adr/ADR-073-orchestrator-verify-before-assert.md`** — Amendment 5 append (CFP-1102). §결정 1 transition trigger enum 4 → 5 entry `ratchet` (`fix_iter_start` 5번째). §결정 1-E main HEAD `pin` verify primitive 3-step (fetch + remote HEAD `pin` gh api + local cache cross-check). §결정 1-F Amendment 2 §결정 1-A 3-step 재실행 정합. CFP-1087 cascade race evidence + pattern_count 2 reach HIGH escalation.
 
 #### Cross-ref
 
@@ -958,7 +958,7 @@ ADR-073 Amendment 2 carrier: §결정 1-A (script wire) / §결정 1-B (hooks/se
 
 ### Added (INCIDENT-2026-05-17 — cross-repo gh CLI safety net)
 
-- **`hooks/cross-repo-gh-safety`** — 신규 PreToolUse hook (extensionless bash, polyglot wrapper 패턴 정합 — `run-hook.cmd` dispatch). `gh pr|issue <write-verb>` (create/edit/comment/close/reopen/merge/review/ready/lock/unlock/delete/transfer/develop/pin/unpin) 명령에 `--repo`/`-R` flag 또는 `GH_REPO` env (inline prefix 포함) 부재 시 `exit 2` 차단 + 한글 차단 메시지. read-only verb (view/list/checks/status/diff) = scope 외 (정보 조회, write 사고 영향 0). 비-Bash tool / command 추출 실패 = fail-open (best-effort 1차 안전망). `BYPASS_CROSS_REPO_GH_SAFETY=1` escape (scope disjoint — `BYPASS_CODEFORGE_PREREQ` / `BYPASS_WORKTREE_FIRST` 와 별도 env). 정적 properties = session-start hook 패턴 정합 (set -euo pipefail / filesystem touch 0 / network call 0 / jq 비의존 POSIX grep·sed 파싱).
+- **`hooks/cross-repo-gh-safety`** — 신규 PreToolUse hook (extensionless bash, polyglot wrapper 패턴 정합 — `run-hook.cmd` dispatch). `gh pr|issue <write-verb>` (create/edit/comment/close/reopen/merge/review/ready/lock/unlock/delete/transfer/develop/`pin`/unpin) 명령에 `--repo`/`-R` flag 또는 `GH_REPO` env (inline prefix 포함) 부재 시 `exit 2` 차단 + 한글 차단 메시지. read-only verb (view/list/checks/status/diff) = scope 외 (정보 조회, write 사고 영향 0). 비-Bash tool / command 추출 실패 = fail-open (best-effort 1차 안전망). `BYPASS_CROSS_REPO_GH_SAFETY=1` escape (scope disjoint — `BYPASS_CODEFORGE_PREREQ` / `BYPASS_WORKTREE_FIRST` 와 별도 env). 정적 properties = session-start hook 패턴 정합 (set -euo pipefail / filesystem touch 0 / network call 0 / jq 비의존 POSIX grep·sed 파싱).
 - **`hooks/hooks.json`** — `PreToolUse` matcher `Bash` entry 신설 (`run-hook.cmd cross-repo-gh-safety`).
 - **`skills/lane-self-write-boundary/SKILL.md`** — Cross-cutting rule cross-ref 신설: 모든 lane plugin + Orchestrator 의 GitHub self-write 시 `--repo` 명시 의무 + 물리 안전망(hook) / 가이드 차원(skill) 2중 안전망 + bypass env 명시.
 
@@ -1043,7 +1043,7 @@ ADR-073 Amendment 2 carrier: §결정 1-A (script wire) / §결정 1-B (hooks/se
 
 ### Added (CFP-820 Epic CFP-699 Wave 3 Story-6 Phase 2 — ADR-063 Amendment 5 §결정 15/16 3-way version atomic invariant enforcement)
 
-- **`scripts/check-3way-version-parity.sh`** (NEW) — publisher (`.claude-plugin/plugin.json`) ↔ registry (`marketplace.json`) ↔ consumer (`project.yaml` `codeforge.version_pin.version`) 3-way byte-identical version compare. PIN_ABSENT = warning-first exit 0 (orthogonality invariant — pin 미선언 ≠ 버전 불일치). PIN_MALFORMED = exit 2. 3-way mismatch = blocking exit 1. ADR-063 Amendment 5 §결정 15 AC-1~AC-13 전 항목 커버. 14/14 BATS TC PASS (TDD RED→GREEN — 3 FIX iterations).
+- **`scripts/check-3way-version-parity.sh`** (NEW) — publisher (`.claude-plugin/plugin.json`) ↔ registry (`marketplace.json`) ↔ consumer (`project.yaml` `codeforge.version_pin.version`) 3-way byte-identical version compare. PIN_ABSENT = warning-first exit 0 (orthogonality invariant — `pin` 미선언 ≠ 버전 불일치). PIN_MALFORMED = exit 2. 3-way mismatch = blocking exit 1. ADR-063 Amendment 5 §결정 15 AC-1~AC-13 전 항목 커버. 14/14 BATS TC PASS (TDD RED→GREEN — 3 FIX iterations).
 - **`scripts/read_version_pin.py`** (NEW, ADR-061 외부 .py) — `project.yaml` `codeforge.version_pin.version` YAML 파싱 helper. Stdout protocol: PIN_ABSENT / PIN_MALFORMED:<reason> / PIN_VERSION:<version>. Exit codes: 0/10(no PyYAML)/11(parse error).
 - **`templates/github-workflows/version-3way-atomic.yml`** (NEW) — PR-time 3-way version atomic invariant check workflow. blocking-on-pr tier. Triggers on plugin.json / CHANGELOG.md / project.yaml / scripts 변경. `hotfix-bypass:version-3way-atomic` label bypass channel.
 - **`.github/workflows/version-3way-atomic.yml`** (NEW, byte-identical self-app ADR-005).
@@ -1055,7 +1055,7 @@ ADR-073 Amendment 2 carrier: §결정 1-A (script wire) / §결정 1-B (hooks/se
 - **`docs/inter-plugin-contracts/label-registry-v2.md`** — v2.23 → v2.24 PATCH (hotfix-bypass:version-3way-atomic 33번째 family member, §3 yaml entry append, ADR-063 Amendment 5 §결정 16 carrier).
 - **`overlay/hooks/validate_config.py`** — `codeforge.version_pin` (optional dict) + `codeforge.version_pin.version` (optional str) SCHEMA_RULES 추가 (CFP-820 / ADR-063 Amendment 5).
 - **`overlay/_overlay/project.yaml.example`** — `codeforge.version_pin` commented 예시 블록 추가.
-- **`docs/consumer-guide.md`** — §2i 신설 (3-way version atomic pin 설정 가이드, CFP-820 / ADR-063 Amendment 5 §결정 15).
+- **`docs/consumer-guide.md`** — §2i 신설 (3-way version atomic `pin` 설정 가이드, CFP-820 / ADR-063 Amendment 5 §결정 15).
 - **`CLAUDE.md`** — GitHub Workflow 27종 → 28종 (`version-3way-atomic.yml` blocking-on-pr 3번째 entry 추가). blocking-on-pr 2 → 3.
 - **`.claude-plugin/plugin.json`** — 5.81.0 → 5.82.0 MINOR (신규 lint script + workflow blocking-on-pr 활성화 — ADR-037). marketplace 별도 sibling PR sync 의무 (ADR-063 §결정 5).
 
@@ -1119,20 +1119,20 @@ ADR-073 Amendment 2 carrier: §결정 1-A (script wire) / §결정 1-B (hooks/se
 
 ## [5.77.0] - 2026-05-16
 
-### Changed (CFP-750 Phase 2 — 박제 enforcement 강화: lint scope 확장 + per-word decoupling + 전수 sweep + R9 perf fix)
+### Changed (CFP-750 Phase 2 — `박제` enforcement 강화: lint scope 확장 + per-word decoupling + 전수 sweep + R9 perf fix)
 
 - **`scripts/check-wording-dictionary.sh`** — ADR-064 Amendment 5 (CFP-750) 구현:
-  - `FORBID_DICTIONARY` array → `declare -A WORD_TARGETS` per-word map (박제/못 박기/pin/freezing = expanded `docs CLAUDE.md CHANGELOG.md templates` / 별도 = 5-scope 유지). per-word scope decoupling = scope axis 정밀화 (어휘 추가 시 scope 자동 확장 차단). R2 mitigation (`별` standalone fp collateral 차단, #718 F4 disjoint carrier).
+  - `FORBID_DICTIONARY` array → `declare -A WORD_TARGETS` per-word map (`박제`/`못 박기`/`pin`/`freezing` = expanded `docs CLAUDE.md CHANGELOG.md templates` / 별도 = 5-scope 유지). per-word scope decoupling = scope axis 정밀화 (어휘 추가 시 scope 자동 확장 차단). R2 mitigation (`별` standalone fp collateral 차단, #718 F4 disjoint carrier).
   - Bash 4+ guard (`((BASH_VERSINFO[0] < 4)) && exit 1`) + 4 precedent script consistency anchor (`check-codeforge-version-drift.sh:45` / `measure-rate-limit-fallback.sh:312-313` / `migrate-label-to-issue-type.sh:44+143`).
   - inline code-span (`` `...` ``) strip 로직 추가 (single-backtick, blockquote/fenced 분기 보존). 메타-언급 정밀 EXEMPT (file 전체 EXEMPT 차단).
   - **R9 perf algorithmic mitigation 달성 (>30x)** — `strip_exempt` per-line `printf|sed` subshell loop O(lines×fork) → 단일 awk 1-pass + filesystem memo (mktemp -d cache, strip 결과 tmp file 1회 + path 반환, grep file 직접 read). CLAUDE.md 단일 원래 >수분 → 4.5s. Windows Git Bash residual = MSYS fork-emulation-bound (algorithmic 회귀 아님). CI ubuntu-latest authoritative per R9 §4.2 (P2 advisory continue-on-error).
 - **`docs/wording-dictionary.md`** — 카테고리 (a) lint scope 문구 갱신 (per-word decoupling) + frontmatter `amendments` row append (amendment 2, carrier_cfp CFP-750). Phase 1 scope gap catch-up (Phase 1 lane 실행 누락 catch-up via Phase 2).
 - **`docs/evidence-checks-registry.yaml`** — `wording-dictionary` entry `detect_command` (no-arg per-word lookup mode) + `description` scope 갱신 (current_tier: warning 유지).
-- **`CLAUDE.md`** — 결정원칙 forbid-list lint scope mirror 갱신 (per-word decoupling — 박제/못박기/pin/freezing expanded / 별도 5-scope, CFP-750 cross-ref).
+- **`CLAUDE.md`** — 결정원칙 forbid-list lint scope mirror 갱신 (per-word decoupling — `박제`/못박기/`pin`/`freezing` expanded / 별도 5-scope, CFP-750 cross-ref).
 - **`templates/github-workflows/wording-dictionary.yml`** + **`.github/workflows/wording-dictionary.yml`** (byte-identical excl `name:`) — `on.pull_request.paths` 에 `CHANGELOG.md` 명시 + lint invocation step `run:` no-arg 전환 (per-word lookup mode default).
-- **`tests/scripts/test_check_wording_dictionary.bats`** (+241) — INV-T1~T5 bats fixture (TDD): IT-4/IT-4a~d/IT-5/IT-self-app/IT-treaty-invariance + edge case (adjacent/unbalanced/double backtick/multiline) + 기존 박제 fixture 4건 (TC-1~4 + IT-1/2 + F-3) 보존. 합성 repo tree + no-arg per-word lookup mode 정합. **40/40 GREEN PASS**.
+- **`tests/scripts/test_check_wording_dictionary.bats`** (+241) — INV-T1~T5 bats fixture (TDD): IT-4/IT-4a~d/IT-5/IT-self-app/IT-treaty-invariance + edge case (adjacent/unbalanced/double backtick/multiline) + 기존 `박제` fixture 4건 (TC-1~4 + IT-1/2 + F-3) 보존. 합성 repo tree + no-arg per-word lookup mode 정합. **40/40 GREEN PASS**.
 - **`tests/contracts/test_cfp750_treaty_invariance.sh`** (+103, NEW) — INV-T2 treaty invariance helper (TestContractArchitect §8.1 #6). first-cell-identifier semantic — 표 row 변경은 field/enum/invariant 명 집합 변경 시만 flag, description cell 내부 prose 어휘 치환 허용. Change Plan §6.4 정합 (§8.0 literal vs §6.4 semantic 모순 후속 carrier).
-- **박제 전수 sweep (12 file)** — Class-Q (blockquote `>` 사용자 verbatim) 절대 보존 + Class-B (non-quote body) `명시`/`확정`/`기재`/`포함` 문맥별도 치환 + 메타-언급 inline code-span 화. parallel-dispatch-protocol-v1.md 10회 / CLAUDE.md / CHANGELOG.md / ADR-027/037/076 / domain-knowledge×2 / contracts×4 sweep. 의미 보존 (schema 층 무변경, contract version bump 0, `sibling sync` 면제 ADR-008/010). pre-existing baseline debt (ADR-027/076/CLAUDE.md L290 + **ADR-037 pin baseline option A catch-up**, §6.2 item6 list 확장) 동반 정리.
+- **`박제` 전수 sweep (12 file)** — Class-Q (blockquote `>` 사용자 verbatim) 절대 보존 + Class-B (non-quote body) `명시`/`확정`/`기재`/`포함` 문맥별도 치환 + 메타-언급 inline code-span 화. parallel-dispatch-protocol-v1.md 10회 / CLAUDE.md / CHANGELOG.md / ADR-027/037/076 / domain-knowledge×2 / contracts×4 sweep. 의미 보존 (schema 층 무변경, contract version bump 0, `sibling sync` 면제 ADR-008/010). pre-existing baseline debt (ADR-027/076/CLAUDE.md L290 + **ADR-037 `pin` baseline option A catch-up**, §6.2 item6 list 확장) 동반 정리.
 - **`.claude-plugin/plugin.json`** — 5.76.0 → 5.77.0 MINOR (lint script behavior change + CLAUDE.md 의미 변경 — ADR-037 base 결정 1). version + description `mirrored field` bump → marketplace atomic sync MERGED `mclayer/marketplace#150` (ADR-063 §결정 2 선행 ordering).
 - **Phase 1 wording-dictionary.md scope gap catch-up (§10 Iter 3)** — Phase 1 lane 실행 gap (Change Plan §6.1 정확 명시, Phase 1 PR 작성 시 wording-dictionary.md 미포함) Phase 2 흡수. retroactive 불가, 추가 PR 0. ADR-068 I-4 wording SSOT lockstep + INV-1 (CFP-610 mirror) = Phase 2 종료 시점 충족.
 
