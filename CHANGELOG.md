@@ -7,7 +7,17 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
-(none — 6.8.0 release captures CFP-1580 governance behavior change + carry-over CFP-1540/CFP-1539 from prior session)
+(none)
+
+## [6.8.1] - 2026-05-25
+
+### Added
+
+- [CFP-1559] **ADR-082 Amendment 20 — §결정 15 신설 Issue body stale-claim super-class verify-before-trust write-time pre-screen mandate (declarative-only Wave 1)**
+
+### Bump rationale
+
+- ADR-037 §결정 1(a) PATCH — additive governance behavior mandate (declarative Wave 1 only, src/tests 변경 0)
 
 ## [6.8.0] - 2026-05-25
 

@@ -1,0 +1,96 @@
+# CFP-1559 — marketplace.json sibling sync patch draft
+
+**Carrier**: cross-repo PR `mclayer/marketplace` (Orchestrator scope — ADR-039 §결정 2 sibling sync 영역).
+**Source**: ArchitectAgent worktree-save (ADR-063 §결정 1 3-file atomic invariant + §결정 2 ordering compliance).
+**ADR anchors**: ADR-016 (sibling sync) / ADR-063 (atomic invariant + ordering) / ADR-066 (PAT scope `marketplace contents:read` reuse, no new grant) / ADR-037 (PATCH bump SemVer) / ADR-082 Amendment 20 (carrier).
+**Generated**: 2026-05-25 KST.
+
+---
+
+## §1. Target file
+
+`mclayer/marketplace:.claude-plugin/marketplace.json` — `plugins[name=codeforge]` block.
+
+## §2. Mutation scope (closed-enum 2 fields)
+
+| Field | Current value (verified-via gh api 2026-05-25 KST) | New value (byte-identical wrapper mirror) |
+|---|---|---|
+| `version` | `"6.8.0"` (CFP-1580 MINOR most recent merge) | `"6.8.1"` |
+
+## §3. Other mirrored fields (UNCHANGED — byte-identical preserve)
+
+- `name`: `"codeforge"` (unchanged)
+- `author`: `{"name": "Josh"}` (unchanged)
+
+## §4. PR ordering (ADR-063 §결정 2)
+
+1. **本 marketplace sync PR open + merge 선행** (mclayer/marketplace) — ChiefAuthor (ArchitectAgent) draft → Orchestrator open via mcp__github__create_pull_request OR gh CLI fallback
+2. wrapper Phase 1 PR open (mclayer/plugin-codeforge `cfp-1559-wave3`) — ADR-082 Amendment 20 + ADR-RESERVATION + CLAUDE.md + registries + plugin.json 6.7.3 + CHANGELOG + Change Plan
+3. wrapper Phase 1 PR CI verify (`check-marketplace-parity.sh` PASS / `marketplace-description-verbatim.yml` PASS / `version-bump-atomic-check.yml` PASS / `architect-marketplace-self-check.yml` PASS — `marketplace_sync_declared: true`) → merge
+
+**Anti-pattern 회피 (ADR-063 §결정 2 명시)**: wrapper PR merge 선행 → marketplace stale 노출 차단.
+
+## §5. Verbatim jq patch (single mutation expression)
+
+```bash
+# In mclayer/marketplace clone, after `git fetch origin main`:
+jq '
+  (.plugins[] | select(.name == "codeforge") | .version) = "6.8.1"
+' .claude-plugin/marketplace.json > /tmp/marketplace.json.new && \
+mv /tmp/marketplace.json.new .claude-plugin/marketplace.json
+```
+
+## §6. Post-write sanity check (3-source byte-identical verify, ADR-082 §결정 1 layer 1)
+
+```bash
+# In mclayer/marketplace local clone:
+jq -r '.plugins[] | select(.name=="codeforge") | {version, description}' .claude-plugin/marketplace.json
+# Expected:
+# version: "6.8.1"
+```
+
+## §7. PR description template
+
+```markdown
+## Summary
+
+CFP-1559 (mclayer/plugin-codeforge#1559) — ADR-082 Amendment 20 §결정 15 신설 Issue body stale-claim super-class verify-before-trust write-time pre-screen mandate (declarative-only Wave 1) sibling marketplace sync.
+
+Mirrored field 2종 변경 (ADR-063 §결정 1 3-file atomic invariant):
+- `version`: 6.8.0 → 6.8.1 (PATCH, ADR-037 §결정 1(a) — Wave 3 version race resolution post CFP-1580 6.8.0 MINOR)
+
+## ADR anchors
+
+- ADR-082 Amendment 20 — §결정 15 신설 Issue body stale-claim super-class verify-before-trust write-time pre-screen mandate (declarative-only Wave 1, 4 sub-pattern closed-set enumeration: PR merge state / CFP merge state / count number / sister carrier origin)
+- ADR-016 — marketplace sibling sync mandatory (mirrored field 4종)
+- ADR-063 §결정 1 — 3-file atomic invariant + §결정 2 — ordering (본 PR 선행 merge) + §결정 5 atomic invariant 발효 (mirrored field 변경 시 marketplace_sync_required: true) + Amendment 9 (CFP-604) — `architect-marketplace-self-check.yml` declare presence check
+- ADR-037 — PATCH bump SemVer (additive only)
+- ADR-066 — PAT scope `marketplace contents:read` reuse, no new grant
+
+## Cross-repo coordination
+
+- Sibling wrapper PR: mclayer/plugin-codeforge#TBD (cfp-1559-wave3)
+- Wrapper PR depends on this PR merging first per ADR-063 §결정 2 ordering.
+
+## Change Plan
+
+mclayer/codeforge-internal-docs:plugin-codeforge/change-plans/cfp-1559-issue-body-stale-claim-super-class.md
+
+## Story file
+
+mclayer/codeforge-internal-docs:plugin-codeforge/stories/cfp-1559.md
+
+Co-Authored-By: Claude Opus 4.7 <noreply@anthropic.com>
+```
+
+## §8. Bypass channel (NOT used — 정상 운영)
+
+본 PR = 정상 운영 영역. `hotfix-bypass:marketplace-atomic` label 불요 (ADR-024 Amendment 3 §결정 6.A family).
+
+## §9. Verify-before-trust evidence (ADR-082 / ADR-070)
+
+- marketplace.json current state fetch: `gh api repos/mclayer/marketplace/contents/.claude-plugin/marketplace.json --jq '.content' | base64 -d` (verified 2026-05-25 KST)
+- wrapper plugin.json current state post-mutation: 6.7.3 + description with `+ CFP-1559 (2026-05-25)` suffix verified
+- 3-source byte-identical sanity check post-merge: wrapper plugin.json description == marketplace.json plugins[codeforge].description == Change Plan canonical wording (3-place byte-identical, ADR-068 I-4 wording SSOT)
+- Mid-spawn drift detection applied (ADR-082 Amd 16 §결정 1-F): CFP-1588 origin/main drift detected during this Story chief author session → rebase clean disjoint scope verified (no conflict with marketplace mutation paths)
+- ADR-082 Amendment 17 §결정 1-G strict claim mandate 2nd applied case after CFP-1492 (ADR-RESERVATION amendments_reserved[] row pre-claim commit `7a7ac08` 완료, ArchitectAgent body write 전 strict pre-claim 의무 충족)
