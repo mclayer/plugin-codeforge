@@ -176,3 +176,34 @@ WRAPPER_EOF
   [ "$status" -eq 0 ]
   [[ "$output" == *"bypass invoked"* ]]
 }
+
+# ---------------------------------------------------------------------------
+# TC-9: cp949 / non-ASCII Korean title round-trip (CFP-1540 carrier)
+# ---------------------------------------------------------------------------
+@test "TC-9: non-ASCII Korean title round-trip — exit 0, UTF-8 preserved, no UnicodeDecodeError" {
+  # Part A: mock-path fixture round-trip (JSON fixture with Korean title)
+  export CFP967_GH_MOCK_RESPONSE="${FIXTURES_DIR}/non-ascii-title.json"
+  export CFP_CONTEXT="CFP-1540"
+
+  run _run_sentinel --mode=title-search
+  [ "$status" -eq 0 ]
+  # Must be valid JSON (no UnicodeDecodeError crash)
+  echo "$output" | python3 -m json.tool > /dev/null
+  # Korean characters must be preserved in output (UTF-8 round-trip)
+  echo "$output" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+assert len(d['matches']) >= 1, f'expected 1 match, got {d}'
+title = d['matches'][0]['title']
+assert '한글' in title, f'Korean chars missing in title: {title!r}'
+"
+  unset CFP967_GH_MOCK_RESPONSE CFP_CONTEXT
+
+  # Part B: subprocess.run encoding kwarg AST-verify — 3-kwarg combo presence check
+  # (text=True, encoding="utf-8", errors="replace") at all 6 sites.
+  # RED criterion (pre-fix): missing encoding+errors at text=True sites → exit 1.
+  # GREEN criterion (post-fix): all 6 text=True sites have 3-kwarg combo → exit 0.
+  CHECKER="${BATS_TEST_DIRNAME}/check_subprocess_encoding.py"
+  run python3 "${CHECKER}" "${SCRIPT_DIR}/lib/check_parallel_work_sentinel.py"
+  [ "$status" -eq 0 ]
+}

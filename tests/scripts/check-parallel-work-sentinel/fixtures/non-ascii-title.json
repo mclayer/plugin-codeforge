@@ -1,0 +1,11 @@
+[
+  {
+    "number": 1540,
+    "title": "CFP-1540 sentinel cp949 한글 인코딩 수정",
+    "labels": [
+      {"name": "phase:구현"},
+      {"name": "type:fix"}
+    ],
+    "closedAt": null
+  }
+]

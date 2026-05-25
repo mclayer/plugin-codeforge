@@ -41,3 +41,16 @@ fixtures:
       red_tcs: [7, 8]
       green_all: true
       platform_verified: ["linux"]
+
+  - file: tests/scripts/check-parallel-work-sentinel/test_parallel_work_sentinel.bats
+    description: "cp949 Korean title round-trip — bats 9 TC (TC-1~TC-9, TC-9 신규 CFP-1540)"
+    impl_file: scripts/lib/check_parallel_work_sentinel.py
+    tc_count: 9
+    discriminating_count: 1  # TC-9 (non-ASCII title round-trip)
+    regression_guard_count: 1  # TC-8 (bypass invariant, existing)
+    red_green_proof:
+      pre_impl_sha: "a7b397c"
+      method: "git stash push -- scripts/lib/check_parallel_work_sentinel.py"
+      red_tcs: [9]
+      green_all: true
+      platform_verified: ["windows", "linux"]
