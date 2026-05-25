@@ -115,6 +115,12 @@ amendments:
     summary: "§결정 1 layer 1 sub-scope (1-I) 신설 — pre-spawn-prompt-finalize verify layer mandate. Parallel session race 11th occurrence (CFP-1420 Sub-A S1.2 STAND_DOWN_DUPLICATE per PR #1441 prior merge 2026-05-24T03:07:53Z) escalate_user pattern_count 11 ≫ ADR-045 §D-9 threshold 2 Mandatory escalation 산물 + 12th meta-occurrence (CFP-1342 ADR-082 Amd 18 + sub-scope 1-H collision detected during pre-merge window of THIS Story PR #1527 post-open, recovery via renumber Amd 18→19 + sub-scope 1-H→1-I + 4-file cross-ref rebase on origin/main HEAD ca1c20e — recursive dogfooding evidence for #1476 sub-decisions 1+2+3 race window 영역 직접 reproduce: worktree create T0 → spawn prompt finalize T1 → ArchitectAgent commit T2 → ~30-60s gap → CFP-1342 merge T3 → PR #1527 open T4 → collision T5 → recovery T6) — sub-decision 3 (Race condition window 단축) carrier within CFP-FU-A. paired sibling = ADR-073 Amendment 13 (sub-decision 1 polling cadence 1→3, 12+13번째 transition trigger entries `pre_git_operation` + `pre_push`) + ADR-073 Amendment 14 (sub-decision 2 OR→AND composition layer §결정 1-P primitive AND aggregate) = 3 ADR Amendment 동시 발의 axis disjoint complement 3-set (event timing cadence + composition layer + window narrowing), ADR-064 §결정 1 CFP scope unitary 정합. 4-tuple primitive: (a) pre-spawn-prompt-finalize verify mandate — worktree create 후 spawn prompt content 작성 직전 (즉 `git worktree add` 완료 timestamp ~ `[USER-UTTERANCE-VERBATIM]` block emit timestamp 안 window ~30-60s) 1회 추가 polling 의무 (b) 3-source 동시 invoke + AND aggregate verify — `git fetch origin main --quiet` + `gh issue list --search` + `gh pr list --search \"head:<branch>\"` 3-source 동시 invoke + 모두 PASS verify (sub-decision 2 AND composition layer 정합) (c) race window ~30-60s 단축 mandate — worktree create timestamp ~ spawn prompt emit timestamp 안 polling 1회 의무 binding (d) verified-via annotation — spawn prompt 안 `pre_spawn_prompt_finalize_verified: <bool>` field 의무 명시. 본 sub-scope 1-I = sub-scope 1-A / 1-B / 1-C / 1-D / 1-E / 1-F / 1-G / 1-H 와 disjoint axis (pre-spawn-prompt-finalize window verify axis — spawn prompt finalize 직전 window 영역, Amd 15 1-E spawn-time SHA fetch 시점 + Amd 16 1-F mid-spawn drift 시점 + Amd 18 1-H Orchestrator §10 FIX Ledger resolution field source/evidence verify 와 disjoint complement). Amd 15 (1-E pre-spawn pin) = spawn-time SHA fetch 시점만 cover, Amd 16 (1-F mid-spawn drift) = spawn-internal periodic check 만 cover, Amd 18 (1-H) = Orchestrator FIX Ledger resolution field self-write verify 만 cover (Orchestrator monopoly axis), 본 Amd 19 (1-I) = chief author spawn pre-prompt-finalize window covered (worktree create 후 ~ spawn prompt finalize 직전, ArchitectAgent / chief author / deputy spawn 영역) = 4-layer temporal defense forcing function 완결 (pre-spawn-fetch + pre-spawn-prompt-finalize + mid-spawn-periodic + Orchestrator §10 source-claim). ADR-082 sub-scope 1-C `[USER-UTTERANCE-VERBATIM]` block precedent + sub-scope 1-E `[PRE-SPAWN-ORIGIN-MAIN-SHA]` block precedent 답습 (spawn-time anchor block normative pattern 동형). Wave 1 = declaration-only behavioral mandate (`mechanical_enforcement_actions[]` 신규 entry `pre-spawn-prompt-finalize-verify` warning-tier deferred-followup). Wave 2 mechanical wire (lint script + workflow yml hydrate + bats fixture + label-registry MINOR bump + evidence-checks-registry entry) = 별 sub-CFP carrier 분리 (CFP-1437/1436/1435 Wave 1→Wave 2 split precedent 답습). 본 Amendment 19 자체가 META-self-applied (§결정 10.D 14th applied case + collision recovery 1st applied case): 본 Amendment 번호(19) 가 target ADR-082 frontmatter `amendments:` Read verify (origin/main ca1c20eefd3f3db35a85604ec320f8f6cb2919ff max=18 — CFP-1342 Amd 18 merge 후 base post-CFP-1343 fetch verified, 정확 next-slot = 19) 후 결정 (verified-via: `git show origin/main:docs/adr/ADR-082-...md` frontmatter amendments[] 2026-05-25 KST 기준 origin/main HEAD ca1c20e post-collision-recovery rebase)."
     direction: strengthening
     sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §결정 1 layer 1 sub-scope (1-A/1-B/1-C/1-D/1-E/1-F/1-G/1-H) → (1-I pre-spawn-prompt-finalize verify layer) 확장). ADR-064 §결정 7 symmetric evidence-gated 정합. parallel session race 11th occurrence escalate_user pattern_count 11 ≫ threshold 2 Mandatory ADR-045 §D-9 산물 + 12th meta-occurrence (CFP-1342 collision recovery in-flight). META-self-applied (§결정 10.D 14th applied case + collision recovery 1st applied case)."
+  - amendment_id: 20
+    carrier_story: CFP-1559
+    date: 2026-05-25
+    summary: "§결정 15 신설 — Issue body stale-claim super-class verify-before-trust write-time pre-screen mandate. 4 sub-pattern closed-set enumeration: (a) PR #NNNN merge state (CLOSED/MERGED stale) — Issue body author 가 sibling PR state mention 시 stale 가능 (b) CFP-NNNN MERGED/CLOSED state stale — Issue body author 가 sibling CFP state mention 시 stale 가능 (c) count number stale — 'X VIOLATIONs' / 'Y defect' / 'pattern_count Z' 등 quantitative count cite 시 verify-after-the-fact 시 obsolete (d) sister carrier origin claim stale — 'CFP-NNNN carrier' / 'sibling CFP-NNNN' 등 sister origin attribution 시 실제 다른 carrier 영역. 본 Amendment 20 = super-class scope (Issue body content 영역 broader stale-reference pattern). CFP-1216 Phase 2 wired `amendment-number-frontmatter-verify` lint (sub-class — ADR-NNN Amd M regex citation only) extension super-class declarative anchor. paired sibling CFP-1558 = amendment-number sub-class declarative ratchet (axis disjoint, 본 ADR Amendment 21 점유 예정 chronologically — CFP-1559 발의 first, CFP-1558 = Amendment 21 sequential allocation). Wave 1 = declaration-only behavioral mandate (`mechanical_enforcement_actions[]` 신규 entry `issue-body-claim-pre-screen` warning-tier deferred-followup append). Wave 2 mechanical wire (`scripts/lib/check_issue_body_claim_pre_screen.py` Python SSOT per ADR-061 + `scripts/check-issue-body-claim-pre-screen.sh` bash thin wrapper + `templates/github-workflows/issue-body-claim-pre-screen.yml` workflow + `.github/workflows/` byte-identical mirror + `tests/scripts/cfp-issue-body-claim-pre-screen.bats` fixture RED→GREEN stash proof per ADR-082 §결정 11.A + ContinuityAgent agent file cross-plugin sync ADR-010) = 별 sub-CFP carrier 분리 (CFP-1437/1436/1435 → CFP-1489/1500/1497/1502 Wave 1→Wave 2 split precedent 답습). pattern_count 7+ reach Mandatory ADR-045 §D-9 escalation 산물: CFP-FU-B Issue #1477 5-defect 3 PIVOT (#2 description text stale / #4 count '4 VIOLATIONs' stale / #5 origin claim 'CFP-1303' stale = 60% stale rate) + CFP-1041/1050 RequirementsPL spawn packet stale claim lineage 4 evidence trail = 합산 ≥ 7 reach. ADR-064 §결정 7 (CFP-1149 Amendment 8) symmetric evidence-gated ratchet 강화 방향 정합. False-positive 완화 guards (code-span EXEMPT / quoted-text EXEMPT / templates/** EXEMPT / docs/stories/§9 transcript EXEMPT) = Wave 2 lint design 시 결정 — Phase 1 declarative scope 외. ContinuityAgent verify-before-trust 8-tuple matrix scope expansion (RequirementsPL spawn prompt `issue_body_pre_screen_warnings` field 추가) = Wave 2 cross-plugin ADR-010 sibling sync 시점. axis disjoint with sister carriers CFP-1437/1436/1497 3-layer defense (spawn lifecycle axis) — 본 Amendment 20 = Issue body content verify-before-trust write-time axis (lifecycle 단계 비교: 본 Amd 20 = Issue body authored 시점 / CFP-1437 Amd 15 = chief author spawn-time SHA pin / CFP-1436 Amd 16 = spawn-internal periodic / CFP-1435 Amd 17 = amendment slot reservation lifecycle / CFP-1342 Amd 18 = Orchestrator §10 FIX Ledger source-claim / CFP-FU-A Amd 19 = pre-spawn-prompt-finalize window). 본 Amendment 20 자체가 META-self-applied (§결정 10.D 15th applied case): 본 Amendment 번호(20) 가 target ADR-082 frontmatter `amendments:` Read verify (origin/main HEAD `4000440ee2c31c35b042dd0e5220be5c2f3aaefd` max=19 — CFP-FU-A Amd 19 merge 후 base, 정확 next-slot = 20) 후 결정 (verified-via: `git show origin/main:docs/adr/ADR-082-...md` frontmatter amendments[] 2026-05-25 KST 기준 origin/main HEAD 4000440 post-CFP-FU-A merge 11bf2d95→ca1c20e→4000440 fetch verified) + ADR-082 Amendment 17 §결정 1-G strict claim mandate 2nd applied case (chief author body write 전 ADR-RESERVATION row pre-append + commit + push 완료 verified)."
+    direction: strengthening
+    sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: ADR-082 super-class scope (Issue body authorship verify Amendment 2 §결정 1 layer 1 sub-scope 1-A) → Issue body content broader stale-claim super-class (4 sub-pattern enumeration: PR merge state / CFP merge state / count number / sister carrier origin) 확장, forbid scope 축소 0건). ADR-064 §결정 7 (CFP-1149 Amendment 8) symmetric evidence-gated 정합. pattern_count evidence: §결정 15 = 7 reach (CFP-FU-B 3 PIVOT + CFP-1041/1050 lineage 4). is_transitional: false 유지 (permanent governance policy). META-self-applied (§결정 10.D 15th applied case + Amendment 17 §결정 1-G strict claim mandate 2nd applied case after CFP-1492)."
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-841
@@ -218,6 +224,12 @@ amendment_log:
     decisions_touched: ["§결정 1"]
     nature: ratchet-up  # §결정 1 layer 1 sub-scope (1-H Orchestrator §10 FIX Ledger resolution field claim source/evidence verify) 확장 (ADR-058 §결정 5 강화 방향)
     note: "S6 Theme 5 Optional quartet — CFP-1316 retro F2 Optional carrier. Orchestrator self-write monopoly 영역 (§10 FIX Ledger resolution field — fix-event-v1 contract, CFP-32) 의 claim source/evidence verify 의무 명문화 — sub-scope 1-A/1-B/1-C/1-D/1-E/1-F/1-G 7종 외 codify gap closure (Orchestrator §10 FIX Ledger row resolution field write authority 영역 axis disjoint, fix-event-v1 contract level write-time semantic truth verify). 4 의무 codify: (a) Orchestrator §10 FIX Ledger row resolution field 작성 시 인용 source / evidence verify-via direct execution 의무 (b) measurable evidence claim 시 실 검증된 결과 verify (cached / inferred 사용 금지) (c) verified-via annotation (예: 'Read <path> + grep count = N + exit code = 0') 의무 (d) wrap-style 자동화 영역 = 실 실행 결과 stdout / exit code / grep diff 확인 후 작성. Wave 1 = declaration-only behavioral mandate (`mechanical_enforcement_actions[]` 신규 entry `fix-ledger-resolution-source-verify` warning-tier deferred-followup — fix-event-v1 contract emit-time pre-check pattern). Wave 2 mechanical lint = 별 sub-CFP carrier (deferred-followup, ADR-082 §결정 6 retain pattern 답습). 동인 evidence: CFP-1316 iter 1 §10 FIX Ledger row resolution field claim 영역 'wrap 실행 완료, advisory 0 verified' 영역 = Orchestrator self-write monopoly verify-before-trust gap risk pattern (wrap 미실행 영역에서 작성됐다면 false declare = §결정 1 layer 1 위배). 본 Amendment 18 = sub-scope 1-H 명시 codify. doc-only fast-path ADR-054 Cat 1 단일 PR (script / workflow / bats wire 0건). 본 Amendment 18 자체가 META-self-applied (§결정 10.D 13th applied case + Amendment 17 sub-scope 1-G pre-reservation strict claim mandate 1st applied case): 본 Amendment 번호(18) 가 target ADR-082 frontmatter `amendments:` Read verify (origin/main 11bf2d95e47be364438cc293812f6066dc07ed0f max=17 — CFP-1341 Amd 17 merge 후 base, 정확 next-slot = 18) 후 결정 + ADR-RESERVATION amendments_reserved[] row pre-append 완료 (adr_number 82 amendment_id 18 reserved_by_cfp CFP-1342 reservation_date 2026-05-25 KST status active). minimal-applicability: §10 FIX Ledger resolution field write monopoly = Orchestrator only — lane agent / PL agent / chief author 영역 0 (sub-scope (1-B) 일반 lane agent self-write 와 disjoint axis)."
+  - amendment_id: 20
+    carrier_story: CFP-1559
+    date: 2026-05-25  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 15 (신설)"]
+    nature: ratchet-up  # §결정 15 신설 — Issue body stale-claim super-class verify-before-trust write-time pre-screen mandate (4 sub-pattern closed-set enumeration). ADR-082 super-class scope expansion (Amendment 2 §결정 1 layer 1 sub-scope 1-A Issue body authorship → Issue body content broader stale-claim super-class), ADR-058 §결정 5 강화 방향.
+    note: "FU-CFP-D super-class carrier — Issue body stale-claim 4 sub-pattern closed-set declarative anchor. 4 sub-pattern: (a) PR #NNNN merge state stale / (b) CFP-NNNN MERGED/CLOSED state stale / (c) count number stale 'X VIOLATIONs' / 'Y defect' / 'pattern_count Z' / (d) sister carrier origin claim stale 'CFP-NNNN carrier'. CFP-1216 Phase 2 wired `amendment-number-frontmatter-verify` lint (sub-class — ADR-NNN Amd M regex citation only) extension super-class declarative anchor. paired sibling CFP-1558 = amendment-number sub-class declarative ratchet (axis disjoint, 본 ADR Amendment 21 점유 예정 — CFP-1559 발의 first chronological, CFP-1558 = Amendment 21 sequential allocation). Wave 1 = declaration-only behavioral mandate (`mechanical_enforcement_actions[]` 신규 entry `issue-body-claim-pre-screen` warning-tier deferred-followup). Wave 2 mechanical wire (lint script + workflow + bats fixture + ContinuityAgent agent file cross-plugin) = 별 sub-CFP carrier 분리 (CFP-1437/1436/1435 → CFP-1489/1500/1497/1502 Wave 1→Wave 2 split precedent 답습). pattern_count 7+ reach Mandatory ADR-045 §D-9 escalation 산물: CFP-FU-B Issue #1477 5-defect 3 PIVOT (60% stale rate) + CFP-1041/1050 RequirementsPL spawn packet stale claim lineage 4 = 합산 ≥ 7. ADR-064 §결정 7 (CFP-1149 Amendment 8) symmetric evidence-gated ratchet 강화 정합. False-positive 완화 guards (code-span / quoted-text / templates/** / §9 transcript EXEMPT) = Wave 2 lint design scope (Phase 1 declarative scope 외). axis disjoint with sister 3-layer defense (CFP-1437 spawn-time SHA pin / CFP-1436 mid-spawn drift / CFP-1435 amendment slot reservation / CFP-1342 Orchestrator §10 FIX Ledger / CFP-FU-A pre-spawn-prompt-finalize window — 본 Amendment 20 = Issue body content write-time axis). 본 Amendment 20 자체가 META-self-applied (§결정 10.D 15th applied case + Amendment 17 §결정 1-G strict claim mandate 2nd applied case after CFP-1492): 본 Amendment 번호(20) = target ADR-082 frontmatter `amendments:` Read verify (origin/main HEAD `4000440ee2c31c35b042dd0e5220be5c2f3aaefd` max=19 — CFP-FU-A Amd 19 merge 후 base, 정확 next-slot = 20) 후 결정. ADR-RESERVATION amendments_reserved[] row pre-append + commit + push 완료 verified (commit `7a7ac08`, ArchitectAgent body write 전 strict pre-claim 의무 충족)."
   - amendment_id: 19
     carrier_story: CFP-FU-A
     date: 2026-05-25  # KST per ADR-079 §결정 2
@@ -264,6 +276,11 @@ related_stories:
   - CFP-FU-A # Amendment 19 carrier (§결정 1 layer 1 sub-scope (1-I) 신설 — pre-spawn-prompt-finalize verify layer mandate, sub-decision 3 carrier within CFP-FU-A, renumbered from Amd 18 sub-scope 1-H post CFP-1342 mid-flight collision recovery, paired sibling ADR-073 Amendment 13 + 14, 3 ADR Amendment 동시 발의 axis disjoint complement 3-set, parallel session race 11th occurrence escalate_user pattern_count 11 reach Mandatory ADR-045 §D-9 산물 + 12th meta-occurrence collision recovery in-flight evidence)
   - CFP-1420 # Amendment 19 sentinel — parallel session race 11th occurrence (Mega-Epic CFP-1415 Sub-A S1.2, PR #1442 STAND_DOWN_DUPLICATE per #1441 prior merge)
   - CFP-1342 # Amendment 19 collision sentinel — CFP-1342 ADR-082 Amd 18 + sub-scope 1-H collision detected post-PR-#1527-open, recovery via Amd 19 + sub-scope 1-I + rebase on origin/main HEAD ca1c20e (12th meta-occurrence, recursive dogfooding evidence for #1476)
+  - CFP-1559 # Amendment 20 carrier (§결정 15 신설 — Issue body stale-claim super-class verify-before-trust write-time pre-screen mandate. 4 sub-pattern closed-set enumeration: PR merge state stale / CFP merge state stale / count number stale / sister carrier origin claim stale. CFP-1216 Phase 2 wired amendment-number-frontmatter-verify lint sub-class extension super-class declarative anchor. paired sibling CFP-1558 = amendment-number sub-class declarative ratchet axis disjoint, 본 ADR Amendment 21 점유 예정. pattern_count 7+ reach Mandatory ADR-045 §D-9 escalation 산물 — CFP-FU-B 3 PIVOT + CFP-1041/1050 lineage 4)
+  - CFP-1558 # Amendment 21 carrier (paired sibling — amendment-number sub-class declarative ratchet, ADR-082 Amendment 21 점유 예정 sequential allocation 후 CFP-1559)
+  - CFP-1477 # Amendment 20 sentinel evidence — CFP-FU-B Issue #1477 5-defect 3 PIVOT 60% stale rate
+  - CFP-1041 # Amendment 20 sentinel evidence — RequirementsPL spawn packet stale claim pattern_count lineage 4
+  - CFP-1050 # Amendment 20 sentinel evidence — RequirementsPL spawn packet stale claim pattern_count lineage 4 sister CFP
 related_adrs:
   - ADR-073  # Orchestrator cross-repo state / assumption verify (disjoint 보완 — Orchestrator 행위 한정)
   - ADR-070  # Codex external worker output verify (disjoint 보완 — 외부 worker output 한정)
@@ -305,6 +322,10 @@ related_files:
   - <internal-docs>/plugin-codeforge/change-plans/cfp-1436-mid-flight-rebase-detection.md  # Amendment 16 carrier Change Plan (CFP-1436 Phase 1 Story, internal-docs SSOT per ADR-013 dogfood-out policy)
   - docs/adr/ADR-050-parallel-epic-conflict-coordination.md  # Amendment 17 cross-ref — Parallel epic conflict coordination ADR-RESERVATION carrier (amendment slot reservation = fine-grained ADR number reservation extension, CFP-1058 Amendment 4 codify + 본 Amendment 17 forcing function)
   - templates/github-workflows/amendment-slot-reservation-check.yml  # Amendment 17 동반 — Wave 1 declaration-only workflow stub (실 logic = Wave 2 별 sub-CFP carrier)
+  - docs/adr/ADR-082-write-time-self-write-verification-mandate.md  # Amendment 20 self-anchor — Issue body stale-claim super-class verify-before-trust pre-screen mandate (§결정 15 신설, super-class extension of CFP-1216 amendment-number-frontmatter-verify sub-class lint)
+  - <internal-docs>/plugin-codeforge/change-plans/cfp-1559-issue-body-stale-claim-super-class.md  # Amendment 20 carrier Change Plan (CFP-1559 Phase 1 Story, internal-docs SSOT per ADR-013 dogfood-out policy)
+  - <internal-docs>/plugin-codeforge/stories/cfp-1559.md  # Amendment 20 carrier Story file
+  - docs/cross-repo-patches/cfp-1559-marketplace-sync.patch.txt  # Amendment 20 동반 — marketplace.json sibling sync patch draft (cross-repo PR per ADR-063 §결정 2 ordering: marketplace 선행 merge)
 is_transitional: false
 # Wave 1 = behavioral directive only (lane agent write-time self-discipline forcing function).
 # Wave 2 (Amendment 1, CFP-841) = §결정 6 behavioral→mechanical 전환:
@@ -346,6 +367,9 @@ mechanical_enforcement_actions:
   - action: pre-spawn-prompt-finalize-verify
     status: deferred-followup     # Phase 1 declare (본 Amendment 18 CFP-FU-A) / Phase 2 actual wire = 별 sub-CFP carrier (lint script + workflow yml hydrate + bats fixture + label-registry MINOR + evidence-checks-registry entry)
     target_section: §결정 1 layer 1 sub-scope (1-H)       # pre-spawn-prompt-finalize verify layer mandate — worktree create 후 spawn prompt content 작성 직전 ~30-60s window 안 1회 추가 polling 의무 (git fetch + gh issue list + gh pr list 3-source AND aggregate, race window 단축). paired sibling ADR-073 Amendment 13 transition trigger `pre_git_operation` + `pre_push` + Amendment 14 §결정 1-P AND composition layer (sub-decision 1+2+3 3 ADR Amendment 동시 발의 axis disjoint complement 3-set). parallel session race 11th occurrence escalate_user pattern_count 11 reach Mandatory ADR-045 §D-9 산물.
+  - action: issue-body-claim-pre-screen
+    status: deferred-followup     # Phase 1 declare (본 Amendment 20 CFP-1559 super-class) / Phase 2 actual wire = 별 sub-CFP carrier (lint script `scripts/lib/check_issue_body_claim_pre_screen.py` Python SSOT per ADR-061 + `scripts/check-issue-body-claim-pre-screen.sh` bash thin wrapper + `templates/github-workflows/issue-body-claim-pre-screen.yml` workflow + `.github/workflows/` byte-identical mirror + `tests/scripts/cfp-issue-body-claim-pre-screen.bats` fixture RED→GREEN stash proof + ContinuityAgent agent file cross-plugin ADR-010 sibling sync — codeforge-requirements:ContinuityAgent.md verify-before-trust 8-tuple matrix scope expansion + RequirementsPL spawn prompt `issue_body_pre_screen_warnings` field 추가)
+    target_section: §결정 15       # Issue body stale-claim super-class verify-before-trust write-time pre-screen mandate — 4 sub-pattern closed-set enumeration (a-PR #NNNN merge state CLOSED/MERGED stale / b-CFP-NNNN MERGED/CLOSED state stale / c-count number stale 예 `X VIOLATIONs` `Y defect` `pattern_count Z` / d-sister carrier origin claim stale 예 `CFP-NNNN carrier`). CFP-1216 Phase 2 wired `amendment-number-frontmatter-verify` lint (sub-class — ADR-NNN Amd M regex citation only) extension super-class declarative anchor. paired sibling CFP-1558 = amendment-number sub-class declarative ratchet axis disjoint (본 ADR Amendment 21 점유 예정). pattern_count 7+ reach Mandatory ADR-045 §D-9 escalation 산물 (CFP-FU-B Issue #1477 3 PIVOT 60% stale rate + CFP-1041/1050 RequirementsPL spawn packet stale claim lineage 4 = 합산 ≥ 7).
 sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (ratchet 강화 방향 only — verify scope 확장). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과. is_transitional: false (영구 정책). self-referential 주의: 본 ADR 의 해소기준 부재 선언 자체가 §결정 2 verify 대상 아님 (§결정 6 EC-3 self-protection)."
 pre_lookup_evidence:
   verified_files:
@@ -1688,3 +1712,120 @@ Wave 1 retain rationale: mechanical wire 의 detection logic (Orchestrator runti
 - `templates/github-workflows/pre-spawn-prompt-finalize-verify.yml` — workflow stub (declaration-only Wave 1 / Wave 2 mechanical wire 별 sub-CFP carrier)
 - `<internal-docs>/plugin-codeforge/stories/CFP-FU-A.md` — Story file (CFP-FU-A carrier, Phase 1 declarative, §10 12th meta-occurrence marker)
 - `CLAUDE.md` — verify-before-trust 4-layer 단락 ADR-073 Amendment 13/14 + ADR-082 Amendment 19 cross-ref 1 line append (CFP-506 line cap 정합)
+
+---
+
+## Amendment 20 — §결정 15 신설 (Issue body stale-claim super-class verify-before-trust write-time pre-screen mandate, CFP-1559, 2026-05-25 KST)
+
+**날짜**: 2026-05-25 KST
+
+**carrier**: CFP-1559 (FU-CFP-D super-class — Issue body stale-claim 4 sub-pattern closed-set declarative anchor)
+
+**paired sibling (axis disjoint)**: CFP-1558 (amendment-number sub-class declarative ratchet, ADR-082 Amendment 21 점유 예정 sequential allocation 후 본 CFP-1559)
+
+### 동기
+
+**ADR-045 §D-9 Mandatory escalation trigger**: PMOAgent CFP-FU-A+FU-B batch retro (2026-05-25 KST) cross-Story aggregate evidence — Issue body 안 stale origin claim 또는 stale count 다발 pattern_count 7+ reach (≫ threshold 2 = 3.5x 초과). 사용자 결정 Q2 = Mechanical lint 신설 채택.
+
+**Sentinel evidence (pattern_count 7+ reach)**:
+
+| # | Story | Stale claim 영역 | Direct evidence |
+|---|---|---|---|
+| 1 | CFP-FU-B (Issue #1477) defect #2 | description text stale | PIVOT MAJOR — Issue body description ↔ actual file content drift |
+| 2 | CFP-FU-B (Issue #1477) defect #4 | count number stale ("4 VIOLATIONs") | PIVOT MINOR — actual grep count ≠ claimed 4 |
+| 3 | CFP-FU-B (Issue #1477) defect #5 | origin claim stale ("CFP-1303 carrier") | PIVOT MAJOR — actual carrier ≠ CFP-1303 |
+| 4-7 | CFP-1041/1050 lineage | RequirementsPL spawn packet stale claim pattern_count 4 | memory `project_cfp_1041_1050_wrapper_wide_pin_cleanup_complete.md` |
+
+합산 ≥ 7 reach (CFP-FU-B 3 PIVOT 60% stale rate + CFP-1041/1050 lineage 4) = ADR-045 §D-9 Mandatory escalation 산물 (threshold 2 의 3.5배 초과 large margin).
+
+**Sub-class vs super-class scope axis disjoint**:
+
+- **Sub-class (CFP-1216 Phase 2 wired)** = `amendment-number-frontmatter-verify` lint (regex `ADR-NNN Amd M` citation only) — script `check-amendment-number-stale.sh` + workflow `amendment-number-frontmatter-verify.yml` + bats fixture + label `hotfix-bypass:amendment-number-stale` 67번째 family member. CFP-1312 Amendment 7 양방향 Check (b) backward-staleness extension 완료. **현재 mechanical wire 부재 영역** = amendment-number 외 모든 Issue body content stale claim 영역.
+- **Super-class (본 Amendment 20 carrier)** = 4 sub-pattern closed-set enumeration: PR merge state stale / CFP merge state stale / count number stale / sister carrier origin claim stale — broader Issue body content stale-reference pattern. **declarative-only Wave 1**, mechanical wire = 별 sub-CFP carrier (CFP-1437/1436/1435 → CFP-1489/1500/1497/1502 Wave 1→Wave 2 split precedent 답습).
+
+### §결정 15 신설 — Issue body stale-claim super-class verify-before-trust write-time pre-screen mandate (4 sub-pattern closed-set enumeration)
+
+**적용 조건**: `issue_origin: orchestrator_authored_followup` Issue body → 의무 (Amendment 2 §결정 1 layer 1 sub-scope 1-A scope 정합).
+
+**4 sub-pattern closed-set enumeration** (super-class scope expansion of CFP-1216 amendment-number sub-class):
+
+#### (a) PR #NNNN merge state stale pre-screen verify
+
+Issue body 안 `PR #NNNN` citation 발견 시 = author 시점 ↔ verify 시점 사이 race 로 stale 화 가능 영역. write-time verify-via direct evidence (예: `gh pr view <NNNN> --json state,merged,mergedAt`) + verified-via annotation 의무 (예: `[verified-via: gh pr view 1441 state=MERGED merged=true mergedAt=2026-05-24T03:07:53Z pinned_at: 2026-05-24]`).
+
+**Wave 2 lint heuristic**: regex `PR #\d+` 발견 시 Issue body 안 (or 직후 N±5 line window) verified-via annotation presence 검사. 부재 시 warning emit.
+
+#### (b) CFP-NNNN MERGED/CLOSED state stale pre-screen verify
+
+Issue body 안 `CFP-NNNN` citation 발견 시 (특히 `MERGED` / `CLOSED` / `CARRIER` / `PR` keyword 동반) = author 시점 ↔ verify 시점 사이 race 로 stale 화 가능 영역. write-time verify-via direct evidence (예: `gh issue view <NNNN> --json state,stateReason,closedAt`) + verified-via annotation 의무.
+
+**Wave 2 lint heuristic**: regex `CFP-\d{4,5}` 발견 시 동반 state keyword presence + verified-via annotation cross-validate.
+
+#### (c) count number stale pre-screen verify
+
+Issue body 안 quantitative count cite 발견 시 (예: `X VIOLATIONs` / `Y defect` / `pattern_count Z` / `N occurrence` / `M times`) = verify-after-the-fact 시점에 obsolete 가능 영역. write-time verify-via direct evidence (예: `grep -c <pattern> <file>` 또는 `git log --oneline --grep=<pattern> | wc -l`) + verified-via annotation 의무.
+
+**Wave 2 lint heuristic**: regex `\d+\s+(VIOLATIONs?|defects?|occurrences?|times?|pattern_count)` 발견 시 동반 verified-via annotation cross-validate. Caveat: semantic count vs grep count gap 영역은 false-positive risk (Wave 2 design 시 enum-style guard 결정).
+
+#### (d) sister carrier origin claim stale pre-screen verify
+
+Issue body 안 sister carrier origin attribution 발견 시 (예: `CFP-NNNN carrier` / `sibling CFP-NNNN` / `paired CFP-NNNN`) = 실제 다른 carrier 영역 (cross-Story authorship miss) 가능 영역. write-time verify-via direct evidence (예: `gh issue view <NNNN> --json title,body,labels` cross-reference) + verified-via annotation 의무.
+
+**Wave 2 lint heuristic**: regex `(carrier|sibling|paired)\s*:?\s*CFP-\d+` 발견 시 carrier 영역 cross-attribution verify.
+
+### §결정 15.A — Wave 1 = declaration-only behavioral mandate
+
+`mechanical_enforcement_actions[]` 신규 entry `issue-body-claim-pre-screen` warning-tier deferred-followup append (본 ADR frontmatter 9번째 mechanical action). Wave 2 mechanical wire (lint script + workflow yml hydrate + bats fixture + label-registry MINOR bump + evidence-checks-registry Active entry + ContinuityAgent agent file cross-plugin sync ADR-010) = 별 sub-CFP carrier 분리 (CFP-1437/1436/1435 → CFP-1489/1500/1497/1502 Wave 1→Wave 2 split precedent 답습).
+
+Wave 1 retain rationale: mechanical wire 의 detection logic (false-positive 완화 guards — code-span EXEMPT / quoted-text EXEMPT / `templates/**` EXEMPT / `docs/stories/§9` transcript EXEMPT / per-block scan cap N=50 line CodeQL ReDoS guard CFP-1497 PR #1499 sentinel 답습) = 별 Wave 2 design scope.
+
+### §결정 15.B — sub-class lint extension super-class declarative anchor
+
+CFP-1216 Phase 2 wired `amendment-number-frontmatter-verify` lint (regex `ADR-NNN Amd M` citation sub-class only) = 본 super-class scope (4 sub-pattern enumeration) 의 1 sub-pattern. 양 axis disjoint declarative + mechanical layer 분리:
+
+- **CFP-1216 wired sub-class**: ADR-NNN Amd M citation amendment 번호 staleness (1 sub-pattern, mechanical lint Active warning tier)
+- **본 Amendment 20 super-class declarative**: 4 sub-pattern closed-set enumeration (PR/CFP/count/sister origin), Wave 2 mechanical wire = 별 sub-CFP carrier
+
+paired sibling CFP-1558 = amendment-number sub-class declarative ratchet codify (ADR Amendment 21 점유 예정) — CFP-1558 + CFP-1559 = 합쳐서 super-class + sub-class 양면 ratchet 강화 (axis disjoint, ADR-064 §결정 1 CFP scope unitary 정합).
+
+### §결정 15.C — disjoint axis cross-ref
+
+- **1-A (Amendment 2)** Orchestrator-authored Issue body authorship pre-publish verify (write-time, 일반 Issue body authorship verify): 본 Amendment 20 = Issue body content broader stale-claim super-class — Amendment 2 의 scope superset (Issue body authorship 일반 verify ↔ Issue body content 4 sub-pattern stale-claim specific verify).
+- **CFP-1216 amendment-number-frontmatter-verify (Active warning tier)**: ADR-NNN Amd M citation sub-class — 본 Amendment 20 super-class 의 1 sub-pattern (4 sub-pattern enumeration 의 amendment-number extension).
+- **3-layer defense (CFP-1437 Amd 15 1-E + CFP-1436 Amd 16 1-F + CFP-1435 Amd 17 1-G)**: spawn lifecycle axis (spawn-time SHA pin + spawn-internal periodic drift + amendment slot reservation lifecycle pre-claim). 본 Amendment 20 = Issue body content axis (write-time content stale-claim) — lifecycle 단계 disjoint axis complement.
+- **CFP-FU-A Amd 19 1-I (pre-spawn-prompt-finalize window)**: spawn prompt finalize 직전 ~30-60s window verify. 본 Amendment 20 = Issue body authored 시점 verify (lifecycle 비교: 본 Amd 20 = Issue body authoring 시점 / Amd 19 = spawn prompt finalize 시점 — disjoint axis).
+- **CFP-1342 Amd 18 1-H (Orchestrator §10 FIX Ledger source-claim verify)**: Orchestrator monopoly fix-event-v1 contract write-time verify. 본 Amendment 20 = Issue body authorship write-time verify (write 주체 disjoint axis).
+
+### §결정 15.D — META self-application (15th applied case)
+
+본 Amendment 20 자체가 META-self-applied (§결정 10.D 15th applied case):
+
+- Amendment 번호 (20) = target ADR-082 frontmatter `amendments:` Read verify origin/main HEAD `4000440ee2c31c35b042dd0e5220be5c2f3aaefd` max=19 (CFP-FU-A Amd 19 merge 후 base) 후 결정 — 정확 next-slot = 20.
+- Amendment 17 §결정 1-G strict claim mandate 2nd applied case (after CFP-1492): ADR-RESERVATION amendments_reserved[] row pre-append + commit + push 완료 (`7a7ac08`) verified, ArchitectAgent body write 전 strict pre-claim 의무 충족.
+- META self-application pattern: 본 Amendment 20 carrier 자체가 Issue body §"pattern_count 7+ reach" claim 영역 verify-before-trust 적용 (CFP-FU-B 5-defect 3 PIVOT + CFP-1041/1050 lineage 4 evidence trail Story §2.1 verified state table 작성 시 direct evidence cross-reference 검증 완료).
+
+### 근거
+
+- §결정 1 layer 1 sub-scope (1-A Issue body authorship verify Amendment 2) 의 scope superset 확장 — Issue body authorship 일반 verify ↔ Issue body content 4 sub-pattern stale-claim specific verify. forbid scope 확장 (Issue body content broader stale-reference pattern), 약화 영역 0건.
+- CFP-1216 Phase 2 wired amendment-number-frontmatter-verify sub-class lint 의 super-class declarative extension — 1 sub-pattern (ADR-NNN Amd M regex citation) → 4 sub-pattern closed-set enumeration (PR/CFP/count/sister origin).
+- pattern_count 7+ reach (CFP-FU-B 3 PIVOT 60% stale rate + CFP-1041/1050 lineage 4) ≫ ADR-045 §D-9 threshold 2 = Mandatory escalation 산물.
+- ADR-058 §결정 5 sunset_justification N/A 면제 (ratchet 강화 방향, forbid scope 축소 0건).
+- ADR-064 §결정 7 (CFP-1149 Amendment 8) symmetric evidence-gated ratchet 강화 정합. is_transitional: false 유지 (permanent governance policy).
+- ADR-040 Amendment 3 §결정 7.A schema 정합 — `mechanical_enforcement_actions[]` 9-entry (Amendment 1 의 2 + Amendment 6 의 1 + Amendment 14 의 1 + Amendment 15 의 1 + Amendment 16 의 1 + Amendment 17 의 1 + Amendment 19 의 1 + 본 Amendment 20 의 1 entry).
+- ADR-039 lane self-write boundary 정합 — codeforge-design ArchitectAgent (chief author) self-write (ADR-082 wrapper-self), cross-plugin agent file ContinuityAgent (codeforge-requirements) Wave 2 carrier 분리 (ADR-010 sibling sync).
+- ADR-054 §결정 1 doc-only fast-path 정합 (ADR Amendment + RESERVATION row + registry entry + label MINOR + plugin.json PATCH + marketplace sibling sync, src/tests 무변경 단일 PR).
+- 본 Amendment 20 자체가 META-self-applied (§결정 10.D 15th applied case + Amendment 17 strict claim mandate 2nd applied case).
+
+### Related (Amendment 20 동반)
+
+- `docs/adr/ADR-RESERVATION.md` — `amendments_reserved[]` row append (adr_number 82 amendment_id 20 reserved_by_cfp CFP-1559 reservation_date 2026-05-25 KST status active) commit `7a7ac08` pre-claim 완료
+- `docs/inter-plugin-contracts/label-registry-v2.md` — v2.73 → v2.74 MINOR bump + 99번째 hotfix-bypass family member `hotfix-bypass:issue-body-claim-pre-screen` (Wave 2 carrier bypass channel)
+- `docs/inter-plugin-contracts/MANIFEST.yaml` — label-registry-v2 row `"2.73"` → `"2.74"` ratchet
+- `docs/evidence-checks-registry.yaml` — 신규 entry `issue-body-claim-pre-screen` warning-tier deferred-followup (Phase 1 declare / Phase 2 mechanical wire = 별 sub-CFP carrier)
+- `.claude-plugin/plugin.json` — 6.7.2 → 6.7.3 PATCH bump (governance Amendment 신설 ADR-037 (a) carrier behavior 변경, CFP-1368 precedent 답습)
+- `mclayer/marketplace:.claude-plugin/marketplace.json` — codeforge entry version + description sibling sync (cross-repo PR per ADR-063 §결정 2 ordering: marketplace 선행 merge)
+- `CHANGELOG.md` — CFP-1559 entry append `[Unreleased]` `### Added` (2026-05-25 KST)
+- `CLAUDE.md` — verify-before-trust 4-layer 단락 ADR-082 Amendment 20 §결정 15 cross-ref 1 line append (CFP-506 line cap 정합)
+- `<internal-docs>/plugin-codeforge/change-plans/cfp-1559-issue-body-stale-claim-super-class.md` — Change Plan SSOT (Phase 1 carrier, internal-docs SSOT per ADR-013 dogfood-out policy)
+- `<internal-docs>/plugin-codeforge/stories/cfp-1559.md` — Story file (CFP-1559 carrier, Phase 1 declarative)
+- `docs/cross-repo-patches/cfp-1559-marketplace-sync.patch.txt` — marketplace.json sibling sync patch draft (cross-repo PR)
