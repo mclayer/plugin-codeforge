@@ -2977,6 +2977,36 @@ GitHub Issue/PR 갱신·코멘트 기록·sub-issue 생성 불가 시:
 
 **CFP-1302 추가 (phase-gate-auto-cleanup.yml + multi-gate explicit shape)**: phase 전환 시 prior gate label 자동 cleanup 은 신규 workflow `templates/github-workflows/phase-gate-auto-cleanup.yml` (CFP-1302 / CFP-604 retro F6 Wave 2) 가 담당 (SRP 분리, `phase-gate-mergeable.yml` 와 concurrency.group namespace 분리). multi-gate `required` shape = `{phase, gates: string[]}` array (semantic 변경 0, syntactic 강화 — `every()` AND invariant + B-1 empty-array fail-loud guard). `liveEntryOk` 별 변수 보존 (ADR-030 conditional gate semantics — `required.gates[]` unconditional array semantics 와 axis disjoint, CFP-1302 D-1 결정).
 
+#### 9.7.1 Phase label transition timing (CFP-1577 / CFP-1539+CFP-1540 batch retro §4.1 #1)
+
+§9.7 표 = **static label × gate snapshot mapping** (PR open 시점 mergeable 판정 기준). 본 §9.7.1 표 = **dynamic transition timing forcing function** — Orchestrator 가 *언제 어떤* phase label add/remove + gate label attach 의무인지 codify. axis disjoint (snapshot 판정 ↔ transition timing). CFP-1539+CFP-1540 batch merge incident (premature `phase:완료` attach → workflow ACTION_REQUIRED → manual recovery) 가 forcing function source.
+
+| Phase (target) | Add label | Remove label | Add gate | Timing signal (event) | Source |
+|---|---|---|---|---|---|
+| `phase:대기` | `phase:대기` | — | — | Issue Forms submission 직후 `story-init.yml` Action 자동 부착 | story-init.yml (mechanical) |
+| `phase:요구사항` | `phase:요구사항` | `phase:대기` | — | RequirementsPLAgent spawn 직전 (Orchestrator lane entry trigger) | Orchestrator |
+| `phase:설계` | `phase:설계` | `phase:요구사항` | — | RequirementsPL verdict PASS + ArchitectPLAgent spawn 직전 | Orchestrator |
+| `phase:설계-리뷰` | `phase:설계-리뷰` | `phase:설계` | — (verdict 후 부착) | ArchitectAgent verdict 후 DesignReviewPLAgent spawn 직전 | Orchestrator |
+| `phase:구현` | `phase:구현` | `phase:설계-리뷰` | `gate:design-review-pass` (DesignReview PASS 시점 부착) | DesignReviewPL verdict PASS 직후 + DeveloperPLAgent spawn 직전 | Orchestrator (gate label = codeforge-review self-write) |
+| `phase:구현-리뷰` | `phase:구현-리뷰` | `phase:구현` | (`gate:design-review-pass` retain — 별도 code-review gate 미도입) | DeveloperPL ready + CodeReviewPLAgent spawn 직전 | Orchestrator |
+| `phase:구현-테스트` | `phase:구현-테스트` | `phase:구현-리뷰` | — (gate 무 — CI gate inline polling) | CodeReview PASS + CI gate `gh pr checks --watch` polling 진입 직전 | Orchestrator |
+| `phase:보안-테스트` (opt-in) | `phase:보안-테스트` | `phase:구현-테스트` | `gate:security-test-pass` | 통합테스트 PASS + SecurityTestPLAgent spawn 직전 (consumer `lanes.security_ai: true` 시에만) | Orchestrator |
+| `phase:배포` (CFP-1059) | `phase:배포` | `phase:보안-테스트` (또는 `phase:구현-테스트` if security 미활성) | `gate:deploy-pass` | Epic 묶음 완료 후 DeployPLAgent spawn 직전 (Phase 1 declarative) | Orchestrator |
+| `phase:배포-리뷰` (CFP-1059) | `phase:배포-리뷰` | `phase:배포` | `gate:deploy-review-pass` | DeployPL PASS + DeployReviewPLAgent spawn 직전 (Phase 1 declarative) | Orchestrator |
+| **`phase:완료`** | `phase:완료` | `phase:구현-리뷰` (또는 `phase:배포-리뷰` if deploy lane 활성) | **precondition AND**: `gate:design-review-pass` (또는 활성 lane 의 terminal gate) + `gate:retro-complete` (label-registry-v2 line 558, ADR-045) | **Phase 2 PR merge 후 + retro write 완료 후** (PMOAgent `gate:retro-complete` 부착 확인 후) | Orchestrator (phase 전환) + PMOAgent (`gate:retro-complete` self-write) |
+
+**핵심 invariant (CFP-1577 — `phase:완료` premature attach 차단)**:
+
+- `phase:완료` 부착은 **2 gate AND** 의무: (a) Phase 2 PR merge 후 활성 lane 의 terminal gate label (`gate:design-review-pass` default, deploy lane 활성 시 `gate:deploy-review-pass`) (b) `gate:retro-complete` (PMOAgent self-write 후). 양 gate 부재 시 `phase-gate-mergeable.yml` ACTION_REQUIRED 발생 (workflow line 391-404 default fallback path = `phaseOk = (phaseLabel === required.phase)` mismatch).
+- `phase:완료` attach precondition 위반 = `phase:구현-리뷰` (또는 적용 가능한 직전 phase) + 해당 gate 재부착으로 정정 후 PASS (CFP-1539+CFP-1540 batch incident resolution pattern).
+- `gate:retro-complete` 부재 시 `retro-mandatory.yml` (ADR-045) 가 Story Issue close 차단 (auto-reopen) — `phase:완료` attach 와 함께 retro write 완료 확인 의무.
+
+**Cross-ref (transition timing 의무)**:
+
+- `codeforge:story-epic-flow-preflight` skill = lane entry preflight 3-check (phase 라벨 정합 / docs file 선행 섹션 / 외부 의존성). 본 §9.7.1 = preflight 의 *phase label 정합* 항목 source SSOT (skill body 1-row cross-ref append per CFP-1577 AC-3).
+- ADR-026 Amendment 4 (CFP-795) = `phase-gate-mergeable.yml` post-merge fix exemption (axis disjoint — workflow logic expansion vs. 본 §9.7.1 = Orchestrator timing codification layer).
+- workflow yml `phase-gate-mergeable.yml` 본문 변경 0건 (CFP-1577 Out of scope §3) — 본 §9.7.1 = documentation layer only.
+
 ---
 
 ## 10. Hotfix 경로 (운영 장애 대응)

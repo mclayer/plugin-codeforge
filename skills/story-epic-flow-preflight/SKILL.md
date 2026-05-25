@@ -49,7 +49,7 @@ tools: Read
 ## 레인 진입 전 Preflight 체크 의무
 
 각 레인 진입 직전 Orchestrator가 3개 체크 수행:
-1. **phase 라벨 정합** — 현재 Story Issue 라벨이 해당 레인에 맞는 `phase:*` 보유 여부
+1. **phase 라벨 정합** — 현재 Story Issue 라벨이 해당 레인에 맞는 `phase:*` 보유 여부. **Phase label transition timing (add/remove + gate attach + timing signal) SSOT** = [playbook §9.7.1](../../docs/orchestrator-playbook.md#971-phase-label-transition-timing-cfp-1577--cfp-1539cfp-1540-batch-retro-41-1) (CFP-1577 — `phase:완료` precondition `gate:design-review-pass` AND `gate:retro-complete` 의무 포함)
 2. **docs file 선행 섹션** — 해당 레인 진입 전 의무 섹션 (§1-7 Phase 1 완료 등) 존재 여부
 3. **외부 의존성 가용** — MCP/CLI/plugin 상태 정상 여부
 
