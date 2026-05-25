@@ -1,5 +1,6 @@
 name: numeric-claim-write-time-verify
 # CFP-1612 / ADR-082 Amendment 25 sub-scope 1-N — numeric claim write-time verify
+# CFP-1647 / ADR-082 Amendment 27 sub-scope 1-P — PR commit msg + PR body scope expansion
 # Tier: warning (ADR-060 evidence-enforceable, continue-on-error: true)
 # evidence-checks-registry.yaml entry: numeric-claim-write-time-verify
 #
@@ -42,7 +43,7 @@ name: numeric-claim-write-time-verify
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, edited]
   workflow_dispatch:
 
 permissions: {}  # top-level deny-all
@@ -180,4 +181,60 @@ jobs:
           if [ "$WARN_COUNT" -gt 0 ]; then
             echo "::warning::numeric-claim-write-time-verify: $WARN_COUNT Change Plan file(s) have unverified numeric claims"
           fi
+          exit 0  # warning tier: non-blocking
+
+      - name: Verify PR commit msg numeric claims (CFP-1647 sub-scope 1-P)
+        if: steps.bypass.outputs.bypass != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x scripts/check-numeric-claim-write-time-verify.sh
+
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          if [ -z "$PR_NUMBER" ]; then
+            echo "[numeric-claim-write-time-verify] workflow_dispatch: PR number unavailable — pr-commit-msg lint skipped"
+            exit 0
+          fi
+
+          echo "[numeric-claim-write-time-verify] Linting PR commit messages: PR #${PR_NUMBER}"
+          bash scripts/check-numeric-claim-write-time-verify.sh \
+            --scope pr-commit-msg \
+            --pr "${PR_NUMBER}" \
+            --mode=audit \
+            2>&1 || {
+            EXIT_CODE=$?
+            if [ $EXIT_CODE -eq 1 ]; then
+              echo "::warning::numeric-claim-write-time-verify WARNING: PR #${PR_NUMBER} commit messages have unverified numeric claims"
+            elif [ $EXIT_CODE -eq 2 ]; then
+              echo "::warning::numeric-claim-write-time-verify ENVIRONMENT_ERROR: PR commit msg ingestion failed"
+            fi
+          }
+          exit 0  # warning tier: non-blocking
+
+      - name: Verify PR body numeric claims (CFP-1647 sub-scope 1-P)
+        if: steps.bypass.outputs.bypass != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x scripts/check-numeric-claim-write-time-verify.sh
+
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          if [ -z "$PR_NUMBER" ]; then
+            echo "[numeric-claim-write-time-verify] workflow_dispatch: PR number unavailable — pr-body lint skipped"
+            exit 0
+          fi
+
+          echo "[numeric-claim-write-time-verify] Linting PR body: PR #${PR_NUMBER}"
+          bash scripts/check-numeric-claim-write-time-verify.sh \
+            --scope pr-body \
+            --pr "${PR_NUMBER}" \
+            --mode=audit \
+            2>&1 || {
+            EXIT_CODE=$?
+            if [ $EXIT_CODE -eq 1 ]; then
+              echo "::warning::numeric-claim-write-time-verify WARNING: PR #${PR_NUMBER} body has unverified numeric claims"
+            elif [ $EXIT_CODE -eq 2 ]; then
+              echo "::warning::numeric-claim-write-time-verify ENVIRONMENT_ERROR: PR body ingestion failed"
+            fi
+          }
           exit 0  # warning tier: non-blocking

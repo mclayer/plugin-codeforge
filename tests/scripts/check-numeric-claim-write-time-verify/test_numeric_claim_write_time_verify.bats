@@ -1,6 +1,7 @@
 #!/usr/bin/env bats
 # tests/scripts/check-numeric-claim-write-time-verify/test_numeric_claim_write_time_verify.bats
 # CFP-1612 / ADR-082 Amendment 25 sub-scope 1-N — bats fixture
+# CFP-1647 / ADR-082 Amendment 27 sub-scope 1-P — PR commit msg + PR body TC expansion
 #
 # CFP-1334 §8.4 5 markers:
 #   pre_impl_sha:       TC-RED 은 구현 전 상태 (git stash 후) 에서 수행됨을 증명
@@ -9,7 +10,7 @@
 #   red_green_anchor:   TC-RED → TC-GREEN 전환 명시 주석 포함
 #   platform_verified:  Windows + Unix 양 환경 python3 encoding 정합 확인
 #
-# TC coverage (8 TC):
+# TC coverage (12 TC):
 #   TC-1: PASS — no numeric claims detected (PASS exit 0)
 #   TC-2: WARNING — unverified numeric claim (exit 1)
 #   TC-3: PASS — verified numeric claims (source hint present, exit 0)
@@ -18,6 +19,10 @@
 #   TC-6: ENVIRONMENT_ERROR — Python SSOT missing → bash wrapper exit 2
 #   TC-7: RED→GREEN stash proof anchor (missing verify → add verify → PASS)
 #   TC-8: platform_verified — python3 UTF-8 stdout/stderr encoding (Windows + Unix)
+#   TC-9:  PASS — PR commit msg with source hints (exit 0) [CFP-1647 sub-scope 1-P]
+#   TC-10: WARNING — PR commit msg unverified numeric claims (exit 1) [CFP-1647 sub-scope 1-P]
+#   TC-11: PASS — PR body with source hints (exit 0) [CFP-1647 sub-scope 1-P]
+#   TC-12: WARNING — PR body unverified numeric claims (exit 1) [CFP-1647 sub-scope 1-P]
 
 # CFP-1334 §8.4 marker: pre_impl_sha
 # pre_impl_sha: 이 fixture 는 Phase 2 구현 전 git stash push 후 RED TC 를 통해
@@ -43,6 +48,8 @@ setup() {
   unset CFP1612_STORY_FILE_MOCK || true
   unset CFP1612_CHANGE_PLAN_MOCK || true
   unset CFP1612_SUBPROCESS_MOCK || true
+  unset CFP1647_PR_COMMIT_MSG_MOCK || true
+  unset CFP1647_PR_BODY_MOCK || true
 }
 
 teardown() {
@@ -51,6 +58,8 @@ teardown() {
   unset CFP1612_STORY_FILE_MOCK || true
   unset CFP1612_CHANGE_PLAN_MOCK || true
   unset CFP1612_SUBPROCESS_MOCK || true
+  unset CFP1647_PR_COMMIT_MSG_MOCK || true
+  unset CFP1647_PR_BODY_MOCK || true
 }
 
 # Helper: run Python SSOT directly
@@ -247,4 +256,88 @@ WRAPPER_EOF
 
   unset CFP1612_STORY_FILE_MOCK
   rm -f "${TEMP_STORY}"
+}
+
+# ---------------------------------------------------------------------------
+# TC-9: PASS — PR commit msg with source hints (exit 0) [CFP-1647 sub-scope 1-P]
+# red_green_anchor: TC-9 = GREEN scenario (source hints present → PASS exit 0)
+# ---------------------------------------------------------------------------
+@test "TC-9: PASS — PR commit msg with source hints (exit 0) [CFP-1647 sub-scope 1-P]" {
+  # role_vocabulary: pr-commit-msg scope — ADR-082 §결정 1-K numeric claim verify
+  # red_green_anchor: GREEN state — inline source hints in commit msg
+  export CFP1647_PR_COMMIT_MSG_MOCK="${FIXTURES_DIR}/pr-commit-msg-verified.txt"
+  export CFP1612_SUBPROCESS_MOCK=1  # mock subprocess cross-verify
+
+  run python3 "${PYTHON_SSOT}" \
+    --scope pr-commit-msg \
+    --mode=audit
+
+  # Exit 0 = PASS (source hints present in commit msg)
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"PASS"* ]]
+  [[ "$output" == *"${ROLE_VOCAB}"* ]]
+}
+
+# ---------------------------------------------------------------------------
+# TC-10: WARNING — PR commit msg unverified numeric claims (exit 1) [CFP-1647 sub-scope 1-P]
+# red_green_anchor: TC-10 = RED scenario (no source hints → WARNING exit 1)
+# ---------------------------------------------------------------------------
+@test "TC-10: WARNING — PR commit msg unverified numeric claims (exit 1) [CFP-1647 sub-scope 1-P]" {
+  # role_vocabulary: pr-commit-msg scope, missing source hint → WARNING
+  # red_green_anchor: RED state — numeric claims in commit msg without [verified via ...] markers
+  export CFP1647_PR_COMMIT_MSG_MOCK="${FIXTURES_DIR}/pr-commit-msg-unverified.txt"
+
+  run python3 "${PYTHON_SSOT}" \
+    --scope pr-commit-msg \
+    --mode=audit
+
+  # Exit 1 = WARNING (numeric claims missing source hints)
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"WARNING"* ]] || [[ "$stderr" == *"WARNING"* ]]
+  [[ "$output" == *"${ROLE_VOCAB}"* ]]
+}
+
+# ---------------------------------------------------------------------------
+# TC-11: PASS — PR body with source hints (exit 0) [CFP-1647 sub-scope 1-P]
+# red_green_anchor: TC-11 = GREEN scenario (source hints in PR body → PASS exit 0)
+# ---------------------------------------------------------------------------
+@test "TC-11: PASS — PR body with source hints (exit 0) [CFP-1647 sub-scope 1-P]" {
+  # role_vocabulary: pr-body scope — ADR-082 §결정 1-K numeric claim verify
+  # red_green_anchor: GREEN state — inline source hints in PR body
+  export CFP1647_PR_BODY_MOCK="${FIXTURES_DIR}/pr-body-verified.md"
+  export CFP1612_SUBPROCESS_MOCK=1  # mock subprocess cross-verify
+
+  run python3 "${PYTHON_SSOT}" \
+    --scope pr-body \
+    --mode=audit
+
+  # Exit 0 = PASS (source hints present in PR body)
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"PASS"* ]]
+  [[ "$output" == *"${ROLE_VOCAB}"* ]]
+}
+
+# ---------------------------------------------------------------------------
+# TC-12: WARNING — PR body unverified numeric claims (exit 1) [CFP-1647 sub-scope 1-P]
+# red_green_anchor: TC-12 = RED scenario (no source hints in PR body → WARNING exit 1)
+#
+# AC-6 genuine RED reproduce (CFP-1647 §8.4 AC-6 stash proof):
+#   1. git stash push -m "pre-impl-red-proof-cfp-1647"
+#      → removes check_numeric_claim_write_time.py (--scope pr-* functions)
+#   2. bats tests/.../*.bats → TC-10 + TC-12 exit 2 (SSOT missing) = RED confirmed
+#   3. git stash pop → GREEN restored (TC-10 exit 1, TC-12 exit 1 = expected WARNING)
+# ---------------------------------------------------------------------------
+@test "TC-12: WARNING — PR body unverified numeric claims (exit 1) [CFP-1647 sub-scope 1-P]" {
+  # role_vocabulary: pr-body scope, missing source hints → WARNING
+  # red_green_anchor: RED state — numeric claims in PR body without [verified via ...] markers
+  export CFP1647_PR_BODY_MOCK="${FIXTURES_DIR}/pr-body-unverified.md"
+
+  run python3 "${PYTHON_SSOT}" \
+    --scope pr-body \
+    --mode=audit
+
+  # Exit 1 = WARNING (numeric claims missing source hints)
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"WARNING"* ]] || [[ "$stderr" == *"WARNING"* ]]
+  [[ "$output" == *"${ROLE_VOCAB}"* ]]
 }
