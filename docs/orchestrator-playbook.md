@@ -20,7 +20,7 @@ related:
 
 > **[PARTIAL ARCHIVED — Confluence-as-derived-mirror migration in progress (CFP-1584 Sub-A Phase 2, 2026-05-25 KST)]**
 >
-> This document is being split into §-level Confluence pages under bucket [CFP-1494 S2.4 carrier page (id=2130966)](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2130966). Git source remains the **SSOT** per [ADR-103 §결정 1](adr/ADR-103-confluence-derived-mirror-governance.md) (sync direction: git → Confluence). Confluence pages are **derived mirror**, NOT source of truth.
+> This document is being split into §-level Confluence pages under bucket [CFP-1494 S2.4 carrier page (id=2130966)](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2130966). Git source remains the **SSOT** per [ADR-103 §결정 1](adr/ADR-103-git-confluence-sync-mechanism.md) (sync direction: git → Confluence). Confluence pages are **derived mirror**, NOT source of truth.
 >
 > **Sub-pages pushed (7 of 20)** — CFP-1584 Sub-A Phase 2 partial completion:
 >
