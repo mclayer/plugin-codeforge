@@ -18,11 +18,11 @@ related:
   - codeforge-review:agents/SecurityTestPLAgent.md
 ---
 
-> **[PARTIAL ARCHIVED — Confluence-as-derived-mirror migration in progress (CFP-1584 Sub-A Phase 2, 2026-05-25 KST)]**
+> **[ARCHIVED — Confluence-as-derived-mirror migration complete (CFP-1584 Phase 2 100% delivered, 2026-05-25 KST)]**
 >
-> This document is being split into §-level Confluence pages under bucket [CFP-1494 S2.4 carrier page (id=2130966)](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2130966). Git source remains the **SSOT** per [ADR-103 §결정 1](adr/ADR-103-git-confluence-sync-mechanism.md) (sync direction: git → Confluence). Confluence pages are **derived mirror**, NOT source of truth.
+> This document has been split into §-level Confluence pages under bucket [CFP-1494 S2.4 carrier page (id=2130966)](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2130966). Git source remains the **SSOT** per [ADR-103 §결정 1/2](adr/ADR-103-git-confluence-sync-mechanism.md) (sync direction: git → Confluence). Confluence pages are **derived mirror**, NOT source of truth. Cross-ref: [ADR-100 §결정 1](adr/ADR-100-confluence-sor-docs-partial-extend.md) (Confluence SoR-docs partial extend), [ADR-076](adr/ADR-076-declarative-reconciliation-upgrade.md) (cascade closure), [ADR-054](adr/ADR-054-doc-only-fast-path.md) (doc-only fast-path).
 >
-> **Sub-pages pushed (7 of 20)** — CFP-1584 Sub-A Phase 2 partial completion:
+> **Sub-pages pushed (19 of 19)** — CFP-1584 Phase 2 directive × 19 contract 100% delivered (cumulative: prior PR #1626 7/19 + capacity-batched [CFP-1630](https://github.com/mclayer/plugin-codeforge/issues/1630) Batch 1 [#1636](https://github.com/mclayer/plugin-codeforge/pull/1636) + Batch 2 [#1643](https://github.com/mclayer/plugin-codeforge/pull/1643) + Batch 3 [#1650](https://github.com/mclayer/plugin-codeforge/pull/1650) + Batch 4 final 12/19):
 >
 > | § | title | Confluence id | URL |
 > |---|---|---|---|
@@ -30,17 +30,29 @@ related:
 > | §2 | 사용자(Human) 상호작용 규약 | 2098442 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098442/2+Human) |
 > | §3 | 스폰 시퀀스 + 프롬프트 템플릿 | 2098466 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098466/3) |
 > | §3B | Preflight 체크 (lane 진입 직전) | 2098490 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098490/3B+Preflight+lane) |
+> | §4 | 병렬 스폰 판단 | 2131011 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2131011/4) |
 > | §5 | docs/stories file 동기화 | 2163913 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2163913/5+docs+stories+file) |
+> | §6 | FIX 루프 상태 머신 | 2098557 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098557/6+FIX) |
+> | §7 | 세션 재개(resume) 복원 절차 | 2131032 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2131032/7+resume) |
+> | §8 | 토큰 예산 모니터링 + 세션 회고 | 2131053 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2131053/8) |
+> | §9 | 트러블슈팅 플레이북 | 2098535 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098535/9) |
 > | §10 | Hotfix 경로 | 2098515 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098515/10+Hotfix) |
 > | §11 | Cross-agent write coordination | 2163935 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2163935/11+Cross-agent+write+coordination) |
+> | §12 | Orchestrator 컨텍스트 패킷 | 2163955 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2163955/12+Orchestrator) |
+> | §13 | PMOAgent 프로젝트 관리 (Cross-cutting) | 2066052 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2066052/13+PMOAgent+Cross-cutting) |
+> | §14 | §0 Live Progress (CFP-20) | 2098588 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098588/14+0+Live+Progress+CFP-20) |
+> | §15 | 4-channel observability boundary | 2131073 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2131073/15+4-channel+observability+boundary) |
+> | §16 | Post-merge automation flow | 2131093 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2131093/16+Post-merge+automation+flow) |
+> | §17 | Inter-plugin contract sibling sync 절차 | 2131113 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2131113/17+Inter-plugin+contract+sibling+sync) |
+> | 부록 A+B | 관련 문서 + 개정 이력 | 2066075 | [link](https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2066075/A+B) |
 >
-> **Deferred to [CFP-1617](https://github.com/mclayer/plugin-codeforge/issues/1617) (follow-up carrier)**:
-> - **CRITICAL Step 0** — pre-spawn-pin (134KB, §.N-level split required per original CFP-1617 scope)
-> - **12 regular sections** (§4, §6, §7, §8, §9, §12, §13, §14, §15, §16, §17, 부록 A+B) — deferred due to single-session context capacity exhaustion at 7/20 pages
+> **Out-of-scope axis (별 carry-over, axis disjoint)**:
+> - **CRITICAL Step 0** — pre-spawn-pin (134KB, §.N-level split) — [CFP-1617](https://github.com/mclayer/plugin-codeforge/issues/1617) (size limit axis ≠ Phase 2 directive axis)
+> - **Probe artifact cleanup**: `_probe_1kb_CFP-1584` (id=2163892) — Confluence push capability sentinel, cleanup deferred to follow-up housekeeping CFP
 >
-> Page id mapping SSOT: [`docs/confluence-ia-tree.yaml`](confluence-ia-tree.yaml) `playbook_split_pages[]` field. Each entry's `push_attempt_status` field reports per-entry state (`success` / `deferred_to_cfp_1617_size_split` / `deferred_to_cfp_1617_session_capacity`).
+> Page id mapping SSOT: [`docs/confluence-ia-tree.yaml`](confluence-ia-tree.yaml) `playbook_split_pages[]` field. Each entry's `push_attempt_status` field reports per-entry state (19 success + 17 deferred_mcp_disconnect for Step 0 §.N split = CFP-1617 carry-over).
 >
-> **Probe artifact (cleanup follow-up)**: `_probe_1kb_CFP-1584` (id=2163892) — Confluence push capability sentinel, cleanup deferred to CFP-1617 maintenance.
+> Mega-Epic context: [CFP-1415](https://github.com/mclayer/plugin-codeforge/issues/1415) (CLOSED 2026-05-24, Confluence-as-derived-mirror governance).
 
 # Orchestrator Playbook
 
