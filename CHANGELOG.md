@@ -7,6 +7,17 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+### Fixed
+
+- [CFP-1540] **Sentinel script `scripts/lib/check_parallel_work_sentinel.py` — 6 subprocess.run() call sites cp949 encoding fix** (CFP-967 mechanical wire invocation reliability layer 회복, CFP-FU-A retro mandatory follow-up #2 carrier)
+  - 6 call sites (line 95/114/128/327/344/380) 의 `subprocess.run(..., text=True)` 에 `encoding="utf-8", errors="replace"` 명시 추가. line 113 `git fetch origin` = binary discard (skip, disjoint scope)
+  - Windows Git Bash 환경 cp949 default platform encoding 으로 인한 `UnicodeDecodeError` 차단 → race window catch 실패 silent failure state 해소
+  - 3-kwarg combo rationale (DomainAgent + Researcher convergent): `text=True` (mode flag) + `encoding="utf-8"` (codec spec, PEP 540 env dependency 회피) + `errors="replace"` (`U+FFFD` visible marker, silent corruption 차단 + crash 차단 양립)
+  - sibling-scope continuation of CFP-1393 F8-FU (PR #1395, `sys.stdout.reconfigure` 37 file bulk sweep print() scope) — 본 fix = subprocess() scope second-half
+  - bats TC-9 추가 (Korean Issue title fixture mock, `tests/scripts/check-parallel-work-sentinel/fixtures/non-ascii-title.json` 신규) — 16/16 GREEN gate (기존 8 TC + TC-9)
+  - Wave 2 mechanical wire (sibling paired) = CFP-1539 (sentinel reliable invocation 후속 carrier — 본 #1540 이 prerequisite)
+  - Change Plan SSOT: `<internal-docs>/plugin-codeforge/change-plans/cfp-1540-sentinel-cp949-encoding-fix.md`
+
 ### Added
 
 - [CFP-FU-A] **Parallel session race 11th occurrence 3-Amendment paired carrier + 12th meta-occurrence collision recovery** (escalate_user pattern_count 11 reach Mandatory ADR-045 §D-9 — sub-decisions 1+2+3 통합 + recursive dogfooding evidence for #1476)
