@@ -1498,27 +1498,36 @@ sub_b_carrier_followup:
 
 playbook_split_pages:
   # bucket ancestor = 2130966 (CFP-1494 S2.4 minimal carrier)
-  - id: null
+  - id: "2066024"
     parent: 2130966
     title: "§1 — 세션 생명주기"
     source_section: "## 1. 세션 생명주기"
     source_line_range: [31, 249]
     source_line_count: 219
     estimated_byte_size: 16000
-  - id: null
+    last_synced: "2026-05-25T21:47:00+09:00"
+    push_attempt_status: "success"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2066024/1"
+  - id: "2098442"
     parent: 2130966
     title: "§2 — 사용자(Human) 상호작용 규약"
     source_section: "## 2. 사용자(Human) 상호작용 규약"
     source_line_range: [250, 316]
     source_line_count: 66
     estimated_byte_size: 5000
-  - id: null
+    last_synced: "2026-05-25T21:47:45+09:00"
+    push_attempt_status: "success"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098442/2+Human"
+  - id: "2098466"
     parent: 2130966
     title: "§3 — 스폰 시퀀스 + 프롬프트 템플릿"
     source_section: "## 3. 스폰 시퀀스 + 프롬프트 템플릿"
     source_line_range: [317, 626]
     source_line_count: 309
     estimated_byte_size: 23000
+    last_synced: "2026-05-25T21:52:04+09:00"
+    push_attempt_status: "success"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098466/3"
   - id: null
     parent: 2130966
     title: "CRITICAL Step 0 — pre-spawn-pin"
@@ -1527,13 +1536,18 @@ playbook_split_pages:
     source_line_count: 1317
     estimated_byte_size: 158000
     split_warning: "Cloud 한계 64KB community noise 영역 초과 → §.N-level 추가 분할 carrier 의무 (별 follow-up CFP)"
-  - id: null
+    push_attempt_status: "deferred_to_cfp_1617_size_split"
+    push_failure_reason: "134KB section body exceeds practical single-page push channel; §.N-level split required per CFP-1617 (already OPEN follow-up)"
+  - id: "2098490"
     parent: 2130966
     title: "§3B — Preflight 체크 (lane 진입 직전)"
     source_section: "## 3B. Preflight 체크 (lane 진입 직전)"
     source_line_range: [1945, 2195]
     source_line_count: 250
     estimated_byte_size: 18000
+    last_synced: "2026-05-25T21:55:04+09:00"
+    push_attempt_status: "success"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098490/3B+Preflight+lane"
   - id: null
     parent: 2130966
     title: "§4 — 병렬 스폰 판단"
@@ -1541,13 +1555,18 @@ playbook_split_pages:
     source_line_range: [2196, 2285]
     source_line_count: 89
     estimated_byte_size: 6000
-  - id: null
+    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
+    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
+  - id: "2163913"
     parent: 2130966
     title: "§5 — docs/stories file 동기화"
     source_section: "## 5. docs/stories file 동기화"
     source_line_range: [2286, 2336]
     source_line_count: 50
     estimated_byte_size: 3000
+    last_synced: "2026-05-25T21:56:37+09:00"
+    push_attempt_status: "success"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2163913/5+docs+stories+file"
   - id: null
     parent: 2130966
     title: "§6 — FIX 루프 상태 머신"
@@ -1555,6 +1574,8 @@ playbook_split_pages:
     source_line_range: [2337, 2592]
     source_line_count: 255
     estimated_byte_size: 19000
+    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
+    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
   - id: null
     parent: 2130966
     title: "§7 — 세션 재개(resume) 복원 절차"
@@ -1562,6 +1583,8 @@ playbook_split_pages:
     source_line_range: [2593, 2666]
     source_line_count: 73
     estimated_byte_size: 5000
+    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
+    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
   - id: null
     parent: 2130966
     title: "§8 — 토큰 예산 모니터링 + 세션 회고"
@@ -1569,6 +1592,8 @@ playbook_split_pages:
     source_line_range: [2667, 2760]
     source_line_count: 93
     estimated_byte_size: 7000
+    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
+    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
   - id: null
     parent: 2130966
     title: "§9 — 트러블슈팅 플레이북"
@@ -1576,7 +1601,9 @@ playbook_split_pages:
     source_line_range: [2761, 2858]
     source_line_count: 97
     estimated_byte_size: 7000
-  - id: null
+    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
+    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
+  - id: "2098515"
     parent: 2130966
     title: "§10 — Hotfix 경로"
     source_section: "## 10. Hotfix 경로 (운영 장애 대응)"
@@ -1584,13 +1611,19 @@ playbook_split_pages:
     source_line_count: 7
     estimated_byte_size: 500
     note: "§10 7 line only — 별 page 의미 미달 가능, §11 와 통합 검토 carrier"
-  - id: null
+    last_synced: "2026-05-25T21:56:57+09:00"
+    push_attempt_status: "success"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098515/10+Hotfix"
+  - id: "2163935"
     parent: 2130966
     title: "§11 — Cross-agent write coordination"
     source_section: "## 11. Cross-agent write coordination"
     source_line_range: [2867, 2878]
     source_line_count: 11
     estimated_byte_size: 800
+    last_synced: "2026-05-25T21:57:05+09:00"
+    push_attempt_status: "success"
+    confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2163935/11+Cross-agent+write+coordination"
   - id: null
     parent: 2130966
     title: "§12 — Orchestrator 컨텍스트 패킷"
@@ -1598,6 +1631,8 @@ playbook_split_pages:
     source_line_range: [2879, 3089]
     source_line_count: 210
     estimated_byte_size: 15000
+    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
+    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
   - id: null
     parent: 2130966
     title: "§13 — PMOAgent 프로젝트 관리 (Cross-cutting)"
@@ -1605,6 +1640,8 @@ playbook_split_pages:
     source_line_range: [3090, 3183]
     source_line_count: 93
     estimated_byte_size: 7000
+    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
+    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
   - id: null
     parent: 2130966
     title: "§14 — §0 Live Progress (CFP-20)"
@@ -1613,6 +1650,8 @@ playbook_split_pages:
     source_line_count: 295
     estimated_byte_size: 22000
     note: "Spawn ID 대장 + Spawn Token Telemetry sub-§ 포함"
+    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
+    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
   - id: null
     parent: 2130966
     title: "§15 — 4-channel observability boundary"
@@ -1620,6 +1659,8 @@ playbook_split_pages:
     source_line_range: [3479, 3529]
     source_line_count: 50
     estimated_byte_size: 3000
+    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
+    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
   - id: null
     parent: 2130966
     title: "§16 — Post-merge automation flow"
@@ -1627,6 +1668,8 @@ playbook_split_pages:
     source_line_range: [3530, 3578]
     source_line_count: 48
     estimated_byte_size: 3000
+    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
+    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
   - id: null
     parent: 2130966
     title: "§17 — Inter-plugin contract sibling sync 절차"
@@ -1634,6 +1677,8 @@ playbook_split_pages:
     source_line_range: [3579, 3616]
     source_line_count: 37
     estimated_byte_size: 3000
+    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
+    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
   - id: null
     parent: 2130966
     title: "부록 A — 관련 문서 + 부록 B — 개정 이력"
@@ -1643,6 +1688,8 @@ playbook_split_pages:
     estimated_byte_size: 1600
     note: "부록 A + B 통합 page (각 13 line, 통합 가독성 우선)"
 
+    push_attempt_status: "deferred_to_cfp_1617_session_capacity"
+    push_failure_reason: "Single-session context capacity exhausted at 7/20 pages; remaining sections deferred to CFP-1617 follow-up carrier per ADR-076 result fidelity"
 playbook_split_pages_total: 20  # 17 § + 부록 A+B 통합 + (CRITICAL Step 0 §.N-level 추가 분할 carrier 별 follow-up CFP)
 playbook_source_total_byte: 290403
 playbook_source_total_line: 3643
