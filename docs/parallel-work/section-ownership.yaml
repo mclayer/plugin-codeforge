@@ -669,4 +669,14 @@ owned_sections:
     owner_adr: ADR-073
     parallel_edit: locked
 
+  - file: docs/adr/ADR-113-admin-merge-preflight-gate.md
+    section: "§결정 1-8 admin-merge pre-flight gate 5-step procedure + attempt cap=3 dual scope + branch protection forbid + 5 lint chain inherit + failure mode enum 4-fail + Authn/Authz cross-ref + DR + Wave 2+ deferred-followup (CFP-1522)"
+    owner_adr: ADR-113
+    parallel_edit: append-only
+
+  - file: docs/orchestrator-playbook.md
+    section: "§3.19 Admin merge pre-flight gate procedure section — 5-step + dual scope + 진단 flow + 우회 mechanism enum (a-d) + fallback path + evidence-checks-registry binding (CFP-1522)"
+    owner_adr: ADR-113
+    parallel_edit: append-only
+
 # 이 목록에 없는 파일/섹션: 제한 없음 (신규 섹션 추가, 목록 외 섹션 수정 자유)

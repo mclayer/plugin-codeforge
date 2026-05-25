@@ -4802,3 +4802,63 @@ entries:
       last_occurrence: "2026-05-22T00:00:00Z"    # CFP-1316 retro F1 Mandatory codify
       promotion_trigger: auto_blocking # pattern_count >= 2 reach 시 blocking promotion 후보
     status: Active                     # CFP-1341 mechanical wire 완료 (single PR full implementation, post-rebase 94번째 / v2.69)
+
+  - name: admin-merge-preflight-gate
+    description: |
+      ADR-113 §결정 1 admin-merge pre-flight gate 5-step procedure mandate +
+      ADR-073 §결정 1 verify-before-assert transition trigger admin_merge_attempt
+      sub-domain instantiation. ADR-045 §D-9 pattern_count 3 reach
+      (CFP-1334 retro + CFP-1318 retro + CFP-1495 PR #1505 close evacuation
+      3-incident super-class `admin_merge_action_required_force_attempt`)
+      Mandatory ADR escalation 산물.
+
+      Detection scope (Wave 2 wire 시점 활성): Orchestrator `gh pr merge --admin`
+      attempt 직전 5-step procedure (Step 1 gh pr checks state enum fetch /
+      Step 2 ACTION_REQUIRED abort + 10-value closed_enum abort_states /
+      Step 3 fresh commit trigger recovery / Step 4 ≤60s re-verify /
+      Step 5 attempt cap=3 STOP + escalate). 10-value abort_states enum:
+      action_required / failure / cancelled / timed_out / stale / pending /
+      in_progress / skipped / neutral / unknown (closed-set, unknown =
+      fail-closed semantic admin merge 차단).
+
+      Attempt cap=3 dual scope: per-PR AND per-Story counter (Threat A
+      counter reset abuse mitigation — close+reopen / PR 재생성 우회 차단).
+
+      Wave 1 = declaration-only (ADR-082 §결정 6 retain pattern +
+      ADR-070 §D5 retain pattern + ADR-086 self-application 답습).
+      Wave 2 mechanical wire = 별 sub-Story carrier (scripts/check-admin-merge-preflight.sh
+      3-layer: pre-commit hook + pre-push hook + Orchestrator instrumentation).
+
+      ADR-024 Amendment 6/8 §결정 6.A 5 lint chain 자동 covered
+      (bypass-as-norm-mutation 차단 inherit, 별 lint 신설 0).
+
+      pattern_count >= 2 재발 시 follow-up CFP MUST promote to blocking tier.
+    detect_command: bash scripts/check-admin-merge-preflight.sh    # Wave 2 wire 시점 활성, Wave 1 = stub
+    workflow: null                     # Wave 1 = declarative anchor only (workflow Wave 2 carrier)
+    current_tier: warning              # ADR-060 §결정 5 — 첫 도입 = warning mode (deferred-followup)
+    bypass_label: hotfix-bypass:admin-merge-preflight-gate
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1334                     # sentinel #1 carrier (admin-merge ACTION_REQUIRED retro F1)
+        - CFP-1318                     # sentinel #2 carrier (phase-gate-mergeable workflow_dispatch 부재 retro)
+        - CFP-1495                     # sentinel #3 carrier (PR #1505 close evacuation, headRefOid 13b958eb 보존)
+        - CFP-1522                     # self-carrier (Wave 1 declarative anchor)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 본 lint = procedural pre-flight, no regex 영역
+    introduced_by: CFP-1522
+    introduced_date: 2026-05-25
+    owner_adr: ADR-113                 # §결정 1 pre-flight gate 5-step procedure mandate
+    paired_owner_adr: ADR-073          # §결정 1 verify-before-assert primitive admin_merge_attempt sub-domain
+    carrier_adr: ADR-060               # evidence-enforceable promotion framework
+    recurrence:
+      count: 3                         # CFP-1334 + CFP-1318 + CFP-1495 pattern_count 3 reach Mandatory
+      threshold: 2                     # pattern_count >= 2 재발 시 promote
+      last_occurrence: "2026-05-25T00:00:00Z"    # CFP-1495 PR #1505 close evacuation
+      promotion_trigger: auto_blocking # pattern_count >= 2 reach 시 blocking promotion 후보
+    status: deferred-followup          # Wave 1 declaration-only — Wave 2 별 sub-Story carrier 에서 status: Active 전환
