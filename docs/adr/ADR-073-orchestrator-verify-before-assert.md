@@ -93,6 +93,20 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 12 + §결정 1-A transition trigger 표 11번째 row"
     sunset_justification: null
+  - amendment_id: 13
+    cfp: CFP-FU-A
+    date: 2026-05-25
+    scope: "§결정 1 expansion — transition trigger enum 12+13번째 entry `pre_git_operation` + `pre_push` 신설 (closed-set ratchet 강화, Amendment 2/3/5/6/7/8/10/11/12 §결정 1-A precedent 답습). polling cadence 1→3 확장 (현 = 1회 lane-entry 미codify specific binding, 신 = lane-entry + git operation 직전 + push 직전 3 cadence). sub-decision 1 (Polling threshold tighten) carrier within CFP-FU-A. paired sibling Amd 14 (sub-decision 2 OR→AND composition layer) + ADR-082 Amendment 19 sub-scope (1-I) (sub-decision 3 pre-spawn-prompt-finalize verify layer, renumbered from Amd 18 sub-scope 1-H post CFP-1342 mid-flight collision recovery) = 3 ADR Amendment 동시 발의 axis disjoint complement 3-set ADR-064 §결정 1 CFP scope unitary 정합. 본 Amendment 는 §결정 1-11 본문 + Amendment 1-12 scope 강화 only (ADR-058 §결정 5 ratchet 정합) — 약화 / scope 축소 / 면제 영역 0건. closed_enum: open_extension:false — 14번째 trigger 추가 시 Amendment 강화 방향만. evidence-checks-registry warning-tier 2 entry `pre-git-operation-sentinel-pickup` + `pre-push-sentinel-pickup` 신설 = mechanical wire Wave 2 별 sub-CFP (declaration-only-Wave-1 retain, parallel-work-sentinel-pickup + worktree-self-ownership-verify + subagent-sibling-story-polling-evidence + mcp-token-freshness-precheck + stale-local-main-checkout-divergence-check + cross-repo-label-sync + spawn-prompt-head-pin-presence + mid-spawn-drift-detection precedent 답습). parallel session race 11th occurrence (CFP-1420 Sub-A S1.2 STAND_DOWN_DUPLICATE per PR #1441 prior merge) escalate_user pattern_count 11 ≫ ADR-045 §D-9 threshold 2 = Mandatory escalation 산물. 본 Amendment 13 = pre-git-state-mutation layer (git operation 직전 cadence — `git add` / `git commit` / `git merge` / `git rebase` direct state mutation 직전 sentinel pickup 의무) + pre-network-publish layer (push 직전 cadence — `git push` direct cross-repo state propagation 직전 sentinel pickup 의무) — Amendment 5 (`fix_iter_start`) + Amendment 11 (`spawn_prompt_emit`) + Amendment 12 (`mid_spawn_origin_drift_detected`) 와 axis disjoint (event timing layer, 별 sub-domain — fix iter vs spawn-time vs mid-spawn vs git-op vs push)."
+    status: applied
+    ref: "## Amendments / Amendment 13 + §결정 1-A transition trigger 표 12+13번째 row"
+    sunset_justification: null
+  - amendment_id: 14
+    cfp: CFP-FU-A
+    date: 2026-05-25
+    scope: "§결정 1-P primitive 신설 — AND aggregate composition layer. `scripts/lib/check_parallel_work_sentinel.py:437` argparse `--mode` choices = `[\"title-search\", \"epic-state-poll\", \"head-compare-sibling-commits\"]` mutually exclusive dispatcher 영역 (single-mode invocation, caller discretion only) → 3-mode 동시 실행 + 모두 AND aggregate 의무 composition layer 신설 mandate. lane-entry sentinel polling 시 3 mode 모두 invoke + AND aggregate verify (single-mode invocation 차단). caller discretion 금지 — race window 차단 능력 1/3 → 3/3 보장 ratchet. sub-decision 2 (Heuristic precision triple-source AND) carrier within CFP-FU-A. axis disjoint with Amd 11/12/13 (Amd 11/12/13 = single source per spawn or single trigger per cadence, 본 Amd 14 = multi-source AND composition per polling event). paired sibling Amd 13 (sub-decision 1 polling cadence 1→3) + ADR-082 Amendment 19 sub-scope (1-I) (sub-decision 3 pre-spawn-prompt-finalize verify layer, renumbered from Amd 18 sub-scope 1-H post CFP-1342 mid-flight collision recovery) = 3 ADR Amendment 동시 발의 axis disjoint complement 3-set ADR-064 §결정 1 CFP scope unitary 정합. 본 Amendment 는 §결정 1-11 + 1-P primitive 신설 + Amendment 1-13 scope 강화 only (ADR-058 §결정 5 ratchet 정합) — 약화 / scope 축소 / 면제 영역 0건. evidence-checks-registry warning-tier entry `parallel-work-sentinel-and-aggregate` 신설 = mechanical wire Wave 2 별 sub-CFP carrier (declaration-only-Wave-1 retain — `scripts/lib/check_parallel_work_sentinel.py` 신규 `--mode all-and` choice 추가 + 3 sub-mode invoke + 결과 AND aggregate logic Wave 2 carrier). parallel session race 11th occurrence (CFP-1420 Sub-A S1.2 STAND_DOWN_DUPLICATE per PR #1441 prior merge) — OR semantics structural weakness root cause carrier (현재 lib code = single-mode dispatcher caller discretion 으로 race window 차단 능력 1/3 수준, AND composition 으로 race window 차단 능력 3/3 ratchet)."
+    status: applied
+    ref: "## Amendments / Amendment 14 + §결정 1-P primitive AND composition layer"
+    sunset_justification: null
 related_stories:
   - CFP-622  # carrier
   - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
@@ -115,6 +129,8 @@ related_stories:
   - CFP-1437 # Amendment 11 — transition trigger enum 10번째 entry `spawn_prompt_emit` (Orchestrator / PL / chief author spawn 시점 origin/main SHA pin verify mandate + spawn prompt 첫 줄 [PRE-SPAWN-ORIGIN-MAIN-SHA] block 의무, paired ADR-082 Amendment 15 sub-scope 1-E spawn prompt SHA-anchor write-time verify). CFP-1336 amendment_number_stale_at_planning pattern_count 9+ reach system-level evidence preventive solution carrier — chief author / deputy stale-at-planning 차단 forcing function. cascade SHA propagation (parent → child fresh re-fetch). Sub-CFP A Wave 1 declarative-only carrier (mechanical lint wire = Wave 2 별 sub-CFP)
   - CFP-1389 # Amendment 11 origin — CFP-1336 retro follow-up Sub-CFP A (Pre-spawn HEAD-pin protocol mechanical lint Epic carrier)
   - CFP-1436 # Amendment 12 — transition trigger enum 11번째 entry `mid_spawn_origin_drift_detected` (chief author / deputy / sub-tuple spawn-internal periodic origin/main fetch drift detection + return early protocol, paired ADR-082 Amendment 16 sub-scope 1-F spawn-internal periodic origin re-pin). Sub-CFP B Wave 1 declarative-only — reactive complement to Sub-CFP A CFP-1437 (preventive pre-spawn pin) / Sub-CFP B 가 mid-spawn drift detection 영역 codify. CFP-1336 9+ collisions evidence reactive carrier — 2-layer defense (preventive + reactive) forcing function 완결. mechanical lint wire = Wave 2 별 sub-CFP
+  - CFP-FU-A # Amendment 13 + 14 paired carriers — transition trigger enum 12+13번째 entry `pre_git_operation` + `pre_push` (Amd 13 sub-decision 1 polling cadence 1→3) + §결정 1-P primitive AND aggregate composition layer (Amd 14 sub-decision 2 OR→AND triple-source). paired sibling ADR-082 Amendment 19 sub-scope (1-I) pre-spawn-prompt-finalize verify layer (sub-decision 3 race window 단축, renumbered from Amd 18 sub-scope 1-H post CFP-1342 mid-flight collision recovery + 12th meta-occurrence). 3 ADR Amendment 동시 발의 axis disjoint complement 3-set ADR-064 §결정 1 CFP scope unitary 정합. parallel session race 11th occurrence (CFP-1420 Sub-A S1.2 STAND_DOWN_DUPLICATE per PR #1441 prior merge) escalate_user pattern_count 11 ≫ ADR-045 §D-9 threshold 2 = Mandatory escalation 산물. doc-only fast-path (ADR-054) Wave 1 declaration-only — mechanical wire (lint script + workflow + bats fixture + label-registry MINOR + evidence-checks-registry entry) = 별 sub-CFP carrier 분리 (CFP-1437/1436/1435 Wave 1→Wave 2 split precedent 답습)
+  - CFP-1420 # Amendment 13+14 sentinel — parallel session race 11th occurrence (Mega-Epic CFP-1415 Sub-A S1.2, branch `cfp-1420-doc-locations-schema-1-2-confluence-variant` PR #1441 prior merge 2026-05-24T03:07:53Z → 본 session PR #1442 STAND_DOWN_DUPLICATE per DesignReviewPL verdict ESCALATE_PACKET_INCOMPLETE parallel_session_conflict_post_merge_duplicate)
   - CFP-597  # sentinel #4 strike #1 origin (CLAUDE.md cap + playbook §3.6 false alarm)
   - CFP-578  # ADR-070 verify-before-trust 자매 (external worker output)
   - CFP-612  # ADR-071 dialog convergence 자매 governance
@@ -146,6 +162,9 @@ mechanical_enforcement_actions:
   - cross-repo-label-sync  # CFP-1336 Amendment 10 (renumber from 9, CFP-1384 mid-session collision) — Wave 1 declarative anchor (warning tier, deferred-followup status, recurrence count 0 — sentinel-driven 아닌 ratchet 확장 carrier (CFP-1302 D-4 chief tie-break dissent carry-over F2 carrier), threshold 3 / promotion_trigger none, actual workflow yml hydrate + script + bats fixture pair + impl repo listener seed + PAT scope grant actual = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합. Amendment 10 §결정 1-A 9번째 entry label_change + §결정 1-M primitive (verify-before-assert 4-step) carrier. paired sibling ADR-082 Amendment 14 sub-scope 1-D cross-repo label-write authority + ADR-066 Amendment 4 §결정 2 6번째 entry cross-repo-target-repos issues:write)
   - spawn-prompt-head-pin-presence  # CFP-1437 Amendment 11 — Wave 1 declarative anchor (warning tier, deferred-followup status, recurrence count 0 — sentinel-driven (CFP-1336 amendment_number_stale_at_planning pattern_count 9+ reach system-level evidence preventive solution carrier), threshold 3 / promotion_trigger none, actual lint script + workflow yml hydrate + bats fixture pair + label-registry MINOR bump + evidence-checks-registry entry = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — parallel-work-sentinel-pickup + worktree-self-ownership-verify + subagent-sibling-story-polling-evidence + mcp-token-freshness-precheck + stale-local-main-checkout-divergence-check + cross-repo-label-sync precedent 답습. Amendment 11 §결정 1-A 10번째 entry `spawn_prompt_emit` + §결정 1-N primitive (spawn-time `git rev-parse origin/main` direct fetch + spawn prompt 첫 줄 `[PRE-SPAWN-ORIGIN-MAIN-SHA: <40-char-hex>]` block + verified-via annotation + cascade SHA propagation parent → child fresh re-fetch) carrier. paired sibling ADR-082 Amendment 15 sub-scope 1-E spawn prompt SHA-anchor write-time verify (verify 의무 ↔ write authority 의무 disjoint axis pair, 같은 CFP-1437 carrier)
   - mid-spawn-drift-detection  # CFP-1436 Amendment 12 — Wave 1 declarative anchor (warning tier, deferred-followup status, recurrence count 0 — sentinel-driven reactive complement (CFP-1336 9+ collisions evidence, Sub-CFP A CFP-1437 preventive + Sub-CFP B CFP-1436 reactive 2-layer defense forcing function 완결), threshold 3 / promotion_trigger none, actual lint script + workflow yml hydrate + bats fixture pair + label-registry MINOR bump + evidence-checks-registry entry = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — parallel-work-sentinel-pickup + worktree-self-ownership-verify + subagent-sibling-story-polling-evidence + mcp-token-freshness-precheck + stale-local-main-checkout-divergence-check + cross-repo-label-sync + spawn-prompt-head-pin-presence precedent 답습. Amendment 12 §결정 1-A 11번째 entry `mid_spawn_origin_drift_detected` + §결정 1-O primitive (spawn-internal periodic `git fetch origin main --quiet` + `git rev-parse origin/main` compare with PRE-SPAWN-ORIGIN-MAIN-SHA + drift ≥ N threshold detection + return early protocol `drift_detected: true` flag) carrier. paired sibling ADR-082 Amendment 16 sub-scope 1-F spawn-internal periodic origin re-pin (verify 의무 ↔ write authority 의무 disjoint axis pair, 같은 CFP-1436 carrier)
+  - pre-git-operation-sentinel-pickup  # CFP-FU-A Amendment 13 (1/2) — Wave 1 declarative anchor (warning tier, deferred-followup status, recurrence count 0 — sentinel-driven (CFP-1420 Sub-A S1.2 parallel session race 11th occurrence, escalate_user pattern_count 11 reach Mandatory ADR-045 §D-9), threshold 3 / promotion_trigger none, actual lint script + workflow yml hydrate + bats fixture pair + label-registry MINOR bump + evidence-checks-registry entry = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — parallel-work-sentinel-pickup + worktree-self-ownership-verify + subagent-sibling-story-polling-evidence + mcp-token-freshness-precheck + stale-local-main-checkout-divergence-check + cross-repo-label-sync + spawn-prompt-head-pin-presence + mid-spawn-drift-detection precedent 답습. Amendment 13 §결정 1-A 12번째 entry `pre_git_operation` carrier — git state mutation 직전 (예: `git add` / `git commit` / `git merge` / `git rebase` direct state mutation 직전) sentinel pickup 의무. paired sibling Amendment 14 (1-P AND composition layer) + ADR-082 Amendment 19 sub-scope (1-I) pre-spawn-prompt-finalize verify layer (renumbered from Amd 18 sub-scope 1-H post CFP-1342 collision recovery))
+  - pre-push-sentinel-pickup  # CFP-FU-A Amendment 13 (2/2) — Wave 1 declarative anchor (warning tier, deferred-followup status, recurrence count 0 — sentinel-driven (CFP-1420 Sub-A S1.2), threshold 3 / promotion_trigger none, actual lint script + workflow yml hydrate + bats fixture pair + label-registry MINOR bump + evidence-checks-registry entry = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — pre-git-operation-sentinel-pickup precedent 답습. Amendment 13 §결정 1-A 13번째 entry `pre_push` carrier — `git push` direct cross-repo state propagation 직전 sentinel pickup 의무 (network publish 영역 — Amd 13 1/2 pre_git_operation 의 local-only mutation 영역과 axis disjoint complement). paired sibling Amendment 13 (1/2) + Amendment 14 + ADR-082 Amendment 19 sub-scope (1-I) (renumbered from Amd 18 sub-scope 1-H post CFP-1342 collision recovery))
+  - parallel-work-sentinel-and-aggregate  # CFP-FU-A Amendment 14 — Wave 1 declarative anchor (warning tier, deferred-followup status, recurrence count 0 — sentinel-driven OR semantics structural weakness (CFP-1420 Sub-A S1.2 evidence root cause = `scripts/lib/check_parallel_work_sentinel.py:437` single-mode dispatcher, caller discretion only), threshold 3 / promotion_trigger none, actual `scripts/lib/check_parallel_work_sentinel.py` 신규 `--mode all-and` choice 추가 + 3 sub-mode invoke + 결과 AND aggregate logic + workflow yml hydrate + bats fixture pair + label-registry MINOR bump + evidence-checks-registry entry = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — pre-git-operation-sentinel-pickup + pre-push-sentinel-pickup precedent 답습. Amendment 14 §결정 1-P primitive AND aggregate composition layer carrier (3-mode 모두 invoke + 결과 AND aggregate verify, single-mode invocation 차단). paired sibling Amendment 13 (1/2 + 2/2) + ADR-082 Amendment 19 sub-scope (1-I) (renumbered from Amd 18 sub-scope 1-H post CFP-1342 collision recovery))
 # Wave 1 = behavioral directive only (Orchestrator self-discipline forcing function) — Amendment 2 (CFP-966)
 # 가 첫 mechanical_enforcement_actions[] row entry append (declarative anchor only — script + workflow
 # 실 binding 은 sibling Story-2 CFP-967 carrier).
@@ -1227,3 +1246,120 @@ ADR-073 Amendment 12 = mid-spawn 시점 origin/main SHA drift 감지 의무 (whe
 - `<internal-docs>/plugin-codeforge/change-plans/cfp-1436-mid-flight-rebase-detection.md` — Change Plan SSOT (Phase 1 carrier, internal-docs SSOT per ADR-013 dogfood-out policy + `docs/change-plans/` gitignored)
 - `CLAUDE.md` — verify-before-trust 4-layer 단락 ADR-073 Amendment 12 + ADR-082 Amendment 16 sub-scope 1-F cross-ref 1 line append (CFP-506 line cap 정합)
 - `<internal-docs>/plugin-codeforge/stories/CFP-1436.md` — Story file (Sub-CFP B carrier, Phase 1 declarative)
+
+### Amendment 13 — `pre_git_operation` + `pre_push` transition trigger 12+13번째 entries (Polling cadence 1→3, CFP-FU-A sub-decision 1)
+
+**날짜**: 2026-05-25 KST
+
+**carrier**: CFP-FU-A (Parallel session race 11th occurrence 3-decision sub-CFP — sub-decision 1 carrier within CFP-FU-A).
+
+**paired sibling**: Amendment 14 (sub-decision 2 OR→AND composition layer §결정 1-P primitive) + ADR-082 Amendment 19 sub-scope (1-I) (sub-decision 3 pre-spawn-prompt-finalize verify layer, renumbered from Amd 18 sub-scope 1-H post CFP-1342 mid-flight collision recovery). 3 ADR Amendment 동시 발의 = axis disjoint complement 3-set (event timing cadence + composition layer + window narrowing), ADR-064 §결정 1 CFP scope unitary 정합.
+
+#### 동기
+
+CFP-1420 Sub-A S1.2 parallel session race 11th occurrence (Mega-Epic CFP-1415, branch `cfp-1420-doc-locations-schema-1-2-confluence-variant`, PR #1441 prior merge 2026-05-24T03:07:53Z → 본 session PR #1442 STAND_DOWN_DUPLICATE per DesignReviewPL verdict ESCALATE_PACKET_INCOMPLETE `parallel_session_conflict_post_merge_duplicate`) sentinel.
+
+근본 원인 분석 (Story §2.2):
+- (a) lane-entry polling은 발생했으나 timing이 race window 안 — polling 시점에는 별 session의 PR #1441이 아직 open 상태가 아니었거나, polling이 부분 source만 사용
+- (b) **OR semantics structural weakness** — `scripts/lib/check_parallel_work_sentinel.py:437` single-mode dispatcher (caller discretion only). caller가 1 mode만 호출하면 다른 2 source 정보 누락 — race window 차단 능력 1/3 수준
+- (c) race window pre-spawn-prompt phase (Amd 14 + ADR-082 Amd 19 sub-scope 1-I 영역, renumbered from Amd 18/1-H post CFP-1342 collision recovery)
+
+본 Amendment 13 동인 = (a) polling cadence 자체 부족 — 현 ADR-073 Amd 2 transition trigger enum 4 source (`lane_spawn` / `pr_open` / `merge_transition` / `active_sessions_check`) + Amd 5 (`fix_iter_start`) + Amd 11 (`spawn_prompt_emit`) + Amd 12 (`mid_spawn_origin_drift_detected`) covers spawn/fix-iter-time + pr/merge/label/session_start state-mutation. 단 "git operation 직전" (`git add` / `git commit` / `git merge` / `git rebase`) + "push 직전" (`git push` direct cross-repo state propagation) specific cadence binding 미codify — race window 위주 cadence gap.
+
+#### Sentinel evidence (pattern_count 11 reach Mandatory ADR-045 §D-9)
+
+| # | Story | 발생 | Resolution |
+|---|---|---|---|
+| 1 | CFP-953 | label-based search miss → memory rule 6 신설 (title-based search 의무) | reactive |
+| 2 | CFP-946 | Epic close miss → memory rule 7 신설 (Epic state polling 의무) | reactive |
+| 3 | CFP-949 | sub-issue scope polling gap → rule 7 refinement | reactive |
+| 4-10 | (다수) | various race window incidents | partial preventive (Amd 2/3/4/5) |
+| 11 | CFP-1420 Sub-A S1.2 | PR #1442 STAND_DOWN_DUPLICATE per #1441 prior merge | escalate_user mandate (본 carrier) |
+
+11 occurrences ≫ threshold 2 = ADR-045 §D-9 Mandatory escalation + 12th meta-occurrence (CFP-1342 collision recovery in-flight). 본 Amendment 13 + 14 + ADR-082 Amendment 19 sub-scope (1-I) (renumbered from Amd 18/1-H post CFP-1342 mid-flight collision recovery) = preventive + reactive 3-layer 완결 carrier.
+
+#### §결정 1 expansion — `pre_git_operation` + `pre_push` transition trigger 12+13번째 entries
+
+Amendment 2/3/5/6/7/8/10/11/12 precedent 답습 (closed-set ratchet 강화). 본 Amendment 13 = 12+13번째 entries append.
+
+> closed_enum: open_extension:false — 14번째 trigger 추가 시 Amendment 강화 방향만 허용 (ADR-058 §결정 5 정합).
+
+#### §결정 1-A transition trigger 표 12+13번째 row
+
+| # | Trigger | Verify subject | Verify object | Timing |
+|---|---|---|---|---|
+| 12 | `pre_git_operation` | Orchestrator / PL / chief author / subagent | origin/main SHA fresh + sibling Story/PR state (3-mode AND per Amd 14) | git state mutation 직전 (예: `git add` / `git commit` / `git merge` / `git rebase` direct mutation 직전, local-only) |
+| 13 | `pre_push` | Orchestrator / PL / chief author / subagent | origin/main SHA fresh + sibling Story/PR state (3-mode AND per Amd 14) | `git push` direct cross-repo state propagation 직전 (network publish 영역, axis disjoint with 12 — local mutation vs network publish) |
+
+#### Wave 1 = declaration-only behavioral mandate
+
+`mechanical_enforcement_actions[]` 신규 2 entry `pre-git-operation-sentinel-pickup` + `pre-push-sentinel-pickup` warning-tier deferred-followup append. Wave 2 mechanical wire (`pre-commit` / `pre-push` git hook 통합 + lint script + workflow + bats fixture + label-registry MINOR + evidence-checks-registry entry) = 별 sub-CFP carrier 분리 (precedent CFP-1437/1436/1435 Wave 1→Wave 2 split 답습).
+
+#### Disjoint axis cross-ref
+
+- **Amendment 5** (`fix_iter_start`): FIX iter N > 0 시점 main HEAD pin verify. 본 Amd 13 = pre-git-operation / pre-push timing (FIX iter 진입과 무관). FIX iter ↔ git-op/push disjoint.
+- **Amendment 11** (`spawn_prompt_emit`): pre-spawn time SHA pin verify (Sub-CFP A CFP-1437, preventive). 본 Amd 13 = pre-git-operation/pre-push (spawn 후 working time). spawn-time ↔ working-time disjoint.
+- **Amendment 12** (`mid_spawn_origin_drift_detected`): spawn-internal periodic drift detection (Sub-CFP B CFP-1436, reactive). 본 Amd 13 = pre-git-operation/pre-push (specific git event trigger). periodic time ↔ event time disjoint.
+- **ADR-045 §D-9**: PMOAgent retro corpus pattern_count threshold escalation. 본 Amd 13 = pattern_count 공유 (parallel_session_race 11+ reach, escalate_user mandate 산물).
+
+#### Amendment 13 — sunset_justification N/A 정당
+
+`is_transitional: false` (영구 governance policy) 보존 — Amendment 13 scope = 본문 + Amendment 1-12 강화 방향 only (enum 12+13번째 entries append + pre-git-operation/pre-push specific cadence codify). 약화 / scope 축소 / 면제 영역 0건. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과. ADR-064 §self-application top-down ratchet 정합.
+
+#### Related (Amendment 13 동반)
+
+- `docs/adr/ADR-073-orchestrator-verify-before-assert.md` — Amendment 14 paired (1-P AND composition layer, same CFP-FU-A carrier)
+- `docs/adr/ADR-082-write-time-self-write-verification-mandate.md` — Amendment 18 paired (1-H pre-spawn-prompt-finalize verify layer, same CFP-FU-A carrier)
+- `docs/adr/ADR-RESERVATION.md` — `amendments_reserved[]` 3-row pre-claim append (ADR-073 Amd 13 + Amd 14 + ADR-082 Amd 19, CFP-FU-A paired carrier active 동시 점유; renumbered from Amd 18 post CFP-1342 collision recovery, CFP-1342 Amd 18 row preserved upstream)
+- `<internal-docs>/plugin-codeforge/change-plans/cfp-fu-a-parallel-race-3-decisions.md` — Change Plan SSOT (Phase 1 carrier, internal-docs SSOT per ADR-013 dogfood-out policy)
+- `<internal-docs>/plugin-codeforge/stories/CFP-FU-A.md` — Story file (CFP-FU-A carrier, Phase 1 declarative)
+- `CLAUDE.md` — verify-before-trust 4-layer 단락 ADR-073 Amendment 13/14 + ADR-082 Amendment 19 sub-scope (1-I) (renumbered from Amd 18/1-H post CFP-1342 collision recovery) cross-ref 1 line append (CFP-506 line cap 정합)
+
+### Amendment 14 — §결정 1-P primitive AND aggregate composition layer (CFP-FU-A sub-decision 2)
+
+**날짜**: 2026-05-25 KST
+
+**carrier**: CFP-FU-A (Parallel session race 11th occurrence 3-decision sub-CFP — sub-decision 2 carrier within CFP-FU-A).
+
+**paired sibling**: Amendment 13 (sub-decision 1 polling cadence 1→3, 12+13번째 transition trigger entries) + ADR-082 Amendment 19 sub-scope (1-I) (sub-decision 3 pre-spawn-prompt-finalize verify layer, renumbered from Amd 18 sub-scope 1-H post CFP-1342 mid-flight collision recovery). 3 ADR Amendment 동시 발의 = axis disjoint complement 3-set (event timing cadence + composition layer + window narrowing), ADR-064 §결정 1 CFP scope unitary 정합.
+
+#### 동기
+
+Story §2.0 verify-before-trust 7th pivot — Issue body assumption "scripts/check-parallel-work-sentinel.sh 3 polling mode = OR semantics" verified-pivot. 실제 `scripts/lib/check_parallel_work_sentinel.py:437` argparse `--mode` choices = `["title-search", "epic-state-poll", "head-compare-sibling-commits"]` = **mutually exclusive dispatcher** (single mode per invocation), NOT composed OR. caller가 mode 선택 — no AND/OR composition layer codified.
+
+CFP-1420 Sub-A S1.2 11th occurrence root cause analysis (Story §2.2(b)): caller discretion 으로 single-mode invocation 시 다른 2 source 정보 누락 — race window 차단 능력 1/3 수준. AND composition layer 신설 시 race window 차단 능력 3/3 보장 ratchet.
+
+#### §결정 1-P primitive — AND aggregate composition layer mandate
+
+lane-entry sentinel polling 시 다음 3 의무:
+
+1. **3-mode 동시 invoke 의무** — `title-search` + `epic-state-poll` + `head-compare-sibling-commits` 3 sub-mode 모두 invoke (caller가 single-mode만 invoke 금지). Wave 1 = behavioral mandate (caller가 자체 sequential invoke 가능), Wave 2 mechanical wire = `scripts/lib/check_parallel_work_sentinel.py` 신규 `--mode all-and` choice 추가 + 3 sub-mode invoke + 결과 AND aggregate logic 별 sub-CFP carrier.
+2. **AND aggregate verify 의무** — 3-mode 결과 모두 PASS (race detected = false) 시에만 sentinel PASS. 1개라도 positive (race detected = true) 시 race detected verdict.
+3. **single-mode invocation 차단 binding** — caller discretion 금지 (race window 차단 능력 보장 ratchet). `--mode <single>` invocation 시 deprecation warning 발화 의무 (Wave 2 mechanical wire).
+
+> Amendment 14 sub-decision 2 carrier — race window 차단 능력 1/3 → 3/3 ratchet 강화.
+
+#### Wave 1 = declaration-only behavioral mandate
+
+`mechanical_enforcement_actions[]` 신규 entry `parallel-work-sentinel-and-aggregate` warning-tier deferred-followup append. Wave 2 mechanical wire (`scripts/lib/check_parallel_work_sentinel.py` 신규 `--mode all-and` choice + 3 sub-mode invoke + 결과 AND aggregate logic + workflow yml hydrate + bats fixture pair + label-registry MINOR + evidence-checks-registry entry) = 별 sub-CFP carrier 분리 (precedent CFP-1437/1436/1435 Wave 1→Wave 2 split 답습).
+
+#### Disjoint axis cross-ref
+
+- **Amendment 11** (`spawn_prompt_emit`): pre-spawn time SHA pin verify (single source per spawn — origin/main SHA fetch 시점). 본 Amd 14 = multi-source AND per polling event (composition layer). single source per spawn ↔ multi-source AND composition disjoint.
+- **Amendment 12** (`mid_spawn_origin_drift_detected`): spawn-internal periodic drift detection (single source per check — origin/main SHA compare). 본 Amd 14 = multi-source AND per polling event. single source per check ↔ multi-source AND composition disjoint.
+- **Amendment 13** (`pre_git_operation` + `pre_push`): event timing cadence (when polling 발화). 본 Amd 14 = composition layer (how polling source 묶기). cadence ↔ composition disjoint complement (cadence 발화 후 composition layer 적용 = sequential composition).
+- **Amendment 5 + ADR-085 lane-entry sentinel 4-step polling**: 4-step polling 의 source 추가 (active_sessions[] field check + gh issue list search + git pull rebase + active_sessions[] append). 본 Amd 14 = polling 안 3-mode 동시 AND aggregate (sub-source composition). 4-step polling ↔ 3-mode AND aggregate disjoint (4-step = lane-entry sequence, 3-mode = source aggregation per polling event).
+- **ADR-045 §D-9**: PMOAgent retro corpus pattern_count threshold escalation. 본 Amd 14 = pattern_count 공유 (parallel_session_race 11+ reach, OR semantics structural weakness root cause carrier).
+
+#### Amendment 14 — sunset_justification N/A 정당
+
+`is_transitional: false` (영구 governance policy) 보존 — Amendment 14 scope = 본문 + Amendment 1-13 + 1-P primitive 신설 강화 방향 only (composition layer 신설 + caller discretion 차단 invariant codify). 약화 / scope 축소 / 면제 영역 0건. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과. ADR-064 §self-application top-down ratchet 정합.
+
+#### Related (Amendment 14 동반)
+
+- `docs/adr/ADR-073-orchestrator-verify-before-assert.md` — Amendment 13 paired (1-A 12+13번째 entries, same CFP-FU-A carrier)
+- `docs/adr/ADR-082-write-time-self-write-verification-mandate.md` — Amendment 18 paired (1-H pre-spawn-prompt-finalize verify layer, same CFP-FU-A carrier)
+- `docs/adr/ADR-RESERVATION.md` — `amendments_reserved[]` 3-row pre-claim append (ADR-073 Amd 13 + Amd 14 + ADR-082 Amd 19, CFP-FU-A paired carrier active 동시 점유; renumbered from Amd 18 post CFP-1342 collision recovery, CFP-1342 Amd 18 row preserved upstream)
+- `scripts/lib/check_parallel_work_sentinel.py` — line 437 argparse `--mode` choices 영역 (Wave 2 mechanical wire 대상, `--mode all-and` choice 신규 추가)
+- `<internal-docs>/plugin-codeforge/change-plans/cfp-fu-a-parallel-race-3-decisions.md` — Change Plan SSOT
+- `<internal-docs>/plugin-codeforge/stories/CFP-FU-A.md` — Story file
