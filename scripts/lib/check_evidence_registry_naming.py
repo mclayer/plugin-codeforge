@@ -52,6 +52,8 @@ DRIFT_ALLOWLIST = {
     ("cross-layer-impact-detection",    "cross-layer-impact-check.yml"):      "Conservative no-rename — entry name 'detection' (CFP-1059 / ADR-090 §결정 1 cross-layer impact detection), workflow basename 'check'. Pre-existing main drift, CFP-1336 carrier cleanup",
     # CFP-1489 — Wave 2-A spawn-prompt-head-pin Pre-spawn HEAD-pin protocol mechanical wire
     ("spawn-prompt-head-pin-presence",  "spawn-prompt-head-pin-check.yml"):   "CFP-1489 / ADR-073 Amendment 11 + ADR-082 Amendment 15 paired carrier — entry name semantic 'presence' (Pre-spawn HEAD-pin protocol block presence check intent, CFP-1437 Wave 1 declarative stub SSOT naming verbatim 답습), workflow basename 'spawn-prompt-head-pin-check' (Conservative no-rename §결정 20)",
+    # CFP-1368 — codex-fallback-subclass-tally entry name preserves CFP-1286 subclass semantic
+    ("codex-fallback-subclass-tally",   "codex-fallback-tally-check.yml"):    "CFP-1368 / ADR-052 Amendment 14 + ADR-060 Amendment N — entry name semantic 'subclass-tally' (CFP-1286 fail-mode SUB-CLASS 9-enum 누적 카운터, subclass semantic 보존), workflow basename 'codex-fallback-tally-check' trimmed for brevity (Conservative no-rename §결정 20). CFP-1286 Wave 1 declarative anchor origin 보존.",
 }
 
 REGISTRY_PATH = Path("docs/evidence-checks-registry.yaml")
