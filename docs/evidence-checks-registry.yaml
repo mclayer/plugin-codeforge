@@ -5545,3 +5545,57 @@ entries:
       promotion_trigger: warning_tier_initial  # 첫 도입 = warning tier initial (pattern_count 1, 2nd occurrence 시 blocking-on-pr 승격)
     status: warning                 # warning tier initial registration per ADR-060 §결정 5 "첫 도입 = warning mode" default (CFP-1648 carrier — F-DR-001 P0 forward-prevention sentinel mechanical wire activation)
 
+  - name: backlog-issue-phase-label-forbid
+    description: |
+      Backlog Issue `phase:*` label timing discipline mechanical lint (warning tier, ADR-060 §결정 5 first introduction default).
+
+      CFP-1646 / ADR-024 Amendment 17 §결정 6.A.9 신설 carrier — behavioral directive normative 승격 첫 carrier (memory `feedback_no_phase_label_on_backlog_issues.md` ephemeral → ADR-024 normative SSOT 승격). CFP-1111 follow-up #1198/#1199 phase:설계 reflex incident origin (사용자 지적 "두개의 이슈 현재 작업 중 아닌가?").
+
+      Detection scope (Wave 2 codify, declarative anchor):
+        3-AND predicate on Issue event:
+          (a) state == "open"
+          (b) assignee == null (담당자 미할당)
+          (c) linked_pr count == 0 (linked PR 부재)
+        3 AND 만족 = backlog (lane 진입 X) → `phase:*` label 부착 검출 시 warning emit.
+        한 조건이라도 false = 착수 가능성 신호 (lint 발화 부적합, false-positive 차단).
+
+      Bypass channel:
+        - `hotfix-bypass:backlog-issue-label` label 부착 시 lint skip (audit-trailed exception channel, 104번째 family member)
+        - `BYPASS_BACKLOG_ISSUE_LABEL=1` env unconditional skip
+
+      Wave 1 status (Phase 1 PR, 본 entry registration) = `deferred-followup`:
+        본 entry 등록 자체 = declarative anchor. workflow Wave 1 stub `if: false` neutralizer (CFP-1510 precedent 답습).
+        detect_command / workflow field = Phase 2 wire carrier placeholder.
+
+      Wave 2 status (Phase 2 PR scope, future carrier) = `warning` 전환:
+        - workflow body actual lint wire (`if: false` 제거 + 3-AND predicate detection)
+        - script `scripts/check-backlog-issue-label.sh` thin-wrapper (ADR-061)
+        - script `scripts/lib/check_backlog_issue_label.py` (ADR-061 multi-line Python external)
+        - bats fixture `tests/bats/check-backlog-issue-label.bats` RED→GREEN stash proof (CFP-1334)
+        - boundary fixture pair `tests/fixtures/backlog-issue-label/{pass,fail}/` (CFP-963 Codex TP#4)
+
+      Full-lane attempt audit (PR #1664 + #941 closed): 3 parallel race events on same Story
+      (CFP-1657 Amendment 16 § 6.A.8 slot collision + CFP-1648 v2.78 + 103rd slot collision) →
+      ArchitectPL FIX iter 3 ESCALATE_PACKET_INCOMPLETE → 사용자 minimal path direct CFP-1110
+      precedent invocation per ADR-039 inline exception. 본 entry = minimal path 산출물.
+    detect_command: bash scripts/check-backlog-issue-label.sh  # Wave 2 carrier — Phase 2 PR scope
+    workflow: .github/workflows/backlog-issue-label-forbid.yml
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:backlog-issue-label
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative: 20             # ADR-060 §결정 6 default — PR 누적 ≥ 20 의무
+      bypass_external_failure: 0    # bypass label 외 failure count = 0 의무
+      sibling_story_merged: true    # sibling Story merged 의무 (Wave 2 별 carrier 평가 후 blocking-on-pr 승격 결정)
+    introduced_by: CFP-1646
+    introduced_date: 2026-05-26
+    owner_adr: ADR-024-Amendment-17  # declaration source ADR — Amendment 17 §결정 6.A.9 신설 Issue label timing discipline mandate (behavioral directive normative 승격 첫 carrier)
+    carrier_adr: ADR-060            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (CFP-963/CFP-1559/CFP-1612/CFP-1632/CFP-1648 dual-binding precedent 답습)
+    sibling_dependencies: [CFP-1646]
+    recurrence:
+      count: 0                      # 첫 도입, 0 occurrence (CFP-1111 follow-up #1198/#1199 origin = behavioral directive trigger, not lint occurrence)
+      threshold: 2                  # ADR-045 §D-9 N=2 standard Mandatory escalation threshold (2nd occurrence = blocking-on-pr 승격 forcing function)
+      last_occurrence: null         # 첫 도입, lint 발화 0건
+      promotion_trigger: warning_tier_initial  # 첫 도입 = warning tier initial (pattern_count 0, lint occurrence 누적 시 blocking-on-pr 승격 평가)
+    status: deferred-followup       # Wave 1 declarative status — workflow body Wave 2 wire 시 `warning` 전환 (Phase 2 PR scope, 별 sub-CFP carrier)
+

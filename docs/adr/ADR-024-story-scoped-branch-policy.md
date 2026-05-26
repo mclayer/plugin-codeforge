@@ -5,7 +5,7 @@ status: Accepted
 category: governance
 date: 2026-05-03
 is_transitional: false
-amended_by: CFP-1657
+amended_by: CFP-1646
 amended_date: 2026-05-26
 amendments:
   - by: "CFP-134"
@@ -72,6 +72,10 @@ amendments:
     date: "2026-05-26"
     scope: "Amendment 16 — §결정 6.A.8 신설 (wording-dictionary pre-existing-drift bypass evidence codify, pattern_count 3 reach ADR-045 §D-9 threshold). hotfix-bypass:wording-dictionary label 부착 PR body `## Bypass justification (wording-dictionary)` 섹션 의무 codify (CFP-845 §결정 6.A.4 `[bypass-justification]` PR comment marker SSOT 정합, ADR-024 Amendment 8 sibling 확장). evidence (pattern_count 3+): CFP-1240 (pre-existing wording-dictionary drift bypass) / CFP-1267 (pre-existing wording-dictionary drift bypass) / CFP-1617 (pre-existing ADR-073 `pin` 어휘 drift bypass, scope 외 영역). 섹션 본문 의무 3-field: pre-existing scope (어느 ADR/doc/줄) / bypass 사유 (scope 외 / future cleanup carrier #) / expected_resolution_carrier (별 CFP #). 섹션 부재 시 lint warning — mechanical wire = 별 sub-CFP carrier (`wording-dictionary-bypass-justification-presence-lint` warning tier evidence-check-registry entry 후보). label family member 신설 0 (hotfix-bypass:wording-dictionary retain), 신규 entry append 0 (raw active grep count 변경 0), §결정 6.A.8 신설만 — wording-dictionary scope 확장 (ADR-064 Amendment 2/4/5) 시 pre-existing drift 발생률 ↑ 영역의 evidence-grounded bypass 정당화 pathway codify. label-registry-v2 bump 0 (kind:registry sibling sync 면제 영역, ADR-010 §결정 2 + ADR-008 §결정 3 — entry append 0). plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). carrier_strategy: wording-dictionary scope 확장 시 pre-existing drift 회피 path 명문화 (bypass 수단 ≠ scope 축소 — ratchet 강화 + bypass 정당화 절차 명확). mechanical_enforcement_actions [] declaration-only Wave 1 (ADR-082 §결정 6 + ADR-070 §D5 패턴 답습). PMOAgent retro PMOAgent surface (CFP-1617 retro internal-docs PR #937, 2026-05-26T08:03 KST merged) trigger. ADR-082 §결정 9 verify-at-write-time (worktree base post-rebase 7c6a5490 direct read, 본 amendment_id = 16 next-slot 정합)."
     sunset_justification: "N/A — is_transitional: false (permanent governance policy). §결정 6.A.8 신설 = §결정 6.A.4 PR comment marker mechanical enforce SSOT 의 wording-dictionary entry 영역 확장 (per-entry-specific justification mandate, narrative audit trail 강화). label family member 신설 0 (raw active grep count 변경 0). forbid scope 확장 0건 (wording-dictionary scope 변경 0). ratchet-UP 강화 방향 (bypass-as-norm-mutation 누적 monitoring 의 narrative audit pathway 강화, 약화 영역 0건 — bypass 수단 ≠ scope 축소). ADR-058 §결정 5 + ADR-064 §self-application top-down ratchet 정합 + ADR-045 §D-9 forcing function 작동 사례 (pattern_count 3 evidence 동반)."
+  - by: "CFP-1646"
+    date: "2026-05-26"
+    scope: "Amendment 17 — §결정 6.A.9 신설 (Issue label timing discipline backlog `phase:*` reflex 차단 mechanical enforce). backlog/예약/follow-up CFP Issue 발의 시 `phase:*` label 부착 금지 — 미착수 backlog 관례 = unlabeled (Issue #1112 / #1169 prior art). backlog 식별 3-AND predicate: state:open + assignee:none + linked_pr:none. `hotfix-bypass:backlog-issue-label` 104번째 family member (raw active concrete grep count post-append 103+1=104 정합 — CFP-1648 v2.78 103번째 adr-dual-block-parity → CFP-1646 = 104번째 / v2.79 ratchet up). label-registry-v2 v2.78 → v2.79 MINOR bump. MANIFEST.yaml row sync. evidence-checks-registry `backlog-issue-phase-label-forbid` warning-tier entry (ADR-060 §결정 5 first introduction = warning mode). workflow pair Wave 1 declarative stub (templates/ + .github/workflows/ byte-identical per ADR-005). behavioral directive normative 승격 첫 carrier (CLAUDE.md 'Orchestrator 정책 적용 범위 + behavioral directive (normative)' 단락 첫 carrier) — memory `feedback_no_phase_label_on_backlog_issues.md` ephemeral (consumer 비전파 + single-session scope = structural enforcement 불가) → ADR-024 normative SSOT 승격. CFP-1111 follow-up #1198/#1199 phase:설계 reflex incident origin (사용자 지적 '두개의 이슈 현재 작업 중 아닌가?'). Full-lane attempt PR #1664 + #941 closed audit trail — RequirementsPL + 3x ArchitectPL + 2x DesignReviewPL + 3 parallel race events (CFP-1657 Amd 16 § 6.A.8 slot collision + CFP-1648 v2.78 + 103번째 slot collision) → ArchitectPL FIX iter 3 ESCALATE_PACKET_INCOMPLETE → 사용자 minimal path direct CFP-1110 precedent invocation per ADR-039 inline exception. Wave 1 declarative scope (본 Phase 1 PR scope): registry entry + ADR Amendment + workflow stub + CHANGELOG + MANIFEST + Story file (internal-docs). Wave 2 (Phase 2 PR scope — future carrier): script + bats + workflow body wire + evidence-registry status active. ADR-082 §결정 9 verify-at-write-time worktree absolute path 강제 (ADR-040 Amendment 6 §결정 7.J.3) 정합. PMOAgent retro 의무 (post Phase 1 PR merge auto-spawn 5min grace, ADR-045 §D-5) — multi-incident escalation: `stale_fact_inheritance` + `worktree_path_mismatch` + `orchestrator_initial_turn_verify_stale` + `sister_session_race_in_design_lane` pattern_count 3 reach Mandatory + `parallel_race_recursive_dogfooding` + `cross_session_state_ambiguity` (ADR-045 §D-9 escalation territory, sister carrier escalation_action `adr_draft_emitted` 후보)."
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). §결정 6.A.9 신설 = §결정 6.A per-entry namespace 영구 확장 (label attach timing axis disjoint, 다른 8 sub-decisions §결정 6.A.1~6.A.8 = label content / counting / macro / parity / wording-dictionary 영역). ratchet-UP 강화 방향 (label timing discipline 신설, behavioral directive normative 승격 첫 carrier — memory 만으로 갈음 금지 invariant 강화). ADR-058 §결정 5 + ADR-064 §self-application top-down ratchet 정합."
   - by: "CFP-1607"
     date: "2026-05-25"
     scope: "Amendment 15 — §결정 6.A.3 per-plugin-cumulative-counter tier ratchet warning → blocking-on-pr declarative anchor (Wave 1 declarative ratchet + Wave 2 mechanical wire 별 sub-CFP). 사용자 directive 2026-05-25 KST `사용자 confirmed blocking-on-pr 승격` (Issue #1607 body `escalate_user` enum resolved — Wave 3 retro §4.2 C carrier). ADR-024 amendment_id slot strict pre-claim 정합 (ADR-082 §결정 1 sub-scope (1-G) amendment-slot pre-reservation mandate 적용 4th applied case — Amendment 18 CFP-1342 1st + Amendment 21 CFP-1578 2nd + Amendment 22 CFP-1601 3rd precedent 답습) + sub-scope (1-K) numeric claim write-time strict claim mandate 적용 2nd applied case (Amendment 22 CFP-1601 1st applied META carrier 직후 답습). ADR-060 §결정 6 promotion gate AND 3/3 PASS evidence: (a) PR cumulative since 2026-05-17 (CFP-845 ship 시점) = 200 PRs ≥ 20 (`gh pr list --search 'merged:>=2026-05-17' --limit 200` returned full list, 10x threshold 충족) / (b) bypass label外 failure count = 0 (`recurrence.count: 0` registry yaml verified) + `gh pr list --label hotfix-bypass:per-plugin-cumulative-counter` returned 0 PRs (no actual bypass usage during warning mode) / (c) sibling Stories CFP-390 PR #415/#420 + CFP-455 PR #460/#461 (CFP-412 substitution per ADR-060 Amendment 1+2 sibling_dependencies chain [CFP-390, CFP-412, CFP-455]) ALL MERGED. 본 Amendment 15 = ADR-060 framework 첫 actual blocking-on-pr 승격 carrier — framework SSOT 검증 carrier (multi-entry registry 운영 검증 첫 사례). evidence-checks-registry entry `per-plugin-cumulative-counter` `current_tier: warning` → `blocking-on-pr` + `status: warning` → `blocking-on-pr` + `recurrence.last_occurrence` Phase 1 PR merge KST timestamp 갱신 + `recurrence.promotion_trigger: warning_to_blocking_on_pr` 갱신. workflow `templates/github-workflows/per-plugin-cumulative-counter.yml` + `.github/workflows/` self-app `continue-on-error: true` → `false` ratchet = Phase 2 carrier scope. evidence_artifact (v) + (vi) gap closure declarative anchor (Phase 2 별 sub-CFP carrier — `scripts/check-audit-comment-author.{sh,py}` + `templates/github-workflows/audit-comment-author.yml` + `.github/workflows/` self-app + `bypass-audit.yml` sticky comment pattern wire + `tests/bats/check-audit-comment-author.bats` RED→GREEN stash proof + `tests/fixtures/audit-comment-author/` boundary fixture pair). bypass channel preserve — `hotfix-bypass:per-plugin-cumulative-counter` label retain (45번째 family member raw count convention, label-registry MINOR bump 0). plugin.json bump 0 = `marketplace_sync_declared: false` (mirrored field 변경 0, kind:registry sibling sync 면제 영역, ADR-063 atomic invariant 발효 조건 미충족). CLAUDE.md L260 영역 'evidence-checks-registry warning tier 19종' 문장 갱신 (warning tier 18종 + blocking-on-pr 4종 — CFP-1607 carrier 반영). schema doc `docs/inter-plugin-contracts/evidence-check-registry-v1.md` value transition example 추가 (warning → blocking-on-pr 첫 사례 documenting, schema 변경 0). ADR-045 §D-9 cross-ref pattern_count 3 cumulative occurrence `escalate_user` enum resolved by 사용자 2026-05-25 KST — 본 Amendment 15 = §D-9 forcing function 작동 사례 첫 carrier. ADR-064 §결정 5 CFP scope unitary 정합 — 본 Amendment 15 = per-plugin-cumulative-counter 단일 entry 승격 (sibling sub-decisions 6.A.4 / 6.A.5 미승격, 별 CFP scope). Wave 4 batch sequential last entry (Story CFP-1604 / CFP-1605 / CFP-1606 4/4 PIVOT trend break — 본 Story PROCEED_WITH_SCOPE_EXPANSION). mid-spawn drift detection (ADR-073 Amendment 12) 적용 evidence — worktree base 0a19e6a → 4c66891 rebase clean (CFP-1601 + CFP-1586 + CFP-1585 + CFP-1584 cascade integrate, 4 commits behind origin/main detected + rebased atomic pre-commit). prior art Amendment 14 (CFP-1306) 직전 chronological carrier 정합 (file body Amendment 13 (CFP-1510) 직후 sequential, frontmatter `amendments[]` array sequential append)."
@@ -177,6 +181,12 @@ mechanical_enforcement_actions:
   - action: wording-dictionary-bypass-justification
     status: deferred-followup     # registry yaml row append + workflow + script wire = 별 sub-CFP scope (Wave 2 mechanical wire — `wording-dictionary-bypass-justification-presence-lint` warning tier evidence-check-registry entry 후보)
     target_section: §결정 6.A.8   # wording-dictionary entry 영역 pre-existing-drift bypass narrative audit pathway codify
+  # Amendment 17 (CFP-1646, 2026-05-26) — §결정 6.A.9 신설 Issue label timing discipline (backlog `phase:*` reflex 차단 mechanical enforce)
+  # behavioral directive normative 승격 첫 carrier — memory `feedback_no_phase_label_on_backlog_issues.md` ephemeral → ADR-024 normative SSOT 승격
+  # Wave 1 declarative — registry §3 entry append (104번째 hotfix-bypass:backlog-issue-label) + workflow Wave 1 stub; Wave 2 mechanical wire = 별 sub-CFP carrier (script + bats + workflow body)
+  - action: backlog-issue-phase-label-forbid
+    status: deferred-followup     # registry yaml row append = Phase 1 PR; actual lint script + workflow body + bats fixture wire = Phase 2 PR scope (Wave 2 carrier)
+    target_section: §결정 6.A.9   # backlog Issue (state:open + assignee:none + linked_pr:none) AND `phase:*` label 부착 검출 = warning emit, hotfix-bypass:backlog-issue-label bypass channel
 ---
 
 # ADR-024: Story-scoped branch policy — main 직접 수정 금지 + Phase 2 enforcement deferred
@@ -1581,4 +1591,98 @@ ADR-082 §결정 1 sub-scope (1-K) numeric claim write-time strict claim mandate
 - CFP-610 prior art (`hotfix-bypass:wording-dictionary` 22번째 family member carrier)
 - CFP-1617 retro internal-docs PR #937 (PMOAgent surface trigger)
 - CFP-1240 / CFP-1267 / CFP-1617 (pattern_count 3 evidence)
+
+## Amendment 17 — §결정 6.A.9 신설 Issue label timing discipline (backlog `phase:*` reflex 차단 mechanical enforce, CFP-1646, 2026-05-26 KST)
+
+### Context
+
+memory `feedback_no_phase_label_on_backlog_issues.md` ephemeral (consumer 비전파 + single-session scope = structural enforcement 불가) → ADR-024 normative SSOT 승격 첫 carrier. 사용자 directive 2026-05 (CFP-1111 follow-up #1198/#1199 phase:설계 reflex incident origin): "두개의 이슈 현재 작업 중 아닌가?" — 즉시 lane 진입 안 한 backlog/예약/follow-up CFP Issue 발의 시 `phase:*` label 부착 부적합. 미착수 backlog 관례 = unlabeled (Issue #1112 / #1169 prior art pattern).
+
+CLAUDE.md "Orchestrator 정책 적용 범위 + behavioral directive (normative)" 단락 정합 — Orchestrator 행동 directive 를 personal memory file 저장만으로 갈음 금지. Memory = ephemeral + consumer 비전파 + single-session scope = structural enforcement 불가. 즉시 CFP 제안 + ADR / playbook / consumer-guide 반영 의무. 본 Story = behavioral directive normative 승격 첫 carrier (template precedent for 향후 mandate).
+
+### Amendment
+
+§결정 6.A.9 신설 — `hotfix-bypass:backlog-issue-label` 104번째 family member (raw active concrete grep count post-append = 103 + 1 = 104 정합, CFP-1648 v2.78 103번째 adr-dual-block-parity → CFP-1646 = 104번째 / v2.79 ratchet up 완료).
+
+#### §결정 6.A.9: Issue label timing discipline (backlog `phase:*` reflex 차단)
+
+즉시 lane 진입하지 않는 backlog / 예약 / follow-up CFP Issue 발의 시 `phase:*` label 부착 금지. 미착수 backlog 관례 = unlabeled.
+
+**Backlog 상태 식별 mechanical proxy 3-AND predicate**:
+- (a) `state:open` (Issue 자체 열림)
+- (b) `assignee:none` (담당자 미할당)
+- (c) `linked_pr:none` (linked PR 부재)
+
+3 AND 만족 = backlog (lane 진입 X, `phase:*` label 부적합) → lint 발화 (warning tier). 한 조건이라도 false = 착수 가능성 신호 (lint 발화 부적합, false-positive 차단).
+
+**Bypass channel**: `hotfix-bypass:backlog-issue-label` (104번째 family member) — §결정 6.A per-entry namespace 영구 확장. audit-trailed exception channel (기존 `scripts/check-bypass-audit-comment.sh` CFP-389 prior art reuse, 신규 audit lint 도입 0건). `BYPASS_BACKLOG_ISSUE_LABEL=1` env unconditional skip.
+
+#### Wave 1 (Phase 1 PR scope — declarative)
+
+- 본 ADR-024 Amendment 17 §결정 6.A.9 신설 (본 Amendment) + frontmatter `amendments[]` row + `mechanical_enforcement_actions[]` row (action: `backlog-issue-phase-label-forbid`, status: deferred-followup, target_section: §결정 6.A.9) + `amended_by`/`amended_date` 갱신
+- label-registry-v2 v2.78 → v2.79 MINOR + `hotfix-bypass:backlog-issue-label` 104번째 raw active concrete family member entry append (§3) + amendment_log row append
+- MANIFEST.yaml row "2.78" → "2.79" sync
+- workflow pair `templates/github-workflows/backlog-issue-label-forbid.yml` + `.github/workflows/backlog-issue-label-forbid.yml` Wave 1 declarative stub (`if: false`, workflow_dispatch + issues:[opened,labeled] trigger, ADR-005 byte-identical pair, CFP-1510 macro-label-expander.yml precedent 답습)
+- CHANGELOG.md [Unreleased] CFP-1646 entry append
+
+#### Wave 2 (Phase 2 PR scope — mechanical wire, future carrier)
+
+- workflow body actual lint wire (`if: false` 제거 + 3-AND predicate detection)
+- script `scripts/check-backlog-issue-label.sh` thin-wrapper (ADR-061 정합)
+- script `scripts/lib/check_backlog_issue_label.py` (ADR-061 multi-line Python external file)
+- bats fixture `tests/bats/check-backlog-issue-label.bats` RED→GREEN stash proof (CFP-1334 §8.4 5 markers)
+- boundary fixture pair `tests/fixtures/backlog-issue-label/{pass,fail}/` (CFP-963 Codex TP#4 정합)
+- evidence-checks-registry `backlog-issue-phase-label-forbid` warning-tier entry status `deferred-followup` → `warning` 전환
+
+#### Wave 3 (post Phase 2 PR merge 별 task — memory housekeeping)
+
+- Delete memory file `feedback_no_phase_label_on_backlog_issues.md` (normative 승격 완료)
+- Delete memory file `feedback_brainstorming_why_first.md` (skill `codeforge:codeforge-brainstorm` body L63/66/100/140-145 9 grep hits HIT verified, retire only — skill body 보강 carrier 불필요)
+- Delete memory file `feedback_codex_collaboration_patterns.md` (ADR-052 + ADR-070 + ADR-081 codified, retire only)
+- MEMORY.md index 3 line 제거
+
+### Axis disjoint matrix (§결정 6.A sub-decisions)
+
+§결정 6.A.1~6.A.9 axis 분리:
+
+| Sub-decision | Carrier | Axis |
+|---|---|---|
+| §결정 6.A.1 | Amendment 4 / CFP-481 | auto-phase-label branch → phase mapping |
+| §결정 6.A.2 | Amendment 6 / CFP-825 | bypass-label-counter per-entry namespace 누적 |
+| §결정 6.A.3 | Amendment 8 / CFP-845 | per-plugin-cumulative-counter cross-plugin ratchet |
+| §결정 6.A.4 | Amendment 8 / CFP-845 | bypass-justification-marker PR comment marker |
+| §결정 6.A.5 | Amendment 8 / CFP-845 | cross-repo-bypass-counter 3-repo signature |
+| §결정 6.A.6 | Amendment 13 / CFP-1510 | pre-existing-main-drift-bundle macro label |
+| §결정 6.A.7 | Amendment 14 / CFP-1306 | parallel-anchors-checked-presence lint |
+| §결정 6.A.8 | Amendment 16 / CFP-1657 | wording-dictionary-bypass-justification narrative audit |
+| **§결정 6.A.9** | **Amendment 17 / CFP-1646** | **Issue label timing discipline (backlog `phase:*` reflex 차단) — 본 Amendment, axis disjoint label attach timing layer** |
+
+### Process audit — Full-lane attempt closure (PR #1664 + #941 closed)
+
+본 Story 의 Full-lane attempt audit trail (Issue #1646 + closed PRs):
+
+1. RequirementsPLAgent PROCEED (drift correction §2.2 inline)
+2. ArchitectPLAgent FIX iter 1 (false premise — main repo path stale verify) → Orchestrator SendMessage premise resolution
+3. ArchitectPLAgent PASS (Amendment 16 § 6.A.8 + v2.78 + 103rd 시도)
+4. DesignReviewPLAgent FIX iter 2 (3 findings: F-001 P0 declared vs actual content mismatch / F-002 P2 workflow comment drift / F-003 P3 axis fit wording)
+5. ArchitectPLAgent FIX iter 2 closure new commit `65166326`
+6. DesignReviewPLAgent re-review PASS (4-way INV-1 parity restored)
+7. PR #1664 merge attempt DIRTY (CFP-1657 parallel race — Amendment 16 § 6.A.8 slot collision)
+8. ArchitectPLAgent FIX iter 3 ESCALATE_PACKET_INCOMPLETE (3rd parallel race CFP-1648 v2.78 + 103rd slot collision)
+9. **사용자 minimal path 선택** (CFP-1110 precedent invocation per ADR-039 inline exception) — PR #1664 + #941 close + new branch `cfp-1646-v2` on origin/main `56061363` + Orchestrator inline direct write (본 Amendment 산출물)
+
+본 Amendment 17 = minimal path 산출물. fa3190e2 + 65166326 commit chain abandoned. Audit trail = Issue #1646 + closed PR mclayer/plugin-codeforge#1664 + mclayer/codeforge-internal-docs#941 + internal-docs Story §10/§14.
+
+### Related
+
+- **CFP-1646** carrier Story
+- Issue #1646 USER-UTTERANCE-VERBATIM
+- closed PR mclayer/plugin-codeforge#1664 + mclayer/codeforge-internal-docs#941 (Full-lane attempt audit)
+- CFP-1657 (parallel race source — Amendment 16 § 6.A.8 slot collision, wording-dictionary axis)
+- CFP-1648 (parallel race source — v2.78 + 103rd slot collision, adr-dual-block-parity axis)
+- CFP-1110 (minimal path precedent invocation source — 사용자 직권 inline path)
+- ADR-039 (inline exception per user directive)
+- CFP-1111 follow-up #1198/#1199 (phase:설계 reflex incident origin)
+- ADR-024 Amendment 16 (CFP-1657, §결정 6.A.8 wording-dictionary pre-existing-drift bypass — chronological direct precedent, axis disjoint)
+- Memory `feedback_no_phase_label_on_backlog_issues.md` (ephemeral source, post-merge retire)
 
