@@ -8,8 +8,14 @@
 #         + cascade_execution_plan: Phase 2 PR 안 6 MCP call atomic execution plan + dry_run_gate mandate
 #         + legacy_adr_migration_map[]: 148 page (ADR 117 + IPC 30 + Consumer Guide 1) per-page binding skeleton (Phase 2 post-execute populate, F-DR-001 factual update — ADR corpus 117 ground truth verified-via `git ls-files docs/adr/ADR-*.md | wc -l` 2026-05-25 KST)
 #         backward-compat 보존 (field 추가만, 삭제/rename 0 — ADR-089 §결정 1 양방향 호환)
+#   1.2 — CFP-1668 (Wave 1 Phase 2) MINOR bump:
+#         + per_consumer_instantiate_template: consumer 측 자기 IA tree 를 instantiate 하는 generic skeleton
+#           (space 결정 / mirror 대상 결정 / parent page placement 결정 트리 포함)
+#         + backward-compat: 기존 1.1 consumer (mctrader 등) = 1.2 신설 sub-tree 부재 시 fallback (Wave 2 carrier)
+#         + wrapper CFP space hard-code 영역 entry 보존 (invariant — 변경 0)
+#         ADR-100 Amendment 2 + ADR-111 Amendment 2 carrier
 
-schema_version: "1.1"
+schema_version: "1.2"
 
 space:
   key: CFP
@@ -2286,6 +2292,72 @@ living_architecture_pages:
     mermaid_diagram_count: null
     phase_2_status: "defer"
     phase_2_defer_reason: "GitHub repo mclayer/plugin-codeforge-deploy-review 404 부재 — CFP-1059 declarative phase only, 실 plugin repo 신설 = 별 sub-Story S3 carrier"
+
+# =============================================================================
+# CFP-1668 Schema 1.2 신설 — per_consumer_instantiate_template
+# consumer 측 자기 IA tree 를 instantiate 하는 generic skeleton + 결정 트리
+# backward-compat: 기존 1.1 consumer = 본 section 부재 시 fallback (Wave 2 carrier)
+# =============================================================================
+per_consumer_instantiate_template:
+  schema_version: "1.2"
+  carrier_story: "CFP-1668"
+  description: |
+    consumer 가 자기 Confluence space 의 IA tree 를 instantiate 하는 generic skeleton.
+    consumer-guide §1o Step 2 진입점. ADR-100 Amendment 2 + ADR-111 Amendment 2 carrier.
+
+  # Step 1 — space 결정 (consumer-guide §1o Step 1 정합)
+  space_decision:
+    derived_default: consumer_own_space  # ownership 명확 + parent_id collision 회피
+    options:
+      - id: consumer_own_space
+        description: "consumer 자기 Confluence space 생성 (권장)"
+        example_space_key: "MCT"
+        when: "독립적 governance isolation 필요 / space 계약 독립"
+      - id: wrapper_cfp_subtree
+        description: "wrapper CFP space 안 sub-tree 사용"
+        when: "소규모 consumer / cross-org space 공유 계약 보유"
+        prerequisite: "wrapper admin 에게 parent page 생성 요청"
+
+  # Step 2 — IA tree skeleton (consumer 복사 후 값 채우기)
+  space_skeleton:
+    # consumer 는 아래 skeleton 을 복사 후 <...> 값을 채워 사용
+    schema_version: "1.2"
+    space:
+      key: "<CONSUMER-SPACE-KEY>"              # 예: MCT
+      id: "<numeric-id>"                       # Confluence space numeric ID
+      name: "<Consumer Display Name>"          # 예: mctrader
+      cloud_id: "<cloud-uuid>"                 # Confluence Cloud 인스턴스 UUID
+      instance: "<instance-hostname>"          # 예: myorg.atlassian.net
+      root_homepage_id: "<numeric-id>"         # space root homepage page ID (project.yaml homepage_id 정합)
+    ia_axis: per-plugin-top-level-plus-cross-cutting-sibling   # wrapper 패턴 답습 (derived default)
+    deviation_path:
+      active: mcp-direct                       # 현재 표준 (mark engine = retain_for_future)
+      rationale: "<consumer-specific rationale>"
+    mark_engine_path:
+      status: retain_for_future
+      dependency: "<CONSUMER_ATLASSIAN_API_TOKEN env key>"
+
+  # Step 3 — mirror 대상 결정 (ADR-111 Amendment 2 §결정 1 closed-enum 5 subset)
+  mirror_targets_decision:
+    closed_enum:
+      - adr                   # ADR mirror — 권장 (설계 결정 이력 공유)
+      - architecture_doc      # Living Architecture mirror — 권장 (ADR-078)
+      - change_plan           # Change Plan mirror — 선택
+      - domain_knowledge      # Domain Knowledge mirror — 선택
+      - orchestrator_playbook # Orchestrator Playbook mirror — 선택
+    expand_invariant: false   # 확장 0 — 신규 타입 추가 시 ADR-111 Amendment 필요
+    consumer_subset_allowed: true   # consumer 는 위 5 개 중 subset 자유 선택
+
+  # Step 4 — parent page placement
+  parent_page_placement:
+    default_rule: "per-doc-type root page 아래 — IA tree 의 space.root_homepage_id 하위"
+    override_via: "project.yaml atlassian.confluence.per_doc_type_override.<type>.parent_page_id"
+    conflict_resolution: "consumer-authored 영역 우선 (OOS edge case 4번 — wrapper-managed marker block 충돌 시)"
+
+  # backward-compat note
+  backward_compat:
+    v1_1_consumers: "기존 1.1 consumer = 본 per_consumer_instantiate_template section 부재 — schema validator fallback (Wave 2 carrier). 기존 space.*/deviation_path/mark_engine_path 필드 구조 0 변경"
+    field_addition_only: true   # ADR-089 §결정 1 양방향 호환 — 삭제/rename 0
 
 living_architecture_pages_total: 9  # 7 pushed + 2 defer (CFP-1619 wrapper push 완료 후 — 2 defer = CFP-1059 declarative-phase plugin repo 부재 영역 잔존)
 living_architecture_carrier: "CFP-1524 Sub-C (CFP-1586) + CFP-1619 (wrapper carrier — follow-up to CFP-1586 defer)"

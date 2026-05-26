@@ -5,8 +5,8 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.2  
-**Last regen**: 2026-05-25T07:19:37Z  
-**Registered doc types**: 16
+**Last regen**: 2026-05-26T00:00:00Z  
+**Registered doc types**: 17
 
 ## Summary table
 
@@ -353,4 +353,32 @@
   > Story-4 = enforcement layer carrier (declare-only) — Story-5 (별 CFP) = downgrade asymmetry invariant declarative carrier (canary → beta → stable demotion path).
   > parallel-edit policy = serialized (canary_compatibility_check section-ownership.yaml + ArchitectAgent monopoly).
   > family_7_atomic × channel × promotion gate 3-axis cross-product = wrapper Tier-1 declare-time exemption (ADR-72 §결정 6 invariant 정합) + consumer Tier-2 admin-tier 권장 (boundary 2-tier disjoint).
+
+---
+
+### `orchestrator_playbook`
+
+- **single_repo**: `<owner-repo>/docs/orchestrator-playbook.md`
+- **confluence**: `https://<confluence-instance>/wiki/spaces/<space-key>/pages/<page-id>`
+- **confluence_variant**:
+  - `page_id_pattern`: `<placeholder>`
+  - `authoritative_source`: git (immutable)
+  - `mirror_direction`: git_to_confluence (immutable)
+  - `consumer_applicable`: true
+- **owner_agent**: `orchestrator`
+- **introduced_by**: CFP-1668
+- **naming_pattern**: `orchestrator-playbook\.md`
+- **frontmatter_required**: False
+- **examples**:
+  - mclayer/plugin-codeforge/docs/orchestrator-playbook.md (wrapper canonical)
+
+  **notes**:
+  > CFP-1668 / ADR-111 Amendment 2 §결정 1 carrier — 5번째 mirror 대상 신설.
+  > wrapper canonical = mclayer/plugin-codeforge/docs/orchestrator-playbook.md (단일 SSOT).
+  > consumer 는 project.yaml atlassian.confluence.mirror_targets 에 orchestrator_playbook 추가로 mirror 활성.
+  > git = SoR-work invariant (ADR-100 §결정 1) — Confluence 는 readable mirror (단방향, 역방향 edit 금지).
+  > confluence_variant sub-tree: consumer_applicable: true (ADR-083 §결정 1 — 4-way enum `consumer` 해당).
+  > mirror 대상 closed-enum: [adr, architecture_doc, change_plan, domain_knowledge, orchestrator_playbook] 완결 (ADR-111 Amendment 2 §결정 1 5-tuple).
+  > parallel-edit policy = append-only (playbook = governance narrative, Orchestrator owner).
+  > Phase 1 (CFP-1668) = doc type 등록 + ADR-111 Amendment 2 §결정 1 carrier. Sub-B sync = Wave 2 별 carrier.
 

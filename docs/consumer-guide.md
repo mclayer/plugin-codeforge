@@ -647,6 +647,123 @@ multi-layer architecture (RDB / 빅데이터 / API / service repo) 운영 consum
 
 참조: [ADR-087](adr/ADR-087-deploy-lane-and-lifecycle-extension.md) · [ADR-088](adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) · [ADR-089](adr/ADR-089-schema-change-7-principles.md) · [ADR-090](adr/ADR-090-cross-layer-reference-policy.md) · [project-config-schema §deploy 섹션 설명](project-config-schema.md)
 
+### 1o. Confluence migration 셋업 (opt-in, CFP-1668 / [ADR-100 Amendment 2](adr/ADR-100-confluence-doc-ssot-recognition.md) + [ADR-111 Amendment 2](adr/ADR-111-confluence-mirror-classification-policy.md))
+
+consumer 측 Confluence doc-mirror 셋업 4-step SOP. **opt-in** — `atlassian.confluence.*` block 부재 시 비활성, 기존 git-only governance 유지 (breaking 0).
+
+Skill 진입점: `codeforge:confluence-migration` (분산 자료 단일 lookup-table).
+
+공통 invariant 7건 (consumer scope 동일 적용, ADR-100 Amendment 2 + ADR-111 Amendment 2):
+
+1. **git = SoR-work** — git repo 가 진실의 원천. Confluence 에서 직접 edit 금지.
+2. **Confluence = SoR-docs readable mirror** — 단방향 git→Confluence.
+3. **3-anchor verify** — content property: git-source sha256 / native version / sync commit SHA.
+4. **mark engine path = retain_for_future** — 현재 MCP-direct 운영 중 (#1320 secret 주입 후 mark engine 활성).
+5. **Issue-only retain 5 영역** — Story file / FIX Ledger / Lane Evidence / decision packet / spawn prompt = Confluence mirror 0 (ratchet 강화).
+6. **mirror 대상 closed-enum 5** — `adr` / `architecture_doc` / `change_plan` / `domain_knowledge` / `orchestrator_playbook`.
+7. **consumer ⊆ wrapper SYMMETRIC subset** — 확장 0 invariant (신규 타입 = ADR-111 Amendment 필요).
+
+#### Step 1 — space 결정
+
+consumer 결정 분기:
+
+- **(a) consumer 자기 Confluence space 생성** (derived default — ownership 명확, parent_id collision 회피)
+  - 예: `MCT` (mctrader) / `PROJ` (generic consumer)
+  - 권장: 별도 space 가 governance isolation 최적
+- **(b) wrapper `CFP` space 안 sub-tree** (cross-org space sharing 정합)
+  - 소규모 consumer / cross-org space 계약 있는 경우
+  - wrapper admin 에게 parent page 생성 요청 필요
+
+#### Step 2 — IA tree instantiate
+
+`docs/confluence-ia-tree.yaml` schema 1.2 `per_consumer_instantiate_template` section 활용:
+
+```yaml
+# .claude/_overlay/confluence-ia-tree-consumer.yaml  (또는 consumer repo 안)
+schema_version: "1.2"
+
+space:
+  key: <CONSUMER-SPACE-KEY>          # 예: MCT
+  id: "<numeric-id>"                 # Confluence space numeric ID
+  name: <Consumer Display Name>      # 예: "mctrader"
+  cloud_id: "<cloud-uuid>"           # Confluence Cloud 인스턴스 UUID
+  instance: <instance-hostname>      # 예: myorg.atlassian.net
+  root_homepage_id: "<numeric-id>"   # space root homepage page ID
+
+ia_axis: per-plugin-top-level-plus-cross-cutting-sibling   # wrapper 패턴 답습
+
+deviation_path:
+  active: mcp-direct                 # 현재 표준 path (mark engine = retain_for_future)
+  rationale: "<consumer-specific rationale>"
+
+mark_engine_path:
+  status: retain_for_future
+  dependency: "<CONSUMER_ATLASSIAN_API_TOKEN env key>"
+```
+
+#### Step 3 — mirror 대상 선택
+
+closed-enum 5 의 subset 선택 + `project.yaml` 갱신:
+
+```yaml
+# .claude/_overlay/project.yaml
+atlassian:
+  enabled: true
+  confluence:
+    base_url: "https://<instance>.atlassian.net"
+    space_key: <CONSUMER-SPACE-KEY>
+    instance: <instance-hostname>              # 예: myorg.atlassian.net
+    homepage_id: "<numeric-id>"                # Step 2 에서 확인한 root_homepage_id
+    mirror_targets: [adr, architecture_doc]    # closed-enum 5 의 subset 선택
+                                               # [adr, architecture_doc, change_plan, domain_knowledge, orchestrator_playbook]
+    api_token_env: CONSUMER_ATLASSIAN_API_TOKEN
+    user_email_env: CONSUMER_ATLASSIAN_USER_EMAIL
+    per_doc_type_override:                     # optional — per-doc-type parent page 오버라이드
+      adr:
+        parent_page_id: "<numeric-id>"
+```
+
+**mirror_targets 선택 기준**:
+
+| 타입 | 권장 | 비고 |
+|---|---|---|
+| `adr` | 권장 | 설계 결정 이력 공유 — governance hub |
+| `architecture_doc` | 권장 | 살아있는 구조 설계 문서 (ADR-078) |
+| `change_plan` | 선택 | 변경 계획 공유 필요 시 |
+| `domain_knowledge` | 선택 | 도메인 지식 공유 필요 시 |
+| `orchestrator_playbook` | 선택 | consumer-facing playbook 공유 필요 시 |
+
+#### Step 4 — 첫 push dry-run
+
+```bash
+# dry-run: mapping table + 3-anchor verify report (actual write 0)
+python scripts/confluence-sync-3anchor.py --dry-run --space <CONSUMER-SPACE-KEY>
+
+# apply: 실제 push + 3-anchor stamp
+python scripts/confluence-sync-3anchor.py --apply --space <CONSUMER-SPACE-KEY>
+```
+
+dry-run 결과 검증:
+- mapping table (git path → Confluence page) 정합 확인
+- 3-anchor verify report (sha256 / version / commit SHA)
+- fail 시 → ADR-101 verify-before-trust path (응답 검증 의무)
+
+#### Issue-only retain 영역 (ADR-111 Amendment 2 §결정 2 — consumer 동일 적용)
+
+다음 5 영역 = **Confluence mirror 절대 금지** (ratchet 강화):
+
+1. **Story file** (`docs/stories/<KEY>.md`)
+2. **FIX Ledger** (Story file §10 sub-section)
+3. **Lane Evidence** (Story file §14 sub-section)
+4. **decision packet** (`decisions/<packet_id>.yaml`)
+5. **spawn prompt** (ephemeral, session-scoped)
+
+#### Write boundary (§4b 정합)
+
+`atlassian.confluence.*` field = **consumer-authored only**. 모든 codeforge agent 는 본 block write 금지. sync agent (ADR-103 carrier) = read-only (consumer overlay value 수신 후 sync 대상 결정).
+
+참조: [ADR-100](adr/ADR-100-confluence-doc-ssot-recognition.md) · [ADR-111](adr/ADR-111-confluence-mirror-classification-policy.md) · [ADR-099](adr/ADR-099-atlassian-tool-allow-lint.md) · [ADR-101](adr/ADR-101-verify-before-trust-confluence-rest.md) · [ADR-103](adr/ADR-103-confluence-sync-mechanism.md) · [project-config-schema §atlassian 섹션 설명](project-config-schema.md) · skill `codeforge:confluence-migration`
+
 ## 2. Consumer 프로젝트 구조 초기화
 
 ```
