@@ -425,6 +425,11 @@ amendments_reserved:
     reserved_by_cfp: CFP-1688
     reservation_date: 2026-05-26 KST
     status: active   # ArchitectAgent commit time 점유 (Story Phase 1 PR carrier — Amendment 30 §결정 1 layer 1 sub-scope (1-S) 신설 ADR frontmatter block convention codify + dual-block parity lint (sub-scope 1-Q CFP-1648) single-block ADR 면제 scope clarification. Pivot 1 root cause codify (CFP-1680 retro CFP-FU-C #1688): ADR-045 = single-block (amendment_log[] only, no amendments[] block) + body `### Amendment N` H3 heading ↔ lint BODY_H2_AMENDMENT_PATTERN 은 `## Amendment N` H2 만 detect → 11 amendments 전부 AMENDMENT_LOG_FRONTMATTER_ONLY false-positive (warning-tier non-blocking but PR check output pollution). 면제 정책: amendments[] block 부재 시 single-block mode (Block 1 + Block 3 skip, Block 2 만 적용) + body section H2/H3 both-level detect. Combined Phase 1+2 (ADR amendment + lint fix + bats, CFP-1648 combined precedent 답습). verified-via git show origin/main:docs/adr/ADR-082-...md frontmatter amendments[] max=29 → next=30 2026-05-26 KST 기준 origin/main 506f7cfc (CFP-1683 Amendment 29 sub-scope 1-R merge 후 base). status reserved 미경유 직접 active 전환 (ArchitectAgent chief author precedent — ADR-082 Amendment 27 row CFP-1647 직전 패턴 정합). META self-applied (sub-scope 1-G 13th applied case).
+
+  - adr_number: 114
+    reserved_by_cfp: CFP-1685
+    reservation_date: 2026-05-26 KST
+    status: active   # Orchestrator minimal path direct (CFP-1646 retro F4 Option A 사용자 결정) commit time 점유 — 신규 ADR-114 Minimal path direct invocation protocol (full-lane process escalation fallback). When (FIX iter ≥ 3 ESCALATE + N+ ambiguity blocker + 사용자 directive) / How (close 1st attempt PRs + 새 branch + Orchestrator inline write + commit + PR + admin merge) / Boundary (single carrier 보존 + lane evidence §10/§14 preservation + ADR-082 Amendment 29 §1-R mid-Story FIX-loop re-verification 정합). CFP-1110 1st applied + CFP-1646 2nd applied case codify (pattern_count ≥ 2 reach). verified-via `git ls-tree origin/main docs/adr/` latest = ADR-113, ADR-114 collision check empty → available, 2026-05-26 KST 기준 origin/main 5d609b36. minimal path direct per ADR-039 inline exception. is_transitional: false permanent governance protocol.
 ```
 
 ## 해소 기준
