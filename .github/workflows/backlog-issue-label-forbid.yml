@@ -1,0 +1,80 @@
+name: Backlog issue phase-label forbid (warning mode — Wave 1 stub)
+# CFP-1646 / ADR-024 Amendment 17 §결정 6.A.9 신설 carrier
+# ADR-060 §결정 5 default warning mode (first introduction = warning tier)
+# Tier: warning (continue-on-error: true, non-required check)
+# Bypass channel: hotfix-bypass:backlog-issue-label label (ADR-024 Amendment 3 / Amendment 17 §결정 6.A.9 — 104번째 family member)
+#
+# Wave 1 declarative stub — Wave 2 mechanical wire = Phase 2 PR scope.
+# Wave 2 carrier: scripts/check-backlog-issue-label.sh thin-wrapper (ADR-061) +
+#                 scripts/lib/check_backlog_issue_label.py (ADR-061 multi-line Python external file) +
+#                 tests/bats/check-backlog-issue-label.bats RED→GREEN stash proof (CFP-1334) +
+#                 tests/fixtures/backlog-issue-label/{pass,fail}/ boundary fixture pair (CFP-963 Codex TP#4)
+#
+# Detection scope (Wave 2 codify, declarative anchor):
+#   3-AND predicate on Issue event:
+#     (a) state == "open"
+#     (b) assignee == null (담당자 미할당)
+#     (c) linked_pr count == 0 (linked PR 부재)
+#   3 AND 만족 = backlog (lane 진입 X) → `phase:*` label 부착 검출 시 warning emit.
+#   한 조건이라도 false = 착수 가능성 신호 (lint 발화 부적합, false-positive 차단).
+#
+# Bypass channel:
+#   - `hotfix-bypass:backlog-issue-label` label 부착 시 lint skip (audit-trailed exception channel)
+#   - `BYPASS_BACKLOG_ISSUE_LABEL=1` env unconditional skip
+#
+# behavioral directive normative 승격 carrier:
+#   - Source: memory `feedback_no_phase_label_on_backlog_issues.md` (ephemeral)
+#   - Origin: CFP-1111 follow-up #1198/#1199 phase:설계 reflex incident (사용자 지적 '두개의 이슈 현재 작업 중 아닌가?')
+#   - Carrier: 본 workflow (Wave 1 stub) + ADR-024 Amendment 17 §결정 6.A.9 (normative SSOT 승격)
+#
+# SecurityArch §7.2 TH-2 constraint: permissions issues:read + pull-requests:read minimal (no write).
+# No CODEFORGE_CROSS_REPO_PAT — secrets.GITHUB_TOKEN read-only fallback only (PAT guard).
+#
+# 승격 path (ADR-060 §결정 6):
+#   warning → blocking-on-pr 승격 시 CFP-NNN carrier PR 가 다음 변경 동반 의무:
+#     1. 본 workflow 의 `continue-on-error: true` 제거
+#     2. (a) PR cumulative ≥ 20 since Phase 2 PR merge / (b) bypass label 외 failure = 0 / (c) sibling Story merged 3 AND
+#     3. evidence 3 산출물 제출 (ADR-060 §결정 6 (d) + evidence-checks-registry.yaml promotion_criteria)
+#
+# Precedent byte-pattern: templates/github-workflows/auto-phase-label.yml (CFP-481 / ADR-024 Amendment 4)
+#                       + templates/github-workflows/mid-spawn-drift-detection-check.yml (CFP-1500 Wave 1→2 split)
+
+on:
+  # Wave 1 stub: workflow_dispatch + issues:[opened,labeled] trigger active, `if: false` job-level neutralizer
+  # (Wave 2 carrier = `if: false` 제거 + body actual lint wire). CFP-1510 macro-label-expander.yml precedent 답습.
+  workflow_dispatch:
+  # issues 트리거는 Wave 2 carrier 가 활성 (Wave 1 stub 영역 안 declarative only — `if: false` 정합)
+  issues:
+    types: [opened, labeled]
+
+permissions:
+  issues: read
+  pull-requests: read
+  contents: read
+
+concurrency:
+  group: backlog-issue-label-forbid-${{ github.event.issue.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  backlog-issue-label-forbid:
+    runs-on: ubuntu-latest
+    # warning mode (ADR-060 §결정 5) — workflow fail 이 PR merge 차단하지 않음.
+    # required_status_checks.contexts 부착 X.
+    continue-on-error: true
+    # Wave 1 stub disabled — Wave 2 carrier 가 `if:` body 활성
+    # (CFP-1510 macro-label-expander.yml `if: false` Wave 1 stub precedent 답습)
+    if: false
+    steps:
+      - name: Wave 1 stub — declarative anchor only (Wave 2 carrier = mechanical wire)
+        run: |
+          echo "::notice::CFP-1646 Wave 1 stub — backlog Issue phase:* label timing discipline declarative anchor."
+          echo "Wave 2 carrier (Phase 2 PR) 가 다음을 wire:"
+          echo "  - scripts/check-backlog-issue-label.sh thin-wrapper (ADR-061)"
+          echo "  - scripts/lib/check_backlog_issue_label.py (ADR-061 multi-line Python external)"
+          echo "  - tests/bats/check-backlog-issue-label.bats RED→GREEN stash proof (CFP-1334)"
+          echo "  - tests/fixtures/backlog-issue-label/{pass,fail}/ boundary fixture pair (CFP-963 Codex TP#4)"
+          echo "  - if: false 제거 + 3-AND predicate body actual lint wire"
+          echo ""
+          echo "ADR-024 Amendment 17 §결정 6.A.9 — backlog Issue (state:open + assignee:none + linked_pr:none) AND \`phase:*\` label 부착 검출 = warning emit."
+          echo "Bypass: hotfix-bypass:backlog-issue-label label 부착 시 lint skip (audit-trailed exception channel)."
