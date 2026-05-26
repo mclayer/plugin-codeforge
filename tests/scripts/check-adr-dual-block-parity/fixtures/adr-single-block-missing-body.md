@@ -26,12 +26,14 @@ Single-block ADR (no amendments[] block, amendment_log[] only).
 Amendment 1 has corresponding H3 body section.
 Amendment 2 body section is INTENTIONALLY MISSING.
 
-Expected: Block 2 retained → WARNING exit 1
-  AMENDMENT_LOG_FRONTMATTER_ONLY: Amendment 2 in frontmatter amendment_log[]
-  but body section missing (F-DR-001 P0 origin sentinel)
+Expected (ADR-082 Amendment 31 sub-scope 1-T, supersedes CFP-1688 Fix A):
+  Single-block ADR (amendment_log[] only, no amendments[]) → EXEMPT via
+  dual-block gate → PASS exit 0. No Block 2 check.
 
-This verifies that Fix A does NOT weaken Block 2 (F-DR-001 P0 sentinel).
-Single-block mode skips Block 1 and Block 3 but Block 2 fires correctly.
+CFP-1688 (Fix A) previously ran Block 2 here → WARNING exit 1. Amendment 31
+narrows the lint to dual-block-only ADRs, so single-block ADRs (incl. this
+one) are now exempt. F-DR-001 P0 sentinel protection is preserved for
+DUAL-BLOCK ADRs (see adr-amendment-log-missing.md / TC-4), not single-block.
 
 ## 결정
 

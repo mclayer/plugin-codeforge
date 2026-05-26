@@ -2,47 +2,56 @@
 # tests/scripts/check-adr-dual-block-parity/test_adr_dual_block_parity.bats
 # CFP-1648 / ADR-082 Amendment 28 sub-scope 1-Q — bats fixture
 # CFP-1688 / ADR-082 Amendment 30 sub-scope 1-S — single-block + H3 + Fix C bats fixture
+# CFP-1734 / ADR-082 Amendment 32 sub-scope 1-U — dual-block gate (Fix A supersede)
 #
 # CFP-1334 §8.4 5 markers:
 #   pre_impl_sha:       TC-RED 은 구현 전 상태 (git stash 후) 에서 수행됨을 증명
 #   git_stash_sequence: bats teardown 에서 stash pop 복구 절차 명시
-#   role_vocabulary:    DeveloperPLAgent / ADR-082 §결정 1-Q/1-S 도메인 어휘 정합
+#   role_vocabulary:    DeveloperPLAgent / ADR-082 §결정 1-Q/1-S/1-U 도메인 어휘 정합
 #   red_green_anchor:   TC-RED → TC-GREEN 전환 명시 주석 포함
 #   platform_verified:  Windows + Unix 양 환경 python3 encoding 정합 확인
 #
-# pre_impl_sha: cc8e18628f734fbf0ca118f8f6435aa91765ca31 (Phase 1 design commits, before Phase 2 fix)
+# pre_impl_sha: e2d0ffd1 (Phase 1 ADR-082 Amd 32 + ADR-RESERVATION committed, before Phase 2 fix)
 # git_stash_sequence:
-#   1. stash_push: git stash push -m "pre-impl-red-proof-cfp-1688" (RED 진정성 입증)
+#   1. stash_push: git stash push -m "pre-impl-red-proof-cfp-1734" (RED 진정성 입증)
 #   2. red_run:    bats tests/scripts/check-adr-dual-block-parity/*.bats
-#                  TC-9: single-block fixture → exit 1 (FP AMENDMENT_LOG_FRONTMATTER_ONLY) = RED
-#                  TC-15: long-frontmatter → exit 1 (cap-300 truncation) = RED
+#                  TC-10: single-block missing-body → exit 1 (WARNING Block 2 retained, CFP-1688) = RED
+#                  TC-16: parens-convention → exit 1 (FP AMENDMENTS_FRONTMATTER_ONLY, CFP-1688) = RED
 #   3. stash_pop:  git stash pop → GREEN 복구
 #
-# TC coverage (15 TC):
+# TC coverage (17 TC — CFP-1688 16 TC + TC-16 신규, TC-3/9/10 BREAKING, TC-12/13 rationale):
 #   TC-1:  PASS — ADR with full parity (frontmatter + body match)
-#   TC-2:  WARNING — frontmatter amendments[] entry but body section missing (exit 1)
-#   TC-3:  WARNING — body section present but frontmatter row missing (exit 1)
-#   TC-4:  WARNING — amendment_log[] frontmatter only, body missing (F-DR-001 sentinel, exit 1)
+#   TC-2:  WARNING — dual-block: frontmatter amendments[] entry but body section missing (exit 1)
+#   TC-3:  PASS — body section present but frontmatter rows empty (degenerate, EXEMPT, exit 0)
+#          [BREAKING from CFP-1688: was WARNING exit 1]
+#   TC-4:  WARNING — dual-block F-DR-001 sentinel: amendment_log[] frontmatter only, body missing (exit 1)
 #   TC-5:  BYPASS env respected (exit 0)
 #   TC-6:  ENVIRONMENT_ERROR — Python SSOT missing → bash wrapper exit 2
 #   TC-7:  red_green_anchor — RED→GREEN behavioral contract verified
 #   TC-8:  platform_verified — UTF-8 stdout/stderr encoding (Windows + Unix)
-#   TC-9:  PASS — single-block ADR (amendment_log[] only + H3 body, all present) — Fix A
-#   TC-10: WARNING — single-block ADR genuinely missing body section — Fix A + Block 2 retain
+#   TC-9:  PASS — single-block ADR (amendment_log[] only + H3 body, all present) — EXEMPT (Amd 32)
+#          [CFP-1688: Fix A single-block mode skip; Amd 32: dual-block gate EXEMPT]
+#   TC-10: PASS — single-block ADR genuinely missing body section — EXEMPT (Amd 32)
+#          [BREAKING from CFP-1688: was WARNING exit 1 (Block 2 retained)]
 #   TC-11: PASS — dual-block ADR regression guard (unchanged behavior)
-#   TC-12: PASS — H3 body section detection — Fix B
+#   TC-12: PASS — H3 body section detection — Fix B (dual-block path; single-block = EXEMPT)
 #   TC-13: PASS — H4 sub-section NOT matched (bounded {2,3} guard) — Fix B
+#          [rationale: single-block → EXEMPT, H4 guard still holds conceptually]
 #   TC-14: PASS — dual-block ADR with H2 body (H3 addition no FP) — Fix B regression
-#   TC-15: PASS — long-frontmatter ADR (>300 line) — Fix C scan cap
+#   TC-15: PASS — long-frontmatter ADR (>300 line) — Fix C scan cap (dual-block path)
+#   TC-16: PASS — parens-convention ADR (amendments[]-only, no amendment_log[]) — EXEMPT (Amd 32)
+#          [BREAKING from CFP-1688: was WARNING exit 1 AMENDMENTS_FRONTMATTER_ONLY FP]
+#          [red_green_anchor: RED (pre-impl) = exit 1 FP; GREEN (post-impl) = exit 0 EXEMPT]
 #
-# 7 fixtures (4 existing + 3 new):
+# 8 fixtures (7 existing + 1 new):
 #   adr-parity-pass.md            — TC-1/TC-11/TC-14 PASS scenario
-#   adr-frontmatter-only.md       — TC-2 WARNING (amendments[] frontmatter only)
-#   adr-body-only.md              — TC-3 WARNING (body section only)
-#   adr-amendment-log-missing.md  — TC-4 F-DR-001 sentinel scenario
-#   adr-single-block-h3-pass.md   — TC-9/TC-12/TC-13 single-block H3 PASS (Fix A+B)
-#   adr-single-block-missing-body.md — TC-10 single-block WARNING (Block 2 retained)
-#   adr-long-frontmatter.md       — TC-15 Fix C RED/GREEN scan cap proof
+#   adr-frontmatter-only.md       — TC-2 WARNING dual-block (amendments[] frontmatter only)
+#   adr-body-only.md              — TC-3 PASS EXEMPT (degenerate empty both blocks)
+#   adr-amendment-log-missing.md  — TC-4 F-DR-001 sentinel scenario (dual-block)
+#   adr-single-block-h3-pass.md   — TC-9/TC-12/TC-13 single-block H3 EXEMPT
+#   adr-single-block-missing-body.md — TC-10 single-block EXEMPT (Amd 32)
+#   adr-long-frontmatter.md       — TC-15 Fix C RED/GREEN scan cap proof (dual-block)
+#   adr-parens-convention.md      — TC-16 parens-convention EXEMPT (amendments[]-only)
 
 bats_require_minimum_version 1.5.0
 
@@ -121,19 +130,24 @@ _run_sh() {
 }
 
 # ---------------------------------------------------------------------------
-# TC-3: WARNING — body section present but frontmatter amendments[] row missing
+# TC-3: PASS — body section present but frontmatter rows empty (degenerate, EXEMPT)
+# BREAKING (CFP-1734 Amendment 32): was WARNING exit 1 in CFP-1688.
+# adr-body-only.md has amendments: [] + amendment_log: [] (both empty arrays).
+# dual_block = bool([]) AND bool([]) = False → EXEMPT → trivial PASS exit 0.
+# red_green_anchor: pre-impl (CFP-1688) = exit 1 BODY_ONLY; post-impl (Amd 32) = exit 0 PASS.
 # ---------------------------------------------------------------------------
-@test "TC-3: WARNING — body ## Amendment section exists but frontmatter row missing (exit 1)" {
-  # role_vocabulary: ADR-082 §결정 1-Q — bidirectional parity check
+@test "TC-3: PASS — degenerate body-only ADR (empty both frontmatter blocks) EXEMPT (Amd 32, exit 0)" {
+  # role_vocabulary: ADR-082 §결정 1-U dual-block gate — degenerate non-dual-block ADR
+  # red_green_anchor: GREEN state after Amendment 32 — empty amendments[]+amendment_log[] → EXEMPT
   export CFP1648_ADR_GLOB_MOCK="${FIXTURES_DIR}/adr-body-only.md"
 
   run python3 "${PYTHON_SSOT}" \
     --mode=audit \
     --adr-glob="${FIXTURES_DIR}/adr-body-only.md"
 
-  # Exit 1 = WARNING (body section exists but frontmatter rows missing)
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"WARNING"* ]] || [[ "$output" == *"BODY_ONLY"* ]]
+  # Exit 0 = PASS (degenerate: amendments[] empty + amendment_log[] empty → dual_block false → EXEMPT)
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"PASS"* ]]
   [[ "$output" == *"${ROLE_VOCAB}"* ]]
 }
 
@@ -310,44 +324,49 @@ KOREAN_ADR_EOF
 # ===========================================================================
 
 # ---------------------------------------------------------------------------
-# TC-9: PASS — single-block ADR (amendment_log[] only + H3 body, all present)
-# Fix A: single-block mode — Block 1 + Block 3 skip, Block 2 PASS
-# red_green_anchor: RED (unfixed) = exit 1 AMENDMENT_LOG_FRONTMATTER_ONLY FP (H2-only detect)
-#                  GREEN (fixed)  = exit 0 PASS (single-block mode skip + H3 detect)
+# TC-9: PASS — single-block ADR (amendment_log[] only + H3 body, all present) — EXEMPT
+# CFP-1688 Fix A: single-block mode skip Block1/3, Block 2 PASS.
+# Amendment 32 (CFP-1734): dual-block gate — single-block → EXEMPT (no blocks run).
+# Exit 0 result unchanged; rationale shifts from "Fix A single-block mode" to "EXEMPT".
+# red_green_anchor: exit 0 maintained across both fixes.
 # ---------------------------------------------------------------------------
-@test "TC-9: PASS — single-block ADR amendment_log-only H3 body all present (Fix A, exit 0)" {
-  # role_vocabulary: single-block mode — amendments[] absent, amendment_log[] only
-  # red_green_anchor: RED state before Fix A = H3 body not detected → AMENDMENT_LOG_FRONTMATTER_ONLY FP
-  #                   GREEN state after Fix A+B = single-block mode skip Block1/3 + H3 detect → PASS
+@test "TC-9: PASS — single-block ADR amendment_log-only EXEMPT via dual-block gate (Amd 32, exit 0)" {
+  # role_vocabulary: ADR-082 §결정 1-U dual-block gate — single-block ADR amendment_log[]-only EXEMPT
+  # Amd 32: amendments[] absent → dual_block = False → early-return PASS (gate, no blocks run)
+  # CFP-1688 Fix A behavior superseded: Block 2 no longer runs for single-block ADRs
   export CFP1648_ADR_GLOB_MOCK="${FIXTURES_DIR}/adr-single-block-h3-pass.md"
 
   run python3 "${PYTHON_SSOT}" \
     --mode=audit \
     --adr-glob="${FIXTURES_DIR}/adr-single-block-h3-pass.md"
 
-  # Exit 0 = PASS (single-block ADR: all amendment_log[] entries have H3 body sections)
+  # Exit 0 = PASS (single-block: dual_block gate → EXEMPT, no blocks executed)
   [ "$status" -eq 0 ]
   [[ "$output" == *"PASS"* ]]
   [[ "$output" == *"${ROLE_VOCAB}"* ]]
 }
 
 # ---------------------------------------------------------------------------
-# TC-10: WARNING — single-block ADR genuinely missing body section
-# Fix A: Block 2 retained unconditionally — F-DR-001 P0 sentinel fires correctly
+# TC-10: PASS — single-block ADR genuinely missing body section — EXEMPT (Amd 32)
+# BREAKING (CFP-1734 Amendment 32): was WARNING exit 1 in CFP-1688 (Block 2 retained).
+# Amendment 32 dual-block gate: single-block (amendment_log[]-only) → EXEMPT, Block 2 NOT run.
+# F-DR-001 P0 sentinel protection preserved for dual-block ADRs (TC-4); single-block = accepted tradeoff.
+# red_green_anchor: RED (pre-impl CFP-1688) = exit 1 AMENDMENT_LOG_FRONTMATTER_ONLY Amendment 2
+#                  GREEN (post-impl Amd 32) = exit 0 PASS EXEMPT
 # ---------------------------------------------------------------------------
-@test "TC-10: WARNING — single-block ADR genuinely missing body section (Fix A Block 2 retain, exit 1)" {
-  # role_vocabulary: single-block mode with genuine Block 2 violation
-  # red_green_anchor: Fix A does NOT weaken Block 2 — genuine drift surfaces correctly
+@test "TC-10: PASS — single-block ADR missing body EXEMPT via dual-block gate (Amd 32, exit 0)" {
+  # role_vocabulary: ADR-082 §결정 1-U dual-block gate — single-block ADR amendment_log[]-only EXEMPT
+  # Amd 32: amendments[] absent → dual_block = False → early-return PASS (gate supersedes Block 2)
+  # red_green_anchor: GREEN state after Amendment 32 (this TC was RED in CFP-1688)
   export CFP1648_ADR_GLOB_MOCK="${FIXTURES_DIR}/adr-single-block-missing-body.md"
 
   run python3 "${PYTHON_SSOT}" \
     --mode=audit \
     --adr-glob="${FIXTURES_DIR}/adr-single-block-missing-body.md"
 
-  # Exit 1 = WARNING (Block 2 retained: Amendment 2 body missing in single-block ADR)
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"AMENDMENT_LOG_FRONTMATTER_ONLY"* ]]
-  [[ "$output" == *"Amendment 2"* ]]
+  # Exit 0 = PASS (single-block: dual_block gate → EXEMPT, Block 2 not executed)
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"PASS"* ]]
   [[ "$output" == *"${ROLE_VOCAB}"* ]]
 }
 
@@ -371,45 +390,47 @@ KOREAN_ADR_EOF
 }
 
 # ---------------------------------------------------------------------------
-# TC-12: PASS — H3 body section detection
-# Fix B: BODY_AMENDMENT_PATTERN detects ### Amendment N (H3)
-# red_green_anchor: RED (unfixed) = H3 not detected → false AMENDMENT_LOG_FRONTMATTER_ONLY
-#                  GREEN (fixed)  = H3 detected → Block 2 parity OK → PASS
+# TC-12: PASS — H3 body section detection (Fix B, dual-block path only)
+# Fix B: BODY_AMENDMENT_PATTERN detects ### Amendment N (H3).
+# Note (Amd 32): adr-single-block-h3-pass.md is single-block → EXEMPT (gate).
+# Fix B still serves the dual-block path (e.g. adr-parity-pass.md H2; TC-14).
+# Exit 0 unchanged; rationale: EXEMPT (not "Fix B H3 detect parity OK").
 # ---------------------------------------------------------------------------
-@test "TC-12: PASS — H3 body amendment section detected by Fix B (exit 0)" {
-  # role_vocabulary: H3 body section detection — ADR-082 Amendment 30 Fix B
-  # red_green_anchor: before Fix B, H3 headings undetected → FP; after Fix B → PASS
+@test "TC-12: PASS — H3 body amendment section fixture EXEMPT via dual-block gate (exit 0)" {
+  # role_vocabulary: ADR-082 §결정 1-U dual-block gate — single-block fixture → EXEMPT
+  # Fix B (H3 detect) retained for dual-block path; single-block = EXEMPT before Fix B logic runs
   export CFP1648_ADR_GLOB_MOCK="${FIXTURES_DIR}/adr-single-block-h3-pass.md"
 
   run python3 "${PYTHON_SSOT}" \
     --mode=audit \
     --adr-glob="${FIXTURES_DIR}/adr-single-block-h3-pass.md"
 
-  # Exit 0 = PASS (H3 ### Amendment N headings detected, Block 2 parity OK)
+  # Exit 0 = PASS (single-block → EXEMPT; Fix B H3 detection active in dual-block path)
   [ "$status" -eq 0 ]
   [[ "$output" == *"PASS"* ]]
   [[ "$output" == *"${ROLE_VOCAB}"* ]]
 }
 
 # ---------------------------------------------------------------------------
-# TC-13: PASS — H4 sub-section NOT matched (bounded {2,3} guard)
-# Fix B: BODY_AMENDMENT_PATTERN {2,3} excludes H4 (####)
-# The fixture contains "#### §D-1 적용 evidence" which must NOT be extracted as amendment
+# TC-13: PASS — H4 sub-section NOT matched (bounded {2,3} guard) — Fix B
+# Fix B: BODY_AMENDMENT_PATTERN {2,3} excludes H4 (####).
+# The fixture contains "#### §D-1 적용 evidence" which is NOT extracted as amendment.
+# Note (Amd 32): adr-single-block-h3-pass.md is single-block → EXEMPT (gate early-return).
+# The H4 exclusion guard still holds logically; EXEMPT means no blocks run → no H4 FP possible.
 # ---------------------------------------------------------------------------
-@test "TC-13: PASS — H4 sub-section not matched by {2,3} bound (Fix B H4 guard, exit 0)" {
-  # role_vocabulary: H4 guard — BODY_AMENDMENT_PATTERN {2,3} upper bound
-  # The fixture adr-single-block-h3-pass.md contains "#### §D-1 세부 결정" H4 heading
-  # It must NOT be extracted as body amendment ID → no false BODY_ONLY_NO_LOG violation
+@test "TC-13: PASS — H4 sub-section guard (Fix B) + EXEMPT via dual-block gate (exit 0)" {
+  # role_vocabulary: H4 guard — BODY_AMENDMENT_PATTERN {2,3} upper bound; dual-block gate EXEMPT
+  # Single-block → dual_block = False → EXEMPT → no BODY_ONLY_NO_LOG from H4 or any heading
   export CFP1648_ADR_GLOB_MOCK="${FIXTURES_DIR}/adr-single-block-h3-pass.md"
 
   run python3 "${PYTHON_SSOT}" \
     --mode=audit \
     --adr-glob="${FIXTURES_DIR}/adr-single-block-h3-pass.md"
 
-  # Exit 0 = PASS (H4 sub-sections excluded from body_ids — no false violations)
+  # Exit 0 = PASS (single-block EXEMPT; H4 sub-sections also correctly excluded by {2,3} bound)
   [ "$status" -eq 0 ]
   [[ "$output" == *"PASS"* ]]
-  # No BODY_ONLY_NO_LOG from H4 heading
+  # No BODY_ONLY_NO_LOG from H4 heading (EXEMPT gate, no blocks run)
   [[ "$output" != *"BODY_ONLY_NO_LOG"* ]]
   [[ "$output" == *"${ROLE_VOCAB}"* ]]
 }
@@ -466,20 +487,54 @@ KOREAN_ADR_EOF
 }
 
 # ---------------------------------------------------------------------------
-# TC-15 RED proof: demonstrate unfixed cap-300 produces violations
-# This TC verifies the RED state by patching the cap inline (env-based simulation)
+# TC-16: PASS — parens-convention ADR (amendments[]-only, no amendment_log[]) — EXEMPT
+# NEW in CFP-1734 / Amendment 32 (sub-scope 1-U): Option A key evidence TC.
+# Fixture: adr-parens-convention.md — amendments[] present + body uses `## §결정 N (Amendment M, CFP-XXX)`
+#   + NO amendment_log[].
+# amendments[]-only → dual_block = bool([1]) AND bool([]) = False → EXEMPT → PASS exit 0.
+# CFP-1688 (pre-impl) behavior: dual-block path → Block 1 `AMENDMENTS_FRONTMATTER_ONLY` FP = RED.
+# Amendment 32 (post-impl): dual-block gate → EXEMPT = GREEN.
+# red_green_anchor: RED (pre-impl) = exit 1 FP; GREEN (post-impl) = exit 0 EXEMPT.
+# This TC is a primary RED anchor for CFP-1334 §8.4 RED→GREEN stash proof.
 # ---------------------------------------------------------------------------
-@test "TC-15-RED: long-frontmatter RED proof — unfixed cap-300 produces BODY_ONLY_NO_LOG" {
-  # red_green_anchor: This TC explicitly demonstrates the RED state for TC-15
-  # Unfixed behavior: amendment_log: is at line 308, cap=300 means it is NEVER seen
-  # We simulate the unfixed behavior by creating a truncated fixture on-the-fly
-  # (only first 300 lines of the long-frontmatter fixture)
+@test "TC-16: PASS — parens-convention ADR amendments[]-only EXEMPT via dual-block gate (Amd 32, exit 0)" {
+  # role_vocabulary: ADR-082 §결정 1-U dual-block gate — amendments[]-only ADR EXEMPT
+  # red_green_anchor: GREEN state after Amendment 32 — amendments[]-only → dual_block false → EXEMPT
+  # pre_impl_sha: e2d0ffd1 (before this Phase 2 fix) — running TC-16 against CFP-1688 code = exit 1 FP
+  export CFP1648_ADR_GLOB_MOCK="${FIXTURES_DIR}/adr-parens-convention.md"
+
+  run python3 "${PYTHON_SSOT}" \
+    --mode=audit \
+    --adr-glob="${FIXTURES_DIR}/adr-parens-convention.md"
+
+  # Exit 0 = PASS (amendments[]-only: dual_block = False → EXEMPT, no AMENDMENTS_FRONTMATTER_ONLY FP)
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"PASS"* ]]
+  # No FP violations from parens-convention body (not detected by BODY_AMENDMENT_PATTERN)
+  [[ "$output" != *"AMENDMENTS_FRONTMATTER_ONLY"* ]]
+  [[ "$output" != *"WARNING"* ]]
+  [[ "$output" == *"${ROLE_VOCAB}"* ]]
+}
+
+# ---------------------------------------------------------------------------
+# TC-15-RED: long-frontmatter truncation behavior — Amendment 32 updated
+# Under CFP-1688: cap-300 truncation → amendment_log[] not seen → BODY_ONLY_NO_LOG exit 1 = RED.
+# Under Amendment 32 (CFP-1734): truncated file has amendments[] but no amendment_log[]
+#   → amendments[]-only → dual_block = False → EXEMPT → exit 0.
+# Fix C (cap-5000) still serves dual-block ADR-082 (TC-15 above).
+# This TC now demonstrates: truncated (amendments[]-only) → EXEMPT, not policed.
+# ---------------------------------------------------------------------------
+@test "TC-15-RED: long-frontmatter truncated amendments[]-only EXEMPT via dual-block gate (Amd 32, exit 0)" {
+  # red_green_anchor: Amendment 32 supersedes the CFP-1688 RED state:
+  #   CFP-1688 RED: truncated → amendment_log[] empty → CROSS_BLOCK_COUNT_MISMATCH exit 1
+  #   Amendment 32: truncated → amendments[]-only → dual_block false → EXEMPT exit 0
+  # Fix C relevance preserved for TC-15 (full dual-block adr-long-frontmatter.md → PASS).
   TEMP_TRUNCATED=$(mktemp /tmp/test_cfp1688_truncated_XXXXXX.md)
 
   # Extract first 300 lines of long-frontmatter fixture (simulates cap-300 behavior)
   head -300 "${FIXTURES_DIR}/adr-long-frontmatter.md" > "${TEMP_TRUNCATED}"
-  # Append closing --- so it forms valid ADR (frontmatter-only ADR)
-  # amendment_log: block will be absent (past line 300 in original)
+  # Append closing --- so it forms valid ADR structure
+  # amendment_log: block will be absent (starts past line 300 in original)
   echo '---' >> "${TEMP_TRUNCATED}"
 
   export CFP1648_ADR_GLOB_MOCK="${TEMP_TRUNCATED}"
@@ -488,11 +543,10 @@ KOREAN_ADR_EOF
     --mode=audit \
     --adr-glob="${TEMP_TRUNCATED}"
 
-  # Exit 1 = WARNING (amendments[] present but amendment_log[] empty because truncated)
-  # This proves the RED state: if amendment_log block is not reachable, lint fires false violations
-  # (CROSS_BLOCK_COUNT_MISMATCH or BODY_ONLY_NO_LOG)
-  [ "$status" -eq 1 ]
-  [[ "$output" == *"WARNING"* ]] || [[ "$output" == *"CROSS_BLOCK_COUNT_MISMATCH"* ]] || [[ "$output" == *"BODY_ONLY_NO_LOG"* ]]
+  # Exit 0 = PASS (truncated: amendments[] present but amendment_log[] absent → amendments[]-only
+  #   → dual_block = False → EXEMPT. Amendment 32 gate supersedes CFP-1688 exit 1 behavior.)
+  [ "$status" -eq 0 ]
+  [[ "$output" == *"PASS"* ]]
 
   rm -f "${TEMP_TRUNCATED}"
 }

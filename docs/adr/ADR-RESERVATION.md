@@ -430,6 +430,12 @@ amendments_reserved:
     reserved_by_cfp: CFP-1685
     reservation_date: 2026-05-26 KST
     status: active   # Orchestrator minimal path direct (CFP-1646 retro F4 Option A 사용자 결정) commit time 점유 — 신규 ADR-114 Minimal path direct invocation protocol (full-lane process escalation fallback). When (FIX iter ≥ 3 ESCALATE + N+ ambiguity blocker + 사용자 directive) / How (close 1st attempt PRs + 새 branch + Orchestrator inline write + commit + PR + admin merge) / Boundary (single carrier 보존 + lane evidence §10/§14 preservation + ADR-082 Amendment 29 §1-R mid-Story FIX-loop re-verification 정합). CFP-1110 1st applied + CFP-1646 2nd applied case codify (pattern_count ≥ 2 reach). verified-via `git ls-tree origin/main docs/adr/` latest = ADR-113, ADR-114 collision check empty → available, 2026-05-26 KST 기준 origin/main 5d609b36. minimal path direct per ADR-039 inline exception. is_transitional: false permanent governance protocol.
+
+  - adr_number: 82
+    amendment_id: 32
+    reserved_by_cfp: CFP-1734
+    reservation_date: 2026-05-26 KST
+    status: active   # ArchitectAgent commit time 점유 (Story Phase 1 PR carrier — Amendment 32 §결정 1 layer 1 sub-scope (1-U) 신설 dual-block parity lint scope narrowing to dual-block-only ADRs. CFP-FU from CFP-1688 #1734 carrier + user Option A 결정 (2026-05-26 KST). 동인: verify-before-trust 결과 lint 가 전체 82 ADR 중 39개 convention 만 검출 (35개는 `## §결정 N. <title> (Amendment M, CFP-XXX)` parens-convention 미검출, 예 ADR-071). CFP-1688 sub-scope 1-S single-block mode (amendment_log[]-only → Block 2 only) 를 dual-block gate 로 정제: amendments[] AND amendment_log[] 둘 다 present 시에만 Block 1/2/3 적용, 그 외 (single-block 양방향 / no-amendments) 면제. 효과: #1734 amendments[]-only ADR (parens-convention 포함) FP 0 해소 + #1735 genuine drift 정책 대상 dual-block ADR (ADR-082) 로 축소. Fix B (H2/H3 detect) + Fix C (frontmatter scan cap) retain (dual-block path 유효). verified-via git show origin/main:docs/adr/ADR-082-...md frontmatter amendments[] max=30 → next=31 at pre-spawn 2026-05-26 KST origin/main 1d004935. RESLOT 31 → 32 / sub-scope 1-T → 1-U post-CFP-1684 Amendment 31 + sub-scope 1-T mid-flight collision (parallel race amendment_number_stale_at_planning, ADR-082 Amendment 29 §1-R self-apply). status reserved 미경유 직접 active 전환 (ArchitectAgent chief author precedent — ADR-082 Amendment 30 row CFP-1688 직전 패턴 정합). META self-applied (sub-scope 1-G 14th applied case).
 ```
 
 ## 해소 기준

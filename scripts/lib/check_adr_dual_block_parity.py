@@ -2,24 +2,30 @@
 scripts/lib/check_adr_dual_block_parity.py
 CFP-1648 / ADR-082 Amendment 28 sub-scope 1-Q — ADR dual-block parity lint SSOT
 CFP-1688 / ADR-082 Amendment 30 sub-scope 1-S — single-block exemption + H2/H3 detection + scan cap fix
+CFP-1734 / ADR-082 Amendment 32 sub-scope 1-U — dual-block gate (Fix A supersede)
 
 기능:
   docs/adr/ADR-*.md 파일의 frontmatter amendments[] / amendment_log[] 와
   body ## Amendment N / ### Amendment N (H2/H3) section 의 양방향 parity 를 검증한다.
+  Amendment 32 (sub-scope 1-U) 이후: dual-block ADR (amendments[] AND amendment_log[] 양방향 모두 존재) 에만 적용.
 
   F-DR-001 P0 origin sentinel scenario:
     frontmatter amendment_log[] entry 존재 but body ## Amendment N section 부재
-    → WARNING exit 1
+    → WARNING exit 1 (dual-block ADR 한정)
 
 Detection logic:
 
-  Single-block mode (ADR-082 Amendment 30 sub-scope 1-S):
-    amendments[] 부재 AND amendment_log[] 존재 → single-block ADR (e.g. ADR-045)
-    Block 1 skip (amendments[] empty — meaningless)
-    Block 3 skip (amendments[] empty — always mismatch)
-    Block 2 retain (amendment_log[] ↔ body — F-DR-001 P0 sentinel, unconditional)
+  Dual-block gate (ADR-082 Amendment 32 sub-scope 1-U, CFP-1734):
+    amendments[] AND amendment_log[] both non-empty → dual-block ADR → Block 1 / Block 2 / Block 3 적용.
+    그 외 (single-block 양방향 / amendments[]-only / parens-convention / no-amendments) → EXEMPT → PASS.
+    SUPERSEDES CFP-1688 Fix A single-block mode (amendment_log[]-only → Block 2 only):
+      single-block 은 이제 Block 2 도 미적용 (완전 면제).
+    Rationale: 82 frontmatter-amendment ADR, lint body detection match 39개.
+      35개 ADR 이 parens-convention (`## §결정 N (Amendment M)`, 예 ADR-071) 사용 →
+      Fix A 를 amendments[]-only 로 symmetric 확장하면 이 35개에 FP 발생.
+      dual-block-only narrow = 1-Q 의 F-DR-001 intent (ADR-082 consistency 검사) 유지하면서 FP 해소.
 
-  Dual-block mode (amendments[] + amendment_log[] both present):
+  Dual-block mode (amendments[] + amendment_log[] both non-empty):
     Block 1: amendments[] parity
       - frontmatter amendments[] count ↔ body ## Amendment N H2/H3 count
       - 모든 frontmatter amendment_id 에 대응 body section 존재 여부
@@ -333,44 +339,45 @@ def _check_adr_parity(adr_path: str) -> ParityResult:
             not result.body_ids):
         return result
 
-    # Fix A (CFP-1688 / ADR-082 Amendment 30 sub-scope 1-S):
-    # Single-block mode: amendments[] absent AND amendment_log[] present.
-    # These are valid single-block ADRs (e.g. ADR-045) — no amendments[] block by convention.
-    # Block 1 and Block 3 are meaningless (amendments[] is empty), so skip them.
-    # Block 2 (F-DR-001 P0 sentinel) is always retained — unconditional.
-    single_block_mode = (
-        not result.amendments_ids and bool(result.amendment_log_ids)
-    )
+    # Amendment 32 (CFP-1734 / ADR-082 sub-scope 1-U): dual-block gate.
+    # Narrow 1-Q lint scope to dual-block ADRs only (amendments[] AND amendment_log[] both present).
+    # SUPERSEDES CFP-1688 Fix A single-block mode: single-block is now fully EXEMPT (not Block-2-checked).
+    # Rationale: 82 frontmatter-amendment ADRs, lint body detection matches 39; 35 use parens-convention
+    #   `## §결정 N (Amendment M)` (e.g. ADR-071) — extending Fix A symmetrically to amendments[]-only
+    #   would FP on those 35. dual-block-only matches 1-Q's original F-DR-001 intent (ADR-082 consistency).
+    dual_block = bool(result.amendments_ids) and bool(result.amendment_log_ids)
+    if not dual_block:
+        # single-block (either direction) / amendments[]-only / parens-convention / no-amendments → EXEMPT
+        return result  # no violations → PASS
 
+    # dual-block ADR: run Block 1 / Block 2 / Block 3 (Fix B H2/H3 + Fix C scan cap RETAINED)
     amendments_set = set(result.amendments_ids)
     body_set = set(result.body_ids)
+    log_set = set(result.amendment_log_ids)
 
-    if not single_block_mode:
-        # -------------------------------------------------------------------
-        # Block 1: amendments[] ↔ body parity (dual-block mode only)
-        # -------------------------------------------------------------------
+    # -------------------------------------------------------------------
+    # Block 1: amendments[] ↔ body parity
+    # -------------------------------------------------------------------
 
-        # frontmatter amendments[] has entry but body section missing
-        missing_in_body_from_amendments = amendments_set - body_set
-        for aid in sorted(missing_in_body_from_amendments):
-            result.add_violation(
-                f"AMENDMENTS_FRONTMATTER_ONLY: Amendment {aid} in frontmatter "
-                f"amendments[] but body ## Amendment {aid} section missing"
-            )
+    # frontmatter amendments[] has entry but body section missing
+    missing_in_body_from_amendments = amendments_set - body_set
+    for aid in sorted(missing_in_body_from_amendments):
+        result.add_violation(
+            f"AMENDMENTS_FRONTMATTER_ONLY: Amendment {aid} in frontmatter "
+            f"amendments[] but body ## Amendment {aid} section missing"
+        )
 
-        # body section exists but frontmatter amendments[] missing
-        missing_in_amendments_from_body = body_set - amendments_set
-        for aid in sorted(missing_in_amendments_from_body):
-            result.add_violation(
-                f"BODY_ONLY_NO_AMENDMENTS: Amendment {aid} in body ## Amendment "
-                f"section but frontmatter amendments[] row missing"
-            )
+    # body section exists but frontmatter amendments[] missing
+    missing_in_amendments_from_body = body_set - amendments_set
+    for aid in sorted(missing_in_amendments_from_body):
+        result.add_violation(
+            f"BODY_ONLY_NO_AMENDMENTS: Amendment {aid} in body ## Amendment "
+            f"section but frontmatter amendments[] row missing"
+        )
 
     # -----------------------------------------------------------------------
     # Block 2: amendment_log[] ↔ body parity (F-DR-001 P0 sentinel)
-    # Unconditionally retained in both single-block and dual-block mode.
     # -----------------------------------------------------------------------
-    log_set = set(result.amendment_log_ids)
 
     # F-DR-001 P0 origin: frontmatter amendment_log[] entry but body section missing
     missing_in_body_from_log = log_set - body_set
@@ -389,16 +396,15 @@ def _check_adr_parity(adr_path: str) -> ParityResult:
             f"section but frontmatter amendment_log[] entry missing"
         )
 
-    if not single_block_mode:
-        # -------------------------------------------------------------------
-        # Block 3: amendments[] ↔ amendment_log[] count parity (dual-block only)
-        # -------------------------------------------------------------------
-        if len(result.amendments_ids) != len(result.amendment_log_ids):
-            result.add_violation(
-                f"CROSS_BLOCK_COUNT_MISMATCH: amendments[] count "
-                f"{len(result.amendments_ids)} != amendment_log[] count "
-                f"{len(result.amendment_log_ids)}"
-            )
+    # -------------------------------------------------------------------
+    # Block 3: amendments[] ↔ amendment_log[] cross-count parity
+    # -------------------------------------------------------------------
+    if len(result.amendments_ids) != len(result.amendment_log_ids):
+        result.add_violation(
+            f"CROSS_BLOCK_COUNT_MISMATCH: amendments[] count "
+            f"{len(result.amendments_ids)} != amendment_log[] count "
+            f"{len(result.amendment_log_ids)}"
+        )
 
     return result
 
