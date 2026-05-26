@@ -42,7 +42,24 @@
     skip "Phase 2 artifact not yet created"
   fi
   ! grep -E '\[.*\]\(\s*\)' "skills/confluence-migration/SKILL.md" || {
-    echo "ERROR: Broken markdown links found"
+    echo "ERROR: Broken markdown links found (empty href)"
     return 1
   }
+}
+
+@test "Test-1.6: SKILL.md ADR link targets exist on filesystem" {
+  if [ ! -f "skills/confluence-migration/SKILL.md" ]; then
+    skip "Phase 2 artifact not yet created"
+  fi
+  # Extract relative file links from SKILL.md and verify target files exist
+  broken=0
+  while IFS= read -r link; do
+    # Resolve relative path from SKILL.md location (skills/confluence-migration/)
+    target="skills/confluence-migration/${link}"
+    if [ ! -f "$target" ]; then
+      echo "ERROR: Broken link target not found: $target (from link: $link)"
+      broken=1
+    fi
+  done < <(grep -oE '\]\([^)]+\.md\)' "skills/confluence-migration/SKILL.md" | sed 's/^](//;s/)$//' | grep '^\.\.')
+  [ "$broken" -eq 0 ] || return 1
 }

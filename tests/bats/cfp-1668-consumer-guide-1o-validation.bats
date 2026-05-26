@@ -29,12 +29,18 @@
   if [ ! -f "docs/consumer-guide.md" ]; then
     skip "consumer-guide missing"
   fi
-  grep -qi "ADR-100" "docs/consumer-guide.md" || echo "WARNING: ADR-100 not referenced"
+  grep -qi "ADR-100" "docs/consumer-guide.md" || {
+    echo "ERROR: ADR-100 not referenced in consumer-guide.md"
+    return 1
+  }
 }
 
 @test "Test-4.5: ADR-111 mentioned in §1o" {
   if [ ! -f "docs/consumer-guide.md" ]; then
     skip "consumer-guide missing"
   fi
-  grep -qi "ADR-111" "docs/consumer-guide.md" || echo "WARNING: ADR-111 not referenced"
+  grep -qi "ADR-111" "docs/consumer-guide.md" || {
+    echo "ERROR: ADR-111 not referenced in consumer-guide.md"
+    return 1
+  }
 }

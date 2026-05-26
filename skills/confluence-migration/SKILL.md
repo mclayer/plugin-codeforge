@@ -53,10 +53,10 @@ wrapper-self = `mclayer/plugin-codeforge` Confluence space `CFP` 작업 영역.
 
 | ADR | 역할 |
 |---|---|
-| [ADR-099](../../docs/adr/ADR-099-atlassian-tool-allow-lint.md) | Atlassian tool allow lint — `mcp__atlassian__*` 허용 관리 |
+| [ADR-099](../../docs/adr/ADR-099-atlassian-allow-redefinition.md) | Atlassian tool allow redefinition — `mcp__atlassian__*` 허용 관리 |
 | [ADR-100](../../docs/adr/ADR-100-confluence-doc-ssot-recognition.md) | Confluence doc SSOT recognition — git = SoR-work / Confluence = readable mirror 원칙 |
 | [ADR-101](../../docs/adr/ADR-101-verify-before-trust-confluence-rest.md) | verify-before-trust Confluence REST — 응답 검증 의무 |
-| [ADR-103](../../docs/adr/ADR-103-confluence-sync-mechanism.md) | Confluence sync mechanism — 3-anchor stamp + mark engine path |
+| [ADR-103](../../docs/adr/ADR-103-git-confluence-sync-mechanism.md) | Confluence sync mechanism — 3-anchor stamp + mark engine path |
 | [ADR-111](../../docs/adr/ADR-111-confluence-mirror-classification-policy.md) | mirror classification policy — closed-enum 5 mirror 대상 + 5 Issue-only retain 면제 SSOT |
 
 ### 2.2 IA tree SSOT

@@ -5,7 +5,7 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.2  
-**Last regen**: 2026-05-26T00:00:00Z  
+**Last regen**: 2026-05-26T04:49:59Z  
 **Registered doc types**: 17
 
 ## Summary table
@@ -28,6 +28,7 @@
 | 14 | `integration_test_baseline` | single_repo | `codeforge-test:IntegrationTestAgent` | CFP-954 |
 | 15 | `architecture_doc` | confluence / dogfood / single_repo | `codeforge-design:ArchitectAgent` | CFP-919 |
 | 16 | `promotion_criteria_4tuple_artifact` | single_repo | `codeforge-design:ArchitectAgent` | CFP-991 |
+| 17 | `orchestrator_playbook` | confluence / single_repo | `orchestrator` | CFP-1668 |
 
 ## Per-doc-type details
 
@@ -354,17 +355,10 @@
   > parallel-edit policy = serialized (canary_compatibility_check section-ownership.yaml + ArchitectAgent monopoly).
   > family_7_atomic × channel × promotion gate 3-axis cross-product = wrapper Tier-1 declare-time exemption (ADR-72 §결정 6 invariant 정합) + consumer Tier-2 admin-tier 권장 (boundary 2-tier disjoint).
 
----
-
 ### `orchestrator_playbook`
 
 - **single_repo**: `<owner-repo>/docs/orchestrator-playbook.md`
 - **confluence**: `https://<confluence-instance>/wiki/spaces/<space-key>/pages/<page-id>`
-- **confluence_variant**:
-  - `page_id_pattern`: `<placeholder>`
-  - `authoritative_source`: git (immutable)
-  - `mirror_direction`: git_to_confluence (immutable)
-  - `consumer_applicable`: true
 - **owner_agent**: `orchestrator`
 - **introduced_by**: CFP-1668
 - **naming_pattern**: `orchestrator-playbook\.md`

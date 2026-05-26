@@ -20,7 +20,8 @@
   fi
   count=$(grep -cE 'codeforge:[a-z-]+' "CLAUDE.md")
   [ "$count" -ge 12 ] || {
-    echo "WARNING: Expected 12+ skills, found $count"
+    echo "ERROR: Expected 12+ codeforge skills, found $count"
+    return 1
   }
 }
 
@@ -39,6 +40,7 @@
     skip "CLAUDE.md missing"
   fi
   grep "confluence-migration" "CLAUDE.md" | grep -q "\`codeforge:" || {
-    echo "WARNING: Not in standard format"
+    echo "ERROR: confluence-migration not in standard format \`codeforge:name\`"
+    return 1
   }
 }

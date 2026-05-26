@@ -762,7 +762,7 @@ dry-run 결과 검증:
 
 `atlassian.confluence.*` field = **consumer-authored only**. 모든 codeforge agent 는 본 block write 금지. sync agent (ADR-103 carrier) = read-only (consumer overlay value 수신 후 sync 대상 결정).
 
-참조: [ADR-100](adr/ADR-100-confluence-doc-ssot-recognition.md) · [ADR-111](adr/ADR-111-confluence-mirror-classification-policy.md) · [ADR-099](adr/ADR-099-atlassian-tool-allow-lint.md) · [ADR-101](adr/ADR-101-verify-before-trust-confluence-rest.md) · [ADR-103](adr/ADR-103-confluence-sync-mechanism.md) · [project-config-schema §atlassian 섹션 설명](project-config-schema.md) · skill `codeforge:confluence-migration`
+참조: [ADR-100](adr/ADR-100-confluence-doc-ssot-recognition.md) · [ADR-111](adr/ADR-111-confluence-mirror-classification-policy.md) · [ADR-099](adr/ADR-099-atlassian-allow-redefinition.md) · [ADR-101](adr/ADR-101-verify-before-trust-confluence-rest.md) · [ADR-103](adr/ADR-103-git-confluence-sync-mechanism.md) · [project-config-schema §atlassian 섹션 설명](project-config-schema.md) · skill `codeforge:confluence-migration`
 
 ## 2. Consumer 프로젝트 구조 초기화
 
