@@ -5606,3 +5606,37 @@ entries:
       promotion_trigger: warning_tier_initial  # 첫 도입 = warning tier initial (pattern_count 0, lint occurrence 누적 시 blocking-on-pr 승격 평가)
     status: deferred-followup       # Wave 1 declarative status — workflow body Wave 2 wire 시 `warning` 전환 (Phase 2 PR scope, 별 sub-CFP carrier)
 
+  - name: filesystem-worktree-pinned-default
+    description: |
+      Filesystem Read/Grep tool layer worktree-pinned `git show HEAD:<path>` 강제 default + agent spawn prompt `git -C <worktree_abs_path>` directive 강제 expansion (warning tier, ADR-060 §결정 5 first introduction default).
+
+      CFP-1682 / ADR-040 Amendment 7 §결정 7.J.4 신설 carrier — CFP-1646 ArchitectPL FIX iter 1 false premise 사건 carrier (main repo path Grep stale snapshot 차단). ADR-045 §D-9 cumulative pattern_count Mandatory reach: worktree_path_mismatch ≥ 3 + stale_fact_inheritance ≥ 6 + orchestrator_initial_turn_verify_stale ≥ 2.
+
+      Detection scope (Wave 2 codify, declarative anchor):
+        agent filesystem Read/Grep tool 가 file path read 시 default behavior:
+          - working tree path → `git show HEAD:<path>` (worktree HEAD snapshot, deterministic)
+          - main repo path 사용 금지 (local main snapshot stale risk)
+        agent spawn prompt 안 `git -C <worktree_abs_path>` directive 의무 (ADR-040 Amendment 6 §결정 7.J.3 expansion).
+
+      Bypass channel: `hotfix-bypass:filesystem-worktree-pinned` 105번째 family member.
+    detect_command: bash scripts/check-filesystem-worktree-pinned.sh  # Wave 2 carrier
+    workflow: .github/workflows/filesystem-worktree-pinned-check.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:filesystem-worktree-pinned
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative: 20
+      bypass_external_failure: 0
+      sibling_story_merged: true
+    introduced_by: CFP-1682
+    introduced_date: 2026-05-26
+    owner_adr: ADR-040-Amendment-7
+    carrier_adr: ADR-060
+    sibling_dependencies: [CFP-1682, CFP-1646]
+    recurrence:
+      count: 1                      # CFP-1646 ArchitectPL FIX iter 1 false premise direct evidence
+      threshold: 2
+      last_occurrence: "2026-05-26T08:55:00+09:00"  # CFP-1646 FIX iter 1 detection time
+      promotion_trigger: warning_tier_initial
+    status: deferred-followup
+
