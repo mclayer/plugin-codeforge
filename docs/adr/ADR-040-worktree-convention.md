@@ -37,6 +37,11 @@ amendments:
     date: 2026-05-17
     title: Agent-internal write worktree-membership enforcement (harness CWD reset gap + lint scope CWD → write-target-path 확장 + test/probe sandbox boundary + self-block 회피 5-layer 동형)
     sunset_justification: "N/A — is_transitional: false (permanent governance mandate). 본 Amendment 6 = enforcement scope 확장 (lane spawn CWD → agent-internal write target path). ratchet 강화 방향 (worktree-first enforcement boundary 확장, ADR-058 §결정 5 정합) — sunset 면제. CFP-825 retro §6 후보 1 / §3 RC-1 동근원 + #836 spurious artifact evidence 가 enforcement gap 정량 입증."
+  - id: 7
+    carrier_story: CFP-1682
+    date: 2026-05-26
+    title: Filesystem Read/Grep tool layer worktree-pinned `git show HEAD:<path>` 강제 default (ArchitectPL FIX iter 1 false premise 사건 carrier, CFP-1646 retro F1 forcing function 산물 — main repo path stale snapshot 차단)
+    sunset_justification: "N/A — is_transitional: false (permanent governance mandate). 본 Amendment 7 = filesystem tool layer read/grep verify default 영역 확장 (Amd 3 spawn prompt + Amd 6 write target path 영역과 axis disjoint sub-scope). ratchet 강화 방향 (worktree-first enforcement boundary 확장 — filesystem Read/Grep tool layer 신설, ADR-058 §결정 5 정합) — sunset 면제. CFP-1646 ArchitectPL FIX iter 1 false premise 직접 evidence (main repo path Grep result v2.51 / Amd 12 / 72 vs worktree direct v2.77 / Amd 15 / 102, 12+ delta) + pattern_count Mandatory reach (`worktree_path_mismatch` ≥ 3 + `stale_fact_inheritance` ≥ 6 + `orchestrator_initial_turn_verify_stale` ≥ 2) 정량 입증."
 mechanical_enforcement_actions:
   # FIX iter 1 F-1 (CFP-427) 정정: status enum 정합 (warning / enforcing / deferred-followup) 환원 +
   # progress_note optional string field 신설 (entry-level 진척 추적). schema 변경 = MINOR (backward compatible).
@@ -57,6 +62,12 @@ mechanical_enforcement_actions:
     status: enforcing
     progress_note: "actual wire CFP-427 (Story 2 — scripts/check-spawn-evidence-cwd.sh + enforce-from filter). CFP-429 (Story 4) Amendment 4 declaration — gate (b) FAIL → warning tier 유지 + actual 승격 follow-up CFP. CFP-531 (본 Amendment 5) actual 승격 완료 — current_tier: warning → blocking-on-pr 전환 + status: warning → enforcing. CFP-843 (본 Amendment 6) scope 확장 — 기존 §14 Lane Evidence `Working dir:` field (lane spawn CWD) 검증 외 agent transcript Write/Edit tool target path + git write target 의 worktree-membership 검증 추가 (Researcher Unknown #1 — git write only 누락 차단). lint timing = 사후 (artifact 검증, post-hoc 패턴 정합). self-block 회피 5-layer 동형 (§결정 7.J.4). actual script 확장 = Phase 2 carrier (SSOT 선언 = 본 Amendment 6 Phase 1)."
     target_section: §결정 5
+  # Amendment 7 (CFP-1682, 2026-05-26) — filesystem Read/Grep tool layer worktree-pinned default
+  # CFP-1646 ArchitectPL FIX iter 1 false premise 사건 carrier — main repo path Grep stale snapshot 차단
+  # Wave 1 declarative — workflow stub + label entry + evidence-registry entry; Wave 2 mechanical wire = 별 sub-CFP carrier
+  - action: filesystem-worktree-pinned-default
+    status: deferred-followup     # Wave 1 declarative; actual mechanical lint script `scripts/lib/check_filesystem_worktree_pinned.py` + bats + workflow body wire = Phase 2 PR scope (Wave 2 carrier)
+    target_section: §결정 7.J     # filesystem Read/Grep tool layer worktree-pinned `git show HEAD:<path>` 강제 default + agent spawn prompt `git -C <worktree_abs_path>` directive 강제 확장
 related_stories:
   - CFP-134
   - CFP-136
@@ -911,3 +922,57 @@ N/A — permanent policy
 - **CFP-139** — GitOpsAgent (lifecycle 자동화, 본 ADR §결정 3 hook contract 구현).
 - **CFP-425** — Epic carrier (worktree-first mechanical enforcement 영구화).
 - **CFP-426** — Amendment 3 carrier (본 §결정 7 — normative ↔ mechanical boundary mandate).
+
+## Amendment 7 — Filesystem Read/Grep tool layer worktree-pinned `git show HEAD:<path>` 강제 default (CFP-1682, 2026-05-26 KST)
+
+### Context
+
+CFP-1646 (backlog Issue label timing discipline) full-lane attempt 진행 중 **ArchitectPL FIX iter 1 false premise 사건** 발생:
+- ArchitectPL inline Grep verify result: `v2.51 / Amendment 12 / 72 raw active concrete`
+- Orchestrator worktree direct verify result: `v2.77 / Amendment 15 / 102 raw active concrete`
+- **12+ delta** — ArchitectPL filesystem Read/Grep tool 이 **main repo path** 사용 (local main 18 commit behind origin/main snapshot), NOT worktree path
+
+근본 원인 = ADR-040 Amendment 6 §결정 7.J.3 worktree absolute path 강제 directive 가 agent filesystem tool layer 에서 미적용. agent harness cwd reset gap + spawn prompt directive 미사용 시 main repo path fallback.
+
+ADR-045 §D-9 cumulative pattern_count Mandatory reach:
+- `worktree_path_mismatch` cumulative ≥ 3 (CFP-689 Amendment 3 + CFP-1646 + lineage)
+- `stale_fact_inheritance` cumulative ≥ 6 (CFP-1591 + CFP-1646 3 sub-occurrence + lineage)
+- `orchestrator_initial_turn_verify_stale` cumulative ≥ 2 (CFP-1645 + CFP-1646)
+
+### Amendment
+
+#### §결정 7.J.4: Filesystem tool layer worktree-pinned default
+
+agent filesystem Read/Grep tool 가 file path read 시 **default behavior**:
+- working tree path → `git show HEAD:<path>` (worktree HEAD snapshot, deterministic)
+- main repo path 사용 금지 (local main snapshot stale risk)
+- agent spawn prompt 안 `git -C <worktree_abs_path>` directive 의무 (Amendment 6 §결정 7.J.3 expansion — filesystem tool layer 까지 boundary 확장)
+
+#### Bypass channel
+
+`hotfix-bypass:filesystem-worktree-pinned` 105번째 family member — §결정 6.A per-entry namespace 영구 확장. audit-trailed exception channel.
+
+#### Wave 1 (Phase 1 PR scope — declarative, 본 Amendment)
+
+- 본 ADR-040 Amendment 7 §결정 7.J.4 신설 (본 Amendment) + frontmatter amendments[] row + mechanical_enforcement_actions[] row (action: `filesystem-worktree-pinned-default`, status: `deferred-followup`)
+- label-registry-v2 v2.79 → v2.80 MINOR + `hotfix-bypass:filesystem-worktree-pinned` 105번째 raw active concrete family member entry
+- MANIFEST.yaml row sync
+- evidence-checks-registry `filesystem-worktree-pinned-default` warning-tier entry append (status `deferred-followup`)
+- workflow Wave 1 declarative stub `templates/github-workflows/filesystem-worktree-pinned-check.yml` + `.github/workflows/` byte-identical pair
+- CHANGELOG entry
+
+#### Wave 2 (Phase 2 PR scope — mechanical wire, future carrier)
+
+- workflow body actual lint wire (`if: false` 제거 + filesystem tool layer worktree-pinned check)
+- script `scripts/check-filesystem-worktree-pinned.sh` thin-wrapper (ADR-061)
+- script `scripts/lib/check_filesystem_worktree_pinned.py` (ADR-061 multi-line Python external file)
+- bats fixture RED→GREEN stash proof (CFP-1334)
+- boundary fixture pair (worktree path PASS + main repo path FAIL, CFP-963 Codex TP#4)
+- evidence-registry status `deferred-followup` → `warning` 전환
+
+### Related
+
+- CFP-1682 carrier Story
+- CFP-1646 retro origin (ArchitectPL FIX iter 1 false premise direct evidence)
+- ADR-040 Amendment 6 §결정 7.J.3 (worktree absolute path directive — axis disjoint extension)
+- ADR-082 §결정 9 verify-at-write-time (sibling carrier — verify-before-cite bidirectional)

@@ -1,0 +1,63 @@
+name: Filesystem tool worktree-pinned default check (warning mode — Wave 1 stub)
+# CFP-1682 / ADR-040 Amendment 7 §결정 7.J.4 신설 carrier
+# CFP-1646 ArchitectPL FIX iter 1 false premise 사건 carrier — main repo path Grep stale snapshot 차단
+# ADR-060 §결정 5 default warning mode (first introduction = warning tier)
+# Tier: warning (continue-on-error: true, non-required check)
+# Bypass channel: hotfix-bypass:filesystem-worktree-pinned label (105번째 family member)
+#
+# Wave 1 declarative stub — Wave 2 mechanical wire = Phase 2 PR scope.
+# Wave 2 carrier: scripts/check-filesystem-worktree-pinned.sh thin-wrapper (ADR-061) +
+#                 scripts/lib/check_filesystem_worktree_pinned.py (ADR-061 multi-line Python external) +
+#                 tests/bats/check-filesystem-worktree-pinned.bats RED→GREEN stash proof (CFP-1334) +
+#                 tests/fixtures/filesystem-worktree-pinned/{worktree-path-pass,main-repo-path-fail}/ (CFP-963 Codex TP#4)
+#
+# Detection scope (Wave 2 codify, declarative anchor):
+#   agent filesystem Read/Grep tool 가 file path read 시 default behavior verify:
+#     - working tree path → `git show HEAD:<path>` (worktree HEAD snapshot, deterministic)
+#     - main repo path 사용 = violation (local main snapshot stale risk)
+#   agent spawn prompt 안 `git -C <worktree_abs_path>` directive 존재 verify (ADR-040 Amendment 6 §결정 7.J.3 expansion).
+#
+# Bypass channel:
+#   - `hotfix-bypass:filesystem-worktree-pinned` label 부착 시 lint skip (audit-trailed exception channel)
+#   - `BYPASS_FILESYSTEM_WORKTREE_PINNED=1` env unconditional skip
+#
+# ADR-045 §D-9 cumulative pattern_count Mandatory reach evidence:
+#   - `worktree_path_mismatch` cumulative ≥ 3 (CFP-689 + CFP-1646 + lineage)
+#   - `stale_fact_inheritance` cumulative ≥ 6 (CFP-1591 + CFP-1646 3 sub-occurrence)
+#   - `orchestrator_initial_turn_verify_stale` cumulative ≥ 2 (CFP-1645 + CFP-1646)
+#
+# SecurityArch §7.2 constraint: permissions contents:read + pull-requests:read minimal (no write).
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - '.claude/_overlay/**'   # agent spawn prompt verify scope
+      - 'scripts/**'            # filesystem tool layer impl
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: filesystem-worktree-pinned-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  filesystem-worktree-pinned-check:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    if: false  # Wave 1 stub disabled — Wave 2 carrier 가 if:false 제거 + body actual lint wire
+    steps:
+      - name: Wave 1 stub — declarative anchor only (Wave 2 carrier = mechanical wire)
+        run: |
+          echo "::notice::CFP-1682 Wave 1 stub — filesystem tool worktree-pinned default declarative anchor."
+          echo "Wave 2 carrier (Phase 2 PR) 가 다음을 wire:"
+          echo "  - scripts/check-filesystem-worktree-pinned.sh thin-wrapper (ADR-061)"
+          echo "  - scripts/lib/check_filesystem_worktree_pinned.py (ADR-061 multi-line Python external)"
+          echo "  - tests/bats/check-filesystem-worktree-pinned.bats RED→GREEN stash proof (CFP-1334)"
+          echo "  - boundary fixture pair (worktree path PASS + main repo path FAIL, CFP-963 Codex TP#4)"
+          echo ""
+          echo "ADR-040 Amendment 7 §결정 7.J.4 — agent filesystem Read/Grep tool 가 main repo path 사용 = violation 검출 시 warning emit."
+          echo "Bypass: hotfix-bypass:filesystem-worktree-pinned label 부착 시 lint skip (audit-trailed exception channel)."
