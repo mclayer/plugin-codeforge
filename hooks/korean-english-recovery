@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# codeforge — UserPromptSubmit hook: 한영 키보드 레이아웃 변환 추론 (CFP-1751)
+#
+# 책임: 사용자 입력이 한영 전환 실수로 보이면 두벌식 ↔ QWERTY 매핑 변환을 시도해
+#       additionalContext 로 추정 결과 주입. Orchestrator 가 변환 의미로 추론 + 통보 후 진행.
+#
+# 구현: 두벌식 매핑·Hangul 음절 합성·heuristic 은 python 으로 (bash 부적합).
+#       python 없으면 통과(fail-safe).
+# bypass: BYPASS_KOREAN_ENGLISH_RECOVERY=1 → 검사 생략.
+# fail-safe: python 부재 / 오류 시 차단하지 않고 통과.
+set -uo pipefail
+
+[ "${BYPASS_KOREAN_ENGLISH_RECOVERY:-0}" = "1" ] && exit 0
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
+if command -v python3 >/dev/null 2>&1; then
+  PY=python3
+elif command -v python >/dev/null 2>&1; then
+  PY=python
+else
+  exit 0   # python 부재 → 통과 (fail-safe, 사용자 입력 차단 안 함)
+fi
+
+exec "$PY" "$DIR/korean-english-recovery.py"
