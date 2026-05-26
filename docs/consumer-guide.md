@@ -1107,6 +1107,31 @@ Consumer repo 의 첫 PR open 시점에 codeforge 필수 label set (`phase:*` / 
 
 ---
 
+### §2h.3 사용자 대화 품질 hook (UserPromptSubmit + Stop) 자동 활성 (CFP-1738)
+
+Orchestrator 가 사용자에게 **codeforge 내부 식별자**(ADR/CFP 번호·§결정·내부 코드네임·계약명)를 풀이 없이 써서 이해를 방해하는 것을 막는 2개 hook. **일반 기술 용어**(hook / worktree / schema / latency 등)는 대상 아님 — 사용자가 엔지니어라는 전제.
+
+| Hook | 파일 | 동작 | 의존성 |
+|---|---|---|---|
+| UserPromptSubmit | `hooks/plain-language-reminder` | 답변 발화 직전 3규칙(평범하게 / 불필요한 질문 금지 / 구조로 전달)을 컨텍스트에 주입 (예방) | 없음 (순수 bash) |
+| Stop | `hooks/plain-language-check` → `plain-language-check.py` | 직전 답변에 내부 식별자가 임계치 이상이면 `decision=block` → 평범하게 재작성 유도 | python (없으면 통과) |
+
+**자동 활성**: `/plugins install codeforge@mclayer` 만 하면 plugin-root `hooks/hooks.json` 의 UserPromptSubmit + Stop entry 가 자동 활성 (별도 `.claude/settings.json` 등록 불필요).
+
+**설정 (consumer 환경변수)**:
+
+| env | 기본 | 효과 |
+|---|---|---|
+| `BYPASS_PLAIN_LANGUAGE=1` | off | 두 hook 모두 끔 |
+| `PLAIN_LANG_JARGON_THRESHOLD=N` | `1` | 검사 발동 임계치 (1 = 내부 식별자 1개라도 발견 시 재작성) |
+| `PLAIN_LANG_EXTRA_PATTERNS=re1,re2` | (없음) | consumer 고유 용어 정규식 추가 (쉼표 구분, 잘못된 정규식은 무시) |
+
+**한계 (명시)**: Stop hook 은 답이 화면에 표시된 **후** 작동 → 잡소리를 "안 보이게" 막지 못하고 "노출 즉시 재작성"하게 만든다. 진짜 0 노출은 Orchestrator 규율 + reminder hook 의 사전 주입이 책임. mechanical 강제 아님 (Stop block 은 재작성 유도이며 사용자 입력 차단이 아님).
+
+**fail-safe**: python 부재 / 파싱 오류 / 예외 시 검사를 건너뛰고 통과 — 사용자 작업을 막지 않음.
+
+---
+
 ### §2i. 3-way version atomic 고정 설정 (CFP-820 / ADR-063 Amendment 5 §결정 15)
 
 Consumer repo 에서 **codeforge version 을 고정** 하고 PR-time 에 publisher ↔ registry ↔ consumer 3-way 버전 일치를 자동 검증하는 선택 기능이다.
