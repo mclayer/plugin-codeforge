@@ -169,6 +169,12 @@ amendments:
     summary: "§결정 1 layer 1 sub-scope (1-Q) 신설 — ADR dual-block parity 3-invariant forward-prevention lint (F-DR-001 P0 origin sentinel mechanical carrier). F-DR-001 P0 origin: Amendment N frontmatter amendment_log[] entry present but body ## Amendment N section missing (CFP-1637 retro발견 — Amendment 26 case). Combined Phase 1+2 (no Wave split). 3-invariant check: Block 1 (amendments[] ↔ body H2 parity) / Block 2 (amendment_log[] ↔ body H2 parity — F-DR-001 P0 sentinel) / Block 3 (amendments[] ↔ amendment_log[] cross-count parity). axis disjoint from 1-A through 1-P (dual-block ADR structural parity axis — not numeric claim / not cross-repo state / not spawn prompt / not ownership). Python SSOT `scripts/lib/check_adr_dual_block_parity.py` (ADR-061 thin wrapper convention, anchored simple regex CodeQL ReDoS guard, line-by-line parse, PER_LANE_EVIDENCE_SCAN_CAP=30, Windows cp949 reconfigure) + bash thin wrapper `scripts/check-adr-dual-block-parity.sh` + D2 dual trigger workflow `templates/github-workflows/adr-dual-block-parity.yml` + `.github/workflows/adr-dual-block-parity.yml` byte-identical mirror (ADR-005) + bats 8 TC RED→GREEN stash proof (CFP-1334 §8.4 5 markers) + evidence-checks-registry warning-tier initial registration + label-registry-v2 MINOR bump v2.77 → v2.78 (`hotfix-bypass:adr-dual-block-parity` 103번째 hotfix-bypass:* family member) + MANIFEST.yaml label_registry version 갱신. ADR-060 §결정 5 first introduction = warning mode (continue-on-error: true). META-self-applied (본 Amendment 자체가 F-DR-001 P0 sentinel forward-prevention 의 첫 META applied case — amendments[] entry + amendment_log[] entry + body ## Amendment 28 section 3-block parity 동시 write, 즉 F-DR-001 을 forward-prevent 하는 lint 가 자기 자신의 Amendment 에 META self-application 적용 = recursive dogfooding integrity verify)."
     direction: strengthening
     sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §결정 1 layer 1 sub-scope (1-A/…/1-P) → (1-Q ADR dual-block parity 3-invariant forward-prevention lint) 신설, forbid scope 축소 0건). ADR-064 §결정 7 symmetric evidence-gated 정합. pattern_count evidence: F-DR-001 P0 origin = CFP-1637 retro sentinel (Amendment 26 amendment_log[] entry present but body section missing, 1-occurrence 기록 — retro §5 F-DR-001 escalation 산물). is_transitional: false 유지 (permanent governance policy). META-self-applied: 본 Amendment 28 자체가 amendments[] + amendment_log[] + body 3-block dual-write via forward-prevention lint being enforced on its own carrier ADR."
+  - amendment_id: 29
+    carrier_story: CFP-1683
+    date: 2026-05-26
+    summary: "§결정 1 layer 1 sub-scope (1-R) 신설 — mid-Story FIX-loop re-verification mandate. FIX iter ≥ 2 시점 reslot calculus 의무 (amendment_id slot + label-registry MINOR bump version + bypass family member raw count 3-tuple 재verify) + per-iter mid-spawn drift detection (ArchitectPL re-engage prompt 안 3 field presence: `amendment_slot_revalidated` / `registry_version_revalidated` / `bypass_count_revalidated`) + slot collision recheck (origin/main fetch + amendment_log[] / contract_version / hotfix-bypass:* grep count 재verify). axis disjoint from 1-G (CFP-1435 Amendment 17 strict pre-reservation claim — Story 시작 시점 only) — 본 1-R = FIX-loop intra-Story window 영역. CFP-1646 직접 evidence: 1st attempt FIX iter 1 → iter 2 → iter 3 spawn cycle 사이 amendment slot + version + bypass count 재verify 부재 → CFP-1657 Amd 16 slot collision + CFP-1648 v2.78 + 103번째 slot collision 발생 (ESCALATE_PACKET_INCOMPLETE outcome). Wave 1 declarative — Wave 2 mechanical wire (`scripts/lib/check_fix_loop_reverify.py` + bash thin wrapper + workflow body wire + bats RED→GREEN stash proof + boundary fixture pair) = 별 sub-CFP carrier."
+    direction: strengthening
+    sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §결정 1 layer 1 sub-scope (1-A/…/1-Q) → (1-R mid-Story FIX-loop re-verification) 신설). pattern_count evidence: `sister_session_race_in_design_lane` cumulative ≥ 5 (CFP-684 + CFP-698 + CFP-1041 + CFP-1591 + CFP-1646 3 sub-events) — ADR-045 §D-9 Mandatory escalation 산물. is_transitional: false 유지 (permanent governance policy)."
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-841
@@ -332,6 +338,12 @@ amendment_log:
     decisions_touched: ["§결정 1 layer 1 sub-scope 1-Q (신설)"]
     nature: ratchet-up  # §결정 1 layer 1 sub-scope (1-A/.../1-P) → (1-Q ADR dual-block parity 3-invariant forward-prevention lint) 신설 (ADR-058 §결정 5 강화 방향). Issue #1648 MEDIUM follow-up from CFP-1637 retro — F-DR-001 P0 origin sentinel mechanical carrier. Combined Phase 1+2.
     note: "CFP-1648 carrier — F-DR-001 P0 origin: Amendment N frontmatter amendment_log[] entry present but body ## Amendment N section missing (CFP-1637 retro 발견). 3-invariant check: Block 1 (amendments[] ↔ body H2 parity) / Block 2 (amendment_log[] ↔ body H2 parity — F-DR-001 P0 sentinel) / Block 3 (amendments[] ↔ amendment_log[] cross-count parity). Python SSOT `scripts/lib/check_adr_dual_block_parity.py` (ADR-061 thin wrapper, anchored simple regex CodeQL ReDoS guard ADR-061 Amendment 3 §결정 11 정합, line-by-line parse, PER_LANE_EVIDENCE_SCAN_CAP=30, Windows cp949 reconfigure) + bash thin wrapper `scripts/check-adr-dual-block-parity.sh` + D2 dual trigger workflow (pull_request paths:docs/adr/** + workflow_dispatch full-scan) + `.github/workflows/` byte-identical mirror ADR-005 + bats 8 TC RED→GREEN stash proof (CFP-1334 §8.4 5 markers: pre_impl_sha / git_stash_sequence / role_vocabulary / red_green_anchor / platform_verified) + evidence-checks-registry warning-tier initial registration (ADR-060 §결정 5 first introduction = warning mode) + label-registry-v2 MINOR bump v2.77 → v2.78 (`hotfix-bypass:adr-dual-block-parity` 103번째 hotfix-bypass:* family member, ADR-108 §결정 3 forcing function parity mandate 정합) + MANIFEST.yaml label_registry version 갱신. 본 Amendment 28 자체가 META-self-applied (F-DR-001 P0 sentinel 의 첫 META applied case — amendments[] entry + amendment_log[] entry + body ## Amendment 28 section 3-block parity 동시 write = forward-prevention lint 가 자기 자신의 Amendment 에 recursive dogfooding integrity verify 첫 적용). 본 Amendment 번호(28) = source command `grep -oE '^  - amendment_id: [0-9]+' docs/adr/ADR-082-*.md | tail -1` actual = `amendment_id: 27` (Amd 27 CFP-1647 점유) → 정확 next-slot for CFP-1648 = 28 [verified]."
+  - amendment_id: 29
+    carrier_story: CFP-1683
+    date: 2026-05-26  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 1 layer 1 sub-scope 1-R (신설)"]
+    nature: ratchet-up  # mid-Story FIX-loop re-verification mandate 신설 (axis disjoint from 1-G CFP-1435 Story-start pre-reservation — FIX-loop intra-Story window 영역).
+    note: "CFP-1683 carrier — CFP-1646 retro F2 forcing function (`sister_session_race_in_design_lane` cumulative pattern_count ≥ 5: CFP-684 + CFP-698 + CFP-1041 + CFP-1591 + CFP-1646 3 sub-events). Direct evidence = CFP-1646 1st attempt FIX iter 1 → iter 2 → iter 3 spawn cycle 사이 amendment slot + version + bypass count 재verify 부재 → CFP-1657 Amd 16 slot + CFP-1648 v2.78/103번째 slot collision 발생 (ESCALATE_PACKET_INCOMPLETE outcome). Mandate: FIX iter ≥ 2 시점 ArchitectPL re-engage prompt 안 3-tuple 재verify 의무 (amendment_id slot + label-registry MINOR bump version + bypass family member raw count). Wave 1 declarative — Wave 2 mechanical wire (`scripts/lib/check_fix_loop_reverify.py` + bash thin wrapper + workflow body wire + bats RED→GREEN stash proof + boundary fixture pair) = 별 sub-CFP carrier. label-registry-v2 v2.80 → v2.81 (`hotfix-bypass:fix-loop-reverify-mandate` 106번째 hotfix-bypass:* family member). META-self-applied: 본 Amendment 자체가 CFP-1683 = FIX-loop re-verify mandate carrier ADR-082 dual-block parity (Amendment 28 sub-scope 1-Q) self-application — amendments[] + amendment_log[] + body 3-block dual-write."
 related_stories:
   - CFP-776  # carrier (super-class 통합 결정 — escalation_action escalate_user)
   - CFP-841  # Amendment 1 carrier (§결정 6 behavioral→mechanical 전환 후속 carrier)
@@ -2466,4 +2478,72 @@ AC-6 genuine RED proved: stash/rename Python SSOT → TC-1 through TC-5 and TC-7
 - `docs/inter-plugin-contracts/label-registry-v2.md` — v2.77 → v2.78, `hotfix-bypass:adr-dual-block-parity` 103번째 family member
 - `docs/inter-plugin-contracts/MANIFEST.yaml` — label_registry version 갱신
 - `CHANGELOG.md` — [Unreleased] Added entry append
+
+## Amendment 29 — §결정 1 layer 1 sub-scope (1-R) 신설 mid-Story FIX-loop re-verification mandate (CFP-1683, 2026-05-26 KST)
+
+### Context
+
+CFP-1646 1st attempt Full lane process 진행 중 **3 parallel race events** 발생:
+- FIX iter 1 (false premise) → iter 2 (3 findings) → iter 3 (ESCALATE_PACKET_INCOMPLETE)
+- CFP-1657 took Amendment 16 § 6.A.8 slot during iter 1 → iter 2 window (wording-dictionary axis)
+- CFP-1648 took v2.78 + 103rd family member slot during iter 2 → iter 3 window (adr-dual-block-parity axis)
+
+Root cause = FIX-loop intra-Story window 안 **amendment slot + label-registry version + bypass family count 3-tuple 재verify 부재**. ArchitectPL re-engage prompt 가 origin/main fetch + 3-tuple recheck 없이 spawn → 기존 spawn prompt facts 답습.
+
+ADR-082 §결정 1 layer 1 sub-scope 1-G (CFP-1435 Amendment 17) strict pre-reservation claim mandate = **Story 시작 시점** only cover. FIX-loop intra-Story window 영역 미cover.
+
+ADR-045 §D-9 cumulative pattern_count Mandatory reach:
+- `sister_session_race_in_design_lane` ≥ 5 (CFP-684 + CFP-698 + CFP-1041 + CFP-1591 + CFP-1646 3 sub-events)
+
+### Amendment
+
+#### §결정 1 layer 1 sub-scope 1-R: Mid-Story FIX-loop re-verification mandate
+
+FIX iter ≥ 2 시점 ArchitectPL (또는 lane PL) re-engage 시 **3-tuple reslot calculus 재verify 의무**:
+
+1. **amendment_id slot 재verify** — `git fetch origin main` + `grep -oE '^  - amendment_id: [0-9]+' docs/adr/ADR-N-*.md | tail -1` actual next-slot
+2. **label-registry MINOR bump version 재verify** — `git show origin/main:docs/inter-plugin-contracts/label-registry-v2.md | head -10 | grep '^version:'` actual current version
+3. **bypass family member raw count 재verify** — `git show origin/main:docs/inter-plugin-contracts/label-registry-v2.md | grep -c '^  - name: hotfix-bypass:'` actual current count
+
+3-tuple delta detection 시 — slot collision 발생 → re-author with corrected facts (amendment_id + version + family count 모두 next-slot 정합).
+
+#### Per-iter mid-spawn drift detection
+
+ArchitectPL re-engage prompt 안 **3 field presence 의무**:
+- `amendment_slot_revalidated: <actual_next_slot>`
+- `registry_version_revalidated: <actual_current_version>`
+- `bypass_count_revalidated: <actual_current_count>`
+
+3 field 부재 시 lint warning (Wave 2 mechanical wire scope).
+
+#### Wave 1 (Phase 1 PR scope — declarative, 본 Amendment)
+
+- 본 ADR-082 Amendment 29 §결정 1 layer 1 sub-scope 1-R 신설
+- label-registry-v2 v2.80 → v2.81 MINOR + `hotfix-bypass:fix-loop-reverify-mandate` 106번째 raw active concrete family member
+- MANIFEST.yaml row sync
+- evidence-checks-registry `fix-loop-reverify-mandate` warning-tier entry append (status `deferred-followup`)
+- workflow Wave 1 declarative stub (`fix-loop-reverify-check.yml` templates + .github byte-identical pair)
+- CHANGELOG entry
+
+#### Wave 2 (Phase 2 PR scope — mechanical wire, future carrier)
+
+- workflow body actual lint wire
+- script `scripts/check-fix-loop-reverify.sh` thin-wrapper (ADR-061)
+- script `scripts/lib/check_fix_loop_reverify.py` (ADR-061 multi-line Python external)
+- bats fixture RED→GREEN stash proof (CFP-1334)
+- boundary fixture pair (3-field presence PASS + 3-field absent FAIL, CFP-963 Codex TP#4)
+
+### Axis disjoint
+
+- §결정 1 sub-scope 1-G (Amendment 17 CFP-1435) — Story 시작 시점 pre-reservation strict claim
+- §결정 1 sub-scope 1-R (본 Amendment 29) — FIX-loop intra-Story window re-verification
+- Axis 분리 — Story-start ↔ intra-Story FIX-loop 시점
+
+### Related
+
+- CFP-1683 carrier Story
+- CFP-1646 retro F2 origin (3 parallel race events direct evidence)
+- ADR-082 §결정 1 sub-scope 1-G (CFP-1435 Amendment 17, sibling axis disjoint)
+- ADR-085 §결정 1 multi-session collaboration protocol
+- ADR-073 Amendment 6 sibling_story_handoff
 

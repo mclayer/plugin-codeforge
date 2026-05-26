@@ -5640,3 +5640,42 @@ entries:
       promotion_trigger: warning_tier_initial
     status: deferred-followup
 
+  - name: fix-loop-reverify-mandate
+    description: |
+      Mid-Story FIX-loop re-verification mandate (warning tier, ADR-060 §결정 5 first introduction default).
+
+      CFP-1683 / ADR-082 Amendment 29 §결정 1 layer 1 sub-scope (1-R) 신설 carrier. CFP-1646 retro F2 forcing function — `sister_session_race_in_design_lane` cumulative pattern_count ≥ 5 (CFP-684 + CFP-698 + CFP-1041 + CFP-1591 + CFP-1646 3 sub-events).
+
+      Detection scope (Wave 2 codify, declarative anchor):
+        FIX iter ≥ 2 시점 ArchitectPL (또는 lane PL) re-engage prompt 안 3 field presence verify:
+          - `amendment_slot_revalidated: <actual_next_slot>` (origin/main fetch + amendments[] grep)
+          - `registry_version_revalidated: <actual_current_version>` (label-registry-v2 frontmatter version verify)
+          - `bypass_count_revalidated: <actual_current_count>` (hotfix-bypass:* raw count verify)
+        3 field 부재 시 warning emit. 3-tuple delta detection 시 slot collision warning + corrected facts 재author.
+
+      Bypass: `hotfix-bypass:fix-loop-reverify-mandate` 106번째 family member.
+
+      Wave 2 (Phase 2 PR scope, future carrier):
+        - scripts/check-fix-loop-reverify.sh (ADR-061) + scripts/lib/check_fix_loop_reverify.py
+        - bats RED→GREEN stash proof + boundary fixture pair
+    detect_command: bash scripts/check-fix-loop-reverify.sh
+    workflow: .github/workflows/fix-loop-reverify-check.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:fix-loop-reverify-mandate
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative: 20
+      bypass_external_failure: 0
+      sibling_story_merged: true
+    introduced_by: CFP-1683
+    introduced_date: 2026-05-26
+    owner_adr: ADR-082-Amendment-29
+    carrier_adr: ADR-060
+    sibling_dependencies: [CFP-1683, CFP-1646]
+    recurrence:
+      count: 3                      # CFP-1646 FIX iter 1+2+3 events (3 parallel race in 1 Story)
+      threshold: 2
+      last_occurrence: "2026-05-26T12:30:00+09:00"  # CFP-1646 FIX iter 3 ESCALATE_PACKET_INCOMPLETE
+      promotion_trigger: warning_tier_initial
+    status: deferred-followup
+
