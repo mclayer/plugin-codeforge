@@ -23,7 +23,7 @@ related_adrs:
   - ADR-064  # §결정 9 stop-time + §결정 3 question quality 3-check — Stop/UserPromptSubmit hook 의 mechanical layer
   - ADR-070  # Codex verify-before-trust — SubagentStop ledger 위반 기록 대상
   - ADR-071  # Orchestrator ↔ user dialog convergence — §결정 17 back-translation gate (SubagentStop ledger 대상) + UserPromptSubmit dialog reminder
-  - ADR-073  # verify-before-assert — Amendment 2 parallel-work-sentinel polling (UserPromptSubmit reminder 대상) + Amendment 15-16 SHA pin / drift detection
+  - ADR-073  # verify-before-assert — Amendment 2 parallel-work-sentinel polling (UserPromptSubmit reminder 대상) + Amendment 15-16 SHA 고정 / drift detection
   - ADR-082  # Amendment 17 sub-scope 1-G amendment-slot pre-reservation (본 ADR 자체가 1-G META applied — reservation row 115 pre-claim 후 file write)
   - ADR-043  # stop-event-v1 Allow-list amendment 판정 (Story-4 carrier — hook_source/hook_decision field MINOR bump 정합)
   - ADR-068  # boundary completeness 6-invariant + I-5 dimensional empirical grounding (hook latency / session burn empirical citation)
@@ -51,7 +51,7 @@ related_files:
 
 ## 상태
 
-Accepted (2026-05-26 KST) — Epic CFP-1740 carrier_story. ADR-039 §결정 9 deferred follow-up (Orchestrator runtime enforcement, turn-time 행동 강제 공백) 영역의 **직접 carrier**. ADR-038 Amendment 1 §결정 8 (non-skippable attempt / non-blocking fail) layered defense 패턴의 runtime hook 확장 적용. declaration-only Wave 1 (ADR-070 §D5 / ADR-082 §결정 6 retain pattern 답습 — 4 hook entry registration + warning-tier `runtime-hook-presence` lint = Wave 1, blocking 승격 = ADR-060 evidence-gate 후 별 follow-up). is_transitional: false permanent governance ratchet (ADR-058 §결정 5 정합, §결정 7 보안 ADR default presumption false 정합).
+Accepted (2026-05-26 KST) — Epic CFP-1740 carrier_story. ADR-039 §결정 9 deferred follow-up (Orchestrator runtime enforcement, turn-time 행동 강제 공백) 영역의 **직접 carrier**. ADR-038 Amendment 1 §결정 8 (non-skippable attempt / non-blocking fail) layered defense 패턴의 runtime hook 확장 적용. declaration-only Wave 1 (ADR-070 §D5 / ADR-082 §결정 6 retain pattern 답습 — 4 hook entry registration + warning-tier `runtime-hook-presence` lint = Wave 1, blocking 승격 = ADR-060 evidence-gate 후 별도 follow-up). is_transitional: false permanent governance ratchet (ADR-058 §결정 5 정합, §결정 7 보안 ADR default presumption false 정합).
 
 ## 컨텍스트
 
@@ -147,7 +147,7 @@ PreToolUse(Agent) spawn-format gate 는 **warning-tier 부터 시작**. ADR-060 
 - `hotfix-bypass:runtime-hook-presence` label family member (label-registry-v2 MINOR bump).
 - PreToolUse(Agent) hook 자체의 `permissionDecision` 발화 = warning 단계에서는 **deny 대신 stderr warning + presence record only** (false-positive deny → spawn deadlock 회피).
 
-**Wave 2 (별 follow-up CFP carrier)**:
+**Wave 2 (별도 follow-up CFP carrier)**:
 - ADR-060 evidence-gate 충족 후 `current_tier: blocking-on-pr` 승격.
 - PreToolUse(Agent) hook 의 `permissionDecision: "deny"` 활성 (Wave 1 evidence 충족 시).
 - consumer 전파도 **advisory (warning) 부터** — false-positive deny → consumer spawn deadlock 위험 (§7.4 OperationalRisk 정합).
@@ -168,18 +168,18 @@ hook stale / 불완전 설치 / 실행 오류 시 **graceful degradation** — a
 - ledger write 실패 (file system 권한 결여) → stderr warning + record-only (Stop/SubagentStop 적용)
 - spawn-format parse error (PreToolUse(Agent), check_spawn_prompt_format.py exception) → warning + spawn 허용 (deadlock 회피, Wave 1)
 
-**escalate 금지 invariant**: warning → blocking 승격은 **별 follow-up CFP + ADR-060 evidence-gate 통과** 후에만 (자동 escalation 금지). false-positive deny 누적 시 즉시 warning 복귀 (sibling Story 별 rollback carrier).
+**escalate 금지 invariant**: warning → blocking 승격은 **별도 follow-up CFP + ADR-060 evidence-gate 통과** 후에만 (자동 escalation 금지). false-positive deny 누적 시 즉시 warning 복귀 (sibling Story 별도 rollback carrier).
 
 ### §결정 6 — Scope boundary (inline-write detect hook 제외, 후속 CFP)
 
 본 ADR scope = **4 hook 종**: UserPromptSubmit / PreToolUse(matcher:"Agent") / Stop / SubagentStop.
 
-**제외 영역** (별 follow-up CFP):
+**제외 영역** (별도 follow-up CFP):
 - **inline-write detect hook** — ADR-039 §결정 9 두번째 bullet 의 Orchestrator inline Read/Write/Edit/Bash 직접 호출 검출 영역. PreToolUse(matcher:"Read"|"Write"|"Edit") 분기 + Orchestrator turn 컨텍스트 차별 검출 (Inline whitelist 4-entry vs 그 외 영역) 의 별도 mechanism 설계 필요. **본 Epic 제외, 후속 CFP**.
 
 **근거 — ADR-064 §결정 1 CFP scope unitary 정합**:
 - 본 ADR scope = "turn-time hook enforcement super-class" 안 **4 일관 영역** (spawn-format / dialog reminder / stop-time / subagent-return). 4 hook 모두 `hooks/hooks.json` 단일 dispatcher 통합 + warning-tier 시작 + graceful degradation 동일 패턴 → 단일 atomic scope.
-- inline-write detect = **disjoint sub-domain** (Orchestrator inline-context 검출 mechanism 영역). 한 CFP 안 "경량 → full" 단계 채택 금지 정합 — 별 CFP 분리는 허용.
+- inline-write detect = **disjoint sub-domain** (Orchestrator inline-context 검출 mechanism 영역). 한 CFP 안 "경량 → full" 단계 채택 금지 정합 — 별도 CFP 분리는 허용.
 
 **미래 확장 잠재 영역** (informational only, 본 ADR scope 외):
 - PostToolUse hook (사후 tool output 감사)
@@ -191,7 +191,7 @@ hook stale / 불완전 설치 / 실행 오류 시 **graceful degradation** — a
 ### 긍정적 결과
 
 1. **turn-time enforcement 공백 메움** — ADR-039 §결정 9 deferred follow-up 직접 이행. 매 turn 시점 spawn-format / dialog convergence / stop-time / subagent-return 4 영역 mechanical layer 활성.
-2. **사후 PR-time lint → preventive turn-time layer 당김** — CFP-1489 spawn-prompt-head-pin / CFP-1497 amendment-slot-reservation / CFP-1500 mid-spawn-drift / CFP-1502 chief-author-span 4 사후 lint 의 검증을 PreToolUse(Agent) preventive layer 로 당김 (양 layer 공존, disjoint).
+2. **사후 PR-time lint → preventive turn-time layer 당김** — CFP-1489 `spawn-prompt-head-pin` / CFP-1497 `amendment-slot-reservation` / CFP-1500 `mid-spawn-drift` / CFP-1502 `chief-author-span` 4 사후 lint 의 검증을 PreToolUse(Agent) preventive layer 로 당김 (양 layer 공존, disjoint).
 3. **ADR-064 §결정 9 stop-time + §결정 3 question quality 의 mechanical layer 부재** 영역 해소 — Stop hook 이 ledger row + advisory 발화.
 4. **ADR-070 / ADR-071 §결정 17 의 mechanical layer 부재** 영역 해소 — SubagentStop hook 이 verify-before-trust / back-translation 위반 ledger row.
 5. **plugin 배포 모델 유지** — `.claude/hooks` 직접 배포 우회 채택 안 함 (#10412 workaround 회피).
@@ -201,18 +201,18 @@ hook stale / 불완전 설치 / 실행 오류 시 **graceful degradation** — a
 1. **hook latency 누적** — 4 hook 의 turn-time 호출이 각 < 200ms 목표 (PreToolUse < 500ms blocking gate 영역) 이나 누적 시 사용자 체감 latency 증가 가능. graceful degradation 5-layer (§결정 5) 가 timeout fail-open 보장.
 2. **`hooks/hooks.json` 단일 file = 6 Story 직렬화 bottleneck** — CFP-1740 plan §batch 정합 sequential 강제 (state_dependency + shared_resource 양 사유, ADR-064 §결정 4 sequential mandate 정합).
 3. **consumer overlay deprecated grace 비용** — 1 release grace 안 양 channel 동시 활성 시 이중 발화 검출 lint 필요 (§결정 3 one-channel rule, Phase 2 wire).
-4. **PreToolUse(Agent) false-positive deny 위험** — spawn-format gate 의 검증 로직 false-positive 시 spawn deadlock. Wave 1 warning-only 가 위험 완화 (deny 활성 = ADR-060 evidence-gate 후 별 CFP).
+4. **PreToolUse(Agent) false-positive deny 위험** — spawn-format gate 의 검증 로직 false-positive 시 spawn deadlock. Wave 1 warning-only 가 위험 완화 (deny 활성 = ADR-060 evidence-gate 후 별도 CFP).
 5. **#55754 burn 회피 비용** — Stop/SubagentStop block 금지 binding constraint 가 enforcement 강도 상한 형성. 진정 차단 필요 영역은 PreToolUse 분기로만 (turn-completion gate 영역은 ledger + 다음 turn UserPromptSubmit 재주입).
 
 ### 의존성 / 후속 영역
 
-- **Wave 2 (별 follow-up CFP)** — ADR-060 evidence-gate 충족 (PR ≥ 20 + bypass 외 failure = 0 + sibling Story merged) 후 PreToolUse(Agent) blocking 승격.
+- **Wave 2 (별도 follow-up CFP)** — ADR-060 evidence-gate 충족 (PR ≥ 20 + bypass 외 failure = 0 + sibling Story merged) 후 PreToolUse(Agent) blocking 승격.
 - **CFP-1740 Story-2 (#1742)** — PreToolUse(Agent) spawn-format gate 구현 (scripts/lib/check_spawn_prompt_format.py + hooks/pretooluse-agent-spawn-gate).
 - **CFP-1740 Story-3 (#1743)** — Stop + SubagentStop hook 구현 (ledger atomic append).
 - **CFP-1740 Story-4 (#1744)** — stop-event-v1 v1.0 → v1.1 MINOR bump (`hook_source` / `hook_decision` field, ADR-043 Allow-list amendment 판정).
 - **CFP-1740 Story-5 (#1745)** — evidence-checks-registry 4 entry + label-registry MINOR + consumer-guide hook 등록 안내.
 - **CFP-1740 Story-6 (#1746)** — 통합 검증 (4 신규 + 기존 3 hook 공존 + Win·Unix polyglot + ledger 경합).
-- **별 CFP (inline-write detect hook)** — §결정 6 scope boundary 명시 제외 영역.
+- **별도 CFP (inline-write detect hook)** — §결정 6 scope boundary 명시 제외 영역.
 
 ## 검증 + 측정 (Verification + Metrics, ADR-068 I-5 dimensional empirical grounding 정합)
 
@@ -237,12 +237,34 @@ hook stale / 불완전 설치 / 실행 오류 시 **graceful degradation** — a
 - **I-2 cross-module status enum propagation** — PreToolUse(Agent) `permissionDecision: "deny"` ↔ Orchestrator Agent tool spawn return value 매핑 = Claude Code platform native (caller 분기 처리는 platform 책임, hook 측 책임 외). Stop/SubagentStop ledger row `hook_source` enum ↔ stop-event-v1 reader 분기 처리 = Story-4 carrier.
 - **I-3 unconditional vs conditional guard placement** — graceful degradation 5-layer (§결정 5) = **unconditional** (hook 진입 시점 무조건, 영역 enum 5 전부 fail-open exit 0). spawn-format gate (PreToolUse:Agent) = **conditional Wave 1** (warning-only, Wave 2 evidence-gate 후 blocking 승격 시 unconditional 전환). 본 ADR 본문 §결정 5 명시.
 - **I-4 wording SSOT** — `runtime-hook-presence` action name = evidence-checks-registry entry name verbatim (frontmatter `mechanical_enforcement_actions[].action` + label `hotfix-bypass:runtime-hook-presence` family + workflow file name 3-way 일치, ADR-040 Amendment 3 §결정 7.A 정합).
-- **I-5 dimensional empirical grounding** — 위 "검증 + 측정" 표 10 dimension annotation. `[empirical-source: TBD]` 3 entry 는 Story-2/3 bats fixture 측정 후 별 Amendment 로 채움 (CFP-1740 spec §3.3 검증 출처 명시 정합).
+- **I-5 dimensional empirical grounding** — 위 "검증 + 측정" 표 10 dimension annotation. `[empirical-source: TBD]` 3 entry 는 Story-2/3 bats fixture 측정 후 별도 Amendment 로 채움 (CFP-1740 spec §3.3 검증 출처 명시 정합).
 - **I-6 audit-gate-pointer-existence** — DesignReview lane finding 시 4-form pointer scope (file path / section anchor / ADR §결정 N reference) 보유 — 본 ADR 본문 = ADR-039 §결정 9 (file + ADR ref) + ADR-038 Amendment 1 §결정 8 (ADR ref + section anchor) + GitHub #10412 / #55754 (외부 link target) 3-way pointer presence.
 
 ## 결정 원칙 anchor (ADR-064 §결정 1-7 정합)
 
 본 ADR = **broad coverage** (4 hook tier + 5 graceful degradation 영역 + 6 §결정 enum) + **best-effort** (공식 hooks reference + GitHub issue verify 완료 후 도달 가능한 최선의 안) + **active amendment** (ratchet 강화 방향, `is_transitional: false` permanent governance ratchet, ADR-058 §결정 5 정합 — ratchet 강화 sunset_justification 면제).
+
+## 관련 파일
+
+frontmatter `related_files` 의 narrative companion (markdown link 형식):
+
+- [hooks/hooks.json](../../hooks/hooks.json) — 4 신규 hook entry append (UserPromptSubmit / PreToolUse:Agent / Stop / SubagentStop) — Story-1~3 carrier
+- [hooks/run-hook.cmd](../../hooks/run-hook.cmd) — polyglot dispatcher (superpowers 5.1.0 MIT, 미변경 — entry router 재사용)
+- `hooks/userprompt-submit` (Story-1 carrier, 생성 예정) — 신규 extensionless polyglot (overlay/hooks/userprompt-reminder.{sh,ps1} wrapper-root 승격/미러)
+- `hooks/pretooluse-agent-spawn-gate` (Story-2 carrier, 생성 예정) — 신규 extensionless polyglot — 유일 blocking hook
+- `hooks/stop` (Story-3 carrier, 생성 예정) — 신규 extensionless polyglot — non-blocking ledger
+- `hooks/subagent-stop` (Story-3 carrier, 생성 예정) — 신규 extensionless polyglot — non-blocking ledger
+- `scripts/lib/check_spawn_prompt_format.py` (Story-2 carrier, 생성 예정) — ADR-061 Python lib (line-by-line parse, heredoc 금지)
+- `scripts/check-runtime-hook-presence.sh` (Story-5 carrier, 생성 예정) — thin bash wrapper — evidence-checks-registry warning-tier
+- `templates/github-workflows/runtime-hook-presence.yml` (Story-5 carrier, 생성 예정) — workflow 신설
+- [docs/inter-plugin-contracts/stop-event-v1.md](../inter-plugin-contracts/stop-event-v1.md) — v1.0 → v1.1 MINOR (hook_source / hook_decision field) — Story-4 carrier (ADR-043 Allow-list amendment 판정)
+- [docs/inter-plugin-contracts/label-registry-v2.md](../inter-plugin-contracts/label-registry-v2.md) — `hotfix-bypass:runtime-hook-presence` family member append — Story-5 carrier
+- [docs/evidence-checks-registry.yaml](../evidence-checks-registry.yaml) — 4 entry append (runtime-hook-{userprompt,pretooluse-agent,stop,subagentstop}-presence, warning-tier) — Story-5 carrier
+- [docs/consumer-guide.md](../consumer-guide.md) — hook 등록 안내 + one-channel rule — Story-5 carrier
+- [docs/orchestrator-playbook.md](../orchestrator-playbook.md) — §1.1 runtime hook dispatcher sub-section 신설 — Story-5 carrier
+- [CLAUDE.md](../../CLAUDE.md) — "세션 개시 의무" + "오케스트레이션 규칙" reference 갱신 — Story-5 carrier
+- [overlay/hooks/userprompt-reminder.sh](../../overlay/hooks/userprompt-reminder.sh) — consumer overlay — wrapper-root 승격 후 deprecated grace (one-channel rule, ADR-038 Amendment 3 §결정 10 precedent 답습)
+- [overlay/hooks/userprompt-reminder.ps1](../../overlay/hooks/userprompt-reminder.ps1) — consumer overlay — wrapper-root 승격 후 deprecated grace (one-channel rule, ADR-038 Amendment 3 §결정 10 precedent 답습)
 
 ## Cross-reference
 
