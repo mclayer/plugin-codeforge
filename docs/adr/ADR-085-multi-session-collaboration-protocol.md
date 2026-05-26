@@ -255,6 +255,16 @@ frontmatter `mechanical_enforcement_actions: [active-sessions-presence, lane-ent
 
 별 sub-CFP carrier 의 hotfix-bypass label 4-tier scope = `hotfix-bypass:active-sessions-presence` / `hotfix-bypass:lane-entry-ownership-verify` (label-registry-v2 v2.40 신규 family member).
 
+### Amendment 1 — §결정 9 신설 Multi-session prompt design normative (CFP-1693, 2026-05-26 KST)
+
+**결정**: §결정 9 신설 — 사용자가 다른 Claude session 에 작업 위임 prompt 생성 시 4-rule mandate (self-contained end-to-end per session / axis-disjoint 강제 / sequential dependency → 한 session / copy-paste 준비) + 확인 단계 의무 (anti-pattern vs good pattern 양 예시 첫 응답 시 사용자 확인).
+
+**근거**: memory `feedback_next_session_prompt_design` (2026-05-25 KST 사용자 directive verbatim) normative 승격 carrier. CFP scope unitary 정합 — ADR-085 super-class 안 coordination axis sub-decision append. axis disjoint vs §결정 1-8 (§1 5-layer 표 anchor / §2 active_sessions[] schema / §3 lane-entry 4-step polling / §4 rebase merge / §5 handoff baton transfer / §6 race-window heartbeat / §7 subagent self-confusion / §8 known-limitation) — 본 §결정 9 = 'session 생성 직전 prompt design 시점' phase 영역 (pre-session start, §1-8 = post-session start coordination).
+
+**영향**: ratchet 강화 방향 (governance 표현력 확장 — prompt design layer 명문 codify, ADR-064 §결정 7 evidence-gated symmetric ratchet 정합). doc-only fast-path. forbid scope 축소 0건. `is_transitional: false` 유지 (permanent governance policy). sunset_justification N/A.
+
+**Cross-ref**: §결정 9 (본문 즉시 하단 — 4-rule mandate + Phase 0 확인 단계 + anti-pattern / good pattern 예시) / memory `feedback_next_session_prompt_design` (2026-05-25 KST 사용자 directive normative anchor) / ADR-058 §결정 5 sunset_justification N/A (ratchet 강화 방향) / ADR-064 §결정 7 (CFP-1149 Amendment 8) symmetric evidence-gated 정합.
+
 ### §결정 9 — Multi-session prompt design normative (Amendment 1, CFP-1693)
 
 사용자가 다른 Claude session 에 작업 위임 prompt 생성 시 의무 4-rule + 확인 단계. axis disjoint vs §결정 1-8 = **pre-session start prompt design** phase (§1-8 = post-session start coordination).
