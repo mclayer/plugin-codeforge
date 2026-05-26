@@ -35,6 +35,16 @@ amendment_log:
     date: 2026-05-24
     summary: "design doc Confluence-mirror 인정 범위 확장 — §결정 1 의 단일 'wrapper git-commit governance docs' phrasing 위에 ADR-111 closed-enum 4 대상 (ADR / Living Architecture / Change Plan / Domain Knowledge) 정식 codify. write boundary = ADR-103 sync agent 보존 (단방향 git→Confluence)."
     sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: 인정 범위 명시화 + closed-enum codify, forbid scope 축소 아님). ADR-064 §self-application top-down ratchet 정합. is_transitional: false 유지 (permanent governance policy)."
+  - amendment_id: 2
+    carrier_story: CFP-1668
+    date: 2026-05-26  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 1", "§결정 3"]
+    nature: ratchet-up  # consumer scope 확장 (forbid scope 축소 0, ADR-058 §결정 5 강화 방향 면제)
+    sunset_justification: null  # ratchet-up — consumer scope binding 명시화 (wrapper invariant 보존 + consumer scope sub-section 추가). ADR-058 §결정 5 ratchet 강화 방향 면제 정합. ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 (강화 = pattern_count evidence — mctrader incident `unknown` 분류 영역 super-class + consumer scope binding 부재로 sibling Story 마다 재논의 비용 발생)
+    summary: |
+      Wave 1 wrapper-canonical Confluence migration codify (CFP-1668) — consumer-facing operability 신설 carrier. §결정 1 의 'wrapper governance docs' 영역 단일 phrasing 위에 consumer scope binding sub-section 추가 (wrapper + consumer 양 영역 동일 4-layer disjoint axis 적용 — git SoR-work / Confluence SoR-docs readable mirror 단방향 git→Confluence direction). 7 invariant (CFP-1668 Story §2.3 표) 모두 consumer scope 에도 동일 적용 명시. §결정 3 atlassian.* schema owner SSOT 의 consumer-scope sub-scope extension — `.claude/_overlay/project.yaml` atlassian.confluence.* binding 안 4 신규 field (instance / homepage_id / mirror_targets[] / per_doc_type_override) 영역 declare-only (실 schema wire = Phase 2 carrier).
+      ADR-027 Amendment 미경유 invariant 보존 — `docs/project-config-schema.md` L501 verbatim `ADR-027 natural extend: atlassian.* schema 신설은 ADR-027 amendment 불요` (verified-via direct Read of origin/main `89c8721d`) — ADR-100 §결정 3 = atlassian.* schema 의 정식 owner SSOT.
+      ratchet 강화 방향 = (a) wrapper 단일 phrasing → wrapper + consumer 양 영역 (forbid scope 축소 0) (b) §결정 3 atlassian.* schema owner 의 consumer-scope sub-scope 명시화 (declare 범위 확장, security boundary 무약화). ADR-013 §결정 1 KEEP/MOVE 의미 약화 0건 (partial extend invariant 보존). collision-rebase ratchet: amendment_log 직전 origin max amendment_id 재확인 (Amendment 1 / CFP-1419) → 2. amendments_reserved[] pre-claim = ADR-RESERVATION row 410-415 active (commit 77e378e4, sub-scope 1-G META 11th applied). carrier_story CFP-1668 verified-via `git show origin/main:docs/adr/ADR-RESERVATION.md` row append. META-self-applied (ADR-082 §결정 1 sub-scope 1-G 11th applied case + sub-scope 1-E PRE-SPAWN-ORIGIN-MAIN-SHA pin verified `89c8721d179182a60ef8bb8b4b8806cc01bf78ba`).
 ---
 
 # ADR-100 — Confluence doc SSOT 인정 (wrapper governance docs 의 Confluence authoritative readable source 추가)
@@ -107,6 +117,30 @@ ArchitectAnalyst 이의 3 (dogfood vs consumer Confluence sync 범위 불일치)
 
 **§결정 1 의 "wrapper docs" = wrapper git-commit governance docs 로 정밀 정의** (KEEP 영역 우선 대상). dogfood-out docs (retros/change-plans/stories) 는 Epic-A scope 안이나 sync source 가 wrapper repo 가 아니라 **internal-docs repo** 다 (ADR-013 §결정 1 MOVE 정합 — dogfood artifact 는 internal-docs SSOT). consumer docs 는 Epic-B (multi-tenant). 이 3-way 분리로 "wrapper docs/** 가 KEEP/MOVE 양쪽 걸침" 모호성을 해소한다.
 
+#### consumer scope binding (Amendment 2 — CFP-1668 Wave 1)
+
+본 ADR 의 wrapper-canonical 결정은 consumer repo (mctrader / 미래 consumer) 영역에도 **동일 4-layer disjoint axis 적용** 의무. consumer scope = wrapper invariant 의 SYMMETRIC subset 확장 (확장 0, 약화 0):
+
+| axis | wrapper | consumer |
+|---|---|---|
+| **git = SoR-work** | wrapper repo git-commit (`docs/adr/` 등) | consumer repo git-commit (자기 `docs/**`) — sync direction 동일 (단방향 git → Confluence) |
+| **Confluence = SoR-docs** | wrapper space (예: `CFP` hard-code) authoritative readable | consumer 자기 Confluence space (per-consumer 결정) authoritative readable — 4-layer architecture 동일 |
+| **변경 source** | wrapper repo PR/commit/CODEOWNERS | consumer repo PR/commit (consumer 자기 review gate) — 변경은 자기 repo 에서만 발생 |
+
+**7 invariant consumer scope 동일 적용 명시 (CFP-1668 Story §2.3 표 — verified-via direct Read of `mclayer/codeforge-internal-docs#944` Story file commit `d810244`)**:
+
+1. **git = SoR-work / Confluence = SoR-docs disjoint axis** — consumer 측 `atlassian.confluence.*` schema 도 단방향 git→Confluence mirror direction immutable (역방향 0건)
+2. **sync direction = 단방향 git → Confluence (write boundary = ADR-103 sync agent 단일 진입점)** — consumer 측 schema 의 `mirror_direction` field 도 `git_to_confluence` immutable
+3. **closed-enum 5 mirror 대상 (ADR / Living Architecture / Change Plan / Domain Knowledge / Orchestrator Playbook)** (open_extension: false) — consumer 측 mirror 대상 = wrapper closed-enum 5 의 **SYMMETRIC subset** (Q-1 사용자 확정 CFP-1668), 확장 시 별 CFP 의무
+4. **Issue-only retain 5 면제 (Story file / FIX Ledger / Lane Evidence / decision packet / spawn prompt)** Confluence mirror 금지 — consumer 측 도 동일 retain 영역 (mirror 0건, Q-2 사용자 확정 CFP-1668)
+5. **3-anchor verify (content hash / version / sync commit SHA) + dual-layer verify + SSRF Layer 3 base_url allowlist** invariant — consumer 측 sync 도 동일 invariant, 약화 0건
+6. **token = `*_env` reference 패턴 (평문 token 직접 mount 금지)** — consumer 측 `atlassian.confluence.api_token_env` 형식 의무 (평문 0건)
+7. **mcp__atlassian permission deny baseline 보존 + 정식 sync agent narrow allow 만 우회** — consumer 측 도 동일 `.claude/settings.json` deny baseline (wrapper-managed marker block ownership 보존 정합)
+
+**ratchet 영향**: ratchet 강화 only (forbid scope 축소 0). open_extension: false invariant 보존. consumer scope 확장 = security boundary 확장 (mcp__atlassian deny baseline + token env-ref + SSRF allowlist) ≠ 약화.
+
+**ADR-013 §결정 1 KEEP 의미 약화 0건 invariant 보존** — consumer repo `docs/**` 는 ADR-013 §결정 1 KEEP/MOVE 영역 외 (consumer repo = consumer 자기 SSOT) — 본 Amendment 2 = wrapper governance pattern 의 consumer 적용 binding 명시화 (consumer repo 의 KEEP/MOVE 재분류 0건). disjoint axis 보존.
+
 #### ADR-013 cross-ref Amendment 동반 (1줄 declare)
 
 본 ADR-100 = ADR-013 §결정 1 의 partial extend 이므로, ADR-013 측에 1줄 cross-ref Amendment 동반을 **declare** 한다 (Phase 2 또는 후속 carrier 위임): "ADR-013 §결정 1 KEEP 영역에 Confluence authoritative readable sync 추가 허용 (git SoR-work 보존, Confluence SoR-docs readable layer 추가) — ADR-100 §결정 1." 본 cross-ref Amendment 는 ADR-013 KEEP/MOVE 목록을 변경하지 않는다 (additive, supersede 아님 — anti-drift historic-preserving 정합).
@@ -151,6 +185,23 @@ atlassian:
 #### ADR-027 natural extend (충돌 0)
 
 atlassian.* schema 신설은 ADR-027 amendment 불요 — atlassian.* schema 가 project-config-schema.md 갱신으로 bootstrap validation 이 자동 cover 한다 (ADR-027 §결정 1 bootstrap 검증 책임 = wrapper overlay/hooks/, ArchitectAnalyst 권고). consumer 측은 project-config-schema.md SCHEMA_RULES validator 추가 (Phase 2 carrier) 로 자동 검증. ADR-027 와 충돌 surface 없음 = natural extend.
+
+#### consumer-scope sub-scope extension (Amendment 2 — CFP-1668 Wave 1)
+
+본 ADR §결정 3 = atlassian.* schema 의 정식 owner SSOT (ADR-027 Amendment 미경유 invariant). 본 Amendment 2 가 consumer scope sub-scope 를 명시화한다 — `.claude/_overlay/project.yaml` atlassian.confluence.* binding 안 **4 신규 field 영역 declare-only** (실 schema wire = Phase 2 carrier — `docs/project-config-schema.md` block extension):
+
+| field | type | purpose | scope | secret? |
+|---|---|---|---|---|
+| `confluence.mirror_targets[]` | array of string | consumer 측 mirror 대상 enum (closed-enum SYMMETRIC subset, Q-1 정합) | per-consumer instantiate | NOT secret |
+| `confluence.homepage_id` | string (optional) | consumer 측 Confluence space root page id (parent_id placement 결정 영역) | per-consumer instantiate | NOT secret |
+| `confluence.per_doc_type_override` | object (optional) | per-doc-type 별 binding override (예: `{adr: {parent_page_id: ...}}`) | per-consumer instantiate | NOT secret |
+| `confluence.instance` | string (optional) | consumer 측 multi-instance Confluence Cloud account binding (sandbox/production 동시 운영 영역 declarative anchor — multi-instance binding mechanism = OOS 별 carrier) | per-consumer instantiate | NOT secret |
+
+**mirror_targets[] enum validation (closed-enum 5)** — 각 entry ∈ {adr, architecture_doc, change_plan, domain_knowledge, orchestrator_playbook} (ADR-111 §결정 1 closed-enum 5 정합, Amendment 1 후). open_extension: false (확장 시 별 CFP 의무).
+
+**secret boundary 보존** — 4 신규 field 모두 NOT secret (Internal 분류). secret = `api_token` + `user_email` (Amendment 1 이전 §결정 3 본문 보존) — schema field 는 `*_env` reference (env key name) 만 허용, 평문 token / email 직접 기재 금지.
+
+**implementation defer** — 실 schema row append (`docs/project-config-schema.md` L468-505 block extension) = Phase 2 carrier. 본 Amendment 2 = declarative anchor only (ADR-082 §결정 6 retain pattern 답습 — Wave 1 declare / Wave 2 wire). `mechanical_enforcement_actions[]` 무변경 (`[]`).
 
 ### §결정 4 — Layer 1 settings.json mcp__atlassian deny baseline (SecurityArch P1 — scope 분리, narrow allow W4 defer)
 

@@ -8,7 +8,7 @@ carrier_story: CFP-1419
 parent_epic: CFP-1415
 supersedes: null
 amends: null
-amendments: [1]
+amendments: [1, 2]
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-1618
@@ -17,6 +17,13 @@ amendment_log:
     nature: ratchet-up  # closed-enum 4 → 5 영역 확장 (ADR-058 §결정 5 강화 방향 sunset_justification 면제)
     sunset_justification: null  # ratchet-up — closed-enum 인정 범위 확장 (forbid scope 축소 0, ADR-013 §결정 1 KEEP 의미 보존 + ADR-100 §결정 1 partial extend 의미 보존). ADR-058 §결정 5 ratchet 강화 방향 면제 정합. ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 (강화 = pattern_count evidence — CFP-1584 Phase 1 audit 결과 4 영역 외 Playbook 영역 발견, 분류 부재 시 sibling Story 마다 재논의 비용 발생)
     note: "§결정 1 closed-enum 4 → 5 영역 추가 (5번째 영역 = orchestrator-runbook, `docs/orchestrator-playbook.md` SSOT). Origin = CFP-1584 Phase 1 audit (PR #1608 merged 2026-05-25 11:08:46Z) — Sub-A (CFP-1524 Sub-A) Confluence push 진입 시 4 영역 (ADR / Living Architecture / Change Plan / Domain Knowledge) 외 Playbook 영역 발견, ADR-111 classification 적용 불가. 5번째 영역 정의 = `docs/orchestrator-playbook.md` (Orchestrator 의 세션 생명주기 + 스폰 시퀀스 + Preflight 체크 + FIX 루프 + 세션 재개 + 트러블슈팅 + cross-agent write coordination + context packet + observability boundary + post-merge automation + sibling sync 절차 등 운영 절차 SSOT). git 위치 = `docs/orchestrator-playbook.md` (wrapper repo). sync source repo = wrapper repo (plugin). sync direction = 단방향 git → Confluence (4 mirror 영역 정합). **scope boundary (derived default)**: orchestrator-playbook 영역 한정 — 일반 runbook 영역 (예: deployment runbook / oncall runbook / production incident runbook 등) **포함 안 함**. 확장 시 별 CFP carrier 의무 (open_extension: false). Amendment 1 = ratchet 강화 방향 (closed-enum 확장 + 인정 범위 명시화), ADR-058 §결정 5 sunset_justification 면제. §결정 3 IA axis = orchestrator-playbook 영역 = cross-cutting sibling 또는 per-plugin top-level (wrapper) sub-page 양 IA axis 모두 허용 (현 시점 flat 3-parent hierarchy CFP-1146 W5 cutover transitional 정합). 정식 재구조화는 Sub-B carrier (별 Story 영역, 본 Amendment scope 외). §결정 4 diagram strategy + §결정 5 cross-link discipline 적용 영역 = 5번째 영역에도 동일 적용 (의미 변경 0, 적용 영역 확장 만 — §결정 3/4/5 본문 무수정 invariant 보존). docs/confluence-ia-tree.yaml `playbook_pages_adr_111_classification` block 동반 명시 (mapping declaration, source-of-truth = ADR-111 §결정 1 5번째 row). collision-rebase ratchet: amendment_log 직전 origin max amendment_id 재확인 = 0 (baseline `amendment_log: []`) → 1. amendments_reserved[] pre-claim 면제 (단일 session 영역, parallel race 0 verified). META-self-applied 0 (closed-enum 확장 carrier, ADR-082 §결정 9 verify-before-cite 영역 외)."
+  - amendment_id: 2
+    carrier_story: CFP-1668
+    date: 2026-05-26  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 1", "§결정 2"]
+    nature: ratchet-up  # consumer scope binding 명시화 — SYMMETRIC subset (consumer ⊆ wrapper, 확장 0 invariant) + Issue-only retain consumer scope 동일 적용 (forbid scope 축소 0)
+    sunset_justification: null  # ratchet-up — consumer scope binding 명시화 (forbid scope 축소 0, wrapper invariant 보존). ADR-058 §결정 5 ratchet 강화 방향 면제 정합. ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 (강화 = pattern_count evidence — Wave 1 wrapper-canonical Confluence migration codify, consumer-facing operability 부재로 mctrader `unknown` 분류 영역 super-class incident 발생)
+    note: "Wave 1 wrapper-canonical Confluence migration codify (CFP-1668) — consumer-facing operability 신설 carrier. §결정 1 closed-enum 5 mirror 대상 의 consumer scope binding 명시화 — consumer 측 mirror 대상 = wrapper closed-enum 5 의 **SYMMETRIC subset** (consumer ⊆ wrapper closed-enum 5, 확장 0 invariant 보존). 사용자 Q-1 답 verbatim = SYMMETRIC subset 확정 (2026-05-26 KST). §결정 2 Issue-only retain consumer scope 동일 적용 명시 — Story file / FIX Ledger / Lane Evidence / decision packet / spawn prompt 5 영역 consumer 측 도 Confluence mirror 금지. 사용자 Q-2 답 verbatim = YES 동일 적용 확정 (2026-05-26 KST, ratchet 강화 명시). consumer overlay project.yaml 의 `atlassian.confluence.issue_only_retain_targets` field 신설은 불필요 (§결정 2 inline binding sufficient). collision-rebase ratchet: amendment_log 직전 origin max amendment_id 재확인 = 1 (Amendment 1 / CFP-1618 merged 2026-05-25 KST) → 2. amendments_reserved[] pre-claim = ADR-RESERVATION row 416-421 active (commit 77e378e4, sub-scope 1-G META 12th applied). carrier_story CFP-1668 verified-via `git show origin/main:docs/adr/ADR-RESERVATION.md` row append. META-self-applied (ADR-082 §결정 1 sub-scope 1-G 12th applied case + sub-scope 1-E PRE-SPAWN-ORIGIN-MAIN-SHA pin verified `89c8721d179182a60ef8bb8b4b8806cc01bf78ba`). enum_closure annotation (ADR-068 I-2 cross-module propagation completeness) = consumer mirror_targets[] ⊆ wrapper closed-enum 5 invariant verify. ADR-100 Amendment 2 paired sibling (동일 CFP-1668 Phase 1 PR scope, 본 carrier 와 axis disjoint — ADR-100 §결정 1/3 wrapper-consumer binding ↔ 본 ADR-111 §결정 1/2 closed-enum subset binding)."
 related_stories:
   - CFP-1419     # 본 carrier (Mega-Epic CFP-1415 Sub-A S1.1)
   - CFP-1415     # umbrella Mega-Epic (Confluence-as-derived-mirror governance standardization)
@@ -96,6 +103,25 @@ design doc 영역 의 Confluence mirror authoritative readable 대상을 다음 
 
 **Orchestrator Playbook scope boundary (5번째 영역, Amendment 1 — CFP-1618)**: 5번째 영역 = `docs/orchestrator-playbook.md` (Orchestrator 의 세션 생명주기 + 스폰 시퀀스 + Preflight 체크 + FIX 루프 + 세션 재개 + 트러블슈팅 + cross-agent write coordination + context packet + observability boundary + post-merge automation + sibling sync 절차 등 운영 절차 SSOT). **scope boundary (derived default)**: orchestrator-playbook 영역 한정 — 일반 runbook 영역 (예: deployment runbook / oncall runbook / production incident runbook / disaster recovery runbook 등) **포함 안 함**. 확장 시 별 CFP carrier 의무 (open_extension: false). split granularity = §-level page split (CFP-1524 Sub-A CFP-1584 carrier, 17 § + 부록 A+B 통합 = 19 entry skeleton + CRITICAL Step 0 §.N-level 추가 분할 carrier 별 follow-up CFP). split mapping SSOT = `docs/confluence-ia-tree.yaml` `playbook_split_pages[]` array + `playbook_pages_adr_111_classification` declaration block. §결정 3 IA axis 적용 영역: orchestrator-playbook = cross-cutting sibling 영역 (현 시점 flat 3-parent hierarchy CFP-1146 W5 cutover transitional, 정식 재구조화 Sub-B carrier defer). §결정 4 diagram strategy + §결정 5 cross-link discipline 동일 적용 (5번째 영역에도 diagram-as-code 의무 + git anchor + Confluence anchor 양쪽 link 의무 — §결정 3/4/5 본문 무수정 invariant 보존, 적용 영역 확장 만).
 
+#### consumer scope binding — SYMMETRIC subset (Amendment 2 — CFP-1668 Wave 1)
+
+본 ADR §결정 1 closed-enum 5 (Amendment 1 후) 의 **consumer scope binding** 명시화 — consumer 측 mirror 대상 = wrapper closed-enum 5 의 **SYMMETRIC subset** (consumer ⊆ wrapper, 확장 0 invariant). 사용자 Q-1 답 verbatim = SYMMETRIC subset 확정 (CFP-1668, 2026-05-26 KST).
+
+| consumer scope | 의미 | invariant |
+|---|---|---|
+| **subset 선택 mechanism** | consumer 가 자기 `atlassian.confluence.mirror_targets[]` field 안 wrapper closed-enum 5 중 일부 또는 전체 entry 선택 (예: `[adr]` / `[adr, change_plan]` / `[adr, architecture_doc, change_plan, domain_knowledge, orchestrator_playbook]` 모두) | enum_closure 검증 — 각 entry ∈ {adr, architecture_doc, change_plan, domain_knowledge, orchestrator_playbook}. wrapper 외 신규 type 추가 금지 (open_extension: false) |
+| **per-consumer space 결정** | consumer 가 자기 Confluence space (예: mctrader = `MCT`, 미래 consumer = 자기 결정) 의 root parent page 를 `atlassian.confluence.homepage_id` 로 명시 — per-consumer 영역, wrapper space (예: `CFP`) 와 disjoint | wrapper space namespace 침범 0건. consumer 자기 space ownership |
+| **sync source repo** | consumer repo (자기 git source) — 단방향 git→Confluence (ADR-100 §결정 1 disjoint axis 정합) | sync direction immutable |
+| **mirror_targets[] enum 확장** | 별 CFP 의무 (wrapper closed-enum 5 본문 변경 = 별 ADR-111 Amendment carrier — 본 Amendment 1 / Amendment 2 의 precedent) | open_extension: false (Q-1 SYMMETRIC subset 확정) |
+
+**ADR-068 I-2 cross-module propagation completeness — enum_closure annotation 의무**:
+
+consumer scope binding 의 5 entry enum (`adr` / `architecture_doc` / `change_plan` / `domain_knowledge` / `orchestrator_playbook`) = wrapper SSOT 와 **enum_closure** (parallel_anchors_checked annotation per review-verdict-v4 v4.9 `findings[].parallel_anchors_checked[]`). consumer schema field `confluence.mirror_targets[]` validation 시 wrapper closed-enum 5 의 enum_closure 검증 의무 (Phase 2 bootstrap validation carrier).
+
+**ratchet 영향**: ratchet 강화 only — (a) closed-enum 5 invariant 보존 (forbid scope 축소 0) (b) consumer scope binding 명시화 = security boundary 확장 (consumer 측 mirror 대상 enum 검증 mechanism 신설 영역) ≠ 약화. open_extension: false invariant 보존.
+
+**implementation defer** — 실 consumer schema row append + enum_closure validation lint = Phase 2 carrier (`docs/project-config-schema.md` block extension + Wave 2 bootstrap validation wire). 본 Amendment 2 = declarative anchor only (ADR-082 §결정 6 retain pattern 답습 — Wave 1 declare / Wave 2 wire).
+
 ### §결정 2 — Issue-only retain closed-enum 5 (Confluence mirror 금지 면제 영역)
 
 다음 5 영역은 git/Issue 양 채널 유지 + **Confluence mirror 금지** (closed-enum, open_extension: false):
@@ -111,6 +137,30 @@ design doc 영역 의 Confluence mirror authoritative readable 대상을 다음 
 **근거 정합 ADR**: (1) Story file = ADR-013 §결정 1 dogfood-out invariant + ADR-031 Story SSOT + Issue body bidirectional binding (codeforge native mechanism). (2) FIX Ledger = fix-event-v1 v1.3 contract Orchestrator monopoly (CFP-32). (3) Lane Evidence = ADR-031 Story-scoped temporary. (4) Decision Packet = lane plugin output ephemeral (review-verdict-v4 verdict block 만 git 영구). (5) spawn prompt = ADR-082 §결정 1 layer 1-C USER-UTTERANCE-VERBATIM block ephemeral.
 
 **ADR-013 §결정 1 KEEP 영역 정합**: 5 면제 영역 모두 ADR-013 §결정 1 KEEP 영역 (plugin repo 잔류 runtime SSOT 또는 ephemeral subagent context) — Confluence SoR-docs readable layer 추가 영역이 아니다. 본 §결정 2 = ADR-013 §결정 1 KEEP 의미 약화 0건 invariant 강화 (mirror 금지 명시화).
+
+#### consumer scope 동일 적용 (Amendment 2 — CFP-1668 Wave 1)
+
+본 §결정 2 의 closed-enum 5 Issue-only retain 영역 = **consumer 측에도 동일 적용** (mirror 금지 invariant ratchet 강화). 사용자 Q-2 답 verbatim = YES 동일 적용 확정 (CFP-1668, 2026-05-26 KST).
+
+| 영역 (wrapper-self) | consumer scope 동일 적용 | 의미 |
+|---|---|---|
+| **Story file** (§1-§14) | consumer repo Story file (consumer 자기 internal-docs 또는 consumer repo 안 stories/) Confluence mirror 금지 | consumer 측 도 Issue body bidirectional binding 영역 = 양 채널 sync 가 governance 1차 mechanism. Confluence 3-way mirror 는 sync invariant 복잡도 폭발 |
+| **FIX Ledger §10** | consumer Story file §10 Confluence mirror 금지 | fix-event-v1 v1.3 contract — Orchestrator 단독 §10 append 독점 (CFP-32). consumer 측 도 동일 monopoly 영역 |
+| **Lane Evidence §14** | consumer Story file §14 Confluence mirror 금지 | ADR-031 lane spawn evidence carrier — Story-scoped temporary 영역, consumer 측 도 동일 |
+| **Decision Packet** | consumer lane PL synthesis ephemeral output Confluence mirror 금지 | Lane PL synthesis ephemeral — consumer 측 lane plugin 출력도 동일 ephemeral 영역 |
+| **spawn prompt** | consumer subagent ephemeral context Confluence mirror 금지 | ADR-082 §결정 1 layer 1-C USER-UTTERANCE-VERBATIM block carrier — consumer 측 도 동일 ephemeral + 평문 secret leak surface 차단 영역 |
+
+**consumer overlay schema field 신설 0** — consumer 측 mirror 금지 invariant 는 **§결정 2 inline binding sufficient** (consumer overlay project.yaml 안 `atlassian.confluence.issue_only_retain_targets` field 신설은 불필요). consumer 측 sync agent (ADR-103 carrier) 가 본 §결정 2 enum 5 영역을 mirror 대상 enum 에서 자동 제외 의무 (구현 영역).
+
+**근거 정합 ADR (consumer scope 동일 적용)**:
+
+1. **Story file** = ADR-013 §결정 1 KEEP 영역 (consumer repo Story file 도 consumer SSOT) + ADR-031 Story SSOT + Issue body bidirectional binding (codeforge native mechanism, consumer 측 도 동일)
+2. **FIX Ledger** = fix-event-v1 v1.3 Orchestrator monopoly (CFP-32 — consumer 측 도 동일 monopoly)
+3. **Lane Evidence** = ADR-031 Story-scoped temporary (consumer 측 도 동일)
+4. **Decision Packet** = lane plugin output ephemeral (consumer 측 도 동일 ephemeral)
+5. **spawn prompt** = ADR-082 §결정 1 layer 1-C USER-UTTERANCE-VERBATIM block ephemeral (consumer 측 도 동일)
+
+**ratchet 영향**: ratchet 강화 only — (a) consumer scope 동일 적용 명시화 = mirror 금지 영역 확장 (forbid scope 확장 = 강화) (b) ADR-013 §결정 1 KEEP 의미 약화 0건 (consumer repo SSOT ownership 보존). open_extension: false invariant 보존.
 
 ### §결정 3 — Confluence IA (Information Architecture) axis
 
