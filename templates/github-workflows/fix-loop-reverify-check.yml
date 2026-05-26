@@ -1,0 +1,50 @@
+name: FIX-loop re-verification mandate check (warning mode — Wave 1 stub)
+# CFP-1683 / ADR-082 Amendment 29 §결정 1 layer 1 sub-scope (1-R) 신설 carrier
+# CFP-1646 retro F2 forcing function (sister_session_race_in_design_lane cumulative ≥ 5)
+# ADR-060 §결정 5 default warning mode (first introduction = warning tier)
+# Tier: warning (continue-on-error: true, non-required check)
+# Bypass: hotfix-bypass:fix-loop-reverify-mandate label (106번째 family member)
+#
+# Wave 1 declarative stub — Wave 2 mechanical wire = Phase 2 PR scope.
+# Wave 2 carrier: scripts/check-fix-loop-reverify.sh + scripts/lib/check_fix_loop_reverify.py (ADR-061) +
+#                 bats fixture pair RED→GREEN stash proof (CFP-1334) +
+#                 boundary fixture pair (3-field presence PASS + 3-field absent FAIL, CFP-963 Codex TP#4)
+#
+# Detection scope (Wave 2 codify, declarative anchor):
+#   FIX iter ≥ 2 시점 ArchitectPL (또는 lane PL) re-engage prompt 안 3 field presence:
+#     - amendment_slot_revalidated: <actual_next_slot> (origin/main fetch + amendments[] grep)
+#     - registry_version_revalidated: <actual_current_version> (label-registry-v2 frontmatter version)
+#     - bypass_count_revalidated: <actual_current_count> (hotfix-bypass:* raw count)
+#   3 field 부재 시 warning emit. 3-tuple delta detection 시 slot collision warning.
+#
+# Axis disjoint:
+#   - ADR-082 §결정 1 sub-scope 1-G (CFP-1435 Amd 17) = Story-start pre-reservation strict claim
+#   - 본 §결정 1 sub-scope 1-R (Amd 29 CFP-1683) = FIX-loop intra-Story window re-verification
+
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize]
+    paths:
+      - 'docs/stories/**'
+      - 'docs/adr/**'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: fix-loop-reverify-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  fix-loop-reverify-check:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    if: false  # Wave 1 stub disabled — Wave 2 carrier 가 if:false 제거 + body actual lint wire
+    steps:
+      - name: Wave 1 stub — declarative anchor only (Wave 2 carrier = mechanical wire)
+        run: |
+          echo "::notice::CFP-1683 Wave 1 stub — FIX-loop re-verification mandate declarative anchor."
+          echo "ADR-082 Amendment 29 §결정 1 sub-scope (1-R) — FIX iter ≥ 2 시점 3-tuple 재verify 의무."
+          echo "Bypass: hotfix-bypass:fix-loop-reverify-mandate label (audit-trailed exception channel)."
