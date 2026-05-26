@@ -419,6 +419,12 @@ amendments_reserved:
     reserved_by_cfp: CFP-1668
     reservation_date: 2026-05-26 KST
     status: active   # ArchitectAgent / RequirementsPL chief author commit time 점유 (Story Phase 1 PR carrier — Amendment 2 §결정 1 consumer-facing mirror 대상 선택 codify (SYMMETRIC subset — consumer ⊆ wrapper closed-enum 5, 확장 0 invariant 보존), §결정 2 Issue-only retain consumer scope 동일 적용 명시. 사용자 Q-1 SYMMETRIC subset 확정 + Q-2 YES 동일 적용 확정. CFP-1668 Wave 1 wrapper-canonical Confluence migration 표준 codify carrier. verified-via `git show origin/main:docs/adr/ADR-111-confluence-mirror-classification-policy.md` frontmatter amendments[] max=1 → next=2 2026-05-26 KST 기준 origin/main `9dd9cbf3`. status `reserved` 미경유 직접 `active` 전환 (ArchitectAgent chief author precedent — ADR-082 Amendment 27 row CFP-1647 직전 패턴 정합). META self-applied (sub-scope 1-G 12th applied case).
+
+  - adr_number: 82
+    amendment_id: 30
+    reserved_by_cfp: CFP-1688
+    reservation_date: 2026-05-26 KST
+    status: active   # ArchitectAgent commit time 점유 (Story Phase 1 PR carrier — Amendment 30 §결정 1 layer 1 sub-scope (1-S) 신설 ADR frontmatter block convention codify + dual-block parity lint (sub-scope 1-Q CFP-1648) single-block ADR 면제 scope clarification. Pivot 1 root cause codify (CFP-1680 retro CFP-FU-C #1688): ADR-045 = single-block (amendment_log[] only, no amendments[] block) + body `### Amendment N` H3 heading ↔ lint BODY_H2_AMENDMENT_PATTERN 은 `## Amendment N` H2 만 detect → 11 amendments 전부 AMENDMENT_LOG_FRONTMATTER_ONLY false-positive (warning-tier non-blocking but PR check output pollution). 면제 정책: amendments[] block 부재 시 single-block mode (Block 1 + Block 3 skip, Block 2 만 적용) + body section H2/H3 both-level detect. Combined Phase 1+2 (ADR amendment + lint fix + bats, CFP-1648 combined precedent 답습). verified-via git show origin/main:docs/adr/ADR-082-...md frontmatter amendments[] max=29 → next=30 2026-05-26 KST 기준 origin/main 506f7cfc (CFP-1683 Amendment 29 sub-scope 1-R merge 후 base). status reserved 미경유 직접 active 전환 (ArchitectAgent chief author precedent — ADR-082 Amendment 27 row CFP-1647 직전 패턴 정합). META self-applied (sub-scope 1-G 13th applied case).
 ```
 
 ## 해소 기준
