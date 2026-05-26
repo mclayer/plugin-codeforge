@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# codeforge — UserPromptSubmit hook: 사용자 대화 규칙 주입 (CFP-1738)
+#
+# 책임: 답변 발화 직전 "사용자 대화 3규칙"을 Orchestrator 컨텍스트에 주입(예방).
+# 회피 대상 = codeforge 내부 식별자만. 일반 기술 용어는 OK (사용자=엔지니어 기준).
+#
+# 출력: UserPromptSubmit additionalContext JSON (단일 줄, \n 은 JSON escape).
+# bypass: BYPASS_PLAIN_LANGUAGE=1 → 주입 생략.
+# fail-safe: 어떤 경우에도 exit 0 (사용자 입력 차단 안 함).
+set -uo pipefail
+
+[ "${BYPASS_PLAIN_LANGUAGE:-0}" = "1" ] && exit 0
+
+cat <<'EOF'
+{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"[codeforge 사용자 대화 규칙 — 답변 발화 직전 점검]\n1) 내부 jargon 회피: codeforge 내부 식별자(ADR-번호 / CFP-번호 / §결정 / 내부 코드네임·계약명)를 풀이 없이 사용자에게 쓰지 말 것. 일반 기술 용어(hook / worktree / schema / latency 등)는 OK — 사용자는 데이터·인프라 엔지니어. 꼭 필요한 내부 식별자는 평문 한 줄 풀이를 먼저 붙인다.\n2) 불필요한 질문 금지: 답이 사실상 정해졌으면(합리적 default 자명 / 선택지 1개) 묻지 말고, 무엇을 할지 짧게 통보하고 자동 진행. 틀리면 사용자가 고친다.\n3) 구조로 전달: 긴 평서문 덩어리 금지. 제목·표·불릿·개조식으로 핵심을 맨 앞에, 한눈에 보이게. 상태 보고·계획·비교·현황은 표 또는 개조식 우선."}}
+EOF
+
+exit 0
