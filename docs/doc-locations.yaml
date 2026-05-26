@@ -5,7 +5,7 @@
 # Regen markdown: scripts/check-doc-locations.sh --regen
 schema_version: "1.2"
 introduced_by: CFP-276 (issue #276)
-last_updated: 2026-05-24  # CFP-1256 W4-S13 — schema_version 1.0→1.1 (confluence variant 신규 추가: allowed_variants + allowed_placeholders + adr/change_plan/retro/inter_plugin_contract 4 entry confluence variant, ADR-103 §결정 5 R2 fold). | CFP-1059 — Deploy lane + Deploy Review lane 신설 (Phase 1 declarative): 신규 doc type 추가 0 (Story §12 배포 manifest / §13 배포 검증 evidence = Story file 안 sub-section 영역, lane plugin self-write 영역). actual deploy-manifest / deploy-review-evidence file path location 결정 = S2/S3 sub-Story carrier (lane plugin seed 신설 후 doc taxonomy 변경 검토). 본 registry 변경 0 (CFP-1059 Phase 1). | CFP-991 — promotion_criteria_4tuple_artifact 신설 (Wave 4 sub-Epic #1 Story-4 carrier — canary promotion criteria 4-tuple SSOT artifact location: docs/domain-knowledge/domain/production-cutover/promotion-criteria-4tuple.md, ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14 carrier, 16번째 entry). | CFP-949 — Sub-Epic 6 lane plugin self-owned architecture_doc seed completion (architecture_doc entry 의 examples row expand; 신규 doc type 추가 없음). CFP-954 — integration_test_baseline 신설 (Wave 4 sub-Epic #882 Story-3 carrier — IntegrationTestAgent Epic-level reactivation first activation, ADR-055 Amendment 3 + ADR-72 §결정 1 mandate first activation 동반). CFP-946-A — codex-collaboration narrative SSOT 신설 (domain_knowledge entry 의 examples row append; 신규 doc type 추가 없음). | CFP-1420 — schema_version 1.1→1.2 MINOR bump: confluence_variant sub-tree 신규 활성 (ADR-111 §결정 1 closed-enum 4 mirror 대상 영역 — adr/architecture_doc/change_plan/domain_knowledge), 4 fields (page_id_pattern / authoritative_source: git immutable / mirror_direction: git_to_confluence immutable / last_synced_at). + ADR-111 §결정 2 closed-enum 5 Issue-only retain 면제 영역 (story_file + decision_packet yaml-matching entry) confluence_variant: null explicit declare. backward-compat retain: 기존 variants.confluence URL pattern (adr/change_plan/retro/inter_plugin_contract 4 entry) 보존 (ADR-111 partial activation 영역, 별 carrier). Note: #1420 body 의 "ADR-107" cite = sibling Story #1419 race resolution 후 ADR-111 으로 변경 (ADR-107~110 모두 다른 CFP 점유, CFP-1419 가 ADR-111 신설).
+last_updated: 2026-05-26  # CFP-1256 W4-S13 — schema_version 1.0→1.1 (confluence variant 신규 추가: allowed_variants + allowed_placeholders + adr/change_plan/retro/inter_plugin_contract 4 entry confluence variant, ADR-103 §결정 5 R2 fold). | CFP-1059 — Deploy lane + Deploy Review lane 신설 (Phase 1 declarative): 신규 doc type 추가 0 (Story §12 배포 manifest / §13 배포 검증 evidence = Story file 안 sub-section 영역, lane plugin self-write 영역). actual deploy-manifest / deploy-review-evidence file path location 결정 = S2/S3 sub-Story carrier (lane plugin seed 신설 후 doc taxonomy 변경 검토). 본 registry 변경 0 (CFP-1059 Phase 1). | CFP-991 — promotion_criteria_4tuple_artifact 신설 (Wave 4 sub-Epic #1 Story-4 carrier — canary promotion criteria 4-tuple SSOT artifact location: docs/domain-knowledge/domain/production-cutover/promotion-criteria-4tuple.md, ADR-72 Amendment 3 + ADR-076 §결정 9.6 + reconcile-protocol-v1 v1.11 §4.14 carrier, 16번째 entry). | CFP-949 — Sub-Epic 6 lane plugin self-owned architecture_doc seed completion (architecture_doc entry 의 examples row expand; 신규 doc type 추가 없음). CFP-954 — integration_test_baseline 신설 (Wave 4 sub-Epic #882 Story-3 carrier — IntegrationTestAgent Epic-level reactivation first activation, ADR-055 Amendment 3 + ADR-72 §결정 1 mandate first activation 동반). CFP-946-A — codex-collaboration narrative SSOT 신설 (domain_knowledge entry 의 examples row append; 신규 doc type 추가 없음). | CFP-1420 — schema_version 1.1→1.2 MINOR bump: confluence_variant sub-tree 신규 활성 (ADR-111 §결정 1 closed-enum 4 mirror 대상 영역 — adr/architecture_doc/change_plan/domain_knowledge), 4 fields (page_id_pattern / authoritative_source: git immutable / mirror_direction: git_to_confluence immutable / last_synced_at). + ADR-111 §결정 2 closed-enum 5 Issue-only retain 면제 영역 (story_file + decision_packet yaml-matching entry) confluence_variant: null explicit declare. backward-compat retain: 기존 variants.confluence URL pattern (adr/change_plan/retro/inter_plugin_contract 4 entry) 보존 (ADR-111 partial activation 영역, 별 carrier). Note: #1420 body 의 "ADR-107" cite = sibling Story #1419 race resolution 후 ADR-111 으로 변경 (ADR-107~110 모두 다른 CFP 점유, CFP-1419 가 ADR-111 신설). | CFP-1668 — orchestrator_playbook doc type 신설 (17번째 entry, ADR-111 Amendment 2 §결정 1 5번째 mirror 대상 carrier) + consumer-applicability annotation (ADR-083 + ADR-111 Amendment 2 정합 — confluence_variant sub-tree consumer scope binding `consumer_applicable: true` 명시).
 
 allowed_variants:
   - single_repo
@@ -376,3 +376,29 @@ doc_types:
       Story-4 = enforcement layer carrier (declare-only) — Story-5 (별 CFP) = downgrade asymmetry invariant declarative carrier (canary → beta → stable demotion path).
       parallel-edit policy = serialized (canary_compatibility_check section-ownership.yaml + ArchitectAgent monopoly).
       family_7_atomic × channel × promotion gate 3-axis cross-product = wrapper Tier-1 declare-time exemption (ADR-72 §결정 6 invariant 정합) + consumer Tier-2 admin-tier 권장 (boundary 2-tier disjoint).
+
+  - name: orchestrator_playbook
+    variants:
+      single_repo: "<owner-repo>/docs/orchestrator-playbook.md"
+      confluence: "https://<confluence-instance>/wiki/spaces/<space-key>/pages/<page-id>"  # CFP-1668 / ADR-111 Amendment 2 §결정 1 — 5번째 mirror 대상 (consumer 선택 가능 closed-enum)
+    confluence_variant:
+      page_id_pattern: "<placeholder>"   # Sub-B sync engine write (ADR-103 mechanism)
+      authoritative_source: git          # immutable (ADR-111 §결정 1)
+      mirror_direction: git_to_confluence   # immutable (ADR-111 §결정 1)
+      last_synced_at: null               # Sub-B sync engine write
+      consumer_applicable: true          # CFP-1668 / ADR-083 §결정 1 — consumer 는 mirror 대상 closed-enum 5 안 subset 선택 자유 (확장 0 invariant 정합)
+    owner_agent: orchestrator
+    introduced_by: CFP-1668
+    naming_pattern: "orchestrator-playbook\\.md"
+    frontmatter_required: false
+    examples:
+      - "mclayer/plugin-codeforge/docs/orchestrator-playbook.md (wrapper canonical)"
+    notes: |
+      CFP-1668 / ADR-111 Amendment 2 §결정 1 carrier — 5번째 mirror 대상 신설.
+      wrapper canonical = mclayer/plugin-codeforge/docs/orchestrator-playbook.md (단일 SSOT).
+      consumer 는 project.yaml atlassian.confluence.mirror_targets 에 orchestrator_playbook 추가로 mirror 활성.
+      git = SoR-work invariant (ADR-100 §결정 1) — Confluence 는 readable mirror (단방향, 역방향 edit 금지).
+      confluence_variant sub-tree: consumer_applicable: true (ADR-083 §결정 1 — 4-way enum `consumer` 해당).
+      mirror 대상 closed-enum: [adr, architecture_doc, change_plan, domain_knowledge, orchestrator_playbook] 완결 (ADR-111 Amendment 2 §결정 1 5-tuple).
+      parallel-edit policy = append-only (playbook = governance narrative, Orchestrator owner).
+      Phase 1 (CFP-1668) = doc type 등록 + ADR-111 Amendment 2 §결정 1 carrier. Sub-B sync = Wave 2 별 carrier.

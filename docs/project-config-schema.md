@@ -486,6 +486,24 @@ atlassian:
                                      # 예: "ATLASSIAN_API_TOKEN" (Atlassian REST basic-auth token env key)
     user_email_env: <string>         # Atlassian REST basic-auth email key name — token 과 동일 Secret 취급
                                      # 예: "ATLASSIAN_USER_EMAIL"
+    # 신규 field (CFP-1668 / ADR-100 Amendment 2 + ADR-111 Amendment 2)
+    instance: <string>               # [optional] Atlassian instance hostname — NOT secret (Internal 분류)
+                                     # 예: "mclayer.atlassian.net" / "myorg.atlassian.net"
+                                     # consumer multi-instance 영역 (sandbox/production 분리 가능)
+                                     # 부재 시: base_url 에서 hostname 추출 (fallback)
+    homepage_id: <string>            # [required if mirror enabled] Confluence space 의 root homepage page ID
+                                     # per-consumer IA tree base anchor — confluence-ia-tree.yaml space.root_homepage_id 정합
+                                     # 예: "1867943"
+                                     # 부재 시 mirror 비활성 (consumer Confluence migration 선행 조건)
+    mirror_targets: <array>          # [required if mirror enabled] closed-enum 5 의 subset (확장 0 invariant)
+                                     # ADR-111 Amendment 2 §결정 1 SYMMETRIC subset (consumer 선택 자유)
+                                     # 허용 값: adr / architecture_doc / change_plan / domain_knowledge / orchestrator_playbook
+                                     # 예: [adr, architecture_doc]
+                                     # 부재 시 mirror 비활성
+    per_doc_type_override: <map>     # [optional] per-doc-type 별 binding 오버라이드
+                                     # wrapper-managed marker block 안 ownership
+                                     # conflict resolution: consumer-authored 영역 우선 (OOS edge case 4번 carrier)
+                                     # 예: {adr: {parent_page_id: "12345"}}
   jira:                              # W4+ (ADR-103 sync mechanism) — S2 declare-only, schema placeholder
     project_key: <string>            # NOT secret (Internal 분류)
                                      # 예: "PROJ"
@@ -496,7 +514,12 @@ atlassian:
   - **Internal (NOT secret) = `base_url` / `space_key` / `project_key`** — 평문 기재 허용.
   - precedent: project-config-schema.md `deploy.docker_hub.auth_secret_env` / `deploy.1password.connect_token_env` / `deploy.ssh_targets[].key_secret_env` = 모두 `_env` suffix reference 패턴 (ADR-100 §결정 3 §secret boundary 정합).
 
-- **부재 시 동작**: `atlassian` section 자체가 없으면 Confluence 비활성 — 기존 git-only governance 동작 유지. codeforge agent = git SSOT 우선 (ADR-013 §결정 1 KEEP 영역 보존).
+- **부재 시 동작**: `atlassian` section 자체가 없으면 Confluence 비활성 — 기존 git-only governance 동작 유지. codeforge agent = git SSOT 우선 (ADR-013 §결정 1 KEEP 영역 보존). `homepage_id` 또는 `mirror_targets` 부재 시도 mirror 비활성 (opt-in, backward-compat 보장).
+
+- **신규 field 분류** (CFP-1668 / ADR-100 Amendment 2 + ADR-111 Amendment 2):
+  - **Internal (NOT secret) = `instance` / `homepage_id` / `mirror_targets` / `per_doc_type_override`** — 평문 기재 허용. `instance` = `base_url` hostname 중복 허용 (명시적 override 가능).
+  - **`mirror_targets` closed-enum 5** (ADR-111 Amendment 2 §결정 1 SYMMETRIC subset): `adr` / `architecture_doc` / `change_plan` / `domain_knowledge` / `orchestrator_playbook`. 확장 0 invariant — 신규 타입 추가 시 ADR-111 Amendment 필요.
+  - **`per_doc_type_override` scope**: wrapper-managed marker block 안 ownership. consumer-authored 영역에서 conflict 시 consumer 우선 (ADR-027 consumer-authored 원칙 정합).
 
 - **ADR-027 natural extend**: atlassian.* schema 신설은 ADR-027 amendment 불요 — project-config-schema.md 갱신으로 bootstrap validation 이 자동 cover (ADR-027 §결정 1 정합). consumer 측 schema validator 추가는 Phase 2 carrier.
 
