@@ -1,10 +1,12 @@
 """
 scripts/lib/check_numeric_claim_write_time.py
 CFP-1612 / ADR-082 Amendment 25 sub-scope 1-N — numeric claim write-time verify SSOT
+CFP-1647 / ADR-082 Amendment 27 sub-scope 1-P — PR commit msg + PR body scope expansion
 
 기능:
-  Governance document (Story file / Change Plan) 안의 숫자 주장(numeric claim)에 대해
-  ADR-082 §결정 1-K 4-step verify-before-write mandate 준수 여부를 검증.
+  Governance document (Story file / Change Plan / PR commit message / PR body) 안의
+  숫자 주장(numeric claim)에 대해 ADR-082 §결정 1-K 4-step verify-before-write mandate
+  준수 여부를 검증.
 
 Numeric claim 6 closed-set dimension:
   1. line_count    — "+93 lines", "+101 lines", "+54 lines", "~400 LOC" 등
@@ -56,6 +58,12 @@ Test seam:
   CFP1612_STORY_FILE_MOCK=<file>       — Story file mock (file path)
   CFP1612_CHANGE_PLAN_MOCK=<file>      — Change Plan mock (file path)
   CFP1612_SUBPROCESS_MOCK=1            — subprocess cross-verify mock (no-op, exit 0)
+  CFP1647_PR_COMMIT_MSG_MOCK=<file>    — PR commit messages mock (file path, CFP-1647)
+  CFP1647_PR_BODY_MOCK=<file>          — PR body mock (file path, CFP-1647)
+
+Scope flags (CFP-1647 sub-scope 1-P Wave 2 expansion):
+  --scope pr-commit-msg  — PR commit messages via gh api or git log
+  --scope pr-body        — PR description body via gh pr view
 """
 
 import argparse
@@ -80,6 +88,8 @@ BYPASS_ENV = "BYPASS_NUMERIC_CLAIM_WRITE_TIME_VERIFY"
 STORY_FILE_MOCK_ENV = "CFP1612_STORY_FILE_MOCK"
 CHANGE_PLAN_MOCK_ENV = "CFP1612_CHANGE_PLAN_MOCK"
 SUBPROCESS_MOCK_ENV = "CFP1612_SUBPROCESS_MOCK"
+PR_COMMIT_MSG_MOCK_ENV = "CFP1647_PR_COMMIT_MSG_MOCK"  # CFP-1647 sub-scope 1-P
+PR_BODY_MOCK_ENV = "CFP1647_PR_BODY_MOCK"              # CFP-1647 sub-scope 1-P
 
 # PER_LANE_EVIDENCE_SCAN_CAP: ReDoS guard — line-by-line scan 최대 라인 수
 PER_LANE_EVIDENCE_SCAN_CAP = 30
@@ -509,6 +519,218 @@ def run_audit_lint(
 
 
 # ---------------------------------------------------------------------------
+# CFP-1647 sub-scope 1-P: PR commit msg + PR body ingestion functions
+# ADR-061 Amd 3 §결정 11 ReDoS guard: simple subprocess + line-split only
+# ---------------------------------------------------------------------------
+
+def _read_pr_commit_msgs(pr_number: Optional[str], base: str = "main") -> list[str]:
+    """
+    Ingest PR commit messages for numeric claim scanning.
+
+    Primary:   gh api repos/<owner>/<repo>/pulls/<pr>/commits (JSON array)
+    Fallback:  git log --format=%B <base>..HEAD (local, no gh auth required)
+    Mock:      CFP1647_PR_COMMIT_MSG_MOCK env = file path to mock content
+
+    ADR-061 Amd 3 §결정 11 ReDoS guard: no nested quantifier, line-by-line only.
+    Graceful degradation:
+      gh 401/404 → git log fallback
+      git log error → empty list (fail-open, advisory stderr)
+      subprocess timeout → empty list (fail-open)
+    """
+    # Test seam: mock file override
+    mock_path = os.environ.get(PR_COMMIT_MSG_MOCK_ENV)
+    if mock_path:
+        try:
+            with open(mock_path, "r", encoding="utf-8", errors="replace") as f:
+                return f.readlines()
+        except OSError:
+            return []
+
+    if os.environ.get(SUBPROCESS_MOCK_ENV) == "1":
+        return []
+
+    # Primary: gh api (requires auth + GH_TOKEN)
+    if pr_number:
+        try:
+            import json as _json
+            result = subprocess.run(
+                ["gh", "api", f"repos/{{owner}}/{{repo}}/pulls/{pr_number}/commits",
+                 "--jq", ".[].commit.message"],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=15,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                return result.stdout.splitlines(keepends=True)
+        except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
+            pass
+
+    # Fallback: git log --format=%B <base>..HEAD
+    try:
+        result = subprocess.run(
+            ["git", "log", "--format=%B", f"{base}..HEAD"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=15,
+        )
+        if result.returncode == 0:
+            return result.stdout.splitlines(keepends=True)
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as exc:
+        print(
+            f"[numeric-claim-write-time-verify] advisory: git log fallback failed: {exc}",
+            file=sys.stderr,
+        )
+
+    return []
+
+
+def _read_pr_body(pr_number: Optional[str]) -> list[str]:
+    """
+    Ingest PR description body for numeric claim scanning.
+
+    Primary:   gh pr view <pr> --json title,body --jq .body
+    Mock:      CFP1647_PR_BODY_MOCK env = file path to mock content
+
+    ADR-061 Amd 3 §결정 11 ReDoS guard: no nested quantifier, line-by-line only.
+    Graceful degradation:
+      gh 401/404 → empty list (fail-open, advisory stderr)
+      subprocess timeout → empty list (fail-open)
+    """
+    # Test seam: mock file override
+    mock_path = os.environ.get(PR_BODY_MOCK_ENV)
+    if mock_path:
+        try:
+            with open(mock_path, "r", encoding="utf-8", errors="replace") as f:
+                return f.readlines()
+        except OSError:
+            return []
+
+    if os.environ.get(SUBPROCESS_MOCK_ENV) == "1":
+        return []
+
+    if not pr_number:
+        return []
+
+    try:
+        result = subprocess.run(
+            ["gh", "pr", "view", pr_number, "--json", "title,body", "--jq", ".body"],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=15,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            return result.stdout.splitlines(keepends=True)
+    except (subprocess.TimeoutExpired, FileNotFoundError, OSError) as exc:
+        print(
+            f"[numeric-claim-write-time-verify] advisory: gh pr view failed: {exc}",
+            file=sys.stderr,
+        )
+
+    return []
+
+
+def run_pr_scope_lint(
+    scope: str,
+    pr_number: Optional[str],
+    base: str,
+    strict_mode: bool,
+    scan_cap: int,
+    worktree_path: Optional[str],
+) -> None:
+    """
+    CFP-1647 sub-scope 1-P: PR scope lint runner.
+    scope: "pr-commit-msg" | "pr-body"
+
+    ADR-082 §결정 1-K 4-step mandate applied to PR content:
+      Step 1: ingest PR content (commit msgs or body)
+      Step 2-3: same as run_audit_lint
+      Step 4: verdict emit
+
+    Graceful degradation: empty content → PASS (fail-open, no PR content available)
+    """
+    # Ingest PR content
+    if scope == "pr-commit-msg":
+        lines = _read_pr_commit_msgs(pr_number, base=base)
+        scope_label = "pr-commit-msg"
+    elif scope == "pr-body":
+        lines = _read_pr_body(pr_number)
+        scope_label = "pr-body"
+    else:
+        _exit_pass(f"unknown scope '{scope}' — silent skip")
+
+    if not lines:
+        _exit_pass(
+            f"{scope_label}: no content available (empty PR or auth unavailable) — PASS"
+        )
+
+    # Step 1: scan for numeric claims
+    findings = _scan_lines_for_numeric_claims(lines, scan_cap=scan_cap)
+
+    if not findings:
+        _exit_pass(
+            f"{scope_label}: no numeric claims detected in {len(lines)} lines "
+            f"(scan_cap={scan_cap}) — PASS"
+        )
+
+    # Step 2 + 3: check source hint + cross-verify for each finding
+    warnings = []
+    verified_count = 0
+
+    for finding in findings:
+        if finding["source_hint_present"]:
+            ok, detail = _cross_verify_source_hint(
+                line_text=finding["line_text"],
+                claimed_value=finding["matched_value"],
+                worktree_path=worktree_path,
+            )
+            if ok:
+                verified_count += 1
+            else:
+                warnings.append(
+                    f"  line {finding['line_no']} [{finding['dimension']}] "
+                    f"value={finding['matched_value']}: {detail}"
+                )
+        else:
+            # ±1 line context tolerance
+            line_idx = finding["line_no"] - 1
+            adjacent_lines = []
+            if line_idx > 0:
+                adjacent_lines.append(lines[line_idx - 1])
+            if line_idx + 1 < len(lines):
+                adjacent_lines.append(lines[line_idx + 1])
+            adjacent_hint = any(_has_source_hint(al) for al in adjacent_lines)
+
+            if adjacent_hint:
+                verified_count += 1
+            else:
+                warnings.append(
+                    f"  line {finding['line_no']} [{finding['dimension']}] "
+                    f"value={finding['matched_value']}: "
+                    f"no inline source hint found "
+                    f"(ADR-082 §결정 1-K: numeric claim requires [verified via ...] marker)"
+                )
+
+    # Step 4: verdict
+    total = len(findings)
+    if warnings:
+        summary = (
+            f"{scope_label}: {len(warnings)}/{total} numeric claim(s) missing source hint\n"
+            + "\n".join(warnings)
+        )
+        _exit_warning(summary)
+    else:
+        _exit_pass(
+            f"{scope_label}: {verified_count}/{total} numeric claim(s) have source hints — all verified"
+        )
+
+
+# ---------------------------------------------------------------------------
 # Main entrypoint
 # ---------------------------------------------------------------------------
 def main() -> None:
@@ -524,7 +746,9 @@ def main() -> None:
         description=(
             "CFP-1612 / ADR-082 Amendment 25 sub-scope 1-N — "
             "numeric claim write-time verify "
-            "(ADR-082 §결정 1-K 4-step mandate)"
+            "(ADR-082 §결정 1-K 4-step mandate). "
+            "CFP-1647 / ADR-082 Amendment 27 sub-scope 1-P — "
+            "PR commit msg + PR body scope expansion."
         ),
         prog=SCRIPT_NAME,
     )
@@ -561,6 +785,29 @@ def main() -> None:
         default=None,
         help="Absolute path to git worktree (for cross-verify subprocess invocation)",
     )
+    # CFP-1647 sub-scope 1-P: new scope flags
+    parser.add_argument(
+        "--scope",
+        choices=["pr-commit-msg", "pr-body"],
+        default=None,
+        help=(
+            "CFP-1647 sub-scope 1-P: PR scope to lint. "
+            "'pr-commit-msg' — scan PR commit messages; "
+            "'pr-body' — scan PR description body. "
+            "Requires --pr when not using mock env."
+        ),
+    )
+    parser.add_argument(
+        "--pr",
+        default=None,
+        dest="pr_number",
+        help="PR number for --scope pr-commit-msg / pr-body ingestion (CFP-1647 sub-scope 1-P)",
+    )
+    parser.add_argument(
+        "--base",
+        default="main",
+        help="Base branch for git log fallback in --scope pr-commit-msg (default: main)",
+    )
 
     args = parser.parse_args()
 
@@ -572,7 +819,19 @@ def main() -> None:
         # In mock mode, subprocess cross-verify is no-op
         os.environ.setdefault(SUBPROCESS_MOCK_ENV, "1")
 
-    # Determine scan target(s)
+    # CFP-1647 sub-scope 1-P: PR scope dispatch (mutually exclusive with file targets)
+    if args.scope:
+        run_pr_scope_lint(
+            scope=args.scope,
+            pr_number=args.pr_number,
+            base=args.base,
+            strict_mode=strict_mode,
+            scan_cap=args.scan_cap,
+            worktree_path=args.worktree_path,
+        )
+        return  # run_pr_scope_lint calls sys.exit internally
+
+    # Determine scan target(s) — original file-based scan
     scan_targets: list[tuple[str, str]] = []
     if args.story_file:
         scan_targets.append((args.story_file, "story-file"))

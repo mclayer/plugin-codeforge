@@ -5354,11 +5354,18 @@ entries:
   - name: numeric-claim-write-time-verify
     description: |
       ADR-082 Amendment 22 §결정 1 layer 1 sub-scope (1-K) 신설 (CFP-1601 carrier) + Amendment 25 §결정 1 layer 1
-      sub-scope (1-N) Wave 2 mechanical enforcement wire activation (CFP-1612 carrier) — ArchitectAgent
+      sub-scope (1-N) Wave 2 mechanical enforcement wire activation (CFP-1612 carrier) + Amendment 27 §결정 1
+      layer 1 sub-scope (1-P) PR commit msg + PR body scope expansion (CFP-1647 carrier) — ArchitectAgent
       (chief author) / Orchestrator (spawn packet) / lane PL write-time 영역 안 numeric claim
       (line count / file count / API count / pattern_count / commit count / row count — 6 closed-set numeric
       claim dimensions) 의 source command / actual value / claim↔actual cross-verify 4-step write-time
       strict mandate. ADR-061 multi-line Python convention 준수 (lint script SSOT = Python).
+
+      CFP-1647 sub-scope 1-P scope expansion (Wave 2 additive):
+      PR commit msg scope (--scope pr-commit-msg): git log --format=%B origin/main..HEAD 또는
+      gh api pulls/<pr>/commits fallback 경유 commit message 전체 numeric claim scan.
+      PR body scope (--scope pr-body): gh pr view <pr> --json title,body 경유 PR description
+      body numeric claim scan. 기존 Story file / Change Plan 4-step mandate 동일 적용.
 
       4-step verify-before-write mandate:
       (a) source command identify — claim 의 ground truth source command 명시 의무 (예: `grep -c '^  - amendment_id:' <file>` / `wc -l <file>` / `git diff --shortstat` / `find <dir> -name '*.md' | wc -l`)
@@ -5400,8 +5407,8 @@ entries:
       recovery 3rd applied after CFP-FU-A Amd 19 + CFP-1590 Amd 23 — initial spawn pinned origin/main
       f2e78b16 + amendments[] max=23 → CFP-1589 Amd 24+1-M merge 후 base shift to 5b5c9f7b + max=24 →
       renumber Amd 24→25 + sub-scope 1-M→1-N on rebase).
-    detect_command: bash scripts/check-numeric-claim-write-time-verify.sh  # Wave 2 wire complete (CFP-1612 Phase 2 PR #1631 merged 2026-05-25 KST, Python SSOT scripts/lib/check_numeric_claim_write_time.py)
-    workflow: .github/workflows/numeric-claim-write-time-verify.yml  # Wave 2 wire complete (CFP-1612 Phase 2 PR #1631 merged 2026-05-25 KST, byte-identical mirror with templates/github-workflows/)
+    detect_command: bash scripts/check-numeric-claim-write-time-verify.sh  # Wave 2 wire complete (CFP-1612 Phase 2 PR #1631 merged 2026-05-25 KST, Python SSOT scripts/lib/check_numeric_claim_write_time.py) + CFP-1647 Phase 2 pr-commit-msg/pr-body scope expansion
+    workflow: .github/workflows/numeric-claim-write-time-verify.yml  # Wave 2 wire complete (CFP-1612 Phase 2 PR #1631 merged 2026-05-25 KST, byte-identical mirror with templates/github-workflows/) + CFP-1647 Phase 2 pr-commit-msg/pr-body steps added
     current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode (declaration → first wire)
     bypass_label: hotfix-bypass:numeric-claim-write-time-verify
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
@@ -5418,7 +5425,7 @@ entries:
       threshold: 3                  # ADR-060 §결정 19 / schema v1.2 standard default + ADR-045 §D-9 N=2 보다 strict (per-pattern systemic class 결정 sentinel)
       last_occurrence: "2026-05-25T00:00:00+09:00"  # CFP-1612 Wave 2 wire activation carrier, ADR-079 KST normative
       promotion_trigger: warning_tier_initial  # count=2 < threshold=3 → warning-tier initial registration (Wave 2 mechanical wire activation, pattern_count 누적 시 Wave 3 별 carrier 발의)
-    status: warning                 # Phase 1 declare (본 CFP-1612 Wave 2 mechanical wire activation) / Phase 2 actual wire = 별 sub-CFP carrier (script + workflow + bats fixture, ADR-082 §결정 6 retain pattern 답습 + CFP-1437/1436/1435 → CFP-1489/1500/1497/1502 Wave 1→Wave 2 split precedent 답습)
+    status: warning                 # Phase 1 declare (본 CFP-1612 Wave 2 mechanical wire activation) / Phase 2 actual wire = 별 sub-CFP carrier (script + workflow + bats fixture, ADR-082 §결정 6 retain pattern 답습 + CFP-1437/1436/1435 → CFP-1489/1500/1497/1502 Wave 1→Wave 2 split precedent 답습). CFP-1647 Phase 2 = PR commit msg + PR body scope expansion (additive wire, sub-scope 1-P)
 
   # CFP-1632 신설 — ADR-045 Amendment 10 Wave 2 mechanical wire activation
   # ADR-045 Amendment 9 §D-10 declarative anchor → Wave 2 mechanical wire (CFP-1632)
