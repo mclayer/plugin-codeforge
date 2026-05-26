@@ -117,6 +117,29 @@ amendment_log:
       ratchet 강화 방향 (scope 확장 — Orchestrator scope boundary 명문 codify, §결정 7 evidence-gated symmetric ratchet 정합). is_transitional: false 정합. 약화 방향 (영역 boundary 모호화 / 사용자 묻기 reflex 자유화 / deputy 영역 침범 허용) = ADR-058 §결정 5 sunset_justification 의무.
     direction: strengthen
     sunset_justification: null  # ratchet 강화 방향 (governance 표현력 확장 — Orchestrator scope boundary 의 명문 codify)
+  - amendment: 11
+    carrier_story: CFP-1753
+    date: 2026-05-27
+    summary: |
+      §결정 12 신설 (Trace 8) — Autonomous loop idle-without-purpose 자동 종료 mandate. Orchestrator 가 `ScheduleWakeup(<sec>, <reason>)` 호출 결정 직전 4-tuple AND gate self-check 의무:
+      (armed_monitor == 0) AND (in_progress_agent == 0) AND (open_pr_session == 0) AND (actionable_backlog == 0) → ScheduleWakeup 호출 금지, loop 자동 종료 (dynamic pacing 이므로 ScheduleWakeup 호출 생략 = loop terminus).
+      4 signal 운영적 정의:
+      (1) armed_monitor = `Monitor` tool 로 watch 중인 background process / file / log stream 이 1+ 존재 (PR check polling / file change watch / log tail 등)
+      (2) in_progress_agent = active Agent tool spawn (subagent 실행 중) 1+ 존재 — return 미수신 영역
+      (3) open_pr_session = 본 세션이 author 인 open PR 중 review/merge 사용자 동의 대기 1+ 존재 — 사용자만 풀 수 있는 차단 (ADR-071 §결정 15 touchpoint (b) 영역, 사용자 dialog) 또는 CI failing 영역 (FIX 의무 — actionable)
+      (4) actionable_backlog = Story / Epic / Issue / TodoWrite 안 next step 1+ 존재 — derived default (§결정 3 룰 1) 로 즉시 진행 가능 영역
+      Anti-pattern enum (closed-set 3 종):
+      (A) "CI green check 단독 = actionable signal" reflex — CI green 만으로 loop 유지 금지. CI green = 1 회 verify 후 done (재polling 무의미 영역, polling 은 CI failing/in-progress 일 때만 의미)
+      (B) "trivial verification 만 loop 유지" — `gh run list | jq` / `git fetch` / single Read 등 trivial verify 후 다시 `ScheduleWakeup` 호출 = idle-without-purpose
+      (C) "stop in single line = 한 줄 status report" reflex 오해석 — "stop in single line" 의 mechanical 의미 = `ScheduleWakeup` 호출 **생략** (한 줄 status report 후 자동 loop 종료, dynamic pacing 이므로 ScheduleWakeup 안 부르면 loop 자연 종료)
+      사용자 directive (2026-05-27 KST verbatim): "이런 일이 발생하지 않아야겠다. 어떻게 개선하겠나? ... 정식으로 진행해" — 본 세션 2026-05-26~27 약 14+ consecutive idle ticks 동안 "CI green, idle" status report 무의미 반복 evidence (CFP-1680 lineage 전체 close 직후 + domain-knowledge doc PR #1750 close), 사용자 "뭘 기다리는거야" 3 회 반복 → loop 종료. memory `feedback_autonomous_loop_idle_termination` normative 승격.
+      §결정 9 stop-time 평문 정리 의무 + §결정 11 Orchestrator scope boundary 와 disjoint cross-cutting axis — §결정 9 = single-turn output frequency (한 turn 안 평문 정리) / §결정 11 = proposing-time scope (3-axis) / **§결정 12 = autonomous loop tick frequency (multi-turn ScheduleWakeup cadence)**.
+      ADR-071 §결정 15 (Amendment 4 / CFP-851 Conversational reporting frequency suppression contract) 의 frequency-axis sibling — ADR-071 §결정 15 = user-facing turn frequency (Orchestrator → user dialog) / 본 §결정 12 = autonomous loop tick frequency (Orchestrator self-loop, user 미관여). 같은 frequency-axis governance family, disjoint scope.
+      Wave 1 declarative — Wave 2 mechanical wire (CFP-1738 hooks 패턴 활용: Stop hook 또는 PreToolUse `ScheduleWakeup` matcher 가 4-tuple AND gate self-block) = 별 sub-CFP carrier 분리 (`mechanical_enforcement_actions: []` retain — ADR-082 §결정 6 + ADR-070 §D5 + ADR-076 §결정 1 retain pattern 답습).
+      META self-application: 본 amendment 자체가 Orchestrator behavior governance — 본 Orchestrator (autonomous loop 운영 주체) 의 self-application carrier. 본 세션 14+ idle tick 실패가 evidence base (ADR-064 §결정 7 evidence-gated symmetric ratchet 정합 — pattern_count = 1 Story sentinel 14+ tick = ADR-045 §D-9 Mandatory threshold 미달 but 사용자 directive verbatim 의 immediate normative 승격, precedent: CFP-637 Amendment 3 3 memory entry normative 승격 패턴).
+      ratchet 강화 방향 (scope 확장 — Orchestrator autonomous loop tick frequency governance 의 명문 codify, §결정 7 evidence-gated symmetric ratchet 정합). is_transitional: false 정합. 약화 방향 (4-tuple AND gate 1+ 조건 제거 / Anti-pattern enum 축소 / "stop in single line" mechanical 의미 reinterpretation 허용) = ADR-058 §결정 5 sunset_justification 의무.
+    direction: strengthen
+    sunset_justification: null  # ratchet 강화 방향 (autonomous loop tick frequency governance 명문 codify, scope 약화 0건)
 mechanical_enforcement_actions:
   - action: parallel-dispatch-prompt-check
     binding: 본 Amendment 1 §결정 4 Trace 4 implementation contract (`docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md` §3 의 4 의무 항목) — Orchestrator → PL spawn prompt 검증 lint (warning tier, ADR-060 framework 정합)
@@ -136,6 +159,7 @@ related_stories:
   - CFP-1149 # Amendment 8 carrier — §결정 7 top-down ratchet → evidence-gated symmetric (약화 1급 승격, sunset asymmetry 제거, 메타 평가 root)
   - CFP-1134 # Amendment 7 carrier — §결정 5 paradigm replacement 면제 exception clause (ADR-097 §결정 2 연동)
   - CFP-1645 # Amendment 10 carrier — §결정 11 신설 (Trace 7 Orchestrator scope boundary primitive 3-axis: 사실 / 구체 환경 분석 / Orchestrator scope)
+  - CFP-1753 # Amendment 11 carrier — §결정 12 신설 (Trace 8 autonomous loop idle-without-purpose 자동 종료, 4-tuple AND gate + Anti-pattern enum + ScheduleWakeup-skip mandate)
 related_adrs:
   - ADR-039
   - ADR-044  # CFP-609 Amendment 1 — agent teams enabled context (env=1) TeamCreate fan-out 자연 정합
@@ -472,6 +496,82 @@ Orchestrator (본 Claude 세션) 의 scope boundary 3-axis 분류:
 - ADR-073 Amd 2/6/7/8/9/10/11/12/13/15/16 — memory rule 1-5 carrier (≥80% covered, 본 §결정 11 paired memory retire 정합)
 - memory `feedback_orchestrator_role_boundary` retire = 본 §결정 11 codify 직후 (CLAUDE.md L150 normative 정합)
 - memory `feedback_session_start_parallel_work_check` rule 1-5 retire = ADR-073 Amendment chain carrier (rule 6+7 = CFP-966/967 normative)
+
+### 결정 12 — Autonomous loop idle-without-purpose 자동 종료 mandate (Trace 8, Amendment 11 신설 CFP-1753)
+
+Orchestrator 가 `ScheduleWakeup(<sec>, <reason>)` tool 호출 결정 직전 4-tuple AND gate self-check 의무. 4 signal 모두 0 (false) 이면 `ScheduleWakeup` 호출 **금지** — loop 자동 종료 (dynamic pacing 이므로 ScheduleWakeup 호출 생략 = loop terminus, 평문 한 줄 status report 후 자동 종료).
+
+**4-tuple AND gate**:
+
+```
+ScheduleWakeup 호출 허용 조건 = (armed_monitor > 0) OR (in_progress_agent > 0) OR (open_pr_session > 0) OR (actionable_backlog > 0)
+ScheduleWakeup 호출 금지 조건 = (armed_monitor == 0) AND (in_progress_agent == 0) AND (open_pr_session == 0) AND (actionable_backlog == 0)
+```
+
+**4 signal 운영적 정의**:
+
+| Signal | 정의 | 0 → loop 유지 무의미 이유 |
+|---|---|---|
+| **armed_monitor** | `Monitor` tool 로 watch 중인 background process / file / log stream / PR check polling / file change watch / log tail 1+ 존재 | armed_monitor 부재 = 외부 event 가 loop tick 에 reach 불가 영역 (notification driven 아님) |
+| **in_progress_agent** | active Agent tool spawn (subagent 실행 중) 1+ 존재 — return 미수신 영역 | subagent return 부재 = autonomous loop tick 이 wait 할 대상 없음 |
+| **open_pr_session** | 본 세션이 author 인 open PR 중 review/merge 사용자 동의 대기 1+ 존재 (사용자만 풀 수 있는 차단, ADR-071 §결정 15 touchpoint (b) 영역) **또는** CI failing 영역 (FIX 의무 — actionable) | open PR 대기 = 사용자 dialog 영역 (loop 이 아닌 user-facing turn 으로 전환). CI failing = 즉시 FIX actionable (loop 유지 아닌 immediate action) |
+| **actionable_backlog** | Story / Epic / Issue / TodoWrite 안 next step 1+ 존재 — derived default (§결정 3 룰 1) 로 즉시 진행 가능 영역 | actionable_backlog 부재 = 다음 step 의 derived default 없음 = loop tick 이 무엇을 수행할지 미정의 영역 |
+
+**Anti-pattern enum (closed-set 3 종)**:
+
+1. **(A) "CI green check 단독 = actionable signal" reflex**: CI green polling 만으로 loop 유지 금지. CI green = 1 회 verify 후 done (재polling 무의미 영역). polling 은 CI **failing** 또는 **in-progress** 일 때만 의미 (failing → FIX actionable 도출, in-progress → 완료 대기 = `armed_monitor` 활성).
+2. **(B) "trivial verification 만 loop 유지"**: `gh run list | jq` / `git fetch` / single Read / single Grep 등 trivial verify 후 다시 `ScheduleWakeup` 호출 = idle-without-purpose. trivial verify 후 4-tuple 재평가 — 모두 0 → loop 종료.
+3. **(C) "stop in single line = 한 줄 status report" reflex 오해석**: "stop in single line" 의 mechanical 의미 = `ScheduleWakeup` 호출 **생략** (한 줄 status report 후 자동 loop 종료, dynamic pacing 이므로 ScheduleWakeup 안 부르면 loop 자연 종료). 한 줄 status report 후 `ScheduleWakeup` 다시 호출 = "stop" semantic 위배.
+
+**적용 시점**: Orchestrator 가 매 user-facing turn 종료 시 + 매 `ScheduleWakeup` 호출 결정 직전. 4-tuple self-check 후 모두 0 → loop 종료. 1+ true → ScheduleWakeup 호출 허용 (reason 명시 의무 — 어느 signal 이 true 인지 평문 declare).
+
+**사용자 directive (2026-05-27 KST verbatim)**:
+
+> 이런 일이 발생하지 않아야겠다. 어떻게 개선하겠나? ... 정식으로 진행해
+
+본 directive 의 trigger = 본 세션 2026-05-26~27 약 14+ consecutive idle ticks 동안 "CI green, idle" status report 무의미 반복 — CFP-1680 lineage 전체 close 직후 (Issue #1686 / #1688 / #1734 / #1735 + domain-knowledge doc PR #1750 close), Orchestrator 가 `ScheduleWakeup(1800s, "<<autonomous-loop-dynamic>>")` cycle 진입. 각 tick = single `gh run list | jq` (CI green) → `ScheduleWakeup` 재호출 (4-tuple all-0 영역 — actionable_backlog 부재, open_pr_session 부재, in_progress_agent 부재, armed_monitor 부재). 사용자 "뭘 기다리는거야" 3 회 반복 → loop 종료. memory `feedback_autonomous_loop_idle_termination` normative 승격.
+
+**§결정 9 / §결정 11 / §결정 12 axis disjoint (3-axis frequency governance)**:
+
+| §결정 | frequency axis | 영역 |
+|---|---|---|
+| **§결정 9** (Amendment 2/3 CFP-610/637) | single-turn output frequency | 한 turn 안 평문 정리 / question quality 3-check (sub-turn level) |
+| **§결정 11** (Amendment 10 CFP-1645) | proposing-time scope | 3-axis 사실 / 구체 환경 분석 / Orchestrator scope (사용자 묻기 영역 분류) |
+| **§결정 12** (본 Amendment 11) | autonomous loop tick frequency | multi-turn ScheduleWakeup cadence (autonomous loop level) |
+
+**ADR-071 §결정 15 (Amendment 4 CFP-851 Conversational reporting frequency suppression contract) 와의 sibling axis 분리**:
+
+- **ADR-071 §결정 15** = user-facing turn frequency (Orchestrator → user dialog 발화 cadence — 3 touchpoint closed enumeration)
+- **본 §결정 12** = autonomous loop tick frequency (Orchestrator self-loop, user 미관여 영역 — 4-tuple AND gate)
+
+두 §결정 = 같은 **frequency-axis governance family** (말 거는 / loop tick 거는 횟수·시점 governance), **disjoint scope** (user dialog vs self-loop). family 공통 invariant = "purpose-driven frequency" — 발화 / loop tick 이 purpose 부재 영역에서 reflex 로 활성화되지 않음.
+
+**적용 범위**: wrapper + 모든 consumer (CLAUDE.md L138 normative 정합).
+
+**강제 강도**: Wave 1 declarative — behavioral directive only. Mechanical enforce 영역 (Wave 2) = **별 sub-CFP carrier** (`mechanical_enforcement_actions: []` retain — ADR-082 §결정 6 + ADR-070 §D5 + ADR-076 §결정 1 declaration-only retain 패턴 답습). Wave 2 후보 메커니즘 (현 단계 codify 영역 외):
+
+- CFP-1738 hooks 패턴 활용 — Stop hook 또는 PreToolUse `ScheduleWakeup` matcher 가 4-tuple AND gate self-block (Orchestrator state check)
+- evidence-checks-registry warning-tier entry `autonomous-loop-idle-termination` 신설 (별 sub-CFP scope)
+
+**거절된 대안 (D12)**:
+
+- (D12-A) ADR-071 amendment 영역 — ADR-071 §결정 15 = user-facing turn frequency 영역, autonomous loop tick 영역과 disjoint scope. ADR-064 = decision principle SSOT 의 자연 instantiation 영역 (Trace 1-7 와 cohesive, Trace 8 신설).
+- (D12-B) 별 ADR 신설 — §결정 5 CFP scope unitary 위배 + ADR-064 가 이미 frequency-axis governance carrier (§결정 9 + §결정 11) 의 자연 anchor.
+- (D12-C) `ScheduleWakeup` 호출 전면 금지 (4-tuple gate 없이) — actionable_backlog / armed_monitor / in_progress_agent / open_pr_session 영역의 정당 loop tick 가능성 차단 = false negative risk (정당 polling case 까지 차단).
+- (D12-D) Wave 1 + Wave 2 동시 carrier — §결정 5 CFP scope unitary 위배 + ADR-082 §결정 6 / ADR-070 §D5 / ADR-076 §결정 1 declaration-only retain 패턴 정합 위배.
+
+**Sunset criteria**: N/A (governance permanent, §결정 7 evidence-gated symmetric ratchet 정합). 약화 방향 (4-tuple AND gate 1+ 조건 제거 / Anti-pattern enum 축소 / "stop in single line" mechanical 의미 reinterpretation 허용) = ADR-058 §결정 5 sunset_justification 의무.
+
+**META self-application**: 본 amendment 자체가 Orchestrator behavior governance — 본 Orchestrator (autonomous loop 운영 주체) 의 self-application carrier. 본 세션 14+ idle tick 실패가 evidence base. 본 amendment 이후 본 Orchestrator 가 `ScheduleWakeup` 호출 결정 직전 4-tuple self-check + reason 평문 declare 의무.
+
+본 §결정 = 결정 6 proposing-time scope 영역 + 결정 9 stop-time output 영역 + 결정 11 proposing-time scope 3-axis 영역 모두와 disjoint axis (autonomous loop tick frequency). §결정 1-11 disjoint axis 보존 — 결정 1-5 (결정 menu 내용 + 제시 룰) / 결정 6 (proposing-time scope) / 결정 7 (ratchet) / 결정 8 (declaration only) / 결정 9 (stop-time wording + question quality) / 결정 10 (skill body precedence) / 결정 11 (proposing-time 3-axis) / **결정 12 (autonomous loop tick frequency)**.
+
+**관련 carrier**:
+
+- ADR-071 §결정 15 (Amendment 4 / CFP-851) — frequency-axis sibling (user-facing turn frequency)
+- CFP-1738 — hooks 패턴 carrier (Wave 2 mechanical wire 후보 메커니즘)
+- memory `feedback_autonomous_loop_idle_termination` retire = 본 §결정 12 codify 직후 (CLAUDE.md L138 normative 정합)
+- 본 세션 (2026-05-26~27) 14+ idle tick evidence base — pattern_count 1 Story sentinel (ADR-045 §D-9 Mandatory threshold 미달 but 사용자 directive verbatim 의 immediate normative 승격, CFP-637 Amendment 3 precedent 정합)
 
 ## Amendment 1 — §결정 4 Trace 4 Implementation Contract (CFP-609, 2026-05-13)
 
