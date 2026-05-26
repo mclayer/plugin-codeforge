@@ -181,6 +181,12 @@ amendments:
     summary: "§결정 1 layer 1 sub-scope (1-S) 신설 — ADR frontmatter block convention SSOT codify + sub-scope 1-Q (CFP-1648 dual-block parity lint) single-block ADR 면제 scope clarification. Two ADR frontmatter conventions 명문화: (1) single-block = `amendment_log[]` block only (no `amendments[]` block) — 일부 ADR 의 valid convention (예: ADR-045, amendment_log[] only + body `### Amendment N` H3 heading) / (2) dual-block = `amendments[]` + `amendment_log[]` 둘 다 (예: ADR-082 본 ADR, F-DR-001 mandate 정합). sub-scope 1-Q lint scope correction (3 fix, 동일 parser-correctness false-positive class): Fix A (single-block mode — amendments[] block 부재 시 Block 1 + Block 3 skip, Block 2 amendment_log[] ↔ body parity F-DR-001 P0 sentinel 만 적용) + Fix B (body section detection H2 `## Amendment N` AND H3 `### Amendment N` both-level, bounded `{2,3}` H4 차단) + Fix C (frontmatter scan cap — `_extract_frontmatter_lines` 의 `lines[:PER_LANE_EVIDENCE_SCAN_CAP*10]` 300-line slice 가 long-frontmatter ADR (ADR-082 자신 2nd `---` line 548) 의 amendment_log[] entry 22-29 절단 → slice cap 확대 (예: 5000) 으로 full frontmatter scan, `---` delimiter break 가 실 boundary retain, ReDoS 무관 correctness fix). 3 root cause (CFP-1680 retro CFP-FU-C #1688 + Orchestrator verify-before-trust ADR-073/ADR-082 direct extraction FIX iter 1): (1) ADR-045 single-block + H3 body → BODY_H2_AMENDMENT_PATTERN (H2 only) body_ids empty → 11 amendments AMENDMENT_LOG_FRONTMATTER_ONLY false-positive + (2) H3 미detect + (3) ADR-082 long-frontmatter 절단 → false CROSS_BLOCK_COUNT_MISMATCH 30 != 20 + false BODY_ONLY_NO_LOG Amendment 30 (amendment_log[] line 353 cap 너머). 모두 warning-tier non-blocking but PR check output pollution. lint scope correction = 신규 check 아닌 1-Q scope 정정 → 기존 `adr-dual-block-parity` evidence-checks-registry entry + `hotfix-bypass:adr-dual-block-parity` label 재사용 (신규 entry / 신규 label 0). Combined Phase 1+2 (ADR amendment Phase 1 + lint fix Phase 2 develop lane dispatch, CFP-1648 combined precedent 답습). axis disjoint from 1-A through 1-R (ADR structural-parity-lint scope correction axis — 1-Q sub-domain refinement, not a new verify subject). META-self-applied (§결정 10.D 13th applied case + Amendment 17 §결정 1-G strict pre-reservation 6th applied case): 본 Amendment 30 = ADR-082 dual-block convention 의 exemplar 이며, 1-S 가 clarify 하는 lint 가 본 ADR-082 자신의 dual-block structure (amendments[] + amendment_log[] + body ## Amendment 30) 위에서 false-positive 없이 PASS 해야 하는 recursive dogfooding (Fix C 가 enabler — Fix C 없이 lint 가 amendment_log[] line 353 see 못해 false-fail). verified-via: `git show origin/main:docs/adr/ADR-082-write-time-self-write-verification-mandate.md` frontmatter amendments[] max=29 (CFP-1683 Amendment 29 merge 후 base) → 정확 next-slot = 30, 2026-05-26 KST 기준 origin/main 506f7cfc (PRE-SPAWN-ORIGIN-MAIN-SHA verified, pre_spawn_pin_verified: true). ADR-RESERVATION row pre-append + commit dad73ec5 (pre_reservation_verified: true)."
     direction: strengthening
     sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §결정 1 layer 1 sub-scope (1-A/…/1-R) → (1-S ADR frontmatter block convention SSOT + 1-Q single-block/H3/frontmatter-scan-cap 3-fix scope correction) 신설. 본 Amendment 는 lint scope correction (false-positive 차단) 이나 forbid scope 축소 아님 — Block 2 (F-DR-001 P0 sentinel) 검증 retain + single-block ADR 도 amendment_log[] ↔ body parity 계속 enforce + Fix C 적용 후 long-frontmatter ADR 의 genuine body-section drift (amendments 8-13/18-21 frontmatter-only) 가 정당 surface (FP 차단이 genuine warning 을 enable, 약화 아님). ADR-064 §결정 7 (CFP-1149 Amendment 8) symmetric evidence-gated 정합 — false-positive 정정 = accuracy 강화 (over-rate 차단 = ADR-081 §결정 D6 severity calibration 정합), guard 약화 0건. ADR-073/ADR-082 Orchestrator verify-before-trust 가 Fix C (bug #3) 를 FIX iter 1 에서 catch — same-class parser-correctness FP). pattern_count evidence: CFP-1680 retro (single-block + H3 11 amendments false-positive 직접 lint 실행 확인) + bug #3 frontmatter scan cap (ADR-082 self direct extraction, FIX iter 1 catch). is_transitional: false 유지 (permanent governance policy). META-self-applied (§결정 10.D 13th applied case)."
+  - amendment_id: 31
+    carrier_story: CFP-1684
+    date: 2026-05-26
+    summary: "§결정 1 layer 1 sub-scope (1-T) 신설 — PMOAgent retro write-time verify-before-trust mandate (META recursive evidence carrier). retro file write 시 cited fact (commit SHA + label-registry version + bypass family count + cross-Story memory pattern_count) source direct verify 의무. axis disjoint from §결정 9 verify-at-write-time (CFP-1312 Amendment 7 — ArchitectAgent + Orchestrator scope) — 본 1-T = PMOAgent retro write scope. (slot 재배정: CFP-1688 가 Amendment 30 + sub-scope 1-S 점유 → 본 CFP-1684 = Amendment 31 + sub-scope 1-T 재배정, ADR-082 Amendment 29 §결정 1-R mid-Story FIX-loop re-verification mandate self-application — 4th parallel race CFP-1688 slot collision detect 후 reslot.) META self-application: CFP-1646 retro write-time PMOAgent 자체 `stale_fact_inheritance` 진입 (Story spec wrapper merge SHA claim `e84f0460` Phase 1 commit vs actual `00641695` merge commit + internal-docs `0b37a71` vs actual `33fff4cf`) — 본 retro 안 verified-via correction 의 root carrier. Wave 1 declarative — Wave 2 mechanical wire (`scripts/lib/check_retro_fact_verify.py` SHA pattern + version pattern presence-grep + verify trace presence) = 별 sub-CFP carrier."
+    direction: strengthening
+    sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §결정 1 layer 1 sub-scope (1-A/…/1-S) → (1-T PMOAgent retro write-time verify) 신설). pattern_count evidence: CFP-1646 retro write-time stale fact (2 commit SHA claim mismatch — wrapper + internal-docs) META recursive direct evidence. is_transitional: false 유지 (permanent governance policy). META self-application: 본 Amendment 31 자체가 PMOAgent retro write-time verify mandate carrier — ADR-082 Amendment 28 dual-block parity self-apply + Amendment 29 §결정 1-R mid-Story FIX-loop re-verification self-apply (CFP-1688 slot collision reslot)."
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-841
@@ -356,6 +362,12 @@ amendment_log:
     decisions_touched: ["§결정 1 layer 1 sub-scope 1-S (신설)"]
     nature: ratchet-up  # §결정 1 layer 1 sub-scope (1-A/.../1-R) → (1-S ADR frontmatter block convention SSOT + 1-Q single-block/H3/frontmatter-scan-cap 3-fix scope correction) 신설 (ADR-058 §결정 5 강화 방향 — false-positive 정정 accuracy 강화, guard 약화 0건). CFP-FU-C from CFP-1680 retro Pivot 1 root cause + Orchestrator verify-before-trust FIX iter 1 (bug #3). Combined Phase 1+2.
     note: "CFP-1688 carrier — ADR frontmatter block convention SSOT codify (single-block = amendment_log[] only e.g. ADR-045 / dual-block = both e.g. ADR-082) + sub-scope 1-Q (CFP-1648 lint) scope correction (3 fix, 동일 parser-correctness false-positive class). 3 root cause: (1) ADR-045 frontmatter `amendment_log:` block ONLY (grep -cE '^amendments:' = 0, grep -cE '^amendment_log:' = 1) + body `### Amendment N` H3 heading (line 439) ↔ lint BODY_H2_AMENDMENT_PATTERN 은 `## Amendment N` H2 only detect → body_ids empty → 11 amendments 전부 Block 2 AMENDMENT_LOG_FRONTMATTER_ONLY false-positive + Block 3 CROSS_BLOCK_COUNT_MISMATCH false-fire / (2) H3 미detect / (3) frontmatter scan cap — `_extract_frontmatter_lines` 의 `lines[:PER_LANE_EVIDENCE_SCAN_CAP*10]` = 300 line slice 가 ADR-082 자신의 long frontmatter (2nd `---` = line 548) 의 amendment_log[] entry 22-29 (line 305-347, 300 초과) 절단 → false CROSS_BLOCK_COUNT_MISMATCH 30 != 20 + false BODY_ONLY_NO_LOG Amendment 30 (amendment_log[] line 353 cap 너머) — Orchestrator verify-before-trust ADR-073/ADR-082 direct extraction FIX iter 1 발견. Fix spec (Phase 2 develop lane dispatch via Change Plan §8): Fix A (single-block mode — amendments[] 부재 + amendment_log[] present 시 Block 1 + Block 3 skip, Block 2 만 적용) / Fix B (body heading `## Amendment N` H2 AND `### Amendment N` H3 both-level, bounded `{2,3}` H4 차단) / Fix C (frontmatter scan cap 확대 — `---` delimiter break 가 실 boundary, slice cap 5000 으로 full frontmatter scan, ReDoS 무관 correctness fix). lint scope correction = 기존 `adr-dual-block-parity` evidence-checks-registry entry + `hotfix-bypass:adr-dual-block-parity` label 재사용 (신규 entry / 신규 label 0, label-registry MINOR bump 0). META-self-applied: ADR-082 = dual-block exemplar — 본 Amendment 30 의 amendments[] + amendment_log[] + body ## Amendment 30 3-block parity authoring 정확, 단 lint PASS 는 Fix C 가 enabler (Fix C 없이 lint 가 amendment_log[] line 353 see 못해 false-fail). Fix C 적용 후 ADR-082 의 genuine body-section drift (amendments 8-13/18-21 frontmatter-only) = 정당 surface, body backfill = 별 follow-up CFP (out of scope). 본 Amendment 번호(30) = source command `git show origin/main:docs/adr/ADR-082-write-time-self-write-verification-mandate.md` frontmatter amendments[] actual max=29 (Amd 29 CFP-1683 점유) → 정확 next-slot for CFP-1688 = 30 [verified, origin/main 506f7cfc, PRE-SPAWN-ORIGIN-MAIN-SHA pinned]. ADR-RESERVATION row pre-append + commit dad73ec5 (pre_reservation_verified: true)."
+  - amendment_id: 31
+    carrier_story: CFP-1684
+    date: 2026-05-26  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 1 layer 1 sub-scope 1-T (신설)"]
+    nature: ratchet-up  # PMOAgent retro write-time verify-before-trust mandate 신설 (axis disjoint from §결정 9 CFP-1312 Amd 7 ArchitectAgent + Orchestrator scope — PMOAgent retro write scope). slot 재배정: CFP-1688 Amendment 30 + sub-scope 1-S 점유 → 본 CFP-1684 = Amendment 31 + sub-scope 1-T (4th parallel race reslot per ADR-082 Amd 29 §1-R mid-Story FIX-loop re-verification self-apply).
+    note: "CFP-1684 carrier — CFP-1646 retro F3 forcing function (META recursive evidence). retro file write 시 cited fact (commit SHA + label-registry version + bypass family count + cross-Story memory pattern_count) source direct verify 의무. META self-application direct evidence: CFP-1646 retro write-time PMOAgent 자체 `stale_fact_inheritance` 진입 — Story spec wrapper merge SHA claim `e84f0460` (Phase 1 commit) vs actual `00641695` (merge commit) + internal-docs `0b37a71` vs actual `33fff4cf` — PMOAgent retro 안 verified-via correction 의 root carrier. Mandate: PMOAgent retro file write 시 SHA / version / count / pattern_count cited fact 의 `gh api` + `git log` source direct verify 의무. Wave 1 declarative — Wave 2 mechanical wire (`scripts/lib/check_retro_fact_verify.py` SHA pattern + version pattern presence-grep + verify trace presence) = 별 sub-CFP carrier. label-registry-v2 v2.81 → v2.82 (`hotfix-bypass:retro-fact-verify-mandate` 107번째 hotfix-bypass:* family member). slot 재배정 audit: CFP-1688 가 Amendment 30 + sub-scope 1-S + (v2.81 retain, label bump 0) 점유 → 본 CFP-1684 reslot Amendment 31 + sub-scope 1-T + label-registry v2.82 (CFP-1688 label bump 0 이므로 v2.81 → v2.82 retain) + 107번째 family member retain. META-self-applied: 본 ADR codify 자체가 retro write-time verify 정합 (recursive dogfooding) — amendments[] + amendment_log[] + body 3-block dual-write per Amendment 28 parity + Amendment 29 §1-R mid-Story FIX-loop re-verification self-apply (CFP-1688 slot collision detect → reslot)."
 related_stories:
   - CFP-776  # carrier (super-class 통합 결정 — escalation_action escalate_user)
   - CFP-841  # Amendment 1 carrier (§결정 6 behavioral→mechanical 전환 후속 carrier)
@@ -2638,4 +2650,54 @@ Fix C 적용 후 lint 가 full frontmatter 를 읽으면, ADR-082 의 **body §A
 - ADR-054 §결정 1 — doc-only fast-path 비적격 (lint fix = scripts/tests 변경 동반, Combined Phase 1+2)
 - `scripts/lib/check_adr_dual_block_parity.py` — Phase 2 lint fix target (Fix A single-block mode + Fix B H2/H3 detection + Fix C frontmatter scan cap)
 - `tests/scripts/check-adr-dual-block-parity/` — Phase 2 bats 신규 TC + fixture (single-block / H3 / H4 guard / long-frontmatter) 추가 target
+## Amendment 31 — §결정 1 layer 1 sub-scope (1-T) 신설 PMOAgent retro write-time verify-before-trust mandate (CFP-1684, 2026-05-26 KST, META recursive evidence carrier — CFP-1688 Amendment 30 + sub-scope 1-S slot collision reslot)
+
+### Context
+
+CFP-1646 PMOAgent retro write-time 자체 `stale_fact_inheritance` 진입 — **META recursive evidence**:
+- Story spec 본문 안 wrapper merge commit SHA claim `e84f0460` (Phase 1 commit) vs actual `00641695` (merge commit)
+- internal-docs SHA claim `0b37a71` (Phase 1 commit) vs actual `33fff4cf` (merge commit)
+
+즉 verify-before-trust mandate 를 codify 하는 retro 자체가 write-time verify gap 노출. PMOAgent retro write-time fact verify 부재 영역.
+
+ADR-082 §결정 9 verify-at-write-time (CFP-1312 Amendment 7) = ArchitectAgent + Orchestrator scope. PMOAgent retro write scope 미cover.
+
+### Amendment
+
+#### §결정 1 layer 1 sub-scope 1-S: PMOAgent retro write-time verify-before-trust mandate
+
+PMOAgent retro file write 시 cited fact source direct verify 의무:
+- **commit SHA** — `gh pr view <PR#> --json mergeCommit` 또는 `git log` direct verify (Phase 1 commit SHA vs merge commit SHA disambiguation)
+- **label-registry version** — `git show origin/main:docs/inter-plugin-contracts/label-registry-v2.md | grep '^version:'` direct verify
+- **bypass family count** — `grep -c '^  - name: hotfix-bypass:'` direct verify
+- **cross-Story memory pattern_count** — source memory entries direct cross-ref
+
+#### Wave 1 (Phase 1 PR scope — declarative, 본 Amendment)
+
+- 본 ADR-082 Amendment 30 §결정 1 sub-scope 1-S 신설
+- label-registry-v2 v2.81 → v2.82 MINOR + `hotfix-bypass:retro-fact-verify-mandate` 107번째 family member
+- MANIFEST.yaml row sync + evidence-checks-registry `retro-fact-verify-mandate` warning-tier entry
+- workflow Wave 1 stub pair (ADR-005) + CHANGELOG entry
+
+#### Wave 2 (Phase 2 PR scope — mechanical wire, future carrier)
+
+- script `scripts/check-retro-fact-verify.sh` (ADR-061) + `scripts/lib/check_retro_fact_verify.py`
+- retro file 안 SHA pattern + version pattern presence-grep + corresponding `gh api` / `git log` verify trace presence
+- bats RED→GREEN stash proof (CFP-1334) + boundary fixture pair (CFP-963 Codex TP#4)
+
+### Axis disjoint
+
+- §결정 9 (CFP-1312 Amendment 7) — ArchitectAgent + Orchestrator write-time verify scope
+- §결정 1 sub-scope 1-S (본 Amendment 30) — PMOAgent retro write scope
+
+### META self-application
+
+본 Amendment 30 자체가 retro write-time verify mandate carrier — ADR-082 Amendment 28 dual-block parity (amendments[] + amendment_log[] + body 3-block dual-write) self-apply. recursive dogfooding: retro write-time verify 를 codify 하면서 본 ADR Amendment 자체가 dual-block parity verify 적용.
+
+### Related
+
+- CFP-1684 carrier Story (META recursive evidence)
+- CFP-1646 retro F3 origin (PMOAgent retro write-time 2 commit SHA claim mismatch direct evidence)
+- ADR-082 §결정 9 verify-at-write-time (CFP-1312 Amendment 7, sibling axis disjoint)
+- ADR-073 Amendment 2 transition trigger `session_start` cold start verify
 
