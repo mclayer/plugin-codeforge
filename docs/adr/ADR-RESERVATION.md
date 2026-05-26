@@ -407,6 +407,18 @@ amendments_reserved:
     reserved_by_cfp: CFP-1693
     reservation_date: 2026-05-26 KST
     status: active   # CFP-1693 — Amd 1 §결정 9 신설 multi-session prompt design normative (memory `feedback_next_session_prompt_design` normative 승격, §결정 1-8 이미 점유 verify-before-trust catch). 4 rule (self-contained end-to-end per session / axis-disjoint 강제 file·ADR·registry collision 0 / sequential dependency → 한 session / copy-paste 준비 context+scope+preflight+done criteria) + 확인 단계 (anti-pattern vs good pattern 양 예시). 사용자 directive 2026-05-25 KST verbatim. doc-only fast-path. memory retire carrier (post-merge). META-self-applied §결정 1-G 10th (verified-via origin/main HEAD `d8e01c38` ADR-085 amendments[] max=0 → next=1, §결정 enum max=8 → next=9).
+
+  - adr_number: 100
+    amendment_id: 2
+    reserved_by_cfp: CFP-1668
+    reservation_date: 2026-05-26 KST
+    status: active   # ArchitectAgent / RequirementsPL chief author commit time 점유 (Story Phase 1 PR carrier — Amendment 2 §결정 1 consumer overlay scope 확장 codify (project.yaml atlassian.confluence.* binding), §결정 3 atlassian.* schema owner SSOT 의 consumer-scope sub-scope extension. Codex Proactive Check #4 (ADR-052 Amendment 1) divergence 4-domain hit anchor #2 산물 — AC-3 ADR-027 Amendment 10 carrier 폐기 → ADR-100 §결정 3 sub-scope extension reframe. CFP-1668 Wave 1 wrapper-canonical Confluence migration 표준 codify carrier. verified-via `git show origin/main:docs/adr/ADR-100-confluence-doc-ssot-recognition.md` frontmatter amendments[] max=1 → next=2 2026-05-26 KST 기준 origin/main `9dd9cbf3`. status `reserved` 미경유 직접 `active` 전환 (ArchitectAgent chief author precedent — ADR-082 Amendment 27 row CFP-1647 직전 패턴 정합). META self-applied (sub-scope 1-G 11th applied case).
+
+  - adr_number: 111
+    amendment_id: 2
+    reserved_by_cfp: CFP-1668
+    reservation_date: 2026-05-26 KST
+    status: active   # ArchitectAgent / RequirementsPL chief author commit time 점유 (Story Phase 1 PR carrier — Amendment 2 §결정 1 consumer-facing mirror 대상 선택 codify (SYMMETRIC subset — consumer ⊆ wrapper closed-enum 5, 확장 0 invariant 보존), §결정 2 Issue-only retain consumer scope 동일 적용 명시. 사용자 Q-1 SYMMETRIC subset 확정 + Q-2 YES 동일 적용 확정. CFP-1668 Wave 1 wrapper-canonical Confluence migration 표준 codify carrier. verified-via `git show origin/main:docs/adr/ADR-111-confluence-mirror-classification-policy.md` frontmatter amendments[] max=1 → next=2 2026-05-26 KST 기준 origin/main `9dd9cbf3`. status `reserved` 미경유 직접 `active` 전환 (ArchitectAgent chief author precedent — ADR-082 Amendment 27 row CFP-1647 직전 패턴 정합). META self-applied (sub-scope 1-G 12th applied case).
 ```
 
 ## 해소 기준
