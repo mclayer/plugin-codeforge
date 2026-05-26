@@ -5400,8 +5400,8 @@ entries:
       recovery 3rd applied after CFP-FU-A Amd 19 + CFP-1590 Amd 23 — initial spawn pinned origin/main
       f2e78b16 + amendments[] max=23 → CFP-1589 Amd 24+1-M merge 후 base shift to 5b5c9f7b + max=24 →
       renumber Amd 24→25 + sub-scope 1-M→1-N on rebase).
-    detect_command: bash scripts/check-numeric-claim-write-time-verify.sh  # Wave 2 carrier 별 sub-CFP (Phase 2, script 부재 — TBD via Wave 2 mechanical wire DeveloperPL + QADev spawn)
-    workflow: .github/workflows/numeric-claim-write-time-verify.yml  # Wave 2 carrier 별 sub-CFP (Phase 2, workflow 부재 — TBD via Wave 2 mechanical wire)
+    detect_command: bash scripts/check-numeric-claim-write-time-verify.sh  # Wave 2 wire complete (CFP-1612 Phase 2 PR #1631 merged 2026-05-25 KST, Python SSOT scripts/lib/check_numeric_claim_write_time.py)
+    workflow: .github/workflows/numeric-claim-write-time-verify.yml  # Wave 2 wire complete (CFP-1612 Phase 2 PR #1631 merged 2026-05-25 KST, byte-identical mirror with templates/github-workflows/)
     current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode (declaration → first wire)
     bypass_label: hotfix-bypass:numeric-claim-write-time-verify
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
