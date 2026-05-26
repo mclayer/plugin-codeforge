@@ -40,7 +40,8 @@ name: Backlog issue phase-label forbid (warning mode — Wave 1 stub)
 #                       + templates/github-workflows/mid-spawn-drift-detection-check.yml (CFP-1500 Wave 1→2 split)
 
 on:
-  # Wave 1 stub: workflow_dispatch only (manual smoke test) — Wave 2 carrier 가 issues.opened + issues.labeled wire
+  # Wave 1 stub: workflow_dispatch + issues:[opened,labeled] trigger active, `if: false` job-level neutralizer
+  # (Wave 2 carrier = `if: false` 제거 + body actual lint wire). CFP-1510 macro-label-expander.yml precedent 답습.
   workflow_dispatch:
   # issues 트리거는 Wave 2 carrier 가 활성 (Wave 1 stub 영역 안 declarative only — `if: false` 정합)
   issues:

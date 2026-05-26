@@ -5485,4 +5485,65 @@ entries:
       promotion_trigger: warning_tier_initial  # 첫 도입 = warning tier initial registration (Wave 2 mechanical wire activation, Wave 3 별 carrier 평가 후 blocking-on-pr 승격 결정)
     status: warning                 # Wave 2 mechanical wire activation (본 CFP-1632) — warning tier initial registration per ADR-060 §결정 5 "첫 도입 = warning mode" default
 
+  # ─── CFP-1646 Phase 1 (ADR-024 Amendment 16 §결정 6.A.8 — Issue label timing discipline, 2026-05-26 KST) ───
+  # backlog Issue (state:open + assignee:none + linked_pr:none) AND `phase:*` label 부착 검출 lint.
+  # Wave 1 declarative stub — Wave 2 carrier (Phase 2 PR) 가 script + bats + workflow body actual lint wire.
+  # behavioral directive normative 승격 첫 carrier (memory feedback_no_phase_label_on_backlog_issues.md → ADR-024 normative SSOT).
+  # FIX iter 2 closure (F-001 P0) — Phase 1 commit fa3190e2 declared vs actual content mismatch 복원
+  # (ADR-024 §결정 6.A.8 ↔ registry yaml cross-ref invariant 복원, INV-1 parity).
+  - name: backlog-issue-phase-label-forbid
+    description: |
+      ADR-024 Amendment 16 §결정 6.A.8 — Issue label timing discipline mechanical enforce.
+      backlog Issue 식별 3-AND predicate (state:open AND assignee:none AND linked_pr:none) 만족 +
+      `phase:*` label 부착 검출 시 warning emit (lane 진입 X 상태에서 `phase:*` semantic 위반 차단).
+      한 조건이라도 false = 착수 가능성 신호 → lint 발화 부적합 (false-positive 차단).
+
+      behavioral directive normative 승격 첫 carrier (CLAUDE.md "Orchestrator 정책 적용 범위 +
+      behavioral directive (normative)" 단락 정합 — 사용자 directive 를 personal memory file
+      저장 만으로 갈음 금지, 즉시 CFP 제안 후 normative SSOT 반영 의무). Source memory
+      `feedback_no_phase_label_on_backlog_issues.md` (ephemeral) → ADR-024 normative SSOT 승격.
+      Origin: CFP-1111 follow-up #1198/#1199 phase:설계 reflex incident (사용자 지적
+      "두개의 이슈 현재 작업 중 아닌가?").
+
+      Wave 1 declarative anchor — Wave 2 actual mechanical wire (Phase 2 PR):
+        - scripts/check-backlog-issue-label.sh thin-wrapper (ADR-061 §결정 1)
+        - scripts/lib/check_backlog_issue_label.py (ADR-061 multi-line Python external file)
+        - tests/bats/check-backlog-issue-label.bats RED→GREEN stash proof (CFP-1334 mandate)
+        - tests/fixtures/backlog-issue-label/{pass,fail}/ boundary fixture pair (CFP-963 Codex TP#4)
+        - templates/github-workflows/backlog-issue-label-forbid.yml body wire (`if: false` 제거 + 3-AND predicate detection)
+        - .github/workflows/backlog-issue-label-forbid.yml self-app byte-identical (ADR-005)
+
+      bypass: hotfix-bypass:backlog-issue-label label (103번째 family member,
+      raw active concrete grep count post-append 102 + 1 = 103) + BYPASS_BACKLOG_ISSUE_LABEL=1 env unconditional skip.
+
+      pattern_count ≥ N 추가 reach 시 warning → blocking-on-pr 승격 = 별 carrier 분리
+      (ADR-060 §결정 6 promotion gate AND 3/3 — PR 누적 ≥ 20 + bypass 외 failure = 0 + sibling Story merged).
+    detect_command: bash scripts/check-backlog-issue-label.sh   # Wave 2 carrier (Phase 2 PR scope — Wave 1 = script 부재)
+    workflow: templates/github-workflows/backlog-issue-label-forbid.yml
+    current_tier: warning              # ADR-060 §결정 5 — 첫 도입 = warning mode (continue-on-error, non-required check)
+    bypass_label: hotfix-bypass:backlog-issue-label
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-1646                     # self-carrier Wave 1 declarative anchor (본 Phase 1 PR)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+        - red_green_stash_proof_evidence  # Wave 2 bats RED→GREEN stash proof (CFP-1334 mandate)
+        - boundary_fixture_pair_evidence   # Wave 2 PASS+FAIL boundary fixture pair (CFP-963 Codex TP#4 mandate)
+    modal_anti_pattern_dictionary: {}
+    introduced_by: CFP-1646
+    introduced_date: 2026-05-26
+    owner_adr: ADR-024-Amendment-16    # declaration source ADR — Amendment 16 §결정 6.A.8 신설 (Issue label timing discipline)
+    carrier_adr: ADR-060               # enforcement source ADR — Amendment 5 default warning mode (first introduction = warning tier)
+    recurrence:
+      count: 2                         # CFP-1111 follow-up #1198 + #1199 phase:설계 reflex incident (pattern_count 2 evidence at Story origin)
+      threshold: TBD                    # Wave 2 mechanical wire 후 calibration (script + bats 가 actual recurrence 측정 가능 시점 결정)
+      last_occurrence: 2026-05-22T00:00:00+09:00  # CFP-1111 follow-up incident date 추정 (사용자 지적 origin, ADR-079 KST)
+      promotion_trigger: warning_tier_initial  # 첫 도입 = warning tier initial registration (Wave 1 declarative anchor, Wave 2 mechanical wire activation 후 별 carrier 평가)
+    status: deferred-followup          # Wave 1 declarative stub — Wave 2 actual mechanical wire (script + bats + workflow body) = Phase 2 PR scope 후 status → warning 전환 (CFP-1306 / CFP-1334 deferred-followup → warning 직접 전환 precedent 답습)
+
 
