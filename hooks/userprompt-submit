@@ -28,6 +28,11 @@
 # Bypass:
 #   BYPASS_CODEFORGE_USERPROMPT_SUBMIT=1 → stderr audit + exit 0 (stdout 0)
 #
+# Sibling channel disjoint axis (CFP-1738 / hooks/plain-language-reminder = jargon·구조 directive;
+#   본 hook (CFP-1741 / ADR-115 §결정 6) = derived default·parallel-work-sentinel reminder).
+#   두 hook 은 UserPromptSubmit event 에 동시 등록, 각자 stdout 독립 발화
+#   (harness 가 system-reminder 로 wrap, 한 hook 의 fail 이 다른 hook 영향 X).
+#
 # one-channel rule (ADR-115 §결정 3):
 #   reminder text 첫 행: [codeforge-wrapper-userprompt-submit] marker
 #   consumer overlay 가 이 marker 를 발견하면 overlay 측 reminder skip
