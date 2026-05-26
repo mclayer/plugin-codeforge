@@ -1132,6 +1132,36 @@ Orchestrator 가 사용자에게 **codeforge 내부 식별자**(ADR/CFP 번호·
 
 ---
 
+### §2h.4 한영 키보드 레이아웃 자동 변환 추론 hook (CFP-1751)
+
+사용자가 한영 전환 키를 누르지 못해 잘못된 레이아웃으로 입력했을 때(예: `dkssudgktpdy` 는 두벌식 한글 키보드에서 `안녕하세요` 의 키 시퀀스 — 영문 모드였음), 두벌식 ↔ QWERTY 매핑 변환을 시도해 Orchestrator 가 의미를 추정하고 답변할 수 있게 한다.
+
+| Hook | 파일 | 동작 |
+|---|---|---|
+| UserPromptSubmit (추가 entry) | `hooks/korean-english-recovery` → `korean-english-recovery.py` | 양방향 변환 시도 → 품질 점수 임계치 이상이면 `additionalContext` 로 추정 결과 주입. Orchestrator 가 변환 의미로 답변하고 첫 줄에 "한영전환으로 읽음: <원문> → <변환문>" 통보. |
+
+**자동 활성**: `/plugins install codeforge@mclayer` 만 하면 plugin-root `hooks/hooks.json` UserPromptSubmit 의 두 번째 entry 로 자동 활성. python 부재 시 통과(fail-safe).
+
+**설정 (consumer 환경변수)**:
+
+| env | 기본 | 효과 |
+|---|---|---|
+| `BYPASS_KOREAN_ENGLISH_RECOVERY=1` | off | 비활성화 |
+
+**탐지 기준 (heuristic, false positive 회피)**:
+- eng→kor: 입력이 두벌식 매핑 가능한 ASCII letter 비율 ≥ 80% + 변환 결과의 합성 음절 비율 ≥ 70%
+- kor→eng: 입력의 Hangul 음절 비율 ≥ 70% + 변환 결과가 영어 vowel 분포(0.20~0.60) 내 letter 비율 ≥ 80%
+- 1~3자 짧은 단독 단어 / 의미 명확한 문장 → 변환 안 시도
+
+**한계**:
+- `UserPromptSubmit` hook 은 사용자 원문을 수정할 수 없음 → `additionalContext` 주입만. Orchestrator 가 통보 후 진행 (사용자 정정 가능).
+- 양쪽 모두 의미 있을 때는 더 높은 품질 점수 후보를 우선 추정. 틀리면 사용자가 한 마디로 정정.
+- heuristic 기반 → false positive/negative 가능. 첫 줄 통보가 즉시 정정 경로.
+
+**fail-safe**: python 부재 / 파싱 오류 / 예외 시 검사를 건너뛰고 통과 — 사용자 입력 차단하지 않음.
+
+---
+
 ### §2i. 3-way version atomic 고정 설정 (CFP-820 / ADR-063 Amendment 5 §결정 15)
 
 Consumer repo 에서 **codeforge version 을 고정** 하고 PR-time 에 publisher ↔ registry ↔ consumer 3-way 버전 일치를 자동 검증하는 선택 기능이다.
