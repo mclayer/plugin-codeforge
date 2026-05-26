@@ -175,6 +175,12 @@ amendments:
     summary: "§결정 1 layer 1 sub-scope (1-R) 신설 — mid-Story FIX-loop re-verification mandate. FIX iter ≥ 2 시점 reslot calculus 의무 (amendment_id slot + label-registry MINOR bump version + bypass family member raw count 3-tuple 재verify) + per-iter mid-spawn drift detection (ArchitectPL re-engage prompt 안 3 field presence: `amendment_slot_revalidated` / `registry_version_revalidated` / `bypass_count_revalidated`) + slot collision recheck (origin/main fetch + amendment_log[] / contract_version / hotfix-bypass:* grep count 재verify). axis disjoint from 1-G (CFP-1435 Amendment 17 strict pre-reservation claim — Story 시작 시점 only) — 본 1-R = FIX-loop intra-Story window 영역. CFP-1646 직접 evidence: 1st attempt FIX iter 1 → iter 2 → iter 3 spawn cycle 사이 amendment slot + version + bypass count 재verify 부재 → CFP-1657 Amd 16 slot collision + CFP-1648 v2.78 + 103번째 slot collision 발생 (ESCALATE_PACKET_INCOMPLETE outcome). Wave 1 declarative — Wave 2 mechanical wire (`scripts/lib/check_fix_loop_reverify.py` + bash thin wrapper + workflow body wire + bats RED→GREEN stash proof + boundary fixture pair) = 별 sub-CFP carrier."
     direction: strengthening
     sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §결정 1 layer 1 sub-scope (1-A/…/1-Q) → (1-R mid-Story FIX-loop re-verification) 신설). pattern_count evidence: `sister_session_race_in_design_lane` cumulative ≥ 5 (CFP-684 + CFP-698 + CFP-1041 + CFP-1591 + CFP-1646 3 sub-events) — ADR-045 §D-9 Mandatory escalation 산물. is_transitional: false 유지 (permanent governance policy)."
+  - amendment_id: 30
+    carrier_story: CFP-1688
+    date: 2026-05-26
+    summary: "§결정 1 layer 1 sub-scope (1-S) 신설 — ADR frontmatter block convention SSOT codify + sub-scope 1-Q (CFP-1648 dual-block parity lint) single-block ADR 면제 scope clarification. Two ADR frontmatter conventions 명문화: (1) single-block = `amendment_log[]` block only (no `amendments[]` block) — 일부 ADR 의 valid convention (예: ADR-045, amendment_log[] only + body `### Amendment N` H3 heading) / (2) dual-block = `amendments[]` + `amendment_log[]` 둘 다 (예: ADR-082 본 ADR, F-DR-001 mandate 정합). sub-scope 1-Q lint scope correction (3 fix, 동일 parser-correctness false-positive class): Fix A (single-block mode — amendments[] block 부재 시 Block 1 + Block 3 skip, Block 2 amendment_log[] ↔ body parity F-DR-001 P0 sentinel 만 적용) + Fix B (body section detection H2 `## Amendment N` AND H3 `### Amendment N` both-level, bounded `{2,3}` H4 차단) + Fix C (frontmatter scan cap — `_extract_frontmatter_lines` 의 `lines[:PER_LANE_EVIDENCE_SCAN_CAP*10]` 300-line slice 가 long-frontmatter ADR (ADR-082 자신 2nd `---` line 548) 의 amendment_log[] entry 22-29 절단 → slice cap 확대 (예: 5000) 으로 full frontmatter scan, `---` delimiter break 가 실 boundary retain, ReDoS 무관 correctness fix). 3 root cause (CFP-1680 retro CFP-FU-C #1688 + Orchestrator verify-before-trust ADR-073/ADR-082 direct extraction FIX iter 1): (1) ADR-045 single-block + H3 body → BODY_H2_AMENDMENT_PATTERN (H2 only) body_ids empty → 11 amendments AMENDMENT_LOG_FRONTMATTER_ONLY false-positive + (2) H3 미detect + (3) ADR-082 long-frontmatter 절단 → false CROSS_BLOCK_COUNT_MISMATCH 30 != 20 + false BODY_ONLY_NO_LOG Amendment 30 (amendment_log[] line 353 cap 너머). 모두 warning-tier non-blocking but PR check output pollution. lint scope correction = 신규 check 아닌 1-Q scope 정정 → 기존 `adr-dual-block-parity` evidence-checks-registry entry + `hotfix-bypass:adr-dual-block-parity` label 재사용 (신규 entry / 신규 label 0). Combined Phase 1+2 (ADR amendment Phase 1 + lint fix Phase 2 develop lane dispatch, CFP-1648 combined precedent 답습). axis disjoint from 1-A through 1-R (ADR structural-parity-lint scope correction axis — 1-Q sub-domain refinement, not a new verify subject). META-self-applied (§결정 10.D 13th applied case + Amendment 17 §결정 1-G strict pre-reservation 6th applied case): 본 Amendment 30 = ADR-082 dual-block convention 의 exemplar 이며, 1-S 가 clarify 하는 lint 가 본 ADR-082 자신의 dual-block structure (amendments[] + amendment_log[] + body ## Amendment 30) 위에서 false-positive 없이 PASS 해야 하는 recursive dogfooding (Fix C 가 enabler — Fix C 없이 lint 가 amendment_log[] line 353 see 못해 false-fail). verified-via: `git show origin/main:docs/adr/ADR-082-write-time-self-write-verification-mandate.md` frontmatter amendments[] max=29 (CFP-1683 Amendment 29 merge 후 base) → 정확 next-slot = 30, 2026-05-26 KST 기준 origin/main 506f7cfc (PRE-SPAWN-ORIGIN-MAIN-SHA verified, pre_spawn_pin_verified: true). ADR-RESERVATION row pre-append + commit dad73ec5 (pre_reservation_verified: true)."
+    direction: strengthening
+    sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §결정 1 layer 1 sub-scope (1-A/…/1-R) → (1-S ADR frontmatter block convention SSOT + 1-Q single-block/H3/frontmatter-scan-cap 3-fix scope correction) 신설. 본 Amendment 는 lint scope correction (false-positive 차단) 이나 forbid scope 축소 아님 — Block 2 (F-DR-001 P0 sentinel) 검증 retain + single-block ADR 도 amendment_log[] ↔ body parity 계속 enforce + Fix C 적용 후 long-frontmatter ADR 의 genuine body-section drift (amendments 8-13/18-21 frontmatter-only) 가 정당 surface (FP 차단이 genuine warning 을 enable, 약화 아님). ADR-064 §결정 7 (CFP-1149 Amendment 8) symmetric evidence-gated 정합 — false-positive 정정 = accuracy 강화 (over-rate 차단 = ADR-081 §결정 D6 severity calibration 정합), guard 약화 0건. ADR-073/ADR-082 Orchestrator verify-before-trust 가 Fix C (bug #3) 를 FIX iter 1 에서 catch — same-class parser-correctness FP). pattern_count evidence: CFP-1680 retro (single-block + H3 11 amendments false-positive 직접 lint 실행 확인) + bug #3 frontmatter scan cap (ADR-082 self direct extraction, FIX iter 1 catch). is_transitional: false 유지 (permanent governance policy). META-self-applied (§결정 10.D 13th applied case)."
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-841
@@ -344,6 +350,12 @@ amendment_log:
     decisions_touched: ["§결정 1 layer 1 sub-scope 1-R (신설)"]
     nature: ratchet-up  # mid-Story FIX-loop re-verification mandate 신설 (axis disjoint from 1-G CFP-1435 Story-start pre-reservation — FIX-loop intra-Story window 영역).
     note: "CFP-1683 carrier — CFP-1646 retro F2 forcing function (`sister_session_race_in_design_lane` cumulative pattern_count ≥ 5: CFP-684 + CFP-698 + CFP-1041 + CFP-1591 + CFP-1646 3 sub-events). Direct evidence = CFP-1646 1st attempt FIX iter 1 → iter 2 → iter 3 spawn cycle 사이 amendment slot + version + bypass count 재verify 부재 → CFP-1657 Amd 16 slot + CFP-1648 v2.78/103번째 slot collision 발생 (ESCALATE_PACKET_INCOMPLETE outcome). Mandate: FIX iter ≥ 2 시점 ArchitectPL re-engage prompt 안 3-tuple 재verify 의무 (amendment_id slot + label-registry MINOR bump version + bypass family member raw count). Wave 1 declarative — Wave 2 mechanical wire (`scripts/lib/check_fix_loop_reverify.py` + bash thin wrapper + workflow body wire + bats RED→GREEN stash proof + boundary fixture pair) = 별 sub-CFP carrier. label-registry-v2 v2.80 → v2.81 (`hotfix-bypass:fix-loop-reverify-mandate` 106번째 hotfix-bypass:* family member). META-self-applied: 본 Amendment 자체가 CFP-1683 = FIX-loop re-verify mandate carrier ADR-082 dual-block parity (Amendment 28 sub-scope 1-Q) self-application — amendments[] + amendment_log[] + body 3-block dual-write."
+  - amendment_id: 30
+    carrier_story: CFP-1688
+    date: 2026-05-26  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 1 layer 1 sub-scope 1-S (신설)"]
+    nature: ratchet-up  # §결정 1 layer 1 sub-scope (1-A/.../1-R) → (1-S ADR frontmatter block convention SSOT + 1-Q single-block/H3/frontmatter-scan-cap 3-fix scope correction) 신설 (ADR-058 §결정 5 강화 방향 — false-positive 정정 accuracy 강화, guard 약화 0건). CFP-FU-C from CFP-1680 retro Pivot 1 root cause + Orchestrator verify-before-trust FIX iter 1 (bug #3). Combined Phase 1+2.
+    note: "CFP-1688 carrier — ADR frontmatter block convention SSOT codify (single-block = amendment_log[] only e.g. ADR-045 / dual-block = both e.g. ADR-082) + sub-scope 1-Q (CFP-1648 lint) scope correction (3 fix, 동일 parser-correctness false-positive class). 3 root cause: (1) ADR-045 frontmatter `amendment_log:` block ONLY (grep -cE '^amendments:' = 0, grep -cE '^amendment_log:' = 1) + body `### Amendment N` H3 heading (line 439) ↔ lint BODY_H2_AMENDMENT_PATTERN 은 `## Amendment N` H2 only detect → body_ids empty → 11 amendments 전부 Block 2 AMENDMENT_LOG_FRONTMATTER_ONLY false-positive + Block 3 CROSS_BLOCK_COUNT_MISMATCH false-fire / (2) H3 미detect / (3) frontmatter scan cap — `_extract_frontmatter_lines` 의 `lines[:PER_LANE_EVIDENCE_SCAN_CAP*10]` = 300 line slice 가 ADR-082 자신의 long frontmatter (2nd `---` = line 548) 의 amendment_log[] entry 22-29 (line 305-347, 300 초과) 절단 → false CROSS_BLOCK_COUNT_MISMATCH 30 != 20 + false BODY_ONLY_NO_LOG Amendment 30 (amendment_log[] line 353 cap 너머) — Orchestrator verify-before-trust ADR-073/ADR-082 direct extraction FIX iter 1 발견. Fix spec (Phase 2 develop lane dispatch via Change Plan §8): Fix A (single-block mode — amendments[] 부재 + amendment_log[] present 시 Block 1 + Block 3 skip, Block 2 만 적용) / Fix B (body heading `## Amendment N` H2 AND `### Amendment N` H3 both-level, bounded `{2,3}` H4 차단) / Fix C (frontmatter scan cap 확대 — `---` delimiter break 가 실 boundary, slice cap 5000 으로 full frontmatter scan, ReDoS 무관 correctness fix). lint scope correction = 기존 `adr-dual-block-parity` evidence-checks-registry entry + `hotfix-bypass:adr-dual-block-parity` label 재사용 (신규 entry / 신규 label 0, label-registry MINOR bump 0). META-self-applied: ADR-082 = dual-block exemplar — 본 Amendment 30 의 amendments[] + amendment_log[] + body ## Amendment 30 3-block parity authoring 정확, 단 lint PASS 는 Fix C 가 enabler (Fix C 없이 lint 가 amendment_log[] line 353 see 못해 false-fail). Fix C 적용 후 ADR-082 의 genuine body-section drift (amendments 8-13/18-21 frontmatter-only) = 정당 surface, body backfill = 별 follow-up CFP (out of scope). 본 Amendment 번호(30) = source command `git show origin/main:docs/adr/ADR-082-write-time-self-write-verification-mandate.md` frontmatter amendments[] actual max=29 (Amd 29 CFP-1683 점유) → 정확 next-slot for CFP-1688 = 30 [verified, origin/main 506f7cfc, PRE-SPAWN-ORIGIN-MAIN-SHA pinned]. ADR-RESERVATION row pre-append + commit dad73ec5 (pre_reservation_verified: true)."
 related_stories:
   - CFP-776  # carrier (super-class 통합 결정 — escalation_action escalate_user)
   - CFP-841  # Amendment 1 carrier (§결정 6 behavioral→mechanical 전환 후속 carrier)
@@ -409,6 +421,10 @@ related_stories:
   - CFP-1637 # Amendment 27 origin carrier (sub-scope 1-O Amd 26 Wave 1 declaration-only mandate — 본 Amendment 27 Wave 2 mechanical enforcement wire 의 Wave 1 SSOT base, Issue #1647 HIGH FU-A 의 origin)
   - CFP-1648 # Amendment 28 carrier (§결정 1 layer 1 sub-scope 1-Q 신설 — ADR dual-block parity 3-invariant forward-prevention lint, F-DR-001 P0 origin sentinel mechanical carrier. Issue #1648 MEDIUM follow-up from CFP-1637 retro. Combined Phase 1+2. META-self-applied: amendments[] + amendment_log[] + body 3-block parity 동시 write = recursive dogfooding integrity verify.)
   - CFP-1637 # Amendment 28 origin carrier (F-DR-001 P0 origin: Amendment 26 amendment_log[] entry present but body section missing — CFP-1637 retro 발견, 본 Amendment 28 forward-prevention lint 의 sentinel evidence)
+  - CFP-1683 # Amendment 29 carrier (§결정 1 layer 1 sub-scope 1-R 신설 — mid-Story FIX-loop re-verification mandate, sibling axis disjoint from 1-G Story-start pre-reservation)
+  - CFP-1688 # Amendment 30 carrier (§결정 1 layer 1 sub-scope 1-S 신설 — ADR frontmatter block convention SSOT codify + sub-scope 1-Q single-block ADR 면제 scope clarification. CFP-FU-C from CFP-1680 retro Pivot 1 root cause. single-block (amendment_log[] only e.g. ADR-045) vs dual-block (both e.g. ADR-082) convention 명문화 + 1-Q lint single-block mode (Block 1/3 skip) + body H2/H3 both-level detection scope correction. lint scope correction = 기존 adr-dual-block-parity entry + hotfix-bypass:adr-dual-block-parity label 재사용, 신규 entry/label 0. Combined Phase 1+2 develop lane dispatch.)
+  - CFP-1680 # Amendment 30 origin (CFP-1680 retro Pivot 1 root cause — sub-scope 1-Q lint false-positive on single-block ADR-045, CFP-FU-C #1688 escalation)
+  - CFP-1648 # Amendment 30 sibling (sub-scope 1-Q lint origin Amendment 28 carrier — 본 Amendment 30 = 1-Q scope correction, dual-carrier naming SSOT adr-dual-block-parity)
 related_adrs:
   - ADR-073  # Orchestrator cross-repo state / assumption verify (disjoint 보완 — Orchestrator 행위 한정)
   - ADR-070  # Codex external worker output verify (disjoint 보완 — 외부 worker output 한정)
@@ -2546,4 +2562,80 @@ ArchitectPL re-engage prompt 안 **3 field presence 의무**:
 - ADR-082 §결정 1 sub-scope 1-G (CFP-1435 Amendment 17, sibling axis disjoint)
 - ADR-085 §결정 1 multi-session collaboration protocol
 - ADR-073 Amendment 6 sibling_story_handoff
+
+## Amendment 30 — §결정 1 layer 1 sub-scope (1-S) 신설 (ADR frontmatter block convention SSOT + sub-scope 1-Q single-block 면제 scope clarification, CFP-1688, 2026-05-26 KST)
+
+### Context
+
+**Issue #1688 MEDIUM follow-up (CFP-FU-C from CFP-1680 retro Pivot 1 root cause)** — sub-scope 1-Q (CFP-1648 dual-block parity lint, Amendment 28) 가 **single-block ADR 에 대해 false-positive** 한다. ADR-045 에 대해 lint 직접 실행으로 확인:
+
+- **ADR-045 frontmatter**: `amendment_log:` block ONLY — `amendments:` block 부재 (single-block convention). verified: `grep -cE "^amendments:" ADR-045 = 0`, `grep -cE "^amendment_log:" = 1`.
+- **ADR-045 body**: `### Amendment N` (H3) heading 사용 (예: `### Amendment 5 — §D-9 신설`) + `#### §D-N` sub-section. 기존 lint `BODY_H2_AMENDMENT_PATTERN` 은 `## Amendment N` (H2) 만 match.
+- **결과**: body_ids empty (H3 미detect) → 11 ADR-045 amendments 전부 `AMENDMENT_LOG_FRONTMATTER_ONLY` false-positive ("body ## Amendment N section missing"). Block 3 (`CROSS_BLOCK_COUNT_MISMATCH`) 도 동시 fire (amendments[]=0 != amendment_log[]=N).
+- warning-tier (`continue-on-error: true`) 이므로 non-blocking 이나, 모든 PR 의 check output 을 false warning 으로 오염.
+
+**bug #3 — frontmatter scan cap (Orchestrator verify-before-trust, ADR-073/ADR-082 direct extraction)**: `_extract_frontmatter_lines()` 가 frontmatter scan 을 `lines[:PER_LANE_EVIDENCE_SCAN_CAP * 10]` = **300 line** 으로 cap 한다. ADR-082 자신의 frontmatter 가 300 line 초과 (amendments[] + amendment_log[] verbose multi-line entry 가 2nd `---` delimiter line 548 까지 진행, related_stories: line 359) → extractor 가 2nd `---` 에 도달하기 전 silent 절단 → amendment_log[] entry 22-29 (line 305-347, 전부 300 초과) DROP. verified: origin/main `_extract_amendment_log_ids` returns max=22 (entry 23-29 DROP) / Amendment 30 edit 후 max=21 (entry 22 추가 DROP). 결과 = false `CROSS_BLOCK_COUNT_MISMATCH: amendments[] count 30 != amendment_log[] count 20` + false `BODY_ONLY_NO_LOG: Amendment 30` (30 은 amendment_log[] line 353 에 존재하나 cap 너머). loop 자체는 2nd `---` 에서 `break` (line 136-137) 하므로 block scan 은 정상 — 300-line slice cap 이 유일 원인 (redundant runaway protection mis-fire).
+
+**triple schema heterogeneity** root cause: (1) single-block (amendment_log[] only) vs dual-block (both) + (2) body heading H3 (`###`) vs H2 (`##`) + (3) frontmatter scan cap (300 line) 가 long-frontmatter ADR (ADR-082 자신) 의 amendment_log[] 절단. 세 bug 모두 동일 class — **lint 가 real ADR convention 을 정확히 read 못함** (parser-correctness false-positive).
+
+anchor_id = `adr_frontmatter_block_convention_single_block_exemption` / root_cause_class = `lint-scope-overbroad-single-block-fp`. ADR-082 §결정 1 layer 1 sub-scope 1-S (disjoint from 1-A through 1-R — ADR structural-parity-lint scope correction axis, 1-Q sub-domain refinement, not a new verify subject).
+
+### Amendment
+
+#### §결정 1 layer 1 sub-scope 1-S: ADR frontmatter block convention SSOT + 1-Q single-block 면제 scope clarification
+
+**(1) ADR frontmatter block convention SSOT (2 valid conventions 명문화)**:
+
+| convention | frontmatter blocks | body heading | exemplar |
+|---|---|---|---|
+| **single-block** | `amendment_log[]` only (no `amendments[]`) | `### Amendment N` (H3) 또는 `## Amendment N` (H2) | ADR-045 |
+| **dual-block** | `amendments[]` + `amendment_log[]` 둘 다 | `## Amendment N` (H2) | ADR-082 (본 ADR) |
+
+두 convention 모두 valid. **migration / standardization 강제 안 함** (retroactive 전면 변경은 risk 큼 — 기존 ADR frontmatter 변조 금지 invariant 정합). lint 가 두 convention 을 모두 지원한다.
+
+**(2) sub-scope 1-Q (CFP-1648 lint) scope correction (3 fix, 동일 false-positive class)**:
+
+- **Fix A — single-block mode**: `amendments:` block 부재 + `amendment_log:` block present 시 single-block mode 진입 → **Block 1** (amendments[] ↔ body) + **Block 3** (amendments[] ↔ amendment_log[] cross-count) **skip**, **Block 2** (amendment_log[] ↔ body parity, **F-DR-001 P0 sentinel**) **만 적용**. (single-block ADR 도 amendment_log[] ↔ body parity 는 계속 enforce — F-DR-001 P0 보호 무약화.)
+- **Fix B — body heading both-level detection**: body amendment section 을 `## Amendment N` (H2) **AND** `### Amendment N` (H3) 둘 다 detect (H3 추가). ReDoS guard (ADR-061 Amendment 3 §결정 11) 정합 — anchored simple regex, no nested quantifier (예: `^#{2,3}\s+Amendment\s+([0-9]+)` — bounded `{2,3}` 가 H4 `####` 차단, 또는 H2/H3 2 pattern 분리).
+- **Fix C — frontmatter scan cap (NEW, Orchestrator verify-before-trust 발견)**: `_extract_frontmatter_lines()` 의 `lines[:PER_LANE_EVIDENCE_SCAN_CAP * 10]` (300 line) slice 가 long-frontmatter ADR (ADR-082 자신, frontmatter 2nd `---` = line 548) 의 amendment_log[] 절단. fix = frontmatter delimiter 탐색 slice cap 제거 — frontmatter 는 이미 `---` delimiter 로 bounded 이므로 2nd `---` 까지 scan + 넉넉한 safety cap (예: 5000 line) 으로 runaway protection retain. correctness fix (ReDoS-relevant regex 변경 아님 — backtracking pattern 무관, slice 상한값 확대만).
+
+**lint scope correction = 신규 check 아닌 sub-scope 1-Q scope 정정** — 기존 `adr-dual-block-parity` evidence-checks-registry entry + `hotfix-bypass:adr-dual-block-parity` label 재사용. 신규 evidence-checks-registry entry 0 / 신규 label 0 / label-registry MINOR bump 0.
+
+#### Wave 분배 (Combined Phase 1+2 — CFP-1648 combined precedent 답습)
+
+- **Phase 1 (본 ADR Amendment 30, design lane)**: §결정 1 layer 1 sub-scope 1-S 신설 + ADR frontmatter block convention SSOT codify + Change Plan §8 Test Contract (lint fix spec — Fix A/B/C).
+- **Phase 2 (develop lane dispatch — Change Plan §8 SSOT)**: `scripts/lib/check_adr_dual_block_parity.py` lint fix (Fix A single-block mode + Fix B H2/H3 body detection + Fix C frontmatter scan cap) + bats 신규 TC (single-block PASS / single-block missing-body WARNING / dual-block 무변경 / H3 detection / H4 guard / **long-frontmatter >300 line high-numbered amendment_log entry 추출**) + 기존 4 fixture + single-block/H3/long-frontmatter fixture 추가.
+
+### Axis disjoint
+
+- §결정 1 sub-scope 1-Q (Amendment 28 CFP-1648) — dual-block parity 3-invariant forward-prevention lint (lint **신설**)
+- §결정 1 sub-scope 1-S (본 Amendment 30 CFP-1688) — 1-Q lint single-block ADR 면제 + body H2/H3 both-level + frontmatter scan cap (Fix A/B/C) **scope correction** (lint 신설 아닌 scope 정정)
+- Axis 분리 — lint 신설 (1-Q) ↔ lint scope correction / false-positive 차단 (1-S). 1-S 는 1-Q sub-domain refinement (verify subject 동일 = ADR dual-block structural parity, 적용 scope 만 정정).
+
+### META self-application (recursive dogfooding — dual-block exemplar, Fix C 가 enabler)
+
+본 Amendment 30 = ADR-082 의 **dual-block convention exemplar** 이며, 1-S 가 clarify 하는 lint 가 본 ADR-082 자신의 dual-block structure 위에서 false-positive 없이 PASS 해야 한다 (recursive dogfooding integrity verify):
+
+- `amendments[]` entry: Amendment 30 row append (max=29 → next-slot=30 verified)
+- `amendment_log[]` entry: Amendment 30 row append (F-DR-001 P0 sentinel — amendment_log entry present 의무, file line 353)
+- body `## Amendment 30` section: 본 section (H2 — dual-block convention 정합)
+
+**3-block parity authoring 은 정확** (3 block 전부 amendment_id 30 보유, file 상 검증 완료). 단 **bug #3 (frontmatter scan cap 300) 가 unfixed 인 현 상태에서는 lint 가 ADR-082 의 amendment_log[] line 353 을 see 하지 못해 false `BODY_ONLY_NO_LOG: Amendment 30` 산출** — 즉 recursive dogfooding PASS 는 **Fix C 가 enabler** (Fix C 적용 후에야 lint 가 full frontmatter 를 읽어 Amendment 30 parity 를 정확히 PASS). 이것이 Fix C 를 CFP-1688 scope 에 포함하는 직접 근거 — 본 Amendment 의 META self-application 자체가 Fix C 없이는 성립 불가. dual-block ADR-082 는 single-block mode 미진입 (amendments[] present) → 3-block 전부 검증 path. (META self-application — §결정 10.D 13th applied case). Amendment 17 §결정 1-G strict pre-reservation 6th applied case (ADR-RESERVATION row pre-append + commit dad73ec5, `pre_reservation_verified: true`).
+
+### Genuine drift (out of scope — Fix C 적용 후 정당 surface)
+
+Fix C 적용 후 lint 가 full frontmatter 를 읽으면, ADR-082 의 **body §Amendment 8-13 / 18-21 section 부재** 가 genuine drift WARNING 으로 정당 surface 한다 (해당 amendment 들은 frontmatter-only — body `## Amendment N` section 미작성). 이는 Fix C 가 의도대로 동작하는 **legitimate warning** 이며 CFP-1688 scope 외. body section backfill (또는 accept-as-historical 결정) = 별 follow-up CFP. parser-correctness bug (Fix A/B/C, in-scope) ↔ genuine body-section drift (out-of-scope) 의 명확 분리.
+
+### Related
+
+- CFP-1688 carrier Story
+- CFP-1680 retro Pivot 1 origin (sub-scope 1-Q lint false-positive on single-block ADR-045 root cause)
+- CFP-1648 sibling (sub-scope 1-Q lint origin Amendment 28, dual-carrier naming SSOT `adr-dual-block-parity`)
+- ADR-045 — single-block convention exemplar (amendment_log[] only + H3 body)
+- ADR-082 (본 ADR) — dual-block convention exemplar (amendments[] + amendment_log[] + H2 body) + long-frontmatter (>300 line) Fix C 직접 sentinel
+- ADR-073 / ADR-082 — Orchestrator verify-before-trust (Fix C 발견 채널 — FIX 직접 lint 실행 + extraction 검증)
+- ADR-061 Amendment 3 §결정 11 — CodeQL ReDoS guard (Phase 2 lint fix regex anchored simple, no nested quantifier — Fix C 는 slice cap 확대로 ReDoS 무관)
+- ADR-054 §결정 1 — doc-only fast-path 비적격 (lint fix = scripts/tests 변경 동반, Combined Phase 1+2)
+- `scripts/lib/check_adr_dual_block_parity.py` — Phase 2 lint fix target (Fix A single-block mode + Fix B H2/H3 detection + Fix C frontmatter scan cap)
+- `tests/scripts/check-adr-dual-block-parity/` — Phase 2 bats 신규 TC + fixture (single-block / H3 / H4 guard / long-frontmatter) 추가 target
 

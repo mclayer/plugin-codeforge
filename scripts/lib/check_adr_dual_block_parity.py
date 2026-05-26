@@ -1,25 +1,36 @@
 """
 scripts/lib/check_adr_dual_block_parity.py
 CFP-1648 / ADR-082 Amendment 28 sub-scope 1-Q — ADR dual-block parity lint SSOT
+CFP-1688 / ADR-082 Amendment 30 sub-scope 1-S — single-block exemption + H2/H3 detection + scan cap fix
 
 기능:
   docs/adr/ADR-*.md 파일의 frontmatter amendments[] / amendment_log[] 와
-  body ## Amendment N — ... H2 section 의 양방향 parity 를 검증한다.
+  body ## Amendment N / ### Amendment N (H2/H3) section 의 양방향 parity 를 검증한다.
 
   F-DR-001 P0 origin sentinel scenario:
     frontmatter amendment_log[] entry 존재 but body ## Amendment N section 부재
     → WARNING exit 1
 
-Detection logic (2 dual-block):
-  Block 1: amendments[] parity
-    - frontmatter amendments[] count ↔ body ## Amendment N H2 count
-    - 모든 frontmatter amendment_id 에 대응 body section 존재 여부
-    - 모든 body ## Amendment N 에 대응 frontmatter row 존재 여부
+Detection logic:
 
-  Block 2: amendment_log[] parity  ← F-DR-001 P0 origin
-    - frontmatter amendment_log[] count ↔ body ## Amendment N H2 count (동일 invariant)
-    - frontmatter amendment_log[] entry 마다 body section 존재 여부 (sentence-level)
-    - amendment_log[] 의 amendment_id 추출 → body section 매핑
+  Single-block mode (ADR-082 Amendment 30 sub-scope 1-S):
+    amendments[] 부재 AND amendment_log[] 존재 → single-block ADR (e.g. ADR-045)
+    Block 1 skip (amendments[] empty — meaningless)
+    Block 3 skip (amendments[] empty — always mismatch)
+    Block 2 retain (amendment_log[] ↔ body — F-DR-001 P0 sentinel, unconditional)
+
+  Dual-block mode (amendments[] + amendment_log[] both present):
+    Block 1: amendments[] parity
+      - frontmatter amendments[] count ↔ body ## Amendment N H2/H3 count
+      - 모든 frontmatter amendment_id 에 대응 body section 존재 여부
+      - 모든 body ## Amendment N 에 대응 frontmatter row 존재 여부
+
+    Block 2: amendment_log[] parity  ← F-DR-001 P0 origin
+      - frontmatter amendment_log[] count ↔ body ## Amendment N H2/H3 count (동일 invariant)
+      - frontmatter amendment_log[] entry 마다 body section 존재 여부 (sentence-level)
+      - amendment_log[] 의 amendment_id 추출 → body section 매핑
+
+    Block 3: amendments[] ↔ amendment_log[] cross-count parity
 
 Exit code 3-tier (ADR-060 §결정 15):
   0 PASS: all ADR files parity verified
@@ -109,9 +120,13 @@ AMENDMENT_LOG_START_PATTERN = re.compile(r"^amendment_log:")
 # amendments[] block start marker
 AMENDMENTS_START_PATTERN = re.compile(r"^amendments:")
 
-# Body section H2 header: "## Amendment N ..." or "## Amendment N—..."
-# Simple anchored: line starts with "## Amendment " followed by digits
-BODY_H2_AMENDMENT_PATTERN = re.compile(r"^##\s+Amendment\s+([0-9]+)")
+# Body section H2/H3 header: "## Amendment N ..." or "### Amendment N ..."
+# Fix B (CFP-1688 / ADR-082 Amendment 30 sub-scope 1-S):
+#   Detect both H2 (##) and H3 (###) amendment headings.
+#   Bounded {2,3} quantifier — H1 and H4+ are NOT matched.
+#   Anchored simple regex (ADR-061 Amd 3 §결정 11 ReDoS guard — no nested quantifier).
+#   Duplicate headings (e.g. "### Amendment 8 적용 evidence") collapse via set() in parity check.
+BODY_AMENDMENT_PATTERN = re.compile(r"^#{2,3}\s+Amendment\s+([0-9]+)")
 
 
 # ---------------------------------------------------------------------------
@@ -127,7 +142,13 @@ def _extract_frontmatter_lines(lines: List[str]) -> List[str]:
     fm_lines: List[str] = []
     delim_count = 0
 
-    for line in lines[:PER_LANE_EVIDENCE_SCAN_CAP * 10]:  # reasonable front limit
+    # Fix C (CFP-1688 / ADR-082 Amendment 30 sub-scope 1-S):
+    # Use a generous safety cap (5000 lines) instead of PER_LANE_EVIDENCE_SCAN_CAP * 10 (300).
+    # The real boundary is the 2nd "---" delimiter (loop break below).
+    # ADR-082's frontmatter 2nd "---" delimiter is at line ~548 — cap 300 silently truncated
+    # amendment_log[] entries 22+ causing false CROSS_BLOCK_COUNT_MISMATCH + BODY_ONLY_NO_LOG.
+    # This is a correctness fix, NOT a ReDoS-relevant regex change.
+    for line in lines[:5000]:  # safety cap — real boundary = 2nd "---" delimiter
         if FRONTMATTER_DELIM.match(line):
             delim_count += 1
             if delim_count == 1:
@@ -212,12 +233,19 @@ def _extract_amendment_log_ids(fm_lines: List[str]) -> List[int]:
 
 def _extract_body_amendment_ids(lines: List[str]) -> List[int]:
     """
-    Extract amendment IDs from body ## Amendment N ... H2 sections.
+    Extract amendment IDs from body ## Amendment N / ### Amendment N sections.
+
+    Fix B (CFP-1688 / ADR-082 Amendment 30 sub-scope 1-S):
+      Now detects both H2 (##) and H3 (###) amendment headings via BODY_AMENDMENT_PATTERN.
+      H4+ (#### §D-N etc.) are excluded by the {2,3} upper bound.
+      Duplicate headings (e.g. "### Amendment 8 적용 evidence") collapse harmlessly
+      via set() in _check_adr_parity — no special dedup needed here.
 
     Scans entire file body (after frontmatter) for:
       ## Amendment N
       ## Amendment N — ...
-      ## Amendment N (...)
+      ### Amendment N
+      ### Amendment N — ...
 
     Returns sorted list of amendment IDs found in body.
     """
@@ -241,8 +269,8 @@ def _extract_body_amendment_ids(lines: List[str]) -> List[int]:
         if not past_frontmatter:
             continue
 
-        # Body: scan for ## Amendment N patterns
-        m = BODY_H2_AMENDMENT_PATTERN.match(line)
+        # Body: scan for ## Amendment N / ### Amendment N patterns (H2/H3, not H4+)
+        m = BODY_AMENDMENT_PATTERN.match(line)
         if m:
             ids.append(int(m.group(1)))
 
@@ -305,30 +333,42 @@ def _check_adr_parity(adr_path: str) -> ParityResult:
             not result.body_ids):
         return result
 
-    # -----------------------------------------------------------------------
-    # Block 1: amendments[] ↔ body parity
-    # -----------------------------------------------------------------------
+    # Fix A (CFP-1688 / ADR-082 Amendment 30 sub-scope 1-S):
+    # Single-block mode: amendments[] absent AND amendment_log[] present.
+    # These are valid single-block ADRs (e.g. ADR-045) — no amendments[] block by convention.
+    # Block 1 and Block 3 are meaningless (amendments[] is empty), so skip them.
+    # Block 2 (F-DR-001 P0 sentinel) is always retained — unconditional.
+    single_block_mode = (
+        not result.amendments_ids and bool(result.amendment_log_ids)
+    )
+
     amendments_set = set(result.amendments_ids)
     body_set = set(result.body_ids)
 
-    # frontmatter amendments[] has entry but body section missing
-    missing_in_body_from_amendments = amendments_set - body_set
-    for aid in sorted(missing_in_body_from_amendments):
-        result.add_violation(
-            f"AMENDMENTS_FRONTMATTER_ONLY: Amendment {aid} in frontmatter "
-            f"amendments[] but body ## Amendment {aid} section missing"
-        )
+    if not single_block_mode:
+        # -------------------------------------------------------------------
+        # Block 1: amendments[] ↔ body parity (dual-block mode only)
+        # -------------------------------------------------------------------
 
-    # body section exists but frontmatter amendments[] missing
-    missing_in_amendments_from_body = body_set - amendments_set
-    for aid in sorted(missing_in_amendments_from_body):
-        result.add_violation(
-            f"BODY_ONLY_NO_AMENDMENTS: Amendment {aid} in body ## Amendment "
-            f"section but frontmatter amendments[] row missing"
-        )
+        # frontmatter amendments[] has entry but body section missing
+        missing_in_body_from_amendments = amendments_set - body_set
+        for aid in sorted(missing_in_body_from_amendments):
+            result.add_violation(
+                f"AMENDMENTS_FRONTMATTER_ONLY: Amendment {aid} in frontmatter "
+                f"amendments[] but body ## Amendment {aid} section missing"
+            )
+
+        # body section exists but frontmatter amendments[] missing
+        missing_in_amendments_from_body = body_set - amendments_set
+        for aid in sorted(missing_in_amendments_from_body):
+            result.add_violation(
+                f"BODY_ONLY_NO_AMENDMENTS: Amendment {aid} in body ## Amendment "
+                f"section but frontmatter amendments[] row missing"
+            )
 
     # -----------------------------------------------------------------------
     # Block 2: amendment_log[] ↔ body parity (F-DR-001 P0 sentinel)
+    # Unconditionally retained in both single-block and dual-block mode.
     # -----------------------------------------------------------------------
     log_set = set(result.amendment_log_ids)
 
@@ -349,15 +389,16 @@ def _check_adr_parity(adr_path: str) -> ParityResult:
             f"section but frontmatter amendment_log[] entry missing"
         )
 
-    # -----------------------------------------------------------------------
-    # Block 3: amendments[] ↔ amendment_log[] count parity (cross-block)
-    # -----------------------------------------------------------------------
-    if len(result.amendments_ids) != len(result.amendment_log_ids):
-        result.add_violation(
-            f"CROSS_BLOCK_COUNT_MISMATCH: amendments[] count "
-            f"{len(result.amendments_ids)} != amendment_log[] count "
-            f"{len(result.amendment_log_ids)}"
-        )
+    if not single_block_mode:
+        # -------------------------------------------------------------------
+        # Block 3: amendments[] ↔ amendment_log[] count parity (dual-block only)
+        # -------------------------------------------------------------------
+        if len(result.amendments_ids) != len(result.amendment_log_ids):
+            result.add_violation(
+                f"CROSS_BLOCK_COUNT_MISMATCH: amendments[] count "
+                f"{len(result.amendments_ids)} != amendment_log[] count "
+                f"{len(result.amendment_log_ids)}"
+            )
 
     return result
 
