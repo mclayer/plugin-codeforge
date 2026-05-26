@@ -233,6 +233,41 @@ PMOAgent 가 retro file `§6 ADR 후보 발의` section 안 ADR draft candidate 
 
 **Self-application 자체 evidence** (META 6-tier recursive dogfooding first wild use case — CFP-1632 retro 2026-05-26 KST): 본 §D-10 mandate 자체가 CFP-1623 (Wave 1 declarative anchor) + CFP-1632 (Wave 2 mechanical wire activation) 의 retro 작성 시점 self-applied. 본 §4.1 sub-section 의 실 적용 evidence = retro [`plugin-codeforge/retros/2026-05-26-cfp-1632.md`](https://github.com/mclayer/codeforge-internal-docs/blob/main/plugin-codeforge/retros/2026-05-26-cfp-1632.md) §6 (`downgrade_action: null`, 8-tuple AND PASS).
 
+#### 4.2 Retro batch closure pattern (CFP-1680, [ADR-045 Amendment 11 §D-11](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-045-story-retro-mandatory-trigger.md))
+
+PMOAgent 가 누적 LOW/MEDIUM follow-up Issue (**≥ 3**) 의 batch closure 진행 시 본 4-option decision enum + 5 verify-before-trust sub-scope + closure summary table SSOT + closure forcing function 3 step 적용 의무 (Mandatory framing). axis 분리: §D-9 (post-hoc threshold escalation) / §D-10 (pre-publish 8-tuple verify) 와 disjoint — 본 §D-11 = post-batch governance **status update** lifecycle 영역.
+
+**Decision enum (closed-set 4-option)** — 각 Issue 별 1 값 결정 의무:
+
+- **`CLOSE_AS_OBVIATED`** — recent carrier 가 이미 cover (direct merge link verify 의무, Issue body verbatim ↔ carrier PR merge state mapping)
+- **`CLOSE_AS_SENTINEL`** — declarative monitor only (pattern_count not reached, ADR-060 promotion gate AND 3/3 미충족, deferred future carrier candidate)
+- **`PROMOTE`** — pattern_count reached, active Story 발의 의무 (label `priority:P1` 부착, §D-9 escalation 정합)
+- **`DEFER`** — keep open, future carrier 대기 (rationale 명시 의무, sunset gate metric 부재 영역 보존)
+
+**Verify-before-trust 5 sub-scope mandate** (batch closure write-time, 각 Issue 별):
+
+- **(a) per-Issue body verbatim cite** — 재합성 0 (ADR-082 §결정 1 sub-scope (1-C) USER-UTTERANCE-VERBATIM block 패턴 답습, Issue body wording 직접 인용)
+- **(b) recent merge state direct verify** — `gh api repos/<owner>/<repo>/pulls/<N>` + `git log --oneline <SHA>` (ADR-073 verify-before-assert primitive)
+- **(c) axis disjoint discrimination** — false-positive obviation 차단 ("비슷한 carrier 가 cover 한다" 추론 금지 — verify 의무, ADR-082 §결정 12 정합)
+- **(d) sibling carrier cross-link via PR number** — closure rationale 안 PR/Issue 번호 explicit cite (ADR-082 §결정 9 verify-before-cite 양방향)
+- **(e) sub-scope alphabet sequential verify** — pre-write 위치 확인 (ADR-082 §결정 1 sub-scope codify 패턴)
+
+**Closure summary table format (SSOT)** — batch closure retro file §X (close lane sub-section) 안 5-column 의무 (ADR-068 I-4 wording SSOT invariant 정합):
+
+| # | Issue | Tier | Decision | Final state | Comment URL |
+|---|---|---|---|---|---|
+| 1 | #NNN | priority:low \| priority:medium | CLOSE_AS_OBVIATED \| CLOSE_AS_SENTINEL \| PROMOTE \| DEFER | closed (not_planned) \| closed (completed) \| open (deferred) | https://github.com/.../issues/NNN#issuecomment-... |
+
+**Cross-Story pattern_count progression** — §D-9 `cross_story_pattern_adr_trigger` field 충돌 회피 의무. closure 자체는 pattern_count 변화 0 (closure ≠ pattern increment) → Net escalation 0 시 field empty 유지.
+
+**Closure forcing function 3 step** (각 Issue 별):
+
+1. **`[PMO]` prefix comment + state transition** — closure decision rationale comment + state 전환 (`closed` `not_planned` OR `completed` reason)
+2. **Retro PR open + auto-merge** — closure evidence trail 영속화 (ADR-045 §결정 4 정합, retro file §X close lane sub-section 안 closure summary table embed)
+3. **`gate:retro-complete` label add OR `not_planned` reason close** — ADR-045 §결정 5 close-blocking 정합
+
+**Wave 1 → Wave 2 split 적용 영역 외** (declarative anchor only): batch close = governance status update (closure decision + comment + label 영역) — mechanical wire 영역 disjoint (ADR-076 declarative reconciliation pattern, closure decision = 사용자 + agent judgment 영역). pattern_count ≥ 9 reach 시 warning → blocking-on-pr 승격 = Wave 3 별 carrier 분리 (ADR-060 §결정 6 promotion gate AND 3/3).
+
 ADR draft 내용 예시 (Orchestrator 반환 payload `adr_proposal` 필드):
 
 ```markdown
