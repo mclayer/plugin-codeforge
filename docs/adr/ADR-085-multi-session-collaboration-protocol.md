@@ -8,8 +8,21 @@ carrier_story: CFP-1041
 parent_epic: null
 supersedes: null
 amends: null
-amendments: []
-amendment_log: []
+amendments:
+  - amendment_id: 1
+    cfp: CFP-1693
+    date: 2026-05-26
+    scope: "§결정 9 신설 — Multi-session prompt design normative. 사용자가 다른 session 에 작업 위임 prompt 생성 시 4-rule mandate (self-contained end-to-end per session / axis-disjoint 강제 / sequential dependency → 한 session / copy-paste 준비). + 확인 단계 의무 (anti-pattern vs good pattern 양 예시). memory `feedback_next_session_prompt_design` (2026-05-25 KST 사용자 directive verbatim) normative 승격 carrier. CFP scope unitary 정합 — ADR-085 super-class 안 coordination axis sub-decision append. axis disjoint vs §결정 1-8 (§1 5-layer 표 anchor / §2 active_sessions[] schema / §3 lane-entry 4-step polling / §4 rebase merge / §5 handoff baton transfer / §6 race-window heartbeat / §7 subagent self-confusion / §8 known-limitation) — 본 §9 = 'session 생성 직전 prompt design 시점' phase 영역 (pre-session start, §1-8 = post-session start coordination). ratchet 강화 방향 (governance 표현력 확장 — prompt design layer 명문 codify, ADR-064 §결정 7 evidence-gated symmetric ratchet 정합)."
+    status: applied
+    ref: "### §결정 9 — Multi-session prompt design normative (Amendment 1, CFP-1693)"
+    sunset_justification: null
+amendment_log:
+  - amendment_id: 1
+    carrier_story: CFP-1693
+    date: 2026-05-26
+    direction: strengthen
+    summary: "§결정 9 신설 multi-session prompt design normative — memory `feedback_next_session_prompt_design` normative 승격 carrier. 4-rule mandate (self-contained end-to-end / axis-disjoint / sequential dependency 한 session / copy-paste 준비) + 확인 단계 의무. axis disjoint vs §결정 1-8 (pre-session start prompt design phase, §1-8 = post-session start coordination). doc-only fast-path. ratchet 강화 방향, sunset_justification N/A."
+    sunset_justification: null
 related_stories:
   - CFP-1041  # carrier (3-pillar anchor — active_sessions[] + lane-entry sentinel + rebase merge 우선)
   - CFP-681   # retroactive evidence: rebase merge first success variant (force-push 회피)
@@ -241,6 +254,37 @@ frontmatter `mechanical_enforcement_actions: [active-sessions-presence, lane-ent
 - `lane-entry-ownership-verify` — lane entry 4-step polling subprocess invoke (ADR-073 Amendment 2 polling enum 4번째 source wire).
 
 별 sub-CFP carrier 의 hotfix-bypass label 4-tier scope = `hotfix-bypass:active-sessions-presence` / `hotfix-bypass:lane-entry-ownership-verify` (label-registry-v2 v2.40 신규 family member).
+
+### §결정 9 — Multi-session prompt design normative (Amendment 1, CFP-1693)
+
+사용자가 다른 Claude session 에 작업 위임 prompt 생성 시 의무 4-rule + 확인 단계. axis disjoint vs §결정 1-8 = **pre-session start prompt design** phase (§1-8 = post-session start coordination).
+
+#### 4-rule mandate
+
+1. **각 session = self-contained end-to-end** — Requirements → Architect → Developer → CodeReview → merge → PMOAgent retro 단일 session 안 모두 처리. lane 사이 split 금지 (artificial "Session 1 = step 1-3, Session 2 = step 4" pattern reject).
+2. **session 사이 axis-disjoint 강제** — file collision 0, ADR amendment slot collision 0, registry version bump collision 0. 양 session 동시 실행 가능해야 함.
+3. **Sequential dependency 있는 작업 = 한 session** — A 출력을 B 가 받는 구조면 양자를 한 session 으로 묶음. inter-session dependency 발생 시 사용자 turn 사이 wait 필요 → parallel 의미 상실.
+4. **Copy-paste 준비** — 사용자가 그대로 복사해 새 session 에 붙여 사용. context (이전 session 산출) + scope + preflight 의무 + done criteria + reference 모두 포함.
+
+#### 확인 단계 (Phase 0 의무)
+
+첫 응답 시 양 패턴 (anti-pattern vs good pattern) 예시 들어 사용자 확인 받음. 확인 후 prompts 생성.
+
+#### Anti-pattern (거부)
+
+- ❌ Session 1 "RequirementsPL + ArchitectAgent 만 진행" + Session 2 "위 결과 받아서 Developer 진행"
+- ❌ 양 session 이 label-registry-v2 MINOR bump 동시 시도 (version collision)
+- ❌ 양 session 이 같은 ADR amendment slot 점유 시도
+
+#### Good pattern
+
+- ✅ Session A: 단일 Story end-to-end (lane sequential within session)
+- ✅ Session B: 다른 repo / 다른 ADR / 다른 file domain 의 별 work
+- ✅ 양 session 동시 실행 시 file touch overlap = 0
+
+#### Sunset criteria
+
+N/A — permanent governance (ratchet 강화 방향, ADR-058 §결정 5 + ADR-064 §결정 7 evidence-gated symmetric ratchet 정합).
 
 ### §결정 N+ — Out-of-scope declarations (본 carrier scope 외 영역)
 
