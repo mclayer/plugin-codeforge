@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT (file structure adapted from superpowers v5.1.0)
+# UserPromptSubmit hook for codeforge plugin — dialog reminder + parallel-work-sentinel
+#
+# Carrier: CFP-1741 (Story-1 of Epic CFP-1740 — ADR-115 §결정 1·3·5)
+#
+# 책임 경계 (ADR-115 §결정 1 / §결정 3 / ADR-038 Amendment 1 §결정 8 정합):
+#   - 책임: 매 user prompt 마다 codeforge governance directive 를 stdout 으로 주입.
+#           Claude Code harness 가 자동 system-reminder 로 wrap.
+#   - 비책임: user prompt 차단 금지 (ADR-115 §결정 5 — non-blocking tier).
+#             이중 발화 방지: 본 hook 의 marker [codeforge-wrapper-userprompt-submit] 를
+#             consumer overlay 가 감지 시 overlay 측 reminder skip (one-channel rule).
+#
+# 정적 properties (ADR-115 §결정 5 / ADR-038 §결정 7·8 정합):
+#   (a) set -euo pipefail + exit 0 trap — 어떤 fail 도 user prompt block 금지
+#   (b) plain stdout SSOT (JSON output 부재 — system-reminder wrap 은 harness 책임)
+#   (c) filesystem touch 0 — no >, >>, mkdir, rm, mv, cp
+#   (d) network call 0
+#   (e) timeout 내 exit 0 종료 (UserPromptSubmit 30s 기준)
+#
+# Graceful degradation 5층 (ADR-115 §결정 5 closed-set):
+#   (a) hook 파일 부재 → harness skip (본 파일 존재 시 N/A)
+#   (b) shebang/interpreter 부재 → run-hook.cmd `exit /b 0` silent fail-open
+#   (c) timeout → exit 0 (set -e trap 이 마지막 line 에서 강제 exit 0)
+#   (d) stdout write 실패 → stderr warning + exit 0
+#   (e) 어떤 fail 도 user prompt block 금지
+#
+# Bypass:
+#   BYPASS_CODEFORGE_USERPROMPT_SUBMIT=1 → stderr audit + exit 0 (stdout 0)
+#
+# Sibling channel disjoint axis (CFP-1738 / hooks/plain-language-reminder = jargon·구조 directive;
+#   본 hook (CFP-1741 / ADR-115 §결정 6) = derived default·parallel-work-sentinel reminder).
+#   두 hook 은 UserPromptSubmit event 에 동시 등록, 각자 stdout 독립 발화
+#   (harness 가 system-reminder 로 wrap, 한 hook 의 fail 이 다른 hook 영향 X).
+#
+# one-channel rule (ADR-115 §결정 3):
+#   reminder text 첫 행: [codeforge-wrapper-userprompt-submit] marker
+#   consumer overlay 가 이 marker 를 발견하면 overlay 측 reminder skip
+#   (overlay 측 future Story 영역 — 본 Story 는 wrapper-root marker emit 만)
+
+set -euo pipefail
+
+# 어떤 실패도 exit 0 으로 trap — user prompt block 금지 (ADR-115 §결정 5)
+trap 'exit 0' ERR
+
+# Bypass check — audit trail (ADR-115 §결정 5 / ADR-038 §결정 7·8 정합)
+if [ "${BYPASS_CODEFORGE_USERPROMPT_SUBMIT:-0}" = "1" ]; then
+  >&2 printf '[codeforge-userprompt-submit] BYPASS_CODEFORGE_USERPROMPT_SUBMIT=1 — reminder suppressed at %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  exit 0
+fi
+
+# Plain stdout SSOT — harness 가 자동 system-reminder wrap.
+# single-quoted heredoc (<<'EOF') — env interpolation / command substitution 차단
+cat <<'EOF'
+[codeforge-wrapper-userprompt-submit]
+
+[codeforge 사용자 대화 규칙 — 매 turn 점검 (ADR-071 / ADR-073 정합)]
+
+대화 규칙 (ADR-071 user-dialog-mode §결정 3 / §결정 9 question quality 3-check):
+1. Derived default 자명 시 질문 금지 — 무엇을 할지 짧게 통보 후 자동 진행 (사용자가 정정).
+2. 내부 식별자 풀이: ADR 번호 / CFP 번호 / §결정 / 내부 계약명 사용 시 평문 한 줄 풀이 선행.
+3. Stop-time: 300자±50 평문 정리 (직전 결정 / 다음 step / 미해결 분기) 발화 의무.
+
+병렬 작업 감지 (ADR-073 Amendment 2 — parallel-work-sentinel):
+lane spawn / PR open / merge transition 직전 아래 스크립트 실행:
+  bash scripts/check-parallel-work-sentinel.sh --mode=title-search
+  bash scripts/check-parallel-work-sentinel.sh --mode=epic-state-poll --epic-id=<EPIC_ID>
+Bypass (audit-trailed): BYPASS_PARALLEL_WORK_SENTINEL=1
+
+[one-channel rule: consumer overlay 가 이 marker 발견 시 overlay 측 reminder skip]
+EOF
+
+exit 0
