@@ -5485,4 +5485,63 @@ entries:
       promotion_trigger: warning_tier_initial  # 첫 도입 = warning tier initial registration (Wave 2 mechanical wire activation, Wave 3 별 carrier 평가 후 blocking-on-pr 승격 결정)
     status: warning                 # Wave 2 mechanical wire activation (본 CFP-1632) — warning tier initial registration per ADR-060 §결정 5 "첫 도입 = warning mode" default
 
+  # ─── CFP-1648 Phase 2 (ADR-082 Amendment 28 sub-scope 1-Q — adr-dual-block-parity, 2026-05-26 KST) ───
+  # F-DR-001 P0 origin: frontmatter amendment_log[] body section missing despite frontmatter present
+  # Forward-prevention sentinel mechanical wire 의무 (CFP-1637 retro §5 F-DR-001 Pattern 2 Mandatory escalation)
+  - name: adr-dual-block-parity
+    description: |
+      ADR-082 Amendment 28 §결정 1 layer 1 sub-scope (1-Q) 신설 (CFP-1648 carrier) — ADR
+      dual-block parity lint (F-DR-001 P0 origin sentinel forward-prevention mechanical wire).
+
+      F-DR-001 P0 origin: CFP-1637 retro §5 — Amendment 26 amendment_log body section missing
+      despite frontmatter present. pattern_count 1 declarative monitor + 2nd occurrence escalation 후보
+      + forward-prevention sentinel mechanical wire 의무.
+
+      Detection logic (3 dual-block invariant):
+        Block 1: amendments[] ↔ body H2 count + bidirectional membership parity
+        Block 2: amendment_log[] ↔ body H2 count + bidirectional membership parity (F-DR-001 P0)
+        Block 3: amendments[] ↔ amendment_log[] cross-count parity
+
+      Scan scope: docs/adr/ADR-*.md 전체.
+
+      Exit code 3-tier (ADR-060 §결정 15):
+        0 PASS: all ADR files parity verified
+        1 WARNING: 1+ ADR with parity drift
+        2 ENVIRONMENT_ERROR: file unreadable OR parse error
+
+      FP guard:
+        - No false-positive exemption needed (ADR body H2 pattern is specific)
+        - Pre-existing drift in older ADR files = expected warning tier initial signal
+          (전체 ADR 파일 backfill = 별도 follow-up CFP carrier)
+
+      bypass audit-trailed exception channel:
+        hotfix-bypass:adr-dual-block-parity (ADR-024 Amendment 6/8 §결정 6.A per-entry namespace)
+
+      META self-application:
+        본 carrier 자체가 ADR-082 Amendment 28 amendments[] + amendment_log[] + body section
+        dual-block parity 의무 적용 (dual-block parity forward-prevention sentinel self-apply).
+
+      pattern_count 1 (CFP-1637 F-DR-001 P0 occurrence) + 2nd occurrence 시 blocking-on-pr
+      승격 의무 (ADR-060 §결정 6 promotion gate AND 3/3 — PR 누적 ≥ 20 + bypass 외 failure = 0
+      + sibling Story merged).
+    detect_command: bash scripts/check-adr-dual-block-parity.sh
+    workflow: .github/workflows/adr-dual-block-parity.yml
+    current_tier: warning           # ADR-060 §결정 5 — 첫 도입 = warning mode (warning tier initial registration)
+    bypass_label: hotfix-bypass:adr-dual-block-parity
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative: 20             # ADR-060 §결정 6 default — PR 누적 ≥ 20 의무
+      bypass_external_failure: 0    # bypass label 외 failure count = 0 의무
+      sibling_story_merged: true    # sibling Story merged 의무 (Wave 2 별 carrier 평가 후 blocking-on-pr 승격 결정)
+    introduced_by: CFP-1648
+    introduced_date: 2026-05-26
+    owner_adr: ADR-082-Amendment-28  # declaration source ADR — Amendment 28 §결정 1 layer 1 sub-scope (1-Q) 신설 ADR dual-block parity lint mandate (F-DR-001 P0 origin sentinel forward-prevention)
+    carrier_adr: ADR-060            # enforcement source ADR — evidence-enforceable warning-tier framework carrier (CFP-963 / CFP-1559 / CFP-1612 / CFP-1632 dual-binding precedent 답습)
+    sibling_dependencies: [CFP-1637, CFP-1648]
+    recurrence:
+      count: 1                      # 1 occurrence (CFP-1637 F-DR-001 P0 — Amendment 26 amendment_log body section missing) — pattern_count 1 declarative monitor (2nd occurrence → blocking-on-pr 승격 의무)
+      threshold: 2                  # ADR-045 §D-9 N=2 standard Mandatory escalation threshold (2nd occurrence = blocking-on-pr 승격 forcing function)
+      last_occurrence: "2026-05-26T00:00:00+09:00"  # CFP-1648 warning-tier initial registration carrier, ADR-079 KST normative
+      promotion_trigger: warning_tier_initial  # 첫 도입 = warning tier initial (pattern_count 1, 2nd occurrence 시 blocking-on-pr 승격)
+    status: warning                 # warning tier initial registration per ADR-060 §결정 5 "첫 도입 = warning mode" default (CFP-1648 carrier — F-DR-001 P0 forward-prevention sentinel mechanical wire activation)
 
