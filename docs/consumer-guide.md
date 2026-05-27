@@ -1162,6 +1162,47 @@ Orchestrator 가 사용자에게 **codeforge 내부 식별자**(ADR/CFP 번호·
 
 ---
 
+### §2h.5 Runtime hook presence 등록 의무 및 evidence gate (CFP-1745 / ADR-115)
+
+Codeforge 가 올바르게 동작하려면 `hooks/hooks.json` 에 아래 4개 hook entry 가 존재해야 한다. `/plugins install codeforge@mclayer` 를 수행하면 plugin-root `hooks/hooks.json` 이 자동 활성화되어 **별도 등록 절차 없이** 4 entry 가 포함된다.
+
+| Hook 종류 | 역할 | ADR-115 §결정 |
+|---|---|---|
+| `UserPromptSubmit` | 사용자 프롬프트 제출 직후 Orchestrator 행동 규율 주입 (plain-language-reminder / korean-english-recovery / userprompt-submit) | §결정 2 |
+| `PreToolUse[matcher:Agent]` | Agent tool 발동 직전 spawn gate (pretooluse-agent-spawn-gate) | §결정 3 |
+| `Stop` | Orchestrator 응답 완료 직후 발화 품질 검사 (plain-language-check / stop) | §결정 5 |
+| `SubagentStop` | subagent 완료 직후 ledger 기록 (subagent-stop) | §결정 5 |
+
+**등록 확인 방법**:
+
+```bash
+bash scripts/check-runtime-hook-presence.sh all
+```
+
+4 hook 모두 `OK` 출력 시 정상. `WARNING` 출력 시 hook 부재 — `/plugins install codeforge@mclayer` 재실행으로 복구.
+
+**Evidence gate (CFP-1745 / ADR-115 + ADR-060)**:
+
+`runtime-hook-presence.yml` workflow 가 PR-time 에 4 hook entry presence 를 자동 검증한다 (warning tier — non-blocking). 4 evidence-check entry 는 단일 bypass family `hotfix-bypass:runtime-hook-presence` 를 공유.
+
+**한계 및 알려진 버그 (platform bug #10412)**:
+
+Stop / SubagentStop hook 이 plugin-deploy 후 간헐적으로 발화 중단될 수 있다. 이는 Claude Code harness 의 platform 버그 (#10412) 로, hook 파일이 존재함에도 trigger 가 누락되는 현상이다. 발생 시:
+
+1. `hooks/hooks.json` 에 해당 entry 가 있는지 확인 (`bash scripts/check-runtime-hook-presence.sh stop`)
+2. entry 가 있는데도 발화 안 되면 platform bug #10412 — `/plugins reinstall codeforge@mclayer` 시도
+3. PR 이 runtime-hook-presence lint 로 차단될 경우 `hotfix-bypass:runtime-hook-presence` label 부착 후 진행
+
+**`overlay/hooks/userprompt-reminder.{sh,ps1}` deprecated (1 release grace)**:
+
+기존 consumer 가 `.claude/_overlay/hooks/userprompt-reminder.sh` 또는 `.ps1` 로 등록한 경우 — plugin-root `hooks/hooks.json` 첫 번째 `UserPromptSubmit` entry 와 중복. 1 release grace 기간 안에 아래 절차로 cleanup 권장:
+
+1. `.claude/_overlay/hooks/userprompt-reminder.{sh,ps1}` 파일 제거
+2. `.claude/settings.json` `hooks.UserPromptSubmit[]` 안 해당 entry 삭제 (있는 경우)
+3. `bash scripts/check-runtime-hook-presence.sh userprompt` 로 plugin-root entry 정상 활성 확인
+
+---
+
 ### §2i. 3-way version atomic 고정 설정 (CFP-820 / ADR-063 Amendment 5 §결정 15)
 
 Consumer repo 에서 **codeforge version 을 고정** 하고 PR-time 에 publisher ↔ registry ↔ consumer 3-way 버전 일치를 자동 검증하는 선택 기능이다.

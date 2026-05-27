@@ -5717,3 +5717,152 @@ entries:
       promotion_trigger: warning_tier_initial
     status: deferred-followup
 
+  # ─── CFP-1745 Story-5 (ADR-115 — runtime hook presence evidence gate, 2026-05-27) ───
+  # Epic CFP-1740 Story-5: evidence-gate 4 entry (UserPromptSubmit / PreToolUse:Agent / Stop / SubagentStop)
+  # Story-1/2/3 hook 실 구현 = pattern_count carrier (≥3) — ADR-064 §결정 7 evidence-gated ratchet 정합
+  # 4 entry 단일 bypass family 공유: hotfix-bypass:runtime-hook-presence
+  - name: runtime-hook-userprompt-presence
+    description: |
+      CFP-1745 / ADR-115 — hooks/hooks.json UserPromptSubmit entry presence lint (warning tier).
+
+      hooks/hooks.json 안 UserPromptSubmit hook entry 존재 여부를 검증한다.
+      UserPromptSubmit hook = 사용자 프롬프트 제출 직후 Orchestrator 행동 규율 주입 채널
+      (plain-language-reminder / korean-english-recovery / userprompt-submit 3 entry, CFP-1738/1751 carrier).
+
+      Epic CFP-1740 Story-1/2/3 에서 hook 이 실 구현됨 — Story-5 본 entry 가 evidence gate 역할.
+
+      Detection: hooks/hooks.json jq 파싱 → .hooks.UserPromptSubmit array presence verify.
+      Warning tier: exit 0 (continue-on-error: true 정합). bypass_label 부착 PR skip.
+      Bypass: `hotfix-bypass:runtime-hook-presence` (4 entry 공유 단일 family).
+
+      axis: ADR-115 §결정 2 UserPromptSubmit hook mandate — evidence gate 첫 mechanical layer.
+    detect_command: bash scripts/check-runtime-hook-presence.sh userprompt
+    workflow: templates/github-workflows/runtime-hook-presence.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:runtime-hook-presence
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative: 20
+      bypass_external_failure: 0
+      sibling_story_merged: true
+    introduced_by: CFP-1745
+    introduced_date: 2026-05-27
+    owner_adr: ADR-115
+    carrier_adr: ADR-060
+    sibling_dependencies: [CFP-1745, CFP-1740]
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: deferred-followup
+
+  - name: runtime-hook-pretooluse-agent-presence
+    description: |
+      CFP-1745 / ADR-115 — hooks/hooks.json PreToolUse[matcher:"Agent"] entry presence lint (warning tier).
+
+      hooks/hooks.json 안 PreToolUse hook 중 matcher 가 "Agent" 인 entry 존재 여부를 검증한다.
+      PreToolUse:Agent hook = Agent tool 발동 직전 spawn gate 채널 (pretooluse-agent-spawn-gate, CFP-1740 carrier).
+
+      Epic CFP-1740 Story-2 에서 PreToolUse:Agent hook 이 실 구현됨 — 본 entry 가 evidence gate.
+
+      Detection: hooks/hooks.json jq 파싱 → .hooks.PreToolUse[] 중 matcher=="Agent" entry presence verify.
+      Warning tier: exit 0 (continue-on-error: true 정합). bypass_label 부착 PR skip.
+      Bypass: `hotfix-bypass:runtime-hook-presence` (4 entry 공유 단일 family).
+
+      axis: ADR-115 §결정 3 PreToolUse[Agent] hook mandate — evidence gate 첫 mechanical layer.
+    detect_command: bash scripts/check-runtime-hook-presence.sh pretooluse-agent
+    workflow: templates/github-workflows/runtime-hook-presence.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:runtime-hook-presence
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative: 20
+      bypass_external_failure: 0
+      sibling_story_merged: true
+    introduced_by: CFP-1745
+    introduced_date: 2026-05-27
+    owner_adr: ADR-115
+    carrier_adr: ADR-060
+    sibling_dependencies: [CFP-1745, CFP-1740]
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: deferred-followup
+
+  - name: runtime-hook-stop-presence
+    description: |
+      CFP-1745 / ADR-115 — hooks/hooks.json Stop entry presence lint (warning tier).
+
+      hooks/hooks.json 안 Stop hook entry 존재 여부를 검증한다.
+      Stop hook = Orchestrator 응답 완료 직후 발화 품질 검사 채널
+      (plain-language-check / stop 2 entry, CFP-1738/1743 carrier).
+
+      Epic CFP-1740 Story-3 에서 Stop hook 이 실 구현됨 — 본 entry 가 evidence gate.
+
+      한계 명시: Stop/SubagentStop hook 이 Claude Code harness platform bug #10412 로 인해
+      plugin-deploy 후 간헐적으로 발화 중단될 수 있음. 이 경우 hotfix-bypass 채널 사용.
+
+      Detection: hooks/hooks.json jq 파싱 → .hooks.Stop array presence verify.
+      Warning tier: exit 0 (continue-on-error: true 정합). bypass_label 부착 PR skip.
+      Bypass: `hotfix-bypass:runtime-hook-presence` (4 entry 공유 단일 family).
+
+      axis: ADR-115 §결정 5 Stop hook mandate — evidence gate 첫 mechanical layer.
+    detect_command: bash scripts/check-runtime-hook-presence.sh stop
+    workflow: templates/github-workflows/runtime-hook-presence.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:runtime-hook-presence
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative: 20
+      bypass_external_failure: 0
+      sibling_story_merged: true
+    introduced_by: CFP-1745
+    introduced_date: 2026-05-27
+    owner_adr: ADR-115
+    carrier_adr: ADR-060
+    sibling_dependencies: [CFP-1745, CFP-1740]
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: deferred-followup
+
+  - name: runtime-hook-subagentstop-presence
+    description: |
+      CFP-1745 / ADR-115 — hooks/hooks.json SubagentStop entry presence lint (warning tier).
+
+      hooks/hooks.json 안 SubagentStop hook entry 존재 여부를 검증한다.
+      SubagentStop hook = subagent 완료 직후 ledger 기록 채널
+      (subagent-stop entry, CFP-1743 carrier).
+
+      Epic CFP-1740 Story-3 에서 SubagentStop hook 이 실 구현됨 — 본 entry 가 evidence gate.
+
+      한계 명시: Stop/SubagentStop hook 이 Claude Code harness platform bug #10412 로 인해
+      plugin-deploy 후 간헐적으로 발화 중단될 수 있음. 이 경우 hotfix-bypass 채널 사용.
+
+      Detection: hooks/hooks.json jq 파싱 → .hooks.SubagentStop array presence verify.
+      Warning tier: exit 0 (continue-on-error: true 정합). bypass_label 부착 PR skip.
+      Bypass: `hotfix-bypass:runtime-hook-presence` (4 entry 공유 단일 family).
+
+      axis: ADR-115 §결정 5 SubagentStop hook mandate — evidence gate 첫 mechanical layer.
+    detect_command: bash scripts/check-runtime-hook-presence.sh subagentstop
+    workflow: templates/github-workflows/runtime-hook-presence.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:runtime-hook-presence
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative: 20
+      bypass_external_failure: 0
+      sibling_story_merged: true
+    introduced_by: CFP-1745
+    introduced_date: 2026-05-27
+    owner_adr: ADR-115
+    carrier_adr: ADR-060
+    sibling_dependencies: [CFP-1745, CFP-1740]
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: deferred-followup
+
