@@ -55,6 +55,13 @@ amendments:
       (b) 2026-05-23 KST 세션 시작 시 시스템 reminder "MEMORY.md is 53.2KB (limit: 24.4KB)" 발화 trigger
       memory `feedback_unjustified_session_swap_reflex` normative 승격 carrier. pattern_count 2 reach (ADR-045 §D-9 threshold). §결정 4 sub-mechanism 2 "차원 enum 4종 closed" 와 axis disjoint — §결정 18 = "결정 구조" 차원 sub-pattern routing (5번째 차원 신설 회피). Amendment 6 §결정 17 (lane back-translation gate) 와 disjoint axis (return-time output gate ↔ session lifecycle reflex). additive — Layer 1-4 / DialogFidelityAgent auxiliary / §결정 12-17 모두 보존, is_transitional=false 유지, ADR-058 §결정 5 약화 차단 영역 미적용.
     sunset_justification: null
+  - amendment_id: 8
+    date: "2026-05-27"
+    carrier_story: CFP-1764
+    issue: https://github.com/mclayer/plugin-codeforge/issues/1764
+    summary: |
+      Agent burst output paste 합성 시 mid-turn glossary lookup 의무 (§결정 19 신설). Orchestrator 가 agent burst output (DomainAgent / ResearcherAgent / RequirementsAnalystAgent / PMOAgent 등 4+ 부속 작업자) 결과를 사용자 메시지로 합성 (paste-and-translate) 할 때 `docs/wording-dictionary.md` 카테고리 (c) codename → 평이 어휘 mapping table lookup 의무 — 1:1 치환 또는 평문 풀이 동반. lookup table SSOT location = wording-dictionary 카테고리 (c) (ADR 본문 / skill SKILL.md / domain-knowledge 별 SSOT 금지, single source of truth). closed enumeration cap = 15 codename 첫 batch + ratchet extensibility (신규 어휘 등장 시 별 후속 CFP). Scope = 사용자 dialog turn (Orchestrator 직접 발화) 영역만 — governance artifact (ADR / spec / change-plan / Story file) scope 외. §결정 2(a) frame mode step 4 (message 작성) 직전 step 3 cognitive 단계 "glossary lookup 필수 실행". 면제 channel = `hotfix-bypass:codename-glossary-lookup` label (audit-trailed exception, Story-2 carrier 75번째 hotfix-bypass family member). Consumer false positive handling = consumer overlay `jargon_filter_exempt_vocabulary: [...]` field 별 follow-up CFP carrier (본 Amendment 8 scope 외). Source incident = mctrader-hub#517 consumer brainstorm Phase 1 dialog 4-turn 누적 jargon leak (사용자 directive 4건 verbatim + consumer ad-hoc fix 거부 + wrapper canonical path 의무). Axis disjoint declare 3종 — §결정 17 (Amendment 6 lane back-translation gate) = return-time output gate per-lane vertical axis ↔ 본 §결정 19 = mid-turn paste-and-translate horizontal axis (lane-agnostic Orchestrator 합성) / §결정 14 (effectiveness measurement, CFP-833) = post-hoc metric layer ↔ 본 §결정 19 = mid-turn forcing function layer / ADR-064 §결정 9 (question quality 3-check) = dialog 진입 결정 분기 self-check ↔ 본 §결정 19 = dialog 진입 후 발화 작성 mid-turn 단계. mechanical_enforcement_actions[] frontmatter `codename-glossary-lookup` entry append (Story-2 declarative anchor, deferred-followup). additive — Layer 1-4 / DialogFidelityAgent auxiliary / §결정 12-18 모두 보존, 5번째 cognitive layer 신설 금지 invariant 보존 (§결정 12.3 정합 — §결정 19 = mechanism 추가, cognitive layer count 변경 아님). is_transitional=false 유지, ADR-058 §결정 5 약화 차단 영역 미적용.
+    sunset_justification: null
 related_stories:
   - CFP-612  # carrier
   - CFP-525  # ancestor Epic (closed 2026-05-13)
@@ -73,6 +80,7 @@ related_stories:
   - CFP-1104 # Amendment 5 carrier (natural-language action trigger lookup table — "codeforge upgrade" mapping)
   - CFP-1110 # Amendment 6 carrier (lane back-translation gate binding — paired ADR-082 Amendment 5, 사용자 직권 minimal path first application, paradox-break)
   - CFP-1340 # Amendment 7 carrier (unjustified session swap reflex 차단 + /compact normative — §결정 18 신설, ADR-053/057 trigger closed 2-set + anti-pattern 7종, 재발 incident 2건 evidence pattern_count 2 reach)
+  - CFP-1764 # Amendment 8 carrier (agent burst output paste 합성 시 mid-turn glossary lookup 의무 — §결정 19 신설, docs/wording-dictionary.md 카테고리 (c) codename → 평이 어휘 mapping table SSOT, closed 15 codename 첫 batch + ratchet extensibility, source incident mctrader-hub#517 4-turn 누적 jargon leak)
 related_adrs:
   - ADR-064  # 결정 원칙 mandate — proposing-time 5 룰 mother policy (mechanical version 승격 source)
   - ADR-058  # sunset criteria mandate (is_transitional: false 정합)
@@ -89,10 +97,13 @@ related_adrs:
   - ADR-082  # Amendment 6 — paired sibling carrier (lane PL spawn prompt user-utterance verbatim anchor / write-time input anchor ↔ 본 ADR Amendment 6 §결정 17 = lane return back-translation gate / return-time output gate, disjoint axis)
   - ADR-053  # Amendment 7 — session swap reflex trigger #1 (구조 변경 재구동) closed 2-set first entry
   - ADR-057  # Amendment 7 — session swap reflex trigger #2 (Sonnet/Haiku → Opus fallback) closed 2-set second entry
+  - ADR-024  # Amendment 8 — hotfix-bypass:codename-glossary-lookup 75번째 family member (Story-2 carrier)
+  - ADR-060  # Amendment 8 — evidence-checks-registry warning-tier 23번째 entry codename-glossary-lookup (Story-2 carrier)
 related_files:
   - CLAUDE.md
   - docs/orchestrator-playbook.md
   - docs/orchestrator-communication-incidents.md
+  - docs/wording-dictionary.md  # Amendment 8 — 카테고리 (c) codename → 평이 어휘 mapping table SSOT
   - skills/user-dialog-mode/SKILL.md
   - docs/parallel-work/section-ownership.yaml
 is_transitional: false
@@ -101,6 +112,10 @@ mechanical_enforcement_actions:
     status: deferred-followup
     progress_note: "Phase 1 (CFP-833) = registry entry skeleton (non-null detect_command, #827 회피) + ADR-071 Amendment 3 + 본문 §결정 14. Phase 2 carrier (동일 Story CFP-833 후속 PR) = dialog-fidelity-measurement.yml workflow 2종 byte-identical + check-dialog-fidelity-effect.sh thin wrapper + lib .py. warning tier advisory (no PR block) — runtime cron metric, blocking 승격 의미 부적용 (precedent rate-limit-fallback-rate 동형)"
     target_section: §결정 14
+  - action: codename-glossary-lookup
+    status: deferred-followup
+    progress_note: "Phase 1 (CFP-1764 Story-1, 본 Amendment 8) = §결정 19 신설 + docs/wording-dictionary.md 카테고리 (c) SSOT codify (closed 15 codename 첫 batch + ratchet extensibility) + skill SKILL.md cross-ref + CLAUDE.md cross-ref. Phase 2 carrier (CFP-1764 Story-2 — #797 unblock) = scripts/check-codename-glossary-lookup.sh PR diff scan + templates/github-workflows/codename-glossary-lookup.yml + .github/workflows self-app byte-identical + evidence-checks-registry-v1 23번째 warning entry + label-registry-v2 v2.37 → v2.38 (`hotfix-bypass:codename-glossary-lookup` 75번째 family member). warning tier — turn-final hook 부재 platform 한계 (lint-time post-write detection only, runtime mid-turn block 불가)"
+    target_section: §결정 19
 # Wave 5 = cognitive + persistence layer. Amendment 3 (CFP-833) = effectiveness measurement layer (additive — Layer 1-4 + auxiliary 보존).
 # Layer 1 mechanical lint (preamble presence check) = 별도 follow-up CFP 분리 (Story §1 verbatim).
 # 본 ADR effective 후 신설 evidence-enforceable entry 가 follow-up CFP carrier 에서 추가될 때
@@ -959,9 +974,84 @@ DialogFidelityAgent (Amendment 1-3 3-anchor / Amendment 6 4-anchor) 가 `post_us
 
 `sunset_justification: null` 적격 (§12.7 / §13.7 / §14.4 / §15.7 / §16.8 / §17.7 family pattern 정합 — Amendment 1/2/3/4/5/6/7 모두 동일).
 
+## §결정 19. Agent burst output paste 합성 시 mid-turn glossary lookup 의무 (Amendment 8, CFP-1764)
+
+### 19.1 결정 요약
+
+Orchestrator 가 agent burst output (DomainAgent / ResearcherAgent / RequirementsAnalystAgent / PMOAgent 등 4+ 부속 작업자) 결과를 사용자 메시지로 합성 (paste-and-translate) 할 때 의무 lookup:
+
+1. **mid-turn glossary lookup 의무** — `docs/wording-dictionary.md` 카테고리 (c) codename → 평이 어휘 mapping table 을 lookup 후 1:1 치환 또는 평문 풀이 동반.
+2. **lookup table SSOT location** = `docs/wording-dictionary.md` 카테고리 (c). ADR 본문 / skill SKILL.md / domain-knowledge 별 SSOT 금지 (중복 codification 0, single source of truth).
+3. **closed enumeration cap = 15 codename** (첫 batch). 신규 어휘 등장 시 별 후속 CFP 의무 (ratchet extensibility).
+4. **Scope** = 사용자 dialog turn (Orchestrator 직접 발화) 영역만. governance artifact (ADR / spec / change-plan / Story file) = scope 외 (codename 자연 사용).
+5. **§결정 2(a) frame mode step 4 (message 작성) 직전 cognitive 단계** — "glossary lookup 필수 실행". codename 발견 시 평이 어휘 치환 또는 평문 풀이 동반. step 1 (격리) + step 2 (사용자 지식 추정) + step 3 (turn 결정 1 문장) + **step 3.5 glossary lookup** + step 4 (메시지 작성).
+6. **Mechanical layer (Story-2 carrier)** — `codename-glossary-lookup` warning-tier evidence-check entry (23번째 entry) + `hotfix-bypass:codename-glossary-lookup` 75번째 hotfix-bypass family member + PR diff scan workflow.
+
+### 19.2 배경 — mctrader-hub#517 4-turn 누적 jargon leak
+
+consumer mctrader-hub#517 PR 안 brainstorm Phase 1 dialog 도중 4-turn 누적 jargon leak 재발. wired mechanism 10+ 종 (§결정 1-18 + DialogFidelityAgent + UserPromptSubmit hook rule 1) 모두 차단 실패. 사용자 directive 4건 verbatim:
+
+| turn | 사용자 발화 |
+|------|------------|
+| 1차 | "여전히 어투가 사용자 친화적이지 않다. 적용되지 않은 것 같아" |
+| 2차 | "아니 그렇게 넘어가지 말고 codeforge에서 넘어온 내용 있잖아. 그게 왜 적용이 안되는거야" |
+| 3차 | "너가 memory에 적은 내용은 제거해" (consumer ad-hoc fix 거부) |
+| 4차 | "제발 이번엔 제대로 하자. 다시 하는 일 없도록 꼼꼼하게 검토하여 계획하라." |
+| confirm | "오케이 그렇게 escalation 하자. 그렇게 버전업되면 버전 업그레이드 통해 적용받는 식으로" |
+
+사용자 confirm directive verbatim = wrapper canonical path 의무 anchor (consumer ad-hoc fix 거부 + wrapper Amendment LAND → version bump → consumer plugin update).
+
+### 19.3 Root cause
+
+§결정 2(c) "평이 번역 의무" 는 명시되나 *번역 mechanism 부재* — agent output prose 가 codeforge vocabulary 로 작성된 채 Orchestrator 가 합성 발화에 그대로 옮긴다. Axis = "mid-turn output composition" — §결정 17 (lane-return scope) 와 disjoint axis (lane return = boundary, paste 합성 = mid-turn).
+
+### 19.4 면제 channel
+
+`hotfix-bypass:codename-glossary-lookup` label (audit-trailed exception, [ADR-024](ADR-024-story-scoped-branch-policy.md) §결정 6 per-entry namespace 정합). 카테고리 (a) forbid 의 `hotfix-bypass:wording-dictionary` 와 별 channel — disjoint scope. Story-2 carrier 75번째 hotfix-bypass family member 신설.
+
+### 19.5 Consumer false positive handling
+
+consumer project (mctrader-hub 등) 가 동일 codename 을 비즈니스 용어로 사용하는 경우 (예: "drift" = 포트폴리오 변동 감지), consumer overlay `jargon_filter_exempt_vocabulary: [...]` field 신설 — 별 follow-up CFP carrier (본 Amendment 8 scope 외). consumer overlay 가 wrapper 정책 축소 불가 invariant 정합 — exempt 선언은 false positive 회피 channel only (wrapper 정책 자체 약화 아님).
+
+### 19.6 Axis disjoint declare (3종)
+
+| 기존 §결정 | axis | 본 §결정 19 axis | 관계 |
+|---|---|---|---|
+| §결정 17 (Amendment 6, lane back-translation gate) | return-time output gate per-lane vertical axis | mid-turn paste-and-translate horizontal axis (lane-agnostic Orchestrator 합성) | disjoint cross-cutting |
+| §결정 14 (effectiveness measurement, CFP-833) | post-hoc metric layer | mid-turn forcing function layer | disjoint sibling |
+| ADR-064 §결정 9 (question quality 3-check) | dialog 진입 결정 분기 self-check | dialog 진입 후 발화 작성 mid-turn 단계 | disjoint sibling |
+
+본 §결정 19 = mid-turn paste-and-translate **mechanism 추가** — §결정 12.3 invariant "신규 5번째 cognitive layer 신설 금지" 보존 (§결정 3 4-layer cognitive enum count 변경 아님, mechanism 만 추가).
+
+### 19.7 효과 measurement
+
+- Layer 4 영속 file (`docs/orchestrator-communication-incidents.md`) pattern_dimension `표현` 차원 신규 incident 발생률 < 1건/100 turn (Story-2 warning-tier lint 측정 baseline)
+- `hotfix-bypass:codename-glossary-lookup` 발화 count 누적 추세 (Story-2 lint warning false positive proxy)
+- consumer Layer 4 영속 file row 신규 추가 빈도 (mctrader-hub#517 baseline 4-turn 누적 → 1-turn 이하 감소 KPI)
+
+3 dimension 정량 metric — empirical-source annotation: Story-2 land 후 30-day rolling window. KPI artifact = 별 sub-CFP carrier (Wave 2 mechanical wire 후).
+
+### 19.8 scope_boundary (out-of-scope)
+
+본 Amendment 8 **포함**: §결정 19 신설 + wording-dictionary 카테고리 (c) SSOT codify (closed 15 codename 첫 batch + ratchet extensibility) + CLAUDE.md cross-ref + skill SKILL.md cross-ref + plugin.json MINOR bump + CHANGELOG row + marketplace sibling sync.
+
+본 Amendment 8 **out-of-scope** (별 carrier):
+
+- **mechanical lint backbone** (`scripts/check-codename-glossary-lookup.sh` + workflow + evidence-checks-registry row + label-registry MINOR) — **Story-2 carrier** (#797 unblock).
+- **4 부속 작업자 prompt template 갱신** (DomainAgent / ResearcherAgent / RequirementsAnalystAgent / PMOAgent 평이 번역 directive 추가) — **Story-3 carrier** (codeforge-requirements + codeforge-pmo sibling 2-PR).
+- **consumer overlay `jargon_filter_exempt_vocabulary` field** — consumer customization 영역, 별 follow-up CFP carrier (consumer-guide.md schema 확장).
+- **신규 codename 추가** (16번째 entry 이상) — ratchet extensibility, 별 후속 CFP 의무 (ADR-064 §결정 5 CFP scope unitary 정합).
+- **turn-final hook mechanical wire** — Claude Code harness 영역 (외부), platform inherent limit. runtime mid-turn block 불가 — Story-2 lint = PR diff scan layer (post-write detection only).
+
+### 19.9 sunset_justification: null (ADR-058 §결정 5 정합)
+
+본 Amendment 8 = **additive 강화** (Layer 1-4 / DialogFidelityAgent auxiliary / §결정 12-18 모두 보존, mid-turn paste-and-translate mechanism 추가 only). 강화 방향 only — `is_transitional: false` 보존, ADR-058 §결정 5 약화 차단 영역 미적용.
+
+`sunset_justification: null` 적격 (§12.7 / §13.7 / §14.4 / §15.7 / §16.8 / §17.7 / §18.8 family pattern 정합 — Amendment 1/2/3/4/5/6/7/8 모두 동일).
+
 ## self-application top-down ratchet
 
-본 ADR amendment 는 [ADR-064 §결정 7](ADR-064-decision-principle-mandate.md) top-down ratchet 정합 — 강화 방향만 허용 (scope 확장 / 강도 강화). 약화 방향 (`is_transitional: false → true` 다운그레이드 / 4 layer 축소 / 3 memory entry mapping 회수 / Sub-mechanism 2 차원 enum 축소 / **3 touchpoint enum 축소 — §결정 15 Amendment 4** / **trigger table 회수 — §결정 16 Amendment 5** / **§결정 17 back-translation gate 회수 — Amendment 6** / **§결정 18 session swap reflex anti-pattern 7종 enum 축소 — Amendment 7** / **§결정 2(c) richness 약화 — frequency 축소 ≠ richness 축소 invariant 위반**) 은 [ADR-058 §결정 5](ADR-058-adr-sunset-criteria-mandate.md) `sunset_justification` 의무로 차단. 본 ADR-071 = ADR-064 ratchet 의 직접 carrier (mechanical version 승격 + scope 확장 = strict superset). Amendment 1/2/3/4/5/6/7 = `sunset_justification: null` family pattern.
+본 ADR amendment 는 [ADR-064 §결정 7](ADR-064-decision-principle-mandate.md) top-down ratchet 정합 — 강화 방향만 허용 (scope 확장 / 강도 강화). 약화 방향 (`is_transitional: false → true` 다운그레이드 / 4 layer 축소 / 3 memory entry mapping 회수 / Sub-mechanism 2 차원 enum 축소 / **3 touchpoint enum 축소 — §결정 15 Amendment 4** / **trigger table 회수 — §결정 16 Amendment 5** / **§결정 17 back-translation gate 회수 — Amendment 6** / **§결정 18 session swap reflex anti-pattern 7종 enum 축소 — Amendment 7** / **§결정 19 mid-turn glossary lookup 의무 회수 또는 codename 15-batch 축소 — Amendment 8** / **§결정 2(c) richness 약화 — frequency 축소 ≠ richness 축소 invariant 위반**) 은 [ADR-058 §결정 5](ADR-058-adr-sunset-criteria-mandate.md) `sunset_justification` 의무로 차단. 본 ADR-071 = ADR-064 ratchet 의 직접 carrier (mechanical version 승격 + scope 확장 = strict superset). Amendment 1/2/3/4/5/6/7/8 = `sunset_justification: null` family pattern.
 
 ## 해소 기준
 
@@ -991,6 +1081,8 @@ N/A — permanent policy.
 - [CFP-1104](https://github.com/mclayer/plugin-codeforge/issues/1104) — Amendment 5 carrier Issue (natural-language action trigger lookup table)
 - [CFP-1110](https://github.com/mclayer/plugin-codeforge/issues/1110) — Amendment 6 carrier Issue (lane back-translation gate binding — paired ADR-082 Amendment 5)
 - [CFP-1340](https://github.com/mclayer/plugin-codeforge/issues/1340) — Amendment 7 carrier Issue (unjustified session swap reflex 차단 + /compact normative)
+- [CFP-1764](https://github.com/mclayer/plugin-codeforge/issues/1764) — Amendment 8 carrier Issue (agent burst output paste 합성 시 mid-turn glossary lookup 의무 — §결정 19 신설, docs/wording-dictionary.md 카테고리 (c) codename → 평이 어휘 mapping table SSOT, mctrader-hub#517 evidence)
+- [docs/wording-dictionary.md](../wording-dictionary.md) — Amendment 8 — 카테고리 (c) codename → 평이 어휘 mapping table SSOT
 - [CFP-582](https://github.com/mclayer/plugin-codeforge/issues/589) — sibling (agent ↔ agent domain, conceptual cross-ref)
 - [ADR-053](ADR-053-structural-change-restart-prerequisite.md) — session swap reflex trigger #1 (구조 변경 재구동) closed 2-set first entry
 - [ADR-057](ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) — session swap reflex trigger #2 (Sonnet/Haiku → Opus fallback) closed 2-set second entry

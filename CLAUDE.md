@@ -98,7 +98,9 @@ Orchestrator 가 사용자에게 결정 제안 / 질문 시 6 룰 적용:
 3. **식별자 사전 요약** — ADR / CFP / 코드 식별자 인용 시 핵심 결정 1 문장 요약 사전 제시 후 질문 / 제안 본문 진입.
 4. **질문 brevity** — 1 문장 단위, 다중 질문 시 numbered list (최대 3 항목).
 5. **`AskUserQuestion` 범위 제한** — 가치 판단 / 미공개 컨텍스트 2 종 한정.
-6. **표현 발화 전 맥락 파악 + 문장 구조 self-check (Amendment 2 신설, CFP-610)** — 직전 turn 결정 / 미해결 분기 / 사용자 발화 요지 / 진행 단계 파악 + 완전한 문장 / jargon 사전 점검 ([`docs/wording-dictionary.md`](docs/wording-dictionary.md) 카테고리 a/b) / 식별자 평문 요약 / 다중 분기 numbered list 분리 self-check. behavioral directive only (mechanical enforce 불가). 룰 1/3/4 발동 전 상위 self-check 단계.
+6. **표현 발화 전 맥락 파악 + 문장 구조 self-check (Amendment 2 신설, CFP-610)** — 직전 turn 결정 / 미해결 분기 / 사용자 발화 요지 / 진행 단계 파악 + 완전한 문장 / jargon 사전 점검 ([`docs/wording-dictionary.md`](docs/wording-dictionary.md) 카테고리 a/b/c) / 식별자 평문 요약 / 다중 분기 numbered list 분리 self-check. behavioral directive only (mechanical enforce 불가). 룰 1/3/4 발동 전 상위 self-check 단계.
+
+**Mid-turn glossary lookup 의무 (ADR-071 Amendment 8, CFP-1764)**: Orchestrator 가 agent burst output (DomainAgent / ResearcherAgent / RequirementsAnalystAgent / PMOAgent 등 부속 작업자) 결과를 사용자 메시지로 합성할 때 (paste-and-translate) codename → 평이 어휘 mapping table ([`docs/wording-dictionary.md`](docs/wording-dictionary.md) 카테고리 (c), closed 15 codename 첫 batch + ratchet extensibility) lookup 의무 — 1:1 치환 또는 평문 풀이 동반. SSOT = [ADR-071 §결정 19](docs/adr/ADR-071-orchestrator-user-dialog-convergence.md). frame mode step 4 (message 작성) 직전 cognitive 단계. mctrader-hub#517 4-turn 누적 jargon leak evidence base. mechanical lint = Story-2 carrier (Wave 2, `codename-glossary-lookup` warning-tier evidence-check 23번째 entry + `hotfix-bypass:codename-glossary-lookup` 75번째 family member).
 
 ### Stop-time + Question quality 3-check + Skill body precedence (Trace 5/6, Amendment 2 CFP-610 / Amendment 3 CFP-637)
 

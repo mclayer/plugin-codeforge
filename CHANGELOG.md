@@ -7,6 +7,12 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.9.0] - 2026-05-27
+
+### Added
+
+- [CFP-1764-S1] **ADR-071 Amendment 8 — agent burst output paste 합성 시 mid-turn glossary lookup 의무** (doc-only fast-path ADR-054 Cat 1, regulation MINOR per ADR-063 §결정 1). §결정 19 신설 — Orchestrator 가 agent burst output (DomainAgent / ResearcherAgent / RequirementsAnalystAgent / PMOAgent 등 4+ 부속 작업자) 결과를 사용자 메시지로 합성 (paste-and-translate) 할 때 `docs/wording-dictionary.md` 카테고리 (c) codename → 평이 어휘 mapping table lookup 의무. closed 15 codename 첫 batch (Story / carry / drift / spec / scope manifest / ADR / Amendment / sub-agent / lane / Phase / Layer / sub-mechanism / mid-turn / forcing function / ratchet) + ratchet extensibility (신규 어휘 = 별 후속 CFP). `docs/wording-dictionary.md` 카테고리 (c) 신설 (Amendment 4 lockstep) + frontmatter `mechanical_enforcement_actions[]` `codename-glossary-lookup` entry append (deferred-followup, Story-2 carrier #797 unblock — Wave 2 mechanical wire). CLAUDE.md "결정 제시 (Trace 2)" 단락 cross-ref 1줄 + `skills/user-dialog-mode/SKILL.md` mid-turn glossary lookup sub-section 추가. Source incident = mctrader-hub#517 consumer brainstorm Phase 1 dialog 4-turn 누적 jargon leak (사용자 directive 4건 verbatim + consumer ad-hoc fix 거부 + wrapper canonical path 의무). Axis disjoint declare — §결정 17 (Amendment 6 lane back-translation gate) = return-time output gate per-lane vertical axis ↔ §결정 19 = mid-turn paste-and-translate horizontal axis (lane-agnostic Orchestrator 합성). 5번째 cognitive layer 신설 금지 invariant 보존 (§결정 12.3 정합 — mechanism 추가, cognitive layer count 변경 아님). marketplace sibling sync PR (`mclayer/marketplace` `plugins[name=codeforge].version` 6.8.2 → 6.9.0) 동반 — ADR-063 §결정 2 atomic ordering (marketplace PR 선행 merge → wrapper PR merge). Story-2 (#797 unblock, lint backbone) + Story-3 (4 agent prompt template 평이 번역 directive) 별 sub-Story carrier (Wave 2/3).
+
 ## [6.8.2] - 2026-05-27
 
 ### Fixed
