@@ -1,0 +1,148 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT (file structure adapted from superpowers v5.1.0)
+# SubagentStop hook for codeforge plugin — verify-before-trust advisory + ledger row
+#
+# Carrier: CFP-1743 (Story-3 of Epic CFP-1740 — ADR-115 §결정 2·3·5)
+#
+# 책임 경계 (ADR-115 §결정 2 / §결정 3 / §결정 5 정합):
+#   - subagent return 시점 verify-before-trust (ADR-070) advisory (stderr)
+#   - back-translation gate (ADR-071 §결정 17) 위반 ledger row + 경고
+#   - stop-event-v1 v1.0 ledger row append (hook_source: subagent-stop, record-only)
+#   - ledger write: ${CLAUDE_PROJECT_DIR}/.claude/ledger/stop-event.jsonl
+#   - **block 금지** (ADR-115 §결정 2) — stdout JSON 안 block field 절대 미등장
+#   - exit code 항상 0 (graceful degradation)
+#
+# 정적 properties (ADR-115 §결정 5 / ADR-038 §결정 7·8 정합):
+#   (a) set -euo pipefail + exit 0 trap — 어떤 fail 도 SubagentStop block 금지
+#   (b) stdout 출력 없음 — block/permissionDecision:deny 절대 미등장
+#   (c) network call 0
+#   (d) Python 호출 — ADR-061 Amendment 3 외부 .py 파일 (heredoc 금지)
+#
+# Graceful degradation 5층 (ADR-115 §결정 5 closed-set):
+#   (a) hook 파일 부재 → harness skip (본 파일 존재 시 N/A)
+#   (b) bash interpreter 부재 → run-hook.cmd `exit /b 0` silent fail-open
+#   (c) Python 부재 / 오류 → stderr warning + exit 0
+#   (d) stdin 읽기 실패 → 빈 stop_reason 으로 fallback
+#   (e) 어떤 fail 도 SubagentStop block 금지
+#
+# Bypass:
+#   BYPASS_CODEFORGE_SUBAGENT_STOP=1 → stderr audit echo + exit 0 (ledger 미작성)
+#
+# one-channel rule (ADR-115 §결정 3):
+#   marker: [codeforge-wrapper-subagent-stop]
+#
+# Sibling hook axis:
+#   hooks/stop = Stop 담당 (stop-time advisory + ledger)
+#   본 hook    = SubagentStop 담당 (subagent return verify-before-trust advisory + ledger)
+
+set -euo pipefail
+
+# 어떤 실패도 exit 0 으로 trap — SubagentStop block 금지 (ADR-115 §결정 2·5)
+trap 'exit 0' ERR
+
+# ── Bypass check (audit trail 의무) ──────────────────────────────────────────
+if [ "${BYPASS_CODEFORGE_SUBAGENT_STOP:-0}" = "1" ]; then
+  >&2 printf '[codeforge-wrapper-subagent-stop] BYPASS_CODEFORGE_SUBAGENT_STOP=1 — subagent-stop hook suppressed at %s\n' \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  exit 0
+fi
+
+# ── stdin = SubagentStop hook JSON payload 읽기 ───────────────────────────────
+PAYLOAD="$(cat 2>/dev/null || true)"
+
+# stop_reason 추출
+STOP_REASON=""
+if command -v python3 >/dev/null 2>&1; then
+  STOP_REASON="$(printf '%s' "${PAYLOAD}" | python3 -c "
+import json, sys
+try:
+    data = json.loads(sys.stdin.read())
+    reason = data.get('stop_reason', '')
+    if not reason:
+        # subagent-stop 전용 — subagent 완료 여부
+        if data.get('subagent_completed', False):
+            reason = 'subagent_completed'
+        else:
+            reason = 'subagent_stopped'
+    print(reason, end='')
+except Exception:
+    pass
+" 2>/dev/null || true)"
+elif command -v python >/dev/null 2>&1; then
+  STOP_REASON="$(printf '%s' "${PAYLOAD}" | python -c "
+import json, sys
+try:
+    data = json.loads(sys.stdin.read())
+    reason = data.get('stop_reason', '')
+    if not reason:
+        if data.get('subagent_completed', False):
+            reason = 'subagent_completed'
+        else:
+            reason = 'subagent_stopped'
+    print(reason, end='')
+except Exception:
+    pass
+" 2>/dev/null || true)"
+fi
+
+# ── session_id 결정 ───────────────────────────────────────────────────────────
+SESSION_ID="${CLAUDE_SESSION_ID:-}"
+if [ -z "$SESSION_ID" ] && [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
+  SESSION_ID="$(basename "${CLAUDE_PROJECT_DIR}")"
+fi
+
+# ── ledger path 결정 ──────────────────────────────────────────────────────────
+LEDGER_FILE=""
+if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
+  LEDGER_FILE="${CLAUDE_PROJECT_DIR}/.claude/ledger/stop-event.jsonl"
+fi
+
+# ── ADR-070 verify-before-trust advisory (stderr) ────────────────────────────
+# SubagentStop hook = subagent return 시점 verify-before-trust advisory reminder
+>&2 printf '[codeforge-wrapper-subagent-stop] ADVISORY: ADR-070 verify-before-trust — subagent output ground-truth verify 의무\n'
+>&2 printf '  Orchestrator = subagent artifacts verbatim Read + mismatch reject + §10 FP count tally.\n'
+>&2 printf '  ADR-071 §결정 17 back-translation gate: [USER-UTTERANCE-VERBATIM] block 유무 확인.\n'
+
+# ── Python verifier 경로 결정 ─────────────────────────────────────────────────
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
+APPEND_SCRIPT=""
+
+if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/lib/append_stop_event.py" ]; then
+  APPEND_SCRIPT="${PLUGIN_ROOT}/scripts/lib/append_stop_event.py"
+elif [ -f "scripts/lib/append_stop_event.py" ]; then
+  APPEND_SCRIPT="scripts/lib/append_stop_event.py"
+fi
+
+# ── ledger row append ─────────────────────────────────────────────────────────
+if [ -z "$LEDGER_FILE" ]; then
+  >&2 printf '[codeforge-wrapper-subagent-stop] WARN: CLAUDE_PROJECT_DIR unset — ledger append skipped\n'
+  exit 0
+fi
+
+if [ -z "$APPEND_SCRIPT" ]; then
+  >&2 printf '[codeforge-wrapper-subagent-stop] WARN: append_stop_event.py not found — ledger append skipped\n'
+  exit 0
+fi
+
+PYTHON_CMD=""
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON_CMD="python3"
+elif command -v python >/dev/null 2>&1; then
+  PYTHON_CMD="python"
+fi
+
+if [ -z "$PYTHON_CMD" ]; then
+  >&2 printf '[codeforge-wrapper-subagent-stop] WARN: Python interpreter not found — ledger append skipped\n'
+  exit 0
+fi
+
+# append 실행 — hook_source: subagent-stop
+"$PYTHON_CMD" "$APPEND_SCRIPT" \
+  --hook-source "subagent-stop" \
+  --stop-reason "${STOP_REASON}" \
+  --session-id "${SESSION_ID}" \
+  --ledger-path "${LEDGER_FILE}" \
+  2>/dev/null || true
+
+# ── 항상 exit 0 (ADR-115 §결정 2 — block 금지) ───────────────────────────────
+exit 0
