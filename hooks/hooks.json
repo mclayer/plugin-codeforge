@@ -27,6 +27,16 @@
             "async": false
           }
         ]
+      },
+      {
+        "matcher": "ScheduleWakeup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd\" schedule-wakeup-reminder",
+            "async": false
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
