@@ -1,0 +1,176 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT (file structure adapted from superpowers v5.1.0)
+# PreToolUse(Agent) hook for codeforge plugin — spawn-format 4-block gate
+#
+# Carrier: CFP-1742 (Story-2 of Epic CFP-1740 — ADR-115 §결정 1·4·6)
+#
+# 책임 경계 (ADR-115 §결정 1 / §결정 4 / §결정 6 정합):
+#   - 책임: Agent tool spawn 직전 spawn-prompt 안 필수 4 block presence 검증.
+#           Wave 1 warning-only — 누락 시 stderr warning 발화 + exit 0 (deny 비활성).
+#           Wave 2 (별 sub-CFP, ADR-060 evidence-gate 후): stdout JSON deny 활성.
+#   - 비책임: spawn prompt 내용 변조 금지. inline-write 검출 영역 외 (Change Plan §결정 6).
+#             코드 품질 / 보안 검사 영역 외 (CodeReview / SecurityTest lane 책임).
+#
+# 검증 대상 4 block (ADR-115 §결정 6 closed-set):
+#   1. [PRE-SPAWN-ORIGIN-MAIN-SHA] : <SHA>  — ADR-082 Amendment 15 1-E
+#   2. [USER-UTTERANCE-VERBATIM]            — ADR-082 Amendment 5 1-C
+#   3. worktree-first directive presence    — ADR-040 Amendment 6
+#   4. parallel-dispatch directive presence — ADR-064 Amendment 1
+#
+# Wave 1 출력 (warning-only):
+#   - 4 block 모두 present  → exit 0 (no warning)
+#   - 1+ block 누락         → stderr warning per block + exit 0 (deny 비활성)
+#   - BYPASS env 설정       → stderr audit + exit 0 (bypass audit trail)
+#
+# 정적 properties (ADR-115 §결정 5 / ADR-038 §결정 7·8 정합):
+#   (a) set -euo pipefail + exit 0 trap — 어떤 fail 도 spawn block 금지 (Wave 1)
+#   (b) filesystem touch 0 — no >, >>, mkdir, rm, mv, cp (stdin/stderr 만)
+#   (c) network call 0
+#   (d) Python 호출 — ADR-061 Amendment 3 외부 .py 파일 (heredoc 금지)
+#   (e) timeout 내 exit 0 종료 (PreToolUse 30s 기준, < 500ms 목표 §7.4 OR-1)
+#
+# Graceful degradation 5층 (ADR-115 §결정 5 closed-set):
+#   (a) hook 파일 부재 → harness skip (본 파일 존재 시 N/A)
+#   (b) bash interpreter 부재 → run-hook.cmd `exit /b 0` silent fail-open
+#   (c) Python 부재 / 오류 → stderr warning + exit 0 (spawn 허용)
+#   (d) stdin 읽기 실패 → check_spawn_prompt_format.py 가 빈 텍스트 처리
+#   (e) 어떤 fail 도 Wave 1 spawn block 금지
+#
+# Bypass:
+#   BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE=1 → stderr audit echo + exit 0
+#   (scope disjoint — BYPASS_CROSS_REPO_GH_SAFETY / BYPASS_CODEFORGE_PREREQ 등과 별 env)
+#
+# one-channel rule (ADR-115 §결정 3):
+#   marker: [codeforge-wrapper-pretooluse-agent-gate]
+#
+# Sibling hook disjoint axis:
+#   hooks/cross-repo-gh-safety = PreToolUse(Bash) 담당 (cwd gh write safety)
+#   본 hook   = PreToolUse(Agent) 담당 (spawn-format 4-block gate)
+#   두 hook 은 서로 다른 matcher 에 등록 — 상호 독립 (ADR-115 §결정 3 정합)
+
+set -euo pipefail
+
+# 어떤 실패도 exit 0 으로 trap — Wave 1 spawn block 금지 (ADR-115 §결정 4·5)
+trap 'exit 0' ERR
+
+# ── Bypass check (audit trail 의무) ──────────────────────────────────────────
+if [ "${BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE:-0}" = "1" ]; then
+  >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE=1 — spawn-format gate suppressed at %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  exit 0
+fi
+
+# ── stdin = PreToolUse JSON payload 읽기 ─────────────────────────────────────
+# Claude Code 가 hook stdin 으로 tool_input JSON 을 전달.
+# Agent tool 의 경우 tool_input.prompt 에 spawn prompt 본문 포함.
+PAYLOAD="$(cat 2>/dev/null || true)"
+
+# payload 가 비어있으면 pass-through (scope 외)
+if [ -z "$PAYLOAD" ]; then
+  exit 0
+fi
+
+# ── spawn prompt 추출 ─────────────────────────────────────────────────────────
+# jq 비의존 (환경 jq 부재 가능) — tool_input.prompt 필드 추출.
+# Python stdlib json 을 사용해 안전한 추출 (ADR-061 Amendment 3 정합).
+# 추출 실패 시 fail-open (false-negative 가 false-positive 보다 안전 — Wave 1).
+PROMPT_TEXT=""
+if command -v python3 >/dev/null 2>&1; then
+  PROMPT_TEXT="$(printf '%s' "$PAYLOAD" | python3 -c "
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    # tool_input.prompt 또는 tool_input 의 다른 키에서 prompt 추출
+    tool_input = data.get('tool_input', {})
+    prompt = tool_input.get('prompt', '')
+    print(prompt, end='')
+except Exception:
+    pass
+" 2>/dev/null || true)"
+elif command -v python >/dev/null 2>&1; then
+  PROMPT_TEXT="$(printf '%s' "$PAYLOAD" | python -c "
+import json, sys
+try:
+    data = json.load(sys.stdin)
+    tool_input = data.get('tool_input', {})
+    prompt = tool_input.get('prompt', '')
+    print(prompt, end='')
+except Exception:
+    pass
+" 2>/dev/null || true)"
+fi
+
+# prompt 추출 실패 (Python 부재 또는 parse 오류) → fail-open
+if [ -z "$PROMPT_TEXT" ]; then
+  >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] WARN: spawn prompt extraction failed (Python unavailable or JSON parse error) — spawn allowed (Wave 1 graceful degradation)\n'
+  exit 0
+fi
+
+# ── Python verifier 호출 (ADR-061 Amendment 3 정합) ──────────────────────────
+# scripts/lib/check_spawn_prompt_format.py 가 4 block presence 검증.
+# CLAUDE_PLUGIN_ROOT 환경변수 = Claude Code 가 hook 호출 시 plugin root 로 설정.
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
+VERIFIER_SCRIPT=""
+
+if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/lib/check_spawn_prompt_format.py" ]; then
+  VERIFIER_SCRIPT="${PLUGIN_ROOT}/scripts/lib/check_spawn_prompt_format.py"
+elif [ -f "scripts/lib/check_spawn_prompt_format.py" ]; then
+  # fallback: cwd 기준 (bats fixture 등 테스트 환경)
+  VERIFIER_SCRIPT="scripts/lib/check_spawn_prompt_format.py"
+fi
+
+if [ -z "$VERIFIER_SCRIPT" ]; then
+  >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] WARN: check_spawn_prompt_format.py not found — spawn allowed (Wave 1 graceful degradation)\n'
+  exit 0
+fi
+
+# Python verifier 실행 — stdout JSON, stderr warning
+PYTHON_CMD=""
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON_CMD="python3"
+elif command -v python >/dev/null 2>&1; then
+  PYTHON_CMD="python"
+fi
+
+if [ -z "$PYTHON_CMD" ]; then
+  >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] WARN: Python interpreter not found — spawn allowed (Wave 1 graceful degradation)\n'
+  exit 0
+fi
+
+# verifier 실행 — exit 1 = missing blocks, exit 0 = all present
+VERIFIER_OUT=""
+VERIFIER_EXIT=0
+VERIFIER_OUT="$(printf '%s' "$PROMPT_TEXT" | "$PYTHON_CMD" "$VERIFIER_SCRIPT" --prompt-stdin 2>/dev/null)" || VERIFIER_EXIT=$?
+
+# Wave 1: exit code 에 무관하게 exit 0 (warning-only)
+# 누락 block 목록 파싱 후 stderr warning 발화
+if [ "$VERIFIER_EXIT" -ne 0 ]; then
+  # missing block 목록 — JSON 파싱 (Python stdout)
+  MISSING_BLOCKS=""
+  if [ -n "$VERIFIER_OUT" ] && [ -n "$PYTHON_CMD" ]; then
+    MISSING_BLOCKS="$(printf '%s' "$VERIFIER_OUT" | "$PYTHON_CMD" -c "
+import json, sys
+try:
+    data = json.loads(sys.stdin.read())
+    missing = data.get('missing', [])
+    print(', '.join(missing))
+except Exception:
+    pass
+" 2>/dev/null || true)"
+  fi
+
+  if [ -n "$MISSING_BLOCKS" ]; then
+    >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] WARN: spawn prompt missing required blocks: [%s]\n' "$MISSING_BLOCKS"
+    >&2 printf '  ADR-115 §결정 6 / Change Plan §3.3 — 4 block presence 의무:\n'
+    >&2 printf '  1. [PRE-SPAWN-ORIGIN-MAIN-SHA] : <SHA>  (ADR-082 Amendment 15 1-E)\n'
+    >&2 printf '  2. [USER-UTTERANCE-VERBATIM]            (ADR-082 Amendment 5 1-C)\n'
+    >&2 printf '  3. worktree-first directive             (ADR-040 Amendment 6)\n'
+    >&2 printf '  4. parallel-dispatch directive          (ADR-064 Amendment 1)\n'
+    >&2 printf '  Wave 1: warning-only (spawn allowed). Wave 2 deny 활성 = 별 sub-CFP carrier.\n'
+    >&2 printf '  Bypass: BYPASS_CODEFORGE_PRETOOLUSE_AGENT_GATE=1\n'
+  else
+    >&2 printf '[codeforge-wrapper-pretooluse-agent-gate] WARN: spawn prompt format issue detected — spawn allowed (Wave 1)\n'
+  fi
+fi
+
+# Wave 1: 항상 exit 0 (deny 비활성)
+exit 0
