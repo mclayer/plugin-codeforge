@@ -25,7 +25,7 @@ tools: Read
 | 1 | **codeforge 내부 어휘 "내부 메모" 분류 격리** — ADR-NNN / CFP-NNN / lane plugin name / hook name / inter-plugin contract name 을 내부 메모 영역으로 분류. 사용자 발화 본문 직접 등장 금지 (식별자 인용 시 사전 요약 의무) |
 | 2 | **사용자 지금까지 무엇 알고 있는지 정리** — 사용자 mental model 추정. 이전 turn 발화 기준 + 미공개 컨텍스트 분리 |
 | 3 | **사용자 이 turn 무엇 답·결정해야 하는지 한 문장** — turn 의 사용자 action item 1 문장. 한 문장으로 명확하지 않으면 step 미완 |
-| 4 | **위 셋 바탕으로 메시지 작성** — step 1+2+3 통합 위에 본문 |
+| 4 | **위 셋 바탕으로 메시지 작성** — step 1+2+3 통합 위에 본문. **mid-turn glossary lookup 의무** (ADR-071 §결정 19, Amendment 8 — CFP-1764): agent burst output paste 합성 시 codename 발견 시 [`docs/wording-dictionary.md`](../../docs/wording-dictionary.md) 카테고리 (c) lookup → 평이 어휘 1:1 치환 또는 평문 풀이 동반. closed 15 codename 첫 batch + ratchet extensibility (신규 어휘 = 별 후속 CFP) |
 
 ## frame mode 안 세부 룰 3 종 (ADR-071 §결정 2)
 
@@ -213,3 +213,67 @@ DialogFidelityAgent spawn (subagent 형태) = [ADR-039 §결정 2](../../docs/ad
 ### mechanical lint = 별도 follow-up CFP
 
 §결정 15 = behavioral directive only. 3 touchpoint 외 발화 자동 감지 + 억제-induced rework 측정 = 별도 follow-up CFP scope (§결정 10 패턴 정합, dialog-fidelity-effect precedent runtime cron measurement 동형).
+
+## Mid-turn glossary lookup (ADR-071 §결정 19 / CFP-1764 / Amendment 8)
+
+> normative SSOT = [ADR-071 §결정 19](../../docs/adr/ADR-071-orchestrator-user-dialog-convergence.md) + [`docs/wording-dictionary.md`](../../docs/wording-dictionary.md) 카테고리 (c). 본 sub-section = **lookup mirror only** (skill body precedence 정합 — [ADR-064 §결정 10](../../docs/adr/ADR-064-decision-principle-mandate.md) normative > skill body 우선).
+
+### 본질 anchor — agent burst paste 합성 시점의 mid-turn forcing function
+
+§결정 2(c) "sub-agent 결과 평이 번역" 의무는 명시되나 *번역 mechanism 부재* — agent output prose 가 codeforge vocabulary 로 작성된 채 Orchestrator 가 합성 발화에 그대로 옮긴다. 본 §결정 19 = mid-turn paste-and-translate 시점 glossary lookup 강제. mctrader-hub#517 4-turn 누적 jargon leak evidence.
+
+### lookup table SSOT location
+
+**`docs/wording-dictionary.md` 카테고리 (c)** — closed 15 codename 첫 batch + ratchet extensibility. ADR 본문 / 본 skill SKILL.md / domain-knowledge 별 SSOT 금지 (single source of truth).
+
+### codename → 평이 어휘 mapping (cap 15, 시점 1 baseline 2026-05-27)
+
+| codename | 평이 어휘 (1:1) | 비고 |
+|---|---|---|
+| Story | 작업 단위 | codeforge SDLC 1 단위 |
+| carry / carry-over | 이어 옮기다 / 다음으로 옮겨감 | 결정 / 정보 전달 |
+| drift | 원본과 어긋남 / 이탈 | repo / file 일관성 깨짐 |
+| spec | 명세서 | brainstorm 산출물 |
+| scope manifest | 변경 범위 목록 | PR scope 명시 |
+| ADR | 결정 기록 | Architecture Decision Record |
+| Amendment | 수정안 / 후속 수정 | 기존 ADR 후속 결정 |
+| sub-agent / agent | 부속 작업자 / 작업자 | spawn 단위 |
+| lane | 작업 영역 | 8 lane plugin family |
+| Phase 1 / Phase 2 | 1차 단계 / 2차 단계 | PR split |
+| Layer N | N층 / N단계 | ADR-071 cognitive enum |
+| sub-mechanism | 부속 매커니즘 | ADR-071 §결정 4 |
+| mid-turn | 발화 도중 | Amendment 8 핵심 |
+| forcing function | 강제 매커니즘 | governance ratchet |
+| ratchet | 강화 방향 고정 | sunset asymmetry |
+
+신규 어휘 도입 = 별 후속 CFP 의무 (ratchet extensibility). 정확 lookup = `docs/wording-dictionary.md` 카테고리 (c) verbatim.
+
+### Scope (사용자 dialog turn only)
+
+- **적용**: 사용자 dialog turn (Orchestrator 직접 발화) 영역
+- **scope 외**: governance artifact (ADR / spec / change-plan / Story file) — codename 자연 사용 허용
+
+### Forcing function 위치 — frame mode step 4 직전
+
+frame mode step 3 (turn 결정 1 문장 정리) 와 step 4 (메시지 작성) 사이 cognitive 단계 — codename 발견 시 평이 어휘 치환 또는 평문 풀이 동반 의무 실행.
+
+### 5번째 cognitive layer 신설 금지 invariant 보존
+
+본 §결정 19 = mechanism 추가 (glossary lookup forcing function), §결정 3 4-layer cognitive enum count 변경 아님 (§결정 12.3 invariant 정합).
+
+### Mechanical layer (Story-2 carrier)
+
+- `scripts/check-codename-glossary-lookup.sh` PR diff scan + wording-dictionary 카테고리 (c) grep target
+- `templates/github-workflows/codename-glossary-lookup.yml` warning-tier workflow
+- `docs/evidence-checks-registry.yaml` 23번째 warning entry (`codename-glossary-lookup`)
+- `hotfix-bypass:codename-glossary-lookup` 75번째 hotfix-bypass family member (label-registry-v2 v2.37 → v2.38 MINOR)
+
+turn-final hook 부재 platform 한계 — lint-time post-write detection only, runtime mid-turn block 불가.
+
+### Consumer false positive
+
+consumer project (mctrader-hub 등) 가 동일 codename 을 비즈니스 용어로 사용하는 경우 (예: "drift" = 포트폴리오 변동), consumer overlay `jargon_filter_exempt_vocabulary: [...]` field 신설 — 별 follow-up CFP carrier (본 Amendment 8 scope 외).
+
+### closed enum 확장 시 별 CFP 의무
+
+15 codename closed enumeration. 16번째 entry 이상 도입 시 별 후속 CFP 의무 (ADR-064 §결정 5 CFP scope unitary + ADR-058 §결정 5 sunset_justification + Story §1 사용자 explicit 승인). 본 ADR-071 안 5번째 closed enumeration 인스턴스 (3-anchor enum §13.6 / 4 차원 enum §4 / 3 touchpoint enum §15.5 / trigger table §16 / **codename 15-batch §19**).
