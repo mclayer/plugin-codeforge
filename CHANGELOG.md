@@ -4,6 +4,32 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.3.0] - 2026-05-27
+
+### CFP-1764 Story-3 — PMOAgent prompt template 평이 번역 의무 directive 추가 (MINOR)
+
+ADR-071 Amendment 8 (wrapper plugin-codeforge, Story-1 #1769 MERGED 2026-05-27 12:30:49 KST) horizontal axis 자매 carrier. PMOAgent prompt template 본문에 codename → 평이 어휘 평문 풀이 의무 directive 추가. retro / Epic 분해 / Cross-Story 패턴 보고 산출물 안 사용자 dialog paste 영역 jargon leak 차단.
+
+#### Added
+
+- `agents/PMOAgent.md` — "출력 시 평이 어휘 의무 (ADR-071 §결정 19, Amendment 8 — CFP-1764)" section 신설:
+  - In scope 산출물 4종 명시 (retro `## 핵심 발견` / `## 다음 단계` / Epic 분해 위험 신호 / Cross-Story patterns 요약 / ADR 후보 발의 `## 배경` `## 문제` 첫 paragraph)
+  - Lookup SSOT = wrapper `docs/wording-dictionary.md` 카테고리 (c) 15 batch + ratchet 평문 풀이 ("강화 방향 고정 확장")
+  - Out of scope (governance artifact 본문 / pmo_output v1 structured field / retro frontmatter)
+  - 적용 예시 15-row 표
+- `.claude-plugin/plugin.json` — version 0.2.0 → 0.3.0 MINOR. description CFP-1764 Story-3 entry append.
+
+#### Why
+
+ADR-071 §결정 19 (Amendment 8, Story-1 carrier) horizontal axis 자매 — PMOAgent retro 본문 + Cross-Story patterns 요약 sentence 가 Story 작업 단위 완료 직후 사용자에게 보고되는 영역. 사용자 directive 2026-05-27 KST (mctrader-hub#517 4-turn 누적 redirect + confirm directive: "오케이 그렇게 escalation 하자. 그렇게 버전업되면 버전 업그레이드 통해 적용받는 식으로") wrapper canonical path 의무 적용.
+
+#### Compatibility
+
+- canonical: wrapper `plugin-codeforge` (Amendment 8 ADR-071 + wording-dictionary 카테고리 (c) SSOT, Story-1 PR #1769 MERGED)
+- sibling: codeforge-requirements (Story-3 PR sibling sync, 동일 MINOR)
+- marketplace: 4 mirrored field (`name` / `version` / `description` / `author`) atomic sync 의무 (ADR-063 §결정 2 ordering)
+- Effective date: marketplace sync PR merged + 본 PR merged + consumer `/plugins install` 후 (ADR-053 structural change restart 적용 영역)
+
 ## [0.2.0] - 2026-05-16
 
 ### CFP-777 (Epic #761 Story-1) — DialogFidelityAgent 신규 cross-cutting verifier agent 추가 (MINOR)
