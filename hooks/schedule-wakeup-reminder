@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# codeforge — PreToolUse hook (matcher: ScheduleWakeup): autonomous loop idle-without-purpose reminder (CFP-1755 / ADR-064 Amendment 12, Wave 2A mechanical wire)
+#
+# 책임: Orchestrator 가 ScheduleWakeup tool 호출 직전 4-tuple AND gate self-check 를 컨텍스트로 주입 (advisory, non-blocking).
+# 4-tuple 모두 0 → loop 자동 종료 (ScheduleWakeup 호출 생략 = dynamic pacing terminus, ADR-064 §결정 12).
+#
+# 출력: PreToolUse additionalContext JSON (단일 줄, \n 은 JSON escape).
+# bypass: BYPASS_SCHEDULE_WAKEUP_REMINDER=1 → 주입 생략.
+# fail-safe: 어떤 경우에도 exit 0 (ScheduleWakeup 호출 차단 안 함 — Wave 2B 영역).
+#
+# Wave 2A scope: advisory reminder only — signal inspection 부재 (armed_monitor / in_progress_agent / actionable_backlog
+# 은 hook process 에서 외부 verify 불가, open_pr_session 만 부분 verify 가능하나 본 Wave A 영역 외).
+# Wave 2B (deferred 별 sub-CFP): permissionDecision:"deny" + 4-tuple 실제 verify (signal inspection 메커니즘 필요).
+set -uo pipefail
+
+[ "${BYPASS_SCHEDULE_WAKEUP_REMINDER:-0}" = "1" ] && exit 0
+
+# stdin 의 PreToolUse JSON payload 읽기 — fail-safe (stdin 부재 / 파싱 오류 시 그래도 reminder 발화).
+# 본 Wave A 는 payload field 사용 영역 부재 (advisory only) — 단순 발화 후 종료.
+
+cat <<'EOF'
+{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"[autonomous loop idle-without-purpose self-check — ScheduleWakeup 호출 직전 4-tuple AND gate 점검 의무 (codeforge governance Amendment 12 Wave 2A)]\n4 signal 모두 0 (false) 이면 ScheduleWakeup 호출 금지 — loop 자동 종료 (한 줄 status report 후 dynamic pacing terminus, ScheduleWakeup 생략 = 자연 loop 종료):\n  1) armed_monitor > 0? (Monitor tool watch / background process polling / file change watch / log tail 1+ 활성)\n  2) in_progress_agent > 0? (active Agent tool spawn — subagent return 미수신 영역)\n  3) open_pr_session > 0? (본 세션 author open PR 중 review/merge 사용자 동의 대기 또는 CI failing FIX 의무 영역)\n  4) actionable_backlog > 0? (Story / Epic / Issue / TodoWrite next step 1+ derived default 즉시 진행 가능 영역)\nAnti-pattern: CI green polling 단독 / trivial verify (gh run list / git fetch / single Read) 후 재호출 / 한 줄 status report 후 ScheduleWakeup 재호출 = idle-without-purpose. ScheduleWakeup 호출 시 reason 평문 declare 의무 — 어느 signal 이 true 인지 명시."}}
+EOF
+
+exit 0

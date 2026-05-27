@@ -140,9 +140,23 @@ amendment_log:
       ratchet 강화 방향 (scope 확장 — Orchestrator autonomous loop tick frequency governance 의 명문 codify, §결정 7 evidence-gated symmetric ratchet 정합). is_transitional: false 정합. 약화 방향 (4-tuple AND gate 1+ 조건 제거 / Anti-pattern enum 축소 / "stop in single line" mechanical 의미 reinterpretation 허용) = ADR-058 §결정 5 sunset_justification 의무.
     direction: strengthen
     sunset_justification: null  # ratchet 강화 방향 (autonomous loop tick frequency governance 명문 codify, scope 약화 0건)
+  - amendment: 12
+    carrier_story: CFP-1755
+    date: 2026-05-27
+    summary: |
+      §결정 12 (Trace 8) Wave 2A mechanical wire activation — PreToolUse matcher `ScheduleWakeup` advisory reminder hook 신설 (`hooks/schedule-wakeup-reminder` + `hooks/hooks.json` PreToolUse 두 번째 entry). 4-tuple AND gate self-check 평문을 Orchestrator 에 `additionalContext` 로 컨텍스트 주입 (non-blocking advisory) — ScheduleWakeup 호출 직전 자동 prompt-time reminder.
+      §결정 12 본문 변경 0건 (Amendment 11 declarative anchor verbatim retain → 본 Amendment 12 = mechanical wire activation source split). CFP-1612 (ADR-082 Amd 22→25 split) / CFP-1632 (ADR-045 Amd 10 split) precedent 답습 — declarative-only Wave 1 + mechanical wire activation Wave 2 의 amendment 단위 분리 패턴.
+      Wave 2A scope (advisory layer, proportionate first step) = prompt-time reminder only — signal inspection 부재 (armed_monitor / in_progress_agent / actionable_backlog 은 hook process 외부 verify 불가, open_pr_session 만 부분 verify 가능하나 본 Wave A 영역 외). Wave 2B (deferred 별 sub-CFP) = `permissionDecision:"deny"` blocking gate + 4-tuple 실제 verify (signal inspection mechanism 필요).
+      `mechanical_enforcement_actions[]` 두 번째 entry append — `autonomous-loop-idle-termination-reminder` action (binding = §결정 12 Wave 2A mechanical wire). hook = session-runtime advisory (PR-time CI lint 아닌 turn-time gate, ADR-060 4-tier 적용 영역 외 — domain-knowledge `docs/domain-knowledge/concept/orchestrator-runtime-hook-enforcement.md` 분류 정합). CFP-1738 reminder hook 패턴 (`hooks/plain-language-reminder` UserPromptSubmit + `hooks/plain-language-check.py` Stop) 의 2번째 instantiation — bash shim + cat-heredoc JSON 정적 출력 (Python 불요, <100ms invocation cost).
+      ratchet 강화 방향 (declarative → mechanical 격상, scope 확장 아님 — 본문 변경 0). is_transitional: false 정합. 약화 방향 (hook 제거 / advisory → silent 격하 / 4-tuple AND gate 본문 wording 약화) = ADR-058 §결정 5 sunset_justification 의무.
+      META self-application: 본 amendment 도입 직후 Orchestrator 가 `ScheduleWakeup` 호출 시 본 hook 의 reminder 가 PreToolUse 단계에서 prompt context 에 주입됨 — Amendment 11 declarative anchor 의 immediate runtime feedback layer. 본 Story 자체 PR merge 후 첫 ScheduleWakeup 호출 = first applied case.
+    direction: strengthen
+    sunset_justification: null  # ratchet 강화 방향 (declarative → mechanical 격상, scope 약화 0건)
 mechanical_enforcement_actions:
   - action: parallel-dispatch-prompt-check
     binding: 본 Amendment 1 §결정 4 Trace 4 implementation contract (`docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md` §3 의 4 의무 항목) — Orchestrator → PL spawn prompt 검증 lint (warning tier, ADR-060 framework 정합)
+  - action: autonomous-loop-idle-termination-reminder
+    binding: 본 Amendment 12 §결정 12 (Trace 8) Wave 2A mechanical wire — PreToolUse matcher `ScheduleWakeup` advisory reminder hook (`hooks/schedule-wakeup-reminder` + `hooks/hooks.json` PreToolUse 두 번째 entry). 4-tuple AND gate self-check 평문 컨텍스트 주입 (advisory non-blocking, session-runtime layer — PR-time CI lint 아닌 turn-time gate, ADR-060 4-tier 영역 외, domain-knowledge `orchestrator-runtime-hook-enforcement` 정합)
 related_stories:
   - CFP-445
   - CFP-446
@@ -160,6 +174,7 @@ related_stories:
   - CFP-1134 # Amendment 7 carrier — §결정 5 paradigm replacement 면제 exception clause (ADR-097 §결정 2 연동)
   - CFP-1645 # Amendment 10 carrier — §결정 11 신설 (Trace 7 Orchestrator scope boundary primitive 3-axis: 사실 / 구체 환경 분석 / Orchestrator scope)
   - CFP-1753 # Amendment 11 carrier — §결정 12 신설 (Trace 8 autonomous loop idle-without-purpose 자동 종료, 4-tuple AND gate + Anti-pattern enum + ScheduleWakeup-skip mandate)
+  - CFP-1755 # Amendment 12 carrier — §결정 12 Wave 2A mechanical wire activation (PreToolUse `ScheduleWakeup` advisory reminder hook, hooks/schedule-wakeup-reminder + hooks/hooks.json second PreToolUse entry, CFP-1738 reminder pattern 2nd instantiation)
 related_adrs:
   - ADR-039
   - ADR-044  # CFP-609 Amendment 1 — agent teams enabled context (env=1) TeamCreate fan-out 자연 정합
@@ -190,6 +205,9 @@ related_files:
   - docs/wording-dictionary.md  # CFP-750 Amendment 5 — 사용 규칙 lint scope 문구 lockstep
   - docs/evidence-checks-registry.yaml  # CFP-750 Amendment 5 — wording-dictionary entry detect_command + description scope 갱신
   - docs/domain-knowledge/domain/governance-principle/wording-discipline-enforcement.md  # CFP-750 carrier — registration ↔ enforcement 2-layer 분리 + scope 확장 ratchet 판정 SSOT 신설
+  - hooks/schedule-wakeup-reminder  # CFP-1755 Amendment 12 — PreToolUse matcher ScheduleWakeup advisory reminder hook (4-tuple AND gate self-check prompt context injection)
+  - hooks/hooks.json  # CFP-1755 Amendment 12 — PreToolUse 두 번째 entry append (matcher: ScheduleWakeup)
+  - docs/domain-knowledge/concept/orchestrator-runtime-hook-enforcement.md  # CFP-1755 Amendment 12 — turn-time hook layer classification SSOT (Stop / UserPromptSubmit / PreToolUse 차단 가능 영역)
 ---
 
 # ADR-064: codeforge 결정 원칙 mandate — 결정 내용·결정 제시·적용 속도 normative SSOT
@@ -946,6 +964,76 @@ PR ordering (ADR-063 §결정 2): marketplace sync PR 선행 merge → plugin PR
 - `박제` retroactive sweep PR carrier = **본 Amendment 5 (CFP-750)** (본 Amendment 5 §Amendment 결정 3 verbatim 명시)
 
 두 carrier 는 어휘·occurrence·scope axis disjoint = 충돌 0. 동형 retroactive-sweep family 의 두 instantiation. PMOAgent retro file `evidence-track` 표에 두 carrier 동반 기록 의무.
+
+## Amendment 12 — §결정 12 Wave 2A mechanical wire activation (CFP-1755, 2026-05-27)
+
+### 배경
+
+Amendment 11 (CFP-1753) 가 §결정 12 (Trace 8) autonomous loop idle-without-purpose 자동 종료 mandate 를 declarative anchor 로 codify 했다. Wave 2 mechanical wire = "CFP-1738 hooks 패턴 활용 Stop hook 또는 PreToolUse `ScheduleWakeup` matcher" 로 deferred 됐고, `mechanical_enforcement_actions: []` retain (declaration-only Wave 1 pattern, ADR-082 §결정 6 + ADR-070 §D5 + ADR-076 §결정 1 답습).
+
+본 Amendment 12 = Wave 2A — advisory layer 의 proportionate first step. Wave 2B (blocking gate) 는 별 sub-CFP carrier 로 분리 (signal inspection 메커니즘 부재 영역 — armed_monitor / in_progress_agent / actionable_backlog 은 hook process 외부 verify 불가).
+
+### Amendment 결정 1 — PreToolUse `ScheduleWakeup` matcher advisory reminder hook 신설
+
+`hooks/schedule-wakeup-reminder` (bash shim, fast cat-heredoc static JSON 출력) + `hooks/hooks.json` PreToolUse 두 번째 entry append (matcher: `ScheduleWakeup`, command: `${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd schedule-wakeup-reminder`).
+
+| 항목 | 값 | 근거 |
+|---|---|---|
+| 발화 시점 | ScheduleWakeup tool 호출 직전 (PreToolUse) | Orchestrator state 결정 직전 advisory injection |
+| 출력 format | `hookSpecificOutput.additionalContext` (단일 줄, \n JSON escape) | Claude Code hooks reference 정합 (advisory non-blocking) |
+| 차단 여부 | non-blocking (exit 0 always) | Wave 2A scope — Wave 2B blocking 영역 외 |
+| bypass channel | `BYPASS_SCHEDULE_WAKEUP_REMINDER=1` env | CFP-1738 `BYPASS_PLAIN_LANGUAGE` 패턴 답습 |
+| fail-safe | python/bash 부재·오류 시 exit 0 | ScheduleWakeup 호출 차단 안 함 (Wave 2A 영역 외) |
+| invocation cost | <100ms (정적 echo, signal inspection 없음) | CFP-1738 reminder hook 동등 |
+| 적용 범위 | wrapper + 모든 consumer (`hooks/hooks.json` plugin-root first-class registration, CFP-475 / ADR-038 Amendment 3) | 자동 활성, consumer 별도 등록 절차 불필요 |
+
+### Amendment 결정 2 — Wave 2B 분리 (별 sub-CFP carrier)
+
+Wave 2B 영역은 본 amendment scope 외 (§결정 5 CFP scope unitary 정합):
+
+| Wave 2B 항목 | 미해결 사유 | 별 sub-CFP carrier |
+|---|---|---|
+| `permissionDecision:"deny"` blocking gate | 4-tuple AND gate 모두 0 영역 강제 차단 — false negative risk evaluation 필요 (정당 polling case 차단 risk) | TBD (Wave 2B Story) |
+| 4-tuple signal inspection mechanism | armed_monitor / in_progress_agent / actionable_backlog 은 hook process 외부 verify 불가 — open_pr_session 만 `gh pr list` 가능 | TBD (Wave 2B Story) |
+| evidence-checks-registry warning-tier entry `autonomous-loop-idle-termination-gate` | PR-time CI lint 아닌 turn-time gate = ADR-060 4-tier framework 영역 외, 별 카운터 메커니즘 필요 | TBD (Wave 2B Story) |
+
+본 Wave 2A = `mechanical_enforcement_actions[]` 두 번째 entry `autonomous-loop-idle-termination-reminder` (advisory tier, ADR-060 4-tier 영역 외 — domain-knowledge `docs/domain-knowledge/concept/orchestrator-runtime-hook-enforcement.md` 정합).
+
+### Amendment 결정 3 — 본문 §결정 12 변경 0건 (declarative anchor verbatim retain)
+
+Amendment 12 = Amendment 11 §결정 12 본문의 mechanical wire activation source split — 본문 wording 변경 0. 선례 정합:
+
+- **CFP-1612** ADR-082 Amd 22→25 split (declarative anchor 본문 변경 0, mechanical wire Amendment 별 split)
+- **CFP-1632** ADR-045 Amd 10 split (동일 패턴)
+
+본 Amendment 12 = 위 split precedent 3번째 instantiation. declarative-only Wave 1 + mechanical wire activation Wave 2 의 amendment 단위 분리 = ratchet 강화 방향 (forcing function 의 layered defense 추가, §결정 7 evidence-gated symmetric ratchet 정합).
+
+### Amendment 결정 4 — CFP-1738 reminder hook 패턴 2번째 instantiation
+
+CFP-1738 (`hooks/plain-language-reminder` UserPromptSubmit + `hooks/plain-language-check.py` Stop) = 본 Amendment 12 의 직접 precedent — Orchestrator turn-time behavioral discipline 의 advisory reminder + retroactive check 2-layer 패턴.
+
+| Hook | CFP-1738 (2026-05-26) | CFP-1755 Wave 2A (2026-05-27) |
+|---|---|---|
+| 발화 layer | UserPromptSubmit (turn-start advisory) + Stop (turn-end retroactive check) | PreToolUse (tool-call advisory) |
+| Tool target | All user prompts | `ScheduleWakeup` (matcher exact-string) |
+| 차단 | advisory + decision:"block" Stop | advisory only (Wave 2A) — Wave 2B = `permissionDecision:"deny"` |
+| 검사 대상 | codeforge 내부 jargon (ADR-N / CFP-N / §결정) | 4-tuple AND gate self-check (armed_monitor / in_progress_agent / open_pr_session / actionable_backlog) |
+| Output format | `additionalContext` (UserPromptSubmit) + `decision:"block"` (Stop) | `additionalContext` (PreToolUse) |
+| Bypass | `BYPASS_PLAIN_LANGUAGE=1` | `BYPASS_SCHEDULE_WAKEUP_REMINDER=1` |
+
+본 패턴이 codeforge turn-time hook enforcement 의 2번째 instantiation — 같은 hooks plugin-root first-class registration (`hooks/hooks.json`, ADR-038 Amendment 3 §결정 11 polyglot wrapper). domain-knowledge `orchestrator-runtime-hook-enforcement` doc 의 "PreToolUse YES (block 가능, `permissionDecision:"deny"`)" 영역 의 첫 advisory-only instantiation (CFP-1738 `plain-language-reminder` 가 UserPromptSubmit advisory 의 첫 case, 본 hook 이 PreToolUse advisory 의 첫 case).
+
+### Amendment 결정 5 — META self-application
+
+본 Amendment 12 도입 직후 Orchestrator 가 `ScheduleWakeup` 호출 시 본 hook 의 reminder 가 PreToolUse 단계에서 prompt context 에 자동 주입됨. Amendment 11 declarative anchor 의 immediate runtime feedback layer — 본 Story (CFP-1755) PR merge 후 첫 ScheduleWakeup 호출 = first applied case.
+
+§결정 7 evidence-gated symmetric ratchet 정합 — declarative → mechanical 격상 = 강화 방향 (scope 확장 아님, 본문 변경 0). 약화 방향 (hook 제거 / advisory → silent 격하 / 4-tuple AND gate 본문 wording 약화) = ADR-058 §결정 5 sunset_justification 의무.
+
+### Amendment 결정 6 — Sibling sync 면제 (wrapper-self plugin-root hook)
+
+본 Amendment 12 carrier 4 file (`hooks/schedule-wakeup-reminder` + `hooks/hooks.json` + `docs/adr/ADR-064-decision-principle-mandate.md` + `CLAUDE.md`) = 모두 wrapper-self file. sibling sync 면제 (ADR-010 §결정 2 정합 — wrapper-canonical SSOT 영역, plugin-root hooks/ 는 ADR-038 Amendment 3 §결정 11 plugin-root first-class registration).
+
+review-verdict-v4 schema 변경 0건 (advisory hook 은 verdict packet 영역 외, ADR-060 4-tier framework 외).
 
 ## 결과
 
