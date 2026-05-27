@@ -12,16 +12,25 @@ related_adrs:
   - ADR-029  # phase execution visibility (sanitize policy SSOT 통합)
   - ADR-039  # subagent default (Phase 1 trust model precedent)
   - ADR-042  # measurement channel architecture (sibling — privacy concern 분리)
+  - ADR-115  # runtime hook enforcement policy (hook_source / hook_decision field origin — Amendment 1 carrier)
 related_stories:
   - CFP-283
+  - CFP-1744
 related_cfps:
   - CFP-283
+  - CFP-1744
 related_files:
   - docs/inter-plugin-contracts/stop-event-v1.md
   - docs/project-config-schema.md
   - docs/consumer-guide.md
   - docs/domain-knowledge/orchestrator-discipline/measurement-channel.md
 is_transitional: false
+amendment_log:
+  - amendment: 1
+    date: 2026-05-27
+    carrier_story: CFP-1744
+    summary: "§결정 2 Allow-list 16 → 18 field 확장 — hook_source (enum: stop/subagent-stop) + hook_decision (enum: record-only) 2 optional field 추가 (stop-event-v1 v1.1 MINOR bump 동반). ADR-115 §결정 2 block 금지 binding constraint 정합. MINOR 영역 (optional field 추가 = backward-compat, ADR-008 SemVer 정합)."
+mechanical_enforcement_actions: []
 ---
 
 # ADR-043: Codeforge telemetry privacy policy
@@ -72,17 +81,29 @@ CFP-283 ADR-039 §결정 9 deferred measurement channel slot 처리 시 Security
 - ADR-039 Phase 1 doc-only trust model 패턴 정합
 - 사용자 명시 directive 없는 한 measurement opt-in = 사용자 자율
 
-### 결정 2 — Allow-list ONLY 16 field whitelist (capture 시점)
+### 결정 2 — Allow-list ONLY field whitelist (capture 시점)
 
-**Capture 시점 sanitize = Allow-list ONLY**. stop-event-v1 schema 16 field (ADR-042 §결정 2 enumerated) 외 field capture 금지:
+**Capture 시점 sanitize = Allow-list ONLY**. stop-event-v1 schema field (ADR-042 §결정 2 enumerated + CFP-1744 Amendment 1) 외 field capture 금지:
 
+```
+event_id / schema_version / timestamp / story_key / phase_label / lane_label /
+reason_class / reason_class_subclass / actor / iter / decider_pick /
+override_marker / recovery_action / outcome / consumer_scope / parent_event_id /
+hook_source / hook_decision
+```
+
+**v1.0 (CFP-283 origin, 16 field)**:
 ```
 event_id / schema_version / timestamp / story_key / phase_label / lane_label /
 reason_class / reason_class_subclass / actor / iter / decider_pick /
 override_marker / recovery_action / outcome / consumer_scope / parent_event_id
 ```
 
-추가 field capture = BREAKING change → ADR-042 amendment 의무 + 본 ADR-043 §결정 2 갱신 의무 (cross-ref).
+**Amendment 1 (CFP-1744, 2026-05-27) — 18 field 확장**:
+- `hook_source`: enum `{"stop", "subagent-stop"}` optional — emit 한 hook 종류 (non-sensitive)
+- `hook_decision`: enum `{"record-only"}` optional — non-blocking marker (non-sensitive)
+
+추가 field capture = MINOR change (optional field) 또는 BREAKING change (필수 field) → ADR-042 amendment 의무 + 본 ADR-043 §결정 2 갱신 의무 (cross-ref). optional field 추가 = MINOR (ADR-008 §결정 2 정합 — v1.0 reader 가 skip 가능).
 
 근거:
 - Allow-list = future expansion 시 explicit ADR review 강제 (silent expansion 차단)
@@ -91,7 +112,7 @@ override_marker / recovery_action / outcome / consumer_scope / parent_event_id
 
 ### 결정 3 — Deny-list regex (capture 통과 후 2차 안전망 — defense in depth)
 
-Allow-list 16 field 중 `reason_class_subclass` (free-form string) / `actor` (session ID hash) / `recovery_action` 등 string field 의 capture 시점 redact regex:
+Allow-list 18 field 중 (v1.0 origin 16 + v1.1 Amendment 1 2 optional) `reason_class_subclass` (free-form string) / `actor` (session ID hash) / `recovery_action` 등 string field 의 capture 시점 redact regex:
 
 | Pattern | Regex | 대상 |
 |---|---|---|
@@ -121,7 +142,7 @@ ADR-029 §결정 2 (phase narration sanitize policy) sanitize 적용 범위 = **
 
 **SSOT 분담**:
 - ADR-029 §결정 2 (Amendment 1 후) = format / 한국어 lane / stderr-only invariant + sanitize 적용 범위 (narration + ledger 양쪽) SSOT
-- 본 ADR-043 §결정 3 = sanitize Deny-list regex 6 pattern + Allow-list ONLY 16 field SSOT
+- 본 ADR-043 §결정 3 = sanitize Deny-list regex 6 pattern + Allow-list ONLY 18 field SSOT (v1.0 16 + v1.1 Amendment 1 2 optional)
 
 양쪽 SSOT 변경 시 sync 의무 (cross-ref invariant). future ledger (spawn-event-v1 land 시) = 본 §결정 4 가 정의하는 unified scope 자동 inherit.
 
@@ -184,7 +205,7 @@ LDP (Local Differential Privacy, arxiv 2507.06350) = Phase 2 dashboard cold tier
 본 ADR 의 검증 채널 (TestContractArch §8.4 정합):
 
 1. **Opt-in default false invariant lint** — `docs/project-config-schema.md` `telemetry.enabled: false` default + consumer-guide § "Telemetry opt-in" cross-ref 존재.
-2. **Allow-list ONLY enforcement lint** — stop-event-v1 schema 16 field 외 추가 시 lint FAIL (BREAKING change → ADR-042 + ADR-043 amendment 의무).
+2. **Allow-list ONLY enforcement lint** — stop-event-v1 schema 18 field 외 추가 시 lint FAIL (BREAKING change → ADR-042 + ADR-043 amendment 의무).
 3. **Deny-list regex coverage lint** — 6 redact pattern 정합 검증.
 4. **ADR-029 §결정 2 amendment invariant** — ADR-029 frontmatter `amendment_log[]` CFP-283 entry 존재 + ADR-029 §결정 2 본문 Amendment 1 paragraph 존재 + ADR-043 §결정 4 cross-ref link 양방향 정합 (CFP-283 carrier Amendment 1, 2026-05-09 land 완료).
 5. **wrapper-vs-consumer isolation lint** — ledger storage path 분리 (wrapper `mclayer/plugin-codeforge` vs consumer repo).
@@ -196,7 +217,7 @@ LDP (Local Differential Privacy, arxiv 2507.06350) = Phase 2 dashboard cold tier
 ### 영향 file (wrapper repo)
 
 - `docs/adr/ADR-043-codeforge-telemetry-privacy-policy.md` (본 file)
-- `docs/inter-plugin-contracts/stop-event-v1.md` (Allow-list ONLY 16 field 적용 + Deny-list regex 명시)
+- `docs/inter-plugin-contracts/stop-event-v1.md` (Allow-list ONLY 18 field 적용 + Deny-list regex 명시 (v1.1 Amendment 1 후))
 - `docs/project-config-schema.md` (telemetry block — opt-in default false)
 - `docs/consumer-guide.md` § "Telemetry opt-in" (default false 명시)
 - `docs/domain-knowledge/orchestrator-discipline/measurement-channel.md` (privacy 정책 cross-ref)
@@ -225,7 +246,7 @@ LDP (Local Differential Privacy, arxiv 2507.06350) = Phase 2 dashboard cold tier
 
 ## 관련 ADR
 
-- **ADR-029** (phase execution visibility) — **amends** 관계. §결정 2 sanitize policy 적용 범위 확장 (narration → narration + ledger unified SSOT) — CFP-283 carrier Amendment 1 (2026-05-09) land 완료. ADR-029 §결정 2 = format / scope SSOT, 본 ADR §결정 3 = Deny-list regex / Allow-list 16 field SSOT.
+- **ADR-029** (phase execution visibility) — **amends** 관계. §결정 2 sanitize policy 적용 범위 확장 (narration → narration + ledger unified SSOT) — CFP-283 carrier Amendment 1 (2026-05-09) land 완료. ADR-029 §결정 2 = format / scope SSOT, 본 ADR §결정 3 = Deny-list regex / Allow-list 18 field SSOT (v1.0 16 + Amendment 1 2 optional).
 - **ADR-042** (measurement channel architecture) — **sibling Phase 1 PR**. ADR-042 §결정 5-6 verbatim cross-ref. architecture vs policy 분리.
 - **ADR-039** (subagent default) — Phase 1 doc-only trust model 패턴 precedent. §결정 1 opt-in default false 정당화 근거.
 - **ADR-025** (stop discipline) — stop-event-v1 deferred slot context.
@@ -238,10 +259,38 @@ N/A — permanent policy
 
 ## 관련 파일
 
-- `docs/inter-plugin-contracts/stop-event-v1.md` (Allow-list 16 field + Deny-list regex 적용)
+- `docs/inter-plugin-contracts/stop-event-v1.md` (Allow-list 18 field + Deny-list regex 적용 — v1.1 Amendment 1 후)
 - `docs/project-config-schema.md` (telemetry block — opt-in default false)
 - `docs/consumer-guide.md` § "Telemetry opt-in"
 - `docs/domain-knowledge/orchestrator-discipline/measurement-channel.md`
 - `docs/adr/ADR-042-codeforge-measurement-channel-architecture.md` (sibling)
+- `docs/adr/ADR-115-runtime-hook-enforcement-policy.md` (hook_source / hook_decision field origin — Amendment 1 carrier)
 - `mclayer/codeforge-internal-docs:wrapper/stories/CFP-283.md`
+- `mclayer/codeforge-internal-docs:wrapper/stories/CFP-1744.md`
 - `mclayer/codeforge-internal-docs:wrapper/change-plans/cfp-283-adr-039-measurement-channel.md`
+
+## Amendment 1 (CFP-1744, 2026-05-27) — Allow-list 16 → 18 field 확장
+
+### 배경
+
+CFP-1740 Epic Story-3 (#1743) 가 `hooks/stop` + `hooks/subagent-stop` 신설 시 ledger row 에 `hook_source` / `hook_decision` 두 field 를 실 기록 (scripts/lib/append_stop_event.py). 해당 field 가 ADR-043 §결정 2 Allow-list (16 field) 에 미포함 → schema SSOT 와 실 구현 gap 발생. Story-4 (#1744) carrier 로 Allow-list 정식 확장.
+
+### Amendment 내용
+
+**§결정 2 Allow-list 16 → 18 field 갱신**:
+- `hook_source`: enum `{"stop", "subagent-stop"}` optional (non-sensitive) — emit 한 hook 종류. ADR-115 §결정 2 non-blocking 2종 분기 정합. 부재 시 `"stop"` 해석 (backward-compat default).
+- `hook_decision`: enum `{"record-only"}` optional (non-sensitive) — non-blocking marker. ADR-115 §결정 2 block 금지 binding constraint. closed-set 1-value, 확장 시 별 CFP + 본 Amendment 갱신 의무.
+
+### 근거
+
+- **MINOR 영역 정합** (ADR-008 SemVer §결정 2): optional field 추가 = backward-compat. v1.0 reader 가 unknown field skip 가능 → BREAKING change 아님.
+- **non-sensitive 분류 (ADR-043 §결정 3 Deny-list 미적용)**: `hook_source` = enum 2-value (stop/subagent-stop), `hook_decision` = enum 1-value (record-only) — PII / credential pattern 0건. Deny-list regex 6 pattern 중 어느 것도 매치 불가. Sanitize = non-sensitive 취급 (§결정 3 pass-through).
+- **ADR-115 §결정 2 block 금지 binding constraint 정합**: `hook_decision: "record-only"` 는 non-blocking marker. block(continue):false 발화 금지 invariant 의 schema-level 명시.
+- **ADR-064 §결정 7 evidence-gated symmetric ratchet 정합**: 강화 방향 (field 확장 = ratchet ↑). 근거 evidence = Story-3 (#1743) ledger row 실 작성 (hooks/stop + hooks/subagent-stop) = pattern_count 의 실 구현 carrier.
+
+### 비-영향
+
+- §결정 1 (opt-in default false) 무변경
+- §결정 3 (Deny-list regex 6 pattern) 무변경 — `hook_source` / `hook_decision` non-sensitive 분류로 Deny-list 적용 0건
+- §결정 4 (sanitize SSOT 통합) 무변경
+- §결정 5 (wrapper-vs-consumer isolation) 무변경
