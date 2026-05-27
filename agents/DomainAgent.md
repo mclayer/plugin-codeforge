@@ -139,7 +139,42 @@ permissions:
 - 갱신: "{기존 페이지}" — {갱신 내용 요약}
 ```
 
-RequirementsPLAgent는 이 출력을 Analyst·Researcher 산출물과 **병렬 수령** 후 dedup·상충 조정 단계에서 통합. 본 산출물이 Analyst·Researcher 프롬프트로 전달되지 않는다 (독립 관점 유지).
+RequirementsPLAgent (요구사항 작업 영역 PL) 는 이 출력을 Analyst·Researcher 산출물과 **병렬 수령** 후 dedup·상충 조정 단계에서 통합. 본 산출물이 Analyst·Researcher 프롬프트로 전달되지 않는다 (독립 관점 유지).
+
+## 출력 시 평이 어휘 의무 (ADR-071 §결정 19, Amendment 8 — CFP-1764)
+
+본 agent 의 출력 (보고서 / verdict packet / 산출물) 이 Orchestrator 의 사용자 dialog turn 에 paste 합성될 가능성이 있는 영역 (보고서 본문 / 한눈에 / 결론 / 권장 sentence) 은 **codename 사용 시 평이 어휘 치환 또는 평문 풀이 동반 의무**.
+
+### Lookup SSOT
+
+`docs/wording-dictionary.md` 카테고리 (c) — codename → 평이 어휘 1:1 mapping (closed 15 batch + ratchet extensibility). wrapper repo `mclayer/plugin-codeforge` SSOT, consumer overlay 축소 불가.
+
+### Scope
+
+- **In scope** (평이 어휘 의무): 사용자 dialog 영역 paste 가능 영역 — 한눈에 / 핵심 결정 / 권장 / 결론 / status report sentence
+- **Out of scope** (codename 자연 사용 OK): governance artifact 본문 (ADR / spec / change-plan / Story file frontmatter / verdict packet structured field) — 추적 가치 보존 영역
+
+### 적용 예시
+
+| codename | 평이 어휘 (1:1) |
+|---|---|
+| Story / sub-Story | 작업 단위 / 하위 작업 |
+| ADR | 결정 기록 |
+| Amendment | 수정안 / 후속 수정 |
+| drift | 원본과 어긋남 / 이탈 |
+| spec | 명세서 |
+| scope manifest | 변경 범위 목록 |
+| sub-agent | 부속 작업자 |
+| lane | 작업 영역 |
+| Phase 1 / Phase 2 | 1차 단계 / 2차 단계 |
+| Layer N | N층 / N단계 |
+| sub-mechanism | 부속 매커니즘 |
+| mid-turn | 발화 도중 / 응답 도중 |
+| forcing function | 강제 매커니즘 |
+| ratchet | 강화 방향 고정 |
+| carry / carry-over | 이어 옮기다 |
+
+전체 15 어휘 + ratchet extensibility = `docs/wording-dictionary.md` 카테고리 (c) SSOT.
 
 ## Domain Knowledge 페이지 직접 write + write queue drain 추적 템플릿
 

@@ -4,6 +4,30 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.7.0] - 2026-05-27
+
+### CFP-1764 Story-3 — 3 agent prompt template 평이 번역 의무 directive 추가 (MINOR)
+
+ADR-071 Amendment 8 (wrapper plugin-codeforge, Story-1 #1769 MERGED 2026-05-27 12:30:49 KST) horizontal axis 자매 carrier. 본 lane plugin 안 3 부속 작업자 (DomainAgent / ResearcherAgent / RequirementsAnalystAgent) prompt template 본문에 codename → 평이 어휘 평문 풀이 의무 directive 추가. 사용자 dialog turn paste 합성 영역 jargon leak 차단.
+
+#### Added
+
+- `agents/DomainAgent.md` — "출력 시 평이 어휘 의무 (ADR-071 §결정 19, Amendment 8 — CFP-1764)" section 신설 (Lookup SSOT = wrapper `docs/wording-dictionary.md` 카테고리 (c) 15 batch + Scope (In/Out) + 적용 예시 15-row 표). 본문 첫 사용 영역 self-application 1줄 추가 ("RequirementsPLAgent (요구사항 작업 영역 PL)").
+- `agents/ResearcherAgent.md` — 동상 directive section 신설 + Cross-agent Signal 영역 self-application 1줄 ("DomainAgent 또는 RequirementsAnalyst (부속 작업자 동료)").
+- `agents/RequirementsAnalystAgent.md` — 동상 directive section 신설 + codex exec prompt body 안 directive 명시 권장 추가 + Lookup SSOT 안 ratchet 평문 풀이 self-application ("ratchet extensibility (강화 방향 고정 확장)").
+- `.claude-plugin/plugin.json` — version 0.6.0 → 0.7.0 MINOR. description CFP-1764 Story-3 entry append.
+
+#### Why
+
+ADR-071 §결정 19 (Amendment 8, Story-1 carrier) horizontal axis 자매 — agent burst output 의 원천 영역. 사용자 directive 2026-05-27 KST (mctrader-hub#517 4-turn 누적 redirect + confirm directive: "오케이 그렇게 escalation 하자. 그렇게 버전업되면 버전 업그레이드 통해 적용받는 식으로") wrapper canonical path 의무 적용. consumer overlay (`.claude/_overlay/`) 축소 불가 invariant 유지.
+
+#### Compatibility
+
+- canonical: wrapper `plugin-codeforge` (Amendment 8 ADR-071 + wording-dictionary 카테고리 (c) SSOT, Story-1 PR #1769 MERGED)
+- sibling: codeforge-pmo (Story-3 PR sibling sync, 동일 MINOR)
+- marketplace: 4 mirrored field (`name` / `version` / `description` / `author`) atomic sync 의무 (ADR-063 §결정 2 ordering)
+- Effective date: marketplace sync PR merged + 본 PR merged + consumer `/plugins install` 후 (ADR-053 structural change restart 적용 영역)
+
 ## [0.6.0] - 2026-05-13
 
 ### CFP-510 — RequirementsPLAgent divergence detection 4 영역 확장 (MINOR)
