@@ -4,7 +4,7 @@
 # Scope: kind:contract files only. kind:registry files (comment-prefix-registry,
 # fix-event [v1.3 — CFP-842 depth-aware scope optional fields: affected_scope + affected_paths_with_depth],
 # label-registry, decision-packet [versions: v1 archived, v2.1 deprecated (CFP-134)],
-# stop-event [v1 active — CFP-283 / ADR-042]) are managed by check-doc-frontmatter.sh chain.
+# stop-event [v1.1 active — CFP-283 / ADR-042; CFP-1744 v1.1 MINOR bump: hook_source / hook_decision 2 optional field]) are managed by check-doc-frontmatter.sh chain.
 contracts:
   - name: review_verdict
     canonical_repo: mclayer/plugin-codeforge-review
