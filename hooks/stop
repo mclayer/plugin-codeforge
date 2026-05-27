@@ -1,0 +1,142 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT (file structure adapted from superpowers v5.1.0)
+# Stop hook for codeforge plugin — stop-event-v1 v1.0 ledger row + advisory
+#
+# Carrier: CFP-1743 (Story-3 of Epic CFP-1740 — ADR-115 §결정 2·3·5)
+#
+# 책임 경계 (ADR-115 §결정 2 / §결정 3 / §결정 5 정합):
+#   - stop-time 진입 시 ADR-064 §결정 9 300자±50 평문 정리 advisory (stderr)
+#   - stop-event-v1 v1.0 ledger row append (record-only)
+#   - ledger write: ${CLAUDE_PROJECT_DIR}/.claude/ledger/stop-event.jsonl
+#   - **block 금지** (ADR-115 §결정 2) — stdout JSON 안 block field 절대 미등장
+#   - exit code 항상 0 (graceful degradation)
+#
+# 정적 properties (ADR-115 §결정 5 / ADR-038 §결정 7·8 정합):
+#   (a) set -euo pipefail + exit 0 trap — 어떤 fail 도 Stop block 금지 (ADR-115 §결정 2)
+#   (b) stdout 출력 없음 — block/permissionDecision:deny 절대 미등장
+#   (c) network call 0
+#   (d) Python 호출 — ADR-061 Amendment 3 외부 .py 파일 (heredoc 금지)
+#
+# Graceful degradation 5층 (ADR-115 §결정 5 closed-set):
+#   (a) hook 파일 부재 → harness skip (본 파일 존재 시 N/A)
+#   (b) bash interpreter 부재 → run-hook.cmd `exit /b 0` silent fail-open
+#   (c) Python 부재 / 오류 → stderr warning + exit 0 (ledger 미작성, advisory 발화)
+#   (d) stdin 읽기 실패 → 빈 stop_reason 으로 fallback
+#   (e) 어떤 fail 도 Stop block 금지
+#
+# Bypass:
+#   BYPASS_CODEFORGE_STOP=1 → stderr audit echo + exit 0 (ledger 미작성)
+#
+# one-channel rule (ADR-115 §결정 3):
+#   marker: [codeforge-wrapper-stop]
+#
+# Sibling hook axis:
+#   hooks/subagent-stop = SubagentStop 담당 (subagent return verify-before-trust)
+#   본 hook    = Stop 담당 (stop-time advisory + ledger)
+
+set -euo pipefail
+
+# 어떤 실패도 exit 0 으로 trap — Stop block 금지 (ADR-115 §결정 2·5)
+trap 'exit 0' ERR
+
+# ── Bypass check (audit trail 의무) ──────────────────────────────────────────
+if [ "${BYPASS_CODEFORGE_STOP:-0}" = "1" ]; then
+  >&2 printf '[codeforge-wrapper-stop] BYPASS_CODEFORGE_STOP=1 — stop hook suppressed at %s\n' \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+  exit 0
+fi
+
+# ── stdin = Stop hook JSON payload 읽기 ──────────────────────────────────────
+PAYLOAD="$(cat 2>/dev/null || true)"
+
+# stop_reason 추출 (Python stdlib json, ADR-061 Amendment 3 정합)
+STOP_REASON=""
+if command -v python3 >/dev/null 2>&1; then
+  STOP_REASON="$(printf '%s' "${PAYLOAD}" | python3 -c "
+import json, sys
+try:
+    data = json.loads(sys.stdin.read())
+    # stop_hook_active 또는 stop_reason 에서 이유 추출
+    reason = data.get('stop_reason', '')
+    if not reason and data.get('stop_hook_active', False):
+        reason = 'stop_hook_active'
+    print(reason, end='')
+except Exception:
+    pass
+" 2>/dev/null || true)"
+elif command -v python >/dev/null 2>&1; then
+  STOP_REASON="$(printf '%s' "${PAYLOAD}" | python -c "
+import json, sys
+try:
+    data = json.loads(sys.stdin.read())
+    reason = data.get('stop_reason', '')
+    if not reason and data.get('stop_hook_active', False):
+        reason = 'stop_hook_active'
+    print(reason, end='')
+except Exception:
+    pass
+" 2>/dev/null || true)"
+fi
+
+# ── session_id 결정 ───────────────────────────────────────────────────────────
+SESSION_ID="${CLAUDE_SESSION_ID:-}"
+if [ -z "$SESSION_ID" ] && [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
+  # CLAUDE_PROJECT_DIR 경로 마지막 컴포넌트를 fallback session_id 로 사용
+  SESSION_ID="$(basename "${CLAUDE_PROJECT_DIR}")"
+fi
+
+# ── ledger path 결정 ──────────────────────────────────────────────────────────
+LEDGER_FILE=""
+if [ -n "${CLAUDE_PROJECT_DIR:-}" ]; then
+  LEDGER_FILE="${CLAUDE_PROJECT_DIR}/.claude/ledger/stop-event.jsonl"
+fi
+
+# ── ADR-064 §결정 9 advisory (stderr) ────────────────────────────────────────
+# Stop hook = 300자±50 평문 정리 advisory reminder (non-blocking)
+>&2 printf '[codeforge-wrapper-stop] ADVISORY: ADR-064 §결정 9 — stop-time 평문 정리 의무\n'
+>&2 printf '  stop-time 응답 = 직전 결정 / 다음 step / 미해결 분기 300자±50 평문 정리 (tool_use only turn 제외).\n'
+
+# ── Python verifier 경로 결정 ─────────────────────────────────────────────────
+PLUGIN_ROOT="${CLAUDE_PLUGIN_ROOT:-}"
+APPEND_SCRIPT=""
+
+if [ -n "$PLUGIN_ROOT" ] && [ -f "${PLUGIN_ROOT}/scripts/lib/append_stop_event.py" ]; then
+  APPEND_SCRIPT="${PLUGIN_ROOT}/scripts/lib/append_stop_event.py"
+elif [ -f "scripts/lib/append_stop_event.py" ]; then
+  # fallback: cwd 기준 (bats fixture 등 테스트 환경)
+  APPEND_SCRIPT="scripts/lib/append_stop_event.py"
+fi
+
+# ── ledger row append ─────────────────────────────────────────────────────────
+if [ -z "$LEDGER_FILE" ]; then
+  >&2 printf '[codeforge-wrapper-stop] WARN: CLAUDE_PROJECT_DIR unset — ledger append skipped\n'
+  exit 0
+fi
+
+if [ -z "$APPEND_SCRIPT" ]; then
+  >&2 printf '[codeforge-wrapper-stop] WARN: append_stop_event.py not found — ledger append skipped\n'
+  exit 0
+fi
+
+PYTHON_CMD=""
+if command -v python3 >/dev/null 2>&1; then
+  PYTHON_CMD="python3"
+elif command -v python >/dev/null 2>&1; then
+  PYTHON_CMD="python"
+fi
+
+if [ -z "$PYTHON_CMD" ]; then
+  >&2 printf '[codeforge-wrapper-stop] WARN: Python interpreter not found — ledger append skipped\n'
+  exit 0
+fi
+
+# append 실행 — 실패해도 exit 0 (graceful degradation, trap ERR 처리)
+"$PYTHON_CMD" "$APPEND_SCRIPT" \
+  --hook-source "stop" \
+  --stop-reason "${STOP_REASON}" \
+  --session-id "${SESSION_ID}" \
+  --ledger-path "${LEDGER_FILE}" \
+  2>/dev/null || true
+
+# ── 항상 exit 0 (ADR-115 §결정 2 — block 금지) ───────────────────────────────
+exit 0
