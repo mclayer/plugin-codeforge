@@ -7,6 +7,12 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.10.0] - 2026-05-27
+
+### Added
+
+- [CFP-1764-S2] **ADR-071 §결정 19 Amendment 8 mechanical wire — `codename-glossary-lookup` warning-tier evidence-check entry** (lint TDD fast-path, #797 unblock). `scripts/check-codename-glossary-lookup.sh` PR diff scan (wording-dictionary 카테고리 (c) 15 codename, line-by-line ReDoS-safe ADR-061 §결정 11 정합) + `.github/workflows/codename-glossary-lookup.yml` self-app (warning-tier, PR 차단 금지) + `hotfix-bypass:codename-glossary-lookup` **109번째 hotfix-bypass family member** (label-registry-v2 v2.83 → v2.84 MINOR) + evidence-checks-registry entry 신설. #797 unblock — wording-dictionary 카테고리 (c) lookup table grep target 확정 후 lint backbone 활성. TDD RED→GREEN: `tests/lint/test_codename_glossary_lookup.bats` 3 scenarios PASS. marketplace sibling sync PR (`mclayer/marketplace` `plugins[name=codeforge].version` 6.9.0 → 6.10.0) 동반 — ADR-063 §결정 2 atomic ordering (marketplace PR 선행 merge → wrapper PR merge).
+
 ## [6.9.0] - 2026-05-27
 
 ### Added

@@ -1,0 +1,53 @@
+name: codename-glossary-lookup (ADR-071 §결정 19 mechanical wire)
+# CFP-1764 Story-2 — wording-dictionary 카테고리 (c) PR diff scan lint
+# ADR-071 Amendment 8 §결정 19 mechanical wire
+# Evidence-checks-registry: codename-glossary-lookup (warning tier)
+# Bypass: hotfix-bypass:codename-glossary-lookup label
+
+on:
+  pull_request:
+    types: [opened, synchronize, labeled, unlabeled]
+    paths:
+      - 'docs/**'
+      - 'CLAUDE.md'
+      - 'templates/**'
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # warning-tier — PR 차단 금지 (ADR-060 §결정 5)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect bypass label
+        id: bypass
+        run: |
+          labels="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
+          if echo "${labels}" | grep -q "hotfix-bypass:codename-glossary-lookup"; then
+            echo "bypass=true" >> "$GITHUB_OUTPUT"
+            echo "[bypass] hotfix-bypass:codename-glossary-lookup label detected, lint skipped"
+          else
+            echo "bypass=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Scan changed files for codename leak
+        if: steps.bypass.outputs.bypass == 'false'
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          changed=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD" -- 'docs/**' 'CLAUDE.md' 'templates/**' 2>/dev/null || true)
+          warning_total=0
+          for file in ${changed}; do
+            if [ -f "${file}" ]; then
+              if ! bash scripts/check-codename-glossary-lookup.sh --file "${file}"; then
+                warning_total=$((warning_total + 1))
+              fi
+            fi
+          done
+          if [ "${warning_total}" -gt 0 ]; then
+            echo "::warning::${warning_total} file(s) contain codename leak (wording-dictionary 카테고리 (c) 평이 풀이 미동반). Use hotfix-bypass:codename-glossary-lookup label to bypass."
+          fi
+          exit 0  # warning-tier, PR 차단 금지

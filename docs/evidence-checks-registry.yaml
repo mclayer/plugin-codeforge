@@ -5866,3 +5866,31 @@ entries:
       promotion_trigger: none
     status: deferred-followup
 
+
+  # ─── CFP-1764 Story-2 — codename-glossary-lookup (ADR-071 §결정 19 Amendment 8 mechanical wire) ───
+  - name: codename-glossary-lookup
+    description: |
+      ADR-071 §결정 19 (Amendment 8, CFP-1764) mechanical wire — agent burst output paste 합성 시
+      mid-turn glossary lookup 의무 (wording-dictionary 카테고리 (c) PR diff scan).
+      docs/** / CLAUDE.md / templates/** 안 카테고리 (c) codename 발견 시 평이 풀이 동반 검사.
+      15 codename closed batch (Story / carry / drift / spec / scope manifest / ADR / Amendment /
+      sub-agent / agent / lane / Phase / Layer / sub-mechanism / mid-turn / forcing function / ratchet).
+      #797 unblock — wording-dictionary 카테고리 (c) lookup table grep target 확정 carrier.
+    detect_command: bash scripts/check-codename-glossary-lookup.sh --file <file>
+    workflow: templates/github-workflows/codename-glossary-lookup.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:codename-glossary-lookup
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: [CFP-1764]
+    introduced_by: CFP-1764
+    introduced_date: 2026-05-27
+    owner_adr: ADR-071
+    carrier_adr: ADR-060
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: warning
