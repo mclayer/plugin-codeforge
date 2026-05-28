@@ -2912,3 +2912,49 @@ ELSE:                         # single-block 양방향 / amendments[]-only / no-
 - `scripts/lib/check_adr_dual_block_parity.py` — Phase 2 lint narrow target (`_check_adr_parity` dual-block gate, Fix A supersede, Fix B + Fix C RETAIN)
 - `tests/scripts/check-adr-dual-block-parity/` — Phase 2 bats TC 변경 target (TC-9 rationale / TC-10 exit 1→0 / TC-3 WARNING→PASS / dual-block TC-1/4/7/11/14/15 regression guard)
 
+## Amendment 33 — §결정 1 layer 1 sub-scope (1-V) execution_context_reconciliation
+
+**Date:** 2026-05-27 KST
+**Carrier:** CFP-1787 (audit:from-cfp-1764-retro)
+**Direction:** strengthening
+**Pattern count:** 4 reach (CFP-1735 §6 + CFP-1753 §6 + CFP-1755 §6 + CFP-1764 §4.5 self) ≥ ADR-045 §D-9 Mandatory threshold 2
+
+### §결정
+
+§결정 1 layer 1 (Orchestrator scope + internal lane agent write-time scope) sub-scope (1-V) 신설 — verdict packet 안 `execution_context_state` 5 sub-field declare 의무.
+
+### 5 sub-field 명세
+
+| # | field | derivable? | derive primitive | declare 의무 사유 |
+|---|---|---|---|---|
+| 1 | `working_dir_abs_path` | YES | `pwd` (absolute path) | review 가 packet 안 path 와 spawn 시점 path 비교 가능. spawn-time vs return-time drift 검출. sub-scope 1-J + ADR-040 worktree convention 정합. |
+| 2 | `target_write_repo` | YES | `git -C <wt> remote -v` (origin URL → org/repo 파싱) | sub-scope 1-J `worktree_target_repo` 와 axis-adjacent **disjoint** — 1-J = chief author worktree-level cross-repo target verify (worktree HEAD ↔ expected repo) / 1-V = packet-level execution context state declare (after-the-fact). |
+| 3 | `staged_files_required[]` | **NO (novel axis)** | derive 불가능 — intent declaration only | "이 write 산출물이 staged 상태로 만들어야 하는 file 목록" intent. retro file + surrounding spec/plan + ADR-RESERVATION row 등 multi-file write 누락 검출. |
+| 4 | `branch_required` | YES | `git branch --show-current` (또는 `cfp-NNN[-<slug>]` derive via ADR-024) | stale branch 위 write 검출. |
+| 5 | `remote_sync_required` | **NO (novel axis)** | derive 불가능 — pre-write intent enum | 3-value enum: `pull` / `fetch` / `N/A`. pre-write 시점에 declare 안 하면 stale main 위 write 후 force-push 위험. |
+
+### Scope boundary
+
+- **In scope (의무 영역)**: lane agent verdict packet (PMOAgent / chief author / deputy / 4-tuple sub-tuple / retro write-target). retro / spec / plan / change-plan / ADR draft 안 write 산출물.
+- **Out of scope (면제 영역)**: Orchestrator inline whitelist 4-entry (사용자 dialog / TodoWrite scratchpad / Read-only Q&A / Status report) 안 self-write. §9 verdict / §10 FIX Ledger / phase transition label.
+- **Cross-repo 다중 write_target 영역**: primary `target_write_repo` 1 string 강제 + optional `cross_repo_secondary_targets[]` array (3+ repo 시 declare). primary write 가 항상 1 repo invariant.
+
+### Axis disjoint statement (ADR-068 I-4 wording SSOT 정합)
+
+본 sub-scope 1-V 는 sub-scope 1-A~1-U 22 entry 와 disjoint axis:
+
+- 1-A (cross-repo state verify) ↔ 1-V: 1-A = Orchestrator state read verify-before-cite axis / 1-V = lane agent packet field declare axis (write-time)
+- 1-J (cross-repo worktree target authority) ↔ 1-V: 1-J = chief author worktree-level cross-repo target verify (worktree HEAD ↔ expected repo at chief-author-time) / 1-V = packet-level after-the-fact execution context declare (post-write)
+- 1-T (PMOAgent retro write-time fact verify) ↔ 1-V: 1-T = retro 안 cited fact (commit SHA / label version / bypass count) source direct verify / 1-V = retro write 시점 execution context state declare (verify subject axis disjoint: fact source vs environment state)
+- 1-U (1-T dual-block lint Wave 2 wire) ↔ 1-V: 1-U = sub-scope 1-T mechanical lint / 1-V = 별 sub-scope 신설 declarative + Wave 2 wire
+
+### Wave 분리
+
+- **Wave 1 (본 Amendment, declarative)**: §결정 codify + frontmatter `mechanical_enforcement_actions[]` entry `execution-context-state-presence` deferred-followup 명시 + CLAUDE.md cross-ref 갱신
+- **Wave 2 (combined single PR, mechanical wire)**: `scripts/lib/check_execution_context_state.py` + `templates/github-workflows/execution-context-state-check.yml` + `tests/wave2-mechanical-wire/check-execution-context-state.bats` + `docs/inter-plugin-contracts/label-registry-v2.md` v2.84 → v2.85 MINOR + `docs/evidence-checks-registry.yaml` 신규 entry
+- **Wave 3+ (future, 별 sub-CFP)**: Orchestrator runtime actual-value verify (`execution_context_state` declare 값 ↔ runtime `pwd` / `git remote -v` 값 mismatch detection). 현 Wave 2 lint = packet field presence + schema validation only (offline).
+
+### dogfood self-application (sub-scope 1-V 1st applied case)
+
+본 carrier Story 의 spec frontmatter `pre_lookup_evidence[]` 안 본 carrier 작성 시점 execution context 4 source verify declare — 본 sub-scope 1-V 의 1st applied case = self. META self-applied (§결정 10.D 12th applied case + sub-scope 1-G 18th + sub-scope 1-L spawn prompt fact verify).
+
