@@ -167,6 +167,36 @@ PMOAgent를 다시 spawn (2nd pass — Phase 0의 예비 분해와 달리 설계
 
 PMOAgent 출력의 scope_manifest 초안을 spec 파일 끝에 추가.
 
+### execution_context_verify step (ADR-073 Amd 17 — CFP-1786)
+
+Phase 2 PMOAgent 2nd pass spawn 직전 의무 — **single-reader pattern**. Phase 0 4 agent 영역 verify 의무 0건 (race / token cost / inconsistency 3 risk 차단 invariant) — PMOAgent 단독 reader 가 1회 actual state direct read.
+
+**4-item closed-enum hard cap verify**:
+
+1. **label-registry-v2 version** — `git -C <worktree> show origin/main:docs/inter-plugin-contracts/label-registry-v2.md` line 6 frontmatter `version: vN.NN`
+2. **evidence-checks-registry entry count** — `git -C <worktree> show origin/main:docs/evidence-checks-registry.yaml` content + `grep -c '^- name:'` direct count
+3. **plugin metadata version** — `git -C <worktree> show origin/main:plugin.json` `version` field (또는 `.claude-plugin/plugin.json` actual path)
+4. **marketplace.json version** — cross-repo `git -C <marketplace-worktree> show origin/main:marketplace.json` `plugins[name=codeforge].version` field
+
+5번째 item 확장 = 별 CFP carrier 의무 (ADR-064 §결정 5 CFP scope unitary carve-out).
+
+**Output**: PMOAgent 가 verified 4-item + `verified_via` annotation + `origin_main_sha` + `captured_at_kst` 7-field tuple 합성 → spec 파일 `execution_context:` frontmatter field 에 기록 (template field 활성화). Phase 1 brainstorming dialog context packet 에 corrected facts injection (4 agent prompt 가 stale 정보 인용 시 정정).
+
+**예시 spec.md frontmatter** (활성화 시):
+
+```yaml
+execution_context:
+  label_registry_v2_version: "v2.74"
+  evidence_checks_registry_entry_count: 24
+  plugin_metadata_version: "v1.5.12"
+  marketplace_json_version: "v1.5.12"
+  verified_via: "git -C <worktree> fetch origin && git show origin/main:<path>"
+  origin_main_sha: "<40-char-hex>"
+  captured_at_kst: "YYYY-MM-DDTHH:MM:SS+09:00"
+```
+
+backward-compat: 미선언 시 default "not captured" — Wave 2 mechanical lint (별 sub-CFP carrier — CFP-1786-W2 reserved) 가 stale 영역 감지.
+
 ## 종료
 
 spec 파일 저장 완료 후 `superpowers:writing-plans` 스킬 호출.
