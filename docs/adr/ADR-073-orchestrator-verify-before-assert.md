@@ -121,6 +121,13 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 16 + §결정 1-A transition trigger 표 14번째 row mechanical wire activation"
     sunset_justification: null
+  - amendment_id: 17
+    cfp: CFP-1786
+    date: 2026-05-28
+    scope: "§결정 1 expansion — transition trigger enum 15번째 entry `brainstorm_phase_2_pmo_2nd_pass` 추가 (closed-set ratchet 강화, Amendment 2/3/5/6/7/8/10/11/12/13/15 §결정 1-A precedent 답습). Orchestrator brainstorm Phase 2 PMOAgent 2nd pass 진입 시점 영역 — single-reader pattern (Phase 0 race 차단) + 4-item closed-enum hard cap (label-registry-v2 version / evidence-checks-registry entry count / plugin metadata version / marketplace.json version) + verified-via annotation 의무. 4 agent (DomainAgent / ResearcherAgent / RequirementsAnalystAgent / PMOAgent) 가 각자 verify 시 race / token cost / inconsistency 3 risk → single-reader 가 PMOAgent 2nd pass 시점 1회 actual state direct read + 4 agent prompt 에 corrected facts injection. 본 Amendment 는 §결정 1-14 본문 + Amendment 1-16 scope 강화 only (ADR-058 §결정 5 ratchet 정합) — 약화 / scope 축소 / 면제 영역 0건. closed_enum: open_extension:false — 16번째 trigger 추가 시 Amendment 강화 방향만. evidence-checks-registry warning-tier entry `brainstorm-execution-context-verify` 신설 = Wave 2 mechanical wire 별 sub-CFP (declaration-only-Wave-1 retain, parallel-work-sentinel-pickup + worktree-self-ownership-verify + subagent-sibling-story-polling-evidence + mcp-token-freshness-precheck + stale-local-main-checkout-divergence-check + cross-repo-label-sync + spawn-prompt-head-pin-presence + mid-spawn-drift-detection + pre-git-operation-sentinel-pickup + pre-push-sentinel-pickup + parallel-work-sentinel-and-aggregate + architect-chief-author-base-sha-freeze-verify precedent 답습). axis disjoint vs Amendment 7 git layer + Amendment 8 auth layer + Amendment 10 label state layer + Amendment 11 spawn-time SHA-anchor layer + Amendment 12 mid-spawn time layer + Amendment 15 chief author handoff layer (brainstorm execution context layer 신규 axis). 동인 = CFP-1764 retro §3.B pattern_count 1 first applied case + 본 Story META self-application effective 1.5 (Issue #1786 body Pivot 2 catch: 'Amendment 2 baseline 3 enum + 4번째 후보' → 'actual 14 enum + 15번째 후보' 정정 first verify pass)."
+    status: applied
+    ref: "## Amendments / Amendment 17 + §결정 1-A transition trigger 표 15번째 row"
+    sunset_justification: null
 related_stories:
   - CFP-622  # carrier
   - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
@@ -149,6 +156,7 @@ related_stories:
   - CFP-1334 # Amendment 15 sentinel sibling — retro §5.2 4건 stale-base regression cascade lineage (escalate_user Optional, 본 CFP-1571 Mandatory escalation source 1/2)
   - CFP-1403 # Amendment 15 sentinel sibling — retro §3.1 1건 stale-base regression cascade lineage (escalate_user, 본 CFP-1571 Mandatory escalation source 2/2 + PMO 권장 Option A 채택 carrier)
   - CFP-1581 # Amendment 16 — Wave 2 mechanical wire activation (declaration → mechanical wire active 전환, Amendment 15 (CFP-1571) Wave 1 declarative-only carrier 의 mechanical wire activation). 12번째 mechanical_enforcement_actions[] entry `architect-chief-author-base-sha-freeze-verify` inline comment status 갱신 (deferred-followup → warning-tier wire complete) + evidence-checks-registry warning-tier entry 신규 등록 (NOT promotion per ADR-060 §결정 5 'first introduction = warning mode' default) + script chain (`scripts/check-architect-chief-author-base-sha-freeze.{sh,py}`) + PR-time workflow (`templates/github-workflows/architect-chief-author-base-sha-freeze.yml` + `.github/workflows/` self-app per ADR-005) + bats fixture cohort (`tests/scripts/check-architect-chief-author-base-sha-freeze/test_*.bats` RED→GREEN stash proof pattern per CFP-1334 §8.4) + label-registry-v2 v2.73 → v2.74 MINOR bump (`hotfix-bypass:architect-chief-author-base-sha-freeze-verify` 99번째 family member). pattern_count 6 reach Mandatory (CFP-1334 §3.1 4건 + CFP-1403 §3.1 1건 + 본 Story 6번째 META self-evidence). CFP-967 / CFP-1437 / CFP-1497 / CFP-1436 / CFP-1435 / CFP-1539 / CFP-1368 Wave 1 → Wave 2 split precedent 답습 chain 7-instance established pattern.
+  - CFP-1786 # Amendment 17 — transition trigger enum 15번째 entry `brainstorm_phase_2_pmo_2nd_pass` (single-reader pattern + 4-item closed-enum hard cap, Phase 0 race 차단 + scope creep 차단). CFP-1764 retro §3.B pattern_count 1 first applied case + META self-application effective 1.5. doc-only fast-path (ADR-054) Wave 1 declarative-only — mechanical wire (script + workflow + bats + label-registry MINOR + evidence-checks-registry entry + hotfix-bypass family member) = Wave 2 별 sub-CFP carrier (CFP-1786-W2 reserved). paired sibling mclayer/plugin-codeforge#1787 (ADR-082 Amd N, axis disjoint — self-write claim verify ↔ brainstorm execution context verify).
   - CFP-597  # sentinel #4 strike #1 origin (CLAUDE.md cap + playbook §3.6 false alarm)
   - CFP-578  # ADR-070 verify-before-trust 자매 (external worker output)
   - CFP-612  # ADR-071 dialog convergence 자매 governance
@@ -184,6 +192,7 @@ mechanical_enforcement_actions:
   - pre-push-sentinel-pickup  # CFP-FU-A Amendment 13 (2/2) — Wave 1 declarative anchor (warning tier, deferred-followup status, recurrence count 0 — sentinel-driven (CFP-1420 Sub-A S1.2), threshold 3 / promotion_trigger none, actual lint script + workflow yml hydrate + bats fixture pair + label-registry MINOR bump + evidence-checks-registry entry = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — pre-git-operation-sentinel-pickup precedent 답습. Amendment 13 §결정 1-A 13번째 entry `pre_push` carrier — `git push` direct cross-repo state propagation 직전 sentinel pickup 의무 (network publish 영역 — Amd 13 1/2 pre_git_operation 의 local-only mutation 영역과 axis disjoint complement). paired sibling Amendment 13 (1/2) + Amendment 14 + ADR-082 Amendment 19 sub-scope (1-I) (renumbered from Amd 18 sub-scope 1-H post CFP-1342 collision recovery))
   - parallel-work-sentinel-and-aggregate  # CFP-FU-A Amendment 14 — Wave 1 declarative anchor (warning tier, deferred-followup status, recurrence count 0 — sentinel-driven OR semantics structural weakness (CFP-1420 Sub-A S1.2 evidence root cause = `scripts/lib/check_parallel_work_sentinel.py:437` single-mode dispatcher, caller discretion only), threshold 3 / promotion_trigger none, actual `scripts/lib/check_parallel_work_sentinel.py` 신규 `--mode all-and` choice 추가 + 3 sub-mode invoke + 결과 AND aggregate logic + workflow yml hydrate + bats fixture pair + label-registry MINOR bump + evidence-checks-registry entry = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — pre-git-operation-sentinel-pickup + pre-push-sentinel-pickup precedent 답습. Amendment 14 §결정 1-P primitive AND aggregate composition layer carrier (3-mode 모두 invoke + 결과 AND aggregate verify, single-mode invocation 차단). paired sibling Amendment 13 (1/2 + 2/2) + ADR-082 Amendment 19 sub-scope (1-I) (renumbered from Amd 18 sub-scope 1-H post CFP-1342 collision recovery))
   - architect-chief-author-base-sha-freeze-verify  # CFP-1571 Amd 15 (Wave 1 declarative) → CFP-1581 Amd 16 (Wave 2 mechanical wire active). recurrence count 6 / threshold 3 / auto_blocking active. Mandatory escalation `parallel-session-merge-stream-main-advance-during-lane-flow` pattern_count 6 (CFP-1334 §3.1 4건 + CFP-1403 §3.1 1건 + CFP-1581 6th). Wave 2 wire: bash thin + Python SSOT (ADR-061) + workflow dual trigger + bats fixture RED→GREEN + label-registry v2.73→v2.74 (`hotfix-bypass:architect-chief-author-base-sha-freeze-verify` 99번째 family member) + evidence-checks-registry warning-tier. Wave 1→Wave 2 split chain 11-instance. Amd 15 §결정 1-A 14번째 entry `architect_agent_chief_author_lane_spawn` + §결정 1-Q primitive (4-step verify-before-assert: git fetch + git diff base drift + mechanical rebase + expected diff narrowed). Amd 16 = mechanical wire activation (artifact verification 2-mode lint: spawn-prompt-grep + lane-evidence-marker-grep).
+  - brainstorm-execution-context-verify  # CFP-1786 Amendment 17 — Wave 1 declarative anchor (warning tier, deferred-followup status, recurrence count 0 — sentinel-driven (CFP-1764 retro §3.B pattern_count 1 first applied case + META self-application effective 1.5), threshold 3 / promotion_trigger none, actual lint script + workflow yml hydrate + bats fixture pair + label-registry MINOR bump + evidence-checks-registry entry + hotfix-bypass family member = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — precedent 답습 12-instance chain (parallel-work-sentinel-pickup + worktree-self-ownership-verify + subagent-sibling-story-polling-evidence + mcp-token-freshness-precheck + stale-local-main-checkout-divergence-check + cross-repo-label-sync + spawn-prompt-head-pin-presence + mid-spawn-drift-detection + pre-git-operation-sentinel-pickup + pre-push-sentinel-pickup + parallel-work-sentinel-and-aggregate + architect-chief-author-base-sha-freeze-verify). Amendment 17 §결정 1-A 15번째 entry `brainstorm_phase_2_pmo_2nd_pass` + §A 4-item closed-enum hard cap + §B single-reader pattern + §C template execution_context field + §D mechanical wire Wave 2 carrier. paired sibling ADR-082 Amendment N (#1787 carrier, axis disjoint — self-write claim verify ↔ brainstorm execution context verify, 같은 brainstorm Phase 2 시점 disjoint sub-domain).
 # Wave 1 = behavioral directive only (Orchestrator self-discipline forcing function) — Amendment 2 (CFP-966)
 # 가 첫 mechanical_enforcement_actions[] row entry append (declarative anchor only — script + workflow
 # 실 binding 은 sibling Story-2 CFP-967 carrier).
@@ -1419,6 +1428,7 @@ Amendment 2/3/5/6/7/8/10/11/12/13 precedent 답습 (closed-set ratchet 강화). 
 | # | Trigger | Verify subject | Verify object | Timing |
 |---|---|---|---|---|
 | 14 | `architect_agent_chief_author_lane_spawn` | Orchestrator + ArchitectPL (handoff sender) | origin/main SHA (chief author spawn 시점 fresh) + base drift (working tree HEAD vs origin/main) | ArchitectAgent chief author Agent tool dispatch 직전 (ArchitectPL deputy spawn request packet 수령 후) |
+| 15 | `brainstorm_phase_2_pmo_2nd_pass` | Orchestrator + PMOAgent (single-reader, Phase 0 4 agent 영역 verify 의무 0건 retain) | 4-item closed-enum hard cap (label-registry-v2 version / evidence-checks-registry entry count / plugin metadata version / marketplace.json version) | brainstorm Phase 2 PMOAgent 2nd pass spawn 직전 (Phase 0 4 agent burst 종료 후, spec 작성 직전) |
 
 #### §결정 1-Q primitive — ArchitectPL → ArchitectAgent chief author handoff specific cadence (4-step verify-before-assert mandate)
 
@@ -1472,3 +1482,83 @@ Wave 1 retain rationale: Amd 11/12/13/14 (CFP-1437 spawn_prompt_emit + CFP-1436 
 - `docs/adr/ADR-RESERVATION.md` — `amendments_reserved[]` row append (ADR-073 Amd 15, CFP-1571 carrier active 점유 — retrospective baseline, CFP-1497 amendment-slot reservation optional 정합)
 - `<internal-docs>/plugin-codeforge/change-plans/cfp-1571-adr073-amd-15.md` — Change Plan SSOT (Phase 1 carrier, internal-docs SSOT per ADR-013 dogfood-out policy)
 - `<internal-docs>/plugin-codeforge/stories/CFP-1571.md` — Story file (CFP-1571 carrier, Phase 1 declarative)
+
+## Amendment 17 (2026-05-28 KST, CFP-1786) — `brainstorm_phase_2_pmo_2nd_pass` transition trigger 15번째 entry (single-reader pattern + 4-item closed-enum hard cap)
+
+본 Amendment 는 §결정 1 transition trigger enum 15번째 entry `brainstorm_phase_2_pmo_2nd_pass` 추가 (closed-set ratchet 강화 14→15) + single-reader pattern normative codify (Phase 0 race 차단) + 4-item closed-enum hard cap (scope creep 차단) + template `execution_context` field + skill body Phase 2 step + CLAUDE.md cross-ref 1 line append. ADR-058 §결정 5 ratchet 강화 only, 약화 / scope 축소 / 면제 영역 0건.
+
+#### §A. Verify scope — closed-enum 4-item hard cap (scope creep 차단)
+
+1. **label-registry-v2 version** — `git -C <worktree> show origin/main:docs/inter-plugin-contracts/label-registry-v2.md` line 6 frontmatter `version: vN.NN`
+2. **evidence-checks-registry entry count** — `git -C <worktree> show origin/main:docs/evidence-checks-registry.yaml` content + `grep -c '^- name:'` direct count
+3. **plugin metadata version** — `git -C <worktree> show origin/main:plugin.json` `version` field (또는 `.claude-plugin/plugin.json` actual path)
+4. **marketplace.json version** — cross-repo `git -C <marketplace-worktree> show origin/main:marketplace.json` `plugins[name=codeforge].version` field
+
+5번째 item 확장 = 별 CFP carrier 의무 (ADR-064 §결정 5 CFP scope unitary carve-out).
+
+#### §B. Single-reader pattern — Phase 0 race 차단 (PMOAgent 2nd pass 단독 reader)
+
+- **Phase 0** (4 agent 병렬 burst) 단계 verify 의무 0건 — 4 agent 각자 verify 시 race / token cost / inconsistency 3 risk 차단 invariant
+- **Phase 2** (PMOAgent 2nd pass) 진입 시점 1회 actual state direct read — PMOAgent 단독 reader
+- 4 agent prompt 에 corrected facts injection — Phase 0 결과 + Phase 2 single-reader 가 합성한 corrected facts 가 Phase 1 brainstorming dialog 의 context packet 에 주입
+
+#### §C. Template `execution_context` field — capture forcing function
+
+`<internal-docs>/wrapper/templates/spec.md` + `<internal-docs>/wrapper/templates/plan.md` frontmatter optional field:
+
+```yaml
+execution_context:
+  label_registry_v2_version: "<vN.NN>"
+  evidence_checks_registry_entry_count: <integer>
+  plugin_metadata_version: "<vN.NN>"
+  marketplace_json_version: "<vN.NN>"
+  verified_via: "git -C <worktree> fetch origin && git show origin/main:<path>"
+  origin_main_sha: "<40-char-hex>"
+  captured_at_kst: "<ISO 8601 zoned +09:00>"
+```
+
+backward-compat: 미선언 시 default "not captured" — Wave 2 mechanical lint (별 sub-CFP carrier) 가 stale 영역 감지.
+
+#### §D. Mechanical wire — Wave 2 별 sub-CFP carrier (declaration-only Wave 1)
+
+`mechanical_enforcement_actions[]` 13번째 entry `brainstorm-execution-context-verify` 신규 append (warning-tier deferred-followup status). Wave 2 carrier 별 sub-CFP scope:
+
+- `scripts/check-brainstorm-execution-context.sh` lint (thin bash) + `scripts/lib/check_brainstorm_execution_context.py` Python SSOT per ADR-061
+- `templates/github-workflows/brainstorm-execution-context-verify.yml` dual trigger pull_request + workflow_dispatch + `.github/workflows/` self-app per ADR-005
+- `tests/scripts/test_check-brainstorm-execution-context.sh` bats fixture pair RED→GREEN stash proof per CFP-1334 §8.4
+- `docs/evidence-checks-registry.yaml` warning-tier entry `brainstorm-execution-context-verify` (recurrence count 0 / threshold 3 / promotion_trigger none)
+- `docs/inter-plugin-contracts/label-registry-v2.md` MINOR bump — `hotfix-bypass:brainstorm-execution-context-verify` family member 신설
+
+precedent 답습 = Amd 11/12/13/14/15→16 Wave 1→Wave 2 split chain 12-instance established pattern.
+
+#### §E. Disjoint axis cross-ref
+
+- **Amendment 5** (`fix_iter_start`): FIX iter trigger. brainstorm Phase 2 = FIX iter 진입 이전 — disjoint.
+- **Amendment 7** (`stale_local_main_checkout`): Orchestrator self-Read working tree vs origin/main. brainstorm Phase 2 = subagent (PMOAgent) single-reader — self-Read ↔ subagent reader disjoint.
+- **Amendment 8** (`mcp_token_expired_mid_flight`): MCP auth token TTL. brainstorm Phase 2 = git layer + registry verify (not auth) — auth ↔ git/registry disjoint.
+- **Amendment 10** (`label_change`): cross-repo label state mutation event. brainstorm Phase 2 = pre-spawn verify — label mutation ↔ pre-spawn verify disjoint.
+- **Amendment 11** (`spawn_prompt_emit` generic spawn): generic any-actor spawn-time SHA pin. brainstorm Phase 2 = PMOAgent 2nd pass specific cadence — generic ↔ specific disjoint complement.
+- **Amendment 12** (`mid_spawn_origin_drift_detected`): spawn-internal periodic drift. brainstorm Phase 2 = pre-spawn — mid-spawn ↔ pre-spawn disjoint.
+- **Amendment 13** (`pre_git_operation` + `pre_push`): git event-specific cadence. brainstorm Phase 2 = no git state mutation — git event ↔ read-only verify disjoint.
+- **Amendment 14** (`parallel-work-sentinel-and-aggregate`): polling AND aggregation. brainstorm Phase 2 = single-reader (single source) — AND ↔ single-reader disjoint.
+- **Amendment 15** (`architect_agent_chief_author_lane_spawn`): chief author handoff base SHA freeze. brainstorm Phase 2 = PMOAgent 2nd pass — chief author ↔ PMO handoff disjoint complement.
+
+본 Amendment 17 = **brainstorm execution context layer** 신규 axis — Amd 7/8/10/11/12/13/15 와 모두 axis disjoint.
+
+#### §F. Wave 1 = declaration-only behavioral mandate
+
+`mechanical_enforcement_actions[]` 13번째 entry 신규 append = warning-tier deferred-followup. Wave 2 = 별 sub-CFP (CFP-1786-W2 reserved). precedent ADR-082 §결정 6 + ADR-070 §D5 + Amd 11/12/13/14 Wave 1→Wave 2 split 답습.
+
+#### §G. Amendment 17 — sunset_justification N/A 정당
+
+`is_transitional: false` 보존 — Amendment 17 scope = 강화 방향 only (transition trigger 14→15 + single-reader + 4-item hard cap + template + skill + CLAUDE.md). 약화 / scope 축소 / 면제 0건. ADR-058 §결정 5 sunset_justification ratchet 통과. ADR-064 §self-application top-down ratchet 정합.
+
+#### §H. Related
+
+- `<internal-docs>/plugin-codeforge/change-plans/CFP-1786.md` — Change Plan SSOT
+- `<internal-docs>/plugin-codeforge/stories/CFP-1786.md` — Story file
+- `<internal-docs>/wrapper/templates/spec.md` + `plan.md` — `execution_context` field carrier
+- `skills/codeforge-brainstorm/SKILL.md` Phase 2 — `execution_context_verify` step carrier
+- `CLAUDE.md` — "Verify-before-trust 4-layer governance" 1 line append
+- sibling parallel: mclayer/plugin-codeforge#1787 (ADR-082 Amd N, axis disjoint)
+- parent retro: `<internal-docs>/plugin-codeforge/retros/2026-05-27-cfp-1764.md` §3.B / §4.2
