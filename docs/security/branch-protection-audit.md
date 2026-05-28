@@ -56,3 +56,61 @@ CFP-1785 DesignReview verify-before-trust 결과:
 ## Baseline Verify Date
 
 2026-05-28T21:55:00+09:00
+
+---
+
+## §Story-2 — codeforge-deploy / codeforge-deploy-review 2 plugin protection CREATE
+
+**Story**: CFP-1785-S2
+**작성**: DeveloperPLAgent
+**timestamp**: 2026-05-28T23:15:00+09:00
+
+### §before Matrix (CREATE 전 baseline — 2026-05-28T22:40:32+09:00 verify)
+
+| plugin | protection state | 사유 |
+|--------|-----------------|------|
+| codeforge-deploy | 404 NOT PROTECTED | CFP-1059 / ADR-087 신설 시점 (2026-04~05) protection 누락 |
+| codeforge-deploy-review | 404 NOT PROTECTED | CFP-1059 / ADR-088 신설 시점 (2026-04~05) protection 누락 |
+
+verified-via: `gh api repos/mclayer/plugin-codeforge-{deploy,deploy-review}/branches/main/protection` (Phase 0 RequirementsPL verify 2026-05-28T22:40:32+09:00 + Phase 2 pre-PUT baseline GET 재실행 verify-before-trust 2026-05-28T23:15:00+09:00) `[verified]`
+
+### CREATE Payload (4 sibling precedent 복제)
+
+```json
+{
+  "required_status_checks": {
+    "strict": true,
+    "contexts": ["phase-gate-mergeable", "check-gate"]
+  },
+  "enforce_admins": true,
+  "required_pull_request_reviews": null,
+  "restrictions": {
+    "users": [],
+    "teams": [],
+    "apps": []
+  }
+}
+```
+
+- contexts = `["phase-gate-mergeable", "check-gate"]` (design / develop / test 3-sibling 2-tuple precedent 복제, review `invariant` outlier 미적용 — deploy/deploy-review = new plugin)
+- `strict: true` (Story-1 sibling 정합)
+- `enforce_admins: true` (CFP-70 anchor)
+- `required_pull_request_reviews: null` (solo-dev 가정, CFP-72)
+- `restrictions: {users:[], teams:[], apps:[]}` (direct push 차단)
+
+### §after Matrix (CREATE 후 post-verify — 2026-05-28T23:15:00+09:00)
+
+| plugin | contexts (after) | enforce_admins | restrictions | PARITY | timestamp |
+|--------|-----------------|----------------|--------------|--------|-----------|
+| codeforge-deploy | `["check-gate","phase-gate-mergeable"]` (sorted) | true | not null (users:[], teams:[], apps:[]) | **PARITY OK** | 2026-05-28T23:15:00+09:00 |
+| codeforge-deploy-review | `["check-gate","phase-gate-mergeable"]` (sorted) | true | not null (users:[], teams:[], apps:[]) | **PARITY OK** | 2026-05-28T23:15:00+09:00 |
+
+verified-via: `gh api repos/mclayer/plugin-codeforge-{deploy,deploy-review}/branches/main/protection --jq '.required_status_checks.contexts | sort'` + `--jq '.enforce_admins.enabled'` + `--jq '.restrictions != null'` (post-CREATE GET, 2026-05-28T23:15:00+09:00) `[verified]`
+
+### Risk Note (Story-2)
+
+- **workflow file 미존재 영역**: 2 plugin `.github/workflows/phase-gate-mergeable.yml` 자체 부재 → 양 context (`phase-gate-mergeable` + `check-gate`) 모두 영구 pending 상태
+- GitHub 기본 동작: pending context = absent (fail 처리 0) → PR merge 가능 (Story-1 carry-over invariant 동형)
+- `enforce_admins: true` 활성화로 admin merge gate (ADR-113 5-step pre-flight gate) mechanism 신규 활성화 (이전 404 NOT PROTECTED 영역 → 신설)
+- **Phase 2 carrier**: 2 plugin workflow file `phase-gate-mergeable.yml` 신설 = ADR-087 Phase 2 wire 정합 영역 (별 follow-up CFP)
+- **rollback path**: protection DELETE (`gh api --method DELETE repos/mclayer/plugin-codeforge-{deploy,deploy-review}/branches/main/protection`) 으로 이전 404 state 복원 가능 (idempotent)
