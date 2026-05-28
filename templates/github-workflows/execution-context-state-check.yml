@@ -1,0 +1,51 @@
+# CFP-1787 — ADR-082 Amendment 33 sub-scope 1-V execution_context_reconciliation
+# Wave 2 mechanical wire — verdict packet execution_context_state lint
+# Tier: warning (continue-on-error: true), bypass label: hotfix-bypass:execution-context-state-presence
+
+name: execution-context-state-check
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Set up bats
+        run: |
+          sudo apt-get install -y bats
+
+      - name: Check hotfix-bypass label
+        id: bypass
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh pr view "${{ github.event.pull_request.number }}" --json labels --jq '.labels[].name' \
+            | grep -qx "hotfix-bypass:execution-context-state-presence"; then
+            echo "bypass=true" >> "$GITHUB_OUTPUT"
+            echo "[CFP-1787] hotfix-bypass:execution-context-state-presence label detected — lint skip"
+          else
+            echo "bypass=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run execution_context_state lint
+        if: steps.bypass.outputs.bypass != 'true'
+        run: |
+          # Wave 2 mechanical wire scope = lint script presence + bats fixture self-validation
+          # Actual packet field scanning across PR diff = Wave 3 carrier (별 sub-CFP)
+          echo "[CFP-1787] Wave 2 mechanical wire = lint script + bats self-validation (Wave 3 = runtime packet scan)"
+          bats tests/wave2-mechanical-wire/check-execution-context-state.bats
