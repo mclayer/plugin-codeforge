@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: label
-version: "2.84"
+version: "2.85"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
@@ -1960,3 +1960,12 @@ labels:
     description: "hotfix-bypass: codename-glossary-lookup warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1764 Story-2 / ADR-071 §결정 19 Amendment 8 mechanical wire carrier — wording-dictionary 카테고리 (c) PR diff scan lint bypass channel). docs/** / CLAUDE.md / templates/** 안 카테고리 (c) codename 발견 + 평이 풀이 동반 부재 시 warning 발화 — 정당 사용 영역 (governance artifact 본문 내 codename 자연 사용 등) 에서 임시 skip 시 부착. scripts/check-codename-glossary-lookup.sh bash lint (ADR-061 §결정 11 ReDoS-safe line-by-line, anchored simple patterns). BYPASS_CODENAME_GLOSSARY_LOOKUP=1 env 지원 (CI 호환). warning tier: exit 0 (continue-on-error: true 정합, PR 차단 금지). #797 unblock — wording-dictionary 카테고리 (c) lookup table grep target 확정 + lint backbone 활성. audit-trailed exception channel (ADR-024 Amendment 6/8 §결정 6.A 5 lint chain inherit). **109번째 hotfix-bypass:* family member (ADR-108 §결정 3 forcing function parity mandate — description text N번째 명시 의무, raw active concrete grep count post-append = 108 + 1 = 109 정합 — CFP-1745 v2.83 108번째 runtime-hook-presence → CFP-1764 = 109번째 / v2.84 ratchet up 완료)**."
     single_active: false
     attach_owner_plugin: "Orchestrator (CFP-1764 codename-glossary-lookup warning-tier bypass — wording-dictionary 카테고리 (c) lint 임시 skip 시 부착, audit-trailed exception channel 의무) / ArchitectAgent / DeveloperPLAgent"
+
+  # CFP-1787 신설 — ADR-082 Amendment 33 sub-scope 1-V (execution_context_reconciliation Wave 2 mechanical wire)
+  # ratchet ladder: CFP-1764 v2.84 109번째 codename-glossary-lookup → CFP-1787 = 110번째 / v2.85 ratchet up
+  - name: hotfix-bypass:execution-context-state-presence
+    category: hotfix-bypass
+    color: "fef2c0"
+    description: "hotfix-bypass: execution-context-state-presence warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1787 / ADR-082 Amendment 33 sub-scope 1-V execution_context_reconciliation Wave 2 mechanical wire carrier — verdict packet execution_context_state 5 sub-field (working_dir_abs_path / target_write_repo / staged_files_required / branch_required / remote_sync_required) presence + schema validation bypass channel). scripts/lib/check_execution_context_state.py + templates/github-workflows/execution-context-state-check.yml + tests/wave2-mechanical-wire/check-execution-context-state.bats triple-sibling. BYPASS_EXECUTION_CONTEXT_STATE_PRESENCE=1 env 지원 (CI 호환). warning tier: exit 0 (continue-on-error: true 정합, PR 차단 금지). ADR-060 §결정 5 default warning mode 정합. Wave 1 declarative (ADR-082 Amendment 33 sub-scope 1-V codify) / Wave 2 mechanical wire (본 CFP-1787) / Wave 3 runtime packet scan = 별 sub-CFP carrier. audit-trailed exception channel (ADR-024 Amendment 6/8 §결정 6.A 5 lint chain inherit). **110번째 hotfix-bypass:* family member (ADR-108 §결정 3 forcing function parity mandate — description text N번째 명시 의무, raw active concrete grep count post-append = 109 + 1 = 110 정합 — CFP-1764 v2.84 109번째 codename-glossary-lookup → CFP-1787 = 110번째 / v2.85 ratchet up 완료)**."
+    single_active: false
+    attach_owner_plugin: "Orchestrator (CFP-1787 execution-context-state-presence warning-tier bypass — verdict packet execution_context_state 5 sub-field presence + schema validation lint 임시 skip 시 부착, audit-trailed exception channel 의무) / ArchitectAgent / DeveloperPLAgent"
