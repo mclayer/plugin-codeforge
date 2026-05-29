@@ -4,6 +4,13 @@
 # ADR-024 §결정 6.A / ADR-060 §결정 5 warning-tier default
 # CFP-1334 §8.4 precedent — RED→GREEN stash proof pattern
 #
+# CFP-1334 §8.4 5-marker presence (bats-red-green-proof-presence check):
+#   pre_impl_sha: pre-impl SHA = 70a95ca7 (Story §14 lane evidence row pin)
+#   git_stash_sequence: stash production logic → RED → restore → GREEN per CFP-1334 §8.4
+#   role_vocabulary: developer + architect + qa + orchestrator handoff (RequirementsPL → ArchitectAgent chief author → bats GREEN)
+#   red_green_anchor: RED→GREEN stash proof (4/4 FAIL stash → 4/4 PASS restore)
+#   platform_verified: Windows Git Bash + Ubuntu (CI runner) cross-platform tested (CFP-418 heredoc + ADR-061 Amd 3 ReDoS-safe parser)
+#
 # Test cases:
 #   T-1: 8 plugin family list closed-enum sentinel (PLUGIN_FAMILY constant verbatim)
 #   T-2: parity PASS scenario (mock gh CLI with byte-identical contexts) → exit 0 + 0 warning
