@@ -8,6 +8,7 @@ carrier_story: CFP-1059
 parent_epic: CFP-1059
 related_stories:
   - CFP-1059  # carrier Epic
+  - CFP-1808  # Amendment 2 — Phase 2 wire activation (deploy-lane-presence 6번째 required check + 2 plugin phase-gate-mergeable.yml 신설 + deploy-lane-presence.yml 신설). Wave 1 declarative + immediate wire atomic (HIGH risk 영구 차단 회피 mandate, declaration-only Wave 1 패턴 적합 영역 외).
 related_adrs:
   - ADR-023  # lane plugin lifecycle (Amendment N 동반 — 8 lane 확장 절차)
   - ADR-042  # agent model selection (Amendment 9 동반 — DeployPL/Worker tier)
@@ -53,10 +54,16 @@ amendments:
     carrier_story: CFP-1317-S1
     description: "§결정 5 stateful daemon BG-1~4 비적격 기준 형식화 + 신규 §결정 9 (rolling/writer-lease 보조 매커니즘) + §결정 5 wording 정정 + EC-G/H 흡수"
     sunset_justification: null
+  - number: 2
+    date: "2026-05-29"
+    carrier_story: CFP-1808
+    description: "Phase 2 wire activation — deploy-lane-presence 6번째 required check 활성 (본 repo main 보호 contexts 5→6 ratchet) + 2 plugin repo (codeforge-deploy / codeforge-deploy-review) phase-gate-mergeable.yml workflow 신설 (HIGH risk 영구 차단 회피 — 부재 시 plugin PR merge 영구 pending). deploy-lane-presence.yml workflow 신설 (templates/ + .github/workflows/ self-app per ADR-005 byte-identical). auto-deploy.yml + deploy-lane-spawn-evidence.yml workflows 이미 활성 — 본 Amendment 안 cross-ref declarative declare only. ADR-088 (배포 리뷰 lane) cross-ref backref 의무. ADR-058 §결정 5 ratchet 강화 only (5→6 contexts, 영구 차단 회피) — 약화 / scope 축소 / 면제 영역 0건. parent CFP-1785 retro F-D HIGH carrier (parallel session CFP-1785 종결 후 audit 결과 발견)."
+    sunset_justification: null  # strengthening direction (Phase 2 wire activation, contexts 5→6 ratchet, 2 plugin sibling sync 의무 — HIGH risk 영구 차단 회피 mandate). ADR-058 §결정 5 정합 (약화 0건).
 is_transitional: false  # permanent lane structure — 약화 차단 ratchet (ADR-058 §결정 5 정합)
 sunset_justification: null
 mechanical_enforcement_actions:
   - deploy-lane-spawn-evidence  # declaration-only Wave 1 (ADR-070 / ADR-082 / ADR-086 precedent 답습)
+  - deploy-lane-presence  # CFP-1808 Amendment 2 — Phase 2 wire activation. workflow self-app templates/ + .github/workflows/ byte-identical + 본 repo main 보호 contexts 5→6 ratchet + 2 plugin sibling phase-gate-mergeable.yml workflow 신설 (HIGH risk 영구 차단 회피 mandate).
 ---
 
 # ADR-087 — Deploy lane 신설 (codeforge-deploy plugin 정식 도입 + lane lifecycle 6→8 단계 확장)
@@ -296,3 +303,44 @@ CFP-1059 Story-1 = 4 ADR carrier 묶음 + 8 Amendment + skill 갱신 + plugin.js
 - `templates/github-workflows/blue-green-swap.yml` (Phase 1 skeleton, S6 wire)
 - `templates/github-workflows/retention-window-timer.yml` (Phase 1 skeleton, S6 wire)
 - `templates/github-workflows/auto-rollback.yml` (Phase 1 skeleton, S6 wire)
+
+## Amendment 2 (2026-05-29 KST, CFP-1808) — Phase 2 wire activation: deploy-lane-presence 6번째 required check + 2 plugin sibling sync + auto-deploy / deploy-lane-spawn-evidence declarative declare
+
+본 Amendment 는 §결정 1-N (기존) 본문의 Phase 2 wire activation — HIGH risk 영구 차단 회피 mandate (declaration-only Wave 1 패턴 적용 영역 외, 즉시 wire 의무). ADR-058 §결정 5 ratchet 강화 only.
+
+### §A. Wave 1 declarative + immediate wire atomic (rationale: HIGH risk 회피)
+
+본 Amendment scope = declarative-only Wave 1 패턴 적용 영역 **외** — pattern_count 1 first applied case + HIGH risk 영구 차단 가능성 (2 plugin repo PR merge 영구 pending). 즉시 wire 의무 — Wave 2 별 sub-CFP 분리 = ratchet 약화 위험 (영구 차단 risk 미해소 기간 연장). precedent: ADR-088 §결정 2 (배포 리뷰 lane mandatory smoke / 성능 비교 / cutover 검증 — 즉시 wire mandate 동형).
+
+### §B. deploy-lane-presence 6번째 required check 활성
+
+본 repo `main` 보호 contexts 현재 5 (phase-gate-mergeable / invariant-check / doc frontmatter schema (CFP-28 — strict) / doc section schema (CFP-28 — strict) / check-gate) → 6 (+ deploy-lane-presence). admin gh CLI 작업 (`gh api repos/.../branches/main/protection`) Story 마지막 단계 mandate.
+
+### §C. 2 plugin sibling sync (`phase-gate-mergeable.yml` 신설)
+
+`codeforge-deploy` + `codeforge-deploy-review` plugin repo `.github/workflows/phase-gate-mergeable.yml` = 부재 → 신설 의무 (HIGH risk 차단 회피). source = 본 repo `templates/github-workflows/phase-gate-mergeable.yml` (32899 bytes, 2026-05-26 timestamp). byte-identical copy (ADR-010 sibling sync precedent + ADR-005 self-app 동형).
+
+### §D. auto-deploy / deploy-lane-spawn-evidence declarative declare (이미 활성)
+
+본 repo `auto-deploy.yml` + `deploy-lane-spawn-evidence.yml` + `deploy-review-lane-spawn-evidence.yml` workflows = 이미 활성 (.github/workflows/ + templates/ byte-identical). 본 Amendment 안 cross-ref declarative declare only — 신규 file 신설 0.
+
+### §E. ADR-088 cross-ref backref
+
+배포 리뷰 lane (ADR-088) 영역 영향 cross-ref:
+- `auto-deploy.yml` trigger → 배포 lane (ADR-087) → 자동 trigger → 배포 리뷰 lane (ADR-088)
+- `deploy-lane-presence` required check = 배포 lane + 배포 리뷰 lane 양 evidence 의무
+
+본 Amendment 본문 안 ADR-088 §결정 1/2/3 cross-ref 명시 의무 (배포 리뷰 lane mandatory smoke / 성능 비교 / cutover 사후 검증 — Phase 2 PR evidence chain 동반).
+
+### §F. Amendment 2 — sunset_justification N/A 정당
+
+`is_transitional: false` 보존 — Amendment 2 scope = 결정 1-N 강화 방향 only (Phase 2 wire activation, contexts 5→6 ratchet, 2 plugin sibling sync 의무). 약화 / scope 축소 / 면제 0건. ADR-058 §결정 5 sunset_justification ratchet 통과. ADR-064 §self-application top-down ratchet 정합 (영구 차단 회피 mandate carve-out 외).
+
+### §G. Related
+
+- `<internal-docs>/plugin-codeforge/stories/CFP-1808.md` — Story file
+- `<internal-docs>/plugin-codeforge/specs/CFP-1808-deploy-phase-gate-workflows.md` — Spec file
+- `.github/workflows/deploy-lane-presence.yml` + `templates/github-workflows/deploy-lane-presence.yml` — workflow file 신설 (본 Amendment carrier)
+- `<codeforge-deploy>/.github/workflows/phase-gate-mergeable.yml` + `<codeforge-deploy-review>/.github/workflows/phase-gate-mergeable.yml` — 2 plugin sibling sync (본 Amendment carrier)
+- parent retro: `<internal-docs>/plugin-codeforge/retros/2026-05-28-cfp-1785.md` (parallel session FU-D HIGH origin)
+- cross-ref: ADR-088 §결정 1-3 (배포 리뷰 lane)
