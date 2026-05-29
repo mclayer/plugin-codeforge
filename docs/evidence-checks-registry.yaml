@@ -5929,3 +5929,38 @@ entries:
       threshold: 3
       promotion_trigger: none
     status: warning
+
+
+  # ─── CFP-1807 — branch-protection-context-parity (ADR-024 §결정 6.A cross-repo parity warning lint) ───
+  - name: branch-protection-context-parity
+    description: |
+      CFP-1807 / ADR-024 §결정 6.A — cross-repo branch protection contexts parity
+      warning lint (Wave 2 mechanical wire). 8 codeforge family plugin × CLAUDE.md
+      "6 lane plugin branch protection contexts SSOT" 표 actual ↔ expected drift
+      감지 → markdown table 경고 (PR comment + stdout). Wave 1 declarative
+      (CFP-1785 PATCH + CFP-1808 6번째 check ratchet 후 SSOT 표 codify) /
+      Wave 2 본 mechanical wire (scripts/lib + bash thin wrapper + workflow + bats
+      fixture quadruple-sibling). ADR-060 §결정 5 default warning mode 정합.
+      ADR-061 Amd 3 §결정 11 line-by-line parse (ReDoS-safe).
+    detect_command: bash scripts/check-branch-protection-context-parity.sh
+    workflow: templates/github-workflows/branch-protection-context-parity.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:branch-protection-context-parity
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: [CFP-1807]
+    introduced_by: CFP-1807
+    introduced_date: 2026-05-29
+    owner_adr: ADR-024
+    owner_amendment_id: 16
+    carrier_adr: ADR-060
+    paired_lint_script: scripts/lib/check_branch_protection_context_parity.py
+    paired_workflow: templates/github-workflows/branch-protection-context-parity.yml
+    paired_bats_fixture: tests/scripts/test_check-branch-protection-context-parity.sh
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: warning
