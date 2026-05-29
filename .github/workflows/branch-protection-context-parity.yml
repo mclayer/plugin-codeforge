@@ -1,0 +1,93 @@
+name: branch-protection-context-parity
+# CFP-1807 / ADR-024 §결정 6.A — cross-repo branch protection contexts parity warning lint
+# Tier: warning (ADR-060 §결정 5 default, continue-on-error: true)
+# evidence-checks-registry.yaml entry: branch-protection-context-parity
+#
+# 검증:
+#   8 codeforge family plugin × CLAUDE.md "6 lane plugin branch protection contexts SSOT" 표
+#   actual `gh api repos/<owner>/<repo>/branches/main/protection/required_status_checks` drift 감지
+#   → warning emit (markdown table, PR comment).
+#
+# 트리거:
+#   pull_request: PR open/sync 시 즉시 lint
+#   workflow_dispatch: manual override (ad-hoc verification, CFP-1334 §8.4 precedent)
+#
+# Hotfix bypass:
+#   hotfix-bypass:branch-protection-context-parity label 부착 시 skip + audit comment
+#   (ADR-024 Amendment 16 §결정 6.A 정합)
+#
+# Permissions: minimum (top-level deny-all + job override)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  workflow_dispatch:
+
+permissions: {}  # top-level deny-all
+
+jobs:
+  branch-protection-context-parity:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # warning tier — drift does not block CI
+    permissions:
+      contents: read         # checkout + CLAUDE.md read
+      pull-requests: write   # PR comment emit
+
+    concurrency:
+      group: branch-protection-context-parity-${{ github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Check hotfix-bypass label
+        id: bypass
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # CFP-1807 — bypass label detection (ADR-024 Amendment 16 §결정 6.A)
+          if [ -z "${PR_NUMBER:-}" ]; then
+            echo "bypass=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          labels=$(gh pr view "$PR_NUMBER" --json labels --jq '.labels[].name' 2>/dev/null || true)
+          if echo "$labels" | grep -qx 'hotfix-bypass:branch-protection-context-parity'; then
+            echo "bypass=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "bypass=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run branch-protection-context-parity
+        if: steps.bypass.outputs.bypass != 'true'
+        id: lint
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}  # ADR-066 cross-repo PAT (read contents on 8 plugin family)
+        run: |
+          chmod +x scripts/check-branch-protection-context-parity.sh
+          set -o pipefail
+          bash scripts/check-branch-protection-context-parity.sh | tee /tmp/parity-output.txt
+          # warning-tier: exit 0 even on drift (markdown table already in output)
+
+      - name: Post PR comment on drift
+        if: steps.bypass.outputs.bypass != 'true' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ ! -f /tmp/parity-output.txt ]; then
+            exit 0
+          fi
+          if grep -q '^WARNING:' /tmp/parity-output.txt; then
+            gh pr comment "$PR_NUMBER" --body-file /tmp/parity-output.txt || true
+          fi
+
+      - name: Bypass audit comment
+        if: steps.bypass.outputs.bypass == 'true' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # ADR-024 Amendment 16 §결정 6.A audit-trailed exception channel
+          gh pr comment "$PR_NUMBER" --body "**branch-protection-context-parity bypass active** — \`hotfix-bypass:branch-protection-context-parity\` label detected. Lint skipped per ADR-024 Amendment 16 §결정 6.A audit channel. Bypass justification required in PR body \`### Bypass reason\` section (ADR-024 §결정 6.A.8 / CFP-1657)." || true
