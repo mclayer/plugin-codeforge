@@ -1,6 +1,6 @@
 ---
 name: QADeveloperAgent
-model: claude-haiku-4-5
+model: haiku
 role: qa
 description: 구현 레인 TDD 테스트 코드 작성 — Architect deputy 계약 §8 이행자, ArchitectPLAgent 감사
 permissions:

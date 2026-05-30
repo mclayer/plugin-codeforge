@@ -1,6 +1,6 @@
 ---
 name: FrontendDeveloperAgent
-model: claude-sonnet-4-6
+model: sonnet
 # rate-limit 시 Orchestrator가 model:opus로 fallback spawn — ADR-057
 role: dev
 description: 웹 프론트엔드 UI 구현 — 템플릿·정적 자산·클라이언트 측 로직

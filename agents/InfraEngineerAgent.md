@@ -1,6 +1,6 @@
 ---
 name: InfraEngineerAgent
-model: claude-haiku-4-5
+model: haiku
 role: dev
 description: 인프라·배포·설정·운영 스크립트 엔지니어링 — Docker-first (Dockerfile + compose.yml + .dockerignore primary). K8s = presets/k8s/ opt-in. systemd/launchd/PaaS = legacy (consumer overlay opt-in only — ADR-033 §결정 3).
 permissions:

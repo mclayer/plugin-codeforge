@@ -2,6 +2,10 @@
 
 `codeforge-develop` plugin 릴리스 이력.
 
+## 0.7.1 (2026-05-30)
+
+- [CFP-1845 follow-up] agent model 핀 → 별칭 전환 (opus/sonnet/haiku 항상 최신 지칭). frontmatter model field 7건 (presets/webapp 포함). tier 분류 변경 0건. wrapper #1846 / #1847 연계. marketplace sibling sync 동반.
+
 ## 0.7.0 (2026-05-14)
 
 - CFP-609: DeveloperPLAgent.md 자율 병렬 결정 tree 4-분기 신설 (parallel-dispatch-protocol-v1 §5 sibling sync — wrapper canonical mclayer/plugin-codeforge `docs/inter-plugin-contracts/parallel-dispatch-protocol-v1.md`)
