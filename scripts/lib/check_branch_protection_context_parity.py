@@ -115,16 +115,20 @@ def parse_claude_md_table(claude_md_path: Path) -> dict[str, List[str]]:
     text = claude_md_path.read_text(encoding="utf-8")
     lines = text.splitlines()
 
-    # Step 1: locate anchor line
+    # Step 1: locate anchor line — heading-strict (line starts with `**` bold marker).
+    # CFP-1855 fix: prior implementation matched first occurrence including narrative
+    # text mention (e.g., line 264 narrative reference) → scan cap exhausted before
+    # actual heading at line 322. Strict pattern: heading line starts with `**`
+    # AND contains anchor → narrative mention skipped.
     anchor_idx = -1
     for i, line in enumerate(lines):
-        if CLAUDE_MD_TABLE_ANCHOR in line:
+        if CLAUDE_MD_TABLE_ANCHOR in line and line.lstrip().startswith("**"):
             anchor_idx = i
             break
 
     if anchor_idx == -1:
         raise SystemExit(
-            f"CLAUDE.md table anchor '{CLAUDE_MD_TABLE_ANCHOR}' not found"
+            f"CLAUDE.md table anchor heading '**{CLAUDE_MD_TABLE_ANCHOR}**' not found"
         )
 
     # Step 2: skip until table separator `|--`
