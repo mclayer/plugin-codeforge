@@ -1,6 +1,6 @@
 ---
 name: SecurityArchitectAgent
-model: claude-opus-4-7
+model: opus
 bounded_context: codeforge-governance
 ddd_pattern: domain-service
 description: ArchitectPLAgent 직속 SubAgent — 보안 설계 변호자. 위협 모델·trust boundary·auth/data 모델을 공격자 관점에서 변호해 설계가 보안 결함을 방치하지 않도록 견제

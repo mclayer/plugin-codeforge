@@ -1,6 +1,6 @@
 ---
 name: CodebaseMapperAgent
-model: claude-sonnet-4-6
+model: sonnet
 bounded_context: codeforge-governance
 ddd_pattern: domain-service-sub-tuple
 description: ArchitectPLAgent 직속 SubAgent — 기존 코드베이스 사실 변호자. file structure / API surface / 의존성 그래프 등 명시적 fact source 만 인용. 추론·해석·synthesis 금지 (chief author 영역)

@@ -2,6 +2,12 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.21.2] - 2026-05-30
+
+### Changed (CFP-1845 follow-up — agent model 핀 → 별칭 전환)
+
+[CFP-1845 follow-up] agent model 핀 → 별칭 전환 (opus/sonnet/haiku 항상 최신 지칭). frontmatter model field 10건. tier 분류 변경 0건. wrapper #1846 / #1847 연계. marketplace sibling sync 동반.
+
 ## [0.21.1] - 2026-05-21
 
 ### Changed (CFP-1168 — RACI 4-way → 3-way overlap zone mirror 전면 재편)

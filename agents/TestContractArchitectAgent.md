@@ -1,6 +1,6 @@
 ---
 name: TestContractArchitectAgent
-model: claude-opus-4-7
+model: opus
 bounded_context: codeforge-governance
 ddd_pattern: domain-service
 description: ArchitectPLAgent 직속 SubAgent — §8 Test Contract QA perspective contributor. 테스트 관점에서 커버리지 후보·경계·invariant·Perf Baseline 타당성을 표현해 설계가 테스트 공백을 방치하지 않도록 견제
