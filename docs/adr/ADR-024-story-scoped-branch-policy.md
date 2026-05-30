@@ -5,8 +5,8 @@ status: Accepted
 category: governance
 date: 2026-05-03
 is_transitional: false
-amended_by: CFP-1646
-amended_date: 2026-05-26
+amended_by: CFP-1850
+amended_date: 2026-05-31
 amendments:
   - by: "CFP-134"
     date: "2026-05-08"
@@ -76,6 +76,10 @@ amendments:
     date: "2026-05-26"
     scope: "Amendment 17 — §결정 6.A.9 신설 (Issue label timing discipline backlog `phase:*` reflex 차단 mechanical enforce). backlog/예약/follow-up CFP Issue 발의 시 `phase:*` label 부착 금지 — 미착수 backlog 관례 = unlabeled (Issue #1112 / #1169 prior art). backlog 식별 3-AND predicate: state:open + assignee:none + linked_pr:none. `hotfix-bypass:backlog-issue-label` 104번째 family member (raw active concrete grep count post-append 103+1=104 정합 — CFP-1648 v2.78 103번째 adr-dual-block-parity → CFP-1646 = 104번째 / v2.79 ratchet up). label-registry-v2 v2.78 → v2.79 MINOR bump. MANIFEST.yaml row sync. evidence-checks-registry `backlog-issue-phase-label-forbid` warning-tier entry (ADR-060 §결정 5 first introduction = warning mode). workflow pair Wave 1 declarative stub (templates/ + .github/workflows/ byte-identical per ADR-005). behavioral directive normative 승격 첫 carrier (CLAUDE.md 'Orchestrator 정책 적용 범위 + behavioral directive (normative)' 단락 첫 carrier) — memory `feedback_no_phase_label_on_backlog_issues.md` ephemeral (consumer 비전파 + single-session scope = structural enforcement 불가) → ADR-024 normative SSOT 승격. CFP-1111 follow-up #1198/#1199 phase:설계 reflex incident origin (사용자 지적 '두개의 이슈 현재 작업 중 아닌가?'). Full-lane attempt PR #1664 + #941 closed audit trail — RequirementsPL + 3x ArchitectPL + 2x DesignReviewPL + 3 parallel race events (CFP-1657 Amd 16 § 6.A.8 slot collision + CFP-1648 v2.78 + 103번째 slot collision) → ArchitectPL FIX iter 3 ESCALATE_PACKET_INCOMPLETE → 사용자 minimal path direct CFP-1110 precedent invocation per ADR-039 inline exception. Wave 1 declarative scope (본 Phase 1 PR scope): registry entry + ADR Amendment + workflow stub + CHANGELOG + MANIFEST + Story file (internal-docs). Wave 2 (Phase 2 PR scope — future carrier): script + bats + workflow body wire + evidence-registry status active. ADR-082 §결정 9 verify-at-write-time worktree absolute path 강제 (ADR-040 Amendment 6 §결정 7.J.3) 정합. PMOAgent retro 의무 (post Phase 1 PR merge auto-spawn 5min grace, ADR-045 §D-5) — multi-incident escalation: `stale_fact_inheritance` + `worktree_path_mismatch` + `orchestrator_initial_turn_verify_stale` + `sister_session_race_in_design_lane` pattern_count 3 reach Mandatory + `parallel_race_recursive_dogfooding` + `cross_session_state_ambiguity` (ADR-045 §D-9 escalation territory, sister carrier escalation_action `adr_draft_emitted` 후보)."
     sunset_justification: "N/A — is_transitional: false (permanent governance policy). §결정 6.A.9 신설 = §결정 6.A per-entry namespace 영구 확장 (label attach timing axis disjoint, 다른 8 sub-decisions §결정 6.A.1~6.A.8 = label content / counting / macro / parity / wording-dictionary 영역). ratchet-UP 강화 방향 (label timing discipline 신설, behavioral directive normative 승격 첫 carrier — memory 만으로 갈음 금지 invariant 강화). ADR-058 §결정 5 + ADR-064 §self-application top-down ratchet 정합."
+  - by: "CFP-1850"
+    date: "2026-05-31"
+    scope: "Amendment 18 — §결정 6.A.10 신설 isChoreOnly fast-path 면제 채널 codify + CFP-1845 anti-pattern (단일 chore PR cross-repo phase-gate 영구 차단 해소). phase-gate-mergeable.yml 의 `isChoreOnly` 5번째 fast-pass source (CFP-1850 Story-1 PR #1866 MERGED) 를 ADR-024 branch protection 정책의 정식 면제 채널로 normative codify — fast-pass OR-gate 5-source 확장 (isEpicLabel || isSiblingPr || isDocOnly || isPostMergeFix || isChoreOnly). 메커니즘 = 4-조건 AND strict (isPostMergeFix 3-조건 AND 보안 패턴 동형): (a) `phase:unclassified` label ∧ (b) Story 미연결 (`story_uri` PR-body marker 부재 + linked `type:story` Issue 0 — Orchestrator monopoly, PR author 위조 불가 결정적 차단원) ∧ (c) `sibling-pr`/`impl-manifest` label 부재 ∧ (d) diff chore-safe path (기존 isDocOnly allow-list + `agents/*.md` 승격, `src/`/`tests/`/`overlay/` 여전히 배제). 조건 (b) helper catch = 404-only skip + 그 외 예외 (network / rate-limit / 403 / 5xx) fail-closed (isChoreOnly=false → 기존 평가 경로 진입). 충족 시 conclusion=success, title `Phase Gate (chore fast-pass)`. **CFP-1845 anti-pattern 명문화**: 단일 chore PR (model 별칭 sync — `claude-opus-4-7` → `opus`) 이 `agents/*.md` 를 건드려 `hasCode=true` → `isDocOnly=false` → `phase:unclassified` label 이 phase 기본값 `phase:설계-리뷰` 에 mismatch → 영구 `action_required` → `enforce_admins:true` 라 admin merge 도 거부 → 6 lane plugin repo branch protection 손작업 우회 (protection off → merge → restore) 반복. 이 'enforce_admins:true invariant 손작업 우회 + 보안 게이트 단발 비활성' 가 재현불가/위험 anti-pattern. isChoreOnly 가 구조적 해소 (손작업 우회 불필요, enforce_admins:true invariant 보존). ratchet 방향: ADR-024 frontmatter `is_transitional: false` permanent → sunset_justification N/A. 본 Amendment = 면제 채널 신설이지만 4-조건 AND strict + 조건 (b) Orchestrator monopoly 결정적 차단원 (위조 불가) 라 evidence-grounded carve-out (ratchet 약화 아님 — fast-pass 우회 표면 추가 0, ADR-058 §결정 5 + ADR-064 §결정 7 evidence-gated symmetric ratchet 정합). 필요성 evidence: Story-2 (CFP-1850-S2 PR #1867 MERGED) 가 requirements/pmo 에 phase-gate-mergeable 필수 추가 (8 lane plugin repo 통일) → isChoreOnly 없으면 그 2 repo chore PR 도 동일 차단 메커니즘에 빠짐 = 면제 채널의 운영 필요성. mechanical_enforcement_actions: 신규 entry append 0건 — isChoreOnly 는 phase-gate-mergeable.yml + .github/workflows/phase-gate-mergeable.yml (byte-identical, ADR-005) 의 inline OR-gate 분기 (L319-380 영역) 에 이미 mechanical wired (CFP-1850-S1 PR #1866 MERGED). 별 lint action 불필요 — phase-gate-mergeable.yml 자체가 required status check (branch protection 1번째) 로 이미 mechanical gate, 본 5번째 source 는 그 gate 의 fast-pass 분기 확장 (별 lint/sentinel 영역 아님). label-registry-v2 bump 0 (family member 신설 0, kind:registry sibling sync 면제 영역, ADR-010 §결정 2 + ADR-008 §결정 3 — entry append 0). plugin.json bump 0 / marketplace_sync_declared: false (mirrored field 변경 0, ADR-063 atomic invariant 발효 조건 미충족). prior art = ADR-026 Amendment 4 §결정 6 (CFP-795) 4번째 fast-pass source isPostMergeFix 3-조건 AND 패턴 직접 동형 (3-source → 4-source ratchet 강화) — 본 Amendment 18 = 4-source → 5-source ratchet 강화 동형 답습 (gate 강화이며 약화 아님). ADR-054 (doc-only fast-path Story 분류) 와 disjoint axis — ADR-054 = Story 단위 lane skip 분류 / 본 §결정 6.A.10 = PR 단위 phase-gate fast-pass source 분류, 영역 disjoint. ADR-024 amendment_id slot strict pre-claim 정합 (ADR-082 §결정 1 sub-scope (1-G) amendment-slot pre-reservation mandate 적용 — ADR-RESERVATION amendments_reserved[] row append + commit 후 본 row 작성). ADR-082 §결정 1 sub-scope (1-K) numeric claim write-time strict claim mandate 4-step verify-before-write: (a) source command `grep -nE \"^## Amendment [0-9]+\" docs/adr/ADR-024-story-scoped-branch-policy.md` (b) actual max value = 17 (Amendment 17 = CFP-1646 §결정 6.A.9, body L1595) (c) claim↔actual cross-verify (worktree base commit 10878775 post-CFP-1850-S2 merge, fact verified via `git log --oneline -3` on cfp-1850-s3-adr branch) (d) match → write. 정확 next-slot for CFP-1850 = 18 / next sub-decision = 6.A.10."
+    sunset_justification: "N/A — is_transitional: false (permanent governance policy). §결정 6.A.10 신설 = fast-pass OR-gate 5번째 source 영구 확장 (axis disjoint label content / counting / macro / parity / wording-dictionary / timing — 본 axis = chore PR Story 미연결 결정적 분류, 영역 disjoint). 4-조건 AND strict (특히 조건 (b) Orchestrator monopoly Story 미연결 = PR author 위조 불가 결정적 차단원) 라 ratchet-UP 강화 방향 — fast-pass 우회 표면 추가 0건 (조건 (a) phase:unclassified 진입 가드 + 조건 (b) Story 미연결 결정적 차단원 + 조건 (c) sibling-pr/impl-manifest 배제 + 조건 (d) chore-safe diff path 4중 AND, 기존 fast-pass 4-source 보다 엄격). enforce_admins:true invariant 보존 (admin override 정상화 거부) + escalate-and-fix 철학 실행 (consumer workaround 금지, 정책 기반 자동 gate pass). ADR-058 §결정 5 + ADR-064 §self-application evidence-gated symmetric ratchet 정합 (CFP-1845 incident pattern 의 구조적 해소 evidence 동반, ratchet 강화)."
   - by: "CFP-1607"
     date: "2026-05-25"
     scope: "Amendment 15 — §결정 6.A.3 per-plugin-cumulative-counter tier ratchet warning → blocking-on-pr declarative anchor (Wave 1 declarative ratchet + Wave 2 mechanical wire 별 sub-CFP). 사용자 directive 2026-05-25 KST `사용자 confirmed blocking-on-pr 승격` (Issue #1607 body `escalate_user` enum resolved — Wave 3 retro §4.2 C carrier). ADR-024 amendment_id slot strict pre-claim 정합 (ADR-082 §결정 1 sub-scope (1-G) amendment-slot pre-reservation mandate 적용 4th applied case — Amendment 18 CFP-1342 1st + Amendment 21 CFP-1578 2nd + Amendment 22 CFP-1601 3rd precedent 답습) + sub-scope (1-K) numeric claim write-time strict claim mandate 적용 2nd applied case (Amendment 22 CFP-1601 1st applied META carrier 직후 답습). ADR-060 §결정 6 promotion gate AND 3/3 PASS evidence: (a) PR cumulative since 2026-05-17 (CFP-845 ship 시점) = 200 PRs ≥ 20 (`gh pr list --search 'merged:>=2026-05-17' --limit 200` returned full list, 10x threshold 충족) / (b) bypass label外 failure count = 0 (`recurrence.count: 0` registry yaml verified) + `gh pr list --label hotfix-bypass:per-plugin-cumulative-counter` returned 0 PRs (no actual bypass usage during warning mode) / (c) sibling Stories CFP-390 PR #415/#420 + CFP-455 PR #460/#461 (CFP-412 substitution per ADR-060 Amendment 1+2 sibling_dependencies chain [CFP-390, CFP-412, CFP-455]) ALL MERGED. 본 Amendment 15 = ADR-060 framework 첫 actual blocking-on-pr 승격 carrier — framework SSOT 검증 carrier (multi-entry registry 운영 검증 첫 사례). evidence-checks-registry entry `per-plugin-cumulative-counter` `current_tier: warning` → `blocking-on-pr` + `status: warning` → `blocking-on-pr` + `recurrence.last_occurrence` Phase 1 PR merge KST timestamp 갱신 + `recurrence.promotion_trigger: warning_to_blocking_on_pr` 갱신. workflow `templates/github-workflows/per-plugin-cumulative-counter.yml` + `.github/workflows/` self-app `continue-on-error: true` → `false` ratchet = Phase 2 carrier scope. evidence_artifact (v) + (vi) gap closure declarative anchor (Phase 2 별 sub-CFP carrier — `scripts/check-audit-comment-author.{sh,py}` + `templates/github-workflows/audit-comment-author.yml` + `.github/workflows/` self-app + `bypass-audit.yml` sticky comment pattern wire + `tests/bats/check-audit-comment-author.bats` RED→GREEN stash proof + `tests/fixtures/audit-comment-author/` boundary fixture pair). bypass channel preserve — `hotfix-bypass:per-plugin-cumulative-counter` label retain (45번째 family member raw count convention, label-registry MINOR bump 0). plugin.json bump 0 = `marketplace_sync_declared: false` (mirrored field 변경 0, kind:registry sibling sync 면제 영역, ADR-063 atomic invariant 발효 조건 미충족). CLAUDE.md L260 영역 'evidence-checks-registry warning tier 19종' 문장 갱신 (warning tier 18종 + blocking-on-pr 4종 — CFP-1607 carrier 반영). schema doc `docs/inter-plugin-contracts/evidence-check-registry-v1.md` value transition example 추가 (warning → blocking-on-pr 첫 사례 documenting, schema 변경 0). ADR-045 §D-9 cross-ref pattern_count 3 cumulative occurrence `escalate_user` enum resolved by 사용자 2026-05-25 KST — 본 Amendment 15 = §D-9 forcing function 작동 사례 첫 carrier. ADR-064 §결정 5 CFP scope unitary 정합 — 본 Amendment 15 = per-plugin-cumulative-counter 단일 entry 승격 (sibling sub-decisions 6.A.4 / 6.A.5 미승격, 별 CFP scope). Wave 4 batch sequential last entry (Story CFP-1604 / CFP-1605 / CFP-1606 4/4 PIVOT trend break — 본 Story PROCEED_WITH_SCOPE_EXPANSION). mid-spawn drift detection (ADR-073 Amendment 12) 적용 evidence — worktree base 0a19e6a → 4c66891 rebase clean (CFP-1601 + CFP-1586 + CFP-1585 + CFP-1584 cascade integrate, 4 commits behind origin/main detected + rebased atomic pre-commit). prior art Amendment 14 (CFP-1306) 직전 chronological carrier 정합 (file body Amendment 13 (CFP-1510) 직후 sequential, frontmatter `amendments[]` array sequential append)."
@@ -187,6 +191,14 @@ mechanical_enforcement_actions:
   - action: backlog-issue-phase-label-forbid
     status: deferred-followup     # registry yaml row append = Phase 1 PR; actual lint script + workflow body + bats fixture wire = Phase 2 PR scope (Wave 2 carrier)
     target_section: §결정 6.A.9   # backlog Issue (state:open + assignee:none + linked_pr:none) AND `phase:*` label 부착 검출 = warning emit, hotfix-bypass:backlog-issue-label bypass channel
+  # Amendment 18 (CFP-1850, 2026-05-31 KST) — §결정 6.A.10 신설 isChoreOnly fast-path 면제 채널 codify + CFP-1845 anti-pattern
+  # phase-gate-mergeable.yml `isChoreOnly` 5번째 fast-pass source (CFP-1850-S1 PR #1866 MERGED) ADR-024 정식 면제 채널 normative codify
+  # ADR-026 Amendment 4 §결정 6 isPostMergeFix 3-조건 AND 보안 패턴 동형 — fast-pass OR-gate 4-source → 5-source ratchet 강화
+  # 신규 lint action 신설 0건 — isChoreOnly 는 phase-gate-mergeable.yml 의 inline OR-gate 분기 (CFP-1850-S1) 에 이미 mechanical wired
+  # phase-gate-mergeable.yml 자체가 required status check (branch protection 1번째) 로 이미 mechanical gate
+  - action: phase-gate-mergeable
+    status: existing-reuse        # 신규 lint 도입 0건 — phase-gate-mergeable.yml (CFP-1850-S1 PR #1866 MERGED) 에 isChoreOnly 4-조건 AND inline OR-gate 분기 (L319-380 영역) 이미 wired, 본 entry 는 declarative codify
+    target_section: §결정 6.A.10  # isChoreOnly 4-조건 AND fast-pass exemption channel — phase:unclassified ∧ Story 미연결 ∧ sibling-pr/impl-manifest 부재 ∧ chore-safe diff
 ---
 
 # ADR-024: Story-scoped branch policy — main 직접 수정 금지 + Phase 2 enforcement deferred
@@ -1655,7 +1667,7 @@ CLAUDE.md "Orchestrator 정책 적용 범위 + behavioral directive (normative)"
 | §결정 6.A.6 | Amendment 13 / CFP-1510 | pre-existing-main-drift-bundle macro label |
 | §결정 6.A.7 | Amendment 14 / CFP-1306 | parallel-anchors-checked-presence lint |
 | §결정 6.A.8 | Amendment 16 / CFP-1657 | wording-dictionary-bypass-justification narrative audit |
-| **§결정 6.A.9** | **Amendment 17 / CFP-1646** | **Issue label timing discipline (backlog `phase:*` reflex 차단) — 본 Amendment, axis disjoint label attach timing layer** |
+| **§결정 6.A.9** | **Amendment 17 / CFP-1646** | **Issue label timing discipline (backlog `phase:*` reflex 차단) — Amendment 17, axis disjoint label attach timing layer** |
 
 ### Process audit — Full-lane attempt closure (PR #1664 + #941 closed)
 
@@ -1685,4 +1697,140 @@ CLAUDE.md "Orchestrator 정책 적용 범위 + behavioral directive (normative)"
 - CFP-1111 follow-up #1198/#1199 (phase:설계 reflex incident origin)
 - ADR-024 Amendment 16 (CFP-1657, §결정 6.A.8 wording-dictionary pre-existing-drift bypass — chronological direct precedent, axis disjoint)
 - Memory `feedback_no_phase_label_on_backlog_issues.md` (ephemeral source, post-merge retire)
+
+## Amendment 18 — §결정 6.A.10 신설 isChoreOnly fast-path 면제 채널 codify + CFP-1845 anti-pattern (CFP-1850-S3, 2026-05-31 KST)
+
+### Context
+
+CFP-1845 incident (2026-05-30 KST) — Agent / Orchestrator model 핀 → 별칭 sync 작업 (`claude-opus-4-7` → `opus` 등 44건) 이 6 lane plugin repo 의 `agents/*.md` 만 건드린 단일 chore PR 였음에도, 다음 mechanical cascade 로 cross-repo phase-gate 영구 차단 + 손작업 우회 반복 발생:
+
+1. PR diff = `agents/*.md` 변경 → phase-gate-mergeable.yml 의 `hasCode=true` 평가 (이전 isDocOnly allow-list = `docs/`/`templates/`/`scripts/`/`CLAUDE.md`/`README.md`/`CHANGELOG.md` 정도 — `agents/*.md` 누락)
+2. `isDocOnly=false` → fast-pass OR-gate 미통과
+3. PR label = `phase:unclassified` (Story 미연결 chore PR 의 정상 결과 — auto-phase-label.yml 의 4-tier fallback chain terminal default)
+4. phase 기본값 `phase:설계-리뷰` 와 mismatch → 영구 `action_required`
+5. `enforce_admins: true` invariant (ADR-024 §결정 4 CFP-70) 라 admin merge 도 거부
+6. 6 lane plugin repo (codeforge-design / develop / review / test / requirements / pmo) 에서 branch protection 손으로 끄고 (`require_status_checks: null`) → merge → 복원 반복
+
+이 "보안 게이트 단발 비활성 + branch protection 손작업 우회 + enforce_admins:true invariant 손작업 위배" 가 재현불가/위험 anti-pattern. structural 해소 필요.
+
+CFP-1850 Story-1 (PR #1866 MERGED) 이 `isChoreOnly` 5번째 fast-pass source 를 phase-gate-mergeable.yml 의 OR-gate (L319-380) 에 inline 추가하여 structural 해소. Story-2 (PR #1867 MERGED) 가 8 lane plugin repo workflow mirror 통일 + requirements/pmo 보호규칙 `phase-gate-mergeable` 필수 추가. 본 Story-3 (CFP-1850-S3) = 그 mechanical 신설을 ADR-024 branch protection 정책의 정식 면제 채널로 normative codify.
+
+### Amendment
+
+§결정 6.A.10 신설 — `isChoreOnly` 4-조건 AND fast-path 면제 채널 (phase-gate-mergeable.yml 5번째 fast-pass source). fast-pass OR-gate 4-source → 5-source ratchet 강화 (ADR-026 Amendment 4 §결정 6 3-source → 4-source 동형 답습).
+
+#### §결정 6.A.10: isChoreOnly fast-path 면제 채널 (4-조건 AND)
+
+phase-gate-mergeable.yml 의 기존 4-source fast-pass OR-gate (`isEpicLabel || isSiblingPr || isDocOnly || isPostMergeFix`) 에 5번째 source `isChoreOnly` 를 additive 신설 (기존 4 source 무변경 invariant — ADR-064 ratchet 정합).
+
+**4-조건 AND strict gate**:
+
+| 조건 | 의미 | 위조 가능성 |
+|---|---|---|
+| (a) `phase:unclassified` label | auto-phase-label.yml 의 4-tier fallback chain terminal default — Story 미연결 chore PR 의 정상 결과 | PR author label 부착 가능 (단독 위조 위험) |
+| (b) Story 미연결 — `story_uri` PR-body marker 부재 AND linked `type:story` Issue 0 | Orchestrator monopoly 결정적 차단원 — PR author 위조 불가 (Story Issue 생성 + linking 권한 = Orchestrator-only) | **결정적 차단원** |
+| (c) `sibling-pr` / `impl-manifest` label 부재 | sibling-PR (impl manifest 의 sub-issue) 도 아님 — 진짜 단발 PR 만 통과 | PR author label 부착 가능 |
+| (d) diff chore-safe path | 기존 isDocOnly allow-list + `agents/*.md` 승격 (`src/` / `tests/` / `overlay/` 여전히 배제) | diff 자체는 위조 불가 (git source-of-truth) |
+
+4-조건 AND 충족 시 `conclusion=success`, title `Phase Gate (chore fast-pass)`. 한 조건이라도 false = isChoreOnly=false (기존 평가 경로 진입, fast-pass 불가).
+
+**조건 (b) helper catch invariant**: GitHub API 호출 (Issue search + PR-body parse) 시 — 404-only skip (Issue 없음 = Story 미연결 신호 정합) + 그 외 예외 (network / rate-limit / 403 / 5xx) fail-closed → isChoreOnly=false → 기존 평가 경로 진입. 보안 우회 위험 = false-negative 0 (조건 (b) 위조 불가 + helper catch fail-closed 양면 차단).
+
+**위조 표면 분석**: 조건 (a)/(c) 는 PR author label 부착 가능 → 단독으로는 self-declare 위조 위험. 하지만 조건 (b) Orchestrator monopoly Story 미연결 = **결정적 차단원** (PR author 가 Story Issue 생성 + linking 권한 자체가 없음 — Orchestrator monopoly per ADR-039 inline whitelist). 조건 (d) git diff = source-of-truth 위조 불가. 따라서 조건 (a) ∧ (c) self-declare 위조만으로는 통과 불가 — 조건 (b) ∧ (d) 가 결정적 차단원 + 위조 불가 source-of-truth 로 4-source AND 의 보안 invariant 보존.
+
+**enforce_admins:true invariant 보존**: 본 면제 채널 = admin override 정상화 아님. admin 도 4-조건 AND strict 통과해야 머지 가능. CFP-1845 의 "branch protection 손작업 우회" anti-pattern 의 구조적 해소 — admin 이 손으로 protection off 할 필요 자체가 사라짐 (정상 chore PR 이 자동 통과).
+
+#### CFP-1845 anti-pattern 명문화 (재현불가/위험)
+
+다음 4-step cascade anti-pattern 의 ADR-024 normative 차단:
+
+1. 단일 chore PR (model 별칭 sync / typo fix / 등) 이 `agents/*.md` 등 코드 영역 touch
+2. `isDocOnly=false` → fast-pass 미통과 → `action_required` 영구 행
+3. `enforce_admins: true` 라 admin merge 도 거부
+4. **anti-pattern**: branch protection 손으로 끄기 (`require_status_checks: null`) → merge → 복원 반복
+
+본 anti-pattern 의 위험 axis:
+- **보안 게이트 단발 비활성**: protection off window 동안 다른 PR 도 동시 통과 가능 (race window)
+- **enforce_admins:true invariant 위배**: ADR-024 §결정 4 CFP-70 의 admin 도 required check 통과 의무 손작업 위배
+- **재현불가 + audit gap**: 손작업 이력 = branch protection API call log 만 (PR 단위 추적 불가)
+- **escalate-and-fix 위배**: consumer workaround = policy bypass 의 anti-pattern (ADR-026 Amendment 4 §결정 6 escalate-and-fix 철학 정합)
+
+§결정 6.A.10 isChoreOnly fast-path = 본 anti-pattern 의 **구조적 해소** — 손작업 우회 불필요 + enforce_admins:true invariant 보존 + audit trail 자동 (phase-gate-mergeable.yml conclusion log).
+
+#### Wave 1 (Phase 1 PR scope — declarative codify)
+
+본 Story-3 PR (CFP-1850-S3) scope:
+
+- 본 ADR-024 Amendment 18 §결정 6.A.10 신설 (본 Amendment) + frontmatter `amendments[]` row + `mechanical_enforcement_actions[]` row (action: `phase-gate-mergeable`, status: existing-reuse, target_section: §결정 6.A.10) + `amended_by`/`amended_date` 갱신
+- ADR-RESERVATION amendments_reserved[] row append (adr_number: 24 / amendment_id: 18 / reserved_by_cfp: CFP-1850 / status: active)
+- CHANGELOG.md [Unreleased] CFP-1850-S3 entry append
+
+#### Wave 0 (이미 wired — CFP-1850-S1 + S2 PR MERGED)
+
+본 §결정 6.A.10 의 mechanical layer 는 본 Amendment codify 시점 **이미 active**:
+
+- **CFP-1850-S1 (PR #1866 MERGED)**: `templates/github-workflows/phase-gate-mergeable.yml` + `.github/workflows/phase-gate-mergeable.yml` (byte-identical, ADR-005) 에 `isChoreOnly` 5번째 fast-pass source inline 신설 (L319-380, 4-조건 AND + helper catch fail-closed). structural-grep test TC-C-1~16 68/68 PASS.
+- **CFP-1850-S2 (PR #1867 MERGED)**: 8 lane plugin repo (`mclayer/plugin-codeforge-{design,develop,review,test,requirements,pmo,deploy,deploy-review}`) `.github/workflows/phase-gate-mergeable.yml` byte-parity sync + branch protection contexts `[check-gate, phase-gate-mergeable]` 통일 (requirements/pmo 신규 필수 추가). isChoreOnly fast-pass 가 모든 lane plugin repo 에서 동일 작동.
+
+따라서 본 Amendment 18 = mechanical 신설 declarative codify (existing-reuse) — 별 lint / workflow / script 신설 0건. ADR-076 / ADR-082 / ADR-086 precedent (`mechanical_enforcement_actions: []` declaration-only Wave 1) 와 disjoint — 본 entry 는 `existing-reuse` (이미 wired) status.
+
+#### Wave 2 (Phase 2 PR scope — none, 별 carrier 0)
+
+본 §결정 6.A.10 = phase-gate-mergeable.yml inline OR-gate 분기 (이미 wired) — 별 lint / sentinel / evidence-check entry 신설 영역 외. Wave 2 carrier 0 (mechanical layer 완결).
+
+### Axis disjoint matrix update (§결정 6.A sub-decisions)
+
+Amendment 17 의 axis disjoint matrix 에 §결정 6.A.10 row 추가:
+
+| Sub-decision | Carrier | Axis |
+|---|---|---|
+| §결정 6.A.1 | Amendment 4 / CFP-481 | auto-phase-label branch → phase mapping |
+| §결정 6.A.2 | Amendment 6 / CFP-825 | bypass-label-counter per-entry namespace 누적 |
+| §결정 6.A.3 | Amendment 8 / CFP-845 | per-plugin-cumulative-counter cross-plugin ratchet |
+| §결정 6.A.4 | Amendment 8 / CFP-845 | bypass-justification-marker PR comment marker |
+| §결정 6.A.5 | Amendment 8 / CFP-845 | cross-repo-bypass-counter 3-repo signature |
+| §결정 6.A.6 | Amendment 13 / CFP-1510 | pre-existing-main-drift-bundle macro label |
+| §결정 6.A.7 | Amendment 14 / CFP-1306 | parallel-anchors-checked-presence lint |
+| §결정 6.A.8 | Amendment 16 / CFP-1657 | wording-dictionary-bypass-justification narrative audit |
+| §결정 6.A.9 | Amendment 17 / CFP-1646 | Issue label timing discipline (backlog `phase:*` reflex 차단) |
+| **§결정 6.A.10** | **Amendment 18 / CFP-1850** | **isChoreOnly fast-path 면제 채널 (4-조건 AND, fast-pass OR-gate 5번째 source) — 본 Amendment, axis disjoint fast-pass source layer (다른 9 sub-decisions = label content / counting / macro / parity / wording-dictionary / timing 영역, 본 axis = chore PR Story 미연결 결정적 분류)** |
+
+§결정 6.A.10 axis disjoint 보장: 다른 9 sub-decisions §결정 6.A.1~6.A.9 = `hotfix-bypass:*` label namespace family member 확장 / per-entry namespace counter / macro label / wording-dictionary narrative audit / backlog Issue timing 영역. 본 §결정 6.A.10 = phase-gate-mergeable.yml fast-pass OR-gate source 확장 영역 — 영역 disjoint (label namespace ↔ fast-pass source).
+
+### ratchet 정합 분석
+
+| 축 | 본 Amendment 18 영향 | ratchet 방향 |
+|---|---|---|
+| frontmatter `is_transitional` | `false` retain (permanent governance policy) | invariant |
+| `sunset_justification` | N/A (is_transitional: false → sunset 면제) | invariant |
+| fast-pass OR-gate source 수 | 4 → 5 (isChoreOnly 신설) | **강화** (gate 강화, 약화 0건) |
+| 4-조건 AND strict | 조건 (a)/(c) 위조 가능 + 조건 (b)/(d) 결정적 차단원 + source-of-truth 위조 불가 양면 | **보존** (보안 invariant 유지) |
+| enforce_admins:true invariant | branch protection 손작업 우회 anti-pattern structural 해소 → invariant 위배 회피 | **보존** (admin 도 4-AND 통과 의무) |
+| escalate-and-fix 철학 | consumer workaround 금지 + 정책 기반 자동 gate pass | **정합** (ADR-026 Amendment 4 §결정 6 동형 답습) |
+
+ADR-058 §결정 5 + ADR-064 §self-application evidence-gated symmetric ratchet 정합 — CFP-1845 incident pattern (재현불가/위험 anti-pattern) 의 구조적 해소 evidence 동반, ratchet 강화. ADR-024 §결정 1 (main 직접 수정 금지) + §결정 4 (enforce_admins:true) invariant 전부 보존.
+
+### Process audit — Story-3 minimal-path normative codify (Phase 1 단발 PR)
+
+본 Story-3 (CFP-1850-S3) audit trail:
+
+- **Wave 0 (이미 wired, separate Stories)**: Story-1 (PR #1866 MERGED) inline OR-gate 분기 신설 + Story-2 (PR #1867 MERGED) 8 lane plugin repo mirror 통일
+- **Story-3 (본 PR)**: Phase 1 단발 PR (Phase 2 carrier 0) — ADR-024 Amendment 18 normative codify + frontmatter + ADR-RESERVATION row + CHANGELOG entry. doc-only fast-path ADR-054 Cat 1 적용 (src/tests 무변경, 신규 ADR Amendment normative codify only). Full-lane 면제 (ADR-054 §결정 1 doc-only fast-path 분류).
+- Phase 2 carrier 0 — mechanical layer 는 Story-1 + Story-2 에서 이미 완결 (existing-reuse status, 별 lint / workflow / script 신설 0건)
+
+### Cross-reference
+
+- **CFP-1850-S1 (PR #1866 MERGED)**: phase-gate-mergeable.yml isChoreOnly 5번째 fast-pass source inline OR-gate 분기 신설 — 본 Amendment 의 mechanical layer SSOT
+- **CFP-1850-S2 (PR #1867 MERGED)**: 8 lane plugin repo workflow mirror 통일 + requirements/pmo 보호규칙 `phase-gate-mergeable` 필수 추가 — 본 Amendment 의 cross-repo deployment SSOT
+- **CFP-1845**: model 핀 → 별칭 sync incident (anti-pattern incident origin) — 본 Amendment 의 motivating evidence
+- **ADR-026 Amendment 4 §결정 6 (CFP-795)**: 4번째 fast-pass source isPostMergeFix 3-조건 AND 보안 패턴 — 본 Amendment 의 직접 prior art (fast-pass OR-gate ratchet 강화 동형 답습)
+- **ADR-026 Amendment 5 (CFP-900)**: 5번째 fast-pass source `.github/` content sanity orthogonal warning layer — fast-pass OR-gate 확장 sibling carrier (별 axis, orthogonal warning vs additive source)
+- **ADR-054 §결정 1**: doc-only Story fast-path 분류 표 — disjoint axis (Story 단위 lane skip 분류 vs PR 단위 phase-gate fast-pass source) 본 Story-3 = doc-only fast-path Cat 1 적용
+- **ADR-039 inline whitelist**: Orchestrator monopoly Story Issue 생성 + linking 권한 — 조건 (b) 결정적 차단원의 underlying SSOT
+- **ADR-024 §결정 4 (CFP-70)**: `enforce_admins: true` invariant — CFP-1845 anti-pattern 의 위배 회피 SSOT
+- **ADR-024 §결정 6.A**: per-entry namespace 의 sibling sub-decision matrix (§결정 6.A.1~6.A.9 = label namespace family member 확장 / per-entry namespace counter / macro / wording-dictionary / backlog timing — 본 §결정 6.A.10 = fast-pass source 영역 axis disjoint)
+- **ADR-063 atomic invariant**: mirrored field bump 0 (label-registry-v2 bump 0, plugin.json bump 0, marketplace_sync_declared: false) — atomic invariant 발효 조건 미충족
+- **ADR-064 §self-application evidence-gated symmetric ratchet**: 본 Amendment = CFP-1845 incident evidence-grounded carve-out (ratchet 강화 방향, 약화 0건)
+- **ADR-058 §결정 5**: sunset_justification N/A — is_transitional: false permanent governance policy + ratchet 강화 방향
+- **ADR-082 §결정 1 sub-scope (1-G) + (1-K)**: amendment-slot pre-reservation + numeric claim write-time strict claim — 본 Amendment 18 slot pre-claim 정합 (ADR-RESERVATION row append + 4-step verify-before-write)
 
