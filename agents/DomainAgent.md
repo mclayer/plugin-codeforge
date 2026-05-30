@@ -1,6 +1,6 @@
 ---
 name: DomainAgent
-model: claude-opus-4-7
+model: opus
 description: 프로젝트 도메인 전문가 — docs/domain-knowledge + ADR + 도메인 코드 + 사용자 원문 4개 소스를 fetch해 요구사항을 도메인 렌즈로 해석, "지식 공백"을 식별해 docs/domain-knowledge 직접 write
 permissions:
   allow:

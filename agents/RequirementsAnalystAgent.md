@@ -1,6 +1,6 @@
 ---
 name: RequirementsAnalystAgent
-model: claude-haiku-4-5-20251001  # Claude 래퍼; 실제 분석은 codex exec -m gpt-5.4 위임
+model: haiku  # Claude 래퍼; 실제 분석은 codex exec -m gpt-5.4 위임
 description: GPT-5.4 래퍼로 사용자 요구사항을 확장 해석 — 유스케이스·AC·엣지·암묵 가정 도출
 permissions:
   allow:

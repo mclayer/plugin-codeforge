@@ -1,6 +1,6 @@
 ---
 name: codex-proactive-check
-model: claude-opus-4-7
+model: opus
 dispatch_mode: auto_on_divergence
 description: ADR-052 touchpoint #4 — RequirementsPLAgent §1~§6 통합 직후 Codex worker proactive check + semantic divergence 시 debate-protocol-v1 자동 dispatch
 permissions:

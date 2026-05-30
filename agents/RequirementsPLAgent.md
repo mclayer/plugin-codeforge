@@ -1,6 +1,6 @@
 ---
 name: RequirementsPLAgent
-model: claude-opus-4-7
+model: opus
 description: 요구사항 레인 PL — DomainAgent/Analyst/Researcher 병렬 조율 + 세 독립 관점 dedup·상충 조정, 통합 명세서 작성 및 Story file §3-6 갱신 의뢰
 permissions:
   allow:
