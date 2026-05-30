@@ -1,0 +1,120 @@
+name: branch-protection-context-name-strict-match
+# CFP-1849 / ADR-024 §결정 6.A + ADR-060 — branch-protection-context-name-strict-match warning lint
+# Tier: warning (ADR-060 §결정 5 default, continue-on-error: true)
+# evidence-checks-registry.yaml entry: branch-protection-context-name-strict-match
+# Parent retro: CFP-1807 F-001 carrier (silent BLOCKED 가짜 CLEAN 1차 occurrence in CFP-1808)
+#
+# 검증:
+#   main branch protection 의 required check context name 이 actual workflow job
+#   표시명 (jobs.<id>.name OR job id fallback) 과 strict match 검증.
+#   - exact match → PASS
+#   - substring match only → WARN (verify intent)
+#   - no match → FAIL (silent BLOCKED risk, markdown table emit)
+#
+# 트리거:
+#   pull_request: PR open/sync 시 즉시 lint
+#   workflow_dispatch: manual override (ad-hoc verification)
+#   schedule (weekly Monday 09:00 UTC): drift early detect (CFP-1849 sub-CFP)
+#
+# Hotfix bypass:
+#   hotfix-bypass:branch-protection-context-name-strict-match label 부착 시 skip + audit comment
+#   (ADR-024 Amendment 16 §결정 6.A 정합)
+#
+# Permissions: minimum (top-level deny-all + job override)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+  workflow_dispatch:
+  schedule:
+    - cron: "0 9 * * 1"  # weekly Monday 09:00 UTC = early drift detect
+
+permissions: {}  # top-level deny-all
+
+jobs:
+  branch-protection-context-name-strict-match:
+    name: branch-protection-context-name-strict-match
+    runs-on: ubuntu-latest
+    continue-on-error: true  # warning tier — drift does not block CI
+    permissions:
+      contents: read         # checkout + workflow yml read
+      pull-requests: write   # PR comment emit
+
+    concurrency:
+      group: branch-protection-context-name-strict-match-${{ github.event.pull_request.number || github.run_id }}
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Install PyYAML (ADR-061 Amd 3 §결정 11 — yaml.safe_load primary)
+        run: |
+          python -m pip install --quiet pyyaml
+
+      - name: Check hotfix-bypass label
+        id: bypass
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # CFP-1849 — bypass label detection (ADR-024 Amendment 16 §결정 6.A)
+          if [ -z "${PR_NUMBER:-}" ]; then
+            echo "bypass=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          labels=$(gh pr view "$PR_NUMBER" --json labels --jq '.labels[].name' 2>/dev/null || true)
+          if echo "$labels" | grep -qx 'hotfix-bypass:branch-protection-context-name-strict-match'; then
+            echo "bypass=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "bypass=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run branch-protection-context-name-strict-match
+        if: steps.bypass.outputs.bypass != 'true'
+        id: lint
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          chmod +x scripts/check-branch-protection-context-name-strict-match.sh
+          set -o pipefail
+          bash scripts/check-branch-protection-context-name-strict-match.sh \
+            | tee /tmp/strict-match-output.txt
+          # warning-tier: exit 0 even on drift (markdown table already in output)
+
+      - name: Post PR comment on mismatch
+        if: steps.bypass.outputs.bypass != 'true' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if [ ! -f /tmp/strict-match-output.txt ]; then
+            exit 0
+          fi
+          if grep -q '^## branch-protection-context-name-strict-match' /tmp/strict-match-output.txt; then
+            gh pr comment "$PR_NUMBER" --body-file /tmp/strict-match-output.txt || true
+          fi
+
+      - name: Emit summary
+        if: always()
+        run: |
+          {
+            echo "## branch-protection-context-name-strict-match lint output"
+            echo ""
+            cat /tmp/strict-match-output.txt 2>/dev/null || echo "_no output_"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Bypass audit comment
+        if: steps.bypass.outputs.bypass == 'true' && github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          # ADR-024 Amendment 16 §결정 6.A audit-trailed exception channel
+          gh pr comment "$PR_NUMBER" --body "**branch-protection-context-name-strict-match bypass active** — \`hotfix-bypass:branch-protection-context-name-strict-match\` label detected. Lint skipped per ADR-024 Amendment 16 §결정 6.A audit channel. Bypass justification required in PR body \`### Bypass reason\` section (ADR-024 §결정 6.A.8 / CFP-1657)." || true
