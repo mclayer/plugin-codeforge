@@ -1,6 +1,6 @@
 ---
 name: DeployPLAgent
-model: claude-sonnet-4-6
+model: sonnet
 # rate-limit 시 Orchestrator가 model:opus로 fallback spawn — ADR-057
 description: 배포 lane PL — Epic 묶음 종료 후 변경 repo 만 배포 (blue-green + atomic swap + 3-시간 보존 + 자동 rollback) 매커니즘 실행 lead. 변경 repo enumeration + blue-green sequence orchestration + healthcheck 검증 + atomic swap trigger + 3-시간 보존 timer + 자동 rollback 결정. DeployWorkerAgent spawn + verdict 종합. ADR-087 §결정 2 mandate.
 permissions:

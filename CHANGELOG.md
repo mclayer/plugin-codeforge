@@ -22,6 +22,22 @@ mctrader [#1272](https://github.com/mclayer/plugin-codeforge/issues/1272) consum
   - **(c) wrapper SSOT 영역**: `templates/github-workflows/` 안 `blue-green-swap.yml` / `retention-window-timer.yml` / `auto-rollback.yml` 명칭 yml 부재 + ADR-087 §관련 파일 L201-204 stale reference → S3 ADR-107 (drift detection process) 안 부분 흡수 후보, 또는 별 wrapper CFP carrier
   - **mctrader-data#81**: `image-publish.yml` matrix `[data, engine, signal-collector]` pilot web 미포함 + registry SSOT `ghcr.io` vs `docker.io` → mctrader-side 별 Issue carrier
 
+## [1.0.1] - 2026-05-30
+
+### CFP-1845 follow-up — agent model 핀 → 별칭 전환
+
+[CFP-1845 follow-up] agent model 핀 → 별칭 전환. frontmatter model field 2건. tier 분류 변경 0건. wrapper [#1846](https://github.com/mclayer/plugin-codeforge/pull/1846) / [#1847](https://github.com/mclayer/plugin-codeforge/issues/1847) 연계. marketplace sibling sync 동반.
+
+#### Changed
+
+- `agents/DeployPLAgent.md` — frontmatter `model: claude-sonnet-4-6` → `model: sonnet` (Sonnet tier 분류 불변).
+- `agents/DeployWorkerAgent.md` — frontmatter `model: claude-sonnet-4-6` → `model: sonnet` (Sonnet tier 분류 불변).
+
+#### Notes
+
+- frontmatter `model:` field 만 별칭 전환 — 본문/description 과거 버전 서술 보존.
+- tier 분류 변경 0건 (Sonnet → Sonnet). version PATCH bump (1.0.0 → 1.0.1) + marketplace sibling sync 동반.
+
 ## [1.0.0] - 2026-05-21
 
 ### CFP-1059 (Epic Story-2) — Deploy lane plugin 첫 release (신규 plugin baseline)

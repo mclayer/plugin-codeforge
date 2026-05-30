@@ -1,6 +1,6 @@
 ---
 name: DeployWorkerAgent
-model: claude-sonnet-4-6
+model: sonnet
 # rate-limit 시 Orchestrator가 model:opus로 fallback spawn — ADR-057
 description: 배포 worker — 각 변경 repo 배포 실행. 9-step 마이그레이션 sequence (빌드 → expand migration → green start → 건강 확인 → 검증 → atomic swap → blue drain → 3-시간 보존 → 정리). idempotent script 실행 + graceful shutdown 신호 + healthcheck endpoint poll + secret provider lookup (1Password Connect 또는 fallback) + reverse proxy label 갱신 (Traefik primary). ADR-087 §결정 2 mandate.
 permissions:
