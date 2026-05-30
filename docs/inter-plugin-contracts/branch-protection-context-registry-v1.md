@@ -1,7 +1,7 @@
 ---
 kind: registry
 registry: branch-protection-context-registry
-version: "1.0"
+version: "1.1"
 status: Active
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/branch-protection-context-registry-v1.md
@@ -10,6 +10,7 @@ authors:
   - ArchitectAgent (CFP-1806 carrier — 8 codeforge plugin family main branch protection contexts SSOT structured codify)
 version_history:
   - { version: "1.0", date: 2026-05-30, carrier: CFP-1806, change: "initial — 8 codeforge plugin family (wrapper + 7 lane plugin) main branch required_status_checks.contexts[] structured SSOT codify. Previously markdown table only in wrapper CLAUDE.md '6 lane plugin branch protection contexts SSOT' 단락 (CFP-1785-S1 PATCH 후 상태). Parent retro: CFP-1785 retro FU-B P3 (structured cross-repo parity verify의 input anchor SSOT 분리)." }
+  - { version: "1.1", date: 2026-05-31, carrier: CFP-1850-S2, change: "MINOR — codeforge-pmo / codeforge-deploy / codeforge-deploy-review 3 entry contexts[] 채움 (contexts: [] + protected: false → [check-gate, phase-gate-mergeable]). pmo = phase-gate-mergeable 필수 신규 추가 (gh API PATCH 적용). deploy/deploy-review = 실제 PROTECTED 상태 반영 (이전 protected:false = drift). 8 lane plugin 모두 phase-gate-mergeable 필수 포함 통일 (review 는 invariant 유지 — live check). 단일 chore PR 영구 차단은 CFP-1850-S1 isChoreOnly fast-pass 로 해소되어 requirements/pmo 필수 추가 안전. wrapper 6번째 context 표기 drift 정정 동반 (deploy-lane-presence 축약 → actual job 표시명 'Verify deploy lane presence (Phase 2 wire — ADR-087 Amd 2)', CFP-1807 parity lint clean)." }
 owner_adr: ADR-024
 carrier_story: CFP-1806
 sibling_sync_exempt: true
@@ -37,9 +38,9 @@ related_plugins:
   - codeforge-review (lane plugin, registry entry, `invariant` outlier 보존)
   - codeforge-develop (lane plugin, registry entry)
   - codeforge-test (lane plugin, registry entry)
-  - codeforge-pmo (lane plugin, registry entry — current NOT PROTECTED)
-  - codeforge-deploy (lane plugin, registry entry — current NOT PROTECTED, Story-2 carrier 영역)
-  - codeforge-deploy-review (lane plugin, registry entry — current NOT PROTECTED, Story-2 carrier 영역)
+  - codeforge-pmo (lane plugin, registry entry — CFP-1850-S2 phase-gate-mergeable 필수 추가)
+  - codeforge-deploy (lane plugin, registry entry — CFP-1850-S2 PROTECTED 정정)
+  - codeforge-deploy-review (lane plugin, registry entry — CFP-1850-S2 PROTECTED 정정)
 ---
 
 # branch-protection-context-registry-v1 — Inter-plugin Contract Registry
@@ -102,9 +103,9 @@ family:
   - mclayer/plugin-codeforge-review   # lane plugin (codeforge-review), invariant outlier 보존
   - mclayer/plugin-codeforge-develop  # lane plugin (codeforge-develop)
   - mclayer/plugin-codeforge-test     # lane plugin (codeforge-test)
-  - mclayer/plugin-codeforge-pmo      # lane plugin (codeforge-pmo) — current NOT PROTECTED
-  - mclayer/plugin-codeforge-deploy   # lane plugin (codeforge-deploy) — current NOT PROTECTED, Story-2 carrier 신설 영역
-  - mclayer/plugin-codeforge-deploy-review  # lane plugin (codeforge-deploy-review) — current NOT PROTECTED, Story-2 carrier 신설 영역
+  - mclayer/plugin-codeforge-pmo      # lane plugin (codeforge-pmo) — CFP-1850-S2 phase-gate-mergeable 필수 추가
+  - mclayer/plugin-codeforge-deploy   # lane plugin (codeforge-deploy) — CFP-1850-S2 PROTECTED 정정
+  - mclayer/plugin-codeforge-deploy-review  # lane plugin (codeforge-deploy-review) — CFP-1850-S2 PROTECTED 정정
 ```
 
 NOTE: 9 entry 명단이지만 codeforge family 통상 호칭 = "8 plugin family" (wrapper 1 + 7 lane). 본 registry 안 frontmatter / 본문 9 entry 명시는 codeforge-internal-docs lane plugin (별 lifecycle) 제외 + 본 `family` block 의 9 entry 는 GitHub repo level 명단 (wrapper repo 1 + lane plugin repo 8). audit log + lint scope 와 1:1 매칭.
@@ -123,8 +124,8 @@ plugins:
       - "doc frontmatter schema (CFP-28 — strict)"
       - "doc section schema (CFP-28 — strict)"
       - "check-gate"
-      - "deploy-lane-presence"
-    note: "6-tuple (CFP-1808 Amendment 2 — `deploy-lane-presence` 6번째 wire 활성). `check-gate` = `phase-gate-mergeable.yml` workflow job ID (CFP-1785-S1 PATCH)."
+      - "Verify deploy lane presence (Phase 2 wire — ADR-087 Amd 2)"
+    note: "6-tuple (CFP-1808 Amendment 2 — deploy-lane-presence wire 활성). 6번째 context = `deploy-lane-presence.yml` 의 workflow job 표시명 (`jobs.*.name`) verbatim — CFP-1850-S2 drift 정정 (이전 `deploy-lane-presence` 축약 표기 = actual context명 mismatch). `check-gate` = `phase-gate-mergeable.yml` workflow job ID (CFP-1785-S1 PATCH)."
 
   - repo: mclayer/plugin-codeforge-requirements
     role: lane
@@ -164,28 +165,31 @@ plugins:
 
   - repo: mclayer/plugin-codeforge-pmo
     role: lane
-    contexts: []
-    protected: false
-    note: "NOT PROTECTED — Story-2 carrier 신설 영역 (CFP-1785 retro FU-A cleanup scope)."
+    contexts:
+      - "check-gate"
+      - "phase-gate-mergeable"
+    note: "2-tuple. CFP-1850-S2 — `phase-gate-mergeable` 필수 추가 (이전 `check-gate`만, 단일 chore PR 은 isChoreOnly fast-pass 로 통과)."
 
   - repo: mclayer/plugin-codeforge-deploy
     role: lane
-    contexts: []
-    protected: false
-    note: "NOT PROTECTED — Story-2 carrier 신설 영역 (CFP-1059 / ADR-087 신설 plugin)."
+    contexts:
+      - "check-gate"
+      - "phase-gate-mergeable"
+    note: "2-tuple. CFP-1850-S2 — PROTECTED 정정 (이전 표기 protected:false = drift, 실제 보호됨). CFP-1059 / ADR-087 신설 plugin."
 
   - repo: mclayer/plugin-codeforge-deploy-review
     role: lane
-    contexts: []
-    protected: false
-    note: "NOT PROTECTED — Story-2 carrier 신설 영역 (CFP-1059 / ADR-088 신설 plugin)."
+    contexts:
+      - "check-gate"
+      - "phase-gate-mergeable"
+    note: "2-tuple. CFP-1850-S2 — PROTECTED 정정 (이전 표기 protected:false = drift, 실제 보호됨). CFP-1059 / ADR-088 신설 plugin."
 ```
 
 ### 3.1 Schema invariants
 
 - **closed-set 8 plugin scope** — 본 registry 안 9 row 외 plugin entry 추가 = MAJOR bump 의무 (family scope 확장 = breaking schema change).
 - **contexts[] array element string verbatim** — GitHub branch protection API response `required_status_checks.contexts[]` array element 와 byte-identical match (whitespace / em-dash / 괄호 포함). CFP-1849 context name strict-match lint 의 input anchor.
-- **`protected: false` + `contexts: []` 동시 표기** — NOT PROTECTED plugin (codeforge-pmo / codeforge-deploy / codeforge-deploy-review) 는 두 field 동시 표기 의무 (silent omission 차단).
+- **`protected: false` + `contexts: []` 동시 표기** — NOT PROTECTED plugin 은 두 field 동시 표기 의무 (silent omission 차단). CFP-1850-S2 후 현재 8 plugin family 모두 PROTECTED (NOT PROTECTED instance 0건) — convention 은 미래 신설 plugin 용으로 보존.
 - **`role` enum closed-set 2-value** — `wrapper` (1 plugin) / `lane` (7 lane plugin). 다른 role 신설 = MAJOR bump 의무.
 - **`note` field optional, prose 자유 형식** — human-readable annotation. lint consumer 는 contexts[] / protected / role 3 field 만 mechanical read.
 
