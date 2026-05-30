@@ -305,10 +305,45 @@ def main() -> int:
         default=None,
         help="Override plugin family list (default: closed-enum 8 plugin)",
     )
+    parser.add_argument(
+        "--consumer-overlay",
+        type=Path,
+        default=None,
+        help=(
+            "Consumer overlay project.yaml path (CFP-1858). When set, reads "
+            "branch_protection.consumer_repo_lint.family[] and appends to plugins "
+            "list (CFP-1809 schema, ADR-083 4-enum applicable=always 영역 적용)."
+        ),
+    )
     args = parser.parse_args()
 
     claude_md_path: Path = args.claude_md or (args.repo_root / "CLAUDE.md")
     plugins: List[str] = args.plugins or list(PLUGIN_FAMILY)
+
+    # CFP-1858 — consumer overlay extension. If --consumer-overlay path given,
+    # parse project.yaml + extend plugins list with consumer_repo_lint.family[].
+    # Soft fail (warning + continue with wrapper-only plugins) on parse error.
+    if args.consumer_overlay is not None:
+        try:
+            import yaml  # type: ignore[import-untyped]
+            with open(args.consumer_overlay, "r", encoding="utf-8") as f:
+                overlay = yaml.safe_load(f) or {}
+            bp = (overlay.get("branch_protection") or {})
+            crl = (bp.get("consumer_repo_lint") or {})
+            if crl.get("enabled", False):
+                family = crl.get("family") or []
+                if isinstance(family, list):
+                    plugins.extend(str(r) for r in family if r)
+                    print(
+                        f"[CFP-1858] consumer overlay: +{len(family)} repo from "
+                        f"branch_protection.consumer_repo_lint.family[]",
+                        file=sys.stderr,
+                    )
+        except Exception as e:  # noqa: BLE001 — soft fail per ADR-060 warning-tier
+            print(
+                f"[CFP-1858] consumer overlay parse failed ({e}) — fallback wrapper-only",
+                file=sys.stderr,
+            )
 
     # Parse CLAUDE.md SSOT table
     expected_table = parse_claude_md_table(claude_md_path)
