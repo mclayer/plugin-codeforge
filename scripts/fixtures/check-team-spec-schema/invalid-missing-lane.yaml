@@ -6,7 +6,7 @@ teammates:
   - name: SomeAgent
     role: PL
     system_prompt_path: agents/SomeAgent.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 

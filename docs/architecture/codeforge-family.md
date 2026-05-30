@@ -215,7 +215,7 @@ runtime topology — 각 plugin / external system 의 container-level deployment
 ```mermaid
 graph TB
     subgraph "User Workstation (Windows / macOS / Linux)"
-        ClaudeCode[Claude Code CLI<br/>Orchestrator session<br/>Opus 4.7 1M context]
+        ClaudeCode[Claude Code CLI<br/>Orchestrator session<br/>Opus tier latest 1M context]
         MCP_GitHub[MCP github server]
         MCP_Atlassian[MCP atlassian server]
         CodexCLI[codex CLI<br/>file-redirect dispatch<br/>ADR-081 D8]

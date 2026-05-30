@@ -7,6 +7,12 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+## [6.11.0] - 2026-05-30
+
+### Changed
+
+- [CFP-1845] **Agent/Orchestrator model 핀 → 별칭 전환 (opus/sonnet/haiku 항상 최신 버전 지칭)**. ADR-042 Amendment 12 (§결정 1 tier 표 Model 컬럼 `claude-opus-4-7`/`claude-sonnet-4-6`/`claude-haiku-4-5` → `opus`/`sonnet`/`haiku`) + ADR-057 Amendment 4 (§결정 1 Orchestrator 버전 핀 `claude-opus-4-7` → 별칭 `opus`) + CLAUDE.md 세션 개시 체크리스트 mirror 동시 갱신. `templates/team-spec-*.yaml` 7종 + `scripts/fixtures/check-team-spec-schema/*.yaml` `model:` 핀 → 별칭 (44건). 별칭 = 플랫폼이 항상 최신 tier 버전으로 해석 → 버전 릴리스마다 일괄 변경 chore 제거 + 자동 추적 (현재 해석: opus→4.8 실질 상향, sonnet→4.6 / haiku→4.5 현 최신 동일). **tier 분류 정책 강도 불변** — 버전 표기 방식만 별칭화 (ratchet 약화 아님, ADR-058 §결정 5 정합). 역사 서술(amendment_log·inventory 의 과거 버전 언급)은 frozen audit trail 로 보존 (Event Sourcing). 사용자 directive 2026-05-30 KST. cross-repo 6 lane plugin agent file `model:` 별칭 전환 = follow-up PR. marketplace sibling sync PR (`mclayer/marketplace` `plugins[name=codeforge].version` 6.10.0 → 6.11.0) 동반 — ADR-063 §결정 2 atomic ordering (marketplace PR 선행 merge → wrapper PR merge).
+
 ## [6.10.0] - 2026-05-27
 
 ### Added

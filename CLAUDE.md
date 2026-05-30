@@ -26,7 +26,7 @@ Lane internal · per-lane spawn detail · severity rule · GitHub workflow subse
 
 세션 시작 직후, 모든 작업보다 먼저 의존성 노출·설치·인증 상태 확인. 자동 복구 가능한 것은 즉시 복구, 불가능한 것은 사용자에게 요구. 복구 완료 전까지 **모든 작업 중단**.
 
-**세션 개시 prerequisite 3종**: (1) Orchestrator 모델 = `claude-opus-4-7` (Opus) 필수 — Sonnet/Haiku 세션에서 즉시 중단 → Opus 재시작 요청 ([ADR-057](docs/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md)). (2) MCP 서버 `github` — Issue/PR/sub-issue/comment·label·milestone 각 lane plugin self-write; `docs/{change-plans,adr,domain-knowledge,retros}/**` 직접 write 는 owner agent (CFP-26 Phase 0a). (3) GitHub 도구 = `mcp__github__*` 우선 — `gh` CLI는 MCP 미커버 영역(`milestone CRUD` / `Discussions` / `GraphQL` / `label 부트스트랩 스크립트`)에서만 fallback. MCP 미노출 시 `/mcp` 재인증 요청 후 대기.
+**세션 개시 prerequisite 3종**: (1) Orchestrator 모델 = 별칭 `opus` (항상 최신 Opus tier, 현재 4.8) 필수 — Sonnet/Haiku 세션에서 즉시 중단 → Opus 재시작 요청 ([ADR-057](docs/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) Amendment 4 / CFP-1845 — 버전 핀 → 별칭). (2) MCP 서버 `github` — Issue/PR/sub-issue/comment·label·milestone 각 lane plugin self-write; `docs/{change-plans,adr,domain-knowledge,retros}/**` 직접 write 는 owner agent (CFP-26 Phase 0a). (3) GitHub 도구 = `mcp__github__*` 우선 — `gh` CLI는 MCP 미커버 영역(`milestone CRUD` / `Discussions` / `GraphQL` / `label 부트스트랩 스크립트`)에서만 fallback. MCP 미노출 시 `/mcp` 재인증 요청 후 대기.
 
 **필수 플러그인 (10종)**:
 - `codeforge-{review,pmo,requirements,develop,design,test}@mclayer` — 6 lane plugin active (codeforge-test 통합테스트 전용 부활 — CFP-367 / ADR-055 / ADR-048 Amendment 1). 하단 deploy / deploy-review 2 lane 포함 시 family 총 8 lane (CFP-1059 / ADR-087 + ADR-088)

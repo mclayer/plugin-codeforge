@@ -7,14 +7,14 @@ teammates:
   - name: DesignReviewPLAgent
     role: PL
     system_prompt_path: agents/DesignReviewPLAgent.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: ClaudeReviewAgent
     role: worker
     system_prompt_path: agents/ClaudeReviewAgent.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
