@@ -1,0 +1,84 @@
+---
+kind: registry
+registry: <REGISTRY_NAME>
+version: "1.0"
+status: Active
+canonical_repo: mclayer/plugin-codeforge
+canonical_path: docs/inter-plugin-contracts/<REGISTRY_NAME>-v1.md
+date: <YYYY-MM-DD>
+authors:
+  - <AGENT_NAME> (<CFP_KEY> carrier — <one-line scope summary>)
+version_history:
+  - { version: "1.0", date: <YYYY-MM-DD>, carrier: <CFP_KEY>, change: "initial — <baseline scope rationale>" }
+owner_adr: <ADR-NNN>
+carrier_story: <CFP_KEY>
+sibling_sync_exempt: true  # kind:registry per ADR-010 §결정 2
+related_adrs:
+  - ADR-008  # Inter-plugin contract versioning
+  - ADR-010  # Inter-plugin Contract Sibling Sync (kind:registry exempt)
+  - <ADR-NNN>  # owner_adr cross-ref
+related_files:
+  - docs/inter-plugin-contracts/MANIFEST.yaml  # registries[] entry
+related_plugins:
+  - codeforge  # (wrapper, SSOT host)
+---
+
+## 변경 이력
+
+- v1.0 (<YYYY-MM-DD>, <CFP_KEY>): initial baseline — <one-line>
+
+## 1. 목적
+
+<본 registry 가 codify 하는 closed-enum / lookup table 의 SSOT 영역 명시. 2-3 문장.>
+
+cross-ref:
+- consumer lint / workflow / ADR 정합 영역 명시
+- CLAUDE.md narrative mirror 위치 명시 (있을 시)
+
+## 2. Schema
+
+본 registry 의 yaml schema = §3 정의. summary:
+- top-level shape: `<field_name>[]` array OR `{key: value}` map
+- 각 entry 의 mandatory field 목록
+- 각 entry 의 optional field 목록 + default
+
+## 3. 항목
+
+본 registry 의 closed-enum entries (또는 lookup table rows):
+
+```yaml
+<schema yaml block — actual canonical data>
+```
+
+신규 entry 추가 = MINOR bump.
+
+## 4. 변경 규칙
+
+- **MINOR bump** (v1.X → v1.X+1) = entry append OR optional field 확장
+- **MAJOR bump** (v1.X → v2.0) = breaking schema change (top-level shape 변경, mandatory field rename/remove)
+- **sibling sync 면제** (kind:registry per ADR-010 §결정 2)
+- **ADR-008 versioning policy** 정합 (semver + carrier_story trace)
+- **owner_adr 변경 시** = MINOR (governance trace 보존), ADR cross-ref 동반
+
+## 5. Cross-reference
+
+- ADR-008 (Inter-plugin contract versioning)
+- ADR-010 (Inter-plugin Contract Sibling Sync, kind:registry exempt — §결정 2)
+- ADR-064 (CFP scope unitary)
+- <owner_adr cross-ref>
+- consumer files (lint / workflow / template)
+
+## 6. Out-of-scope
+
+본 registry 가 codify 하지 않는 영역 (boundary 보존):
+- <other registries / contracts / SSOT 와 disjoint 명시>
+- <Wave 2 mechanical wire 가 별 sub-CFP carrier 인 영역 명시>
+
+---
+
+<!-- Template usage notes (delete on instantiate):
+  - Replace all <PLACEHOLDER> tokens with actual values
+  - Required sections (## 2. Schema / ## 3. 항목 / ## 4. 변경 규칙) enforced by scripts/check-doc-section-schema.sh (CFP-28 strict)
+  - kind:registry sibling sync 면제 (ADR-010 §결정 2)
+  - Parent template: this file (CFP-1859 신설, sentinel from CFP-1806 retro §8)
+-->
