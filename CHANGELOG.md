@@ -7,6 +7,10 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 
 ## [Unreleased]
 
+### Added
+
+- [CFP-1850-S1] **phase-gate-mergeable.yml `isChoreOnly` 5번째 fast-pass source 신설 (단일 chore PR cross-repo phase-gate 영구 차단 해소)**. 단일 chore/doc PR (model 별칭 sync 등) 이 `agents/*.md` 를 건드려 `hasCode=true` → `isDocOnly=false` → `phase:unclassified` label 이 phase 기본값 `phase:설계-리뷰` 에 mismatch → 영구 `action_required` → `enforce_admins:true` 라 admin merge 도 거부 (CFP-1845 incident — 6 lane plugin repo branch protection 손작업 우회 반복). 해소 = 기존 4 fast-pass source (isEpicLabel/isSiblingPr/isDocOnly/isPostMergeFix) OR-gate 에 5번째 `isChoreOnly` additive 신설. **4-조건 AND** (isPostMergeFix 3-조건 AND 보안 패턴 동형): (a) `phase:unclassified` label ∧ (b) Story 미연결 (`story_uri` marker 부재 + linked `type:story` Issue 0 — Orchestrator monopoly, PR author 위조 불가 결정적 차단원) ∧ (c) `sibling-pr`/`impl-manifest` label 부재 ∧ (d) diff chore-safe path (기존 isDocOnly allow-list + `agents/*.md` 승격, `src/`/`tests/`/`overlay/` 여전히 배제). 조건 (b) helper catch = 404-only skip + 그 외 예외 fail-closed (network/rate-limit/403/5xx 시 isChoreOnly=false). 충족 시 conclusion=success, title `Phase Gate (chore fast-pass)`. **기존 4 source 무변경 invariant** (additive only, ratchet 약화 0 — ADR-064 정합). `.github/workflows/phase-gate-mergeable.yml` byte-identical self-app mirror (ADR-005). structural-grep test (TC-C-1~16) 68/68 PASS. Epic CFP-1850 진입점 Story — S2 (8 repo required check 통일 + 6 lane workflow mirror) / S3 (ADR-024 Amendment 23 면제 채널 codify) 별 Story carrier.
+
 ## [6.11.0] - 2026-05-30
 
 ### Changed

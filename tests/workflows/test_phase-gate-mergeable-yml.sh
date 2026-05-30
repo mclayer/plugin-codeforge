@@ -509,12 +509,163 @@ test_cfp900_orthogonal_layer_comment() {
 test_cfp900_orthogonal_layer_comment || true
 
 # ============================================================================
+# 12. TC-C: CFP-1850-S1 isChoreOnly 5번째 fast-pass source (4-조건 AND) 검증
+# ============================================================================
+
+echo ""
+echo "=== 12. TC-C: isChoreOnly 5번째 fast-pass source (CFP-1850-S1) ==="
+
+# TC-C-1: helper checkNoStoryBinding 존재
+assert_contains \
+    "TC-C-1: checkNoStoryBinding helper 함수 존재" \
+    "$TEMPLATES_WORKFLOW" \
+    "async function checkNoStoryBinding"
+
+# TC-C-2: 4-조건 AND 구조 (a/c/d 통과 후 b 평가)
+assert_contains \
+    "TC-C-2: isChoreOnly = noStoryBinding AND 구조" \
+    "$TEMPLATES_WORKFLOW" \
+    "isChoreOnly = noStoryBinding"
+
+# TC-C-3: 조건 (a) label check — phase:unclassified
+assert_contains \
+    "TC-C-3: 조건 (a) hasChoreLabel = allLabels.includes('phase:unclassified')" \
+    "$TEMPLATES_WORKFLOW" \
+    "allLabels.includes('phase:unclassified')"
+
+# TC-C-4: 조건 (c) sibling/impl label 부재 — 양 label 모두 부재 확인 (멀티라인 가능)
+assert_contains \
+    "TC-C-4a: 조건 (c) !allLabels.includes('sibling-pr') 존재" \
+    "$TEMPLATES_WORKFLOW" \
+    "!allLabels.includes('sibling-pr')"
+
+assert_contains \
+    "TC-C-4b: 조건 (c) !allLabels.includes('impl-manifest') 존재" \
+    "$TEMPLATES_WORKFLOW" \
+    "!allLabels.includes('impl-manifest')"
+
+assert_contains \
+    "TC-C-4c: 조건 (c) noSiblingOrImplLabel 변수명 존재" \
+    "$TEMPLATES_WORKFLOW" \
+    "const noSiblingOrImplLabel"
+
+# TC-C-5: 조건 (d) chore-safe path — agents/ 포함
+assert_contains \
+    "TC-C-5: 조건 (d) choreSafePaths agents/ startsWith 존재" \
+    "$TEMPLATES_WORKFLOW" \
+    "f.filename.startsWith('agents/')"
+
+# TC-C-6: 조건 (d) src/ 미포함 검증 (런타임 로직 — choreSafePaths 블록에 src/ startsWith 없음)
+#   choreSafePaths const 블록은 agents/ 로 끝나야 하고 src/ 를 포함하지 않는다
+#   검증 방법: choreSafePaths 정의 이후 줄에서 src/ startsWith 가 나오지 않음
+#   (isDocOnly 블록 위에 hasCode 정의의 src/ 는 별도 컨텍스트)
+test_TC_C6_choreSafePaths_no_src() {
+    local desc="TC-C-6: choreSafePaths 블록 안 src/ startsWith 미포함 (agents/ 만 추가됨 invariant)"
+    TESTS_RUN=$((TESTS_RUN + 1))
+    # choreSafePaths 정의 블록 추출 (const choreSafePaths = ... 부터 ); 까지)
+    local block
+    block=$(awk '/const choreSafePaths = files\.every/{found=1} found{print} found && /\);/{exit}' "$TEMPLATES_WORKFLOW")
+    if echo "$block" | grep -qF "f.filename.startsWith('src/')"; then
+        echo -e "${RED}FAIL${NC} $desc"
+        echo "    choreSafePaths 블록 안에 src/ startsWith 존재 (should not)"
+        TESTS_FAILED=$((TESTS_FAILED + 1))
+        return 1 || true
+    else
+        echo -e "${GREEN}PASS${NC} $desc"
+        TESTS_PASSED=$((TESTS_PASSED + 1))
+        return 0
+    fi
+}
+test_TC_C6_choreSafePaths_no_src || true
+
+# TC-C-7: 조건 b short-circuit — hasChoreLabel && noSiblingOrImplLabel && choreSafePaths
+assert_contains_ere \
+    "TC-C-7: 조건 b short-circuit if(hasChoreLabel && noSiblingOrImplLabel && choreSafePaths)" \
+    "$TEMPLATES_WORKFLOW" \
+    "if \(hasChoreLabel && noSiblingOrImplLabel && choreSafePaths\)"
+
+# TC-C-8: fail-closed default — let isChoreOnly = false
+assert_contains \
+    "TC-C-8: fail-closed default 'let isChoreOnly = false'" \
+    "$TEMPLATES_WORKFLOW" \
+    "let isChoreOnly = false"
+
+# TC-C-9: OR-gate 5-way 확장
+assert_contains \
+    "TC-C-9: OR-gate 5-way (isEpicLabel || isSiblingPr || isDocOnly || isPostMergeFix || isChoreOnly)" \
+    "$TEMPLATES_WORKFLOW" \
+    "isEpicLabel || isSiblingPr || isDocOnly || isPostMergeFix || isChoreOnly"
+
+# TC-C-10: reason ternary 5-way — chore-only branch + CFP-1850
+assert_contains \
+    "TC-C-10a: reason ternary — chore-only 4-조건 AND fast-pass 문자열 존재" \
+    "$TEMPLATES_WORKFLOW" \
+    "chore-only 4-조건 AND fast-pass"
+
+assert_contains \
+    "TC-C-10b: reason ternary — CFP-1850 참조 존재" \
+    "$TEMPLATES_WORKFLOW" \
+    "CFP-1850"
+
+# TC-C-11: output title = 'Phase Gate (chore fast-pass)'
+assert_contains \
+    "TC-C-11: output title 'Phase Gate (chore fast-pass)' 존재" \
+    "$TEMPLATES_WORKFLOW" \
+    "Phase Gate (chore fast-pass)"
+
+# TC-C-12: ADR-005 byte-identical mirror (기존 §1 재실행)
+assert_files_identical \
+    "TC-C-12: ADR-005 byte-identical mirror (templates/ ↔ .github/)" \
+    "$TEMPLATES_WORKFLOW" \
+    "$SELF_APP_WORKFLOW"
+
+# TC-C-13: 기존 4-source OR-gate 무변경 — 기존 4-source 모두 Green
+assert_contains \
+    "TC-C-13: 기존 isEpicLabel source 무변경" \
+    "$TEMPLATES_WORKFLOW" \
+    "const isEpicLabel = allLabels.includes('type:epic')"
+
+assert_contains \
+    "TC-C-13: 기존 isSiblingPr source 무변경" \
+    "$TEMPLATES_WORKFLOW" \
+    "const isSiblingPr = allLabels.includes('sibling-pr')"
+
+assert_contains \
+    "TC-C-13: 기존 isPostMergeFix fail-closed (let isPostMergeFix = false) 무변경" \
+    "$TEMPLATES_WORKFLOW" \
+    "let isPostMergeFix = false"
+
+# TC-C-14: (b) story_uri marker 부재 검사 — checkNoStoryBinding 안
+assert_contains_ere \
+    "TC-C-14: (b) story_uri marker 부재 검사 존재 (body.match inside checkNoStoryBinding)" \
+    "$TEMPLATES_WORKFLOW" \
+    "body\.match\(/story_uri:"
+
+# TC-C-15: (b) linked Issue type:story label 검사 — checkNoStoryBinding 안
+assert_contains \
+    "TC-C-15: (b) linked Issue type:story label 검사 (labels.includes('type:story') inside helper)" \
+    "$TEMPLATES_WORKFLOW" \
+    "labels.includes('type:story')"
+
+# TC-C-16: checkNoStoryBinding catch — 404 skip + non-404 fail-closed (보안 강화)
+#   PR author 가 가짜 Related: #N + chore-safe diff 로 issue.get 실패 유도 시 fail-open 우회 차단
+assert_contains \
+    "TC-C-16a: catch — e.status === 404 분기 존재 (404 = 정상 skip)" \
+    "$TEMPLATES_WORKFLOW" \
+    "if (e.status === 404) continue;"
+
+assert_contains \
+    "TC-C-16b: catch — return false fail-closed 존재 (non-404 = 판정 불가 → chore 아님)" \
+    "$TEMPLATES_WORKFLOW" \
+    "return false;                      // network/rate-limit/403/5xx = 판정 불가 → fail-closed (chore 아님)"
+
+# ============================================================================
 # 결과 요약
 # ============================================================================
 
 echo ""
 echo "============================================"
-echo "CFP-795 + CFP-900 phase-gate-mergeable.yml 테스트 결과"
+echo "CFP-795 + CFP-900 + CFP-1850-S1 phase-gate-mergeable.yml 테스트 결과"
 echo "============================================"
 echo "총 테스트: $TESTS_RUN"
 echo -e "PASS: ${GREEN}$TESTS_PASSED${NC}"
