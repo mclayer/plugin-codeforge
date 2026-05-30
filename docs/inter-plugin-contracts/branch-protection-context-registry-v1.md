@@ -71,7 +71,26 @@ related_plugins:
 | 2 | `branch-protection-sync` (CFP-821 D2 §결정 A) | manifest-driven dry-run helper | `templates/scripts/setup-branch-protection.sh` |
 | 3 | `branch-protection-context-parity` (CFP-1807) + `branch-protection-context-name-strict-match` (CFP-1849) | cross-repo 8 plugin family iteration + SSOT 표 vs actual gh api response 집합 의미 비교 + workflow job 표시명 strict match | **본 registry** (CFP-1806) + wrapper CLAUDE.md prose mirror |
 
-## 2. Family scope (closed-enum 8 plugins)
+## 2. Schema
+
+본 contract 의 yaml schema = §3 에서 정의. summary:
+- top-level `plugins[]` array (closed-enum 8 codeforge plugin family)
+- 각 plugin entry = `{ repo: string, contexts: string[] }`
+- `repo` = GitHub `owner/repo` slug
+- `contexts` = `required_status_checks.contexts[]` verbatim (workflow job 표시명 strict match)
+
+## 3. 항목
+
+본 registry 의 entry = §4 Family scope 안 closed-enum 8 plugin family. 각 entry 는 §5 Context schema yaml block 안 구체 contexts[] 보유.
+
+## 4. 변경 규칙
+
+- MINOR bump (v1.X → v1.X+1) = entry append (새 plugin family 추가) 또는 contexts[] array 확장
+- MAJOR bump (v1.X → v2.0) = breaking schema change (top-level shape 변경)
+- sibling sync 면제 (kind:registry per ADR-010 §결정 2)
+- ADR-008 versioning policy 정합
+
+## 5. Family scope (closed-enum 8 plugins)
 
 본 registry 는 8 codeforge family plugin closed-enum 만 carrier. 다른 marketplace plugin (codex / superpowers / github / pyright-lsp / context7 / commit-commands / pr-review-toolkit) = scope 외.
 
