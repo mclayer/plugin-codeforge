@@ -2,7 +2,7 @@
 title: project.yaml schema — consumer SSOT 상수 구조화
 status: active
 created: 2026-04-24
-updated: 2026-05-17  # CFP-820 Wave 3 Story-6 — codeforge.version_pin block 신설 (3-way version atomic invariant consumer layer, ADR-063 Amendment 5 §결정 15 / reconcile-protocol-v1 v1.5 §4.8). MINOR — 기존 schema 확장 (선택 field, backward-compat: 부재 = warning-first)
+updated: 2026-05-30  # CFP-1809 — branch_protection.* block 신설 (consumer overlay 4-enum applicability — wrapper_only/always/optional/external_managed, ADR-083 consumer-applicability filter framework instance). MINOR — 기존 schema 확장 (선택 field, backward-compat: 부재 = 기존 wrapper-only 동작 유지)
 ---
 
 # `project.yaml` Schema
@@ -507,6 +507,33 @@ atlassian:
   jira:                              # W4+ (ADR-103 sync mechanism) — S2 declare-only, schema placeholder
     project_key: <string>            # NOT secret (Internal 분류)
                                      # 예: "PROJ"
+
+# [선택] Branch protection consumer overlay (CFP-1809 / [ADR-083](adr/ADR-083-consumer-applicability-filter.md) instance)
+# default = applicable: wrapper_only (codeforge family plugin repo SSOT 만 유지 — wrapper CLAUDE.md "6 lane plugin branch protection contexts SSOT" 표 자체 governance)
+# 부재 시 동작: consumer 측 `phase-gate-mergeable` 참조 silent drift 차단 안 됨 (wrapper-only governance, consumer 자체 branch protection 자율).
+# applicable: always 선언 시 consumer 가 자체 main branch protection contexts 의무 declare (mctrader case — 자체 build/test/lint 등 자체 governance).
+branch_protection:
+  applicable: wrapper_only | always | optional | external_managed
+                                     # ADR-083 consumer-applicability filter 4-enum instance (본 schema-specific 정의 — walker per-step applicable_to 와 disjoint scope):
+                                     #   wrapper_only (default) — codeforge family plugin repo 만 governance. consumer 측 branch protection 자율 (wrapper 비검사). 기존 동작 보존.
+                                     #   always — consumer 가 자체 main branch protection 의무 (예: mctrader-* 5 repo). required_contexts[] declare 의무.
+                                     #   optional — consumer 자율 declare (선언 시 검사 활성, 부재 시 skip). enforcement 없음.
+                                     #   external_managed — external CI tool (Jenkins / CircleCI / GitLab CI 등) 가 governance. codeforge lint 영역 외 (false-positive 차단).
+
+  required_contexts:                 # consumer 측 main branch required_status_checks.contexts[] strict-match list
+                                     # applicable=always 시 의무. applicable=wrapper_only/external_managed 시 무시. applicable=optional 시 선언 가능.
+                                     # 예: ["build", "test", "lint"] — context-name strict match (workflow job ID 또는 GitHub Action status check name)
+    - <string>                       # e.g. "build" / "test" / "lint" / "phase-gate-mergeable"
+
+  enforce_admins: <bool>             # default true (admin 도 required check 통과 의무 — wrapper CFP-70 정합)
+                                     # consumer 가 admin override 허용 정책 시 false (less safe — drift 0 invariant 위배 가능)
+
+  consumer_repo_lint:                # [선택] branch-protection-context-parity lint (CFP-1807 cross-repo parity carrier) 가 consumer repo 도 검사할지 결정
+                                     # 부재 시: consumer repo 검사 비활성 (codeforge family 9 plugin 만 iteration)
+    enabled: <bool>                  # default false — consumer 자체 lint 미설정 fallback
+                                     # true = lint 가 family[] 안 consumer repo 도 iteration (consumer 측 contexts drift 자동 감지)
+    family:                          # enabled=true 시 의무 — 검사 대상 consumer repo list
+      - <string>                     # e.g. "mclayer/mctrader-hub" / "mclayer/mctrader-data"
 ```
 
 - **secret 분류** (SecurityArch §7.1 정합):
@@ -526,6 +553,39 @@ atlassian:
 - **narrow allow defer**: `atlassian.enabled: true` 설정 시에도 Layer 1 (`mcp__atlassian__*` deny baseline) 은 W4/ADR-103 narrow allow wire 전까지 유지 (ADR-100 §결정 4 — deny precedence 경고, narrow allow 사용처 미존재 시 선제 부여 = 최소권한 위반).
 
 - **write boundary**: consumer-authored. 모든 codeforge agent 는 본 block write 금지 (§4b write 금지 invariant 절대 보존). sync agent (ADR-103 carrier) = read-only (consumer overlay value 수신 후 sync 대상 결정).
+
+### `branch_protection` 섹션 설명 (CFP-1809 / [ADR-083](adr/ADR-083-consumer-applicability-filter.md) instance)
+
+Consumer 측 main branch protection contexts governance 의 consumer overlay 영역. CFP-1785 retro follow-up FU-C P3 carrier — consumer 가 `phase-gate-mergeable` 등 wrapper context 를 stale reference 로 보유 시 silent drift 차단. ADR-083 consumer-applicability filter framework 의 schema-specific instance (walker per-step `applicable_to: {consumer/wrapper/both}` filter 와 disjoint scope — 본 4-enum 은 branch protection 영역 특화).
+
+- **`branch_protection.applicable`** (선택, enum, default `wrapper_only`): consumer-applicability 4-enum 분류.
+  - **`wrapper_only`** (default) — codeforge family plugin repo (wrapper + 6 lane plugin + codeforge-deploy + codeforge-deploy-review = 9 plugin) 만 governance. wrapper `CLAUDE.md` "6 lane plugin branch protection contexts SSOT" 표 가 SSOT. consumer 측 branch protection = 자율 (wrapper 검사 0건). 기존 동작 보존 — backward-compat invariant.
+  - **`always`** — consumer 가 자체 main branch protection 의무 declare. `required_contexts[]` field 의무 (예: mctrader 5 repo 가 자체 build/test/lint 등 자체 governance). lint 가 declare 된 contexts 와 actual gh api response strict-match parity 검사.
+  - **`optional`** — consumer 자율 declare. `required_contexts[]` 선언 시 검사 활성, 부재 시 skip. enforcement 없음 (advisory only — onboarding 마찰 0).
+  - **`external_managed`** — external CI tool (Jenkins / CircleCI / GitLab CI / BuildKite 등) 가 governance. codeforge lint 영역 외 (false-positive 차단 — 외부 도구 contexts 검사 안 함). consumer 가 external CI 운영 시 declare.
+
+- **`branch_protection.required_contexts`** (조건부 의무, array): consumer 측 main branch `required_status_checks.contexts[]` strict-match list.
+  - `applicable=always` 시 의무 — declare 0건 = validator FAIL.
+  - `applicable=optional` 시 선택 — declare 시 검사 활성, 부재 시 skip.
+  - `applicable=wrapper_only / external_managed` 시 무시 (declare 해도 검사 안 함).
+  - context-name = workflow job ID 또는 GitHub Action status check name strict match (semver normalize 안 함 — "build" ≠ "Build" ≠ "build (ci)" 모두 mismatch, consumer 가 verbatim mirror 의무).
+
+- **`branch_protection.enforce_admins`** (선택, bool, default `true`): admin 도 required check 통과 의무 (wrapper CFP-70 정합 — drift 0 invariant 강화).
+  - `true` (default) — admin merge pre-flight gate (ADR-113 §결정 1 정합) 활성. admin override 차단.
+  - `false` — admin override 허용 (less safe — drift 0 invariant 약화 가능). 명시적 consumer 선택 시에만 false (advisory warning).
+
+- **`branch_protection.consumer_repo_lint`** (선택, object): `branch-protection-context-parity` lint (CFP-1807 cross-repo parity carrier) 의 consumer repo 확장 영역.
+  - **`enabled`** (선택, bool, default `false`) — consumer 자체 lint 미설정 fallback. `true` 시 lint 가 `family[]` 안 consumer repo 도 iteration (consumer 측 contexts drift 자동 감지).
+  - **`family`** (조건부 의무, array) — `enabled=true` 시 의무. 검사 대상 consumer repo list (예: `["mclayer/mctrader-hub", "mclayer/mctrader-data"]`). 부재 시 = enabled 무효 (lint skip).
+  - Phase 2 carrier 영역 — 본 Story (CFP-1809) Phase 1 declarative-only. mechanical wire (consumer repo iteration logic) = 별 sub-CFP carrier.
+
+- **미정의 시 동작**: `branch_protection` 섹션 자체가 없으면 default 값 적용 (`applicable: wrapper_only`, `enforce_admins: true`, `consumer_repo_lint.enabled: false`). codeforge wrapper 강제 안 함 (consumer 자율 — backward-compat invariant). 기존 consumer overlay 영향 0 (additive only — schema rule §1.1 선택 필드 추가).
+
+- **mctrader case (applicable=always)** — mctrader-hub + mctrader-data + mctrader-market + mctrader-engine + mctrader-web 5 repo 가 자체 build/test/lint 등 자체 governance 운영. consumer overlay `branch_protection.applicable: always` + `required_contexts: ["build", "test", "lint"]` declare. CFP-1785 retro 가 발견한 silent drift 영역 (consumer 가 wrapper `phase-gate-mergeable` context 를 stale reference 로 보유 시) = `applicable=always` declare 후 actual gh api response strict-match parity 검사로 차단.
+
+- **write boundary**: consumer-authored. 모든 codeforge agent 는 본 block write 금지 (§4b write 금지 invariant 절대 보존). `branch-protection-context-parity` lint (CFP-1807 carrier) = read-only compare-only (write surface 0). consumer 가 본 field 등록은 자율 (codeforge 강제 안 함, default `wrapper_only` 보존).
+
+- **ADR-083 framework cross-ref**: ADR-083 = consumer-applicability filter general framework (walker per-step `applicable_to: {consumer/wrapper/both}` filter). 본 `branch_protection.applicable` 4-enum 은 framework 의 schema-specific instance — branch protection 영역 특화 enum (4-way) vs walker filter 영역 일반 enum (3-way). disjoint scope — 두 4-enum 이 같은 axis 가 아님 (walker filter = workflow yml copy 영역, branch protection = consumer repo gh api response 검사 영역).
 
 ## 3. 예시 (webapp)
 
@@ -637,6 +697,17 @@ codeforge:
   # CFP-906 Wave 4 sub-Epic #1 Story-1 — Multi-version channel 고정 (선택, ADR-076 §결정 9 declare layer)
   channel:
     tier: stable        # 3-tier closed-enum (stable | beta | canary, default: stable) — release tier selector, version_pin disjoint peer
+
+# CFP-1809 — branch_protection consumer overlay (mctrader case, applicable=always)
+branch_protection:
+  applicable: always    # mctrader 5 repo 자체 governance — wrapper SSOT 와 disjoint
+  required_contexts:
+    - "build"
+    - "test"
+    - "lint"
+  enforce_admins: true  # admin override 차단 (drift 0 invariant 강화, wrapper CFP-70 정합)
+  consumer_repo_lint:
+    enabled: false      # consumer 자체 lint 미설정 default (Phase 2 carrier — 별 sub-CFP wire)
 ```
 
 **통합테스트 설정 예시 — mctrader-engine (FastAPI + PostgreSQL + Redis)**:
