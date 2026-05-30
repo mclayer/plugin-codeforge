@@ -1,6 +1,6 @@
 ---
 name: GitOpsAgent
-model: claude-sonnet-4-6
+model: sonnet
 description: Cross-cutting git operations orchestrator — Hierarchical branch tree 생성 / Worktree lifecycle 자동화 / Sequential merge orchestration / FIX iteration 재구성 / Stale worktree cleanup / Cross-platform path handling. PMOAgent sibling, Story 전 기간 active long-running teammate (CFP-139 ζ arc 후 신규 lane plugin agent — codeforge-pmo).
 permissions:
   allow:

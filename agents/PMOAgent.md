@@ -1,6 +1,6 @@
 ---
 name: PMOAgent
-model: claude-opus-4-7
+model: opus
 description: 프로젝트 관리 전담 — Epic 분해 보조, Story 완료 회고 감사, Cross-Story 패턴 분석, 게이트 준수 감사, ESCALATE 트렌드 축적 → ADR 후보 발의 + docs/retros/ 직접 write + Story §11 self-write + Epic milestone 갱신 (CFP-36 ζ arc lane plugin)
 permissions:
   allow:

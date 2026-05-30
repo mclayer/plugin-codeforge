@@ -4,6 +4,18 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.3.1] - 2026-05-30
+
+### [CFP-1845 follow-up] agent model 핀 → 별칭 전환 (PATCH)
+
+[CFP-1845 follow-up] agent model 핀 → 별칭 전환 (opus/sonnet/haiku 항상 최신 지칭). frontmatter model field 3건. tier 분류 변경 0건. wrapper #1846 / #1847 연계. marketplace sibling sync 동반.
+
+#### Changed
+
+- `agents/PMOAgent.md` — `model: claude-opus-4-7` → `model: opus`
+- `agents/DialogFidelityAgent.md` — `model: claude-opus-4-7` → `model: opus`
+- `agents/GitOpsAgent.md` — `model: claude-sonnet-4-6` → `model: sonnet`
+
 ## [0.3.0] - 2026-05-27
 
 ### CFP-1764 Story-3 — PMOAgent prompt template 평이 번역 의무 directive 추가 (MINOR)

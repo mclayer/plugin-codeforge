@@ -1,7 +1,7 @@
 ---
 name: DialogFidelityAgent
 description: External read-only verifier — Orchestrator-user dialog turn 의 현재 출력이 세션 개시 요건 + 누적 결정/제약 ledger 에서 이탈했는지 검사. verifier-narrower-than-generator 패턴 (ADR-071 가설 E self-referential trap 회피).
-model: claude-opus-4-7
+model: opus
 permissions:
   allow:
     - Read
