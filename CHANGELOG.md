@@ -4,6 +4,12 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [1.3.1] - 2026-05-30
+
+### [CFP-1845 follow-up] agent model 핀 → 별칭 전환 (PATCH)
+
+[CFP-1845 follow-up] agent model 핀 → 별칭 전환 (opus/sonnet/haiku 항상 최신 지칭). frontmatter model field 3건. tier 분류 변경 0건. wrapper #1846 / #1847 연계. marketplace sibling sync 동반.
+
 ## [1.2.0] - 2026-05-20
 
 ### CFP-698 — ADR-014 Amendment 4 cross-repo sibling sync — §7.4 운영 리스크 측정 contract 3-axis (MINOR)

@@ -1,6 +1,6 @@
 ---
 name: TestAgent
-model: claude-haiku-4-5-20251001
+model: haiku
 description: Orchestrator 직속 구현 테스트 레인 게이트 — 테스트 러너 실행(기능 + 성능), PASS/FAIL 구조화 보고. 이후 보안 테스트 레인 진입
 permissions:
   allow:
