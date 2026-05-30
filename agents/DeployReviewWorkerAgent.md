@@ -1,6 +1,6 @@
 ---
 name: DeployReviewWorkerAgent
-model: claude-sonnet-4-6
+model: sonnet
 # rate-limit 시 Orchestrator가 model:opus로 fallback spawn — ADR-057
 description: 배포 리뷰 worker — smoke test 실행 (HTTP shadow / WebSocket·daemon 대기 mode) + 성능 비교 baseline 수집 (latency p50/p95/p99 / throughput / error rate / CPU·memory) + cutover 사후 검증 worker. DeployReviewPLAgent 에 측정 결과 반환. ADR-088 §결정 2/6 mandate.
 permissions:

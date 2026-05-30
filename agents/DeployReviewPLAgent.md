@@ -1,6 +1,6 @@
 ---
 name: DeployReviewPLAgent
-model: claude-opus-4-7
+model: opus
 description: 배포 리뷰 lane PL — production-grade 성능 측정 1st-class lead. smoke / 성능 비교 / cutover 사후 검증 verdict 종합. 성능 기준 미충족 시 root cause 1차 진단 + debate-protocol-v1 cross-module trigger (성능 모델 결정 분열 시) + 구현/설계/요구사항 lane FIX dispatch. DeployReviewWorkerAgent + ProductionEvidenceDeputy spawn. ADR-088 §결정 2/5 mandate. Opus tier (adversarial debate 자동 발동 영역).
 permissions:
   allow:

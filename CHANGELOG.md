@@ -4,6 +4,23 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [1.0.1] - 2026-05-30
+
+### CFP-1845 follow-up — agent model 핀 → 별칭 전환
+
+[CFP-1845 follow-up] agent model 핀 → 별칭 전환. frontmatter model field 2건. tier 분류 변경 0건. wrapper [#1846](https://github.com/mclayer/plugin-codeforge/pull/1846) / [#1847](https://github.com/mclayer/plugin-codeforge/issues/1847) 연계. marketplace sibling sync 동반.
+
+#### Changed
+
+- `agents/DeployReviewPLAgent.md` — frontmatter `model: claude-opus-4-7` → `model: opus` (Opus tier 분류 불변).
+- `agents/DeployReviewWorkerAgent.md` — frontmatter `model: claude-sonnet-4-6` → `model: sonnet` (Sonnet tier 분류 불변).
+
+#### Notes
+
+- frontmatter `model:` field 만 별칭 전환 — 본문/description 과거 버전 서술 보존.
+- `agents/ProductionEvidenceDeputyAgent.md` 은 `model:` field 부재 (CONDITIONAL deputy, parent_pl spawn) — 변경 없음.
+- tier 분류 변경 0건 (Opus → Opus, Sonnet → Sonnet). version PATCH bump (1.0.0 → 1.0.1) + marketplace sibling sync 동반.
+
 ## [1.0.0] - 2026-05-21
 
 ### CFP-1059 (Epic Story-3) — Deploy Review lane plugin 첫 release + ProductionEvidenceDeputy 이관 (신규 plugin baseline)
