@@ -135,6 +135,13 @@ amendments:
     status: applied
     ref: "## Amendments / Amendment 18 + §결정 1-A transition trigger 표 16번째 row"
     sunset_justification: null
+  - amendment_id: 19
+    cfp: CFP-822
+    date: 2026-05-30
+    scope: "§결정 1 expansion — transition trigger enum 17번째 entry `post_subagent_task_completion` 추가 (closed-set ratchet 강화, Amendment 2/3/5/6/7/8/10/11/12/13/15/17/18 §결정 1-A precedent 답습). Orchestrator 가 subagent (lane PL / chief author / deputy / 4-tuple sub-tuple) 'DONE / success / PASS / MERGED' 보고 receive 후 critical artifact (ADR / Story / RETRO / scope_manifest / spec / plan / code FIX — paired ADR-082 Amd 35 sub-scope 1-X §A 정합) actual existence + content verify-before-trust 영역. Verify cadence = subagent return 직후 single-shot (subagent return 마다 N 회 — 매 task completion cadence). 본 Amendment 는 §결정 1-16 본문 + Amendment 1-18 scope 강화 only (ADR-058 §결정 5 ratchet 정합) — 약화 / scope 축소 / 면제 영역 0건. closed_enum: open_extension:false — 18번째 trigger 추가 시 Amendment 강화 방향만. evidence-checks-registry warning-tier entry `subagent-self-report-post-task-verify` (paired ADR-082 Amd 35 동형 entry) Wave 2 mechanical wire 별 sub-CFP CFP-822-W2 carrier. paired sibling ADR-082 Amendment 35 sub-scope 1-X (Orchestrator-side post-task claim verify discipline — verify subject Orchestrator / verify object 6 critical artifact category ARTIFACT-1~6 / verify timing post-task / verify-via direct method ls+Read+wc+grep+git-status). axis disjoint vs Amendment 18 (`pre_spawn_prompt_fact_assertion`) — Amd 18 = pre-spawn fact embed direction (Orchestrator→subagent before), Amd 19 = post-task claim receive direction (subagent→Orchestrator after, opposite direction). axis disjoint vs Amendment 11 (`spawn_prompt_emit` — spawn-time SHA pin embed) — different lifecycle phase. 동인: mctrader-hub MCT-189 + MCT-190 origin evidence N=2 reach (2026-05-17, subagent SUCCESS claim 후 actual file 부재 super-class). #822 HIGH priority 12-day pre-existing carrier."
+    status: applied
+    ref: "## Amendments / Amendment 19 + §결정 1-A transition trigger 표 17번째 row"
+    sunset_justification: null
 related_stories:
   - CFP-622  # carrier
   - CFP-776  # Amendment 1 — ADR-082 cross-ref (disjoint 보완)
@@ -165,6 +172,7 @@ related_stories:
   - CFP-1581 # Amendment 16 — Wave 2 mechanical wire activation (declaration → mechanical wire active 전환, Amendment 15 (CFP-1571) Wave 1 declarative-only carrier 의 mechanical wire activation). 12번째 mechanical_enforcement_actions[] entry `architect-chief-author-base-sha-freeze-verify` inline comment status 갱신 (deferred-followup → warning-tier wire complete) + evidence-checks-registry warning-tier entry 신규 등록 (NOT promotion per ADR-060 §결정 5 'first introduction = warning mode' default) + script chain (`scripts/check-architect-chief-author-base-sha-freeze.{sh,py}`) + PR-time workflow (`templates/github-workflows/architect-chief-author-base-sha-freeze.yml` + `.github/workflows/` self-app per ADR-005) + bats fixture cohort (`tests/scripts/check-architect-chief-author-base-sha-freeze/test_*.bats` RED→GREEN stash proof pattern per CFP-1334 §8.4) + label-registry-v2 v2.73 → v2.74 MINOR bump (`hotfix-bypass:architect-chief-author-base-sha-freeze-verify` 99번째 family member). pattern_count 6 reach Mandatory (CFP-1334 §3.1 4건 + CFP-1403 §3.1 1건 + 본 Story 6번째 META self-evidence). CFP-967 / CFP-1437 / CFP-1497 / CFP-1436 / CFP-1435 / CFP-1539 / CFP-1368 Wave 1 → Wave 2 split precedent 답습 chain 7-instance established pattern.
   - CFP-1786 # Amendment 17 — transition trigger enum 15번째 entry `brainstorm_phase_2_pmo_2nd_pass` (single-reader pattern + 4-item closed-enum hard cap, Phase 0 race 차단 + scope creep 차단). CFP-1764 retro §3.B pattern_count 1 first applied case + META self-application effective 1.5. doc-only fast-path (ADR-054) Wave 1 declarative-only — mechanical wire (script + workflow + bats + label-registry MINOR + evidence-checks-registry entry + hotfix-bypass family member) = Wave 2 별 sub-CFP carrier (CFP-1786-W2 reserved). paired sibling mclayer/plugin-codeforge#1787 (ADR-082 Amd N, axis disjoint — self-write claim verify ↔ brainstorm execution context verify).
   - CFP-1842 # Amendment 18 — transition trigger enum 16번째 entry `pre_spawn_prompt_fact_assertion` (paired ADR-082 Amd 34 sub-scope 1-W). Mandatory ADR-045 §D-9 escalation source — pattern_count 3 reach.
+  - CFP-822  # Amendment 19 — transition trigger enum 17번째 entry `post_subagent_task_completion` (paired ADR-082 Amd 35 sub-scope 1-X subagent_self_report_post_task_verify). HIGH priority 12-day pre-existing #822 carrier. mctrader MCT-189 + MCT-190 origin evidence N=2 reach (2026-05-17). Wave 1 declarative-only (Wave 2 = CFP-822-W2 별 sub-CFP carrier). 본 carrier scope = wrapper-actionable §2 only.
   - CFP-597  # sentinel #4 strike #1 origin (CLAUDE.md cap + playbook §3.6 false alarm)
   - CFP-578  # ADR-070 verify-before-trust 자매 (external worker output)
   - CFP-612  # ADR-071 dialog convergence 자매 governance
@@ -202,6 +210,7 @@ mechanical_enforcement_actions:
   - architect-chief-author-base-sha-freeze-verify  # CFP-1571 Amd 15 (Wave 1 declarative) → CFP-1581 Amd 16 (Wave 2 mechanical wire active). recurrence count 6 / threshold 3 / auto_blocking active. Mandatory escalation `parallel-session-merge-stream-main-advance-during-lane-flow` pattern_count 6 (CFP-1334 §3.1 4건 + CFP-1403 §3.1 1건 + CFP-1581 6th). Wave 2 wire: bash thin + Python SSOT (ADR-061) + workflow dual trigger + bats fixture RED→GREEN + label-registry v2.73→v2.74 (`hotfix-bypass:architect-chief-author-base-sha-freeze-verify` 99번째 family member) + evidence-checks-registry warning-tier. Wave 1→Wave 2 split chain 11-instance. Amd 15 §결정 1-A 14번째 entry `architect_agent_chief_author_lane_spawn` + §결정 1-Q primitive (4-step verify-before-assert: git fetch + git diff base drift + mechanical rebase + expected diff narrowed). Amd 16 = mechanical wire activation (artifact verification 2-mode lint: spawn-prompt-grep + lane-evidence-marker-grep).
   - brainstorm-execution-context-verify  # CFP-1786 Amendment 17 — Wave 1 declarative anchor (warning tier, deferred-followup status, recurrence count 0 — sentinel-driven (CFP-1764 retro §3.B pattern_count 1 first applied case + META self-application effective 1.5), threshold 3 / promotion_trigger none, actual lint script + workflow yml hydrate + bats fixture pair + label-registry MINOR bump + evidence-checks-registry entry + hotfix-bypass family member = Wave 2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — precedent 답습 12-instance chain (parallel-work-sentinel-pickup + worktree-self-ownership-verify + subagent-sibling-story-polling-evidence + mcp-token-freshness-precheck + stale-local-main-checkout-divergence-check + cross-repo-label-sync + spawn-prompt-head-pin-presence + mid-spawn-drift-detection + pre-git-operation-sentinel-pickup + pre-push-sentinel-pickup + parallel-work-sentinel-and-aggregate + architect-chief-author-base-sha-freeze-verify). Amendment 17 §결정 1-A 15번째 entry `brainstorm_phase_2_pmo_2nd_pass` + §A 4-item closed-enum hard cap + §B single-reader pattern + §C template execution_context field + §D mechanical wire Wave 2 carrier. paired sibling ADR-082 Amendment N (#1787 carrier, axis disjoint — self-write claim verify ↔ brainstorm execution context verify, 같은 brainstorm Phase 2 시점 disjoint sub-domain).
   - pre-spawn-prompt-fact-verify  # CFP-1842 Amendment 18 — Wave 1 declarative anchor (paired ADR-082 Amd 34 sub-scope 1-W carrier). recurrence count 3 / threshold 2 / Mandatory. Wave 2 mechanical wire = CFP-1842-W2 별 sub-CFP carrier.
+  - subagent-self-report-post-task-verify  # CFP-822 Amendment 19 — Wave 1 declarative anchor (paired ADR-082 Amd 35 sub-scope 1-X carrier). recurrence count 2 / threshold 2 / Mandatory N=2 reach. mctrader MCT-189 + MCT-190 origin evidence (2026-05-17, subagent SUCCESS claim 후 actual file 부재 super-class). Wave 2 mechanical wire (post-tool-use hook + script + workflow + bats + label-registry MINOR + evidence-checks-registry entry) = CFP-822-W2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합 — pre-spawn-prompt-fact-verify precedent 답습. Amendment 19 §결정 1-A 17번째 entry `post_subagent_task_completion` carrier — subagent return claim receive 직후 6 critical artifact category ARTIFACT-1~6 (ADR / Story / RETRO / scope_manifest / spec/plan / code FIX) actual existence + content verify-before-trust 의무 (verify methods: ls + Read + wc -l + grep + git status --short). paired sibling ADR-082 Amendment 35 sub-scope 1-X (Orchestrator-side post-task claim verify discipline — verify subject Orchestrator / verify object 6 critical artifact category / verify timing post-task / verify-via direct method).
 # Wave 1 = behavioral directive only (Orchestrator self-discipline forcing function) — Amendment 2 (CFP-966)
 # 가 첫 mechanical_enforcement_actions[] row entry append (declarative anchor only — script + workflow
 # 실 binding 은 sibling Story-2 CFP-967 carrier).
@@ -1612,3 +1621,52 @@ is_transitional: false 보존. Amd 18 = 강화 방향 only (transition trigger 1
 - 3 pattern occurrence retros (위 §D)
 - sibling axis-disjoint Issue: #822
 - Story: `<internal-docs>/plugin-codeforge/stories/CFP-1842.md`
+
+## Amendment 19 (2026-05-30 KST, CFP-822) — transition trigger 17번째 entry `post_subagent_task_completion` (paired ADR-082 Amd 35 sub-scope 1-X)
+
+본 Amendment 는 §결정 1 transition trigger enum 17번째 entry `post_subagent_task_completion` 추가 (closed-set ratchet 강화 16→17). paired sibling ADR-082 Amendment 35 sub-scope 1-X (Orchestrator-side post-task claim verify discipline) 의 cadence codify carrier.
+
+### §A. Trigger cadence — post-task single-shot per subagent return
+
+Orchestrator 가 subagent return 수신 시 (subagent claim "DONE / success / PASS / MERGED") critical artifact (paired ADR-082 Amd 35 §A ARTIFACT-1~6 6종 category) actual existence + content verify-before-trust 의무. 매 subagent return 마다 single-shot cadence.
+
+### §B. Disjoint axis vs Amendment 18 (`pre_spawn_prompt_fact_assertion`)
+
+- Amendment 18 (CFP-1842): pre-spawn fact embed direction — Orchestrator → subagent before (verify cadence = spawn 직전 single-shot)
+- Amendment 19 (본): post-task claim receive direction — subagent → Orchestrator after (verify cadence = return 직후 single-shot, opposite direction)
+- 양 axis 동일 spawn lifecycle 영역, sub-decision 분리 (pre-spawn embed vs post-task receive, axis disjoint complement)
+
+### §C. Disjoint axis vs Amendment 11 (`spawn_prompt_emit`)
+
+- Amendment 11 (CFP-1437): spawn-time SHA pin block embed mandate (`[PRE-SPAWN-ORIGIN-MAIN-SHA: ...]`) — spawn-time lifecycle
+- Amendment 19 (본): post-task receive critical artifact verify — return-time lifecycle (different lifecycle phase)
+
+### §D. Paired sibling — ADR-082 Amendment 35 sub-scope 1-X
+
+본 Amd 19 = transition trigger cadence codify. paired ADR-082 Amd 35 sub-scope 1-X = scope (what artifact / how verify) codify. 양 Amendment 같은 CFP-822 unitary carrier (ADR-064 §결정 5 정합).
+
+### §E. Mandatory escalation source — N=2 reach (mctrader-hub external)
+
+ADR-045 §D-9 Mandatory framing:
+- 1차: mctrader-hub retro 2026-05-17 MCT-189 — subagent SUCCESS claim 후 actual file 부재 발견
+- 2차: mctrader-hub retro 2026-05-17 MCT-190 — 동형 reproduction (super-class `subagent_self_report_claim_vs_actual_artifact_gap`)
+- META 3rd occurrence: 본 carrier Orchestrator → ArchitectAgent return verify (META self-application — 본 carrier 자체가 1-X 첫 적용 사례)
+
+### §F. Wave 1 declarative-only
+
+`mechanical_enforcement_actions[]` `subagent-self-report-post-task-verify` declarative anchor. Wave 2 mechanical wire (post-tool-use hook + lint script + workflow + bats + label-registry MINOR + evidence-checks-registry entry) = CFP-822-W2 별 sub-CFP carrier.
+
+### §G. sunset_justification N/A 정당
+
+is_transitional: false 보존. Amd 19 = 강화 방향 only (transition trigger 16→17). ADR-058 §결정 5 ratchet 통과.
+
+### §H. Related
+
+- paired sibling: ADR-082 Amendment 35 sub-scope 1-X (Orchestrator-side post-task claim verify discipline)
+- origin Issue: mclayer/plugin-codeforge#822 (HIGH priority 12-day pre-existing)
+- 2 pattern occurrence external retros (위 §E)
+- Story: `<internal-docs>/plugin-codeforge/stories/CFP-822.md`
+- Spec: `<internal-docs>/plugin-codeforge/specs/CFP-822-subagent-self-report-verify-gate.md`
+- 본 carrier scope = wrapper-actionable §2 only:
+  - #822 §1 = `superpowers:subagent-driven-development` skill `implementer-prompt.md` (external claude-plugins-official) — defer (별 upstream PR)
+  - #822 §3 = mctrader-hub ADR-032 amendment (external) — defer (별 consumer PR)

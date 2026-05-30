@@ -207,6 +207,14 @@ amendments:
     status: applied
     ref: "## Amendment 34 + sub-scope 1-W row"
     sunset_justification: null
+  - amendment_id: 35
+    carrier_story: CFP-822
+    date: 2026-05-30
+    sub_scope: "1-X"
+    scope: "§결정 1 layer 1 (Orchestrator scope) sub-scope 1-X `subagent_self_report_post_task_verify` 신설 — Orchestrator 가 subagent 'DONE / success / PASS / MERGED' 보고 receive 후 critical artifact (ADR / Story / RETRO / scope_manifest / spec / plan / code FIX) 의 actual existence + content verify-before-trust 의무. 6종 critical artifact category closed-enum: ARTIFACT-1 ADR (docs/adr/ADR-*.md) / ARTIFACT-2 Story (Story file path) / ARTIFACT-3 RETRO (retro file) / ARTIFACT-4 scope_manifest (scope_manifests/*.yaml) / ARTIFACT-5 spec / plan (spec/plan path) / ARTIFACT-6 code FIX (production source file). Verify methods 5종: ls <path> + Read <path> (line 1-N) + wc -l + grep <expected keyword> + git status --short <path>. axis disjoint vs sub-scope 1-W (CFP-1842, Orchestrator → subagent pre-spawn fact verify cadence) — 1-X = subagent → Orchestrator post-task verify cadence (claim-receive trust gate). paired sibling ADR-073 Amendment 19 (transition trigger 17번째 entry `post_subagent_task_completion`, axis 동형 sub-domain cadence codify). pattern_count: mctrader MCT-189 + MCT-190 origin evidence N=2 reach (2026-05-17, #822 HIGH priority 12-day pre-existing). 본 carrier scope = wrapper-actionable §2 only (#822 §1 superpowers:subagent-driven-development implementer-prompt.md external claude-plugins-official defer + §3 mctrader-hub ADR-032 external defer). Wave 1 declarative-only — mechanical wire (lint script + workflow + bats + label-registry MINOR `hotfix-bypass:subagent-self-report-post-task-verify` + evidence-checks-registry entry) = CFP-822-W2 별 sub-CFP carrier. precedent 답습 ADR-082 §결정 6 + ADR-070 §D5 + ADR-076 §결정 6 + ADR-081 §D5 + 24 prior Amendment Wave 1→Wave 2 split chain. ADR-058 §결정 5 ratchet 강화 only (sub-scope 23→24, scope 확장). ADR-064 §결정 5 CFP scope unitary (2 paired Amendment 단일 carrier 정합, axis 동형 sub-domain). META-self-applied: 본 carrier Orchestrator 가 본 ArchitectAgent spawn 'DONE' 보고 receive 후 5 file actual edit verify (ls + git status --short + Read) 의무 — 1-X 첫 적용 사례 = self."
+    status: applied
+    ref: "## Amendment 35 + sub-scope 1-X row"
+    sunset_justification: null
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-841
@@ -412,6 +420,12 @@ amendment_log:
     decisions_touched: ["§결정 1 layer 1 sub-scope 1-W (신설)"]
     nature: ratchet-up  # §결정 1 layer 1 sub-scope (1-A~1-V) → (1-W orchestrator_spawn_prompt_fact_verify_before_embed) 신설 (ADR-058 §결정 5 강화 방향 — 5종 fact category C1-C5 verify-before-embed 의무 ratchet, forbid scope 축소 아님). Mandatory ADR-045 §D-9 escalation source — pattern_count 3 reach.
     note: "CFP-1842 carrier — Mandatory ADR-045 §D-9 escalation source. pattern_count 3 reach: (1) CFP-1808 F-005 — Orchestrator → DesignReviewPL spawn 시 ArchitectAgent 'sha256 PASS' claim verify 없이 embed / (2) CFP-1807 F-002 — Orchestrator → ArchitectAgent spawn 시 baseline counter (v2.82 / 107 / 137) stale 단언 / (3) META — 본 Issue #1842 초기 body 'ADR-082 Amd 24 sub-scope 1-W' 인용 (actual Amd 33 / next 34) 동일 패턴 재발현. Mandate: Orchestrator 가 subagent (lane PL / chief author / deputy / 4-tuple sub-tuple) spawn 직전 spawn prompt 안 fact 단언 (5종 category C1-C5 — C1 counter / C2 version / C3 SHA / C4 verify-result / C5 file-existence) verify-before-embed 의무. axis disjoint vs sub-scope 1-L (CFP-1590, worker→worker handoff) — 1-W = Orchestrator-side (Orchestrator→subagent handoff). paired sibling ADR-073 Amendment 18 (transition trigger 16번째 entry `pre_spawn_prompt_fact_assertion`, axis 동형 sub-domain cadence codify). ADR-064 §결정 5 CFP scope unitary (2 paired Amendment 단일 carrier 정합). Wave 1 declarative-only — Wave 2 mechanical wire (lint script + workflow + bats + label-registry MINOR `hotfix-bypass:orchestrator-spawn-prompt-fact-verify` + evidence-checks-registry entry) = CFP-1842-W2 별 sub-CFP carrier. precedent 답습 ADR-082 §결정 6 + ADR-070 §D5 + ADR-076 §결정 6 + ADR-081 §D5 + 23 prior Amendment Wave 1→Wave 2 split chain. META-self-applied: 본 carrier Story 의 spawn prompt 자체가 사전 verify (Amd 33 + 1-V baseline 직접 Read verify 후 next-slot Amd 34 + 1-W 결정) — 1-W sub-scope 의 1st applied case = self. dual-block parity: ADR-082 = dual-block exemplar (Amd 32 sub-scope 1-U dual-block gate self-application), 본 Amd 34 의 amendments[] + amendment_log[] + body ## Amendment 34 3-block parity 보존."
+  - amendment_id: 35
+    carrier_story: CFP-822
+    date: 2026-05-30  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 1 layer 1 sub-scope 1-X (신설)"]
+    nature: ratchet-up  # §결정 1 layer 1 sub-scope (1-A~1-W) → (1-X subagent_self_report_post_task_verify) 신설 (ADR-058 §결정 5 강화 방향 — subagent "DONE/PASS/MERGED" 보고 receive 후 critical artifact actual existence + content verify 의무 ratchet, forbid scope 축소 아님). HIGH priority pre-existing #822 (12 day) carrier. mctrader MCT-189 + MCT-190 evidence N=2 reach (2026-05-17).
+    note: "CFP-822 carrier — HIGH priority 12-day pre-existing Issue. mctrader-hub MCT-189/MCT-190 origin evidence (2026-05-17). Mandate: Orchestrator 가 subagent (lane PL / chief author / deputy / 4-tuple sub-tuple) 'DONE / success / PASS / MERGED' 보고 receive 후 critical artifact (ADR / Story / RETRO / scope_manifest / spec / plan / code FIX) 의 actual existence + content verify-before-trust 의무. 6종 critical artifact category (closed-enum): (1) ARTIFACT-1 ADR (docs/adr/ADR-*.md) / (2) ARTIFACT-2 Story (Story file path) / (3) ARTIFACT-3 RETRO (retro file) / (4) ARTIFACT-4 scope_manifest (scope_manifests/*.yaml) / (5) ARTIFACT-5 spec / plan / (6) ARTIFACT-6 code FIX (production source file). Verify methods 5종: ls <path> + Read <path> (line 1-N) + wc -l + grep <expected keyword> + git status --short <path>. axis disjoint vs sub-scope 1-W (Amd 34 Orchestrator → subagent pre-spawn fact verify, Orchestrator-side pre-spawn cadence) — 1-X = subagent → Orchestrator post-task verify (Orchestrator-side post-task cadence, claim-receive trust gate). paired sibling ADR-073 Amendment 19 (transition trigger 17번째 entry `post_subagent_task_completion`, axis 동형 sub-domain cadence codify). ADR-064 §결정 5 CFP scope unitary (2 paired Amendment 단일 carrier 정합). Wave 1 declarative-only — Wave 2 mechanical wire (lint script + workflow + bats + label-registry MINOR `hotfix-bypass:subagent-self-report-post-task-verify` + evidence-checks-registry entry) = CFP-822-W2 별 sub-CFP carrier. precedent 답습 ADR-082 §결정 6 + ADR-070 §D5 + ADR-076 §결정 6 + ADR-081 §D5 + 24 prior Amendment Wave 1→Wave 2 split chain. 본 carrier scope = wrapper-actionable §2 only (#822 §1 superpowers:subagent-driven-development implementer-prompt.md external claude-plugins-official + §3 mctrader-hub ADR-032 external defer). META-self-applied: 본 carrier Orchestrator 의 본 ArchitectAgent spawn 자체가 1-X 첫 적용 사례 — Orchestrator 가 ArchitectAgent 'DONE' 보고 receive 후 5 file actual edit verify (ls + diff + Read) 의무. dual-block parity: 본 Amd 35 의 amendments[] + amendment_log[] + body ## Amendment 35 3-block parity 보존 (Amd 32 sub-scope 1-U dual-block gate self-application 정합)."
 related_stories:
   - CFP-776  # carrier (super-class 통합 결정 — escalation_action escalate_user)
   - CFP-841  # Amendment 1 carrier (§결정 6 behavioral→mechanical 전환 후속 carrier)
@@ -489,6 +503,7 @@ related_stories:
   - CFP-1753 # Amendment 33 sentinel evidence #2 (§6 reserved cluster anchor 2nd — CFP-1735 §6 통합)
   - CFP-1755 # Amendment 33 sentinel evidence #3 (§6 reserved cluster anchor 3rd — CFP-1735 + CFP-1753 + self §4.4 통합)
   - CFP-1842 # Amendment 34 — sub-scope 1-W `orchestrator_spawn_prompt_fact_verify_before_embed` (Orchestrator-side spawn prompt fact discipline, paired ADR-073 Amd 18). Mandatory ADR-045 §D-9 escalation source — pattern_count 3 reach (CFP-1808 F-005 + CFP-1807 F-002 + META self-evidence).
+  - CFP-822  # Amendment 35 — sub-scope 1-X `subagent_self_report_post_task_verify` (Orchestrator-side post-task claim verify discipline, paired ADR-073 Amd 19). HIGH priority 12-day pre-existing #822 carrier. mctrader MCT-189 + MCT-190 origin evidence N=2 reach (2026-05-17, subagent SUCCESS claim 후 actual file 부재 super-class). Wave 1 declarative-only (Wave 2 = CFP-822-W2 별 sub-CFP carrier). 본 carrier scope = wrapper-actionable §2 only (#822 §1 superpowers external + §3 mctrader-hub external defer).
 related_adrs:
   - ADR-073  # Orchestrator cross-repo state / assumption verify (disjoint 보완 — Orchestrator 행위 한정)
   - ADR-070  # Codex external worker output verify (disjoint 보완 — 외부 worker output 한정)
@@ -604,6 +619,9 @@ mechanical_enforcement_actions:
   - action: orchestrator-spawn-prompt-fact-verify
     status: deferred-followup     # CFP-1842 Amendment 34 — Wave 1 declarative anchor (warning tier, deferred-followup status, recurrence count 3 / threshold 2 / Mandatory, actual lint script + workflow + bats + label-registry MINOR + evidence-checks-registry entry = CFP-1842-W2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합. Amendment 34 §결정 1 layer 1 sub-scope 1-W carrier — 5종 fact category C1-C5 (counter / version / SHA / verify-result / file-existence) closed-enum verify-before-embed. paired sibling ADR-073 Amendment 18 sub-decision `pre_spawn_prompt_fact_assertion` transition trigger 16번째 entry.
     target_section: §결정 1 layer 1 sub-scope (1-W)       # orchestrator_spawn_prompt_fact_verify_before_embed — Orchestrator 가 subagent (lane PL / chief author / deputy / 4-tuple sub-tuple) spawn 직전 spawn prompt 안 fact 단언 (counter / version / SHA / verify-result / file-existence 5종) 발화 시점 verify-before-embed 의무. 5종 fact category C1-C5 closed-enum: C1 counter / C2 version / C3 SHA / C4 verify-result / C5 file-existence. 5종 모두 spawn prompt embed 직전 direct Read / git api / file system call verify 의무. axis disjoint vs sub-scope 1-L (CFP-1590, worker→worker) — 1-W = Orchestrator→subagent. paired sibling ADR-073 Amendment 18 (transition trigger 16번째 entry `pre_spawn_prompt_fact_assertion`). pattern_count 3 reach Mandatory ADR-045 §D-9: CFP-1808 F-005 + CFP-1807 F-002 + META self-evidence.
+  - action: subagent-self-report-post-task-verify
+    status: deferred-followup     # CFP-822 Amendment 35 — Wave 1 declarative anchor (warning tier, deferred-followup status, recurrence count 2 / threshold 2 / Mandatory N=2 reach, actual lint script + workflow + bats + label-registry MINOR + evidence-checks-registry entry = CFP-822-W2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합. Amendment 35 §결정 1 layer 1 sub-scope 1-X carrier — 6종 critical artifact category ARTIFACT-1~6 (ADR / Story / RETRO / scope_manifest / spec/plan / code FIX) closed-enum verify-after-receive. paired sibling ADR-073 Amendment 19 sub-decision `post_subagent_task_completion` transition trigger 17번째 entry. origin: #822 HIGH priority 12-day pre-existing + mctrader MCT-189/190.
+    target_section: §결정 1 layer 1 sub-scope (1-X)       # subagent_self_report_post_task_verify — Orchestrator 가 subagent (lane PL / chief author / deputy / 4-tuple sub-tuple) "DONE/PASS/MERGED" 보고 receive 후 critical artifact actual existence + content verify-before-trust 의무. 6종 critical artifact category closed-enum: ARTIFACT-1 ADR / ARTIFACT-2 Story / ARTIFACT-3 RETRO / ARTIFACT-4 scope_manifest / ARTIFACT-5 spec/plan / ARTIFACT-6 code FIX. 5종 verify methods: ls + Read line 1-N + wc -l + grep keyword + git status --short. axis disjoint vs sub-scope 1-W (CFP-1842 Orchestrator→subagent pre-spawn fact verify) — 1-X = subagent→Orchestrator post-task claim verify (opposite direction). paired sibling ADR-073 Amendment 19 (transition trigger 17번째 entry `post_subagent_task_completion`). origin pattern N=2 reach: mctrader-hub MCT-189 (subagent SUCCESS claim 후 actual file 부재) + MCT-190 (동형 reproduction 2026-05-17).
 sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (ratchet 강화 방향 only — verify scope 확장). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과. is_transitional: false (영구 정책). self-referential 주의: 본 ADR 의 해소기준 부재 선언 자체가 §결정 2 verify 대상 아님 (§결정 6 EC-3 self-protection)."
 pre_lookup_evidence:
   verified_files:
@@ -3055,3 +3073,77 @@ is_transitional: false 보존. Amd 34 = 강화 방향 only (sub-scope 22→23 ra
   - codeforge-internal-docs/plugin-codeforge/retros/2026-05-29-cfp-1807.md F-002 (2차)
   - 본 Issue #1842 초기 body META (3차)
 
+## Amendment 35 (2026-05-30 KST, CFP-822) — sub-scope 1-X `subagent_self_report_post_task_verify` (Orchestrator-side subagent claim post-task verify discipline, paired ADR-073 Amd 19)
+
+본 Amendment 는 §결정 1 layer 1 (Orchestrator scope) sub-scope 1-X 신설 — Orchestrator 가 subagent "DONE / success / PASS / MERGED" 보고 receive 후 critical artifact actual existence + content verify-before-trust 의무. ADR-058 §결정 5 ratchet 강화 only (sub-scope 23→24). mctrader MCT-189 + MCT-190 origin evidence N=2 reach (2026-05-17, #822 HIGH priority 12-day pre-existing).
+
+### §A. 6종 critical artifact category (closed-enum)
+
+Orchestrator 가 subagent (lane PL / chief author / deputy / 4-tuple sub-tuple) "DONE" 보고 receive 후 다음 6 category artifact 가 보고 claim 안 있을 시 actual existence + content verify-before-trust 의무:
+
+| Category | 영역 | Verify method |
+|---|---|---|
+| ARTIFACT-1 ADR | docs/adr/ADR-*.md (신규 ADR / Amendment) | `ls docs/adr/ADR-*.md` + `grep -E '^## Amendment <N>' file` + `Read line 1-N` |
+| ARTIFACT-2 Story | Story file path (`<internal-docs>/<plugin>/stories/CFP-N.md`) | `ls <story-path>` + `Read line 1-50` + `grep -E '^## §<N>'` |
+| ARTIFACT-3 RETRO | retro file (`<internal-docs>/<plugin>/retros/YYYY-MM-DD-cfp-N.md`) | `ls <retro-path>` + `Read line 1-50` + `grep -E '^## §|^## F-'` |
+| ARTIFACT-4 scope_manifest | Epic scope manifest (`scope_manifests/<epic>.yaml`) | `ls <manifest-path>` + `Read line 1-N` + `grep -E '^planned_(adrs|files|claude_md_sections)'` |
+| ARTIFACT-5 spec / plan | spec / plan file (`<internal-docs>/<plugin>/specs/CFP-N-*.md` 또는 `/plans/CFP-N-*.md`) | `ls <spec-path>` + `Read line 1-N` + `grep -E '^## §|^---'` |
+| ARTIFACT-6 code FIX | production source file (`src/**`, `scripts/**`, `templates/**` 등 FIX target) | `git status --short <path>` + `git diff <path>` + `Read line 1-N` |
+
+7번째 category 확장 = 별 CFP carrier (ADR-064 §결정 5 CFP scope unitary carve-out).
+
+### §B. Mechanism — post-task receive-verify-before-trust protocol
+
+Orchestrator 가 subagent return 수신 시:
+
+1. subagent return claim parse (예: "DONE: ADR-082 Amd 35 written / ARTIFACT-1 ADR-082 + ARTIFACT-2 Story + ARTIFACT-5 spec")
+2. 각 claim 의 6 category 분류 (ARTIFACT-1 ~ ARTIFACT-6)
+3. category 별 verify method 실행 (Read / Bash / git status 직접 호출)
+4. verify 결과 = expected fact OK 시 다음 step / mismatch 시 reject + FIX iter trigger
+5. 다음 subagent spawn 또는 사용자 보고 직전 actual verify 결과 verbatim 첨부 (claim relay 직접 보고 금지)
+
+axis disjoint vs sub-scope 1-W (CFP-1842, Orchestrator → subagent pre-spawn fact verify cadence) — 1-X = subagent → Orchestrator post-task verify cadence (claim-receive trust gate, opposite direction).
+
+### §C. META self-application (본 carrier 본 자체)
+
+본 Amendment 35 = META first applied case:
+- 본 Orchestrator 가 본 ArchitectAgent spawn → ArchitectAgent return "DONE: 5 file edited (ADR-082 + ADR-073 + CLAUDE.md + Story + Spec)"
+- Orchestrator 가 claim 수신 후 5 file actual verify 의무 (ls + git status --short + Read 첫 line 첫 last)
+- 즉 본 Amendment 본문 작성 → spawn return → Orchestrator post-task verify 자체가 1-X 첫 적용 사례
+- precedent: mctrader-hub MCT-189 (subagent SUCCESS claim 후 actual file 부재 발견) + MCT-190 (동형 reproduction, 2026-05-17)
+
+### §D. Wave 1 declarative-only — Wave 2 별 sub-CFP carrier
+
+`mechanical_enforcement_actions[]` `subagent-self-report-post-task-verify` entry = warning-tier deferred-followup. Wave 2 carrier (CFP-822-W2 reserved):
+- `scripts/check-subagent-self-report-post-task-verify.sh` lint (post-tool-use hook 영역 — Agent tool return parse)
+- `templates/github-workflows/subagent-self-report-post-task-verify.yml` workflow (declarative anchor)
+- bats fixture (6 TC per ARTIFACT-1~6)
+- `docs/evidence-checks-registry.yaml` warning-tier entry
+- `docs/inter-plugin-contracts/label-registry-v2.md` MINOR bump — `hotfix-bypass:subagent-self-report-post-task-verify` family member
+
+precedent 24-instance chain Wave 1→Wave 2 split established.
+
+### §E. Disjoint axis cross-ref
+
+- ADR-082 sub-scope 1-W (CFP-1842) — Orchestrator → subagent pre-spawn fact verify axis. 1-X = post-task complement (opposite direction, same Orchestrator-side).
+- ADR-082 sub-scope 1-M (CFP-1589) — own-author synthesis 보고 vs actual git commit gap verify (chief author self-write). 1-X = Orchestrator post-task scope (verify subject = Orchestrator, verify object = subagent claim).
+- ADR-082 sub-scope 1-V (CFP-1787) — execution_context_reconciliation verdict packet 5 sub-field declare (write-time semantic truth). 1-X = post-task receive-time (different lifecycle).
+- ADR-073 sub-scope chain transition trigger — paired sibling ADR-073 Amd 19 17번째 entry `post_subagent_task_completion` (axis 동형 sub-domain cadence codify).
+
+### §F. sunset_justification N/A 정당
+
+is_transitional: false 보존. Amd 35 = 강화 방향 only (sub-scope 23→24 ratchet 확장). ADR-058 §결정 5 sunset_justification ratchet 통과. ADR-064 §self-application top-down ratchet 정합 (forbid scope 확장).
+
+### §G. Related
+
+- `<internal-docs>/plugin-codeforge/stories/CFP-822.md` — Story file
+- `<internal-docs>/plugin-codeforge/specs/CFP-822-subagent-self-report-verify-gate.md` — Spec file
+- paired sibling ADR: ADR-073 Amendment 19 (transition trigger 17번째 entry `post_subagent_task_completion`)
+- origin Issue: mclayer/plugin-codeforge#822 (HIGH priority 12-day pre-existing, mctrader MCT-189/190 carrier)
+- 2 pattern occurrence retros (external):
+  - mctrader-hub retro 2026-05-17 MCT-189 (subagent SUCCESS claim 후 actual file 부재)
+  - mctrader-hub retro 2026-05-17 MCT-190 (동형 reproduction, N=2 Mandatory)
+- META 3rd occurrence: 본 carrier Orchestrator → ArchitectAgent return verify (META self-application)
+- 본 carrier scope = wrapper-actionable §2 only:
+  - #822 §1 = `superpowers:subagent-driven-development` skill `implementer-prompt.md` (external claude-plugins-official) — defer (별 upstream PR)
+  - #822 §3 = mctrader-hub ADR-032 amendment (external) — defer (별 consumer PR)
