@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.10.1 — 2026-05-30
+
+### Changed
+
+- **[CFP-1845 follow-up] agent model 핀 → 별칭 전환 (opus/sonnet/haiku 항상 최신 지칭). frontmatter model field 5건. tier 분류 변경 0건. wrapper #1846 / #1847 연계. marketplace sibling sync 동반.**
+  - `agents/ClaudeReviewAgent.md` · `agents/CodeReviewPLAgent.md` · `agents/DesignReviewPLAgent.md` · `agents/SecurityTestPLAgent.md` — `model: claude-opus-4-7` → `model: opus`
+  - `agents/CodexReviewAgent.md` — `model: claude-haiku-4-5-20251001` → `model: haiku`
+  - 본문/description 의 과거 버전 서술(frozen audit trail)은 무변경.
+
 ## 1.10.0 — 2026-05-23
 
 ### Changed

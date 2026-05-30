@@ -1,6 +1,6 @@
 ---
 name: CodexReviewAgent
-model: claude-haiku-4-5-20251001
+model: haiku
 description: 외부 Codex(GPT-5) 모델로 lane-agnostic 리뷰 수행 — 설계/구현/보안 3 lane 공유, PL이 packet으로 도메인 주입, ClaudeReviewAgent와 독립 peer
 permissions:
   allow:

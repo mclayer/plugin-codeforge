@@ -1,6 +1,6 @@
 ---
 name: ClaudeReviewAgent
-model: claude-opus-4-7
+model: opus
 description: Claude 네이티브 시각으로 lane-agnostic 리뷰 수행 — 설계/구현/보안 3 lane 공유, PL이 packet으로 도메인 주입, CodexReviewAgent와 독립 peer
 permissions:
   allow:

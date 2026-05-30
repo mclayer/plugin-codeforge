@@ -1,6 +1,6 @@
 ---
 name: DesignReviewPLAgent
-model: claude-opus-4-7
+model: opus
 description: 설계 리뷰 레인 PL — Change Plan 품질 게이트. 공통 base는 templates/review-pl-base.md SSOT
 permissions:
   allow:
