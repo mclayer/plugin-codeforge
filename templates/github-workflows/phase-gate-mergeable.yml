@@ -316,15 +316,82 @@ jobs:
               isPostMergeFix = cond2 && cond3;  // 조건 1(label)은 진입 가드, AND 결합은 2∧3
             }
 
-            // OR-gate 4-way 확장 (Refactor: additive, 기존 source 무변경 — Change Plan §3.1)
-            if (isEpicLabel || isSiblingPr || isDocOnly || isPostMergeFix) {
+            // CFP-1850-S1 §3 — 5번째 fast-pass source: isChoreOnly (4-조건 AND)
+            //
+            // 보안 설계 요약 (Change Plan §7 / §3 verbatim):
+            //   조건 (a) label   = phase:unclassified 존재 (PR author 영역 — 단독 불충분)
+            //   조건 (b) Story 미연결 = story_uri marker 부재 AND linked type:story Issue 0
+            //                          (Orchestrator 영역 — PR author 위조 불가)
+            //   조건 (c) sibling/impl label 부재 = (Orchestrator monopoly)
+            //   조건 (d) diff chore-safe path 만 = isDocOnly 허용 경로 + agents/*.md 승격
+            //   4-조건 AND = single point of forgery 제거 (isPostMergeFix 3-조건 AND 동형)
+            //   fail-closed: 판정 불가 시 isChoreOnly=false → 기존 평가 경로 진입
+
+            // 조건 (b) helper: Story 미연결 확인 (Orchestrator monopoly)
+            async function checkNoStoryBinding(body, localRefs, github, context) {
+              // (b.1) story_uri marker 부재
+              if (body.match(/story_uri:\s*(\S+)/)) return false;
+              // (b.2) linked Issue 중 type:story 보유 0
+              for (const n of localRefs) {
+                try {
+                  const { data: issue } = await github.rest.issues.get({
+                    owner: context.repo.owner, repo: context.repo.repo, issue_number: n
+                  });
+                  const labels = issue.labels.map(l => l.name || l);
+                  if (labels.includes('type:story')) return false;  // Story 연결 발견 → chore 아님
+                } catch (e) {
+                  if (e.status === 404) continue;   // issue 부재 = 정상 skip
+                  return false;                      // network/rate-limit/403/5xx = 판정 불가 → fail-closed (chore 아님)
+                }
+              }
+              return true;  // 양 source 모두 부재 = Story 미연결
+            }
+
+            // 조건 (a) — phase:unclassified label (PR author self-attach 가능 — 단독 불충분)
+            const hasChoreLabel = allLabels.includes('phase:unclassified');
+
+            // 조건 (c) — sibling/impl label 부재 (Orchestrator monopoly)
+            const noSiblingOrImplLabel = !allLabels.includes('sibling-pr') &&
+                                         !allLabels.includes('impl-manifest');
+
+            // 조건 (d) — chore-safe path only (isDocOnly 허용 경로 + agents/ 승격, src/tests/overlay/ 제외)
+            const choreSafePaths = files.every(f =>
+              f.filename.endsWith('.md') ||
+              f.filename.startsWith('docs/') ||
+              f.filename.startsWith('wrapper/') ||
+              f.filename.startsWith('.github/') ||
+              f.filename.startsWith('templates/') ||
+              f.filename.startsWith('scripts/') ||
+              f.filename.startsWith('.claude-plugin/') ||
+              f.filename.startsWith('.claude/_overlay/') ||
+              f.filename.startsWith('.codeforge/') ||
+              f.filename.startsWith('scope_manifests/') ||
+              f.filename === 'CHANGELOG.md' ||
+              f.filename === 'README.md' ||
+              f.filename === 'CONTRIBUTING.md' ||
+              f.filename.startsWith('agents/')   // CFP-1850-S1: agents/ chore-safe 승격 (src/tests/overlay/ 여전히 배제)
+            );
+
+            // short-circuit + 통합: (a)/(c)/(d) 즉시 평가 후 (b) API call (비용 최소화)
+            let isChoreOnly = false;
+            if (hasChoreLabel && noSiblingOrImplLabel && choreSafePaths) {
+              // 조건 a / c / d 통과 — 조건 b (API call) 마지막 평가
+              const noStoryBinding = await checkNoStoryBinding(body, localRefs, github, context);
+              isChoreOnly = noStoryBinding;
+            }
+
+            // OR-gate 5-way 확장 (Refactor: additive, 기존 4 source 무변경 — Change Plan §3.1/§3.2)
+            if (isEpicLabel || isSiblingPr || isDocOnly || isPostMergeFix || isChoreOnly) {
+              const fastPassTitle = isChoreOnly ? 'Phase Gate (chore fast-pass)' : 'Phase Gate (fast-pass)';
               const reason = isEpicLabel
                 ? `type:epic label fast-pass (CFP-106 #143 fix)`
                 : isSiblingPr
                 ? `sibling-pr label fast-pass (CFP-499 / ADR-010 Amendment 4 — wrapper Story mirror sync PR)`
                 : isDocOnly
                 ? `doc-only PR fast-pass — files: ${files.map(f=>f.filename).slice(0,3).join(', ')}${files.length>3?'...':''} (CFP-106 #143 fix)`
-                : `post-merge-fix 3-조건 AND fast-pass (ADR-026 Amendment 4 §결정 6 — label ∧ Story §10 binding ∧ 원 PR §7 보안 non-touch 양면)`;
+                : isPostMergeFix
+                ? `post-merge-fix 3-조건 AND fast-pass (ADR-026 Amendment 4 §결정 6 — label ∧ Story §10 binding ∧ 원 PR §7 보안 non-touch 양면)`
+                : `chore-only 4-조건 AND fast-pass (CFP-1850 §3 — phase:unclassified ∧ no Story binding ∧ no sibling/impl label ∧ chore-safe diff)`;
 
               // ── CFP-900 §4.13 fast_pass_content_sanity — warning tier (orthogonal layer) ──
               // fast-pass OR-gate PASS 자체 보존 (게이트 약화 0 — ADR-064 ratchet invariant).
@@ -378,7 +445,7 @@ jobs:
                 head_sha: pr.head.sha,
                 status: 'completed',
                 conclusion: 'success',
-                output: { title: 'Phase Gate (fast-pass)', summary: reason }
+                output: { title: fastPassTitle, summary: reason }
               });
               return;
             }
