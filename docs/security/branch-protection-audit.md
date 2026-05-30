@@ -114,3 +114,43 @@ verified-via: `gh api repos/mclayer/plugin-codeforge-{deploy,deploy-review}/bran
 - `enforce_admins: true` 활성화로 admin merge gate (ADR-113 5-step pre-flight gate) mechanism 신규 활성화 (이전 404 NOT PROTECTED 영역 → 신설)
 - **Phase 2 carrier**: 2 plugin workflow file `phase-gate-mergeable.yml` 신설 = ADR-087 Phase 2 wire 정합 영역 (별 follow-up CFP)
 - **rollback path**: protection DELETE (`gh api --method DELETE repos/mclayer/plugin-codeforge-{deploy,deploy-review}/branches/main/protection`) 으로 이전 404 state 복원 가능 (idempotent)
+
+---
+
+## CFP-1850-S2 — requirements/pmo phase-gate-mergeable 필수 추가 + 8 repo 워크플로 mirror (2026-05-31 KST)
+
+### 변경 1 — 보호규칙 API PATCH (requirements/pmo)
+
+| plugin | contexts (before) | contexts (after) | enforce_admins | timestamp |
+|--------|-------------------|------------------|----------------|-----------|
+| codeforge-requirements | `["check-gate"]` | `["check-gate","phase-gate-mergeable"]` | true | 2026-05-31T00:30:00+09:00 |
+| codeforge-pmo | `["check-gate"]` | `["check-gate","phase-gate-mergeable"]` | true | 2026-05-31T00:30:00+09:00 |
+
+verified-via: `gh api repos/mclayer/plugin-codeforge-{requirements,pmo}/branches/main/protection/required_status_checks/contexts` (post-POST GET) `[verified]`
+
+### 변경 2 — phase-gate-mergeable.yml workflow mirror (8 lane repo)
+
+8 lane plugin repo 의 `.github/workflows/phase-gate-mergeable.yml` 을 wrapper 정본 (CFP-1850-S1 isChoreOnly 5th fast-pass 포함, 37047B) 으로 통일. 이전 상태: 6 repo (design/develop/review/test/requirements/pmo) = 17213B stale (isPostMergeFix + isChoreOnly 누락), deploy/deploy-review = 32899B (isChoreOnly 누락). 8 PR 모두 MERGED, main byte-parity 확인.
+
+| repo | PR | merge |
+|------|----|----|
+| design | #65 | MERGED |
+| develop | #33 | MERGED |
+| review | #48 | MERGED |
+| test | #31 | MERGED |
+| deploy | #4 | MERGED |
+| deploy-review | #3 | MERGED |
+| requirements | #33 | MERGED |
+| pmo | #32 | MERGED |
+
+### 안전 근거 (S1 선행 의존)
+
+requirements/pmo 에 phase-gate-mergeable 필수 추가가 안전한 이유 = CFP-1850-S1 의 isChoreOnly fast-pass 가 두 repo 워크플로에 먼저 들어갔기 때문 (변경 2 가 변경 1 선행). 단일 chore PR (phase:unclassified + Story 미연결 + chore-safe diff) 은 isChoreOnly 로 통과 → 영구 action_required 차단 재발 없음.
+
+### review invariant 유지 결정
+
+review 의 `invariant` 필수 체크는 `invariant-check.yml` 이 생성하는 live check — 제거 시 review 고유 보호 강도 축소. CFP-1850-S2 = 보호 강도 비축소 원칙 (ADR-058 §결정 5 ratchet) 으로 유지. "통일"의 본질 = requirements/pmo 누락 보완이며 review 의 추가 체크는 무해.
+
+### rollback path
+
+requirements/pmo phase-gate-mergeable 제거: `gh api --method DELETE repos/mclayer/plugin-codeforge-{requirements,pmo}/branches/main/protection/required_status_checks/contexts -f 'contexts[]=phase-gate-mergeable'` (idempotent).
