@@ -1,0 +1,60 @@
+name: orchestrator-spawn-prompt-fact-verify (ADR-082 Amd 34 + ADR-073 Amd 18 mechanical wire)
+# CFP-1844 — Orchestrator spawn-prompt-fact verify warning lint
+# ADR-082 Amendment 34 sub-scope 1-W (carrier) + ADR-073 Amendment 18 (paired sibling)
+# Evidence-checks-registry: orchestrator-spawn-prompt-fact-verify (warning tier)
+# Bypass: hotfix-bypass:orchestrator-spawn-prompt-fact-verify label
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled, edited]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  check:
+    name: Orchestrator spawn-prompt-fact verify (warning-tier)
+    runs-on: ubuntu-latest
+    continue-on-error: true  # warning-tier — PR 차단 금지 (ADR-060 §결정 5 default)
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Detect bypass label
+        id: bypass
+        run: |
+          labels="${{ join(github.event.pull_request.labels.*.name, ' ') }}"
+          if echo "${labels}" | grep -q "hotfix-bypass:orchestrator-spawn-prompt-fact-verify"; then
+            echo "bypass=true" >> "$GITHUB_OUTPUT"
+            echo "[bypass] hotfix-bypass:orchestrator-spawn-prompt-fact-verify label detected, lint skipped"
+          else
+            echo "bypass=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fetch PR body
+        if: steps.bypass.outputs.bypass == 'false'
+        id: prbody
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER="${{ github.event.pull_request.number }}"
+          mkdir -p /tmp/spawn-prompt-fact
+          gh pr view "${PR_NUMBER}" --json body --jq '.body' > /tmp/spawn-prompt-fact/pr-body.md
+          wc -l /tmp/spawn-prompt-fact/pr-body.md
+
+      - name: Run spawn-prompt-fact verify lint
+        if: steps.bypass.outputs.bypass == 'false'
+        run: |
+          bash scripts/check-orchestrator-spawn-prompt-fact-verify.sh \
+            --input /tmp/spawn-prompt-fact/pr-body.md \
+            | tee /tmp/spawn-prompt-fact/lint-output.md
+
+      - name: Emit summary
+        if: steps.bypass.outputs.bypass == 'false' && always()
+        run: |
+          {
+            echo "## orchestrator-spawn-prompt-fact-verify lint output"
+            echo ""
+            cat /tmp/spawn-prompt-fact/lint-output.md 2>/dev/null || echo "_no output_"
+          } >> "$GITHUB_STEP_SUMMARY"
