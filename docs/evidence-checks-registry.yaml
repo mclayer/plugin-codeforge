@@ -6012,3 +6012,48 @@ entries:
       threshold: 3
       promotion_trigger: none
     status: warning
+
+
+  # ─── CFP-1849 — branch-protection-context-name-strict-match (ADR-024 §결정 6.A + ADR-060, CFP-1807 retro F-001 carrier) ───
+  - name: branch-protection-context-name-strict-match
+    description: |
+      CFP-1849 / ADR-024 §결정 6.A + ADR-060 — branch-protection-context-name-strict-match
+      warning lint (Wave 2 mechanical wire). main branch protection 의 required check
+      context name 이 actual workflow job 표시명 (jobs.<job_id>.name OR job_id fallback)
+      과 strict match 검증. mismatch 시 silent BLOCKED 가짜 CLEAN risk 자동 감지.
+      Parent retro: CFP-1807 F-001 (1차 occurrence in CFP-1808 — `deploy-lane-presence`
+      context name vs `Verify deploy lane presence (Phase 2 wire — ADR-087 Amd 2)`
+      job 표시명 mismatch → 모든 후속 PR pending 가짜 CLEAN, CFP-1807 PR #1827 admin
+      gh CLI manual catch).
+      검증 3-tier:
+        exact match → PASS
+        substring match only → WARN (verify intent)
+        no match → FAIL (silent BLOCKED risk, markdown table emit + PR comment)
+      scan target = .github/workflows/*.yml 전수 (jobs.<id>.name 또는 job_id fallback).
+      Implementation: PyYAML safe_load primary (ADR-061 Amd 3 §결정 11 ReDoS-safe) +
+      line-by-line scan fallback. trigger = pull_request + workflow_dispatch +
+      schedule (weekly Monday 09:00 UTC, drift early detect). bypass label =
+      hotfix-bypass:branch-protection-context-name-strict-match (113번째 family member).
+    detect_command: bash scripts/check-branch-protection-context-name-strict-match.sh
+    workflow: templates/github-workflows/branch-protection-context-name-strict-match.yml
+    current_tier: warning
+    bypass_label: hotfix-bypass:branch-protection-context-name-strict-match
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies: [CFP-1849]
+    introduced_by: CFP-1849
+    introduced_date: 2026-05-30
+    owner_adr: ADR-024
+    owner_cfp: CFP-1849
+    parent_retro: CFP-1807
+    carrier_adr: ADR-060
+    paired_lint_script: scripts/lib/check_branch_protection_context_name_strict_match.py
+    paired_workflow: templates/github-workflows/branch-protection-context-name-strict-match.yml
+    paired_bats_fixture: tests/scripts/test_check-branch-protection-context-name-strict-match.sh
+    recurrence:
+      count: 1
+      threshold: 3
+      promotion_trigger: none
+    status: warning
