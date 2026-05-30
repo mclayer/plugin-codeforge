@@ -27,28 +27,28 @@ teammates:
   - name: RequirementsPLAgent
     role: PL
     system_prompt_path: agents/RequirementsPLAgent.md  # codeforge-requirements plugin canonical
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: DomainAgent
     role: deputy
     system_prompt_path: agents/DomainAgent.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: RequirementsAnalyst
     role: deputy
     system_prompt_path: agents/RequirementsAnalystAgent.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: Researcher
     role: deputy
     system_prompt_path: agents/ResearcherAgent.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
@@ -56,21 +56,21 @@ teammates:
   - name: ChangeImpactAgent
     role: deputy
     system_prompt_path: agents/ChangeImpactAgent.md  # codeforge-requirements plugin canonical
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: FeasibilityAgent
     role: deputy
     system_prompt_path: agents/FeasibilityAgent.md  # codeforge-requirements plugin canonical
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: ContinuityAgent
     role: deputy
     system_prompt_path: agents/ContinuityAgent.md  # codeforge-requirements plugin canonical
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
@@ -79,7 +79,7 @@ teammates:
   - name: PMOAgent
     role: deputy
     system_prompt_path: agents/PMOAgent.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: conditional
     activation_condition: epic_structure_change
     contrapositive_invariant: "PMO 합류 미발동 = Epic 구조 무변경"

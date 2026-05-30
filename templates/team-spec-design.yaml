@@ -18,63 +18,63 @@ teammates:
   - name: ArchitectPLAgent
     role: PL
     system_prompt_path: agents/ArchitectPLAgent.md  # codeforge-design plugin canonical
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: ArchitectAgent
     role: chief
     system_prompt_path: agents/ArchitectAgent.md  # chief author (6 deputy 통합)
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: CodebaseMapperAgent
     role: deputy
     system_prompt_path: agents/CodebaseMapperAgent.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: RefactorAgent
     role: deputy
     system_prompt_path: agents/RefactorAgent.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: SecurityArchitectAgent
     role: deputy
     system_prompt_path: agents/SecurityArchitectAgent.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: OperationalRiskArchitectAgent
     role: deputy
     system_prompt_path: agents/OperationalRiskArchitectAgent.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: TestContractArchitectAgent
     role: deputy
     system_prompt_path: agents/TestContractArchitectAgent.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: DataMigrationArchitectAgent
     role: deputy
     system_prompt_path: agents/DataMigrationArchitectAgent.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: LiveOpsDeputy
     role: deputy
     system_prompt_path: agents/LiveOpsDeputy.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: conditional
     activation_condition: live_touching_story  # ADR-030 § Live touching detection
     dispatch_mode: default
@@ -82,7 +82,7 @@ teammates:
   - name: LiveOrderingDeputy
     role: deputy
     system_prompt_path: agents/LiveOrderingDeputy.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: conditional
     activation_condition: live_touching_story
     dispatch_mode: default

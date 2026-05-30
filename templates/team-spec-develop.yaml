@@ -18,14 +18,14 @@ teammates:
   - name: DeveloperPLAgent
     role: PL
     system_prompt_path: agents/DeveloperPLAgent.md  # codeforge-develop plugin canonical
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: QADeveloperAgent
     role: QADev
     system_prompt_path: agents/QADeveloperAgent.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
@@ -33,21 +33,21 @@ teammates:
   - name: SoftwareDeveloperAgent
     role: role:dev
     system_prompt_path: agents/SoftwareDeveloperAgent.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: TestDeveloperAgent
     role: role:dev
     system_prompt_path: agents/TestDeveloperAgent.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: InfraDeveloperAgent
     role: role:dev
     system_prompt_path: agents/InfraDeveloperAgent.md
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 

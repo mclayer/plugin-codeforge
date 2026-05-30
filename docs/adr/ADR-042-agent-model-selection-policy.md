@@ -124,6 +124,17 @@ amendment_log:
       - ADR-076 (declarative UpgradeAgent runtime SSOT — paradigm replace 진행 중, model:sonnet → Opus 상향 source)
       - imperative-walker-protocol-v1 §2.F.2 (UpgradeAgent runtime ownership + model_tier_reassessment: required cross-ref)
       - ADR-068 §결정 1 I-5 (walker walk source count 7 / grace window 12mo·9mo K8s empirical grounding cross-ref)
+  - amendment_id: 12
+    date: "2026-05-30"
+    status: applied
+    summary: "CFP-1845 — model tier 정책의 버전 핀(claude-opus-4-7 / claude-sonnet-4-6 / claude-haiku-4-5)을 별칭(opus / sonnet / haiku)으로 전환. 별칭 = 플랫폼이 항상 최신 tier 버전으로 해석 → 버전 릴리스마다 전 파일 일괄 변경 chore 제거 + 자동 최신 추적. tier 분류(Opus/Sonnet/Haiku role pattern criteria) 정책 강도 불변 — 버전 표기 방식만 별칭화 (ratchet 약화 아님, ADR-058 §결정 5 정합 — tier 분류 logic 변경 0건). 사용자 directive (2026-05-30 KST) verbatim: 'opus, sonnet, haiku 모두 최신 버전으로 지칭하도록 해'. §결정 1 tier 표 4 row (Opus / Sonnet / Haiku / Opus pilot) Model 컬럼 별칭화. amendment_log·inventory 등 역사 서술의 과거 버전 언급(Opus 4.7 → Sonnet 4.6 등)은 frozen audit trail 로 보존 (Event Sourcing — 과거 결정 시점 박제 정상 영역). ADR-057 §결정 1 (Orchestrator 버전 핀) Amendment 4 동시 개정 sibling (CFP-1845 atomic). cross-repo: 6 lane plugin agent file `model:` field 별칭 전환 = follow-up PR."
+    ref: CFP-1845
+    carrier_story: CFP-1845
+    sunset_justification: null
+    affected_agents:
+      - "전체 tier 표 (개별 agent tier 분류 변경 0건 — 버전 표기 방식만 별칭화)"
+    cross_ref:
+      - ADR-057 Amendment 4 (CFP-1845 — Orchestrator 버전 핀 → 별칭 sibling, atomic)
 related_stories:
   - CFP-448
   - CFP-676
@@ -131,6 +142,7 @@ related_stories:
   - CFP-1059  # Amendment 9 carrier — 4 신설 agent tier (DeployPL/DeployWorker/DeployReviewPL/DeployReviewWorker)
   - CFP-1126  # Amendment 10 carrier — AggregateArch + ModuleArch 통합 (Amendment 8 partial retroactive rollback, ratchet 축소 첫 carrier, ADR-058 §결정 5 first applied)
   - CFP-1155  # Amendment 11 carrier — UpgradeAgent walker model tier (declarative Sonnet → imperative walk Opus, ADR-098 §결정 2 carry, CFP-1111 Wave 2 Story-4)
+  - CFP-1845  # Amendment 12 carrier — model 버전 핀 → 별칭(opus/sonnet/haiku) 전환 (항상 최신 tier 지칭, ADR-057 Amendment 4 sibling atomic)
 related_adrs:
   - ADR-009
   - ADR-013
@@ -207,21 +219,23 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 
 | Tier | Model | Role pattern criteria |
 |------|-------|----------------------|
-| **Opus** | claude-opus-4-7 | (a) Multi-source synthesis (3+ SubAgent / lane / contract input dedup + 종합 판정) — 모든 PL · ArchitectAgent chief. (b) Independent reasoning peer to external GPT-5 (ClaudeReviewAgent — Codex 와의 의도적 reasoning depth 매칭). (c) High-stakes domain interpretation (DomainAgent — Live trading / 금융 / 헬스 데이터 등 invariant 누설 위험). (d) Security / safety boundary owner (SecurityArchitectAgent · OperationalRiskArchitectAgent · DataMigrationArchitectAgent · TestContractArchitectAgent — §7 trust boundary / §7.4 DR / §11 schema rollback / §8 perf baseline). (e) Real-funds risk owner (LiveOpsDeputyAgent · LiveOrderingDeputyAgent — CFP-77 CONDITIONAL). (f) Cross-Story pattern analysis + ADR proposal (PMOAgent). (g) Deep research with reshape mandate (ResearcherAgent — per [ADR-046](ADR-046-researcher-role-redefinition.md) (2026-05-09)). |
-| **Sonnet** | claude-sonnet-4-6 | (a) Single-mandate advocacy within multi-deputy debate — read-only 조사 + 자기 mandate 측 단일 축 주장 (CodebaseMapperAgent — existing facts only, RefactorAgent — pattern advocacy only). (b) Implementation work — code write / refactor / test 구현 (DeveloperAgent · DeveloperPLAgent · 2 webapp preset). |
+| **Opus** | opus | (a) Multi-source synthesis (3+ SubAgent / lane / contract input dedup + 종합 판정) — 모든 PL · ArchitectAgent chief. (b) Independent reasoning peer to external GPT-5 (ClaudeReviewAgent — Codex 와의 의도적 reasoning depth 매칭). (c) High-stakes domain interpretation (DomainAgent — Live trading / 금융 / 헬스 데이터 등 invariant 누설 위험). (d) Security / safety boundary owner (SecurityArchitectAgent · OperationalRiskArchitectAgent · DataMigrationArchitectAgent · TestContractArchitectAgent — §7 trust boundary / §7.4 DR / §11 schema rollback / §8 perf baseline). (e) Real-funds risk owner (LiveOpsDeputyAgent · LiveOrderingDeputyAgent — CFP-77 CONDITIONAL). (f) Cross-Story pattern analysis + ADR proposal (PMOAgent). (g) Deep research with reshape mandate (ResearcherAgent — per [ADR-046](ADR-046-researcher-role-redefinition.md) (2026-05-09)). |
+| **Sonnet** | sonnet | (a) Single-mandate advocacy within multi-deputy debate — read-only 조사 + 자기 mandate 측 단일 축 주장 (CodebaseMapperAgent — existing facts only, RefactorAgent — pattern advocacy only). (b) Implementation work — code write / refactor / test 구현 (DeveloperAgent · DeveloperPLAgent · 2 webapp preset). |
 
 > **Amendment 4 (2026-05-11)**: CodebaseMapperAgent·RefactorAgent는 Opus로 복원됨 — ADR-057 참조.
 >
 > **Amendment 5 (2026-05-12, CFP-448)**: Amendment 4 의 6 agent 상향 중 3종 (CodebaseMapperAgent · RefactorAgent · DeveloperPLAgent) Opus → Sonnet 복귀. 나머지 3종 (FeasibilityAgent · ContinuityAgent · ChangeImpactAgent) Opus 유지. ADR-057 Amendment 3 cross-ref.
 >
 > **Amendment 7 (2026-05-19, CFP-676)**: Sonnet (a) "Single-mandate advocacy within multi-deputy debate" 에 **CodeArchitectAgent** (§3 code 설계 단일 축 advocacy — layered/hexagonal/clean/DDD bounded context/module boundary/dependency direction) + **ArchitectAnalystAgent** (변경 전 기존 설계 분석 단일 축 — PriorArtAgent rename, 4-tuple sub-tuple component) 2종 추가. CodebaseMapper/Refactor 동질 패턴 (single-mandate advocate, multi-source synthesis = ArchitectAgent chief Opus). §결정 2 invariant ("Sonnet 으로 fully cover 가능 = role 재정의 시그널") 충족 — 처음부터 single-mandate 정의이므로 Sonnet 적정. DataMigrationArchitectAgent → **DataArchitectAgent** rename + mandate 확장 / OperationalRiskArchitectAgent → **InfraOperationalArchitectAgent** rename — 본 § 의 Sonnet criteria 무관 (Opus tier 유지, §결정 1 (d) Security/safety boundary owner / 결정 4 inheritance). 상세 = 본 ADR `## Amendment 7` 본문 section. **CodebaseMapper / Refactor 의 mandate text 재정의 동시 산출물 의무 발화로 §결정 2 invariant 정합 — 단순 model field downgrade 금지. DeveloperPLAgent 는 사용자 framing (CFP-448) verbatim ('아키텍트가 짜준 디자인 명세에서 제한되게 움직여 고도의 추론이 필요하지 않기 때문이다') 직접 적용 + ADR-042 §결정 1 (b) "Implementation work — code write / refactor / test 구현" verbatim 정의 정합 회귀 → mandate text 재정의 면제 + Codex re-review 면제**. 자세한 결정 matrix 는 본 ADR Amendment 5 본문 + ADR-057 Amendment 3 §결정 3 표 참조.
-| **Haiku** | claude-haiku-4-5 | (a) Test runner / 결과 수집 — minimal reasoning (TestAgent). (b) External tool wrapper — 본체 reasoning 은 external (Codex GPT-5 / GPT-5.4) 가 수행, Claude 는 prompt 조립 / output relay 만 (CodexReviewAgent · RequirementsAnalystAgent). (c) Mechanical pattern execution — 입력 명세(Change Plan §3 + Story §8)가 충분히 structured되어 creative/diagnostic reasoning 없이 패턴 기반 생성이 가능하고, 오류 발생 시 FIX 루프가 CI/테스트로 즉시 감지 가능한 경우 (InfraEngineerAgent · QADeveloperAgent · DataEngineerAgent — Amendment 2). |
+| **Haiku** | haiku | (a) Test runner / 결과 수집 — minimal reasoning (TestAgent). (b) External tool wrapper — 본체 reasoning 은 external (Codex GPT-5 / GPT-5.4) 가 수행, Claude 는 prompt 조립 / output relay 만 (CodexReviewAgent · RequirementsAnalystAgent). (c) Mechanical pattern execution — 입력 명세(Change Plan §3 + Story §8)가 충분히 structured되어 creative/diagnostic reasoning 없이 패턴 기반 생성이 가능하고, 오류 발생 시 FIX 루프가 CI/테스트로 즉시 감지 가능한 경우 (InfraEngineerAgent · QADeveloperAgent · DataEngineerAgent — Amendment 2). |
 
 > **Amendment 11 (2026-05-21, CFP-1155)**: Opus (a) "Multi-source synthesis" 에 **UpgradeAgent** (codeforge-pmo, imperative walk runtime) 추가 — declarative `model: sonnet` (CFP-743, 9-domain single-source diff) → imperative walk **Opus** 상향. plan stage = 7-plugin CHANGELOG.md 다중 source dedup + min_prerequisite_version topological resolve (DAG) + importance_score 종합 = multi-source synthesis 깊이 (§결정 2 invariant Sonnet fully-cover 불가). ADR-098 §결정 2 model tier 재평가 의무 carry. 상세 = 본 ADR `## Amendment 11` body section.
 >
 > **Amendment 6 (2026-05-16, CFP-777)**: DialogFidelityAgent 신규 entry 추가 (codeforge-pmo / Opus pilot tier). verifier mandate = 누적 대화 fidelity 검증, 의미적 모순 판정 영역. mandate depth = 다축 (semantic match + ledger consistency + 4 차원 enum closed + Story §1 immutable cross-ref + Layer 4 incidents row inspection). single-axis 외형은 single-axis 검수이나 contradiction detection 은 deep reasoning 영역 — **Opus pilot 시작 → N=20 baseline 후 §결정 2 invariant 적용 재판정** (별도 carrier). **Codex 평행 평가 의무** (CFP-379 / CFP-448 pattern) — TP#4 dispatch 시 본 Amendment 입력 verbatim 전달, Opus vs Sonnet baseline divergence detect. ADR-071 Amendment 1 (DialogFidelityAgent external verifier auxiliary layer) cross-ref.
 
-| **Opus pilot** | claude-opus-4-7 | DialogFidelityAgent (codeforge-pmo) — verifier-narrower-than-generator 패턴: 누적 대화 fidelity 검증 (Story §1 immutable + Layer 4 incidents + 현 turn output), 의미적 모순 판정 (deep reasoning 영역). §결정 2 invariant 재판정 trigger = N=20 spawn baseline 후 (별도 carrier). |
+| **Opus pilot** | opus | DialogFidelityAgent (codeforge-pmo) — verifier-narrower-than-generator 패턴: 누적 대화 fidelity 검증 (Story §1 immutable + Layer 4 incidents + 현 turn output), 의미적 모순 판정 (deep reasoning 영역). §결정 2 invariant 재판정 trigger = N=20 spawn baseline 후 (별도 carrier). |
+
+> **Amendment 12 (2026-05-30, CFP-1845)**: 본 §결정 1 tier 표의 Model 컬럼을 버전 핀(claude-opus-4-7 / claude-sonnet-4-6 / claude-haiku-4-5)에서 **별칭(opus / sonnet / haiku)** 으로 전환. 별칭 = 플랫폼이 항상 최신 tier 버전으로 해석 — 버전 릴리스마다 전 파일 일괄 변경 chore 제거 + 자동 최신 추적. 현재 해석: opus→4.8 (실질 상향), sonnet→4.6, haiku→4.5 (현 최신 동일). **tier 분류 정책 강도 불변** (Opus/Sonnet/Haiku role pattern criteria 변경 0건, 버전 표기 방식만), ratchet 약화 아님 (ADR-058 §결정 5 정합). 사용자 directive (2026-05-30 KST) verbatim: "opus, sonnet, haiku 모두 최신 버전으로 지칭하도록 해". § "현재 agent inventory (2026-05-09)" 의 "Opus 4.7 / Sonnet 4.6 / Haiku 4.5" 표기 + amendment_log 과거 버전 언급은 frozen audit trail 로 보존 (그 시점 snapshot). ADR-057 §결정 1 (Orchestrator 버전 핀 → 별칭) Amendment 4 동시 개정 sibling (CFP-1845 atomic). 향후 신규 agent `model:` field default = 별칭. cross-repo 6 lane plugin agent file 별칭 전환 = follow-up PR.
 
 ### 결정 2: 본 ADR 발효 시점 변경 사항 (2 sibling PR scope)
 

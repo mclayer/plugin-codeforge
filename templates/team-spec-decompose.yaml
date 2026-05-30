@@ -17,14 +17,14 @@ teammates:
   - name: PMOAgent
     role: PL
     system_prompt_path: agents/PMOAgent.md  # codeforge-pmo plugin canonical (sibling sync)
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: default
     dispatch_mode: default
 
   - name: GitOpsAgent
     role: deputy
     system_prompt_path: agents/GitOpsAgent.md  # codeforge-pmo plugin (CFP-139 신설 후)
-    model: claude-opus-4-7
+    model: opus
     spawn_mode: conditional
     activation_condition: cfp_139_active
     dispatch_mode: default
