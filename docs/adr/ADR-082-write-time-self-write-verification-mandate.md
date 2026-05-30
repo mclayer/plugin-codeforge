@@ -199,6 +199,14 @@ amendments:
     summary: "§결정 1 layer 1 sub-scope (1-V) 신설 — execution_context_reconciliation (verdict packet write-time execution context state declare). PMOAgent / retro write-target / chief author / deputy verdict packet 안 `execution_context_state` 5 sub-field 명시 declare 의무: (a) `working_dir_abs_path` (derivable via `pwd` — sub-scope 1-J + ADR-040 worktree convention 정합) (b) `target_write_repo` (derivable via `git -C <wt> remote -v` — sub-scope 1-J `worktree_target_repo` 와 axis-adjacent disjoint: 1-J = chief author worktree-level cross-repo target verify / 1-V = packet-level after-the-fact declare) (c) `staged_files_required[]` (novel axis — intent declaration, derive 불가능: 본 write 산출물이 staged 상태로 만들어야 하는 file 목록) (d) `branch_required` (derivable via `git branch --show-current` — ADR-040 / ADR-024 `cfp-NNN[-<slug>]` binding) (e) `remote_sync_required` (novel axis — pre-write intent enum: pull / fetch / N/A). 5 field 중 3 derivable + 2 novel — derive primitive cross-ref 본문 표 명시 (ratchet density 보호, ADR-068 I-4 wording SSOT). 본 sub-scope 1-V = sub-scope 1-A~1-U 22 entry 와 disjoint axis (packet-level execution context state declare axis). paired_sibling_base = Amendment 31 (1-T) — axis-adjacent supplementary clause (retro write fact verify ↔ execution context state declare). Wave 1 = declaration-only behavioral mandate (mechanical_enforcement_actions[] 신규 entry `execution-context-state-presence` warning-tier) + Wave 2 mechanical wire (scripts/lib/check_execution_context_state.py + templates/github-workflows/execution-context-state-check.yml + tests/wave2-mechanical-wire/check-execution-context-state.bats + label-registry-v2 v2.84 → v2.85 MINOR `hotfix-bypass:execution-context-state-presence` 110번째 family member + evidence-checks-registry entry) single Story combined PR (CFP-1648/1688/1734/1755 combined precedent 답습). 동인 = cluster anchor pattern_count 4 reach (CFP-1735 §6 + CFP-1753 §6 + CFP-1755 §6 + CFP-1764 §4.5 self) ≥ ADR-045 §D-9 threshold 2 Mandatory escalation. ADR-073 paired Amendment 不要 (sub-scope 1-V axis disjoint complement from Orchestrator verify-before-assert axis — sub-scope 1-E/1-F precedent 와 차이). ADR-045 별도 Amendment 신설 不要 (cross-ref only, Amendment 10 §결정 12 precedent 답습). META self-applied (§결정 10.D 12th applied case): Amendment 번호(33) 가 target frontmatter `amendments:` Read verify 후 결정 (verified-via `git show origin/main:docs/adr/ADR-082-...md` frontmatter amendments[] max=32 2026-05-27 KST 기준 origin/main 1b08d2f4). dogfood self-application — 본 carrier Story 자체 spec frontmatter `pre_lookup_evidence[]` 안 `execution_context_state` 5 field declare 정합 (1-V sub-scope 의 1st applied case = self)."
     direction: strengthening
     sunset_justification: "N/A — ADR-058 §결정 5 면제 (ratchet 강화 방향: §결정 1 layer 1 sub-scope (1-A~1-U) → (1-V execution_context_reconciliation) 확장, forbid scope 축소 아님). ADR-064 §결정 7 (CFP-1149 Amendment 8) symmetric evidence-gated 정합. is_transitional: false 유지 (permanent governance policy). pattern_count evidence: cluster anchor 4 reach (CFP-1735 §6 + CFP-1753 §6 + CFP-1755 §6 + CFP-1764 §4.5 self) ≥ ADR-045 §D-9 threshold 2. META-self-applied (§결정 10.D 12th applied case + sub-scope 1-G 18th + sub-scope 1-L spawn prompt fact verify)."
+  - amendment_id: 34
+    carrier_story: CFP-1842
+    date: 2026-05-29
+    sub_scope: "1-W"
+    scope: "§결정 1 layer 1 (Orchestrator scope) sub-scope 1-W `orchestrator_spawn_prompt_fact_verify_before_embed` 신설 — Orchestrator 가 subagent (lane PL / chief author / deputy / 4-tuple sub-tuple) spawn 직전 spawn prompt 안 fact 단언 (counter 값 / version / SHA / sha256 verify PASS / line count / 파일 존재 등) 발화 시점 verify-before-embed 의무. 5종 fact category (C1-C5) closed-enum: C1 counter (label-registry / evidence-checks / hotfix-bypass family count 등) / C2 version (label-registry-v2 version / plugin metadata version / marketplace.json version) / C3 SHA (origin/main HEAD / pre-spawn pin / file sha256) / C4 verify-result (sha256 byte-identical PASS / sub-agent claim PASS) / C5 file-existence (path 존재 + line count). 5종 모두 spawn prompt embed 직전 direct Read / git api / file system call verify 의무. axis disjoint vs sub-scope 1-L (CFP-1590) — 1-L = worker self-write spawn prompt fact (worker→worker handoff), 1-W = Orchestrator-side (Orchestrator→subagent handoff). pattern_count 3 reach Mandatory ADR-045 §D-9: 1차 CFP-1808 F-005 (sha256 PASS claim verify 없이 embed) + 2차 CFP-1807 F-002 (baseline counter stale 단언) + 3차 META (본 carrier 본 자체 ADR-082 Amd 번호 stale 단언). Wave 1 declarative-only — mechanical wire (lint script + workflow + bats + label-registry MINOR `hotfix-bypass:orchestrator-spawn-prompt-fact-verify` + evidence-checks-registry entry) = CFP-1842-W2 별 sub-CFP carrier. precedent 답습 ADR-082 §결정 6 + ADR-070 §D5 + ADR-076 §결정 6 + ADR-081 §D5 + 23 prior Amendment Wave 1→Wave 2 split chain. paired sibling ADR-073 Amendment 18 (transition trigger 16번째 entry `pre_spawn_prompt_fact_assertion` — 같은 cadence axis). ADR-058 §결정 5 ratchet 강화 only (sub-scope 22→23, scope 확장). ADR-064 §결정 5 CFP scope unitary (2 paired Amendment 단일 carrier 정합, axis 동형 sub-domain)."
+    status: applied
+    ref: "## Amendment 34 + sub-scope 1-W row"
+    sunset_justification: null
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-841
@@ -398,6 +406,12 @@ amendment_log:
     decisions_touched: ["§결정 1 layer 1 sub-scope 1-V (신설)"]
     nature: ratchet-up  # §결정 1 layer 1 sub-scope (1-A~1-U) → (1-V execution_context_reconciliation) 신설 (ADR-058 §결정 5 강화 방향 — verdict packet 5 sub-field declare 의무 ratchet, forbid scope 축소 아님). audit-from-CFP-1764-retro carrier + cluster anchor pattern_count 4 reach.
     note: "CFP-1787 carrier — CFP-1764 §4.5 audit packet origin. cluster anchor pattern_count 4 reach (CFP-1735 §6 + CFP-1753 §6 + CFP-1755 §6 + CFP-1764 §4.5 self) ≥ ADR-045 §D-9 threshold 2 Mandatory escalation. Mandate: verdict packet (PMOAgent / chief author / deputy / retro write-target) 안 `execution_context_state` 5 sub-field 명시 declare 의무 — (a) `working_dir_abs_path` derivable via `pwd` ADR-040 worktree convention 정합 / (b) `target_write_repo` derivable via `git -C <wt> remote -v` axis-adjacent disjoint sub-scope 1-J / (c) `staged_files_required[]` novel axis intent declaration derive 불가능 / (d) `branch_required` derivable via `git branch --show-current` ADR-040 / ADR-024 binding / (e) `remote_sync_required` novel axis pre-write intent enum pull/fetch/N/A. 5 field 중 3 derivable + 2 novel — derive primitive cross-ref 본문 §결정 표 명시 (ratchet density 보호, ADR-068 I-4 wording SSOT). axis disjoint statement: sub-scope 1-V vs 1-A (Orchestrator state read verify-before-cite axis) / 1-V vs 1-J (chief author worktree-level cross-repo target verify) / 1-V vs 1-T (retro fact source direct verify) / 1-V vs 1-U (sub-scope 1-T mechanical lint Wave 2 wire) — verify subject axis disjoint (fact source vs environment state, lint axis vs declarative axis). Wave 1 declarative + Wave 2 mechanical wire single Story combined PR (CFP-1648/1688/1734/1755 combined precedent 답습) — scripts/lib/check_execution_context_state.py + templates/github-workflows/execution-context-state-check.yml + tests/wave2-mechanical-wire/check-execution-context-state.bats + label-registry-v2 v2.84 → v2.85 MINOR `hotfix-bypass:execution-context-state-presence` 110번째 family member + evidence-checks-registry warning-tier entry. ADR-073 paired Amendment 不要 (sub-scope 1-V axis disjoint complement from Orchestrator verify-before-assert axis). ADR-045 cross-ref only. 본 Amendment 번호(33) = source command `git show origin/main:docs/adr/ADR-082-write-time-self-write-verification-mandate.md` frontmatter amendments[] actual max=32 (Amd 32 CFP-1734 점유) → 정확 next-slot for CFP-1787 = 33 [verified, origin/main 1b08d2f4, PRE-SPAWN-ORIGIN-MAIN-SHA pinned]. sub-scope letter = 1-U 다음 = 1-V [verified, body sub-scope census 1-A..1-U 점유]. ADR-RESERVATION row pre-append commit f16e16fd (pre_reservation_verified: true). META-self-applied (§결정 10.D 12th applied case + sub-scope 1-G 18th + sub-scope 1-L spawn prompt fact verify): ADR-082 = dual-block exemplar — Amendment 33 의 amendments[] + amendment_log[] + body ## Amendment 33 3-block parity 필수 (Amendment 32 sub-scope 1-U dual-block gate self-application recursive dogfooding). dogfood self-application — 본 carrier Story 자체 spec frontmatter `pre_lookup_evidence[]` 안 `execution_context_state` 5 field declare 정합 (1-V sub-scope 의 1st applied case = self)."
+  - amendment_id: 34
+    carrier_story: CFP-1842
+    date: 2026-05-29  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 1 layer 1 sub-scope 1-W (신설)"]
+    nature: ratchet-up  # §결정 1 layer 1 sub-scope (1-A~1-V) → (1-W orchestrator_spawn_prompt_fact_verify_before_embed) 신설 (ADR-058 §결정 5 강화 방향 — 5종 fact category C1-C5 verify-before-embed 의무 ratchet, forbid scope 축소 아님). Mandatory ADR-045 §D-9 escalation source — pattern_count 3 reach.
+    note: "CFP-1842 carrier — Mandatory ADR-045 §D-9 escalation source. pattern_count 3 reach: (1) CFP-1808 F-005 — Orchestrator → DesignReviewPL spawn 시 ArchitectAgent 'sha256 PASS' claim verify 없이 embed / (2) CFP-1807 F-002 — Orchestrator → ArchitectAgent spawn 시 baseline counter (v2.82 / 107 / 137) stale 단언 / (3) META — 본 Issue #1842 초기 body 'ADR-082 Amd 24 sub-scope 1-W' 인용 (actual Amd 33 / next 34) 동일 패턴 재발현. Mandate: Orchestrator 가 subagent (lane PL / chief author / deputy / 4-tuple sub-tuple) spawn 직전 spawn prompt 안 fact 단언 (5종 category C1-C5 — C1 counter / C2 version / C3 SHA / C4 verify-result / C5 file-existence) verify-before-embed 의무. axis disjoint vs sub-scope 1-L (CFP-1590, worker→worker handoff) — 1-W = Orchestrator-side (Orchestrator→subagent handoff). paired sibling ADR-073 Amendment 18 (transition trigger 16번째 entry `pre_spawn_prompt_fact_assertion`, axis 동형 sub-domain cadence codify). ADR-064 §결정 5 CFP scope unitary (2 paired Amendment 단일 carrier 정합). Wave 1 declarative-only — Wave 2 mechanical wire (lint script + workflow + bats + label-registry MINOR `hotfix-bypass:orchestrator-spawn-prompt-fact-verify` + evidence-checks-registry entry) = CFP-1842-W2 별 sub-CFP carrier. precedent 답습 ADR-082 §결정 6 + ADR-070 §D5 + ADR-076 §결정 6 + ADR-081 §D5 + 23 prior Amendment Wave 1→Wave 2 split chain. META-self-applied: 본 carrier Story 의 spawn prompt 자체가 사전 verify (Amd 33 + 1-V baseline 직접 Read verify 후 next-slot Amd 34 + 1-W 결정) — 1-W sub-scope 의 1st applied case = self. dual-block parity: ADR-082 = dual-block exemplar (Amd 32 sub-scope 1-U dual-block gate self-application), 본 Amd 34 의 amendments[] + amendment_log[] + body ## Amendment 34 3-block parity 보존."
 related_stories:
   - CFP-776  # carrier (super-class 통합 결정 — escalation_action escalate_user)
   - CFP-841  # Amendment 1 carrier (§결정 6 behavioral→mechanical 전환 후속 carrier)
@@ -474,6 +488,7 @@ related_stories:
   - CFP-1735 # Amendment 33 sentinel evidence #1 (§6 reserved cluster anchor 1st — sub-scope 1-V candidate carrier)
   - CFP-1753 # Amendment 33 sentinel evidence #2 (§6 reserved cluster anchor 2nd — CFP-1735 §6 통합)
   - CFP-1755 # Amendment 33 sentinel evidence #3 (§6 reserved cluster anchor 3rd — CFP-1735 + CFP-1753 + self §4.4 통합)
+  - CFP-1842 # Amendment 34 — sub-scope 1-W `orchestrator_spawn_prompt_fact_verify_before_embed` (Orchestrator-side spawn prompt fact discipline, paired ADR-073 Amd 18). Mandatory ADR-045 §D-9 escalation source — pattern_count 3 reach (CFP-1808 F-005 + CFP-1807 F-002 + META self-evidence).
 related_adrs:
   - ADR-073  # Orchestrator cross-repo state / assumption verify (disjoint 보완 — Orchestrator 행위 한정)
   - ADR-070  # Codex external worker output verify (disjoint 보완 — 외부 worker output 한정)
@@ -586,6 +601,9 @@ mechanical_enforcement_actions:
   - action: execution-context-state-presence
     status: deferred-followup     # Phase 1 declare (본 Amendment 33 CFP-1787) / Phase 2 actual wire = 별 sub-CFP carrier (Python SSOT lint per ADR-061 `scripts/lib/check_execution_context_state.py` + `templates/github-workflows/execution-context-state-check.yml` workflow + `.github/workflows/` byte-identical mirror + `tests/wave2-mechanical-wire/check-execution-context-state.bats` fixture RED→GREEN stash proof per §결정 11.A + label-registry-v2 v2.84 → v2.85 MINOR `hotfix-bypass:execution-context-state-presence` 110번째 family member + evidence-checks-registry warning-tier initial registration ADR-060 §결정 5 정합)
     target_section: §결정 1 layer 1 sub-scope (1-V)       # execution_context_reconciliation — PMOAgent / retro write-target / chief author / deputy verdict packet 안 `execution_context_state` 5 sub-field 명시 declare 의무 (a-`working_dir_abs_path` derivable via `pwd` ADR-040 worktree convention 정합 / b-`target_write_repo` derivable via `git -C <wt> remote -v` axis-adjacent disjoint sub-scope 1-J / c-`staged_files_required[]` novel axis intent declaration derive 불가능 / d-`branch_required` derivable via `git branch --show-current` ADR-040 / ADR-024 binding / e-`remote_sync_required` novel axis pre-write intent enum pull/fetch/N/A). 5 field 중 3 derivable + 2 novel — derive primitive cross-ref 본문 표 명시 (ratchet density 보호, ADR-068 I-4 wording SSOT). axis disjoint from sub-scope 1-A through 1-U 22 entry (packet-level execution context state declare axis, paired_sibling_base = Amendment 31 §1-T axis-adjacent supplementary clause). 동인 = cluster anchor pattern_count 4 reach (CFP-1735 §6 + CFP-1753 §6 + CFP-1755 §6 + CFP-1764 §4.5 self) ≥ ADR-045 §D-9 threshold 2 Mandatory escalation. ADR-073 paired Amendment 不要 (sub-scope 1-V axis disjoint complement from Orchestrator verify-before-assert axis). ADR-045 cross-ref only.
+  - action: orchestrator-spawn-prompt-fact-verify
+    status: deferred-followup     # CFP-1842 Amendment 34 — Wave 1 declarative anchor (warning tier, deferred-followup status, recurrence count 3 / threshold 2 / Mandatory, actual lint script + workflow + bats + label-registry MINOR + evidence-checks-registry entry = CFP-1842-W2 별 sub-CFP carrier per ADR-040 Amendment 3 §결정 7.D self-application 정합. Amendment 34 §결정 1 layer 1 sub-scope 1-W carrier — 5종 fact category C1-C5 (counter / version / SHA / verify-result / file-existence) closed-enum verify-before-embed. paired sibling ADR-073 Amendment 18 sub-decision `pre_spawn_prompt_fact_assertion` transition trigger 16번째 entry.
+    target_section: §결정 1 layer 1 sub-scope (1-W)       # orchestrator_spawn_prompt_fact_verify_before_embed — Orchestrator 가 subagent (lane PL / chief author / deputy / 4-tuple sub-tuple) spawn 직전 spawn prompt 안 fact 단언 (counter / version / SHA / verify-result / file-existence 5종) 발화 시점 verify-before-embed 의무. 5종 fact category C1-C5 closed-enum: C1 counter / C2 version / C3 SHA / C4 verify-result / C5 file-existence. 5종 모두 spawn prompt embed 직전 direct Read / git api / file system call verify 의무. axis disjoint vs sub-scope 1-L (CFP-1590, worker→worker) — 1-W = Orchestrator→subagent. paired sibling ADR-073 Amendment 18 (transition trigger 16번째 entry `pre_spawn_prompt_fact_assertion`). pattern_count 3 reach Mandatory ADR-045 §D-9: CFP-1808 F-005 + CFP-1807 F-002 + META self-evidence.
 sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (ratchet 강화 방향 only — verify scope 확장). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과. is_transitional: false (영구 정책). self-referential 주의: 본 ADR 의 해소기준 부재 선언 자체가 §결정 2 verify 대상 아님 (§결정 6 EC-3 self-protection)."
 pre_lookup_evidence:
   verified_files:
@@ -2968,4 +2986,72 @@ ELSE:                         # single-block 양방향 / amendments[]-only / no-
 ### dogfood self-application (sub-scope 1-V 1st applied case)
 
 본 carrier Story 의 spec frontmatter `pre_lookup_evidence[]` 안 본 carrier 작성 시점 execution context 4 source verify declare — 본 sub-scope 1-V 의 1st applied case = self. META self-applied (§결정 10.D 12th applied case + sub-scope 1-G 18th + sub-scope 1-L spawn prompt fact verify).
+
+## Amendment 34 (2026-05-29 KST, CFP-1842) — sub-scope 1-W `orchestrator_spawn_prompt_fact_verify_before_embed` (Orchestrator-side spawn prompt fact discipline, paired ADR-073 Amd 18)
+
+본 Amendment 는 §결정 1 layer 1 (Orchestrator scope) sub-scope 1-W 신설 — Orchestrator 가 subagent spawn 직전 spawn prompt 안 fact 단언 verify-before-embed 의무. ADR-058 §결정 5 ratchet 강화 only (sub-scope 22→23). pattern_count 3 reach Mandatory ADR-045 §D-9 escalation source.
+
+### §A. 5종 fact category (C1-C5 closed-enum)
+
+Orchestrator 가 subagent spawn prompt 안 다음 5 category fact 단언 시 verify-before-embed 의무:
+
+| Category | 영역 | Verify method |
+|---|---|---|
+| C1 counter | label-registry hotfix-bypass family count / evidence-checks entry count / sub-scope letter 개수 등 | `grep -c '^pattern' file` direct |
+| C2 version | label-registry-v2 version / plugin metadata version / marketplace.json version / ADR amendment id 등 | `grep '^version:' file` / `grep amendment_id:` direct |
+| C3 SHA | origin/main HEAD SHA / pre-spawn pin SHA / 파일 sha256 | `git rev-parse origin/main` / `sha256sum file` direct |
+| C4 verify-result | "sha256 PASS" / "byte-identical OK" / sub-agent claim "PASS" | actual command 재실행 (Orchestrator 자신이 verify, claim relay 금지) |
+| C5 file-existence | 파일 path 존재 + line count | `ls file` / `wc -l file` direct |
+
+6번째 category 확장 = 별 CFP carrier (ADR-064 §결정 5 CFP scope unitary carve-out).
+
+### §B. Mechanism — pre-spawn verify-before-embed protocol
+
+Orchestrator 가 subagent spawn prompt 작성 시:
+
+1. 단언할 fact 식별 (5 category C1-C5 분류)
+2. 각 fact 의 verify method 실행 (Read / Bash / git api 직접 호출)
+3. verify 결과 spawn prompt 안 embed (단언 옆 `verified-via: <method>` annotation 의무)
+4. subagent → Orchestrator return 시 subagent claim relay 직접 spawn 금지 (Orchestrator 가 fresh verify 후 다음 subagent spawn)
+
+precedent (axis disjoint): ADR-082 sub-scope 1-L (CFP-1590) = worker self-write spawn prompt fact (worker→worker). 본 1-W = Orchestrator-side (Orchestrator→subagent). axis disjoint complement.
+
+### §C. META self-application (Mandatory carrier 본 자체)
+
+본 Amendment 34 = META first applied case:
+- 본 Story #1842 초기 Issue body 가 "ADR-082 Amd 24 sub-scope 1-W" 인용 → actual = Amd 33 → next Amd 34 (3차 pattern occurrence)
+- Issue body 정정 후 본 spawn prompt 안 모든 fact (Amd 34 / sub-scope 1-W / Amd 33 / 1-V 21 letters) 단언 = pre-write verified
+- 즉 본 Amendment 본문 작성 자체가 1-W 첫 적용 사례 (write-time Read verify required, claim ≠ ground truth 차단)
+
+### §D. Wave 1 declarative-only — Wave 2 별 sub-CFP carrier
+
+`mechanical_enforcement_actions[]` `orchestrator-spawn-prompt-fact-verify` entry = warning-tier deferred-followup. Wave 2 carrier (CFP-1842-W2 reserved):
+- `scripts/check-orchestrator-spawn-prompt-fact-verify.sh` lint
+- `templates/github-workflows/orchestrator-spawn-prompt-fact-verify.yml` workflow
+- bats fixture (5 TC per C1-C5)
+- `docs/evidence-checks-registry.yaml` warning-tier entry
+- `docs/inter-plugin-contracts/label-registry-v2.md` MINOR bump — `hotfix-bypass:orchestrator-spawn-prompt-fact-verify` family member
+
+precedent 23-instance chain Wave 1→Wave 2 split established.
+
+### §E. Disjoint axis cross-ref
+
+- ADR-082 sub-scope 1-L (CFP-1590) — worker self-write spawn prompt fact axis. 1-W = Orchestrator-side complement.
+- ADR-082 sub-scope 1-V (CFP-1787) — write-target agent verdict packet execution_context. 1-W = pre-spawn timing (1-V = write-time).
+- ADR-073 sub-scope chain transition trigger — paired sibling ADR-073 Amd 18 16번째 entry `pre_spawn_prompt_fact_assertion` (axis 동형 sub-domain cadence codify).
+
+### §F. sunset_justification N/A 정당
+
+is_transitional: false 보존. Amd 34 = 강화 방향 only (sub-scope 22→23 ratchet 확장). ADR-058 §결정 5 sunset_justification ratchet 통과. ADR-064 §self-application top-down ratchet 정합 (forbid scope 확장).
+
+### §G. Related
+
+- `<internal-docs>/plugin-codeforge/stories/CFP-1842.md` — Story file
+- `<internal-docs>/plugin-codeforge/specs/CFP-1842-orchestrator-spawn-prompt-fact-discipline.md` — Spec file
+- paired sibling ADR: ADR-073 Amendment 18 (transition trigger 16번째 entry)
+- sibling axis-disjoint Issue: mclayer/plugin-codeforge#822 (post-task verify discipline, HIGH priority pre-existing)
+- 3 pattern occurrence retros:
+  - codeforge-internal-docs/plugin-codeforge/retros/2026-05-28-cfp-1808.md F-005 (1차)
+  - codeforge-internal-docs/plugin-codeforge/retros/2026-05-29-cfp-1807.md F-002 (2차)
+  - 본 Issue #1842 초기 body META (3차)
 
