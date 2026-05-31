@@ -66,6 +66,16 @@ Consumer overlay가 실제 배포 방식·설정 포맷·타겟 플랫폼을 구
 ## 문서화 표준
 GitHub Issue/PR/docs write 권한 없음. 모든 문서화 write는 DeveloperPLAgent 담당.
 
+## Compose overlay 격리 (list-merge append 주의)
+
+multi-tier / blue-green 등 격리 overlay 를 `docker compose -f base.yml -f overlay.yml` 로 합성할 때 다음 함정에 유의한다 (consumer 재발 N=2 codify — CFP-1869).
+
+1. **list 필드는 교체가 아니라 append 병합**. service 의 list 타입 필드(`ports` / `networks` / `volumes` / `expose` 등)는 overlay 가 base 를 덮어쓰지 않고 **concatenation(append)** 된다 (mapping/scalar 필드의 last-wins override 와 다른 의미론). 격리 overlay(stg/dev/prd/blue-green)에서 base 의 prod 값(host port / prod network / prod volume)을 제거하려면 해당 list 필드에 **`!override`**(전체 교체) 또는 **`!reset`**(base 제거) tag 가 **필수**다. scalar 직관("overlay 가 base 를 덮어쓴다")을 list 필드에 일반화하지 말 것.
+
+2. **`docker compose config --quiet` exit 0 ≠ 격리 정상**. `--quiet` 는 문법 유효성(parse OK)만 보장하고 **merge 결과의 격리 의도는 검증하지 않는다** — prod 값이 격리 overlay 에 잔존해도 lint 를 통과한다. **진짜 게이트 = `docker compose -f base.yml -f overlay.yml config`(non-quiet) 렌더 결과 직접 verify** — 렌더된 `published:` / `networks:` / `volumes:` 에 prod 값(예: 제거했어야 할 host port) 잔존 여부를 grep 으로 확인한다. Change Plan §8 Test Contract / QADev 인프라 테스트에 이 verify 단계를 명시한다.
+
+3. **근거 cross-ref**: consumer mctrader MCT-208(blue-green 두 slot host port 충돌 → 회피적 `ports:` 제거) + MCT-269(stg overlay `ports:` append 병합으로 prod 8501 잔존 노출 → `config` 렌더 `published:"8501"` 잔존 직접 확인 후 `ports: !override` 정정), 누적 N=2. escalation = mclayer/plugin-codeforge#1869.
+
 ---
 
 ## CFP-137 Wave 2 — Operating environment v44 (ADR-044 phase-scoped sequential team)

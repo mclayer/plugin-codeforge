@@ -2,6 +2,23 @@
 
 `codeforge-develop` plugin 릴리스 이력.
 
+## 0.8.0 (2026-05-31) — CFP-1869 InfraEngineerAgent compose overlay 격리 guard (MINOR)
+
+### Added
+
+- `agents/InfraEngineerAgent.md` (UPDATE) — 신설 sub-section "Compose overlay 격리 (list-merge append 주의)". 3 항목: (1) compose list 필드(ports/networks/volumes)는 overlay 합성 시 교체가 아니라 **append 병합** → 격리 overlay 에서 base prod 값 제거는 `!override`/`!reset` tag 의무. (2) `docker compose config --quiet` exit 0 ≠ 격리 정상 (문법만 검사) → 진짜 게이트 = `config`(non-quiet) 렌더 직접 verify (`published:`/`networks:`/`volumes:` prod 값 잔존 grep 확인). (3) cross-ref consumer mctrader MCT-208 + MCT-269 (N=2) + escalation #1869.
+- `.claude-plugin/plugin.json` — version 0.7.1 → 0.8.0 MINOR + description CFP-1869 entry append.
+
+### Why
+
+consumer escalation mclayer/plugin-codeforge#1869 — mctrader 가 stg/blue-green compose overlay 작성 중 list-merge append 함정으로 silent mis-isolation 2회 재발 (MCT-208 회피적 + MCT-269 정면 `ports:` prod 값 잔존 노출, N=2 ≥ ADR-045 §D-9 threshold 2). InfraEngineerAgent prompt 에 함정 codify → 다른 consumer 재발 차단.
+
+### Compatibility
+
+- **Wire**: agent prompt 지침 추가만. runtime contract / overlay / API surface 영향 0. consumer project 동작 무변경 (retroactive 면제, 본 mandate effective 후 신규 compose overlay 작성부터 적용).
+- **Marketplace sync**: 본 MINOR bump 의 marketplace.json mirror = sibling sync PR (mclayer/marketplace cfp-1869) 에서 처리 (ADR-063 atomic invariant — marketplace sync PR 선행 merge → plugin PR merge).
+- **ADR cross-ref**: ADR-037 §결정 1 (a) Agent file "추가" = MINOR bump 근거 (CFP-609 0.6.0→0.7.0 선례 동형).
+
 ## 0.7.1 (2026-05-30)
 
 - [CFP-1845 follow-up] agent model 핀 → 별칭 전환 (opus/sonnet/haiku 항상 최신 지칭). frontmatter model field 7건 (presets/webapp 포함). tier 분류 변경 0건. wrapper #1846 / #1847 연계. marketplace sibling sync 동반.
