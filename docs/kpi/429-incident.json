@@ -1,10 +1,10 @@
 {
   "schema_version": "1.0",
   "history_file": "docs/kpi/429-incident-history.jsonl",
-  "measured_at": null,
+  "measured_at": "2026-05-31T03:58:22.277336+00:00",
   "window_weeks": 4,
   "weekly_incident_count": 0,
   "cascade_incidents": 0,
   "max_cascade_depth": 0,
-  "gate_status": "pending"
+  "gate_status": "operational"
 }
