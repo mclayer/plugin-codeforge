@@ -2295,20 +2295,20 @@ living_architecture_pages:
     page_id: "2098391"
     ancestor_id: "2130791"  # codeforge-deploy top-level parent (declarative_phase: true)
     git_source_path: "docs/architecture/codeforge-deploy.md"
-    last_synced: null
+    last_synced: "2026-06-01T14:22:29+09:00"  # CFP-1677 Stage 2a — git source 신설 후 Confluence push
     five_anchor_codified: true  # CFP-1427 AC-1 declarative
-    mermaid_diagram_count: null
-    phase_2_status: "defer"
-    phase_2_defer_reason: "GitHub repo mclayer/plugin-codeforge-deploy 404 부재 — CFP-1059 declarative phase only, 실 plugin repo 신설 = 별 sub-Story S2 carrier"
+    mermaid_diagram_count: 0
+    phase_2_status: "pushed"  # CFP-1677 — prior defer_reason "repo 404 부재" stale (실제 = git source file 부재, Stage 1 PR plugin-codeforge-deploy#5 해소)
+    confluence_version_after_push: 2
   - plugin_name: "codeforge-deploy-review"  # CFP-1059 신설 plugin — declarative phase
     page_id: "2130919"
     ancestor_id: "2163482"  # codeforge-deploy-review top-level parent (declarative_phase: true)
     git_source_path: "docs/architecture/codeforge-deploy-review.md"
-    last_synced: null
+    last_synced: "2026-06-01T14:24:34+09:00"  # CFP-1677 Stage 2a — git source 신설 후 Confluence push
     five_anchor_codified: true  # CFP-1427 AC-2 declarative
-    mermaid_diagram_count: null
-    phase_2_status: "defer"
-    phase_2_defer_reason: "GitHub repo mclayer/plugin-codeforge-deploy-review 404 부재 — CFP-1059 declarative phase only, 실 plugin repo 신설 = 별 sub-Story S3 carrier"
+    mermaid_diagram_count: 0
+    phase_2_status: "pushed"  # CFP-1677 — prior defer_reason "repo 404 부재" stale (실제 = git source file 부재, Stage 1 PR plugin-codeforge-deploy-review#4 해소)
+    confluence_version_after_push: 2
 
 # =============================================================================
 # CFP-1668 Schema 1.2 신설 — per_consumer_instantiate_template
