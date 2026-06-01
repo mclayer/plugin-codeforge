@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# admin-merge-preflight.sample — CFP-1564 / ADR-113 §결정 1 Wave 2 mechanical wire.
+# 3-layer self-block layer 1/3 (pre-commit advisory — ADR-113 §3.19.4 (c)).
+#
+# Purpose (advisory only — non-blocking):
+#   Story branch 에서 commit 시, `gh pr merge --admin` attempt 전 admin-merge
+#   pre-flight gate (ADR-113 §결정 1 5-step) 가 의무임을 reminder. commit 자체는
+#   차단하지 않음 (gate 는 merge attempt 시점 적용 — pre-commit 은 awareness layer).
+#
+# Install (opt-in):
+#   cp templates/.git-hooks/admin-merge-preflight.sample .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+#   (또는 기존 pre-commit hook 에 본 블록 append)
+#   bash scripts/install-git-hooks.sh   # CFP-428 installer pattern
+#
+# Bypass: BYPASS_ADMIN_MERGE_PREFLIGHT_REMINDER=1 env → reminder skip.
+#
+# ADR-060 §결정 5 warning-tier — advisory, exit 0 항상 (commit 미차단).
+
+set -euo pipefail
+
+if [[ "${BYPASS_ADMIN_MERGE_PREFLIGHT_REMINDER:-}" == "1" ]]; then
+  exit 0
+fi
+
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "")"
+case "$branch" in
+  cfp-*|CFP-*)
+    cat >&2 <<'REMINDER'
+::warning:: [admin-merge-preflight] reminder (ADR-113 §결정 1 / CFP-1564)
+  Story branch commit 감지. PR merge 시 `gh pr merge --admin` attempt 전
+  admin-merge pre-flight gate 의무 (5-step procedure):
+    bash scripts/check-admin-merge-preflight.sh --pr <PR-N> --story <CFP-NNN> --head-sha <SHA>
+  ACTION_REQUIRED 잔존 시 force-merge 금지 (Step 3 fresh commit re-trigger).
+  attempt cap=3 (per-PR + per-Story dual scope) reach 시 STOP + escalate.
+  (advisory only — commit 미차단. bypass: BYPASS_ADMIN_MERGE_PREFLIGHT_REMINDER=1)
+REMINDER
+    ;;
+esac
+
+exit 0

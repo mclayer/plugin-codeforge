@@ -4837,9 +4837,9 @@ entries:
       (bypass-as-norm-mutation 차단 inherit, 별 lint 신설 0).
 
       pattern_count >= 2 재발 시 follow-up CFP MUST promote to blocking tier.
-    detect_command: bash scripts/check-admin-merge-preflight.sh    # Wave 2 wire 시점 활성, Wave 1 = stub
-    workflow: null                     # Wave 1 = declarative anchor only (workflow Wave 2 carrier)
-    current_tier: warning              # ADR-060 §결정 5 — 첫 도입 = warning mode (deferred-followup)
+    detect_command: bash scripts/check-admin-merge-preflight.sh    # CFP-1564 Wave 2 wire 활성 (Python SSOT scripts/lib/check_admin_merge_preflight.py)
+    workflow: .github/workflows/admin-merge-preflight-check.yml    # CFP-1564 Wave 2 — templates/github-workflows/ byte-identical self-app (ADR-005)
+    current_tier: warning              # ADR-060 §결정 5 — warning mode (gate-block advisory, PR merge 미차단)
     bypass_label: hotfix-bypass:admin-merge-preflight-gate
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     promotion_criteria:
@@ -4850,6 +4850,7 @@ entries:
         - CFP-1318                     # sentinel #2 carrier (phase-gate-mergeable workflow_dispatch 부재 retro)
         - CFP-1495                     # sentinel #3 carrier (PR #1505 close evacuation, headRefOid 13b958eb 보존)
         - CFP-1522                     # self-carrier (Wave 1 declarative anchor)
+        - CFP-1564                     # Wave 2 mechanical wire carrier (script + lib + bats RED→GREEN + workflow self-app)
       evidence_artifacts:
         - github_actions_run_history_url
         - lint_failure_count_zero_proof
@@ -4865,7 +4866,7 @@ entries:
       threshold: 2                     # pattern_count >= 2 재발 시 promote
       last_occurrence: "2026-05-25T00:00:00Z"    # CFP-1495 PR #1505 close evacuation
       promotion_trigger: auto_blocking # pattern_count >= 2 reach 시 blocking promotion 후보
-    status: deferred-followup          # Wave 1 declaration-only — Wave 2 별 sub-Story carrier 에서 status: Active 전환
+    status: active                     # CFP-1564 Wave 2 mechanical wire 완료 (deferred-followup → active 전환): script + Python SSOT + bats 7 TC RED→GREEN + workflow self-app byte-identical land. current_tier 는 warning 유지 (ADR-060 §결정 5).
 
   - name: confluence-drift-detection
     description: |

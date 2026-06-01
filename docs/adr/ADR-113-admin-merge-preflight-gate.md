@@ -12,7 +12,7 @@ amendments: []
 amendment_log: []
 is_transitional: false
 mechanical_enforcement_actions:
-  - admin-merge-preflight-gate
+  - admin-merge-preflight-gate    # Wave 2 active (CFP-1564) — scripts/check-admin-merge-preflight.sh + scripts/lib/check_admin_merge_preflight.py + admin-merge-preflight-check.yml self-app (warning-tier). Wave 1 = declaration-only (§결정 8). status-note edit (§결정 8 Wave 2 fulfillment, 신규 normative decision 0 → ADR Amendment 불요).
 related_adrs:
   - ADR-024  # enforce_admins source + hotfix-bypass channel SSOT + Amendment 6/8 §결정 6.A bypass-as-norm-mutation chain
   - ADR-040  # Amendment 3 §결정 7.D mechanical_enforcement_actions[] frontmatter 의무 (self-application 정합)
@@ -210,7 +210,7 @@ branch naming `cfp-1495-redo` 권장 (ADR-024 cfp-NNN 정합, 간결 — `cfp-14
 
 | Wave | carrier 영역 | 후속 CFP (TBD) |
 |---|---|---|
-| **Wave 2** | mechanical wire — `scripts/check-admin-merge-preflight.sh` (3-layer self-block: pre-commit hook + pre-push hook + Orchestrator self-instrumentation) | 별 sub-Story carrier (CFP-TBD-Wave2) |
+| **Wave 2** ✅ | mechanical wire — `scripts/check-admin-merge-preflight.sh` + `scripts/lib/check_admin_merge_preflight.py` (5-step procedure SSOT) + `admin-merge-preflight-check.yml` self-app (warning-tier) + bats 7 TC RED→GREEN + 3-layer self-block (pre-commit + pre-push `.sample` advisory; 3번째 layer = playbook §3.19 Orchestrator self-instrumentation, 신규 skill 불요 — redundant) | **CFP-1564 (완료)** — evidence-registry `status: deferred-followup → active` |
 | **Wave 3** | Codex worker fail mode enum 9번째 entry (`admin_merge_preflight_skip`) + ADR-070 §결정 D1 sub-class | 별 carrier (Codex collaboration governance scope) |
 | **Wave 4** | `phase-gate-mergeable.yml` `workflow_dispatch` entry 보완 + manual re-trigger 경로 codify | 별 brainstorm carrier (Researcher hypothesis (e) follow-on) |
 | **별** | ADR-RESERVATION row 107-112 backfill (registry row gap 영역) | 별 follow-up CFP carrier (chief author scope 외 — ADR-064 §결정 5 unitary 정합) |
@@ -248,7 +248,7 @@ N/A — permanent governance ratchet (ADR-058 §결정 7 보안 ADR default pres
 
 | 우선순위 | 작업 | 영역 |
 |---|---|---|
-| Wave 2 | `scripts/check-admin-merge-preflight.sh` 3-layer mechanical wire (pre-commit / pre-push / Orchestrator instrumentation) | 별 sub-Story carrier |
+| Wave 2 ✅ | `scripts/check-admin-merge-preflight.sh` + `scripts/lib/check_admin_merge_preflight.py` + `admin-merge-preflight-check.yml` self-app + bats 7 TC + 3-layer self-block (pre-commit / pre-push `.sample` + playbook §3.19 Orchestrator instrumentation, 신규 skill 불요) — **CFP-1564 (완료)** | evidence-registry active |
 | Wave 3 | Codex worker fail mode enum 9번째 entry + ADR-070 §결정 D1 sub-class instantiation | 별 carrier (Codex governance) |
 | Wave 4 | `phase-gate-mergeable.yml` `workflow_dispatch` entry 보완 검토 (Researcher hypothesis (e)) | 별 brainstorm carrier |
 | 즉시 | CFP-1495 carrier 재진입 (§결정 7 DR procedure 활성) | post-CFP-1522 merge 직후 |
