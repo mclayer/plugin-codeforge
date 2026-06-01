@@ -2617,7 +2617,7 @@ corrects_pr: <owner>/<repo>#<N>     # 정정 대상 원 MERGED PR
 # → phase-gate-mergeable CI 가 3-조건 AND 자동 검증 → fast-pass success
 ```
 
-**consumer hub repo 화이트리스트**: dogfood default = `github.com/mclayer/codeforge-internal-docs`. consumer hub repo 가 다른 경우 `ALLOWED_HUB_REPOS` workflow env 에 추가 (`phase_gate.allowed_hub_repos[]` overlay 확장, ADR-057 정합 — 축소 불가). `docs/hotfix-playbook.md §6` 상세 참조.
+**consumer hub repo 화이트리스트**: dogfood default = `github.com/mclayer/codeforge-internal-docs`. consumer hub repo 가 다른 경우 (1) `.claude/_overlay/project.yaml` 에 `phase_gate.allowed_hub_repos[]` 로 선언 (2) codeforge-upgrade 후 `bash scripts/inject-allowed-hub-repos.sh` 실행 (idempotent, ADR-057 확장-only 정합 — 축소 불가). 자동 wire 미활성 시 manual step. `docs/hotfix-playbook.md §6` 상세 참조.
 
 **EC-2 경계**: `post-merge-fix` ≠ `hotfix:minimal` (별 경로). `hotfix:minimal` = 운영 장애 단일 파일 수정, 보안테스트 필수. `post-merge-fix` = cross-repo land_order 정정 전용, 보안 non-touch 역참조 시 보안테스트 실질 N/A.
 

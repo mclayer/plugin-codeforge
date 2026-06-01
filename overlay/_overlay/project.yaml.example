@@ -33,6 +33,15 @@ labels:
     - "<REPLACE — 프로젝트 component 2 (e.g. ui)>"
     - "<REPLACE — 프로젝트 component 3 (e.g. data)>"
 
+# Phase gate hub repo 화이트리스트 확장 (CFP-1716 / ADR-057)
+# Consumer hub repo 가 default 외 다른 경우 여기 추가.
+# Mechanism: bash scripts/inject-allowed-hub-repos.sh 실행 (idempotent, dedup, never-reduce)
+# 정책: ADR-057 확장-only (축소 금지)
+# 비활성 시 이 블록 전체 삭제 또는 주석 유지.
+# phase_gate:
+#   allowed_hub_repos:
+#     - "github.com/mclayer/mctrader-hub"  # Consumer hub repo (추가)
+
 # Workflow distribution mode (CFP-86 / consumer-guide §2c, CFP-89)
 # - "full" (Path A, default) = 7 workflow 모두 보유 (CFP-94 후 — story-section-schema.yml 추가)
 # - "degraded" (Path B) = 일부 workflow 부재, manual compensating check 의무
