@@ -6057,3 +6057,55 @@ entries:
       threshold: 3
       promotion_trigger: none
     status: warning
+
+
+  # ─── CFP-1565 — chief-author-crossref-consistency (ADR-068 Amendment 5 I-7 / ADR-060, CFP-1522 retro F-003 carrier) ───
+  - name: chief-author-crossref-consistency
+    description: |
+      CFP-1565 / ADR-068 Amendment 5 §결정 1 I-7 chief-author cross-ADR scope/fact
+      claim consistency invariant — Wave 1 declaration-only (ADR-082 §결정 6 +
+      ADR-070 §D5 retain pattern 답습). verdict field-only enforcement
+      (`chief_author_crossref_consistency_self_check_passed: bool` review-verdict-v4
+      v4.12 + `findings[].type: "chief-author-crossref-inconsistency"`).
+
+      chief author 가 ADR/doc 본문 §3/§7/§10/§11 에서 다른 ADR 의 SSOT 값
+      (scope list / count / enum / 권한 범위) 인용·단언 시 대상 ADR direct
+      Read-verify 후 cross-adr-claim-verify-annotation 3-key (cited_adr+§결정 /
+      cited_value / verify_status) 대조 의무. I-4 wording SSOT (identifier 표기) 와
+      disjoint axis (I-7 = cross-ADR factual/scope 값 SSOT 정합). I-6
+      audit-gate-pointer = pointer 실재 verify / I-7 = 인용 값 SSOT 정합.
+
+      Evidence: CFP-1522 retro F-003 P1 (ADR-113 §결정 6 `admin:repo` scope claim ↔
+      ADR-066 §결정 2 PAT 6-scope SSOT mismatch, chief 미 cross-check).
+
+      Wave 2 mechanical wire (별 sub-CFP carrier): scripts/check-chief-author-
+      crossref-consistency.sh (ADR-061) + scripts/lib + workflow yml + bats fixture
+      RED→GREEN stash proof. pattern_count >= 2 재발 시 follow-up CFP MUST promote
+      (ADR-082 §결정 6 정합).
+    detect_command: bash scripts/check-chief-author-crossref-consistency.sh  # TBD — Wave 2 sub-CFP carrier wire
+    workflow: templates/github-workflows/chief-author-crossref-consistency.yml  # TBD — Wave 2 sub-CFP carrier wire
+    current_tier: warning  # ADR-060 schema required field (deferred-followup status, tier 분류 = warning 의도)
+    bypass_label: hotfix-bypass:boundary-wording  # ADR-068 owner family 재사용 (신규 label 신설 0건, dimensional-empirical-grounding deferred entry 의 기존 label 재사용 precedent 답습)
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh  # schema doc v1.1 §3 — bypass_label 정의 시 bypass_audit_lint 의무
+    introduced_by: CFP-1565
+    introduced_date: 2026-06-01  # KST
+    owner_adr: ADR-068-Amendment-5  # declaration source — I-7 chief-author cross-ADR claim consistency
+    carrier_adr: ADR-060  # enforcement framework source
+    recurrence:
+      count: 1  # CFP-1522 retro F-003 P1 첫 occurrence (ADR-113 §결정 6 ↔ ADR-066 §결정 2 mismatch)
+      threshold: 2  # pattern_count >= 2 재발 시 Wave 2 mechanical wire warning-tier promotion MUST (ADR-082 §결정 6)
+      promotion_trigger: none  # Wave 1 = declaration only. Wave 2 별 sub-CFP merge 후 warning 전환.
+    status: deferred-followup  # Wave 1 declaration only — actual mechanical lint = 별 sub-CFP Wave 2 carrier 후 warning 전환
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-1565                              # 본 Story (declarative anchor Wave 1)
+        - CFP-528                               # ADR-068 Amendment 1 I-5 (invariant 신설 precedent)
+        - CFP-1087                              # ADR-068 Amendment 3 I-6 (invariant 신설 precedent)
+        - TBD-Wave-2-sub-CFP                    # Wave 2 mechanical wire (script + lib + workflow + bats 별 sub-CFP)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+        - cfp_1522_retro_f003_evidence  # ADR-113 §결정 6 ↔ ADR-066 §결정 2 mismatch sentinel
