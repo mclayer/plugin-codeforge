@@ -735,18 +735,48 @@ atlassian:
 
 #### Step 4 — 첫 push dry-run
 
-```bash
-# dry-run: mapping table + 3-anchor verify report (actual write 0)
-python scripts/confluence-sync-3anchor.py --dry-run --space <CONSUMER-SPACE-KEY>
+> **주의**: `scripts/confluence-sync-3anchor.py` 는 **wrapper-only** 내부 도구 — consumer 배포 자산에 포함되지 않으므로 consumer 가 직접 호출하면 안 됨. consumer 가 받는 Confluence 관련 자산은 `templates/github-workflows/` 의 워크플로우 **3종**뿐:
+> - `confluence-doc-sync.yml` — mark engine git→Confluence push (ADR-103 §결정 1)
+> - `confluence-drift-detection.yml` — 사후 3-anchor drift verify
+> - `issue-design-content-confluence-link.yml`
 
-# apply: 실제 push + 3-anchor stamp
-python scripts/confluence-sync-3anchor.py --apply --space <CONSUMER-SPACE-KEY>
-```
+**dry-run (권장 1순위 — 워크플로우 경로)**:
+
+GitHub Actions UI 에서 `confluence-doc-sync.yml` → **Run workflow** → `full_sync: false` (또는 기본값) 로 실행. 워크플로우 내부에서 mark `--dry-run` flag 가 적용된 경우 실제 Confluence 업데이트 없이 렌더링 결과만 출력함.
+
+> mark `--dry-run` flag 공식 동작: "resolve page and ancestry, show resulting HTML and exit" — 실제 Confluence write 0. mark 버전에 따라 flag 가 워크플로우에 wire 되어 있는지 확인 (`confluence-doc-sync.yml` 내 `mark` 호출 라인 참조).
+
+**apply (실제 push)**:
+
+GitHub Actions UI 에서 `confluence-doc-sync.yml` → **Run workflow** → `full_sync: true` 로 실행.
 
 dry-run 결과 검증:
 - mapping table (git path → Confluence page) 정합 확인
-- 3-anchor verify report (sha256 / version / commit SHA)
+- 3-anchor drift verify 는 `confluence-drift-detection.yml` 워크플로우 실행으로 수행 (sha256 / version / commit SHA)
 - fail 시 → ADR-101 verify-before-trust path (응답 검증 의무)
+
+#### Step 4b — non-greenfield consumer: title 정합 사전 검증 (apply 전 필수 gate)
+
+**대상**: Wave 1 도입 이전에 MCP-direct 등으로 이미 curated 제목 page 를 Confluence 에 적재한 consumer. git markdown H1 ≠ Confluence page 기존 제목 인 경우, mark `title-from-h1` 모드로 sync 하면 기존 page 를 update 하는 대신 **신규(중복) page 를 대량 생성**할 수 있음 → live space 비가역 오염.
+
+**Gate: dry-run create-vs-update 검증 통과 없이 apply 금지.**
+
+1. **판정** — dry-run 출력에서 각 page 의 처리 결과를 확인:
+   - `create` 로 잡히는 page = title drift 신호 (기존 page 와 제목이 불일치하여 신규 page 로 인식).
+   - 신규 consumer (Confluence 기존 page 없음) 는 전부 `create` 가 정상.
+   - **기존 page 가 있는 consumer 에서 `create` 가 잡히면 title 불일치 → 아래 정합 절차 필수**.
+
+2. **정합 방법 (택1, apply 전 의무)**:
+   - **(a) markdown 헤더 주입** — git markdown 파일 상단에 mark 메타데이터 헤더 추가:
+     ```markdown
+     <!-- Title: <Confluence-에-있는-기존-curated-제목> -->
+     ```
+     이렇게 하면 H1 과 무관하게 Confluence 기존 page 제목으로 page 를 찾아 update.
+   - **(b) Confluence page 제목 rename** — Confluence 에서 기존 page 제목을 git markdown H1 과 일치하도록 변경. 이후 `title-from-h1` 로 정상 update.
+
+3. **검증** — 정합 방법 적용 후 dry-run 재실행. 해당 page 가 `create` → `update` 로 바뀌면 정합 완료.
+
+**SOP gate 명시**: dry-run 에서 기존 page 가 모두 `update` 로 확인된 후에만 apply 진행. mass-duplication 발생 후 복구는 Confluence REST API 개별 삭제 필요 — 사전 차단 우선.
 
 #### Issue-only retain 영역 (ADR-111 Amendment 2 §결정 2 — consumer 동일 적용)
 
