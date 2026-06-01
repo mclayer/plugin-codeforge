@@ -215,6 +215,14 @@ amendments:
     status: applied
     ref: "## Amendment 35 + sub-scope 1-X row"
     sunset_justification: null
+  - amendment_id: 36
+    carrier_story: CFP-1613
+    date: 2026-06-01
+    sub_scope: "1-Y"
+    scope: "§결정 1 layer 1 (Orchestrator scope) sub-scope 1-Y `amendment_array_ordering_convention` 신설 — ADR frontmatter `amendments[]` + `amendment_log[]` array row-append ordering convention SSOT (hybrid: primary key amendment_id ascending + tie-break reservation_date ascending for paired-sibling concurrent reservation). 2 추가 codify: (a) sub-scope letter (1-A..1-Y) ↔ amendment_id (1..36) NOT guaranteed synchronized — reslot race decouple (CFP-1684 → Amd 31/sub-scope 1-T precedent), mapping resolution = amendment_log[] entry 의 `sub_scope` field SSOT (id↔sub-scope 동기 가정 금지, entry field 직접 read 의무) / (b) paired-sibling-race row-append decision tree 4-step ladder (pre-reservation per 1-G → collision 미발생 id ascending → collision 시 reservation_date tie-break reslot (reslotted = higher id) → reservation_date 동일 시 carrier CFP 번호 ascending final tie-break). dual-block-parity lint (sub-scope 1-Q/1-S, Amd 28/30) 는 set parity 만 검증 → 순서 axis 는 본 1-Y 가 codify (order-check 는 Wave 2 lint). axis disjoint vs sub-scope 1-S (CFP-1688 Amd 30, block convention SSOT — '어떤 block') — 1-Y = block 내부 row ordering ('어떤 순서'), 1-S sub-domain refinement. 동인 = CFP-1601 retro F-DR-1601-2 P2 (paired sibling race CFP-1559 Amd 20 ↔ CFP-1578 Amd 21 chronological-vs-id ordering ambiguity). MEDIUM Wave 1 declarative-only — mechanical wire (array-ordering lint script + workflow + bats + label-registry MINOR `hotfix-bypass:adr-amendment-array-ordering` + evidence-checks-registry entry) = CFP-1613-W2 별 sub-CFP carrier. precedent 답습 ADR-082 §결정 6 + ADR-070 §D5 + ADR-076 §결정 6 + ADR-081 §D5 + 25 prior Amendment Wave 1→Wave 2 split chain. ADR-058 §결정 5 ratchet 강화 only (sub-scope 24→25, convention codify scope 확장). ADR-064 §결정 7 (CFP-1149 Amendment 8) symmetric evidence-gated 정합. ADR-054 §결정 1 doc-only fast-path 적격 (단일 PR, scripts/tests 무변경). META-self-applied: 본 Amd 36 = sub-scope 1-Y 첫 적용 사례 — 본 carrier 가 id-ascending convention 을 자신의 amendments[] + amendment_log[] row append 에 적용 (max=35 → next-slot=36 id ascending 최하단 append, source command verify `grep -oE '^  - amendment_id: [0-9]+' docs/adr/ADR-082-*.md | tail -1` actual = amendment_id: 35 [verified])."
+    status: applied
+    ref: "## Amendment 36 + sub-scope 1-Y row"
+    sunset_justification: null
 amendment_log:
   - amendment_id: 1
     carrier_story: CFP-841
@@ -426,6 +434,12 @@ amendment_log:
     decisions_touched: ["§결정 1 layer 1 sub-scope 1-X (신설)"]
     nature: ratchet-up  # §결정 1 layer 1 sub-scope (1-A~1-W) → (1-X subagent_self_report_post_task_verify) 신설 (ADR-058 §결정 5 강화 방향 — subagent "DONE/PASS/MERGED" 보고 receive 후 critical artifact actual existence + content verify 의무 ratchet, forbid scope 축소 아님). HIGH priority pre-existing #822 (12 day) carrier. mctrader MCT-189 + MCT-190 evidence N=2 reach (2026-05-17).
     note: "CFP-822 carrier — HIGH priority 12-day pre-existing Issue. mctrader-hub MCT-189/MCT-190 origin evidence (2026-05-17). Mandate: Orchestrator 가 subagent (lane PL / chief author / deputy / 4-tuple sub-tuple) 'DONE / success / PASS / MERGED' 보고 receive 후 critical artifact (ADR / Story / RETRO / scope_manifest / spec / plan / code FIX) 의 actual existence + content verify-before-trust 의무. 6종 critical artifact category (closed-enum): (1) ARTIFACT-1 ADR (docs/adr/ADR-*.md) / (2) ARTIFACT-2 Story (Story file path) / (3) ARTIFACT-3 RETRO (retro file) / (4) ARTIFACT-4 scope_manifest (scope_manifests/*.yaml) / (5) ARTIFACT-5 spec / plan / (6) ARTIFACT-6 code FIX (production source file). Verify methods 5종: ls <path> + Read <path> (line 1-N) + wc -l + grep <expected keyword> + git status --short <path>. axis disjoint vs sub-scope 1-W (Amd 34 Orchestrator → subagent pre-spawn fact verify, Orchestrator-side pre-spawn cadence) — 1-X = subagent → Orchestrator post-task verify (Orchestrator-side post-task cadence, claim-receive trust gate). paired sibling ADR-073 Amendment 19 (transition trigger 17번째 entry `post_subagent_task_completion`, axis 동형 sub-domain cadence codify). ADR-064 §결정 5 CFP scope unitary (2 paired Amendment 단일 carrier 정합). Wave 1 declarative-only — Wave 2 mechanical wire (lint script + workflow + bats + label-registry MINOR `hotfix-bypass:subagent-self-report-post-task-verify` + evidence-checks-registry entry) = CFP-822-W2 별 sub-CFP carrier. precedent 답습 ADR-082 §결정 6 + ADR-070 §D5 + ADR-076 §결정 6 + ADR-081 §D5 + 24 prior Amendment Wave 1→Wave 2 split chain. 본 carrier scope = wrapper-actionable §2 only (#822 §1 superpowers:subagent-driven-development implementer-prompt.md external claude-plugins-official + §3 mctrader-hub ADR-032 external defer). META-self-applied: 본 carrier Orchestrator 의 본 ArchitectAgent spawn 자체가 1-X 첫 적용 사례 — Orchestrator 가 ArchitectAgent 'DONE' 보고 receive 후 5 file actual edit verify (ls + diff + Read) 의무. dual-block parity: 본 Amd 35 의 amendments[] + amendment_log[] + body ## Amendment 35 3-block parity 보존 (Amd 32 sub-scope 1-U dual-block gate self-application 정합)."
+  - amendment_id: 36
+    carrier_story: CFP-1613
+    date: 2026-06-01  # KST per ADR-079 §결정 2
+    decisions_touched: ["§결정 1 layer 1 sub-scope 1-Y (신설)"]
+    nature: ratchet-up  # §결정 1 layer 1 sub-scope (1-A~1-X) → (1-Y amendment_array_ordering_convention) 신설 (ADR-058 §결정 5 강화 방향 — ADR frontmatter amendments[] + amendment_log[] array row-append ordering convention codify, forbid scope 축소 아님). MEDIUM Wave 1 declarative. CFP-1601 retro F-DR-1601-2 P2 paired-sibling-race ordering ambiguity 동인.
+    note: "CFP-1613 carrier — MEDIUM Wave 1 declarative. 동인 = CFP-1601 retro F-DR-1601-2 P2 (paired sibling race CFP-1559 Amd 20 ↔ CFP-1578 Amd 21 chronological-vs-id ordering ambiguity). Mandate: ADR frontmatter `amendments[]` + `amendment_log[]` array row-append ordering convention SSOT = hybrid (primary key amendment_id ascending + tie-break reservation_date ascending for paired-sibling concurrent reservation). 2 추가 codify: (a) sub-scope letter (1-A..1-Y) ↔ amendment_id (1..36) NOT guaranteed synchronized — reslot race decouple (CFP-1684 → Amd 31/sub-scope 1-T precedent), mapping resolution = amendment_log[] entry `sub_scope` field SSOT (id↔sub-scope 동기 가정 금지, entry field 직접 read 의무) / (b) paired-sibling-race row-append decision tree 4-step ladder (pre-reservation per sub-scope 1-G → collision 미발생 시 id ascending → collision 시 reservation_date tie-break reslot (reslotted entry = higher id) → reservation_date 동일 시 carrier CFP 번호 ascending final tie-break). axis disjoint vs sub-scope 1-S (Amd 30 CFP-1688, block convention SSOT single-block vs dual-block — '어떤 block') — 1-Y = block 내부 row ordering ('어떤 순서'), 1-S sub-domain refinement. dual-block-parity lint (sub-scope 1-Q/1-S, Amd 28/30) 는 set parity (amendment_id 집합) 만 검증 → 순서 axis 는 본 1-Y codify (order-check Wave 2 lint). paired sibling ADR-073 Amendment 不要 (sub-scope 1-Y axis disjoint complement — array ordering convention, Orchestrator verify-before-assert axis 와 다름, sub-scope 1-S/1-V precedent 답습). Wave 1 declarative-only — Wave 2 mechanical wire (scripts/lib/check_adr_amendment_array_ordering.py + templates/github-workflows/adr-amendment-array-ordering.yml + bats + label-registry MINOR `hotfix-bypass:adr-amendment-array-ordering` + evidence-checks-registry entry) = CFP-1613-W2 별 sub-CFP carrier. precedent 답습 ADR-082 §결정 6 + ADR-070 §D5 + ADR-076 §결정 6 + ADR-081 §D5 + 25 prior Amendment Wave 1→Wave 2 split chain. ADR-064 §결정 5 CFP scope unitary. ADR-054 §결정 1 doc-only fast-path 적격 (단일 PR, scripts/tests 무변경). META-self-applied: 본 Amd 36 = sub-scope 1-Y 첫 적용 사례 — 본 carrier 가 id-ascending convention 을 자신의 amendments[] + amendment_log[] row append 에 적용 (max=35 → next-slot=36 id ascending 최하단 append). source command verify `grep -oE '^  - amendment_id: [0-9]+' docs/adr/ADR-082-write-time-self-write-verification-mandate.md | tail -1` actual = `amendment_id: 35` (Amd 35 CFP-822 점유) → 정확 next-slot for CFP-1613 = 36 [verified]. dual-block parity: 본 Amd 36 의 amendments[] + amendment_log[] + body ## Amendment 36 3-block parity 보존 (Amd 32 sub-scope 1-U dual-block gate self-application 정합)."
 related_stories:
   - CFP-776  # carrier (super-class 통합 결정 — escalation_action escalate_user)
   - CFP-841  # Amendment 1 carrier (§결정 6 behavioral→mechanical 전환 후속 carrier)
@@ -504,6 +518,7 @@ related_stories:
   - CFP-1755 # Amendment 33 sentinel evidence #3 (§6 reserved cluster anchor 3rd — CFP-1735 + CFP-1753 + self §4.4 통합)
   - CFP-1842 # Amendment 34 — sub-scope 1-W `orchestrator_spawn_prompt_fact_verify_before_embed` (Orchestrator-side spawn prompt fact discipline, paired ADR-073 Amd 18). Mandatory ADR-045 §D-9 escalation source — pattern_count 3 reach (CFP-1808 F-005 + CFP-1807 F-002 + META self-evidence).
   - CFP-822  # Amendment 35 — sub-scope 1-X `subagent_self_report_post_task_verify` (Orchestrator-side post-task claim verify discipline, paired ADR-073 Amd 19). HIGH priority 12-day pre-existing #822 carrier. mctrader MCT-189 + MCT-190 origin evidence N=2 reach (2026-05-17, subagent SUCCESS claim 후 actual file 부재 super-class). Wave 1 declarative-only (Wave 2 = CFP-822-W2 별 sub-CFP carrier). 본 carrier scope = wrapper-actionable §2 only (#822 §1 superpowers external + §3 mctrader-hub external defer).
+  - CFP-1613 # Amendment 36 — sub-scope 1-Y `amendment_array_ordering_convention` (ADR frontmatter amendments[] + amendment_log[] array row-append ordering SSOT, hybrid: id ascending + reservation_date tie-break). MEDIUM Wave 1 declarative. CFP-1601 retro F-DR-1601-2 P2 paired-sibling-race ordering ambiguity 동인 (CFP-1559 Amd 20 ↔ CFP-1578 Amd 21). sub-scope letter ↔ amendment_id NOT synchronized 명문화 (reslot decouple, CFP-1684 → Amd 31/1-T precedent) + paired-sibling-race row-append decision tree 4-step. axis disjoint vs sub-scope 1-S (block convention) — 1-S sub-domain refinement. Wave 2 = CFP-1613-W2 별 sub-CFP carrier.
 related_adrs:
   - ADR-073  # Orchestrator cross-repo state / assumption verify (disjoint 보완 — Orchestrator 행위 한정)
   - ADR-070  # Codex external worker output verify (disjoint 보완 — 외부 worker output 한정)
@@ -3147,3 +3162,82 @@ is_transitional: false 보존. Amd 35 = 강화 방향 only (sub-scope 23→24 ra
 - 본 carrier scope = wrapper-actionable §2 only:
   - #822 §1 = `superpowers:subagent-driven-development` skill `implementer-prompt.md` (external claude-plugins-official) — defer (별 upstream PR)
   - #822 §3 = mctrader-hub ADR-032 amendment (external) — defer (별 consumer PR)
+
+## Amendment 36 (2026-06-01 KST, CFP-1613) — sub-scope 1-Y `amendment_array_ordering_convention` (frontmatter amendments[] + amendment_log[] array ordering SSOT, hybrid: id ascending + reservation_date tie-break)
+
+본 Amendment 는 §결정 1 layer 1 (Orchestrator scope) sub-scope 1-Y 신설 — ADR frontmatter `amendments[]` + `amendment_log[]` array 의 **row-append ordering convention SSOT**. ADR-058 §결정 5 ratchet 강화 only (sub-scope 24→25 — convention codify, forbid scope 축소 0건). MEDIUM Wave 1 declarative. 동인 = CFP-1601 retro F-DR-1601-2 P2 (paired sibling race CFP-1559 Amd 20 ↔ CFP-1578 Amd 21 chronological-vs-id ordering ambiguity).
+
+### Context
+
+Amendment 30 (sub-scope 1-S) 가 ADR frontmatter **block convention** (single-block vs dual-block) 을 SSOT 화했으나, array **내부 row ordering convention** (어떤 순서로 row 를 append 하는가) 은 미codify 상태였다. CFP-1601 retro F-DR-1601-2 P2 에서 paired-sibling race (CFP-1559 Amd 20 ↔ CFP-1578 Amd 21) 동시 reservation 시 **chronological (reservation_date) vs id (amendment_id) ordering 모호성** 이 surface — 두 CFP 가 동시에 slot 을 예약하면 append 순서가 작성자별로 갈려 frontmatter array 가 비결정적 순서로 자란다. dual-block-parity lint (sub-scope 1-Q/1-S, Amendment 28/30) 는 **set parity** (amendment_id 집합 일치) 만 검증하고 **순서** 는 검증하지 않으므로, 순서 불일치는 lint-silent drift 로 누적된다.
+
+anchor_id = `amendment_array_ordering_convention` / root_cause_class = `frontmatter-array-order-nondeterministic`. ADR-082 §결정 1 layer 1 sub-scope 1-Y (disjoint from 1-A through 1-X — array ordering convention axis. 1-S block convention 의 sub-domain refinement: 1-S = "어떤 block 을 쓰는가" / 1-Y = "그 array 안 row 를 어떤 순서로 쓰는가").
+
+### §A. Ordering convention SSOT (hybrid — id ascending + reservation_date tie-break)
+
+`amendments[]` + `amendment_log[]` 양 array 모두 다음 ordering 의무:
+
+1. **Primary key — `amendment_id` ascending** (1, 2, 3, … N). 양 block 모두 amendment_id 오름차순으로 row append. 신규 amendment = max amendment_id + 1 = array 최하단 append (verify-before-trust source command = `grep -oE '^  - amendment_id: [0-9]+' <adr> | tail -1`, sub-scope 1-K precision rule 정합).
+2. **Tie-break — `reservation_date` ascending** (paired-sibling-race 한정). 두 CFP 가 동일 시점 concurrent reservation 으로 amendment_id 충돌 시, 먼저 reserve 한 (이른 `reservation_date`) CFP 가 낮은 amendment_id 점유. reslot 발생 시 §B decision tree 적용.
+
+Primary key (id ascending) 가 거의 모든 경우를 cover — reservation_date tie-break 는 concurrent collision (paired-sibling race) edge case 한정 발동.
+
+### §B. sub-scope letter ↔ amendment_id mapping (NOT guaranteed synchronized)
+
+sub-scope letter (1-A … 1-Y) 와 amendment_id (1 … 36) 는 **동기화 보장 안 됨** — reslot race 가 둘을 decouple 한다.
+
+**Evidence**: CFP-1684 가 collision 후 reslot 되어 **Amd 31 / sub-scope 1-T** 가 됐다 (CFP-1688 Amd 30 + sub-scope 1-S slot collision reslot — Amendment 31 body heading 명시). 즉 amendment_id 30↔31 사이 sub-scope 가 1-S↔1-T 로 흘렀으나, 항상 `amendment_id N ⇒ sub-scope = N번째 letter` 식 직접 매핑은 성립 안 한다 (초기 Amendment 1-7 은 §결정 6 등 layer-level touch 로 sub-scope letter 미부여 — sub-scope letter 는 1-A 부터 layer 1 Orchestrator scope sub-scope 도입 후 sequential).
+
+**읽는 법 (mapping resolution)**: `amendment_log[]` entry 가 **both** field 를 carry 한다 — `amendment_id` (정수 slot) + `sub_scope` (예 `"1-W"`) + `ref` (예 `"## Amendment 34 + sub-scope 1-W row"`). mapping 확인 시 **amendment_log[] entry 의 `sub_scope` field 가 SSOT** (body heading 의 sub-scope 표기는 human-readable mirror). amendment_id ↔ sub-scope 동기 가정 금지 — entry field 직접 read 의무 (verify-before-trust 정합).
+
+### §C. paired-sibling-race row-append decision tree
+
+두 CFP 가 concurrent 하게 amendment slot 을 예약할 때 (paired-sibling race) row-append ordering ladder:
+
+1. **각 CFP 가 spawn 직전 ADR-RESERVATION `amendments_reserved[]` row pre-append** (sub-scope 1-G strict pre-reservation mandate 정합) + spawn prompt `pre_reserved_amendment_slots: [{adr, amendment_id}]` field 보유.
+2. **collision 미발생 (순차 reserve)**: 먼저 reserve = 낮은 amendment_id (max+1), 나중 reserve = 그 다음 (max+2). id ascending append. 정상 case.
+3. **collision 발생 (동일 max+1 을 둘이 동시 claim)**: `reservation_date` tie-break — 이른 reservation_date CFP 가 max+1 점유, 늦은 CFP 는 **reslot** (max+2 로 이동, 즉 reslotted entry 가 더 높은 id 점유). reslot 된 CFP 의 sub-scope letter 도 그에 맞춰 sequential 재배정 (CFP-1684 → Amd 31/1-T precedent).
+4. **reservation_date 동일 (분 단위 충돌)**: carrier_story CFP 번호 ascending 을 final tie-break (낮은 CFP 번호 = 낮은 amendment_id). deterministic 보장.
+
+reslot 후 commit 직전 **재verify 의무** (sub-scope 1-K Step 1 source command + sub-scope 1-V execution context): `git fetch origin main` + `grep -oE '^  - amendment_id: [0-9]+' <adr> | tail -1` actual next-slot 재확인 후 최종 row append.
+
+### §D. Wave 1 declarative-only — Wave 2 별 sub-CFP carrier
+
+`mechanical_enforcement_actions[]` 신규 entry 0 (convention codify — array 순서 lint 는 별 sub-CFP). Wave 2 carrier (CFP-1613-W2 reserved, 재발 시 promote):
+- `scripts/lib/check_adr_amendment_array_ordering.py` lint (amendment_id ascending 검증 — dual-block-parity lint 의 set-parity 를 order-parity 로 확장하는 sub-domain)
+- `templates/github-workflows/adr-amendment-array-ordering.yml` workflow (declarative anchor)
+- bats fixture (id-ascending PASS / out-of-order WARNING / reslot tie-break)
+- `docs/evidence-checks-registry.yaml` warning-tier entry + `hotfix-bypass:adr-amendment-array-ordering` family member
+
+precedent 25-instance chain Wave 1→Wave 2 split established. pattern_count ≥ 2 추가 reach 시 promote.
+
+### §E. Disjoint axis cross-ref
+
+- ADR-082 sub-scope 1-S (CFP-1688, Amendment 30) — ADR frontmatter **block convention** SSOT (single-block vs dual-block, "어떤 block 을 쓰는가"). 1-Y = block 내부 **row ordering** ("그 array row 를 어떤 순서로"). 1-Y 는 1-S 의 sub-domain refinement (block convention → row ordering convention).
+- ADR-082 sub-scope 1-Q (CFP-1648, Amendment 28) — dual-block parity **set** 검증 (amendment_id 집합 일치). 1-Y = **order** convention (set parity 가 verify 안 하는 순서 axis). lint 신설 시 1-Q sub-domain 확장.
+- ADR-082 sub-scope 1-G (CFP-1435, Amendment 17) — amendment-slot strict pre-reservation mandate. 1-Y §C decision tree 가 1-G pre-reservation 을 paired-race ordering ladder 로 확장 (pre-reservation 후 collision 시 reslot rule).
+- ADR-082 sub-scope 1-K (CFP-1601, Amendment 22) — numeric claim source command precision. 1-Y next-slot 계산 (`grep … | tail -1`) 이 1-K source command rule 직접 재사용.
+- ADR-058 §결정 5 — sunset_justification N/A ratchet-up (convention codify, scope 축소 0). ADR-064 §결정 7 (CFP-1149 Amendment 8) symmetric evidence-gated 정합 (강화 방향, pattern evidence = CFP-1601 retro F-DR-1601-2 P2).
+
+### §F. META self-application (recursive dogfooding)
+
+본 Amendment 36 = sub-scope 1-Y 첫 적용 사례 = self:
+- 본 carrier 가 §A id-ascending convention 을 본 Amendment 자신의 row append 에 적용 — `amendments[]` + `amendment_log[]` 양 block 모두 amendment_id 36 을 max(35) + 1 = 최하단 append (id ascending 준수).
+- verify-before-trust: spawn 직전 `grep -oE '^  - amendment_id: [0-9]+' docs/adr/ADR-082-*.md | tail -1` actual = `amendment_id: 35` → next-slot = 36 `[verified]` (sub-scope 1-K source command + 1-V execution context 정합).
+- dual-block parity: 본 Amd 36 의 amendments[] + amendment_log[] + body `## Amendment 36` 3-block parity 보존 (Amd 32 sub-scope 1-U dual-block gate self-application 정합).
+- sub-scope letter = 1-Y (1-X = CFP-822 Amd 35 다음 sequential — amendment_id 36 ↔ sub-scope 1-Y 동기, 단 §B 에 따라 동기는 보장이 아닌 본 case 의 사실).
+
+### §G. sunset_justification N/A 정당
+
+is_transitional: false 보존. Amd 36 = 강화 방향 only (sub-scope 24→25 ratchet 확장 + array ordering convention codify). ADR-058 §결정 5 sunset_justification ratchet 통과 (forbid scope 확장, convention 명문화). ADR-064 §self-application top-down ratchet 정합.
+
+### §H. Related
+
+- CFP-1613 carrier Story (`<internal-docs>/plugin-codeforge/stories/CFP-1613.md`)
+- CFP-1601 retro F-DR-1601-2 P2 — paired-sibling race ordering ambiguity origin (CFP-1559 Amd 20 ↔ CFP-1578 Amd 21 chronological-vs-id)
+- ADR-082 Amendment 30 (sub-scope 1-S) — block convention SSOT (본 1-Y 의 parent axis)
+- ADR-082 Amendment 28 (sub-scope 1-Q) — dual-block parity set-check (order-check 미포함 — 1-Y 가 보완)
+- ADR-082 Amendment 17 (sub-scope 1-G) — amendment-slot strict pre-reservation (§C decision tree base)
+- reslot precedent: CFP-1684 → Amd 31 / sub-scope 1-T (CFP-1688 Amd 30 / 1-S collision reslot)
+- origin Issue: mclayer/plugin-codeforge#1613 (MEDIUM, Wave 1 declarative)
+- ADR-054 §결정 1 — doc-only fast-path 적격 (단일 PR, scripts/tests 무변경)
