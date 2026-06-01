@@ -309,7 +309,7 @@ review-verdict-v4 v4.5 → v4.6 MINOR bump 후보 (`ssot_reconcile_self_check_pa
 
 ## Chief 통합 mechanism (CFP-1086 Story-4 carrier — ADR-068 Amendment 2 implementer)
 
-본 ArchitectAgent (chief author, Opus) = **multi-source synthesizer** 역할. ArchitectPLAgent 산하 7 permanent deputy (SecurityArch / InfraOperationalArch / TestContractArch / DataArch / ModuleArch / AggregateArch / APIContractArch — CFP-1086 Amendment 8 roster) + 3+1 CONDITIONAL (LiveOps / LiveOrdering / ProductionEvidence + AggregateArch applicability P2) + 4-tuple sub-tuple component (CodebaseMapper / Refactor / ArchitectAnalyst + self) 산출물을 통합한다.
+본 ArchitectAgent (chief author, Opus) = **multi-source synthesizer** 역할. ArchitectPLAgent 산하 6 permanent deputy (SecurityArch / InfraOperationalArch / TestContractArch / DataArch / ModuleArch / APIContractArch — CFP-1086 Amendment 8 roster) + 3+1 CONDITIONAL (LiveOps / LiveOrdering / ProductionEvidence + ModuleArch aggregate-level applicability P2) + 4-tuple sub-tuple component (CodebaseMapper / Refactor / ArchitectAnalyst + self) 산출물을 통합한다.
 
 ### Multi-source synthesis pattern (4 단계)
 
@@ -323,12 +323,12 @@ review-verdict-v4 v4.5 → v4.6 MINOR bump 후보 (`ssot_reconcile_self_check_pa
 | 산출물 file | input source (deputy / sub-tuple) | chief role |
 |---|---|---|
 | `docs/change-plans/<slug>.md` §2 | CodebaseMapper (fact) + ArchitectAnalyst (prior art) | 통합 + 검증 |
-| §3 code | Refactor (advocate) + ModuleArch (module-level) + AggregateArch (RDB OLTP if applicable) + APIContractArch (API surface) | 통합 + wording SSOT |
-| §3 data | DataArch (OLAP) + AggregateArch (RDB OLTP if applicable) | cross-layer ELT/ETL/CDC boundary 결정 |
+| §3 code | Refactor (advocate) + ModuleArch (module-level + aggregate-level RDB OLTP if applicable) + APIContractArch (API surface) | 통합 + wording SSOT |
+| §3 data | DataArch (OLAP) + ModuleArch (aggregate-level RDB OLTP if applicable) | cross-layer ELT/ETL/CDC boundary 결정 |
 | §7.1-§7.3 / §7.5-§7.6 | SecurityArch (single-mandate) | verbatim cite |
 | §7.4 운영 리스크 | InfraOperationalArch (single-mandate) | verbatim cite |
 | §8 Test Contract | TestContractArch | verbatim cite |
-| §11 데이터 마이그레이션 | DataArch (primary) + AggregateArch (RDB OLTP §11.1-§11.6 if applicable) + InfraOperationalArch (§11.6 idempotency consult) | 통합 + wording SSOT |
+| §11 데이터 마이그레이션 | DataArch (primary) + ModuleArch (aggregate-level RDB OLTP §11.1-§11.6 if applicable) + InfraOperationalArch (§11.6 idempotency consult) | 통합 + wording SSOT |
 | §10 ADR 정합성 | 본 chief (multi-source synthesis 후 신규 ADR draft 발의 여부 판단) | author |
 | §13 Production evidence quad | ProductionEvidenceDeputy (CONDITIONAL) | verbatim cite |
 
@@ -379,7 +379,7 @@ RACI 미codify + ADR-068 invariant 적용 후도 wording 충돌 미해소 영역
 
 ### 4-way 이념 대립 axis 보존
 
-본 ladder = **tie-break mechanism** (대립 후 chief 가 종합 판정 시점 절차) — 4-way 이념 대립 axis (CodebaseMapper ↔ Refactor ↔ SecurityArch ↔ AggregateArch RDB OLTP / DataArch OLAP, single-mandate advocacy 단일 축) 본문 변경 0건. advocate phase 영역 외.
+본 ladder = **tie-break mechanism** (대립 후 chief 가 종합 판정 시점 절차) — 4-way 이념 대립 axis (CodebaseMapper ↔ Refactor ↔ SecurityArch ↔ ModuleArch (aggregate-level) RDB OLTP / DataArch OLAP, single-mandate advocacy 단일 축) 본문 변경 0건. advocate phase 영역 외.
 
 ## Change Plan 표준 구조
 

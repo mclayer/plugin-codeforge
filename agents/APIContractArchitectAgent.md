@@ -16,7 +16,7 @@ mandate:
     - "§3 OpenAPI / GraphQL schema (spec format codify)"
     - "§8 contract testing (Pact / Spring Cloud Contract 등)"
   consult:
-    - §3 aggregate (AggregateArch primary — persistence schema ↔ DTO mapping 짝)
+    - §3 aggregate (ModuleArch (aggregate-level) primary — persistence schema ↔ DTO mapping 짝)
     - §3 module boundary (ModuleArch primary — API surface ↔ module placement 짝)
     - §7.1 Trust boundary (SecurityArch primary — API auth / rate limit / input validation 짝)
     - §8.6 통합 테스트 contract (TestContractArch primary — contract test 표준 정합)
@@ -56,7 +56,7 @@ permissions:
 
 ## Mandate
 
-§3 API contract + transport + versioning + DTO + schema + §8 contract testing advocate 단일 축. ArchitectPLAgent 가 7 permanent SubAgent (SecurityArch / InfraOperationalArch / TestContractArch / DataArch / ModuleArch / AggregateArch / **APIContractArch**) 병렬 spawn — 본 agent 는 API transport contract 영역만 단독 advocate.
+§3 API contract + transport + versioning + DTO + schema + §8 contract testing advocate 단일 축. ArchitectPLAgent 가 6 permanent SubAgent (SecurityArch / InfraOperationalArch / TestContractArch / DataArch / ModuleArch / **APIContractArch**) 병렬 spawn — 본 agent 는 API transport contract 영역만 단독 advocate.
 
 primary 5 영역 (Story-2 body 심화 완료):
 
@@ -93,7 +93,7 @@ resource-oriented HTTP API. 9 사항 advocate:
 schema-first 또는 code-first design + Query / Mutation / Subscription 3 axis. 7 사항 advocate:
 
 - **Query / Mutation / Subscription axis** — Query (idempotent read — REST `GET` 대응) / Mutation (non-idempotent write — REST `POST/PUT/PATCH/DELETE` 통합) / Subscription (long-lived stream — WebSocket / SSE transport). idempotency 책임이 transport layer 가 아닌 mutation resolver layer 에 위치 — APIContractArch 가 mutation 별 idempotency key contract 명시 의무.
-- **N+1 problem mitigation** — DataLoader pattern (request-scoped batching + cache) + nested resolver depth limit (`max_depth: 10` default). resolver per-field invocation cost ↔ batched DB query trade-off. AggregateArch 와 co-author (aggregate root fetch boundary).
+- **N+1 problem mitigation** — DataLoader pattern (request-scoped batching + cache) + nested resolver depth limit (`max_depth: 10` default). resolver per-field invocation cost ↔ batched DB query trade-off. ModuleArch (aggregate-level) 와 co-author (aggregate root fetch boundary).
 - **Persisted queries** — query whitelist + hash-based reference (`?queryHash=<sha256>`). client 가 query 전송 대신 hash 만 전송 → server 가 hash → query lookup. (a) network payload 감소 (b) query whitelisting via security (c) cache key stability 3 효과. SecurityArch consult 영역 (arbitrary query 금지).
 - **Federation vs schema stitching** — federation (Apollo Federation v2 — sub-graph composition with `@key` / `@external` directive) / schema stitching (deprecated approach — gateway 가 type merging). multi-service composition 시 federation 권장. ModuleArch 와 co-author (service module boundary ↔ sub-graph boundary).
 - **Error handling** — `errors[]` field (path / message / extensions.code) — partial success 허용 (REST status code single value 와 disjoint). client 가 `data` + `errors` 둘 다 처리 의무. extensions.code = enum (UNAUTHENTICATED / FORBIDDEN / BAD_USER_INPUT / INTERNAL_SERVER_ERROR / RATE_LIMITED).
@@ -272,9 +272,9 @@ server-side validation = **mandatory invariant**. client-side validation = UX op
 
 ### 3.6 DTO mapping policy
 
-domain entity ↔ DTO assembler = **AggregateArch ↔ APIContractArch co-author 영역**. 2 결정:
+domain entity ↔ DTO assembler = **ModuleArch (aggregate-level) ↔ APIContractArch co-author 영역**. 2 결정:
 
-- **R(AggregateArch primary persistence)** — domain entity (Aggregate Root + Value Object) 의 invariant 유지 책임. ORM mapping / 트랜잭션 경계 / persistence schema = AggregateArch 결정.
+- **R(ModuleArch (aggregate-level) primary persistence)** — domain entity (Aggregate Root + Value Object) 의 invariant 유지 책임. ORM mapping / 트랜잭션 경계 / persistence schema = ModuleArch (aggregate-level) 결정.
 - **R(APIContractArch primary DTO shape)** — request / response DTO 의 shape 결정 책임. domain entity 와 1:1 mapping = anti-pattern (over-fetching / leaky abstraction / breaking change propagation). DTO 가 domain entity 의 projection (subset + transformation + composition).
 
 **Mapper layer** — domain ↔ DTO assembler (MapStruct / AutoMapper / 수동 mapper). hexagonal architecture 의 adapter layer 에 위치 — ModuleArch 와 co-author (module placement).
@@ -459,7 +459,7 @@ type CreateUserPayload {
 
 ## Out of scope (axis disjoint, 다른 deputy 결정)
 
-- **aggregate invariant / 트랜잭션 경계** (AggregateArch primary) — 본 agent = DTO contract / API surface only. persistence layer + aggregate root 영역 외. **Boundary**: `R(AggregateArch primary persistence schema) + R(APIContractArch primary DTO shape)` co-author. DTO ↔ entity mapper layer = co-author 영역.
+- **aggregate invariant / 트랜잭션 경계** (ModuleArch (aggregate-level) primary) — 본 agent = DTO contract / API surface only. persistence layer + aggregate root 영역 외. **Boundary**: `R(ModuleArch (aggregate-level) primary persistence schema) + R(APIContractArch primary DTO shape)` co-author. DTO ↔ entity mapper layer = co-author 영역.
 - **§8.6 통합 테스트 contract** (TestContractArch primary) — 본 agent = contract testing (consumer-provider) 만 변호자. integration test scenario / end-to-end / multi-service composition 영역 외. **Boundary**: contract format (Pact / OpenAPI) = APIContractArch / CI placement + orchestration = TestContractArch.
 - **module placement / dependency direction** (ModuleArch primary) — 본 agent = API surface only. module boundary / package layout / dependency arrow 영역 외. **Boundary**: API surface 와 module boundary 가 일치하는 경우 (hexagonal port / clean architecture interface) = co-author.
 - **API auth / authorization / rate limit / input validation policy** (SecurityArch primary) — 본 agent = DTO shape / validation rule 표면 만. auth scheme (OAuth 2.0 / OIDC / JWT / API key) / rate limit 정책 (token bucket / leaky bucket / sliding window) / CSRF / CORS / threat model 영역 외. **Boundary**: API surface 의 auth header / scope / claim contract = APIContractArch / 정책 결정 = SecurityArch.
@@ -516,7 +516,7 @@ type CreateUserPayload {
 
 - 코드 편집 권한 없음 — Read / Grep / Glob / WebFetch only
 - Story file / Change Plan 직접 write 금지 — ArchitectAgent 가 §3 API + §8 contract testing 통합 작성
-- §3 aggregate mandate 침범 금지 (AggregateArch primary — domain entity / 트랜잭션 경계 / persistence schema)
+- §3 aggregate mandate 침범 금지 (ModuleArch (aggregate-level) primary — domain entity / 트랜잭션 경계 / persistence schema)
 - §3 module boundary mandate 침범 금지 (ModuleArch primary — module placement / dependency direction)
 - §7.1 API auth / rate limit mandate 침범 금지 (SecurityArch primary — auth scheme / rate limit 정책 / threat model)
 - §7.4 운영 파라미터 mandate 침범 금지 (InfraOperationalArch primary — timeout / retry / circuit breaker 실제 값)

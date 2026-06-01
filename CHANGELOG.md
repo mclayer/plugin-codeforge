@@ -2,6 +2,17 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.21.3] - 2026-06-01
+
+### Changed (CFP-1141 — AggregateArch deprecate sibling cross-ref cascade 정정)
+
+CFP-1126 (ADR-042 Amendment 10 — AggregateArchitectAgent deprecate + ModuleArchitectAgent boundary axis 통합 흡수) 의 deferred follow-up. sibling agent file 3종 안 stale `AggregateArch` (current actor) 참조를 canonical `ModuleArch (aggregate-level)` 로 정정 + permanent deputy roster `7 → 6` 정정:
+- `agents/APIContractArchitectAgent.md` — roster 7→6 + AggregateArch primary/co-author/제약 → ModuleArch (aggregate-level)
+- `agents/DataArchitectAgent.md` — roster 7→6 + mandate 이동 기록(❌ entity/aggregate/DB schema/persistence/데이터 흐름) + cross-layer co-author → ModuleArch (aggregate-level)
+- `agents/ArchitectAgent.md` — §3/§11 RACI row + 3+1 CONDITIONAL applicability + 4-way 이념 대립 axis actor → ModuleArch (aggregate-level)
+
+RACI 4→3 column 재편은 CFP-1168 (0.21.1) 에서 이미 완료 — 본 PR 무관. plugin.json description(frozen append-log)·marketplace 는 별 mirrored-field 변경 없음(version PATCH only). PATCH bump (ADR-037 (a) agent file minor edit). doc-only fast-path ADR-054. marketplace atomic sync = version mirror sibling PR 의무 (ADR-063 §결정 5).
+
 ## [0.21.2] - 2026-05-30
 
 ### Changed (CFP-1845 follow-up — agent model 핀 → 별칭 전환)
