@@ -206,6 +206,10 @@ findings:
 
 CFP-604 Phase 2 CodeReview Iter 1 = LOCAL_AUTHOR `check-version-bump-atomic.sh:76` jq fallback unreachable catch. FIX iter 2 적용 후 CI 에서 REMOTE_AUTHOR `check-version-bump-atomic.sh:213` 동일 root cause (jq object/scalar handling) site 미catch 발견 → continuation commit `85b6042` 추가 필요. `local_remote` pattern_type parallel-site grep 미적용 결함.
 
+## 추가 체크 항목 (CFP-1565 / ADR-068 I-7)
+
+- **I-7 chief-author cross-ADR scope/fact claim consistency** (impl/doc cross-validate 관점) — impl / doc 본문 안 다른 ADR 의 scope / enum / count / 권한 인용 값이 대상 ADR 의 실제 SSOT 와 mismatch 시 finding emit (severity P1, type `"chief-author-crossref-inconsistency"`, review-verdict-v4 v4.12). DesignReviewPL 설계 문서 감사 검증과 dual cross-validate (ADR-068 §결정 2 Tier C). I-4 wording SSOT (identifier 표기 동기화) 와 disjoint axis — I-7 = cross-ADR factual/scope 값 의 SSOT 정합. dedup: 같은 `anchor_id` 양 lane finding 시 severity 높은 쪽 채택.
+
 ## 보고 형식 추가 (base §5 외 lane-specific)
 
 - PASS: `다음 단계: Orchestrator가 TestAgent 스폰 (구현 테스트) → 이후 SecurityTestPL 스폰 (보안 테스트)`

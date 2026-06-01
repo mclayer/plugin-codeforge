@@ -323,6 +323,26 @@ Violation finding type: `boundary-completeness` (review-verdict-v4 v4.3 `finding
 - Severity default = P1 (empirical-source 누락이 SLA 위반 / accuracy regression 으로 전파 시 P0 가능)
 - ADR-068 §결정 2 Amendment 1: ArchitectAgent 는 `dimensional_empirical_self_check_passed: bool` emit (verdict packet, review-verdict-v4 v4.4), DesignReview / CodeReview PL 은 `findings[].type: "dimensional-empirical-gap"` 로 cross-validate — boundary-completeness dual-binding 과 동일 패턴
 
+### I-7 Chief-author cross-ADR scope/fact claim consistency (Amendment 5 — CFP-1565, 2026-06-01)
+
+**I-7 (Chief-author cross-ADR scope/fact claim consistency)**: chief author 가 ADR / doc 본문 (§3 / §7 / §10 / §11) 에서 다른 ADR 의 SSOT 값 (scope list / count / enum / 권한 범위) 을 인용·단언할 때, 인용 시점에 대상 ADR direct Read-verify 후 cross-adr-claim-verify-annotation 3-key (cited_adr+§결정 / cited_value / verify_status) 대조 누락 시 finding emit (severity P1, type `"chief-author-crossref-inconsistency"`, review-verdict-v4 v4.12). Verification format: cross-adr-claim-verify-annotation. I-6 (audit-gate-pointer existence) 가 pointer 의 **실재** verify 라면, I-7 = cross-ADR 인용 **값** 의 SSOT 정합 verify. I-4 wording SSOT (Story↔ADR↔impl identifier 표기 동기화) 와 **disjoint axis**.
+
+**Trigger**: chief author cross-ADR scope/fact claim (다른 ADR §결정 N 의 list / count / enum / scope 값) 인용 발화 시점에 대상 ADR direct Read-verify 누락 → finding emit.
+
+**Mitigation**: claim 별 cross-adr-claim-verify-annotation 3-key 명시 (cited_adr+§결정 / cited_value / verify_status) + commit 직전 target ADR direct Read 대조 (ADR-073 §결정 1 verify-before-assert primitive directly-analogous).
+
+**Justification (annotation 면제)**: self-ref (동일 ADR 안 §결정 cross-ref) / well-known stable constant (변경 빈도 0 영역, 예: SemVer MAJOR/MINOR/PATCH 정의).
+
+**Exemption**: cross-ADR scope/fact claim 0건 Story = scope 외 (Story §1 명시 선언).
+
+**CodeReviewPL Tier C cross-validate (I-7)**: impl / doc 안 다른 ADR 의 scope / enum / count / 권한 인용 값이 대상 ADR SSOT 와 mismatch 시 finding emit.
+
+**적용 원칙**:
+- DesignReview Tier B (design-review-time) = ADR/doc 본문의 cross-ADR scope claim ↔ 대상 ADR SSOT 대조 누락 detect (설계 문서 감사 관점)
+- CodeReview Tier C (code-review-time) = impl / doc cross-ADR 인용 값 ↔ 대상 ADR SSOT 정합성 cross-validate
+- Severity default = P1 (cross-ADR scope 불일치가 ADR 간 경계 사실 오류로 전파 시 P0 가능)
+- ADR-068 §결정 2 Amendment 5: ArchitectAgent 는 `chief_author_crossref_consistency_self_check_passed: bool` emit (verdict packet, review-verdict-v4 v4.12), DesignReview / CodeReview PL 은 `findings[].type: "chief-author-crossref-inconsistency"` 로 cross-validate — boundary-completeness dual-binding 과 동일 패턴
+
 ### DDD finding type 3 literal (v4.8 — ADR-091 / CFP-1117)
 
 DesignReview 와 CodeReview PL 이 `findings[].type` 3 DDD literal (review-verdict-v4 v4.8) 로 DDD vocabulary governance 위반을 flag 하는 공통 check table. ADR-091 §결정 6 enforcement layer 3-tier 의 3번째 tier (review-verdict-v4 enum) + §결정 7 INV-5 vocabulary theater 차단 forcing function 연결.
