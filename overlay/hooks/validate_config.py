@@ -50,6 +50,59 @@ def _is_progress_narration_verbosity(v: Any) -> bool:
     return isinstance(v, str) and v in ("full", "lane_only")
 
 
+def _is_bool(v: Any) -> bool:
+    return isinstance(v, bool)
+
+
+def _is_number(v: Any) -> bool:
+    """int 또는 float (bool 제외 — YAML 에서 true/false 가 int 로 오인되지 않게)."""
+    return isinstance(v, (int, float)) and not isinstance(v, bool)
+
+
+def _is_int(v: Any) -> bool:
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
+def _is_list_of_host_mapping_entries(v: Any) -> bool:
+    """deploy.host_mapping — list of {host: str, containers: list[str]}.
+
+    Schema SSOT: docs/project-config-schema.md §2 (deploy 섹션, ~L361-366).
+    """
+    if not isinstance(v, list):
+        return False
+    for entry in v:
+        if not isinstance(entry, dict):
+            return False
+        if not _is_str(entry.get("host")):
+            return False
+        if "containers" in entry and not _is_list_of_str(entry["containers"]):
+            return False
+    return True
+
+
+def _is_list_of_ssh_target_entries(v: Any) -> bool:
+    """deploy.ssh_targets — list of {host, user, key_secret_env: str, port: int}.
+
+    Schema SSOT: docs/project-config-schema.md §2 (deploy 섹션, ~L388-393).
+    """
+    if not isinstance(v, list):
+        return False
+    for entry in v:
+        if not isinstance(entry, dict):
+            return False
+        for field in ("host", "user", "key_secret_env"):
+            if field in entry and not _is_str(entry[field]):
+                return False
+        if "port" in entry and not _is_int(entry["port"]):
+            return False
+    return True
+
+
+def _is_list_of_str_or_empty(v: Any) -> bool:
+    """list of non-empty str (빈 list 허용 — atlassian.mirror_targets 등)."""
+    return isinstance(v, list) and all(isinstance(x, str) and len(x) > 0 for x in v)
+
+
 def _is_list_of_repo_entries(v: Any) -> bool:
     """list of dict, each with required name + role; role-conditional fields validated.
 
@@ -207,6 +260,134 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     ("parallel_dispatch.wall_clock_measurement", False,
      lambda v: isinstance(v, bool),
      "parallel_dispatch.wall_clock_measurement (boolean), optional, default true"),
+
+    # -------------------------------------------------------------------------
+    # CFP — consumer-guide 가 안내하지만 SCHEMA_RULES 미등록이던 5 블록 (doc↔validator drift 수정)
+    # 문서(813줄)·consumer-guide 가 사용을 안내하는데도 _check_unknown_keys 가 exit 4 → SessionStart abort.
+    # 문서 스키마대로 OPTIONAL(required=False) 등록. 자식 키도 명시 등록 → 문서 외 자식 키는 여전히 unknown reject.
+    # 모든 블록 = consumer-authored only (§4b write 금지 invariant 보존, codeforge agent read-only).
+    # -------------------------------------------------------------------------
+
+    # [선택] aggregate_arch — AggregateArchitect deputy applicability + migration tool
+    # Schema SSOT: docs/project-config-schema.md §aggregate_arch (~L229-345) · consumer-guide §1m
+    ("aggregate_arch", False, dict, "aggregate_arch section (mapping), optional"),
+    ("aggregate_arch.applicable", False, _is_bool,
+     "aggregate_arch.applicable (boolean, default true — AggregateArch deputy 활성 여부), optional"),
+    ("aggregate_arch.migration_tool", False,
+     lambda v: isinstance(v, str) and v in (
+         "alembic", "prisma-migrate", "typeorm", "goose", "golang-migrate",
+         "flyway", "liquibase", "sqlx-migrate", "custom"),
+     "aggregate_arch.migration_tool (9-enum: alembic|prisma-migrate|typeorm|goose|"
+     "golang-migrate|flyway|liquibase|sqlx-migrate|custom, default alembic), optional"),
+
+    # [선택] deploy — Deploy lane settings (CFP-1059 / ADR-087 / ADR-088)
+    # Schema SSOT: docs/project-config-schema.md §deploy (~L347-466) · consumer-guide §1n
+    ("deploy", False, dict, "deploy section (mapping), optional"),
+    ("deploy.host_mapping", False, _is_list_of_host_mapping_entries,
+     "deploy.host_mapping (list of {host: str, containers: list[str]}), optional"),
+    ("deploy.docker_hub", False, dict, "deploy.docker_hub section (mapping), optional"),
+    ("deploy.docker_hub.org", False, _is_str, "deploy.docker_hub.org (non-empty string), optional"),
+    ("deploy.docker_hub.image_prefix", False, _is_str,
+     "deploy.docker_hub.image_prefix (non-empty string), optional"),
+    ("deploy.docker_hub.auth_secret_env", False, _is_str,
+     "deploy.docker_hub.auth_secret_env (env-key reference string), optional"),
+    ("deploy.traefik", False, dict, "deploy.traefik section (mapping), optional"),
+    ("deploy.traefik.enabled", False, _is_bool, "deploy.traefik.enabled (boolean), optional"),
+    ("deploy.traefik.network", False, _is_str, "deploy.traefik.network (non-empty string), optional"),
+    ("deploy.traefik.domain_pattern", False, _is_str,
+     "deploy.traefik.domain_pattern (non-empty string), optional"),
+    # NOTE: '1password' = YAML 에서 int 가 아닌 문자열 키 (따옴표 불요 — bare key 로도 string 처리됨)
+    ("deploy.1password", False, dict, "deploy.1password section (mapping), optional"),
+    ("deploy.1password.enabled", False, _is_bool, "deploy.1password.enabled (boolean), optional"),
+    ("deploy.1password.connect_host_env", False, _is_str,
+     "deploy.1password.connect_host_env (env-key reference string), optional"),
+    ("deploy.1password.connect_token_env", False, _is_str,
+     "deploy.1password.connect_token_env (env-key reference string), optional"),
+    ("deploy.1password.vault", False, _is_str, "deploy.1password.vault (non-empty string), optional"),
+    ("deploy.ssh_targets", False, _is_list_of_ssh_target_entries,
+     "deploy.ssh_targets (list of {host,user,key_secret_env: str, port: int}), optional"),
+    ("deploy.auto_rollback", False, dict, "deploy.auto_rollback section (mapping), optional"),
+    ("deploy.auto_rollback.enabled", False, _is_bool,
+     "deploy.auto_rollback.enabled (boolean), optional"),
+    ("deploy.auto_rollback.error_rate_threshold", False, _is_number,
+     "deploy.auto_rollback.error_rate_threshold (number, e.g. 0.02), optional"),
+    ("deploy.auto_rollback.latency_burn_rate_threshold", False, _is_number,
+     "deploy.auto_rollback.latency_burn_rate_threshold (number), optional"),
+    ("deploy.auto_rollback.window", False, _is_int,
+     "deploy.auto_rollback.window (int seconds, default 3600), optional"),
+    ("deploy.operational_monitor", False, dict,
+     "deploy.operational_monitor section (mapping), optional"),
+    ("deploy.operational_monitor.enabled", False, _is_bool,
+     "deploy.operational_monitor.enabled (boolean), optional"),
+    ("deploy.operational_monitor.signal_type", False, _is_str,
+     "deploy.operational_monitor.signal_type (string), optional"),
+    ("deploy.operational_monitor.metric_name", False, _is_str,
+     "deploy.operational_monitor.metric_name (string), optional"),
+    ("deploy.operational_monitor.regression_threshold", False, _is_number,
+     "deploy.operational_monitor.regression_threshold (number), optional"),
+    ("deploy.operational_monitor.recovery_margin", False, _is_number,
+     "deploy.operational_monitor.recovery_margin (number, default 0.5), optional"),
+    ("deploy.operational_monitor.flap_n", False, _is_int,
+     "deploy.operational_monitor.flap_n (int, default 2), optional"),
+    ("deploy.operational_monitor.window", False, _is_int,
+     "deploy.operational_monitor.window (int seconds, default 86400), optional"),
+    ("deploy.self_improving_loop", False, dict,
+     "deploy.self_improving_loop section (mapping), optional"),
+    ("deploy.self_improving_loop.enabled", False, _is_bool,
+     "deploy.self_improving_loop.enabled (boolean), optional"),
+    ("deploy.self_improving_loop.loop_max_depth", False, _is_int,
+     "deploy.self_improving_loop.loop_max_depth (int, default 3), optional"),
+    ("deploy.self_improving_loop.dedup_window_hours", False, _is_int,
+     "deploy.self_improving_loop.dedup_window_hours (int, default 24), optional"),
+    ("deploy.self_improving_loop.pattern_count_threshold", False, _is_int,
+     "deploy.self_improving_loop.pattern_count_threshold (int, default 2), optional"),
+    ("deploy.canary", False, dict, "deploy.canary section (mapping), optional"),
+    ("deploy.canary.subset", False, _is_str, "deploy.canary.subset (string), optional"),
+    ("deploy.canary.auto_promote_enabled", False, _is_bool,
+     "deploy.canary.auto_promote_enabled (boolean), optional"),
+
+    # [선택] atlassian — Atlassian suite 재결합 (CFP-1215 / ADR-100 / ADR-111)
+    # Schema SSOT: docs/project-config-schema.md §atlassian (~L468-555) · consumer-guide §1o
+    ("atlassian", False, dict, "atlassian section (mapping), optional"),
+    ("atlassian.enabled", False, _is_bool, "atlassian.enabled (boolean), optional"),
+    ("atlassian.confluence", False, dict, "atlassian.confluence section (mapping), optional"),
+    ("atlassian.confluence.base_url", False, _is_str,
+     "atlassian.confluence.base_url (non-empty string, NOT secret), optional"),
+    ("atlassian.confluence.space_key", False, _is_str,
+     "atlassian.confluence.space_key (non-empty string, NOT secret), optional"),
+    ("atlassian.confluence.api_token_env", False, _is_str,
+     "atlassian.confluence.api_token_env (env-key reference string — 평문 token 금지), optional"),
+    ("atlassian.confluence.user_email_env", False, _is_str,
+     "atlassian.confluence.user_email_env (env-key reference string), optional"),
+    ("atlassian.confluence.instance", False, _is_str,
+     "atlassian.confluence.instance (non-empty string, NOT secret), optional"),
+    ("atlassian.confluence.homepage_id", False, _is_str,
+     "atlassian.confluence.homepage_id (string page ID), optional"),
+    ("atlassian.confluence.mirror_targets", False,
+     lambda v: isinstance(v, list) and all(
+         isinstance(x, str) and x in (
+             "adr", "architecture_doc", "change_plan",
+             "domain_knowledge", "orchestrator_playbook") for x in v),
+     "atlassian.confluence.mirror_targets (list, closed-enum 5: adr|architecture_doc|"
+     "change_plan|domain_knowledge|orchestrator_playbook), optional"),
+    ("atlassian.confluence.per_doc_type_override", False, dict,
+     "atlassian.confluence.per_doc_type_override (mapping), optional"),
+    ("atlassian.jira", False, dict, "atlassian.jira section (mapping), optional"),
+    ("atlassian.jira.project_key", False, _is_str,
+     "atlassian.jira.project_key (non-empty string, NOT secret), optional"),
+
+    # [선택] runtime — Windows external session auto-resume (CFP-1355 / ADR-110)
+    # Schema SSOT: consumer-guide §1j (~L347-422). project.yaml: runtime.auto_resume.enabled
+    ("runtime", False, dict, "runtime section (mapping), optional"),
+    ("runtime.auto_resume", False, dict, "runtime.auto_resume section (mapping), optional"),
+    ("runtime.auto_resume.enabled", False, _is_bool,
+     "runtime.auto_resume.enabled (boolean — Windows auto-resume opt-in), optional"),
+
+    # [선택] security — consumer 자체 cross-repo PAT rotation cadence override (ADR-066 §결정 7)
+    # Schema SSOT: consumer-guide §1g (~L242). 강화 방향만 (90 days 미만 short rotation 허용).
+    ("security", False, dict, "security section (mapping), optional"),
+    ("security.pat_rotation_cadence_days", False, _is_int,
+     "security.pat_rotation_cadence_days (int days — PAT rotation cadence override, 강화 방향만), optional"),
 ]
 
 
