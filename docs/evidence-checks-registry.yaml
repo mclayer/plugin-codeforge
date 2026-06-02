@@ -2269,7 +2269,7 @@ entries:
       workflow_dispatch + Issue auto-create + per-signature dedup).
     detect_command: bash scripts/check-per-plugin-cumulative-counter.sh
     workflow: templates/github-workflows/per-plugin-cumulative-counter.yml
-    current_tier: blocking-on-pr  # CFP-1607 Amendment 15 ratchet (2026-05-25 KST) — warning → blocking-on-pr (ADR-060 framework first-use promotion). Wave 1 declarative tier transition; Wave 2 workflow continue-on-error 변경 = 별 sub-CFP.
+    current_tier: warning  # red-team 정정 2026-06-02 (blocking-on-pr → warning): 워크플로(.github/workflows/per-plugin-cumulative-counter.yml)가 continue-on-error:true + pull_request 트리거 부재 → 실제 PR 차단 불가. 레지스트리 tier 를 실체에 일치시킴. 이전 CFP-1607 Amendment 15 (2026-05-25) blocking-on-pr declarative promotion 은 Wave 2 (continue-on-error 제거 + PR 트리거 + required context 부착) 미배선으로 효력 없었음 — 진짜 차단 원하면 Wave 2 배선 필요.
     bypass_label: hotfix-bypass:per-plugin-cumulative-counter
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     promotion_criteria:
