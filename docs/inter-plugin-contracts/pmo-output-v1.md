@@ -108,7 +108,7 @@ pmo_output:
     events:                       # array of git ops events
       - event_type: <enum>        # team-create / team-delete / sequential-merge / conflict-detected / fix-iteration-rebuild / stale-cleanup
         timestamp: ISO8601
-        lane: <string>            # 7 lane slug (requirements / design / develop / ...) 또는 cross-cutting
+        lane: <string>            # 8 lane slug (requirements / design / review / develop / test / deploy / deploy-review / pmo) 또는 cross-cutting
         actor: GitOpsAgent
         worktree_count: <int>     # team-create 시 N
         outcome: success | conflict | aborted
