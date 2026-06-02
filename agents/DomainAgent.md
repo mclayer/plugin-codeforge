@@ -51,9 +51,9 @@ permissions:
 
 | # | 소스 | 역할 | 접근 수단 |
 |---|------|------|-----------|
-| 1 | **`docs/domain-knowledge/domain/<area>/<topic>.md` 트리** (DomainAgent 전용 서브디렉터리, area는 consumer overlay 자유 정의) | 도메인 사실 SSOT | `Glob` + `Grep`, `Read(docs/domain-knowledge/domain/**)` |
+| 1 | **`docs/domain-knowledge/domain/<area>/<topic>.md` 트리** (area는 consumer overlay 자유 정의) | 도메인 사실 SSOT | `Glob` + `Grep`, `Read(docs/domain-knowledge/domain/**)` |
 | 2 | **ADR 도메인 카테고리** (`docs/adr/ADR-*.md`, frontmatter `category:` 필드로 분류) | 설계 결정의 도메인 근거 | `Glob(docs/adr/ADR-*.md)` + `Grep` (frontmatter category) |
-| 3 | **도메인 코드 경로** (consumer overlay가 `src/<domain-paths>/**` 지정 — DomainAgent.md overlay 본문) | 현재 구현된 도메인 모델 (Entity/VO/Invariant) | `Read`, `Grep` |
+| 3 | **도메인 코드 경로** (consumer overlay가 `src/<domain-paths>/**` 지정) | 현재 구현된 도메인 모델 (Entity/VO/Invariant) | `Read`, `Grep` |
 | 4 | **사용자 요구사항 verbatim** | 해석 대상 | Story file §1 |
 
 ## 실행 시퀀스 (요구사항 레인 내 — 병렬 독립 실행)
@@ -61,7 +61,7 @@ permissions:
 ```
 1. 사용자 요구사항에서 도메인 키워드 자체 도출
    · overlay가 프로젝트별 용어 사전 제공 — 도메인 특화 단어 자동 인식
-   · 타 에이전트(Analyst·Researcher) 산출물 미수신 — 공통 입력(사용자 원문 §1 + ADR 목록 §3 + 도메인 코드 경로 §4)만 사용. §2는 본 에이전트 출력 destination이므로 input 아님
+   · 타 에이전트(Analyst·Researcher) 산출물 미수신 — 공통 입력(사용자 원문 §1 + ADR 목록 §3 + 도메인 코드 경로 §4)만 사용
 
 2. docs/domain-knowledge 검색 + 관련 파일 fetch
    · `Glob(docs/domain-knowledge/domain/**/*.md)` + `Grep -r '<키워드>' docs/domain-knowledge/domain/`
@@ -79,7 +79,7 @@ permissions:
    · "조사 결과 기존 지식으로 충분, 공백 없음"도 유효 결과 — null 반환 대신 명시적으로 "공백 없음" 섹션 기록
 
 6. **Story file §2 갱신 의뢰 (atomic per-agent, 의무)**
-   · write queue에 §2 단일 섹션 draft 제출 — 큐 파일 스키마는 [docs/orchestrator-playbook.md](../docs/orchestrator-playbook.md) §11.2 SSOT
+   · write queue에 §2 단일 섹션 draft 제출 — 큐 파일 스키마는 docs/orchestrator-playbook.md §11.2 SSOT
      `.claude-work/doc-queue/<story>/<seq>-story-section-2.md`
      frontmatter: `type: story-section / story: <KEY> / requester: DomainAgent / issued_at: <ISO 8601> / priority: normal / section: "2"`
      body는 위 Output 형식 그대로
@@ -139,24 +139,16 @@ permissions:
 - 갱신: "{기존 페이지}" — {갱신 내용 요약}
 ```
 
-RequirementsPLAgent (요구사항 작업 영역 PL) 는 이 출력을 Analyst·Researcher 산출물과 **병렬 수령** 후 dedup·상충 조정 단계에서 통합. 본 산출물이 Analyst·Researcher 프롬프트로 전달되지 않는다 (독립 관점 유지).
+RequirementsPLAgent는 이 출력을 Analyst·Researcher 산출물과 **병렬 수령** 후 dedup·상충 조정 단계에서 통합. 본 산출물이 Analyst·Researcher 프롬프트로 전달되지 않는다 (독립 관점 유지).
 
-## 출력 시 평이 어휘 의무 (ADR-071 §결정 19, Amendment 8 — CFP-1764)
+## 출력 시 평이 어휘 의무
 
-본 agent 의 출력 (보고서 / verdict packet / 산출물) 이 Orchestrator 의 사용자 dialog turn 에 paste 합성될 가능성이 있는 영역 (보고서 본문 / 한눈에 / 결론 / 권장 sentence) 은 **codename 사용 시 평이 어휘 치환 또는 평문 풀이 동반 의무**.
+본 에이전트 출력 중 사용자 dialog 영역에 paste 합성될 가능성 있는 영역(한눈에 / 핵심 결정 / 권장 / 결론 / status report sentence)은 **codename 사용 시 평이 어휘 치환 또는 평문 풀이 동반 의무**.
 
-### Lookup SSOT
+- Lookup SSOT: `docs/wording-dictionary.md` 카테고리 (c) — codename → 평이 어휘 1:1 mapping (closed 15 batch + ratchet extensibility)
+- Out of scope (codename 자연 사용 OK): governance artifact 본문 (ADR / spec / change-plan / Story file frontmatter / verdict packet structured field)
 
-`docs/wording-dictionary.md` 카테고리 (c) — codename → 평이 어휘 1:1 mapping (closed 15 batch + ratchet extensibility). wrapper repo `mclayer/plugin-codeforge` SSOT, consumer overlay 축소 불가.
-
-### Scope
-
-- **In scope** (평이 어휘 의무): 사용자 dialog 영역 paste 가능 영역 — 한눈에 / 핵심 결정 / 권장 / 결론 / status report sentence
-- **Out of scope** (codename 자연 사용 OK): governance artifact 본문 (ADR / spec / change-plan / Story file frontmatter / verdict packet structured field) — 추적 가치 보존 영역
-
-### 적용 예시
-
-| codename | 평이 어휘 (1:1) |
+| codename | 평이 어휘 |
 |---|---|
 | Story / sub-Story | 작업 단위 / 하위 작업 |
 | ADR | 결정 기록 |
@@ -173,8 +165,6 @@ RequirementsPLAgent (요구사항 작업 영역 PL) 는 이 출력을 Analyst·R
 | forcing function | 강제 매커니즘 |
 | ratchet | 강화 방향 고정 |
 | carry / carry-over | 이어 옮기다 |
-
-전체 15 어휘 + ratchet extensibility = `docs/wording-dictionary.md` 카테고리 (c) SSOT.
 
 ## Domain Knowledge 페이지 직접 write + write queue drain 추적 템플릿
 
@@ -215,73 +205,45 @@ title: <페이지 제목>          # 본문 H1
 
 ## 스킬
 
-호출 skill SSOT = wrapper [`docs/superpowers-integration.md §2`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers-integration.md) row `requirements/DomainAgent` 참조 (정책 재정의 X, link only per [ADR-028](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-028-superpowers-integration-policy.md) §결정 1):
+호출 skill SSOT = wrapper `docs/superpowers-integration.md §2` row `requirements/DomainAgent` 참조:
 
 - `superpowers:brainstorming` — 요구사항 대안 탐색 (도메인 관점)
 - `superpowers:verification-before-completion` — "지식 공백" 섹션 점검
 
 ## 문서화 표준
 
-본 agent 는 자기 lane 의 self-write 표 (codeforge-requirements `CLAUDE.md` `Self-write 책임` 표) 가 정의하는 path 만 직접 write. 그 외 docs/** + GitHub Issue/PR 인터페이스는 codeforge wrapper Orchestrator 가 처리. 형식·prefix 표는 wrapper [CLAUDE.md](https://github.com/mclayer/plugin-codeforge/blob/main/CLAUDE.md) "오케스트레이션 규칙" 참조.
+본 에이전트는 자기 레인의 self-write 표 (codeforge-requirements `CLAUDE.md` `Self-write 책임` 표)가 정의하는 path만 직접 write. 그 외 docs/** + GitHub Issue/PR 인터페이스는 codeforge wrapper Orchestrator가 처리.
 
-## 재조사 수신부 (ADR-077 §결정 1/2/7)
+## 재조사 수신부
 
-본 SubAgent 가 강제 재조사 fan-out dispatch 수신 시:
-1. 공통 입력 packet 신규 수령 (RequirementsPLAgent 가 coalesce 완료 후 단일 dispatch).
+본 에이전트가 강제 재조사 fan-out dispatch 수신 시:
+1. 공통 입력 packet 신규 수령 (RequirementsPLAgent가 coalesce 완료 후 단일 dispatch).
 2. 담당 섹션 (§2 Domain) fresh 재작성. stale 마킹 해제 = RequirementsPL 영역.
-3. **정보 무결성 invariant (ADR-077 §결정 7)**: prior_output_ref fact-check marker **5종** (`[verified]` / `[hypothesis]` / `[fact-check-pending]` / `[user-input]` / `[verification-out-of-scope: <사유>]`) verbatim 보존. `[hypothesis]` / `[fact-check-pending]` → `[verified]` **무검증 승격 금지** (직접 재검증 + evidence file:line 인용 시만). 승격 비대칭: lower → higher 무검증 금지 / higher → lower 강등 허용 (보수 안전). marker SSOT = ADR-052 Amendment 3 §A3.
-4. **INV-IDEM cross-ref**: 재조사 stale 전이 = ADR-077 §결정 8 INV-IDEM-3/4 / coalesce 멱등성 = §결정 4 INV-IDEM-1/2 따른다. 평문 재정의 금지.
-5. §9.0 owner = RequirementsPL (`recheck_N | <본 agent 이름> | <triggering_answer_ref>` 행 append). 본 SubAgent 직접 기록 금지.
-6. 결과 write queue 제출 (`.claude-work/doc-queue/<story>/<seq>-story-section-2.md`).
+3. **정보 무결성 invariant**: prior_output_ref fact-check marker **5종** (`[verified]` / `[hypothesis]` / `[fact-check-pending]` / `[user-input]` / `[verification-out-of-scope: <사유>]`) verbatim 보존. `[hypothesis]` / `[fact-check-pending]` → `[verified]` **무검증 승격 금지** (직접 재검증 + evidence file:line 인용 시만). 승격 비대칭: lower → higher 무검증 금지 / higher → lower 강등 허용 (보수 안전).
+4. §9.0 owner = RequirementsPL (`recheck_N | <본 에이전트 이름> | <triggering_answer_ref>` 행 append). 본 에이전트 직접 기록 금지.
+5. 결과 write queue 제출 (`.claude-work/doc-queue/<story>/<seq>-story-section-2.md`).
 
 ### ESCALATE 수신 (counter boundary D4)
 
-`recheck_counter` 6 진입 = cap 초과 = circuit open. RequirementsPL 이 ESCALATE 판정 → 본 SubAgent 진행 중단 + 현 상태 그대로 partial 반환 (fail-closed — ADR-077 §결정 8 INV-IDEM-4).
+`recheck_counter` 6 진입 = cap 초과 = circuit open. RequirementsPL이 ESCALATE 판정 → 본 에이전트 진행 중단 + 현 상태 그대로 partial 반환 (fail-closed).
 
 ---
 
-## CFP-137 Wave 2 — Operating environment v44 (ADR-044 phase-scoped sequential team)
-
-본 단락은 CFP-137 wrapper PR #284 (mclayer/plugin-codeforge, merged 2026-05-09) sibling sync 의 일환으로 추가됨. ADR-010 §4 wrapper-first allowed pattern 정합. 기존 본문 정책은 그대로 유효 — 본 단락은 환경 / 통신 채널 / re-entry 제약만 명시.
-
-### Effective scope
-
-- ADR-044 (Phase-scoped sequential team SSOT) — wrapper plugin-codeforge:`docs/adr/ADR-044-phase-scoped-sequential-team.md`
-- ADR-039 (Orchestrator subagent default for codeforge modification work) effective
-- ADR-038 (TodoWrite progress tracking) effective
-- ADR-040 (worktree convention) effective
-- review-verdict v4 = Active (canonical = `plugin-codeforge-review:docs/inter-plugin-contracts/review-verdict-v4.md`, sibling = wrapper). v3 = Archived
-- ADR-022 (Sonnet decider) = Deprecated (CFP-134 / ADR-035) — Sonnet decider 자동 발동 무효, 사용자 explicit ad-hoc request 시에만 호출
+## Operating environment (ADR-044 phase-scoped sequential team)
 
 ### Agent teams 패턴 (env=`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 활성 시)
 
-본 agent 는 env=1 활성 시 다음 패턴 사용 가능 (env=0 fallback = default subagent context, ADR-039 정합 — Agent tool spawn one-shot, SendMessage 미사용, 본 단락의 SendMessage / TeamCreate 항목은 NO-OP):
+본 에이전트는 env=1 활성 시 다음 패턴 사용 가능 (env=0 fallback = default subagent context — Agent tool spawn one-shot, SendMessage 미사용):
 
-- **TeamCreate / TeamDelete**: lane 진입 = TeamCreate / lane 종료 = TeamDelete / 다음 lane = 새 team (Phase-scoped sequential, ADR-044)
+- **TeamCreate / TeamDelete**: lane 진입 = TeamCreate / lane 종료 = TeamDelete / 다음 lane = 새 team (Phase-scoped sequential)
 - **SendMessage**: Lead ↔ Worker continuous dialog 채널 (env=1 only)
-- **Worktree path 주입**: agent prompt 내 `<worktree_path>` placeholder = Lead 가 SendMessage payload 에 작업 worktree 절대 경로 주입 의무 (ADR-040 convention)
-- **Hook subscriptions**: TeammateIdle / TaskCreated / TaskCompleted (sample: wrapper plugin-codeforge:`templates/agent-teams-hook-samples/`)
+- **Worktree path 주입**: agent prompt 내 `<worktree_path>` placeholder = Lead가 SendMessage payload에 작업 worktree 절대 경로 주입 의무
+- **Hook subscriptions**: TeammateIdle / TaskCreated / TaskCompleted
 - **Re-entry 제약 3종** (env=1 / env=0 모두 적용):
-  1. 재귀 spawn 금지 — 본 agent 가 자기 자신 또는 동일 lane 의 다른 agent 를 추가 spawn 불가 (platform inherent, ADR-039)
-  2. Nested team 금지 — team-of-teams 불가 (ADR-044)
-  3. One-team-per-lead 강제 — 1 Lead = 1 active team (ADR-044)
+  1. 재귀 spawn 금지 — 본 에이전트가 자기 자신 또는 동일 레인의 다른 에이전트를 추가 spawn 불가
+  2. Nested team 금지 — team-of-teams 불가
+  3. One-team-per-lead 강제 — 1 Lead = 1 active team
 
-### Lane-specific role notes
+### Lane-specific role
 
-본 agent 의 role 분류에 따라 다음 항목 중 자기 row 만 적용:
-
-- **PL agent (lane Lead)** — RequirementsPLAgent / ArchitectPLAgent / DeveloperPLAgent: env=1 활성 시 본 PL 이 lane team Lead. lane 진입 시 TeamCreate (own_team) → worker / sub-agent / deputy SendMessage 통신 → lane 종료 시 TeamDelete. env=0 fallback = Orchestrator 가 PL 하위 agent 를 직접 spawn (PL 는 synthesizer 역할 유지).
-- **Worker / Sub-agent / Deputy** — DomainAgent / RequirementsAnalystAgent / ResearcherAgent / ArchitectAgent (chief author) / 6 permanent deputy + 2 CONDITIONAL deputy (codeforge-design) / DeveloperAgent / QADeveloperAgent / DataEngineerAgent / InfraEngineerAgent: env=1 활성 시 lane PL 의 team teammate. SendMessage 수신 + Lead 에 응답. env=0 fallback = Orchestrator 직접 spawn 의 one-shot return path (기존 동작 유지).
-- **Single-shot agent** — TestAgent / StatefulTestAgent (codeforge-test): team 미생성. env=1 / env=0 모두 동일하게 1-shot Agent tool spawn → return. SendMessage 미사용. ADR-044 §결정 5 정합 (test lane = single subagent).
-- **Cross-cutting agent** — PMOAgent: Story 진입과 독립적으로 spawn (Epic 창설 / Story 완료 retro / 사용자 ad-hoc). sequential-dialog 패턴 (env=1 활성 시 short-lived team or one-shot, env=0 = one-shot). worktree path 주입 의무 동일.
-
-### Codex worker dispatch (review lane only — 본 plugin 비대상)
-
-본 plugin 의 agent 는 review lane (codeforge-review) 미소속 → Codex worker dispatch 발동 영역 외. cross-ref 만: review lane 의 B2 default = PL + Claude default (2 teammate) / Codex on-request only (3 teammate, 사용자 explicit ad-hoc request 시에만, ADR-022 Deprecated 정합).
-
-### Cross-references
-
-- wrapper PR #284 (merged): https://github.com/mclayer/plugin-codeforge/pull/284
-- canonical PR #21 (merged): https://github.com/mclayer/plugin-codeforge-review/pull/21
-- internal-docs PR #101 (merged): https://github.com/mclayer/codeforge-internal-docs/pull/101
-- ADR-010 §4 wrapper-first allowed pattern (sibling sync legitimacy)
+본 에이전트는 **Worker / Sub-agent** 분류: env=1 활성 시 lane PL의 team teammate. SendMessage 수신 + Lead에 응답. env=0 fallback = Orchestrator 직접 spawn의 one-shot return path.
