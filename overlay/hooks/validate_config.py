@@ -103,6 +103,24 @@ def _is_list_of_str_or_empty(v: Any) -> bool:
     return isinstance(v, list) and all(isinstance(x, str) and len(x) > 0 for x in v)
 
 
+def _is_per_doc_type_override(v: Any) -> bool:
+    """atlassian.confluence.per_doc_type_override — OPEN MAPPING.
+
+    arbitrary doc-type key (adr / change-plan / story / ...) → dict 값.
+    각 값은 optional `parent_page_id` (str) 등 자식을 가질 수 있다 (자식 키 자유).
+    SHAPE 만 검증: dict 이고, 모든 값이 dict 여야 한다 (string 등 비-dict 값은 malformed).
+
+    Schema SSOT: docs/project-config-schema.md §atlassian per_doc_type_override (~L503,
+    `per_doc_type_override: <map>` — 예: {adr: {parent_page_id: "12345"}}).
+    """
+    if not isinstance(v, dict):
+        return False
+    for value in v.values():
+        if not isinstance(value, dict):
+            return False
+    return True
+
+
 def _is_list_of_repo_entries(v: Any) -> bool:
     """list of dict, each with required name + role; role-conditional fields validated.
 
@@ -370,8 +388,11 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
              "domain_knowledge", "orchestrator_playbook") for x in v),
      "atlassian.confluence.mirror_targets (list, closed-enum 5: adr|architecture_doc|"
      "change_plan|domain_knowledge|orchestrator_playbook), optional"),
-    ("atlassian.confluence.per_doc_type_override", False, dict,
-     "atlassian.confluence.per_doc_type_override (mapping), optional"),
+    # OPEN MAPPING — 자식 doc-type 키(adr/change-plan/story/...) 자유.
+    # _check_unknown_keys 가 OPEN_MAPPING_PATHS 로 재귀를 건너뛴다 (자식키 EXIT 4 차단).
+    # type_check = SHAPE 검증 (dict-of-dict). Schema SSOT: project-config-schema.md ~L503.
+    ("atlassian.confluence.per_doc_type_override", False, _is_per_doc_type_override,
+     "atlassian.confluence.per_doc_type_override (open mapping: doc-type → {parent_page_id: str}), optional"),
     ("atlassian.jira", False, dict, "atlassian.jira section (mapping), optional"),
     ("atlassian.jira.project_key", False, _is_str,
      "atlassian.jira.project_key (non-empty string, NOT secret), optional"),
@@ -389,6 +410,15 @@ SCHEMA_RULES: list[tuple[str, bool, Any, str]] = [
     ("security.pat_rotation_cadence_days", False, _is_int,
      "security.pat_rotation_cadence_days (int days — PAT rotation cadence override, 강화 방향만), optional"),
 ]
+
+
+# OPEN MAPPING parent paths — 자식 키가 schema-free arbitrary mapping 인 경로.
+# _check_unknown_keys 가 이 경로 아래로는 재귀하지 않는다 (자식 키를 unknown 으로 reject 금지).
+# SHAPE 검증은 해당 path 의 SCHEMA_RULES type_check 가 담당 (예: _is_per_doc_type_override).
+# 신규 open mapping 추가 시 여기에 dotted-path 등록 + SCHEMA_RULES 에 shape type_check 등록.
+OPEN_MAPPING_PATHS: set[str] = {
+    "atlassian.confluence.per_doc_type_override",
+}
 
 
 # Unknown key reject — schema 정의 외 키는 거부
@@ -431,6 +461,9 @@ def _check_unknown_keys(data: Any, parent_path: str = "") -> list[str]:
                 f"unknown key: {full_path} — schema에 정의되지 않음 "
                 f"(allowed at '{parent_path or '<root>'}': {sorted(allowed) or '<none>'})"
             )
+            continue
+        # OPEN MAPPING — 자식 doc-type 키 자유. 재귀 건너뜀 (SHAPE 는 type_check 가 검증).
+        if full_path in OPEN_MAPPING_PATHS:
             continue
         # recurse into known nested dicts only
         if isinstance(value, dict):

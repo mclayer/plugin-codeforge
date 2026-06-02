@@ -379,3 +379,59 @@ class TestDocumentedOptionalBlocks:
         data["totally_made_up_block"] = 1
         errs = vc.validate(data)
         assert any("totally_made_up_block" in e for e in errs)
+
+    # -------------------------------------------------------------------------
+    # F-CR-1932-1 — per_doc_type_override OPEN MAPPING (구현리뷰 P1)
+    # 문서화된 형태 {adr: {parent_page_id: ...}} 가 _check_unknown_keys 재귀로
+    # 자식 doc-type 키 → unknown key → EXIT 4 되던 잔존 결함 수정.
+    # Schema SSOT: docs/project-config-schema.md §atlassian per_doc_type_override (~L503).
+    # -------------------------------------------------------------------------
+
+    def test_per_doc_type_override_documented_form_valid(self):
+        """문서화된 per_doc_type_override (자식 doc-type 키들) 가 validate clean."""
+        data = _minimal_valid_data()
+        data["atlassian"] = {
+            "confluence": {
+                "per_doc_type_override": {
+                    "adr": {"parent_page_id": "12345"},
+                    "change-plan": {"parent_page_id": "67890"},
+                }
+            }
+        }
+        assert vc.validate(data) == []
+
+    def test_per_doc_type_override_arbitrary_doc_types_valid(self):
+        """adr/change-plan 외 임의 doc-type 키도 허용 (open mapping)."""
+        data = _minimal_valid_data()
+        data["atlassian"] = {
+            "confluence": {
+                "per_doc_type_override": {
+                    "story": {"parent_page_id": "111"},
+                    "domain_knowledge": {"parent_page_id": "222"},
+                    "any_future_doc_type": {"parent_page_id": "333"},
+                }
+            }
+        }
+        assert vc.validate(data) == []
+
+    def test_per_doc_type_override_empty_mapping_valid(self):
+        """빈 per_doc_type_override 도 유효 (자식 0개)."""
+        data = _minimal_valid_data()
+        data["atlassian"] = {"confluence": {"per_doc_type_override": {}}}
+        assert vc.validate(data) == []
+
+    def test_per_doc_type_override_malformed_non_dict_value_rejected(self):
+        """doc-type 값이 dict 가 아니면 (예: string) malformed → reject."""
+        data = _minimal_valid_data()
+        data["atlassian"] = {
+            "confluence": {"per_doc_type_override": {"adr": "not-a-dict"}}
+        }
+        errs = vc.validate(data)
+        assert any("per_doc_type_override" in e for e in errs)
+
+    def test_per_doc_type_override_non_dict_rejected(self):
+        """per_doc_type_override 자체가 dict 가 아니면 reject."""
+        data = _minimal_valid_data()
+        data["atlassian"] = {"confluence": {"per_doc_type_override": ["adr"]}}
+        errs = vc.validate(data)
+        assert any("per_doc_type_override" in e for e in errs)
