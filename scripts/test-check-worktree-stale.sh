@@ -1,12 +1,20 @@
 #!/usr/bin/env bash
-# CFP-136 — worktree script unit test
-# Coverage: check-worktree-stale.sh (no-worktrees fast-exit / syntax / §8.5.2 restart recovery /
-#           §8.5.4 accumulation prune / §8.5.3 origin-present worktree kept)
-# Story §8 ref: §8.4 InfraEng 산출물 §3.5 stale scan + §8.5.2 Restart recovery + §8.5.4 Unbounded accumulation
+# CFP-136 — worktree GC unit test (red-team 정정 후).
 #
-# NOTE: "7-day age" test 는 실제 mtime 조작 없이 검증 불가 (CI 환경 제약).
-# 본 test 는 stale 기준 중 "origin absent" 경로와 "no worktrees" fast-path 를 커버.
-# 7일 mtime 기준 통합 검증은 Phase 2 follow-up fixture (실제 old mtime symlink 활용).
+# Coverage:
+#   - bash syntax
+#   - BYPASS_WORKTREE_GC=1 fast-exit
+#   - non-git dir graceful exit
+#   - merged + old + clean              → PRUNED
+#   - merged + old + DIRTY              → KEPT (data-loss 가드)
+#   - NOT merged + old + clean          → KEPT
+#   - merged + RECENT (age 미만)        → KEPT
+#   - gh 불가                           → KEPT + WARN (fail-safe)
+#   - alternate base dir worktree       → 여전히 EVALUATED (Defect A)
+#   - locked worktree                   → KEPT
+#
+# 실제 worktree 는 절대 삭제하지 않음 — git/gh 를 stub (GC_GIT_BIN / GC_GH_BIN) 으로 주입하고
+# fixture 디렉터리 mtime 을 touch 로 조작.
 #
 # Exit code: 0 (모든 test PASS) / 1 (1 이상 FAIL)
 
@@ -14,7 +22,6 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 STALE_SCRIPT="$SCRIPT_DIR/../templates/scripts/check-worktree-stale.sh"
-CREATE_SCRIPT="$SCRIPT_DIR/../templates/scripts/worktree-create.sh"
 PASS=0
 FAIL=0
 
@@ -23,228 +30,293 @@ log() { printf '[test] %s\n' "$1" >&2; }
 assert_exit() {
   local label="$1" expected="$2" actual="$3"
   if [[ "$actual" -eq "$expected" ]]; then
-    PASS=$((PASS + 1))
-    log "  PASS: $label (rc=$actual)"
+    PASS=$((PASS + 1)); log "  PASS: $label (rc=$actual)"
   else
-    FAIL=$((FAIL + 1))
-    log "  FAIL: $label (expected rc=$expected, got rc=$actual)"
+    FAIL=$((FAIL + 1)); log "  FAIL: $label (expected rc=$expected, got rc=$actual)"
   fi
 }
 
 assert_contains() {
   local label="$1" needle="$2" haystack="$3"
-  if printf '%s' "$haystack" | grep -q "$needle"; then
-    PASS=$((PASS + 1))
-    log "  PASS: $label (found '$needle')"
+  if printf '%s' "$haystack" | grep -q -- "$needle"; then
+    PASS=$((PASS + 1)); log "  PASS: $label (found '$needle')"
   else
-    FAIL=$((FAIL + 1))
-    log "  FAIL: $label (expected '$needle' in output)"
+    FAIL=$((FAIL + 1)); log "  FAIL: $label (expected '$needle' in output)"
   fi
 }
 
-setup_repo() {
-  local tmp
-  tmp="$(mktemp -d)"
-  git init -q "$tmp"
-  # Set committer identity to avoid CI failure when global git config is absent
-  git -C "$tmp" config user.email "test@cfp-136.local"
-  git -C "$tmp" config user.name "CFP-136 Test"
-  git -C "$tmp" commit --allow-empty -q -m "init"
-  echo "$tmp"
+assert_not_contains() {
+  local label="$1" needle="$2" haystack="$3"
+  if printf '%s' "$haystack" | grep -q -- "$needle"; then
+    FAIL=$((FAIL + 1)); log "  FAIL: $label (unexpected '$needle' present)"
+  else
+    PASS=$((PASS + 1)); log "  PASS: $label ('$needle' absent as expected)"
+  fi
 }
 
-teardown_repo() {
-  local repo="$1"
-  git -C "$repo" worktree list --porcelain 2>/dev/null \
-    | awk '/^worktree / {print $2}' \
-    | grep -v "^$repo$" \
-    | while read -r wt; do
-        git -C "$repo" worktree remove --force "$wt" 2>/dev/null || rm -rf "$wt"
-      done
-  git -C "$repo" worktree prune 2>/dev/null || true
-  rm -rf "$repo"
+# ── Stub harness ────────────────────────────────────────────────────────────
+# 각 시나리오는 SANDBOX 디렉터리 안에 git/gh stub 와 state 파일을 둔다.
+# Stub git/gh 는 GC_GIT_BIN / GC_GH_BIN 으로 GC 스크립트에 주입된다.
+#
+# State (env 로 stub 에 전달):
+#   STUB_DIR          stub state 디렉터리
+#   STUB_WT_PORCELAIN `git worktree list --porcelain` 출력 파일 경로
+#   STUB_DIRTY        "1" → status --porcelain 이 변경 출력 (dirty)
+#   STUB_GH_AUTH      "1" → gh auth status 성공, 아니면 실패(=gh 불가)
+#   STUB_GH_MERGED    "1" → gh pr list 가 merged PR 1건 반환
+#   STUB_AHEAD        ahead commit 수 (has_unpushed_commits 용); 기본 0
+#   STUB_REMOVE_LOG   worktree remove 호출 기록 파일
+
+make_stub_git() {
+  local path="$1"
+  cat > "$path" <<'STUB'
+#!/usr/bin/env bash
+# fake git — GC 스크립트가 호출하는 subcommand 만 처리.
+set -uo pipefail
+# -C <dir> prefix 무시
+args=()
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    -C) shift 2;;
+    *) args+=("$1"); shift;;
+  esac
+done
+set -- "${args[@]}"
+cmd="${1:-}"; sub="${2:-}"
+case "$cmd $sub" in
+  "rev-parse --show-toplevel")
+    echo "${STUB_REPO_ROOT:-/fake/repo}";;
+  "rev-parse --abbrev-ref")
+    # @{upstream} 조회 — 항상 실패 처리 (origin/main fallback 경로로)
+    exit 1;;
+  "rev-parse --verify")
+    exit 1;;  # origin/main 없음 → main fallback (그래도 rev-list 가 ahead 반환)
+  "worktree list")
+    cat "$STUB_WT_PORCELAIN";;
+  "status --porcelain")
+    if [[ "${STUB_DIRTY:-0}" == "1" ]]; then echo " M somefile.txt"; fi;;
+  "rev-list --count")
+    echo "${STUB_AHEAD:-0}";;
+  "worktree remove")
+    # 마지막 인자 = path
+    eval "wt=\${$#}"
+    echo "REMOVE $wt" >> "$STUB_REMOVE_LOG"
+    exit 0;;
+  "branch -D")
+    exit 0;;
+  *)
+    exit 0;;
+esac
+STUB
+  chmod +x "$path"
 }
 
-# Test 1 — bash syntax check
-test_1_syntax_check() {
-  log "Test 1: bash -n syntax check"
+make_stub_gh() {
+  local path="$1"
+  cat > "$path" <<'STUB'
+#!/usr/bin/env bash
+set -uo pipefail
+cmd="${1:-}"; sub="${2:-}"
+case "$cmd $sub" in
+  "auth status")
+    [[ "${STUB_GH_AUTH:-0}" == "1" ]] && exit 0 || exit 1;;
+  "pr list")
+    if [[ "${STUB_GH_MERGED:-0}" == "1" ]]; then
+      echo '[{"number":123}]'
+    else
+      echo '[]'
+    fi;;
+  *)
+    exit 0;;
+esac
+STUB
+  chmod +x "$path"
+}
+
+# 시나리오 실행 헬퍼.
+# 인자: label, wt_old(1/0), dirty, gh_auth, gh_merged, locked, ahead, base_kind(default/alt)
+# 출력: GC stdout+stderr 를 전역 RUN_OUT 에 / rc 를 RUN_RC 에 담는다.
+RUN_OUT=""
+RUN_RC=0
+run_scenario() {
+  local wt_old="$1" dirty="$2" gh_auth="$3" gh_merged="$4" locked="$5" ahead="${6:-0}" base_kind="${7:-default}"
+
+  local sb; sb="$(mktemp -d)"
+  local repo_root="$sb/repo"
+  mkdir -p "$repo_root"
+
+  # worktree fixture 디렉터리
+  local wt_dir
+  if [[ "$base_kind" == "alt" ]]; then
+    wt_dir="$sb/other-base/.claude/worktrees/repo/cfp-999-feature"
+  else
+    wt_dir="$sb/.claude/worktrees/repo/cfp-999-feature"
+  fi
+  mkdir -p "$wt_dir"
+
+  # 나이 조작
+  if [[ "$wt_old" == "1" ]]; then
+    touch -d "30 days ago" "$wt_dir" 2>/dev/null || touch -t 202001010000 "$wt_dir"
+  fi
+
+  # porcelain 출력 작성
+  local porcelain="$sb/wt.porcelain"
+  {
+    echo "worktree $repo_root"
+    echo "HEAD 1111111111111111111111111111111111111111"
+    echo "branch refs/heads/main"
+    echo ""
+    echo "worktree $wt_dir"
+    echo "HEAD 2222222222222222222222222222222222222222"
+    echo "branch refs/heads/cfp-999-feature"
+    [[ "$locked" == "1" ]] && echo "locked"
+    echo ""
+  } > "$porcelain"
+
+  local stub_git="$sb/git" stub_gh="$sb/gh" remove_log="$sb/remove.log"
+  : > "$remove_log"
+  make_stub_git "$stub_git"
+  make_stub_gh "$stub_gh"
+
+  RUN_RC=0
+  RUN_OUT="$(
+    GC_GIT_BIN="$stub_git" \
+    GC_GH_BIN="$stub_gh" \
+    STUB_REPO_ROOT="$repo_root" \
+    STUB_WT_PORCELAIN="$porcelain" \
+    STUB_DIRTY="$dirty" \
+    STUB_GH_AUTH="$gh_auth" \
+    STUB_GH_MERGED="$gh_merged" \
+    STUB_AHEAD="$ahead" \
+    STUB_REMOVE_LOG="$remove_log" \
+    PATH="$sb:$PATH" \
+    bash "$STALE_SCRIPT" 2>&1
+  )" || RUN_RC=$?
+
+  RUN_REMOVE_LOG="$(cat "$remove_log" 2>/dev/null || true)"
+  rm -rf "$sb"
+}
+
+# ── Tests ─────────────────────────────────────────────────────────────────────
+
+# 1 — syntax
+test_syntax() {
+  log "Test: bash -n syntax check"
   local rc=0
   bash -n "$STALE_SCRIPT" 2>/dev/null || rc=$?
   assert_exit "syntax check" 0 "$rc"
 }
 
-# Test 2 — §8.5.2 Restart recovery: no WORKTREE_BASE dir → exit 0 fast path
-test_2_no_worktree_base_exits_0() {
-  log "Test 2: §8.5.2 — WORKTREE_BASE absent → exit 0 (fast path, no crash)"
-  local repo rc=0 out
-  repo="$(setup_repo)"
-  local fake_home
-  fake_home="$(mktemp -d)"
-  # fake_home has no .claude/worktrees/<repo> dir
-
-  out="$(
-    cd "$repo"
-    HOME="$fake_home" bash "$STALE_SCRIPT" 2>/dev/null
-  )" || rc=$?
-
-  assert_exit "no-worktree-base exit 0" 0 "$rc"
-  assert_contains "output mentions NO_WORKTREES" "NO_WORKTREES" "$out"
-
-  rm -rf "$fake_home"
-  teardown_repo "$repo"
+# 2 — BYPASS
+test_bypass() {
+  log "Test: BYPASS_WORKTREE_GC=1 → exit 0 + skip log, no DONE"
+  local rc=0 out
+  out="$(BYPASS_WORKTREE_GC=1 bash "$STALE_SCRIPT" 2>&1)" || rc=$?
+  assert_exit "bypass exit 0" 0 "$rc"
+  assert_contains "bypass skip log" "skipping" "$out"
+  assert_not_contains "bypass no DONE" "DONE" "$out"
 }
 
-# Test 3 — §8.5.4 Accumulation: worktree base exists but empty → exit 0, pruned=0
-test_3_empty_worktree_base_exits_0() {
-  log "Test 3: §8.5.4 — WORKTREE_BASE exists but empty → exit 0, DONE pruned=0"
-  local repo rc=0 out
-  repo="$(setup_repo)"
-  local fake_home
-  fake_home="$(mktemp -d)"
-  # Create the base dir manually (as bootstrap would)
-  local repo_name
-  repo_name="$(basename "$repo")"
-  mkdir -p "$fake_home/.claude/worktrees/$repo_name"
-
-  out="$(
-    cd "$repo"
-    HOME="$fake_home" bash "$STALE_SCRIPT" 2>/dev/null
-  )" || rc=$?
-
-  assert_exit "empty-base exit 0" 0 "$rc"
-  assert_contains "DONE line present" "DONE" "$out"
-
-  rm -rf "$fake_home"
-  teardown_repo "$repo"
+# 3 — non-git dir graceful
+test_non_git_dir() {
+  log "Test: non-git dir → graceful exit 0"
+  local rc=0 tmp
+  tmp="$(mktemp -d)"
+  ( cd "$tmp" && bash "$STALE_SCRIPT" >/dev/null 2>&1 ) || rc=$?
+  assert_exit "non-git exit 0" 0 "$rc"
+  rm -rf "$tmp"
 }
 
-# Test 4 — §8.5.2 Restart recovery: fresh worktree (age < 7d) is NOT pruned
-test_4_fresh_worktree_not_pruned() {
-  log "Test 4: §8.5.2 — fresh worktree (< 7d) + origin absent → kept (age criterion)"
-  # Note: script checks age first (-mtime +7) then origin.
-  # A freshly created worktree will NOT be stale by age → kept regardless of origin.
-  local repo rc=0 out wt_path
-  repo="$(setup_repo)"
-  local base
-  base="$(git -C "$repo" symbolic-ref --short HEAD 2>/dev/null || echo "main")"
-  local fake_home
-  fake_home="$(mktemp -d)"
-
-  wt_path="$(
-    cd "$repo"
-    HOME="$fake_home" bash "$CREATE_SCRIPT" "cfp-136-fresh-branch" "$base" 2>/dev/null
-  )"
-
-  out="$(
-    cd "$repo"
-    HOME="$fake_home" bash "$STALE_SCRIPT" 2>/dev/null
-  )" || rc=$?
-
-  assert_exit "fresh-worktree stale-check exit 0" 0 "$rc"
-  # Fresh worktree should not be in PRUNING output
-  if printf '%s' "$out" | grep -q "PRUNING.*cfp-136-fresh-branch"; then
-    FAIL=$((FAIL + 1))
-    log "  FAIL: fresh worktree was incorrectly pruned"
-  else
-    PASS=$((PASS + 1))
-    log "  PASS: fresh worktree not pruned (age criterion correct)"
-  fi
-
-  # Cleanup
-  git -C "$repo" worktree remove --force "$wt_path" 2>/dev/null || true
-  git -C "$repo" branch -D "cfp-136-fresh-branch" 2>/dev/null || true
-  rm -rf "$fake_home"
-  teardown_repo "$repo"
+# 4 — merged + old + clean → PRUNED
+test_merged_old_clean_pruned() {
+  log "Test: merged + old + clean → PRUNED"
+  run_scenario 1 0 1 1 0 0 default
+  assert_exit "exit 0" 0 "$RUN_RC"
+  assert_contains "PRUNING line" "PRUNING" "$RUN_OUT"
+  assert_contains "pruned=1" "pruned=1" "$RUN_OUT"
+  assert_contains "remove called" "cfp-999-feature" "$RUN_REMOVE_LOG"
 }
 
-# Test 5 — §8.5.3 Cache/drift: main repo worktree is NEVER treated as stale candidate
-test_5_main_worktree_skipped() {
-  log "Test 5: §8.5.3 — main repo worktree is skipped (not in .claude/worktrees/)"
-  local repo rc=0 out
-  repo="$(setup_repo)"
-  local fake_home
-  fake_home="$(mktemp -d)"
-  local repo_name
-  repo_name="$(basename "$repo")"
-  mkdir -p "$fake_home/.claude/worktrees/$repo_name"
-
-  out="$(
-    cd "$repo"
-    HOME="$fake_home" bash "$STALE_SCRIPT" 2>/dev/null
-  )" || rc=$?
-
-  assert_exit "main-worktree-skipped exit 0" 0 "$rc"
-  # Main repo path must never appear in PRUNING output
-  if printf '%s' "$out" | grep -q "PRUNING.*$repo[^/]"; then
-    FAIL=$((FAIL + 1))
-    log "  FAIL: main repo incorrectly included in stale candidates"
-  else
-    PASS=$((PASS + 1))
-    log "  PASS: main repo worktree correctly skipped"
-  fi
-
-  rm -rf "$fake_home"
-  teardown_repo "$repo"
+# 5 — merged + old + DIRTY → KEPT (data-loss 가드)
+test_merged_old_dirty_kept() {
+  log "Test: merged + old + DIRTY → KEPT (data-loss 가드)"
+  run_scenario 1 1 1 1 0 0 default
+  assert_exit "exit 0" 0 "$RUN_RC"
+  assert_contains "KEEP dirty" "dirty" "$RUN_OUT"
+  assert_contains "pruned=0" "pruned=0" "$RUN_OUT"
+  assert_not_contains "no PRUNING" "PRUNING" "$RUN_OUT"
 }
 
-# Test 6 — Fail-safe: git failure inside subshell does not crash outer session (|| true)
-test_6_failsafe_git_error_no_crash() {
-  log "Test 6: §8.5.2 fail-safe — invalid git repo → graceful exit rc=0 (non-blocking)"
-  local rc=0
-  # Run stale check in a non-git directory; production trap guarantees exit 0
-  local tmp_nonrepo
-  tmp_nonrepo="$(mktemp -d)"
-  (
-    cd "$tmp_nonrepo"
-    bash "$STALE_SCRIPT" 2>/dev/null
-  ) || rc=$?
-  # Production fix (§3.5 graceful trap) guarantees exit 0 on non-git dir
-  assert_exit "invalid-git-dir exit 0" 0 "$rc"
-  rm -rf "$tmp_nonrepo"
+# 6 — NOT merged + old + clean → KEPT
+test_notmerged_old_clean_kept() {
+  log "Test: NOT merged + old + clean → KEPT"
+  run_scenario 1 0 1 0 0 0 default
+  assert_exit "exit 0" 0 "$RUN_RC"
+  assert_contains "KEEP merged 없음" "merged PR 없음" "$RUN_OUT"
+  assert_contains "pruned=0" "pruned=0" "$RUN_OUT"
 }
 
-# Test 7 — SEC-iter1-P2-1: BYPASS_WORKTREE_GC=1 → exit 0 + skip message (no origin contact)
-test_7_bypass_worktree_gc() {
-  log "Test 7: SEC-iter1-P2-1 — BYPASS_WORKTREE_GC=1 → exit 0 + skip log, no origin contact"
-  local repo rc=0 err_out
-  repo="$(setup_repo)"
-
-  err_out="$(
-    cd "$repo"
-    BYPASS_WORKTREE_GC=1 bash "$STALE_SCRIPT" 2>&1 1>/dev/null
-  )" || rc=$?
-
-  assert_exit "BYPASS_WORKTREE_GC exit 0" 0 "$rc"
-  assert_contains "skip message in stderr" "BYPASS_WORKTREE_GC=1" "$err_out"
-  assert_contains "skipping keyword" "skipping" "$err_out"
-
-  # Verify no 'ls-remote' or 'git fetch' invocation by checking the script did not
-  # reach the origin-contact section (DONE line must be absent from stdout)
-  local stdout_out
-  stdout_out="$(
-    cd "$repo"
-    BYPASS_WORKTREE_GC=1 bash "$STALE_SCRIPT" 2>/dev/null
-  )"
-  if printf '%s' "$stdout_out" | grep -q "DONE"; then
-    FAIL=$((FAIL + 1))
-    log "  FAIL: BYPASS mode should not reach DONE line (origin contact section)"
-  else
-    PASS=$((PASS + 1))
-    log "  PASS: BYPASS mode exited before DONE (origin contact skipped)"
-  fi
-
-  teardown_repo "$repo"
+# 7 — merged + RECENT (age 미만) → KEPT
+test_merged_recent_kept() {
+  log "Test: merged + recent (age 미만) → KEPT"
+  run_scenario 0 0 1 1 0 0 default
+  assert_exit "exit 0" 0 "$RUN_RC"
+  assert_contains "pruned=0" "pruned=0" "$RUN_OUT"
+  assert_not_contains "no PRUNING" "PRUNING" "$RUN_OUT"
 }
 
-# ── Run ───────────────────────────────────────────────────────────────────────
+# 8 — gh 불가 → KEPT + WARN (fail-safe)
+test_gh_unavailable_failsafe() {
+  log "Test: gh 불가 (미인증) → KEPT + WARN (fail-safe)"
+  run_scenario 1 0 0 1 0 0 default
+  assert_exit "exit 0" 0 "$RUN_RC"
+  assert_contains "WARN gh" "WARN" "$RUN_OUT"
+  assert_contains "pruned=0" "pruned=0" "$RUN_OUT"
+  assert_not_contains "no PRUNING" "PRUNING" "$RUN_OUT"
+}
+
+# 9 — alternate base dir worktree → 여전히 EVALUATED (Defect A)
+test_alt_base_evaluated() {
+  log "Test: alternate base dir worktree → 여전히 EVALUATED (Defect A)"
+  run_scenario 1 0 1 1 0 0 alt
+  assert_exit "exit 0" 0 "$RUN_RC"
+  # 다른 base 에 있어도 prune 까지 도달해야 함 (이전 결함이면 무시됐을 것)
+  assert_contains "PRUNING (alt base)" "PRUNING" "$RUN_OUT"
+  assert_contains "pruned=1" "pruned=1" "$RUN_OUT"
+}
+
+# 10 — locked worktree → KEPT
+test_locked_kept() {
+  log "Test: locked worktree → KEPT"
+  run_scenario 1 0 1 1 1 0 default
+  assert_exit "exit 0" 0 "$RUN_RC"
+  assert_contains "KEEP locked" "locked" "$RUN_OUT"
+  assert_contains "pruned=0" "pruned=0" "$RUN_OUT"
+  assert_not_contains "no PRUNING" "PRUNING" "$RUN_OUT"
+}
+
+# 11 — merged + old + clean BUT unpushed commits → KEPT (data-loss 가드 2)
+test_unpushed_commits_kept() {
+  log "Test: merged + old + clean + unpushed commits → KEPT"
+  run_scenario 1 0 1 1 0 3 default
+  assert_exit "exit 0" 0 "$RUN_RC"
+  assert_contains "KEEP unpushed" "unpushed" "$RUN_OUT"
+  assert_contains "pruned=0" "pruned=0" "$RUN_OUT"
+}
+
+# ── Run ─────────────────────────────────────────────────────────────────────
 log "=== test-check-worktree-stale 시작 ==="
-test_1_syntax_check
-test_2_no_worktree_base_exits_0
-test_3_empty_worktree_base_exits_0
-test_4_fresh_worktree_not_pruned
-test_5_main_worktree_skipped
-test_6_failsafe_git_error_no_crash
-test_7_bypass_worktree_gc
+test_syntax
+test_bypass
+test_non_git_dir
+test_merged_old_clean_pruned
+test_merged_old_dirty_kept
+test_notmerged_old_clean_kept
+test_merged_recent_kept
+test_gh_unavailable_failsafe
+test_alt_base_evaluated
+test_locked_kept
+test_unpushed_commits_kept
 
 log ""
 log "=== Summary: $PASS PASS, $FAIL FAIL ==="
