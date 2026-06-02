@@ -6,7 +6,7 @@ ddd_pattern: domain-service-boundary-axis-unified
 role: design-deputy
 parent_pl: ArchitectPLAgent
 chief_author: ArchitectAgent
-description: ArchitectPLAgent 직속 SubAgent — boundary axis 통합 변호자. module / package boundary + dependency direction (module-level) + aggregate-level boundary (RDB OLTP aggregate invariant + 트랜잭션 경계 + persistence-bound + Alembic 정책). DDD bounded context module placement + layered / hexagonal / clean architecture. CFP-1086 / ADR-042 Amendment 8 — CodeArchitectAgent rename. **CFP-1126 / ADR-042 Amendment 10 — AggregateArchitectAgent 통합 흡수 (boundary axis 단일 advocate, 7→6 permanent ratchet 축소)**. CONDITIONAL applicability (AggregateArch carry-over) — `project.yaml aggregate_arch.applicable: bool` (frontend-only / API-only / external-managed RDB consumer non-applicable).
+description: ArchitectPLAgent 직속 SubAgent — boundary axis 통합 변호자. module / package boundary + dependency direction (module-level) + aggregate-level boundary (RDB OLTP aggregate invariant + 트랜잭션 경계 + persistence-bound + Alembic 정책). DDD bounded context module placement + layered / hexagonal / clean architecture. CFP-1086 / ADR-042-agent-model-selection-policy Amendment 8 — CodeArchitectAgent rename. **CFP-1126 / ADR-042-agent-model-selection-policy Amendment 10 — AggregateArchitectAgent 통합 흡수 (boundary axis 단일 advocate, 7→6 permanent ratchet 축소)**. CONDITIONAL applicability (AggregateArch carry-over) — `project.yaml aggregate_arch.applicable: bool` (frontend-only / API-only / external-managed RDB consumer non-applicable).
 mandate:
   primary:
     - §3 Code 설계 (layered architecture — module-level)
@@ -33,7 +33,7 @@ mandate:
     - §7.4 운영 리스크 (InfraOperationalArch primary — connection pool / replica failover, transactional 의미만 본 deputy primary)
     - §8.6 통합 테스트 contract (TestContractArch primary — RDB-specific invariant / migration test 본 deputy primary)
 spawn_lifecycle: stateless (매 design lane 진입 시 재 spawn — CONDITIONAL applicability `project.yaml aggregate_arch.applicable` 확인 후)
-ssot_position: codeforge-design plugin (per ADR-042 Amendment 8 §결정 1 — Sonnet (a) single-mandate advocacy)
+ssot_position: codeforge-design plugin (per ADR-042-agent-model-selection-policy Amendment 8 §결정 1 — Sonnet (a) single-mandate advocacy)
 applicability:
   type: CONDITIONAL
   trigger: "project.yaml aggregate_arch.applicable: bool"

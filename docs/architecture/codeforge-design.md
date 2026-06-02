@@ -18,7 +18,7 @@ family_ref: ../../../plugin-codeforge/docs/architecture/codeforge-family.md#모�
 
 codeforge-design = 설계 레인 plugin. **Change Plan + ADR 확정** 책임. `[verified: CLAUDE.md @ cfp-1086-s1 Sub-agent fan-out table + agents/ tree direct enumeration]` — agent 구성:
 
-**Permanent agent (9 file)** — 모든 설계 lane 진입 시 spawn (PL + chief + 7 deputy, CFP-1086 / ADR-042 Amendment 8):
+**Permanent agent (9 file)** — 모든 설계 lane 진입 시 spawn (PL + chief + 7 deputy, CFP-1086 / ADR-042-agent-model-selection-policy Amendment 8):
 
 | 모듈 (agent) | 역할 | 입장 / 책임 | model |
 |---|---|---|---|
@@ -51,9 +51,9 @@ codeforge-design = 설계 레인 plugin. **Change Plan + ADR 확정** 책임. `[
 
 > **4-way 이념 대립 축** (CFP-1086 정합): RDB OLTP 영역 = CodebaseMapper ↔ Refactor ↔ SecurityArch ↔ AggregateArch / 빅데이터 OLAP 영역 = CodebaseMapper ↔ Refactor ↔ SecurityArch ↔ DataArch / Cross-layer (ELT/ETL/CDC) = AggregateArch + DataArch co-author deferred. chief author 가 충돌 해소 + Change Plan 명시. TestContractArch / InfraOperationalArch / ModuleArch / APIContractArch / ArchitectAnalyst / LiveOps / LiveOrdering / ProductionEvidence = contributor / single-mandate advocacy 단일 축 (대립 비참여).
 
-**InfraArchitect 신설 철회** (CFP-1026 S1 — ADR-042 Amendment 7 SSOT): Docker-first + AWS 없음 환경 — InfraArchitect 미도입 결정. InfraOperationalArchitect 가 §7.4.6 Container considerations 영역 cover.
+**InfraArchitect 신설 철회** (CFP-1026 S1 — ADR-042-agent-model-selection-policy Amendment 7 SSOT): Docker-first + AWS 없음 환경 — InfraArchitect 미도입 결정. InfraOperationalArchitect 가 §7.4.6 Container considerations 영역 cover.
 
-**DDDArchitect 신설 reject** (CFP-1086 / ADR-042 Amendment 8 §DDDArchitectAgent reject 명문화): Phase 1 Q4-prime 사용자 발의 — axis 미정합 (method / 학파 layer + ModuleArch wording overlap + consumer applicability 축소). 미도입 결정, ratchet 위반 아님 (ADR-058 §결정 5 sunset_justification 불필요).
+**DDDArchitect 신설 reject** (CFP-1086 / ADR-042-agent-model-selection-policy Amendment 8 §DDDArchitectAgent reject 명문화): Phase 1 Q4-prime 사용자 발의 — axis 미정합 (method / 학파 layer + ModuleArch wording overlap + consumer applicability 축소). 미도입 결정, ratchet 위반 아님 (ADR-058 §결정 5 sunset_justification 불필요).
 
 ## 경계
 

@@ -154,7 +154,7 @@ wrapper-self-app Story (ADR-005 plugin-meta-na, ADR-72 §결정 6) — 본 agent
 
 - ADR-72 (ProductionEvidenceDeputy + Epic cutover gate) — 본 agent SSOT carrier
 - ADR-014 Amendment 4 (CFP-676 / S1) — policy SSOT vs evidence SSOT disjoint axis
-- ADR-042 Amendment 7 (CFP-676 / S1) — design lane agent 구조 재편
+- ADR-042-agent-model-selection-policy Amendment 7 (CFP-676 / S1) — design lane agent 구조 재편
 - ADR-005 (plugin-meta-na — wrapper-self-app N/A)
 - ADR-063 Amendment 5 §결정 15 — family 7 atomic canary pin (publisher_versions[] length_invariant=7)
 - reconcile-protocol-v1 v1.11 §4.14 canary_compatibility_check_binding (Wave 4 sub-Epic #882 Story-4)

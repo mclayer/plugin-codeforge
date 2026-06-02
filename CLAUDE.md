@@ -1,6 +1,6 @@
 # CLAUDE.md (codeforge-design)
 
-codeforge ζ arc Design lane plugin (LAST extraction). 6 permanent + 3+1 CONDITIONAL SubAgent + 4-tuple sub-tuple + change-plan/adr templates. CFP-1086 / ADR-042 Amendment 8 — BackendArchEpic Phase 2 design lane 7+3+1 roster 재편 (AggregateArch + APIContractArch 신설 / CodeArch → ModuleArch rename / DataArch mandate 축소). **CFP-1126 / ADR-042 Amendment 10 — AggregateArch + ModuleArch 통합 (boundary axis 단일 advocate, 7→6 permanent, ratchet 축소 first applied carrier ADR-058 §결정 5).**
+codeforge ζ arc Design lane plugin (LAST extraction). 6 permanent + 3+1 CONDITIONAL SubAgent + 4-tuple sub-tuple + change-plan/adr templates. CFP-1086 / ADR-042-agent-model-selection-policy Amendment 8 — BackendArchEpic Phase 2 design lane 7+3+1 roster 재편 (AggregateArch + APIContractArch 신설 / CodeArch → ModuleArch rename / DataArch mandate 축소). **CFP-1126 / ADR-042-agent-model-selection-policy Amendment 10 — AggregateArch + ModuleArch 통합 (boundary axis 단일 advocate, 7→6 permanent, ratchet 축소 first applied carrier ADR-058 §결정 5).**
 
 ## Plugin position
 
@@ -29,7 +29,7 @@ codeforge core (>= 5.0.0) 의존.
 | `phase:설계` → `phase:설계-리뷰` transition | ArchitectPLAgent |
 | `docs/architecture/<path>.md` | ArchitectAgent (lane gate — ADR-078 §결정 1 4 영역 갱신 의무, 매 Change Plan merge 시) |
 
-## 6 permanent + 3+1 CONDITIONAL SubAgent + 4-tuple sub-tuple (CFP-1086 — ADR-042 Amendment 8 / ADR-068 Amendment 2 / ADR-086; **CFP-1126 — ADR-042 Amendment 10 AggregateArch + ModuleArch 통합 7→6**)
+## 6 permanent + 3+1 CONDITIONAL SubAgent + 4-tuple sub-tuple (CFP-1086 — ADR-042-agent-model-selection-policy Amendment 8 / ADR-068 Amendment 2 / ADR-086; **CFP-1126 — ADR-042-agent-model-selection-policy Amendment 10 AggregateArch + ModuleArch 통합 7→6**)
 
 **SubAgent 수 = 6 permanent + 3+1 CONDITIONAL + 4-tuple sub-tuple**. wrapper SSOT (CLAUDE.md "Deputy mandate 매트릭스" / skills/deputy-mandate/SKILL.md) 와 byte-consistent. **CFP-1126 Amendment 10 = AggregateArchitectAgent deprecate + ModuleArchitectAgent mandate 흡수 (boundary axis 단일 advocate, ratchet 축소 first applied carrier — ADR-058 §결정 5). RACI matrix 4→3 column 재편 = 별 CFP carrier (CFP scope unitary, 본 CFP-1126 = agent 통합 + roster count 정정만, RACI dangling reference 는 pointer note).**
 
@@ -64,9 +64,9 @@ codeforge core (>= 5.0.0) 의존.
 
 **flat spawn 의미**: Orchestrator 가 4 component 모두 평행 spawn. 재귀 spawn 금지 (platform inherent) / nested team 금지 (ADR-044) / sub-lead 격상 0건 (ADR-009 §결정 1 + ADR-039 정합). 4-tuple = 어느 sub-agent 가 어느 deputy 영역 Context Packet 으로 spawn 됐는지를 표기하는 **논리적 그룹핑**일 뿐 **물리적 spawn 계층 (nested) 이 아니다**.
 
-**InfraArchitect 신설 철회** (CFP-1026 S1 — ADR-042 Amendment 7 SSOT): Docker-first + AWS 없음 환경 — InfraArchitect 미도입 결정. InfraOperationalArchitect 가 §7.4.6 Container considerations 영역 cover.
+**InfraArchitect 신설 철회** (CFP-1026 S1 — ADR-042-agent-model-selection-policy Amendment 7 SSOT): Docker-first + AWS 없음 환경 — InfraArchitect 미도입 결정. InfraOperationalArchitect 가 §7.4.6 Container considerations 영역 cover.
 
-**DDDArchitect 신설 reject** (CFP-1086 / ADR-042 Amendment 8 §DDDArchitectAgent reject 명문화): Phase 1 Q4-prime 사용자 발의 — axis 미정합 (method / 학파 layer + ModuleArch wording overlap + consumer applicability 축소). 미도입 결정, ratchet 위반 아님 (ADR-058 §결정 5 sunset_justification 불필요).
+**DDDArchitect 신설 reject** (CFP-1086 / ADR-042-agent-model-selection-policy Amendment 8 §DDDArchitectAgent reject 명문화): Phase 1 Q4-prime 사용자 발의 — axis 미정합 (method / 학파 layer + ModuleArch wording overlap + consumer applicability 축소). 미도입 결정, ratchet 위반 아님 (ADR-058 §결정 5 sunset_justification 불필요).
 
 ## 4-way 이념 대립 (7 permanent 중 대립 참여 — CFP-1086 정합)
 
@@ -91,7 +91,7 @@ chief tie-break ladder 3 단계 (ADR-068 Amendment 2) 의 **1단계 (RACI matrix
 
 ### 9-cell summary (3 sub-axis × 3 cross-axis, CFP-1168 재편)
 
-> **CFP-1168 재편 note** (CFP-1126 follow-up — ADR-042 Amendment 10 + ADR-091 Amendment 1 정합): CFP-1126 (AggregateArch deprecated → ModuleArch boundary axis unified, 7→6 permanent) 가 RACI matrix body 를 transitional 보존 (Aggregate column 의 C=ModuleArch pointer 정정만). 본 CFP-1168 = 그 deferred carrier 의 실 재편 — **4-way → 3-way 전면 재편** (Aggregate cross-axis column 제거, ModuleArch (boundary axis unified) cross-axis 가 module-level + aggregate-level RDB OLTP 흡수). 기존 Security/InfraOp/TestContract × Aggregate cell 의 C=AggregateArch → Module cross-axis cell 안 aggregate-level 정합 검토로 통합. CONDITIONAL applicability `aggregate_arch.applicable` key 보존 (ModuleArch carry-over).
+> **CFP-1168 재편 note** (CFP-1126 follow-up — ADR-042-agent-model-selection-policy Amendment 10 + ADR-091 Amendment 1 정합): CFP-1126 (AggregateArch deprecated → ModuleArch boundary axis unified, 7→6 permanent) 가 RACI matrix body 를 transitional 보존 (Aggregate column 의 C=ModuleArch pointer 정정만). 본 CFP-1168 = 그 deferred carrier 의 실 재편 — **4-way → 3-way 전면 재편** (Aggregate cross-axis column 제거, ModuleArch (boundary axis unified) cross-axis 가 module-level + aggregate-level RDB OLTP 흡수). 기존 Security/InfraOp/TestContract × Aggregate cell 의 C=AggregateArch → Module cross-axis cell 안 aggregate-level 정합 검토로 통합. CONDITIONAL applicability `aggregate_arch.applicable` key 보존 (ModuleArch carry-over).
 
 | Sub-axis ↓ \\ Cross-axis → | Data OLAP (R/C/I) | Module (R/C/I, boundary axis unified — module-level + aggregate-level RDB OLTP, CFP-1126 AggregateArch 흡수) | APIContract (R/C/I) |
 |---|---|---|---|
@@ -171,7 +171,7 @@ CONDITIONAL trigger 판정 (ArchitectPL 의 의무):
 - ADR-010 (Inter-plugin Contract Sibling Sync) — design-output v2 sibling sync
 - ADR-012 (Wrapper CLAUDE.md SSOT Boundary) — §3 4번째 예외 (operational risk 매트릭스 / decision row / mandate 경계)
 - ADR-014 (Operational Risk SSOT Distribution) + **Amendment 4** (CFP-676 / S1) — 본 plugin §7.4 schema SSOT, OperationalRiskArch → InfraOperationalArch rename + §7.4 primary/shell 분류 + ProductionEvidence dual-spawn disjoint axis
-- ADR-042 (Agent model selection policy) + **Amendment 7** (CFP-676 / S1) — design lane agent 구조 재편 model tier SSOT (CodeArchitect / ArchitectAnalyst Sonnet 신설 + DataArchitect / InfraOperationalArchitect rename Opus 유지 + InfraArchitect 신설 철회) + **Amendment 8** (CFP-1086 / Story-1) — BackendArchEpic Phase 2 design lane 7+3+1 roster 재편 (AggregateArch + APIContractArch Sonnet 신설 + CodeArch → ModuleArch rename + DataArch mandate 축소 RDB OLTP 영역 제거 + AggregateArch CONDITIONAL applicability P2 + DDDArchitect 신설 reject 명문화)
+- ADR-042-agent-model-selection-policy (Agent model selection policy) + **Amendment 7** (CFP-676 / S1) — design lane agent 구조 재편 model tier SSOT (CodeArchitect / ArchitectAnalyst Sonnet 신설 + DataArchitect / InfraOperationalArchitect rename Opus 유지 + InfraArchitect 신설 철회) + **Amendment 8** (CFP-1086 / Story-1) — BackendArchEpic Phase 2 design lane 7+3+1 roster 재편 (AggregateArch + APIContractArch Sonnet 신설 + CodeArch → ModuleArch rename + DataArch mandate 축소 RDB OLTP 영역 제거 + AggregateArch CONDITIONAL applicability P2 + DDDArchitect 신설 reject 명문화)
 - ADR-044 (Phase-scoped sequential team) — flat spawn / nested team 금지 / 재귀 spawn 금지 / sub-lead 격상 0건 (CFP-676 reaffirm 단락)
 - **ADR-068** (Boundary completeness invariants) + **Amendment 2** (CFP-1086 / Story-1 sibling) — wording SSOT chief tie-break ladder 3 단계 (RACI lookup → ADR-068 invariant → chief judgement + ADR Amendment 발의)
 - **ADR-72** (ProductionEvidenceDeputy + Epic cutover gate) — CONDITIONAL deputy 3번째 (production cutover Story 만)

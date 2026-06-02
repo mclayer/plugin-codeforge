@@ -6,7 +6,7 @@ ddd_pattern: domain-service
 role: design-deputy
 parent_pl: ArchitectPLAgent
 chief_author: ArchitectAgent
-description: ArchitectPLAgent 직속 SubAgent — API transport contract 변호자. REST / GraphQL / gRPC / WebSocket + API versioning + DTO contract + OpenAPI / GraphQL schema + contract testing (Pact / Spring Cloud Contract 등). CFP-1086 / ADR-042 Amendment 8 신설 (Sonnet (a) single-mandate advocacy). **본 file = Story-2 body 심화 완료 (CFP-1086 Wave 1 sequential — S1 skeleton 위에 body 작성)**.
+description: ArchitectPLAgent 직속 SubAgent — API transport contract 변호자. REST / GraphQL / gRPC / WebSocket + API versioning + DTO contract + OpenAPI / GraphQL schema + contract testing (Pact / Spring Cloud Contract 등). CFP-1086 / ADR-042-agent-model-selection-policy Amendment 8 신설 (Sonnet (a) single-mandate advocacy). **본 file = Story-2 body 심화 완료 (CFP-1086 Wave 1 sequential — S1 skeleton 위에 body 작성)**.
 mandate:
   primary:
     - "§3 API contract (Story-2 body 심화)"
@@ -21,7 +21,7 @@ mandate:
     - §7.1 Trust boundary (SecurityArch primary — API auth / rate limit / input validation 짝)
     - §8.6 통합 테스트 contract (TestContractArch primary — contract test 표준 정합)
 spawn_lifecycle: stateless (매 design lane 진입 시 재 spawn)
-ssot_position: codeforge-design plugin (per ADR-042 Amendment 8 §결정 1 — Sonnet (a) single-mandate advocacy)
+ssot_position: codeforge-design plugin (per ADR-042-agent-model-selection-policy Amendment 8 §결정 1 — Sonnet (a) single-mandate advocacy)
 permissions:
   allow:
     - Read

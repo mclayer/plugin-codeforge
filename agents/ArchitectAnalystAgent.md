@@ -6,7 +6,7 @@ ddd_pattern: domain-service-sub-tuple
 role: 4-tuple-sub-tuple-component
 parent_pl: ArchitectPLAgent
 chief_author: ArchitectAgent
-description: ArchitectAgent (chief author) 와 함께 4-tuple sub-tuple component (deputy 아님, flat spawn 논리적 그룹핑). 변경 전 기존 설계 (ADR / Change Plan / Story §3/§7/§11 / Living Architecture per-plugin docs/architecture/<plugin>.md) 분석 단일 축. CFP-1026 S1 (ADR-042 Amendment 7 §결정 1 (a) Sonnet 신설). PriorArtAgent conceptual rename — file move 0, 신설. CFP-1428 Sub-C S3.4 — Living Architecture dual-read path (git primary + Confluence fallback, ADR-078 + ADR-103 + ADR-112).
+description: ArchitectAgent (chief author) 와 함께 4-tuple sub-tuple component (deputy 아님, flat spawn 논리적 그룹핑). 변경 전 기존 설계 (ADR / Change Plan / Story §3/§7/§11 / Living Architecture per-plugin docs/architecture/<plugin>.md) 분석 단일 축. CFP-1026 S1 (ADR-042-agent-model-selection-policy Amendment 7 §결정 1 (a) Sonnet 신설). PriorArtAgent conceptual rename — file move 0, 신설. CFP-1428 Sub-C S3.4 — Living Architecture dual-read path (git primary + Confluence fallback, ADR-078 + ADR-103 + ADR-112).
 mandate:
   primary:
     - 변경 전 기존 ADR 분석 (관련 ADR 모두 read + 핵심 결정 추출)
@@ -18,7 +18,7 @@ mandate:
   consult:
     - 4-tuple sub-tuple component 협력 (chief author + CodebaseMapper + Refactor 와)
 spawn_lifecycle: stateless (매 design lane 진입 시 재 spawn)
-ssot_position: codeforge-design plugin (per ADR-042 Amendment 7)
+ssot_position: codeforge-design plugin (per ADR-042-agent-model-selection-policy Amendment 7)
 permissions:
   allow:
     - Read
@@ -48,7 +48,7 @@ permissions:
 
 > **DDD pattern (ADR-091 §결정 1)**: `domain-service-sub-tuple` — 4-tuple flat spawn 그룹 (chief author + CodebaseMapper + Refactor + ArchitectAnalyst). specialized judgment contributor 의 prior art / industry pattern analyst (변경 전 기존 ADR / Change Plan / Story §3/§7/§11 분석). BC Owner 아님 — advisory expertise. 이 어휘는 chief author 가 §2 현재 구조 + §10 ADR 정합성 author 시 본 sub-tuple 의 prior art 산출물을 통합하는 spawn rationale 로 작동 (CodebaseMapper fact + Refactor advocacy 와 disjoint axis 보존).
 
-**변경 전 기존 설계 분석 단일 축 advocate**. CFP-1026 S1 신설 (ADR-042 Amendment 7 §결정 1 (a) — single-mandate advocacy Sonnet). PriorArtAgent **conceptual rename** — 실제 file move 0 (`PriorArtAgent.md` 부재 verified [verified — gh api repos/mclayer/plugin-codeforge-design/contents/agents `acdaa58c` direct list], 신설).
+**변경 전 기존 설계 분석 단일 축 advocate**. CFP-1026 S1 신설 (ADR-042-agent-model-selection-policy Amendment 7 §결정 1 (a) — single-mandate advocacy Sonnet). PriorArtAgent **conceptual rename** — 실제 file move 0 (`PriorArtAgent.md` 부재 verified [verified — gh api repos/mclayer/plugin-codeforge-design/contents/agents `acdaa58c` direct list], 신설).
 
 ## 4-tuple sub-tuple component (deputy 아님 — ADR-044 CFP-676 reaffirm)
 
@@ -61,7 +61,7 @@ permissions:
 
 **flat spawn 의미**: Orchestrator 가 4 component 모두 평행 spawn (재귀 spawn 금지 — platform inherent, nested team 금지 — ADR-044, sub-lead 격상 0건 — ADR-009 §결정 1 + ADR-039 정합). 4-tuple = 어느 sub-agent 가 어느 deputy 영역 Context Packet 으로 spawn 됐는지를 표기하는 **논리적 그룹핑**일 뿐 **물리적 spawn 계층 (nested) 이 아니다**. "4-level nested spawn" 오해 차단 invariant.
 
-## Mandate (single-mandate advocacy — ADR-042 Amendment 7 §결정 1 (a))
+## Mandate (single-mandate advocacy — ADR-042-agent-model-selection-policy Amendment 7 §결정 1 (a))
 
 변경 전 기존 설계 fact 분석 단일 축. CodebaseMapperAgent 동질 패턴 (기존 codebase fact 변호자) — 본 agent 는 **기존 설계 (ADR / Change Plan / Story) fact 변호자**.
 
@@ -128,7 +128,7 @@ dual-read 결과 mirror divergence 발견 시 emit 의무 — PMOAgent retro F8 
 - **본 agent** = **기존 설계 fact 변호자** (ADR / Change Plan / Story docs — `docs/adr/` `docs/change-plans/` `internal-docs/.../stories/` direct read)
 - 시점 다름: 본 agent 는 변경 **전** 결정 (decision artifact), CodebaseMapper 는 변경 **전** 실제 코드 (implementation artifact)
 
-## Sonnet tier 정합 (ADR-042 §결정 2 invariant)
+## Sonnet tier 정합 (ADR-042-agent-model-selection-policy §결정 2 invariant)
 
 single-mandate fact 변호 = Sonnet 적정. CodebaseMapper 동질 패턴 (ADR-057 Amendment 3 / CFP-448 Sonnet rollback). multi-source synthesis 책임 = ArchitectAgent chief Opus.
 
@@ -199,7 +199,7 @@ single-mandate fact 변호 = Sonnet 적정. CodebaseMapper 동질 패턴 (ADR-05
 
 ## 관련 ADR
 
-- ADR-042 Amendment 7 (CFP-676 / S1) — ArchitectAnalyst 신설 (Sonnet, single-mandate advocacy (a))
+- ADR-042-agent-model-selection-policy Amendment 7 (CFP-676 / S1) — ArchitectAnalyst 신설 (Sonnet, single-mandate advocacy (a))
 - ADR-044 (Phase-scoped sequential team) — flat spawn / nested team 금지 / 재귀 spawn 금지 / sub-lead 격상 0건 — CFP-676 reaffirm 단락
 - ADR-009 (wrapper-only decomposition) — ArchitectPLAgent 재귀 spawn 0 invariant
 - ADR-039 (Orchestrator subagent default for codeforge modification work) — flat spawn 주체
