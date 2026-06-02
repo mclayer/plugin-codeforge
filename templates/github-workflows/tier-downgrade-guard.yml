@@ -1,0 +1,35 @@
+name: tier-downgrade guard
+# tier-downgrade guard — evidence-checks-registry.yaml current_tier(강제강도 SSOT) 무단 하향 방지.
+#
+# 레드팀 발견: current_tier 가 검사 강제 강도의 SSOT 인데 어떤 검사도 이 필드를 지키지 않음
+#   (기존 약화방지 가드는 전부 docs/adr/ADR-*.md 경로 scope). 본 가드는 tier 하향/entry 제거를
+#   감지하고 `tier-downgrade-justification:` 마커가 없으면 run 을 FAIL 시킨다.
+#   이 마커 = 정정/축소 lane(promotion CFP 없이 근거만으로 진행)의 강제 수단.
+#   정책 SSOT: docs/correction-lane.md
+#
+# NOT warning-theater: 본 가드 step 은 continue-on-error 미설정 — 정당화 없는 하향 시 run FAIL.
+# 단, 현재 branch protection required_status_checks.contexts 에 미등록 → run FAIL 이 merge 를
+#   (아직) 차단하지 않음. merge-blocking 전환 = repo owner 가 본 job context 를 branch protection
+#   에 추가하는 별도 owner action (본 workflow 가 스스로 하지 않음).
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'docs/evidence-checks-registry.yaml'
+
+permissions:
+  contents: read
+
+jobs:
+  tier-downgrade-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run tier-downgrade guard
+        env:
+          TIER_DOWNGRADE_JUSTIFICATION: ${{ github.event.pull_request.body }}
+        run: bash scripts/check-tier-downgrade-guard.sh
