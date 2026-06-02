@@ -1,10 +1,10 @@
 # codeforge
 
-**Claude Code 범용 SW 개발 오케스트레이션 플러그인**. 사용자 요구사항 한 건을 받아 **0 core 에이전트 (wrapper-only) + 6 lane plugin (codeforge-{review,pmo,requirements,test,develop,design}) + `role: dev` 동적 roster · 7 레인** 구조로 요구사항 해석 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → 구현 테스트 → 보안 테스트 게이트까지 자율 실행한다.
+**Claude Code 범용 SW 개발 오케스트레이션 플러그인**. 사용자 요구사항 한 건을 받아 **0 core 에이전트 (wrapper-only) + 8 lane plugin (codeforge-{requirements,design,review,develop,test,deploy,deploy-review,pmo}) + `role: dev` 동적 roster · 8 레인** 구조로 요구사항 해석 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → 통합 테스트 → 보안 테스트 → 배포 → 배포 리뷰까지 자율 실행한다.
 
 ## 주요 특징
 
-- **0 core (wrapper-only) + 6 lane plugin + `role: dev` 동적 roster · 7 레인 · 1 Cross-cutting (PMOAgent)** 구조로 SW 개발 프로세스 전반 커버
+- **0 core (wrapper-only) + 8 lane plugin + `role: dev` 동적 roster · 8 레인 · 1 Cross-cutting (PMOAgent)** 구조로 SW 개발 프로세스 전반 커버
 - **프로젝트 shape별 preset** (`presets/webapp` 등) — 웹앱·CLI·라이브러리·임베디드 등 Dev 구성 번들을 골라 overlay에 임포트
 - **CodebaseMapper ↔ Refactor 이념 대립** 으로 설계 균형 확보
 - **Claude + Codex(GPT-5) peer 리뷰** 로 설계 리뷰·코드 리뷰·보안 테스트 3중 peer 이중화
@@ -27,7 +27,9 @@ Orchestrator (최상위 Claude 세션)
  ├── [구현] DeveloperPL (role:dev roster 병렬) + QADev
  ├── [구현 리뷰] CodeReviewPL (Claude ‖ Codex)
  ├── [구현 테스트] TestAgent
- └── [보안 테스트] SecurityTestPL (Claude ‖ Codex)
+ ├── [보안 테스트] SecurityTestPL (Claude ‖ Codex)
+ ├── [배포] DeployPL
+ └── [배포 리뷰] DeployReviewPL
 ```
 
 상세는 [`CLAUDE.md`](CLAUDE.md) 참조.
@@ -127,7 +129,7 @@ mkdir -p .claude/_overlay/agents
 | [`CHANGELOG.md`](CHANGELOG.md) | 릴리스 이력 (SemVer) |
 | [`templates/`](templates/) | 공통 문서 양식 SSOT — Change Plan · ADR · Story Page · Impl Manifest |
 | [`presets/`](https://github.com/mclayer/plugin-codeforge-develop/tree/main/presets) | 프로젝트 shape별 Dev 에이전트 번들 — webapp 등 |
-| `agents/*.md` | 없음 (wrapper-only — agent md 는 6 lane plugin 에 분산) |
+| `agents/*.md` | 없음 (wrapper-only — agent md 는 8 lane plugin 에 분산) |
 
 ## 구조
 

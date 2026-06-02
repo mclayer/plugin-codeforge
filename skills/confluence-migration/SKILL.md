@@ -178,7 +178,7 @@ consumer-applicability filter (ADR-083 §결정 1 4-way enum):
 1. **Story file** (`docs/stories/<KEY>.md`) — Issue 안 §1-§14 모두 포함
 2. **FIX Ledger** (Story file §10 sub-section) — fix-event-v1 contract
 3. **Lane Evidence** (Story file §14 sub-section) — ADR-031 carrier
-4. **decision packet** (`decisions/<packet_id>.yaml`) — ADR-022 Sonnet decider
+4. **decision packet** (`decisions/<packet_id>.yaml`)
 5. **spawn prompt** (ephemeral, session-scoped) — ADR-082 sub-scope 1-C
 
 > **ratchet 강화 rationale**: ADR-111 Amendment 2 §결정 2 — 위 5 영역은 governance audit trail 의 원자 단위. Confluence mirror 시 mutable Confluence page 와 immutable Issue history 간 split-brain 위험. Issue-only retain = 단방향 audit trail 보존 invariant.
