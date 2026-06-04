@@ -192,12 +192,12 @@ clarification 강제 재조사 trigger 와 다른 재실행 trigger 는 **trigge
 
 ## 관련 ADR
 
-- [ADR-077](../../adr/ADR-077-clarification-forced-reinvestigation-propagation.md) — **본 개념의 normative SSOT** (§결정 1-10)
-- [ADR-076](../../adr/ADR-076-declarative-reconciliation-upgrade.md) — declarative reconciliation 패턴 재사용 anchor (stale 게이트, §결정 8)
-- [ADR-067](../../adr/ADR-067-fix-ledger-implementability-escalation.md) — §10 FIX Ledger cross-pollinate 금지 disjoint hard constraint 선례 (§결정 5)
-- [ADR-059](../../adr/ADR-059-debate-protocol-v1.md) — debate round counter (3 카운터 disjoint 일원, max-round 5 precedent)
-- [ADR-058](../../adr/ADR-058-adr-sunset-criteria-mandate.md) — value-equality skip 비차용 invariant ratchet 차단 정합 (§결정 5 sunset_justification)
-- [ADR-052](../../adr/ADR-052-codex-proactive-check-touchpoints.md) — trigger origin disjoint boundary (Touchpoint #4 divergence vs clarification answer)
+- [ADR-077](../../../archive/adr/ADR-077-clarification-forced-reinvestigation-propagation.md) — **본 개념의 normative SSOT** (§결정 1-10)
+- [ADR-076](../../../archive/adr/ADR-076-declarative-reconciliation-upgrade.md) — declarative reconciliation 패턴 재사용 anchor (stale 게이트, §결정 8)
+- [ADR-067](../../../archive/adr/ADR-067-fix-ledger-implementability-escalation.md) — §10 FIX Ledger cross-pollinate 금지 disjoint hard constraint 선례 (§결정 5)
+- [ADR-059](../../../archive/adr/ADR-059-debate-protocol-v1.md) — debate round counter (3 카운터 disjoint 일원, max-round 5 precedent)
+- [ADR-058](../../../archive/adr/ADR-058-adr-sunset-criteria-mandate.md) — value-equality skip 비차용 invariant ratchet 차단 정합 (§결정 5 sunset_justification)
+- [ADR-052](../../../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) — trigger origin disjoint boundary (Touchpoint #4 divergence vs clarification answer)
 
 ## 변경 이력
 

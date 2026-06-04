@@ -8,7 +8,7 @@ tools: Read
 
 > 참조 테이블 skill — lane 진입 전 Story / Epic flow 패턴과 Preflight 체크 요건을 확인하세요.
 
-## 레인 8개 · 단계 정의 (CFP-1059 / [ADR-087](../../docs/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](../../docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — 6 → 8 lane 확장)
+## 레인 8개 · 단계 정의 (CFP-1059 / [ADR-087](../../archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](../../archive/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — 6 → 8 lane 확장)
 
 ```
 [Story] 요구사항 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → [CI gate]  ← N회 반복
@@ -44,7 +44,7 @@ tools: Read
 
 - **Mode A (repo-local, ADR-020 v1 default)**: 각 작업 repo 가 자체 Story
 - **Mode B (hub-centralized)**: 1 hub repo 가 모든 child Story (mctrader 패턴)
-- parent Epic Issue + child Story (per mode) + `epic_dependencies` graph + Change Plan §3 contract pin + Mixed-mode 금지. 상세 [ADR-020](../../docs/adr/ADR-020-cross-repo-epic-pattern.md), playbook §3.4.
+- parent Epic Issue + child Story (per mode) + `epic_dependencies` graph + Change Plan §3 contract pin + Mixed-mode 금지. 상세 [ADR-020](../../archive/adr/ADR-020-cross-repo-epic-pattern.md), playbook §3.4.
 
 ## 레인 진입 전 Preflight 체크 의무
 
@@ -68,6 +68,6 @@ FAIL 시 block+report. 상세는 playbook §3B.
 | 통합테스트 | **Epic 하위 전체 Story** CI gate PASS (1회) | `tests/integration/baseline/` + `tests/integration/stories/<EPIC-KEY>/` 동적 실행 | 3 |
 | 보안 테스트 **(opt-in: lanes.security_ai: true)** | 통합테스트 PASS | §9 (SecurityTestPL 2-layer) + `gate:security-test-pass` | ∞ |
 
-**통합테스트는 Epic-level 실행 (ADR-055 Amendment 2)**: Epic 하위 모든 Story CI gate PASS 후 Orchestrator가 IntegrationTestAgent 1회 spawn. Baseline Suite + Story Suite 동적 실행. FAIL 시 `responsible_stories` 집계 → 해당 Story FIX loop. 상세: [playbook §3.11–3.12](../../docs/orchestrator-playbook.md) + [ADR-055 Amendment 2](../../docs/adr/ADR-055-integration-test-lane-policy.md).
+**통합테스트는 Epic-level 실행 (ADR-055 Amendment 2)**: Epic 하위 모든 Story CI gate PASS 후 Orchestrator가 IntegrationTestAgent 1회 spawn. Baseline Suite + Story Suite 동적 실행. FAIL 시 `responsible_stories` 집계 → 해당 Story FIX loop. 상세: [playbook §3.11–3.12](../../docs/orchestrator-playbook.md) + [ADR-055 Amendment 2](../../archive/adr/ADR-055-integration-test-lane-policy.md).
 
 세부 spawn sequence · branch logic · FIX 진단 흐름 SSOT: [playbook §3](../../docs/orchestrator-playbook.md) + 각 lane plugin CLAUDE.md.

@@ -18,7 +18,7 @@ related_cfp:
 
 CFP-450 (ADR-013 Amendment 4) PAT consolidation 후 단일 `CODEFORGE_CROSS_REPO_PAT` 의 rotation history.
 
-정책 SSOT: [ADR-066](../adr/ADR-066-pat-rotation-policy.md).
+정책 SSOT: [ADR-066](../../archive/adr/ADR-066-pat-rotation-policy.md).
 
 ## Rotation history
 
@@ -56,7 +56,7 @@ CFP-450 (ADR-013 Amendment 4) PAT consolidation 후 단일 `CODEFORGE_CROSS_REPO
 
 ## Compromise response (leak / suspected leak 시)
 
-[ADR-066 §결정 4](../adr/ADR-066-pat-rotation-policy.md#결정-4--compromise-response-leak--suspected-leak-시-4-step) 4-step 실행 + 본 file 신규 row append (`reason: leak response (compromise <date>)`).
+[ADR-066 §결정 4](../../archive/adr/ADR-066-pat-rotation-policy.md#결정-4--compromise-response-leak--suspected-leak-시-4-step) 4-step 실행 + 본 file 신규 row append (`reason: leak response (compromise <date>)`).
 
 ## 자동화 carrier (Phase 2 후속)
 

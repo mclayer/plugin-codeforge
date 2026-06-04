@@ -242,13 +242,13 @@ STORY_EOF
 
 ## 관련 ADR
 
-- [ADR-027 Amendment 2 §결정 6](../../../adr/ADR-027-consumer-adoption-protocol.md) — Action 차단 환경 manual agent direct write fallback path normative SSOT (primary carrier)
-- [ADR-032 Amendment 1](../../../adr/ADR-032-adr-027-amendment-1-hard-enforcement.md) — strict-eligible 4종 (manual fallback PR 도 strict 통과 의무)
-- [ADR-036](../../../adr/ADR-036-project-key-atomic-reservation.md) — KEY atomic invariant (fallback path 도 동일 적용)
-- [ADR-066](../../../adr/ADR-066-pat-rotation-policy.md) — PAT rotation policy (CODEFORGE_FALLBACK_PAT 90 days rotation)
-- [ADR-073](../../../adr/ADR-073-orchestrator-verify-before-assert.md) — verify-before-assert (governance ratchet 약화 mitigation layer)
-- [ADR-052 Amendment 4](../../../adr/ADR-052-codex-proactive-check-touchpoints.md) — Codex Touchpoint #2 mandatory (ArchitectAgent §3 직후 manual PR 도 dispatch 의무)
-- [ADR-061](../../../adr/ADR-061-python-script-writing-convention.md) — Python script writing convention (shell heredoc single-quoted patterns)
+- [ADR-027 Amendment 2 §결정 6](../../../../archive/adr/ADR-027-consumer-adoption-protocol.md) — Action 차단 환경 manual agent direct write fallback path normative SSOT (primary carrier)
+- [ADR-032 Amendment 1](../../../../archive/adr/ADR-032-adr-027-amendment-1-hard-enforcement.md) — strict-eligible 4종 (manual fallback PR 도 strict 통과 의무)
+- [ADR-036](../../../../archive/adr/ADR-036-project-key-atomic-reservation.md) — KEY atomic invariant (fallback path 도 동일 적용)
+- [ADR-066](../../../../archive/adr/ADR-066-pat-rotation-policy.md) — PAT rotation policy (CODEFORGE_FALLBACK_PAT 90 days rotation)
+- [ADR-073](../../../../archive/adr/ADR-073-orchestrator-verify-before-assert.md) — verify-before-assert (governance ratchet 약화 mitigation layer)
+- [ADR-052 Amendment 4](../../../../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) — Codex Touchpoint #2 mandatory (ArchitectAgent §3 직후 manual PR 도 dispatch 의무)
+- [ADR-061](../../../../archive/adr/ADR-061-python-script-writing-convention.md) — Python script writing convention (shell heredoc single-quoted patterns)
 
 ### Sunset criteria (ADR-058 §결정 5)
 

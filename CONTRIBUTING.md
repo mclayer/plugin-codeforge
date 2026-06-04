@@ -69,7 +69,7 @@ wrapper plugin (codeforge) 은 자체 surface 변경 외에 다음 3 trigger 시
 - **T2**: 어느 lane plugin 의 agent file 삭제 / 역할 재정의 시
 - **T3**: family-wide invariant ADR (ADR-009 / ADR-016 / ADR-024 / ADR-008 / ADR-037) supersede 시
 
-상세 SSOT: [`docs/adr/ADR-037-plugin-version-bump-rule.md`](docs/adr/ADR-037-plugin-version-bump-rule.md).
+상세 SSOT: [`archive/adr/ADR-037-plugin-version-bump-rule.md`](archive/adr/ADR-037-plugin-version-bump-rule.md).
 
 ### Bypass
 
@@ -108,5 +108,5 @@ Plugin repo 작업 시 brainstorming spec / Change Plan / Story / Retro 는 [`mc
 - 정책 SSOT: [`CLAUDE.md`](CLAUDE.md)
 - 작업 흐름 SSOT: [`docs/orchestrator-playbook.md`](docs/orchestrator-playbook.md)
 - Consumer 가이드: [`docs/consumer-guide.md`](docs/consumer-guide.md)
-- ADR list: [`docs/adr/`](docs/adr/)
+- ADR list: [`archive/adr/`](archive/adr/)
 - Inter-plugin contracts: [`docs/inter-plugin-contracts/`](docs/inter-plugin-contracts/)

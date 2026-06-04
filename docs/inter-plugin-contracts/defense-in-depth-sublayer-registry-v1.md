@@ -161,9 +161,9 @@ ADR-010 §결정 2 verbatim 정합 (kind:registry sibling sync 면제 정책).
 
 ## 관련 파일
 
-- [`docs/adr/ADR-075-defense-in-depth-sublayer-registry.md`](../adr/ADR-075-defense-in-depth-sublayer-registry.md) — 본 registry carrier SSOT
-- [`docs/adr/ADR-063-marketplace-atomic-invariant.md`](../adr/ADR-063-marketplace-atomic-invariant.md) — §결정 5 본문 표 sublayer enumeration source
+- [`docs/adr/ADR-075-defense-in-depth-sublayer-registry.md`](../../archive/adr/ADR-075-defense-in-depth-sublayer-registry.md) — 본 registry carrier SSOT
+- [`docs/adr/ADR-063-marketplace-atomic-invariant.md`](../../archive/adr/ADR-063-marketplace-atomic-invariant.md) — §결정 5 본문 표 sublayer enumeration source
 - [`docs/inter-plugin-contracts/MANIFEST.yaml`](MANIFEST.yaml) — registries 블록 7번째 entry
-- [`docs/adr/ADR-008-inter-plugin-contract-versioning.md`](../adr/ADR-008-inter-plugin-contract-versioning.md) — versioning policy
-- [`docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md`](../adr/ADR-010-inter-plugin-contract-sibling-sync.md) — sibling sync 면제
-- [`docs/adr/ADR-060-evidence-enforceable-promotion-framework.md`](../adr/ADR-060-evidence-enforceable-promotion-framework.md) — enforce_tier enum 정합
+- [`docs/adr/ADR-008-inter-plugin-contract-versioning.md`](../../archive/adr/ADR-008-inter-plugin-contract-versioning.md) — versioning policy
+- [`docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md`](../../archive/adr/ADR-010-inter-plugin-contract-sibling-sync.md) — sibling sync 면제
+- [`docs/adr/ADR-060-evidence-enforceable-promotion-framework.md`](../../archive/adr/ADR-060-evidence-enforceable-promotion-framework.md) — enforce_tier enum 정합

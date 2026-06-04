@@ -222,8 +222,8 @@ CFP-708 base lint 가 도입한 ±5-line cross-context window pairing 알고리�
 
 **2 occurrence sentinel** (ArchitectPL Python regex empirical reproduction verified):
 
-1. **CFP-1000 1st** — `CLAUDE.md L189` (TodoWrite narrative bullet, `[ADR-038](docs/adr/ADR-038-progress-visualization-todowrite.md)` literal markdown link) + ±5 window L184~L194 안 **L185** cite `**Amendment 6 (CFP-843)**` (canonical regex 매칭 form) → cross-pair → `ADR-038 Amendment 6 claim is phantom (ahead)` (ADR-038 frontmatter `amendments[]` length = 4) **false-pair (cross-context contamination)**.
-2. **CFP-1001 2nd** — `CLAUDE.md L281` (Evidence-enforceable framework bullet, `[ADR-060](docs/adr/ADR-060-evidence-enforceable-promotion-framework.md)` literal markdown link) + ±5 window L276~L286 안 **L283** cite `**Amendment 1 (CFP-841)**` (canonical regex 매칭 form, ADR-082 narrative bullet 안) → cross-pair → `ADR-060 Amendment 1 claim is stale (behind)` (ADR-060 frontmatter `amendment_log[]` length = 14) **false-pair (cross-context contamination)**.
+1. **CFP-1000 1st** — `CLAUDE.md L189` (TodoWrite narrative bullet, `[ADR-038](ADR-038-progress-visualization-todowrite.md)` literal markdown link) + ±5 window L184~L194 안 **L185** cite `**Amendment 6 (CFP-843)**` (canonical regex 매칭 form) → cross-pair → `ADR-038 Amendment 6 claim is phantom (ahead)` (ADR-038 frontmatter `amendments[]` length = 4) **false-pair (cross-context contamination)**.
+2. **CFP-1001 2nd** — `CLAUDE.md L281` (Evidence-enforceable framework bullet, `[ADR-060](ADR-060-evidence-enforceable-promotion-framework.md)` literal markdown link) + ±5 window L276~L286 안 **L283** cite `**Amendment 1 (CFP-841)**` (canonical regex 매칭 form, ADR-082 narrative bullet 안) → cross-pair → `ADR-060 Amendment 1 claim is stale (behind)` (ADR-060 frontmatter `amendment_log[]` length = 14) **false-pair (cross-context contamination)**.
 
 L281 line 자체의 self-cite `Amendment 1 (CFP-390, 2026-05-11)` 은 date-suffixed canonical form 으로 regex `\(CFP-\d+\)` 미매칭 (CFP-390 직후 `,` 가 따라옴) → lint algorithm 의 인식 영역 외, false-pair source 아님.
 

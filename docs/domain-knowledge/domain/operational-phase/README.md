@@ -45,7 +45,7 @@ updated: 2026-05-22
 
 ## ADR-104 cross-ref
 
-본 디렉토리 전체의 normative SSOT = [`docs/adr/ADR-104-operational-phase-definition.md`](../../../adr/ADR-104-operational-phase-definition.md).
+본 디렉토리 전체의 normative SSOT = [`docs/adr/ADR-104-operational-phase-definition.md`](../../../../archive/adr/ADR-104-operational-phase-definition.md).
 
 - §결정 1 — release lifecycle 위치 (배포 → 배포검토 → 운영 phase) → `operational-phase-definition.md §1`
 - §결정 2 — lane 아님 (mechanism layer) → `operational-phase-definition.md §3`

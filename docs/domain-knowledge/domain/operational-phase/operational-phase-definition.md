@@ -26,7 +26,7 @@ updated: 2026-05-22
 
 # 운영 phase 전체 정의 narrative
 
-> **normative SSOT**: [`docs/adr/ADR-104-operational-phase-definition.md`](../../../adr/ADR-104-operational-phase-definition.md). 본 파일은 ADR-104 §결정 1·2·5 의 서술적 elaboration 이다 — 결정 자체는 ADR-104 가 확정한다.
+> **normative SSOT**: [`docs/adr/ADR-104-operational-phase-definition.md`](../../../../archive/adr/ADR-104-operational-phase-definition.md). 본 파일은 ADR-104 §결정 1·2·5 의 서술적 elaboration 이다 — 결정 자체는 ADR-104 가 확정한다.
 
 ## 정의
 
@@ -123,11 +123,11 @@ codeforge 의 lane 은 Story-scoped 구조 (종료 게이트 포함). 운영 pha
 
 ## 관련 ADR
 
-- [ADR-104](../../../adr/ADR-104-operational-phase-definition.md) — **normative SSOT** (운영 phase 1st-class 정의 — §결정 1·2·5)
-- [ADR-087](../../../adr/ADR-087-deploy-lane-and-lifecycle-extension.md) — Deploy lane 신설 (선행 단계)
-- [ADR-088](../../../adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — Deploy Review lane ("한 번 끝나는" + L81 운영 phase 별 Epic origin)
-- [ADR-023](../../../adr/ADR-023-lane-plugin-lifecycle.md) — lane plugin lifecycle (lane count invariant)
-- [ADR-045](../../../adr/ADR-045-story-retro-mandatory-trigger.md) — §D-9 retro pattern (self-improving loop 답습 source)
+- [ADR-104](../../../../archive/adr/ADR-104-operational-phase-definition.md) — **normative SSOT** (운영 phase 1st-class 정의 — §결정 1·2·5)
+- [ADR-087](../../../../archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) — Deploy lane 신설 (선행 단계)
+- [ADR-088](../../../../archive/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — Deploy Review lane ("한 번 끝나는" + L81 운영 phase 별 Epic origin)
+- [ADR-023](../../../../archive/adr/ADR-023-lane-plugin-lifecycle.md) — lane plugin lifecycle (lane count invariant)
+- [ADR-045](../../../../archive/adr/ADR-045-story-retro-mandatory-trigger.md) — §D-9 retro pattern (self-improving loop 답습 source)
 
 ## 변경 이력
 

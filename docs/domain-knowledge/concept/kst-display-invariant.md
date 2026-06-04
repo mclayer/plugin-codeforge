@@ -93,7 +93,7 @@ Story `§14 Lane Evidence` 는 한 섹션 안에 두 layer 가 disjoint co-exist
 - **consumer overlay tz override 불가** — ADR-079 §결정 7 (wrapper-canonical KST 강제)
 
 **참조 파일**:
-- [ADR-079: KST timestamp display mandate](../../adr/ADR-079-kst-timestamp-display-mandate.md) — normative SSOT
+- [ADR-079: KST timestamp display mandate](../../../archive/adr/ADR-079-kst-timestamp-display-mandate.md) — normative SSOT
 - [timestamp-display-policy](../domain/governance-principle/timestamp-display-policy.md) — 정책 narrative
 
 ## 변경 이력

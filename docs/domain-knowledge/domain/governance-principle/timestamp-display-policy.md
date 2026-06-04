@@ -121,7 +121,7 @@ wrapper-canonical KST 강제. consumer overlay (`.claude/_overlay/`) 는 **이 �
 
 ## 관련 ADR
 
-- [ADR-079: KST timestamp display mandate](../../../adr/ADR-079-kst-timestamp-display-mandate.md) — normative SSOT
+- [ADR-079: KST timestamp display mandate](../../../../archive/adr/ADR-079-kst-timestamp-display-mandate.md) — normative SSOT
 - [kst-display-invariant](../../concept/kst-display-invariant.md) — 개념 SSOT
 - [CLAUDE.md §시각 표시 정책](../../../../CLAUDE.md) — cross-cutting 요약
 

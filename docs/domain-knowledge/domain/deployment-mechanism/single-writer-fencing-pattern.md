@@ -111,7 +111,7 @@ writer-lease semantic invariant 4 (codeforge 도메인 적용 의무):
 
 ## 관련 ADR
 
-- [ADR-087](../../../adr/ADR-087-deploy-lane-and-lifecycle-extension.md) §결정 9.3 writer-lease primary binding + §결정 9.5 concurrent deploy serialization cross-ref
+- [ADR-087](../../../../archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) §결정 9.3 writer-lease primary binding + §결정 9.5 concurrent deploy serialization cross-ref
 
 ### ADR-087 §결정 9.3 binding
 
@@ -148,7 +148,7 @@ writer-lease semantic invariant 4 (codeforge 도메인 적용 의무):
 
 - [stateful-daemon-bg-eligibility.md](stateful-daemon-bg-eligibility.md) — BG-1~4 비적격 기준 (본 entry 의 binding domain context)
 - [../jsonl-write/race-condition-handling-pattern.md](../jsonl-write/race-condition-handling-pattern.md) — single-writer 인접 도메인 (cross-repo jsonl write Pattern A SHA-based optimistic concurrency). 두 entry 가 동일 domain motivation (단일-writer 보장) 의 disjoint layer — process-level (본 entry = writer-lease 매커니즘) vs file-level (jsonl-write = SHA optimistic concurrency).
-- [ADR-087](../../../adr/ADR-087-deploy-lane-and-lifecycle-extension.md) §결정 9.3 (본 entry 의 binding ADR)
+- [ADR-087](../../../../archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) §결정 9.3 (본 entry 의 binding ADR)
 - Kleppmann "Designing Data-Intensive Applications" Ch.8 "Distributed System Trouble" — Fencing tokens 절
 
 

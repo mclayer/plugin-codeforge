@@ -683,7 +683,7 @@ N/A — Phase 1 Wave 1 declarative anchor scope only (governance SSOT codify, ru
 
 | Pointer form | Example (본 Change Plan 안) |
 |---|---|
-| **link target** | `[ADR-073](docs/adr/ADR-073-orchestrator-verify-before-assert.md)` / `[ADR-082](docs/adr/ADR-082-write-time-self-write-verification-mandate.md)` / `[ADR-066](docs/adr/ADR-066-pat-rotation-policy.md)` |
+| **link target** | `[ADR-073](../../archive/adr/ADR-073-orchestrator-verify-before-assert.md)` / `[ADR-082](../../archive/adr/ADR-082-write-time-self-write-verification-mandate.md)` / `[ADR-066](../../archive/adr/ADR-066-pat-rotation-policy.md)` |
 | **section anchor** | `#§7.1 Trust boundary` / `#§결정 1-A 9번째 row label_change` / `#§결정 2 scope minimum 6번째 entry` |
 | **file path reference** | `templates/github-workflows/cross-repo-label-sync.yml` / `docs/security/pat-rotation-log.md` / `docs/inter-plugin-contracts/label-registry-v2.md` |
 | **ADR §결정 N reference** | `ADR-073 Amendment 9 §결정 1-A 9번째 entry label_change` / `ADR-082 Amendment 14 §결정 1 layer 1 sub-scope 1-D` / `ADR-066 Amendment 4 §결정 2 6번째 entry cross-repo-target-repos issues:write` |

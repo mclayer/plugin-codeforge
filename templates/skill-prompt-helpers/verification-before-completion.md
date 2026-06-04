@@ -11,4 +11,4 @@ When invoking `superpowers:verification-before-completion` from codeforge family
 - PASS 판정 → gate label apply + phase transition
 - FIX 판정 → Story §10 FIX Ledger row append (decider:claude_sonnet)
 
-**Reference**: [Integration SSOT §3 row 5](../../docs/superpowers-integration.md) · [ADR-022 Sonnet decider](../../docs/adr/ADR-022-sonnet-review-verdict-decider.md) · [review-verdict-v4](../../docs/inter-plugin-contracts/review-verdict-v4.md)
+**Reference**: [Integration SSOT §3 row 5](../../docs/superpowers-integration.md) · [ADR-022 Sonnet decider](../../archive/adr/ADR-022-sonnet-review-verdict-decider.md) · [review-verdict-v4](../../docs/inter-plugin-contracts/review-verdict-v4.md)

@@ -117,11 +117,11 @@ ADR-039 §결정 14 = branch creation 시점 의무 (pre-action). 본 pattern = 
 
 ## 관련 ADR
 
-- [ADR-076](../../adr/ADR-076-declarative-reconciliation-upgrade.md) — §4.7 marker-aware 2-way / wholesale_mirror 패턴의 long-running rebase 영역 확장 anchor (인접 도메인)
-- [ADR-039](../../adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — §결정 14 `pre-spawn-pin` mandate (CFP-895) — 본 pattern 의 짝
-- [ADR-064](../../adr/ADR-064-decision-principle-mandate.md) — §결정 4 parallel default (mid-flight churn 의 원인)
-- [ADR-073](../../adr/ADR-073-orchestrator-verify-before-assert.md) — HEAD 고정 before rebase decision
-- [ADR-077](../../adr/ADR-077-clarification-forced-reinvestigation-propagation.md) — §결정 5 4-layer disjoint N-layer 확장 anchor
+- [ADR-076](../../../archive/adr/ADR-076-declarative-reconciliation-upgrade.md) — §4.7 marker-aware 2-way / wholesale_mirror 패턴의 long-running rebase 영역 확장 anchor (인접 도메인)
+- [ADR-039](../../../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — §결정 14 `pre-spawn-pin` mandate (CFP-895) — 본 pattern 의 짝
+- [ADR-064](../../../archive/adr/ADR-064-decision-principle-mandate.md) — §결정 4 parallel default (mid-flight churn 의 원인)
+- [ADR-073](../../../archive/adr/ADR-073-orchestrator-verify-before-assert.md) — HEAD 고정 before rebase decision
+- [ADR-077](../../../archive/adr/ADR-077-clarification-forced-reinvestigation-propagation.md) — §결정 5 4-layer disjoint N-layer 확장 anchor
 
 ## 변경 이력
 

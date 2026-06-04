@@ -47,7 +47,7 @@ consumers:
 
 Codex ↔ Opus 두 워커가 lane 결정 지점에서 finding / judgment 불일치 (divergence) 를 산출할 때 발동하는 multi-round adversarial debate protocol 의 schema SSOT. **lane-agnostic** — 모든 lane (DesignReview / Requirements / 미래 CodeReview / SecurityTest) 에서 본 schema 재사용. lane-specific 트리거 조건은 각 lane plugin 이 별도 정의.
 
-본 protocol carrier ADR = [ADR-059](../adr/ADR-059-debate-protocol-v1.md). 5 결정: (1) protocol 정의 (2) DesignReview 자동 발동 (3) reasoning carryover (4) anchor 재발 escalation (5) lane-agnostic registry.
+본 protocol carrier ADR = [ADR-059](../../archive/adr/ADR-059-debate-protocol-v1.md). 5 결정: (1) protocol 정의 (2) DesignReview 자동 발동 (3) reasoning carryover (4) anchor 재발 escalation (5) lane-agnostic registry.
 
 ### 1.1 주요 개념
 
@@ -352,8 +352,8 @@ codeforge family Story 의 debate transcript 위치 = `<internal-docs-clone>/<pl
 
 ### 4.3 관련
 
-- [ADR-059](../adr/ADR-059-debate-protocol-v1.md) — carrier (5 결정)
-- [ADR-044](../adr/ADR-044-phase-scoped-sequential-team.md) — dispatch_mode Amendment 1 (auto_on_divergence)
+- [ADR-059](../../archive/adr/ADR-059-debate-protocol-v1.md) — carrier (5 결정)
+- [ADR-044](../../archive/adr/ADR-044-phase-scoped-sequential-team.md) — dispatch_mode Amendment 1 (auto_on_divergence)
 - [review-verdict-v4](review-verdict-v4.md) — `findings[].anchor_id` divergence surface + `worker_dialog_rounds` 측정 source
 - [fix-event-v1 1.1](fix-event-v1.md) — `debate_artifact_ref` optional 필드 MINOR bump
 - [story-page-structure.md](../../templates/story-page-structure.md) — Story §9 schema

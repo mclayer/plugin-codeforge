@@ -363,7 +363,7 @@ ADR 미합의 / Wave 미작성 / placeholder 집중 영역. **design lane 진입
 
 ### ADR-076 declarative reconciliation 3-layer cross-ref
 
-본 doc 의 architecture_doc 운용은 [ADR-076](../adr/ADR-076-declarative-reconciliation-upgrade.md) declarative reconciliation 3-layer 패턴을 도메인 disjoint 로 답습 (ADR-078 §결정 2):
+본 doc 의 architecture_doc 운용은 [ADR-076](../../archive/adr/ADR-076-declarative-reconciliation-upgrade.md) declarative reconciliation 3-layer 패턴을 도메인 disjoint 로 답습 (ADR-078 §결정 2):
 
 - **desired state** = 본 doc 의 4 H2 closed-enum (모듈 + 경계 + 인터페이스 계약 + 데이터 흐름) + 5-anchor 시스템 현황 section (ADR-078 Amd 2 §결정 3) 누적 현재 상태 SSOT
 - **current state** = wrapper repo (`CLAUDE.md` / `docs/inter-plugin-contracts/MANIFEST.yaml` / 8 lane plugin repo 의 actual agent file + CLAUDE.md + arch doc) 의 실제 정의 상태

@@ -37,7 +37,7 @@ tools: Read
 - **가이드 차원**: 본 rule = hook 미적용 환경 (다른 plugin / hook bypass) fallback 인지 경로.
 - **bypass**: 의도된 단일-repo 작업 확신 시 `BYPASS_CROSS_REPO_GH_SAFETY=1` (scope disjoint — `BYPASS_CODEFORGE_PREREQ` / `BYPASS_WORKTREE_FIRST` 와 별 env).
 
-**Cross-cutting rule — cross-repo worktree target authority verify-before-write** (CFP-1578 / [ADR-082 Amendment 21](../../docs/adr/ADR-082-write-time-self-write-verification-mandate.md) §결정 1 sub-scope 1-J):
+**Cross-cutting rule — cross-repo worktree target authority verify-before-write** (CFP-1578 / [ADR-082 Amendment 21](../../archive/adr/ADR-082-write-time-self-write-verification-mandate.md) §결정 1 sub-scope 1-J):
 
 `gh --repo` rule (filesystem-orthogonal API-level) 와 disjoint axis 의 filesystem write-target boundary 영역 — chief author / lane agent / Orchestrator 가 spawn prompt 작성 또는 직접 file write 직전 worktree target authority verify-before-write 의무. **Cross-repo write-target boundary matrix**:
 

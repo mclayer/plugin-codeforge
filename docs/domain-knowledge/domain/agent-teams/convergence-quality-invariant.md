@@ -184,7 +184,7 @@ ADR-059 Amendment 2 §결정 8 carrier — CFP-582 Wave 4 의 DesignLane blanket
 
 ## 참조
 
-- [ADR-059 Amendment 2 §결정 8](../../../adr/ADR-059-debate-protocol-v1.md)
+- [ADR-059 Amendment 2 §결정 8](../../../../archive/adr/ADR-059-debate-protocol-v1.md)
 - [debate-protocol-v1 v1.2 registry yaml](../../../inter-plugin-contracts/debate-protocol-v1.md)
-- [ADR-052 Codex Proactive Check Touchpoint #2](../../../adr/ADR-052-codex-proactive-check-touchpoints.md)
+- [ADR-052 Codex Proactive Check Touchpoint #2](../../../../archive/adr/ADR-052-codex-proactive-check-touchpoints.md)
 - [agent-teams-platform-capability](agent-teams-platform-capability.md)

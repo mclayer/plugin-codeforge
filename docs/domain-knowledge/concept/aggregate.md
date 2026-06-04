@@ -176,9 +176,9 @@ ADR-086 = **Deputy 신설 결정 framework** (5-checklist self-application).
 
 ## 관련 ADR
 
-- [ADR-091 §결정 1](../../adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — agent ↔ DDD pattern Hybrid mapping (Authority Pair / Domain Service / Subdomain Specialist enum)
-- [ADR-091 §결정 3](../../adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Aggregate metaphor 2-layer explicit separate (Layer A / Layer B)
-- [ADR-086](../../adr/ADR-086-deputy-creation-decision-framework.md) — Deputy 신설 결정 framework (5-checklist self-application) = codeforge governance Aggregate decision boundary 사례
+- [ADR-091 §결정 1](../../../archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — agent ↔ DDD pattern Hybrid mapping (Authority Pair / Domain Service / Subdomain Specialist enum)
+- [ADR-091 §결정 3](../../../archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Aggregate metaphor 2-layer explicit separate (Layer A / Layer B)
+- [ADR-086](../../../archive/adr/ADR-086-deputy-creation-decision-framework.md) — Deputy 신설 결정 framework (5-checklist self-application) = codeforge governance Aggregate decision boundary 사례
 - [`docs/glossary.md` Aggregate (governance BC)](../../glossary.md#aggregate-governance-bc) — Layer A SSOT
 - [`docs/glossary.md` Aggregate (mctrader application BC)](../../glossary.md#aggregate-mctrader-application-bc) — application BC SSOT (별 BC)
 - [`docs/glossary.md` Aggregate Root](../../glossary.md#aggregate-root) — Authority Pair supervisor metaphor

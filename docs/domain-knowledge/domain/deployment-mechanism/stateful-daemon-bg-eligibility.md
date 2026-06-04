@@ -108,8 +108,8 @@ deploy:
 
 ## 관련 ADR
 
-- [ADR-087](../../../adr/ADR-087-deploy-lane-and-lifecycle-extension.md) §결정 5 + §결정 9 (본 entry 의 binding ADR)
-- [ADR-089](../../../adr/ADR-089-schema-change-7-principles.md) (Schema 변경 7 원칙 — 양방향 호환 / reverse / smoke 영역)
+- [ADR-087](../../../../archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) §결정 5 + §결정 9 (본 entry 의 binding ADR)
+- [ADR-089](../../../../archive/adr/ADR-089-schema-change-7-principles.md) (Schema 변경 7 원칙 — 양방향 호환 / reverse / smoke 영역)
 
 ### See also
 

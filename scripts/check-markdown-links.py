@@ -9,6 +9,9 @@ md_files = [p for p in md_files if ".claude/agents" not in str(p)]
 # Enhancement B: tests/fixtures/ 제외 (의도된 broken-link FP test fixture 보존)
 # normalize to forward slashes for cross-platform path matching
 md_files = [p for p in md_files if "tests/fixtures" not in str(p).replace("\\", "/")]
+# 슬림화: archive/ 제외 (frozen 보관물 — 내부 상대링크는 live 표준 검증 대상 아님.
+# 보관 시점 SHA 기준 동결, 후속 단계서 삭제될 live 문서를 가리킬 수 있음)
+md_files = [p for p in md_files if not str(p).replace("\\", "/").startswith("archive/")]
 
 errors: list[str] = []
 for md in md_files:
