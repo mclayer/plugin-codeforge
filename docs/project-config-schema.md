@@ -344,7 +344,7 @@ Consumer 프로젝트의 통합테스트 Baseline Suite와 실행 환경을 구�
 
 - **write boundary**: consumer-authored. 모든 codeforge agent 는 본 field write 금지 (§4b write 금지 invariant 절대 보존). AggregateArchitect deputy = read-only (consumer overlay value 를 spawn-time Context Packet 으로 수신 후 mandate 결정에 반영).
 
-### `deploy` 섹션 설명 (CFP-1059 / [ADR-087](adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md))
+### `deploy` 섹션 설명 (CFP-1059 / [ADR-087](../archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](../archive/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md))
 
 Deploy lane + Deploy Review lane (CFP-1059 / 6 → 8 lane 확장) 의 consumer overlay 영역. Phase 1 declarative — 실 DeployPLAgent / DeployReviewPLAgent spawn = lane plugin seed (codeforge-deploy / codeforge-deploy-review) 신설 후 활성 (별 sub-Story carrier).
 
@@ -461,11 +461,11 @@ deploy:
   - `deploy.host_mapping` 부재 = deploy lane 활성화 prerequisite 불충족 → warning + skip (Epic close 진행, manual deploy operator 영역).
   - `deploy.1password.enabled=false` = `.env` fallback (CI Secrets → SSH 전송, less secure). production 환경 = `true` 권장.
   - `deploy.traefik.enabled=false` = manual orchestration override (consumer 자체 reverse proxy). codeforge wrapper = blue-green atomic swap automation skip.
-- **schema 7 원칙 binding** (CFP-1059 / [ADR-089](adr/ADR-089-schema-change-7-principles.md)): consumer 의 schema 변경 (DB / inter-plugin contract / API contract / event schema / project.yaml 본 block 자체) 시 ChangePlan §11 self-check 표 의무 (S2 carrier wire). deploy block field 추가 시 본 schema 자체도 7 원칙 적용.
-- **cross-layer 영향** (CFP-1059 / [ADR-090](adr/ADR-090-cross-layer-reference-policy.md)): consumer 가 multi-layer architecture (RDB / 빅데이터 / API / service repo) 운영 시 deploy block 등록 = cross-layer 의존 매핑 source (자동 감지 + 사용자 declare hybrid).
+- **schema 7 원칙 binding** (CFP-1059 / [ADR-089](../archive/adr/ADR-089-schema-change-7-principles.md)): consumer 의 schema 변경 (DB / inter-plugin contract / API contract / event schema / project.yaml 본 block 자체) 시 ChangePlan §11 self-check 표 의무 (S2 carrier wire). deploy block field 추가 시 본 schema 자체도 7 원칙 적용.
+- **cross-layer 영향** (CFP-1059 / [ADR-090](../archive/adr/ADR-090-cross-layer-reference-policy.md)): consumer 가 multi-layer architecture (RDB / 빅데이터 / API / service repo) 운영 시 deploy block 등록 = cross-layer 의존 매핑 source (자동 감지 + 사용자 declare hybrid).
 - **write boundary**: consumer-authored. 모든 codeforge agent 는 본 block write 금지 (§4b write 금지 invariant 절대 보존). DeployPLAgent / DeployReviewPLAgent = read-only (consumer overlay value 를 spawn-time Context Packet 으로 수신 후 배포 sequence 결정에 반영).
 
-### `atlassian` 섹션 설명 (CFP-1215 / [ADR-100](adr/ADR-100-confluence-doc-ssot-recognition.md))
+### `atlassian` 섹션 설명 (CFP-1215 / [ADR-100](../archive/adr/ADR-100-confluence-doc-ssot-recognition.md))
 
 Atlassian suite 재결합 (Epic-A CFP-1146) 의 consumer overlay 영역. ADR-100 §결정 3 — project.yaml `atlassian.*` schema (token = `*_env` reference only, SecurityArch 권고, deploy 1password env-key precedent 정합).
 
@@ -554,7 +554,7 @@ branch_protection:
 
 - **write boundary**: consumer-authored. 모든 codeforge agent 는 본 block write 금지 (§4b write 금지 invariant 절대 보존). sync agent (ADR-103 carrier) = read-only (consumer overlay value 수신 후 sync 대상 결정).
 
-### `branch_protection` 섹션 설명 (CFP-1809 / [ADR-083](adr/ADR-083-consumer-applicability-filter.md) instance)
+### `branch_protection` 섹션 설명 (CFP-1809 / [ADR-083](../archive/adr/ADR-083-consumer-applicability-filter.md) instance)
 
 Consumer 측 main branch protection contexts governance 의 consumer overlay 영역. CFP-1785 retro follow-up FU-C P3 carrier — consumer 가 `phase-gate-mergeable` 등 wrapper context 를 stale reference 로 보유 시 silent drift 차단. ADR-083 consumer-applicability filter framework 의 schema-specific instance (walker per-step `applicable_to: {consumer/wrapper/both}` filter 와 disjoint scope — 본 4-enum 은 branch protection 영역 특화).
 
@@ -809,5 +809,5 @@ python3 ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/validate_config.py \
 - [`../overlay/_overlay/project.yaml.example`](../overlay/_overlay/project.yaml.example) — 스켈레톤
 - [`../overlay/hooks/validate_config.py`](../overlay/hooks/validate_config.py) — Schema 검증 구현
 - [`../agents/DocsAgent.md`](https://github.com/mclayer/plugin-codeforge/blob/v3.0.0/agents/DocsAgent.md) — 주 소비자
-- [`adr/ADR-069-multi-repo-story-key-system.md`](adr/ADR-069-multi-repo-story-key-system.md) — Multi-repo story key system (`codeforge.stories.*` 블록 SSOT)
-- [`adr/ADR-020-cross-repo-epic-pattern.md`](adr/ADR-020-cross-repo-epic-pattern.md) — Mode A/B/C cross-repo Epic 패턴 (ADR-050 의 조직적 결정 root)
+- [`adr/ADR-069-multi-repo-story-key-system.md`](../archive/adr/ADR-069-multi-repo-story-key-system.md) — Multi-repo story key system (`codeforge.stories.*` 블록 SSOT)
+- [`adr/ADR-020-cross-repo-epic-pattern.md`](../archive/adr/ADR-020-cross-repo-epic-pattern.md) — Mode A/B/C cross-repo Epic 패턴 (ADR-050 의 조직적 결정 root)

@@ -159,10 +159,10 @@ implicit identity propagation 시 다음 failure mode 발현:
 
 ## 관련 ADR
 
-- [ADR-084](../../../adr/ADR-084-numeric-space-sharing-channel-disjointness.md) — 본 narrative SSOT 의 carrier ADR (3-곳 declare 의무 3rd location)
-- [ADR-076](../../../adr/ADR-076-declarative-reconciliation-upgrade.md) — reconcile-protocol-v1 declarative reconciliation host
-- [ADR-082](../../../adr/ADR-082-write-time-self-write-verification-mandate.md) — disjoint 4-layer 표 governance pattern source
-- [ADR-068](../../../adr/ADR-068-boundary-completeness-invariants.md) — boundary completeness invariants (scope disjoint — ArchitectAgent self-check axis ↔ inter-plugin contract codify axis)
+- [ADR-084](../../../../archive/adr/ADR-084-numeric-space-sharing-channel-disjointness.md) — 본 narrative SSOT 의 carrier ADR (3-곳 declare 의무 3rd location)
+- [ADR-076](../../../../archive/adr/ADR-076-declarative-reconciliation-upgrade.md) — reconcile-protocol-v1 declarative reconciliation host
+- [ADR-082](../../../../archive/adr/ADR-082-write-time-self-write-verification-mandate.md) — disjoint 4-layer 표 governance pattern source
+- [ADR-068](../../../../archive/adr/ADR-068-boundary-completeness-invariants.md) — boundary completeness invariants (scope disjoint — ArchitectAgent self-check axis ↔ inter-plugin contract codify axis)
 
 ## 변경 이력
 

@@ -102,7 +102,7 @@ EXECUTE ONLY. AskUserQuestion 0. scope re-interpretation 0.
 
 ## Cross-references
 
-- [ADR-082 §결정 1 layer 1 sub-scope (1-C)](adr/ADR-082-write-time-self-write-verification-mandate.md) — anchor 자체 신설 SSOT
-- [ADR-071 §결정 17](adr/ADR-071-orchestrator-user-dialog-convergence.md) — back-translation gate (lane return)
-- [ADR-039](adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — subagent default + inline whitelist 4-entry
-- [ADR-064 §결정 9 / §결정 10](adr/ADR-064-decision-principle-mandate.md) — Question quality 3-check + Skill body precedence
+- [ADR-082 §결정 1 layer 1 sub-scope (1-C)](../archive/adr/ADR-082-write-time-self-write-verification-mandate.md) — anchor 자체 신설 SSOT
+- [ADR-071 §결정 17](../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md) — back-translation gate (lane return)
+- [ADR-039](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — subagent default + inline whitelist 4-entry
+- [ADR-064 §결정 9 / §결정 10](../archive/adr/ADR-064-decision-principle-mandate.md) — Question quality 3-check + Skill body precedence

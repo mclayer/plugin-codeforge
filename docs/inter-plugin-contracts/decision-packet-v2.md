@@ -28,7 +28,7 @@ related_files:
 
 > **DEPRECATED (2026-05-08, CFP-134 / ADR-035)**: ADR-022 가 Deprecated 처리되어 본 decision-packet v2.1 schema 의 5-step Sonnet decider invocation 영역 (trigger enum / `review_lane_context` block / `decider_decision` / `attempts[]` / `audit_result` 등) 자동 발동 무효. codeforge 가 자동 invoke 안 함. 사용자 ad-hoc Sonnet 호출 시 본 schema 의무 아님 — 사용자 prompt 자유 형식 가능. v3 MAJOR bump 후속 deferred (CFP-137 또는 별도 CFP carrier — 정식 schema 제거 / 신규 ad-hoc-only schema 도입). 본문 history record 보존.
 >
-> Architecture decision SSOT = [ADR-035](../adr/ADR-035-codeforge-agent-teams-epic-architecture.md) (Epic CFP-134).
+> Architecture decision SSOT = [ADR-035](../../archive/adr/ADR-035-codeforge-agent-teams-epic-architecture.md) (Epic CFP-134).
 
 # decision-packet v2.1
 

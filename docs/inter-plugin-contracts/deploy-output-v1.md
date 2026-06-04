@@ -31,7 +31,7 @@ related_plugins:
 
 ## 컨텍스트
 
-CFP-1059 / [ADR-087](../adr/ADR-087-deploy-lane-and-lifecycle-extension.md) 가 Deploy lane (codeforge-deploy plugin) 정식 신설. DeployPLAgent / DeployWorkerAgent output → Orchestrator handoff schema 가 본 contract 영역.
+CFP-1059 / [ADR-087](../../archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) 가 Deploy lane (codeforge-deploy plugin) 정식 신설. DeployPLAgent / DeployWorkerAgent output → Orchestrator handoff schema 가 본 contract 영역.
 
 ## Phase 1 declarative anchor
 

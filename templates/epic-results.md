@@ -14,7 +14,7 @@ related_adrs:
 
 ## 사용 위치 및 시점
 
-- **위치**: [`docs/doc-locations.yaml`](../docs/doc-locations.yaml) `epic_results` row 참조 ([ADR-041](../docs/adr/ADR-041-doc-location-registry.md)) — Mode A/B/C → `<scope>/docs/retros/EPIC-RESULTS-<EPIC_KEY>.md` / dogfood (codeforge family) → `<internal-docs>/<plugin-folder>/retros/EPIC-RESULTS-<EPIC_KEY>.md` (Amendment 1 — CFP-288)
+- **위치**: [`docs/doc-locations.yaml`](../docs/doc-locations.yaml) `epic_results` row 참조 ([ADR-041](../archive/adr/ADR-041-doc-location-registry.md)) — Mode A/B/C → `<scope>/docs/retros/EPIC-RESULTS-<EPIC_KEY>.md` / dogfood (codeforge family) → `<internal-docs>/<plugin-folder>/retros/EPIC-RESULTS-<EPIC_KEY>.md` (Amendment 1 — CFP-288)
 - **시점**: Epic close PR 동반 작성 (Phase N+1 close PR 의 doc artifact)
 - **작성자**: PMOAgent (Cross-cutting) self-write — codeforge-pmo lane plugin owner path
 - **mctrader 사용 사례**: `mctrader-hub/docs/retros/EPIC-RESULTS-MCT-*.md` (Amendment 1 — root → docs/retros/ 이동, consumer root clutter 해소)
@@ -177,8 +177,8 @@ consumer 첫 cross-repo Epic 시 추가:
 
 ## 관련 ADR / contract
 
-- [ADR-020 + Amendment 1](../docs/adr/ADR-020-cross-repo-epic-pattern.md) — cross-repo Epic 패턴 + Mode A/B + Joint-phase
-- [ADR-022](../docs/adr/ADR-022-sonnet-review-verdict-decider.md) — §7 Sonnet decider trigger 분류 source
-- [ADR-025 + Amendment 1](../docs/adr/ADR-025-stop-discipline-non-whitelist-as-defect.md) — §9 stop trigger metric source
+- [ADR-020 + Amendment 1](../archive/adr/ADR-020-cross-repo-epic-pattern.md) — cross-repo Epic 패턴 + Mode A/B + Joint-phase
+- [ADR-022](../archive/adr/ADR-022-sonnet-review-verdict-decider.md) — §7 Sonnet decider trigger 분류 source
+- [ADR-025 + Amendment 1](../archive/adr/ADR-025-stop-discipline-non-whitelist-as-defect.md) — §9 stop trigger metric source
 - [decision-packet-v2.1](../docs/inter-plugin-contracts/decision-packet-v2.md) — §7 Sonnet decider 결정 schema
 - [fix-event-v1](../docs/inter-plugin-contracts/fix-event-v1.md) — §9 CI iteration ↔ FIX Ledger relation

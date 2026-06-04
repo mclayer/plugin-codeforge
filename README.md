@@ -62,7 +62,7 @@ Orchestrator (최상위 Claude 세션)
 
 세션 개시 시 자동 점검 · 미설치 시 blocking wait.
 
-### 2a. Enterprise environment prerequisite (CFP-661 / [ADR-027 Amendment 2](docs/adr/ADR-027-consumer-adoption-protocol.md))
+### 2a. Enterprise environment prerequisite (CFP-661 / [ADR-027 Amendment 2](archive/adr/ADR-027-consumer-adoption-protocol.md))
 
 codeforge 의 6 핵심 workflow (`story-init.yml` 외 5종) 는 PR / branch create / Issue comment write 권한을 사용. GitHub Enterprise org 의 admin policy 가 `default_workflow_permissions: read` cap 으로 차단 시 workflow silent skip → Story init 실패. **enterprise admin 권한 보유 환경에서 다음 prerequisite 활성 의무**:
 
@@ -89,7 +89,7 @@ gh api --method PUT repos/<owner>/<repo>/actions/permissions/workflow \
 - 또는 Issue 발의자가 `fallback:manual` label 부착 (per-Issue override trigger C)
 - RequirementsPL / ArchitectPL 가 `bash templates/scripts/manual-story-init-fallback.sh <ISSUE_NUMBER>` 호출
 
-상세 SSOT: [`docs/consumer-guide.md §1h` Action 차단 환경 fallback](docs/consumer-guide.md) + [ADR-027 §결정 6](docs/adr/ADR-027-consumer-adoption-protocol.md).
+상세 SSOT: [`docs/consumer-guide.md §1h` Action 차단 환경 fallback](docs/consumer-guide.md) + [ADR-027 §결정 6](archive/adr/ADR-027-consumer-adoption-protocol.md).
 
 ### 3. Consumer 프로젝트 overlay 구성
 

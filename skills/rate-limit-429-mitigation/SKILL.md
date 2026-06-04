@@ -169,12 +169,12 @@ transcript: "<lane evidence narrative> [429-auto-retry: count=<N>, final_status=
 
 ## Cross-references
 
-- [ADR-109](../../docs/adr/ADR-109-in-process-429-mitigation-framework.md) — 본 skill body SSOT (§결정 1-§결정 10)
-- [ADR-039](../../docs/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — §결정 2 inline whitelist closed 4-entry 보호 + §결정 9 carryover (Amendment N)
-- [ADR-044](../../docs/adr/ADR-044-phase-scoped-sequential-team.md) — Amendment N team-spec yaml `parallel_spawn_cap` + `spawn_stagger_ms` + `cascade_circuit_breaker` 3 field 신설
-- [ADR-057](../../docs/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) — §결정 2 cross-model substitution axis (sequential composition cross-ref)
-- [ADR-064](../../docs/adr/ADR-064-decision-principle-mandate.md) — §결정 4 Trace 4 Amendment N (surgical exception channel)
-- [ADR-067](../../docs/adr/ADR-067-fix-ledger-implementability-escalation.md) — RESET contamination 차단 cross-ref
-- [ADR-104](../../docs/adr/ADR-104-operational-phase-definition.md) — 운영 phase 1st-class 정의
-- [ADR-106](../../docs/adr/ADR-106-operational-signal-pmo-input-circuit.md) — 운영 metric → PMOAgent input 회로
+- [ADR-109](../../archive/adr/ADR-109-in-process-429-mitigation-framework.md) — 본 skill body SSOT (§결정 1-§결정 10)
+- [ADR-039](../../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — §결정 2 inline whitelist closed 4-entry 보호 + §결정 9 carryover (Amendment N)
+- [ADR-044](../../archive/adr/ADR-044-phase-scoped-sequential-team.md) — Amendment N team-spec yaml `parallel_spawn_cap` + `spawn_stagger_ms` + `cascade_circuit_breaker` 3 field 신설
+- [ADR-057](../../archive/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) — §결정 2 cross-model substitution axis (sequential composition cross-ref)
+- [ADR-064](../../archive/adr/ADR-064-decision-principle-mandate.md) — §결정 4 Trace 4 Amendment N (surgical exception channel)
+- [ADR-067](../../archive/adr/ADR-067-fix-ledger-implementability-escalation.md) — RESET contamination 차단 cross-ref
+- [ADR-104](../../archive/adr/ADR-104-operational-phase-definition.md) — 운영 phase 1st-class 정의
+- [ADR-106](../../archive/adr/ADR-106-operational-signal-pmo-input-circuit.md) — 운영 metric → PMOAgent input 회로
 - `mclayer/codeforge-internal-docs/plugin-codeforge/change-plans/cfp-1354-in-process-429-mitigation.md` — Phase 1 Change Plan carrier (dogfood-out per ADR-013)

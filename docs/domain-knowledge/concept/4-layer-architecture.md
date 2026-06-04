@@ -194,8 +194,8 @@ codeforge governance BC 의 4-Layer 유사 구조 (variant — mctrader applicat
 
 ## 관련 ADR
 
-- [ADR-091 §결정 4](../../adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Published Language 분리 (codeforge + mctrader 2 SSOT)
-- [ADR-091 §결정 7 영역 5](../../adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — ADR acceptance criteria 변경 evidence (4-Layer 모델 cross-ref)
+- [ADR-091 §결정 4](../../../archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Published Language 분리 (codeforge + mctrader 2 SSOT)
+- [ADR-091 §결정 7 영역 5](../../../archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — ADR acceptance criteria 변경 evidence (4-Layer 모델 cross-ref)
 - [`docs/glossary.md` 4-Layer Architecture entry](../../glossary.md#4-layer-architecture-mctrader-적용) — SSOT (line 299-312)
 - [`docs/glossary.md` Anti-Corruption Layer (ACL)](../../glossary.md#anti-corruption-layer-acl) — Layer 1 패턴 SSOT
 - [`docs/glossary.md` Open Host Service (OHS)](../../glossary.md#open-host-service-ohs) — Layer 2 패턴 SSOT

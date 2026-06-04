@@ -322,8 +322,8 @@ ADR-082 §결정 1 layer disjoint 정합 — design lane verdict packet 의 4 se
 
 ### Cross-references
 
-- [ADR-078 architecture doc lane gate](../../../plugin-codeforge/docs/adr/ADR-078-living-architecture-doc.md) §결정 1 (4 wording SSOT)
-- [ADR-082 write-time self-write verification](../../../plugin-codeforge/docs/adr/ADR-082-write-time-self-write-verification-mandate.md) scope (b)
-- [ADR-008 inter-plugin contract versioning](../../../plugin-codeforge/docs/adr/ADR-008-inter-plugin-contract-versioning.md) §결정 2 (MINOR additive)
-- [ADR-010 sibling sync ordering](../../../plugin-codeforge/docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md) §결정 1 (canonical first → sibling follow)
+- [ADR-078 architecture doc lane gate](../../archive/adr/ADR-078-living-architecture-doc.md) §결정 1 (4 wording SSOT)
+- [ADR-082 write-time self-write verification](../../archive/adr/ADR-082-write-time-self-write-verification-mandate.md) scope (b)
+- [ADR-008 inter-plugin contract versioning](../../archive/adr/ADR-008-inter-plugin-contract-versioning.md) §결정 2 (MINOR additive)
+- [ADR-010 sibling sync ordering](../../archive/adr/ADR-010-inter-plugin-contract-sibling-sync.md) §결정 1 (canonical first → sibling follow)
 

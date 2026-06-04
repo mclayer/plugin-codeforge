@@ -6,7 +6,7 @@ tools: Read
 
 # Orchestrator-user dialog mode (frame + 4 layer + sub-mechanism)
 
-> 참조 lookup-table skill — 매 user-facing turn 직전 호출. mechanism 만 적용하고 본질 anchor 를 놓치면 가설 E (mechanical 규칙 자체 한계) trap. 정책 SSOT: [ADR-071](../../docs/adr/ADR-071-orchestrator-user-dialog-convergence.md) + [playbook §3.14](../../docs/orchestrator-playbook.md).
+> 참조 lookup-table skill — 매 user-facing turn 직전 호출. mechanism 만 적용하고 본질 anchor 를 놓치면 가설 E (mechanical 규칙 자체 한계) trap. 정책 SSOT: [ADR-071](../../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md) + [playbook §3.14](../../docs/orchestrator-playbook.md).
 
 ## 본질 anchor
 
@@ -16,7 +16,7 @@ tools: Read
 
 ## 호출 시점
 
-매 user-facing turn 직전 (= [ADR-039](../../docs/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) inline whitelist 1번 entry = 사용자 dialog turn). lane spawn 직전 / subagent 결과 수령 후 / `AskUserQuestion` 발화 직전 / 일반 dialog turn 모두 적용.
+매 user-facing turn 직전 (= [ADR-039](../../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) inline whitelist 1번 entry = 사용자 dialog turn). lane spawn 직전 / subagent 결과 수령 후 / `AskUserQuestion` 발화 직전 / 일반 dialog turn 모두 적용.
 
 ## frame mode 진입 4 step (ADR-071 §결정 1)
 
@@ -128,7 +128,7 @@ tools: Read
 
 ## CFP-582 conceptual cross-ref (ADR-071 §결정 9)
 
-[ADR-059](../../docs/adr/ADR-059-debate-protocol-v1.md) Amendment 2 (CFP-582) = agent ↔ agent debate domain. 본 skill / ADR-071 = Orchestrator ↔ user dialog domain. CFP-582 의 3 marker pattern (`counterargument_present` / `alternative_proposed` / `debate_purpose_statement_present`) = debate transcript verification schema — **turn-by-turn user dialog 에 직접 mapping 부적합**. Conceptual cross-ref only — schema 재사용 절대 금지.
+[ADR-059](../../archive/adr/ADR-059-debate-protocol-v1.md) Amendment 2 (CFP-582) = agent ↔ agent debate domain. 본 skill / ADR-071 = Orchestrator ↔ user dialog domain. CFP-582 의 3 marker pattern (`counterargument_present` / `alternative_proposed` / `debate_purpose_statement_present`) = debate transcript verification schema — **turn-by-turn user dialog 에 직접 mapping 부적합**. Conceptual cross-ref only — schema 재사용 절대 금지.
 
 ## scope 외 (ADR-071 §결정 10)
 
@@ -141,7 +141,7 @@ tools: Read
 
 ## DialogFidelityAgent spawn anchor (ADR-071 §결정 13 / CFP-818)
 
-> normative SSOT = [playbook §3.14 verifier auxiliary](../../docs/orchestrator-playbook.md) + [ADR-071 §결정 12·13](../../docs/adr/ADR-071-orchestrator-user-dialog-convergence.md). 본 sub-section = **lookup mirror only** (skill body precedence 정합 — [ADR-064 §결정 10](../../docs/adr/ADR-064-decision-principle-mandate.md) normative > skill body 우선).
+> normative SSOT = [playbook §3.14 verifier auxiliary](../../docs/orchestrator-playbook.md) + [ADR-071 §결정 12·13](../../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md). 본 sub-section = **lookup mirror only** (skill body precedence 정합 — [ADR-064 §결정 10](../../archive/adr/ADR-064-decision-principle-mandate.md) normative > skill body 우선).
 
 ### 3-anchor 발화 형태 매핑
 
@@ -170,11 +170,11 @@ free-form output 차단 (generator 역할 침범 금지).
 
 ### Inline whitelist 1번 entry 정합
 
-DialogFidelityAgent spawn (subagent 형태) = [ADR-039 §결정 2](../../docs/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) Inline whitelist 4-entry 1번 entry (사용자 dialog) scope **안** cognitive 보강. 5번째 entry 신설 아님 (closed enumeration 보존).
+DialogFidelityAgent spawn (subagent 형태) = [ADR-039 §결정 2](../../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) Inline whitelist 4-entry 1번 entry (사용자 dialog) scope **안** cognitive 보강. 5번째 entry 신설 아님 (closed enumeration 보존).
 
 ### Q-3check disjoint scope
 
-[ADR-064 §결정 9](../../docs/adr/ADR-064-decision-principle-mandate.md) Q-3check = Orchestrator self-check. DialogFidelityAgent = 외부 verifier. disjoint — 양자 cross-cutting 보강.
+[ADR-064 §결정 9](../../archive/adr/ADR-064-decision-principle-mandate.md) Q-3check = Orchestrator self-check. DialogFidelityAgent = 외부 verifier. disjoint — 양자 cross-cutting 보강.
 
 ### closed enum 확장 시 별도 CFP 의무
 
@@ -182,7 +182,7 @@ DialogFidelityAgent spawn (subagent 형태) = [ADR-039 §결정 2](../../docs/ad
 
 ## Conversational reporting frequency suppression (ADR-071 §결정 15 / CFP-851 / Amendment 4)
 
-> normative SSOT = [playbook §3.14 frequency suppression](../../docs/orchestrator-playbook.md) + [ADR-071 §결정 15](../../docs/adr/ADR-071-orchestrator-user-dialog-convergence.md). 본 sub-section = **lookup mirror only** (skill body precedence 정합 — [ADR-064 §결정 10](../../docs/adr/ADR-064-decision-principle-mandate.md) normative > skill body 우선).
+> normative SSOT = [playbook §3.14 frequency suppression](../../docs/orchestrator-playbook.md) + [ADR-071 §결정 15](../../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md). 본 sub-section = **lookup mirror only** (skill body precedence 정합 — [ADR-064 §결정 10](../../archive/adr/ADR-064-decision-principle-mandate.md) normative > skill body 우선).
 
 ### 본질 anchor — frequency vs richness 분리 invariant
 
@@ -216,7 +216,7 @@ DialogFidelityAgent spawn (subagent 형태) = [ADR-039 §결정 2](../../docs/ad
 
 ## Mid-turn glossary lookup (ADR-071 §결정 19 / CFP-1764 / Amendment 8)
 
-> normative SSOT = [ADR-071 §결정 19](../../docs/adr/ADR-071-orchestrator-user-dialog-convergence.md) + [`docs/wording-dictionary.md`](../../docs/wording-dictionary.md) 카테고리 (c). 본 sub-section = **lookup mirror only** (skill body precedence 정합 — [ADR-064 §결정 10](../../docs/adr/ADR-064-decision-principle-mandate.md) normative > skill body 우선).
+> normative SSOT = [ADR-071 §결정 19](../../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md) + [`docs/wording-dictionary.md`](../../docs/wording-dictionary.md) 카테고리 (c). 본 sub-section = **lookup mirror only** (skill body precedence 정합 — [ADR-064 §결정 10](../../archive/adr/ADR-064-decision-principle-mandate.md) normative > skill body 우선).
 
 ### 본질 anchor — agent burst paste 합성 시점의 mid-turn forcing function
 

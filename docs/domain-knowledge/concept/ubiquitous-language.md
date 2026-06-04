@@ -161,11 +161,11 @@ ADR-091 §결정 7 의 5 영역 evidence enumeration 의무:
 
 ## 관련 ADR
 
-- [ADR-091 §결정 5](../../adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Bounded Context governance + 15 agent frontmatter field 의무
-- [ADR-091 §결정 6](../../adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — enforcement layer 3-tier (Agent prompt + Template lint + review-verdict enum)
-- [ADR-091 §결정 7](../../adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Vocabulary theater 차단 forcing function INV-5
-- [ADR-068](../../adr/ADR-068-boundary-completeness-invariants.md) — Boundary completeness invariants (I-4 wording SSOT 정합)
-- [ADR-064](../../adr/ADR-064-decision-principle-mandate.md) — Decision principle mandate (Trace 1 forbid-list dictionary 확장 후보)
+- [ADR-091 §결정 5](../../../archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Bounded Context governance + 15 agent frontmatter field 의무
+- [ADR-091 §결정 6](../../../archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — enforcement layer 3-tier (Agent prompt + Template lint + review-verdict enum)
+- [ADR-091 §결정 7](../../../archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Vocabulary theater 차단 forcing function INV-5
+- [ADR-068](../../../archive/adr/ADR-068-boundary-completeness-invariants.md) — Boundary completeness invariants (I-4 wording SSOT 정합)
+- [ADR-064](../../../archive/adr/ADR-064-decision-principle-mandate.md) — Decision principle mandate (Trace 1 forbid-list dictionary 확장 후보)
 - [`docs/glossary.md`](../../glossary.md) — Ubiquitous Language entry SSOT
 - [`docs/wording-dictionary.md`](../../wording-dictionary.md) — negative forbid-list (보완 관계)
 - [`docs/domain-knowledge/concept/bounded-context.md`](bounded-context.md) — BC sibling

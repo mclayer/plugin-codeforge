@@ -81,7 +81,7 @@ tools: Read
 - **DesignReview**: 문서(Change Plan + ADR) 감사. 실구현 코드 미검토. §7 완결성 감사
 - **CodeReview**: 코드(src·config·deploy·tests). 일반 품질·런타임 결함·테스트 품질 중심
 - **SecurityTest**: 코드 + 인프라 + 의존성. 1차 GitHub native (Dependabot/CodeQL/Secret Scanning), 2차 Claude/Codex
-- **DeployReview (CFP-1059 / [ADR-088](../../docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md), Phase 1 declarative)**: production runtime 측정 + cutover 사후 검증 (위 4 review lane 모두와 disjoint axis — code-level / production-level 분리). 검증 3종 = (a) smoke (양방향 호환 — ADR-089 §결정 4) / (b) 성능 비교 (production runtime ↔ pre-deploy baseline, ADR-068 I-5 dimensional empirical grounding 정합 — `[empirical-source: ...]` annotation 의무) / (c) cutover 사후 검증 (ProductionEvidenceDeputy ownership 이관 codeforge-design CONDITIONAL → codeforge-deploy-review 정식, ADR-088 §결정 3). FAIL 시 FIX dispatch (DeveloperPL / ArchitectPL / RequirementsPL — debate-protocol-v1 multi-round adversarial debate 자동 발동 의무)
+- **DeployReview (CFP-1059 / [ADR-088](../../archive/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md), Phase 1 declarative)**: production runtime 측정 + cutover 사후 검증 (위 4 review lane 모두와 disjoint axis — code-level / production-level 분리). 검증 3종 = (a) smoke (양방향 호환 — ADR-089 §결정 4) / (b) 성능 비교 (production runtime ↔ pre-deploy baseline, ADR-068 I-5 dimensional empirical grounding 정합 — `[empirical-source: ...]` annotation 의무) / (c) cutover 사후 검증 (ProductionEvidenceDeputy ownership 이관 codeforge-design CONDITIONAL → codeforge-deploy-review 정식, ADR-088 §결정 3). FAIL 시 FIX dispatch (DeveloperPL / ArchitectPL / RequirementsPL — debate-protocol-v1 multi-round adversarial debate 자동 발동 의무)
 - 중복 지적 발생 시 해당 레인 ReviewPL이 dedup → severity 높은 쪽 채택
 
 > **DeployReview ↔ 기존 4 review lane disjoint axis (ADR-088 §결정 2 / Lane 진입 시 review-responsibility skill 호출 의무)**:
@@ -91,4 +91,4 @@ tools: Read
 > - IntegrationTest (codeforge-test) = 시나리오 단위 정합 검증, production cutover 사후 검증 미접근
 > - **DeployReview (본 신설 lane)** = production 환경 성능 측정 + cutover 사후 검증, 위 4 review lane 모두와 disjoint axis
 
-> **Debut-audit measurable signal**: ✅ 0개 또는 ≥2개 row = [ADR-021](../../docs/adr/ADR-021-phase-gap-measurable-signal.md) R4 (Responsibility leak) detection source.
+> **Debut-audit measurable signal**: ✅ 0개 또는 ≥2개 row = [ADR-021](../../archive/adr/ADR-021-phase-gap-measurable-signal.md) R4 (Responsibility leak) detection source.

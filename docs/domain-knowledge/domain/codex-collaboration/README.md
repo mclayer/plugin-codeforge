@@ -26,7 +26,7 @@ related_files:
 
 ## §1. 배경
 
-codeforge wrapper 는 `codex@openai-codex` plugin 의 codex CLI runtime 을 외부 worker 로 활용해 6 touchpoint Codex proactive check 채널을 운영한다 ([ADR-052](../../../adr/ADR-052-codex-proactive-check-touchpoints.md)). 외부 worker output 의 신뢰 boundary 는 ADR-070 verify-before-trust pattern 으로 codify, dispatch prompt 의 composition 은 ADR-081 boilerplate SSOT 로 codify.
+codeforge wrapper 는 `codex@openai-codex` plugin 의 codex CLI runtime 을 외부 worker 로 활용해 6 touchpoint Codex proactive check 채널을 운영한다 ([ADR-052](../../../../archive/adr/ADR-052-codex-proactive-check-touchpoints.md)). 외부 worker output 의 신뢰 boundary 는 ADR-070 verify-before-trust pattern 으로 codify, dispatch prompt 의 composition 은 ADR-081 boilerplate SSOT 로 codify.
 
 본 narrative SSOT = 위 3 ADR 의 운영 narrative cross-ref hub. 신규 결정 채택은 본 페이지 영역 외 — 결정 본문 SSOT 는 각 ADR.
 
@@ -62,9 +62,9 @@ Codex worker sandbox-level file system access 실패가 누적 9 회 occurrence 
 
 | ADR | normative scope | 결정 본문 SSOT |
 |---|---|---|
-| [ADR-052](../../../adr/ADR-052-codex-proactive-check-touchpoints.md) | **6 touchpoint behavior** (dispatch trigger + ProactiveCheckPacket v1 schema + 처리 결과 + mandatory/optional 분기) | D1-D4 + Amendment 1-8 본문 |
-| [ADR-070](../../../adr/ADR-070-codex-verify-before-trust.md) | **verify-before-trust pattern** (Codex output ground truth verify 의무 + reject 흐름 + Story §10 false positive count tally + **substitution scope 3-path enum codify**) | D1-D5 + Amendment 1-3 본문 |
-| [ADR-081](../../../adr/ADR-081-codex-worker-prompt-boilerplate.md) | **prompt boilerplate composition** (3 mandatory section + verify-before-trust scope 5 sub-scope + 3-lane partition + severity calibration rubric) | D1-D5 + D6 + Amendment 1 본문 |
+| [ADR-052](../../../../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) | **6 touchpoint behavior** (dispatch trigger + ProactiveCheckPacket v1 schema + 처리 결과 + mandatory/optional 분기) | D1-D4 + Amendment 1-8 본문 |
+| [ADR-070](../../../../archive/adr/ADR-070-codex-verify-before-trust.md) | **verify-before-trust pattern** (Codex output ground truth verify 의무 + reject 흐름 + Story §10 false positive count tally + **substitution scope 3-path enum codify**) | D1-D5 + Amendment 1-3 본문 |
+| [ADR-081](../../../../archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) | **prompt boilerplate composition** (3 mandatory section + verify-before-trust scope 5 sub-scope + 3-lane partition + severity calibration rubric) | D1-D5 + D6 + Amendment 1 본문 |
 
 3 ADR 의 normative anchor scope 침범 0 — 각 ADR 영역 disjoint.
 
@@ -76,7 +76,7 @@ ADR-070 §결정 D1 expansion (Amendment 3, CFP-946-A) 의 운영 narrative — 
 - **`manual_substitution_declare`** — sandbox 영역 외 file (internal-docs / sibling repo / cross-plugin path) verify task 필요 시 채택. Codex worker spawn 직전 substitution scope 명시 declare (spawn prompt `task` field 본문 또는 별도 sub-field `substitution_scope`). Story §10 marker = `[codex-substitution-scope-declared: <scope-enum>]` (1 회/spawn).
 - **`fallback_skip_with_marker`** — Codex CLI 미가용 / sandbox network-block 확정 / reentrant 위험 영역 채택. Codex worker spawn 자체 skip + Orchestrator 가 substitution 후속 동작 단독 수행 (verify-before-trust 5 sub-scope 全 적용, ADR-081 §결정 D2). Story §10 marker = `[codex-sandbox-fallback: <fail-mode>]` (1 회/spawn, fail-mode 6 enum).
 
-**6 touchpoint × 3-enum cross-matrix**: 각 touchpoint 의 default + manual_substitution_declare trigger + fallback_skip_with_marker trigger 표 = [ADR-052 Amendment 8](../../../adr/ADR-052-codex-proactive-check-touchpoints.md) §A1 SSOT.
+**6 touchpoint × 3-enum cross-matrix**: 각 touchpoint 의 default + manual_substitution_declare trigger + fallback_skip_with_marker trigger 표 = [ADR-052 Amendment 8](../../../../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) §A1 SSOT.
 
 **decision tree narrative**: [`substitution-scope-decision-tree.md`](substitution-scope-decision-tree.md) (본 page 자매 narrative).
 
@@ -105,7 +105,7 @@ substitution path = "Codex worker substitution" 이지 verify-before-trust 면�
 ## §9. 관련 페이지
 
 - [`substitution-scope-decision-tree.md`](substitution-scope-decision-tree.md) — substitution path 3-enum decision tree (trigger × Story §10 marker × verify-before-trust 5 sub-scope cross-matrix)
-- [ADR-052](../../../adr/ADR-052-codex-proactive-check-touchpoints.md) — 6 touchpoint × 3-enum cross-matrix SSOT (Amendment 8)
-- [ADR-070](../../../adr/ADR-070-codex-verify-before-trust.md) — substitution path 3-enum normative anchor SSOT (§결정 D1 expansion, Amendment 3)
-- [ADR-081](../../../adr/ADR-081-codex-worker-prompt-boilerplate.md) — boilerplate composition SSOT (3 mandatory section + verify-before-trust 5 sub-scope)
+- [ADR-052](../../../../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) — 6 touchpoint × 3-enum cross-matrix SSOT (Amendment 8)
+- [ADR-070](../../../../archive/adr/ADR-070-codex-verify-before-trust.md) — substitution path 3-enum normative anchor SSOT (§결정 D1 expansion, Amendment 3)
+- [ADR-081](../../../../archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) — boilerplate composition SSOT (3 mandatory section + verify-before-trust 5 sub-scope)
 - [playbook §3.10](../../../orchestrator-playbook.md) — Codex Proactive Check dispatch + substitution path 3-enum + 결과 처리 SSOT

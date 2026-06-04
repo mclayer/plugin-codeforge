@@ -145,11 +145,11 @@ AggregateArchitectAgent 의 mandate = **consumer aggregate boundary 설계 advoc
 
 ## 관련 ADR
 
-- [ADR-091 §결정 3](../../adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Aggregate metaphor 2-layer explicit separate
-- [ADR-091 §결정 4](../../adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Published Language 분리 (codeforge + mctrader 2 SSOT)
-- [ADR-091 §결정 5](../../adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Bounded Context governance + 15 agent frontmatter field 의무
-- [ADR-013](../../adr/ADR-013-codeforge-family-dogfood-out-policy.md) — codeforge-family-dogfood-out-policy (Published Language 분리 정합)
-- [ADR-086](../../adr/ADR-086-deputy-creation-decision-framework.md) — Deputy 신설 결정 framework (Aggregate decision boundary 사례)
+- [ADR-091 §결정 3](../../../archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Aggregate metaphor 2-layer explicit separate
+- [ADR-091 §결정 4](../../../archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Published Language 분리 (codeforge + mctrader 2 SSOT)
+- [ADR-091 §결정 5](../../../archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Bounded Context governance + 15 agent frontmatter field 의무
+- [ADR-013](../../../archive/adr/ADR-013-codeforge-family-dogfood-out-policy.md) — codeforge-family-dogfood-out-policy (Published Language 분리 정합)
+- [ADR-086](../../../archive/adr/ADR-086-deputy-creation-decision-framework.md) — Deputy 신설 결정 framework (Aggregate decision boundary 사례)
 - [`docs/glossary.md`](../../glossary.md) — Bounded Context entry SSOT (line 77-82)
 - [`docs/domain-knowledge/concept/aggregate.md`](aggregate.md) — Aggregate 2-layer separate sibling
 - [`docs/domain-knowledge/concept/ubiquitous-language.md`](ubiquitous-language.md) — BC 내부 어휘 SSOT sibling

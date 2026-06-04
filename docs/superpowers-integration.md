@@ -16,7 +16,7 @@ related_files:
 
 # codeforge ↔ superpowers Integration SSOT
 
-본 문서는 codeforge family (wrapper + 6 lane plugin) 가 `superpowers@claude-plugins-official` 을 사용하는 단일 진실원. 모든 lane CLAUDE.md / agent md 는 본 문서를 link 로 참조 — 정책 재정의 금지 ([ADR-028](adr/ADR-028-superpowers-integration-policy.md) §결정 1).
+본 문서는 codeforge family (wrapper + 6 lane plugin) 가 `superpowers@claude-plugins-official` 을 사용하는 단일 진실원. 모든 lane CLAUDE.md / agent md 는 본 문서를 link 로 참조 — 정책 재정의 금지 ([ADR-028](../archive/adr/ADR-028-superpowers-integration-policy.md) §결정 1).
 
 ## §1 현 상태 사실
 
@@ -27,13 +27,13 @@ superpowers 의존이 codeforge family 에 존재하는 4 표면 위치:
 3. **[docs/orchestrator-playbook.md §1.1](orchestrator-playbook.md)** checklist 0번 — 미설치 시 `/plugins install` 안내
 4. **[docs/consumer-guide.md §0b](consumer-guide.md)** — 필수 4종 advertisement (consumer 측)
 
-CI 안전망: [ADR-017](adr/ADR-017-skill-override-path-enforcement.md) + Amendment 1 (`docs/superpowers/{specs,plans}/**` plugin repo 금지 + agent md `Edit/Write(docs/superpowers/**)` 권한 표기 금지). [scripts/check-superpowers-integration.sh](../scripts/check-superpowers-integration.sh) lint script 가 PR check 로 fail-closed.
+CI 안전망: [ADR-017](../archive/adr/ADR-017-skill-override-path-enforcement.md) + Amendment 1 (`docs/superpowers/{specs,plans}/**` plugin repo 금지 + agent md `Edit/Write(docs/superpowers/**)` 권한 표기 금지). [scripts/check-superpowers-integration.sh](../scripts/check-superpowers-integration.sh) lint script 가 PR check 로 fail-closed.
 
 ## §2 호출 지점 enumerate (SSOT 표)
 
 본 표가 17 agent × 7 skill 호출 매핑 SSOT. 변경 시 본 표 + lane plugin agent md 동시 갱신 (CI lint 가 drift 자동 detect).
 
-총 30 호출 지점 / 7 superpowers skill + codex:codex-rescue (proactive, 6 entry) / 15 agent file + 1 wrapper Orchestrator (3 ReviewPL agent 는 skill 호출 없음 — stale path 정리 대상만, §5 참조). 24 = 23 in-lane + 1 wrapper Stage 0 ([ADR-034](adr/ADR-034-pre-issue-brainstorming-stage.md), CFP-129). 30 = 24 + 6 Codex proactive touchpoints ([ADR-052](adr/ADR-052-codex-proactive-check-touchpoints.md), CFP-354).
+총 30 호출 지점 / 7 superpowers skill + codex:codex-rescue (proactive, 6 entry) / 15 agent file + 1 wrapper Orchestrator (3 ReviewPL agent 는 skill 호출 없음 — stale path 정리 대상만, §5 참조). 24 = 23 in-lane + 1 wrapper Stage 0 ([ADR-034](../archive/adr/ADR-034-pre-issue-brainstorming-stage.md), CFP-129). 30 = 24 + 6 Codex proactive touchpoints ([ADR-052](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md), CFP-354).
 
 | Lane | Agent | codeforge Phase trigger | Skill | Path override | I/O 계약 | Phase target |
 |---|---|---|---|:-:|---|---|
@@ -64,13 +64,13 @@ CI 안전망: [ADR-017](adr/ADR-017-skill-override-path-enforcement.md) + Amendm
 | review | ClaudeReviewAgent | PASS evidence 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-review Phase 2 |
 | pmo | PMOAgent | Story 완료 감사 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-pmo Phase 2 |
 | pmo | GitOpsAgent | Worktree lifecycle + branch tree + sequential merge + conflict escalation (CFP-139) | superpowers:using-git-worktrees | NO | §3 row 6 (CFP-139) | plugin-codeforge-pmo Phase 2 (CFP-139) |
-| **wrapper** | **Orchestrator (or human)** | **pre-Issue scoping (Stage 0, [ADR-034](adr/ADR-034-pre-issue-brainstorming-stage.md))** | superpowers:brainstorming | YES | §3 row 2 | wrapper Phase 1 (post-merge: Issue Form 제출) |
-| **wrapper** | **Orchestrator** | **AskUserQuestion 직전 — Pre-question Review ([ADR-052](adr/ADR-052-codex-proactive-check-touchpoints.md) §3.10.1)** | codex:codex-rescue (proactive) | NO | playbook §3.10.1 | wrapper (전 레인) |
-| **wrapper** | **Orchestrator** | **ArchitectAgent §3 초안 완료 직후 — Design Synthesis Check ([ADR-052](adr/ADR-052-codex-proactive-check-touchpoints.md) §3.10.2)** | codex:codex-rescue (proactive) | NO | playbook §3.10.2 | design lane |
-| **wrapper** | **Orchestrator** | **DeveloperPLAgent FIX 2+ 반복 감지 시 — Dev Rescue ([ADR-052](adr/ADR-052-codex-proactive-check-touchpoints.md) §3.10.3)** | codex:codex-rescue (proactive) | NO | playbook §3.10.3 | develop lane |
-| **wrapper** | **Orchestrator** | **RequirementsPLAgent §1-§6 완료 직후 — Requirements Review ([ADR-052](adr/ADR-052-codex-proactive-check-touchpoints.md) §3.10.4)** | codex:codex-rescue (proactive) | NO | playbook §3.10.4 | requirements lane |
-| **wrapper** | **Orchestrator** | **ArchitectPLAgent root cause 판정 직후 — FIX 2nd Opinion ([ADR-052](adr/ADR-052-codex-proactive-check-touchpoints.md) §3.10.5)** | codex:codex-rescue (proactive) | NO | playbook §3.10.5 | design (FIX loop) |
-| **wrapper** | **Orchestrator** | **ArchitectAgent ADR 초안 완료 직후 — ADR Review ([ADR-052](adr/ADR-052-codex-proactive-check-touchpoints.md) §3.10.6)** | codex:codex-rescue (proactive) | NO | playbook §3.10.6 | design lane |
+| **wrapper** | **Orchestrator (or human)** | **pre-Issue scoping (Stage 0, [ADR-034](../archive/adr/ADR-034-pre-issue-brainstorming-stage.md))** | superpowers:brainstorming | YES | §3 row 2 | wrapper Phase 1 (post-merge: Issue Form 제출) |
+| **wrapper** | **Orchestrator** | **AskUserQuestion 직전 — Pre-question Review ([ADR-052](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) §3.10.1)** | codex:codex-rescue (proactive) | NO | playbook §3.10.1 | wrapper (전 레인) |
+| **wrapper** | **Orchestrator** | **ArchitectAgent §3 초안 완료 직후 — Design Synthesis Check ([ADR-052](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) §3.10.2)** | codex:codex-rescue (proactive) | NO | playbook §3.10.2 | design lane |
+| **wrapper** | **Orchestrator** | **DeveloperPLAgent FIX 2+ 반복 감지 시 — Dev Rescue ([ADR-052](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) §3.10.3)** | codex:codex-rescue (proactive) | NO | playbook §3.10.3 | develop lane |
+| **wrapper** | **Orchestrator** | **RequirementsPLAgent §1-§6 완료 직후 — Requirements Review ([ADR-052](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) §3.10.4)** | codex:codex-rescue (proactive) | NO | playbook §3.10.4 | requirements lane |
+| **wrapper** | **Orchestrator** | **ArchitectPLAgent root cause 판정 직후 — FIX 2nd Opinion ([ADR-052](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) §3.10.5)** | codex:codex-rescue (proactive) | NO | playbook §3.10.5 | design (FIX loop) |
+| **wrapper** | **Orchestrator** | **ArchitectAgent ADR 초안 완료 직후 — ADR Review ([ADR-052](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) §3.10.6)** | codex:codex-rescue (proactive) | NO | playbook §3.10.6 | design lane |
 
 > **Stage 0 footnote (CFP-129 / ADR-034)**: 위 row 의 I/O = §3 row 2 의 in-lane 시나리오와 다름. Pre-Issue 시나리오의 I/O = spec → Issue Form `user-original` 필드 (§1 verbatim source) + `spec_link` 필드 (path/URL traceability, Phase 2 fixture). [orchestrator-playbook §1.2.0](orchestrator-playbook.md) SSOT. 총 호출 지점 = 23 → 24, in-lane brainstorming 2 행 (DomainAgent / RequirementsPL) 과 별개 단계.
 
@@ -90,9 +90,9 @@ CI 안전망: [ADR-017](adr/ADR-017-skill-override-path-enforcement.md) + Amendm
 
 **계층**:
 1. **선제 (prompt-time)**: [`templates/skill-prompt-helpers/`](../templates/skill-prompt-helpers/) fragment — agent md / Orchestrator prompt 가 `Read(${CLAUDE_PLUGIN_ROOT}/codeforge/templates/skill-prompt-helpers/<fragment>.md)` 패턴으로 inline reference. fragment 안에 explicit path override 안내.
-2. **사후 (PR-time)**: [ADR-017](adr/ADR-017-skill-override-path-enforcement.md) + Amendment 1 CI lint — `docs/superpowers/{specs,plans}/**` 경로 file 생성 + agent md `Edit/Write(docs/superpowers/**)` 권한 표기 금지. fail-closed.
+2. **사후 (PR-time)**: [ADR-017](../archive/adr/ADR-017-skill-override-path-enforcement.md) + Amendment 1 CI lint — `docs/superpowers/{specs,plans}/**` 경로 file 생성 + agent md `Edit/Write(docs/superpowers/**)` 권한 표기 금지. fail-closed.
 
-**4 fragment** (wrapper-owned, lane import-only — [ADR-028](adr/ADR-028-superpowers-integration-policy.md) §결정 5):
+**4 fragment** (wrapper-owned, lane import-only — [ADR-028](../archive/adr/ADR-028-superpowers-integration-policy.md) §결정 5):
 - `templates/skill-prompt-helpers/brainstorming-path-override.md`
 - `templates/skill-prompt-helpers/writing-plans-path-override.md`
 - `templates/skill-prompt-helpers/tdd-discipline.md`
@@ -139,4 +139,4 @@ Phase 1 wrapper PR merge 직후 6 lane CFP batch open. 각 lane CFP scope:
 | 6 | codeforge-test | 2 agent md | (동일) |
 | 7 | codeforge-pmo | 2 agent md (PMOAgent + GitOpsAgent CFP-139) | (동일) |
 
-각 lane CFP = 별도 child Story (Mode B hub-centralized — wrapper repo = Epic owner, [ADR-020](adr/ADR-020-cross-repo-epic-pattern.md)).
+각 lane CFP = 별도 child Story (Mode B hub-centralized — wrapper repo = Epic owner, [ADR-020](../archive/adr/ADR-020-cross-repo-epic-pattern.md)).

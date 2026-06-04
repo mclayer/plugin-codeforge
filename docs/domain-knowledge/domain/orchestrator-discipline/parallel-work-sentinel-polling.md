@@ -153,7 +153,7 @@ Wave 3 follow-up CFP (blocking-on-pr → blocking-on-merge 승격)
 
 ## See also
 
-- **ADR-073 Amendment 2** ([`docs/adr/ADR-073-orchestrator-verify-before-assert.md`](../../../adr/ADR-073-orchestrator-verify-before-assert.md)) — declarative anchor carrier (§결정 1-A/1-B/1-C)
+- **ADR-073 Amendment 2** ([`docs/adr/ADR-073-orchestrator-verify-before-assert.md`](../../../../archive/adr/ADR-073-orchestrator-verify-before-assert.md)) — declarative anchor carrier (§결정 1-A/1-B/1-C)
 - **evidence-checks-registry entry** ([`docs/evidence-checks-registry.yaml`](../../../evidence-checks-registry.yaml)) — `parallel-work-sentinel-pickup` row
 - **Sibling Story-2** — [CFP-967](https://github.com/mclayer/plugin-codeforge/issues/967) (mechanical wire carrier — script + hook + workflow + bats)
 - **Memory rule 6** — feedback_session_start_parallel_work_check.md `Rule 6 — title-based search 의무` (CFP-953 incident carrier)
@@ -196,14 +196,14 @@ cold start `session_start` 보강: SessionStart hook tier 가 turn 0 prompt-inje
 
 ## 관련 ADR
 
-- [ADR-073](../../../adr/ADR-073-orchestrator-verify-before-assert.md) **Amendment 2** (CFP-966 carrier) — §결정 1-A transition trigger enum 3종 / §결정 1-B cold start session_start 보강 / §결정 1-C sustained polling mandate. base §결정 1 (CFP-622) + Amendment 1 (CFP-776 ADR-082 cross-ref) scope 강화 (ratchet 방향 only).
-- [ADR-070](../../../adr/ADR-070-codex-verify-before-trust.md) — verify-before-trust 4-layer governance Layer 2 (Codex 외부 worker output verify). 본 polling = Layer 1, disjoint scope.
-- [ADR-082](../../../adr/ADR-082-write-time-self-write-verification-mandate.md) — Layer 3 (internal lane agent write-time self-write verify). ADR-082 §결정 1 layer disjoint 4-layer 표 = 공통 anchor.
-- [ADR-045](../../../adr/ADR-045-story-retro-mandatory-trigger.md) §D-9 — Layer 4 (PMOAgent retro corpus enumeration cross-Story pattern_count escalation).
-- [ADR-060](../../../adr/ADR-060-evidence-enforceable-promotion-framework.md) — evidence-enforceable warning-tier framework. `parallel-work-sentinel-pickup` entry carrier_adr. recurrence-driven promotion gate (count 2 / threshold 3 / promotion_trigger auto_blocking, §결정 19 Amendment 6).
-- [ADR-058](../../../adr/ADR-058-adr-sunset-criteria-mandate.md) §결정 5 — Amendment 2 = scope 강화 방향만 (sunset_justification N/A 정당, is_transitional: false 보존).
-- [ADR-064](../../../adr/ADR-064-decision-principle-mandate.md) §self-application top-down ratchet — Amendment 강화 방향만. §결정 1 CFP scope unitary (mechanical wire 별 CFP-967 분리).
-- [ADR-040](../../../adr/ADR-040-worktree-convention.md) Amendment 3 §결정 7.D — governance ADR `mechanical_enforcement_actions[]` 의무. ADR-073 Amendment 2 가 첫 row entry (`parallel-work-sentinel-pickup`) append (declarative anchor only — Story-2 mechanical wire).
+- [ADR-073](../../../../archive/adr/ADR-073-orchestrator-verify-before-assert.md) **Amendment 2** (CFP-966 carrier) — §결정 1-A transition trigger enum 3종 / §결정 1-B cold start session_start 보강 / §결정 1-C sustained polling mandate. base §결정 1 (CFP-622) + Amendment 1 (CFP-776 ADR-082 cross-ref) scope 강화 (ratchet 방향 only).
+- [ADR-070](../../../../archive/adr/ADR-070-codex-verify-before-trust.md) — verify-before-trust 4-layer governance Layer 2 (Codex 외부 worker output verify). 본 polling = Layer 1, disjoint scope.
+- [ADR-082](../../../../archive/adr/ADR-082-write-time-self-write-verification-mandate.md) — Layer 3 (internal lane agent write-time self-write verify). ADR-082 §결정 1 layer disjoint 4-layer 표 = 공통 anchor.
+- [ADR-045](../../../../archive/adr/ADR-045-story-retro-mandatory-trigger.md) §D-9 — Layer 4 (PMOAgent retro corpus enumeration cross-Story pattern_count escalation).
+- [ADR-060](../../../../archive/adr/ADR-060-evidence-enforceable-promotion-framework.md) — evidence-enforceable warning-tier framework. `parallel-work-sentinel-pickup` entry carrier_adr. recurrence-driven promotion gate (count 2 / threshold 3 / promotion_trigger auto_blocking, §결정 19 Amendment 6).
+- [ADR-058](../../../../archive/adr/ADR-058-adr-sunset-criteria-mandate.md) §결정 5 — Amendment 2 = scope 강화 방향만 (sunset_justification N/A 정당, is_transitional: false 보존).
+- [ADR-064](../../../../archive/adr/ADR-064-decision-principle-mandate.md) §self-application top-down ratchet — Amendment 강화 방향만. §결정 1 CFP scope unitary (mechanical wire 별 CFP-967 분리).
+- [ADR-040](../../../../archive/adr/ADR-040-worktree-convention.md) Amendment 3 §결정 7.D — governance ADR `mechanical_enforcement_actions[]` 의무. ADR-073 Amendment 2 가 첫 row entry (`parallel-work-sentinel-pickup`) append (declarative anchor only — Story-2 mechanical wire).
 
 ## 변경 이력
 

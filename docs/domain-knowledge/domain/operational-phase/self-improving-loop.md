@@ -24,7 +24,7 @@ updated: 2026-05-22
 
 # 운영 phase self-improving loop
 
-> **normative SSOT**: [`docs/adr/ADR-104-operational-phase-definition.md`](../../../adr/ADR-104-operational-phase-definition.md). 본 파일은 ADR-104 §결정 5 의 서술적 elaboration 이다.
+> **normative SSOT**: [`docs/adr/ADR-104-operational-phase-definition.md`](../../../../archive/adr/ADR-104-operational-phase-definition.md). 본 파일은 ADR-104 §결정 5 의 서술적 elaboration 이다.
 
 > **범위 boundary**: loop 개념 정의 + 무한 발산 위험 식별 만. 실 loop closure mechanism (dedup / max-depth / 사용자 gate) = **S6 carrier** (ADR-104 §결정 5 anti-scope 명시).
 
@@ -133,8 +133,8 @@ S6 까지 loop closure gate 가 없는 동안, cron workflow 가 수동 throttle
 
 ## 관련 ADR
 
-- [ADR-104](../../../adr/ADR-104-operational-phase-definition.md) — **normative SSOT** (§결정 5 — self-improving loop + loop closure gate 위험 식별 + S6 carrier forward-ref)
-- [ADR-045](../../../adr/ADR-045-story-retro-mandatory-trigger.md) — §D-9 cross-Story pattern_count ≥ 2 → ADR escalation forcing function (loop 답습 source)
+- [ADR-104](../../../../archive/adr/ADR-104-operational-phase-definition.md) — **normative SSOT** (§결정 5 — self-improving loop + loop closure gate 위험 식별 + S6 carrier forward-ref)
+- [ADR-045](../../../../archive/adr/ADR-045-story-retro-mandatory-trigger.md) — §D-9 cross-Story pattern_count ≥ 2 → ADR escalation forcing function (loop 답습 source)
 
 ## 변경 이력
 
