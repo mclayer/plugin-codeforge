@@ -182,6 +182,7 @@ jobs:
               f.filename.startsWith('scripts/') ||
               f.filename.startsWith('.claude-plugin/') ||
               f.filename.startsWith('.claude/_overlay/') ||   // CFP-758 #758 — consumer overlay SSOT (state-only)
+              f.filename === '.claude/settings.json' ||        // orchestrator runtime config (permissions/sandbox state, non-executable) — .claude/_overlay/ sibling
               f.filename.startsWith('.codeforge/') ||          // CFP-758 #503/#723 — counter reservation (non-executable state)
               f.filename.startsWith('scope_manifests/') ||     // CFP-758 #503/#723 — Epic scope manifest (governance state)
               f.filename === 'CHANGELOG.md' ||
@@ -364,6 +365,7 @@ jobs:
               f.filename.startsWith('scripts/') ||
               f.filename.startsWith('.claude-plugin/') ||
               f.filename.startsWith('.claude/_overlay/') ||
+              f.filename === '.claude/settings.json' ||
               f.filename.startsWith('.codeforge/') ||
               f.filename.startsWith('scope_manifests/') ||
               f.filename === 'CHANGELOG.md' ||
