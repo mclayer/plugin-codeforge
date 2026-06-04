@@ -95,9 +95,68 @@
       "mcp__atlassian__createConfluencePage",
       "mcp__atlassian__updateConfluencePage"
     ],
+    "deny": [
+      "mcp__plugin_atlassian_atlassian__getAccessibleAtlassianResources",
+      "mcp__plugin_atlassian_atlassian__fetch",
+      "mcp__plugin_atlassian_atlassian__search",
+      "mcp__plugin_atlassian_atlassian__atlassianUserInfo",
+      "mcp__plugin_atlassian_atlassian__createConfluenceFooterComment",
+      "mcp__plugin_atlassian_atlassian__createConfluenceInlineComment",
+      "mcp__plugin_atlassian_atlassian__getConfluenceCommentChildren",
+      "mcp__plugin_atlassian_atlassian__getConfluencePageFooterComments",
+      "mcp__plugin_atlassian_atlassian__getConfluencePageInlineComments",
+      "mcp__plugin_atlassian_atlassian__addCommentToJiraIssue",
+      "mcp__plugin_atlassian_atlassian__addWorklogToJiraIssue",
+      "mcp__plugin_atlassian_atlassian__createIssueLink",
+      "mcp__plugin_atlassian_atlassian__createJiraIssue",
+      "mcp__plugin_atlassian_atlassian__editJiraIssue",
+      "mcp__plugin_atlassian_atlassian__getIssueLinkTypes",
+      "mcp__plugin_atlassian_atlassian__getJiraIssue",
+      "mcp__plugin_atlassian_atlassian__getJiraIssueRemoteIssueLinks",
+      "mcp__plugin_atlassian_atlassian__getJiraIssueTypeMetaWithFields",
+      "mcp__plugin_atlassian_atlassian__getJiraProjectIssueTypesMetadata",
+      "mcp__plugin_atlassian_atlassian__getTransitionsForJiraIssue",
+      "mcp__plugin_atlassian_atlassian__getVisibleJiraProjects",
+      "mcp__plugin_atlassian_atlassian__lookupJiraAccountId",
+      "mcp__plugin_atlassian_atlassian__searchJiraIssuesUsingJql",
+      "mcp__plugin_atlassian_atlassian__transitionJiraIssue",
+      "mcp__atlassian__getAccessibleAtlassianResources",
+      "mcp__atlassian__fetch",
+      "mcp__atlassian__search",
+      "mcp__atlassian__atlassianUserInfo",
+      "mcp__atlassian__createConfluenceFooterComment",
+      "mcp__atlassian__createConfluenceInlineComment",
+      "mcp__atlassian__getConfluenceCommentChildren",
+      "mcp__atlassian__getConfluencePageFooterComments",
+      "mcp__atlassian__getConfluencePageInlineComments",
+      "mcp__atlassian__addCommentToJiraIssue",
+      "mcp__atlassian__addWorklogToJiraIssue",
+      "mcp__atlassian__createIssueLink",
+      "mcp__atlassian__createJiraIssue",
+      "mcp__atlassian__editJiraIssue",
+      "mcp__atlassian__getIssueLinkTypes",
+      "mcp__atlassian__getJiraIssue",
+      "mcp__atlassian__getJiraIssueRemoteIssueLinks",
+      "mcp__atlassian__getJiraIssueTypeMetaWithFields",
+      "mcp__atlassian__getJiraProjectIssueTypesMetadata",
+      "mcp__atlassian__getTransitionsForJiraIssue",
+      "mcp__atlassian__getVisibleJiraProjects",
+      "mcp__atlassian__lookupJiraAccountId",
+      "mcp__atlassian__searchJiraIssuesUsingJql",
+      "mcp__atlassian__transitionJiraIssue"
+    ],
     "defaultMode": "bypassPermissions"
   },
   "hooks": {
-
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"${CLAUDE_PROJECT_DIR}/templates/scripts/check-worktree-stale.sh\" || true"
+          }
+        ]
+      }
+    ]
   }
 }
