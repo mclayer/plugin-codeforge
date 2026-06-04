@@ -6,12 +6,16 @@
 #   - BYPASS_WORKTREE_GC=1 fast-exit
 #   - non-git dir graceful exit
 #   - merged + old + clean              → PRUNED
-#   - merged + old + DIRTY              → KEPT (data-loss 가드)
+#   - merged + old + DIRTY(tracked)     → KEPT (data-loss 가드)
 #   - NOT merged + old + clean          → KEPT
 #   - merged + RECENT (age 미만)        → KEPT
 #   - gh 불가                           → KEPT + WARN (fail-safe)
 #   - alternate base dir worktree       → 여전히 EVALUATED (Defect A)
 #   - locked worktree                   → KEPT
+#   - merged + 병합 후 추가 commit      → KEPT (squash-aware data-loss 가드)
+#   - merged + 임시 untracked(.tmp)만   → PRUNED (temp 무시)
+#   - merged + head local 부재          → KEPT (보수적 head 미상 가드)
+#   - DRY_RUN                           → would-prune 보고 + 실제 remove 없음
 #
 # 실제 worktree 는 절대 삭제하지 않음 — git/gh 를 stub (GC_GIT_BIN / GC_GH_BIN) 으로 주입하고
 # fixture 디렉터리 mtime 을 touch 로 조작.
@@ -94,7 +98,13 @@ case "$cmd $sub" in
   "worktree list")
     cat "$STUB_WT_PORCELAIN";;
   "status --porcelain")
-    if [[ "${STUB_DIRTY:-0}" == "1" ]]; then echo " M somefile.txt"; fi;;
+    # tracked 변경 (dirty 가드 발동해야 함)
+    if [[ "${STUB_DIRTY:-0}" == "1" ]]; then echo " M somefile.txt"; fi
+    # 임시 산출물 untracked (GC_TEMP_IGNORE_RE 로 무시되어야 함)
+    if [[ "${STUB_DIRTY_TEMP:-0}" == "1" ]]; then echo "?? .tmp-pr-body-wrapper.md"; echo "?? .tmp/"; fi;;
+  "cat-file -e")
+    # merged head commit 이 local 에 존재하는지. 기본 존재(1).
+    [[ "${STUB_HEAD_PRESENT:-1}" == "1" ]] && exit 0 || exit 1;;
   "rev-list --count")
     echo "${STUB_AHEAD:-0}";;
   "worktree remove")
@@ -122,7 +132,9 @@ case "$cmd $sub" in
     [[ "${STUB_GH_AUTH:-0}" == "1" ]] && exit 0 || exit 1;;
   "pr list")
     if [[ "${STUB_GH_MERGED:-0}" == "1" ]]; then
-      echo '[{"number":123}]'
+      # headRefOid = porcelain HEAD(222...) 와 동일. cat-file/rev-list 는 stub 이라 값 자체는 무의미하나
+      # merged_pr_head 의 sed 추출이 비지 않게 유효 hex 제공.
+      echo '[{"number":123,"headRefOid":"2222222222222222222222222222222222222222"}]'
     else
       echo '[]'
     fi;;
@@ -134,12 +146,13 @@ STUB
 }
 
 # 시나리오 실행 헬퍼.
-# 인자: label, wt_old(1/0), dirty, gh_auth, gh_merged, locked, ahead, base_kind(default/alt)
+# 인자: wt_old(1/0), dirty, gh_auth, gh_merged, locked, ahead, base_kind(default/alt),
+#       dirty_temp(임시 untracked만; 기본0), head_present(merged head local 존재; 기본1), dry_run(기본0)
 # 출력: GC stdout+stderr 를 전역 RUN_OUT 에 / rc 를 RUN_RC 에 담는다.
 RUN_OUT=""
 RUN_RC=0
 run_scenario() {
-  local wt_old="$1" dirty="$2" gh_auth="$3" gh_merged="$4" locked="$5" ahead="${6:-0}" base_kind="${7:-default}"
+  local wt_old="$1" dirty="$2" gh_auth="$3" gh_merged="$4" locked="$5" ahead="${6:-0}" base_kind="${7:-default}" dirty_temp="${8:-0}" head_present="${9:-1}" dry_run="${10:-0}"
 
   local sb; sb="$(mktemp -d)"
   local repo_root="$sb/repo"
@@ -185,10 +198,13 @@ run_scenario() {
     STUB_REPO_ROOT="$repo_root" \
     STUB_WT_PORCELAIN="$porcelain" \
     STUB_DIRTY="$dirty" \
+    STUB_DIRTY_TEMP="$dirty_temp" \
+    STUB_HEAD_PRESENT="$head_present" \
     STUB_GH_AUTH="$gh_auth" \
     STUB_GH_MERGED="$gh_merged" \
     STUB_AHEAD="$ahead" \
     STUB_REMOVE_LOG="$remove_log" \
+    GC_DRY_RUN="$dry_run" \
     PATH="$sb:$PATH" \
     bash "$STALE_SCRIPT" 2>&1
   )" || RUN_RC=$?
@@ -295,13 +311,49 @@ test_locked_kept() {
   assert_not_contains "no PRUNING" "PRUNING" "$RUN_OUT"
 }
 
-# 11 — merged + old + clean BUT unpushed commits → KEPT (data-loss 가드 2)
-test_unpushed_commits_kept() {
-  log "Test: merged + old + clean + unpushed commits → KEPT"
+# 11 — merged + old + clean BUT 병합 후 추가 commit → KEPT (squash-aware data-loss 가드)
+test_post_merge_commits_kept() {
+  log "Test: merged + old + clean + 병합 후 추가 commit → KEPT"
   run_scenario 1 0 1 1 0 3 default
   assert_exit "exit 0" 0 "$RUN_RC"
-  assert_contains "KEEP unpushed" "unpushed" "$RUN_OUT"
+  assert_contains "KEEP 병합 후" "병합 후 추가 local commit" "$RUN_OUT"
   assert_contains "pruned=0" "pruned=0" "$RUN_OUT"
+  assert_not_contains "no PRUNING" "PRUNING" "$RUN_OUT"
+}
+
+# 12 — merged + old + 임시 untracked 만(.tmp 등) + 추가 commit 0 → PRUNED (temp 무시, squash-aware)
+test_temp_only_dirty_pruned() {
+  log "Test: merged + old + 임시 untracked 만 + 추가 commit 0 → PRUNED (temp 무시)"
+  # dirty=0(tracked 변경 없음), ahead=0(병합 후 추가 없음), dirty_temp=1(.tmp 만 존재)
+  run_scenario 1 0 1 1 0 0 default 1 1
+  assert_exit "exit 0" 0 "$RUN_RC"
+  assert_not_contains "not KEEP dirty" "KEEP (dirty" "$RUN_OUT"
+  assert_contains "PRUNING line" "PRUNING" "$RUN_OUT"
+  assert_contains "pruned=1" "pruned=1" "$RUN_OUT"
+}
+
+# 13 — merged 인데 merged head 가 local 에 없음(force-push/rebase) → KEPT (보수적 head 미상 가드)
+test_merged_head_absent_kept() {
+  log "Test: merged + head local 부재 → KEPT (보수적)"
+  # ahead=0 이지만 head_present=0 → cat-file -e 실패 → has_commits_after_merge 보수적 keep
+  run_scenario 1 0 1 1 0 0 default 0 0
+  assert_exit "exit 0" 0 "$RUN_RC"
+  assert_contains "KEEP 병합 후" "병합 후 추가 local commit" "$RUN_OUT"
+  assert_contains "pruned=0" "pruned=0" "$RUN_OUT"
+  assert_not_contains "no PRUNING" "PRUNING" "$RUN_OUT"
+}
+
+# 14 — DRY_RUN: prune 대상이어도 실제 remove 안 함 (pruned=0 + would-prune 보고)
+test_dry_run_no_removal() {
+  log "Test: DRY_RUN → would-prune 보고 + 실제 remove 없음 (pruned=0)"
+  # 정상이면 prune 될 시나리오(merged+old+clean+ahead0) 에 dry_run=1
+  run_scenario 1 0 1 1 0 0 default 0 1 1
+  assert_exit "exit 0" 0 "$RUN_RC"
+  assert_contains "DRY_RUN would-prune" "DRY_RUN would-prune" "$RUN_OUT"
+  assert_contains "would_prune=1" "would_prune=1" "$RUN_OUT"
+  assert_contains "pruned=0" "pruned=0" "$RUN_OUT"
+  assert_not_contains "no actual PRUNING" "PRUNING (stale" "$RUN_OUT"
+  assert_not_contains "no remove call" "cfp-999-feature" "$RUN_REMOVE_LOG"
 }
 
 # ── Run ─────────────────────────────────────────────────────────────────────
@@ -316,7 +368,10 @@ test_merged_recent_kept
 test_gh_unavailable_failsafe
 test_alt_base_evaluated
 test_locked_kept
-test_unpushed_commits_kept
+test_post_merge_commits_kept
+test_temp_only_dirty_pruned
+test_merged_head_absent_kept
+test_dry_run_no_removal
 
 log ""
 log "=== Summary: $PASS PASS, $FAIL FAIL ==="
