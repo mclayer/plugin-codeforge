@@ -66,10 +66,10 @@ permissions:
 |------|------|
 | **Story 진입 (요구사항 lane)** | PMOAgent 의 Epic 분해 결과 받아 hierarchical branch tree 1회 생성 |
 | **각 lane 진입 직전** | TeamCreate event — N 개 worktree 동시 생성 (병렬 sub-agent 별 독립 worktree) |
-| **각 lane 종료 직후** | TeamDelete event — sequential merge 순서 결정 + worktree prune |
+| **각 lane 종료 직후** | TeamDelete event — sequential merge 순서 결정 + 해당 lane sub-worktree prune |
 | **FIX iteration trigger** | 해당 lane worktree 재구성 (clean state) |
-| **SessionStart hook** | Stale worktree (> 7d 또는 phase:done Story branch) 자동 detect + cleanup |
-| **Story close** | 전체 worktree tree teardown (orphan branch 보고) |
+| **Story/Epic 완료 (회고 시점)** | **eager teardown (primary 경로)** — PMOAgent 회고와 동시/직후, 완료 Story 의 worktree(들)을 **mergedAt 확인 후 경로 기반으로 제거**. manifest 미등록(외부 manual create) worktree 도 Story branch 패턴(`cfp-NNN*`)으로 포함. §5 참조 |
+| **SessionStart / 주기적** | **backstop 경로** — 크래시·중단으로 회고를 못 거친 orphan 만 정리 (`check-worktree-stale.sh`, 7d+ & merged & clean). primary 정리는 위 완료 시점 eager 경로 |
 
 세션 재개 시 `.claude-work/worktree-manifest.yaml` 에서 lifecycle state 복원.
 
@@ -253,22 +253,34 @@ Orchestrator monopoly trigger — Phase 2 PR open 시점:
 - 또는 새 worktree spawn (이전 worktree 는 `status: aborted` 표시 후 manifest 보존)
 - 새 sub-agent spawn 받을 준비
 
-### 5. Stale worktree 자동 detect + cleanup (SessionStart hook)
+### 5. Worktree cleanup — eager (완료 시점, primary) + periodic (backstop)
 
-SessionStart hook 에서 GitOpsAgent 가 prune candidates 식별:
-- `.claude-work/worktree-manifest.yaml` mtime > 7d
-- 또는 status:active 인데 GitHub 상 phase:done Story branch
-- 또는 manifest 에 없는 orphan worktree (외부 manual create)
+worktree 정리는 **두 경로**. primary = 완료 시점 eager (deterministic), backstop = 주기적 (orphan 안전망).
+누적 결함 교훈: 정리를 주기적 GC 단독에 의존하면 (a) 완료를 못 거친 worktree 가 무한 누적 + (b) GitHub
+post-merge automation 은 클라우드 러너라 로컬 worktree 미접근 → **로컬 세션의 완료 시점이 유일한 deterministic 정리 지점**.
 
-cleanup 실행:
+#### 5a. eager 완료 정리 (primary — Story/Epic 완료 회고 시점)
+
+Orchestrator 가 완료 회고 단계에서 GitOpsAgent 를 dispatch (PMOAgent 회고와 동시/직후). 입력 = 완료 Story KEY.
 
 ```bash
+# 1) merge 확정 확인 (PROTECTED repo 필수 — pre-merge remove = policy violation, ADR-040 Amd 2)
+gh pr view <PR_NUMBER> --json mergedAt --jq .mergedAt   # non-null = merged
+
+# 2) 완료 Story 의 worktree(들) 식별 — manifest + Story branch 패턴(cfp-NNN*) 양쪽 (manifest 미등록 포함)
+# 3) data-loss 가드 후 제거 (dirty=uncommitted 변경 보유 시 skip + 보고)
+git worktree remove --force <story worktree path>
+git branch -D <story branch>      # local only — origin push 안 함
 git worktree prune
-git worktree remove --force <stale path>
-git branch -D <stale branch>  # local only — origin push 안 함
 ```
 
-manifest row 는 `status: pruned` 로 update (append-only — 삭제 X).
+manifest row 는 `status: pruned` 로 update (append-only — 삭제 X). dirty 로 skip 한 worktree 는 Orchestrator 에 보고.
+
+#### 5b. periodic backstop (orphan 안전망)
+
+크래시·중단으로 eager 정리를 못 거친 orphan 전용. `templates/scripts/check-worktree-stale.sh` (wrapper SSOT) —
+조건 = age 7d+ AND merged PR(squash-aware: headRefOid 이후 추가 commit 0) AND clean(임시파일 제외) AND not-locked.
+수동/스케줄 호출 (SessionStart 동기 실행은 시작 지연으로 제거됨). preview = `GC_DRY_RUN=1`.
 
 ### 6. Cross-platform path handling
 
@@ -310,6 +322,7 @@ Story 진행 중 의미 있는 git ops event 마다 `docs/stories/<KEY>.md` 의 
 | 영역 | PMOAgent | GitOpsAgent |
 |------|:--------:|:-----------:|
 | Story 완료 회고 | ✅ | — |
+| 완료 worktree 정리 (회고 시점 eager) | — (회고와 동시 dispatch) | ✅ |
 | Cross-Story FIX 패턴 | ✅ | (consult 시 git history 제공) |
 | Epic 분해 자문 | ✅ | (분해 결과 받아 branch tree 생성만) |
 | ADR 후보 발의 | ✅ | — |
