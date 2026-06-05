@@ -120,12 +120,14 @@ Claude Code harness 가 세션 부팅 시점에 `.claude/settings.json` 의 `hoo
 
 ### 규칙 3 — codeforge 의 3 SessionStart hook 책임 분담
 
-CFP-500 merge 후 codeforge 는 **3종 SessionStart hook** 운영. 책임 boundary 명확화:
+CFP-500 merge 후 codeforge 는 **2종 SessionStart hook** 운영 (worktree-gc 는 retire — 아래 표 참조). 책임 boundary 명확화:
+
+> **retire 기록**: `SessionStart-codeforge-worktree-gc` hook 은 제거됨. SessionStart 동기 실행이 worktree 다수 스캔으로 세션 시작을 지연시켰고, 정리 대상은 본질적으로 로컬 완료 시점에만 안전 판정 가능. → worktree 정리는 **eager 완료 시점 GitOpsAgent** (agents/GitOpsAgent.md §5) 가 primary, 주기적 `check-worktree-stale.sh` (squash-aware) 는 수동/스케줄 backstop. 아래 표의 worktree-gc 행은 historical.
 
 | Hook | ADR | Sample file | Helper script | Install path 모델 | 실행 책임 영역 | Severity |
 |------|-----|-------------|---------------|--------------------|----------------|----------|
 | `SessionStart-codeforge-drift.json.sample` | ADR-037 / CFP-262 | `templates/.claude/hooks/SessionStart-codeforge-drift.json.sample` | `scripts/check-codeforge-version-drift.sh` | **plugin-installed** (`${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/...`) | plugin family version drift hard-stop blocking | MAJOR=exit 1 / MINOR=warning / PATCH=info |
-| `SessionStart-codeforge-worktree-gc.json.sample` | ADR-040 / CFP-136 | `templates/.claude/hooks/SessionStart-codeforge-worktree-gc.json.sample` | `templates/scripts/check-worktree-stale.sh` | **consumer-installed** (`${CLAUDE_PROJECT_DIR}/templates/scripts/...`, bootstrap stage 7 mirror) | 7일 + origin-absent worktree 자동 prune | always exit 0 (info logging) |
+| ~~`SessionStart-codeforge-worktree-gc`~~ **(RETIRED)** | ADR-040 / CFP-136 | 삭제됨 (sample 제거) | `templates/scripts/check-worktree-stale.sh` (backstop, 수동/스케줄) | consumer-installed (script 유지) | **retire** — SessionStart 동기 GC 제거 (시작 지연). eager 완료 정리 = GitOpsAgent §5, 주기 = 수동 backstop (squash-aware) | — |
 | `SessionStart-codeforge-prereq-check.json.sample` | ADR-038 Amendment 2 / CFP-500 | `templates/.claude/hooks/SessionStart-codeforge-prereq-check.json.sample` | `scripts/check-codeforge-prereq.sh` | **plugin-installed** (drift 패턴 inherit) | deferred tool schema prefetch advisory | advisory exit 0 (stdout heredoc echo) |
 
 #### Install path 모델 분기 사유

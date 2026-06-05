@@ -573,46 +573,13 @@ entries:
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
-  # ─── CFP-426 Phase 2 backfill (4 entries, ADR-040 Amendment 3 §결정 7.D verbatim, 2026-05-12) ───
+  # ─── CFP-426 Phase 2 backfill (3 entries, ADR-040 Amendment 3 §결정 7.D verbatim, 2026-05-12) ───
   # Story 1 skeleton (warning tier) — actual wire 는 후속 Story:
-  #   - CFP-427 (Story 2): worktree-first-session-start-wire + worktree-first-spawn-evidence-cwd actual wire
+  #   - CFP-427 (Story 2): worktree-first-spawn-evidence-cwd actual wire
+  #     (worktree-first-session-start-wire = SessionStart worktree-GC 패턴 retire 로 제거 — eager 완료 정리 GitOpsAgent §5 로 대체, theater 검사 정리)
   #   - CFP-428 (Story 3): worktree-first-pre-checkout + worktree-first-pre-commit-main-block actual git hook
-  #   - CFP-429 (Story 4): 4 entry warning → blocking-on-pr 승격 평가 (ADR-060 §결정 6 gate)
-  # carrier ADR-040 mechanical_enforcement_actions[] 4 entry self-application 첫 사례 (Amendment 3 §결정 7.D)
-
-  - name: worktree-first-session-start-wire
-    description: |
-      ADR-040 §결정 5 (Stale GC) + §결정 7 (Amendment 3) — wrapper repo `.claude/settings.json` 의
-      `hooks.SessionStart[]` 안에 `check-worktree-stale.sh` 호출 entry 존재 검증. SessionStart hook
-      wire 누락 시 stale worktree 자동 GC 미동작 (declaration only → mechanical enforcement 분리).
-      warning tier — continue-on-error: true. CFP-427 Story 2 가 actual wire 첫 사례 —
-      `scripts/check-session-start-hook-presence.sh` `exec` swap wrapper 패턴 (RefactorArch 결정).
-      CFP-429 (Story 4) Amendment 4 declaration: 4/4 actual wire 완료 + ADR-060 §결정 6 promotion
-      gate (b) bypass 외 failure > 0 FAIL → current_tier: warning 유지 + actual 승격 follow-up CFP
-      carrier (from-cfp-425-followup label). Self-test integration test: tests/integration/stories/CFP-425/self-test-worktree-block.sh E4-1 (Phase 2 PR CFP-429).
-    detect_command: bash scripts/check-worktree-first-session-start-wire.sh
-    workflow: templates/github-workflows/worktree-first-session-start-wire.yml
-    current_tier: blocking-on-pr  # CFP-531 / ADR-040 Amendment 5 — warning → blocking-on-pr 승격 (2026-05-13)
-    bypass_label: hotfix-bypass:worktree-session-start-wire
-    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse (BYPASS_LABEL_PREFIX=hotfix-bypass:)
-    promotion_criteria:
-      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
-      failure_threshold: 0          # ADR-060 §결정 6 (b)
-      sibling_dependencies:         # ADR-060 §결정 6 (c) — Story 4 진입 시 평가
-        - CFP-427
-        - CFP-428
-        - CFP-429
-      evidence_artifacts:
-        - github_actions_run_history_url
-        - lint_failure_count_zero_proof
-        - pr_cumulative_count_proof
-    introduced_by: CFP-426
-    owner_adr: ADR-040
-    carrier_adr: ADR-040
-    recurrence:
-      count: 0
-      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
-    status: Active
+  #   - CFP-429 (Story 4): warning → blocking-on-pr 승격 평가 (ADR-060 §결정 6 gate)
+  # carrier ADR-040 mechanical_enforcement_actions[] self-application 첫 사례 (Amendment 3 §결정 7.D)
 
   - name: worktree-first-pre-checkout
     description: |
