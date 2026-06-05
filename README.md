@@ -126,7 +126,7 @@ mkdir -p .claude/_overlay/agents
 | [`docs/plugin-design.md`](docs/plugin-design.md) | 플러그인 설계 spec — core/overlay 분리 원칙·merge 계약·β 메커니즘 |
 | [`docs/project-config-schema.md`](docs/project-config-schema.md) | `project.yaml` Schema SSOT — GitHub·labels 구조화 상수 |
 | [`docs/migration-guide.md`](docs/migration-guide.md) | 플러그인 버전업 시 consumer overlay 마이그레이션 절차 |
-| [`CHANGELOG.md`](CHANGELOG.md) | 릴리스 이력 (SemVer) |
+| [`CHANGELOG.md`](archive/CHANGELOG-legacy.md) | 릴리스 이력 (SemVer) |
 | [`templates/`](templates/) | 공통 문서 양식 SSOT — Change Plan · ADR · Story Page · Impl Manifest |
 | [`presets/`](https://github.com/mclayer/plugin-codeforge-develop/tree/main/presets) | 프로젝트 shape별 Dev 에이전트 번들 — webapp 등 |
 | `agents/*.md` | 없음 (wrapper-only — agent md 는 8 lane plugin 에 분산) |
@@ -175,4 +175,4 @@ TBD.
 
 ## 연혁
 
-전체 릴리스 이력은 [`CHANGELOG.md`](CHANGELOG.md) 참조.
+전체 릴리스 이력은 [`CHANGELOG.md`](archive/CHANGELOG-legacy.md) 참조.

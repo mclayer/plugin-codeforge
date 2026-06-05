@@ -174,6 +174,12 @@ scan_file_for_word() {
     # 영어 어휘 — word-boundary + case-insensitive
     escaped_pattern="\\b${word}\\b"
     hits="$(grep -niE -- "$escaped_pattern" "$sf" || true)"
+    # 'pin' false-positive 좁힘 (prune): 정책은 한국어 메타포 'pin' 차단 목적이나
+    # GitHub Actions / git 표준 기술 compound(SHA-pin / HEAD-pin / re-pin / contract-pin / spawn pin 등)는
+    # 정당 기술 용어 → 해당 compound 줄만 제외 (어휘 정책 보존, 오탐만 제거).
+    if [ "$word" = "pin" ] && [ -n "$hits" ]; then
+      hits="$(printf '%s\n' "$hits" | grep -viE -- '([a-z0-9]-pin|pin-[a-z0-9]|(sha|head|spawn|contract|main|action|re|git|version|baseline|frozen|prompt)[ -]?pin)' || true)"
+    fi
   elif [ "$word" = "별" ]; then
     # 한국어 단일 character (CFP-672 Amendment 4) — Hangul-boundary lookahead/lookbehind
     # (?<![가-힣]) = 직전 character 가 Hangul 음절 (U+AC00-U+D7A3) 아님
