@@ -148,7 +148,7 @@ dry-run 결과 = mapping table (git path → Confluence page) + 3-anchor verify 
 | Confluence governance | ADR-100 / ADR-111 / ADR-099 / ADR-101 / ADR-103 |
 | consumer-applicability | [ADR-083](../../archive/adr/ADR-083-consumer-applicability-filter.md) (본 Story Wave 1 으로 `unknown` → `applicable` 전환) |
 | consumer adoption | [ADR-027](../../archive/adr/ADR-027-consumer-adoption-protocol.md) (atlassian.* schema 정합) |
-| verdict packet | review-verdict-v4 v4.11 (6번째 verdict-level optional bool field) |
+| verdict packet | review-verdict-v4 v4.12 (7번째 verdict-level optional bool field — CFP-1565) |
 | doc location | [docs/doc-locations.yaml](../../docs/doc-locations.yaml) (confluence_variant sub-tree — schema 1.2, CFP-1668) |
 | consumer guide | [docs/consumer-guide.md §1o](../../docs/consumer-guide.md) (Confluence migration 셋업 4-step SOP) |
 | IA tree | [docs/confluence-ia-tree.yaml](../../docs/confluence-ia-tree.yaml) (schema 1.2, per-consumer template 신설) |

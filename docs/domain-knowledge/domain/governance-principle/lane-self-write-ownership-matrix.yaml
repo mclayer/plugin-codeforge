@@ -57,7 +57,7 @@ sections:
     # 4-way RACI matrix host = skills/deputy-mandate/SKILL.md (canonical mapping)
     deputy_sub_ownership:
       - sub_section: "3 도메인 모델 / aggregate invariant (RDB OLTP)"
-        deputy: AggregateArchitectAgent
+        deputy: ModuleArchitectAgent  # CFP-1126: AggregateArch deprecated, boundary axis ModuleArch 통합
         ownership_kind: primary
         applicability_field: "aggregate_arch.applicable"
         cross_ref: "ADR-042 Amendment 8 §Roster (AggregateArch 신설, Sonnet single-mandate)"
@@ -66,7 +66,7 @@ sections:
         ownership_kind: primary
         cross_ref: "ADR-042 Amendment 8 §Roster (DataArch mandate 축소 — RDB OLTP 영역 제거)"
       - sub_section: "3 데이터 ↔ RDB OLTP cross-layer (ELT/ETL/CDC)"
-        deputy: [AggregateArchitectAgent, DataArchitectAgent]
+        deputy: [ModuleArchitectAgent, DataArchitectAgent]  # CFP-1126: AggregateArch deprecated, boundary axis ModuleArch 통합
         ownership_kind: co-author
         cross_ref: "ADR-042 Amendment 8 §3 cross-layer ELT/ETL/CDC"
       - sub_section: "3 module boundary / dependency direction / layered/hexagonal/clean"
@@ -179,7 +179,7 @@ sections:
     # ADR-042 Amendment 8 (Aggregate/Data split) + ADR-72 (ProductionEvidence CONDITIONAL)
     deputy_sub_ownership:
       - sub_section: "11 RDB OLTP migration (schema rollback / aggregate invariant 보존)"
-        deputy: AggregateArchitectAgent
+        deputy: ModuleArchitectAgent  # CFP-1126: AggregateArch deprecated, boundary axis ModuleArch 통합
         ownership_kind: primary
         applicability_field: "aggregate_arch.applicable"
         cross_ref: "ADR-042 Amendment 8 §Roster + consumer-guide §1l"

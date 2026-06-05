@@ -30,8 +30,8 @@ codeforge core 가 외부 plugin과 통신할 때의 typed schema. wrapper repo 
 wrapper-owned. 본 lint scope 밖 — `check-doc-frontmatter.sh` + `check-doc-section-schema.sh` 가 검증.
 
 - [comment-prefix-registry-v1.md](../../docs/inter-plugin-contracts/comment-prefix-registry-v1.md) — 11 phase prefix taxonomy
-- [fix-event-v1.md](../../docs/inter-plugin-contracts/fix-event-v1.md) — Story §10 FIX Ledger writer monopoly (v1.1 — CFP-391 `debate_artifact_ref` optional 필드)
-- [label-registry-v1.md](../../docs/inter-plugin-contracts/label-registry-v1.md) — phase/gate/fix label taxonomy (Archived — CFP-140) / [label-registry-v2.md](../../docs/inter-plugin-contracts/label-registry-v2.md) (Active — ADR-049, v2.4 — CFP-506 `hotfix-bypass:claude-md-line-cap` 8번째 family member)
+- [fix-event-v1.md](../../docs/inter-plugin-contracts/fix-event-v1.md) — Story §10 FIX Ledger writer monopoly (v1.3 — CFP-842 depth-aware scope 2 optional fields)
+- [label-registry-v1.md](../../docs/inter-plugin-contracts/label-registry-v1.md) — phase/gate/fix label taxonomy (Archived — CFP-140) / [label-registry-v2.md](../../docs/inter-plugin-contracts/label-registry-v2.md) (Active — ADR-049, v2.88 — CFP-1849 113번째 family member)
 - [debate-protocol-v1.md](../../docs/inter-plugin-contracts/debate-protocol-v1.md) — Codex↔Opus multi-round adversarial debate protocol (lane-agnostic, CFP-391 / ADR-059)
 - [evidence-check-registry-v1.md](../../docs/inter-plugin-contracts/evidence-check-registry-v1.md) (v1.1 — Active) — evidence-enforceable governance check schema (CFP-389 / ADR-060). registry data SSOT = [`docs/evidence-checks-registry.yaml`](../../docs/evidence-checks-registry.yaml).
 

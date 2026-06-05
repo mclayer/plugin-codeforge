@@ -67,6 +67,8 @@ FAIL 시 block+report. 상세는 playbook §3B.
 | CI gate | 구현 리뷰 PASS | (Orchestrator inline `gh pr checks` polling — 30분 timeout) | ∞ |
 | 통합테스트 | **Epic 하위 전체 Story** CI gate PASS (1회) | `tests/integration/baseline/` + `tests/integration/stories/<EPIC-KEY>/` 동적 실행 | 3 |
 | 보안 테스트 **(opt-in: lanes.security_ai: true)** | 통합테스트 PASS | §9 (SecurityTestPL 2-layer) + `gate:security-test-pass` | ∞ |
+| 배포 | Epic 하위 전체 Story merged (통합테스트·보안테스트 PASS) | (DeployPLAgent — consumer `deploy:` block opt-in) | — |
+| 배포 리뷰 | 배포 lane PASS | (DeployReviewPLAgent — smoke / 성능 비교 / cutover 사후 검증) | — |
 
 **통합테스트는 Epic-level 실행 (ADR-055 Amendment 2)**: Epic 하위 모든 Story CI gate PASS 후 Orchestrator가 IntegrationTestAgent 1회 spawn. Baseline Suite + Story Suite 동적 실행. FAIL 시 `responsible_stories` 집계 → 해당 Story FIX loop. 상세: [playbook §3.11–3.12](../../docs/orchestrator-playbook.md) + [ADR-055 Amendment 2](../../archive/adr/ADR-055-integration-test-lane-policy.md).
 
