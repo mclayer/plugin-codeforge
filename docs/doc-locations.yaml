@@ -98,6 +98,7 @@ doc_types:
   - name: adr
     variants:
       single_repo: "<owner-repo>/docs/adr/ADR-NNN-<slug>.md"
+      dogfood: "archive/adr/ADR-NNN-<slug>.md"  # plugin-codeforge(dogfood/wrapper) 자기 ADR 은 prune 이후 archive/adr/ 로 이동 (소비자 관례 docs/adr/ 와 별개)
       confluence: "https://<confluence-instance>/wiki/spaces/<space-key>/pages/<page-id>"  # CFP-1256 / ADR-103 §결정 5 R2 — readable mirror (git = SoR-work, Confluence = authoritative readable mirror, 실 값 = consumer overlay atlassian.* 주입)
     confluence_variant:
       page_id_pattern: "<placeholder>"   # CFP-1420 / ADR-111 §결정 1 — Sub-B 영역 실 page_id stamp (per-doc page id)
@@ -109,9 +110,12 @@ doc_types:
     naming_pattern: "ADR-[0-9]{3}-[a-z0-9-]+\\.md"
     frontmatter_required: true
     examples:
-      - "mclayer/plugin-codeforge/docs/adr/ADR-020-cross-repo-epic-pattern.md"
+      - "mclayer/plugin-codeforge/archive/adr/ADR-020-cross-repo-epic-pattern.md  # wrapper 자기 ADR — prune 후 archive/adr/ 로 이동"
+      - "mctrader-hub/docs/adr/ADR-001-example.md  # 소비자 일반 관례 = docs/adr/"
     notes: |
-      Mode-agnostic. ADR 는 항상 plugin repo / consumer repo 의 docs/adr/.
+      Mode-agnostic. 소비자(consumer) repo 의 ADR 는 docs/adr/ 가 일반 관례.
+      예외: plugin-codeforge(wrapper) 자기 ADR 은 prune 이후 archive/adr/ 로 이동.
+      소비자는 dogfood 예외에 영향받지 않음 — single_repo variant(docs/adr/) 사용.
       CODEOWNERS = architect team review 의무.
       confluence variant (CFP-1256 / ADR-103 §결정 5 R2): git→Confluence one-way sync readable mirror.
       실 Confluence URL = consumer overlay project.yaml atlassian.confluence.base_url + space_key + page_id 주입.

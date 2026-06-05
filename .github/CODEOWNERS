@@ -5,7 +5,7 @@
 # CODEOWNERS는 audit/문서화 (어느 영역이 critical인지 표시) 용도.
 
 # 설계 결정 (ADR) — architect 의무 review
-docs/adr/**                                   @mccho8865
+archive/adr/**                                @mccho8865
 
 # 변경 계획 (Change Plan) — architect 의무 review
 docs/change-plans/**                          @mccho8865
