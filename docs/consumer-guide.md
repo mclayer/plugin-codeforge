@@ -1081,11 +1081,10 @@ Codeforge orchestration 의 critical path tool 인 **TodoWrite** 는 Claude Code
 
 Consumer 가 `/plugins install codeforge@mclayer` 만 수행하면 plugin-root `hooks/hooks.json` 의 `SessionStart` entry 가 자동 활성된다 (Claude Code 공식 spec — plugin install 시점에 plugin-root `hooks/hooks.json` discovery + auto-load). **별도 `.claude/settings.json` 등록 절차 불필요**.
 
-**기존 consumer migration**: `.claude/settings.json` 안 `hooks.SessionStart[]` array 에 `check-codeforge-prereq.sh` 호출 entry 가 잔존하면 plugin-root 활성과 중복 (one-channel rule 위반) → `scripts/check-no-duplicate-session-start-hook.sh` lint 가 warning tier (exit 2) 발화. **권장 cleanup 절차**:
+**기존 consumer migration**: `.claude/settings.json` 안 `hooks.SessionStart[]` array 에 `check-codeforge-prereq.sh` 호출 entry 가 잔존하면 plugin-root 활성과 중복 (one-channel rule 위반). **권장 cleanup 절차**:
 
-1. `.claude/settings.json` 의 `hooks.SessionStart[]` 안 `command` 가 `check-codeforge-prereq.sh` 를 포함한 entry 1건 삭제
-2. `scripts/check-no-duplicate-session-start-hook.sh` 실행 후 exit 0 (PASS) verify
-3. Claude Code 세션 재시작 → 첫 turn `additionalContext` 안 `ToolSearch select:TodoWrite` substring 발화 확인
+1. `.claude/settings.json` 의 `hooks.SessionStart[]` 안 `command` 가 `check-codeforge-prereq.sh` 를 포함한 entry 1건 삭제 (육안 확인 — 자동 lint 는 자기거버넌스 prune 으로 제거됨, one-channel rule 자체는 유효)
+2. Claude Code 세션 재시작 → 첫 turn `additionalContext` 안 `ToolSearch select:TodoWrite` substring 발화 확인
 
 **Bypass (advisory)**: 환경별 사유로 prereq-check 발화 제어 시 — `BYPASS_CODEFORGE_PREREQ=1` env 설정 시 hook short-circuit (stdout empty + harness injection 0 + stderr 1-line audit echo). 기존 `BYPASS_PREREQ_CHECK=1` 도 1 release 동안 호환 유지 (deprecation warning stderr 출력, 후속 CFP 제거 예정).
 
