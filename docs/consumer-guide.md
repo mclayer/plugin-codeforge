@@ -529,9 +529,9 @@ bash scripts/reconcile-overlay.sh
 
 참조: [reconcile-protocol-v1 §4.7](inter-plugin-contracts/reconcile-protocol-v1.md) · [ADR-076](../archive/adr/ADR-076-declarative-reconciliation-upgrade.md) · [ADR-027 §결정 7.A.1](../archive/adr/ADR-027-consumer-adoption-protocol.md)
 
-### 1m. AggregateArchitect deputy applicability + migration tool (CFP-1086 / [ADR-042 Amendment 8](../archive/adr/ADR-042-agent-model-selection-policy.md) / [ADR-086](../archive/adr/ADR-086-deputy-creation-decision-framework.md))
+### 1m. ModuleArchitect deputy applicability + migration tool (aggregate-level, CFP-1086 / CFP-1126 / [ADR-042 Amendment 8](../archive/adr/ADR-042-agent-model-selection-policy.md) / [ADR-086](../archive/adr/ADR-086-deputy-creation-decision-framework.md))
 
-codeforge-design lane 의 **AggregateArchitectAgent** (CFP-1086 Story-1 신설 — RDB OLTP aggregate invariant 변호자) 가 본 consumer 영역에 적용되는지 결정. 2 field 자율 override (default 적용 — 의도적으로 강제 안 함).
+codeforge-design lane 의 **ModuleArchitectAgent** (aggregate-level — 구 AggregateArchitectAgent, CFP-1126 / ADR-042 Amd 10 통합) 가 본 consumer 영역에 적용되는지 결정. RDB OLTP aggregate invariant 변호자. 2 field 자율 override (default 적용 — 의도적으로 강제 안 함).
 
 #### `aggregate_arch.applicable` (CONDITIONAL spawn)
 
@@ -542,9 +542,9 @@ aggregate_arch:
   migration_tool: alembic    # 9-enum, default alembic
 ```
 
-**`applicable: true` (default)** — 대부분 consumer 가 RDB OLTP schema 제어권 보유. 설계 lane 진입 시 AggregateArch deputy parallel spawn 활성. 7 permanent deputy (SecurityArch / InfraOperationalArch / TestContractArch / DataArch / ModuleArch / **AggregateArch** / APIContractArch) 모두 활성. mctrader 예시 — RDB OLTP (PostgreSQL + SQLAlchemy + Alembic) + 빅데이터 OLAP (Parquet + DuckDB) 양 영역 보유 → applicable=true.
+**`applicable: true` (default)** — 대부분 consumer 가 RDB OLTP schema 제어권 보유. 설계 lane 진입 시 ModuleArch deputy parallel spawn 활성 (aggregate-level 포함). 6 permanent deputy (SecurityArch / InfraOperationalArch / TestContractArch / DataArch / **ModuleArch** (aggregate-level 포함) / APIContractArch) 모두 활성. mctrader 예시 — RDB OLTP (PostgreSQL + SQLAlchemy + Alembic) + 빅데이터 OLAP (Parquet + DuckDB) 양 영역 보유 → applicable=true.
 
-**`applicable: false`** — AggregateArch deputy 미spawn. 다음 consumer 영역에서 선택:
+**`applicable: false`** — ModuleArch deputy (aggregate-level) 미spawn. 다음 consumer 영역에서 선택:
 
 - **frontend-only project** — RDB schema 부재 (예: pure SPA / static site)
 - **API-only project** — 외부 RDB consume only, schema 제어권 없음 (예: third-party API client)
@@ -578,7 +578,7 @@ aggregate_arch:
 6. 백업 (data backup before destructive change)
 7. hard limit (max migration size / lock duration)
 
-본 7 원칙 = AggregateArchitect agent 의 mandate (consumer overlay 가 약화 불가). Tool 만 override 자유.
+본 7 원칙 = ModuleArchitectAgent (aggregate-level) 의 mandate (consumer overlay 가 약화 불가). Tool 만 override 자유.
 
 #### 미정의 시 동작
 
@@ -586,7 +586,7 @@ aggregate_arch:
 
 #### Write boundary (§4b 정합)
 
-`aggregate_arch.*` field = **consumer-authored only**. 모든 codeforge agent (AggregateArchitect 포함) 는 본 field write 금지. AggregateArchitect deputy = consumer overlay value 를 spawn-time Context Packet 으로 수신 후 mandate 결정에 반영 (read-only).
+`aggregate_arch.*` field = **consumer-authored only**. 모든 codeforge agent (ModuleArchitectAgent 포함) 는 본 field write 금지. ModuleArchitectAgent (aggregate-level) = consumer overlay value 를 spawn-time Context Packet 으로 수신 후 mandate 결정에 반영 (read-only).
 
 참조: [ADR-042 Amendment 8](../archive/adr/ADR-042-agent-model-selection-policy.md) (7+3+1 roster + AggregateArch 신설) · [ADR-086](../archive/adr/ADR-086-deputy-creation-decision-framework.md) (Deputy 신설 결정 framework P7) · `agents/AggregateArchitectAgent.md` (codeforge-design plugin) · [project-config-schema §aggregate_arch 섹션 설명](project-config-schema.md)
 

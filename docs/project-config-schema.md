@@ -226,14 +226,14 @@ codeforge:
 lanes:
   security_ai: false               # 기본값: false (opt-in only)
 
-# [선택] AggregateArchitect deputy applicability + migration tool override (CFP-1086 / ADR-042 Amendment 8 / ADR-086)
+# [선택] ModuleArchitect deputy applicability + migration tool override — aggregate-level (CFP-1086 / CFP-1126 / ADR-042 Amendment 8 + 10 / ADR-086)
 # default = applicable: true, migration_tool: alembic
-# applicable: false 시 AggregateArch deputy 미spawn (frontend-only / API-only / external-managed RDB consumer)
+# applicable: false 시 ModuleArch deputy (aggregate-level) 미spawn (frontend-only / API-only / external-managed RDB consumer)
 # migration_tool: 9-enum override (consumer overlay 가 자유 override 가능)
 aggregate_arch:
   # CONDITIONAL applicability (CFP-1086 P2)
   # default: true (대부분 consumer 가 RDB OLTP schema 제어권 보유)
-  # false = AggregateArch deputy 미spawn (예: frontend-only project / API-only project / external-managed RDB)
+  # false = ModuleArch deputy (aggregate-level) 미spawn (예: frontend-only project / API-only project / external-managed RDB)
   applicable: true                 # bool, default true
 
   # Migration tool 9-enum override (consumer overlay 가 stack 에 맞게 override)
@@ -318,11 +318,11 @@ Consumer 프로젝트의 통합테스트 Baseline Suite와 실행 환경을 구�
 
 ### `aggregate_arch` 섹션 설명 (CFP-1086 / ADR-042 Amendment 8 / ADR-086)
 
-**AggregateArchitectAgent** deputy (CFP-1086 Story-1 신설 — RDB OLTP aggregate invariant 변호자) 의 consumer overlay 영역. 2 field — `applicable` (CONDITIONAL spawn 활성) + `migration_tool` (9-enum override).
+**ModuleArchitectAgent** (aggregate-level — 구 AggregateArchitectAgent, CFP-1126 / ADR-042 Amd 10 통합) deputy 의 consumer overlay 영역. RDB OLTP aggregate invariant 변호자. 2 field — `applicable` (CONDITIONAL spawn 활성) + `migration_tool` (9-enum override).
 
-- **`aggregate_arch.applicable`** (선택, bool, default `true`): AggregateArch deputy 활성 여부.
-  - `true` (default) — 대부분 consumer 가 RDB OLTP schema 제어권 보유. 설계 lane 진입 시 AggregateArch deputy parallel spawn 활성. 7 permanent deputy 모두 활성 (CFP-1086 Amendment 8 정합).
-  - `false` — AggregateArch deputy 미spawn. non-applicable consumer 영역:
+- **`aggregate_arch.applicable`** (선택, bool, default `true`): ModuleArch deputy (aggregate-level) 활성 여부.
+  - `true` (default) — 대부분 consumer 가 RDB OLTP schema 제어권 보유. 설계 lane 진입 시 ModuleArch deputy (aggregate-level) parallel spawn 활성. 6 permanent deputy 모두 활성 (CFP-1086 / CFP-1126 정합).
+  - `false` — ModuleArch deputy (aggregate-level) 미spawn. non-applicable consumer 영역:
     - **frontend-only project** (RDB schema 부재)
     - **API-only project** (외부 RDB consume only, schema 제어권 없음)
     - **external-managed RDB** (consumer 가 schema 제어권 없음, 예: SaaS DB)
@@ -338,11 +338,11 @@ Consumer 프로젝트의 통합테스트 Baseline Suite와 실행 환경을 구�
     - `flyway` / `liquibase` (Java stack)
     - `sqlx-migrate` (Rust stack)
     - `custom` (consumer-defined — 9 enum 외 도구)
-  - 본 field 는 AggregateArchitect agent 의 §11 RDB OLTP author 시 input (tool 선택만, 정책 7 원칙 mandate 는 무변경).
+  - 본 field 는 ModuleArchitectAgent (aggregate-level) 의 §11 RDB OLTP author 시 input (tool 선택만, 정책 7 원칙 mandate 는 무변경).
 
 - **미정의 시 동작**: `aggregate_arch` 섹션 자체가 없으면 default 값 적용 (`applicable: true`, `migration_tool: alembic`). codeforge wrapper 강제 안 함 (consumer 자율).
 
-- **write boundary**: consumer-authored. 모든 codeforge agent 는 본 field write 금지 (§4b write 금지 invariant 절대 보존). AggregateArchitect deputy = read-only (consumer overlay value 를 spawn-time Context Packet 으로 수신 후 mandate 결정에 반영).
+- **write boundary**: consumer-authored. 모든 codeforge agent 는 본 field write 금지 (§4b write 금지 invariant 절대 보존). ModuleArchitectAgent (aggregate-level) = read-only (consumer overlay value 를 spawn-time Context Packet 으로 수신 후 mandate 결정에 반영).
 
 ### `deploy` 섹션 설명 (CFP-1059 / [ADR-087](../archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](../archive/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md))
 

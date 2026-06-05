@@ -218,7 +218,7 @@
 **영어**: Domain Service  
 **정의 (DDD tactical)**: Entity / Value Object 에 자연스럽게 속하지 않는 도메인 로직. stateless. operation-centric (noun 아님).  
 **정의 (codeforge governance BC, ADR-091 §결정 1)**: specialized judgment contributor — 7 permanent SubAgent + 3 sub-tuple 의 role.  
-**plugin-codeforge 적용 사례**: SecurityArchitectAgent (위협 모델 contributor) / TestContractArchitectAgent (§8 Test Contract contributor) / AggregateArchitectAgent (RDB OLTP aggregate invariant contributor) 등. operation = "boundary advocacy" (noun 아님). stateless = re-spawn 시 context 재load.
+**plugin-codeforge 적용 사례**: SecurityArchitectAgent (위협 모델 contributor) / TestContractArchitectAgent (§8 Test Contract contributor) / ModuleArchitectAgent (aggregate-level — RDB OLTP aggregate invariant contributor, 구 AggregateArchitectAgent, CFP-1126 통합) 등. operation = "boundary advocacy" (noun 아님). stateless = re-spawn 시 context 재load.
 
 ### Domain Event
 
@@ -342,13 +342,13 @@ Layer 2'─ mctrader-engine (PURE CONSUMER, mctrader_data=0, mctrader_market_*=0
 ### Domain Service (governance contributor)
 
 **영어**: Domain Service (governance contributor)  
-**정의 (codeforge governance BC, ADR-091 §결정 1)**: specialized judgment contributor. 7 permanent SubAgent (SecurityArch / InfraOpArch / TestContractArch / AggregateArch / APIContractArch / ModuleArch / DataArch) + 3 sub-tuple (CodebaseMapper / Refactor / ArchitectAnalyst).  
+**정의 (codeforge governance BC, ADR-091 §결정 1)**: specialized judgment contributor. 6 permanent SubAgent (SecurityArch / InfraOpArch / TestContractArch / APIContractArch / ModuleArch (aggregate-level 포함 — 구 AggregateArch, CFP-1126 통합) / DataArch) + 3 sub-tuple (CodebaseMapper / Refactor / ArchitectAnalyst).  
 **plugin-codeforge 적용 사례**: ArchitectPLAgent 가 deputy spawn 시 "specialized judgment contributor" role 으로 spawn. ArchitectAgent 가 chief author 로서 deputy 산출물 통합. operation-centric — boundary advocacy + specialized perspective.
 
 ### Subdomain Specialist
 
 **영어**: Subdomain Specialist  
-**정의 (codeforge governance BC, ADR-091 §결정 1)**: 3+1 CONDITIONAL deputy role — LiveOpsDeputyAgent / LiveOrderingDeputyAgent / ProductionEvidenceDeputyAgent + AggregateArch CONDITIONAL P2. "which subdomain under threat" 활성 시만 spawn.  
+**정의 (codeforge governance BC, ADR-091 §결정 1)**: 3+1 CONDITIONAL deputy role — LiveOpsDeputyAgent / LiveOrderingDeputyAgent / ProductionEvidenceDeputyAgent + ModuleArch (aggregate-level) CONDITIONAL P2. "which subdomain under threat" 활성 시만 spawn.  
 **plugin-codeforge 적용 사례**: ArchitectPLAgent 가 deputy spawn 결정 시 subdomain enum (live ops / live ordering / production evidence) 활성 여부 판단. Subdomain inactive = spawn 0 (PMO orchestration 절약).
 
 ### "Which subdomain under threat" (deputy spawn rationale)
