@@ -169,12 +169,8 @@ test_7_bootstrap_dry_run_stage7_coverage() {
   assert_contains "dry-run mentions Stage 7 manifest" "consumer-scripts.manifest" "$out"
 }
 
-# ── Test 8: SessionStart hook sample exists ───────────────────────────────────
-test_8_session_start_hook_sample_exists() {
-  log "Test 8: SessionStart hook sample file exists (§3.6 + §4 AC-7)"
-  assert_file_exists "SessionStart hook sample" \
-    "$PLUGIN_ROOT/templates/.claude/hooks/SessionStart-codeforge-worktree-gc.json.sample"
-}
+# (Test 8 retired — SessionStart-codeforge-worktree-gc.json.sample 제거: SessionStart worktree-GC 패턴 은퇴,
+#  eager 완료 정리 GitOpsAgent §5 로 대체. check-worktree-stale.sh 자체는 backstop 으로 manifest 유지 → Test 2/3 cover.)
 
 # ── Run ───────────────────────────────────────────────────────────────────────
 log "=== test-worktree-manifest-integration 시작 ==="
@@ -185,7 +181,6 @@ test_4_scripts_have_shebang
 test_5_all_scripts_syntax_check
 test_6_manifest_lint_passes
 test_7_bootstrap_dry_run_stage7_coverage
-test_8_session_start_hook_sample_exists
 
 log ""
 log "=== Summary: $PASS PASS, $FAIL FAIL ==="

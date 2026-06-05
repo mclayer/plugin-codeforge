@@ -48,7 +48,6 @@ bypass-justification-marker.yml
 # ─────────────────────────────────────────────────────────────────────────────
 worktree-first-pre-checkout.yml
 worktree-first-pre-commit-main-block.yml
-worktree-first-session-start-wire.yml
 worktree-first-spawn-evidence-cwd.yml
 
 # ─────────────────────────────────────────────────────────────────────────────
