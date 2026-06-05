@@ -10,7 +10,8 @@ codeforge 프로젝트에서 `superpowers:brainstorming`을 대체하는 강화 
 ## 적용 조건
 
 - `.claude/_overlay/project.yaml` 존재 (codeforge consumer 프로젝트)
-- 또는 `docs/adr/` 디렉터리 존재 (wrapper dogfood 프로젝트)
+- 또는 `docs/adr/` 디렉터리 존재 (codeforge consumer 프로젝트)
+- 또는 `archive/adr/` 디렉터리 존재 (plugin-codeforge wrapper 자기 — prune 이후 이동)
 
 조건 불충족 시 `superpowers:brainstorming`으로 fallback.
 

@@ -5,7 +5,7 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.2  
-**Last regen**: 2026-05-26T04:49:59Z  
+**Last regen**: 2026-06-05T00:54:04Z  
 **Registered doc types**: 17
 
 ## Summary table
@@ -14,7 +14,7 @@
 |---|---|---|---|---|
 | 1 | `epic_results` | dogfood / mode_a / mode_b / mode_c | `codeforge-pmo:PMOAgent` | CFP-83 |
 | 2 | `story_file` | dogfood / mode_b / multi_repo_hub / multi_repo_impl / single_repo | `codeforge-requirements:RequirementsPLAgent` | CFP-1 |
-| 3 | `adr` | confluence / single_repo | `codeforge-design:ArchitectAgent` | CFP-26 |
+| 3 | `adr` | confluence / dogfood / single_repo | `codeforge-design:ArchitectAgent` | CFP-26 |
 | 4 | `change_plan` | confluence / dogfood / single_repo | `codeforge-design:ArchitectAgent` | CFP-7 |
 | 5 | `retro` | confluence / dogfood / single_repo | `codeforge-pmo:PMOAgent` | CFP-36 |
 | 6 | `domain_knowledge` | confluence / single_repo | `codeforge-requirements:DomainAgent` | CFP-37 |
@@ -83,16 +83,20 @@
 ### `adr`
 
 - **single_repo**: `<owner-repo>/docs/adr/ADR-NNN-<slug>.md`
+- **dogfood**: `archive/adr/ADR-NNN-<slug>.md`
 - **confluence**: `https://<confluence-instance>/wiki/spaces/<space-key>/pages/<page-id>`
 - **owner_agent**: `codeforge-design:ArchitectAgent`
 - **introduced_by**: CFP-26
 - **naming_pattern**: `ADR-[0-9]{3}-[a-z0-9-]+\.md`
 - **frontmatter_required**: True
 - **examples**:
-  - mclayer/plugin-codeforge/docs/adr/ADR-020-cross-repo-epic-pattern.md
+  - mclayer/plugin-codeforge/archive/adr/ADR-020-cross-repo-epic-pattern.md  # wrapper 자기 ADR — prune 후 archive/adr/ 로 이동
+  - mctrader-hub/docs/adr/ADR-001-example.md  # 소비자 일반 관례 = docs/adr/
 
   **notes**:
-  > Mode-agnostic. ADR 는 항상 plugin repo / consumer repo 의 docs/adr/.
+  > Mode-agnostic. 소비자(consumer) repo 의 ADR 는 docs/adr/ 가 일반 관례.
+  > 예외: plugin-codeforge(wrapper) 자기 ADR 은 prune 이후 archive/adr/ 로 이동.
+  > 소비자는 dogfood 예외에 영향받지 않음 — single_repo variant(docs/adr/) 사용.
   > CODEOWNERS = architect team review 의무.
   > confluence variant (CFP-1256 / ADR-103 §결정 5 R2): git→Confluence one-way sync readable mirror.
   > 실 Confluence URL = consumer overlay project.yaml atlassian.confluence.base_url + space_key + page_id 주입.
