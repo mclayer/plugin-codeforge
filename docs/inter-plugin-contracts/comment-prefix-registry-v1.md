@@ -78,7 +78,7 @@ prefixes:
       - RefactorAgent
       - SecurityArchitectAgent
       - TestContractArchitectAgent
-      - DataMigrationArchitectAgent
+      - ModuleArchitectAgent
     auto_mirror: false
 
   - prefix: "[설계-리뷰]"
