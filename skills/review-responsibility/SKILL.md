@@ -1,6 +1,6 @@
 ---
 name: review-responsibility
-description: Design/Code/Security 리뷰 책임 매트릭스. 4 lane(DesignLane·DesignReview·CodeReview·SecurityTest) 체크 항목 분담 테이블. 설계리뷰·구현리뷰·보안테스트 lane 진입 시 Orchestrator 호출 의무.
+description: Design/Code/Security 리뷰 책임 매트릭스. 5 lane(DesignLane·DesignReview·CodeReview·SecurityTest·DeployReview) 체크 항목 분담 테이블. 설계리뷰·구현리뷰·보안테스트·배포리뷰 lane 진입 시 Orchestrator 호출 의무.
 tools: Read
 ---
 
@@ -10,7 +10,7 @@ tools: Read
 
 ## 호출 시점
 
-설계리뷰 lane 진입 시 (DesignReviewPL spawn 전), 구현리뷰 lane 진입 시 (CodeReviewPL spawn 전), 보안테스트 lane 진입 시 (SecurityTestPL spawn 전).
+설계리뷰 lane 진입 시 (DesignReviewPL spawn 전), 구현리뷰 lane 진입 시 (CodeReviewPL spawn 전), 보안테스트 lane 진입 시 (SecurityTestPL spawn 전), 배포리뷰 lane 진입 시 (DeployReviewPLAgent spawn 전).
 
 ## 개요
 
@@ -42,13 +42,13 @@ tools: Read
 | **§11 Data integrity invariant** | ✅ | (감사) | — | (검증) |
 | **§11 Backfill / 기존 데이터 처리** | ✅ | (감사) | — | (검증) |
 | **§11 누락 / N/A 사유 부재** | — | ✅ **P0 차단** | — | — |
-| **§7.4 DR / failover 경로** | ✅ OpRiskArch | (감사) | — | (검증) |
-| **§7.4 Cancel-on-disconnect** | ✅ OpRiskArch | (감사) | — | (검증) |
-| **§7.4 Clock sync (CONDITIONAL)** | ✅ OpRiskArch | (감사·N/A 사유) | — | (검증) |
-| **§7.4 Rate limit / quota** | ✅ OpRiskArch | (감사) | — | (검증) |
-| **§7.4 Env isolation** | ✅ OpRiskArch | (감사) | — | (검증) |
+| **§7.4 DR / failover 경로** | ✅ InfraOperationalArch | (감사) | — | (검증) |
+| **§7.4 Cancel-on-disconnect** | ✅ InfraOperationalArch | (감사) | — | (검증) |
+| **§7.4 Clock sync (CONDITIONAL)** | ✅ InfraOperationalArch | (감사·N/A 사유) | — | (검증) |
+| **§7.4 Rate limit / quota** | ✅ InfraOperationalArch | (감사) | — | (검증) |
+| **§7.4 Env isolation** | ✅ InfraOperationalArch | (감사) | — | (검증) |
 | **§7.4 누락 / N/A 사유 부재** | — | ✅ **P0 차단** | — | — |
-| **§11 Idempotency (CONDITIONAL)** | ✅ DataMigrationArch | (감사·N/A 사유) | — | — |
+| **§11 Idempotency (CONDITIONAL)** | ✅ ModuleArch | (감사·N/A 사유) | — | — |
 | **§11 Idempotency 누락 / N/A 사유 부재** | — | ✅ **P0 차단** | — | — |
 | 코드 ↔ Change Plan 변경 계획 준수 | — | — | ✅ | — |
 | 코드 스타일·네이밍·가독성 | — | — | ✅ | — |
@@ -67,13 +67,13 @@ tools: Read
 | 정적 분석 결함 | — | — | — | ✅ (1차: CodeQL) |
 | 설정·배포 보안 (default credential·open port·TLS) | — | — | — | ✅ |
 | Race / TOCTOU 보안 취약 | — | — | — | ✅ |
-| **Container image base / multi-stage build 전략** | ✅ (Refactor + OpRiskArch) | ✅ (감사) | (구현 준수) | — |
+| **Container image base / multi-stage build 전략** | ✅ (Refactor + InfraOperationalArch) | ✅ (감사) | (구현 준수) | — |
 | **Dockerfile syntax + best practice** | — | — | — | ✅ (1차: hadolint) |
 | **Container image CVE / misconfig** | — | — | — | ✅ (1차: trivy) |
 | **Compose service definition / health check / dep order** | — | (감사) | ✅ | — |
 | **Container network mode / port exposure** | ✅ SecurityArch | (감사) | — | ✅ (코드 준수 검증) |
 | **Container secret / env mount 전략** | ✅ SecurityArch | (감사) | — | ✅ (런타임 노출 검증) |
-| **§7.4 Container restart policy / volume DR** | ✅ OpRiskArch | (감사) | — | (검증) |
+| **§7.4 Container restart policy / volume DR** | ✅ InfraOperationalArch | (감사) | — | (검증) |
 
 ## Lane 역할 요약 (CFP-1059 / ADR-087+088 후 — 4 → 5 review lane)
 
