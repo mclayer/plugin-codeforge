@@ -2283,55 +2283,6 @@ entries:
       promotion_trigger: none     # Phase 2 actual wire 완료, 첫 evidence 누적 후 advisory 격상 예정
     status: warning              # Phase 2 wire 완료 (CFP-845 Phase 2, 2026-05-17) — lint script + workflow + bats 모두 Active
 
-  # ─── CFP-845 Phase 1 (ADR-024 Amendment 8 §결정 6.A.5 — cross-repo 3-repo bypass counter extension, 2026-05-17) ───
-  # cross-repo 영역 첫 evidence-checks-registry entry.
-  # CFP-825 Amendment 6 §scope_boundary 4 out-of-scope 중 4번 영역 (cross-repo extension) 흡수.
-  - name: cross-repo-bypass-counter
-    description: |
-      ADR-024 Amendment 8 §결정 6.A.5 — 3-repo (mclayer/plugin-codeforge wrapper +
-      mclayer/codeforge-internal-docs + mclayer/marketplace) cross-repo per-(repo,
-      plugin, label) signature 누적 카운터 lint. threshold = per-(repo, plugin, label)
-      signature 누적 ≥3 reach-merged PR (§결정 6.A.2 와 동일 — repo namespace 분리 시
-      per-repo 독립 trigger). aggregate trigger = 3 repo 동일 (plugin, label) signature
-      동시 reach 시 단일 aggregate carrier Issue 발의 (multi-repo signature, 3-repo
-      systemic mutation 신호). per-repo 단독 trigger + aggregate trigger 양 channel
-      disjoint. dedup_unit = (repo, PR number) 2-tuple (cross-repo PR number 충돌 회피).
-      single PAT (CODEFORGE_CROSS_REPO_PAT, ADR-066) reuse — 3 repo `issues:read` +
-      `repo:read` 권한, 신규 secret 0건. rotation 90 day / max 180 day lifetime
-      정합 (ADR-066). carrier Issue repository = aggregate carrier = mclayer/plugin-codeforge
-      (wrapper governance owner SSOT, ADR-013 정합), per-repo carrier = 해당 repo
-      (각 repo local governance). self-meta loop 회피: hotfix-bypass:cross-repo-bypass-counter
-      부착 PR 은 cross-repo 누적 count 제외. grep-testable artifact 존재 예정
-      (scripts/check-cross-repo-bypass-counter.{py,sh}, Phase 2 carrier). CFP-627
-      marketplace-drift-detection precedent (24h cron + workflow_dispatch + Issue
-      auto-create + per-signature dedup) cross-repo 확장.
-    detect_command: bash scripts/check-cross-repo-bypass-counter.sh
-    workflow: templates/github-workflows/cross-repo-bypass-counter.yml
-    current_tier: warning
-    bypass_label: hotfix-bypass:cross-repo-bypass-counter
-    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
-    promotion_criteria:
-      pr_cumulative_min: 20
-      failure_threshold: 0
-      sibling_dependencies: []
-      evidence_artifacts:
-        - github_actions_run_history_url
-        - lint_failure_count_zero_proof
-        - pr_cumulative_count_proof
-        - cross_repo_aggregate_threshold_calibration_evidence  # aggregate trigger threshold 재calibration evidence (Phase 2 actual wire 후 별 calibration carrier)
-        - pat_rotation_audit_log_evidence                       # ADR-066 PAT rotation log 정합 (90 day rotation / 180 day max lifetime)
-    modal_anti_pattern_dictionary: {}
-    introduced_by: CFP-845
-    introduced_date: 2026-05-17
-    owner_adr: ADR-024            # Amendment 8 §결정 6.A.5 (cross-repo extension SSOT)
-    carrier_adr: ADR-060          # evidence-enforceable framework carrier
-    recurrence:
-      count: 0                    # Phase 1 entry append, Phase 2 actual wire 후 evidence 누적 시점 별 update
-      threshold: 3                # ADR-024 Amendment 8 §결정 6.A.5 — per-(repo, plugin, label) signature 단위 §결정 6.A.2 와 동일 (3)
-      last_occurrence: null       # Phase 2 actual wire 후 first reach 시점 update
-      promotion_trigger: none     # Phase 2 actual wire 완료, 첫 evidence 누적 후 advisory 격상 예정
-    status: warning              # Phase 2 wire 완료 (CFP-845 Phase 2, 2026-05-17) — lint script + workflow + bats 모두 Active
-
   # ─── CFP-820 Phase 2 — version-3way-atomic (ADR-063 Amendment 5 §결정 15 carrier) ───
   # Epic CFP-699 Wave 3 Story-6 B2 — blocking-on-pr tier 직접 시작 (ADR-060 §결정 11 / ADR-063 §결정 11 패턴 답습)
   # Epic §8 scope_manifest planned_label_registry_bumps 3rd entry 정합
