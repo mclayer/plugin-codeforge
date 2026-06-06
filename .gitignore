@@ -38,3 +38,7 @@ docs/superpowers/
 docs/stories/
 docs/retros/
 docs/change-plans/
+
+# Orchestrator scratch — issue body / PR body / payload / retro 임시 파일
+.tmp-*
+.tmp/

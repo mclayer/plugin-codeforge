@@ -142,7 +142,7 @@ sequential 의무 task 만 명시 (6 enum 중 해당):
 
 **`shared_resource` manual override 패턴 정의 (close-set 6 enum 보존 의무)**:
 
-§3 6 enum (`tdd_red_phase` / `schema_migration` / `adr_reservation_append` / `fix_ledger_append` / `sibling_sync_ordering` / `marketplace_sync_ordering`) = close-set 보존 — `shared_resource` 영역 7번째 enum 영역 신설 영역 아님. ADR-064 §결정 4 의 normative SSOT 3 사유 (`state dependency` / `shared resource` / `ordering invariant`) 중 `shared resource` 영역 codeforge 도메인 instantiation 영역 same-file-same-method 영역 영역. 6 enum 외 영역 sequential 선택 시 = ADR-039 §결정 7 `policy_violation_subdecision` 발화. 다만 `shared_resource` 영역 패턴 영역 plan author 영역 매핑 방식 영역:
+§3 6 enum (`tdd_red_phase` / `schema_migration` / `adr_reservation_append` / `fix_ledger_append` / `sibling_sync_ordering` / `marketplace_sync_ordering`) = close-set 보존 — `shared_resource` 는 7번째 enum 신설 아님. ADR-064 §결정 4 의 normative SSOT 3 사유 (`state dependency` / `shared resource` / `ordering invariant`) 중 `shared resource` 가 codeforge 도메인에서 instantiation 되는 사례 = same-file-same-method. 6 enum 외에서 sequential 선택 시 = ADR-039 §결정 7 `policy_violation_subdecision` 발화. 다만 `shared_resource` 패턴이 plan author 에게 매핑되는 방식:
 
 | 패턴 | 6 enum 매핑 | 비고 |
 |---|---|---|
