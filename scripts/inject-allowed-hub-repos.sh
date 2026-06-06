@@ -55,11 +55,13 @@ extract_allowed_repos() {
 TEMPLATE_DEFAULT="github.com/mclayer/codeforge-internal-docs"
 
 # Validate repo entry format (domain/owner/repo, e.g. github.com/mclayer/mctrader-hub)
+# Positive charset whitelist: only alphanumeric, dot, underscore, hyphen in each segment
 validate_repo_entry() {
   local entry="$1"
-  # Simple check: contains 2 slashes and no whitespace/quotes/brackets
-  # Pattern: <domain>/<owner>/<repo>
-  if [[ ! "$entry" =~ ^[^/]+/[^/]+/[^/]+$ ]] || [[ "$entry" =~ [[:space:]\"\'\[\]\{]$ ]]; then
+  # Pattern: 3 segments separated by exactly 2 slashes
+  # Each segment: [A-Za-z0-9._-]+ (alphanumeric, dot, underscore, hyphen)
+  # Rejects: commas, quotes, spaces, semicolons, newlines, parens, shell metacharacters
+  if [[ ! "$entry" =~ ^[A-Za-z0-9._-]+/[A-Za-z0-9._-]+/[A-Za-z0-9._-]+$ ]]; then
     echo "WARN: Invalid repo entry format (skip): $entry" >&2
     return 1
   fi
@@ -81,8 +83,10 @@ merge_allowed_repos() {
   if [[ -f "$project_yaml" ]]; then
     while IFS= read -r repo_entry; do
       [[ -z "$repo_entry" ]] && continue
-      # Trim whitespace
-      repo_entry="$(echo "$repo_entry" | xargs)"
+      # Trim leading/trailing whitespace using bash parameter expansion (no xargs)
+      repo_entry="${repo_entry#"${repo_entry%%[![:space:]]*}"}"
+      repo_entry="${repo_entry%"${repo_entry##*[![:space:]]}"}"
+      [[ -z "$repo_entry" ]] && continue
       if validate_repo_entry "$repo_entry"; then
         # Dedup: skip if already seen
         if [[ "${seen[$repo_entry]:-}" != "1" ]]; then
@@ -114,8 +118,8 @@ inject_workflow_env() {
   local merged_value="$2"
 
   # Find ALLOWED_HUB_REPOS env line, rewrite value only
-  # Pattern: ALLOWED_HUB_REPOS: "..."
-  # Use sed to replace only the value, preserve line structure
+  # Pattern: ALLOWED_HUB_REPOS: "..." (double-quoted only)
+  # Detect quote style mismatch and warn
 
   if [[ "$DRY_RUN" == 1 ]]; then
     echo "=== DRY-RUN: Would inject into $workflow_file ==="
@@ -123,21 +127,44 @@ inject_workflow_env() {
     echo "New value: ALLOWED_HUB_REPOS: \"$merged_value\""
     echo ""
   else
-    # In-place rewrite (sed)
+    # Check if line exists with double-quotes (expected format)
+    if ! grep -q '^[[:space:]]*ALLOWED_HUB_REPOS:[[:space:]]*".*"[[:space:]]*$' "$workflow_file"; then
+      # Line with different quote style found, warn but skip rewrite
+      if grep -q '^[[:space:]]*ALLOWED_HUB_REPOS:' "$workflow_file"; then
+        echo "WARN: ALLOWED_HUB_REPOS line found but value not rewritten (quote style mismatch): $workflow_file" >&2
+        return 1
+      fi
+      return 0
+    fi
+
+    # In-place rewrite using AWK
     # Match: ALLOWED_HUB_REPOS: "<anything>" → ALLOWED_HUB_REPOS: "<merged_value>"
     # Use temporary file to avoid sed portability issues
     local tmp_file="${workflow_file}.tmp.$$"
+    local count_file="/tmp/rewrite_count.$$.txt"
+
     # AWK to rewrite ALLOWED_HUB_REPOS line only (idempotent safe)
+    # Count rewrites by writing count marker to stderr
     awk -v merged="$merged_value" '
       /^[[:space:]]*ALLOWED_HUB_REPOS:[[:space:]]*".*"[[:space:]]*$/ {
         # Preserve indentation
         match($0, /^[[:space:]]*/);
         indent = substr($0, RSTART, RLENGTH);
         printf "%sALLOWED_HUB_REPOS: \"%s\"\n", indent, merged;
+        print "REWRITTEN" > "/tmp/rewrite_marker.tmp";
         next;
       }
       { print; }
     ' "$workflow_file" > "$tmp_file"
+
+    # Check if rewrite actually happened
+    if [[ ! -f "/tmp/rewrite_marker.tmp" ]]; then
+      rm "$tmp_file"
+      echo "WARN: ALLOWED_HUB_REPOS line found but value not rewritten (quote style mismatch): $workflow_file" >&2
+      return 1
+    fi
+    rm -f "/tmp/rewrite_marker.tmp"
+
     mv "$tmp_file" "$workflow_file"
     echo "Injected: $workflow_file"
   fi
