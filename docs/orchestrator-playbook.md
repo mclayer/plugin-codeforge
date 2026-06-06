@@ -2801,7 +2801,27 @@ story_cache[<story-key>] = {
 
 - **Packet 주입**: 설계/구현/리뷰 레인처럼 여러 섹션 깊이 참조 필요할 때 (§1-8 범위)
 - **Path만 전달**: 단발성 조회, 섹션 캐시 미정의 부분
-- **설계 lane packet recipient**: ArchitectPLAgent (Phase 2에서 ArchitectAgent (chief author) + 6 SubAgent(Mapper/Refactor/SecurityArchitect/OperationalRiskArchitect/TestContractArch/DataMigrationArchitect)에 forward — PL이 packet 분배 책임)
+- **설계 lane packet recipient (CFP-1026 S2 — S1 5+3 재편 반영)**: ArchitectPLAgent (Phase 2에서 ArchitectAgent (chief author) + **5 permanent deputy** (SecurityArch / InfraOperationalArch / TestContractArch / DataArch / CodeArch) + **3 CONDITIONAL** (LiveOps / LiveOrdering / ProductionEvidence — Story §13 trigger 시) + **4-tuple sub-tuple** (CodebaseMapper / RefactorAgent / ArchitectAnalyst) 에 forward — PL이 packet 분배 책임). deputy 명칭·count SSOT = `deputy-mandate` skill (ADR-042 Amendment 7 / ADR-014 Amendment 4). 영역별 specialized packet 형식 = §12.4.1.
+
+#### 12.4.1 Deputy 영역별 specialized flat spawn Context Packet 4종 (CFP-1026 S2 / ADR-039 §결정 1 / ADR-044 reaffirm)
+
+설계 lane 에서 chief author **ArchitectAgent** + **4-tuple sub-tuple** (CodebaseMapper / RefactorAgent / ArchitectAnalyst) flat spawn 시, Orchestrator 가 주입하는 영역별 Context Packet specialization spec.
+
+- **(a) Orchestrator flat spawn**: 4 agent (+deputy) 를 Orchestrator (또는 env=1 시 lane Lead = ArchitectPLAgent) 가 모두 동일 평면에서 spawn. **재귀 spawn 금지** (platform inherent — Lead 와 teammate 모두) / **nested team 금지** (no team-of-teams — ADR-044) / **sub-lead 격상 0건** (one-team-per-lead — ADR-044 CFP-676 reaffirm).
+- **(b) "4-tuple = 논리적 그룹핑"**: 어느 sub-agent 가 어느 deputy 영역 Context Packet 으로 spawn 됐는지를 가리키는 논리 단위 — **물리적 spawn 계층 아님** (4-level nested spawn 오해 금지). deputy column 과 별개 (4-tuple = chief 의 multi-source synthesis 입력 producer, deputy = §3/§7/§11/§13 sub owner).
+- **(c) 정적 overlay vs 동적 spawn-time packet 대비**: consumer overlay 메커니즘 (`.claude/_overlay/` SessionStart merge — 세션당 1회 로드, **정적**, project 상수 / Helm-style desired state, §12.5) ≠ spawn-time Context Packet (매 spawn 마다 Orchestrator 가 deputy 영역별 슬라이스 재조립 주입 — **동적**, Story 섹션 + 영역 specialization). **disjoint layer**: overlay = project 상수 SSOT / spawn-time packet = Story 섹션 + deputy 영역 specialization. 혼동 금지 (Story §1 deliverable 3 verbatim).
+- **(d) ADR-039 §결정 1 cross-ref**: Orchestrator subagent default — spawn 주체 = Orchestrator flat (4-tuple 은 논리 그룹핑이지 spawn 계층 아님). env=0 = Orchestrator one-shot Agent tool spawn / env=1 = ArchitectPLAgent lane Lead SendMessage (phase-scoped team, ADR-044).
+
+**영역별 packet specialization** (§12.3 Story Context Packet 의 영역별 슬라이스):
+
+| spawn 대상 | 영역별 packet 슬라이스 | deputy 영역 매핑 |
+|---|---|---|
+| **CodebaseMapper** | as-is 코드 사실 (변경 대상 파일·레이어·현 책임 — Story §4.0/§4.1 + 관련 코드) | 사실 보고 (deputy 영역 무관 — 전 영역 공통 입력) |
+| **RefactorAgent** | to-be 구조 + 결합도 + 최소 변경 경로 (Story §1 목적 + §3 + §4.1 델타) | §3 code 축 (CodeArch consult 보조) |
+| **ArchitectAnalyst** | 변경 前 기존 설계 (관련 ADR 본문 + 기존 Change Plan + 선행 Story §3/§7) | 전 deputy 영역 (기존 설계 분석 단일 축) |
+| **chief author (deputy-영역 packet)** | 해당 deputy 영역 Story 섹션 (§7.x / §11 / §3 code\|data) + 관련 ADR 슬라이스 | deputy 영역별 (SecurityArch=§7.1-7.3/7.5-7.6 / InfraOperationalArch=§7.4 / DataArch=§3 data·§11 / CodeArch=§3 code / TestContractArch=§8.5) |
+
+worktree-membership directive (ADR-040 Amendment 6) 는 4종 packet 주입 시 모두 동일 적용 (§12.3 cross-ref). deputy / 4-tuple 명칭·count SSOT = `deputy-mandate` skill (재정의 금지 — link only).
 
 ### 12.5 Project Config Packet (project.yaml 슬라이스)
 

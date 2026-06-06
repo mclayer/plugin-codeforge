@@ -10,7 +10,7 @@ tools: Read
 
 ## 호출 시점
 
-설계 lane 진입 시. ArchitectPLAgent가 5 → 8(+ProductionEvidence=9) deputy parallel spawn 여부를 결정하기 전 호출.
+설계 lane 진입 시. ArchitectPLAgent가 5 → 8(+ProductionEvidence=9) deputy parallel spawn 여부를 결정하기 전 호출. **deputy spawn 결정 외에 4-tuple sub-tuple (CodebaseMapper / RefactorAgent / ArchitectAnalyst — chief author ArchitectAgent 와 함께 논리적 그룹핑, deputy column 아님) flat spawn 결정도 본 skill 입력 영역** — 4-tuple Context Packet 영역별 specialization spec = `docs/orchestrator-playbook.md §12.4.1` SSOT (본 skill 은 "4-tuple = 논리 그룹핑" reaffirm 만, spawn-time packet 형식은 playbook cross-ref, CFP-1026 S2).
 
 ## Deputy mandate 매트릭스 — 5 permanent + 3 CONDITIONAL (CFP-676 / ADR-042 Amendment 7)
 
@@ -43,6 +43,8 @@ ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72. design lane 
 
 ✅ = primary owner / (consult) = secondary input.
 
+> **§13 Live Operational Discipline 행 disjointness (CFP-1026 S2 — S1 cell 값 무변경 annotation)**: §13 행 (CONDITIONAL Live touching) primary owner = LiveOps ✅. 본 §13 행은 §7.4 (운영 리스크 sub) / §11 (idempotency·ledger) sub 와 **disjoint mandate scope** — §13 = Live operational discipline 11 필드 (vault / injection / permission / allowlist / withdrawal-off / first-trade cap / kill switch / operator approval / reconciliation / runbook / rollback), §7.4 = 설계 시점 운영 리스크 정책, §11 = 데이터 구조·idempotency. 한 cell consult 표기가 다른 행 primary 를 침범하지 않음 (H17 책임 분쟁 차단 invariant 정합).
+
 ## CONDITIONAL deputy 활성 정책 (CFP-77 / ADR-72)
 
 - **LiveOpsDeputy + LiveOrderingDeputy** = Live touching Story만 active (real funds / live exchange API / production credential / live order placement 중 하나 이상). Backtest/Paper-only Story = 미spawn.
@@ -57,4 +59,13 @@ ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72. design lane 
 
 §7.4 schema 자체는 codeforge-design plugin SSOT. wrapper는 본 매트릭스만 SSOT 보유 ([ADR-014](../../docs/adr/ADR-014-operational-risk-ssot-distribution.md) + Amendment 4, [ADR-72](../../docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md), [ADR-042 Amendment 7](../../docs/adr/ADR-042-agent-model-selection-policy.md)).
 
-> **W1 S2 forward pointer (state dependency on CFP-676 S1)**: 본 skill 의 full mandate matrix 재작성 (per-cell 상세 + Context Packet 4종 spec + CodeArch/ArchitectAnalyst mandate 본문 세부) = W1 S2 영역. 본 S1 = drift 동시 해소 (heading/count/description/deputy 명칭 rename + CodeArch column + ArchitectAnalyst sub-tuple + ProductionEvidence reflection) — CLAUDE.md "Deputy mandate 매트릭스" 단락과 byte-consistent (Codex S-CFP676-DEPUTY-MATRIX-6TO5 P1 drift 해소). agent file 실 신설/rename = W2 S3 (codeforge-design sibling).
+## 4-tuple sub-tuple flat spawn 가이드 (CFP-1026 S2 / ADR-044 reaffirm)
+
+deputy column 과 별개로, ArchitectPLAgent 가 설계 lane 에서 spawn 하는 **4-tuple sub-tuple** = chief author **ArchitectAgent** + **CodebaseMapper** + **RefactorAgent** + **ArchitectAnalyst** (PriorArtAgent rename, Sonnet). deputy 가 아니라 chief author 의 multi-source synthesis 입력 producer.
+
+- **"4-tuple" = 논리적 그룹핑** — 어느 sub-agent 가 어느 deputy 영역 Context Packet 으로 spawn 됐는지를 가리키는 논리 단위이지 **물리적 spawn 계층 아님**. 4-level nested spawn 으로 오해 금지.
+- **flat spawn** — Orchestrator(또는 env=1 시 lane Lead)가 4 agent 를 모두 동일 평면에서 spawn. **재귀 spawn 금지** (platform inherent — Lead 와 teammate 모두) / **nested team 금지** (no team-of-teams — ADR-044) / **sub-lead 격상 0건** (one-team-per-lead — ADR-044 reaffirm). CFP-676 ADR-044 reaffirm 단락 정합.
+- **Context Packet 영역별 specialization spec** = `docs/orchestrator-playbook.md §12.4.1` SSOT (spawn-time 동적 packet — 정적 consumer overlay 와 disjoint, ADR-039 §결정 1 정합). 본 skill 은 4-tuple 의 논리 그룹핑·flat spawn invariant 만 SSOT 보유 — packet 주입 형식은 playbook cross-ref.
+
+> **CFP-1026 W1 S2 — forward pointer 해소 (state dependency on CFP-676 S1)**: 본 skill 의 5+3 매트릭스 본문 + frontmatter 는 **S1 (CFP-676, wrapper main `abcd92bf` merged) 이 full 재작성 완료** (heading / count / description / deputy 명칭 rename + CodeArch column + §3 Code/Data 행 + §7.4 primary 4-sub annotation + ProductionEvidence column + ArchitectAnalyst sub-tuple). 본 S2 = S1 산출 byte-consistency 보존 + (a) 호출 시점 4-tuple flat spawn 결정 명시 (b) §13 행 disjoint annotation (c) 4-tuple sub-tuple flat spawn 가이드 단락 (위) — **additive only, S1 매트릭스 cell·frontmatter 변조 0** (Story §2.5 상충 조정 — "full 재작성" 의도 = S1+S2 누적 최종 형태). per-cell 상세 + Context Packet 4종 specialized spawn spec = playbook §12.4.1 SSOT (S2 codify). agent file 실 신설/rename = W2 S3 (codeforge-design sibling).
+
