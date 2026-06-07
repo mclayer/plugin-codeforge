@@ -2232,7 +2232,7 @@ attempt cap=3 = **dual scope AND** (Threat A counter reset abuse — close+reope
 - (a) **Counter reset abuse** (Threat A) — close+reopen / PR 재생성 / attempt 분산 → **per-PR + per-Story dual scope** (§3.19.2 AND condition)
 - (b) **`enforce_admins` toggle abuse** (Threat B) — `gh api -X PATCH /repos/<org>/<repo>/branches/main/protection` 안 `enforce_admins.enabled: false` toggle → **explicit forbid** (audit-trailed exception channel 외 금지, ADR-113 §결정 3)
 - (c) **Pre-flight gate script bypass** — Orchestrator instrumentation 우회 + 직접 `gh pr merge --admin` → Wave 2 mechanical wire carrier (`scripts/check-admin-merge-preflight.sh` 3-layer self-block: pre-commit + pre-push + Orchestrator instrumentation, 별 sub-Story carrier)
-- (d) **Bypass-as-norm-mutation** — `hotfix-bypass:admin-merge-preflight-gate` norm mutation → ADR-024 Amendment 6/8 §결정 6.A 5 lint chain 자동 covered (`bypass-label-counter` + `per-plugin-cumulative-counter` + `bypass-justification-marker` + `cross-repo-bypass-counter` + `check-bypass-audit-comment.sh`) + `[bypass-justification]` PR comment marker 의무 (`comment-prefix-registry-v1` 14번째 prefix)
+- (d) **Bypass-as-norm-mutation** — `hotfix-bypass:admin-merge-preflight-gate` norm mutation → ADR-024 Amendment 6/8 §결정 6.A 4 lint chain 자동 covered (`bypass-label-counter` + `per-plugin-cumulative-counter` + `bypass-justification-marker` + `check-bypass-audit-comment.sh`) + `[bypass-justification]` PR comment marker 의무 (`comment-prefix-registry-v1` 14번째 prefix)
 
 #### §3.19.5 Fallback path (CFP-1495 carrier 재진입)
 
