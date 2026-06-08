@@ -1,0 +1,79 @@
+name: ADR citation slug lint (warning mode)
+# CFP-2057 / ADR-060 — ADR 인용 번호 ↔ slug 정합 mechanical lint (2-layer)
+# L1: slug-existence / L2: deny-list (ALLOWED_HUB_REPOS 맥락 ADR-057 오인용 차단)
+# Tier: warning (continue-on-error, non-required check)
+# Bypass channel: hotfix-bypass:adr-citation-slug (ADR-024 §결정 6.A per-entry namespace)
+#
+# 승격 path:
+#   warning → blocking-on-pr 승격 시 CFP-NNN carrier PR 가 다음 변경 동반 의무:
+#     1. 본 workflow 의 continue-on-error: true 제거
+#     2. branch protection required_status_checks.contexts 에 본 workflow job name 추가
+#     3. evidence 3 산출물 제출 (ADR-060 §결정 6 (d) + evidence-checks-registry promotion_criteria)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    paths:
+      - '**/*.md'
+      - '**/*.yml'
+      - '**/*.yaml'
+      - '**/*.sh'
+      - '**/*.py'
+      - 'archive/adr/**'
+      - 'docs/**'
+      - 'scripts/**'
+      - 'templates/**'
+      - '.github/workflows/**'
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  adr-citation-slug:
+    runs-on: ubuntu-latest
+    # warning mode (ADR-060 §결정 5) — lint fail 이 PR merge 차단하지 않음.
+    # required_status_checks.contexts 부착 X.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Run ADR citation slug lint
+        id: lint
+        run: |
+          bash scripts/check-adr-citation-slug.sh . 2>&1 | tee lint-output.txt
+          exit ${PIPESTATUS[0]}
+        continue-on-error: true
+
+      - name: Post warning comment (L2 deny-list violation)
+        if: steps.lint.outcome == 'failure'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const output = fs.readFileSync('lint-output.txt', 'utf8');
+            const body = [
+              '## ADR citation slug lint — warning',
+              '',
+              '> ADR-060 warning-tier (CFP-2057). PR merge 차단 아님.',
+              '> bypass: `hotfix-bypass:adr-citation-slug` label 부착.',
+              '',
+              '```',
+              output.slice(0, 3000),
+              '```',
+            ].join('\n');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
