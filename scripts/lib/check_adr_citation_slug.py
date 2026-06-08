@@ -12,6 +12,12 @@ ADR-061 compliant - external .py SSOT, no heredoc.
 scope: Population A (ALLOWED_HUB_REPOS context) first. Expand to Population B via separate carrier.
 archive/ included: ADR-026 origin is in archive/ - must include for root-cause detection.
 
+L1 false-positive suppression (CFP-2057 P2 fix):
+  - tests/** paths: intentional sentinel fixtures (tests/**/fixtures/*, test scripts) exempt from L1.
+  - Sentinel ADR numbers (>= 900): skip L1 slug-existence check (ADR-999, ADR-9991..9998, etc.
+    are reserved sentinel numbers used in test fixtures and documentation examples).
+  - Per-line dedup: same ADR number cited twice on one line counts as 1 violation (not 2).
+
 Limitations (mandatory disclosure - design section 7.6 AC-5):
   - ADR-057 misquote (number exists, only meaning wrong) = L1 cannot detect - L2 deny-list blocks.
   - General semantic correctness of citations = reviewer responsibility, not lint scope.
@@ -92,6 +98,15 @@ EXCLUDE_DIRS = {'node_modules', '.git', '__pycache__', '.venv', 'venv'}
 # Excluded files (lint script self-exclusion to avoid self-referential false-positive)
 EXCLUDE_FILES = {'check_adr_citation_slug.py'}
 
+# L1 sentinel ADR number threshold: ADR numbers >= this value are reserved for test
+# fixtures / documentation examples and are intentionally not real ADRs.
+# Covers: ADR-999, ADR-9991..9999, ADR-9992, ADR-9993..9998, etc.
+L1_SENTINEL_THRESHOLD = 900
+
+# L1 path prefix exempt from slug-existence check: test fixtures / test scripts
+# use intentional sentinel ADR numbers that must not trigger L1 violations.
+L1_EXEMPT_PATH_PARTS = ('tests',)
+
 # ADR directory candidates
 ADR_DIR_CANDIDATES = [
     'archive/adr',
@@ -124,6 +139,13 @@ def is_exempt_l2(line):
     return any(p.search(line) for p in L2_EXEMPT_PATTERNS)
 
 
+def _is_l1_path_exempt(file_path):
+    """Return True if file is in a path exempt from L1 slug-existence check.
+    tests/** paths contain intentional sentinel fixtures - exempt from L1.
+    """
+    return any(part in L1_EXEMPT_PATH_PARTS for part in file_path.parts)
+
+
 def check_file(file_path, existing_adrs, adr_dir_exists):
     """Check one file. Returns (l1_violations, l2_violations)."""
     l1_violations = []
@@ -133,6 +155,9 @@ def check_file(file_path, existing_adrs, adr_dir_exists):
         content = file_path.read_text(encoding='utf-8', errors='replace')
     except OSError:
         return l1_violations, l2_violations
+
+    # L1 path-level exemption: tests/** are intentional fixture files
+    l1_path_exempt = _is_l1_path_exempt(file_path)
 
     for lineno, line in enumerate(content.splitlines(), 1):
         # L2 deny-list check (exempt first)
@@ -149,9 +174,18 @@ def check_file(file_path, existing_adrs, adr_dir_exists):
                     break  # report once per line
 
         # L1 slug-existence check
-        if adr_dir_exists:
+        if adr_dir_exists and not l1_path_exempt:
+            # Dedup: collect unique ADR numbers per line (F-CR-2057-2)
+            seen_on_line = set()
             for m in ADR_REF_PATTERN.finditer(line):
                 adr_num = int(m.group(1))
+                # Skip sentinel numbers (>= L1_SENTINEL_THRESHOLD): test fixtures /
+                # documentation placeholder examples (ADR-999, ADR-9991..9998, etc.)
+                if adr_num >= L1_SENTINEL_THRESHOLD:
+                    continue
+                if adr_num in seen_on_line:
+                    continue  # dedup: same number already reported for this line
+                seen_on_line.add(adr_num)
                 if adr_num not in existing_adrs:
                     l1_violations.append({
                         'file': str(file_path),

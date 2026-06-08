@@ -109,16 +109,58 @@ EOF
   [ "$status" -eq 0 ]
 }
 
-# D5-L1-b: 미존재 ADR 인용 → exit 2
-@test "L1: 미존재 ADR-999 인용 → exit 2" {
+# D5-L1-b: 미존재 ADR 인용 → exit 2 (non-sentinel 번호)
+@test "L1: 미존재 ADR-042 인용 → exit 2" {
   local test_file="${TEST_TEMP_DIR}/missing.md"
   cat > "$test_file" << 'EOF'
-참조: ADR-999 정합.
+참조: ADR-042 정합.
 EOF
 
   run python3 "$LIB" --repo-root "$TEST_TEMP_DIR" "$test_file"
   [ "$status" -eq 2 ]
   echo "$output" | grep -q "L1-SLUG"
+}
+
+# D5-L1-c: sentinel 번호(>= 900) → L1 skip (false-positive 방지, CFP-2057 P2 fix)
+@test "L1: sentinel ADR-999 인용 → PASS (sentinel skip)" {
+  local test_file="${TEST_TEMP_DIR}/sentinel.md"
+  cat > "$test_file" << 'EOF'
+테스트 예시: ADR-999 참조 (placeholder 번호).
+ADR-9995, ADR-9998 도 sentinel.
+EOF
+
+  run python3 "$LIB" --repo-root "$TEST_TEMP_DIR" "$test_file"
+  # sentinel 번호 → L1 위반 없음 (status 0)
+  [ "$status" -eq 0 ]
+}
+
+# D5-L1-d: tests/ 경로 파일 → L1 면제 (fixture 경로, CFP-2057 P2 fix)
+@test "L1: tests/ 경로 파일의 미존재 ADR 인용 → L1 면제 PASS" {
+  mkdir -p "${TEST_TEMP_DIR}/tests/fixtures"
+  local test_file="${TEST_TEMP_DIR}/tests/fixtures/sample-fixture.md"
+  cat > "$test_file" << 'EOF'
+id: ADR-042
+# ADR-042: 테스트 fixture ADR sentinel (존재하지 않는 ADR 번호)
+EOF
+
+  run python3 "$LIB" --repo-root "$TEST_TEMP_DIR" "$test_file"
+  # tests/ 경로 면제 → L1 위반 없음 (status 0)
+  [ "$status" -eq 0 ]
+}
+
+# D5-L1-e: 한 줄에 같은 ADR 번호 2회 → 위반 1건 (dedup, CFP-2057 P2 fix)
+@test "L1: 한 줄에 같은 ADR-042 2회 인용 → 위반 1건 (dedup)" {
+  local test_file="${TEST_TEMP_DIR}/dedup.md"
+  cat > "$test_file" << 'EOF'
+ADR-042 정합 (ADR-042 참조 중복).
+EOF
+
+  run python3 "$LIB" --repo-root "$TEST_TEMP_DIR" "$test_file"
+  [ "$status" -eq 2 ]
+  # 위반 1건 (L1-SLUG 1개) — dedup 결과 2건이 아님
+  local count
+  count=$(echo "$output" | grep -c "L1-SLUG" || true)
+  [ "$count" -eq 1 ]
 }
 
 # ─── D5 자기 진원 RED 방지 확인 ───────────────────────────────────────
