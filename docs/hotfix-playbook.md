@@ -111,4 +111,4 @@ hotfix-1 merge 후 bug 발견 → hotfix-2: hub Story §10 row chain depth ≤ 2
 
 ### consumer hub PAT scope
 
-consumer hub repo 가 mclayer/codeforge-internal-docs 가 아닌 경우: 해당 consumer 측 `CODEFORGE_CROSS_REPO_PAT` 가 hub repo `contents:read` 보유 의무. consumer-guide §1g + ADR-066 PAT rotation policy 참조. `ALLOWED_HUB_REPOS` workflow env 에 consumer hub 추가 (overlay 확장 가능, 축소 불가 — ADR-057 정합).
+consumer hub repo 가 mclayer/codeforge-internal-docs 가 아닌 경우: 해당 consumer 측 `CODEFORGE_CROSS_REPO_PAT` 가 hub repo `contents:read` 보유 의무. consumer-guide §1g + ADR-066 PAT rotation policy 참조. `ALLOWED_HUB_REPOS` workflow env 에 consumer hub 추가 (overlay 확장 가능, 축소 불가 — ADR-026 Amd 4 §결정 6 (화이트리스트) + ADR-024 §결정 6 (확장-only 패턴) + ADR-116 (주입 mechanism)).

@@ -23,7 +23,7 @@ concurrency:
 
 env:
   # CFP-795 / phase-gate-mergeable.yml §ALLOWED_HUB_REPOS 정합.
-  # consumer overlay: .claude/_overlay/project.yaml phase_gate.allowed_hub_repos[] 로 확장 가능 (ADR-057 정합 — 축소 불가).
+  # consumer overlay: .claude/_overlay/project.yaml phase_gate.allowed_hub_repos[] 로 확장 가능 (ADR-026 Amd 4 §결정 6 (화이트리스트) + ADR-024 §결정 6 (확장-only 패턴) + ADR-116 (주입 mechanism) — 축소 불가).
   ALLOWED_HUB_REPOS: "github.com/mclayer/codeforge-internal-docs"
 
 jobs:
