@@ -19,6 +19,14 @@
 
 set -euo pipefail
 
+# D2: bash 4+ version guard (CFP-2057, ADR-116 §결정 4)
+# declare -A (associative array) 는 bash 4.0+ 전용 — bash 3.2 (macOS 기본) 미지원.
+# 실행 환경 = CI/Linux (bash ≥5) 한정; 이 guard 가 macOS silent 실패를 명시 거부로 전환.
+if [ -z "${BASH_VERSINFO:-}" ] || [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
+  echo "ERROR: requires bash >= 4 (declare -A associative array). macOS 기본 bash 3.2 미지원 — brew install bash 또는 CI/Linux 에서 실행." >&2
+  exit 1
+fi
+
 REPO_ROOT="${REPO_ROOT:-.}"
 DRY_RUN=0
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -45,10 +53,13 @@ PROJECT_YAML="${REPO_ROOT}/.claude/_overlay/project.yaml"
 WORKFLOWS_DIR="${REPO_ROOT}/.github/workflows"
 
 # Validate YAML, extract phase_gate.allowed_hub_repos[]
-# Exit 0 if field absent, exit 1 on parse error
+# Exit 0 if field absent, exit 1 on parse error.
+# 호출자가 반환코드를 직접 확인하도록 output 변수로 사용 — set -e 환경에서
+# 프로세스 치환(<(...))은 exit 코드 전파 보장이 없으므로 명시 처리.
 extract_allowed_repos() {
   local project_yaml="$1"
   python3 "${SCRIPT_DIR}/lib/extract_allowed_hub_repos.py" "$project_yaml"
+  return $?
 }
 
 # Template default ALLOWED_HUB_REPOS value
@@ -80,7 +91,16 @@ merge_allowed_repos() {
   seen["$TEMPLATE_DEFAULT"]=1
 
   # Project.yaml entries (from extract_allowed_repos)
+  # YAML parse error propagation: 프로세스 치환(<(...)) 은 set -e 내에서
+  # 하위 프로세스 exit code 를 보장하지 않으므로, 먼저 직접 실행해 성공 여부 확인.
   if [[ -f "$project_yaml" ]]; then
+    local extract_output
+    if ! extract_output=$(python3 "${SCRIPT_DIR}/lib/extract_allowed_hub_repos.py" "$project_yaml" 2>&1); then
+      # YAML parse error (exit 1 from python) — 상위로 전파
+      echo "$extract_output" >&2
+      return 1
+    fi
+    # stdout 만 재사용 (stderr 는 이미 소비)
     while IFS= read -r repo_entry; do
       [[ -z "$repo_entry" ]] && continue
       # Trim leading/trailing whitespace using bash parameter expansion (no xargs)
@@ -94,7 +114,7 @@ merge_allowed_repos() {
           seen["$repo_entry"]=1
         fi
       fi
-    done < <(extract_allowed_repos "$project_yaml")
+    done <<< "$extract_output"
   fi
 
   # Output comma-separated, quoted for YAML env value
@@ -139,30 +159,33 @@ inject_workflow_env() {
 
     # In-place rewrite using AWK
     # Match: ALLOWED_HUB_REPOS: "<anything>" → ALLOWED_HUB_REPOS: "<merged_value>"
-    # Use temporary file to avoid sed portability issues
+    # Use temporary file (PID-isolated, $$ suffix) to avoid sed portability issues.
+    # D3 (CFP-2057, CWE-377 완화): /tmp 고정 marker 파일 IPC 제거 —
+    #   AWK 가 rewrite 발생 시 stderr 에 "REWRITTEN" 신호 emit,
+    #   bash 가 2>&1 1>tmp_file 패턴으로 stderr 캡처 → 파일시스템 IPC 불요 (TOCTOU 표면 소거).
     local tmp_file="${workflow_file}.tmp.$$"
 
-    # AWK to rewrite ALLOWED_HUB_REPOS line only (idempotent safe)
-    # Count rewrites by writing count marker to stderr
-    awk -v merged="$merged_value" '
+    # AWK rewrites ALLOWED_HUB_REPOS line only (idempotent safe).
+    # On match: emit "REWRITTEN" to stderr as IPC signal (no /tmp marker file).
+    # Redirect: stdout → tmp_file (rewritten content), stderr → awk_stderr variable.
+    local awk_stderr
+    awk_stderr=$(awk -v merged="$merged_value" '
       /^[[:space:]]*ALLOWED_HUB_REPOS:[[:space:]]*".*"[[:space:]]*$/ {
-        # Preserve indentation
         match($0, /^[[:space:]]*/);
         indent = substr($0, RSTART, RLENGTH);
         printf "%sALLOWED_HUB_REPOS: \"%s\"\n", indent, merged;
-        print "REWRITTEN" > "/tmp/rewrite_marker.tmp";
+        print "REWRITTEN" > "/dev/stderr";
         next;
       }
       { print; }
-    ' "$workflow_file" > "$tmp_file"
+    ' "$workflow_file" 2>&1 1>"$tmp_file") || true
 
-    # Check if rewrite actually happened
-    if [[ ! -f "/tmp/rewrite_marker.tmp" ]]; then
-      rm "$tmp_file"
+    # Check if rewrite actually happened (REWRITTEN signal in captured stderr)
+    if [[ "${awk_stderr}" != *"REWRITTEN"* ]]; then
+      rm -f "$tmp_file"
       echo "WARN: ALLOWED_HUB_REPOS line found but value not rewritten (quote style mismatch): $workflow_file" >&2
       return 1
     fi
-    rm -f "/tmp/rewrite_marker.tmp"
 
     mv "$tmp_file" "$workflow_file"
     echo "Injected: $workflow_file"
