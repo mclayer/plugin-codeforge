@@ -135,21 +135,21 @@ BC 사이 통신 = **Published Language** 의무. content duplication 금지 —
 - mctrader BC link 만 (예: `mctrader-hub/docs/glossary.md`)
 - 양 BC 가 동시 답습하는 패턴 (예: 4-Layer Architecture) 은 verbatim cite + cross-ref 형식
 
-### 적용 사례: AggregateArchitectAgent 의 "RDB OLTP aggregate invariant"
+### 적용 사례: ModuleArchitectAgent (aggregate-level) 의 "RDB OLTP aggregate invariant"
 
-AggregateArchitectAgent 의 mandate = **consumer aggregate boundary 설계 advocacy** (application BC 안 design task 영역).
+ModuleArchitectAgent (aggregate-level — 구 AggregateArchitectAgent, CFP-1126 / ADR-042 Amd 10 통합) 의 mandate = **consumer aggregate boundary 설계 advocacy** (application BC 안 design task 영역).
 
-**중요 사례**: AggregateArchitectAgent 가 codeforge governance BC 안 agent 이지만, 그 mandate (RDB OLTP aggregate invariant / 트랜잭션 경계) 는 **application BC reference** 이다. codeforge governance BC 의 agent 가 application BC 의 design decision 영역에서 specialized judgment contributor 로 작동.
+**중요 사례**: ModuleArchitectAgent (aggregate-level) 가 codeforge governance BC 안 agent 이지만, 그 mandate (RDB OLTP aggregate invariant / 트랜잭션 경계) 는 **application BC reference** 이다. codeforge governance BC 의 agent 가 application BC 의 design decision 영역에서 specialized judgment contributor 로 작동.
 
-**Authority Pair (ArchitectPL + ArchitectAgent)** 가 final author authority — AggregateArchitectAgent 는 specialized advocacy 만 contribute. 본 BC boundary = "agent 가 어느 BC 안에서 작동하는가" (codeforge governance BC) ≠ "agent mandate 의 적용 대상 BC" (consumer application BC) — 2 distinct dimension.
+**Authority Pair (ArchitectPL + ArchitectAgent)** 가 final author authority — ModuleArchitectAgent (aggregate-level) 는 specialized advocacy 만 contribute. 본 BC boundary = "agent 가 어느 BC 안에서 작동하는가" (codeforge governance BC) ≠ "agent mandate 의 적용 대상 BC" (consumer application BC) — 2 distinct dimension.
 
 ## 관련 ADR
 
-- [ADR-091 §결정 3](../../adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Aggregate metaphor 2-layer explicit separate
-- [ADR-091 §결정 4](../../adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Published Language 분리 (codeforge + mctrader 2 SSOT)
-- [ADR-091 §결정 5](../../adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Bounded Context governance + 15 agent frontmatter field 의무
-- [ADR-013](../../adr/ADR-013-codeforge-family-dogfood-out-policy.md) — codeforge-family-dogfood-out-policy (Published Language 분리 정합)
-- [ADR-086](../../adr/ADR-086-deputy-creation-decision-framework.md) — Deputy 신설 결정 framework (Aggregate decision boundary 사례)
+- [ADR-091 §결정 3](../../../archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Aggregate metaphor 2-layer explicit separate
+- [ADR-091 §결정 4](../../../archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Published Language 분리 (codeforge + mctrader 2 SSOT)
+- [ADR-091 §결정 5](../../../archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Bounded Context governance + 15 agent frontmatter field 의무
+- [ADR-013](../../../archive/adr/ADR-013-codeforge-family-dogfood-out-policy.md) — codeforge-family-dogfood-out-policy (Published Language 분리 정합)
+- [ADR-086](../../../archive/adr/ADR-086-deputy-creation-decision-framework.md) — Deputy 신설 결정 framework (Aggregate decision boundary 사례)
 - [`docs/glossary.md`](../../glossary.md) — Bounded Context entry SSOT (line 77-82)
 - [`docs/domain-knowledge/concept/aggregate.md`](aggregate.md) — Aggregate 2-layer separate sibling
 - [`docs/domain-knowledge/concept/ubiquitous-language.md`](ubiquitous-language.md) — BC 내부 어휘 SSOT sibling

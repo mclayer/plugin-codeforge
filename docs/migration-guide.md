@@ -109,7 +109,7 @@ updated: 2026-04-24
 - codeforge-review (PL) → codeforge core: `review_verdict v2` 반환 (typed, v1 은 CFP-D 시점 Archived)
 - codeforge core (Orchestrator → lane plugin): verdict 받아 Story §9 / PR comment / gate label 처리 *(v0.x에서는 DocsAgent가 담당했으나 CFP-40 final delete 후 각 lane plugin self-write로 전환)*
 
-상세 schema: codeforge core repo의 [`docs/inter-plugin-contracts/review-verdict-v2.md`](inter-plugin-contracts/review-verdict-v2.md) (Active). v1 (Archived, historical record): [`docs/inter-plugin-contracts/review-verdict-v1.md`](inter-plugin-contracts/review-verdict-v1.md). Versioning + archive 룰: [ADR-008](adr/ADR-008-inter-plugin-contract-versioning.md) §5/§5.1.
+상세 schema: codeforge core repo의 [`docs/inter-plugin-contracts/review-verdict-v2.md`](inter-plugin-contracts/review-verdict-v2.md) (Active). v1 (Archived, historical record): [`docs/inter-plugin-contracts/review-verdict-v1.md`](inter-plugin-contracts/review-verdict-v1.md). Versioning + archive 룰: [ADR-008](../archive/adr/ADR-008-inter-plugin-contract-versioning.md) §5/§5.1.
 
 ### 5. 설계 SSOT
 
@@ -285,7 +285,7 @@ exit=0 이어야 통과. 16 assertion check.
 
 ### Breaking changes
 
-[ADR-001](adr/ADR-001-review-agent-unification.md) 결정에 따라 **3 lane × 2 vendor = 6 워커**(Claude{Design,Code,SecurityTest}ReviewAgent + Codex 동등 6종)를 **2 lane-agnostic 워커**(`ClaudeReviewAgent`, `CodexReviewAgent`)로 통합. lane-specific 도메인(체크리스트·스코프·category enum·severity 자동 룰)은 호출 PL이 `review_packet`으로 주입.
+[ADR-001](../archive/adr/ADR-001-review-agent-unification.md) 결정에 따라 **3 lane × 2 vendor = 6 워커**(Claude{Design,Code,SecurityTest}ReviewAgent + Codex 동등 6종)를 **2 lane-agnostic 워커**(`ClaudeReviewAgent`, `CodexReviewAgent`)로 통합. lane-specific 도메인(체크리스트·스코프·category enum·severity 자동 룰)은 호출 PL이 `review_packet`으로 주입.
 
 - 24 core agents → **20 core agents** (워커 6 삭제 + 워커 2 신규)
 - Codex 플러그인이 단일 의존성으로 격상 — 미설치 시 3 리뷰 lane 전부 진입 불가

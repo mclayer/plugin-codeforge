@@ -53,11 +53,11 @@ wrapper-self = `mclayer/plugin-codeforge` Confluence space `CFP` 작업 영역.
 
 | ADR | 역할 |
 |---|---|
-| [ADR-099](../../docs/adr/ADR-099-atlassian-allow-redefinition.md) | Atlassian tool allow redefinition — `mcp__atlassian__*` 허용 관리 |
-| [ADR-100](../../docs/adr/ADR-100-confluence-doc-ssot-recognition.md) | Confluence doc SSOT recognition — git = SoR-work / Confluence = readable mirror 원칙 |
-| [ADR-101](../../docs/adr/ADR-101-verify-before-trust-confluence-rest.md) | verify-before-trust Confluence REST — 응답 검증 의무 |
-| [ADR-103](../../docs/adr/ADR-103-git-confluence-sync-mechanism.md) | Confluence sync mechanism — 3-anchor stamp + mark engine path |
-| [ADR-111](../../docs/adr/ADR-111-confluence-mirror-classification-policy.md) | mirror classification policy — closed-enum 5 mirror 대상 + 5 Issue-only retain 면제 SSOT |
+| [ADR-099](../../archive/adr/ADR-099-atlassian-allow-redefinition.md) | Atlassian tool allow redefinition — `mcp__atlassian__*` 허용 관리 |
+| [ADR-100](../../archive/adr/ADR-100-confluence-doc-ssot-recognition.md) | Confluence doc SSOT recognition — git = SoR-work / Confluence = readable mirror 원칙 |
+| [ADR-101](../../archive/adr/ADR-101-verify-before-trust-confluence-rest.md) | verify-before-trust Confluence REST — 응답 검증 의무 |
+| [ADR-103](../../archive/adr/ADR-103-git-confluence-sync-mechanism.md) | Confluence sync mechanism — 3-anchor stamp + mark engine path |
+| [ADR-111](../../archive/adr/ADR-111-confluence-mirror-classification-policy.md) | mirror classification policy — closed-enum 5 mirror 대상 + 5 Issue-only retain 면제 SSOT |
 
 ### 2.2 IA tree SSOT
 
@@ -146,9 +146,9 @@ dry-run 결과 = mapping table (git path → Confluence page) + 3-anchor verify 
 | 영역 | 참조 |
 |---|---|
 | Confluence governance | ADR-100 / ADR-111 / ADR-099 / ADR-101 / ADR-103 |
-| consumer-applicability | [ADR-083](../../docs/adr/ADR-083-consumer-applicability-filter.md) (본 Story Wave 1 으로 `unknown` → `applicable` 전환) |
-| consumer adoption | [ADR-027](../../docs/adr/ADR-027-consumer-adoption-protocol.md) (atlassian.* schema 정합) |
-| verdict packet | review-verdict-v4 v4.11 (6번째 verdict-level optional bool field) |
+| consumer-applicability | [ADR-083](../../archive/adr/ADR-083-consumer-applicability-filter.md) (본 Story Wave 1 으로 `unknown` → `applicable` 전환) |
+| consumer adoption | [ADR-027](../../archive/adr/ADR-027-consumer-adoption-protocol.md) (atlassian.* schema 정합) |
+| verdict packet | review-verdict-v4 (verdict-level optional bool fields — 현재 버전은 파일 frontmatter SSOT) |
 | doc location | [docs/doc-locations.yaml](../../docs/doc-locations.yaml) (confluence_variant sub-tree — schema 1.2, CFP-1668) |
 | consumer guide | [docs/consumer-guide.md §1o](../../docs/consumer-guide.md) (Confluence migration 셋업 4-step SOP) |
 | IA tree | [docs/confluence-ia-tree.yaml](../../docs/confluence-ia-tree.yaml) (schema 1.2, per-consumer template 신설) |
@@ -178,7 +178,7 @@ consumer-applicability filter (ADR-083 §결정 1 4-way enum):
 1. **Story file** (`docs/stories/<KEY>.md`) — Issue 안 §1-§14 모두 포함
 2. **FIX Ledger** (Story file §10 sub-section) — fix-event-v1 contract
 3. **Lane Evidence** (Story file §14 sub-section) — ADR-031 carrier
-4. **decision packet** (`decisions/<packet_id>.yaml`) — ADR-022 Sonnet decider
+4. **decision packet** (`decisions/<packet_id>.yaml`)
 5. **spawn prompt** (ephemeral, session-scoped) — ADR-082 sub-scope 1-C
 
 > **ratchet 강화 rationale**: ADR-111 Amendment 2 §결정 2 — 위 5 영역은 governance audit trail 의 원자 단위. Confluence mirror 시 mutable Confluence page 와 immutable Issue history 간 split-brain 위험. Issue-only retain = 단방향 audit trail 보존 invariant.

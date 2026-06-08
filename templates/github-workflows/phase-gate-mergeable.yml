@@ -148,10 +148,12 @@ jobs:
               pull_number: pr.number
             });
             const hasCode = files.some(f =>
-              f.filename.startsWith('src/') ||
-              f.filename.startsWith('agents/') ||
-              f.filename.startsWith('tests/') ||
-              f.filename.startsWith('overlay/')
+              f.status !== 'removed' && (   // CFP-prune: 삭제(removed)는 "코드 추가/변경" 아님 — dead 파일 제거 PR 의 fast-pass 차단 해소
+                f.filename.startsWith('src/') ||
+                f.filename.startsWith('agents/') ||
+                f.filename.startsWith('tests/') ||
+                f.filename.startsWith('overlay/')
+              )
             );
 
             // 5a. Doc-only / type:epic fast-pass (CFP-106 fix #143).
@@ -182,11 +184,13 @@ jobs:
               f.filename.startsWith('scripts/') ||
               f.filename.startsWith('.claude-plugin/') ||
               f.filename.startsWith('.claude/_overlay/') ||   // CFP-758 #758 — consumer overlay SSOT (state-only)
+              f.filename === '.claude/settings.json' ||        // orchestrator runtime config (permissions/sandbox state, non-executable) — .claude/_overlay/ sibling
               f.filename.startsWith('.codeforge/') ||          // CFP-758 #503/#723 — counter reservation (non-executable state)
               f.filename.startsWith('scope_manifests/') ||     // CFP-758 #503/#723 — Epic scope manifest (governance state)
               f.filename === 'CHANGELOG.md' ||
               f.filename === 'README.md' ||
-              f.filename === 'CONTRIBUTING.md'
+              f.filename === 'CONTRIBUTING.md' ||
+              (f.status === 'removed' && f.filename.startsWith('tests/'))   // CFP-prune: 삭제된 test 파일 = dead-test cleanup, fast-pass 허용 (src/overlay 삭제는 여전히 비허용)
             );
 
             // CFP-795 / ADR-026 Amendment 4 §결정 6 — 4번째 fast-pass source: isPostMergeFix (3-조건 AND)
@@ -364,12 +368,14 @@ jobs:
               f.filename.startsWith('scripts/') ||
               f.filename.startsWith('.claude-plugin/') ||
               f.filename.startsWith('.claude/_overlay/') ||
+              f.filename === '.claude/settings.json' ||
               f.filename.startsWith('.codeforge/') ||
               f.filename.startsWith('scope_manifests/') ||
               f.filename === 'CHANGELOG.md' ||
               f.filename === 'README.md' ||
               f.filename === 'CONTRIBUTING.md' ||
-              f.filename.startsWith('agents/')   // CFP-1850-S1: agents/ chore-safe 승격 (src/tests/overlay/ 여전히 배제)
+              f.filename.startsWith('agents/') ||   // CFP-1850-S1: agents/ chore-safe 승격
+              (f.status === 'removed' && f.filename.startsWith('tests/'))   // CFP-prune: 삭제된 test 파일 = dead-test cleanup (src/overlay 삭제는 여전히 배제)
             );
 
             // short-circuit + 통합: (a)/(c)/(d) 즉시 평가 후 (b) API call (비용 최소화)

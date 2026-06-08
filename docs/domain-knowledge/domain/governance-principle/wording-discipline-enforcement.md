@@ -115,10 +115,10 @@ scope 확장이 EXEMPT framework 를 *축소* 하면 (예: blockquote exempt 제
 
 ## 관련 ADR
 
-- [ADR-064](../../../adr/ADR-064-decision-principle-mandate.md) — forbid-list dictionary normative carrier. §결정 2 (forbid-list + Amendment 2/4 어휘 추가) + §결정 7 (self-application top-down ratchet — 본 SSOT 규칙 3 의 판정 근거) + §결정 8 (Declaration only — registration ↔ enforcement 분리의 구조적 동인).
-- [ADR-058](../../../adr/ADR-058-adr-sunset-criteria-mandate.md) — sunset criteria mandate. §결정 5 sunset_justification 의무 = 약화 방향 amendment 차단. 본 SSOT 규칙 3 의 "강화 = sunset_justification 불요" 판정의 대칭 anchor.
-- [ADR-060](../../../adr/ADR-060-evidence-enforceable-promotion-framework.md) — evidence-enforceable promotion framework. 4-tier (warning → blocking-on-pr → blocking-on-merge → hotfix-bypass) + 승격 게이트 AND condition. 본 SSOT 규칙 2 tier 축의 SSOT.
-- [ADR-024](../../../adr/ADR-024-story-scoped-branch-policy.md) — Amendment 3 per-entry `hotfix-bypass:*` namespace. enforcement 의 audit-trailed exception channel (정책 회피 등록 아님).
+- [ADR-064](../../../../archive/adr/ADR-064-decision-principle-mandate.md) — forbid-list dictionary normative carrier. §결정 2 (forbid-list + Amendment 2/4 어휘 추가) + §결정 7 (self-application top-down ratchet — 본 SSOT 규칙 3 의 판정 근거) + §결정 8 (Declaration only — registration ↔ enforcement 분리의 구조적 동인).
+- [ADR-058](../../../../archive/adr/ADR-058-adr-sunset-criteria-mandate.md) — sunset criteria mandate. §결정 5 sunset_justification 의무 = 약화 방향 amendment 차단. 본 SSOT 규칙 3 의 "강화 = sunset_justification 불요" 판정의 대칭 anchor.
+- [ADR-060](../../../../archive/adr/ADR-060-evidence-enforceable-promotion-framework.md) — evidence-enforceable promotion framework. 4-tier (warning → blocking-on-pr → blocking-on-merge → hotfix-bypass) + 승격 게이트 AND condition. 본 SSOT 규칙 2 tier 축의 SSOT.
+- [ADR-024](../../../../archive/adr/ADR-024-story-scoped-branch-policy.md) — Amendment 3 per-entry `hotfix-bypass:*` namespace. enforcement 의 audit-trailed exception channel (정책 회피 등록 아님).
 - [decision-style](decision-style.md) — sibling domain knowledge. 결정 *내용/제시/속도* 행동 패턴 (Trace 1/2/4). 본 페이지는 그 결정 원칙이 산출한 forbid-list 의 *enforcement layer* 행동 패턴 — disjoint scope (decision-style = 결정 발생, 본 페이지 = 결정 산출물의 실효성).
 
 ## 변경 이력

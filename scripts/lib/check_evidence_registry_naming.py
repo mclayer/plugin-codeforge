@@ -56,6 +56,8 @@ DRIFT_ALLOWLIST = {
     ("codex-fallback-subclass-tally",   "codex-fallback-tally-check.yml"):    "CFP-1368 / ADR-052 Amendment 14 + ADR-060 Amendment N — entry name semantic 'subclass-tally' (CFP-1286 fail-mode SUB-CLASS 9-enum 누적 카운터, subclass semantic 보존), workflow basename 'codex-fallback-tally-check' trimmed for brevity (Conservative no-rename §결정 20). CFP-1286 Wave 1 declarative anchor origin 보존.",
     # CFP-1787 — execution-context-state-presence entry name preserves "presence" semantic (Wave 1 declarative + Wave 2 mechanical wire)
     ("execution-context-state-presence", "execution-context-state-check.yml"): "CFP-1787 / ADR-082 Amendment 33 sub-scope 1-V — entry name semantic 'presence' (verdict packet 5 sub-field declare presence check intent, ADR-082 Amd 25/27 'presence' lint family naming verbatim 답습), workflow basename 'execution-context-state-check' (Conservative no-rename §결정 20).",
+    # CFP-1564 — admin-merge-preflight-gate entry name preserves "gate" semantic (ADR-113 §결정 1 pre-flight gate)
+    ("admin-merge-preflight-gate",       "admin-merge-preflight-check.yml"):   "CFP-1564 / ADR-113 §결정 1 — entry name semantic 'gate' (admin-merge pre-flight gate 5-step procedure mandate, ADR-060 evidence-checks-registry entry naming verbatim), workflow basename 'admin-merge-preflight-check' (Conservative no-rename §결정 20, check suffix 통일).",
 }
 
 REGISTRY_PATH = Path("docs/evidence-checks-registry.yaml")

@@ -25,7 +25,7 @@ authors:
 **상위 SSOT 위치**:
 - 본 file: 상세 schema + example + ESCALATE 처리
 - [`CLAUDE.md`](../../CLAUDE.md) "## Inter-plugin Contract" 섹션: 요약 + cross-ref to 본 file
-- [`docs/adr/ADR-008-inter-plugin-contract-versioning.md`](../adr/ADR-008-inter-plugin-contract-versioning.md): versioning 룰
+- [`docs/adr/ADR-008-inter-plugin-contract-versioning.md`](../../archive/adr/ADR-008-inter-plugin-contract-versioning.md): versioning 룰
 
 ## 1. 흐름 개요
 

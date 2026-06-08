@@ -54,7 +54,7 @@ readonly SKIP_LIST=(
   "templates/github-workflows/wrapper-managed-block.yml"
   "docs/inter-plugin-contracts/reconcile-protocol-v1.md"
   "docs/evidence-checks-registry.yaml"
-  "docs/adr/ADR-027-consumer-adoption-protocol.md"
+  "archive/adr/ADR-027-consumer-adoption-protocol.md"
 )
 
 # ── path canonical form 정규화 helper ────────────────────────────────────────

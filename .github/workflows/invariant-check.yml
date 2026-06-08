@@ -2,15 +2,11 @@ name: Invariant Check
 
 # CFP-5 Phase A + CFP-7~10 Phase C/D + CFP-13/16 — SSOT drift 자동 차단.
 #
-# 검증 8종:
+# 검증 (CHANGELOG 동결로 #2 version-match / #7 migration-parity 제거 — prune):
 #   1. Workflow parity — templates/github-workflows/*.yml ↔ .github/workflows/<basename>.yml byte-identical
-#   2. Version match — .claude-plugin/plugin.json `version` ↔ CHANGELOG.md 최상단 [version] header
 #   3. Agent count — agents/*.md 실제 개수 ↔ CLAUDE.md "N core 에이전트" 첫 매칭
 #   4. Write queue permission parity (CFP-7) — CLAUDE.md "Write queue 의뢰 권한" 표 ↔ agents/*.md frontmatter permissions.allow
 #   5. ADR-002 footer pattern (CFP-8) — agents/*.md (DocsAgent 제외) + presets/*/agents/*.md 의 "## 문서화 표준" 섹션 1줄 + 정확한 link target + SSOT 본문 inline 복제 금지
-#   6. Review category enum parity (CFP-9 lane=code + CFP-13 lane=design/security) — 3 lane 각각의 SSOT (templates/review-checklists/<lane>.md) ↔ <Lane>PLAgent.md YAML list ↔ CodexReviewAgent.md lane-anchored 프롬프트 set 정합 (동일 순서)
-#   7. Migration-guide BREAKING parity (CFP-10) — CHANGELOG.md `## [X.Y.Z] ... (BREAKING ...)` ↔ docs/migration-guide.md `## vA.B → vC.D` 섹션 정합 (모든 BREAKING은 migration-guide에 대응 섹션 보유)
-#   8. Severity overrides count + breakdown parity (CFP-16) — 3 lane 각각의 SSOT "## Severity 자동 룰" bullet 개수 + P0/P1 분포 ↔ <Lane>PLAgent.md severity_overrides YAML list 정합 (Codex 프롬프트는 의도적 영문 요약이라 scope 외)
 
 on:
   push:
@@ -76,26 +72,7 @@ jobs:
           fi
           exit $EXIT
 
-      - name: Version match (plugin.json ↔ CHANGELOG.md latest)
-        run: |
-          set -u
-          PJ_VER=$(jq -r '.version' .claude-plugin/plugin.json)
-          CL_VER=$(grep -oE '^## \[[0-9]+\.[0-9]+\.[0-9]+\]' CHANGELOG.md | head -1 | sed -E 's/^## \[(.*)\]$/\1/')
-          if [ -z "$PJ_VER" ] || [ "$PJ_VER" = "null" ]; then
-            echo "::error file=.claude-plugin/plugin.json::version 필드 부재 또는 null"
-            exit 1
-          fi
-          if [ -z "$CL_VER" ]; then
-            echo "::error file=CHANGELOG.md::최상단 ## [N.N.N] header 부재"
-            exit 1
-          fi
-          if [ "$PJ_VER" != "$CL_VER" ]; then
-            echo "::error::plugin.json version ($PJ_VER) ≠ CHANGELOG.md latest ($CL_VER)"
-            echo "  plugin.json: $PJ_VER"
-            echo "  CHANGELOG.md: $CL_VER"
-            exit 1
-          fi
-          echo "✓ Version match: $PJ_VER"
+      # Version match (plugin.json ↔ CHANGELOG.md) — REMOVED (prune: CHANGELOG → archive/CHANGELOG-legacy.md 동결, 버전 SSOT = plugin.json)
 
       - name: Agent count (agents/*.md ↔ CLAUDE.md \"N core 에이전트\")
         run: |
@@ -326,74 +303,7 @@ jobs:
       # 5 review agent + base + 3 checklist이 codeforge-review plugin으로 이동.
       # 본 invariant는 codeforge-review repo의 자체 CI에서 enforce해야 함 (별도 후속 — CFP-29.5 또는 등).
 
-      - name: Migration-guide BREAKING parity (CFP-10 — CHANGELOG ↔ migration-guide)
-        run: |
-          python3 <<'EOF'
-          """
-          CHANGELOG.md의 모든 BREAKING 버전이 docs/migration-guide.md에 대응 섹션을 가지는지 검증.
-
-          Invariant:
-            - CHANGELOG.md `## [X.Y.Z] — DATE (BREAKING — title)` 패턴
-            - 각 BREAKING 버전의 major.minor (X.Y)에 대해
-              docs/migration-guide.md에 `## vA.B → vX.Y` heading 존재
-            - 역방향(migration-guide의 모든 섹션 → CHANGELOG BREAKING)은 강제 안 함:
-              non-breaking migration 섹션도 문서화 가치 있음 (superset 허용)
-          """
-          import re
-          import sys
-          from pathlib import Path
-
-          # 1. CHANGELOG.md의 BREAKING 버전 추출
-          changelog = Path("CHANGELOG.md").read_text(encoding="utf-8")
-          breaking_re = re.compile(
-              r"^## \[(\d+)\.(\d+)\.(\d+)\][^\n]*\(BREAKING",
-              re.MULTILINE,
-          )
-          breaking_versions = []  # [(major, minor, patch, full_str)]
-          for m in breaking_re.finditer(changelog):
-              major, minor, patch = m.group(1), m.group(2), m.group(3)
-              breaking_versions.append((major, minor, patch, f"{major}.{minor}.{patch}"))
-
-          if not breaking_versions:
-              print("✓ Migration-guide BREAKING parity: BREAKING 버전 없음 (skip)")
-              sys.exit(0)
-
-          # 2. migration-guide.md의 `## vA.B → vC.D` 섹션 추출
-          mg_text = Path("docs/migration-guide.md").read_text(encoding="utf-8")
-          # 한국어 emdash(→) 또는 일반 dash(->)도 허용 (관행상 emdash 사용)
-          mg_sections = set()  # set of "C.D" (to-version)
-          for m in re.finditer(
-              r"^##\s*v(\d+)\.(\d+)\s*[→\-]+>?\s*v(\d+)\.(\d+)\b",
-              mg_text,
-              re.MULTILINE,
-          ):
-              from_major, from_minor = m.group(1), m.group(2)
-              to_major, to_minor = m.group(3), m.group(4)
-              mg_sections.add(f"{to_major}.{to_minor}")
-
-          # 3. 정합 검증 — 각 BREAKING의 major.minor가 migration-guide에 대응 섹션 존재
-          errors = []
-          for major, minor, patch, full in breaking_versions:
-              key = f"{major}.{minor}"
-              if key not in mg_sections:
-                  errors.append(
-                      f"CHANGELOG v{full} BREAKING but migration-guide.md에 "
-                      f"'## v? → v{major}.{minor}' 섹션 부재"
-                  )
-
-          if errors:
-              print(f"::error file=docs/migration-guide.md::Migration-guide BREAKING parity 실패 ({len(errors)} drift)")
-              for e in errors:
-                  print(f"  - {e}")
-              print(f"  CHANGELOG BREAKING versions: {[v[3] for v in breaking_versions]}")
-              print(f"  migration-guide section to-versions: {sorted(mg_sections)}")
-              sys.exit(1)
-
-          print(
-              f"✓ Migration-guide BREAKING parity: "
-              f"{len(breaking_versions)} BREAKING × all matched in migration-guide"
-          )
-          EOF
+      # Migration-guide BREAKING parity (CFP-10 — CHANGELOG ↔ migration-guide) — REMOVED (prune: CHANGELOG 동결로 BREAKING 추출원 소멸, plugin.json SemVer 가 호환성 신호)
 
       # Severity overrides count + breakdown parity (CFP-16) — REMOVED in CFP-29 Phase 1
       # 5 review agent + base + 3 checklist이 codeforge-review plugin으로 이동.

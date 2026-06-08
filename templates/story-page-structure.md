@@ -402,7 +402,7 @@ git_ops_log:
     - `retro_summary: <one-paragraph-summary>` — max 500자 한 단락 요약
     - `learnings_count: <integer >= 0>` — retro 안 학습 항목 개수 (PMOAgent count)
     - `feedback_back_to_codeforge: <Issue link list or empty []>` — codeforge improvement 발견 시 Issue 링크 (label: `codeforge-improvement` 또는 `from-mctrader-debut` 등)
-- **Migration policy** (ADR-045 D-5, backward compat): 본 schema = 신규 Story (CFP-138 merge 이후 close) 부터 strict mode. 기존 close Story file 100+ 의 §11 = vague placeholder (`- 회고 (PMOAgent 작성)`) 유지 — retroactive 미처리 ([ADR-045](../docs/adr/ADR-045-story-retro-mandatory-trigger.md) §결정 5 정합).
+- **Migration policy** (ADR-045 D-5, backward compat): 본 schema = 신규 Story (CFP-138 merge 이후 close) 부터 strict mode. 기존 close Story file 100+ 의 §11 = vague placeholder (`- 회고 (PMOAgent 작성)`) 유지 — retroactive 미처리 ([ADR-045](../archive/adr/ADR-045-story-retro-mandatory-trigger.md) §결정 5 정합).
 
 ### §12. Sonnet Decision Log (CFP-59 / CFP-61 / ADR-022)
 

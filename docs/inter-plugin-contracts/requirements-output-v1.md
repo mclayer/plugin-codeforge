@@ -116,7 +116,7 @@ requirements_output:
 
 ## 3.1 Story §1 frontmatter schema (cross-repo Epic 지원, v1.1)
 
-CFP-60 / [ADR-020](../adr/ADR-020-cross-repo-epic-pattern.md) 신설. Story `§1 메타` 의 YAML frontmatter 에 cross-repo Epic 정보 추가 (optional, backward compatible).
+CFP-60 / [ADR-020](../../archive/adr/ADR-020-cross-repo-epic-pattern.md) 신설. Story `§1 메타` 의 YAML frontmatter 에 cross-repo Epic 정보 추가 (optional, backward compatible).
 
 ```yaml
 ---

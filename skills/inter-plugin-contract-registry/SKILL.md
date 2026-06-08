@@ -23,21 +23,23 @@ codeforge core 가 외부 plugin과 통신할 때의 typed schema. wrapper repo 
 | `test_verdict` | codeforge-test | test-verdict-v1.md (Archived) · [test-verdict-v2.md](../../docs/inter-plugin-contracts/test-verdict-v2.md) (Active — CFP-367 / ADR-055) |
 | `pmo_output` | codeforge-pmo | pmo-output-v1.md (Active) |
 
-각 wrapper sibling 은 lane plugin canonical 의 verbatim mirror + "**상위 SSOT 위치**" 섹션. canonical 변경 시 wrapper sibling sync PR 후속 의무 ([ADR-010](../../docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md)).
+각 wrapper sibling 은 lane plugin canonical 의 verbatim mirror + "**상위 SSOT 위치**" 섹션. canonical 변경 시 wrapper sibling sync PR 후속 의무 ([ADR-010](../../archive/adr/ADR-010-inter-plugin-contract-sibling-sync.md)).
 
 ## kind:registry (cross-cutting protocol, 5 file)
 
 wrapper-owned. 본 lint scope 밖 — `check-doc-frontmatter.sh` + `check-doc-section-schema.sh` 가 검증.
 
+> 각 파일의 현재 `version` = 파일 frontmatter 가 SSOT. 본 목록은 버전 번호를 적지 않는다 (bump 마다 stale 재발 방지 — 과거 v1.1/v2.4 등 하드코딩이 수십 버전 뒤처졌던 결함 차단). 버전 확인은 해당 파일 frontmatter / MANIFEST.yaml 직접 조회.
+
 - [comment-prefix-registry-v1.md](../../docs/inter-plugin-contracts/comment-prefix-registry-v1.md) — 11 phase prefix taxonomy
-- [fix-event-v1.md](../../docs/inter-plugin-contracts/fix-event-v1.md) — Story §10 FIX Ledger writer monopoly (v1.1 — CFP-391 `debate_artifact_ref` optional 필드)
-- [label-registry-v1.md](../../docs/inter-plugin-contracts/label-registry-v1.md) — phase/gate/fix label taxonomy (Archived — CFP-140) / [label-registry-v2.md](../../docs/inter-plugin-contracts/label-registry-v2.md) (Active — ADR-049, v2.4 — CFP-506 `hotfix-bypass:claude-md-line-cap` 8번째 family member)
+- [fix-event-v1.md](../../docs/inter-plugin-contracts/fix-event-v1.md) — Story §10 FIX Ledger writer monopoly (Active)
+- [label-registry-v1.md](../../docs/inter-plugin-contracts/label-registry-v1.md) — phase/gate/fix label taxonomy (Archived — CFP-140) / [label-registry-v2.md](../../docs/inter-plugin-contracts/label-registry-v2.md) (Active — ADR-049)
 - [debate-protocol-v1.md](../../docs/inter-plugin-contracts/debate-protocol-v1.md) — Codex↔Opus multi-round adversarial debate protocol (lane-agnostic, CFP-391 / ADR-059)
-- [evidence-check-registry-v1.md](../../docs/inter-plugin-contracts/evidence-check-registry-v1.md) (v1.1 — Active) — evidence-enforceable governance check schema (CFP-389 / ADR-060). registry data SSOT = [`docs/evidence-checks-registry.yaml`](../../docs/evidence-checks-registry.yaml).
+- [evidence-check-registry-v1.md](../../docs/inter-plugin-contracts/evidence-check-registry-v1.md) (Active) — evidence-enforceable governance check schema (CFP-389 / ADR-060). registry data SSOT = [`docs/evidence-checks-registry.yaml`](../../docs/evidence-checks-registry.yaml).
 
 ## Versioning + Write boundary
 
-Versioning + sibling sync SSOT: [ADR-008](../../docs/adr/ADR-008-inter-plugin-contract-versioning.md) (SemVer 룰) + [ADR-010](../../docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md) (canonical/sibling 책임 + 신규 contract 추가 4단계). Write boundary: 각 lane plugin = 자기 contract producer + self-writer. wrapper Orchestrator = verdict 응답 + lane 라우팅 + Story §10 FIX Ledger 만 처리 (상세 [playbook](../../docs/orchestrator-playbook.md)).
+Versioning + sibling sync SSOT: [ADR-008](../../archive/adr/ADR-008-inter-plugin-contract-versioning.md) (SemVer 룰) + [ADR-010](../../archive/adr/ADR-010-inter-plugin-contract-sibling-sync.md) (canonical/sibling 책임 + 신규 contract 추가 4단계). Write boundary: 각 lane plugin = 자기 contract producer + self-writer. wrapper Orchestrator = verdict 응답 + lane 라우팅 + Story §10 FIX Ledger 만 처리 (상세 [playbook](../../docs/orchestrator-playbook.md)).
 
 **SemVer 적용 규칙 (ADR-008)**:
 - MAJOR bump: breaking change (consumer migration 필요) — sibling sync PR 의무 (ADR-010)

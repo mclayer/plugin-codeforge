@@ -1,6 +1,6 @@
 ---
 name: review-responsibility
-description: Design/Code/Security 리뷰 책임 매트릭스. 4 lane(DesignLane·DesignReview·CodeReview·SecurityTest) 체크 항목 분담 테이블. 설계리뷰·구현리뷰·보안테스트 lane 진입 시 Orchestrator 호출 의무.
+description: Design/Code/Security 리뷰 책임 매트릭스. 5 lane(DesignLane·DesignReview·CodeReview·SecurityTest·DeployReview) 체크 항목 분담 테이블. 설계리뷰·구현리뷰·보안테스트·배포리뷰 lane 진입 시 Orchestrator 호출 의무.
 tools: Read
 ---
 
@@ -10,7 +10,7 @@ tools: Read
 
 ## 호출 시점
 
-설계리뷰 lane 진입 시 (DesignReviewPL spawn 전), 구현리뷰 lane 진입 시 (CodeReviewPL spawn 전), 보안테스트 lane 진입 시 (SecurityTestPL spawn 전).
+설계리뷰 lane 진입 시 (DesignReviewPL spawn 전), 구현리뷰 lane 진입 시 (CodeReviewPL spawn 전), 보안테스트 lane 진입 시 (SecurityTestPL spawn 전), 배포리뷰 lane 진입 시 (DeployReviewPLAgent spawn 전).
 
 ## 개요
 
@@ -42,13 +42,13 @@ tools: Read
 | **§11 Data integrity invariant** | ✅ | (감사) | — | (검증) |
 | **§11 Backfill / 기존 데이터 처리** | ✅ | (감사) | — | (검증) |
 | **§11 누락 / N/A 사유 부재** | — | ✅ **P0 차단** | — | — |
-| **§7.4 DR / failover 경로** | ✅ OpRiskArch | (감사) | — | (검증) |
-| **§7.4 Cancel-on-disconnect** | ✅ OpRiskArch | (감사) | — | (검증) |
-| **§7.4 Clock sync (CONDITIONAL)** | ✅ OpRiskArch | (감사·N/A 사유) | — | (검증) |
-| **§7.4 Rate limit / quota** | ✅ OpRiskArch | (감사) | — | (검증) |
-| **§7.4 Env isolation** | ✅ OpRiskArch | (감사) | — | (검증) |
+| **§7.4 DR / failover 경로** | ✅ InfraOperationalArch | (감사) | — | (검증) |
+| **§7.4 Cancel-on-disconnect** | ✅ InfraOperationalArch | (감사) | — | (검증) |
+| **§7.4 Clock sync (CONDITIONAL)** | ✅ InfraOperationalArch | (감사·N/A 사유) | — | (검증) |
+| **§7.4 Rate limit / quota** | ✅ InfraOperationalArch | (감사) | — | (검증) |
+| **§7.4 Env isolation** | ✅ InfraOperationalArch | (감사) | — | (검증) |
 | **§7.4 누락 / N/A 사유 부재** | — | ✅ **P0 차단** | — | — |
-| **§11 Idempotency (CONDITIONAL)** | ✅ DataMigrationArch | (감사·N/A 사유) | — | — |
+| **§11 Idempotency (CONDITIONAL)** | ✅ ModuleArch | (감사·N/A 사유) | — | — |
 | **§11 Idempotency 누락 / N/A 사유 부재** | — | ✅ **P0 차단** | — | — |
 | 코드 ↔ Change Plan 변경 계획 준수 | — | — | ✅ | — |
 | 코드 스타일·네이밍·가독성 | — | — | ✅ | — |
@@ -67,13 +67,13 @@ tools: Read
 | 정적 분석 결함 | — | — | — | ✅ (1차: CodeQL) |
 | 설정·배포 보안 (default credential·open port·TLS) | — | — | — | ✅ |
 | Race / TOCTOU 보안 취약 | — | — | — | ✅ |
-| **Container image base / multi-stage build 전략** | ✅ (Refactor + OpRiskArch) | ✅ (감사) | (구현 준수) | — |
+| **Container image base / multi-stage build 전략** | ✅ (Refactor + InfraOperationalArch) | ✅ (감사) | (구현 준수) | — |
 | **Dockerfile syntax + best practice** | — | — | — | ✅ (1차: hadolint) |
 | **Container image CVE / misconfig** | — | — | — | ✅ (1차: trivy) |
 | **Compose service definition / health check / dep order** | — | (감사) | ✅ | — |
 | **Container network mode / port exposure** | ✅ SecurityArch | (감사) | — | ✅ (코드 준수 검증) |
 | **Container secret / env mount 전략** | ✅ SecurityArch | (감사) | — | ✅ (런타임 노출 검증) |
-| **§7.4 Container restart policy / volume DR** | ✅ OpRiskArch | (감사) | — | (검증) |
+| **§7.4 Container restart policy / volume DR** | ✅ InfraOperationalArch | (감사) | — | (검증) |
 
 ## Lane 역할 요약 (CFP-1059 / ADR-087+088 후 — 4 → 5 review lane)
 
@@ -81,7 +81,7 @@ tools: Read
 - **DesignReview**: 문서(Change Plan + ADR) 감사. 실구현 코드 미검토. §7 완결성 감사
 - **CodeReview**: 코드(src·config·deploy·tests). 일반 품질·런타임 결함·테스트 품질 중심
 - **SecurityTest**: 코드 + 인프라 + 의존성. 1차 GitHub native (Dependabot/CodeQL/Secret Scanning), 2차 Claude/Codex
-- **DeployReview (CFP-1059 / [ADR-088](../../docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md), Phase 1 declarative)**: production runtime 측정 + cutover 사후 검증 (위 4 review lane 모두와 disjoint axis — code-level / production-level 분리). 검증 3종 = (a) smoke (양방향 호환 — ADR-089 §결정 4) / (b) 성능 비교 (production runtime ↔ pre-deploy baseline, ADR-068 I-5 dimensional empirical grounding 정합 — `[empirical-source: ...]` annotation 의무) / (c) cutover 사후 검증 (ProductionEvidenceDeputy ownership 이관 codeforge-design CONDITIONAL → codeforge-deploy-review 정식, ADR-088 §결정 3). FAIL 시 FIX dispatch (DeveloperPL / ArchitectPL / RequirementsPL — debate-protocol-v1 multi-round adversarial debate 자동 발동 의무)
+- **DeployReview (CFP-1059 / [ADR-088](../../archive/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md), Phase 1 declarative)**: production runtime 측정 + cutover 사후 검증 (위 4 review lane 모두와 disjoint axis — code-level / production-level 분리). 검증 3종 = (a) smoke (양방향 호환 — ADR-089 §결정 4) / (b) 성능 비교 (production runtime ↔ pre-deploy baseline, ADR-068 I-5 dimensional empirical grounding 정합 — `[empirical-source: ...]` annotation 의무) / (c) cutover 사후 검증 (ProductionEvidenceDeputy ownership 이관 codeforge-design CONDITIONAL → codeforge-deploy-review 정식, ADR-088 §결정 3). FAIL 시 FIX dispatch (DeveloperPL / ArchitectPL / RequirementsPL — debate-protocol-v1 multi-round adversarial debate 자동 발동 의무)
 - 중복 지적 발생 시 해당 레인 ReviewPL이 dedup → severity 높은 쪽 채택
 
 > **DeployReview ↔ 기존 4 review lane disjoint axis (ADR-088 §결정 2 / Lane 진입 시 review-responsibility skill 호출 의무)**:
@@ -91,4 +91,4 @@ tools: Read
 > - IntegrationTest (codeforge-test) = 시나리오 단위 정합 검증, production cutover 사후 검증 미접근
 > - **DeployReview (본 신설 lane)** = production 환경 성능 측정 + cutover 사후 검증, 위 4 review lane 모두와 disjoint axis
 
-> **Debut-audit measurable signal**: ✅ 0개 또는 ≥2개 row = [ADR-021](../../docs/adr/ADR-021-phase-gap-measurable-signal.md) R4 (Responsibility leak) detection source.
+> **Debut-audit measurable signal**: ✅ 0개 또는 ≥2개 row = [ADR-021](../../archive/adr/ADR-021-phase-gap-measurable-signal.md) R4 (Responsibility leak) detection source.

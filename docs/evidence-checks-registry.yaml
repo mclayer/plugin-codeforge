@@ -573,46 +573,13 @@ entries:
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
-  # ─── CFP-426 Phase 2 backfill (4 entries, ADR-040 Amendment 3 §결정 7.D verbatim, 2026-05-12) ───
+  # ─── CFP-426 Phase 2 backfill (3 entries, ADR-040 Amendment 3 §결정 7.D verbatim, 2026-05-12) ───
   # Story 1 skeleton (warning tier) — actual wire 는 후속 Story:
-  #   - CFP-427 (Story 2): worktree-first-session-start-wire + worktree-first-spawn-evidence-cwd actual wire
+  #   - CFP-427 (Story 2): worktree-first-spawn-evidence-cwd actual wire
+  #     (worktree-first-session-start-wire = SessionStart worktree-GC 패턴 retire 로 제거 — eager 완료 정리 GitOpsAgent §5 로 대체, theater 검사 정리)
   #   - CFP-428 (Story 3): worktree-first-pre-checkout + worktree-first-pre-commit-main-block actual git hook
-  #   - CFP-429 (Story 4): 4 entry warning → blocking-on-pr 승격 평가 (ADR-060 §결정 6 gate)
-  # carrier ADR-040 mechanical_enforcement_actions[] 4 entry self-application 첫 사례 (Amendment 3 §결정 7.D)
-
-  - name: worktree-first-session-start-wire
-    description: |
-      ADR-040 §결정 5 (Stale GC) + §결정 7 (Amendment 3) — wrapper repo `.claude/settings.json` 의
-      `hooks.SessionStart[]` 안에 `check-worktree-stale.sh` 호출 entry 존재 검증. SessionStart hook
-      wire 누락 시 stale worktree 자동 GC 미동작 (declaration only → mechanical enforcement 분리).
-      warning tier — continue-on-error: true. CFP-427 Story 2 가 actual wire 첫 사례 —
-      `scripts/check-session-start-hook-presence.sh` `exec` swap wrapper 패턴 (RefactorArch 결정).
-      CFP-429 (Story 4) Amendment 4 declaration: 4/4 actual wire 완료 + ADR-060 §결정 6 promotion
-      gate (b) bypass 외 failure > 0 FAIL → current_tier: warning 유지 + actual 승격 follow-up CFP
-      carrier (from-cfp-425-followup label). Self-test integration test: tests/integration/stories/CFP-425/self-test-worktree-block.sh E4-1 (Phase 2 PR CFP-429).
-    detect_command: bash scripts/check-worktree-first-session-start-wire.sh
-    workflow: templates/github-workflows/worktree-first-session-start-wire.yml
-    current_tier: blocking-on-pr  # CFP-531 / ADR-040 Amendment 5 — warning → blocking-on-pr 승격 (2026-05-13)
-    bypass_label: hotfix-bypass:worktree-session-start-wire
-    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse (BYPASS_LABEL_PREFIX=hotfix-bypass:)
-    promotion_criteria:
-      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
-      failure_threshold: 0          # ADR-060 §결정 6 (b)
-      sibling_dependencies:         # ADR-060 §결정 6 (c) — Story 4 진입 시 평가
-        - CFP-427
-        - CFP-428
-        - CFP-429
-      evidence_artifacts:
-        - github_actions_run_history_url
-        - lint_failure_count_zero_proof
-        - pr_cumulative_count_proof
-    introduced_by: CFP-426
-    owner_adr: ADR-040
-    carrier_adr: ADR-040
-    recurrence:
-      count: 0
-      promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
-    status: Active
+  #   - CFP-429 (Story 4): warning → blocking-on-pr 승격 평가 (ADR-060 §결정 6 gate)
+  # carrier ADR-040 mechanical_enforcement_actions[] self-application 첫 사례 (Amendment 3 §결정 7.D)
 
   - name: worktree-first-pre-checkout
     description: |
@@ -811,34 +778,8 @@ entries:
       promotion_trigger: none      # ADR-060 §결정 19 (Amendment 6) — schema v1.2 default
     status: Active
 
-  # ─── CFP-475 Phase 2 (duplicate-session-start-hook-check, 2026-05-12) ───
-  # ADR-038 Amendment 3 §결정 12 one-channel rule mechanical lint
-  # plugin-root hooks/hooks.json SSOT 이전 후 settings.json 중복 등록 detect
-
-  - name: duplicate-session-start-hook-check
-    description: |
-      ADR-038 Amendment 3 §결정 12 (one-channel rule) — `.claude/settings.json` `hooks.SessionStart[]`
-      와 plugin-root `hooks/hooks.json` 양 channel 안 prereq-check entry 동시 정의 detect.
-      하나의 channel 만 SSOT (plugin-root first-class, settings.json fallback deprecated).
-      warning tier — continue-on-error: true. CFP-475 Phase 2 PR 가 actual wire 첫 사례 —
-      `scripts/check-no-duplicate-session-start-hook.sh` (bash + jq) + `hotfix-bypass:duplicate-session-start-hook` label.
-    detect_command: bash scripts/check-no-duplicate-session-start-hook.sh
-    workflow: templates/github-workflows/duplicate-session-start-hook-check.yml
-    current_tier: warning          # ADR-060 §결정 5 — 첫 도입 = warning mode
-    bypass_label: hotfix-bypass:duplicate-session-start-hook
-    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh   # CFP-389 prior art reuse
-    promotion_criteria:
-      pr_cumulative_min: 20         # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
-      failure_threshold: 0          # ADR-060 §결정 6 (b)
-      sibling_dependencies: []      # 본 entry 단독 — Story 4 진입 시 평가 sibling 부재
-      evidence_artifacts:
-        - github_actions_run_history_url
-        - lint_failure_count_zero_proof
-        - pr_cumulative_count_proof
-    introduced_by: CFP-475
-    owner_adr: ADR-038
-    carrier_adr: ADR-038
-    status: Active
+  # (duplicate-session-start-hook-check entry retired — #1972 가 script + workflow 삭제(자기거버넌스 CI prune),
+  #  본 cleanup 이 잔존 entry + orphan 테스트 제거로 마무리. ADR-038 Amendment 3 §결정 12 one-channel rule 자체는 유효.)
 
   # ─── CFP-481 Phase 2 (PR open 시 phase label 자동 부착, 2026-05-12) ───
   # ADR-024 Amendment 4 §결정 6.A.1 branch → phase mapping 표 SSOT 의 mechanical enforcement —
@@ -2269,7 +2210,7 @@ entries:
       workflow_dispatch + Issue auto-create + per-signature dedup).
     detect_command: bash scripts/check-per-plugin-cumulative-counter.sh
     workflow: templates/github-workflows/per-plugin-cumulative-counter.yml
-    current_tier: blocking-on-pr  # CFP-1607 Amendment 15 ratchet (2026-05-25 KST) — warning → blocking-on-pr (ADR-060 framework first-use promotion). Wave 1 declarative tier transition; Wave 2 workflow continue-on-error 변경 = 별 sub-CFP.
+    current_tier: warning  # red-team 정정 2026-06-02 (blocking-on-pr → warning): 워크플로(.github/workflows/per-plugin-cumulative-counter.yml)가 continue-on-error:true + pull_request 트리거 부재 → 실제 PR 차단 불가. 레지스트리 tier 를 실체에 일치시킴. 이전 CFP-1607 Amendment 15 (2026-05-25) blocking-on-pr declarative promotion 은 Wave 2 (continue-on-error 제거 + PR 트리거 + required context 부착) 미배선으로 효력 없었음 — 진짜 차단 원하면 Wave 2 배선 필요.
     bypass_label: hotfix-bypass:per-plugin-cumulative-counter
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     promotion_criteria:
@@ -2338,55 +2279,6 @@ entries:
     recurrence:
       count: 0                    # Phase 1 entry append, Phase 2 actual wire 후 evidence 누적 시점 별 update
       threshold: 1                # PR per-presence boolean (binary) — 단일 PR scope, 누적 threshold 미적용
-      last_occurrence: null       # Phase 2 actual wire 후 first reach 시점 update
-      promotion_trigger: none     # Phase 2 actual wire 완료, 첫 evidence 누적 후 advisory 격상 예정
-    status: warning              # Phase 2 wire 완료 (CFP-845 Phase 2, 2026-05-17) — lint script + workflow + bats 모두 Active
-
-  # ─── CFP-845 Phase 1 (ADR-024 Amendment 8 §결정 6.A.5 — cross-repo 3-repo bypass counter extension, 2026-05-17) ───
-  # cross-repo 영역 첫 evidence-checks-registry entry.
-  # CFP-825 Amendment 6 §scope_boundary 4 out-of-scope 중 4번 영역 (cross-repo extension) 흡수.
-  - name: cross-repo-bypass-counter
-    description: |
-      ADR-024 Amendment 8 §결정 6.A.5 — 3-repo (mclayer/plugin-codeforge wrapper +
-      mclayer/codeforge-internal-docs + mclayer/marketplace) cross-repo per-(repo,
-      plugin, label) signature 누적 카운터 lint. threshold = per-(repo, plugin, label)
-      signature 누적 ≥3 reach-merged PR (§결정 6.A.2 와 동일 — repo namespace 분리 시
-      per-repo 독립 trigger). aggregate trigger = 3 repo 동일 (plugin, label) signature
-      동시 reach 시 단일 aggregate carrier Issue 발의 (multi-repo signature, 3-repo
-      systemic mutation 신호). per-repo 단독 trigger + aggregate trigger 양 channel
-      disjoint. dedup_unit = (repo, PR number) 2-tuple (cross-repo PR number 충돌 회피).
-      single PAT (CODEFORGE_CROSS_REPO_PAT, ADR-066) reuse — 3 repo `issues:read` +
-      `repo:read` 권한, 신규 secret 0건. rotation 90 day / max 180 day lifetime
-      정합 (ADR-066). carrier Issue repository = aggregate carrier = mclayer/plugin-codeforge
-      (wrapper governance owner SSOT, ADR-013 정합), per-repo carrier = 해당 repo
-      (각 repo local governance). self-meta loop 회피: hotfix-bypass:cross-repo-bypass-counter
-      부착 PR 은 cross-repo 누적 count 제외. grep-testable artifact 존재 예정
-      (scripts/check-cross-repo-bypass-counter.{py,sh}, Phase 2 carrier). CFP-627
-      marketplace-drift-detection precedent (24h cron + workflow_dispatch + Issue
-      auto-create + per-signature dedup) cross-repo 확장.
-    detect_command: bash scripts/check-cross-repo-bypass-counter.sh
-    workflow: templates/github-workflows/cross-repo-bypass-counter.yml
-    current_tier: warning
-    bypass_label: hotfix-bypass:cross-repo-bypass-counter
-    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
-    promotion_criteria:
-      pr_cumulative_min: 20
-      failure_threshold: 0
-      sibling_dependencies: []
-      evidence_artifacts:
-        - github_actions_run_history_url
-        - lint_failure_count_zero_proof
-        - pr_cumulative_count_proof
-        - cross_repo_aggregate_threshold_calibration_evidence  # aggregate trigger threshold 재calibration evidence (Phase 2 actual wire 후 별 calibration carrier)
-        - pat_rotation_audit_log_evidence                       # ADR-066 PAT rotation log 정합 (90 day rotation / 180 day max lifetime)
-    modal_anti_pattern_dictionary: {}
-    introduced_by: CFP-845
-    introduced_date: 2026-05-17
-    owner_adr: ADR-024            # Amendment 8 §결정 6.A.5 (cross-repo extension SSOT)
-    carrier_adr: ADR-060          # evidence-enforceable framework carrier
-    recurrence:
-      count: 0                    # Phase 1 entry append, Phase 2 actual wire 후 evidence 누적 시점 별 update
-      threshold: 3                # ADR-024 Amendment 8 §결정 6.A.5 — per-(repo, plugin, label) signature 단위 §결정 6.A.2 와 동일 (3)
       last_occurrence: null       # Phase 2 actual wire 후 first reach 시점 update
       promotion_trigger: none     # Phase 2 actual wire 완료, 첫 evidence 누적 후 advisory 격상 예정
     status: warning              # Phase 2 wire 완료 (CFP-845 Phase 2, 2026-05-17) — lint script + workflow + bats 모두 Active
@@ -4837,9 +4729,9 @@ entries:
       (bypass-as-norm-mutation 차단 inherit, 별 lint 신설 0).
 
       pattern_count >= 2 재발 시 follow-up CFP MUST promote to blocking tier.
-    detect_command: bash scripts/check-admin-merge-preflight.sh    # Wave 2 wire 시점 활성, Wave 1 = stub
-    workflow: null                     # Wave 1 = declarative anchor only (workflow Wave 2 carrier)
-    current_tier: warning              # ADR-060 §결정 5 — 첫 도입 = warning mode (deferred-followup)
+    detect_command: bash scripts/check-admin-merge-preflight.sh    # CFP-1564 Wave 2 wire 활성 (Python SSOT scripts/lib/check_admin_merge_preflight.py)
+    workflow: .github/workflows/admin-merge-preflight-check.yml    # CFP-1564 Wave 2 — templates/github-workflows/ byte-identical self-app (ADR-005)
+    current_tier: warning              # ADR-060 §결정 5 — warning mode (gate-block advisory, PR merge 미차단)
     bypass_label: hotfix-bypass:admin-merge-preflight-gate
     bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
     promotion_criteria:
@@ -4850,6 +4742,7 @@ entries:
         - CFP-1318                     # sentinel #2 carrier (phase-gate-mergeable workflow_dispatch 부재 retro)
         - CFP-1495                     # sentinel #3 carrier (PR #1505 close evacuation, headRefOid 13b958eb 보존)
         - CFP-1522                     # self-carrier (Wave 1 declarative anchor)
+        - CFP-1564                     # Wave 2 mechanical wire carrier (script + lib + bats RED→GREEN + workflow self-app)
       evidence_artifacts:
         - github_actions_run_history_url
         - lint_failure_count_zero_proof
@@ -4865,7 +4758,7 @@ entries:
       threshold: 2                     # pattern_count >= 2 재발 시 promote
       last_occurrence: "2026-05-25T00:00:00Z"    # CFP-1495 PR #1505 close evacuation
       promotion_trigger: auto_blocking # pattern_count >= 2 reach 시 blocking promotion 후보
-    status: deferred-followup          # Wave 1 declaration-only — Wave 2 별 sub-Story carrier 에서 status: Active 전환
+    status: active                     # CFP-1564 Wave 2 mechanical wire 완료 (deferred-followup → active 전환): script + Python SSOT + bats 7 TC RED→GREEN + workflow self-app byte-identical land. current_tier 는 warning 유지 (ADR-060 §결정 5).
 
   - name: confluence-drift-detection
     description: |

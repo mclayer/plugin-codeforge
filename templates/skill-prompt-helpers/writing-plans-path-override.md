@@ -10,4 +10,4 @@ When invoking `superpowers:writing-plans` from codeforge family plugin work, ove
 
 Pass this as part of the Skill invocation prompt argument. ADR-017 CI lint will reject the default path at PR stage.
 
-**Reference**: [ADR-013](../../docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md) · [ADR-017](../../docs/adr/ADR-017-skill-override-path-enforcement.md) · [Integration SSOT §4](../../docs/superpowers-integration.md)
+**Reference**: [ADR-013](../../archive/adr/ADR-013-codeforge-family-dogfood-out-policy.md) · [ADR-017](../../archive/adr/ADR-017-skill-override-path-enforcement.md) · [Integration SSOT §4](../../docs/superpowers-integration.md)

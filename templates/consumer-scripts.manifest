@@ -27,7 +27,8 @@ scripts/check-lane-evidence.sh:templates/github-workflows/lane-evidence-check.ym
 scripts/check-lint.sh
 overlay/hooks/pre-push.sh.example
 
-# CFP-136 / ADR-040 — worktree convention scripts (SessionStart hook + manual invocation).
+# CFP-136 / ADR-040 — worktree convention scripts. check-worktree-stale.sh = 주기 backstop (수동/스케줄;
+#   SessionStart 동기 hook 은 retire). eager 완료 정리는 GitOpsAgent (agents/GitOpsAgent.md §5).
 # Source: templates/scripts/worktree-*.sh (plugin-relative).
 # Consumer install path: ${CLAUDE_PROJECT_DIR}/templates/scripts/worktree-*.sh
 #   (plugin-root-relative verbatim mirror per scripts/bootstrap-consumer.sh:335

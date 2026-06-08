@@ -145,7 +145,7 @@ fi
 # Story-3 자체 = scripts/check-production-cutover-evidence.sh 신설 → runtime behavior change > 0 → Tier-1 exemption (declare-time presence verify only)
 if [[ $IS_WRAPPER_REPO -eq 1 ]]; then
   # Tier-1 declare-time scope check: ADR-72 frontmatter + amendment_log + cross-ref presence
-  ADR_72_PATH="${REPO_ROOT}/docs/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md"
+  ADR_72_PATH="${REPO_ROOT}/archive/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md"
   EVIDENCE_REGISTRY_PATH="${REPO_ROOT}/docs/evidence-checks-registry.yaml"
   LABEL_REGISTRY_PATH="${REPO_ROOT}/docs/inter-plugin-contracts/label-registry-v2.md"
 

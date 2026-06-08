@@ -8,7 +8,7 @@ tools: Read
 
 > 참조 테이블 skill — lane 진입 전 Story / Epic flow 패턴과 Preflight 체크 요건을 확인하세요.
 
-## 레인 8개 · 단계 정의 (CFP-1059 / [ADR-087](../../docs/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](../../docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — 6 → 8 lane 확장)
+## 레인 8개 · 단계 정의 (CFP-1059 / [ADR-087](../../archive/adr/ADR-087-deploy-lane-and-lifecycle-extension.md) + [ADR-088](../../archive/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) — 6 → 8 lane 확장)
 
 ```
 [Story] 요구사항 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → [CI gate]  ← N회 반복
@@ -18,7 +18,7 @@ tools: Read
                                                            [배포] → [배포 리뷰] → Epic close
 ```
 
-모든 Story는 **full 8 레인 + CI gate** 통과 (CFP-1059 후 — 배포 + 배포 리뷰 신설). Fast-path 없음 (단 **Hotfix 경로** 2종은 예외 — 운영 장애 대응, 사후 감사 의무. 상세는 [`docs/hotfix-playbook.md`](../../docs/hotfix-playbook.md)). **CI gate** = 구현 리뷰 PASS 후 Orchestrator가 `gh pr checks <PR_NUMBER> --watch`로 GitHub CI 결과 polling (최대 30분 timeout). PASS 시 merge gate 진입 (`lanes.security_ai: true` consumer는 SecurityTestPL spawn 추가). FAIL 시 DeveloperPL 1차 진단 → ArchitectPL 최종 판정 → FIX loop (CFP-317 / ADR-048).
+모든 Story는 **full 8 레인 + CI gate** 통과 (CFP-1059 후 — 배포 + 배포 리뷰 신설). Fast-path 없음 (단 **Hotfix 경로** 2종은 예외 — 운영 장애 대응, 사후 감사 의무. 상세는 [`docs/hotfix-playbook.md`](../../docs/hotfix-playbook.md)). **CI gate** = 구현 리뷰 PASS 후 Orchestrator가 `gh pr checks <PR_NUMBER> --watch`로 GitHub CI 결과 polling (최대 30분 timeout). PASS 시 merge gate 진입 (`lanes.security_ai: true` consumer는 SecurityTestPL spawn 추가). FAIL 시 DeveloperPL 1차 진단 → ArchitectPL 최종 판정 → FIX loop (CFP-317 / ADR-048-ci-native-test-execution).
 
 **배포 lane (Phase 1 declarative — CFP-1059 / ADR-087)**: Epic 묶음 종료 후 (모든 Story merged) Orchestrator → DeployPLAgent 자동 trigger. 변경 repo enumeration + DeployWorkerAgent N 병렬 dispatch (repo 단위). 배포 매커니즘 = blue-green + atomic swap + 3-시간 보존 + 자동 rollback (단일 매커니즘 고정). FAIL 시 자동 rollback + FIX dispatch. 활성 조건 = consumer `project.yaml` 안 `deploy:` block 등록 + codeforge-deploy plugin install (opt-in).
 
@@ -27,7 +27,7 @@ tools: Read
 ## Story flow (default — single-repo Story 또는 Epic 외 1 child Story)
 
 **1 Story = 2 PRs**:
-- **Phase 1 PR** (요구사항 + 설계 + 설계리뷰 lane): `docs/stories/<KEY>.md` §1-7 + `docs/change-plans/<slug>.md` + `docs/adr/ADR-NNN-<slug>.md`. **(internal-docs SSOT 적용 시, ADR-013 dogfood-out + amendment)**: change-plan 위치는 `<internal-docs-clone>/<plugin-folder>/change-plans/<slug>.md`. Codeforge family / dogfood Story 의 경우 본 path override. 또한 doc-only Story (예: ADR carrier 가 architecture decision SSOT 인 경우) 는 **별도 change-plan 면제** — ADR 가 §3 도입할 설계 SSOT 역할 충족 (ADR-013 정합).
+- **Phase 1 PR** (요구사항 + 설계 + 설계리뷰 lane): `docs/stories/<KEY>.md` §1-7 + `docs/change-plans/<slug>.md` + `docs/adr/ADR-NNN-<slug>.md` (소비자 repo) / `archive/adr/ADR-NNN-<slug>.md` (plugin-codeforge wrapper 자기 — prune 이후 이동). **(internal-docs SSOT 적용 시, ADR-013 dogfood-out + amendment)**: change-plan 위치는 `<internal-docs-clone>/<plugin-folder>/change-plans/<slug>.md`. Codeforge family / dogfood Story 의 경우 본 path override. 또한 doc-only Story (예: ADR carrier 가 architecture decision SSOT 인 경우) 는 **별도 change-plan 면제** — ADR 가 §3 도입할 설계 SSOT 역할 충족 (ADR-013 정합).
 - **Phase 2 PR** (구현 + 구현리뷰 + 구현테스트 + 보안테스트 lane): `src/**` + `tests/**` + `docs/stories/<KEY>.md` §8-11 append
 
 **doc-only fast-path (ADR-054 적용 시)**: **1 Story = 1 PR** — Phase 1/2 분리 없음. 단일 PR에 요구사항·설계·경량 설계리뷰 결과 포함; Story file §1·§2·§11 필수, §3~§10은 `N/A — doc-only fast-path (ADR-054)` 선언 의무.
@@ -44,7 +44,7 @@ tools: Read
 
 - **Mode A (repo-local, ADR-020 v1 default)**: 각 작업 repo 가 자체 Story
 - **Mode B (hub-centralized)**: 1 hub repo 가 모든 child Story (mctrader 패턴)
-- parent Epic Issue + child Story (per mode) + `epic_dependencies` graph + Change Plan §3 contract pin + Mixed-mode 금지. 상세 [ADR-020](../../docs/adr/ADR-020-cross-repo-epic-pattern.md), playbook §3.4.
+- parent Epic Issue + child Story (per mode) + `epic_dependencies` graph + Change Plan §3 contract pin + Mixed-mode 금지. 상세 [ADR-020](../../archive/adr/ADR-020-cross-repo-epic-pattern.md), playbook §3.4.
 
 ## 레인 진입 전 Preflight 체크 의무
 
@@ -67,7 +67,9 @@ FAIL 시 block+report. 상세는 playbook §3B.
 | CI gate | 구현 리뷰 PASS | (Orchestrator inline `gh pr checks` polling — 30분 timeout) | ∞ |
 | 통합테스트 | **Epic 하위 전체 Story** CI gate PASS (1회) | `tests/integration/baseline/` + `tests/integration/stories/<EPIC-KEY>/` 동적 실행 | 3 |
 | 보안 테스트 **(opt-in: lanes.security_ai: true)** | 통합테스트 PASS | §9 (SecurityTestPL 2-layer) + `gate:security-test-pass` | ∞ |
+| 배포 | Epic 하위 전체 Story merged (통합테스트·보안테스트 PASS) | (DeployPLAgent — consumer `deploy:` block opt-in) | — |
+| 배포 리뷰 | 배포 lane PASS | (DeployReviewPLAgent — smoke / 성능 비교 / cutover 사후 검증) | — |
 
-**통합테스트는 Epic-level 실행 (ADR-055 Amendment 2)**: Epic 하위 모든 Story CI gate PASS 후 Orchestrator가 IntegrationTestAgent 1회 spawn. Baseline Suite + Story Suite 동적 실행. FAIL 시 `responsible_stories` 집계 → 해당 Story FIX loop. 상세: [playbook §3.11–3.12](../../docs/orchestrator-playbook.md) + [ADR-055 Amendment 2](../../docs/adr/ADR-055-integration-test-lane-policy.md).
+**통합테스트는 Epic-level 실행 (ADR-055 Amendment 2)**: Epic 하위 모든 Story CI gate PASS 후 Orchestrator가 IntegrationTestAgent 1회 spawn. Baseline Suite + Story Suite 동적 실행. FAIL 시 `responsible_stories` 집계 → 해당 Story FIX loop. 상세: [playbook §3.11–3.12](../../docs/orchestrator-playbook.md) + [ADR-055 Amendment 2](../../archive/adr/ADR-055-integration-test-lane-policy.md).
 
 세부 spawn sequence · branch logic · FIX 진단 흐름 SSOT: [playbook §3](../../docs/orchestrator-playbook.md) + 각 lane plugin CLAUDE.md.

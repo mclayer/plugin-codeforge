@@ -8,7 +8,7 @@
 #   (4) 4 lint script warning tier exit 0 (false-positive 차단 0)
 #   (5) `BYPASS_WORKTREE_FIRST=1` env reserved (fixture 안 4 hook 시뮬레이션 모두 적용 의무)
 #
-# E4-1: scripts/check-session-start-hook-presence.sh 가 SessionStart hook 부재 시 WARN 출력 verify
+# (E4-1 retired — check-session-start-hook-presence.sh 제거: SessionStart worktree-GC 패턴 은퇴, eager 완료 정리 GitOpsAgent §5 로 대체)
 # E4-2: scripts/check-worktree-first-spawn-evidence-cwd.sh 가 Working dir: 누락 row 검출 verify
 # E4-3: templates/.git-hooks/pre-checkout.sample 가 main working tree 에서 cfp-NNN checkout 시 WARN 출력 verify
 # E4-4: templates/.git-hooks/pre-commit-main-block.sample 가 main working tree 에서 src/docs commit 시 WARN 출력 verify
@@ -32,19 +32,6 @@ assert_warn() {
     RESULTS+=("    output: $3")
     FAIL=$((FAIL+1))
   fi
-}
-
-# ── E4-1: scripts/check-session-start-hook-presence.sh SessionStart hook 부재 시 WARN ──
-e4_1() {
-  local fixture_dir="$TMP/e4-1"
-  mkdir -p "$fixture_dir/.claude"
-  # 의도적으로 hooks: {} 미지정 (SessionStart hook 부재 시뮬레이션)
-  cat > "$fixture_dir/.claude/settings.json" <<'JSON'
-{ "hooks": {} }
-JSON
-  local out
-  out=$(cd "$fixture_dir" && bash "$REPO_ROOT/scripts/check-session-start-hook-presence.sh" 2>&1) || true
-  assert_warn "E4-1 (SessionStart hook absence WARN)" "WARN|worktree" "$out"
 }
 
 # ── E4-2: scripts/check-worktree-first-spawn-evidence-cwd.sh Working dir: 누락 row 검출 ──
@@ -109,34 +96,11 @@ e4_4() {
   assert_warn "E4-4 (pre-commit main → src/docs WARN)" "WARN|worktree-first" "$out"
 }
 
-# ── bypass env propagation subset (R4 mitigation layer (5) verification) ──
-e4_bypass() {
-  local fixture_dir="$TMP/e4-bypass"
-  mkdir -p "$fixture_dir/.claude"
-  cat > "$fixture_dir/.claude/settings.json" <<'JSON'
-{ "hooks": {} }
-JSON
-  local out
-  out=$(cd "$fixture_dir" && BYPASS_WORKTREE_FIRST=1 bash "$REPO_ROOT/scripts/check-session-start-hook-presence.sh" 2>&1) || true
-  # BYPASS_WORKTREE_FIRST=1 시 canonical script 출력 = "[hook-presence] BYPASS_WORKTREE_FIRST=1 — skip"
-  # else fallback 제거 → grep pattern 미매칭 시 FAIL (false-positive 검출 능력 보장)
-  if echo "$out" | grep -E "BYPASS_WORKTREE_FIRST=1|skip" > /dev/null 2>&1; then
-    RESULTS+=("PASS: E4-bypass (BYPASS_WORKTREE_FIRST=1 early exit)")
-    PASS=$((PASS+1))
-  else
-    RESULTS+=("FAIL: E4-bypass — BYPASS skip pattern not detected in output")
-    RESULTS+=("    output: $out")
-    FAIL=$((FAIL+1))
-  fi
-}
-
 # 실행
 echo "CFP-429 E4 self-test starting (REPO_ROOT=$REPO_ROOT)"
-e4_1
 e4_2
 e4_3
 e4_4
-e4_bypass
 
 # Reporting
 echo ""

@@ -10,7 +10,7 @@ tools: Read
 
 ## 호출 시점
 
-FIX 루프 트리거 시 (설계리뷰 / 구현리뷰 / 구현테스트 / 보안테스트 FAIL). DeveloperPL 1차 진단 전 Orchestrator 호출.
+FIX 루프 트리거 시 (설계리뷰 / 구현리뷰 / 구현테스트 / 보안테스트 / 배포 / 배포리뷰 FAIL). DeveloperPL 1차 진단 전 Orchestrator 호출.
 
 ## 프로세스
 

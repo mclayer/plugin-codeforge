@@ -32,7 +32,7 @@ updated: 2026-05-12
 
 ## 정의
 
-**codeforge 결정 원칙 (decision-style)** 은 [ADR-064](../../../adr/ADR-064-decision-principle-mandate.md) 의 결정 원칙 normative SSOT 를 행동 패턴 + 운영 사례로 풀어낸 SSOT 다. ADR-064 가 normative 룰 자체를 정의하면, 본 페이지는 그 룰을 실행할 때의 패턴 / 예시 / 운영 사례 / cross-ref 를 정리한다.
+**codeforge 결정 원칙 (decision-style)** 은 [ADR-064](../../../../archive/adr/ADR-064-decision-principle-mandate.md) 의 결정 원칙 normative SSOT 를 행동 패턴 + 운영 사례로 풀어낸 SSOT 다. ADR-064 가 normative 룰 자체를 정의하면, 본 페이지는 그 룰을 실행할 때의 패턴 / 예시 / 운영 사례 / cross-ref 를 정리한다.
 
 본 페이지는 3 갈래 (Trace) 의 통합 SSOT 다:
 
@@ -252,13 +252,13 @@ Trace 4 measurable signal:
 
 ## 관련 ADR
 
-- [ADR-039](../../../adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — subagent default. Trace 4 의 모체 — multi-task spawn 시 parallel default 룰은 ADR-039 §결정 7 `policy_violace_subdecision` 결정 영역의 자연 확장.
-- [ADR-058](../../../adr/ADR-058-adr-sunset-criteria-mandate.md) — ADR 해소 기준 mandate. `is_transitional: true` 안전망 외연 분리 + Trace 1 의 top-down ratchet active amendment 원칙 차단 forcing function (§결정 5 `sunset_justification`).
-- [ADR-060](../../../adr/ADR-060-evidence-enforceable-promotion-framework.md) — evidence-enforceable framework. CFP-449 carrier 가 본 SSOT 의 forbid-list lint 를 4-tier (warning → blocking-on-pr → blocking-on-merge → hotfix-bypass) 점진 승격 framework 안으로 진입시키는 base.
-- [ADR-052](../../../adr/ADR-052-codex-proactive-check-touchpoints.md) — Codex proactive check. CFP-446 carrier 가 본 SSOT 의 Trace 2 룰 (식별자 사전 요약 + 옵션 dump 차단) 을 touchpoint #1 iterative reformulation pre-review 영역에 적용.
-- [ADR-054](../../../adr/ADR-054-doc-only-story-fast-path.md) — doc-only fast-path. CFP scope unitary 룰의 full-lane 강제 근거 — 신규 ADR 도입 Story = full-lane 의무 (모호 시 full-lane 안전 방향).
-- [ADR-064](../../../adr/ADR-064-decision-principle-mandate.md) — 결정 원칙 mandate. 본 페이지의 normative carrier.
-- [ADR-063](../../../adr/ADR-063-marketplace-atomic-invariant.md) — marketplace atomic invariant. version bump 정합 — codeforge family 7 plugin sibling sync 시 본 SSOT 의 active amendment 룰 (강화 방향 amendment) 직접 적용.
+- [ADR-039](../../../../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) — subagent default. Trace 4 의 모체 — multi-task spawn 시 parallel default 룰은 ADR-039 §결정 7 `policy_violace_subdecision` 결정 영역의 자연 확장.
+- [ADR-058](../../../../archive/adr/ADR-058-adr-sunset-criteria-mandate.md) — ADR 해소 기준 mandate. `is_transitional: true` 안전망 외연 분리 + Trace 1 의 top-down ratchet active amendment 원칙 차단 forcing function (§결정 5 `sunset_justification`).
+- [ADR-060](../../../../archive/adr/ADR-060-evidence-enforceable-promotion-framework.md) — evidence-enforceable framework. CFP-449 carrier 가 본 SSOT 의 forbid-list lint 를 4-tier (warning → blocking-on-pr → blocking-on-merge → hotfix-bypass) 점진 승격 framework 안으로 진입시키는 base.
+- [ADR-052](../../../../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) — Codex proactive check. CFP-446 carrier 가 본 SSOT 의 Trace 2 룰 (식별자 사전 요약 + 옵션 dump 차단) 을 touchpoint #1 iterative reformulation pre-review 영역에 적용.
+- [ADR-054](../../../../archive/adr/ADR-054-doc-only-story-fast-path.md) — doc-only fast-path. CFP scope unitary 룰의 full-lane 강제 근거 — 신규 ADR 도입 Story = full-lane 의무 (모호 시 full-lane 안전 방향).
+- [ADR-064](../../../../archive/adr/ADR-064-decision-principle-mandate.md) — 결정 원칙 mandate. 본 페이지의 normative carrier.
+- [ADR-063](../../../../archive/adr/ADR-063-marketplace-atomic-invariant.md) — marketplace atomic invariant. version bump 정합 — codeforge family 7 plugin sibling sync 시 본 SSOT 의 active amendment 룰 (강화 방향 amendment) 직접 적용.
 
 ## 변경 이력
 

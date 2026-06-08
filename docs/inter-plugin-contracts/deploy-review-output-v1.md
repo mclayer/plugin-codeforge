@@ -33,7 +33,7 @@ related_plugins:
 
 ## 컨텍스트
 
-CFP-1059 / [ADR-088](../adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) 가 Deploy Review lane (codeforge-deploy-review plugin) 정식 신설. DeployReviewPLAgent / DeployReviewWorkerAgent output → Orchestrator handoff schema 가 본 contract 영역.
+CFP-1059 / [ADR-088](../../archive/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) 가 Deploy Review lane (codeforge-deploy-review plugin) 정식 신설. DeployReviewPLAgent / DeployReviewWorkerAgent output → Orchestrator handoff schema 가 본 contract 영역.
 
 ## Phase 1 declarative anchor
 

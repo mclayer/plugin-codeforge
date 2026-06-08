@@ -48,7 +48,7 @@ cross-repo Story 진행 시 양 의미 혼동 → ADR 의 결정 영역이 model
 
 - ArchitectPLAgent 가 Story 단위 supervisor 역할 명시 시 (Layer A metaphor 적용)
 - ArchitectAgent 의 산출물 (Change Plan + ADR draft + §8 + §11) author 시 (Layer B real Aggregate)
-- AggregateArchitectAgent (deputy) 의 consumer aggregate boundary advocacy 시 (application BC reference)
+- ModuleArchitectAgent (aggregate-level — 구 AggregateArchitectAgent, CFP-1126 통합) 의 consumer aggregate boundary advocacy 시 (application BC reference)
 - cross-repo Story (codeforge ↔ mctrader) 진행 시 동음이의 충돌 차단
 
 ### 관련 사건 (Codex Q5 합의)
@@ -140,7 +140,7 @@ DDD Tactical Design 의 3 building block 분류:
 - Layer A metaphor — ArchitectPLAgent role description + frontmatter `ddd_pattern` field
 - Layer B real Aggregate — ArchitectLane 산출물 (Change Plan + ADR draft + §8 Test Contract + §11)
 - ADR-086 5-checklist self-application = codeforge governance Aggregate decision boundary 사례
-- AggregateArchitectAgent 의 process-participant role (codeforge governance BC 안 agent)
+- ModuleArchitectAgent (aggregate-level) 의 process-participant role (codeforge governance BC 안 agent)
 
 ### 영역 외 (mctrader application BC Aggregate)
 
@@ -149,9 +149,9 @@ DDD Tactical Design 의 3 building block 분류:
 - mctrader application BC 안 transactionally consistent boundary 의 RDB OLTP 구현
 - consumer project 자체 도메인 BC 의 Aggregate (overlay 영역만 codeforge SSOT 와 contact)
 
-### AggregateArchitectAgent 의 영역 boundary (process-participant vs mandate)
+### ModuleArchitectAgent (aggregate-level) 의 영역 boundary (process-participant vs mandate)
 
-**중요 boundary**: AggregateArchitectAgent 가 codeforge governance BC 안 agent (process-participant 영역) 이지만, 그 mandate (RDB OLTP aggregate invariant / 트랜잭션 경계) 는 **application BC reference** (mandate 영역). codeforge governance BC 의 agent 가 application BC 의 design decision 영역에서 specialized judgment contributor 로 작동.
+**중요 boundary**: ModuleArchitectAgent (aggregate-level — 구 AggregateArchitectAgent, CFP-1126 통합) 가 codeforge governance BC 안 agent (process-participant 영역) 이지만, 그 mandate (RDB OLTP aggregate invariant / 트랜잭션 경계) 는 **application BC reference** (mandate 영역). codeforge governance BC 의 agent 가 application BC 의 design decision 영역에서 specialized judgment contributor 로 작동.
 
 mctrader application BC 의 실 Aggregate 분류 + Aggregate Root 명세 + invariant 정의 = downstream Epic (별 CFP) — 본 codeforge SSOT 영역 외.
 
@@ -176,9 +176,9 @@ ADR-086 = **Deputy 신설 결정 framework** (5-checklist self-application).
 
 ## 관련 ADR
 
-- [ADR-091 §결정 1](../../adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — agent ↔ DDD pattern Hybrid mapping (Authority Pair / Domain Service / Subdomain Specialist enum)
-- [ADR-091 §결정 3](../../adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Aggregate metaphor 2-layer explicit separate (Layer A / Layer B)
-- [ADR-086](../../adr/ADR-086-deputy-creation-decision-framework.md) — Deputy 신설 결정 framework (5-checklist self-application) = codeforge governance Aggregate decision boundary 사례
+- [ADR-091 §결정 1](../../../archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — agent ↔ DDD pattern Hybrid mapping (Authority Pair / Domain Service / Subdomain Specialist enum)
+- [ADR-091 §결정 3](../../../archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md) — Aggregate metaphor 2-layer explicit separate (Layer A / Layer B)
+- [ADR-086](../../../archive/adr/ADR-086-deputy-creation-decision-framework.md) — Deputy 신설 결정 framework (5-checklist self-application) = codeforge governance Aggregate decision boundary 사례
 - [`docs/glossary.md` Aggregate (governance BC)](../../glossary.md#aggregate-governance-bc) — Layer A SSOT
 - [`docs/glossary.md` Aggregate (mctrader application BC)](../../glossary.md#aggregate-mctrader-application-bc) — application BC SSOT (별 BC)
 - [`docs/glossary.md` Aggregate Root](../../glossary.md#aggregate-root) — Authority Pair supervisor metaphor

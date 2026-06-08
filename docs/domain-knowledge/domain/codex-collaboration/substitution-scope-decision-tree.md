@@ -33,7 +33,7 @@ date: 2026-05-18
 
 # Codex substitution path — decision tree narrative
 
-본 페이지 = Codex worker spawn 결정 시점의 substitution path 3-enum 선택 decision tree narrative (CFP-946-A carrier). 결정 본문 SSOT = [ADR-070 §결정 D1 expansion](../../../adr/ADR-070-codex-verify-before-trust.md) + [ADR-052 Amendment 8](../../../adr/ADR-052-codex-proactive-check-touchpoints.md).
+본 페이지 = Codex worker spawn 결정 시점의 substitution path 3-enum 선택 decision tree narrative (CFP-946-A carrier). 결정 본문 SSOT = [ADR-070 §결정 D1 expansion](../../../../archive/adr/ADR-070-codex-verify-before-trust.md) + [ADR-052 Amendment 8](../../../../archive/adr/ADR-052-codex-proactive-check-touchpoints.md).
 
 ## 정의
 
@@ -160,11 +160,11 @@ threshold 도달 시 (`substitution_count >= 5` OR `verify_failure_rate >= 15%`)
 
 ## 관련 ADR
 
-- [ADR-052 Amendment 8](../../../adr/ADR-052-codex-proactive-check-touchpoints.md) — 6 touchpoint × 3-enum cross-matrix SSOT
-- [ADR-070 §결정 D1 expansion (Amendment 3)](../../../adr/ADR-070-codex-verify-before-trust.md) — substitution path 3-enum normative anchor SSOT
-- [ADR-081 §결정 D2](../../../adr/ADR-081-codex-worker-prompt-boilerplate.md) — verify-before-trust 5 sub-scope SSOT
-- [ADR-064 §결정 1](../../../adr/ADR-064-decision-principle-mandate.md) — CFP scope unitary (Story-A normative ≠ Story-B mechanical)
-- [ADR-073](../../../adr/ADR-073-orchestrator-verify-before-assert.md) — Orchestrator verify-before-assert layer disjoint
+- [ADR-052 Amendment 8](../../../../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) — 6 touchpoint × 3-enum cross-matrix SSOT
+- [ADR-070 §결정 D1 expansion (Amendment 3)](../../../../archive/adr/ADR-070-codex-verify-before-trust.md) — substitution path 3-enum normative anchor SSOT
+- [ADR-081 §결정 D2](../../../../archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) — verify-before-trust 5 sub-scope SSOT
+- [ADR-064 §결정 1](../../../../archive/adr/ADR-064-decision-principle-mandate.md) — CFP scope unitary (Story-A normative ≠ Story-B mechanical)
+- [ADR-073](../../../../archive/adr/ADR-073-orchestrator-verify-before-assert.md) — Orchestrator verify-before-assert layer disjoint
 
 ## 관련 페이지
 

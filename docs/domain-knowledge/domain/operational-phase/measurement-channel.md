@@ -27,7 +27,7 @@ updated: 2026-05-22
 
 # 운영 phase 측정 채널
 
-> **normative SSOT**: [`docs/adr/ADR-104-operational-phase-definition.md`](../../../adr/ADR-104-operational-phase-definition.md). 본 파일은 ADR-104 §결정 3·4 의 서술적 elaboration 이다.
+> **normative SSOT**: [`docs/adr/ADR-104-operational-phase-definition.md`](../../../../archive/adr/ADR-104-operational-phase-definition.md). 본 파일은 ADR-104 §결정 3·4 의 서술적 elaboration 이다.
 
 ## 정의
 
@@ -162,11 +162,11 @@ ADR-72 §결정 6 (원형):
 
 ## 관련 ADR
 
-- [ADR-104](../../../adr/ADR-104-operational-phase-definition.md) — **normative SSOT** (§결정 3 0 API call + §결정 4 wrapper-N/A)
-- [ADR-083](../../../adr/ADR-083-consumer-applicability-filter.md) — filesystem-only signal invariant (0 API call 동형 source)
-- [ADR-72](../../../adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md) — wrapper-self-app N/A invariant + Tier-1 declare-time exemption 패턴 source
-- [ADR-066](../../../adr/ADR-066-pat-rotation-policy.md) — PAT scope 최소화 정합 (offline-first)
-- [ADR-057](../../../adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) — consumer overlay 정책 축소 불가
+- [ADR-104](../../../../archive/adr/ADR-104-operational-phase-definition.md) — **normative SSOT** (§결정 3 0 API call + §결정 4 wrapper-N/A)
+- [ADR-083](../../../../archive/adr/ADR-083-consumer-applicability-filter.md) — filesystem-only signal invariant (0 API call 동형 source)
+- [ADR-72](../../../../archive/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md) — wrapper-self-app N/A invariant + Tier-1 declare-time exemption 패턴 source
+- [ADR-066](../../../../archive/adr/ADR-066-pat-rotation-policy.md) — PAT scope 최소화 정합 (offline-first)
+- [ADR-057](../../../../archive/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) — consumer overlay 정책 축소 불가
 
 ## 변경 이력
 

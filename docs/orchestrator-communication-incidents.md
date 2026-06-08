@@ -11,7 +11,7 @@ schema_version: "1.0"
 
 # Orchestrator Communication Incidents
 
-> Layer 4 누적 detection file ([ADR-071 §결정 6](adr/ADR-071-orchestrator-user-dialog-convergence.md)).
+> Layer 4 누적 detection file ([ADR-071 §결정 6](../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md)).
 > owner = Orchestrator 단독 monopoly. append-only. cross-Story 영속 (Story 종료 시 reset 없음).
 > M=5 max threshold 누적 시 사용자 escalation (`AskUserQuestion` 발화).
 > reset 정책: manual archive only (yearly file rotate 또는 별 row delineator marker — 사용자 explicit reset request 시).
@@ -20,7 +20,7 @@ schema_version: "1.0"
 
 1. **append-only** — Orchestrator 단독 row append. lane plugin / sub-agent / 사용자 manual edit 금지.
 2. **cross-Story 영속** — Story 종료 시 row reset 없음. M=5 카운터 = lifetime 영속.
-3. **pattern_dimension 분류** — [ADR-071 §결정 4](adr/ADR-071-orchestrator-user-dialog-convergence.md) 4 차원 enum 만 허용 (표현 / 결정 구조 / 보고 형식 / 질문 자체).
+3. **pattern_dimension 분류** — [ADR-071 §결정 4](../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md) 4 차원 enum 만 허용 (표현 / 결정 구조 / 보고 형식 / 질문 자체).
 4. **사용자 escalation 후 다음 incident** — pattern_dimension 강제 전환 (sub-mechanism 2 정합).
 5. **manual reset** — 사용자 explicit reset request 시에만 archive (별 file 분리 또는 row delineator marker 추가).
 6. **scope** = wrapper repo only. consumer 측은 자기 repo 의 `docs/orchestrator-communication-incidents.md` 별 lifecycle.
@@ -53,6 +53,6 @@ schema_version: "1.0"
 
 ## 관련 파일
 
-- [ADR-071](adr/ADR-071-orchestrator-user-dialog-convergence.md) — carrier ADR
+- [ADR-071](../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md) — carrier ADR
 - [docs/orchestrator-playbook.md §3.14](orchestrator-playbook.md) — frame mode + 4 layer + sub-mechanism 본문 SSOT
 - [skills/user-dialog-mode/SKILL.md](../skills/user-dialog-mode/SKILL.md) — frame mode + 4 layer lookup table

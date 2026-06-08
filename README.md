@@ -1,10 +1,10 @@
 # codeforge
 
-**Claude Code 범용 SW 개발 오케스트레이션 플러그인**. 사용자 요구사항 한 건을 받아 **0 core 에이전트 (wrapper-only) + 6 lane plugin (codeforge-{review,pmo,requirements,test,develop,design}) + `role: dev` 동적 roster · 7 레인** 구조로 요구사항 해석 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → 구현 테스트 → 보안 테스트 게이트까지 자율 실행한다.
+**Claude Code 범용 SW 개발 오케스트레이션 플러그인**. 사용자 요구사항 한 건을 받아 **0 core 에이전트 (wrapper-only) + 8 lane plugin (codeforge-{requirements,design,review,develop,test,deploy,deploy-review,pmo}) + `role: dev` 동적 roster · 8 레인** 구조로 요구사항 해석 → 설계 → 설계 리뷰 → 구현 → 구현 리뷰 → 통합 테스트 → 보안 테스트 → 배포 → 배포 리뷰까지 자율 실행한다.
 
 ## 주요 특징
 
-- **0 core (wrapper-only) + 6 lane plugin + `role: dev` 동적 roster · 7 레인 · 1 Cross-cutting (PMOAgent)** 구조로 SW 개발 프로세스 전반 커버
+- **0 core (wrapper-only) + 8 lane plugin + `role: dev` 동적 roster · 8 레인 · 1 Cross-cutting (PMOAgent)** 구조로 SW 개발 프로세스 전반 커버
 - **프로젝트 shape별 preset** (`presets/webapp` 등) — 웹앱·CLI·라이브러리·임베디드 등 Dev 구성 번들을 골라 overlay에 임포트
 - **CodebaseMapper ↔ Refactor 이념 대립** 으로 설계 균형 확보
 - **Claude + Codex(GPT-5) peer 리뷰** 로 설계 리뷰·코드 리뷰·보안 테스트 3중 peer 이중화
@@ -27,7 +27,9 @@ Orchestrator (최상위 Claude 세션)
  ├── [구현] DeveloperPL (role:dev roster 병렬) + QADev
  ├── [구현 리뷰] CodeReviewPL (Claude ‖ Codex)
  ├── [구현 테스트] TestAgent
- └── [보안 테스트] SecurityTestPL (Claude ‖ Codex)
+ ├── [보안 테스트] SecurityTestPL (Claude ‖ Codex)
+ ├── [배포] DeployPL
+ └── [배포 리뷰] DeployReviewPL
 ```
 
 상세는 [`CLAUDE.md`](CLAUDE.md) 참조.
@@ -60,7 +62,7 @@ Orchestrator (최상위 Claude 세션)
 
 세션 개시 시 자동 점검 · 미설치 시 blocking wait.
 
-### 2a. Enterprise environment prerequisite (CFP-661 / [ADR-027 Amendment 2](docs/adr/ADR-027-consumer-adoption-protocol.md))
+### 2a. Enterprise environment prerequisite (CFP-661 / [ADR-027 Amendment 2](archive/adr/ADR-027-consumer-adoption-protocol.md))
 
 codeforge 의 6 핵심 workflow (`story-init.yml` 외 5종) 는 PR / branch create / Issue comment write 권한을 사용. GitHub Enterprise org 의 admin policy 가 `default_workflow_permissions: read` cap 으로 차단 시 workflow silent skip → Story init 실패. **enterprise admin 권한 보유 환경에서 다음 prerequisite 활성 의무**:
 
@@ -87,7 +89,7 @@ gh api --method PUT repos/<owner>/<repo>/actions/permissions/workflow \
 - 또는 Issue 발의자가 `fallback:manual` label 부착 (per-Issue override trigger C)
 - RequirementsPL / ArchitectPL 가 `bash templates/scripts/manual-story-init-fallback.sh <ISSUE_NUMBER>` 호출
 
-상세 SSOT: [`docs/consumer-guide.md §1h` Action 차단 환경 fallback](docs/consumer-guide.md) + [ADR-027 §결정 6](docs/adr/ADR-027-consumer-adoption-protocol.md).
+상세 SSOT: [`docs/consumer-guide.md §1h` Action 차단 환경 fallback](docs/consumer-guide.md) + [ADR-027 §결정 6](archive/adr/ADR-027-consumer-adoption-protocol.md).
 
 ### 3. Consumer 프로젝트 overlay 구성
 
@@ -124,10 +126,10 @@ mkdir -p .claude/_overlay/agents
 | [`docs/plugin-design.md`](docs/plugin-design.md) | 플러그인 설계 spec — core/overlay 분리 원칙·merge 계약·β 메커니즘 |
 | [`docs/project-config-schema.md`](docs/project-config-schema.md) | `project.yaml` Schema SSOT — GitHub·labels 구조화 상수 |
 | [`docs/migration-guide.md`](docs/migration-guide.md) | 플러그인 버전업 시 consumer overlay 마이그레이션 절차 |
-| [`CHANGELOG.md`](CHANGELOG.md) | 릴리스 이력 (SemVer) |
+| [`CHANGELOG.md`](archive/CHANGELOG-legacy.md) | 릴리스 이력 (SemVer) |
 | [`templates/`](templates/) | 공통 문서 양식 SSOT — Change Plan · ADR · Story Page · Impl Manifest |
 | [`presets/`](https://github.com/mclayer/plugin-codeforge-develop/tree/main/presets) | 프로젝트 shape별 Dev 에이전트 번들 — webapp 등 |
-| `agents/*.md` | 없음 (wrapper-only — agent md 는 6 lane plugin 에 분산) |
+| `agents/*.md` | 없음 (wrapper-only — agent md 는 8 lane plugin 에 분산) |
 
 ## 구조
 
@@ -173,4 +175,4 @@ TBD.
 
 ## 연혁
 
-전체 릴리스 이력은 [`CHANGELOG.md`](CHANGELOG.md) 참조.
+전체 릴리스 이력은 [`CHANGELOG.md`](archive/CHANGELOG-legacy.md) 참조.

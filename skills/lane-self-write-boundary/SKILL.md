@@ -15,7 +15,7 @@ tools: Read
 | Lane plugin | docs/ self-write 영역 | GitHub self-write |
 |---|---|---|
 | codeforge-requirements | `docs/stories/<KEY>.md §2·§5·§6`, `docs/domain-knowledge/<area>/<topic>.md` | `[요구사항]` prefix comment, phase:요구사항→phase:설계 transition, Discussions Q&A routing |
-| codeforge-design | `docs/stories/<KEY>.md §3·§7·§11`, `docs/change-plans/<slug>.md`, `docs/adr/ADR-NNN-<slug>.md` | `[설계]` prefix comment, phase:설계→phase:설계-리뷰 transition |
+| codeforge-design | `docs/stories/<KEY>.md §3·§7·§11`, `docs/change-plans/<slug>.md`, `docs/adr/ADR-NNN-<slug>.md` (소비자 repo) / `archive/adr/ADR-NNN-<slug>.md` (plugin-codeforge wrapper 자기 — prune 이후 이동) | `[설계]` prefix comment, phase:설계→phase:설계-리뷰 transition |
 | codeforge-review (CFP-35 v2 — pre-CFP-61 history) | `docs/stories/<KEY>.md §9` (각 Review PL) | `[설계-리뷰]` / `[구현-리뷰]` / `[보안-테스트]` prefix comment, gate:design-review-pass / gate:security-test-pass label, phase transition (review-verdict-v2). **(History only — CFP-61 부터 final §9 verdict + GitHub gate write 책임 Orchestrator 로 transfer)** |
 | **codeforge-review (CFP-137 v4 — current SSOT, CFP-134 / ADR-035 정정 후)** | review-verdict-v4 packet 작성 (findings + `pl_recommendation`) — synthesis 만, Orchestrator 에 return. **final §9 verdict append + GitHub comment + gate label + phase transition 은 Orchestrator self-write** (Stage 0 spec §3.5 verbatim, ADR-022 Deprecated 후 Sonnet decider 자동 발동 무효) | (review-verdict 영역 GitHub write 는 Orchestrator) |
 | codeforge-develop | `docs/stories/<KEY>.md §8·§8.5`, Phase 2 PR creation | `[구현]` prefix comment, phase:구현→phase:구현-리뷰 transition |
@@ -37,13 +37,13 @@ tools: Read
 - **가이드 차원**: 본 rule = hook 미적용 환경 (다른 plugin / hook bypass) fallback 인지 경로.
 - **bypass**: 의도된 단일-repo 작업 확신 시 `BYPASS_CROSS_REPO_GH_SAFETY=1` (scope disjoint — `BYPASS_CODEFORGE_PREREQ` / `BYPASS_WORKTREE_FIRST` 와 별 env).
 
-**Cross-cutting rule — cross-repo worktree target authority verify-before-write** (CFP-1578 / [ADR-082 Amendment 21](../../docs/adr/ADR-082-write-time-self-write-verification-mandate.md) §결정 1 sub-scope 1-J):
+**Cross-cutting rule — cross-repo worktree target authority verify-before-write** (CFP-1578 / [ADR-082 Amendment 21](../../archive/adr/ADR-082-write-time-self-write-verification-mandate.md) §결정 1 sub-scope 1-J):
 
 `gh --repo` rule (filesystem-orthogonal API-level) 와 disjoint axis 의 filesystem write-target boundary 영역 — chief author / lane agent / Orchestrator 가 spawn prompt 작성 또는 직접 file write 직전 worktree target authority verify-before-write 의무. **Cross-repo write-target boundary matrix**:
 
 | Target repo | Expected remote URL pattern | Owner content (4 single-owner doc + Story sections + retro 영역) |
 |---|---|---|
-| `wrapper` (plugin-codeforge) | `mclayer/plugin-codeforge` | `docs/adr/**` + `docs/inter-plugin-contracts/**` + `templates/**` + `scripts/**` + `.github/**` + `CLAUDE.md` + `skills/**` + `hooks/**` |
+| `wrapper` (plugin-codeforge) | `mclayer/plugin-codeforge` | `archive/adr/**` (prune 이후 이동 — 소비자 repo 는 `docs/adr/**`) + `docs/inter-plugin-contracts/**` + `templates/**` + `scripts/**` + `.github/**` + `CLAUDE.md` + `skills/**` + `hooks/**` |
 | `internal-docs` (codeforge-internal-docs) | `mclayer/codeforge-internal-docs` | `plugin-codeforge/stories/<KEY>.md` + `plugin-codeforge/change-plans/<slug>.md` + `plugin-codeforge/retros/<sprint>.md` + `plugin-codeforge/specs/` + `plugin-codeforge/plans/` (ADR-013 dogfood-out SSOT path) |
 | `marketplace` (marketplace) | `mclayer/marketplace` | `marketplace.json` mirrored field sync (4 field per ADR-063) |
 | `consumer-<name>` (예: `mctrader-hub`) | `mclayer/<name>` | consumer overlay `.claude/_overlay/` + consumer Story file (consumer repo SSOT) |
@@ -61,7 +61,7 @@ tools: Read
 - **disjoint axis vs cross-repo `gh` rule**: `gh --repo` = API-level target binding (gh CLI 가 cwd 의 git remote 로 silent resolve 차단) / 본 rule = filesystem-level worktree target binding (write 직전 worktree path↔remote URL authority verify). 두 axis 모두 cross-repo write 사고 차단 영역 disjoint complement.
 - **동인**: CFP-1539+CFP-1540 batch retro §4.1 #2 — PMOAgent retro spawn 시 internal-docs PR target 작성 시 wrapper repo plugin-codeforge worktree 안에서 `git worktree add` 시도 후 정정 발생 (wrapper repo worktree mis-target 첫 catch occurrence). ADR-013 dogfood-out internal-docs SSOT path + ADR-040 worktree convention 정합 영역 codify 부재 super-class gap closure. paired sibling = CFP-1559 Amendment 20 (Issue body stale claim pre-screen super-class, axis disjoint).
 
-**4 single-owner doc** (CFP-26 Phase 0a 이후): `docs/{change-plans,adr,domain-knowledge,retros}/**` 는 owner agent direct write — lane plugin 의 ArchitectAgent / DomainAgent / PMOAgent 자기 owner path write.
+**4 single-owner doc** (CFP-26 Phase 0a 이후): `docs/{change-plans,adr,domain-knowledge,retros}/**` (소비자 repo) / `archive/adr/**` + `docs/{change-plans,domain-knowledge,retros}/**` (plugin-codeforge wrapper 자기 — ADR 만 archive 이동, prune 이후) 는 owner agent direct write — lane plugin 의 ArchitectAgent / DomainAgent / PMOAgent 자기 owner path write.
 
 문서화 표준 4 single-owner doc 템플릿은 [`templates/`](../../templates/) — change-plan / adr 현재 존재, domain-knowledge schema / retro schema CFP-27 신설. owner agent는 본인 owner path write 시 해당 템플릿 schema 준수 필수 — `scripts/check-write-permission-redistribution.sh` (CFP-26) + 향후 frontmatter/section schema lint (CFP-27)에서 강제.
 
