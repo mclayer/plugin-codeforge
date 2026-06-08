@@ -1,7 +1,7 @@
 #!/bin/bash
 # inject-allowed-hub-repos.sh
 # Idempotent post-reconcile injection of consumer ALLOWED_HUB_REPOS extensions
-# into GitHub workflow env vars. ADR-057 consumer-applicability confirm.
+# into GitHub workflow env vars. ADR-116 consumer-applicability (idempotent reconcile-then-patch).
 #
 # Mechanism:
 #  1. Read consumer .claude/_overlay/project.yaml phase_gate.allowed_hub_repos[]

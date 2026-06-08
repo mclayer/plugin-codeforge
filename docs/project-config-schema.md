@@ -148,14 +148,14 @@ infra_strategy: docker_first | legacy_systemd | none  # 기본값: docker_first
 infra_strategy_extras:
   k8s_preset_enabled: true | false  # presets/k8s/ (codeforge-develop) 활성 여부, 기본값: false
 
-# [선택] Phase gate hub repo 화이트리스트 확장 (CFP-1716 / ADR-057)
+# [선택] Phase gate hub repo 화이트리스트 확장 (CFP-1716 / ADR-116)
 # phase-gate-mergeable.yml + phase-gate-auto-cleanup.yml 의 ALLOWED_HUB_REPOS env 를 consumer 특화 hub repo 로 확장.
 # Mechanism:
 #   - Template default = "github.com/mclayer/codeforge-internal-docs" (항상 포함, 축소 불가)
 #   - Consumer overlay 안 phase_gate.allowed_hub_repos[] 로 추가 hub repo 선언
 #   - Post-reconcile: bash scripts/inject-allowed-hub-repos.sh 실행 (idempotent, dedup, never-reduce 보장)
 # Idempotent: 매 reconcile 후 호출 = 항상 올바른 상태 복원 (매번 덮어써짐 현상 해소)
-# 정책 SSOT: ADR-057 확장-only constraint (축소 / 기본값 제거 금지)
+# 정책 SSOT: ADR-116 확장-only constraint (축소 / 기본값 제거 금지) — 선례 ADR-026 Amd4 §결정 6 / ADR-024 §결정 6
 phase_gate:
   allowed_hub_repos:                  # Consumer 화이트리스트 추가 (string list, optional)
     - <string>                        # 예: "github.com/mclayer/mctrader-hub"
