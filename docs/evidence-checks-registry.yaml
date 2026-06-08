@@ -6002,3 +6002,44 @@ entries:
         - lint_failure_count_zero_proof
         - pr_cumulative_count_proof
         - cfp_1522_retro_f003_evidence  # ADR-113 §결정 6 ↔ ADR-066 §결정 2 mismatch sentinel
+
+  - name: adr-citation-slug
+    description: |
+      CFP-2057 / ADR-060 warning-tier — ADR 인용 번호 ↔ slug 정합 mechanical lint (2-layer).
+      ADR-057 오인용(ALLOWED_HUB_REPOS/SECURITY_PATHS 화이트리스트 맥락) 재발 차단.
+
+      L1 slug-existence: prose ADR-NNN 인용 → archive/adr/ADR-NNN-<slug>.md 존재 확인.
+        archive/ 포함 (진원 ADR-026 이 archive/ 에 있음 — link lint 와 trade-off 상이).
+      L2 deny-list: ADR-057 ∩ 확장-only/ALLOWED_HUB_REPOS/SECURITY_PATHS 맥락 = FAIL.
+        ADR-057 실제 = Orchestrator Opus mandate — 화이트리스트 정책과 무관.
+
+      한계 명시 (AC-5 / 설계 §7.6):
+        - ADR-057 류(번호 실재·의미만 틀림) = L1 불검출, L2 가 차단.
+        - 인용 의미 정합 일반 검증 = semantic(reviewer 책임), lint 미담당.
+        - scope = ALLOWED_HUB_REPOS 맥락 1차 한정 (Population B = 별 carrier).
+
+      Evidence: CFP-2057 D1 — phase-gate-mergeable.yml 주석 + ADR-026 frontmatter summary
+        + ADR-026:L604 SECURITY_PATHS 정의 + phase-gate-auto-cleanup.yml + hotfix-playbook.md
+        + templates/ 미러 5쌍 총 9 occurrence.
+
+      재발 차단: D5 wire 후 ADR-057 오인용 동일 패턴 재발 시 CI warning 자동 노출.
+      Population B carrier merge 후 L2 deny-list scope 전역 확대 = 점진 ratchet.
+    detect_command: bash scripts/check-adr-citation-slug.sh
+    workflow: .github/workflows/adr-citation-slug.yml
+    current_tier: warning  # ADR-060 §결정 5 — continue-on-error, non-required check
+    bypass_label: hotfix-bypass:adr-citation-slug
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    introduced_by: CFP-2057
+    introduced_date: 2026-06-08  # KST
+    owner_adr: ADR-060  # evidence-checks-registry framework
+    carrier_adr: ADR-060
+    recurrence:
+      count: 1  # CFP-2057 진원 — ADR-057 오인용 9 occurrence (6 파일)
+      threshold: 2
+      promotion_trigger: none
+    status: warning  # D1 정정 완료 후 즉시 active (자기 진원 RED 0)
+    promotion_criteria:
+      pr_cumulative_min: 10
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-2057  # 본 Story (D5 mechanical wire)
