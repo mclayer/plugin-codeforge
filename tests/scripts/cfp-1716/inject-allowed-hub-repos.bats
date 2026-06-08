@@ -228,9 +228,53 @@ EOF
     --repo "$REPO_ROOT" 2>&1)
 
   # 부적합 entry에 대한 warn 발생 확인
-  echo "$output" | grep -q "Invalid repo entry format" || true
+  echo "$output" | grep -q "Invalid repo entry format"
 
   # 적합한 entry만 주입됨
   grep -q "github.com/mclayer/mctrader-hub" \
     "${WORKFLOWS_DIR}/phase-gate-mergeable.yml"
+}
+
+# Test 9: mixed-quote 회귀 — mismatch 파일이 먼저 와도 정상 파일 주입 보장
+@test "mixed-quote mismatch 앞에 와도 정상 워크플로 주입 계속됨 (F-CR-1716-1 회귀)" {
+  cat > "${OVERLAY_DIR}/project.yaml" << 'YAML'
+project:
+  name: test-project
+github:
+  org: mclayer
+  repo: test-repo
+  default_branch: main
+phase_gate:
+  allowed_hub_repos:
+    - "github.com/mclayer/mctrader-hub"
+YAML
+
+  # aaa-mismatch.yml: ALLOWED_HUB_REPOS 값에 single-quote (quote style mismatch)
+  # 파일명이 a 로 시작 → find 정렬상 먼저 처리됨
+  cat > "${WORKFLOWS_DIR}/aaa-mismatch.yml" << 'FIXTURE'
+name: aaa-mismatch
+on: [pull_request]
+env:
+  ALLOWED_HUB_REPOS: 'github.com/mclayer/codeforge-internal-docs'
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "test"
+FIXTURE
+
+  # 기존 phase-gate-mergeable.yml = double-quote (정상)
+
+  # 단언 (a): 스크립트가 abort 없이 정상 종료
+  run bash "${BATS_TEST_DIRNAME}/../../../scripts/inject-allowed-hub-repos.sh" \
+    --repo "$REPO_ROOT"
+  [ "$status" -eq 0 ]
+
+  # 단언 (b): 정상 파일(phase-gate-mergeable.yml)에 값이 실제로 주입됨 (누락 아님)
+  grep -q 'ALLOWED_HUB_REPOS: "github.com/mclayer/codeforge-internal-docs,github.com/mclayer/mctrader-hub"' \
+    "${WORKFLOWS_DIR}/phase-gate-mergeable.yml"
+
+  # 단언 (c): mismatch 파일은 변경 없음 (single-quote 그대로)
+  grep -q "ALLOWED_HUB_REPOS: 'github.com/mclayer/codeforge-internal-docs'" \
+    "${WORKFLOWS_DIR}/aaa-mismatch.yml"
 }

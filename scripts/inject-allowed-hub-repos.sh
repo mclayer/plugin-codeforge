@@ -141,7 +141,6 @@ inject_workflow_env() {
     # Match: ALLOWED_HUB_REPOS: "<anything>" → ALLOWED_HUB_REPOS: "<merged_value>"
     # Use temporary file to avoid sed portability issues
     local tmp_file="${workflow_file}.tmp.$$"
-    local count_file="/tmp/rewrite_count.$$.txt"
 
     # AWK to rewrite ALLOWED_HUB_REPOS line only (idempotent safe)
     # Count rewrites by writing count marker to stderr
@@ -192,9 +191,13 @@ main() {
   fi
 
   found_any=0
+  skipped_count=0
   while IFS= read -r workflow_file; do
     if grep -q '^[[:space:]]*ALLOWED_HUB_REPOS:' "$workflow_file"; then
-      inject_workflow_env "$workflow_file" "$merged"
+      if ! inject_workflow_env "$workflow_file" "$merged"; then
+        skipped_count=$((skipped_count + 1))
+        continue
+      fi
       found_any=1
     fi
   done < <(find "$WORKFLOWS_DIR" -maxdepth 1 \( -name "*.yml" -o -name "*.yaml" \))
