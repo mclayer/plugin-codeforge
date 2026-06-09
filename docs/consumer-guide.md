@@ -2555,6 +2555,20 @@ consumer 측 사용자 활성 directive 권장 (자체 인지 강화 채널 — 
 - 예외: wrapper backlog 에 등록할 `codeforge-improvement` Issue (label: `codeforge-improvement`, `from-<consumer>-debut`) = wrapper repo 의 backlog → wrapper 세션 OK
 - consumer overlay (`.claude/_overlay/`) 가 wrapper CLAUDE.md 정책을 축소하는 directive 는 무효 (확장만 허용)
 
+## 7.3 repo 밖 임시 산출물 위치 (repo-confinement) — CFP-2092
+
+**홈 루트(`~`)에 스크래치를 쓰지 마세요.** dogfood 세션에서 홈 루트에 plugin 클론·`.tmp-*`·`story-payload.json` 등 작업물이 누출됐던 사고의 재발 방지 가드 2종이 플러그인 hook 으로 자동 적용됩니다 (설치만으로 consumer 도 동일 적용).
+
+| hook | 시점 | 동작 | bypass env |
+|---|---|---|---|
+| `repo-confinement` | PreToolUse(Bash) | 홈 루트 누출 패턴 명령 **차단** (exit 2) | `BYPASS_REPO_CONFINEMENT=1` |
+| `stray-scratch-leak` | SessionStart | 홈 루트 누출 의심 항목 **advisory 경고** (비차단) | `BYPASS_STRAY_SCRATCH_LEAK=1` |
+
+**규칙**:
+- repo 밖 임시 산출물이 꼭 필요하면 **`~/.claude/codeforge-scratch/`** 아래에만 두세요 (유일 허용 경로 — `repo-confinement` carve-out).
+- 홈 루트 직접 쓰기·상대경로 출력(cwd=홈 루트 상태의 `git clone url name` / `cmd > out.json`) 금지 — 가드가 차단합니다.
+- 정상 작업은 repo / worktree 안에서 (repo 내부 절대경로 또는 cwd 가 repo 인 상태).
+
 ## 7.5. CI Terminal State Classification (CFP-106 fix #144)
 
 PR / GitHub Actions 결과 처리 가이드. fresh consumer (mctrader debut 등) 가 `SUCCESS` 만 wait 하는 naive polling 으로 사용자 stop 발생하던 패턴 해결.

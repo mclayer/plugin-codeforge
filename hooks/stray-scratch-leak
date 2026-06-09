@@ -1,0 +1,55 @@
+: << 'CMDBLOCK'
+@REM Polyglot hook: stray-scratch-leak (CFP-2092)
+@REM Adapted from superpowers 5.1.0 (MIT License) — codeforge polyglot pattern (CFP-475)
+@echo off
+REM SessionStart hook — 홈 루트 codeforge 스크래치 누출 advisory 경고
+REM Invokes scripts/check-stray-scratch-leak.sh via Python SSOT
+REM Advisory only (warning tier, non-blocking — continue-on-error)
+
+set "REPO_ROOT=%~dp0.."
+if exist "C:\Program Files\Git\bin\bash.exe" (
+    "C:\Program Files\Git\bin\bash.exe" "%REPO_ROOT%\scripts\check-stray-scratch-leak.sh"
+    exit /b 0
+)
+if exist "C:\Program Files (x86)\Git\bin\bash.exe" (
+    "C:\Program Files (x86)\Git\bin\bash.exe" "%REPO_ROOT%\scripts\check-stray-scratch-leak.sh"
+    exit /b 0
+)
+where bash >nul 2>nul
+if %ERRORLEVEL% equ 0 (
+    bash "%REPO_ROOT%\scripts\check-stray-scratch-leak.sh"
+    exit /b 0
+)
+exit /b 0
+CMDBLOCK
+
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT (file structure adapted from superpowers v5.1.0)
+# hooks/stray-scratch-leak — SessionStart hook for 홈 루트 스크래치 누출 경고
+#
+# CFP-2092
+#
+# 책임 경계:
+#   - SessionStart 시점에 홈 루트(~)의 codeforge 스크래치 의심 항목을 advisory 출력.
+#   - advisory only — 실패해도 세션 차단 없음 (warning tier, non-blocking).
+#   - repo-confinement (PreToolUse) 가드의 2중 안전망 (누락분·우회분 환기).
+#
+# Bypass:
+#   BYPASS_STRAY_SCRATCH_LEAK=1 — exit 0 (경고 없음)
+
+set -euo pipefail
+
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${HOOK_DIR}/.." && pwd)"
+
+SCRIPT="${REPO_ROOT}/scripts/check-stray-scratch-leak.sh"
+
+if [ ! -f "${SCRIPT}" ]; then
+  # Script 없으면 silent skip (non-blocking 원칙)
+  exit 0
+fi
+
+# Run check — exit code 무시 (advisory, warning tier)
+bash "${SCRIPT}" 2>&1 || true
+
+exit 0
