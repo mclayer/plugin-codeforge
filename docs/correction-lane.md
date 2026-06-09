@@ -32,7 +32,12 @@
 
 ## 범위 / 비범위
 - **범위**: 강제 강도를 *낮추는* / 거버넌스를 *제거하는* 변경.
-- **비범위**: 강제 강도를 *올리는* 변경(warning→blocking 승격, 신규 검사 도입)은 본 lane 대상이 아니다 — 기존 promotion 경로(evidence-checks-registry `promotion_criteria` + 승격 carrier)를 따른다.
+- **비범위**: 강제 강도를 *올리는* 변경(warning→blocking 승격, 신규 검사 도입)은 본 lane 대상이 아니다 — 기존 promotion 경로(evidence-checks-registry `promotion_criteria` + 승격 carrier)를 따른다. 신규 검사 도입은 정당화 순증 게이트(`increment-justification-presence`, CFP-2061-S1)도 함께 적용.
+
+## dead 검사 제거의 객관 판정 입력 (CFP-2061-S2)
+- 본 lane 의 대표 use-case = **dead 검사 entry 제거**. "이 검사가 제거해도 되는 dead 인가" 의 객관 판정 기준 SSOT = [`docs/check-dead-criteria.yaml`](check-dead-criteria.yaml) (CFP-2061-S2).
+- 판정은 **necessary-not-sufficient**: dead 후보 = 정적 신호(advisory tier + required-context 아님 + exclude tag 미보유) AND 충족일 뿐, 자동 삭제 아님. `security` / `consumer-whitelist` tag 보유 검사는 hard-exclude(양보불가 가드 — 오삭 차단).
+- 실제 entry 제거 시 본 가드(`tier-downgrade-justification:` 마커)가 여전히 의무 — dead 후보여도 마커 부재면 `check-tier-downgrade-guard.sh` exit 1 차단.
 
 ## 의도적 최소 구성 (이 결정 자체가 첫 dogfood)
 본 가드는 **evidence-checks-registry 프레임워크에 등록하지 않는다**.

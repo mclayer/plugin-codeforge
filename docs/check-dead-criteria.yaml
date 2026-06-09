@@ -1,0 +1,204 @@
+# docs/check-dead-criteria.yaml
+# 검사(워크플로/스크립트) "dead" 객관 판정 기준 SSOT + 양보불가 가드
+#
+# Carrier Story: CFP-2061-S2 (검사 dead 객관 판정 기준 SSOT + 양보불가 가드)
+# Parent Epic:   CFP-2061 (de-bloat 거버넌스 영속화)
+# Carrier ADR:   없음 (신규 ADR 0건 — doc-only fast-path, ADR-054). 입력 신호는
+#                ADR-060 framework data (current_tier / recurrence) + ADR-083 consumer
+#                whitelist + branch protection contexts (CLAUDE.md "브랜치 보호" 표) 재사용.
+# 관련 ADR:      ADR-058 (sunset evidence-gate, 방향 동형) / ADR-064 (§결정 7 symmetric
+#                ratchet 약화 방향 evidence-gate) / ADR-060 (framework, reference-only).
+#
+# 본 파일의 성격:
+#   - 정적 SSOT. dead 판정의 *기준 정의* 만 담는다. dead 검사 *목록(결과)* 은 생성하지
+#     않는다 (관심사 분리, AC-6). 결과 산출 = S5(적극 청소 lane)가 본 기준을 적용해 동적으로.
+#   - necessary-not-sufficient: 기준 충족 = "dead *후보*" 일 뿐, 자동 삭제 아님 (AC-5).
+#     실제 제거는 (1) exclude tag hard-exclude 통과 + (2) S5 의 명시적 정당화
+#     (tier-downgrade-guard 마커) 를 모두 거쳐야 한다.
+#
+# Read 검증 출처 (작성 시점 verified):
+#   - docs/evidence-checks-registry.yaml schema_version: "1.3" (current_tier / recurrence field)
+#   - templates/scripts/consumer_applicable_workflows.txt (ADR-083 §4.12 positive whitelist)
+#   - scripts/check-tier-downgrade-guard.sh (entry 제거 감지 + 마커 강제 — dead 삭제 방어막)
+#   - CLAUDE.md "브랜치 보호" 표 (required_status_checks contexts 6-tuple SSOT)
+#   - CFP-2061-S1 §11 FU-1 (security/consumer-whitelist exempt 잠정 경계 → 본 S2 가 tag SSOT 확정)
+
+schema_version: "1.0"   # CFP-2061-S2 — 신규 SSOT 초판
+introduced_by: CFP-2061-S2
+last_updated: 2026-06-09
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 1. dead 판정 객관 신호 (정적 — SSOT 검증 가능)  [AC-1]
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# dead 후보 = 아래 3 정적 신호를 *모두* (AND) 충족하는 검사.
+# 3 신호는 전부 기존 SSOT 에서 객관 측정 가능 — 신규 계측 0 (S1 "집행만" 정신 / ADR-064 결정 원칙).
+# 주관·모달 어휘("안정화되면" / "임시" / "한시적" / "쓸모없어 보이는" 등) 배제 — ADR-064 forbid-list 정합.
+
+static_signals:
+  combine: AND   # 3 신호 모두 충족해야 dead 후보 (necessary 조건 집합)
+
+  signals:
+    - id: advisory_tier
+      description: >-
+        검사의 current_tier 가 advisory(warning) 이다. blocking tier 는 정의상
+        활성 차단막이므로 dead 일 수 없다.
+      source: docs/evidence-checks-registry.yaml
+      field: entries[].current_tier
+      dead_value: warning
+      not_dead_values: [blocking-on-pr, blocking-on-merge, hotfix-bypass]
+      measurement: registry yaml entry 의 current_tier enum 직접 read (객관)
+
+    - id: not_required_context
+      description: >-
+        검사의 workflow job context 가 branch protection required_status_checks
+        contexts 에 포함되지 않는다. required-context 인 검사는 머지 차단 계약막이므로 dead 불가.
+      source: CLAUDE.md "브랜치 보호" 표 (6 lane plugin + wrapper required_status_checks contexts SSOT)
+      measurement: >-
+        검사 workflow 의 job context 명을 6-tuple/8-plugin required contexts 표와 대조.
+        포함 시 dead 후보 제외 (객관 membership check).
+      note: >-
+        현 required contexts 는 대부분 aggregate workflow (phase-gate-mergeable /
+        check-gate / invariant 등) 라 개별 evidence check 가 직접 required 인 경우는 드묾.
+        그래도 본 신호로 명시 — false-negative(오삭) 차단 우선 (§2.3 우선순위 1).
+
+    - id: no_exclude_tag
+      description: >-
+        검사가 exclude tag(security / consumer-whitelist) 를 보유하지 않는다.
+        보유 시 §2 hard-exclude 로 즉시 제외 (본 신호 평가 이전에 가드 발동).
+      source: docs/evidence-checks-registry.yaml entries[].tags (+ consumer-whitelist derive — §2 참조)
+      measurement: tags field membership check (객관)
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 2. 양보불가 가드 — exclude tag hard-exclude  [AC-2]
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# 아래 closed-set tag 중 하나라도 보유한 검사는 static_signals 를 *전부 충족해도*
+# dead 후보에서 자동 제외된다 (hard exclude). 드물게 fire 하는 안전망(보안 게이트)의
+# 오삭(false-positive) 차단이 본 가드의 존재 이유 (spec Phase 0 동인).
+#
+# OR 의미: 한 tag 라도 보유 시 제외 (EC7 — security + consumer-whitelist 양 태그 → 어느 쪽으로도 제외).
+
+exclude_tags:
+  semantics: OR              # 하나라도 보유 시 hard-exclude
+  policy: hard_exclude       # 기준 충족이어도 dead 후보 불가 (양보 불가)
+
+  closed_set:
+    - tag: security
+      description: >-
+        보안 안전망 검사. 드물게 fire 하지만 보안 사고 시 last-line-of-defense.
+        오삭 시 보안 회귀 위험 → 양보 불가 hard-exclude.
+      determination: >-
+        presence-based (명시 부착). 검사 작성자가 registry entry 에 tags: [security]
+        를 명시한다. owner_adr 보안 ADR 자동 분류(derive)는 보조 신호로만 검토 가능하나,
+        본 S2 default = 명시 부착 (false-negative=오삭 회피 우선, §4.2 G3 권장).
+      storage: docs/evidence-checks-registry.yaml entries[].tags (inline list field)
+      examples_hint: >-
+        secret scanning / branch-protection 계열 / workflow-permissions / bypass-audit
+        성격의 검사가 후보 (실 부착은 검사 작성 시점 또는 S5 검토 시점 — 본 SSOT 는 기준만).
+
+    - tag: consumer-whitelist
+      description: >-
+        consumer repo 에 mirror 의무인 workflow 에 대응하는 검사. consumer 제품 보호
+        안전망 → 오삭 시 consumer(예: mctrader) 영향 → 양보 불가 hard-exclude.
+      determination: >-
+        derive-based (단일 출처 재사용, AC-4 이중 정의 금지). consumer-whitelist 멤버십은
+        templates/scripts/consumer_applicable_workflows.txt (ADR-083 §4.12 positive
+        whitelist) 에서 derive — 별도 명시 tag 신설 금지. registry entry 의 workflow
+        basename 이 그 whitelist 에 존재하면 consumer-whitelist tag 보유로 간주.
+      derive_source: templates/scripts/consumer_applicable_workflows.txt
+      derive_rule: >-
+        registry entry 의 workflow path basename (예: adr-sunset-criteria.yml) 가
+        consumer_applicable_workflows.txt 의 한 줄(주석/빈줄 제외)과 일치하면 derive 성립.
+      note: >-
+        whitelist 파일은 workflow basename 단위, registry entry 는 검사 단위 →
+        매핑 키 = entry.workflow 의 basename. 누락 위험 0 (기존 SSOT 재사용, §4.2 B2).
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 3. 정적 vs 동적 신호 분리  [AC-6]
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# "최근 N PR 에서 fire 0회" 의 *실제 fire count* 는 GitHub Actions run history(런타임
+# 데이터)로만 측정 가능 — 정적 SSOT 로 표현 불가. 따라서 본 SSOT 는 정적 신호만 담고,
+# fire-count axis 는 S5 삭제 시점의 보조 확인으로 분리한다 (관심사 분리).
+
+signal_classification:
+  static:
+    description: 본 SSOT 가 정의하고 검증 가능한 신호. dead 후보 선별의 1차 필터.
+    members: [advisory_tier, not_required_context, no_exclude_tag]
+    measurable_from: 기존 정적 SSOT (registry yaml / whitelist / branch protection 표)
+
+  dynamic:
+    description: >-
+      런타임 신호. 본 정적 SSOT 범위 *외*. S5 가 삭제 시점에 보조 확인.
+    members:
+      - id: fire_count
+        signal: 최근 N PR 에서 workflow 실제 fire 0회
+        source: GitHub Actions run history (런타임)
+        why_out_of_scope: >-
+          recurrence.count 는 *위반 발생* 카운터이지 *workflow 실행(fire)* 카운터가
+          아닐 수 있음 (§4.2 B1). 정적 SSOT 로 fire 횟수를 단언 불가.
+        handled_by: S5 (삭제 시점 run history 조회 — FU-3)
+        suggested_window_hint: >-
+          참고 임계 후보 = ADR-060 promotion_criteria.pr_cumulative_min 기본값 20 PR
+          (정합 힌트, S5 가 확정). last_occurrence cutoff 후보 = 90일. 본 SSOT 는
+          정적 신호만 강제하고 동적 임계 수치는 S5 결정에 위임 (G1).
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 4. necessary-not-sufficient — 후보 ≠ 삭제  [AC-5]
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# 본 기준 충족은 dead "후보" 지정일 뿐, 자동 삭제 트리거가 아니다.
+
+removal_protocol:
+  candidate_means: 정적 신호 AND 충족 + exclude_tag 미보유 → "dead 후보"
+  automatic_deletion: false   # 자동 삭제 금지
+
+  required_before_removal:
+    - step: exclude_tag_check
+      rule: security / consumer-whitelist tag 보유 시 후보 자체 불성립 (§2 hard-exclude)
+    - step: dynamic_confirm
+      rule: S5 가 fire-count(런타임) 보조 확인 (§3 dynamic, FU-3)
+    - step: justification_marker
+      rule: >-
+        실제 entry 제거 시 scripts/check-tier-downgrade-guard.sh 가 정당화 마커
+        (tier-downgrade-justification:) 부재면 exit 1 로 차단. dead 후보여도 이 가드
+        통과 의무 (correction-lane 마커 = 근거 인용).
+      enforcement: scripts/check-tier-downgrade-guard.sh (기존 — 본 S2 변경 없음)
+      policy_ssot: docs/correction-lane.md
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 5. S5 입력 계약 (machine-readable hand-off)  [AC-3]
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# S5(적극 청소 lane) 가 본 SSOT 를 파싱해 dead 후보를 산출할 때 읽을 필드 계약.
+
+s5_input_contract:
+  reads:
+    - static_signals.signals[].field        # 각 정적 신호의 registry 필드 경로
+    - static_signals.combine                 # AND 결합 규칙
+    - exclude_tags.closed_set[].tag          # hard-exclude tag closed-set
+    - exclude_tags.closed_set[].derive_source  # consumer-whitelist derive 원천
+    - removal_protocol.required_before_removal  # 후보 → 삭제 전 의무 단계
+  produces: >-
+    dead 후보 목록 (동적 산출, 본 SSOT 에 저장 안 함 — §3 관심사 분리). 각 후보에
+    removal_protocol 3 단계 적용 후에만 제거.
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 6. S1 게이트 tag SSOT 단일화 (S1 FU-1 충족)  [AC-4]
+# ─────────────────────────────────────────────────────────────────────────────
+#
+# 본 exclude_tags.closed_set 의 security / consumer-whitelist 2 tag = S1 정당화 순증
+# 게이트(increment-justification)의 exempt 판정과 *동일* SSOT. 이중 정의 금지.
+
+tag_ssot_unification:
+  single_ssot: docs/check-dead-criteria.yaml exclude_tags.closed_set (+ derive_source for consumer-whitelist)
+  used_by:
+    - lane: S5 dead 제외 (본 S2 — exclude_tags hard-exclude)
+    - lane: S1 정당화 순증 게이트 exempt (CFP-2061-S1 increment-justification-presence)
+  s1_fu1: >-
+    CFP-2061-S1 §11 FU-1 = "S1 의 exempt 잠정 경계(security tag entry + consumer-whitelist
+    tag) 를 S2 가 확정한 tag SSOT 와 대조해 정합". 본 S2 가 그 tag SSOT 를 확정 →
+    S1 게이트의 exempt 판정이 본 closed_set + derive_source 를 단일 참조하도록 정렬
+    (S1 게이트 코드 수정은 OOS7 — 설계 레인 FU-1 처리 영역, 본 S2 는 tag SSOT 확정 + cross-ref 까지).
+  consumer_whitelist_derive: templates/scripts/consumer_applicable_workflows.txt (ADR-083)  # 단일 출처
