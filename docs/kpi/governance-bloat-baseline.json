@@ -2,19 +2,19 @@
   "schema_version": "1.0",
   "kpi_name": "governance-bloat",
   "owner_adr": "ADR-060",
-  "carrier_story": "CFP-2061-S7 (re-baseline; S4 carrier)",
+  "carrier_story": "CFP-debloat-dead-suite (re-baseline; dead-suite 삭제 후)",
   "provisional": false,
   "rebaseline_owner": null,
-  "captured_at_sha": "eaecfdee03b3e00558371a7984aea30d94fcb684",
-  "captured_at_kst": "2026-06-09T15:00:00+09:00",
+  "captured_at_sha": "cfp-debloat-dead-suite",
+  "captured_at_kst": "2026-06-09T20:00:00+09:00",
   "history_file": "docs/kpi/governance-bloat-history.jsonl",
-  "measured_at": "2026-06-09T15:00:00+09:00",
+  "measured_at": "2026-06-09T20:00:00+09:00",
   "baseline_metrics": {
     "evidence_checks_registry_entries": {
-      "value": 140,
+      "value": 103,
       "unit": "count",
       "threshold_rel_pct": 20,
-      "note": "registry yaml entries[] tier-entry count. S2/check-dead-criteria SSOT 재사용 (이중 정의 금지, ADR-064)"
+      "note": "registry yaml entries[] tier-entry count. CFP-debloat: 37 stale 엔트리 제거 후 실측 103 (이전 140). S2/check-dead-criteria SSOT 재사용 (이중 정의 금지, ADR-064)"
     },
     "workflows_total": {
       "value": 54,
@@ -23,22 +23,22 @@
       "note": "git ls-files '.github/workflows/*.yml' len"
     },
     "workflows_pr_triggered": {
-      "value": 45,
+      "value": 47,
       "unit": "count",
       "threshold_rel_pct": 20,
-      "note": "workflows_total 중 on.pull_request 트리거 보유. 실측 45 (Change Plan 초안 47 = S1/S2/S3 머지 전 값, 현 HEAD 실측 45로 정정)"
+      "note": "workflows_total 중 on.pull_request 트리거 보유. CFP-debloat 실측 47"
     },
     "shell_scripts": {
-      "value": 152,
+      "value": 122,
       "unit": "count",
       "threshold_rel_pct": 25,
-      "note": "git ls-files 'scripts/' | grep '.sh$' len. 정정 glob (Change Plan §4.1 — NOT scripts/**/*.sh=8, 정확=150)"
+      "note": "git ls-files 'scripts/' | grep '.sh$' len. CFP-debloat: 죽은 test-*.sh 러너 제거 후 실측 122 (이전 152)"
     },
     "shell_loc": {
-      "value": 19741,
+      "value": 15351,
       "unit": "lines",
       "threshold_rel_pct": 25,
-      "note": "shell_scripts 파일 합산 line count"
+      "note": "shell_scripts 파일 합산 line count. CFP-debloat 실측 15351 (이전 19741)"
     },
     "adr_count": {
       "value": 121,
@@ -55,7 +55,8 @@
   },
   "gate_status": "ready",
   "notes": [
-    "provisional:false — CFP-2061-S7 재baseline. S5/S6 청소 후 canonical 측정값 확정 (check_governance_drift.py measure).",
+    "provisional:false — CFP-debloat-dead-suite 재baseline. 죽은 자체 테스트 스위트 + stale registry 37 엔트리 + 고아 스크립트 제거 후 canonical 측정값 확정.",
+    "이전 baseline(CFP-2061-S7): registry 140, shell_scripts 152, shell_loc 19741. CFP-debloat net 감소 의도적.",
     "캠페인 net: 예방 구조(S1 게이트/S4 cron/S2·S3 기준문서) 추가 + 청소(S5 orphan 7 entry+5 라벨 / S6 셸 dedup ~120줄). 순수 개수는 소폭 변동 — 가치는 numerical 감소가 아니라 재증식 통제 구조.",
     "threshold_rel_pct: ADR 용량 15% tight / shell LOC 25% loose / 기타 20.",
     "FU-2: 첫 3 cron run 변동성 관찰 후 false-positive 시 loosen.",

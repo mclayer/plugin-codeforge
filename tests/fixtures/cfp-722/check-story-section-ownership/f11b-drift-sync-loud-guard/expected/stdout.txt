@@ -1,1 +1,0 @@
-warning: heading-SSOT drift suspected for §10 — guard may be silently disabled

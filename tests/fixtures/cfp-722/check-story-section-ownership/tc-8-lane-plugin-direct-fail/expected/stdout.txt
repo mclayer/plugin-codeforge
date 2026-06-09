@@ -1,1 +1,0 @@
-warning violation: §10 monopoly section modified without Orchestrator/delegate attribution (branch: cfp-500/develop)

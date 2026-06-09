@@ -1,7 +1,0 @@
-{
-  "pr_branch": "cfp-500",
-  "pr_labels": [
-    "phase:구현-리뷰"
-  ],
-  "path_pattern": "*/stories/*.md"
-}

@@ -1,2 +1,0 @@
-check-comment-prefix.sh runs against docs/inter-plugin-contracts/comment-prefix-registry-v1.md
-Fixture here is for documentation only.

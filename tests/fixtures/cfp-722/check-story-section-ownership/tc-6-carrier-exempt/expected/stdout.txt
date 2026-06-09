@@ -1,1 +1,0 @@
-notice carrier-exempt: CFP-722 declares bootstrap_exempt_protocols including policy:lane-self-write-boundary-mechanical — ownership checks bypassed

@@ -1,7 +1,0 @@
-{
-  "pr_branch": "cfp-301/requirements",
-  "pr_labels": [
-    "phase:요구사항"
-  ],
-  "path_pattern": "docs/stories/*.md"
-}

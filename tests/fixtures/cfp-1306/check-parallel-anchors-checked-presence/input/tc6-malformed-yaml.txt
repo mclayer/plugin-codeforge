@@ -1,8 +1,0 @@
----
-# TC-6: malformed YAML (parse failure)
-# Expected: exit 2 (META-ERROR)
-findings:
-  - id: F-005
-    broken: [unclosed
-    parallel_anchors_checked:
-      bad: {{{

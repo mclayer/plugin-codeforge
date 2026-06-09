@@ -1,5 +1,0 @@
-project:
-  name: myapp
-
-lanes:
-  security_ai: true

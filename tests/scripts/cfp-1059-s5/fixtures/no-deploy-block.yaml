@@ -1,9 +1,0 @@
----
-# TC-4 fixture — no deploy block at all (opt-in PASS)
-# Expected: PASS (exit 0, skip) — deploy block absent = consumer has not opted in
-project:
-  name: my-lib
-  key_prefix: LIB
-  story_key_prefix: LIB
-  github_org: mclayer
-  github_repo: my-lib

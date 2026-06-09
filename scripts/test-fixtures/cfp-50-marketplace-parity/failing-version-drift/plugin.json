@@ -1,7 +1,0 @@
-{
-  "name": "test-plugin",
-  "version": "1.0.0",
-  "description": "Test plugin for parity check",
-  "author": { "name": "TestAuthor" },
-  "keywords": ["test"]
-}

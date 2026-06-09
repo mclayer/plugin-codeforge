@@ -1,9 +1,0 @@
-{
-  "status": "ahead",
-  "ahead_by": 2,
-  "behind_by": 0,
-  "commits": [
-    {"sha": "491949a", "commit": {"message": "[CFP-988] ADR-070 Amendment 4"}},
-    {"sha": "faa3277", "commit": {"message": "[CFP-967] FIX iter 2 revert"}}
-  ]
-}

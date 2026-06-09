@@ -1,3 +1,0 @@
-SUPERPOWERS_VERSION: 0.0.0
-
-# Empty snapshot fixture (no skills)
