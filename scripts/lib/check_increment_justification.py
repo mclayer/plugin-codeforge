@@ -13,8 +13,8 @@ ADR-060 framework 14번째 warning-tier entry (increment-justification-presence)
 
 trigger-path closed-set (G1):
   (a) docs/evidence-checks-registry.yaml 의 entries[] row 신규 append (diff hunk 에 '- name:' 추가)
-  (b) scripts/check-*.{sh,py} 신규 파일 (diff status=added)
-  (c) (templates|.github)/workflows/*.yml 신규 파일 (diff status=added)
+  (b) scripts/check-*.{sh,py} 신규 파일 (diff status=A / GitHub REST 'added')
+  (c) (templates|.github)/workflows/*.yml 신규 파일 (diff status=A / GitHub REST 'added')
   (d) archive/adr/ADR-*.md 신규 파일 + 신규 adr_number (Amendment 아닌 신규)
 
 marker (PR body, 3 AND):
@@ -56,6 +56,26 @@ import sys
 
 # ── 상수 ──────────────────────────────────────────────────────────────────────
 SELF_META_EXEMPT_LABEL = "hotfix-bypass:increment-justification"
+
+# GitHub REST API /pulls/{n}/files 의 .status 필드 → git name-status 단문자 매핑
+# (F-CR-NEW-1: production full-word status normalize — detect_trigger_paths 는 단문자 사용)
+_GH_STATUS_MAP = {
+    "added": "A",
+    "modified": "M",
+    "removed": "D",
+    "deleted": "D",
+    "renamed": "R",
+    "copied": "C",
+    "changed": "M",
+    "unchanged": "M",
+}
+
+
+def _normalize_status(status):
+    """GitHub REST .status 풀워드 → 단문자 normalize. 이미 단문자면 그대로 반환."""
+    if len(status) == 1:
+        return status.upper()
+    return _GH_STATUS_MAP.get(status.lower(), "M")
 
 # trigger-path 판별 패턴 (G1 closed-set)
 TRIGGER_CHECK_SCRIPT = re.compile(
@@ -112,7 +132,7 @@ def get_diff_files(repo, pr_number):
                 continue
             parts = line.split("\t", 1)
             if len(parts) == 2:
-                status = parts[0].strip()
+                status = _normalize_status(parts[0].strip())
                 path = parts[1].strip()
             else:
                 # status 없이 path 만인 경우 M 으로 간주
@@ -124,6 +144,8 @@ def get_diff_files(repo, pr_number):
         return files
 
     # 실제 gh api 호출 — .patch 필드 포함 (gh api files endpoint 지원)
+    # GitHub REST /pulls/{n}/files 의 .status 는 풀워드("added"/"modified"/…)
+    # _normalize_status 로 단문자 변환 후 적재 (F-CR-NEW-1)
     import json
     raw = run_gh([
         "api", "-X", "GET",
@@ -134,7 +156,8 @@ def get_diff_files(repo, pr_number):
     try:
         items = json.loads(raw)
         for item in items:
-            status = item.get("status", "M")
+            raw_status = item.get("status", "M")
+            status = _normalize_status(raw_status)
             path = item.get("filename", "")
             patch = item.get("patch", "") or ""
             if path:

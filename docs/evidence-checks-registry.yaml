@@ -6055,7 +6055,7 @@ entries:
       ADR-060 framework 14번째 warning-tier entry.
       grep-presence only (semantic adequacy = reviewer responsibility, false-positive 명시).
       paired_owner_adr ADR-060 §결정 30 SSOT. carrier: CFP-2061-S1.
-      self-exempt: hotfix-bypass:increment-justification (114번째 hotfix-bypass:* family member,
+      self-exempt: hotfix-bypass:increment-justification (113번째 hotfix-bypass:* family member,
       label-registry-v2 v2.90 carrier). exempt AC-4: 보안/consumer-whitelist tag entry 잠정 경계
       (S2 머지 후 정합 — §7 결정 5 / OOS1).
     detect_command: bash scripts/check-increment-justification.sh

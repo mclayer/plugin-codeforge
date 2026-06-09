@@ -16,7 +16,7 @@ name: increment-justification
 # Warning tier (ADR-060 §결정 30): exit 1 on missing marker (warning, not blocking).
 # continue-on-error: true (warning tier, ADR-060 §결정 5)
 #
-# Bypass: hotfix-bypass:increment-justification label (114번째 family member, label-registry-v2 v2.90)
+# Bypass: hotfix-bypass:increment-justification label (113번째 family member, label-registry-v2 v2.90)
 on:
   pull_request:
     types: [opened, synchronize, reopened]

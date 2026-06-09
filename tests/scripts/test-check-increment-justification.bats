@@ -199,3 +199,28 @@ M	docs/evidence-checks-registry.yaml"
   [ "$status" -eq 0 ]
   [[ "$output" == *"PASS"* ]]
 }
+
+# ------------------------------------------------------------------ TC-11: production full-word status (F-CR-NEW-1 discriminating)
+@test "TC-11: GitHub REST full-word status('added'/'modified') -> trigger 정상 감지 -> exit 1 WARNING [F-CR-NEW-1 discriminating]" {
+  # 목적: production 경로 (GitHub REST API) 가 반환하는 풀워드 status 가
+  #       normalize 를 거쳐 trigger-path 로 정상 감지되는지 검증.
+  # 본 TC 가 없으면 단문자 mock 만으로는 production no-op 결함 재포착 불가 (위양성 차단).
+  #
+  # BEFORE FIX (normalize 없음):
+  #   CIJ_MOCK_DIFF_FILES="added\tscripts/check-full-word.py" → triggers=0 → exit 0 (no-op, WRONG)
+  # AFTER FIX (normalize 적용):
+  #   same input → triggers=1 → exit 1 WARNING (CORRECT)
+  run env \
+    CIJ_MOCK_DIFF_FILES="added	scripts/check-full-word.py" \
+    CIJ_MOCK_PR_BODY="" \
+    CIJ_MOCK_PR_LABELS="" \
+    bash "$SCRIPT" --repo mclayer/plugin-codeforge --pr-number 9011
+
+  echo "# status: $status" >&3
+  echo "# output: $output" >&3
+
+  # normalize 후 'added' -> 'A' -> trigger 감지 -> WARNING
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"WARNING"* ]] || [[ "$output" == *"marker"* ]]
+  [[ "$output" == *"new-check-script"* ]]
+}
