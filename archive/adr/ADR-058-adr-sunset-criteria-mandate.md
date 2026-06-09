@@ -19,9 +19,20 @@ amendment_log:
     direction: weaken  # sunset_justification 차단 logic → 약화 evidence-gate (symmetric, 비대칭 제거)
     sunset_justification: |
       본 amendment = 약화 방향 (§결정 5 의 "차단" 강도를 "evidence-gate" 로 완화 — 약화를 더 쉽게) → 재정의 전 §결정 5 규칙상 self-referential sunset_justification 의무. evidence: (1) Researcher net 35% 정당화 + Codex ROI indeterminate 수렴 (2) sunset asymmetry metric — 실 retire 0건 / is_transitional:false 85건 (3) ratchet stacking loop demonstration. ADR-064 §결정 7 (symmetric 재정의) 정합. is_transitional: false 유지 (§결정 6 본 ADR self false — recursive sunset 회피).
+  - amendment: 2
+    carrier_story: CFP-2061-S3
+    date: 2026-06-09
+    summary: |
+      §결정 9 신설 — ADR 능동 일몰(active sunset) 실행 절차 연결. ADR-058 은 sunset *기준*(§결정 1-5)을 정의하나, 기준 충족 ADR 을 *실제로 일몰시키는 단일·평시 실행 절차*(트리거 → 후보 판정 → sunset_justification 작성 → status 강등 → 역참조 갱신 → RESERVATION 잠금)는 부재했다. 본 amendment 가 그 실행 절차 SSOT(docs/domain-knowledge/domain/governance-principle/adr-active-sunset-procedure.md)를 §결정 9 로 anchor 한다.
+      방향 축 = §결정 5 약화 evidence-gate(약화를 *허용*하는 gate) ↔ 능동 sunset 실행 절차(약화를 *집행*하는 절차)의 보완. evidence-gate 가 "약화해도 되는가"를 판정한다면, 능동 sunset 절차는 "판정 통과 후 어떻게 집행하는가"를 정의 — 두 layer 는 disjoint 보완 (gate=판정 / 절차=집행). de-bloat 거버넌스 영속화 Epic(CFP-2061) 의 능동 청소 방향 보완.
+      "실 retire 0건"(Amendment 1 컨텍스트) 정정 — ADR-076/083 carrier-preserved bulk sunset 2건이 이미 집행됨(sunset_status: Sunsetted, β2 audit #1113 LOSSLESS). 단 그 2건은 bulk paradigm replacement(ADR-097 경로)였고 단일·평시 절차는 여전히 부재 → 본 §결정 9 가 공백 충족.
+      doc-only fast-path (ADR-054) — 신규 ADR 0 / 신규 워크플로 0 / 신규 스크립트 0. 역참조 점검 mechanical lint = 후속 carrier (Wave 1 declarative-only, ADR-082 §결정 6 retain pattern).
+    direction: strengthen  # 능동 sunset 실행 절차 신설 = governance 표현력 확장 (집행 capability 추가, 약화 0건)
+    sunset_justification: null  # strengthen 방향 — §결정 5 약화 evidence-gate 무관 (절차 추가 = 강화). is_transitional: false 유지 (§결정 6 self false 보존)
 related_stories:
   - CFP-387
   - CFP-1149  # Amendment 1 carrier — §결정 5 차단 → 약화 evidence-gate 재정의 (ADR-064 §결정 7 symmetric sibling)
+  - CFP-2061-S3  # Amendment 2 carrier — §결정 9 능동 일몰 실행 절차 anchor (de-bloat 거버넌스 영속화 Epic CFP-2061)
 related_adrs:
   - ADR-010
   - ADR-013
@@ -30,9 +41,12 @@ related_adrs:
   - ADR-054
   - ADR-057
   - ADR-064  # §결정 7 evidence-gated symmetric ratchet sibling carrier (CFP-1149 Amendment 8 ↔ 본 ADR-058 Amendment 1)
+  - ADR-095  # Amendment 2 cross-ref — sunset metric 표준 + K8s 시간 threshold (능동 sunset 후보 판정 입력)
+  - ADR-097  # Amendment 2 cross-ref — §결정 3 carrier-preserved bulk sunset (단일·평시 sunset 의 bulk 분기 경로)
 related_files:
   - templates/adr.md
   - docs/adr/ADR-058-adr-sunset-criteria-mandate.md
+  - docs/domain-knowledge/domain/governance-principle/adr-active-sunset-procedure.md  # Amendment 2 — §결정 9 능동 일몰 실행 절차 SSOT
   - CLAUDE.md
 ---
 
@@ -139,6 +153,22 @@ SecurityArchitectAgent consult 결과 통합.
 본 ADR 의 효력 발생 시점 = Accepted 직후 (선언 효력). CFP-B merge 까지는 author 자발적 준수 + DesignReview lane review 가 1차 안전망.
 
 **임시 운영 문구 (Codex proactive check #1 권고 반영, CFP-B merge 까지 효력)**: DesignReview lane MUST flag missing/ambiguous sunset criteria on touched ADRs (본 Story 이후 진입하는 모든 ADR 변경 PR 에 적용). 모달 어휘 ("안정화되면", "임시", "한시적", "until further notice" 등) 우발 포함 검사 = DesignReview reviewer checklist 항목 추가 (CFP-B CI lint 정식 도입 전까지 manual gate).
+
+### 결정 9 — ADR 능동 일몰(active sunset) 실행 절차 연결 (CFP-2061-S3, Amendment 2)
+
+> **CFP-2061-S3 (2026-06-09 KST)**: §결정 1-5 는 sunset *기준* (분류 / 해소 기준 / 3-tuple / 약화 evidence-gate) 을 정의하나, **기준 충족 ADR 을 실제로 일몰시키는 단일·평시 실행 절차는 부재**했다. 본 §결정 이 그 실행 절차 SSOT 를 anchor 한다.
+
+**실행 절차 SSOT**: `docs/domain-knowledge/domain/governance-principle/adr-active-sunset-procedure.md`. 단일·평시 sunset 6단계 (트리거 → 후보 판정 → `sunset_justification` 작성 → status 강등 → 역참조 갱신 → RESERVATION 잠금) + archive 강등 체크리스트(G2) + 역참조 안전 점검(G3, cross-repo 포함) 을 codify.
+
+**§결정 5 와의 축 관계 (보완)**: §결정 5 약화 evidence-gate 는 "약화해도 되는가"를 *판정*하는 gate 다. 본 §결정 9 능동 sunset 절차는 그 판정 통과 후 "어떻게 집행하는가"를 정의하는 *집행* 절차다. 두 layer 는 disjoint 보완 — gate(판정) ↔ 절차(집행). 능동 sunset 절차는 §결정 5 evidence-gate 를 입력으로 받는다 (sunset 의 정당화 *내용* SSOT = §결정 5, 집행 *단계* SSOT = §결정 9 연결 문서).
+
+**status 강등 방식 (carrier-preserved in-place)**: sunset 실행 = `sunset_status: Sunsetted` frontmatter 플래그 set + **파일 위치 유지** (`archive/adr/` 그대로, 별도 디렉터리 이동 0) + **본문 보존** (historical record + carrier 참조 포인터). top-level `status:` 는 ADR lifecycle layer 로 무변경 가능 — `sunset_status` 가 일몰 SSOT 신호 (disjoint layer). 전례 = ADR-076 (CFP-1186) / ADR-083 (CFP-1111 Wave 4) carrier-preserved sunset.
+
+**"실 retire 0건" 정정**: Amendment 1 컨텍스트의 "실 retire 0건" 주장은 stale — ADR-076/083 carrier-preserved bulk sunset 2건 (β2 audit #1113 LOSSLESS) 이 이미 집행됨. 단 그 2건은 bulk paradigm replacement (ADR-097 §결정 3 경로) 였고 **단일·평시 절차는 여전히 부재** → 본 §결정 9 가 공백 충족. bulk sunset (9+ ADR 동시) 은 본 절차 비대상 — ADR-097 면제 channel 이 SSOT.
+
+**mechanical enforcement = 후속 carrier (Wave 1 declarative-only)**: 역참조 dangling 차단 lint (`adr-sunset-crossref-dangling` warning tier 후보) 는 후속 carrier — `scripts/` + `templates/github-workflows/` 변경이 ADR-054 §결정 4/5 full-lane 강제를 유발하므로 본 carrier (doc-only fast-path) 에서 분리. pattern_count >= 2 재발 시 follow-up CFP MUST promote to mechanical (ADR-082 §결정 6 / ADR-070 §D5 retain pattern 답습).
+
+ArchitectAgent (집행 §3 단계 1-5) + GitOpsAgent (RESERVATION 잠금 §3 단계 6) RACI 는 연결 문서 §7 SSOT.
 
 ## 결과
 
