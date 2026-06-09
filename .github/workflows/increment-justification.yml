@@ -20,6 +20,12 @@ name: increment-justification
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    paths:
+      - 'archive/adr/**'
+      - 'docs/evidence-checks-registry.yaml'
+      - 'scripts/check-*'
+      - 'templates/workflows/**'
+      - '.github/workflows/**'
   workflow_dispatch:
 
 permissions:

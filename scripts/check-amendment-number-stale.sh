@@ -29,48 +29,14 @@ if [[ "$BYPASS" == "1" ]]; then
   exit 0
 fi
 
-# ── 파일 수집 ─────────────────────────────────────────────────────────────────
-collect_files() {
-  local raw_files=()
-
-  if [[ $# -gt 0 ]]; then
-    # 명시적 인수
-    raw_files=("$@")
-  else
-    # git diff 기반 자동 감지 (check-wrapper-managed-block.sh 패턴 답습)
-    if ! command -v git &>/dev/null; then
-      echo "$SCRIPT_NAME ERROR: git 미설치 (환경 오류)" >&2
-      exit 2
-    fi
-    local base_ref="${GITHUB_BASE_REF:-}"
-    local git_files
-    if [[ -n "$base_ref" ]]; then
-      mapfile -t git_files < <(
-        git diff --name-only "origin/${base_ref}...HEAD" 2>/dev/null \
-          | grep -E '\.(md|yaml|yml)$' || true
-      )
-    else
-      # 로컬: staged + unstaged
-      mapfile -t git_files < <(
-        { git diff --name-only HEAD 2>/dev/null; git diff --cached --name-only 2>/dev/null; } \
-          | grep -E '\.(md|yaml|yml)$' | sort -u || true
-      )
-    fi
-    raw_files=("${git_files[@]+"${git_files[@]}"}")
-  fi
-
-  # 파일 목록 출력
-  local f
-  for f in "${raw_files[@]+"${raw_files[@]}"}"; do
-    [[ -z "$f" ]] && continue
-    echo "$f"
-  done
-}
+# ── 공유 helper source (CFP-2061-S6) ─────────────────────────────────────────
+# shellcheck source=lib/collect_changed_files.sh
+source "${SCRIPT_DIR}/lib/collect_changed_files.sh"
 
 # ── 메인: 파일 수집 후 Python SSOT 호출 ──────────────────────────────────────
 main() {
   local files=()
-  mapfile -t files < <(collect_files "$@")
+  mapfile -t files < <(collect_changed_files '\.(md|yaml|yml)$' "$@")
 
   if [[ "${#files[@]}" -eq 0 ]]; then
     echo "$SCRIPT_NAME INFO: 검증 대상 파일 없음 (변경 없음 또는 해당 확장자 미포함)" >&2
