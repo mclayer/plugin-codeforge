@@ -50,7 +50,7 @@ CFP-450 (ADR-013 Amendment 4) PAT consolidation 후 단일 `CODEFORGE_CROSS_REPO
 | `rotated_at (KST)` | ISO 8601 (KST `+09:00` suffix) | 새 PAT 발급 + org secret 갱신 완료 시점 |
 | `by` | email | rotation 수행 주체 (사용자 식별) |
 | `reason` | free text | rotation 사유 (scheduled / leak response / scope change 등) |
-| `expiration` | ISO 8601 date (KST) | 새 PAT 의 만료 일자 (≤ 90 days 권장 / ≤ 180 days 최대) |
+| `expiration` | ISO 8601 date (KST) 또는 sentinel `No-expiration` | 새 PAT 의 만료 일자 (≤ 90 days 권장 / ≤ 180 days 최대). 단 §결정 1 exception 적용 (단일 family dogfood PAT classic No-expiration) 시 sentinel `No-expiration` 허용 (ADR-066 Amendment 5, CFP-2101 — 보상통제 3종 충족 조건). sentinel row 는 §결정 6 자동 만료 reminder parse 에서 skip 대상 (만료 없음 → reminder 비대상). |
 | `revoked_at` | ISO 8601 (KST) 또는 `-` | 이전 PAT 의 revoke 시점 (당시 active row 면 `-`) |
 
 ## Audit notes
