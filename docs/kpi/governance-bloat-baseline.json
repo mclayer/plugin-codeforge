@@ -2,22 +2,22 @@
   "schema_version": "1.0",
   "kpi_name": "governance-bloat",
   "owner_adr": "ADR-060",
-  "carrier_story": "CFP-2061-S4",
-  "provisional": true,
-  "rebaseline_owner": "CFP-2061-S7",
-  "captured_at_sha": "aa687ce6b2b18abb93a7385c2db72a312ea37a54",
-  "captured_at_kst": "2026-06-09T10:00:00+09:00",
+  "carrier_story": "CFP-2061-S7 (re-baseline; S4 carrier)",
+  "provisional": false,
+  "rebaseline_owner": null,
+  "captured_at_sha": "eaecfdee03b3e00558371a7984aea30d94fcb684",
+  "captured_at_kst": "2026-06-09T15:00:00+09:00",
   "history_file": "docs/kpi/governance-bloat-history.jsonl",
-  "measured_at": null,
+  "measured_at": "2026-06-09T15:00:00+09:00",
   "baseline_metrics": {
     "evidence_checks_registry_entries": {
-      "value": 146,
+      "value": 140,
       "unit": "count",
       "threshold_rel_pct": 20,
       "note": "registry yaml entries[] tier-entry count. S2/check-dead-criteria SSOT 재사용 (이중 정의 금지, ADR-064)"
     },
     "workflows_total": {
-      "value": 53,
+      "value": 54,
       "unit": "count",
       "threshold_rel_pct": 20,
       "note": "git ls-files '.github/workflows/*.yml' len"
@@ -29,13 +29,13 @@
       "note": "workflows_total 중 on.pull_request 트리거 보유. 실측 45 (Change Plan 초안 47 = S1/S2/S3 머지 전 값, 현 HEAD 실측 45로 정정)"
     },
     "shell_scripts": {
-      "value": 150,
+      "value": 152,
       "unit": "count",
       "threshold_rel_pct": 25,
       "note": "git ls-files 'scripts/' | grep '.sh$' len. 정정 glob (Change Plan §4.1 — NOT scripts/**/*.sh=8, 정확=150)"
     },
     "shell_loc": {
-      "value": 19813,
+      "value": 19741,
       "unit": "lines",
       "threshold_rel_pct": 25,
       "note": "shell_scripts 파일 합산 line count"
@@ -47,18 +47,18 @@
       "note": "git ls-files 'archive/adr/ADR-*.md' len"
     },
     "adr_total_bytes": {
-      "value": 4597298,
+      "value": 4604456,
       "unit": "bytes",
       "threshold_rel_pct": 15,
       "note": "adr_count 파일 합산 byte size. ADR 용량 누적 단조증가 특성 → tight threshold 15%"
     }
   },
-  "gate_status": "warming",
+  "gate_status": "ready",
   "notes": [
-    "provisional:true — S5/S6 청소(검사 dead/ADR 일몰)가 지표를 의도적 감소시킴 → S4 baseline은 잠정 (D5)",
-    "S7 진입 시 청소 후 실측값으로 재baseline + provisional:false (rebaseline_owner: CFP-2061-S7)",
-    "threshold_rel_pct 초기값: ADR 용량(누적 단조증가) 15% tight / shell LOC(리팩터 변동) 25% loose",
-    "FU-2: 첫 3 cron run 변동성 관찰 후 false-positive 시 loosen",
-    "FU-3: 3 month 0 false-positive 후 warming -> ready 전이 (ADR-060 §결정 31)"
+    "provisional:false — CFP-2061-S7 재baseline. S5/S6 청소 후 canonical 측정값 확정 (check_governance_drift.py measure).",
+    "캠페인 net: 예방 구조(S1 게이트/S4 cron/S2·S3 기준문서) 추가 + 청소(S5 orphan 7 entry+5 라벨 / S6 셸 dedup ~120줄). 순수 개수는 소폭 변동 — 가치는 numerical 감소가 아니라 재증식 통제 구조.",
+    "threshold_rel_pct: ADR 용량 15% tight / shell LOC 25% loose / 기타 20.",
+    "FU-2: 첫 3 cron run 변동성 관찰 후 false-positive 시 loosen.",
+    "FU-3: 3 month 0 false-positive 후 ready 유지 확인 (ADR-060 §결정 31)."
   ]
 }
