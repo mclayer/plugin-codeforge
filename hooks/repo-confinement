@@ -1,0 +1,59 @@
+: << 'CMDBLOCK'
+@REM Polyglot hook: repo-confinement (CFP-2092)
+@REM Adapted from superpowers 5.1.0 (MIT License) — codeforge polyglot pattern (CFP-475)
+@echo off
+REM PreToolUse(Bash) hook — repo 밖(홈 루트) 스크래치 누출 차단
+REM Invokes scripts/check-repo-confinement.sh via Python SSOT
+REM Blocking (exit 2 = block) — exit code 그대로 전파 (stale 와 달리 || true 금지)
+REM stdin (PreToolUse JSON payload) 상속
+
+set "REPO_ROOT=%~dp0.."
+if exist "C:\Program Files\Git\bin\bash.exe" (
+    "C:\Program Files\Git\bin\bash.exe" "%REPO_ROOT%\scripts\check-repo-confinement.sh"
+    exit /b %ERRORLEVEL%
+)
+if exist "C:\Program Files (x86)\Git\bin\bash.exe" (
+    "C:\Program Files (x86)\Git\bin\bash.exe" "%REPO_ROOT%\scripts\check-repo-confinement.sh"
+    exit /b %ERRORLEVEL%
+)
+where bash >nul 2>nul
+if %ERRORLEVEL% equ 0 (
+    bash "%REPO_ROOT%\scripts\check-repo-confinement.sh"
+    exit /b %ERRORLEVEL%
+)
+exit /b 0
+CMDBLOCK
+
+#!/usr/bin/env bash
+# SPDX-License-Identifier: MIT (file structure adapted from superpowers v5.1.0)
+# hooks/repo-confinement — PreToolUse(Bash) hook for repo 밖 스크래치 누출 차단
+#
+# CFP-2092
+#
+# 책임 경계:
+#   - PreToolUse(Bash) 시점에 Bash 명령이 홈 루트(~)로 스크래치를 누출하는
+#     패턴을 물리 차단 (exit 2 = block).
+#   - 비책임: 읽기 명령·repo 내부 cwd 작업·`~/.claude/` 타깃 = 통과.
+#
+# Blocking contract (Claude Code): exit 2 + stderr = block, exit 0 = allow.
+#   → stale-local-main-checkout 와 달리 advisory 아님. exit code 그대로 전파
+#     ('|| true' 금지 — 차단 위해 exit 2 보존). stdin (payload) 도 상속.
+#
+# Bypass:
+#   BYPASS_REPO_CONFINEMENT=1 — stderr audit echo + exit 0
+
+set -euo pipefail
+
+HOOK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "${HOOK_DIR}/.." && pwd)"
+
+SCRIPT="${REPO_ROOT}/scripts/check-repo-confinement.sh"
+
+if [ ! -f "${SCRIPT}" ]; then
+  # Script 없으면 silent skip (fail-open — guard 부재 시 차단 안 함)
+  exit 0
+fi
+
+# Run guard — stdin (PreToolUse payload) 상속, exit code 그대로 전파 (차단 보존).
+bash "${SCRIPT}"
+exit $?
