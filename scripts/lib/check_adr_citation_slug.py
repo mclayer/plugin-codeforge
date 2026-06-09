@@ -6,10 +6,12 @@ ADR-061 compliant - external .py SSOT, no heredoc.
 
 2-layer validation:
   L1 slug-existence: ADR-NNN citation in docs -> archive/adr/ADR-NNN-<slug>.md existence check.
-  L2 deny-list:      ADR-057 + ALLOWED_HUB_REPOS/SECURITY_PATHS/whitelist context = FAIL.
-                     (ADR-057 actual = Orchestrator Opus mandate - unrelated to whitelist policy)
+  L2 deny-list:      ADR-057 + (ALLOWED_HUB_REPOS/SECURITY_PATHS/whitelist context) OR
+                     (ratchet keywords: 축소불가/확장만/never-reduce with proximity) = FAIL.
+                     (ADR-057 actual = Orchestrator Opus mandate - unrelated to whitelist/ratchet policy)
+                     Legitimate citations (자동재시도금지, fallback) are EXEMPT via proximity-bound patterns.
 
-scope: Population A (ALLOWED_HUB_REPOS context) first. Expand to Population B via separate carrier.
+scope: Population A (ALLOWED_HUB_REPOS context) + Population B (ratchet misquote, global). CFP-2093 전역 확대.
 archive/ included: ADR-026 origin is in archive/ - must include for root-cause detection.
 
 L1 false-positive suppression (CFP-2057 P2 fix):
@@ -52,20 +54,27 @@ def _posix_to_path(p):
     return Path(p)
 
 
-# L2 deny-list: ADR-057 + ALLOWED_HUB_REPOS/SECURITY_PATHS context patterns
-# scope = Population A only (ALLOWED_HUB_REPOS first-pass, design section 7.6)
-# Population B (operational-phase, rollback, etc.) = separate carrier, NOT included here.
-# Patterns: ADR-057 cited specifically in ALLOWED_HUB_REPOS or SECURITY_PATHS context
+# L2 deny-list: ADR-057 misquote patterns
+# Population A: ADR-057 + ALLOWED_HUB_REPOS/SECURITY_PATHS context (original scope)
+# Population B: ADR-057 + ratchet keywords (축소 불가/확장만/never-reduce) global (CFP-2093 전역 확대)
+# Note: Population B = included (CFP-2093 전역 확대 — 정당 인용은 EXEMPT 으로 보호).
 L2_DENY_PATTERNS = [
-    # ADR-057 + ALLOWED_HUB_REPOS keyword (direct)
+    # ADR-057 + ALLOWED_HUB_REPOS keyword (direct) — Population A
     re.compile(r'ADR-057.*ALLOWED_HUB_REPOS', re.IGNORECASE),
     re.compile(r'ALLOWED_HUB_REPOS.*ADR-057', re.IGNORECASE),
-    # ADR-057 + SECURITY_PATHS keyword (direct)
+    # ADR-057 + SECURITY_PATHS keyword (direct) — Population A
     re.compile(r'ADR-057.*SECURITY_PATHS', re.IGNORECASE),
     re.compile(r'SECURITY_PATHS.*ADR-057', re.IGNORECASE),
+    # ADR-057 + ratchet keywords with proximity bound — Population B (CFP-2093)
+    # .{0,40} = proximity bound (avoids line-wildcard false-positive for distant co-occurrence)
+    re.compile(r'ADR-057.{0,40}(축소\s*불가|축소\s*차단|확장만|확장-only|never-reduce)', re.IGNORECASE),
+    re.compile(r'(축소\s*불가|축소\s*차단|확장만|확장-only|never-reduce).{0,40}ADR-057', re.IGNORECASE),
 ]
 
-# Exempt patterns for historical narrative (CHANGELOG-legacy, amendment history, etc.)
+# Exempt patterns for legitimate ADR-057 citations and historical narrative.
+# Priority rule: deny match takes precedence over exempt.
+# Proximity-bound exempts (자동재시도/fallback) require ADR-057 within .{0,40}
+# to avoid over-exempting lines where ratchet-misquote co-exists near ADR-057.
 L2_EXEMPT_PATTERNS = [
     re.compile(r'CHANGELOG', re.IGNORECASE),
     re.compile(r'misquote correction', re.IGNORECASE),
@@ -84,6 +93,30 @@ L2_EXEMPT_PATTERNS = [
     re.compile(r'정정 대상'),            # 정정 대상
     re.compile(r'실제.*ADR-057'),                # 실제 ADR-057
     re.compile(r'ADR-057.*실제'),                # ADR-057 실제
+    # Proximity-bound: legitimate ADR-057 citation (자동 재시도 금지, fallback) — CFP-2093 Population B
+    # ADR-057:76 "(자동 재시도 금지)" and ADR-057:70 §결정 2 (Sonnet→Opus fallback) are legitimate.
+    # Exempt ONLY when the legitimate keyword is near ADR-057 (.{0,40}).
+    re.compile(r'자동\s*재시도\s*금지.{0,40}ADR-057'),
+    re.compile(r'ADR-057.{0,40}자동\s*재시도\s*금지'),
+    re.compile(r'fallback.{0,40}ADR-057', re.IGNORECASE),
+    re.compile(r'ADR-057.{0,40}fallback', re.IGNORECASE),
+]
+
+# Population B deny patterns (ratchet keywords) — used for deny-vs-exempt priority logic
+# When a line matches a Population B deny pattern AND a proximity-bound exempt pattern,
+# deny takes precedence (RED). This prevents a mixed line (misquote + legitimate citation)
+# from being incorrectly exempted by the legitimate part.
+L2_DENY_PATTERNS_POPULATION_B = [
+    re.compile(r'ADR-057.{0,40}(축소\s*불가|축소\s*차단|확장만|확장-only|never-reduce)', re.IGNORECASE),
+    re.compile(r'(축소\s*불가|축소\s*차단|확장만|확장-only|never-reduce).{0,40}ADR-057', re.IGNORECASE),
+]
+
+# Proximity-bound exempt patterns (자동재시도/fallback) — these are subject to deny-priority
+L2_EXEMPT_PROXIMITY_BOUND = [
+    re.compile(r'자동\s*재시도\s*금지.{0,40}ADR-057'),
+    re.compile(r'ADR-057.{0,40}자동\s*재시도\s*금지'),
+    re.compile(r'fallback.{0,40}ADR-057', re.IGNORECASE),
+    re.compile(r'ADR-057.{0,40}fallback', re.IGNORECASE),
 ]
 
 # ADR-NNN pattern (L1 slug-existence)
@@ -135,8 +168,30 @@ def load_existing_adrs(adr_dir):
 
 
 def is_exempt_l2(line):
-    """Check if line is exempt from L2 deny-list."""
-    return any(p.search(line) for p in L2_EXEMPT_PATTERNS)
+    """Check if line is exempt from L2 deny-list.
+
+    Priority rule (CFP-2093 §7.3 deny-vs-exempt):
+    - Population A (ALLOWED_HUB_REPOS/SECURITY_PATHS): standard exempt (any exempt match = skip).
+    - Population B (ratchet keywords): if the line matches a Population B deny pattern AND
+      proximity-bound exempt is present, deny takes priority (RED).
+      Only non-proximity-bound exempts (CHANGELOG, Orchestrator Opus, etc.) can fully exempt.
+    """
+    # Check if any non-proximity-bound exempt matches (these always win)
+    non_proximity_exempts = L2_EXEMPT_PATTERNS[:len(L2_EXEMPT_PATTERNS) - len(L2_EXEMPT_PROXIMITY_BOUND)]
+    if any(p.search(line) for p in non_proximity_exempts):
+        return True
+
+    # Check if proximity-bound exempt matches
+    proximity_match = any(p.search(line) for p in L2_EXEMPT_PROXIMITY_BOUND)
+    if not proximity_match:
+        return False
+
+    # Proximity-bound exempt matches — but deny takes priority if Population B deny also matches
+    population_b_deny = any(p.search(line) for p in L2_DENY_PATTERNS_POPULATION_B)
+    if population_b_deny:
+        # Deny takes priority: ratchet-misquote co-exists with legitimate citation
+        return False
+    return True
 
 
 def _is_l1_path_exempt(file_path):
@@ -169,7 +224,7 @@ def check_file(file_path, existing_adrs, adr_dir_exists):
                         'line': lineno,
                         'content': line.rstrip(),
                         'layer': 'L2',
-                        'reason': 'ADR-057 misquote (whitelist/ALLOWED_HUB_REPOS/SECURITY_PATHS context - actual ADR-057 = Orchestrator Opus mandate)',
+                        'reason': 'ADR-057 misquote (whitelist/ratchet context - actual ADR-057 = Orchestrator Opus mandate, not overlay ratchet policy)',
                     })
                     break  # report once per line
 
@@ -270,7 +325,7 @@ def main(argv=None):
     # Limitations disclosure (AC-5)
     print()
     print("NOTE: L1 detects ADR number/slug existence mismatch only. Semantic correctness = reviewer responsibility.")
-    print("NOTE: L2 scope = ALLOWED_HUB_REPOS/SECURITY_PATHS context only (Population B = separate carrier).")
+    print("NOTE: L2 scope = ADR-057 misquote global (Population A: ALLOWED_HUB_REPOS/SECURITY_PATHS + Population B: ratchet keywords). Legitimate citations (자동재시도금지/fallback) are EXEMPT.")
 
     if all_l2 and all_l1:
         return 3

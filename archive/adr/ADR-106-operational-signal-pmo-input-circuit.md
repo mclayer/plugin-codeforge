@@ -17,7 +17,8 @@ related_adrs:
   - ADR-045      # 직접 제약 — §D-9 (L402-427) cross-Story pattern_count ≥ 2 → ADR escalation forcing function + escalation_action 2-value enum (adr_draft_emitted | escalate_user). 본 ADR 답습 source + disjoint 명시 대상 (retro 도메인 vs 운영 phase 도메인 — ADR-045 본문 무변경)
   - ADR-064      # 직접 제약 — 모달 어휘 forbid-list (운영 신호 정량 우선 정합) + Trace 4 default parallel (S2 ∥ S3)
   - ADR-058      # 직접 제약 — §해소 기준 정량 명시 의무 + ratchet 강화 방향 (loop closure 원칙 약화 차단)
-  - ADR-057      # 배경 — consumer overlay 정책 축소 불가 (loop closure threshold consumer 확장 가능 / 축소 불가) + "자동 재시도 금지" 패턴 (PMOAgent 실패 시 escalate)
+  - ADR-064      # §결정 7 evidence-gated symmetric ratchet — consumer overlay 정책 축소 불가 (loop closure threshold consumer 확장 가능 / 축소 불가)
+  - ADR-057      # 배경 — "자동 재시도 금지" 패턴 (PMOAgent 실패 시 escalate)
   - ADR-083      # 배경 — filesystem-only signal invariant (0 API call constraint 동형 source, ADR-104 §결정 3 경유 계승)
   - ADR-084      # 배경 — pattern_count ≥ 2 재발 시 mechanical promote precedent (declaration-only Wave 1 retain pattern chain — file명 = ADR-084-numeric-space-sharing-channel-disjointness.md, sentinel clause L40-41)
   - ADR-086      # 배경 — deputy creation decision framework (본 S3 deputy 결정 CONDITIONAL 미spawn 정합)
@@ -130,7 +131,7 @@ self-improving-loop.md (S1) 가 무한 발산 위험(동일 신호 반복 / Issu
 | **(b) max-depth** | loop 깊이 카운터 (신호 → Issue → Epic → 배포 → 재신호 cycle 횟수 상한). 상한 초과 시 자동 발의 중단 | Epic 무한 중첩 (loop 가 다음 Epic 을 낳고 그 배포가 재신호) | max-depth counter (KPI `loop_depth` field 추적) (S6) |
 | **(c) escalate_user** | max-depth 초과 또는 dedup 충돌 누적 시 자동 Issue 중단 + 사용자 ESCALATE (ADR-045 §D-9 escalation_action: escalate_user 답습) | Issue 폭발 (noise 과잉) | escalate_user gate (자동 발의 중단 + 사용자 통지) (S6) |
 
-**원칙 강도**: 3원칙 모두 **OR 조건으로 발동** (하나라도 trip 되면 자동 발의 억제 — 보수적). consumer overlay 가 threshold (dedup window / max-depth 상한) 를 **확장 가능하나 축소 불가** (ADR-057 정합 — 안전망 약화 차단). 외부 정당성 — control theory damping (dedup = hysteresis 동일 입력 억제 / max-depth = rate limiting 횟수 상한 / escalate_user = human circuit breaker 인간 차단기). **본 ADR = 원칙만 정의** — 실 closure gate mechanism (dedup gate / max-depth counter / escalate_user wire) = **S6 (#1195) carrier**.
+**원칙 강도**: 3원칙 모두 **OR 조건으로 발동** (하나라도 trip 되면 자동 발의 억제 — 보수적). consumer overlay 가 threshold (dedup window / max-depth 상한) 를 **확장 가능하나 축소 불가** (ADR-064 §결정 7 + ADR-058 §결정 5 — 안전망 약화 차단). 외부 정당성 — control theory damping (dedup = hysteresis 동일 입력 억제 / max-depth = rate limiting 횟수 상한 / escalate_user = human circuit breaker 인간 차단기). **본 ADR = 원칙만 정의** — 실 closure gate mechanism (dedup gate / max-depth counter / escalate_user wire) = **S6 (#1195) carrier**.
 
 ### §결정 5 — operational-signal contract 결정 (defer — 회로/관계 declare, 실 wiring = S6)
 
@@ -227,7 +228,8 @@ N/A — permanent policy
 - **ADR-045** — §D-9 cross-Story pattern → ADR escalation forcing function + escalation_action 2-value enum (답습 source + disjoint 명시 대상, 본문 무변경)
 - **ADR-064** — 모달 어휘 forbid-list (운영 신호 정량 우선) + Trace 4 default parallel (S2 ∥ S3)
 - **ADR-058 §결정 5** — §해소 기준 정량 명시 + ratchet 강화 방향 (loop closure 원칙 약화 차단)
-- **ADR-057** — consumer overlay 축소 불가 (closure threshold 확장 가능 / 축소 불가) + "자동 재시도 금지" (PMOAgent 실패 시 escalate)
+- **ADR-064 §결정 7** — consumer overlay 축소 불가 (closure threshold 확장 가능 / 축소 불가)
+- **ADR-057** — "자동 재시도 금지" (PMOAgent 실패 시 escalate)
 - **ADR-083** — filesystem-only signal invariant (0 API call 동형 — ADR-104 §결정 3 경유 계승)
 - **ADR-084** — pattern_count ≥ 2 재발 시 mechanical promote precedent (declaration-only Wave 1 retain pattern chain)
 - **ADR-054** — doc-only fast-path (본 Story 비대상 — 신규 ADR 포함 → full-lane)

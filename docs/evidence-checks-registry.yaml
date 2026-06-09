@@ -5650,24 +5650,26 @@ entries:
   - name: adr-citation-slug
     description: |
       CFP-2057 / ADR-060 warning-tier — ADR 인용 번호 ↔ slug 정합 mechanical lint (2-layer).
-      ADR-057 오인용(ALLOWED_HUB_REPOS/SECURITY_PATHS 화이트리스트 맥락) 재발 차단.
+      ADR-057 오인용(ALLOWED_HUB_REPOS/SECURITY_PATHS 화이트리스트 맥락 + 축소불가/확장만/never-reduce ratchet 맥락) 재발 차단.
 
       L1 slug-existence: prose ADR-NNN 인용 → archive/adr/ADR-NNN-<slug>.md 존재 확인.
         archive/ 포함 (진원 ADR-026 이 archive/ 에 있음 — link lint 와 trade-off 상이).
-      L2 deny-list: ADR-057 ∩ 확장-only/ALLOWED_HUB_REPOS/SECURITY_PATHS 맥락 = FAIL.
-        ADR-057 실제 = Orchestrator Opus mandate — 화이트리스트 정책과 무관.
+      L2 deny-list: ADR-057 ∩ (확장-only/ALLOWED_HUB_REPOS/SECURITY_PATHS 맥락 | 축소불가 ratchet 키워드) = FAIL.
+        ADR-057 실제 = Orchestrator Opus mandate — 화이트리스트 정책 및 일반 overlay ratchet 원칙과 무관.
+        정당 인용(Opus mandate / fallback / 자동 재시도 금지) = EXEMPT (proximity-bound).
 
       한계 명시 (AC-5 / 설계 §7.6):
         - ADR-057 류(번호 실재·의미만 틀림) = L1 불검출, L2 가 차단.
         - 인용 의미 정합 일반 검증 = semantic(reviewer 책임), lint 미담당.
-        - scope = ALLOWED_HUB_REPOS 맥락 1차 한정 (Population B = 별 carrier).
+        - scope = ADR-057 오인용 전역. 정당 인용(Opus mandate / fallback / 자동 재시도 금지) = EXEMPT.
 
-      Evidence: CFP-2057 D1 — phase-gate-mergeable.yml 주석 + ADR-026 frontmatter summary
+      Evidence: CFP-2057 D1 (Population A) — phase-gate-mergeable.yml 주석 + ADR-026 frontmatter summary
         + ADR-026:L604 SECURITY_PATHS 정의 + phase-gate-auto-cleanup.yml + hotfix-playbook.md
         + templates/ 미러 5쌍 총 9 occurrence.
+        CFP-2093 (Population B) — ADR-079/104/105/106 + domain-knowledge 3파일 + inter-plugin-contracts 총 17 라인 / 8 파일.
 
-      재발 차단: D5 wire 후 ADR-057 오인용 동일 패턴 재발 시 CI warning 자동 노출.
-      Population B carrier merge 후 L2 deny-list scope 전역 확대 = 점진 ratchet.
+      재발 차단: wire 후 ADR-057 오인용 동일 패턴 재발 시 CI warning 자동 노출.
+      Population A + B 전역 scope (CFP-2093 전역 확대 완료).
     detect_command: bash scripts/check-adr-citation-slug.sh
     workflow: .github/workflows/adr-citation-slug.yml
     current_tier: warning  # ADR-060 §결정 5 — continue-on-error, non-required check

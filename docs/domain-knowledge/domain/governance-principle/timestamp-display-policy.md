@@ -9,7 +9,7 @@ updated: 2026-05-16
 carrier_story: CFP-770
 related_adrs:
   - ADR-079  # KST timestamp display mandate (Layer-bounded) — 본 정책 normative SSOT
-  - ADR-057  # Orchestrator Opus mandate — consumer overlay 축소 불가 패턴 정합
+  - ADR-064  # §결정 7 evidence-gated symmetric ratchet — consumer overlay 축소 불가 패턴 정합
   - ADR-073  # verify-before-assert — external timestamp 무변조 invariant
   - ADR-058  # ADR sunset criteria — is_transitional:false governance presumption 정합
 tags:
@@ -73,7 +73,7 @@ multi-consumer 환경에서 각 consumer 가 다른 timezone 을 쓰면 cross-St
 
 ### 원칙 5 — consumer overlay tz override 불가
 
-wrapper-canonical KST 강제. consumer overlay (`.claude/_overlay/`) 는 **이 정책을 축소할 수 없고 확장만 가능** (CLAUDE.md normative + ADR-057 정합).
+wrapper-canonical KST 강제. consumer overlay (`.claude/_overlay/`) 는 **이 정책을 축소할 수 없고 확장만 가능** (CLAUDE.md normative + consumer-guide §2556 + ADR-064 §결정 7 정합).
 
 미국/유럽 consumer 도입 시 별도 CFP (현 scope 외). 단일 tz 기준 의무 이유:
 

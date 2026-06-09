@@ -17,7 +17,7 @@ related_adrs:
   - ADR-083  # filesystem-only signal invariant — 0 API call 의 동형 source (§결정, L133)
   - ADR-066  # PAT scope 최소화 정합 (offline-first invariant)
   - ADR-72   # wrapper-self-app N/A invariant + Tier-1 declare-time exemption 패턴 source
-  - ADR-057  # consumer overlay 정책 축소 불가 (0 API call / wrapper-N/A 축소 차단)
+  - ADR-064  # §결정 7 evidence-gated symmetric ratchet — consumer overlay 정책 축소 불가 (0 API call / wrapper-N/A 축소 차단)
 related_stories:
   - CFP-1190  # 본 carrier
   - CFP-1187  # umbrella Epic
@@ -143,7 +143,7 @@ ADR-72 §결정 6 (원형):
   → Tier-1 declare-time exemption 으로 fast-pass / skip
 ```
 
-**consumer overlay 축소 불가** (ADR-057 정합) — 0 API call constraint + wrapper-N/A invariant 는 wrapper-canonical invariant. consumer 가 `operational_phase.enabled: false` 선언해도 override 되지 않는다.
+**consumer overlay 축소 불가** (ADR-064 §결정 7 정합) — 0 API call constraint + wrapper-N/A invariant 는 wrapper-canonical invariant. consumer 가 `operational_phase.enabled: false` 선언해도 override 되지 않는다.
 
 ## 경계
 
@@ -166,7 +166,7 @@ ADR-72 §결정 6 (원형):
 - [ADR-083](../../../../archive/adr/ADR-083-consumer-applicability-filter.md) — filesystem-only signal invariant (0 API call 동형 source)
 - [ADR-72](../../../../archive/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md) — wrapper-self-app N/A invariant + Tier-1 declare-time exemption 패턴 source
 - [ADR-066](../../../../archive/adr/ADR-066-pat-rotation-policy.md) — PAT scope 최소화 정합 (offline-first)
-- [ADR-057](../../../../archive/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) — consumer overlay 정책 축소 불가
+- [ADR-064](../../../../archive/adr/ADR-064-decision-principle-mandate.md) — §결정 7 evidence-gated symmetric ratchet (consumer overlay 축소 불가)
 
 ## 변경 이력
 

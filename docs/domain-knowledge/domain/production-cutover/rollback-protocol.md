@@ -82,7 +82,7 @@ rollback (canary 이전 state 복귀) vs forward-fix (canary 유지 + hotfix Sto
 
 **안전장치 4 (AND — 모두 충족 시에만 auto layer 진입, ADR-105 §결정 3)**:
 1. **명확한 숫자 임계** — 에러율 / latency burn rate 등 숫자 + window 형식으로만 trigger. 모달·정성 어휘 금지 (ADR-064 forbid-list / ADR-058 §해소 기준 정합). 임계 모호 시 auto 진입 불가 → user-decision layer.
-2. **보존 기간 안에서만** — green→blue 복귀가 데이터 손실 0 으로 가능한 보존 기간(default 3h, CFP-1059 / ADR-087 §결정 5 정합, consumer 확장 가능 / 축소 불가 ADR-057) 안에서만. 초과 시 자동 금지 → user-decision layer → Step 5b forward-fix.
+2. **보존 기간 안에서만** — green→blue 복귀가 데이터 손실 0 으로 가능한 보존 기간(default 3h, CFP-1059 / ADR-087 §결정 5 정합, consumer 확장 가능 / 축소 불가 ADR-064 §결정 7) 안에서만. 초과 시 자동 금지 → user-decision layer → Step 5b forward-fix.
 3. **자동 rollback 후 사후 알림** — 자동 실행 ≠ 침묵 실행. 되돌린 직후 Issue 자동 발의 + PMOAgent escalation 의무 (ADR-045 §D-9 답습, 무음 rollback = 위반).
 4. **kill-switch** — 자동 rollback mechanism 비활성화 토글 (예: `.codeforge/auto-rollback.disabled` filesystem flag 또는 config). 활성 시 auto layer 전체 무력화 → user-decision layer 만 동작. **kill-switch 가 다른 안전장치보다 우선** (ADR-014 boundary axis 정합).
 
