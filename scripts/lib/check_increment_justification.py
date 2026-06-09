@@ -34,11 +34,13 @@ exempt channels:
 
 Test override env vars (bats TC mock 지원):
   CIJ_MOCK_DIFF_FILES        — newline-delimited "STATUS\\tPATH" (gh api diff 대체)
+  CIJ_MOCK_REGISTRY_PATCH    — registry 파일의 diff patch hunk 문자열 (멀티라인 허용).
+                               설정 시 registry-append 감지에 사용 (실 gh api .patch 필드 대체).
+                               미설정 = patch 없음으로 간주, registry-append trigger 비활성.
   CIJ_MOCK_PR_BODY           — PR body text (gh api 대체)
   CIJ_MOCK_PR_LABELS         — comma-separated label names (gh api 대체)
   CIJ_MOCK_BASE_ABSENT       — "1" 이면 base-ref 부재 시뮬레이션
   CIJ_MOCK_EXEMPT_PATHS      — newline-delimited exempt paths
-  CIJ_MOCK_REGISTRY_APPEND   — "1" 이면 registry에 '- name:' 추가 시뮬레이션
 
 False-positive risk 명시 (Story §7.2 Spoofing):
   grep-presence 는 marker body 의 semantic 적절성을 보장하지 않음.
@@ -67,6 +69,9 @@ TRIGGER_ADR = re.compile(
 )
 REGISTRY_PATH = "docs/evidence-checks-registry.yaml"
 
+# registry-append 감지 패턴: diff hunk 에서 '+ ' 로 시작하는 '  - name:' 추가 라인
+REGISTRY_APPEND_PATTERN = re.compile(r"^\+\s*-\s*name:", re.MULTILINE)
+
 # marker 검증 패턴 (PR body, 3 AND)
 MARKER_LINE_PATTERN = re.compile(r"^\[increment-justification\]", re.MULTILINE)
 MARKER_WHY_PATTERN = re.compile(r"why=")
@@ -88,13 +93,17 @@ def run_gh(args):
 def get_diff_files(repo, pr_number):
     """
     PR diff 파일 목록 반환.
-    Returns: list of (status, path) tuples
+    Returns: list of (status, path, patch) tuples
       status: 'A' (added), 'M' (modified), 'D' (deleted), 'R' (renamed), etc.
+      patch:  diff hunk 문자열 (없으면 빈 문자열) — registry-append 감지에 사용.
 
     Mock: CIJ_MOCK_DIFF_FILES 환경변수가 설정된 경우 실제 gh api 호출 없이
-          newline-delimited "STATUS\\tPATH" 형식으로 반환.
+          newline-delimited "STATUS\\tPATH" 형식으로 반환 (patch 는 빈 문자열).
+          registry 파일의 patch 는 CIJ_MOCK_REGISTRY_PATCH 별도 env var 로 제공 (멀티라인 안전).
     """
     mock_var = "CIJ_MOCK_DIFF_FILES"
+    mock_registry_patch = os.environ.get("CIJ_MOCK_REGISTRY_PATCH", "")
+
     if mock_var in os.environ:
         files = []
         for line in os.environ[mock_var].strip().splitlines():
@@ -103,27 +112,36 @@ def get_diff_files(repo, pr_number):
                 continue
             parts = line.split("\t", 1)
             if len(parts) == 2:
-                files.append((parts[0].strip(), parts[1].strip()))
+                status = parts[0].strip()
+                path = parts[1].strip()
             else:
                 # status 없이 path 만인 경우 M 으로 간주
-                files.append(("M", parts[0].strip()))
+                status = "M"
+                path = parts[0].strip()
+            # registry 파일의 patch 는 CIJ_MOCK_REGISTRY_PATCH 에서 주입
+            patch = mock_registry_patch if path == REGISTRY_PATH else ""
+            files.append((status, path, patch))
         return files
 
-    # 실제 gh api 호출
+    # 실제 gh api 호출 — .patch 필드 포함 (gh api files endpoint 지원)
+    import json
     raw = run_gh([
         "api", "-X", "GET",
         f"/repos/{repo}/pulls/{pr_number}/files",
         "--paginate",
-        "--jq", ".[] | .status + \"\\t\" + .filename",
     ])
     files = []
-    for line in raw.splitlines():
-        line = line.strip()
-        if not line:
-            continue
-        parts = line.split("\t", 1)
-        if len(parts) == 2:
-            files.append((parts[0].strip(), parts[1].strip()))
+    try:
+        items = json.loads(raw)
+        for item in items:
+            status = item.get("status", "M")
+            path = item.get("filename", "")
+            patch = item.get("patch", "") or ""
+            if path:
+                files.append((status, path, patch))
+    except (json.JSONDecodeError, TypeError):
+        # fallback: jq 없이 line-by-line
+        pass
     return files
 
 
@@ -192,19 +210,16 @@ def detect_trigger_paths(diff_files):
     triggers = []
     exempt_paths = get_exempt_paths()
 
-    # registry append 시뮬레이션 mock
-    registry_append_mock = os.environ.get("CIJ_MOCK_REGISTRY_APPEND", "") == "1"
-
-    for status, path in diff_files:
+    for status, path, patch in diff_files:
         if path in exempt_paths:
             continue
 
-        # (a) registry row 신규 append
-        # 실제 환경: diff hunk 파싱으로 '- name:' 추가 감지
-        # mock 환경: CIJ_MOCK_REGISTRY_APPEND=1 OR path == REGISTRY_PATH && status==M (후자는 hunk 파싱 필요)
-        # 본 구현: REGISTRY_PATH 의 M/A + mock flag 조합
-        if path == REGISTRY_PATH and status in ("A", "M") and registry_append_mock:
-            triggers.append(("registry-append", path))
+        # (a) registry row 신규 append — diff hunk 에서 '+ ' 로 시작하는 '  - name:' 라인 감지
+        # Change Plan §3.3 step 2(a): diff hunk 에 '- name:' 추가 = G1 closed-set 명시 계약.
+        # patch 가 빈 문자열이면 registry-append trigger 비활성 (hunk 파싱 불가).
+        if path == REGISTRY_PATH and status in ("A", "M") and patch:
+            if REGISTRY_APPEND_PATTERN.search(patch):
+                triggers.append(("registry-append", path))
             continue
 
         # (b) scripts/check-*.{sh,py} 신규 파일

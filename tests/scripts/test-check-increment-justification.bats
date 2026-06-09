@@ -1,5 +1,5 @@
 #!/usr/bin/env bats
-# tests/scripts/test-check-justification-increment.bats
+# tests/scripts/test-check-increment-justification.bats
 # CFP-2061-S1 / ADR-060 §결정 30
 #
 # 정당화 순증 게이트 unit tests (TDD RED→GREEN)
@@ -39,9 +39,10 @@ teardown() {
 
 # ------------------------------------------------------------------ TC-1: happy path (marker 존재 -> PASS)
 @test "TC-1: 신규 검사 + marker(why + blocks-or-replaces) 존재 -> exit 0 PASS" {
+  # fixture: with_marker_pr_body.txt (Change Plan §8 RED proof discriminating fixture)
   run env \
     CIJ_MOCK_DIFF_FILES="A	scripts/check-foo.sh" \
-    CIJ_MOCK_PR_BODY="[increment-justification] why=필요한 이유 blocks-or-replaces=기존 수동 프로세스 대체" \
+    CIJ_MOCK_PR_BODY="$(cat tests/fixtures/cfp-2061-s1/with_marker_pr_body.txt)" \
     CIJ_MOCK_PR_LABELS="" \
     bash "$SCRIPT" --repo mclayer/plugin-codeforge --pr-number 9001
 
@@ -54,9 +55,10 @@ teardown() {
 
 # ------------------------------------------------------------------ TC-2: RED core (marker 부재 -> WARNING)
 @test "TC-2: 신규 검사 + marker 부재 -> exit 1 WARNING [discriminating core]" {
+  # fixture: without_marker_pr_body.txt (Change Plan §8 RED proof discriminating fixture)
   run env \
     CIJ_MOCK_DIFF_FILES="A	scripts/check-foo.sh" \
-    CIJ_MOCK_PR_BODY="" \
+    CIJ_MOCK_PR_BODY="$(cat tests/fixtures/cfp-2061-s1/without_marker_pr_body.txt)" \
     CIJ_MOCK_PR_LABELS="" \
     bash "$SCRIPT" --repo mclayer/plugin-codeforge --pr-number 9002
 
@@ -69,9 +71,10 @@ teardown() {
 
 # ------------------------------------------------------------------ TC-3: 요소 누락 (blocks-or-replaces 없음 -> WARNING)
 @test "TC-3: marker 존재하나 blocks-or-replaces 누락 -> exit 1 WARNING" {
+  # fixture: only_why_pr_body.txt (why= 만 존재, blocks-or-replaces= 누락)
   run env \
     CIJ_MOCK_DIFF_FILES="A	scripts/check-bar.sh" \
-    CIJ_MOCK_PR_BODY="[increment-justification] why=이유가 있음" \
+    CIJ_MOCK_PR_BODY="$(cat tests/fixtures/cfp-2061-s1/only_why_pr_body.txt)" \
     CIJ_MOCK_PR_LABELS="" \
     bash "$SCRIPT" --repo mclayer/plugin-codeforge --pr-number 9003
 
@@ -84,14 +87,14 @@ teardown() {
 
 # ------------------------------------------------------------------ TC-4: 분산 우회 (registry + workflow, marker 부재 -> WARNING)
 @test "TC-4: registry append + 신규 workflow 동시, marker 부재 -> exit 1 WARNING" {
-  # registry append (- name: 추가) + workflow 신규 추가
+  # 실 patch fixture 기반 (F-CR-2 fix — CIJ_MOCK_REGISTRY_PATCH 로 실 hunk 주입, mock flag 제거)
   DIFF="A	.github/workflows/foo.yml
 M	docs/evidence-checks-registry.yaml"
   run env \
     CIJ_MOCK_DIFF_FILES="$DIFF" \
+    CIJ_MOCK_REGISTRY_PATCH="$(cat tests/fixtures/cfp-2061-s1/registry_append_patch.txt)" \
     CIJ_MOCK_PR_BODY="" \
     CIJ_MOCK_PR_LABELS="" \
-    CIJ_MOCK_REGISTRY_APPEND="1" \
     bash "$SCRIPT" --repo mclayer/plugin-codeforge --pr-number 9004
 
   echo "# status: $status" >&3
@@ -99,6 +102,8 @@ M	docs/evidence-checks-registry.yaml"
 
   [ "$status" -eq 1 ]
   [[ "$output" == *"WARNING"* ]] || [[ "$output" == *"marker"* ]]
+  # registry-append trigger 가 실 patch 파싱으로 감지되는지 확인 (F-CR-2 discriminating assertion)
+  [[ "$output" == *"registry-append"* ]]
 }
 
 # ------------------------------------------------------------------ TC-5: 신규 ADR, marker 부재 -> WARNING
