@@ -16,6 +16,8 @@ related_stories:
   - CFP-521
   - CFP-627
   - CFP-743  # Amendment 3 — reconcile PR cross-repo write scope 추가 (Wave 2 Story-3, UpgradeAgent + CLI consumer .github/workflows/ 자동 생성 PR 인증 carrier)
+  - CFP-1336  # Amendment 4 — cross-repo label endpoint write scope 추가
+  - CFP-2101  # Amendment 5 — classic No-expiration evidence-gated exception (첫 약화 방향 amendment, #2053 outage 복구 정합화)
 related_adrs:
   - ADR-013
   - ADR-016
@@ -44,6 +46,25 @@ amendments:
     summary: "§결정 2 scope minimum 5종 → 6종 갱신 — `cross-repo-target-repos issues:write (label endpoint)` grant 추가. CFP-1336 (Cross-repo bidirectional label sync — wrapper Story Issue ↔ impl repo PR labels) 의 `templates/github-workflows/cross-repo-label-sync.yml` (Wave 2 carrier) workflow 가 cross-repo label state mutation (write) 권한을 요구 — wrapper repo Story Issue label change event 수신 → impl repo PR label sync write + impl repo PR label change event 수신 → wrapper Story Issue label sync write (bidirectional). 현재 5 scope (repo:read / repo:write / metadata:read / marketplace contents:read / reconcile-target-repos contents:write + pull_requests:write) 안 cross-repo label endpoint write 권한 부재 — least-privilege 정합 신규 scope 의무. scope target = `mclayer/plugin-codeforge` (wrapper) ↔ impl repo (consumer Phase 2 PR repo) 한정 (fine-grained PAT repository access list 강제, org-wide write 절대 금지). action = `issues:write` (label endpoint) 1종만 — `contents:write` / `workflows:write` / `admin:*` / `delete_repo` 등 escalation scope 미부여 (self-modification escalation 차단). Strengthening direction only (scope 확장 = ADR-064 top-down ratchet 정합 — weakening 아님). ADR-013 Amendment 4 단일 PAT consolidation 정책 무변경 (별도 PAT 신설 X — 단일 CODEFORGE_CROSS_REPO_PAT scope 확장, 6번째 consumer workflow phase-gate-mergeable.yml / rate-limit-fallback-kpi.yml / marketplace-drift-detection.yml / UpgradeAgent reconcile / 신규 cross-repo-label-sync.yml). paired sibling ADR-073 Amendment 9 §결정 1 (transition trigger `label_change` 9번째 entry, verify subject layer) + ADR-082 Amendment 14 §결정 1 layer 1 sub-scope (1-D) cross-repo label-write authority (write authority layer) — 3 ADR Amendment 동시 발의 (CFP-1336 carrier, axis disjoint complement 3-set: verify subject ↔ write authority ↔ PAT scope grant, ADR-064 §결정 1 CFP scope unitary 정합). Audit log placeholder row append (`docs/security/pat-rotation-log.md` 4번째 row Phase 1 placeholder + Phase 2 actual grant date — Amendment 2/3 precedent 답습, Phase 2 PR description checklist forcing function 의무). CFP-1302 D-4 chief tie-break dissent carry-over F2 carrier — sentinel-driven 아닌 ratchet 확장 carrier."
     is_transitional: false
     sunset_justification: "N/A — permanent security policy. ADR-058 §결정 7 security ADR default presumption 정합 (is_transitional: false). ADR-064 §self-application top-down ratchet 정합 (Amendment 4 = scope 확장 강화 방향 only — cross-repo-target-repos 한정 least-privilege + action 1종만 issues:write label endpoint). 약화 방향 (scope 축소 / org-wide write 확대 / action escalation contents:write 또는 admin / lifetime 연장 / rotation cadence 약화) 발의 차단."
+  - amendment: 5
+    date: 2026-06-09
+    cfp: CFP-2101
+    direction: weaken
+    summary: "§결정 1 (cadence 90일 권장 / 180일 최대) + §결정 2 (fine-grained 6 scope least-privilege, classic/org-wide 금지) 에 evidence-gated exception clause 추가 — 단일 family dogfood 운영 PAT 의 classic No-expiration + repo/workflow scope 허용 (보상통제 3종 의무). 본 ADR 첫 약화 방향 amendment. §결정 1/2 의 기존 mandate 본문은 폐기 없이 보존 (default 강화 정책 유지) + exception clause 만 append. 약화 대상 = (a) lifetime 무한대 (No-expiration, §결정 1 90/180일 위배) + (b) scope 광역화 (classic `repo`+`workflow`, §결정 2 fine-grained 6 scope + org-wide contents:write 금지 위배) — 2 방향 동시 약화. evidence: #2053 outage — fine-grained ≤90일 회전 friction 이 `story-init` cross-repo write 전면 404 유발 (모든 신규 Story scaffold 차단). 사용자 2026-06-09 classic No-expiration (repo+workflow) 11 repo set 으로 교체 + 검증 완료. 보상통제 3종: (1) §결정 4 leak 즉시 revoke 절차 유지 (무만료라도 compromise 시 T+0 revoke + T+1h rotation 의무 불변) (2) 단일 consolidated PAT (ADR-013 Amendment 4 — 회전/노출 대상 토큰 1개) (3) single-owner dogfood 컨텍스트 (multi-tenant production 아님, 토큰 소유자 = 유일 운영자). §결정 4 (compromise response) / §결정 5 (audit log SSOT) 보존. §결정 7 consumer overlay 강화-only 정책 무변경 — 본 약화는 family 단일 dogfood PAT 한정 exception, consumer 약화 channel 로 전파 금지 (weakening scope 격리 의무). ADR-064 §결정 7 Amendment 8 evidence-gated symmetric ratchet 정합 (약화도 evidence 동반 시 1급) + ADR-058 §결정 5 (재정의 후 — sunset_justification = 약화 evidence requirement, 차단 logic 아님) 정합. Audit log row append (`docs/security/pat-rotation-log.md` 2026-06-09 actual grant row — placeholder 아님, 실 교체 완료) + 이전 active row (2026-05-14 fine-grained PAT) revoked_at 갱신."
+    is_transitional: false
+    sunset_justification: |
+      약화 방향 amendment — ADR-058 §결정 5 (CFP-1149 재정의 후 — sunset_justification = 약화 evidence requirement, 강화 방향 evidence 와 동등 1급 절차) + ADR-064 §결정 7 Amendment 8 (evidence-gated symmetric ratchet — 약화도 evidence 동반 시 1급 허용, 비대칭 제거) 정합. is_transitional: false 유지 (security policy permanent — exception clause 자체가 영구 정책, 안전망 transitional 아님).
+
+      약화 evidence (metric / incident — 강화 방향의 pattern_count / incident 와 동등 1급):
+      1. **#2053 outage (incident evidence)** — fine-grained PAT 의 ≤90일 회전 + repository-access-list 관리 friction 이 `CODEFORGE_CROSS_REPO_PAT` 만료/scope 누락 시 cross-repo write 전면 HTTP 404 를 유발. `story-init` 등 모든 신규 Story scaffold cross-repo write 가 차단되어 codeforge dogfood 파이프라인 전면 중단. fine-grained 회전 cadence 의 운영 가용성 비용이 보안 이득을 압도한 실측 사례.
+      2. **운영 환경 변화 (environment evidence)** — codeforge family = single-owner dogfood (유일 운영자 `mccho@mclayer.it`, multi-tenant production 아님). multi-tenant 환경이라면 No-expiration + 광역 scope = 부적격이나, single-owner dogfood 의 blast radius 는 운영자 1인으로 bounded — fine-grained 회전의 한계 보안 이득이 단일 운영자 컨텍스트에서 marginal.
+
+      blast radius 보상통제 3종 (약화의 잔존 risk 를 bounded 로 유지 — 무제한 약화 아님):
+      1. **§결정 4 leak 즉시 revoke 절차 유지** — No-expiration 이라도 compromise (실수 commit / log 노출 / 운영자 자격 변동) 감지 시 T+0 즉시 revoke + T+1h rotation 의무 불변. 무만료의 무한 compromise window 를 detection→revoke 절차로 상쇄. compromise response 가 lifetime 만료를 대체하는 1차 통제.
+      2. **단일 consolidated PAT (ADR-013 Amendment 4)** — 회전/노출 대상 토큰 1개. 광역 classic scope 의 blast radius 가 토큰 다수가 아닌 단일 토큰에 집중 → revoke 시 단일 action 으로 전 표면 무효화 가능 (분산 토큰 대비 incident response 단순).
+      3. **single-owner dogfood 컨텍스트** — multi-tenant production 아님. classic `repo` 광역 scope 의 노출 대상 = 운영자 본인 접근 가능 repo (family 11 repo set) 한정, 외부 tenant / 3rd-party 노출 0.
+
+      scope 격리 (약화 전파 차단 — INV): 본 약화는 codeforge family 단일 dogfood PAT 한정 exception. §결정 7 consumer overlay `security.pat_rotation_cadence_days` 강화-only 정책 무변경 — consumer 측은 No-expiration / classic scope 약화 channel 비전파 (weakening scope 격리 의무, consumer-guide cross-ref).
 mechanical_enforcement_actions: []
 ---
 
@@ -78,6 +99,8 @@ CFP-450 이 도입한 consolidation 자체는 secret governance 의 첫 단계 (
 
 90 days 는 GitHub 권장 best practice + codeforge family 의 cross-repo 활성 활동 기간 (CFP cycle 평균 1-2 weeks × 8-10 Story = 분기 1회 회전이 정상 사용 cycle 과 align).
 
+**Exception clause (Amendment 5, CFP-2101 — evidence-gated weakening)**: 위 권장/최대 cadence 는 default mandate 로 유지하되, **단일 family dogfood 운영 PAT 는 classic No-expiration (무만료) 을 허용**한다 — 단 §결정 4 leak 즉시 revoke 절차 유지 + 단일 consolidated PAT + single-owner dogfood 컨텍스트 3 보상통제 동시 충족 시에 한함 (3종 중 1+ 부재 시 본 exception 무효, default cadence 적용). evidence = #2053 outage (fine-grained ≤90일 회전 friction 이 cross-repo write 전면 404 → Story scaffold 전면 차단). ADR-064 §결정 7 Amendment 8 evidence-gated symmetric ratchet + ADR-058 §결정 5 (약화 evidence requirement) 정합. **본 exception 은 codeforge family 단일 dogfood PAT 한정** — §결정 7 consumer overlay (강화-only) 로 전파 금지. 무만료라도 §결정 5 audit log row append + compromise 시 §결정 4 4-step 의무는 불변 (lifetime 만료를 detection→revoke 통제가 대체).
+
 ### 결정 2 — Scope minimum (least privilege) (Amendment 4, CFP-1336 — 5종 → 6종 갱신)
 
 PAT 발급 시 다음 6 scope 만 부여:
@@ -92,6 +115,8 @@ PAT 발급 시 다음 6 scope 만 부여:
 | **`cross-repo-target-repos issues:write (label endpoint)`** | **`cross-repo-label-sync.yml` (CFP-1336 / ADR-073 Amendment 9 + ADR-082 Amendment 14 sub-scope 1-D paired sibling Wave 2 carrier) — cross-repo bidirectional label sync workflow (wrapper repo Story Issue label change event 수신 → impl repo PR label sync write + impl repo PR label change event 수신 → wrapper Story Issue label sync write). scope target = `mclayer/plugin-codeforge` (wrapper) ↔ impl repo (consumer Phase 2 PR repo) 한정 (fine-grained PAT repository access list 강제, org-wide write 절대 금지). action = `issues:write` (label endpoint) 1종만 — `contents:write` / `workflows:write` / `admin:*` / `delete_repo` 등 escalation scope 미부여 (self-modification escalation 차단)** | **CFP-1336 ADR-066 Amendment 4 (binds ADR-073 Amendment 9 §결정 1-A 9번째 entry `label_change` + ADR-082 Amendment 14 §결정 1 layer 1 sub-scope 1-D cross-repo label-write authority — 3 ADR Amendment 동시 발의 axis disjoint complement 3-set)** |
 
 `admin:org` / `delete_repo` / `workflow` / `gist` / org-wide `contents:write` / 기타 광역 scope 부여 금지. `reconcile-target-repos contents:write + pull_requests:write` 는 **fine-grained PAT 의 repository access 를 reconcile 대상 consumer repo 로 명시 제한** (org-wide 금지 — least-privilege 핵심 invariant). 향후 신규 workflow 가 추가 scope 필요 시 별도 ADR 보완 의무.
+
+**Exception clause (Amendment 5, CFP-2101 — evidence-gated weakening)**: 위 fine-grained 6 scope least-privilege 는 default mandate 로 유지하되, **단일 family dogfood 운영 PAT 는 classic PAT 의 `repo` + `workflow` 2 scope 를 허용**한다 — 단 §결정 1 exception clause 와 동일 3 보상통제 (§결정 4 leak 즉시 revoke + 단일 consolidated PAT + single-owner dogfood) 동시 충족 시에 한함. classic `repo` = 운영자 접근 가능 전 repo read/write (org 광역) 로, 본래 §결정 2 가 금지한 "org-wide `contents:write`" 영역에 해당 — least-privilege 의 정면 약화임을 명시 인지. 약화 정당화: #2053 outage 가 fine-grained repository-access-list 누락 (scope 관리 friction) 을 cross-repo write 전면 404 원인 후보로 demonstrate → classic `repo` 광역화가 운영 단순성으로 friction 회피. blast radius 보상 = 단일 토큰 (revoke 1 action 전 표면 무효화) + single-owner (외부 tenant 노출 0) + 즉시 revoke 절차. **본 exception 은 codeforge family 단일 dogfood PAT 한정** — consumer overlay (§결정 7) 비전파. exception 무효 조건 (보상통제 1+ 부재) 시 fine-grained 6 scope default 복귀. ADR-064 §결정 7 Amendment 8 + ADR-058 §결정 5 정합.
 
 **Amendment 2 (CFP-627) rationale**: ADR-063 Amendment 3 §결정 13 (post-rebase — CFP-631 Amendment 2 §결정 11+12 occupied) reactive scheduled detection (`marketplace-drift-detection.yml`) 가 `mclayer/marketplace` repo 의 `marketplace.json` fetch 의무 → least-privilege 정합 신규 scope grant. ADR-013 Amendment 4 (PAT consolidation) 정책 무변경 — 단일 PAT scope 확장 (별도 PAT 신설 X).
 
