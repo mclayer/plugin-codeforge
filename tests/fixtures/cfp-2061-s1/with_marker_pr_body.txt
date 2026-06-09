@@ -1,0 +1,3 @@
+[increment-justification] why=de-bloat 거버넌스 재증식의 측정 공백(추가마다 실효 입증 의무 부재)을 메우는 예방 구조 blocks-or-replaces=CLAUDE.md 1.8K→7.2K 재증식 유형의 무근거 거버넌스 순증을 차단(개수 cap 아닌 근거 의무)
+
+이 PR은 정당화 순증 게이트를 도입합니다.

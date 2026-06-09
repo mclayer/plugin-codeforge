@@ -1,0 +1,42 @@
+name: increment-justification
+# CFP-2061-S1 / ADR-060 §결정 30
+# [increment-justification] PR body marker grep-presence lint.
+# 검사·ADR·스크립트 신규 추가 PR 에 대해 PR body 에 marker 존재 여부를 검증.
+# narrative justification 강제 (grep-presence only — semantic adequacy 불가, reviewer responsibility).
+#
+# trigger-path closed-set (G1):
+#   (a) docs/evidence-checks-registry.yaml entries[] row 신규 append
+#   (b) scripts/check-*.{sh,py} 신규 파일
+#   (c) (templates|.github)/workflows/*.yml 신규 파일
+#   (d) archive/adr/ADR-*.md 신규 파일 (Amendment 아닌 신규)
+#
+# trigger-path 0건 -> 자동 PASS (chore fast-path).
+#
+# Semantic adequacy: grep-presence only -- false-positive risk, reviewer responsibility.
+# Warning tier (ADR-060 §결정 30): exit 1 on missing marker (warning, not blocking).
+# continue-on-error: true (warning tier, ADR-060 §결정 5)
+#
+# Bypass: hotfix-bypass:increment-justification label (114번째 family member, label-registry-v2 v2.90)
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  increment-justification-check:
+    runs-on: ubuntu-latest
+    continue-on-error: true  # warning tier -- ADR-060 §결정 5
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check increment justification marker
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          bash scripts/check-increment-justification.sh \
+            --repo ${{ github.repository }} \
+            --pr-number ${{ github.event.pull_request.number }}
