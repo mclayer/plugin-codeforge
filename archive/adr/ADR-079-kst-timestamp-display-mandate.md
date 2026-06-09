@@ -22,7 +22,7 @@ related_adrs:
   - ADR-064  # Decision principle mandate — §결정 1 CFP-scope-unitary (Phase 1/Phase 2 독립 CFP), §결정 4 ordering invariant (RESERVATION row sequential append)
   - ADR-058  # ADR sunset criteria mandate — is_transitional:false governance presumption (§결정 7), §해소 기준 N/A permanent policy, §결정 5 sunset_justification ratchet 차단
   - ADR-040  # Worktree convention Amendment 3 — normative ADR mechanical_enforcement_actions[] 의무 (Phase 1 deferred-followup declare, CFP-771 Amendment 1 채움)
-  - ADR-057  # Orchestrator Opus mandate — consumer overlay 축소 불가 패턴 (KST wrapper-canonical 강제, tz override 불가 정합)
+  - ADR-064  # §결정 7 evidence-gated symmetric ratchet — consumer overlay 축소 불가 패턴 (KST wrapper-canonical 강제, tz override 불가 정합)
   - ADR-073  # Orchestrator verify-before-assert — external timestamp 무변조 invariant (quote-external UTC verbatim + KST parenthetical) 정합
   - ADR-031  # Lane-spawn evidence — §14 Lane Evidence display 표 (KST) vs schema field spawned_at/returned_at (UTC strict 보존) Layer-bounded disjoint
   - ADR-060  # Evidence-enforceable promotion framework — Phase 2 CFP-771 warning-tier lint carrier (mechanical_enforcement_actions[] 채움 target)
@@ -129,7 +129,7 @@ governance self-write 만 KST 직접 표기. external timestamp (GitHub API resp
 
 ### 결정 7 — consumer overlay tz override 불가
 
-wrapper-canonical KST 강제. consumer overlay (`.claude/_overlay/`) 는 정책을 축소할 수 없고 확장만 가능 (CLAUDE.md normative + ADR-057 정합). 미국/유럽 consumer 도입 시 별도 CFP (현 시점 scope 외). OpRiskArch 검토 — consumer overlay tz override 가 audit-trail-coherence (cross-consumer Story 시각 비교) 를 깨므로 wrapper-canonical 단일 기준 유지.
+wrapper-canonical KST 강제. consumer overlay (`.claude/_overlay/`) 는 정책을 축소할 수 없고 확장만 가능 (CLAUDE.md normative + consumer-guide §2556 + ADR-064 §결정 7 정합). 미국/유럽 consumer 도입 시 별도 CFP (현 시점 scope 외). OpRiskArch 검토 — consumer overlay tz override 가 audit-trail-coherence (cross-consumer Story 시각 비교) 를 깨므로 wrapper-canonical 단일 기준 유지.
 
 ### 결정 8 — cross-plugin template SSOT 경계 명확화 (factual divergence 정정)
 
@@ -187,7 +187,7 @@ N/A — permanent policy (`is_transitional: false`, ADR-058 §결정 7 governanc
 - [ADR-064](ADR-064-decision-principle-mandate.md) — §결정 1 CFP-scope-unitary / §결정 4 ordering invariant
 - [ADR-058](ADR-058-adr-sunset-criteria-mandate.md) — §결정 7 governance presumption / §결정 5 ratchet
 - [ADR-040](ADR-040-worktree-convention.md) — Amendment 3 §결정 7.D mechanical_enforcement_actions[] self-application
-- [ADR-057](ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md) — consumer overlay 축소 불가 패턴
+- [ADR-064](ADR-064-decision-principle-mandate.md) — §결정 7 evidence-gated symmetric ratchet (consumer overlay 축소 불가)
 - [ADR-031](ADR-031-lane-spawn-evidence-trail.md) — §14 Lane Evidence schema (dual-layer co-existence 근거)
 - `CLAUDE.md` — 신규 단락 "시각 표시 정책 (KST, ISO 8601)"
 - `docs/orchestrator-playbook.md` — normative cross-ref 5곳

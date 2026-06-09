@@ -90,7 +90,7 @@ ADR-106 §결정 3 KPI append-only state 구조 (10-field) 와 동일. `operatio
 | (b) max-depth | `loop_depth` | loop_depth ≥ 상한 | `loop_max_depth` (default 3) |
 | (c) escalate_user | `escalation_action` | max-depth/dedup OR trip | `pattern_count_threshold` (default 2) |
 
-OR 발동 (하나라도 trip 시 자동 발의 억제 — 보수적 fail-safe). consumer overlay (`project.yaml deploy.self_improving_loop`) 확장 가능 / 축소 불가 (ADR-057 / ADR-058 ratchet).
+OR 발동 (하나라도 trip 시 자동 발의 억제 — 보수적 fail-safe). consumer overlay (`project.yaml deploy.self_improving_loop`) 확장 가능 / 축소 불가 (ADR-064 §결정 7 / ADR-058 §결정 5 ratchet).
 
 ### 3.4 pmo-output-v1 disjoint (escalation 출력 carrier)
 

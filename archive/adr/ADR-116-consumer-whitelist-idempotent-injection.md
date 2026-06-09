@@ -10,7 +10,7 @@ amends: null
 supersedes: null
 related_adrs:
   - ADR-026  # Amendment 4 §결정 6 — ALLOWED_HUB_REPOS 화이트리스트 정책 소유 (zero-trust strict-match anchor)
-  - ADR-024  # §결정 6 — consumer overlay 화이트리스트 확장-only / never-reduce 패턴 선례 (branch-protection contexts)
+  - ADR-024  # Amendment 2 §결정 A — required_status_checks 확장-only / never-reduce 화이트리스트 선례 (branch-protection contexts)
   - ADR-057  # 오인용 정정 대상 — 실제 = Orchestrator Opus mandate (확장-only 와 무관). 본 ADR 이 인용 오류를 정정
   - ADR-061  # 외부 .py 파일 분리 (heredoc 금지) — extract_allowed_hub_repos.py 정합
 related_stories:
@@ -40,11 +40,11 @@ Accepted (2026-06-08 KST — CFP-1716 carrier). 사후 형식화 ADR — 구현 
 - mctrader-data 에서 `,github.com/mclayer/mctrader-hub` 가 **3회 재발 손실**(mctrader-data#189/#198/#199) — 전형적 configuration drift.
 - consumer overlay `phase_gate.allowed_hub_repos[]` 는 schema/문서에만 선언되어 있고 **실제 주입 메커니즘이 0개**였다(미싱 링크).
 
-기존 ADR-024 §결정 6 이 동일 class(보안 화이트리스트, overlay-driven, never-reduce)를 branch-protection `required_status_checks.contexts` 에 이미 codify — consumer 는 자기 context **추가만** 가능(core 삭제 불허). 본 ADR 은 그 패턴을 `ALLOWED_HUB_REPOS` 도메인에 두 번째로 실현한다.
+기존 ADR-024 Amendment 2 §결정 A 가 동일 class(보안 화이트리스트, overlay-driven, never-reduce)를 branch-protection `required_status_checks.contexts` 에 이미 codify — consumer 는 자기 context **추가만** 가능(core 삭제 불허). 본 ADR 은 그 패턴을 `ALLOWED_HUB_REPOS` 도메인에 두 번째로 실현한다.
 
 ### 근거 ADR 재선정 (ADR-057 오인용 정정)
 
-구현/문서/워크플로우 주석이 모두 "ADR-057 확장-only 정합" 으로 인용했으나, **ADR-057 의 실제 결정 = Orchestrator Opus 필수화 + Sonnet→Opus rate-limit fallback** 으로 확장-only 와 무관. "확장-only / 축소 불가" 개념은 실재하나(consumer-guide §2556 overlay 일반 원칙 + ADR-024 §결정 6 화이트리스트 class) ADR-057 이 소유하지 않는다.
+구현/문서/워크플로우 주석이 모두 "ADR-057 확장-only 정합" 으로 인용했으나, **ADR-057 의 실제 결정 = Orchestrator Opus 필수화 + Sonnet→Opus rate-limit fallback** 으로 확장-only 와 무관. "확장-only / 축소 불가" 개념은 실재하나(consumer-guide §2556 overlay 일반 원칙 + ADR-024 Amendment 2 §결정 A 화이트리스트 class) ADR-057 이 소유하지 않는다.
 
 leak 진원 = `phase-gate-mergeable.yml:16` 주석 + ADR-026 Amendment 4 §결정 6 frontmatter summary(pre-existing) → 구현/Story §1 D4 가 답습. 본 ADR 은 ADR-057 을 **amend 하지 않고**(단일 결정 응집 보존), 올바른 근거를 재확정한다. 기존 leak 정정 = 별 doc-only fix carrier(CFP-1716 Story §11.3 권고).
 
@@ -81,7 +81,7 @@ N/A — permanent policy. 본 ADR 은 consumer 보안 화이트리스트 확장-
 ## 근거 (Rationale)
 
 - 옵션 A(reconcile 덮어쓰기 로직 제거) **기각** — wrapper thin-dispatcher invariant 위배 + reconcile 본체 수정은 모든 consumer 영향 광역 리스크.
-- 옵션 B(멱등 후처리 주입) **채택** — reconcile 무수정, 환경-특화 확장만 멱등 재적용, never-reduce 로 보안 화이트리스트 무결성 보존. ADR-024 §결정 6 선례 동형.
+- 옵션 B(멱등 후처리 주입) **채택** — reconcile 무수정, 환경-특화 확장만 멱등 재적용, never-reduce 로 보안 화이트리스트 무결성 보존. ADR-024 Amendment 2 §결정 A 선례 동형.
 - awk 전면 fallback **기각** — 검증된 GREEN 구현(8 bats)을 흔들고 retroactive 안정성 훼손. 실행환경 한정 + guard 가 비용 대비 충분.
 
 ## 영향 / 후속

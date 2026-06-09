@@ -13,7 +13,7 @@ permissions:
 env:
   # CFP-795 / ADR-026 Amendment 4 §결정 6 — ALLOWED_HUB_REPOS hub repo 화이트리스트 (zero-trust anchor).
   # story_uri (PR-body self-declared) 의 host+owner/repo 를 이 목록과 strict match.
-  # consumer overlay: .claude/_overlay/project.yaml phase_gate.allowed_hub_repos[] 로 확장 가능 (ADR-026 Amd 4 §결정 6 (화이트리스트) + ADR-024 §결정 6 (확장-only 패턴) + ADR-116 (주입 mechanism) — 축소 불가).
+  # consumer overlay: .claude/_overlay/project.yaml phase_gate.allowed_hub_repos[] 로 확장 가능 (ADR-026 Amd 4 §결정 6 (화이트리스트) + ADR-024 Amendment 2 §결정 A (확장-only 패턴) + ADR-116 (주입 mechanism) — 축소 불가).
   # 화이트리스트 미일치 시 즉시 cond2=false (fail-closed). PR body derive 절대 금지 (zero-trust).
   ALLOWED_HUB_REPOS: "github.com/mclayer/codeforge-internal-docs"
 
@@ -208,7 +208,7 @@ jobs:
             // SECURITY_PATHS: 조건 3 보안 경로 패턴 (§3.3 verbatim, Change Plan §7.2 STRIDE T1/T2 차단)
             //   (a) 보안 분류 ADR — docs/adr/ADR-*.md (category:security 또는 title /security/i best-effort)
             //   (b) docs/security/ — 보안 문서
-            //   consumer overlay 가 SECURITY_PATHS 확장 가능 (축소 불가 — ADR-026 Amd 4 §결정 6 (화이트리스트) + ADR-024 §결정 6 (확장-only 패턴))
+            //   consumer overlay 가 SECURITY_PATHS 확장 가능 (축소 불가 — ADR-026 Amd 4 §결정 6 (화이트리스트) + ADR-024 Amendment 2 §결정 A (확장-only 패턴))
             const SECURITY_PATHS = [
               /^docs\/adr\/ADR-.*\.md$/,   // (a) ADR 파일 (보안 분류 frontmatter best-effort — 파일명 패턴 1차 match)
               /^docs\/security\//           // (b) 보안 문서
