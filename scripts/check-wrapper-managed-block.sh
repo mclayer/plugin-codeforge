@@ -126,18 +126,7 @@ normalize_path() {
   echo "$p"
 }
 
-# SKIP_LIST 에 포함 여부 (repo-relative exact path 매칭 — basename-only 금지)
-is_skip_listed() {
-  local file
-  file="$(normalize_path "$1")"
-  local entry
-  for entry in "${SKIP_LIST[@]}"; do
-    if [[ "$file" == "$entry" ]]; then
-      return 0
-    fi
-  done
-  return 1
-}
+# is_skip_listed 는 collect_changed_files.sh source 이후 재정의됨 (CFP-2061-S6 POST_FILTER_FN)
 
 # ── marker 정의 (whole-line anchored regex, ADR-027 §결정 7.D.3) ──────────────
 # 각 파일 타입별 anchored pattern: ^[[:space:]]* ... [[:space:]]*$
@@ -269,42 +258,24 @@ check_file() {
   return $errors
 }
 
-# ── 검증 대상 파일 수집 ───────────────────────────────────────────────────────
-collect_files() {
-  local raw_files=()
-  if [[ $# -gt 0 ]]; then
-    # 명시적 인수
-    raw_files=("$@")
-  else
-    # git diff 기반 자동 감지
-    if ! command -v git &>/dev/null; then
-      echo "$SCRIPT_NAME ERROR: git 미설치 (환경 오류)" >&2
-      exit 2
-    fi
-    # PR 컨텍스트 (CI) vs 로컬 실행 분기
-    local base_ref="${GITHUB_BASE_REF:-}"
-    local git_files
-    if [[ -n "$base_ref" ]]; then
-      mapfile -t git_files < <(git diff --name-only "origin/${base_ref}...HEAD" 2>/dev/null \
-        | grep -E '\.(yml|yaml|sh|md)$' || true)
-    else
-      # 로컬: staged + unstaged
-      mapfile -t git_files < <({ git diff --name-only HEAD 2>/dev/null; git diff --cached --name-only 2>/dev/null; } \
-        | grep -E '\.(yml|yaml|sh|md)$' | sort -u || true)
-    fi
-    raw_files=("${git_files[@]+"${git_files[@]}"}")
-  fi
+# ── 공유 helper source (CFP-2061-S6) ─────────────────────────────────────────
+# shellcheck source=lib/collect_changed_files.sh
+SCRIPT_DIR_WMB="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR_WMB}/lib/collect_changed_files.sh"
 
-  # SKIP_LIST 필터링 (repo-relative exact path 매칭 — ADR-027 §결정 7.D.2)
+# ── is_skip_listed: POST_FILTER_FN 계약 준수 (exit 0 = skip) ─────────────────
+# stderr 메시지는 이 함수 내에서 출력 (caller-local — 과추상화 회피, ADR-027 §결정 7.D.2)
+is_skip_listed() {
   local file
-  for file in "${raw_files[@]+"${raw_files[@]}"}"; do
-    [[ -z "$file" ]] && continue
-    if is_skip_listed "$file"; then
-      echo "$SCRIPT_NAME SKIP (self-referential): $file" >&2
-      continue
+  file="$(normalize_path "$1")"
+  local entry
+  for entry in "${SKIP_LIST[@]}"; do
+    if [[ "$file" == "$entry" ]]; then
+      echo "$SCRIPT_NAME SKIP (self-referential): $1" >&2
+      return 0  # 제외 신호 (POST_FILTER_FN 계약: exit 0 = skip)
     fi
-    echo "$file"
   done
+  return 1  # 통과
 }
 
 # ── 메인 ─────────────────────────────────────────────────────────────────────
@@ -320,7 +291,7 @@ main() {
       ((total_errors++)) || true
     fi
     ((checked++)) || true
-  done < <(collect_files "$@")
+  done < <(POST_FILTER_FN=is_skip_listed collect_changed_files '\.(yml|yaml|sh|md)$' "$@")
 
   if [[ "$checked" -eq 0 ]]; then
     echo "$SCRIPT_NAME INFO: 검증 대상 파일 없음 (marker block 미사용, self-referential skip, 또는 변경 없음)" >&2
