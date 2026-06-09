@@ -39,7 +39,7 @@ CFP-450 (ADR-013 Amendment 4) PAT consolidation 후 단일 `CODEFORGE_CROSS_REPO
 
 [^t3]: CFP-1336 Amendment 4 = **Phase 1 placeholder row** (ADR-066 §결정 2 Grant 절차 + §결정 5 audit log SSOT 정합, Amendment 2/3 placeholder pattern 답습). 실제 scope grant + live verify 는 CFP-1336 Wave 2 별 sub-CFP carrier (`templates/github-workflows/cross-repo-label-sync.yml` workflow hydrate + impl repo listener seed + bats fixture pair + script lint binding) 진입 전 사용자 manual blocker. Wave 2 진입 시 본 row 의 `rotated_at` 을 actual grant timestamp 로 갱신 + scope active 를 cross-repo label sync workflow 1건 (wrapper → impl bidirectional label write success)으로 live verify (ADR-073 Amendment 9 §결정 1-A 9번째 entry `label_change` verify-before-assert 4-step 정합) 후 placeholder 표기 제거 의무.
 
-[^t4]: CFP-2101 Amendment 5 = **actual rotation row** (placeholder 아님 — 토큰 교체 이미 완료, 2026-06-09 검증). #2053 PAT 404 outage 복구 시 사용자가 fine-grained PAT → classic No-expiration (repo+workflow) 11 repo set 으로 실 교체. 시간 부분 `00:00:00+09:00` = 정확 발급 시각 불명 시 발급 일자 기준 자정 placeholder ([^t1] 정합) — 사용자가 GitHub Settings 에서 정확 timestamp 확인 후 별 commit 정정 허용.
+[^t4]: CFP-2101 Amendment 5 = **actual rotation row** (placeholder 아님 — 토큰 교체 이미 완료, 2026-06-09 검증). #2053 PAT 404 outage 복구 시 사용자가 fine-grained PAT → classic No-expiration (repo+workflow) 11 repo set 으로 실 교체. 시간 부분 `00:00:00+09:00` = 정확 발급 시각 불명 시 발급 일자 기준 자정 placeholder ([^t1] 정합) — 사용자가 GitHub Settings 에서 정확 timestamp 확인 후 별도 commit 정정 허용.
 
 [^e2]: classic No-expiration (무만료) = ADR-066 §결정 1 Amendment 5 evidence-gated exception clause 정합 (단일 family dogfood PAT 한정, 보상통제 3종 충족 시). 본래 §결정 1 default (90일 권장 / 180일 최대) 의 약화 방향 exception — lifetime 만료 부재를 §결정 4 compromise response (leak 즉시 T+0 revoke + T+1h rotation) 절차가 대체. 무만료라도 compromise 감지 시 revoke 의무 불변.
 
