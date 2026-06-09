@@ -6043,3 +6043,39 @@ entries:
       failure_threshold: 0
       sibling_dependencies:
         - CFP-2057  # 본 Story (D5 mechanical wire)
+
+  - name: increment-justification-presence
+    description: |
+      CFP-2061-S1 / ADR-060 §결정 30 mechanical verification —
+      검사(scripts/check-*.{sh,py})·workflow((templates|.github)/workflows/*.yml)·
+      ADR(archive/adr/ADR-*.md 신규)·registry row 신규 append PR 에 대해
+      PR body 안 [increment-justification] marker(why + blocks-or-replaces 2-요소 AND)
+      존재 여부를 검증. trigger-path 0건이면 자동 PASS (chore fast-path 자동 충족).
+      순증(추가) 방향 정당화 의무 — 기존 약화 방향 check-tier-downgrade-guard.sh 의 대칭물.
+      ADR-060 framework 14번째 warning-tier entry.
+      grep-presence only (semantic adequacy = reviewer responsibility, false-positive 명시).
+      paired_owner_adr ADR-060 §결정 30 SSOT. carrier: CFP-2061-S1.
+      self-exempt: hotfix-bypass:increment-justification (113번째 hotfix-bypass:* family member,
+      label-registry-v2 v2.90 carrier). exempt AC-4: 보안/consumer-whitelist tag entry 잠정 경계
+      (S2 머지 후 정합 — §7 결정 5 / OOS1).
+    detect_command: bash scripts/check-increment-justification.sh
+    workflow: templates/github-workflows/increment-justification.yml
+    current_tier: warning  # ADR-060 §결정 5 — 첫 도입 = warning mode
+    bypass_label: hotfix-bypass:increment-justification
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    introduced_by: CFP-2061-S1
+    introduced_date: 2026-06-09  # KST
+    owner_adr: ADR-060  # evidence-checks-registry framework
+    carrier_adr: ADR-060
+    paired_owner_adr: ADR-060
+    spec_invariant_measurement_required: false  # grep-presence lint — qualitative-only
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: warning  # 첫 도입 warning mode (ADR-060 §결정 5)
+    promotion_criteria:
+      pr_cumulative_min: 20
+      failure_threshold: 0
+      sibling_dependencies:
+        - CFP-2061-S1  # 본 Story (mechanical wire carrier)
