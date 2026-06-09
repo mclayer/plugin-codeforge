@@ -1,0 +1,45 @@
+name: governance-remeasure-cron
+# CFP-2061-S4 / ADR-060 §결정 31 — governance-drift-detection warning tier (15번째)
+# 거버넌스 지표 7종 주기 측정 → baseline 대비 drift 이슈 자동 발행 (advisory)
+#
+# ADR refs: ADR-060 (warning tier) / ADR-061 (python entry-point) / ADR-066 (단일 PAT)
+#           ADR-083 (consumer-applicability: wrapper-self 전용) / ADR-005 (self-app parity)
+#
+# Warning tier (ADR-060 4-tier framework):
+#   Script exits 0 on drift + Issue auto-create (warning, not blocking).
+#   Cron failure is visible via workflow conclusion -- continue-on-error: false.
+#
+# cron 시각: '30 1 * * *' (daily 01:30 UTC = 10:30 KST)
+#   bypass-label-counter(0 0) / 기존 cron 시각 분산 — PAT rate-limit 동시 burst 회피 (ADR-109)
+#
+# Bypass: hotfix-bypass:governance-drift (label-registry-v2 v2.91 family member)
+on:
+  schedule:
+    - cron: '30 1 * * *'  # daily 01:30 UTC = 10:30 KST (시각 분산, ADR-109)
+  workflow_dispatch:
+
+permissions:
+  issues: write    # Issue auto-create (drift alert per metric)
+  contents: read   # git ls-files 측정 (self-repo checkout)
+
+jobs:
+  measure-and-alert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install pyyaml
+
+      - name: Run governance drift check
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}  # ADR-066 single PAT
+        run: |
+          bash scripts/check-governance-drift.sh check \
+            --baseline docs/kpi/governance-bloat-baseline.json \
+            --repo-root .

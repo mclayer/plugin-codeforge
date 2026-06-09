@@ -34,6 +34,12 @@ mechanical_enforcement_actions:
     status: warning               # Phase 1+2 분리 wire (Phase 1 = ADR Amendment + frontmatter entry, Phase 2 = registry row + script/workflow/bats). warning tier first per §결정 5
     progress_note: "CFP-2061-S1 Amendment 16 carrier — 검사(scripts/check-*, (templates|.github)/workflows/*)·ADR(신규 adr_number)·스크립트 신규 추가 PR 의 PR body 정당화 marker (`[increment-justification] why=<...> blocks-or-replaces=<...>`) presence-grep heuristic lint. check-tier-downgrade-guard.sh 순증 방향 대칭 + check-bypass-justification-marker presence-grep/exempt/3-tier exit 구조 차용. ADR-058/064 약화 정당화 순증 제약 reference-only 연결. Phase 1 = ADR Amd16 + frontmatter entry + Story §3·§7 + Change Plan, Phase 2 = scripts/lib/check_increment_justification.py + scripts/check-increment-justification.sh + templates/github-workflows/increment-justification.yml + .github/workflows/ self-app + tests/bats + tests/fixtures + registry row. warning tier first per §결정 5"
     target_section: §결정 30      # 본 Amendment 16 의 mechanical action ↔ §결정 binding
+  # Amendment 17 (CFP-2061-S4, 2026-06-09) — 15번째 warning-tier entry 도입 (governance-drift-detection,
+  # 거버넌스 지표 7종 주기 측정 + drift 이슈 자동 발행 cron, de-bloat 재증식 감시 경보 채널).
+  - action: governance-drift-detection
+    status: warning               # Phase 2 full-lane wire (Python SSOT + bash wrapper + cron workflow + baseline JSON + bats + registry row). warning tier first per §결정 5
+    progress_note: "CFP-2061-S4 Amendment 17 carrier — 거버넌스 지표 7종(검사수/워크플로수/매-PR워크플로/셸수/셸LOC/ADR수/ADR바이트) baseline JSON 대비 drift 상대 증가율 임계 초과 시 이슈 자동 발행(dedup). dedup signature = sha256(governance-drift|metric|increase|bucket) — current_val 절대 제외(폭주 함정 회피). advisory exit 0 (warning tier). Phase 2 = scripts/lib/check_governance_drift.py + scripts/check-governance-drift.sh + templates+.github/workflows/governance-remeasure-cron.yml (ADR-005 byte-parity) + docs/kpi/governance-bloat-baseline.json (provisional) + tests/bats 19 TC RED->GREEN. prior art 답습: check-marketplace-drift.sh + bypass-label-counter.py (신규 발명 0). warning tier first per §결정 5"
+    target_section: §결정 31      # 본 Amendment 17 의 mechanical action ↔ §결정 binding
 amendment_log:
   - amendment: 1
     carrier_story: CFP-390
@@ -550,6 +556,36 @@ amendment_log:
       CFP-662, CFP-734]` (Amendment 2 §결정 6 (c) chain 정합,
       self-carrier CFP-2061-S1 제외 — self promotion gate 평가
       trigger = 자기 PR merge tautology 회피 convention).
+  - amendment: 17
+    carrier_story: CFP-2061-S4
+    date: 2026-06-09
+    direction: strengthen
+    sunset_justification: null  # ADR-060 = is_transitional:false 영구 framework → ADR-058 §결정 5 trigger 미해당. 본 Amendment 17 = 강화 방향 (15번째 warning-tier entry governance-drift-detection 등록 = framework entry count 14 → 15 ratchet-UP). 약화 영역 0건.
+    summary: |
+      신설 §결정 31 — 15번째 warning-tier evidence-checks-registry entry
+      `governance-drift-detection` 등록 carrier amendment.
+      거버넌스 지표 7종(검사수/워크플로수/매-PR워크플로/셸수/셸LOC/ADR수/ADR바이트)
+      baseline JSON 대비 drift 상대 증가율 임계 초과 시 이슈 자동 발행 (dedup).
+
+      dedup signature = sha256("governance-drift|<metric>|increase|<bucket>") — current_val 절대 제외.
+      포함 시 매일 signature 변동 → dedup 무력화 → 이슈 폭주 (D4 함정 회피).
+      advisory exit 0 (warning tier — PR 게이트 아님).
+
+      구조 = prior art 답습 (신규 발명 0):
+        check-marketplace-drift.sh (cron+drift+sha256 dedup+이슈자동+warning+401/429/5xx)
+        bypass-label-counter.py (dedup signature count 제외 + dry-run + _SKIP_ISSUE_CREATE)
+
+      Phase 2 산출물: scripts/lib/check_governance_drift.py (SSOT) +
+      scripts/check-governance-drift.sh (ADR-061 thin wrapper) +
+      templates+.github/workflows/governance-remeasure-cron.yml (ADR-005 byte-parity) +
+      docs/kpi/governance-bloat-baseline.json (provisional, D5) +
+      docs/kpi/governance-bloat-history.jsonl + tests/bats 19 TC RED->GREEN +
+      registry entry + label-registry-v2 v2.91 (hotfix-bypass:governance-drift).
+
+      ratchet 위반 0건 (enum/tier/bypass channel 동작 변경 없음,
+      framework 자연 사용 사례 entry 추가 only. ADR-064 §결정 7 정합).
+      ADR-058 §결정 5 sunset_justification 의무 = is_transitional:false 영구
+      framework trigger 자체 미해당.
 related_stories:
   - CFP-389
   - CFP-390  # Amendment 1 carrier — 인벤토리 backfill (CFP-388 Epic Story-2)
@@ -565,6 +601,7 @@ related_stories:
   - CFP-734  # Amendment 12 carrier — 신설 §결정 26 KPI history accumulation 메커니즘 선택 결정 규칙 SSOT + 3-KPI 분류표 + 통일 "history" key 명 grandfather 정책 + follow-up CFP 경계 (ADR-064 §결정 5). lane 분류 = doc-only fast-path (ADR-054 §결정 1). G-1 지식 공백 (패턴 rationale 부재) retroactive 해소
   - CFP-722  # Amendment 13 carrier — 신설 §결정 27 11번째 warning-tier entry story-section-ownership + lane-self-write-boundary mechanical-enforcement layer (CFP-688 Phase 2 PR #441 destructive rewrite incident 차단 forcing function, ADR-031 §14 monopoly + CFP-32 fix-event-v1 §10 monopoly cross-ref only — ownership semantic 재정의 0건). full-lane (script + workflow + bats + dual-deployment per-repo self-app).
   - CFP-963  # Amendment 14 carrier — 신설 §결정 28 12번째 warning-tier entry codex-network-scope-presence + ADR-081 Amendment 4 §결정 D1.D 본문 확장 (boolean → 4-tier enum strict ratchet-up) mechanical enforcement layer. ADR-040 Amendment 3 §결정 7.A self-application (ADR-081 mechanical_enforcement_actions[]=[] → list[object] 전환). full-lane (Phase 1 = 3 ADR Amd + 2 contract MINOR + SSOT doc + Story + Change Plan, Phase 2 = scripts/lib/2 workflow/bats/fixture pair CX-963-3 P2 boundary mandate). CFP-509 v1.1→v1.2 sibling MANIFEST sync miss INV-1 parity 영역의 evidence-check-registry-v1 MANIFEST row stale "1.1" → "1.3" atomic catch-up (CFP-963 silent stale 영역 catch-up + 신규 v1.3 MINOR network_scope_actual optional schema field codify, 단일 PR row write).
+  - CFP-2061-S4  # Amendment 17 carrier — 신설 §결정 31 15번째 warning-tier entry governance-drift-detection + 거버넌스 지표 7종 주기 측정 + drift 이슈 자동 발행 (advisory, cron). full-lane (Python SSOT + bash wrapper + cron workflow + baseline JSON + bats 19 TC). prior art 답습: check-marketplace-drift.sh + bypass-label-counter.py (신규 발명 0). de-bloat 재증식 감시 경보 채널.
 related_adrs:
   - ADR-008   # versioning (kind:registry 도 minor/major SemVer 정합)
   - ADR-010   # contract sibling sync (kind:registry scope 외 명시)
@@ -1914,3 +1951,56 @@ grep = `^\[increment-justification\]` line-start anchor + `why=` substring + `bl
 - **ADR-005** — sibling-workflow-parity (template ↔ self-app byte-identical, Phase 2).
 - **ADR-058 §결정 5** — `is_transitional: false` 영구 framework trigger 미해당 + 강화 방향 amendment.
 - **prior art** — `scripts/check-tier-downgrade-guard.sh` (약화 방향 대칭) / `scripts/check-bypass-justification-marker.{py,sh}` (presence-grep/exempt/3-tier) / `templates/github-workflows/bypass-justification-marker.yml` (workflow 양식).
+
+## Amendment 17 (CFP-2061-S4, 2026-06-09 KST)
+
+### Amendment 17-결정 31 (신설) — 15번째 warning-tier entry `governance-drift-detection` 등록 + 거버넌스 지표 주기 재계측 + drift 이슈 자동 발행 cron
+
+#### 31.A — 결정 (신규 entry `governance-drift-detection` + warning-tier)
+
+`docs/evidence-checks-registry.yaml` 에 신규 entry `governance-drift-detection` append (Phase 2 PR scope). 거버넌스 지표 7종 baseline 대비 drift 상대 증가율 임계 초과 시 advisory 이슈 자동 발행.
+
+**7지표 측정 대상**:
+
+| metric | 단위 | 측정 명령 | 임계 |
+|---|---|---|---|
+| evidence_checks_registry_entries | count | registry yaml entries[] len | +20% |
+| workflows_total | count | git ls-files '.github/workflows/*.yml' | +20% |
+| workflows_pr_triggered | count | 위 중 pull_request 트리거 | +20% |
+| shell_scripts | count | git ls-files 'scripts/' \| grep '.sh$' | +25% |
+| shell_loc | lines | shell_scripts 합산 LOC | +25% |
+| adr_count | count | git ls-files 'archive/adr/ADR-*.md' | +15% |
+| adr_total_bytes | bytes | adr_count 합산 byte | +15% |
+
+**shell_scripts glob 정정 (§4.1)**: `git ls-files 'scripts/' | grep '.sh$'` (top-level + nested 전부). NOT `scripts/**/*.sh` (top-level 누락 — 18배 과소측정).
+
+#### 31.B — dedup signature (D4 — 최대 함정 회피)
+
+```
+SIG = sha256("governance-drift|<metric>|increase|<threshold_bucket>") | first 16 chars
+```
+
+**current_val 절대 제외** — 포함 시 매일 측정값이 변하면 signature 변동 → dedup 무력화 → 이슈 폭주 (D4 핵심 함정).
+
+답습 원천: `bypass-label-counter.py` L169 `signature = f"{repo}::{label}"` (count 제외) 패턴 직접 답습.
+
+#### 31.C — advisory + prior art 답습
+
+- **advisory exit 0** — drift 감지 + 이슈 발행 후에도 exit 0 (warning tier). setup error 만 exit 2.
+- **prior art 답습**: `scripts/check-marketplace-drift.sh` (cron+drift+sha256 dedup+이슈자동+401/429/5xx) + `scripts/check-bypass-label-counter.py` (dedup signature + dry-run + _SKIP_ISSUE_CREATE). 신규 발명 0.
+- **cron 시각**: `30 1 * * *` (01:30 UTC = 10:30 KST) — bypass-label-counter(00:00) 시각 분산 (ADR-109).
+- **baseline provisional**: `provisional:true` + `rebaseline_owner:CFP-2061-S7` + `captured_at_sha` (D5 — S5/S6 청소 전 잠정).
+
+#### 31.D — TDD bats 19 TC RED->GREEN proof
+
+TC-1 측정 정확성 (discriminating — glob 결함 RED verify) + TC-2 dedup signature (discriminating 핵심 — current_val 포함 naive 시 RED) + TC-3 drift 임계 경계 + TC-4 advisory exit 0 + TC-5 401/429/5xx. hermetic mock.
+
+#### 31.E — Cross-ref
+
+- **§결정 5 / §결정 6 / §결정 11** — warning-first / standard promotion threshold / framework permanent SSOT host.
+- **ADR-061** — thin wrapper + scripts/lib Python SSOT (NO heredoc). ADR-005 = template ↔ self-app byte-identical.
+- **ADR-066** — CODEFORGE_CROSS_REPO_PAT (issues:write + contents:read).
+- **ADR-083** — consumer-applicability: wrapper-self 전용 (self-repo 측정 + self-repo issue create).
+- **ADR-109** — rate-limit-429-mitigation: cron 시각 분산 정합.
+- **ADR-058 §결정 5** — `is_transitional: false` 영구 framework trigger 미해당 + 강화 방향 (15번째 entry ratchet-UP).
+- **prior art** — `scripts/check-marketplace-drift.sh` + `scripts/check-bypass-label-counter.py` + `scripts/lib/gh-api-helpers.sh`.
