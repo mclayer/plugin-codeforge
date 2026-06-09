@@ -1,5 +1,0 @@
-{
-  "pr_branch": "cfp-200/develop",
-  "pr_labels": ["phase:구현"],
-  "path_pattern": "docs/stories/*.md"
-}

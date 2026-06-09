@@ -1,9 +1,0 @@
-# TC-5 META-ERROR fixture — CFP-442 Phase 2
-# 의도적으로 YAML parse 실패를 유발하는 broken yaml
-# Expected: exit 2 (META-ERROR) — yaml.YAMLError 감지
-schema_version: "1.2"
-entries:
-  - name: broken-entry
-    description: |
-      broken yaml below:
-    invalid: [unclosed bracket

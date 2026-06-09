@@ -1,4 +1,0 @@
-# CFP-128 fixture — docker-compose.yml 옛 naming (Codex P1-3 duality)
-services:
-  fixture:
-    build: .

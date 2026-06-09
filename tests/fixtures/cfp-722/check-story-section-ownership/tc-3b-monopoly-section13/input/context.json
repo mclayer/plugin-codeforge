@@ -1,7 +1,0 @@
-{
-  "pr_branch": "cfp-201/develop",
-  "pr_labels": [
-    "phase:설계"
-  ],
-  "path_pattern": "docs/stories/*.md"
-}

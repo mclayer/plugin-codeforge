@@ -1,4 +1,0 @@
-# CFP-128 fixture — docker_first scenario
-services:
-  fixture:
-    build: .

@@ -1,8 +1,0 @@
-warning violation: §2 destructively modified by non-owner lane (branch: cfp-688/develop)
-warning violation: §3 destructively modified by non-owner lane (branch: cfp-688/develop)
-warning violation: §5 destructively modified by non-owner lane (branch: cfp-688/develop)
-warning violation: §6 destructively modified by non-owner lane (branch: cfp-688/develop)
-warning violation: §7 destructively modified by non-owner lane (branch: cfp-688/develop)
-warning violation: §10 monopoly section modified without Orchestrator/delegate attribution (branch: cfp-688/develop)
-warning violation: §13 monopoly section modified without Orchestrator/delegate attribution (branch: cfp-688/develop)
-warning violation: §14 monopoly section modified without Orchestrator/delegate attribution (branch: cfp-688/develop)

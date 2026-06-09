@@ -1,1 +1,0 @@
-{"status": "WARNING", "exit_code": 1, "tally": {"codex_truncated_no_verdict": 3}, "threshold_breached": ["codex_truncated_no_verdict"]}

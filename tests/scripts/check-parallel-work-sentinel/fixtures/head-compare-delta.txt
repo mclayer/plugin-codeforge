@@ -1,2 +1,0 @@
-491949a 2026-05-19T01:15:00+09:00 [CFP-988] ADR-070 Amendment 4 — §결정 D6 mandatory-real-execution-evidence STANDING + Epic-gate verify-don't-dismiss (#993)
-faa3277 2026-05-19T00:30:00+09:00 [CFP-967] FIX iter 2 — Option C strict factual full revert (Codex #2 P1+P2)

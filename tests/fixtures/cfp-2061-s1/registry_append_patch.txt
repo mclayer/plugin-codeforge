@@ -1,7 +1,0 @@
-@@ -10,6 +10,9 @@ entries:
-   - name: existing-check
-     current_tier: warning
-     description: "기존 항목"
-+  - name: new-check-entry
-+    current_tier: warning
-+    description: "신규 추가 항목"

@@ -1,4 +1,0 @@
-doc-frontmatter-check
-doc-section-schema-check
-invariant-check
-phase-gate-mergeable

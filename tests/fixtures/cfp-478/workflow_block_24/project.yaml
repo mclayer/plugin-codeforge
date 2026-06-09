@@ -1,6 +1,0 @@
-project:
-  name: codeforge
-
-github:
-  story_key_prefix: CFP
-  org: mclayer
