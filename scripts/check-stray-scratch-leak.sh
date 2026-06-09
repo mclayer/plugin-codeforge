@@ -18,8 +18,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PYTHON_SSOT="${SCRIPT_DIR}/lib/check_stray_scratch_leak.py"
 
 if [ ! -f "${PYTHON_SSOT}" ]; then
-  echo "[check-stray-scratch-leak] ERROR: Python SSOT not found: ${PYTHON_SSOT}" >&2
-  exit 2
+  # fail-open: SSOT 부재 시 exit 0 (advisory + repo-confinement 와 통일).
+  echo "[check-stray-scratch-leak] WARNING: Python SSOT not found, check skipped (fail-open): ${PYTHON_SSOT}" >&2
+  exit 0
 fi
 
 exec python3 "${PYTHON_SSOT}" "$@"

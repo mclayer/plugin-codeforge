@@ -28,11 +28,12 @@ import os
 import re
 import sys
 
-# Windows cp949 stdout/stderr encoding 차단 (ADR-061 standardize)
+# Windows cp949 stdout/stderr encoding 차단 (ADR-061 standardize).
+# errors="replace" — cp949 환경에서 인코딩 불가 문자 방어 (lib/ 다수 파일 관용).
 if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 if hasattr(sys.stderr, "reconfigure"):
-    sys.stderr.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 SCRIPT_NAME = "stray-scratch-leak"
 BYPASS_ENV = "BYPASS_STRAY_SCRATCH_LEAK"
@@ -58,8 +59,9 @@ FILE_GLOBS = [
 # 홈 루트 누출 의심 디렉터리 glob
 DIR_GLOBS = [".tmp"]
 
-# git-clone 휴리스틱: 이름이 `<prefix><번호>-<slug>` 형태 + 내부 .git 존재
-_CLONE_DIR_RE = re.compile(r"^[a-z]{2,8}[0-9]+-.+")
+# git-clone 휴리스틱: 이름이 `<prefix><번호>-<slug>` 형태 + 내부 .git 존재.
+#   C#5 fix: IGNORECASE — 대문자 `CFP2092-` 류도 탐지 (.git 보유 조건은 유지).
+_CLONE_DIR_RE = re.compile(r"^[a-z]{2,8}[0-9]+-.+", re.IGNORECASE)
 
 
 def main():

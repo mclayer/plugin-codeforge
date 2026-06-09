@@ -53,6 +53,38 @@ PYEOF
   [ "$status" -eq 2 ]
 }
 
+# F-1: fd 번호 redirect 우회 차단
+@test "F-1: 'echo x 1>~/leak.md' → exit 2 (BLOCK, fd redirect)" {
+  local pl
+  pl="$(_payload "Bash" "echo x 1>~/leak.md" "")"
+  run bash -c "printf '%s' '$pl' | python3 '$LIB'"
+  [ "$status" -eq 2 ]
+}
+
+@test "F-1: 'echo x 2>>~/leak.md' → exit 2 (BLOCK, fd append redirect)" {
+  local pl
+  pl="$(_payload "Bash" "echo x 2>>~/leak.md" "")"
+  run bash -c "printf '%s' '$pl' | python3 '$LIB'"
+  [ "$status" -eq 2 ]
+}
+
+# F-5: path traversal carve-out 우회 차단
+@test "F-5: 'echo x > ~/.claude/../leak.md' → exit 2 (BLOCK, traversal)" {
+  local pl
+  pl="$(_payload "Bash" "echo x > ~/.claude/../leak.md" "")"
+  run bash -c "printf '%s' '$pl' | python3 '$LIB'"
+  [ "$status" -eq 2 ]
+}
+
+# F-4: cwd=home + .claude 무관 명령 → 면제 과대 차단
+@test "F-4: cwd=home + 'echo x > out.txt && cat ~/.config/foo' → exit 2 (.claude 없음)" {
+  local home pl
+  home="$(python3 -c 'import os;print(os.path.expanduser("~"))')"
+  pl="$(_payload "Bash" "echo x > out.txt && cat ~/.config/foo" "$home")"
+  run bash -c "printf '%s' '$pl' | python3 '$LIB'"
+  [ "$status" -eq 2 ]
+}
+
 # ─── ALLOW 케이스 ──────────────────────────────────────────────────────
 
 @test "carve-out '> ~/.claude/codeforge-scratch/foo.md' → exit 0 (ALLOW)" {
@@ -82,6 +114,35 @@ PYEOF
   local pl
   pl="$(_payload "Bash" "cat ~/foo" "")"
   run bash -c "printf '%s' '$pl' | python3 '$LIB'"
+  [ "$status" -eq 0 ]
+}
+
+# F-1 false-positive 회피: fd-dup `2>&1` 은 redirect 으로 안 침 (홈 타깃 없음, cwd≠home)
+@test "F-1 회피: 'cmd 2>&1' (cwd≠home, 홈 타깃 없음) → exit 0 (ALLOW)" {
+  local tmp pl
+  tmp="$(mktemp -d)"
+  pl="$(_payload "Bash" "somecmd 2>&1" "$tmp")"
+  run bash -c "printf '%s' '$pl' | python3 '$LIB'"
+  rm -rf "$tmp"
+  [ "$status" -eq 0 ]
+}
+
+# F-4 회피: cwd=home + `git clone url ~/.claude/x` (정식 carve-out) → exit 0
+@test "F-4 회피: cwd=home + 'git clone url ~/.claude/x' → exit 0 (ALLOW)" {
+  local home pl
+  home="$(python3 -c 'import os;print(os.path.expanduser("~"))')"
+  pl="$(_payload "Bash" "git clone https://example.com/x.git ~/.claude/x" "$home")"
+  run bash -c "printf '%s' '$pl' | python3 '$LIB'"
+  [ "$status" -eq 0 ]
+}
+
+# `cd ~` (cwd≠home, 생성 동사·redirect 없음) → exit 0
+@test "'cd ~' (cwd≠home) → exit 0 (ALLOW)" {
+  local tmp pl
+  tmp="$(mktemp -d)"
+  pl="$(_payload "Bash" "cd ~" "$tmp")"
+  run bash -c "printf '%s' '$pl' | python3 '$LIB'"
+  rm -rf "$tmp"
   [ "$status" -eq 0 ]
 }
 

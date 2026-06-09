@@ -18,8 +18,10 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PYTHON_SSOT="${SCRIPT_DIR}/lib/check_repo_confinement.py"
 
 if [ ! -f "${PYTHON_SSOT}" ]; then
-  echo "[check-repo-confinement] ERROR: Python SSOT not found: ${PYTHON_SSOT}" >&2
-  exit 2
+  # fail-open: SSOT 부재 시 exit 0 (가드 best-effort 철학). exit 2 면 PreToolUse
+  # 차단 신호라 lib deploy 누락 시 모든 Bash 명령 영구 차단(세션 brick) → 금지.
+  echo "[check-repo-confinement] WARNING: Python SSOT not found, guard skipped (fail-open): ${PYTHON_SSOT}" >&2
+  exit 0
 fi
 
 exec python3 "${PYTHON_SSOT}" "$@"

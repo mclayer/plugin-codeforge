@@ -38,11 +38,12 @@ import re
 import sys
 import time
 
-# Windows cp949 stdout/stderr encoding 차단 (ADR-061 standardize)
+# Windows cp949 stdout/stderr encoding 차단 (ADR-061 standardize).
+# errors="replace" — cp949 환경에서 인코딩 불가 문자 방어 (lib/ 다수 파일 관용).
 if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 if hasattr(sys.stderr, "reconfigure"):
-    sys.stderr.reconfigure(encoding="utf-8")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 SCRIPT_NAME = "check_repo_confinement"
 BYPASS_ENV = "BYPASS_REPO_CONFINEMENT"
@@ -54,21 +55,26 @@ SCRATCH_HINT = "~/.claude/codeforge-scratch/"
 _CREATE_VERB_RE = re.compile(
     r"(?:^|[;&|]|\s)(?:git\s+clone|tee|touch|mkdir|cp|mv)(?:\s|$)"
 )
-# 출력 redirect `>` / `>>` — 단 `2>&1` 같은 fd-dup 은 제외.
-_REDIRECT_RE = re.compile(r"(?<![0-9>])>>?(?!&)")
+# 출력 redirect `>` / `>>` — 단 `2>&1`/`>&2` 같은 fd-dup 은 `(?!&)` 로 제외.
+#   F-1 fix: fd 번호 redirect (`1>~/x` `2>~/x` `2>>~/x`) 도 잡도록 `(?<![0-9>])`
+#   lookbehind 제거. fd-dup 제외는 `(?!&)` 가 단독으로 처리.
+_REDIRECT_RE = re.compile(r">>?(?!&)")
 
-# 명시적 홈 루트 타깃: `~/<seg>` | `$HOME/<seg>` | `${HOME}/<seg>`
-#   | `%USERPROFILE%\<seg>` | `$env:USERPROFILE\<seg>` 에서 첫 세그먼트 추출.
+# 명시적 홈 루트 타깃: `~/...` | `$HOME/...` | `${HOME}/...`
+#   | `%USERPROFILE%\...` | `$env:USERPROFILE\...` 에서 홈 뒤 전체 경로
+#   (공백/연산자 전까지)를 캡처. F-5 fix: `..` traversal 검출 위해 첫 세그먼트가
+#   아닌 전체 경로를 본다.
 _HOME_TARGET_RE = re.compile(
     r"(?:~|\$HOME|\$\{HOME\}|%USERPROFILE%|\$env:USERPROFILE)[/\\]"
-    r"([^\s/\\;&|>'\"]+)"
+    r"([^\s;&|>'\"]+)"
 )
 
 # 쓰기 맥락 prefix — 이 뒤에 오는 홈 타깃만 explicit_home_write 로 본다.
 #   redirect(`>`/`>>`) | tee | cp | mv | git clone.
 #   읽기 명령(cat/ls/grep)이 `~/foo` 를 인자로 받아도 차단하지 않기 위함.
+#   C#1 fix: redirect 패턴을 _REDIRECT_RE.pattern 참조로 조립 (단일 출처).
 _WRITE_CONTEXT_RE = re.compile(
-    r"(?:(?<![0-9>])>>?(?!&)|(?:^|[;&|]|\s)(?:tee|cp|mv|git\s+clone)(?:\s|$))"
+    r"(?:" + _REDIRECT_RE.pattern + r"|(?:^|[;&|]|\s)(?:tee|cp|mv|git\s+clone)(?:\s|$))"
 )
 
 
@@ -96,17 +102,20 @@ def _read_payload():
 
 def _extract_home_write_target(cmd):
     """쓰기 맥락(redirect/tee/cp/mv/git clone) 뒤에 오는 명시적 홈 루트 타깃의
-    첫 세그먼트 집합을 반환. `.claude` 세그먼트는 carve-out 으로 제외."""
-    segs = []
+    경로 집합을 반환. carve-out = 첫 세그먼트가 `.claude` **이고** 경로에 `..`
+    traversal 이 없을 때만 (F-5 fix — `~/.claude/../leak.md` 우회 차단)."""
+    targets = []
     for m in _HOME_TARGET_RE.finditer(cmd):
-        seg = m.group(1)
-        if seg == ".claude":
-            continue  # carve-out — `~/.claude/...` 정식 허용
+        path = m.group(1)  # 홈 뒤 전체 경로 (공백/연산자 전까지)
+        first_seg = re.split(r"[/\\]", path, maxsplit=1)[0]
+        # carve-out: `.claude` 첫 세그먼트 + `..` traversal 없음
+        if first_seg == ".claude" and ".." not in path:
+            continue  # `~/.claude/...` 정식 허용 (traversal 미포함)
         # 이 홈 타깃이 쓰기 맥락(앞쪽에 redirect/tee/cp/mv/git clone)에 있는지 확인.
         prefix = cmd[: m.start()]
         if _WRITE_CONTEXT_RE.search(prefix):
-            segs.append(seg)
-    return segs
+            targets.append(path)
+    return targets
 
 
 def main():
@@ -136,13 +145,16 @@ def main():
     home = os.path.expanduser("~")
 
     # 3. explicit_home_write — 쓰기 맥락의 명시적 홈 루트 타깃
-    explicit_segs = _extract_home_write_target(cmd)
-    explicit_home_write = len(explicit_segs) > 0
+    explicit_targets = _extract_home_write_target(cmd)
+    explicit_home_write = len(explicit_targets) > 0
 
-    # 4. cwd_home_creating — 홈 루트 cwd 에서 파일 생성 명령
+    # 4. cwd_home_creating — 홈 루트 cwd 에서 파일 생성 명령.
+    #   F-4 fix: `.claude` 부분문자열 면제 과대 차단 — `~/.claude` (또는
+    #   `$HOME/.claude`/`${HOME}/.claude`) 로 **쓰는 경우만** 면제 (정식 carve-out).
     is_creating = bool(_CREATE_VERB_RE.search(cmd)) or bool(_REDIRECT_RE.search(cmd))
     cwd_is_home_root = _norm(cwd) == _norm(home)
-    cwd_home_creating = cwd_is_home_root and is_creating and (".claude" not in cmd)
+    writes_to_dotclaude = bool(re.search(r"(?:~|\$HOME|\$\{HOME\})/\.claude", cmd))
+    cwd_home_creating = cwd_is_home_root and is_creating and not writes_to_dotclaude
 
     blocked = explicit_home_write or cwd_home_creating
     if not blocked:
