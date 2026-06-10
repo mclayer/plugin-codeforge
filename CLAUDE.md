@@ -34,7 +34,7 @@ GitOpsAgent (CFP-139 신설 long-running teammate) 가 다음을 직접 write:
 | `docs/stories/<KEY>.md §10.5 Git Ops Log` | 매 git ops event (append-only) | `Edit(docs/stories/**)` |
 | GitHub comment `[GitOps]` prefix | conflict / escalation | `mcp__github__add_issue_comment` |
 
-DocsAgent 경유 안 함 — codeforge wrapper 측 DocsAgent 는 ζ arc 진행 중 단계적 해체. 자세한 사항은 codeforge wrapper [CFP-31 parent spec](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md) 참조.
+DocsAgent 경유 안 함 ([CFP-31 parent spec](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md)).
 
 ### Retro 자동 trigger flow (CFP-138 / ADR-045)
 
@@ -65,7 +65,7 @@ retro file `§6 ADR 후보 발의` 안 ADR draft candidate 작성 직전 — 8 i
 
 ## GitOpsAgent (CFP-139)
 
-본 plugin 은 PMOAgent (one-shot trigger-driven, Cross-cutting 회고·감사) + **GitOpsAgent (long-running teammate, Story 전 기간 active git operations orchestrator)** + **DialogFidelityAgent (one-shot read-only verifier, 세션 요건·누적 결정 fidelity 검수, verifier-narrower-than-generator)** 3 agent 로 구성. 세 agent 는 sibling — 책임 영역 명확히 분리.
+본 plugin 은 PMOAgent (one-shot trigger-driven, Cross-cutting 회고·감사) + GitOpsAgent (long-running teammate, git operations orchestrator) + DialogFidelityAgent (one-shot read-only verifier, fidelity 검수) 3 sibling agent 로 구성.
 
 | 영역 | PMOAgent | GitOpsAgent | DialogFidelityAgent |
 |------|:--------:|:-----------:|:-------------------:|

@@ -22,7 +22,7 @@ permissions:
 
 # DialogFidelityAgent (codeforge-pmo cross-cutting)
 
-본 agent 는 **read-only verifier**. 발화 entity (Orchestrator) 와 검증 entity 분리 — ADR-071 가설 E (self-referential trap) 해소 채널.
+**read-only verifier**. 발화 entity (Orchestrator) 와 검증 entity 분리 — ADR-071 가설 E (self-referential trap) 해소 채널.
 
 ## 1. Mandate
 
@@ -77,7 +77,7 @@ verifier_metadata:
 
 ## 4. Spawn anchor 3종 trigger (ADR-039 §결정 2 inline whitelist 보존)
 
-ADR-039 **§결정 2** (`[verified — git show origin/main:docs/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md line 93]`) Inline whitelist 4-entry. 매 user-facing turn spawn 금지. (note: base ADR-071 §결정 11 본문이 §결정 7 인용 = base self-error, 본 agent file 은 §결정 2 정확 cite 채택). 선별 anchor:
+ADR-039 **§결정 2** Inline whitelist 4-entry. 매 user-facing turn spawn 금지. 선별 anchor:
 
 | anchor | 발동 시점 |
 |---|---|
@@ -146,15 +146,12 @@ verifier append 직접 권한 부재 (M1 enforce).
 
 ## 9. Cross-ref
 
-- ADR-071 Amendment 1 §결정 12: external verifier auxiliary layer additive invariant
-- ADR-042 Amendment 6: Opus pilot tier + §결정 2 invariant 적용 trigger (N=20 baseline 후 Sonnet 전환 가능)
-- ADR-070 §B verify-before-trust chain (Orchestrator post-verify ground truth direct Read 의무 — literal §A4 anchor 부재)
+- ADR-071 Amd 1 §결정 12: external verifier auxiliary layer additive invariant
+- ADR-042 Amd 6: Opus pilot tier (N=20 baseline 후 Sonnet 전환 가능)
+- ADR-070 §B verify-before-trust chain
 - ADR-039 §결정 2: Inline whitelist 4-entry 보존
-- ADR-079: KST timestamp display layer 정합
-- ADR-063: marketplace atomic invariant (sibling cross-repo 4-mirrored field sync)
-- Change Plan CFP-777 §7 (SecurityArch + OpRiskArch verbatim)
-- Change Plan CFP-777 §8 (TestContractArch verbatim)
-- Change Plan CFP-777 §11 (DataMigrationArch 분기 A)
+- ADR-079 KST timestamp / ADR-063 marketplace atomic invariant
+- Change Plan CFP-777 §7 (SecurityArch + OpRiskArch) / §8 (TestContractArch) / §11 (DataMigrationArch 분기 A)
 
 ## 10. Spawn evidence trail (Story §14 row 의무 schema)
 
