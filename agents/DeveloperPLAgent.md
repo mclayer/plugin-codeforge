@@ -259,39 +259,14 @@ ReviewPL verdict packet의 `mechanical_category` 자격 충족 시 (`mechanical_
 
 본 agent는 자기 lane의 self-write 표 (codeforge-develop `CLAUDE.md` `Self-write 책임` 표)가 정의하는 path만 직접 write. 그 외 docs/** + GitHub Issue/PR 인터페이스는 codeforge wrapper Orchestrator가 처리.
 
----
+## Operating environment (ADR-044)
 
-## Operating environment (ADR-044 phase-scoped sequential team)
+본 agent role = lane Lead — env=1 시 lane 진입 TeamCreate → worker SendMessage → lane 종료 TeamDelete, env=0 fallback = Orchestrator가 PL 하위 agent 직접 spawn (PL은 synthesizer 유지, ADR-039).
 
-### Effective scope
-
-- ADR-044 (Phase-scoped sequential team) — wrapper `docs/adr/ADR-044-phase-scoped-sequential-team.md`
-- ADR-039 (Orchestrator subagent default) effective
-- ADR-038 (TodoWrite progress tracking) effective
-- ADR-040 (worktree convention) effective
-- review-verdict v4 = Active (canonical = `plugin-codeforge-review:docs/inter-plugin-contracts/review-verdict-v4.md`). v3 = Archived
-- ADR-022 (Sonnet decider) = Deprecated — 자동 발동 무효, 사용자 explicit ad-hoc request 시에만 호출
-
-### Agent teams 패턴 (env=`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 활성 시)
-
-본 agent는 env=1 활성 시 다음 패턴 사용 가능 (env=0 fallback = default subagent context, ADR-039 정합 — Agent tool spawn one-shot, SendMessage 미사용):
-
-- **TeamCreate / TeamDelete**: lane 진입 = TeamCreate / lane 종료 = TeamDelete / 다음 lane = 새 team (Phase-scoped sequential)
-- **SendMessage**: Lead ↔ Worker continuous dialog 채널 (env=1 only)
-- **Worktree path 주입**: agent prompt 내 `<worktree_path>` placeholder = Lead가 SendMessage payload에 작업 worktree 절대 경로 주입 의무
-- **Re-entry 제약 3종** (env=1 / env=0 모두 적용):
-  1. 재귀 spawn 금지 — 본 agent가 자기 자신 또는 동일 lane의 다른 agent를 추가 spawn 불가
-  2. Nested team 금지 — team-of-teams 불가
-  3. One-team-per-lead 강제 — 1 Lead = 1 active team
-
-### Lane-specific role notes
-
-- **PL agent (lane Lead)** — env=1 활성 시 본 PL이 lane team Lead. lane 진입 시 TeamCreate → worker SendMessage 통신 → lane 종료 시 TeamDelete. env=0 fallback = Orchestrator가 PL 하위 agent를 직접 spawn.
-- **Worker / Sub-agent / Deputy** — env=1 활성 시 lane PL의 team teammate. SendMessage 수신 + Lead에 응답. env=0 fallback = Orchestrator 직접 spawn의 one-shot return path.
-
-### Codex worker dispatch
-
-본 plugin의 agent는 review lane (codeforge-review) 미소속 → Codex worker dispatch 발동 영역 외.
+Re-entry 제약 3종 (env 무관):
+1. 재귀 spawn 금지 (자기 자신 / 동일 lane agent 추가 spawn 불가)
+2. Nested team 금지
+3. One-team-per-lead 강제
 
 ## 자율 병렬 결정 tree (parallel-dispatch-protocol-v1 §5)
 
