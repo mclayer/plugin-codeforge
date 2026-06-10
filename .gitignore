@@ -30,6 +30,10 @@ node_modules/
 # Claude Code — local agent worktrees
 .claude/worktrees/
 
+# Claude Code — local runtime artifacts (per-session, not tracked)
+.claude/ledger/
+.claude/token_tally.json
+
 # Claude Code — local project MCP config (per-developer, may contain token env refs)
 .mcp.json
 
