@@ -374,6 +374,10 @@ jobs:
               f.filename === 'CHANGELOG.md' ||
               f.filename === 'README.md' ||
               f.filename === 'CONTRIBUTING.md' ||
+              f.filename === '.gitignore' ||
+              f.filename === '.gitattributes' ||
+              f.filename === '.editorconfig' ||
+              f.filename === '.dockerignore' ||   // CFP-2139: 루트 hygiene dotfile chore-safe 승격 (CFP-1850-S1 allowlist 연장, additive)
               f.filename.startsWith('agents/') ||   // CFP-1850-S1: agents/ chore-safe 승격
               (f.status === 'removed' && f.filename.startsWith('tests/'))   // CFP-prune: 삭제된 test 파일 = dead-test cleanup (src/overlay 삭제는 여전히 배제)
             );
