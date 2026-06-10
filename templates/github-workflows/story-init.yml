@@ -132,11 +132,16 @@ jobs:
           BRANCH="feat/${KEY}-${SLUG}"
           STORY_PATH="${DOGFOOD_FOLDER}/stories/${KEY}.md"
 
+          # CFP-2142 D2 — BRANCH URL-encode (defense in depth).
+          # D1 (ASCII-only slug) 수정 후에도 기존 한글 브랜치 재트리거 케이스에서
+          # raw 삽입 시 Stage 2 query param 이 HTTP 400 → fail-closed 차단 방어.
+          BRANCH_ENC=$(jq -rn --arg v "$BRANCH" '$v|@uri')
+
           # Stage 1 — branch existence
           http_code=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer ${GH_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${TARGET_REPO}/branches/${BRANCH}" 2>/dev/null || echo "000")
+            "https://api.github.com/repos/${TARGET_REPO}/branches/${BRANCH_ENC}" 2>/dev/null || echo "000")
 
           if [[ "$http_code" == "200" ]]; then
             STAGE1_PRESENT=true
@@ -152,7 +157,7 @@ jobs:
             file_http_code=$(curl -s -o /dev/null -w "%{http_code}" \
               -H "Authorization: Bearer ${GH_TOKEN}" \
               -H "Accept: application/vnd.github+json" \
-              "https://api.github.com/repos/${TARGET_REPO}/contents/${STORY_PATH}?ref=${BRANCH}" 2>/dev/null || echo "000")
+              "https://api.github.com/repos/${TARGET_REPO}/contents/${STORY_PATH}?ref=${BRANCH_ENC}" 2>/dev/null || echo "000")
 
             if [[ "$file_http_code" == "200" ]]; then
               echo "::notice::idempotent skip — branch + Story file 모두 존재 (CFP-596 two-stage check §3.5 정합)"
@@ -512,7 +517,10 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MILESTONE: ${{ steps.parse.outputs.milestone }}
         run: |
-          gh issue edit "$ISSUE_NUMBER" --milestone "$MILESTONE"
+          # CFP-2142 D4 — milestone graceful: Issue form 자유 텍스트 (예: "(없음 — 단일 Story)")가
+          # repo milestone 에 부재하면 edit 실패 → run 전체 failure 였음. warning 으로 강등.
+          gh issue edit "$ISSUE_NUMBER" --milestone "$MILESTONE" \
+            || echo "::warning::milestone '${MILESTONE}' 부착 실패 — repo 에 해당 milestone 부재 (자유 텍스트 입력 가능). Story init 은 계속 진행 (CFP-2142 D4 graceful)"
 
       - name: Add component label
         if: steps.existence_check.outputs.skip != 'true' && steps.parse.outputs.component != ''
@@ -543,3 +551,22 @@ jobs:
             --field "type_id=${TYPE_ID}" 2>/dev/null \
             && echo "Issue Type 'Story' attached to #${ISSUE_NUMBER}" \
             || echo "::warning::Issue Type attachment failed (may already be set or API unsupported)"
+
+      - name: Post failure notice comment (CFP-2142 D3 — silent-fail 차단)
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # CFP-2142 D3 — 임의 step 실패 시 Issue 에 안내 없이 silent 종료되던 결함 보완.
+          # 자기 repo Issue comment 라 GITHUB_TOKEN (issues: write) 으로 충분 — PAT 불요.
+          gh issue comment "$ISSUE_NUMBER" --body "$(cat <<EOF
+          ## Story Init workflow 실패 — manual fallback 안내 (CFP-2142 D3)
+
+          본 Issue 의 story-init workflow 가 실패해 Story scaffold 가 완료되지 않았을 수 있습니다.
+
+          - 실패 run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          - manual fallback: \`bash templates/scripts/manual-story-init-fallback.sh ${ISSUE_NUMBER}\`
+
+          실패 step 로그에서 원인 해소 후 \`phase:요구사항\` label 재부착으로 re-trigger 하거나, 위 manual fallback path 로 진행하세요.
+          EOF
+          )"
