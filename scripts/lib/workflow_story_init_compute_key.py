@@ -204,8 +204,10 @@ def main(argv=None) -> None:
     key = compute_key(title, prefix, issue_number)
 
     # slug computation (CFP-596 base 동일)
+    # slug 은 cosmetic — 식별자는 KEY. ASCII-only 강제 (한글 보존 시 branch ref 에
+    # non-ASCII 가 들어가 story-init.yml existence_check 의 미인코딩 curl 이 HTTP 400 반환).
     title_clean = re.sub(r"^\[STORY\]\s*", "", title).strip()
-    slug = re.sub(r"[^A-Za-z0-9가-힣]+", "-", title_clean, flags=re.UNICODE)
+    slug = re.sub(r"[^A-Za-z0-9]+", "-", title_clean)
     slug = slug.strip("-")[:40].rstrip("-")
 
     print(key)

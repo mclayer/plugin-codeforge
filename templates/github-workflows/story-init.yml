@@ -114,6 +114,7 @@ jobs:
         id: existence_check
         env:
           GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+          ISSUE_GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           KEY: ${{ steps.key.outputs.key }}
           SLUG: ${{ steps.key.outputs.slug }}
           IS_CODEFORGE_FAMILY: ${{ steps.project_config.outputs.is_codeforge_family }}
@@ -124,6 +125,30 @@ jobs:
           # consumer branch: single-stage (기존 동작 보존).
           # fail-closed: 4xx/5xx → exit 1 (PAT scope 또는 unreachable).
 
+          # existence_check 가 4xx/5xx 로 종료하기 직전 Issue 에 fallback 안내 comment 1개 게시.
+          # silent-fail 회피 — 원인 + 수동 재시도/라벨 토글 안내 (GITHUB_TOKEN 사용, 동일 repo).
+          fail_with_comment() {
+            local stage="$1"; local code="$2"; local repo="$3"
+            echo "::error::existence_check ${stage} 실패 — HTTP ${code}. PAT scope 또는 ${repo} unreachable (ADR-066 §결정 2 참조)"
+            GH_TOKEN="$ISSUE_GH_TOKEN" gh issue comment "$ISSUE_NUMBER" --body "$(cat <<EOF
+          ## Story init 중단 — existence_check ${stage} HTTP ${code} (자동 진행 불가)
+
+          \`${repo}\` 대상 existence_check 가 HTTP \`${code}\` 로 종료. story-init 자동 진행이 멈췄습니다.
+
+          가능 원인:
+          - \`CODEFORGE_CROSS_REPO_PAT\` scope 부족 또는 만료 (ADR-066 §결정 2)
+          - 대상 repo \`${repo}\` 일시 unreachable
+          - branch ref 에 non-ASCII 잔여 (HTTP 400 — slug ASCII-only 수정 전 firing)
+
+          수동 재시도:
+          1. PAT scope / 만료 확인 후 갱신
+          2. 본 Issue 의 \`phase:요구사항\` label 을 제거했다 다시 부착 (story-init 재발화 trigger)
+          3. 또는 \`bash templates/scripts/worktree-create.sh ${KEY} origin/main\` 로 수동 진행
+          EOF
+          )" || echo "::warning::fallback comment 게시 실패 (issues:write 권한 확인)"
+            exit 1
+          }
+
           if [[ "$IS_CODEFORGE_FAMILY" == "true" ]]; then
             TARGET_REPO="mclayer/codeforge-internal-docs"
           else
@@ -132,19 +157,22 @@ jobs:
           BRANCH="feat/${KEY}-${SLUG}"
           STORY_PATH="${DOGFOOD_FOLDER}/stories/${KEY}.md"
 
+          # CFP — branch ref URL-encode (defense in depth). 미인코딩 ref 는 non-ASCII slug 잔여 시
+          # GitHub API 가 HTTP 400 반환 (실측: ASCII ref=404 vs 한글 ref=400). jq @uri 로 encode.
+          BRANCH_ENC=$(jq -rn --arg b "$BRANCH" '$b|@uri')
+
           # Stage 1 — branch existence
           http_code=$(curl -s -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer ${GH_TOKEN}" \
             -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/repos/${TARGET_REPO}/branches/${BRANCH}" 2>/dev/null || echo "000")
+            "https://api.github.com/repos/${TARGET_REPO}/branches/${BRANCH_ENC}" 2>/dev/null || echo "000")
 
           if [[ "$http_code" == "200" ]]; then
             STAGE1_PRESENT=true
           elif [[ "$http_code" == "404" ]]; then
             STAGE1_PRESENT=false
           else
-            echo "::error::existence_check Stage 1 실패 — HTTP ${http_code}. PAT scope 또는 ${TARGET_REPO} unreachable (ADR-066 §결정 2 참조)"
-            exit 1
+            fail_with_comment "Stage 1" "$http_code" "$TARGET_REPO"
           fi
 
           if [[ "$IS_CODEFORGE_FAMILY" == "true" && "$STAGE1_PRESENT" == "true" ]]; then
@@ -152,7 +180,7 @@ jobs:
             file_http_code=$(curl -s -o /dev/null -w "%{http_code}" \
               -H "Authorization: Bearer ${GH_TOKEN}" \
               -H "Accept: application/vnd.github+json" \
-              "https://api.github.com/repos/${TARGET_REPO}/contents/${STORY_PATH}?ref=${BRANCH}" 2>/dev/null || echo "000")
+              "https://api.github.com/repos/${TARGET_REPO}/contents/${STORY_PATH}?ref=${BRANCH_ENC}" 2>/dev/null || echo "000")
 
             if [[ "$file_http_code" == "200" ]]; then
               echo "::notice::idempotent skip — branch + Story file 모두 존재 (CFP-596 two-stage check §3.5 정합)"
@@ -165,8 +193,7 @@ jobs:
               echo "auto_recovered=true" >> "$GITHUB_OUTPUT"
               echo "skip_branch_create=true" >> "$GITHUB_OUTPUT"
             else
-              echo "::error::existence_check Stage 2 실패 — HTTP ${file_http_code}. PAT scope 또는 ${TARGET_REPO} unreachable (ADR-066 §결정 2 참조)"
-              exit 1
+              fail_with_comment "Stage 2" "$file_http_code" "$TARGET_REPO"
             fi
           elif [[ "$STAGE1_PRESENT" == "true" ]]; then
             # consumer branch — Stage 1 only (기존 동작 보존)
@@ -508,11 +535,15 @@ jobs:
 
       - name: Assign Milestone (if specified)
         if: steps.existence_check.outputs.skip != 'true' && steps.parse.outputs.milestone != ''
+        # milestone 없거나 자유텍스트(미생성 milestone)여도 story-init 전체가 실패하지 않게 non-fatal.
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           MILESTONE: ${{ steps.parse.outputs.milestone }}
         run: |
-          gh issue edit "$ISSUE_NUMBER" --milestone "$MILESTONE"
+          if ! gh issue edit "$ISSUE_NUMBER" --milestone "$MILESTONE"; then
+            echo "::warning::milestone '${MILESTONE}' 할당 실패 — 미생성 milestone 또는 자유텍스트. story-init 무중단 진행 (non-fatal)"
+          fi
 
       - name: Add component label
         if: steps.existence_check.outputs.skip != 'true' && steps.parse.outputs.component != ''
