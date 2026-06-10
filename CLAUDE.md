@@ -85,8 +85,7 @@ consumer overlay `tests.performance.depends_on_functional: true` 시 sequential 
 
 ### Consumer overlay 위임
 
-- 러너 (pytest / npm test / cargo test 등) · 테스트 경로 · baseline 파일 위치 · performance 의존성 모두 consumer overlay (`.claude/_overlay/project.yaml` `tests.*` slice) 지정
-- TestAgent 는 overlay 명시값 follow — hardcoded path/runner 없음
+테스트 경로 · baseline 파일 위치 · performance 의존성 · 러너 모두 consumer overlay (`.claude/_overlay/project.yaml` `tests.*` slice) 지정. TestAgent 는 overlay 명시값 follow — hardcoded path/runner 없음.
 
 ### FAIL → 진단
 
