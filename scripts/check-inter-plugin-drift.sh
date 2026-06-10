@@ -4,12 +4,13 @@
 # 검사: docs/inter-plugin-contracts/MANIFEST.yaml 의 각 Active entry 에 대해
 #       canonical (lane plugin repo) 와 wrapper sibling 본문 verbatim 비교.
 #
-# 정규화 5 단계:
+# 정규화 6 단계:
 #   1. Frontmatter 분리
 #   2. Sibling-only meta section 제거 (`**상위 SSOT 위치**:` 단락)
 #   3. Line ending 정규화 (CRLF → LF)
 #   4. Trailing whitespace trim
-#   5. Trailing newline 통일 (file 끝 \n 1개)
+#   5. ADR 참조 상대경로 정규화 (CFP-2141 / ADR-011 Amd 1 — per-repo ADR 위치 차이 false-positive 제거)
+#   6. Trailing newline 통일 (file 끝 \n 1개)
 #
 # 비교: 정규화된 sibling body == canonical body? (byte 단위)
 #       drift 발견 시 unified_diff + ::error:: annotation + exit 1
@@ -91,10 +92,36 @@ def fetch_canonical(repo, path):
 
     raise RuntimeError(f"canonical fetch 실패 ({repo}/{path}): {last_err}")
 
-def normalize(text):
-    """정규화 5 단계 (canonical + sibling 양쪽 동일 적용).
+# ADR 참조 상대경로 정규화 (CFP-2141 / ADR-011 Amendment 1).
+#
+# canonical(lane repo) 의 ADR 는 `docs/adr/`, wrapper repo 의 ADR 는 `archive/adr/` 에
+# 위치한다 (#1973 docs/adr→archive/adr 이동). 따라서 markdown 상대링크의 prefix 가
+# repo 마다 정당하게 다르다:
+#   - lane requirements/pmo canonical : ../adr/ADR-NNN
+#   - design lane canonical (cross-repo): ../../../plugin-codeforge/docs/adr/ADR-NNN
+#   - wrapper sibling                  : ../../archive/adr/ADR-NNN
+# 이 prefix 차이는 schema/normative drift 가 아니라 per-repo ADR 위치 차이일 뿐이므로
+# verbatim 비교 전 단일 토큰으로 정규화해 false-positive 를 제거한다.
+#
+# surgical scope: 반드시 `../` 로 시작하는 *상대* 경로 prefix + `adr/ADR-<숫자>` 형태만
+# 대상. 코드블록 안 inline `docs/adr/ADR-NNN` (../ 없음) 과 절대 URL
+# `https://.../docs/adr/ADR-NNN` 은 양쪽 repo 가 byte-identical 이라 손대지 않는다
+# (= schema/normative 내용은 그대로 verbatim 유지).
+_ADR_REL_LINK = re.compile(
+    r"(?:\.\./)+"                       # 1개 이상 ../
+    r"(?:archive/|plugin-codeforge/docs/)?"  # 선택적 archive/ 또는 plugin-codeforge/docs/
+    r"adr/(ADR-\d)"                     # adr/ADR-<숫자> (캡처: ADR-숫자 첫 글자)
+)
 
-    순서: line ending → trailing whitespace → frontmatter → meta section → trailing newline
+def normalize_adr_paths(text):
+    """ADR 참조 상대경로 prefix 를 단일 토큰 `<ADR-REF>/` 로 정규화 (surgical)."""
+    return _ADR_REL_LINK.sub(r"<ADR-REF>/\1", text)
+
+def normalize(text):
+    """정규화 6 단계 (canonical + sibling 양쪽 동일 적용).
+
+    순서: line ending → trailing whitespace → frontmatter → meta section
+          → ADR 상대경로 정규화 → trailing newline
     (whitespace 가 frontmatter delimiter `---` 에도 영향 주지 않도록 먼저 trim)
     """
     # 1. Line ending 정규화
@@ -118,7 +145,10 @@ def normalize(text):
     text = pattern.sub("", text)
     text = re.sub(r"\n{3,}", "\n\n", text)
 
-    # 5. Trailing newline 통일 (file 끝 \n 1개)
+    # 5. ADR 참조 상대경로 정규화 (per-repo ADR 위치 차이 false-positive 제거, ADR-011 Amd 1)
+    text = normalize_adr_paths(text)
+
+    # 6. Trailing newline 통일 (file 끝 \n 1개)
     text = text.rstrip("\n") + "\n"
 
     return text
