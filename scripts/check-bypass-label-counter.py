@@ -35,7 +35,7 @@ PAT scope requirement (OQ-1 / Change Plan §3.3 EC-3):
 
 Test override env vars (bats TC mock 지원):
   CBL_MOCK_PRS_JSON=<newline-delimited-json>  — merged PR 목록 강제 (gh api 대체)
-  CBL_MOCK_DEDUP_COUNT=<int>                  — dedup 검색 결과 total_count 강제
+  CBL_MOCK_DEDUP_COUNT=<int>                  — dedup 판정 강제 (>0 = dedup True)
   CBL_SKIP_ISSUE_CREATE=1                     — Issue create 차단 (dry-run / TC mode)
 """
 
@@ -160,6 +160,13 @@ def check_dedup(repo, label):
     """
     동일 (plugin, label) signature 의 기존 open carrier Issue 존재 여부 확인.
     Returns: True if existing Issue found (dedup → skip create), False otherwise.
+
+    CFP-2143 label-independent 견고화:
+      과거 PAT 권한 부족 기간(2026-05-17~06-09)에 carrier Issue 가 label 없이
+      생성돼 label: 조건 검색이 영구 miss → 매일 signature 중복 재생성.
+      따라서 label 조건 없이 in:title 검색하고, GitHub 검색은 특수문자 토큰화
+      근사 매칭이므로 total_count 대신 item title 의 client-side prefix 정확
+      검증으로 판정한다.
     """
     # Test override: CBL_MOCK_DEDUP_COUNT
     mock_count = os.environ.get("CBL_MOCK_DEDUP_COUNT", "")
@@ -167,18 +174,33 @@ def check_dedup(repo, label):
         return int(mock_count) > 0
 
     signature = f"{repo}::{label}"
-    # title pattern 검색: [bypass-counter] <signature>
-    search_q = f'repo:{repo} is:issue is:open label:{CARRIER_ISSUE_LABEL} "[bypass-counter] {signature}"'
+    title_prefix = f"[bypass-counter] {signature} "
+    # title pattern 검색: [bypass-counter] <signature> — label 조건 제거 (CFP-2143)
+    search_q = f'repo:{repo} is:issue is:open in:title "[bypass-counter] {signature}"'
     raw = run_gh([
         "api", "-X", "GET", "search/issues",
         "-f", f"q={search_q}",
-        "--jq", ".total_count",
+        "-f", "per_page=100",
+        "--jq", "[.items[].title]",
     ])
     try:
-        count = int(raw.strip() or "0")
-        return count > 0
-    except ValueError:
+        titles = json.loads(raw.strip() or "[]")
+    except json.JSONDecodeError:
         return False
+
+    # client-side 정확 검증: 근사 매칭 검색 결과 중 title prefix 일치만 인정
+    matches = [t for t in titles if isinstance(t, str) and t.startswith(title_prefix)]
+
+    # 자기복구 신호: 동일 signature open carrier 2건 이상 = 과거 dedup miss 잔재.
+    # 생성은 어차피 skip — cleanup 은 별도 작업 scope.
+    if len(matches) >= 2:
+        print(
+            f"[bypass-counter-warning] duplicate open carrier Issues for "
+            f"{signature}: {len(matches)} open -- create skipped, cleanup needed",
+            file=sys.stderr,
+        )
+
+    return len(matches) > 0
 
 
 def create_carrier_issue(repo, label, pr_numbers, dry_run=False):
