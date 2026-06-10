@@ -2,19 +2,19 @@
   "schema_version": "1.0",
   "kpi_name": "governance-bloat",
   "owner_adr": "ADR-060",
-  "carrier_story": "CFP-debloat-dead-suite (re-baseline; dead-suite 삭제 후)",
+  "carrier_story": "CFP-2105 (theater registry 엔트리 21 + 스크립트 36 제거 후 re-baseline)",
   "provisional": false,
   "rebaseline_owner": null,
-  "captured_at_sha": "cfp-debloat-dead-suite",
-  "captured_at_kst": "2026-06-09T20:00:00+09:00",
+  "captured_at_sha": "cfp-theater-registry-cleanup",
+  "captured_at_kst": "2026-06-10T00:00:00+09:00",
   "history_file": "docs/kpi/governance-bloat-history.jsonl",
-  "measured_at": "2026-06-09T20:00:00+09:00",
+  "measured_at": "2026-06-10T00:00:00+09:00",
   "baseline_metrics": {
     "evidence_checks_registry_entries": {
-      "value": 103,
+      "value": 82,
       "unit": "count",
       "threshold_rel_pct": 20,
-      "note": "registry yaml entries[] tier-entry count. CFP-debloat: 37 stale 엔트리 제거 후 실측 103 (이전 140). S2/check-dead-criteria SSOT 재사용 (이중 정의 금지, ADR-064)"
+      "note": "registry yaml entries[] tier-entry count. CFP-2105: theater dead 21 엔트리 제거 후 실측 82 (이전 103). workflow 부재 + skill/playbook/hook 호출 0 dead inventory 제거."
     },
     "workflows_total": {
       "value": 54,
@@ -29,16 +29,16 @@
       "note": "workflows_total 중 on.pull_request 트리거 보유. CFP-debloat 실측 47"
     },
     "shell_scripts": {
-      "value": 122,
+      "value": 101,
       "unit": "count",
       "threshold_rel_pct": 25,
-      "note": "git ls-files 'scripts/' | grep '.sh$' len. CFP-debloat: 죽은 test-*.sh 러너 제거 후 실측 122 (이전 152)"
+      "note": "git ls-files 'scripts/' | grep '.sh$' len. CFP-2105: theater dead 21 sh 제거 후 실측 101 (이전 122)"
     },
     "shell_loc": {
-      "value": 15351,
+      "value": 14064,
       "unit": "lines",
       "threshold_rel_pct": 25,
-      "note": "shell_scripts 파일 합산 line count. CFP-debloat 실측 15351 (이전 19741)"
+      "note": "shell_scripts 파일 합산 line count. CFP-2105 실측 14064 (이전 15351)"
     },
     "adr_count": {
       "value": 121,
