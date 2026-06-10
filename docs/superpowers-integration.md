@@ -27,7 +27,7 @@ superpowers 의존이 codeforge family 에 존재하는 4 표면 위치:
 3. **[docs/orchestrator-playbook.md §1.1](orchestrator-playbook.md)** checklist 0번 — 미설치 시 `/plugins install` 안내
 4. **[docs/consumer-guide.md §0b](consumer-guide.md)** — 필수 4종 advertisement (consumer 측)
 
-CI 안전망: [ADR-017](../archive/adr/ADR-017-skill-override-path-enforcement.md) + Amendment 1 (`docs/superpowers/{specs,plans}/**` plugin repo 금지 + agent md `Edit/Write(docs/superpowers/**)` 권한 표기 금지). [scripts/check-superpowers-integration.sh](../scripts/check-superpowers-integration.sh) lint script 가 PR check 로 fail-closed.
+CI 안전망: [ADR-017](../archive/adr/ADR-017-skill-override-path-enforcement.md) + Amendment 1 (`docs/superpowers/{specs,plans}/**` plugin repo 금지 + agent md `Edit/Write(docs/superpowers/**)` 권한 표기 금지).
 
 ## §2 호출 지점 enumerate (SSOT 표)
 
