@@ -82,7 +82,7 @@ codeforge core (Orchestrator)
 
 ```yaml
 design_packet:
-  contract_version: "2.0"
+  contract_version: "2.4"
   story_key: <STORY_KEY>
   story_sections_1_to_7: <markdown>     # 필수
   related_adr_paths:                    # 필수 — Story §3 fetch
@@ -97,7 +97,7 @@ design_packet:
 
 ```yaml
 design_output:
-  contract_version: "2.0"
+  contract_version: "2.4"
   story_key: <STORY_KEY>
 
   status: PASS | FIX_CHIEF_AUTHOR_REVISION | ESCALATE_PACKET_INCOMPLETE
