@@ -80,5 +80,17 @@ jobs:
       - name: Run check-workflow-yaml.sh
         run: bash scripts/check-workflow-yaml.sh
 
+  story-key-compute:
+    name: story-key compute_key self-test (CFP-2116)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run compute_key --self-test (F1-F8, ADR-036 Amd 2)
+        run: python3 scripts/lib/workflow_story_init_compute_key.py --self-test
+
   # marketplace-sync job removed (CFP-457) — redundant with marketplace-parity.yml (CFP-50 / ADR-016 / ADR-023).
   # See CFP-441 retro Action item 1 (3 marketplace lint scripts redundancy cleanup).
