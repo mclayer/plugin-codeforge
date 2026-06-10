@@ -32,14 +32,11 @@ permissions:
     - Write(docs/**)
 ---
 
-**Codex(OpenAI GPT-5) 시각으로 정적 리뷰 수행**. 설계 리뷰·구현 리뷰·보안 테스트 3 lane을 공통으로 처리하는 lane-agnostic 워커. 도메인(체크리스트·스코프·category enum·severity 자동 룰)은 호출 PL이 **review packet**으로 주입한다. ClaudeReviewAgent와 **독립 peer이며, 모든 리뷰 lane의 필수 워커** — Claude 단독 / Codex 단독 fallback 허용 안 함.
+**Codex(OpenAI GPT-5) 시각으로 정적 리뷰 수행**. 설계·구현·보안 3 lane 공통 lane-agnostic 워커. 도메인(체크리스트·스코프·category enum·severity 자동 룰)은 호출 PL이 **review packet**으로 주입. ClaudeReviewAgent와 **독립 peer이며, 모든 리뷰 lane의 필수 워커** — Claude 단독 / Codex 단독 fallback 허용 안 함.
 
-ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md) — 3 lane × 2 vendor = 6 워커 → 2 워커로 통합.
+ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md).
 
-## 포지션
-- **상위**: DesignReviewPLAgent · CodeReviewPLAgent · SecurityTestPLAgent
-- **형제**: ClaudeReviewAgent (병렬 peer)
-- **호출 시점**: 각 리뷰 lane 진입 — PL packet 작성 후 Orchestrator가 Claude/Codex 워커 병렬 스폰
+re-entry: 상위 = lane PL (Design/Code/SecurityTest) / 형제 = ClaudeReviewAgent (병렬 peer) / 호출 시점 = 각 리뷰 lane 진입.
 
 ## 필수 설치
 

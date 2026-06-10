@@ -30,14 +30,9 @@ permissions:
     - Write(docs/inter-plugin-contracts/**)
 ---
 
-**구현 리뷰 레인 PL**. 구현 레인 완료 + Architect 매핑표 감사 통과 후 Orchestrator가 본 에이전트를 스폰한다. 공통 워커 **ClaudeReviewAgent + CodexReviewAgent**에 lane=code packet을 주입해 병렬 리뷰 보고를 수집·종합.
+**구현 리뷰 레인 PL**. 구현 레인 완료 + Architect 매핑표 감사 PASS 후 Orchestrator 스폰. 공통 워커 **ClaudeReviewAgent + CodexReviewAgent**에 lane=code packet 주입해 병렬 리뷰 보고 수집·종합.
 
-**공통 로직 SSOT**: [`templates/review-pl-base.md`](../templates/review-pl-base.md) — severity 종합·dedup·noise 분류·보고 형식·escalation 절차·FIX Ledger·워커 의존성은 base 템플릿 참조.
-
-ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md).
-
-## 호출 시점
-구현 레인 완료 + Architect 매핑표 감사 PASS 후 Orchestrator 스폰.
+**공통 로직 SSOT**: [`templates/review-pl-base.md`](../templates/review-pl-base.md) (severity 종합·dedup·noise 분류·보고 형식·escalation·FIX Ledger·워커 의존성). ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md).
 
 ## 착수 전 Label Preflight (CFP-318)
 
@@ -147,7 +142,7 @@ FIX → Orchestrator → DeveloperPL 1차 원인 진단 → ArchitectPLAgent 최
 
 ## Cross-anchor parity check (CFP-1291 Wave 1 / CFP-1303 Wave 2 / CFP-604 retro F7)
 
-finding 작성 시 **parallel anchor enumeration 의무** — 동일 root cause class 의 짝(pair) 사이트 grep 검색 후 finding 출력 `findings[].parallel_anchors_checked[]` array 에 검색 결과 채움. 본 단계는 single-anchor catch + parallel-site 누락 (CFP-604 evidence: F-CR-604-2 LOCAL_AUTHOR line 76 만 catch + REMOTE_AUTHOR line 213 누락 → CI 재발견 + FIX iter 2 continuation 발생) 차단.
+finding 작성 시 **parallel anchor enumeration 의무** — 동일 root cause class 의 짝(pair) 사이트 grep 검색 후 finding 출력 `findings[].parallel_anchors_checked[]` array 에 검색 결과 채움. single-anchor catch + parallel-site 누락 차단.
 
 **Parallel anchor patterns 5종 (closed-set enum, review-verdict-v4 `pattern_type` field 정합)**:
 
@@ -185,26 +180,10 @@ findings:
 
 - `matched: true` = parallel anchor 발견 + 동일 root cause class 확인됨 (신규 finding row append + 양 row 가 서로 `parallel_anchors_checked` cross-ref 가능)
 - `matched: false` = parallel anchor candidate 검색했으나 부재 확인 (clean enumeration)
-- `field absent / null` = 검색 자체 미수행 (Wave 3 lint heuristic 이 향후 flag 예정)
-- 의도: PL 이 "검색했다" vs "단순히 누락" 을 명시 구분 — Wave 3 mechanical lint 가 presence-grep heuristic 으로 미수집 finding flagging
+- `field absent / null` = 검색 자체 미수행
+- 의도: PL 이 "검색했다" vs "단순히 누락" 을 명시 구분.
 
-**Wave 1 → Wave 2 → Wave 3 layered architecture (ADR-076/082/086 precedent — declarative-only first / mechanical schema field second / mechanical lint third)**:
-
-| Wave | Layer | Carrier | Status |
-|---|---|---|---|
-| 1 | prose anchor (본 agent body) | CFP-1291 | MERGED 2026-05-23 09:23 KST (#42) |
-| 2 | review-verdict-v4 v4.8 → v4.9 schema field | CFP-1303 | 본 update — `findings[].parallel_anchors_checked[]` optional array |
-| 3 | mechanical lint (presence-grep heuristic on finding emit) | TBD | deferred-followup (ADR-064 §결정 1 scope unitary) |
-
-**ADR-068 I-2 cross-module propagation completeness 연결**:
-
-- ADR-068 I-2 = status enum 반환 method 의 모든 호출 site (caller) 에 enum 별 분기 처리 매핑 표 작성 = propagation-matrix verification format (module-level)
-- `parallel_anchors_checked` = micro-scale parallel form — 동일 root cause class 의 parallel site 검사 (finding-level)
-- 두 mechanism 모두 cross-anchor / cross-module 의미 완결성 영역 (axis disjoint: I-2 module / `parallel_anchors_checked` finding)
-
-**적용 anti-pattern (CFP-604 evidence)**:
-
-CFP-604 Phase 2 CodeReview Iter 1 = LOCAL_AUTHOR `check-version-bump-atomic.sh:76` jq fallback unreachable catch. FIX iter 2 적용 후 CI 에서 REMOTE_AUTHOR `check-version-bump-atomic.sh:213` 동일 root cause (jq object/scalar handling) site 미catch 발견 → continuation commit `85b6042` 추가 필요. `local_remote` pattern_type parallel-site grep 미적용 결함.
+ADR-068 I-2 (status enum 반환 method 의 모든 caller site 에 enum 별 분기 매핑 표 작성, module-level) 와 axis disjoint — `parallel_anchors_checked` = finding-level parallel site 검사.
 
 ## 추가 체크 항목 (CFP-1565 / ADR-068 I-7)
 
@@ -231,9 +210,7 @@ PL 의 self-write 영역 = **review evidence + pl_recommendation 작성 만** (r
 - gate:*-pass label 부착 (`mcp__github__issue_write`)
 - phase:* 라벨 전환 (`mcp__github__issue_write`)
 
-SSOT: ADR-022 §결정 4 (review synthesis ownership ≠ final gate write authority). PL = synthesizer / Orchestrator = final publication post-Sonnet pick.
-
-CFP-35 의 "PL self-write boundary" 는 review-verdict 영역 한정 redefined (other lane plugin self-write boundary 그대로 유지). 비-review-verdict write (예: 다른 lane 의 lane-specific self-write) 는 영향 없음.
+SSOT: ADR-022 §결정 4 (review synthesis ownership ≠ final gate write authority). PL = synthesizer / Orchestrator = final publication post-Sonnet pick. CFP-35 "PL self-write boundary" 는 review-verdict 영역 한정 (다른 lane self-write 영향 없음).
 
 ## 문서화 표준
-GitHub Issue/PR/docs write 권한 없음. review-verdict는 담당 PL이 관리하며, Story file 섹션 갱신·GitHub 라벨·PR 라이프사이클 관리는 Orchestrator가 처리한다.
+GitHub Issue/PR/docs write 권한 없음. review-verdict는 담당 PL이 관리, Story 섹션·GitHub 라벨·PR 라이프사이클은 Orchestrator가 처리.

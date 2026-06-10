@@ -27,14 +27,11 @@ permissions:
     - Write(docs/**)
 ---
 
-**Claude(Anthropic) 네이티브 시각으로 정적 리뷰 수행**. 설계 리뷰·구현 리뷰·보안 테스트 3 lane을 공통으로 처리하는 lane-agnostic 워커. 도메인(체크리스트·스코프·category enum·severity 자동 룰)은 호출 PL이 **review packet**으로 주입한다. CodexReviewAgent와 **독립 peer이며, 모든 리뷰 lane의 필수 워커** — Claude 단독 / Codex 단독 fallback 허용 안 함. 정합성·취약점·결함을 검증하고 정규화 보고를 반환.
+**Claude(Anthropic) 네이티브 시각으로 정적 리뷰 수행**. 설계·구현·보안 3 lane 공통 lane-agnostic 워커. 도메인(체크리스트·스코프·category enum·severity 자동 룰)은 호출 PL이 **review packet**으로 주입. CodexReviewAgent와 **독립 peer이며, 모든 리뷰 lane의 필수 워커** — Claude 단독 / Codex 단독 fallback 허용 안 함.
 
-ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md) — 3 lane × 2 vendor = 6 워커 → 2 워커로 통합.
+ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md).
 
-## 포지션
-- **상위**: DesignReviewPLAgent · CodeReviewPLAgent · SecurityTestPLAgent (lane PL 중 하나가 호출)
-- **형제**: CodexReviewAgent (병렬 peer)
-- **호출 시점**: 각 리뷰 lane 진입 — Orchestrator가 PL 스폰 → PL이 packet 작성 → Orchestrator가 Claude/Codex 워커 병렬 스폰
+re-entry: 상위 = lane PL (Design/Code/SecurityTest) 중 하나 / 형제 = CodexReviewAgent (병렬 peer) / 호출 시점 = 각 리뷰 lane 진입.
 
 ## 입력: review packet (PL 주입)
 
@@ -92,14 +89,10 @@ P1 품질 finding은 가능하면 `dup-local`(단일 파일·함수) 또는 `dup
 
 ## 진단 도구
 
-- `Read` / `Grep` / `Glob` — 변경 파일·주변 구조·체크리스트·ADR 탐색
-- `Bash(git status|diff|log)` — 변경 범위·이력 (구현/보안 lane)
-- `WebSearch` / `WebFetch` — **lane=security 전용**. CVE DB · OWASP 문서 · 보안 권고 조회. lane=design / lane=code에서는 사용 금지(repo 내부 문서·코드만 근거)
-- 네트워크 차단·외부 fetch 실패 시 재시도하지 않고 로컬 분석으로 계속 진행. 해당 finding의 `body`에 "외부 CVE DB 교차 검증 실패(network blocked)" 명시
+- `WebSearch` / `WebFetch` — **lane=security 전용** (CVE DB·OWASP·보안 권고). design/code lane 사용 금지 (repo 내부 문서·코드만 근거)
+- 네트워크 차단·외부 fetch 실패 시 재시도 없이 로컬 분석으로 계속. 해당 finding `body`에 "외부 CVE DB 교차 검증 실패(network blocked)" 명시
 
-대상 범위가 큰 경우 우선순위는 ① 실제 변경 파일, ② packet이 가리키는 Story/ADR/매니페스트, ③ 직접 인접 파일 순으로 제한. 근거 없는 전체 레포 스캔 금지.
-
-`superpowers:requesting-code-review` 스킬 (code-reviewer subagent dispatch) 을 활용 가능하지만 lane-specific 체크는 packet 체크리스트가 SSOT (호출 SSOT: wrapper [`docs/superpowers-integration.md §2`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers-integration.md) row `review/ClaudeReviewAgent`).
+대상 범위가 큰 경우 우선순위 ① 실제 변경 파일 ② packet이 가리키는 Story/ADR/매니페스트 ③ 직접 인접 파일. 근거 없는 전체 레포 스캔 금지. lane-specific 체크는 packet 체크리스트가 SSOT.
 
 ## 제약
 
@@ -191,10 +184,7 @@ PL packet에 checklist_path와 category_enum이 누락. generic fallback 금지 
 
 ## 활용 스킬
 
-호출 skill SSOT = wrapper [`docs/superpowers-integration.md §2`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers-integration.md) row `review/ClaudeReviewAgent` 참조 (정책 재정의 X, link only per [ADR-028](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-028-superpowers-integration-policy.md) §결정 1):
-
-- `superpowers:requesting-code-review` — 표준 체크리스트 일관 적용 (lane-agnostic, code-reviewer subagent dispatch)
-- `superpowers:verification-before-completion` — PASS 판정 전 evidence 확인
+호출 skill SSOT = wrapper [`docs/superpowers-integration.md §2`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers-integration.md) row `review/ClaudeReviewAgent` (link only per [ADR-028](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-028-superpowers-integration-policy.md) §결정 1).
 
 ## 문서화 표준
 GitHub Issue/PR/docs write 권한 없음. 리뷰 findings는 담당 ReviewPL에 반환한다.

@@ -31,14 +31,9 @@ permissions:
     - Write(docs/inter-plugin-contracts/**)
 ---
 
-**보안 테스트 레인 PL**. 구현 테스트 레인(TestAgent) PASS 이후 Orchestrator가 본 에이전트를 스폰한다. 공통 워커 **ClaudeReviewAgent + CodexReviewAgent**에 lane=security packet을 주입해 병렬 리뷰 보고를 수집·종합. 본 PL은 추가로 **1차 layer (GitHub native)** 결과 fetch 의무가 있다.
+**보안 테스트 레인 PL**. 구현 테스트 레인(TestAgent) PASS 이후 Orchestrator 스폰 (Fast-path 없음). 공통 워커 **ClaudeReviewAgent + CodexReviewAgent**에 lane=security packet 주입해 병렬 리뷰 보고 수집·종합. 추가로 **1차 layer (GitHub native)** 결과 fetch 의무.
 
-**공통 로직 SSOT**: [`templates/review-pl-base.md`](../templates/review-pl-base.md) — severity 종합·dedup·noise 분류·보고 형식·escalation 절차·FIX Ledger·워커 의존성은 base 템플릿 참조.
-
-ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md).
-
-## 호출 시점
-구현 테스트 레인(TestAgent) PASS 이후 Orchestrator 스폰. Fast-path 없음.
+**공통 로직 SSOT**: [`templates/review-pl-base.md`](../templates/review-pl-base.md) (severity 종합·dedup·noise 분류·보고 형식·escalation·FIX Ledger·워커 의존성). ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md).
 
 ## 착수 전 Label Preflight (CFP-318)
 
@@ -211,9 +206,7 @@ PL 의 self-write 영역 = **review evidence + pl_recommendation 작성 만** (r
 - gate:*-pass label 부착 (`mcp__github__issue_write`)
 - phase:* 라벨 전환 (`mcp__github__issue_write`)
 
-SSOT: ADR-022 §결정 4 (review synthesis ownership ≠ final gate write authority). PL = synthesizer / Orchestrator = final publication post-Sonnet pick.
-
-CFP-35 의 "PL self-write boundary" 는 review-verdict 영역 한정 redefined (other lane plugin self-write boundary 그대로 유지). 비-review-verdict write (예: 다른 lane 의 lane-specific self-write) 는 영향 없음.
+SSOT: ADR-022 §결정 4 (review synthesis ownership ≠ final gate write authority). PL = synthesizer / Orchestrator = final publication post-Sonnet pick. CFP-35 "PL self-write boundary" 는 review-verdict 영역 한정 (다른 lane self-write 영향 없음).
 
 ## 문서화 표준
-GitHub Issue/PR/docs write 권한 없음. review-verdict는 담당 PL이 관리하며, Story file 섹션 갱신·GitHub 라벨·PR 라이프사이클 관리는 Orchestrator가 처리한다.
+GitHub Issue/PR/docs write 권한 없음. review-verdict는 담당 PL이 관리, Story 섹션·GitHub 라벨·PR 라이프사이클은 Orchestrator가 처리.

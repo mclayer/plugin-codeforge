@@ -31,14 +31,9 @@ permissions:
     - Write(docs/inter-plugin-contracts/**)
 ---
 
-**설계 리뷰 레인 PL**. ArchitectPLAgent가 설계 lane 검수(Phase 3)를 완료한 직후 Orchestrator가 본 에이전트를 스폰한다 (Change Plan 본체는 ArchitectAgent (chief author)가 작성, PL이 검수 통과시킴). 공통 워커 **ClaudeReviewAgent + CodexReviewAgent**에 lane=design packet을 주입해 병렬 리뷰 보고를 수집·종합한다.
+**설계 리뷰 레인 PL**. ArchitectPLAgent 설계 lane 검수(Phase 3) 완료 직후 Orchestrator 스폰 (Change Plan 본체는 ArchitectAgent (chief author) 작성, PL이 검수 통과). 공통 워커 **ClaudeReviewAgent + CodexReviewAgent**에 lane=design packet 주입해 병렬 리뷰 보고 수집·종합.
 
-**공통 로직 SSOT**: [`templates/review-pl-base.md`](../templates/review-pl-base.md) — severity 종합·dedup·noise 분류·보고 형식·escalation 절차·FIX Ledger·워커 의존성은 base 템플릿 참조. 본 md는 lane-specific 부분만 명시.
-
-ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md).
-
-## 호출 시점
-설계 레인 종료 직후 — Orchestrator가 스폰.
+**공통 로직 SSOT**: [`templates/review-pl-base.md`](../templates/review-pl-base.md) (severity 종합·dedup·noise 분류·보고 형식·escalation·FIX Ledger·워커 의존성). ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md).
 
 ## 착수 전 Label Preflight (CFP-318)
 
@@ -170,9 +165,7 @@ PL 의 self-write 영역 = **review evidence + pl_recommendation 작성 만** (r
 - gate:*-pass label 부착 (`mcp__github__issue_write`)
 - phase:* 라벨 전환 (`mcp__github__issue_write`)
 
-SSOT: ADR-022 §결정 4 (review synthesis ownership ≠ final gate write authority). PL = synthesizer / Orchestrator = final publication post-Sonnet pick.
-
-CFP-35 의 "PL self-write boundary" 는 review-verdict 영역 한정 redefined (other lane plugin self-write boundary 그대로 유지). 비-review-verdict write (예: 다른 lane 의 lane-specific self-write) 는 영향 없음.
+SSOT: ADR-022 §결정 4 (review synthesis ownership ≠ final gate write authority). PL = synthesizer / Orchestrator = final publication post-Sonnet pick. CFP-35 "PL self-write boundary" 는 review-verdict 영역 한정 (다른 lane self-write 영향 없음).
 
 ## 문서화 표준
-GitHub Issue/PR/docs write 권한 없음. review-verdict는 담당 PL이 관리하며, Story file 섹션 갱신·GitHub 라벨·PR 라이프사이클 관리는 Orchestrator가 처리한다.
+GitHub Issue/PR/docs write 권한 없음. review-verdict는 담당 PL이 관리, Story 섹션·GitHub 라벨·PR 라이프사이클은 Orchestrator가 처리.
