@@ -70,55 +70,14 @@ primary 5 영역:
 
 ## 1. Transport semantics
 
-API transport 선택은 latency requirement / payload size / streaming need / client diversity / network topology / caching strategy 6 axis disjoint matrix 검토 후 단일 transport 선택 (multi-transport 도입 = consumer 부담, sufficient rationale 의무).
+API transport 선택은 latency / payload size / streaming need / client diversity / network topology / caching 6 axis 검토 후 단일 transport 선택 (multi-transport = consumer 부담, sufficient rationale 의무). REST / GraphQL / gRPC / WebSocket 4 transport 의 요지는 §1.5 matrix 가 인코딩한다. APIContractArch 가 명시 의무 보유하는 contract-level 포인트만 아래 보존:
 
-### 1.1 REST
-
-resource-oriented HTTP API. 9 사항 advocate:
-
-- **HTTP verb semantics** — `GET` (safe + idempotent — server state mutation 0) / `POST` (non-idempotent — create / arbitrary action) / `PUT` (idempotent — full replace) / `PATCH` (non-idempotent default — partial update, JSON Patch RFC 6902 / JSON Merge Patch RFC 7396 시 idempotent) / `DELETE` (idempotent — 두 번 호출 시 동일 final state).
-- **Idempotency key** — non-idempotent verb (`POST` / `PATCH`) 의 client retry safety 보장. `Idempotency-Key` header (Stripe / PayPal pattern, draft RFC) + server-side dedup window (대표 24h). retry storm + network partition + duplicate processing 차단.
-- **Status code semantics** — 2xx success (200 / 201 / 202 / 204 의미 분리) / 3xx redirect / 4xx client error (400 validation / 401 unauthenticated / 403 unauthorized / 404 / 409 conflict / 422 unprocessable entity / 429 rate limit) / 5xx server error (500 / 502 / 503 / 504 timeout). status code 의 의미 mismatch (예: validation 실패에 500 반환) = §결정 1 breaking concern.
-- **Richardson Maturity Model 4 level** — Level 0 (single endpoint, RPC over HTTP) / Level 1 (resource 분리) / Level 2 (HTTP verb 활용) / Level 3 (HATEOAS — hypermedia controls). Level 2 = pragmatic default. Level 3 = client diversity 높은 public API (Spring HATEOAS / HAL+JSON), trade-off 정량 평가 후 선택.
-- **HATEOAS 결정** — consumer overlay 결정 영역. discoverability 가치 ↔ client 복잡도 + payload bloat trade-off. backend-for-frontend (BFF) 패턴 시 HATEOAS 불필요 (client 가 server-rendered links 의존 안함).
-- **Content negotiation** — `Accept` / `Accept-Language` / `Accept-Encoding` / `Accept-Charset` 4 axis. `application/json` default, `application/xml` / `application/cbor` / `application/msgpack` 추가 시 server-side serializer 책임.
-- **Cache semantics** — `Cache-Control` (max-age / s-maxage / private / public / no-store) + `ETag` (strong / weak) + `Last-Modified` + conditional request (`If-None-Match` / `If-Modified-Since` → 304). CDN-friendly = idempotent GET endpoint 의 cacheable response.
-- **Pagination pattern** — offset-based (`?page=N&size=M`, simple but large offset cost) / cursor-based (`?after=<opaque>&limit=N`, stable for changing data) / keyset-based (`?since_id=<id>&limit=N`, indexed). DataArch 와 co-author (OLAP cursor pattern).
-- **HTTP/2 + HTTP/3** — multiplexing (head-of-line blocking 해소) / server push (deprecated, prefer `103 Early Hints`) / QUIC (UDP-based, 0-RTT resume). 본 mandate scope 외 (InfraOperationalArch primary), API contract 영역에서는 protocol-agnostic 유지.
-
-### 1.2 GraphQL
-
-schema-first 또는 code-first design + Query / Mutation / Subscription 3 axis. 7 사항 advocate:
-
-- **Query / Mutation / Subscription axis** — Query (idempotent read — REST `GET` 대응) / Mutation (non-idempotent write — REST `POST/PUT/PATCH/DELETE` 통합) / Subscription (long-lived stream — WebSocket / SSE transport). idempotency 책임이 transport layer 가 아닌 mutation resolver layer 에 위치 — APIContractArch 가 mutation 별 idempotency key contract 명시 의무.
-- **N+1 problem mitigation** — DataLoader pattern (request-scoped batching + cache) + nested resolver depth limit (`max_depth: 10` default). resolver per-field invocation cost ↔ batched DB query trade-off. ModuleArch (aggregate-level) 와 co-author (aggregate root fetch boundary).
-- **Persisted queries** — query whitelist + hash-based reference (`?queryHash=<sha256>`). client 가 query 전송 대신 hash 만 전송 → server 가 hash → query lookup. (a) network payload 감소 (b) query whitelisting via security (c) cache key stability 3 효과. SecurityArch consult 영역 (arbitrary query 금지).
-- **Federation vs schema stitching** — federation (Apollo Federation v2 — sub-graph composition with `@key` / `@external` directive) / schema stitching (deprecated approach — gateway 가 type merging). multi-service composition 시 federation 권장. ModuleArch 와 co-author (service module boundary ↔ sub-graph boundary).
-- **Error handling** — `errors[]` field (path / message / extensions.code) — partial success 허용 (REST status code single value 와 disjoint). client 가 `data` + `errors` 둘 다 처리 의무. extensions.code = enum (UNAUTHENTICATED / FORBIDDEN / BAD_USER_INPUT / INTERNAL_SERVER_ERROR / RATE_LIMITED).
-- **Schema evolution** — additive only (field 추가 = safe / field 삭제 = breaking). `@deprecated(reason: "...")` directive + N-1 quarter sunset period default. breaking change 시 새 type 신설 + 기존 type `@deprecated` (graceful migration).
-- **Introspection control** — development = enabled / production = disabled 권장 (schema disclosure 차단). SecurityArch consult.
-
-### 1.3 gRPC
-
-ProtoBuf schema + 4 RPC 유형. 6 사항 advocate:
-
-- **ProtoBuf schema 정의** — `.proto` file (proto3 default) + `message` (DTO) + `service` (RPC contract). field number = wire format stable identifier (rename safe / renumber breaking). reserved field number + tag for future-proofing.
-- **4 RPC 유형** — Unary (1 req → 1 resp, REST 대응) / Server streaming (1 req → N resp, e.g. log tail) / Client streaming (N req → 1 resp, e.g. upload chunks) / Bidirectional streaming (N req ↔ N resp, e.g. chat / live update). 각 유형 별 timeout / cancellation / backpressure 정책 명시 의무.
-- **Deadline propagation** — client deadline (`context.WithDeadline`) → server 가 down-stream RPC 에 deadline 전파. cascading failure 차단 (server 가 unbounded wait 금지). InfraOperationalArch 와 co-author (timeout / retry / circuit breaker 정책).
-- **Interceptors** — unary / stream interceptor — auth / logging / tracing / rate limit cross-cutting. SecurityArch consult.
-- **Status codes** — gRPC status code enum (OK / CANCELLED / UNKNOWN / INVALID_ARGUMENT / DEADLINE_EXCEEDED / NOT_FOUND / ALREADY_EXISTS / PERMISSION_DENIED / RESOURCE_EXHAUSTED / FAILED_PRECONDITION / ABORTED / OUT_OF_RANGE / UNIMPLEMENTED / INTERNAL / UNAVAILABLE / DATA_LOSS / UNAUTHENTICATED). HTTP status code 와 disjoint mapping (gRPC-Web bridge 영역 별도).
-- **Service mesh 통합** — Envoy / Istio / Linkerd sidecar proxy 와 native gRPC support. mTLS / circuit breaker / canary routing = mesh layer 책임 (APIContractArch scope 외, InfraOperationalArch primary).
-
-### 1.4 WebSocket
-
-full-duplex 영구 연결 + subprotocol negotiation. 6 사항 advocate:
-
-- **Connection lifecycle** — HTTP upgrade (`Upgrade: websocket` + `Sec-WebSocket-Key`) → handshake → message frames → close frame. close code enum (1000 normal / 1001 going away / 1006 abnormal / 1011 server error / 4xxx application-specific).
-- **Heartbeat (ping / pong)** — server-initiated ping (default 30s interval) + client pong response (default 10s timeout). idle connection detection + intermediary (proxy / load balancer) timeout 회피. interval 은 `[empirical-source: TBD — wiretap required per CFP-528]` — 추정값 lock-in 금지.
-- **Reconnect strategy** — exponential backoff + jitter (e.g. `min(base * 2^n + random, cap)`). client-side resume token (last-seen message ID) + server-side replay buffer (window N messages). InfraOperationalArch consult.
-- **Subprotocol negotiation** — `Sec-WebSocket-Protocol` header — application-defined subprotocol (e.g. `graphql-ws` / `mqtt` / `wamp` / custom). server 가 supported subprotocol enumeration + client 가 선호도 순서 송신.
-- **Message framing** — JSON (human-readable + debug-friendly + payload bloat) / Protobuf (binary + schema-bound + smaller) / MessagePack (binary + schema-less). frame fragmentation (`FIN` bit) — large message 의 multi-frame split.
-- **Authentication** — handshake 시 `Sec-WebSocket-Protocol` 또는 query param 으로 token 전송 (header-based auth 는 browser API 제약). post-handshake token rotation = subprotocol layer 책임. SecurityArch consult.
+- **idempotency** — non-idempotent verb(`POST`/`PATCH`) 및 GraphQL mutation 의 client retry safety = `Idempotency-Key` contract + dedup window 명시 (idempotency 책임이 GraphQL 에서는 mutation resolver layer 에 위치).
+- **status code 의미 mismatch** (예: validation 실패에 500) = §결정 1 breaking concern.
+- **GraphQL N+1** — DataLoader + resolver depth limit + persisted query whitelist (ModuleArch / SecurityArch co-author).
+- **GraphQL error** — `errors[]` (path/message/extensions.code) partial success, REST single status 와 disjoint.
+- **gRPC deadline propagation** — contract 의미는 APIContractArch, 실제 값은 InfraOperationalArch.
+- **WebSocket auth** — handshake token 전송 (subprotocol/query param, header-based 제약). SecurityArch consult.
 
 ### 1.5 Transport 선택 결정 framework
 
@@ -166,26 +125,12 @@ semver 정합 + 3-axis versioning + deprecation policy 통합. 5 사항 advocate
 
 ADR-008 (Inter-plugin Contract Versioning) 정합 — codeforge 자신의 inter-plugin contract versioning rule 과 동일 (MAJOR = breaking / MINOR = additive / PATCH = fix). consumer 영역 API versioning 도 동일 rule 답습.
 
-### 2.3 Deprecation policy
+### 2.3 Deprecation + 통신 정책 (default)
 
-- **Minimum N-1 version parallel support** — v2 출시 시 v1 N quarter 동안 동시 제공. default N = 2 quarter (6 months), 외부 enterprise consumer 영역 = 4 quarter (12 months) 권장.
-- **Sunset header** — `Sunset: Sat, 31 Dec 2026 23:59:59 GMT` (RFC 8594) — v1 sunset date 명시. `Deprecation: @1735689599` (Unix timestamp, draft RFC) 동반.
-- **Link header** — `Link: <https://api.example.com/v2/users>; rel="successor-version"` (RFC 8288) — 후속 version URI 명시.
-- **Migration guide** — sunset date 6 month 전 consumer 통보 + migration doc 게시 의무 (consumer-guide 또는 changelog).
-
-### 2.4 GraphQL versioning special
-
-GraphQL 은 URI versioning 부재 — single endpoint `/graphql`. Schema evolution 으로 대체:
-
-- **Additive only** — field 추가 = safe / field 삭제 = breaking → `@deprecated(reason: "...")` directive + N-1 quarter sunset.
-- **Persisted query 의 version 관리** — query hash 가 schema version 과 disjoint. schema 변경 시 persisted query whitelist 갱신 의무.
-- **No major version bump** — single endpoint 유지 + 신규 type 신설 + 기존 type `@deprecated` (graceful migration). 강제 breaking 시 = 새 endpoint `/graphql/v2` 신설 (rare, sufficient rationale 의무).
-
-### 2.5 Breaking change communication
-
-- **Changelog mandatory** — MAJOR bump 시 `CHANGELOG.md` 또는 `docs/api-changelog.md` 에 `## Breaking changes` 단락 의무.
-- **Migration script** — possible 시 client SDK migration codemod 제공 (e.g. jscodeshift / ts-morph based).
-- **Soft launch** — beta endpoint (`/v2-beta/`) → general availability (`/v2/`) → v1 deprecation announcement → v1 sunset. 4 phase sequence default.
+- **N-1 parallel support** — v2 출시 시 v1 default N = 2 quarter (6mo), enterprise = 4 quarter (12mo) 동시 제공.
+- **Sunset / Link header** — `Sunset` (RFC 8594) + `Deprecation` + `Link; rel="successor-version"` (RFC 8288) 명시. sunset 6mo 전 consumer 통보 + migration doc 의무.
+- **GraphQL special** — URI versioning 부재 (single `/graphql`) → additive-only schema evolution + `@deprecated` + N-1 quarter sunset. MAJOR bump 없이 신규 type 신설 + 기존 type `@deprecated`. persisted query whitelist 갱신 의무.
+- **Breaking 통신** — MAJOR bump 시 `## Breaking changes` changelog 의무 + soft launch (beta → GA → deprecation announce → sunset) default.
 
 ---
 
@@ -215,49 +160,15 @@ GraphQL 은 URI versioning 부재 — single endpoint `/graphql`. Schema evoluti
 
 ### 3.3 Validation rule
 
-server-side validation = **mandatory invariant**. client-side validation = UX optimization only (network round-trip 회피 목적, 신뢰 layer 아님). 9 validation primitive advocate:
-
-- **type** — string / number / integer / boolean / array / object / null
-- **format** — `email` / `uuid` / `uri` / `date-time` (ISO 8601) / `ipv4` / `ipv6`
-- **min / max** — `minLength` / `maxLength` / `minimum` / `maximum` / `exclusiveMinimum` / `exclusiveMaximum`
-- **pattern** — regex constraint (ReDoS 회피 의무 — SecurityArch consult)
-- **enum** — closed-set value enumeration
-- **const** — single literal value (e.g. discriminator field)
-- **multipleOf** — divisibility (e.g. price granularity)
-- **required[]** — required field list (object-level)
-- **dependentRequired** — conditional required (e.g. `if "type": "credit_card" then "card_number" required`)
+server-side validation = **mandatory invariant**. client-side validation = UX optimization only (신뢰 layer 아님). primitive (type / format / min·max / pattern / enum / const / multipleOf / required[] / dependentRequired) 는 JSON Schema 표준 어휘 사용. pattern = ReDoS 회피 의무 (SecurityArch consult).
 
 ### 3.4 Validation library
 
-| Language | Library | Strength |
-|---|---|---|
-| JavaScript / TypeScript | **Zod** | type inference + composition / **Joi** stable + Hapi native / **Yup** lightweight |
-| Python | **Pydantic v2** | type hints native + FastAPI 통합 / dataclass + jsonschema 결합 |
-| Java | **jakarta-validation** (구 javax.validation) JSR 380 — Hibernate Validator 표준 |
-| Go | **go-playground/validator** struct tag + ozzo-validation fluent |
-| Rust | **validator** crate (derive macro) |
-| C# / .NET | **FluentValidation** / DataAnnotations |
-
-**선택 default** = 해당 language 의 ecosystem standard. cross-language API 시 schema (JSON Schema / OpenAPI / Protobuf) 가 SSOT — 각 language 의 codegen 으로 validation 생성.
+**선택 default** = 해당 language 의 ecosystem standard. cross-language API 시 schema (JSON Schema / OpenAPI / Protobuf) 가 SSOT — 각 language codegen 으로 validation 생성.
 
 ### 3.5 Error contract (RFC 7807)
 
 **RFC 7807 Problem Details for HTTP APIs** 채택 default. `application/problem+json` content type + 5 표준 field:
-
-```json
-{
-  "type": "https://api.example.com/problems/validation-error",
-  "title": "Validation Failed",
-  "status": 422,
-  "detail": "Email field must be a valid RFC 5322 address",
-  "instance": "/users/12345",
-  "errors": [
-    { "field": "email", "code": "INVALID_FORMAT", "message": "..." }
-  ]
-}
-```
-
-**5 field**:
 - `type` (URI) — problem type identifier (URI), dereferenceable doc 권장
 - `title` (string) — human-readable summary (locale-independent)
 - `status` (integer) — HTTP status code (response status code 와 일치 의무)
@@ -281,106 +192,14 @@ domain entity ↔ DTO assembler = **ModuleArch (aggregate-level) ↔ APIContract
 
 ## 4. OpenAPI / GraphQL schema
 
-REST = OpenAPI / GraphQL = SDL or code-first. 4 사항 advocate:
+REST = OpenAPI / GraphQL = SDL or code-first. 기본 선택 (default) 만 codify:
 
-### 4.1 OpenAPI
-
-**spec format**:
-- **OpenAPI 3.0** (2017) — JSON Schema Draft 4 subset (nullable via `nullable: true` keyword)
-- **OpenAPI 3.1** (2021) — JSON Schema Draft 2020-12 alignment (nullable via `type: ["string", "null"]` 표준), webhook 신설, jsonSchemaDialect override
-
-**default 선택** = OpenAPI 3.1 (신규 도입), 3.0 → 3.1 migration 시 nullable 표현 마이그레이션 필요.
-
-**code-first vs spec-first**:
-
-| Approach | Pros | Cons | Recommended |
-|---|---|---|---|
-| **spec-first** | explicit contract + design-first + multi-team alignment | sync 부담 (spec ↔ code drift) | **default** — public API / multi-consumer |
-| **code-first** | single source / 즉시 코드 정합 | spec 자동 생성 의존 (annotation drift) + spec 가 implementation 뒤따름 | internal API / single-team / rapid iteration |
-
-**Spec-first workflow**:
-1. OpenAPI spec author (Stoplight / Swagger Editor / SwaggerHub / Apicurio)
-2. Server stub generation (openapi-generator / swagger-codegen / Speakeasy / Fern)
-3. Client SDK generation (per-language target)
-4. Mock server (Prism / Speccy mock) — frontend / consumer 가 backend 완성 전 prototyping
-
-**Tooling**:
-- **openapi-generator** — multi-language broad (50+ target), defacto 표준
-- **swagger-codegen** — predecessor, openapi-generator fork
-- **Speakeasy** — managed SDK generation, ergonomic-focused
-- **Fern** — startup-focused SDK + docs unified
-- **orval** — TypeScript / React-Query / SWR client generation focus
-
-**Validation tool**:
-- **Spectral** — OpenAPI lint (style guide enforcement)
-- **dredd** — API blueprint + OpenAPI contract testing
-- **Schemathesis** — property-based testing (Hypothesis backend)
-
-### 4.2 GraphQL
-
-**SDL (Schema Definition Language)** 표준:
-
-```graphql
-type User {
-  id: ID!
-  email: String!
-  posts(first: Int = 10, after: String): PostConnection!
-}
-
-type Query {
-  user(id: ID!): User
-}
-
-type Mutation {
-  createUser(input: CreateUserInput!): CreateUserPayload!
-}
-
-input CreateUserInput {
-  email: String!
-}
-
-type CreateUserPayload {
-  user: User
-  errors: [UserError!]!
-}
-```
-
-**schema-first vs code-first**:
-
-| Approach | Pros | Cons | Recommended |
-|---|---|---|---|
-| **schema-first** | SDL = SSOT + design-first + cross-team alignment | resolver ↔ SDL drift 위험 (codegen with strict checks 의무) | multi-team / federated graph |
-| **code-first** | type-safe (TypeScript / Java types 이 schema 생성) + drift 0 | SDL 후행 (introspection 으로 retrieve) | single-team / Apollo Server / Nexus / Pothos / TypeGraphQL |
-
-**default 선택** = code-first (drift 차단 + type safety). schema-first = federated graph + multi-team alignment 필요 시.
-
-**Introspection control** — development = enabled / production = disabled (schema disclosure 차단, SecurityArch consult).
-
-**Tooling**:
-- **graphql-codegen** — multi-language client + server codegen
-- **Apollo Server** — JavaScript / TypeScript server
-- **GraphQL Yoga** — TheGuild ecosystem lightweight
-- **Pothos** — code-first TypeScript builder
-- **Nexus** — code-first (Pothos 의 predecessor, less maintained)
-- **TypeGraphQL** — decorator-based code-first
-- **strawberry-graphql** — Python code-first (FastAPI 통합)
-
-### 4.3 Schema versioning + evolution
-
-**OpenAPI**:
-- spec file version (e.g. `openapi-v1.0.yaml` / `openapi-v2.0.yaml`) — git-tracked + tagged release
-- breaking change detection — **oasdiff** tool / **openapi-diff** — CI gate 의무
-
-**GraphQL**:
-- single schema + `@deprecated` directive — additive evolution
-- breaking change detection — **graphql-inspector** — CI gate 의무
-- breaking change 시 새 type 신설 + 기존 type `@deprecated`
-
-### 4.4 Schema repository 정책
-
-- **spec file 위치** — `docs/api/openapi.yaml` 또는 `schema.graphql` (repo root 또는 dedicated `api/` directory)
-- **codegen output** — generated client SDK 는 별 repo 또는 별 directory (e.g. `clients/<language>/`) — git-tracked (downstream consumer 가 git submodule / npm package 로 retrieval)
-- **versioned artifact** — schema 의 versioned snapshot 을 release artifact 로 publish (e.g. `https://api.example.com/openapi/v1.2.yaml`)
+- **OpenAPI 버전 default = 3.1** (JSON Schema Draft 2020-12 alignment, nullable via `type: ["string","null"]`). 3.0 → 3.1 migration 시 nullable 표현 변환 필요.
+- **REST spec 접근 default = spec-first** (public API / multi-consumer — explicit contract + multi-team alignment). code-first = internal / single-team / rapid iteration.
+- **GraphQL 접근 default = code-first** (drift 0 + type safety). schema-first = federated graph + multi-team alignment 필요 시.
+- **Introspection** — development enabled / production disabled (schema disclosure 차단, SecurityArch consult).
+- **Drift detection CI gate 의무** — OpenAPI = oasdiff / openapi-diff, GraphQL = graphql-inspector. breaking change 시 새 type 신설 + 기존 `@deprecated`.
+- **Schema repo 정책** — spec file `docs/api/openapi.yaml` 또는 `schema.graphql` git-tracked, codegen output 별 directory, versioned snapshot 을 release artifact 로 publish.
 
 ---
 
@@ -396,48 +215,13 @@ type CreateUserPayload {
 | **Provider-driven contract** | **Spring Cloud Contract** | provider 가 contract 정의 → consumer 가 stub 사용 | provider 가 SSOT / 단일 provider × N consumer |
 | **Schema-based contract** | **dredd** / **Schemathesis** / **chakram** / **k6** | OpenAPI / GraphQL schema 자체가 contract → request/response 검증 | schema-first / public API / schema = SSOT |
 
-### 5.2 Consumer-driven contract testing (Pact)
+### 5.2 Paradigm 별 핵심
 
-**Pact 구조**:
-1. Consumer test (Jest / pytest / etc.) → `pact-mock-service` 가 expectation record
-2. Pact file (JSON) 생성 — consumer expectation 의 SSOT
-3. Pact broker (e.g. Pactflow) 에 publish — versioned + tagged (e.g. consumer version + git branch)
-4. Provider verification — provider CI 가 broker 에서 pact file fetch → provider 가 expectation 만족 확인
-5. `can-i-deploy` gate — broker query → consumer / provider matrix verification → CI gate
+- **Pact (consumer-driven)** — consumer test → pact file → broker(Pactflow) publish → provider CI verify → `can-i-deploy` gate. multi-consumer × 1-provider 에서 each consumer 가 own expectation 보유, provider 변경 시 regression 즉시 catch. limitation = behavioral contract only (Schemathesis property-based 로 보완).
+- **Spring Cloud Contract (provider-driven)** — provider 가 contract(Groovy DSL/YAML) 정의 → stub jar → consumer test 가 stub 사용. Spring ecosystem + provider SSOT.
+- **Schema-based** — OpenAPI/GraphQL schema 자체가 contract → Schemathesis(property-based) / dredd / graphql-inspector 로 검증.
 
-**Pact strengths**:
-- Multi-consumer × 1-provider 시 each consumer 가 own expectation 보유
-- Provider implementation 변경 시 consumer expectation regression 즉시 catch
-- Versioning + tag (e.g. `prod` / `staging`) — environment-aware verification
-
-**Pact limitations**:
-- Pact = behavioral contract only (semantic-rich behavior 검증 안 함 — Schemathesis property-based testing 보완)
-- Provider 가 consumer 영향 visibility 부족 시 friction (organizational alignment 의존)
-
-### 5.3 Provider-driven contract testing (Spring Cloud Contract)
-
-**Spring Cloud Contract 구조**:
-1. Provider 가 contract 정의 (Groovy DSL or YAML)
-2. Provider build → stub jar 생성 + consumer integration test 용 `wiremock` stub
-3. Consumer 가 stub jar dependency → consumer test 시 stub 사용
-4. Provider 가 contract 변경 시 stub jar version bump → consumer 가 신규 stub 으로 regression 검증
-
-**Use case** — Spring ecosystem + 단일 provider × N consumer. provider 가 SSOT 인 경우.
-
-### 5.4 Schema-based contract testing
-
-**OpenAPI**:
-- **dredd** — API blueprint + OpenAPI request/response 검증 (mature, less active)
-- **Schemathesis** — Python + Hypothesis (property-based testing) — schema 로 random valid input 생성 + edge case 자동 탐색
-- **chakram** — JavaScript request library + assertion
-- **Prism** — Stoplight mock server + validation
-
-**GraphQL**:
-- **graphql-inspector** — schema breaking change detection (CI gate)
-- **graphql-codegen + zod schema** — TypeScript client + runtime validation
-- **Schemathesis (GraphQL mode)** — schema-driven property-based testing
-
-### 5.5 Contract testing vs integration testing axis disjoint
+### 5.3 Contract testing vs integration testing axis disjoint
 
 - **Contract testing** — 두 service boundary 의 message shape 정합 검증 only. consumer 와 provider 사이 의 contract 만 검증. **APIContractArch primary 영역**.
 - **Integration testing** — end-to-end behavior 검증 (multi-service composition / DB persistence / external dependency 통합). **TestContractArch primary §8.6 통합 테스트 영역**.
@@ -447,11 +231,11 @@ type CreateUserPayload {
 - contract test 의 CI placement / orchestration / report aggregation = TestContractArch
 - contract broker 운영 (Pactflow / 자체 호스팅 broker) = InfraOperationalArch consult
 
-### 5.6 CI integration
+### 5.4 CI integration
 
-- **Pre-merge gate** — consumer test 가 contract change 발생 시 → provider verification CI trigger → broker 가 `can-i-deploy` response → merge gate
-- **Post-merge canary** — production deploy 전 contract regression scan (latest production pact ↔ staging provider)
-- **Sunset coordination** — contract 의 deprecated state → broker tag 변경 → consumer 가 migration 의무 (sunset header 동반)
+- **Pre-merge gate** — contract change 시 provider verification CI → broker `can-i-deploy` → merge gate.
+- **Post-merge canary** — production deploy 전 contract regression scan (production pact ↔ staging provider).
+- **Sunset coordination** — deprecated contract → broker tag 변경 → consumer migration 의무 (sunset header 동반).
 
 ---
 
