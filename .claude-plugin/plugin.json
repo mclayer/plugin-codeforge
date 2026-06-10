@@ -1,6 +1,6 @@
 {
   "name": "codeforge",
-  "version": "6.12.0",
+  "version": "6.13.0",
   "description": "Claude Code 범용 SW 개발 오케스트레이션 플러그인. 0 core 에이전트 (wrapper-only) · 8 레인 + CI gate + role:dev 동적 roster 로 요구사항 접수부터 배포 리뷰 통과까지 자율 실행",
   "author": {
     "name": "Josh"
