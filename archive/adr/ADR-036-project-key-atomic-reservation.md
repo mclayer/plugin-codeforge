@@ -24,6 +24,12 @@ amendment_log:
     carrier: CFP-671
     summary: "Title regex precedence over Issue# fallback — cfp-reserve.yml reservation pattern 정합 보존"
     sunset_justification: "ratchet 강화 (race-free guarantee 보존 + title pattern precedence 추가). 약화 방향 아님."
+  - amendment_id: 2
+    date: 2026-06-10
+    carrier: CFP-2116
+    summary: "대괄호 필수 regex 정밀화 — reservation(bracketed) vs reference(bare) 구분으로 title 참조 prior-CFP 오추출 차단"
+    sunset_justification: "ratchet 강화 (reference 차단 추가 + race-free/prefix-guard/title-precedence 보존). 약화 아님."
+    is_transitional: false
 ---
 
 # ADR-036: Project key atomic reservation — KEY = PREFIX-Issue#
@@ -270,3 +276,69 @@ Title `[ABC-123] ...` (외부 project KEY) 에 PREFIX=CFP 인 repo 에서 발의
 ### Sunset justification
 
 ratchet 강화 (race-free guarantee 보존 + title pattern precedence 추가). 약화 방향 아님. ADR-058 §결정 5 정합.
+
+## Amendment 2 — Bracket-mandatory title KEY (CFP-2116, 2026-06-10)
+
+### 발견된 영역
+
+Amendment 1 §결정 1 의 regex `r'\[?([A-Z]+-\d+)\]?'` 가 대괄호를 **optional** 로 둬, title 본문의 bare reference (`CFP-2104 후속`) 도 reservation KEY 로 오추출하는 결손.
+
+**실제 사고 (CFP-2111, 2026-06-09)**: Story title = `[STORY] CFP-2104 후속 — self-test CI 가시성 ...`. story-init 가 KEY = `CFP-2104` 오추출 → 이미 존재하는 KEY 와 충돌 + existence_check HTTP 400 → 자동 scaffold 전면 실패(수동 우회).
+
+**판별 신호 실측**:
+
+| 개념 | title 출현 형태 | 예시 |
+|---|---|---|
+| **reservation** (예약 KEY) | `[CFP-NNNN]` 대괄호 필수 | `[STORY] [CFP-662] bootstrap-labels workflow 신설 ...` |
+| **reference** (참조 prior CFP) | `CFP-NNNN` bare (대괄호 없음) | `[STORY] CFP-2104 후속 — ...` |
+
+→ **단일 판별 신호 = 대괄호 형태** (위치 단독으로는 bare 선두 출현 시 구분 불충분).
+
+### 결정 1 — 대괄호 필수 regex (Amendment 1 §결정 1 supersede)
+
+`compute_key()` 순수 함수의 KEY 추출 regex 를 대괄호 **필수**로 정밀화:
+
+```python
+# Amendment 1 §결정 1 (historical — Amd 2 가 supersede):
+m = re.search(r'\[?([A-Z]+-\d+)\]?', title_clean)
+
+# Amendment 2 §결정 1 (현재 active):
+m = re.search(r'\[([A-Z]+-\d+)\]', title_clean)
+```
+
+**변경 축**: 대괄호 optional(`\[?`…`\]?`) → 필수(`\[`…`\]`). capture group `([A-Z]+-\d+)` (prefix-generalized) 는 불변.
+
+**2-layer 방어 보존**: regex 는 대괄호 형태만 검증 (layer-1) + prefix guard(`startswith`) 는 cross-project 차단 유지 (layer-2, ADR-036 Amd 1 §결정 2 불변). prefix-literal 미채택 근거 = prefix guard 가 살아있는 코드 경로로 남아야 AC-4 security fixture 실행.
+
+### 무회귀 논증
+
+신·구 regex 동작 차이는 **bare 토큰 입력에서만** 발생. 대괄호 존재 입력은 신·구 byte-identical 매치:
+
+| 입력 형태 | 구 regex 결과 | 신 regex 결과 | 무회귀? |
+|---|---|---|---|
+| `[CFP-662] ...` (reservation) | `CFP-662` | `CFP-662` | ✅ 동일 |
+| `[ABC-123] ...` (대괄호 + prefix MISMATCH) | `ABC-123` → fallback | `ABC-123` → fallback | ✅ 동일 |
+| `story-init KEY 계산 버그 ...` (토큰 부재) | no match → fallback | no match → fallback | ✅ 동일 |
+| `CFP-2104 후속 ...` (bare reference) | `CFP-2104` (오추출!) | no match → fallback | ✅ **버그만 정정** |
+
+reservation 정상 흐름(`cfp-reserve`→promote 가 항상 `[CFP-NNNN]` 대괄호 산출) 은 수학적으로 무회귀.
+
+### 결정 2 — `compute_key()` 순수 함수 추출 (testability)
+
+기존 `main()` 안 inline KEY 계산부를 `compute_key(title, prefix, issue_number) -> str` 순수 함수로 추출. `main()` 은 env read → `compute_key()` → slug 계산 → print. **3-line stdout 출력 계약(key/slug/title_clean) 불변** — workflow sed 파싱 무손상.
+
+### 결정 3 — `--self-test` fixture F1-F8
+
+`argparse --self-test` + `run_self_test()` 인라인 fixture (sibling `check_adr_citation_slug.py` CFP-2104 패턴 복제). 8 fixture = AC-1~4 + E1/E2/E4 + P2-2 전수 커버. de-bloat 정합 (bats 신규 0, ADR-061 .py SSOT).
+
+CI wire: `adr-citation-slug.yml` 선례대로 적정 워크플로에 `--self-test` step 추가.
+
+### 영향
+
+- **consumer 영향 0** — PREFIX-agnostic generalized capture 유지, env 계약 불변
+- `.github/workflows/story-init.yml` + `templates/github-workflows/story-init.yml` **무변경** (`.py` 호출만)
+- going-forward ratchet 강화 (reference 차단 추가). 기존 misaligned KEY 遡及 적용 금지 (Amd 1 §결정 6 동일)
+
+### Sunset justification
+
+ratchet 강화 (reference 차단 추가 + race-free/prefix-guard/title-precedence 보존). 약화 방향 아님. ADR-058 §결정 5 정합. `is_transitional: false`.
