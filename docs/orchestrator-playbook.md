@@ -698,6 +698,16 @@ Epic 묶음 완료 (모든 Story merged): Orchestrator → DeployPLAgent 자동 
 설계:        Orchestrator → ArchitectPLAgent → (CodebaseMapper ∥ Refactor ∥ SecurityArchitect ∥ TestContractArch ∥ ModuleArchitect 병렬) → ArchitectAgent (chief author) 통합 → ArchitectPLAgent 검수 → Change Plan 확정
                          → ArchitectAgent direct write (docs/change-plans/<slug>.md + docs/adr/ADR-NNN-<slug>.md) + ArchitectAgent 가 Story file §3/§7/§11 직접 self-write (codeforge-design self-write 표)
 설계 리뷰:   Orchestrator → DesignReviewPLAgent (lane=design packet 작성) → packet return (no writes — CFP-61 / ADR-022)
+             **[D2-A CFP-2111] pr_phase 판정 + 주입 절차 (ReviewPL packet 작성 전 선행)**:
+             Orchestrator 가 ReviewPL 에 packet 작성 의뢰 시, PR 의 `pr_phase` 를 결정론적으로 판정해 packet 에 주입한다.
+             - **판정 방법 (primary — 결정론적)**: PR 변경 파일 전체를 아래 repo-specific 정밀 docs allowlist 와 비교.
+               - **internal-docs repo**: `wrapper/stories/**` · `wrapper/change-plans/**` · `wrapper/domain-knowledge/**`
+               - **wrapper repo**: `docs/stories/**` · `docs/change-plans/**` · `docs/domain-knowledge/**` · `archive/adr/**`
+               - 변경 파일 전체가 allowlist 한정이고 구현 코드 0 → `pr_phase: phase1_docs`
+               - allowlist 외 경로 1건이라도 포함 → `pr_phase: phase2_impl` (보수 default)
+               - **bare `*.md` catch-all 금지**: `agents/**` · `templates/**` · `scripts/**` · `.github/**` 등 구현 산출물 .md 를 phase1_docs 로 역방향 오판 방지.
+             - **보조 cross-check**: Story phase 라벨 (`phase:요구사항`/`phase:설계` = Phase 1, `phase:구현` 이후 = Phase 2). 파일 패턴과 불일치 시 파일 패턴 우선.
+             - 판정 결과를 packet 의 `pr_phase` optional 필드에 주입 (`review_packet` schema v1.1 — `plugin-codeforge-review:templates/review-pl-base.md §2`).
              **review-verdict 5-step algorithm (CFP-61 / ADR-022 §결정 3)**:
              1. ReviewPL spawn → workers (ClaudeReviewAgent ∥ CodexReviewAgent 병렬) → dedup → review-verdict-v3 packet 작성 (no writes)
                 ├── findings + pl_recommendation 작성
@@ -732,6 +742,7 @@ Epic 묶음 완료 (모든 Story merged): Orchestrator → DeployPLAgent 자동 
                          → Orchestrator가 ArchitectPLAgent stateless 재스폰 → 매핑표 감사 (chief author 보조)
                          → §8.5 commit 시 subissue-from-impl-manifest.yml 자동 sub-issue 생성
 구현 리뷰:   Orchestrator → CodeReviewPLAgent (lane=code packet 작성) → packet return (no writes — CFP-61 / ADR-022)
+             **[D2-A CFP-2111] pr_phase 판정·주입**: 위 설계-리뷰 §D2-A 절차 동일 적용 (PR 변경 파일 패턴 → `pr_phase: phase2_impl` 보수 default).
              → Orchestrator가 한 메시지에 (ClaudeReviewAgent ∥ CodexReviewAgent) dispatch → PL 종합 → PASS/FIX (R3, R2)
              → PASS/FIX 결정: review-verdict 5-step algorithm 적용 (위 설계-리뷰 동일 흐름, lane=code, [구현-리뷰] prefix)
                          FIX 시 mechanical_category 자격 확인 → fast-path 또는 정상 cycle (R11)
@@ -742,6 +753,7 @@ Epic 묶음 완료 (모든 Story merged): Orchestrator → DeployPLAgent 자동 
                          → FAIL: `gh run view --log-failed` 수집 → FIX loop (DeveloperPL 1차 진단 → ArchitectPL 최종 판정)
 통합 테스트: (Epic 하위 전체 Story CI gate PASS 후 1회 실행 — **상세: §3.11**)
 보안 테스트: Orchestrator → SecurityTestPLAgent (lanes.security_ai: true 시만, lane=security packet 작성, 1차 layer cache hit/miss 확인)
+             **[D2-A CFP-2111] pr_phase 판정·주입**: 위 설계-리뷰 §D2-A 절차 동일 적용.
              1차 layer: .claude-work/cache/<KEY>-sec1.json hit 시 inline 첨부 (R10) / miss 시 PL이 직접 fetch
              2차 layer: PL이 packet return → Orchestrator가 한 메시지에 (ClaudeReviewAgent ∥ CodexReviewAgent) dispatch → PL 종합 → PASS/FIX (R3, R2)
                          → PASS/FIX 결정: review-verdict 5-step algorithm 적용 (위 설계-리뷰 동일 흐름, lane=security)

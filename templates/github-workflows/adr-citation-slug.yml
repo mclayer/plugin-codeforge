@@ -49,7 +49,6 @@ jobs:
 
       - name: Run self-test (D3 — inline fixture, CFP-2104 §7.4)
         run: bash scripts/check-adr-citation-slug.sh --self-test
-        continue-on-error: true
 
       - name: Run ADR citation slug lint
         id: lint
