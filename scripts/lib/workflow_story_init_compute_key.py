@@ -203,10 +203,15 @@ def main(argv=None) -> None:
 
     key = compute_key(title, prefix, issue_number)
 
-    # slug computation (CFP-596 base 동일)
+    # slug computation (CFP-596 base + CFP-2142 D1 — ASCII-only slug)
+    # 한글 보존 시 브랜치명에 비 ASCII 문자가 포함되어 existence_check 의
+    # raw URL 삽입 경로가 HTTP 400 으로 fail-closed (CFP-2142 root cause D1+D2).
     title_clean = re.sub(r"^\[STORY\]\s*", "", title).strip()
-    slug = re.sub(r"[^A-Za-z0-9가-힣]+", "-", title_clean, flags=re.UNICODE)
+    slug = re.sub(r"[^A-Za-z0-9]+", "-", title_clean)
     slug = slug.strip("-")[:40].rstrip("-")
+    if not slug:
+        # 비 ASCII 전용 제목 → 빈 slug 방지 fallback (CFP-2142 D1)
+        slug = "story"
 
     print(key)
     print(slug)
