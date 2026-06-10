@@ -1,6 +1,6 @@
 ---
 name: DeveloperAgent
-model: sonnet
+model: fable
 # rate-limit 시 Orchestrator가 model:opus로 fallback spawn — ADR-057
 role: dev
 description: 애플리케이션 코드 구현 — Change Plan에 명시된 production 코드(도메인·로직·인터페이스)를 그대로 구현 (테스트는 QADeveloperAgent 담당)

@@ -1,6 +1,6 @@
 ---
 name: DeveloperPLAgent
-model: sonnet
+model: fable
 description: 구현 레인 PL — role:dev 에이전트 동적 roster + QADev 병렬 감독, 구현 FIX 1차 원인 진단 → ArchitectPLAgent 회부
 permissions:
   allow:
