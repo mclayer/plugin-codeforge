@@ -138,53 +138,27 @@ ArchitectAgent self-lint 결격 RETURN 수령 시 → 본 PL이 해당 SubAgent 
 PASS → Orchestrator에 DesignReview lane 진입 요청.
 RETURN → ArchitectAgent 재스폰 의뢰 (clarification context + 누락 항목).
 
-### Phase 3.5: verdict packet 작성
+### Phase 3.5: verdict packet 작성 — self-check boolean field forward
 
-본 PL이 검수 PASS 후 review-verdict-v4 packet 작성 시 다음 필드 의무 (design lane):
+본 PL이 검수 PASS 후 verdict packet 작성 시, ArchitectAgent self-check 결과를 다음 boolean field 로 forward. **셋 모두 true 일 때만 Phase 1 commit 진행. 1+ false 시 FIX 의무.**
 
-- `mechanical_self_check_passed: <bool>` — ArchitectAgent §5.5 Phase 1 commit-time 7-item mechanical sync self-check 결과 forward
-  - `true` = ArchitectAgent 가 모두 PASS 또는 NA 보고
-  - `false` = 즉시 `pl_recommendation: FIX` + `findings[]` 에 mechanical 누락 항목 each row append (severity P1, category `mechanical_sync_required`) + ArchitectAgent re-spawn 명령
-- **`architecture_doc_updated: <bool>`** (design-output-v2 v2.4 MINOR)
-  - `true` = ArchitectAgent 가 architecture doc 4 영역 (modules/boundaries/interfaces/data_flow) 중 1+ 갱신 완료 보고
-  - `false` = ArchitectAgent 가 Change Plan §10.A `architecture_doc_impact` all false + `none_rationale` declare (skip 정당화)
-  - 누락 / 모순 (Change Plan §3/§5/§11 변경 ↔ §10.A `none` declare mismatch) = 즉시 `pl_recommendation: FIX` + `findings[]` 에 architecture-doc-gap row append + ArchitectAgent re-spawn 명령
+| field | 출처 | true 조건 | false 시 findings[] row |
+|---|---|---|---|
+| `mechanical_self_check_passed` | ArchitectAgent §5.5 7-item mechanical sync | 모두 PASS 또는 NA | category `mechanical_sync_required` (P1) |
+| `boundary_completeness_self_check_passed` | I-1~I-4 boundary | 4 invariant 충족 | type `boundary-completeness` |
+| `dimensional_empirical_self_check_passed` | dimensional empirical | 추정값 lock-in 0 | category `dimensional_empirical_gap`, type `dimensional-empirical-gap` (P1) |
+| `architecture_doc_updated` | architecture doc 4 영역(modules/boundaries/interfaces/data_flow) | 1+ 갱신 또는 §10.A `none_rationale` declare | architecture-doc-gap row (§3/§5/§11 변경 ↔ §10.A `none` declare mismatch 시) |
 
-**FIX 처리 절차** (`mechanical_self_check_passed: false`):
+**공통 FIX 처리 절차** (any field false):
 
-1. 본 PL 이 verdict packet 의 `pl_recommendation: FIX` + findings[] populate
-2. Orchestrator 에 packet return (Story §10 FIX Ledger row append 의무 — Orchestrator monopoly, fix-event-v1 contract)
-3. ArchitectAgent re-spawn 의뢰 (clarification context = 누락 mechanical sync 항목 list)
-4. ArchitectAgent 가 누락 항목 보완 + §5.5 self-check 재실행 → 본 PL 에 RETURN
-5. 본 PL 이 검수 + packet re-author (`mechanical_self_check_passed: true` 가능 시 PASS)
+1. 본 PL 이 packet `pl_recommendation: FIX` + findings[] populate
+2. Orchestrator 에 packet return (Story §10 FIX Ledger row append — Orchestrator monopoly, fix-event-v1 contract)
+3. ArchitectAgent re-spawn 의뢰 (clarification context = 누락 항목 list)
+4. ArchitectAgent 가 보완 + 해당 self-check 재실행 → 본 PL 에 RETURN
+5. 본 PL 이 검수 + packet re-author (true 가능 시 PASS)
 
 **적용 lane**: design lane 필수. 다른 lane (code/security) = 본 PL 영역 외 (omit 허용).
-
-**marketplace 영역 분리**: 본 필드 scope = non-marketplace 영역만. marketplace mirrored field atomic invariant 검증은 별도 lint 채널 (`check-version-bump-atomic.sh`).
-
-### Phase 3.6: Dimensional empirical grounding cross-validate
-
-ArchitectAgent §3/§7 self-check 결과 `dimensional_empirical_self_check_passed: bool` 수령 후 verdict packet (review-verdict-v4 v4.4) 에 forward.
-
-- **true 수신 시**: 정상 Phase 1 commit 진행
-- **false 수신 시**: `pl_recommendation: FIX` + `findings[]` 에 dimensional-empirical-gap row append (severity P1, category `dimensional_empirical_gap`, type `"dimensional-empirical-gap"`) → ArchitectAgent re-spawn
-
-verdict packet 셋 별도 boolean field 동시 emit 의무 (review-verdict-v4 v4.4 schema):
-- `mechanical_self_check_passed: bool` (ADR-065 syntactic 7-item)
-- `boundary_completeness_self_check_passed: bool` (ADR-068 I-1~I-4)
-- `dimensional_empirical_self_check_passed: bool` (ADR-068 I-5)
-
-셋 모두 true 일 때만 Phase 1 commit 진행. 1+ false 시 FIX 의무.
-
-**FIX 처리 절차** (`dimensional_empirical_self_check_passed: false`):
-
-1. 본 PL 이 verdict packet 의 `pl_recommendation: FIX` + findings[] populate (dimensional-empirical-gap row each)
-2. Orchestrator 에 packet return (Story §10 FIX Ledger row append 의무 — Orchestrator monopoly, fix-event-v1 contract)
-3. ArchitectAgent re-spawn 의뢰 (clarification context = 누락 dimensional empirical annotation 항목 list)
-4. ArchitectAgent 가 누락 항목 보완 + §5.6.1 self-check 재실행 → 본 PL 에 RETURN
-5. 본 PL 이 검수 + packet re-author (`dimensional_empirical_self_check_passed: true` 가능 시 PASS)
-
-**marketplace 영역 분리**: 본 필드 scope = non-marketplace 영역만. invariant 정의 SSOT: `docs/adr/ADR-068-boundary-completeness-invariants.md`.
+**marketplace 영역 분리**: 본 field scope = non-marketplace 영역만. marketplace mirrored field atomic invariant = 별도 lint 채널 (`check-version-bump-atomic.sh`). boundary/dimensional invariant SSOT = `docs/adr/ADR-068-boundary-completeness-invariants.md`.
 
 ## Clarification 재스폰 trigger
 
@@ -246,38 +220,11 @@ GitHub Issue·PR write는 Orchestrator 담당. 문서화 write 권한 없음.
 
 ---
 
-## Operating environment (ADR-044 phase-scoped sequential team)
+## Operating environment
 
-기존 본문 정책은 그대로 유효 — 본 단락은 환경 / 통신 채널 / re-entry 제약만 명시.
+**Role 분류**: PL agent (lane Lead). env=1 활성 시 본 PL 이 lane team Lead — TeamCreate → worker SendMessage 통신 → TeamDelete. env=0 fallback = Orchestrator 가 PL 하위 agent 를 직접 spawn one-shot.
 
-### Effective scope
-
-- ADR-044 (Phase-scoped sequential team SSOT) — `docs/adr/ADR-044-phase-scoped-sequential-team.md`
-- ADR-039 (Orchestrator subagent default) effective
-- ADR-038 (TodoWrite progress tracking) effective
-- ADR-040 (worktree convention) effective
-- review-verdict v4 = Active. v3 = Archived
-- ADR-022 (Sonnet decider) = Deprecated — Sonnet decider 자동 발동 무효, 사용자 explicit ad-hoc request 시에만 호출
-
-### Agent teams 패턴 (env=`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 활성 시)
-
-본 agent 는 env=1 활성 시 다음 패턴 사용 가능 (env=0 fallback = default subagent context, ADR-039 정합 — Agent tool spawn one-shot, SendMessage 미사용):
-
-- **TeamCreate / TeamDelete**: lane 진입 = TeamCreate / lane 종료 = TeamDelete / 다음 lane = 새 team (Phase-scoped sequential)
-- **SendMessage**: Lead ↔ Worker continuous dialog 채널 (env=1 only)
-- **Worktree path 주입**: agent prompt 내 `<worktree_path>` placeholder = Lead 가 SendMessage payload 에 작업 worktree 절대 경로 주입 의무
-- **Hook subscriptions**: TeammateIdle / TaskCreated / TaskCompleted (sample: `templates/agent-teams-hook-samples/`)
-- **Re-entry 제약 3종** (env=1 / env=0 모두 적용):
-  1. 재귀 spawn 금지 — 본 agent 가 자기 자신 또는 동일 lane 의 다른 agent 를 추가 spawn 불가
-  2. Nested team 금지 — team-of-teams 불가
-  3. One-team-per-lead 강제 — 1 Lead = 1 active team
-
-### Lane-specific role notes
-
-- **PL agent (lane Lead)** — ArchitectPLAgent: env=1 활성 시 본 PL 이 lane team Lead. lane 진입 시 TeamCreate → worker SendMessage 통신 → lane 종료 시 TeamDelete. env=0 fallback = Orchestrator 가 PL 하위 agent 를 직접 spawn.
-- **Worker / Sub-agent / Deputy** — ArchitectAgent (chief author) / 6 permanent SubAgent + CONDITIONAL SubAgent: env=1 활성 시 lane PL 의 team teammate. SendMessage 수신 + Lead 에 응답. env=0 fallback = Orchestrator 직접 spawn one-shot.
-- **Cross-cutting agent** — PMOAgent: Story 진입과 독립적으로 spawn. env=0 = one-shot.
-
-### Codex worker dispatch
-
-본 plugin 의 agent 는 review lane (codeforge-review) 미소속 → Codex worker dispatch 발동 영역 외.
+**Re-entry 제약 3종** (env=1 / env=0 모두 적용):
+1. 재귀 spawn 금지 — 자기 자신 또는 동일 lane 의 다른 agent 추가 spawn 불가
+2. Nested team 금지 — team-of-teams 불가
+3. One-team-per-lead 강제 — 1 Lead = 1 active team

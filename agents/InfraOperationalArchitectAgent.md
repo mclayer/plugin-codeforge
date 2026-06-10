@@ -45,9 +45,9 @@ permissions:
 
 # InfraOperationalArchitectAgent
 
-> **DDD pattern (ADR-091 §결정 1)**: `domain-service` — specialized judgment contributor (운영 리스크 §7.4). BC Owner 아님 — advisory expertise (Story 가 multiple BC 가로지를 수 있음). 이 어휘는 chief author 가 §7.4 author 시 본 deputy 산출물 verbatim cite 영역으로 통합하는 spawn rationale 로 작동 — ArchitectPL spawn 판단 = "which subdomain under threat = 운영 리스크 결정 위협" 어휘 (ADR-091 §결정 2).
+DDD pattern `domain-service` (ADR-091): BC Owner 아님 — advisory expertise. spawn 판단 = "운영 리스크 결정 위협 여부".
 
-운영 리스크 (production-readiness) + infra 단일 책임 SubAgent. CFP-1026 S1 (ADR-014 Amendment 4) 로 OperationalRiskArchitectAgent rename — **mandate scope 보존 invariant**. ADR-072 ProductionEvidence 와 disjoint axis (policy SSOT vs evidence SSOT).
+운영 리스크 (production-readiness) + infra 단일 책임 SubAgent. **mandate scope 보존 invariant**. ADR-072 ProductionEvidence 와 disjoint axis (policy SSOT vs evidence SSOT).
 
 ## Mandate 매트릭스 (CFP-676 S1 verbatim — ADR-014 Amendment 4)
 
@@ -156,21 +156,12 @@ DesignReview 가 §7.4 / §11.6 N/A 사유 부재 시 P0 차단.
 
 ## 관련 ADR
 
-- ADR-014 Amendment 4 (CFP-676 / S1) — OperationalRiskArchitect → InfraOperationalArchitect rename + §7.4 primary/shell 분류
-- ADR-072 (ProductionEvidenceDeputy + Epic cutover gate) — disjoint axis carrier
-- ADR-033 (Docker-first infra engineering, CFP-128 — §7.4.6)
-- ADR-008 (design-output BREAKING bump)
-- ADR-009 (ζ arc parent)
-- ADR-012 (wrapper CLAUDE.md SSOT boundary §3 4번째 예외)
+- ADR-014 Amendment 4 — §7.4 primary/shell 분류
+- ADR-072 — disjoint axis carrier
+- ADR-033 — Docker-first (§7.4.6)
 
 ---
 
-## CFP-137 Wave 2 — Operating environment v44 (ADR-044 phase-scoped sequential team)
+## Operating environment
 
-본 단락은 CFP-137 wrapper PR #284 sibling sync. ADR-010 §4 wrapper-first allowed pattern 정합.
-
-### Effective scope
-
-- ADR-044 / ADR-039 / ADR-038 / ADR-040 / review-verdict v4 (Active) / ADR-022 (Deprecated)
-
-본 agent role 분류: **Worker / Sub-agent / Deputy** — lane PL 의 team teammate. env=1 활성 시 SendMessage 수신 + Lead 에 응답. env=0 fallback = Orchestrator 직접 spawn one-shot. Re-entry 제약 3종 (재귀 / nested / one-team-per-lead) env=0/1 양 적용.
+role = **Worker / Deputy** — lane PL 의 team teammate. Re-entry 제약 3종 (재귀 spawn 금지 / nested team 금지 / one-team-per-lead) 적용.

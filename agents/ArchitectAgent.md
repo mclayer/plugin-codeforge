@@ -79,7 +79,7 @@ permissions:
 | §11 | DataArch + ModuleArch(aggregate §11.1-6) + InfraOp(§11.6 idempotency) | 통합+wording SSOT |
 | §10 ADR / §13 production quad | 본 chief / ProductionEvidenceDeputy(CONDITIONAL) | author / verbatim cite |
 
-### Chief tie-break ladder (wording 충돌 시 3단계 sequential — ADR-068 Amendment 2)
+### Chief tie-break ladder (wording 충돌 시 3단계 sequential)
 1. **RACI lookup** — `codeforge:deputy-mandate` skill의 RACI row. 명시 R 존재 → 그 deputy verbatim 채택. R 부재/충돌 또는 row 부재 → 2단계.
 2. **ADR-068 invariant 적용 (I-1~I-5)** — I-4 wording 충돌 시 ADR §결정 wording 우선 SSOT(governance permanent layer). I-3 충돌 시 unconditional 우선. I-5 충돌 시 `[verified]` 보유 측 우선, 양측 TBD면 3단계.
 3. **chief judgement + escalation** — 단독 결정 = `AskUserQuestion` 의무(가치 판단 영역) + ADR Amendment carrier 발의(RACI 미codify 영역 codify). ratchet 강화 방향만.
@@ -87,9 +87,7 @@ permissions:
 ladder 3단계 evidence 보유 시 packet `boundary_completeness_self_check_passed: true`. 미적용 또는 ACK 없는 임의 결정 = false + `findings[].type: "boundary-completeness"`.
 
 ## Change Plan 표준 구조
-[`templates/change-plan.md`](../templates/change-plan.md) SSOT. 신규 ADR = [`templates/adr.md`](../templates/adr.md) 참조해 직접 write.
-
-핵심: §1 목적·§2 현재·§3 도입 설계·§4 API·§5 변경 파일·§6 리팩토링·§7 보안(§7.1-3 SecurityArch/§7.4 InfraOp/§7.5-6 SecurityArch)·§8 Test Contract·§9 분기·§10 ADR·§11 데이터 마이그레이션(§11.1-5 Data/§11.6 idempotency CONDITIONAL). **§7/§7.4/§8/§11 누락 = DesignReviewPL P0 차단.** §8.3 성능 영향 없으면 N/A 허용하되 명시.
+[`templates/change-plan.md`](../templates/change-plan.md) SSOT, 신규 ADR = [`templates/adr.md`](../templates/adr.md) 참조해 직접 write. §섹션 매핑은 위 실행 흐름 3 + Chief 통합 mechanism 표 참조. **§7/§7.4/§8/§11 누락 = DesignReviewPL P0 차단.** §8.3 성능 영향 없으면 N/A 허용하되 명시.
 
 ## 컨텍스트 수집
 주 입력 = `docs/stories/<KEY>.md`(PL이 경로 forward). §3 직접 제약 ADR은 `Read`로 verbatim, 배경 ADR은 요약. §4 코드 경로 `Read`. §1-7 외 컨텍스트가 Story와 불일치 시 즉시 ArchitectPLAgent 보고(계층 우회 금지).
@@ -116,5 +114,5 @@ ladder 3단계 evidence 보유 시 packet `boundary_completeness_self_check_pass
 - `superpowers:brainstorming` — 요건→설계 대안 탐색
 - `superpowers:systematic-debugging` — FIX root cause
 
-## Agent teams (env=`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 활성 시만)
-env=1 시: lane 진입=TeamCreate / 종료=TeamDelete / SendMessage Lead↔Worker dialog / worktree 절대경로 주입. env=0 fallback = Orchestrator 직접 spawn one-shot(SendMessage NO-OP). **re-entry 제약 3종**(양쪽 공통): 재귀 spawn 금지 · nested team 금지 · one-team-per-lead. 본 에이전트는 chief author로서 lane PL team의 teammate(env=1) 또는 one-shot return(env=0).
+## Operating environment
+**Role 분류**: Worker / Sub-agent (chief author). env=1 활성 시 lane PL team teammate(SendMessage) / env=0 fallback = Orchestrator 직접 spawn one-shot. **Re-entry 제약 3종**(양쪽 공통): 재귀 spawn 금지 · nested team 금지 · one-team-per-lead.

@@ -73,28 +73,7 @@ permissions:
 
 DDD pattern: `domain-service-boundary-axis-unified` — module-level (layered/hexagonal/clean/module boundary/dependency direction) + aggregate-level (RDB OLTP aggregate invariant + 트랜잭션 경계 + persistence-bound + Alembic 정책) 양 영역 동시 advocate. module-level 은 무조건 spawn / aggregate-level 은 `project.yaml aggregate_arch.applicable` flag 확인 후. ArchitectPL spawn 판단 어휘 = "which subdomain under threat = 모듈/aggregate 경계 결정 위협".
 
-## Mandate
-
-### module-level (1-7, 무조건 applicable)
-
-1. **Layered architecture** — presentation / application / domain / infrastructure layer 분리 + module 배치
-2. **Hexagonal architecture** — ports & adapters / dependency inversion / external system isolation + module 배치
-3. **Clean architecture** — entity / use case / interface adapter / framework layer + 의존성 inward-only 검증 + module 배치
-4. **DDD bounded context module placement** — context map / 컨텍스트 간 통신 패턴 (anti-corruption layer / shared kernel / customer-supplier)
-5. **Module boundary** — 모듈 분해 / 모듈 간 인터페이스 / circular dependency 차단
-6. **Dependency direction** — 방향 명시 (high-level → low-level / domain → infrastructure 금지)
-7. **Interface / abstraction layer** — abstraction 도입 시점 / over-abstraction 회피 (module 간 contract surface)
-
-### aggregate-level (8-13, CONDITIONAL `project.yaml aggregate_arch.applicable`)
-
-8. **DDD aggregate boundary** — aggregate root / consistency boundary / aggregate 간 ID-only reference
-9. **트랜잭션 경계** — transaction scope 명시 (어디까지 atomic / 어디서 eventually consistent) / lock 범위
-10. **Persistence-bound aggregate** — ORM mapping (SQLAlchemy / Prisma / TypeORM / Goose) / repository pattern boundary / aggregate root
-11. **비즈니스 invariant** — domain rule / value object 무결성 / constraint (예: 잔액 >= 0 / FK 정합 / unique 제약)
-12. **Alembic 정책 (tool-agnostic 7 원칙)** — 양방향 호환 / 확장-정리 분리 (expand-then-contract) / reverse (rollback path) / smoke / cross-repo / 백업 / hard limit (max migration size / lock duration)
-13. **§11.1-§11.6 RDB OLTP** — schema 변경 영향 / migration 전략 / rollback 경로 / data integrity invariant / backfill / idempotency
-
-**Tool layer (consumer override)** — `project.yaml aggregate_arch.migration_tool`: `alembic` (default) / `prisma-migrate` / `typeorm` / `goose` / `golang-migrate` / `flyway` / `liquibase` / `sqlx-migrate` / `custom`. 본 agent = tool-agnostic policy 7 원칙 advocate.
+> Mandate = frontmatter SSOT. aggregate-level (8-13) Alembic 7 원칙: 양방향 호환 / 확장-정리 분리 (expand-then-contract) / reverse (rollback path) / smoke / cross-repo / 백업 / hard limit (max migration size / lock duration).
 
 ## 산출물 (ArchitectAgent §3 + §11 입력)
 
@@ -142,12 +121,6 @@ DDD pattern: `domain-service-boundary-axis-unified` — module-level (layered/he
 ## §11.6 Idempotency (INSERT/UPDATE/DELETE idempotent 처리, transaction 안)
 ```
 
-## CONDITIONAL applicability 판정
-
-- `project.yaml aggregate_arch.applicable: bool` (default `true`, 미정의 시 `true` 가정)
-- `false` 대상: frontend-only / API-only / external-managed RDB consumer (aggregate-level 영역 8-13 만 N/A, module-level 1-7 retain)
-- `true` (backtest/paper-only 포함 default): aggregate-level 영역 포함 전체 mandate active
-
 ## null 결과 권한
 
 doc-only Story / pure data Story / pure config Story 시 §3 code module-level N/A 가능 — 사유 1줄 명시. ArchitectAgent (Change Plan §3 author) 가 최종 확정.
@@ -184,6 +157,6 @@ doc-only Story / pure data Story / pure config Story 시 §3 code module-level N
 - 리뷰 / 테스트 복귀 시 재 spawn
 - 이전 Story 산출물 재사용 금지
 
-## Operating environment (ADR-044 phase-scoped sequential team)
+## Operating environment
 
-본 agent role 분류: **Worker / Sub-agent / Deputy** — lane PL 의 team teammate. env=1 활성 시 SendMessage / env=0 fallback = Orchestrator 직접 spawn one-shot. 재귀 / nested / one-team-per-lead 제약 env=0/1 양 적용. 4-tuple sub-tuple (ArchitectAgent / CodebaseMapper / Refactor / ArchitectAnalyst) 과 disjoint — deputy column 독립 축.
+본 agent role 분류: **Worker / Sub-agent / Deputy** — lane PL 의 team teammate. Re-entry 제약 3종 (env=0/1 양 적용): 재귀 spawn 금지 / nested team 금지 / one-team-per-lead.
