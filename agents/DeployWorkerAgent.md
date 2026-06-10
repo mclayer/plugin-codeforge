@@ -35,7 +35,7 @@ permissions:
 
 ## 라이프사이클 (stateless 재스폰)
 
-매 배포 trigger 마다 repo 별 신규 스폰. 세션 유지 없음. repo 의 deploy config + 현재 컨테이너 상태 재로딩.
+매 배포 trigger 마다 repo 별 신규 스폰 (세션 유지 없음). repo 의 deploy config + 현재 컨테이너 상태 재로딩.
 
 ## Mandate
 
@@ -137,12 +137,8 @@ worker_result:
 
 ---
 
-## CFP-137 Wave 2 — Operating environment v44 (ADR-044 phase-scoped sequential team)
+## Operating environment v44 (ADR-044 phase-scoped sequential team)
 
-본 단락은 CFP-137 sibling sync. ADR-010 §4 wrapper-first allowed pattern 정합.
+Effective scope: ADR-044 / ADR-039 / ADR-038 / ADR-040 / review-verdict v4 (Active) / ADR-022 (Deprecated).
 
-### Effective scope
-
-- ADR-044 / ADR-039 / ADR-038 / ADR-040 / review-verdict v4 (Active) / ADR-022 (Deprecated)
-
-본 agent role 분류: **Worker** — DeployPLAgent 의 team teammate. env=1 활성 시 SendMessage 수신 + Lead 에 응답. env=0 fallback = Orchestrator 직접 spawn 의 one-shot return path. Re-entry 제약 3종 (재귀 spawn 금지 / nested team 금지 / one-team-per-lead) env=0/1 양 적용.
+본 agent role = **Worker** (DeployPLAgent 의 team teammate). env=1 활성 시 SendMessage 수신 + Lead 에 응답. env=0 fallback = Orchestrator 직접 spawn 의 one-shot return path. Re-entry 제약 3종 (재귀 spawn 금지 / nested team 금지 / one-team-per-lead) env=0/1 양 적용.

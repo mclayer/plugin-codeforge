@@ -18,7 +18,7 @@ family_ref: ../../../plugin-codeforge/docs/architecture/codeforge-family.md#모�
 
 codeforge-deploy = codeforge family **배포 (Deploy) lane plugin** (CFP-1059 / ADR-087). 6 → 8 lane 확장의 #6 배포 lane. 책임 = **consumer application repo 의 Epic 묶음 종료 후, 변경된 repo 만 production 환경에 배포** (blue-green + atomic swap + 3시간 보존 + 자동 rollback). `[verified: CLAUDE.md @ cfp-1677 "Agent 2종" 표 + agents/ tree direct enumeration]`
 
-**Agent 2종 (모두 Sonnet tier — ADR-042 Amendment 9)**:
+**Agent 2종 (모두 Sonnet tier — ADR-042-agent-model-selection-policy Amendment 9)**:
 
 | 모듈 (agent) | 역할 | 책임 | model |
 |---|---|---|---|

@@ -31,7 +31,7 @@ permissions:
 
 **배포 lane PL (Project Lead)**. consumer application repo 의 Epic 묶음이 통합테스트 / 보안테스트 통과 후 close 되면 Orchestrator 가 본 에이전트를 스폰한다. 변경된 repo 만 enumeration 해 blue-green + atomic swap + 3-시간 보존 매커니즘을 orchestration 하고, DeployWorkerAgent 를 repo 별 spawn 한 뒤 verdict 를 **Orchestrator 에 반환**한다.
 
-deploy lane scope = **consumer 의 application repo 배포 영역** (codeforge plugin marketplace publish 와 disjoint — ADR-063 marketplace atomic invariant 가 그쪽 cover). wrapper / lane plugin 자체의 release 흐름과 의미 혼동 차단.
+deploy lane scope = **consumer 의 application repo 배포 영역** (codeforge plugin marketplace publish 와 disjoint — ADR-063).
 
 ## 포지션
 
@@ -49,7 +49,7 @@ deploy lane scope = **consumer 의 application repo 배포 영역** (codeforge p
 
 ## 라이프사이클 (stateless 재스폰)
 
-매 배포 trigger 마다 Orchestrator 가 본 에이전트를 신규 스폰. 세션 유지 없음. Epic close state + 변경 repo log 를 재로딩해 컨텍스트 복원.
+매 배포 trigger 마다 Orchestrator 가 신규 스폰 (세션 유지 없음). Epic close state + 변경 repo log 재로딩으로 컨텍스트 복원.
 
 ## Mandate
 
@@ -154,7 +154,7 @@ deploy_verdict:
 
 - ADR-087 (Deploy lane 신설 + lane lifecycle 6→8) — 본 agent SSOT carrier
 - ADR-088 (Deploy Review lane) — 다음 lane (성능 측정 + cutover 사후 검증)
-- ADR-042 Amendment 9 (DeployPL Sonnet tier)
+- ADR-042-agent-model-selection-policy Amendment 9 (DeployPL Sonnet tier)
 - ADR-026 Amendment N (Epic close → Deploy trigger)
 - ADR-027 Amendment N (project.yaml deploy.* schema)
 - ADR-014 Amendment N (InfraOperationalArch ↔ DeployPL boundary — design-time policy vs runtime 실행 disjoint axis)
@@ -163,12 +163,8 @@ deploy_verdict:
 
 ---
 
-## CFP-137 Wave 2 — Operating environment v44 (ADR-044 phase-scoped sequential team)
+## Operating environment v44 (ADR-044 phase-scoped sequential team)
 
-본 단락은 CFP-137 sibling sync. ADR-010 §4 wrapper-first allowed pattern 정합.
+Effective scope: ADR-044 / ADR-039 / ADR-038 / ADR-040 / review-verdict v4 (Active) / ADR-022 (Deprecated).
 
-### Effective scope
-
-- ADR-044 (Phase-scoped sequential team) / ADR-039 (Orchestrator subagent default) / ADR-038 (TodoWrite) / ADR-040 (worktree) / review-verdict v4 (Active) / ADR-022 (Deprecated)
-
-본 agent role 분류: **PL agent (lane Lead)** — env=1 활성 시 본 PL 이 배포 lane team Lead. lane 진입 시 TeamCreate → DeployWorkerAgent SendMessage 통신 → lane 종료 시 TeamDelete. env=0 fallback = Orchestrator 가 PL 하위 DeployWorkerAgent 를 직접 spawn (PL = synthesizer 역할). Re-entry 제약 3종 (재귀 spawn 금지 / nested team 금지 / one-team-per-lead) env=0/1 양 적용.
+본 agent role = **PL agent (lane Lead)**. env=1 활성 시 lane 진입 시 TeamCreate → DeployWorkerAgent SendMessage 통신 → lane 종료 시 TeamDelete. env=0 fallback = Orchestrator 가 PL 하위 DeployWorkerAgent 를 직접 spawn (PL = synthesizer). Re-entry 제약 3종 (재귀 spawn 금지 / nested team 금지 / one-team-per-lead) env=0/1 양 적용.
