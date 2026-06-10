@@ -1,6 +1,7 @@
 name: ADR citation slug lint (warning mode)
 # CFP-2057 / ADR-060 — ADR 인용 번호 ↔ slug 정합 mechanical lint (2-layer)
 # L1: slug-existence / L2: deny-list (ALLOWED_HUB_REPOS 맥락 ADR-057 오인용 차단)
+# CFP-2104 — D1 deny-우선 전역(anchor-resolution) + D2 rule-identity + D3 --self-test step
 # Tier: warning (continue-on-error, non-required check)
 # Bypass channel: hotfix-bypass:adr-citation-slug (ADR-024 §결정 6.A per-entry namespace)
 #
@@ -45,6 +46,10 @@ jobs:
 
       - name: Install dependencies
         run: pip install pyyaml
+
+      - name: Run self-test (D3 — inline fixture, CFP-2104 §7.4)
+        run: bash scripts/check-adr-citation-slug.sh --self-test
+        continue-on-error: true
 
       - name: Run ADR citation slug lint
         id: lint
