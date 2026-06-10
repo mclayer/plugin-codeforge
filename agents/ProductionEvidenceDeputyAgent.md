@@ -46,7 +46,7 @@ permissions:
 
 # ProductionEvidenceDeputyAgent
 
-Production cutover evidence 단일 책임 SubAgent. **CFP-1059 Story-3 (ADR-088 §결정 4 + ADR-72 Amendment 4) 로 ownership 이관** — codeforge-design lane CONDITIONAL deputy → **codeforge-deploy-review lane 정식 deputy**. mandate body 는 ADR-72 §결정 1-7 verbatim 유지 (이관은 ownership / parent_pl / ssot_position 만 변경, 책임 영역 불변). InfraOperationalArchitectAgent 와 **disjoint axis** (policy SSOT vs evidence SSOT).
+Production cutover evidence 단일 책임 SubAgent. **CFP-1059 Story-3 (ADR-088 §결정 4 + ADR-72 Amendment 4) 로 ownership 이관** — codeforge-design lane CONDITIONAL deputy → **codeforge-deploy-review lane 정식 deputy**. mandate body = ADR-72 §결정 1-7 verbatim 유지 (이관은 ownership / parent_pl / ssot_position 만 변경, 책임 영역 불변). InfraOperationalArchitectAgent 와 **disjoint axis** (policy SSOT vs evidence SSOT).
 
 ## Ownership 이관 (CFP-1059 Story-3 — ADR-088 §결정 4)
 
@@ -153,7 +153,7 @@ wrapper-self-app Story (ADR-005 plugin-meta-na, ADR-72 §결정 6) — 본 agent
 - ADR-088 §결정 4 (Deploy Review lane + ProductionEvidenceDeputy ownership 이관) — 본 이관 SSOT carrier
 - ADR-72 (ProductionEvidenceDeputy + Epic cutover gate) — 본 agent mandate body SSOT (이관 후에도 유지)
 - ADR-014 Amendment 4 (policy SSOT vs evidence SSOT disjoint axis)
-- ADR-042 Amendment 9 (CFP-1059 design lane → deploy-review lane agent 재배치)
+- ADR-042-agent-model-selection-policy Amendment 9 (CFP-1059 design lane → deploy-review lane agent 재배치)
 - ADR-005 (plugin-meta-na — wrapper-self-app N/A)
 - ADR-063 Amendment 5 §결정 15 — family atomic canary pin (publisher_versions[] length_invariant)
 - reconcile-protocol-v1 §4.14 canary_compatibility_check_binding
@@ -162,10 +162,6 @@ wrapper-self-app Story (ADR-005 plugin-meta-na, ADR-72 §결정 6) — 본 agent
 
 ## CFP-137 Wave 2 — Operating environment v44 (ADR-044 phase-scoped sequential team)
 
-본 단락은 CFP-137 sibling sync. ADR-010 §4 wrapper-first allowed pattern 정합.
+Effective scope: ADR-044 / ADR-039 / ADR-038 / ADR-040 / review-verdict v4 (Active) / ADR-022 (Deprecated).
 
-### Effective scope
-
-- ADR-044 / ADR-039 / ADR-038 / ADR-040 / review-verdict v4 (Active) / ADR-022 (Deprecated)
-
-본 agent role 분류: **Worker / Sub-agent / Deputy (CONDITIONAL)** — DeployReviewPLAgent 의 team teammate. env=1 활성 시 SendMessage / env=0 fallback = Orchestrator 직접 spawn one-shot. Re-entry 제약 3종 (재귀 / nested / one-team-per-lead) env=0/1 양 적용. CONDITIONAL trigger 충족 시만 spawn.
+role 분류: **Worker / Sub-agent / Deputy (CONDITIONAL)** — DeployReviewPLAgent team teammate. env=1 시 SendMessage / env=0 fallback = Orchestrator 직접 spawn one-shot. Re-entry 제약 3종 (재귀 / nested / one-team-per-lead) env=0/1 양 적용. CONDITIONAL trigger 충족 시만 spawn.

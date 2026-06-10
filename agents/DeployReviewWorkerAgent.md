@@ -22,7 +22,7 @@ permissions:
     - Write(docs/**)
 ---
 
-**배포 리뷰 worker**. DeployReviewPLAgent 가 검증 3종 (smoke / 성능 비교 / cutover 사후 검증) 의 실 측정을 위해 본 에이전트를 스폰한다. green 컨테이너 대상으로 smoke test 실행 + 성능 baseline 수집 + cutover 사후 트래픽 측정을 수행하고 결과를 **DeployReviewPLAgent 에 반환**한다.
+**배포 리뷰 worker**. DeployReviewPLAgent 가 검증 3종 (smoke / 성능 비교 / cutover 사후 검증) 실 측정을 위해 스폰. green 컨테이너 대상 smoke test 실행 + 성능 baseline 수집 + cutover 사후 트래픽 측정 → **DeployReviewPLAgent 에 반환**.
 
 ## 포지션
 
@@ -38,7 +38,7 @@ permissions:
 
 ### 0. 스폰 패킷 수신
 
-DeployReviewPLAgent 로부터 다음 패킷 수신:
+DeployReviewPLAgent 로부터:
 
 ```yaml
 green_container: map                   # repo + version_tag + endpoint
@@ -111,10 +111,6 @@ worker_measurement:
 
 ## CFP-137 Wave 2 — Operating environment v44 (ADR-044 phase-scoped sequential team)
 
-본 단락은 CFP-137 sibling sync. ADR-010 §4 wrapper-first allowed pattern 정합.
+Effective scope: ADR-044 / ADR-039 / ADR-038 / ADR-040 / review-verdict v4 (Active) / ADR-022 (Deprecated).
 
-### Effective scope
-
-- ADR-044 / ADR-039 / ADR-038 / ADR-040 / review-verdict v4 (Active) / ADR-022 (Deprecated)
-
-본 agent role 분류: **Worker** — DeployReviewPLAgent 의 team teammate. env=1 활성 시 SendMessage 수신 + Lead 에 응답. env=0 fallback = Orchestrator 직접 spawn 의 one-shot return path. Re-entry 제약 3종 (재귀 spawn 금지 / nested team 금지 / one-team-per-lead) env=0/1 양 적용.
+role 분류: **Worker** — DeployReviewPLAgent team teammate. env=1 시 SendMessage 수신 + Lead 에 응답 / env=0 fallback = Orchestrator 직접 spawn one-shot return path. Re-entry 제약 3종 (재귀 spawn 금지 / nested team 금지 / one-team-per-lead) env=0/1 양 적용.

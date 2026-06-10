@@ -8,9 +8,9 @@
 
 `codeforge-deploy-review` = codeforge family **배포 리뷰 (Deploy Review) lane plugin** (CFP-1059 / [ADR-088](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md)). codeforge 6 → 8 lane 확장의 #7 배포 리뷰 lane. **production 환경 성능 측정을 1st-class 검증 phase 로 격상**.
 
-본 plugin 은 **codeforge core (wrapper) 의존** — 단독 동작 불가. codeforge wrapper 의 Orchestrator 가 DeployReviewPLAgent 를 스폰하고 verdict 를 수령. SessionStart hook 이 codeforge core 설치 여부 verify.
+본 plugin 은 **codeforge core (wrapper) 의존** — 단독 동작 불가. wrapper Orchestrator 가 DeployReviewPLAgent 스폰 + verdict 수령. SessionStart hook 이 codeforge core 설치 verify.
 
-본 lane scope = **"한 번 끝나는 검증" 만** (smoke / 성능 비교 / cutover 사후 검증). 운영 phase (canary promote / rollback 신호 회수 / regression 감지 / channel drift / cutover monitoring 30일 / smoke ongoing 등 continuous monitoring) 와 disjoint — 운영 phase = 별 Epic carrier.
+본 lane scope = **"한 번 끝나는 검증" 만** (smoke / 성능 비교 / cutover 사후 검증). 운영 phase (continuous monitoring — canary promote / rollback 신호 회수 / regression 감지 / channel drift / cutover monitoring 30일 / smoke ongoing) 와 disjoint — 운영 phase = 별 Epic carrier.
 
 ## Agent 2종 + 1 deputy
 

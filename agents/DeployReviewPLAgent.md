@@ -29,9 +29,9 @@ permissions:
     - Write(docs/change-plans/**)
 ---
 
-**배포 리뷰 lane PL (Project Lead)**. 배포 lane (DeployPLAgent) 이 green 컨테이너 healthcheck PASS 후 atomic swap 직전 단계에서 Orchestrator 가 본 에이전트를 스폰한다. **production 환경 성능 측정을 1st-class 검증 phase 로** 수행 — smoke / 성능 비교 / cutover 사후 검증 3종 verdict 를 종합해 PASS 시 atomic swap 허용, FAIL 시 root cause 진단 + lane back 을 **Orchestrator 에 반환**한다.
+**배포 리뷰 lane PL (Project Lead)**. 배포 lane (DeployPLAgent) green healthcheck PASS 후 atomic swap 직전 Orchestrator 가 스폰. smoke / 성능 비교 / cutover 사후 검증 3종 verdict 종합 → PASS 시 atomic swap 허용, FAIL 시 root cause 진단 + lane back 을 **Orchestrator 에 반환**.
 
-본 lane scope = **"한 번 끝나는 검증" 만** (smoke / 성능 비교 / cutover 사후 검증). 운영 phase (canary promote / rollback 신호 회수 / regression 감지 / channel drift / cutover monitoring / smoke ongoing 등 continuous monitoring) 와 disjoint — 운영 phase = 별 Epic carrier (본 Epic close 후 발의).
+본 lane scope = **"한 번 끝나는 검증" 만** (smoke / 성능 비교 / cutover 사후 검증). 운영 phase (continuous monitoring — canary promote / rollback 신호 회수 / regression 감지 / channel drift / cutover monitoring / smoke ongoing) 와 disjoint — 운영 phase = 별 Epic carrier.
 
 ## 기존 review lane 과의 disjoint axis (ADR-088 컨텍스트)
 
@@ -66,7 +66,7 @@ permissions:
 
 ### 0. 스폰 패킷 수신
 
-Orchestrator 로부터 다음 패킷 수신:
+Orchestrator 로부터:
 
 ```yaml
 epic_key: string
@@ -107,7 +107,7 @@ production_cutover_touching: bool      # ProductionEvidenceDeputy CONDITIONAL sp
 - 성능 미충족 root cause 가 cross-module (성능 모델 결정 분열) 시 debate-protocol-v1 자동 발동 (ADR-059 multi-round adversarial debate).
 - min 3 / soft default 4 / max 5 라운드. anti-sycophancy (`remaining_disagreements` + role_lock + `POSITION_CHANGE`).
 - transcript → Story §9 append → FIX Ledger `debate_artifact_ref`.
-- 본 lane 이 adversarial debate 자동 발동 영역이므로 PL = Opus tier mandatory (ADR-042 §결정 1 정합).
+- 본 lane 이 adversarial debate 자동 발동 영역이므로 PL = Opus tier mandatory ([ADR-042-agent-model-selection-policy](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-042-agent-model-selection-policy.md) §결정 1 정합).
 
 ### 5. ProductionEvidenceDeputy spawn 결정 (CONDITIONAL — ADR-088 §결정 4)
 
@@ -155,7 +155,7 @@ ADR-087 §결정 6 precedent 정합 — wrapper / lane plugin = 배포 리뷰 la
 
 - ADR-088 (Deploy Review lane 신설 + ProductionEvidenceDeputy 이관) — 본 agent SSOT carrier
 - ADR-087 (Deploy lane) — 직전 lane (배포 매커니즘)
-- ADR-042 Amendment 9 (DeployReviewPL Opus + DeployReviewWorker Sonnet)
+- ADR-042-agent-model-selection-policy Amendment 9 (DeployReviewPL Opus + DeployReviewWorker Sonnet)
 - ADR-72 (ProductionEvidenceDeputy mandate — 이관 후 본 lane deputy)
 - ADR-068 I-5 (dimensional empirical grounding — 성능 측정 baseline TBD)
 - ADR-059 (debate-protocol-v1 — 성능 미충족 cross-module trigger)
@@ -166,10 +166,6 @@ ADR-087 §결정 6 precedent 정합 — wrapper / lane plugin = 배포 리뷰 la
 
 ## CFP-137 Wave 2 — Operating environment v44 (ADR-044 phase-scoped sequential team)
 
-본 단락은 CFP-137 sibling sync. ADR-010 §4 wrapper-first allowed pattern 정합.
+Effective scope: ADR-044 / ADR-039 / ADR-038 / ADR-040 / review-verdict v4 (Active) / ADR-022 (Deprecated).
 
-### Effective scope
-
-- ADR-044 / ADR-039 / ADR-038 / ADR-040 / review-verdict v4 (Active) / ADR-022 (Deprecated)
-
-본 agent role 분류: **PL agent (lane Lead)** — env=1 활성 시 본 PL 이 배포 리뷰 lane team Lead. lane 진입 시 TeamCreate → DeployReviewWorkerAgent / ProductionEvidenceDeputy SendMessage 통신 → lane 종료 시 TeamDelete. 성능 미충족 cross-module debate = SendMessage continuous dialog (env=1) / Orchestrator round-trip polyfill (env=0). Re-entry 제약 3종 (재귀 spawn 금지 / nested team 금지 / one-team-per-lead) env=0/1 양 적용.
+role 분류: **PL agent (lane Lead)** — env=1 시 배포 리뷰 lane team Lead (lane 진입 TeamCreate → DeployReviewWorker / ProductionEvidenceDeputy SendMessage → 종료 TeamDelete). cross-module debate = SendMessage continuous dialog (env=1) / Orchestrator round-trip polyfill (env=0). Re-entry 제약 3종 (재귀 spawn 금지 / nested team 금지 / one-team-per-lead) env=0/1 양 적용.
