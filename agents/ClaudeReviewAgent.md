@@ -42,16 +42,19 @@ ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md) — 3 lan
 
 **Packet 누락 검증** (필수 — 미충족 시 즉시 `ESCALATE_PACKET_INCOMPLETE` 반환, generic fallback 금지 — [ADR-001](../docs/adr/ADR-001-review-agent-unification.md) §결정 4번):
 
-1. **공통 필수 필드**: `contract_version` (== `"1.0"`) · `lane` · `checklist_path` · `scope_globs` · `category_enum` 존재. `contract_version` 누락 또는 `"1.0"`이 아닌 값 → 즉시 `ESCALATE_PACKET_INCOMPLETE` (review_verdict v1 contract enforcement, [ADR-008](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-008-inter-plugin-contract-versioning.md))
+1. **공통 필수 필드**: `contract_version` (major == 1, 즉 `"1."` 접두 허용) · `lane` · `checklist_path` · `scope_globs` · `category_enum` 존재. `contract_version` 누락 또는 major ≠ 1 → 즉시 `ESCALATE_PACKET_INCOMPLETE` (ADR-008 §결정 4 v1.x compat — `"1.0"` · `"1.1"` 등 v1.x 모두 정상 처리. missing/unknown/major≠1 만 ESCALATE. [ADR-008](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-008-inter-plugin-contract-versioning.md))
 2. **lane↔checklist 일치**: `checklist_path`와 `category_enum`이 packet의 `lane` 값과 동일 lane의 SSOT를 가리켜야 함 (예: `lane=design`인데 `templates/review-checklists/code.md`가 오면 ESCALATE)
 3. **lane-conditional 추가 검증**:
    - `lane=design`: `related_adrs` 또는 Story §3에서 추적 가능한 ADR 입력 ≥ 1. 둘 다 비어 있으면 ESCALATE
    - `lane=code`: `story_key` 필수. Story file §8.5 Impl Manifest를 `Read`로 열 수 없거나 매핑 표가 비어 있으면 ESCALATE
    - `lane=security`: packet은 1차 layer 결과(Dependabot · CodeQL · Secret Scanning · Push Protection)를 inline 포함 + `scope_globs`에 의존성 매니페스트 ≥ 1 포함. 둘 중 하나라도 부재 시 즉시 `ESCALATE_PACKET_INCOMPLETE` (ADR-001 §결정 4번 invariant policing — fetch 책임은 SecurityTestPL 소유, 워커 비차단 fallback은 silently 약한 보안 lane을 만들 수 있음)
+4. **pr_phase 인지 (선택 필드, CFP-2111)**: packet 에 `pr_phase` 필드가 존재하면 리뷰 baseline 에 적용.
+   - `pr_phase == phase1_docs`: "main 에 구현 코드가 아직 없음이 정상 — Phase 2 구현물 부재를 결함으로 보고 금지". 설계 문서·story·change-plan 부재는 정상 range 기대치로 처리.
+   - `pr_phase == phase2_impl` 또는 필드 부재: 현 AS-IS phase-중립 동작 유지 (하위호환).
 
 ## 역할
 
-1. PL packet 검증 (§입력의 3단계 검증 — 공통 필수 / lane↔checklist 일치 / lane-conditional)
+1. PL packet 검증 (§입력의 4단계 검증 — 공통 필수 / lane↔checklist 일치 / lane-conditional / pr_phase 인지)
 2. `checklist_path` 파일을 `Read`로 fetch. 체크리스트 항목은 (a) **진단 영역의 trigger** (해당 항목이 다루는 카테고리·결함을 검사) 와 (b) **finding category 후보 source** (체크리스트 헤더가 packet `category_enum`과 매핑되어야 함)로 활용. 체크리스트는 packet에 inline 전달될 수도 있음
 3. `scope_globs`로 리뷰 대상 식별 (`Glob` + `Read`)
 4. lane별 진단 도구 활용:

@@ -23,7 +23,8 @@ PL은 lane 진입 시 다음 필드를 채운 packet을 워커에 주입한다. 
 
 ```yaml
 review_packet:
-  contract_version: "1.0"                                       # 필수 — review_verdict v1 contract enforcement
+  contract_version: "1.1"                                       # 필수 — review_verdict v1 contract enforcement
+                                                               # v1.0→v1.1 MINOR bump (CFP-2111): pr_phase optional 필드 추가 (ADR-008 §결정 2)
   lane: design | code | security                               # 필수
   checklist_path: templates/review-checklists/{design,code,security}.md  # 필수
   scope_globs:                                                  # 필수
@@ -36,6 +37,11 @@ review_packet:
   story_key: <STORY_KEY>     # 필수 — Story file 참조용
   related_adrs:              # 선택 — 정합성 교차 입력
     - docs/adr/ADR-NNN-<slug>.md
+  pr_phase: phase1_docs | phase2_impl   # 선택 (CFP-2111) — PR 의 Phase 1(docs-only) vs Phase 2(impl) 구분.
+                                        # phase1_docs: 구현 코드 부재가 정상 — 워커가 "main 에 구현물 기대" 오판 금지.
+                                        # 부재 시 phase-중립 동작 (AS-IS 하위호환, ADR-008 §결정 4 v1.x compat).
+                                        # 값 출처: Orchestrator 가 PR 변경 파일 패턴으로 결정론적 판정
+                                        # (wrapper docs/orchestrator-playbook.md §3.1 D2-A 절차).
 ```
 
 ### lane-specific 확장 필드
@@ -64,6 +70,7 @@ review_packet:
 | story_key | ✅ | ✅ | ✅ |
 | severity_overrides | ◯ | ◯ | ◯ |
 | related_adrs | ◯ | ◯ | ◯ |
+| **pr_phase** | ◯ | ◯ | ◯ |
 | **first_layer_findings** | — | — | ✅ |
 
 ---
@@ -599,3 +606,4 @@ DesignReview lane 의 기존 `auto_on_divergence` (Amendment 1) 외에 wrapper r
 | v3.0 | 2026-05-02 | CFP-61 | §5.4: `pl_recommendation` (advisory only) + `decision_state`, Orchestrator post-Sonnet self-write 영역 정의, `writes_completed` 의미 재정의 (PL→Orchestrator self-write audit), `decider_decision_ref` object 신설 (decision-packet-v2.1 / ADR-022) |
 | v3.1 | 2026-05-07 | CFP-128 | §3: Container security severity rule append (SecurityTest lane only) — trivy CRITICAL/HIGH/mid + hadolint error/warning/info. ADR-033 §결정 4 sibling sync. |
 | v3.2 | 2026-05-13 | CFP-582 | §11.5: debate-protocol-v1 v1.2 cross-ref block 신설 (ADR-059 Amendment 2) — DesignReviewPL 의 3 marker pattern verification + convergence_quality_invariant_final 검증 책무 + Phase 2 mechanical lint cross-ref. |
+| v3.3 | 2026-06-10 | CFP-2111 | §2: review_packet `contract_version` v1.0→v1.1 MINOR bump (ADR-008 §결정 2) — `pr_phase: phase1_docs \| phase2_impl` optional 필드 신설 + lane 매트릭스 row 추가. 워커 enforcement `== "1.0"` → v1.x major 일치 허용 정합화 (ADR-008 §결정 4 compat 위반 해소). |
