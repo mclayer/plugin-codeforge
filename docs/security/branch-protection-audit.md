@@ -154,3 +154,61 @@ review 의 `invariant` 필수 체크는 `invariant-check.yml` 이 생성하는 l
 ### rollback path
 
 requirements/pmo phase-gate-mergeable 제거: `gh api --method DELETE repos/mclayer/plugin-codeforge-{requirements,pmo}/branches/main/protection/required_status_checks/contexts -f 'contexts[]=phase-gate-mergeable'` (idempotent).
+
+---
+
+## 2026-06-10 — lane repo main 머지불가 2종 결함 정정 (4 repo restrictions 제거 + 2 repo rpr 추가)
+
+**배경**: codeforge de-bloat 캠페인 중 deploy/deploy-review de-bloat PR 이 fully-green 인데도 머지 불가 발견. 진단 결과 **§Story-2 (CFP-1785-S2) CREATE payload 의 Risk Note 가정이 틀렸음**이 규명됨 — 본 audit log line 112-113 의 "pending context = absent → PR merge 가능" 가정은 **미검증 추정**이었고, 실제로는 아래 2종 결함으로 **모든 머지가 차단**되고 있었다 (red-team PR #6/#5 가 8일 stuck 한 원인).
+
+### 근본원인 2종
+
+- **A — `restrictions` 빈 허용목록**: `{users:[], teams:[], apps:[]}` 은 "direct push 차단" 의도였으나(§Story-2 line 99), 실제 GitHub 동작 = **아무도(admin 포함, enforce_admins=true) 머지 불가**. "direct push 차단 + PR merge 허용" 의 올바른 구현은 restrictions 미설정(None) + "Require PR before merging" 룰이다.
+- **B — `required_pull_request_reviews: null`**: "Require PR before merging" 룰 자체 부재. 이 상태에서 GitHub 는 required status check 를 stuck **"expected"** 로 평가 → merge API 가 `Required status check phase-gate-mergeable is expected` 반환 (실제 check-run 은 success 인데도). deploy/deploy-review 만 해당 (정상 6 lane 은 rpr 객체 count 0 보유).
+
+deploy/deploy-review = A+B 동시, requirements/pmo = A 만 (rpr count 0 보유 — 이후 어느 시점 §Story-2 precedent 복제로 빈 restrictions 만 전파된 것으로 추정).
+
+### §before (2026-06-10 진단 시점)
+
+| plugin | restrictions | rpr | 결함 |
+|--------|-------------|-----|------|
+| codeforge-requirements | SET (빈 배열) | 0 | A |
+| codeforge-pmo | SET (빈 배열) | 0 | A |
+| codeforge-deploy | SET (빈 배열) | null | A + B |
+| codeforge-deploy-review | SET (빈 배열) | null | A + B |
+| design/review/develop/test | None | 0 | 정상 (대조군) |
+
+### 수정 (API)
+
+- **restrictions 제거** (4 repo): `gh api -X DELETE repos/mclayer/plugin-codeforge-{requirements,pmo,deploy,deploy-review}/branches/main/protection/restrictions`
+- **rpr 추가** (2 repo): `gh api -X PATCH repos/mclayer/plugin-codeforge-{deploy,deploy-review}/branches/main/protection/required_pull_request_reviews` payload `{"required_approving_review_count":0,"dismiss_stale_reviews":false,"require_code_owner_reviews":false,"require_last_push_approval":false}`
+
+수정 의미 = §Story-2 의 원래 의도("direct push 차단 + solo-dev PR merge 허용 + 리뷰 0")를 올바르게 실현. rpr count 0 = "PR 필수, 승인 0건" = solo-dev PR merge 허용.
+
+### 검증 (실측)
+
+deploy 에 rpr 추가 후 임시 test PR 생성 → `mergeStateStatus` 가 **BLOCKED → CLEAN** 전환 확인 (enforce_admins 토글 불필요). test PR 은 머지 없이 close + branch 삭제. de-bloat PR (#7/#6) 및 version-bump PR (#8/#7) 은 수정 전이라 enforce_admins off→--admin→on 토글로 머지했고, 토글은 매건 즉시 복원함.
+
+### §after (전 8 lane parity — 2026-06-10 verify)
+
+| plugin | enforce_admins | restrictions | rpr | contexts |
+|--------|----------------|--------------|-----|----------|
+| codeforge-requirements | true | None | 0 | check-gate, phase-gate-mergeable |
+| codeforge-design | true | None | 0 | check-gate, phase-gate-mergeable |
+| codeforge-review | true | None | 0 | invariant, check-gate, phase-gate-mergeable |
+| codeforge-develop | true | None | 0 | check-gate, phase-gate-mergeable |
+| codeforge-test | true | None | 0 | check-gate, phase-gate-mergeable |
+| codeforge-pmo | true | None | 0 | check-gate, phase-gate-mergeable |
+| codeforge-deploy | true | None | 0 | check-gate, phase-gate-mergeable |
+| codeforge-deploy-review | true | None | 0 | check-gate, phase-gate-mergeable |
+
+verified-via: `gh api repos/mclayer/plugin-codeforge-<lane>/branches/main/protection` (8 lane GET, 2026-06-10) `[verified]`. strict 는 lane별 상이(무관 — 정규화 안 함). enforce_admins=true 전 lane 유지.
+
+### precedent 교정 (향후 신설 plugin)
+
+§Story-2 CREATE payload (line 80-93) 의 `required_pull_request_reviews: null` + `restrictions: {users:[],teams:[],apps:[]}` 는 **머지불가 antipattern** — 재사용 금지. 신설 lane plugin protection 은 `required_pull_request_reviews: {required_approving_review_count: 0}` + `restrictions: null` 로 생성할 것 ("direct push 차단 + solo-dev PR merge").
+
+### rollback path
+
+- restrictions 복원(비권장 — 머지불가 재발): `gh api -X PUT .../protection/restrictions` with empty arrays
+- rpr 제거(비권장 — phantom 재발): `gh api -X DELETE .../protection/required_pull_request_reviews`
