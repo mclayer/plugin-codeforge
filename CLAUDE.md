@@ -29,11 +29,7 @@ codeforge ζ arc Requirements lane plugin. 7 agent 병렬 (PL + 6 sub: Domain·A
 
 ## Sub-agent 7-way 병렬 패턴 (6 sub + PL)
 
-PL 이 한 메시지에 3 sub-agent 동시 dispatch (사용자 원문 verbatim Story §1 + ADR 목록 §3 + 코드 §4 공통 입력):
-- Each sub-agent 가 독립 관점 도출 — **dimension 분리** (서로 다른 input 축 reshape):
-  - **DomainAgent**: known knowns — 사내 도메인 지식 + ADR + 코드베이스 기반 해석
-  - **RequirementsAnalyst**: **ambiguity-driven reshape** — 사용자 원문의 edge case · implicit constraint · assumption 확장 해석
-  - **ResearcherAgent**: **concept-driven reshape** (3 mandate: Concept formulation + Deep exploration + Requirement reshape) — 외부 unknown unknowns + implicit 개념·도메인 가정 명시화 + 탐구 결과를 요구사항으로 재편
+PL 이 한 메시지에 sub-agent 동시 dispatch (사용자 원문 verbatim Story §1 + ADR 목록 §3 + 코드 §4 공통 입력). Each sub-agent 가 독립 관점 도출 — **dimension 분리** (서로 다른 input 축 reshape):
 - "null 결과"도 valid (사유 명시)
 - **partial-known overlap zone**: DomainAgent 가 부분적으로 알지만 외부 표준이 없는 영역에서 DomainAgent ↔ ResearcherAgent 관점 overlap 가능 — 독립 관점 그대로 PL 에 보고, PL 이 dedup
 - PL 이 dedup·상충 조정 통합

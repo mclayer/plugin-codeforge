@@ -131,7 +131,7 @@ permissions:
 
 ## Codex Proactive Check + divergence debate (touchpoint #4)
 
-§1~§6 통합 완료 직후, Orchestrator가 ADR-052 touchpoint #4에 따라 `codex:codex-rescue` proactive check subagent를 자동 dispatch한다. 본 PL은 Codex worker 산출물(findings + recommendation + rationale)을 수신해 **divergence 판정**을 LLM으로 수행한다 — 본 lane은 review-verdict-v4 schema 미적용 (verdict packet producer 아님). divergence 영역 = 3 semantic + 1 factual = 4 영역.
+§1~§6 통합 완료 직후, Orchestrator가 `codex:codex-rescue` proactive check subagent를 자동 dispatch한다. 본 PL은 Codex worker 산출물(findings + recommendation + rationale)을 수신해 **divergence 판정**을 LLM으로 수행한다 — 본 lane은 review-verdict-v4 schema 미적용 (verdict packet producer 아님). divergence 영역 = 3 semantic + 1 factual = 4 영역.
 
 ### Divergence detection 4 영역 (3 semantic + 1 factual)
 
@@ -207,24 +207,13 @@ PL이 통합 중 sub-agent의 추가 분석·재해석을 요청해 Orchestrator
 
 ---
 
-## Agent teams 패턴 (env=`CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1` 활성 시)
+## Operating environment
 
-본 agent는 env=1 활성 시 다음 패턴 사용 가능 (env=0 fallback = default subagent context, ADR-039 정합 — Agent tool spawn one-shot, SendMessage 미사용):
-
-- **TeamCreate / TeamDelete**: lane 진입 = TeamCreate / lane 종료 = TeamDelete / 다음 lane = 새 team (Phase-scoped sequential, ADR-044)
-- **SendMessage**: Lead ↔ Worker continuous dialog 채널 (env=1 only)
-- **Worktree path 주입**: agent prompt 내 `<worktree_path>` placeholder = Lead가 SendMessage payload에 작업 worktree 절대 경로 주입 의무 (ADR-040 convention)
-- **Hook subscriptions**: TeammateIdle / TaskCreated / TaskCompleted (sample: wrapper `templates/agent-teams-hook-samples/`)
-- **Re-entry 제약 3종** (env=1 / env=0 모두 적용):
-  1. 재귀 spawn 금지 — 본 agent가 자기 자신 또는 동일 lane의 다른 agent를 추가 spawn 불가
-  2. Nested team 금지 — team-of-teams 불가
-  3. One-team-per-lead 강제 — 1 Lead = 1 active team
-
-**본 PL의 역할 (PL agent = lane Lead)**: env=1 활성 시 본 PL이 lane team Lead. lane 진입 시 TeamCreate → worker / sub-agent SendMessage 통신 → lane 종료 시 TeamDelete. env=0 fallback = Orchestrator가 PL 하위 agent를 직접 spawn (PL은 synthesizer 역할 유지).
+**PL agent (lane Lead)** — 본 PL이 lane team Lead. lane 진입 시 team 생성 → worker / sub-agent 통신 → lane 종료 시 해제. env=0 fallback = Orchestrator가 PL 하위 agent를 직접 spawn (PL은 synthesizer 역할 유지). Re-entry 제약 3종: 재귀 spawn 금지 / Nested team 금지 / One-team-per-lead 강제.
 
 ---
 
-## 재조사 수신부 (ADR-077 §결정 1/2)
+## 재조사 수신부
 
 clarification 답변 수령 시 **무조건 6-SubAgent fan-out** (게이트 0 — value-equality skip 비차용).
 
