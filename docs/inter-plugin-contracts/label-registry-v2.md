@@ -1,13 +1,14 @@
 ---
 kind: registry
 registry: label
-version: "2.92"
+version: "2.93"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
 created_date: 2026-05-09
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/label-registry-v2.md
+date: 2026-06-10  # #2112 (de-bloat #2105 FU) v2.93 — 고아 hotfix-bypass label 12건 제거 (hotfix-bypass:evidence-naming / hotfix-bypass:marketplace-drift-detection / hotfix-bypass:channel-drift-detection / hotfix-bypass:adr-077-ratchet / hotfix-bypass:adr-077-design-reading / hotfix-bypass:architecture-drift / hotfix-bypass:ddd-pattern-frontmatter / hotfix-bypass:self-improving-loop / hotfix-bypass:amendment-number-stale / hotfix-bypass:spawn-prompt-head-pin / hotfix-bypass:amendment-slot-reservation / hotfix-bypass:mid-spawn-drift-detection). 제거 근거: #2110 에서 제거된 21 theater registry 엔트리의 짝 bypass channel — raison d'être 소멸 (CFP-2061-S5 v2.92 동형 선례). raw active grep count 12 감소 (109→97). MINOR bump (12 entry 제거 = backward-compat 무영향, ADR-008 §결정 2/3), kind:registry sibling sync 면제 (ADR-010 §결정 2), plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). MANIFEST.yaml row "2.92" → "2.93" ratchet 동반. doc-only fast-path (ADR-054). NOTE: 과거 frontmatter date 줄의 "N번째 family member" 표현은 historical record — append-only 원칙으로 재계산/재작성하지 않음 (CFP-2061-S5 v2.92 NOTE 답습).
 date: 2026-06-09  # CFP-2061-S5 v2.92 — stale 전용 bypass label 5건 제거 (hotfix-bypass:post-merge-followup-success-rate / hotfix-bypass:architect-marketplace-self-check / hotfix-bypass:subagent-sibling-story-polling / hotfix-bypass:mcp-token-freshness / hotfix-bypass:pl-inline-verify-cwd-mandate). 제거 근거: evidence-checks-registry stale dead-check 7 entry 제거(CFP-2061-S5 파트 ①)에 연동된 전용 bypass channel 5건 소멸 — raison d'être 소멸 (CFP-1870 v2.89 동형 선례). raw active grep count 5 감소 (114→109). MINOR bump (5 entry 제거 = backward-compat 무영향, ADR-008 §결정 2/3), kind:registry sibling sync 면제 (ADR-010 §결정 2), plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). MANIFEST.yaml row "2.91" → "2.92" ratchet 동반. doc-only fast-path (ADR-054). NOTE: 과거 frontmatter date 줄의 "N번째 family member" 표현은 historical record — append-only 원칙으로 재계산/재작성하지 않음 (CFP-1870 v2.89 NOTE 답습).
 date: 2026-06-09  # CFP-2061-S4 v2.91 — governance-drift bypass label 신설 (1 신규 entry: hotfix-bypass:governance-drift 114번째 hotfix-bypass:* family member raw active concrete grep count post-append 113+1=114 정합, CFP-2061-S4 / ADR-060 §결정 31 carrier — 거버넌스 지표 7종 주기 측정 + drift 이슈 자동 발행 cron advisory warning-tier bypass channel). MINOR bump: 1 신규 entry, kind:registry sibling sync 면제 (ADR-010 §결정 2 + ADR-008 §결정 3 row append), plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). MANIFEST.yaml row "2.90" -> "2.91" ratchet 동반. ADR-108 §결정 3 forcing function parity mandate — description text "114번째" 명시 의무 (raw active concrete grep count post-append = 113 + 1 = 114 정합).
 date: 2026-06-09  # CFP-2061-S1 v2.90 — increment-justification bypass label 신설 (1 신규 entry: hotfix-bypass:increment-justification 113번째 hotfix-bypass:* family member raw active concrete grep count post-append 112+1=113 정합, CFP-2061-S1 / ADR-060 §결정 30 carrier — 검사·ADR·스크립트 신규 추가 PR 에 실효 정당화 강제 warning-tier bypass channel). MINOR bump: 1 신규 entry, kind:registry sibling sync 면제 (ADR-010 §결정 2 + ADR-008 §결정 3 row append), plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). MANIFEST.yaml row "2.89" → "2.90" ratchet 동반. ADR-108 §결정 3 forcing function parity mandate — description text "113번째" 명시 의무 (raw active concrete grep count post-append = 112 + 1 = 113 정합 — CFP-1870 v2.89 cross-repo-bypass-counter 1 제거로 CFP-1849 v2.88 113번째 baseline 이 112로 환원 → CFP-2061-S1 = 113번째 / v2.90 ratchet up).
@@ -954,13 +955,6 @@ labels:
     single_active: false
     attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
 
-  - name: hotfix-bypass:marketplace-drift-detection
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: marketplace ↔ wrapper plugin.json reactive scheduled drift detection workflow skip + audit comment 자동 발의 (CFP-627 / ADR-063 Amendment 3 §결정 13 / ADR-024 Amendment 3 §결정 6.A — templates/github-workflows/marketplace-drift-detection.yml Phase 2 carrier — warning tier 신규 entry, 4th defense layer reactive scheduled cron channel). 19번째 hotfix-bypass:* family member."
-    single_active: false
-    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
-
   - name: hotfix-bypass:workflow-version-drift
     category: hotfix-bypass
     color: "fef2c0"
@@ -1068,24 +1062,6 @@ labels:
     single_active: false
     attach_owner_plugin: "Orchestrator (cross-repo Story mirror PR open 시 부착 — sibling PR 가 wrapper Story 의 mirror 임을 명시, ADR-010 Amendment 4 §결정 5 정합) / lane plugin PL (sibling sync PR author)"
 
-  # hotfix-bypass:adr-077-ratchet (CFP-785 / ADR-077 §결정 9 ratchet 선언 mechanical lint warning-tier)
-  # 29번째 hotfix-bypass:* family member (v2.22 PATCH bump, v2.21 CFP-795 collision rebase 재인덱스).
-  - name: hotfix-bypass:adr-077-ratchet
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: ADR-077 §결정 9 ratchet lint (`adr-077-ratchet-declared`) skip — Story-3 carrier (CFP-785), Phase 2 wire 후 enforce. lint script: scripts/check-adr-077-ratchet.sh. Phase 1 status: deferred-followup → Phase 2 land 시 Active. ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합."
-    single_active: false
-    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
-
-  # hotfix-bypass:adr-077-design-reading (CFP-785 / ADR-077 §결정 3 design-reading mandate lint warning-tier)
-  # 30번째 hotfix-bypass:* family member (v2.22 PATCH bump, v2.21 CFP-795 collision rebase 재인덱스).
-  - name: hotfix-bypass:adr-077-design-reading
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: ADR-077 §결정 3 design-reading mandate lint (`adr-077-design-reading-mandate-declared`) skip — Story-3 carrier (CFP-785), Phase 2 wire 후 enforce. lint script: scripts/check-adr-077-design-reading-mandate.sh. ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합."
-    single_active: false
-    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
-
   # hotfix-bypass:bypass-label-counter (CFP-825 / ADR-024 Amendment 6 §결정 6.A.2 carrier — per-entry namespace 누적 사용 카운터 lint, self-meta loop 회피 invariant)
   # 31번째 hotfix-bypass:* family member (v2.23 MINOR bump — 2 신규 family member 동시 추가, 본 entry + exempt:<entry> template).
   - name: hotfix-bypass:bypass-label-counter
@@ -1165,20 +1141,6 @@ labels:
     category: hotfix-bypass
     color: "fef2c0"
     description: "hotfix-bypass: inter-plugin-contracts-parity warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-894 / ADR-010 — templates/github-workflows/inter-plugin-contracts-parity.yml + scripts/check-inter-plugin-contracts-parity.{sh,py}, INV-1 wrapper-local MANIFEST.yaml contract_version row ↔ wrapper sibling .md frontmatter contract_version 2-touchpoint byte-identical parity skip. CFP-834 silent drift (wrapper sibling 1.1↔body 1.0) 류 재발 차단. Phase 2 carrier (별 CFP): body `## N.` payload + cross-repo canonical frontmatter parity (CODEFORGE_CROSS_REPO_PAT 의존, ADR-066). Archived 면제 (historical record). Missing file = separation of concerns (CFP-42 check_inter_plugin_contracts.py 영역, parity 영역 외 silent skip). ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합). 41번째 hotfix-bypass:* family member."
-
-  # hotfix-bypass:channel-drift-detection (CFP-932 — Wave 4 sub-Epic #1 Story-2 channel-drift-detection warning-tier bypass channel)
-  # 42번째 hotfix-bypass:* family member — ADR-063 Amendment 3 §결정 13 marketplace-drift-detection precedent 답습 (3-tuple channel drift 4th defense layer).
-  - name: hotfix-bypass:channel-drift-detection
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: channel-drift-detection warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-932 / ADR-063 Amendment 3 §결정 13 + reconcile-protocol-v1 §4.10 — templates/github-workflows/channel-drift-detection.yml + scripts/check-channel-drift.sh, 3-tuple channel drift (consumer codeforge.channel.tier ↔ install plugin.json .version ↔ registry marketplace.json channels[*].versions[] membership) 24h cron + workflow_dispatch reactive scheduled detection. marketplace-drift-detection.yml byte-pattern 답습 — signature dedup + E-4 3-branch (401 fail-closed / 429 fail-open / 5xx 3-retry) + warning-first (drift 감지해도 exit 0, Issue auto-create 통보 channel). (c) registry leg 미populate (Story-4 전) = warning-first graceful (blocking 0, transitional valid). evidence-checks-registry.yaml channel-drift-detection entry warning-tier 동반 (ADR-060 framework). Wave 4 sub-Epic #1 Story-2 carrier, Epic CFP-882. ADR-024 Amendment 3 §결정 6.A per-entry namespace 정합). 42번째 hotfix-bypass:* family member."
-
-  # hotfix-bypass:architecture-drift (CFP-923 — Epic B Story-4 ADR-078 P-S4 architecture-drift warning-tier bypass channel)
-  # 43번째 hotfix-bypass:* family member — ADR-078 §결정 1 4 H2 closed-enum + 3 detection class lint (CFP-771 kst-timestamp-display precedent 동형).
-  - name: hotfix-bypass:architecture-drift
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: architecture-drift warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-923 / ADR-078 §결정 4 P-S4 / ADR-024 Amendment 3 §결정 6.A — templates/github-workflows/architecture-drift.yml + scripts/check-architecture-drift.sh, docs/architecture/**/*.md scope 의 4 H2 closed-enum (모듈/경계/인터페이스 계약/데이터 흐름) + 3 detection class (a 모듈 enumeration parity / b inter-plugin-contracts enumeration parity / d anti-scope guard violation — class/def/import/signature line + H2 closed-enum 외 H2) 정합 lint. 4-guard FP 완화 (CFP-841 corpus-claim-verify §결정 4/6 EC-3 prior art 재사용 — scope guard / citation≠assertion 면제 / forward-only / self-referential exemption). Epic B Story-4 single-Phase land — CFP-771 kst-timestamp-display 동형. evidence-checks-registry.yaml architecture-drift entry warning-tier 동반 (ADR-060 framework). 43번째 hotfix-bypass:* family member."
 
   # hotfix-bypass:codex-sandbox-substitution (CFP-963 — ADR-024 Amendment 9 + ADR-060 Amendment 14 §결정 28 + ADR-081 Amendment 4 §결정 D1.D body 확장 carrier)
   # 44번째 hotfix-bypass:* family member — historical-with-template-count convention citation (Codex TP#2 F-CX-963-A P2 calibration verdict 정합):
@@ -1349,16 +1311,6 @@ labels:
     single_active: false
     attach_owner_plugin: "사용자 직접 (wrapper-self-app Tier-1 declare-time 면제 / consumer Tier-2 admin-tier 권장)"
 
-  # 49번째 family member — evidence-checks-registry entry naming convention lint bypass.
-  # Provenance: docs/evidence-checks-registry.yaml line 1053 + scripts/lib/check_evidence_registry_naming.py line 160 + templates/github-workflows/evidence-registry-naming-check.yml line 30. Operational scope = evidence-checks-registry.yaml row name convention check warning-tier skip (when legitimate naming exception arises, e.g., backward-compat alias).
-  # Backing carrier = ADR-060 framework (evidence-checks-registry-v1 naming convention guardrail).
-  - name: hotfix-bypass:evidence-naming
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: evidence-checks-registry.yaml entry name convention warning-tier lint conditional skip + audit comment 자동 발의 (ADR-060 framework / scripts/lib/check_evidence_registry_naming.py SSOT — templates/github-workflows/evidence-registry-naming-check.yml carrier — name field kebab-case + reserved prefix invariant check, warning tier. ADR-024 Amendment 11 §결정 6.A per-entry namespace 정합). 49번째 hotfix-bypass:* family member (raw active concrete grep count convention 답습). CFP-1006 v2.39 registry §3 late codify (gh-side 등록 pre-existing / §3 선언 누락 → Tier-B 4-way sync Wave 1 carrier)."
-    single_active: false
-    attach_owner_plugin: "사용자 직접 / Orchestrator (hotfix-bypass 경로)"
-
   # 50번째 family member — Markdown internal-links broken-link warning-tier lint bypass.
   # Provenance: 11+ merged PRs (Issue #1013 bypass-counter signature reach evidence). Operational scope = doc-only fast-path PRs that introduce intentional non-existent internal links (e.g., forward references to future Story files, ADR placeholders, planned-but-deferred docs).
   # Backing carrier: general doc maintenance lint (broken markdown links detection) — used extensively across CFP-NNN doc PRs. No dedicated workflow file (general lint scope).
@@ -1501,12 +1453,6 @@ labels:
     single_active: false
     attach_owner_plugin: "ArchitectAgent (chief author, codeforge-design lane — DDD vocabulary governance carrier Story PR bypass) / Orchestrator (carrier Story PR bypass)"
 
-  - name: hotfix-bypass:ddd-pattern-frontmatter
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: ddd-pattern-frontmatter warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1117-S3 / ADR-091 §결정 5 + §결정 6 carrier — ArchitectLane agent file frontmatter bounded_context + ddd_pattern field presence + enum membership (sub-classification 6종 허용) 영역 bypass channel, cross-plugin lint codeforge-design agents/*.md, vocabulary theater 차단 forcing function INV-5). 63번째 hotfix-bypass:* family member."
-    single_active: false
-    attach_owner_plugin: "ArchitectAgent (chief author, codeforge-design lane — DDD vocabulary governance carrier Story PR bypass) / Orchestrator (carrier Story PR bypass)"
   # CFP-1059-S5 신설 — 1 entry (deployment-schema-check)
   - name: hotfix-bypass:deployment-schema
     category: hotfix-bypass
@@ -1538,21 +1484,6 @@ labels:
     single_active: false
     attach_owner_plugin: "Orchestrator (CFP-1194 regression/health monitor warning-tier bypass — consumer 환경 임시 skip 시 부착) / DeveloperPLAgent"
 
-  # CFP-1195 신설 — 1 entry (hotfix-bypass:self-improving-loop)
-  - name: hotfix-bypass:self-improving-loop
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: self-improving-loop-closure warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1195 / ADR-106 §결정 4 loop closure 3원칙 carrier — 24h cron Epic-level dedup gate / max-depth / escalate_user / KPI append-only / PMOAgent escalation / 사용자 게이트 closure mechanism workflow bypass channel, evidence-checks-registry self-improving-loop-closure entry 의 bypass channel). 66번째 hotfix-bypass:* family member."
-    single_active: false
-    attach_owner_plugin: "Orchestrator (CFP-1195 self-improving loop closure warning-tier bypass — consumer 환경 임시 skip 시 부착) / DeveloperPLAgent"
-
-  # CFP-1216 신설 — 1 entry (hotfix-bypass:amendment-number-stale)
-  - name: hotfix-bypass:amendment-number-stale
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: amendment-number-frontmatter-verify warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1216 / ADR-082 Amendment 6 §결정 9 carrier — ADR frontmatter amendment id self-consistency + cross-doc forward citation staleness lint workflow bypass channel, evidence-checks-registry amendment-number-frontmatter-verify entry 의 bypass channel). 67번째 hotfix-bypass:* family member."
-    single_active: false
-    attach_owner_plugin: "Orchestrator (CFP-1216 amendment number frontmatter verify warning-tier bypass — consumer 환경 임시 skip 시 부착) / DeveloperPLAgent"
 
   # CFP-1196 신설 — 1 entry (hotfix-bypass:canary-auto-promote)
   - name: hotfix-bypass:canary-auto-promote
@@ -1682,30 +1613,6 @@ labels:
     description: "hotfix-bypass: living-architecture-update warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1429 / ADR-112 §결정 1 (per-Epic mandatory update gate) + §결정 2 (closed-binary: 5-anchor section update OR no-op explicit declare) carrier — Living Architecture per-Epic mandatory update gate mechanical wire warning-tier bypass channel, Mega-Epic CFP-1415 Sub-C S3.5 = Sub-C 마지막 mechanical activation Story). PR open / Epic close trigger 시 ArchitectAgent Living Architecture update evidence verify lint — closed-binary check: (a) PR touched files 안 `docs/architecture/<plugin>.md` (Living Architecture page) presence, 또는 (b) PR body 안 `[living-arch-no-impact: <rationale>]` explicit declare presence. 양쪽 모두 부재 시 warning emit (ADR-112 §결정 4 — DesignReviewPL emit `living-architecture-not-updated` finding type). ADR-082 §결정 6 retain pattern 답습 (Wave 1 declare = ADR-112 mechanical_enforcement_actions / Wave 2 wire = 본 entry). per-PR heuristic proxy — per-Epic granularity (ideal) 는 후속 evidence-gated promotion carrier. pattern_count >= 3 재발 시 follow-up CFP MUST promote to blocking tier. **84번째 hotfix-bypass:* family member (ADR-108 forcing function parity mandate — description text N번째 명시 의무, raw grep count post-append = 83 + 1 = 84 정합)**."
     single_active: false
     attach_owner_plugin: "Orchestrator (CFP-1429 living-architecture-update warning-tier bypass — Living Architecture per-Epic update gate 임시 skip 시 부착) / ArchitectAgent"
-
-  # CFP-1489 신설 — Wave 2-A of CFP-1389 (Sub-CFP A CFP-1437 mechanical wire — Pre-spawn HEAD-pin protocol)
-  - name: hotfix-bypass:spawn-prompt-head-pin
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: spawn-prompt-head-pin warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1489 / ADR-073 Amendment 11 §결정 1-A `spawn_prompt_emit` transition trigger 10번째 entry + ADR-082 Amendment 15 §결정 1 layer 1 sub-scope (1-E) spawn prompt SHA-anchor write-time verify paired carrier — Pre-spawn HEAD-pin protocol mechanical lint warning-tier bypass channel, CFP-1437 Wave 1 declarative anchor의 Wave 2-A 실 mechanical wire, evidence-checks-registry spawn-prompt-head-pin-presence entry 의 bypass channel). spawn-prompt candidate file (Story §14 Lane Evidence transcripts / Issue body active_sessions context / spawn dispatcher logs) 안에서 `[PRE-SPAWN-ORIGIN-MAIN-SHA: <40-char-lowercase-hex>]` block presence + SHA format strict (regex `^\\[PRE-SPAWN-ORIGIN-MAIN-SHA: [0-9a-f]{40}\\]$`) check warning-tier — block 부재 시 [WARN-ABSENT] / 형식 무효 시 [WARN-INVALID]. templates/** + tests/** path = FP-완화 guard (canonical example / bats fixture 면제). spawn evidence marker (ArchitectAgent spawn / RequirementsPLAgent spawn / deputy spawn / Lane evidence / §14 Lane / USER-UTTERANCE-VERBATIM 등) 부재 file = silent skip (lint scope 외). ADR-082 §결정 6 retain pattern 답습 (Wave 1 declare = CFP-1437 PR #1444 merged / Wave 2-A wire = 본 entry). bidirectional verify-before-trust spawn-time anchor sub-domain (worktree-self-ownership-verify CFP-1366 worktree layer + subagent-sibling-story-polling CFP-1366 subagent layer + mcp-token-freshness CFP-1366 MCP auth layer 와 axis disjoint, 양 layer staleness sub-domain). pattern_count >= 3 재발 시 follow-up CFP MUST promote to blocking tier. **85번째 hotfix-bypass:* family member (ADR-108 forcing function parity mandate — description text N번째 명시 의무, raw grep count post-append = 84 + 1 = 85 정합)**."
-    single_active: false
-    attach_owner_plugin: "Orchestrator (CFP-1489 spawn-prompt-head-pin warning-tier bypass — Pre-spawn HEAD-pin protocol 임시 skip 시 부착) / ArchitectAgent"
-
-  # CFP-1497 신설 — Wave 2-C of CFP-1389 (Sub-CFP C CFP-1435 mechanical wire — Amendment-slot reservation strict claim)
-  - name: hotfix-bypass:amendment-slot-reservation
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: amendment-slot-reservation warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1497 / ADR-082 Amendment 17 §결정 1 layer 1 sub-scope (1-G) amendment-slot pre-reservation strict claim mandate + ADR-050 §결정 1 ADR-RESERVATION carrier cross-ref — Amendment-slot reservation mechanical lint warning-tier bypass channel, CFP-1435 Wave 1 declarative stub workflow (PR #1482 merged 2026-05-24)의 Wave 2-C 실 mechanical wire, evidence-checks-registry amendment-slot-reservation entry 의 bypass channel). 변경 ADR file (`docs/adr/ADR-NNN-*.md`) 안 frontmatter `amendments:` array 의 새 `amendment_id: N` entry 가 `docs/adr/ADR-RESERVATION.md` `amendments_reserved[]` array 안 매칭 `{adr_number, amendment_id, reserved_by_cfp}` row 부재 시 [WARN-MISSING-RESERVATION], 같은 (adr_number, amendment_id) slot 이 2+ row 안 reservation claim 시 [WARN-CONCURRENT-CONFLICT] warning-tier. templates/** + tests/** path = FP-완화 guard (canonical example / bats fixture 면제). ADR file (`docs/adr/ADR-NNN-*.md`) 아닌 모든 file = silent skip (lint scope 외). ADR-082 §결정 6 retain pattern 답습 (Wave 1 declare = CFP-1435 PR #1482 merged / Wave 2-C wire = 본 entry). 3-layer defense forcing function closure 의 3번째 mechanical layer (CFP-1489 Wave 2-A preventive pre-spawn pin + CFP-1436 Wave 1 reactive mid-spawn drift + 본 CFP-1497 preventive slot reservation mechanical enforcement = CFP-1389 parent Epic 3-layer defense forcing function 완성). pattern_count 9+ CFP-1336 amendment_number_stale_at_planning evidence base 공유 (Sub-CFP A/C 양 evidence). pattern_count >= 3 재발 시 follow-up CFP MUST promote to blocking tier. **86번째 hotfix-bypass:* family member (ADR-108 forcing function parity mandate — description text N번째 명시 의무, raw grep count post-append = 85 + 1 = 86 정합)**."
-    single_active: false
-    attach_owner_plugin: "Orchestrator (CFP-1497 amendment-slot-reservation warning-tier bypass — Amendment-slot pre-reservation strict claim 임시 skip 시 부착) / ArchitectAgent"
-
-  # CFP-1500 신설 — Wave 2-B of CFP-1389 (Sub-CFP B CFP-1436 mechanical wire — Mid-spawn drift detection)
-  - name: hotfix-bypass:mid-spawn-drift-detection
-    category: hotfix-bypass
-    color: "fef2c0"
-    description: "hotfix-bypass: mid-spawn-drift-detection warning-tier mechanical lint 조건부 skip + audit comment 자동 발의 (CFP-1500 / ADR-082 Amendment 16 §결정 1 layer 1 sub-scope (1-F) spawn-internal periodic origin re-pin protocol + ADR-073 Amendment 12 `mid_spawn_origin_drift_detected` transition trigger 11번째 entry paired sibling — Mid-spawn drift detection mechanical lint warning-tier bypass channel, CFP-1436 Wave 1 declarative stub workflow (PR #1475 merged 2026-05-24)의 Wave 2-B 실 mechanical wire, evidence-checks-registry mid-spawn-drift-detection entry 의 bypass channel). 변경 Story file (`docs/stories/**/*.md`) 안 §14 Lane Evidence section 의 agent spawn entry (ArchitectAgent / RequirementsPLAgent / DeveloperAgent / DesignReviewPLAgent / DeveloperPLAgent / QADeveloperAgent / deputy / chief author / SubAgent 등) 안에서 `mid_spawn_drift_check_executed: <bool>` field OR `drift_check_directive_present: true` marker presence 부재 시 [WARN-DIRECTIVE-ABSENT], long-duration spawn (≥ 5 min) 안에서 `drift_detected: <bool>` return packet flag 부재 시 [WARN-RETURN-PAYLOAD-INCOMPLETE] warning-tier. templates/** + tests/** path + markdown table row (line starts with `|`) = FP-완화 guard (canonical example / bats fixture / table abstract row 면제). Story file 아닌 모든 file = silent skip (lint scope 외). ADR-082 §결정 6 retain pattern 답습 (Wave 1 declare = CFP-1436 PR #1475 merged / Wave 2-B wire = 본 entry). 3-layer mechanical defense forcing function 완결 (CFP-1389 parent Epic): preventive pre-spawn pin (CFP-1489 Wave 2-A) + preventive slot reservation (CFP-1497 Wave 2-C) + reactive mid-spawn drift (본 CFP-1500 Wave 2-B) = 3 mechanical layer 완성. CodeQL ReDoS guard: line-by-line parse 의무 (CFP-1497 PR #1499 sentinel verbatim 답습 — nested quantifier regex 절대 금지, per-entry scan cap 50 line pathological-input bound). pattern_count 9+ CFP-1336 amendment_number_stale_at_planning evidence base 공유 (Sub-CFP A/B/C 3 evidence). pattern_count >= 3 재발 시 follow-up CFP MUST promote to blocking tier. **87번째 hotfix-bypass:* family member (ADR-108 forcing function parity mandate — description text N번째 명시 의무, raw grep count post-append = 86 + 1 = 87 정합)**."
-    single_active: false
-    attach_owner_plugin: "Orchestrator (CFP-1500 mid-spawn-drift-detection warning-tier bypass — Mid-spawn drift detection directive 임시 skip 시 부착) / ArchitectAgent"
 
   # CFP-1502 신설 — Wave 2-D of CFP-1389 (Sub-CFP D CFP-1438 mechanical wire — Chief author span telemetry, FINAL Wave 2)
   - name: hotfix-bypass:chief-author-span-telemetry
