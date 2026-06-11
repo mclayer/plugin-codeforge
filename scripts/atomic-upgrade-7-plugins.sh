@@ -11,14 +11,12 @@
 #   - per-family transaction boundary (7 plugin all-or-rollback) = 본 shell 단독 (§4.4)
 #   - user_decision_branches: 0 (no prompt invariant — Epic §1 WHY "0 자리")
 #   - --channel propagation: CHANNEL_ARGS array (REPO_ARGS 동형 orthogonal 차원) — CFP-932 D2
-#   - mixed channel detection: _check_channel_consistency 헬퍼 (snapshot 생성 이전 — DC-1)
 #
 # F-002 옵션 A — 7-name FAMILY loop 가 codex/superpowers 를 구조적으로 배제
 # AC-3 / ADR-037 Amendment 1 — atomic 후 0 drift invariant (drift > 0 = transaction 실패)
 #
 # §4.5 / §7.4.1 (i) — --repo <path> wrong-target 검증 (실재 디렉터리 AND .git 보유)
 # abort-before-touch — 검증 실패 시 per-family snapshot 무생성 (filesystem touch 0)
-# DC-1 (OpRiskArch §7.4.1): mixed channel detection = snapshot 생성 이전 강제 (abort-before-touch)
 #
 # ADR-061 정합 — heredoc-python 0 (multi-line python 미사용, POSIX bash only)
 

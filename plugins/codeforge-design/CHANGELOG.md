@@ -11,6 +11,8 @@
 
 버전 할당 = Epic #2151 S5 release 시점 (plugin.json version bump 없음 — marketplace sync 의무 비발동).
 
+## [0.21.3] - 2026-06-01
+
 ### Changed (CFP-1141 — AggregateArch deprecate sibling cross-ref cascade 정정)
 
 CFP-1126 (ADR-042 Amendment 10 — AggregateArchitectAgent deprecate + ModuleArchitectAgent boundary axis 통합 흡수) 의 deferred follow-up. sibling agent file 3종 안 stale `AggregateArch` (current actor) 참조를 canonical `ModuleArch (aggregate-level)` 로 정정 + permanent deputy roster `7 → 6` 정정:
