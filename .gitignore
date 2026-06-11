@@ -34,6 +34,10 @@ node_modules/
 .claude/ledger/
 .claude/token_tally.json
 
+# Claude Code 로컬 설정 — 커밋 금지 (권한 SSOT = 사용자 레벨 ~/.claude/settings.json, #2175 후속)
+.claude/settings.json
+.claude/settings.local.json
+
 # Claude Code — local project MCP config (per-developer, may contain token env refs)
 .mcp.json
 
