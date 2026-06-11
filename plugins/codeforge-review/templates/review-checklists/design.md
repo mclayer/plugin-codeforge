@@ -14,7 +14,7 @@ CFP-46 / [ADR-014](../../docs/adr/ADR-014-operational-risk-ssot-distribution.md)
 
 ## Category enum (출력 분류)
 
-`adr-mismatch | design-completeness | mapper-refactor-balance | implementability | test-contract | section-missing | security-design | data-migration | api-compatibility | observability | slo-missing`
+`adr-mismatch | design-completeness | mapper-refactor-balance | implementability | test-contract | section-missing | security-design | data-migration | api-compatibility | observability | slo-missing | fake-drift-cfp2159`
 
 ## Severity 자동 룰
 
