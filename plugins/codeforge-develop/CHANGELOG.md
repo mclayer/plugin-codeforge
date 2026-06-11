@@ -2,6 +2,13 @@
 
 `codeforge-develop` plugin 릴리스 이력.
 
+## 0.9.1 (2026-06-12) — CFP-2178 S6 lane repo archive 참조 sweep (PATCH)
+
+### Changed (CFP-2178 — S6 lane repo archive 참조 sweep, PATCH)
+
+- `overlay/hooks/session-start-deps-check.sh` 안내 URL — 구 lane repo (`mclayer/plugin-codeforge-develop`) → wrapper 모노레포 앵커 (`mclayer/plugin-codeforge/tree/main/plugins/codeforge-develop#dependencies`). 구 lane repo 8개 = 2026-06-12 GitHub archive (ADR-118 D1) — read-only repo 안내 차단.
+- `CLAUDE.md` `story_issues` repo 좌표 — `mclayer/plugin-codeforge-develop` → `mclayer/plugin-codeforge` (archive 후 read-only repo 에 issue 생성 지시 = 기능 파손 해소).
+
 ## 0.8.0 (2026-05-31) — CFP-1869 InfraEngineerAgent compose overlay 격리 guard (MINOR)
 
 ### Added

@@ -11,7 +11,7 @@ related_adrs:
   - ADR-086  # Deputy 신설 결정 framework — codeforge governance Aggregate decision boundary 사례
 related_files:
   - docs/glossary.md  # Aggregate entries SSOT (governance BC line 186-190 + application BC line 192-196)
-  - plugin-codeforge-design/agents/AggregateArchitectAgent.md  # AggregateArch deputy mandate
+  - plugins/codeforge-design/agents/AggregateArchitectAgent.md  # AggregateArch deputy mandate
   - docs/domain-knowledge/concept/bounded-context.md  # BC sibling
 tags:
   - aggregate

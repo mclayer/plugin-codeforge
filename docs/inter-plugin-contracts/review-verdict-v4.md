@@ -368,7 +368,7 @@ pl_recommendation=ESCALATE_PACKET_INCOMPLETE 시:
 
 ## 6. v4 ↔ canonical sync (ADR-010)
 
-본 file = sibling. canonical = `mclayer/plugin-codeforge-review/docs/inter-plugin-contracts/review-verdict-v4.md` (CFP-137 sibling sync follow-up PR 시 신설). canonical 변경 시 wrapper sibling sync PR 의무. CI lint = `check-inter-plugin-contracts.sh` (wrapper repo).
+본 file = canonical 단일 원본 (wrapper `docs/inter-plugin-contracts/review-verdict-v4.md` — ADR-118 D5, sibling sync 폐지. CFP-2178 S6 정정). CI lint = `check-inter-plugin-contracts.sh` (wrapper repo).
 
 **Wrapper-first 절차 (ADR-010 §4 + Story §5.5 B1 default 채택)**:
 1. 본 wrapper Phase 1 PR (CFP-137) merge — 본 file (sibling) 신설 + v3 sibling status flip.

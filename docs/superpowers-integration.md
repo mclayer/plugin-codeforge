@@ -37,33 +37,33 @@ CI 안전망: [ADR-017](../archive/adr/ADR-017-skill-override-path-enforcement.m
 
 | Lane | Agent | codeforge Phase trigger | Skill | Path override | I/O 계약 | Phase target |
 |---|---|---|---|:-:|---|---|
-| design | ArchitectAgent | 설계 lane R3 (Change Plan §3) | superpowers:writing-plans | YES | §3 row 1 | plugin-codeforge-design Phase 2 |
-| design | ArchitectAgent | 설계 lane R2 (대안 탐색) | superpowers:brainstorming | YES | §3 row 2 | plugin-codeforge-design Phase 2 |
-| design | ArchitectAgent | FIX 수령 (root cause) | superpowers:systematic-debugging | NO | §3 row 4 | plugin-codeforge-design Phase 2 |
-| design | ArchitectPLAgent | 설계 lane synthesis | superpowers:writing-plans | YES | §3 row 1 | plugin-codeforge-design Phase 2 |
-| design | ArchitectPLAgent | 6 SubAgent 병렬 spawn | superpowers:dispatching-parallel-agents | NO | §3 row 6 | plugin-codeforge-design Phase 2 |
-| design | ArchitectPLAgent | FIX 수령 | superpowers:systematic-debugging | NO | §3 row 4 | plugin-codeforge-design Phase 2 |
-| design | ModuleArchitectAgent | §11 author input (RDB OLTP — 구 DataMigrationArchitectAgent, CFP-1086/CFP-1126 통합) | superpowers:writing-plans | YES | §3 row 1 | plugin-codeforge-design Phase 2 |
-| design | RefactorAgent | §6 author input | superpowers:writing-plans | YES | §3 row 1 | plugin-codeforge-design Phase 2 |
-| design | SecurityArchitectAgent | §7 author input | superpowers:writing-plans | YES | §3 row 1 | plugin-codeforge-design Phase 2 |
-| design | TestContractArchitectAgent | §8 author input | superpowers:writing-plans | YES | §3 row 1 | plugin-codeforge-design Phase 2 |
-| develop | DataEngineerAgent | 파이프라인 장애 진단 | superpowers:systematic-debugging | NO | §3 row 4 | plugin-codeforge-develop Phase 2 |
-| develop | DeveloperAgent | 구현 (TDD) | superpowers:test-driven-development | NO | §3 row 3 | plugin-codeforge-develop Phase 2 |
-| develop | DeveloperAgent | 구현 장애 진단 | superpowers:systematic-debugging | NO | §3 row 4 | plugin-codeforge-develop Phase 2 |
-| develop | QADeveloperAgent | tests/** 작성 (TDD) | superpowers:test-driven-development | NO | §3 row 3 | plugin-codeforge-develop Phase 2 |
-| requirements | DomainAgent | 요구사항 대안 탐색 | superpowers:brainstorming | YES | §3 row 2 | plugin-codeforge-requirements Phase 2 |
-| requirements | DomainAgent | 지식 공백 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-requirements Phase 2 |
-| requirements | RequirementsAnalystAgent | 사용자 확인 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-requirements Phase 2 |
-| requirements | RequirementsPLAgent | 요구사항 대안 탐색 | superpowers:brainstorming | YES | §3 row 2 | plugin-codeforge-requirements Phase 2 |
-| requirements | RequirementsPLAgent | 통합 명세 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-requirements Phase 2 |
-| requirements | ResearcherAgent | 출처 URL 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-requirements Phase 2 |
-| requirements | ChangeImpactAgent | 변경 델타 불확실 영역 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-requirements CFP-374 |
-| requirements | FeasibilityAgent | 구현 가능성 판단 근거 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-requirements CFP-374 |
-| requirements | ContinuityAgent | 연속성 분석 누락 항목 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-requirements CFP-374 |
-| review | ClaudeReviewAgent | 표준 체크리스트 | superpowers:requesting-code-review | NO | §3 row 7 | plugin-codeforge-review Phase 2 |
-| review | ClaudeReviewAgent | PASS evidence 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-review Phase 2 |
-| pmo | PMOAgent | Story 완료 감사 | superpowers:verification-before-completion | NO | §3 row 5 | plugin-codeforge-pmo Phase 2 |
-| pmo | GitOpsAgent | Worktree lifecycle + branch tree + sequential merge + conflict escalation (CFP-139) | superpowers:using-git-worktrees | NO | §3 row 6 (CFP-139) | plugin-codeforge-pmo Phase 2 (CFP-139) |
+| design | ArchitectAgent | 설계 lane R3 (Change Plan §3) | superpowers:writing-plans | YES | §3 row 1 | plugins/codeforge-design Phase 2 |
+| design | ArchitectAgent | 설계 lane R2 (대안 탐색) | superpowers:brainstorming | YES | §3 row 2 | plugins/codeforge-design Phase 2 |
+| design | ArchitectAgent | FIX 수령 (root cause) | superpowers:systematic-debugging | NO | §3 row 4 | plugins/codeforge-design Phase 2 |
+| design | ArchitectPLAgent | 설계 lane synthesis | superpowers:writing-plans | YES | §3 row 1 | plugins/codeforge-design Phase 2 |
+| design | ArchitectPLAgent | 6 SubAgent 병렬 spawn | superpowers:dispatching-parallel-agents | NO | §3 row 6 | plugins/codeforge-design Phase 2 |
+| design | ArchitectPLAgent | FIX 수령 | superpowers:systematic-debugging | NO | §3 row 4 | plugins/codeforge-design Phase 2 |
+| design | ModuleArchitectAgent | §11 author input (RDB OLTP — 구 DataMigrationArchitectAgent, CFP-1086/CFP-1126 통합) | superpowers:writing-plans | YES | §3 row 1 | plugins/codeforge-design Phase 2 |
+| design | RefactorAgent | §6 author input | superpowers:writing-plans | YES | §3 row 1 | plugins/codeforge-design Phase 2 |
+| design | SecurityArchitectAgent | §7 author input | superpowers:writing-plans | YES | §3 row 1 | plugins/codeforge-design Phase 2 |
+| design | TestContractArchitectAgent | §8 author input | superpowers:writing-plans | YES | §3 row 1 | plugins/codeforge-design Phase 2 |
+| develop | DataEngineerAgent | 파이프라인 장애 진단 | superpowers:systematic-debugging | NO | §3 row 4 | plugins/codeforge-develop Phase 2 |
+| develop | DeveloperAgent | 구현 (TDD) | superpowers:test-driven-development | NO | §3 row 3 | plugins/codeforge-develop Phase 2 |
+| develop | DeveloperAgent | 구현 장애 진단 | superpowers:systematic-debugging | NO | §3 row 4 | plugins/codeforge-develop Phase 2 |
+| develop | QADeveloperAgent | tests/** 작성 (TDD) | superpowers:test-driven-development | NO | §3 row 3 | plugins/codeforge-develop Phase 2 |
+| requirements | DomainAgent | 요구사항 대안 탐색 | superpowers:brainstorming | YES | §3 row 2 | plugins/codeforge-requirements Phase 2 |
+| requirements | DomainAgent | 지식 공백 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugins/codeforge-requirements Phase 2 |
+| requirements | RequirementsAnalystAgent | 사용자 확인 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugins/codeforge-requirements Phase 2 |
+| requirements | RequirementsPLAgent | 요구사항 대안 탐색 | superpowers:brainstorming | YES | §3 row 2 | plugins/codeforge-requirements Phase 2 |
+| requirements | RequirementsPLAgent | 통합 명세 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugins/codeforge-requirements Phase 2 |
+| requirements | ResearcherAgent | 출처 URL 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugins/codeforge-requirements Phase 2 |
+| requirements | ChangeImpactAgent | 변경 델타 불확실 영역 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugins/codeforge-requirements CFP-374 |
+| requirements | FeasibilityAgent | 구현 가능성 판단 근거 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugins/codeforge-requirements CFP-374 |
+| requirements | ContinuityAgent | 연속성 분석 누락 항목 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugins/codeforge-requirements CFP-374 |
+| review | ClaudeReviewAgent | 표준 체크리스트 | superpowers:requesting-code-review | NO | §3 row 7 | plugins/codeforge-review Phase 2 |
+| review | ClaudeReviewAgent | PASS evidence 점검 | superpowers:verification-before-completion | NO | §3 row 5 | plugins/codeforge-review Phase 2 |
+| pmo | PMOAgent | Story 완료 감사 | superpowers:verification-before-completion | NO | §3 row 5 | plugins/codeforge-pmo Phase 2 |
+| pmo | GitOpsAgent | Worktree lifecycle + branch tree + sequential merge + conflict escalation (CFP-139) | superpowers:using-git-worktrees | NO | §3 row 6 (CFP-139) | plugins/codeforge-pmo Phase 2 (CFP-139) |
 | **wrapper** | **Orchestrator (or human)** | **pre-Issue scoping (Stage 0, [ADR-034](../archive/adr/ADR-034-pre-issue-brainstorming-stage.md))** | superpowers:brainstorming | YES | §3 row 2 | wrapper Phase 1 (post-merge: Issue Form 제출) |
 | **wrapper** | **Orchestrator** | **AskUserQuestion 직전 — Pre-question Review ([ADR-052](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) §3.10.1)** | codex:codex-rescue (proactive) | NO | playbook §3.10.1 | wrapper (전 레인) |
 | **wrapper** | **Orchestrator** | **ArchitectAgent §3 초안 완료 직후 — Design Synthesis Check ([ADR-052](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) §3.10.2)** | codex:codex-rescue (proactive) | NO | playbook §3.10.2 | design lane |

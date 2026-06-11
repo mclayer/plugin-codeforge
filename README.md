@@ -128,7 +128,7 @@ mkdir -p .claude/_overlay/agents
 | [`docs/migration-guide.md`](docs/migration-guide.md) | 플러그인 버전업 시 consumer overlay 마이그레이션 절차 |
 | [`CHANGELOG.md`](archive/CHANGELOG-legacy.md) | 릴리스 이력 (SemVer) |
 | [`templates/`](templates/) | 공통 문서 양식 SSOT — Change Plan · ADR · Story Page · Impl Manifest |
-| [`presets/`](https://github.com/mclayer/plugin-codeforge-develop/tree/main/presets) | 프로젝트 shape별 Dev 에이전트 번들 — webapp 등 |
+| [`presets/`](plugins/codeforge-develop/presets/) | 프로젝트 shape별 Dev 에이전트 번들 — webapp 등 |
 | `agents/*.md` | 없음 (wrapper-only — agent md 는 8 lane plugin 에 분산) |
 
 ## 구조

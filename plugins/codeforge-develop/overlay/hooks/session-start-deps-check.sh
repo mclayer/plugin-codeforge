@@ -26,7 +26,7 @@ if [[ ! -d "$CORE_PLUGIN_PATH" ]]; then
     "codeforge-develop@mclayer": true
   }
 
-자세한 사항: https://github.com/mclayer/plugin-codeforge-develop#dependencies
+자세한 사항: https://github.com/mclayer/plugin-codeforge/tree/main/plugins/codeforge-develop#dependencies
 
 EOF
   exit 1

@@ -63,7 +63,7 @@ ADR-091 §결정 7 가 5 영역 evidence enumeration 의무로 vocabulary theate
 codeforge governance BC 의 Ubiquitous Language SSOT = [`plugin-codeforge/docs/glossary.md`](../../glossary.md) (ADR-091 Story-1 신규 산출).
 
 **SSOT 적용 범위 (의무)**:
-- agent file 본문 (15 agent in `plugin-codeforge-design/agents/`)
+- agent file 본문 (15 agent in `plugins/codeforge-design/agents/`)
 - ADR 본문 (`docs/adr/ADR-NNN-*.md`)
 - Change Plan (`docs/change-plans/<KEY>-*.md`)
 - Story file (`docs/stories/<KEY>.md`)
@@ -101,7 +101,7 @@ ADR-091 §결정 6 의 lint mechanism. ADR-091 frontmatter `mechanical_enforceme
 - bypass label: `hotfix-bypass:ubiquitous-language-drift` (S3 신설, label-registry-v2 v2.42 → v2.43 MINOR bump, 61번째 family member)
 
 **검사 logic**:
-1. `Glob(docs/adr/**, docs/change-plans/**, docs/stories/**, plugin-codeforge-design/agents/**, skills/**)` 으로 모든 governance file 후보 수집
+1. `Glob(docs/adr/**, docs/change-plans/**, docs/stories/**, plugins/codeforge-design/agents/**, skills/**)` 으로 모든 governance file 후보 수집
 2. 각 file 안 DDD term (Aggregate / Bounded Context / Ubiquitous Language / Entity / Value Object / Domain Service / Domain Event / Application Service / Infrastructure / Repository / Factory / Specification / Module / Layered / Hexagonal / Clean / Onion / 4-Layer / Authority Pair / Subdomain Specialist 등) presence-grep
 3. glossary.md 안 해당 term entry verbatim quote 또는 link cite 여부 확인
 4. drift 발견 시 warning + comment trail

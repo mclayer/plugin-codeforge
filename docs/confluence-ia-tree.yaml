@@ -1305,7 +1305,7 @@ top_level_pages:
   lane_plugins:
     - name: codeforge-requirements
       page_id: "2098238"
-      git_source: "https://github.com/mclayer/plugin-codeforge-requirements"
+      git_source: "https://github.com/mclayer/plugin-codeforge/tree/main/plugins/codeforge-requirements"
       children:
         - { name: "Living Architecture", page_id: "2163504", source: "docs/architecture/codeforge-requirements.md" }
         - { name: "ADR", page_id: "2065671", source: "docs/adr/ (lane:requirements)" }
@@ -1315,7 +1315,7 @@ top_level_pages:
 
     - name: codeforge-design
       page_id: "2163460"
-      git_source: "https://github.com/mclayer/plugin-codeforge-design"
+      git_source: "https://github.com/mclayer/plugin-codeforge/tree/main/plugins/codeforge-design"
       children:
         - { name: "Living Architecture", page_id: "2065717", source: "docs/architecture/codeforge-design.md" }
         - { name: "ADR", page_id: "2163571", source: "docs/adr/ (lane:design)" }
@@ -1325,7 +1325,7 @@ top_level_pages:
 
     - name: codeforge-develop
       page_id: "2065627"
-      git_source: "https://github.com/mclayer/plugin-codeforge-develop"
+      git_source: "https://github.com/mclayer/plugin-codeforge/tree/main/plugins/codeforge-develop"
       children:
         - { name: "Living Architecture", page_id: "2065739", source: "docs/architecture/codeforge-develop.md" }
         - { name: "ADR", page_id: "2098305", source: "docs/adr/ (lane:develop)" }
@@ -1335,7 +1335,7 @@ top_level_pages:
 
     - name: codeforge-review
       page_id: "2130769"
-      git_source: "https://github.com/mclayer/plugin-codeforge-review"
+      git_source: "https://github.com/mclayer/plugin-codeforge/tree/main/plugins/codeforge-review"
       children:
         - { name: "Living Architecture", page_id: "2130855", source: "docs/architecture/codeforge-review.md" }
         - { name: "ADR", page_id: "2065761", source: "docs/adr/ (lane:design-review + code-review + security-test)" }
@@ -1345,7 +1345,7 @@ top_level_pages:
 
     - name: codeforge-test
       page_id: "2098261"
-      git_source: "https://github.com/mclayer/plugin-codeforge-test"
+      git_source: "https://github.com/mclayer/plugin-codeforge/tree/main/plugins/codeforge-test"
       children:
         - { name: "Living Architecture", page_id: "2163699", source: "docs/architecture/codeforge-test.md" }
         - { name: "ADR", page_id: "2065783", source: "docs/adr/ (lane:test)" }
@@ -1355,7 +1355,7 @@ top_level_pages:
 
     - name: codeforge-pmo
       page_id: "2065649"
-      git_source: "https://github.com/mclayer/plugin-codeforge-pmo"
+      git_source: "https://github.com/mclayer/plugin-codeforge/tree/main/plugins/codeforge-pmo"
       children:
         - { name: "Living Architecture", page_id: "2065827", source: "docs/architecture/codeforge-pmo.md" }
         - { name: "ADR", page_id: "2130897", source: "docs/adr/ (lane:pmo)" }
@@ -1365,7 +1365,7 @@ top_level_pages:
 
     - name: codeforge-deploy
       page_id: "2130791"
-      git_source: "https://github.com/mclayer/plugin-codeforge-deploy"
+      git_source: "https://github.com/mclayer/plugin-codeforge/tree/main/plugins/codeforge-deploy"
       declarative_phase: true  # CFP-1059 / ADR-087
       children:
         - { name: "Living Architecture", page_id: "2098391", source: "docs/architecture/codeforge-deploy.md (declarative)" }
@@ -1376,7 +1376,7 @@ top_level_pages:
 
     - name: codeforge-deploy-review
       page_id: "2163482"
-      git_source: "https://github.com/mclayer/plugin-codeforge-deploy-review"
+      git_source: "https://github.com/mclayer/plugin-codeforge/tree/main/plugins/codeforge-deploy-review"
       declarative_phase: true  # CFP-1059 / ADR-088
       children:
         - { name: "Living Architecture", page_id: "2130919", source: "docs/architecture/codeforge-deploy-review.md (declarative)" }

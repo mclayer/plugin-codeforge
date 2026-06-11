@@ -218,7 +218,7 @@ codeforge family 가 사용하는 `CODEFORGE_CROSS_REPO_PAT` (cross-repo Story b
 
 1. New PAT 발급 — GitHub Personal access tokens, 위 scope, expiration ≤ 90 days
 2. mclayer org secrets 갱신 — `Settings > Secrets > Actions > CODEFORGE_CROSS_REPO_PAT` (org level)
-3. sibling repo verification — 7 repo (codeforge-{requirements,design,develop,test,review,pmo} + marketplace + codeforge-internal-docs) org secret 가시성 확인
+3. repo verification — marketplace + codeforge-internal-docs org secret 가시성 확인 (구 lane repo 8개 = 2026-06-12 GitHub archive, CFP-2178 S6 — fine-grained PAT 전환 시 access list 에서 제외 권고: `docs/security/pat-rotation-log.md`)
 4. 1-2 PR 테스트 — phase-gate-mergeable 또는 KPI workflow active PR 동작 확인
 5. 이전 PAT revoke — GitHub Personal access tokens settings + audit log row append
 
@@ -1954,7 +1954,7 @@ cp -r ${CLAUDE_PLUGIN_ROOT}/codeforge/presets/webapp/agents/*.md \
       .claude/_overlay/agents/
 ```
 
-상세는 [`../presets/README.md`](https://github.com/mclayer/plugin-codeforge-develop/blob/main/presets/README.md) 참조.
+상세는 [`plugins/codeforge-develop/presets/README.md`](../plugins/codeforge-develop/presets/README.md) 참조.
 
 ### 3d. `.claude/_overlay/agents/<Name>.md` 예시
 

@@ -209,7 +209,7 @@
 - **naming_pattern**: `[a-z0-9-]+-v[0-9]+\.md`
 - **frontmatter_required**: True
 - **examples**:
-  - mclayer/plugin-codeforge-review/docs/inter-plugin-contracts/review-verdict-v3.md
+  - plugins/codeforge-review/docs/inter-plugin-contracts/review-verdict-v3.md
 
   **notes**:
   > Canonical 은 producer plugin repo. wrapper 는 sibling sync mirror (ADR-010).
@@ -306,14 +306,14 @@
 - **frontmatter_required**: True
 - **examples**:
   - mclayer/plugin-codeforge/docs/architecture/codeforge-family.md (wrapper family overview seed — CFP-919 baseline + CFP-1427 Sub-C S3.3 5-anchor expand + 7→8 plugin family update)
-  - mclayer/plugin-codeforge-requirements/docs/architecture/codeforge-requirements.md (CFP-968)
-  - mclayer/plugin-codeforge-design/docs/architecture/codeforge-design.md (CFP-969 + CFP-1086-S4 mctrader 5 repo cross-layer evidence)
-  - mclayer/plugin-codeforge-develop/docs/architecture/codeforge-develop.md (CFP-970)
-  - mclayer/plugin-codeforge-review/docs/architecture/codeforge-review.md (CFP-971)
-  - mclayer/plugin-codeforge-test/docs/architecture/codeforge-test.md (CFP-972)
-  - mclayer/plugin-codeforge-pmo/docs/architecture/codeforge-pmo.md (CFP-973)
-  - mclayer/plugin-codeforge-deploy/docs/architecture/codeforge-deploy.md (CFP-1059 declarative Phase 1 — plugin repo 신설 = S2 sub-Story carrier, body wire deferred)
-  - mclayer/plugin-codeforge-deploy-review/docs/architecture/codeforge-deploy-review.md (CFP-1059 declarative Phase 1 — plugin repo 신설 = S3 sub-Story carrier, body wire deferred)
+  - plugins/codeforge-requirements/docs/architecture/codeforge-requirements.md (CFP-968)
+  - plugins/codeforge-design/docs/architecture/codeforge-design.md (CFP-969 + CFP-1086-S4 mctrader 5 repo cross-layer evidence)
+  - plugins/codeforge-develop/docs/architecture/codeforge-develop.md (CFP-970)
+  - plugins/codeforge-review/docs/architecture/codeforge-review.md (CFP-971)
+  - plugins/codeforge-test/docs/architecture/codeforge-test.md (CFP-972)
+  - plugins/codeforge-pmo/docs/architecture/codeforge-pmo.md (CFP-973)
+  - plugins/codeforge-deploy/docs/architecture/codeforge-deploy.md (CFP-1059 declarative Phase 1 — plugin repo 신설 = S2 sub-Story carrier, body wire deferred)
+  - plugins/codeforge-deploy-review/docs/architecture/codeforge-deploy-review.md (CFP-1059 declarative Phase 1 — plugin repo 신설 = S3 sub-Story carrier, body wire deferred)
   - mclayer/codeforge-internal-docs/wrapper/architecture/wrapper-overview.md (dogfood)
 
   **notes**:

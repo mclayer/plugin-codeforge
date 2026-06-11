@@ -9,7 +9,7 @@ kind: architecture_doc
 
 <!-- 본 file = wrapper repo 1회 seed (CFP-920 / Epic B Story-2) + CFP-1427 5-anchor expand (Sub-C S3.3 / ADR-078 Amd 2).
      누적 현재 상태 SSOT (Story key 독립, 영속). 델타는 Change Plan SSOT (disjoint, ADR-078 §결정 3).
-     8 lane plugin self-owned architecture_doc 는 각자 plugin repo `docs/architecture/<plugin>.md` SSOT
+     8 lane plugin self-owned architecture_doc 는 모노레포 `plugins/<plugin>/docs/architecture/<plugin>.md` SSOT (ADR-118 D3)
      (CFP-949 Sub-Epic 6 lane plugin self-owned seed merged + CFP-1059 declarative 2 신규 plugin = follow-up sub-CFP 독립 carrier).
      본 doc = family overview (cross-link source) + 8 lane plugin enumeration + 5-anchor 시스템 현황 layer. -->
 
@@ -53,7 +53,7 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 
 ## 인터페이스 계약
 
-모듈 간 계약 surface = `docs/inter-plugin-contracts/` (canonical = producer plugin repo, wrapper = sibling sync mirror — ADR-010). `[verified: MANIFEST.yaml @ HEAD fb06a04]`:
+모듈 간 계약 surface = `docs/inter-plugin-contracts/` (wrapper 단일 원본 — ADR-118 D5, sibling sync 폐지). `[verified: MANIFEST.yaml @ HEAD fb06a04]`:
 
 **kind:contract (9)** — lane 간 산출물 핸드오프 surface (CFP-1059 / ADR-087+088 신설 2종 placeholder):
 
@@ -205,8 +205,8 @@ graph TB
 ```
 
 **plugin family lifecycle phase**:
-- **Active (6 production lanes)** = codeforge-{requirements,design,review,develop,test,pmo} 모두 정식 plugin repo 보유 + agent file + self-owned arch doc + marketplace 등록
-- **Declarative Phase 1 (2 deploy lanes)** = codeforge-{deploy,deploy-review} = CFP-1059 / ADR-087+088 declarative seed only. plugin repo 신설 = S2/S3 sub-Story body wire carrier (본 Sub-C S3.3 scope 외)
+- **Active (6 production lanes)** = codeforge-{requirements,design,review,develop,test,pmo} 모두 모노레포 `plugins/<plugin>/` 동봉 (ADR-118 D3, 구 lane repo = 2026-06-12 GitHub archive — ADR-118 D1) + agent file + self-owned arch doc + marketplace 등록
+- **Declarative Phase 1 (2 deploy lanes)** = codeforge-{deploy,deploy-review} = CFP-1059 / ADR-087+088 declarative seed 후 모노레포 `plugins/codeforge-{deploy,deploy-review}/` 동봉 (구 lane repo = 2026-06-12 GitHub archive)
 
 ### C4 Container
 
@@ -344,14 +344,14 @@ ADR 미합의 / Wave 미작성 / placeholder 집중 영역. **design lane 진입
 | 영역 | 상태 | carrier |
 |---|---|---|
 | **Mega-Epic CFP-1415 (Confluence-as-derived-mirror governance standardization) 진행 중** | 4 Sub-Epic split (Sub-A/B/C/D) — 본 Sub-C S3.3 = wrapper family.md 5-anchor expand carrier | Issue #1415 (Epic) + Sub-Epic #1418 (Sub-C) |
-| **codeforge-deploy / codeforge-deploy-review plugin repo 신설 미완** | CFP-1059 / ADR-087+088 declarative Phase 1 merged — 실 plugin seed (agent file / contract body / marketplace 등록) = S2/S3 sub-Story carrier | follow-up sub-CFP 2 (S2 codeforge-deploy seed / S3 codeforge-deploy-review seed) |
-| **8 lane plugin self-owned arch doc 5-anchor expand** | 6 active plugin (CFP-949 baseline) = 4 H2 schema 보유 / 5-anchor section 미반영 — 본 Sub-C S3.3 의 cross-repo follow-up 영역 | follow-up sub-CFP 6 (codeforge-{requirements,design,develop,review,test,pmo} 각자 self-owned arch doc 5-anchor expand) |
+| **codeforge-deploy / codeforge-deploy-review 정식 승격 잔여** | CFP-1059 / ADR-087+088 declarative Phase 1 merged — 실 plugin seed 는 모노레포 `plugins/codeforge-{deploy,deploy-review}/` 동봉 (ADR-118 D3) | follow-up sub-CFP 2 (S2 codeforge-deploy seed / S3 codeforge-deploy-review seed) |
+| **8 lane plugin self-owned arch doc 5-anchor expand** | 6 active plugin (CFP-949 baseline) = 4 H2 schema 보유 / 5-anchor section 미반영 — 모노레포 `plugins/` in-tree follow-up | follow-up sub-CFP 6 (codeforge-{requirements,design,develop,review,test,pmo} 각자 self-owned arch doc 5-anchor expand) |
 | **ArchitectAnalystAgent dual-read path 실 wire** | ADR-078 Amd 2 §결정 1 declared (git primary + Confluence fallback) — 실 wire = codeforge-design plugin ArchitectAnalystAgent.md self-write 확장 | follow-up Sub-C S3.4 (다른 sub-CFP carrier) |
 | **mechanical wire — review-verdict-v4 v4.10 `living_architecture_updated: bool`** | ADR-078 Amd 2 §결정 6 declared (Wave 1 declaration-only) — lint workflow + bats fixture + evidence-checks-registry row + hotfix-bypass label family member | follow-up Sub-C S3.5 / CFP-1429 carrier |
 | **5 follow-up CFP (HIGH 2 + MEDIUM 2 + LOW-DEFER 1)** | Mega-Epic CFP-1415 진행 중 5 follow-up declared — defer / immediate split | (다른 CFP 발의 후 status 갱신) |
 | **#1320 사용자 dependency** | 사용자 발화 영역의 hard dependency — 본 Sub-C 진행 중 absorb 필요 시 status update | Issue #1320 |
 | **#1439 MCP labels bug** | MCP labels API 영역 known bug — codeforge family 안 cross-cutting 영향 (label-registry-v2 propagation 차단 가능) | Issue #1439 (독립 fix carrier) |
-| **CFP-1126 / ADR-042 Amd 10 — AggregateArch deprecated 실 agent file 정리** | 정책 codify 완료 (CFP-1168 realized) — 실 agent file deprecate = codeforge-design plugin cross-repo sibling sync Wave 2 추후 CFP carrier | follow-up sub-CFP (codeforge-design plugin agent file deprecation) |
+| **CFP-1126 / ADR-042 Amd 10 — AggregateArch deprecated 실 agent file 정리** | 정책 codify 완료 (CFP-1168 realized) — 실 agent file deprecate = `plugins/codeforge-design/` in-tree Wave 2 추후 CFP carrier (sibling sync 폐지 — ADR-118 D5) | follow-up sub-CFP (codeforge-design plugin agent file deprecation) |
 
 > **본 Open Decisions 영역 = 매 ADR-078 Amd 2 §결정 2 per-Epic 현행화 시점에 갱신 의무**. ArchitectAnalystAgent / 신규 contributor / design lane 진입 시 본 표가 "지금 codeforge 의 모호성" 즉시 visible answer 의 single SSOT.
 
@@ -366,7 +366,7 @@ ADR 미합의 / Wave 미작성 / placeholder 집중 영역. **design lane 진입
 본 doc 의 architecture_doc 운용은 [ADR-076](../../archive/adr/ADR-076-declarative-reconciliation-upgrade.md) declarative reconciliation 3-layer 패턴을 도메인 disjoint 로 답습 (ADR-078 §결정 2):
 
 - **desired state** = 본 doc 의 4 H2 closed-enum (모듈 + 경계 + 인터페이스 계약 + 데이터 흐름) + 5-anchor 시스템 현황 section (ADR-078 Amd 2 §결정 3) 누적 현재 상태 SSOT
-- **current state** = wrapper repo (`CLAUDE.md` / `docs/inter-plugin-contracts/MANIFEST.yaml` / 8 lane plugin repo 의 actual agent file + CLAUDE.md + arch doc) 의 실제 정의 상태
+- **current state** = wrapper repo (`CLAUDE.md` / `docs/inter-plugin-contracts/MANIFEST.yaml` / `plugins/<lane>/` 의 actual agent file + CLAUDE.md + arch doc) 의 실제 정의 상태
 - **converge** = ArchitectAgent self-write 확장 (per-Epic 현행화 mandate, ADR-078 §결정 4 + Amd 2 §결정 2) + design lane verdict gate (drift lint architecture-drift, ADR-078 Amd 1)
 
 > 본 cross-ref = 패턴 답습. 도메인 (upgrade flow ↔ family overview) 은 disjoint. wording SSOT = ADR-076 본문 + ADR-078 §결정 2 + Amd 2.
