@@ -112,7 +112,7 @@ cross-repo distributed work (mctrader 7+ repo 안 임의 repo) 가 MCT-NNN key �
 | Option | Mechanism | Complexity | Coverage | Migration cost |
 |---|---|---|---|---|
 | **A** | mechanical enforcement | medium (workflow + script + ADR amendment) | 7+ repo all PR | low (CI gate 추가) |
-| **B** | doc-only consumer self-discipline | low (current state, governance skill 박제) | self-discipline 만 | 0 (no change) |
+| **B** | doc-only consumer self-discipline | low (current state, governance skill 명시) | self-discipline 만 | 0 (no change) |
 | **C** | counter SSOT centralization in plugin | high (plugin API + downstream cascade) | full mechanical | high (consumer migration) |
 
 ### 규칙 3 — Option A 권장 (derived default, ADR-060 evidence-enforceable promotion framework)

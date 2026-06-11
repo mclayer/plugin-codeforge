@@ -3,12 +3,11 @@ on:
   pull_request:
     paths:
       # ADR-064 Amendment 5 §결정 1 (CFP-750) — lint scope 확장 (5 영역 → 거버넌스 문서 전체).
-      # 단축 표현 = docs/** (전체) + CLAUDE.md + CHANGELOG.md + templates/**.
-      # CHANGELOG.md 명시 추가 — docs/** 가 docs/inter-plugin-contracts/** 등 cover 하나
-      # append-only history 영역 CHANGELOG.md 는 별도 명시 (Amendment 5 §결정 1 L602 표 row).
+      # 단축 표현 = docs/** (전체) + CLAUDE.md + templates/**.
+      # CHANGELOG.md path 제거 (CFP-2154) — main 에 CHANGELOG.md 부재 dead reference 정리
+      # (정책 선언은 docs/wording-dictionary.md 유지 — 파일 재생성 시 path 재추가).
       - 'docs/**'
       - 'CLAUDE.md'
-      - 'CHANGELOG.md'
       - 'templates/**'
       - '.github/workflows/wording-dictionary.yml'
 permissions:
@@ -31,6 +30,9 @@ jobs:
             } else {
               core.setOutput('skip', 'false');
             }
+      - name: Run lint self-test (CFP-2154 — counter-case fixture, CFP-2104 D3 precedent)
+        if: steps.bypass.outputs.skip != 'true'
+        run: bash scripts/check-wording-dictionary.sh --self-test
       - name: Run wording-dictionary lint
         if: steps.bypass.outputs.skip != 'true'
         # ADR-064 Amendment 5 §결정 2 / Change Plan §3.2.2 (CFP-750) — 인자 완전 제거.
