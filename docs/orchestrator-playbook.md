@@ -445,7 +445,7 @@ Phase 2 enforcement (stop-event-v1 ledger / inline write detect hook / spawn cos
 
 #### §3.0.9 Pre-action fact verification (normative — wrapper + all consumers)
 
-Orchestrator 가 사용자에게 substantive path 를 제시하거나 외부 system 동작을 인용하기 전, 아래 5-item self-audit 의무:
+Orchestrator 가 사용자에게 substantive path 를 제시하거나 외부 system 동작을 인용하기 전, 아래 6-item self-audit 의무:
 
 | 항목 | verify 도구 | skip 금지 조건 |
 |---|---|---|
@@ -454,6 +454,9 @@ Orchestrator 가 사용자에게 substantive path 를 제시하거나 외부 sys
 | schema / config 실제 fields | `Read` | structured contract 인용 전 |
 | GitHub Issue / state | `mcp__github__issue_read` | Issue 상태 주장 전 |
 | 사용자 환경 state | `Read ~/.claude/settings.json` 또는 `Bash which` | 설치 여부·인증 상태 주장 전 |
+| 외부 지식 / 산업 표준 / 기술 동작 일반론 | `WebSearch` / `WebFetch` / 공식 문서 | training 지식 기반 단정 발화 전 — 출처 인용 의무 |
+
+**외부 지식 grounding (ADR-119)**: 위 표 6번째 항목의 normative SSOT = [ADR-119](../archive/adr/ADR-119-research-before-claims.md) — 외부 지식 주장 = 자료 조사 선행 + 출처 인용, repo 사실 = 실측 (ADR-073), 확인 불가 = "확인 불가/추정" 명시(abstention) 후 진행. 본 절 = cross-ref anchor (상세 중복 서술 금지).
 
 **Hedging 금지 신호 (이 단어 응답에 등장 시 verify 의무)**:
 - "should be" / "보통" / "~로 추정" / "~일 것" / 외부 system 동작 가정

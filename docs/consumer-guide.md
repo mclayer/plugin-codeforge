@@ -2570,6 +2570,14 @@ consumer 측 사용자 활성 directive 권장 (자체 인지 강화 채널 — 
 - 홈 루트 직접 쓰기·상대경로 출력(cwd=홈 루트 상태의 `git clone url name` / `cmd > out.json`) 금지 — 가드가 차단합니다.
 - 정상 작업은 repo / worktree 안에서 (repo 내부 절대경로 또는 cwd 가 repo 인 상태).
 
+## 7.4 Research-before-claims 상속 (ADR-119)
+
+wrapper [ADR-119](../archive/adr/ADR-119-research-before-claims.md) 의 research-before-claims 원칙은 consumer 가 codeforge family plugin 을 사용하는 시점부터 consumer Orchestrator 에 자동 상속된다 (ADR-039 §결정 7 inheritance 패턴 — §7.0.1 과 동일 구조).
+
+- 핵심 의무 = 외부 지식 단정 전 자료 조사 + 출처 인용 / repo·cross-repo 사실 단정 전 실측 (cross-repo 는 `git fetch` 후 origin/main 실제 확인 — `git show origin/main:<path>`, wrapper ADR-073 패턴) / 확인 불가 시 "확인 불가/추정" 명시(abstention) 후 진행 — 3-way matrix 상세 = ADR-119 §결정 1 SSOT (본 절 = cross-ref anchor, 재서술 금지)
+- consumer overlay 로 본 원칙 축소 불가 — 확장만 가능. 약화 = wrapper ADR-119 amendment 경로만 (evidence-gated, ADR-064 §결정 7)
+- Phase 1 trust model — 자동 enforcement hook 부재, consumer Orchestrator 자체 인지가 1차 안전망 (§7.0.4 패턴)
+
 ## 7.5. CI Terminal State Classification (CFP-106 fix #144)
 
 PR / GitHub Actions 결과 처리 가이드. fresh consumer (mctrader debut 등) 가 `SUCCESS` 만 wait 하는 naive polling 으로 사용자 stop 발생하던 패턴 해결.
