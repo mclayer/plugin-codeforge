@@ -12,7 +12,7 @@ md_files = [p for p in md_files if "tests/fixtures" not in str(p).replace("\\", 
 # 슬림화: archive/ 제외 (frozen 보관물 — 내부 상대링크는 live 표준 검증 대상 아님.
 # 보관 시점 SHA 기준 동결, 후속 단계서 삭제될 live 문서를 가리킬 수 있음)
 md_files = [p for p in md_files if not str(p).replace("\\", "/").startswith("archive/")]
-# CFP-2152 S1 (ADR-118): plugins/ = lane repo subtree 흡수 격리 구역 — lane 잔여물 링크 정리는 S3 책임, 그전까지 lint 범위 제외
+# CFP-2152 S1 (ADR-118): plugins/ = lane repo subtree 흡수 격리 구역 — lane 콘텐츠 정리 별도 후속 (broken link 38 실측, CFP-2159 격리 유지 판정), 그전까지 lint 범위 제외
 md_files = [p for p in md_files if not str(p).replace("\\", "/").startswith("plugins/")]
 
 errors: list[str] = []

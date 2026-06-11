@@ -12,7 +12,7 @@ codeforge core 가 외부 plugin과 통신할 때의 typed schema. wrapper repo 
 
 ## kind:contract (typed inter-plugin schema, 6 entry / 8 file)
 
-[docs/inter-plugin-contracts/MANIFEST.yaml](../../docs/inter-plugin-contracts/MANIFEST.yaml) 가 SSOT. lint 는 [scripts/check-inter-plugin-contracts.sh](../../scripts/check-inter-plugin-contracts.sh).
+[docs/inter-plugin-contracts/MANIFEST.yaml](../../docs/inter-plugin-contracts/MANIFEST.yaml) 가 SSOT. lint 였던 `scripts/check-inter-plugin-contracts.sh` 는 CFP-2159 (ADR-118 S3) 에서 은퇴 — 모노레포 통합으로 cross-repo mirror 검사 대상 소멸. contract 단일화 후속 = S2 (CFP-2158).
 
 | Contract | Producer plugin | Files (wrapper sibling) |
 |---|---|---|

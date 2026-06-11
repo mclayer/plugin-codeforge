@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 5
     permissions:
       # issues:write — phase label transition, Issue close, Issue comment
-      # pull-requests:write — PR comment (sibling close / status updates)
+      # pull-requests:write — PR comment (status updates)
       # contents:read — checkout repo (.codeforge/ flag check)
       # CODEFORGE_CROSS_REPO_PAT handles cross-repo writes (story writer, telemetry) independently.
       issues: write
@@ -328,18 +328,7 @@ jobs:
             echo "outcome=fail" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Action 4 — Sibling PR auto-close
-        if: steps.enabled.outputs.disabled != 'true' && steps.meta.outputs.story_key != ''
-        id: action4
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        continue-on-error: true
-        run: |
-          if ./scripts/post-merge-sibling-close.sh "${{ steps.meta.outputs.story_key }}"; then
-            echo "outcome=success" >> $GITHUB_OUTPUT
-          else
-            echo "outcome=fail" >> $GITHUB_OUTPUT
-          fi
+      # Action 4 (sibling PR auto-close) — CFP-2159 (ADR-118 S3) 은퇴: 모노레포 통합으로 sibling PR 부재.
 
       - name: Telemetry counter
         if: always() && steps.enabled.outputs.disabled != 'true' && steps.meta.outputs.story_key != ''
@@ -348,15 +337,14 @@ jobs:
         run: |
           # CFP-74 Codex P1 #2 fix: explicit outcome aggregation from per-action step outputs.
           # `continue-on-error: true` makes job.status always success, so we must inspect
-          # individual action outcome outputs (action1/2/3/4) to compute correct telemetry.
+          # individual action outcome outputs (action1/2/3) to compute correct telemetry.
           A1="${{ steps.action1.outputs.outcome || 'skip' }}"
           A2="${{ steps.action2.outputs.outcome || 'skip' }}"
           A3="${{ steps.action3.outputs.outcome || 'skip' }}"
-          A4="${{ steps.action4.outputs.outcome || 'skip' }}"
 
           ACTIONS_DONE=""
           ACTIONS_FAILED=""
-          for entry in "phase_label_transition:$A1" "story_section_9:$A2" "issue_close:$A3" "sibling_pr_close:$A4"; do
+          for entry in "phase_label_transition:$A1" "story_section_9:$A2" "issue_close:$A3"; do
             name="${entry%%:*}"
             result="${entry##*:}"
             if [ "$result" = "success" ] || [ "$result" = "no_op" ]; then
