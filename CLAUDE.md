@@ -4,7 +4,7 @@
 모든 응답·주석·문서는 **한글 주 언어**. 영어는 기술 용어·코드·고유명사만. 한자(일·중 포함) 금지.
 
 ## 정체
-codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 모노레포. 최상위 Claude 세션(Orchestrator)이 8개 lane plugin 의 에이전트를 spawn 해 요구사항 접수부터 배포 리뷰까지 진행한다. 8 lane plugin 은 본 repo `plugins/<plugin name>/` 하위 동봉 (ADR-118 D3) — 에이전트 상세 SSOT = `plugins/<lane>/CLAUDE.md`. 구 lane repo 8개 = 2026-06-12 GitHub archive (이력 보존, ADR-118 D1).
+codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 모노레포. **0 core 에이전트 (wrapper-only)** — wrapper 루트 자체 에이전트 0, 최상위 Claude 세션(Orchestrator)이 8개 lane plugin 의 에이전트를 spawn 해 요구사항 접수부터 배포 리뷰까지 진행한다. 8 lane plugin 은 본 repo `plugins/<plugin name>/` 하위 동봉 (ADR-118 D3) — 에이전트 상세 SSOT = `plugins/<lane>/CLAUDE.md`. 구 lane repo 8개 = 2026-06-12 GitHub archive (이력 보존, ADR-118 D1).
 
 consumer 프로젝트가 **설치해 쓰는 플러그인**이다. 프로젝트별 도메인·기술스택·상수는 consumer 측 `.claude/_overlay/` 로 주입(overlay 는 정책을 확장만 가능, 축소 불가). 상세: [docs/consumer-guide.md](docs/consumer-guide.md).
 
