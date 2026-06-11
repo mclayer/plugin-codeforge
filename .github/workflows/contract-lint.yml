@@ -1,4 +1,5 @@
 name: contract-lint
+# CFP-2159 (ADR-118 S3): inter-plugin-contracts / inter-plugin-drift job 은퇴 — 모노레포 통합으로 cross-repo contract mirror 검사 대상 소멸. 잔존 4 job = 비분리 거버넌스 lint.
 
 on:
   pull_request:
@@ -11,36 +12,6 @@ permissions:
   contents: read
 
 jobs:
-  inter-plugin-contracts:
-    name: inter-plugin-contracts (CFP-33)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install pyyaml
-      - name: Run check-inter-plugin-contracts.sh
-        run: bash scripts/check-inter-plugin-contracts.sh
-
-  inter-plugin-drift:
-    name: inter-plugin-drift (CFP-E)
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install pyyaml
-      - name: Run check-inter-plugin-drift.sh
-        env:
-          # CFP-71 / ADR-011 amendment: lane plugin private repo cross-repo read 전용 PAT.
-          # secrets.GITHUB_TOKEN 은 wrapper repo scope 만 — 6 lane plugin contents fetch 불가.
-          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
-        run: bash scripts/check-inter-plugin-drift.sh
-
   comment-prefix-registry:
     name: comment-prefix-registry self-validation (CFP-33)
     runs-on: ubuntu-latest
