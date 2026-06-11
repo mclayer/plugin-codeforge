@@ -152,7 +152,7 @@ glossary_ref: docs/glossary.md          # Published Language SSOT (content dupli
 ```
 
 **작성 규칙**:
-1. **bounded_context 명시 의무** — 본 Story 가 어느 BC 안에서 작동하는지 explicit declare. default = `codeforge-governance` (wrapper / lane plugin Story). application BC (mctrader 등 downstream) 는 별 SSOT (`mctrader-hub/docs/glossary.md`).
+1. **bounded_context 명시 의무** — 본 Story 가 어느 BC 안에서 작동하는지 explicit declare. default = `codeforge-governance` (wrapper / lane plugin Story). application BC (mctrader 등 downstream) 는 별도 SSOT (`mctrader-hub/docs/glossary.md`).
 2. **ddd_terms = glossary anchor 정합** — enumerate 한 모든 term 은 `docs/glossary.md` 안 정의 entry 가 존재해야 함 (drift 차단). glossary 외 미정의 DDD term 사용 = `scripts/check-ubiquitous-language.sh` warning tier 가 감지.
 3. **동음이의 분리** — `Aggregate` 처럼 governance BC ↔ application BC 동음이의 term 은 BC qualifier 병기 (`Aggregate (governance BC)` vs `Aggregate (mctrader application BC)`, ADR-091 §결정 3 Layer A/B).
 4. **anti-pattern 어휘 forbid** — `Big Ball of Mud` / `Smart UI` 등 anti-pattern term 은 design intent (채택 표현) 로 사용 금지 (after-the-fact 분석 description 만 허용, ADR-064 forbid-list 확장 후보 OQ-1).

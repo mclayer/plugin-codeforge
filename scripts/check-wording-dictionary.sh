@@ -27,9 +27,14 @@
 #   - docs/adr/ADR-064-decision-principle-mandate.md (어휘 정의 ADR 본문)
 #
 # Lint 적용 영역 (ADR-064 Amendment 5 §Amendment 결정 2 — per-word scope decoupling):
-#   박제 / 못 박기 / pin / freezing = docs/** + CLAUDE.md + CHANGELOG.md + templates/** (expanded scope)
+#   박제 / 못 박기 / pin / freezing = docs/** + CLAUDE.md + templates/** (expanded scope)
 #   별 (standalone) = docs/adr/** + docs/change-plans/** + CLAUDE.md + docs/orchestrator-playbook.md + templates/** (5-scope 유지)
 # 단, 인자로 파일/디렉토리를 직접 지정 시 (uniform override mode) 해당 대상에만 적용.
+# CHANGELOG.md = scope 에서 제거 (CFP-2154 — main 에 CHANGELOG.md 부재 dead reference 정리.
+#   정책 선언 자체는 docs/wording-dictionary.md 유지 — 파일 재생성 시 target 재추가).
+#
+# Self-test: `--self-test` 단일 flag = inline fixture 기반 counter-case 검증 (CFP-2154,
+#   CFP-2104 D3 --self-test precedent 답습). dual-mode invariant 무관 (mode flag 아님).
 
 set -uo pipefail
 
@@ -43,18 +48,28 @@ set -uo pipefail
 # 어휘 5 entry (Amendment 2: 박제 / 못 박기 / pin / freezing + Amendment 4: 별 standalone).
 # Amendment 5 (CFP-750): FORBID_DICTIONARY array → per-word WORD_TARGETS associative array.
 #   어휘별 scope 독립 결정 — scope 확장 시 `별` standalone false-positive collateral 차단.
-#   박제/못 박기/pin/freezing = expanded scope (docs/** + CLAUDE.md + CHANGELOG.md + templates/**)
+#   박제/못 박기/pin/freezing = expanded scope (docs/** + CLAUDE.md + templates/**)
 #   별 = 5-scope 유지 (별 standalone fp carrier 분리, Amendment 4 §Amendment 결정 6)
+# CHANGELOG.md target 제거 (CFP-2154 — main 부재 dead reference 정리, 행동 변화 0).
 # SSOT forcing function: 어휘 list ↔ scope 가 단일 map 에 통합 → drift 차단.
 # 한국어 어휘 = substring match (POSIX \b ASCII boundary only — 한국어 영역 의미 부재).
 # false-positive 완화 = blockquote (>) + fenced code block + inline code-span (`...`) + EXEMPT_FILES framework.
 declare -A WORD_TARGETS=(
-  ["박제"]="docs CLAUDE.md CHANGELOG.md templates"
-  ["못 박기"]="docs CLAUDE.md CHANGELOG.md templates"
-  ["pin"]="docs CLAUDE.md CHANGELOG.md templates"
-  ["freezing"]="docs CLAUDE.md CHANGELOG.md templates"
+  ["박제"]="docs CLAUDE.md templates"
+  ["못 박기"]="docs CLAUDE.md templates"
+  ["pin"]="docs CLAUDE.md templates"
+  ["freezing"]="docs CLAUDE.md templates"
   ["별"]="docs/adr docs/change-plans CLAUDE.md docs/orchestrator-playbook.md templates"
 )
+
+# ─── Amendment 3 (CFP-1060) — `별 + carrier-noun` hand-off vocabulary exemption ──
+# docs/wording-dictionary.md Amendment 3 §규칙 선언 regex 의 verbatim wire (Wave 2
+# mechanical lint update — CFP-2154 실현). 선언문이 SSOT — noun list 임의 확장 금지.
+# 선언 패턴: 별\s+(sub-CFP|carrier|session|Story|Issue|PR|lane|sub-Epic|Epic|Wave|layer|sub-axis|sub-CFP carrier|sub-Story)
+# 적용 방식 = sed pre-screen: 면제 패턴 occurrence 만 제거 후 standalone `별` 검출
+# (per-occurrence 정밀 — 동일 줄 안 비면제 `별` 은 계속 검출, line 단위 통째 면제 아님).
+# alternation 은 longest-first 정렬 (POSIX ERE leftmost-longest 외 구현 방어).
+BYEOL_CARRIER_NOUN_EXEMPT='sub-CFP carrier|sub-Story|sub-Epic|sub-axis|sub-CFP|session|carrier|Story|Issue|lane|Epic|Wave|layer|PR'
 
 # ─── 카테고리 (b): 평문 정의 동반 의무 어휘 ───────────────────────────────────
 # Mirror of docs/wording-dictionary.md 카테고리 (b) — change in lockstep (CFP-610 / INV-1 / ADR-068 I-1)
@@ -67,7 +82,8 @@ DEFINITION_REQUIRED_DICTIONARY=(
 )
 
 # 카테고리 (b) advisory scope = 카테고리 (a) 박제 expanded scope 와 동일 (default no-arg invocation).
-DEFINITION_REQUIRED_SCOPE="docs CLAUDE.md CHANGELOG.md templates"
+# CHANGELOG.md target 제거 (CFP-2154 — main 부재 dead reference 정리).
+DEFINITION_REQUIRED_SCOPE="docs CLAUDE.md templates"
 
 # ─── EXEMPT 파일 (사전 파일 자체 + 어휘 정의 ADR) ──────────────────────────────
 # docs/wording-dictionary.md: 사전 파일 — 어휘 정의 목적
@@ -77,11 +93,20 @@ DEFINITION_REQUIRED_SCOPE="docs CLAUDE.md CHANGELOG.md templates"
 EXEMPT_FILES=(
   "docs/wording-dictionary.md"
   "docs/adr/ADR-064-decision-principle-mandate.md"
+  # ADR-108 append-only frozen 이력 — 과거 entry description 의 어휘는 audit trail
+  # verbatim 보존 의무 (rewrite 금지) → file 단위 EXEMPT (CFP-2154).
+  "docs/inter-plugin-contracts/label-registry-v2.md"
 )
 
 # ─── 인자 model (§3.2.1 — backward-compat zero migration cost) ────────────────
 # 인자 없음 ($# -eq 0)  = per-word lookup mode — WORD_TARGETS map lookup 활성 (어휘별 독립 scope)
 # 인자 있음 ($# -ne 0)  = uniform override mode — 지정 대상에만 모든 어휘 적용 (ad-hoc / 테스트)
+# --self-test           = inline fixture counter-case 검증 (CFP-2154 / CFP-2104 D3 precedent)
+SELF_TEST=0
+if [ "${1:-}" = "--self-test" ]; then
+  SELF_TEST=1
+  shift
+fi
 if [ $# -eq 0 ]; then
   OVERRIDE_TARGETS=()
 else
@@ -178,7 +203,8 @@ scan_file_for_word() {
     # GitHub Actions / git 표준 기술 compound(SHA-pin / HEAD-pin / re-pin / contract-pin / spawn pin 등)는
     # 정당 기술 용어 → 해당 compound 줄만 제외 (어휘 정책 보존, 오탐만 제거).
     if [ "$word" = "pin" ] && [ -n "$hits" ]; then
-      hits="$(printf '%s\n' "$hits" | grep -viE -- '([a-z0-9]-pin|pin-[a-z0-9]|(sha|head|spawn|contract|main|action|re|git|version|baseline|frozen|prompt)[ -]?pin)' || true)"
+      # workspace 추가 (CFP-2154): `Cargo.lock workspace pin` 등 표준 기술 compound.
+      hits="$(printf '%s\n' "$hits" | grep -viE -- '([a-z0-9]-pin|pin-[a-z0-9]|(sha|head|spawn|contract|main|action|re|git|version|baseline|frozen|prompt|workspace)[ -]?pin)' || true)"
     fi
   elif [ "$word" = "별" ]; then
     # 한국어 단일 character (CFP-672 Amendment 4) — Hangul-boundary lookahead/lookbehind
@@ -186,8 +212,10 @@ scan_file_for_word() {
     # (?![가-힣])  = 직후 character 가 Hangul 음절 아님
     # → standalone `별` (공백 / 구두점 / line edge 로 둘러싸인) 만 match.
     # Perl regex (-P) 가 PCRE 지원 = Hangul Unicode class. LC_ALL UTF-8 강제.
+    # Amendment 3 (CFP-1060) exemption pre-screen (CFP-2154 wire): 선언된 `별 + carrier-noun`
+    # hand-off vocabulary occurrence 를 먼저 제거 (sed 는 줄 보존 — 줄번호 불변).
     escaped_pattern="(?<![가-힣])${word}(?![가-힣])"
-    hits="$(LC_ALL=en_US.UTF-8 grep -nP -- "$escaped_pattern" "$sf" 2>/dev/null || true)"
+    hits="$(sed -E "s/별[[:space:]]+(${BYEOL_CARRIER_NOUN_EXEMPT})//g" "$sf" | LC_ALL=en_US.UTF-8 grep -nP -- "$escaped_pattern" 2>/dev/null || true)"
   else
     # 한국어 multi-character 어휘 — substring (case-insensitive 의미 없으나 -i 무해)
     hits="$(grep -ni -- "$word" "$sf" || true)"
@@ -248,6 +276,49 @@ scan_scope() {
     fi
   done
 }
+
+# ─── --self-test: inline fixture counter-case 검증 (CFP-2154 / CFP-2104 D3 precedent) ──
+# regex 정련 (Amendment 3 wire + pin workspace compound) 의 보호 강도 비축소 입증 의무:
+# 정탐(true-positive) 보존 counter-case + 면제(exemption) 양방향 fixture.
+# fixture = 임시 dir 안 .md (repo 스캔 대상 외) — uniform override mode 재귀 호출로 검증.
+if [ "$SELF_TEST" -eq 1 ]; then
+  ST_DIR="$(mktemp -d)"
+  ST_FAIL=0
+  st_case() {
+    # $1 = case 이름 / $2 = fixture 내용 / $3 = 기대 exit code (0|1)
+    local name="$1" content="$2" expected="$3" rc
+    printf '%s\n' "$content" > "$ST_DIR/case.md"
+    bash "$0" "$ST_DIR/case.md" > /dev/null 2>&1
+    rc=$?
+    if [ "$rc" -ne "$expected" ]; then
+      echo "SELF-TEST FAIL: $name (expected exit $expected, got $rc)"
+      ST_FAIL=1
+    else
+      echo "SELF-TEST PASS: $name"
+    fi
+  }
+  # ── 정탐 보존 (counter-case — 보호 강도 비축소) ──
+  st_case "박제 정탐 유지" "이 결정을 박제 한다." 1
+  st_case "별 standalone 정탐 유지 (carrier-noun 외)" "별 컴퓨터 에서 실행한다." 1
+  st_case "별 + 비면제 명사 정탐 유지" "동일 또는 별 Orchestrator session 에서." 1
+  st_case "동일 줄 면제+정탐 혼재 — 정탐 유지" "별 carrier 분리 후 별 컴퓨터 사용." 1
+  st_case "pin standalone 정탐 유지" "please pin the dependency." 1
+  # ── 면제 (Amendment 3 wire + 기존 exempt invariant 보존) ──
+  st_case "Amendment 3: 별 sub-CFP carrier" "Wave 2 별 sub-CFP carrier 분리." 0
+  st_case "Amendment 3: 별 Story" "별 Story 로 발의한다." 0
+  st_case "Amendment 3: 별 PR" "S2 는 별 PR 로 처리." 0
+  st_case "Hangul-boundary: 별도/특별/구별 비검출 유지" "별도 처리. 특별 조치. 구별 기준." 0
+  st_case "pin compound: workspace pin (CFP-2154 신규)" "Cargo.lock workspace pin 답습." 0
+  st_case "pin compound: SHA-pin (기존 유지)" "action SHA-pin 정책 유지." 0
+  st_case "blockquote exempt 유지" "> 박제 금지 인용문." 0
+  rm -rf "$ST_DIR"
+  if [ "$ST_FAIL" -eq 1 ]; then
+    echo "wording-dictionary self-test FAIL"
+    exit 1
+  fi
+  echo "wording-dictionary self-test PASS (12 case)"
+  exit 0
+fi
 
 # ─── 메인 스캔 ────────────────────────────────────────────────────────────────
 if [ ${#OVERRIDE_TARGETS[@]} -eq 0 ]; then

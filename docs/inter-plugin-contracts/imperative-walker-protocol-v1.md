@@ -219,7 +219,7 @@ min_prerequisite_version:
 
 #### §2.E.4 consumer_applicability_filter_binding (ADR-083 Amendment 3 codify, CFP-1293)
 
-walker apply Stage D 영역 ADR-083 consumer-applicability filter wire active. ADR-083 sunset_justification (CFP-1186 Amendment 2) 가 "walker per-step `applicable_to` filter 로 carry" 를 metric 으로 박제한 약속의 실현 carrier — carrier-preserved sunset (ADR-097 §결정 3) 정합.
+walker apply Stage D 영역 ADR-083 consumer-applicability filter wire active. ADR-083 sunset_justification (CFP-1186 Amendment 2) 가 "walker per-step `applicable_to` filter 로 carry" 를 metric 으로 명시한 약속의 실현 carrier — carrier-preserved sunset (ADR-097 §결정 3) 정합.
 
 > verified-via: Read docs/adr/ADR-083-consumer-applicability-filter.md Amendment 3 (line 17-23 amendment_log entry 3 + line 88-145 sunset_executed → wire_active_in_walker sub-section verbatim). 본 §2.E.4 = ADR-083 §결정 5 wire location 3 영역 atomic codify 의 walker contract layer.
 
