@@ -1,7 +1,7 @@
 ---
 adr_number: 10
 title: Inter-plugin Contract Sibling Sync — canonical/sibling 책임 + sync 트리거 + drift 처리 정책
-status: Proposed
+status: Superseded
 category: Team & Process
 date: 2026-04-29
 related_files:
@@ -15,7 +15,9 @@ is_transitional: false
 
 ## 상태
 
-Proposed (2026-04-29) — CFP-42 Phase 1 PR merge 시 Accepted 전환. CFP-42 Phase 2 PR merge 시 Adopted 전환.
+Superseded (2026-06-11, CFP-2158) — ADR-118 D5 (monorepo 통합) 가 본 ADR 의 전제 (canonical=lane repo / sibling=wrapper repo 별도 git repo) 를 소멸시킴. 상세 = Amendment 5. **carve-out 존속 2건**: Amendment 1 (ADR 번호 reserve protocol — sibling sync 와 무관한 live 절차) + §결정 3 의 "MANIFEST.yaml = kind:contract registry SSOT" (wrapper-단일 형태로 존속).
+
+(이력: Proposed 2026-04-29 — CFP-42 Phase 1 PR merge 시 Accepted 전환 예정이었음.)
 
 ## 컨텍스트
 
@@ -225,3 +227,36 @@ CFP-448 (#448) sibling PR plugin-codeforge-requirements#20 + plugin-codeforge-de
 - [templates/github-workflows/phase-gate-mergeable.yml](../../templates/github-workflows/phase-gate-mergeable.yml) — wrapper SSOT fixture (sibling-pr fast-pass 추가)
 - `mclayer/plugin-codeforge-requirements/.github/workflows/phase-gate-mergeable.yml` — drift sync + sibling-pr fast-pass
 - CFP-499 Story file (`mclayer/codeforge-internal-docs/wrapper/stories/CFP-499.md`)
+
+---
+
+## Amendment 5 — 전제 소멸에 따른 Superseded 전이 (CFP-2158 / Epic #2151 S2, 2026-06-11)
+
+### 배경
+
+본 ADR 의 모든 sync 정책은 **"canonical (lane plugin repo) 과 sibling (wrapper repo) 이 별도 git repo"** 라는 전제 위에 서 있다. ADR-118 (monorepo 통합) S1 (CFP-2152, wrapper main `b6c599bc`) 이 8 lane repo 를 wrapper `plugins/<plugin-name>/` 하위로 subtree 흡수하면서 이 전제가 소멸했다 — "lane repo" 와 "wrapper repo" 는 동일 repo 의 다른 디렉터리가 됐고, canonical↔sibling 은 같은 git tree 안 순수 중복이 됐다.
+
+실측 (CFP-2158 요구사항 lane, wrapper main `b6c599bc`): lane 측 contract 사본 18 파일 중 schema 본문 drift 0 (차이는 전부 mirror-bookkeeping), 단 `review-verdict-v4` 5 consumer lane 사본은 canonical 대비 9+/111- stale — mirror drift 비용의 실증.
+
+### 결정
+
+**ADR-118 D5 가 본 ADR 의 핵심 결정을 supersede 한다. frontmatter `status: Proposed → Superseded`.**
+
+| 본 ADR 구성 요소 | 처리 | 근거 |
+|---|---|---|
+| §결정 1 (Canonical 위치 룰 — producer lane repo) | **obsolete** | 단일 원본 = wrapper `docs/inter-plugin-contracts/` (ADR-118 D5, CFP-2158 실현) |
+| §결정 2 (Sibling 위치 룰 — verbatim mirror + 상위 SSOT 섹션) | **obsolete** | mirror 개념 자체 폐지. 기존 wrapper 파일이 단일 원본으로 승격 |
+| §결정 3 (MANIFEST.yaml = registry SSOT) | **carve-out 존속** | MANIFEST 는 kind:contract 완결성 SSOT 로 계속 유효 — canonical_repo 는 단일 repo (`mclayer/plugin-codeforge`) 표기로 재작성 (CFP-2158) |
+| §결정 4 (Sync 트리거) + §결정 5 (Drift 검출) | **obsolete** | cross-repo 가 사라져 trigger vacuous. drift 검출 기계 (contract-lint / parity) 은퇴 = Epic S3 carrier |
+| Amendment 1 (ADR 번호 reserve protocol) | **carve-out 존속** | sibling sync 와 무관한 live 절차 (병렬 branch ADR 번호 race 차단). 본 Amendment 후에도 정상 효력 |
+| Amendment 2 (MAJOR canonical-first) / Amendment 3 (sync-contract-bump.sh) / Amendment 4 (sibling-pr fast-pass) | **obsolete** | 전부 cross-repo sync 절차 — 대상 소멸. script/label 실 제거 = Epic S3 carrier |
+
+### 책임 경계 (Epic #2151 S2 ↔ S3)
+
+- **S2 (CFP-2158, 본 Amendment carrier)**: 정책 문서 전이 (본 Amendment + status 필드) + 데이터 단일화 (lane 사본 18 삭제 + MANIFEST canonical_repo 재작성 + 단일 원본 marker 재작성).
+- **S3 (CFP-2159)**: 본 ADR 를 강제하던 분리기인 기계 은퇴 (contract-lint.yml / inter-plugin-contracts-parity.yml / sync-contract-bump.sh 등). 본 Amendment 는 기계를 건드리지 않는다 (경로 disjoint).
+
+### 위배 시 처리 (전이 후)
+
+- 신규 contract 추가 = wrapper `docs/inter-plugin-contracts/` 에 직접 작성 + MANIFEST entry 추가 (2단계 — 기존 4단계 절차 폐지).
+- 기존 contract frontmatter 의 `related_adrs ∋ ADR-010` 인용은 historical 로 유지 허용 (제거 의무 없음 — ADR-008 인용 의무는 불변).
