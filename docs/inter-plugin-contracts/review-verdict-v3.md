@@ -32,7 +32,7 @@ authors:
 **(CFP-135 DEPRECATED PASSTHROUGH 적용 후)**: 본 BREAKING 변경 중 `pl_recommendation` 만 active. 나머지 (`status` 제거 / `sonnet_final_status` / `decider_decision_ref` / `write_errors` / `writes_completed` 의미 재정의) 는 NO-OP — frontmatter 위 deprecation note 참조.
 
 **상위 SSOT 위치**:
-- `mclayer/plugin-codeforge-review/docs/inter-plugin-contracts/review-verdict-v3.md`: **canonical**
+- `mclayer/plugin-codeforge-review/docs/inter-plugin-contracts/review-verdict-v3.md`: **canonical** (구 lane repo 삭제됨 2026-06-12, 현 단일 원본 = wrapper. ADR-118 D5)
 - 본 file (codeforge wrapper repo): sibling reference (ADR-010 sync 의무)
 - ADR-022 carrier: `docs/adr/ADR-022-sonnet-review-verdict-decider.md`
 

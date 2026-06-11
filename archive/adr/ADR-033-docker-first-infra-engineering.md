@@ -46,7 +46,7 @@ Phase 1 internal-docs PR (mclayer/codeforge-internal-docs#67) merged at 2026-05-
 
 ### 현재 상태
 
-[InfraEngineerAgent](https://github.com/mclayer/plugin-codeforge-develop/blob/main/agents/InfraEngineerAgent.md) (codeforge-develop, role:dev core) mandate = `systemd / launchd / Docker / K8s / PaaS / CI / cron / 패키징` (broad, 8 항목 평등). 어느 쪽이 default 인지 미명시. impl-manifest 예시 ([templates/impl-manifest.md:16](../../templates/impl-manifest.md#L16)) 도 systemd 우선. wrapper repo 내 Docker 실 fixture 0개 ([CHANGELOG.md](../../CHANGELOG.md) + examples/webapp-minimal narrative mention 만).
+InfraEngineerAgent (codeforge-develop, role:dev core — 현 `plugins/codeforge-develop/agents/InfraEngineerAgent.md`, 구 lane repo 삭제됨 2026-06-12) mandate = `systemd / launchd / Docker / K8s / PaaS / CI / cron / 패키징` (broad, 8 항목 평등). 어느 쪽이 default 인지 미명시. impl-manifest 예시 ([templates/impl-manifest.md:16](../../templates/impl-manifest.md#L16)) 도 systemd 우선. wrapper repo 내 Docker 실 fixture 0개 ([CHANGELOG.md](../../CHANGELOG.md) + examples/webapp-minimal narrative mention 만).
 
 ### 사용자 요구사항 해석
 
@@ -101,7 +101,7 @@ K8s 가 1st-class 가 아닌 이유: 모든 consumer 가 K8s cluster 가용한 �
 
 ### §결정 4 — SecurityTest 1st-layer = trivy + hadolint 추가
 
-[SecurityTestPLAgent](https://github.com/mclayer/plugin-codeforge-review/blob/main/agents/SecurityTestPLAgent.md) (codeforge-review) 1st-layer 자동 도구 세트 확장:
+SecurityTestPLAgent (codeforge-review — 현 `plugins/codeforge-review/agents/SecurityTestPLAgent.md`) 1st-layer 자동 도구 세트 확장:
 
 ```
 Before: Dependabot + CodeQL + Secret Scanning (3종, GitHub native only)

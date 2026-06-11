@@ -422,7 +422,7 @@ ADR-058 §결정 7 default presumption `false` (governance / security ADR) 정�
 
 - `docs/architecture/` — S2 (#920) seed 영역
 - `templates/architecture-doc.md` — S2 (#920) template carrier
-- `mclayer/plugin-codeforge-design/` — S3 (#921) lane gate carrier
+- `mclayer/plugin-codeforge-design/` — S3 (#921) lane gate carrier (현 `plugins/codeforge-design/`, 구 repo 삭제됨 2026-06-12)
 - `scripts/check-architecture-drift.sh` — S4 (#923) lint carrier
 - `templates/github-workflows/architecture-drift.yml` — S4 (#923) workflow carrier
 - `docs/evidence-checks-registry.yaml` — S4 (#923) row append carrier

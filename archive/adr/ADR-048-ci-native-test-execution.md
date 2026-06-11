@@ -92,7 +92,7 @@ N/A — permanent policy
 - `docs/orchestrator-playbook.md`: CI gate 절차 추가
 - `templates/github-workflows/phase-gate-mergeable.yml`: security_ai 조건부 heuristic
 - `docs/inter-plugin-contracts/test-verdict-v1.md`: status Archived
-- `plugin-codeforge-test`: Deprecated 선언
+- `plugin-codeforge-test`: Deprecated 선언 (구 lane repo — 현 `plugins/codeforge-test/`, repo 삭제됨 2026-06-12)
 
 ---
 

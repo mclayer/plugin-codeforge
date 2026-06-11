@@ -33,7 +33,7 @@ CFP-25 design spec ([Claude Opus 4.7 + Codex GPT-5.4 4 라운드 협업 결과](
 
 ## 결정
 
-본 plugin (`codeforge-review`)을 codeforge core repo에서 분리된 별도 `mclayer/plugin-codeforge-review` repo로 신설한다. 추출 대상:
+본 plugin (`codeforge-review`)을 codeforge core repo에서 분리된 별도 `mclayer/plugin-codeforge-review` repo로 신설한다 (구 lane repo — 현 wrapper 모노레포 `plugins/codeforge-review/` 로 재흡수, repo 삭제됨 2026-06-12). 추출 대상:
 
 - 5 review agents: `DesignReviewPLAgent` · `CodeReviewPLAgent` · `SecurityTestPLAgent` · `ClaudeReviewAgent` · `CodexReviewAgent`
 - 공통 base: `templates/review-pl-base.md` (severity 종합 / dedup / 보고 형식 / escalation SSOT)

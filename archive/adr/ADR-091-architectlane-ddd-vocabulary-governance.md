@@ -156,7 +156,7 @@ sunset_justification: null  # is_transitional false — sunset 기준 부재 + a
 ### CFP-1086 LAND 정합 (verify-via)
 
 - `gh issue view 1086 --json state,labels` = CLOSED + phase:완료
-- `ls plugin-codeforge-design/agents/` = 15 file (7 permanent SubAgent + ArchitectPL + ArchitectAgent + 3+1 CONDITIONAL deputy + 3 sub-tuple)
+- `ls plugin-codeforge-design/agents/` = 15 file (7 permanent SubAgent + ArchitectPL + ArchitectAgent + 3+1 CONDITIONAL deputy + 3 sub-tuple) — 구 lane repo 좌표, 현 `plugins/codeforge-design/agents/` (repo 삭제됨 2026-06-12)
 - `Read(docs/adr/ADR-086-*.md)` = Accepted
 - skills/deputy-mandate/SKILL.md = 4-way RACI matrix 활성
 

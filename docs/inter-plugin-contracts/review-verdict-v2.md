@@ -21,7 +21,7 @@ authors:
 `codeforge-review` plugin → `codeforge` core (Orchestrator) 단방향 schema. v1과 BREAKING — PL이 **자기 lane writer 역할 직접 수행**, core(DocsAgent) write 위임 제거.
 
 **상위 SSOT 위치**:
-- `mclayer/plugin-codeforge-review/docs/inter-plugin-contracts/review-verdict-v2.md`: **canonical** (codeforge-review repo)
+- `mclayer/plugin-codeforge-review/docs/inter-plugin-contracts/review-verdict-v2.md`: **canonical** (codeforge-review repo — 구 lane repo 삭제됨 2026-06-12, 현 단일 원본 = wrapper. ADR-118 D5)
 - 본 file (codeforge wrapper repo): sibling reference (canonical 변경 시 sync 의무 — CFP-24 marketplace sync 정책 유사)
 - ADR-001 (review-agent-unification — lane-agnostic worker): codeforge-review repo의 docs/adr/ADR-001 참조
 

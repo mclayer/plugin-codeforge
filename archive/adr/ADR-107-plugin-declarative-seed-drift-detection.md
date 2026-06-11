@@ -63,7 +63,7 @@ mctrader CFP-1059 배포 lane 첫 consumer adoption (`mctrader#1265` 진행 중)
   - (a) BG-1~4 비적격 4-tuple 표 미명시 (`STATEFUL_DAEMON_BG_NEEDED` / `WRITER_LEASE_REQUIRED` / `EXTERNAL_PORT_BINDING` / `MULTI_PROCESS_FENCING_REQUIRED`)
   - (b) §결정 9 6 sub-section (writer-lease / fencing pattern) 신설 영역
 - (c)+(d) codeforge-deploy plugin file 영역 — Wave A S2 (CFP-1317-S2) plugin d-B 채택 (`8842ec1b2617f2cc7e7106589d8888f048c75fd5` merged)
-  - (c) `mclayer/plugin-codeforge-deploy/templates/deploy-mechanism.md` plugin 1.0.0 baseline 영역
+  - (c) `mclayer/plugin-codeforge-deploy/templates/deploy-mechanism.md` (현 `plugins/codeforge-deploy/templates/`, 구 repo 삭제됨 2026-06-12) plugin 1.0.0 baseline 영역
   - (d) **= 6회째 누적 G-1/G-3/G-6 동형 drift super-class** — plugin 1.0.0 declarative seed (templates/deploy-mechanism.md 9-flat field) ↔ wrapper SSOT (`docs/project-config-schema.md` 5-nested) 구조 mismatch
 
 ### pattern_count history (ADR-045 §D-9 Mandatory framing line 417 정합)

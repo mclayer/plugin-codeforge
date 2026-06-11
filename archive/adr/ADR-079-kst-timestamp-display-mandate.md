@@ -139,9 +139,9 @@ spec/Story §4.0 scope_manifest 가 "5 template frontmatter (wrapper-local)" 로
 |---|---|---|
 | `templates/story-page-structure.md` | **wrapper repo** (CLAUDE.md L334 relative link, 실재 확인) | Phase 1 변경 대상 (AC-5) |
 | `templates/epic-results.md` | **wrapper repo** (실재 확인) | Phase 1 변경 대상 (AC-5) |
-| `templates/adr.md` | **codeforge-design plugin** (CLAUDE.md L290 — `https://github.com/mclayer/plugin-codeforge-design/`) | wrapper Phase 1 scope 외 — codeforge-design plugin 후속 sibling Story (Phase 1 declare only) |
+| `templates/adr.md` | **codeforge-design plugin** (CLAUDE.md L290 — 구 `mclayer/plugin-codeforge-design` repo, 현 `plugins/codeforge-design/`, 구 repo 삭제됨 2026-06-12) | wrapper Phase 1 scope 외 — codeforge-design plugin 후속 sibling Story (Phase 1 declare only) |
 | `templates/change-plan.md` | **codeforge-design plugin** (wrapper repo 부재) | 동 |
-| `templates/retro.md` | **codeforge-pmo plugin** (CLAUDE.md L334 — `https://github.com/mclayer/plugin-codeforge-pmo/`) | wrapper Phase 1 scope 외 — codeforge-pmo plugin 후속 sibling Story (Phase 1 declare only) |
+| `templates/retro.md` | **codeforge-pmo plugin** (CLAUDE.md L334 — 구 `mclayer/plugin-codeforge-pmo` repo, 현 `plugins/codeforge-pmo/`) | wrapper Phase 1 scope 외 — codeforge-pmo plugin 후속 sibling Story (Phase 1 declare only) |
 
 **결정**: 본 Phase 1 = wrapper-local 2 template (`story-page-structure.md` / `epic-results.md`) frontmatter `date:` field KST 일자 의미 명시 + CLAUDE.md 신규 단락이 "ADR / change-plan / retro template (lane plugin SSOT) 도 동일 KST 일자 의미 적용 — 해당 plugin 후속 Story 가 sibling 반영" normative declare. cross-plugin template 직접 변경 = 본 wrapper Phase 1 scope 외 (ADR-013 sibling sync 패턴, memory `project_stale_skill_ownership_lore` cross-plugin ownership 잘못 가정 차단). AC-5 / AC-12 의 "5 template" 은 "wrapper-local 2 + cross-plugin 3 declare" 로 정정 — invariant 본질 (5 template `date:` 모두 KST 일자 의미) 은 유효, wrapper Phase 1 의 직접 변경 대상만 2 로 축소.
 

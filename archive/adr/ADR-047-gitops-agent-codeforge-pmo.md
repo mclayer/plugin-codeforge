@@ -75,7 +75,7 @@ is_transitional: false
 
 ### D-1 — GitOpsAgent file 위치 = codeforge-pmo plugin 단독 (대안 A 채택)
 
-**결정**: GitOpsAgent file = `mclayer/plugin-codeforge-pmo/agents/GitOpsAgent.md` 단독. PMOAgent 와 sibling teammate (같은 plugin 안 2번째 agent).
+**결정**: GitOpsAgent file = `mclayer/plugin-codeforge-pmo/agents/GitOpsAgent.md` (현 `plugins/codeforge-pmo/agents/GitOpsAgent.md`, 구 repo 삭제됨 2026-06-12) 단독. PMOAgent 와 sibling teammate (같은 plugin 안 2번째 agent).
 
 **거절된 대안**:
 - (B) wrapper agent 신설 — ADR-009 invariant (wrapper-only decomposition, agent 0개) 위반. 기각.

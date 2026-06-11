@@ -18,7 +18,7 @@ authors:
 > **[ARCHIVED — CFP-317 / ADR-048]** TestAgent deprecated. CI-native 테스트 전환으로 본 contract는 더 이상 사용되지 않음. 역사적 참조용으로 보존.
 
 **상위 SSOT 위치**:
-- `mclayer/plugin-codeforge-test/docs/inter-plugin-contracts/test-verdict-v1.md`: **canonical** (codeforge-test repo)
+- `mclayer/plugin-codeforge-test/docs/inter-plugin-contracts/test-verdict-v1.md`: **canonical** (codeforge-test repo — 구 lane repo 삭제됨 2026-06-12, 현 단일 원본 = wrapper. ADR-118 D5)
 - 본 file (codeforge wrapper repo): sibling reference (canonical 변경 시 sync 의무 — ADR-010 + CFP-24 marketplace sync 정책 동질)
 - ADR-008 (versioning 룰): codeforge wrapper repo `docs/adr/ADR-008-inter-plugin-contract-versioning.md`
 - ADR-010 (본 contract 의 sibling sync 정책): codeforge wrapper repo `docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md`

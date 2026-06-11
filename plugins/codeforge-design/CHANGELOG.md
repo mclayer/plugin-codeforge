@@ -121,7 +121,7 @@ wrapper sibling PR #1151 (Story template §ubiquitous_language + 3 lint + eviden
 #### Cross-ref
 
 - Epic: #1059 / Story-3 (codeforge-deploy-review plugin seed + ProductionEvidenceDeputy 이관)
-- 정식 SSOT: [`mclayer/plugin-codeforge-deploy-review`](https://github.com/mclayer/plugin-codeforge-deploy-review)
+- 정식 SSOT: `mclayer/plugin-codeforge-deploy-review` (현 `plugins/codeforge-deploy-review/`, 구 repo 삭제됨 2026-06-12)
 
 ## [0.17.0] - 2026-05-20
 

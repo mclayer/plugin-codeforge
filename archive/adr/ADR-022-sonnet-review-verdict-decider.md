@@ -138,7 +138,7 @@ ADR-019 §결정 4 그대로 유지:
 
 #### 결정 5.1 — review-verdict v3 (BREAKING)
 
-Canonical at `mclayer/plugin-codeforge-review/docs/inter-plugin-contracts/review-verdict-v3.md`.
+Canonical at `mclayer/plugin-codeforge-review/docs/inter-plugin-contracts/review-verdict-v3.md` (구 lane repo — 삭제됨 2026-06-12, 현 단일 원본 = wrapper `docs/inter-plugin-contracts/`).
 
 ```yaml
 review_verdict:

@@ -156,6 +156,6 @@ Orchestrator → phase:요구사항 → phase:설계 label 전환 → 설계 lan
 
 - **desired state** = 본 doc (`docs/architecture/codeforge-requirements.md`) — lane 의 영속 구조 SSOT.
 - **current state** = lane plugin agent file (`agents/RequirementsPLAgent.md` · `agents/DomainAgent.md` · `agents/RequirementsAnalystAgent.md` · `agents/ResearcherAgent.md` · `agents/ChangeImpactAgent.md` · `agents/FeasibilityAgent.md` · `agents/ContinuityAgent.md` · `agents/codex-proactive-check.md`) + `CLAUDE.md` (runtime 실제 동작).
-- **converge** = ArchitectAgent self-write 확장 (Sub-Epic CFP-949 S3 carrier `mclayer/plugin-codeforge-design` ADR-082 §결정 1 mechanism) + design lane verdict gate (drift lint CFP-923 detection class d, Wave 4 carrier).
+- **converge** = ArchitectAgent self-write 확장 (Sub-Epic CFP-949 S3 carrier `mclayer/plugin-codeforge-design` — 구 lane repo, 현 `plugins/codeforge-design/`, repo 삭제됨 2026-06-12 — ADR-082 §결정 1 mechanism) + design lane verdict gate (drift lint CFP-923 detection class d, Wave 4 carrier).
 
 > 본 cross-ref = 패턴 답습 (pattern). 도메인 (upgrade flow ↔ 설계 lane) 은 disjoint. wording SSOT = ADR-076 본문 + ADR-078 §결정 2.

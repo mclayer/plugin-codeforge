@@ -783,7 +783,7 @@ Breaking change 있는 버전은 [`docs/migration-guide.md`](docs/migration-guid
 - [CFP-1059 Story-2/S3] codeforge family 7 → 9 plugin 실재화 — 신규 2 lane plugin seed 노출 (PATCH)
   - "필수 플러그인 (8종 active + 2 신설 예정)" → "(10종)" + codeforge-deploy + codeforge-deploy-review 실 plugin URL 정정 (Story-1 declarative 의 후속 wire)
   - "Development Agent Team" 표 배포 / 배포 리뷰 row SSOT = `TBD (S2/S3 sub-Story carrier)` → 실 plugin CLAUDE.md URL (배포 2 agent / 배포 리뷰 3 agent — ProductionEvidenceDeputy 이관 포함)
-  - 신규 plugin seed = `mclayer/plugin-codeforge-deploy` (1.0.0) + `mclayer/plugin-codeforge-deploy-review` (1.0.0)
+  - 신규 plugin seed = `mclayer/plugin-codeforge-deploy` (1.0.0) + `mclayer/plugin-codeforge-deploy-review` (1.0.0) — 구 lane repo 8개는 모노레포 `plugins/<lane>/` 로 흡수, repo 삭제됨 2026-06-12 (ADR-118 D1 Amendment 1). 본 파일 안 lane repo 언급 전부 동일.
   - marketplace.json 2 신규 entry `sibling sync` (ADR-016 / ADR-063) — wrapper entry version 6.0.2 mirror 동반
 - doc-only fast-path (ADR-054 Category 2) — src/tests 무변경. CFP-1059 / ADR-087 / ADR-088 정합
 
@@ -2913,7 +2913,7 @@ Multi-round Adversarial Debate Protocol 의 Requirements lane 확장. Story 1 (C
 
 - Story: [CFP-411](https://github.com/mclayer/plugin-codeforge/issues/392) — doc-only fast-path
 - Wrapper PR: [#411](https://github.com/mclayer/plugin-codeforge/pull/411) merged 2026-05-11
-- Sibling: [codeforge-requirements#19](https://github.com/mclayer/plugin-codeforge-requirements/pull/19) merged 2026-05-11
+- Sibling: codeforge-requirements#19 merged 2026-05-11
 - Story 1: CFP-391 (Protocol + DesignReview lane) — full-lane
 
 ## [5.13.0] - 2026-05-11
@@ -3084,7 +3084,7 @@ ADR-037 §3.1 (h) 새 ADR + (g) additive CLAUDE.md guidance → MINOR. 5.5.0 →
 
 ADR-013 dogfood-out explicit waiver: full Story flow 우회 (3 사유 — KEY collision codeforge-internal-docs#99 / Action permission codeforge-internal-docs#98 / cost asymmetry).
 
-Sibling: [mclayer/plugin-codeforge-design#24](https://github.com/mclayer/plugin-codeforge-design/pull/24) (Mapper + Refactor model field edit + 0.4.0 → 0.4.1 PATCH).
+Sibling: mclayer/plugin-codeforge-design#24 (Mapper + Refactor model field edit + 0.4.0 → 0.4.1 PATCH).
 
 Marketplace mirror sync: 후속 sibling PR (codeforge 5.6.0 + codeforge-design 0.4.1).
 
@@ -3898,7 +3898,7 @@ CFP-27 도입 시점에 명시적으로 "CFP-28 strict 전환" 약속. drift 위
 
 ### CFP-29 — Phase 1 · codeforge-review plugin 추출 (BREAKING — staged ε strategic payoff)
 
-**BREAKING (v1.0 이전 minor 표기)**. 5 review agent (Design/Code/SecurityTest PL + Claude/Codex worker) + `templates/review-pl-base.md` + 3 lane checklist을 별도 plugin [`codeforge-review`](https://github.com/mclayer/plugin-codeforge-review) v0.1.0 으로 추출. Inter-plugin Contract `review_verdict v1` 동결.
+**BREAKING (v1.0 이전 minor 표기)**. 5 review agent (Design/Code/SecurityTest PL + Claude/Codex worker) + `templates/review-pl-base.md` + 3 lane checklist을 별도 plugin `codeforge-review` (구 `mclayer/plugin-codeforge-review` repo) v0.1.0 으로 추출. Inter-plugin Contract `review_verdict v1` 동결.
 
 설계 SSOT: [`docs/superpowers/specs/2026-04-28-cfp-29-codeforge-review-extraction-design.md`](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-28-cfp-29-codeforge-review-extraction-design.md) (CFP-29 — 본 구현 Story, parent CFP-25 staged ε design).
 

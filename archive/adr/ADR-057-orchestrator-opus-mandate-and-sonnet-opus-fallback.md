@@ -313,7 +313,7 @@ Amendment 1 sunset gate 1 ("Sonnet 잔류 agent 0건") 거리 = 5종 → 8종 (3
 - `templates/github-workflows/rate-limit-fallback-kpi.yml` — Amendment 2 신설 (monthly cron + threshold alert, CFP-393)
 - `docs/kpi/rate-limit-fallback.json` — Amendment 2 신설 (KPI dashboard data SSOT, CFP-393)
 - `docs/evidence-checks-registry.yaml` — Amendment 2 가 두 번째 entry `rate-limit-fallback-rate` append (CFP-393)
-- `plugin-codeforge-requirements/agents/RequirementsPLAgent.md` — model: claude-opus-4-7
+- `plugin-codeforge-requirements/agents/RequirementsPLAgent.md` — model: claude-opus-4-7 (이하 lane repo 좌표 = 현 `plugins/<lane>/` 모노레포, 구 repo 삭제됨 2026-06-12)
 - `plugin-codeforge-requirements/agents/DomainAgent.md` — model: claude-opus-4-7
 - `plugin-codeforge-requirements/agents/RequirementsAnalystAgent.md` — model: claude-opus-4-7
 - `plugin-codeforge-requirements/agents/ResearcherAgent.md` — model: claude-opus-4-7

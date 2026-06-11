@@ -139,7 +139,7 @@ self-improving-loop.md (S1) 가 무한 발산 위험(동일 신호 반복 / Issu
 
 **결정 = defer (신설하지 않고 관계만 declare)**. 두 선택지 ((A) operational-signal-v1 신설 / (B) pmo-output-v1 v1.3 확장) 중 본 Phase 1 에서는 **둘 다 채택하지 않고**, 본 ADR 에 회로/관계만 declare 하고 실 contract wiring 을 **S6 (#1195) carrier** 로 defer 한다. 근거:
 
-1. **Phase 1 churn 최소화** — operational-signal-v1 신설 시 MANIFEST.yaml row append + canonical_repo 결정 + sibling sync (pmo_output canonical = `mclayer/plugin-codeforge-pmo`, sibling sync 대상) 비용 발생. 본 S3 = 정책 정의 Story (코드 0) — contract body 가 실제 소비될 시점 = S6 mechanism wire 시점이므로 그때 신설이 자연스럽다.
+1. **Phase 1 churn 최소화** — operational-signal-v1 신설 시 MANIFEST.yaml row append + canonical_repo 결정 + sibling sync (pmo_output canonical = `mclayer/plugin-codeforge-pmo` — 현 `plugins/codeforge-pmo/`, 구 repo 삭제됨 2026-06-12, sibling sync 대상) 비용 발생. 본 S3 = 정책 정의 Story (코드 0) — contract body 가 실제 소비될 시점 = S6 mechanism wire 시점이므로 그때 신설이 자연스럽다.
 2. **CFP-1059 placeholder precedent** — `deploy_output` / `deploy_review_output` 가 MANIFEST.yaml 에 `canonical_repo: ... # TBD — lane plugin seed 신설 후 confirm` placeholder 로 declare 만 하고 body wire 를 sub-Story carrier 로 defer 한 precedent 답습.
 3. **disjoint 검증 완료** — 신설 vs 확장 결정에 필요한 disjoint (input vs output 방향 / 운영 vs retro 도메인) 는 §경계 에 검증 표로 명시. S6 가 wiring 시 신설(SSOT 명료) 권고 — 단계 3 escalation 출력은 기존 `pmo-output-v1` `cross_story_pattern_adr_trigger` field 재사용 가능, 단계 1→3 input 은 신규 operational-signal-v1 가 자연스럽다.
 

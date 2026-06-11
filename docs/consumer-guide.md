@@ -1277,7 +1277,7 @@ Consumer repo Story 가 **production cutover surface** (real funds / live exchan
 - **L1 mandate declare** = wrapper plugin 자체 (CFP-632 Phase 1 + CFP-954 mandate activation declare) — ADR-72 §결정 1-7 SSOT
 - **L2 trigger axis** = Live touching + production cutover both → 9 SubAgent (6 permanent + LiveOps + LiveOrdering + ProductionEvidence) spawn 의무 (ADR-72 §결정 3)
 - **L3 evidence quad** = bucket prefix listing / WAL sample / drainage rate / cadence trigger 4중 (ADR-72 §결정 5)
-- **L4 EPIC CLOSED gate** = PMOAgent retro epic_close_gate (Sibling Story-4 plugin-codeforge-pmo#18 carrier — Story-3 = warning tier, blocking-on-pr 승격 = follow-up CFP-Z' carrier)
+- **L4 EPIC CLOSED gate** = PMOAgent retro epic_close_gate (Sibling Story-4 plugin-codeforge-pmo#18 carrier — 구 lane repo issue, repo 삭제됨 2026-06-12, 현 `plugins/codeforge-pmo/`. Story-3 = warning tier, blocking-on-pr 승격 = follow-up CFP-Z' carrier)
 - **L5 user explicit go-ahead** = Phase 1 PR open 전 사용자 명시 confirm 의무 (production-touching label 부착 + Story frontmatter `production_cutover_touching: true` dual-source AND, ADR-72 §결정 6 wrapper-self-app N/A invariant 정합)
 
 **4 prerequisite measurement source mechanical anchor 4-tuple (Change Plan §3.5 + ADR-72 amendment_log Amendment 2)**:

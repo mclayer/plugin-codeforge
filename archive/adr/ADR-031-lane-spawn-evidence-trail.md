@@ -150,7 +150,7 @@ ADR-027 §결과:108 retroactive 미처리 invariant 정합.
 | Repo | 영향 | sibling PR 의무 |
 |---|---|---|
 | `mclayer/plugin-codeforge` (wrapper) | ADR-031 + workflow + lint script + template | 본 PR 자체 |
-| `mclayer/plugin-codeforge-requirements` | 변경 없음 | 불요 |
+| `mclayer/plugin-codeforge-requirements` (이하 lane repo 8개 — 현 `plugins/<lane>/` 모노레포, 구 repo 삭제됨 2026-06-12) | 변경 없음 | 불요 |
 | `mclayer/plugin-codeforge-design` | 변경 없음 | 불요 |
 | `mclayer/plugin-codeforge-review` | 변경 없음 | 불요 |
 | `mclayer/plugin-codeforge-develop` | 변경 없음 | 불요 |

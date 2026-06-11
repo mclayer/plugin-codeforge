@@ -193,7 +193,7 @@ wrapper Story 가 sibling repo (lane plugin) 에 mechanical mirror sync PR 을 o
 
 결과 — 매 wrapper Story 마다 모든 sibling PR 이 `phase-gate-mergeable` action_required 차단. Orchestrator 가 evidence comment 기재 (CFP-133 fallback) 또는 label cycle 등의 ad-hoc workaround 로 unblock. recurring 비용 + workflow drift (sibling repo 별로 CFP-133 fallback 적용 시점 차이) 로 신뢰 무너짐.
 
-CFP-448 (#448) sibling PR plugin-codeforge-requirements#20 + plugin-codeforge-design#34 차단 진단 후 본 Amendment 발의.
+CFP-448 (#448) sibling PR plugin-codeforge-requirements#20 + plugin-codeforge-design#34 (구 lane repo — 현 `plugins/<lane>/` 모노레포, repo 삭제됨 2026-06-12) 차단 진단 후 본 Amendment 발의.
 
 ### 결정
 
