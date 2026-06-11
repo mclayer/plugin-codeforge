@@ -14,7 +14,7 @@ amendments:
   - amendment: 3
     carrier_cfp: CFP-1060
     date: 2026-05-20
-    summary: "`별 + carrier-noun` hand-off vocabulary exemption codify (Wave 1 declarative). 의도된 '별도의 N' 패턴 (별 sub-CFP / 별 carrier / 별 session / 별 Story / 별 Issue / 별 PR / 별 lane / 별 sub-Epic / 별 Epic / 별 Wave 등) = forbid-list exempt. CFP-1041 evidence (13+ occurrence declarative SSOT, DesignReview F-DR-1041-3 bypass-as-design pattern). Wave 2 mechanical lint update = 별 sub-CFP carrier deferred. ADR-064 Amendment 6 lockstep."
+    summary: "`별 + carrier-noun` hand-off vocabulary exemption codify (Wave 1 declarative). 의도된 '별도의 N' 패턴 (별 sub-CFP / 별 carrier / 별 session / 별 Story / 별 Issue / 별 PR / 별 lane / 별 sub-Epic / 별 Epic / 별 Wave 등) = forbid-list exempt. CFP-1041 evidence (13+ occurrence declarative SSOT, DesignReview F-DR-1041-3 bypass-as-design pattern). Wave 2 mechanical lint update = CFP-2154 (PR #2155, 2026-06-11) 가 `scripts/check-wording-dictionary.sh` 에 선언 regex verbatim wire 완료 (self-test 12 case). ADR-064 Amendment 6 lockstep."
   - amendment: 4
     carrier_cfp: CFP-1764
     date: 2026-05-27
@@ -55,9 +55,9 @@ codeforge 의 표현 규율 (ADR-064 §결정 2 + §결정 9) 의 어휘 SSOT.
 
 **규칙** (Wave 1 declarative-only): `별\s+(sub-CFP|carrier|session|Story|Issue|PR|lane|sub-Epic|Epic|Wave|layer|sub-axis|sub-CFP carrier|sub-Story)` 패턴 = forbid-list exempt (semantic = "별도의 N" 의도된 hand-off). 본 패턴 외 standalone `별` (예: "별 layer 만" 자체) = forbid-list 유지.
 
-**Wave 2 mechanical lint update (별 sub-CFP carrier deferred)**: `scripts/lib/check_wording_dictionary.py` (또는 `scripts/check-wording-dictionary.sh`) 안 exemption regex pre-screen 추가. 본 Wave 1 = declarative SSOT only (lint script 무변경, bypass label 계속 사용).
+**Wave 2 mechanical lint update (이행 완료 — CFP-2154)**: CFP-2154 (PR #2155, merge 8b67fc14, 2026-06-11) 가 `scripts/check-wording-dictionary.sh` 에 본 선언 regex 의 verbatim exemption pre-screen 으로 wire 완료 (`--self-test` 12 case 포함). 선언문(본 §규칙)이 SSOT — script 는 verbatim mirror (noun list 임의 확장 금지).
 
-**Backward-compat**: 기존 `hotfix-bypass:wording-dictionary` label 사용 carrier 유지 (Wave 2 mechanical wire 후 의도된 hand-off vocabulary 영역은 자동 PASS, label 채택 불요).
+**Backward-compat**: 기존 `hotfix-bypass:wording-dictionary` label 사용 carrier 유지. Wave 2 wire 완료 (CFP-2154) 로 의도된 hand-off vocabulary 패턴은 자동 PASS — 신규 PR 은 label 채택 불요.
 
 | 어휘 | 평문 정의 (사용자에게 보이는 의미) | 권장 대체 | 도입 CFP |
 |---|---|---|---|
