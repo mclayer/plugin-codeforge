@@ -1,0 +1,68 @@
+# docker-compose.test.yml — 통합테스트 격리 환경 템플릿 (CFP-367 / ADR-055)
+#
+# 사용법:
+#   docker-compose -f docker-compose.test.yml up -d --wait
+#   pytest tests/integration/ --timeout=300
+#   docker-compose -f docker-compose.test.yml down
+#
+# Consumer 커스터마이즈:
+#   1. app service: 실제 서비스 이미지/build로 교체
+#   2. wiremock: 필요 없으면 service + depends_on에서 제거
+#   3. test-db: DB 엔진 교체 가능 (PostgreSQL, MySQL, SQLite)
+#   4. ports는 테스트 전용 — 운영 포트와 충돌 방지를 위해 오프셋 적용 권장 (예: 15432)
+
+version: "3.9"
+
+services:
+  # 테스트 대상 애플리케이션 (실제 컨테이너 — static mock 금지)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=postgresql://test:test@test-db:5432/testdb
+      - ENV=test
+      # 외부 API는 WireMock URL로 redirect
+      - EXTERNAL_API_BASE_URL=http://wiremock:8080
+    depends_on:
+      test-db:
+        condition: service_healthy
+      wiremock:
+        condition: service_started
+    networks:
+      - test-network
+
+  # 격리 테스트 DB (운영 DB와 완전 분리)
+  test-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: test
+      POSTGRES_PASSWORD: test
+      POSTGRES_DB: testdb
+    ports:
+      - "15432:5432"  # 운영 포트(5432)와 충돌 방지
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U test"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - test-network
+    volumes:
+      - /var/lib/postgresql/data  # ephemeral — 컨테이너 재시작 시 초기화
+
+  # 외부 API WireMock (계약 기반 stub — 실제 API 스펙과 일치 필수)
+  wiremock:
+    image: wiremock/wiremock:3.3.1
+    ports:
+      - "18080:8080"
+    volumes:
+      - ./tests/integration/wiremock:/home/wiremock
+    command: ["--global-response-templating", "--disable-gzip"]
+    networks:
+      - test-network
+
+networks:
+  test-network:
+    driver: bridge
+    # 격리 네트워크 — 컨테이너 간만 통신, 외부 노출 최소화
