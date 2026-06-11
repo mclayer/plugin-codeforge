@@ -152,7 +152,8 @@ ADR_REF_PATTERN = re.compile(r'\bADR-(\d+)\b')
 SCAN_EXTENSIONS = {'.md', '.yml', '.yaml', '.sh', '.py', '.txt'}
 
 # Excluded directories (archive/ is INCLUDED - ADR-026 origin is there)
-EXCLUDE_DIRS = {'node_modules', '.git', '__pycache__', '.venv', 'venv'}
+# CFP-2152 S1 (ADR-118): 'plugins' = lane repo subtree 흡수 격리 구역 (정리는 S3)
+EXCLUDE_DIRS = {'node_modules', '.git', '__pycache__', '.venv', 'venv', 'plugins'}
 
 # Excluded files (lint script self-exclusion to avoid self-referential false-positive)
 EXCLUDE_FILES = {'check_adr_citation_slug.py'}
