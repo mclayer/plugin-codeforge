@@ -1269,10 +1269,23 @@ if __name__ == "__main__":
     print(f"  WalkResult values: {[r.value for r in WalkResult]}")
     print(f"  EXIT_CODE_MAP: { {k.value: v for k, v in EXIT_CODE_MAP.items()} }")
 
+    # D7 동결 assert (ADR-118 / CFP-2170) — 9-tuple 순서값 정확 list 동등 비교
+    # (entry 1개 swap / 추가 / 삭제 모두 FAIL — 단순 phrasing 아닌 검증 분기)
+    _EXPECTED_TOPOLOGICAL_ORDER = [
+        "codeforge", "codeforge-requirements", "codeforge-design",
+        "codeforge-review", "codeforge-develop", "codeforge-test",
+        "codeforge-pmo", "codeforge-deploy", "codeforge-deploy-review",
+    ]
+    assert TOPOLOGICAL_ORDER == _EXPECTED_TOPOLOGICAL_ORDER, (
+        f"D7 violation (ADR-118): TOPOLOGICAL_ORDER 순서값 변경 감지: {TOPOLOGICAL_ORDER}"
+    )
+    assert get_topological_order() == _EXPECTED_TOPOLOGICAL_ORDER
+    print("  TOPOLOGICAL_ORDER == _EXPECTED_TOPOLOGICAL_ORDER (D7 동결, 9-tuple) ✓")
+
     # aggregate_walk_result sanity
-    result = aggregate_walk_result([WalkResult.SUCCESS] * 7)
+    result = aggregate_walk_result([WalkResult.SUCCESS] * 9)
     assert result == WalkResult.SUCCESS, f"sanity FAIL: {result}"
-    print("  aggregate_walk_result([SUCCESS]*7) = SUCCESS ✓")
+    print("  aggregate_walk_result([SUCCESS]*9) = SUCCESS ✓")
 
     result = aggregate_walk_result([WalkResult.SUCCESS, WalkResult.FAILED])
     assert result == WalkResult.FAILED, f"sanity FAIL: {result}"
