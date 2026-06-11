@@ -30,7 +30,13 @@ concurrency:
 
 jobs:
   story-init:
-    if: contains(github.event.issue.labels.*.name, 'type:story') && contains(github.event.issue.labels.*.name, 'phase:요구사항')
+    # CFP-2149 — gate 라벨 편집 재트리거 차단: labeled 이벤트는 phase:요구사항 부착일 때만 발화.
+    # CFP-280 의도 보존: opened 시 race 회피용 labeled re-trigger 는 phase:요구사항 부착만 재발화.
+    # opened 이벤트엔 github.event.label 부재 → 빈 문자열 평가 (false) — || 단락 순서가 opened 우선이라 안전.
+    if: |
+      (github.event.action == 'opened' || github.event.label.name == 'phase:요구사항') &&
+      contains(github.event.issue.labels.*.name, 'type:story') &&
+      contains(github.event.issue.labels.*.name, 'phase:요구사항')
     runs-on: ubuntu-latest
     env:
       ISSUE_TITLE: ${{ github.event.issue.title }}

@@ -41,7 +41,9 @@ jobs:
             }
 
   # CFP-90: Issue close 시 terminal phase 검증 (CFP-85 P1-5 follow-up)
-  # phase progression invariant — closed Issue 가 phase:보안-테스트 (terminal) 또는 early-close:* 형식
+  # phase progression invariant — closed Issue 가 phase:보안-테스트 (terminal)
+  # 또는 phase:완료 + gate:design-review-pass + gate:retro-complete (CFP-2149 — CFP-1577 lifecycle 완주 단말 인정)
+  # 또는 early-close:* 형식. 무가드 phase:완료 (gate 2종 미보유) 는 여전히 경고 — 엄격성 비축소.
   enforce-terminal-on-close:
     if: github.event.action == 'closed' && github.event.issue != null
     runs-on: ubuntu-latest
@@ -65,9 +67,20 @@ jobs:
 
             const TERMINAL_PHASE = 'phase:보안-테스트';
 
-            // PASS 조건: terminal phase 또는 early-close 명시
-            if (phaseLabel === TERMINAL_PHASE || earlyCloseLabel) {
-              core.info(`Issue #${issue.number} closed with valid phase: ${phaseLabel || earlyCloseLabel}`);
+            // CFP-2149 — phase:완료 + gate 2종 동시 보유 = lifecycle 완주 단말 인정 (CFP-1577 인용).
+            // 무가드 phase:완료 (gate 라벨 미보유) 는 여전히 경고 — 엄격성 비축소가 본 수정의 핵심 제약.
+            const COMPLETE_PHASE = 'phase:완료';
+            const REQUIRED_GATES = ['gate:design-review-pass', 'gate:retro-complete'];
+            const completeWithGates = phaseLabel === COMPLETE_PHASE && REQUIRED_GATES.every(g => labels.includes(g));
+
+            // PASS 조건: terminal phase 또는 phase:완료+gate 2종 또는 early-close 명시
+            if (phaseLabel === TERMINAL_PHASE || completeWithGates || earlyCloseLabel) {
+              const passPath = phaseLabel === TERMINAL_PHASE
+                ? `terminal phase (${TERMINAL_PHASE})`
+                : completeWithGates
+                  ? `${COMPLETE_PHASE} + required gates (${REQUIRED_GATES.join(', ')}) — CFP-2149`
+                  : `early-close (${earlyCloseLabel})`;
+              core.info(`Issue #${issue.number} closed with valid phase — PASS path: ${passPath}`);
               return;
             }
 
@@ -75,7 +88,7 @@ jobs:
             const currentPhase = phaseLabel || '(no phase label)';
             const body = `⚠️ **Phase progression invariant violation** (CFP-85 / CFP-90)\n\n` +
               `Story Issue closed at non-terminal phase: \`${currentPhase}\`.\n\n` +
-              `**Expected**: \`${TERMINAL_PHASE}\` (default after security test PASS) OR \`early-close:<reason>\` label (Epic 종료 / 중복 / Out-of-scope reclassify 등 명시).\n\n` +
+              `**Expected**: \`${TERMINAL_PHASE}\` (default after security test PASS) OR \`${COMPLETE_PHASE}\` + \`${REQUIRED_GATES.join('\` + \`')}\` (CFP-1577 lifecycle 완주 — CFP-2149) OR \`early-close:<reason>\` label (Epic 종료 / 중복 / Out-of-scope reclassify 등 명시).\n\n` +
               `**Action required** (one of):\n` +
               `1. **올바른 progression**: Issue 재open → 정상 lane 진행 → terminal phase 도달 후 close\n` +
               `2. **Early close 정당화**: \`early-close:<reason>\` label 부착 (예: \`early-close:duplicate\`, \`early-close:reclassified\`, \`early-close:epic-rolled-up\`)\n\n` +
