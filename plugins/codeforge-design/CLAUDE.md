@@ -50,7 +50,7 @@ codeforge core (>= 5.0.0) 의존.
 |---|---|---|
 | **LiveOpsDeputy** (CONDITIONAL — Live touching Story 만) | real funds / live exchange API / production credential / live order placement 1+ touching | "operator approval / kill switch / incident response 가 충족되는가, OperationEvent audit trail 이 보존되는가" |
 | **LiveOrderingDeputy** (CONDITIONAL — Live touching Story 만) | LiveOps 동일 trigger | "order submit / partial fill / cancel race / rejection mapping / ledger reconcile invariant 이 정합인가" |
-| **ProductionEvidenceDeputy** (CONDITIONAL — production cutover Story 만) | Change Plan §13 `production_cutover_touching: true` 선언 OR §13 Live Operational Discipline 본문 보유. wrapper-self-app N/A | "production evidence quad (functional / security / monitoring / testing) 4 source 충족하는가, EPIC CLOSED gate evidence 정합인가, Family 7 atomic canary pin length_invariant=7 정합인가" |
+| **ProductionEvidenceDeputy** | — | codeforge-deploy-review 로 이관 완료 (ADR-088 §결정 4) — 본 lane 은 spawn 하지 않음 (canonical = `plugins/codeforge-deploy-review/agents/ProductionEvidenceDeputyAgent.md`) |
 | **ModuleArch aggregate-level CONDITIONAL applicability** | `project.yaml aggregate_arch.applicable: bool` (default `true`). non-applicable consumer = frontend-only / API-only / external-managed RDB | "본 consumer 가 RDB OLTP schema 제어권 보유하는가 — aggregate-level 영역 (ModuleArch mandate 8-13) 만 conditional, module-level 영역 (1-7) 은 무조건 applicable" |
 
 ## 4-tuple sub-tuple (deputy 아님 — ADR-044 CFP-676 reaffirm)
@@ -70,7 +70,7 @@ codeforge core (>= 5.0.0) 의존.
 
 ## 4-way 이념 대립 (대립 참여 roster)
 
-ArchitectPLAgent 가 SubAgent 를 **병렬 spawn**. 대립 참여 = CodebaseMapper ↔ Refactor ↔ SecurityArch ↔ (DataArch 또는 ModuleArch). TestContract / InfraOperational / APIContract = single-mandate 단일 축 (대립 비참여). LiveOps / LiveOrdering / ProductionEvidence = CONDITIONAL 단일 축 (대립 비참여).
+ArchitectPLAgent 가 SubAgent 를 **병렬 spawn**. 대립 참여 = CodebaseMapper ↔ Refactor ↔ SecurityArch ↔ (DataArch 또는 ModuleArch). TestContract / InfraOperational / APIContract = single-mandate 단일 축 (대립 비참여). LiveOps / LiveOrdering = CONDITIONAL 단일 축 (대립 비참여).
 
 - **RDB OLTP 영역 대립**: CodebaseMapper ↔ Refactor ↔ SecurityArch ↔ ModuleArch (aggregate-level) (4-way)
 - **빅데이터 OLAP 영역 대립**: CodebaseMapper ↔ Refactor ↔ SecurityArch ↔ DataArch (4-way)
@@ -103,13 +103,11 @@ ArchitectPLAgent 가 SubAgent 를 **병렬 spawn**. 대립 참여 = CodebaseMapp
 | **ModuleArchitectAgent** (deputy — AggregateArch 통합 흡수) | 설계 lane 진입 즉시 (aggregate-level 영역 = CONDITIONAL applicability `project.yaml aggregate_arch.applicable` 확인) | **§3 code boundary axis: module-level (module boundary + dependency direction + layered/hexagonal/clean + DDD bounded context module placement) + aggregate-level (DDD aggregate boundary + 트랜잭션 경계 + persistence-bound, CONDITIONAL) + §11.1-§11.6 RDB OLTP (Alembic 정책 7 원칙: 양방향 호환 / 확장-정리 분리 / reverse / smoke / cross-repo / 백업 / hard limit)** |
 | **LiveOpsDeputy** (CONDITIONAL — Live touching Story 만) | ArchitectPL 의 §13 CONDITIONAL trigger 검토 후 spawn | **§13 Live Operational Discipline (operator approval / kill switch / incident response / OperationEvent audit) + §7.5 (live API key) consult** |
 | **LiveOrderingDeputy** (CONDITIONAL — Live touching Story 만) | ArchitectPL 의 §13 CONDITIONAL trigger 검토 후 spawn | **§11 Ledger reconcile / partial fill / fee invariant + §8.5 (order replay) + §11.6 idempotency (order side) consult** |
-| **ProductionEvidenceDeputy** (CONDITIONAL — production cutover Story 만) | ArchitectPL 의 §13 production_cutover trigger 검토 후 spawn (wrapper-self-app N/A) | **§13 Production Evidence Quad (MS-1 live_touching / MS-2 production_cutover_touching dual-source AND / MS-3 marketplace_publish_touching / MS-4 consumer_impact_blast_radius) + EPIC CLOSED gate + post-cutover wiring + Family 7 atomic canary pin** |
 
 ArchitectPLAgent prompt:
 - **Backtest/Paper-only Story (default, ModuleArch aggregate-level applicable=true)**: "6 permanent deputy 병렬 spawn (SecurityArch / InfraOperationalArch / TestContractArch / DataArch / ModuleArch / APIContractArch) + 3 4-tuple sub-tuple (CodebaseMapper / Refactor / ArchitectAnalyst) flat spawn (ArchitectAgent chief 포함). ArchitectAgent (chief author) 가 9 (6 + 3 sub-tuple) 산출물 통합 후 Change Plan §1-§13 author. ModuleArch = boundary axis (module-level + aggregate-level RDB OLTP) 통합 산출."
 - **Frontend-only / API-only / external-managed consumer (`project.yaml aggregate_arch.applicable: false`)**: "ModuleArch aggregate-level 영역 N/A (module-level 영역 retain — 항상 spawn). 6 permanent deputy + 3 sub-tuple = 9 산출물 통합 (ModuleArch 산출물 = module-level only)."
 - **Live touching Story (CONDITIONAL active)**: "위 + LiveOpsDeputy + LiveOrderingDeputy spawn. ArchitectAgent chief 가 11 산출물 통합 후 Change Plan §1-§13 + Story §13 author."
-- **Production cutover Story (CONDITIONAL active)**: "위 + ProductionEvidenceDeputy spawn (wrapper-self-app N/A 시 미spawn). ArchitectAgent chief 가 12 산출물 통합."
 
 CONDITIONAL trigger 판정 (ArchitectPL 의 의무):
 - ModuleArch aggregate-level applicability: consumer `project.yaml aggregate_arch.applicable: bool` 확인 (default `true`). 미정의 시 `true` 가정. frontend-only / API-only / external-managed RDB consumer 만 `false` (ModuleArch 항상 spawn — aggregate-level 영역만 conditional, module-level 영역 무조건)
@@ -141,7 +139,7 @@ CONDITIONAL trigger 판정 (ArchitectPL 의 의무):
 - ADR-042 (+Amd 7/8) — design lane agent model tier SSOT + roster 재편 (APIContractArch/ModuleArch 등 + DataArch mandate 축소 + InfraArchitect·DDDArchitect 신설 reject)
 - ADR-044 — Phase-scoped sequential team (flat spawn / nested team·재귀 spawn·sub-lead 격상 금지)
 - ADR-068 (+Amd 2) — Boundary completeness invariants + chief tie-break ladder 3 단계 (RACI → invariant → judgement+Amendment)
-- ADR-72 — ProductionEvidenceDeputy + Epic cutover gate (CONDITIONAL deputy, production cutover Story 만)
+- ADR-72 — ProductionEvidenceDeputy + Epic cutover gate (ADR-088 §결정 4 로 codeforge-deploy-review 이관 완료 — 본 lane spawn 0, CFP-2170 design 본 파일 삭제)
 - ADR-078 — Living architecture doc SSOT (`docs/architecture/codeforge-design.md` 갱신 의무)
 - ADR-086 — Deputy 신설 결정 framework P7 (axis 분석 + 5-checklist self-application). agent file 신설/rename/축소 모두 self-application 의무.
 

@@ -2,6 +2,15 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [Unreleased]
+
+### Removed (CFP-2170 — ProductionEvidenceDeputyAgent design 본 물리 삭제)
+
+- `agents/ProductionEvidenceDeputyAgent.md` 삭제 — ADR-088 §결정 4 ownership 이관 (canonical = `plugins/codeforge-deploy-review/agents/ProductionEvidenceDeputyAgent.md`) 의 lifecycle 완결. deprecated 부착 (2026-05-21) 후 0.21.2 / 0.21.3 — 2 release 경과로 "1 release grace" 만료 실측 (Change Plan cfp-2170 §2.3). consumer blast radius 0 — S5 전 marketplace `codeforge-design` source = 구 lane repo (monorepo `plugins/codeforge-design/**` 와 물리 disjoint).
+- `CLAUDE.md` PE roster 기재 4곳 → 이관 사실 1줄 축약 (Sub-agent fan-out 표 PE row + 12-산출물 서사 PE 분기 제거, ADR-72 관련-ADR 줄 이관 註).
+
+버전 할당 = Epic #2151 S5 release 시점 (plugin.json version bump 없음 — marketplace sync 의무 비발동).
+
 ## [0.21.3] - 2026-06-01
 
 ### Changed (CFP-1141 — AggregateArch deprecate sibling cross-ref cascade 정정)
