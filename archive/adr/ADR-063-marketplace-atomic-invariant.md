@@ -26,6 +26,7 @@ related_stories:
   - CFP-906  # Amendment 6 §결정 17 carrier — Wave 4 sub-Epic #1 Story-1 (mirrored field × channel matrix + 3-way channel invariant)
   - CFP-1059 # Amendment 7 §결정 18 carrier — family scope 7 plugin → 9 plugin 확장 + MAJOR atomic bump invariant codify (codeforge-deploy + codeforge-deploy-review 신설 정합)
   - CFP-1179 # Amendment 8 §결정 19 carrier — Tier 분리 (Tier 1 wrapper bundle vs Tier 2 lane per-walk atomic scope 명확화)
+  - CFP-2174 # Amendment 11 §결정 24/25 carrier — Epic #2151 S5 marketplace source git-subdir 전환 + 단일-repo plugins/ 시대 Tier 2 atomic scope 재정의 (ADR-118 D6 예약 carrier)
 amendments:
   - amendment: 1
     date: 2026-05-13
@@ -83,6 +84,12 @@ amendments:
     summary: "§결정 21 본문 안 sub-section 'Step 1.5: Decision rule for marketplace_sync_required' 신설 (Algorithm overview Step 1 ↔ Step 4 사이 자연 위치) — deterministic algorithm Rule (a)/(b)/(c)/(d) codify. Rule (a) mirrored field 4종 (name/version/description/author) 1+ 변경 감지 시 marketplace_sync_required: true 자동 추론 (모든 semver tier 포함, version-only bump 도 mirrored field version 변경 → true) + sub-clause declarative SSOT (mirrored field 1+ 변경 AND `false` 명시 = Rule (a) deterministic mandate 위반, mechanical wire = 별 CFP carrier 영역 / 현재 check-architect-marketplace-self-check.sh Step 5 가 true case completeness 만 검증, Mitigation = §결정 22 Gap B `check-version-bump-atomic.sh` blocking-on-pr 실값 parity 가 실효 차단 layer — F-SA-1403-01 source). Rule (b) `marketplace_sync_required` field 4 enum closed-set: `true` / `declaration_only_wave_1` / `sibling_story_scope` / `cross_repo_dogfood_out` / `doc_only_fast_path` (open_extension: false — 5번째 enum value 시도 시 별 ADR Amendment 신설 의무, CFP-1403 Story §5.3 EC-8 정합 — F-SA-1403-03 source). Rule (c) owner = ArchitectAgent (chief author) §3.6 mechanical sync self-check (ADR-065 7-item checklist row 8) — Issue body 'Orchestrator §3.6' stale wording 정정 (CFP-1403 retro Pivot 1 source), Orchestrator 작성 영역 아님, DesignReviewPL audit perspective cross-check. Rule (d) self-application — 본 Amendment 10 자체가 Rule (a)/(b)/(c) 의 첫 적용 carrier (META self-app dogfood). Phase 1 PR (doc-only ADR change) = `declaration_only_wave_1` 또는 `doc_only_fast_path` 영역, Phase 2 PR (만약 lint script / workflow 변경 시) = Rule (a) 충족 → `true` (Option B 선택 시 lint 변경 0 = `declaration_only_wave_1` 유지). cross-reference: cross-repo `mclayer/marketplace` PR injection scenario = §결정 2 (ordering policy) + §결정 22 (Gap B blocking-on-pr 실값 parity) 영역 — Amendment 10 scope 외 (F-SA-1403-02 source). CFP-1334 retro F-PL-1334-02 + F-DR-1334-03 P2 advisory borderline marketplace_sync_required determination evidence base. ArchitectAnalyst FACT FIX: Amendment 1~9 CONSECUTIVE (gap 0건) — Story CFP-1403 §5.6 RequirementsPL synthesis 'Amendment 4/7 missing 정합 보존' 가정 정정 (false). Amendment 10 = sequential next slot, no missing precedent. ratchet ↑ direction only (declaration presence check Amendment 9 → declaration value algorithm 강화 = scope 확장 + invariant 강도 상승) — ADR-064 §self-application top-down ratchet + ADR-058 §결정 5 약화 방향 발의 차단 logic 통과."
     is_transitional: false
     sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 10 = declaration value decision algorithm codify 강화 방향 only — Amendment 9 declaration presence check 위에 deterministic value algorithm 추가, scope 확장 + invariant 강도 상승, 약화 요소 0건). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과 (Rule (a) mirrored field detection 약화 / Rule (b) enum closed-set 확장 무허가 / Rule (c) ArchitectAgent owner 변경 / Rule (d) self-application skip = sunset_justification 3-tuple 의무)."
+  - amendment: 11
+    date: 2026-06-11
+    cfp: CFP-2174
+    summary: "§결정 24/25 신설 — lane plugin 8종 marketplace source 형식 github(분산 repo) → git-subdir(단일 repo plugins/ 하위) 전환 + 무핀 정책 + 단일-repo 시대 Tier 2 atomic scope 재정의 (Epic #2151 / ADR-118 D6 예약 carrier — S5 Phase 2 게이트). (a) lane 8 entry source = {git-subdir, url=mclayer/plugin-codeforge, path=plugins/<plugin name>} — path ↔ plugin.json name 1:1 (ADR-118 D3), wrapper entry = github source 유지 (repo 루트 자체가 plugin). (b) 무핀 (ref/sha 생략 — default branch HEAD 추종): version 식별·캐시 교체 SSOT = plugin.json version (플랫폼 version resolution 1순위 — 공식 문서 'Version resolution and release channels'), sha 핀 채택 시 lane 콘텐츠 갱신마다 marketplace sha 재핀 sync PR 필요 = Epic #2151 이 제거한 cross-repo sync 마찰(strict bypass 누적 109회)의 부분 재생산 → 비채택. 현행 github source 도 ref/sha 무핀이므로 핀 강도 동등 이전 (약화 0). supply-chain 요구 격상 시 sha 핀 도입 = 강화 방향 Amendment open path. (c) Tier 2 (§결정 19) 경로 차원 재정의 — lane 의 repo-내 release 파일 2종 (plugin.json + CHANGELOG, ADR-092 영역. §결정 19 의 'Tier 2 atomic scope 2-file (plugin.json + marketplace.json)' 과 별개 개념 — 동음이의 혼용 금지) 이 S1~S4 흡수로 wrapper repo plugins/<name>/ 에 위치: lane bump 가 wrapper 파일과 단일 repo 단일 PR 로 원자화 가능, cross-repo coordination 잔여 = marketplace.json 1축 (2-repo → 1축 drift surface 축소). §결정 2 ordering (marketplace sync PR 선행 merge → plugin repo PR merge) 불변. (d) source 필드 ≠ mirrored field 4종 — source 교체 단독은 3-file atomic trigger 아님 (동반 version bump 는 §결정 21 Step 1.5 Rule (a) 정상 trigger). (e) family scope 9-plugin 불변 (Amendment 7 보존 — frontmatter 표기 §결정 18, 본문 결정 번호 충돌 pre-existing → follow-up #2173 위임. 엔트리 수 9 + 각 entry identity 불변). (f) 실측 게이트 의무 — source 전환 merge 후 G0~G4 (Story CFP-2174 §7 / Change Plan cfp-2174-marketplace-subdir SSOT) 전부 PASS 전 S6 (lane repo archive 비가역) 진입 금지, FAIL 시 rollback = source github 형식 복원 (S6 전 lane repo 생존 구간 한정 완전 가역, version 필드는 복원 금지 — parity 보존). (g) Tier 1 (wrapper) atomic scope 재정의 — plugin.json + marketplace.json 2-file + CHANGELOG 축 = ADR-092 위임 (ADR-092 Amendment 1 §결정 3 sibling — wrapper 루트 CHANGELOG 동결 codify). direction: weaken 1건 (Tier 1 한정), evidence 3종 gate = de-bloat 4차 merge 사실 #1967/#1972/#1975 + invariant-check.yml version-match prune 주석 + wrapper bump 2회 선례 PR #2135/#2136 CHANGELOG 없이 merge — letter ↔ 현실 drift 의 사후 codify (신규 약화 행위 0), tier-downgrade-justification 마커 = carrier commit message 포함. 첫 적용 carrier = 본 CFP-2174 자체 (wrapper 6.14.0→6.15.0 MINOR + design 0.22.0→0.23.0 MINOR — S4 CHANGELOG [Unreleased] 위임 해소). ratchet: (a)~(f) = 강화/중립 (drift surface 축소 + 핀 강도 동등 + mirrored field scope/ordering/bypass 보존) + (g) = 부분 weaken 1건 (ADR-058 §결정 5 evidence-gate 통과 + ADR-092 Amendment 1 동반) — ADR-064 top-down ratchet 정합."
+    is_transitional: false
+    sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 — Amendment 11 = (a)~(f) 강화/중립 (source 취득 경로 전환 + cross-repo drift surface 2-repo → 1축 축소 + 핀 강도 동등 이전 + mirrored field scope/ordering/bypass 보존) + (g) 부분 weaken 1건 (Tier 1 CHANGELOG 축 ADR-092 위임 — 기 merge 된 wrapper CHANGELOG 동결의 사후 codify, evidence 3종 gate + ADR-092 Amendment 1 sibling + tier-downgrade-justification 마커, ADR-058 §결정 5 evidence-gate 통과). 추가 약화 방향 (git-subdir → 분산 repo source 회귀 / §결정 2 ordering 해제 / 실측 게이트 G0~G4 생략 후 S6 진입 / lane plugin CHANGELOG 의무 약화) = sunset_justification 3-tuple 의무."
 mechanical_enforcement_actions:
   - action: version-3way-atomic
     binding_decision: 15
@@ -796,6 +803,62 @@ ADR-064 self-application top-down ratchet 정합 — 약화 방향 (예: Gap A l
 **Self-application 첫 사례 (본 carrier)**: 본 CFP-604 Story 의 Phase 2 PR 자체가 wrapper plugin.json mirrored field 2종 (`version` MINOR bump + `description` tail append Amendment 9 carrier note) bump 동반 — Amendment 9 가 enforce 하는 §결정 22 marketplace 정합 강제를 자기 자신에 적용 (dogfood). marketplace sibling sync PR 선행 merge → wrapper Phase 2 PR merge ordering 강제 (§결정 2). Change Plan §13 declare (`marketplace_sync_required: true`) → 본 §결정 21 Gap A lint 의 첫 검증 대상.
 
 본 ADR-063 amendment 발의 시 매번 ratchet 방향 검증 의무 — 강화 방향만 허용.
+
+### 결정 24: lane plugin source 형식 git-subdir 전환 + 무핀 정책 + 단일-repo 시대 Tier 2 atomic scope 재정의 (Amendment 11, CFP-2174)
+
+**Context (Epic #2151 모노레포 통합 — ADR-118 D6 예약 carrier)**: S1~S4 (CFP-2152/2158/2159/2170) 로 8 lane plugin 콘텐츠가 wrapper repo `plugins/codeforge-<lane>/` 하위로 이력 보존 흡수 완료 (wrapper main `ad720901` 기준). 본 결정은 marketplace 의 plugin **취득 경로(source)** 를 단일 repo 형식으로 전환하고, 그에 따라 atomic invariant 의 cross-repo scope 를 재정의한다. ADR-118 D6 이 "ADR 예약 2건 중 2번째 = ADR-063 Amendment (source 필드 형식, S5 carrier)" 로 본 Amendment 를 예약했다.
+
+**(a) source 형식 — lane 8 entry git-subdir 전환**:
+
+```diff
+- "source": { "source": "github", "repo": "mclayer/plugin-codeforge-<lane>" }
++ "source": { "source": "git-subdir", "url": "mclayer/plugin-codeforge", "path": "plugins/codeforge-<lane>" }
+```
+
+- `path` ↔ plugin.json `name` 1:1 (ADR-118 D3 — 디렉터리 = 정식 plugin name).
+- wrapper 엔트리 `codeforge` 는 **github source 유지** (repo 루트 자체가 plugin — git-subdir 비대상).
+- 엔트리 수 9 + 각 entry identity (name/version/description/author + spawn 식별자) 불변.
+
+**(b) 무핀 정책 — ref/sha 생략 (default branch HEAD 추종)**:
+
+| 근거 | 내용 |
+|---|---|
+| version 식별 SSOT | 플랫폼 version resolution 1순위 = plugin.json `version` (공식 문서 "Version resolution and release channels") — version 문자열이 캐시 교체 trigger. sha 없이도 release discipline 은 §결정 1/19 atomic invariant 가 담당 |
+| sha 핀 = 마찰 재생산 | self-hosted 동일 repo 를 가리키므로 sha 핀 시 lane 콘텐츠 갱신마다 marketplace sha 재핀 sync PR 필요 — Epic #2151 이 측정·제거한 cross-repo sync 마찰 (strict bypass 누적 109회) 의 부분 재현 |
+| 핀 강도 동등 이전 | 현행 github source 도 ref/sha 무핀 (default branch HEAD 추종) — 본 전환으로 핀 강도 변화 0 (약화 아님) |
+| open path | supply-chain 요구 격상 시 sha 핀 도입 = **강화 방향 Amendment** 로 가능 |
+
+**(c) Tier 2 단일-repo 경로 차원 재정의 (§결정 19 위에 갱신) — 용어 분리 의무**:
+
+- **용어 분리 (동음이의 혼용 금지)**: §결정 19 의 "Tier 2 atomic scope 2-file" = `plugin.json` + `marketplace.json` (marketplace coordination invariant — 불변 보존). 본 (c) 가 다루는 "lane repo-내 release 파일 2종" = `plugins/<name>/.claude-plugin/plugin.json` + `plugins/<name>/CHANGELOG.md` (ADR-092 CHANGELOG 영역 — atomic scope 아님). 양자는 별개 개념이다.
+- lane 의 repo-내 release 파일 2종이 S1~S4 흡수로 wrapper repo 안에 위치 — lane bump 와 wrapper bump 가 **단일 repo 단일 PR 로 원자화 가능** (종전: lane repo PR + marketplace PR 2-repo coordination).
+- cross-repo coordination 잔여 = `mclayer/marketplace/.claude-plugin/marketplace.json` **1축뿐** — drift surface 축소 (강화).
+- §결정 2 ordering **불변**: marketplace sync PR 선행 merge → plugin repo (wrapper) PR merge.
+
+**(d) source 필드 ≠ mirrored field**: source 교체 단독은 mirrored field 4종 (name/version/description/author) 외 — 3-file atomic trigger 아님. 동반 version bump 는 §결정 21 Step 1.5 Rule (a) 정상 trigger (`marketplace_sync_required: true`).
+
+**(e) family scope 9-plugin 불변**: Amendment 7 보존 — 본 전환은 scope 변경 없음. (인용 주의: Amendment 7 frontmatter 표기 = "§결정 18 신설" 이나 본문 `### 결정 18` 헤더는 Amendment 6 self-application 절이 점유 — **결정 번호 충돌 pre-existing**, 정정 = follow-up #2173 위임. 본 Amendment 의 결정 영역 외.)
+
+**(g) Tier 1 (wrapper) atomic scope 재정의 — CHANGELOG 축 ADR-092 위임 (direction: weaken, evidence-gate 통과)**:
+
+- **재정의**: Tier 1 atomic scope = `plugin.json` + `marketplace.json` **2-file** + CHANGELOG 축 = **ADR-092 위임** (ADR-092 Amendment 1 §결정 3 sibling — wrapper 루트 CHANGELOG 동결 codify: wrapper version 이력 SSOT = plugin.json version + git history + marketplace.json mirror). §결정 1 의 "CHANGELOG.md entry 의무" 와 §결정 19 Tier 1 "3-file 보존" 은 wrapper 에 한해 본 (g) 로 갱신된다. lane plugin (Tier 2) 의 `plugins/<name>/CHANGELOG.md` self-owned 의무 = 전부 보존 (ADR-092 §결정 1).
+- **direction: weaken 1건 (Tier 1 한정) — ADR-058 §결정 5 evidence-gate 3종**: ① de-bloat 4차 merge 사실 (#1967/#1972/#1975 — 루트 `CHANGELOG.md` → `archive/CHANGELOG-legacy.md` 동결) ② `invariant-check.yml` 주석 "(CHANGELOG 동결로 #2 version-match / #7 migration-parity 제거 — prune)" (version-match 검증 기 제거) ③ wrapper bump 2회 선례 (6.13.0 PR #2136 / 6.14.0 PR #2135 — CHANGELOG 없이 merge). 즉 본 (g) = **letter ↔ 현실 drift 의 사후 codify** (신규 약화 행위 0건 — 약화는 de-bloat 캠페인에서 기 merge). tier-downgrade-justification 마커 = carrier commit message 포함.
+- **복원 경로**: wrapper changelog 재개 시 ADR-092 §결정 3 폐지 + 본 (g) 폐지 amendment (강화 방향) 로 가능.
+
+**(f) 실측 게이트 의무 (Epic hard gate)**: source 전환 merge 후 이 머신 실측 게이트 G0~G4 (Story CFP-2174 §7 + Change Plan `cfp-2174-marketplace-subdir` 절차 SSOT — G0 로컬 clone 신선화 / G1 9 plugin 갱신 / G2 캐시 + fresh-install 표본 / G3 spawn 식별자 무변경 / G4 check_bootstrap 통과) **전부 PASS 전 S6 (lane repo archive — 비가역) 진입 금지**. FAIL 시 rollback = marketplace source 를 github 형식으로 복원하는 신규 PR (version 필드는 복원 금지 — wrapper/design bump 가 이미 main 인 경우 parity 보존 의무). S6 전 lane repo 생존 구간 한정 완전 가역 (ADR-118 D1).
+
+### 결정 25: Self-application — Amendment 11 ratchet 검증 + 첫 적용 사례
+
+**Ratchet 검증**: 본 Amendment 11 = **(a)~(f) 강화/중립 + (g) 부분 weaken 1건 (evidence-gate 통과)**:
+
+- (b) 무핀 = 현행 github source 와 핀 강도 동등 (중립 이전) — 핀 의무가 존재한 적 없으므로 해제 아님.
+- (c) Tier 2 단일-repo 경로 차원 = cross-repo drift surface 2-repo → 1축 축소 (강화). mirrored field 4종 scope / Tier 구분 / §결정 2 ordering / §결정 4 bypass 채널 전부 보존.
+- (f) 실측 게이트 = 신규 forcing function 추가 (강화) — S6 비가역 진입 전 게이트 의무.
+- **(g) Tier 1 CHANGELOG 축 ADR-092 위임 = 부분 weaken 1건** — 단 기 merge 된 동결 사실의 **사후 codify** (신규 약화 행위 0). ADR-058 §결정 5 evidence-gate 3종 (de-bloat 4차 merge / invariant-check prune 주석 / bump 선례 2회) + ADR-092 Amendment 1 sibling 동반 + tier-downgrade-justification 마커 + 복원 경로 명시 — 3-tuple 충족.
+
+ADR-064 self-application top-down ratchet 정합 — 추가 약화 방향 (git-subdir → 분산 repo 회귀 / ordering 해제 / 게이트 생략 후 S6 진입 / lane CHANGELOG 의무 약화) 미해당. ADR-058 §결정 5 sunset_justification = frontmatter 명시.
+
+**Self-application 첫 사례 (본 carrier)**: 본 CFP-2174 자체가 wrapper plugin.json `version` 6.14.0 → 6.15.0 MINOR (배포 토대 변경 — ADR-037 behavior-affecting MINOR) + design plugin `version` 0.22.0 → 0.23.0 MINOR (S4 CFP-2170 design CHANGELOG `[Unreleased]` 가 "버전 할당 = Epic #2151 S5 release 시점" 으로 명시 위임한 항목 해소) bump 동반 — §결정 2 ordering (marketplace sync PR 선행 merge → wrapper PR merge) + §결정 21 Rule (a) (`marketplace_sync_required: true`, `mirrored_fields_changed: [version]`) 첫 적용. 나머지 7 lane = version 불변 (콘텐츠 델타 = S2 contract mirror + S3 CI 삭제뿐 — 에이전트/CLAUDE.md/매니페스트 무변경 실측, bump 불요). G0~G4 실측 결과 = Story CFP-2174 §9 기록 의무.
 
 ## 결과
 

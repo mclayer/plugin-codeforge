@@ -21,7 +21,13 @@ related_files:
 mechanical_enforcement_actions: []  # declaration-only Wave 1 — ADR-097 §결정 0 / ADR-082 §결정 6 / ADR-070 §D5 retain pattern 답습 (drift detection lint = §결정 2 declare, mechanical wire 별 sub-CFP carrier; pattern_count >= 2 재발 시 follow-up CFP MUST promote)
 is_transitional: false  # permanent policy — changelog SSOT location 은 영구 정책 (per-plugin self-owned location 자체는 변경 저빈도 event 이나 anchor 는 future 재사용 permanent). 약화 방향 차단 ratchet (ADR-058 §결정 5 정합)
 sunset_justification: null  # is_transitional false — sunset 기준 부재 + amendment 시 ratchet 강화 방향만 허용
-amendment_log: []
+amendment_log:
+  - amendment: 1
+    date: 2026-06-11
+    cfp: CFP-2174
+    direction: weaken  # 부분 약화 — wrapper 1 plugin 한정 (lane plugin per-plugin self-owned 전부 보존). ADR-058 §결정 5 evidence-gate 통과 (3종 evidence 아래)
+    summary: "§결정 3 신설 — wrapper 루트 CHANGELOG 동결 codify (이미 merge 된 사실의 사후 정합 — 신규 약화 행위 아님). §결정 1 K-4 enum 의 wrapper row 재정의: wrapper changelog = `archive/CHANGELOG-legacy.md` 동결 보존 (신규 entry 금지), wrapper version 이력 SSOT = plugin.json version + git history + marketplace.json mirror. lane plugin (모노레포 후 8종, `plugins/<name>/CHANGELOG.md`) per-plugin self-owned 의무 = 전부 보존 + location 경로만 모노레포 정합 갱신 (중립 — Epic #2151 S1 흡수). §결정 2 drift detection 대상 = lane 8종만 (wrapper 제외 — CHANGELOG 부재). evidence 3종 (de-bloat 4차 merge 사실 #1967/#1972/#1975 + invariant-check.yml version-match prune 주석 'CHANGELOG 동결로 #2 version-match 제거' + wrapper bump 2회 선례 PR #2135 6.14.0 / #2136 6.13.0 — CHANGELOG 없이 merge). ADR-063 Amendment 11 §결정 24 (g) sibling (Tier 1 atomic scope 의 CHANGELOG 축 = 본 ADR 위임)."
+    sunset_justification: "부분 weaken 1건 (wrapper 1 plugin 한정 changelog 동결) — ADR-058 §결정 5 evidence-gate 3-tuple: (1) 약화 대상 = §결정 1 wrapper row 만, lane 8 plugin self-owned + §결정 2 drift detection + closed_enum 전부 보존 (2) evidence 3종 = 기 merge 사실 (de-bloat 4차 / prune 주석 / bump 선례 2회) — 본 Amendment = letter ↔ 현실 drift 의 사후 codify, 신규 약화 행위 0 (3) 복원 경로 명시 = wrapper changelog 재개 시 본 §결정 3 폐지 amendment (강화 방향) 로 가능. tier-downgrade-justification 마커 = carrier commit message 포함."
 ---
 
 # ADR-092 — Changelog SSOT location
@@ -93,6 +99,23 @@ changelog ↔ `plugin.json` `version` drift detection lint 을 declare 한다 ([
 - **mechanical wire = Wave 1 부재** (`mechanical_enforcement_actions: []` declaration-only). 본 ADR 은 drift detection 을 **declare** 하고, 실 lint 구현 (`scripts/` + `templates/github-workflows/`) 은 별 sub-CFP carrier (ADR-097 §결정 0 / ADR-082 §결정 6 retain pattern 답습 — pattern_count >= 2 재발 시 follow-up CFP MUST promote to mechanical lint).
 
 본 drift detection 은 [ADR-016](ADR-016-marketplace-registration-policy.md) mirrored field (`version`) versioning + [ADR-063](ADR-063-marketplace-atomic-invariant.md) marketplace ↔ plugin.json atomic invariant 와 disjoint axis — ADR-063 = (plugin.json + CHANGELOG.md + marketplace.json) 3-file atomic coordination 의무 (version bump 시 동시 갱신), 본 §결정 2 = changelog 최신 entry version ↔ plugin.json version 사후 정합 detection (advisory). 양자 cross-ref (atomic coordination 의무 + 사후 drift detection 보완).
+
+### §결정 3 — wrapper 루트 CHANGELOG 동결 codify (Amendment 1, CFP-2174 — direction: weaken, evidence-gate 통과)
+
+**Context (letter ↔ 현실 drift 사후 정합)**: §결정 1 K-4 는 wrapper 를 포함한 per-plugin self-owned CHANGELOG + "version bump 와 같은 PR 안 entry append 의무" 로 codify 했다. 그러나 de-bloat 4차 (2026-06-05 #1967/#1972/#1975) 가 wrapper 루트 `CHANGELOG.md` 를 `archive/CHANGELOG-legacy.md` 로 동결했고, 이후 wrapper bump 2회 (6.13.0 PR #2136 / 6.14.0 PR #2135) 가 CHANGELOG 없이 merge 됐으며, `invariant-check.yml` 은 "(CHANGELOG 동결로 #2 version-match / #7 migration-parity 제거 — prune)" 주석으로 version-match 검증을 제거했다. 즉 **약화는 이미 merge 된 사실**이고 본 §결정 3 은 그 사후 codify 다 (CFP-2174 설계리뷰 iter1 P0-1 — 동결 codify ADR 0건 공백 해소).
+
+**재정의 (§결정 1 표 wrapper row 한정)**:
+
+| 대상 | changelog 보유 | SSOT 여부 | 갱신 주체 |
+|---|---|---|---|
+| wrapper plugin | **동결** — `archive/CHANGELOG-legacy.md` 보존 (신규 entry 금지) | version 이력 SSOT = **plugin.json version + git history (+ marketplace.json mirror)** | (bump PR 은 plugin.json 만) |
+| lane plugin 각각 (모노레포 후 8종) | `plugins/<plugin name>/CHANGELOG.md` self-owned — **의무 보존** | **SSOT** | 해당 lane 변경 PR (Epic #2151 S1 흡수 후 wrapper repo 단일 PR 안에서 self-write boundary 정합) |
+
+- §결정 2 drift detection 대상 = lane 8종만 (wrapper 제외 — CHANGELOG 부재가 정상 상태).
+- §결정 0 carry-over 1 (closed_enum) 정합 — 본 변경은 enum 의 amendment 경유 재정의 (runtime ad-hoc 아님).
+- ADR-063 Amendment 11 §결정 24 (g) sibling — Tier 1 atomic scope 의 CHANGELOG 축은 본 ADR 위임.
+
+**direction: weaken — ADR-058 §결정 5 evidence-gate 3-tuple**: (1) 약화 범위 = wrapper 1 plugin 한정 (lane 8 self-owned + drift detection + closed_enum 보존) (2) evidence 3종 = de-bloat 4차 merge 사실 / invariant-check prune 주석 / bump 선례 2회 (3) 복원 경로 = wrapper changelog 재개 시 본 §결정 3 폐지 amendment (강화 방향) 가능. tier-downgrade-justification 마커 = carrier commit message 포함.
 
 ## 결과
 
