@@ -5,7 +5,7 @@
 
 **Source SSOT**: [`docs/doc-locations.yaml`](doc-locations.yaml)  
 **schema_version**: 1.2  
-**Last regen**: 2026-06-05T00:54:04Z  
+**Last regen**: 2026-06-11T17:21:27Z  
 **Registered doc types**: 17
 
 ## Summary table
@@ -209,10 +209,10 @@
 - **naming_pattern**: `[a-z0-9-]+-v[0-9]+\.md`
 - **frontmatter_required**: True
 - **examples**:
-  - plugins/codeforge-review/docs/inter-plugin-contracts/review-verdict-v3.md
+  - docs/inter-plugin-contracts/review-verdict-v3.md
 
   **notes**:
-  > Canonical 은 producer plugin repo. wrapper 는 sibling sync mirror (ADR-010).
+  > wrapper 단일 원본 (ADR-118 D5 — sibling sync 폐지).
   > MANIFEST.yaml 가 별도 SSOT — 본 entry 는 위치 룰만.
   > confluence variant (CFP-1256 / ADR-103 §결정 5 R2): wrapper governance docs (KEEP path, ADR-013) 의 Confluence readable mirror. git = SoR-work invariant.
 
