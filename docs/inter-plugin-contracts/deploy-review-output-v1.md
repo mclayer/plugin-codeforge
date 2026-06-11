@@ -3,7 +3,7 @@ kind: contract
 contract: deploy_review_output
 contract_version: "0.1"
 status: Active  # Phase 1 = placeholder declare only (CFP-1059 / ADR-088). Body wire = S3 sub-Story carrier.
-canonical_repo: mclayer/plugin-codeforge-deploy-review  # TBD — lane plugin seed 신설 후 wire
+canonical_repo: mclayer/plugin-codeforge  # CFP-2178 S6 — wrapper 단일 원본 정정 (S2 CFP-2158 누락분 마무리). status Active ↔ MANIFEST Draft = pre-existing drift (CFP-1336 Draft revert) — 본 Story 비수정 기록
 canonical_path: docs/inter-plugin-contracts/
 created_by: CFP-1059
 created_date: 2026-05-20  # KST
@@ -58,7 +58,7 @@ S3 에서 다음 field group 이 정식 schema 로 author 될 영역:
 
 ## Sibling sync (ADR-010)
 
-본 contract = `canonical_repo: mclayer/plugin-codeforge-deploy-review` (lane plugin seed 신설 후 confirm). sibling sync 영역 9 plugin family (CFP-1059 후) 안에서 cross-plugin schema 의무 — S3 wire 시 ADR-010 §결정 1 정합.
+본 contract = `canonical_repo: mclayer/plugin-codeforge` (wrapper 단일 원본 — ADR-118 D5, CFP-2178 S6 정정).
 
 ## debate-protocol-v1 trigger (ADR-088 §결정 4)
 

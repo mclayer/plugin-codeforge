@@ -118,7 +118,7 @@ BC 사이 통신 = **Published Language** 의무. content duplication 금지 —
 - ArchitectLane 산출물 (Change Plan + ADR draft + §8 Test Contract + §11 데이터 마이그레이션)
 - inter-plugin contracts (review-verdict-v4 / fix-event-v1 / label-registry-v2 / debate-protocol-v1 / git-ops-event-v1 등)
 - 본 plugin-codeforge repo 안 모든 도메인 knowledge 문서 (`docs/domain-knowledge/`)
-- agent file 본문 (15 agent in `plugin-codeforge-design/agents/`)
+- agent file 본문 (15 agent in `plugins/codeforge-design/agents/`)
 - ADR 본문 + Change Plan + Story file + skill file + CLAUDE.md (wrapper + lane plugin)
 
 ### 영역 외 (mctrader application BC 및 downstream Epic 영역)

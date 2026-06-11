@@ -199,4 +199,4 @@ requirements_output:
 
 - 동결 일시: 2026-04-29 (CFP-37)
 - 협업: Claude (codification) · CFP-31 parent spec §5.7
-- Source: `mclayer/plugin-codeforge-requirements` 4 agent 책임 정의
+- Source: `plugins/codeforge-requirements` 4 agent 책임 정의

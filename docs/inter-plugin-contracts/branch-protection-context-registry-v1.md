@@ -1,8 +1,9 @@
 ---
 kind: registry
 registry: branch-protection-context-registry
-version: "1.1"
-status: Active
+version: "1.2"
+status: Archived
+superseded_by: wrapper CLAUDE.md 브랜치 보호 표 (wrapper 1행) + docs/security/branch-protection-audit.md  # CFP-2178 S6 — lane repo 8개 archive 로 cross-repo parity 대상 소멸
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/branch-protection-context-registry-v1.md
 date: 2026-05-30
@@ -11,6 +12,7 @@ authors:
 version_history:
   - { version: "1.0", date: 2026-05-30, carrier: CFP-1806, change: "initial — 8 codeforge plugin family (wrapper + 7 lane plugin) main branch required_status_checks.contexts[] structured SSOT codify. Previously markdown table only in wrapper CLAUDE.md '6 lane plugin branch protection contexts SSOT' 단락 (CFP-1785-S1 PATCH 후 상태). Parent retro: CFP-1785 retro FU-B P3 (structured cross-repo parity verify의 input anchor SSOT 분리)." }
   - { version: "1.1", date: 2026-05-31, carrier: CFP-1850-S2, change: "MINOR — codeforge-pmo / codeforge-deploy / codeforge-deploy-review 3 entry contexts[] 채움 (contexts: [] + protected: false → [check-gate, phase-gate-mergeable]). pmo = phase-gate-mergeable 필수 신규 추가 (gh API PATCH 적용). deploy/deploy-review = 실제 PROTECTED 상태 반영 (이전 protected:false = drift). 8 lane plugin 모두 phase-gate-mergeable 필수 포함 통일 (review 는 invariant 유지 — live check). 단일 chore PR 영구 차단은 CFP-1850-S1 isChoreOnly fast-pass 로 해소되어 requirements/pmo 필수 추가 안전. wrapper 6번째 context 표기 drift 정정 동반 (deploy-lane-presence 축약 → actual job 표시명 'Verify deploy lane presence (Phase 2 wire — ADR-087 Amd 2)', CFP-1807 parity lint clean)." }
+  - { version: "1.2", date: 2026-06-12, carrier: CFP-2178, change: "MINOR — status Active → Archived. lane repo 8개 GitHub archive (Epic #2151 S6, ADR-118 D1) 로 9-repo cross-repo parity 검증 대상 소멸. 잔존 SSOT = wrapper CLAUDE.md 브랜치 보호 표 (wrapper 1행) + docs/security/branch-protection-audit.md. related_files 의 부재 script 인용 (scripts/lib/check_branch_protection_context_name_strict_match.py — S3 에서 파일 소멸) 제거. file 잔존 + historical record 보존 (ADR-008 §5.1). MINOR 등급 근거 = status 전환 + version_history append — 필드 제거/의미 파괴 0 비파괴 변경 (ADR-008 §2 v1.x backward-compatible)." }
 owner_adr: ADR-024
 carrier_story: CFP-1806
 sibling_sync_exempt: true
@@ -30,7 +32,6 @@ related_files:
   - docs/inter-plugin-contracts/label-registry-v2.md  # severity:/hotfix-bypass:* family cross-ref
   - docs/adr/ADR-024-story-scoped-branch-policy.md
   - docs/security/branch-protection-audit.md  # audit log SSOT (post-PATCH state record)
-  - scripts/lib/check_branch_protection_context_name_strict_match.py  # CFP-1849 strict-match lint (consumer of this registry)
 related_plugins:
   - codeforge (wrapper, SSOT host repo)
   - codeforge-requirements (lane plugin, registry entry)
@@ -44,6 +45,8 @@ related_plugins:
 ---
 
 # branch-protection-context-registry-v1 — Inter-plugin Contract Registry
+
+> **Archived (v1.2, CFP-2178 S6, 2026-06-12)** — lane repo 8개 GitHub archive (ADR-118 D1) 로 cross-repo parity 검증 대상 소멸. 잔존 SSOT = wrapper `CLAUDE.md` 브랜치 보호 표 (wrapper 1행) + [`docs/security/branch-protection-audit.md`](../security/branch-protection-audit.md). 본 file 은 historical record 로 보존 (ADR-008 §5.1). 이하 본문 = archive 시점 상태 동결.
 
 8 codeforge plugin family (wrapper + 7 lane plugin) 의 GitHub `main` branch protection `required_status_checks.contexts[]` array SSOT. cross-repo parity verify lint (`branch-protection-context-parity` — CFP-1807) + context name strict-match lint (`branch-protection-context-name-strict-match` — CFP-1849) 의 **input anchor SSOT** 로 작동.
 

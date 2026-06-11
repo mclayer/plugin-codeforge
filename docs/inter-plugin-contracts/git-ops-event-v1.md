@@ -194,7 +194,7 @@ ADR-008 SemVer 적용:
 
 ### Sibling sync (ADR-010)
 
-- **canonical** = 본 file (`mclayer/plugin-codeforge-pmo/docs/inter-plugin-contracts/git-ops-event-v1.md`)
+- **canonical** = 본 file (wrapper `docs/inter-plugin-contracts/git-ops-event-v1.md` — ADR-118 D5 단일 원본, CFP-2178 S6 정정)
 - **wrapper sibling** = `mclayer/plugin-codeforge/docs/inter-plugin-contracts/git-ops-event-v1.md`
 - canonical 변경 시 wrapper sibling sync PR 후속 의무 — `check-inter-plugin-contracts.sh` lint 강제
 - 본 plugin 의 `agents/GitOpsAgent.md` agent file 의 contract reference 도 본 file schema 와 align 의무

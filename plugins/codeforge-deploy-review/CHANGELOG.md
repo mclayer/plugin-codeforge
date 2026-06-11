@@ -4,6 +4,12 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [1.0.3] - 2026-06-12
+
+### Changed (CFP-2178 — S6 lane repo archive 참조 sweep, PATCH)
+
+- `README.md` 필수 의존 `codeforge-deploy@mclayer` 링크 — 구 lane repo URL (`mclayer/plugin-codeforge-deploy`) → 동일 모노레포 상대 경로 (`plugins/codeforge-deploy/`). 구 lane repo 8개 = 2026-06-12 GitHub archive (ADR-118 D1).
+
 ## [1.0.1] - 2026-05-30
 
 ### CFP-1845 follow-up — agent model 핀 → 별칭 전환

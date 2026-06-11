@@ -149,5 +149,5 @@ CONDITIONAL trigger 판정 (ArchitectPL 의 의무):
 
 Plugin repo 측 GitHub Issue 와 internal-docs 측 Story file 의 binding:
 - Issue body frontmatter: `story_uri: <internal-docs URL>`
-- Story file frontmatter: `story_issues: [{repo: "mclayer/plugin-codeforge-design", number: <N>}]`
+- Story file frontmatter: `story_issues: [{repo: "mclayer/plugin-codeforge", number: <N>}]`
 - `.github/workflows/phase-gate-mergeable.yml` (본 repo) 가 cross-repo Story fetch via GitHub App

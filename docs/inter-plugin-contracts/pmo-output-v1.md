@@ -177,4 +177,4 @@ PMOAgent self-write 단계 실패 (예: GitHub milestone API rate limit, retro f
 
 - 동결 일시: 2026-04-29 (CFP-36) → v1.1 amendment 2026-05-08 (CFP-139) → v1.2 amendment 2026-05-14 (CFP-665) → v1.3 amendment 2026-05-25 (CFP-1632)
 - 협업: Claude (codification) · CFP-31 parent spec §5.6 · CFP-139 GitOpsAgent agent file · CFP-665 ArchitectAgent (chief author) · CFP-1632 DeveloperPLAgent (Wave 2 mechanical wire)
-- Source: `mclayer/plugin-codeforge-pmo/agents/PMOAgent.md` + `agents/GitOpsAgent.md` 책임 정의 + ADR-045 Amendment 5 §D-9 + ADR-045 Amendment 9 §D-10
+- Source: `plugins/codeforge-pmo/agents/PMOAgent.md` + `agents/GitOpsAgent.md` 책임 정의 + ADR-045 Amendment 5 §D-9 + ADR-045 Amendment 9 §D-10

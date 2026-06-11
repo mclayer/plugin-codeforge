@@ -4,6 +4,13 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.8.1] - 2026-06-12
+
+### Changed (CFP-2178 — S6 lane repo archive 참조 sweep, PATCH)
+
+- `overlay/hooks/session-start-deps-check.sh` 안내 URL — 구 lane repo (`mclayer/plugin-codeforge-requirements`) → wrapper 모노레포 앵커 (`mclayer/plugin-codeforge/tree/main/plugins/codeforge-requirements#dependencies`). 구 lane repo 8개 = 2026-06-12 GitHub archive (ADR-118 D1) — read-only repo 안내 차단.
+- `CLAUDE.md` `story_issues` repo 좌표 — `mclayer/plugin-codeforge-requirements` → `mclayer/plugin-codeforge` (archive 후 read-only repo 에 issue 생성 지시 = 기능 파손 해소).
+
 ## [0.7.1] - 2026-05-30
 
 ### CFP-1845 follow-up — agent model 핀 → 별칭 전환 (PATCH)

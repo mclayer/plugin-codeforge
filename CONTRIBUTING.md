@@ -9,12 +9,12 @@
 | Plugin | Repo | Role |
 |---|---|---|
 | `codeforge` (wrapper) | mclayer/plugin-codeforge | Orchestration policy + CI templates + 0 agents (ADR-009) |
-| `codeforge-requirements` | mclayer/plugin-codeforge-requirements | 4 agents (PL + Domain + Analyst + Researcher) |
-| `codeforge-design` | mclayer/plugin-codeforge-design | 8 agents (PL + ArchitectAgent chief + 6 deputy) |
-| `codeforge-review` | mclayer/plugin-codeforge-review | 5 agents (3 PL + 2 worker) |
-| `codeforge-develop` | mclayer/plugin-codeforge-develop | 5 core agents + dynamic role:dev + presets |
-| `codeforge-test` | mclayer/plugin-codeforge-test | 1 agent |
-| `codeforge-pmo` | mclayer/plugin-codeforge-pmo | 1 agent |
+| `codeforge-requirements` | plugins/codeforge-requirements/ | 4 agents (PL + Domain + Analyst + Researcher) |
+| `codeforge-design` | plugins/codeforge-design/ | 8 agents (PL + ArchitectAgent chief + 6 deputy) |
+| `codeforge-review` | plugins/codeforge-review/ | 5 agents (3 PL + 2 worker) |
+| `codeforge-develop` | plugins/codeforge-develop/ | 5 core agents + dynamic role:dev + presets |
+| `codeforge-test` | plugins/codeforge-test/ | 1 agent |
+| `codeforge-pmo` | plugins/codeforge-pmo/ | 1 agent |
 
 ## Branch policy (ADR-024)
 

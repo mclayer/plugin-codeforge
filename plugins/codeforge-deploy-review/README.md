@@ -6,7 +6,7 @@ DeployReviewPLAgent (Opus) + DeployReviewWorkerAgent (Sonnet) + ProductionEviden
 
 ## Dependencies
 
-**필수**: [`codeforge@mclayer`](https://github.com/mclayer/plugin-codeforge) (>= 6.0.0) + [`codeforge-deploy@mclayer`](https://github.com/mclayer/plugin-codeforge-deploy) (직전 배포 lane). 단독 동작 불가 — codeforge wrapper의 Orchestrator가 DeployReviewPLAgent를 스폰.
+**필수**: [`codeforge@mclayer`](https://github.com/mclayer/plugin-codeforge) (>= 6.0.0) + [`codeforge-deploy@mclayer`](../codeforge-deploy/) (직전 배포 lane, 동일 모노레포 `plugins/codeforge-deploy/`). 단독 동작 불가 — codeforge wrapper의 Orchestrator가 DeployReviewPLAgent를 스폰.
 
 ## 설치
 
