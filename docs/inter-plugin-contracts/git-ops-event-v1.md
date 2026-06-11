@@ -25,11 +25,7 @@ carrier_story: CFP-139
 
 # git_ops_event v1 — Inter-plugin Contract
 
-**상위 SSOT 위치**:
-- 본 file (`mclayer/plugin-codeforge-pmo/docs/inter-plugin-contracts/git-ops-event-v1.md`): **canonical SSOT** (codeforge-pmo repo, GitOpsAgent producer plugin)
-- `mclayer/plugin-codeforge/docs/inter-plugin-contracts/git-ops-event-v1.md`: wrapper sibling reference (canonical 변경 시 sync 의무 — ADR-010 + sibling sync 정책)
-- ADR-008 (versioning 룰): codeforge wrapper repo `docs/adr/ADR-008-inter-plugin-contract-versioning.md`
-- ADR-010 (본 contract 의 sibling sync 정책): codeforge wrapper repo `docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md`
+**상위 SSOT 위치**: 본 파일이 단일 원본 (canonical) — CFP-2158 / [ADR-118](../../archive/adr/ADR-118-monorepo-consolidation.md) D5 가 lane canonical ↔ wrapper mirror 이중체계를 폐지 (monorepo 통합 S1 후속). frontmatter 의 ADR-010 인용은 historical (sibling sync 정책 Superseded — ADR-010 Amendment 5). versioning 룰 = ADR-008 불변.
 
 `codeforge-pmo` plugin (GitOpsAgent) → `codeforge` core (Orchestrator) + lane PL agents 단방향 schema. GitOpsAgent 가 worktree create / delete / merge / conflict + branch tree 변경을 typed event 로 보고. wrapper Orchestrator + lane PL 가 event 수령 후 다음 액션 (teammate spawn / lane 전환 / chief author re-spawn / PMOAgent escalation) 결정.
 

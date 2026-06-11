@@ -15,11 +15,7 @@ authors:
 
 # requirements_output v1 — Inter-plugin Contract
 
-**상위 SSOT 위치**:
-- `mclayer/plugin-codeforge-requirements/docs/inter-plugin-contracts/requirements-output-v1.md`: **canonical** (codeforge-requirements repo)
-- 본 file (codeforge wrapper repo): sibling reference (canonical 변경 시 sync 의무 — ADR-010 + CFP-24 marketplace sync 정책 동질)
-- ADR-008 (versioning 룰): codeforge wrapper repo `docs/adr/ADR-008-inter-plugin-contract-versioning.md`
-- ADR-010 (본 contract 의 sibling sync 정책): codeforge wrapper repo `docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md`
+**상위 SSOT 위치**: 본 파일이 단일 원본 (canonical) — CFP-2158 / [ADR-118](../../archive/adr/ADR-118-monorepo-consolidation.md) D5 가 lane canonical ↔ wrapper mirror 이중체계를 폐지 (monorepo 통합 S1 후속). frontmatter 의 ADR-010 인용은 historical (sibling sync 정책 Superseded — ADR-010 Amendment 5). versioning 룰 = ADR-008 불변.
 
 `codeforge-requirements` plugin → `codeforge` core (Orchestrator) 단방향 schema. 4 sub-agent (Domain · Analyst · Researcher) 병렬 스폰 후 RequirementsPLAgent 가 통합·자체 write 후 typed output 으로 결과 audit.
 

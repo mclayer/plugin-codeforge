@@ -3942,41 +3942,20 @@ internal-docs cross-repo write 는 항상 branch (`<key>-post-merge-followup-prN
 
 ---
 
-## 17. Inter-plugin contract sibling sync 절차 (CFP-408 / ADR-010 Amendment 3)
+## 17. Inter-plugin contract 갱신 절차 (단일 원본 — CFP-2158 / ADR-118 D5)
 
-### 17.1 호출 방식
+구 sibling sync 절차 (CFP-408 / ADR-010 Amendment 3) 는 **Superseded** (ADR-010 Amendment 5) — monorepo 통합 (ADR-118 S1) 으로 canonical/sibling 이중체계가 소멸했다.
 
-inter-plugin contract version bump 발생 시 Orchestrator 는 manual 3 PR 패턴 대신 `scripts/sync-contract-bump.sh` standard tool 호출.
+### 17.1 단일 원본 절차
 
-```bash
-# 1단계: dry-run 으로 plan 검토 (의무)
-bash scripts/sync-contract-bump.sh <contract> <new-version> --dry-run
+- **contract version bump** = wrapper `docs/inter-plugin-contracts/<file>` + `MANIFEST.yaml` row **동시 갱신 (atomic, 같은 PR)**. cross-repo sync PR 불요.
+- **신규 contract 추가** = 2단계: ① wrapper `docs/inter-plugin-contracts/` 직접 작성 ② MANIFEST entry 추가 (같은 PR).
+- versioning 룰 = ADR-008 불변 (MAJOR/MINOR/PATCH SemVer).
+- 구 `scripts/sync-contract-bump.sh` 호출 지시는 폐지 — script 자체가 S3 (CFP-2159, 구현 PR #2164) 에서 삭제됨.
 
-# 2단계: real-run (wrapper sibling stage 자동화)
-bash scripts/sync-contract-bump.sh <contract> <new-version>
-```
+### 17.2 Confluence derived mirror
 
-`<contract>` = `MANIFEST.yaml` `contracts[].name` (예: `review-verdict`, `design-output`). kind:registry (label-registry, debate-protocol, fix-event 등) 는 본 script 적용 외 — exit 3 + 명시적 reject.
-
-### 17.2 3-stage sequence
-
-| Stage | Repo | 자동화 | 비고 |
-|-------|------|--------|------|
-| 1 | wrapper (mclayer/plugin-codeforge) | ✅ (script real-run) | branch + commit + push + `gh pr create` |
-| 2 | canonical (lane plugin repo) | ❌ (수동) | 본 script 는 plan 출력만; 수동 clone + commit + PR |
-| 3 | marketplace (mclayer/marketplace) | ❌ (수동) | `plugin.json` `version` 변경 동반 시만 |
-
-Phase 2 follow-up CFP 에서 canonical clone + commit + PR 자동화 확장 검토.
-
-### 17.3 Merge order strict
-
-**canonical → wrapper sibling → marketplace.** MAJOR bump 시 canonical-first 의무 (ADR-010 Amendment 2). script 가 MANIFEST Active file 명에서 vN 추출 → 자동 감지 → PR body footer 자동 삽입.
-
-병렬 epic 환경에서는 `merge-order:1/2` label (ADR-050) 동시 사용. cross-section conflict (inter-plugin-contracts / label-registry / MANIFEST.yaml 동시 수정) 시 `conflict:{contract-overlap,registry-bump-overlap}` 라벨 (ADR-050 Amendment 1, CFP-534) 자동 부착 — lower CFP 선행 merge.
-
-### 17.4 Test harness
-
-`scripts/test-sync-contract-bump.sh` — 8 scenario × 18 assertion (usage / --help / unknown contract / invalid version / dry-run preview / kind:registry reject / dry-run idempotency). PR-time CI 통합 미적용 (Phase 2 — ADR-060 evidence-check registry 등록 시 promote).
+본 §17 의 Confluence mirror (page 2131113) 는 **derived** — 본 절 갱신 후 Confluence 후속 sync 의무 (ADR-103 채널).
 
 ---
 

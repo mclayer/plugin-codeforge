@@ -18,11 +18,7 @@ authors:
 
 `codeforge-develop` plugin → `codeforge` core (Orchestrator) 단방향 schema. DeveloperPLAgent 가 role:dev roster 동적 discover + 병렬 spawn 후 Story §8 / §8.5 self-write + Phase 2 PR open + verdict 반환.
 
-**상위 SSOT 위치**:
-- `mclayer/plugin-codeforge-develop/docs/inter-plugin-contracts/develop-output-v1.md`: **canonical** (codeforge-develop repo)
-- 본 file (codeforge wrapper repo): sibling reference (canonical 변경 시 sync 의무 — ADR-010 + CFP-24 marketplace sync 정책 동질)
-- ADR-008 (versioning 룰): codeforge wrapper repo `docs/adr/ADR-008-inter-plugin-contract-versioning.md`
-- ADR-010 (본 contract 의 sibling sync 정책): codeforge wrapper repo `docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md`
+**상위 SSOT 위치**: 본 파일이 단일 원본 (canonical) — CFP-2158 / [ADR-118](../../archive/adr/ADR-118-monorepo-consolidation.md) D5 가 lane canonical ↔ wrapper mirror 이중체계를 폐지 (monorepo 통합 S1 후속). frontmatter 의 ADR-010 인용은 historical (sibling sync 정책 Superseded — ADR-010 Amendment 5). versioning 룰 = ADR-008 불변.
 
 ## 1. 흐름 개요
 

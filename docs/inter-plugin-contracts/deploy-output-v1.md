@@ -23,7 +23,7 @@ related_plugins:
 
 # deploy-output-v1
 
-**상위 SSOT 위치**: `mclayer/plugin-codeforge-deploy/docs/inter-plugin-contracts/deploy-output-v1.md` (TBD — S2 sub-Story 신설 후 wire)
+**상위 SSOT 위치**: 본 파일이 단일 원본 (canonical) — CFP-2158 / [ADR-118](../../archive/adr/ADR-118-monorepo-consolidation.md) D5. 기존 "TBD — lane seed 신설 후 wire" 는 monorepo 통합으로 계획 자체가 소멸 (해소). status Draft 유지 — Active 복귀는 deploy lane 별 carrier.
 
 ## 상태
 
