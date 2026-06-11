@@ -2,6 +2,8 @@
 adr_number: 10
 title: Inter-plugin Contract Sibling Sync — canonical/sibling 책임 + sync 트리거 + drift 처리 정책
 status: Superseded
+superseded_by: ADR-118
+superseded_date: 2026-06-11
 category: Team & Process
 date: 2026-04-29
 related_files:
@@ -240,7 +242,9 @@ CFP-448 (#448) sibling PR plugin-codeforge-requirements#20 + plugin-codeforge-de
 
 ### 결정
 
-**ADR-118 D5 가 본 ADR 의 핵심 결정을 supersede 한다. frontmatter `status: Proposed → Superseded`.**
+**ADR-118 D5 가 본 ADR 의 핵심 결정을 supersede 한다. frontmatter `status: Proposed → Superseded` + `superseded_by: ADR-118` (ADR-018/019 선례 형식).** [cross-adr-claim-verify: cited_adr=ADR-118 D5, cited_value="contract canonical↔mirror 이중체계 폐지 → 단일 원본. open #2141 은 대상물 소멸로 흡수·close (S2)", verify_status=verified (설계리뷰 iter1 + ADR-118 본문 직접 Read)]
+
+- direction: **ratchet 축소 (정책 sunset)** — sunset_justification (ADR-058 §결정 5 evidence-grounded justification): 전제 (canonical/sibling 별도 git repo) 가 S1 (`b6c599bc` subtree 흡수) 로 실측 소멸 + schema 본문 drift 0 / review-verdict-v4 stale 5 사본 (mirror drift 비용) 실증. carve-out 2건 존속으로 live 절차 (ADR 번호 reserve / MANIFEST SSOT) 무손상.
 
 | 본 ADR 구성 요소 | 처리 | 근거 |
 |---|---|---|
@@ -253,7 +257,7 @@ CFP-448 (#448) sibling PR plugin-codeforge-requirements#20 + plugin-codeforge-de
 
 ### 책임 경계 (Epic #2151 S2 ↔ S3)
 
-- **S2 (CFP-2158, 본 Amendment carrier)**: 정책 문서 전이 (본 Amendment + status 필드) + 데이터 단일화 (lane 사본 18 삭제 + MANIFEST canonical_repo 재작성 + 단일 원본 marker 재작성).
+- **S2 (CFP-2158, 본 Amendment carrier)**: 정책 문서 전이 (본 Amendment + status 필드) + 데이터 단일화 (lane 사본 18 삭제 + MANIFEST canonical_repo 재작성 + 단일 원본 marker 재작성) + 운영 지시 표면 갱신 (`skills/inter-plugin-contract-registry/SKILL.md` + `docs/orchestrator-playbook.md` §17 — 옛 sync 절차 재실행 차단).
 - **S3 (CFP-2159)**: 본 ADR 를 강제하던 분리기인 기계 은퇴 (contract-lint.yml / inter-plugin-contracts-parity.yml / sync-contract-bump.sh 등). 본 Amendment 는 기계를 건드리지 않는다 (경로 disjoint).
 
 ### 위배 시 처리 (전이 후)
