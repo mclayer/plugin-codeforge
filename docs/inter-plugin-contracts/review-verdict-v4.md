@@ -112,10 +112,7 @@ amendment_log:
 
 신규 field `worker_dialog_rounds` 추가 — Adversarial debate (5 권장 패턴 — ADR-044 §결정 5) measurable verification.
 
-**상위 SSOT 위치**:
-- `mclayer/plugin-codeforge-review/docs/inter-plugin-contracts/review-verdict-v4.md`: **canonical** (sibling sync follow-up PR — wrapper Phase 1 PR merge 후 ADR-010 §단계 절차 정합)
-- 본 file (codeforge wrapper repo): sibling reference (CFP-137 wrapper Phase 1 PR 시 신설)
-- ADR-044 carrier: `docs/adr/ADR-044-phase-scoped-sequential-team.md`
+**상위 SSOT 위치**: 본 파일이 단일 원본 (canonical) — CFP-2158 / [ADR-118](../../archive/adr/ADR-118-monorepo-consolidation.md) D5 가 lane canonical ↔ wrapper mirror 이중체계를 폐지 (monorepo 통합 S1 후속). frontmatter 의 ADR-010 인용은 historical (sibling sync 정책 Superseded — ADR-010 Amendment 5). versioning 룰 = ADR-008 불변.
 
 ## 1. v3 → v4 BREAKING 변경 요약
 

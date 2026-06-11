@@ -21,9 +21,7 @@ authors:
 
 `codeforge-pmo` plugin → `codeforge` core (Orchestrator) 단방향 schema. PMOAgent 가 self-write 후 typed output 으로 결과 audit 보고.
 
-**상위 SSOT 위치**:
-- `mclayer/plugin-codeforge-pmo/docs/inter-plugin-contracts/pmo-output-v1.md`: **canonical** (codeforge-pmo repo)
-- `mclayer/plugin-codeforge/docs/inter-plugin-contracts/pmo-output-v1.md`: sibling reference (sync 의무)
+**상위 SSOT 위치**: 본 파일이 단일 원본 (canonical) — CFP-2158 / [ADR-118](../../archive/adr/ADR-118-monorepo-consolidation.md) D5 가 lane canonical ↔ wrapper mirror 이중체계를 폐지 (monorepo 통합 S1 후속). frontmatter 의 ADR-010 인용은 historical (sibling sync 정책 Superseded — ADR-010 Amendment 5). versioning 룰 = ADR-008 불변.
 
 ## 1. 흐름 개요
 

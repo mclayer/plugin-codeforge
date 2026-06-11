@@ -1,5 +1,6 @@
 # docs/inter-plugin-contracts/MANIFEST.yaml
 # SSOT for kind:contract files completeness — referenced by ADR-010
+# CFP-2158 / ADR-118 D5: canonical=wrapper 단일 원본 (lane mirror 폐지 — ADR-010 Amendment 5 Superseded)
 # Owner: codeforge wrapper repo. Updated when adding/removing kind:contract.
 # Scope: kind:contract files only. kind:registry files (comment-prefix-registry,
 # fix-event [v1.3 — CFP-842 depth-aware scope optional fields: affected_scope + affected_paths_with_depth],
@@ -7,7 +8,7 @@
 # stop-event [v1.1 active — CFP-283 / ADR-042; CFP-1744 v1.1 MINOR bump: hook_source / hook_decision 2 optional field]) are managed by check-doc-frontmatter.sh chain.
 contracts:
   - name: review_verdict
-    canonical_repo: mclayer/plugin-codeforge-review
+    canonical_repo: mclayer/plugin-codeforge
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: review-verdict-v1.md, contract_version: "1.0", status: Archived }
@@ -16,51 +17,51 @@ contracts:
       - { file: review-verdict-v4.md, contract_version: "4.12", status: Active }  # CFP-137: NEW (Sonnet decider 영역 제거 + worker_dialog_rounds 추가). CFP-391: v4.0 → v4.1 MINOR bump (findings[].anchor_id optional field, debate-protocol-v1 stable identifier SSOT). CFP-438: v4.1 → v4.2 MINOR bump (mechanical_self_check_passed optional bool, ADR-065). CFP-527: v4.2 → v4.3 MINOR bump (boundary_completeness_self_check_passed optional bool + findings[].type "boundary-completeness" literal, ADR-068). CFP-528: v4.3 → v4.4 MINOR bump (dimensional_empirical_self_check_passed optional bool + findings[].type "dimensional-empirical-gap" literal, ADR-068 Amendment 1). CFP-597: v4.4 → v4.5 MINOR bump (marketplace_sync_declared optional bool, ADR-063 Amendment 1). CFP-1086: v4.5 → v4.6 MINOR bump (deputy_axis_restructure_self_check_passed optional bool field — ADR-042 Amendment 8 + ADR-086 P7 framework self-application 첫 사례 carrier + boundary_completeness_self_check_passed scope expansion — ADR-068 Amendment 2 wording SSOT chief tie-break ladder). CFP-1087: v4.6 → v4.7 MINOR bump (audit_gate_pointer_self_check_passed 5번째 verdict-level boolean field 신설 + findings[].type 5번째 enum literal "audit-gate-pointer-missing" — ADR-068 Amendment 3 §결정 1 I-6 audit-gate-pointer-existence invariant carrier, CFP-528 Amendment 1 패턴 verbatim 답습, additive only backward-compat invariant). CFP-1117: v4.7 → v4.8 MINOR bump (findings[].type 6/7/8번째 enum literal "bc_violation" / "aggregate_violation" / "ubiquitous_language_drift" 3 DDD finding type — ADR-091 §결정 6 enforcement layer 3-tier 의 3번째 tier (review-verdict-v4 enum S4) + §결정 7 INV-5 vocabulary theater 차단 forcing function review-verdict finding 연결 (evidence #4), CFP-528 Amendment 1 패턴 verbatim 답습, additive only backward-compat invariant. 5 sibling v4.3 pre-existing drift = 본 S4 scope 외 별 sweep CFP carrier). CFP-1303: v4.8 → v4.9 MINOR bump (findings[].parallel_anchors_checked optional array field 신설 — CFP-604 retro F7 Wave 2 carrier, Wave 1 CFP-1291 prose-only anchor (CodeReviewPLAgent.md cross-anchor parity check step) 위 schema layer codify. 각 entry = 3 field — file_line string · pattern_type enum 5종 closed-set (local_remote · client_server · read_write · forward_reverse · enum_closure) · matched bool. ADR-068 I-2 cross-module propagation completeness 의 review-verdict layer realization (micro-scale parallel form, semantic anchor). CFP-391 (anchor_id) pattern 답습 — findings[] entry 안 optional field 추가. ADR-008 §결정 2 "새 선택 필드 추가" MINOR bump 정합. additive only backward-compat invariant (기존 v4.8 consumer 가 본 신규 field 무시 가능). mechanical lint (presence-grep heuristic) = Wave 3 별 carrier (deferred-followup). CFP-1117-S4 wrapper sibling sync precedent 답습 (canonical + wrapper atomic, 5 other lane plugin sweep = 별 follow-up CFP — CFP-1167 precedent). CFP-1424: v4.9 → v4.10 MINOR bump (findings[].type enum 9번째 literal "confluence-mirror-link-missing" 추가 — ADR-111 §결정 5 cross-link discipline 정합, closed-enum 8 → 9 ratchet additive only). CFP-1426: v4.10 → v4.11 MINOR bump (6번째 verdict-level optional bool field living_architecture_updated_self_check_passed 신설 + findings[].type enum 10번째 literal "living-architecture-not-updated" 추가 — ADR-112 Living Architecture per-Epic mandatory update gate carrier, closed-enum 9 → 10 ratchet additive only). CFP-1565: v4.11 → v4.12 MINOR bump (7번째 verdict-level optional bool field chief_author_crossref_consistency_self_check_passed 신설 + findings[].type enum 11번째 literal "chief-author-crossref-inconsistency" 추가 — ADR-068 Amendment 5 §결정 1 I-7 chief-author cross-ADR scope/fact claim consistency invariant carrier, I-4 wording SSOT 와 disjoint axis (I-7 = cross-ADR factual/scope 값 SSOT 정합), closed-enum 10 → 11 ratchet additive only, CFP-1522 retro F-003 P1 evidence).
 
   - name: requirements_output
-    canonical_repo: mclayer/plugin-codeforge-requirements
+    canonical_repo: mclayer/plugin-codeforge
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: requirements-output-v1.md, contract_version: "1.1", status: Active }  # CFP-834: v1.0 → v1.1 MINOR (reinvestigation_tracking optional block, ADR-077 §결정 5 carrier)
 
   - name: design_output
-    canonical_repo: mclayer/plugin-codeforge-design
+    canonical_repo: mclayer/plugin-codeforge
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: design-output-v1.md, contract_version: "1.0", status: Archived }
       - { file: design-output-v2.md, contract_version: "2.4", status: Active }  # CFP-921 (Epic B Story-3): v2.3 → v2.4 MINOR bump (architecture_doc_updated optional bool field, ADR-078 lane gate carrier, canonical codeforge-design PR #45 SHA 49870ed8). CFP-128: v2.1 → v2.2 MINOR bump (container_considerations block, ADR-033). CFP-662: v2.2 → v2.3 MINOR bump (spec_invariant_measurement_required bool field — Issue #669 sibling sync, canonical codeforge-design PR #42 SHA a6aa5502). Note: MANIFEST was at "2.1" while file was "2.2" — both resolved to "2.3" in this 2-minor jump (Option A: SSOT alignment + audit trail + atomic + rollback simplicity).
 
   - name: develop_output
-    canonical_repo: mclayer/plugin-codeforge-develop
+    canonical_repo: mclayer/plugin-codeforge
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: develop-output-v1.md, contract_version: "1.1", status: Active }  # CFP-297: MINOR bump (cross_layer_dialog_rounds)
 
   - name: test_verdict
-    canonical_repo: mclayer/plugin-codeforge-test
+    canonical_repo: mclayer/plugin-codeforge
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: test-verdict-v1.md, contract_version: "1.1", status: Archived }  # CFP-317 / ADR-048: TestAgent deprecated
       - { file: test-verdict-v2.md, contract_version: "2.2", status: Active }   # CFP-373: v2.2 story_keys[]+attribution_confidence (v2.0 CFP-367, v2.1 CFP-371, v2.2 CFP-373)
 
   - name: pmo_output
-    canonical_repo: mclayer/plugin-codeforge-pmo
+    canonical_repo: mclayer/plugin-codeforge
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: pmo-output-v1.md, contract_version: "1.3", status: Active }  # CFP-1632: v1.2 → v1.3 MINOR bump (retro_section_6_pre_publish_verify optional field — ADR-045 Amendment 9 §D-10 + Amendment 10 Wave 2 mechanical lint enforcement wire, 8-tuple verify-before-trust AND gate forcing function contract schema carrier)  # CFP-139 / ADR-047: MINOR bump (worktree_manifest optional field). CFP-665: v1.1 → v1.2 MINOR bump (cross_story_pattern_adr_trigger optional field — ADR-045 Amendment 5 §D-9 Mandatory framing 정합)
 
   - name: git_ops_event
-    canonical_repo: mclayer/plugin-codeforge-pmo
+    canonical_repo: mclayer/plugin-codeforge
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: git-ops-event-v1.md, contract_version: "1.0", status: Active }  # CFP-139: GitOpsAgent introduction
 
   - name: deploy_output
-    canonical_repo: mclayer/plugin-codeforge-deploy  # TBD — lane plugin seed 신설 후 confirm
+    canonical_repo: mclayer/plugin-codeforge
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: deploy-output-v1.md, contract_version: "0.1", status: Draft }  # CFP-1289 set Active prematurely (CFP-604 retro F5 placeholder), but canonical mclayer/plugin-codeforge-deploy not yet seeded → inter-plugin-drift lint flags "Active without canonical". CFP-1336 carrier reverts to Draft — Active 복귀 = S2 sub-Story carrier (canonical sibling seed 신설 후, 0.1 → 1.0 wired MAJOR bump ADR-008 §결정 1 정합). CFP-1059 / ADR-087.
 
   - name: deploy_review_output
-    canonical_repo: mclayer/plugin-codeforge-deploy-review  # TBD — lane plugin seed 신설 후 confirm
+    canonical_repo: mclayer/plugin-codeforge
     canonical_path: docs/inter-plugin-contracts/
     files:
       - { file: deploy-review-output-v1.md, contract_version: "0.1", status: Draft }  # CFP-1289 set Active prematurely (CFP-604 retro F5 placeholder), but canonical mclayer/plugin-codeforge-deploy-review not yet seeded → inter-plugin-drift lint flags "Active without canonical". CFP-1336 carrier reverts to Draft — Active 복귀 = S3 sub-Story carrier (canonical sibling seed 신설 후, ProductionEvidenceDeputy ownership 이관 mirror + debate-protocol-v1 trigger 의무). CFP-1059 / ADR-088.
