@@ -1,0 +1,15 @@
+# CFP-128 / ADR-033 — K8s Service template
+# Placeholder: {app_name} / {namespace}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {app_name}
+  namespace: {namespace}
+spec:
+  selector:
+    app: {app_name}
+  ports:
+    - port: 80
+      targetPort: 3000
+      protocol: TCP
+  type: ClusterIP

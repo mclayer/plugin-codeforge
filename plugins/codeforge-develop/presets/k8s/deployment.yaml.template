@@ -1,0 +1,43 @@
+# CFP-128 / ADR-033 — K8s Deployment template (consumer 측 opt-in via project.yaml infra_strategy_extras.k8s_preset_enabled: true)
+# Placeholder substitution: {app_name} / {namespace} / {image_ref} / {replicas}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {app_name}
+  namespace: {namespace}
+  labels:
+    app: {app_name}
+spec:
+  replicas: {replicas}
+  selector:
+    matchLabels:
+      app: {app_name}
+  template:
+    metadata:
+      labels:
+        app: {app_name}
+    spec:
+      containers:
+        - name: {app_name}
+          image: {image_ref}
+          ports:
+            - containerPort: 3000
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
