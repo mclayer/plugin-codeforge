@@ -69,3 +69,7 @@ CFP-450 (ADR-013 Amendment 4) PAT consolidation 후 단일 `CODEFORGE_CROSS_REPO
 - 자동 만료 reminder workflow: 별도 CFP.
 - Audit log schema lint (`scripts/check-pat-rotation-log.sh`): 별도 CFP.
 - 도입 시 ADR-066 `mechanical_enforcement_actions[]` row append + `docs/evidence-checks-registry.yaml` warning tier entry 등록 (ADR-040 Amendment 3 §결정 7 + ADR-060 정합).
+
+## 권고 (CFP-2178 S6 — 2026-06-12)
+
+**권고 (CFP-2178 S6)**: CODEFORGE_CROSS_REPO_PAT 11-repo set 중 lane 8 repo 는 archive 됨 — **fine-grained PAT 전환 시 lane 8 repo 를 access list 에서 제외**할 것. 단 **현행 classic PAT 에서는 repository 단위 scope 축소가 기술적으로 실행 불가** (classic = 계정 전체 repo 일괄 접근, repo 단위 access list 개념 부재) — 본 기록은 권고이며 실행 자동화 없음. 실제 fine-grained 전환 실행 시 ADR-066 Amendment 의무.

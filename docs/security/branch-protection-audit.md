@@ -212,3 +212,10 @@ verified-via: `gh api repos/mclayer/plugin-codeforge-<lane>/branches/main/protec
 
 - restrictions 복원(비권장 — 머지불가 재발): `gh api -X PUT .../protection/restrictions` with empty arrays
 - rpr 제거(비권장 — phantom 재발): `gh api -X DELETE .../protection/required_pull_request_reviews`
+
+## 2026-06-12 — CFP-2178 S6: lane repo 8개 archive + protection 활성 관리 9→1 동결
+
+- archive 실측: deploy (smoke) 2026-06-12T02:16 KST → 잔여 7 (requirements/design/review/develop/test/pmo/deploy-review) 02:16~02:17 KST 순차, 실패 0
+- 사후 검증: 8/8 isArchived true + 8/8 ls-remote fetch OK (AC-1/AC-2) + close 선행 7 issue (AC-3, §D-11 CLOSE_AS_OBVIATED)
+- GAP-1 smoke 실측: archived repo protection rule **잔존+inert** (deploy GET 정상 — contexts 2-tuple/rpr 0/enforce_admins true verbatim, 변경 불가·발효 무대상). §after 표 (2026-06-10 parity) = archive 시점 동결 상태로 보존
+- 활성 관리 표면 = wrapper 단일 (6-tuple). SSOT = wrapper CLAUDE.md 표 1행 + 본 doc. registry v1.2 Archived (#2179)

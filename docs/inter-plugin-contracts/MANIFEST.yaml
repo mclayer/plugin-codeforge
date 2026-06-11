@@ -58,13 +58,13 @@ contracts:
     canonical_repo: mclayer/plugin-codeforge
     canonical_path: docs/inter-plugin-contracts/
     files:
-      - { file: deploy-output-v1.md, contract_version: "0.1", status: Draft }  # CFP-1289 set Active prematurely (CFP-604 retro F5 placeholder), but canonical mclayer/plugin-codeforge-deploy not yet seeded → inter-plugin-drift lint flags "Active without canonical". CFP-1336 carrier reverts to Draft — Active 복귀 = S2 sub-Story carrier (canonical sibling seed 신설 후, 0.1 → 1.0 wired MAJOR bump ADR-008 §결정 1 정합). CFP-1059 / ADR-087.
+      - { file: deploy-output-v1.md, contract_version: "0.1", status: Draft }  # CFP-1289 set Active prematurely (CFP-604 retro F5 placeholder), but canonical mclayer/plugin-codeforge-deploy not yet seeded → inter-plugin-drift lint flags "Active without canonical". CFP-1336 carrier reverts to Draft — Active 복귀 = S2 sub-Story carrier (canonical sibling seed 신설 후, 0.1 → 1.0 wired MAJOR bump ADR-008 §결정 1 정합). CFP-1059 / ADR-087. canonical = wrapper (ADR-118 D5, CFP-2178 S6 정정).
 
   - name: deploy_review_output
     canonical_repo: mclayer/plugin-codeforge
     canonical_path: docs/inter-plugin-contracts/
     files:
-      - { file: deploy-review-output-v1.md, contract_version: "0.1", status: Draft }  # CFP-1289 set Active prematurely (CFP-604 retro F5 placeholder), but canonical mclayer/plugin-codeforge-deploy-review not yet seeded → inter-plugin-drift lint flags "Active without canonical". CFP-1336 carrier reverts to Draft — Active 복귀 = S3 sub-Story carrier (canonical sibling seed 신설 후, ProductionEvidenceDeputy ownership 이관 mirror + debate-protocol-v1 trigger 의무). CFP-1059 / ADR-088.
+      - { file: deploy-review-output-v1.md, contract_version: "0.1", status: Draft }  # CFP-1289 set Active prematurely (CFP-604 retro F5 placeholder), but canonical mclayer/plugin-codeforge-deploy-review not yet seeded → inter-plugin-drift lint flags "Active without canonical". CFP-1336 carrier reverts to Draft — Active 복귀 = S3 sub-Story carrier (canonical sibling seed 신설 후, ProductionEvidenceDeputy ownership 이관 mirror + debate-protocol-v1 trigger 의무). CFP-1059 / ADR-088. canonical = wrapper (ADR-118 D5, CFP-2178 S6 정정).
 
 # kind:registry entries (managed by check-doc-frontmatter.sh chain)
 # label-registry versioned here for CFP-140 MAJOR bump tracking (ADR-008 §결정)

@@ -710,7 +710,7 @@ Epic 묶음 완료 (모든 Story merged): Orchestrator → DeployPLAgent 자동 
                - allowlist 외 경로 1건이라도 포함 → `pr_phase: phase2_impl` (보수 default)
                - **bare `*.md` catch-all 금지**: `agents/**` · `templates/**` · `scripts/**` · `.github/**` 등 구현 산출물 .md 를 phase1_docs 로 역방향 오판 방지.
              - **보조 cross-check**: Story phase 라벨 (`phase:요구사항`/`phase:설계` = Phase 1, `phase:구현` 이후 = Phase 2). 파일 패턴과 불일치 시 파일 패턴 우선.
-             - 판정 결과를 packet 의 `pr_phase` optional 필드에 주입 (`review_packet` schema v1.1 — `plugin-codeforge-review:templates/review-pl-base.md §2`).
+             - 판정 결과를 packet 의 `pr_phase` optional 필드에 주입 (`review_packet` schema v1.1 — `plugins/codeforge-review/templates/review-pl-base.md §2`).
              **review-verdict 5-step algorithm (CFP-61 / ADR-022 §결정 3)**:
              1. ReviewPL spawn → workers (ClaudeReviewAgent ∥ CodexReviewAgent 병렬) → dedup → review-verdict-v3 packet 작성 (no writes)
                 ├── findings + pl_recommendation 작성
@@ -982,7 +982,7 @@ integration_test:
 | **ProductionEvidenceDeputyAgent** (CONDITIONAL — production cutover 영향 Story 만, CFP-632 / ADR-72) | 설계 lane production-grounding SubAgent. trigger = Change Plan §13 `production_cutover_touching: true` 선언 OR Live touching + production cutover both. 타 SubAgent 산출물 미수신, 원 소스 직접 독해. 책임 3종: (1) production evidence quad owner (bucket prefix listing + WAL sample + drainage rate + L2/L3 cadence trigger 4중) (2) EPIC CLOSED gate 검증 (3) post-cutover wiring inspection (compose.yml env / production deploy state / collector emit schema 실측 ↔ 가설 mismatch surface). chief author가 Change Plan §7.4 production grounding subsection 추가 + EPIC close PR retro epic_close_gate 의무. InfraOperationalArch §7.4 와 boundary axis 분리 (design-time policy vs runtime-evidence). Mandate matrix 7 cell overlap 71% — 양 측 consult 5 cell |
 | **QADeveloperAgent** | Change Plan §8 Test Contract 입력. 매핑표 반환 의무 |
 | **`role: dev` 에이전트** (DeveloperAgent·DataEng·InfraEng·preset·overlay) | 계획서 변경 금지 — 결함 발견 시 즉시 DevPL→ArchitectPLAgent 에스컬레이션 |
-| **DesignReviewPLAgent** (codeforge-review plugin) | lane=design packet 작성 (codeforge-review repo의 `templates/review-checklists/design.md` 인용 + scope_globs + category_enum + severity_overrides). Claude/Codex 통합 워커 병렬 스폰 후 종합. ADR 정합성 체크 P0 고정 |
+| **DesignReviewPLAgent** (codeforge-review plugin) | lane=design packet 작성 (codeforge-review plugin (plugins/codeforge-review/) 의 `templates/review-checklists/design.md` 인용 + scope_globs + category_enum + severity_overrides). Claude/Codex 통합 워커 병렬 스폰 후 종합. ADR 정합성 체크 P0 고정 |
 | **CodeReviewPLAgent** | lane=code packet 작성. Claude/Codex 통합 워커 병렬 스폰 후 종합. DesignReviewPL과 공통 severity 규칙 (base 템플릿 SSOT) |
 | **SecurityTestPLAgent** | (lanes.security_ai: true 시만) 1차 layer = Dependabot/CodeQL/Secret Scanning 결과 `gh api repos/*` 로 fetch → packet에 inline 첨부. 2차 layer = lane=security packet으로 Claude/Codex 통합 워커 병렬 스폰 후 종합. CI gate PASS 이후 진입 |
 | **ClaudeReviewAgent / CodexReviewAgent** | lane-agnostic 워커 ([ADR-001](../archive/adr/ADR-001-review-agent-unification.md)). 호출 PL이 review packet으로 도메인(체크리스트·스코프·category enum·severity 자동 룰) 주입. packet 누락 시 ESCALATE 반환 — generic fallback 금지. 정규화 스키마 P0/P1/P2/P3 + lane 필드 반환. CodexReviewAgent는 codex-companion.mjs 실행 |
@@ -1142,7 +1142,7 @@ Phase 2 (follow-up CFP): `scripts/codeforge-story-counter.py` 자동 발급 (fil
 
 **Sentinel evidence (CFP-534)**: 2026-05-13 KST CFP-521 v2.4 vs CFP-429 v2.5 가 `docs/inter-plugin-contracts/label-registry-v2.md` frontmatter 3-location (`version` / `bumped_at` / `amendments[]` row) 동시 수정 → manual 15분 추가 + risk. Amendment 1 = 해당 사고 재발 방지 carrier.
 
-**Cross-references**: [ADR-050](../archive/adr/ADR-050-parallel-epic-conflict-coordination.md) Amendment 1 / `templates/github-workflows/parallel-epic-conflict-check.yml` / sibling `mclayer/plugin-codeforge-pmo` `agents/GitOpsAgent.md` §3.5 / `docs/parallel-work/section-ownership.yaml`.
+**Cross-references**: [ADR-050](../archive/adr/ADR-050-parallel-epic-conflict-coordination.md) Amendment 1 / `templates/github-workflows/parallel-epic-conflict-check.yml` / `plugins/codeforge-pmo/agents/GitOpsAgent.md` §3.5 / `docs/parallel-work/section-ownership.yaml`.
 
 ### §3.5 Worktree dispatch (CFP-136 / ADR-040)
 
@@ -2348,7 +2348,7 @@ ADR-005 plugin-meta-na 패턴(§8/§9 lane 게이트 면제)으로 진행되는 
 **의무 절차** (push 직전):
 1. 변경 대상 SSOT 식별 (CLAUDE.md / `agents/**` / `templates/**` / `.claude-plugin/plugin.json` / `CHANGELOG.md` / `docs/migration-guide.md` 등)
 2. 영향 받는 invariant-check Step (3 agent count / 6 category enum / 7 migration-guide BREAKING parity / 8 severity_overrides count)을 [`.github/workflows/invariant-check.yml`](../.github/workflows/invariant-check.yml)에서 직접 grep으로 확인
-3. 로컬 dry-run: 해당 step의 핵심 grep·python 로직 1-2줄을 직접 실행해 본 PR 변경 후 PASS 여부 확인 (예: `grep -c "data-migration" templates/change-plan.md docs/inter-plugin-contracts/review-verdict-v1.md` — review subsystem 자체 검증은 codeforge-review repo에서)
+3. 로컬 dry-run: 해당 step의 핵심 grep·python 로직 1-2줄을 직접 실행해 본 PR 변경 후 PASS 여부 확인 (예: `grep -c "data-migration" templates/change-plan.md docs/inter-plugin-contracts/review-verdict-v1.md` — review subsystem 자체 검증은 codeforge-review plugin (plugins/codeforge-review/) 에서)
 4. drift 발견 시 push 전 fix commit 추가, drift 부재 시 push 진행
 
 **근거**: [`docs/retros/2026-04-28-codex-audit-closure-sprint.md`](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/retros/2026-04-28-codex-audit-closure-sprint.md) §5. CFP-21 (migration-guide BREAKING regex 미일치) / CFP-22 (DesignReviewPL severity_overrides P1 3건 누락) 모두 push 후 CI fail로 발견 — plan 작성 단계에서 잡혔어야.
@@ -2477,7 +2477,7 @@ Orchestrator 가 Issue body 안 fact claim 마다 source direct verify 후 autho
 
 **Wave 2 progression** (deferred-followup): `scripts/check-story-section-issue-origin.sh` (warning tier, ADR-060 §결정 5 정합) — `issue_origin: orchestrator_authored_followup` 시 §2.1 verified state table 존재 + 4-column schema 정합 lint. 별도 CFP carrier (brainstorm 단계 결정).
 
-**Wave 3 progression** (cross-repo, 후순위 ratchet, CFP-1002 precedent 정합): RequirementsPL spawn prompt template (`mclayer/plugin-codeforge-requirements` canonical) explicit verify-before-trust mandate — cross-repo sibling sync 동반 가치 판단 영역, 별도 canonical CFP carrier 분리.
+**Wave 3 progression** (후순위 ratchet, CFP-1002 precedent 정합): RequirementsPL spawn prompt template (`plugins/codeforge-requirements/` in-tree) explicit verify-before-trust mandate — 별도 CFP carrier 분리.
 
 ### §3.18 Multi-session collaboration protocol — lane-entry sentinel ownership verify (CFP-1041 / [ADR-085](../archive/adr/ADR-085-multi-session-collaboration-protocol.md))
 
@@ -2862,7 +2862,7 @@ review·테스트 FIX (구현 리뷰·구현 테스트·보안 테스트) 시 De
 
 ### 6.10 Mechanical fast-path (R11, [CFP-19 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
 
-ReviewPL verdict packet의 `mechanical_category` 필드 (typo / broken-link / minor-naming / comment-only / none — SSOT codeforge-review repo의 `templates/review-pl-base.md` §3 R11 절) + severity 조합으로 fast-path 자격 판정:
+ReviewPL verdict packet의 `mechanical_category` 필드 (typo / broken-link / minor-naming / comment-only / none — SSOT codeforge-review plugin (plugins/codeforge-review/) 의 `templates/review-pl-base.md` §3 R11 절) + severity 조합으로 fast-path 자격 판정:
 
 **자격 조건**: `mechanical_category != none` AND (severity = P2 OR (severity = P1 AND 영향 파일 수 = 1))
 
@@ -2874,7 +2874,7 @@ ReviewPL verdict packet의 `mechanical_category` 필드 (typo / broken-link / mi
 
 **자격 미충족 또는 분류 잘못**: 다음 review iteration이 P0/P1 검출 → 정상 §6.6 cycle.
 
-**제약**: 보안 lane의 injection / credential / CVE / trust-boundary 카테고리는 항상 `mechanical_category = none`이라 fast-path 자격 없음 (codeforge-review repo의 `templates/review-pl-base.md` §3 R11 SSOT).
+**제약**: 보안 lane의 injection / credential / CVE / trust-boundary 카테고리는 항상 `mechanical_category = none`이라 fast-path 자격 없음 (codeforge-review plugin (plugins/codeforge-review/) 의 `templates/review-pl-base.md` §3 R11 SSOT).
 
 ### 6.11 Spec amendment loop (CFP-87)
 
