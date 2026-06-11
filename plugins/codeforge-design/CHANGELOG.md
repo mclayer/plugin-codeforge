@@ -2,14 +2,16 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
-## [Unreleased]
+## [0.23.0] - 2026-06-11
 
 ### Removed (CFP-2170 — ProductionEvidenceDeputyAgent design 본 물리 삭제)
 
 - `agents/ProductionEvidenceDeputyAgent.md` 삭제 — ADR-088 §결정 4 ownership 이관 (canonical = `plugins/codeforge-deploy-review/agents/ProductionEvidenceDeputyAgent.md`) 의 lifecycle 완결. deprecated 부착 (2026-05-21) 후 0.21.2 / 0.21.3 — 2 release 경과로 "1 release grace" 만료 실측 (Change Plan cfp-2170 §2.3). consumer blast radius 0 — S5 전 marketplace `codeforge-design` source = 구 lane repo (monorepo `plugins/codeforge-design/**` 와 물리 disjoint).
 - `CLAUDE.md` PE roster 기재 4곳 → 이관 사실 1줄 축약 (Sub-agent fan-out 표 PE row + 12-산출물 서사 PE 분기 제거, ADR-72 관련-ADR 줄 이관 註).
 
-버전 할당 = Epic #2151 S5 release 시점 (plugin.json version bump 없음 — marketplace sync 의무 비발동).
+추가 (CFP-2174 S5): `CLAUDE.md` L11-12 inter-plugin contract dangling 상대링크 2건 정정 — markdown 링크 제거 + 평문 경로 + canonical 위치 명시 (설치 캐시 self-contained 기준 끊김 해소, 0.23.0 첫 출하분 dangling 0 — Change Plan cfp-2174 §2 P1-3).
+
+0.23.0 할당 (CFP-2174 S5 — lane 8 marketplace source git-subdir 전환 + wrapper 6.15.0 동반 MINOR).
 
 ## [0.21.3] - 2026-06-01
 
