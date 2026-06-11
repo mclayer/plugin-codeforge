@@ -131,4 +131,4 @@ v2.0 — 양쪽 동시 bump + 새 ADR
 - [`docs/inter-plugin-contracts/review-verdict-v1.md`](../inter-plugin-contracts/review-verdict-v1.md) — v1 상세 schema (본 ADR이 versioning 룰 동결)
 - [`CLAUDE.md`](../../CLAUDE.md) "## Inter-plugin Contract" 섹션
 - [CFP-29 design spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-28-cfp-29-codeforge-review-extraction-design.md) §4.3 — 본 ADR의 motivation
-- [`mclayer/plugin-codeforge-review`](https://github.com/mclayer/plugin-codeforge-review) — v1 contract 준수 plugin
+- `mclayer/plugin-codeforge-review` — v1 contract 준수 plugin (현 `plugins/codeforge-review/`, 구 repo 삭제됨 2026-06-12)

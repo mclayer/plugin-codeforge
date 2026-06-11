@@ -83,7 +83,7 @@ mechanical enforcement = Class-A sweep 의 1회성 적용 + 신규 작성 시 Su
 
 CFP-751 적용 영역:
 - **wrapper repo `mclayer/plugin-codeforge`** — CLAUDE.md / docs/ / skills/ 안 deputy 일반 명사 sweep. Phase 2 PR carrier.
-- **cross-plugin `mclayer/plugin-codeforge-design`** — codeforge-design plugin = "Deputy mandate 매트릭스" 의 진짜 SSOT 위치 (deputy 정의 원천). CLAUDE.md / agent files (LiveOpsDeputyAgent.md 등 Class-B 보존) / skill files / templates 안 deputy 일반 명사 sweep. **ADR-010 §sibling sync PR 의무** — wrapper PR merge 와 paired sibling repo PR.
+- **cross-plugin `mclayer/plugin-codeforge-design`** (현 `plugins/codeforge-design/`, 구 repo 삭제됨 2026-06-12) — codeforge-design plugin = "Deputy mandate 매트릭스" 의 진짜 SSOT 위치 (deputy 정의 원천). CLAUDE.md / agent files (LiveOpsDeputyAgent.md 등 Class-B 보존) / skill files / templates 안 deputy 일반 명사 sweep. **ADR-010 §sibling sync PR 의무** — wrapper PR merge 와 paired sibling repo PR.
 - **기타 lane plugin** (codeforge-{requirements, develop, review, test, pmo}) = deputy 일반 명사 미사용 추정 (verify 의무). 사용 발견 시 sibling sync 확장.
 
 ### 결정 5 — Phase 1 (Story+ADR+Change Plan doc) + Phase 2 (sweep + sibling sync) 2-PR

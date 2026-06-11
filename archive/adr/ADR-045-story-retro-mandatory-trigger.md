@@ -677,7 +677,7 @@ Net escalation 0 시 `cross_story_pattern_adr_trigger` field empty 유지 (closu
 
 PMOAgent batch closure 진행 시 다음 3 step 의무 (각 Issue 별):
 
-1. **`[PMO]` prefix comment + state transition** — Issue 별 closure decision rationale comment 작성 + state 전환 (`closed` `not_planned` reason OR `completed` reason). 상세 [PMOAgent.md §"closure rationale comment"](https://github.com/mclayer/plugin-codeforge-pmo/blob/main/agents/PMOAgent.md) (Wave 2 sibling sync 시점).
+1. **`[PMO]` prefix comment + state transition** — Issue 별 closure decision rationale comment 작성 + state 전환 (`closed` `not_planned` reason OR `completed` reason). 상세 PMOAgent.md §"closure rationale comment" (현 `plugins/codeforge-pmo/agents/PMOAgent.md`, 구 lane repo 삭제됨 2026-06-12) (Wave 2 sibling sync 시점).
 2. **Retro PR open + auto-merge** — closure evidence trail 의 영속화 (ADR-045 §결정 4 retro PR 자동 merge 정합, batch closure retro file §X close lane sub-section 안 closure summary table embed).
 3. **`gate:retro-complete` label add OR `not_planned` reason close** — ADR-045 §결정 5 close-blocking 정합 (Issue close 의무 evidence trail).
 

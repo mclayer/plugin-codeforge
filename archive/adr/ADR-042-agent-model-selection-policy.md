@@ -239,7 +239,7 @@ Cancelled Story tracking: [codeforge-internal-docs#96](https://github.com/mclaye
 
 ### 결정 2: 본 ADR 발효 시점 변경 사항 (2 sibling PR scope)
 
-**plugin-codeforge-design sibling PR** (별도 — 본 ADR PR merge 직후):
+**plugin-codeforge-design sibling PR** (별도 — 본 ADR PR merge 직후. 구 lane repo — 현 `plugins/codeforge-design/`, repo 삭제됨 2026-06-12):
 - CodebaseMapperAgent: Opus 4.7 → **Sonnet 4.6**
 - RefactorAgent: Opus 4.7 → **Sonnet 4.6**
 
@@ -376,7 +376,7 @@ N/A — permanent policy
 
 - [`.claude-plugin/plugin.json`](../../.claude-plugin/plugin.json) — wrapper plugin manifest (5.5.0 → 5.6.0 MINOR bump)
 - [`CLAUDE.md`](../../CLAUDE.md) — Development Agent Team 섹션에 본 ADR 1줄 참조 추가
-- 본 ADR scope 외 lane plugin agent file (CodebaseMapperAgent · RefactorAgent model field edit) — sibling PR [mclayer/plugin-codeforge-design#24](https://github.com/mclayer/plugin-codeforge-design/pull/24)
+- 본 ADR scope 외 lane plugin agent file (CodebaseMapperAgent · RefactorAgent model field edit) — sibling PR mclayer/plugin-codeforge-design#24
 
 ## 관련 ADR
 
@@ -394,8 +394,8 @@ N/A — permanent policy
 - [codeforge-internal-docs#96](https://github.com/mclayer/codeforge-internal-docs/issues/96) — cancelled Story (KEY collision 으로 close not_planned)
 - [codeforge-internal-docs#98](https://github.com/mclayer/codeforge-internal-docs/issues/98) — `story-init.yml` Action permission misconfiguration
 - [codeforge-internal-docs#99](https://github.com/mclayer/codeforge-internal-docs/issues/99) — KEY collision tracking
-- [plugin-codeforge-requirements#12](https://github.com/mclayer/plugin-codeforge-requirements/issues/12) — ResearcherAgent role 재정의 follow-up
-- **Sibling PR** (codeforge-design Mapper + Refactor model edit): [mclayer/plugin-codeforge-design#24](https://github.com/mclayer/plugin-codeforge-design/pull/24) — version 0.4.0 → 0.4.1 PATCH bump 동반
+- plugin-codeforge-requirements#12 — ResearcherAgent role 재정의 follow-up
+- **Sibling PR** (codeforge-design Mapper + Refactor model edit): mclayer/plugin-codeforge-design#24 — version 0.4.0 → 0.4.1 PATCH bump 동반
 
 ---
 

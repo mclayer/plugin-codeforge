@@ -187,7 +187,7 @@ Orchestrator 수령 → Story §9 final verdict + GitHub comment `[설계리뷰]
 
 - **desired state** = 본 doc 의 4 H2 closed-enum (모듈 + 경계 + 인터페이스 계약 + 데이터 흐름) 누적 현재 상태 SSOT
 - **current state** = lane plugin agent file (`agents/{DesignReviewPLAgent,CodeReviewPLAgent,SecurityTestPLAgent,ClaudeReviewAgent,CodexReviewAgent}.md`) + `templates/review-pl-base.md` 공통 + `templates/review-checklists/*.md` + `CLAUDE.md` (runtime 실제 동작)
-- **converge** = ArchitectAgent self-write 확장 (Sub-Epic CFP-949 S3 carrier `mclayer/plugin-codeforge-design` ADR-082 §결정 1 mechanism) + design lane verdict gate (drift lint CFP-923 detection class d, Wave 4 carrier)
+- **converge** = ArchitectAgent self-write 확장 (Sub-Epic CFP-949 S3 carrier `mclayer/plugin-codeforge-design` — 구 lane repo, 현 `plugins/codeforge-design/`, repo 삭제됨 2026-06-12 — ADR-082 §결정 1 mechanism) + design lane verdict gate (drift lint CFP-923 detection class d, Wave 4 carrier)
 
 > 본 cross-ref = 패턴 답습. 도메인 (upgrade flow ↔ review lane) 은 disjoint. wording SSOT = ADR-076 본문 + ADR-078 §결정 2.
 

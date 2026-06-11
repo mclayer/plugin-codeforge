@@ -106,7 +106,7 @@ GraphQL Audit Log API (`enterprise.auditLog`, 5000 pt/hr) + REST `/orgs/{org}/au
 ### 영향 받는 영역
 
 - `mclayer/plugin-codeforge` (wrapper): 본 ADR file + CLAUDE.md "Lane plugin self-write boundary" 표 codeforge-pmo row 갱신
-- `mclayer/plugin-codeforge-pmo` (canonical): GitOpsAgent.md mandate 11 → 14 area 확장 + CLAUDE.md self-write 표 7 row 추가
+- `mclayer/plugin-codeforge-pmo` (canonical — 현 `plugins/codeforge-pmo/`, 구 repo 삭제됨 2026-06-12): GitOpsAgent.md mandate 11 → 14 area 확장 + CLAUDE.md self-write 표 7 row 추가
 - `templates/rulesets/**` (3 file 신규)
 - `templates/custom-properties.yaml` (신규)
 - `templates/required-workflows-spec.yaml` (신규)

@@ -311,9 +311,9 @@ Amendment 시 ratchet 강화 방향만 허용 (ADR-058 §결정 5 sunset_justifi
 - mctrader 3-cycle 누적 패턴 (Epic CFP-620 post-mortem)
 - mctrader-hub Live Mode Epic (ADR-014 Amendment 1 carrier)
 - Sibling Story-2 (ADR-014 Amendment 3): https://github.com/mclayer/plugin-codeforge/issues/633
-- Sibling Story-3 (ADR-068 Amendment 2 — verdict field-time enforcement): https://github.com/mclayer/plugin-codeforge-review/issues/34
-- Sibling Story-4 (PMOAgent retro Cross-Story pattern): https://github.com/mclayer/plugin-codeforge-pmo/issues/18
-- Sibling Story-5 (DevPL/QADev spec invariant verify gate): https://github.com/mclayer/plugin-codeforge-develop/issues/24
+- Sibling Story-3 (ADR-068 Amendment 2 — verdict field-time enforcement): plugin-codeforge-review#34 (구 lane repo issue — repo 삭제됨 2026-06-12, 현 `plugins/codeforge-review/`)
+- Sibling Story-4 (PMOAgent retro Cross-Story pattern): plugin-codeforge-pmo#18
+- Sibling Story-5 (DevPL/QADev spec invariant verify gate): plugin-codeforge-develop#24
 
 ---
 

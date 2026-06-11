@@ -101,7 +101,7 @@ related_plugins:
 ```yaml
 family:
   - mclayer/plugin-codeforge          # wrapper, 6-tuple contexts (post CFP-1808 deploy-lane-presence wire 활성)
-  - mclayer/plugin-codeforge-requirements  # lane plugin (codeforge-requirements)
+  - mclayer/plugin-codeforge-requirements  # lane plugin (codeforge-requirements) — 이하 lane repo 8개 = 구 repo 삭제됨 2026-06-12, 현 plugins/<lane>/ 모노레포 (본 registry = Archived historical record)
   - mclayer/plugin-codeforge-design   # lane plugin (codeforge-design)
   - mclayer/plugin-codeforge-review   # lane plugin (codeforge-review), invariant outlier 보존
   - mclayer/plugin-codeforge-develop  # lane plugin (codeforge-develop)

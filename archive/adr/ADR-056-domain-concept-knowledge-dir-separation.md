@@ -122,7 +122,7 @@ N/A — permanent policy
 ## 관련 파일
 
 - [ADR-046](ADR-046-researcher-role-redefinition.md) — ResearcherAgent role (본 ADR가 Amendment 1 적용)
-- `mclayer/plugin-codeforge-requirements:agents/DomainAgent.md`
+- `mclayer/plugin-codeforge-requirements:agents/DomainAgent.md` (구 lane repo — 현 `plugins/codeforge-requirements/agents/`, repo 삭제됨 2026-06-12)
 - `mclayer/plugin-codeforge-requirements:agents/ResearcherAgent.md`
 - `mclayer/plugin-codeforge-requirements:agents/RequirementsPLAgent.md`
 

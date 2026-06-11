@@ -168,5 +168,5 @@ ADR-008 룰 적용:
 
 - 본 v1 동결 시점: 2026-04-28 CFP-29 머지 시점
 - codeforge core SHA: feat/cfp-29-phase-1 브랜치 머지 commit (PR #XX)
-- codeforge-review SHA: initial commit on main (mclayer/plugin-codeforge-review)
+- codeforge-review SHA: initial commit on main (mclayer/plugin-codeforge-review — 구 lane repo 삭제됨 2026-06-12, 현 `plugins/codeforge-review/`)
 - 이전 review packet schema source: codeforge core (pre-CFP-29) `templates/review-pl-base.md` §2 — 본 file로 이전 + version 부여

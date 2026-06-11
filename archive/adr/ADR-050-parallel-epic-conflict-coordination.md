@@ -192,4 +192,4 @@ N/A — permanent policy
 - `templates/github-workflows/parallel-epic-conflict-check.yml` — 결정 3 구현 (+ Amendment 1 cross-section detection logic)
 - `docs/inter-plugin-contracts/label-registry-v2.md` — Amendment 1 sentinel evidence
 - `docs/inter-plugin-contracts/MANIFEST.yaml` — Amendment 1 신규 검출 영역
-- 본 plugin sibling: `mclayer/plugin-codeforge-pmo` `agents/GitOpsAgent.md` (Amendment 1 intersection 로직 확장 owner)
+- 본 plugin sibling: `mclayer/plugin-codeforge-pmo` `agents/GitOpsAgent.md` (Amendment 1 intersection 로직 확장 owner — 현 `plugins/codeforge-pmo/agents/GitOpsAgent.md`, 구 repo 삭제됨 2026-06-12)

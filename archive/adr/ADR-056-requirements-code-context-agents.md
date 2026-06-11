@@ -89,7 +89,5 @@ N/A — permanent policy
 - [ADR-042](ADR-042-agent-model-selection-policy.md) — 모델 티어 정책
 - [ADR-046](ADR-046-researcher-role-redefinition.md) — Researcher Opus tier 근거
 - [CFP-374 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/requirements/specs/2026-05-11-requirements-code-context-agents-design.md)
-- [ChangeImpactAgent](https://github.com/mclayer/plugin-codeforge-requirements/blob/main/agents/ChangeImpactAgent.md)
-- [FeasibilityAgent](https://github.com/mclayer/plugin-codeforge-requirements/blob/main/agents/FeasibilityAgent.md)
-- [ContinuityAgent](https://github.com/mclayer/plugin-codeforge-requirements/blob/main/agents/ContinuityAgent.md)
+- ChangeImpactAgent / FeasibilityAgent / ContinuityAgent — 현 `plugins/codeforge-requirements/agents/`, 구 plugin-codeforge-requirements repo 삭제됨 2026-06-12
 - [story-page-structure.md](../../templates/story-page-structure.md)

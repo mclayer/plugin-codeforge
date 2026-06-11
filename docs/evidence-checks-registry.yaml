@@ -866,7 +866,7 @@ entries:
       pr_cumulative_min: 20            # ADR-060 §결정 6 (a) / §결정 10 velocity-normalized
       failure_threshold: 0             # ADR-060 §결정 6 (b)
       sibling_dependencies:
-        - CFP-Z'  # PMOAgent retro epic_close_gate workflow integration (Sibling Story-4 plugin-codeforge-pmo#18 prerequisite for blocking-on-pr 승격)
+        - CFP-Z'  # PMOAgent retro epic_close_gate workflow integration (Sibling Story-4 plugin-codeforge-pmo#18 prerequisite for blocking-on-pr 승격 — 구 lane repo issue, repo 삭제됨 2026-06-12)
       evidence_artifacts:
         - github_actions_run_history_url
         - lint_failure_count_zero_proof

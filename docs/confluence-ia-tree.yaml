@@ -2298,7 +2298,7 @@ living_architecture_pages:
     last_synced: "2026-06-01T14:22:29+09:00"  # CFP-1677 Stage 2a — git source 신설 후 Confluence push
     five_anchor_codified: true  # CFP-1427 AC-1 declarative
     mermaid_diagram_count: 0
-    phase_2_status: "pushed"  # CFP-1677 — prior defer_reason "repo 404 부재" stale (실제 = git source file 부재, Stage 1 PR plugin-codeforge-deploy#5 해소)
+    phase_2_status: "pushed"  # CFP-1677 — prior defer_reason "repo 404 부재" stale (실제 = git source file 부재, Stage 1 PR plugin-codeforge-deploy#5 해소 — 구 lane repo PR, repo 삭제됨 2026-06-12, 현 plugins/codeforge-deploy/)
     confluence_version_after_push: 2
   - plugin_name: "codeforge-deploy-review"  # CFP-1059 신설 plugin — declarative phase
     page_id: "2130919"

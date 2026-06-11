@@ -40,7 +40,7 @@ ADR-042 (Agent model selection policy, merged 2026-05-09T02:48:46Z, commit `5928
 
 > "ResearcherAgent는 단순한 검색을 위한 Agent가 아니다. 요구사항을 분석하며 필요한 개념을 심층적으로 정립한 뒤 탐구하여 실제적인 요구사항으로 재편해야하는데 sonnet으로 대체 가능한 수준의 얕은 역할만 맡고 있다면 역할이 제대로 잡히지 않은 것이다."
 
-Issue [`plugin-codeforge-requirements#12`](https://github.com/mclayer/plugin-codeforge-requirements/issues/12) 가 본 redesign 의 carrier issue.
+Issue `plugin-codeforge-requirements#12` (구 lane repo issue — 현 `plugins/codeforge-requirements/`, repo 삭제됨 2026-06-12) 가 본 redesign 의 carrier issue.
 
 본 ADR 는 Researcher 의 3 mandate (Concept formulation / Deep exploration / Requirement reshape concept-driven) 를 명료화하고, DomainAgent / RequirementsAnalyst 와의 4-way 협업 모델을 정합 보존하며, 산출 schema 와 mode policy 를 SSOT 화한다.
 
@@ -163,8 +163,8 @@ N/A — permanent policy
 
 - 본 ADR
 - [ADR-042](ADR-042-agent-model-selection-policy.md) — Agent model selection policy (frontmatter `amendment_log[1]` + §결정 2 annotation + §결정 1 (g) cleanup 동행)
-- [`mclayer/plugin-codeforge-requirements:agents/ResearcherAgent.md`](https://github.com/mclayer/plugin-codeforge-requirements/blob/main/agents/ResearcherAgent.md) — sibling PR target
-- [`mclayer/plugin-codeforge-requirements:CLAUDE.md`](https://github.com/mclayer/plugin-codeforge-requirements/blob/main/CLAUDE.md) — sibling PR target
+- `mclayer/plugin-codeforge-requirements:agents/ResearcherAgent.md` — sibling PR target
+- `mclayer/plugin-codeforge-requirements:CLAUDE.md` — sibling PR target
 - [Spec PR #105](https://github.com/mclayer/codeforge-internal-docs/pull/105) — Stage 0 brainstorming SSOT (commit `02b676a` amendment 1 — ADR-046 carrier rename)
 
 ## 관련 ADR

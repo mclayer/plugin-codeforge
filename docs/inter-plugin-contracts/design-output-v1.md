@@ -21,7 +21,7 @@ authors:
 > **ARCHIVED 2026-04-30** — 본 v1 은 [v2](design-output-v2.md) 로 대체됨 (CFP-46, ADR-014). v2 는 OperationalRiskArchitectAgent 추가 (5 SubAgent → 6 SubAgent) + §11.6 Idempotency invariant CONDITIONAL 신설 BREAKING bump.
 
 **상위 SSOT 위치**:
-- `mclayer/plugin-codeforge-design/docs/inter-plugin-contracts/design-output-v1.md`: **canonical** (codeforge-design repo)
+- `mclayer/plugin-codeforge-design/docs/inter-plugin-contracts/design-output-v1.md`: **canonical** (codeforge-design repo — 구 lane repo 삭제됨 2026-06-12, 현 단일 원본 = wrapper. ADR-118 D5)
 - 본 file (codeforge wrapper repo): sibling reference (canonical 변경 시 sync 의무 — ADR-010 + CFP-24 marketplace sync 정책 동질)
 - ADR-008 (versioning 룰): codeforge wrapper repo `docs/adr/ADR-008-inter-plugin-contract-versioning.md`
 - ADR-010 (본 contract 의 sibling sync 정책): codeforge wrapper repo `docs/adr/ADR-010-inter-plugin-contract-sibling-sync.md`

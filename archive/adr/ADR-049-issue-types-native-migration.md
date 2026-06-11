@@ -125,7 +125,7 @@ codeforge 의 Issue 분류 = label hack `type:epic / type:story / type:bug` (3 e
   - `docs/inter-plugin-contracts/label-registry-v2.md` (신규)
   - `docs/inter-plugin-contracts/MANIFEST.yaml` (label-registry version bump entry 추가)
 
-- `mclayer/plugin-codeforge-pmo` (sibling sync — ADR-010 정합):
+- `mclayer/plugin-codeforge-pmo` (sibling sync — ADR-010 정합. 현 `plugins/codeforge-pmo/`, 구 repo 삭제됨 2026-06-12):
   - `docs/inter-plugin-contracts/label-registry-v1.md` mirror sync (Active → Archived)
   - `docs/inter-plugin-contracts/label-registry-v2.md` mirror 신설
 

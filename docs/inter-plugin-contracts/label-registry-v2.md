@@ -1642,6 +1642,7 @@ labels:
   # CFP-1367 신설 — ADR-107 Amendment 1 Wave 2 mechanical wire carrier (F1+F2 통합)
   # ADR-024 Amendment 8 §결정 6.A per-entry namespace audit-trailed exception channel
   # Wave 1 declarative (Phase 1 PR seed) — Phase 2 PR 가 실 lint script + workflow + bats fixture mechanical wire
+  # (참고) 아래 description 안 `mclayer/plugin-codeforge-deploy/templates/deploy-mechanism.md` 예시 좌표 = 구 lane repo (현 plugins/codeforge-deploy/templates/, repo 삭제됨 2026-06-12). description 은 GitHub live label parity 대상 — 본문 무수정 보존 (CFP-2183)
   - name: hotfix-bypass:plugin-declarative-seed-byte-parity
     category: hotfix-bypass
     color: "fef2c0"
