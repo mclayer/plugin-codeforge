@@ -27,6 +27,7 @@ related_stories:
   - CFP-1059 # Amendment 7 §결정 18 carrier — family scope 7 plugin → 9 plugin 확장 + MAJOR atomic bump invariant codify (codeforge-deploy + codeforge-deploy-review 신설 정합)
   - CFP-1179 # Amendment 8 §결정 19 carrier — Tier 분리 (Tier 1 wrapper bundle vs Tier 2 lane per-walk atomic scope 명확화)
   - CFP-2174 # Amendment 11 §결정 24/25 carrier — Epic #2151 S5 marketplace source git-subdir 전환 + 단일-repo plugins/ 시대 Tier 2 atomic scope 재정의 (ADR-118 D6 예약 carrier)
+  - CFP-2203 # Amendment 12 §결정 26/27 carrier — post-merge local activation 책임 = Orchestrator (`claude plugin update` CLI 직접 실행 + cache 실측, CFP-2191 오안내 사고 재발 차단)
 amendments:
   - amendment: 1
     date: 2026-05-13
@@ -90,6 +91,12 @@ amendments:
     summary: "§결정 24/25 신설 — lane plugin 8종 marketplace source 형식 github(분산 repo) → git-subdir(단일 repo plugins/ 하위) 전환 + 무핀 정책 + 단일-repo 시대 Tier 2 atomic scope 재정의 (Epic #2151 / ADR-118 D6 예약 carrier — S5 Phase 2 게이트). (a) lane 8 entry source = {git-subdir, url=mclayer/plugin-codeforge, path=plugins/<plugin name>} — path ↔ plugin.json name 1:1 (ADR-118 D3), wrapper entry = github source 유지 (repo 루트 자체가 plugin). (b) 무핀 (ref/sha 생략 — default branch HEAD 추종): version 식별·캐시 교체 SSOT = plugin.json version (플랫폼 version resolution 1순위 — 공식 문서 'Version resolution and release channels'), sha 핀 채택 시 lane 콘텐츠 갱신마다 marketplace sha 재핀 sync PR 필요 = Epic #2151 이 제거한 cross-repo sync 마찰(strict bypass 누적 109회)의 부분 재생산 → 비채택. 현행 github source 도 ref/sha 무핀이므로 핀 강도 동등 이전 (약화 0). supply-chain 요구 격상 시 sha 핀 도입 = 강화 방향 Amendment open path. (c) Tier 2 (§결정 19) 경로 차원 재정의 — lane 의 repo-내 release 파일 2종 (plugin.json + CHANGELOG, ADR-092 영역. §결정 19 의 'Tier 2 atomic scope 2-file (plugin.json + marketplace.json)' 과 별개 개념 — 동음이의 혼용 금지) 이 S1~S4 흡수로 wrapper repo plugins/<name>/ 에 위치: lane bump 가 wrapper 파일과 단일 repo 단일 PR 로 원자화 가능, cross-repo coordination 잔여 = marketplace.json 1축 (2-repo → 1축 drift surface 축소). §결정 2 ordering (marketplace sync PR 선행 merge → plugin repo PR merge) 불변. (d) source 필드 ≠ mirrored field 4종 — source 교체 단독은 3-file atomic trigger 아님 (동반 version bump 는 §결정 21 Step 1.5 Rule (a) 정상 trigger). (e) family scope 9-plugin 불변 (Amendment 7 보존 — frontmatter 표기 §결정 18, 본문 결정 번호 충돌 pre-existing → follow-up #2173 위임. 엔트리 수 9 + 각 entry identity 불변). (f) 실측 게이트 의무 — source 전환 merge 후 G0~G4 (Story CFP-2174 §7 / Change Plan cfp-2174-marketplace-subdir SSOT) 전부 PASS 전 S6 (lane repo archive 비가역) 진입 금지, FAIL 시 rollback = source github 형식 복원 (S6 전 lane repo 생존 구간 한정 완전 가역, version 필드는 복원 금지 — parity 보존). (g) Tier 1 (wrapper) atomic scope 재정의 — plugin.json + marketplace.json 2-file + CHANGELOG 축 = ADR-092 위임 (ADR-092 Amendment 1 §결정 3 sibling — wrapper 루트 CHANGELOG 동결 codify). direction: weaken 1건 (Tier 1 한정), evidence 3종 gate = de-bloat 4차 merge 사실 #1967/#1972/#1975 + invariant-check.yml version-match prune 주석 + wrapper bump 2회 선례 PR #2135/#2136 CHANGELOG 없이 merge — letter ↔ 현실 drift 의 사후 codify (신규 약화 행위 0), tier-downgrade-justification 마커 = carrier commit message 포함. 첫 적용 carrier = 본 CFP-2174 자체 (wrapper 6.14.0→6.15.0 MINOR + design 0.22.0→0.23.0 MINOR — S4 CHANGELOG [Unreleased] 위임 해소). ratchet: (a)~(f) = 강화/중립 (drift surface 축소 + 핀 강도 동등 + mirrored field scope/ordering/bypass 보존) + (g) = 부분 weaken 1건 (ADR-058 §결정 5 evidence-gate 통과 + ADR-092 Amendment 1 동반) — ADR-064 top-down ratchet 정합."
     is_transitional: false
     sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 — Amendment 11 = (a)~(f) 강화/중립 (source 취득 경로 전환 + cross-repo drift surface 2-repo → 1축 축소 + 핀 강도 동등 이전 + mirrored field scope/ordering/bypass 보존) + (g) 부분 weaken 1건 (Tier 1 CHANGELOG 축 ADR-092 위임 — 기 merge 된 wrapper CHANGELOG 동결의 사후 codify, evidence 3종 gate + ADR-092 Amendment 1 sibling + tier-downgrade-justification 마커, ADR-058 §결정 5 evidence-gate 통과). 추가 약화 방향 (git-subdir → 분산 repo source 회귀 / §결정 2 ordering 해제 / 실측 게이트 G0~G4 생략 후 S6 진입 / lane plugin CHANGELOG 의무 약화) = sunset_justification 3-tuple 의무."
+  - amendment: 12
+    date: 2026-06-13
+    cfp: CFP-2203
+    summary: "§결정 26/27 신설 — post-merge local activation 책임 = Orchestrator. plugin version bump 포함 PR merge (`mergedAt` 확인) 직후 Orchestrator 가 터미널 CLI `claude plugin update <plugin>@mclayer` 를 직접 실행 + 로컬 plugin cache 반영 실측 의무. 사용자에게 업데이트 액션 요구 금지 (적용 = 다음 세션 재시작, 보고 1줄만). 근거 = CFP-2191 오안내 사고 (Orchestrator 가 미지원 슬래시 명령 `/plugins update` 를 사용자에게 안내 → 활성화 차단) + 사용자 directive 2026-06-13 ('다음부터 이런 안내 없이 너가 업데이트할 수 있도록 해라'). 슬래시 명령 `/plugins update` 미지원 사실 명시 — 정본 = 터미널 CLI `claude plugin update <plugin>@mclayer` ('restart required to apply', Claude Code 2.1.175 `claude plugin update --help` 실측). 기존 §결정 1~25 무변경 — §결정 1 atomic invariant + §결정 2 ordering 위에 post-merge local activation 책임 layer 1단 추가. version bump 0 carrier (doc-only, 3-file atomic invariant 비발동 — §결정 21 Rule (b) doc_only_fast_path). ratchet 강화 방향 only — ADR-064 top-down ratchet + ADR-058 §결정 5 약화 방향 발의 차단 logic 통과."
+    is_transitional: false
+    sunset_justification: "N/A — permanent governance policy. ADR-064 §self-application top-down ratchet 정합 (Amendment 12 = ratchet 강화 — post-merge local activation 책임 layer 추가, 기존 결정 무변경, 약화 요소 0건). ADR-058 §결정 5 약화 방향 발의 차단 logic 통과 (activation 책임 사용자 재이관 / cache 실측 의무 해제 = sunset_justification 3-tuple 의무)."
 mechanical_enforcement_actions:
   - action: version-3way-atomic
     binding_decision: 15
@@ -859,6 +866,41 @@ ADR-064 self-application top-down ratchet 정합 — 약화 방향 (예: Gap A l
 ADR-064 self-application top-down ratchet 정합 — 추가 약화 방향 (git-subdir → 분산 repo 회귀 / ordering 해제 / 게이트 생략 후 S6 진입 / lane CHANGELOG 의무 약화) 미해당. ADR-058 §결정 5 sunset_justification = frontmatter 명시.
 
 **Self-application 첫 사례 (본 carrier)**: 본 CFP-2174 자체가 wrapper plugin.json `version` 6.14.0 → 6.15.0 MINOR (배포 토대 변경 — ADR-037 behavior-affecting MINOR) + design plugin `version` 0.22.0 → 0.23.0 MINOR (S4 CFP-2170 design CHANGELOG `[Unreleased]` 가 "버전 할당 = Epic #2151 S5 release 시점" 으로 명시 위임한 항목 해소) bump 동반 — §결정 2 ordering (marketplace sync PR 선행 merge → wrapper PR merge) + §결정 21 Rule (a) (`marketplace_sync_required: true`, `mirrored_fields_changed: [version]`) 첫 적용. 나머지 7 lane = version 불변 (콘텐츠 델타 = S2 contract mirror + S3 CI 삭제뿐 — 에이전트/CLAUDE.md/매니페스트 무변경 실측, bump 불요). G0~G4 실측 결과 = Story CFP-2174 §9 기록 의무.
+
+### 결정 26: post-merge local activation 책임 = Orchestrator — `claude plugin update` CLI 직접 실행 (Amendment 12, CFP-2203)
+
+**Context (CFP-2191 오안내 사고 — activation 책임 공백)**: 기존 §결정 1~25 는 publishing-time invariant (3-file atomic + ordering + lint 4-layer) 를 cover 하나, **bump PR merge 후 로컬 plugin cache 활성화** 단계의 책임 주체가 미정의였다. CFP-2191 마무리에서 Orchestrator 가 미지원 슬래시 명령 `/plugins update` 를 사용자에게 안내 → 사용자가 실행 불가 → 활성화 차단 (오안내 사고). 과거 메모리 lore "활성화엔 /plugins update 필요" (CFP-2134 / CFP-2161) = 부정확 표기 — 본 결정이 정정한다. 사용자 directive 2026-06-13: "다음부터 이런 안내 없이 너가 업데이트할 수 있도록 해라."
+
+**검증된 사실 (슬래시 명령 부재)** `[verified: Claude Code 2.1.175 — claude plugin update --help 실측]`:
+- `/plugins update` 슬래시 명령은 **미지원** (CFP-2191 차단 근본 원인).
+- 정본 = 터미널 CLI `claude plugin update <plugin>@mclayer` — help verbatim: "Update a plugin to the latest version (restart required to apply)", default scope = `user`.
+
+**Mandate (post-merge local activation 책임 layer)**:
+
+| 항목 | 내용 |
+|---|---|
+| 실행 시점 | plugin version bump 포함 PR merge 직후 — merge 사실은 `mergedAt` 확인 (ADR-073 verify-before-assert 정합) |
+| 책임 주체 | **Orchestrator** (사용자 아님) — 터미널 CLI `claude plugin update <plugin>@mclayer` 직접 실행 |
+| 실측 의무 | 실행 후 로컬 plugin cache 반영 실측 (갱신된 version 확인) — 출력 무검증 단정 금지 (ADR-119) |
+| 사용자 보고 | **업데이트 액션 요구 금지** — 보고 1줄만 ("plugin update 실행 완료, 적용 = 다음 세션") |
+| 적용 시점 | 다음 세션 재시작 시 (CLI help verbatim "restart required to apply") |
+
+**기존 결정 무변경**: §결정 1 (3-file atomic) / §결정 2 (ordering) / §결정 21 (Rule a~d) 포함 §결정 1~25 전부 byte-unchanged — 본 결정 26 = publishing-time invariant 체인 끝에 post-merge local activation 책임 layer 1단 추가 (defense chain: 작성 시점 → PR-time → merge ordering → **post-merge activation**).
+
+**CLAUDE.md 동반 carrier**: 마켓플레이스 동기화 단락 1줄 append (D1, 본 CFP-2203) — Orchestrator 매 턴 자기검열 정책 layer 에 동일 mandate 박제.
+
+### 결정 27: Self-application — Amendment 12 ratchet 검증
+
+본 Amendment 12 = **강화 방향 only**. 약화 요소 0건:
+
+- §결정 26 = 기존 publishing-time invariant 위에 post-merge local activation 책임 layer 추가 (책임 공백 해소 — scope 확장, 기존 결정 무변경).
+- §결정 27 = Amendment 12 ratchet 검증 절 (Amendment 1/2/3/5/6/8/9/11 의 §결정 10/12/14/16/18/20/23/25 self-application 절 동형).
+
+ADR-064 self-application top-down ratchet 정합 — 약화 방향 (예: activation 책임 사용자 재이관 / cache 실측 의무 해제 / 미지원 슬래시 명령 안내 복원) 미해당. ADR-058 §결정 5 sunset_justification = frontmatter 명시.
+
+**본 carrier 의 invariant 비발동 declare**: 본 CFP-2203 = doc-only (CLAUDE.md + 본 ADR 2-file, version bump 0) — §결정 1 3-file atomic invariant + marketplace sibling sync PR **비발동** (§결정 21 Rule (b) enum `doc_only_fast_path`). Amendment 12 첫 적용 사례 = 본 carrier 이후 최초의 plugin version bump 포함 PR merge 시점 (Story §9 또는 해당 Story 기록 의무).
+
+본 ADR-063 amendment 발의 시 매번 ratchet 방향 검증 의무 — 강화 방향만 허용.
 
 ## 결과
 
