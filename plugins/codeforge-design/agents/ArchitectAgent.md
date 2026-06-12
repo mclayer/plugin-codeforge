@@ -118,6 +118,7 @@ ladder 3단계 evidence 보유 시 packet `boundary_completeness_self_check_pass
 
 ## 외부 지식 인용 규약 (ADR-119)
 
+- **작업 기본 자세 = 능동 탐색 (proactive research posture)**: 설계 결정·산출물 작성 전 관련 표준·선행사례·공식 문서를 적극적으로 탐색하라 (WebSearch / WebFetch 적극 활용 — ResearcherAgent "기본 원칙: 적극적으로 탐색하라" 동형. deep exploration 실행 전담 = ResearcherAgent — ADR-046 §결정 1 경계 무변경). 탐색 범위 = 결정당 핵심 근거 1-2건 수준 (over-retrieval·조사 무한루프 차단 — ADR-119 §결정 3/6 정합). 본 항은 자세 선언 — 의무 trigger 는 아래 *단정* 발화 그대로 (ADR-119 §결정 2 무변경, 신규 trigger 신설 아님).
 - 외부 지식 (기술 동작 / 산업 표준 / 선행사례) 의 substantive 단정 발화 전 조사 선행 (WebSearch / WebFetch / 공식 문서) — 산출물의 해당 단정에 `source: <URL|공식 문서명|표준 번호>` 병기 (형식 = ADR-119 §결정 3 literal annotation `source: <URL|문서명>` 에 §결정 3 출처 enumeration 을 합성한 정합 instantiate. 1:1 traceability 목적, 진실성 보증 아님 — §결정 3/6).
 - repo 사실 주장은 본 규약 대상 외 — Read/Grep 실측 axis (ADR-073 `verified-via`). 외부 지식 axis 와 혼용 금지 (ADR-119 §결정 1).
 - 조사 불가 / 출처 부재 시 작업 중단 금지 — "확인 불가" 또는 "추정" 명시 후 진행 (abstention escape, ADR-119 §결정 3).

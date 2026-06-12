@@ -2,6 +2,12 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.25.0] - 2026-06-12
+
+### Added (CFP-2192 — proactive research posture bullet, MINOR)
+
+CFP-2192 — design lane 11 worker (ArchitectPL·CodebaseMapper 제외) "외부 지식 인용 규약 (ADR-119)" block 선두에 능동 탐색 자세 bullet 1개 추가 (4→5 bullet, 11 file block byte-identical). 자세 선언 — 의무 trigger 무변경 (ADR-119 §결정 2 무변경, Amendment 불요 — Change Plan cfp-2192 §10 강화 해석). 탐색 범위 = 결정당 핵심 근거 1-2건 (over-retrieval 차단, §결정 3/6 정합). ArchitectPL (WebSearch/WebFetch 0 — dead letter 방지) + CodebaseMapper (fact-only mandate) 제외 보존. MINOR (ADR-037 §결정 3 — `feat` commit signal, CFP-2184 동질 선례). marketplace sync 선행 merge (ADR-063).
+
 ## [0.24.0] - 2026-06-12
 
 ### Added (CFP-2184 — agent research mandate expansion, MINOR)
