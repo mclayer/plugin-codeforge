@@ -1,7 +1,7 @@
 ---
 adr_number: 88
 title: Deploy Review lane 신설 — codeforge-deploy-review plugin + ProductionEvidenceDeputy ownership 이관
-status: Accepted
+status: Superseded by ADR-121
 category: lifecycle
 date: 2026-05-20
 carrier_story: CFP-1059
