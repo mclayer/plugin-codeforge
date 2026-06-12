@@ -900,7 +900,7 @@ def build_walk_completion_report(
 
 
 def render_walk_progress_items(steps: list) -> list[str]:
-    """walk step 리스트 → TodoWrite 4-marker render 문자열 리스트 hook.
+    """walk step 리스트 → TodoWrite content 문자열 리스트 hook (이모지 prefix 없음).
 
     walk_report.py render_walk_todo_items() 위임.
     walk_report 미설치 시 빈 리스트 반환 (graceful degradation).
@@ -909,11 +909,14 @@ def render_walk_progress_items(steps: list) -> list[str]:
         steps: WalkStep list (walk_report.WalkStep 객체 — walk_report 모듈 import 필요)
 
     Returns:
-        list[str] — 각 원소 = "{marker} {name}" (TodoWrite content 형태)
+        list[str] — 각 원소 = "{name}" (FIX_DETECTED 는 "{name} — FIX detected")
         walk_report 미설치 = [] (graceful degradation)
 
-    ADR-038 §결정 2 4-marker (Amendment 4 vocab):
-      ⬜ PENDING / ⏳ IN_PROGRESS / ✅ COMPLETED / 🔄 FIX_DETECTED
+    ADR-038 Amendment 5 (CFP-2215) native status 매핑:
+      PENDING → "pending" / IN_PROGRESS → "in_progress" / COMPLETED → "completed"
+      FIX_DETECTED → "in_progress" + content 텍스트 label (native state 부재 특수 케이스)
+      상태는 TodoWrite status field 가 표현 (walk_report._STEP_STATUS_NATIVE) —
+      content 이모지 prefix 금지.
     """
     mod = _import_walk_report_module()
     if mod is None:

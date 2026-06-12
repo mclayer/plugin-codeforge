@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 # scripts/lib/walk_report.py — CFP-1175 Phase 2
-# walk completion 4-field 보고 생성 + TodoWrite 4-marker visualization (ADR-061 외부 .py 의무)
+# walk completion 4-field 보고 생성 + TodoWrite native status visualization (ADR-061 외부 .py 의무)
 #
 # 책임 (change-plan §3 / ADR-093 §결정 1):
 #   (a) CompletionReport 생성 — walk_result + 외부 보고 4-field schema
 #       from_version / to_version / target_version_release_date / key_changes_summary
 #   (b) format_completion_report_text() — 사용자 발화 verbatim 4-field 텍스트 보고
 #       업그레이드 전 버전 / 업그레이드 후 버전 / 최신 버전 업데이트 일자 / 주요 변경 내용
-#   (c) render_walk_todo_items() — walk step 단위 TodoWrite 4-marker render
-#       ⬜ PENDING / ⏳ IN_PROGRESS / ✅ COMPLETED / 🔄 FIX_DETECTED (ADR-038 §결정 2/3)
+#   (c) render_walk_todo_items() — walk step 단위 TodoWrite content render
+#       native status 매핑 (pending/in_progress/completed) — content 이모지 prefix 없음
+#       (ADR-038 Amendment 5 / §결정 2/3)
 #   (d) extract_key_changes() — changelog entry 에서 핵심 변경 요약 추출
 #   (e) walk_plan.py 연동 — WalkResult enum 공유 (공유 import)
 #
 # ADR refs:
 #   ADR-061 python script-writing convention (외부 .py 의무)
 #   ADR-093 completion report 4-field schema (walk_result + 외부 보고 4-field closed-set)
-#   ADR-038 progress visualization via TodoWrite (4-marker ⬜⏳✅🔄, Amendment 4)
+#   ADR-038 progress visualization via TodoWrite (Amendment 5 — native status 렌더, content 이모지 폐지)
 #   ADR-076 declarative reconciliation upgrade (walk_result semantic 원천)
 #
 # SSOT:
@@ -59,17 +60,18 @@ from walk_plan import WalkResult  # noqa: E402 (path insert 후)
 
 
 # ──────────────────────────── WalkStepStatus enum ────────────────────────────
-# ADR-038 §결정 2 4-marker (Amendment 4 vocab swap 정합)
+# ADR-038 Amendment 5 (CFP-2215) — content 이모지 marker 폐지, native status 렌더
 # closed-set 4-value (ADR-093 §결정 2 open_extension: false 정합)
 
 class WalkStepStatus(Enum):
     """walk step 진행 상태 enum (4-value closed-set).
 
-    ADR-038 §결정 2 4-marker 대응:
-      PENDING       → ⬜ (pending empty checkbox)
-      IN_PROGRESS   → ⏳ (in_progress 모래시계)
-      COMPLETED     → ✅ (completed PASS)
-      FIX_DETECTED  → 🔄 (FIX 검출 lane, retry trigger — ADR-038 §결정 3)
+    ADR-038 Amendment 5 — Claude Code 네이티브 TodoWrite status 대응:
+      PENDING       → native status "pending" (빈 체크박스 — 도구 자체 렌더)
+      IN_PROGRESS   → native status "in_progress" (✱ — 도구 자체 렌더)
+      COMPLETED     → native status "completed" (체크 + 취소선 — 도구 자체 렌더)
+      FIX_DETECTED  → native state 부재 특수 케이스 — "in_progress" + content
+                      텍스트 label "FIX detected" (ADR-038 §결정 3, 이모지 없이)
 
     closed-set open_extension: false.
     5번째 값 신설 = 본 모듈 amendment (ADR-093 §결정 2 정합) 로만.
@@ -80,12 +82,13 @@ class WalkStepStatus(Enum):
     FIX_DETECTED = "FIX_DETECTED"
 
 
-# 4-marker 매핑 (ADR-038 §결정 2 Amendment 4 vocabulary)
-_STEP_STATUS_MARKER = {
-    WalkStepStatus.PENDING: "⬜",
-    WalkStepStatus.IN_PROGRESS: "⏳",
-    WalkStepStatus.COMPLETED: "✅",
-    WalkStepStatus.FIX_DETECTED: "🔄",
+# native status 매핑 (ADR-038 Amendment 5 — content 이모지 prefix 폐지)
+# TodoWrite status field 에 전달할 값. FIX_DETECTED = in_progress + content label.
+_STEP_STATUS_NATIVE = {
+    WalkStepStatus.PENDING: "pending",
+    WalkStepStatus.IN_PROGRESS: "in_progress",
+    WalkStepStatus.COMPLETED: "completed",
+    WalkStepStatus.FIX_DETECTED: "in_progress",
 }
 
 
@@ -93,7 +96,7 @@ _STEP_STATUS_MARKER = {
 
 @dataclass
 class WalkStep:
-    """단일 walk step (name + 4-marker status).
+    """단일 walk step (name + status).
 
     TodoWrite render 입력 단위.
     """
@@ -283,13 +286,14 @@ def format_completion_report_text(report: CompletionReport) -> str:
 # ──────────────────────────── render_walk_todo_items ─────────────────────────
 
 def render_walk_todo_items(steps: list[WalkStep]) -> list[str]:
-    """walk step 리스트 → TodoWrite 4-marker render 문자열 리스트.
+    """walk step 리스트 → TodoWrite content 문자열 리스트 (이모지 prefix 없음).
 
-    ADR-038 §결정 2/3/5 정합:
-      ⬜ PENDING      — 대기 (pending empty checkbox)
-      ⏳ IN_PROGRESS  — 진행 중 (모래시계, Amendment 4 vocab)
-      ✅ COMPLETED    — 완료 (PASS)
-      🔄 FIX_DETECTED — FIX 검출 lane (retry trigger — ADR-038 §결정 3)
+    ADR-038 Amendment 5 (CFP-2215) 정합 — content 이모지 4-marker 폐지:
+      상태는 TodoWrite native status field 가 표현 (호출자가 _STEP_STATUS_NATIVE
+      매핑으로 전달 — pending / in_progress / completed, 도구 자체 렌더).
+      content = step name 텍스트만.
+      FIX_DETECTED 는 native state 부재 특수 케이스 — content 텍스트 label
+      "FIX detected" suffix 로 표현 (ADR-038 §결정 3, 이모지 없이).
 
     hierarchical render: 본 함수는 lane-level row 생성 (agent sub-row = 호출자 책임).
 
@@ -298,15 +302,17 @@ def render_walk_todo_items(steps: list[WalkStep]) -> list[str]:
             빈 list → 빈 리스트 반환
 
     Returns:
-        문자열 리스트 — 각 원소 = "{marker} {name}" 형태 (TodoWrite content 형태)
+        문자열 리스트 — 각 원소 = "{name}" (FIX_DETECTED 는 "{name} — FIX detected")
     """
     if not steps:
         return []
 
     items = []
     for step in steps:
-        marker = _STEP_STATUS_MARKER.get(step.status, "⬜")
-        items.append(f"{marker} {step.name}")
+        if step.status == WalkStepStatus.FIX_DETECTED:
+            items.append(f"{step.name} — FIX detected")
+        else:
+            items.append(step.name)
     return items
 
 
@@ -316,7 +322,7 @@ if __name__ == "__main__":
     # sanity check self-test (ADR-061 §결정 3 sanity check 3종 중 sample)
     print("walk_report.py sanity check:")
     print(f"  WalkStepStatus values: {[s.value for s in WalkStepStatus]}")
-    print(f"  4-marker map: { {s.value: m for s, m in _STEP_STATUS_MARKER.items()} }")
+    print(f"  native status map: { {s.value: m for s, m in _STEP_STATUS_NATIVE.items()} }")
 
     # CompletionReport 생성 sanity
     report = build_completion_report(
@@ -339,11 +345,18 @@ if __name__ == "__main__":
         WalkStep(name="단계 D", status=WalkStepStatus.FIX_DETECTED),
     ]
     items = render_walk_todo_items(steps)
-    assert items[0].startswith("✅"), f"sanity FAIL: {items[0]}"
-    assert items[1].startswith("⏳"), f"sanity FAIL: {items[1]}"
-    assert items[2].startswith("⬜"), f"sanity FAIL: {items[2]}"
-    assert items[3].startswith("🔄"), f"sanity FAIL: {items[3]}"
-    print("  render_walk_todo_items() markers ✓")
+    # ADR-038 Amendment 5 — content 이모지 prefix 부재 + native status 매핑 검증
+    assert items[0] == "단계 A", f"sanity FAIL: {items[0]}"
+    assert items[1] == "단계 B", f"sanity FAIL: {items[1]}"
+    assert items[2] == "단계 C", f"sanity FAIL: {items[2]}"
+    assert items[3] == "단계 D — FIX detected", f"sanity FAIL: {items[3]}"
+    # 폐지된 4-marker glyph (U+2B1C/U+23F3/U+2705/U+1F504 — chr() 표기 = 본 파일 자체 grep 잔존 0 유지)
+    _banned_glyphs = (chr(0x2B1C), chr(0x23F3), chr(0x2705), chr(0x1F504))
+    for it in items:
+        assert not any(g in it for g in _banned_glyphs), \
+            f"sanity FAIL emoji remnant: {it!r}"
+    assert _STEP_STATUS_NATIVE[WalkStepStatus.FIX_DETECTED] == "in_progress"
+    print("  render_walk_todo_items() native (no emoji) ✓")
 
     # format_completion_report_text sanity
     text = format_completion_report_text(report)
