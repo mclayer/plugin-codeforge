@@ -1,7 +1,7 @@
 ---
 adr_number: 87
 title: Deploy lane 신설 — codeforge-deploy plugin 정식 도입 + lane lifecycle 6→8 단계 확장
-status: Accepted
+status: Superseded by ADR-121
 category: lifecycle
 date: 2026-05-20
 carrier_story: CFP-1059
