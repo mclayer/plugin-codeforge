@@ -738,11 +738,12 @@ Epic 묶음 완료 (모든 Story merged): Orchestrator → DeployPLAgent 자동 
              → Orchestrator가 한 메시지에 (ClaudeReviewAgent ∥ CodexReviewAgent) dispatch → PL 종합 → PASS/FIX (R3, R2)
              → PASS/FIX 결정: review-verdict 5-step algorithm 적용 (위 설계-리뷰 동일 흐름, lane=code, [구현-리뷰] prefix)
                          FIX 시 mechanical_category 자격 확인 → fast-path 또는 정상 cycle (R11)
-구현 테스트: CI gate (ADR-048) — Orchestrator inline 수행:
-                         `gh pr checks <PR_NUMBER> --watch` (timeout 30분)
-                         → PASS + lanes.security_ai: false (default): merge gate 진입
+구현 테스트: CI gate (ADR-048 + Amendment 2) — Orchestrator inline 수행:
+                         `gh pr checks <PR_NUMBER> --required --watch --fail-fast` — Bash run_in_background (백그라운드 비블로킹, watch 종료 시 자동 재개)
+                         → PASS + lanes.security_ai: false (default): merge gate 진입 (merge 직전 ADR-073 Amd 2 merge_transition sentinel polling 유지)
                          → PASS + lanes.security_ai: true: SecurityTestPL spawn
                          → FAIL: `gh run view --log-failed` 수집 → FIX loop (DeveloperPL 1차 진단 → ArchitectPL 최종 판정)
+                         → stuck (required check 5분+ pending/expected): re-trigger 1회 → admin merge fallback + 사후 검증 (ADR-048 Amd 2 (d))
 통합 테스트: (Epic 하위 전체 Story CI gate PASS 후 1회 실행 — **상세: §3.11**)
 보안 테스트: Orchestrator → SecurityTestPLAgent (lanes.security_ai: true 시만, lane=security packet 작성, 1차 layer cache hit/miss 확인)
              **[D2-A CFP-2111] pr_phase 판정·주입**: 위 설계-리뷰 §D2-A 절차 동일 적용.
@@ -777,18 +778,22 @@ Epic 묶음 완료 (모든 Story merged): Orchestrator → DeployPLAgent 자동 
 
 상세 SSOT: comment-prefix-registry-v1 (CFP-61 갱신 — review verdict 작성자 = Orchestrator post-Sonnet) + label-registry-v1.
 
-#### CI gate (구현 리뷰 PASS 후 — ADR-048)
+#### CI gate (구현 리뷰 PASS 후 — ADR-048 + Amendment 2)
 
-구현 리뷰 PASS 직후 Orchestrator inline 수행 (read-only whitelist 예외):
+구현 리뷰 PASS 직후 Orchestrator inline 수행 (read-only whitelist 예외). **required-only + 백그라운드 비블로킹** (ADR-048 Amendment 2 / CFP-2214):
 
 ```bash
-gh pr checks <PR_NUMBER> --watch
+gh pr checks <PR_NUMBER> --required --watch --fail-fast   # Bash run_in_background 로 실행
 ```
 
-- **timeout**: 30분. 초과 시 사용자에게 보고 후 대기.
+- **required-only 대기**: required check (merge 를 실제 차단하는 branch protection contexts) 만 대기. 전체 검사(비-required, warning tier) 완료 대기 금지 — 실측 required 6종 = PR open 후 15~30초 완료 (전체 대기 시 CodeQL ~50s + bootstrap-labels ~110s 추가, PR #2205/#2194/#2187/#2186).
+- **백그라운드 비블로킹**: watch 는 Bash `run_in_background` 로 실행 — 세션 즉시 자유, watch 종료 시 harness 자동 재호출 → PASS 시 merge 진행. 전경 blocking watch 금지 ((구) "timeout 30분 초과 시 사용자 보고 후 대기" 절차 삭제). merge 직전 ADR-073 Amd 2 `merge_transition` sentinel polling 의무는 재개 시점에 그대로 수행 (무약화).
+- **merge 후 검사 대기 금지**: merge 후 trigger 검사 (retro-check / close-blocking / retry-state-machine 등 pull_request closed·cron 계열 — retro-check 는 sleep 300 내장, ADR-045 D-1) 는 merge·다음 단계 진행과 무관 — 명시적 대기 금지.
+- **stuck fallback (자동 진행)**: required check 5분+ pending/expected stuck → ① 해당 run 1회 re-trigger (`gh run rerun <run-id>` 또는 empty-commit) → ② 여전히 stuck 시 admin merge (`gh pr merge --admin` — ADR-113 §3.19 attempt cap dual scope 유지, stuck-pending sub-case 한정 자동 진행) → ③ 사후 검증 1회 (merge 후 main 에서 동일 검사 green 확인) → ④ 사용자 결과 보고. #1908 (flaky FAIL 자동 re-trigger 일반화) 와 축 분리.
+- **edge — required check 0건 repo** (branch protection 미설정 consumer): 기존 전체 watch fallback (`--required` 제거).
 - **PASS + `lanes.security_ai: false`** (default): merge gate 진입.
 - **PASS + `lanes.security_ai: true`**: SecurityTestPL spawn (codeforge-review plugin).
-- **FAIL**: 아래 명령으로 실패 로그 수집 후 FIX loop 진입.
+- **FAIL** (무변경): 아래 명령으로 실패 로그 수집 후 FIX loop 진입.
 
 ```bash
 gh run view --log-failed
@@ -2862,7 +2867,7 @@ Orchestrator 자체 토큰 = 세션 전체 - 20 서브에이전트 합계.
 | `phase:설계-리뷰` | `phase:설계-리뷰` | `phase:설계` | — (verdict 후 부착) | ArchitectAgent verdict 후 DesignReviewPLAgent spawn 직전 | Orchestrator |
 | `phase:구현` | `phase:구현` | `phase:설계-리뷰` | `gate:design-review-pass` (DesignReview PASS 시점 부착) | DesignReviewPL verdict PASS 직후 + DeveloperPLAgent spawn 직전 | Orchestrator (gate label = codeforge-review self-write) |
 | `phase:구현-리뷰` | `phase:구현-리뷰` | `phase:구현` | (`gate:design-review-pass` retain — 별도 code-review gate 미도입) | DeveloperPL ready + CodeReviewPLAgent spawn 직전 | Orchestrator |
-| `phase:구현-테스트` | `phase:구현-테스트` | `phase:구현-리뷰` | — (gate 무 — CI gate inline polling) | CodeReview PASS + CI gate `gh pr checks --watch` polling 진입 직전 | Orchestrator |
+| `phase:구현-테스트` | `phase:구현-테스트` | `phase:구현-리뷰` | — (gate 무 — CI gate inline polling) | CodeReview PASS + CI gate `gh pr checks --required --watch --fail-fast` 백그라운드 watch 진입 직전 (ADR-048 Amd 2) | Orchestrator |
 | `phase:보안-테스트` (opt-in) | `phase:보안-테스트` | `phase:구현-테스트` | `gate:security-test-pass` | 통합테스트 PASS + SecurityTestPLAgent spawn 직전 (consumer `lanes.security_ai: true` 시에만) | Orchestrator |
 | `phase:배포` (CFP-1059) | `phase:배포` | `phase:보안-테스트` (또는 `phase:구현-테스트` if security 미활성) | `gate:deploy-pass` | Epic 묶음 완료 후 DeployPLAgent spawn 직전 (Phase 1 declarative) | Orchestrator |
 | `phase:배포-리뷰` (CFP-1059) | `phase:배포-리뷰` | `phase:배포` | `gate:deploy-review-pass` | DeployPL PASS + DeployReviewPLAgent spawn 직전 (Phase 1 declarative) | Orchestrator |
@@ -3334,7 +3339,7 @@ incremental patch 금지 — collision 의심 시 항상 full rewrite.
 [설계] Deputy spawn 6/6 병렬 (CodebaseMapper / Refactor / SecurityArch / InfraOperationalArch / TestContractArch / ModuleArch)
 [설계] ModuleArchitectAgent return — §11 Migration 전략 + Rollback 경로 author 완료
 [설계 리뷰] R7 병렬 dispatch — DesignReviewPL ∥ DeveloperPL Phase 2 PR 준비
-[구현 테스트] CI gate 실행 중 — `gh pr checks` watching (timeout 30분)
+[구현 테스트] CI gate 백그라운드 watch 가동 — `gh pr checks --required` (required-only, ADR-048 Amd 2)
 ```
 
 세부 rule: 한국어 lane 이름, 멀티라인 금지, stderr only (file-write 와 격리). Stop discipline 정책은 ADR-022 §결정 2 + ADR-025 SSOT (본 §14.5 는 visibility 만 다룸).
@@ -3348,7 +3353,7 @@ incremental patch 금지 — collision 의심 시 항상 full rewrite.
 | 설계 리뷰 | `PASS — Claude/Codex 종합, 코멘트 #<id>` | DesignReviewPL packet |
 | 구현 | `Phase 2 PR #<num> · <commit>건 · §8.5 manifest <file>건` | DeveloperPL + git log |
 | 구현 리뷰 | `PASS — Claude/Codex 종합, 코멘트 #<id>` | CodeReviewPL packet |
-| 구현 테스트 | `CI gate <PASS\|FAIL> — checks <N>건` | `gh pr checks` 출력 |
+| 구현 테스트 | `CI gate <PASS\|FAIL> — required checks <N>건` | `gh pr checks --required` 출력 (ADR-048 Amd 2) |
 | 보안 테스트 | `1차 alerts <N> / 2차 P0:<N> P1:<N>` | SecurityTestPL packet |
 
 미정 데이터는 `?` placeholder (예: `Change Plan v? + ADR-? 신규 (SubAgent 6인)`).

@@ -18,7 +18,7 @@ tools: Read
                                                            [배포] → [배포 리뷰] → Epic close
 ```
 
-모든 Story는 **full 8 레인 + CI gate** 통과 (CFP-1059 후 — 배포 + 배포 리뷰 신설). Fast-path 없음 (단 **Hotfix 경로** 2종은 예외 — 운영 장애 대응, 사후 감사 의무. 상세는 [`docs/hotfix-playbook.md`](../../docs/hotfix-playbook.md)). **CI gate** = 구현 리뷰 PASS 후 Orchestrator가 `gh pr checks <PR_NUMBER> --watch`로 GitHub CI 결과 polling (최대 30분 timeout). PASS 시 merge gate 진입 (`lanes.security_ai: true` consumer는 SecurityTestPL spawn 추가). FAIL 시 DeveloperPL 1차 진단 → ArchitectPL 최종 판정 → FIX loop (CFP-317 / ADR-048-ci-native-test-execution).
+모든 Story는 **full 8 레인 + CI gate** 통과 (CFP-1059 후 — 배포 + 배포 리뷰 신설). Fast-path 없음 (단 **Hotfix 경로** 2종은 예외 — 운영 장애 대응, 사후 감사 의무. 상세는 [`docs/hotfix-playbook.md`](../../docs/hotfix-playbook.md)). **CI gate** = 구현 리뷰 PASS 후 Orchestrator가 `gh pr checks <PR_NUMBER> --required --watch --fail-fast` 를 백그라운드(Bash run_in_background)로 실행 — required check 만 대기 (전체 검사 대기 금지), watch 종료 시 자동 재개 → PASS 시 merge gate 진입 (`lanes.security_ai: true` consumer는 SecurityTestPL spawn 추가). required check 5분+ stuck 시 re-trigger 1회 → admin merge fallback + 사후 검증 + 결과 보고 자동 진행; required check 0건 repo 는 전체 watch fallback. FAIL 시 DeveloperPL 1차 진단 → ArchitectPL 최종 판정 → FIX loop (CFP-317 / ADR-048-ci-native-test-execution + Amendment 2).
 
 **배포 lane (Phase 1 declarative — CFP-1059 / ADR-087)**: Epic 묶음 종료 후 (모든 Story merged) Orchestrator → DeployPLAgent 자동 trigger. 변경 repo enumeration + DeployWorkerAgent N 병렬 dispatch (repo 단위). 배포 매커니즘 = blue-green + atomic swap + 3-시간 보존 + 자동 rollback (단일 매커니즘 고정). FAIL 시 자동 rollback + FIX dispatch. 활성 조건 = consumer `project.yaml` 안 `deploy:` block 등록 + codeforge-deploy plugin install (opt-in).
 
@@ -64,7 +64,7 @@ FAIL 시 block+report. 상세는 playbook §3B.
 | 설계 리뷰 | ArchitectAgent verdict | §9 (DesignReviewPL Claude+Codex 종합) + `gate:design-review-pass` | 3 |
 | 구현 | 설계 리뷰 PASS | §8·§8.5 + Phase 2 PR 첫 commit (DeveloperPL + QADev + N role:dev) | — |
 | 구현 리뷰 | DeveloperPL ready | §9 (CodeReviewPL Claude+Codex 종합) | 3 |
-| CI gate | 구현 리뷰 PASS | (Orchestrator inline `gh pr checks` polling — 30분 timeout) | ∞ |
+| CI gate | 구현 리뷰 PASS | (Orchestrator inline `gh pr checks --required` 백그라운드 watch — ADR-048 Amd 2) | ∞ |
 | 통합테스트 | **Epic 하위 전체 Story** CI gate PASS (1회) | `tests/integration/baseline/` + `tests/integration/stories/<EPIC-KEY>/` 동적 실행 | 3 |
 | 보안 테스트 **(opt-in: lanes.security_ai: true)** | 통합테스트 PASS | §9 (SecurityTestPL 2-layer) + `gate:security-test-pass` | ∞ |
 | 배포 | Epic 하위 전체 Story merged (통합테스트·보안테스트 PASS) | (DeployPLAgent — consumer `deploy:` block opt-in) | — |

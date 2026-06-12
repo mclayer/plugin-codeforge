@@ -44,7 +44,7 @@ mcp__github__list_issues(state='open', labels=['type:story'])
 | phase:구현 | §8 일부 | 마지막 구현 에이전트 (§8에서 확인) 재스폰 |
 | phase:구현-리뷰 | §9.2 블록 없음 | CodeReviewPLAgent 재스폰 |
 | phase:구현-리뷰 | §9.2 블록 FIX | DeveloperPL 1차 진단 → ArchitectPLAgent 최종 판정 |
-| phase:구현-테스트 | §9.3 블록 없음 | `gh pr checks <PR_NUMBER> --watch` 재실행 (CI gate 재확인) |
+| phase:구현-테스트 | §9.3 블록 없음 | `gh pr checks <PR_NUMBER> --required --watch --fail-fast` 백그라운드 재실행 (CI gate 재확인 — ADR-048 Amd 2) |
 | phase:구현-테스트 | §9.3 블록 FAIL | DeveloperPL 1차 진단 → ArchitectPLAgent 최종 판정 |
 | phase:통합-테스트 | §9 통합 테스트 블록 없음 | IntegrationTestAgent 재스폰 |
 | phase:통합-테스트 | §9 통합 테스트 FAIL | DeveloperPL 1차 진단 → ArchitectPLAgent 최종 판정 |
