@@ -1783,7 +1783,7 @@ E11 popup turn 의 Layer 2 면제 사유 = popup 본문 자체가 declare semant
 
 | 판정 | 행동 | 예시 |
 |---|---|---|
-| 사실 (YES) | derived default 적용 + declare + 결과 보고 + 사용자 정정 의무 | 파일 존재 / `wc -l` / `git log` / SHA / `grep` 결과 |
+| 사실 (YES) | derived default 적용 (컨텍스트로 추론 가능 시) + declare + 결과 보고 + 사용자 정정 의무 | 파일 존재 / `wc -l` / `git log` / SHA / `grep` 결과 |
 | 가치 (NO) | `AskUserQuestion` 발화 의무 | 사용자 선호 (UX / 보고 길이) / 정책 강화 방향 / scope 결정 / brainstorm 채택안 |
 | 모호 (AMBIGUOUS) | 가치 측 분류 (safe direction) → `AskUserQuestion` 발화 의무 | derived default 추론 가능 + future 작업 영향 큼 |
 
