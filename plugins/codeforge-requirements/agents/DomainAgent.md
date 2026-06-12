@@ -198,16 +198,10 @@ title: <페이지 제목>          # 본문 H1
 
 ## 재조사 수신부
 
-본 에이전트가 강제 재조사 fan-out dispatch 수신 시:
-1. 공통 입력 packet 신규 수령 (RequirementsPLAgent가 coalesce 완료 후 단일 dispatch).
-2. 담당 섹션 (§2 Domain) fresh 재작성. stale 마킹 해제 = RequirementsPL 영역.
-3. **정보 무결성 invariant**: prior_output_ref fact-check marker **5종** (`[verified]` / `[hypothesis]` / `[fact-check-pending]` / `[user-input]` / `[verification-out-of-scope: <사유>]`) verbatim 보존. `[hypothesis]` / `[fact-check-pending]` → `[verified]` **무검증 승격 금지** (직접 재검증 + evidence file:line 인용 시만). 승격 비대칭: lower → higher 무검증 금지 / higher → lower 강등 허용 (보수 안전).
-4. §9.0 owner = RequirementsPL (`recheck_N | <본 에이전트 이름> | <triggering_answer_ref>` 행 append). 본 에이전트 직접 기록 금지.
-5. 결과 write queue 제출 (`.claude-work/doc-queue/<story>/<seq>-story-section-2.md`).
+수신 5-step + 정보 무결성 invariant + counter boundary 본문 = `templates/recheck-receiver-base.md` SSOT (참조-time base — ADR-120 §결정 4 (b)).
 
-### ESCALATE 수신 (counter boundary D4)
-
-`recheck_counter` 6 진입 = cap 초과 = circuit open. RequirementsPL이 ESCALATE 판정 → 본 에이전트 진행 중단 + 현 상태 그대로 partial 반환 (fail-closed).
+- **Gate (inline 잔존)**: fact-check marker 5종 verbatim 보존 + 무검증 승격 금지 (직접 재검증 + evidence file:line 인용 시만 승격). `recheck_counter` 6 진입 = circuit open → 진행 중단 + 현 상태 partial 반환 (fail-closed). §9.0 직접 기록 금지 (owner = RequirementsPL).
+- **본 agent delta**: 담당 섹션 = §2 Domain / write queue = `.claude-work/doc-queue/<story>/<seq>-story-section-2.md`.
 
 ---
 

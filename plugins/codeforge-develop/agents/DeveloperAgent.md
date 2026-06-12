@@ -56,15 +56,10 @@ GitHub Issue/PR/docs write 권한 없음. 모든 문서화 write는 DeveloperPLA
 
 ## 외부 지식 인용 규약 (ADR-119 — 조사 도구 미보유)
 
-- 본 agent 는 외부 조사 도구 미보유 (의도된 경계 — 조사 주체는 설계 lane 응집). 외부 지식 단정 필요 시 Change Plan / spawn packet 에 인용된 출처 (`source:`) 를 그대로 인계 인용 — training 지식 단독 단정 금지.
-- 인계할 출처 부재 + 외부 지식 필요 = 추측 진행 금지. "확인 불가" 명시 후 DeveloperPL 경유 Architect 에스컬레이션 (기존 외부 라이브러리 회부 경로와 동일).
-- repo 사실 (코드/문서) 은 본 규약 대상 외 — Read/Grep 직접 실측.
+- **Gate**: 외부 지식 단정 = Change Plan / spawn packet 인용 출처 (`source:`) 인계 인용만 — training 지식 단독 단정 금지. 출처 부재 시 추측 금지, "확인 불가" 명시 후 DeveloperPL 경유 Architect 에스컬레이션. repo 사실 = 대상 외 (Read/Grep 직접 실측). 상세 = ADR-119.
 
 ## Operating environment (ADR-044)
 
 본 agent role = Worker/Sub-agent — env=1 시 lane PL(DeveloperPL) team teammate, env=0 fallback = Orchestrator 직접 one-shot spawn (ADR-039).
 
-Re-entry 제약 3종 (env 무관):
-1. 재귀 spawn 금지 (자기 자신 / 동일 lane agent 추가 spawn 불가)
-2. Nested team 금지
-3. One-team-per-lead 강제
+**Re-entry 제약 3종** (env=0/1 공통 — ADR-039/ADR-044): 재귀 spawn 금지 · nested team 금지 · one-team-per-lead.

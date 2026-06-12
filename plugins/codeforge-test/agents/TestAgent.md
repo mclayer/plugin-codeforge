@@ -155,7 +155,4 @@ TestAgent는 Story file §9.3 "구현 테스트" 섹션을 **직접 write 하지
 
 **Role**: Single-shot agent (codeforge-test) — team 미생성. env=1 / env=0 모두 동일하게 1-shot Agent tool spawn → return. SendMessage 미사용 (ADR-044 §결정 5).
 
-**Re-entry 제약 3종** (env=1 / env=0 모두 적용):
-1. 재귀 spawn 금지 — 자기 자신 또는 동일 lane 의 다른 agent 추가 spawn 불가 (ADR-039)
-2. Nested team 금지 — team-of-teams 불가 (ADR-044)
-3. One-team-per-lead 강제 — 1 Lead = 1 active team (ADR-044)
+**Re-entry 제약 3종** (env=0/1 공통 — ADR-039/ADR-044): 재귀 spawn 금지 · nested team 금지 · one-team-per-lead.
