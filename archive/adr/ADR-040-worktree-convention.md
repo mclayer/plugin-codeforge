@@ -46,7 +46,7 @@ amendments:
     carrier_story: CFP-2191
     date: 2026-06-12
     title: worktree-lifecycle skill carrier — lookup mirror skill 신설 + CLAUDE.md 압축 (정리 의무 가시성 승격, 기존 결정 무변경)
-    sunset_justification: "N/A — is_transitional: false (permanent governance mandate). 본 Amendment 8 = 인지 경로 보강만 — skills/worktree-lifecycle/SKILL.md lookup mirror 신설 + CLAUDE.md 항상-로드 anchor 강화 (생성 의무 단독 → 생성 + 완결 시 정리 + skill 참조 3요소). ratchet 강화 방향 (기존 §결정 1~7 + Amendment 1~7 무손상, 신규 enforcement 0 — 기존 mechanical_enforcement_actions[] 4 entry 가 이미 cover) — sunset 면제. 동인 실증: 2026-06-12 worktree GC 캠페인 stale worktree 약 230개 (4.3G→192M) — eager 정리 의무가 항상-로드 정책에 부재했던 것이 누적 1차 원인."
+    sunset_justification: "N/A — is_transitional: false (permanent governance mandate). 본 Amendment 8 = 인지 경로 보강만 — skills/worktree-lifecycle/SKILL.md lookup mirror 신설 + CLAUDE.md 항상-로드 anchor 강화 (생성 의무 단독 → 생성 + 완결 시 정리 + skill 참조 3요소). ratchet 강화 방향 (기존 §결정 1~7 + Amendment 1~7 무손상, 신규 enforcement 0 — 기존 mechanical_enforcement_actions[] 5 entry (worktree-first 4종 + filesystem-worktree-pinned-default — Amd 7) 가 이미 cover) — sunset 면제. 동인 실증: 2026-06-12 worktree GC 캠페인 stale worktree 약 230개 (4.3G→192M) — eager 정리 의무가 항상-로드 정책에 부재했던 것이 누적 1차 원인."
 mechanical_enforcement_actions:
   # FIX iter 1 F-1 (CFP-427) 정정: status enum 정합 (warning / enforcing / deferred-followup) 환원 +
   # progress_note optional string field 신설 (entry-level 진척 추적). schema 변경 = MINOR (backward compatible).
@@ -1004,7 +1004,7 @@ agent filesystem Read/Grep tool 가 file path read 시 **default behavior**:
 1. **skill 신설 — `skills/worktree-lifecycle/SKILL.md` (lookup mirror 지위)**: 개시 → 작업 중 (`git -C` 주입) → 완결 시 정리 (1급 단계, eager primary) → backstop GC → bypass env 2종 disjoint 의 전 lifecycle 을 단일 lookup 지점으로 mirror. 호출 시점 2개 = ① 코딩/수정 작업 개시 직전 ② Story/PR 완결 직후. **SSOT 이동 아님** — 정책 SSOT = 본 ADR-040(+Amd 1~8), 절차 SSOT = playbook §3.5 + Step 0a-prime 유지, skill 본문에 양 SSOT link 의무.
 2. **CLAUDE.md worktree anchor 압축·강화**: 기존 1줄 (생성 의무만) → 생성 의무 + **완결 시 정리 의무** + skill 참조 3요소 1줄 (net 강화 — 항상-로드 강제력 비축소). "레인 진입 시 스킬 호출" 표에 `codeforge:worktree-lifecycle` 행 추가 (2-시점 — lane 단일 시점 행들과 구분).
 3. **기존 §결정 1~7 + Amendment 1~7 무변경** — 본문 결정/절차/invariant 변경 0. playbook §3.5/§0a-prime 절차 변경 0. GitOpsAgent mandate 변경 0.
-4. **`mechanical_enforcement_actions[]` 변경 0** — 신규 enforcement 0. 기존 4 entry (worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd}) 가 mechanical 측을 이미 cover — 본 Amendment 는 behavioral 인지 경로 보강.
+4. **`mechanical_enforcement_actions[]` 변경 0** — 신규 enforcement 0. 기존 5 entry (worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd} + filesystem-worktree-pinned-default — Amd 7) 가 mechanical 측을 이미 cover — 본 Amendment 는 behavioral 인지 경로 보강.
 
 ### 정합성 검증
 
