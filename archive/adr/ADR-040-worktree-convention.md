@@ -42,6 +42,11 @@ amendments:
     date: 2026-05-26
     title: Filesystem Read/Grep tool layer worktree-pinned `git show HEAD:<path>` 강제 default (ArchitectPL FIX iter 1 false premise 사건 carrier, CFP-1646 retro F1 forcing function 산물 — main repo path stale snapshot 차단)
     sunset_justification: "N/A — is_transitional: false (permanent governance mandate). 본 Amendment 7 = filesystem tool layer read/grep verify default 영역 확장 (Amd 3 spawn prompt + Amd 6 write target path 영역과 axis disjoint sub-scope). ratchet 강화 방향 (worktree-first enforcement boundary 확장 — filesystem Read/Grep tool layer 신설, ADR-058 §결정 5 정합) — sunset 면제. CFP-1646 ArchitectPL FIX iter 1 false premise 직접 evidence (main repo path Grep result v2.51 / Amd 12 / 72 vs worktree direct v2.77 / Amd 15 / 102, 12+ delta) + pattern_count Mandatory reach (`worktree_path_mismatch` ≥ 3 + `stale_fact_inheritance` ≥ 6 + `orchestrator_initial_turn_verify_stale` ≥ 2) 정량 입증."
+  - id: 8
+    carrier_story: CFP-2191
+    date: 2026-06-12
+    title: worktree-lifecycle skill carrier — lookup mirror skill 신설 + CLAUDE.md 압축 (정리 의무 가시성 승격, 기존 결정 무변경)
+    sunset_justification: "N/A — is_transitional: false (permanent governance mandate). 본 Amendment 8 = 인지 경로 보강만 — skills/worktree-lifecycle/SKILL.md lookup mirror 신설 + CLAUDE.md 항상-로드 anchor 강화 (생성 의무 단독 → 생성 + 완결 시 정리 + skill 참조 3요소). ratchet 강화 방향 (기존 §결정 1~7 + Amendment 1~7 무손상, 신규 enforcement 0 — 기존 mechanical_enforcement_actions[] 4 entry 가 이미 cover) — sunset 면제. 동인 실증: 2026-06-12 worktree GC 캠페인 stale worktree 약 230개 (4.3G→192M) — eager 정리 의무가 항상-로드 정책에 부재했던 것이 누적 1차 원인."
 mechanical_enforcement_actions:
   # FIX iter 1 F-1 (CFP-427) 정정: status enum 정합 (warning / enforcing / deferred-followup) 환원 +
   # progress_note optional string field 신설 (entry-level 진척 추적). schema 변경 = MINOR (backward compatible).
@@ -81,6 +86,7 @@ related_stories:
   - CFP-429  # Story 4 — Amendment 4 carrier (closing the loop declaration)
   - CFP-531  # Story 5 — Amendment 5 carrier (actual warning → blocking-on-pr 승격 declaration, closing-the-loop 최종 closing moment)
   - CFP-843  # Amendment 6 carrier — agent-internal write worktree-membership enforcement (CFP-825 retro §6 후보 1 + §3 RC-1 동근원 + #836 spurious artifact evidence)
+  - CFP-2191 # Amendment 8 carrier — worktree-lifecycle skill (lookup mirror) 신설 + CLAUDE.md 압축
 related_adrs:
   - ADR-009
   - ADR-024  # Amendment 3 hotfix-bypass label family 동반
@@ -976,3 +982,43 @@ agent filesystem Read/Grep tool 가 file path read 시 **default behavior**:
 - CFP-1646 retro origin (ArchitectPL FIX iter 1 false premise direct evidence)
 - ADR-040 Amendment 6 §결정 7.J.3 (worktree absolute path directive — axis disjoint extension)
 - ADR-082 §결정 9 verify-at-write-time (sibling carrier — verify-before-cite bidirectional)
+
+## Amendment 8 — worktree-lifecycle skill carrier (CFP-2191, 2026-06-12)
+
+**제목**: `skills/worktree-lifecycle/SKILL.md` lookup mirror 신설 + CLAUDE.md worktree anchor 압축·강화 (정리 의무 가시성 승격 — 기존 §결정 1~7 + Amendment 1~7 무변경)
+
+**상태**: Proposed → CFP-2191 PR merge 시점 Accepted (doc-only fast-path, ADR-054 — 1 Story = 1 PR).
+
+### 컨텍스트
+
+사용자 directive (2026-06-12, CFP-2191 verbatim):
+
+> "기존에 모든 코드 수정 작업은 worktree를 통해 수행하고 완결과 함께 정리하자고 했지? 그 내용을 정리해서 skill로 만들고 기존 지침은 대체할까?"
+
+동인 실증 `[verified]`: 2026-06-12 worktree GC 캠페인 — stale worktree 약 230개 방치 (4.3G→192M 회수). 규약 자체는 본 ADR + playbook §3.5/§0a-prime 에 완비되어 있었으나, 항상-로드 정책(CLAUDE.md)의 worktree bullet 이 **생성 측만** 보유 — "완결 시 정리(eager)" 가 매 턴 자기검열 대상에서 누락된 것이 누적 1차 원인. 규약 분산 4곳 (CLAUDE.md / 본 ADR / playbook §3.5·§0a-prime / GitOpsAgent §5) 의 lookup 인지 비용도 동반 문제.
+
+### Amendment
+
+본 Amendment 8 = **인지 경로 보강만**. 결정 변경 0.
+
+1. **skill 신설 — `skills/worktree-lifecycle/SKILL.md` (lookup mirror 지위)**: 개시 → 작업 중 (`git -C` 주입) → 완결 시 정리 (1급 단계, eager primary) → backstop GC → bypass env 2종 disjoint 의 전 lifecycle 을 단일 lookup 지점으로 mirror. 호출 시점 2개 = ① 코딩/수정 작업 개시 직전 ② Story/PR 완결 직후. **SSOT 이동 아님** — 정책 SSOT = 본 ADR-040(+Amd 1~8), 절차 SSOT = playbook §3.5 + Step 0a-prime 유지, skill 본문에 양 SSOT link 의무.
+2. **CLAUDE.md worktree anchor 압축·강화**: 기존 1줄 (생성 의무만) → 생성 의무 + **완결 시 정리 의무** + skill 참조 3요소 1줄 (net 강화 — 항상-로드 강제력 비축소). "레인 진입 시 스킬 호출" 표에 `codeforge:worktree-lifecycle` 행 추가 (2-시점 — lane 단일 시점 행들과 구분).
+3. **기존 §결정 1~7 + Amendment 1~7 무변경** — 본문 결정/절차/invariant 변경 0. playbook §3.5/§0a-prime 절차 변경 0. GitOpsAgent mandate 변경 0.
+4. **`mechanical_enforcement_actions[]` 변경 0** — 신규 enforcement 0. 기존 4 entry (worktree-first-{session-start-wire, pre-checkout, pre-commit-main-block, spawn-evidence-cwd}) 가 mechanical 측을 이미 cover — 본 Amendment 는 behavioral 인지 경로 보강.
+
+### 정합성 검증
+
+- **ADR-058 §결정 5 정합**: 정리 의무 가시성 승격 = ratchet 강화 방향 (기존 결정 무손상) — frontmatter `amendments[]` row 8 `sunset_justification` 명시.
+- **ADR-009 invariant 무손상**: skill = wrapper 산출물 (agent 아님) — wrapper agent 0개 유지.
+- **ADR-054 정합**: doc-only fast-path 적격 — 기존 ADR Amendment + src/tests 무변경 + 신규 ADR 0.
+- **ADR-063 정합**: plugin.json `name/version/description/author` 4 field 무변경 `[verified]` (skill 신설 선례 실측: CFP-1668 confluence-migration skill 신설 commit 0b9bf112 + CFP-2158 skill 개정 commit 1ae0c70e 모두 plugin.json 무변경) → version bump 0 + marketplace sync 불요.
+- **본 ADR §결정 5 / Amendment 3 §결정 7.E 무손상**: bypass env 2종 (`BYPASS_WORKTREE_GC` / `BYPASS_WORKTREE_FIRST`) contract 변경 0 — skill 은 disjoint scope 표를 mirror 만.
+
+### Related
+
+- CFP-2191 carrier Story (Issue mclayer/plugin-codeforge#2191) — doc-only fast-path
+- 2026-06-12 worktree GC 캠페인 (stale 약 230개, 4.3G→192M) — 동인 실증
+- `skills/worktree-lifecycle/SKILL.md` (본 Amendment 신설 mirror)
+- `docs/orchestrator-playbook.md` §3.5 + Step 0a-prime (절차 SSOT — 무변경)
+- ADR-054 (doc-only Story fast-path)
+- ADR-063 (marketplace atomic invariant — 4 field 무변경 확인)
