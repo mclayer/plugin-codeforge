@@ -102,4 +102,4 @@ related:
   walk_enum_ssot: "scripts/lib/walk_plan.py"        # WalkResult enum 공유
   adr_ssot: "docs/adr/ADR-093-completion-report-4field-schema.md"
   contract_ssot: "docs/inter-plugin-contracts/imperative-walker-protocol-v1.md"
-  todowrite_adr: "docs/adr/ADR-038-progress-visualization-todowrite.md"
+  todowrite_adr: "archive/adr/ADR-038-progress-visualization-todowrite.md"

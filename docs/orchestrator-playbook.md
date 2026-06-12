@@ -3272,7 +3272,7 @@ fix_cycle: <N>
 - Story 시작 시 모든 lane `⬜` init (CFP-707 Amendment 4 — `⏸` deprecated, `⬜` empty checkbox 통일)
 - Story 완료 시 `_archive/<KEY>.md` 로 mv (PMO Cross-Story 분석 input 보존)
 
-### 14.4 Status enum (ADR-041 — CFP-2215 Amendment 5 native status 전환)
+### 14.4 Status enum (ADR-038 — CFP-2215 Amendment 5 native status 전환)
 
 **TodoWrite channel**: Claude Code 네이티브 TodoWrite status 렌더 사용 — 도구가 status field 로 자체 렌더 (pending = 빈 체크박스 / in_progress = ✱ / completed = ✓ + 취소선). **content 문자열에 상태 이모지 prefix 표기 금지** (네이티브 패널 이중 표기 방지 — ADR-038 Amendment 5).
 **§0 file channel**: 자체 렌더가 없는 plain markdown — 4-marker glyph (`⬜⏳✅🔄`) 를 file 채널 한정 유지 (channel 별 표현 분리, native status 와 의미 매핑 1:1).
@@ -3300,7 +3300,7 @@ fix_cycle: <N>
 - `full` (default, ADR-029 §결정 1+4) — 모든 ✅ 표기 항목 narrate (sub-step 포함)
 - `lane_only` — lane-level event 만 narrate (CFP-20 기존 동작, sub-step 표기는 file-only 로 fallback)
 
-| 이벤트 | 영향 라인 (§0 file 채널) | 갱신 동작 (§0 file 채널) | terminal narration | TodoWrite 갱신 (ADR-041 — CFP-2215 Amendment 5 native status) | full/lane_only |
+| 이벤트 | 영향 라인 (§0 file 채널) | 갱신 동작 (§0 file 채널) | terminal narration | TodoWrite 갱신 (ADR-038 — CFP-2215 Amendment 5 native status) | full/lane_only |
 |---|---|---|---|---|---|
 | Story 개시 | 전체 | file create, 7 lane `⬜` | ✅ | 7 lane row `pending` seed | both |
 | Lane 진입 | top | `⬜` → `⏳ 진행 중`, current_lane 갱신 | ✅ | lane row `pending` → `in_progress` + agent sub-row 펼침 | both |
@@ -3320,14 +3320,14 @@ fix_cycle: <N>
 
 R10 prefetch (security 1차 layer cache) 같은 사용자 무관 메타 이벤트는 **의도적 skip** (verbosity 무관).
 
-**TodoWrite 시도 의무 + 실패 non-blocking 원칙 (ADR-041 + ADR-038 Amendment 1 §결정 8)**: 두 속성을 명확히 분리한다.
+**TodoWrite 시도 의무 + 실패 non-blocking 원칙 (ADR-038 §결정 8 시도 의무 + §결정 7 non-blocking — Amendment 1)**: 두 속성을 명확히 분리한다.
 
 - **시도 의무 (non-skippable)**: 위 표의 TodoWrite 갱신 컬럼에 표시된 이벤트 각각에서 Orchestrator 는 TodoWrite 갱신을 **반드시 시도**해야 한다. 시도 자체를 건너뛰는 것은 ADR-038 §결정 8 위반이다.
 - **실패 처리 (non-blocking)**: 시도 후 갱신 실패 시 — lane primary work 미차단. lane 은 계속 진행하고, TodoWrite discrepancy 는 warning 으로 surface 한다. 사용자 confirmation / polling / acknowledgment wait 도입 없음 (ADR-029 stop discipline 정책 무영향).
 
 "시도를 건너뛰는 것" 과 "시도했으나 실패한 것" 은 별개의 위반이다.
 
-**Single-Story collision rule (ADR-041)**: single-Story 모드에서도 두 concurrent lane spawn 이 같은 Story 의 TodoWrite 를 동시에 write 할 수 있다. collision 발생 시:
+**Single-Story collision rule (ADR-038 §결정 4)**: single-Story 모드에서도 두 concurrent lane spawn 이 같은 Story 의 TodoWrite 를 동시에 write 할 수 있다. collision 발생 시:
 1. canonical §14 Lane Evidence table state 에서 todo list 전체를 재구성
 2. TodoWrite hard-reset 수행: 기존 todo list 를 부분 수정하지 않고 full rewrite
 3. rewrite 후 active lane / agent sub-row 는 canonical state 에 남아 있는 evidence 만 반영
@@ -3374,7 +3374,7 @@ incremental patch 금지 — collision 의심 시 항상 full rewrite.
        └→ 6) Story 완료 시 _archive/<KEY>.md 로 mv + index.md 갱신
 ```
 
-**TodoWrite update (step 5) detail (ADR-041 — CFP-2215 Amendment 5 native status)**:
+**TodoWrite update (step 5) detail (ADR-038 — CFP-2215 Amendment 5 native status)**:
 - content 이모지 prefix 금지 — 상태는 status field 단독 표현 (네이티브 렌더), content 는 텍스트만
 - Lane 진입: lane row → status `in_progress` + agent sub-row 펼침 (PL → workers/deputies → chief 순)
 - Agent return: 해당 agent sub-row 의 status=completed + content 갱신 (1-line 활동 결과)
@@ -3392,7 +3392,7 @@ incremental patch 금지 — collision 의심 시 항상 full rewrite.
 1. `.claude-work/progress/<KEY>.md` 존재 여부 확인
 2. **존재해도 신뢰하지 않음** — state source(Story §10 + GitHub Issue phase label + Story §-fill state)에서 재 derive
 3. 재 derive 결과를 cache 재기록, last_processed_seq 갱신
-4. **★ TodoWrite re-build (ADR-041 — CFP-2215 Amendment 5 native status)**: §0 file 의 lane 별도 status 로 TodoWrite full rewrite
+4. **★ TodoWrite re-build (ADR-038 — CFP-2215 Amendment 5 native status)**: §0 file 의 lane 별도 status 로 TodoWrite full rewrite
    - active lane 의 agent sub-row 는 빈 상태 (SubAgent 활성 정보 손실 허용 — 다음 SubAgent 이벤트에서 자동 충족)
    - §0 file 4-marker 를 native status 로 변환 (⬜→`pending` / ⏳→`in_progress` / ✅→`completed` / 🔄→`in_progress` + content `FIX-N detected (cause: <원인 lane>)`) — content 이모지 prefix 없이
    - Single-Story 모드 — `[KEY]` prefix drop
