@@ -2,6 +2,12 @@
 
 `codeforge-develop` plugin 릴리스 이력.
 
+## 0.10.0 (2026-06-12) — CFP-2184 tier B 인용 인계 규약 (MINOR)
+
+### Added
+
+- 5 agent 본문에 외부 지식 인용 인계/주입 절 신설 (도구 부여 0 — 조사 주체는 설계 lane 응집, 기존 Architect 회부 경로 보존). ADR-119 §결정 3 instantiate.
+
 ## 0.9.1 (2026-06-12) — CFP-2178 S6 lane repo archive 참조 sweep (PATCH)
 
 ### Changed (CFP-2178 — S6 lane repo archive 참조 sweep, PATCH)

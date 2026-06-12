@@ -76,6 +76,12 @@ multi-tier / blue-green 등 격리 overlay 를 `docker compose -f base.yml -f ov
 
 3. **근거 cross-ref**: consumer mctrader MCT-208(blue-green 두 slot host port 충돌 → 회피적 `ports:` 제거) + MCT-269(stg overlay `ports:` append 병합으로 prod 8501 잔존 노출 → `config` 렌더 `published:"8501"` 잔존 직접 확인 후 `ports: !override` 정정), 누적 N=2. escalation = mclayer/plugin-codeforge#1869.
 
+## 외부 지식 인용 규약 (ADR-119 — 조사 도구 미보유)
+
+- 본 agent 는 외부 조사 도구 미보유 (의도된 경계 — 조사 주체는 설계 lane 응집). 외부 지식 단정 필요 시 Change Plan / spawn packet 에 인용된 출처 (`source:`) 를 그대로 인계 인용 — training 지식 단독 단정 금지.
+- 인계할 출처 부재 + 외부 지식 필요 = 추측 진행 금지. "확인 불가" 명시 후 DeveloperPL 경유 Architect 에스컬레이션 (기존 외부 라이브러리 회부 경로와 동일).
+- repo 사실 (코드/문서) 은 본 규약 대상 외 — Read/Grep 직접 실측.
+
 ## Operating environment (ADR-044)
 
 본 agent role = Worker/Sub-agent — env=1 시 lane PL(DeveloperPL) team teammate, env=0 fallback = Orchestrator 직접 one-shot spawn (ADR-039).

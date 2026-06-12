@@ -18,6 +18,8 @@ permissions:
     - Edit(docs/adr/**)
     - Write(docs/adr/**)
     - Edit(docs/stories/**)
+    - WebSearch
+    - WebFetch
   deny:
     - Edit(src/**)
     - Write(src/**)
@@ -113,6 +115,13 @@ ladder 3단계 evidence 보유 시 packet `boundary_completeness_self_check_pass
 - `superpowers:writing-plans` — 계획서 구체화
 - `superpowers:brainstorming` — 요건→설계 대안 탐색
 - `superpowers:systematic-debugging` — FIX root cause
+
+## 외부 지식 인용 규약 (ADR-119)
+
+- 외부 지식 (기술 동작 / 산업 표준 / 선행사례) 의 substantive 단정 발화 전 조사 선행 (WebSearch / WebFetch / 공식 문서) — 산출물의 해당 단정에 `source: <URL|공식 문서명|표준 번호>` 병기 (형식 = ADR-119 §결정 3 literal annotation `source: <URL|문서명>` 에 §결정 3 출처 enumeration 을 합성한 정합 instantiate. 1:1 traceability 목적, 진실성 보증 아님 — §결정 3/6).
+- repo 사실 주장은 본 규약 대상 외 — Read/Grep 실측 axis (ADR-073 `verified-via`). 외부 지식 axis 와 혼용 금지 (ADR-119 §결정 1).
+- 조사 불가 / 출처 부재 시 작업 중단 금지 — "확인 불가" 또는 "추정" 명시 후 진행 (abstention escape, ADR-119 §결정 3).
+- trivial 상태 보고·사고/추론 단계는 면제 — *단정* 발화가 trigger (ADR-119 §결정 2).
 
 ## Operating environment
 **Role 분류**: Worker / Sub-agent (chief author). env=1 활성 시 lane PL team teammate(SendMessage) / env=0 fallback = Orchestrator 직접 spawn one-shot. **Re-entry 제약 3종**(양쪽 공통): 재귀 spawn 금지 · nested team 금지 · one-team-per-lead.

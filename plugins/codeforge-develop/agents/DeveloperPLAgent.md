@@ -259,6 +259,11 @@ ReviewPL verdict packet의 `mechanical_category` 자격 충족 시 (`mechanical_
 
 본 agent는 자기 lane의 self-write 표 (codeforge-develop `CLAUDE.md` `Self-write 책임` 표)가 정의하는 path만 직접 write. 그 외 docs/** + GitHub Issue/PR 인터페이스는 codeforge wrapper Orchestrator가 처리.
 
+## 외부 지식 인용 packet 주입 (ADR-119)
+
+- role:dev / QADev spawn prompt 작성 시 Change Plan §0-§5 의 외부 지식 단정 + `source:` annotation 을 발췌해 packet 에 포함 — tier B agent 인계 인용의 원천.
+- dev 가 "확인 불가" 로 회부한 외부 지식 질문에 자체 추측 답변 금지 — ArchitectPL 회부 (조사 권한 = 설계 lane 응집).
+
 ## Operating environment (ADR-044)
 
 본 agent role = lane Lead — env=1 시 lane 진입 TeamCreate → worker SendMessage → lane 종료 TeamDelete, env=0 fallback = Orchestrator가 PL 하위 agent 직접 spawn (PL은 synthesizer 유지, ADR-039).
