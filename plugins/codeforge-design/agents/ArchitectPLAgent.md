@@ -229,7 +229,4 @@ GitHub Issue·PR write는 Orchestrator 담당. 문서화 write 권한 없음.
 
 **Role 분류**: PL agent (lane Lead). env=1 활성 시 본 PL 이 lane team Lead — TeamCreate → worker SendMessage 통신 → TeamDelete. env=0 fallback = Orchestrator 가 PL 하위 agent 를 직접 spawn one-shot.
 
-**Re-entry 제약 3종** (env=1 / env=0 모두 적용):
-1. 재귀 spawn 금지 — 자기 자신 또는 동일 lane 의 다른 agent 추가 spawn 불가
-2. Nested team 금지 — team-of-teams 불가
-3. One-team-per-lead 강제 — 1 Lead = 1 active team
+**Re-entry 제약 3종** (env=0/1 공통 — ADR-039/ADR-044): 재귀 spawn 금지 · nested team 금지 · one-team-per-lead.

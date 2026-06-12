@@ -268,10 +268,7 @@ ReviewPL verdict packet의 `mechanical_category` 자격 충족 시 (`mechanical_
 
 본 agent role = lane Lead — env=1 시 lane 진입 TeamCreate → worker SendMessage → lane 종료 TeamDelete, env=0 fallback = Orchestrator가 PL 하위 agent 직접 spawn (PL은 synthesizer 유지, ADR-039).
 
-Re-entry 제약 3종 (env 무관):
-1. 재귀 spawn 금지 (자기 자신 / 동일 lane agent 추가 spawn 불가)
-2. Nested team 금지
-3. One-team-per-lead 강제
+**Re-entry 제약 3종** (env=0/1 공통 — ADR-039/ADR-044): 재귀 spawn 금지 · nested team 금지 · one-team-per-lead.
 
 ## 자율 병렬 결정 tree (parallel-dispatch-protocol-v1 §5)
 

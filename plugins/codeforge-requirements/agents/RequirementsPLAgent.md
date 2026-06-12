@@ -231,7 +231,7 @@ parallel always-executable. sequential 선택 = state dependency / shared resour
 
 ### Counter boundary semantics
 
-`recheck_counter == 5` = 5번째 정상 재조사 사이클. `recheck_counter`가 6으로 증가 진입 = `cap 초과` = circuit open → ESCALATE (`escalation_class: scope_redefinition_required`, `recheck_counter` RESET to 0). 즉 5번째 재조사 = 정상 완료, 6번째 trigger 시점 = circuit open.
+**Gate**: `recheck_counter` 6 진입 = cap 초과 = circuit open → ESCALATE (`escalation_class: scope_redefinition_required`, `recheck_counter` RESET to 0). 경계 semantics 본문 = `templates/recheck-receiver-base.md` §3 SSOT (참조-time base — ADR-120 §결정 4 (b)).
 
 ### 조건부 PMO 합류 판정
 
@@ -243,4 +243,4 @@ parallel always-executable. sequential 선택 = state dependency / shared resour
 
 ### 정보 무결성 invariant
 
-강제 재조사 fan-out 재스폰 시 수신한 `prior_output_ref` (이전 §2/§4.1/§4.2/§4.3/§5/§6 산출)의 fact-check marker **5종** (`[verified]` / `[hypothesis]` / `[fact-check-pending]` / `[user-input]` / `[verification-out-of-scope: <사유>]`)을 **verbatim 보존**한다. `[hypothesis]` / `[fact-check-pending]`을 `[verified]`로 **무검증 승격 금지** — 직접 재검증 + evidence file:line 인용 시에만 승격 허용. marker 부재 = 암묵 `[hypothesis]` default 유지. reverse-explicit `[verification-out-of-scope: <사유>]` 사유 필드 verbatim 보존. **승격 비대칭**: lower → higher 무검증 금지 / higher → lower (`[verified]` → `[hypothesis]`) 강등 허용 (보수 안전 방향).
+**Gate**: `prior_output_ref` fact-check marker **5종** verbatim 보존 + 무검증 승격 금지 (직접 재검증 + evidence file:line 인용 시만 승격 / higher → lower 강등은 허용 — 보수 안전). invariant 본문 = `templates/recheck-receiver-base.md` §2 SSOT.
