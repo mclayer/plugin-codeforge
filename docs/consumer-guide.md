@@ -2600,7 +2600,10 @@ PR / GitHub Actions 결과 처리 가이드. fresh consumer (mctrader debut 등)
 ```bash
 # 모든 terminal state 자동 분류 (SUCCESS / FAILURE / ACTION_REQUIRED / BLOCKED).
 # `gh pr checks --watch` 가 8 = ACTION_REQUIRED, 0 = success.
-until gh pr checks "$PR" --repo "$REPO" --watch --interval 10 >/dev/null 2>&1 || ec=$? \
+# required check 만 대기 (`--required` — ADR-048 Amendment 2, 전체 검사 대기 금지).
+# required check 0건 repo (branch protection 미설정) 는 `--required` 제거 — 기존 전체 watch fallback.
+# 백그라운드 실행 권고: 본 loop 는 Bash run_in_background 로 실행 (세션 비블로킹, 종료 시 자동 재개).
+until gh pr checks "$PR" --repo "$REPO" --required --watch --interval 10 >/dev/null 2>&1 || ec=$? \
       && { [ "$ec" -eq 0 ] || [ "$ec" -eq 8 ]; }; do sleep 5; done
 echo "[ci-watch] terminal state reached, exit=$ec"
 ```
