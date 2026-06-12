@@ -2,7 +2,7 @@
 kind: contract
 contract: deploy_output
 contract_version: "0.1"
-status: Active  # Phase 1 = placeholder declare only (CFP-1059 / ADR-087). Body wire = S2 sub-Story carrier.
+status: Deprecated  # ADR-121 (CFP-2225) — lane 폐지, sunset 2026-07-13 KST. 물리 삭제 = Epic #2217 S5. 구 주석 (Phase 1 placeholder declare only, CFP-1059/ADR-087) 이력 + canonical_repo 행 pre-existing drift 기록 = 보존.
 canonical_repo: mclayer/plugin-codeforge  # CFP-2178 S6 — wrapper 단일 원본 정정 (S2 CFP-2158 누락분 마무리). status Active ↔ MANIFEST Draft = pre-existing drift (CFP-1336 Draft revert) — 본 Story 비수정 기록
 canonical_path: docs/inter-plugin-contracts/
 created_by: CFP-1059

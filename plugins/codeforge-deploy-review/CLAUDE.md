@@ -1,5 +1,7 @@
 # CLAUDE.md
 
+> ⚠ **DEPRECATED (ADR-121, 2026-06-13 KST)** — 본 lane plugin 은 폐지 결정됨. sunset = **2026-07-13 KST** (이후 Wave 2 에서 물리 제거 — Epic #2217 S5/S6). 대체 경로 = consumer repo GitHub Actions + GitHub Environments (dev/stg/prd) 완전 위임. 상세: `archive/adr/ADR-121-deprecate-deploy-lanes.md`.
+
 ## 언어 정책
 
 모든 응답·코드 주석·문서 작성에서 **한글을 주 언어로 사용**. 영어는 기술 용어·코드·고유명사 등 필요한 경우에만 사용. 한자(일본어·중국어 포함) 사용 절대 금지.
