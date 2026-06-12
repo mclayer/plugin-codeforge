@@ -142,11 +142,11 @@ N/A — permanent policy
 
 **(a) required-only 대기**: CI gate 판정 = `gh pr checks <PR_NUMBER> --required --watch --fail-fast`. 전체 검사(비-required, warning tier) 완료 대기 금지 — 비-required 검사는 merge 차단 권한 없음 (사후 red 는 기존 bypass-counter / 정비 경로 무변경).
 
-**(b) 백그라운드 비블로킹 watch**: watch 는 Bash `run_in_background` 로 실행 — 세션 즉시 자유, 명령 종료 시 harness 자동 재호출 → PASS 시 merge 진행. 원문 "최대 30분 timeout, 초과 시 사용자 보고 후 대기" 절차 삭제. 전경 blocking watch 금지. **merge 직전 [ADR-073 Amendment 2](ADR-073-orchestrator-verify-before-assert.md) `merge_transition` sentinel polling 의무는 그대로 유지** (백그라운드 재개 시점에 수행) — 본 항은 watch 형태 변경이며 verify-before-assert 약화 아님.
+**(b) 백그라운드 비블로킹 watch**: watch 는 Bash `run_in_background` 로 실행 — 세션 즉시 자유, 명령 종료 시 harness 자동 재호출 → PASS 시 merge 진행. 원문 "최대 30분 timeout, 초과 시 사용자 보고 후 대기" 절차 삭제. 전경 blocking watch 금지. **merge 직전 [ADR-073 Amendment 2](ADR-073-orchestrator-verify-before-assert.md) `merge_transition` sentinel polling 의무는 그대로 유지** (백그라운드 재개 시점에 수행) — 본 항은 watch 형태 변경이며 verify-before-assert 약화 아님. watch PASS 와 merge 실행 사이 race (origin/main 이동 등) 의 최종 merge 권위 = ADR-073 Amd 2 `merge_transition` sentinel — sentinel 미통과 시 watch PASS 무효, 재검 후 진행 (보강: CFP-2219, codex P2 advisory — 해석 여지 축소 정정, 신규 결정 아님).
 
 **(c) merge 후 검사 대기 금지**: merge 후 trigger 검사 (retro-check / close-blocking / retry-state-machine 등 pull_request closed·cron 계열 — retro-check 는 sleep 300 내장, ADR-045 D-1) 는 merge·다음 단계 진행과 무관 — 명시적 대기 금지.
 
-**(d) stuck fallback 양성화**: required check 가 5분+ pending/expected stuck → 해당 run 1회 re-trigger (`gh run rerun <run-id>` 또는 empty-commit) → 여전히 stuck 시 admin merge (`gh pr merge --admin`) + 사후 검증 1회 (merge 후 main 에서 동일 검사 green 확인) + 사용자 결과 보고. 전 과정 자동 진행 (멈춰서 묻지 않음).
+**(d) stuck fallback 양성화**: required check 가 5분+ pending/expected stuck → 해당 run 1회 re-trigger (`gh run rerun <run-id>` 또는 empty-commit) → 여전히 stuck 시 admin merge (`gh pr merge --admin`) + 사후 검증 1회 (merge 후 main 에서 동일 검사 green 확인) + 사용자 결과 보고. 사후 검증 1회의 검사 집합 = merge 시점의 required check set 과 동일 — 추가/축소 없음 (보강: CFP-2219, codex P2 advisory — 해석 여지 축소 정정, 신규 결정 아님). 전 과정 자동 진행 (멈춰서 묻지 않음).
 
 ### edge 2건
 

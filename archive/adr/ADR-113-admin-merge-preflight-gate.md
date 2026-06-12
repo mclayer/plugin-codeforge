@@ -8,8 +8,20 @@ carrier_story: CFP-1522
 parent_epic: CFP-1543
 supersedes: null
 amends: null
-amendments: []
-amendment_log: []
+amendments:
+  - amendment_id: 1
+    cfp: CFP-2219
+    date: 2026-06-13
+    scope: "cross-ref-only — ADR-048 Amendment 2 (CFP-2214) §결정 (d) 가 CI gate stuck-pending sub-case 한정으로 본 ADR Step 5 escalation 을 대체함을 mirror. 신규 normative 결정 0."
+    status: applied
+    ref: "### Amendment 1 — ADR-048 Amendment 2 stuck-pending sub-case interface mirror (cross-ref-only, CFP-2219)"
+amendment_log:
+  - amendment_id: 1
+    carrier_story: CFP-2219
+    date: 2026-06-13
+    direction: cross-ref-only
+    summary: "ADR-048 Amendment 2 §결정 (d) 가 CI gate stuck-pending sub-case (required check pending/expected 5분+ AND re-trigger 1회 후 잔존) 한정으로 본 ADR Step 5 'STOP + 사용자 escalation' 을 '자동 admin merge + 사후 검증 1회 + 사용자 결과 보고' 로 대체. 그 외 state (action_required / failure / unknown fail-closed) + attempt cap dual scope (per-PR / per-Story ≥3 STOP) 무변경. precedence: 충돌 시 stuck-pending sub-case SSOT = ADR-048 Amd 2."
+    sunset_justification: 'N/A — cross-ref-only (mechanism 의미 변경 0), is_transitional: false 보존.'
 is_transitional: false
 mechanical_enforcement_actions:
   - admin-merge-preflight-gate    # Wave 2 active (CFP-1564) — scripts/check-admin-merge-preflight.sh + scripts/lib/check_admin_merge_preflight.py + admin-merge-preflight-check.yml self-app (warning-tier). Wave 1 = declaration-only (§결정 8). status-note edit (§결정 8 Wave 2 fulfillment, 신규 normative decision 0 → ADR Amendment 불요).
@@ -17,6 +29,7 @@ related_adrs:
   - ADR-024  # enforce_admins source + hotfix-bypass channel SSOT + Amendment 6/8 §결정 6.A bypass-as-norm-mutation chain
   - ADR-040  # Amendment 3 §결정 7.D mechanical_enforcement_actions[] frontmatter 의무 (self-application 정합)
   - ADR-045  # §D-9 cross-Story pattern_count ≥ 2 mandatory ADR escalation (본 ADR = pattern_count 3 reach 산물)
+  - ADR-048  # Amendment 2 (CFP-2214) §결정 (d) — CI gate stuck-pending sub-case 한정 본 ADR Step 5 escalation 대체 (본 ADR Amendment 1 cross-ref-only mirror, 해당 sub-case precedence SSOT = ADR-048 Amd 2)
   - ADR-058  # §결정 5/7 sunset criteria + 보안 ADR default presumption false
   - ADR-060  # evidence-checks-registry 4-tier framework + warning 첫 entry
   - ADR-066  # PAT 90d rotation invariant — admin-merge 및 branch protection PATCH 는 session admin auth disjoint axis (ADR-066 §결정 2 6-scope set 안 admin:* literal 부재, cross-ref only)
@@ -256,10 +269,27 @@ N/A — permanent governance ratchet (ADR-058 §결정 7 보안 ADR default pres
 
 ## Amendments
 
-(amendment 0 — 본 ADR 신설, 별 Amendment 없음.)
+### Amendment 1 — ADR-048 Amendment 2 stuck-pending sub-case interface mirror (cross-ref-only, CFP-2219)
+
+**날짜**: 2026-06-13. **신규 normative 결정 0 — cross-ref-only Amendment** (ADR-073 Amendment 4 cross-ref-only 관례 답습). 발원: CFP-2214 (ADR-048 Amendment 2, PR #2216 merged) follow-up Issue #2219.
+
+[ADR-048 Amendment 2 (CFP-2214)](ADR-048-ci-native-test-execution.md) §결정 (d) 는 **CI gate stuck-pending sub-case 한정** — required check 가 pending/expected 상태로 5분+ 잔존 AND re-trigger 1회 (본 ADR §결정 1 Step 3 fresh commit trigger recovery 동형) 후에도 잔존 — 으로 본 ADR §결정 1 Step 5 "STOP + 사용자 escalation" 을 **"자동 admin merge + 사후 검증 1회 (merge 후 main 에서 동일 검사 green 확인) + 사용자 결과 보고"** 로 대체한다.
+
+본 ADR 의 그 외 mechanism 전부 무변경:
+
+- **그 외 state 무변경** — `action_required` / `failure` / `unknown` (fail-closed) 등 §결정 1 abort_states_enum 의 stuck-pending 외 전 state 는 본 ADR 5-step procedure + escalation 그대로 유효
+- **attempt cap dual scope 무변경** — §결정 2 per-PR / per-Story 누적 ≥ 3 STOP 그대로 유효 (ADR-048 Amd 2 (d) 자체가 cap 유지 명시)
+- §결정 3 branch protection explicit forbid / §결정 4 5 lint chain / §결정 5 failure mode enum / §결정 6 Authn/Authz — 무변경
+
+**Precedence 선언**: 충돌 시 stuck-pending sub-case 의 SSOT = ADR-048 Amendment 2 (해당 sub-case 한정 본 ADR Step 5 보다 우선). 그 외 sub-case 의 SSOT = 본 ADR.
+
+#### Amendment 1 — sunset_justification N/A 정당
+
+`is_transitional: false` (permanent governance ratchet) 보존 — Amendment 1 scope = cross-ref-only mirror (mechanism 의미 변경 0, 신규 normative 결정 0). stuck-pending sub-case 대체의 normative 본체 = ADR-048 Amendment 2 — 본 Amendment 는 ADR-048 ↔ ADR-113 양방향 cross-ref 정합 mirror 만. ADR-058 §결정 5 sunset_justification ratchet 차단 logic 통과 (ADR-073 Amendment 4 동형 precedent).
 
 ## Cross-reference
 
+- **stuck-pending sub-case 대체 (Amendment 1 mirror)**: [ADR-048 Amendment 2 §결정 (d)](ADR-048-ci-native-test-execution.md) — CI gate stuck-pending sub-case 한정 Step 5 escalation 대체, 해당 sub-case precedence SSOT = ADR-048 Amd 2 (CFP-2219)
 - **directly-analogous primitive**: [ADR-073 §결정 1](ADR-073-orchestrator-verify-before-assert.md) — transition trigger enum 9종 (lane_spawn / pr_open / merge_transition / worktree_lane_spawn / fix_iter_start / sibling_story_handoff / stale_local_main_checkout / mcp_token_expired_mid_flight / label_change) 답습 (admin_merge_attempt 시점 sub-domain instantiate)
 - **declaration-only-Wave-1 retain pattern**: [ADR-082 §결정 6](ADR-082-write-time-self-write-verification-mandate.md) + [ADR-070 §D5](ADR-070-codex-verify-before-trust.md)
 - **§D-9 forcing function**: [ADR-045 §D-9](ADR-045-story-retro-mandatory-trigger.md) — pattern_count 3 reach Mandatory escalation 산물

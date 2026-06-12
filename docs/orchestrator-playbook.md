@@ -787,7 +787,7 @@ gh pr checks <PR_NUMBER> --required --watch --fail-fast   # Bash run_in_backgrou
 ```
 
 - **required-only 대기**: required check (merge 를 실제 차단하는 branch protection contexts) 만 대기. 전체 검사(비-required, warning tier) 완료 대기 금지 — 실측 required 6종 = PR open 후 15~30초 완료 (전체 대기 시 CodeQL ~50s + bootstrap-labels ~110s 추가, PR #2205/#2194/#2187/#2186).
-- **백그라운드 비블로킹**: watch 는 Bash `run_in_background` 로 실행 — 세션 즉시 자유, watch 종료 시 harness 자동 재호출 → PASS 시 merge 진행. 전경 blocking watch 금지 ((구) "timeout 30분 초과 시 사용자 보고 후 대기" 절차 삭제). merge 직전 ADR-073 Amd 2 `merge_transition` sentinel polling 의무는 재개 시점에 그대로 수행 (무약화).
+- **백그라운드 비블로킹**: watch 는 Bash `run_in_background` 로 실행 — 세션 즉시 자유, watch 종료 시 harness 자동 재호출 → PASS 시 merge 진행. 전경 blocking watch 금지 ((구) "timeout 30분 초과 시 사용자 보고 후 대기" 절차 삭제). merge 직전 ADR-073 Amd 2 `merge_transition` sentinel polling 의무는 재개 시점에 그대로 수행 (무약화). watch PASS 와 merge 실행 사이 race (origin/main 이동 등) 의 최종 merge 권위 = `merge_transition` sentinel — sentinel 미통과 시 watch PASS 무효, 재검 후 진행 (ADR-048 Amd 2 (b) / CFP-2219).
 - **merge 후 검사 대기 금지**: merge 후 trigger 검사 (retro-check / close-blocking / retry-state-machine 등 pull_request closed·cron 계열 — retro-check 는 sleep 300 내장, ADR-045 D-1) 는 merge·다음 단계 진행과 무관 — 명시적 대기 금지.
 - **stuck fallback (자동 진행)**: required check 5분+ pending/expected stuck → ① 해당 run 1회 re-trigger (`gh run rerun <run-id>` 또는 empty-commit) → ② 여전히 stuck 시 admin merge (`gh pr merge --admin` — ADR-113 §3.19 attempt cap dual scope 유지, stuck-pending sub-case 한정 자동 진행) → ③ 사후 검증 1회 (merge 후 main 에서 동일 검사 green 확인) → ④ 사용자 결과 보고. #1908 (flaky FAIL 자동 re-trigger 일반화) 와 축 분리.
 - **edge — required check 0건 repo** (branch protection 미설정 consumer): 기존 전체 watch fallback (`--required` 제거).
