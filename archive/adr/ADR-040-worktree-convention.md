@@ -1011,7 +1011,7 @@ agent filesystem Read/Grep tool 가 file path read 시 **default behavior**:
 - **ADR-058 §결정 5 정합**: 정리 의무 가시성 승격 = ratchet 강화 방향 (기존 결정 무손상) — frontmatter `amendments[]` row 8 `sunset_justification` 명시.
 - **ADR-009 invariant 무손상**: skill = wrapper 산출물 (agent 아님) — wrapper agent 0개 유지.
 - **ADR-054 정합**: doc-only fast-path 적격 — 기존 ADR Amendment + src/tests 무변경 + 신규 ADR 0.
-- **ADR-063 정합**: plugin.json `name/version/description/author` 4 field 무변경 `[verified]` (skill 신설 선례 실측: CFP-1668 confluence-migration skill 신설 commit 0b9bf112 + CFP-2158 skill 개정 commit 1ae0c70e 모두 plugin.json 무변경) → version bump 0 + marketplace sync 불요.
+- **ADR-063 정합**: plugin.json `version` **MINOR bump 6.15.0 → 6.16.0** + marketplace mirror sync PR 선행 merge 의무 (`name/description/author` 3 field 무변경). bump 판정 근거 — skill 신설/개정 선례 2건 (CFP-1668 commit 0b9bf112 / CFP-2158 commit 1ae0c70e, 모두 plugin.json 무변경 `[verified]`) 은 **CLAUDE.md 스킬 호출 표 미등재** skill 이었으나, 본 Amendment 8 의 D2 는 표에 `codeforge:worktree-lifecycle` 행을 추가 — merge 후 매 wrapper 세션이 해당 skill 호출을 지시하므로 plugin cache (6.15.0) 에 skill 부재 시 호출 실패 반복 → 활성화 배포 필요 = MINOR (Orchestrator 재량 정정, 설계 lane 초기 보수 default "bump 0" 번복).
 - **본 ADR §결정 5 / Amendment 3 §결정 7.E 무손상**: bypass env 2종 (`BYPASS_WORKTREE_GC` / `BYPASS_WORKTREE_FIRST`) contract 변경 0 — skill 은 disjoint scope 표를 mirror 만.
 
 ### Related
@@ -1021,4 +1021,4 @@ agent filesystem Read/Grep tool 가 file path read 시 **default behavior**:
 - `skills/worktree-lifecycle/SKILL.md` (본 Amendment 신설 mirror)
 - `docs/orchestrator-playbook.md` §3.5 + Step 0a-prime (절차 SSOT — 무변경)
 - ADR-054 (doc-only Story fast-path)
-- ADR-063 (marketplace atomic invariant — 4 field 무변경 확인)
+- ADR-063 (marketplace atomic invariant — version MINOR 6.16.0 mirror sync 선행 merge 대상)
