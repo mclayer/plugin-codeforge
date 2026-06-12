@@ -1544,7 +1544,7 @@ playbook_split_pages:
     estimated_byte_size: 3082
     push_attempt_status: "success"
     confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/4554754/CRITICAL+Step+0+pre-spawn-pin+navigation+hub"
-    last_synced: "2026-06-01T14:02:00+09:00"
+    last_synced: "2026-06-13T07:50:49+09:00"
     carrier: "CFP-1617 Step 0 stub parent (CFP-1584 Phase 2 deferred carrier)"
     split_note: "Step 0 본문 1318 line → 16 sub-§ child page 분산 (이 page = navigation hub only)"
   - id: "4784129"
@@ -1636,7 +1636,7 @@ playbook_split_pages:
     estimated_byte_size: 22445
     push_attempt_status: "success"
     confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/4456480/3.5+Worktree+dispatch+CFP-136+ADR-040"
-    last_synced: "2026-06-01T14:02:00+09:00"
+    last_synced: "2026-06-13T07:52:51+09:00"
   - id: "4620289"
     parent: 4554754
     title: "§3.6 TeamCreate / TeamDelete protocol (CFP-137 / ADR-044)"
@@ -1706,7 +1706,7 @@ playbook_split_pages:
     estimated_byte_size: 9090
     push_attempt_status: "success"
     confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/4063306/3.14+Orchestrator-user+dialog+convergence+CFP-612+ADR-071"
-    last_synced: "2026-06-01T14:02:00+09:00"
+    last_synced: "2026-06-13T07:56:04+09:00"
   - id: "2098490"
     parent: 2130966
     title: "§3B — Preflight 체크 (lane 진입 직전)"
@@ -1754,7 +1754,7 @@ playbook_split_pages:
     source_line_range: [2593, 2666]
     source_line_count: 73
     estimated_byte_size: 5000
-    last_synced: "2026-05-25T22:47:11+09:00"
+    last_synced: "2026-06-13T07:47:48+09:00"
     push_attempt_status: "success"
     confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2131032/7+resume"
   - id: "2131053"
@@ -1774,7 +1774,7 @@ playbook_split_pages:
     source_line_range: [2761, 2858]
     source_line_count: 97
     estimated_byte_size: 7000
-    last_synced: "2026-05-25T22:49:34+09:00"
+    last_synced: "2026-06-13T07:49:06+09:00"
     push_attempt_status: "success"
     confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2098535/9"
   - id: "2098515"
@@ -1847,7 +1847,7 @@ playbook_split_pages:
     source_line_count: 48
     estimated_byte_size: 3000
     push_attempt_status: "success"
-    last_synced: "2026-05-25T23:41:49+09:00"
+    last_synced: "2026-06-13T07:49:26+09:00"
     confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2131093/16+Post-merge+automation+flow"
   - id: "2131113"
     parent: 2130966
@@ -1868,7 +1868,7 @@ playbook_split_pages:
     estimated_byte_size: 1600
     note: "부록 A + B 통합 page (각 13 line, 통합 가독성 우선)"
     push_attempt_status: "success"
-    last_synced: "2026-05-25T23:43:13+09:00"
+    last_synced: "2026-06-13T07:50:20+09:00"
     confluence_url: "https://mclayer.atlassian.net/wiki/spaces/CFP/pages/2066075/A+B"
 playbook_split_pages_total: 36  # CFP-1617: 20-1+17=36
 playbook_split_carrier_phase_3: "CFP-1641 (DONE 2026-06-01) — 17 Confluence page actual push 완료, MCP reconnect 후 backfill"
