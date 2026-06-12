@@ -4,6 +4,12 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [1.0.4] - 2026-06-13
+
+### Changed (CFP-2225 — deprecation 마킹, PATCH)
+
+- **DEPRECATED 선언** (ADR-121, Epic #2217 S2) — sunset **2026-07-13 KST**, 이후 Wave 2 (S5/S6) 물리 제거. CLAUDE.md 최상단 deprecation 배너 + plugin.json description 선두 `[DEPRECATED — sunset 2026-07-13 KST, ADR-121]` prefix. 대체 경로 = consumer repo GitHub Actions + GitHub Environments (dev/stg/prd) 완전 위임. 본 bump = 선언적 마킹만 (agent/template 기능 무변경).
+
 ## [1.0.3] - 2026-06-12
 
 ### Changed (CFP-2178 — S6 lane repo archive 참조 sweep, PATCH)

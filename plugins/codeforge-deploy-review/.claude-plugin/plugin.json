@@ -1,7 +1,7 @@
 {
   "name": "codeforge-deploy-review",
-  "version": "1.0.3",
-  "description": "codeforge 배포 리뷰 (Deploy Review) lane plugin (CFP-1059 / ADR-088) — production-grade 성능 측정 1st-class 검증 phase. DeployReviewPLAgent (Opus) + DeployReviewWorkerAgent (Sonnet) + ProductionEvidenceDeputy (ADR-72 이관). 검증 3종 (한 번 끝나는) = smoke / 성능 비교 / cutover 사후 검증. 성능 기준 미충족 시 요구사항/설계 lane FIX (debate-protocol-v1 cross-module trigger). HTTP shadow / WebSocket·daemon 대기 mode 분기. codeforge core 의존. 8 lane composition #7 (배포 다음).",
+  "version": "1.0.4",
+  "description": "[DEPRECATED — sunset 2026-07-13 KST, ADR-121] codeforge 배포 리뷰 (Deploy Review) lane plugin (CFP-1059 / ADR-088) — production-grade 성능 측정 1st-class 검증 phase. DeployReviewPLAgent (Opus) + DeployReviewWorkerAgent (Sonnet) + ProductionEvidenceDeputy (ADR-72 이관). 검증 3종 (한 번 끝나는) = smoke / 성능 비교 / cutover 사후 검증. 성능 기준 미충족 시 요구사항/설계 lane FIX (debate-protocol-v1 cross-module trigger). HTTP shadow / WebSocket·daemon 대기 mode 분기. codeforge core 의존. 8 lane composition #7 (배포 다음).",
   "author": {
     "name": "Josh"
   },
