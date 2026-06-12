@@ -7,6 +7,8 @@ tools: Read
 # Session Recovery (CFP-2198 / ADR-120 — playbook §7 + §9.1-§9.5 이전)
 
 > **절차 본문 SSOT = 본 skill** — `docs/orchestrator-playbook.md` §7 guide 절차 + §9.1-§9.5 트러블슈팅에서 이전 (CFP-2198, ADR-120 §결정 1 cold×guide). **gate 명제는 playbook 잔류** (ADR-120 §결정 3 — skill 확률 활성화는 gate 캐리어 불가): §7.4 FIX 카운터 복원 의무 / §9.6 PR keyword 정책 / §9.7-§9.7.1 phase×gate label 매핑. 본 절차 수행 중 해당 지점 도달 시 playbook 원문 참조.
+>
+> **mirror-carrier 주석 (Codex TP 반영)**: 본 body 안의 의무/금지 표현은 전부 1차 carrier 의 mirror 다 — Never-skippable 병렬 스폰 = requirements lane agent 정의 (Domain/Analyst/Researcher 등 4+ 파일) / Codex CLI 미설치 시 진입 불가·중단 = wrapper `CLAUDE.md` 필수 의존성 anchor / Mapper 매 진입 재스폰·재사용 금지·단독 설계 결정 금지 = design lane `CLAUDE.md` + `CodebaseMapperAgent.md` + `ArchitectPLAgent.md` mandate. 본 skill 미활성 turn 에도 해당 gate 들은 1차 carrier 로 유지된다 (ADR-120 §결정 3 정합 — 본 skill 은 gate 의 단독 carrier 아님).
 
 ## 1부 — 세션 재개(resume) 복원 절차 (playbook §7 이전분)
 

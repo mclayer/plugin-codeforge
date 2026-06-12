@@ -7,6 +7,8 @@ tools: Read
 # Post-merge & Closure Ops (CFP-2198 / ADR-120 — playbook §16 + §18 이전)
 
 > **절차 본문 SSOT = 본 skill** — `docs/orchestrator-playbook.md` §16 post-merge automation flow + §18 PMOAgent retro batch closure 에서 이전 (CFP-2198, ADR-120 §결정 1 cold×guide). **gate 명제는 playbook 잔류** (ADR-120 §결정 3): §16.5 main 직접 push 금지 invariant / §18.3 verify-before-trust mandate (5 sub-scope). normative wording SSOT = ADR-026 (§16) / ADR-045 §D-11 (§18) — 본 skill 로 SSOT 이동 아님 (운영 절차 위치만 이전).
+>
+> **mirror-carrier 주석 (Codex TP 반영)**: 본 body 안의 의무 표현 (§18.1 AND trigger / §18.2 4-option enum + PROMOTE 발의 의무 / §18.4 closure table SSOT / §18.5 close-blocking) 은 전부 `ADR-045 §D-11` normative SSOT + `retro-mandatory.yml` mechanical enforcement 의 mirror 다. 본 skill 미활성 turn 에도 해당 gate 들은 ADR + CI 로 유지된다 (ADR-120 §결정 3 정합 — 본 skill 은 gate 의 단독 carrier 아님).
 
 ## 1부 — Post-merge automation flow (playbook §16 이전분, ADR-026 + CFP-74)
 

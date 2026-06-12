@@ -3848,7 +3848,7 @@ PMOAgent batch closure write-time 각 Issue 에 다음 5 sub-scope 의무 (ADR-0
 | (d) sibling carrier cross-link via PR number | closure rationale 안 PR/Issue 번호 explicit cite | comment body 안 #NNN explicit cite + `mcp__github__pull_request_read` verify | ADR-082 §결정 9 verify-before-cite 양방향 답습 batch closure 영역 |
 | (e) sub-scope alphabet sequential verify | 본 §18.3 sub-scope (a)~(e) pre-write 위치 확인 | manual sub-scope alphabet sequential check before each verify step | ADR-082 §결정 1 sub-scope codify 패턴 답습 |
 
-**1+ sub-scope failure** = closure 중단 + 본 §18.2 decision tree 재진입 (DEFER 또는 PROMOTE 으로 re-classify).
+**1+ sub-scope failure** = closure 중단 + §18.2 decision tree (`codeforge:post-merge-closure` skill 수록) 재진입 (DEFER 또는 PROMOTE 으로 re-classify).
 
 ---
 
