@@ -2,6 +2,12 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.24.0] - 2026-06-12
+
+### Added (CFP-2184 — agent research mandate expansion, MINOR)
+
+CFP-2184 — ADR-119 agent-level 실현: tier A 3 (ArchitectAgent/Refactor/TestContractArch WebSearch+WebFetch 부여) + A-prime 8 인용 규약 절 + ArchitectPL 인용 검수 절. CodebaseMapper 무변경 (의도된 fact-only deny 보존). MINOR (ADR-037 (a) 추가). marketplace sync 선행 merge (ADR-063).
+
 ## [0.23.1] - 2026-06-12
 
 ### Changed (CFP-2178 — S6 lane repo archive 참조 sweep, PATCH)

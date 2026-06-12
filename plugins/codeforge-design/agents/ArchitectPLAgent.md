@@ -220,6 +220,11 @@ GitHub Issue·PR write는 Orchestrator 담당. 문서화 write 권한 없음.
 
 ---
 
+## 외부 지식 인용 검수 (ADR-119)
+
+- deputy/chief 산출물 검수 시 외부 지식 단정에 `source:` 인용 존재 확인 — 무출처 단정 = 해당 SubAgent 재spawn 또는 chief RETURN 사유.
+- abstention ("확인 불가/추정" 명시) 은 결격 아님 — 무출처 *단정* 만 결격 (ADR-119 §결정 3 데드락 회피 보존).
+
 ## Operating environment
 
 **Role 분류**: PL agent (lane Lead). env=1 활성 시 본 PL 이 lane team Lead — TeamCreate → worker SendMessage 통신 → TeamDelete. env=0 fallback = Orchestrator 가 PL 하위 agent 를 직접 spawn one-shot.
