@@ -83,16 +83,18 @@ closed_enum_invariant:
   completion_report_fields: closed  # consumer overlay field 추가 불가
   enforcement: "scripts/lib/walk_report.py CompletionReport(frozen=True)"
 
-# ── TodoWrite 4-marker (ADR-038 §결정 2 Amendment 4) ────────────────────────
+# ── TodoWrite native status 매핑 (ADR-038 Amendment 5 — CFP-2215) ────────────
 # walk step 단위 progress visualization (업그레이드 단계별 진행 상황)
+# content 이모지 4-marker 폐지 — Claude Code 네이티브 TodoWrite status 렌더 사용
+# (pending = 빈 체크박스 / in_progress = ✱ / completed = 체크 + 취소선 — 도구 자체 렌더)
 
-walk_step_markers:
-  PENDING: "⬜"       # 대기 (pending empty checkbox)
-  IN_PROGRESS: "⏳"   # 진행 중 (모래시계 — Amendment 4 vocab)
-  COMPLETED: "✅"     # 완료 (PASS)
-  FIX_DETECTED: "🔄"  # FIX 검출 lane (retry trigger — ADR-038 §결정 3)
+walk_step_native_status:
+  PENDING: "pending"          # 대기 — 네이티브 빈 체크박스 렌더
+  IN_PROGRESS: "in_progress"  # 진행 중 — 네이티브 ✱ 렌더
+  COMPLETED: "completed"      # 완료 — 네이티브 체크 + 취소선 렌더
+  FIX_DETECTED: "in_progress" # FIX 검출 — native state 부재 특수 케이스, content 텍스트 label "FIX detected" (ADR-038 §결정 3, 이모지 없이)
   enforcement: "scripts/lib/walk_report.py render_walk_todo_items()"
-  reference: "docs/adr/ADR-038-progress-visualization-todowrite.md §결정 2/3"
+  reference: "archive/adr/ADR-038-progress-visualization-todowrite.md Amendment 5 (§결정 2/3 annotation)"
 
 # ── 관련 파일 ───────────────────────────────────────────────────────────────
 related:
