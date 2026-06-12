@@ -658,18 +658,7 @@ Orchestrator 가 lane PL agent spawn 시 **plan task DAG 분석 결과를 spawn 
 
 #### §3.0.16 — DeveloperPL + branch-creating subagent pre-spawn-pin mandate (CFP-895 / ADR-039 Amendment 1)
 
-ADR-039 §결정 14 (Amendment 1) 의 Orchestrator-side codification. DeveloperPL 또는 새 branch 를 생성하는 subagent (codeforge-develop:DeveloperAgent / role:dev 등) 가 Phase 2 PR open 또는 cross-repo paired PR open 시 stale base 회피 mandate.
-
-**Orchestrator 의 의무 절차** (subagent return 직후):
-
-1. **post-spawn verify** — `mcp__github__pull_request_read get` 의 `head.sha` parent commit 을 `mcp__github__list_commits sha=main perPage=1` (또는 `gh api repos/<owner>/<repo>/commits/main --jq .sha`) 와 비교.
-2. **mismatch detection** — branch HEAD parent ≠ current origin/main 이면 stale-base → 즉시 **FIX trigger** (구현-side, RESET=NO).
-3. **re-dispatch 의무** — 동일 subagent 재spawn 시 prompt 에 (a) explicit current-main-HEAD SHA (Orchestrator 가 방금 고정한 값) + (b) "self-reset 금지 / 기존 작업 content 보존, only rebase the base" + (c) 추가 mid-flight churn 대비 "rebase 시 main HEAD 재고정 (parallel session advance 가능)" 명시.
-4. **§10 FIX Ledger row append** — stale-base rebase iteration = Orchestrator monopoly write (fix-event-v1 contract, CFP-32). 형식 = `구현 (Orchestrator verify-before-trust, 구현리뷰 이전 적발)` lane.
-
-**근거 evidence**: CFP-699/CFP-702/CFP-848 3차 누적 (ADR-039 Amendment 1 §결정 14 표).
-
-**SubAgent prompt Step 0 의무** — Orchestrator 가 DeveloperPL spawn 시 packet 에 다음 Step 0 명시:
+**Pointer (CFP-2211 — canonical 단일화)**: canonical gate = 바로 아래 `## CRITICAL Step 0` block (DeveloperPL / branch-creating subagent spawn packet 에 verbatim 삽입 대상). Orchestrator-side 의무 절차 4-step (post-spawn verify `head.sha` parent ↔ origin/main 비교 → mismatch 시 FIX trigger 구현-side RESET=NO → re-dispatch 시 current-main-HEAD SHA + "self-reset 금지, only rebase the base" 명시 → §10 FIX Ledger row append, 형식 = `구현 (Orchestrator verify-before-trust, 구현리뷰 이전 적발)` lane, fix-event-v1 / CFP-32) 본문 SSOT = ADR-039 Amendment 1 §결정 14 (evidence: CFP-699/CFP-702/CFP-848 3차 누적).
 
 ```text
 ## CRITICAL Step 0 — pre-spawn-pin (mandatory, ADR-039 §결정 14)
@@ -1148,99 +1137,31 @@ Phase 2 (follow-up CFP): `scripts/codeforge-story-counter.py` 자동 발급 (fil
 
 매 lane spawn 시 Orchestrator 가 worktree 생성 후 sub-agent 에 cwd 주입. file 충돌 0 보장.
 
-**Lifecycle**:
+**Lifecycle (5-step)**:
 
-1. **lane spawn 직전**:
-   ```bash
-   bash templates/scripts/worktree-create.sh cfp-NNN/<lane> origin/main
-   # → returns worktree path: $HOME/.claude/worktrees/<repo>/cfp-NNN-<lane>
-   ```
-   하위 sub-task (SubAgent / role:dev) 가 있으면 sub-worktree 추가:
-   ```bash
-   bash templates/scripts/worktree-create.sh cfp-NNN/<lane>/<sub> cfp-NNN/<lane>
-   ```
+| step | 시점 | 행위 |
+|---|---|---|
+| 1 | lane spawn 직전 | `bash templates/scripts/worktree-create.sh cfp-NNN/<lane> origin/main` → path `$HOME/.claude/worktrees/<repo>/cfp-NNN-<lane>`. 하위 sub-task (SubAgent / role:dev) 존재 시 sub-worktree: `worktree-create.sh cfp-NNN/<lane>/<sub> cfp-NNN/<lane>` |
+| 2 | sub-agent spawn 시 | prompt 에 `Working dir: <worktree-path>` 명시. **`git -C <worktree_abs_path>` 강제 directive (ADR-040 Amendment 6 / CFP-843)**: "All file operations MUST target `<worktree_abs_path>` — git command = `git -C <worktree_abs_path> <subcommand>` (상대경로 git 호출 금지), Write/Edit tool = absolute path rooted at `<worktree_abs_path>`, path 정규형 = forward slash" 1줄 의무 — harness 의 bash 호출 간 cwd reset 으로 상대경로 호출이 main repo root 에 landing (CFP-825 §3 RC-1 동근원) |
+| 3 | sub-agent return 후 | 자기 sub-branch commit → sequential merge: `worktree-merge.sh cfp-NNN/<lane> cfp-NNN/<lane>/<sub1> cfp-NNN/<lane>/<sub2>` |
+| 4 | lane 완료 후 | parent (story root) branch 로 merge: `worktree-merge.sh cfp-NNN cfp-NNN/<lane>` |
+| 5 | Story 완료 후 (회고 시점) | GitOpsAgent eager 정리 (primary — agents/GitOpsAgent.md §5a, PMOAgent 회고와 동시/직후): sub → lane 순 `worktree-prune.sh`. Story root worktree 는 **PR merge 확인 후** prune — `gh api .../branches/main --jq .protected` 감지, `PROTECTED=true` 시 push → PR → `gh pr view <N> --json mergedAt` non-null 확인 → `git worktree remove` + `git worktree prune` + `git branch -d` 순서 강제 (ADR-040 Amendment 2 — pre-merge `git worktree remove` = policy violation) |
 
-2. **sub-agent spawn 시**: prompt 에 `Working dir: <worktree-path>` 명시. sub-agent 가 cd 해서 작업.
-   - **`git -C <worktree_abs_path>` 강제 directive (ADR-040 Amendment 6 / CFP-843)**: spawn prompt 에 "All file operations MUST target `<worktree_abs_path>` — git command = `git -C <worktree_abs_path> <subcommand>` (상대경로 git 호출 금지), Write/Edit tool = absolute path rooted at `<worktree_abs_path>`, path 정규형 = forward slash (cross-platform MSYS Git Bash 정합)" 1줄 의무. 근거: harness 가 bash 호출 간 cwd 를 reset → 상대경로 git/tool 호출이 main repo root 로 resolve → agent-internal write 가 main working tree 에 landing (CFP-825 §3 RC-1 동근원).
+**Conflict 처리**: worktree-merge.sh conflict detect 시 exit code 2 → Orchestrator 가 chief author / 충돌 SubAgent 재spawn (cwd = parent worktree) 또는 PMOAgent escalation (CFP-139 GitOpsAgent 도입 후).
 
-3. **sub-agent return 후**: Orchestrator 또는 sub-agent 가 자기 sub-branch 에 commit. Sequential merge:
-   ```bash
-   bash templates/scripts/worktree-merge.sh cfp-NNN/<lane> cfp-NNN/<lane>/<sub1> cfp-NNN/<lane>/<sub2>
-   ```
+**주기 backstop (orphan 안전망 — eager 정리를 못 거친 worktree 전용)**: `bash templates/scripts/check-worktree-stale.sh` 수동/스케줄 호출 (SessionStart 동기 호출은 시작 지연으로 제거됨). 조건 = age 7d+ AND merged PR (**squash-aware**: 병합 PR headRefOid 이후 추가 commit 0) AND clean AND not-locked. preview `GC_DRY_RUN=1` / bypass `BYPASS_WORKTREE_GC=1`.
 
-4. **lane 완료 후**: parent (story root) branch 으로 merge:
-   ```bash
-   bash templates/scripts/worktree-merge.sh cfp-NNN cfp-NNN/<lane>
-   ```
+**Cross-platform**: Windows `${HOME}\.claude\worktrees\<repo>\<branch-flat>` / macOS·Linux `~/.claude/worktrees/<repo>/<branch-flat>`. path 변환 = `worktree-path-util.sh` (`is_windows`, `to_posix_path`).
 
-5. **Story 완료 후 (회고 시점, GitOpsAgent eager 정리 — primary 경로)**: 모든 sub-worktree prune. Orchestrator 가 완료 회고 단계에서 GitOpsAgent 를 dispatch (PMOAgent 회고와 동시/직후, agents/GitOpsAgent.md §5a):
-   ```bash
-   bash templates/scripts/worktree-prune.sh cfp-NNN/<lane>/<sub>
-   bash templates/scripts/worktree-prune.sh cfp-NNN/<lane>
-   ```
-   Story root worktree 는 **PR merge 확인 후** prune:
-   ```bash
-   # 1) branch protection 감지
-   PROTECTED=$(gh api "repos/$(gh repo view --json nameWithOwner --jq .nameWithOwner)/branches/main" --jq '.protected')
-   # PROTECTED=true → merge 시도 금지, push → PR → mergedAt 확인 순서 필수
-   # PROTECTED=false → local merge 후 바로 cleanup 가능
+**Marketplace sync PR proactive dispatch (CFP-597 / [ADR-063](../archive/adr/ADR-063-marketplace-atomic-invariant.md) Amendment 1)**: Phase 2 PR open 시점에 Change Plan §13 `marketplace_sync_required: true` declare 감지 → GitOpsAgent (codeforge-pmo) spawn (dispatch = Orchestrator monopoly, ADR-039 정합). artifacts verbatim 첨부 ([ADR-070](../archive/adr/ADR-070-codex-verify-before-trust.md)) = §13 sub-row (`marketplace_sync_required` + `mirrored_fields_changed[]` + `triggering_plugins[]`) + triggering plugin name. GitOpsAgent 행위 5-step: (1) `mclayer/marketplace` worktree 신설 (branch `cfp-NNN`, base main) → (2) `.claude-plugin/marketplace.json` 해당 plugin mirrored field 갱신 → (3) PR open title `[CFP-NNN] Sibling sync — <plugin> <version> mirrored field update` → (4) body `Closes <triggering-plugin-PR>` → (5) **marketplace PR 선행 merge (ADR-063 §결정 2)**. reactive `check-marketplace-parity.sh` channel = defense-in-depth 보존.
 
-   # 2) PR merge 확인 (non-null mergedAt = merged) — PROTECTED=true 시 필수
-   gh pr view <PR_NUMBER> --json mergedAt --jq .mergedAt
-
-   # 3) mergedAt 확인 후 cleanup
-   MAIN_ROOT=$(git -C "$(git rev-parse --git-common-dir)/.." rev-parse --show-toplevel)
-   cd "$MAIN_ROOT"
-   git worktree remove "$HOME/.claude/worktrees/<repo>/cfp-NNN"
-   git worktree prune
-   git branch -d cfp-NNN
-   ```
-   **branch-protected repo** (`PROTECTED=true`): push → PR 생성 → `mergedAt` 확인 → cleanup 순서 강제 (ADR-040 Amendment 2). pre-merge `git worktree remove` = policy violation.
-
-**Conflict 처리**:
-- worktree-merge.sh 가 conflict detect 시 exit code 2
-- Orchestrator 가 conflict 받으면 chief author / 충돌 SubAgent sub-agent 재 spawn (cwd = parent worktree)
-- 또는 PMOAgent escalation (CFP-139 GitOpsAgent 도입 후)
-
-**주기 backstop (orphan 안전망 — eager 정리를 못 거친 worktree 전용)**:
-- `bash templates/scripts/check-worktree-stale.sh` — **수동/스케줄 호출** (과거 SessionStart 동기 호출은 시작 지연으로 제거됨)
-- 조건 = age 7d+ AND merged PR (**squash-aware**: 병합 PR headRefOid 이후 추가 commit 0) AND clean (임시파일 제외) AND not-locked
-- preview = `GC_DRY_RUN=1` / bypass = `BYPASS_WORKTREE_GC=1`
-
-**Cross-platform**:
-- Windows: `${HOME}\.claude\worktrees\<repo>\<branch-flat>` (PowerShell or Bash via Git for Windows)
-- macOS / Linux: `~/.claude/worktrees/<repo>/<branch-flat>`
-- Path 변환은 `worktree-path-util.sh` 함수 (`is_windows`, `to_posix_path`).
-
-**Marketplace sync PR proactive dispatch (CFP-597 / [ADR-063](../archive/adr/ADR-063-marketplace-atomic-invariant.md) Amendment 1)**:
-
-Orchestrator 가 Phase 2 PR open 시점에 Change Plan §13 안 `marketplace_sync_required: true` declare 감지 시 GitOpsAgent (codeforge-pmo) spawn. spawn prompt:
-
-**artifacts (verbatim 첨부, [ADR-070](../archive/adr/ADR-070-codex-verify-before-trust.md) verify-before-trust mandate)**:
-- Change Plan §13 sub-row (`marketplace_sync_required` + `mirrored_fields_changed[]` + `triggering_plugins[]`)
-- triggering plugin name + 변경된 mirrored field enum
-
-**GitOpsAgent §3.6 행위** (codeforge-pmo sibling, Phase 2 carrier):
-1. `mclayer/marketplace` repo worktree 신설 — branch `cfp-NNN`, base `main`
-2. `.claude-plugin/marketplace.json` 안 해당 plugin entry 의 mirrored field 갱신 (`mirrored_fields_changed[]` 기준)
-3. marketplace PR open — title `[CFP-NNN] Sibling sync — <plugin> <version> mirrored field update`
-4. PR body 안 `Closes <triggering-plugin-PR>` cross-reference
-5. ADR-063 §결정 2 ordering 정합 — marketplace PR 선행 merge 의무
-
-dispatch trigger: Phase 2 PR carrier (Orchestrator monopoly, ADR-039 subagent default 정합). lane 위치 = codeforge-pmo (GitOpsAgent home, sibling plugin). reactive `check-marketplace-parity.sh` channel = defense-in-depth 보존.
-
-**의존성**:
-- ADR-024 amendment 1 (hierarchical branch convention)
-- ADR-040 (worktree convention SSOT)
-- CFP-137 (agent teams 적극 도입) — 본 §3.5 의 use case full
-- CFP-139 (GitOpsAgent) — Orchestrator 의 worktree management 책임을 GitOpsAgent 로 이관 (Wave 3)
-- CFP-597 (ADR-063 Amendment 1) — marketplace sync PR proactive dispatch trigger
+**의존성**: ADR-024 Amendment 1 (hierarchical branch) / ADR-040 (worktree convention SSOT) / CFP-137 (agent teams) / CFP-139 (GitOpsAgent worktree management 이관) / CFP-597 (marketplace sync dispatch trigger).
 
 #### §3.5.1 Parallel work sentinel polling (CFP-966 / [ADR-073 Amendment 2](../archive/adr/ADR-073-orchestrator-verify-before-assert.md))
 
 > **NORMATIVE — ADR-073 Amendment 2 §결정 1-A/1-B/1-C declarative anchor**. lane spawn 직전 (§3.5 step 1) 시점에 적용되는 mid-flight parallel race 차단 polling 의무. mechanical wire (lint script + workflow + hook json sample) = sibling Story-2 CFP-967 carrier — 본 §3.5.1 = behavioral directive + declarative anchor (declaration-only-Wave-1 status).
 
-**동인 (sentinel evidence)**: 2026-05-18 KST same-day 2/2 parallel race incidents — CFP-953 (first, label-based search miss → CFP-932 carrier miss) + CFP-946 (second, 11분 gap Epic close miss → PR #962 "Closes #946" 충돌). long-running Orchestrator session 의 turn-0-only SessionStart snapshot staleness 영역.
+**동인 (sentinel evidence)**: 2026-05-18 KST same-day 2/2 parallel race — CFP-953 (label-based search miss → CFP-932 carrier miss) + CFP-946 (Epic close miss). turn-0-only SessionStart snapshot staleness 가 공통 근원.
 
 **Transition trigger enum 3종 (closed set)** — 각 transition 직전 polling 의무:
 
@@ -1255,36 +1176,24 @@ closed enum — 4번째 trigger 추가 = ADR-073 Amendment 강화 방향만 (ADR
 **HEAD compare pattern (verify-before-trust 4-layer governance Layer 1)** — 매 transition trigger 직전 3-step 의무:
 
 ```bash
-# Step 1 — title-based search (memory rule 6 의무, CFP-953 incident carrier)
+# Step 1 — title-based search 의무 (memory rule 6, CFP-953) — label-based search 만 = 위반
 gh issue list --search "<keyword>" --state all --json number,title,labels,closedAt
-# label-based search 만 (rule 6 위반) → CFP-953 incident reproduction risk
-
-# Step 2 — Epic state poll (memory rule 7 의무, CFP-946 incident carrier)
+# Step 2 — Epic state poll (memory rule 7, CFP-946) — 5+ min 경과 session state cache 무조건 stale 가정
 gh issue view <epic_number> --json state,closedAt,closedBy,labels
-# polling 직전 5+ min 경과 session state cache (TodoWrite / Story §0 / .claude-work/progress) 무조건 stale 가정
-
-# Step 3 — HEAD compare sibling commits (mid-flight race 차단)
-PRIOR_HEAD=<session state cache 의 pinned HEAD — stale 가능>
-CURRENT_HEAD=$(git ls-remote origin <branch> | cut -f1)   # direct verify (재고정)
+# Step 3 — HEAD compare (mid-flight race 차단) — CURRENT_HEAD direct verify 재고정
+CURRENT_HEAD=$(git ls-remote origin <branch> | cut -f1)
 gh api repos/{owner}/{repo}/compare/${PRIOR_HEAD}...${CURRENT_HEAD} --jq '.commits[].sha'
 ```
 
-**Cold start `session_start` 보강**: session 첫 turn additionalContext 안 active CFP context list + open Epic state list + current branch HEAD vs origin/main delta 3-item preload (SessionStart hook tier 위임 — Story-2 CFP-967 `templates/.claude/hooks/SessionStart-parallel-work-poll.json.sample` mechanical wire). additionalContext = layer 1 fallback 만 — actual sustained polling = 매 transition trigger 직전 §3.5.1 3-step.
+**Cold start `session_start` 보강**: session 첫 turn additionalContext 3-item preload (active CFP list + open Epic state + branch HEAD delta, SessionStart hook tier — CFP-967 wire) = layer 1 fallback 만. **Sustained in-session polling 의무**: actual polling = 매 transition trigger 직전 본 3-step (HEAD SHA 재고정, session cache stale 무조건 가정).
 
-**Sustained in-session polling 의무**: turn-0-only SessionStart hook 한계 해소 — long-running session 안 매 transition trigger 직전 HEAD SHA 재고정 의무 (session state cache stale 무조건 가정).
-
-**Cross-ref**:
-- [ADR-073 Amendment 2](../archive/adr/ADR-073-orchestrator-verify-before-assert.md) §결정 1-A/1-B/1-C — declarative anchor SSOT
-- `docs/evidence-checks-registry.yaml` `parallel-work-sentinel-pickup` entry — warning tier (declaration-only-Wave-1, recurrence count 2 / threshold 3 / promotion_trigger auto_blocking)
-- [`docs/domain-knowledge/domain/orchestrator-discipline/parallel-work-sentinel-polling.md`](../docs/domain-knowledge/domain/orchestrator-discipline/parallel-work-sentinel-polling.md) — narrative SSOT (sentinel batch + escalation matrix)
-- memory rule 6 (title-based search 의무, CFP-953 carrier) + rule 7 (Epic 진행 중 polling 의무, CFP-946 carrier) — declarative cross-ref normative anchor
-- sibling Story-2 [CFP-967](https://github.com/mclayer/plugin-codeforge/issues/967) — mechanical wire (script + hook + workflow + bats), sequential (Story-1 merge 후)
+**Cross-ref**: [ADR-073 Amendment 2](../archive/adr/ADR-073-orchestrator-verify-before-assert.md) §결정 1-A/1-B/1-C (declarative anchor SSOT) / evidence-checks-registry `parallel-work-sentinel-pickup` (warning tier) / [`parallel-work-sentinel-polling.md`](../docs/domain-knowledge/domain/orchestrator-discipline/parallel-work-sentinel-polling.md) (narrative SSOT) / memory rule 6·7 / sibling Story-2 [CFP-967](https://github.com/mclayer/plugin-codeforge/issues/967) (mechanical wire).
 
 #### §3.5.2 Cross-repo worktree target authority verify (CFP-1578 / [ADR-082 Amendment 21](../archive/adr/ADR-082-write-time-self-write-verification-mandate.md) §결정 1 sub-scope 1-J)
 
 > **NORMATIVE — ADR-082 Amendment 21 §결정 1 layer 1 sub-scope (1-J) declarative anchor**. chief author / lane agent / Orchestrator 가 spawn prompt 작성 또는 직접 file write 직전 cross-repo worktree target authority verify-before-write 의무. mechanical wire (lint script + workflow + hook json sample + bats fixture) = 별 sub-CFP Wave 2 carrier — 본 §3.5.2 = behavioral directive + declarative anchor (Wave 1 declaration-only).
 
-**동인 (sentinel evidence)**: CFP-1539+CFP-1540 batch retro §4.1 #2 — PMOAgent retro spawn 시 internal-docs PR target 작성 시 wrapper repo plugin-codeforge worktree 안에서 `git worktree add` 시도 후 정정 발생. wrapper repo worktree mis-target 첫 catch occurrence. ADR-013 dogfood-out internal-docs SSOT path (Story file + Change Plan + retro = internal-docs) + ADR-040 worktree convention (repo 단위 worktree 분리) 정합 영역 codify 부재. paired sibling = CFP-1559 Amendment 20 (Issue body stale claim pre-screen super-class, axis disjoint — content verify vs target authority verify, 동시 발의 race).
+**동인 (sentinel evidence)**: CFP-1539+CFP-1540 batch retro §4.1 #2 — wrapper worktree 안 internal-docs PR target `git worktree add` 시도 (mis-target 첫 catch). paired sibling = CFP-1559 Amendment 20 (content verify vs target authority verify axis disjoint).
 
 **4-tuple primitive (cross-repo write-target boundary mandate)** — spawn prompt 작성 또는 직접 file write 직전 4 의무:
 
@@ -1298,39 +1207,17 @@ gh api repos/{owner}/{repo}/compare/${PRIOR_HEAD}...${CURRENT_HEAD} --jq '.commi
 **Verify pattern (verify-before-trust 4-layer governance Layer 3 — ADR-082 sub-scope 1-J)**:
 
 ```bash
-# Step 1 — worktree target repo authority verify (mandate (a))
+# mandate (a): actual remote 가 expected enum 매핑과 일치하는지 verify — mismatch 시 write 차단 + sentinel 발화
 ACTUAL_REMOTE_URL=$(git -C <worktree_abs_path> remote get-url origin)
-# expected = wrapper plugin-codeforge → "mclayer/plugin-codeforge"
-# expected = internal-docs → "mclayer/codeforge-internal-docs"
-
-# Step 2 — expected target enum 일치 verify (mandate (a))
-EXPECTED_REPO="wrapper"   # spawn prompt field (b) 에서 declare
-case "$EXPECTED_REPO" in
-  wrapper) EXPECTED_URL_PATTERN="mclayer/plugin-codeforge" ;;
-  internal-docs) EXPECTED_URL_PATTERN="mclayer/codeforge-internal-docs" ;;
-  marketplace) EXPECTED_URL_PATTERN="mclayer/marketplace" ;;
-  consumer-*) EXPECTED_URL_PATTERN="mclayer/${EXPECTED_REPO#consumer-}" ;;
-esac
-if ! echo "$ACTUAL_REMOTE_URL" | grep -q "$EXPECTED_URL_PATTERN"; then
-  echo "ERROR: worktree target mismatch — expected $EXPECTED_REPO ($EXPECTED_URL_PATTERN), got $ACTUAL_REMOTE_URL"
-  exit 1
-fi
-
-# Step 3 — cross-repo write 시 별 worktree switch (mandate (c))
-# wrapper worktree 안에서 internal-docs PR 생성 시도 = mismatch → step 2 차단
-# 필요 시 internal-docs 별 worktree 생성:
-# git -C /path/to/internal-docs-repo worktree add <internal-docs-worktree> <branch>
+# expected 매핑: wrapper→mclayer/plugin-codeforge / internal-docs→mclayer/codeforge-internal-docs /
+#               marketplace→mclayer/marketplace / consumer-<name>→mclayer/<name>
+# mandate (c): cross-repo write = 별 worktree explicit create + cwd switch
+#   (wrapper worktree 안 internal-docs PR 생성 시도 = mismatch 차단 대상)
 ```
 
-**Cold start sentinel**: session 첫 turn 직후 active worktree list scan + worktree↔expected-repo 매핑 확인 (SessionStart hook tier 위임 — Wave 2 sub-CFP `templates/.claude/hooks/SessionStart-worktree-target-verify.json.sample` mechanical wire). actual sustained verify = 매 spawn prompt 작성 또는 file write 직전 §3.5.2 mandate.
+**Cold start sentinel**: session 첫 turn 직후 active worktree list ↔ expected-repo 매핑 scan (SessionStart hook tier — Wave 2 sub-CFP wire). actual sustained verify = 매 spawn prompt 작성 / file write 직전 본 mandate.
 
-**Cross-ref**:
-- [ADR-082 Amendment 21](../archive/adr/ADR-082-write-time-self-write-verification-mandate.md) §결정 1 layer 1 sub-scope (1-J) — declarative anchor SSOT
-- [ADR-040 worktree convention](../archive/adr/ADR-040-worktree-convention.md) — namespace 표준 (`${HOME}/.claude/worktrees/<repo-name>/<branch-flat>`) + worktree-first normative 정합
-- [ADR-013 dogfood-out internal-docs SSOT](../archive/adr/ADR-013-codeforge-family-dogfood-out-policy.md) — Story file + Change Plan + retro = internal-docs / src + tests + workflow + ADR + CLAUDE.md = wrapper plugin-codeforge
-- `docs/evidence-checks-registry.yaml` `worktree-target-authority-verify` entry — warning tier deferred-followup (Wave 2 sub-CFP wire)
-- paired sibling CFP-1559 Amendment 20 — Issue body stale claim pre-screen super-class, axis disjoint (content verify vs target authority verify, 동시 발의 race)
-- 동인: CFP-1539+CFP-1540 batch retro §4.1 #2 — worktree mis-target 첫 catch carrier
+**Cross-ref**: [ADR-082 Amendment 21](../archive/adr/ADR-082-write-time-self-write-verification-mandate.md) §결정 1 sub-scope (1-J) (declarative anchor SSOT) / [ADR-040](../archive/adr/ADR-040-worktree-convention.md) (namespace 표준) / [ADR-013](../archive/adr/ADR-013-codeforge-family-dogfood-out-policy.md) (dogfood-out path 분리: Story·Change Plan·retro = internal-docs, src·workflow·ADR·CLAUDE.md = wrapper) / evidence-checks-registry `worktree-target-authority-verify` (warning tier) / paired sibling CFP-1559 Amendment 20.
 
 #### §3.5.3 Version race coordination sequential merge orchestration (CFP-1603 / [ADR-045 §D-9](../archive/adr/ADR-045-story-retro-mandatory-trigger.md) pattern_count 2 escalation_resolved_carrier)
 
@@ -1353,88 +1240,24 @@ ADR-045 §D-9 pattern_count ≥ threshold 2 reach = Mandatory framing 발동 영
 | (b) | same-day multi-Story batch | session boundary 와 무관 — 동일 base SHA target 시 race 활성 (ADR-040 worktree convention 정합, Story 단위 worktree 분리) |
 | (c) | marketplace sibling sync trigger 동반 여부 | mirrored field (`name` / `version` / `description` / `author`) 변경 시 marketplace sibling PR 동반 — ADR-063 §결정 2 ordering 활성. 변경 0 시 sequential ordering 4-step → 2-step 축소 (mandate 5 fallback) |
 
-**Sequential merge orchestration sequence — 4-step (full path, marketplace sibling sync 동반 시)**:
+**Sequential merge orchestration — 4-step (full path, marketplace sibling sync 동반 시)** (예: 선행 MINOR 6.8.0 + 후행 PATCH 6.7.3, same base 6.7.2):
 
-```
-선행 PR (MINOR, 예 6.8.0) + 후행 PR (PATCH, 예 6.7.3) same base SHA 6.7.2 target
+| step | 행위 | invariant |
+|---|---|---|
+| 1 | 선행 marketplace sibling PR merge (mirrored field mirror) | **marketplace PR 선행 merge — ADR-063 §결정 2 ordering** |
+| 2 | 선행 plugin PR merge | 3-file atomic (ADR-063 §결정 1) + CHANGELOG `[Unreleased]` → released entry transition |
+| 3 | 후행 plugin PR rebase + version bump 재계산 (6.7.3 → 6.8.1) | SemVer monotonic (PATCH 6.7.3 < MINOR 6.8.0 < rebased 6.8.1) + CHANGELOG chronological append + 후행 marketplace sibling rebase 동반 |
+| 4 | 후행 marketplace sibling merge → 후행 plugin PR merge | mirror sync 정합 |
 
-Step 1 — 선행 marketplace sibling PR merge (선행 PR mirrored field MINOR mirror)
-  · marketplace.json `.plugins[name=codeforge].version` 6.7.2 → 6.8.0 sync
-  · ADR-063 §결정 2 ordering 정합 — marketplace PR 선행 merge
+**2-step 축소 path (mirrored field 변경 0건 — 예: doc-only fast-path batch)**: 선행 plugin PR merge → 후행 plugin PR rebase + merge (CHANGELOG chronological append). plugin.json bump 0 이라도 base SHA 변경 시 후행 rebase 의무 (race coordination 자체는 mirrored field 무관 적용).
 
-Step 2 — 선행 plugin PR merge (MINOR 6.8.0)
-  · plugin.json `.version` 6.7.2 → 6.8.0 atomic (3-file invariant ADR-063 §결정 1)
-  · CHANGELOG.md `[Unreleased]` → `[6.8.0]` released entry transition
+**ordering invariant (ADR-037 §결정 1 정합)**: race resolution priority = MAJOR > MINOR > PATCH 선행 merge. 동일 surface category race = lower CFP 번호 선행 (ADR-050 §3.4.2 답습). 후행 rebase 후 bump 재계산 = base 변경분 + 후행 변경분 합산 SemVer monotonic 보장 (MAJOR+MINOR 는 ADR-063 Amendment 7 §결정 18 atomic MAJOR scope 정합 시 atomic bundle 의무).
 
-Step 3 — 후행 plugin PR rebase + version bump 재계산 (6.7.3 → 6.8.1)
-  · git rebase origin/main (base SHA 6.7.2 → 6.8.0)
-  · plugin.json `.version` 6.7.3 → 6.8.1 재bump (SemVer monotonic invariant: PATCH 6.7.3 < MINOR 6.8.0 < PATCH rebased 6.8.1)
-  · CHANGELOG.md `[Unreleased]` merge conflict resolve — chronological append (선행 6.8.0 entry 위, 후행 entry 아래) OR 후행 별 sub-section
-  · 후행 marketplace sibling PR (PATCH rebased 6.8.1 mirror) rebase 동반
+**Race resolution evidence (Wave 3, 2026-05-25 KST)**: #1580 (MINOR 6.8.0) + #1559 (PATCH 6.7.3) same base 6.7.2 race — §3.5.1 `pr_open` polling detect → MINOR 선행 merge → #1559 rebase 6.7.3→6.8.1 + marketplace sibling sync. 실측 7-step 전개 = ADR-045 §D-9 carrier 기록 (CFP-1603).
 
-Step 4 — 후행 marketplace sibling PR merge → 후행 plugin PR merge (PATCH 6.8.1)
-  · marketplace.json `.plugins[name=codeforge].version` 6.8.0 → 6.8.1 sync
-  · plugin.json `.version` 6.8.1 atomic
-```
+**Wave 2 mechanical wire carrier (declaration-only Wave 1 retain)**: workflow lint (sequential merge ordering 자동 verify — registry `version-race-coordination-ordering` entry 후보) + bats fixture (MINOR+PATCH / PATCH+PATCH / MAJOR+MINOR / marketplace 부재 4 case) = 별 sub-CFP. `mechanical_enforcement_actions: []` (ADR-082 §결정 6 + ADR-070 §D5 retain 답습).
 
-**Sequential merge orchestration sequence — 2-step (marketplace sibling sync 부재 축소 path)**:
-
-```
-선행 PR + 후행 PR mirrored field 변경 0건 (예: doc-only fast-path Story batch)
-
-Step 1 — 선행 plugin PR merge
-  · plugin.json 변경 0, CHANGELOG.md `[Unreleased]` entry 추가
-
-Step 2 — 후행 plugin PR rebase + merge
-  · git rebase origin/main (선행 PR merge commit 포함)
-  · CHANGELOG.md `[Unreleased]` merge conflict resolve — chronological append
-  · plugin.json bump 0건 (race coordination orchestration 자체는 mirrored field 변경 0 시에도 적용 — base SHA 변경 시 후행 PR rebase 의무)
-```
-
-**ordering invariant (MINOR > PATCH > PATCH per ADR-037 §결정 1 정합)**:
-
-```
-race resolution priority:
-  MAJOR > MINOR > PATCH
-
-동일 surface category (예: PATCH + PATCH) race 시:
-  lower CFP 번호 선행 merge (ADR-050 §3.4.2 patterns 답습)
-
-후행 PR rebase 후 bump 재계산:
-  base 변경분 + 후행 PR 변경분 합산 → SemVer monotonic 보장
-  · MINOR + PATCH = MINOR rebased to MINOR.MINOR+1.0 OR PATCH (semantic preserve)
-  · PATCH + PATCH = PATCH rebased to next PATCH
-  · MAJOR + MINOR = MAJOR rebased to MAJOR.MINOR+1.0 (ADR-063 Amendment 7 §결정 18 9-plugin atomic MAJOR scope 정합 시 atomic bundle 의무)
-```
-
-**Race resolution example (Wave 3 evidence verbatim, 2026-05-25 KST)**:
-
-| Step | Actor | Action | Resulting state |
-|------|---|---|---|
-| 1 | Orchestrator | sentinel polling §3.5.1 `pr_open` transition direct verify | #1580 (MINOR 6.8.0) + #1559 (PATCH 6.7.3) both target base 6.7.2 — race detected |
-| 2 | Orchestrator | ADR-037 §결정 1 ordering decide — MINOR 선행 | #1580 first merge order assigned |
-| 3 | GitOpsAgent (codeforge-pmo §3.6) | marketplace sibling PR #1580-marketplace open + merge | marketplace.json 6.8.0 sync |
-| 4 | Orchestrator | #1580 plugin PR merge | plugin.json 6.7.2 → 6.8.0, CHANGELOG `[Unreleased]` → `[6.8.0]` |
-| 5 | Orchestrator | #1559 rebase + version bump 재계산 | plugin.json 6.7.3 → 6.8.1, CHANGELOG `[Unreleased]` entry chronological append |
-| 6 | GitOpsAgent | marketplace sibling PR #1559-marketplace rebase + merge | marketplace.json 6.8.0 → 6.8.1 sync |
-| 7 | Orchestrator | #1559 plugin PR merge | plugin.json 6.8.0 → 6.8.1 atomic |
-
-**Wave 2 mechanical wire carrier (declaration-only Wave 1 retain — Wave 2 별 sub-CFP)**:
-
-- workflow lint — same-day multi-Story plugin.json version bump 영역 sequential merge ordering 자동 verify (별 sub-CFP, evidence-checks-registry `version-race-coordination-ordering` entry 후보)
-- bats fixture — race resolution scenario coverage (MINOR+PATCH / PATCH+PATCH / MAJOR+MINOR / marketplace 부재 축소 4 case)
-- `mechanical_enforcement_actions: []` declaration-only-Wave-1 (ADR-082 §결정 6 + ADR-070 §D5 retain pattern 답습)
-
-**Cross-ref**:
-
-- [ADR-037 §결정 1 plugin version bump rule](../archive/adr/ADR-037-plugin-version-bump-rule.md) — SemVer monotonic invariant + Option β core rule (Lenient base, 12 surface category) upstream policy SSOT
-- [ADR-063 §결정 1/§결정 2 marketplace atomic invariant](../archive/adr/ADR-063-marketplace-atomic-invariant.md) — 3-file atomic invariant + marketplace sibling sync ordering upstream policy SSOT
-- [ADR-045 §D-9 cross_story_pattern_adr_trigger](../archive/adr/ADR-045-story-retro-mandatory-trigger.md) — forcing function SSOT (pattern_count threshold 2 → escalate_user → 본 §3.5.3 codify carrier)
-- [ADR-050 §3.4.2 Parallel epic coordination](../archive/adr/ADR-050-parallel-epic-conflict-coordination.md) — Epic-scope conflict detection (axis disjoint, PR-level post-hoc) cross-ref
-- §3.5.1 Parallel work sentinel polling — race detection mechanism (sentinel polling `pr_open` / `merge_transition` transition trigger 가 race detect)
-- [ADR-024 §3 sequence-of-singletons](../archive/adr/ADR-024-story-scoped-branch-policy.md) — trunk-based branching axis (release branch 부재, main-direct PR sequential)
-- §3.6 marketplace sync PR proactive dispatch (CFP-597 / ADR-063 Amendment 1) — GitOpsAgent §3.6 행위 (sibling axis disjoint, marketplace sibling sync proactive dispatch vs race resolution sequence orchestration)
-- 동인: ADR-045 §D-9 pattern_count 2 reach (Wave 2 + Wave 3 batch sentinel evidence) escalation_resolved_carrier
+**Cross-ref**: [ADR-037 §결정 1](../archive/adr/ADR-037-plugin-version-bump-rule.md) (SemVer monotonic + 12 surface category SSOT) / [ADR-063 §결정 1·2](../archive/adr/ADR-063-marketplace-atomic-invariant.md) (3-file atomic + sibling ordering SSOT) / [ADR-045 §D-9](../archive/adr/ADR-045-story-retro-mandatory-trigger.md) (forcing function SSOT — pattern_count 2 → escalate_user → 본 codify carrier) / [ADR-050 §3.4.2](../archive/adr/ADR-050-parallel-epic-conflict-coordination.md) (Epic-scope conflict, axis disjoint) / §3.5.1 (race detection mechanism) / [ADR-024 §3](../archive/adr/ADR-024-story-scoped-branch-policy.md) (sequence-of-singletons) / §3.5 marketplace sync proactive dispatch (sibling axis disjoint).
 
 ### §3.6 TeamCreate / TeamDelete protocol (CFP-137 / [ADR-044](../archive/adr/ADR-044-phase-scoped-sequential-team.md))
 
@@ -1586,7 +1409,7 @@ Codex worker 결과 수신 후 Orchestrator 는 finding evidence 의 ground trut
 | 판정 불일치 (#5 전용) | — | N/A (#5 = optional) | 사용자 에스컬레이션 |
 | verify mismatch 검출 (모든 touchpoint) | — | finding reject + Story §10 false positive count tally + override rationale (ADR-070 §결정 D3) | 동일 |
 
-**Boilerplate composition SSOT (CFP-819 / [ADR-081](../archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) + ADR-052 Amendment 6)**: Codex worker prompt 본문 3 mandatory section (dogfood-out Story path verbatim / lane stage 표기 = current_lane + phase / sandbox boundary = sandbox_outside_paths) + verify-before-trust scope 5 sub-scope 분리 (file scope grep+quote / dir scope recursive grep+count / cross-repo gh api+commit SHA / grep count claim active vs historical 차원 / ADR §결정 번호 정확성) + 3-lane partition 표 (Codex factual citation 영역 / DesignReviewPL boundary completeness 영역 [ADR-068 4 invariants + Amd 1 I-5] / CodeReviewPL post-impl style + historical reference 보존성 영역 disjoint scope) = ADR-081 SSOT. declaration-only retain (ADR-070 §D5 precedent), mechanical lint 부재.
+**Boilerplate composition SSOT (CFP-819 / [ADR-081](../archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) + ADR-052 Amendment 6)**: worker prompt 3 mandatory section (dogfood-out Story path verbatim / lane stage = current_lane + phase / sandbox boundary = sandbox_outside_paths) + verify-before-trust 5 sub-scope + 3-lane partition 표 = **ADR-081 본문 SSOT** (declaration-only retain, ADR-070 §D5 precedent).
 
 **Substitution scope 3-path enum (CFP-946-A / [ADR-052 Amendment 8](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) + [ADR-070](../archive/adr/ADR-070-codex-verify-before-trust.md) §결정 D1 expansion / Amendment 3)**: Codex worker spawn 결정 시점에 substitution scope explicit declare 의무 — 운영적 substitution behavior 의 normative codification. 9 occurrence sentinel (CFP-756 Epic close retro Sentinel #4 strike #8) 산물.
 
@@ -1604,7 +1427,7 @@ Codex worker 결과 수신 후 Orchestrator 는 finding evidence 의 ground trut
 
 #### §3.10.1-bis Graceful degradation step pair (a)(b)(c) (CFP-963 / [ADR-081 Amendment 4](../archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) §결정 D1.D body 확장 + [ADR-060 Amendment 14](../archive/adr/ADR-060-evidence-enforceable-promotion-framework.md) §결정 28 carrier)
 
-ADR-081 Amendment 4 §결정 D1.D body 확장 (`sandbox_network_required: <bool>` → `network_scope: <4-tier enum>`: `offline` / `repo-fetch-only` / `web-fetch` / `offline_substitution_declared`) 이 codex worker spawn-prompt boilerplate 의 4-tier declaration 영역 codify. 본 sub-section = Codex CLI 미가용 / sandbox network-block 확정 / 8+ occurrence sentinel reentrant 위험 영역의 **graceful degradation step pair (a)(b)(c)** 명시 — fail-mode 8-enum 의 mechanical detection layer SSOT (신규 enum value 0, 기존 8-enum 재사용 — `api_missing` / `version_skew` / `enterprise_blocked` / `gh_api_network_blocked` / `manual_substitution_declared` / `inline_orchestrator_verify_only` / `subagent_recursion_blocked` / `dispatch_stall_or_stream_timeout`).
+ADR-081 Amendment 4 §결정 D1.D body 확장 (`sandbox_network_required: <bool>` → `network_scope: <4-tier enum>`: `offline` / `repo-fetch-only` / `web-fetch` / `offline_substitution_declared`) 의 codify. 본 sub-section = Codex CLI 미가용 / sandbox network-block 확정 / 8+ occurrence sentinel reentrant 위험 시 **graceful degradation step pair (a)(b)(c)** — fail-mode 8-enum (위 substitution 3-path 표 `fallback_skip_with_marker` row 가 enum 8종 SSOT) 의 mechanical detection layer.
 
 **step (a) — Codex spawn 직전 detect (fail-mode 8-enum membership)**:
 
@@ -1625,18 +1448,13 @@ step (a) 1+ probe 실패 시 Orchestrator 는 다음 action:
 1. **Codex worker spawn 자체 skip** — codex CLI 미가용 / sandbox network-block 영역, dispatch 자체 무의미.
 2. **`network_scope: offline_substitution_declared` 4-tier enum value declare** — ADR-081 Amendment 4 §결정 D1.D body 정합 (boolean equivalent 부재 영역, strict ratchet-up). spawn-prompt body 가 사후 audit trail 용도로 declare 보유 (실제 spawn 미발생, declaration retain).
 3. **Orchestrator inline 단독 substitution path 진입** — substitution path 3-enum `fallback_skip_with_marker` (ADR-052 Amendment 8 / ADR-070 Amendment 3 §결정 1 expansion 정합). Codex finding evidence ground truth 를 own working directory file Read / Glob / Grep 로 단독 verify (ADR-070 §결정 D1 무조건 적용).
-4. **verify-before-trust 5 sub-scope 全 적용** — substitution = "Codex worker substitution" 이지 verify-before-trust 면제 아님 ([ADR-081 §결정 D2](../archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) 5 sub-scope 무조건 적용):
-   - D2.A file scope verify (single file 안 grep count)
-   - D2.B dir scope verify (recursive grep)
-   - D2.C cross-repo scope verify (gh api / git fetch origin — enterprise_blocked 영역은 본 sub-scope 자체 실패 가능, ADR-073 §결정 D1 정합 fallback)
-   - D2.D grep count claim verify (active vs historical 차원)
-   - D2.E ADR §결정 번호 정확성 verify
+4. **verify-before-trust 5 sub-scope (D2.A~D2.E) 全 적용** — substitution = "Codex worker substitution" 이지 verify-before-trust 면제 아님 ([ADR-081 §결정 D2](../archive/adr/ADR-081-codex-worker-prompt-boilerplate.md) — 위 "5 sub-scope 무조건 적용" 단락과 동일 enum. D2.C cross-repo verify 는 enterprise_blocked 시 자체 실패 가능 → ADR-073 §결정 D1 fallback)
 
 **step (c) — Story §10 marker + §14 `network_scope_actual` field**:
 
 substitution path activation 시 Orchestrator 는 다음 audit trail 의무:
 
-1. **Story §10 marker (1 회/spawn)**: `[codex-sandbox-fallback: <fail-mode>]` row append — fail-mode 8-enum 안 정확 1 value 보유 의무 (api_missing / version_skew / enterprise_blocked / gh_api_network_blocked / manual_substitution_declared / inline_orchestrator_verify_only / subagent_recursion_blocked / dispatch_stall_or_stream_timeout). fix-event-v1 contract 정합 (Orchestrator monopoly, CFP-32). `codex-network-scope-presence` lint (ADR-060 Amendment 14 §결정 28 / CFP-963 Phase 2 carrier) 가 marker enum 정합 membership check 검증.
+1. **Story §10 marker (1 회/spawn)**: `[codex-sandbox-fallback: <fail-mode>]` row append — fail-mode 8-enum (위 substitution 3-path 표 SSOT) 안 정확 1 value 보유 의무. fix-event-v1 contract 정합 (Orchestrator monopoly, CFP-32). `codex-network-scope-presence` lint (ADR-060 Amendment 14 §결정 28 / CFP-963 Phase 2 carrier) 가 marker enum membership check 검증.
 2. **§14 Lane Evidence row 의 `network_scope_actual` field** (optional 13번째 field — evidence-check-registry-v1 v1.3 신규 schema, ADR-031 §14 12 field 영향 0 backward-compat): 본 lane row 의 actual scope (`offline_substitution_declared`) 기록. Codex dispatch 아닌 lane row = omit (omit-on-N/A pattern). present 시 4-tier enum 안 정확 1 value 보유 의무 (offline / repo-fetch-only / web-fetch / offline_substitution_declared). `codex-network-scope-presence` lint 가 §14 row 안 본 field membership check 검증.
 3. **PMOAgent retro trigger 영역 carry-over** (선택): substitution 발화 누적 ≥3 occurrence within Story = ADR-045 §D-9 cross-Story pattern threshold reach 후보 (PMO retro carrier evaluation 영역).
 
@@ -1656,9 +1474,7 @@ substitution path activation 시 Orchestrator 는 다음 audit trail 의무:
 | **step (b) declare + verify-before-trust 5 sub-scope** | Orchestrator `network_scope: offline_substitution_declared` declare + verify-before-trust 5 sub-scope 全 적용 (codeforge 강제) | 사용자 자율 선택 — ad-hoc invocation prompt 본문 안 `network_scope: <4-tier enum>` declare 권장 + ADR-070 verify-before-trust pattern 채택 권장 (codeforge 강제 0, ADR-081 Amendment 5 A2 SSOT) |
 | **step (c) Story §10 marker + §14 `network_scope_actual` field** | Orchestrator audit trail 의무 (`[codex-sandbox-fallback: <fail-mode>]` row + `network_scope_actual` field) | reactive 변형 marker = `[codex-rescue-fallback: <fail-mode>]` 권장 (사용자 자율 선택, Wave 2 mechanical lint scope 확장 시 marker enum value codify 결정 영역) — 사용자 ad-hoc invocation 시 codeforge 강제 0 |
 
-**mechanical lint scope 확장 (Wave 2)**: `codex-network-scope-presence` lint (evidence-checks-registry entry, ADR-060 Amendment 14 §결정 28 carrier) 의 mechanical detection scope = proactive 6 touchpoint spawn prompt 한정 (CFP-1003 / ADR-052 Amendment 9 + ADR-070 Amendment 5 + ADR-081 Amendment 5 — proactive/reactive disjoint codify). reactive 영역 mechanical lint 확장 = 별도 CFP carrier 분리 (Wave 2, ADR-064 §결정 1 unitary 정합).
-
-**사용자 책임 영역 invariant 보존**: 본 sub-section 의 4-anchor best-effort 가이드 = 사용자 ad-hoc invocation 시점에 anchor 채택 / 비채택 = 사용자 책임 영역. codeforge 측 강제 미발효 invariant retain (ADR-070 D1 L110 + ADR-022 Deprecated 정합). proactive 6 touchpoint scope 강제 invariant 와 disjoint axis.
+**invariant 2종**: (1) `codex-network-scope-presence` lint detection scope = proactive 6 touchpoint spawn prompt 한정 — reactive 확장 = 별도 CFP (Wave 2, ADR-064 §결정 1 unitary). (2) reactive 가이드 채택/비채택 = 사용자 책임 — codeforge 강제 미발효 retain (ADR-070 D1 + ADR-022 Deprecated 정합), proactive 강제 invariant 와 disjoint axis.
 
 #### §3.10.1 Pre-question Review (iterative reformulation — CFP-446 / [ADR-052 Amendment 2](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md))
 
@@ -1669,23 +1485,7 @@ substitution path activation 시 Orchestrator 는 다음 audit trail 의무:
 | task | "아래 질문 초안을 검토해 (1) ambiguity / context-external 영역 = 표현 애매 또는 답 추론 정보 컨텍스트 부재 (2) verbosity 영역 = 핵심 결정 대비 장황. 2 기준 모두 통과 = `accept` / 1 종이라도 검출 = `reject` + reformulation 제안. reformulation 결과도 brevity 준수 의무" |
 | 출력 적용 (iterative) | Codex `accept` → 그대로 `AskUserQuestion` 발화 / Codex `reject` → reformulation 반영 후 다음 round dispatch / 최대 3 rounds / fall-through 시 round 3 reformulation 그대로 `AskUserQuestion` 발화 |
 
-**Round 흐름 (max 3 + fall-through)**:
-
-```
-Round 1: Codex dispatch (질문 초안 v1)
-  ├─ accept → AskUserQuestion(v1) [early termination]
-  └─ reject → reformulation v2
-       ↓
-Round 2: Codex dispatch (질문 초안 v2)
-  ├─ accept → AskUserQuestion(v2)
-  └─ reject → reformulation v3
-       ↓
-Round 3: Codex dispatch (질문 초안 v3)
-  ├─ accept → AskUserQuestion(v3)
-  └─ reject (fall-through) → AskUserQuestion(v3) [그대로]
-```
-
-사용자 발화 directive verbatim (CFP-446 §1 — Story file SSOT): "이 리뷰는 최대 3회 반복할 수 있고 3회를 채우면 그냥 사용자에게 질문하라" — fall-through 정책 SSOT.
+**Round 흐름 (max 3 + fall-through)**: Round N (1~3) Codex dispatch → `accept` = 즉시 해당 버전 `AskUserQuestion` 발화 (early termination) / `reject` = reformulation vN+1 후 다음 round. Round 3 reject = fall-through → v3 그대로 발화. 사용자 발화 directive verbatim (CFP-446 §1 — Story file SSOT): "이 리뷰는 최대 3회 반복할 수 있고 3회를 채우면 그냥 사용자에게 질문하라".
 
 **Codex reject 기준 (2 종)**:
 
@@ -1699,16 +1499,7 @@ Round 3: Codex dispatch (질문 초안 v3)
 - **질문자 (Orchestrator)** — 질문 초안 작성 시 1 문장 단위 + numbered list (max 3 항목). 컨텍스트 길이 < 핵심 질문 길이 비율 유지. ADR-064 §결정 3 룰 4 정합
 - **리뷰어 (Codex)** — `verbosity` reject 시 reformulation 결과도 brevity 준수 의무. round N+1 입력이 round N 보다 길어지면 Orchestrator 가 reformulation 거부 후 round N+1 skip → fall-through 조기 진입 가능 (자기모순 차단)
 
-**debate-protocol-v1 미사용 결정 (ADR-052 Amendment 2 A5)**:
-
-본 iterative reformulation 은 `debate-protocol-v1` (§3.13) 의 multi-round adversarial debate 와 영역 분리. 본 영역은 단일 agent (Codex) self-iteration 으로 충분 — role_lock / anti-sycophancy / anchor 재발 / transcript Story §9 영속화 모두 불필요. 사용자 발화 directive ("Codex 에 리뷰 요청 … 다시 재구성하여 리뷰") 가 self-iteration 패턴 정합.
-
-| 영역 | debate-protocol-v1 (ADR-059) | §3.10.1 iterative reformulation |
-|---|---|---|
-| 참여자 | 2 agent adversarial | 1 agent (Codex) self-iteration |
-| Trigger | finding severity / recommendation divergence | Codex reject (ambiguity / verbosity) |
-| Round 영속화 | Story §9 transcript 의무 | Orchestrator turn 내 transient (영속화 불필요) |
-| FIX 흐름 | §10 ledger + reasoning carryover | N/A — verdict producer 영역 외 |
+**debate-protocol-v1 미사용 결정 (ADR-052 Amendment 2 A5)**: 본 iterative reformulation = 단일 agent (Codex) self-iteration — §3.13 multi-round adversarial debate (2 agent / divergence trigger / Story §9 transcript 의무 / §10 ledger) 와 분리. role_lock·anti-sycophancy·transcript 영속화 모두 불필요, round 는 Orchestrator turn 내 transient.
 
 #### §3.10.2 Design Synthesis Check (**mandatory** — CFP-532 / [ADR-052 Amendment 4](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md))
 
@@ -1988,37 +1779,21 @@ E11 popup turn 의 Layer 2 면제 사유 = popup 본문 자체가 declare semant
 
 #### 사실/가치 판단 결정 트리 (ADR-071 §결정 5)
 
-```
-결정 후보 발화 직전:
-  is_factual?
-    YES → derived default 적용 (컨텍스트로 추론 가능 시)
-                   ↓
-                  declare default + 결과 보고 + 사용자 정정 의무
-    NO (가치 판단 영역) → AskUserQuestion 발화 의무
-    AMBIGUOUS → 가치 측 분류 (safe direction)
-                   ↓
-                  AskUserQuestion 발화 의무
-```
+결정 후보 발화 직전 `is_factual?` 분기:
 
-**사실 예시**: 파일 존재 / `wc -l` 결과 / `git log` 출력 / SHA / `grep` 결과
-**가치 예시**: 사용자 선호 (UX / 보고 길이) / 정책 강화 방향 / scope 결정 / brainstorm 채택안
-**모호 예시**: derived default 추론 가능 + future 작업 영향 큼 → 가치 측 (사용자 확인 후 진행)
+| 판정 | 행동 | 예시 |
+|---|---|---|
+| 사실 (YES) | derived default 적용 + declare + 결과 보고 + 사용자 정정 의무 | 파일 존재 / `wc -l` / `git log` / SHA / `grep` 결과 |
+| 가치 (NO) | `AskUserQuestion` 발화 의무 | 사용자 선호 (UX / 보고 길이) / 정책 강화 방향 / scope 결정 / brainstorm 채택안 |
+| 모호 (AMBIGUOUS) | 가치 측 분류 (safe direction) → `AskUserQuestion` 발화 의무 | derived default 추론 가능 + future 작업 영향 큼 |
 
 #### 3 memory entry normative 승격 mapping (ADR-071 §결정 8)
 
-| memory entry | 정책 위치 SSOT 이전 | unchanged scope |
-|---|---|---|
-| `feedback_explain_before_ask` | 본 §3.14 frame 본문 + ADR-071 §결정 1 step 4 + §결정 4 sub-mechanism 1 | — |
-| `feedback_question_quality` | 본 §3.14 frame 본문 + ADR-071 §결정 2 (b) + §결정 5 결정 트리 | — |
-| `feedback_subagent_driven_auto_select` | **변경 없음** — §3.0.5 기존 정책 유지 | codeforge wrapper side SSOT 변경 0 (사용자 personal memory side entry 자체 영향 없음 — 사용자 영역, codeforge wrapper scope 외) |
-
-**승격 시점**: 본 Story (CFP-612) Phase 2 PR merge 시점. PMOAgent retro ([ADR-045](../archive/adr/ADR-045-story-retro-mandatory-trigger.md) mandate) 의제로 사용자 personal memory entry 삭제 제안 (사용자 결정 영역).
+`feedback_explain_before_ask` → 본 §3.14 frame 본문 + ADR-071 §결정 1 step 4 + §결정 4 sub-mechanism 1 / `feedback_question_quality` → 본 §3.14 frame 본문 + ADR-071 §결정 2 (b) + §결정 5 결정 트리 / `feedback_subagent_driven_auto_select` → **변경 없음** (§3.0.5 기존 정책 유지, 사용자 personal memory entry = 사용자 영역). 승격 시점 = CFP-612 Phase 2 PR merge (완료).
 
 #### CFP-582 conceptual cross-ref (schema fit 부적합 — ADR-071 §결정 9)
 
-[§3.13 debate-protocol-v1](../archive/adr/ADR-059-debate-protocol-v1.md) Amendment 2 (CFP-582) 의 3 marker pattern (`counterargument_present` / `alternative_proposed` / `debate_purpose_statement_present`) = **debate transcript verification schema** (multi-round adversarial debate 의 convergence_quality_invariant 검증용).
-
-본 §3.14 = **turn-by-turn Orchestrator-user dialog** (single-turn cognitive frame + cross-Story 누적 detection). 두 sub-section 의 schema 직접 mapping **부적합**. 본 §3.14 의 frame mode + 4 layer + sub-mechanism 어느 항목도 §3.13 의 3 marker schema 를 import 하지 않는다. CFP-582 의 본질 (수렴 dialog) 만 conceptual cross-ref. **schema 재사용 절대 금지**.
+[§3.13 debate-protocol-v1](../archive/adr/ADR-059-debate-protocol-v1.md) Amendment 2 (CFP-582) 의 3 marker pattern (`counterargument_present` / `alternative_proposed` / `debate_purpose_statement_present`) = debate transcript verification schema — 본 §3.14 (turn-by-turn cognitive frame) 와 conceptual common ground (수렴 dialog) 만 공유. **schema 재사용 절대 금지** (frame mode + 4 layer + sub-mechanism 어느 항목도 3 marker schema import 안 함).
 
 #### env=0 / env=1 동작 동일
 
@@ -2026,26 +1801,13 @@ E11 popup turn 의 Layer 2 면제 사유 = popup 본문 자체가 declare semant
 
 #### scope 외 (ADR-071 §결정 10)
 
-- **Layer 1 preamble mechanical lint** — 별도 follow-up CFP (Wave 5 = cognitive + persistence layer 만, lint 별도 CFP 분리)
-- **agent ↔ agent debate** (§3.13 cover 완료)
-- **코드 품질 / 보안 / 성능**
-- **사용자 personal memory entry 자체 삭제** (사용자 영역 — codeforge wrapper scope 외)
-- **consumer overlay 영역 customization** (overlay 가 정책 축소 불허)
-- **debate-protocol-v1 3 marker import** (schema 직접 채택 절대 금지)
-- **frame mode marker visible vs hidden** = 본 §3.14 derived default hidden cognitive layer, visible 추가 = 별도 CFP
-- **Layer 3 false positive 처리 advanced policy** = 첫 incident 시점 사용자 결정 영역
-- **Layer 4 file rotate / archive 자동화** = 별도 CFP
+Layer 1 preamble mechanical lint (별도 CFP) / agent↔agent debate (§3.13 cover) / 코드 품질·보안·성능 / 사용자 personal memory entry 삭제 (사용자 영역) / consumer overlay customization (정책 축소 불허) / debate-protocol-v1 3 marker import (절대 금지) / frame mode visible marker 추가 (별도 CFP — derived default = hidden) / Layer 3 false positive advanced policy (첫 incident 시점 사용자 결정) / Layer 4 file rotate·archive 자동화 (별도 CFP).
 
 #### DialogFidelityAgent verifier auxiliary (ADR-071 Amendment 1 / CFP-777, Amendment 2 / CFP-818)
 
 DialogFidelityAgent = codeforge-pmo **cross-cutting read-only verifier** (additive auxiliary, **5번째 cognitive layer 신설 금지** — Layer 1-4 enum 보존 invariant, ADR-071 §결정 12).
 
-**Spawn trigger 3-anchor** (ADR-039 §결정 2 inline whitelist 보존, 자동 hook 부재 → Orchestrator 자율 채택):
-- `post_user_turn`: 사용자 turn 응답 직후 (Layer 3 "추상" detect / numbered list 발화 / AskUserQuestion 직전)
-- `pre_architectpl_synthesis`: ArchitectPL synthesis 완료 직전 (Codex TP#2 augment)
-- `pre_fix_rootcause`: FIX 루프 root cause 판정 직전 (Codex TP#3 augment)
-
-**3-anchor 발화 형태 매핑 표 (ADR-071 §결정 13.2, CFP-818)**: 각 anchor 가 어떤 turn shape 직전 활성하는지 + Codex touchpoint dedup:
+**Spawn trigger 3-anchor + 발화 형태 매핑 표 (ADR-071 §결정 13.2, CFP-818)** — ADR-039 §결정 2 inline whitelist 보존, 자동 hook 부재 → Orchestrator 자율 채택:
 
 | anchor | 발동 시점 | 발화 형태 매핑 (UC) | Codex touchpoint dedup |
 |---|---|---|---|
@@ -2071,11 +1833,7 @@ cell 값 enum: `active` (spawn 의무) / `면제` (spawn 금지) / `final flush 
 
 **verify-before-trust 의무** ([ADR-070](../archive/adr/ADR-070-codex-verify-before-trust.md)): `evidence_path[]` direct Read verify 의무, mismatch 시 verdict reject + Story §10 tally + override rationale 명시.
 
-**Inline whitelist 1번 entry 정합 cross-ref (ADR-071 §결정 13.4 / CFP-818)**: DialogFidelityAgent spawn (subagent 형태) 자체는 [ADR-039 §결정 2](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) inline whitelist 4-entry 1번 entry (사용자 dialog) 의 scope **안** cognitive 보강 — 사용자 dialog 본 발화는 inline 유지 + 직전/직후 verifier spawn 은 ADR-039 §결정 1 default subagent spawn 정합. 5번째 entry 신설 아님 (closed enumeration 보존).
-
-**Q-3check disjoint scope cross-ref (ADR-071 §결정 13.5 / CFP-818)**: [ADR-064 §결정 9](../archive/adr/ADR-064-decision-principle-mandate.md) Question quality 3-check = Orchestrator self-check (proposing/stop-time). DialogFidelityAgent = 외부 verifier (발화 entity ≠ 검증 entity 분리, self-referential trap 회피). disjoint scope — 양자 cross-cutting 보강 (3-check 가 cover 못하는 누적 결정 ledger drift / 세션 개시 요건 일관성 = DialogFidelityAgent cover, DialogFidelityAgent 가 cover 못하는 turn-internal cognitive frame / 7 anti-pattern P1-P7 = 3-check cover).
-
-**closed enum 확장 시 별도 CFP 의무 (ADR-071 §결정 13.6 / CFP-818)**: 3-anchor enum closed enumeration 보존. 확장 후보 3종 (`pre_lane_spawn` / `pre_phase_transition` / `pre_pause_decision`) 발생 시 별도 CFP 신설 의무 ([ADR-064 §결정 7](../archive/adr/ADR-064-decision-principle-mandate.md) top-down ratchet + [ADR-058 §결정 5](../archive/adr/ADR-058-adr-sunset-criteria-mandate.md) sunset_justification 정합).
+**cross-ref 3종 (ADR-071 §결정 13.4~13.6 / CFP-818)**: (13.4) verifier spawn = [ADR-039 §결정 2](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) inline whitelist 1번 entry scope **안** cognitive 보강 — 5번째 entry 신설 아님 (closed enumeration 보존). (13.5) [ADR-064 §결정 9](../archive/adr/ADR-064-decision-principle-mandate.md) Q-3check (Orchestrator self-check) 와 disjoint — DialogFidelityAgent = 외부 verifier (발화 entity ≠ 검증 entity, self-referential trap 회피), ledger drift·세션 개시 요건 = verifier cover / turn-internal frame·7 anti-pattern = 3-check cover. (13.6) 3-anchor closed enum 확장 (후보 `pre_lane_spawn` / `pre_phase_transition` / `pre_pause_decision`) = 별도 CFP 의무 (ADR-064 §결정 7 ratchet + ADR-058 §결정 5).
 
 #### Conversational reporting frequency suppression (ADR-071 §결정 15 / CFP-851 / Amendment 4)
 
@@ -2091,15 +1849,9 @@ Orchestrator 가 사용자에게 **말 거는 시점·빈도** (frequency / timi
 
 그 외 진행·중간 결정·근거·중간 결과 = **산출물 channel** 전용 기록 (대화 turn 아님): `docs/stories/<KEY>.md` / `docs/change-plans/<slug>.md` / `docs/adr/ADR-NNN-<slug>.md` / PR description / GitHub Issue comment / TodoWrite panel ([ADR-038](../archive/adr/ADR-038-progress-visualization-todowrite.md) progress visualization).
 
-**무약화 invariant** — 3 touchpoint 발화 시:
-- Layer 1 가시적 preamble + Layer 2 자기 declare 의무 — turn-shape edge derived default (E9/E10/E11/E12 표) 무변경
-- §결정 2(c) richness 보존 — raw packet 노출 금지, 평이한 한글, 3 줄 제약 거부, "왜 / trade-off / 걸려있는 것" 배경 포함
-- DialogFidelityAgent auxiliary 3-anchor spawn 보존 — §결정 12/13 family pattern 정합
-- §결정 14 incident append-rate measurement 보존
+**무약화 invariant** — 3 touchpoint 발화 시: Layer 1 preamble + Layer 2 declare 의무 (turn-shape E9~E12 표 무변경) / §결정 2(c) richness 보존 (raw packet 노출 금지, 평이한 한글, 3 줄 제약 거부, "왜 / trade-off / 걸려있는 것" 배경) / DialogFidelityAgent 3-anchor spawn 보존 / §결정 14 incident append-rate measurement 보존.
 
-**closed enum 확장 패턴** — 4번째 touchpoint 신설 시 별도 CFP 의무 (ADR-064 §결정 7 top-down ratchet + ADR-058 §결정 5 sunset_justification + Story §1 사용자 explicit 승인 의무). 본 ADR-071 안 3번째 closed enumeration 인스턴스 (3-anchor enum / 4 차원 enum / 3 touchpoint enum 동형).
-
-**mechanical lint = 별도 follow-up CFP** (§결정 10 패턴 정합 — behavioral directive only, advisory warning tier 첫 도입 시 evidence-checks-registry entry append + dialog-fidelity-effect precedent 동형 runtime cron measurement).
+**closed enum 확장 + lint**: 4번째 touchpoint 신설 = 별도 CFP 의무 (ADR-064 §결정 7 ratchet + ADR-058 §결정 5 + Story §1 사용자 explicit 승인). mechanical lint = 별도 follow-up CFP (behavioral directive only — §결정 10 패턴).
 
 ---
 
