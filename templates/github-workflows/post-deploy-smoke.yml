@@ -1,0 +1,99 @@
+name: Post-deploy smoke
+# BEGIN wrapper-managed
+# CFP-2227 / ADR-121 §결정 3·8 — post-deploy smoke seed (배포 후 검증, promote 차단 게이트)
+# Tier: declarative (consumer-template)
+# Bypass channel: 불요 — consumer repo 복사용 seed (wrapper required gate 비대상)
+#
+# 역할 (ADR-121 §결정 8 — smoke 검증 consumer workflow 환원):
+#   healthcheck endpoint poll + 핵심 시나리오 curl.
+#   FAIL = exit 1 -> workflow 실패 -> consumer-deploy-seed.yml 의 needs: 체인이
+#   다음 환경 promote 를 차단 (자동 rollback 0 — 사람 판단, ADR-121 §결정 C).
+#
+# 호출 형태 2종:
+#   (a) workflow_call — consumer-deploy-seed.yml 의 환경 job 사이에 job 으로 삽입 (권장)
+#   (b) workflow_dispatch — 수동 단발 검증
+# END wrapper-managed
+
+on:
+  workflow_call:
+    inputs:
+      healthcheck_url:
+        description: 'healthcheck endpoint (예: https://dev.example.com/health)'
+        required: true
+        type: string
+      timeout_seconds:
+        description: 'healthcheck poll 전체 timeout (초) — consumer 환경 기동 시간에 맞게 조정 (placeholder default)'
+        required: false
+        type: number
+        default: 300
+      interval_seconds:
+        description: 'poll 간격 (초) — placeholder default'
+        required: false
+        type: number
+        default: 10
+      smoke_base_url:
+        description: '핵심 시나리오 curl base URL — 미제공 시 시나리오 step 은 warning 후 skip'
+        required: false
+        type: string
+        default: ''
+  workflow_dispatch:
+    inputs:
+      healthcheck_url:
+        description: 'healthcheck endpoint'
+        required: true
+        type: string
+      timeout_seconds:
+        description: 'poll timeout (초)'
+        required: false
+        type: number
+        default: 300
+      interval_seconds:
+        description: 'poll 간격 (초)'
+        required: false
+        type: number
+        default: 10
+      smoke_base_url:
+        description: '핵심 시나리오 base URL (미제공 시 warning 후 skip)'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    env:
+      HEALTHCHECK_URL: ${{ inputs.healthcheck_url }}
+      TIMEOUT_SECONDS: ${{ inputs.timeout_seconds }}
+      INTERVAL_SECONDS: ${{ inputs.interval_seconds }}
+      SMOKE_BASE_URL: ${{ inputs.smoke_base_url }}
+    steps:
+      - name: Healthcheck endpoint poll
+        run: |
+          set -euo pipefail
+          echo "=== healthcheck poll: $HEALTHCHECK_URL (timeout ${TIMEOUT_SECONDS}s / interval ${INTERVAL_SECONDS}s) ==="
+          deadline=$(( $(date +%s) + TIMEOUT_SECONDS ))
+          until curl -fsS -o /dev/null --max-time 10 "$HEALTHCHECK_URL"; do
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::healthcheck timeout (${TIMEOUT_SECONDS}s) — smoke FAIL, promote 차단 (exit 1)"
+              exit 1
+            fi
+            echo "healthcheck 미응답 — ${INTERVAL_SECONDS}s 후 재시도"
+            sleep "$INTERVAL_SECONDS"
+          done
+          echo "healthcheck OK: $HEALTHCHECK_URL"
+
+      - name: 핵심 시나리오 curl (consumer fixture)
+        run: |
+          set -euo pipefail
+          if [ -z "$SMOKE_BASE_URL" ]; then
+            echo "::warning::smoke 실 fixture 미제공 — consumer 핵심 시나리오 연동 필요 (smoke_base_url 입력)"
+            exit 0
+          fi
+          echo "=== 핵심 시나리오 smoke: $SMOKE_BASE_URL ==="
+          # [placeholder] consumer 가 핵심 시나리오 curl 로 교체 — 실패 시 exit 1 이 promote 차단
+          # 예: curl -fsS --max-time 10 "$SMOKE_BASE_URL/api/v1/orders/recent" | jq -e '.status == "ok"'
+          # 예: curl -fsS --max-time 10 -X POST "$SMOKE_BASE_URL/api/v1/echo" -d '{"ping":1}' | jq -e '.pong == 1'
+          echo "[placeholder] 핵심 시나리오 curl — consumer 가 채움 (현재 통과 처리)"

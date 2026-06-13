@@ -1,0 +1,91 @@
+name: Consumer deploy (dev -> stg -> prd)
+# BEGIN wrapper-managed
+# CFP-2227 / ADR-121 §결정 2·3 — 배포 완전 위임 consumer seed (Epic CFP-2217 S3)
+# Tier: declarative (consumer-template)
+# Bypass channel: 불요 — consumer repo 복사용 seed (wrapper required gate 비대상, 복사 후 consumer 가 환경값 채움)
+#
+# 구조 invariant (ADR-121 §결정 2 — D1):
+#   build -> deploy-dev(environment: dev) -> deploy-stg(environment: stg) -> deploy-prd(environment: prd)
+#   순차 needs: 의존 체인. 앞 환경 job FAIL = 다음 환경 promote 차단.
+#
+# prd 승인 게이트 = GitHub Environments required reviewers (repo 설정) — 본 yml 내부 차단 로직 0:
+#   Settings -> Environments -> prd -> Required reviewers 지정 시
+#   GitHub 이 deploy-prd job 시작 전 승인 대기 상태로 차단한다.
+#   승인/거부 = 사람 판단. workflow 에 승인 로직을 추가하지 말 것 (D1 invariant).
+#   설정 경로 상세: docs/consumer-guide.md §1n (배포 위임 모델)
+#
+# smoke 연동 (선택 — ADR-121 §결정 8):
+#   post-deploy-smoke.yml (workflow_call) 을 환경 사이에 삽입하면 smoke FAIL 이 promote 를 차단한다. 예:
+#     smoke-dev:
+#       needs: deploy-dev
+#       uses: ./.github/workflows/post-deploy-smoke.yml
+#       with:
+#         healthcheck_url: https://dev.example.com/health
+#     deploy-stg:
+#       needs: smoke-dev   # deploy-dev 직접 의존 대신 smoke 경유
+# END wrapper-managed
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  # 필요 시 consumer 가 추가 (예: OIDC cloud 인증 = id-token: write)
+
+# 동일 ref in-flight 배포 1개 직렬화 — 중복 배포 차단 (실행 중 배포는 취소하지 않음)
+concurrency:
+  group: consumer-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build artifact (consumer 채움)
+        run: |
+          set -euo pipefail
+          # [placeholder] consumer 가 빌드/이미지 push 명령으로 교체
+          # 예: docker build -t <registry>/<image>:${{ github.sha }} .
+          # 예: docker push <registry>/<image>:${{ github.sha }}
+          # monorepo consumer: 변경 repo/path 감지 (paths filter 또는 changed-files) 후 선별 빌드
+          echo "[placeholder] build — consumer 가 채움"
+
+  deploy-dev:
+    runs-on: ubuntu-latest
+    needs: build
+    environment: dev
+    steps:
+      - name: Deploy to dev (consumer 채움)
+        run: |
+          set -euo pipefail
+          # [placeholder] dev 배포 명령으로 교체 — secrets 는 dev environment namespace 에서 주입
+          # 예: ssh 배포 host "docker pull <image> && docker compose up -d"
+          echo "[placeholder] deploy dev — consumer 가 채움"
+
+  deploy-stg:
+    runs-on: ubuntu-latest
+    needs: deploy-dev
+    environment: stg
+    steps:
+      - name: Deploy to stg (consumer 채움)
+        run: |
+          set -euo pipefail
+          # [placeholder] stg 배포 명령으로 교체 — secrets 는 stg environment namespace 에서 주입
+          echo "[placeholder] deploy stg — consumer 가 채움"
+
+  deploy-prd:
+    runs-on: ubuntu-latest
+    needs: deploy-stg
+    # prd 승인 차단 = GitHub Environments required reviewers (repo 설정) 가 수행.
+    # 본 job 에 승인 로직 0 — environment key 만 선언 (D1 invariant, ADR-121 §결정 2).
+    environment: prd
+    steps:
+      - name: Deploy to prd (consumer 채움)
+        run: |
+          set -euo pipefail
+          # [placeholder] prd 배포 명령으로 교체 — secrets 는 prd environment namespace 에서 주입
+          echo "[placeholder] deploy prd — consumer 가 채움"
