@@ -138,7 +138,7 @@ is_transitional: false
 mechanical_enforcement_actions:
   - action: dialog-fidelity-effect
     status: sunsetted  # Amendment 9 (CFP-2236) — DialogFidelityAgent sunset 동반. measurement subject (DialogFidelityAgent) 폐지로 metric 무의미화. status 변경 (registry entry 제거보다 보수 — historical record).
-    progress_note: "[SUNSETTED Amendment 9 / CFP-2236] DialogFidelityAgent 폐지로 본 effectiveness measurement action 무의미화 (측정 대상 부재). Phase 2 carrier (dialog-fidelity-measurement.yml + check-dialog-fidelity-effect.sh + lib .py) 실 wiring 0 = cost_vs_effect_zero sunset evidence 의 일부. 원 Phase 1 (CFP-833) = registry entry skeleton + ADR-071 Amendment 3 + 본문 §결정 14 (historical, carrier-preserved). evidence-checks-registry dialog-fidelity-effect entry 실 cleanup = 별 follow-up (본 doc-only fast-path scope 외)."
+    progress_note: "[SUNSETTED Amendment 9 / CFP-2236] DialogFidelityAgent 폐지로 본 effectiveness measurement action 무의미화 (측정 대상 부재). Phase 2 carrier (dialog-fidelity-measurement.yml + check-dialog-fidelity-effect.sh + lib .py) 실 wiring 0 = cost_vs_effect_zero sunset evidence 의 일부. 원 Phase 1 (CFP-833) = registry entry skeleton + ADR-071 Amendment 3 + 본문 §결정 14 (historical, carrier-preserved). evidence-checks-registry dialog-fidelity-effect entry 실 cleanup = 별도 follow-up (본 doc-only fast-path scope 외)."
     target_section: §결정 14
   - action: codename-glossary-lookup
     status: deferred-followup
