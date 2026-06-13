@@ -21,7 +21,7 @@ ADR refs:
   ADR-060: exit code 3-tier
   ADR-068 I-5: port 22 = SSH standard (empirical exemption — numeric default documented below)
 
-Schema SSOT: docs/project-config-schema.md L362-L391 (deploy.* 5 sub-field)
+Schema SSOT: docs/project-config-schema.md "### `deploy` 섹션 설명" heading (deploy.* 5 sub-field)
 """
 
 from __future__ import annotations
