@@ -317,7 +317,7 @@ upgrade_agent_ownership:
   reconcile_protocol_v1_citation: forbidden_1st_class   # v1.13 Deprecated — 1st-class SSOT citation 금지
 ```
 
-- **ownership = codeforge-pmo 흡수 (a 채택)** — upgrade transaction = lane-agnostic family-wide 작업 → cross-cutting lane (codeforge-pmo) 자연스러운 귀속 (PMOAgent + GitOpsAgent + DialogFidelityAgent sibling). single-repo scope 유지 (신규 plugin 도입 0, 8-plugin family blast radius 0). (b) 신규 codeforge-upgrade lane plugin = 거부 (ADR-023 lifecycle blast radius 과잉).
+- **ownership = codeforge-pmo 흡수 (a 채택)** — upgrade transaction = lane-agnostic family-wide 작업 → cross-cutting lane (codeforge-pmo) 자연스러운 귀속 (PMOAgent + GitOpsAgent sibling). single-repo scope 유지 (신규 plugin 도입 0, 8-plugin family blast radius 0). (b) 신규 codeforge-upgrade lane plugin = 거부 (ADR-023 lifecycle blast radius 과잉).
 - **ownership boundary codify only** — UpgradeAgent 실 runtime mandate body (changelog walk 절차 / plan / apply transaction / 3 mode) = Wave 2 Story-4 (CFP-1155) 영역 (ADR-098 scope 외). model tier 재평가 의무 = declare only (실 tier 확정 = CFP-1155, ADR-042 amendment carry).
 - **runtime SSOT = ADR-076** (paradigm replace 진행 중) — reconcile-protocol-v1 (v1.13 Deprecated) 1st-class SSOT citation 금지. walker 가 어느 paradigm (declarative 잔존 vs imperative 전환) 이든 UpgradeAgent = codeforge-pmo 귀속 (paradigm-agnostic ownership anchor).
 

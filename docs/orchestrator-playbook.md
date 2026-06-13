@@ -1808,37 +1808,9 @@ E11 popup turn 의 Layer 2 면제 사유 = popup 본문 자체가 declare semant
 
 Layer 1 preamble mechanical lint (별도 CFP) / agent↔agent debate (§3.13 cover) / 코드 품질·보안·성능 / 사용자 personal memory entry 삭제 (사용자 영역) / consumer overlay customization (정책 축소 불허) / debate-protocol-v1 3 marker import (절대 금지) / frame mode visible marker 추가 (별도 CFP — derived default = hidden) / Layer 3 false positive advanced policy (첫 incident 시점 사용자 결정) / Layer 4 file rotate·archive 자동화 (별도 CFP).
 
-#### DialogFidelityAgent verifier auxiliary (ADR-071 Amendment 1 / CFP-777, Amendment 2 / CFP-818)
+#### DialogFidelityAgent verifier auxiliary sunset (ADR-071 Amendment 9 / CFP-2236, 2026-06-14)
 
-DialogFidelityAgent = codeforge-pmo **cross-cutting read-only verifier** (additive auxiliary, **5번째 cognitive layer 신설 금지** — Layer 1-4 enum 보존 invariant, ADR-071 §결정 12).
-
-**Spawn trigger 3-anchor + 발화 형태 매핑 표 (ADR-071 §결정 13.2, CFP-818)** — ADR-039 §결정 2 inline whitelist 보존, 자동 hook 부재 → Orchestrator 자율 채택:
-
-| anchor | 발동 시점 | 발화 형태 매핑 (UC) | Codex touchpoint dedup |
-|---|---|---|---|
-| `post_user_turn` | 사용자 turn 응답 직후 (Layer 3 "추상" detect / numbered list 발화 / `AskUserQuestion` 직전) | UC-1 (`AskUserQuestion` 발화 직전) / UC-2 (numbered list 또는 dialog format 발화 직전) / Layer 3 "추상" stem detect 직후 | 없음 (Codex 6 touchpoint 와 disjoint) |
-| `pre_architectpl_synthesis` | ArchitectPL synthesis 완료 직전 (사용자 보고 발화 직전) | UC-3 (Orchestrator 가 ArchitectPL synthesis 결과 사용자 보고 발화 직전) | **Codex TP#2 (mandatory, [ADR-052](../archive/adr/ADR-052-codex-proactive-check-touchpoints.md) Amendment 4) 와 동일 위치** — 양 verifier 활성 (EC-6 dedup: Codex = P0/P1 inline FIX mandatory, DialogFidelityAgent = correction_action_hint 5-enum 권고) |
-| `pre_fix_rootcause` | FIX 루프 root cause 판정 직전 (ArchitectPL 1차 진단 후 최종 판정 직전) | UC-4 (Orchestrator 가 FIX 루프 root cause 판정 직전) | **Codex TP#3 (FIX 2+ 감지 시) 와 동일 위치** — 양 verifier 활성 (EC-5 dedup: Codex = P0/P1 single-shot 검토, DialogFidelityAgent = ledger drift detection 권고) |
-
-dedup 패턴 (EC-5/EC-6): 동일 위치 활성 시 Orchestrator 가 양 verdict 통합 (verify-before-trust [ADR-070](../archive/adr/ADR-070-codex-verify-before-trust.md) 의무).
-
-**turn-shape edge × 3-anchor 12 cell 활성 표 (ADR-071 §결정 13.3, CFP-818)**: 위 "Turn-shape derived defaults" 표 의 E9/E10/E11/E12 edge × 3-anchor cross-product 활성 매핑:
-
-| anchor \ edge | E9 streaming token | E10 tool-call-only | E11 AskUserQuestion popup | E12 trivial answer |
-|---|---|---|---|---|
-| `post_user_turn` | **final flush 시 활성** (mid-stream spawn 금지 — idempotency, EC-4 derived default) | **면제** (사용자 발화 직접 미발생, EC-3 derived default) | **active** (popup 본문 자체가 dialog convergence anchor — popup option_text/body Layer 3 "추상" detect 영역, EC-2 derived default) | **면제** (cost > benefit, trivial turn 3-criteria AND 충족 시 cognitive overhead 정당화 불가, EC-1 derived default) |
-| `pre_architectpl_synthesis` | active (edge-independent — Story 1회 발동, ArchitectPL synthesis 완료 직전 fixed timepoint) | active | active | active |
-| `pre_fix_rootcause` | active (edge-independent — FIX 발동 시점 fixed, [ADR-067](../archive/adr/ADR-067-fix-ledger-implementability-escalation.md) FIX 3 카운터 범위 안 ≤ 3/Story) | active | active | active |
-
-cell 값 enum: `active` (spawn 의무) / `면제` (spawn 금지) / `final flush 시 활성` (E9 streaming 의 final flush 단계 1회만 spawn — mid-stream 금지).
-
-**Output Port closed enum**: `verify_result: fidelity_ok | drift_detected | ledger_gap` + `correction_action_hint: rescan_ledger | escalate_user | self_correct | no_action | null` (free-form 차단, generator 역할 침범 금지).
-
-**Orchestrator dispatch**: verifier output 수신 후 `correction_action_hint` enum (rescan_ledger / escalate_user / self_correct / no_action / null) 에 따라 Orchestrator 가 직접 action 분기 — verifier 는 권고만, 실제 메시지 변경 / ledger append / 사용자 escalation 은 Orchestrator monopoly.
-
-**verify-before-trust 의무** ([ADR-070](../archive/adr/ADR-070-codex-verify-before-trust.md)): `evidence_path[]` direct Read verify 의무, mismatch 시 verdict reject + Story §10 tally + override rationale 명시.
-
-**cross-ref 3종 (ADR-071 §결정 13.4~13.6 / CFP-818)**: (13.4) verifier spawn = [ADR-039 §결정 2](../archive/adr/ADR-039-orchestrator-subagent-default-for-codeforge-modification-work.md) inline whitelist 1번 entry scope **안** cognitive 보강 — 5번째 entry 신설 아님 (closed enumeration 보존). (13.5) [ADR-064 §결정 9](../archive/adr/ADR-064-decision-principle-mandate.md) Q-3check (Orchestrator self-check) 와 disjoint — DialogFidelityAgent = 외부 verifier (발화 entity ≠ 검증 entity, self-referential trap 회피), ledger drift·세션 개시 요건 = verifier cover / turn-internal frame·7 anti-pattern = 3-check cover. (13.6) 3-anchor closed enum 확장 (후보 `pre_lane_spawn` / `pre_phase_transition` / `pre_pause_decision`) = 별도 CFP 의무 (ADR-064 §결정 7 ratchet + ADR-058 §결정 5).
+> **[SUNSETTED]** 구 DialogFidelityAgent (codeforge-pmo cross-cutting read-only verifier, 3-anchor `post_user_turn` / `pre_architectpl_synthesis` / `pre_fix_rootcause`) 는 전면 폐지 (ADR-071 Amendment 9, carrier-preserved). dialog turn 검증 ground 보존: 동일 anchor 의 **Codex TP#2 / TP#3** (mandatory P0/P1 inline FIX) + **ADR-064 §결정 9 Q-3check** (Orchestrator self-check). 폐지 근거 3축 = 죽은 3-anchor spawn 의무 (런타임 미준수) + 검증 ground 중복 (Codex + Q-3check 이미 cover, DialogFidelity = `correction_action_hint` 5-enum 권고만 최저 구속력) + Opus verifier spawn 비용 대비 측정 효과 0. **보존 invariant 무손상**: Layer 1-4 cognitive enum / frame mode 4 step / 3 touchpoint frequency-richness / 5번째 cognitive layer 신설 금지 invariant 모두 무변경. ADR-071 본체 폐지 아님 — verifier auxiliary sub-layer 만 외과 절제.
 
 #### Conversational reporting frequency suppression (ADR-071 §결정 15 / CFP-851 / Amendment 4)
 
@@ -1854,7 +1826,7 @@ Orchestrator 가 사용자에게 **말 거는 시점·빈도** (frequency / timi
 
 그 외 진행·중간 결정·근거·중간 결과 = **산출물 channel** 전용 기록 (대화 turn 아님): `docs/stories/<KEY>.md` / `docs/change-plans/<slug>.md` / `docs/adr/ADR-NNN-<slug>.md` / PR description / GitHub Issue comment / TodoWrite panel ([ADR-038](../archive/adr/ADR-038-progress-visualization-todowrite.md) progress visualization).
 
-**무약화 invariant** — 3 touchpoint 발화 시: Layer 1 preamble + Layer 2 declare 의무 (turn-shape E9~E12 표 무변경) / §결정 2(c) richness 보존 (raw packet 노출 금지, 평이한 한글, 3 줄 제약 거부, "왜 / trade-off / 걸려있는 것" 배경) / DialogFidelityAgent 3-anchor spawn 보존 / §결정 14 incident append-rate measurement 보존.
+**무약화 invariant** — 3 touchpoint 발화 시: Layer 1 preamble + Layer 2 declare 의무 (turn-shape E9~E12 표 무변경) / §결정 2(c) richness 보존 (raw packet 노출 금지, 평이한 한글, 3 줄 제약 거부, "왜 / trade-off / 걸려있는 것" 배경). (DialogFidelityAgent 3-anchor spawn + §결정 14 incident append-rate measurement = CFP-2236 sunset — ADR-071 Amendment 9.)
 
 **closed enum 확장 + lint**: 4번째 touchpoint 신설 = 별도 CFP 의무 (ADR-064 §결정 7 ratchet + ADR-058 §결정 5 + Story §1 사용자 explicit 승인). mechanical lint = 별도 follow-up CFP (behavioral directive only — §결정 10 패턴).
 

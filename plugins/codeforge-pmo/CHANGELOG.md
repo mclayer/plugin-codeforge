@@ -4,6 +4,34 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.4.0] - 2026-06-14
+
+### CFP-2236 — DialogFidelityAgent 전면 폐지 (sunset) (MINOR)
+
+DialogFidelityAgent (CFP-777 Story-1 신설 cross-cutting read-only dialog fidelity verifier) 전면 폐지. agent count 3→2 (PMOAgent + GitOpsAgent). CFP-777 의 신규 agent 추가가 MINOR (0.1.3→0.2.0) 였으므로 대칭 제거도 MINOR (capability 축소, ADR-037).
+
+#### Removed
+
+- `agents/DialogFidelityAgent.md` — 파일 삭제 (git history 가 이력 보존).
+- `CLAUDE.md` — 3 sibling agent 서술 → 2 sibling. 책임 표 DialogFidelity 열 제거. Agent 상세 SSOT 링크 제거. sunset 안내 추가.
+- `docs/architecture/codeforge-pmo.md` — title frontmatter "Dialog fidelity" 제거 / 모듈 표 DialogFidelity 행 제거 (3→2) / Cross-cutting boundary bullet 제거 / verifier surface 블록 제거 / 데이터 흐름 trigger 5 (dialog turn) 블록 + downstream bullet 제거 / ADR-076 current state 인용 제거. sunset banner 2종 추가.
+
+#### Why
+
+- **죽은 의무 (dead mandate)**: 3-anchor spawn 의무 (특히 `pre_architectpl_synthesis` "항상 active") 런타임 미준수 — CFP-2234 전 과정에서 ArchitectPL synthesis 사용자 보고 시점에도 미spawn (CFP-2215 이전 TodoWrite dead 와 동형). 본 CFP-2236 설계 lane fable→opus fallback = fable 의존 불안정성 동반 evidence.
+- **검증 ground 중복 (redundancy)**: 동일 anchor 의 Codex TP#2/TP#3 (mandatory P0/P1 inline FIX) + ADR-064 §결정 9 Q-3check (Orchestrator self-check) 가 이미 cover. DialogFidelity = `correction_action_hint` 5-enum 권고만 = 최저 구속력.
+- **비용 대비 효과 0 (cost vs effect)**: 매 synthesis·매 FIX 직전 Opus verifier spawn 누적 비용, 측정된 효과 0 (§결정 14 measurement deferred-followup 실 wiring 0).
+
+ADR-058 §결정 5 (약화 evidence-gate) + ADR-064 §결정 7 (symmetric ratchet) 정합 — 약화 방향 1급 허용, evidence-grounded, first weaken-direction amendment.
+
+#### Cross-references
+
+- ADR-071 Amendment 9 (carrier-preserved in-place sunset — §결정 12/13/14 + §17.4.3 의 DialogFidelity 부분 강등, ADR-071 본체 무손상)
+- ADR-058 §결정 5 (약화 evidence requirement) / ADR-064 §결정 7 (symmetric ratchet)
+- ADR-037 (plugin bump semantics — capability 축소 = MINOR, CFP-777 신규 agent MINOR 와 대칭)
+- ADR-063 (marketplace atomic invariant — 4 mirrored field sync 동반)
+- Story file (internal-docs): `wrapper/stories/CFP-2236.md`
+
 ## [0.3.3] - 2026-06-12
 
 ### Changed (CFP-2178 — S6 lane repo archive 참조 sweep, PATCH)
