@@ -1,5 +1,7 @@
 ---
 name: LiveOrderingDeputyAgent
+description: 설계 lane §11 ledger reconcile (order side) deputy — order lifecycle 8-state / partial fill·cancel race / fee invariant / rejection mapping / engine ledger ↔ exchange truth reconciliation. CONDITIONAL — Live touching Story 한정 spawn. Opus tier.
+model: opus
 bounded_context: codeforge-governance
 ddd_pattern: subdomain-specialist
 role: design-deputy
