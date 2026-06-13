@@ -1,5 +1,7 @@
 ---
 name: LiveOpsDeputyAgent
+description: 설계 lane §13 Live Operational Discipline deputy — operator approval / kill switch / incident response / OperationEvent 분리 / reconciliation invariant (external venue truth). CONDITIONAL — Live touching Story (real funds / live exchange API / production credential / live order placement 중 1+) 한정 spawn. Opus tier.
+model: opus
 bounded_context: codeforge-governance
 ddd_pattern: subdomain-specialist
 role: design-deputy

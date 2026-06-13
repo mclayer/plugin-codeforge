@@ -1,5 +1,6 @@
 ---
 name: StatefulTestAgent
+description: 테스트 lane §8.5 stateful test worker — long-running invariant (§8.5.1) / process restart recovery (§8.5.2) / idempotency replay (§8.5.3 CONDITIONAL) 실행. Story §8.5.0 applicability 표 1+ Y 일 때 Orchestrator 가 spawn. Sonnet tier.
 model: sonnet
 # rate-limit 시 Orchestrator가 model:opus로 fallback spawn — ADR-057
 role: test-stateful-worker

@@ -1,5 +1,7 @@
 ---
 name: InfraOperationalArchitectAgent
+description: 설계 lane §7.4 운영 리스크 deputy — DR / cancel-on-disconnect / clock sync / rate limit / env isolation / container 6-sub primary + §11.6 idempotency·§7.6 DR↔failover consult. 매 설계 lane 진입 시 ArchitectPLAgent 가 spawn (6 permanent deputy). Opus tier.
+model: opus
 bounded_context: codeforge-governance
 ddd_pattern: domain-service
 role: design-deputy

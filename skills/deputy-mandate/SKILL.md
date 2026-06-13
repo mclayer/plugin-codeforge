@@ -6,67 +6,34 @@ tools: Read
 
 # Deputy Mandate 매트릭스 (codeforge-design lane)
 
-> 참조 테이블 skill — 내용을 읽고 deputy spawn 결정 및 §3/§7/§11/§13 책임 분담에 적용하세요.
+> 참조 테이블 skill — deputy spawn 결정 + §3/§7/§11/§13 책임 분담에 적용. normative SSOT = ADR-014(+Amd 4) · ADR-042(+Amd 7/8/10) · ADR-068(+Amd 2) · ADR-086 · ADR-091(+Amd 1) · ADR-72 · ADR-088.
 
 ## 호출 시점
 
-설계 lane 진입 시. ArchitectPLAgent가 6 → 8(+ProductionEvidence=9) deputy parallel spawn 여부를 결정하기 전 호출 (CFP-1126 — AggregateArch deprecated, ModuleArch boundary axis unified, 6 permanent).
+- 설계 lane 진입 시 — ArchitectPLAgent 가 6 → 8(+ProductionEvidence=9) deputy parallel spawn 여부를 결정하기 전 (CFP-1126 — 6 permanent).
+- ArchitectPLAgent 가 4-tuple sub-tuple flat spawn 을 결정하기 전 (CFP-681) — 아래 "4-tuple sub-tuple spawn 가이드" + playbook §12.8 (deputy 영역별 specialized Context Packet 4종 spec) cross-ref.
+- doc-only fast-path mechanism codify Story 진입 시 (실 설계 결정 0) — 매트릭스 + 4-tuple 가이드를 읽고 chief author 중심 + 자기 mandate deputy consult 만으로 codify 범위 확정.
 
-추가 trigger (CFP-681 / W1 S2):
-- ArchitectPLAgent 가 4-tuple sub-tuple (CodebaseMapper / Refactor / ArchitectAnalyst — chief author 포함) flat spawn 을 결정하기 전. 본 skill 의 "4-tuple sub-tuple spawn 가이드" 섹션 + playbook §12.8 (deputy 영역별 specialized Context Packet 4종 spec) cross-ref.
-- doc-only fast-path mechanism codify Story 진입 시 (실 설계 결정 0) — 본 skill 매트릭스 + 4-tuple 가이드를 읽고 chief author 중심 + 자기 mandate deputy consult 만으로 codify 범위를 확정.
+## 4-tuple sub-tuple spawn 가이드 (CFP-681 / ADR-044 CFP-676 reaffirm)
 
-## 4-tuple sub-tuple spawn 가이드 (CFP-681 / W1 S2 — ADR-044 CFP-676 reaffirm)
+> **deputy column 아님 — flat spawn 논리적 그룹핑** (물리적 spawn 계층(nested) 아님 — "4-level nested spawn" 오해 차단). 4-tuple = ArchitectAgent (chief author, Opus — multi-source synthesizer) + CodebaseMapper (Sonnet, existing codebase fact) + Refactor (Sonnet, decoupling/pattern advocacy) + **ArchitectAnalyst** (Sonnet, 기존 설계 분석 단일 축).
 
-> **deputy column 아님 — flat spawn 논리적 그룹핑**. 본 가이드는 deputy mandate 매트릭스 (6 permanent + 3+1 CONDITIONAL — CFP-1126 정합) 와 disjoint 한 별개 축이다. 4-tuple = ArchitectAgent (chief author, Opus — multi-source synthesizer) + CodebaseMapper (Sonnet, existing codebase fact) + Refactor (Sonnet, decoupling/pattern advocacy) + **ArchitectAnalyst** (Sonnet, PriorArtAgent rename — 변경 전 기존 설계 ADR/Change Plan/Story 분석 단일 축). single-mandate advocacy 패턴 (ADR-042-agent-model-selection-policy Amendment 7 SSOT — `abcd92bf`).
+- **spawn gate**: 4 component 모두 Orchestrator 가 **flat spawn** — 재귀 spawn 금지 (platform inherent) / nested team 금지 / sub-lead 격상 0건 (ADR-044 + ADR-009 §결정 1 + ADR-039 정합).
+- ArchitectPLAgent = PL synthesizer — 산출물 통합 검수만, sub-agent 재귀 spawn 금지 (env=0 fallback = Orchestrator 직접 spawn one-shot).
+- Context Packet = spawn-time **동적** 주입 (매 spawn — playbook §12.8). consumer overlay SessionStart merge (정적) 와 구분.
+- chief author 는 4-tuple component 이나 deputy 아님 — deputy + sub-tuple 산출물 multi-source synthesis (Opus). ArchitectAnalyst dual-read = primary git `docs/architecture/<plugin>.md` + fallback Confluence (CFP-1428, divergence 시 PMO retro F8 emit).
 
-**"4-tuple = 논리적 그룹핑" 정의**: 4-tuple 은 어느 sub-agent 가 어느 deputy 영역 Context Packet 으로 spawn 됐는지를 표기하는 **논리적 그룹핑**일 뿐 **물리적 spawn 계층(nested)이 아니다**. 4 component 모두 Orchestrator 가 flat spawn (재귀 spawn 금지 — platform inherent / nested team 금지 / sub-lead 격상 0건 — ADR-044 CFP-676 reaffirm 단락 + ADR-009 §결정 1 + ADR-039 정합). "4-level nested spawn" 오해 차단 (Story §1 deliverable 3 verbatim — CFP-681 EC-6).
+## Deputy mandate 매트릭스 — 6 permanent + 3+1 CONDITIONAL
 
-**spawn 주체·시점**:
-- spawn 주체 = **Orchestrator** (flat spawn, ADR-039 §결정 1 default subagent context). ArchitectPLAgent 는 PL synthesizer 역할 — 4-tuple 산출물 통합 검수만, sub-agent 를 재귀 spawn 하지 않는다 (env=0 fallback = Orchestrator 직접 spawn one-shot).
-- Context Packet = spawn-time **동적** 주입 (매 spawn — playbook §12.8). consumer overlay SessionStart merge (정적 desired state) 와 명시적 구분.
+ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72 + ADR-086 (Deputy 신설 결정 framework). design lane deputy 가 §3/§7/§11/§13 sub별 owning 범위 명시 — H17 책임 분쟁 차단.
 
-**chief author 포함 의미**: ArchitectAgent (chief author) 는 4-tuple 의 component 이지만 deputy 가 아니다. deputy 6 permanent + 3+1 CONDITIONAL (자기 mandate 단일 축 advocacy — CFP-1126 정합) 산출물 + 나머지 3 sub-tuple (Mapper/Refactor/ArchitectAnalyst) 산출물을 **multi-source synthesis** 하는 Opus chief 역할. ArchitectAnalyst (Sonnet) 는 chief 가 아니라 "기존 설계 분석 단일 축" advocate.
+**roster 재편 연혁 (요약 — 상세 = 각 ADR Amendment SSOT)**:
 
-## Deputy mandate 매트릭스 — 6 permanent + 3+1 CONDITIONAL (CFP-1126 / ADR-042-agent-model-selection-policy Amendment 10 + ADR-091 Amendment 1 — AggregateArch deprecated, ModuleArch boundary axis unified)
+- CFP-1026 (ADR-042 Amd 7 + ADR-014 Amd 4): DataMigrationArch→DataArch + OperationalRiskArch→InfraOperationalArch rename + CodeArch·ArchitectAnalyst(sub-tuple) 신설 (5+3 baseline).
+- CFP-1086 (ADR-042 Amd 8 + ADR-068 Amd 2 + ADR-086): 5+3 → 7+3+1 — AggregateArch·APIContractArch 신설 + CodeArch→ModuleArch rename + DataArch 축소 (RDB OLTP 제거 → 빅데이터 OLAP only) + **chief tie-break ladder 3 단계** 신설 (ADR-068 Amd 2 — Cell selection heuristic 단락 정의 참조) + **DDDArchitectAgent 신설 reject 명문화** (미도입 결정 — reject 영역 보존).
+- CFP-1126 (ADR-042 Amd 10 + ADR-091 Amd 1): **AggregateArch deprecated** — mandate carry-over to **ModuleArch (boundary axis 단일 advocate — module-level + aggregate-level 통합)**, 7 → **6 permanent**. **CONDITIONAL applicability carry-over**: `project.yaml aggregate_arch.applicable: bool` (key 보존, consumer overlay backward-compat) — non-applicable consumer (frontend-only / API-only / external-managed RDB) 는 aggregate-level 영역만 conditional, module-level 은 무조건 applicable. `aggregate_arch.migration_tool` 9-enum override (default alembic) 동반. RACI 4-way → 3-way 재편 = CFP-1168 realized.
 
-ADR-014 (+ Amendment 4) + ADR-012 §3 4번째 SSOT 예외 + ADR-72 + ADR-086 (Deputy 신설 결정 framework). design lane deputy가 §3/§7/§11/§13 sub별 owning 범위 명시 — H17 책임 분쟁 차단.
-
-### CFP-1126 Story 재편 (ADR-042-agent-model-selection-policy Amendment 10 + ADR-091 Amendment 1 atomic carrier — current canonical layer)
-
-CFP-1086 Amendment 8 (7+3+1) 위 partial retroactive rollback — boundary axis 영역만 통합 (DataArch / APIContract / DDDArch reject 영역 보존). 7+3+1 → **6+3+1** roster:
-
-- **AggregateArch ⚠ deprecated** — mandate (§3 aggregate + §11 RDB OLTP 전체: aggregate invariant + 트랜잭션 경계 + persistence-bound + Alembic 정책 7 원칙) carry-over to **ModuleArchitectAgent** (boundary axis 단일 advocate — module-level boundary + aggregate-level boundary 통합 흡수). agent file 실 deprecate = Wave 2 별 CFP carrier (codeforge-design plugin cross-repo sibling sync, ADR-010 정합).
-- **ModuleArch mandate 확장** — module-level boundary + dependency direction + layered/hexagonal/clean module-level + DDD bounded context module placement **+ aggregate-level boundary** (AggregateArch carry-over: aggregate invariant + 트랜잭션 경계 + persistence-bound + Alembic 정책 7 원칙). Sonnet 유지.
-- **CONDITIONAL applicability carry-over** — `project.yaml aggregate_arch.applicable: bool` (key 이름 보존, consumer overlay backward-compat). non-applicable consumer (frontend-only / API-only / external-managed RDB) = ModuleArch aggregate-level 영역만 conditional, module-level 영역 무조건 applicable. Tool scope B — 9-enum `aggregate_arch.migration_tool` override (default alembic) = ModuleArch carry-over.
-- 7 permanent → **6 permanent** (AggregateArch deprecated). 3+1 CONDITIONAL = applicability carry-over로 갯수 무변경 (AggregateArch applicability → ModuleArch aggregate-level applicability).
-- **ratchet 축소 first applied carrier** (ADR-058 §결정 5 sunset_justification 의무 충족 — 약화 방향 evidence-grounded justification: chief + 7 deputy + 4-tuple = 12+ agent advocacy fan-out 불균형 정정, boundary axis 1 advocate 충분). ADR-064 §self-application top-down ratchet 의 evidence-gated exception 첫 carrier.
-
-### CFP-1086 Story-1 재편 (ADR-042-agent-model-selection-policy Amendment 8 + ADR-068 Amendment 2 + ADR-086 신설 atomic carrier — superseded by Amendment 10 boundary axis 영역)
-
-BackendArchEpic Phase 2 — 5+3 → 7+3+1 roster 재편 (axis 명확화). **CFP-1126 Amendment 10 에서 AggregateArch deprecated + ModuleArch 통합 — 본 단락의 AggregateArch 영역은 historical layer**:
-
-- ~~**AggregateArch** 신설~~ (CFP-1126 deprecated — mandate carry-over to ModuleArch) (§3 aggregate + §11 RDB OLTP 전체: aggregate boundary + 트랜잭션 경계 + persistence-bound + Alembic 정책 7 원칙). Sonnet (single-mandate advocacy — ADR-042-agent-model-selection-policy §결정 1 Sonnet (a)).
-- **APIContractArch** 신설 (§3 API + §8 contract testing: REST/GraphQL/gRPC/WebSocket + versioning + DTO + OpenAPI/GraphQL schema + contract testing). Sonnet (single-mandate advocacy). skeleton at S1 / body 심화 = S2 별 PR. **(CFP-1126 보존 — transport axis disjoint 유지)**
-- **CodeArch → ModuleArch rename + mandate 정정** (axis 명확화 — "코드 구조 일반" → "module / package boundary + dependency direction"). **(CFP-1126 Amendment 10 에서 aggregate-level boundary 흡수 통합 — boundary axis 단일 advocate)** Sonnet 유지.
-- **DataArch mandate 축소** — RDB OLTP 영역 제거 (PostgreSQL / SQLAlchemy / Alembic / 트랜잭션 경계 / 도메인 모델 모두 ModuleArch 분리 per CFP-1126). 빅데이터 OLAP only (Parquet / 객체저장소 / DuckDB / streaming / 백필 / 시계열 집계). Opus 유지.
-- 5 permanent → 7 permanent → **6 permanent** (CFP-1126 — AggregateArch deprecated). 3 CONDITIONAL → **3+1 CONDITIONAL** (AggregateArch applicability P2 → ModuleArch aggregate-level applicability carry-over).
-- **chief tie-break ladder 3 단계** (ADR-068 Amendment 2): (1) RACI matrix lookup → (2) ADR-068 invariant (I-1~I-5) → (3) chief judgement + ADR Amendment carrier 발의 (axis disjoint + 5-checklist 의무).
-- **DDDArchitectAgent 신설 reject 명문화** (Phase 1 Q4-prime — axis 미정합 method/학파 layer + ModuleArch wording overlap + consumer applicability 축소). 미도입 결정, ratchet 위반 아님. **(CFP-1126 보존 — reject 영역 유지)**
-
-### CFP-1026 S1 재편 (ADR-042-agent-model-selection-policy Amendment 7 / ADR-014 Amendment 4 atomic carrier — historical layer)
-
-CFP-1086 Amendment 8 이전 baseline (5+3 roster):
-- DataMigrationArch → **DataArch** rename + mandate 확장 (§3 data + §11 전체 데이터 구조). Opus 유지. **(CFP-1086 Amendment 8 에서 mandate 축소 — RDB OLTP 영역 제거)**
-- OperationalRiskArch → **InfraOperationalArch** rename (§7.4 DR / disconnect / clock / rate / env / container — mandate scope 보존). Opus 유지.
-- **CodeArch** 신설 (§3 code: layered / hexagonal / clean / DDD bounded context / module boundary / dependency direction). Sonnet. **(CFP-1086 Amendment 8 에서 ModuleArch rename + mandate 정정)**
-- 6 permanent → **5 permanent** (DataMigration→Data 흡수 rename, 순삭제 0). **(CFP-1086 Amendment 8 에서 5 → 7 permanent — AggregateArch + APIContractArch 신설)**
-- **ArchitectAnalyst** (PriorArtAgent rename, Sonnet) = CodebaseMapper / Refactor 와 함께 **4-tuple sub-tuple** (chief author 포함 — flat spawn 논리적 그룹핑, deputy column 아님). CFP-1086 Amendment 8 변경 0건 (sub-tuple invariant 보존).
-- **ArchitectAnalyst dual-read path (CFP-1428 / Sub-C S3.4)** = primary git `docs/architecture/<plugin>.md` (per-plugin Living Architecture, ADR-078 + ADR-112) + fallback Confluence page (ADR-103 mirror). divergence detect 시 PMOAgent retro F8 escalation channel emit (별 sibling PR codeforge-pmo). sibling design PR mclayer/plugin-codeforge-design#62 (747b540) MERGED — ArchitectAnalystAgent.md 본문 dual-read path section 신설 (구 lane repo PR — repo 삭제됨 2026-06-12, 현 `plugins/codeforge-design/`).
-
-### CFP-1126 6+3+1 primary axis matrix (Amendment 10 정합 — 본 matrix 가 canonical SSOT)
-
-> CFP-1086 Amendment 8 의 7+3+1 matrix 위 boundary axis 통합 (AggregateArch deprecated → ModuleArch unified). §3 aggregate / §11.1-§11.6 RDB OLTP / Alembic 7 원칙 owner = AggregateArch → **ModuleArch (boundary axis unified)** carry-over.
+### 6+3+1 primary axis matrix (canonical SSOT — CFP-1126 / ADR-042 Amendment 10 정합)
 
 | Change Plan sub-section | owner deputy (primary R) | model |
 |---|---|---|
@@ -93,37 +60,16 @@ CFP-1086 Amendment 8 이전 baseline (5+3 roster):
 - APIContractArch (transport surface) ↔ ModuleArch (module placement) — module public API ↔ transport contract = co-author 영역
 - SecurityArch (PII 정책) ↔ ModuleArch (aggregate-level PII persistence schema) — column type / encryption-at-rest schema = co-author 영역
 
-> ⚠ **AggregateArch deprecated 정합 footnote** (CFP-1126 / [ADR-042 Amendment 10](../../archive/adr/ADR-042-agent-model-selection-policy.md) + [ADR-091 Amendment 1](../../archive/adr/ADR-091-architectlane-ddd-vocabulary-governance.md), 2026-05-21 KST — RACI matrix **전면 재편 realized** by [CFP-1168](https://github.com/mclayer/plugin-codeforge/issues/1168)): **AggregateArchitectAgent ⚠ deprecated** — mandate carry-over to **ModuleArchitectAgent** (boundary axis 단일 advocate 통합: module-level boundary + aggregate-level boundary). 본 6+3+1 primary axis matrix 의 §3 aggregate / §11.1-§11.6 RDB OLTP / Alembic 7 원칙 owner = ModuleArch (boundary axis unified) carry-over 완료. axis disjoint 검증 4 영역 = ModuleArch↔AggregateArch 자기 통합으로 제거 + AggregateArch↔DataArch → ModuleArch↔DataArch + SecurityArch↔AggregateArch → SecurityArch↔ModuleArch 정정 완료. RACI 4-way 12-cell → **3-way 9-cell 재편 완료** (AggregateArch cell 제거). **CONDITIONAL applicability** `project.yaml aggregate_arch.applicable: bool` = ModuleArch carry-over (key 이름 보존, consumer overlay backward-compat). baseline = 7 → **6 permanent** (3+1 CONDITIONAL, AggregateArch applicability P2 → ModuleArch aggregate-level applicability carry-over). **RACI matrix 전면 재편 (4-way → 3-way, AggregateArch row/cell 제거)** = CFP-1126 follow-up **CFP-1168 realized** (deferred → realized — ADR-091 Amendment 1 §결정 7 INV-5 forcing function scope). agent file 실 deprecate = Wave 2 별 CFP carrier (codeforge-design plugin cross-repo sibling).
+> ⚠ **AggregateArch deprecated footnote** (CFP-1126 / ADR-042 Amd 10 + ADR-091 Amd 1, CFP-1168 realized): mandate carry-over to ModuleArch (boundary axis unified) 완료 — 본 matrix owner + axis disjoint 4 영역 + RACI 3-way 9-cell 모두 재편 완료 상태. agent file 실 deprecate = Wave 2 별 CFP carrier.
 
-### CFP-676 historical 5+3 matrix (CFP-1086 Amendment 8 이전 baseline — historical layer 보존)
+### CFP-676 historical 5+3 matrix
 
-> 본 matrix = CFP-676 / ADR-042-agent-model-selection-policy Amendment 7 시점 baseline. CFP-1086 Amendment 8 에서 superseded — 본 matrix 의 CodeArch / DataArch 영역은 CFP-1086 정합으로 ModuleArch / DataArch (축소) 로 변경됨. AggregateArch / APIContractArch column 미존재 (CFP-1086 신설).
-
-| §3 / §7 / §11 / §13 sub | SecurityArch | **InfraOperationalArch** | TestContractArch | **DataArch** (~~RDB+OLAP~~ → OLAP only per CFP-1086) | **CodeArch** (~~code 일반~~ → ModuleArch per CFP-1086) | **LiveOps** (CONDITIONAL) | **LiveOrdering** (CONDITIONAL) | **ProductionEvidence** (CONDITIONAL) |
-|---|:-:|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-| §3 Code 설계 (layered/hexagonal/clean/DDD/module boundary/dependency direction) | — | — | — | — | ✅ | — | — | — |
-| §3 Data 구조 (entity/aggregate/VO/persistence model/데이터 흐름) | — | — | — | ✅ | (consult module boundary) | — | — | — |
-| §7.1 Trust boundary | ✅ **(+container network mode / secret mount)** | (consult) | — | — | — | (consult Live API) | — | (consult prod env) |
-| §7.2 Threat model | ✅ | — | — | — | — | — | — | — |
-| §7.3 Auth/authz | ✅ | — | — | — | — | (consult operator approval) | — | — |
-| **§7.4 DR / disconnect / rate limit / env isolation / container** | (consult) | **✅ (primary 4-sub: DR §7.4.1 / Clock §7.4.3 / Env §7.4.5 / Container §7.4.6 — restart policy / volume DR / health check / network mode; cross-ref shell 2-sub: Rate §7.4.4 / Disconnect §7.4.2 evidence-driven)(+environment containment owner)** | — | — | — | (consult Live failure) | (consult exchange rate-limit) | **(consult — evidence axis, production cutover Story)** |
-| **§7.4 Clock sync (CONDITIONAL)** | (consult) | **✅** | — | — | — | — | — | (consult drift 실측) |
-| §7.5 민감 데이터 분류 | ✅ **(+container secret mount / image layer 누설)(+credential threat owner: vault path / runtime injection / key permission)** | (consult containment) | — | — | — | (consult API key) | — | — |
-| §7.6 위협↔완화 매핑 | ✅ | (DR↔failover consult) | — | — | — | (consult kill switch) | — | — |
-| **§11 Idempotency (CONDITIONAL)** | — | (consult)(+N줄 memo input — §7.4.2 disconnect 짝) | — | **✅ (+cell primary author)** | — | — | (consult order idempotency) | — |
-| §11 Schema/Migration/Rollback + 전체 데이터 구조 | — | — | — | ✅ **(+DB container volume / data persistence / event schema / DTO / API contract data)** | (consult module boundary) | — | — | — |
-| **§11 Ledger reconcile / partial fill / fee invariant (CONDITIONAL Live)** | — | (consult) | — | (consult §11) | — | — | **✅** | — |
-| **§8.5 Stateful / restart invariant** | — | (consult §7.4 짝) | **✅** | (consult §11.6 짝) | — | — | (consult order replay) | — |
-| **§8.5 discriminating fixture mandate (RED→GREEN proof, CFP-1334)** | — | — | **✅** | — | — | — | — | — |
-| **§13 Live Operational Discipline (CONDITIONAL Live touching)** | (consult §7.5) | (consult kill switch) | — | (consult §11) | — | **✅** | (consult §11 ledger) | (consult cutover evidence) |
-| **Production evidence quad / EPIC CLOSED gate / post-cutover wiring (CONDITIONAL production cutover)** | (consult §7.5) | **(consult — policy SSOT axis)** | — | — | — | (consult) | (consult) | **✅ (evidence SSOT axis — ADR-72 §결정 2/4)** |
-
-✅ = primary owner / (consult) = secondary input.
+> superseded (CFP-1086 / CFP-1126) — historical 5+3 matrix 본문은 git history (pre-CFP-2234 본 파일) + ADR-042 Amendment 7 참조. 현행 lookup = 위 6+3+1 primary axis matrix 단일.
 
 ## CONDITIONAL deputy 활성 정책 (CFP-77 / ADR-72)
 
 - **LiveOpsDeputy + LiveOrderingDeputy** = Live touching Story만 active (real funds / live exchange API / production credential / live order placement 중 하나 이상). Backtest/Paper-only Story = 미spawn.
-- **ProductionEvidenceDeputy** (ADR-72 §결정 1/3) = Live touching Story **OR** production cutover 영향 Story 만 active (Change Plan §13 `production_cutover_touching: true` 선언 또는 §13 Live Operational Discipline 본문 보유). wrapper-self-app N/A (ADR-72 §결정 6 — ADR-005 `plugin-meta-na`). **Ownership 이관 (CFP-1059 / [ADR-088](../../archive/adr/ADR-088-deploy-review-lane-and-production-evidence-transfer.md) §결정 3)**: codeforge-design CONDITIONAL → codeforge-deploy-review 정식 이관. mandate body 자체는 보존 (ADR-72 §결정 1-7 그대로 — 4 prerequisite measurement source enforcement). ownership 만 이전 (axis 정합: production 환경 평가 = production 환경 lane 영역, 설계 lane 의 design 결정 layer 와 axis 불일치). Phase 1 declarative — 실 이관 = codeforge-deploy-review plugin seed 신설 (S3 sub-Story carrier) 후 활성. 이관 후 = codeforge-deploy-review 의 정규 deputy (CONDITIONAL 아님, mandatory 부분).
+- **ProductionEvidenceDeputy** (ADR-72 §결정 1/3) = Live touching Story **OR** production cutover 영향 Story 만 active (Change Plan §13 `production_cutover_touching: true` 선언 또는 §13 Live Operational Discipline 본문 보유). wrapper-self-app N/A (ADR-72 §결정 6 — ADR-005 `plugin-meta-na`). **Ownership 이관 (CFP-1059 / ADR-088 §결정 3)**: codeforge-design CONDITIONAL → codeforge-deploy-review 정식 이관 — mandate body 보존 (ADR-72 §결정 1-7 그대로), ownership 만 이전. 이관 후 = codeforge-deploy-review 의 정규 deputy.
 - ArchitectPLAgent가 Story의 §13 CONDITIONAL trigger 검토 후 spawn 결정:
   - Backtest/Paper-only: 5 permanent deputy
   - Live touching pre-cutover: 8 (5 + LiveOps + LiveOrdering + [4-tuple sub-tuple])
@@ -132,24 +78,22 @@ CFP-1086 Amendment 8 이전 baseline (5+3 roster):
 
 **InfraOperationalArch ↔ ProductionEvidence disjoint axis (ADR-72 §결정 4 / ADR-014 Amendment 4 §결정 3)**: policy SSOT (InfraOperationalArch §7.4 invariant 정의 — design-time) vs evidence SSOT (ProductionEvidence production grounding 실측 명시 — runtime). consumer production cutover Story 에서 dual-spawn 가능 (영역 disjoint). wrapper-self-app 시 ProductionEvidence N/A.
 
-§7.4 schema 자체는 codeforge-design plugin SSOT. wrapper는 본 매트릭스만 SSOT 보유 ([ADR-014](../../archive/adr/ADR-014-operational-risk-ssot-distribution.md) + Amendment 4, [ADR-72](../../archive/adr/ADR-72-production-evidence-deputy-and-epic-cutover-gate.md), [ADR-042 Amendment 7](../../archive/adr/ADR-042-agent-model-selection-policy.md)).
+§7.4 schema 자체는 codeforge-design plugin SSOT. wrapper는 본 매트릭스만 SSOT 보유 (ADR-014 + Amendment 4 / ADR-72 / ADR-042 Amendment 7).
 
 ## DDD pattern mapping (ADR-091 §결정 1/2 — CFP-1117 S5)
 
-> **ArchitectLane 14 agent ↔ DDD role Hybrid mapping**. ADR-091 (ArchitectLane DDD vocabulary governance) §결정 1 Hybrid mapping + §결정 2 deputy spawn rationale 어휘 transition 의 deputy-mandate skill realize layer. Published Language SSOT = [`docs/glossary.md`](../../docs/glossary.md) (codeforge governance BC). 본 section = ADR-091 §결정 1/2 + Amendment 1 (CFP-1126 / ADR-042-agent-model-selection-policy Amendment 10 정합 — AggregateArch deprecated, ModuleArch unified) 정합. 단일 DDD 패턴 전 agent 강제 = false precision → 거부 (3 role 만 — ADR-091 §결정 1 rationale).
+> ArchitectLane agent ↔ DDD role Hybrid mapping. Published Language SSOT = [`docs/glossary.md`](../../docs/glossary.md). **단일 DDD 패턴 전 agent 강제 = false precision → 거부 (3 role 만 — ADR-091 §결정 1 rationale)**.
 
 ### 1. Authority Pair (ArchitectPLAgent + ArchitectAgent)
 
-ArchitectPL + Architect 2 agent = **Authority Pair** (ADR-091 §결정 3 Aggregate metaphor 2-layer 정합):
+- **ArchitectPLAgent** = Authority Pair **Layer A** (Aggregate Root metaphor — governance BC, PL metaphor): supervised authority cluster. Story 단위 plan consistency boundary 의 supervisor. **deputy spawn 결정 주체** — 6 permanent + 3+1 CONDITIONAL spawn 여부 + 4-tuple flat spawn 결정.
+- **ArchitectAgent** (chief author) = Authority Pair **Layer B** (산출물 = real Aggregate): multi-source synthesizer. Change Plan + ADR draft + §8 Test Contract + §11 = **real consistency boundary** — §1-§11 + BC classification + aggregate impacts 가 handoff 전 cohere 의무.
 
-- **ArchitectPLAgent** = Authority Pair (Aggregate Root metaphor) — **Layer A** (governance BC, PL metaphor): supervised authority cluster. Story 단위 plan consistency boundary 의 supervisor. **deputy spawn 결정 주체** (Aggregate Root metaphor — supervised authority). 6 permanent deputy + 3+1 CONDITIONAL spawn 여부 + 4-tuple sub-tuple flat spawn 을 결정.
-- **ArchitectAgent** (chief author) = Authority Pair (Chief Author) — **Layer B** (governance BC, ArchitectLane 산출물 = real Aggregate): multi-source synthesizer. Change Plan + ADR draft + §8 Test Contract + §11 데이터 마이그레이션 = **real consistency boundary**. §1-§11 + BC classification + aggregate impacts + language choices + risks + ADR rationale 가 handoff 전 cohere 해야 함 (산출물 real 일관성 경계).
-
-> Layer A (PL metaphor only) ↔ Layer B (Architect 산출물 real consistency boundary) explicit separate = 동음이의 (governance BC ↔ application BC) 충돌 차단 의무 (ADR-091 §결정 3). mctrader application BC 의 Aggregate (DDD Aggregate root in domain model) 은 **별 BC** — `docs/glossary.md` 3 distinct semantics entry 분리.
+> Layer A (metaphor only) ↔ Layer B (real consistency boundary) explicit separate = 동음이의 (governance BC ↔ application BC) 충돌 차단 의무 (ADR-091 §결정 3). consumer application BC 의 DDD Aggregate = 별 BC — `docs/glossary.md` 3 distinct semantics entry 분리.
 
 ### 2. Domain Service (6 permanent SubAgent + 3 sub-tuple)
 
-다음 6 permanent SubAgent + 3 sub-tuple = **Domain Service** — "specialized judgment contributor — BC Owner 아님 (Story 가 multiple BC 가로지를 수 있음 → advisory expertise ≠ contextual authority)":
+다음 = **Domain Service** — "specialized judgment contributor — **BC Owner 아님** (Story 가 multiple BC 가로지를 수 있음 → advisory expertise ≠ contextual authority)":
 
 | Agent | Domain Service 영역 |
 |---|---|
@@ -163,14 +107,11 @@ ArchitectPL + Architect 2 agent = **Authority Pair** (ADR-091 §결정 3 Aggrega
 | RefactorAgent (sub-tuple) | refactoring 옹호자 — decoupling / pattern / interface 분리 |
 | ArchitectAnalystAgent (sub-tuple) | prior art / industry pattern analyst |
 
-> sub-tuple 3 (CodebaseMapper / Refactor / ArchitectAnalyst) = Domain Service role 이지만 deputy column 아님 (4-tuple flat spawn 논리적 그룹핑 — "4-tuple sub-tuple spawn 가이드" section 정합). `bounded_context: codeforge-governance`, `ddd_pattern: Domain Service` (ADR-091 §결정 5 frontmatter field — agent file 은 codeforge-design plugin sibling).
+> sub-tuple 3 = Domain Service role 이지만 **deputy column 아님** (4-tuple flat spawn 논리적 그룹핑). `bounded_context: codeforge-governance`, `ddd_pattern: Domain Service` (ADR-091 §결정 5 frontmatter field).
 
 ### 3. Subdomain Specialist (3+1 CONDITIONAL) — "which subdomain under threat" 어휘 transition
 
-3+1 CONDITIONAL deputy (LiveOps / LiveOrdering / ProductionEvidence) = **Subdomain Specialist**. ADR-091 §결정 2 deputy spawn rationale 어휘 transition:
-
-- **Before**: "perspective-contributor" (보수 / 혁신 / 위협 등 perspective) / "CONDITIONAL 활성"
-- **After**: **"which subdomain under threat"** (subdomain decision is at risk → Subdomain Specialist spawn)
+3+1 CONDITIONAL deputy = **Subdomain Specialist**. ADR-091 §결정 2 spawn rationale 어휘 transition: "perspective-contributor" → **"which subdomain under threat"** (subdomain decision is at risk → Subdomain Specialist spawn).
 
 | Deputy | spawn rationale 어휘 (ArchitectPL spawn 결정 input) | spawn trigger (실 영향) |
 |---|---|---|
@@ -178,30 +119,27 @@ ArchitectPL + Architect 2 agent = **Authority Pair** (ADR-091 §결정 3 Aggrega
 | LiveOrderingDeputy | "which subdomain under threat = **live ordering**" | Live touching Story 의 order side (ledger reconcile / partial fill / fee invariant / order idempotency) — live ordering subdomain decision at risk 시 spawn |
 | ProductionEvidenceDeputy | "which subdomain under threat = **production evidence**" | production cutover 영향 Story (Change Plan §13 `production_cutover_touching: true` 또는 §13 Live Operational Discipline 본문 보유) — production evidence subdomain decision at risk 시 spawn. ownership = codeforge-deploy-review (ADR-088 §결정 3 이관 declarative) |
 
-> **vocabulary theater 차단 (INV-5 — ADR-091 §결정 7)**: 본 "which subdomain under threat" 어휘는 **단순 nominal 명칭이 아니라 ArchitectPL 의 CONDITIONAL spawn 결정 input 에 실제 반영**된다. ArchitectPL 이 "CONDITIONAL deputy 활성 정책" section 의 spawn 결정 (Backtest/Paper-only: 미spawn / Live touching: LiveOps + LiveOrdering / Production cutover: + ProductionEvidence) 을 할 때, **어느 subdomain decision 이 risk 에 처했는가** (live ops / live ordering / production evidence) 를 판정해 그 enum 어휘를 spawn rationale 로 명시 출력해야 한다. 어휘 emit ↔ spawn decision 결합 = forcing function. Deputy = contributor 유지 (BC Owner 아님 — option C deputy = BC Owner = overreach 거부, ADR-091 §결정 2 rationale).
+> **vocabulary theater 차단 (INV-5 — ADR-091 §결정 7)**: 본 "which subdomain under threat" 어휘는 **단순 nominal 명칭이 아니라 ArchitectPL 의 CONDITIONAL spawn 결정 input 에 실제 반영**된다. ArchitectPL 이 CONDITIONAL spawn 결정 (Backtest/Paper-only: 미spawn / Live touching: LiveOps + LiveOrdering / Production cutover: + ProductionEvidence) 시, **어느 subdomain decision 이 risk 에 처했는가** (live ops / live ordering / production evidence) 를 판정해 그 enum 어휘를 spawn rationale 로 명시 출력해야 한다. **어휘 emit ↔ spawn decision 결합 = forcing function**. Deputy = contributor 유지 (BC Owner 아님 — deputy = BC Owner = overreach 거부, ADR-091 §결정 2 rationale).
 
-> **W1 S2 보강 완료 (CFP-681 — state dependency on CFP-676 S1 해소)**: S1 (CFP-676, wrapper main `abcd92bf`) 이 5+3 mandate matrix 본문 + frontmatter + §13 Live Discipline 행을 full 재작성 완료. 본 S2 = **매트릭스 본문 재작성 0 (S1 산출물 보존)** + additive 보강만: (a) "호출 시점" 4-tuple spawn trigger 추가 (b) 신규 "4-tuple sub-tuple spawn 가이드" 섹션 (CodebaseMapper/Refactor/ArchitectAnalyst + chief author — flat spawn 논리적 그룹핑, nested 금지 reaffirm) (c) playbook §12.8 (deputy 영역별 specialized Context Packet 4종 spec) + ADR-039 §결정 1 cross-ref (d) CLAUDE.md "Deputy mandate 매트릭스" 단락 (`abcd92bf` L229-233) 과 deputy 명칭 5종 + 3 CONDITIONAL + ArchitectAnalyst sub-tuple 표현 byte-consistent 재확인. "full 재작성" 의 §1 의도 = S1+S2 누적으로 5+3 매트릭스 + 4-tuple/Context Packet spec 최종 형태 SSOT 존재 — 충족 (CFP-681 §2.5 상충 조정 / AC-1). agent file 실 신설/rename = W2 S3 (codeforge-design sibling).
+연혁 주석 (각 1줄 — 상세 = git history + ADR Amendment):
+- W1 S2 보강 완료 (CFP-681) — S1 (CFP-676) 매트릭스 본문 위 additive 보강 (4-tuple 가이드 + Context Packet cross-ref).
+- CFP-1086 Story-1 보강 완료 — 7+3+1 재편 반영 (ADR-042 Amendment 8 SSOT).
+- CFP-1168 RACI 재편 완료 — 4-way 12-cell → 3-way 9-cell (ADR-042 Amendment 10 + ADR-091 Amendment 1 SSOT).
 
-> **CFP-1086 Story-1 보강 완료 (BackendArchEpic Phase 2 — 7+3+1 roster 재편)**: CFP-1086 / ADR-042-agent-model-selection-policy Amendment 8 + ADR-068 Amendment 2 + ADR-086 신설 atomic carrier 가 5+3 → 7+3+1 (AggregateArch + APIContractArch 신설 + ModuleArch rename + DataArch 축소 + AggregateArch CONDITIONAL applicability P2) 재편. 본 SKILL.md 보강: (a) frontmatter description 갱신 (5+3 → 7+3+1) (b) "Deputy mandate 매트릭스" 단락 header CFP-1086 layer 추가 (c) "CFP-1086 7+3+1 primary axis matrix" 신규 단락 (canonical SSOT — owner deputy per Change Plan sub-section + axis disjoint 검증 4 영역) (d) CFP-676 historical 5+3 matrix retain (superseded marker 추가) (e) "RACI 표준 row 형식 (Story-3 carrier skeleton)" 신규 단락 (4-column R/A/C/I body 채움 = Story-3 별 PR). agent file 실 신설/rename = 본 Story-1 codeforge-design plugin sibling PR (doc-only fast-path ADR-054 5-repo atomic).
+## RACI 표준 row 형식 (3-way overlap zone body)
 
-> **CFP-1168 RACI matrix 전면 재편 완료 (CFP-1126 follow-up — ADR-042-agent-model-selection-policy Amendment 10 + ADR-091 Amendment 1 정합)**: CFP-1126 (AggregateArch deprecated + ModuleArch boundary axis unified, 7→6 permanent) 가 RACI matrix body 를 transitional 보존 (footnote 명시만 — "RACI 전면 재편 = 별 carrier CFP" deferred). 본 CFP-1168 = 그 deferred carrier 의 실 재편: (a) frontmatter description 7+3+1 → 6+3+1 (b) 매트릭스 header + BackendArchEpic roster section CFP-1126 layer 추가 (c) CFP-1086 7+3+1 → **6+3+1 primary axis matrix** (§3 aggregate / §11.1-§11.6 RDB OLTP / Alembic 7 원칙 owner = AggregateArch → ModuleArch unified) (d) axis disjoint 검증 4 영역 정정 (ModuleArch↔AggregateArch 자기 통합 제거 + AggregateArch↔DataArch → ModuleArch↔DataArch + SecurityArch↔AggregateArch → SecurityArch↔ModuleArch) (e) footnote deferred → realized (f) **RACI 4-way 12-cell → 3-way 9-cell body 전면 재편** (AggregateArch column/cell 제거, Cell 1.1/2.1/3.1 의 C=AggregateArch → ModuleArch aggregate-level). CONDITIONAL applicability key `aggregate_arch.applicable` 보존 (ModuleArch carry-over, consumer overlay backward-compat). doc-only fast-path ADR-054. wrapper skill = canonical / design CLAUDE.md = mirror (sibling sync 정합). agent file 실 deprecate = Wave 2 별 CFP carrier.
-
-## RACI 표준 row 형식 (Story-3 — 3-way overlap zone body, CFP-1168 재편)
-
-CFP-1086 / ADR-068 Amendment 2 chief tie-break ladder 3 단계 의 **1단계 (RACI matrix lookup)** 입력 SSOT — 3-way overlap zone 의 명시적 R/A/C/I 4-column row 형식. 본 단락 body = **CFP-1086 Wave 2 Story-3 carrier** (skeleton → body 전환 완료) + **CFP-1168 재편** (CFP-1126 정합 — 4-way → 3-way, AggregateArch cross-axis 흡수 to ModuleArch aggregate-level).
+chief tie-break ladder (ADR-068 Amendment 2) **1단계 (RACI matrix lookup)** 입력 SSOT — 3-way overlap zone 의 명시적 R/A/C/I 4-column row 형식 (CFP-1086 Story-3 body + CFP-1168 재편).
 
 ### 4-column 열 정의
 
 - **Responsible (R)** — primary 결정권자 (single role per row, 결정 권한 owner). 실 author / 산출물 1차 작성 책임.
-- **Accountable (A)** — approver / final sign-off (chief tie-break ladder 3단계 trigger 영역 — **ArchitectAgent chief author**). 모든 row 의 A = ArchitectAgent (chief tie-break ladder ADR-068 Amendment 2 §결정 1).
+- **Accountable (A)** — approver / final sign-off (chief tie-break ladder 3단계 trigger 영역 — **ArchitectAgent chief author**). 모든 row 의 A = ArchitectAgent (ADR-068 Amendment 2 §결정 1).
 - **Consulted (C)** — co-author / 협업 (mandate scope 가 partial overlap, input 제공). 결정권 없으나 행위 결정 전 양방향 dialog 의무.
 - **Informed (I)** — notified only (mandate scope 외, 변경 영향 인지 의무). 일방향 통지 — dialog 없음.
 
-### 3-way overlap zone (3 sub-axis × 3 cross-axis = 9 cells, CFP-1168 재편)
+### 3-way overlap zone (3 sub-axis × 3 cross-axis = 9 cells)
 
-본 9-cell matrix = CFP-1126 6+3+1 §primary axis matrix 의 cross-axis 영역 보강. primary single-axis 결정은 §primary axis matrix lookup, **다축 overlap 영역**만 본 RACI lookup 으로 처리.
-
-> **CFP-1168 재편 note**: CFP-1126 (AggregateArch deprecated → ModuleArch boundary axis unified) 정합 — 기존 4-way (× Aggregate/Data/Module/APIContract = 12 cells) 에서 Aggregate cross-axis column 제거, ModuleArch (boundary axis unified) cross-axis 가 module-level + aggregate-level (RDB OLTP) 흡수. 3-way (× Data/Module(unified)/APIContract) = 9 cells. 기존 Cell 1.1/2.1/3.1 (Security/InfraOp/TestContract × Aggregate) 의 C=AggregateArch → ModuleArch (aggregate-level) 흡수해 Module cross-axis cell 안 aggregate-level 정합 검토로 통합.
+primary single-axis 결정은 §primary axis matrix lookup, **다축 overlap 영역**만 본 RACI lookup 으로 처리. (CFP-1168: 구 4-way 12-cell 의 Aggregate cross-axis column 을 ModuleArch aggregate-level 로 흡수.)
 
 | Sub-axis ↓ \\ Cross-axis → | Data (빅데이터 OLAP) | Module (boundary + dependency + aggregate-level RDB OLTP, unified) | APIContract (transport + DTO) |
 |---|---|---|---|
@@ -209,7 +147,7 @@ CFP-1086 / ADR-068 Amendment 2 chief tie-break ladder 3 단계 의 **1단계 (RA
 | **InfraOp** (DR / clock / rate / env / container) | Cell 2.1 | Cell 2.2 | Cell 2.3 |
 | **TestContract** (커버리지 / 경계 / invariant / §8.5/§8.6) | Cell 3.1 | Cell 3.2 | Cell 3.3 |
 
-### Row 1 — Security cross-axis (Cell 1.1 ~ Cell 1.3)
+### Row 1 — Security cross-axis
 
 #### Cell 1.1 — Security × Data (OLAP PII 익명화 / 보존 정책 / Parquet column 마스킹)
 
@@ -222,7 +160,7 @@ CFP-1086 / ADR-068 Amendment 2 chief tie-break ladder 3 단계 의 **1단계 (RA
 
 #### Cell 1.2 — Security × Module (trust boundary module 배치 / dependency direction + aggregate-level PII column / encryption-at-rest)
 
-> **CFP-1168 흡수**: 기존 Cell 1.3 (Security × Module) + Cell 1.1 (Security × Aggregate) 통합. ModuleArch boundary axis unified — module-level trust boundary 정합 + aggregate-level RDB OLTP PII column type / encryption-at-rest schema / Alembic migration 정합 (AggregateArch carry-over).
+> CFP-1168 흡수 — 구 Security × Aggregate cell 통합 (ModuleArch aggregate-level).
 
 | Role | Deputy | 책임 |
 |---|---|---|
@@ -240,7 +178,7 @@ CFP-1086 / ADR-068 Amendment 2 chief tie-break ladder 3 단계 의 **1단계 (RA
 | **C** | APIContractArchitectAgent | API endpoint 별 auth scheme (OAuth2 / JWT / mTLS) + rate limit header 표준 (RFC 6585 + X-RateLimit-*) + input validation schema (OpenAPI / JSON Schema) co-author |
 | **I** | InfraOperationalArchitectAgent | §7.4.4 rate limit runtime enforcement (transport-level retry / circuit breaker) 인지 |
 
-### Row 2 — InfraOp cross-axis (Cell 2.1 ~ Cell 2.3)
+### Row 2 — InfraOp cross-axis
 
 #### Cell 2.1 — InfraOp × Data (OLAP scan / streaming throttle / batch window)
 
@@ -253,7 +191,7 @@ CFP-1086 / ADR-068 Amendment 2 chief tie-break ladder 3 단계 의 **1단계 (RA
 
 #### Cell 2.2 — InfraOp × Module (runtime module 분리 / hot reload + aggregate-level connection pool / replica / advisory lock)
 
-> **CFP-1168 흡수**: 기존 Cell 2.3 (InfraOp × Module) + Cell 2.1 (InfraOp × Aggregate) 통합. ModuleArch boundary axis unified — module-level runtime process boundary 정합 + aggregate-level 트랜잭션 경계 / isolation level 가 connection pool / replica / lock 정책과 정합 (AggregateArch carry-over semantics 영역).
+> CFP-1168 흡수 — 구 InfraOp × Aggregate cell 통합 (ModuleArch aggregate-level).
 
 | Role | Deputy | 책임 |
 |---|---|---|
@@ -271,7 +209,7 @@ CFP-1086 / ADR-068 Amendment 2 chief tie-break ladder 3 단계 의 **1단계 (RA
 | **C** | APIContractArchitectAgent | API contract level retry-safety (idempotent verb 정합 + retry header + 5xx vs 4xx mapping + GraphQL persisted query retry semantics) co-author |
 | **I** | TestContractArchitectAgent | §8.5 stateful test (cancel-on-disconnect + circuit breaker open/close transition) 인지 |
 
-### Row 3 — TestContract cross-axis (Cell 3.1 ~ Cell 3.3)
+### Row 3 — TestContract cross-axis
 
 #### Cell 3.1 — TestContract × Data (OLAP fixture / streaming replay / lineage test)
 
@@ -284,7 +222,7 @@ CFP-1086 / ADR-068 Amendment 2 chief tie-break ladder 3 단계 의 **1단계 (RA
 
 #### Cell 3.2 — TestContract × Module (module boundary test / dependency test + aggregate-level migration forward/backward + idempotency test)
 
-> **CFP-1168 흡수**: 기존 Cell 3.3 (TestContract × Module) + Cell 3.1 (TestContract × Aggregate) 통합. ModuleArch boundary axis unified — module-level dependency direction test seed + aggregate-level Alembic 정책 7 원칙 정합 migration test seed (AggregateArch carry-over).
+> CFP-1168 흡수 — 구 TestContract × Aggregate cell 통합 (ModuleArch aggregate-level).
 
 | Role | Deputy | 책임 |
 |---|---|---|
@@ -297,9 +235,9 @@ CFP-1086 / ADR-068 Amendment 2 chief tie-break ladder 3 단계 의 **1단계 (RA
 
 | Role | Deputy | 책임 |
 |---|---|---|
-| **R** | APIContractArchitectAgent | §8.6 contract testing **primary** (CFP-1126 6+3+1 primary axis matrix row 정합) — Pact consumer-driven / Spring Cloud Contract provider-driven / Schemathesis schema-based 3 paradigm |
+| **R** | APIContractArchitectAgent | §8.6 contract testing **primary** (6+3+1 primary axis matrix row 정합) — Pact consumer-driven / Spring Cloud Contract provider-driven / Schemathesis schema-based 3 paradigm |
 | **A** | ArchitectAgent | chief tie-break ladder 3단계 |
-| **C** | TestContractArchitectAgent | §8.6 통합 테스트 CI placement + orchestration + test orchestration 책임 (contract format ≠ CI placement disjoint axis) |
+| **C** | TestContractArchitectAgent | §8.6 통합 테스트 CI placement + orchestration 책임 (contract format ≠ CI placement disjoint axis) |
 | **I** | InfraOperationalArchitectAgent | Pact broker 운영 + contract testing CI 인프라 인지 |
 
 ### Cell selection heuristic (chief author 적용 ladder 1단계)
@@ -313,13 +251,4 @@ CFP-1086 / ADR-068 Amendment 2 chief tie-break ladder 3 단계 의 **1단계 (RA
 3. **R+C 합의 부재** → chief tie-break ladder 2단계 (ADR-068 invariant 적용) 진입
 4. **invariant 적용 후에도 미해소** → chief tie-break ladder 3단계 (chief judgement + ADR Amendment carrier 발의)
 
-### Cross-ref
-
-- **ADR-068 Amendment 2** (CFP-1086 / Story-1) — chief tie-break ladder 3 단계: (1) RACI matrix lookup (본 단락 body 3-way 9-cell SSOT — CFP-1168 재편) → (2) ADR-068 invariant 적용 → (3) chief judgement + ADR Amendment 발의
-- **ADR-042-agent-model-selection-policy Amendment 10 + ADR-091 Amendment 1** (CFP-1126 / CFP-1168 carrier) — AggregateArch deprecated + ModuleArch boundary axis unified (7+3+1 → 6+3+1). RACI 4-way 12-cell → 3-way 9-cell 전면 재편 (ADR-091 §결정 7 INV-5 forcing function scope). CONDITIONAL applicability `aggregate_arch.applicable` key 보존 (ModuleArch carry-over).
-- **ADR-086** (CFP-1086 / Story-1 신설) — Deputy 신설 결정 framework §결정 1 axis 분석 + §결정 2 5-checklist self-app. RACI codify = mechanism gap 해소 ratchet (chief tie-break 3단계 → 1단계로 Move-left)
-- **review-verdict-v4 v4.6** (CFP-1086 carrier) — `boundary_completeness_self_check_passed` scope expansion (Amendment 2 ladder 3단계 mechanism 통과 의무)
-- **CFP-1086 Story-2** — APIContractArch mandate body 심화 (Cell 1.3 / 2.3 / 3.3 의 C/R 영역 detail SSOT — CFP-1168 재번호)
-- **codeforge-design `CLAUDE.md`** — RACI section mirror (wrapper skill SSOT 참조)
-
-본 RACI 3-way 9-cell codify = ratchet 강화 방향 (1단계 RACI matrix lookup 영역 확장 → 3단계 chief judgement 영역 축소) + CFP-1126 boundary axis 통합 (4-way → 3-way, AggregateArch deprecated 정합). ADR-058 §결정 5 / ADR-064 §결정 7 top-down ratchet 정합. CFP-1168 = CFP-1126 follow-up deferred carrier realized (RACI matrix 전면 재편 — AggregateArch cross-axis column 흡수 to ModuleArch aggregate-level).
+Cross-ref (1줄): ladder 3 단계 = ADR-068 Amendment 2 / 6+3+1 재편 = ADR-042 Amendment 10 + ADR-091 Amendment 1 / Deputy 신설 framework = ADR-086 / review-verdict `boundary_completeness_self_check_passed` = CFP-1086 carrier / codeforge-design `CLAUDE.md` = 본 단락 mirror (wrapper skill canonical).
