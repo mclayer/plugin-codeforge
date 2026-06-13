@@ -29,7 +29,7 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 | **codeforge-test** | 통합테스트 레인 — Epic-level 통합 검증 | 1 (IntegrationTestAgent) | Active |
 | **codeforge-deploy** (CFP-1059 / ADR-087) | 배포 레인 — Epic 묶음 종료 후 변경 repo blue-green + atomic swap + 3-시간 보존 + 자동 rollback | 2 (DeployPLAgent + DeployWorkerAgent, Sonnet) | Phase 1 declarative — plugin seed 신설 = S2 sub-Story carrier |
 | **codeforge-deploy-review** (CFP-1059 / ADR-088) | 배포 검토 레인 — production smoke / 성능 비교 / cutover 사후 검증 + ProductionEvidenceDeputy 이관 owner | 3 (DeployReviewPLAgent Opus + DeployReviewWorkerAgent Sonnet + ProductionEvidenceDeputy 이관) | Phase 1 declarative — plugin seed 신설 = S3 sub-Story carrier |
-| **codeforge-pmo** | Cross-cutting — Epic 창설 / Story 회고 / Git ops / Dialog fidelity | 3 (PMOAgent + GitOpsAgent + DialogFidelityAgent) | Active |
+| **codeforge-pmo** | Cross-cutting — Epic 창설 / Story 회고 / Git ops | 2 (PMOAgent + GitOpsAgent) | Active |
 
 > 각 lane plugin agent 역할·동작 = 해당 plugin CLAUDE.md SSOT (lane plugin self-owned architecture_doc 안 `## 모듈` H2 = lane internal 상세). 본 표 = family composition map (plugin 단위, 라인 수준 0건).
 
@@ -94,7 +94,7 @@ codeforge = Claude Code 범용 SW 개발 오케스트레이션 플러그인 fami
 **Cross-cutting 흐름** (Story lane 게이트 비개입, 독립 spawn):
 - PMOAgent — Epic 창설 / Story 완료 retro (Phase 2 PR merge 후 5분 grace 자동 trigger, ADR-045)
 - GitOpsAgent — parallel epic conflict 검사 + scope_manifest intersection
-- DialogFidelityAgent — Orchestrator ↔ 사용자 dialog 3-anchor read-only verify
+- (DialogFidelityAgent — Orchestrator ↔ 사용자 dialog 3-anchor read-only verify = CFP-2236 sunset, ADR-071 Amendment 9. 검증 ground = Codex TP#2/TP#3 + ADR-064 Q-3check 보존.)
 
 **artifact propagation**:
 - Story file (`internal-docs/<plugin>/stories/<KEY>.md`) = lane 간 컨텍스트 SSOT (각 lane self-fetch)
@@ -175,7 +175,7 @@ graph TB
         Review[codeforge-review<br/>3 PL + 2 worker]
         Develop[codeforge-develop<br/>5 + dynamic role:dev]
         Test[codeforge-test<br/>1 IntegrationTestAgent]
-        PMO[codeforge-pmo<br/>3 PMO + GitOps + DialogFidelity]
+        PMO[codeforge-pmo<br/>2 PMO + GitOps]
     end
 
     subgraph "Deploy lanes (2 declarative — CFP-1059 Phase 1)"
@@ -325,7 +325,6 @@ graph TB
     subgraph "codeforge-pmo (Cross-cutting)"
         PMO[PMOAgent<br/>Epic / retro / cross-Story]
         GitOps[GitOpsAgent<br/>long-running teammate]
-        DialogFid[DialogFidelityAgent<br/>3-anchor verifier]
     end
 ```
 
@@ -334,7 +333,7 @@ graph TB
 - **flat spawn invariant** = Orchestrator 가 모든 sub-agent / worker flat spawn (재귀 spawn 금지 ADR-039, nested team 금지 ADR-044). 4-tuple sub-tuple = 논리적 그룹핑일 뿐 spawn 계층 아님
 - **worker peer 필수** = review lane 의 Claude + Codex 양 worker 모두 spawn 의무 (단독 fallback 0, ADR-001)
 - **CONDITIONAL deputy** = Live touching / production cutover Story 만 active (Backtest/Paper-only Story = 미spawn)
-- **Cross-cutting boundary** = PMO / GitOps / DialogFidelity 는 Story lane gate 비개입 (sibling 책임 영역 disjoint)
+- **Cross-cutting boundary** = PMO / GitOps 는 Story lane gate 비개입 (sibling 책임 영역 disjoint)
 - **Phase 1 declarative (deploy lanes)** = agent file / contract body / workflow 실 신설 = S2/S3 sub-Story carrier (본 declarative phase = 정책 anchor only)
 
 ### Open Decisions Pending

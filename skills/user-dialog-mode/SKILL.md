@@ -110,38 +110,9 @@ tools: Read
 - CFP-582 cross-ref (ADR-071 §결정 9): agent↔agent debate domain (ADR-059 Amendment 2) — conceptual cross-ref only, 3 marker **schema 재사용 절대 금지**.
 - scope 외 (ADR-071 §결정 10): Layer 1 mechanical lint (별도 CFP) / agent↔agent debate / 코드 품질·보안·성능 / 사용자 memory entry 삭제 / consumer overlay customization (**overlay 는 정책 축소 불허**) / debate marker import (schema 직접 채택 절대 금지).
 
-## DialogFidelityAgent spawn anchor (ADR-071 §결정 13 / CFP-818)
+## DialogFidelityAgent spawn anchor — sunset (ADR-071 Amendment 9 / CFP-2236, 2026-06-14)
 
-> normative SSOT = [playbook §3.14 verifier auxiliary](../../docs/orchestrator-playbook.md) + [ADR-071 §결정 12·13](../../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md). 본 sub-section = **lookup mirror only** ([ADR-064 §결정 10](../../archive/adr/ADR-064-decision-principle-mandate.md) normative > skill body).
-
-### 3-anchor 발화 형태 매핑
-
-| anchor | 발동 시점 | 발화 형태 (UC) |
-|---|---|---|
-| `post_user_turn` | 사용자 turn 응답 직후 (Layer 3 "추상" detect / numbered list 발화 / AskUserQuestion 직전) | UC-1 (AskUserQuestion) / UC-2 (numbered list / dialog format) / Layer 3 stem detect |
-| `pre_architectpl_synthesis` | ArchitectPL synthesis 완료 직전 (사용자 보고 발화 직전) | UC-3 (ArchitectPL 결과 보고) — Codex TP#2 mandatory dedup |
-| `pre_fix_rootcause` | FIX 루프 root cause 판정 직전 | UC-4 (root cause 판정) — Codex TP#3 dedup |
-
-### turn-shape edge × 3-anchor 12 cell 활성 표
-
-| anchor \ edge | E9 streaming | E10 tool-call-only | E11 popup | E12 trivial |
-|---|---|---|---|---|
-| `post_user_turn` | final flush 시 활성 | 면제 | active | 면제 |
-| `pre_architectpl_synthesis` | active | active | active | active |
-| `pre_fix_rootcause` | active | active | active | active |
-
-cell 값: `active` (spawn 의무) / `면제` (spawn 금지) / `final flush 시 활성` (E9 streaming 의 final flush 1회만).
-
-### Output Port closed enum (Story-1 결정 SSOT, 변경 0)
-
-- `verify_result: fidelity_ok | drift_detected | ledger_gap`
-- `correction_action_hint: rescan_ledger | escalate_user | self_correct | no_action | null`
-
-free-form output 차단 (generator 역할 침범 금지).
-
-- Inline whitelist 정합: spawn = ADR-039 §결정 2 whitelist 1번 entry (사용자 dialog) scope **안** cognitive 보강 — 5번째 entry 신설 아님 (closed enumeration 보존).
-- Q-3check (ADR-064 §결정 9) = Orchestrator self-check ↔ DialogFidelity = 외부 verifier — disjoint.
-- 3-anchor closed enum — 확장 (`pre_lane_spawn` 등) = **별도 CFP 의무**.
+> **[SUNSETTED]** 구 DialogFidelityAgent 3-anchor spawn anchor (`post_user_turn` / `pre_architectpl_synthesis` / `pre_fix_rootcause`) 는 전면 폐지 (ADR-071 Amendment 9, carrier-preserved). dialog turn 검증 ground 보존 = 동일 anchor 의 **Codex TP#2 / TP#3** (mandatory P0/P1 inline FIX) + **ADR-064 §결정 9 Q-3check** (Orchestrator self-check). 폐지 근거 = 죽은 spawn 의무 + 검증 ground 중복 + Opus verifier 비용 대비 효과 0. **보존 invariant 무손상**: 위 frame mode 4 step / 4 layer 검증 / sub-mechanism 2 종 / 아래 3 touchpoint / mid-turn glossary / 5번째 cognitive layer 신설 금지 invariant 모두 무변경 (ADR-071 본체 폐지 아님 — verifier auxiliary 만 절제).
 
 ## Conversational reporting frequency suppression (ADR-071 §결정 15 / CFP-851)
 
@@ -159,7 +130,7 @@ free-form output 차단 (generator 역할 침범 금지).
 
 그 외 진행·중간 결정·근거·중간 결과 = 산출물 channel (대화 turn 아님): Story file / change-plan / ADR / PR description / Issue comment / TodoWrite panel.
 
-**무약화 invariant** — 3 touchpoint 발화 turn 에도 모두 그대로 적용: Layer 1 preamble + Layer 2 declare (turn-shape edge 무변경) / §결정 2(c) richness / DialogFidelityAgent 3-anchor spawn / §결정 14 incident append-rate measurement.
+**무약화 invariant** — 3 touchpoint 발화 turn 에도 모두 그대로 적용: Layer 1 preamble + Layer 2 declare (turn-shape edge 무변경) / §결정 2(c) richness. (DialogFidelityAgent 3-anchor spawn + §결정 14 incident append-rate measurement = CFP-2236 sunset — ADR-071 Amendment 9.)
 
 4번째 touchpoint 신설 = **별도 CFP 의무** (ADR-064 §결정 7 ratchet + ADR-058 §결정 5 sunset_justification + Story §1 사용자 explicit 승인). mechanical lint = 별도 follow-up CFP (§결정 15 = behavioral directive only).
 
