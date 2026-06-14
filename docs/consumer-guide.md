@@ -37,7 +37,7 @@ ls ~/.claude/plugins/cache/<marketplace>/codeforge/<version>/agents/
 
 `CLAUDE.md` §"세션 개시 의무"에 명시. 미설치 시 플러그인 동작 불가:
 
-- **Claude Code 버전**: v2.1.170 이상 필수 — codeforge 일부 에이전트가 `model: fable`(Claude Fable 5)을 사용하며, 2.1.170 미만에서는 해당 에이전트 spawn 이 실패한다 ([ADR-117](../archive/adr/ADR-117-fable-5-surgical-model-tier.md)).
+- **Claude Code 버전**: v2.1.170 이상 필수 — codeforge 일부 에이전트가 `model: fable`(Claude Fable 5)을 사용하며, 2.1.170 미만에서는 해당 에이전트 spawn 이 실패한다 ([ADR-117](../archive/adr/ADR-117-fable-5-surgical-model-tier.md)). (dormant — 2026-06-14 CFP-2241: 현재 wrapper self 는 미 정부 제약으로 surgical 10 에이전트를 `model: opus` 임시 override 해 fable 미사용 상태다(ADR-117 Amendment 1). floor 정책은 원복 대비 보존 — 제약 해제·fable 환원 시 본 버전 floor 가 즉시 재유효.)
 - **MCP**: `github` 인증 완료 (`/mcp` 인증)
 - **플러그인 4종**: `codex@openai-codex`, `superpowers@claude-plugins-official` ([integration SSOT](superpowers-integration.md)), `claude-md-management@claude-plugins-official`, `github@claude-plugins-official`
 - **CLI 2종**: `codex`, `gh` (`gh auth login` 인증)

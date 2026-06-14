@@ -5,13 +5,19 @@ status: Accepted
 category: governance
 date: 2026-06-10
 carrier_story: CFP-2134
-is_transitional: false
+is_transitional: false   # ADR 본체 = permanent policy. Amendment 1 (CFP-2241) 만 transitional override (제약 해제 시 원복) — amendment_log 참조.
 amends: null
 supersedes: null
+amendment_log:
+  - by: "CFP-2241"
+    date: "2026-06-14"
+    scope: "Amendment 1 — 미 정부 제약에 따른 fable → opus 임시 transitional override. 결정 1 의 surgical 10 에이전트 `model: fable` → `model: opus` 임시 치환 (정책 = 어느 역할이 fable 적격인가 결정 1 표 불변, 모델 alias 만 임시 교체). 결정 3 floor (Claude Code 2.1.170) + ADR-057 Amendment 5 (fable model-unavailable → opus fresh re-spawn fallback) 는 삭제하지 않고 dormant 보존 (원복 대비). 결정 1·2·3·4·5 본문 변경 0건 — model alias 만 frontmatter 치환. bump: 4 lane plugin PATCH (design 0.25.3 / develop 0.10.2 / review 1.12.2 / requirements 0.8.3) + wrapper 6.19.3."
+    sunset_justification: "transitional override 는 ratchet 강화가 아니라 외부 제약(미 정부 fable 사용 불가)에 대한 임시 대응이다. 원의도(capability 상승이 2배 비용을 정당화하는 surgical 역할에 최강 모델 적용)는 thinking 프로파일 동일(ADR-117 컨텍스트)인 opus 로 충족 — 능력 손실 0. 명시 override(frontmatter 직접 치환) 채택 근거 = ADR-057 Amendment 5 의 매 spawn 실패→재시도 fallback 은 지연 + 제약 트리거 문구 불확실. 원복 trigger = 사용자 '제약 해제' 통지, 원복 절차 = (a) 10 frontmatter opus → fable 환원 + 임시 표식 코멘트 제거 (b) 본 Amendment 를 dormant/superseded 마킹 (c) floor·fallback 정책 재활성 확인 — 원복도 Story 경유. ADR-058 §결정 5 self-application (Amendment 시 sunset_justification 의무) 정합."
 related_adrs:
-  - ADR-057  # Orchestrator Opus 필수 mandate + Sonnet→Opus rate-limit fallback — 본 ADR §결정 5 (Orchestrator 제외) 정합
+  - ADR-057  # Orchestrator Opus 필수 mandate + Sonnet→Opus rate-limit fallback — 본 ADR §결정 5 (Orchestrator 제외) 정합. Amendment 5 (fable model-unavailable → opus fallback) = ADR-117 Amendment 1 로 dormant 보존.
 related_stories:
   - CFP-2134  # carrier (Cross-repo Fable 5 채택 Epic — foundation)
+  - CFP-2241  # Amendment 1 carrier (미 정부 제약 fable → opus 임시 override)
 related_files:
   - docs/consumer-guide.md
 mechanical_enforcement_actions: []   # 신규 lint/sentinel 0 — model alias 적용은 각 lane plugin 의 에이전트 frontmatter (별 lane PR) 가 SSOT. Claude Code 버전 floor 는 런타임 spawn 실패로 자가 강제 (미인식 ID = silent fallback 없이 fail).
@@ -96,3 +102,65 @@ N/A — permanent policy. 본 ADR 은 모델 tier 선택 정책의 상시 기준
 - **marketplace sync**: plugin.json 메타 변경(version) 동반 시 ADR-063 atomic invariant 에 따라 marketplace sync PR 선행(본 Epic 범위).
 - **consumer 호환성**: 2.1.170 미만 consumer 는 해당 lane 에이전트 spawn 실패 — consumer-guide floor 명시로 사전 고지.
 - **Orchestrator Fable 채택**: 별 결정 사안(§결정 5) — 향후 별 ADR/CFP.
+
+## Amendment 1 (2026-06-14) — CFP-2241 — 미 정부 제약에 따른 fable → opus 임시 transitional override
+
+### 성격
+
+본 Amendment 는 **transitional**(임시 + 원복 가능)이다. ADR 본체 status 는 **Accepted 유지** — 결정 1~5 의 정책은 불변이며, 본 Amendment 는 외부 제약 기간에 한정해 모델 **alias 만** 임시 치환한다. 제약 해제 시 원복 절차 완료로 해소한다.
+
+### 컨텍스트
+
+2026-06-14 KST, 미 정부 제약으로 `fable` alias(Claude Fable 5) 사용이 불가해졌다. 그 결과 결정 1 의 surgical 10 에이전트(`model: fable`)가 spawn 실패/우회 상태가 된다. 기존 ADR-057 Amendment 5(fable model-unavailable → opus fresh re-spawn fallback)는 매 spawn 실패 후 재시도 방식이라 (a) 실패→재시도 지연이 누적되고 (b) 제약 환경의 에러 문구가 fallback trigger 문자열과 일치한다는 보장이 없어 trigger 가 불확실하다.
+
+### 결정
+
+결정 1 의 surgical 10 에이전트 frontmatter `model: fable` → `model: opus`(최신 Opus tier alias)로 **임시 override** 한다.
+
+- **정책 불변**: "어느 역할이 fable 적격인가"(결정 1 표 — chief author / 장기 agentic 코딩 / 적대적 심판 10 역할)는 그대로다. 모델 alias 만 임시 치환한다.
+- **능력 손실 0**: ADR-117 컨텍스트의 사실대로 fable 의 thinking 프로파일은 opus 4.8 과 동일(adaptive on / extended 없음)이라 `fable` → `opus` 교체 시 thinking 능력 손실이 없다.
+- **명시 override 채택**: 매 spawn 실패 후 재시도하는 ADR-057 Amendment 5 fallback 에 의존하지 않고 frontmatter 를 직접 교체한다 — 지연 + trigger 불확실성 제거.
+- **임시 표식**: 각 frontmatter `model:` 라인에 임시 override 임을 알리는 inline 코멘트(CFP-2241 / ADR-117 Amendment 1 / 원복 안내)를 부착한다.
+
+적용 대상 10 에이전트(결정 1 표와 동일):
+
+| lane | 에이전트 | frontmatter |
+|---|---|---|
+| requirements | ResearcherAgent | `model: opus` (임시) |
+| develop | DeveloperAgent | `model: opus` (임시) |
+| develop | DeveloperPLAgent | `model: opus` (임시) |
+| design | ArchitectAgent | `model: opus` (임시) |
+| design | ArchitectPLAgent | `model: opus` (임시) |
+| design | SecurityArchitectAgent | `model: opus` (임시) |
+| review | ClaudeReviewAgent | `model: opus` (임시) |
+| review | CodeReviewPLAgent | `model: opus` (임시) |
+| review | DesignReviewPLAgent | `model: opus` (임시) |
+| review | SecurityTestPLAgent | `model: opus` (임시) |
+
+### 보존(미삭제) 명시 — dormant
+
+다음 정책은 **삭제하지 않고 dormant 보존** 한다 — 제약 해제 시 즉시 재유효해야 하기 때문이다.
+
+- **결정 3 floor(Claude Code 2.1.170)**: fable alias 인식 floor. 현재 wrapper self 는 opus override 라 floor 가 휴면이나, consumer-guide 의 floor 문장은 보존한다(원복 시 재유효).
+- **ADR-057 Amendment 5(fable model-unavailable → opus fresh re-spawn fallback)**: 현재 surgical 10 이 opus override 라 model-unavailable trigger 가 휴면이다. ADR-057 §결정 4 / playbook §3.0.12 / CLAUDE.md "비-opus tier → Opus fallback" 문장은 dormant 주석만 부착하고 보존한다.
+
+SSOT 문서 dormant 주석 부착 위치: `CLAUDE.md`(비-opus tier 섹션) · `docs/consumer-guide.md`(floor 의존성) · `docs/orchestrator-playbook.md`(§3.0.12 fable model-unavailable case).
+
+### 원복 절차
+
+원복 trigger = 사용자가 "제약 해제" 통지. 원복도 Story 경유로 수행한다.
+
+1. 10 에이전트 frontmatter `model: opus` → `model: fable` 환원 + 임시 표식 코멘트 제거.
+2. 본 Amendment 1 을 dormant/superseded 로 마킹(amendment_log + 본 섹션 상태 표기).
+3. 보존해 둔 floor(결정 3) + ADR-057 Amendment 5 fallback + SSOT dormant 주석이 재활성됐는지 확인(주석 제거 / trigger 재유효).
+4. 4 lane plugin + wrapper version bump + marketplace sync(mirrored field 변경 시 ADR-063 atomic invariant).
+
+### 해소 기준
+
+미 정부 제약 해제 시 위 원복 절차 완료로 본 Amendment 가 해소된다. 해소 시 ADR 본체는 변경 없이 결정 1~5 가 원래대로(fable surgical) 작동한다.
+
+### 근거 (Rationale)
+
+- 옵션 A(ADR-057 Amendment 5 자동 fallback 에 의존) **기각** — 매 spawn 실패→재시도 지연 누적 + 제약 환경 에러 문구가 fallback trigger 문자열과 일치한다는 보장 없음(trigger 불확실).
+- 옵션 B(명시 frontmatter override) **채택** — 사전 결정적이라 지연 0, trigger 확실. thinking 프로파일 동일이라 능력 손실 0. floor·fallback 정책은 dormant 보존이라 원복 즉시 가능.
+- 옵션 C(fable 영구 폐기 + opus 정착) **기각** — 사용자 결정상 fable 영구 폐기가 아니며 제약 기간 한정 조치다. 영구 전환은 원복 불가를 초래해 사용자 전제(임시 + 원복 가능)에 위배.
