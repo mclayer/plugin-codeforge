@@ -74,8 +74,8 @@ bump 포함 PR merge (`mergedAt` 확인) 직후 Orchestrator 가 터미널 CLI `
 ## 시각 표기
 사용자 대면·문서 표기 = KST `+09:00` ISO 8601. 외부 timestamp(GitHub/git)는 원본 보존.
 
-## Sonnet → Opus fallback
-`model: sonnet` 서브에이전트가 rate-limit 에러 반환 시: 동일 작업을 `model: opus` 로 1회 재spawn, 실패 시 사용자 통지 후 대기 (자동 재시도 금지).
+## 비-opus tier → Opus fallback
+비-opus 서브에이전트 spawn 실패 시 동일 작업을 `model: opus` 로 **fresh re-spawn** 1회(SendMessage resume 금지 — 원본 agent 의 `model` frontmatter 가 resume 시 재해석돼 재실패), 실패 시 사용자 통지 후 대기 (자동 재시도 금지). 2 trigger: ① `model: sonnet` rate-limit ② `model: fable` model-unavailable(`"currently unavailable"` / `"may not exist or you may not have access"` — floor 미달 spawn 실패와 구분, ADR-117 §결정 3). max 1회 = per-spawn-attempt(sonnet/fable 비합산). 상세 = [ADR-057 §결정 5](archive/adr/ADR-057-orchestrator-opus-mandate-and-sonnet-opus-fallback.md).
 
 ---
 > 본 파일은 Orchestrator 가 매 턴 자기검열해야 하는 정책만 담는다. 레인 내부 절차·근거·이력은 각 lane plugin CLAUDE.md / 스킬 / `docs/` 가 SSOT.
