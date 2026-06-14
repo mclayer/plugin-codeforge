@@ -513,7 +513,7 @@ Agent tool이 Sonnet subagent spawn 결과로 rate-limit 에러를 반환하면:
 **fable model-unavailable case (ADR-057 §결정 4, CFP-2238)**: `model: fable` lane agent (ADR-117 §결정 1 10종) spawn 결과가 model-unavailable 에러를 반환하면:
 
 1. 새 `Agent` spawn + `opts.model: opus` 1회 (per-spawn-attempt — sonnet 카운터와 비합산)
-2. 성공 시 §14 Lane Evidence row 에 `[model-unavailable-fallback:fable→opus]` 태그 (별 trigger 태그 — sonnet rate-limit KPI 분모 8종 오염 차단)
+2. 성공 시 §14 Lane Evidence row 에 `[model-unavailable-fallback:fable→opus]` 태그 (전용 trigger 태그 — sonnet rate-limit KPI 분모 8종 오염 차단)
 3. opus 도 실패 시 사용자 통지 → 대기 (자동 재시도 금지)
 
 판별: result 에 `"currently unavailable"` / `"may not exist or you may not have access"` 포함 시 model-unavailable. **floor-fail 구분(hypothesis)**: ADR-117 §결정 3 의 floor (< 2.1.170 → 미인식 ID spawn 실패)은 별개 사건 — 정정 = `Reload Window`/버전 업그레이드(opus fallback 아님). floor-fail string 과 model-unavailable string 의 동일성은 미실증(floor-fail string 만 verified) → string-match 만으로 무조건 fallback 시 floor 환경 문제 은폐 위험. 구분 = `claude --model fable -p "ok"` fresh CLI smoke 대조(fresh PASS + in-process FAIL = floor-fail). 미분류 오류 = task failure 로 routing(fallback 미발동).
