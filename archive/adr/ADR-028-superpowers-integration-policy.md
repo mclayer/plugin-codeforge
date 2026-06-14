@@ -1,7 +1,7 @@
 ---
 adr_number: 28
 title: Superpowers integration policy — codeforge family wrapping mechanism
-status: Accepted
+status: Superseded by ADR-122
 category: Team & Process
 date: 2026-05-05
 related_files:
@@ -10,8 +10,8 @@ related_files:
   - docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md
   - docs/adr/ADR-017-skill-override-path-enforcement.md
   - templates/skill-prompt-helpers/
-  - scripts/check-superpowers-integration.sh
-  - templates/github-workflows/superpowers-integration.yml
+  - scripts/check-superpowers-integration.sh  # dead reference (CFP-113 lint — 미구현/제거, ADR-122 supersede)
+  - templates/github-workflows/superpowers-integration.yml  # dead reference (CFP-113 lint — 미구현/제거, ADR-122 supersede)
 related_stories:
   - CFP-113
 is_transitional: false
@@ -22,6 +22,8 @@ is_transitional: false
 ## 상태
 
 Accepted (2026-05-05) — CFP-113 carrier.
+
+Superseded by [ADR-122](ADR-122-superpowers-dependency-removal.md) (2026-06-15, CFP-2249 carrier) — superpowers 의존 완전 제거로 integration policy referent 소멸. 이력 보존 목적 supersede (물리삭제 아님, `is_transitional: false` permanent record).
 
 ## 컨텍스트
 
@@ -87,6 +89,12 @@ N/A — permanent policy
 - `docs/adr/ADR-013-codeforge-family-dogfood-out-policy.md`
 - `docs/adr/ADR-017-skill-override-path-enforcement.md` (Amendment 1 동시 발의)
 - `templates/skill-prompt-helpers/`
-- `scripts/check-superpowers-integration.sh`
-- `scripts/test-check-superpowers-integration.sh`
-- `templates/github-workflows/superpowers-integration.yml`
+- `scripts/check-superpowers-integration.sh` — dead reference (CFP-113 lint — 미구현/제거, ADR-122)
+- `scripts/test-check-superpowers-integration.sh` — dead reference (CFP-113 lint — 미구현/제거, ADR-122)
+- `templates/github-workflows/superpowers-integration.yml` — dead reference (CFP-113 lint — 미구현/제거, ADR-122)
+
+## Amendment 1 (2026-06-15, CFP-2249 / ADR-122)
+
+본 ADR-028 이 정의한 codeforge ↔ superpowers integration policy 는 [ADR-122](ADR-122-superpowers-dependency-removal.md) 의 superpowers 의존 완전 제거 결정으로 referent 가 소멸했다. integration SSOT (`docs/superpowers-integration.md`) · invocation contract 표 · skill→artifact 변환 표 · skill-prompt-helpers fragment 가 모두 제거 대상이 되면서 본 정책이 강제할 대상이 없어졌다. 따라서 status 를 Superseded 로 전환한다 (물리삭제 아님 — `archive/adr/` 역사 보존, ADR-122 §결정 4/6 정합).
+
+부수적으로, 본 ADR 의 frontmatter `related_files` 및 본문 "관련 파일" 절이 가리키던 CFP-113 lint 산출물 3종 (`scripts/check-superpowers-integration.sh` / `scripts/test-check-superpowers-integration.sh` / `templates/github-workflows/superpowers-integration.yml`) 은 repo 에 존재하지 않는 dead reference (lint 후속 미구현/제거) 임을 명시한다 — 각 경로에 `dead reference` 주석 부착.
