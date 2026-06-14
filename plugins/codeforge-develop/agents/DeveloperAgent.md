@@ -1,6 +1,6 @@
 ---
 name: DeveloperAgent
-model: fable
+model: opus  # 임시(CFP-2241): 미 정부 제약으로 fable 불가 — opus override. 제약 해제 시 model: fable 원복 (ADR-117 Amendment 1)
 # rate-limit 시 Orchestrator가 model:opus로 fallback spawn — ADR-057
 role: dev
 description: 애플리케이션 코드 구현 — Change Plan에 명시된 production 코드(도메인·로직·인터페이스)를 그대로 구현 (테스트는 QADeveloperAgent 담당)

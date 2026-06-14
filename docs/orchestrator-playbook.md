@@ -510,7 +510,7 @@ Agent tool이 Sonnet subagent spawn 결과로 rate-limit 에러를 반환하면:
 
 **fresh-spawn-only invariant (sonnet/fable 공통)**: 위 "재spawn" = 새 `Agent` spawn + `opts.model: opus`. **SendMessage resume 금지** — 원본 agent frontmatter `model` 이 resume 시 재해석돼 재실패한다 (CFP-2236 실측 root cause).
 
-**fable model-unavailable case (ADR-057 §결정 4, CFP-2238)**: `model: fable` lane agent (ADR-117 §결정 1 10종) spawn 결과가 model-unavailable 에러를 반환하면:
+**fable model-unavailable case (ADR-057 §결정 4, CFP-2238)** — dormant(CFP-2241, 2026-06-14): ADR-117 §결정 1 10 에이전트가 미 정부 제약으로 `model: opus` 임시 override 상태(ADR-117 Amendment 1)라 본 case 는 휴면이다. 절차·정책은 원복 대비 보존 — 제약 해제·fable 환원 시 즉시 재유효. `model: fable` lane agent (ADR-117 §결정 1 10종) spawn 결과가 model-unavailable 에러를 반환하면:
 
 1. 새 `Agent` spawn + `opts.model: opus` 1회 (per-spawn-attempt — sonnet 카운터와 비합산)
 2. 성공 시 §14 Lane Evidence row 에 `[model-unavailable-fallback:fable→opus]` 태그 (전용 trigger 태그 — sonnet rate-limit KPI 분모 8종 오염 차단)

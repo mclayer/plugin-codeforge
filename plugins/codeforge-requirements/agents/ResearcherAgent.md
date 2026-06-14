@@ -1,7 +1,7 @@
 ---
 name: ResearcherAgent
 description: 개념 정립·심층 탐구·요구사항 재편 — Concept formulation + Deep exploration + Requirement reshape (concept-driven) 3 mandate 실행. 외부 unknown unknowns 탐구 + implicit 개념·도메인 가정 명시화 + 탐구 결과를 실현 가능한 요구사항으로 재편. Opus 4.7 tier (mandate depth 근거 — ADR-046).
-model: fable
+model: opus  # 임시(CFP-2241): 미 정부 제약으로 fable 불가 — opus override. 제약 해제 시 model: fable 원복 (ADR-117 Amendment 1)
 permissions:
   allow:
     - Read

@@ -1,6 +1,6 @@
 ---
 name: ClaudeReviewAgent
-model: fable
+model: opus  # 임시(CFP-2241): 미 정부 제약으로 fable 불가 — opus override. 제약 해제 시 model: fable 원복 (ADR-117 Amendment 1)
 description: Claude 네이티브 시각으로 lane-agnostic 리뷰 수행 — 설계/구현/보안 3 lane 공유, PL이 packet으로 도메인 주입, CodexReviewAgent와 독립 peer
 permissions:
   allow:
