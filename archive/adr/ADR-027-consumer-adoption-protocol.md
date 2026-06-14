@@ -32,6 +32,7 @@ amendments:
   - ADR-027-Amendment-7-CFP-1059  # CFP-1059 Story-1 — consumer adoption 시 project.yaml `deploy.*` schema 확장 (5 sub-field: host_mapping / docker_hub / traefik / 1password / ssh_targets) — codeforge-deploy lane 신설 정합. §결정 11 신설
   - ADR-027-Amendment-8-CFP-1125  # CFP-1125 (CFP-1111 Wave-4 Story-11) — Amendment 6 sunset_boundary declarative (β2 audit #1113 Anchor 4 LOSSLESS 판정 carry). Amendment 6 §결정 10 4-way detection signals + D4 customization marker preserve invariant 의 효용을 CFP-1111 walker paradigm 으로 carry — walker repo-kind detection hook (detect-repo-kind.py 재사용) 동일 truth-table + walker per-step customization_marker_preserve flag 0 silent overwrite. is_transitional 본체 false 무변경 (영역 분리 — Amendment 6 영역만 sunset boundary 명시, 본체 다른 amendment 영향 0). ratchet 강화 only (declaration-only Wave-1 → walker Wave-4 carry), 약화 0건
   - ADR-027-Amendment-9-CFP-1177  # CFP-1177 Story-8 — customization marker block 을 paradigm-agnostic preserved layer 로 codify. 동일 invariant (marker 안 = wrapper SSOT wins, 밖 = consumer byte-identical 보존, integrity fingerprint check 의무, MARKER_NONE = wholesale + user-visible loss report) 가 declarative reconcile (ADR-076 / reconcile-overlay.sh) AND imperative walk apply (walk_plan.py apply_overlay_file) 양 경로에 동일 적용. Walk apply 는 merge_with_marker primitive 재사용 의무 (DRY — 재구현 금지). §결정 12 신설
+  - ADR-027-Amendment-10-CFP-2243  # CFP-2243 — §결정 2 3-trigger enforcement 의 Secondary trigger (UserPromptSubmit) 구멍 메우기: "codeforge 의도 선언 + 미초기화 → bootstrap-first" 불변식 명문화 (§결정 13 신설). 기존 Secondary trigger regex 는 변경 동사만 잡고 "codeforge 사용 선언 시점(설계/brainstorm 요청) + 미초기화 감지" 미포착 → 미초기화 greenfield consumer 가 bootstrap 없이 superpowers:brainstorming 으로 silent fallback (Issue #2243). intent(변경동사 + codeforge 고유신호) ∧ detect-repo-kind exit 3 (unknown=진짜 greenfield) ∧ docs/adr·archive/adr 부재 AND-gate → wrapper plugin hooks/ 의 UserPromptSubmit 훅이 bootstrap 미충족 surface + 초기화 우선 유도 (warning inject only, exit 0 — hard-block 권한 보유하나 정책적 미사용). chicken-and-egg 해결 = overlay/ 아닌 wrapper plugin hooks/ 배치 (plugin 설치 즉시 활성). ADR-034 D1 옵션성 보존 (brainstorm 진입 차단 아님, 초기화 권고만). additive only, ratchet 강화 방향 — sunset_justification 불요
 amendment_log:
   - amendment_id: 8
     date: 2026-05-21
@@ -45,6 +46,12 @@ amendment_log:
     summary: "customization marker block paradigm-agnostic preserved layer codify (CFP-1177 Story-8). Amendment 3 §결정 7 의 invariant (marker 안 = wrapper SSOT wins / 밖 = consumer byte-identical 보존 / integrity fingerprint check 의무 / MARKER_NONE = wholesale + user-visible loss report) 가 declarative reconcile (ADR-076 / reconcile-overlay.sh) AND imperative walk apply (walk_plan.py apply_overlay_file) 양 경로 모두에 동일 적용됨을 normative codify. apply_overlay_file = merge_with_marker primitive 재사용 (DRY 원칙 — marker logic 재구현 금지). §결정 12 신설. ratchet 강화: scope 확장 (declarative-only → declarative+imperative), weakening 0건 — ADR-058 §결정 5 정합."
     is_transitional: false
     sunset_justification: "ratchet 강화 방향 전용 (scope 확장: declarative-only invariant → declarative+imperative 양 경로 동일 invariant). is_transitional: false permanent governance invariant 무변경. metric = bats TC suite (tests/scripts/cfp-1177/cfp-1177-overlay-apply.bats 19 TC — MARKER_VALID 3-way / MARKER_NONE wholesale / integrity fallback / base_content 시그니처 호환 / frozen dataclass). who = apply_overlay_file 함수 (walk_plan.py §f). how = bats TC 19/19 GREEN + walk_plan.py _split_consumer_outer round-trip byte-identical verify. scope 확장 = weakening 0 (기존 declarative path 무변경, imperative path 신규 적용 추가). ADR-058 §결정 5 sunset_justification = ratchet 강화 방향 전용 exemption 정합."
+  - amendment_id: 10
+    date: 2026-06-15
+    cfp: CFP-2243
+    summary: "§결정 2 3-trigger enforcement model 의 Secondary trigger (UserPromptSubmit) 구멍 메우기 — §결정 13 신설. 기존 Secondary trigger (overlay/hooks/userprompt_reminder.py CHANGE_PATTERNS) 는 '변경 동사' 만 잡고 'codeforge 사용 선언 시점(설계/brainstorm 요청) + 미초기화 감지' 미포착. 결과: 미초기화 greenfield consumer 가 codeforge 사용 선언에도 bootstrap 없이 superpowers:brainstorming 으로 silent fallback (Issue #2243). 본 Amendment 10 = entry-gate sub-trigger 명문화: intent(변경동사 ∪ codeforge 고유신호) ∧ detect-repo-kind exit 3 (unknown = plugin.json·overlay 양 부재 = 진짜 greenfield) ∧ docs/adr·archive/adr 부재 AND-gate 충족 시에만 발화 (false-positive 억제). 발화 = bootstrap 미충족 surface + scripts/bootstrap-consumer.sh 안내 (GitHub remote 부재 시 자동 gh repo create 금지 — 명령 surface + 사용자 확인) → warning inject only, exit 0. hard-block 권한(exit 2 prompt erase)은 정책적 미사용 (ADR-027 §결정 2 'Block 아님' + ADR-034 D1 옵션성). chicken-and-egg 해결 = wrapper plugin hooks/ 배치 (overlay/ 아님 — plugin 설치 즉시 활성, 미초기화 consumer settings.json 등록 불요). ADR-034 D1 보존 (brainstorm 진입 차단 아님, 초기화 권고만 — 사용자 거부 시 진행). ratchet 강화: 기존 Secondary trigger 적용 범위 확장 (변경동사 only → codeforge 선언 + 미초기화 감지 포함), weakening 0건."
+    is_transitional: false
+    sunset_justification: "ratchet 강화 방향 전용 (Secondary trigger enforcement scope 확장: 변경동사-only intent → codeforge-선언 + 미초기화 감지 entry-gate 추가). is_transitional: false permanent governance invariant 무변경. metric = bootstrap-first-gate 단위 테스트 suite (TC1 positive intent+unknown+미초기화→reminder / TC2 consumer overlay 존재→silent / TC3 intent 미매치→silent / TC4 bypass→silent / TC5 fail-safe exit0 / TC6 intent regex enum) + detect-repo-kind.py 무변경 회귀 0. who = hooks/bootstrap-first-gate.py (wrapper plugin hooks/, UserPromptSubmit additive entry). how = AND-gate (intent ∧ detect exit3 ∧ docs·archive/adr 부재 ∧ not-bypassed) ⟺ 발화 invariant + 모든 경로 exit 0 fail-safe. scope 확장 = weakening 0 (기존 변경동사 Secondary trigger 무변경, codeforge-선언 entry-gate 신규 적용 추가). ADR-058 §결정 5 sunset_justification = ratchet 강화 방향 전용 exemption 정합."
 mechanical_enforcement_actions:
   - action_name: section-1-verbatim-postmerge
     decision_binding: "Amendment 2 §결정 6.A — manual fallback path 의 §1 verbatim invariant post-merge lint (warning tier)"
@@ -844,3 +851,130 @@ Cross-ref:
 - `docs/inter-plugin-contracts/imperative-walker-protocol-v1.md` — walk apply 계약 SSOT (paradigm carrier)
 - [ADR-058](ADR-058-adr-sunset-criteria-mandate.md) §결정 5 — sunset_justification ratchet 강화 방향 exemption
 - [ADR-064](ADR-064-decision-principle-mandate.md) §self-application — ratchet 강화 방향 only (scope 확장, weakening 0)
+
+## Amendment 10 — Secondary trigger entry-gate: codeforge 선언 + 미초기화 → bootstrap-first (CFP-2243)
+
+**Effective**: 2026-06-15 (CFP-2243 Phase 1 wrapper PR merge 시점 — ADR Proposed→Effective, ADR-032 / Amendment 1 2-stage 패턴 정합).
+
+**Carrier**: CFP-2243 (dogfood, wrapper-self-application). single Story (Phase 1 문서/ADR PR + Phase 2 코드 PR). not part of Epic.
+
+본 ADR §결정 2 (3-trigger enforcement model) 의 **Secondary trigger (UserPromptSubmit hook)** 가 가진 구멍을 메운다. 기존 Secondary trigger (`overlay/hooks/userprompt_reminder.py` `CHANGE_PATTERNS`) 는 "변경 동사" (`구현|만들|수정|fix|implement|...`) 만 검출 → 미초기화 consumer 에서 사용자가 codeforge 사용을 선언(설계/brainstorm/스토리 요청)했을 때 **bootstrap 미충족을 surface 하지 못하고** `superpowers:brainstorming` 으로 silent fallback (Issue #2243). 이는 §컨텍스트 line 90 사용자 원 directive ("처음 시작시 codeforge 사용 선언시 의존 관계 플러그인 설치 등 ... codeforge 반영 자체에 필요") 의 의도적 seed 가 메커니즘으로 실현되지 않은 gap.
+
+본 amendment = ADR-027 §결정 2 Secondary trigger 의 **entry-gate sub-trigger 확장** (additive, supersede 아님). §결정 13 신설. ratchet 강화 방향 only.
+
+### 결정 13 — codeforge 의도 선언 + 미초기화 → bootstrap-first 불변식 (normative SSOT)
+
+#### §결정 13.A — intent 감지 범위 (변경동사 ∪ codeforge 고유신호)
+
+발화 1차 조건 = 사용자 prompt 가 다음 2 class 중 하나 이상 매치:
+
+| class | enum (ReDoS-free 단순 alternation) | matching 계약 | 근거 |
+|---|---|---|---|
+| **변경 동사** | `구현 / 만들 / 수정 / 짜 / 고쳐 / 추가 / fix / implement / refactor / create / add / build / change / update / modify / edit / write` | substring 매치 허용 (기존 동작 답습) | 기존 Secondary trigger `CHANGE_PATTERNS` verbatim 정합 (overlay/hooks/userprompt_reminder.py L36-43) |
+| **codeforge-distinctive marker** | `codeforge / story / 스토리 / epic / lane / 레인` | **단독 매치 = intent 허용** (해당 토큰만으로 codeforge 선언 확정) | 신규 — codeforge 사용 선언 시점 포착 (Issue #2243 핵심 gap). value judgment A 사용자 확정 enum. distinctive = 일상 한국어에서 codeforge 외 의미 충돌 없음 |
+| **generic 명사** | `설계 / 아키텍처` | **단독 매치 금지** — codeforge-distinctive marker **co-occurrence 시에만** intent 인정 | generic 한글 명사. 한글에는 `\b` word-boundary 가 없어 `상세설계` / `아키텍처 책` 등 무관 substring 이 false-positive 발화 → distinctive co-occurrence 로만 게이팅 (F2 해소) |
+
+**matching 계약 (ADR 고정 — 구현 regex 위임 금지)**:
+- 변경 동사 ∪ codeforge-distinctive marker 중 **1+ 단독 매치** = intent TRUE.
+- generic 명사(`설계`/`아키텍처`)는 **codeforge-distinctive marker(또는 변경 동사) 동반 시에만** intent 기여. 단독 generic 명사 매치 = intent FALSE (false-positive 억제).
+- 한글은 `\b` 부재 → substring 매치가 generic 명사를 오발화시키므로, generic 명사는 co-occurrence gate 로 격리. distinctive marker / 변경동사는 substring 허용 (오발화 위험 낮음 — distinctive 어휘).
+
+2 class (변경동사 ∪ distinctive marker) 의 **합집합 (OR)** = intent 매치. generic 명사는 위 co-occurrence 계약을 통과할 때만 가산. (단 본 §13.A 1차 조건만으로는 발화하지 않음 — §13.B AND-gate 와 결합해야 발화. false-positive 이중 억제.)
+
+#### §결정 13.B — AND-gate (발화 ⟺ intent ∧ 미초기화 greenfield)
+
+발화 = 다음 **모두** 충족 시에만 (AND-gate):
+
+1. **intent 매치** (§13.A) — 변경동사 ∪ codeforge-distinctive marker (generic 명사는 co-occurrence 시에만)
+2. **detect-repo-kind exit 3 (`unknown`)** — `.claude-plugin/plugin.json` AND `.claude/_overlay/project.yaml` **양 신호 부재** = 진짜 greenfield. `templates/scripts/detect-repo-kind.py` (무변경 재사용) 가 exit 3 반환 시에만. consumer(exit 1, overlay 존재=초기화됨) / mixed(exit 2, wrapper-self) / plugin(exit 0, plugin.json 존재) 에서는 silent.
+3. **`docs/adr` 부재 AND `archive/adr` 부재** — exit 3 이 plugin.json·overlay 양 부재를 이미 함의하므로 그 2 신호 중복검사 불요. skill 기존 fallback 조건(SKILL.md 적용조건 = project.yaml OR docs/adr OR archive/adr)과 정합 위해 docs/adr·archive/adr 부재만 추가 검사
+4. **not-bypassed** (§13.E)
+
+**"미초기화" SSOT 정의 = 4 부재** (detect truth-table 기준 단일화 — P1 해소):
+> 미초기화(greenfield) ⟺ `.claude-plugin/plugin.json` 부재 ∧ `.claude/_overlay/project.yaml` 부재 ∧ `docs/adr` 부재 ∧ `archive/adr` 부재.
+> 앞 2 부재(plugin.json + project.yaml) = detect-repo-kind `unknown`(exit 3) 의 **정확한 등가** (detect-repo-kind.py:99-115 실측 — `has_plugin=False ∧ has_overlay=False` 일 때만 unknown). 뒤 2 부재(docs·archive/adr)는 §결정 13.B 조건 3 의 추가 게이트. **이 4 부재 정의는 hook §13.B 술어 = SKILL.md 미초기화 판정 = consumer-guide greenfield 정의가 byte-동일 (I-4 wording SSOT)**.
+> ⚠ `plugin.json` **존재** = detect plugin(exit 0) 또는 mixed(exit 2) → 본 gate 대상 아님(침묵). plugin.json 부재 항목을 미초기화 판정에서 누락하면 `plugin.json 존재 + overlay 부재 + ADR dir 부재`(scaffold 직후 plugin repo)를 consumer bootstrap 으로 오유도하는 술어 drift 발생 — 이를 차단하기 위해 plugin.json 부재가 미초기화 정의의 1번째 conjunct.
+
+이 AND-gate = value judgment A 의 "repo_kind=unknown(greenfield) AND overlay/adr 부재" 정합. 미초기화에서만 발화 → 초기화 후 영구 침묵 (reflex 자연 억제). **detect-repo-kind.py 무변경 invariant 보존** (2 signal 만 검사하는 기존 SSOT 그대로 subprocess 호출).
+
+**wrapper-self = mixed(exit 2) 침묵 (P3)**: wrapper repo 자신(`.claude-plugin/plugin.json` + `.claude/_overlay/...` overlay 양존, dogfood) = detect-repo-kind **mixed(exit 2)** → 조건 2(exit 3) 불충족 → gate 침묵. wrapper 자기 세션은 codeforge dogfood 작업이므로 bootstrap 유도가 무의미·간섭 → **의도된 무발화** (dogfood 무간섭 invariant). plugin.json 존재만으로도 4 부재 정의(1번째 conjunct) 가 깨지므로 이중으로 침묵 보장.
+
+#### §결정 13.C — 발화 = warning inject only, exit 0 (hard-block 권한 보유하나 정책적 미사용)
+
+발화 시 출력 = 정적 system-reminder context inject (사용자 prompt echo 0):
+- bootstrap 미충족 상태 surface
+- `scripts/bootstrap-consumer.sh` 초기화 안내
+- GitHub remote 부재 시 명령 surface (자동 생성 금지 — §13.D)
+
+**hard-block 미사용 = 거버넌스 invariant 에 의한 의도적 설계 결정** (기술적 한계 아님):
+- UserPromptSubmit hook 은 기술적으로 exit code 2 또는 JSON `decision:block` 으로 사용자 prompt 를 erase(차단)할 수 있다 (출처: https://code.claude.com/docs/en/hooks.md — UserPromptSubmit hook decision control).
+- **그러나 본 훅은 이 block 권한을 쓰지 않는다**: ADR-027 §결정 2 ("Block 아님 — warning inject only" + "enforcement = LLM 측 책임") + ADR-034 D1 (brainstorm = 순수 옵션). 사용자 prompt erase = 수용 불가.
+- → **모든 경로 exit 0 + plain stdout context inject 만**. (DesignReview 의 "왜 block 안 쓰나" 오해 차단 목적으로 본 §13.C 에 명시.)
+
+**observability — stderr 1-line audit (F4 채택)**:
+- 본 훅은 Issue #2243 의 본질(silent fallback) 을 메우는 장치이므로, **회귀로 다시 silent 해진 것을 사후 감지** 할 수 있어야 한다. 이를 위해 발화 경로마다 stderr 에 1줄 audit 을 남긴다:
+  - 형식: `[bootstrap-first-gate] fired exit_path=<warn-injected|silent-initialized|silent-bypassed|silent-mixed|silent-plugin>` (한 줄, 고정 prefix).
+  - **prompt 내용 echo 0** — 사용자 입력 텍스트는 stderr 에 절대 기록하지 않는다 (korean-english-recovery 의 stderr advisory 동형 — diagnostic only, payload 미포함). PII/secret leak 차단.
+  - stderr 이므로 UserPromptSubmit 의 stdout context-inject 채널과 분리 → 사용자 prompt 에 영향 0, exit 0 불변.
+- **metric N/A 명시**: 본 훅은 매 prompt 1회 동기 advisory 단발 hook 이다. SLO / throughput / latency budget / error-rate metric = **N/A** (지속 서비스 아님, 단발 stderr 라인 1줄). 관측 = audit 라인 grep 로 충분 (시계열 metric backend 불요).
+
+#### §결정 13.D — GitHub remote 부재 시 자동 생성 금지 (value judgment B)
+
+`bootstrap-consumer.sh` 가 org/repo 감지 실패 (project.yaml 부재 + git remote 부재 → Stage 1 fatal) 하는 greenfield 환경:
+- **자동 `gh repo create` 금지**. 부작용 (사용자 GitHub 계정에 repo 생성) = 명시 동의 없이 수행 불가.
+- 훅/skill 은 **명령 + 필요 상태 surface + 사용자 확인 후 진행** — Orchestrator 가 확인 대화로 안내.
+
+#### §결정 13.E — bypass env (ADR-027 §결정 3 honor + 전용 단일 flag)
+
+| env | 의미 | 근거 |
+|---|---|---|
+| `HOTFIX_BYPASS_CODEFORGE=1` + `HOTFIX_BYPASS_REASON="<사유>"` (양 set) | bypass honored (silent skip + stderr audit) | §결정 3 정합 — 우회 surface 분산 차단 |
+| `BYPASS_BOOTSTRAP_GATE=1` (단일 flag) | 본 훅 전용 advisory bypass (reason 불요 — advisory warning 이므로) | korean-english-recovery `BYPASS_KOREAN_ENGLISH_RECOVERY` 동형 패턴 |
+
+#### §결정 13.F — wrapper plugin hooks/ 배치 (chicken-and-egg 해결)
+
+본 entry-gate 훅 = **wrapper plugin `hooks/`** 에 배치 (`overlay/hooks/` 아님):
+- `overlay/hooks/userprompt_reminder.py` (기존 Secondary trigger) 는 **consumer `.claude/settings.json` 등록 의존** → consumer 가 bootstrap 을 이미 마친 후에만 활성. 미초기화 greenfield 을 **구조적으로 못 잡음** (chicken-and-egg).
+- wrapper plugin `hooks/hooks.json` UserPromptSubmit 배열은 **plugin 설치 즉시 활성** (consumer settings.json 등록 불요). → 미초기화 greenfield 의 첫 prompt 부터 발화 가능.
+- 이는 SessionStart `check-bootstrap` 이 consumer settings.json 등록 의존이라 greenfield 못 잡는 동일 한계를 wrapper plugin hooks/ 로 해소.
+
+**dispatch 형식 (F5 — additive entry, 실측 정합)**:
+- `hooks/hooks.json` 의 `UserPromptSubmit` 배열(실측 `hooks/hooks.json:62-71`, 현재 `korean-english-recovery` 1 entry)은 전 hook 을 `run-hook.cmd <name>` polyglot shim 으로 dispatch 한다.
+- 본 훅 추가 = 그 배열에 **`"${CLAUDE_PLUGIN_ROOT}/hooks/run-hook.cmd" bootstrap-first-gate` 1 entry append** (`async:false`). 기존 entry 무변경 (additive).
+- shim(`hooks/bootstrap-first-gate`, 확장자 없음) = **korean-english-recovery shim 패턴 답습**: ① `BYPASS_BOOTSTRAP_GATE=1` 시 `exit 0` ② `python3`→`python` 탐색, 둘 다 부재 시 `exit 0` (fail-safe, 사용자 입력 차단 안 함) ③ `exec "$PY" "$DIR/bootstrap-first-gate.py"` (core 위임). bash 단발 + python core 분리 = sibling shim 동형.
+
+#### §결정 13.G — D1 옵션성 보존 (brainstorm 진입 차단 아님)
+
+ADR-034 D1 (brainstorm = 순수 옵션, CI 강제 없음) 보존:
+- 게이트 대상 = "bootstrap 미초기화 감지 → surface → 초기화 우선 **유도(권고)**". brainstorm 호출 자체를 막지 않음.
+- `superpowers:brainstorming` 직접 호출 (ADR-034 Amd 2 cost-out 경로) 도 block 금지 — warning 만.
+- 사용자가 "초기화 없이 진행" 명시 선택 시 silent fallback (opt-out 보존).
+- ADR-034 에는 1줄 cross-ref 주석만 추가 (게이트 대상 = bootstrap 미초기화 감지·제안, brainstorm 진입 자체 차단 아님 — D1 자기모순 회피).
+
+### Bypass 정합
+
+§결정 3 `HOTFIX_BYPASS_CODEFORGE=1 + REASON` 양 env set → strict 무관 hook self skip. Amendment 10 entry-gate 활성 시에도 §결정 3 bypass mechanism 그대로 작동. 추가로 본 훅 전용 advisory bypass = `BYPASS_BOOTSTRAP_GATE=1` (§결정 13.E) — 별도 mechanism.
+
+### Default 미변경 = additive only
+
+본 amendment = additive 만. 기존 Secondary trigger (변경동사 `CHANGE_PATTERNS`) 무변경. 초기화 완료 consumer (exit 0/1/2) = 발화 0 (backward-compat). detect-repo-kind.py 무변경. 기존 consumer 동작 즉시 변경 0.
+
+### 해소 기준 정합
+
+ADR-027 frontmatter `is_transitional: false` (permanent policy). Amendment 10 = Secondary trigger enforcement scope 확장 (변경동사-only → codeforge-선언 + 미초기화 감지 entry-gate) = governance 강화 방향 ratchet — ADR-058 §결정 5 sunset_justification 불요 (강화 방향, weakening 0건).
+
+Cross-ref:
+- ADR-027 §결정 2 (3-trigger enforcement model) — 본 Amendment 10 = Secondary trigger entry-gate 확장 carrier
+- ADR-027 §결정 3 (HOTFIX_BYPASS_CODEFORGE bypass) — §13.E honor
+- ADR-027 Amendment 6 §결정 10 + [ADR-083](ADR-083-consumer-applicability-filter.md) §결정 1/5 — detect-repo-kind 4-way truth-table (exit 0/1/2/3) SSOT, 무변경 재사용
+- [ADR-034](ADR-034-pre-issue-brainstorming-stage.md) D1 — brainstorm 옵션성 보존 (게이트 ≠ 진입 차단), 1줄 cross-ref 주석 동반
+- [ADR-058](ADR-058-adr-sunset-criteria-mandate.md) §결정 5 — sunset_justification ratchet 강화 방향 exemption
+- [ADR-064](ADR-064-decision-principle-mandate.md) §self-application — ratchet 강화 방향 only (scope 확장, weakening 0)
+- https://code.claude.com/docs/en/hooks.md — UserPromptSubmit hook decision control (exit 2 / decision:block = prompt erase 권한, exit 0 = context inject) — 본 훅은 exit 0 만 사용 (정책적 자기 절제)
+- `skills/codeforge-brainstorm/SKILL.md` §"게이트 분기 절차" — skill 측 LLM 지시 (entry-gate 의 skill-side mirror). 미초기화 = 4 부재 SSOT 정의 동일화 (§13.B I-4 wording SSOT)
+- `templates/scripts/detect-repo-kind.py:99-115` — `unknown`(exit 3) ⟺ `has_plugin=False ∧ has_overlay=False` 실측 SSOT (§13.B 4 부재 정의의 앞 2 conjunct 근거, 무변경 재사용)
+- `hooks/hooks.json:62-71` — UserPromptSubmit `run-hook.cmd <name>` polyglot dispatch 배열 (§13.F additive entry append 대상, 실측)
+- `hooks/korean-english-recovery` (shim) — bypass→exit0 / python 탐색→부재시 exit0 / exec core 패턴 SSOT (§13.F bootstrap-first-gate shim 답습 원형) + stderr advisory 동형 (§13.C audit 1-line)
+- `overlay/hooks/userprompt_reminder.py:59` — 기존 무제한 `sys.stdin.read()` (sibling). bounded read `sys.stdin.read(1<<20)` 는 본 훅 **신규 강화** — 복사 아님 (Change Plan §3.2(a)/§7 I-3)
+- `hooks/bootstrap-first-gate` + `hooks/bootstrap-first-gate.py` — Phase 2 mechanical enforcement carrier
+- internal-docs Change Plan `cfp-2243-bootstrap-first-gate.md` §3/§7/§8/§11 — 구현 계약 SSOT (ADR-013 dogfood-out)

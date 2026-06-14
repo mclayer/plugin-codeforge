@@ -72,6 +72,8 @@ ADR-027 Amendment 1 / CFP-127 정합 — Proposed → Accepted 2-stage 패턴.
 
 **순수 옵션** — CI 강제 없음, 권장만. 비-trivial Story (cross-cutting / 새 도메인 / 모호한 scope) 에 권장. 작은 chore Story / 명료한 요구사항이면 생략 가능.
 
+> **cross-ref (ADR-027 Amendment 10 / §결정 13, CFP-2243)**: 미초기화 greenfield consumer 에서 codeforge 의도 선언 시 발동하는 bootstrap-first entry-gate (UserPromptSubmit 훅 + skill 게이트 절차) 의 대상 = **bootstrap 미초기화 감지·제안** — brainstorm 진입 자체 차단 아님. warning inject only (exit 0), 사용자 거부 시 진행. 본 D1 (brainstorm = 순수 옵션, CI 강제 없음) 보존 — 게이트는 초기화 우선 "유도(권고)" 만 수행하며 hard-block 미사용. (D1 자기모순 회피 — "진입 시 상태 확인 의무" 를 본 ADR 에 넣지 않고 ADR-027 §결정 13 에 위임.)
+
 **거절된 대안**:
 - (B) 복잡도 임계 위 mandatory: 임계 정의 모호. CI 강제 = 옵션 정책 위배.
 - (C) 모든 Story mandatory: 작은 chore (typo fix / link repair) 도 Stage 0 강제 → 과도. in-lane brainstorming (DomainAgent / RequirementsPL) 으로 lane 내부 보호 이미 존재.
