@@ -5,7 +5,7 @@ description: codeforge 프로젝트 전용 brainstorming — Requirements 에이
 
 # codeforge:brainstorm Skill
 
-codeforge 프로젝트에서 `superpowers:brainstorming`을 대체하는 강화 brainstorming 스킬.
+codeforge 프로젝트 전용 강화 brainstorming 스킬 — 외부 brainstorming plugin 없이 자립(native)한다. why-first 대화 discipline 을 본 skill 본문이 직접 내재한다 (ADR-122 §결정 2).
 
 ## 적용 조건
 
@@ -13,11 +13,11 @@ codeforge 프로젝트에서 `superpowers:brainstorming`을 대체하는 강화 
 - 또는 `docs/adr/` 디렉터리 존재 (codeforge consumer 프로젝트)
 - 또는 `archive/adr/` 디렉터리 존재 (plugin-codeforge wrapper 자기 — prune 이후 이동)
 
-조건 불충족 시 `superpowers:brainstorming`으로 fallback.
+조건 불충족(미초기화) 시 처리는 아래 "게이트 분기 절차" 가 담당한다.
 
 ## 게이트 분기 절차 (ADR-027 Amendment 10 / §결정 13 — CFP-2243)
 
-위 "적용 조건" 이 **불충족** (= 미초기화) 인데 사용자가 codeforge 사용을 선언(설계/brainstorm/스토리 요청 등 codeforge 의도)한 경우, `superpowers:brainstorming` fallback **전에** 다음 절차를 수행한다. 목적 = 미초기화 greenfield consumer 가 bootstrap 없이 silent fallback 하는 문제(Issue #2243) 방지.
+위 "적용 조건" 이 **불충족** (= 미초기화) 인데 사용자가 codeforge 사용을 선언(설계/brainstorm/스토리 요청 등 codeforge 의도)한 경우, native brainstorm 진입 **전에** 다음 절차를 수행한다. 목적 = 미초기화 greenfield consumer 가 bootstrap 없이 곧장 brainstorm 으로 흘러가는 문제(Issue #2243) 방지.
 
 **미초기화 판정** = 다음 **4 부재 모두** 충족 (hook §13.B 술어와 byte-동일 — ADR-027 §결정 13.B SSOT):
 - `.claude-plugin/plugin.json` 부재 (plugin/mixed 아님)
@@ -36,7 +36,7 @@ codeforge 프로젝트에서 `superpowers:brainstorming`을 대체하는 강화 
    - **gh 인증** 확인 (`gh auth status`).
    - **GitHub remote** 확인 (`git remote -v` / `.claude/_overlay/project.yaml` org/repo). remote **부재 시 자동 `gh repo create` 금지** — `gh repo create <org>/<repo>` 명령 + 필요 상태를 surface 하고 **사용자 확인 후** 진행 (value judgment B — 사용자 GitHub 계정 부작용 방지).
 3. **부분 초기화** (예: project.yaml 만 존재, ADR 부재 등 일부만 충족) → `bootstrap-consumer.sh --resume` 또는 `--force` 권고 (AC#6).
-4. **사용자 opt-out** — 사용자가 "초기화 없이 진행" 을 명시 선택한 경우에만 `superpowers:brainstorming` 으로 silent fallback (AC#2 opt-out 보존).
+4. **사용자 opt-out** — 사용자가 "초기화 없이 진행" 을 명시 선택한 경우 초기화 권고를 더 surface 하지 않고 **본 skill 의 native brainstorm 을 그대로 진행**한다 (AC#2 opt-out 보존 — opt-out 은 초기화 유도를 건너뛸 뿐, 외부 plugin 으로 위임하는 것이 아니다).
 
 **D1 옵션성 보존 (ADR-034 D1)**: 본 절차는 brainstorm 진입 자체를 **차단하지 않는다**. 초기화를 먼저 "유도(권고)" 할 뿐이며, 사용자가 거부하면 그대로 진행한다. (mechanical mirror = wrapper plugin `hooks/bootstrap-first-gate` UserPromptSubmit 훅 — warning inject only, exit 0.)
 
@@ -48,7 +48,7 @@ codeforge 프로젝트에서 `superpowers:brainstorming`을 대체하는 강화 
 
 ### 사용자 cost-out 경로 (Phase 0 skip)
 
-Phase 0 의 비용 (ResearcherAgent Opus tier 포함 4 에이전트 병렬 spawn) 을 원하지 않는 경우, `codeforge:brainstorm` 대신 `superpowers:brainstorming` 을 **직접 호출**한다. 이 경우 Phase 0 가 수행되지 않고 일반 brainstorming 만 진행 (Amendment 1 의 fallback 경로 유지).
+Phase 0 의 비용 (ResearcherAgent Opus tier 포함 4 에이전트 병렬 spawn) 을 원하지 않는 경우, 사용자는 **"Phase 0 skip"** 을 명시한다. 이 경우 4 agent 병렬 spawn 을 건너뛰고 **Phase 1 native 대화로 바로 진입**한다 — 컨텍스트 패킷 없이 why-first 대화를 직접 시작한다 (Phase 0 비용만 회피, brainstorming discipline 은 본 skill 본문이 그대로 수행). 컨텍스트 패킷 부재로 인한 사실 정보 공백은 Phase 1 대화 중 필요 시 Orchestrator 가 개별 Read/조회로 보충한다.
 
 ## Phase 0: 병렬 에이전트 burst
 
@@ -148,10 +148,14 @@ docs/domain-knowledge/ 디렉터리를 읽고...
 
 ## Phase 1: 강화된 brainstorming 대화
 
-`superpowers:brainstorming` 스킬을 호출하되, 첫 메시지에 컨텍스트 패킷을 포함.
+Phase 1 brainstorming 대화는 **본 skill 이 직접 수행**한다 (외부 brainstorming plugin 위임 없음 — native). Phase 0 컨텍스트 패킷을 첫 메시지의 입력으로 삼아 why-first 대화를 시작한다.
 
-`superpowers:brainstorming`의 checklist 1(project context explore)은 이미 수행됨 —
-Phase 0 결과로 대체. checklist 2부터 진행.
+**native 대화 flow (단계적 탐색 후 설계 수렴)**: 아래 4 단계를 순차 진행한다. 1 단계(컨텍스트 탐색)는 **Phase 0 의 4 agent 병렬 burst 로 이미 대체**되었으므로 (컨텍스트 패킷이 그 산출물), Phase 1 은 2 단계부터 시작한다.
+
+1. **컨텍스트 탐색** (project context explore) — *Phase 0 결과로 대체됨. Phase 1 에서는 재수행하지 않고 컨텍스트 패킷을 입력으로 받는다.*
+2. **why 확립** — 컨텍스트 패킷을 출발점으로, 첫 질문은 반드시 "왜"(동기·배경·실제 필요)를 향한다. what 이 아니라 why 를 먼저 확립한다 (아래 "Why-first 원칙").
+3. **요구·제약 탐색** — why 를 렌즈로 요구사항을 단계적으로 발굴하고 제약(기술·운영·범위)을 확인한다. 사용자가 미처 언급하지 않은 요구사항까지 능동 발굴한다.
+4. **대안 제시 → 설계 수렴** — why 충족 관점에서 더 나은 대안을 Orchestrator 가 능동 제안하고(사용자가 원래 방향을 유지하면 존중), edge case 를 점검한 뒤 설계로 수렴한다.
 
 **Priority precedence (CFP-637 / ADR-064 §결정 10, Amendment 3)**: 본 Phase 1 의 dialog format / AskUserQuestion / "사용자 confirm" 지시는 **CLAUDE.md ADR-064 §결정 3 룰 1 (Derived default) + §결정 9 Question quality 3-check 보다 후순위**. dialog 진입은 다음 모두 충족 시에만:
 
@@ -161,7 +165,7 @@ Phase 0 결과로 대체. checklist 2부터 진행.
 
 위 3 self-check 미통과 영역 = derived default declare + 진행 (사용자 정정 의무). dialog format / numbered list / "권장 = ..." 형식 발화 금지. CFP-358 / CFP-374 (Subagent-Driven 자동 선택) 의 generalized precedent — 본 skill 의 dialog reflex 차단이 §결정 10 의 first applied case.
 
-본 precedence 는 superpowers:brainstorming 내부 checklist 도 동일 적용 (CFP-639 cross-plugin sister Story 가 upstream PR carrier).
+본 precedence 는 본 skill 의 native 대화 전반(위 4 단계 flow 전체)에 동일 적용된다.
 
 **Why-first 원칙**: brainstorming의 첫 질문은 반드시 "왜"를 향한다. 사용자가 요청한 내용(what)이 아니라 그 배경·동기·실제 필요(why)를 먼저 확립한다.
 
@@ -225,5 +229,5 @@ backward-compat: 미선언 시 default "not captured" — Wave 2 mechanical lint
 
 ## 종료
 
-spec 파일 저장 완료 후 `superpowers:writing-plans` 스킬 호출.
+spec 파일 저장 완료 후 `codeforge:writing-plans` 스킬 호출.
 (scope_manifest 초안은 spec 파일에 포함됨 — Phase 1 PR 시 Issue body에 붙여넣기)
