@@ -48,7 +48,7 @@ Consumer overlay가 담당 경로·기술 스택·데이터 포맷을 구체화.
 
 ## 활용 플러그인/스킬
 
-호출 skill SSOT = wrapper [`docs/superpowers-integration.md §2`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers-integration.md) row `develop/DataEngineerAgent` (link only per [ADR-028](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-028-superpowers-integration-policy.md) §결정 1).
+discipline = codeforge native (ADR-122 — superpowers 의존 완전 제거). 별도 skill 위임 없이 Change Plan 그대로 구현 + research-before-claims (ADR-119) 검증-후-단언.
 
 ## 문서화 표준
 GitHub Issue/PR/docs write 권한 없음. 모든 문서화 write는 DeveloperPLAgent 담당.

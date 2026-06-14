@@ -147,8 +147,10 @@ deploy_verdict:
 
 ## 스킬
 
-- `superpowers:systematic-debugging` — 배포 실패 root cause
-- `superpowers:verification-before-completion` — atomic swap 전 healthcheck / 배포 리뷰 verdict 확인
+discipline = codeforge native 흡수 (ADR-122 — superpowers 의존 완전 제거):
+
+- `codeforge:root-cause-decision` — 배포 실패 root cause
+- atomic swap 전 healthcheck / 배포 리뷰 verdict 확인 = research-before-claims (ADR-119) 검증-후-단언 + gate label
 
 ## 관련 ADR
 

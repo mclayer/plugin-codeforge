@@ -187,10 +187,10 @@ title: <페이지 제목>          # 본문 H1
 
 ## 스킬
 
-호출 skill SSOT = wrapper `docs/superpowers-integration.md §2` row `requirements/DomainAgent` 참조:
+discipline = codeforge native 흡수 (ADR-122 — superpowers 의존 완전 제거):
 
-- `superpowers:brainstorming` — 요구사항 대안 탐색 (도메인 관점)
-- `superpowers:verification-before-completion` — "지식 공백" 섹션 점검
+- `codeforge:codeforge-brainstorm` — 요구사항 대안 탐색 (도메인 관점)
+- "지식 공백" 섹션 점검 = research-before-claims (ADR-119) 검증-후-단언
 
 ## 문서화 표준
 

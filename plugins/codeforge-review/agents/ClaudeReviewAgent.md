@@ -184,7 +184,7 @@ PL packet에 checklist_path와 category_enum이 누락. generic fallback 금지 
 
 ## 활용 스킬
 
-호출 skill SSOT = wrapper [`docs/superpowers-integration.md §2`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers-integration.md) row `review/ClaudeReviewAgent` (link only per [ADR-028](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-028-superpowers-integration-policy.md) §결정 1).
+discipline = codeforge native (ADR-122 — superpowers 의존 완전 제거). 공통 리뷰 discipline = `templates/review-pl-base.md §9` + research-before-claims (ADR-119) 검증-후-단언.
 
 ## 문서화 표준
 GitHub Issue/PR/docs write 권한 없음. 리뷰 findings는 담당 ReviewPL에 반환한다.

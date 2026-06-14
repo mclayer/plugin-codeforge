@@ -99,7 +99,9 @@ worker_measurement:
 
 ## 스킬
 
-- `superpowers:systematic-debugging` — smoke / 성능 측정 이상 진단
+discipline = codeforge native 흡수 (ADR-122 — superpowers 의존 완전 제거):
+
+- `codeforge:root-cause-decision` — smoke / 성능 측정 이상 진단
 
 ## 관련 ADR
 

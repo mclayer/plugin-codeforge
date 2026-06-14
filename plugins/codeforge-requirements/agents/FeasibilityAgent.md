@@ -107,9 +107,9 @@ section: "4.2"
 
 ## 스킬
 
-호출 skill SSOT = wrapper `docs/superpowers-integration.md §2` row `requirements/FeasibilityAgent` 참조:
+discipline = codeforge native 흡수 (ADR-122 — superpowers 의존 완전 제거):
 
-- `superpowers:verification-before-completion` — 가능성 판단 근거 점검
+- 가능성 판단 근거 점검 = research-before-claims (ADR-119) 검증-후-단언
 
 ## 문서화 표준
 

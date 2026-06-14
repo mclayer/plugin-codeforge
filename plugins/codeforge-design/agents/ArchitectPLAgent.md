@@ -208,11 +208,11 @@ DeveloperPLAgent의 1차 원인 진단을 Orchestrator 경유로 수령 후 본 
 
 ## 스킬
 
-호출 skill SSOT = wrapper `docs/superpowers-integration.md §2` row `design/ArchitectPLAgent` 참조:
+discipline = codeforge native 흡수 (ADR-122 — superpowers 의존 완전 제거):
 
-- `superpowers:writing-plans` — SubAgent 계획서 0-context 구체화 검수
-- `superpowers:dispatching-parallel-agents` — 6 SubAgent 병렬 spawn 근거
-- `superpowers:systematic-debugging` — FIX root cause
+- `codeforge:writing-plans` — SubAgent 계획서 0-context 구체화 검수
+- 6 SubAgent 병렬 spawn 근거 = wrapper CLAUDE.md "병렬 default"
+- `codeforge:root-cause-decision` — FIX root cause
 
 ## 문서화 표준
 

@@ -148,8 +148,10 @@ ADR-087 §결정 6 precedent 정합 — wrapper / lane plugin = 배포 리뷰 la
 
 ## 스킬
 
-- `superpowers:systematic-debugging` — 성능 회귀 root cause
-- `superpowers:verification-before-completion` — verdict 발화 전 성능 metric evidence 확인
+discipline = codeforge native 흡수 (ADR-122 — superpowers 의존 완전 제거):
+
+- `codeforge:root-cause-decision` — 성능 회귀 root cause
+- verdict 발화 전 성능 metric evidence 확인 = research-before-claims (ADR-119) 검증-후-단언 + gate label
 
 ## 관련 ADR
 

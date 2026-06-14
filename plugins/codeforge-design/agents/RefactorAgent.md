@@ -148,10 +148,10 @@ permissions:
 
 ## 활용 플러그인/스킬
 
-호출 skill SSOT = wrapper [`docs/superpowers-integration.md §2`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers-integration.md) row `design/RefactorAgent` 참조:
+discipline = codeforge native 흡수 (ADR-122 — superpowers 의존 완전 제거):
 
 - **언어별 LSP** (consumer overlay 지정) — 참조 추적·타입 일관성 확인. Python의 경우 `pyright-lsp`, TypeScript는 typescript-language-server, Go는 gopls 등
-- **superpowers:writing-plans** — 0-context 구체화
+- **`codeforge:writing-plans`** — 0-context 구체화
 
 ## 문서화 표준
 GitHub Issue/PR/docs write 권한 없음. 오케스트레이터에 보고서 반환만 수행.
