@@ -84,7 +84,7 @@ ADR-017 §결정 1 (금지 경로) 의 lint 대상에 다음 추가:
 
 - **agent md 의 권한 표기에 `docs/superpowers/**` 잔존 금지** — `Edit(docs/superpowers/...)` / `Write(docs/superpowers/...)` 패턴 모두 fail-closed
 - 검사 위치: `agents/**.md` (lane plugin) 의 frontmatter `allowed-tools` 및 본문 권한 표기
-- 검사 script: `scripts/check-superpowers-integration.sh` (CFP-113 신규) check 2
+- 검사 script: `scripts/check-superpowers-integration.sh` (CFP-113 신규) check 2 — (CFP-113 lint — 후속 미구현/제거, dead reference)
 
 ### 적용 시점 (effective date)
 
@@ -92,7 +92,7 @@ ADR-017 §결정 1 (금지 경로) 의 lint 대상에 다음 추가:
 
 ### 관련 파일 추가
 
-- `scripts/check-superpowers-integration.sh`
-- `scripts/test-check-superpowers-integration.sh`
-- `templates/github-workflows/superpowers-integration.yml`
+- `scripts/check-superpowers-integration.sh` — (CFP-113 lint — 후속 미구현/제거, dead reference)
+- `scripts/test-check-superpowers-integration.sh` — (CFP-113 lint — 후속 미구현/제거, dead reference)
+- `templates/github-workflows/superpowers-integration.yml` — (CFP-113 lint — 후속 미구현/제거, dead reference)
 - `docs/adr/ADR-028-superpowers-integration-policy.md`

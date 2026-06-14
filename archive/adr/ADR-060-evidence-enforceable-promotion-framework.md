@@ -1004,8 +1004,8 @@ sibling_dependencies:            # ADR-060 §결정 6 (c) — Amendment 1 정정
 | 9 | `label-registry-sync` | `bash scripts/check-label-registry.sh` | `.github/workflows/contract-lint.yml` job:`label-registry-sync` | label-registry-v2 (kind:registry) | `warning` |
 | 10 | ~~`marketplace-sync`~~ (retired CFP-457) | ~~`bash scripts/check-marketplace-sync.sh`~~ | ~~`.github/workflows/contract-lint.yml` job:`marketplace-sync`~~ | ~~ADR-016~~ | ~~`warning`~~ — see entry #5 `marketplace-parity` (CFP-50 / ADR-023) for SSOT |
 | 11 | `dogfood-artifact-paths` | `bash scripts/check-dogfood-artifact-paths.sh` | `.github/workflows/dogfood-artifact-paths.yml` | ADR-013 / ADR-017 | `warning` |
-| 12 | `superpowers-integration` | `bash scripts/check-superpowers-integration.sh` | `.github/workflows/superpowers-integration.yml` | ADR-028 / CFP-113 | `warning` |
-| 13 | `superpowers-schema-drift` | `bash scripts/check-superpowers-schema-drift.sh` | `.github/workflows/superpowers-schema-drift.yml` | ADR-028 / CFP-121 | `warning` (scheduled quarterly + PR:paths) |
+| 12 | ~~`superpowers-integration`~~ (retired — dead file, ADR-122) | ~~`bash scripts/check-superpowers-integration.sh`~~ | ~~`.github/workflows/superpowers-integration.yml`~~ | ~~ADR-028 / CFP-113~~ | ~~`warning`~~ |
+| 13 | ~~`superpowers-schema-drift`~~ (retired — dead file, ADR-122) | ~~`bash scripts/check-superpowers-schema-drift.sh`~~ | ~~`.github/workflows/superpowers-schema-drift.yml`~~ | ~~ADR-028 / CFP-121~~ | ~~`warning` (scheduled quarterly + PR:paths)~~ |
 | 14 | `parallel-epic-conflict` | (workflow inline — PR file 교집합) | `.github/workflows/parallel-epic-conflict-check.yml` | ADR-050 | `warning` (continue-on-error prior art) |
 | 15 | `branch-protection-drift` | (workflow inline — gh api + manifest diff) | `.github/workflows/branch-protection-drift-check.yml` | ADR-024 Amendment 2 | `warning` (weekly Mon 09:00 UTC cron) |
 | 16 | `required-workflow-drift` | (workflow inline + `check-enterprise-admin.sh`) | `.github/workflows/required-workflow-drift-check.yml` | ADR-048 §결정 3 | `warning` (weekly Mon 10:00 UTC cron) |
@@ -1243,7 +1243,7 @@ evidence-checks-registry.yaml 에 신규 row append (Phase 2 PR scope). framewor
 |---|---|---|---|
 | 14 MISSING (read-only lint) | 14 | **T1 base** | `permissions: contents: read` |
 | 2 JOB-LEVEL upgrade (`wording-ssot-check.yml` x2) | 2 | **T1 base** | `permissions: contents: read` (job-level → top-level move) |
-| 2 `superpowers-schema-drift.yml` (.github + templates) | (이미 14 MISSING 안 포함) | **T1 top-level + T3 schedule job override** | top-level `contents: read` + schedule job `issues: write` (TH-7 sealed verdict 정합 — EC-4 job-level escalation 채택) |
+| ~~2 `superpowers-schema-drift.yml` (.github + templates)~~ (retired — file 부재, ADR-122) | ~~(이미 14 MISSING 안 포함)~~ | ~~**T1 top-level + T3 schedule job override**~~ | ~~top-level `contents: read` + schedule job `issues: write` (TH-7 sealed verdict 정합 — EC-4 job-level escalation 채택)~~ |
 | 1 pair `test.yml` (.github vs templates) | 2 file (의도적 divergence) | **T1 base** each | 양쪽 독립 hardening, mirror invariant 비대상 (Story §2.4) |
 
 **TH-7 sealed verdict** (SecurityArch finalize): scheduled conditional issue create job 만 `issues: write` 권한 escalate — top-level `issues: write` 가 PR 경로까지 권한 확대 = least privilege 위반 회피 (Story §5.3 EC-4 정합).

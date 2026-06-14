@@ -127,7 +127,6 @@ graph LR
     subgraph "External Systems"
         GitHub[GitHub API<br/>MCP github server]
         Codex[Codex CLI<br/>openai-codex plugin]
-        Superpowers[superpowers<br/>17 lane skill]
         Marketplace[mclayer/marketplace<br/>9-plugin registry]
         Confluence[Confluence API<br/>readable mirror]
         InternalDocs[mclayer/codeforge-internal-docs<br/>dogfood monorepo]
@@ -141,7 +140,6 @@ graph LR
     User -- "요구 접수 dialog" --> Orchestrator
     Contributor -- "PR / Issue / Review" --> GitHub
     Orchestrator -- "agent spawn / git ops / Issue/PR write" --> GitHub
-    Orchestrator -- "skill 호출 / parallel agent dispatch" --> Superpowers
     Orchestrator -- "Codex Proactive Check 6 touchpoint" --> Codex
     Orchestrator -- "spawn" --> Family
     GitHub -- "marketplace publish / plugin install" --> Marketplace
@@ -149,7 +147,7 @@ graph LR
     Family -- "git→Confluence one-way sync<br/>(ADR-103, ADR-111 closed-enum 4 mirror 대상)" --> Confluence
 ```
 
-**Trust boundary**: 외부 입력 = (사용자 dialog / GitHub API webhook / Codex worker output / Superpowers skill body / Marketplace registry data / Confluence API). 모든 외부 입력은 verify-before-trust 4-layer 안전망 통과 (ADR-073 Orchestrator verify-before-assert / ADR-070 Codex verify-before-trust / ADR-082 write-time self-write verification / ADR-045 §D-9 PMOAgent retro forcing function).
+**Trust boundary**: 외부 입력 = (사용자 dialog / GitHub API webhook / Codex worker output / Marketplace registry data / Confluence API). 모든 외부 입력은 verify-before-trust 4-layer 안전망 통과 (ADR-073 Orchestrator verify-before-assert / ADR-070 Codex verify-before-trust / ADR-082 write-time self-write verification / ADR-045 §D-9 PMOAgent retro forcing function).
 
 **in-scope vs out-of-scope**:
 - in-scope = SW 개발 라이프사이클 자동화 (요구사항 → 설계 → 리뷰 → 구현 → 통합 테스트 → 보안 테스트 → 배포 → 배포 검토 8 lane)
@@ -236,7 +234,7 @@ graph TB
     end
 
     subgraph "Plugin Cache (codeforge family + dependencies)"
-        PluginCache[~/.claude/plugins/cache/<br/>codeforge 6.6.1<br/>+ 8 lane plugin<br/>+ superpowers + codex]
+        PluginCache[~/.claude/plugins/cache/<br/>codeforge 6.6.1<br/>+ 8 lane plugin<br/>+ codex]
     end
 
     ClaudeCode <-- "agent spawn / Read/Write/Edit/Bash" --> Worktrees

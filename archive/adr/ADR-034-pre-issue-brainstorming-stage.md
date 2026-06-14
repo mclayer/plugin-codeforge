@@ -17,8 +17,13 @@ amendments:
     carrier_story: CFP-386
     date: 2026-05-11
     title: "Phase 0 자동 실행 — opt-in AskUserQuestion 폐지"
+  - id: 3
+    carrier_story: CFP-2249
+    date: 2026-06-15
+    title: "superpowers fallback 문구 제거 — codeforge:brainstorm 자립 (ADR-122 §결정 7)"
 related_stories:
   - CFP-129
+  - CFP-2249   # Amendment 3 — superpowers fallback 제거
 related_adrs:
   - ADR-013
   - ADR-017
@@ -26,11 +31,12 @@ related_adrs:
   - ADR-028
   - ADR-031
   - ADR-032
+  - ADR-122   # Amendment 3 — superpowers 의존 완전 제거 (fallback 대상 소멸)
 related_files:
   - docs/orchestrator-playbook.md
   - docs/consumer-guide.md
-  - docs/superpowers-integration.md
-  - templates/skill-prompt-helpers/brainstorming-path-override.md
+  - docs/superpowers-integration.md  # dead reference — CFP-2249/ADR-122 로 sunset 제거 (파일 부재)
+  - templates/skill-prompt-helpers/brainstorming-path-override.md  # dead reference — CFP-2249/ADR-122 로 sunset 제거 (파일 부재)
   - templates/github-issue-forms/story.yml
   - CLAUDE.md
 is_transitional: false
@@ -56,11 +62,13 @@ ADR-027 Amendment 1 / CFP-127 정합 — Proposed → Accepted 2-stage 패턴.
 
 ### 현재 상태
 
+> **(CFP-2249/ADR-122 주석)** 아래 서술은 ADR-034 작성 시점(2026-05-07) 의 당시 상태 기록이다. `docs/superpowers-integration.md` + `templates/skill-prompt-helpers/brainstorming-path-override.md` 는 ADR-122 로 sunset 제거됨 (현존 파일 아님) — brainstorming 은 `codeforge:brainstorm` 자립 skill 로 내재화. 본 절은 이력 보존 목적.
+
 `docs/orchestrator-playbook.md` §1.2 신규 세션 플로우 = 사용자 요구사항 접수 후 Issue Forms 또는 Orchestrator 직접 분해 2 가지 옵션만 명시. Issue Form **제출 전** 사용자 / consumer Orchestrator 가 brainstorming 으로 scope 정리하는 절차 = 미문서화.
 
-`docs/superpowers-integration.md` §2 SSOT 의 brainstorming 호출 2 행 (`requirements / DomainAgent / 요구사항 대안 탐색` + `requirements / RequirementsPLAgent / 요구사항 대안 탐색`) 은 모두 **lane 내부** 호출 — 사용자 입력이 이미 Issue Form 으로 들어온 후 lane plugin agent 가 호출. Pre-Issue scoping (사용자 발화 → Issue Form 제출 전) 은 다른 단계.
+(당시) `docs/superpowers-integration.md` §2 SSOT 의 brainstorming 호출 2 행 (`requirements / DomainAgent / 요구사항 대안 탐색` + `requirements / RequirementsPLAgent / 요구사항 대안 탐색`) 은 모두 **lane 내부** 호출 — 사용자 입력이 이미 Issue Form 으로 들어온 후 lane plugin agent 가 호출. Pre-Issue scoping (사용자 발화 → Issue Form 제출 전) 은 다른 단계.
 
-`templates/skill-prompt-helpers/brainstorming-path-override.md` fragment 는 ADR-013 / ADR-017 enforce path override 안내 — 단 in-lane 시나리오만 다룸.
+(당시) `templates/skill-prompt-helpers/brainstorming-path-override.md` fragment 는 ADR-013 / ADR-017 enforce path override 안내 — 단 in-lane 시나리오만 다룸.
 
 ### Gap
 - Pre-Issue 시나리오 = 미문서화 (사용자 / consumer Orchestrator 가 임의로 호출 가능하나 호출점 / spec 위치 / Issue Form 연결 mechanism SSOT 부재)
@@ -90,13 +98,13 @@ ADR-027 Amendment 1 / CFP-127 정합 — Proposed → Accepted 2-stage 패턴.
 
 ### D4. Skill prompt helper = sub-section append
 
-기존 [`templates/skill-prompt-helpers/brainstorming-path-override.md`](../../templates/skill-prompt-helpers/brainstorming-path-override.md) 에 "Pre-Issue scenario" sub-section append. 별도 fragment 신설 안 함.
+기존 `templates/skill-prompt-helpers/brainstorming-path-override.md` (CFP-2249/ADR-122 로 sunset 제거 — 파일 부재, 당시 결정) 에 "Pre-Issue scenario" sub-section append. 별도 fragment 신설 안 함.
 
 근거: [ADR-028](ADR-028-superpowers-integration-policy.md) §결정 5 — wrapper-owned fragment 4 개 고정. 1 fragment 안에 in-lane / pre-Issue 2 시나리오 분리가 더 간결.
 
 ### D5. superpowers-integration.md §2 표 = 1 row + footnote
 
-기존 23 호출 지점 → 24 호출 지점. 신규 row = `wrapper / Orchestrator (or human) / pre-Issue scoping (Stage 0) / superpowers:brainstorming / YES / §3 row 2 / wrapper Phase 1 (post-merge: Issue Form 제출)`.
+기존 23 호출 지점 → 24 호출 지점. 신규 row = `wrapper / Orchestrator (or human) / pre-Issue scoping (Stage 0) / 외부 plugin brainstorming skill / YES / §3 row 2 / wrapper Phase 1 (post-merge: Issue Form 제출)`. (Amendment 3 / ADR-122: superpowers-integration.md 자체가 sunset 제거됨 — 본 row 는 당시 통합 표 이력 기록.)
 
 §2 직후 footnote 추가 — Pre-Issue 시나리오의 I/O = spec → Issue Form `user-original` (§1 verbatim source) + `spec_link` 필드 (path/URL traceability). §3 row 2 의 in-lane I/O 와 다름.
 
@@ -124,8 +132,9 @@ ADR-027 Amendment 1 / CFP-127 정합 — Proposed → Accepted 2-stage 패턴.
 - [ADR-013](ADR-013-codeforge-family-dogfood-out-policy.md) — codeforge family dogfood-out policy. spec / plan / change-plan / story / retro 위치 internal-docs override.
 - [ADR-017](ADR-017-skill-override-path-enforcement.md) — skill override path enforcement. `docs/superpowers/{specs,plans}/**` plugin repo 금지 + CI fail-closed.
 - [ADR-027](ADR-027-consumer-adoption-protocol.md) + [ADR-032 Amendment 1](ADR-032-adr-027-amendment-1-hard-enforcement.md) — consumer adoption + ADR Proposed → Accepted 2-stage 패턴.
-- [ADR-028](ADR-028-superpowers-integration-policy.md) — superpowers integration SSOT, wrapper-owned fragment 4 개 고정.
+- [ADR-028](ADR-028-superpowers-integration-policy.md) — superpowers integration SSOT, wrapper-owned fragment 4 개 고정. (ADR-122 로 Superseded — superpowers 의존 제거)
 - [ADR-031](ADR-031-lane-spawn-evidence-trail.md) — lane spawn evidence trail + effective date freeze 패턴.
+- [ADR-122](ADR-122-superpowers-dependency-removal.md) — superpowers 의존 완전 제거 (§결정 7: 본 ADR-034 fallback 문구 제거 — Amendment 3). Stage 0 brainstorming 핵심 정책은 보존, superpowers 매개체만 `codeforge:brainstorm` 자립으로 치환.
 
 ## 해소 기준
 
@@ -136,8 +145,8 @@ N/A — permanent policy
 Phase 1 wrapper PR (이 PR):
 - [`docs/orchestrator-playbook.md`](../orchestrator-playbook.md) — §1.2.0 Stage 0 블록 INSERT
 - [`docs/consumer-guide.md`](../consumer-guide.md) — §2.0a "Optional Stage 0" APPEND
-- [`docs/superpowers-integration.md`](../superpowers-integration.md) — §2 표 1 row + footnote (24 호출 지점)
-- [`templates/skill-prompt-helpers/brainstorming-path-override.md`](../../templates/skill-prompt-helpers/brainstorming-path-override.md) — "Pre-Issue scenario" sub-section APPEND
+- `docs/superpowers-integration.md` — §2 표 1 row + footnote (24 호출 지점) — **dead reference: CFP-2249/ADR-122 로 sunset 제거 (파일 부재, 당시 변경 이력)**
+- `templates/skill-prompt-helpers/brainstorming-path-override.md` — "Pre-Issue scenario" sub-section APPEND — **dead reference: CFP-2249/ADR-122 로 sunset 제거 (파일 부재, 당시 변경 이력)**
 
 Phase 2 wrapper PR (후속):
 - [`templates/github-issue-forms/story.yml`](../../templates/github-issue-forms/story.yml) — optional `spec_link` textarea field 추가
@@ -155,7 +164,7 @@ internal-docs (별도 repo, mclayer/codeforge-internal-docs):
 
 ### 컨텍스트
 
-기존 Stage 0는 `superpowers:brainstorming` 단독 호출 (Orchestrator 단일 에이전트).
+기존 Stage 0는 외부 plugin brainstorming skill 단독 호출 (Orchestrator 단일 에이전트).
 Requirements 에이전트(DomainAgent, ResearcherAgent, RequirementsAnalystAgent, PMOAgent)의
 전문성이 brainstorming 단계에 투입되지 않아 scope 정의 품질이 낮고 downstream 충돌 확률이 높다.
 
@@ -166,8 +175,8 @@ Requirements 에이전트(DomainAgent, ResearcherAgent, RequirementsAnalystAgent
 
 | 항목 | 기존 (ADR-034 v1) | Amendment 1 이후 |
 |---|---|---|
-| Stage 0 스킬 | `superpowers:brainstorming` | codeforge 프로젝트 = `codeforge:brainstorm` (권장) |
-| 하위호환 | — | `superpowers:brainstorming` 직접 호출 허용 유지 |
+| Stage 0 스킬 | 외부 plugin brainstorming skill | codeforge 프로젝트 = `codeforge:brainstorm` (권장) |
+| 하위호환 | — | (Amendment 3 / ADR-122: 외부 plugin 없이 `codeforge:brainstorm` 자립 — superpowers fallback 대상 소멸) |
 | 에이전트 참여 | Orchestrator 단독 | Phase 0: 4 에이전트 병렬 컨텍스트 제공 (opt-in) |
 | 출력 | spec 파일 | spec 파일 + scope_manifest 초안 |
 
@@ -195,7 +204,7 @@ Amendment 1 (CFP-345) 는 ResearcherAgent Opus tier 비용 제어를 위해 Phas
 
 1. **반복 비용 경고 = 학습된 reflex**: 매 호출마다 동일 질문 반복 → 의미 있는 결정 없이 클릭만 수행. AskUserQuestion 의 신호 가치 소실.
 2. **호출 시점에 이미 비용 의사 표명됨**: brainstorming 자체가 비-trivial Story 권장 절차. `codeforge:brainstorm` skill 호출 = 비용 발생 동의 = 추가 확인 불필요.
-3. **cost-out 경로 이미 존재**: 비용 절감을 원하는 사용자는 `superpowers:brainstorming` 을 직접 호출 가능 (codeforge:brainstorm 의 fallback 경로). 자동 실행해도 사용자 제어 보존.
+3. **cost-out 경로 이미 존재**: 비용 절감을 원하는 사용자는 `codeforge:brainstorm` 의 Phase 0 (4 에이전트 병렬 spawn) 를 skip 가능. 자동 실행해도 사용자 제어 보존. (Amendment 3 / ADR-122: 구 superpowers fallback 경로는 의존 제거로 소멸 — cost-out 은 Phase 0 skip 으로만 제공.)
 4. **CFP-358 / CFP-374 패턴 정합**: Subagent-Driven 자동 선택 (구현 실행 방식 프롬프트 skip) 과 동일 원칙 — "비용 경고가 생산성을 저하시키는 경우 사용자 선택이 아닌 정책으로 처리".
 
 ### 변경
@@ -204,26 +213,48 @@ Amendment 1 (CFP-345) 는 ResearcherAgent Opus tier 비용 제어를 위해 Phas
 |---|---|---|
 | Phase 0 진입 | opt-in 확인 후 진입 | 자동 진입 (별도 사용자 확인 없음) |
 | AskUserQuestion | 매 호출당 1회 | 0회 |
-| 사용자 cost-out 경로 | Phase 0 거절 → `superpowers:brainstorming` fallback | `superpowers:brainstorming` 을 직접 호출 (codeforge:brainstorm 호출 자체를 skip) |
+| 사용자 cost-out 경로 | Phase 0 거절 → 외부 plugin brainstorming fallback | `codeforge:brainstorm` Phase 0 skip (Amendment 3 / ADR-122: 외부 plugin fallback 대상 소멸 — cost-out = Phase 0 skip only) |
 | 비용 통지 | 매 호출 inline 경고 | SKILL.md 본문 + ADR-042 의 model tier 정책 SSOT 참조 |
 
 ### 적용 조건
 
 - `codeforge:brainstorm` skill 발동 시 즉시 Phase 0 (4 에이전트 병렬 spawn) 진행
 - Phase 0 결과를 Phase 1 (강화된 brainstorming 대화) 초기 컨텍스트로 주입
-- Phase 0 의 4 에이전트 결과 합성 후 `superpowers:brainstorming` 의 checklist 2 부터 진행 (기존 동일)
+- Phase 0 의 4 에이전트 결과 합성 후 `codeforge:brainstorm` 의 내재 brainstorming checklist 로 진행 (Amendment 3 / ADR-122: 구 superpowers checklist 는 codeforge:brainstorm 본문으로 내재화)
 
 ### 사용자 제어 보존
 
 비용 절감을 원하는 사용자는:
-- `superpowers:brainstorming` 을 명시적으로 호출 → `codeforge:brainstorm` 의 Phase 0 skip (4 에이전트 spawn 없음)
-- 이 경로는 SKILL.md 본문에서 fallback 으로 명시 (Amendment 1 `superpowers:brainstorming` 직접 호출 허용 유지 정합)
+- `codeforge:brainstorm` 의 Phase 0 (4 에이전트 병렬 spawn) 를 skip → 강화된 brainstorming 대화만 진행
+- 이 cost-out 경로는 SKILL.md 본문에서 명시 (Amendment 3 / ADR-122: 구 superpowers fallback 광고는 의존 제거로 폐기 — Phase 0 skip 이 유일 cost-out)
 
 ### 변경 파일
 
 - `skills/codeforge-brainstorm/SKILL.md` — "Phase 0 opt-in 확인" 섹션 (17-25 줄) 제거 + 자동 실행 명시
 - `docs/adr/ADR-034-pre-issue-brainstorming-stage.md` — 본 Amendment 2 (frontmatter `amendments[]` + 본문 추가)
 - `CLAUDE.md` — Stage 0 annotation 정합 갱신 (`(opt-in Phase 0)` → `(자동 Phase 0)`)
+
+### 만료 / supersede
+
+별도 superseding amendment 없는 한 영구.
+
+## Amendment 3 — superpowers fallback 문구 제거 (CFP-2249 / ADR-122, 2026-06-15)
+
+### 컨텍스트
+
+[ADR-122](ADR-122-superpowers-dependency-removal.md) 가 codeforge family 의 superpowers 의존을 완전 제거했다 (brainstorming/writing-plans 를 `codeforge:brainstorm` / `codeforge:writing-plans` 자립 skill 로 내재화). 본 ADR-034 의 Stage 0 정책은 Amendment 1·2 를 거치며 `codeforge:brainstorm` 을 권장 경로로 채택했으나, **하위호환 / cost-out 경로로 외부 plugin brainstorming skill 직접 호출을 fallback 으로 광고**하는 문구가 본문 9 지점에 잔존했다 (line 99/158/169/170/198/207/214/219/220). superpowers 의존이 제거된 상태에서 이 fallback 광고는 존재하지 않는 외부 경로를 활성 경로로 안내 → ADR-122 §결정 2 (codeforge 자립) 직접 모순.
+
+### 결정
+
+ADR-122 §결정 7 에 따라 본 ADR-034 의 superpowers fallback 문구를 제거한다.
+
+- **하위호환 / cost-out 경로** (line 170/198/207/219/220): 외부 plugin brainstorming skill 직접 호출 fallback 광고 제거 → cost-out = `codeforge:brainstorm` 의 Phase 0 (4 에이전트 병렬 spawn) skip 으로만 기술. 외부 plugin fallback 대상 소멸.
+- **checklist 참조** (line 214): 구 superpowers checklist 참조 → `codeforge:brainstorm` 내재 brainstorming checklist 로 치환 (ADR-122 가 brainstorming 을 SKILL.md 본문에 내재화).
+- **이력 서술** (line 99/158/169): Amendment 1 변천 이력 / §컨텍스트 평문의 superpowers 어구 → "외부 plugin (일반)" 으로 wording 정규화 (ADR-064 §결정 10 cleanup 동형 — referent 소멸).
+
+### 보존 (무손상)
+
+Stage 0 (pre-Issue brainstorming) 핵심 정책 본체 — 옵션 정책 / Phase 0 자동 실행 (Amendment 2) / spec → Issue Form `user-original` + `spec_link` I/O / effective date freeze (D6) — 전부 무손상. superpowers 라는 **매개체**만 codeforge 자립 skill 로 치환했을 뿐 brainstorming Stage 0 결정 자체는 불변.
 
 ### 만료 / supersede
 

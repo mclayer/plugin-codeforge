@@ -2711,3 +2711,38 @@ entries:
       failure_threshold: 0
       sibling_dependencies:
         - CFP-2061-S4  # 본 Story (mechanical wire carrier)
+
+  - name: check-no-superpowers
+    description: |
+      ADR-122 회귀 방지 gate — superpowers 의존 완전 제거 후 토큰 재유입 차단.
+      라이브 `superpowers:<skill>` 호출 감지 (warning tier, 토큰 정규식 매칭).
+      정규식: superpowers:[a-z][a-z0-9-]* (literal `docs/superpowers/**` 경로와 분리).
+      EXEMPT (이력 보존): archive/adr/** + archive/CHANGELOG-legacy.md + archive/prune-2026-06/**
+      + 스크립트 자신 (self-reference allowlist).
+      wrapper dogfood 자립성 강화 (외부 plugin 강결합 제거) — discipline 3건
+      (red-first TDD / 0-context plan / iteration 가설차별화) codeforge native 흡수.
+      Blocking 승격 = 별 follow-up (ADR-122 sunset_justification 회귀 차단 3-axis 명시).
+    detect_command: bash scripts/check-no-superpowers.sh
+    workflow: null   # CI 미wire — standalone manual / 세션-개시 호출 (ADR-122 회귀 방지 gate)
+    current_tier: warning   # ADR-060 §결정 5 — 신규 등록 warning, blocking 승격은 별 follow-up
+    bypass_label: hotfix-bypass:superpowers-allow
+    bypass_audit_lint: bash scripts/check-bypass-audit-comment.sh
+    promotion_criteria:
+      pr_cumulative_min: 20            # ADR-060 §결정 6 (a)
+      failure_threshold: 0             # ADR-060 §결정 6 (b)
+      sibling_dependencies:
+        - CFP-2249   # S9 본 entry 도입 carrier (sunset stage)
+      evidence_artifacts:
+        - github_actions_run_history_url
+        - lint_failure_count_zero_proof
+        - pr_cumulative_count_proof
+    modal_anti_pattern_dictionary: {}  # 토큰 호출 감지 lint — modal 어휘 검사 미포함
+    introduced_by: CFP-2249
+    introduced_date: 2026-06-15    # KST (ADR-122 회귀 방지 설계)
+    owner_adr: ADR-122             # superpowers 의존 제거 policy SSOT
+    carrier_adr: ADR-060           # evidence-checks-registry framework
+    recurrence:
+      count: 0
+      threshold: 3
+      promotion_trigger: none
+    status: Active
