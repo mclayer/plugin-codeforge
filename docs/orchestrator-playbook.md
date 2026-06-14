@@ -3247,7 +3247,7 @@ fix_cycle: <N>
 ### 14.4 Status enum (ADR-038 — CFP-2215 Amendment 5 native status 전환)
 
 **TodoWrite channel**: Claude Code 네이티브 TodoWrite status 렌더 사용 — 도구가 status field 로 자체 렌더 (pending = 빈 체크박스 / in_progress = ✱ / completed = ✓ + 취소선). **content 문자열에 상태 이모지 prefix 표기 금지** (네이티브 패널 이중 표기 방지 — ADR-038 Amendment 5).
-**§0 file channel**: 자체 렌더가 없는 plain markdown — 4-marker glyph (`⬜⏳✅🔄`) 를 file 채널 한정 유지 (channel 별 표현 분리, native status 와 의미 매핑 1:1).
+**§0 file channel**: 자체 렌더가 없는 plain markdown — 4-marker glyph (`⬜⏳✅🔄`) 를 file 채널 한정 유지 (channel 단위 표현 분리, native status 와 의미 매핑 1:1).
 
 | TodoWrite native status | 의미 | §0 file 마커 (file 채널 한정) | 사용 위치 |
 |---|---|---|---|
@@ -3262,7 +3262,7 @@ fix_cycle: <N>
 **RESET**: 원인 lane status `completed` 유지 (content suffix `FIX-N 원인 · <판정>` 보존) + 새 lane row append (`(재진입 RESET-N)` suffix).
 **blocked / waiting**: 별도 status 없음. 대기 상태는 `pending` 으로 표현, 진행 중 차단성 작업은 `in_progress` row 의 content 1줄 설명으로 표현.
 
-기존 8 marker (⏸ ⏳-blocked 🔄 ✅ ❌ FIX-N ❌ FIX-N(fast-path) ⊘ 🔁) 폐기 (CFP-707 Amendment 4 이력). **CFP-2215 Amendment 5**: TodoWrite channel 의 content 이모지 4-marker 폐지 → 네이티브 status 렌더 채택. 4-marker glyph 는 §0 file channel 한정 잔존 — "file / TodoWrite 두 channel 동일 어휘" invariant 는 Amendment 5 로 해소 (channel 별 표현 분리).
+기존 8 marker (⏸ ⏳-blocked 🔄 ✅ ❌ FIX-N ❌ FIX-N(fast-path) ⊘ 🔁) 폐기 (CFP-707 Amendment 4 이력). **CFP-2215 Amendment 5**: TodoWrite channel 의 content 이모지 4-marker 폐지 → 네이티브 status 렌더 채택. 4-marker glyph 는 §0 file channel 한정 잔존 — "file / TodoWrite 두 channel 동일 어휘" invariant 는 Amendment 5 로 해소 (channel 단위 표현 분리).
 
 활성 lane row 라인에 inline qualifier (file 채널 예: `⏳ 설계` content 미동반, sub-row 가 detail 표현. PASS 시 `✅ 설계 - PASS · Change Plan v1 + ADR-NNN`. TodoWrite 채널 = status `completed` + content `설계 - PASS · Change Plan v1 + ADR-NNN`).
 
