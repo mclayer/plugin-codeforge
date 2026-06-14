@@ -77,3 +77,12 @@ FIX 루프 트리거 시 (설계리뷰 / 구현리뷰 / 구현테스트 / 보안
 
 - **설계 원인 판정 시**: Change Plan 갱신 (§3/§6/§7/§8 해당 항목) → Phase 1 follow-up PR → 설계 리뷰 레인부터 재실행
 - **구현 원인 판정 시**: Change Plan 유지, Phase 2 PR commit append → 구현 리뷰 재실행
+
+## iteration 가설 차별화 원칙
+
+> behavioral discipline — mechanical lint 불가, review/Orchestrator judgment 으로 검증.
+
+- **매 FIX iteration 은 직전 iteration 과 다른 가설을 세운다.** 같은 원인 가설로 반복 수정(동일 fix 재시도)은 금지 — FIX Ledger §10 에 직전 iteration 의 가설이 기록되므로, 새 iteration 은 그것과 구별되는 가설을 명시해야 한다.
+- **같은 가설이 2회 연속 FAIL 하면 1차 가정(구현 vs 설계)을 재분류** — 구현 가설이 반복 실패하면 설계 원인으로 escalate 고려 (위 decision table 의 "설계 원인 escalate 조건" 재평가).
+- DeveloperPL 1차 진단 보고 시 다음 형식으로 가설 차별을 명시할 것: **"이번 iteration 가설: \<X\> (직전 iteration 가설 \<Y\> 와 차별점: \<Z\>)"**.
+- 근거: ADR-064 normative (FIX 의사결정 원칙). 외부 디버깅 skill 이 제공하던 hypothesis-differentiation discipline 을 본 skill 이 흡수.
