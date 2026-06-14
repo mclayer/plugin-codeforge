@@ -4,6 +4,18 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.4.1] - 2026-06-15
+
+### Changed (CFP-2249 — superpowers 의존 완전 제거, PATCH)
+
+Epic CFP-2249 (superpowers 의존 완전 제거, ADR-122 — supersede ADR-028) 의 lane 반영. PMO lane agent 의 `superpowers:*` skill 호출 / `docs/superpowers-integration.md` 참조를 codeforge native discipline 으로 교체. 필수 plugin 4→3 의 wrapper 정책 변경 동반 lane catch-up. capability 추가/제거 0 — PATCH.
+
+- `agents/PMOAgent.md` · `agents/GitOpsAgent.md` — `superpowers:*` 호출 / `superpowers-integration.md` 참조 제거 → codeforge native (ADR-122) 흡수.
+
+#### Why
+
+ADR-122 — superpowers 외부 plugin 의존을 codeforge native 로 내재화. consumer breaking 0.
+
 ## [0.4.0] - 2026-06-14
 
 ### CFP-2236 — DialogFidelityAgent 전면 폐지 (sunset) (MINOR)

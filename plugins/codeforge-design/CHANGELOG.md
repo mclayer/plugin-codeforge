@@ -2,6 +2,18 @@
 
 `codeforge-design` plugin 릴리스 이력.
 
+## [0.25.4] - 2026-06-15
+
+### Changed (CFP-2249 — superpowers 의존 완전 제거, PATCH)
+
+Epic CFP-2249 (superpowers 의존 완전 제거, ADR-122 — supersede ADR-028) 의 lane 반영. 설계 lane agent 의 `superpowers:writing-plans` 등 호출 / `docs/superpowers-integration.md` 참조를 codeforge native (`codeforge:writing-plans`) 로 교체. 필수 plugin 4→3 의 wrapper 정책 변경 동반 lane catch-up. capability 추가/제거 0 — PATCH.
+
+- `agents/ArchitectAgent.md` · `agents/ArchitectPLAgent.md` · `agents/RefactorAgent.md` · `agents/SecurityArchitectAgent.md` · `agents/TestContractArchitectAgent.md` — `superpowers:*` skill 호출 / `superpowers-integration.md` 참조 제거 → `codeforge:writing-plans` 등 native 흡수 (ADR-122). discipline = research-before-claims (ADR-119) + codeforge native skill.
+
+#### Why
+
+ADR-122 — superpowers 외부 plugin 의존을 codeforge native 로 내재화 (writing-plans / brainstorming / discipline invariant). consumer breaking 0.
+
 ## [0.25.0] - 2026-06-12
 
 ### Added (CFP-2192 — proactive research posture bullet, MINOR)
