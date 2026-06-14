@@ -35,8 +35,8 @@ related_adrs:
 related_files:
   - docs/orchestrator-playbook.md
   - docs/consumer-guide.md
-  - docs/superpowers-integration.md
-  - templates/skill-prompt-helpers/brainstorming-path-override.md
+  - docs/superpowers-integration.md  # dead reference — CFP-2249/ADR-122 로 sunset 제거 (파일 부재)
+  - templates/skill-prompt-helpers/brainstorming-path-override.md  # dead reference — CFP-2249/ADR-122 로 sunset 제거 (파일 부재)
   - templates/github-issue-forms/story.yml
   - CLAUDE.md
 is_transitional: false
@@ -62,11 +62,13 @@ ADR-027 Amendment 1 / CFP-127 정합 — Proposed → Accepted 2-stage 패턴.
 
 ### 현재 상태
 
+> **(CFP-2249/ADR-122 주석)** 아래 서술은 ADR-034 작성 시점(2026-05-07) 의 당시 상태 기록이다. `docs/superpowers-integration.md` + `templates/skill-prompt-helpers/brainstorming-path-override.md` 는 ADR-122 로 sunset 제거됨 (현존 파일 아님) — brainstorming 은 `codeforge:brainstorm` 자립 skill 로 내재화. 본 절은 이력 보존 목적.
+
 `docs/orchestrator-playbook.md` §1.2 신규 세션 플로우 = 사용자 요구사항 접수 후 Issue Forms 또는 Orchestrator 직접 분해 2 가지 옵션만 명시. Issue Form **제출 전** 사용자 / consumer Orchestrator 가 brainstorming 으로 scope 정리하는 절차 = 미문서화.
 
-`docs/superpowers-integration.md` §2 SSOT 의 brainstorming 호출 2 행 (`requirements / DomainAgent / 요구사항 대안 탐색` + `requirements / RequirementsPLAgent / 요구사항 대안 탐색`) 은 모두 **lane 내부** 호출 — 사용자 입력이 이미 Issue Form 으로 들어온 후 lane plugin agent 가 호출. Pre-Issue scoping (사용자 발화 → Issue Form 제출 전) 은 다른 단계.
+(당시) `docs/superpowers-integration.md` §2 SSOT 의 brainstorming 호출 2 행 (`requirements / DomainAgent / 요구사항 대안 탐색` + `requirements / RequirementsPLAgent / 요구사항 대안 탐색`) 은 모두 **lane 내부** 호출 — 사용자 입력이 이미 Issue Form 으로 들어온 후 lane plugin agent 가 호출. Pre-Issue scoping (사용자 발화 → Issue Form 제출 전) 은 다른 단계.
 
-`templates/skill-prompt-helpers/brainstorming-path-override.md` fragment 는 ADR-013 / ADR-017 enforce path override 안내 — 단 in-lane 시나리오만 다룸.
+(당시) `templates/skill-prompt-helpers/brainstorming-path-override.md` fragment 는 ADR-013 / ADR-017 enforce path override 안내 — 단 in-lane 시나리오만 다룸.
 
 ### Gap
 - Pre-Issue 시나리오 = 미문서화 (사용자 / consumer Orchestrator 가 임의로 호출 가능하나 호출점 / spec 위치 / Issue Form 연결 mechanism SSOT 부재)
@@ -96,7 +98,7 @@ ADR-027 Amendment 1 / CFP-127 정합 — Proposed → Accepted 2-stage 패턴.
 
 ### D4. Skill prompt helper = sub-section append
 
-기존 [`templates/skill-prompt-helpers/brainstorming-path-override.md`](../../templates/skill-prompt-helpers/brainstorming-path-override.md) 에 "Pre-Issue scenario" sub-section append. 별도 fragment 신설 안 함.
+기존 `templates/skill-prompt-helpers/brainstorming-path-override.md` (CFP-2249/ADR-122 로 sunset 제거 — 파일 부재, 당시 결정) 에 "Pre-Issue scenario" sub-section append. 별도 fragment 신설 안 함.
 
 근거: [ADR-028](ADR-028-superpowers-integration-policy.md) §결정 5 — wrapper-owned fragment 4 개 고정. 1 fragment 안에 in-lane / pre-Issue 2 시나리오 분리가 더 간결.
 
@@ -143,8 +145,8 @@ N/A — permanent policy
 Phase 1 wrapper PR (이 PR):
 - [`docs/orchestrator-playbook.md`](../orchestrator-playbook.md) — §1.2.0 Stage 0 블록 INSERT
 - [`docs/consumer-guide.md`](../consumer-guide.md) — §2.0a "Optional Stage 0" APPEND
-- [`docs/superpowers-integration.md`](../superpowers-integration.md) — §2 표 1 row + footnote (24 호출 지점)
-- [`templates/skill-prompt-helpers/brainstorming-path-override.md`](../../templates/skill-prompt-helpers/brainstorming-path-override.md) — "Pre-Issue scenario" sub-section APPEND
+- `docs/superpowers-integration.md` — §2 표 1 row + footnote (24 호출 지점) — **dead reference: CFP-2249/ADR-122 로 sunset 제거 (파일 부재, 당시 변경 이력)**
+- `templates/skill-prompt-helpers/brainstorming-path-override.md` — "Pre-Issue scenario" sub-section APPEND — **dead reference: CFP-2249/ADR-122 로 sunset 제거 (파일 부재, 당시 변경 이력)**
 
 Phase 2 wrapper PR (후속):
 - [`templates/github-issue-forms/story.yml`](../../templates/github-issue-forms/story.yml) — optional `spec_link` textarea field 추가
