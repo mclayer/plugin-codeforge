@@ -15,6 +15,31 @@ codeforge 프로젝트에서 `superpowers:brainstorming`을 대체하는 강화 
 
 조건 불충족 시 `superpowers:brainstorming`으로 fallback.
 
+## 게이트 분기 절차 (ADR-027 Amendment 10 / §결정 13 — CFP-2243)
+
+위 "적용 조건" 이 **불충족** (= 미초기화) 인데 사용자가 codeforge 사용을 선언(설계/brainstorm/스토리 요청 등 codeforge 의도)한 경우, `superpowers:brainstorming` fallback **전에** 다음 절차를 수행한다. 목적 = 미초기화 greenfield consumer 가 bootstrap 없이 silent fallback 하는 문제(Issue #2243) 방지.
+
+**미초기화 판정** = 다음 **4 부재 모두** 충족 (hook §13.B 술어와 byte-동일 — ADR-027 §결정 13.B SSOT):
+- `.claude-plugin/plugin.json` 부재 (plugin/mixed 아님)
+- `.claude/_overlay/project.yaml` 부재 (consumer 미초기화)
+- `docs/adr/` 부재
+- `archive/adr/` 부재
+
+**술어 등가 (normative — L27 거짓 등가 교정)**:
+- **`.claude-plugin/plugin.json` 존재 = plugin/mixed → 본 절차 대상 아님 (침묵).** plugin.json 이 있으면 detect-repo-kind 가 plugin(exit 0) 또는 mixed(exit 2) 를 반환하며 절대 unknown 이 아니다. plugin.json 부재를 미초기화 판정에 포함하지 않으면, `plugin.json 존재 + overlay 부재 + ADR dir 부재`(scaffold 직후 plugin repo) 를 consumer bootstrap 으로 오유도한다 (술어 drift). 따라서 plugin.json 부재가 미초기화 판정의 1번째 조건.
+- **정확 등가**: 위 `.claude-plugin/plugin.json` 부재 ∧ `.claude/_overlay/project.yaml` 부재 = detect-repo-kind `unknown`(exit 3). 거기에 `docs/adr` 부재 ∧ `archive/adr` 부재 를 더한 **4 부재 = 본 게이트의 미초기화 술어** (= wrapper plugin `hooks/bootstrap-first-gate` 훅 §13.B 술어와 동일 — skill-side / hook-side 동일 repo-state 동일 분류).
+
+**미초기화 + codeforge 의도 시 분기**:
+
+1. **미초기화 상태 명시 surface** — "현재 codeforge 가 초기화되지 않았습니다 (project.yaml / ADR 부재). codeforge protocol 을 따르려면 먼저 bootstrap 이 필요합니다." 를 사용자에게 통보.
+2. **초기화 제안** — `scripts/bootstrap-consumer.sh` 실행을 권고. 단 **전제 점검 의무**:
+   - **gh 인증** 확인 (`gh auth status`).
+   - **GitHub remote** 확인 (`git remote -v` / `.claude/_overlay/project.yaml` org/repo). remote **부재 시 자동 `gh repo create` 금지** — `gh repo create <org>/<repo>` 명령 + 필요 상태를 surface 하고 **사용자 확인 후** 진행 (value judgment B — 사용자 GitHub 계정 부작용 방지).
+3. **부분 초기화** (예: project.yaml 만 존재, ADR 부재 등 일부만 충족) → `bootstrap-consumer.sh --resume` 또는 `--force` 권고 (AC#6).
+4. **사용자 opt-out** — 사용자가 "초기화 없이 진행" 을 명시 선택한 경우에만 `superpowers:brainstorming` 으로 silent fallback (AC#2 opt-out 보존).
+
+**D1 옵션성 보존 (ADR-034 D1)**: 본 절차는 brainstorm 진입 자체를 **차단하지 않는다**. 초기화를 먼저 "유도(권고)" 할 뿐이며, 사용자가 거부하면 그대로 진행한다. (mechanical mirror = wrapper plugin `hooks/bootstrap-first-gate` UserPromptSubmit 훅 — warning inject only, exit 0.)
+
 ## Phase 0 진입 정책 (ADR-034 Amendment 2 — CFP-386)
 
 스킬 발동 시 **Phase 0 을 자동 실행** — 별도 사용자 확인 (AskUserQuestion) 없이 즉시 4 개 에이전트를 병렬 spawn.

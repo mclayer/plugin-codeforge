@@ -1344,6 +1344,23 @@ Spec 저장 위치:
 
 In-lane brainstorming (DomainAgent / RequirementsPL 가 lane 내부에서 호출) 과는 다른 단계 — [superpowers-integration.md §2](superpowers-integration.md) 참조.
 
+#### 미초기화 (greenfield) consumer 의 첫 진입 — bootstrap-first 안내 (ADR-027 Amendment 10 / §결정 13, CFP-2243)
+
+아직 codeforge 가 초기화되지 않은 프로젝트 (greenfield) 에서 사용자가 codeforge 사용을 선언(설계/brainstorm/스토리 요청)하면, codeforge 는 brainstorming 으로 바로 진행하기 **전에** 초기화가 필요함을 먼저 안내합니다. 여기서 **greenfield(미초기화) = 다음 4 가지 모두 부재** (detect-repo-kind truth-table 기준 단일 정의, ADR-027 §결정 13.B SSOT):
+
+- `.claude-plugin/plugin.json` 부재 (plugin/mixed repo 아님 — 있으면 detect plugin(exit 0)/mixed(exit 2) → gate 침묵)
+- `.claude/_overlay/project.yaml` 부재 (consumer 초기화 안 됨)
+- `docs/adr/` 부재
+- `archive/adr/` 부재
+
+(앞 2 부재 = `detect-repo-kind` `unknown`(exit 3) 의 정확한 등가. 이 4 부재 정의는 wrapper 훅·`codeforge:brainstorm` skill 의 미초기화 판정과 byte-동일.) 안내 절차:
+
+1. **미초기화 상태 surface** — wrapper plugin UserPromptSubmit 훅 (`hooks/bootstrap-first-gate`, 설치 즉시 활성) 이 정적 안내를 context 에 inject. 사용자 입력을 차단하지 않습니다 (warning only).
+2. **초기화 권고** — `scripts/bootstrap-consumer.sh` 실행을 안내. **GitHub remote 가 없으면 자동으로 repo 를 만들지 않습니다** — `gh repo create` 명령과 필요 상태를 보여 주고 사용자 확인 후 진행합니다.
+3. **초기화 없이 진행 선택 가능** — 사용자가 "초기화 없이 진행" 을 명시하면 그대로 brainstorming 으로 진행합니다 (Stage 0 옵션성 보존 — [ADR-034](../archive/adr/ADR-034-pre-issue-brainstorming-stage.md) D1).
+
+이 안내는 brainstorm 진입 자체를 막지 않습니다. 초기화를 먼저 권고할 뿐입니다. 초기화 완료 consumer (project.yaml 존재) 에서는 발화하지 않습니다.
+
 ---
 
 ### 2.1 (manual fallback) 초기 복사
