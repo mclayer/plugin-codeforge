@@ -498,7 +498,7 @@ Orchestrator 가 사용자에게 substantive path 를 제시하거나 외부 sys
 
 인프라 SSOT: ADR-040 (CFP-136). Script: `bash templates/scripts/worktree-create.sh <branch> <base-ref>`.
 
-#### §3.0.12 Rate-limit Fallback (ADR-057)
+#### §3.0.12 비-opus tier Fallback (ADR-057 §결정 2·5)
 
 Agent tool이 Sonnet subagent spawn 결과로 rate-limit 에러를 반환하면:
 
@@ -507,6 +507,16 @@ Agent tool이 Sonnet subagent spawn 결과로 rate-limit 에러를 반환하면:
 3. Opus도 실패 시 사용자에게 상황 통지 → 대기 (자동 재시도 루프 금지)
 
 판별 기준: Agent tool result에 "rate limit", "quota exceeded", "429" 포함 시 rate-limit로 분류.
+
+**fresh-spawn-only invariant (sonnet/fable 공통)**: 위 "재spawn" = 새 `Agent` spawn + `opts.model: opus`. **SendMessage resume 금지** — 원본 agent frontmatter `model` 이 resume 시 재해석돼 재실패한다 (CFP-2236 실측 root cause).
+
+**fable model-unavailable case (ADR-057 §결정 4, CFP-2238)**: `model: fable` lane agent (ADR-117 §결정 1 10종) spawn 결과가 model-unavailable 에러를 반환하면:
+
+1. 새 `Agent` spawn + `opts.model: opus` 1회 (per-spawn-attempt — sonnet 카운터와 비합산)
+2. 성공 시 §14 Lane Evidence row 에 `[model-unavailable-fallback:fable→opus]` 태그 (전용 trigger 태그 — sonnet rate-limit KPI 분모 8종 오염 차단)
+3. opus 도 실패 시 사용자 통지 → 대기 (자동 재시도 금지)
+
+판별: result 에 `"currently unavailable"` / `"may not exist or you may not have access"` 포함 시 model-unavailable. **floor-fail 구분(hypothesis)**: ADR-117 §결정 3 의 floor (< 2.1.170 → 미인식 ID spawn 실패)은 별개 사건 — 정정 = `Reload Window`/버전 업그레이드(opus fallback 아님). floor-fail string 과 model-unavailable string 의 동일성은 미실증(floor-fail string 만 verified) → string-match 만으로 무조건 fallback 시 floor 환경 문제 은폐 위험. 구분 = `claude --model fable -p "ok"` fresh CLI smoke 대조(fresh PASS + in-process FAIL = floor-fail). 미분류 오류 = task failure 로 routing(fallback 미발동).
 
 #### §3.0.13 PR description `## Lane evidence` manual append 정책 (CFP-507)
 
