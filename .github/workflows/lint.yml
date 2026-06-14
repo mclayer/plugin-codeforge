@@ -126,3 +126,17 @@ jobs:
           python-version: "3.12"
       - name: Run check-doc-section-schema.sh
         run: bash scripts/check-doc-section-schema.sh
+
+  hook-unit-tests:
+    name: hook unit tests (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install pytest
+        run: pip install pytest
+      - name: Run hook unit tests
+        run: pytest hooks/tests overlay/hooks/tests -q
