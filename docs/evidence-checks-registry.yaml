@@ -1201,9 +1201,6 @@ entries:
       promotion_trigger: advisory # count=5 ≥ threshold=3 → advisory (본 carrier 자체가 monitoring 도입)
     status: Active
 
-  # ─── CFP-833 Phase 1 — dialog-fidelity-effect entry (Epic CFP-761 Story-3 closing-the-loop) ───
-  # ADR-071 Amendment 3 carrier. precedent rate-limit-fallback-rate 동형 (runtime cron metric pattern).
-  # Phase 1 = skeleton (non-null detect_command, #827 회피). Phase 2 carrier = workflow yml 2종 + check script + lib .py.
   - name: bypass-justification-marker
     description: |
       ADR-024 Amendment 8 §결정 6.A.4 — hotfix-bypass:* label 부착 PR 의
