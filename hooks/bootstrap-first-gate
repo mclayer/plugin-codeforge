@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+# codeforge — UserPromptSubmit hook: bootstrap-first entry-gate (CFP-2243, ADR-027 §결정 13)
+#
+# 책임: 미초기화 greenfield repo 에서 codeforge 사용 의도(변경동사/고유신호)가 감지되면
+#       bootstrap 미충족을 surface 하는 정적 reminder 를 inject. silent fallback(#2243) 차단.
+#
+# 구현: intent regex·detect-repo-kind subprocess·ADR dir 검사·발화 판정은 python core 로.
+#       python 없으면 통과(fail-safe). 모든 경로 exit 0 (사용자 prompt erase 권한 미사용).
+# bypass: BYPASS_BOOTSTRAP_GATE=1 → 검사 생략 (advisory bypass). python core 도 재확인.
+# fail-safe: python 부재 / 오류 시 차단하지 않고 통과 (exit 0).
+set -uo pipefail
+
+[ "${BYPASS_BOOTSTRAP_GATE:-0}" = "1" ] && exit 0
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
+if command -v python3 >/dev/null 2>&1; then
+  PY=python3
+elif command -v python >/dev/null 2>&1; then
+  PY=python
+else
+  exit 0   # python 부재 → 통과 (fail-safe, 사용자 입력 차단 안 함)
+fi
+
+exec "$PY" "$DIR/bootstrap-first-gate.py"
