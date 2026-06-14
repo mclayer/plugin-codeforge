@@ -1,5 +1,17 @@
 # Changelog
 
+## 1.12.3 — 2026-06-15
+
+### Changed (CFP-2249 — superpowers 의존 완전 제거, PATCH)
+
+Epic CFP-2249 (superpowers 의존 완전 제거, ADR-122 — supersede ADR-028) 의 lane 반영. 리뷰 lane 의 `superpowers:*` skill 호출 / `docs/superpowers-integration.md` 참조를 codeforge native discipline 으로 교체. 필수 plugin 4→3 의 wrapper 정책 변경 동반 lane catch-up. capability 추가/제거 0 — PATCH.
+
+- `agents/ClaudeReviewAgent.md` · `templates/review-pl-base.md` — `superpowers:*` 호출 / `superpowers-integration.md` 참조 제거 → codeforge native (ADR-122) 흡수. discipline = research-before-claims (ADR-119) + codeforge native skill.
+
+#### Why
+
+ADR-122 — superpowers 외부 plugin 의존을 codeforge native 로 내재화. consumer breaking 0.
+
 ## 1.12.1 — 2026-06-12
 
 ### Changed (CFP-2178 — S6 lane repo archive 참조 sweep, PATCH)

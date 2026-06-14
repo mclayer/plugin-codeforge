@@ -4,6 +4,20 @@
 
 버전 체계: [Semantic Versioning 2.0.0](https://semver.org/lang/ko/). v1.0 이전은 minor bump도 breaking 가능.
 
+## [0.8.4] - 2026-06-15
+
+### CFP-2249 — superpowers 의존 완전 제거 (PATCH)
+
+Epic CFP-2249 (superpowers 의존 완전 제거, ADR-122 — supersede ADR-028) 의 lane 반영. 요구사항 lane 7 agent 의 `superpowers:*` skill 호출 / `docs/superpowers-integration.md` 참조를 codeforge native discipline 으로 교체. 필수 plugin 4→3 (superpowers 제거) 의 wrapper 정책 변경에 동반하는 lane catch-up. capability 추가/제거 0 (skill 위임 경로만 native 흡수) — PATCH.
+
+#### Changed
+
+- `agents/RequirementsPLAgent.md` · `agents/DomainAgent.md` · `agents/RequirementsAnalystAgent.md` · `agents/ChangeImpactAgent.md` · `agents/FeasibilityAgent.md` · `agents/ContinuityAgent.md` · `agents/codex-proactive-check.md` — `superpowers:*` 호출 / `superpowers-integration.md` 참조 제거 → codeforge native (ADR-122) 흡수. discipline = research-before-claims (ADR-119) 검증-후-단언 + codeforge native skill.
+
+#### Why
+
+ADR-122 — superpowers 외부 plugin 의존이 brainstorming / writing-plans / tdd / verification discipline 을 codeforge native 로 내재화하면서 불필요해짐. consumer breaking 0 (wrapper 가 동일 discipline 을 codeforge native skill 로 제공).
+
 ## [0.8.1] - 2026-06-12
 
 ### Changed (CFP-2178 — S6 lane repo archive 참조 sweep, PATCH)
