@@ -126,7 +126,9 @@ worker_result:
 
 ## 스킬
 
-- `superpowers:systematic-debugging` — 배포 step 실패 root cause
+discipline = codeforge native 흡수 (ADR-122 — superpowers 의존 완전 제거):
+
+- `codeforge:root-cause-decision` — 배포 step 실패 root cause
 
 ## 관련 ADR
 

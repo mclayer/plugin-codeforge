@@ -560,8 +560,10 @@ DesignReviewPL 이 Story §8.6 (IntegrationTest contract pointer) audit 시 — 
 
 ## 9. 활용 플러그인/스킬 (공통)
 
-- `superpowers:systematic-debugging` — FIX 판정 후 수정 방향 초안 시 "symptom 패치 금지" 원칙
-- `superpowers:verification-before-completion` — PASS 판정 전 evidence 확인
+discipline = codeforge native 흡수 (ADR-122 — superpowers 의존 완전 제거):
+
+- `codeforge:root-cause-decision` — FIX 판정 후 수정 방향 초안 시 "symptom 패치 금지" 원칙
+- PASS 판정 전 evidence 확인 = research-before-claims (ADR-119) 검증-후-단언 + `codeforge:review-responsibility`
 
 ---
 

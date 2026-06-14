@@ -101,7 +101,7 @@ bootstrap:
   # default = false (warning-only, ADR-027 §결정 2 Tertiary trigger LLM-trust 정합).
   # true 시 strict-eligible drift 5종 발견 → exit 1 (CFP-660 4 → 5 종 확장):
   #   (a) project.yaml 부재
-  #   (b) plugin 11종 중 wrapper(1) + 6 lane(6) + superpowers(1) = 8 critical 미설치
+  #   (b) plugin 10종 중 wrapper(1) + 6 lane(6) = 7 critical 미설치
   #   (c) settings.json 의 SessionStart × 2 + UserPromptSubmit × 1 hook 미등록
   #   (d) 18 label 중 phase:* (7) + gate:* (3) = 10 critical 부재
   #   (e) consumer .github/workflows/<name>.yml SHA / 핵심 line drift vs wrapper templates

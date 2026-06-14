@@ -109,9 +109,9 @@ section: "4.3"
 
 ## 스킬
 
-호출 skill SSOT = wrapper `docs/superpowers-integration.md §2` row `requirements/ContinuityAgent` 참조:
+discipline = codeforge native 흡수 (ADR-122 — superpowers 의존 완전 제거):
 
-- `superpowers:verification-before-completion` — 연속성 분석 누락 항목 점검
+- 연속성 분석 누락 항목 점검 = research-before-claims (ADR-119) 검증-후-단언
 
 ## 문서화 표준
 

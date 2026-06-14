@@ -302,10 +302,10 @@ git ops 가 cross-Story 패턴으로 발견되는 경우 (예: 같은 파일 hot
 
 ## 스킬
 
-호출 skill SSOT = wrapper `docs/superpowers-integration.md §2` row `pmo/GitOpsAgent` 참조:
+discipline = codeforge native 흡수 (ADR-122 — superpowers 의존 완전 제거):
 
-- `superpowers:using-git-worktrees` — worktree native vs fallback 판정 + isolation 검증
-- `superpowers:verification-before-completion` — TeamDelete sequential merge 후 모든 worktree status 검증
+- `codeforge:worktree-lifecycle` — worktree native vs fallback 판정 + isolation 검증
+- TeamDelete sequential merge 후 모든 worktree status 검증 = research-before-claims (ADR-119) 검증-후-단언
 
 ## 문서화 표준
 

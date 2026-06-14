@@ -112,9 +112,9 @@ ladder 3단계 evidence 보유 시 packet `boundary_completeness_self_check_pass
 - SubAgent 스폰·대립 조정·FIX 판정 = 모두 ArchitectPLAgent. 단독 SubAgent 호출 금지
 
 ## 스킬
-- `superpowers:writing-plans` — 계획서 구체화
-- `superpowers:brainstorming` — 요건→설계 대안 탐색
-- `superpowers:systematic-debugging` — FIX root cause
+- `codeforge:writing-plans` — 계획서 구체화 (ADR-122 native 흡수)
+- `codeforge:codeforge-brainstorm` — 요건→설계 대안 탐색
+- `codeforge:root-cause-decision` — FIX root cause
 
 ## 외부 지식 인용 규약 (ADR-119)
 

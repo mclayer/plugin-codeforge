@@ -25,7 +25,7 @@ Strict mode opt-in (CFP-127 / ADR-032 amendment 1, CFP-660 / ADR-032 amendment 2
     3. YAML: `bootstrap.strict_mode: true` (.claude/_overlay/project.yaml)
   Strict-eligible drift (5종 — CFP-660 4 → 5 종 확장):
     (a) project.yaml 부재 → exit 1
-    (b) plugin 11종 중 wrapper(1) + 6 lane(6) + superpowers(1) = 8 critical 미설치 → exit 1
+    (b) plugin 10종 중 wrapper(1) + 6 lane(6) = 7 critical 미설치 → exit 1
     (c) settings.json 의 3 hook 미등록 → exit 1
     (d) 18 label 중 phase:* (7) + gate:* (3) = 10 critical 부재 → exit 1
     (e) consumer workflow version drift — stale `.github/workflows/<name>.yml` vs wrapper
@@ -72,14 +72,12 @@ REQUIRED_PLUGINS = {
     "codeforge-test@mclayer",
     "codeforge-review@mclayer",
     "codeforge-pmo@mclayer",
-    # 4 dependencies (integration SSOT: docs/superpowers-integration.md):
+    # 3 dependencies (ADR-122 — superpowers 의존 완전 제거, discipline codeforge native 흡수):
     #   github             — GitHub MCP tool exposure
     #   codex              — CodexReviewAgent (review lane) + Sonnet decider 5-step
-    #   superpowers        — 17 lane agent x 7 skill (writing-plans / brainstorming / TDD / ...)
     #   claude-md-management — CLAUDE.md maintenance skill
     "github@claude-plugins-official",
     "codex@openai-codex",
-    "superpowers@claude-plugins-official",
     "claude-md-management@claude-plugins-official",
 }
 
@@ -97,7 +95,8 @@ EXPECTED_FORMS = {"audit.yml", "bug.yml", "story.yml"}
 
 CODEOWNERS_LINE_PATTERN = re.compile(r"^[^\s#]+\s+@[\w\-/]+(?:\s+@[\w\-/]+)*\s*$")
 
-# CFP-127 / ADR-032 — Strict-eligible plugin subset (8 critical = wrapper + 6 lane + superpowers)
+# CFP-127 / ADR-032 — Strict-eligible plugin subset (7 critical = wrapper + 6 lane)
+# CFP-2249 / ADR-032 amendment 3 — superpowers 제거 (ADR-122 의존 완전 제거): 8 → 7
 STRICT_ELIGIBLE_PLUGINS = {
     "codeforge@mclayer",
     "codeforge-requirements@mclayer",
@@ -106,7 +105,6 @@ STRICT_ELIGIBLE_PLUGINS = {
     "codeforge-test@mclayer",
     "codeforge-review@mclayer",
     "codeforge-pmo@mclayer",
-    "superpowers@claude-plugins-official",
 }
 
 # CFP-127 / ADR-032 — Strict-eligible label subset (10 critical = phase:* 7 + gate:* 3)
@@ -369,8 +367,7 @@ def check_plugins_installed(plugins_json: Path) -> list[str]:
         for p in sorted(missing):
             warns.append(f"              /plugins install {p}")
         warns.extend([
-            "           → consumer-guide §1a 'codeforge family 11 plugin install' 참조",
-            "           → superpowers 의존 SSOT: docs/superpowers-integration.md",
+            "           → consumer-guide §1a 'codeforge family 10 plugin install' 참조",
             "           → 미해결 시 6 lane orchestration 작동 불가, manual workaround 회귀",
         ])
         return warns
@@ -805,7 +802,7 @@ def _classify_strict_eligible(
 
     5 type:
       (a) project.yaml 부재 — 별도 main() 검사
-      (b) plugin 11종 중 wrapper(1) + 6 lane(6) + superpowers(1) = 8 critical 미설치
+      (b) plugin 10종 중 wrapper(1) + 6 lane(6) = 7 critical 미설치
       (c) settings.json 의 3 hook 미등록 (check 9)
       (d) 18 label 중 phase:* (7) + gate:* (3) = 10 critical 부재 (gh_ready 시만)
       (e) consumer workflow drift — STRICT_ELIGIBLE_WORKFLOWS 영역 (CFP-660 NEW)

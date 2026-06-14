@@ -111,9 +111,9 @@ section: "4.1"
 
 ## 스킬
 
-호출 skill SSOT = wrapper [`docs/superpowers-integration.md §2`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers-integration.md) row `requirements/ChangeImpactAgent` 참조:
+discipline = codeforge native 흡수 (ADR-122 — superpowers 의존 완전 제거):
 
-- `superpowers:verification-before-completion` — 변경 델타 불확실 영역 점검
+- 변경 델타 불확실 영역 점검 = research-before-claims (ADR-119) 검증-후-단언
 
 ## 문서화 표준
 
