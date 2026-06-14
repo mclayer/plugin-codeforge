@@ -2,7 +2,8 @@
 
 CFP-2243 Phase 2 — bootstrap-first-gate.py 단위 + 통합 테스트.
 
-Cross-platform CI matrix (ubuntu-latest + windows-latest) 양 OS pass 의무.
+CI: lint.yml hook-unit-tests job (ubuntu-latest) 에서 실행. windows matrix 미포함
+— advisory 단발 훅이라 비용 대비 가치 낮음 (구현 리뷰 P2 결정).
 
 불변식:
   - 모든 경로 exit 0 (P0 fail-safe) — 사용자 prompt erase 권한 미사용.
@@ -379,24 +380,59 @@ def test_tc5a_malformed_json_raw_fallback(tmp_path, monkeypatch, capsys):
 
     assert rc == 0
     # raw fallback + intent 매치 → exit 0 (발화 또는 silent, 예외는 아님)
+    assert "<system-reminder>" in captured.out  # raw fallback '구현해줘' intent TRUE → 발화
+    assert "구현해줘" not in captured.err  # prompt 미echo
 
 
-def test_tc5b_detect_exception_nonzero_fail_safe(tmp_path, monkeypatch, capsys):
-    """TC5b: subprocess 예외 → 비-3 sentinel, silent-detect-error + exit 0."""
+def test_tc5b_detect_kind_subprocess_exception_returns_sentinel(tmp_path, monkeypatch):
+    """TC5b(a): _detect_repo_kind 내부 try/except — subprocess 예외 시 -1 sentinel 반환.
+
+    함수 내부 try/except (py L131-141) 가 OSError/TimeoutExpired 를 삼키고
+    -1 sentinel 반환하는지 검증 (fail-safe). 호출자 main() 은 -1 이면 silent 경로.
+    """
+    monkeypatch.chdir(str(tmp_path))
+
+    # subprocess.run 자체를 raise 하도록 patch
+    def raise_oserror(*a, **k):
+        raise OSError("subprocess unavailable")
+
+    monkeypatch.setattr("subprocess.run", raise_oserror)
+
+    # _detect_repo_kind 호출 → exception 삼키고 -1 반환
+    rc = bfg._detect_repo_kind(str(tmp_path))
+    assert rc == -1, f"Expected sentinel -1 on OSError, got {rc}"
+
+    # TimeoutExpired 변형도 테스트
+    def raise_timeout(*a, **k):
+        raise subprocess.TimeoutExpired(cmd="detect-repo-kind.py", timeout=5)
+
+    monkeypatch.setattr("subprocess.run", raise_timeout)
+    rc = bfg._detect_repo_kind(str(tmp_path))
+    assert rc == -1, f"Expected sentinel -1 on TimeoutExpired, got {rc}"
+
+
+def test_tc5b_main_silent_detect_error_audit(tmp_path, monkeypatch, capsys):
+    """TC5b(b): main() label dispatch 분기 검증 — _detect_repo_kind rc=-1 시 silent-detect-error audit.
+
+    _detect_repo_kind 가 -1 반환 → label 분기(py L224-233) 에서 'silent-detect-error'
+    dispatch 이름 지정(rc=-1 은 dict.get(rc, "silent-detect-error") fallback).
+    end-to-end 발화 경로 검증.
+    """
     monkeypatch.chdir(str(tmp_path))
     monkeypatch.setattr(
         "sys.stdin", io.StringIO('{"prompt":"codeforge story"}')
     )
     monkeypatch.setattr("sys.stdin.isatty", lambda: False)
-    # detect 예외 → -1 반환
-    monkeypatch.setattr(bfg, "_detect_repo_kind", lambda cwd: (-1 for _ in ()).throw(OSError("boom")))
+
+    # _detect_repo_kind 를 lambda 로 patch → -1 반환 (예외 아님, 값 반환)
+    monkeypatch.setattr(bfg, "_detect_repo_kind", lambda cwd: -1)
 
     rc = bfg.main()
     captured = capsys.readouterr()
 
-    assert rc == 0
-    assert captured.out == ""
-    # detect 호출이 예외 → 대신 비-3 감지로 silent
+    assert rc == 0  # P0: 모든 경로 exit 0
+    assert captured.out == ""  # 발화 안 함 (silent-detect-error)
+    assert "[bootstrap-first-gate] fired exit_path=silent-detect-error" in captured.err
 
 
 def test_tc5c_main_exception_exit_zero_no_prompt_leak(tmp_path, monkeypatch, capsys):
@@ -477,78 +513,75 @@ def test_tc8_initialized_adr_dir_exists_silent(tmp_path, monkeypatch, capsys):
 
 
 def test_tc9_detect_repo_kind_integration_unknown(tmp_path, monkeypatch):
-    """TC9 (detect 단위): subprocess exit code mapping 검증 (exit 3=unknown).
+    """TC9 (detect 단위): bare greenfield (no plugin.json, no overlay) → exit 3.
 
-    Note: worktree 자체가 mixed repo 이므로, tmp_path 가 isolated 환경에서도
-    detect-repo-kind 의 모 repo 추적(ancestor search) 으로 인해 mixed 로 평가될 수
-    있다. 그 대신 subprocess 호출 자체는 성공(return code 반환)을 검증하고,
-    실제 exit code map (0=plugin / 1=consumer / 2=mixed / 3=unknown) 은
-    detect-repo-kind.py 의 integration test suite 에서 cover.
+    detect-repo-kind.py 는 --repo-root 로 지정된 디렉터리 단독 검사(ancestor search 0).
+    격리된 tmp_path 에서 정확한 exit code 를 결정적으로 반환한다.
     """
-    # 실제 detect-repo-kind.py subprocess call 성공 여부 + return code 수신 검증
-    real_repo_root = Path(__file__).resolve().parent.parent.parent.parent
-    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(real_repo_root))
+    # CLAUDE_PLUGIN_ROOT 를 현재 worktree root 로 설정 (hooks/ 의 부모)
+    plugin_root = Path(__file__).resolve().parent.parent.parent
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(plugin_root))
 
-    # tmp_path 는 isolated tmp dir 이지만, detect ancestor 가 real repo 를
-    # 찾을 수 있으므로, return code 는 2(mixed) 일 수 있다.
-    # 중요한 것은 subprocess 호출 성공 + valid exit code (0/1/2/3 또는 비-3 sentinel)
+    # tmp_path 는 greenfield (plugin.json·overlay 모두 부재)
+    # → detect-repo-kind.py 는 exit 3 (unknown) 반환
     rc = bfg._detect_repo_kind(str(tmp_path))
 
-    # P0: 어떤 경우든 -1 이 아니어야 함 (예외 없음)
-    assert rc != -1, f"detect subprocess exception, got sentinel -1"
-    # valid exit code: 0=plugin / 1=consumer / 2=mixed / 3=unknown
-    assert rc in (0, 1, 2, 3), f"Invalid exit code {rc}"
+    # exact assertion: 정확히 exit 3 (unknown)
+    assert rc == 3, f"Expected exit 3 (unknown bare dir), got {rc}"
 
 
 def test_tc9_detect_repo_kind_integration_plugin(tmp_path, monkeypatch):
-    """TC9 variant (detect 단위): subprocess 호출 성공 확인.
+    """TC9 variant: plugin.json 만 존재 → exit 0.
 
-    Note: 동일한 isolated tmp_path 이슈로, 실제 exit code 는 test 환경에 따라
-    달라질 수 있다. subprocess call success + return code 수신만 검증.
+    detect-repo-kind.py 는 --repo-root 를 단독 검사(ancestor search 0).
+    격리된 tmp_path 에 plugin.json 생성 시 exit 0 반환.
     """
-    real_repo_root = Path(__file__).resolve().parent.parent.parent.parent
-    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(real_repo_root))
+    # CLAUDE_PLUGIN_ROOT 를 현재 worktree root 로 설정 (hooks/ 의 부모)
+    plugin_root = Path(__file__).resolve().parent.parent.parent
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(plugin_root))
 
-    # plugin.json 생성 (신호 A) — 단순히 subprocess 가 이를 감지하는지 검증
+    # plugin.json 생성 (신호 A)
     (tmp_path / ".claude-plugin").mkdir(parents=True)
     (tmp_path / ".claude-plugin" / "plugin.json").write_text("{}")
 
     rc = bfg._detect_repo_kind(str(tmp_path))
 
-    # P0: 예외 없음
-    assert rc != -1, f"detect subprocess exception, got sentinel -1"
-    # plugin.json 존재 → exit 0 또는 2(mixed, 만약 ancestor repo 감지) 가능
-    # 실제 정확 매핑은 detect-repo-kind.py integration test 에서 cover
-    assert rc in (0, 1, 2, 3), f"Invalid exit code {rc}"
+    # exact assertion: 정확히 exit 0 (plugin)
+    assert rc == 0, f"Expected exit 0 (plugin), got {rc}"
 
 
 def test_tc9_detect_repo_kind_integration_consumer(tmp_path, monkeypatch):
-    """TC9 variant (detect 단위): subprocess 호출 성공 확인.
+    """TC9 variant: overlay project.yaml 만 존재 → exit 1.
 
-    Note: 동일한 isolated tmp_path 이슈로, 실제 exit code 는 test 환경에 따라
-    달라질 수 있다. subprocess call success + return code 수신만 검증.
+    detect-repo-kind.py 는 --repo-root 를 단독 검사(ancestor search 0).
+    격리된 tmp_path 에 overlay 생성 시 exit 1 반환.
     """
-    real_repo_root = Path(__file__).resolve().parent.parent.parent.parent
-    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(real_repo_root))
+    # CLAUDE_PLUGIN_ROOT 를 현재 worktree root 로 설정 (hooks/ 의 부모)
+    plugin_root = Path(__file__).resolve().parent.parent.parent
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(plugin_root))
 
-    # overlay/project.yaml 생성 (신호 B) — 단순히 subprocess 가 이를 감지하는지 검증
+    # overlay/project.yaml 생성 (신호 B)
     (tmp_path / ".claude" / "_overlay").mkdir(parents=True)
     (tmp_path / ".claude" / "_overlay" / "project.yaml").write_text("codeforge: {}")
 
     rc = bfg._detect_repo_kind(str(tmp_path))
 
-    # P0: 예외 없음
-    assert rc != -1, f"detect subprocess exception, got sentinel -1"
-    # project.yaml 존재 → exit 1 또는 2(mixed, 만약 ancestor repo 감지) 가능
-    # 실제 정확 매핑은 detect-repo-kind.py integration test 에서 cover
-    assert rc in (0, 1, 2, 3), f"Invalid exit code {rc}"
+    # exact assertion: 정확히 exit 1 (consumer)
+    assert rc == 1, f"Expected exit 1 (consumer), got {rc}"
 
 
 def test_tc9_detect_repo_kind_integration_mixed(tmp_path, monkeypatch):
-    """TC9 variant (detect 통합): plugin.json + overlay 양존 → exit 2(mixed)."""
+    """TC9 variant (detect 통합): plugin.json + overlay 양존 → exit 2(mixed).
+
+    detect-repo-kind.py 는 --repo-root 를 단독 검사(ancestor search 0).
+    CLAUDE_PLUGIN_ROOT = worktree root (= hooks/ 의 부모 = parent×3) — sibling
+    TC9 와 동일 depth. parent×4 는 worktree 상위라 script 미존재 → subprocess 가
+    interpreter exit 2(can't open file) 로 우연히 mixed(2) 와 일치하는 false-positive
+    유발 → 격리 위해 parent×3 로 통일 (실 script fork 보장).
+    """
     monkeypatch.chdir(str(tmp_path))
-    real_repo_root = Path(__file__).resolve().parent.parent.parent.parent
-    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(real_repo_root))
+    plugin_root = Path(__file__).resolve().parent.parent.parent
+    monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(plugin_root))
 
     # plugin.json + overlay 양 생성
     (tmp_path / ".claude-plugin").mkdir(parents=True)
