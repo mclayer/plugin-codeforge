@@ -9,7 +9,7 @@ CFP-103 (Phase 2a of CFP-96 Epic). 10 check (CFP-660 NEW check 10):
   2. 18 plugin label 존재 — 기존 (CFP-11)
   3. workflow_distribution.mode=degraded missing_workflows 안내 — 기존 (CFP-86/89/95)
   4. consumer-scripts manifest drift — 기존 (CFP-97)
-  5. 11 plugin install (~/.claude/plugins/installed_plugins.json) — 기존 (CFP-103)
+  5. 10 plugin install (~/.claude/plugins/installed_plugins.json) — 기존 (CFP-103)
   6. consumer .github/workflows/ file 존재 — 기존 (CFP-103)
   7. consumer .github/ISSUE_TEMPLATE/ 3종 sync — 기존 (CFP-103)
   8. consumer CODEOWNERS 정합 — 기존 (CFP-103)
@@ -336,9 +336,9 @@ def check_consumer_scripts_manifest(plugin_root: Path, overlay_yaml: Path | None
 
 
 def check_plugins_installed(plugins_json: Path) -> list[str]:
-    """CFP-103 NEW check 5 — 11 plugin install 검사.
+    """CFP-103 NEW check 5 — 10 plugin install 검사.
 
-    codeforge family 7 (wrapper + 6 lane) + 4 dependency = 11.
+    codeforge family 7 (wrapper + 6 lane) + 3 dependency = 10.
     """
     if not plugins_json.is_file():
         return [
