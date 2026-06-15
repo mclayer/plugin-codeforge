@@ -98,6 +98,8 @@ PMOAgent batch closure 자동 trigger 조건 (AND gate):
 - **`PROMOTE`** — pattern_count reached + active Story 발의 의무 + label `priority:P1`
 - **`DEFER`** — keep open, future carrier 대기, rationale 명시 의무
 
+> **PROMOTE 발의 전 필요성 게이트 (ADR-119 §결정 9 cross-ref)**: pattern_count 도달 ≠ 무조건 발의. PROMOTE (신규 Story follow-up 발의) 전 3문 게이트 선통과 의무 — ① 깨졌나·강제 요인 ② 이득>비용·리스크 ③ 관찰자 없어도 할 일. 셋 다 YES 아니면 발의 금지 (DEFER/CLOSE_AS_SENTINEL 로 강등, "관찰됨·미조치" 기록).
+
 > **§18.3 verify-before-trust mandate (5 sub-scope) = gate, playbook 잔류** — closure write-time 의무 + 1+ sub-scope failure 시 중단 룰은 `docs/orchestrator-playbook.md` §18.3 원문 수행 (본 skill 미수록).
 
 ### 18.4 Closure summary table SSOT format

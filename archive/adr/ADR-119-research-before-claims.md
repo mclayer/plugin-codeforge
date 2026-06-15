@@ -8,9 +8,16 @@ carrier_story: CFP-2162
 parent_epic: "mclayer/plugin-codeforge#2161"
 supersedes: null
 amends: null
-amendments: []
+amendments:
+  - amendment: 1
+    date: 2026-06-15
+    cfp: CFP-2284
+    summary: "§결정 9 신설 — 제안·보고 grounding 확장: §결정 1~8 의 substantive 주장(claim) 검증 후 단언을 substantive 제안(proposal)·보고(report) 로 확장. 제안 필요성 3문 게이트(① 깨졌나·강제 요인 ② 이득>비용·리스크 ③ 관찰자 없어도 할 일 — 셋 다 YES 아니면 발의 금지) + 완료보고 정직성(작업 상태 단정 = §결정 1 ② 실측 대상, 재검증 후에만 단언, 추측성 backlog 패딩 금지). Orchestrator + 전 lane PL/agent(PMOAgent retro PROMOTE 포함) 적용 + consumer 자동 상속(§결정 7) + Phase 1 declarative-only(§결정 8). CLAUDE.md 형제 bullet + consumer-guide §7.4 cross-ref + skills 2종 cross-ref 동반."
+    is_transitional: false
+    sunset_justification: "N/A — permanent governance. ADR-064 top-down ratchet 정합(Amendment 1 = research-before-claims 를 claim→proposal/report 로 확장, 강화 방향 only). ADR-058 §결정 5 약화 차단 통과."
 related_stories:
   - CFP-2162
+  - CFP-2284  # Amendment 1 §결정 9 carrier — 제안 필요성 게이트 + 완료보고 정직성
 related_adrs:
   - ADR-073  # Orchestrator verify-before-assert — repo/cross-repo 사실 axis (disjoint 보완 대상)
   - ADR-070  # Codex 외부 워커 output verify (외부 "워커" ↔ 외부 "지식" axis disjoint)
@@ -147,6 +154,21 @@ Orchestrator 자신의 사용자 대화 중 외부 지식 주장 = 자체 조사
 - 본 ADR = **Wave 1 declarative-only**. `mechanical_enforcement_actions: []` — lint / registry / hook wire 0.
 - mechanical 승격 = ADR-060 4-tier promotion framework 경로 (warning-tier entry → 승격 gate) — 후속 carrier CFP full-lane 의무 (ADR-054 §결정 6.1 boundary invariant).
 - agent 정의 파일 변경 0건 — Epic #2161 S2 별 Story (본 ADR 은 S2 의 normative anchor 역할만).
+
+### §결정 9 — 제안·보고 grounding 확장 (Amendment 1 / CFP-2284): 필요성 게이트 + 완료보고 정직성
+
+§결정 1~8 의 검증 대상은 *주장(claim)* 이었다. 본 Amendment 는 동일 grounding 원칙을 *제안(proposal)·보고(report)* 로 확장한다 (CFP-2284 carrier). 검증 부족이 거짓 주장으로 새듯, 필요성 검증 부족은 가짜·불필요 follow-up 으로, 상태 검증 부족은 미검증 완료 단언으로 샌다.
+
+- **확장 명제**: §결정 1~8 의 "substantive 주장(claim) 검증 후 단언" 을 **substantive 제안(proposal)·보고(report)** 로 확장. **발견 ≠ 필요** — 관찰을 티켓/제안으로 자동 외부화 금지. Orchestrator = firehose (관찰 전부 방류) 아닌 filter (필요한 것만 통과).
+- **제안 필요성 3문 게이트**: 작업 제안 (대화 제안 + GitHub Issue/follow-up 발의 공통) 발의 *전* 적용 —
+  1. 실제로 깨졌거나 강제 요인(forcing function)이 있는가
+  2. 이득 > 비용·리스크 인가
+  3. 관찰자 없어도 직접 할 일인가
+  **셋 다 YES 아니면 제안/발의 금지** — 기껏해야 "관찰됨·미조치 + 사유" 1줄 기록 (티켓 외부화 아님).
+- **완료 보고 정직성**: 작업 상태 단언 ("완료" / "잔여" / "필요함") = §결정 1 ② (repo·cross-repo 사실) 실측 대상 → **재검증 (Read/Grep/실측) 후에만 단언**. 완료 보고에 추측성·미검증 backlog 패딩 금지 (검증 없이 "이것도 필요할 듯" 나열 = 가짜 잔여 생성).
+- **적용 주체**: Orchestrator + 모든 lane PL/agent. 특히 PMOAgent retro follow-up 발의 — ADR-045 §D-11 4-option decision tree 의 **PROMOTE 결정도 본 3문 게이트 선통과 의무** (pattern_count 도달 ≠ 무조건 발의).
+- **consumer 자동 상속**: §결정 7 정합 — consumer Orchestrator·PMOAgent 자동 적용, overlay 축소 불가 (확장만 가능). cross-ref anchor = `docs/consumer-guide.md` §7.4.
+- **enforcement**: §결정 8 정합 **Phase 1 declarative-only** — mechanical lint 미신설. 필요성(necessity) 은 기계 비탐지 영역 (behavioral directive), lint 신설 = over-build. 향후 필요 시 별도 CFP (ADR-060 4-tier 승격 경로).
 
 ## 결과
 

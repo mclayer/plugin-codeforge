@@ -2683,6 +2683,7 @@ wrapper [ADR-119](../archive/adr/ADR-119-research-before-claims.md) 의 research
 - 핵심 의무 = 외부 지식 단정 전 자료 조사 + 출처 인용 / repo·cross-repo 사실 단정 전 실측 (cross-repo 는 `git fetch` 후 origin/main 실제 확인 — `git show origin/main:<path>`, wrapper ADR-073 패턴) / 확인 불가 시 "확인 불가/추정" 명시(abstention) 후 진행 — 3-way matrix 상세 = ADR-119 §결정 1 SSOT (본 절 = cross-ref anchor, 재서술 금지)
 - consumer overlay 로 본 원칙 축소 불가 — 확장만 가능. 약화 = wrapper ADR-119 amendment 경로만 (evidence-gated, ADR-064 §결정 7)
 - Phase 1 trust model — 자동 enforcement hook 부재, consumer Orchestrator 자체 인지가 1차 안전망 (§7.0.4 패턴)
+- **제안 필요성 게이트 + 완료보고 정직성** (ADR-119 §결정 9, Amendment 1) — consumer Orchestrator·PMOAgent 자동 상속: 작업/follow-up 발의 전 필요성 3문 게이트, 완료 보고는 실측 후 단언(추측 backlog 금지). 상세 = ADR-119 §결정 9 SSOT (본 절 = cross-ref anchor).
 
 ## 7.5. CI Terminal State Classification (CFP-106 fix #144)
 
