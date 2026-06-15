@@ -112,20 +112,20 @@ jobs:
           if [ "${LINT_STATUS:-1}" = "0" ]; then
             BODY="## OK actionlint-check — PASS (warning mode)
 
-actionlint v1.7.12 — violation 0건. 모든 workflow yml YAML parse + syntax PASS.
+          actionlint v1.7.12 — violation 0건. 모든 workflow yml YAML parse + syntax PASS.
 
-_evidence-checks-registry entry: \`workflow-actionlint-precommit\` (ADR-060 warning tier)_"
+          _evidence-checks-registry entry: \`workflow-actionlint-precommit\` (ADR-060 warning tier)_"
           else
             BODY="## WARN actionlint-check — YAML syntax FAIL 감지 (warning mode)
 
-actionlint v1.7.12 — born-broken 재발 위험 감지. 아래 violation 확인 후 수정 요청.
+          actionlint v1.7.12 — born-broken 재발 위험 감지. 아래 violation 확인 후 수정 요청.
 
-\`\`\`
-${LINT_OUT}
-\`\`\`
+          \`\`\`
+          ${LINT_OUT}
+          \`\`\`
 
-bypass: \`hotfix-bypass:actionlint\` label (ADR-024 Amendment 3 §결정 6.A, \`hotfix-bypass:*\` 24번째 family member)
-_evidence-checks-registry entry: \`workflow-actionlint-precommit\` (ADR-060 warning tier — ADR-026 §5.G.b blocking target)_"
+          bypass: \`hotfix-bypass:actionlint\` label (ADR-024 Amendment 3 §결정 6.A, \`hotfix-bypass:*\` 24번째 family member)
+          _evidence-checks-registry entry: \`workflow-actionlint-precommit\` (ADR-060 warning tier — ADR-026 §5.G.b blocking target)_"
           fi
           gh pr comment "$PR_NUMBER" --body "$BODY" || true
 
