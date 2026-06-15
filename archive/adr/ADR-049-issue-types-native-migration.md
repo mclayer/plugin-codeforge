@@ -19,6 +19,7 @@ related_files:
 related_stories:
   - CFP-140
   - CFP-2251  # Amendment 1 carrier — type:* → native Issue Type 실 org cutover (additive)
+  - CFP-2252  # Amendment 2 carrier — type 정정(P0) + native-type 트리거 전환 + 라벨삭제 완결 (Epic #2244 S4)
 amends:
   - ADR-008
 supersedes: null
@@ -29,6 +30,11 @@ amendment_log:
     story: CFP-2251
     scope: "Amendment 1 — type:* → native Issue Type 실 org cutover (ADR-049 Phase 2 실행 결정, 완료). org 재구성 = ADDITIVE: 기존 org type [Task, Bug, Feature] 보존 + Story(id 34327613)/Epic(id 34327614) 신설 + Bug(id 28762364) 재사용 (type:bug 매핑). Audit 은 본 cutover 미포함 (deferred). 마이그레이션 = type:* 라벨 부착 전체 487 이슈 (story 415 + epic 46 + bug 26, open+closed) → native Issue Type --apply + --verify PASS (0 불일치). 실측 결함 정정: REST 이슈 type 부착 payload = `-f type=<이름>` (type_id 는 silent 무시 — story-init.yml L556 동일 결함, S4 #2252 FU). label deprecate 타이밍 = type:* 라벨 물리 삭제 + story-init.yml trigger native-type 전환을 S4 로 sequencing (라벨 선삭제 시 story-init 깨짐 — transient dual-state 허용, §결정 11 정합). 본 Story 는 deprecated 마킹까지. 본문 §결정 1 의 4-type 안 중 Audit 만 deferred 로 조정 (additive 방향 — 기존 결정 축소 0, 실행 결정 추가)."
     sunset_justification: "본 Amendment 는 weakening/reversal 이 아니라 ADR-049 본문 §결정 4/9 (migration script + migration timing) 의 실 실행 결정 추가 — additive ratchet. 기존 §결정 1-12 본문 변경 0 (Audit 만 deferred 조정 = 범위 축소가 아니라 실행 단계 분리). 따라서 sunset/원복 trigger 부재 — cutover 완료 후 영구. (additive amendment 의 sunset_justification = additive 방향 명시. ADR-058 §결정 5 self-application — Amendment 시 본 필드 의무 정합.)"
+  - amendment: 2
+    date: 2026-06-15
+    story: CFP-2252
+    scope: "Amendment 2 — native Issue Type cutover 완결 (Epic #2244 최후 child S4, story-init.yml owner). ADR-049 §결정 5 (story-init Action 갱신 + graceful fallback) + §결정 8 (bootstrap-labels) + Amendment 1 §A1-3 (라벨 삭제 S4 sequencing) 의 실 실행 완결. 3 결정: (1) type 정정(P0) — story-init.yml `Attach native Issue Type` step 의 `--field type_id=<id>` (REST 미존재 파라미터, silent drop, 6개월 잠복) → `-f type=Story` (이름 기반) + verify-after-write (PATCH 2xx ≠ 실제 부착 → 재read 실측, silent-drop 구조적 차단). (2) native-type 트리거 전환 — `on.issues.types` 에 `typed` 추가 + if-expression OR-bridge (`issue.type.name == 'Story'` OR `type:story` 라벨, phase:요구사항 AND 보존). payload 가용성 = 공식 문서 미명세 (abstention) → 라이브 canary (TC-13) 가 입증 gate. (3) 라벨 물리 삭제 = Orchestrator org-mutating 영역 — 3단계 promotion invariant (merge → production canary green blocking → 삭제), PC-1∧PC-2∧PC-3 충족 시에만. 입증 실패 = 라벨 영구 보존 (안전 종착, native+label 공존). additive ratchet — 기존 §결정 1-12 + Amendment 1 본문 변경 0. DI-1 invariant (native type + type:* label 동시 존재 금지) 완전 충족 = 본 Amendment 라벨삭제 단계 완료 시점. 동반: ADR-013 Amendment 7 (TARGET_REPO → project.yaml github.story_ssot_repo 파라미터화) + ADR-066 §결정 2 cross-ref (PAT scope 사전검증 step — scope 무변경). **Amendment 1 §결정 11 graceful-fallback 오인용 정정 — 실제 위치 = §결정 5** (§결정 11 = ADR-008 amendment / §결정 12 = consumer migration 면제 — 둘 다 graceful fallback 과 무관. Amendment 1 §A1-3 의 '§결정 11 정합' 인용은 §결정 5 의 오인용. 상속 drift 차단, additive 무손상)."
+    sunset_justification: "ratchet 강화 (Amendment 1 declared sequencing → S4 actual execution + 라이브 결함 정정). 약화/reversal 방향 아님 — 기존 §결정 1-12 + Amendment 1 본문 변경 0 (graceful-fallback 인용 정정 1줄 = 오인용 교정으로 의미 무변경 additive). DI-1 invariant 강화 (transient dual-state → 완전 충족). sunset/원복 trigger 부재 — cutover 완료 후 영구. ADR-058 §결정 5 self-application 정합."
 ---
 
 # ADR-049: Issue Types + Sub-issues Native Migration
@@ -37,6 +43,7 @@ amendment_log:
 
 Proposed (2026-05-09) — CFP-140 carrier.
 Amendment 1 (2026-06-15) — CFP-2251 carrier: type:* → native Issue Type 실 org cutover (additive 재구성). 아래 "## Amendment 1" 참조.
+Amendment 2 (2026-06-15) — CFP-2252 carrier: native Issue Type cutover 완결 (type 정정 P0 + native-type 트리거 전환 + 라벨삭제 sequencing 완결 + §결정 5 graceful-fallback 인용 정정). 아래 "## Amendment 2" 참조.
 
 ## 컨텍스트
 
@@ -170,6 +177,45 @@ registry 는 본 Amendment 에서 type:epic/story/bug 에 `replaced_by_native_is
 | migration `--verify` | **PASS — 487 정합, 0 불일치** |
 
 **실측 결함 정정 (S4 evidence)**: 빌드 시 `apply_one` 의 부착 payload 가 `--field type_id=<id>` 였으나, REST 가 이를 **silent 무시** (HTTP 2xx 반환하나 type 미설정). 첫 `--apply` 가 487 "성공" 보고 후 `--verify` 가 487 MISMATCH 로 발각. payload 를 `-f type=<TypeName>` (이름 기반) 으로 정정 → 재apply → verify PASS. **동일 결함이 `story-init.yml` L556 (`--field type_id=`) 에도 존재** — 신규 Issue 의 native type 부착이 여태 silent 실패해 왔음. → **S4 (#2252, story-init.yml owner) 에서 정정 대상** (라벨 물리 삭제 + trigger native-type 전환과 동반).
+
+## Amendment 2 (CFP-2252, 2026-06-15) — native Issue Type cutover 완결 (additive ratchet)
+
+Epic #2244 의 최후 child Story (S4, self-host wrapper dogfood). Amendment 1 이 sequencing 으로 S4 에 미룬 **(a) type 정정 / (b) native-type 트리거 전환 / (c) 라벨 물리 삭제** 의 실 실행 완결. ADR-049 §결정 5 (story-init Action 갱신 + graceful fallback) + §결정 8 (bootstrap-labels) + Amendment 1 §A1-3 (라벨 삭제 S4 sequencing) 의 enforcement. 본문 §결정 1-12 + Amendment 1 본문 변경 0 (additive — graceful-fallback 인용 정정 1줄 제외, 아래 A2-0).
+
+### A2-0. Amendment 1 graceful-fallback 인용 정정 (오인용 교정 — 상속 drift 차단)
+
+Amendment 1 §A1-3 본문이 transient dual-state 허용을 "ADR-049 §결정 11 정합" 으로 인용했으나 **실측 결과 graceful fallback 실제 위치 = §결정 5** ("org Issue Types 미활성 시 graceful fallback (label hack 사용 + warning log)"). §결정 11 = ADR-008 amendment (contract version bump), §결정 12 = consumer migration 면제 — 둘 다 graceful fallback 과 무관. **정정**: graceful fallback 인용은 본 ADR 전체에서 **§결정 5** 가 정본. 본 정정은 오인용 교정으로 의미 무변경 (additive 무손상) — Amendment 1 본문은 historic-preserving 으로 inline edit 미수행, 본 A2-0 가 신규 SSOT.
+
+### A2-1. type 정정 (P0 라이브 결함)
+
+`story-init.yml` `Attach native Issue Type` step 의 부착 payload `--field type_id=<id>` = **REST 미존재 파라미터** (HTTP 2xx 반환하나 type 미설정 = silent drop). [SSOT: GitHub REST "Update an issue" — 파라미터 = `type`(string, 타입 이름), null=제거. "Without push access ... type changes are silently dropped"]. migrate-script L171 의 검증된 `-f type=<TypeName>` 패턴과 동일 결함 (Amendment 1 §A1-5 실측 선례). 6개월 잠복 — 신규 Issue native type 부착이 여태 silent 실패.
+
+- **정정**: `-f "type=Story"` (이름 기반). 종전 id 기반 필드 사용 금지.
+- **verify-after-write 추가**: PATCH 2xx ≠ 실제 부착 (push access 부족 시 silent drop) → 재read (`.type.name == "Story"`) 로 실측. 근본 원인 = write 후 검증 부재 → verify 가 동일 결함의 재발을 구조적으로 차단. push access 부족 시 warning + label fallback 의존 (§결정 5), story-init 무중단.
+
+### A2-2. native-type 트리거 전환 (self-host 위험 1급)
+
+- `on.issues.types` 에 `typed` 추가 (issues 이벤트 정식 activity type — native type 부착/UI type 부여 시 발화). [출처: GitHub Docs — Webhook events and payloads, issues event].
+- if-expression **OR-bridge**: `github.event.issue.type.name == 'Story'` OR `contains(labels, 'type:story')` — 라벨삭제 후 native-type 으로 발화 보존 + transient 기간 dual catch + org type 미활성 consumer 는 라벨 분기 fallback (기존 동작 100% 보존, §결정 5 graceful).
+- `phase:요구사항` AND 보존 — type 부착만으로 오발화 차단 (무관 Story type 이슈). null 안전 (type 미설정 = null → `== 'Story'` false, Actions null 비교 안전).
+- **payload 가용성 abstention**: `github.event.issue.type.name` 의 webhook payload 노출 = GitHub 공식 문서 미명세 → Actions context 가용성 **확정 불가**. REST 응답엔 `issue.type` 존재 실측이나 webhook payload 미러는 공식 보증 부재. 본 가정은 라이브 canary (TC-13) 가 입증 gate — 입증 전 미확정 취급.
+- expression truth-table 검증 = `scripts/lib/eval_story_init_trigger_expr.py` (TC-6~11 음성/양성, CI-gated `.github/workflows/story-init-trigger-expr-check.yml` non-required tier). actionlint 는 truth-value 미평가 (문법만) → 음성 조건 (Bug 오발화 차단 / phase gate / null 안전)은 본 harness 가 결정적 검증 (canary 입증 불가 영역, 역할 분리).
+
+### A2-3. 라벨 물리 삭제 = 3단계 promotion invariant (Orchestrator org-mutating)
+
+라벨 물리 삭제 (type:epic / type:story / type:bug 3종) = **org-mutating → Orchestrator 실행 영역** (`gh label delete`), 워크플로/스크립트 자동 삭제 아님. 다음 3단계를 순서대로 통과한 **후에만** 실행 (single-PR step-분리/confirm 양자택일 옵션 없음):
+
+1. **merge** — 트리거 native-type 전환 (A2-2) + type 정정 (A2-1) 이 wrapper + templates 에 merge.
+2. **production canary 증거 (blocking)** — TC-13 (type:story 라벨 미부착 + native "Story" type + phase:요구사항 만으로 story-init 발화) green run 로그. **이 증거 부재 시 라벨 삭제 금지** (payload 가용성 미확정이므로 canary 가 유일 입증 수단).
+3. **삭제** — PC-1 (트리거 PR merge 확인) ∧ PC-2 (TC-13 canary green 로그) ∧ PC-3 (DI-1 직전 상태) 충족 시에만 `gh label delete` 3건.
+
+**입증 실패 종착**: TC-13 canary 가 native-only 발화를 입증하지 못하면 → 라벨 영구 보존 (native+label 공존 = 안전 종착, story-init 무중단). 라벨 삭제는 native-only 발화 입증의 함수 — 입증 없이 삭제 절대 금지. 삭제 대상 = epic/story/bug 3종만 (native type 매핑 존재). type:improvement / type:adr-candidate / type:chore = 삭제 금지 (native type 부재, 본 Story scope 밖). DI-1 invariant 완전 충족 = 라벨삭제 단계 완료 시점.
+
+### A2-4. 동반 결정 (cross-ref)
+
+- **ADR-013 Amendment 7**: TARGET_REPO 하드코딩 4곳 (existence_check / branch create / PR create / Issue body URL) → project.yaml `github.story_ssot_repo` 파라미터화 (default `mclayer/codeforge-internal-docs`, 확장-only). consumer 분기 무변경.
+- **ADR-066 §결정 2 cross-ref (Amendment 불요)**: existence_check 앞 PAT scope 사전검증 step (토큰 유효 → repo 접근 → `permissions.push` write proxy, codeforge family 한정, fail-closed). 기존 6 scope 무변경 — enforcement mechanism 만 추가 → 독립 Amendment 불요, cross-ref 만. fine-grained scope 정밀 introspection API 부재 → `permissions.push` 가 최선 신호 (abstention 명시).
+- **#1046 / #2147 흡수**: #1046 (Create Phase 1 PR self-repo resolve) = pat_precheck 의 에러 locality + write-readiness probe 보강 (existence_check 가 이미 read probe 수행 — 단독 흡수 아님, sentinel pattern_count=1 보존). #2147 (reconcile 빈 §1 scaffold) = parse step body-치환 guard (`^Story SSOT: \[` 마크다운 링크 prefix + 요구사항 추출 0 → exit 1 fail-safe).
 
 ## 결과
 

@@ -1,13 +1,14 @@
 ---
 kind: registry
 registry: label
-version: "2.94"
+version: "2.95"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
 created_date: 2026-05-09
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/label-registry-v2.md
+date: 2026-06-15  # CFP-2252 / ADR-049 Amendment 2 v2.95 — type:epic/story/bug 삭제 sequencing 명시 (물리 삭제 = canary 후 Orchestrator gh label delete, 3단계 promotion invariant PC-1∧2∧3). entry 자체 변경 0 (description 의 "물리 삭제는 S4" → "canary 후" 명료화 + deprecated:true 유지). MINOR bump additive (entry 추가/제거 0, 마킹 텍스트 명료화), kind:registry sibling sync 면제 (ADR-010 §결정 2), plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). MANIFEST.yaml row "2.94" → "2.95" ratchet 동반. doc-only fast-path (ADR-054 — 본 registry 파일 한정).
 date: 2026-06-15  # CFP-2251 / ADR-049 Amendment 1 v2.94 — type:* deprecated entry 마킹 (deprecated:true + replaced_by_native_issue_type) — native Issue Type cutover marking, MINOR bump additive
 date: 2026-06-10  # #2112 (de-bloat #2105 FU) v2.93 — 고아 hotfix-bypass label 12건 제거 (hotfix-bypass:evidence-naming / hotfix-bypass:marketplace-drift-detection / hotfix-bypass:channel-drift-detection / hotfix-bypass:adr-077-ratchet / hotfix-bypass:adr-077-design-reading / hotfix-bypass:architecture-drift / hotfix-bypass:ddd-pattern-frontmatter / hotfix-bypass:self-improving-loop / hotfix-bypass:amendment-number-stale / hotfix-bypass:spawn-prompt-head-pin / hotfix-bypass:amendment-slot-reservation / hotfix-bypass:mid-spawn-drift-detection). 제거 근거: #2110 에서 제거된 21 theater registry 엔트리의 짝 bypass channel — raison d'être 소멸 (CFP-2061-S5 v2.92 동형 선례). raw active grep count 12 감소 (109→97). MINOR bump (12 entry 제거 = backward-compat 무영향, ADR-008 §결정 2/3), kind:registry sibling sync 면제 (ADR-010 §결정 2), plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). MANIFEST.yaml row "2.92" → "2.93" ratchet 동반. doc-only fast-path (ADR-054). NOTE: 과거 frontmatter date 줄의 "N번째 family member" 표현은 historical record — append-only 원칙으로 재계산/재작성하지 않음 (CFP-2061-S5 v2.92 NOTE 답습).
 date: 2026-06-09  # CFP-2061-S5 v2.92 — stale 전용 bypass label 5건 제거 (hotfix-bypass:post-merge-followup-success-rate / hotfix-bypass:architect-marketplace-self-check / hotfix-bypass:subagent-sibling-story-polling / hotfix-bypass:mcp-token-freshness / hotfix-bypass:pl-inline-verify-cwd-mandate). 제거 근거: evidence-checks-registry stale dead-check 7 entry 제거(CFP-2061-S5 파트 ①)에 연동된 전용 bypass channel 5건 소멸 — raison d'être 소멸 (CFP-1870 v2.89 동형 선례). raw active grep count 5 감소 (114→109). MINOR bump (5 entry 제거 = backward-compat 무영향, ADR-008 §결정 2/3), kind:registry sibling sync 면제 (ADR-010 §결정 2), plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). MANIFEST.yaml row "2.91" → "2.92" ratchet 동반. doc-only fast-path (ADR-054). NOTE: 과거 frontmatter date 줄의 "N번째 family member" 표현은 historical record — append-only 원칙으로 재계산/재작성하지 않음 (CFP-1870 v2.89 NOTE 답습).
@@ -95,6 +96,13 @@ related_files:
 # label-registry v2
 
 ## 변경 이력
+
+**v2.95 (CFP-2252 / ADR-049 Amendment 2, 2026-06-15)**: MINOR bump (type:* 삭제 sequencing 명시 — additive).
+- **삭제 status 명시**: `type:epic` / `type:story` / `type:bug` 3 entry 의 description + 주석을 "물리 삭제는 S4 #2252" → "물리 삭제 = canary 후 Orchestrator gh label delete" 로 명료화. entry 자체 (deprecated:true / replaced_by_native_issue_type) 변경 0.
+- **3단계 promotion invariant (ADR-049 Amendment 2 A2-3)**: 물리 삭제 = Orchestrator org-mutating 영역, merge → production canary (TC-13 native-only 발화) green (blocking) → `gh label delete` 3건. PC-1 (트리거 PR merge) ∧ PC-2 (canary green 로그) ∧ PC-3 (DI-1 직전 상태) 충족 시에만. **canary 입증 실패 = 라벨 영구 보존 (안전 종착)**.
+- **graceful-fallback 인용 정정**: transient dual-state 허용 근거 = ADR-049 **§결정 5** (Amendment 2 A2-0 — Amendment 1 의 "§결정 11 정합" 오인용 교정, §결정 11 = ADR-008 amendment / §결정 12 = consumer 면제, 둘 다 graceful fallback 무관).
+- **DI-1 완전 충족 시점**: 라벨삭제 단계 완료 시점 (canary green → 삭제 후). 본 v2.95 = 삭제 sequencing 명시 (삭제 자체는 Orchestrator op).
+- kind:registry sibling sync 면제 (ADR-010 §결정 2 + ADR-008 §결정 3). plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). MANIFEST.yaml row "2.94" → "2.95" ratchet 동반.
 
 **v2.94 (CFP-2251 / ADR-049 Amendment 1, 2026-06-15)**: MINOR bump (type:* deprecated entry 마킹 — additive).
 - **마킹**: `type:epic` / `type:story` / `type:bug` 3 entry 를 `deprecated: true` + `replaced_by_native_issue_type: <type>` 로 명시 (Epic / Story / Bug). v2.0 의 "REMOVED" 주석 선언을 entry-level metadata 로 구체화 (ADR-049 §결정 3 metadata field 정합).
@@ -474,20 +482,23 @@ Story-3 Phase 1 carrier — evidence-checks-registry `adr-077-ratchet-declared` 
 
 ```yaml
 labels:
-  # type:* — v2.0 변경사항 + CFP-2251 cutover marking (ADR-049 Amendment 1)
+  # type:* — v2.0 변경사항 + CFP-2251 cutover marking (ADR-049 Amendment 1) + CFP-2252 삭제 sequencing (ADR-049 Amendment 2)
   # type:epic / type:story / type:bug = DEPRECATED (native Issue Types 로 대체 — ADR-049)
   #   CFP-2251 Amendment 1: 실 org cutover 완료 (Story id 34327613 / Epic id 34327614 신설
   #   + Bug id 28762364 재사용, 487 이슈 --apply + --verify PASS).
-  #   ★ 라벨 물리 삭제는 본 Story 미수행 — story-init.yml 이 type:story 라벨로 트리거되므로
-  #     선삭제 시 깨짐. 물리 삭제 + trigger native-type 전환 = S4 (#2252, story-init.yml owner).
-  #     그때까지 transient dual-state 허용 (deprecated label + native type 공존, §결정 11 정합).
-  #   본 entry 의 deprecated:true 마킹 = 신규 부착 금지 신호 (물리 삭제 ≠ 마킹).
+  #   ★ 라벨 물리 삭제 = canary 후 명시 (CFP-2252 / ADR-049 Amendment 2 A2-3):
+  #     CFP-2252 (S4) 가 story-init.yml 트리거를 native-type OR-bridge 로 전환 (라벨 선삭제 시 깨짐 해소).
+  #     물리 삭제 = Orchestrator org-mutating 영역, 3단계 promotion invariant 후에만:
+  #       merge → production canary (TC-13 native-only 발화) green (blocking) → gh label delete 3건.
+  #     PC-1 ∧ PC-2 ∧ PC-3 충족 시에만 삭제. canary 입증 실패 = 라벨 영구 보존 (안전 종착).
+  #     그때까지 transient dual-state 허용 (deprecated label + native type 공존, ADR-049 §결정 5 정합 — Amendment 2 A2-0 §결정 11 오인용 정정).
+  #   본 entry 의 deprecated:true 마킹 = 신규 부착 금지 신호 (물리 삭제 ≠ 마킹). 삭제 status = canary-gated pending.
   # impl-manifest = RETAINED (sub-issue axis, non-breaking)
 
   - name: type:epic
     category: type
     color: "5319e7"
-    description: "(DEPRECATED — native Issue Type 'Epic'(id 34327614) 로 대체. cutover 완료, 물리 삭제는 S4 #2252)"
+    description: "(DEPRECATED — native Issue Type 'Epic'(id 34327614) 로 대체. cutover 완료, 물리 삭제 = canary 후 Orchestrator gh label delete, CFP-2252 / ADR-049 Amd2 A2-3)"
     single_active: false
     attach_owner_plugin: "(신규 부착 금지 — native Issue Type Epic 사용)"
     deprecated: true
@@ -496,7 +507,7 @@ labels:
   - name: type:story
     category: type
     color: "0e8a16"
-    description: "(DEPRECATED — native Issue Type 'Story'(id 34327613) 로 대체. cutover 완료, 물리 삭제는 S4 #2252)"
+    description: "(DEPRECATED — native Issue Type 'Story'(id 34327613) 로 대체. cutover 완료, 물리 삭제 = canary 후 Orchestrator gh label delete, CFP-2252 / ADR-049 Amd2 A2-3)"
     single_active: false
     attach_owner_plugin: "(신규 부착 금지 — native Issue Type Story 사용)"
     deprecated: true
@@ -505,7 +516,7 @@ labels:
   - name: type:bug
     category: type
     color: "d73a4a"
-    description: "(DEPRECATED — native Issue Type 'Bug'(id 28762364) 재사용으로 대체. cutover 완료, 물리 삭제는 S4 #2252)"
+    description: "(DEPRECATED — native Issue Type 'Bug'(id 28762364) 재사용으로 대체. cutover 완료, 물리 삭제 = canary 후 Orchestrator gh label delete, CFP-2252 / ADR-049 Amd2 A2-3)"
     single_active: false
     attach_owner_plugin: "(신규 부착 금지 — native Issue Type Bug 사용)"
     deprecated: true
