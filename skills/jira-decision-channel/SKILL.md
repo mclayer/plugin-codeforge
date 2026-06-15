@@ -1,14 +1,14 @@
 ---
 name: jira-decision-channel
-description: Orchestrator 결정 fork 를 코드와 분리된 평문 채널(Jira control project)로 운용하는 절차. 결정 분기에서 사용자에게 평문 질문을 던지고 답을 받아야 할 때 호출. payload 구성 → deny-scan(MUST) → MCP post(sentinel) → native notify → grace window → 세션 답 mirror(sentinel) → ScheduleWakeup poll(echo-guard 필터 + first-valid-immutable) → answer parse → PROCESSED 마킹(dedup) → audit. S3(#2289) 으로 echo-guard/dedup/fail-open robustness 보강. ADR-099 Amendment 1 §A1-1~A1-4 / ADR-100 §결정 3 binding. 잔여 robustness(rehydrate/타임아웃/stale = S4) 는 후속 Story 보강.
+description: Orchestrator 결정 fork 를 코드와 분리된 평문 채널(Jira control project)로 운용하는 절차. 결정 분기에서 사용자에게 평문 질문을 던지고 답을 받아야 할 때 호출. payload 구성 → deny-scan(MUST) → MCP post(sentinel) → native notify → grace window → 세션 답 mirror(sentinel) → ScheduleWakeup poll(echo-guard 필터 + first-valid-immutable) → answer parse → PROCESSED 마킹(dedup) → audit. S3(#2289) echo-guard/dedup/fail-open + S4(#2290) rehydrate(at-least-once 복구)/타임아웃 재알림(자동결정 금지)/stale anchor 재확인 robustness 보강. ADR-099 Amendment 1 §A1-1~A1-4 / ADR-100 §결정 3 binding.
 tools: Read, Bash
 ---
 
-# codeforge:jira-decision-channel (CFP-2285 S3 / #2289 — robustness: echo-guard / dedup / fail-open)
+# codeforge:jira-decision-channel (CFP-2285 S4 / #2290 — robustness: rehydrate / 타임아웃 재알림 / stale anchor)
 
 > Orchestrator 가 **결정 fork**(사용자 선택이 필요한 분기)에 도달했을 때 따르는 절차. 코드·산출물과 섞이지 않는 **평문 결정 루프**를 비공개·단일 사용자 Jira **control project** 하나로 운용한다.
 >
-> 정책 SSOT = [ADR-099 Amendment 1](../../archive/adr/ADR-099-atlassian-allow-redefinition.md) §A1-1~A1-4 + [ADR-100](../../archive/adr/ADR-100-confluence-doc-ssot-recognition.md) §결정 3. 본 skill 은 그 정책의 **운영 절차 carrier** (v1 = happy-path).
+> 정책 SSOT = [ADR-099 Amendment 1](../../archive/adr/ADR-099-atlassian-allow-redefinition.md) §A1-1~A1-4 + [ADR-100](../../archive/adr/ADR-100-confluence-doc-ssot-recognition.md) §결정 3. 본 skill 은 그 정책의 **운영 절차 carrier** (S2 happy-path core + S3 echo-guard/dedup/fail-open + S4 rehydrate/타임아웃 재알림/stale anchor robustness).
 >
 > **caller scope (A1-1)**: 본 절차는 **Orchestrator preset 한정**. 임의 SubAgent 는 `addCommentToJiraIssue` narrow-allow 비대상(deny) — Orchestrator inline whitelist(ADR-039 §결정 2) 경계 정합.
 
@@ -190,10 +190,10 @@ mcp__plugin_atlassian_atlassian__addCommentToJiraIssue(
 ```
 
 - 답을 채택하면 **resume(부작용) 직전에** 위 PROCESSED 마커를 post 한다(side effect 전 마킹 → crash-restart 시 (a) 가 중복 처리를 차단). sentinel 포함이므로 다음 poll 에서 echo-guard 로 걸러진다(self-echo 안전).
-- **crash-safety 비대칭 명문화 (P2-1)**: PROCESSED 마커 post → resume 순서는 **double-process 를 막는다**(at-most-once). 그러나 **PROCESSED post 성공 직후·resume 전 crash** 시에는 결정이 마킹만 된 채 act 되지 않아 **silently drop(at-most-once)** 된다 — 즉 이 순서는 중복 처리는 막지만 누락은 막지 못한다. 미act 결정을 재개하는 **at-least-once 복구는 S4 rehydrate(#2290) 소관**(세션 재개 시 미해결 fork 복원).
+- **crash-safety 비대칭 명문화 (P2-1) + S4 해소**: PROCESSED 마커 post → resume 순서는 **double-process 를 막는다**(at-most-once). 그러나 **PROCESSED post 성공 직후·resume 전 crash** 시에는 결정이 마킹만 된 채 act 되지 않아 **silently drop(at-most-once)** 된다 — 즉 이 순서는 중복 처리는 막지만 누락은 막지 못한다. 미act 결정을 재개하는 **at-least-once 복구 = S4 rehydrate(#2290, §10)** 가 메운다 — 세션 재개 시 PROCESSED 마커 없는 미해결 fork 를 복원해 이 at-most-once drop window 를 닫는다(비대칭 해소).
 - PROCESSED 마커도 **fail-open** — post 실패 시 결정 흐름 차단 금지(in-memory 답으로 진행 + 재시도 큐 표기 + audit `dedup-ledger-gap warning: 재처리 위험`). 단 이 경우 crash-restart 중복 차단은 약화되므로(double-process 위험) audit 에 명시한다.
 
-- **short open-window (A1-3)**: 답 대기 window 를 짧게 제한. window 만료 후 도착 답변 = 무시. (정확한 timeout 값·만료 재알림 = S4 보강 예정.)
+- **short open-window (A1-3) + S4 타임아웃 재알림**: 답 대기 window 를 짧게 제한. window 만료 후 도착 답변 = 무시. 다만 **무한 대기 중 미응답**은 자동 결정으로 종결하지 않고 **재알림(escalation)** 으로만 ping 한다 — 정확한 timeout 임계·escalation 스케줄·자동결정 금지 = **S4(#2290, §11)**. **stale anchor 재확인**(늦은 답 + 대상 변경) = **S4(#2290, §12)**.
 
 ---
 
@@ -243,6 +243,86 @@ printf '%s' "$ANSWER_COMMENT" | bash scripts/jira-channel/parse-answer.sh
 
 ---
 
+## 10. rehydrate (at-least-once 복구, S4) (`rehydrate`)
+
+세션 시작/재개 시 **미해결 결정 fork** 를 Jira 에서 복원한다. Jira = durable store 라 미act 결정을 복원할 수 있다(§7 poll(e) 의 at-most-once drop window 를 메우는 짝 — crash-safety 비대칭 해소).
+
+연계: 세션 resume 절차([`codeforge:session-recovery`](session-recovery))가 활성 Story 복원 시 본 rehydrate 를 1회 호출한다(미해결 fork 도 활성 Story 와 함께 복원 대상).
+
+**복원 판정 (PROCESSED 마커 부재 = 미해결)**:
+
+1. control 결정 이슈를 `getJiraIssue`(§7 poll 와 동일 호출, `fields=["comment"]`)로 조회한다.
+2. 코멘트 중 **결정 post**(sentinel `⟦cf-orch⟧` 포함 + payload 형태 `결정 fork: <id>`)를 식별하고, 각 fork id 에 대응하는 `⟦cf-orch⟧ PROCESSED decision=<id>` 마커가 **있는지** 검사한다.
+3. PROCESSED 마커가 **없는** 결정 post = **미해결 fork**(답 미채택 또는 채택 후 resume 전 crash drop). 각각을 **§7 poll 로 재진입**(복원)한다 — poll(a) 선제 검사가 다시 마커 부재를 확인하고, poll(b)~(e) 로 답 후보 선별·채택·PROCESSED 마킹을 정상 수행한다.
+
+- **echo-guard 정합 (self-post 오인 방지)**: rehydrate 가 재진입한 §7 poll 의 (b) echo-guard 필터가 orchestrator 자신의 결정 post / mirror / PROCESSED 마커(모두 sentinel 선두)를 답변 후보에서 제외하므로, rehydrate 가 self-post 를 "사용자 답" 으로 오인하지 않는다.
+- **idempotent**: PROCESSED 마커가 이미 있는 fork 는 미해결 목록에서 제외되므로, rehydrate 를 여러 번 호출해도 이미 처리된 fork 를 재처리하지 않는다(poll(a) dedup 과 동일 ledger 사용).
+- **crash-safety 비대칭 해소**: §7 poll(e) 의 "PROCESSED post 직후·resume 전 crash → silent drop(at-most-once)" 비대칭을, rehydrate 가 **세션 재개 시** 미해결 fork 복원으로 at-least-once 를 보장해 닫는다(S3 §7(e) P2-1 이 S4 소관으로 명시한 짝).
+
+---
+
+## 11. 타임아웃 재알림 (escalation, 자동결정 금지, S4) (`escalate`)
+
+open-window 만료 후에도 미응답이면 **재알림(escalation)만** 하고 **절대 자동 결정하지 않는다**(사용자 확정 결정 — `auto_decide_on_timeout: false`). 무한 대기하되 escalation interval 로 ping 해 미해결 fork 가 사용자 시야에서 사라지지 않게 한다.
+
+**타임스탬프 기록**: 결정 post 시점에 post 시각을 audit/payload 에 기록한다(escalation 임계 계산 기준). 신뢰 시각 = Jira `created`(§7 poll(c) 와 동일 — 로컬 clock 비신뢰).
+
+**매 wakeup poll 에서 (§5 grace → §7 poll 경로)**:
+
+1. `(now − post_ts) > timeout_minutes`(config) AND 해당 fork 미응답(PROCESSED 마커 부재) → **재알림**.
+2. 재알림 = 결정 이슈에 mention 재코멘트(또는 재assign)를 **sentinel 포함** 으로 post:
+   ```
+   mcp__plugin_atlassian_atlassian__addCommentToJiraIssue(
+     cloudId      = <config.cloud_id>,
+     issueIdOrKey = <결정 이슈 key>,
+     commentBody  = "⟦cf-orch⟧ [재알림] fork=<fork-id> 미응답 <경과>분 경과 — 결정 대기 중 @<user>"  # 선두 sentinel
+   )
+   ```
+3. **escalation 스케줄**: config `escalation.intervals_minutes`(예: `[60, 240, 1440]`)에 따라 점증 interval 로 재알림 — 초반 자주, 이후 드물게 ping. interval 소진 후에는 마지막 interval 을 유지(무한 ping, 자동 결정 없음).
+   - **interval 기준점 (오해 제거)**: `timeout_minutes`(예: 1440) = **첫 재알림까지의 지연**(post 시각 → 첫 ping). `escalation.intervals_minutes`[60,240,1440] = **첫 재알림(=timeout 도달) 시점부터** 점증하는 ping **간격**이다(post 시각 기준 누적 오프셋 아님). 즉 첫 ping = post+`timeout_minutes`, 둘째 ping = 첫 ping+60분, 셋째 = +240분, 넷째부터 = +1440분 고정. intervals 는 `post_ts` 가 아니라 **직전 재알림 시각**을 기준으로 더한다.
+4. 재알림 후에도 **결정 흐름은 계속 대기** — escalation 은 알림일 뿐 결정 종결이 아니다. 답이 도착하면 §7 poll 이 정상 채택한다.
+
+- **자동결정 절대 금지 (사용자 확정)**: timeout 도달은 **어떤 옵션도 자동 선택하지 않는다**. `auto_decide_on_timeout: false`(config 박제). timeout = 재알림 trigger 일 뿐, 결정은 끝까지 사용자 몫이다.
+- **echo-guard 정합**: 재알림 코멘트도 sentinel `⟦cf-orch⟧` 를 선두에 박으므로, 다음 §7 poll(b) echo-guard 가 exit 0(skip)으로 걸러 자기 재알림을 "사용자 답" 으로 오인하지 않는다(self-echo 안전 — escalation 코멘트가 답 후보로 재섭취되지 않음).
+- **deny-scan 정합**: 재알림 payload 도 §2 deny-scan 통과 의무(fork-id·경과시간·mention 만 — secret/절대경로 금지).
+
+---
+
+## 12. stale anchor 재확인 (자동 적용 금지, S4) (`anchor-recheck`)
+
+답이 **늦게** 도착했는데 그 사이 결정 **대상(anchor)** 이 바뀌었으면(squash-merge 로 commit SHA 교체 / Story closed 등), 그 답을 **자동 적용하지 않고 사용자에게 재확인**한다.
+
+**답 채택 직전**(§7 poll(e) PROCESSED 마킹·resume **전**) anchor 유효성을 검사한다. **anchor type 에 따라 호출 형태를 분기**해 모든 anchor type 이 stale 검사를 거치게 한다(§1 anchor 필드 L78 형식 `<Story KEY / commit / PR 번호 — 식별자만>` 와 정합):
+
+```bash
+# anchor 에 commit 이 있으면 commit(+story 있으면 함께) 검사:
+bash scripts/jira-channel/anchor-check.sh <commit-SHA> [<story-key>]
+# commit 이 없고 story/PR-only anchor 면 빈 commit + story 로 호출(story-only 검사):
+bash scripts/jira-channel/anchor-check.sh "" <story-key>
+# exit 0 = anchor valid(자동 적용 가능) · exit 2 = stale(commit 부재 또는 story closed) · exit 3 = 입력오류(commit·story 둘 다 빔)
+```
+
+- **anchor type 분기 (모든 anchor 가 검사를 거침)**:
+  - anchor 에 **commit 식별자**가 있으면 → `anchor-check.sh <commit> [<story>]`(commit 존재 + story 있으면 AND 검사).
+  - anchor 가 **commit 없이 Story KEY / PR 번호만**이면 → `anchor-check.sh "" <story>`(commit 검사 생략, story open 만 검사). 빈 commit + story-only 호출은 closed→exit2 / open→exit0 으로 동작한다.
+  - 이렇게 분기하면 commit anchor 든 story/PR-only anchor 든 **모두 stale 검사를 거친다**(과거 commit 필수라 story-only anchor 가 무검사 통과하던 공백을 막음).
+- **exit 0 (valid)** → 정상 적용. §7 poll(e) PROCESSED 마킹 후 resume.
+- **exit 2 (stale)** → **자동 적용 금지**. 대신 **재확인 결정 post**(새 fork)를 사용자에게 되묻는다:
+  ```
+  결정 fork: <원fork-id>-recheck
+  질문: 대상 anchor(<commit/story>)가 변경됨(commit 부재 또는 story closed). 이 답을 그대로 적용할지 재확인.
+  옵션:
+    1) 적용 (변경 인지하고 원답 유지)
+    2) 재검토 (새 상황에 맞춰 다시 결정)
+  영향도: stale 대상에 원답 자동 적용 시 잘못된 commit/closed Story 에 결정 반영 위험.
+  anchor: <갱신된 commit/story 식별자>
+  ```
+  - 이 재확인 post 도 §2 deny-scan → §3 post(sentinel) → §7 poll 정상 루프를 탄다(원 fork 와 별개의 새 fork 로 처리).
+- **exit 3 (입력오류)** → commit·story 가 **둘 다** 비었음(검사 대상 없음). anchor 식별자를 보강해 재호출(검사 생략 금지 — 무검사 자동 적용 회피). anchor type 분기상 최소 commit 또는 story 중 하나는 항상 주어져야 한다.
+- **graceful degrade**: `anchor-check.sh` 는 gh 미가용/미인증/조회실패 시 story open 검사를 생략하고 warning 을 stderr 로 남긴다(channel 가용성 우선 — false-stale 0). commit 이 있으면 commit 검사로 판정하고, story-only 호출(빈 commit)에서 gh 가 degrade 하면 valid 로 통과시킨다(검사 불가 시 자동 적용 차단보다 채널 흐름 우선). repo 는 origin remote 또는 `OWNER/REPO#번호` 형식에서 도출하며, 도출 실패 시에도 degrade. warning 은 audit 에 기록.
+
+---
+
 ## deferred 경계 (robustness 구현 진척 + 잔여 후속 Story)
 
 | 항목 | 소유 | 상태 | 비고 |
@@ -250,6 +330,8 @@ printf '%s' "$ANSWER_COMMENT" | bash scripts/jira-channel/parse-answer.sh
 | echo-guard (self-echo 차단) | **S3 (#2289)** | **구현됨** | sentinel `⟦cf-orch⟧` 내용 마커 + `echo-guard.sh` 폴러 필터. orchestrator 코멘트(post/mirror/PROCESSED)가 자기 답으로 재섭취되지 않음 (echo-guard sentinel 절 + §7 poll(b)) |
 | dedup (중복 처리 억제) | **S3 (#2289)** | **구현됨** | dedup ledger = Jira 자체(durable). `⟦cf-orch⟧ PROCESSED decision=<fork>` 마커를 resume 부작용 **전** post → 재진입 시 (a) 선제 검사로 중복 차단(crash-restart 안전) (§7 poll(a)/(e)) |
 | fail-open (mirror/mark 장애) | **S3 (#2289)** | **구현됨** | mirror·PROCESSED post 실패 시 로컬 흐름 차단 금지 — in-memory 답 진행 + 재시도 큐 + audit `*-gap warning` (§6 mirror / §7 poll(e) / §9 audit) |
-| rehydrate / 타임아웃 재알림 / stale | **S4 (#2290)** | deferred | 세션 재개 시 미해결 fork 복원 · open-window 만료 재알림 · stale 답 폐기 |
+| rehydrate (at-least-once 복구) | **S4 (#2290)** | **구현됨** | 세션 재개 시 PROCESSED 마커 없는 미해결 fork 를 §7 poll 로 복원 — §7 poll(e) at-most-once drop 비대칭 해소. echo-guard 로 self-post 오인 방지. `codeforge:session-recovery` 연계 (§10) |
+| 타임아웃 재알림 (자동결정 금지) | **S4 (#2290)** | **구현됨** | open-window 만료·미응답 시 sentinel 포함 escalation 코멘트로 점증 interval ping. **자동 결정 절대 안 함**(`auto_decide_on_timeout: false`, 사용자 확정). 무한 대기+재알림만 (§11) |
+| stale anchor 재확인 | **S4 (#2290)** | **구현됨** | 답 채택 직전 `anchor-check.sh <commit> <story>` 호출 — exit 2(commit 부재/story closed)면 자동 적용 대신 재확인 결정 post 로 사용자에게 되물음 (§12) |
 
-> S2 happy-path core 위에 S3 가 echo-guard/dedup/fail-open robustness 를 `post`/`mirror`/`poll`/`audit` 단계에 보강했다. **잔여** robustness(rehydrate/타임아웃/stale = S4)는 후속 Story 가 보강하며, 그때까지 세션 재개·window 만료·stale 답 상황은 사용자 평문 확인으로 보완한다.
+> S2 happy-path core 위에 S3 가 echo-guard/dedup/fail-open robustness 를, S4 가 rehydrate(at-least-once 복구)/타임아웃 재알림(자동결정 금지)/stale anchor 재확인 robustness 를 `post`/`mirror`/`poll`/`audit`/`rehydrate`/`escalate`/`anchor-recheck` 단계에 보강해 채널 robustness 가 완결됐다. 타임아웃은 끝까지 **자동 결정하지 않고 재알림만** 하며(사용자 확정), stale 대상에는 답을 자동 적용하지 않고 재확인한다.
