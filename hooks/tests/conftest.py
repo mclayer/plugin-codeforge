@@ -21,3 +21,11 @@ _spec = importlib.util.spec_from_file_location(
 bootstrap_first_gate = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(bootstrap_first_gate)
 sys.modules["bootstrap_first_gate"] = bootstrap_first_gate
+
+# git-branch-delete-merge-gate.py 를 git_branch_delete_merge_gate 모듈명으로 로드 (CFP-2282)
+_gbdmg_spec = importlib.util.spec_from_file_location(
+    "git_branch_delete_merge_gate", HOOKS_DIR / "git-branch-delete-merge-gate.py"
+)
+git_branch_delete_merge_gate = importlib.util.module_from_spec(_gbdmg_spec)
+_gbdmg_spec.loader.exec_module(git_branch_delete_merge_gate)
+sys.modules["git_branch_delete_merge_gate"] = git_branch_delete_merge_gate

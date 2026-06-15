@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# codeforge — PreToolUse hook: git-branch-delete-merge-gate launcher (CFP-2282)
+#
+# 책임: remote branch 삭제 명령(`git push <remote> --delete|-d|:<b>`) 을 가로채
+#       해당 branch 에 열린(미머지) PR 이 있으면 PreToolUse 단계에서 물리 차단.
+#       미머지 PR branch 선삭제로 phase-gate status 가 SHA 에 stuck 되는 사고 방지.
+#
+# 구현: 파싱·gh 조회·차단 판정은 python core 로. python 없으면 통과(fail-open).
+#       모든 경로 exit 0 except "열린 PR 확인" (그 때만 exit 2 block).
+# bypass: BYPASS_BRANCH_DELETE_MERGE_GATE=1 → 검사 생략 (audit echo + exit 0). python core 도 재확인.
+# fail-open: python 부재 / 오류 시 차단하지 않고 통과 (exit 0) — best-effort 안전망.
+set -uo pipefail
+
+[ "${BYPASS_BRANCH_DELETE_MERGE_GATE:-0}" = "1" ] && {
+  >&2 printf '[branch-delete-merge-gate] BYPASS_BRANCH_DELETE_MERGE_GATE=1 — gate suppressed at %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ 2>/dev/null || echo unknown)"
+  exit 0
+}
+
+DIR="$(cd "$(dirname "$0")" && pwd)"
+
+if command -v python3 >/dev/null 2>&1; then
+  PY=python3
+elif command -v python >/dev/null 2>&1; then
+  PY=python
+else
+  exit 0   # python 부재 → 통과 (fail-open, 정상 작업 차단 안 함)
+fi
+
+exec "$PY" "$DIR/git-branch-delete-merge-gate.py"

@@ -49,6 +49,7 @@ push → PR 생성 → gh pr view <N> --json mergedAt 확인 (non-null) → git 
 ```
 
 - **pre-merge `git worktree remove` = policy violation.** `mergedAt` non-null 확인 전 제거 금지.
+- **순서 불변 — 비가역 정리는 merge 확인 후에만.** branch/worktree 삭제(비가역)는 `mergedAt` 비-null 확인 **후에만** 실행한다. branch delete 를 merge 호출과 **같은 무조건 스크립트에 묶지 말 것** — `A; B` / `A && B` 파이프는 선행(merge) 실패 시에도 exit code 를 가려 삭제(B)가 실행될 수 있다. 반드시 조건 가드(`merge 성공 확인 → then 삭제`)로 분리한다. 기계적 보강 = `git-branch-delete-merge-gate` PreToolUse hook — 열린(미머지) PR branch 의 remote 삭제(`git push <remote> --delete|-d|:<b>`)를 하드차단(bypass: `BYPASS_BRANCH_DELETE_MERGE_GATE=1`). **사고 박제: INCIDENT 2026-06-15 #2280** — 미머지 PR branch 선삭제로 PR auto-close + phase-gate-mergeable status 가 head SHA 에 stuck("expected") → reopen·fresh PR·admin merge 까지 BLOCKED.
 - **squash merge 환경의 merged 판정** = PR 상태 기반: `gh pr list --state merged --head <branch>`. squash merge 는 branch commit 을 origin/main ancestry 에 올리지 않으므로 `origin/main..HEAD` 비교는 항상 거짓 양성 (`templates/scripts/check-worktree-stale.sh` 헤더 명세).
 - **수행 주체** = Story/Epic 완료 회고 시점의 GitOpsAgent (playbook Step 0a-prime primary 경로 — mergedAt 확인 후 경로 기반 제거). GitOpsAgent 미spawn 컨텍스트(ad-hoc 작업)에서는 작업 수행 주체가 동일 invariant 로 직접 정리.
 - sub-worktree (`cfp-NNN/lane/<lane>[/<sub>]`) = `bash templates/scripts/worktree-prune.sh <branch>` (playbook §3.5 step 5). Story root worktree 는 Phase 2 PR merge 확인까지 보존.
