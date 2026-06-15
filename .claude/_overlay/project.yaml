@@ -48,4 +48,15 @@ atlassian:
     space_key: "CFP"
     api_token_env: "ATLASSIAN_API_TOKEN"
     user_email_env: "ATLASSIAN_USER_EMAIL"
-  # jira: W4+ defer (wrapper dogfood = Confluence docs only, ADR-100 §결정 3 jira block schema placeholder 만)
+  # jira 결정 채널 (CFP-2285 — Orchestrator↔사용자 평문 결정 루프)
+  # ADR-100 §결정 3 jira block schema 의 실 wire (W4+ defer 를 S1~S2 로 앞당김).
+  # ADR-099 Amendment 1: addCommentToJiraIssue 1종 narrow-allow (§A1-1) + payload deny-scan (§A1-2)
+  #   + first-valid-immutable/short-window (§A1-3) + wrapper-side audit SSOT (§A1-4).
+  # control project = 비공개·단일 사용자 결정 채널 전용 (wrapper dogfood).
+  # secret 없음 — cloud_id/key 는 비밀 아님. notify = Jira 네이티브(PushNotification 의존 회피).
+  jira:
+    decision_channel:
+      cloud_id: "0729a627-5f0e-4e17-b8d1-0365ba887d41"
+      control_project_key: "KAN"
+      issue_type: "작업"
+      notify: "assignee"   # assignee | watcher — Jira native 알림
