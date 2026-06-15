@@ -71,3 +71,24 @@ atlassian:
       # auto_decide_on_timeout = 사용자 확정 결정(박제): timeout 도달해도 **자동 결정 절대 금지**.
       #   timeout = 재알림 trigger 일 뿐, 결정은 끝까지 사용자 몫. SKILL.md §11 / #2290 설계 근거.
       auto_decide_on_timeout: false
+    # CFP-2285 S5 (#2291) — Arc B: 세션·작업 모니터링 미러 (comment-only).
+    # 사용 도구 = addCommentToJiraIssue 1종(ADR-099 §A1-1 준수). 이슈 생성(createJiraIssue)·
+    #   status 전이(transitionJiraIssue)·issue-field write(editJiraIssue) = **전부 deny — 미사용**.
+    # 방향 = Orchestrator → Jira 단방향(진행을 내보냄, 답 미수신). decision_channel(Arc A)
+    #   의 poll/dedup/echo-guard/rehydrate/timeout/stale 은 **전부 비대상** — Arc B 가 import 안 함.
+    #   공유는 sentinel(⟦cf-orch⟧)·deny-scan 2개뿐 → 같은 control project 안전(cross-echo 차단).
+    # 입도 = ADR-038 6-point lane 전이(진입/PASS/FIX 검출/원인 판정/재진입/완료)는 코멘트 텍스트로,
+    #   현재활동 1줄은 단일 코멘트 update 로(라이브 turn-단위 아님). skill = codeforge:jira-progress-mirror.
+    progress_mirror:
+      enabled: false          # opt-in (기본 off — 비활성/미설정 = no-op skip)
+      # project_key = 진행 미러 대상 control project. decision_channel.control_project_key 와
+      #   같은 project 공유 가능(sentinel·echo-guard 정합으로 cross-echo 차단 — 안전).
+      project_key: "KAN"
+      cloud_id: "0729a627-5f0e-4e17-b8d1-0365ba887d41"   # decision_channel 과 공유
+      # mirror_issue_key = 운영자가 **사전 생성**한 모니터링 이슈 1개의 key(Epic 당 또는 기존 이슈 재사용).
+      #   skill 은 이슈를 만들지 않는다(createJiraIssue deny). 빈값/미지정 = no-op skip(warn 1회).
+      #   SKILL.md §1 참조. 예: "KAN-123".
+      mirror_issue_key: ""
+      # current_activity = "현재 무엇 하는중" 1줄 갱신 방식. pinned-comment-update = 단일 "현재활동"
+      #   코멘트를 commentId 로 update(addCommentToJiraIssue 1종 — issue-field write 안 함). SKILL.md §3.
+      current_activity: "pinned-comment-update"
