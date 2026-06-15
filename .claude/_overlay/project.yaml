@@ -54,9 +54,20 @@ atlassian:
   #   + first-valid-immutable/short-window (§A1-3) + wrapper-side audit SSOT (§A1-4).
   # control project = 비공개·단일 사용자 결정 채널 전용 (wrapper dogfood).
   # secret 없음 — cloud_id/key 는 비밀 아님. notify = Jira 네이티브(PushNotification 의존 회피).
+  # CFP-2285 S4 (#2290): 타임아웃 재알림(escalation) 스케줄. ADR-099 §A1-3 short-window 확장.
   jira:
     decision_channel:
       cloud_id: "0729a627-5f0e-4e17-b8d1-0365ba887d41"
       control_project_key: "KAN"
       issue_type: "작업"
       notify: "assignee"   # assignee | watcher — Jira native 알림
+      # ---- S4 타임아웃 재알림 (자동결정 금지) ----
+      # timeout_minutes = 이 시간(분) 미응답 시 재알림(escalation) 시작 임계. 기본 1440 = 24h.
+      timeout_minutes: 1440
+      # escalation.intervals_minutes = 재알림 점증 스케줄(분). 초반 자주→이후 드물게 ping.
+      #   소진 후 마지막 interval 유지(무한 ping). SKILL.md §11 참조.
+      escalation:
+        intervals_minutes: [60, 240, 1440]
+      # auto_decide_on_timeout = 사용자 확정 결정(박제): timeout 도달해도 **자동 결정 절대 금지**.
+      #   timeout = 재알림 trigger 일 뿐, 결정은 끝까지 사용자 몫. SKILL.md §11 / #2290 설계 근거.
+      auto_decide_on_timeout: false
