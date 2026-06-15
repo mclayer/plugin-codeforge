@@ -33,6 +33,7 @@ amendments:
   - ADR-027-Amendment-8-CFP-1125  # CFP-1125 (CFP-1111 Wave-4 Story-11) — Amendment 6 sunset_boundary declarative (β2 audit #1113 Anchor 4 LOSSLESS 판정 carry). Amendment 6 §결정 10 4-way detection signals + D4 customization marker preserve invariant 의 효용을 CFP-1111 walker paradigm 으로 carry — walker repo-kind detection hook (detect-repo-kind.py 재사용) 동일 truth-table + walker per-step customization_marker_preserve flag 0 silent overwrite. is_transitional 본체 false 무변경 (영역 분리 — Amendment 6 영역만 sunset boundary 명시, 본체 다른 amendment 영향 0). ratchet 강화 only (declaration-only Wave-1 → walker Wave-4 carry), 약화 0건
   - ADR-027-Amendment-9-CFP-1177  # CFP-1177 Story-8 — customization marker block 을 paradigm-agnostic preserved layer 로 codify. 동일 invariant (marker 안 = wrapper SSOT wins, 밖 = consumer byte-identical 보존, integrity fingerprint check 의무, MARKER_NONE = wholesale + user-visible loss report) 가 declarative reconcile (ADR-076 / reconcile-overlay.sh) AND imperative walk apply (walk_plan.py apply_overlay_file) 양 경로에 동일 적용. Walk apply 는 merge_with_marker primitive 재사용 의무 (DRY — 재구현 금지). §결정 12 신설
   - ADR-027-Amendment-10-CFP-2243  # CFP-2243 — §결정 2 3-trigger enforcement 의 Secondary trigger (UserPromptSubmit) 구멍 메우기: "codeforge 의도 선언 + 미초기화 → bootstrap-first" 불변식 명문화 (§결정 13 신설). 기존 Secondary trigger regex 는 변경 동사만 잡고 "codeforge 사용 선언 시점(설계/brainstorm 요청) + 미초기화 감지" 미포착 → 미초기화 greenfield consumer 가 bootstrap 없이 superpowers:brainstorming 으로 silent fallback (Issue #2243). intent(변경동사 + codeforge 고유신호) ∧ detect-repo-kind exit 3 (unknown=진짜 greenfield) ∧ docs/adr·archive/adr 부재 AND-gate → wrapper plugin hooks/ 의 UserPromptSubmit 훅이 bootstrap 미충족 surface + 초기화 우선 유도 (warning inject only, exit 0 — hard-block 권한 보유하나 정책적 미사용). chicken-and-egg 해결 = overlay/ 아닌 wrapper plugin hooks/ 배치 (plugin 설치 즉시 활성). ADR-034 D1 옵션성 보존 (brainstorm 진입 차단 아님, 초기화 권고만). additive only, ratchet 강화 방향 — sunset_justification 불요
+  - ADR-027-Amendment-11-CFP-2250  # CFP-2250 (Epic CFP-2244 S2) — §결정 4 (cross-platform 의무 POSIX + Windows) 의 Windows-parity mechanical 강화 (§결정 14 신설). mctrader 데뷔(Windows) 발견 결함: (1) bootstrap-consumer.ps1 Stage 6 가 `& bash bootstrap-labels.sh` 위임 → Git Bash·WSL 부재 native Windows 에서 WARN+수동안내 종료 → label 미시드 → Issue Form `label not found` (silent 온보딩 깨짐). (2) check_bootstrap.py `_resolve_plugins_json` 의 [HOME, USERPROFILE] 고정 순서 → WSL/dual-env 비결정. (3) manifest/project.yaml 부재 검증이 story-init 발동 후 exit 1 (원인 불명). (4) check_bootstrap.py REQUIRED_LABELS 의 type:* (ADR-049 native Issue Type 이관, bootstrap-labels.sh 미생성) 잔존 오탐. (5) .github/workflows/ 전부 ubuntu-latest, windows runner 0 (결함1 회귀 안전망 부재). 해소: 신규 scripts/bootstrap-labels.ps1 (PowerShell-native 시드, label 데이터 SSOT templates/labels/base-labels.tsv 공유 — .sh/.ps1 drift 차단) + Stage 6 3-tier fallback (bash→pwsh→ERROR, silent skip 금지) + _resolve_plugins_json OS-aware 결정화 (os.name nt → USERPROFILE 우선 / posix → HOME 우선) + preflight 전진 (story-init 발동 전 bootstrap 결손 명시) + REQUIRED_LABELS type:* 제거 (18→15, check_bootstrap.py S2 단독 소유 — S3 type:* org cutover 와 파일 충돌 회피) + windows-bootstrap-smoke.yml (windows-latest, 기본 shell pwsh, dry-run smoke). 정합 부수: ADR-122 후속 — bootstrap-consumer.{sh,ps1}/check-debut-readiness.{sh,ps1} 의 required 목록 superpowers 잔존 제거 (check_bootstrap.py 는 CFP-2249 정합 완료). additive only, ratchet 강화 방향 (§결정 4 의 Windows 측 mechanical 이행 — weakening 0) — sunset_justification 불요
 amendment_log:
   - amendment_id: 8
     date: 2026-05-21
@@ -52,6 +53,12 @@ amendment_log:
     summary: "§결정 2 3-trigger enforcement model 의 Secondary trigger (UserPromptSubmit) 구멍 메우기 — §결정 13 신설. 기존 Secondary trigger (overlay/hooks/userprompt_reminder.py CHANGE_PATTERNS) 는 '변경 동사' 만 잡고 'codeforge 사용 선언 시점(설계/brainstorm 요청) + 미초기화 감지' 미포착. 결과: 미초기화 greenfield consumer 가 codeforge 사용 선언에도 bootstrap 없이 superpowers:brainstorming 으로 silent fallback (Issue #2243). 본 Amendment 10 = entry-gate sub-trigger 명문화: intent(변경동사 ∪ codeforge 고유신호) ∧ detect-repo-kind exit 3 (unknown = plugin.json·overlay 양 부재 = 진짜 greenfield) ∧ docs/adr·archive/adr 부재 AND-gate 충족 시에만 발화 (false-positive 억제). 발화 = bootstrap 미충족 surface + scripts/bootstrap-consumer.sh 안내 (GitHub remote 부재 시 자동 gh repo create 금지 — 명령 surface + 사용자 확인) → warning inject only, exit 0. hard-block 권한(exit 2 prompt erase)은 정책적 미사용 (ADR-027 §결정 2 'Block 아님' + ADR-034 D1 옵션성). chicken-and-egg 해결 = wrapper plugin hooks/ 배치 (overlay/ 아님 — plugin 설치 즉시 활성, 미초기화 consumer settings.json 등록 불요). ADR-034 D1 보존 (brainstorm 진입 차단 아님, 초기화 권고만 — 사용자 거부 시 진행). ratchet 강화: 기존 Secondary trigger 적용 범위 확장 (변경동사 only → codeforge 선언 + 미초기화 감지 포함), weakening 0건."
     is_transitional: false
     sunset_justification: "ratchet 강화 방향 전용 (Secondary trigger enforcement scope 확장: 변경동사-only intent → codeforge-선언 + 미초기화 감지 entry-gate 추가). is_transitional: false permanent governance invariant 무변경. metric = bootstrap-first-gate 단위 테스트 suite (TC1 positive intent+unknown+미초기화→reminder / TC2 consumer overlay 존재→silent / TC3 intent 미매치→silent / TC4 bypass→silent / TC5 fail-safe exit0 / TC6 intent regex enum) + detect-repo-kind.py 무변경 회귀 0. who = hooks/bootstrap-first-gate.py (wrapper plugin hooks/, UserPromptSubmit additive entry). how = AND-gate (intent ∧ detect exit3 ∧ docs·archive/adr 부재 ∧ not-bypassed) ⟺ 발화 invariant + 모든 경로 exit 0 fail-safe. scope 확장 = weakening 0 (기존 변경동사 Secondary trigger 무변경, codeforge-선언 entry-gate 신규 적용 추가). ADR-058 §결정 5 sunset_justification = ratchet 강화 방향 전용 exemption 정합."
+  - amendment_id: 11
+    date: 2026-06-15
+    cfp: CFP-2250
+    summary: "§결정 4 (cross-platform 의무 POSIX + Windows) Windows-parity mechanical 강화 — §결정 14 신설. mctrader 데뷔(Windows) 발견 부트스트랩 5 결함 + 1 정합 부수 해소 (Epic CFP-2244 S2). 결함1 = bootstrap-consumer.ps1 Stage 6 bash 위임이 native Windows(Git Bash·WSL 부재)에서 수동안내 종료 → label 미시드 silent 깨짐. 결함2 = check_bootstrap.py _resolve_plugins_json [HOME, USERPROFILE] 고정순서 WSL/dual-env 비결정. 결함3 = manifest/project.yaml preflight 가 story-init 발동 후 (원인 불명). 결함4 = REQUIRED_LABELS type:* (ADR-049 native Issue Type 이관, bootstrap-labels.sh 미생성) 잔존 오탐. 결함5 = windows CI 안전망 0. 정합 부수 = ADR-122 후속 4 스크립트 superpowers required 잔존 제거. 해소 = 신규 bootstrap-labels.ps1 (PowerShell-native + label 데이터 SSOT base-labels.tsv 공유) + Stage 6 3-tier fallback (bash→pwsh→ERROR) + OS-aware resolve (os.name 분기) + preflight 전진 + REQUIRED_LABELS type:* 제거 (18→15, check_bootstrap.py S2 단독 소유) + windows-bootstrap-smoke.yml. additive only, ratchet 강화 (§결정 4 Windows 측 mechanical 이행), weakening 0건 — ADR-058 §결정 5 정합."
+    is_transitional: false
+    sunset_justification: "ratchet 강화 방향 전용 (§결정 4 cross-platform 의무의 Windows 측 mechanical enforcement 추가: bash↔PowerShell label 시드 parity + windows-latest CI smoke + OS-aware resolve 결정화 + REQUIRED_LABELS 오탐 제거). is_transitional: false permanent policy 무변경. metric = (a) bootstrap-labels.ps1 -DryRun count == bootstrap-labels.sh --dry-run count parity, (b) _resolve_plugins_json os=nt → USERPROFILE / posix → HOME 결정적 단위 TC, (c) REQUIRED_LABELS type:* 부재 + len 15 assert, (d) windows-bootstrap-smoke.yml windows-latest GREEN, (e) 4 스크립트 superpowers grep 0. who = scripts/bootstrap-labels.ps1 + overlay/hooks/check_bootstrap.py + .github/workflows/windows-bootstrap-smoke.yml. how = label 데이터 SSOT 단일화(.sh/.ps1 동일 파일 read 로 drift 구조적 차단) + Stage 6 3-tier fallback (silent skip 0) + os.name 분기 결정화 + native Issue Type 이관 정합. scope = §결정 4 Windows 측 미이행 mechanical 보강 (weakening 0 — bash POSIX 경로 무변경, PowerShell native 경로 신규 추가). ADR-058 §결정 5 sunset_justification = ratchet 강화 방향 전용 exemption 정합."
 mechanical_enforcement_actions:
   - action_name: section-1-verbatim-postmerge
     decision_binding: "Amendment 2 §결정 6.A — manual fallback path 의 §1 verbatim invariant post-merge lint (warning tier)"
@@ -978,3 +985,80 @@ Cross-ref:
 - `overlay/hooks/userprompt_reminder.py:59` — 기존 무제한 `sys.stdin.read()` (sibling). bounded read `sys.stdin.read(1<<20)` 는 본 훅 **신규 강화** — 복사 아님 (Change Plan §3.2(a)/§7 I-3)
 - `hooks/bootstrap-first-gate` + `hooks/bootstrap-first-gate.py` — Phase 2 mechanical enforcement carrier
 - internal-docs Change Plan `cfp-2243-bootstrap-first-gate.md` §3/§7/§8/§11 — 구현 계약 SSOT (ADR-013 dogfood-out)
+
+## Amendment 11 — §결정 4 Windows-parity mechanical 강화: PowerShell-native label 시드 + windows CI + resolve 결정화 + REQUIRED_LABELS 오탐 제거 (CFP-2250)
+
+**Effective**: 2026-06-15 (Epic CFP-2244 S2, CFP-2250 Phase 1 설계 PR merge 시점).
+
+**Carrier**: CFP-2250 (`carrier_story` for S2). Parent Epic CFP-2244 (Consumer Onboarding Hardening). Sibling Stories: CFP-2243 (S1, Amendment 10, **MERGED prerequisite**) / CFP-2251 (S3, type:* native Issue Type org cutover) / CFP-2252 (S4, story-init PAT/라우팅) / CFP-2253 (S5, consumer-guide 선형 온보딩).
+
+본 ADR §결정 4 (cross-platform 의무 — POSIX bash + Windows PowerShell 양 OS 검증)는 결정으로만 존재했고 Windows 측 mechanical 이행이 미완이었다. mctrader 데뷔(native Windows 환경)에서 다음이 노출됐다 (실측, worktree HEAD 968d90fc):
+
+| # | 결함 | 실측 위치 | 본질 |
+|---|---|---|---|
+| 1 | Windows label 시드 불완주 | `scripts/bootstrap-consumer.ps1:258-275` (`Stage-6-Labels`) `& bash bootstrap-labels.sh` → bash 미발견(L269) 시 WARN+수동안내(L270) 종료 | §결정 4 Windows-parity 미이행 — label 미시드 → Issue Form `label not found` silent 깨짐 |
+| 2 | HOME/USERPROFILE 비결정 | `overlay/hooks/check_bootstrap.py:145-160` (`_resolve_plugins_json`) `[HOME, USERPROFILE]` 고정순서 first-match | WSL/dual-env 양 env set 시 OS 맥락 무시 → 비결정 |
+| 3 | manifest/project.yaml preflight 늦음 | bootstrap precheck/story-init 발동 후 exit 1 | 검증이 너무 늦고 원인 불명 |
+| 4 | REQUIRED_LABELS type:* 오탐 | `check_bootstrap.py:56-64` type:epic/story/bug ↔ `bootstrap-labels.sh:78-82` 미생성 (ADR-049 native 이관) | 구조적 오탐 (check 2 영구 "부재" 보고) |
+| 5 | windows CI 안전망 부재 | `.github/workflows/` 52 파일 전부 ubuntu-latest (`runs-on: windows` grep 0) | 결함1 회귀 차단 CI 없음 |
+| 6 (정합) | superpowers required 잔존 | `bootstrap-consumer.{sh,ps1}` / `check-debut-readiness.{sh,ps1}` required 목록 | ADR-122/CFP-2249 후속 누락 drift (check_bootstrap.py 는 정합 완료) |
+
+본 amendment = §결정 4 의 **이행 강화** (additive, supersede 아님). §결정 14 신설.
+
+### 결정 14 — Windows-parity mechanical enforcement (normative SSOT)
+
+#### §결정 14.A — PowerShell-native label 시드 parity
+
+신규 `scripts/bootstrap-labels.ps1` (PowerShell 5.1+) = `bootstrap-labels.sh` 의 native parity wrapper (bootstrap-consumer.ps1 이 .sh 의 wrapper 인 선례 답습). 동일 idempotent semantic (create→edit→fail-echo, `bootstrap-labels.sh:46-74` 미러). gh 호출 = **배열 인자** (`& gh label create $name --color $color --description $desc`) 의무 — 문자열 보간 명령 조립 / `Invoke-Expression` 금지 (PowerShell injection 차단, SecurityArch).
+
+#### §결정 14.B — label 데이터 SSOT 단일화 (drift 구조적 차단)
+
+`.sh` 의 hardcoded base label 을 공유 데이터 파일 `templates/labels/base-labels.tsv` (`name\tcolor\tdesc`)로 추출 → `.sh` ∧ `.ps1` 양쪽 동일 파일 read. 중복 hardcode 거절 (영구 drift 위험). hotfix-bypass:* (`parse-hotfix-bypass-labels.py`) + component:* (project.yaml) = Python 단일 경로라 .sh/.ps1 공통 호출 (추가 중복 0). label provenance SSOT = `label-registry-v2.md` (TSV 추출이 provenance 손실 아님). count cross-verify (`check-bootstrap-labels-count.sh`) TSV 경로로 통과 의무.
+
+#### §결정 14.C — Stage 6 3-tier fallback (silent skip 금지)
+
+`bootstrap-consumer.ps1:Stage-6-Labels`: (1) `Get-Command bash` 발견 → `& bash bootstrap-labels.sh` (POSIX 경로 회귀 0). (2) bash 미발견 → `& bootstrap-labels.ps1` (Windows-native fallback, 결함1 해소). (3) 둘 다 불가 → 명시 ERROR + return false. AS-IS 의 WARN-then-skip(L270) 제거 — silent skip 은 결함1 의 근본 (graceful degradation = 자동 fallback, 수동안내 종료 아님).
+
+#### §결정 14.D — OS-aware plugins.json resolve 결정화
+
+`check_bootstrap.py:_resolve_plugins_json` 우선순위 = `os.name == "nt"` → [USERPROFILE, HOME] / POSIX → [HOME, USERPROFILE]. 동일 (os, env, 파일존재) → 동일 path (결정적). OS 가 SSOT 인 env 를 OS 분기로 우선 = WSL(POSIX, HOME 정본) ∧ native Windows(USERPROFILE 정본) 양쪽 결정적.
+
+#### §결정 14.E — preflight 전진 (story-init 발동 전)
+
+bootstrap 미완/결손은 가장 이른 결정적 시점에 명시 안내: (1) `check_bootstrap.py` SessionStart — manifest 부재 silent return → 명시 WARN, project.yaml strict-eligible (a) 메시지 보강. (2) `bootstrap-consumer.{sh,ps1}` Stage 1 precheck — manifest/project.yaml 결손 사전 안내. story-init.yml 자체의 preflight(PAT/라우팅) = S4 #2252 영역 (본 amendment 침범 0 — bootstrap 측 안내로 한정).
+
+#### §결정 14.F — REQUIRED_LABELS type:* 제거 (S2 단독 소유)
+
+`check_bootstrap.py:REQUIRED_LABELS` 에서 type:epic/story/bug 제거 (18→15). ADR-049 native Issue Type 이관 + `bootstrap-labels.sh` 미생성 = 구조적 오탐. `check_plugin_labels` 메시지 `/18` → `len(REQUIRED_LABELS)` 동적. STRICT_ELIGIBLE_LABELS (phase:* 7 + gate:* 3 = 10) type:* 미포함 → 무영향. **충돌 경계**: type:* native Issue Type *org cutover* (ADR-049 Phase 2) = S3 #2251 영역. 본 amendment = `check_bootstrap.py` 파일 단독 오탐 row 제거 (Epic CFP-2244 가 S2 = check_bootstrap.py 단독 소유 명시 — S3/S4 3-way 파일 충돌 회피).
+
+#### §결정 14.G — windows-latest CI smoke (안전망 신설)
+
+신규 `.github/workflows/windows-bootstrap-smoke.yml` (단일 job, windows-latest — 기본 shell pwsh [source: GitHub Actions Windows default shell = PowerShell, github.blog/changelog 2019-10-17]). smoke = no live gh (dry-run, token secret 노출 0): bootstrap-labels.ps1 -DryRun count + bootstrap-consumer.ps1 -DryRun Stage 6 native 경로 + check_bootstrap.py Windows resolve. non-required tier 시작 (branch protection 6-tuple 미등재 — ADR-060 evidence-gate 후 승격 후보). ubuntu job 과 중복 아님 (경로 구분자 / pwsh ConvertFrom-Json / UTF-8 경계 discriminating).
+
+#### §결정 14.H — superpowers required 정합 (ADR-122 후속)
+
+`bootstrap-consumer.{sh,ps1}` + `check-debut-readiness.{sh,ps1}` required 목록에서 `superpowers@claude-plugins-official` 제거 + count 메시지(11→10) 정합. `check_bootstrap.py` 는 CFP-2249 에서 정합 완료. 10 plugin = codeforge 7 (wrapper + 6 lane) + github + codex + claude-md-management.
+
+### Bypass 정합
+
+§결정 3 `HOTFIX_BYPASS_CODEFORGE=1 + REASON` bypass mechanism 무손상. 본 amendment = bootstrap 실행 경로 강화 (enforcement bypass 와 별도 mechanism).
+
+### Default 미변경 = additive only
+
+bash POSIX 경로 무변경 (WSL/Git Bash 환경 회귀 0). PowerShell native 경로 = 신규 fallback 추가. 기존 consumer 동작 (bash 보유) 즉시 변경 0 (backward-compat). type:* 제거 = 오탐 제거 (실 동작 영향 = 노이즈 감소만).
+
+### 해소 기준 정합
+
+ADR-027 frontmatter `is_transitional: false` (permanent policy). Amendment 11 = §결정 4 Windows 측 mechanical enforcement 추가 = governance 강화 방향 ratchet (weakening 0건) — ADR-058 §결정 5 sunset_justification 불요.
+
+Cross-ref:
+- ADR-027 §결정 4 (cross-platform 의무 POSIX + Windows) — 본 Amendment 11 = Windows 측 mechanical 이행 carrier
+- ADR-027 §결정 3 (HOTFIX_BYPASS bypass) — 무손상
+- [ADR-122](ADR-122-superpowers-dependency-removal.md) — §결정 14.H superpowers required 정합 근거 (CFP-2249 sibling)
+- [ADR-049](ADR-049-issue-types-native-migration.md) — §결정 14.F REQUIRED_LABELS type:* 제거 근거 (native Issue Type). S3 #2251 = org cutover Phase 2 영역 (파일 경계 분리)
+- [ADR-032](ADR-032-adr-027-amendment-1-hard-enforcement.md) — Amendment 1 strict-eligible (REQUIRED_LABELS 변경이 STRICT_ELIGIBLE_LABELS 무영향 확인)
+- [ADR-060](ADR-060-evidence-enforceable-promotion-framework.md) — §결정 14.G windows CI non-required → blocking 승격 gate
+- [ADR-058](ADR-058-adr-sunset-criteria-mandate.md) §결정 5 — sunset_justification ratchet 강화 방향 exemption
+- `scripts/bootstrap-consumer.ps1:258-275` / `scripts/bootstrap-labels.sh:46-82` / `overlay/hooks/check_bootstrap.py:56-64,145-160` — 실측 SSOT
+- https://github.blog/changelog/2019-10-17-github-actions-default-shell-on-windows-runners-is-changing-to-powershell/ — windows-latest 기본 shell pwsh (§결정 14.G CI 외부 사실)
+- internal-docs Change Plan `cfp-2250-bootstrap-hardening.md` §3/§8/§11 — 구현 계약 SSOT (ADR-013 dogfood-out)
