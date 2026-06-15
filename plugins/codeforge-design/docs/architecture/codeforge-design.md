@@ -195,7 +195,7 @@ ArchitectPLAgent 검수 → review-verdict packet 작성
 
 ### ADR-076 declarative reconciliation 3-layer cross-ref
 
-본 lane 의 architecture_doc 운용은 [ADR-076](../../../plugin-codeforge/docs/adr/ADR-076-declarative-reconciliation-upgrade.md) declarative reconciliation 3-layer 패턴을 도메인 disjoint 로 답습 (ADR-078 §결정 4 명시):
+본 lane 의 architecture_doc 운용은 [ADR-076](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-076-declarative-reconciliation-upgrade.md) declarative reconciliation 3-layer 패턴을 도메인 disjoint 로 답습 (ADR-078 §결정 4 명시):
 
 - **desired state** = 본 doc 의 4 H2 closed-enum (모듈 + 경계 + 인터페이스 계약 + 데이터 흐름) 누적 현재 상태 SSOT
 - **current state** = lane plugin agent file (`agents/*.md`) + `CLAUDE.md` 의 실제 정의 상태

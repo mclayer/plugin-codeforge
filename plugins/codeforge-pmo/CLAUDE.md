@@ -34,7 +34,7 @@ GitOpsAgent (CFP-139 신설 long-running teammate) 가 다음을 직접 write:
 | `docs/stories/<KEY>.md §10.5 Git Ops Log` | 매 git ops event (append-only) | `Edit(docs/stories/**)` |
 | GitHub comment `[GitOps]` prefix | conflict / escalation | `mcp__github__add_issue_comment` |
 
-DocsAgent 경유 안 함 ([CFP-31 parent spec](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md)).
+DocsAgent 경유 안 함 ([CFP-31 parent spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-29-cfp-31-wrapper-only-decomposition-design.md)).
 
 ### Retro 자동 trigger flow (CFP-138 / ADR-045)
 
