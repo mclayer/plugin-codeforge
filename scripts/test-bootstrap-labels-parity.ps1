@@ -67,8 +67,49 @@ $shRaw = & bash $Sh --dry-run 2>$tmpErr
 $shMap = ConvertTo-LabelMap -Lines $shRaw
 Remove-Item $tmpErr -ErrorAction SilentlyContinue
 
-# --- 3. 비교: name set + per-field (color, desc) divergence ---
 $errors = New-Object System.Collections.Generic.List[string]
+
+# --- 3a. PRIMARY: raw data-line 순서 + exact string equality (CFP-2250 FIX Codex P2-4) ---
+# map(name-keyed) 비교는 중복행/순서차를 놓침 → 순서 보존 data line 1:1 ordinal 비교가 1차.
+# data line = 3-field tab (dry-run 은 stdout 에 name\tcolor\tdesc 만 — summary/self-check 는 stderr).
+function Get-DataLines {
+    param([string[]]$Lines)
+    $out = New-Object System.Collections.Generic.List[string]
+    foreach ($line in $Lines) {
+        if ($null -eq $line) { continue }
+        $s = [string]$line
+        if (-not $s) { continue }
+        if (($s -split "`t").Count -ne 3) { continue }
+        $out.Add($s)
+    }
+    return $out
+}
+$shData = Get-DataLines -Lines $shRaw
+$psData = Get-DataLines -Lines $psRaw
+
+function Get-Snippet {
+    param([string]$Text)
+    if ($null -eq $Text) { return "" }
+    $n = [Math]::Min(60, $Text.Length)
+    return $Text.Substring(0, $n)
+}
+
+if ($shData.Count -ne $psData.Count) {
+    $errors.Add("raw line count divergence: sh=$($shData.Count) ps1=$($psData.Count)")
+} else {
+    for ($i = 0; $i -lt $shData.Count; $i++) {
+        # -cne = ordinal (case + byte sensitive) — UTF-8 한글/special char/순서 divergence 변별
+        if ($shData[$i] -cne $psData[$i]) {
+            $lineNo = $i + 1
+            $shSnip = Get-Snippet -Text $shData[$i]
+            $psSnip = Get-Snippet -Text $psData[$i]
+            $errors.Add("line $lineNo divergence (순서/내용): sh=[$shSnip] ps1=[$psSnip]")
+            if ($errors.Count -ge 6) { $errors.Add("... (추가 line divergence 생략)"); break }
+        }
+    }
+}
+
+# --- 3b. SECONDARY (보조 진단): name-keyed map per-field divergence ---
 
 $shNames = [System.Collections.Generic.HashSet[string]]::new()
 $shMap.Keys | ForEach-Object { [void]$shNames.Add($_) }

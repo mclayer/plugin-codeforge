@@ -278,13 +278,23 @@ function Stage-6-Labels {
     }
     if ($bashCmd) {
         # tier 1: bash (POSIX 경로 — WSL/Git Bash 검증된 경로, 회귀 0)
-        & bash $bootstrapLabelsSh "$script:Org/$script:Repo" 2>&1 | ForEach-Object { Log "  $_" }
+        # CFP-2250 FIX (Codex P1): 파이프(| ForEach-Object) 제거 — $LASTEXITCODE 가 bash native exit 를
+        # 확실히 보존하도록 출력 캡처 후 검사 (이전: exit 미검사 → 실패를 성공으로 삼킴).
+        $labelsOut = & bash $bootstrapLabelsSh "$script:Org/$script:Repo" 2>&1
+        $labelsRc = $LASTEXITCODE
+        foreach ($l in $labelsOut) { Log "  $l" }
+        if ($labelsRc -ne 0) {
+            Log "  ERROR: bash label 시드 실패 (bootstrap-labels.sh exit $labelsRc)"
+            return $false
+        }
     } elseif (Test-Path $bootstrapLabelsPs1) {
         # tier 2: PowerShell-native fallback (결함1 해소 핵심 — bash 부재 네이티브 Windows)
         Log "  bash 미발견 — PowerShell-native label 시드 (bootstrap-labels.ps1)"
-        & $bootstrapLabelsPs1 -Repo "$script:Org/$script:Repo" 2>&1 | ForEach-Object { Log "  $_" }
-        if ($LASTEXITCODE -ne 0) {
-            Log "  ERROR: PowerShell label 시드 실패 (exit $LASTEXITCODE)"
+        $labelsOut = & $bootstrapLabelsPs1 -Repo "$script:Org/$script:Repo" 2>&1
+        $labelsRc = $LASTEXITCODE
+        foreach ($l in $labelsOut) { Log "  $l" }
+        if ($labelsRc -ne 0) {
+            Log "  ERROR: PowerShell label 시드 실패 (exit $labelsRc)"
             return $false
         }
     } else {

@@ -139,7 +139,10 @@ run_or_dry() {
     if [ $DRY_RUN -eq 1 ]; then
         printf '[dry-run] %s\n' "$*" >&2
     else
-        eval "$@"
+        # CFP-2250 FIX (Codex P2): eval 제거 → argv 직접 실행 (공백 경로 안전, 재해석 0).
+        # 모든 호출부 argv 형식 (run_or_dry cp "$a" "$b" 등) — redirection (2>/dev/null) 은
+        # 호출부에서 outer shell 이 소비 (argv 비포함) → 동작 동등.
+        "$@"
     fi
 }
 
@@ -317,7 +320,14 @@ stage_6_labels() {
     if [ $DRY_RUN -eq 1 ]; then
         log "  (dry-run) bash $PLUGIN_ROOT/scripts/bootstrap-labels.sh $ORG/$REPO"
     else
-        bash "$PLUGIN_ROOT/scripts/bootstrap-labels.sh" "$ORG/$REPO" 2>&1 | sed 's/^/  /' >&2 || true
+        # CFP-2250 FIX (Codex P1): silent skip 제거 — bash 종료코드 전파 (이전 `|| true` 가 실패를 삼킴).
+        # ${PIPESTATUS[0]} = pipe 첫 명령(bash)의 exit code (sed 의 0 이 아닌 bash 자체 결과).
+        bash "$PLUGIN_ROOT/scripts/bootstrap-labels.sh" "$ORG/$REPO" 2>&1 | sed 's/^/  /' >&2
+        local labels_rc=${PIPESTATUS[0]}
+        if [ "$labels_rc" -ne 0 ]; then
+            log "  ERROR: label 시드 실패 (bootstrap-labels.sh exit $labels_rc)"
+            return 1
+        fi
     fi
     mark_step "stage_6_labels"
 }
