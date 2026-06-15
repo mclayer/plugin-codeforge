@@ -1,0 +1,30 @@
+name: lane-evidence-harness-check
+
+# CFP-2270 — check-lane-evidence.sh §14 면제 분기 (ADR-031 Amendment 2) TDD harness.
+# wrapper-self CI 검사 (consumer 배포 대상 아님 — templates/github-workflows/ parity 불요,
+# doc-locations-check.yml / consumer-scripts-manifest.yml 와 동일 계열의 wrapper-self check).
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/check-lane-evidence.sh'
+      - 'scripts/test-check-lane-evidence.sh'
+      - 'templates/scripts/detect-repo-kind.py'
+      - '.github/workflows/lane-evidence-harness-check.yml'
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5  # v4.3.1
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: '3.12'
+      - name: Run lane-evidence §14 면제 harness
+        run: bash scripts/test-check-lane-evidence.sh

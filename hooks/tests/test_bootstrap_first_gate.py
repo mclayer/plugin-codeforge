@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import io
 import os
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -512,6 +513,31 @@ def test_tc8_initialized_adr_dir_exists_silent(tmp_path, monkeypatch, capsys):
     assert "[bootstrap-first-gate] fired exit_path=silent-initialized" in captured.err
 
 
+# ============================================================ _run_detect (script 직접 fork)
+
+DETECT_SCRIPT = (
+    Path(__file__).resolve().parent.parent.parent
+    / "templates" / "scripts" / "detect-repo-kind.py"
+)
+
+
+def _run_detect(repo_root):
+    """detect-repo-kind.py 를 직접 subprocess fork 해 (returncode, stdout.strip()) 반환.
+
+    #2247 distinct-marker: exit code 단독 assert 금지 — interpreter/shell 표준 exit
+    (예: 파일 부재 시 python exit 2 'can't open file') 가 도메인 exit code (mixed=2) 와
+    우연 일치해 미 fork 인데도 silent 거짓통과하는 false-positive 를 stdout sentinel 로 차단.
+    stdout sentinel (plugin/consumer/mixed/unknown) 은 도메인 코드 경로에서만 방출되므로
+    미 fork 시 빈 문자열 또는 interpreter 에러 텍스트 → sentinel assert 자연 실패.
+    """
+    result = subprocess.run(
+        [sys.executable, str(DETECT_SCRIPT), "--repo-root", str(repo_root)],
+        capture_output=True,
+        text=True,
+    )
+    return (result.returncode, result.stdout.strip())
+
+
 def test_tc9_detect_repo_kind_integration_unknown(tmp_path, monkeypatch):
     """TC9 (detect 단위): bare greenfield (no plugin.json, no overlay) → exit 3.
 
@@ -592,6 +618,45 @@ def test_tc9_detect_repo_kind_integration_mixed(tmp_path, monkeypatch):
     rc = bfg._detect_repo_kind(str(tmp_path))
 
     assert rc == 2, f"Expected exit 2 (mixed), got {rc}"
+
+
+def test_tc9_run_detect_script_direct_unknown(tmp_path):
+    """TC9 script-직접 (#2247): bare greenfield → (3, 'unknown') 튜플 동시 검증.
+
+    exit code 단독이 아니라 stdout sentinel 'unknown' 병행 → fork 진정성 보장.
+    """
+    rc, kind = _run_detect(tmp_path)
+    assert (rc, kind) == (3, "unknown"), f"Expected (3,'unknown'), got ({rc},{kind!r})"
+
+
+def test_tc9_run_detect_script_direct_plugin(tmp_path):
+    """TC9 script-직접 (#2247): plugin.json 만 → (0, 'plugin') 튜플 동시 검증."""
+    (tmp_path / ".claude-plugin").mkdir(parents=True)
+    (tmp_path / ".claude-plugin" / "plugin.json").write_text("{}")
+    rc, kind = _run_detect(tmp_path)
+    assert (rc, kind) == (0, "plugin"), f"Expected (0,'plugin'), got ({rc},{kind!r})"
+
+
+def test_tc9_run_detect_script_direct_consumer(tmp_path):
+    """TC9 script-직접 (#2247): overlay project.yaml 만 → (1, 'consumer') 튜플 동시 검증."""
+    (tmp_path / ".claude" / "_overlay").mkdir(parents=True)
+    (tmp_path / ".claude" / "_overlay" / "project.yaml").write_text("codeforge: {}")
+    rc, kind = _run_detect(tmp_path)
+    assert (rc, kind) == (1, "consumer"), f"Expected (1,'consumer'), got ({rc},{kind!r})"
+
+
+def test_tc9_run_detect_script_direct_mixed(tmp_path):
+    """TC9 script-직접 (#2247): plugin.json + overlay 양존 → (2, 'mixed') 튜플 동시 검증.
+
+    종전 false-positive 핵심 지점. 미 fork 시 interpreter exit 2 가 mixed(2) 와 우연
+    일치하나 stdout='' != 'mixed' 라 튜플 assert 가 FAIL → fork 진정성 강제.
+    """
+    (tmp_path / ".claude-plugin").mkdir(parents=True)
+    (tmp_path / ".claude-plugin" / "plugin.json").write_text("{}")
+    (tmp_path / ".claude" / "_overlay").mkdir(parents=True)
+    (tmp_path / ".claude" / "_overlay" / "project.yaml").write_text("codeforge: {}")
+    rc, kind = _run_detect(tmp_path)
+    assert (rc, kind) == (2, "mixed"), f"Expected (2,'mixed'), got ({rc},{kind!r})"
 
 
 # ============================================================ INV (불변식 검증)
