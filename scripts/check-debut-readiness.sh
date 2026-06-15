@@ -3,7 +3,7 @@
 #
 # 4 verification orchestration (thin wrapper):
 #   1. check_bootstrap.py (8 check, ADR-027 §결정 1 SSOT)
-#   2. Plugin 11종 presence (installed_plugins.json parse)
+#   2. Plugin 10종 presence (installed_plugins.json parse)
 #   3. project.yaml schema validation (validate_config.py delegate)
 #   4. settings.json hook 정합 (3 hook 등록 grep)
 #
