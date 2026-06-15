@@ -313,3 +313,5 @@ Jira 로 송신되는 코멘트 payload 는 송신 전 deny-scan 으로 **hard-b
 2. `.claude/settings.json` (**사용자레벨 — repo settings.json 생성 금지**, [feedback_no_repo_settings_files]) — `permissions.deny` 에서 `addCommentToJiraIssue` 제거 + Orchestrator preset narrow-allow 에 개별 열거.
 3. `scripts/check-atlassian-tool-drift.sh` — snapshot ⊆ deny 검증이므로 1·2 동시 반영 시 PASS 유지(별도 로직 변경 불요, 동반 검증만).
 4. `scripts/check-no-atlassian.sh` — §결정 2 Layer 2 allowlist 에 결정 채널 평문 참조 영역 cover + **경로버그 동반 수정**: `ALLOWLIST_ADR_PREFIXES` 가 `docs/adr/ADR-099..103` 인데 실제 경로 = `archive/adr/`(CFP-2151 이동) → `archive/adr/ADR-099..103` 로 정정.
+
+> **owner 경계 (설계리뷰 dual-peer 반영, CFP-2285)**: 위 1~4 = **S1 Phase 2** 범위(거버넌스 mechanical — permission/snapshot/lint 한정). §A1-2 payload deny-scan **enforce 구현** + §A1-3 first-valid-immutable·short open-window 의 **운영 메커니즘(timeout / race / failure-mode reliability)** 은 S1 비대상 — **채널 adapter S2(#2288) + 순서·dedup·fail-open S3(#2289) + rehydrate·타임아웃 S4(#2290)** 가 owner. 본 Amendment 는 그 정책 형상만 결정(§A1-2~3), 구현·운영 reliability 는 해당 Story 설계 lane 담당. (Change Plan §7.4 "N/A" 의 정확한 의미 = governance Phase 운영 surface 무관, 운영 reliability = S2~S4 소유 — 누락 아님.)
