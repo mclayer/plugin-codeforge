@@ -2,10 +2,11 @@
 # ADR-103 §결정 3 Option B per-tool deny decomposition — verified snapshot
 #
 # prefix = mcp__plugin_atlassian_atlassian__ (본 설치 실 callable tool 의 effective prefix)
-# 본 파일 = atlassian-tool-drift check 의 deny-target SSOT (24 tool).
-# un-denied 7 tool (read 5 + write 2) 은 의도적으로 본 snapshot 에서 제외 — settings.json allow 에 개별 열거.
+# 본 파일 = atlassian-tool-drift check 의 deny-target SSOT (23 tool).
+# un-denied 8 tool (read 5 + write 3) 은 의도적으로 본 snapshot 에서 제외 — settings.json allow 에 개별 열거.
+# narrow-allow (Orchestrator preset) 분류: addCommentToJiraIssue = ADR-099 Amd1 narrow-allow (Orchestrator preset)
 #
-# drift check: 본 snapshot 24 tool ⊆ .claude/settings.json permissions.deny → PASS
+# drift check: 본 snapshot 23 tool ⊆ .claude/settings.json permissions.deny → PASS
 # 형식: 한 줄 1 tool, 빈 줄 / # 주석 무시
 #
 # ── Confluence-side deny (9) ──
@@ -18,8 +19,7 @@ mcp__plugin_atlassian_atlassian__createConfluenceInlineComment
 mcp__plugin_atlassian_atlassian__getConfluenceCommentChildren
 mcp__plugin_atlassian_atlassian__getConfluencePageFooterComments
 mcp__plugin_atlassian_atlassian__getConfluencePageInlineComments
-# ── Jira-side deny (15) ──
-mcp__plugin_atlassian_atlassian__addCommentToJiraIssue
+# ── Jira-side deny (14) ──
 mcp__plugin_atlassian_atlassian__addWorklogToJiraIssue
 mcp__plugin_atlassian_atlassian__createIssueLink
 mcp__plugin_atlassian_atlassian__createJiraIssue

@@ -28,17 +28,18 @@ ALLOWLIST_FILES=(
 
 # ── Epic-A 5-slot governance ADR prefix allowlist (ADR-099 §결정 2) ───────────
 # ADR-099~103 파일은 Atlassian 재결합 governance ADR 자체 → 평문 참조 허용
+# CFP-2285 S1 Phase 2: 경로 정정 docs/adr/ → archive/adr/ (CFP-2151 모노레포 이동 미반영 pre-existing 버그 — ADR-099 Amd1 Jira 참조 포함 cover)
 ALLOWLIST_ADR_PREFIXES=(
-  "docs/adr/ADR-099"
-  "docs/adr/ADR-100"
-  "docs/adr/ADR-101"
-  "docs/adr/ADR-102"
-  "docs/adr/ADR-103"
+  "archive/adr/ADR-099"
+  "archive/adr/ADR-100"
+  "archive/adr/ADR-101"
+  "archive/adr/ADR-102"
+  "archive/adr/ADR-103"
 )
 
 # ── ADR-100 §결정 1 Confluence-authoritative wrapper governance docs prefix ────
 # docs/inter-plugin-contracts/ + docs/domain-knowledge/ = Epic-A Confluence SoR-docs 영역
-# (docs/adr/ADR-099~103 = ADR_PREFIXES / playbook = FILES 기존 cover)
+# (archive/adr/ADR-099~103 = ADR_PREFIXES / playbook = FILES 기존 cover)
 ALLOWLIST_GOVERNANCE_PREFIXES=(
   "docs/inter-plugin-contracts/"
   "docs/domain-knowledge/"
