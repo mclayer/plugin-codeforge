@@ -10,6 +10,24 @@
 
 ## 1. 설치
 
+### 1.0. 선형 온보딩 Quick-Start (먼저 읽으세요 — 진입 순서)
+
+> 처음 적용하는 경우 아래 **6 step 을 순서대로** 따라가면 됩니다. §1 은 14 개 하위 섹션(1a~1o)으로 세분돼 있지만, 대부분은 **opt-in 고급 기능**입니다 — 첫 도입에 필수인 것은 아래 선형 경로뿐입니다. 각 step 의 상세는 링크된 섹션을 참조하세요.
+
+1. **사전 요구사항 확인** — GitHub Team plan + repo admin + `gh`/`codex` CLI 인증. → [§0](#0-사전-요구사항)
+2. **플러그인 10종 설치** — `/plugins install` 로 codeforge family 7 + 의존 3종(github / codex / claude-md-management) 설치. 단순 `enabledPlugins=true` 만으로는 부족. → [§1a](#1a-플러그인-설치-marketplace-경유) · [§1d](#1d-plugin-install-의무--enabledplugins--installed_pluginsjson-cfp-132--issue-238)
+3. **부트스트랩 실행 (greenfield)** — consumer repo 루트에서 단일 명령으로 overlay scaffold + settings.json + workflows/forms/CODEOWNERS + labels 일괄 생성:
+   - Linux/macOS: `bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/bootstrap-consumer.sh`
+   - Windows(Git Bash/WSL 부재): `pwsh -File ${env:CLAUDE_PLUGIN_ROOT}/codeforge/scripts/bootstrap-consumer.ps1`
+   - → [§2.0](#20-5분-quickstart-recommended--single-command-setup-cfp-125)
+4. **overlay 작성** — `.claude/_overlay/project.yaml` 에 GitHub 좌표 + `story_key_prefix` 등 상수 작성 후 schema 검증. → [§3a](#3a-claude_overlayprojectyaml--objective-ssot-상수)
+5. **준비 상태 검증** — `bash scripts/check-debut-readiness.sh` (Windows: `pwsh -File scripts/check-debut-readiness.ps1`) 로 4 verification(bootstrap 8 sub-check / plugin 10종 / project.yaml schema / settings.json 3 hook) PASS 확인. → [§2.0](#20-5분-quickstart-recommended--single-command-setup-cfp-125)
+6. **첫 Story 생성** — GitHub UI 또는 `gh issue create --template story.yml` 로 Story Issue 제출 → `story-init.yml` Action 이 `docs/stories/<KEY>.md` 자동 생성 + Phase 1 PR open. → [§4c](#4c-첫-story-생성)
+
+> **greenfield(미초기화) 자동 안내**: 아직 초기화되지 않은 repo 에서 사용자가 "구현/설계/스토리" 등 codeforge 사용을 선언하면, wrapper plugin 의 UserPromptSubmit 훅(`hooks/bootstrap-first-gate`, 설치 즉시 활성)이 "먼저 부트스트랩(step 3)이 필요함"을 안내합니다 (입력 차단 안 함 — warning only, ADR-027 Amendment 10 / §결정 13, CFP-2243). → [§2.0a](#20a-optional-stage-0--pre-issue-brainstorming-recommended-for-non-trivial-story) 내 "bootstrap-first 안내".
+>
+> 문제 발생 시 → [§8 트러블슈팅](#8-트러블슈팅) 실패모드 표 참조.
+
 ### 1a. 플러그인 설치 (marketplace 경유)
 
 ```bash
@@ -71,9 +89,9 @@ ls ~/.claude/plugins/cache/<marketplace>/codeforge/<version>/agents/
 /plugin install github@claude-plugins-official
 ```
 
-새 세션 시작 시 11 plugin agent 모두 노출 확인 — 미노출 시 `~/.claude/plugins/installed_plugins.json` entry 부재 점검.
+새 세션 시작 시 10 plugin agent 모두 노출 확인 — 미노출 시 `~/.claude/plugins/installed_plugins.json` entry 부재 점검.
 
-**자동 검증**: SessionStart hook (`overlay/hooks/check_bootstrap.py`) 가 `REQUIRED_PLUGINS` 11종 verify, 누락 시 stderr WARN 출력 (CFP-103). 본 WARN 메시지를 보면 `/plugin install` 누락이 원인 — 위 명령 실행으로 해결.
+**자동 검증**: SessionStart hook (`overlay/hooks/check_bootstrap.py`) 가 `REQUIRED_PLUGINS` 10종 verify, 누락 시 stderr WARN 출력 (CFP-103). 본 WARN 메시지를 보면 `/plugin install` 누락이 원인 — 위 명령 실행으로 해결. (CFP-2249 / [ADR-122](../archive/adr/ADR-122-superpowers-dependency-removal.md): `superpowers` 의존 제거로 11 → 10. codeforge family 7 + github / codex / claude-md-management 3.)
 
 ### 1e. Pre-push lint hook (선택, 권장 — CFP-132 / Issue #236)
 
@@ -856,7 +874,7 @@ bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/bootstrap-consumer.sh
 
 # Verify
 bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-debut-readiness.sh
-  # 4 verification: check_bootstrap.py (8 sub-check) / plugin 11종 / project.yaml schema / settings.json 3 hook
+  # 4 verification: check_bootstrap.py (8 sub-check) / plugin 10종 / project.yaml schema / settings.json 3 hook
 ```
 
 Windows:
@@ -905,7 +923,7 @@ bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-version-drift.sh
 - `--reset` — marker 삭제 + clean state from scratch (사용자 확인 prompt 의무)
 - 기존 `.claude/settings.json` 는 자동 backup `.claude/settings.json.bak.<ts>` (단계 4 시)
 
-**Plugin install 안내**: `bootstrap-consumer.sh` 가 누락 plugin 11종 listing stdout 출력 — 실 install 은 platform-level (Claude Code `/plugins install` 명령 사용자 직접 실행 의무).
+**Plugin install 안내**: `bootstrap-consumer.sh` 가 누락 plugin 10종 listing stdout 출력 — 실 install 은 platform-level (Claude Code `/plugins install` 명령 사용자 직접 실행 의무).
 
 ---
 
@@ -1521,7 +1539,9 @@ mctrader-hub git log 에 `chore: codeforge consumer setup (Path B — degraded d
 
 ### 2d. GitHub Labels 생성 (gh CLI 일괄)
 
-> **CFP-12 자동화** (권장 — consumer 1 repo): `bash scripts/bootstrap-labels.sh [<org>/<repo>]` — 아래 18 label을 idempotent로 일괄 생성. SessionStart hook의 `check-bootstrap.sh`가 부재 시 자동 안내.
+> **CFP-12 자동화** (권장 — consumer 1 repo): `bash scripts/bootstrap-labels.sh [<org>/<repo>]` — base label(`templates/labels/base-labels.tsv` SSOT) + hotfix-bypass:*(registry 동적) + component:*(project.yaml 동적)을 idempotent로 일괄 생성. SessionStart hook의 `check-bootstrap.sh`가 필수 label(REQUIRED_LABELS 15종) 부재 시 자동 안내.
+>
+> **Windows-native** (Git Bash / WSL 부재 — CFP-2250 / [ADR-027 Amendment 11](../archive/adr/ADR-027-consumer-adoption-protocol.md)): `pwsh -File scripts/bootstrap-labels.ps1 [-Repo <org>/<repo>]` — bash 의존 0 의 PowerShell-native parity wrapper. base label SSOT(`base-labels.tsv`)를 `.sh` 와 공유하므로 drift 가 구조적으로 차단됩니다. `-DryRun` 으로 gh 미호출 사전 점검 가능.
 
 > **CFP-120 (codeforge family setup)**: codeforge family 7 repo (wrapper + 6 lane) 모두 label 부트스트랩 = `bash scripts/bootstrap-codeforge-family.sh [--org <org>]` (default org: `mclayer`). lane plugin contributor 가 처음 setup 할 때 의무. label 부재 시 cross-repo Story binding PR 의 phase + gate label apply 가 `'phase:설계-리뷰' not found` 로 실패.
 
@@ -1530,12 +1550,11 @@ mctrader-hub git log 에 `chore: codeforge consumer setup (Path B — degraded d
 ```bash
 ORG_REPO="<your-org>/<your-repo>"
 
-# Type labels
-gh label create "type:epic" --color "3E4B9E" --repo "$ORG_REPO"
-gh label create "type:story" --color "0E8A16" --repo "$ORG_REPO"
-gh label create "type:bug" --color "D73A4A" --repo "$ORG_REPO"
-gh label create "type:audit" --color "FBCA04" --repo "$ORG_REPO"
-gh label create "impl-manifest" --color "C2E0C6" --repo "$ORG_REPO"
+# Type 분류 = native GitHub Issue Type 으로 대체됨 (ADR-049 Amendment 1 — 아래 §2d-prime 참조).
+#   기존 type:epic / type:story / type:bug label 은 더 이상 생성하지 않습니다.
+#   (bootstrap-labels.sh / .ps1 도 type:* 3 entry 를 생성하지 않음 — base-labels.tsv 에서 제거됨.)
+# impl-manifest 는 sub-issue 표지 별도 axis 라 잔존.
+gh label create "impl-manifest" --color "FBCA04" --repo "$ORG_REPO"
 
 # Phase labels (single-active, phase-label-invariant.yml Action이 강제)
 for phase in "요구사항" "설계" "설계-리뷰" "구현" "구현-리뷰" "구현-테스트" "보안-테스트"; do
@@ -1561,7 +1580,7 @@ gh label create "audit:post-hotfix" --color "FBCA04" --repo "$ORG_REPO"
 
 위 `type:epic` / `type:story` / `type:bug` label 은 **native GitHub Issue Type 으로 대체** 됩니다 (ADR-049). label-registry 가 v2.93 → v2.94 로 bump 되며 이 3 entry 는 `deprecated: true` + `replaced_by_native_issue_type` 로 마킹됩니다.
 
-- **wrapper (mclayer org)**: CFP-2251 이 실 cutover 완료 — org 에 `Story`(id 34327613) / `Epic`(id 34327614) Issue Type 신설 + 기존 `Bug`(id 28762364) Issue Type 재사용 (additive, 기존 Task/Feature 보존). type:* 부착 전체 487 이슈를 native type 으로 변환 (verify PASS). **단 type:* label 물리 삭제는 보류** — `story-init.yml` 이 `type:story` 라벨로 트리거되므로 라벨 선삭제 시 깨짐. 물리 삭제 + trigger native-type 전환은 S4 (#2252) 에서 동반 처리 (그때까지 deprecated label + native type transient dual-state, ADR-049 §결정 11 정합).
+- **wrapper (mclayer org)**: CFP-2251 이 실 cutover 완료 — org 에 `Story`(id 34327613) / `Epic`(id 34327614) Issue Type 신설 + 기존 `Bug`(id 28762364) Issue Type 재사용 (additive, 기존 Task/Feature 보존). type:* 부착 전체 487 이슈를 native type 으로 변환 (verify PASS). 이어 CFP-2252 (S4) 가 `story-init.yml` 트리거를 native type 기준으로 전환 완료 — trigger 조건이 `issue.type.name == 'Story'` **OR** `type:story` 라벨 (OR-bridge, [ADR-049 Amendment 2](../archive/adr/ADR-049-issue-types-native-migration.md) §3.2). **type:* label 물리 삭제는 여전히 보류** (#2266 예정) — 현재는 deprecated label + native type 의 **dual-state** (둘 다 동작, ADR-049 §결정 11 정합). dual-state 덕에 native type 미활성 org / 기존 라벨 부착 이슈도 그대로 발화됩니다.
 - **consumer org**: 본 마이그레이션은 wrapper org 한정 (ADR-049 §결정 12). consumer 는 자기 org 에서 별도로 적용 — `scripts/migrate-label-to-issue-type.sh` 를 `--org <consumer-org> --repo <consumer-org>/<repo>` 인자로 재사용 가능.
 
 > **실측 주의 (CFP-2251)**: 이슈 native type 부착 REST payload 는 `-f type=<TypeName>` (이름 기반). `--field type_id=<id>` 는 HTTP 2xx 를 반환하나 **silent 무시** 되어 type 이 설정되지 않는다 — 반드시 `--verify` 로 실제 설정 여부를 확인할 것 (스크립트는 이미 `-f type=` 으로 부착하며 verify mismatch 로 silent 실패를 검출).
@@ -1584,10 +1603,11 @@ bash scripts/migrate-label-to-issue-type.sh --apply --batch-size 50 --repo <org>
 # 4. 정합 확인 (불일치 0 확인 — type_id silent 무시 검출 채널)
 bash scripts/migrate-label-to-issue-type.sh --verify --repo <org>/<repo>
 
-# 5. (verify PASS 후) type:* label 정의 물리 삭제
-#    ★ 선결 조건: story-init.yml(Issue Form trigger)이 type:story 라벨이 아니라
-#      native type 기준으로 동작하도록 먼저 전환할 것. 라벨 선삭제 시 신규 Story init 가 깨진다.
-#      (wrapper 는 이 전환을 S4 #2252 에서 처리 — 그 전까지 dual-state 유지.)
+# 5. (선택, verify PASS 후) type:* label 정의 물리 삭제
+#    ★ 선결 조건: story-init.yml(Issue Form trigger)이 native type 기준으로 동작해야 함.
+#      wrapper 는 CFP-2252(S4)에서 native-type OR-bridge 트리거로 전환 완료 — consumer 도
+#      story-init.yml 최신본을 배포받은 뒤에만 삭제할 것. 라벨 선삭제 + 구 트리거 = 신규 Story init 깨짐.
+#    ★ wrapper org 자체의 물리 삭제는 #2266 에서 별도 처리 (그때까지 dual-state 유지).
 gh label delete type:epic --yes --repo <org>/<repo>
 gh label delete type:story --yes --repo <org>/<repo>
 gh label delete type:bug --yes --repo <org>/<repo>
@@ -1887,12 +1907,22 @@ progress_narration_verbosity: full  # full | lane_only
 
 주 소비자: RequirementsPLAgent · DomainAgent · PMOAgent · ArchitectPLAgent 및 각 lane plugin. 에이전트는 이 파일을 `Read`로 직접 참조.
 
-SessionStart hook이 자동으로 `validate_config.py`를 실행해 schema 준수를 검증. 위반 시 hook abort. 수동 검증:
+> **`github.story_ssot_repo` (선택, codeforge family dogfood-out 전용)**: codeforge family fork (예: 비-mclayer org) 가 자체 internal-docs repo 를 Story SSOT 로 쓸 때만 지정. 부재 시 template default = `mclayer/codeforge-internal-docs`. **일반 consumer 는 무관** — `is_codeforge_family` 가드가 비-family repo 에서는 로컬 write 로 분기합니다 (CFP-2252 / [ADR-013 Amendment 7](../archive/adr/ADR-013-codeforge-family-dogfood-out-policy.md), 확장-only). schema 상세: [`project-config-schema.md` §github.story_ssot_repo](project-config-schema.md).
+
+#### project.yaml schema 검증 명령
+
+SessionStart hook 이 자동으로 `validate_config.py` 를 실행해 schema 준수를 검증합니다 (위반 시 hook abort). 부트스트랩 직후 또는 overlay 수동 편집 후에는 직접 검증하세요 — `check-debut-readiness` (§2.0) 의 4 verification 중 하나도 이 schema 검증을 호출합니다.
 
 ```bash
+# 검증기 위치: ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/validate_config.py
 python3 ${CLAUDE_PLUGIN_ROOT}/codeforge/overlay/hooks/validate_config.py \
     .claude/_overlay/project.yaml
+
+# plugin root 안에서 직접 실행 시 (상대 호출):
+#   python3 validate_config.py .claude/_overlay/project.yaml
 ```
+
+Exit code: `0` = valid / `1` = usage error / `2` = 의존(PyYAML) 부재 / `3` = YAML parse 오류 / `4` = schema 위반. exit 2 (`ERROR: PyYAML required`) 시 `pip install pyyaml`.
 
 ### 3a-multi-repo. Multi-repo story key system 활성화 (선택, CFP-342 / [ADR-069](../archive/adr/ADR-069-multi-repo-story-key-system.md))
 
@@ -2733,6 +2763,22 @@ gh api "repos/$REPO/branches/main/protection/enforce_admins" -X POST
 > **Note**: enforce_admins toggle 은 admin 권한 + branch protection 보존 의무. PR merge 직후 즉시 복원 (window <1초).
 
 ## 8. 트러블슈팅
+
+### 8.0. 온보딩/부트스트랩 실패모드 (증상 → 원인 → 조치)
+
+선형 온보딩(§1.0) 진행 중 자주 만나는 실패모드입니다. step 별로 정렬했습니다.
+
+| 증상 | 원인 | 조치 |
+|------|------|------|
+| Windows 에서 `bash: command not found` / `bootstrap-labels.sh` 실행 불가 | Git Bash / WSL 부재 (PowerShell only 환경) | PowerShell-native fallback 사용: `pwsh -File scripts/bootstrap-labels.ps1 -Repo <org>/<repo>` (CFP-2250 / ADR-027 Amd 11). base label SSOT(`templates/labels/base-labels.tsv`)를 `.sh` 와 공유하므로 결과 동일. 전체 부트스트랩도 `pwsh -File scripts/bootstrap-consumer.ps1`. → [§2.0](#20-5분-quickstart-recommended--single-command-setup-cfp-125) Windows variant |
+| `story-init.yml` Action 이 `::error::missing .claude/_overlay/project.yaml` 로 즉시 실패 | preflight — overlay project.yaml(또는 manifest) 부재 상태에서 Story Issue 제출 | step 3(부트스트랩) + step 4(overlay 작성)를 먼저 완료. `bash scripts/check-debut-readiness.sh` 로 PASS 확인 후 Story 생성. → [§3a](#3a-claude_overlayprojectyaml--objective-ssot-상수) |
+| Story Issue 제출했는데 `story-init.yml` 이 트리거되지 않음 | trigger 조건 미충족 — 이슈에 native Issue Type `Story` 도 `type:story` 라벨도 없음 (둘 중 하나 필수) + `phase:요구사항` 라벨 필요 | 트리거는 OR-bridge: `issue.type.name == 'Story'` **OR** `type:story` 라벨 (ADR-049 Amd 2 §3.2). native type 미활성 org 는 `type:story` 라벨로 fallback (graceful). 추가로 `phase:요구사항` 라벨이 lane 진입 신호로 AND 필요 — Issue Form 제출 시 자동 부착되나, 수동 생성 시 직접 부착. → [§2d-prime](#2d-prime-native-github-issue-type-안내-cfp-2251--adr-049-amendment-1) · [§4c](#4c-첫-story-생성) |
+| `story-init.yml` 이 `403` / cross-repo write 실패 (codeforge family dogfood-out) | PAT scope 부족 — cross-repo Story SSOT write 에 필요한 토큰 권한 미충족 | `CODEFORGE_CROSS_REPO_PAT` 가 대상 repo 의 `contents`/`issues`/`pull-requests` write scope 보유 확인 (classic PAT = `repo` scope). rotation/scope 상세 → [§1g](#1g-codeforge_cross_repo_pat-rotation-policy-cfp-521--adr-066). 일반 single-repo consumer 는 무관 (`is_codeforge_family` 가드로 로컬 write 분기). |
+| `gh label list` 에 phase:*/gate:* 등 필수 label 부재 → Issue Form 제출 시 `label not found` | step 3 의 label 시드 미실행 또는 부분 실패 | `bash scripts/bootstrap-labels.sh <org>/<repo>` (Windows: `pwsh -File scripts/bootstrap-labels.ps1 -Repo <org>/<repo>`) 재실행 (idempotent). SessionStart hook `check_bootstrap.py` 가 REQUIRED_LABELS 15종 중 부재분을 WARN 으로 안내. → [§2d](#2d-github-labels-생성-gh-cli-일괄) |
+| SessionStart 에 `N/10 plugin 미설치` WARN | `enabledPlugins=true` 만 토글하고 `/plugin install` 미실행 → `installed_plugins.json` entry 부재 | 누락 plugin 마다 `/plugin install <name>` 실행 (WARN 메시지에 명령 나열됨). codeforge family 7 + github/codex/claude-md-management 3 = 10종. → [§1a](#1a-플러그인-설치-marketplace-경유) · [§1d](#1d-plugin-install-의무--enabledplugins--installed_pluginsjson-cfp-132--issue-238) |
+| greenfield repo 에서 brainstorm/설계 요청 시 "초기화 먼저" 안내만 뜨고 진행 안 됨 | `bootstrap-first-gate` 훅이 미초기화 상태를 surface (정상 동작 — 입력 차단 아님, warning only) | 안내대로 step 3 부트스트랩 수행. 초기화 없이 진행하려면 "초기화 없이 진행" 을 명시하면 그대로 brainstorming 진행 (Stage 0 옵션성 보존, ADR-027 Amd 10 §결정 13.C). bypass env: `BYPASS_BOOTSTRAP_GATE=1`. → [§2.0a](#20a-optional-stage-0--pre-issue-brainstorming-recommended-for-non-trivial-story) |
+
+### 8.1. 일반 실패모드
 
 | 증상 | 원인 | 대응 |
 |------|------|------|
