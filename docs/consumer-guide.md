@@ -1557,6 +1557,45 @@ gh label create "hotfix:critical" --color "B71C1C" --repo "$ORG_REPO"
 gh label create "audit:post-hotfix" --color "FBCA04" --repo "$ORG_REPO"
 ```
 
+### 2d-prime. native GitHub Issue Type 안내 (CFP-2251 / [ADR-049 Amendment 1](../archive/adr/ADR-049-issue-types-native-migration.md))
+
+위 `type:epic` / `type:story` / `type:bug` label 은 **native GitHub Issue Type 으로 대체** 됩니다 (ADR-049). label-registry 가 v2.93 → v2.94 로 bump 되며 이 3 entry 는 `deprecated: true` + `replaced_by_native_issue_type` 로 마킹됩니다.
+
+- **wrapper (mclayer org)**: CFP-2251 이 실 cutover 완료 — org 에 `Story`(id 34327613) / `Epic`(id 34327614) Issue Type 신설 + 기존 `Bug`(id 28762364) Issue Type 재사용 (additive, 기존 Task/Feature 보존). type:* 부착 전체 487 이슈를 native type 으로 변환 (verify PASS). **단 type:* label 물리 삭제는 보류** — `story-init.yml` 이 `type:story` 라벨로 트리거되므로 라벨 선삭제 시 깨짐. 물리 삭제 + trigger native-type 전환은 S4 (#2252) 에서 동반 처리 (그때까지 deprecated label + native type transient dual-state, ADR-049 §결정 11 정합).
+- **consumer org**: 본 마이그레이션은 wrapper org 한정 (ADR-049 §결정 12). consumer 는 자기 org 에서 별도로 적용 — `scripts/migrate-label-to-issue-type.sh` 를 `--org <consumer-org> --repo <consumer-org>/<repo>` 인자로 재사용 가능.
+
+> **실측 주의 (CFP-2251)**: 이슈 native type 부착 REST payload 는 `-f type=<TypeName>` (이름 기반). `--field type_id=<id>` 는 HTTP 2xx 를 반환하나 **silent 무시** 되어 type 이 설정되지 않는다 — 반드시 `--verify` 로 실제 설정 여부를 확인할 것 (스크립트는 이미 `-f type=` 으로 부착하며 verify mismatch 로 silent 실패를 검출).
+
+native Issue Type 적용 절차 (consumer org, org admin 권한 필요):
+
+```bash
+# 1. dry-run — 대상 이슈 수 + 매핑 + 이미-typed skip 수 확인 (변경 0)
+bash scripts/migrate-label-to-issue-type.sh --dry-run --repo <org>/<repo>
+
+# 2. org Issue Type 신설 (Story/Epic — Bug 는 GitHub 기본 재사용)
+#    (dry-run 출력의 "org Issue Type 가용성" 에서 미생성 type 확인)
+#    is_enabled 는 필수 필드. color enum = gray/blue/green/yellow/orange/red/pink/purple (hex 아님).
+gh api /orgs/<org>/issue-types -X POST -f name=Story -F is_enabled=true -f color=green  -f description="Story: single PR-pair unit (Phase 1 doc + Phase 2 implementation)"
+gh api /orgs/<org>/issue-types -X POST -f name=Epic  -F is_enabled=true -f color=purple -f description="Epic: multi-Story user requirement (Milestone + multiple Stories)"
+
+# 3. 실 변환 (idempotent, batched)
+bash scripts/migrate-label-to-issue-type.sh --apply --batch-size 50 --repo <org>/<repo>
+
+# 4. 정합 확인 (불일치 0 확인 — type_id silent 무시 검출 채널)
+bash scripts/migrate-label-to-issue-type.sh --verify --repo <org>/<repo>
+
+# 5. (verify PASS 후) type:* label 정의 물리 삭제
+#    ★ 선결 조건: story-init.yml(Issue Form trigger)이 type:story 라벨이 아니라
+#      native type 기준으로 동작하도록 먼저 전환할 것. 라벨 선삭제 시 신규 Story init 가 깨진다.
+#      (wrapper 는 이 전환을 S4 #2252 에서 처리 — 그 전까지 dual-state 유지.)
+gh label delete type:epic --yes --repo <org>/<repo>
+gh label delete type:story --yes --repo <org>/<repo>
+gh label delete type:bug --yes --repo <org>/<repo>
+```
+
+> `impl-manifest` label 은 sub-issue 표지 별도 axis 로 **잔존** (Issue Type 대체 대상 아님).
+> native Issue Type 미적용 org (Issue Types 비활성) 에서는 story-init.yml 이 자동 label fallback (graceful — ADR-049 §결정 3). consumer 가 native type 으로 전환하지 않아도 기존 label hack 동작은 보존됩니다 (breaking 0).
+
 ### 2e. Branch protection (main)
 
 #### 다인 contributor 팀 (default — review gate 강제)

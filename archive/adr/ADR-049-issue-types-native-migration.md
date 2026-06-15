@@ -18,10 +18,17 @@ related_files:
   - docs/inter-plugin-contracts/label-registry-v2.md
 related_stories:
   - CFP-140
+  - CFP-2251  # Amendment 1 carrier — type:* → native Issue Type 실 org cutover (additive)
 amends:
   - ADR-008
 supersedes: null
 is_transitional: false
+amendment_log:
+  - amendment: 1
+    date: 2026-06-15
+    story: CFP-2251
+    scope: "Amendment 1 — type:* → native Issue Type 실 org cutover (ADR-049 Phase 2 실행 결정, 완료). org 재구성 = ADDITIVE: 기존 org type [Task, Bug, Feature] 보존 + Story(id 34327613)/Epic(id 34327614) 신설 + Bug(id 28762364) 재사용 (type:bug 매핑). Audit 은 본 cutover 미포함 (deferred). 마이그레이션 = type:* 라벨 부착 전체 487 이슈 (story 415 + epic 46 + bug 26, open+closed) → native Issue Type --apply + --verify PASS (0 불일치). 실측 결함 정정: REST 이슈 type 부착 payload = `-f type=<이름>` (type_id 는 silent 무시 — story-init.yml L556 동일 결함, S4 #2252 FU). label deprecate 타이밍 = type:* 라벨 물리 삭제 + story-init.yml trigger native-type 전환을 S4 로 sequencing (라벨 선삭제 시 story-init 깨짐 — transient dual-state 허용, §결정 11 정합). 본 Story 는 deprecated 마킹까지. 본문 §결정 1 의 4-type 안 중 Audit 만 deferred 로 조정 (additive 방향 — 기존 결정 축소 0, 실행 결정 추가)."
+    sunset_justification: "본 Amendment 는 weakening/reversal 이 아니라 ADR-049 본문 §결정 4/9 (migration script + migration timing) 의 실 실행 결정 추가 — additive ratchet. 기존 §결정 1-12 본문 변경 0 (Audit 만 deferred 조정 = 범위 축소가 아니라 실행 단계 분리). 따라서 sunset/원복 trigger 부재 — cutover 완료 후 영구. (additive amendment 의 sunset_justification = additive 방향 명시. ADR-058 §결정 5 self-application — Amendment 시 본 필드 의무 정합.)"
 ---
 
 # ADR-049: Issue Types + Sub-issues Native Migration
@@ -29,6 +36,7 @@ is_transitional: false
 ## 상태
 
 Proposed (2026-05-09) — CFP-140 carrier.
+Amendment 1 (2026-06-15) — CFP-2251 carrier: type:* → native Issue Type 실 org cutover (additive 재구성). 아래 "## Amendment 1" 참조.
 
 ## 컨텍스트
 
@@ -94,6 +102,74 @@ codeforge 의 Issue 분류 = label hack `type:epic / type:story / type:bug` (3 e
 **12. consumer-side migration 면제** (본 Story scope):
    - mclayer org 만 본 Story 에서 migration. 다른 consumer org (mctrader 등) = audit complete 후 별도 migration CFP.
    - consumer-guide.md 에 label-registry MAJOR bump 영향 + migration plan 안내 (Phase 2 종료 후).
+
+## Amendment 1 (CFP-2251, 2026-06-15) — type:* → native Issue Type 실 org cutover (additive)
+
+ADR-049 본문 §결정 4 (migration script) + §결정 9 (migration timing) 의 **실 실행 결정**. 본문 §결정 1-12 본문 변경 0 (additive ratchet — 기존 결정 축소 없음). mctrader debut audit 후 defer 였던 실 cutover 를 mclayer org 에서 실행한다.
+
+### A1-1. org 재구성 = ADDITIVE (사용자 결정 2026-06-15)
+
+org Issue Type 실측 (2026-06-15, `gh api /orgs/mclayer/issue-types`):
+
+| 기존 org type | id | 처리 |
+|---|---|---|
+| Task | 28762363 | 보존 (GitHub 기본, cutover 무관) |
+| Bug | 28762364 | **재사용** (type:bug 매핑 — 신설 0) |
+| Feature | 28762365 | 보존 (GitHub 기본, cutover 무관) |
+
+신설 대상:
+
+| 신설 type | 매핑 label | 처리 |
+|---|---|---|
+| Story | type:story | org POST 신설 |
+| Epic | type:epic | org POST 신설 |
+
+**Audit = deferred** — ADR-049 §결정 1 의 4-type 안 중 Audit 은 본 cutover 미포함 (사용자 결정). 별 CFP carrier 에서 신설. `templates/issue-types.yaml` `_deferred` block 에 박제.
+
+### A1-2. 마이그레이션 대상 = type:* 부착 전체 487 이슈 (open+closed)
+
+`scripts/migrate-label-to-issue-type.sh --dry-run` 실측 (2026-06-15):
+
+| 매핑 | count |
+|---|---|
+| type:epic → Epic | 46 |
+| type:story → Story | 415 |
+| type:bug → Bug | 26 |
+| **총 대상** | **487** |
+| 이미 native type 보유 (skip) | 0 |
+
+PR 은 제외 (REST issues endpoint `.pull_request == null` 필터). idempotent — 재실행 시 이미 변환된 이슈 skip.
+
+### A1-3. label deprecate 타이밍 (transient dual-state — 물리 삭제는 S4 sequencing)
+
+native Issue Type 부착 + `--verify` PASS 완료 (아래 A1-5 실행 결과). **단 type:* 라벨 물리 삭제는 본 Story 에서 하지 않는다** — `story-init.yml` 이 `type:story` 라벨로 트리거되므로 (Issue Form → label → workflow), 라벨을 선삭제하면 story-init 가 깨진다. 따라서:
+
+1. org Story/Epic Issue Type 신설 (Bug 재사용) — **완료**
+2. `migrate-label-to-issue-type.sh --apply --batch-size 50` — **완료**
+3. `migrate-label-to-issue-type.sh --verify` (불일치 0) — **완료 (PASS)**
+4. type:epic / type:story / type:bug 라벨 정의 물리 삭제 + `story-init.yml` 트리거의 native-type 전환 — **S4 (#2252, story-init.yml owner) 로 sequencing.**
+
+**Transient dual-state 허용** (deprecated label + native type 공존) — ADR-049 §결정 11 의 "org Issue Types 미활성 시 graceful fallback = transient dual-state 허용" 과 정합. story-init.yml 의 trigger 가 native type 기준으로 전환 완료될 때까지 type:* 라벨은 존속한다. S4 종료 시점에 비로소 라벨 물리 삭제 + DI-1 invariant (native type + type:* label 동시 존재 금지) 완전 충족.
+
+registry 는 본 Amendment 에서 type:epic/story/bug 에 `replaced_by_native_issue_type` + `deprecated: true` 마킹 추가 (신규 부착 금지 신호). **물리 삭제 ≠ deprecated 마킹** — 마킹은 본 Story 에서, 삭제는 S4 에서.
+
+### A1-4. 실행 권한 경계
+
+- **도구 빌드 + dry-run** = 구현 레인 (본 Amendment + script).
+- **org Issue Type 신설 + --apply + (S4 의) label 물리 삭제** = Orchestrator 실행 영역 (org-mutating).
+
+### A1-5. 실행 결과 (2026-06-15, Orchestrator 실행 — 기록용)
+
+| 항목 | 결과 |
+|---|---|
+| org Story Issue Type 신설 | **완료** — id=34327613 |
+| org Epic Issue Type 신설 | **완료** — id=34327614 |
+| org Bug Issue Type 재사용 | id=28762364 (신설 0) |
+| org type set (실행 후) | [Task, Bug, Feature, Story, Epic] (5-type, additive — 기존 3 보존) |
+| migration `--apply` | 487 이슈 변환 (epic 46 / story 415 / bug 26) |
+| migration `--verify` | **PASS — 487 정합, 0 불일치** |
+
+**실측 결함 정정 (S4 evidence)**: 빌드 시 `apply_one` 의 부착 payload 가 `--field type_id=<id>` 였으나, REST 가 이를 **silent 무시** (HTTP 2xx 반환하나 type 미설정). 첫 `--apply` 가 487 "성공" 보고 후 `--verify` 가 487 MISMATCH 로 발각. payload 를 `-f type=<TypeName>` (이름 기반) 으로 정정 → 재apply → verify PASS. **동일 결함이 `story-init.yml` L556 (`--field type_id=`) 에도 존재** — 신규 Issue 의 native type 부착이 여태 silent 실패해 왔음. → **S4 (#2252, story-init.yml owner) 에서 정정 대상** (라벨 물리 삭제 + trigger native-type 전환과 동반).
 
 ## 결과
 
