@@ -134,6 +134,8 @@ tools: Read
 
 4번째 touchpoint 신설 = **별도 CFP 의무** (ADR-064 §결정 7 ratchet + ADR-058 §결정 5 sunset_justification + Story §1 사용자 explicit 승인). mechanical lint = 별도 follow-up CFP (§결정 15 = behavioral directive only).
 
+> **완료보고 정직성 + 제안 필요성 게이트 (ADR-119 §결정 9 cross-ref)**: touchpoint (c) 최종 완료 보고 = 작업 상태("완료"/"잔여") 실측(Read/Grep) 후에만 단언, 추측성 backlog 패딩 금지. 보고 중 follow-up 제안 발의 = 필요성 3문 게이트 선통과 의무 (발견 ≠ 필요).
+
 ## Mid-turn glossary lookup (ADR-071 §결정 19 / CFP-1764)
 
 > normative SSOT = [ADR-071 §결정 19](../../archive/adr/ADR-071-orchestrator-user-dialog-convergence.md) + [`docs/wording-dictionary.md`](../../docs/wording-dictionary.md) 카테고리 (c). 본 sub-section = **lookup mirror only**.
