@@ -1744,6 +1744,8 @@ bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-debut-readiness.sh
 
 # 단계 4: labels bootstrap (10 critical = phase:* 7 + gate:* 3)
 bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/bootstrap-labels.sh <org>/<repo>
+# Windows-native (Git Bash / WSL 부재) — PowerShell 등가 (CFP-2250):
+#   pwsh -File ${env:CLAUDE_PLUGIN_ROOT}/codeforge/scripts/bootstrap-labels.ps1 -Repo <org>/<repo>
 # 단계 4 verify:
 bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-debut-readiness.sh
 # 모든 4 check PASS 확인

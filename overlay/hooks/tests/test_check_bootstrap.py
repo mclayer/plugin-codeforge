@@ -6,6 +6,7 @@ Cross-platform CI matrix (ubuntu-latest + windows-latest) 양 OS pass 의무.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -31,26 +32,41 @@ def test_check_plugins_installed_full_pass(tmp_path: Path) -> None:
 
 
 def test_check_plugins_installed_mctrader_partial(tmp_path: Path) -> None:
-    """mctrader-hub 검증 case (4 dep 만, codeforge family 0개) → 7 plugin 부재 warning."""
+    """mctrader-hub 검증 case (4 dep 설치 — github/superpowers/claude-md/codex).
+
+    CFP-2250: superpowers 가 REQUIRED_PLUGINS 에서 제거(10종)되어 installed ∩ required = 3
+    (github/claude-md/codex). 따라서 7/10 미설치 (codeforge family 7개 부재).
+    """
     src = (FIXTURES / "installed_plugins_partial.json").read_text(encoding="utf-8")
     p = tmp_path / "installed_plugins.json"
     p.write_text(src, encoding="utf-8")
     warns = check_bootstrap.check_plugins_installed(p)
     assert warns, "WARN 출력 필요"
-    # 7/11 미설치 (codeforge family 7개 부재)
-    assert any("7/11 plugin 미설치" in w for w in warns)
+    # 7/10 미설치 (codeforge family 7개 부재 — superpowers 제거 후 required=10)
+    assert any("7/10 plugin 미설치" in w for w in warns)
     # 설치 명령 안내 필수
     assert any("/plugins install codeforge@mclayer" in w for w in warns)
 
 
 def test_check_plugins_installed_empty(tmp_path: Path) -> None:
-    """11 plugin 모두 부재 시 11 미설치 warning."""
+    """10 plugin 모두 부재 시 10 미설치 warning (CFP-2250: superpowers 제거 11→10)."""
     src = (FIXTURES / "installed_plugins_empty.json").read_text(encoding="utf-8")
     p = tmp_path / "installed_plugins.json"
     p.write_text(src, encoding="utf-8")
     warns = check_bootstrap.check_plugins_installed(p)
     assert warns
-    assert any("11/11 plugin 미설치" in w for w in warns)
+    assert any("10/10 plugin 미설치" in w for w in warns)
+
+
+def test_check_plugins_installed_required_count_is_10(tmp_path: Path) -> None:
+    """CFP-2250 / ADR-122 — REQUIRED_PLUGINS = 10 (superpowers 제거) + superpowers 부재 assert."""
+    assert len(check_bootstrap.REQUIRED_PLUGINS) == 10
+    assert "superpowers@claude-plugins-official" not in check_bootstrap.REQUIRED_PLUGINS
+    # full fixture (superpowers 포함 11 설치) — required 10 은 subset → warning 부재 (extra 무해)
+    src = (FIXTURES / "installed_plugins_full.json").read_text(encoding="utf-8")
+    p = tmp_path / "installed_plugins.json"
+    p.write_text(src, encoding="utf-8")
+    assert check_bootstrap.check_plugins_installed(p) == []
 
 
 def test_check_plugins_installed_file_missing(tmp_path: Path) -> None:
@@ -222,15 +238,73 @@ def test_resolve_plugins_json_windows() -> None:
 
 
 def test_resolve_plugins_json_dual_env_neither_exists() -> None:
-    """HOME + USERPROFILE 둘 다 set, 둘 다 file 부재 — 첫 candidate (HOME) 반환."""
+    """HOME + USERPROFILE 둘 다 set, 둘 다 file 부재 — OS-우선 candidate 반환 (CFP-2250 결함2).
+
+    Windows (os.name=='nt'): USERPROFILE 우선. POSIX: HOME 우선. 결정적 (고정 순서 아님).
+    """
+    import os as _os
     p = check_bootstrap._resolve_plugins_json({"HOME": "/home/user", "USERPROFILE": "C:/Users/test"})
     s = str(p).replace("\\", "/")
-    # HOME first
-    assert "home/user" in s
+    if _os.name == "nt":
+        assert "Users/test" in s, f"Windows 는 USERPROFILE 우선이어야: {s}"
+    else:
+        assert "home/user" in s, f"POSIX 는 HOME 우선이어야: {s}"
+
+
+def test_resolve_plugins_json_nt_both_exist_userprofile_wins(tmp_path: Path, monkeypatch) -> None:
+    """CFP-2250 결함2 TC3 (discriminating) — os.name='nt' + HOME∧USERPROFILE 양 set + 양 파일 존재 → USERPROFILE.
+
+    비결정 경계 케이스: 고정 [HOME, USERPROFILE] 순서면 HOME 반환(오답). OS-aware 면 Windows=USERPROFILE.
+    os.name 강제는 host==nt 일 때만 (Path 는 host-bound — cross-OS Path 생성 불가). 그 외 skip.
+    """
+    if os.name != "nt":
+        pytest.skip("Path 는 host OS bound — os.name='nt' 강제는 Windows host 에서만 의미 (windows-latest CI 커버)")
+    monkeypatch.setattr(check_bootstrap.os, "name", "nt")
+    home = tmp_path / "home"
+    userprofile = tmp_path / "userprofile"
+    for base in (home, userprofile):
+        d = base / ".claude" / "plugins"
+        d.mkdir(parents=True)
+        (d / "installed_plugins.json").write_text("{}", encoding="utf-8")
+    p = check_bootstrap._resolve_plugins_json({"HOME": str(home), "USERPROFILE": str(userprofile)})
+    assert str(userprofile) in str(p), f"Windows 양 파일 존재 시 USERPROFILE 우선: {p}"
+    assert str(home) not in str(p)
+
+
+def test_resolve_plugins_json_posix_both_exist_home_wins(tmp_path: Path, monkeypatch) -> None:
+    """CFP-2250 결함2 TC4 (POSIX 대칭) — os.name='posix' + 양 파일 존재 → HOME 우선 보존.
+
+    host==posix 일 때만 (Path host-bound). Windows host 는 skip (ubuntu-latest CI 가 커버).
+    """
+    if os.name == "nt":
+        pytest.skip("Path 는 host OS bound — POSIX 분기는 POSIX host 에서만 검증 (ubuntu-latest CI 커버)")
+    monkeypatch.setattr(check_bootstrap.os, "name", "posix")
+    home = tmp_path / "home"
+    userprofile = tmp_path / "userprofile"
+    for base in (home, userprofile):
+        d = base / ".claude" / "plugins"
+        d.mkdir(parents=True)
+        (d / "installed_plugins.json").write_text("{}", encoding="utf-8")
+    p = check_bootstrap._resolve_plugins_json({"HOME": str(home), "USERPROFILE": str(userprofile)})
+    assert str(home) in str(p), f"POSIX 양 파일 존재 시 HOME 우선: {p}"
+
+
+def test_resolve_plugins_json_nt_userprofile_absent_falls_to_home(tmp_path: Path, monkeypatch) -> None:
+    """CFP-2250 결함2 — Windows + USERPROFILE 파일 부재 + HOME 파일 존재 → HOME (차선 채택, 결정적)."""
+    if os.name != "nt":
+        pytest.skip("os.name='nt' 강제는 Windows host 에서만 (Path host-bound)")
+    monkeypatch.setattr(check_bootstrap.os, "name", "nt")
+    home = tmp_path / "home"
+    d = home / ".claude" / "plugins"
+    d.mkdir(parents=True)
+    (d / "installed_plugins.json").write_text("{}", encoding="utf-8")
+    userprofile = tmp_path / "userprofile_no_file"  # 파일 미생성
+    p = check_bootstrap._resolve_plugins_json({"HOME": str(home), "USERPROFILE": str(userprofile)})
+    assert str(home) in str(p)
 
 
 def test_resolve_plugins_json_dual_env_userprofile_exists(tmp_path: Path) -> None:
-    """HOME 부재 + USERPROFILE 의 file 존재 → USERPROFILE path 반환."""
+    """HOME 부재 + USERPROFILE 의 file 존재 → USERPROFILE path 반환 (OS 무관)."""
     fake_home = tmp_path / "fake_home"
     fake_home.mkdir()
     real_userprofile = tmp_path / "real_userprofile"
@@ -537,3 +611,82 @@ def test_workflow_drift_strict_mode_main_exits_1(tmp_path: Path, monkeypatch, ca
     # 일 가능성 — but plugins_json 부재 = STRICT (b) trigger. 그래도 exit 1 발화 확인.
     assert rc == 1, f"strict mode + strict-eligible drift 시 exit 1 의무, got rc={rc}"
     assert "STRICT" in captured.err
+
+
+# ============================================================ Check 4 (결함4) — REQUIRED_LABELS type:* 제거 (CFP-2250)
+
+
+def test_required_labels_no_type_star() -> None:
+    """CFP-2250 결함4 TC5 — REQUIRED_LABELS 에 type:epic/story/bug 부재 (native Issue Type 이관, ADR-049)."""
+    assert "type:epic" not in check_bootstrap.REQUIRED_LABELS
+    assert "type:story" not in check_bootstrap.REQUIRED_LABELS
+    assert "type:bug" not in check_bootstrap.REQUIRED_LABELS
+    # impl-manifest 는 별 axis (sub-issue marker) 라 보존
+    assert "impl-manifest" in check_bootstrap.REQUIRED_LABELS
+
+
+def test_required_labels_count_is_15() -> None:
+    """CFP-2250 결함4 TC5 — REQUIRED_LABELS len == 15 (18 → 15)."""
+    assert len(check_bootstrap.REQUIRED_LABELS) == 15
+
+
+def test_required_labels_no_stale_18_literal() -> None:
+    """CFP-2250 P2-1 TC6 — check_bootstrap.py 전역 '18' literal 잔존 0 (count 정합)."""
+    src = Path(check_bootstrap.__file__).read_text(encoding="utf-8")
+    assert "18" not in src, "check_bootstrap.py 안 stale '18' literal 잔존 (P2-1 위반)"
+
+
+def test_check_plugin_labels_message_uses_dynamic_count(monkeypatch) -> None:
+    """CFP-2250 결함4 TC6 — check_plugin_labels 메시지가 /18 hardcode 가 아닌 /len(REQUIRED_LABELS) 동적.
+
+    gh subprocess 를 mock 해 1 label 만 존재 → 14 missing / 15 메시지 확인.
+    """
+    import json as _json
+
+    class _FakeResult:
+        returncode = 0
+        # 1 label (impl-manifest) 만 존재 → 나머지 14 missing
+        stdout = _json.dumps(["impl-manifest"])
+
+    monkeypatch.setattr(check_bootstrap.subprocess, "run", lambda *a, **k: _FakeResult())
+    warns = check_bootstrap.check_plugin_labels("example", "test")
+    assert warns
+    # 동적 /15 (len(REQUIRED_LABELS)) — /18 hardcode 부재
+    assert any(f"/{len(check_bootstrap.REQUIRED_LABELS)} plugin label 부재" in w for w in warns)
+    assert not any("/18" in w for w in warns)
+
+
+def test_check_plugin_labels_no_type_star_reported(monkeypatch) -> None:
+    """CFP-2250 결함4 TC6 — 모든 REQUIRED_LABELS 존재 시 warning 0 (type:* 부재로 인한 오탐 0)."""
+    import json as _json
+
+    class _FakeResult:
+        returncode = 0
+        # 모든 REQUIRED_LABELS 존재 (type:* 는 애초에 required 아님)
+        stdout = _json.dumps(list(check_bootstrap.REQUIRED_LABELS))
+
+    monkeypatch.setattr(check_bootstrap.subprocess, "run", lambda *a, **k: _FakeResult())
+    warns = check_bootstrap.check_plugin_labels("example", "test")
+    assert warns == [], f"모든 label 존재인데 오탐: {warns}"
+
+
+# ============================================================ Check 4 (결함3) — manifest preflight 메시지 (CFP-2250)
+
+
+def test_manifest_absent_preflight_warns(tmp_path: Path) -> None:
+    """CFP-2250 결함3 TC9 — plugin_root manifest 부재 시 silent return 대신 원인 명시 WARN."""
+    plugin_root = tmp_path / "empty_plugin_root"  # templates/consumer-scripts.manifest 미생성
+    plugin_root.mkdir()
+    warns = check_bootstrap.check_consumer_scripts_manifest(plugin_root)
+    assert warns, "manifest 부재 시 preflight WARN 발화 의무 (silent return 회피)"
+    assert any("manifest 부재" in w for w in warns)
+    assert any("bootstrap 미완" in w or "PLUGIN_ROOT" in w for w in warns)
+
+
+def test_strict_a_message_has_preflight_phrase(tmp_path: Path, monkeypatch, capsys) -> None:
+    """CFP-2250 결함3 TC9 — strict (a) project.yaml 부재 메시지에 'story-init 발동 전' preflight 문구."""
+    monkeypatch.chdir(tmp_path)  # project.yaml 부재 cwd
+    rc = check_bootstrap.main(["--strict"])
+    captured = capsys.readouterr()
+    assert rc == 1
+    assert "story-init 발동 전" in captured.err or "preflight" in captured.err

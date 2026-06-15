@@ -1,0 +1,60 @@
+# windows-bootstrap-smoke.yml — CFP-2250 결함5: windows-latest 부트스트랩 smoke 안전망.
+#
+# 목적: ubuntu 에서 통과하나 Windows 에서 깨지는 PowerShell bootstrap 경로(경로 구분자 \,
+#       pwsh ConvertFrom-Json, UTF-8 인코딩, bash 부재 fallback)를 잡는 회귀 안전망.
+#
+# 본 job 은 TC1(label count) + TC3(USERPROFILE resolve) + TC7(Stage 6 PowerShell-native fallback)
+# 을 windows runner self-validating 으로 composing 한다 (Change Plan §8 TC8 / 설계리뷰 P2-5).
+#
+# dry-run 전용 (gh 미호출) → token secret 불요, side-effect 0 (보안 경계 안전).
+# windows-latest 기본 shell = pwsh (PowerShell Core 7) — bash 명시 불요.
+#
+# non-required tier: branch protection required contexts (wrapper 6-tuple) 미등재 (advisory).
+#   ADR-060 evidence-gate (PR >= 20 + failure 0) 후 승격 후보.
+
+name: windows bootstrap smoke
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  windows-bootstrap-smoke:
+    runs-on: windows-latest      # 기본 shell = pwsh (PowerShell Core)
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: install pyyaml
+        run: pip install pyyaml
+
+      # TC1 — PowerShell-native label 시드 dry-run (gh 미호출, count + tab-separated 출력 self-check)
+      - name: bootstrap-labels.ps1 dry-run (TC1)
+        run: pwsh -File scripts/bootstrap-labels.ps1 -DryRun
+
+      # TC7 — bootstrap-consumer.ps1 dry-run (Stage 6 PowerShell-native 경로 선택 검증, bash 유무 무관 dry-run)
+      - name: bootstrap-consumer.ps1 dry-run (TC7)
+        run: pwsh -File scripts/bootstrap-consumer.ps1 -DryRun
+
+      # TC3 — check_bootstrap.py Windows path resolve 회귀 (os.name=='nt' → USERPROFILE 우선)
+      - name: check_bootstrap.py Windows resolve (TC3)
+        run: python overlay/hooks/check_bootstrap.py --quiet
+
+      # check_bootstrap.py 단위 테스트 (cross-platform matrix Windows side)
+      - name: pytest check_bootstrap (Windows)
+        run: |
+          pip install pytest
+          python -m pytest overlay/hooks/tests/test_check_bootstrap.py -q
+
+      # TC2 — .sh <-> .ps1 label parity (windows runner = Git Bash 동봉 → bash 경로 정상 resolve)
+      - name: label parity .sh <-> .ps1 (TC2)
+        run: pwsh -File scripts/test-bootstrap-labels-parity.ps1

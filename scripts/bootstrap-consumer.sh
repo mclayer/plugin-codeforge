@@ -164,6 +164,14 @@ stage_1_precheck() {
         return 1
     fi
     log "  org=$ORG repo=$REPO"
+    # CFP-2250 결함3 preflight: manifest / project.yaml 결손 사전 안내 (story-init 발동 전 진단).
+    # project.yaml 부재 = Stage 3 에서 자동 scaffold. manifest 부재 = Stage 7 skip. story-init 은 별 lane(S4).
+    if [ ! -f ".claude/_overlay/project.yaml" ]; then
+        log "  preflight: project.yaml 부재 — Stage 3 에서 example 로 자동 scaffold (이후 org/repo 직접 치환 의무)"
+    fi
+    if [ ! -f "$PLUGIN_ROOT/templates/consumer-scripts.manifest" ]; then
+        log "  preflight: consumer-scripts.manifest 부재 — Stage 7 skip (wrapper plugin 설치 확인 권장)"
+    fi
     mark_step "stage_1_precheck"
 }
 
@@ -171,6 +179,7 @@ stage_1_precheck() {
 stage_2_plugin_reminder() {
     log "Stage 2: plugin install reminder"
     local plugins_json="${HOME:-$USERPROFILE}/.claude/plugins/installed_plugins.json"
+    # CFP-2250 / ADR-122 — superpowers 더 이상 codeforge 의존 아님 (check_bootstrap.py REQUIRED_PLUGINS 정합, 11→10).
     local required=(
         "codeforge@mclayer"
         "codeforge-requirements@mclayer"
@@ -181,7 +190,6 @@ stage_2_plugin_reminder() {
         "codeforge-pmo@mclayer"
         "github@claude-plugins-official"
         "codex@openai-codex"
-        "superpowers@claude-plugins-official"
         "claude-md-management@claude-plugins-official"
     )
     local missing=()
@@ -203,7 +211,7 @@ stage_2_plugin_reminder() {
         for p in "${missing[@]}"; do log "    /plugins install $p"; done
         log "  → Claude Code 에서 위 명령 직접 실행 의무 (platform-level)"
     else
-        log "  ✓ 11/${#required[@]} plugin 설치 확인"
+        log "  ✓ ${#required[@]}/${#required[@]} plugin 설치 확인"
     fi
     mark_step "stage_2_plugin_reminder"
 }

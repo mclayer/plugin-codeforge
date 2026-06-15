@@ -75,8 +75,9 @@ check_1_bootstrap() {
 
 # Check 2 — plugin presence
 check_2_plugins() {
-    log "Check 2/4: plugin 11종 presence"
+    log "Check 2/4: plugin 10종 presence"
     local plugins_json="${HOME:-$USERPROFILE}/.claude/plugins/installed_plugins.json"
+    # CFP-2250 / ADR-122 — superpowers 제거 (check_bootstrap.py REQUIRED_PLUGINS 정합, 11→10).
     local required=(
         "codeforge@mclayer"
         "codeforge-requirements@mclayer"
@@ -87,7 +88,6 @@ check_2_plugins() {
         "codeforge-pmo@mclayer"
         "github@claude-plugins-official"
         "codex@openai-codex"
-        "superpowers@claude-plugins-official"
         "claude-md-management@claude-plugins-official"
     )
     if [ ! -f "$plugins_json" ]; then
@@ -111,10 +111,10 @@ check_2_plugins() {
     done
     if [ ${#missing[@]} -gt 0 ]; then
         FAIL_COUNT=$((FAIL_COUNT + 1))
-        FAIL_DETAILS+=("Check 2: ${#missing[@]}/11 plugin 미설치 — ${missing[*]}")
+        FAIL_DETAILS+=("Check 2: ${#missing[@]}/${#required[@]} plugin 미설치 — ${missing[*]}")
     else
         PASS_COUNT=$((PASS_COUNT + 1))
-        log "  ✓ 11/11 plugin 설치 확인"
+        log "  ✓ ${#required[@]}/${#required[@]} plugin 설치 확인"
     fi
 }
 
