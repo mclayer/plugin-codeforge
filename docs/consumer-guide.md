@@ -874,7 +874,7 @@ bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/bootstrap-consumer.sh
 
 # Verify
 bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-debut-readiness.sh
-  # 4 verification: check_bootstrap.py (8 sub-check) / plugin 11종 / project.yaml schema / settings.json 3 hook
+  # 4 verification: check_bootstrap.py (8 sub-check) / plugin 10종 / project.yaml schema / settings.json 3 hook
 ```
 
 Windows:
@@ -923,7 +923,7 @@ bash ${CLAUDE_PLUGIN_ROOT}/codeforge/scripts/check-codeforge-version-drift.sh
 - `--reset` — marker 삭제 + clean state from scratch (사용자 확인 prompt 의무)
 - 기존 `.claude/settings.json` 는 자동 backup `.claude/settings.json.bak.<ts>` (단계 4 시)
 
-**Plugin install 안내**: `bootstrap-consumer.sh` 가 누락 plugin 11종 listing stdout 출력 — 실 install 은 platform-level (Claude Code `/plugins install` 명령 사용자 직접 실행 의무).
+**Plugin install 안내**: `bootstrap-consumer.sh` 가 누락 plugin 10종 listing stdout 출력 — 실 install 은 platform-level (Claude Code `/plugins install` 명령 사용자 직접 실행 의무).
 
 ---
 
