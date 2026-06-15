@@ -222,7 +222,7 @@ test_verdict.failures[].failure_type
 
 ### ADR-076 declarative reconciliation 3-layer cross-ref
 
-본 lane 의 architecture_doc 운용은 [ADR-076](../../../plugin-codeforge/docs/adr/ADR-076-declarative-reconciliation-upgrade.md) declarative reconciliation 3-layer 패턴을 도메인 disjoint 로 답습 (ADR-078 §결정 2 정합, codeforge-{requirements,design,develop} Wave 1 precedent 답습):
+본 lane 의 architecture_doc 운용은 [ADR-076](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-076-declarative-reconciliation-upgrade.md) declarative reconciliation 3-layer 패턴을 도메인 disjoint 로 답습 (ADR-078 §결정 2 정합, codeforge-{requirements,design,develop} Wave 1 precedent 답습):
 
 - **desired state** = 본 doc 의 4 H2 closed-enum (모듈 + 경계 + 인터페이스 계약 + 데이터 흐름) 누적 현재 상태 SSOT.
 - **current state** = lane plugin agent file (`agents/IntegrationTestAgent.md` + deprecated `agents/TestAgent.md` / `agents/StatefulTestAgent.md`) + `CLAUDE.md` + contract file (`docs/inter-plugin-contracts/test-verdict-v2.md`) 의 실제 정의 상태.

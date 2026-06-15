@@ -340,7 +340,7 @@ review_verdict v1 contract는 codeforge core SSOT지만 review plugin 측 PL/wor
 
 `codeforge core` >= 0.17.0 호환 그대로 유지 — contract version v1.0 위반 없음 (오히려 v1.0 enforcement 강화).
 
-상세 plan: [`docs/superpowers/plans/2026-04-29-bundle-1-contract-alignment.md`](docs/superpowers/plans/2026-04-29-bundle-1-contract-alignment.md).
+상세 plan: [`docs/superpowers/plans/2026-04-29-bundle-1-contract-alignment.md`](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/plans/2026-04-29-bundle-1-contract-alignment.md).
 
 ## [0.2.0] - 2026-04-28
 
@@ -372,7 +372,7 @@ review_verdict v1 contract는 codeforge core SSOT지만 review plugin 측 PL/wor
 
 ### Why
 
-CFP-25 Phase 1 strategic payoff. codeforge core revision 비용 절감 + ADR-001 lane-agnostic worker 통합을 plugin 경계로 보존. 상세는 codeforge core repo의 [CFP-29 design spec](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers/specs/2026-04-28-cfp-29-codeforge-review-extraction-design.md).
+CFP-25 Phase 1 strategic payoff. codeforge core revision 비용 절감 + ADR-001 lane-agnostic worker 통합을 plugin 경계로 보존. 상세는 codeforge core repo의 [CFP-29 design spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-28-cfp-29-codeforge-review-extraction-design.md).
 
 ### Migration (from codeforge core monolith)
 

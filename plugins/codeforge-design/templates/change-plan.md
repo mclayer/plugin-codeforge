@@ -50,7 +50,7 @@ story: <KEY>   # GitHub Story Issue key, e.g. PLG-7
 
 #### §3.D bounded_context_boundary (ADR-091 §결정 5 — DDD vocabulary governance, CONDITIONAL)
 
-> DDD 영역 touching Story 의무 / 비-touching 면제. ModuleArchitectAgent (boundary axis unified — module-level + aggregate-level, CFP-1126 흡수) 입력 기반. SSOT = [`docs/glossary.md`](../../docs/glossary.md) (wrapper repo, codeforge governance BC).
+> DDD 영역 touching Story 의무 / 비-touching 면제. ModuleArchitectAgent (boundary axis unified — module-level + aggregate-level, CFP-1126 흡수) 입력 기반. SSOT = [`docs/glossary.md`](https://github.com/mclayer/plugin-codeforge/blob/main/docs/glossary.md) (wrapper repo, codeforge governance BC).
 
 - **bounded_context**: 본 변경이 속한 BC 명시 (codeforge governance BC vs consumer application BC — 동음이의 시 qualifier 병기, ADR-091 §결정 4 Published Language 분리)
 - **module placement**: 신규/변경 module 의 BC 안 배치 (layered / hexagonal / clean architecture — module-level dependency direction)
@@ -77,7 +77,7 @@ story: <KEY>   # GitHub Story Issue key, e.g. PLG-7
 |-----------|-----------|------------|------|
 | `src/...` | 추가·수정·제거 | BackendDev/FrontendDev/DataEng/InfraEng | 한 줄 |
 
-> **Impl Manifest**: 구현 완료 후 DocsAgent가 Story 페이지 §8.5에 기록 — [`impl-manifest.md`](impl-manifest.md) 스키마 참조.
+> **Impl Manifest**: 구현 완료 후 DocsAgent가 Story 페이지 §8.5에 기록 — [`impl-manifest.md`](https://github.com/mclayer/plugin-codeforge/blob/main/templates/impl-manifest.md) 스키마 참조.
 
 ### §6. 리팩토링 선행 작업 (Dev 실행 의뢰 명시)
 - 요건 범위 내 리팩토링만 (전역 리팩터링 금지)
@@ -285,7 +285,7 @@ architecture_doc_impact:
 
 ### §11. 데이터 마이그레이션 (DataMigrationArchitectAgent 입력 — 누락 시 DesignReview P0 차단)
 
-DataMigrationArchitectAgent의 산출물을 ArchitectAgent (chief author)가 통합. SecurityArchitect §7 동형 패턴 — 외부 입력·schema·migration 무관 시 §11.7 N/A 명시 + 사유 1줄. 누락 시 DesignReview P0 차단 ([CFP-21 spec](../docs/superpowers/specs/2026-04-28-cfp-21-datamigration-architect-design.md)).
+DataMigrationArchitectAgent의 산출물을 ArchitectAgent (chief author)가 통합. SecurityArchitect §7 동형 패턴 — 외부 입력·schema·migration 무관 시 §11.7 N/A 명시 + 사유 1줄. 누락 시 DesignReview P0 차단 ([CFP-21 spec](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-28-cfp-21-datamigration-architect-design.md)).
 
 #### §11.1 Schema 변경 영향
 - 변경 대상 테이블/컬렉션/인덱스/뷰 + 변경 유형 (ADD / MODIFY / DROP)

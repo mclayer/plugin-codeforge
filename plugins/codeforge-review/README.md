@@ -2,7 +2,7 @@
 
 [`codeforge`](https://github.com/mclayer/plugin-codeforge) core의 lane-agnostic review subsystem 추출 plugin. 3 review PL (Design / Code / Security) + 2 worker (Claude / Codex) + 공통 base + 3 lane checklist 보유.
 
-[ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-001-review-agent-unification.md) 통합 결정 + [CFP-29](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers/specs/2026-04-28-cfp-29-codeforge-review-extraction-design.md) Phase 1 추출 결과.
+[ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/docs/adr/ADR-001-review-agent-unification.md) 통합 결정 + [CFP-29](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-28-cfp-29-codeforge-review-extraction-design.md) Phase 1 추출 결과.
 
 ## Dependencies
 

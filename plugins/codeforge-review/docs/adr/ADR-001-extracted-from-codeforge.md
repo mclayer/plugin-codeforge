@@ -25,7 +25,7 @@ related_stories:
 
 [`mclayer/plugin-codeforge`](https://github.com/mclayer/plugin-codeforge) (codeforge core)는 24 core agent + 7 lane structure를 monolithic plugin으로 운영. 매 design 변경 (예: CFP-21 DataMigrationArchitect 6번째 deputy 추가)이 9+ file 동시 갱신을 강제 — revision 비용 高.
 
-CFP-25 design spec ([Claude Opus 4.7 + Codex GPT-5.4 4 라운드 협업 결과](https://github.com/mclayer/plugin-codeforge/blob/main/docs/superpowers/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md))이 "staged ε" strategy 합의: 같은 role-shape의 agent family를 plugin 경계로 분리. 본 추출이 Phase 1 strategic payoff.
+CFP-25 design spec ([Claude Opus 4.7 + Codex GPT-5.4 4 라운드 협업 결과](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-28-docsagent-scope-reduction-and-review-extraction-design.md))이 "staged ε" strategy 합의: 같은 role-shape의 agent family를 plugin 경계로 분리. 본 추출이 Phase 1 strategic payoff.
 
 전제 (CFP-26 Phase 0a · CFP-27 Phase 0b 머지 완료):
 - DocsAgent scope 축소 — single-author docs는 owner agent direct write

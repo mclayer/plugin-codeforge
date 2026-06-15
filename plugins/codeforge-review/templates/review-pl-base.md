@@ -2,15 +2,15 @@
 
 3개 리뷰 레인 PL(`DesignReviewPLAgent` · `CodeReviewPLAgent` · `SecurityTestPLAgent`)이 공유하는 **severity 종합 · dedup · noise 분류 · 보고 형식 · escalation 절차**의 SSOT. 각 PL md는 본 템플릿을 참조하고 lane-specific 4가지(체크리스트 packet · FIX 카운터 정책 · 검증 스코프 · 다음 게이트 라벨)만 본문에 명시한다.
 
-ADR 근거: [ADR-001](../docs/adr/ADR-001-review-agent-unification.md).
+ADR 근거: [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-001-review-agent-unification.md).
 
 ---
 
 ## 1. 공통 포지션
 
 - **상위**: Orchestrator
-- **하위**: ClaudeReviewAgent, CodexReviewAgent (워커 2종 통합 — [ADR-001](../docs/adr/ADR-001-review-agent-unification.md))
-- **호출 시점**: 각 레인 진입 직후 Orchestrator 스폰. PL은 워커 packet만 작성·검증해 Orchestrator에 return — **워커 spawn은 Orchestrator가 한 메시지에 두 워커(Claude ∥ Codex)를 dispatch** (서브에이전트 재귀 spawn 금지 platform 제약 정합, [CFP-19 R3](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
+- **하위**: ClaudeReviewAgent, CodexReviewAgent (워커 2종 통합 — [ADR-001](https://github.com/mclayer/plugin-codeforge/blob/main/archive/adr/ADR-001-review-agent-unification.md))
+- **호출 시점**: 각 레인 진입 직후 Orchestrator 스폰. PL은 워커 packet만 작성·검증해 Orchestrator에 return — **워커 spawn은 Orchestrator가 한 메시지에 두 워커(Claude ∥ Codex)를 dispatch** (서브에이전트 재귀 spawn 금지 platform 제약 정합, [CFP-19 R3](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-27-cfp-19-orchestration-parallelization.md))
 - **평행 PL**: 다른 2개 리뷰 PL — 동일 종합 로직 공유, lane-specific 4가지만 다름
 
 ---
@@ -389,7 +389,7 @@ PL은 severity 종합 후 **즉시 Orchestrator에 verdict return** (PASS / FIX 
 - ✅ 허용: PL → Orchestrator (verdict) → Orchestrator → 다음 lane spawn ∥ DocsAgent (background, mode: background)
 - ❌ 금지: PL이 DocsAgent save 완료 대기 후 verdict return — save가 다음 lane 게이트가 되면 안 됨
 
-이 분기는 평균 1-2분 단축 ([CFP-19 R2](../docs/superpowers/specs/2026-04-27-cfp-19-orchestration-parallelization.md)).
+이 분기는 평균 1-2분 단축 ([CFP-19 R2](https://github.com/mclayer/codeforge-internal-docs/blob/main/wrapper/specs/2026-04-27-cfp-19-orchestration-parallelization.md)).
 
 ### PASS
 
@@ -424,7 +424,7 @@ PL은 severity 종합 후 **즉시 Orchestrator에 verdict return** (PASS / FIX 
 
 ### 5.4 Typed verdict 출력 (contract-required v3.0 — CFP-61부터)
 
-§5.1-5.3의 PASS/FIX/ESCALATE 한글 블록은 사람용 보고. **CFP-61부터** PL 출력은 **evidence + advisory recommendation만** — final gate decision은 Orchestrator post-Sonnet self-write 영역. v3 contract surface ([review-verdict-v3.md §3](../docs/inter-plugin-contracts/review-verdict-v3.md) SSOT).
+§5.1-5.3의 PASS/FIX/ESCALATE 한글 블록은 사람용 보고. **CFP-61부터** PL 출력은 **evidence + advisory recommendation만** — final gate decision은 Orchestrator post-Sonnet self-write 영역. v3 contract surface ([review-verdict-v3.md §3](https://github.com/mclayer/plugin-codeforge/blob/main/docs/inter-plugin-contracts/review-verdict-v3.md) SSOT).
 
 **v2 → v3 BREAKING 변경 (CFP-61, ADR-022)**:
 - PL의 `status` 필드 **제거** → `pl_recommendation` (advisory only) 신설
