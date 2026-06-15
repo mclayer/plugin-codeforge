@@ -15,6 +15,7 @@ related_stories:
   - CFP-450  # Amendment 4 carrier (PAT consolidation)
   - CFP-596  # Amendment 5 carrier (story-init workflow cross-repo write mandate — original)
   - CFP-671  # Amendment 5 ACTUAL integration + Amendment 6 carrier (regression incident, CFP-596 phantom changelog evidence)
+  - CFP-2252  # Amendment 7 carrier (TARGET_REPO → project.yaml github.story_ssot_repo 파라미터화, 확장-only)
 related_adrs:
   - ADR-009
   - ADR-012
@@ -39,6 +40,8 @@ Adopted (2026-04-30) — CFP-45 PR-I 머지 시점.
 **Amendment 1 (2026-05-01) — CFP-56**: Brainstorming/writing-plans skill override path enforcement 정책을 ADR-017로 추가. `docs/superpowers/specs/**`와 `docs/superpowers/plans/**`가 plugin repo PR에 나타나면 CI가 fail-closed 하며, internal-docs 경로가 authoritative artifact lane이다. 검사 로직은 `scripts/check-dogfood-artifact-paths.sh`, CI는 `.github/workflows/dogfood-artifact-paths.yml` (template: `templates/github-workflows/dogfood-artifact-paths.yml`).
 
 **Amendment 3 (2026-05-09) — CFP-299**: `docs/domain-knowledge/` cross-cutting pattern doc 작성 표준 추가. 신규 pattern doc 은 implementation-ready pseudocode (`## Pseudocode` 섹션) + edge case table (`## Edge Cases`, 최소 3 entry) 필수. 소급 재작성 면제 (단 기존 파일 수정 시 의무 적용). 상세는 본 ADR 말미 Amendment 3 절.
+
+**Amendment 7 (2026-06-15) — CFP-2252**: `story-init.yml` TARGET_REPO 하드코딩 4곳 → project.yaml `github.story_ssot_repo` 파라미터화 (default `mclayer/codeforge-internal-docs`, 확장-only — 축소/제거 금지). 선례 ADR-024 Amd2 §결정 A + ADR-026 Amd4 §결정 6, mechanism ADR-116 cross-ref. 상세는 본 ADR 말미 Amendment 7 절.
 
 ## 컨텍스트
 
@@ -404,6 +407,41 @@ CFP-596 phantom changelog 영역과 CFP-661 unintentional revert 영역 = 별도
 ### Sunset justification
 
 ratchet 강화 (Amendment 5 declared → actual integration). 약화 방향 아님. ADR-058 §결정 5 정합.
+
+## Amendment 7 (2026-06-15) — CFP-2252 — TARGET_REPO → project.yaml `github.story_ssot_repo` 파라미터화 (확장-only)
+
+### 컨텍스트
+
+Amendment 5/6 가 `story-init.yml` cross-repo write 의 destination = internal-docs (`mclayer/codeforge-internal-docs`) 를 **하드코딩 literal** 로 박았다 (4곳: existence_check / branch create + Story file / Create Phase 1 PR / Update Issue body URL). mclayer org 운영에는 문제 없으나:
+
+- 비-mclayer codeforge family fork 가 자체 internal-docs repo 를 사용할 때 코드 수정 외 override 경로 부재.
+- TARGET_REPO 하드코딩 4곳 = duplication — repo 변경 시 4곳 동시 수정 필요 (drift risk).
+
+CFP-2252 (Epic #2244 S4, native Issue Type cutover 완결 Story) 가 story-init.yml 을 대규모 수정하는 김에 라우팅 일반화 동반.
+
+### 결정
+
+§결정 1 (internal-docs destination SSOT) + Amendment 5 §결정 2 (cross-repo write 패턴) 의 internal-docs hardcoding 을 **project.yaml `github.story_ssot_repo` field 로 일반화**한다 (location 정책 일반화 — ADR-013 이 routing/location 정책 SSOT).
+
+1. **파라미터화 대상**: codeforge family 분기의 TARGET_REPO 하드코딩 4곳 → `steps.project_config.outputs.story_ssot_repo` (env 주입) read. consumer 분기 (`${GITHUB_REPOSITORY}`) 무변경.
+2. **default 보존 (확장-only)**: `github.story_ssot_repo` 부재 시 template default = `mclayer/codeforge-internal-docs`. override 만 허용 — 축소/제거 금지 (mclayer 운영 영향 0, fork 만 분기). §결정 1 의 internal-docs SSOT 의도 보존.
+3. **yq 부재 fallback**: `scripts/lib/workflow_story_init_project_config_story_ssot_repo.py` (신규, stdlib-only, 기존 `_project_config_name.py` / `_key_prefix.py` 패턴 답습). cfg/field 부재 시 default 출력 (fail-closed 아님 — default 보존이 의도).
+4. **schema 갱신**: `docs/project-config-schema.md` `github:` block 에 신규 optional field `story_ssot_repo` 추가 (additive — backward-compat, 부재 = 기존 동작).
+
+### 확장-only 선례 귀속
+
+본 파라미터화의 default-보존 / never-reduce 선례 = **ADR-024 Amendment 2 §결정 A (확장-only 패턴)** + **ADR-026 Amendment 4 §결정 6** (consumer whitelist 확장-only constraint). 주입 mechanism = **ADR-116** (cross-ref — ADR-116 은 확장-only constraint policy 도 보유하나 *선례*는 ADR-024/ADR-026). `docs/project-config-schema.md` L158 + ADR-026 Amd4 §결정 6 본문이 직접 인용하는 패턴 정합.
+
+### 결과
+
+- 비-mclayer codeforge family fork 가 자체 internal-docs repo 를 project.yaml override 로 사용 가능 (코드 수정 0).
+- TARGET_REPO single point — project_config step 단일 산출 (`story_ssot_repo` output)로 DRY. 향후 repo 변경 시 single point.
+- consumer (비-codeforge) project 영향 0 (`is_codeforge_family` 가드 — story_ssot_repo 는 family 분기에만 주입).
+- mclayer 운영 영향 0 (default 보존 — `github.story_ssot_repo` 미선언 시 기존 internal-docs literal 과 동일).
+
+### Sunset justification
+
+확장-only (default 보존, override 만 추가) — 기존 §결정 1 internal-docs SSOT 의도 약화 0. 하드코딩 → 파라미터화 = 일반화 ratchet (mclayer 운영 동작 byte-identical, fork override 경로 추가만). 약화/reversal 방향 아님 — sunset/원복 trigger 부재. ADR-058 §결정 5 정합.
 
 ## 관련 파일
 

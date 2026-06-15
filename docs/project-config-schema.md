@@ -51,6 +51,13 @@ github:
   # Issue 번호 prefix. e.g. "TM" → "TM-7"
   story_key_prefix: <string>
 
+  # [선택] Story SSOT repo (codeforge family dogfood-out only — CFP-2252 / ADR-013 Amendment 7)
+  # 부재 시 template default = "mclayer/codeforge-internal-docs" (확장-only — 축소/제거 금지,
+  # 선례 ADR-024 Amd2 §결정 A + ADR-026 Amd4 §결정 6, mechanism ADR-116 cross-ref).
+  # 비-mclayer codeforge family fork 가 자체 internal-docs repo 사용 시 override.
+  # 비-codeforge consumer 무관 (is_codeforge_family 가드 — consumer 분기 = ${GITHUB_REPOSITORY} local write).
+  story_ssot_repo: <owner/repo>     # e.g. "mclayer/codeforge-internal-docs" (default)
+
   codeowners:
     architect_team: <string>        # e.g. "@acme/architects" — docs/adr·docs/change-plans·.github/workflows·docs/stories review 강제
     domain_expert_team: <string>    # e.g. "@acme/domain-experts" — docs/domain-knowledge review 강제

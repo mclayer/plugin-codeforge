@@ -12,10 +12,18 @@ name: Story Init
 #
 # CFP-661 / ADR-027 Amendment 2 §결정 6: PR create step `continue-on-error: true` + post-fail Issue comment.
 # Enterprise default_workflow_permissions: read 차단 환경에서 silent skip 회피 + CFP-658 Wave 1 fallback path 자동 활성.
+#
+# CFP-2252 / ADR-049 Amendment 2: native Issue Type cutover 완결.
+#   - 트리거 native-type 전환 (OR-bridge: issue.type.name == 'Story' OR type:story 라벨) + `typed` 이벤트 추가.
+#   - native type 부착 step: 종전 type-id 필드(REST 미존재 파라미터 — silent drop) → -f type=Story + verify-after-write.
+#   - PAT scope 사전검증 step (existence_check 앞, codeforge family 한정, fail-closed).
+#   - TARGET_REPO 하드코딩 4곳 → project.yaml github.story_ssot_repo 파라미터화 (ADR-013 Amendment 7).
+#   - internal-docs PR --label type:story 제거 + 사후 graceful 부착 (라벨 cutover 정합).
+#   - #2147 body-치환 guard (degraded scaffold 양산 차단) + #1046 에러 locality + write-readiness probe.
 
 on:
   issues:
-    types: [opened, labeled]   # was: [opened]  — CFP-280 race fix
+    types: [opened, labeled, typed]   # was: [opened] (CFP-280 race fix) → +typed (CFP-2252 native Issue Type 부착 이벤트)
 
 permissions:
   contents: write
@@ -33,9 +41,20 @@ jobs:
     # CFP-2149 — gate 라벨 편집 재트리거 차단: labeled 이벤트는 phase:요구사항 부착일 때만 발화.
     # CFP-280 의도 보존: opened 시 race 회피용 labeled re-trigger 는 phase:요구사항 부착만 재발화.
     # opened 이벤트엔 github.event.label 부재 → 빈 문자열 평가 (false) — || 단락 순서가 opened 우선이라 안전.
+    #
+    # CFP-2252 / ADR-049 Amendment 2 §3.2 — native-type 트리거 OR-bridge (self-host 위험 1급):
+    #   - event gate: opened || phase:요구사항 labeled || typed (native type 부착/UI type 부여 시 발화).
+    #   - Story gate (OR-bridge): issue.type.name == 'Story' OR type:story 라벨 — 라벨삭제 후 native-type 으로
+    #     발화 보존 + transient 기간 dual catch + org type 미활성 consumer 는 라벨 분기 fallback (ADR-049 §결정 5).
+    #   - phase:요구사항 AND 보존: type 부착만으로 오발화 차단 (무관 Story type 이슈 차단 — phase gate 가 lane 진입 신호).
+    #   - null 안전: type 미설정 이슈는 github.event.issue.type.name 가 null → == 'Story' false (Actions null 비교 안전).
+    #   - 본 expression 의 truth-table 검증 = scripts/lib/eval_story_init_trigger_expr.py (TC-6~11, CI-gated, F5).
     if: |
-      (github.event.action == 'opened' || github.event.label.name == 'phase:요구사항') &&
-      contains(github.event.issue.labels.*.name, 'type:story') &&
+      (github.event.action == 'opened'
+       || github.event.label.name == 'phase:요구사항'
+       || github.event.action == 'typed') &&
+      (github.event.issue.type.name == 'Story'
+       || contains(github.event.issue.labels.*.name, 'type:story')) &&
       contains(github.event.issue.labels.*.name, 'phase:요구사항')
     runs-on: ubuntu-latest
     env:
@@ -87,10 +106,24 @@ jobs:
             # plugin folder mapping — Change Plan §3.2
             folder=$(printf '%s' "$project_name" | sed 's/^codeforge-//;s/^codeforge$/wrapper/')
             echo "dogfood_folder=$folder" >> "$GITHUB_OUTPUT"
-            echo "::notice::codeforge family detected (project.name=$project_name) — cross-repo write branch active (folder=$folder)"
+            # CFP-2252 / ADR-013 Amendment 7 — story SSOT repo 파라미터화 (TARGET_REPO 하드코딩 제거).
+            # 부재 시 template default mclayer/codeforge-internal-docs (확장-only — 축소/제거 금지,
+            # 선례 ADR-024 Amd2 §결정 A + ADR-026 Amd4 §결정 6, mechanism ADR-116 cross-ref).
+            if command -v yq >/dev/null 2>&1; then
+              story_ssot_repo="$(yq -r '.github.story_ssot_repo // "mclayer/codeforge-internal-docs"' "$cfg")"
+            else
+              story_ssot_repo="$(CFG_PATH="$cfg" python3 "${GITHUB_WORKSPACE}/scripts/lib/workflow_story_init_project_config_story_ssot_repo.py")"
+            fi
+            # null/empty 방어 (yq 'null' 문자열 또는 빈 값 → default 보존, 확장-only invariant)
+            if [[ -z "$story_ssot_repo" || "$story_ssot_repo" == "null" ]]; then
+              story_ssot_repo="mclayer/codeforge-internal-docs"
+            fi
+            echo "story_ssot_repo=$story_ssot_repo" >> "$GITHUB_OUTPUT"
+            echo "::notice::codeforge family detected (project.name=$project_name) — cross-repo write branch active (folder=$folder, story_ssot_repo=$story_ssot_repo)"
           else
             echo "is_codeforge_family=false" >> "$GITHUB_OUTPUT"
             echo "dogfood_folder=" >> "$GITHUB_OUTPUT"
+            echo "story_ssot_repo=" >> "$GITHUB_OUTPUT"
             echo "::notice::generic consumer detected (project.name=$project_name) — local write branch active (AC-5 정합)"
           fi
 
@@ -116,6 +149,41 @@ jobs:
             echo "TITLE_EOF"
           } >> "$GITHUB_OUTPUT"
 
+      - name: Pre-validate CODEFORGE_CROSS_REPO_PAT scope (codeforge family only — CFP-2252 / ADR-066 §결정 2)
+        id: pat_precheck
+        if: steps.project_config.outputs.is_codeforge_family == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.CODEFORGE_CROSS_REPO_PAT }}
+          STORY_SSOT_REPO: ${{ steps.project_config.outputs.story_ssot_repo }}
+        run: |
+          # CFP-2252 §3.4 (SecurityArch) — PAT scope 3-tier 사전검증 (fail-closed + 에러 locality).
+          # 사후 발각(existence_check L157 HTTP 실패) 대신 명시적 step 에서 fail-fast + 명확 메시지.
+          # #1046 (CFP-689 retro carrier) 흡수: 단독 흡수 아님 — existence_check 가 이미 read probe 수행 →
+          #   본 step = (a) 에러 locality 개선 + (b) write-readiness probe(permissions.push) 보강.
+          set -euo pipefail
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "::error::CODEFORGE_CROSS_REPO_PAT secret 부재 — ADR-066 §결정 2 (fine-grained scope) 참조. story-init cross-repo write 불가."
+            exit 1
+          fi
+          # 1) 토큰 유효성 + 신원
+          if ! gh api user --jq '.login' >/dev/null 2>&1; then
+            echo "::error::PAT 무효 또는 만료 (gh api user 실패) — ADR-066 §결정 1/4 rotation 확인."
+            exit 1
+          fi
+          # 2) target repo metadata:read (접근 가능성)
+          if ! gh api "repos/${STORY_SSOT_REPO}" --jq '.full_name' >/dev/null 2>&1; then
+            echo "::error::PAT 가 ${STORY_SSOT_REPO} 접근 불가 — repo:read/metadata:read scope 또는 repository access list 확인 (ADR-066 §결정 2)."
+            exit 1
+          fi
+          # 3) contents:write 가능성 사전 신호 — permissions.push (write scope proxy).
+          #    fine-grained scope 정밀 introspection API 부재 → permissions.push 가 최선 신호 (abstention 명시).
+          CAN_PUSH=$(gh api "repos/${STORY_SSOT_REPO}" --jq '.permissions.push // false' 2>/dev/null || echo "false")
+          if [[ "$CAN_PUSH" != "true" ]]; then
+            echo "::error::PAT 가 ${STORY_SSOT_REPO} write 권한 부재 (permissions.push=false) — repo:write scope 필요 (ADR-066 §결정 2: branch create + contents PUT + PR create)."
+            exit 1
+          fi
+          echo "::notice::PAT scope 사전검증 PASS — ${STORY_SSOT_REPO} write 가용 (ADR-066 §결정 2 정합)"
+
       - name: Skip if first firing already published (two-stage existence_check — CFP-596 / ADR-013 Amendment 5)
         id: existence_check
         env:
@@ -124,6 +192,7 @@ jobs:
           SLUG: ${{ steps.key.outputs.slug }}
           IS_CODEFORGE_FAMILY: ${{ steps.project_config.outputs.is_codeforge_family }}
           DOGFOOD_FOLDER: ${{ steps.project_config.outputs.dogfood_folder }}
+          STORY_SSOT_REPO: ${{ steps.project_config.outputs.story_ssot_repo }}
         run: |
           # CFP-596 / ADR-013 Amendment 5 — two-stage existence_check (Change Plan §3.5)
           # codeforge family: internal-docs 측 branch + Story file 양 stage check.
@@ -131,7 +200,8 @@ jobs:
           # fail-closed: 4xx/5xx → exit 1 (PAT scope 또는 unreachable).
 
           if [[ "$IS_CODEFORGE_FAMILY" == "true" ]]; then
-            TARGET_REPO="mclayer/codeforge-internal-docs"
+            # CFP-2252 / ADR-013 Amendment 7 — TARGET_REPO 파라미터화 (story_ssot_repo, default 보존)
+            TARGET_REPO="${STORY_SSOT_REPO}"
           else
             TARGET_REPO="${GITHUB_REPOSITORY}"
           fi
@@ -198,6 +268,19 @@ jobs:
           REQ=$(printf '%s' "$ISSUE_BODY" \
                  | awk '/^### 사용자 요구사항/{flag=1; next} /^### /{flag=0} flag' \
                  | sed '/^$/d')
+
+          # CFP-2252 #2147 흡수 — body 치환 후 재렌더 degraded scaffold 차단 (fail-safe).
+          # 발현 = (1) body 이미 'Story SSOT: [...](...)' 마크다운 링크로 치환 + (2) existence_check skip=false
+          #   (slug 변경 재트리거 또는 reconcile auto_recovered) → 요구사항 추출 0 → 빈 §1 scaffold 양산.
+          # 실제 치환 prefix = "Story SSOT: [" (workflow Update Issue body step L513/517 마크다운 링크).
+          #   대괄호까지 일치해야 발동 — 사용자가 우연히 "Story SSOT: ..." 평문으로 시작한 요구사항의 false-pos 축소 (F8).
+          FIRST_LINE=$(printf '%s' "$ISSUE_BODY" | head -1)
+          if [[ -z "${REQ// }" ]] && printf '%s' "$FIRST_LINE" | grep -qE '^Story SSOT: \['; then
+            echo "::error::Issue body 가 이미 'Story SSOT: [' 마크다운 링크로 치환됨 + 요구사항 추출 0 — degraded scaffold 양산 차단 (#2147). 재렌더 중단."
+            echo "body_replaced_guard=true" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+
           {
             echo "requirement<<REQ_EOF"
             printf '%s\n' "$REQ"
@@ -239,12 +322,14 @@ jobs:
           SLUG: ${{ steps.key.outputs.slug }}
           TITLE_CLEAN: ${{ steps.key.outputs.title_clean }}
           DOGFOOD_FOLDER: ${{ steps.project_config.outputs.dogfood_folder }}
+          STORY_SSOT_REPO: ${{ steps.project_config.outputs.story_ssot_repo }}
           CONTENT_B64: ${{ steps.render.outputs.content_b64 }}
           SKIP_BRANCH_CREATE: ${{ steps.existence_check.outputs.skip_branch_create }}
           AUTO_RECOVERED: ${{ steps.existence_check.outputs.auto_recovered }}
         run: |
           set -euo pipefail
-          TARGET_REPO="mclayer/codeforge-internal-docs"
+          # CFP-2252 / ADR-013 Amendment 7 — TARGET_REPO 파라미터화 (story_ssot_repo, default 보존)
+          TARGET_REPO="${STORY_SSOT_REPO}"
           BRANCH="feat/${KEY}-${SLUG}"
           STORY_PATH="${DOGFOOD_FOLDER}/stories/${KEY}.md"
           COMMIT_MSG="[${KEY}] feat: Story init — §1 verbatim, §2-11 placeholder"
@@ -289,16 +374,19 @@ jobs:
           SLUG: ${{ steps.key.outputs.slug }}
           TITLE_CLEAN: ${{ steps.key.outputs.title_clean }}
           DOGFOOD_FOLDER: ${{ steps.project_config.outputs.dogfood_folder }}
+          STORY_SSOT_REPO: ${{ steps.project_config.outputs.story_ssot_repo }}
           AUTO_RECOVERED: ${{ steps.existence_check.outputs.auto_recovered }}
         run: |
           set -euo pipefail
-          TARGET_REPO="mclayer/codeforge-internal-docs"
+          # CFP-2252 / ADR-013 Amendment 7 — TARGET_REPO 파라미터화 (story_ssot_repo, default 보존)
+          TARGET_REPO="${STORY_SSOT_REPO}"
+          REPO_OWNER="${TARGET_REPO%%/*}"
           BRANCH="feat/${KEY}-${SLUG}"
 
           # PR existence check (auto_recovered 분기 — PR list idempotency, Change Plan §3.5 + §4.1)
           EXISTING_PR_URL=$(gh pr list \
             --repo "${TARGET_REPO}" \
-            --head "mclayer:${BRANCH}" \
+            --head "${REPO_OWNER}:${BRANCH}" \
             --base "main" \
             --state open \
             --json url \
@@ -313,13 +401,22 @@ jobs:
           BODY=$(printf 'Story SSOT: `%s/stories/%s.md`\n\nThis is the Phase 1 PR (요구사항+설계+설계리뷰 lane).\n\nRelated: %s#%s\n' \
             "$DOGFOOD_FOLDER" "$KEY" "$GITHUB_REPOSITORY" "$ISSUE_NUMBER")
 
-          PR_URL=$(gh pr create \
+          # CFP-2252 #1046 흡수 — PR create 실패 시 명확 에러 + locality (set -euo silent exit 회피).
+          # CFP-2252 §3.6 (F4) — --label type:story 제거 (라벨 cutover 정합, DI-1 방향). --label 인자 자체 제거:
+          #   gh pr create --label 은 라벨이 repo 에 부재하면 PR 생성 전체 실패 → 라벨 cutover 중 PR open 깨짐 risk.
+          if ! PR_URL=$(gh pr create \
             --repo "${TARGET_REPO}" \
             --base "main" \
             --head "${BRANCH}" \
             --title "[${KEY}] ${TITLE_CLEAN}" \
-            --body "$BODY" \
-            --label "type:story,phase:요구사항")
+            --body "$BODY" 2>&1); then
+            echo "::error::Phase 1 PR create 실패 (${TARGET_REPO}, head=${BRANCH}) — PAT pull_requests:write scope 또는 self-repo resolve 확인 (#1046 carrier / ADR-066 §결정 2). branch 는 push 완료 — manual PR open 필요. gh stderr: ${PR_URL}"
+            exit 1
+          fi
+
+          # 라벨은 사후 graceful 부착 — type:story 제외(삭제 대상), phase:요구사항 만 시도 (라벨 부재 시 무시).
+          gh pr edit "$PR_URL" --repo "${TARGET_REPO}" --add-label "phase:요구사항" 2>/dev/null \
+            || echo "::notice::internal-docs PR phase:요구사항 라벨 부착 skip (라벨 부재 — graceful, CFP-2252 F4)"
 
           echo "::notice::Phase 1 PR created in ${TARGET_REPO}: ${PR_URL}"
         id: create_pr_family
@@ -506,11 +603,13 @@ jobs:
           KEY: ${{ steps.key.outputs.key }}
           IS_CODEFORGE_FAMILY: ${{ steps.project_config.outputs.is_codeforge_family }}
           DOGFOOD_FOLDER: ${{ steps.project_config.outputs.dogfood_folder }}
+          STORY_SSOT_REPO: ${{ steps.project_config.outputs.story_ssot_repo }}
         run: |
           if [[ "$IS_CODEFORGE_FAMILY" == "true" ]]; then
             # cross-repo internal-docs URL (Change Plan §4.3)
+            # CFP-2252 / ADR-013 Amendment 7 — repo URL 파라미터화 (story_ssot_repo, default 보존)
             gh issue edit "$ISSUE_NUMBER" \
-              --body "Story SSOT: [\`${DOGFOOD_FOLDER}/stories/${KEY}.md\`](https://github.com/mclayer/codeforge-internal-docs/blob/main/${DOGFOOD_FOLDER}/stories/${KEY}.md)"
+              --body "Story SSOT: [\`${DOGFOOD_FOLDER}/stories/${KEY}.md\`](https://github.com/${STORY_SSOT_REPO}/blob/main/${DOGFOOD_FOLDER}/stories/${KEY}.md)"
           else
             BASE="main"
             gh issue edit "$ISSUE_NUMBER" \
@@ -536,27 +635,41 @@ jobs:
         run: |
           gh issue edit "$ISSUE_NUMBER" --add-label "component:$COMPONENT"
 
-      - name: Attach native Issue Type (CFP-140 / ADR-049)
+      - name: Attach native Issue Type (CFP-140 / ADR-049 / CFP-2252 type 정정 + verify-after-write)
         if: steps.existence_check.outputs.skip != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           # Attach native Issue Type "Story" to newly created Issue.
-          # Idempotent: if type already set, PATCH is a no-op.
-          # Graceful fallback: if Issue Types not configured for org, emit warning and continue.
+          # Idempotent: 이미 Story type 이면 PATCH 는 no-op.
+          # Graceful fallback: org Issue Types 미활성 시 warning 후 계속 — label hack 사용 (ADR-049 §결정 5).
+          #
+          # CFP-2252 / ADR-049 Amendment 2 §3.1 — 라이브 결함 정정 (P0):
+          #   - 종전 `--field type-id=<id>` 형태 = REST 미존재 파라미터 (2xx 반환하나 silent drop) → 6개월 잠복 결함.
+          #     [SSOT: GitHub REST "Update an issue" — 파라미터 = `type`(string, 타입 이름) / migrate-script L171 검증 패턴]
+          #   - 정정: `-f type=Story` (이름 기반). 종전 id 기반 필드는 사용 금지.
+          #   - verify-after-write 추가: PATCH 2xx ≠ 실제 부착(push access 부족 시 silent drop) → 재read 로 실측 (silent-drop 구조적 차단).
           REPO_OWNER="${GITHUB_REPOSITORY%%/*}"
-          # Get org Issue Types to find "Story" type ID
-          TYPE_ID=$(gh api "/orgs/${REPO_OWNER}/issue-types" \
-            --jq '.[] | select(.name == "Story") | .id' 2>/dev/null || true)
-          if [[ -z "$TYPE_ID" ]]; then
-            echo "::warning::Issue Types not configured for org ${REPO_OWNER} — label fallback active (ADR-049 §결정 3)"
+          # org type 존재 확인 — 부재 시 label fallback (graceful, ADR-049 §결정 5)
+          TYPE_PRESENT=$(gh api "orgs/${REPO_OWNER}/issue-types" \
+            --jq '.[] | select(.name == "Story") | .name' 2>/dev/null || true)
+          if [[ -z "$TYPE_PRESENT" ]]; then
+            echo "::warning::org ${REPO_OWNER} 에 Story Issue Type 부재 — label fallback 유지 (ADR-049 §결정 5)"
             exit 0
           fi
-          # PATCH issue to set type (idempotent — same type_id = no-op)
-          gh api --method PATCH "/repos/${GITHUB_REPOSITORY}/issues/${ISSUE_NUMBER}" \
-            --field "type_id=${TYPE_ID}" 2>/dev/null \
-            && echo "Issue Type 'Story' attached to #${ISSUE_NUMBER}" \
-            || echo "::warning::Issue Type attachment failed (may already be set or API unsupported)"
+          # 이름 기반 부착 (idempotent — 이미 Story 면 no-op). 종전 id 기반 필드는 REST 미존재 파라미터(silent drop) — 사용 금지.
+          if gh api --method PATCH "repos/${GITHUB_REPOSITORY}/issues/${ISSUE_NUMBER}" \
+               -f "type=Story" >/dev/null 2>&1; then
+            # verify-after-write (silent-drop 방어 — 종전 id 기반 결함 재발 차단)
+            SET=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${ISSUE_NUMBER}" --jq '.type.name // ""' 2>/dev/null || echo "")
+            if [[ "$SET" == "Story" ]]; then
+              echo "Issue Type 'Story' 부착 확인 (#${ISSUE_NUMBER})"
+            else
+              echo "::warning::type PATCH 후 verify 미확인 (push access 부족 가능 — silent drop). label fallback 의존 (ADR-049 §결정 5)."
+            fi
+          else
+            echo "::warning::Issue Type PATCH 실패 — label fallback 의존 (ADR-049 §결정 5)"
+          fi
 
       - name: Post failure notice comment (CFP-2142 D3 — silent-fail 차단)
         if: failure()

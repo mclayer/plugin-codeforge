@@ -1,0 +1,38 @@
+name: Story Init Trigger Expression Check
+# CFP-2252 / ADR-049 Amendment 2 §3.2 (F5) — story-init.yml trigger if-expression truth-table CI-gate.
+#
+# 목적: actionlint 는 if-expression 의 truth-value 를 평가하지 않음 (문법만). 음성 조건
+#   (TC-8 Bug 오발화 차단 / TC-9 phase gate / TC-10 null 안전)은 production canary 로 음성 증명 불가
+#   → 본 harness 가 음성+양성 truth-table (TC-6~11 + baseline) 을 결정적으로 검증한다.
+# tier: non-required (advisory gate — branch protection required contexts 미등재).
+# Security: third-party actions 는 SHA-pinned (CFP-300 policy).
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/story-init.yml'
+      - 'templates/github-workflows/story-init.yml'
+      - 'scripts/lib/eval_story_init_trigger_expr.py'
+      - '.github/workflows/story-init-trigger-expr-check.yml'
+      - 'templates/github-workflows/story-init-trigger-expr-check.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  trigger-expr-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.x'
+
+      - name: Run trigger-expr truth-table self-test (TC-6~11 + baseline — CFP-2252 F5)
+        run: |
+          # stdlib only — node 의존 0 (self-host 안전). 11 truth-table case 평가.
+          python3 scripts/lib/eval_story_init_trigger_expr.py --self-test
