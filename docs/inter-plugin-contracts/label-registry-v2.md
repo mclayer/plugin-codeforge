@@ -1,13 +1,14 @@
 ---
 kind: registry
 registry: label
-version: "2.93"
+version: "2.94"
 status: Active
 supersedes: label-registry-v1.md
 created_by: CFP-140
 created_date: 2026-05-09
 canonical_repo: mclayer/plugin-codeforge
 canonical_path: docs/inter-plugin-contracts/label-registry-v2.md
+date: 2026-06-15  # CFP-2251 / ADR-049 Amendment 1 v2.94 — type:* deprecated entry 마킹 (deprecated:true + replaced_by_native_issue_type) — native Issue Type cutover marking, MINOR bump additive
 date: 2026-06-10  # #2112 (de-bloat #2105 FU) v2.93 — 고아 hotfix-bypass label 12건 제거 (hotfix-bypass:evidence-naming / hotfix-bypass:marketplace-drift-detection / hotfix-bypass:channel-drift-detection / hotfix-bypass:adr-077-ratchet / hotfix-bypass:adr-077-design-reading / hotfix-bypass:architecture-drift / hotfix-bypass:ddd-pattern-frontmatter / hotfix-bypass:self-improving-loop / hotfix-bypass:amendment-number-stale / hotfix-bypass:spawn-prompt-head-pin / hotfix-bypass:amendment-slot-reservation / hotfix-bypass:mid-spawn-drift-detection). 제거 근거: #2110 에서 제거된 21 theater registry 엔트리의 짝 bypass channel — raison d'être 소멸 (CFP-2061-S5 v2.92 동형 선례). raw active grep count 12 감소 (109→97). MINOR bump (12 entry 제거 = backward-compat 무영향, ADR-008 §결정 2/3), kind:registry sibling sync 면제 (ADR-010 §결정 2), plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). MANIFEST.yaml row "2.92" → "2.93" ratchet 동반. doc-only fast-path (ADR-054). NOTE: 과거 frontmatter date 줄의 "N번째 family member" 표현은 historical record — append-only 원칙으로 재계산/재작성하지 않음 (CFP-2061-S5 v2.92 NOTE 답습).
 date: 2026-06-09  # CFP-2061-S5 v2.92 — stale 전용 bypass label 5건 제거 (hotfix-bypass:post-merge-followup-success-rate / hotfix-bypass:architect-marketplace-self-check / hotfix-bypass:subagent-sibling-story-polling / hotfix-bypass:mcp-token-freshness / hotfix-bypass:pl-inline-verify-cwd-mandate). 제거 근거: evidence-checks-registry stale dead-check 7 entry 제거(CFP-2061-S5 파트 ①)에 연동된 전용 bypass channel 5건 소멸 — raison d'être 소멸 (CFP-1870 v2.89 동형 선례). raw active grep count 5 감소 (114→109). MINOR bump (5 entry 제거 = backward-compat 무영향, ADR-008 §결정 2/3), kind:registry sibling sync 면제 (ADR-010 §결정 2), plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). MANIFEST.yaml row "2.91" → "2.92" ratchet 동반. doc-only fast-path (ADR-054). NOTE: 과거 frontmatter date 줄의 "N번째 family member" 표현은 historical record — append-only 원칙으로 재계산/재작성하지 않음 (CFP-1870 v2.89 NOTE 답습).
 date: 2026-06-09  # CFP-2061-S4 v2.91 — governance-drift bypass label 신설 (1 신규 entry: hotfix-bypass:governance-drift 114번째 hotfix-bypass:* family member raw active concrete grep count post-append 113+1=114 정합, CFP-2061-S4 / ADR-060 §결정 31 carrier — 거버넌스 지표 7종 주기 측정 + drift 이슈 자동 발행 cron advisory warning-tier bypass channel). MINOR bump: 1 신규 entry, kind:registry sibling sync 면제 (ADR-010 §결정 2 + ADR-008 §결정 3 row append), plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). MANIFEST.yaml row "2.90" -> "2.91" ratchet 동반. ADR-108 §결정 3 forcing function parity mandate — description text "114번째" 명시 의무 (raw active concrete grep count post-append = 113 + 1 = 114 정합).
@@ -94,6 +95,14 @@ related_files:
 # label-registry v2
 
 ## 변경 이력
+
+**v2.94 (CFP-2251 / ADR-049 Amendment 1, 2026-06-15)**: MINOR bump (type:* deprecated entry 마킹 — additive).
+- **마킹**: `type:epic` / `type:story` / `type:bug` 3 entry 를 `deprecated: true` + `replaced_by_native_issue_type: <type>` 로 명시 (Epic / Story / Bug). v2.0 의 "REMOVED" 주석 선언을 entry-level metadata 로 구체화 (ADR-049 §결정 3 metadata field 정합).
+- **schema 추가**: `deprecated` (bool, optional) + `replaced_by_native_issue_type` (string, optional) 2 field 를 §2 schema 표에 추가 (additive — 기존 entry 무영향).
+- **cutover 실행 결과**: CFP-2251 Amendment 1 이 type:* → native Issue Type 실 org cutover 완료 (org Story id 34327613 / Epic id 34327614 신설 + Bug id 28762364 재사용 + 487 이슈 --apply + --verify PASS). 본 registry 변경은 deprecated **marking 만**.
+- **★ 물리 label 삭제 = S4 (#2252, story-init.yml owner) sequencing**: story-init.yml 이 type:story 라벨로 트리거되므로 라벨 선삭제 시 깨짐 → 물리 삭제 + trigger native-type 전환을 S4 로 연기. 그때까지 transient dual-state 허용 (deprecated label + native type 공존, ADR-049 §결정 11 정합). DI-1 invariant (native+label 동시 존재 금지) 완전 충족 = S4 종료 시점.
+- **check_label_registry.py deprecated 필터 동반**: deprecated:true entry 는 의도적으로 bootstrap 미생성이므로 parity 비교(missing_in_script)에서 제외하도록 `scripts/lib/check_label_registry.py` 에 필터 추가. (deprecated label 이 registry 에 존속하나 라벨 정의는 살아있음 — 본 dual-state 에서 bootstrap 이 재생성하지 않게 + parity 오탐 차단.)
+- kind:registry sibling sync 면제 (ADR-010 §결정 2 + ADR-008 §결정 3 row append). plugin.json bump 0 = marketplace_sync_declared: false (mirrored field 변경 0). MANIFEST.yaml row "2.93" → "2.94" ratchet 동반.
 
 **v2.62 (CFP-1497 / Wave 2-C of CFP-1389, Sub-CFP C CFP-1435 mechanical wire / ADR-082 Amendment 17 §결정 1 layer 1 sub-scope (1-G) + ADR-050 §결정 1 carrier, 2026-05-24)**: MINOR bump (1 신규 hotfix-bypass:* label entry append — `hotfix-bypass:amendment-slot-reservation` 86번째 family member, Amendment-slot pre-reservation strict claim mandate mechanical lint warning-tier bypass channel).
 
@@ -458,14 +467,49 @@ Story-3 Phase 1 carrier — evidence-checks-registry `adr-077-ratchet-declared` 
 | description | string | label 설명 |
 | single_active | bool | 같은 category에서 1개만 active 가능 (phase만 true) |
 | attach_owner_plugin | string | 부착 권한 plugin / Action |
+| deprecated | bool | (optional) 폐지 예정 entry. true 시 신규 부착 금지 (CFP-140 v2.0 / ADR-049) |
+| replaced_by_native_issue_type | string | (optional) 폐지 entry 의 대체 native GitHub Issue Type 이름 (ADR-049 §결정 3) |
 
 ## 3. 항목
 
 ```yaml
 labels:
-  # type:* — v2.0 변경사항
-  # type:epic / type:story / type:bug = REMOVED (native Issue Types — ADR-049)
+  # type:* — v2.0 변경사항 + CFP-2251 cutover marking (ADR-049 Amendment 1)
+  # type:epic / type:story / type:bug = DEPRECATED (native Issue Types 로 대체 — ADR-049)
+  #   CFP-2251 Amendment 1: 실 org cutover 완료 (Story id 34327613 / Epic id 34327614 신설
+  #   + Bug id 28762364 재사용, 487 이슈 --apply + --verify PASS).
+  #   ★ 라벨 물리 삭제는 본 Story 미수행 — story-init.yml 이 type:story 라벨로 트리거되므로
+  #     선삭제 시 깨짐. 물리 삭제 + trigger native-type 전환 = S4 (#2252, story-init.yml owner).
+  #     그때까지 transient dual-state 허용 (deprecated label + native type 공존, §결정 11 정합).
+  #   본 entry 의 deprecated:true 마킹 = 신규 부착 금지 신호 (물리 삭제 ≠ 마킹).
   # impl-manifest = RETAINED (sub-issue axis, non-breaking)
+
+  - name: type:epic
+    category: type
+    color: "5319e7"
+    description: "(DEPRECATED — native Issue Type 'Epic'(id 34327614) 로 대체. cutover 완료, 물리 삭제는 S4 #2252)"
+    single_active: false
+    attach_owner_plugin: "(신규 부착 금지 — native Issue Type Epic 사용)"
+    deprecated: true
+    replaced_by_native_issue_type: "Epic"
+
+  - name: type:story
+    category: type
+    color: "0e8a16"
+    description: "(DEPRECATED — native Issue Type 'Story'(id 34327613) 로 대체. cutover 완료, 물리 삭제는 S4 #2252)"
+    single_active: false
+    attach_owner_plugin: "(신규 부착 금지 — native Issue Type Story 사용)"
+    deprecated: true
+    replaced_by_native_issue_type: "Story"
+
+  - name: type:bug
+    category: type
+    color: "d73a4a"
+    description: "(DEPRECATED — native Issue Type 'Bug'(id 28762364) 재사용으로 대체. cutover 완료, 물리 삭제는 S4 #2252)"
+    single_active: false
+    attach_owner_plugin: "(신규 부착 금지 — native Issue Type Bug 사용)"
+    deprecated: true
+    replaced_by_native_issue_type: "Bug"
 
   - name: impl-manifest
     category: type

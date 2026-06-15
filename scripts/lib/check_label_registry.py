@@ -93,7 +93,15 @@ for line in proc.stdout.strip().splitlines():
 errors = []
 
 # 3. 양방향 set 비교
-reg_names = set(registry_labels.keys())
+# deprecated 마킹 entry (deprecated: true) 는 의도적으로 bootstrap 미생성 (폐지 예정 — 신규 부착 금지).
+# native Issue Type 으로 대체된 type:* (CFP-2251 / ADR-049 Amendment 1) 가 대표 사례 —
+# registry 에 replaced_by_native_issue_type 마킹 entry 로 보존하되 bootstrap-labels.sh 는 생성 안 함.
+# 따라서 parity 비교(missing_in_script)에서 deprecated entry 제외 (color/single_active 검사도 자동 제외).
+deprecated_names = {
+    name for name, entry in registry_labels.items()
+    if isinstance(entry, dict) and entry.get("deprecated") is True
+}
+reg_names = set(registry_labels.keys()) - deprecated_names
 scr_names = set(script_labels.keys())
 
 missing_in_script = reg_names - scr_names

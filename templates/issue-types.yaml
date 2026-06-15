@@ -1,36 +1,60 @@
-# Issue Types schema (CFP-140 / ADR-049 §결정 1)
-# Native GitHub Issue Types replacing type:* label hack
-# org: mclayer — org-level definition (repo-level not supported by GitHub)
-# Apply via: gh api /orgs/{org}/issue-types (requires org admin)
+# Issue Types schema (CFP-140 / ADR-049 §결정 1 + CFP-2251 / ADR-049 Amendment 1)
+# Native GitHub Issue Types — type:* label hack 대체.
+#
+# === ADR-049 Amendment 1 (CFP-2251) — additive 재구성 ===
+# org 재구성 = ADDITIVE (기존 type 보존). org 실측 (2026-06-15):
+#   기존 org type: Task / Bug / Feature (GitHub 기본 3종, 전부 is_enabled=true) — 전부 보존.
+#   본 cutover:
+#     - Story  → 신설 (org POST)
+#     - Epic   → 신설 (org POST)
+#     - Bug    → 기존 org Bug 재사용 (신설 0 — type:bug 매핑 대상)
+#   Audit → 본 cutover 미포함 (deferred — 별 CFP carrier).
+#
+# org: mclayer — org-level definition (repo-level not supported by GitHub).
+# Apply via: gh api /orgs/{org}/issue-types (requires org admin).
+# 런타임 org slug 는 인자로 주입 (본 파일 placeholder 유지 — migrate 스크립트는 --org 인자).
 # Docs: https://docs.github.com/en/issues/tracking-your-work-with-issues/configuring-issues/managing-issue-types
 ---
-schema_version: "1.0"
-org: "MCLAYER_ORG_PLACEHOLDER"  # replace with actual org slug
+schema_version: "1.1"   # CFP-2251 Amendment 1 — additive 재구성 반영 (1.0 → 1.1)
+org: "MCLAYER_ORG_PLACEHOLDER"  # replace with actual org slug (런타임 인자 — migrate 스크립트 --org)
 
-# type:* label mapping (ADR-049 §결정 3):
-#   type:epic  → Epic
-#   type:story → Story
-#   type:bug   → Bug
-#   (new)      → Audit
+# type:* label mapping (ADR-049 §결정 3 + Amendment 1):
+#   type:epic  → Epic   (신설)
+#   type:story → Story  (신설)
+#   type:bug   → Bug    (기존 org type 재사용 — 신설 안 함)
 #   impl-manifest = separate axis (label retained, NOT replaced)
+#
+# 비대상 (본 파일에서 관리 안 함):
+#   Task / Feature = GitHub org 기본 type, 보존 (cutover 무관).
+#   Audit          = deferred (아래 _deferred entry 참조 — 본 cutover 미적용).
 
 issue_types:
+  # ── 신설 대상 (org POST 필요) ────────────────────────────────────────
   - name: Epic
     description: "Epic: multi-Story user requirement (Milestone + multiple Stories)"
     color: "5319e7"
     _replaces_label: "type:epic"
+    _action: create   # org 미존재 → gh api /orgs/{org}/issue-types -X POST 로 신설
 
   - name: Story
     description: "Story: single PR-pair unit (Phase 1 doc + Phase 2 implementation)"
     color: "0e8a16"
     _replaces_label: "type:story"
+    _action: create   # org 미존재 → 신설
 
+  # ── 기존 org type 재사용 (신설 안 함) ────────────────────────────────
   - name: Bug
     description: "Bug: defect report requiring a fix Story"
     color: "d73a4a"
     _replaces_label: "type:bug"
+    _action: reuse    # org 기존 Bug (id 실측 28762364) 재사용 — POST 금지 (이름 충돌)
 
+# ── deferred (본 cutover 미적용 — 별 CFP carrier) ──────────────────────
+# Audit Issue Type 은 ADR-049 §결정 1 4-type 안에 있었으나 CFP-2251 cutover 범위 밖.
+# 사용자 결정 (2026-06-15): additive cutover 에서 Audit 제외. 향후 별 Story 에서 신설.
+_deferred:
   - name: Audit
     description: "Audit: governance / compliance / drift audit item"
     color: "fbca04"
-    _replaces_label: null  # new type (no previous label equivalent)
+    _replaces_label: null   # new type (no previous label equivalent)
+    _defer_reason: "CFP-2251 cutover scope 외 (사용자 결정 2026-06-15). 별 CFP carrier 에서 신설."
