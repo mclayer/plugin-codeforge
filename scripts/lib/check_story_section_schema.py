@@ -21,32 +21,36 @@ if hasattr(sys.stderr, "reconfigure"):
     sys.stderr.reconfigure(encoding="utf-8")
 
 # 강제 섹션 (Implementation Story strict, §12+§13 optional)
+# CFP-2293 fix: heading 의 § 기호는 선택적(§?). story-init renderer
+#   (workflow_story_init_render_story.py) 는 `## N.`(§ 없음) 헤딩을 생성하고 기존 consumer
+#   story 전부 동일 형식이므로 linter 도 `## N.` / `## §N.` 양쪽을 수용한다 (renderer↔linter
+#   컨벤션 정합). § anchor 뒤 [\.\s] 가 §1 vs §10/§11 prefix 충돌을 차단한다.
 STRICT_REQUIRED = [
-    ("§1", r"^##\s*§1[\.\s]"),
-    ("§2", r"^##\s*§2[\.\s]"),
-    ("§3", r"^##\s*§3[\.\s]"),
-    ("§4", r"^##\s*§4[\.\s]"),
-    ("§5", r"^##\s*§5[\.\s]"),
-    ("§6", r"^##\s*§6[\.\s]"),
-    ("§7", r"^##\s*§7[\.\s]"),
-    ("§8", r"^##\s*§8[\.\s]"),
-    ("§9", r"^##\s*§9[\.\s]"),
-    ("§10", r"^##\s*§10[\.\s]"),
-    ("§11", r"^##\s*§11[\.\s]"),
+    ("§1", r"^##\s*§?1[\.\s]"),
+    ("§2", r"^##\s*§?2[\.\s]"),
+    ("§3", r"^##\s*§?3[\.\s]"),
+    ("§4", r"^##\s*§?4[\.\s]"),
+    ("§5", r"^##\s*§?5[\.\s]"),
+    ("§6", r"^##\s*§?6[\.\s]"),
+    ("§7", r"^##\s*§?7[\.\s]"),
+    ("§8", r"^##\s*§?8[\.\s]"),
+    ("§9", r"^##\s*§?9[\.\s]"),
+    ("§10", r"^##\s*§?10[\.\s]"),
+    ("§11", r"^##\s*§?11[\.\s]"),
 ]
 
 # Epic condensed required (의무) + 결합/N/A 의무
 EPIC_REQUIRED = [
-    ("§1", r"^##\s*§1[\.\s]"),
-    ("§3", r"^##\s*§3[\.\s]"),
-    ("§7", r"^##\s*§7[\.\s]"),
-    ("§11", r"^##\s*§11[\.\s]"),
-    ("§12", r"^##\s*§12[\.\s]"),
+    ("§1", r"^##\s*§?1[\.\s]"),
+    ("§3", r"^##\s*§?3[\.\s]"),
+    ("§7", r"^##\s*§?7[\.\s]"),
+    ("§11", r"^##\s*§?11[\.\s]"),
+    ("§12", r"^##\s*§?12[\.\s]"),
 ]
 EPIC_NA_REQUIRED = ["§8", "§10"]  # N/A 명시 의무
 
-# 결합 허용 patterns (Epic only) — 예: "§5-6", "§5-§6"
-COMBINED_PATTERN = re.compile(r"^##\s*§(\d+)\s*[-–]\s*§?(\d+)[\.\s]")
+# 결합 허용 patterns (Epic only) — 예: "5-6", "§5-6", "§5-§6" (§ 선택적, CFP-2293)
+COMBINED_PATTERN = re.compile(r"^##\s*§?(\d+)\s*[-–]\s*§?(\d+)[\.\s]")
 
 # N/A first line pattern
 NA_PATTERN = re.compile(r"^N/A\s*[—\-]\s*\S+")
@@ -114,7 +118,7 @@ for f in sorted(stories_dir.glob("*.md")):
             sec_num = int(sec_str.replace("§", ""))
             if sec_num in combined_sections:
                 continue
-            sec_pat = re.compile(rf"^##\s*§{sec_num}[\.\s].*?(?=^##|\Z)", re.MULTILINE | re.DOTALL)
+            sec_pat = re.compile(rf"^##\s*§?{sec_num}[\.\s].*?(?=^##|\Z)", re.MULTILINE | re.DOTALL)
             sec_match = sec_pat.search(text)
             if not sec_match:
                 print(f"❌ {rel}: Epic Story 의 §{sec_num} N/A 명시 의무 (단순 omit 거부 — CFP-84 N/A 형식)")
